@@ -776,10 +776,10 @@ engine.runRenderLoop(()=>{
     if (ll._b) ll.intensity = ll._b + Math.sin(t * 1.9 + ll.position.x * .3) * .1;
   });
 
-  if (walkMode && charMesh) {
+    if (walkMode && charMesh) {
     const dt = engine.getDeltaTime() / 1000;
     const moveSpeed = 5.5 * dt;
-    const turnSpeed = 3.8 * dt;
+    const turnSpeed = 4.8 * dt;
 
     if (turnLeft) charMesh.rotation.y -= turnSpeed;
     if (turnRight) charMesh.rotation.y += turnSpeed;
@@ -798,10 +798,16 @@ engine.runRenderLoop(()=>{
       charMesh.position.addInPlace(forward.scale(-moveSpeed * 0.7));
     }
 
-    walk.position = new BABYLON.Vector3(
+    const desiredCameraPosition = new BABYLON.Vector3(
       charMesh.position.x,
       charMesh.position.y + 1.6,
       charMesh.position.z - 5
+    );
+
+    walk.position = BABYLON.Vector3.Lerp(
+      walk.position,
+      desiredCameraPosition,
+      0.12
     );
 
     walk.setTarget(new BABYLON.Vector3(
