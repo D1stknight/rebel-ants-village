@@ -90,14 +90,13 @@ orbit.lowerRadiusLimit=8; orbit.upperRadiusLimit=280; orbit.upperBetaLimit=Math.
 orbit.wheelPrecision=2; orbit.attachControl(canvas,true);
 
 const walk = new BABYLON.UniversalCamera("w", new BABYLON.Vector3(0, 8, 35), scene);
-walk.speed = 0.65;
-walk.angularSensibility = 4000;
-walk.keysUp = [87];
-walk.keysDown = [83];
-walk.keysLeft = [65];
-walk.keysRight = [68];
+walk.speed = 0;
+walk.angularSensibility = 999999;
+walk.keysUp = [];
+walk.keysDown = [];
+walk.keysLeft = [];
+walk.keysRight = [];
 walk.minZ = 0.2;
-walk.attachControl(canvas, true);
 
 scene.activeCamera = orbit;
 let walkMode = false;
@@ -726,7 +725,7 @@ function toggleWalk(){
     }
 
     scene.activeCamera = walk;
-    walk.attachControl(canvas, true);
+       walk.detachControl();
     orbit.detachControl();
 
     wb.textContent = '🌐  EXIT WALK MODE';
