@@ -714,6 +714,7 @@ let selectedObject = null;
 let fenceRootRef = null;
 let dojoRootRef = null;
 let fenceSourceMeshes = [];
+let editableRootRefs = {};
 
 gizmoManager = new BABYLON.GizmoManager(scene);
 gizmoManager.positionGizmoEnabled = false;
@@ -839,21 +840,40 @@ window.addEventListener('pointerup', () => {
     softSnapSelectedObject();
   }
 });
-function getFenceRoots(){
+function getEditableRoots(){
   return scene.transformNodes.filter(n =>
-    (n.name === "fenceRoot" || n.name.startsWith("fenceRootClone_")) &&
-    !n.parent
+    !n.parent &&
+    (
+      n.name === "fenceRoot" ||
+      n.name === "dojoRoot" ||
+      n.name.startsWith("fenceRootClone_") ||
+      n.name.startsWith("dojoRootClone_")
+    )
   );
 }
 
-function applyFenceTransform(node, data){
+function getObjectType(node){
+  if (!node) return null;
+  if (node.name === "fenceRoot" || node.name.startsWith("fenceRootClone_")) return "fence";
+  if (node.name === "dojoRoot" || node.name.startsWith("dojoRootClone_")) return "dojo";
+  return null;
+}
+
+function makeCloneName(type){
+  if (type === "fence") return "fenceRootClone_" + Date.now();
+  if (type === "dojo") return "dojoRootClone_" + Date.now();
+  return "clone_" + Date.now();
+}
+
+function applyObjectTransform(node, data){
   node.position = new BABYLON.Vector3(data.position.x, data.position.y, data.position.z);
   node.rotation = new BABYLON.Vector3(data.rotation.x, data.rotation.y, data.rotation.z);
   node.scaling = new BABYLON.Vector3(data.scaling.x, data.scaling.y, data.scaling.z);
 }
 
-function saveFenceLayout(){
-  const data = getFenceRoots().map(node => ({
+function saveWorldLayout(){
+  const data = getEditableRoots().map(node => ({
+    type: getObjectType(node),
     name: node.name,
     position: {
       x: node.position.x,
@@ -872,43 +892,55 @@ function saveFenceLayout(){
     }
   }));
 
-  localStorage.setItem("rebelAntsFenceLayout", JSON.stringify(data));
-  console.log("Fence layout saved", data);
+  localStorage.setItem("rebelAntsWorldLayout", JSON.stringify(data));
+  console.log("World layout saved", data);
 }
 
-function loadFenceLayout(){
-  if (!fenceRootRef) return;
+function loadWorldLayout(){
+  if (!fenceRootRef || !dojoRootRef) return;
 
-  const raw = localStorage.getItem("rebelAntsFenceLayout");
+  const raw = localStorage.getItem("rebelAntsWorldLayout");
   if (!raw) return;
 
   let data;
   try {
     data = JSON.parse(raw);
   } catch (err) {
-    console.error("Failed to parse saved fence layout", err);
+    console.error("Failed to parse saved world layout", err);
     return;
   }
 
   if (!Array.isArray(data) || !data.length) return;
 
   scene.transformNodes
-    .filter(n => n.name.startsWith("fenceRootClone_"))
-        .forEach(n => n.dispose(false, false));
+    .filter(n =>
+      n.name.startsWith("fenceRootClone_") ||
+      n.name.startsWith("dojoRootClone_")
+    )
+    .forEach(n => n.dispose(false, false));
 
-  applyFenceTransform(fenceRootRef, data[0]);
+  const baseFence = data.find(d => d.name === "fenceRoot");
+  const baseDojo = data.find(d => d.name === "dojoRoot");
 
-  for (let i = 1; i < data.length; i++) {
-    const cloneRoot = fenceRootRef.clone("fenceRootClone_" + Date.now() + "_" + i);
-    if (!cloneRoot) continue;
+  if (baseFence) applyObjectTransform(fenceRootRef, baseFence);
+  if (baseDojo) applyObjectTransform(dojoRootRef, baseDojo);
 
-    applyFenceTransform(cloneRoot, data[i]);
+  data.forEach((item, index) => {
+    if (item.name === "fenceRoot" || item.name === "dojoRoot") return;
+
+    const sourceRoot =
+      item.type === "dojo" ? dojoRootRef : fenceRootRef;
+
+    const cloneRoot = sourceRoot.clone(makeCloneName(item.type) + "_" + index);
+    if (!cloneRoot) return;
+
+    applyObjectTransform(cloneRoot, item);
 
     cloneRoot.getChildMeshes().forEach(m => {
       shadows.addShadowCaster(m);
       m.receiveShadows = true;
     });
-  }
+  });
 
   selectedObject = null;
   updateSelectedBadge();
@@ -917,14 +949,14 @@ function loadFenceLayout(){
   gizmoManager.rotationGizmoEnabled = false;
   gizmoManager.scaleGizmoEnabled = false;
 
-  console.log("Fence layout loaded", data);
+  console.log("World layout loaded", data);
 }
 
 function deleteSelectedFence(){
   if (!selectedObject) return;
 
-  if (selectedObject.name === "fenceRoot") {
-    alert("The original base fence cannot be deleted. Move it if you want, but keep one base fence in the world.");
+  if (selectedObject.name === "fenceRoot" || selectedObject.name === "dojoRoot") {
+    alert("The original base objects cannot be deleted. Move them if you want, but keep one base version in the world.");
     return;
   }
 
@@ -940,15 +972,19 @@ function deleteSelectedFence(){
   selectedObject = null;
   updateSelectedBadge();
 
-   nodeToDelete.dispose(false, false);
+  nodeToDelete.dispose(false, false);
 }
+
 function duplicateSelectedFence(){
   if (!selectedObject) return;
 
-  const cloneRoot = selectedObject.clone("fenceRootClone_" + Date.now());
+  const objectType = getObjectType(selectedObject);
+  if (!objectType) return;
+
+  const cloneRoot = selectedObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
-   cloneRoot.position = selectedObject.position.clone();
+  cloneRoot.position = selectedObject.position.clone();
   cloneRoot.position.x += 12;
   cloneRoot.rotation = selectedObject.rotation.clone();
   cloneRoot.scaling = selectedObject.scaling.clone();
@@ -961,7 +997,7 @@ function duplicateSelectedFence(){
     m.receiveShadows = true;
   });
 
-    updateSelectedBadge();
+  updateSelectedBadge();
 
   gizmoManager.positionGizmoEnabled = true;
   gizmoManager.rotationGizmoEnabled = false;
@@ -1056,13 +1092,13 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if (adminMode && key === 'p') {
-    saveFenceLayout();
+   if (adminMode && key === 'p') {
+    saveWorldLayout();
     return;
   }
 
   if (adminMode && key === 'l') {
-    loadFenceLayout();
+    loadWorldLayout();
     return;
   }
 
@@ -1190,6 +1226,10 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_5.glb", scen
     ]
   });
 
+   editableRootRefs.dojo = dojoRoot;
+
+  loadWorldLayout();
+
   console.log("Dojo loaded", r);
 
 })
@@ -1216,7 +1256,9 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "fence_1.glb", sce
   fenceRoot.scaling = new BABYLON.Vector3(2, 2, 2);
   fenceRoot.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
 
-  loadFenceLayout();
+   editableRootRefs.fence = fenceRoot;
+
+  loadWorldLayout();
 
   console.log("Fence loaded", r);
 
