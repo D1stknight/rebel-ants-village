@@ -646,31 +646,42 @@ function doorFrame(x,y,z,w,h){
   sph(.08,hm,[x+w*.08,y+.1,z+.12]);
 }
 
-// ── BUILDING 1: THE COLONY — Grand Main Temple ──
+// ── BUILDING 1: THE COLONY (REAL GLB + STRONG GLOW) ──
 (()=>{
-  const x=0,z=-80,col=new BABYLON.Color3(.08,.14,.3);
-  stoneFoundation(x,z,16,12,4);
-  // Tall main walls with wood paneling
-  box(16,6,12,pbr(col,{r:.82}),[x,3.5,z]);
-  woodPanel(x,3.5,z,16,5.5,new BABYLON.Color3(.28,.16,.07),6);
-  // Large windows either side
-  riceWindow(x-4.5,4,z+6.06,1.8,2.5,"#ffe8a0");
-  riceWindow(x,4,z+6.06,1.8,2.5,"#ffe8a0");
-  riceWindow(x+4.5,4,z+6.06,1.8,2.5,"#ffe8a0");
-  doorFrame(x,2.2,z+6.07,2,3.2);
-  // Grand steps
-  for(let i=0;i<5;i++){box(14-i*.5,.3,.7,pbr(new BABYLON.Color3(.6,.56,.46),{r:.9}),[x,i*.3-.2,z+6.4+i*.4]);}
-  // Side pillars
-  const pilM=pbr(new BABYLON.Color3(.25,.14,.07),{r:.88});
-  for(let s of[-1,1]){cyl(.18,.22,6,10,pilM,[x+s*7.2,3.5,z+5.6]);}
-  // Upper story
-  box(10,2.5,8,pbr(col,{r:.82}),[x,8.5,z]);
-  woodPanel(x,8.5,z,10,2.2,new BABYLON.Color3(.28,.16,.07),4);
-  // Main roof 2 tiers
-  pagodaRoof(x,10.6,z,16,12,new BABYLON.Color3(.35,.42,.18),0,2);
-  // Upper roof
-  pagodaRoof(x,13.4,z,11,9,new BABYLON.Color3(.32,.38,.15),0,1);
-  addTrigger({id:'colony',x,z,title:'THE COLONY',sub:'Community Hub · rebelants.io',icon:'🐜',desc:'Rebel Ants is a media company built on transparency, education, and supporting the little guys. Using storytelling to bring light to web3 creators, artists, and projects.',actions:[{label:'Visit Site',href:'https://rebelants.io'},{label:'Discord',href:'https://discord.gg/QhzEHfRqN6',g:true},{label:'Twitter',href:'https://twitter.com/rebelants',g:true}]});
+  const x = 0, z = -80;
+
+  // ✅ KEEP TRIGGER (UNCHANGED)
+  addTrigger({
+    id:'colony',
+    x,
+    z,
+    title:'THE COLONY',
+    sub:'Community Hub · rebelants.io',
+    icon:'🐜',
+    desc:'Rebel Ants is a media company built on transparency, education, and supporting the little guys. Using storytelling to bring light to web3 creators, artists, and projects.',
+    actions:[
+      {label:'Visit Site',href:'https://rebelants.io'},
+      {label:'Discord',href:'https://discord.gg/QhzEHfRqN6',g:true},
+      {label:'Twitter',href:'https://twitter.com/rebelants',g:true}
+    ]
+  });
+
+  // 🔥 STRONG CENTER GLOW (for dojo_9 area)
+  const colonyGlow = new BABYLON.PointLight("colonyGlow", new BABYLON.Vector3(x, 8, z), scene);
+  colonyGlow.diffuse = new BABYLON.Color3(0.3, 0.6, 1.0); // brighter blue
+  colonyGlow.intensity = 12;
+  colonyGlow.range = 70;
+
+  const colonyFill = new BABYLON.PointLight("colonyFill", new BABYLON.Vector3(x, 3, z), scene);
+  colonyFill.diffuse = new BABYLON.Color3(0.15, 0.3, 0.8);
+  colonyFill.intensity = 6;
+  colonyFill.range = 80;
+
+  // 🔥 STRONGER PULSE
+  scene.registerBeforeRender(() => {
+    colonyGlow.intensity = 10 + Math.sin(performance.now() * 0.002) * 2;
+  });
+
 })();
 
 // ── BUILDING 3: RADIO STAGE — Open Pavilion ──
