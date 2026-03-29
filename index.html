@@ -616,6 +616,8 @@ function doorFrame(x,y,z,w,h){
 setSt("Loading character...");
 let charMesh=null, charAnims={}, isMoving=false;
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
+let selectedObject = null;
+let fenceRootRef = null;
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
 .then(r => {
 
@@ -681,6 +683,14 @@ scene.onPointerObservable.add(evt=>{
 });
 
 document.getElementById('pc').addEventListener('click',()=>panel.classList.remove('on'));
+
+canvas.addEventListener('click', () => {
+  if (!adminMode) return;
+  if (!fenceRootRef) return;
+
+  selectedObject = fenceRootRef;
+  console.log('Selected object:', selectedObject.name);
+});
 
 function openPanel(b){
   document.getElementById('picon').textContent=b.icon;
@@ -864,7 +874,8 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_5.glb", scen
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "fence_1.glb", scene)
 .then(r => {
 
-  const fenceRoot = new BABYLON.TransformNode("fenceRoot", scene);
+    const fenceRoot = new BABYLON.TransformNode("fenceRoot", scene);
+  fenceRootRef = fenceRoot;
 
   r.meshes.forEach(m => {
     if (m !== fenceRoot) {
