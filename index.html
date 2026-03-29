@@ -136,6 +136,13 @@ const ASSETS = {
     scale: 1.2,
     rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
   },
+
+dojo_9: {
+  path: "/assets/buildings/dojo_9.glb",
+  scale: 1.2,
+  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+},
+  
   fence_1: {
     path: "/assets/buildings/fence_1.glb",
     scale: 2,
@@ -1369,6 +1376,11 @@ const dojo7Root = spawnAsset("dojo_7", new BABYLON.Vector3(-75, 1.8, 80));
 dojo7Root.name = "dojo7Root";
 dojo7RootRef = dojo7Root;
 editableRootRefs.dojo7 = dojo7Root;
+
+// ===== DOJO 9 =====
+const dojo9Root = spawnAsset("dojo_9", new BABYLON.Vector3(75, 1.8, 80));
+dojo9Root.name = "dojo9Root";
+editableRootRefs.dojo9 = dojo9Root;
 
 
 // ===== LOAD DOJO 6 =====
