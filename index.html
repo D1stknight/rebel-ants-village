@@ -89,17 +89,18 @@ const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/3.6,150,new BAB
 orbit.lowerRadiusLimit=8; orbit.upperRadiusLimit=280; orbit.upperBetaLimit=Math.PI/2.05;
 orbit.wheelPrecision=2; orbit.attachControl(canvas,true);
 
-const walk = new BABYLON.FollowCamera("w", new BABYLON.Vector3(0, 8, 35), scene);
-walk.radius = 18;
-walk.heightOffset = 8;
-walk.rotationOffset = 180;
-walk.cameraAcceleration = 0.08;
-walk.maxCameraSpeed = 12;
+const walk = new BABYLON.UniversalCamera("w", new BABYLON.Vector3(0, 8, 35), scene);
+walk.speed = 0.65;
+walk.angularSensibility = 4000;
+walk.keysUp = [87];
+walk.keysDown = [83];
+walk.keysLeft = [65];
+walk.keysRight = [68];
+walk.minZ = 0.2;
 walk.attachControl(canvas, true);
 
 scene.activeCamera = orbit;
 let walkMode = false;
-
 // ── LIGHTING ────────────────────────────────
 const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.7,-1.1,.5),scene);
 sun.position=new BABYLON.Vector3(160,260,-160);
@@ -637,9 +638,6 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", 
   // Face toward camera area
   charMesh.rotation = new BABYLON.Vector3(0, Math.PI, 0);
 
-  // Make follow camera track the ant
-  walk.lockedTarget = charMesh;
-
   // Enable shadows
   r.meshes.forEach(m => {
     shadows.addShadowCaster(m);
@@ -708,16 +706,39 @@ function openPanel(b){
 
 // ── WALK MODE ────────────────────────────────
 function toggleWalk(){
-  walkMode=!walkMode;
-  const wb=document.getElementById('wb'), xh=document.getElementById('xhair');
-  if(walkMode){
-    scene.activeCamera=walk; walk.attachControl(canvas,true); orbit.detachControl();
-    canvas.requestPointerLock();
-    wb.textContent='🌐  EXIT WALK MODE'; wb.classList.add('on'); xh.classList.add('on');
+  walkMode = !walkMode;
+  const wb = document.getElementById('wb');
+  const xh = document.getElementById('xhair');
+
+  if (walkMode) {
+    if (charMesh) {
+      walk.position = new BABYLON.Vector3(
+        charMesh.position.x,
+        charMesh.position.y + 4,
+        charMesh.position.z - 10
+      );
+      walk.setTarget(new BABYLON.Vector3(
+        charMesh.position.x,
+        charMesh.position.y + 3,
+        charMesh.position.z
+      ));
+    }
+
+    scene.activeCamera = walk;
+    walk.attachControl(canvas, true);
+    orbit.detachControl();
+
+    wb.textContent = '🌐  EXIT WALK MODE';
+    wb.classList.add('on');
+    xh.classList.remove('on');
   } else {
-    scene.activeCamera=orbit; orbit.attachControl(canvas,true); walk.detachControl();
-    document.exitPointerLock();
-    wb.textContent='⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
+    scene.activeCamera = orbit;
+    orbit.attachControl(canvas, true);
+    walk.detachControl();
+
+    wb.textContent = '⚔️  ENTER VILLAGE';
+    wb.classList.remove('on');
+    xh.classList.remove('on');
   }
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&walkMode)toggleWalk();});
