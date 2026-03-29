@@ -907,18 +907,12 @@ canvas.addEventListener('click', () => {
 
   if (!node) return;
 
-   const isFence =
-    node.name === "fenceRoot" || node.name.startsWith("fenceRootClone_");
+     const editableRoots = Object.values(editableRootRefs).filter(Boolean);
 
-        const isDojo =
-    node.name === "dojoRoot" ||
-    node.name === "dojo6Root" ||
-    node.name === "dojo7Root" ||
-    node.name.startsWith("dojoRootClone_") ||
-    node.name.startsWith("dojo6RootClone_") ||
-    node.name.startsWith("dojo7RootClone_");
+  const isEditableRoot = editableRoots.includes(node);
+  const isEditableClone = node.name.includes("RootClone_");
 
-  if (!isFence && !isDojo) return;
+  if (!isEditableRoot && !isEditableClone) return;
 
   selectedObject = node;
   updateSelectedBadge();
