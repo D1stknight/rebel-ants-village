@@ -713,6 +713,7 @@ let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
 let selectedObject = null;
 let fenceRootRef = null;
 let dojoRootRef = null;
+let dojo6RootRef = null;
 let fenceSourceMeshes = [];
 let editableRootRefs = {};
 
@@ -815,8 +816,11 @@ canvas.addEventListener('click', () => {
    const isFence =
     node.name === "fenceRoot" || node.name.startsWith("fenceRootClone_");
 
-  const isDojo =
-    node.name === "dojoRoot" || node.name.startsWith("dojoRootClone_");
+    const isDojo =
+    node.name === "dojoRoot" ||
+    node.name === "dojo6Root" ||
+    node.name.startsWith("dojoRootClone_") ||
+    node.name.startsWith("dojo6RootClone_");
 
   if (!isFence && !isDojo) return;
 
@@ -1252,7 +1256,8 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_5.glb", scen
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scene)
 .then(r => {
 
-  const dojo6Root = new BABYLON.TransformNode("dojo6Root", scene);
+    const dojo6Root = new BABYLON.TransformNode("dojo6Root", scene);
+  dojo6RootRef = dojo6Root;
 
   r.meshes.forEach(m => {
     if (m !== dojo6Root) {
