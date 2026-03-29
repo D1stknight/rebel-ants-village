@@ -777,8 +777,9 @@ engine.runRenderLoop(()=>{
   });
 
   if (walkMode && charMesh) {
-    const moveSpeed = 0.12;
-const turnSpeed = 0.18;
+    const dt = engine.getDeltaTime() / 1000;
+    const moveSpeed = 5.5 * dt;
+    const turnSpeed = 3.8 * dt;
 
     if (turnLeft) charMesh.rotation.y -= turnSpeed;
     if (turnRight) charMesh.rotation.y += turnSpeed;
