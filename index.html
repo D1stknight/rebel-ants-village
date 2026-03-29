@@ -623,6 +623,7 @@ function doorFrame(x,y,z,w,h){
 // ── WALKABLE CHARACTER ───────────────────────
 setSt("Loading character...");
 let charMesh=null, charAnims={}, isMoving=false;
+let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
 .then(r => {
 
@@ -741,15 +742,75 @@ function toggleWalk(){
     xh.classList.remove('on');
   }
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&walkMode)toggleWalk();});
+document.addEventListener('keydown', e => {
+  const key = e.key.toLowerCase();
+
+  if (key === 'escape' && walkMode) toggleWalk();
+
+  if (key === 'w') moveForward = true;
+  if (key === 's') moveBackward = true;
+  if (key === 'a') turnLeft = true;
+  if (key === 'd') turnRight = true;
+});
+
+document.addEventListener('keyup', e => {
+  const key = e.key.toLowerCase();
+
+  if (key === 'w') moveForward = false;
+  if (key === 's') moveBackward = false;
+  if (key === 'a') turnLeft = false;
+  if (key === 'd') turnRight = false;
+});
+
 window.addEventListener('resize',()=>engine.resize());
 
 // ── RENDER LOOP ──────────────────────────────
 let t=0;
 engine.runRenderLoop(()=>{
-  t+=engine.getDeltaTime()*.001;
-  fireLights.forEach(fl=>{ fl.intensity=fl._b+Math.sin(t*9.2+fl.position.x*3)*.65+Math.sin(t*15.1+fl.position.z)*.32; });
-  lanLights.forEach(ll=>{ if(ll._b)ll.intensity=ll._b+Math.sin(t*1.9+ll.position.x*.3)*.1; });
+  t += engine.getDeltaTime() * .001;
+
+  fireLights.forEach(fl => {
+    fl.intensity = fl._b + Math.sin(t * 9.2 + fl.position.x * 3) * .65 + Math.sin(t * 15.1 + fl.position.z) * .32;
+  });
+
+  lanLights.forEach(ll => {
+    if (ll._b) ll.intensity = ll._b + Math.sin(t * 1.9 + ll.position.x * .3) * .1;
+  });
+
+  if (walkMode && charMesh) {
+    const moveSpeed = 0.12;
+    const turnSpeed = 0.035;
+
+    if (turnLeft) charMesh.rotation.y -= turnSpeed;
+    if (turnRight) charMesh.rotation.y += turnSpeed;
+
+    const forward = new BABYLON.Vector3(
+      Math.sin(charMesh.rotation.y),
+      0,
+      Math.cos(charMesh.rotation.y)
+    );
+
+    if (moveForward) {
+      charMesh.position.addInPlace(forward.scale(moveSpeed));
+    }
+
+    if (moveBackward) {
+      charMesh.position.addInPlace(forward.scale(-moveSpeed * 0.7));
+    }
+
+    walk.position = new BABYLON.Vector3(
+      charMesh.position.x,
+      charMesh.position.y + 2.2,
+      charMesh.position.z - 4
+    );
+
+    walk.setTarget(new BABYLON.Vector3(
+      charMesh.position.x,
+      charMesh.position.y + 1.8,
+      charMesh.position.z + 2
+    ));
+  }
+
   scene.render();
 });
 
