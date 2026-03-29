@@ -734,11 +734,22 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", 
 
   // Parent all imported meshes under our player root
   r.meshes.forEach(m => {
-    if (m !== playerRoot) {
-      m.parent = playerRoot;
+    if (m !== dojo6Root) {
+      m.parent = dojo6Root;
     }
+
+    if (m.rotationQuaternion) {
+      m.rotationQuaternion = null;
+    }
+
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
+  });
+
+  r.transformNodes.forEach(t => {
+    if (t !== dojo6Root && t.rotationQuaternion) {
+      t.rotationQuaternion = null;
+    }
   });
 
   // Use playerRoot as the thing we move and rotate
