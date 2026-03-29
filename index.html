@@ -138,6 +138,42 @@ const ASSETS = {
   }
 };
 
+  // ═══════════════════════════════════════
+// SPAWN ASSET FUNCTION (MASTER SYSTEM)
+// ═══════════════════════════════════════
+function spawnAsset(type, position) {
+  const config = ASSETS[type];
+  if (!config) {
+    console.warn("Missing asset:", type);
+    return;
+  }
+
+  BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
+
+    const root = new BABYLON.TransformNode(type + "_root", scene);
+
+    meshes.forEach(m => {
+      m.parent = root;
+    });
+
+    root.position = position.clone();
+    root.scaling = new BABYLON.Vector3(config.scale, config.scale, config.scale);
+
+    if (config.rotation) {
+      root.rotation = config.rotation.clone();
+    }
+
+    // make selectable in admin
+    root.isPickable = true;
+
+    // store type for save system later
+    root.metadata = { type };
+
+    console.log("Spawned:", type);
+
+  });
+}
+
 // ── SCENE ───────────────────────────────────
 const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
