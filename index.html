@@ -155,6 +155,16 @@ function spawnAsset(type, position) {
 
   const root = new BABYLON.TransformNode(type + "_root", scene);
 
+  root.position = position.clone();
+  root.scaling = new BABYLON.Vector3(config.scale, config.scale, config.scale);
+
+  if (config.rotation) {
+    root.rotation = config.rotation.clone();
+  }
+
+  root.isPickable = true;
+  root.metadata = { type };
+
   BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
 
     meshes.forEach(m => {
@@ -163,23 +173,12 @@ function spawnAsset(type, position) {
       m.receiveShadows = true;
     });
 
-    root.position = position.clone();
-    root.scaling = new BABYLON.Vector3(config.scale, config.scale, config.scale);
-
-    if (config.rotation) {
-      root.rotation = config.rotation.clone();
-    }
-
-    root.isPickable = true;
-    root.metadata = { type };
-
     console.log("Spawned:", type);
 
   });
 
-  return root; // ✅ THIS FIXES EVERYTHING
+  return root;
 }
-
 // ── SCENE ───────────────────────────────────
 const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
