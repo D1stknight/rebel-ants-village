@@ -151,7 +151,8 @@ let adminDragging = false;
 
 const GRID_SIZE = 6;
 const ROT_SNAP = Math.PI / 2;
-const SNAP_LERP = 0.18;
+const SNAP_DISTANCE = 1.5;
+const ROT_SNAP_DISTANCE = 0.18;
 
 function updateAdminBadge(){
   const badge = document.getElementById('adminBadge');
@@ -182,12 +183,20 @@ function softSnapSelectedObject(){
   const targetX = snapValue(selectedObject.position.x, GRID_SIZE);
   const targetZ = snapValue(selectedObject.position.z, GRID_SIZE);
 
-  selectedObject.position.x = BABYLON.Scalar.Lerp(selectedObject.position.x, targetX, SNAP_LERP);
-  selectedObject.position.z = BABYLON.Scalar.Lerp(selectedObject.position.z, targetZ, SNAP_LERP);
+  if (Math.abs(selectedObject.position.x - targetX) <= SNAP_DISTANCE) {
+    selectedObject.position.x = targetX;
+  }
+
+  if (Math.abs(selectedObject.position.z - targetZ) <= SNAP_DISTANCE) {
+    selectedObject.position.z = targetZ;
+  }
 
   if (selectedObject.rotation) {
     const targetRotY = snapValue(selectedObject.rotation.y, ROT_SNAP);
-    selectedObject.rotation.y = BABYLON.Scalar.Lerp(selectedObject.rotation.y, targetRotY, SNAP_LERP);
+
+    if (Math.abs(selectedObject.rotation.y - targetRotY) <= ROT_SNAP_DISTANCE) {
+      selectedObject.rotation.y = targetRotY;
+    }
   }
 }
 // ── LIGHTING ────────────────────────────────
@@ -785,8 +794,11 @@ window.addEventListener('pointerdown', () => {
 
 window.addEventListener('pointerup', () => {
   adminDragging = false;
-});
 
+  if (adminMode && selectedObject) {
+    softSnapSelectedObject();
+  }
+});
 function getFenceRoots(){
   return scene.transformNodes.filter(n =>
     (n.name === "fenceRoot" || n.name.startsWith("fenceRootClone_")) &&
