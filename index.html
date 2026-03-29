@@ -1346,7 +1346,6 @@ scene.registerBeforeRender(() => {
   dojoGlow.intensity = 7.5 + Math.sin(performance.now() * 0.002) * 0.8;
 });
 
-loadWorldLayout();
 
 // ===== LOAD DOJO 6 =====
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scene)
@@ -1390,8 +1389,6 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scen
   dojo6Root.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
   editableRootRefs.dojo6 = dojo6Root;
 
-  loadWorldLayout();
-
   console.log("Dojo 6 loaded", r);
 
 })
@@ -1419,8 +1416,6 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "fence_1.glb", sce
 
    editableRootRefs.fence = fenceRoot;
 
-  loadWorldLayout();
-
   console.log("Fence loaded", r);
 
 })
@@ -1434,6 +1429,11 @@ setTimeout(()=>{
   ld.style.opacity='0';
   setTimeout(()=>ld.style.display='none',900);
 },1800);
+
+// ✅ LOAD SAVED LAYOUT (AFTER EVERYTHING EXISTS)
+setTimeout(() => {
+  loadWorldLayout();
+}, 1200);
 </script>
 </body>
 </html>
