@@ -198,6 +198,28 @@ function softSnapSelectedObject(){
       selectedObject.rotation.y = targetRotY;
     }
   }
+
+  snapSelectedObjectToGround();
+}
+
+function snapSelectedObjectToGround(){
+  if (!selectedObject) return;
+
+  const origin = new BABYLON.Vector3(
+    selectedObject.position.x,
+    200,
+    selectedObject.position.z
+  );
+
+  const ray = new BABYLON.Ray(origin, new BABYLON.Vector3(0, -1, 0), 500);
+
+  const hit = scene.pickWithRay(ray, mesh =>
+    mesh === ground || mesh === court || mesh === plaza
+  );
+
+  if (!hit || !hit.hit || !hit.pickedPoint) return;
+
+  selectedObject.position.y = hit.pickedPoint.y;
 }
 // ── LIGHTING ────────────────────────────────
 const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.7,-1.1,.5),scene);
@@ -908,18 +930,20 @@ function duplicateSelectedFence(){
   const cloneRoot = selectedObject.clone("fenceRootClone_" + Date.now());
   if (!cloneRoot) return;
 
-  cloneRoot.position = selectedObject.position.clone();
+   cloneRoot.position = selectedObject.position.clone();
   cloneRoot.position.x += 12;
   cloneRoot.rotation = selectedObject.rotation.clone();
   cloneRoot.scaling = selectedObject.scaling.clone();
+
+  selectedObject = cloneRoot;
+  snapSelectedObjectToGround();
 
   cloneRoot.getChildMeshes().forEach(m => {
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
   });
 
-  selectedObject = cloneRoot;
-  updateSelectedBadge();
+    updateSelectedBadge();
 
   gizmoManager.positionGizmoEnabled = true;
   gizmoManager.rotationGizmoEnabled = false;
