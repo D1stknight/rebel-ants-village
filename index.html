@@ -311,19 +311,6 @@ function torii(x,z,ry=0){
 }
 torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0,-92,Math.PI);
 
-// ── FENCE ────────────────────────────────────
-const fpm=mat(new BABYLON.Color3(.2,.12,.06)), frm=mat(new BABYLON.Color3(.16,.09,.04));
-const FW=95;
-[[-FW,-FW,FW,-FW],[-FW,FW,FW,FW],[-FW,-FW,-FW,FW],[FW,-FW,FW,FW]].forEach(([x1,z1,x2,z2],si)=>{
-  const dx=x2-x1,dz=z2-z1,len=Math.sqrt(dx*dx+dz*dz),a=Math.atan2(dx,dz);
-  const cx=(x1+x2)/2,cz=(z1+z2)/2;
-  for(let ry of[2.1,1.2]){const r=box(len,.13,.16,frm,[cx,ry,cz]);r.rotation.y=a;}
-  for(let i=0;i<=Math.floor(len/4.5);i++){
-    const t=i/Math.floor(len/4.5);
-    const post=box(.2,2.5,.2,fpm,[x1+dx*t,1.1,z1+dz*t]);
-  }
-});
-
 // ── FIRE BOWLS ───────────────────────────────
 const fireLights=[];
 function fireBowl(x,z){
@@ -838,6 +825,32 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_5.glb", scen
 .catch(err => {
   console.error("Dojo failed to load", err);
 });
+
+// ===== LOAD FENCE =====
+BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "fence_1.glb", scene)
+.then(r => {
+
+  const fenceRoot = new BABYLON.TransformNode("fenceRoot", scene);
+
+  r.meshes.forEach(m => {
+    if (m !== fenceRoot) {
+      m.parent = fenceRoot;
+    }
+    shadows.addShadowCaster(m);
+    m.receiveShadows = true;
+  });
+
+  fenceRoot.position = new BABYLON.Vector3(-75, 0, -20);
+  fenceRoot.scaling = new BABYLON.Vector3(2, 2, 2);
+  fenceRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+
+  console.log("Fence loaded", r);
+
+})
+.catch(err => {
+  console.error("Fence failed to load", err);
+});
+  
 // ── LOADING FADE ─────────────────────────────
 setTimeout(()=>{
   const ld=document.getElementById('ld');
