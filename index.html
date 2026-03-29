@@ -29,6 +29,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #tt.on{opacity:1}
 #panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);width:480px;max-width:92vw;max-height:88vh;overflow-y:auto;background:rgba(5,10,28,.97);border:1px solid rgba(232,197,106,.5);padding:38px;z-index:30;opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(22px)}
 #panel.on{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
+#adminBadge{
+  position:fixed;
+  top:70px;
+  right:28px;
+  z-index:20;
+  padding:8px 12px;
+  font-family:'Cinzel Decorative',serif;
+  font-size:10px;
+  letter-spacing:2px;
+  color:#e8c56a;
+  background:rgba(5,10,28,.9);
+  border:1px solid rgba(232,197,106,.35);
+  display:none;
+}
+#adminBadge.on{
+  display:block;
+  border-color:#5ecfca;
+  color:#5ecfca;
+}
 #pc{position:absolute;top:14px;right:18px;background:none;border:none;color:rgba(232,197,106,.5);font-size:22px;cursor:pointer;transition:color .2s;line-height:1}
 #pc:hover{color:#e8c56a}
 #ph2{font-family:'Cinzel Decorative',serif;font-size:16px;color:#e8c56a;letter-spacing:2px;margin-bottom:6px}
@@ -54,6 +73,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <canvas id="c"></canvas>
 <div id="xhair"></div>
 <div id="td"></div>
+<div id="adminBadge">ADMIN MODE</div>
 <div id="hud">
   <div id="logo"><h1>REBEL ANTS</h1><span>The Hidden Village</span></div>
   <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
@@ -100,6 +120,13 @@ walk.minZ = 0.2;
 
 scene.activeCamera = orbit;
 let walkMode = false;
+let adminMode = false;
+
+function updateAdminBadge(){
+  const badge = document.getElementById('adminBadge');
+  if (!badge) return;
+  badge.classList.toggle('on', adminMode);
+}
 // ── LIGHTING ────────────────────────────────
 const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.7,-1.1,.5),scene);
 sun.position=new BABYLON.Vector3(160,260,-160);
@@ -709,6 +736,13 @@ function toggleWalk(){
 }
 document.addEventListener('keydown', e => {
   const key = e.key.toLowerCase();
+
+  if (key === 'm') {
+    adminMode = !adminMode;
+    updateAdminBadge();
+    console.log('Admin mode:', adminMode ? 'ON' : 'OFF');
+    return;
+  }
 
   if (key === 'escape' && walkMode) toggleWalk();
 
