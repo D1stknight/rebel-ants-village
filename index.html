@@ -833,24 +833,9 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_5.glb", scen
     m.receiveShadows = true;
   });
 
-  dojoRoot.position = new BABYLON.Vector3(0, 0, 0);
+  dojoRoot.position = new BABYLON.Vector3(0, 25, 0);
   dojoRoot.scaling = new BABYLON.Vector3(2.2, 2.2, 2.2);
-
-  // Try upright orientation first
-  dojoRoot.rotation = new BABYLON.Vector3(Math.PI / 2, 0, 0);
-
-  // Auto-lift based on bounding box so it sits on the ground
-  const mins = [];
-  r.meshes.forEach(m => {
-    if (m.getBoundingInfo) {
-      mins.push(m.getBoundingInfo().boundingBox.minimumWorld.y);
-    }
-  });
-
-  if (mins.length > 0) {
-    const lowestY = Math.min(...mins);
-    dojoRoot.position.y -= lowestY;
-  }
+  dojoRoot.rotation = new BABYLON.Vector3(-Math.PI / 2, 0, 0);
 
   console.log("Dojo loaded", r);
 
