@@ -1056,11 +1056,16 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if (adminMode && selectedObject && key === 'g') {
+   if (adminMode && selectedObject && key === 'g') {
     gizmoManager.positionGizmoEnabled = true;
     gizmoManager.rotationGizmoEnabled = false;
     gizmoManager.scaleGizmoEnabled = false;
     gizmoManager.attachToNode(selectedObject);
+    return;
+  }
+
+  if (adminMode && selectedObject && key === 'f') {
+    selectedObject.scaling.x *= -1;
     return;
   }
 
