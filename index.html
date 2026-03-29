@@ -619,16 +619,43 @@ function doorFrame(x,y,z,w,h){
 // ── WALKABLE CHARACTER ───────────────────────
 setSt("Loading character...");
 let charMesh=null, charAnims={}, isMoving=false;
-BABYLON.SceneLoader.ImportMeshAsync("","https://threejs.org/examples/models/gltf/","Soldier.glb",scene)
-.then(r=>{
-  charMesh=r.meshes[0];
-  charMesh.position=new BABYLON.Vector3(0,0,55);
-  charMesh.scaling=new BABYLON.Vector3(4.5,4.5,4.5);
-  r.meshes.forEach(m=>{shadows.addShadowCaster(m);m.receiveShadows=true;});
-  r.animationGroups.forEach(ag=>{charAnims[ag.name.toLowerCase()]=ag;ag.stop();});
-  if(charAnims['idle']) charAnims['idle'].play(true);
+BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
+.then(r => {
+
+  // Use the first mesh as root
+  charMesh = r.meshes[0];
+
+  // Position in center area
+  charMesh.position = new BABYLON.Vector3(0, 0, 20);
+
+  // Reset scaling (we will adjust after we see it)
+  charMesh.scaling = new BABYLON.Vector3(1, 1, 1);
+
+  // Enable shadows
+  r.meshes.forEach(m => {
+    shadows.addShadowCaster(m);
+    m.receiveShadows = true;
+  });
+
+  // Handle animations (if they exist)
+  r.animationGroups.forEach(ag => {
+    charAnims[ag.name.toLowerCase()] = ag;
+    ag.stop();
+  });
+
+  // Try to play idle animation automatically
+  if (charAnims['idle']) {
+    charAnims['idle'].play(true);
+  }
+
+  console.log("Character loaded:", r);
   setSt("Character ready!");
-}).catch(()=>setSt("World loaded"));
+
+})
+.catch(err => {
+  console.error("Character failed to load:", err);
+  setSt("Character failed to load");
+});
 
 // ── INTERACTIONS ─────────────────────────────
 const tooltip=document.getElementById('tt');
