@@ -1459,9 +1459,10 @@ setTimeout(()=>{
 function waitForWorldAndLoadLayout() {
   const dojoReady = !!dojoRootRef;
   const dojo6Ready = !!dojo6RootRef;
+  const dojo7Ready = !!dojo7RootRef;
   const fenceReady = !!fenceRootRef;
 
-  if (dojoReady && dojo6Ready && fenceReady) {
+  if (dojoReady && dojo6Ready && dojo7Ready && fenceReady) {
     loadWorldLayout();
     return;
   }
