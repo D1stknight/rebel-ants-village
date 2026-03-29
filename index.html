@@ -89,13 +89,16 @@ const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/3.6,150,new BAB
 orbit.lowerRadiusLimit=8; orbit.upperRadiusLimit=280; orbit.upperBetaLimit=Math.PI/2.05;
 orbit.wheelPrecision=2; orbit.attachControl(canvas,true);
 
-const walk=new BABYLON.UniversalCamera("w",new BABYLON.Vector3(0,3.5,95),scene);
-walk.setTarget(new BABYLON.Vector3(0,3,0));
-walk.speed=0.65; walk.angularSensibility=720;
-walk.keysUp=[87,38]; walk.keysDown=[83,40]; walk.keysLeft=[65,37]; walk.keysRight=[68,39];
-walk.minZ=0.2;
-scene.activeCamera=orbit;
-let walkMode=false;
+const walk = new BABYLON.FollowCamera("w", new BABYLON.Vector3(0, 8, 35), scene);
+walk.radius = 18;
+walk.heightOffset = 8;
+walk.rotationOffset = 180;
+walk.cameraAcceleration = 0.08;
+walk.maxCameraSpeed = 12;
+walk.attachControl(canvas, true);
+
+scene.activeCamera = orbit;
+let walkMode = false;
 
 // ── LIGHTING ────────────────────────────────
 const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.7,-1.1,.5),scene);
