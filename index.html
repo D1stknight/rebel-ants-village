@@ -712,15 +712,15 @@ function toggleWalk(){
 
   if (walkMode) {
     if (charMesh) {
-      walk.position = new BABYLON.Vector3(
+           walk.position = new BABYLON.Vector3(
         charMesh.position.x,
-        charMesh.position.y + 4,
-        charMesh.position.z - 10
+        charMesh.position.y + 2.2,
+        charMesh.position.z - 4
       );
       walk.setTarget(new BABYLON.Vector3(
         charMesh.position.x,
-        charMesh.position.y + 3,
-        charMesh.position.z
+        charMesh.position.y + 1.8,
+        charMesh.position.z + 2
       ));
     }
 
