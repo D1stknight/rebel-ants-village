@@ -1105,7 +1105,7 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if (adminMode && selectedObject && key === 'r') {
+    if (adminMode && selectedObject && key === 'r') {
     gizmoManager.positionGizmoEnabled = false;
     gizmoManager.rotationGizmoEnabled = true;
     gizmoManager.scaleGizmoEnabled = false;
@@ -1113,10 +1113,18 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-   if (adminMode && selectedObject && key === 'g') {
+  if (adminMode && selectedObject && key === 'g') {
     gizmoManager.positionGizmoEnabled = true;
     gizmoManager.rotationGizmoEnabled = false;
     gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+    return;
+  }
+
+  if (adminMode && selectedObject && key === 'y') {
+    gizmoManager.positionGizmoEnabled = false;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = true;
     gizmoManager.attachToNode(selectedObject);
     return;
   }
