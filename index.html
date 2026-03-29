@@ -496,27 +496,6 @@ function doorFrame(x,y,z,w,h){
   addTrigger({id:'colony',x,z,title:'THE COLONY',sub:'Community Hub · rebelants.io',icon:'🐜',desc:'Rebel Ants is a media company built on transparency, education, and supporting the little guys. Using storytelling to bring light to web3 creators, artists, and projects.',actions:[{label:'Visit Site',href:'https://rebelants.io'},{label:'Discord',href:'https://discord.gg/QhzEHfRqN6',g:true},{label:'Twitter',href:'https://twitter.com/rebelants',g:true}]});
 })();
 
-// ── BUILDING 2: DOJO ARCADE — Battle Portal ──
-(()=>{
-  const x=-80,z=0,col=new BABYLON.Color3(.04,.04,.18);
-  stoneFoundation(x,z,12,10,3);
-  box(12,5.5,10,pbr(col,{r:.82}),[x,3.2,z]);
-  woodPanel(x,3.2,z,12,5,new BABYLON.Color3(.12,.08,.35),4);
-  // Teal neon sign
-  const neonM=pbr(new BABYLON.Color3(.05,.85,.82),{e:new BABYLON.Color3(.0,.7,.65),ei:.9,r:.4,a:.9});
-  box(6.5,1.2,.12,neonM,[x,7.2,z+5.06]);
-  const nl=new BABYLON.PointLight("nl",new BABYLON.Vector3(x,7.2,z+6.5),scene);
-  nl.diffuse=new BABYLON.Color3(.05,.85,.82); nl.intensity=3.5; nl.range=16;
-  // Glowing arcade windows
-  const awM=pbr(new BABYLON.Color3(.04,.95,.9),{e:new BABYLON.Color3(.02,.8,.75),ei:.3,a:.72,r:.3});
-  box(2.2,2.8,.1,awM,[x-2.5,3.6,z+5.07]);
-  box(2.2,2.8,.1,awM,[x+2.5,3.6,z+5.07]);
-  doorFrame(x,2.1,z+5.08,2,3.1);
-  for(let i=0;i<3;i++){box(11-i*.4,.28,.62,pbr(new BABYLON.Color3(.5,.5,.58),{r:.9}),[x,i*.28-.18,z+5.28+i*.3]);}
-  pagodaRoof(x,7.5,z,12,10,new BABYLON.Color3(.14,.12,.42),0,2);
-  addTrigger({id:'arcade',x,z,title:'THE DOJO ARCADE',sub:'Battle Portal · Games Hub',icon:'⚔️',desc:'Battle for the Colony — 5,555 hand-drawn ants in 11 gangs fighting AI-driven weekly battles. Earn rewards when your gang wins. The arena never closes.',actions:[{label:'Battle Portal',href:'https://portal.rebelants.io',t:true},{label:'OpenSea',href:'https://opensea.io/collection/rebel-ants-battle-for-the-colony'},{label:'Magic Eden',href:'https://magiceden.us/collections/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221',g:true}]});
-})();
-
 // ── BUILDING 3: RADIO STAGE — Open Pavilion ──
 (()=>{
   const x=80,z=0,col=new BABYLON.Color3(.25,.1,.06);
