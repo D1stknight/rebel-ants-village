@@ -1275,31 +1275,53 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_5.glb", scen
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scene)
 .then(r => {
 
-    const dojo6Root = new BABYLON.TransformNode("dojo6Root", scene);
+  const dojo6Root = new BABYLON.TransformNode("dojo6Root", scene);
   dojo6RootRef = dojo6Root;
 
+  const dojo6ModelRoot = new BABYLON.TransformNode("dojo6ModelRoot", scene);
+  dojo6ModelRoot.parent = dojo6Root;
+
   r.meshes.forEach(m => {
-    if (m !== dojo6Root) {
-      m.parent = dojo6Root;
+    if (m !== dojo6Root && m !== dojo6ModelRoot) {
+      m.parent = dojo6ModelRoot;
     }
+
+    if (m.rotationQuaternion) {
+      m.rotationQuaternion = null;
+    }
+
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
   });
 
-    dojo6Root.position = new BABYLON.Vector3(75, 1.8, 0);
+  r.transformNodes.forEach(t => {
+    if (t !== dojo6Root && t !== dojo6ModelRoot) {
+      t.parent = dojo6ModelRoot;
+    }
+
+    if (t.rotationQuaternion) {
+      t.rotationQuaternion = null;
+    }
+  });
+
+  dojo6ModelRoot.position = BABYLON.Vector3.Zero();
+  dojo6ModelRoot.rotation = BABYLON.Vector3.Zero();
+  dojo6ModelRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+  dojo6Root.position = new BABYLON.Vector3(75, 1.8, 0);
   dojo6Root.scaling = new BABYLON.Vector3(1.2, 1.2, 1.2);
   dojo6Root.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
 
-    editableRootRefs.dojo6 = dojo6Root;
+  editableRootRefs.dojo6 = dojo6Root;
 
   loadWorldLayout();
 
   console.log("Dojo 6 loaded", r);
+
 })
 .catch(err => {
   console.error("Dojo 6 failed to load", err);
 });
-
 // ===== LOAD FENCE =====
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "fence_1.glb", scene)
 .then(r => {
