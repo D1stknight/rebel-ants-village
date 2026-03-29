@@ -1433,9 +1433,20 @@ setTimeout(()=>{
 },1800);
 
 // ✅ LOAD SAVED LAYOUT (AFTER EVERYTHING EXISTS)
-setTimeout(() => {
-  loadWorldLayout();
-}, 1200);
+function waitForWorldAndLoadLayout() {
+  const dojoReady = !!dojoRootRef;
+  const dojo6Ready = !!dojo6RootRef;
+  const fenceReady = !!fenceRootRef;
+
+  if (dojoReady && dojo6Ready && fenceReady) {
+    loadWorldLayout();
+    return;
+  }
+
+  setTimeout(waitForWorldAndLoadLayout, 300);
+}
+
+waitForWorldAndLoadLayout();
 </script>
 </body>
 </html>
