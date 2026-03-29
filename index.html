@@ -675,10 +675,10 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", 
   playerRoot.scaling = new BABYLON.Vector3(1, 1, 1);
 
   // Parent all imported meshes under our player root
-  r.meshes.forEach(m => {
-    if (m !== playerRoot) {
-      m.parent = playerRoot;
-    }
+  fenceSourceMeshes = r.meshes.filter(m => m !== fenceRoot);
+
+  fenceSourceMeshes.forEach(m => {
+    m.parent = fenceRoot;
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
   });
