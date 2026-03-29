@@ -626,23 +626,23 @@ let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
 .then(r => {
 
-  // Use the first mesh as root
-  charMesh = r.meshes[0];
+  // Create our own clean player root
+  const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
+  playerRoot.position = new BABYLON.Vector3(0, 3.6, 20);
+  playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+  playerRoot.scaling = new BABYLON.Vector3(1, 1, 1);
 
-  // Better starting position
-  charMesh.position = new BABYLON.Vector3(0, 3.6, 20);
-
-  // Correct current scale
-  charMesh.scaling = new BABYLON.Vector3(1, 1, 1);
-
-  // Face toward camera area
-  charMesh.rotation = new BABYLON.Vector3(0, Math.PI, 0);
-
-  // Enable shadows
+  // Parent all imported meshes under our player root
   r.meshes.forEach(m => {
+    if (m !== playerRoot) {
+      m.parent = playerRoot;
+    }
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
   });
+
+  // Use playerRoot as the thing we move and rotate
+  charMesh = playerRoot;
 
   // Handle animations (if they exist)
   r.animationGroups.forEach(ag => {
