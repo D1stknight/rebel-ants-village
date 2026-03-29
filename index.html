@@ -625,13 +625,13 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", 
   // Use the first mesh as root
   charMesh = r.meshes[0];
 
-  // Move him into the center plaza and lift him up a little
-  charMesh.position = new BABYLON.Vector3(0, 5, 20);
+  // Better starting position
+  charMesh.position = new BABYLON.Vector3(0, 2.2, 20);
 
-  // TEMP TEST: make him huge on purpose
-  charMesh.scaling = new BABYLON.Vector3(20, 20, 20);
+  // Bring him down to a more reasonable size
+  charMesh.scaling = new BABYLON.Vector3(8, 8, 8);
 
-  // Rotate a little so he is easier to spot
+  // Face toward camera area
   charMesh.rotation = new BABYLON.Vector3(0, Math.PI, 0);
 
   // Enable shadows
