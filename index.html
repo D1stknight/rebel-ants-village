@@ -1285,22 +1285,24 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_5.glb", scen
 
    editableRootRefs.dojo = dojoRoot;
 
-    // 🔥 DOJO GLOW
-  const dojoGlow = new BABYLON.PointLight("dojoGlow", new BABYLON.Vector3(0, 6, 0), scene);
+     // 🔥 DOJO GLOW (centered + stronger)
+  const dojoGlow = new BABYLON.PointLight("dojoGlow", BABYLON.Vector3.Zero(), scene);
   dojoGlow.parent = dojoRoot;
-  dojoGlow.diffuse = new BABYLON.Color3(0.2, 0.4, 1.0); // blue tone
-  dojoGlow.intensity = 5;
-  dojoGlow.range = 35;
+  dojoGlow.position = new BABYLON.Vector3(0, 5, 0);
+  dojoGlow.diffuse = new BABYLON.Color3(0.2, 0.4, 1.0);
+  dojoGlow.intensity = 8;
+  dojoGlow.range = 50;
 
-  const dojoFill = new BABYLON.PointLight("dojoFill", new BABYLON.Vector3(0, 3, 0), scene);
+  const dojoFill = new BABYLON.PointLight("dojoFill", BABYLON.Vector3.Zero(), scene);
   dojoFill.parent = dojoRoot;
+  dojoFill.position = new BABYLON.Vector3(0, 2, 0);
   dojoFill.diffuse = new BABYLON.Color3(0.1, 0.2, 0.6);
-  dojoFill.intensity = 2;
-  dojoFill.range = 40;
+  dojoFill.intensity = 4;
+  dojoFill.range = 60;
 
-  // subtle pulse
+  // stronger pulse
   scene.registerBeforeRender(() => {
-    dojoGlow.intensity = 4.5 + Math.sin(performance.now() * 0.002) * 0.5;
+    dojoGlow.intensity = 7.5 + Math.sin(performance.now() * 0.002) * 0.8;
   });
 
   loadWorldLayout();
