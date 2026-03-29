@@ -643,14 +643,14 @@ function doorFrame(x,y,z,w,h){
   // Strong ambient glow
   const glowLight = new BABYLON.PointLight("archiveGlow", new BABYLON.Vector3(x, 6, z), scene);
   glowLight.diffuse = new BABYLON.Color3(0.3, 0.1, 0.6);
-  glowLight.intensity = 2.5;
-  glowLight.range = 20;
+  glowLight.intensity = 6;
+glowLight.range = 40;
 
   // Secondary soft light (fill)
   const fillLight = new BABYLON.PointLight("archiveFill", new BABYLON.Vector3(x, 3, z), scene);
   fillLight.diffuse = new BABYLON.Color3(0.1, 0.05, 0.3);
-  fillLight.intensity = 1.2;
-  fillLight.range = 25;
+  fillLight.intensity = 3;
+fillLight.range = 40;
 
   // Flicker effect
   scene.registerBeforeRender(() => {
