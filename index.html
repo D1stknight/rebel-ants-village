@@ -712,6 +712,7 @@ let charMesh=null, charAnims={}, isMoving=false;
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
 let selectedObject = null;
 let fenceRootRef = null;
+let dojoRootRef = null;
 let fenceSourceMeshes = [];
 
 gizmoManager = new BABYLON.GizmoManager(scene);
@@ -798,7 +799,14 @@ canvas.addEventListener('click', () => {
   }
 
   if (!node) return;
-  if (!(node.name === "fenceRoot" || node.name.startsWith("fenceRootClone_"))) return;
+
+  const isFence =
+    node.name === "fenceRoot" || node.name.startsWith("fenceRootClone_");
+
+  const isDojo =
+    node.name === "dojoRoot";
+
+  if (!isFence && !isDojo) return;
 
   selectedObject = node;
   updateSelectedBadge();
@@ -808,7 +816,6 @@ canvas.addEventListener('click', () => {
   gizmoManager.scaleGizmoEnabled = false;
   gizmoManager.attachToNode(selectedObject);
 });
-
 window.addEventListener('pointerdown', () => {
   if (!adminMode || !selectedObject) return;
   adminDragging = true;
@@ -1141,7 +1148,8 @@ engine.runRenderLoop(()=>{
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_5.glb", scene)
 .then(r => {
 
-  const dojoRoot = new BABYLON.TransformNode("dojoRoot", scene);
+   const dojoRoot = new BABYLON.TransformNode("dojoRoot", scene);
+  dojoRootRef = dojoRoot;
 
   r.meshes.forEach(m => {
     if (m !== dojoRoot) {
