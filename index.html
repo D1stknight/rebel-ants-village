@@ -955,7 +955,11 @@ function loadWorldLayout(){
 function deleteSelectedFence(){
   if (!selectedObject) return;
 
-  if (selectedObject.name === "fenceRoot" || selectedObject.name === "dojoRoot") {
+  const isOriginalObject =
+    selectedObject === fenceRootRef ||
+    selectedObject === dojoRootRef;
+
+  if (isOriginalObject) {
     alert("The original base objects cannot be deleted. Move them if you want, but keep one base version in the world.");
     return;
   }
@@ -974,7 +978,6 @@ function deleteSelectedFence(){
 
   nodeToDelete.dispose(false, false);
 }
-
 function duplicateSelectedFence(){
   if (!selectedObject) return;
 
