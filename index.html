@@ -117,6 +117,27 @@ const canvas=document.getElementById('c');
 const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
 const setSt=t=>{document.getElementById('ldst').textContent=t;};
 
+// ═══════════════════════════════════════
+// ASSET REGISTRY (ALL GLBs LIVE HERE)
+// ═══════════════════════════════════════
+const ASSETS = {
+  dojo_5: {
+    path: "/assets/buildings/dojo_5.glb",
+    scale: 2.2,
+    rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+  },
+  dojo_6: {
+    path: "/assets/buildings/dojo_6.glb",
+    scale: 1.2,
+    rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+  },
+  fence_1: {
+    path: "/assets/buildings/fence_1.glb",
+    scale: 2,
+    rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+  }
+};
+
 // ── SCENE ───────────────────────────────────
 const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
