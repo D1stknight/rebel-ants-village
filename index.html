@@ -651,6 +651,7 @@ let charMesh=null, charAnims={}, isMoving=false;
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
 let selectedObject = null;
 let fenceRootRef = null;
+let moveSelLeft = false, moveSelRight = false, moveSelUp = false, moveSelDown = false;
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
 .then(r => {
 
@@ -783,11 +784,21 @@ document.addEventListener('keydown', e => {
   if (key === 'm') {
     adminMode = !adminMode;
     updateAdminBadge();
-    console.log('Admin mode:', adminMode ? 'ON' : 'OFF');
+    if (!adminMode) {
+      selectedObject = null;
+      updateSelectedBadge();
+    }
     return;
   }
 
   if (key === 'escape' && walkMode) toggleWalk();
+
+  if (adminMode && selectedObject) {
+    if (e.key === 'ArrowLeft') moveSelLeft = true;
+    if (e.key === 'ArrowRight') moveSelRight = true;
+    if (e.key === 'ArrowUp') moveSelUp = true;
+    if (e.key === 'ArrowDown') moveSelDown = true;
+  }
 
   if (key === 'w') moveForward = true;
   if (key === 's') moveBackward = true;
@@ -797,6 +808,11 @@ document.addEventListener('keydown', e => {
 
 document.addEventListener('keyup', e => {
   const key = e.key.toLowerCase();
+
+  if (e.key === 'ArrowLeft') moveSelLeft = false;
+  if (e.key === 'ArrowRight') moveSelRight = false;
+  if (e.key === 'ArrowUp') moveSelUp = false;
+  if (e.key === 'ArrowDown') moveSelDown = false;
 
   if (key === 'w') moveForward = false;
   if (key === 's') moveBackward = false;
@@ -815,9 +831,18 @@ engine.runRenderLoop(()=>{
     fl.intensity = fl._b + Math.sin(t * 9.2 + fl.position.x * 3) * .65 + Math.sin(t * 15.1 + fl.position.z) * .32;
   });
 
-  lanLights.forEach(ll => {
+   lanLights.forEach(ll => {
     if (ll._b) ll.intensity = ll._b + Math.sin(t * 1.9 + ll.position.x * .3) * .1;
   });
+
+  if (adminMode && selectedObject) {
+    const editStep = 0.25;
+
+    if (moveSelLeft) selectedObject.position.x -= editStep;
+    if (moveSelRight) selectedObject.position.x += editStep;
+    if (moveSelUp) selectedObject.position.z -= editStep;
+    if (moveSelDown) selectedObject.position.z += editStep;
+  }
 
     if (walkMode && charMesh) {
     const dt = engine.getDeltaTime() / 1000;
