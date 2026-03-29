@@ -825,7 +825,7 @@ function toggleWalk(){
 document.addEventListener('keydown', e => {
   const key = e.key.toLowerCase();
 
-   if (key === 'm') {
+  if (key === 'm') {
     adminMode = !adminMode;
     updateAdminBadge();
 
@@ -837,15 +837,33 @@ document.addEventListener('keydown', e => {
       updateSelectedBadge();
       if (gizmoManager) gizmoManager.attachToNode(null);
       gizmoManager.positionGizmoEnabled = false;
+      gizmoManager.rotationGizmoEnabled = false;
+      gizmoManager.scaleGizmoEnabled = false;
       orbit.attachControl(canvas, true);
     }
     return;
   }
 
-   if (key === 'escape' && walkMode) toggleWalk();
+  if (key === 'escape' && walkMode) toggleWalk();
 
   if (adminMode && key === 'n') {
     duplicateSelectedFence();
+    return;
+  }
+
+  if (adminMode && selectedObject && key === 'r') {
+    gizmoManager.positionGizmoEnabled = false;
+    gizmoManager.rotationGizmoEnabled = true;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+    return;
+  }
+
+  if (adminMode && selectedObject && key === 'g') {
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
     return;
   }
 
@@ -854,7 +872,6 @@ document.addEventListener('keydown', e => {
   if (key === 'a') turnLeft = true;
   if (key === 'd') turnRight = true;
 });
-
 document.addEventListener('keyup', e => {
   const key = e.key.toLowerCase();
 
