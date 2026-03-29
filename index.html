@@ -636,30 +636,43 @@ function doorFrame(x,y,z,w,h){
   addTrigger({id:'radio',x,z,title:'REBEL ANTS RADIO',sub:'Live Podcast Studio · Every Week',icon:'🎙️',desc:'The crypto show for the little guys. Live shows every week — interviewing web3 creators, artists, and projects in the web3 space. Watch on YouTube or listen on Spotify & iTunes.',actions:[{label:'YouTube',href:'https://www.youtube.com/@rebelantsradio',r:true},{label:'Spotify',href:'https://open.spotify.com/show/00fDOHcJcJPW7XpEDwO6lk'},{label:'iTunes',href:'https://podcasts.apple.com/us/podcast/rebel-ants-radio-the-nft-show-for-the-little-guys/id1651171099',g:true}]});
 })();
 
-// ── BUILDING 4: ARCHIVE — Gallery Hall ───────
+// ── BUILDING 4: ARCHIVE — Glow Zone ───────
 (()=>{
-  const x=0,z=80,col=new BABYLON.Color3(.05,.05,.14);
-  stoneFoundation(x,z,14,10,3);
-  box(14,6,10,pbr(col,{r:.82}),[x,3.5,z]);
-  woodPanel(x,3.5,z,14,5.5,new BABYLON.Color3(.08,.06,.28),5);
-  // Gallery frames with colored lights
-  const frameCols=["#c0392b","#5ecfca","#e8c56a","#8a9a3a","#6a3a8a"];
-  [-5,-2.5,0,2.5,5].forEach((fx,i)=>{
-    const fc=BABYLON.Color3.FromHexString(frameCols[i%5]);
-    const frM=pbr(fc,{r:.7,m:.1});
-    box(1.4,1.8,.15,frM,[x+fx,3.8,z+5.06]);
-    box(1.1,1.5,.08,pbr(new BABYLON.Color3(.1,.05,.22),{r:.95}),[x+fx,3.8,z+5.12]);
-    const al=new BABYLON.PointLight("al"+i,new BABYLON.Vector3(x+fx,5,z+6.5),scene);
-    al.diffuse=fc; al.intensity=.85; al.range=4.5;
-    al._b=.85; lanLights.push(al);
+  const x=0,z=80;
+
+  // Strong ambient glow
+  const glowLight = new BABYLON.PointLight("archiveGlow", new BABYLON.Vector3(x, 6, z), scene);
+  glowLight.diffuse = new BABYLON.Color3(0.3, 0.1, 0.6);
+  glowLight.intensity = 2.5;
+  glowLight.range = 20;
+
+  // Secondary soft light (fill)
+  const fillLight = new BABYLON.PointLight("archiveFill", new BABYLON.Vector3(x, 3, z), scene);
+  fillLight.diffuse = new BABYLON.Color3(0.1, 0.05, 0.3);
+  fillLight.intensity = 1.2;
+  fillLight.range = 25;
+
+  // Flicker effect
+  scene.registerBeforeRender(() => {
+    glowLight.intensity = 2.2 + Math.sin(performance.now() * 0.002) * 0.3;
   });
-  doorFrame(x,2.2,z+5.08,2.2,3.2);
-  for(let i=0;i<4;i++){box(12.5-i*.5,.28,.65,pbr(new BABYLON.Color3(.58,.54,.46),{r:.9}),[x,i*.28-.18,z+5.32+i*.32]);}
-  // Side pillars
-  const pilM=pbr(new BABYLON.Color3(.25,.14,.07),{r:.88});
-  for(let s of[-1,1]){cyl(.16,.2,6,10,pilM,[x+s*6.5,3.5,z+4.6]);}
-  pagodaRoof(x,7.2,z,14,10,new BABYLON.Color3(.38,.42,.18),0,2);
-  addTrigger({id:'gallery',x,z,title:'THE ARCHIVE',sub:'NFT Gallery · All Collections',icon:'🖼️',desc:'Every Rebel Ant tells a story. Browse Battle for the Colony (5,555), Germy Pets (1-of-1), Unvoiced Echoes, and the original 10,000 v1 ants.',actions:[{label:'OpenSea',href:'https://opensea.io/RebelAnts_LLC/created'},{label:'Germy Pets',href:'https://bueno.art/1a3l6mdx1yoojhwl3m-kh/germy-pets/tokens',g:true},{label:'Unvoiced Echoes',href:'https://opensea.io/collection/unvoiced-echoes',g:true},{label:'v1 Collection',href:'https://bueno.art/1a3l6mdx1yoojhwl3m-kh/rebel-ants',g:true}]});
+
+  // KEEP TRIGGER
+  addTrigger({
+    id:'gallery',
+    x,
+    z,
+    title:'THE ARCHIVE',
+    sub:'NFT Gallery · All Collections',
+    icon:'🖼️',
+    desc:'Every Rebel Ant tells a story. Browse Battle for the Colony (5,555), Germy Pets (1-of-1), Unvoiced Echoes, and the original 10,000 v1 ants.',
+    actions:[
+      {label:'OpenSea',href:'https://opensea.io/RebelAnts_LLC/created'},
+      {label:'Germy Pets',href:'https://bueno.art/1a3l6mdx1yoojhwl3m-kh/germy-pets/tokens',g:true},
+      {label:'Unvoiced Echoes',href:'https://opensea.io/collection/unvoiced-echoes',g:true},
+      {label:'v1 Collection',href:'https://bueno.art/1a3l6mdx1yoojhwl3m-kh/rebel-ants',g:true}
+    ]
+  });
 })();
 
 // ── BUILDING 5: THE VAULT — Staking Temple ───
