@@ -131,6 +131,11 @@ const ASSETS = {
     scale: 1.2,
     rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
   },
+  dojo_7: {
+    path: "/assets/buildings/dojo_7.glb",
+    scale: 1.2,
+    rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+  },
   fence_1: {
     path: "/assets/buildings/fence_1.glb",
     scale: 2,
@@ -1306,7 +1311,7 @@ engine.runRenderLoop(()=>{
   scene.render();
 });
 
-// ===== DOJO (NEW SYSTEM) =====
+// ===== DOJO 5 (NEW SYSTEM) =====
 
 const dojoRoot = spawnAsset("dojo_5", new BABYLON.Vector3(-75, 1.8, 0));
 dojoRoot.name = "dojoRoot";
@@ -1347,6 +1352,12 @@ dojoFill.range = 60;
 scene.registerBeforeRender(() => {
   dojoGlow.intensity = 7.5 + Math.sin(performance.now() * 0.002) * 0.8;
 });
+
+// ===== DOJO 7 (NEW SYSTEM) =====
+
+const dojo7Root = spawnAsset("dojo_7", new BABYLON.Vector3(0, 1.8, 80));
+dojo7Root.name = "dojo7Root";
+editableRootRefs.dojo7 = dojo7Root;
 
 
 // ===== LOAD DOJO 6 =====
