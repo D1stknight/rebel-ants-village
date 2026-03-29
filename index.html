@@ -850,8 +850,10 @@ function getEditableRoots(){
     (
       n.name === "fenceRoot" ||
       n.name === "dojoRoot" ||
+      n.name === "dojo6Root" ||
       n.name.startsWith("fenceRootClone_") ||
-      n.name.startsWith("dojoRootClone_")
+      n.name.startsWith("dojoRootClone_") ||
+      n.name.startsWith("dojo6RootClone_")
     )
   );
 }
@@ -860,12 +862,13 @@ function getObjectType(node){
   if (!node) return null;
   if (node.name === "fenceRoot" || node.name.startsWith("fenceRootClone_")) return "fence";
   if (node.name === "dojoRoot" || node.name.startsWith("dojoRootClone_")) return "dojo";
+  if (node.name === "dojo6Root" || node.name.startsWith("dojo6RootClone_")) return "dojo6";
   return null;
 }
-
 function makeCloneName(type){
   if (type === "fence") return "fenceRootClone_" + Date.now();
   if (type === "dojo") return "dojoRootClone_" + Date.now();
+  if (type === "dojo6") return "dojo6RootClone_" + Date.now();
   return "clone_" + Date.now();
 }
 
@@ -901,7 +904,7 @@ function saveWorldLayout(){
 }
 
 function loadWorldLayout(){
-  if (!fenceRootRef || !dojoRootRef) return;
+  if (!fenceRootRef || !dojoRootRef || !dojo6RootRef) return;
 
   const raw = localStorage.getItem("rebelAntsWorldLayout");
   if (!raw) return;
@@ -919,21 +922,25 @@ function loadWorldLayout(){
   scene.transformNodes
     .filter(n =>
       n.name.startsWith("fenceRootClone_") ||
-      n.name.startsWith("dojoRootClone_")
+      n.name.startsWith("dojoRootClone_") ||
+      n.name.startsWith("dojo6RootClone_")
     )
     .forEach(n => n.dispose(false, false));
 
   const baseFence = data.find(d => d.name === "fenceRoot");
   const baseDojo = data.find(d => d.name === "dojoRoot");
+  const baseDojo6 = data.find(d => d.name === "dojo6Root");
 
   if (baseFence) applyObjectTransform(fenceRootRef, baseFence);
   if (baseDojo) applyObjectTransform(dojoRootRef, baseDojo);
+  if (baseDojo6) applyObjectTransform(dojo6RootRef, baseDojo6);
 
   data.forEach((item, index) => {
-    if (item.name === "fenceRoot" || item.name === "dojoRoot") return;
+    if (item.name === "fenceRoot" || item.name === "dojoRoot" || item.name === "dojo6Root") return;
 
-    const sourceRoot =
-      item.type === "dojo" ? dojoRootRef : fenceRootRef;
+    let sourceRoot = fenceRootRef;
+    if (item.type === "dojo") sourceRoot = dojoRootRef;
+    if (item.type === "dojo6") sourceRoot = dojo6RootRef;
 
     const cloneRoot = sourceRoot.clone(makeCloneName(item.type) + "_" + index);
     if (!cloneRoot) return;
@@ -959,9 +966,10 @@ function loadWorldLayout(){
 function deleteSelectedFence(){
   if (!selectedObject) return;
 
-  const isOriginalObject =
+    const isOriginalObject =
     selectedObject === fenceRootRef ||
-    selectedObject === dojoRootRef;
+    selectedObject === dojoRootRef ||
+    selectedObject === dojo6RootRef;
 
   if (isOriginalObject) {
     alert("The original base objects cannot be deleted. Move them if you want, but keep one base version in the world.");
@@ -1271,8 +1279,11 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scen
   dojo6Root.scaling = new BABYLON.Vector3(1.2, 1.2, 1.2);
   dojo6Root.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
 
-  console.log("Dojo 6 loaded", r);
+    editableRootRefs.dojo6 = dojo6Root;
 
+  loadWorldLayout();
+
+  console.log("Dojo 6 loaded", r);
 })
 .catch(err => {
   console.error("Dojo 6 failed to load", err);
