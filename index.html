@@ -808,7 +808,7 @@ function loadFenceLayout(){
 
   scene.transformNodes
     .filter(n => n.name.startsWith("fenceRootClone_"))
-    .forEach(n => n.dispose(false, true));
+        .forEach(n => n.dispose(false, false));
 
   applyFenceTransform(fenceRootRef, data[0]);
 
@@ -854,7 +854,7 @@ function deleteSelectedFence(){
   selectedObject = null;
   updateSelectedBadge();
 
-  nodeToDelete.dispose(false, true);
+   nodeToDelete.dispose(false, false);
 }
 function duplicateSelectedFence(){
   if (!selectedObject) return;
