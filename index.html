@@ -666,7 +666,6 @@ gizmoManager.scaleGizmoEnabled = false;
 gizmoManager.clearGizmoOnEmptyPointerEvent = false;
 
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
-BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
 .then(r => {
 
   // Create our own clean player root
@@ -676,10 +675,10 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", 
   playerRoot.scaling = new BABYLON.Vector3(1, 1, 1);
 
   // Parent all imported meshes under our player root
-    fenceSourceMeshes = r.meshes.filter(m => m !== fenceRoot);
-
-  fenceSourceMeshes.forEach(m => {
-    m.parent = fenceRoot;
+  r.meshes.forEach(m => {
+    if (m !== playerRoot) {
+      m.parent = playerRoot;
+    }
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
   });
