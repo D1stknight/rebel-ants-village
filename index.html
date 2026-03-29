@@ -746,22 +746,19 @@ canvas.addEventListener('click', () => {
 
 function duplicateSelectedFence(){
   if (!selectedObject) return;
-  if (!fenceSourceMeshes.length) return;
 
-  const cloneRoot = new BABYLON.TransformNode("fenceRootClone", scene);
-
-  fenceSourceMeshes.forEach(m => {
-    const clone = m.clone(m.name + "_clone");
-    if (!clone) return;
-    clone.parent = cloneRoot;
-    shadows.addShadowCaster(clone);
-    clone.receiveShadows = true;
-  });
+  const cloneRoot = selectedObject.clone("fenceRootClone_" + Date.now());
+  if (!cloneRoot) return;
 
   cloneRoot.position = selectedObject.position.clone();
   cloneRoot.position.x += 12;
   cloneRoot.rotation = selectedObject.rotation.clone();
   cloneRoot.scaling = selectedObject.scaling.clone();
+
+  cloneRoot.getChildMeshes().forEach(m => {
+    shadows.addShadowCaster(m);
+    m.receiveShadows = true;
+  });
 
   fenceRootRef = cloneRoot;
   selectedObject = cloneRoot;
