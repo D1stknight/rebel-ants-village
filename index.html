@@ -653,11 +653,19 @@ function doorFrame(x,y,z,w,h){
 
 // ── WALKABLE CHARACTER ───────────────────────
 setSt("Loading character...");
+let charMesh=null, charAnims={}, isMoving=false;
+let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
+let selectedObject = null;
+let fenceRootRef = null;
+let fenceSourceMeshes = [];
+
 gizmoManager = new BABYLON.GizmoManager(scene);
 gizmoManager.positionGizmoEnabled = false;
 gizmoManager.rotationGizmoEnabled = false;
 gizmoManager.scaleGizmoEnabled = false;
 gizmoManager.clearGizmoOnEmptyPointerEvent = false;
+
+BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
 .then(r => {
 
@@ -668,10 +676,10 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", 
   playerRoot.scaling = new BABYLON.Vector3(1, 1, 1);
 
   // Parent all imported meshes under our player root
-  r.meshes.forEach(m => {
-    if (m !== playerRoot) {
-      m.parent = playerRoot;
-    }
+    fenceSourceMeshes = r.meshes.filter(m => m !== fenceRoot);
+
+  fenceSourceMeshes.forEach(m => {
+    m.parent = fenceRoot;
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
   });
@@ -736,6 +744,35 @@ canvas.addEventListener('click', () => {
   gizmoManager.scaleGizmoEnabled = false;
   gizmoManager.attachToNode(selectedObject);
 });
+
+function duplicateSelectedFence(){
+  if (!selectedObject) return;
+  if (!fenceSourceMeshes.length) return;
+
+  const cloneRoot = new BABYLON.TransformNode("fenceRootClone", scene);
+
+  fenceSourceMeshes.forEach(m => {
+    const clone = m.clone(m.name + "_clone");
+    if (!clone) return;
+    clone.parent = cloneRoot;
+    shadows.addShadowCaster(clone);
+    clone.receiveShadows = true;
+  });
+
+  cloneRoot.position = selectedObject.position.clone();
+  cloneRoot.position.x += 12;
+  cloneRoot.rotation = selectedObject.rotation.clone();
+  cloneRoot.scaling = selectedObject.scaling.clone();
+
+  fenceRootRef = cloneRoot;
+  selectedObject = cloneRoot;
+  updateSelectedBadge();
+
+  gizmoManager.positionGizmoEnabled = true;
+  gizmoManager.rotationGizmoEnabled = false;
+  gizmoManager.scaleGizmoEnabled = false;
+  gizmoManager.attachToNode(selectedObject);
+}
 
 function openPanel(b){
   document.getElementById('picon').textContent=b.icon;
@@ -809,7 +846,12 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if (key === 'escape' && walkMode) toggleWalk();
+   if (key === 'escape' && walkMode) toggleWalk();
+
+  if (adminMode && key === 'n') {
+    duplicateSelectedFence();
+    return;
+  }
 
   if (key === 'w') moveForward = true;
   if (key === 's') moveBackward = true;
