@@ -819,6 +819,31 @@ engine.runRenderLoop(()=>{
   scene.render();
 });
 
+// ===== LOAD DOJO =====
+BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_5.glb", scene)
+.then(r => {
+
+  const dojoRoot = new BABYLON.TransformNode("dojoRoot", scene);
+
+  r.meshes.forEach(m => {
+    if (m !== dojoRoot) {
+      m.parent = dojoRoot;
+    }
+    shadows.addShadowCaster(m);
+    m.receiveShadows = true;
+  });
+
+  dojoRoot.position = new BABYLON.Vector3(0, 0, -80);
+  dojoRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+  dojoRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+
+  console.log("Dojo loaded", r);
+
+})
+.catch(err => {
+  console.error("Dojo failed to load", err);
+});
+
 // ── LOADING FADE ─────────────────────────────
 setTimeout(()=>{
   const ld=document.getElementById('ld');
