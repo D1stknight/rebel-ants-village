@@ -733,9 +733,19 @@ document.getElementById('pc').addEventListener('click',()=>panel.classList.remov
 
 canvas.addEventListener('click', () => {
   if (!adminMode) return;
-  if (!fenceRootRef) return;
 
-  selectedObject = fenceRootRef;
+  const pick = scene.pick(scene.pointerX, scene.pointerY);
+  if (!pick || !pick.hit || !pick.pickedMesh) return;
+
+  let node = pick.pickedMesh;
+  while (node && node.parent) {
+    node = node.parent;
+  }
+
+  if (!node) return;
+  if (!(node.name === "fenceRoot" || node.name.startsWith("fenceRootClone_"))) return;
+
+  selectedObject = node;
   updateSelectedBadge();
 
   gizmoManager.positionGizmoEnabled = true;
@@ -832,6 +842,8 @@ function deleteSelectedFence(){
     return;
   }
 
+  const nodeToDelete = selectedObject;
+
   if (gizmoManager) {
     gizmoManager.attachToNode(null);
     gizmoManager.positionGizmoEnabled = false;
@@ -839,11 +851,11 @@ function deleteSelectedFence(){
     gizmoManager.scaleGizmoEnabled = false;
   }
 
-  selectedObject.dispose(false, true);
   selectedObject = null;
   updateSelectedBadge();
-}
 
+  nodeToDelete.dispose(false, true);
+}
 function duplicateSelectedFence(){
   if (!selectedObject) return;
 
@@ -860,7 +872,6 @@ function duplicateSelectedFence(){
     m.receiveShadows = true;
   });
 
-  fenceRootRef = cloneRoot;
   selectedObject = cloneRoot;
   updateSelectedBadge();
 
