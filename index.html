@@ -48,6 +48,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   border-color:#5ecfca;
   color:#5ecfca;
 }
+#selectedBadge{
+  position:fixed;
+  top:105px;
+  right:28px;
+  z-index:20;
+  padding:8px 12px;
+  font-family:'Cinzel Decorative',serif;
+  font-size:10px;
+  letter-spacing:2px;
+  color:#ffffff;
+  background:rgba(5,10,28,.9);
+  border:1px solid rgba(255,255,255,.2);
+  display:none;
+}
+#selectedBadge.on{
+  display:block;
+  border-color:#e8c56a;
+  color:#e8c56a;
+}
 #pc{position:absolute;top:14px;right:18px;background:none;border:none;color:rgba(232,197,106,.5);font-size:22px;cursor:pointer;transition:color .2s;line-height:1}
 #pc:hover{color:#e8c56a}
 #ph2{font-family:'Cinzel Decorative',serif;font-size:16px;color:#e8c56a;letter-spacing:2px;margin-bottom:6px}
@@ -74,6 +93,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="xhair"></div>
 <div id="td"></div>
 <div id="adminBadge">ADMIN MODE</div>
+<div id="selectedBadge">SELECTED: NONE</div>
 <div id="hud">
   <div id="logo"><h1>REBEL ANTS</h1><span>The Hidden Village</span></div>
   <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
@@ -126,6 +146,19 @@ function updateAdminBadge(){
   const badge = document.getElementById('adminBadge');
   if (!badge) return;
   badge.classList.toggle('on', adminMode);
+}
+
+function updateSelectedBadge(){
+  const badge = document.getElementById('selectedBadge');
+  if (!badge) return;
+
+  if (selectedObject) {
+    badge.textContent = 'SELECTED: ' + selectedObject.name.toUpperCase();
+    badge.classList.add('on');
+  } else {
+    badge.textContent = 'SELECTED: NONE';
+    badge.classList.remove('on');
+  }
 }
 // ── LIGHTING ────────────────────────────────
 const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.7,-1.1,.5),scene);
@@ -689,7 +722,7 @@ canvas.addEventListener('click', () => {
   if (!fenceRootRef) return;
 
   selectedObject = fenceRootRef;
-  console.log('Selected object:', selectedObject.name);
+  updateSelectedBadge();
 });
 
 function openPanel(b){
