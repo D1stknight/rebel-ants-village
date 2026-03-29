@@ -812,9 +812,25 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_5.glb", scen
     m.receiveShadows = true;
   });
 
-    dojoRoot.position = new BABYLON.Vector3(-75, 1.8, 0);
+  dojoRoot.position = new BABYLON.Vector3(-75, 1.8, 0);
   dojoRoot.scaling = new BABYLON.Vector3(2.2, 2.2, 2.2);
   dojoRoot.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
+
+  // Add the clickable trigger back for this real building
+  addTrigger({
+    id:'arcade',
+    x:-75,
+    z:0,
+    title:'THE DOJO ARCADE',
+    sub:'Battle Portal · Games Hub',
+    icon:'⚔️',
+    desc:'Battle for the Colony — 5,555 hand-drawn ants in 11 gangs fighting AI-driven weekly battles. Earn rewards when your gang wins. The arena never closes.',
+    actions:[
+      {label:'Battle Portal',href:'https://portal.rebelants.io',t:true},
+      {label:'OpenSea',href:'https://opensea.io/collection/rebel-ants-battle-for-the-colony'},
+      {label:'Magic Eden',href:'https://magiceden.us/collections/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221',g:true}
+    ]
+  });
 
   console.log("Dojo loaded", r);
 
