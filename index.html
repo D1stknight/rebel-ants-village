@@ -768,6 +768,7 @@ const panel=document.getElementById('panel');
 const pickMeshes=()=>BUILDINGS.map(b=>b.mesh);
 
 scene.onPointerObservable.add(evt=>{
+  if (adminMode) return;
   if(evt.type!==BABYLON.PointerEventTypes.POINTERPICK||panel.classList.contains('on'))return;
   const hit=evt.pickInfo;
   if(!hit||!hit.hit)return;
@@ -776,6 +777,11 @@ scene.onPointerObservable.add(evt=>{
 });
 
 scene.onPointerObservable.add(evt=>{
+  if (adminMode) {
+    tooltip.classList.remove('on');
+    canvas.style.cursor='default';
+    return;
+  }
   if(evt.type!==BABYLON.PointerEventTypes.POINTERMOVE||walkMode)return;
   const hit=scene.pick(scene.pointerX,scene.pointerY,m=>BUILDINGS.some(b=>b.mesh===m));
   if(hit&&hit.hit){
