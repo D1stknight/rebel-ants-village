@@ -147,6 +147,11 @@ walk.minZ = 0.2;
 scene.activeCamera = orbit;
 let walkMode = false;
 let adminMode = false;
+let adminDragging = false;
+
+const GRID_SIZE = 6;
+const ROT_SNAP = Math.PI / 2;
+const SNAP_LERP = 0.18;
 
 function updateAdminBadge(){
   const badge = document.getElementById('adminBadge');
@@ -164,6 +169,25 @@ function updateSelectedBadge(){
   } else {
     badge.textContent = 'SELECTED: NONE';
     badge.classList.remove('on');
+  }
+}
+
+function snapValue(value, size){
+  return Math.round(value / size) * size;
+}
+
+function softSnapSelectedObject(){
+  if (!selectedObject) return;
+
+  const targetX = snapValue(selectedObject.position.x, GRID_SIZE);
+  const targetZ = snapValue(selectedObject.position.z, GRID_SIZE);
+
+  selectedObject.position.x = BABYLON.Scalar.Lerp(selectedObject.position.x, targetX, SNAP_LERP);
+  selectedObject.position.z = BABYLON.Scalar.Lerp(selectedObject.position.z, targetZ, SNAP_LERP);
+
+  if (selectedObject.rotation) {
+    const targetRotY = snapValue(selectedObject.rotation.y, ROT_SNAP);
+    selectedObject.rotation.y = BABYLON.Scalar.Lerp(selectedObject.rotation.y, targetRotY, SNAP_LERP);
   }
 }
 // ── LIGHTING ────────────────────────────────
@@ -754,6 +778,15 @@ canvas.addEventListener('click', () => {
   gizmoManager.attachToNode(selectedObject);
 });
 
+window.addEventListener('pointerdown', () => {
+  if (!adminMode || !selectedObject) return;
+  adminDragging = true;
+});
+
+window.addEventListener('pointerup', () => {
+  adminDragging = false;
+});
+
 function getFenceRoots(){
   return scene.transformNodes.filter(n =>
     (n.name === "fenceRoot" || n.name.startsWith("fenceRootClone_")) &&
@@ -1012,9 +1045,13 @@ engine.runRenderLoop(()=>{
     fl.intensity = fl._b + Math.sin(t * 9.2 + fl.position.x * 3) * .65 + Math.sin(t * 15.1 + fl.position.z) * .32;
   });
 
-   lanLights.forEach(ll => {
+     lanLights.forEach(ll => {
     if (ll._b) ll.intensity = ll._b + Math.sin(t * 1.9 + ll.position.x * .3) * .1;
   });
+
+  if (adminMode && selectedObject && !adminDragging) {
+    softSnapSelectedObject();
+  }
 
     if (walkMode && charMesh) {
     const dt = engine.getDeltaTime() / 1000;
