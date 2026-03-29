@@ -1309,6 +1309,8 @@ engine.runRenderLoop(()=>{
 // ===== DOJO (NEW SYSTEM) =====
 
 const dojoRoot = spawnAsset("dojo_5", new BABYLON.Vector3(-75, 1.8, 0));
+dojoRoot.name = "dojoRoot";
+dojoRootRef = dojoRoot;
 editableRootRefs.dojo = dojoRoot;
 
 addTrigger({
