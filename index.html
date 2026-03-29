@@ -756,7 +756,8 @@ canvas.addEventListener('click', () => {
 
 function getFenceRoots(){
   return scene.transformNodes.filter(n =>
-    n.name === "fenceRoot" || n.name.startsWith("fenceRootClone_")
+    (n.name === "fenceRoot" || n.name.startsWith("fenceRootClone_")) &&
+    !n.parent
   );
 }
 
