@@ -625,11 +625,14 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", 
   // Use the first mesh as root
   charMesh = r.meshes[0];
 
-  // Position in center area
-  charMesh.position = new BABYLON.Vector3(0, 0, 20);
+  // Move him into the center plaza and lift him up a little
+  charMesh.position = new BABYLON.Vector3(0, 5, 20);
 
-  // Reset scaling (we will adjust after we see it)
-  charMesh.scaling = new BABYLON.Vector3(1, 1, 1);
+  // TEMP TEST: make him huge on purpose
+  charMesh.scaling = new BABYLON.Vector3(20, 20, 20);
+
+  // Rotate a little so he is easier to spot
+  charMesh.rotation = new BABYLON.Vector3(0, Math.PI, 0);
 
   // Enable shadows
   r.meshes.forEach(m => {
@@ -644,8 +647,8 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", 
   });
 
   // Try to play idle animation automatically
-  if (charAnims['idle']) {
-    charAnims['idle'].play(true);
+  if (charAnims["idle"]) {
+    charAnims["idle"].play(true);
   }
 
   console.log("Character loaded:", r);
