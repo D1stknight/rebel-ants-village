@@ -796,7 +796,12 @@ document.getElementById('pc').addEventListener('click',()=>panel.classList.remov
 canvas.addEventListener('click', () => {
   if (!adminMode) return;
 
-  const pick = scene.pick(scene.pointerX, scene.pointerY);
+  const pick = scene.pick(
+    scene.pointerX,
+    scene.pointerY,
+    mesh => !BUILDINGS.some(b => b.mesh === mesh)
+  );
+
   if (!pick || !pick.hit || !pick.pickedMesh) return;
 
   let node = pick.pickedMesh;
