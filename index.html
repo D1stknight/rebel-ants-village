@@ -1240,6 +1240,31 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_5.glb", scen
   console.error("Dojo failed to load", err);
 });
 
+// ===== LOAD DOJO 6 =====
+BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scene)
+.then(r => {
+
+  const dojo6Root = new BABYLON.TransformNode("dojo6Root", scene);
+
+  r.meshes.forEach(m => {
+    if (m !== dojo6Root) {
+      m.parent = dojo6Root;
+    }
+    shadows.addShadowCaster(m);
+    m.receiveShadows = true;
+  });
+
+  dojo6Root.position = new BABYLON.Vector3(75, 1.8, 0);
+  dojo6Root.scaling = new BABYLON.Vector3(2.2, 2.2, 2.2);
+  dojo6Root.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
+
+  console.log("Dojo 6 loaded", r);
+
+})
+.catch(err => {
+  console.error("Dojo 6 failed to load", err);
+});
+
 // ===== LOAD FENCE =====
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "fence_1.glb", scene)
 .then(r => {
