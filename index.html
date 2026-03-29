@@ -1285,6 +1285,24 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_5.glb", scen
 
    editableRootRefs.dojo = dojoRoot;
 
+    // 🔥 DOJO GLOW
+  const dojoGlow = new BABYLON.PointLight("dojoGlow", new BABYLON.Vector3(0, 6, 0), scene);
+  dojoGlow.parent = dojoRoot;
+  dojoGlow.diffuse = new BABYLON.Color3(0.2, 0.4, 1.0); // blue tone
+  dojoGlow.intensity = 5;
+  dojoGlow.range = 35;
+
+  const dojoFill = new BABYLON.PointLight("dojoFill", new BABYLON.Vector3(0, 3, 0), scene);
+  dojoFill.parent = dojoRoot;
+  dojoFill.diffuse = new BABYLON.Color3(0.1, 0.2, 0.6);
+  dojoFill.intensity = 2;
+  dojoFill.range = 40;
+
+  // subtle pulse
+  scene.registerBeforeRender(() => {
+    dojoGlow.intensity = 4.5 + Math.sin(performance.now() * 0.002) * 0.5;
+  });
+
   loadWorldLayout();
 
   console.log("Dojo loaded", r);
