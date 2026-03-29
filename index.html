@@ -5,564 +5,703 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rebel Ants — The Hidden Village</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Noto+Serif+JP:wght@300;400;700&display=swap');
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:'Noto Serif JP',serif}
-  #renderCanvas{width:100%;height:100%;touch-action:none;display:block}
-
-  #hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:20px 28px;pointer-events:none;z-index:10}
-  #logo h1{font-family:'Cinzel Decorative',serif;font-size:22px;font-weight:900;color:#e8c56a;letter-spacing:4px;text-shadow:0 0 25px rgba(232,197,106,.8),0 2px 6px rgba(0,0,0,.9);line-height:1}
-  #logo span{font-size:10px;letter-spacing:7px;color:#5ecfca;text-transform:uppercase;margin-top:5px;display:block}
-  #controls{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:2px;text-align:right;line-height:2.2;text-transform:uppercase}
-  #controls kbd{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:3px;padding:1px 6px;font-size:10px;color:#e8c56a}
-  #timeDisplay{position:fixed;top:20px;left:50%;transform:translateX(-50%);font-family:'Cinzel Decorative',serif;font-size:12px;color:rgba(232,197,106,.7);letter-spacing:3px;pointer-events:none;z-index:10}
-
-  #crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:8;opacity:0;transition:opacity .3s;width:24px;height:24px}
-  #crosshair.visible{opacity:1}
-  #crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(255,255,255,.8);border-radius:2px}
-  #crosshair::before{width:18px;height:2px;top:11px;left:3px}
-  #crosshair::after{width:2px;height:18px;top:3px;left:11px}
-
-  #walkBtn{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(2,8,24,.9);border:1px solid rgba(232,197,106,.55);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:3px;padding:13px 32px;cursor:pointer;z-index:10;transition:all .25s;backdrop-filter:blur(12px)}
-  #walkBtn:hover{background:rgba(232,197,106,.18);border-color:#e8c56a}
-  #walkBtn.active{background:rgba(232,197,106,.22);border-color:#e8c56a;color:#fff}
-
-  #tooltip{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:rgba(2,8,24,.94);border:1px solid rgba(232,197,106,.45);padding:14px 30px;text-align:center;pointer-events:none;opacity:0;transition:opacity .3s;z-index:20;backdrop-filter:blur(12px);white-space:nowrap}
-  #tooltip h3{font-family:'Cinzel Decorative',serif;font-size:13px;color:#e8c56a;letter-spacing:2px;margin-bottom:4px}
-  #tooltip p{font-size:11px;color:#5ecfca;letter-spacing:1px}
-  #tooltip.visible{opacity:1}
-
-  #panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.92);width:480px;max-width:92vw;max-height:85vh;overflow-y:auto;background:rgba(2,8,24,.97);border:1px solid rgba(232,197,106,.5);padding:38px;z-index:30;opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(22px)}
-  #panel.open{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
-  #panel-close{position:absolute;top:14px;right:18px;background:none;border:none;color:rgba(232,197,106,.5);font-size:22px;cursor:pointer;transition:color .2s}
-  #panel-close:hover{color:#e8c56a}
-  #panel h2{font-family:'Cinzel Decorative',serif;font-size:17px;color:#e8c56a;letter-spacing:2px;margin-bottom:7px}
-  .psub{font-size:10px;color:#5ecfca;letter-spacing:3px;text-transform:uppercase;margin-bottom:22px;border-bottom:1px solid rgba(232,197,106,.15);padding-bottom:18px}
-  #panel-desc{font-size:13px;color:rgba(255,255,255,.78);line-height:2;margin-bottom:22px}
-  #panel-icon{font-size:44px;margin-bottom:18px;display:block}
-  .plinks{display:flex;flex-wrap:wrap;gap:9px}
-  .pb{display:inline-block;background:linear-gradient(135deg,#e8c56a,#c9993a);color:#020818;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:11px 20px;border:none;cursor:pointer;text-decoration:none;transition:opacity .2s}
-  .pb:hover{opacity:.82}
-  .pb.g{background:transparent;border:1px solid rgba(232,197,106,.4);color:#e8c56a}
-  .pb.t{background:linear-gradient(135deg,#5ecfca,#2a9090);color:#020818}
-  .pb.r{background:linear-gradient(135deg,#c0392b,#8a1a10);color:#fff}
-
-  #loading{position:fixed;inset:0;background:#020818;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity 1s}
-  #loading h1{font-family:'Cinzel Decorative',serif;font-size:32px;color:#e8c56a;letter-spacing:5px;margin-bottom:10px;text-shadow:0 0 40px rgba(232,197,106,.6)}
-  #loading .sub{font-size:11px;color:#5ecfca;letter-spacing:7px;text-transform:uppercase;margin-bottom:50px;animation:pulse 2s infinite}
-  #loadStatus{font-size:11px;color:rgba(232,197,106,.5);letter-spacing:2px;margin-top:20px;text-transform:uppercase;text-align:center;max-width:300px}
-  .lb{width:240px;height:2px;background:rgba(232,197,106,.12);position:relative;overflow:hidden}
-  .lf{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#e8c56a,transparent);animation:sweep 1.6s infinite}
-  @keyframes sweep{to{left:100%}}@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
-  #vignette{position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.35) 100%);pointer-events:none;z-index:4}
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Noto+Serif+JP:wght@300;400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:'Noto Serif JP',serif}
+#c{width:100%;height:100%;touch-action:none;display:block}
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:20px 28px;pointer-events:none;z-index:10}
+#logo h1{font-family:'Cinzel Decorative',serif;font-size:22px;font-weight:900;color:#e8c56a;letter-spacing:4px;text-shadow:0 0 25px rgba(232,197,106,.8),0 2px 8px rgba(0,0,0,.9);line-height:1}
+#logo span{font-size:10px;letter-spacing:7px;color:#5ecfca;text-transform:uppercase;margin-top:5px;display:block;text-shadow:0 0 10px rgba(94,207,202,.6)}
+#ctrl{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:2px;text-align:right;line-height:2.2;text-transform:uppercase}
+#ctrl kbd{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:3px;padding:1px 6px;font-size:9px;color:#e8c56a}
+#td{position:fixed;top:20px;left:50%;transform:translateX(-50%);font-family:'Cinzel Decorative',serif;font-size:11px;color:rgba(232,197,106,.65);letter-spacing:3px;pointer-events:none;z-index:10}
+#xhair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:8;opacity:0;transition:opacity .3s;width:22px;height:22px}
+#xhair.on{opacity:1}
+#xhair::before,#xhair::after{content:'';position:absolute;background:rgba(255,255,255,.8);border-radius:1px}
+#xhair::before{width:16px;height:2px;top:10px;left:3px}
+#xhair::after{width:2px;height:16px;top:3px;left:10px}
+#wb{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.55);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:3px;padding:13px 32px;cursor:pointer;z-index:10;transition:all .25s;backdrop-filter:blur(12px)}
+#wb:hover{background:rgba(232,197,106,.18)}
+#wb.on{background:rgba(232,197,106,.22);border-color:#e8c56a}
+#tt{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.95);border:1px solid rgba(232,197,106,.45);padding:13px 28px;text-align:center;pointer-events:none;opacity:0;transition:opacity .3s;z-index:20;backdrop-filter:blur(12px);white-space:nowrap}
+#tt h3{font-family:'Cinzel Decorative',serif;font-size:12px;color:#e8c56a;letter-spacing:2px;margin-bottom:3px}
+#tt p{font-size:10px;color:#5ecfca;letter-spacing:1px}
+#tt.on{opacity:1}
+#panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);width:480px;max-width:92vw;max-height:88vh;overflow-y:auto;background:rgba(5,10,28,.97);border:1px solid rgba(232,197,106,.5);padding:38px;z-index:30;opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(22px)}
+#panel.on{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
+#pc{position:absolute;top:14px;right:18px;background:none;border:none;color:rgba(232,197,106,.5);font-size:22px;cursor:pointer;transition:color .2s;line-height:1}
+#pc:hover{color:#e8c56a}
+#ph2{font-family:'Cinzel Decorative',serif;font-size:16px;color:#e8c56a;letter-spacing:2px;margin-bottom:6px}
+.psb{font-size:10px;color:#5ecfca;letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;border-bottom:1px solid rgba(232,197,106,.12);padding-bottom:16px}
+#pdesc{font-size:13px;color:rgba(255,255,255,.75);line-height:2;margin-bottom:20px}
+#picon{font-size:42px;margin-bottom:16px;display:block}
+.pl{display:flex;flex-wrap:wrap;gap:8px}
+.pb{display:inline-block;background:linear-gradient(135deg,#e8c56a,#c9993a);color:#020818;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:10px 18px;border:none;cursor:pointer;text-decoration:none;transition:opacity .2s}
+.pb:hover{opacity:.82}.pb.g{background:transparent;border:1px solid rgba(232,197,106,.4);color:#e8c56a}
+.pb.t{background:linear-gradient(135deg,#5ecfca,#2a9090);color:#020818}
+.pb.r{background:linear-gradient(135deg,#c0392b,#8a1a10);color:#fff}
+#ld{position:fixed;inset:0;background:#020818;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity .9s}
+#ld h1{font-family:'Cinzel Decorative',serif;font-size:30px;color:#e8c56a;letter-spacing:5px;margin-bottom:10px;text-shadow:0 0 40px rgba(232,197,106,.6)}
+#ld .sub{font-size:10px;color:#5ecfca;letter-spacing:7px;text-transform:uppercase;margin-bottom:48px;animation:pulse 2s infinite}
+#ldst{font-size:10px;color:rgba(232,197,106,.45);letter-spacing:2px;margin-top:18px;text-transform:uppercase;text-align:center}
+.lb{width:240px;height:2px;background:rgba(232,197,106,.1);position:relative;overflow:hidden}
+.lf{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#e8c56a,transparent);animation:sw 1.6s infinite}
+@keyframes sw{to{left:100%}}@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
 </style>
 </head>
 <body>
-<div id="loading">
-  <h1>REBEL ANTS</h1>
-  <div class="sub">Building the Hidden Village...</div>
-  <div class="lb"><div class="lf"></div></div>
-  <div id="loadStatus">Initializing world...</div>
-</div>
-<canvas id="renderCanvas"></canvas>
-<div id="vignette"></div>
-<div id="crosshair"></div>
-<div id="timeDisplay"></div>
+<div id="ld"><h1>REBEL ANTS</h1><div class="sub">Building the Hidden Village...</div><div class="lb"><div class="lf"></div></div><div id="ldst">Initializing...</div></div>
+<canvas id="c"></canvas>
+<div id="xhair"></div>
+<div id="td"></div>
 <div id="hud">
   <div id="logo"><h1>REBEL ANTS</h1><span>The Hidden Village</span></div>
-  <div id="controls"><kbd>W A S D</kbd> Move<br><kbd>Mouse</kbd> Look<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Free cam</div>
+  <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
 </div>
-<button id="walkBtn" onclick="toggleWalk()">⚔️ &nbsp; ENTER VILLAGE</button>
-<div id="tooltip"><h3 id="tt-title">—</h3><p id="tt-sub">Click to enter</p></div>
+<button id="wb" onclick="toggleWalk()">⚔️ &nbsp;ENTER VILLAGE</button>
+<div id="tt"><h3 id="tth">—</h3><p id="ttp">Click to enter</p></div>
 <div id="panel">
-  <button id="panel-close">✕</button>
-  <span id="panel-icon">⚔️</span>
-  <h2 id="panel-title">—</h2>
-  <div class="psub" id="panel-sub">Rebel Ants</div>
-  <p id="panel-desc">—</p>
-  <div class="plinks" id="panel-actions"></div>
+  <button id="pc">✕</button>
+  <span id="picon">⚔️</span>
+  <h2 id="ph2">—</h2>
+  <div class="psb" id="psub">Rebel Ants</div>
+  <p id="pdesc">—</p>
+  <div class="pl" id="pact"></div>
 </div>
 
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
-
 <script>
-const canvas = document.getElementById('renderCanvas');
-const engine = new BABYLON.Engine(canvas, true, {preserveDrawingBuffer:true, stencil:true, adaptToDeviceRatio:true});
-const setStatus = t => { document.getElementById('loadStatus').textContent = t; console.log(t); };
+const canvas=document.getElementById('c');
+const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+const setSt=t=>{document.getElementById('ldst').textContent=t;};
 
-// ── SCENE ─────────────────────────────────────────
-const scene = new BABYLON.Scene(engine);
-scene.clearColor = new BABYLON.Color4(0.4, 0.6, 0.85, 1);
-scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
-scene.fogDensity = 0.008;
-scene.fogColor = new BABYLON.Color3(0.55, 0.7, 0.88);
+// ── SCENE ───────────────────────────────────
+const scene=new BABYLON.Scene(engine);
+scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
+scene.fogMode=BABYLON.Scene.FOGMODE_EXP;
+scene.fogDensity=0.006;
+scene.fogColor=new BABYLON.Color3(.55,.72,.9);
 
-// ── CAMERAS ───────────────────────────────────────
-const orbitCam = new BABYLON.ArcRotateCamera("orbit", -Math.PI/2.2, Math.PI/3.8, 140, new BABYLON.Vector3(0,5,0), scene);
-orbitCam.lowerRadiusLimit = 10;
-orbitCam.upperRadiusLimit = 300;
-orbitCam.upperBetaLimit = Math.PI/2.05;
-orbitCam.wheelPrecision = 2;
-orbitCam.attachControl(canvas, true);
+// ── CAMERAS ─────────────────────────────────
+const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/3.6,150,new BABYLON.Vector3(0,6,0),scene);
+orbit.lowerRadiusLimit=8; orbit.upperRadiusLimit=280; orbit.upperBetaLimit=Math.PI/2.05;
+orbit.wheelPrecision=2; orbit.attachControl(canvas,true);
 
-const walkCam = new BABYLON.UniversalCamera("walk", new BABYLON.Vector3(0, 3, 90), scene);
-walkCam.setTarget(new BABYLON.Vector3(0, 3, 0));
-walkCam.speed = 0.7;
-walkCam.angularSensibility = 750;
-walkCam.keysUp=[87,38]; walkCam.keysDown=[83,40]; walkCam.keysLeft=[65,37]; walkCam.keysRight=[68,39];
-walkCam.minZ = 0.3;
-scene.activeCamera = orbitCam;
-let walkMode = false;
+const walk=new BABYLON.UniversalCamera("w",new BABYLON.Vector3(0,3.5,95),scene);
+walk.setTarget(new BABYLON.Vector3(0,3,0));
+walk.speed=0.65; walk.angularSensibility=720;
+walk.keysUp=[87,38]; walk.keysDown=[83,40]; walk.keysLeft=[65,37]; walk.keysRight=[68,39];
+walk.minZ=0.2;
+scene.activeCamera=orbit;
+let walkMode=false;
 
-// ── LIGHTING ──────────────────────────────────────
-const sunLight = new BABYLON.DirectionalLight("sun", new BABYLON.Vector3(-0.8,-1.2,0.6), scene);
-sunLight.position = new BABYLON.Vector3(150, 250, -150);
-sunLight.intensity = 2.8;
-sunLight.diffuse = new BABYLON.Color3(1.0, 0.96, 0.88);
+// ── LIGHTING ────────────────────────────────
+const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.7,-1.1,.5),scene);
+sun.position=new BABYLON.Vector3(160,260,-160);
+sun.intensity=2.6; sun.diffuse=new BABYLON.Color3(1,.96,.88);
 
-const hemi = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(0,1,0), scene);
-hemi.intensity = 0.7;
-hemi.diffuse = new BABYLON.Color3(0.55, 0.72, 1.0);
-hemi.groundColor = new BABYLON.Color3(0.28, 0.35, 0.18);
-hemi.specular = new BABYLON.Color3(0,0,0);
+const hemi=new BABYLON.HemisphericLight("h",new BABYLON.Vector3(0,1,0),scene);
+hemi.intensity=0.65; hemi.diffuse=new BABYLON.Color3(.52,.7,.98);
+hemi.groundColor=new BABYLON.Color3(.25,.32,.16); hemi.specular=new BABYLON.Color3(0,0,0);
 
-// Shadow generator
-const shadowGen = new BABYLON.ShadowGenerator(2048, sunLight);
-shadowGen.useBlurExponentialShadowMap = true;
-shadowGen.blurKernel = 24;
-shadowGen.bias = 0.001;
+const shadows=new BABYLON.ShadowGenerator(2048,sun);
+shadows.useBlurExponentialShadowMap=true; shadows.blurKernel=20; shadows.bias=0.001;
 
-// ── PROCEDURAL SKY ────────────────────────────────
-const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1200}, scene);
-const skyMat = new BABYLON.SkyMaterial("skyMat", scene);
-skyMat.backFaceCulling = false;
-skyMat.turbidity = 6;
-skyMat.luminance = 1.0;
-skyMat.inclination = 0;
-skyMat.azimuth = 0.25;
-skyMat.rayleigh = 2.8;
-skyMat.mieCoefficient = 0.004;
-skyMat.mieDirectionalG = 0.98;
-skyMat.useSunPosition = true;
-skyMat.sunPosition = sunLight.position;
-skybox.material = skyMat;
-skybox.infiniteDistance = true;
+// ── PROCEDURAL SKY ───────────────────────────
+const skybox=BABYLON.MeshBuilder.CreateBox("sky",{size:1400},scene);
+const skyMat=new BABYLON.SkyMaterial("sm",scene);
+skyMat.backFaceCulling=false; skyMat.turbidity=5; skyMat.luminance=1.0;
+skyMat.rayleigh=2.5; skyMat.mieCoefficient=0.003; skyMat.mieDirectionalG=0.98;
+skyMat.useSunPosition=true; skyMat.sunPosition=sun.position;
+skybox.material=skyMat; skybox.infiniteDistance=true;
 
-// ── REAL-TIME DAY/NIGHT ───────────────────────────
-function updateDayNight(){
-  const now = new Date();
-  const hour = now.getHours() + now.getMinutes()/60;
-  const dayStr = Math.max(0, Math.sin(((hour/24)-.25)*Math.PI*2));
-  skyMat.inclination = -Math.sin(((hour/24)-.25)*Math.PI*2)*0.5;
-  sunLight.intensity = 0.2 + dayStr*3.0;
-  hemi.intensity = 0.2 + dayStr*0.65;
-  if(hour>=6&&hour<9) sunLight.diffuse=new BABYLON.Color3(1,.65,.35);
-  else if(hour>=9&&hour<17) sunLight.diffuse=new BABYLON.Color3(1,.97,.88);
-  else if(hour>=17&&hour<20) sunLight.diffuse=new BABYLON.Color3(1,.5,.18);
-  else { sunLight.diffuse=new BABYLON.Color3(.2,.25,.5); sunLight.intensity=0.15; }
-  scene.fogColor = hour>=6&&hour<20
-    ? new BABYLON.Color3(0.6,0.75,0.92)
-    : new BABYLON.Color3(0.05,0.08,0.18);
-  const h=now.getHours().toString().padStart(2,'0'), m=now.getMinutes().toString().padStart(2,'0');
-  const label = hour<6||hour>=20?'🌙 Night':hour<9?'🌅 Sunrise':hour<17?'☀️ Day':'🌇 Sunset';
-  document.getElementById('timeDisplay').textContent=`${h}:${m}  ·  ${label}`;
+function updateSky(){
+  const now=new Date(), h=now.getHours()+now.getMinutes()/60;
+  const d=Math.max(0,Math.sin(((h/24)-.25)*Math.PI*2));
+  skyMat.inclination=-Math.sin(((h/24)-.25)*Math.PI*2)*.5;
+  sun.intensity=0.15+d*3.2; hemi.intensity=0.18+d*.62;
+  if(h>=6&&h<9){sun.diffuse=new BABYLON.Color3(1,.62,.3);}
+  else if(h>=9&&h<17){sun.diffuse=new BABYLON.Color3(1,.97,.88);}
+  else if(h>=17&&h<20){sun.diffuse=new BABYLON.Color3(1,.48,.15);}
+  else{sun.diffuse=new BABYLON.Color3(.18,.22,.48);sun.intensity=0.12;}
+  scene.fogColor=h>=6&&h<20?new BABYLON.Color3(.58,.74,.9):new BABYLON.Color3(.04,.06,.16);
+  const hh=now.getHours().toString().padStart(2,'0'),mm=now.getMinutes().toString().padStart(2,'0');
+  const lbl=h<6||h>=20?'🌙 Night':h<9?'🌅 Sunrise':h<17?'☀️ Day':'🌇 Sunset';
+  document.getElementById('td').textContent=`${hh}:${mm}  ·  ${lbl}`;
 }
-updateDayNight();
-setInterval(updateDayNight, 30000);
+updateSky(); setInterval(updateSky,30000);
 
-// ── GROUND / TERRAIN ──────────────────────────────
-setStatus("Building terrain...");
-// Large grass ground
-const ground = BABYLON.MeshBuilder.CreateGround("ground",{width:600,height:600,subdivisions:8},scene);
-const gm = new BABYLON.StandardMaterial("gm",scene);
-gm.diffuseColor = new BABYLON.Color3(0.28,0.4,0.18);
-gm.specularColor = new BABYLON.Color3(0.02,0.02,0.02);
-ground.material = gm;
-ground.receiveShadows = true;
+// ── HELPERS ──────────────────────────────────
+function mat(c,o={}){const m=new BABYLON.StandardMaterial("m"+Math.random(),scene);m.diffuseColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;m.specularColor=new BABYLON.Color3(.03,.03,.03);if(o.e)m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;if(o.a)m.alpha=o.a;return m;}
+function pbr(c,o={}){const m=new BABYLON.PBRMaterial("p"+Math.random(),scene);m.albedoColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;m.metallic=o.m||0;m.roughness=o.r||.85;if(o.e){m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;m.emissiveIntensity=o.ei||1;}if(o.a)m.alpha=o.a;return m;}
+function box(w,h,d,mat,pos,ry=0){const b=BABYLON.MeshBuilder.CreateBox("b"+Math.random(),{width:w,height:h,depth:d},scene);b.material=mat;if(pos)b.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(ry)b.rotation.y=ry;b.receiveShadows=true;shadows.addShadowCaster(b);return b;}
+function cyl(rt,rb,h,t,mat,pos,rz=0){const c=BABYLON.MeshBuilder.CreateCylinder("cy"+Math.random(),{diameterTop:rt,diameterBottom:rb,height:h,tessellation:t},scene);c.material=mat;if(pos)c.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(rz)c.rotation.z=rz;c.receiveShadows=true;shadows.addShadowCaster(c);return c;}
+function sph(d,mat,pos){const s=BABYLON.MeshBuilder.CreateSphere("sp"+Math.random(),{diameter:d,segments:8},scene);s.material=mat;if(pos)s.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);s.receiveShadows=true;shadows.addShadowCaster(s);return s;}
 
-// Stone courtyard center
-const court = BABYLON.MeshBuilder.CreateGround("court",{width:200,height:200},scene);
-const cm = new BABYLON.StandardMaterial("cm",scene);
-cm.diffuseColor = new BABYLON.Color3(0.58,0.54,0.46);
-cm.specularColor = new BABYLON.Color3(0.04,0.04,0.04);
-court.material = cm;
-court.position.y = 0.04;
-court.receiveShadows = true;
+// ── GROUND / TERRAIN ─────────────────────────
+setSt("Building terrain...");
+// Large grass base
+const ground=BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:6},scene);
+ground.material=mat(new BABYLON.Color3(.24,.38,.15)); ground.receiveShadows=true;
 
-// Main stone paths
-const pm = new BABYLON.StandardMaterial("pm",scene);
-pm.diffuseColor = new BABYLON.Color3(0.46,0.42,0.36);
-pm.specularColor = new BABYLON.Color3(0.03,0.03,0.03);
+// Courtyard — stone tiles
+const court=BABYLON.MeshBuilder.CreateGround("ct",{width:220,height:220},scene);
+court.material=mat(new BABYLON.Color3(.52,.49,.42)); court.position.y=.06; court.receiveShadows=true;
+
+// Inner plaza
+const plaza=BABYLON.MeshBuilder.CreateGround("pl",{width:90,height:90},scene);
+plaza.material=mat(new BABYLON.Color3(.62,.58,.48)); plaza.position.y=.1; plaza.receiveShadows=true;
+
+// Paths
+const pm=mat(new BABYLON.Color3(.44,.41,.34));
 [[8,300,0,0],[300,8,0,0]].forEach(([w,h,x,z])=>{
-  const p=BABYLON.MeshBuilder.CreateGround("p_"+w,{width:w,height:h},scene);
-  p.material=pm; p.position=new BABYLON.Vector3(x,0.08,z); p.receiveShadows=true;
+  const p=BABYLON.MeshBuilder.CreateGround("pa",{width:w,height:h},scene);
+  p.material=pm; p.position=new BABYLON.Vector3(x,.08,z); p.receiveShadows=true;
 });
 
-// ── MOUNTAINS ─────────────────────────────────────
-setStatus("Sculpting mountains...");
-[
-  [-320,-250,100,180],[-200,-340,80,145],[380,-230,95,170],[220,-320,75,135],
-  [-330,240,90,160],[280,270,88,165],[0,-380,110,195],[0,360,100,175],
-  [-360,0,85,155],[340,80,92,168],[-160,-150,50,85],[160,-150,48,80],
-  [-160,150,52,88],[160,150,46,78],[-260,-260,70,120],[260,-260,68,115],
-  [-260,260,72,125],[260,260,66,110]
-].forEach(([x,z,r,h],i)=>{
-  const mm=new BABYLON.StandardMaterial("mm"+i,scene);
-  mm.diffuseColor=new BABYLON.Color3(0.2+Math.random()*.1,0.24+Math.random()*.08,0.18+Math.random()*.06);
-  mm.specularColor=new BABYLON.Color3(0.01,0.01,0.01);
-  const mtn=BABYLON.MeshBuilder.CreateCylinder("mtn"+i,{diameterTop:0,diameterBottom:r*2,height:h,tessellation:7},scene);
-  mtn.material=mm; mtn.position=new BABYLON.Vector3(x,h/2-8,z);
-  mtn.rotation.y=Math.random()*Math.PI;
-  shadowGen.addShadowCaster(mtn); mtn.receiveShadows=true;
+// ── REALISTIC MOUNTAINS ──────────────────────
+setSt("Sculpting mountains...");
+// Use multiple overlapping cones with noise-like variation for organic look
+function mountain(x,z,r,h,col){
+  const g=new BABYLON.TransformNode("mtg",scene);
+  const segs=6+Math.floor(Math.random()*3);
+  const mm=mat(col);
+  // Main peak
+  const main=cyl(0,r*2,h,segs,mm,[x,h/2-5,z]);
+  main.rotation.y=Math.random()*Math.PI;
+  // Add bulges for organic look
+  for(let i=0;i<4;i++){
+    const angle=Math.random()*Math.PI*2;
+    const dist=r*.45+Math.random()*r*.35;
+    const bx=x+Math.cos(angle)*dist, bz=z+Math.sin(angle)*dist;
+    const bh=h*(.35+Math.random()*.4), br=r*(.3+Math.random()*.35);
+    const bulge=cyl(0,br*2,bh,5,mm,[bx,bh/2-5,bz]);
+    bulge.rotation.y=Math.random()*Math.PI;
+  }
   // Snow cap
-  const sm2=new BABYLON.StandardMaterial("sm"+i,scene);
-  sm2.diffuseColor=new BABYLON.Color3(0.9,0.93,0.98);
-  const snow=BABYLON.MeshBuilder.CreateCylinder("snow"+i,{diameterTop:0,diameterBottom:r*.35,height:h*.28,tessellation:6},scene);
-  snow.material=sm2; snow.position=new BABYLON.Vector3(x,h-10,z);
-  // Secondary peak
-  if(i<10){
-    const mtn2=BABYLON.MeshBuilder.CreateCylinder("mtn2_"+i,{diameterTop:0,diameterBottom:r*1.2,height:h*.7,tessellation:6},scene);
-    mtn2.material=mm; mtn2.position=new BABYLON.Vector3(x+r*.55,h*.7/2-8,z+r*.35);
-    mtn2.rotation.y=Math.random()*Math.PI; shadowGen.addShadowCaster(mtn2);
+  const sm2=mat(new BABYLON.Color3(.88,.92,.98));
+  cyl(0,r*.4,h*.3,segs,sm2,[x,h-8,z]);
+  // Dark base rocks
+  const rm=mat(new BABYLON.Color3(.18,.18,.2));
+  for(let i=0;i<3;i++){
+    const a=Math.random()*Math.PI*2, d=r*.7+Math.random()*r*.3;
+    sph(.8+Math.random()*1.5,rm,[x+Math.cos(a)*d,.3,z+Math.sin(a)*d]);
   }
-});
-
-// ── RIVER ─────────────────────────────────────────
-const river=BABYLON.MeshBuilder.CreateGround("river",{width:25,height:280},scene);
-const rm2=new BABYLON.StandardMaterial("rm2",scene);
-rm2.diffuseColor=new BABYLON.Color3(0.12,0.38,0.68);
-rm2.specularColor=new BABYLON.Color3(0.9,0.95,1.0);
-rm2.specularPower=128; rm2.alpha=0.82;
-river.material=rm2; river.position=new BABYLON.Vector3(105,0.15,0);
-
-// ── REALISTIC TREES ───────────────────────────────
-setStatus("Planting forest...");
-function pineTree(id,x,z,h=12){
-  const trunkM=new BABYLON.StandardMaterial("tk"+id,scene);
-  trunkM.diffuseColor=new BABYLON.Color3(0.22,0.13,0.07);
-  trunkM.specularColor=new BABYLON.Color3(0.01,0.01,0.01);
-  const trunk=BABYLON.MeshBuilder.CreateCylinder("tk"+id,{diameterTop:0.3,diameterBottom:0.7,height:h*.45,tessellation:7},scene);
-  trunk.material=trunkM; trunk.position=new BABYLON.Vector3(x,h*.225,z);
-  shadowGen.addShadowCaster(trunk); trunk.receiveShadows=true;
-  const lc=new BABYLON.Color3(0.06+Math.random()*.1,0.22+Math.random()*.18,0.05+Math.random()*.08);
-  const leafM=new BABYLON.StandardMaterial("lm"+id,scene);
-  leafM.diffuseColor=lc; leafM.specularColor=new BABYLON.Color3(0.01,0.01,0.01);
-  [0,1,2,3].forEach(i=>{
-    const ly=h*(.38+i*.16), lr=h*(.28-i*.055);
-    const cone=BABYLON.MeshBuilder.CreateCylinder("lf"+id+"_"+i,{diameterTop:.2,diameterBottom:lr*2.2,height:h*.34,tessellation:8},scene);
-    cone.material=leafM; cone.position=new BABYLON.Vector3(x,ly,z);
-    shadowGen.addShadowCaster(cone); cone.receiveShadows=true;
-  });
 }
-function cherryTree(id,x,z,h=9){
-  const trunkM=new BABYLON.StandardMaterial("ck"+id,scene);
-  trunkM.diffuseColor=new BABYLON.Color3(0.3,0.16,0.08);
-  const trunk=BABYLON.MeshBuilder.CreateCylinder("ck"+id,{diameterTop:0.25,diameterBottom:0.55,height:h*.5,tessellation:7},scene);
-  trunk.material=trunkM; trunk.position=new BABYLON.Vector3(x,h*.25,z);
-  shadowGen.addShadowCaster(trunk);
-  const blossom=new BABYLON.Color3(0.88+Math.random()*.1,0.62+Math.random()*.15,0.7+Math.random()*.15);
-  const bm=new BABYLON.StandardMaterial("bm"+id,scene);
-  bm.diffuseColor=blossom; bm.specularColor=new BABYLON.Color3(0.02,0.02,0.02);
+const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new BABYLON.Color3(.18,.24,.16)];
+[[-340,-260,95,185],[-200,-360,78,148],[390,-240,92,172],[230,-340,74,138],
+ [-350,250,88,162],[290,280,86,168],[0,-400,108,198],[0,380,98,178],
+ [-380,0,82,158],[360,90,90,170],[-170,-170,52,88],[170,-170,50,84],
+ [-170,170,54,90],[170,170,48,80],[-280,-280,68,125],[280,-280,65,118],
+ [-280,280,70,128],[280,280,62,112]
+].forEach(([x,z,r,h])=>mountain(x,z,r,h,mColors[Math.floor(Math.random()*3)]));
+
+// ── RIVER ────────────────────────────────────
+const rvr=BABYLON.MeshBuilder.CreateGround("rv",{width:22,height:320},scene);
+rvr.material=mat(new BABYLON.Color3(.1,.36,.68),{a:.82}); rvr.position=new BABYLON.Vector3(112,.14,0);
+
+// ── 4 TYPES OF TREES ─────────────────────────
+setSt("Planting forest...");
+
+// TYPE 1: Pine/Conifer — stacked cones
+function pineCone(x,z,h=10){
+  const tk=mat(new BABYLON.Color3(.2,.12,.06));
+  cyl(.25,.6,h*.45,7,tk,[x,h*.22,z]);
+  const lm=mat(new BABYLON.Color3(.06+Math.random()*.08,.22+Math.random()*.14,.05+Math.random()*.06));
+  for(let i=0;i<4;i++){const ly=h*(.38+i*.16),lr=h*(.27-i*.05);cyl(.15,lr*2.2,h*.34,8,lm,[x,ly,z]);}
+}
+
+// TYPE 2: Cherry Blossom — fluffy pink clouds
+function cherry(x,z,h=8){
+  const tk=mat(new BABYLON.Color3(.28,.15,.07));
+  cyl(.2,.5,h*.5,7,tk,[x,h*.25,z]);
+  const bm=mat(new BABYLON.Color3(.86+Math.random()*.1,.6+Math.random()*.12,.68+Math.random()*.12));
   for(let i=0;i<5;i++){
-    const bx=x+(Math.random()-.5)*h*.4, bz2=z+(Math.random()-.5)*h*.4;
-    const by=h*(.58+Math.random()*.22);
-    const blob=BABYLON.MeshBuilder.CreateSphere("bl"+id+"_"+i,{diameter:h*(.2+Math.random()*.12),segments:6},scene);
-    blob.material=bm;
-    blob.scaling=new BABYLON.Vector3(1+Math.random()*.35,.75+Math.random()*.3,1+Math.random()*.35);
-    blob.position=new BABYLON.Vector3(bx,by,bz2);
-    shadowGen.addShadowCaster(blob); blob.receiveShadows=true;
+    const bx=x+(Math.random()-.5)*h*.4, bz=z+(Math.random()-.5)*h*.4, by=h*(.55+Math.random()*.22);
+    const blob=sph(h*(.18+Math.random()*.1),bm,[bx,by,bz]);
+    blob.scaling=new BABYLON.Vector3(1+Math.random()*.3,.8+Math.random()*.25,1+Math.random()*.3);
   }
 }
-// Dense forest rings
-let ti=0;
-for(let ring=0;ring<4;ring++){
-  const r=110+ring*32, count=30+ring*14;
-  for(let i=0;i<count;i++){
-    const angle=(i/count)*Math.PI*2+(ring*.4);
-    const jit=(Math.random()-.5)*28;
-    const x=Math.cos(angle)*r+jit, z=Math.sin(angle)*r+jit;
-    const h=9+Math.random()*12;
-    Math.random()<.28 ? cherryTree(ti++,x,z,h) : pineTree(ti++,x,z,h);
-  }
-}
-// Accent trees in courtyard
-[[-50,0],[50,0],[0,-50],[0,50],[-40,40],[40,40],[-40,-40],[40,-40],
- [-55,22],[-55,-22],[55,22],[55,-22],[22,-55],[-22,-55],[22,55],[-22,55]
-].forEach(([x,z])=>Math.random()<.45?cherryTree(ti++,x,z,6+Math.random()*3):pineTree(ti++,x,z,7+Math.random()*4));
 
-// ── ROCKS / BOULDERS ──────────────────────────────
-const rkm=new BABYLON.StandardMaterial("rkm",scene);
-rkm.diffuseColor=new BABYLON.Color3(0.38,0.38,0.4);
-rkm.specularColor=new BABYLON.Color3(0.06,0.06,0.06);
-[[-60,-40,1.4],[-59,-39,.8],[60,-40,1.2],[61,-39,.7],[-60,40,1.1],[60,40,1.3],
- [-35,60,.9],[35,60,.8],[-35,-60,1.0],[35,-60,.85],[68,5,1.2],[-68,5,.9]
-].forEach(([x,z,s],i)=>{
-  const r=BABYLON.MeshBuilder.CreateSphere("rk"+i,{diameter:s*3.2,segments:5},scene);
-  r.material=rkm; r.position=new BABYLON.Vector3(x,s*.7,z);
-  r.scaling=new BABYLON.Vector3(1+Math.random()*.5,.5+Math.random()*.35,1+Math.random()*.45);
-  r.rotation.y=Math.random()*Math.PI*2;
-  shadowGen.addShadowCaster(r); r.receiveShadows=true;
+// TYPE 3: Oak/Round canopy
+function oak(x,z,h=9){
+  const tk=mat(new BABYLON.Color3(.22,.13,.07));
+  cyl(.3,.7,h*.55,8,tk,[x,h*.27,z]);
+  const lm=mat(new BABYLON.Color3(.12+Math.random()*.1,.3+Math.random()*.18,.08+Math.random()*.08));
+  const main=sph(h*.42,lm,[x,h*.75,z]);
+  main.scaling=new BABYLON.Vector3(1.1,.9,1.1);
+  // Secondary blobs
+  for(let i=0;i<3;i++){
+    const b=sph(h*.28,lm,[x+(Math.random()-.5)*h*.35,h*(.68+Math.random()*.15),z+(Math.random()-.5)*h*.35]);
+  }
+}
+
+// TYPE 4: Bamboo — tall thin stalks
+function bamboo(x,z,h=12){
+  const bm=mat(new BABYLON.Color3(.38+Math.random()*.1,.52+Math.random()*.12,.22+Math.random()*.08));
+  const count=3+Math.floor(Math.random()*4);
+  for(let i=0;i<count;i++){
+    const bx=x+(Math.random()-.5)*1.5, bz=z+(Math.random()-.5)*1.5;
+    const bh=h*(.7+Math.random()*.4);
+    cyl(.06,.1,bh,6,bm,[bx,bh/2,bz]);
+    // Leaf tufts at top
+    const lm=mat(new BABYLON.Color3(.32,.48,.18));
+    for(let j=0;j<3;j++){
+      const lx=bx+(Math.random()-.5)*1.2, lz=bz+(Math.random()-.5)*1.2;
+      const leaf=box(.8,.08,1.8,lm,[lx,bh-.5,lz],Math.random()*Math.PI);
+    }
+  }
+}
+
+// Plant forest in rings
+let ti=0;
+const treeFns=[pineCone,cherry,oak,bamboo];
+for(let ring=0;ring<4;ring++){
+  const r=115+ring*32, cnt=32+ring*16;
+  for(let i=0;i<cnt;i++){
+    const a=(i/cnt)*Math.PI*2+ring*.5, jit=(Math.random()-.5)*26;
+    const x=Math.cos(a)*r+jit, z=Math.sin(a)*r+jit, h=8+Math.random()*11;
+    // Weighted selection — more pine and cherry
+    const weights=[0,0,0,1,1,2,2,3]; // pine=0,cherry=1,oak=2,bamboo=3
+    const fn=treeFns[weights[Math.floor(Math.random()*weights.length)]||0];
+    fn(x,z,h); ti++;
+  }
+}
+// Courtyard accent trees
+[[-52,0],[52,0],[0,-52],[0,52],[-42,42],[42,42],[-42,-42],[42,-42],
+ [-55,24],[-55,-24],[55,24],[55,-24],[24,-55],[-24,-55],[24,55],[-24,55],
+ [-28,28],[28,28],[-28,-28],[28,-28]
+].forEach(([x,z])=>{
+  const fn=[cherry,bamboo,cherry,oak][Math.floor(Math.random()*4)];
+  fn(x,z,5+Math.random()*3);
 });
 
-// ── TORII GATES ───────────────────────────────────
-const toriiM=new BABYLON.StandardMaterial("tm",scene);
-toriiM.diffuseColor=new BABYLON.Color3(0.78,0.1,0.06);
-toriiM.specularColor=new BABYLON.Color3(0.15,0.05,0.03);
-const goldM=new BABYLON.StandardMaterial("gm2",scene);
-goldM.diffuseColor=new BABYLON.Color3(0.9,0.76,0.28);
-goldM.emissiveColor=new BABYLON.Color3(0.12,0.1,0.0);
+// ── ROCKS ────────────────────────────────────
+const rkm=pbr(new BABYLON.Color3(.38,.38,.4),{r:.92,m:.08});
+[[-62,-42,1.5],[-61,-41,.9],[62,-42,1.3],[63,-41,.75],[-62,42,1.2],[62,42,1.4],
+ [-38,62,1.0],[38,62,.9],[-38,-62,1.1],[38,-62,.95],[70,6,1.3],[-70,6,1.0],
+ [-15,72,.8],[15,72,.7],[-72,15,.9],[72,-15,1.1]
+].forEach(([x,z,s],i)=>{
+  const r=BABYLON.MeshBuilder.CreateSphere("r"+i,{diameter:s*3.5,segments:4},scene);
+  r.material=rkm; r.position=new BABYLON.Vector3(x,s*.8,z);
+  r.scaling=new BABYLON.Vector3(1+Math.random()*.55,.48+Math.random()*.3,1+Math.random()*.45);
+  r.rotation.y=Math.random()*Math.PI*2;
+  shadows.addShadowCaster(r); r.receiveShadows=true;
+});
 
-function torii(id,x,z,ry=0){
-  const g=new BABYLON.TransformNode("tg"+id,scene);
+// ── TORII GATES ──────────────────────────────
+const trM=pbr(new BABYLON.Color3(.8,.1,.06),{r:.65,m:.1});
+const glM=pbr(new BABYLON.Color3(.9,.76,.28),{r:.4,m:.5,e:new BABYLON.Color3(.15,.1,0),ei:.3});
+function torii(x,z,ry=0){
+  const g=new BABYLON.TransformNode("tg"+x,scene);
   g.position=new BABYLON.Vector3(x,0,z); g.rotation.y=ry;
   for(let s of[-1,1]){
-    const p=BABYLON.MeshBuilder.CreateCylinder("tp"+id+s,{diameterTop:.3,diameterBottom:.4,height:7.5,tessellation:10},scene);
-    p.material=toriiM; p.position=new BABYLON.Vector3(s*2.5,3.75,0); p.parent=g;
-    shadowGen.addShadowCaster(p);
-    const base=BABYLON.MeshBuilder.CreateBox("tbs"+id+s,{width:.75,height:.5,depth:.75},scene);
-    base.material=new BABYLON.StandardMaterial("tbsm"+id+s,scene);
-    base.material.diffuseColor=new BABYLON.Color3(.32,.32,.35);
-    base.position=new BABYLON.Vector3(s*2.5,-.02,0); base.parent=g;
+    const p=cyl(.3,.42,8,10,trM,[s*2.6,4,0]);p.parent=g;
+    const b=box(.78,.5,.78,mat(new BABYLON.Color3(.3,.3,.32)),[s*2.6,-.02,0]);b.parent=g;
   }
-  const b1=BABYLON.MeshBuilder.CreateBox("tb1_"+id,{width:6.4,height:.42,depth:.42},scene);
-  b1.material=toriiM; b1.position=new BABYLON.Vector3(0,4.5,0); b1.parent=g;
-  shadowGen.addShadowCaster(b1);
-  for(let s of[-1,1]){
-    const cap=BABYLON.MeshBuilder.CreateBox("tc"+id+s,{width:.45,height:.42,depth:.6},scene);
-    cap.material=toriiM; cap.position=new BABYLON.Vector3(s*3.4,4.72,0); cap.rotation.z=s*-.2; cap.parent=g;
-  }
-  const b2=BABYLON.MeshBuilder.CreateBox("tb2_"+id,{width:5.5,height:.34,depth:.34},scene);
-  b2.material=toriiM; b2.position=new BABYLON.Vector3(0,4.0,0); b2.parent=g;
-  const plate=BABYLON.MeshBuilder.CreateBox("tplate"+id,{width:2,height:.45,depth:.12},scene);
-  plate.material=goldM; plate.position=new BABYLON.Vector3(0,4.32,0); plate.parent=g;
+  const b1=box(6.8,.44,.44,trM,[0,4.8,0]);b1.parent=g;
+  for(let s of[-1,1]){const c=box(.46,.44,.62,trM,[s*3.6,5.02,0]);c.rotation.z=s*-.2;c.parent=g;}
+  const b2=box(6.0,.36,.36,trM,[0,4.28,0]);b2.parent=g;
+  const pl=box(2.2,.48,.12,glM,[0,4.66,0]);pl.parent=g;
 }
-torii(0,0,90); torii(1,0,76); torii(2,-88,0,Math.PI/2); torii(3,88,0,Math.PI/2); torii(4,0,-86,Math.PI);
+torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0,-92,Math.PI);
 
-// ── FIRE BOWLS ────────────────────────────────────
-const fireLights=[];
-function fireBowl(id,x,z){
-  const sm3=new BABYLON.StandardMaterial("fsm"+id,scene);
-  sm3.diffuseColor=new BABYLON.Color3(.22,.22,.25);
-  const bm3=new BABYLON.StandardMaterial("fbm"+id,scene);
-  bm3.diffuseColor=new BABYLON.Color3(.28,.28,.3);
-  const fm=new BABYLON.StandardMaterial("ffm"+id,scene);
-  fm.diffuseColor=new BABYLON.Color3(1,.5,.05);
-  fm.emissiveColor=new BABYLON.Color3(.75,.28,0);
-  const stand=BABYLON.MeshBuilder.CreateCylinder("fs"+id,{diameterTop:.07,diameterBottom:.07,height:1.4,tessellation:6},scene);
-  stand.material=sm3; stand.position=new BABYLON.Vector3(x,.7,z);
-  const bowl=BABYLON.MeshBuilder.CreateCylinder("fb"+id,{diameterTop:1.1,diameterBottom:.6,height:.55,tessellation:12},scene);
-  bowl.material=bm3; bowl.position=new BABYLON.Vector3(x,1.45,z);
-  const glow=BABYLON.MeshBuilder.CreateSphere("fg"+id,{diameter:.45},scene);
-  glow.material=fm; glow.position=new BABYLON.Vector3(x,1.72,z);
-  const fl=new BABYLON.PointLight("fl"+id,new BABYLON.Vector3(x,2.2,z),scene);
-  fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.specular=new BABYLON.Color3(.8,.3,0);
-  fl.intensity=3.2; fl.range=18; fl._base=3.2; fireLights.push(fl);
-  shadowGen.addShadowCaster(stand); shadowGen.addShadowCaster(bowl);
-}
-[[-3.5,88],[3.5,88],[-3.5,-3.5],[3.5,-3.5],[-25,2],[25,2],[-25,-2],[25,-2],
- [-3.5,70],[3.5,70],[-3.5,-65],[3.5,-65],[-65,3.5],[65,3.5],[0,0],
- [-18,18],[18,18],[-18,-18],[18,-18]
-].forEach(([x,z],i)=>fireBowl(i,x,z));
-
-// ── HANGING LANTERNS ──────────────────────────────
-const lanternLights=[];
-let lIdx=0;
-function hangLantern(x,y,z,color,chainH=1.0){
-  const root=new BABYLON.TransformNode("ln"+lIdx,scene);
-  root.position=new BABYLON.Vector3(x,y,z);
-  const cm2=new BABYLON.StandardMaterial("lc"+lIdx,scene);
-  cm2.diffuseColor=new BABYLON.Color3(.45,.45,.45);
-  const chain=BABYLON.MeshBuilder.CreateCylinder("lch"+lIdx,{diameterTop:.022,diameterBottom:.022,height:chainH,tessellation:4},scene);
-  chain.material=cm2; chain.position=new BABYLON.Vector3(0,chainH/2,0); chain.parent=root;
-  const bm4=new BABYLON.StandardMaterial("lb"+lIdx,scene);
-  bm4.diffuseColor=new BABYLON.Color3(1,.94,.7);
-  bm4.emissiveColor=BABYLON.Color3.FromHexString(color);
-  bm4.alpha=.9;
-  const body=BABYLON.MeshBuilder.CreateCylinder("lbd"+lIdx,{diameterTop:.28,diameterBottom:.28,height:.7,tessellation:10},scene);
-  body.material=bm4; body.position=new BABYLON.Vector3(0,-.45,0); body.parent=root;
-  const capm=new BABYLON.StandardMaterial("lcp"+lIdx,scene);
-  capm.diffuseColor=new BABYLON.Color3(.22,.12,.05);
-  const tc=BABYLON.MeshBuilder.CreateBox("ltc"+lIdx,{width:.28,height:.1,depth:.28},scene);
-  tc.material=capm; tc.position=new BABYLON.Vector3(0,-.07,0); tc.parent=root;
-  const bc=BABYLON.MeshBuilder.CreateBox("lbc"+lIdx,{width:.28,height:.1,depth:.28},scene);
-  bc.material=capm; bc.position=new BABYLON.Vector3(0,-.82,0); bc.parent=root;
-  const ll=new BABYLON.PointLight("ll"+lIdx,new BABYLON.Vector3(x,y-.45,z),scene);
-  ll.diffuse=BABYLON.Color3.FromHexString(color);
-  ll.intensity=1.2; ll.range=10; ll._base=1.2; lanternLights.push(ll);
-  lIdx++;
-}
-function lanternString(x1,z1,x2,z2,y,n,color){
-  const pts=[];
-  for(let i=0;i<=18;i++){const t=i/18,sag=Math.sin(t*Math.PI)*-1.5;pts.push(new BABYLON.Vector3(x1+(x2-x1)*t,y+sag,z1+(z2-z1)*t));}
-  const rope=BABYLON.MeshBuilder.CreateTube("rope"+lIdx,{path:pts,radius:.028,tessellation:4},scene);
-  const rpm=new BABYLON.StandardMaterial("rpm"+lIdx,scene); rpm.diffuseColor=new BABYLON.Color3(.3,.22,.12); rope.material=rpm;
-  for(let i=0;i<=n;i++){const t=i/n,sag=Math.sin(t*Math.PI)*-1.5;hangLantern(x1+(x2-x1)*t,y+sag-.05,z1+(z2-z1)*t,color,.9);}
-}
-lanternString(-35,-35,35,-35,16,7,"#ffdd88");
-lanternString(-35,35,35,35,16,7,"#ff9944");
-lanternString(-35,-35,-35,35,16,7,"#ff5555");
-lanternString(35,-35,35,35,16,7,"#44aaff");
-lanternString(-25,0,25,0,14,8,"#ffaa44");
-lanternString(0,-25,0,25,14,8,"#ddccff");
-
-// ── FENCE ─────────────────────────────────────────
-const fpostM=new BABYLON.StandardMaterial("fpm",scene); fpostM.diffuseColor=new BABYLON.Color3(.22,.13,.06);
-const frailM=new BABYLON.StandardMaterial("frm",scene); frailM.diffuseColor=new BABYLON.Color3(.18,.1,.04);
-const FW=88;
+// ── FENCE ────────────────────────────────────
+const fpm=mat(new BABYLON.Color3(.2,.12,.06)), frm=mat(new BABYLON.Color3(.16,.09,.04));
+const FW=95;
 [[-FW,-FW,FW,-FW],[-FW,FW,FW,FW],[-FW,-FW,-FW,FW],[FW,-FW,FW,FW]].forEach(([x1,z1,x2,z2],si)=>{
-  const dx=x2-x1,dz=z2-z1,len=Math.sqrt(dx*dx+dz*dz),ang=Math.atan2(dx,dz);
+  const dx=x2-x1,dz=z2-z1,len=Math.sqrt(dx*dx+dz*dz),a=Math.atan2(dx,dz);
   const cx=(x1+x2)/2,cz=(z1+z2)/2;
-  for(let ry of[2.0,1.2]){const r=BABYLON.MeshBuilder.CreateBox("fr"+si+"_"+ry,{width:len,height:.14,depth:.16},scene);r.material=frailM;r.position=new BABYLON.Vector3(cx,ry,cz);r.rotation.y=ang;}
-  for(let i=0;i<=Math.floor(len/4);i++){const t=i/Math.floor(len/4);const post=BABYLON.MeshBuilder.CreateBox("fp"+si+"_"+i,{width:.2,height:2.4,depth:.2},scene);post.material=fpostM;post.position=new BABYLON.Vector3(x1+dx*t,1.0,z1+dz*t);shadowGen.addShadowCaster(post);}
+  for(let ry of[2.1,1.2]){const r=box(len,.13,.16,frm,[cx,ry,cz]);r.rotation.y=a;}
+  for(let i=0;i<=Math.floor(len/4.5);i++){
+    const t=i/Math.floor(len/4.5);
+    const post=box(.2,2.5,.2,fpm,[x1+dx*t,1.1,z1+dz*t]);
+  }
 });
 
-// ═══════════════════════════════════════
-//  BUILDINGS — load the temple GLB
-// ═══════════════════════════════════════
+// ── FIRE BOWLS ───────────────────────────────
+const fireLights=[];
+function fireBowl(x,z){
+  const sm2=mat(new BABYLON.Color3(.22,.22,.25));
+  const bm2=mat(new BABYLON.Color3(.28,.28,.3));
+  const fm=pbr(new BABYLON.Color3(1,.5,.05),{e:new BABYLON.Color3(.8,.3,0),ei:1.4,r:.8});
+  cyl(.07,.07,1.4,6,sm2,[x,.7,z]);
+  cyl(.95,.55,.52,12,bm2,[x,1.46,z]);
+  sph(.42,fm,[x,1.7,z]);
+  const fl=new BABYLON.PointLight("fl"+x,new BABYLON.Vector3(x,2.2,z),scene);
+  fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.intensity=3.2; fl.range=18; fl._b=3.2;
+  fireLights.push(fl);
+}
+[[-4,95],[4,95],[-4,-5],[4,-5],[-26,2],[26,2],[-26,-2],[26,-2],
+ [-4,76],[4,76],[-4,-68],[4,-68],[-68,4],[68,4],[0,0],
+ [-20,20],[20,20],[-20,-20],[20,-20]
+].forEach(([x,z])=>fireBowl(x,z));
+
+// ── HANGING LANTERNS (properly attached to posts) ──
+const lanLights=[];
+let lIdx=0;
+
+function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
+  const root=new BABYLON.TransformNode("lan"+lIdx,scene);
+  root.position=new BABYLON.Vector3(x,y,z);
+  // Chain
+  const cm2=mat(new BABYLON.Color3(.5,.5,.5));
+  cyl(.022,.022,chainH,4,cm2,[0,chainH/2,0]).parent=root;
+  // Body
+  const bm3=pbr(new BABYLON.Color3(1,.94,.7),{e:BABYLON.Color3.FromHexString(col),ei:.75,a:.92,r:.5});
+  cyl(.28,.28,.68,10,bm3,[0,-.46,0]).parent=root;
+  // Caps
+  const capm=mat(new BABYLON.Color3(.22,.12,.05));
+  box(.28,.1,.28,capm,[0,-.08,0]).parent=root;
+  box(.28,.1,.28,capm,[0,-.84,0]).parent=root;
+  // Ring details
+  cyl(.3,.3,.05,10,capm,[0,-.25,0]).parent=root;
+  cyl(.3,.3,.05,10,capm,[0,-.66,0]).parent=root;
+  // Light
+  const ll=new BABYLON.PointLight("ll"+lIdx,new BABYLON.Vector3(x,y-.46,z),scene);
+  ll.diffuse=BABYLON.Color3.FromHexString(col); ll.intensity=1.2; ll.range=10; ll._b=1.2;
+  lanLights.push(ll); lIdx++;
+}
+
+// Lantern STRING with posts — no floating!
+function lanternRow(x1,z1,x2,z2,y,n,col){
+  // Rope
+  const pts=[];
+  for(let i=0;i<=16;i++){const t=i/16,sag=Math.sin(t*Math.PI)*-1.2;pts.push(new BABYLON.Vector3(x1+(x2-x1)*t,y+sag,z1+(z2-z1)*t));}
+  const rope=BABYLON.MeshBuilder.CreateTube("rope"+lIdx,{path:pts,radius:.025,tessellation:4},scene);
+  rope.material=mat(new BABYLON.Color3(.3,.22,.1));
+  // Anchor posts at ends
+  const pm2=mat(new BABYLON.Color3(.22,.13,.06));
+  cyl(.08,.1,y+1,8,pm2,[x1,.0,z1]);
+  cyl(.08,.1,y+1,8,pm2,[x2,.0,z2]);
+  // Lanterns
+  for(let i=0;i<=n;i++){const t=i/n,sag=Math.sin(t*Math.PI)*-1.2;hangingLantern(x1+(x2-x1)*t,y+sag-.05,z1+(z2-z1)*t,col,.9);}
+}
+// Only put lantern strings between buildings — not crossing center
+lanternRow(-38,-38,38,-38,18,6,"#ffdd88");
+lanternRow(-38,38,38,38,18,6,"#ff9944");
+lanternRow(-38,-38,-38,38,18,6,"#ff5555");
+lanternRow(38,-38,38,38,18,6,"#44aaff");
+// Building accent lanterns — on posts near each dojo
+[[-72,0],[72,0],[0,-72],[0,72],[-55,-55],[55,-55]].forEach(([x,z],i)=>{
+  const cols=["#ffdd66","#00ffee","#ff5555","#ffaa22","#ffcc00","#cc44ff"];
+  const pm2=mat(new BABYLON.Color3(.22,.13,.06));
+  for(let s of[-1,1]){
+    cyl(.07,.09,6,8,pm2,[x+s*8,0,z]);
+    hangingLantern(x+s*8,6.5,z,cols[i],.8);
+  }
+});
+
+// ══════════════════════════════════════════════
+//  6 UNIQUE DOJOS — each different architecture
+// ══════════════════════════════════════════════
+
 const BUILDINGS=[];
-const bldgColors=["#ffdd66","#00ffee","#ff5555","#ffaa22","#ffcc00","#cc44ff"];
-const buildingConfigs=[
-  {id:'colony',   x:0,   z:-70, ry:0,           title:'THE COLONY',      sub:'Community Hub · rebelants.io',     icon:'🐜', desc:'Rebel Ants is a media company built on transparency, education, and supporting the little guys. Using storytelling to bring light to web3 creators, artists, and projects.', actions:[{label:'Visit Site',href:'https://rebelants.io'},{label:'Discord',href:'https://discord.gg/QhzEHfRqN6',g:true},{label:'Twitter',href:'https://twitter.com/rebelants',g:true}]},
-  {id:'arcade',   x:-70, z:0,   ry:Math.PI/2,   title:'THE DOJO ARCADE', sub:'Battle Portal · Games Hub',        icon:'⚔️', desc:'Battle for the Colony — 5,555 hand-drawn ants in 11 gangs fighting AI-driven weekly battles. Earn rewards when your gang wins.', actions:[{label:'Battle Portal',href:'https://portal.rebelants.io',t:true},{label:'OpenSea',href:'https://opensea.io/collection/rebel-ants-battle-for-the-colony'},{label:'Magic Eden',href:'https://magiceden.us/collections/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221',g:true}]},
-  {id:'radio',    x:70,  z:0,   ry:-Math.PI/2,  title:'REBEL ANTS RADIO',sub:'Live Podcast Studio · Every Week', icon:'🎙️', desc:'The crypto show for the little guys. Live shows every week — interviewing web3 creators, artists, and projects.', actions:[{label:'YouTube',href:'https://www.youtube.com/@rebelantsradio',r:true},{label:'Spotify',href:'https://open.spotify.com/show/00fDOHcJcJPW7XpEDwO6lk'},{label:'iTunes',href:'https://podcasts.apple.com/us/podcast/rebel-ants-radio-the-nft-show-for-the-little-guys/id1651171099',g:true}]},
-  {id:'gallery',  x:0,   z:70,  ry:Math.PI,     title:'THE ARCHIVE',     sub:'NFT Gallery · All Collections',    icon:'🖼️', desc:'Every Rebel Ant tells a story. Browse Battle for the Colony, Germy Pets, Unvoiced Echoes, and the original 10,000 v1 ants.', actions:[{label:'OpenSea',href:'https://opensea.io/RebelAnts_LLC/created'},{label:'Germy Pets',href:'https://bueno.art/1a3l6mdx1yoojhwl3m-kh/germy-pets/tokens',g:true},{label:'Unvoiced Echoes',href:'https://opensea.io/collection/unvoiced-echoes',g:true}]},
-  {id:'vault',    x:-55, z:-55, ry:Math.PI*.75, title:'THE VAULT',       sub:'Staking · Earn Rewards',           icon:'💰', desc:'Stake your Rebel Ants NFTs to earn rewards and grow the colony treasury. The more warriors you stake, the stronger the colony.', actions:[{label:'Start Staking',href:'https://rebelants.stakeaway.io/'},{label:'Learn More',href:'https://rebelants.io',g:true}]},
-  {id:'forge',    x:55,  z:-55, ry:-Math.PI*.25,title:'THE FORGE',       sub:'Custom Trait Builder',             icon:'🎨', desc:'Gear up your ants for battle. Add custom overlays — weapons, armor, accessories — to your Battle for the Colony ants. Free for all holders.', actions:[{label:'Open Forge',href:'https://builder.rebelants.io',t:true},{label:'View Site',href:'https://rebelants.io',g:true}]},
-];
-
-let loadedCount=0;
-function addTrigger(cfg,idx){
-  const t=BABYLON.MeshBuilder.CreateBox("trig_"+cfg.id,{width:26,height:28,depth:26},scene);
-  t.position=new BABYLON.Vector3(cfg.x,14,cfg.z); t.isPickable=true; t.visibility=0;
+function addTrigger(cfg){
+  const t=BABYLON.MeshBuilder.CreateBox("tr_"+cfg.id,{width:28,height:30,depth:28},scene);
+  t.position=new BABYLON.Vector3(cfg.x,15,cfg.z); t.isPickable=true; t.visibility=0;
   BUILDINGS.push({mesh:t,...cfg});
-  const bl=new BABYLON.PointLight("bl"+idx,new BABYLON.Vector3(cfg.x,18,cfg.z),scene);
-  bl.diffuse=BABYLON.Color3.FromHexString(bldgColors[idx%6]);
-  bl.intensity=2.2; bl.range=35; bl._base=2.2; lanternLights.push(bl);
-}
-function onOneLoaded(cfg,idx){ addTrigger(cfg,idx); loadedCount++; if(loadedCount>=buildingConfigs.length){setStatus("Village ready! 🐜⚔️");fadeIn();} }
-
-buildingConfigs.forEach((cfg,idx)=>{
-  setTimeout(()=>{
-    setStatus(`Loading building ${idx+1} of ${buildingConfigs.length}...`);
-    BABYLON.SceneLoader.ImportMeshAsync("","/","japanese_temple.glb",scene)
-    .then(r=>{
-      const root=new BABYLON.TransformNode("b_"+cfg.id,scene);
-      root.position=new BABYLON.Vector3(cfg.x,0,cfg.z);
-      root.rotation=new BABYLON.Vector3(0,cfg.ry,0);
-      const scale=0.75;
-      root.scaling=new BABYLON.Vector3(scale,scale,scale);
-      r.meshes.forEach(m=>{
-        if(!m.parent) m.parent=root;
-        m.receiveShadows=true;
-        try{shadowGen.addShadowCaster(m);}catch(e){}
-        m.isPickable=false;
-      });
-      onOneLoaded(cfg,idx);
-    })
-    .catch(()=>{ buildFallback(cfg,idx); onOneLoaded(cfg,idx); });
-  },idx*400);
-});
-
-function buildFallback(cfg,idx){
-  const bm5=new BABYLON.PBRMaterial("fbm_"+cfg.id,scene);
-  bm5.albedoColor=BABYLON.Color3.FromHexString(bldgColors[idx%6]);
-  bm5.metallic=0.05; bm5.roughness=0.75;
-  const walls=BABYLON.MeshBuilder.CreateBox("fw_"+cfg.id,{width:22,height:22,depth:18},scene);
-  walls.material=bm5; walls.position=new BABYLON.Vector3(cfg.x,11,cfg.z);
-  walls.rotation.y=cfg.ry; shadowGen.addShadowCaster(walls); walls.receiveShadows=true;
-  const rm3=new BABYLON.StandardMaterial("frm_"+cfg.id,scene);
-  rm3.diffuseColor=new BABYLON.Color3(.2,.3,.1);
-  const roof=BABYLON.MeshBuilder.CreateCylinder("fr_"+cfg.id,{diameterTop:0,diameterBottom:30,height:10,tessellation:4},scene);
-  roof.material=rm3; roof.rotation.y=Math.PI/4; roof.position=new BABYLON.Vector3(cfg.x,27,cfg.z);
-  shadowGen.addShadowCaster(roof); roof.receiveShadows=true;
 }
 
-// ── WALKABLE CHARACTER (Soldier) ──────────────────
-setStatus("Loading character...");
-let playerMesh=null, playerAnimations={}, activeAnim=null;
+// Pagoda roof helper
+function pagodaRoof(x,y,z,w,d,col,ry=0,tiers=2){
+  const rm=pbr(col,{r:.8});
+  for(let i=0;i<tiers;i++){
+    const sc=1-i*.28, ty=y+i*2.4;
+    const cone=cyl(0,Math.max(w,d)*(.8-i*.1)*sc,2.4,4,rm,[x,ty,z]);
+    cone.rotation.y=Math.PI/4+(ry||0);
+    box((w+1.8)*sc,.2,(d+1.8)*sc,rm,[x,ty-1.2,z]);
+    // Gold corner tips
+    const gm2=pbr(new BABYLON.Color3(.9,.76,.28),{m:.6,r:.3,e:new BABYLON.Color3(.12,.1,0),ei:.2});
+    for(let [cx,cz] of[[-1,-1],[1,-1],[-1,1],[1,1]]){
+      const tip=cyl(0,.1,.45,4,gm2,[x+cx*(w+.8)*sc*.5,ty-1.05,z+cz*(d+.8)*sc*.5]);
+      tip.rotation.z=cx*.28; tip.rotation.x=cz*.28;
+    }
+  }
+  // Finial
+  const gm3=pbr(new BABYLON.Color3(.9,.76,.28),{m:.6,r:.3});
+  cyl(.03,.12,1.1,6,gm3,[x,y+tiers*2.4-.1,z]);
+  sph(.28,pbr(new BABYLON.Color3(.9,.76,.28),{m:.6,r:.3,e:new BABYLON.Color3(.2,.16,0),ei:.3}),[x,y+tiers*2.4+.44,z]);
+}
+
+function woodPanel(x,y,z,w,h,col,n=4,fz=0){
+  const wm=pbr(col,{r:.88});
+  const pw=w/n;
+  for(let i=0;i<n;i++){
+    box(pw*.86,h*.88,.08,wm,[x-w/2+pw/2+i*pw,y,z+fz]);
+  }
+  // Horizontal beams
+  const bm2=pbr(new BABYLON.Color3(.22,.12,.05),{r:.9});
+  for(let hy of[-.4,.0,.4].map(v=>y+v*(h/2))){box(w,.1,.1,bm2,[x,hy,z+fz]);}
+}
+
+function riceWindow(x,y,z,w,h,glow){
+  const fm=pbr(new BABYLON.Color3(.25,.14,.07),{r:.9});
+  const pm2=pbr(new BABYLON.Color3(.9,.88,.78),{e:new BABYLON.Color3(.4,.36,.22),ei:.18,a:.92,r:.6});
+  box(w+.15,h+.15,.15,fm,[x,y,z]);
+  box(w,h,.09,pm2,[x,y,z+.05]);
+  box(w,.05,.05,fm,[x,y,z+.1]); box(.05,h,.05,fm,[x,y,z+.1]);
+  box(.05,h,.05,fm,[x+w*.28,y,z+.1]); box(.05,h,.05,fm,[x-w*.28,y,z+.1]);
+  if(glow){const wl=new BABYLON.PointLight("wl"+x,new BABYLON.Vector3(x,y,z+1.5),scene);wl.diffuse=BABYLON.Color3.FromHexString(glow);wl.intensity=.5;wl.range=5;wl._b=.5;lanLights.push(wl);}
+}
+
+function stoneFoundation(x,z,w,d,layers=3){
+  const sm2=pbr(new BABYLON.Color3(.42,.42,.48),{r:.92,m:.05});
+  for(let i=0;i<layers;i++){box(w+i*.7,0.32,d+i*.7,sm2,[x,i*.32*.5-.18,z]);}
+  const sm3=pbr(new BABYLON.Color3(.32,.32,.38),{r:.9});
+  box(w+layers*.7+.5,.15,d+layers*.7+.5,sm3,[x,-.3,z]);
+}
+
+function doorFrame(x,y,z,w,h){
+  const dm=pbr(new BABYLON.Color3(.25,.14,.06),{r:.9});
+  const door=pbr(new BABYLON.Color3(.18,.1,.04),{r:.88});
+  box(w+.22,h+.22,.16,dm,[x,y,z]);
+  box(w*.45,h*.88,.1,door,[x-w*.22,y,z+.04]);
+  box(w*.45,h*.88,.1,door,[x+w*.22,y,z+.04]);
+  // Door handles
+  const hm=pbr(new BABYLON.Color3(.9,.76,.28),{m:.8,r:.2});
+  sph(.08,hm,[x-w*.08,y+.1,z+.12]);
+  sph(.08,hm,[x+w*.08,y+.1,z+.12]);
+}
+
+// ── BUILDING 1: THE COLONY — Grand Main Temple ──
+(()=>{
+  const x=0,z=-80,col=new BABYLON.Color3(.08,.14,.3);
+  stoneFoundation(x,z,16,12,4);
+  // Tall main walls with wood paneling
+  box(16,6,12,pbr(col,{r:.82}),[x,3.5,z]);
+  woodPanel(x,3.5,z,16,5.5,new BABYLON.Color3(.28,.16,.07),6);
+  // Large windows either side
+  riceWindow(x-4.5,4,z+6.06,1.8,2.5,"#ffe8a0");
+  riceWindow(x,4,z+6.06,1.8,2.5,"#ffe8a0");
+  riceWindow(x+4.5,4,z+6.06,1.8,2.5,"#ffe8a0");
+  doorFrame(x,2.2,z+6.07,2,3.2);
+  // Grand steps
+  for(let i=0;i<5;i++){box(14-i*.5,.3,.7,pbr(new BABYLON.Color3(.6,.56,.46),{r:.9}),[x,i*.3-.2,z+6.4+i*.4]);}
+  // Side pillars
+  const pilM=pbr(new BABYLON.Color3(.25,.14,.07),{r:.88});
+  for(let s of[-1,1]){cyl(.18,.22,6,10,pilM,[x+s*7.2,3.5,z+5.6]);}
+  // Upper story
+  box(10,2.5,8,pbr(col,{r:.82}),[x,8.5,z]);
+  woodPanel(x,8.5,z,10,2.2,new BABYLON.Color3(.28,.16,.07),4);
+  // Main roof 2 tiers
+  pagodaRoof(x,10.6,z,16,12,new BABYLON.Color3(.35,.42,.18),0,2);
+  // Upper roof
+  pagodaRoof(x,13.4,z,11,9,new BABYLON.Color3(.32,.38,.15),0,1);
+  addTrigger({id:'colony',x,z,title:'THE COLONY',sub:'Community Hub · rebelants.io',icon:'🐜',desc:'Rebel Ants is a media company built on transparency, education, and supporting the little guys. Using storytelling to bring light to web3 creators, artists, and projects.',actions:[{label:'Visit Site',href:'https://rebelants.io'},{label:'Discord',href:'https://discord.gg/QhzEHfRqN6',g:true},{label:'Twitter',href:'https://twitter.com/rebelants',g:true}]});
+})();
+
+// ── BUILDING 2: DOJO ARCADE — Battle Portal ──
+(()=>{
+  const x=-80,z=0,col=new BABYLON.Color3(.04,.04,.18);
+  stoneFoundation(x,z,12,10,3);
+  box(12,5.5,10,pbr(col,{r:.82}),[x,3.2,z]);
+  woodPanel(x,3.2,z,12,5,new BABYLON.Color3(.12,.08,.35),4);
+  // Teal neon sign
+  const neonM=pbr(new BABYLON.Color3(.05,.85,.82),{e:new BABYLON.Color3(.0,.7,.65),ei:.9,r:.4,a:.9});
+  box(6.5,1.2,.12,neonM,[x,7.2,z+5.06]);
+  const nl=new BABYLON.PointLight("nl",new BABYLON.Vector3(x,7.2,z+6.5),scene);
+  nl.diffuse=new BABYLON.Color3(.05,.85,.82); nl.intensity=3.5; nl.range=16;
+  // Glowing arcade windows
+  const awM=pbr(new BABYLON.Color3(.04,.95,.9),{e:new BABYLON.Color3(.02,.8,.75),ei:.3,a:.72,r:.3});
+  box(2.2,2.8,.1,awM,[x-2.5,3.6,z+5.07]);
+  box(2.2,2.8,.1,awM,[x+2.5,3.6,z+5.07]);
+  doorFrame(x,2.1,z+5.08,2,3.1);
+  for(let i=0;i<3;i++){box(11-i*.4,.28,.62,pbr(new BABYLON.Color3(.5,.5,.58),{r:.9}),[x,i*.28-.18,z+5.28+i*.3]);}
+  pagodaRoof(x,7.5,z,12,10,new BABYLON.Color3(.14,.12,.42),0,2);
+  addTrigger({id:'arcade',x,z,title:'THE DOJO ARCADE',sub:'Battle Portal · Games Hub',icon:'⚔️',desc:'Battle for the Colony — 5,555 hand-drawn ants in 11 gangs fighting AI-driven weekly battles. Earn rewards when your gang wins. The arena never closes.',actions:[{label:'Battle Portal',href:'https://portal.rebelants.io',t:true},{label:'OpenSea',href:'https://opensea.io/collection/rebel-ants-battle-for-the-colony'},{label:'Magic Eden',href:'https://magiceden.us/collections/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221',g:true}]});
+})();
+
+// ── BUILDING 3: RADIO STAGE — Open Pavilion ──
+(()=>{
+  const x=80,z=0,col=new BABYLON.Color3(.25,.1,.06);
+  stoneFoundation(x,z,12,11,3);
+  // Open 3-wall stage structure
+  const wm=pbr(new BABYLON.Color3(.28,.16,.08),{r:.88});
+  box(12,7,.5,wm,[x,3.75,z-5.5]); // back wall
+  box(.5,7,11,wm,[x-5.75,3.75,z]); // left wall
+  box(.5,7,11,wm,[x+5.75,3.75,z]); // right wall
+  woodPanel(x,3.75,z-5.24,12,6.5,new BABYLON.Color3(.22,.12,.05),5,0);
+  // Stage platform
+  box(9,.35,7,pbr(new BABYLON.Color3(.32,.16,.06),{r:.9}),[x,.72,z-1]);
+  box(9,.18,.35,pbr(new BABYLON.Color3(.9,.76,.28),{m:.4,r:.5,e:new BABYLON.Color3(.15,.12,0),ei:.15}),[x,.8,z+2.6]);
+  // Mic stands
+  for(let mx of[-2.2,2.2]){
+    box(.42,.06,.42,pbr(new BABYLON.Color3(.75,.75,.78),{m:.7,r:.3}),[x+mx,.75,z-1.8]);
+    cyl(.05,.05,1.7,8,pbr(new BABYLON.Color3(.88,.88,.9),{m:.8,r:.2}),[x+mx,1.6,z-1.8]);
+    sph(.22,pbr(new BABYLON.Color3(.82,.82,.85),{m:.85,r:.15}),[x+mx+(mx>0?.28:-.28),2.5,z-1.55]);
+  }
+  // Lighting rig
+  box(8,.12,.12,wm,[x,6,z-2]);
+  for(let lx of[-2.5,0,2.5]){
+    const sl=new BABYLON.SpotLight("sp"+lx,new BABYLON.Vector3(x+lx,5.5,z-2),new BABYLON.Vector3(0,-1,.3),1.1,2.5,scene);
+    sl.diffuse=new BABYLON.Color3(1,.3,.2); sl.intensity=1.8; sl.range=8;
+  }
+  // Backdrop
+  const bdM=pbr(new BABYLON.Color3(.65,.08,.06),{e:new BABYLON.Color3(.4,.05,.04),ei:.12,a:.7,r:.8});
+  box(10,6,.08,bdM,[x,3.8,z-5.22]);
+  pagodaRoof(x,8,z,13,12,new BABYLON.Color3(.72,.12,.08),0,2);
+  addTrigger({id:'radio',x,z,title:'REBEL ANTS RADIO',sub:'Live Podcast Studio · Every Week',icon:'🎙️',desc:'The crypto show for the little guys. Live shows every week — interviewing web3 creators, artists, and projects in the web3 space. Watch on YouTube or listen on Spotify & iTunes.',actions:[{label:'YouTube',href:'https://www.youtube.com/@rebelantsradio',r:true},{label:'Spotify',href:'https://open.spotify.com/show/00fDOHcJcJPW7XpEDwO6lk'},{label:'iTunes',href:'https://podcasts.apple.com/us/podcast/rebel-ants-radio-the-nft-show-for-the-little-guys/id1651171099',g:true}]});
+})();
+
+// ── BUILDING 4: ARCHIVE — Gallery Hall ───────
+(()=>{
+  const x=0,z=80,col=new BABYLON.Color3(.05,.05,.14);
+  stoneFoundation(x,z,14,10,3);
+  box(14,6,10,pbr(col,{r:.82}),[x,3.5,z]);
+  woodPanel(x,3.5,z,14,5.5,new BABYLON.Color3(.08,.06,.28),5);
+  // Gallery frames with colored lights
+  const frameCols=["#c0392b","#5ecfca","#e8c56a","#8a9a3a","#6a3a8a"];
+  [-5,-2.5,0,2.5,5].forEach((fx,i)=>{
+    const fc=BABYLON.Color3.FromHexString(frameCols[i%5]);
+    const frM=pbr(fc,{r:.7,m:.1});
+    box(1.4,1.8,.15,frM,[x+fx,3.8,z+5.06]);
+    box(1.1,1.5,.08,pbr(new BABYLON.Color3(.1,.05,.22),{r:.95}),[x+fx,3.8,z+5.12]);
+    const al=new BABYLON.PointLight("al"+i,new BABYLON.Vector3(x+fx,5,z+6.5),scene);
+    al.diffuse=fc; al.intensity=.85; al.range=4.5;
+    al._b=.85; lanLights.push(al);
+  });
+  doorFrame(x,2.2,z+5.08,2.2,3.2);
+  for(let i=0;i<4;i++){box(12.5-i*.5,.28,.65,pbr(new BABYLON.Color3(.58,.54,.46),{r:.9}),[x,i*.28-.18,z+5.32+i*.32]);}
+  // Side pillars
+  const pilM=pbr(new BABYLON.Color3(.25,.14,.07),{r:.88});
+  for(let s of[-1,1]){cyl(.16,.2,6,10,pilM,[x+s*6.5,3.5,z+4.6]);}
+  pagodaRoof(x,7.2,z,14,10,new BABYLON.Color3(.38,.42,.18),0,2);
+  addTrigger({id:'gallery',x,z,title:'THE ARCHIVE',sub:'NFT Gallery · All Collections',icon:'🖼️',desc:'Every Rebel Ant tells a story. Browse Battle for the Colony (5,555), Germy Pets (1-of-1), Unvoiced Echoes, and the original 10,000 v1 ants.',actions:[{label:'OpenSea',href:'https://opensea.io/RebelAnts_LLC/created'},{label:'Germy Pets',href:'https://bueno.art/1a3l6mdx1yoojhwl3m-kh/germy-pets/tokens',g:true},{label:'Unvoiced Echoes',href:'https://opensea.io/collection/unvoiced-echoes',g:true},{label:'v1 Collection',href:'https://bueno.art/1a3l6mdx1yoojhwl3m-kh/rebel-ants',g:true}]});
+})();
+
+// ── BUILDING 5: THE VAULT — Staking Temple ───
+(()=>{
+  const x=-65,z=-65,col=new BABYLON.Color3(.06,.12,.28);
+  stoneFoundation(x,z,10,9,3);
+  box(10,5.5,9,pbr(col,{r:.82}),[x,3.1,z]);
+  woodPanel(x,3.1,z,10,5,new BABYLON.Color3(.12,.18,.38),4);
+  // Gold coin display windows
+  for(let cx of[-2.5,0,2.5]){
+    box(1.3,1.6,.14,pbr(new BABYLON.Color3(.15,.15,.22),{r:.85}),[x+cx,3.5,z+4.56]);
+    const coin=BABYLON.MeshBuilder.CreateCylinder("coin"+cx,{diameterTop:.7,diameterBottom:.7,height:.1,tessellation:20},scene);
+    coin.material=pbr(new BABYLON.Color3(.9,.76,.28),{m:.7,r:.3,e:new BABYLON.Color3(.9,.76,.28),ei:.4});
+    coin.rotation.x=Math.PI/2; coin.position=new BABYLON.Vector3(x+cx,3.5,z+4.62);
+    shadows.addShadowCaster(coin);
+  }
+  const gl=new BABYLON.PointLight("gl",new BABYLON.Vector3(x,4,z+6),scene);
+  gl.diffuse=new BABYLON.Color3(.9,.75,.28); gl.intensity=2.2; gl.range=12;
+  doorFrame(x,2.05,z+4.57,1.9,3.0);
+  for(let i=0;i<3;i++){box(9-i*.4,.28,.62,pbr(new BABYLON.Color3(.5,.5,.58),{r:.9}),[x,i*.28-.18,z+4.72+i*.3]);}
+  pagodaRoof(x,6.8,z,10,9,new BABYLON.Color3(.7,.56,.12),0,1);
+  addTrigger({id:'vault',x,z,title:'THE VAULT',sub:'Staking · Earn Rewards',icon:'💰',desc:'Stake your Rebel Ants NFTs to earn rewards and grow the colony treasury. The more warriors you stake, the stronger your colony becomes.',actions:[{label:'Start Staking',href:'https://rebelants.stakeaway.io/'},{label:'Learn More',href:'https://rebelants.io',g:true}]});
+})();
+
+// ── BUILDING 6: THE FORGE — Trait Builder ────
+(()=>{
+  const x=65,z=-65,col=new BABYLON.Color3(.12,.05,.25);
+  stoneFoundation(x,z,10,9,3);
+  box(10,5.5,9,pbr(col,{r:.82}),[x,3.1,z]);
+  woodPanel(x,3.1,z,10,5,new BABYLON.Color3(.22,.08,.42),4);
+  // Colorful trait strips
+  const traitCols=["#c0392b","#5ecfca","#6a3a8a","#e07020","#e8c56a"];
+  for(let i=0;i<5;i++){
+    const tc=BABYLON.Color3.FromHexString(traitCols[i]);
+    box(.88,3.8,.12,pbr(tc,{e:tc,ei:.2,r:.7}),[x-1.76+i*.88,3.1,z+4.56]);
+    const sl=new BABYLON.PointLight("sl"+i,new BABYLON.Vector3(x-1.76+i*.88,4,z+5.5),scene);
+    sl.diffuse=tc; sl.intensity=.65; sl.range=4; sl._b=.65; lanLights.push(sl);
+  }
+  const pl=new BABYLON.PointLight("pl",new BABYLON.Vector3(x,4,z+6),scene);
+  pl.diffuse=new BABYLON.Color3(.65,.3,.9); pl.intensity=2.0; pl.range=12;
+  doorFrame(x,2.05,z+4.57,1.9,3.0);
+  for(let i=0;i<3;i++){box(9-i*.4,.28,.62,pbr(new BABYLON.Color3(.5,.5,.58),{r:.9}),[x,i*.28-.18,z+4.72+i*.3]);}
+  pagodaRoof(x,6.8,z,10,9,new BABYLON.Color3(.42,.18,.72),0,1);
+  addTrigger({id:'forge',x,z,title:'THE FORGE',sub:'Custom Trait Builder',icon:'🎨',desc:'Gear up your ants for battle. Add custom overlays — weapons, armor, accessories — to your Battle for the Colony ants. Free to use for all holders.',actions:[{label:'Open Forge',href:'https://builder.rebelants.io',t:true},{label:'View Site',href:'https://rebelants.io',g:true}]});
+})();
+
+// ── WALKABLE CHARACTER ───────────────────────
+setSt("Loading character...");
+let charMesh=null, charAnims={}, isMoving=false;
 BABYLON.SceneLoader.ImportMeshAsync("","https://threejs.org/examples/models/gltf/","Soldier.glb",scene)
 .then(r=>{
-  playerMesh=r.meshes[0];
-  playerMesh.position=new BABYLON.Vector3(0,0,50);
-  playerMesh.scaling=new BABYLON.Vector3(4,4,4);
-  r.meshes.forEach(m=>{shadowGen.addShadowCaster(m);m.receiveShadows=true;});
-  // Store animations
-  r.animationGroups.forEach(ag=>{
-    playerAnimations[ag.name.toLowerCase()]=ag;
-    ag.stop();
-  });
-  // Start idle
-  if(playerAnimations['idle']) playerAnimations['idle'].play(true);
-  setStatus("Character loaded!");
-})
-.catch(e=>setStatus("Character loading... please wait"));
+  charMesh=r.meshes[0];
+  charMesh.position=new BABYLON.Vector3(0,0,55);
+  charMesh.scaling=new BABYLON.Vector3(4.5,4.5,4.5);
+  r.meshes.forEach(m=>{shadows.addShadowCaster(m);m.receiveShadows=true;});
+  r.animationGroups.forEach(ag=>{charAnims[ag.name.toLowerCase()]=ag;ag.stop();});
+  if(charAnims['idle']) charAnims['idle'].play(true);
+  setSt("Character ready!");
+}).catch(()=>setSt("World loaded"));
 
-// ── INTERACTION ───────────────────────────────────
-const tooltip=document.getElementById('tooltip');
+// ── INTERACTIONS ─────────────────────────────
+const tooltip=document.getElementById('tt');
 const panel=document.getElementById('panel');
+const pickMeshes=()=>BUILDINGS.map(b=>b.mesh);
+
 scene.onPointerObservable.add(evt=>{
-  if(evt.type!==BABYLON.PointerEventTypes.POINTERPICK||panel.classList.contains('open'))return;
+  if(evt.type!==BABYLON.PointerEventTypes.POINTERPICK||panel.classList.contains('on'))return;
   const hit=evt.pickInfo;
   if(!hit||!hit.hit)return;
   const b=BUILDINGS.find(b=>b.mesh===hit.pickedMesh);
   if(b)openPanel(b);
 });
+
 scene.onPointerObservable.add(evt=>{
   if(evt.type!==BABYLON.PointerEventTypes.POINTERMOVE||walkMode)return;
   const hit=scene.pick(scene.pointerX,scene.pointerY,m=>BUILDINGS.some(b=>b.mesh===m));
   if(hit&&hit.hit){
     const b=BUILDINGS.find(b=>b.mesh===hit.pickedMesh);
-    if(b){document.getElementById('tt-title').textContent=b.title;document.getElementById('tt-sub').textContent=b.sub;tooltip.classList.add('visible');canvas.style.cursor='pointer';return;}
+    if(b){document.getElementById('tth').textContent=b.title;document.getElementById('ttp').textContent=b.sub;tooltip.classList.add('on');canvas.style.cursor='pointer';return;}
   }
-  tooltip.classList.remove('visible');canvas.style.cursor='default';
+  tooltip.classList.remove('on');canvas.style.cursor='default';
 });
-document.getElementById('panel-close').addEventListener('click',()=>panel.classList.remove('open'));
+
+document.getElementById('pc').addEventListener('click',()=>panel.classList.remove('on'));
+
 function openPanel(b){
-  document.getElementById('panel-icon').textContent=b.icon;
-  document.getElementById('panel-title').textContent=b.title;
-  document.getElementById('panel-sub').textContent=b.sub;
-  document.getElementById('panel-desc').textContent=b.desc;
-  const acts=document.getElementById('panel-actions');acts.innerHTML='';
-  b.actions.forEach(a=>{const btn=document.createElement('a');btn.className='pb'+(a.g?' g':a.t?' t':a.r?' r':'');btn.textContent=a.label;btn.href=a.href;btn.target='_blank';btn.rel='noopener';acts.appendChild(btn);});
-  panel.classList.add('open');
+  document.getElementById('picon').textContent=b.icon;
+  document.getElementById('ph2').textContent=b.title;
+  document.getElementById('psub').textContent=b.sub;
+  document.getElementById('pdesc').textContent=b.desc;
+  const acts=document.getElementById('pact');acts.innerHTML='';
+  b.actions.forEach(a=>{
+    const btn=document.createElement('a');
+    btn.className='pb'+(a.g?' g':a.t?' t':a.r?' r':'');
+    btn.textContent=a.label;btn.href=a.href;btn.target='_blank';btn.rel='noopener';
+    acts.appendChild(btn);
+  });
+  panel.classList.add('on');
 }
 
-// ── WALK MODE ─────────────────────────────────────
+// ── WALK MODE ────────────────────────────────
 function toggleWalk(){
   walkMode=!walkMode;
-  const btn=document.getElementById('walkBtn'), ch=document.getElementById('crosshair');
+  const wb=document.getElementById('wb'), xh=document.getElementById('xhair');
   if(walkMode){
-    scene.activeCamera=walkCam;walkCam.attachControl(canvas,true);orbitCam.detachControl();
+    scene.activeCamera=walk; walk.attachControl(canvas,true); orbit.detachControl();
     canvas.requestPointerLock();
-    btn.textContent='🌐  EXIT WALK MODE';btn.classList.add('active');ch.classList.add('visible');
+    wb.textContent='🌐  EXIT WALK MODE'; wb.classList.add('on'); xh.classList.add('on');
   } else {
-    scene.activeCamera=orbitCam;orbitCam.attachControl(canvas,true);walkCam.detachControl();
+    scene.activeCamera=orbit; orbit.attachControl(canvas,true); walk.detachControl();
     document.exitPointerLock();
-    btn.textContent='⚔️  ENTER VILLAGE';btn.classList.remove('active');ch.classList.remove('visible');
+    wb.textContent='⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
   }
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&walkMode)toggleWalk();});
+window.addEventListener('resize',()=>engine.resize());
 
-// ── RENDER LOOP ───────────────────────────────────
+// ── RENDER LOOP ──────────────────────────────
 let t=0;
 engine.runRenderLoop(()=>{
   t+=engine.getDeltaTime()*.001;
-  fireLights.forEach(fl=>{ fl.intensity=fl._base+Math.sin(t*9.2+fl.position.x*3)*.65+Math.sin(t*15+fl.position.z)*.32; });
-  lanternLights.forEach(ll=>{ if(ll._base)ll.intensity=ll._base+Math.sin(t*1.9+ll.position.x*.3)*.1; });
-  // Animate player if walking
-  if(playerMesh&&walkMode){
-    const keys={w:scene.actionManager,forward:false};
-    // Simple player follows camera direction when keys pressed
-  }
+  fireLights.forEach(fl=>{ fl.intensity=fl._b+Math.sin(t*9.2+fl.position.x*3)*.65+Math.sin(t*15.1+fl.position.z)*.32; });
+  lanLights.forEach(ll=>{ if(ll._b)ll.intensity=ll._b+Math.sin(t*1.9+ll.position.x*.3)*.1; });
   scene.render();
 });
-window.addEventListener('resize',()=>engine.resize());
 
-function fadeIn(){
-  setTimeout(()=>{const ld=document.getElementById('loading');ld.style.opacity='0';setTimeout(()=>ld.style.display='none',1000);},600);
-}
+// ── LOADING FADE ─────────────────────────────
+setTimeout(()=>{
+  const ld=document.getElementById('ld');
+  ld.style.opacity='0';
+  setTimeout(()=>ld.style.display='none',900);
+},1800);
 </script>
 </body>
 </html>
