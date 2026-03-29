@@ -903,11 +903,13 @@ canvas.addEventListener('click', () => {
    const isFence =
     node.name === "fenceRoot" || node.name.startsWith("fenceRootClone_");
 
-    const isDojo =
+        const isDojo =
     node.name === "dojoRoot" ||
     node.name === "dojo6Root" ||
+    node.name === "dojo7Root" ||
     node.name.startsWith("dojoRootClone_") ||
-    node.name.startsWith("dojo6RootClone_");
+    node.name.startsWith("dojo6RootClone_") ||
+    node.name.startsWith("dojo7RootClone_");
 
   if (!isFence && !isDojo) return;
 
