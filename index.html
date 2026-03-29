@@ -1157,6 +1157,16 @@ document.addEventListener('keydown', e => {
     return;
   }
 
+  if (adminMode && selectedObject && key === 'q') {
+    selectedObject.rotation.y -= Math.PI / 2;
+    return;
+  }
+
+  if (adminMode && selectedObject && key === 'e') {
+    selectedObject.rotation.y += Math.PI / 2;
+    return;
+  }
+
   if (key === 'w') moveForward = true;
   if (key === 's') moveBackward = true;
   if (key === 'a') turnLeft = true;
@@ -1305,12 +1315,12 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scen
   });
 
     dojo6ModelRoot.position = BABYLON.Vector3.Zero();
-  dojo6ModelRoot.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
-  dojo6ModelRoot.scaling = new BABYLON.Vector3(1.2, 1.2, 1.2);
+  dojo6ModelRoot.rotation = BABYLON.Vector3.Zero();
+  dojo6ModelRoot.scaling = new BABYLON.Vector3(1, 1, 1);
 
   dojo6Root.position = new BABYLON.Vector3(75, 1.8, 0);
-  dojo6Root.scaling = new BABYLON.Vector3(1, 1, 1);
-  dojo6Root.rotation = BABYLON.Vector3.Zero();
+  dojo6Root.scaling = new BABYLON.Vector3(1.2, 1.2, 1.2);
+  dojo6Root.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
   editableRootRefs.dojo6 = dojo6Root;
 
   loadWorldLayout();
