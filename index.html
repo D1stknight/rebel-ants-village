@@ -1591,7 +1591,16 @@ function spawnOakTreeClonesFromPlaceholders() {
   gizmoManager.attachToNode(null);
 }
 
-spawnOakTreeClonesFromPlaceholders();
+function waitForTree1AndSpawnOaks() {
+  if (!tree1Root || !tree1Root.metadata || tree1Root.metadata.loaded !== true) {
+    setTimeout(waitForTree1AndSpawnOaks, 300);
+    return;
+  }
+
+  spawnOakTreeClonesFromPlaceholders();
+}
+
+waitForTree1AndSpawnOaks();
   
 </script>
 </body>
