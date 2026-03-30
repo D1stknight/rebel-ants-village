@@ -1076,13 +1076,14 @@ function loadWorldLayout(){
 
   if (!Array.isArray(data) || !data.length) return;
 
-  scene.transformNodes
+   scene.transformNodes
     .filter(n =>
       n.name.startsWith("fenceRootClone_") ||
       n.name.startsWith("dojoRootClone_") ||
       n.name.startsWith("dojo6RootClone_") ||
       n.name.startsWith("dojo7RootClone_") ||
-      n.name.startsWith("dojo9RootClone_")
+      n.name.startsWith("dojo9RootClone_") ||
+      n.name.startsWith("shrine2RootClone_")
     )
     .forEach(n => n.dispose(false, false));
 
@@ -1091,15 +1092,24 @@ function loadWorldLayout(){
   const baseDojo6 = data.find(d => d.name === "dojo6Root");
   const baseDojo7 = data.find(d => d.name === "dojo7Root");
   const baseDojo9 = data.find(d => d.name === "dojo9Root");
+  const baseShrine = data.find(d => d.name === "shrine2Root");
 
   if (baseFence) applyObjectTransform(fenceRootRef, baseFence);
   if (baseDojo) applyObjectTransform(dojoRootRef, baseDojo);
   if (baseDojo6) applyObjectTransform(dojo6RootRef, baseDojo6);
   if (baseDojo7) applyObjectTransform(dojo7RootRef, baseDojo7);
   if (baseDojo9) applyObjectTransform(dojo9RootRef, baseDojo9);
+  if (baseShrine) applyObjectTransform(shrine2Root, baseShrine);
 
   data.forEach((item, index) => {
-    if (item.name === "fenceRoot" || item.name === "dojoRoot" || item.name === "dojo6Root" || item.name === "dojo7Root" || item.name === "dojo9Root") return;
+    if (
+      item.name === "fenceRoot" ||
+      item.name === "dojoRoot" ||
+      item.name === "dojo6Root" ||
+      item.name === "dojo7Root" ||
+      item.name === "dojo9Root" ||
+      item.name === "shrine2Root"
+    ) return;
 
      let sourceRoot = editableRootRefs[item.type] || fenceRootRef;
 
