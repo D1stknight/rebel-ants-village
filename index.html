@@ -170,7 +170,8 @@ fence_1: {
 shrine_2: {
   path: "/assets/buildings/shrine_2.glb",
   scale: 1.2,
-  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
+  groundOffset: 3
 }
 };
 
@@ -324,7 +325,14 @@ function snapSelectedObjectToGround(){
 
   if (!hit || !hit.hit || !hit.pickedPoint) return;
 
-  selectedObject.position.y = hit.pickedPoint.y;
+  let offset = 0;
+  const type = getObjectType(selectedObject);
+
+  if (type && ASSETS[type] && ASSETS[type].groundOffset) {
+    offset = ASSETS[type].groundOffset;
+  }
+
+  selectedObject.position.y = hit.pickedPoint.y + offset;
 }
 // ── LIGHTING ────────────────────────────────
 const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.7,-1.1,.5),scene);
