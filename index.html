@@ -808,6 +808,7 @@ let fenceRootRef = null;
 let dojoRootRef = null;
 let dojo6RootRef = null;
 let dojo7RootRef = null;
+let dojo9RootRef = null;
 let fenceSourceMeshes = [];
 let editableRootRefs = {};
 
@@ -953,10 +954,12 @@ function getEditableRoots(){
       n.name === "dojoRoot" ||
       n.name === "dojo6Root" ||
       n.name === "dojo7Root" ||
+      n.name === "dojo9Root" ||
       n.name.startsWith("fenceRootClone_") ||
       n.name.startsWith("dojoRootClone_") ||
       n.name.startsWith("dojo6RootClone_") ||
-      n.name.startsWith("dojo7RootClone_")
+      n.name.startsWith("dojo7RootClone_") ||
+      n.name.startsWith("dojo9RootClone_")
     )
   );
 }
@@ -967,6 +970,7 @@ function getObjectType(node){
   if (node.name === "dojoRoot" || node.name.startsWith("dojoRootClone_")) return "dojo";
   if (node.name === "dojo6Root" || node.name.startsWith("dojo6RootClone_")) return "dojo6";
   if (node.name === "dojo7Root" || node.name.startsWith("dojo7RootClone_")) return "dojo7";
+  if (node.name === "dojo9Root" || node.name.startsWith("dojo9RootClone_")) return "dojo9";
   return null;
 }
 function makeCloneName(type){
@@ -974,6 +978,7 @@ function makeCloneName(type){
   if (type === "dojo") return "dojoRootClone_" + Date.now();
   if (type === "dojo6") return "dojo6RootClone_" + Date.now();
   if (type === "dojo7") return "dojo7RootClone_" + Date.now();
+  if (type === "dojo9") return "dojo9RootClone_" + Date.now();
   return "clone_" + Date.now();
 }
 
@@ -1008,8 +1013,8 @@ function saveWorldLayout(){
   console.log("World layout saved", data);
 }
 
-function loadWorldLayout(){
-  if (!fenceRootRef || !dojoRootRef || !dojo6RootRef || !dojo7RootRef) return;
+ffunction loadWorldLayout(){
+  if (!fenceRootRef || !dojoRootRef || !dojo6RootRef || !dojo7RootRef || !dojo9RootRef) return;
 
   const raw = localStorage.getItem("rebelAntsWorldLayout");
   if (!raw) return;
@@ -1029,7 +1034,8 @@ function loadWorldLayout(){
       n.name.startsWith("fenceRootClone_") ||
       n.name.startsWith("dojoRootClone_") ||
       n.name.startsWith("dojo6RootClone_") ||
-      n.name.startsWith("dojo7RootClone_")
+      n.name.startsWith("dojo7RootClone_") ||
+      n.name.startsWith("dojo9RootClone_")
     )
     .forEach(n => n.dispose(false, false));
 
@@ -1037,19 +1043,22 @@ function loadWorldLayout(){
   const baseDojo = data.find(d => d.name === "dojoRoot");
   const baseDojo6 = data.find(d => d.name === "dojo6Root");
   const baseDojo7 = data.find(d => d.name === "dojo7Root");
+  const baseDojo9 = data.find(d => d.name === "dojo9Root");
 
   if (baseFence) applyObjectTransform(fenceRootRef, baseFence);
   if (baseDojo) applyObjectTransform(dojoRootRef, baseDojo);
   if (baseDojo6) applyObjectTransform(dojo6RootRef, baseDojo6);
   if (baseDojo7) applyObjectTransform(dojo7RootRef, baseDojo7);
+  if (baseDojo9) applyObjectTransform(dojo9RootRef, baseDojo9);
 
   data.forEach((item, index) => {
-    if (item.name === "fenceRoot" || item.name === "dojoRoot" || item.name === "dojo6Root" || item.name === "dojo7Root") return;
+    if (item.name === "fenceRoot" || item.name === "dojoRoot" || item.name === "dojo6Root" || item.name === "dojo7Root" || item.name === "dojo9Root") return;
 
     let sourceRoot = fenceRootRef;
     if (item.type === "dojo") sourceRoot = dojoRootRef;
     if (item.type === "dojo6") sourceRoot = dojo6RootRef;
     if (item.type === "dojo7") sourceRoot = dojo7RootRef;
+    if (item.type === "dojo9") sourceRoot = dojo9RootRef;
 
     const cloneRoot = sourceRoot.clone(makeCloneName(item.type) + "_" + index);
     if (!cloneRoot) return;
@@ -1074,11 +1083,12 @@ function loadWorldLayout(){
 function deleteSelectedFence(){
   if (!selectedObject) return;
 
-      const isOriginalObject =
+        const isOriginalObject =
     selectedObject === fenceRootRef ||
     selectedObject === dojoRootRef ||
     selectedObject === dojo6RootRef ||
-    selectedObject === dojo7RootRef;
+    selectedObject === dojo7RootRef ||
+    selectedObject === dojo9RootRef;
 
   if (isOriginalObject) {
     alert("The original base objects cannot be deleted. Move them if you want, but keep one base version in the world.");
@@ -1385,6 +1395,7 @@ editableRootRefs.dojo7 = dojo7Root;
 // ===== DOJO 9 =====
 const dojo9Root = spawnAsset("dojo_9", new BABYLON.Vector3(75, 1.8, 80));
 dojo9Root.name = "dojo9Root";
+dojo9RootRef = dojo9Root;
 editableRootRefs.dojo9 = dojo9Root;
 
 
@@ -1476,9 +1487,10 @@ function waitForWorldAndLoadLayout() {
   const dojoReady = !!dojoRootRef;
   const dojo6Ready = !!dojo6RootRef;
   const dojo7Ready = !!dojo7RootRef;
+  const dojo9Ready = !!dojo9RootRef;
   const fenceReady = !!fenceRootRef;
 
-  if (dojoReady && dojo6Ready && dojo7Ready && fenceReady) {
+  if (dojoReady && dojo6Ready && dojo7Ready && dojo9Ready && fenceReady) {
     loadWorldLayout();
     return;
   }
