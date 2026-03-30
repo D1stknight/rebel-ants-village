@@ -841,6 +841,11 @@ let dojo9RootRef = null;
 let fenceSourceMeshes = [];
 let editableRootRefs = {};
 
+function registerEditableRoot(key, root) {
+  if (!key || !root) return;
+  editableRootRefs[key] = root;
+}
+
 gizmoManager = new BABYLON.GizmoManager(scene);
 gizmoManager.positionGizmoEnabled = false;
 gizmoManager.rotationGizmoEnabled = false;
@@ -1378,7 +1383,7 @@ engine.runRenderLoop(()=>{
 const dojoRoot = spawnAsset("dojo_5", new BABYLON.Vector3(-75, 1.8, 0));
 dojoRoot.name = "dojoRoot";
 dojoRootRef = dojoRoot;
-editableRootRefs.dojo = dojoRoot;
+registerEditableRoot("dojo", dojoRoot);
 
 addTrigger({
   id:'arcade',
@@ -1420,14 +1425,13 @@ scene.registerBeforeRender(() => {
 const dojo7Root = spawnAsset("dojo_7", new BABYLON.Vector3(-75, 1.8, 80));
 dojo7Root.name = "dojo7Root";
 dojo7RootRef = dojo7Root;
-editableRootRefs.dojo7 = dojo7Root;
+registerEditableRoot("dojo7", dojo7Root);
 
 // ===== DOJO 9 =====
 const dojo9Root = spawnAsset("dojo_9", new BABYLON.Vector3(75, 1.8, 80));
 dojo9Root.name = "dojo9Root";
 dojo9RootRef = dojo9Root;
-editableRootRefs.dojo9 = dojo9Root;
-
+registerEditableRoot("dojo9", dojo9Root);
 
 // ===== LOAD DOJO 6 =====
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scene)
@@ -1469,7 +1473,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scen
   dojo6Root.position = new BABYLON.Vector3(75, 1.8, 0);
   dojo6Root.scaling = new BABYLON.Vector3(1.2, 1.2, 1.2);
   dojo6Root.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
-  editableRootRefs.dojo6 = dojo6Root;
+  registerEditableRoot("dojo6", dojo6Root);
 
   console.log("Dojo 6 loaded", r);
 
@@ -1496,7 +1500,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "fence_1.glb", sce
   fenceRoot.scaling = new BABYLON.Vector3(2, 2, 2);
   fenceRoot.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
 
-   editableRootRefs.fence = fenceRoot;
+  registerEditableRoot("fence", fenceRoot);
 
   console.log("Fence loaded", r);
 
