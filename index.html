@@ -1077,14 +1077,15 @@ function loadWorldLayout(){
 
   if (!Array.isArray(data) || !data.length) return;
 
-   scene.transformNodes
+    scene.transformNodes
     .filter(n =>
       n.name.startsWith("fenceRootClone_") ||
       n.name.startsWith("dojoRootClone_") ||
       n.name.startsWith("dojo6RootClone_") ||
       n.name.startsWith("dojo7RootClone_") ||
       n.name.startsWith("dojo9RootClone_") ||
-      n.name.startsWith("shrine2RootClone_")
+      n.name.startsWith("shrine2RootClone_") ||
+      n.name.startsWith("tree_1RootClone_")
     )
     .forEach(n => n.dispose(false, false));
 
@@ -1600,13 +1601,27 @@ registerEditableRoot("tree_1", cloneRoot);
   gizmoManager.attachToNode(null);
 }
 
+function hasSavedOakTreeLayout() {
+  const raw = localStorage.getItem("rebelAntsWorldLayout");
+  if (!raw) return false;
+
+  try {
+    const data = JSON.parse(raw);
+    return Array.isArray(data) && data.some(item => item.type === "tree_1");
+  } catch (err) {
+    return false;
+  }
+}
+
 function waitForTree1AndSpawnOaks() {
   if (!tree1Root || !tree1Root.metadata || tree1Root.metadata.loaded !== true) {
     setTimeout(waitForTree1AndSpawnOaks, 300);
     return;
   }
 
-  spawnOakTreeClonesFromPlaceholders();
+  if (!hasSavedOakTreeLayout()) {
+    spawnOakTreeClonesFromPlaceholders();
+  }
 }
 
 waitForTree1AndSpawnOaks();
