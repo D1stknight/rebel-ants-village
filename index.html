@@ -169,7 +169,7 @@ fence_1: {
 
 shrine_2: {
   path: "/assets/buildings/shrine_2.glb",
-  scale: 15,
+  scale: 12,
   rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
   modelOffsetY: 6
 }
@@ -197,15 +197,17 @@ function spawnAsset(type, position) {
     root.isPickable = true;
   root.metadata = { type, loaded: false };
 
-    BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
+      BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
+
+    const modelRoot = new BABYLON.TransformNode(type + "_modelRoot", scene);
+    modelRoot.parent = root;
+
+    if (config.modelOffsetY) {
+      modelRoot.position.y = config.modelOffsetY;
+    }
 
     meshes.forEach(m => {
-      m.parent = root;
-
-      if (config.modelOffsetY) {
-        m.position.y += config.modelOffsetY;
-      }
-
+      m.parent = modelRoot;
       shadows.addShadowCaster(m);
       m.receiveShadows = true;
     });
@@ -1447,7 +1449,7 @@ dojo9RootRef = dojo9Root;
 registerEditableRoot("dojo9", dojo9Root);
 
 // ===== SHRINE 2 =====
-const shrine2Root = spawnAsset("shrine_2", new BABYLON.Vector3(0, 0, 0));
+const shrine2Root = spawnAsset("shrine_2", new BABYLON.Vector3(0, 0, 140));
 shrine2Root.name = "shrine2Root";
 registerEditableRoot("shrine_2", shrine2Root);
   
