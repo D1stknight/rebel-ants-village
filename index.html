@@ -187,8 +187,8 @@ function spawnAsset(type, position) {
     root.rotation = config.rotation.clone();
   }
 
-  root.isPickable = true;
-  root.metadata = { type };
+    root.isPickable = true;
+  root.metadata = { type, loaded: false };
 
   BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
 
@@ -198,6 +198,7 @@ function spawnAsset(type, position) {
       m.receiveShadows = true;
     });
 
+        root.metadata.loaded = true;
     console.log("Spawned:", type);
 
   });
@@ -1434,8 +1435,9 @@ registerEditableRoot("dojo9", dojo9Root);
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scene)
 .then(r => {
 
-  const dojo6Root = new BABYLON.TransformNode("dojo6Root", scene);
+   const dojo6Root = new BABYLON.TransformNode("dojo6Root", scene);
   dojo6RootRef = dojo6Root;
+  dojo6Root.metadata = { type: "dojo6", loaded: false };
 
   const dojo6ModelRoot = new BABYLON.TransformNode("dojo6ModelRoot", scene);
   dojo6ModelRoot.parent = dojo6Root;
@@ -1472,6 +1474,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scen
   dojo6Root.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
   registerEditableRoot("dojo6", dojo6Root);
 
+    dojo6Root.metadata.loaded = true;
   console.log("Dojo 6 loaded", r);
 
 })
@@ -1482,8 +1485,9 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scen
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "fence_1.glb", scene)
 .then(r => {
 
-  const fenceRoot = new BABYLON.TransformNode("fenceRoot", scene);
+    const fenceRoot = new BABYLON.TransformNode("fenceRoot", scene);
   fenceRootRef = fenceRoot;
+  fenceRoot.metadata = { type: "fence", loaded: false };
 
   r.meshes.forEach(m => {
     if (m !== fenceRoot) {
@@ -1499,6 +1503,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "fence_1.glb", sce
 
   registerEditableRoot("fence", fenceRoot);
 
+    fenceRoot.metadata.loaded = true;
   console.log("Fence loaded", r);
 
 })
@@ -1515,11 +1520,11 @@ setTimeout(()=>{
 
 // ✅ LOAD SAVED LAYOUT (AFTER EVERYTHING EXISTS)
 function waitForWorldAndLoadLayout() {
-  const dojoReady = !!dojoRootRef;
-  const dojo6Ready = !!dojo6RootRef;
-  const dojo7Ready = !!dojo7RootRef;
-  const dojo9Ready = !!dojo9RootRef;
-  const fenceReady = !!fenceRootRef;
+  const dojoReady = !!dojoRootRef && !!dojoRootRef.metadata && dojoRootRef.metadata.loaded === true;
+  const dojo6Ready = !!dojo6RootRef && !!dojo6RootRef.metadata && dojo6RootRef.metadata.loaded === true;
+  const dojo7Ready = !!dojo7RootRef && !!dojo7RootRef.metadata && dojo7RootRef.metadata.loaded === true;
+  const dojo9Ready = !!dojo9RootRef && !!dojo9RootRef.metadata && dojo9RootRef.metadata.loaded === true;
+  const fenceReady = !!fenceRootRef && !!fenceRootRef.metadata && fenceRootRef.metadata.loaded === true;
 
   if (dojoReady && dojo6Ready && dojo7Ready && dojo9Ready && fenceReady) {
     loadWorldLayout();
