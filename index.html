@@ -1452,16 +1452,25 @@ registerEditableRoot("dojo9", dojo9Root);
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "shrine_2.glb", scene)
 .then(r => {
 
-  const shrine2Root = new BABYLON.TransformNode("shrine2Root", scene);
+    const shrine2Root = new BABYLON.TransformNode("shrine2Root", scene);
 
-  const shrine2ModelRoot = new BABYLON.TransformNode("shrine2ModelRoot", scene);
-  shrine2ModelRoot.parent = shrine2Root;
+  const importedShrineRoot = r.transformNodes[0] || r.meshes[0];
+  if (!importedShrineRoot) {
+    console.error("Shrine 2 has no import root", r);
+    return;
+  }
+
+  importedShrineRoot.parent = shrine2Root;
+
+  if (importedShrineRoot.rotationQuaternion) {
+    importedShrineRoot.rotationQuaternion = null;
+  }
+
+  importedShrineRoot.position = new BABYLON.Vector3(0, 0, 0);
+  importedShrineRoot.rotation = BABYLON.Vector3.Zero();
+  importedShrineRoot.scaling = new BABYLON.Vector3(1, 1, 1);
 
   r.meshes.forEach(m => {
-    if (m !== shrine2Root && m !== shrine2ModelRoot) {
-      m.parent = shrine2ModelRoot;
-    }
-
     if (m.rotationQuaternion) {
       m.rotationQuaternion = null;
     }
@@ -1471,41 +1480,10 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "shrine_2.glb", sc
   });
 
   r.transformNodes.forEach(t => {
-    if (t !== shrine2Root && t !== shrine2ModelRoot) {
-      t.parent = shrine2ModelRoot;
-    }
-
     if (t.rotationQuaternion) {
       t.rotationQuaternion = null;
     }
   });
-
-    // Auto-center the shrine mesh so the gizmo sits on the actual building
-  const shrineMeshes = shrine2ModelRoot.getChildMeshes();
-
-  let minX = Infinity, minY = Infinity, minZ = Infinity;
-  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-
-  shrineMeshes.forEach(m => {
-    const info = m.getBoundingInfo().boundingBox;
-    const min = info.minimumWorld;
-    const max = info.maximumWorld;
-
-    if (min.x < minX) minX = min.x;
-    if (min.y < minY) minY = min.y;
-    if (min.z < minZ) minZ = min.z;
-
-    if (max.x > maxX) maxX = max.x;
-    if (max.y > maxY) maxY = max.y;
-    if (max.z > maxZ) maxZ = max.z;
-  });
-
-  const centerX = (minX + maxX) / 2;
-  const centerZ = (minZ + maxZ) / 2;
-
-  shrine2ModelRoot.position = new BABYLON.Vector3(-centerX, -minY, -centerZ);
-  shrine2ModelRoot.rotation = BABYLON.Vector3.Zero();
-  shrine2ModelRoot.scaling = new BABYLON.Vector3(1, 1, 1);
 
   shrine2Root.position = new BABYLON.Vector3(0, 0, 40);
   shrine2Root.scaling = new BABYLON.Vector3(12, 12, 12);
@@ -1514,7 +1492,6 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "shrine_2.glb", sc
   registerEditableRoot("shrine_2", shrine2Root);
 
   console.log("Shrine 2 loaded", r);
-
 })
 .catch(err => {
   console.error("Shrine 2 failed to load", err);
