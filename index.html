@@ -1087,11 +1087,7 @@ function loadWorldLayout(){
   data.forEach((item, index) => {
     if (item.name === "fenceRoot" || item.name === "dojoRoot" || item.name === "dojo6Root" || item.name === "dojo7Root" || item.name === "dojo9Root") return;
 
-       let sourceRoot = fenceRootRef;
-    if (item.type === "dojo" || item.type === "dojo_5") sourceRoot = dojoRootRef;
-    if (item.type === "dojo6" || item.type === "dojo_6") sourceRoot = dojo6RootRef;
-    if (item.type === "dojo7" || item.type === "dojo_7") sourceRoot = dojo7RootRef;
-    if (item.type === "dojo9" || item.type === "dojo_9") sourceRoot = dojo9RootRef;
+     let sourceRoot = editableRootRefs[item.type] || fenceRootRef;
 
     const cloneRoot = sourceRoot.clone(makeCloneName(item.type) + "_" + index);
     if (!cloneRoot) return;
