@@ -1141,20 +1141,27 @@ function loadWorldLayout(){
   if (baseDojo7) applyObjectTransform(dojo7RootRef, baseDojo7);
   if (baseDojo9) applyObjectTransform(dojo9RootRef, baseDojo9);
 
-  data.forEach((item, index) => {
+    data.forEach((item, index) => {
     if (item.name === "fenceRoot" || item.name === "dojoRoot" || item.name === "dojo6Root" || item.name === "dojo7Root" || item.name === "dojo9Root") return;
 
-     let sourceRoot = editableRootRefs[item.type] || fenceRootRef;
+    let sourceRoot = editableRootRefs[item.type] || fenceRootRef;
+    let cloneRoot = null;
 
-    const cloneRoot = sourceRoot.clone(makeCloneName(item.type) + "_" + index);
+    if (item.type === "tree_1") {
+      cloneRoot = createTreeInstanceRoot(sourceRoot, item.type);
+    } else {
+      cloneRoot = sourceRoot.clone(makeCloneName(item.type) + "_" + index);
+      if (!cloneRoot) return;
+
+      cloneRoot.getChildMeshes().forEach(m => {
+        shadows.addShadowCaster(m);
+        m.receiveShadows = true;
+      });
+    }
+
     if (!cloneRoot) return;
 
     applyObjectTransform(cloneRoot, item);
-
-    cloneRoot.getChildMeshes().forEach(m => {
-      shadows.addShadowCaster(m);
-      m.receiveShadows = true;
-    });
   });
 
   selectedObject = null;
