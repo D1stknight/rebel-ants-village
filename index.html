@@ -171,9 +171,8 @@ shrine_2: {
   path: "/assets/buildings/shrine_2.glb",
   scale: 12,
   rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
-  groundOffset: 10
-},
-  
+  groundOffset: 14
+}
 };
 
   // ═══════════════════════════════════════
@@ -200,15 +199,10 @@ function spawnAsset(type, position) {
 
       BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
 
-           meshes.forEach(m => {
+    meshes.forEach(m => {
       m.parent = root;
-
-      if (!config.noShadows) {
-        shadows.addShadowCaster(m);
-        m.receiveShadows = true;
-      } else {
-        m.receiveShadows = false;
-      }
+      shadows.addShadowCaster(m);
+      m.receiveShadows = true;
     });
 
     root.metadata.loaded = true;
@@ -379,9 +373,9 @@ updateSky(); setInterval(updateSky,30000);
 // ── HELPERS ──────────────────────────────────
 function mat(c,o={}){const m=new BABYLON.StandardMaterial("m"+Math.random(),scene);m.diffuseColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;m.specularColor=new BABYLON.Color3(.03,.03,.03);if(o.e)m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;if(o.a)m.alpha=o.a;return m;}
 function pbr(c,o={}){const m=new BABYLON.PBRMaterial("p"+Math.random(),scene);m.albedoColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;m.metallic=o.m||0;m.roughness=o.r||.85;if(o.e){m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;m.emissiveIntensity=o.ei||1;}if(o.a)m.alpha=o.a;return m;}
-function box(w,h,d,mat,pos,ry=0){const b=BABYLON.MeshBuilder.CreateBox("b"+Math.random(),{width:w,height:h,depth:d},scene);b.material=mat;if(pos)b.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(ry)b.rotation.y=ry;b.receiveShadows=false;return b;}
-function cyl(rt,rb,h,t,mat,pos,rz=0){const c=BABYLON.MeshBuilder.CreateCylinder("cy"+Math.random(),{diameterTop:rt,diameterBottom:rb,height:h,tessellation:t},scene);c.material=mat;if(pos)c.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(rz)c.rotation.z=rz;c.receiveShadows=false;return c;}
-function sph(d,mat,pos){const s=BABYLON.MeshBuilder.CreateSphere("sp"+Math.random(),{diameter:d,segments:8},scene);s.material=mat;if(pos)s.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);s.receiveShadows=false;return s;}
+function box(w,h,d,mat,pos,ry=0){const b=BABYLON.MeshBuilder.CreateBox("b"+Math.random(),{width:w,height:h,depth:d},scene);b.material=mat;if(pos)b.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(ry)b.rotation.y=ry;b.receiveShadows=true;shadows.addShadowCaster(b);return b;}
+function cyl(rt,rb,h,t,mat,pos,rz=0){const c=BABYLON.MeshBuilder.CreateCylinder("cy"+Math.random(),{diameterTop:rt,diameterBottom:rb,height:h,tessellation:t},scene);c.material=mat;if(pos)c.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(rz)c.rotation.z=rz;c.receiveShadows=true;shadows.addShadowCaster(c);return c;}
+function sph(d,mat,pos){const s=BABYLON.MeshBuilder.CreateSphere("sp"+Math.random(),{diameter:d,segments:8},scene);s.material=mat;if(pos)s.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);s.receiveShadows=true;shadows.addShadowCaster(s);return s;}
 
 // ── GROUND / TERRAIN ─────────────────────────
 setSt("Building terrain...");
@@ -446,7 +440,6 @@ const rvr=BABYLON.MeshBuilder.CreateGround("rv",{width:22,height:320},scene);
 rvr.material=mat(new BABYLON.Color3(.1,.36,.68),{a:.82}); rvr.position=new BABYLON.Vector3(112,.14,0);
 
 // ── 4 TYPES OF TREES ─────────────────────────
-const USE_PROCEDURAL_TREES = false;
 setSt("Planting forest...");
 
 // TYPE 1: Pine/Conifer — stacked cones
@@ -499,32 +492,28 @@ function bamboo(x,z,h=12){
   }
 }
 
-if (USE_PROCEDURAL_TREES) {
-if (false) {
-  // Plant forest in rings
-  let ti=0;
-  const treeFns=[pineCone,cherry,oak,bamboo];
-  for(let ring=0;ring<4;ring++){
-    const r=115+ring*32, cnt=32+ring*16;
-    for(let i=0;i<cnt;i++){
-      const a=(i/cnt)*Math.PI*2+ring*.5, jit=(Math.random()-.5)*26;
-      const x=Math.cos(a)*r+jit, z=Math.sin(a)*r+jit, h=8+Math.random()*11;
-      // Weighted selection — more pine and cherry
-      const weights=[0,0,0,1,1,2,2,3]; // pine=0,cherry=1,oak=2,bamboo=3
-      const fn=treeFns[weights[Math.floor(Math.random()*weights.length)]||0];
-      fn(x,z,h); ti++;
-    }
+// Plant forest in rings
+let ti=0;
+const treeFns=[pineCone,cherry,oak,bamboo];
+for(let ring=0;ring<4;ring++){
+  const r=115+ring*32, cnt=32+ring*16;
+  for(let i=0;i<cnt;i++){
+    const a=(i/cnt)*Math.PI*2+ring*.5, jit=(Math.random()-.5)*26;
+    const x=Math.cos(a)*r+jit, z=Math.sin(a)*r+jit, h=8+Math.random()*11;
+    // Weighted selection — more pine and cherry
+    const weights=[0,0,0,1,1,2,2,3]; // pine=0,cherry=1,oak=2,bamboo=3
+    const fn=treeFns[weights[Math.floor(Math.random()*weights.length)]||0];
+    fn(x,z,h); ti++;
   }
-  // Courtyard accent trees
-  [[-52,0],[52,0],[0,-52],[0,52],[-42,42],[42,42],[-42,-42],[42,-42],
-   [-55,24],[-55,-24],[55,24],[55,-24],[24,-55],[-24,-55],[24,55],[-24,55],
-   [-28,28],[28,28],[-28,-28],[28,-28]
-  ].forEach(([x,z])=>{
-    const fn=[cherry,bamboo,cherry,oak][Math.floor(Math.random()*4)];
-    fn(x,z,5+Math.random()*3);
-  });
 }
-}
+// Courtyard accent trees
+[[-52,0],[52,0],[0,-52],[0,52],[-42,42],[42,42],[-42,-42],[42,-42],
+ [-55,24],[-55,-24],[55,24],[55,-24],[24,-55],[-24,-55],[24,55],[-24,55],
+ [-28,28],[28,28],[-28,-28],[28,-28]
+].forEach(([x,z])=>{
+  const fn=[cherry,bamboo,cherry,oak][Math.floor(Math.random()*4)];
+  fn(x,z,5+Math.random()*3);
+});
 
 // ── ROCKS ────────────────────────────────────
 const rkm=pbr(new BABYLON.Color3(.38,.38,.4),{r:.92,m:.08});
@@ -595,8 +584,8 @@ function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   cyl(.3,.3,.05,10,capm,[0,-.25,0]).parent=root;
   cyl(.3,.3,.05,10,capm,[0,-.66,0]).parent=root;
   // Light
-    const ll=new BABYLON.PointLight("ll"+lIdx,new BABYLON.Vector3(x,y-.46,z),scene);
-  ll.diffuse=BABYLON.Color3.FromHexString(col); ll.intensity=0; ll.range=10; ll._b=0;
+  const ll=new BABYLON.PointLight("ll"+lIdx,new BABYLON.Vector3(x,y-.46,z),scene);
+  ll.diffuse=BABYLON.Color3.FromHexString(col); ll.intensity=1.2; ll.range=10; ll._b=1.2;
   lanLights.push(ll); lIdx++;
 }
 
@@ -679,7 +668,7 @@ function riceWindow(x,y,z,w,h,glow){
   box(w,h,.09,pm2,[x,y,z+.05]);
   box(w,.05,.05,fm,[x,y,z+.1]); box(.05,h,.05,fm,[x,y,z+.1]);
   box(.05,h,.05,fm,[x+w*.28,y,z+.1]); box(.05,h,.05,fm,[x-w*.28,y,z+.1]);
-  if(glow){const wl=new BABYLON.PointLight("wl"+x,new BABYLON.Vector3(x,y,z+1.5),scene);wl.diffuse=BABYLON.Color3.FromHexString(glow);wl.intensity=0;wl.range=5;wl._b=0;lanLights.push(wl);}
+  if(glow){const wl=new BABYLON.PointLight("wl"+x,new BABYLON.Vector3(x,y,z+1.5),scene);wl.diffuse=BABYLON.Color3.FromHexString(glow);wl.intensity=.5;wl.range=5;wl._b=.5;lanLights.push(wl);}
 }
 
 function stoneFoundation(x,z,w,d,layers=3){
@@ -1039,32 +1028,6 @@ function makeCloneName(type){
   return type + "RootClone_" + Date.now();
 }
 
-function createTreeInstanceRoot(sourceRoot, objectType) {
-  const instanceRoot = new BABYLON.TransformNode(makeCloneName(objectType), scene);
-  instanceRoot.metadata = { type: objectType };
-
-  sourceRoot.getChildMeshes().forEach((sourceMesh, i) => {
-
-  if (!sourceMesh.geometry) return; // 🔥 THIS FIXES EVERYTHING
-
-  const inst = sourceMesh.createInstance(sourceMesh.name + "_inst_" + Date.now() + "_" + i);
-
-  inst.parent = instanceRoot;
-  inst.position = sourceMesh.position.clone();
-
-  if (sourceMesh.rotationQuaternion) {
-    inst.rotationQuaternion = sourceMesh.rotationQuaternion.clone();
-  } else {
-    inst.rotation = sourceMesh.rotation.clone();
-  }
-
-  inst.scaling = sourceMesh.scaling.clone();
-  inst.receiveShadows = false;
-});
-
-  return instanceRoot;
-}
-
 function applyObjectTransform(node, data){
   node.position = new BABYLON.Vector3(data.position.x, data.position.y, data.position.z);
   node.rotation = new BABYLON.Vector3(data.rotation.x, data.rotation.y, data.rotation.z);
@@ -1113,14 +1076,13 @@ function loadWorldLayout(){
 
   if (!Array.isArray(data) || !data.length) return;
 
-    scene.transformNodes
+  scene.transformNodes
     .filter(n =>
       n.name.startsWith("fenceRootClone_") ||
       n.name.startsWith("dojoRootClone_") ||
       n.name.startsWith("dojo6RootClone_") ||
       n.name.startsWith("dojo7RootClone_") ||
-      n.name.startsWith("dojo9RootClone_") ||
-      n.name.startsWith("tree_1RootClone_")
+      n.name.startsWith("dojo9RootClone_")
     )
     .forEach(n => n.dispose(false, false));
 
@@ -1136,33 +1098,20 @@ function loadWorldLayout(){
   if (baseDojo7) applyObjectTransform(dojo7RootRef, baseDojo7);
   if (baseDojo9) applyObjectTransform(dojo9RootRef, baseDojo9);
 
-     data.forEach((item, index) => {
-    if (
-      item.name === "fenceRoot" ||
-      item.name === "dojoRoot" ||
-      item.name === "dojo6Root" ||
-      item.name === "dojo7Root" ||
-      item.name === "dojo9Root" ||
-      item.name === "tree1Root"
-    ) return;
+  data.forEach((item, index) => {
+    if (item.name === "fenceRoot" || item.name === "dojoRoot" || item.name === "dojo6Root" || item.name === "dojo7Root" || item.name === "dojo9Root") return;
 
-    let sourceRoot = editableRootRefs[item.type] || fenceRootRef;
-    let cloneRoot = null;
-    if (item.type === "tree_1") {
-      cloneRoot = createTreeInstanceRoot(sourceRoot, item.type);
-    } else {
-      cloneRoot = sourceRoot.clone(makeCloneName(item.type) + "_" + index);
-      if (!cloneRoot) return;
+     let sourceRoot = editableRootRefs[item.type] || fenceRootRef;
 
-      cloneRoot.getChildMeshes().forEach(m => {
-        shadows.addShadowCaster(m);
-        m.receiveShadows = true;
-      });
-    }
-
+    const cloneRoot = sourceRoot.clone(makeCloneName(item.type) + "_" + index);
     if (!cloneRoot) return;
 
     applyObjectTransform(cloneRoot, item);
+
+    cloneRoot.getChildMeshes().forEach(m => {
+      shadows.addShadowCaster(m);
+      m.receiveShadows = true;
+    });
   });
 
   selectedObject = null;
@@ -1209,22 +1158,8 @@ function duplicateSelectedFence(){
   const objectType = getObjectType(selectedObject);
   if (!objectType) return;
 
-  let cloneRoot = null;
-
-  if (objectType === "tree_1") {
-    const sourceRoot = editableRootRefs["tree_1"];
-    if (!sourceRoot) return;
-
-    cloneRoot = createTreeInstanceRoot(sourceRoot, objectType);
-  } else {
-    cloneRoot = selectedObject.clone(makeCloneName(objectType));
-    if (!cloneRoot) return;
-
-    cloneRoot.getChildMeshes().forEach(m => {
-      shadows.addShadowCaster(m);
-      m.receiveShadows = true;
-    });
-  }
+  const cloneRoot = selectedObject.clone(makeCloneName(objectType));
+  if (!cloneRoot) return;
 
   cloneRoot.position = selectedObject.position.clone();
   cloneRoot.position.x += 12;
@@ -1233,6 +1168,11 @@ function duplicateSelectedFence(){
 
   selectedObject = cloneRoot;
   snapSelectedObjectToGround();
+
+  cloneRoot.getChildMeshes().forEach(m => {
+    shadows.addShadowCaster(m);
+    m.receiveShadows = true;
+  });
 
   updateSelectedBadge();
 
@@ -1502,10 +1442,11 @@ dojo9RootRef = dojo9Root;
 registerEditableRoot("dojo9", dojo9Root);
 
 // ===== SHRINE 2 =====
-const shrine2Root = spawnAsset("shrine_2", new BABYLON.Vector3(9999, 0, 9999));
+const shrine2Root = spawnAsset("shrine_2", new BABYLON.Vector3(0, 0, 40));
 shrine2Root.name = "shrine2Root";
 registerEditableRoot("shrine_2", shrine2Root);
   
+
 // ===== LOAD DOJO 6 =====
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scene)
 .then(r => {
@@ -1572,7 +1513,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "fence_1.glb", sce
     m.receiveShadows = true;
   });
 
-    fenceRoot.position = new BABYLON.Vector3(9999, 0, 9999);
+  fenceRoot.position = new BABYLON.Vector3(-92, 0, -18);
   fenceRoot.scaling = new BABYLON.Vector3(2, 2, 2);
   fenceRoot.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
 
@@ -1601,9 +1542,8 @@ function waitForWorldAndLoadLayout() {
   const dojo9Ready = !!dojo9RootRef && !!dojo9RootRef.metadata && dojo9RootRef.metadata.loaded === true;
   const fenceReady = !!fenceRootRef && !!fenceRootRef.metadata && fenceRootRef.metadata.loaded === true;
 
-   if (dojoReady && dojo6Ready && dojo7Ready && dojo9Ready && fenceReady) {
+  if (dojoReady && dojo6Ready && dojo7Ready && dojo9Ready && fenceReady) {
     loadWorldLayout();
-    scene.freezeActiveMeshes(); // 🔥 performance boost
     return;
   }
 
