@@ -235,8 +235,10 @@ gizmoManager.clearGizmoOnEmptyPointerEvent = false;
 // ── CAMERAS ─────────────────────────────────
 const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/3.6,150,new BABYLON.Vector3(0,6,0),scene);
 orbit.lowerRadiusLimit=8; orbit.upperRadiusLimit=280; orbit.upperBetaLimit=Math.PI/2.05;
-orbit.wheelPrecision=2; orbit.attachControl(canvas,true);
-
+orbit.wheelPrecision=2;
+orbit.inertia = 0;
+orbit.panningInertia = 0;
+orbit.attachControl(canvas,true);
 const walk = new BABYLON.UniversalCamera("w", new BABYLON.Vector3(0, 8, 35), scene);
 walk.speed = 0;
 walk.angularSensibility = 999999;
