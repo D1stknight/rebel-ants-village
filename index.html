@@ -1565,25 +1565,54 @@ function waitForWorldAndLoadLayout() {
 
 waitForWorldAndLoadLayout();
 
-// 🌳 OAK TREE SOURCE
+// 🌳 TREE SOURCE
 const tree1Root = spawnAsset("tree_1", new BABYLON.Vector3(9999, 0, 9999));
 tree1Root.name = "tree1Root";
 registerEditableRoot("tree_1", tree1Root);
+registerEditableRoot("tree_1_pine", tree1Root);
 
 // 🌳 REPLACE ALL OAK PLACEHOLDERS WITH EDITABLE TREE CLONES
 function spawnOakTreeClonesFromPlaceholders() {
   oakPlaceholderPoints.forEach((pt, index) => {
     const cloneRoot = tree1Root.clone(makeCloneName("tree_1") + "_" + index);
-if (!cloneRoot) return;
-
-// 🔥 REGISTER CLONE FOR SAVE SYSTEM
-cloneRoot.metadata = {
-  type: "tree_1",
-  isClone: true
-};
-
-registerEditableRoot("tree_1", cloneRoot);
     if (!cloneRoot) return;
+
+    cloneRoot.metadata = {
+      type: "tree_1",
+      isClone: true
+    };
+
+    registerEditableRoot("tree_1", cloneRoot);
+
+    cloneRoot.position = new BABYLON.Vector3(pt.x, 0, pt.z);
+    cloneRoot.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
+    cloneRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+    cloneRoot.getChildMeshes().forEach(m => {
+      m.receiveShadows = false;
+    });
+
+    selectedObject = cloneRoot;
+    snapSelectedObjectToGround();
+  });
+
+  selectedObject = null;
+  updateSelectedBadge();
+  gizmoManager.attachToNode(null);
+}
+  
+// 🌲 REPLACE ALL PINE PLACEHOLDERS WITH EDITABLE TREE CLONES
+function spawnPineTreeClonesFromPlaceholders() {
+  pinePlaceholderPoints.forEach((pt, index) => {
+    const cloneRoot = tree1Root.clone(makeCloneName("tree_1_pine") + "_" + index);
+    if (!cloneRoot) return;
+
+    cloneRoot.metadata = {
+      type: "tree_1_pine",
+      isClone: true
+    };
+
+    registerEditableRoot("tree_1_pine", cloneRoot);
 
     cloneRoot.position = new BABYLON.Vector3(pt.x, 0, pt.z);
     cloneRoot.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
@@ -1602,30 +1631,34 @@ registerEditableRoot("tree_1", cloneRoot);
   gizmoManager.attachToNode(null);
 }
 
-function hasSavedOakTreeLayout() {
+function hasSavedTreeLayout(typeName) {
   const raw = localStorage.getItem("rebelAntsWorldLayout");
   if (!raw) return false;
 
   try {
     const data = JSON.parse(raw);
-    return Array.isArray(data) && data.some(item => item.type === "tree_1");
+    return Array.isArray(data) && data.some(item => item.type === typeName);
   } catch (err) {
     return false;
   }
 }
 
-function waitForTree1AndSpawnOaks() {
+function waitForTree1AndSpawnTreeFamilies() {
   if (!tree1Root || !tree1Root.metadata || tree1Root.metadata.loaded !== true) {
-    setTimeout(waitForTree1AndSpawnOaks, 300);
+    setTimeout(waitForTree1AndSpawnTreeFamilies, 300);
     return;
   }
 
-  if (!hasSavedOakTreeLayout()) {
+  if (!hasSavedTreeLayout("tree_1")) {
     spawnOakTreeClonesFromPlaceholders();
+  }
+
+  if (!hasSavedTreeLayout("tree_1_pine")) {
+    spawnPineTreeClonesFromPlaceholders();
   }
 }
 
-waitForTree1AndSpawnOaks();
+waitForTree1AndSpawnTreeFamilies();
   
 </script>
 </body>
