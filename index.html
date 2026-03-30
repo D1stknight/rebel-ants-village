@@ -212,8 +212,12 @@ function spawnAsset(type, position) {
       m.parent = root;
 
       if (!config.noShadows) {
-        shadows.addShadowCaster(m);
-        m.receiveShadows = true;
+       if (!config.noShadows) {
+  shadows.addShadowCaster(m);
+  m.receiveShadows = true;
+} else {
+  m.receiveShadows = false;
+}
       } else {
         m.receiveShadows = false;
       }
@@ -1605,8 +1609,9 @@ function waitForWorldAndLoadLayout() {
   const dojo9Ready = !!dojo9RootRef && !!dojo9RootRef.metadata && dojo9RootRef.metadata.loaded === true;
   const fenceReady = !!fenceRootRef && !!fenceRootRef.metadata && fenceRootRef.metadata.loaded === true;
 
-  if (dojoReady && dojo6Ready && dojo7Ready && dojo9Ready && fenceReady) {
+   if (dojoReady && dojo6Ready && dojo7Ready && dojo9Ready && fenceReady) {
     loadWorldLayout();
+    scene.freezeActiveMeshes(); // 🔥 performance boost
     return;
   }
 
