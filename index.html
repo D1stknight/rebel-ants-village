@@ -1563,8 +1563,35 @@ function waitForWorldAndLoadLayout() {
 
 waitForWorldAndLoadLayout();
 
-// 🌳 TEST TREE (OAK)
-spawnAsset("tree_1", new BABYLON.Vector3(0, 0, 20));
+// 🌳 OAK TREE SOURCE
+const tree1Root = spawnAsset("tree_1", new BABYLON.Vector3(9999, 0, 9999));
+tree1Root.name = "tree1Root";
+registerEditableRoot("tree_1", tree1Root);
+
+// 🌳 REPLACE ALL OAK PLACEHOLDERS WITH EDITABLE TREE CLONES
+function spawnOakTreeClonesFromPlaceholders() {
+  oakPlaceholderPoints.forEach((pt, index) => {
+    const cloneRoot = tree1Root.clone(makeCloneName("tree_1") + "_" + index);
+    if (!cloneRoot) return;
+
+    cloneRoot.position = new BABYLON.Vector3(pt.x, 0, pt.z);
+    cloneRoot.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
+    cloneRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+    cloneRoot.getChildMeshes().forEach(m => {
+      m.receiveShadows = false;
+    });
+
+    selectedObject = cloneRoot;
+    snapSelectedObjectToGround();
+  });
+
+  selectedObject = null;
+  updateSelectedBadge();
+  gizmoManager.attachToNode(null);
+}
+
+spawnOakTreeClonesFromPlaceholders();
   
 </script>
 </body>
