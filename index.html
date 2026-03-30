@@ -981,39 +981,32 @@ window.addEventListener('pointerup', () => {
   }
 });
 function getEditableRoots(){
-  return scene.transformNodes.filter(n =>
-    !n.parent &&
-    (
-      n.name === "fenceRoot" ||
-      n.name === "dojoRoot" ||
-      n.name === "dojo6Root" ||
-      n.name === "dojo7Root" ||
-      n.name === "dojo9Root" ||
-      n.name.startsWith("fenceRootClone_") ||
-      n.name.startsWith("dojoRootClone_") ||
-      n.name.startsWith("dojo6RootClone_") ||
-      n.name.startsWith("dojo7RootClone_") ||
-      n.name.startsWith("dojo9RootClone_")
-    )
+  const registeredRoots = Object.values(editableRootRefs).filter(Boolean);
+
+  const clones = scene.transformNodes.filter(n =>
+    !n.parent && n.name.includes("RootClone_")
   );
+
+  return [...registeredRoots, ...clones];
 }
 
 function getObjectType(node){
   if (!node) return null;
+
+  if (node.metadata && node.metadata.type) {
+    return node.metadata.type;
+  }
+
   if (node.name === "fenceRoot" || node.name.startsWith("fenceRootClone_")) return "fence";
   if (node.name === "dojoRoot" || node.name.startsWith("dojoRootClone_")) return "dojo";
   if (node.name === "dojo6Root" || node.name.startsWith("dojo6RootClone_")) return "dojo6";
   if (node.name === "dojo7Root" || node.name.startsWith("dojo7RootClone_")) return "dojo7";
   if (node.name === "dojo9Root" || node.name.startsWith("dojo9RootClone_")) return "dojo9";
+
   return null;
 }
 function makeCloneName(type){
-  if (type === "fence") return "fenceRootClone_" + Date.now();
-  if (type === "dojo") return "dojoRootClone_" + Date.now();
-  if (type === "dojo6") return "dojo6RootClone_" + Date.now();
-  if (type === "dojo7") return "dojo7RootClone_" + Date.now();
-  if (type === "dojo9") return "dojo9RootClone_" + Date.now();
-  return "clone_" + Date.now();
+  return type + "RootClone_" + Date.now();
 }
 
 function applyObjectTransform(node, data){
