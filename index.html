@@ -454,6 +454,7 @@ const rvr=BABYLON.MeshBuilder.CreateGround("rv",{width:22,height:320},scene);
 rvr.material=mat(new BABYLON.Color3(.1,.36,.68),{a:.82}); rvr.position=new BABYLON.Vector3(112,.14,0);
 
 // ── 4 TYPES OF TREES ─────────────────────────
+const USE_PROCEDURAL_TREES = false;
 setSt("Planting forest...");
 
 // TYPE 1: Pine/Conifer — stacked cones
@@ -506,28 +507,30 @@ function bamboo(x,z,h=12){
   }
 }
 
-// Plant forest in rings
-let ti=0;
-const treeFns=[pineCone,cherry,oak,bamboo];
-for(let ring=0;ring<4;ring++){
-  const r=115+ring*32, cnt=32+ring*16;
-  for(let i=0;i<cnt;i++){
-    const a=(i/cnt)*Math.PI*2+ring*.5, jit=(Math.random()-.5)*26;
-    const x=Math.cos(a)*r+jit, z=Math.sin(a)*r+jit, h=8+Math.random()*11;
-    // Weighted selection — more pine and cherry
-    const weights=[0,0,0,1,1,2,2,3]; // pine=0,cherry=1,oak=2,bamboo=3
-    const fn=treeFns[weights[Math.floor(Math.random()*weights.length)]||0];
-    fn(x,z,h); ti++;
+if (USE_PROCEDURAL_TREES) {
+  // Plant forest in rings
+  let ti=0;
+  const treeFns=[pineCone,cherry,oak,bamboo];
+  for(let ring=0;ring<4;ring++){
+    const r=115+ring*32, cnt=32+ring*16;
+    for(let i=0;i<cnt;i++){
+      const a=(i/cnt)*Math.PI*2+ring*.5, jit=(Math.random()-.5)*26;
+      const x=Math.cos(a)*r+jit, z=Math.sin(a)*r+jit, h=8+Math.random()*11;
+      // Weighted selection — more pine and cherry
+      const weights=[0,0,0,1,1,2,2,3]; // pine=0,cherry=1,oak=2,bamboo=3
+      const fn=treeFns[weights[Math.floor(Math.random()*weights.length)]||0];
+      fn(x,z,h); ti++;
+    }
   }
+  // Courtyard accent trees
+  [[-52,0],[52,0],[0,-52],[0,52],[-42,42],[42,42],[-42,-42],[42,-42],
+   [-55,24],[-55,-24],[55,24],[55,-24],[24,-55],[-24,-55],[24,55],[-24,55],
+   [-28,28],[28,28],[-28,-28],[28,-28]
+  ].forEach(([x,z])=>{
+    const fn=[cherry,bamboo,cherry,oak][Math.floor(Math.random()*4)];
+    fn(x,z,5+Math.random()*3);
+  });
 }
-// Courtyard accent trees
-[[-52,0],[52,0],[0,-52],[0,52],[-42,42],[42,42],[-42,-42],[42,-42],
- [-55,24],[-55,-24],[55,24],[55,-24],[24,-55],[-24,-55],[24,55],[-24,55],
- [-28,28],[28,28],[-28,-28],[28,-28]
-].forEach(([x,z])=>{
-  const fn=[cherry,bamboo,cherry,oak][Math.floor(Math.random()*4)];
-  fn(x,z,5+Math.random()*3);
-});
 
 // ── ROCKS ────────────────────────────────────
 const rkm=pbr(new BABYLON.Color3(.38,.38,.4),{r:.92,m:.08});
