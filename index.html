@@ -1442,7 +1442,7 @@ dojo9RootRef = dojo9Root;
 registerEditableRoot("dojo9", dojo9Root);
 
 // ===== SHRINE 2 =====
-const shrine2Root = spawnAsset("shrine_2", new BABYLON.Vector3(0, 0, 40));
+const shrine2Root = spawnAsset("shrine_2", new BABYLON.Vector3(9999, 0, 9999));
 shrine2Root.name = "shrine2Root";
 registerEditableRoot("shrine_2", shrine2Root);
   
@@ -1513,7 +1513,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "fence_1.glb", sce
     m.receiveShadows = true;
   });
 
-  fenceRoot.position = new BABYLON.Vector3(-92, 0, -18);
+    fenceRoot.position = new BABYLON.Vector3(9999, 0, 9999);
   fenceRoot.scaling = new BABYLON.Vector3(2, 2, 2);
   fenceRoot.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
 
