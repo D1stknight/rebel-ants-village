@@ -1572,6 +1572,15 @@ registerEditableRoot("tree_1", tree1Root);
 function spawnOakTreeClonesFromPlaceholders() {
   oakPlaceholderPoints.forEach((pt, index) => {
     const cloneRoot = tree1Root.clone(makeCloneName("tree_1") + "_" + index);
+if (!cloneRoot) return;
+
+// 🔥 REGISTER CLONE FOR SAVE SYSTEM
+cloneRoot.metadata = {
+  type: "tree_1",
+  isClone: true
+};
+
+registerEditableRoot("tree_1", cloneRoot);
     if (!cloneRoot) return;
 
     cloneRoot.position = new BABYLON.Vector3(pt.x, 0, pt.z);
