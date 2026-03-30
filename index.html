@@ -994,6 +994,10 @@ function getObjectType(node){
   if (!node) return null;
 
   if (node.metadata && node.metadata.type) {
+    if (node.metadata.type === "dojo_5") return "dojo";
+    if (node.metadata.type === "dojo_6") return "dojo6";
+    if (node.metadata.type === "dojo_7") return "dojo7";
+    if (node.metadata.type === "dojo_9") return "dojo9";
     return node.metadata.type;
   }
 
@@ -1082,11 +1086,11 @@ function loadWorldLayout(){
   data.forEach((item, index) => {
     if (item.name === "fenceRoot" || item.name === "dojoRoot" || item.name === "dojo6Root" || item.name === "dojo7Root" || item.name === "dojo9Root") return;
 
-    let sourceRoot = fenceRootRef;
-    if (item.type === "dojo") sourceRoot = dojoRootRef;
-    if (item.type === "dojo6") sourceRoot = dojo6RootRef;
-    if (item.type === "dojo7") sourceRoot = dojo7RootRef;
-    if (item.type === "dojo9") sourceRoot = dojo9RootRef;
+       let sourceRoot = fenceRootRef;
+    if (item.type === "dojo" || item.type === "dojo_5") sourceRoot = dojoRootRef;
+    if (item.type === "dojo6" || item.type === "dojo_6") sourceRoot = dojo6RootRef;
+    if (item.type === "dojo7" || item.type === "dojo_7") sourceRoot = dojo7RootRef;
+    if (item.type === "dojo9" || item.type === "dojo_9") sourceRoot = dojo9RootRef;
 
     const cloneRoot = sourceRoot.clone(makeCloneName(item.type) + "_" + index);
     if (!cloneRoot) return;
