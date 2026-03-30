@@ -1050,19 +1050,23 @@ function createTreeInstanceRoot(sourceRoot, objectType) {
   instanceRoot.metadata = { type: objectType };
 
   sourceRoot.getChildMeshes().forEach((sourceMesh, i) => {
-    const inst = sourceMesh.createInstance(sourceMesh.name + "_inst_" + Date.now() + "_" + i);
-    inst.parent = instanceRoot;
-    inst.position = sourceMesh.position.clone();
 
-    if (sourceMesh.rotationQuaternion) {
-      inst.rotationQuaternion = sourceMesh.rotationQuaternion.clone();
-    } else {
-      inst.rotation = sourceMesh.rotation.clone();
-    }
+  if (!sourceMesh.geometry) return; // 🔥 THIS FIXES EVERYTHING
 
-    inst.scaling = sourceMesh.scaling.clone();
-    inst.receiveShadows = false;
-  });
+  const inst = sourceMesh.createInstance(sourceMesh.name + "_inst_" + Date.now() + "_" + i);
+
+  inst.parent = instanceRoot;
+  inst.position = sourceMesh.position.clone();
+
+  if (sourceMesh.rotationQuaternion) {
+    inst.rotationQuaternion = sourceMesh.rotationQuaternion.clone();
+  } else {
+    inst.rotation = sourceMesh.rotation.clone();
+  }
+
+  inst.scaling = sourceMesh.scaling.clone();
+  inst.receiveShadows = false;
+});
 
   return instanceRoot;
 }
