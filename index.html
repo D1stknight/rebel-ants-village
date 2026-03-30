@@ -179,7 +179,16 @@ tree_1: {
   rotation: new BABYLON.Vector3(0, Math.PI, 0),
   groundOffset: 2,
   noShadows: true
+},
+
+pine_1: {
+  path: "/assets/buildings/pine_1.glb",
+  scale: 2,
+  rotation: new BABYLON.Vector3(0, Math.PI, 0),
+  groundOffset: 2,
+  noShadows: true
 }
+  
 };
 
   // ═══════════════════════════════════════
@@ -1624,6 +1633,9 @@ function waitForTree1AndSpawnOaks() {
 }
 
 waitForTree1AndSpawnOaks();
+
+// 🌲 TEST PINE
+spawnAsset("pine_1", new BABYLON.Vector3(20, 0, 20));
 
 
   
