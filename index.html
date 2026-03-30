@@ -208,16 +208,12 @@ function spawnAsset(type, position) {
 
       BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
 
-        meshes.forEach(m => {
+           meshes.forEach(m => {
       m.parent = root;
 
       if (!config.noShadows) {
-       if (!config.noShadows) {
-  shadows.addShadowCaster(m);
-  m.receiveShadows = true;
-} else {
-  m.receiveShadows = false;
-}
+        shadows.addShadowCaster(m);
+        m.receiveShadows = true;
       } else {
         m.receiveShadows = false;
       }
@@ -691,7 +687,8 @@ function riceWindow(x,y,z,w,h,glow){
   box(w,h,.09,pm2,[x,y,z+.05]);
   box(w,.05,.05,fm,[x,y,z+.1]); box(.05,h,.05,fm,[x,y,z+.1]);
   box(.05,h,.05,fm,[x+w*.28,y,z+.1]); box(.05,h,.05,fm,[x-w*.28,y,z+.1]);
-   if(glow){const wl=new BABYLON.PointLight("wl"+x,new BABYLON.Vector3(x,y,z+1.5),scene);wl.diffuse=BABYLON.Color3.FromHexString(glow);wl.intensity=0;wl.range=5;wl._b=0;lanLights.push(wl);}
+  if(glow){const wl=new BABYLON.PointLight("wl"+x,new BABYLON.Vector3(x,y,z+1.5),scene);wl.diffuse=BABYLON.Color3.FromHexString(glow);wl.intensity=0;wl.range=5;wl._b=0;lanLights.push(wl);}
+}
 
 function stoneFoundation(x,z,w,d,layers=3){
   const sm2=pbr(new BABYLON.Color3(.42,.42,.48),{r:.92,m:.05});
