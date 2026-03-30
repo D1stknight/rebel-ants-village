@@ -470,16 +470,10 @@ function cherry(x,z,h=8){
 }
 
 // TYPE 3: Oak/Round canopy
+const oakPlaceholderPoints = [];
+
 function oak(x,z,h=9){
-  const tk=mat(new BABYLON.Color3(.22,.13,.07));
-  cyl(.3,.7,h*.55,8,tk,[x,h*.27,z]);
-  const lm=mat(new BABYLON.Color3(.12+Math.random()*.1,.3+Math.random()*.18,.08+Math.random()*.08));
-  const main=sph(h*.42,lm,[x,h*.75,z]);
-  main.scaling=new BABYLON.Vector3(1.1,.9,1.1);
-  // Secondary blobs
-  for(let i=0;i<3;i++){
-    const b=sph(h*.28,lm,[x+(Math.random()-.5)*h*.35,h*(.68+Math.random()*.15),z+(Math.random()-.5)*h*.35]);
-  }
+  oakPlaceholderPoints.push({ x, z, h });
 }
 
 // TYPE 4: Bamboo — tall thin stalks
