@@ -452,11 +452,10 @@ rvr.material=mat(new BABYLON.Color3(.1,.36,.68),{a:.82}); rvr.position=new BABYL
 setSt("Planting forest...");
 
 // TYPE 1: Pine/Conifer — stacked cones
+const pinePlaceholderPoints = [];
+
 function pineCone(x,z,h=10){
-  const tk=mat(new BABYLON.Color3(.2,.12,.06));
-  cyl(.25,.6,h*.45,7,tk,[x,h*.22,z]);
-  const lm=mat(new BABYLON.Color3(.06+Math.random()*.08,.22+Math.random()*.14,.05+Math.random()*.06));
-  for(let i=0;i<4;i++){const ly=h*(.38+i*.16),lr=h*(.27-i*.05);cyl(.15,lr*2.2,h*.34,8,lm,[x,ly,z]);}
+  pinePlaceholderPoints.push({ x, z, h });
 }
 
 // TYPE 2: Cherry Blossom — fluffy pink clouds
