@@ -178,8 +178,9 @@ tree_1: {
   path: "/assets/buildings/tree_1.glb",
   scale: 4,
   rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
-  groundOffset: 0
-}  
+  groundOffset: 0,
+  noShadows: true
+}
   
 };
 
@@ -207,10 +208,15 @@ function spawnAsset(type, position) {
 
       BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
 
-    meshes.forEach(m => {
+        meshes.forEach(m => {
       m.parent = root;
-      shadows.addShadowCaster(m);
-      m.receiveShadows = true;
+
+      if (!config.noShadows) {
+        shadows.addShadowCaster(m);
+        m.receiveShadows = true;
+      } else {
+        m.receiveShadows = false;
+      }
     });
 
     root.metadata.loaded = true;
@@ -1454,8 +1460,8 @@ const shrine2Root = spawnAsset("shrine_2", new BABYLON.Vector3(9999, 0, 9999));
 shrine2Root.name = "shrine2Root";
 registerEditableRoot("shrine_2", shrine2Root);
 
-  // ===== TREE 1 =====
-const tree1Root = spawnAsset("tree_1", new BABYLON.Vector3(0, 0, 40));
+ // ===== TREE 1 =====
+const tree1Root = spawnAsset("tree_1", new BABYLON.Vector3(9999, 0, 9999));
 tree1Root.name = "tree1Root";
 registerEditableRoot("tree_1", tree1Root);
   
