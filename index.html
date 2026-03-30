@@ -176,9 +176,9 @@ shrine_2: {
 
 tree_1: {
   path: "/assets/buildings/tree_1.glb",
-  scale: 6,
+  scale: 3,
   rotation: new BABYLON.Vector3(0, Math.PI, 0),
-  groundOffset: 2,
+  groundOffset: 1,
   noShadows: true
 }
   
@@ -1121,13 +1121,14 @@ function loadWorldLayout(){
 
   if (!Array.isArray(data) || !data.length) return;
 
-  scene.transformNodes
+    scene.transformNodes
     .filter(n =>
       n.name.startsWith("fenceRootClone_") ||
       n.name.startsWith("dojoRootClone_") ||
       n.name.startsWith("dojo6RootClone_") ||
       n.name.startsWith("dojo7RootClone_") ||
-      n.name.startsWith("dojo9RootClone_")
+      n.name.startsWith("dojo9RootClone_") ||
+      n.name.startsWith("tree_1RootClone_")
     )
     .forEach(n => n.dispose(false, false));
 
@@ -1143,12 +1144,18 @@ function loadWorldLayout(){
   if (baseDojo7) applyObjectTransform(dojo7RootRef, baseDojo7);
   if (baseDojo9) applyObjectTransform(dojo9RootRef, baseDojo9);
 
-    data.forEach((item, index) => {
-    if (item.name === "fenceRoot" || item.name === "dojoRoot" || item.name === "dojo6Root" || item.name === "dojo7Root" || item.name === "dojo9Root") return;
+     data.forEach((item, index) => {
+    if (
+      item.name === "fenceRoot" ||
+      item.name === "dojoRoot" ||
+      item.name === "dojo6Root" ||
+      item.name === "dojo7Root" ||
+      item.name === "dojo9Root" ||
+      item.name === "tree1Root"
+    ) return;
 
     let sourceRoot = editableRootRefs[item.type] || fenceRootRef;
     let cloneRoot = null;
-
     if (item.type === "tree_1") {
       cloneRoot = createTreeInstanceRoot(sourceRoot, item.type);
     } else {
