@@ -1634,8 +1634,65 @@ function waitForTree1AndSpawnOaks() {
 
 waitForTree1AndSpawnOaks();
 
-// 🌲 TEST PINE
-spawnAsset("pine_1", new BABYLON.Vector3(20, 0, 20));
+// 🌲 PINE TREE SOURCE
+const pine1Root = spawnAsset("pine_1", new BABYLON.Vector3(9999, 0, 9999));
+pine1Root.name = "pine1Root";
+registerEditableRoot("pine_1", pine1Root);
+
+// 🌲 REPLACE ALL PINE PLACEHOLDERS WITH EDITABLE PINE CLONES
+function spawnPineTreeClonesFromPlaceholders() {
+  pinePlaceholderPoints.forEach((pt, index) => {
+    const cloneRoot = pine1Root.clone(makeCloneName("pine_1") + "_" + index);
+    if (!cloneRoot) return;
+
+    cloneRoot.metadata = {
+      type: "pine_1",
+      isClone: true
+    };
+
+    registerEditableRoot("pine_1", cloneRoot);
+
+    cloneRoot.position = new BABYLON.Vector3(pt.x, 0, pt.z);
+    cloneRoot.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
+    cloneRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+    cloneRoot.getChildMeshes().forEach(m => {
+      m.receiveShadows = false;
+    });
+
+    selectedObject = cloneRoot;
+    snapSelectedObjectToGround();
+  });
+
+  selectedObject = null;
+  updateSelectedBadge();
+  gizmoManager.attachToNode(null);
+}
+
+function hasSavedPineTreeLayout() {
+  const raw = localStorage.getItem("rebelAntsWorldLayout");
+  if (!raw) return false;
+
+  try {
+    const data = JSON.parse(raw);
+    return Array.isArray(data) && data.some(item => item.type === "pine_1");
+  } catch (err) {
+    return false;
+  }
+}
+
+function waitForPine1AndSpawnPines() {
+  if (!pine1Root || !pine1Root.metadata || pine1Root.metadata.loaded !== true) {
+    setTimeout(waitForPine1AndSpawnPines, 300);
+    return;
+  }
+
+  if (!hasSavedPineTreeLayout()) {
+    spawnPineTreeClonesFromPlaceholders();
+  }
+}
+
+waitForPine1AndSpawnPines();
 
 
   
