@@ -1480,7 +1480,30 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "shrine_2.glb", sc
     }
   });
 
-  shrine2ModelRoot.position = new BABYLON.Vector3(0, 6, 0);
+    // Auto-center the shrine mesh so the gizmo sits on the actual building
+  const shrineMeshes = shrine2ModelRoot.getChildMeshes();
+
+  let minX = Infinity, minY = Infinity, minZ = Infinity;
+  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+
+  shrineMeshes.forEach(m => {
+    const info = m.getBoundingInfo().boundingBox;
+    const min = info.minimumWorld;
+    const max = info.maximumWorld;
+
+    if (min.x < minX) minX = min.x;
+    if (min.y < minY) minY = min.y;
+    if (min.z < minZ) minZ = min.z;
+
+    if (max.x > maxX) maxX = max.x;
+    if (max.y > maxY) maxY = max.y;
+    if (max.z > maxZ) maxZ = max.z;
+  });
+
+  const centerX = (minX + maxX) / 2;
+  const centerZ = (minZ + maxZ) / 2;
+
+  shrine2ModelRoot.position = new BABYLON.Vector3(-centerX, -minY, -centerZ);
   shrine2ModelRoot.rotation = BABYLON.Vector3.Zero();
   shrine2ModelRoot.scaling = new BABYLON.Vector3(1, 1, 1);
 
