@@ -173,14 +173,6 @@ shrine_2: {
   rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
   groundOffset: 10
 },
-
-tree_1: {
-  path: "/assets/buildings/tree_1.glb",
-  scale: 1,
-  rotation: new BABYLON.Vector3(0, Math.PI, 0),
-  groundOffset: 0,
-  noShadows: true
-}
   
 };
 
@@ -1513,11 +1505,6 @@ registerEditableRoot("dojo9", dojo9Root);
 const shrine2Root = spawnAsset("shrine_2", new BABYLON.Vector3(9999, 0, 9999));
 shrine2Root.name = "shrine2Root";
 registerEditableRoot("shrine_2", shrine2Root);
-
-// ===== TREE 1 =====
-const tree1Root = spawnAsset("tree_1", new BABYLON.Vector3(0, 0, 40));
-tree1Root.name = "tree1Root";
-registerEditableRoot("tree_1", tree1Root);
   
 // ===== LOAD DOJO 6 =====
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scene)
