@@ -1045,6 +1045,28 @@ function makeCloneName(type){
   return type + "RootClone_" + Date.now();
 }
 
+function createTreeInstanceRoot(sourceRoot, objectType) {
+  const instanceRoot = new BABYLON.TransformNode(makeCloneName(objectType), scene);
+  instanceRoot.metadata = { type: objectType };
+
+  sourceRoot.getChildMeshes().forEach((sourceMesh, i) => {
+    const inst = sourceMesh.createInstance(sourceMesh.name + "_inst_" + Date.now() + "_" + i);
+    inst.parent = instanceRoot;
+    inst.position = sourceMesh.position.clone();
+
+    if (sourceMesh.rotationQuaternion) {
+      inst.rotationQuaternion = sourceMesh.rotationQuaternion.clone();
+    } else {
+      inst.rotation = sourceMesh.rotation.clone();
+    }
+
+    inst.scaling = sourceMesh.scaling.clone();
+    inst.receiveShadows = false;
+  });
+
+  return instanceRoot;
+}
+
 function applyObjectTransform(node, data){
   node.position = new BABYLON.Vector3(data.position.x, data.position.y, data.position.z);
   node.rotation = new BABYLON.Vector3(data.rotation.x, data.rotation.y, data.rotation.z);
@@ -1175,8 +1197,22 @@ function duplicateSelectedFence(){
   const objectType = getObjectType(selectedObject);
   if (!objectType) return;
 
-  const cloneRoot = selectedObject.clone(makeCloneName(objectType));
-  if (!cloneRoot) return;
+  let cloneRoot = null;
+
+  if (objectType === "tree_1") {
+    const sourceRoot = editableRootRefs["tree_1"];
+    if (!sourceRoot) return;
+
+    cloneRoot = createTreeInstanceRoot(sourceRoot, objectType);
+  } else {
+    cloneRoot = selectedObject.clone(makeCloneName(objectType));
+    if (!cloneRoot) return;
+
+    cloneRoot.getChildMeshes().forEach(m => {
+      shadows.addShadowCaster(m);
+      m.receiveShadows = true;
+    });
+  }
 
   cloneRoot.position = selectedObject.position.clone();
   cloneRoot.position.x += 12;
@@ -1185,11 +1221,6 @@ function duplicateSelectedFence(){
 
   selectedObject = cloneRoot;
   snapSelectedObjectToGround();
-
-  cloneRoot.getChildMeshes().forEach(m => {
-    shadows.addShadowCaster(m);
-    m.receiveShadows = true;
-  });
 
   updateSelectedBadge();
 
