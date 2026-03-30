@@ -607,8 +607,8 @@ function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   cyl(.3,.3,.05,10,capm,[0,-.25,0]).parent=root;
   cyl(.3,.3,.05,10,capm,[0,-.66,0]).parent=root;
   // Light
-  const ll=new BABYLON.PointLight("ll"+lIdx,new BABYLON.Vector3(x,y-.46,z),scene);
-  ll.diffuse=BABYLON.Color3.FromHexString(col); ll.intensity=1.2; ll.range=10; ll._b=1.2;
+    const ll=new BABYLON.PointLight("ll"+lIdx,new BABYLON.Vector3(x,y-.46,z),scene);
+  ll.diffuse=BABYLON.Color3.FromHexString(col); ll.intensity=0; ll.range=10; ll._b=0;
   lanLights.push(ll); lIdx++;
 }
 
@@ -691,8 +691,7 @@ function riceWindow(x,y,z,w,h,glow){
   box(w,h,.09,pm2,[x,y,z+.05]);
   box(w,.05,.05,fm,[x,y,z+.1]); box(.05,h,.05,fm,[x,y,z+.1]);
   box(.05,h,.05,fm,[x+w*.28,y,z+.1]); box(.05,h,.05,fm,[x-w*.28,y,z+.1]);
-  if(glow){const wl=new BABYLON.PointLight("wl"+x,new BABYLON.Vector3(x,y,z+1.5),scene);wl.diffuse=BABYLON.Color3.FromHexString(glow);wl.intensity=.5;wl.range=5;wl._b=.5;lanLights.push(wl);}
-}
+   if(glow){const wl=new BABYLON.PointLight("wl"+x,new BABYLON.Vector3(x,y,z+1.5),scene);wl.diffuse=BABYLON.Color3.FromHexString(glow);wl.intensity=0;wl.range=5;wl._b=0;lanLights.push(wl);}
 
 function stoneFoundation(x,z,w,d,layers=3){
   const sm2=pbr(new BABYLON.Color3(.42,.42,.48),{r:.92,m:.05});
