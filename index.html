@@ -512,6 +512,7 @@ function bamboo(x,z,h=12){
 }
 
 if (USE_PROCEDURAL_TREES) {
+if (false) {
   // Plant forest in rings
   let ti=0;
   const treeFns=[pineCone,cherry,oak,bamboo];
@@ -534,6 +535,7 @@ if (USE_PROCEDURAL_TREES) {
     const fn=[cherry,bamboo,cherry,oak][Math.floor(Math.random()*4)];
     fn(x,z,5+Math.random()*3);
   });
+}
 }
 
 // ── ROCKS ────────────────────────────────────
