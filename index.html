@@ -166,6 +166,11 @@ dojo_9: {
     scale: 2,
     rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
   }
+shrine_2: {
+  path: "/assets/buildings/shrine_2.glb",
+  scale: 1.2,
+  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+}
 };
 
   // ═══════════════════════════════════════
@@ -1426,6 +1431,12 @@ const dojo9Root = spawnAsset("dojo_9", new BABYLON.Vector3(75, 1.8, 80));
 dojo9Root.name = "dojo9Root";
 dojo9RootRef = dojo9Root;
 registerEditableRoot("dojo9", dojo9Root);
+
+// ===== SHRINE 2 =====
+const shrine2Root = spawnAsset("shrine_2", new BABYLON.Vector3(0, 0, 0));
+shrine2Root.name = "shrine2Root";
+registerEditableRoot("shrine_2", shrine2Root);
+  
 
 // ===== LOAD DOJO 6 =====
 BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scene)
