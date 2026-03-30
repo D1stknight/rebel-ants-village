@@ -1448,10 +1448,54 @@ dojo9Root.name = "dojo9Root";
 dojo9RootRef = dojo9Root;
 registerEditableRoot("dojo9", dojo9Root);
 
-// ===== SHRINE 2 =====
-const shrine2Root = spawnAsset("shrine_2", new BABYLON.Vector3(0, 0, 110));
-shrine2Root.name = "shrine2Root";
-registerEditableRoot("shrine_2", shrine2Root);
+// ===== LOAD SHRINE 2 =====
+BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "shrine_2.glb", scene)
+.then(r => {
+
+  const shrine2Root = new BABYLON.TransformNode("shrine2Root", scene);
+
+  const shrine2ModelRoot = new BABYLON.TransformNode("shrine2ModelRoot", scene);
+  shrine2ModelRoot.parent = shrine2Root;
+
+  r.meshes.forEach(m => {
+    if (m !== shrine2Root && m !== shrine2ModelRoot) {
+      m.parent = shrine2ModelRoot;
+    }
+
+    if (m.rotationQuaternion) {
+      m.rotationQuaternion = null;
+    }
+
+    shadows.addShadowCaster(m);
+    m.receiveShadows = true;
+  });
+
+  r.transformNodes.forEach(t => {
+    if (t !== shrine2Root && t !== shrine2ModelRoot) {
+      t.parent = shrine2ModelRoot;
+    }
+
+    if (t.rotationQuaternion) {
+      t.rotationQuaternion = null;
+    }
+  });
+
+  shrine2ModelRoot.position = new BABYLON.Vector3(0, 18, 0);
+  shrine2ModelRoot.rotation = BABYLON.Vector3.Zero();
+  shrine2ModelRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+  shrine2Root.position = new BABYLON.Vector3(0, 0, 92);
+  shrine2Root.scaling = new BABYLON.Vector3(12, 12, 12);
+  shrine2Root.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
+
+  registerEditableRoot("shrine_2", shrine2Root);
+
+  console.log("Shrine 2 loaded", r);
+
+})
+.catch(err => {
+  console.error("Shrine 2 failed to load", err);
+});
   
 
 // ===== LOAD DOJO 6 =====
