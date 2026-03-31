@@ -887,10 +887,10 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", 
   playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
   playerRoot.scaling = new BABYLON.Vector3(1, 1, 1);
 
-  // Parent all imported meshes under our player root
+   // Parent all imported meshes under our player root
   r.meshes.forEach(m => {
-    if (m !== dojo6Root) {
-      m.parent = dojo6Root;
+    if (m !== playerRoot) {
+      m.parent = playerRoot;
     }
 
     if (m.rotationQuaternion) {
@@ -902,7 +902,11 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", 
   });
 
   r.transformNodes.forEach(t => {
-    if (t !== dojo6Root && t.rotationQuaternion) {
+    if (t !== playerRoot) {
+      t.parent = playerRoot;
+    }
+
+    if (t.rotationQuaternion) {
       t.rotationQuaternion = null;
     }
   });
