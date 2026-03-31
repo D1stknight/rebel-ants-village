@@ -1693,7 +1693,21 @@ function waitForPine1AndSpawnPines() {
   }
 }
 
-waitForPine1AndSpawnPines();
+// 🔥 FORCE CHECK + SPAWN PINE
+function startPineSystem() {
+  if (!pine1Root || !pine1Root.metadata || pine1Root.metadata.loaded !== true) {
+    setTimeout(startPineSystem, 300);
+    return;
+  }
+
+  console.log("🌲 Pine ready — spawning...");
+
+  if (!hasSavedPineTreeLayout()) {
+    spawnPineTreeClonesFromPlaceholders();
+  }
+}
+
+startPineSystem();
 
 
   
