@@ -1594,12 +1594,10 @@ function spawnOakTreeClonesFromPlaceholders() {
     const cloneRoot = tree1Root.clone(makeCloneName("tree_1") + "_" + index);
     if (!cloneRoot) return;
 
-    cloneRoot.metadata = {
+       cloneRoot.metadata = {
       type: "tree_1",
       isClone: true
     };
-
-    registerEditableRoot("tree_1", cloneRoot);
 
     cloneRoot.position = new BABYLON.Vector3(pt.x, 0, pt.z);
     cloneRoot.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
@@ -1654,12 +1652,10 @@ function spawnPineTreeClonesFromPlaceholders() {
     const cloneRoot = pine1Root.clone(makeCloneName("pine_1") + "_" + index);
     if (!cloneRoot) return;
 
-    cloneRoot.metadata = {
+       cloneRoot.metadata = {
       type: "pine_1",
       isClone: true
     };
-
-    registerEditableRoot("pine_1", cloneRoot);
 
     cloneRoot.position = new BABYLON.Vector3(pt.x, 0, pt.z);
     cloneRoot.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
