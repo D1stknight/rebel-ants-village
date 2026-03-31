@@ -1565,8 +1565,16 @@ function waitForWorldAndLoadLayout() {
   const dojo9Ready = !!dojo9RootRef && !!dojo9RootRef.metadata && dojo9RootRef.metadata.loaded === true;
   const fenceReady = !!fenceRootRef && !!fenceRootRef.metadata && fenceRootRef.metadata.loaded === true;
 
-  if (dojoReady && dojo6Ready && dojo7Ready && dojo9Ready && fenceReady) {
+    if (dojoReady && dojo6Ready && dojo7Ready && dojo9Ready && fenceReady) {
     loadWorldLayout();
+
+    // 🌲 after layout is loaded, make sure pines spawn if no saved pine layout exists
+    setTimeout(() => {
+      if (typeof startPineSystem === "function") {
+        startPineSystem();
+      }
+    }, 100);
+
     return;
   }
 
