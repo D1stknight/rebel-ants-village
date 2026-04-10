@@ -796,20 +796,7 @@ function doorFrame(x,y,z,w,h){
 (()=>{
   const x=0,z=80;
 
-  // Strong ambient glow
-  const glowLight = new BABYLON.PointLight("archiveGlow", new BABYLON.Vector3(x, 6, z), scene);
-  glowLight.diffuse = new BABYLON.Color3(0.3, 0.1, 0.6);
-  glowLight.intensity = 1.2;
-glowLight.range = 20;
-
-  // Secondary soft light (fill)
-  const fillLight = new BABYLON.PointLight("archiveFill", new BABYLON.Vector3(x, 3, z), scene);
-  fillLight.diffuse = new BABYLON.Color3(0.1, 0.05, 0.3);
-  fillLight.intensity = 0.6;
-fillLight.range = 20;
-
-  // Flicker effect
-  // archive flicker removed for performance
+    // Archive glow lights removed
 
   // KEEP TRIGGER
   addTrigger({
@@ -1454,22 +1441,7 @@ addTrigger({
   ]
 });
 
-// 🔥 DOJO GLOW
-const dojoGlow = new BABYLON.PointLight("dojoGlow", BABYLON.Vector3.Zero(), scene);
-dojoGlow.parent = dojoRoot;
-dojoGlow.position = new BABYLON.Vector3(0, 5, 0);
-dojoGlow.diffuse = new BABYLON.Color3(0.2, 0.4, 1.0);
-dojoGlow.intensity = 1.5;
-dojoGlow.range = 22;
-
-const dojoFill = new BABYLON.PointLight("dojoFill", BABYLON.Vector3.Zero(), scene);
-dojoFill.parent = dojoRoot;
-dojoFill.position = new BABYLON.Vector3(0, 2, 0);
-dojoFill.diffuse = new BABYLON.Color3(0.1, 0.2, 0.6);
-dojoFill.intensity = 0.8;
-dojoFill.range = 28;
-
-// pulse removed for performance
+// Dojo glow lights removed — not visible at night, wasting performance
 
 // ===== DOJO 7 (NEW SYSTEM) =====
 
