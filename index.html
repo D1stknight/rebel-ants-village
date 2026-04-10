@@ -217,8 +217,8 @@ function spawnAsset(type, position) {
 
     meshes.forEach(m => {
       m.parent = root;
-      shadows.addShadowCaster(m);
-      m.receiveShadows = true;
+      if (!config.noShadows) shadows.addShadowCaster(m);
+      m.receiveShadows = !config.noShadows;
     });
 
     root.metadata.loaded = true;
