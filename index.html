@@ -389,8 +389,32 @@ function updateSky(){
 updateSky(); setInterval(updateSky,30000);
 
 // ── HELPERS ──────────────────────────────────
-function mat(c,o={}){const m=new BABYLON.StandardMaterial("m"+Math.random(),scene);m.diffuseColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;m.specularColor=new BABYLON.Color3(.03,.03,.03);if(o.e)m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;if(o.a)m.alpha=o.a;return m;}
-function pbr(c,o={}){const m=new BABYLON.PBRMaterial("p"+Math.random(),scene);m.albedoColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;m.metallic=o.m||0;m.roughness=o.r||.85;if(o.e){m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;m.emissiveIntensity=o.ei||1;}if(o.a)m.alpha=o.a;return m;}
+// Material cache — reuse identical materials instead of creating new ones
+const _matCache={}, _pbrCache={};
+function mat(c,o={}){
+  const col=typeof c==='string'?c:c.toHexString();
+  const key=col+JSON.stringify(o);
+  if(!o.e&&!o.a&&_matCache[key]) return _matCache[key];
+  const m=new BABYLON.StandardMaterial("m_"+col,scene);
+  m.diffuseColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;
+  m.specularColor=new BABYLON.Color3(.03,.03,.03);
+  if(o.e)m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;
+  if(o.a)m.alpha=o.a;
+  if(!o.e&&!o.a)_matCache[key]=m;
+  return m;
+}
+function pbr(c,o={}){
+  const col=typeof c==='string'?c:c.toHexString();
+  const key=col+JSON.stringify(o);
+  if(!o.e&&!o.a&&_pbrCache[key]) return _pbrCache[key];
+  const m=new BABYLON.PBRMaterial("p_"+col,scene);
+  m.albedoColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;
+  m.metallic=o.m||0;m.roughness=o.r||.85;
+  if(o.e){m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;m.emissiveIntensity=o.ei||1;}
+  if(o.a)m.alpha=o.a;
+  if(!o.e&&!o.a)_pbrCache[key]=m;
+  return m;
+}
 function box(w,h,d,mat,pos,ry=0){const b=BABYLON.MeshBuilder.CreateBox("b"+Math.random(),{width:w,height:h,depth:d},scene);b.material=mat;if(pos)b.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(ry)b.rotation.y=ry;b.receiveShadows=true;shadows.addShadowCaster(b);return b;}
 function cyl(rt,rb,h,t,mat,pos,rz=0){const c=BABYLON.MeshBuilder.CreateCylinder("cy"+Math.random(),{diameterTop:rt,diameterBottom:rb,height:h,tessellation:t},scene);c.material=mat;if(pos)c.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(rz)c.rotation.z=rz;c.receiveShadows=true;shadows.addShadowCaster(c);return c;}
 function sph(d,mat,pos){const s=BABYLON.MeshBuilder.CreateSphere("sp"+Math.random(),{diameter:d,segments:8},scene);s.material=mat;if(pos)s.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);s.receiveShadows=true;shadows.addShadowCaster(s);return s;}
