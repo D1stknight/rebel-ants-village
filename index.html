@@ -1239,14 +1239,14 @@ function toggleWalk(){
   if (walkMode) {
     if (charMesh) {
            walk.position = new BABYLON.Vector3(
-        charMesh.position.x,
-        charMesh.position.y + 2.2,
-        charMesh.position.z - 4
+        charMesh.position.x + Math.sin(charMesh.rotation.y) * 7,
+        charMesh.position.y + 3.5,
+        charMesh.position.z + Math.cos(charMesh.rotation.y) * 7
       );
       walk.setTarget(new BABYLON.Vector3(
         charMesh.position.x,
-        charMesh.position.y + 1.8,
-        charMesh.position.z + 2
+        charMesh.position.y + 1.2,
+        charMesh.position.z
       ));
     }
 
@@ -1351,12 +1351,19 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if (key === 'w') moveForward = true;
-  if (key === 's') moveBackward = true;
-  if (key === 'a') turnLeft = true;
-  if (key === 'd') turnRight = true;
+  if (key === 'w' || e.key === 'ArrowUp') moveForward = true;
+  if (key === 's' || e.key === 'ArrowDown') moveBackward = true;
+  if (key === 'a' || e.key === 'ArrowLeft') turnLeft = true;
+  if (key === 'd' || e.key === 'ArrowRight') turnRight = true;
 });
 
+document.addEventListener('keyup', e => {
+  const key = e.key.toLowerCase();
+  if (key === 'w' || e.key === 'ArrowUp') moveForward = false;
+  if (key === 's' || e.key === 'ArrowDown') moveBackward = false;
+  if (key === 'a' || e.key === 'ArrowLeft') turnLeft = false;
+  if (key === 'd' || e.key === 'ArrowRight') turnRight = false;
+});
 window.addEventListener('resize',()=>engine.resize());
 
 // ── RENDER LOOP ──────────────────────────────
@@ -1398,22 +1405,18 @@ engine.runRenderLoop(()=>{
       charMesh.position.addInPlace(forward.scale(-moveSpeed * 0.7));
     }
 
+    // Camera always stays behind character based on their rotation
+    const camDist = 7, camHeight = 3.5;
     const desiredCameraPosition = new BABYLON.Vector3(
-      charMesh.position.x,
-      charMesh.position.y + 1.6,
-      charMesh.position.z - 5
+      charMesh.position.x + Math.sin(charMesh.rotation.y) * camDist,
+      charMesh.position.y + camHeight,
+      charMesh.position.z + Math.cos(charMesh.rotation.y) * camDist
     );
-
-    walk.position = BABYLON.Vector3.Lerp(
-      walk.position,
-      desiredCameraPosition,
-      0.12
-    );
-
+    walk.position = BABYLON.Vector3.Lerp(walk.position, desiredCameraPosition, 0.1);
     walk.setTarget(new BABYLON.Vector3(
       charMesh.position.x,
-      charMesh.position.y + 0.9,
-      charMesh.position.z + 3
+      charMesh.position.y + 1.2,
+      charMesh.position.z
     ));
   }
   scene.render();
