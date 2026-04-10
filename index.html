@@ -1239,9 +1239,9 @@ function toggleWalk(){
   if (walkMode) {
     if (charMesh) {
            walk.position = new BABYLON.Vector3(
-        charMesh.position.x + Math.sin(charMesh.rotation.y) * 7,
+        charMesh.position.x - Math.sin(charMesh.rotation.y) * 7,
         charMesh.position.y + 3.5,
-        charMesh.position.z + Math.cos(charMesh.rotation.y) * 7
+        charMesh.position.z - Math.cos(charMesh.rotation.y) * 7
       );
       walk.setTarget(new BABYLON.Vector3(
         charMesh.position.x,
@@ -1405,12 +1405,12 @@ engine.runRenderLoop(()=>{
       charMesh.position.addInPlace(forward.scale(-moveSpeed * 0.7));
     }
 
-    // Camera always stays behind character based on their rotation
+    // Camera always stays behind character — negate forward direction
     const camDist = 7, camHeight = 3.5;
     const desiredCameraPosition = new BABYLON.Vector3(
-      charMesh.position.x + Math.sin(charMesh.rotation.y) * camDist,
+      charMesh.position.x - Math.sin(charMesh.rotation.y) * camDist,
       charMesh.position.y + camHeight,
-      charMesh.position.z + Math.cos(charMesh.rotation.y) * camDist
+      charMesh.position.z - Math.cos(charMesh.rotation.y) * camDist
     );
     walk.position = BABYLON.Vector3.Lerp(walk.position, desiredCameraPosition, 0.1);
     walk.setTarget(new BABYLON.Vector3(
