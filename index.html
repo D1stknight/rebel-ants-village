@@ -593,9 +593,9 @@ function fireBowl(x,z){
   fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.intensity=1.8; fl.range=10; fl._b=1.8;
   fireLights.push(fl);
 }
-[[-4,95],[4,95],[-4,-5],[4,-5],[-26,2],[26,2],[-26,-2],[26,-2],
- [-4,76],[4,76],[-4,-68],[4,-68],[-68,4],[68,4],[0,0],
- [-20,20],[20,20],[-20,-20],[20,-20]
+// Reduced fire bowls: 19 → 8 lights (keep key positions only)
+[[-4,95],[4,95],[-26,0],[26,0],
+ [-4,-5],[4,-5],[0,0],[-4,76]
 ].forEach(([x,z])=>fireBowl(x,z));
 
 // ── HANGING LANTERNS (properly attached to posts) ──
@@ -639,18 +639,17 @@ function lanternRow(x1,z1,x2,z2,y,n,col){
   for(let i=0;i<=n;i++){const t=i/n,sag=Math.sin(t*Math.PI)*-1.2;hangingLantern(x1+(x2-x1)*t,y+sag-.05,z1+(z2-z1)*t,col,.9);}
 }
 // Only put lantern strings between buildings — not crossing center
-lanternRow(-38,-38,38,-38,18,6,"#ffdd88");
-lanternRow(-38,38,38,38,18,6,"#ff9944");
-lanternRow(-38,-38,-38,38,18,6,"#ff5555");
-lanternRow(38,-38,38,38,18,6,"#44aaff");
+lanternRow(-38,-38,38,-38,18,3,"#ffdd88");
+lanternRow(-38,38,38,38,18,3,"#ff9944");
+lanternRow(-38,-38,-38,38,18,3,"#ff5555");
+lanternRow(38,-38,38,38,18,3,"#44aaff");
 // Building accent lanterns — on posts near each dojo
+// One accent lantern per building (not two)
 [[-72,0],[72,0],[0,-72],[0,72],[-55,-55],[55,-55]].forEach(([x,z],i)=>{
   const cols=["#ffdd66","#00ffee","#ff5555","#ffaa22","#ffcc00","#cc44ff"];
   const pm2=mat(new BABYLON.Color3(.22,.13,.06));
-  for(let s of[-1,1]){
-    cyl(.07,.09,6,8,pm2,[x+s*8,0,z]);
-    hangingLantern(x+s*8,6.5,z,cols[i],.8);
-  }
+  cyl(.07,.09,6,8,pm2,[x+8,0,z]);
+  hangingLantern(x+8,6.5,z,cols[i],.8);
 });
 
 // ══════════════════════════════════════════════
