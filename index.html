@@ -566,7 +566,7 @@ function fireBowl(x,z){
   cyl(.95,.55,.52,12,bm2,[x,1.46,z]);
   sph(.42,fm,[x,1.7,z]);
   const fl=new BABYLON.PointLight("fl"+x,new BABYLON.Vector3(x,2.2,z),scene);
-  fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.intensity=3.2; fl.range=18; fl._b=3.2;
+  fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.intensity=1.8; fl.range=10; fl._b=1.8;
   fireLights.push(fl);
 }
 [[-4,95],[4,95],[-4,-5],[4,-5],[-26,2],[26,2],[-26,-2],[26,-2],
@@ -596,7 +596,7 @@ function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   cyl(.3,.3,.05,10,capm,[0,-.66,0]).parent=root;
   // Light
   const ll=new BABYLON.PointLight("ll"+lIdx,new BABYLON.Vector3(x,y-.46,z),scene);
-  ll.diffuse=BABYLON.Color3.FromHexString(col); ll.intensity=1.2; ll.range=10; ll._b=1.2;
+  ll.diffuse=BABYLON.Color3.FromHexString(col); ll.intensity=0.9; ll.range=7; ll._b=0.9;
   lanLights.push(ll); lIdx++;
 }
 
@@ -724,18 +724,16 @@ function doorFrame(x,y,z,w,h){
   // 🔥 STRONG CENTER GLOW (for dojo_9 area)
   const colonyGlow = new BABYLON.PointLight("colonyGlow", new BABYLON.Vector3(x, 8, z), scene);
   colonyGlow.diffuse = new BABYLON.Color3(0.3, 0.6, 1.0); // brighter blue
-  colonyGlow.intensity = 12;
-  colonyGlow.range = 70;
+  colonyGlow.intensity = 1.8;
+  colonyGlow.range = 25;
 
   const colonyFill = new BABYLON.PointLight("colonyFill", new BABYLON.Vector3(x, 3, z), scene);
   colonyFill.diffuse = new BABYLON.Color3(0.15, 0.3, 0.8);
-  colonyFill.intensity = 6;
-  colonyFill.range = 80;
+  colonyFill.intensity = 0.8;
+  colonyFill.range = 30;
 
   // 🔥 STRONGER PULSE
-  scene.registerBeforeRender(() => {
-    colonyGlow.intensity = 10 + Math.sin(performance.now() * 0.002) * 2;
-  });
+  // colony pulse removed for performance
 
 })();
 
@@ -778,19 +776,17 @@ function doorFrame(x,y,z,w,h){
   // Strong ambient glow
   const glowLight = new BABYLON.PointLight("archiveGlow", new BABYLON.Vector3(x, 6, z), scene);
   glowLight.diffuse = new BABYLON.Color3(0.3, 0.1, 0.6);
-  glowLight.intensity = 6;
-glowLight.range = 40;
+  glowLight.intensity = 1.2;
+glowLight.range = 20;
 
   // Secondary soft light (fill)
   const fillLight = new BABYLON.PointLight("archiveFill", new BABYLON.Vector3(x, 3, z), scene);
   fillLight.diffuse = new BABYLON.Color3(0.1, 0.05, 0.3);
-  fillLight.intensity = 3;
-fillLight.range = 40;
+  fillLight.intensity = 0.6;
+fillLight.range = 20;
 
   // Flicker effect
-  scene.registerBeforeRender(() => {
-    glowLight.intensity = 2.2 + Math.sin(performance.now() * 0.002) * 0.3;
-  });
+  // archive flicker removed for performance
 
   // KEEP TRIGGER
   addTrigger({
@@ -825,7 +821,7 @@ fillLight.range = 40;
     shadows.addShadowCaster(coin);
   }
   const gl=new BABYLON.PointLight("gl",new BABYLON.Vector3(x,4,z+6),scene);
-  gl.diffuse=new BABYLON.Color3(.9,.75,.28); gl.intensity=2.2; gl.range=12;
+  gl.diffuse=new BABYLON.Color3(.9,.75,.28); gl.intensity=1.0; gl.range=8;
   doorFrame(x,2.05,z+4.57,1.9,3.0);
   for(let i=0;i<3;i++){box(9-i*.4,.28,.62,pbr(new BABYLON.Color3(.5,.5,.58),{r:.9}),[x,i*.28-.18,z+4.72+i*.3]);}
   pagodaRoof(x,6.8,z,10,9,new BABYLON.Color3(.7,.56,.12),0,1);
@@ -847,7 +843,7 @@ fillLight.range = 40;
     sl.diffuse=tc; sl.intensity=.65; sl.range=4; sl._b=.65; lanLights.push(sl);
   }
   const pl=new BABYLON.PointLight("pl",new BABYLON.Vector3(x,4,z+6),scene);
-  pl.diffuse=new BABYLON.Color3(.65,.3,.9); pl.intensity=2.0; pl.range=12;
+  pl.diffuse=new BABYLON.Color3(.65,.3,.9); pl.intensity=1.0; pl.range=8;
   doorFrame(x,2.05,z+4.57,1.9,3.0);
   for(let i=0;i<3;i++){box(9-i*.4,.28,.62,pbr(new BABYLON.Color3(.5,.5,.58),{r:.9}),[x,i*.28-.18,z+4.72+i*.3]);}
   pagodaRoof(x,6.8,z,10,9,new BABYLON.Color3(.42,.18,.72),0,1);
@@ -1440,20 +1436,17 @@ const dojoGlow = new BABYLON.PointLight("dojoGlow", BABYLON.Vector3.Zero(), scen
 dojoGlow.parent = dojoRoot;
 dojoGlow.position = new BABYLON.Vector3(0, 5, 0);
 dojoGlow.diffuse = new BABYLON.Color3(0.2, 0.4, 1.0);
-dojoGlow.intensity = 8;
-dojoGlow.range = 50;
+dojoGlow.intensity = 1.5;
+dojoGlow.range = 22;
 
 const dojoFill = new BABYLON.PointLight("dojoFill", BABYLON.Vector3.Zero(), scene);
 dojoFill.parent = dojoRoot;
 dojoFill.position = new BABYLON.Vector3(0, 2, 0);
 dojoFill.diffuse = new BABYLON.Color3(0.1, 0.2, 0.6);
-dojoFill.intensity = 4;
-dojoFill.range = 60;
+dojoFill.intensity = 0.8;
+dojoFill.range = 28;
 
-// pulse
-scene.registerBeforeRender(() => {
-  dojoGlow.intensity = 7.5 + Math.sin(performance.now() * 0.002) * 0.8;
-});
+// pulse removed for performance
 
 // ===== DOJO 7 (NEW SYSTEM) =====
 
