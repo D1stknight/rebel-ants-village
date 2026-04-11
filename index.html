@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rebel Ants — The Hidden Village [DEV]</title>
+<title>Rebel Ants â The Hidden Village [DEV]</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Noto+Serif+JP:wght@300;400;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -111,34 +111,33 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="td"></div>
 <div id="adminBadge">ADMIN MODE</div>
 <div id="selectedBadge">SELECTED: NONE</div>
-<div id="saveBadge">SAVED ✓</div>
+<div id="saveBadge">SAVED â</div>
 <div id="hud">
   <div id="logo"><h1>REBEL ANTS</h1><span>The Hidden Village</span></div>
-  <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>R</kbd> Run<br><kbd>F</kbd> Kick<br><kbd>Space</kbd> Jump<br><kbd>Drag</kbd> Orbit<br><kbd>ESC</kbd> Exit</div>
+  <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
 </div>
-<button id="wb" onclick="toggleWalk()">⚔️ &nbsp;ENTER VILLAGE</button>
-<div id="tt"><h3 id="tth">—</h3><p id="ttp">Click to enter</p></div>
+<button id="wb" onclick="toggleWalk()">âï¸ &nbsp;ENTER VILLAGE</button>
+<div id="tt"><h3 id="tth">â</h3><p id="ttp">Click to enter</p></div>
 <div id="panel">
-  <button id="pc">✕</button>
-  <span id="picon">⚔️</span>
-  <h2 id="ph2">—</h2>
+  <button id="pc">â</button>
+  <span id="picon">âï¸</span>
+  <h2 id="ph2">â</h2>
   <div class="psb" id="psub">Rebel Ants</div>
-  <p id="pdesc">—</p>
+  <p id="pdesc">â</p>
   <div class="pl" id="pact"></div>
 </div>
 
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
-<script src="https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js"></script>
 <script>
 const canvas=document.getElementById('c');
 const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
 const setSt=t=>{document.getElementById('ldst').textContent=t;};
 
-// ═══════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââ
 // ASSET REGISTRY (ALL GLBs LIVE HERE)
-// ═══════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââ
 const ASSETS = {
   dojo_5: {
     path: "/assets/buildings/dojo_5.glb",
@@ -192,9 +191,9 @@ pine_1: {
   
 };
 
-  // ═══════════════════════════════════════
+  // âââââââââââââââââââââââââââââââââââââââ
 // SPAWN ASSET FUNCTION (MASTER SYSTEM)
-// ═══════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââ
 function spawnAsset(type, position) {
   const config = ASSETS[type];
   if (!config) {
@@ -229,7 +228,7 @@ function spawnAsset(type, position) {
 
   return root;
 }
-// ── SCENE ───────────────────────────────────
+// ââ SCENE âââââââââââââââââââââââââââââââââââ
 const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
 scene.fogMode=BABYLON.Scene.FOGMODE_NONE;
@@ -242,7 +241,7 @@ gizmoManager.rotationGizmoEnabled = false;
 gizmoManager.scaleGizmoEnabled = false;
 gizmoManager.clearGizmoOnEmptyPointerEvent = false;
 
-// ── CAMERAS ─────────────────────────────────
+// ââ CAMERAS âââââââââââââââââââââââââââââââââ
 const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/3.6,150,new BABYLON.Vector3(0,6,0),scene);
 orbit.lowerRadiusLimit=8; orbit.upperRadiusLimit=280; orbit.upperBetaLimit=Math.PI/2.05;
 orbit.wheelPrecision=2;
@@ -353,7 +352,7 @@ function snapSelectedObjectToGround(){
 
   selectedObject.position.y = hit.pickedPoint.y + offset;
 }
-// ── LIGHTING ────────────────────────────────
+// ââ LIGHTING ââââââââââââââââââââââââââââââââ
 const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.7,-1.1,.5),scene);
 sun.position=new BABYLON.Vector3(160,260,-160);
 sun.intensity=2.6; sun.diffuse=new BABYLON.Color3(1,.96,.88);
@@ -365,7 +364,7 @@ hemi.groundColor=new BABYLON.Color3(.25,.32,.16); hemi.specular=new BABYLON.Colo
 const shadows=new BABYLON.ShadowGenerator(1024,sun);
 shadows.useBlurExponentialShadowMap=true; shadows.blurKernel=20; shadows.bias=0.001;
 
-// ── PROCEDURAL SKY ───────────────────────────
+// ââ PROCEDURAL SKY âââââââââââââââââââââââââââ
 const skybox=BABYLON.MeshBuilder.CreateBox("sky",{size:1400},scene);
 const skyMat=new BABYLON.SkyMaterial("sm",scene);
 skyMat.backFaceCulling=false; skyMat.turbidity=5; skyMat.luminance=1.0;
@@ -384,13 +383,13 @@ function updateSky(){
   else{sun.diffuse=new BABYLON.Color3(.18,.22,.48);sun.intensity=0.12;}
   scene.fogColor=h>=6&&h<20?new BABYLON.Color3(.58,.74,.9):new BABYLON.Color3(.04,.06,.16);
   const hh=now.getHours().toString().padStart(2,'0'),mm=now.getMinutes().toString().padStart(2,'0');
-  const lbl=h<6||h>=20?'🌙 Night':h<9?'🌅 Sunrise':h<17?'☀️ Day':'🌇 Sunset';
-  document.getElementById('td').textContent=`${hh}:${mm}  ·  ${lbl}`;
+  const lbl=h<6||h>=20?'ð Night':h<9?'ð Sunrise':h<17?'âï¸ Day':'ð Sunset';
+  document.getElementById('td').textContent=`${hh}:${mm}  Â·  ${lbl}`;
 }
 updateSky(); setInterval(updateSky,30000);
 
-// ── HELPERS ──────────────────────────────────
-// Material cache — reuse identical materials instead of creating new ones
+// ââ HELPERS ââââââââââââââââââââââââââââââââââ
+// Material cache â reuse identical materials instead of creating new ones
 const _matCache={}, _pbrCache={};
 function mat(c,o={}){
   const col=typeof c==='string'?c:c.toHexString();
@@ -420,13 +419,13 @@ function box(w,h,d,mat,pos,ry=0){const b=BABYLON.MeshBuilder.CreateBox("b"+Math.
 function cyl(rt,rb,h,t,mat,pos,rz=0){const c=BABYLON.MeshBuilder.CreateCylinder("cy"+Math.random(),{diameterTop:rt,diameterBottom:rb,height:h,tessellation:t},scene);c.material=mat;if(pos)c.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(rz)c.rotation.z=rz;c.receiveShadows=true;shadows.addShadowCaster(c);return c;}
 function sph(d,mat,pos){const s=BABYLON.MeshBuilder.CreateSphere("sp"+Math.random(),{diameter:d,segments:8},scene);s.material=mat;if(pos)s.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);s.receiveShadows=true;shadows.addShadowCaster(s);return s;}
 
-// ── GROUND / TERRAIN ─────────────────────────
+// ââ GROUND / TERRAIN âââââââââââââââââââââââââ
 setSt("Building terrain...");
 // Large grass base
 const ground=BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:6},scene);
 ground.material=mat(new BABYLON.Color3(.24,.38,.15)); ground.receiveShadows=true;
 
-// Courtyard — stone tiles
+// Courtyard â stone tiles
 const court=BABYLON.MeshBuilder.CreateGround("ct",{width:220,height:220},scene);
 court.material=mat(new BABYLON.Color3(.52,.49,.42)); court.position.y=.06; court.receiveShadows=true;
 
@@ -441,7 +440,7 @@ const pm=mat(new BABYLON.Color3(.44,.41,.34));
   p.material=pm; p.position=new BABYLON.Vector3(x,.08,z); p.receiveShadows=true;
 });
 
-// ── REALISTIC MOUNTAINS ──────────────────────
+// ââ REALISTIC MOUNTAINS ââââââââââââââââââââââ
 setSt("Sculpting mountains...");
 // Use multiple overlapping cones with noise-like variation for organic look
 function mountain(x,z,r,h,col){
@@ -478,21 +477,21 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
  [-280,280,70,128],[280,280,62,112]
 ].forEach(([x,z,r,h])=>mountain(x,z,r,h,mColors[Math.floor(Math.random()*3)]));
 
-// ── RIVER ────────────────────────────────────
+// ââ RIVER ââââââââââââââââââââââââââââââââââââ
 const rvr=BABYLON.MeshBuilder.CreateGround("rv",{width:22,height:320},scene);
 rvr.material=mat(new BABYLON.Color3(.1,.36,.68),{a:.82}); rvr.position=new BABYLON.Vector3(112,.14,0);
 
-// ── 4 TYPES OF TREES ─────────────────────────
+// ââ 4 TYPES OF TREES âââââââââââââââââââââââââ
 setSt("Planting forest...");
 
-// TYPE 1: Pine/Conifer — stacked cones
+// TYPE 1: Pine/Conifer â stacked cones
 const pinePlaceholderPoints = [];
 
 function pineCone(x,z,h=10){
   pinePlaceholderPoints.push({ x, z, h });
 }
 
-// TYPE 2: Cherry Blossom — fluffy pink clouds
+// TYPE 2: Cherry Blossom â fluffy pink clouds
 function cherry(x,z,h=8){
   const tk=mat(new BABYLON.Color3(.28,.15,.07));
   cyl(.2,.5,h*.5,7,tk,[x,h*.25,z]);
@@ -511,7 +510,7 @@ function oak(x,z,h=9){
   oakPlaceholderPoints.push({ x, z, h });
 }
 
-// TYPE 4: Bamboo — tall thin stalks
+// TYPE 4: Bamboo â tall thin stalks
 function bamboo(x,z,h=12){
   const bm=mat(new BABYLON.Color3(.38+Math.random()*.1,.52+Math.random()*.12,.22+Math.random()*.08));
   const count=3+Math.floor(Math.random()*4);
@@ -536,7 +535,7 @@ for(let ring=0;ring<4;ring++){
   for(let i=0;i<cnt;i++){
     const a=(i/cnt)*Math.PI*2+ring*.5, jit=(Math.random()-.5)*26;
     const x=Math.cos(a)*r+jit, z=Math.sin(a)*r+jit, h=8+Math.random()*11;
-    // Weighted selection — more pine and cherry
+    // Weighted selection â more pine and cherry
     const weights=[0,0,0,1,1,2,2,3]; // pine=0,cherry=1,oak=2,bamboo=3
     const fn=treeFns[weights[Math.floor(Math.random()*weights.length)]||0];
     fn(x,z,h); ti++;
@@ -551,7 +550,7 @@ for(let ring=0;ring<4;ring++){
   fn(x,z,5+Math.random()*3);
 });
 
-// ── ROCKS ────────────────────────────────────
+// ââ ROCKS ââââââââââââââââââââââââââââââââââââ
 const rkm=pbr(new BABYLON.Color3(.38,.38,.4),{r:.92,m:.08});
 [[-62,-42,1.5],[-61,-41,.9],[62,-42,1.3],[63,-41,.75],[-62,42,1.2],[62,42,1.4],
  [-38,62,1.0],[38,62,.9],[-38,-62,1.1],[38,-62,.95],[70,6,1.3],[-70,6,1.0],
@@ -564,7 +563,7 @@ const rkm=pbr(new BABYLON.Color3(.38,.38,.4),{r:.92,m:.08});
   shadows.addShadowCaster(r); r.receiveShadows=true;
 });
 
-// ── TORII GATES ──────────────────────────────
+// ââ TORII GATES ââââââââââââââââââââââââââââââ
 const trM=pbr(new BABYLON.Color3(.8,.1,.06),{r:.65,m:.1});
 const glM=pbr(new BABYLON.Color3(.9,.76,.28),{r:.4,m:.5,e:new BABYLON.Color3(.15,.1,0),ei:.3});
 function torii(x,z,ry=0){
@@ -581,7 +580,7 @@ function torii(x,z,ry=0){
 }
 torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0,-92,Math.PI);
 
-// ── FIRE BOWLS ───────────────────────────────
+// ââ FIRE BOWLS âââââââââââââââââââââââââââââââ
 const fireLights=[];
 function fireBowl(x,z){
   const sm2=mat(new BABYLON.Color3(.22,.22,.25));
@@ -594,12 +593,12 @@ function fireBowl(x,z){
   fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.intensity=1.8; fl.range=10; fl._b=1.8;
   fireLights.push(fl);
 }
-// Reduced fire bowls: 19 → 8 lights (keep key positions only)
+// Reduced fire bowls: 19 â 8 lights (keep key positions only)
 [[-4,95],[4,95],[-26,0],[26,0],
  [-4,-5],[4,-5],[0,0],[-4,76]
 ].forEach(([x,z])=>fireBowl(x,z));
 
-// ── HANGING LANTERNS (properly attached to posts) ──
+// ââ HANGING LANTERNS (properly attached to posts) ââ
 const lanLights=[];
 let lIdx=0;
 
@@ -625,7 +624,7 @@ function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   lanLights.push(ll); lIdx++;
 }
 
-// Lantern STRING with posts — no floating!
+// Lantern STRING with posts â no floating!
 function lanternRow(x1,z1,x2,z2,y,n,col){
   // Rope
   const pts=[];
@@ -639,12 +638,12 @@ function lanternRow(x1,z1,x2,z2,y,n,col){
   // Lanterns
   for(let i=0;i<=n;i++){const t=i/n,sag=Math.sin(t*Math.PI)*-1.2;hangingLantern(x1+(x2-x1)*t,y+sag-.05,z1+(z2-z1)*t,col,.9);}
 }
-// Only put lantern strings between buildings — not crossing center
+// Only put lantern strings between buildings â not crossing center
 lanternRow(-38,-38,38,-38,18,3,"#ffdd88");
 lanternRow(-38,38,38,38,18,3,"#ff9944");
 lanternRow(-38,-38,-38,38,18,3,"#ff5555");
 lanternRow(38,-38,38,38,18,3,"#44aaff");
-// Building accent lanterns — on posts near each dojo
+// Building accent lanterns â on posts near each dojo
 // One accent lantern per building (not two)
 [[-72,0],[72,0],[0,-72],[0,72],[-55,-55],[55,-55]].forEach(([x,z],i)=>{
   const cols=["#ffdd66","#00ffee","#ff5555","#ffaa22","#ffcc00","#cc44ff"];
@@ -653,9 +652,9 @@ lanternRow(38,-38,38,38,18,3,"#44aaff");
   hangingLantern(x+8,6.5,z,cols[i],.8);
 });
 
-// ══════════════════════════════════════════════
-//  6 UNIQUE DOJOS — each different architecture
-// ══════════════════════════════════════════════
+// ââââââââââââââââââââââââââââââââââââââââââââââ
+//  6 UNIQUE DOJOS â each different architecture
+// ââââââââââââââââââââââââââââââââââââââââââââââ
 
 const BUILDINGS=[];
 function addTrigger(cfg){
@@ -725,18 +724,18 @@ function doorFrame(x,y,z,w,h){
   sph(.08,hm,[x+w*.08,y+.1,z+.12]);
 }
 
-// ── BUILDING 1: THE COLONY (REAL GLB + STRONG GLOW) ──
+// ââ BUILDING 1: THE COLONY (REAL GLB + STRONG GLOW) ââ
 (()=>{
   const x = 0, z = -80;
 
-  // ✅ KEEP TRIGGER (UNCHANGED)
+  // â KEEP TRIGGER (UNCHANGED)
   addTrigger({
     id:'colony',
     x,
     z,
     title:'THE COLONY',
-    sub:'Community Hub · rebelants.io',
-    icon:'🐜',
+    sub:'Community Hub Â· rebelants.io',
+    icon:'ð',
     desc:'Rebel Ants is a media company built on transparency, education, and supporting the little guys. Using storytelling to bring light to web3 creators, artists, and projects.',
     actions:[
       {label:'Visit Site',href:'https://rebelants.io'},
@@ -745,7 +744,7 @@ function doorFrame(x,y,z,w,h){
     ]
   });
 
-  // 🔥 STRONG CENTER GLOW (for dojo_9 area)
+  // ð¥ STRONG CENTER GLOW (for dojo_9 area)
   const colonyGlow = new BABYLON.PointLight("colonyGlow", new BABYLON.Vector3(x, 8, z), scene);
   colonyGlow.diffuse = new BABYLON.Color3(0.3, 0.6, 1.0); // brighter blue
   colonyGlow.intensity = 1.8;
@@ -756,12 +755,12 @@ function doorFrame(x,y,z,w,h){
   colonyFill.intensity = 0.8;
   colonyFill.range = 30;
 
-  // 🔥 STRONGER PULSE
+  // ð¥ STRONGER PULSE
   // colony pulse removed for performance
 
 })();
 
-// ── BUILDING 3: RADIO STAGE — Open Pavilion ──
+// ââ BUILDING 3: RADIO STAGE â Open Pavilion ââ
 (()=>{
   const x=80,z=0,col=new BABYLON.Color3(.25,.1,.06);
   stoneFoundation(x,z,12,11,3);
@@ -790,10 +789,10 @@ function doorFrame(x,y,z,w,h){
   const bdM=pbr(new BABYLON.Color3(.65,.08,.06),{e:new BABYLON.Color3(.4,.05,.04),ei:.12,a:.7,r:.8});
   box(10,6,.08,bdM,[x,3.8,z-5.22]);
   pagodaRoof(x,8,z,13,12,new BABYLON.Color3(.72,.12,.08),0,2);
-  addTrigger({id:'radio',x,z,title:'REBEL ANTS RADIO',sub:'Live Podcast Studio · Every Week',icon:'🎙️',desc:'The crypto show for the little guys. Live shows every week — interviewing web3 creators, artists, and projects in the web3 space. Watch on YouTube or listen on Spotify & iTunes.',actions:[{label:'YouTube',href:'https://www.youtube.com/@rebelantsradio',r:true},{label:'Spotify',href:'https://open.spotify.com/show/00fDOHcJcJPW7XpEDwO6lk'},{label:'iTunes',href:'https://podcasts.apple.com/us/podcast/rebel-ants-radio-the-nft-show-for-the-little-guys/id1651171099',g:true}]});
+  addTrigger({id:'radio',x,z,title:'REBEL ANTS RADIO',sub:'Live Podcast Studio Â· Every Week',icon:'ðï¸',desc:'The crypto show for the little guys. Live shows every week â interviewing web3 creators, artists, and projects in the web3 space. Watch on YouTube or listen on Spotify & iTunes.',actions:[{label:'YouTube',href:'https://www.youtube.com/@rebelantsradio',r:true},{label:'Spotify',href:'https://open.spotify.com/show/00fDOHcJcJPW7XpEDwO6lk'},{label:'iTunes',href:'https://podcasts.apple.com/us/podcast/rebel-ants-radio-the-nft-show-for-the-little-guys/id1651171099',g:true}]});
 })();
 
-// ── BUILDING 4: ARCHIVE — Glow Zone ───────
+// ââ BUILDING 4: ARCHIVE â Glow Zone âââââââ
 (()=>{
   const x=0,z=80;
 
@@ -805,8 +804,8 @@ function doorFrame(x,y,z,w,h){
     x,
     z,
     title:'THE ARCHIVE',
-    sub:'NFT Gallery · All Collections',
-    icon:'🖼️',
+    sub:'NFT Gallery Â· All Collections',
+    icon:'ð¼ï¸',
     desc:'Every Rebel Ant tells a story. Browse Battle for the Colony (5,555), Germy Pets (1-of-1), Unvoiced Echoes, and the original 10,000 v1 ants.',
     actions:[
       {label:'OpenSea',href:'https://opensea.io/RebelAnts_LLC/created'},
@@ -817,7 +816,7 @@ function doorFrame(x,y,z,w,h){
   });
 })();
 
-// ── BUILDING 5: THE VAULT — Staking Temple ───
+// ââ BUILDING 5: THE VAULT â Staking Temple âââ
 (()=>{
   const x=-65,z=-65,col=new BABYLON.Color3(.06,.12,.28);
   stoneFoundation(x,z,10,9,3);
@@ -836,10 +835,10 @@ function doorFrame(x,y,z,w,h){
   doorFrame(x,2.05,z+4.57,1.9,3.0);
   for(let i=0;i<3;i++){box(9-i*.4,.28,.62,pbr(new BABYLON.Color3(.5,.5,.58),{r:.9}),[x,i*.28-.18,z+4.72+i*.3]);}
   pagodaRoof(x,6.8,z,10,9,new BABYLON.Color3(.7,.56,.12),0,1);
-  addTrigger({id:'vault',x,z,title:'THE VAULT',sub:'Staking · Earn Rewards',icon:'💰',desc:'Stake your Rebel Ants NFTs to earn rewards and grow the colony treasury. The more warriors you stake, the stronger your colony becomes.',actions:[{label:'Start Staking',href:'https://rebelants.stakeaway.io/'},{label:'Learn More',href:'https://rebelants.io',g:true}]});
+  addTrigger({id:'vault',x,z,title:'THE VAULT',sub:'Staking Â· Earn Rewards',icon:'ð°',desc:'Stake your Rebel Ants NFTs to earn rewards and grow the colony treasury. The more warriors you stake, the stronger your colony becomes.',actions:[{label:'Start Staking',href:'https://rebelants.stakeaway.io/'},{label:'Learn More',href:'https://rebelants.io',g:true}]});
 })();
 
-// ── BUILDING 6: THE FORGE — Trait Builder ────
+// ââ BUILDING 6: THE FORGE â Trait Builder ââââ
 (()=>{
   const x=65,z=-65,col=new BABYLON.Color3(.12,.05,.25);
   stoneFoundation(x,z,10,9,3);
@@ -858,38 +857,24 @@ function doorFrame(x,y,z,w,h){
   doorFrame(x,2.05,z+4.57,1.9,3.0);
   for(let i=0;i<3;i++){box(9-i*.4,.28,.62,pbr(new BABYLON.Color3(.5,.5,.58),{r:.9}),[x,i*.28-.18,z+4.72+i*.3]);}
   pagodaRoof(x,6.8,z,10,9,new BABYLON.Color3(.42,.18,.72),0,1);
-  addTrigger({id:'forge',x,z,title:'THE FORGE',sub:'Custom Trait Builder',icon:'🎨',desc:'Gear up your ants for battle. Add custom overlays — weapons, armor, accessories — to your Battle for the Colony ants. Free to use for all holders.',actions:[{label:'Open Forge',href:'https://builder.rebelants.io',t:true},{label:'View Site',href:'https://rebelants.io',g:true}]});
+  addTrigger({id:'forge',x,z,title:'THE FORGE',sub:'Custom Trait Builder',icon:'ð¨',desc:'Gear up your ants for battle. Add custom overlays â weapons, armor, accessories â to your Battle for the Colony ants. Free to use for all holders.',actions:[{label:'Open Forge',href:'https://builder.rebelants.io',t:true},{label:'View Site',href:'https://rebelants.io',g:true}]});
 })();
 
-// ── WALKABLE CHARACTER + ANIMATION SYSTEM ────
+// ââ WALKABLE CHARACTER âââââââââââââââââââââââ
 setSt("Loading character...");
-
-// ═══════════════════════════════════════════════════
-// ANIMATION + CHARACTER SYSTEM — CLEAN REWRITE
-// ═══════════════════════════════════════════════════
-
-// animGroups array: 0=idle 1=walk 2=run 3=kick 4=jump
-let animState = -1;
-let animGroups = [];
-
-function switchAnim(idx, loop) {
-  if (animState === idx) return;
-  const prev = animGroups[animState];
-  const next = animGroups[idx];
-  if (!next) { console.warn('Anim idx',idx,'not loaded yet'); return; }
-  if (prev && prev.isPlaying) prev.stop();
-  animState = idx;
-  next.play(loop !== false);
-}
-
-// ─ LOAD CHARACTER ───────────────────────────────────
-setSt('Loading character...');
 let charMesh = null;
 let moveForward = false, moveBackward = false, turnLeft = false, turnRight = false;
-
-BABYLON.SceneLoader.ImportMeshAsync('', '/assets/character/', 'ant_idle_c.glb', scene)
+let animState = -1, animGroups = [];
+function switchAnim(idx, loop) {
+  if (animState === idx) return;
+  const prev = animGroups[animState], next = animGroups[idx];
+  if (!next) return;
+  if (prev && prev.isPlaying) prev.stop();
+  animState = idx; next.play(loop !== false);
+}
+BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", scene)
 .then(r => {
-  const playerRoot = new BABYLON.TransformNode('playerRoot', scene);
+  const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
   playerRoot.position = new BABYLON.Vector3(0, 0.12, 20);
   playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
   playerRoot.scaling = new BABYLON.Vector3(0.018, 0.018, 0.018);
@@ -904,159 +889,97 @@ BABYLON.SceneLoader.ImportMeshAsync('', '/assets/character/', 'ant_idle_c.glb', 
         if (!mat.albedoTexture) {
           const ci = r.meshes.indexOf(m);
           const cols = [new BABYLON.Color3(.08,.15,.38),new BABYLON.Color3(.22,.12,.08),new BABYLON.Color3(.55,.45,.12),new BABYLON.Color3(.06,.06,.08),new BABYLON.Color3(.28,.18,.06)];
-          mat.albedoColor = cols[ci % cols.length]; mat.metallic = ci%3===0?.7:.1; mat.roughness=.6;
+          mat.albedoColor = cols[ci%cols.length]; mat.metallic=ci%3===0?.7:.1; mat.roughness=.6;
         }
       }
     }
   });
-  r.transformNodes.forEach(t => { if(t!==playerRoot)t.parent=playerRoot; if(t.rotationQuaternion)t.rotationQuaternion=null; });
+  r.transformNodes.forEach(tn => { if(tn!==playerRoot)tn.parent=playerRoot; if(tn.rotationQuaternion)tn.rotationQuaternion=null; });
   charMesh = playerRoot;
-  if (r.animationGroups.length > 0) {
-    animGroups[0] = r.animationGroups[0];
-    animState = 0; animGroups[0].play(true);
-    console.log('Idle loaded, tracks:', animGroups[0].targetedAnimations.length);
-  }
-  window.followLight = new BABYLON.PointLight('followLight', new BABYLON.Vector3(0,4,0), scene);
+  if (r.animationGroups.length > 0) { animGroups[0]=r.animationGroups[0]; animState=0; animGroups[0].play(true); }
+  window.followLight = new BABYLON.PointLight("followLight", new BABYLON.Vector3(0,4,0), scene);
   window.followLight.diffuse = new BABYLON.Color3(1,.82,.5);
   window.followLight.intensity = 2.8; window.followLight.range = 22;
-  setSt('Character ready!');
-  loadExtraAnims(r.skeletons[0] || null);
-})
-.catch(err => { console.error('Character failed:', err); setSt('Failed'); });
-function loadExtraAnims(skeleton) {
-  const files = [
-    {file:'ant_walk_c.glb',idx:1},
-    {file:'ant_run_c.glb',idx:2},
-    {file:'ant_flip_kick_c.glb',idx:3},
-    {file:'ant_jumping_c.glb',idx:4}
-  ];
-  files.forEach(({file,idx}) => {
-    BABYLON.SceneLoader.ImportMeshAsync('','/assets/character/',file,scene)
-    .then(r => {
-      r.meshes.forEach(m => { m.isVisible=false; m.setEnabled(false); });
-      const ag = r.animationGroups[0];
-      if (!ag) return;
-      if (skeleton) {
-        ag.targetedAnimations.forEach(ta => {
-          const bone = skeleton.bones.find(b => b.name===ta.target.name);
-          if (bone) ta.target = bone._linkedTransformNode || bone;
-        });
-      }
-      ag.stop();
-      animGroups[idx] = ag;
-      console.log('Anim loaded idx',idx,file,'tracks:',ag.targetedAnimations.length);
-    })
-    .catch(e => console.error('Anim failed:',file,e));
+  setSt("Character ready!");
+  [{f:"ant_walk_c.glb",i:1},{f:"ant_run_c.glb",i:2},{f:"ant_flip_kick_c.glb",i:3},{f:"ant_jumping_c.glb",i:4}].forEach(({f,i}) => {
+    BABYLON.SceneLoader.ImportMeshAsync("","/assets/character/",f,scene).then(r2 => {
+      r2.meshes.forEach(m=>{m.isVisible=false;m.setEnabled(false);});
+      const ag=r2.animationGroups[0]; if(!ag)return;
+      const sk=r.skeletons[0];
+      if(sk)ag.targetedAnimations.forEach(ta=>{const bn=sk.bones.find(b=>b.name===ta.target.name);if(bn)ta.target=bn._linkedTransformNode||bn;});
+      ag.stop(); animGroups[i]=ag;
+    }).catch(e=>console.error("Anim failed:",f,e));
   });
-}
-
-// ─ INTERACTIONS ──────────────────────────────────
+}).catch(err=>{console.error("Character failed:",err);setSt("Failed");});
 const tooltip=document.getElementById('tt');
 const panel=document.getElementById('panel');
-
-scene.onPointerObservable.add(evt => {
-  if (adminMode) return;
-  if (evt.type!==BABYLON.PointerEventTypes.POINTERPICK||panel.classList.contains('on')) return;
-  const hit=evt.pickInfo;
-  if (!hit||!hit.hit) return;
-  const b=BUILDINGS.find(b=>b.mesh===hit.pickedMesh);
-  if (b) openPanel(b);
+scene.onPointerObservable.add(evt=>{
+  if(adminMode)return;
+  if(evt.type!==BABYLON.PointerEventTypes.POINTERPICK||panel.classList.contains('on'))return;
+  const hit=evt.pickInfo; if(!hit||!hit.hit)return;
+  const b=BUILDINGS.find(b=>b.mesh===hit.pickedMesh); if(b)openPanel(b);
 });
-
-scene.onPointerObservable.add(evt => {
-  if (adminMode) { tooltip.classList.remove('on'); return; }
-  if (evt.type!==BABYLON.PointerEventTypes.POINTERMOVE||walkMode) return;
+scene.onPointerObservable.add(evt=>{
+  if(adminMode){tooltip.classList.remove('on');return;}
+  if(evt.type!==BABYLON.PointerEventTypes.POINTERMOVE||walkMode)return;
   const hit=scene.pick(scene.pointerX,scene.pointerY,m=>BUILDINGS.some(b=>b.mesh===m));
-  if (hit&&hit.hit) {
-    const b=BUILDINGS.find(b=>b.mesh===hit.pickedMesh);
-    if (b) { document.getElementById('tth').textContent=b.title; document.getElementById('ttp').textContent=b.sub; tooltip.classList.add('on'); canvas.style.cursor='pointer'; return; }
-  }
-  tooltip.classList.remove('on'); canvas.style.cursor='default';
+  if(hit&&hit.hit){const b=BUILDINGS.find(b=>b.mesh===hit.pickedMesh);if(b){document.getElementById('tth').textContent=b.title;document.getElementById('ttp').textContent=b.sub;tooltip.classList.add('on');canvas.style.cursor='pointer';return;}}
+  tooltip.classList.remove('on');canvas.style.cursor='default';
 });
-
-// Click character in orbit to reset camera
-scene.onPointerObservable.add(evt => {
-  if (walkMode || !charMesh) return;
-  if (evt.type!==BABYLON.PointerEventTypes.POINTERPICK) return;
-  const hit=evt.pickInfo;
-  if (!hit||!hit.hit) return;
-  let node=hit.pickedMesh;
-  while(node&&node.parent) node=node.parent;
-  if (node&&node.name==='playerRoot') {
-    orbit.alpha=-Math.PI/2.1; orbit.beta=Math.PI/3.6;
-    orbit.radius=150; orbit.target=new BABYLON.Vector3(0,6,0);
-  }
+scene.onPointerObservable.add(evt=>{
+  if(walkMode||!charMesh)return;
+  if(evt.type!==BABYLON.PointerEventTypes.POINTERPICK)return;
+  const hit=evt.pickInfo; if(!hit||!hit.hit)return;
+  let node=hit.pickedMesh; while(node&&node.parent)node=node.parent;
+  if(node&&node.name==='playerRoot'){orbit.alpha=-Math.PI/2.1;orbit.beta=Math.PI/3.6;orbit.radius=150;orbit.target=new BABYLON.Vector3(0,6,0);}
 });
-
 document.getElementById('pc').addEventListener('click',()=>panel.classList.remove('on'));
 canvas.addEventListener('click',()=>{
-  if (!adminMode) return;
+  if(!adminMode)return;
   const pick=scene.pick(scene.pointerX,scene.pointerY,mesh=>!BUILDINGS.some(b=>b.mesh===mesh));
-  if (!pick||!pick.hit||!pick.pickedMesh) return;
-  let node=pick.pickedMesh; while(node&&node.parent)node=node.parent;
-  if (!node) return;
-  const editableRoots=Object.values(editableRootRefs).filter(Boolean);
-  if (!editableRoots.includes(node)&&!node.name.includes('RootClone_')) return;
-  selectedObject=node; updateSelectedBadge();
-  gizmoManager.positionGizmoEnabled=true; gizmoManager.rotationGizmoEnabled=false;
-  gizmoManager.scaleGizmoEnabled=false; gizmoManager.attachToNode(selectedObject);
+  if(!pick||!pick.hit||!pick.pickedMesh)return;
+  let node=pick.pickedMesh; while(node&&node.parent)node=node.parent; if(!node)return;
+  const er=Object.values(editableRootRefs).filter(Boolean);
+  if(!er.includes(node)&&!node.name.includes('RootClone_'))return;
+  selectedObject=node;updateSelectedBadge();
+  gizmoManager.positionGizmoEnabled=true;gizmoManager.rotationGizmoEnabled=false;gizmoManager.scaleGizmoEnabled=false;gizmoManager.attachToNode(selectedObject);
 });
-window.addEventListener('pointerdown',()=>{ if(!adminMode||!selectedObject)return; adminDragging=true; });
-window.addEventListener('pointerup',()=>{ adminDragging=false; if(adminMode&&selectedObject)softSnapSelectedObject(); });
-
-function openPanel(b) {
-  document.getElementById('picon').textContent=b.icon;
-  document.getElementById('ph2').textContent=b.title;
-  document.getElementById('psub').textContent=b.sub;
-  document.getElementById('pdesc').textContent=b.desc;
-  const acts=document.getElementById('pact'); acts.innerHTML='';
-  b.actions.forEach(a=>{
-    const btn=document.createElement('a');
-    btn.className='pb'+(a.g?' g':a.t?' t':a.r?' r':'');
-    btn.textContent=a.label; btn.href=a.href; btn.target='_blank'; btn.rel='noopener';
-    acts.appendChild(btn);
-  });
+window.addEventListener('pointerdown',()=>{if(!adminMode||!selectedObject)return;adminDragging=true;});
+window.addEventListener('pointerup',()=>{adminDragging=false;if(adminMode&&selectedObject)softSnapSelectedObject();});
+function openPanel(b){
+  document.getElementById('picon').textContent=b.icon;document.getElementById('ph2').textContent=b.title;
+  document.getElementById('psub').textContent=b.sub;document.getElementById('pdesc').textContent=b.desc;
+  const acts=document.getElementById('pact');acts.innerHTML='';
+  b.actions.forEach(a=>{const btn=document.createElement('a');btn.className='pb'+(a.g?' g':a.t?' t':a.r?' r':'');btn.textContent=a.label;btn.href=a.href;btn.target='_blank';btn.rel='noopener';acts.appendChild(btn);});
   panel.classList.add('on');
 }
-
-// ─ WALK MODE ─────────────────────────────────────
 let _orbitDragging=false,_orbitLastX=0,_orbitLastY=0;
 let _orbitAngleH=Math.PI,_orbitAngleV=0.35;
 const _orbitDist=9;
-
 function toggleWalk(){
   walkMode=!walkMode;
   const wb=document.getElementById('wb'),xh=document.getElementById('xhair');
-  if (walkMode) {
-    if (charMesh) {
-      _orbitAngleH=charMesh.rotation.y+Math.PI; _orbitAngleV=0.35;
-      walk.position=new BABYLON.Vector3(
-        charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),
-        charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,
-        charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
-      walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
-    }
-    scene.activeCamera=walk; walk.detachControl(); orbit.detachControl();
-    wb.textContent='🌐  EXIT WALK MODE'; wb.classList.add('on'); xh.classList.remove('on');
+  if(walkMode){
+    if(charMesh){_orbitAngleH=charMesh.rotation.y+Math.PI;_orbitAngleV=0.35;
+      walk.position=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
+      walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));}
+    scene.activeCamera=walk;walk.detachControl();orbit.detachControl();
+    wb.textContent='🌐  EXIT WALK MODE';wb.classList.add('on');xh.classList.remove('on');
   } else {
-    scene.activeCamera=orbit; orbit.attachControl(canvas,true); walk.detachControl();
-    wb.textContent='⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
+    scene.activeCamera=orbit;orbit.attachControl(canvas,true);walk.detachControl();
+    wb.textContent='⚔️  ENTER VILLAGE';wb.classList.remove('on');xh.classList.remove('on');
   }
 }
-
-// Mouse orbit via Babylon pointer system
 scene.onPointerObservable.add(evt=>{
-  if (!walkMode) return;
-  if (evt.type===BABYLON.PointerEventTypes.POINTERDOWN){_orbitDragging=true;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;}
+  if(!walkMode)return;
+  if(evt.type===BABYLON.PointerEventTypes.POINTERDOWN){_orbitDragging=true;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;}
   else if(evt.type===BABYLON.PointerEventTypes.POINTERUP){_orbitDragging=false;}
   else if(evt.type===BABYLON.PointerEventTypes.POINTERMOVE&&_orbitDragging){
     const dx=scene.pointerX-_orbitLastX,dy=scene.pointerY-_orbitLastY;
     _orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;
-    _orbitAngleH+=dx*0.008;
-    _orbitAngleV=Math.max(0.08,Math.min(0.85,_orbitAngleV+dy*0.006));
+    _orbitAngleH+=dx*0.008;_orbitAngleV=Math.max(0.08,Math.min(0.85,_orbitAngleV+dy*0.006));
   }
 });
-// ─ KEY HANDLERS ─────────────────────────────────
 document.addEventListener('keydown',e=>{
   const key=e.key.toLowerCase();
   if(key==='m'){adminMode=!adminMode;updateAdminBadge();if(adminMode){orbit.detachControl();walk.detachControl();}else{selectedObject=null;updateSelectedBadge();if(gizmoManager)gizmoManager.attachToNode(null);gizmoManager.positionGizmoEnabled=false;gizmoManager.rotationGizmoEnabled=false;gizmoManager.scaleGizmoEnabled=false;orbit.attachControl(canvas,true);}return;}
@@ -1088,37 +1011,24 @@ document.addEventListener('keyup',e=>{
   if(key==='d'||e.key==='ArrowRight')turnRight=false;
   if(key==='r'&&!adminMode&&walkMode){const mv=moveForward||moveBackward||turnLeft||turnRight;switchAnim(mv?1:0,true);}
 });
-// ─ RENDER LOOP ──────────────────────────────────
-let t=0;
 engine.runRenderLoop(()=>{
-  t+=engine.getDeltaTime()*.001;
-  fireLights.forEach(fl=>{fl.intensity=fl._b+Math.sin(t*9.2+fl.position.x*3)*.65+Math.sin(t*15.1+fl.position.z)*.32;});
-  lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(t*1.9+ll.position.x*.3)*.1;});
+  const dt=engine.getDeltaTime()/1000;
+  fireLights.forEach(fl=>{fl.intensity=fl._b+Math.sin(Date.now()*0.009+fl.position.x*3)*.65;});
+  lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(Date.now()*0.0019+ll.position.x*.3)*.1;});
   if(adminMode&&selectedObject&&!adminDragging)softSnapSelectedObject();
   if(walkMode&&charMesh){
-    const dt=engine.getDeltaTime()/1000;
-    const moveSpeed=4.2*dt, turnSpeed=2.4*dt;
-    if(turnLeft) charMesh.rotation.y-=turnSpeed*0.35;
-    if(turnRight) charMesh.rotation.y+=turnSpeed*0.35;
-    const forward=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
+    const moveSpeed=4.2*dt,turnSpeed=2.4*dt;
+    if(turnLeft)charMesh.rotation.y-=turnSpeed*0.35;
+    if(turnRight)charMesh.rotation.y+=turnSpeed*0.35;
+    const fwd=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
     if(!charMesh._vel)charMesh._vel=0;
     const tv=moveForward?moveSpeed:moveBackward?-moveSpeed*0.6:0;
-    charMesh._vel=charMesh._vel+(tv-charMesh._vel)*0.18;
-    if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(forward.scale(charMesh._vel));
-    // Animation: only switch idle<->walk, never interrupt kick/jump
-    if(animState!==3&&animState!==4){
-      const mv=moveForward||moveBackward||turnLeft||turnRight;
-      const tgt=mv?1:0;
-      if(tgt!==animState)switchAnim(tgt,true);
-    }
-    // Follow light
+    charMesh._vel+=(tv-charMesh._vel)*0.18;
+    if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
+    if(animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;}
-    // Camera
     if(moveForward||moveBackward)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
-    const dc=new BABYLON.Vector3(
-      charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),
-      charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,
-      charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
+    const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
     walk.position=BABYLON.Vector3.Lerp(walk.position,dc,0.1);
     walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
   }
@@ -1127,15 +1037,193 @@ engine.runRenderLoop(()=>{
 
 window.addEventListener('resize',()=>engine.resize());
 
+// ââ RENDER LOOP ââââââââââââââââââââââââââââââ
+let t=0;
+engine.runRenderLoop(()=>{
+  t += engine.getDeltaTime() * .001;
 
-// ── LOADING FADE ─────────────────────────────
+  fireLights.forEach(fl => {
+    fl.intensity = fl._b + Math.sin(t * 9.2 + fl.position.x * 3) * .65 + Math.sin(t * 15.1 + fl.position.z) * .32;
+  });
+
+     lanLights.forEach(ll => {
+    if (ll._b) ll.intensity = ll._b + Math.sin(t * 1.9 + ll.position.x * .3) * .1;
+  });
+
+  if (adminMode && selectedObject && !adminDragging) {
+    softSnapSelectedObject();
+  }
+
+    if (walkMode && charMesh) {
+    const dt = engine.getDeltaTime() / 1000;
+    const moveSpeed = 5.5 * dt;
+    const turnSpeed = 4.8 * dt;
+
+    if (turnLeft) charMesh.rotation.y -= turnSpeed;
+    if (turnRight) charMesh.rotation.y += turnSpeed;
+
+    const forward = new BABYLON.Vector3(
+      Math.sin(charMesh.rotation.y),
+      0,
+      Math.cos(charMesh.rotation.y)
+    );
+
+    if (moveForward) {
+      charMesh.position.addInPlace(forward.scale(moveSpeed));
+    }
+
+    if (moveBackward) {
+      charMesh.position.addInPlace(forward.scale(-moveSpeed * 0.7));
+    }
+
+    // Camera always stays behind character â negate forward direction
+    const camDist = 7, camHeight = 3.5;
+    const desiredCameraPosition = new BABYLON.Vector3(
+      charMesh.position.x - Math.sin(charMesh.rotation.y) * camDist,
+      charMesh.position.y + camHeight,
+      charMesh.position.z - Math.cos(charMesh.rotation.y) * camDist
+    );
+    walk.position = BABYLON.Vector3.Lerp(walk.position, desiredCameraPosition, 0.1);
+    walk.setTarget(new BABYLON.Vector3(
+      charMesh.position.x,
+      charMesh.position.y + 1.2,
+      charMesh.position.z
+    ));
+  }
+  scene.render();
+});
+
+// ===== DOJO 5 (NEW SYSTEM) =====
+
+const dojoRoot = spawnAsset("dojo_5", new BABYLON.Vector3(-75, 1.8, 0));
+dojoRoot.name = "dojoRoot";
+dojoRootRef = dojoRoot;
+registerEditableRoot("dojo", dojoRoot);
+
+addTrigger({
+  id:'arcade',
+  x:-75,
+  z:0,
+  title:'THE DOJO ARCADE',
+  sub:'Battle Portal Â· Games Hub',
+  icon:'âï¸',
+  desc:'Battle for the Colony...',
+  actions:[
+    {label:'Battle Portal',href:'https://portal.rebelants.io',t:true},
+    {label:'OpenSea',href:'https://opensea.io/collection/rebel-ants-battle-for-the-colony'},
+    {label:'Magic Eden',href:'https://magiceden.us/...',g:true}
+  ]
+});
+
+// Dojo glow lights removed â not visible at night, wasting performance
+
+// ===== DOJO 7 (NEW SYSTEM) =====
+
+const dojo7Root = spawnAsset("dojo_7", new BABYLON.Vector3(-75, 1.8, 80));
+dojo7Root.name = "dojo7Root";
+dojo7RootRef = dojo7Root;
+registerEditableRoot("dojo7", dojo7Root);
+
+// ===== DOJO 9 =====
+const dojo9Root = spawnAsset("dojo_9", new BABYLON.Vector3(75, 1.8, 80));
+dojo9Root.name = "dojo9Root";
+dojo9RootRef = dojo9Root;
+registerEditableRoot("dojo9", dojo9Root);
+
+// ===== SHRINE 2 =====
+const shrine2Root = spawnAsset("shrine_2", new BABYLON.Vector3(0, 0, 40));
+shrine2Root.name = "shrine2Root";
+registerEditableRoot("shrine_2", shrine2Root);
+  
+
+// ===== LOAD DOJO 6 =====
+BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "dojo_6.glb", scene)
+.then(r => {
+
+   const dojo6Root = new BABYLON.TransformNode("dojo6Root", scene);
+  dojo6RootRef = dojo6Root;
+  dojo6Root.metadata = { type: "dojo6", loaded: false };
+
+  const dojo6ModelRoot = new BABYLON.TransformNode("dojo6ModelRoot", scene);
+  dojo6ModelRoot.parent = dojo6Root;
+
+  r.meshes.forEach(m => {
+    if (m !== dojo6Root && m !== dojo6ModelRoot) {
+      m.parent = dojo6ModelRoot;
+    }
+
+    if (m.rotationQuaternion) {
+      m.rotationQuaternion = null;
+    }
+
+    shadows.addShadowCaster(m);
+    m.receiveShadows = true;
+  });
+
+  r.transformNodes.forEach(t => {
+    if (t !== dojo6Root && t !== dojo6ModelRoot) {
+      t.parent = dojo6ModelRoot;
+    }
+
+    if (t.rotationQuaternion) {
+      t.rotationQuaternion = null;
+    }
+  });
+
+    dojo6ModelRoot.position = BABYLON.Vector3.Zero();
+  dojo6ModelRoot.rotation = BABYLON.Vector3.Zero();
+  dojo6ModelRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+  dojo6Root.position = new BABYLON.Vector3(75, 1.8, 0);
+  dojo6Root.scaling = new BABYLON.Vector3(1.2, 1.2, 1.2);
+  dojo6Root.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
+  registerEditableRoot("dojo6", dojo6Root);
+
+    dojo6Root.metadata.loaded = true;
+  console.log("Dojo 6 loaded", r);
+
+})
+.catch(err => {
+  console.error("Dojo 6 failed to load", err);
+});
+// ===== LOAD FENCE =====
+BABYLON.SceneLoader.ImportMeshAsync("", "/assets/buildings/", "fence_1.glb", scene)
+.then(r => {
+
+    const fenceRoot = new BABYLON.TransformNode("fenceRoot", scene);
+  fenceRootRef = fenceRoot;
+  fenceRoot.metadata = { type: "fence", loaded: false };
+
+  r.meshes.forEach(m => {
+    if (m !== fenceRoot) {
+      m.parent = fenceRoot;
+    }
+    shadows.addShadowCaster(m);
+    m.receiveShadows = true;
+  });
+
+  fenceRoot.position = new BABYLON.Vector3(-92, 0, -18);
+  fenceRoot.scaling = new BABYLON.Vector3(2, 2, 2);
+  fenceRoot.rotation = new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0);
+
+  registerEditableRoot("fence", fenceRoot);
+
+    fenceRoot.metadata.loaded = true;
+  console.log("Fence loaded", r);
+
+})
+.catch(err => {
+  console.error("Fence failed to load", err);
+});
+  
+// ââ LOADING FADE âââââââââââââââââââââââââââââ
 setTimeout(()=>{
   const ld=document.getElementById('ld');
   ld.style.opacity='0';
   setTimeout(()=>ld.style.display='none',900);
 },1800);
 
-// ✅ LOAD SAVED LAYOUT (AFTER EVERYTHING EXISTS)
+// â LOAD SAVED LAYOUT (AFTER EVERYTHING EXISTS)
 function waitForWorldAndLoadLayout() {
   const dojoReady = !!dojoRootRef && !!dojoRootRef.metadata && dojoRootRef.metadata.loaded === true;
   const dojo6Ready = !!dojo6RootRef && !!dojo6RootRef.metadata && dojo6RootRef.metadata.loaded === true;
@@ -1146,7 +1234,7 @@ function waitForWorldAndLoadLayout() {
     if (dojoReady && dojo6Ready && dojo7Ready && dojo9Ready && fenceReady) {
     loadWorldLayout();
 
-    // 🌲 after layout is loaded, make sure pines spawn if no saved pine layout exists
+    // ð² after layout is loaded, make sure pines spawn if no saved pine layout exists
     setTimeout(() => {
       if (typeof startPineSystem === "function") {
         startPineSystem();
@@ -1161,12 +1249,12 @@ function waitForWorldAndLoadLayout() {
 
 waitForWorldAndLoadLayout();
 
-// 🌳 OAK TREE SOURCE
+// ð³ OAK TREE SOURCE
 const tree1Root = spawnAsset("tree_1", new BABYLON.Vector3(9999, 0, 9999));
 tree1Root.name = "tree1Root";
 registerEditableRoot("tree_1", tree1Root);
 
-// 🌳 REPLACE ALL OAK PLACEHOLDERS WITH EDITABLE TREE CLONES
+// ð³ REPLACE ALL OAK PLACEHOLDERS WITH EDITABLE TREE CLONES
 function spawnOakTreeClonesFromPlaceholders() {
   oakPlaceholderPoints.forEach((pt, index) => {
     const cloneRoot = tree1Root.clone(makeCloneName("tree_1") + "_" + index);
@@ -1219,12 +1307,12 @@ function waitForTree1AndSpawnOaks() {
 
 waitForTree1AndSpawnOaks();
 
-// 🌲 PINE TREE SOURCE
+// ð² PINE TREE SOURCE
 const pine1Root = spawnAsset("pine_1", new BABYLON.Vector3(9999, 0, 9999));
 pine1Root.name = "pine1Root";
 registerEditableRoot("pine_1", pine1Root);
 
-// 🌲 REPLACE ALL PINE PLACEHOLDERS WITH EDITABLE PINE CLONES
+// ð² REPLACE ALL PINE PLACEHOLDERS WITH EDITABLE PINE CLONES
 function spawnPineTreeClonesFromPlaceholders() {
   pinePlaceholderPoints.forEach((pt, index) => {
     const cloneRoot = pine1Root.clone(makeCloneName("pine_1") + "_" + index);
@@ -1275,14 +1363,14 @@ function waitForPine1AndSpawnPines() {
   }
 }
 
-// 🔥 FORCE CHECK + SPAWN PINE
+// ð¥ FORCE CHECK + SPAWN PINE
 function startPineSystem() {
   if (!pine1Root || !pine1Root.metadata || pine1Root.metadata.loaded !== true) {
     setTimeout(startPineSystem, 300);
     return;
   }
 
-  console.log("🌲 Pine ready — spawning...");
+  console.log("ð² Pine ready â spawning...");
 
   if (!hasSavedPineTreeLayout()) {
     spawnPineTreeClonesFromPlaceholders();
