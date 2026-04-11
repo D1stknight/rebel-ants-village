@@ -1379,7 +1379,7 @@ engine.runRenderLoop(()=>{
     const tv=moveForward?moveSpeed:moveBackward?-moveSpeed*0.6:0;
     charMesh._vel+=(tv-charMesh._vel)*0.18;
     if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
-    if(animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
+    if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;}
     if(moveForward||moveBackward)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
     const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
