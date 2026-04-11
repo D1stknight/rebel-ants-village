@@ -114,7 +114,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="saveBadge">SAVED ✓</div>
 <div id="hud">
   <div id="logo"><h1>REBEL ANTS</h1><span>The Hidden Village</span></div>
-  <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
+  <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>R</kbd> Run<br><kbd>F</kbd> Kick<br><kbd>Space</kbd> Jump<br><kbd>Drag</kbd> Orbit<br><kbd>ESC</kbd> Exit</div>
 </div>
 <button id="wb" onclick="toggleWalk()">⚔️ &nbsp;ENTER VILLAGE</button>
 <div id="tt"><h3 id="tth">—</h3><p id="ttp">Click to enter</p></div>
@@ -866,19 +866,22 @@ setSt("Loading character...");
 let charMesh=null, isMoving=false;
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
 
-// Animation state machine — use object identity not name (all Mixamo anims named same)
+// Animation state machine
 let currentAnim = null;
 let idleAnim = null, walkAnim = null, runAnim = null;
 
 function playAnim(newAnim, loop=true) {
   if (!newAnim) return;
-  if (currentAnim === newAnim) {
-    if (!newAnim.isStarted) newAnim.start(loop);
-    return;
+  // Same animation already active — never restart it
+  if (currentAnim === newAnim) return;
+  // Stop old
+  if (currentAnim) {
+    currentAnim.stop();
   }
-  if (currentAnim) { currentAnim.pause(); currentAnim.reset(); currentAnim.stop(); }
   currentAnim = newAnim;
-  currentAnim.start(loop);
+  // Use play() with loop — this is the correct Babylon.js call
+  // It only starts if not already playing
+  currentAnim.play(loop);
 }
 
 // Load additional animations retargeted to the base character skeleton
@@ -1453,6 +1456,20 @@ document.addEventListener('keydown', e => {
   if (key === 's' || e.key === 'ArrowDown') moveBackward = true;
   if (key === 'a' || e.key === 'ArrowLeft') turnLeft = true;
   if (key === 'd' || e.key === 'ArrowRight') turnRight = true;
+  // Special moves — play once (no loop)
+  if (key === 'f' && window.kickAnim && walkMode) {
+    playAnim(window.kickAnim, false);
+    // Return to idle after kick finishes
+    setTimeout(() => { if(currentAnim === window.kickAnim) playAnim(idleAnim); }, 1200);
+  }
+  if (key === ' ' && window.jumpAnim && walkMode) {
+    e.preventDefault();
+    playAnim(window.jumpAnim, false);
+    setTimeout(() => { if(currentAnim === window.jumpAnim) playAnim(idleAnim); }, 1000);
+  }
+  if (key === 'r' && !adminMode && runAnim && walkMode) {
+    playAnim(runAnim);
+  }
 });
 
 document.addEventListener('keyup', e => {
@@ -1515,12 +1532,11 @@ engine.runRenderLoop(()=>{
     if (turnLeft)  charMesh.rotation.y -= turnSpeed * 0.35;
     if (turnRight) charMesh.rotation.y += turnSpeed * 0.35;
 
-    // Animation — only switch on actual state change
+    // Animation state — only switch on actual state change
     const moving = moveForward || moveBackward || turnLeft || turnRight;
-    if (moving && currentAnim !== walkAnim && walkAnim) {
-      playAnim(walkAnim);
-    } else if (!moving && currentAnim !== idleAnim && idleAnim) {
-      playAnim(idleAnim);
+    const targetAnim = moving ? walkAnim : idleAnim;
+    if (targetAnim && targetAnim !== currentAnim) {
+      playAnim(targetAnim);
     }
 
     const forward = new BABYLON.Vector3(
