@@ -1355,11 +1355,14 @@ scene.onPointerObservable.add(evt=>{
   else if(evt.type===BABYLON.PointerEventTypes.POINTERMOVE&&_orbitDragging){const dx=scene.pointerX-_orbitLastX,dy=scene.pointerY-_orbitLastY;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;_orbitAngleH+=dx*0.008;_orbitAngleV=Math.max(0.08,Math.min(0.85,_orbitAngleV+dy*0.006));}
 });
 scene.onPointerObservable.add(evt=>{
-  if(walkMode||!charMesh)return;
+  if(!charMesh)return;
   if(evt.type!==BABYLON.PointerEventTypes.POINTERPICK)return;
   const hit=evt.pickInfo; if(!hit||!hit.hit)return;
   let node=hit.pickedMesh; while(node&&node.parent)node=node.parent;
-  if(node&&node.name==='playerRoot'){orbit.alpha=-Math.PI/2.1;orbit.beta=Math.PI/3.6;orbit.radius=150;orbit.target=new BABYLON.Vector3(0,6,0);}
+  if(node&&node.name==='playerRoot'){
+    if(walkMode) toggleWalk();
+    orbit.alpha=-Math.PI/2.1;orbit.beta=Math.PI/3.6;orbit.radius=150;orbit.target=new BABYLON.Vector3(0,6,0);
+  }
 });
 window.addEventListener('resize',()=>engine.resize());
 
