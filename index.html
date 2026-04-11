@@ -863,8 +863,6 @@ function doorFrame(x,y,z,w,h){
 
 // ── WALKABLE CHARACTER + ANIMATION SYSTEM ────
 setSt("Loading character...");
-let charMesh=null, isMoving=false;
-let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
 
 // ═══════════════════════════════════════════════════
 // ANIMATION + CHARACTER SYSTEM — CLEAN REWRITE
@@ -1130,7 +1128,7 @@ engine.runRenderLoop(()=>{
 window.addEventListener('resize',()=>engine.resize());
 
 // ── RENDER LOOP ──────────────────────────────
-let t=0;
+t=0;
 engine.runRenderLoop(()=>{
   t += engine.getDeltaTime() * .001;
 
