@@ -929,22 +929,30 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
 
   // Create our own clean player root
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
-  playerRoot.position = new BABYLON.Vector3(0, 5.2, 20);
+  playerRoot.position = new BABYLON.Vector3(0, 0, 20);
   playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
-  playerRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+  playerRoot.scaling = new BABYLON.Vector3(0.025, 0.025, 0.025);
 
-   // Parent all imported meshes under our player root
+  // Parent all imported meshes under our player root
   r.meshes.forEach(m => {
     if (m !== playerRoot) {
       m.parent = playerRoot;
     }
-
     if (m.rotationQuaternion) {
       m.rotationQuaternion = null;
     }
-
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
+    // Fix white material — ensure PBR material is not overexposed
+    if (m.material) {
+      if (m.material.albedoColor) {
+        // PBR material — don't override, just ensure it's not pure white
+        if (m.material.albedoColor.r === 1 && m.material.albedoColor.g === 1 && m.material.albedoColor.b === 1
+            && !m.material.albedoTexture) {
+          m.material.albedoColor = new BABYLON.Color3(0.6, 0.5, 0.4);
+        }
+      }
+    }
   });
 
   r.transformNodes.forEach(t => {
