@@ -1347,7 +1347,7 @@ document.addEventListener('keyup', e => {
 });
 let _orbitDragging=false, _orbitLastX=0, _orbitLastY=0;
 let _orbitAngleH=Math.PI, _orbitAngleV=0.35;
-const _orbitDist=9;
+let _orbitDist=9;
 scene.onPointerObservable.add(evt=>{
   if(!walkMode)return;
   if(evt.type===BABYLON.PointerEventTypes.POINTERDOWN){_orbitDragging=true;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;}
@@ -1372,16 +1372,19 @@ engine.runRenderLoop(()=>{
   if(adminMode&&selectedObject&&!adminDragging)softSnapSelectedObject();
   if(walkMode&&charMesh){
     const moveSpeed=4.2*dt,turnSpeed=2.4*dt;
-    if(turnLeft)charMesh.rotation.y-=turnSpeed*0.35;
-    if(turnRight)charMesh.rotation.y+=turnSpeed*0.35;
+    const tf=runKey?0.18:0.35;
+    if(turnLeft)charMesh.rotation.y-=turnSpeed*tf;
+    if(turnRight)charMesh.rotation.y+=turnSpeed*tf;
+    charMesh.rotation.z+=(((turnLeft?1:turnRight?-1:0)*0.08)-charMesh.rotation.z)*0.12;
     const fwd=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
     if(!charMesh._vel)charMesh._vel=0;
     const tv=(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
-    charMesh._vel+=(tv-charMesh._vel)*0.18;
+    const _lf=tv!==0?0.22:0.09; charMesh._vel+=(tv-charMesh._vel)*_lf;
     if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;}
     if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
+    _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
     const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
     walk.position=BABYLON.Vector3.Lerp(walk.position,dc,0.1);
     walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
