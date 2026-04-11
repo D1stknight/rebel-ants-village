@@ -866,22 +866,16 @@ setSt("Loading character...");
 let charMesh=null, isMoving=false;
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
 
-// Animation state machine
+// Animation state machine — use object identity not name (all Mixamo anims named same)
 let currentAnim = null;
 let idleAnim = null, walkAnim = null, runAnim = null;
-let currentAnimName = ''; // track by name to prevent restarts
 
 function playAnim(newAnim, loop=true) {
   if (!newAnim) return;
-  const newName = newAnim.name || newAnim.uniqueId;
-  // Already playing this — do nothing at all
-  if (currentAnimName === newName && newAnim.isPlaying) return;
-  // Stop previous
-  if (currentAnim && currentAnim !== newAnim) {
-    currentAnim.stop();
-  }
+  // Use strict object reference — NOT name string (all named "mixamo.com")
+  if (currentAnim === newAnim) return; // already set to this one, do nothing
+  if (currentAnim) currentAnim.stop();
   currentAnim = newAnim;
-  currentAnimName = newName;
   currentAnim.play(loop);
 }
 
@@ -907,10 +901,10 @@ function loadAnimations(skeleton) {
     }).catch(e => console.error("Anim failed:", filename, e));
   }
 
-  loadAnim("ant_walk_c.glb",     ag => { walkAnim = ag; });
-  loadAnim("ant_run_c.glb",      ag => { runAnim = ag; });
-  loadAnim("ant_flip_kick_c.glb",ag => { window.kickAnim = ag; });
-  loadAnim("ant_jumping_c.glb",  ag => { window.jumpAnim = ag; });
+  loadAnim("ant_walk_c.glb",     ag => { walkAnim = ag; walkAnim._key = 'walk'; });
+  loadAnim("ant_run_c.glb",      ag => { runAnim = ag; runAnim._key = 'run'; });
+  loadAnim("ant_flip_kick_c.glb",ag => { window.kickAnim = ag; ag._key = 'kick'; });
+  loadAnim("ant_jumping_c.glb",  ag => { window.jumpAnim = ag; ag._key = 'jump'; });
 }
 let selectedObject = null;
 let fenceRootRef = null;
@@ -979,9 +973,10 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
   // Grab the built-in idle animation from ant_idle_c.glb
   if (r.animationGroups.length > 0) {
     idleAnim = r.animationGroups[0];
-    currentAnim = idleAnim;
+    idleAnim._key = 'idle'; // tag it so we can identify it
     idleAnim.play(true);
-    console.log("✅ Idle anim playing:", idleAnim.name, "tracks:", idleAnim.targetedAnimations.length);
+    currentAnim = idleAnim;
+    console.log("✅ Idle anim playing, tracks:", idleAnim.targetedAnimations.length);
   } else {
     console.warn("No animation groups in base character");
   }
@@ -1351,8 +1346,9 @@ function toggleWalk(){
     }
 
     scene.activeCamera = walk;
-       walk.detachControl();
+    walk.detachControl();
     orbit.detachControl();
+    // Don't use pointer lock — we need mouse events for orbit
 
     wb.textContent = '🌐  EXIT WALK MODE';
     wb.classList.add('on');
@@ -1516,14 +1512,12 @@ engine.runRenderLoop(()=>{
     if (turnLeft)  charMesh.rotation.y -= turnSpeed * 0.35;
     if (turnRight) charMesh.rotation.y += turnSpeed * 0.35;
 
-    // Animation state — only trigger on CHANGE, never every frame
+    // Animation — only switch on actual state change
     const moving = moveForward || moveBackward || turnLeft || turnRight;
-    if (!charMesh._wasMoving && moving && walkAnim) {
+    if (moving && currentAnim !== walkAnim && walkAnim) {
       playAnim(walkAnim);
-      charMesh._wasMoving = true;
-    } else if (charMesh._wasMoving && !moving && idleAnim) {
+    } else if (!moving && currentAnim !== idleAnim && idleAnim) {
       playAnim(idleAnim);
-      charMesh._wasMoving = false;
     }
 
     const forward = new BABYLON.Vector3(
