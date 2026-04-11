@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rebel Ants — The Hidden Village</title>
+<title>Rebel Ants — The Hidden Village [DEV]</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Noto+Serif+JP:wght@300;400;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -217,8 +217,8 @@ function spawnAsset(type, position) {
 
     meshes.forEach(m => {
       m.parent = root;
-      shadows.addShadowCaster(m);
-      m.receiveShadows = true;
+      if (!config.noShadows) shadows.addShadowCaster(m);
+      m.receiveShadows = !config.noShadows;
     });
 
     root.metadata.loaded = true;
@@ -361,7 +361,7 @@ const hemi=new BABYLON.HemisphericLight("h",new BABYLON.Vector3(0,1,0),scene);
 hemi.intensity=0.65; hemi.diffuse=new BABYLON.Color3(.52,.7,.98);
 hemi.groundColor=new BABYLON.Color3(.25,.32,.16); hemi.specular=new BABYLON.Color3(0,0,0);
 
-const shadows=new BABYLON.ShadowGenerator(2048,sun);
+const shadows=new BABYLON.ShadowGenerator(1024,sun);
 shadows.useBlurExponentialShadowMap=true; shadows.blurKernel=20; shadows.bias=0.001;
 
 // ── PROCEDURAL SKY ───────────────────────────
@@ -389,8 +389,32 @@ function updateSky(){
 updateSky(); setInterval(updateSky,30000);
 
 // ── HELPERS ──────────────────────────────────
-function mat(c,o={}){const m=new BABYLON.StandardMaterial("m"+Math.random(),scene);m.diffuseColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;m.specularColor=new BABYLON.Color3(.03,.03,.03);if(o.e)m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;if(o.a)m.alpha=o.a;return m;}
-function pbr(c,o={}){const m=new BABYLON.PBRMaterial("p"+Math.random(),scene);m.albedoColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;m.metallic=o.m||0;m.roughness=o.r||.85;if(o.e){m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;m.emissiveIntensity=o.ei||1;}if(o.a)m.alpha=o.a;return m;}
+// Material cache — reuse identical materials instead of creating new ones
+const _matCache={}, _pbrCache={};
+function mat(c,o={}){
+  const col=typeof c==='string'?c:c.toHexString();
+  const key=col+JSON.stringify(o);
+  if(!o.e&&!o.a&&_matCache[key]) return _matCache[key];
+  const m=new BABYLON.StandardMaterial("m_"+col,scene);
+  m.diffuseColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;
+  m.specularColor=new BABYLON.Color3(.03,.03,.03);
+  if(o.e)m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;
+  if(o.a)m.alpha=o.a;
+  if(!o.e&&!o.a)_matCache[key]=m;
+  return m;
+}
+function pbr(c,o={}){
+  const col=typeof c==='string'?c:c.toHexString();
+  const key=col+JSON.stringify(o);
+  if(!o.e&&!o.a&&_pbrCache[key]) return _pbrCache[key];
+  const m=new BABYLON.PBRMaterial("p_"+col,scene);
+  m.albedoColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;
+  m.metallic=o.m||0;m.roughness=o.r||.85;
+  if(o.e){m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;m.emissiveIntensity=o.ei||1;}
+  if(o.a)m.alpha=o.a;
+  if(!o.e&&!o.a)_pbrCache[key]=m;
+  return m;
+}
 function box(w,h,d,mat,pos,ry=0){const b=BABYLON.MeshBuilder.CreateBox("b"+Math.random(),{width:w,height:h,depth:d},scene);b.material=mat;if(pos)b.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(ry)b.rotation.y=ry;b.receiveShadows=true;shadows.addShadowCaster(b);return b;}
 function cyl(rt,rb,h,t,mat,pos,rz=0){const c=BABYLON.MeshBuilder.CreateCylinder("cy"+Math.random(),{diameterTop:rt,diameterBottom:rb,height:h,tessellation:t},scene);c.material=mat;if(pos)c.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(rz)c.rotation.z=rz;c.receiveShadows=true;shadows.addShadowCaster(c);return c;}
 function sph(d,mat,pos){const s=BABYLON.MeshBuilder.CreateSphere("sp"+Math.random(),{diameter:d,segments:8},scene);s.material=mat;if(pos)s.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);s.receiveShadows=true;shadows.addShadowCaster(s);return s;}
@@ -566,12 +590,12 @@ function fireBowl(x,z){
   cyl(.95,.55,.52,12,bm2,[x,1.46,z]);
   sph(.42,fm,[x,1.7,z]);
   const fl=new BABYLON.PointLight("fl"+x,new BABYLON.Vector3(x,2.2,z),scene);
-  fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.intensity=3.2; fl.range=18; fl._b=3.2;
+  fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.intensity=1.8; fl.range=10; fl._b=1.8;
   fireLights.push(fl);
 }
-[[-4,95],[4,95],[-4,-5],[4,-5],[-26,2],[26,2],[-26,-2],[26,-2],
- [-4,76],[4,76],[-4,-68],[4,-68],[-68,4],[68,4],[0,0],
- [-20,20],[20,20],[-20,-20],[20,-20]
+// Reduced fire bowls: 19 → 8 lights (keep key positions only)
+[[-4,95],[4,95],[-26,0],[26,0],
+ [-4,-5],[4,-5],[0,0],[-4,76]
 ].forEach(([x,z])=>fireBowl(x,z));
 
 // ── HANGING LANTERNS (properly attached to posts) ──
@@ -596,7 +620,7 @@ function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   cyl(.3,.3,.05,10,capm,[0,-.66,0]).parent=root;
   // Light
   const ll=new BABYLON.PointLight("ll"+lIdx,new BABYLON.Vector3(x,y-.46,z),scene);
-  ll.diffuse=BABYLON.Color3.FromHexString(col); ll.intensity=1.2; ll.range=10; ll._b=1.2;
+  ll.diffuse=BABYLON.Color3.FromHexString(col); ll.intensity=0.9; ll.range=7; ll._b=0.9;
   lanLights.push(ll); lIdx++;
 }
 
@@ -615,18 +639,17 @@ function lanternRow(x1,z1,x2,z2,y,n,col){
   for(let i=0;i<=n;i++){const t=i/n,sag=Math.sin(t*Math.PI)*-1.2;hangingLantern(x1+(x2-x1)*t,y+sag-.05,z1+(z2-z1)*t,col,.9);}
 }
 // Only put lantern strings between buildings — not crossing center
-lanternRow(-38,-38,38,-38,18,6,"#ffdd88");
-lanternRow(-38,38,38,38,18,6,"#ff9944");
-lanternRow(-38,-38,-38,38,18,6,"#ff5555");
-lanternRow(38,-38,38,38,18,6,"#44aaff");
+lanternRow(-38,-38,38,-38,18,3,"#ffdd88");
+lanternRow(-38,38,38,38,18,3,"#ff9944");
+lanternRow(-38,-38,-38,38,18,3,"#ff5555");
+lanternRow(38,-38,38,38,18,3,"#44aaff");
 // Building accent lanterns — on posts near each dojo
+// One accent lantern per building (not two)
 [[-72,0],[72,0],[0,-72],[0,72],[-55,-55],[55,-55]].forEach(([x,z],i)=>{
   const cols=["#ffdd66","#00ffee","#ff5555","#ffaa22","#ffcc00","#cc44ff"];
   const pm2=mat(new BABYLON.Color3(.22,.13,.06));
-  for(let s of[-1,1]){
-    cyl(.07,.09,6,8,pm2,[x+s*8,0,z]);
-    hangingLantern(x+s*8,6.5,z,cols[i],.8);
-  }
+  cyl(.07,.09,6,8,pm2,[x+8,0,z]);
+  hangingLantern(x+8,6.5,z,cols[i],.8);
 });
 
 // ══════════════════════════════════════════════
@@ -724,18 +747,16 @@ function doorFrame(x,y,z,w,h){
   // 🔥 STRONG CENTER GLOW (for dojo_9 area)
   const colonyGlow = new BABYLON.PointLight("colonyGlow", new BABYLON.Vector3(x, 8, z), scene);
   colonyGlow.diffuse = new BABYLON.Color3(0.3, 0.6, 1.0); // brighter blue
-  colonyGlow.intensity = 12;
-  colonyGlow.range = 70;
+  colonyGlow.intensity = 1.8;
+  colonyGlow.range = 25;
 
   const colonyFill = new BABYLON.PointLight("colonyFill", new BABYLON.Vector3(x, 3, z), scene);
   colonyFill.diffuse = new BABYLON.Color3(0.15, 0.3, 0.8);
-  colonyFill.intensity = 6;
-  colonyFill.range = 80;
+  colonyFill.intensity = 0.8;
+  colonyFill.range = 30;
 
   // 🔥 STRONGER PULSE
-  scene.registerBeforeRender(() => {
-    colonyGlow.intensity = 10 + Math.sin(performance.now() * 0.002) * 2;
-  });
+  // colony pulse removed for performance
 
 })();
 
@@ -775,22 +796,7 @@ function doorFrame(x,y,z,w,h){
 (()=>{
   const x=0,z=80;
 
-  // Strong ambient glow
-  const glowLight = new BABYLON.PointLight("archiveGlow", new BABYLON.Vector3(x, 6, z), scene);
-  glowLight.diffuse = new BABYLON.Color3(0.3, 0.1, 0.6);
-  glowLight.intensity = 6;
-glowLight.range = 40;
-
-  // Secondary soft light (fill)
-  const fillLight = new BABYLON.PointLight("archiveFill", new BABYLON.Vector3(x, 3, z), scene);
-  fillLight.diffuse = new BABYLON.Color3(0.1, 0.05, 0.3);
-  fillLight.intensity = 3;
-fillLight.range = 40;
-
-  // Flicker effect
-  scene.registerBeforeRender(() => {
-    glowLight.intensity = 2.2 + Math.sin(performance.now() * 0.002) * 0.3;
-  });
+    // Archive glow lights removed
 
   // KEEP TRIGGER
   addTrigger({
@@ -825,7 +831,7 @@ fillLight.range = 40;
     shadows.addShadowCaster(coin);
   }
   const gl=new BABYLON.PointLight("gl",new BABYLON.Vector3(x,4,z+6),scene);
-  gl.diffuse=new BABYLON.Color3(.9,.75,.28); gl.intensity=2.2; gl.range=12;
+  gl.diffuse=new BABYLON.Color3(.9,.75,.28); gl.intensity=1.0; gl.range=8;
   doorFrame(x,2.05,z+4.57,1.9,3.0);
   for(let i=0;i<3;i++){box(9-i*.4,.28,.62,pbr(new BABYLON.Color3(.5,.5,.58),{r:.9}),[x,i*.28-.18,z+4.72+i*.3]);}
   pagodaRoof(x,6.8,z,10,9,new BABYLON.Color3(.7,.56,.12),0,1);
@@ -847,7 +853,7 @@ fillLight.range = 40;
     sl.diffuse=tc; sl.intensity=.65; sl.range=4; sl._b=.65; lanLights.push(sl);
   }
   const pl=new BABYLON.PointLight("pl",new BABYLON.Vector3(x,4,z+6),scene);
-  pl.diffuse=new BABYLON.Color3(.65,.3,.9); pl.intensity=2.0; pl.range=12;
+  pl.diffuse=new BABYLON.Color3(.65,.3,.9); pl.intensity=1.0; pl.range=8;
   doorFrame(x,2.05,z+4.57,1.9,3.0);
   for(let i=0;i<3;i++){box(9-i*.4,.28,.62,pbr(new BABYLON.Color3(.5,.5,.58),{r:.9}),[x,i*.28-.18,z+4.72+i*.3]);}
   pagodaRoof(x,6.8,z,10,9,new BABYLON.Color3(.42,.18,.72),0,1);
@@ -857,7 +863,7 @@ fillLight.range = 40;
 // ── WALKABLE CHARACTER ───────────────────────
 setSt("Loading character...");
 let charMesh=null, charAnims={}, isMoving=false;
-let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
+let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
 let fenceRootRef = null;
 let dojoRootRef = null;
@@ -878,61 +884,54 @@ gizmoManager.rotationGizmoEnabled = false;
 gizmoManager.scaleGizmoEnabled = false;
 gizmoManager.clearGizmoOnEmptyPointerEvent = false;
 
-BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
+let animState = -1, animGroups = [];
+function switchAnim(idx, loop) {
+  if (animState === idx) return;
+  const prev = animGroups[animState], next = animGroups[idx];
+  if (!next) return;
+  if (prev && prev.isPlaying) prev.stop();
+  animState = idx; next.play(loop !== false);
+}
+BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", scene)
 .then(r => {
-
-  // Create our own clean player root
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
-  playerRoot.position = new BABYLON.Vector3(0, 5.2, 20);
+  playerRoot.position = new BABYLON.Vector3(0, 0.12, 20);
   playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
-  playerRoot.scaling = new BABYLON.Vector3(1, 1, 1);
-
-   // Parent all imported meshes under our player root
+  playerRoot.scaling = new BABYLON.Vector3(0.018, 0.018, 0.018);
   r.meshes.forEach(m => {
-    if (m !== playerRoot) {
-      m.parent = playerRoot;
-    }
-
-    if (m.rotationQuaternion) {
-      m.rotationQuaternion = null;
-    }
-
-    shadows.addShadowCaster(m);
-    m.receiveShadows = true;
-  });
-
-  r.transformNodes.forEach(t => {
-    if (t !== playerRoot) {
-      t.parent = playerRoot;
-    }
-
-    if (t.rotationQuaternion) {
-      t.rotationQuaternion = null;
+    if (m !== playerRoot) m.parent = playerRoot;
+    if (m.rotationQuaternion) m.rotationQuaternion = null;
+    shadows.addShadowCaster(m); m.receiveShadows = true;
+    if (m.material) {
+      const mat = m.material;
+      if (mat.getClassName && mat.getClassName() === 'PBRMaterial') {
+        mat.emissiveColor = new BABYLON.Color3(0,0,0); mat.emissiveIntensity = 0;
+        if (!mat.albedoTexture) {
+          const ci = r.meshes.indexOf(m);
+          const cols = [new BABYLON.Color3(.08,.15,.38),new BABYLON.Color3(.22,.12,.08),new BABYLON.Color3(.55,.45,.12),new BABYLON.Color3(.06,.06,.08),new BABYLON.Color3(.28,.18,.06)];
+          mat.albedoColor = cols[ci%cols.length]; mat.metallic=ci%3===0?.7:.1; mat.roughness=.6;
+        }
+      }
     }
   });
-
-  // Use playerRoot as the thing we move and rotate
+  r.transformNodes.forEach(tn => { if(tn!==playerRoot)tn.parent=playerRoot; if(tn.rotationQuaternion)tn.rotationQuaternion=null; });
   charMesh = playerRoot;
-
-  // Handle animations (if they exist)
-  r.animationGroups.forEach(ag => {
-    charAnims[ag.name.toLowerCase()] = ag;
-    ag.stop();
-  });
-
-  // Try to play idle animation automatically
-  if (charAnims["idle"]) {
-    charAnims["idle"].play(true);
-  }
-
-  console.log("Character loaded:", r);
+  if (r.animationGroups.length > 0) { animGroups[0]=r.animationGroups[0]; animState=0; animGroups[0].play(true); }
+  window.followLight = new BABYLON.PointLight("followLight", new BABYLON.Vector3(0,4,0), scene);
+  window.followLight.diffuse = new BABYLON.Color3(1,.82,.5);
+  window.followLight.intensity = 2.8; window.followLight.range = 22;
   setSt("Character ready!");
+  [{f:"ant_walk_c.glb",i:1},{f:"ant_run_c.glb",i:2},{f:"ant_flip_kick_c.glb",i:3},{f:"ant_jumping_c.glb",i:4}].forEach(({f,i}) => {
+    BABYLON.SceneLoader.ImportMeshAsync("","/assets/character/",f,scene).then(r2 => {
+      r2.meshes.forEach(m=>{m.isVisible=false;m.setEnabled(false);});
+      const ag=r2.animationGroups[0]; if(!ag)return;
+      const sk=r.skeletons[0];
+      if(sk)ag.targetedAnimations.forEach(ta=>{const bn=sk.bones.find(b=>b.name===ta.target.name);if(bn)ta.target=bn._linkedTransformNode||bn;});
+      ag.stop(); animGroups[i]=ag;
+    }).catch(e=>console.error("Anim failed:",f,e));
+  });
+}).catch(err=>{console.error("Character failed:",err);setSt("Failed");});
 
-})
-.catch(err => {
-  console.error("Character failed to load:", err);
-  setSt("Character failed to load");
-});
 
 // ── INTERACTIONS ─────────────────────────────
 const tooltip=document.getElementById('tt');
@@ -1225,40 +1224,23 @@ function openPanel(b){
 }
 
 // ── WALK MODE ────────────────────────────────
-function toggleWalk(){
+function toggleWalk() {
   walkMode = !walkMode;
-  const wb = document.getElementById('wb');
-  const xh = document.getElementById('xhair');
-
+  const wb = document.getElementById('wb'), xh = document.getElementById('xhair');
   if (walkMode) {
     if (charMesh) {
-           walk.position = new BABYLON.Vector3(
-        charMesh.position.x,
-        charMesh.position.y + 2.2,
-        charMesh.position.z - 4
-      );
-      walk.setTarget(new BABYLON.Vector3(
-        charMesh.position.x,
-        charMesh.position.y + 1.8,
-        charMesh.position.z + 2
-      ));
+      _orbitAngleH = charMesh.rotation.y + Math.PI; _orbitAngleV = 0.35;
+      walk.position = new BABYLON.Vector3(
+        charMesh.position.x + Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),
+        charMesh.position.y + _orbitDist*Math.sin(_orbitAngleV) + 2,
+        charMesh.position.z + Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
+      walk.setTarget(new BABYLON.Vector3(charMesh.position.x, charMesh.position.y+2.8, charMesh.position.z));
     }
-
-    scene.activeCamera = walk;
-       walk.detachControl();
-    orbit.detachControl();
-
-    wb.textContent = '🌐  EXIT WALK MODE';
-    wb.classList.add('on');
-    xh.classList.remove('on');
+    scene.activeCamera = walk; walk.detachControl(); orbit.detachControl();
+    wb.textContent = '🌐  EXIT WALK MODE'; wb.classList.add('on'); xh.classList.remove('on');
   } else {
-    scene.activeCamera = orbit;
-    orbit.attachControl(canvas, true);
-    walk.detachControl();
-
-    wb.textContent = '⚔️  ENTER VILLAGE';
-    wb.classList.remove('on');
-    xh.classList.remove('on');
+    scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
+    wb.textContent = '⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
   }
 }
 document.addEventListener('keydown', e => {
@@ -1345,70 +1327,67 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if (key === 'w') moveForward = true;
-  if (key === 's') moveBackward = true;
-  if (key === 'a') turnLeft = true;
-  if (key === 'd') turnRight = true;
+  if (key === 'w' || e.key === 'ArrowUp') moveForward = true;
+  if (key === 's' || e.key === 'ArrowDown') moveBackward = true;
+  if (key === 'a' || e.key === 'ArrowLeft') turnLeft = true;
+  if (key === 'd' || e.key === 'ArrowRight') turnRight = true;
+  if (!walkMode) return;
+  if (key === 'r' && !adminMode) { runKey=true; switchAnim(2, true); }
+  if (key === 'f' && !adminMode) { switchAnim(3, false); setTimeout(()=>{ if(animState===3) switchAnim(0,true); }, 1200); }
+  if (e.key === ' ') { e.preventDefault(); switchAnim(4, false); setTimeout(()=>{ if(animState===4) switchAnim(0,true); }, 1000); }
 });
 
+document.addEventListener('keyup', e => {
+  const key = e.key.toLowerCase();
+  if (key === 'w' || e.key === 'ArrowUp') moveForward = false;
+  if (key === 's' || e.key === 'ArrowDown') moveBackward = false;
+  if (key === 'a' || e.key === 'ArrowLeft') turnLeft = false;
+  if (key === 'd' || e.key === 'ArrowRight') turnRight = false;
+  if (key === 'r' && !adminMode && walkMode) { runKey=false; const mv=moveForward||moveBackward||turnLeft||turnRight; switchAnim(mv?1:0,true); }
+});
+let _orbitDragging=false, _orbitLastX=0, _orbitLastY=0;
+let _orbitAngleH=Math.PI, _orbitAngleV=0.35;
+let _orbitDist=9;
+scene.onPointerObservable.add(evt=>{
+  if(!walkMode)return;
+  if(evt.type===BABYLON.PointerEventTypes.POINTERDOWN){_orbitDragging=true;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;}
+  else if(evt.type===BABYLON.PointerEventTypes.POINTERUP){_orbitDragging=false;}
+  else if(evt.type===BABYLON.PointerEventTypes.POINTERMOVE&&_orbitDragging){const dx=scene.pointerX-_orbitLastX,dy=scene.pointerY-_orbitLastY;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;_orbitAngleH+=dx*0.008;_orbitAngleV=Math.max(0.08,Math.min(0.85,_orbitAngleV+dy*0.006));}
+});
+scene.onPointerObservable.add(evt=>{
+  if(walkMode||!charMesh)return;
+  if(evt.type!==BABYLON.PointerEventTypes.POINTERPICK)return;
+  const hit=evt.pickInfo; if(!hit||!hit.hit)return;
+  let node=hit.pickedMesh; while(node&&node.parent)node=node.parent;
+  if(node&&node.name==='playerRoot'){orbit.alpha=-Math.PI/2.1;orbit.beta=Math.PI/3.6;orbit.radius=150;orbit.target=new BABYLON.Vector3(0,6,0);}
+});
 window.addEventListener('resize',()=>engine.resize());
 
 // ── RENDER LOOP ──────────────────────────────
 let t=0;
 engine.runRenderLoop(()=>{
-  t += engine.getDeltaTime() * .001;
-
-  fireLights.forEach(fl => {
-    fl.intensity = fl._b + Math.sin(t * 9.2 + fl.position.x * 3) * .65 + Math.sin(t * 15.1 + fl.position.z) * .32;
-  });
-
-     lanLights.forEach(ll => {
-    if (ll._b) ll.intensity = ll._b + Math.sin(t * 1.9 + ll.position.x * .3) * .1;
-  });
-
-  if (adminMode && selectedObject && !adminDragging) {
-    softSnapSelectedObject();
-  }
-
-    if (walkMode && charMesh) {
-    const dt = engine.getDeltaTime() / 1000;
-    const moveSpeed = 5.5 * dt;
-    const turnSpeed = 4.8 * dt;
-
-    if (turnLeft) charMesh.rotation.y -= turnSpeed;
-    if (turnRight) charMesh.rotation.y += turnSpeed;
-
-    const forward = new BABYLON.Vector3(
-      Math.sin(charMesh.rotation.y),
-      0,
-      Math.cos(charMesh.rotation.y)
-    );
-
-    if (moveForward) {
-      charMesh.position.addInPlace(forward.scale(moveSpeed));
-    }
-
-    if (moveBackward) {
-      charMesh.position.addInPlace(forward.scale(-moveSpeed * 0.7));
-    }
-
-    const desiredCameraPosition = new BABYLON.Vector3(
-      charMesh.position.x,
-      charMesh.position.y + 1.6,
-      charMesh.position.z - 5
-    );
-
-    walk.position = BABYLON.Vector3.Lerp(
-      walk.position,
-      desiredCameraPosition,
-      0.12
-    );
-
-    walk.setTarget(new BABYLON.Vector3(
-      charMesh.position.x,
-      charMesh.position.y + 0.9,
-      charMesh.position.z + 3
-    ));
+  const dt=engine.getDeltaTime()/1000;
+  fireLights.forEach(fl=>{fl.intensity=fl._b+Math.sin(Date.now()*0.009+fl.position.x*3)*0.65;});
+  lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(Date.now()*0.0019+ll.position.x*0.3)*0.1;});
+  if(adminMode&&selectedObject&&!adminDragging)softSnapSelectedObject();
+  if(walkMode&&charMesh){
+    const moveSpeed=4.2*dt,turnSpeed=2.4*dt;
+    const tf=runKey?0.18:0.35;
+    if(turnLeft)charMesh.rotation.y-=turnSpeed*tf;
+    if(turnRight)charMesh.rotation.y+=turnSpeed*tf;
+    charMesh.rotation.z+=(((turnLeft?1:turnRight?-1:0)*0.08)-charMesh.rotation.z)*0.12;
+    const fwd=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
+    if(!charMesh._vel)charMesh._vel=0;
+    const tv=(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
+    const _lf=tv!==0?0.22:0.09; charMesh._vel+=(tv-charMesh._vel)*_lf;
+    if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
+    if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
+    if(window.followLight){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;}
+    if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
+    _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
+    const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
+    walk.position=BABYLON.Vector3.Lerp(walk.position,dc,0.1);
+    walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
   }
   scene.render();
 });
@@ -1435,25 +1414,7 @@ addTrigger({
   ]
 });
 
-// 🔥 DOJO GLOW
-const dojoGlow = new BABYLON.PointLight("dojoGlow", BABYLON.Vector3.Zero(), scene);
-dojoGlow.parent = dojoRoot;
-dojoGlow.position = new BABYLON.Vector3(0, 5, 0);
-dojoGlow.diffuse = new BABYLON.Color3(0.2, 0.4, 1.0);
-dojoGlow.intensity = 8;
-dojoGlow.range = 50;
-
-const dojoFill = new BABYLON.PointLight("dojoFill", BABYLON.Vector3.Zero(), scene);
-dojoFill.parent = dojoRoot;
-dojoFill.position = new BABYLON.Vector3(0, 2, 0);
-dojoFill.diffuse = new BABYLON.Color3(0.1, 0.2, 0.6);
-dojoFill.intensity = 4;
-dojoFill.range = 60;
-
-// pulse
-scene.registerBeforeRender(() => {
-  dojoGlow.intensity = 7.5 + Math.sin(performance.now() * 0.002) * 0.8;
-});
+// Dojo glow lights removed — not visible at night, wasting performance
 
 // ===== DOJO 7 (NEW SYSTEM) =====
 
