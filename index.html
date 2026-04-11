@@ -869,19 +869,20 @@ let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
 // Animation state machine
 let currentAnim = null;
 let idleAnim = null, walkAnim = null, runAnim = null;
+let currentAnimName = ''; // track by name to prevent restarts
 
 function playAnim(newAnim, loop=true) {
   if (!newAnim) return;
-  // Already playing this exact animation — don't restart it
-  if (currentAnim === newAnim && newAnim.isPlaying) return;
-  // Stop current
+  const newName = newAnim.name || newAnim.uniqueId;
+  // Already playing this — do nothing at all
+  if (currentAnimName === newName && newAnim.isPlaying) return;
+  // Stop previous
   if (currentAnim && currentAnim !== newAnim) {
-    currentAnim.pause();
+    currentAnim.stop();
   }
   currentAnim = newAnim;
-  if (!currentAnim.isPlaying) {
-    currentAnim.play(loop);
-  }
+  currentAnimName = newName;
+  currentAnim.play(loop);
 }
 
 // Load additional animations retargeted to the base character skeleton
@@ -1021,6 +1022,12 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
     }
   });
   console.log("✅ Fixed", charMats.size, "character materials");
+
+  // Follow light — warm lantern that moves with the character
+  window.followLight = new BABYLON.PointLight("followLight", new BABYLON.Vector3(0, 4, 0), scene);
+  window.followLight.diffuse = new BABYLON.Color3(1, 0.82, 0.5);
+  window.followLight.intensity = 2.8;
+  window.followLight.range = 22;
 
   // Load walk/run/kick/jump animations and retarget to this skeleton
   loadAnimations(r.skeletons[0]);
@@ -1506,6 +1513,13 @@ engine.runRenderLoop(()=>{
       charMesh.position.addInPlace(forward.scale(charMesh._vel));
     }
 
+    // Move follow light with character
+    if (window.followLight && charMesh) {
+      window.followLight.position.x = charMesh.position.x;
+      window.followLight.position.y = charMesh.position.y + 4;
+      window.followLight.position.z = charMesh.position.z;
+    }
+
     // Camera always stays behind character — negate forward direction
     const camDist = 9, camHeight = 5.5;
     const desiredCameraPosition = new BABYLON.Vector3(
@@ -1516,7 +1530,7 @@ engine.runRenderLoop(()=>{
     walk.position = BABYLON.Vector3.Lerp(walk.position, desiredCameraPosition, 0.1);
     walk.setTarget(new BABYLON.Vector3(
       charMesh.position.x,
-      charMesh.position.y + 1.2,
+      charMesh.position.y + 2.8,
       charMesh.position.z
     ));
   }
