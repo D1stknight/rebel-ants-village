@@ -187,6 +187,12 @@ pine_1: {
   rotation: new BABYLON.Vector3(0, Math.PI, 0),
   groundOffset: 2,
   noShadows: true
+},
+
+rock_1: {
+  path: "/assets/buildings/rock_1.glb",
+  scale: 1.0,
+  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
 }
   
 };
@@ -550,17 +556,13 @@ for(let ring=0;ring<4;ring++){
   fn(x,z,5+Math.random()*3);
 });
 
-// ── ROCKS ────────────────────────────────────
-const rkm=pbr(new BABYLON.Color3(.38,.38,.4),{r:.92,m:.08});
+// ── ROCKS (rock_1.glb) ───────────────────────
 [[-62,-42,1.5],[-61,-41,.9],[62,-42,1.3],[63,-41,.75],[-62,42,1.2],[62,42,1.4],
  [-38,62,1.0],[38,62,.9],[-38,-62,1.1],[38,-62,.95],[70,6,1.3],[-70,6,1.0],
  [-15,72,.8],[15,72,.7],[-72,15,.9],[72,-15,1.1]
-].forEach(([x,z,s],i)=>{
-  const r=BABYLON.MeshBuilder.CreateSphere("r"+i,{diameter:s*3.5,segments:4},scene);
-  r.material=rkm; r.position=new BABYLON.Vector3(x,s*.8,z);
-  r.scaling=new BABYLON.Vector3(1+Math.random()*.55,.48+Math.random()*.3,1+Math.random()*.45);
-  r.rotation.y=Math.random()*Math.PI*2;
-  shadows.addShadowCaster(r); r.receiveShadows=true;
+].forEach(([x,z,s])=>{
+  const rk=spawnAsset("rock_1", new BABYLON.Vector3(x,0,z));
+  if(rk){ rk.scaling=new BABYLON.Vector3(s,s,s); rk.rotation.y=Math.random()*Math.PI*2; }
 });
 
 // ── TORII GATES ──────────────────────────────
