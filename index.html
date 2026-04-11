@@ -863,7 +863,7 @@ function doorFrame(x,y,z,w,h){
 // ── WALKABLE CHARACTER ───────────────────────
 setSt("Loading character...");
 let charMesh=null, charAnims={}, isMoving=false;
-let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
+let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
 let fenceRootRef = null;
 let dojoRootRef = null;
@@ -1332,7 +1332,7 @@ document.addEventListener('keydown', e => {
   if (key === 'a' || e.key === 'ArrowLeft') turnLeft = true;
   if (key === 'd' || e.key === 'ArrowRight') turnRight = true;
   if (!walkMode) return;
-  if (key === 'r' && !adminMode) { switchAnim(2, true); }
+  if (key === 'r' && !adminMode) { runKey=true; switchAnim(2, true); }
   if (key === 'f' && !adminMode) { switchAnim(3, false); setTimeout(()=>{ if(animState===3) switchAnim(0,true); }, 1200); }
   if (e.key === ' ') { e.preventDefault(); switchAnim(4, false); setTimeout(()=>{ if(animState===4) switchAnim(0,true); }, 1000); }
 });
@@ -1343,7 +1343,7 @@ document.addEventListener('keyup', e => {
   if (key === 's' || e.key === 'ArrowDown') moveBackward = false;
   if (key === 'a' || e.key === 'ArrowLeft') turnLeft = false;
   if (key === 'd' || e.key === 'ArrowRight') turnRight = false;
-  if (key === 'r' && !adminMode && walkMode) { const mv=moveForward||moveBackward||turnLeft||turnRight; switchAnim(mv?1:0,true); }
+  if (key === 'r' && !adminMode && walkMode) { runKey=false; const mv=moveForward||moveBackward||turnLeft||turnRight; switchAnim(mv?1:0,true); }
 });
 let _orbitDragging=false, _orbitLastX=0, _orbitLastY=0;
 let _orbitAngleH=Math.PI, _orbitAngleV=0.35;
@@ -1376,12 +1376,12 @@ engine.runRenderLoop(()=>{
     if(turnRight)charMesh.rotation.y+=turnSpeed*0.35;
     const fwd=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
     if(!charMesh._vel)charMesh._vel=0;
-    const tv=moveForward?moveSpeed:moveBackward?-moveSpeed*0.6:0;
+    const tv=(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
     charMesh._vel+=(tv-charMesh._vel)*0.18;
     if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;}
-    if(moveForward||moveBackward)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
+    if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
     const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
     walk.position=BABYLON.Vector3.Lerp(walk.position,dc,0.1);
     walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
