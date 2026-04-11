@@ -937,7 +937,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
 
   // Create our own clean player root
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
-  playerRoot.position = new BABYLON.Vector3(0, 0, 20);
+  playerRoot.position = new BABYLON.Vector3(0, 0.12, 20);
   playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
   playerRoot.scaling = new BABYLON.Vector3(0.018, 0.018, 0.018);
 
@@ -1336,10 +1336,12 @@ function toggleWalk(){
 
   if (walkMode) {
     if (charMesh) {
-           walk.position = new BABYLON.Vector3(
-        charMesh.position.x - Math.sin(charMesh.rotation.y) * 9,
-        charMesh.position.y + 5.5,
-        charMesh.position.z - Math.cos(charMesh.rotation.y) * 9
+           _orbitAngleH = charMesh.rotation.y + Math.PI;
+      _orbitAngleV = 0.35;
+      walk.position = new BABYLON.Vector3(
+        charMesh.position.x + Math.sin(_orbitAngleH) * _orbitDist * Math.cos(_orbitAngleV),
+        charMesh.position.y + _orbitDist * Math.sin(_orbitAngleV) + 2,
+        charMesh.position.z + Math.cos(_orbitAngleH) * _orbitDist * Math.cos(_orbitAngleV)
       );
       walk.setTarget(new BABYLON.Vector3(
         charMesh.position.x,
@@ -1462,6 +1464,29 @@ document.addEventListener('keyup', e => {
   if (key === 'a' || e.key === 'ArrowLeft') turnLeft = false;
   if (key === 'd' || e.key === 'ArrowRight') turnRight = false;
 });
+
+// Mouse orbit around character in walk mode
+let _orbitDragging = false, _orbitLastX = 0, _orbitLastY = 0;
+let _orbitAngleH = Math.PI, _orbitAngleV = 0.35; // horizontal & vertical angles
+const _orbitDist = 9, _orbitHeight = 5.5;
+
+canvas.addEventListener('mousedown', e => {
+  if (!walkMode) return;
+  _orbitDragging = true;
+  _orbitLastX = e.clientX;
+  _orbitLastY = e.clientY;
+});
+canvas.addEventListener('mousemove', e => {
+  if (!walkMode || !_orbitDragging || !charMesh) return;
+  const dx = e.clientX - _orbitLastX;
+  const dy = e.clientY - _orbitLastY;
+  _orbitLastX = e.clientX;
+  _orbitLastY = e.clientY;
+  _orbitAngleH += dx * 0.008;
+  _orbitAngleV = Math.max(0.1, Math.min(0.9, _orbitAngleV + dy * 0.006));
+});
+canvas.addEventListener('mouseup', () => { _orbitDragging = false; });
+canvas.addEventListener('mouseleave', () => { _orbitDragging = false; });
 window.addEventListener('resize',()=>engine.resize());
 
 // ── RENDER LOOP ──────────────────────────────
@@ -1491,12 +1516,14 @@ engine.runRenderLoop(()=>{
     if (turnLeft)  charMesh.rotation.y -= turnSpeed * 0.35;
     if (turnRight) charMesh.rotation.y += turnSpeed * 0.35;
 
-    // Switch animation based on movement — only switch when state changes
+    // Animation state — only trigger on CHANGE, never every frame
     const moving = moveForward || moveBackward || turnLeft || turnRight;
-    if (moving) {
-      if (walkAnim && currentAnim !== walkAnim) playAnim(walkAnim);
-    } else {
-      if (idleAnim && currentAnim !== idleAnim) playAnim(idleAnim);
+    if (!charMesh._wasMoving && moving && walkAnim) {
+      playAnim(walkAnim);
+      charMesh._wasMoving = true;
+    } else if (charMesh._wasMoving && !moving && idleAnim) {
+      playAnim(idleAnim);
+      charMesh._wasMoving = false;
     }
 
     const forward = new BABYLON.Vector3(
@@ -1520,12 +1547,17 @@ engine.runRenderLoop(()=>{
       window.followLight.position.z = charMesh.position.z;
     }
 
-    // Camera always stays behind character — negate forward direction
-    const camDist = 9, camHeight = 5.5;
+    // Camera orbit around character — mouse drag changes angle
+    if (!_orbitDragging && !moveForward && !moveBackward) {
+      // Snap camera behind character when moving forward
+    } else if (moveForward || moveBackward) {
+      // Gradually reset orbit to behind character when walking
+      _orbitAngleH += (charMesh.rotation.y + Math.PI - _orbitAngleH) * 0.04;
+    }
     const desiredCameraPosition = new BABYLON.Vector3(
-      charMesh.position.x - Math.sin(charMesh.rotation.y) * camDist,
-      charMesh.position.y + camHeight,
-      charMesh.position.z - Math.cos(charMesh.rotation.y) * camDist
+      charMesh.position.x + Math.sin(_orbitAngleH) * _orbitDist * Math.cos(_orbitAngleV),
+      charMesh.position.y + _orbitDist * Math.sin(_orbitAngleV) + 2,
+      charMesh.position.z + Math.cos(_orbitAngleH) * _orbitDist * Math.cos(_orbitAngleV)
     );
     walk.position = BABYLON.Vector3.Lerp(walk.position, desiredCameraPosition, 0.1);
     walk.setTarget(new BABYLON.Vector3(
