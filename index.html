@@ -916,7 +916,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
   });
   r.transformNodes.forEach(tn => { if(tn!==playerRoot)tn.parent=playerRoot; if(tn.rotationQuaternion)tn.rotationQuaternion=null; });
   charMesh = playerRoot;
-  if (r.animationGroups.length > 0) { animGroups[0]=r.animationGroups[0]; animGroups[0].targetedAnimations=animGroups[0].targetedAnimations.filter(ta=>ta.animation.targetProperty!=='position'); animState=0; animGroups[0].play(true); }
+  if (r.animationGroups.length > 0) { animGroups[0]=r.animationGroups[0]; const _ta0=animGroups[0].targetedAnimations;for(let _j=_ta0.length-1;_j>=0;_j--){if(_ta0[_j].animation.targetProperty==='position'&&_ta0[_j].target&&_ta0[_j].target.name==='mixamorig_Hips')_ta0.splice(_j,1);} animState=0; animGroups[0].play(true); }
   window.followLight = new BABYLON.PointLight("followLight", new BABYLON.Vector3(0,4,0), scene);
   window.followLight.diffuse = new BABYLON.Color3(1,.82,.5);
   window.followLight.intensity = 2.8; window.followLight.range = 22;
@@ -927,7 +927,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
       const ag=r2.animationGroups[0]; if(!ag)return;
       const sk=r.skeletons[0];
       if(sk)ag.targetedAnimations.forEach(ta=>{const bn=sk.bones.find(b=>b.name===ta.target.name);if(bn)ta.target=bn._linkedTransformNode||bn;});
-      ag.targetedAnimations=ag.targetedAnimations.filter(ta=>ta.animation.targetProperty!=='position'); ag.stop(); animGroups[i]=ag;
+      const _ta=ag.targetedAnimations;for(let _j=_ta.length-1;_j>=0;_j--){if(_ta[_j].animation.targetProperty==='position'&&_ta[_j].target&&_ta[_j].target.name==='mixamorig_Hips')_ta.splice(_j,1);} ag.stop(); animGroups[i]=ag;
     }).catch(e=>console.error("Anim failed:",f,e));
   });
 }).catch(err=>{console.error("Character failed:",err);setSt("Failed");});
