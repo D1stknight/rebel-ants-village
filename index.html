@@ -910,6 +910,20 @@ function loadAnimations(skeleton) {
   loadAnim("ant_run_c.glb",      ag => { runAnim = ag; runAnim._key = 'run'; });
   loadAnim("ant_flip_kick_c.glb",ag => { window.kickAnim = ag; ag._key = 'kick'; });
   loadAnim("ant_jumping_c.glb",  ag => { window.jumpAnim = ag; ag._key = 'jump'; });
+
+  // After all load, do a final sync from scene animationGroups using _key tags
+  // This ensures outer scope variables are correctly assigned
+  setTimeout(() => {
+    const sceneGroups = skeleton.getScene ? skeleton.getScene().animationGroups : scene.animationGroups;
+    sceneGroups.forEach(ag => {
+      if(ag._key === 'idle') { idleAnim = ag; if(!currentAnim){ currentAnim = ag; } }
+      if(ag._key === 'walk') walkAnim = ag;
+      if(ag._key === 'run') runAnim = ag;
+      if(ag._key === 'kick') window.kickAnim = ag;
+      if(ag._key === 'jump') window.jumpAnim = ag;
+    });
+    console.log("✅ Anims synced — idle:", idleAnim?._key, "walk:", walkAnim?._key, "run:", runAnim?._key);
+  }, 3000);
 }
 let selectedObject = null;
 let fenceRootRef = null;
@@ -978,7 +992,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
   // Grab the built-in idle animation from ant_idle_c.glb
   if (r.animationGroups.length > 0) {
     idleAnim = r.animationGroups[0];
-    idleAnim._key = 'idle'; // tag it so we can identify it
+    idleAnim._key = 'idle';
     idleAnim.play(true);
     currentAnim = idleAnim;
     console.log("✅ Idle anim playing, tracks:", idleAnim.targetedAnimations.length);
