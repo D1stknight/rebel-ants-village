@@ -931,7 +931,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
   playerRoot.position = new BABYLON.Vector3(0, 0, 20);
   playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
-  playerRoot.scaling = new BABYLON.Vector3(0.025, 0.025, 0.025);
+  playerRoot.scaling = new BABYLON.Vector3(0.018, 0.018, 0.018);
 
   // Parent all imported meshes under our player root
   r.meshes.forEach(m => {
@@ -982,24 +982,28 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
   console.log("Skeletons:", r.skeletons.length);
   setSt("Character ready!");
 
-  // Fix white color: load original ant_player.glb just for its textures/materials
-  BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
-  .then(orig => {
-    // Get all materials from original
-    const origMats = orig.meshes.filter(m=>m.material).map(m=>m.material);
-    console.log("Original mats:", origMats.length);
-    // Apply first material to our rigged meshes
-    if(origMats.length > 0) {
-      r.meshes.forEach(m => {
-        if(m.material && m !== playerRoot) {
-          m.material = origMats[0];
-        }
-      });
-      console.log("✅ Materials applied from ant_player.glb");
+  // Fix white material — the Mixamo rig's materials lose their textures after Draco compression
+  // Solution: ensure emissive lighting so the character is visible and not washed out
+  r.meshes.forEach(m => {
+    if (!m.material) return;
+    // If PBR material with no texture — give it a nice ant warrior color
+    const mat = m.material;
+    if (mat.getClassName && mat.getClassName() === 'PBRMaterial') {
+      if (!mat.albedoTexture) {
+        // Deep navy/purple ant warrior color
+        mat.albedoColor = new BABYLON.Color3(0.12, 0.18, 0.35);
+        mat.metallic = 0.6;
+        mat.roughness = 0.4;
+        mat.emissiveColor = new BABYLON.Color3(0.04, 0.06, 0.14);
+      }
+    } else if (mat.getClassName && mat.getClassName() === 'StandardMaterial') {
+      if (!mat.diffuseTexture) {
+        mat.diffuseColor = new BABYLON.Color3(0.12, 0.18, 0.35);
+        mat.emissiveColor = new BABYLON.Color3(0.04, 0.06, 0.14);
+      }
     }
-    // Hide original mesh
-    orig.meshes.forEach(m => { m.isVisible=false; m.setEnabled(false); });
-  }).catch(e => console.warn("Could not load original materials:", e));
+  });
+  console.log("✅ Character materials styled");
 
   // Load walk/run/kick/jump animations and retarget to this skeleton
   loadAnimations(r.skeletons[0]);
@@ -1309,9 +1313,9 @@ function toggleWalk(){
   if (walkMode) {
     if (charMesh) {
            walk.position = new BABYLON.Vector3(
-        charMesh.position.x - Math.sin(charMesh.rotation.y) * 7,
-        charMesh.position.y + 3.5,
-        charMesh.position.z - Math.cos(charMesh.rotation.y) * 7
+        charMesh.position.x - Math.sin(charMesh.rotation.y) * 9,
+        charMesh.position.y + 5.5,
+        charMesh.position.z - Math.cos(charMesh.rotation.y) * 9
       );
       walk.setTarget(new BABYLON.Vector3(
         charMesh.position.x,
@@ -1485,7 +1489,7 @@ engine.runRenderLoop(()=>{
     }
 
     // Camera always stays behind character — negate forward direction
-    const camDist = 7, camHeight = 3.5;
+    const camDist = 9, camHeight = 5.5;
     const desiredCameraPosition = new BABYLON.Vector3(
       charMesh.position.x - Math.sin(charMesh.rotation.y) * camDist,
       charMesh.position.y + camHeight,
