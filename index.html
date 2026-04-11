@@ -982,28 +982,38 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
   console.log("Skeletons:", r.skeletons.length);
   setSt("Character ready!");
 
-  // Fix white material — the Mixamo rig's materials lose their textures after Draco compression
-  // Solution: ensure emissive lighting so the character is visible and not washed out
-  r.meshes.forEach(m => {
-    if (!m.material) return;
-    // If PBR material with no texture — give it a nice ant warrior color
-    const mat = m.material;
-    if (mat.getClassName && mat.getClassName() === 'PBRMaterial') {
-      if (!mat.albedoTexture) {
-        // Deep navy/purple ant warrior color
-        mat.albedoColor = new BABYLON.Color3(0.12, 0.18, 0.35);
-        mat.metallic = 0.6;
-        mat.roughness = 0.4;
-        mat.emissiveColor = new BABYLON.Color3(0.04, 0.06, 0.14);
-      }
-    } else if (mat.getClassName && mat.getClassName() === 'StandardMaterial') {
-      if (!mat.diffuseTexture) {
-        mat.diffuseColor = new BABYLON.Color3(0.12, 0.18, 0.35);
-        mat.emissiveColor = new BABYLON.Color3(0.04, 0.06, 0.14);
+  // Fix character materials — Draco strips textures, leaving pure white PBR
+  // Collect unique materials on character meshes and fix them
+  const charMats = new Set();
+  r.meshes.forEach(m => { if(m.material) charMats.add(m.material); });
+  charMats.forEach(mat => {
+    const type = mat.getClassName ? mat.getClassName() : '';
+    if(type === 'PBRMaterial') {
+      // Kill emissive — this is what makes it look white/blown out
+      mat.emissiveColor = new BABYLON.Color3(0,0,0);
+      mat.emissiveIntensity = 0;
+      // If no albedo texture, apply ant warrior colors
+      if(!mat.albedoTexture) {
+        // Multi-part character — vary colors slightly per material
+        const idx = [...charMats].indexOf(mat);
+        const colors = [
+          new BABYLON.Color3(0.08,0.15,0.38), // dark blue armor
+          new BABYLON.Color3(0.22,0.12,0.08), // dark leather
+          new BABYLON.Color3(0.55,0.45,0.12), // gold accent
+          new BABYLON.Color3(0.06,0.06,0.08), // dark shadow
+          new BABYLON.Color3(0.28,0.18,0.06), // brown belt
+        ];
+        mat.albedoColor = colors[idx % colors.length];
+        mat.metallic = idx % 3 === 0 ? 0.7 : 0.1;
+        mat.roughness = 0.6;
+      } else {
+        // Has texture — just make sure it renders correctly
+        mat.roughness = 0.7;
+        mat.metallic = 0.1;
       }
     }
   });
-  console.log("✅ Character materials styled");
+  console.log("✅ Fixed", charMats.size, "character materials");
 
   // Load walk/run/kick/jump animations and retarget to this skeleton
   loadAnimations(r.skeletons[0]);
@@ -1463,8 +1473,9 @@ engine.runRenderLoop(()=>{
     const turnSpeed = 3.2 * dt;
 
     // Smooth turning — lerp toward target rotation
-    if (turnLeft)  charMesh.rotation.y -= turnSpeed * 0.4;
-    if (turnRight) charMesh.rotation.y += turnSpeed * 0.4;
+    // Smooth turning with gradual acceleration
+    if (turnLeft)  charMesh.rotation.y -= turnSpeed * 0.35;
+    if (turnRight) charMesh.rotation.y += turnSpeed * 0.35;
 
     // Switch animation based on movement
     const moving = moveForward || moveBackward || turnLeft || turnRight;
@@ -1480,12 +1491,12 @@ engine.runRenderLoop(()=>{
       Math.cos(charMesh.rotation.y)
     );
 
-    if (moveForward) {
-      charMesh.position.addInPlace(forward.scale(moveSpeed));
-    }
-
-    if (moveBackward) {
-      charMesh.position.addInPlace(forward.scale(-moveSpeed * 0.7));
+    // Smooth acceleration — lerp velocity
+    if (!charMesh._vel) charMesh._vel = 0;
+    const targetVel = moveForward ? moveSpeed : moveBackward ? -moveSpeed * 0.6 : 0;
+    charMesh._vel = charMesh._vel + (targetVel - charMesh._vel) * 0.18;
+    if (Math.abs(charMesh._vel) > 0.0001) {
+      charMesh.position.addInPlace(forward.scale(charMesh._vel));
     }
 
     // Camera always stays behind character — negate forward direction
