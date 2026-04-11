@@ -981,6 +981,26 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
   console.log("Character loaded:", r);
   console.log("Skeletons:", r.skeletons.length);
   setSt("Character ready!");
+
+  // Fix white color: load original ant_player.glb just for its textures/materials
+  BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
+  .then(orig => {
+    // Get all materials from original
+    const origMats = orig.meshes.filter(m=>m.material).map(m=>m.material);
+    console.log("Original mats:", origMats.length);
+    // Apply first material to our rigged meshes
+    if(origMats.length > 0) {
+      r.meshes.forEach(m => {
+        if(m.material && m !== playerRoot) {
+          m.material = origMats[0];
+        }
+      });
+      console.log("✅ Materials applied from ant_player.glb");
+    }
+    // Hide original mesh
+    orig.meshes.forEach(m => { m.isVisible=false; m.setEnabled(false); });
+  }).catch(e => console.warn("Could not load original materials:", e));
+
   // Load walk/run/kick/jump animations and retarget to this skeleton
   loadAnimations(r.skeletons[0]);
 
@@ -1435,11 +1455,12 @@ engine.runRenderLoop(()=>{
 
     if (walkMode && charMesh) {
     const dt = engine.getDeltaTime() / 1000;
-    const moveSpeed = 5.5 * dt;
-    const turnSpeed = 4.8 * dt;
+    const moveSpeed = 4.0 * dt;
+    const turnSpeed = 3.2 * dt;
 
-    if (turnLeft) charMesh.rotation.y -= turnSpeed;
-    if (turnRight) charMesh.rotation.y += turnSpeed;
+    // Smooth turning — lerp toward target rotation
+    if (turnLeft)  charMesh.rotation.y -= turnSpeed * 0.4;
+    if (turnRight) charMesh.rotation.y += turnSpeed * 0.4;
 
     // Switch animation based on movement
     const moving = moveForward || moveBackward || turnLeft || turnRight;
