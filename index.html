@@ -130,6 +130,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+<script src="https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js"></script>
 <script>
 const canvas=document.getElementById('c');
 const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
@@ -860,10 +861,65 @@ function doorFrame(x,y,z,w,h){
   addTrigger({id:'forge',x,z,title:'THE FORGE',sub:'Custom Trait Builder',icon:'🎨',desc:'Gear up your ants for battle. Add custom overlays — weapons, armor, accessories — to your Battle for the Colony ants. Free to use for all holders.',actions:[{label:'Open Forge',href:'https://builder.rebelants.io',t:true},{label:'View Site',href:'https://rebelants.io',g:true}]});
 })();
 
-// ── WALKABLE CHARACTER ───────────────────────
+// ── WALKABLE CHARACTER + ANIMATION SYSTEM ────
 setSt("Loading character...");
-let charMesh=null, charAnims={}, isMoving=false;
+let charMesh=null, isMoving=false;
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
+
+// Animation state machine
+let currentAnim = null;
+let idleAnim = null, walkAnim = null, runAnim = null;
+
+function playAnim(newAnim, loop=true) {
+  if (!newAnim || currentAnim === newAnim) return;
+  if (currentAnim) currentAnim.stop();
+  currentAnim = newAnim;
+  currentAnim.play(loop);
+}
+
+// Load idle animation (also contains the base mesh)
+function loadAnimations() {
+  // Load idle
+  BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", scene)
+  .then(r => {
+    r.animationGroups.forEach(ag => {
+      idleAnim = ag;
+      ag.stop();
+    });
+    // Re-target animations to our charMesh skeleton
+    if(charMesh) {
+      r.animationGroups.forEach(ag => {
+        ag.targetedAnimations.forEach(ta => {
+          const boneName = ta.target.name;
+          const bone = charMesh.getChildTransformNodes(true).find(n => n.name === boneName);
+          if(bone) ta.target = bone;
+        });
+      });
+    }
+    playAnim(idleAnim);
+    setSt("Idle loaded");
+  }).catch(e => console.warn("Idle anim failed:", e));
+
+  // Load walk
+  BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_walk_c.glb", scene)
+  .then(r => {
+    r.animationGroups.forEach(ag => {
+      walkAnim = ag;
+      ag.stop();
+    });
+    setSt("Walk loaded");
+  }).catch(e => console.warn("Walk anim failed:", e));
+
+  // Load run
+  BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_run_c.glb", scene)
+  .then(r => {
+    r.animationGroups.forEach(ag => {
+      runAnim = ag;
+      ag.stop();
+    });
+    setSt("Run loaded");
+  }).catch(e => console.warn("Run anim failed:", e));
+}
 let selectedObject = null;
 let fenceRootRef = null;
 let dojoRootRef = null;
@@ -933,6 +989,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", 
 
   console.log("Character loaded:", r);
   setSt("Character ready!");
+  loadAnimations();
 
 })
 .catch(err => {
@@ -1390,6 +1447,14 @@ engine.runRenderLoop(()=>{
 
     if (turnLeft) charMesh.rotation.y -= turnSpeed;
     if (turnRight) charMesh.rotation.y += turnSpeed;
+
+    // Switch animation based on movement
+    const moving = moveForward || moveBackward || turnLeft || turnRight;
+    if (moving && currentAnim !== walkAnim && walkAnim) {
+      playAnim(walkAnim);
+    } else if (!moving && currentAnim !== idleAnim && idleAnim) {
+      playAnim(idleAnim);
+    }
 
     const forward = new BABYLON.Vector3(
       Math.sin(charMesh.rotation.y),
