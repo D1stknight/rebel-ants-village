@@ -871,10 +871,17 @@ let currentAnim = null;
 let idleAnim = null, walkAnim = null, runAnim = null;
 
 function playAnim(newAnim, loop=true) {
-  if (!newAnim || currentAnim === newAnim) return;
-  if (currentAnim) currentAnim.stop();
+  if (!newAnim) return;
+  // Already playing this exact animation — don't restart it
+  if (currentAnim === newAnim && newAnim.isPlaying) return;
+  // Stop current
+  if (currentAnim && currentAnim !== newAnim) {
+    currentAnim.pause();
+  }
   currentAnim = newAnim;
-  currentAnim.play(loop);
+  if (!currentAnim.isPlaying) {
+    currentAnim.play(loop);
+  }
 }
 
 // Load additional animations retargeted to the base character skeleton
@@ -1477,12 +1484,12 @@ engine.runRenderLoop(()=>{
     if (turnLeft)  charMesh.rotation.y -= turnSpeed * 0.35;
     if (turnRight) charMesh.rotation.y += turnSpeed * 0.35;
 
-    // Switch animation based on movement
+    // Switch animation based on movement — only switch when state changes
     const moving = moveForward || moveBackward || turnLeft || turnRight;
-    if (moving && currentAnim !== walkAnim && walkAnim) {
-      playAnim(walkAnim);
-    } else if (!moving && currentAnim !== idleAnim && idleAnim) {
-      playAnim(idleAnim);
+    if (moving) {
+      if (walkAnim && currentAnim !== walkAnim) playAnim(walkAnim);
+    } else {
+      if (idleAnim && currentAnim !== idleAnim) playAnim(idleAnim);
     }
 
     const forward = new BABYLON.Vector3(
