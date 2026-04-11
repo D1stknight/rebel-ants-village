@@ -877,12 +877,11 @@ function playAnim(newAnim, loop=true) {
   currentAnim.play(loop);
 }
 
-// Load animations — retargeted to existing skeleton
-function loadAnimations() {
-  if (!charMesh) { setTimeout(loadAnimations, 500); return; }
-  const scene_ = charMesh.getScene();
-  const skeleton = scene_.skeletons[0] || null;
-  console.log("Skeleton:", skeleton ? skeleton.name + " bones:" + skeleton.bones.length : "none");
+// Load additional animations retargeted to the base character skeleton
+function loadAnimations(skeleton) {
+  if (!skeleton) { console.warn("No skeleton for loadAnimations"); return; }
+  console.log("Loading anims, skeleton bones:", skeleton.bones.length);
+  const scene_ = scene;
 
   function loadAnim(filename, onDone) {
     BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", filename, scene_)
@@ -890,20 +889,16 @@ function loadAnimations() {
       r.meshes.forEach(m => { m.isVisible = false; m.setEnabled(false); });
       const ag = r.animationGroups[0];
       if (!ag) { console.warn("No anim in", filename); return; }
-      if (skeleton) {
-        ag.targetedAnimations.forEach(ta => {
-          const bone = skeleton.bones.find(b => b.name === ta.target.name);
-          if (bone && bone._linkedTransformNode) ta.target = bone._linkedTransformNode;
-          else if (bone) ta.target = bone;
-        });
-      }
+      ag.targetedAnimations.forEach(ta => {
+        const bone = skeleton.bones.find(b => b.name === ta.target.name);
+        if (bone) ta.target = bone._linkedTransformNode || bone;
+      });
       ag.stop();
-      console.log("Anim loaded:", filename, ag.targetedAnimations.length, "tracks");
+      console.log("Anim ready:", filename);
       onDone(ag);
-    }).catch(e => console.error("Anim load failed:", filename, e));
+    }).catch(e => console.error("Anim failed:", filename, e));
   }
 
-  loadAnim("ant_idle_c.glb",     ag => { idleAnim = ag; playAnim(idleAnim); });
   loadAnim("ant_walk_c.glb",     ag => { walkAnim = ag; });
   loadAnim("ant_run_c.glb",      ag => { runAnim = ag; });
   loadAnim("ant_flip_kick_c.glb",ag => { window.kickAnim = ag; });
@@ -929,7 +924,7 @@ gizmoManager.rotationGizmoEnabled = false;
 gizmoManager.scaleGizmoEnabled = false;
 gizmoManager.clearGizmoOnEmptyPointerEvent = false;
 
-BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", scene)
+BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", scene)
 .then(r => {
 
   // Create our own clean player root
@@ -965,20 +960,21 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_player.glb", 
   // Use playerRoot as the thing we move and rotate
   charMesh = playerRoot;
 
-  // Handle animations (if they exist)
-  r.animationGroups.forEach(ag => {
-    charAnims[ag.name.toLowerCase()] = ag;
-    ag.stop();
-  });
-
-  // Try to play idle animation automatically
-  if (charAnims["idle"]) {
-    charAnims["idle"].play(true);
+  // Grab the built-in idle animation from ant_idle_c.glb
+  if (r.animationGroups.length > 0) {
+    idleAnim = r.animationGroups[0];
+    currentAnim = idleAnim;
+    idleAnim.play(true);
+    console.log("✅ Idle anim playing:", idleAnim.name, "tracks:", idleAnim.targetedAnimations.length);
+  } else {
+    console.warn("No animation groups in base character");
   }
 
   console.log("Character loaded:", r);
+  console.log("Skeletons:", r.skeletons.length);
   setSt("Character ready!");
-  loadAnimations();
+  // Load walk/run/kick/jump animations and retarget to this skeleton
+  loadAnimations(r.skeletons[0]);
 
 })
 .catch(err => {
