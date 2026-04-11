@@ -872,11 +872,13 @@ let idleAnim = null, walkAnim = null, runAnim = null;
 
 function playAnim(newAnim, loop=true) {
   if (!newAnim) return;
-  // Use strict object reference — NOT name string (all named "mixamo.com")
-  if (currentAnim === newAnim) return; // already set to this one, do nothing
-  if (currentAnim) currentAnim.stop();
+  if (currentAnim === newAnim) {
+    if (!newAnim.isStarted) newAnim.start(loop);
+    return;
+  }
+  if (currentAnim) { currentAnim.pause(); currentAnim.reset(); currentAnim.stop(); }
   currentAnim = newAnim;
-  currentAnim.play(loop);
+  currentAnim.start(loop);
 }
 
 // Load additional animations retargeted to the base character skeleton
@@ -1466,23 +1468,24 @@ let _orbitDragging = false, _orbitLastX = 0, _orbitLastY = 0;
 let _orbitAngleH = Math.PI, _orbitAngleV = 0.35; // horizontal & vertical angles
 const _orbitDist = 9, _orbitHeight = 5.5;
 
-canvas.addEventListener('mousedown', e => {
+// Use Babylon's pointer system — canvas.addEventListener blocked by engine
+scene.onPointerObservable.add(evt => {
   if (!walkMode) return;
-  _orbitDragging = true;
-  _orbitLastX = e.clientX;
-  _orbitLastY = e.clientY;
+  if (evt.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+    _orbitDragging = true;
+    _orbitLastX = scene.pointerX;
+    _orbitLastY = scene.pointerY;
+  } else if (evt.type === BABYLON.PointerEventTypes.POINTERUP) {
+    _orbitDragging = false;
+  } else if (evt.type === BABYLON.PointerEventTypes.POINTERMOVE && _orbitDragging) {
+    const dx = scene.pointerX - _orbitLastX;
+    const dy = scene.pointerY - _orbitLastY;
+    _orbitLastX = scene.pointerX;
+    _orbitLastY = scene.pointerY;
+    _orbitAngleH += dx * 0.008;
+    _orbitAngleV = Math.max(0.08, Math.min(0.85, _orbitAngleV + dy * 0.006));
+  }
 });
-canvas.addEventListener('mousemove', e => {
-  if (!walkMode || !_orbitDragging || !charMesh) return;
-  const dx = e.clientX - _orbitLastX;
-  const dy = e.clientY - _orbitLastY;
-  _orbitLastX = e.clientX;
-  _orbitLastY = e.clientY;
-  _orbitAngleH += dx * 0.008;
-  _orbitAngleV = Math.max(0.1, Math.min(0.9, _orbitAngleV + dy * 0.006));
-});
-canvas.addEventListener('mouseup', () => { _orbitDragging = false; });
-canvas.addEventListener('mouseleave', () => { _orbitDragging = false; });
 window.addEventListener('resize',()=>engine.resize());
 
 // ── RENDER LOOP ──────────────────────────────
