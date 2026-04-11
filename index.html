@@ -884,7 +884,6 @@ gizmoManager.rotationGizmoEnabled = false;
 gizmoManager.scaleGizmoEnabled = false;
 gizmoManager.clearGizmoOnEmptyPointerEvent = false;
 
-// Load ant_idle_c.glb — Mixamo rig with skeleton (replaces static ant_player.glb)
 let animState = -1, animGroups = [];
 function switchAnim(idx, loop) {
   if (animState === idx) return;
@@ -932,7 +931,6 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
     }).catch(e=>console.error("Anim failed:",f,e));
   });
 }).catch(err=>{console.error("Character failed:",err);setSt("Failed");});
-
 
 
 // ── INTERACTIONS ─────────────────────────────
@@ -1226,40 +1224,23 @@ function openPanel(b){
 }
 
 // ── WALK MODE ────────────────────────────────
-function toggleWalk(){
+function toggleWalk() {
   walkMode = !walkMode;
-  const wb = document.getElementById('wb');
-  const xh = document.getElementById('xhair');
-
+  const wb = document.getElementById('wb'), xh = document.getElementById('xhair');
   if (walkMode) {
     if (charMesh) {
-           walk.position = new BABYLON.Vector3(
-        charMesh.position.x - Math.sin(charMesh.rotation.y) * 7,
-        charMesh.position.y + 3.5,
-        charMesh.position.z - Math.cos(charMesh.rotation.y) * 7
-      );
-      walk.setTarget(new BABYLON.Vector3(
-        charMesh.position.x,
-        charMesh.position.y + 1.2,
-        charMesh.position.z
-      ));
+      _orbitAngleH = charMesh.rotation.y + Math.PI; _orbitAngleV = 0.35;
+      walk.position = new BABYLON.Vector3(
+        charMesh.position.x + Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),
+        charMesh.position.y + _orbitDist*Math.sin(_orbitAngleV) + 2,
+        charMesh.position.z + Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
+      walk.setTarget(new BABYLON.Vector3(charMesh.position.x, charMesh.position.y+2.8, charMesh.position.z));
     }
-
-    scene.activeCamera = walk;
-       walk.detachControl();
-    orbit.detachControl();
-
-    wb.textContent = '🌐  EXIT WALK MODE';
-    wb.classList.add('on');
-    xh.classList.remove('on');
+    scene.activeCamera = walk; walk.detachControl(); orbit.detachControl();
+    wb.textContent = '🌐  EXIT WALK MODE'; wb.classList.add('on'); xh.classList.remove('on');
   } else {
-    scene.activeCamera = orbit;
-    orbit.attachControl(canvas, true);
-    walk.detachControl();
-
-    wb.textContent = '⚔️  ENTER VILLAGE';
-    wb.classList.remove('on');
-    xh.classList.remove('on');
+    scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
+    wb.textContent = '⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
   }
 }
 document.addEventListener('keydown', e => {
@@ -1350,6 +1331,10 @@ document.addEventListener('keydown', e => {
   if (key === 's' || e.key === 'ArrowDown') moveBackward = true;
   if (key === 'a' || e.key === 'ArrowLeft') turnLeft = true;
   if (key === 'd' || e.key === 'ArrowRight') turnRight = true;
+  if (!walkMode) return;
+  if (key === 'r' && !adminMode) { switchAnim(2, true); }
+  if (key === 'f' && !adminMode) { switchAnim(3, false); setTimeout(()=>{ if(animState===3) switchAnim(0,true); }, 1200); }
+  if (e.key === ' ') { e.preventDefault(); switchAnim(4, false); setTimeout(()=>{ if(animState===4) switchAnim(0,true); }, 1000); }
 });
 
 document.addEventListener('keyup', e => {
@@ -1358,10 +1343,10 @@ document.addEventListener('keyup', e => {
   if (key === 's' || e.key === 'ArrowDown') moveBackward = false;
   if (key === 'a' || e.key === 'ArrowLeft') turnLeft = false;
   if (key === 'd' || e.key === 'ArrowRight') turnRight = false;
+  if (key === 'r' && !adminMode && walkMode) { const mv=moveForward||moveBackward||turnLeft||turnRight; switchAnim(mv?1:0,true); }
 });
-
-let _orbitDragging=false,_orbitLastX=0,_orbitLastY=0;
-let _orbitAngleH=Math.PI,_orbitAngleV=0.35;
+let _orbitDragging=false, _orbitLastX=0, _orbitLastY=0;
+let _orbitAngleH=Math.PI, _orbitAngleV=0.35;
 const _orbitDist=9;
 scene.onPointerObservable.add(evt=>{
   if(!walkMode)return;
@@ -1386,7 +1371,7 @@ engine.runRenderLoop(()=>{
   lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(Date.now()*0.0019+ll.position.x*0.3)*0.1;});
   if(adminMode&&selectedObject&&!adminDragging)softSnapSelectedObject();
   if(walkMode&&charMesh){
-    const moveSpeed=4.2*dt, turnSpeed=2.4*dt;
+    const moveSpeed=4.2*dt,turnSpeed=2.4*dt;
     if(turnLeft)charMesh.rotation.y-=turnSpeed*0.35;
     if(turnRight)charMesh.rotation.y+=turnSpeed*0.35;
     const fwd=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
