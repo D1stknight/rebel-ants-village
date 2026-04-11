@@ -556,14 +556,56 @@ for(let ring=0;ring<4;ring++){
   fn(x,z,5+Math.random()*3);
 });
 
-// ── ROCKS (rock_1.glb) ───────────────────────
-[[-62,-42,1.5],[-61,-41,.9],[62,-42,1.3],[63,-41,.75],[-62,42,1.2],[62,42,1.4],
- [-38,62,1.0],[38,62,.9],[-38,-62,1.1],[38,-62,.95],[70,6,1.3],[-70,6,1.0],
- [-15,72,.8],[15,72,.7],[-72,15,.9],[72,-15,1.1]
-].forEach(([x,z,s])=>{
-  const rk=spawnAsset("rock_1", new BABYLON.Vector3(x,0,z));
-  if(rk){ rk.scaling=new BABYLON.Vector3(s,s,s); rk.rotation.y=Math.random()*Math.PI*2; }
-});
+// 🪨 ROCK SOURCE
+const rockPlaceholderPoints = [
+  {x:-62,z:-42,s:1.5},{x:-61,z:-41,s:.9},{x:62,z:-42,s:1.3},{x:63,z:-41,s:.75},
+  {x:-62,z:42,s:1.2},{x:62,z:42,s:1.4},{x:-38,z:62,s:1.0},{x:38,z:62,s:.9},
+  {x:-38,z:-62,s:1.1},{x:38,z:-62,s:.95},{x:70,z:6,s:1.3},{x:-70,z:6,s:1.0},
+  {x:-15,z:72,s:.8},{x:15,z:72,s:.7},{x:-72,z:15,s:.9},{x:72,z:-15,s:1.1}
+];
+
+const rock1Root = spawnAsset("rock_1", new BABYLON.Vector3(9999, 0, 9999));
+rock1Root.name = "rock1Root";
+rock1RootRef = rock1Root;
+registerEditableRoot("rock_1", rock1Root);
+
+function spawnRockClonesFromPlaceholders() {
+  rockPlaceholderPoints.forEach((pt, index) => {
+    const cloneRoot = rock1Root.clone(makeCloneName("rock_1") + "_" + index);
+    if (!cloneRoot) return;
+    cloneRoot.metadata = { type: "rock_1", isClone: true };
+    cloneRoot.position = new BABYLON.Vector3(pt.x, 0, pt.z);
+    cloneRoot.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
+    cloneRoot.scaling = new BABYLON.Vector3(pt.s, pt.s, pt.s);
+    cloneRoot.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; });
+    selectedObject = cloneRoot;
+    snapSelectedObjectToGround();
+  });
+  selectedObject = null;
+  updateSelectedBadge();
+  gizmoManager.attachToNode(null);
+}
+
+function hasSavedRockLayout() {
+  const raw = localStorage.getItem("rebelAntsWorldLayout");
+  if (!raw) return false;
+  try {
+    const data = JSON.parse(raw);
+    return Array.isArray(data) && data.some(item => item.type === "rock_1");
+  } catch (err) { return false; }
+}
+
+function startRockSystem() {
+  if (!rock1Root || !rock1Root.metadata || rock1Root.metadata.loaded !== true) {
+    setTimeout(startRockSystem, 300);
+    return;
+  }
+  if (!hasSavedRockLayout()) {
+    spawnRockClonesFromPlaceholders();
+  }
+}
+
+startRockSystem();
 
 // ── TORII GATES ──────────────────────────────
 const trM=pbr(new BABYLON.Color3(.8,.1,.06),{r:.65,m:.1});
@@ -872,6 +914,7 @@ let dojoRootRef = null;
 let dojo6RootRef = null;
 let dojo7RootRef = null;
 let dojo9RootRef = null;
+let rock1RootRef = null;
 let fenceSourceMeshes = [];
 let editableRootRefs = {};
 
@@ -1101,7 +1144,8 @@ function loadWorldLayout(){
       n.name.startsWith("dojo9RootClone_") ||
       n.name.startsWith("shrine2RootClone_") ||
       n.name.startsWith("tree_1RootClone_") ||
-      n.name.startsWith("pine_1RootClone_")
+      n.name.startsWith("pine_1RootClone_") ||
+      n.name.startsWith("rock_1RootClone_")
     )
     .forEach(n => n.dispose(false, false));
 
