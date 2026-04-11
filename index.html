@@ -866,657 +866,267 @@ setSt("Loading character...");
 let charMesh=null, isMoving=false;
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false;
 
-// Animation state machine
-let currentAnim = null;
-let idleAnim = null, walkAnim = null, runAnim = null;
+// ═══════════════════════════════════════════════════
+// ANIMATION + CHARACTER SYSTEM — CLEAN REWRITE
+// ═══════════════════════════════════════════════════
 
-function playAnim(newAnim, loop=true) {
-  if (!newAnim) return;
-  // Same animation already active — never restart it
-  if (currentAnim === newAnim) return;
-  // Stop old
-  if (currentAnim) {
-    currentAnim.stop();
-  }
-  currentAnim = newAnim;
-  // Use play() with loop — this is the correct Babylon.js call
-  // It only starts if not already playing
-  currentAnim.play(loop);
+// animGroups array: 0=idle 1=walk 2=run 3=kick 4=jump
+let animState = -1;
+let animGroups = [];
+
+function switchAnim(idx, loop) {
+  if (animState === idx) return;
+  const prev = animGroups[animState];
+  const next = animGroups[idx];
+  if (!next) { console.warn('Anim idx',idx,'not loaded yet'); return; }
+  if (prev && prev.isPlaying) prev.stop();
+  animState = idx;
+  next.play(loop !== false);
 }
 
-// Load additional animations retargeted to the base character skeleton
-function loadAnimations(skeleton) {
-  if (!skeleton) { console.warn("No skeleton for loadAnimations"); return; }
-  console.log("Loading anims, skeleton bones:", skeleton.bones.length);
-  const scene_ = scene;
+// ─ LOAD CHARACTER ───────────────────────────────────
+setSt('Loading character...');
+let charMesh = null;
+let moveForward = false, moveBackward = false, turnLeft = false, turnRight = false;
 
-  function loadAnim(filename, onDone) {
-    BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", filename, scene_)
-    .then(r => {
-      r.meshes.forEach(m => { m.isVisible = false; m.setEnabled(false); });
-      const ag = r.animationGroups[0];
-      if (!ag) { console.warn("No anim in", filename); return; }
-      ag.targetedAnimations.forEach(ta => {
-        const bone = skeleton.bones.find(b => b.name === ta.target.name);
-        if (bone) ta.target = bone._linkedTransformNode || bone;
-      });
-      ag.stop();
-      console.log("Anim ready:", filename);
-      onDone(ag);
-    }).catch(e => console.error("Anim failed:", filename, e));
-  }
-
-  loadAnim("ant_walk_c.glb",     ag => { walkAnim = ag; walkAnim._key = 'walk'; });
-  loadAnim("ant_run_c.glb",      ag => { runAnim = ag; runAnim._key = 'run'; });
-  loadAnim("ant_flip_kick_c.glb",ag => { window.kickAnim = ag; ag._key = 'kick'; });
-  loadAnim("ant_jumping_c.glb",  ag => { window.jumpAnim = ag; ag._key = 'jump'; });
-
-  // After all load, do a final sync from scene animationGroups using _key tags
-  // This ensures outer scope variables are correctly assigned
-  setTimeout(() => {
-    const sceneGroups = skeleton.getScene ? skeleton.getScene().animationGroups : scene.animationGroups;
-    sceneGroups.forEach(ag => {
-      if(ag._key === 'idle') { idleAnim = ag; if(!currentAnim){ currentAnim = ag; } }
-      if(ag._key === 'walk') walkAnim = ag;
-      if(ag._key === 'run') runAnim = ag;
-      if(ag._key === 'kick') window.kickAnim = ag;
-      if(ag._key === 'jump') window.jumpAnim = ag;
-    });
-    console.log("✅ Anims synced — idle:", idleAnim?._key, "walk:", walkAnim?._key, "run:", runAnim?._key);
-  }, 3000);
-}
-let selectedObject = null;
-let fenceRootRef = null;
-let dojoRootRef = null;
-let dojo6RootRef = null;
-let dojo7RootRef = null;
-let dojo9RootRef = null;
-let fenceSourceMeshes = [];
-let editableRootRefs = {};
-
-function registerEditableRoot(key, root) {
-  if (!key || !root) return;
-  editableRootRefs[key] = root;
-}
-
-gizmoManager = new BABYLON.GizmoManager(scene);
-gizmoManager.positionGizmoEnabled = false;
-gizmoManager.rotationGizmoEnabled = false;
-gizmoManager.scaleGizmoEnabled = false;
-gizmoManager.clearGizmoOnEmptyPointerEvent = false;
-
-BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", scene)
+BABYLON.SceneLoader.ImportMeshAsync('', '/assets/character/', 'ant_idle_c.glb', scene)
 .then(r => {
-
-  // Create our own clean player root
-  const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
+  const playerRoot = new BABYLON.TransformNode('playerRoot', scene);
   playerRoot.position = new BABYLON.Vector3(0, 0.12, 20);
   playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
   playerRoot.scaling = new BABYLON.Vector3(0.018, 0.018, 0.018);
-
-  // Parent all imported meshes under our player root
   r.meshes.forEach(m => {
-    if (m !== playerRoot) {
-      m.parent = playerRoot;
-    }
-    if (m.rotationQuaternion) {
-      m.rotationQuaternion = null;
-    }
-    shadows.addShadowCaster(m);
-    m.receiveShadows = true;
-    // Fix white material — ensure PBR material is not overexposed
+    if (m !== playerRoot) m.parent = playerRoot;
+    if (m.rotationQuaternion) m.rotationQuaternion = null;
+    shadows.addShadowCaster(m); m.receiveShadows = true;
     if (m.material) {
-      if (m.material.albedoColor) {
-        // PBR material — don't override, just ensure it's not pure white
-        if (m.material.albedoColor.r === 1 && m.material.albedoColor.g === 1 && m.material.albedoColor.b === 1
-            && !m.material.albedoTexture) {
-          m.material.albedoColor = new BABYLON.Color3(0.6, 0.5, 0.4);
+      const mat = m.material;
+      if (mat.getClassName && mat.getClassName() === 'PBRMaterial') {
+        mat.emissiveColor = new BABYLON.Color3(0,0,0); mat.emissiveIntensity = 0;
+        if (!mat.albedoTexture) {
+          const ci = r.meshes.indexOf(m);
+          const cols = [new BABYLON.Color3(.08,.15,.38),new BABYLON.Color3(.22,.12,.08),new BABYLON.Color3(.55,.45,.12),new BABYLON.Color3(.06,.06,.08),new BABYLON.Color3(.28,.18,.06)];
+          mat.albedoColor = cols[ci % cols.length]; mat.metallic = ci%3===0?.7:.1; mat.roughness=.6;
         }
       }
     }
   });
-
-  r.transformNodes.forEach(t => {
-    if (t !== playerRoot) {
-      t.parent = playerRoot;
-    }
-
-    if (t.rotationQuaternion) {
-      t.rotationQuaternion = null;
-    }
-  });
-
-  // Use playerRoot as the thing we move and rotate
+  r.transformNodes.forEach(t => { if(t!==playerRoot)t.parent=playerRoot; if(t.rotationQuaternion)t.rotationQuaternion=null; });
   charMesh = playerRoot;
-
-  // Grab the built-in idle animation from ant_idle_c.glb
   if (r.animationGroups.length > 0) {
-    idleAnim = r.animationGroups[0];
-    idleAnim._key = 'idle';
-    idleAnim.play(true);
-    currentAnim = idleAnim;
-    console.log("✅ Idle anim playing, tracks:", idleAnim.targetedAnimations.length);
-  } else {
-    console.warn("No animation groups in base character");
+    animGroups[0] = r.animationGroups[0];
+    animState = 0; animGroups[0].play(true);
+    console.log('Idle loaded, tracks:', animGroups[0].targetedAnimations.length);
   }
-
-  console.log("Character loaded:", r);
-  console.log("Skeletons:", r.skeletons.length);
-  setSt("Character ready!");
-
-  // Fix character materials — Draco strips textures, leaving pure white PBR
-  // Collect unique materials on character meshes and fix them
-  const charMats = new Set();
-  r.meshes.forEach(m => { if(m.material) charMats.add(m.material); });
-  charMats.forEach(mat => {
-    const type = mat.getClassName ? mat.getClassName() : '';
-    if(type === 'PBRMaterial') {
-      // Kill emissive — this is what makes it look white/blown out
-      mat.emissiveColor = new BABYLON.Color3(0,0,0);
-      mat.emissiveIntensity = 0;
-      // If no albedo texture, apply ant warrior colors
-      if(!mat.albedoTexture) {
-        // Multi-part character — vary colors slightly per material
-        const idx = [...charMats].indexOf(mat);
-        const colors = [
-          new BABYLON.Color3(0.08,0.15,0.38), // dark blue armor
-          new BABYLON.Color3(0.22,0.12,0.08), // dark leather
-          new BABYLON.Color3(0.55,0.45,0.12), // gold accent
-          new BABYLON.Color3(0.06,0.06,0.08), // dark shadow
-          new BABYLON.Color3(0.28,0.18,0.06), // brown belt
-        ];
-        mat.albedoColor = colors[idx % colors.length];
-        mat.metallic = idx % 3 === 0 ? 0.7 : 0.1;
-        mat.roughness = 0.6;
-      } else {
-        // Has texture — just make sure it renders correctly
-        mat.roughness = 0.7;
-        mat.metallic = 0.1;
-      }
-    }
-  });
-  console.log("✅ Fixed", charMats.size, "character materials");
-
-  // Follow light — warm lantern that moves with the character
-  window.followLight = new BABYLON.PointLight("followLight", new BABYLON.Vector3(0, 4, 0), scene);
-  window.followLight.diffuse = new BABYLON.Color3(1, 0.82, 0.5);
-  window.followLight.intensity = 2.8;
-  window.followLight.range = 22;
-
-  // Load walk/run/kick/jump animations and retarget to this skeleton
-  loadAnimations(r.skeletons[0]);
-
+  window.followLight = new BABYLON.PointLight('followLight', new BABYLON.Vector3(0,4,0), scene);
+  window.followLight.diffuse = new BABYLON.Color3(1,.82,.5);
+  window.followLight.intensity = 2.8; window.followLight.range = 22;
+  setSt('Character ready!');
+  loadExtraAnims(r.skeletons[0] || null);
 })
-.catch(err => {
-  console.error("Character failed to load:", err);
-  setSt("Character failed to load");
-});
+.catch(err => { console.error('Character failed:', err); setSt('Failed'); });
+function loadExtraAnims(skeleton) {
+  const files = [
+    {file:'ant_walk_c.glb',idx:1},
+    {file:'ant_run_c.glb',idx:2},
+    {file:'ant_flip_kick_c.glb',idx:3},
+    {file:'ant_jumping_c.glb',idx:4}
+  ];
+  files.forEach(({file,idx}) => {
+    BABYLON.SceneLoader.ImportMeshAsync('','/assets/character/',file,scene)
+    .then(r => {
+      r.meshes.forEach(m => { m.isVisible=false; m.setEnabled(false); });
+      const ag = r.animationGroups[0];
+      if (!ag) return;
+      if (skeleton) {
+        ag.targetedAnimations.forEach(ta => {
+          const bone = skeleton.bones.find(b => b.name===ta.target.name);
+          if (bone) ta.target = bone._linkedTransformNode || bone;
+        });
+      }
+      ag.stop();
+      animGroups[idx] = ag;
+      console.log('Anim loaded idx',idx,file,'tracks:',ag.targetedAnimations.length);
+    })
+    .catch(e => console.error('Anim failed:',file,e));
+  });
+}
 
-// ── INTERACTIONS ─────────────────────────────
+// ─ INTERACTIONS ──────────────────────────────────
 const tooltip=document.getElementById('tt');
 const panel=document.getElementById('panel');
-const pickMeshes=()=>BUILDINGS.map(b=>b.mesh);
 
-scene.onPointerObservable.add(evt=>{
+scene.onPointerObservable.add(evt => {
   if (adminMode) return;
-  if(evt.type!==BABYLON.PointerEventTypes.POINTERPICK||panel.classList.contains('on'))return;
+  if (evt.type!==BABYLON.PointerEventTypes.POINTERPICK||panel.classList.contains('on')) return;
   const hit=evt.pickInfo;
-  if(!hit||!hit.hit)return;
+  if (!hit||!hit.hit) return;
   const b=BUILDINGS.find(b=>b.mesh===hit.pickedMesh);
-  if(b)openPanel(b);
+  if (b) openPanel(b);
 });
 
-scene.onPointerObservable.add(evt=>{
-  if (adminMode) {
-    tooltip.classList.remove('on');
-    canvas.style.cursor='default';
-    return;
-  }
-  if(evt.type!==BABYLON.PointerEventTypes.POINTERMOVE||walkMode)return;
+scene.onPointerObservable.add(evt => {
+  if (adminMode) { tooltip.classList.remove('on'); return; }
+  if (evt.type!==BABYLON.PointerEventTypes.POINTERMOVE||walkMode) return;
   const hit=scene.pick(scene.pointerX,scene.pointerY,m=>BUILDINGS.some(b=>b.mesh===m));
-  if(hit&&hit.hit){
+  if (hit&&hit.hit) {
     const b=BUILDINGS.find(b=>b.mesh===hit.pickedMesh);
-    if(b){document.getElementById('tth').textContent=b.title;document.getElementById('ttp').textContent=b.sub;tooltip.classList.add('on');canvas.style.cursor='pointer';return;}
+    if (b) { document.getElementById('tth').textContent=b.title; document.getElementById('ttp').textContent=b.sub; tooltip.classList.add('on'); canvas.style.cursor='pointer'; return; }
   }
-  tooltip.classList.remove('on');canvas.style.cursor='default';
+  tooltip.classList.remove('on'); canvas.style.cursor='default';
+});
+
+// Click character in orbit to reset camera
+scene.onPointerObservable.add(evt => {
+  if (walkMode || !charMesh) return;
+  if (evt.type!==BABYLON.PointerEventTypes.POINTERPICK) return;
+  const hit=evt.pickInfo;
+  if (!hit||!hit.hit) return;
+  let node=hit.pickedMesh;
+  while(node&&node.parent) node=node.parent;
+  if (node&&node.name==='playerRoot') {
+    orbit.alpha=-Math.PI/2.1; orbit.beta=Math.PI/3.6;
+    orbit.radius=150; orbit.target=new BABYLON.Vector3(0,6,0);
+  }
 });
 
 document.getElementById('pc').addEventListener('click',()=>panel.classList.remove('on'));
-
-canvas.addEventListener('click', () => {
+canvas.addEventListener('click',()=>{
   if (!adminMode) return;
-
-  const pick = scene.pick(
-    scene.pointerX,
-    scene.pointerY,
-    mesh => !BUILDINGS.some(b => b.mesh === mesh)
-  );
-
-  if (!pick || !pick.hit || !pick.pickedMesh) return;
-
-  let node = pick.pickedMesh;
-  while (node && node.parent) {
-    node = node.parent;
-  }
-
+  const pick=scene.pick(scene.pointerX,scene.pointerY,mesh=>!BUILDINGS.some(b=>b.mesh===mesh));
+  if (!pick||!pick.hit||!pick.pickedMesh) return;
+  let node=pick.pickedMesh; while(node&&node.parent)node=node.parent;
   if (!node) return;
-
-     const editableRoots = Object.values(editableRootRefs).filter(Boolean);
-
-  const isEditableRoot = editableRoots.includes(node);
-  const isEditableClone = node.name.includes("RootClone_");
-
-  if (!isEditableRoot && !isEditableClone) return;
-
-  selectedObject = node;
-  updateSelectedBadge();
-
-  gizmoManager.positionGizmoEnabled = true;
-  gizmoManager.rotationGizmoEnabled = false;
-  gizmoManager.scaleGizmoEnabled = false;
-  gizmoManager.attachToNode(selectedObject);
+  const editableRoots=Object.values(editableRootRefs).filter(Boolean);
+  if (!editableRoots.includes(node)&&!node.name.includes('RootClone_')) return;
+  selectedObject=node; updateSelectedBadge();
+  gizmoManager.positionGizmoEnabled=true; gizmoManager.rotationGizmoEnabled=false;
+  gizmoManager.scaleGizmoEnabled=false; gizmoManager.attachToNode(selectedObject);
 });
-window.addEventListener('pointerdown', () => {
-  if (!adminMode || !selectedObject) return;
-  adminDragging = true;
-});
+window.addEventListener('pointerdown',()=>{ if(!adminMode||!selectedObject)return; adminDragging=true; });
+window.addEventListener('pointerup',()=>{ adminDragging=false; if(adminMode&&selectedObject)softSnapSelectedObject(); });
 
-window.addEventListener('pointerup', () => {
-  adminDragging = false;
-
-  if (adminMode && selectedObject) {
-    softSnapSelectedObject();
-  }
-});
-function getEditableRoots(){
-  const registeredRoots = Object.values(editableRootRefs).filter(Boolean);
-
-  const clones = scene.transformNodes.filter(n =>
-    !n.parent && n.name.includes("RootClone_")
-  );
-
-  return [...registeredRoots, ...clones];
-}
-
-function getObjectType(node){
-  if (!node) return null;
-
-  if (node.metadata && node.metadata.type) {
-    if (node.metadata.type === "dojo_5") return "dojo";
-    if (node.metadata.type === "dojo_6") return "dojo6";
-    if (node.metadata.type === "dojo_7") return "dojo7";
-    if (node.metadata.type === "dojo_9") return "dojo9";
-    return node.metadata.type;
-  }
-
-  if (node.name === "fenceRoot" || node.name.startsWith("fenceRootClone_")) return "fence";
-  if (node.name === "dojoRoot" || node.name.startsWith("dojoRootClone_")) return "dojo";
-  if (node.name === "dojo6Root" || node.name.startsWith("dojo6RootClone_")) return "dojo6";
-  if (node.name === "dojo7Root" || node.name.startsWith("dojo7RootClone_")) return "dojo7";
-  if (node.name === "dojo9Root" || node.name.startsWith("dojo9RootClone_")) return "dojo9";
-
-  return null;
-}
-function makeCloneName(type){
-  return type + "RootClone_" + Date.now();
-}
-
-function applyObjectTransform(node, data){
-  node.position = new BABYLON.Vector3(data.position.x, data.position.y, data.position.z);
-  node.rotation = new BABYLON.Vector3(data.rotation.x, data.rotation.y, data.rotation.z);
-  node.scaling = new BABYLON.Vector3(data.scaling.x, data.scaling.y, data.scaling.z);
-}
-
-function saveWorldLayout(){
-  const data = getEditableRoots().map(node => ({
-    type: getObjectType(node),
-    name: node.name,
-    position: {
-      x: node.position.x,
-      y: node.position.y,
-      z: node.position.z
-    },
-    rotation: {
-      x: node.rotation.x,
-      y: node.rotation.y,
-      z: node.rotation.z
-    },
-    scaling: {
-      x: node.scaling.x,
-      y: node.scaling.y,
-      z: node.scaling.z
-    }
-  }));
-
-  localStorage.setItem("rebelAntsWorldLayout", JSON.stringify(data));
-  console.log("World layout saved", data);
-  showSaveBadge();
-}
-
-function loadWorldLayout(){
-  if (!fenceRootRef || !dojoRootRef || !dojo6RootRef || !dojo7RootRef || !dojo9RootRef) return;
-
-  const raw = localStorage.getItem("rebelAntsWorldLayout");
-  if (!raw) return;
-
-  let data;
-  try {
-    data = JSON.parse(raw);
-  } catch (err) {
-    console.error("Failed to parse saved world layout", err);
-    return;
-  }
-
-  if (!Array.isArray(data) || !data.length) return;
-
-    scene.transformNodes
-    .filter(n =>
-      n.name.startsWith("fenceRootClone_") ||
-      n.name.startsWith("dojoRootClone_") ||
-      n.name.startsWith("dojo6RootClone_") ||
-      n.name.startsWith("dojo7RootClone_") ||
-      n.name.startsWith("dojo9RootClone_") ||
-      n.name.startsWith("shrine2RootClone_") ||
-      n.name.startsWith("tree_1RootClone_") ||
-      n.name.startsWith("pine_1RootClone_")
-    )
-    .forEach(n => n.dispose(false, false));
-
-  const baseFence = data.find(d => d.name === "fenceRoot");
-  const baseDojo = data.find(d => d.name === "dojoRoot");
-  const baseDojo6 = data.find(d => d.name === "dojo6Root");
-  const baseDojo7 = data.find(d => d.name === "dojo7Root");
-  const baseDojo9 = data.find(d => d.name === "dojo9Root");
-  const baseShrine = data.find(d => d.name === "shrine2Root");
-
-  if (baseFence) applyObjectTransform(fenceRootRef, baseFence);
-  if (baseDojo) applyObjectTransform(dojoRootRef, baseDojo);
-  if (baseDojo6) applyObjectTransform(dojo6RootRef, baseDojo6);
-  if (baseDojo7) applyObjectTransform(dojo7RootRef, baseDojo7);
-  if (baseDojo9) applyObjectTransform(dojo9RootRef, baseDojo9);
-  if (baseShrine) applyObjectTransform(shrine2Root, baseShrine);
-
-  data.forEach((item, index) => {
-    if (
-      item.name === "fenceRoot" ||
-      item.name === "dojoRoot" ||
-      item.name === "dojo6Root" ||
-      item.name === "dojo7Root" ||
-      item.name === "dojo9Root" ||
-      item.name === "shrine2Root"
-    ) return;
-
-     let sourceRoot = editableRootRefs[item.type] || fenceRootRef;
-
-    const cloneRoot = sourceRoot.clone(makeCloneName(item.type) + "_" + index);
-    if (!cloneRoot) return;
-
-    applyObjectTransform(cloneRoot, item);
-
-    cloneRoot.getChildMeshes().forEach(m => {
-      shadows.addShadowCaster(m);
-      m.receiveShadows = true;
-    });
-  });
-
-  selectedObject = null;
-  updateSelectedBadge();
-  gizmoManager.attachToNode(null);
-  gizmoManager.positionGizmoEnabled = false;
-  gizmoManager.rotationGizmoEnabled = false;
-  gizmoManager.scaleGizmoEnabled = false;
-
-  console.log("World layout loaded", data);
-}
-function deleteSelectedFence(){
-  if (!selectedObject) return;
-
-        const isOriginalObject =
-    selectedObject === fenceRootRef ||
-    selectedObject === dojoRootRef ||
-    selectedObject === dojo6RootRef ||
-    selectedObject === dojo7RootRef ||
-    selectedObject === dojo9RootRef;
-
-  if (isOriginalObject) {
-    alert("The original base objects cannot be deleted. Move them if you want, but keep one base version in the world.");
-    return;
-  }
-
-  const nodeToDelete = selectedObject;
-
-  if (gizmoManager) {
-    gizmoManager.attachToNode(null);
-    gizmoManager.positionGizmoEnabled = false;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = false;
-  }
-
-  selectedObject = null;
-  updateSelectedBadge();
-
-  nodeToDelete.dispose(false, false);
-}
-function duplicateSelectedFence(){
-  if (!selectedObject) return;
-
-  const objectType = getObjectType(selectedObject);
-  if (!objectType) return;
-
-  const cloneRoot = selectedObject.clone(makeCloneName(objectType));
-  if (!cloneRoot) return;
-
-  cloneRoot.position = selectedObject.position.clone();
-  cloneRoot.position.x += 12;
-  cloneRoot.rotation = selectedObject.rotation.clone();
-  cloneRoot.scaling = selectedObject.scaling.clone();
-
-  selectedObject = cloneRoot;
-  snapSelectedObjectToGround();
-
-  cloneRoot.getChildMeshes().forEach(m => {
-    shadows.addShadowCaster(m);
-    m.receiveShadows = true;
-  });
-
-  updateSelectedBadge();
-
-  gizmoManager.positionGizmoEnabled = true;
-  gizmoManager.rotationGizmoEnabled = false;
-  gizmoManager.scaleGizmoEnabled = false;
-  gizmoManager.attachToNode(selectedObject);
-}
-
-function openPanel(b){
+function openPanel(b) {
   document.getElementById('picon').textContent=b.icon;
   document.getElementById('ph2').textContent=b.title;
   document.getElementById('psub').textContent=b.sub;
   document.getElementById('pdesc').textContent=b.desc;
-  const acts=document.getElementById('pact');acts.innerHTML='';
+  const acts=document.getElementById('pact'); acts.innerHTML='';
   b.actions.forEach(a=>{
     const btn=document.createElement('a');
     btn.className='pb'+(a.g?' g':a.t?' t':a.r?' r':'');
-    btn.textContent=a.label;btn.href=a.href;btn.target='_blank';btn.rel='noopener';
+    btn.textContent=a.label; btn.href=a.href; btn.target='_blank'; btn.rel='noopener';
     acts.appendChild(btn);
   });
   panel.classList.add('on');
 }
 
-// ── WALK MODE ────────────────────────────────
-function toggleWalk(){
-  walkMode = !walkMode;
-  const wb = document.getElementById('wb');
-  const xh = document.getElementById('xhair');
+// ─ WALK MODE ─────────────────────────────────────
+let _orbitDragging=false,_orbitLastX=0,_orbitLastY=0;
+let _orbitAngleH=Math.PI,_orbitAngleV=0.35;
+const _orbitDist=9;
 
+function toggleWalk(){
+  walkMode=!walkMode;
+  const wb=document.getElementById('wb'),xh=document.getElementById('xhair');
   if (walkMode) {
     if (charMesh) {
-           _orbitAngleH = charMesh.rotation.y + Math.PI;
-      _orbitAngleV = 0.35;
-      walk.position = new BABYLON.Vector3(
-        charMesh.position.x + Math.sin(_orbitAngleH) * _orbitDist * Math.cos(_orbitAngleV),
-        charMesh.position.y + _orbitDist * Math.sin(_orbitAngleV) + 2,
-        charMesh.position.z + Math.cos(_orbitAngleH) * _orbitDist * Math.cos(_orbitAngleV)
-      );
-      walk.setTarget(new BABYLON.Vector3(
-        charMesh.position.x,
-        charMesh.position.y + 1.2,
-        charMesh.position.z
-      ));
+      _orbitAngleH=charMesh.rotation.y+Math.PI; _orbitAngleV=0.35;
+      walk.position=new BABYLON.Vector3(
+        charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),
+        charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,
+        charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
+      walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
     }
-
-    scene.activeCamera = walk;
-    walk.detachControl();
-    orbit.detachControl();
-    // Don't use pointer lock — we need mouse events for orbit
-
-    wb.textContent = '🌐  EXIT WALK MODE';
-    wb.classList.add('on');
-    xh.classList.remove('on');
+    scene.activeCamera=walk; walk.detachControl(); orbit.detachControl();
+    wb.textContent='🌐  EXIT WALK MODE'; wb.classList.add('on'); xh.classList.remove('on');
   } else {
-    scene.activeCamera = orbit;
-    orbit.attachControl(canvas, true);
-    walk.detachControl();
-
-    wb.textContent = '⚔️  ENTER VILLAGE';
-    wb.classList.remove('on');
-    xh.classList.remove('on');
+    scene.activeCamera=orbit; orbit.attachControl(canvas,true); walk.detachControl();
+    wb.textContent='⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
   }
 }
-document.addEventListener('keydown', e => {
-  const key = e.key.toLowerCase();
 
-  if (key === 'm') {
-    adminMode = !adminMode;
-    updateAdminBadge();
-
-    if (adminMode) {
-      orbit.detachControl();
-      walk.detachControl();
-    } else {
-      selectedObject = null;
-      updateSelectedBadge();
-      if (gizmoManager) gizmoManager.attachToNode(null);
-      gizmoManager.positionGizmoEnabled = false;
-      gizmoManager.rotationGizmoEnabled = false;
-      gizmoManager.scaleGizmoEnabled = false;
-      orbit.attachControl(canvas, true);
-    }
-    return;
-  }
-
-  if (key === 'escape' && walkMode) toggleWalk();
-
-  if (adminMode && key === 'n') {
-    duplicateSelectedFence();
-    return;
-  }
-
-  if (adminMode && (e.key === 'Delete' || e.key === 'Backspace')) {
-    e.preventDefault();
-    deleteSelectedFence();
-    return;
-  }
-
-   if (adminMode && key === 'p') {
-    saveWorldLayout();
-    return;
-  }
-
-  if (adminMode && key === 'l') {
-    loadWorldLayout();
-    return;
-  }
-
-    if (adminMode && selectedObject && key === 'r') {
-    gizmoManager.positionGizmoEnabled = false;
-    gizmoManager.rotationGizmoEnabled = true;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(selectedObject);
-    return;
-  }
-
-  if (adminMode && selectedObject && key === 'g') {
-    gizmoManager.positionGizmoEnabled = true;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(selectedObject);
-    return;
-  }
-
-  if (adminMode && selectedObject && key === 'y') {
-    gizmoManager.positionGizmoEnabled = false;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = true;
-    gizmoManager.attachToNode(selectedObject);
-    return;
-  }
-
-  if (adminMode && selectedObject && key === 'f') {
-    selectedObject.scaling.x *= -1;
-    return;
-  }
-
-  if (adminMode && selectedObject && key === 'q') {
-    selectedObject.rotation.y -= Math.PI / 2;
-    return;
-  }
-
-  if (adminMode && selectedObject && key === 'e') {
-    selectedObject.rotation.y += Math.PI / 2;
-    return;
-  }
-
-  if (key === 'w' || e.key === 'ArrowUp') moveForward = true;
-  if (key === 's' || e.key === 'ArrowDown') moveBackward = true;
-  if (key === 'a' || e.key === 'ArrowLeft') turnLeft = true;
-  if (key === 'd' || e.key === 'ArrowRight') turnRight = true;
-  // Special moves — play once (no loop)
-  if (key === 'f' && window.kickAnim && walkMode) {
-    playAnim(window.kickAnim, false);
-    // Return to idle after kick finishes
-    setTimeout(() => { if(currentAnim === window.kickAnim) playAnim(idleAnim); }, 1200);
-  }
-  if (key === ' ' && window.jumpAnim && walkMode) {
-    e.preventDefault();
-    playAnim(window.jumpAnim, false);
-    setTimeout(() => { if(currentAnim === window.jumpAnim) playAnim(idleAnim); }, 1000);
-  }
-  if (key === 'r' && !adminMode && runAnim && walkMode) {
-    playAnim(runAnim);
-  }
-});
-
-document.addEventListener('keyup', e => {
-  const key = e.key.toLowerCase();
-  if (key === 'w' || e.key === 'ArrowUp') moveForward = false;
-  if (key === 's' || e.key === 'ArrowDown') moveBackward = false;
-  if (key === 'a' || e.key === 'ArrowLeft') turnLeft = false;
-  if (key === 'd' || e.key === 'ArrowRight') turnRight = false;
-});
-
-// Mouse orbit around character in walk mode
-let _orbitDragging = false, _orbitLastX = 0, _orbitLastY = 0;
-let _orbitAngleH = Math.PI, _orbitAngleV = 0.35; // horizontal & vertical angles
-const _orbitDist = 9, _orbitHeight = 5.5;
-
-// Use Babylon's pointer system — canvas.addEventListener blocked by engine
-scene.onPointerObservable.add(evt => {
+// Mouse orbit via Babylon pointer system
+scene.onPointerObservable.add(evt=>{
   if (!walkMode) return;
-  if (evt.type === BABYLON.PointerEventTypes.POINTERDOWN) {
-    _orbitDragging = true;
-    _orbitLastX = scene.pointerX;
-    _orbitLastY = scene.pointerY;
-  } else if (evt.type === BABYLON.PointerEventTypes.POINTERUP) {
-    _orbitDragging = false;
-  } else if (evt.type === BABYLON.PointerEventTypes.POINTERMOVE && _orbitDragging) {
-    const dx = scene.pointerX - _orbitLastX;
-    const dy = scene.pointerY - _orbitLastY;
-    _orbitLastX = scene.pointerX;
-    _orbitLastY = scene.pointerY;
-    _orbitAngleH += dx * 0.008;
-    _orbitAngleV = Math.max(0.08, Math.min(0.85, _orbitAngleV + dy * 0.006));
+  if (evt.type===BABYLON.PointerEventTypes.POINTERDOWN){_orbitDragging=true;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;}
+  else if(evt.type===BABYLON.PointerEventTypes.POINTERUP){_orbitDragging=false;}
+  else if(evt.type===BABYLON.PointerEventTypes.POINTERMOVE&&_orbitDragging){
+    const dx=scene.pointerX-_orbitLastX,dy=scene.pointerY-_orbitLastY;
+    _orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;
+    _orbitAngleH+=dx*0.008;
+    _orbitAngleV=Math.max(0.08,Math.min(0.85,_orbitAngleV+dy*0.006));
   }
 });
+// ─ KEY HANDLERS ─────────────────────────────────
+document.addEventListener('keydown',e=>{
+  const key=e.key.toLowerCase();
+  if(key==='m'){adminMode=!adminMode;updateAdminBadge();if(adminMode){orbit.detachControl();walk.detachControl();}else{selectedObject=null;updateSelectedBadge();if(gizmoManager)gizmoManager.attachToNode(null);gizmoManager.positionGizmoEnabled=false;gizmoManager.rotationGizmoEnabled=false;gizmoManager.scaleGizmoEnabled=false;orbit.attachControl(canvas,true);}return;}
+  if(key==='escape'&&walkMode){toggleWalk();return;}
+  if(adminMode&&key==='n'){duplicateSelectedFence();return;}
+  if(adminMode&&(e.key==='Delete'||e.key==='Backspace')){e.preventDefault();deleteSelectedFence();return;}
+  if(adminMode&&key==='p'){saveWorldLayout();return;}
+  if(adminMode&&key==='l'){loadWorldLayout();return;}
+  if(adminMode&&selectedObject&&key==='r'){gizmoManager.positionGizmoEnabled=false;gizmoManager.rotationGizmoEnabled=true;gizmoManager.scaleGizmoEnabled=false;gizmoManager.attachToNode(selectedObject);return;}
+  if(adminMode&&selectedObject&&key==='g'){gizmoManager.positionGizmoEnabled=true;gizmoManager.rotationGizmoEnabled=false;gizmoManager.scaleGizmoEnabled=false;gizmoManager.attachToNode(selectedObject);return;}
+  if(adminMode&&selectedObject&&key==='y'){gizmoManager.positionGizmoEnabled=false;gizmoManager.rotationGizmoEnabled=false;gizmoManager.scaleGizmoEnabled=true;gizmoManager.attachToNode(selectedObject);return;}
+  if(adminMode&&selectedObject&&key==='f'){selectedObject.scaling.x*=-1;return;}
+  if(adminMode&&selectedObject&&key==='q'){selectedObject.rotation.y-=Math.PI/2;return;}
+  if(adminMode&&selectedObject&&key==='e'){selectedObject.rotation.y+=Math.PI/2;return;}
+  if(key==='w'||e.key==='ArrowUp')moveForward=true;
+  if(key==='s'||e.key==='ArrowDown')moveBackward=true;
+  if(key==='a'||e.key==='ArrowLeft')turnLeft=true;
+  if(key==='d'||e.key==='ArrowRight')turnRight=true;
+  if(!walkMode)return;
+  if(key==='r'&&!adminMode){switchAnim(2,true);}
+  if(key==='f'&&!adminMode){switchAnim(3,false);setTimeout(()=>{if(animState===3)switchAnim(0,true);},1200);}
+  if(e.key===' '){e.preventDefault();switchAnim(4,false);setTimeout(()=>{if(animState===4)switchAnim(0,true);},1000);}
+});
+document.addEventListener('keyup',e=>{
+  const key=e.key.toLowerCase();
+  if(key==='w'||e.key==='ArrowUp')moveForward=false;
+  if(key==='s'||e.key==='ArrowDown')moveBackward=false;
+  if(key==='a'||e.key==='ArrowLeft')turnLeft=false;
+  if(key==='d'||e.key==='ArrowRight')turnRight=false;
+  if(key==='r'&&!adminMode&&walkMode){const mv=moveForward||moveBackward||turnLeft||turnRight;switchAnim(mv?1:0,true);}
+});
+// ─ RENDER LOOP ──────────────────────────────────
+let t=0;
+engine.runRenderLoop(()=>{
+  t+=engine.getDeltaTime()*.001;
+  fireLights.forEach(fl=>{fl.intensity=fl._b+Math.sin(t*9.2+fl.position.x*3)*.65+Math.sin(t*15.1+fl.position.z)*.32;});
+  lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(t*1.9+ll.position.x*.3)*.1;});
+  if(adminMode&&selectedObject&&!adminDragging)softSnapSelectedObject();
+  if(walkMode&&charMesh){
+    const dt=engine.getDeltaTime()/1000;
+    const moveSpeed=4.2*dt, turnSpeed=2.4*dt;
+    if(turnLeft) charMesh.rotation.y-=turnSpeed*0.35;
+    if(turnRight) charMesh.rotation.y+=turnSpeed*0.35;
+    const forward=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
+    if(!charMesh._vel)charMesh._vel=0;
+    const tv=moveForward?moveSpeed:moveBackward?-moveSpeed*0.6:0;
+    charMesh._vel=charMesh._vel+(tv-charMesh._vel)*0.18;
+    if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(forward.scale(charMesh._vel));
+    // Animation: only switch idle<->walk, never interrupt kick/jump
+    if(animState!==3&&animState!==4){
+      const mv=moveForward||moveBackward||turnLeft||turnRight;
+      const tgt=mv?1:0;
+      if(tgt!==animState)switchAnim(tgt,true);
+    }
+    // Follow light
+    if(window.followLight){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;}
+    // Camera
+    if(moveForward||moveBackward)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
+    const dc=new BABYLON.Vector3(
+      charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),
+      charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,
+      charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
+    walk.position=BABYLON.Vector3.Lerp(walk.position,dc,0.1);
+    walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
+  }
+  scene.render();
+});
+
 window.addEventListener('resize',()=>engine.resize());
 
 // ── RENDER LOOP ──────────────────────────────
