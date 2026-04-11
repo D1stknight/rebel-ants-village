@@ -877,48 +877,37 @@ function playAnim(newAnim, loop=true) {
   currentAnim.play(loop);
 }
 
-// Load idle animation (also contains the base mesh)
+// Load animations — retargeted to existing skeleton
 function loadAnimations() {
-  // Load idle
-  BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", scene)
-  .then(r => {
-    r.animationGroups.forEach(ag => {
-      idleAnim = ag;
-      ag.stop();
-    });
-    // Re-target animations to our charMesh skeleton
-    if(charMesh) {
-      r.animationGroups.forEach(ag => {
+  if (!charMesh) { setTimeout(loadAnimations, 500); return; }
+  const scene_ = charMesh.getScene();
+  const skeleton = scene_.skeletons[0] || null;
+  console.log("Skeleton:", skeleton ? skeleton.name + " bones:" + skeleton.bones.length : "none");
+
+  function loadAnim(filename, onDone) {
+    BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", filename, scene_)
+    .then(r => {
+      r.meshes.forEach(m => { m.isVisible = false; m.setEnabled(false); });
+      const ag = r.animationGroups[0];
+      if (!ag) { console.warn("No anim in", filename); return; }
+      if (skeleton) {
         ag.targetedAnimations.forEach(ta => {
-          const boneName = ta.target.name;
-          const bone = charMesh.getChildTransformNodes(true).find(n => n.name === boneName);
-          if(bone) ta.target = bone;
+          const bone = skeleton.bones.find(b => b.name === ta.target.name);
+          if (bone && bone._linkedTransformNode) ta.target = bone._linkedTransformNode;
+          else if (bone) ta.target = bone;
         });
-      });
-    }
-    playAnim(idleAnim);
-    setSt("Idle loaded");
-  }).catch(e => console.warn("Idle anim failed:", e));
-
-  // Load walk
-  BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_walk_c.glb", scene)
-  .then(r => {
-    r.animationGroups.forEach(ag => {
-      walkAnim = ag;
+      }
       ag.stop();
-    });
-    setSt("Walk loaded");
-  }).catch(e => console.warn("Walk anim failed:", e));
+      console.log("Anim loaded:", filename, ag.targetedAnimations.length, "tracks");
+      onDone(ag);
+    }).catch(e => console.error("Anim load failed:", filename, e));
+  }
 
-  // Load run
-  BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_run_c.glb", scene)
-  .then(r => {
-    r.animationGroups.forEach(ag => {
-      runAnim = ag;
-      ag.stop();
-    });
-    setSt("Run loaded");
-  }).catch(e => console.warn("Run anim failed:", e));
+  loadAnim("ant_idle_c.glb",     ag => { idleAnim = ag; playAnim(idleAnim); });
+  loadAnim("ant_walk_c.glb",     ag => { walkAnim = ag; });
+  loadAnim("ant_run_c.glb",      ag => { runAnim = ag; });
+  loadAnim("ant_flip_kick_c.glb",ag => { window.kickAnim = ag; });
+  loadAnim("ant_jumping_c.glb",  ag => { window.jumpAnim = ag; });
 }
 let selectedObject = null;
 let fenceRootRef = null;
