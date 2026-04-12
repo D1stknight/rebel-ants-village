@@ -1698,12 +1698,7 @@ function spawnRockClonesFromPlaceholders() {
     cloneRoot.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
     cloneRoot.scaling = new BABYLON.Vector3(pt.s, pt.s, pt.s);
     cloneRoot.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; });
-    selectedObject = cloneRoot;
-    snapSelectedObjectToGround();
   });
-  selectedObject = null;
-  updateSelectedBadge();
-  gizmoManager.attachToNode(null);
 }
 
 function hasSavedRockLayout() {
