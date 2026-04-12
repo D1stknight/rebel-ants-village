@@ -1122,7 +1122,8 @@ function loadWorldLayout(){
       item.name === "shrine2Root"
     ) return;
 
-     let sourceRoot = editableRootRefs[item.type] || fenceRootRef;
+     let sourceRoot = editableRootRefs[item.type];
+    if (!sourceRoot) return; // skip if source not loaded yet — its own system will handle it
 
     const cloneRoot = sourceRoot.clone(makeCloneName(item.type) + "_" + index);
     if (!cloneRoot) return;
