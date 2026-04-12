@@ -191,7 +191,7 @@ pine_1: {
 
 rock_1: {
   path: "/assets/buildings/rock_1.glb",
-  scale: 8.0,
+  scale: 1.0,
   rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
 }
   
@@ -1695,7 +1695,7 @@ function spawnRockClonesFromPlaceholders() {
     cloneRoot.metadata = { type: "rock_1", isClone: true };
     cloneRoot.position = new BABYLON.Vector3(pt.x, 0, pt.z);
     cloneRoot.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
-    const rs = pt.s * 8;
+    const rs = pt.s * 2;
     cloneRoot.scaling = new BABYLON.Vector3(rs, rs, rs);
     cloneRoot.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; });
   });
