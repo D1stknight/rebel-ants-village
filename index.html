@@ -1094,8 +1094,7 @@ function loadWorldLayout(){
       n.name.startsWith("dojo9RootClone_") ||
       n.name.startsWith("shrine2RootClone_") ||
       n.name.startsWith("tree_1RootClone_") ||
-      n.name.startsWith("pine_1RootClone_") ||
-      n.name.startsWith("rock_1RootClone_")
+      n.name.startsWith("pine_1RootClone_")
     )
     .forEach(n => n.dispose(false, false));
 
@@ -1687,7 +1686,7 @@ let rock1RootRef = null;
 const rock1Root = spawnAsset("rock_1", new BABYLON.Vector3(9999, 0, 9999));
 rock1Root.name = "rock1Root";
 rock1RootRef = rock1Root;
-registerEditableRoot("rock_1", rock1Root);
+// rock_1 managed by startRockSystem only
 
 function spawnRockClonesFromPlaceholders() {
   rockPlaceholderPoints.forEach((pt, index) => {
@@ -1716,9 +1715,29 @@ function startRockSystem() {
     setTimeout(startRockSystem, 300);
     return;
   }
-  if (!hasSavedRockLayout()) {
-    spawnRockClonesFromPlaceholders();
+  // Dispose any empty clones made by loadWorldLayout before we were ready
+  scene.transformNodes
+    .filter(n => n.name && n.name.startsWith("rock_1RootClone_"))
+    .forEach(n => n.dispose(false, false));
+  // Restore saved positions or spawn defaults
+  const raw = localStorage.getItem("rebelAntsWorldLayout");
+  if (raw) {
+    try {
+      const saved = JSON.parse(raw);
+      const rockItems = saved.filter(item => item.type === "rock_1");
+      if (rockItems.length > 0) {
+        rockItems.forEach((item, index) => {
+          const cloneRoot = rock1Root.clone(makeCloneName("rock_1") + "_" + index);
+          if (!cloneRoot) return;
+          cloneRoot.metadata = { type: "rock_1", isClone: true };
+          applyObjectTransform(cloneRoot, item);
+          cloneRoot.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; });
+        });
+        return;
+      }
+    } catch(e) {}
   }
+  spawnRockClonesFromPlaceholders();
 }
 
 startRockSystem();
