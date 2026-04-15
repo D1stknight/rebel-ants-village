@@ -193,6 +193,12 @@ rock_1: {
   path: "/assets/buildings/rock_1.glb",
   scale: 1.0,
   rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+},
+
+cherry_blossom: {
+  path: "/assets/buildings/cherry_blossom.glb",
+  scale: 1.0,
+  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
 }
   
 };
@@ -497,21 +503,8 @@ function pineCone(x,z,h=10){
   pinePlaceholderPoints.push({ x, z, h });
 }
 
-// TYPE 2: Cherry Blossom — fluffy pink clouds
-function cherry(x,z,h=8){
-  const tk=mat(new BABYLON.Color3(.28,.15,.07));
-  cyl(.2,.5,h*.5,7,tk,[x,h*.25,z]);
-  const bm=mat(new BABYLON.Color3(.86+Math.random()*.1,.6+Math.random()*.12,.68+Math.random()*.12));
-  for(let i=0;i<5;i++){
-    const bx=x+(Math.random()-.5)*h*.4, bz=z+(Math.random()-.5)*h*.4, by=h*(.55+Math.random()*.22);
-    const blob=sph(h*(.18+Math.random()*.1),bm,[bx,by,bz]);
-    blob.scaling=new BABYLON.Vector3(1+Math.random()*.3,.8+Math.random()*.25,1+Math.random()*.3);
-  }
-}
-
-// TYPE 3: Oak/Round canopy
-const oakPlaceholderPoints = [];
-
+// TYPE 2: Cherry Blossom — replaced with GLB (startCherrySystem)
+function cherry(){}
 function oak(x,z,h=9){
   oakPlaceholderPoints.push({ x, z, h });
 }
@@ -1684,6 +1677,7 @@ const rockPlaceholderPoints = [
   {x:-15,z:72,s:.8},{x:15,z:72,s:.7},{x:-72,z:15,s:.9},{x:72,z:-15,s:1.1}
 ];
 let rock1RootRef = null;
+let cherryRootRef = null;
 const rock1Root = spawnAsset("rock_1", new BABYLON.Vector3(9999, 0, 9999));
 rock1Root.name = "rock1Root";
 rock1RootRef = rock1Root;
@@ -1746,6 +1740,60 @@ function startRockSystem() {
 }
 
 startRockSystem();
+
+// 🌸 CHERRY BLOSSOM GLB SYSTEM
+const cherryPlaceholderPoints = [{"x":107.83,"z":45.59,"s":11.2},{"x":93.95,"z":62.22,"s":8.5},{"x":75.89,"z":107.62,"s":15.5},{"x":-95.7,"z":63.81,"s":12.4},{"x":-24.82,"z":-115.17,"s":11.2},{"x":7.82,"z":-107.18,"s":9.4},{"x":78.76,"z":-83.87,"s":11},{"x":119.51,"z":-15.72,"s":12.9},{"x":118.77,"z":60.24,"s":13.4},{"x":33.15,"z":132.82,"s":17.2},{"x":13.75,"z":136.38,"s":18.2},{"x":-6.75,"z":155.15,"s":10.2},{"x":-145.11,"z":-36.95,"s":10.8},{"x":-137.55,"z":-79.02,"s":13},{"x":-62.58,"z":-137.59,"s":17.2},{"x":-25.05,"z":-147.67,"s":8.1},{"x":115.15,"z":-86.87,"s":12},{"x":-13.76,"z":184.82,"s":13.3},{"x":-42.54,"z":182.86,"s":17.1},{"x":-79.9,"z":163.65,"s":16.5},{"x":-125.69,"z":127.41,"s":9.7},{"x":-140.76,"z":110.67,"s":14.8},{"x":-33.95,"z":-178.4,"s":16.3},{"x":54.42,"z":-170.98,"s":15.2},{"x":138.14,"z":-109.2,"s":8.9},{"x":187.66,"z":11.96,"s":15.4},{"x":181.68,"z":24.69,"s":17.3},{"x":172.38,"z":35.61,"s":16.2},{"x":157.75,"z":65.16,"s":11.2},{"x":109.89,"z":139.29,"s":15.5},{"x":-3.24,"z":209.39,"s":8.4},{"x":-21.9,"z":206.5,"s":10.7},{"x":-71.72,"z":195.2,"s":9.9},{"x":-115.02,"z":175.67,"s":9.2},{"x":-146.99,"z":150.66,"s":15.5},{"x":-176.04,"z":118.32,"s":9.3},{"x":-180.01,"z":109.59,"s":13.2},{"x":-205.94,"z":34.1,"s":15.2},{"x":-194.32,"z":-40.38,"s":11.8},{"x":-128.42,"z":-154.14,"s":17.5},{"x":-74.4,"z":-190.72,"s":15.6},{"x":-67.37,"z":-204.89,"s":13.8},{"x":11.96,"z":-216.44,"s":13.8},{"x":56.72,"z":-198.91,"s":8},{"x":89.47,"z":-187.09,"s":15.3},{"x":96.65,"z":-187.85,"s":18.3},{"x":197.04,"z":-56.17,"s":11.4},{"x":219.39,"z":10.03,"s":11},{"x":216.32,"z":24.28,"s":15},{"x":217.74,"z":44.22,"s":18.9},{"x":204.75,"z":50.81,"s":18.7},{"x":184.48,"z":72.42,"s":8.1},{"x":176.14,"z":108.73,"s":13.2},{"x":151.83,"z":130.73,"s":8.5},{"x":84.47,"z":178.87,"s":10.6},{"x":78.84,"z":195.17,"s":16.2},{"x":52,"z":0,"s":7.3},{"x":0,"z":-52,"s":7.5},{"x":0,"z":52,"s":7},{"x":-42,"z":42,"s":5.9},{"x":-42,"z":-42,"s":7.2},{"x":42,"z":-42,"s":5.2},{"x":-55,"z":-24,"s":7.3},{"x":55,"z":-24,"s":7.8},{"x":-28,"z":28,"s":7.1},{"x":-28,"z":-28,"s":6.4}];
+
+const cherryRoot = spawnAsset("cherry_blossom", new BABYLON.Vector3(9999, 0, 9999));
+cherryRoot.name = "cherryRoot";
+cherryRootRef = cherryRoot;
+
+function spawnCherryBlossomsFromPlaceholders() {
+  cherryPlaceholderPoints.forEach((pt, index) => {
+    const cloneRoot = cherryRoot.clone(makeCloneName("cherry_blossom") + "_" + index);
+    if (!cloneRoot) return;
+    cloneRoot.metadata = { type: "cherry_blossom", isClone: true };
+    cloneRoot.position = new BABYLON.Vector3(pt.x, 0, pt.z);
+    cloneRoot.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
+    const sc = (pt.s / 10) * 1.0;
+    cloneRoot.scaling = new BABYLON.Vector3(sc, sc, sc);
+    cloneRoot.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; });
+  });
+}
+
+let _cherrySystemDone = false;
+function startCherrySystem() {
+  if (_cherrySystemDone) return;
+  if (!cherryRoot || !cherryRoot.metadata || cherryRoot.metadata.loaded !== true) {
+    setTimeout(startCherrySystem, 300); return;
+  }
+  _cherrySystemDone = true;
+  scene.transformNodes
+    .filter(n => n.name && n.name.startsWith("cherry_blossomRootClone_"))
+    .forEach(n => n.dispose(false, false));
+  const raw = localStorage.getItem("rebelAntsWorldLayout");
+  if (raw) {
+    try {
+      const saved = JSON.parse(raw);
+      const items = saved.filter(i => i.type === "cherry_blossom");
+      if (items.length > 0) {
+        items.forEach((item, index) => {
+          const cloneRoot = cherryRoot.clone(makeCloneName("cherry_blossom") + "_" + index);
+          if (!cloneRoot) return;
+          cloneRoot.metadata = { type: "cherry_blossom", isClone: true };
+          applyObjectTransform(cloneRoot, item);
+          cloneRoot.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; });
+        });
+        registerEditableRoot("cherry_blossom", cherryRoot);
+        return;
+      }
+    } catch(e) {}
+  }
+  spawnCherryBlossomsFromPlaceholders();
+  registerEditableRoot("cherry_blossom", cherryRoot);
+}
+
+startCherrySystem();
 
 
 
