@@ -1372,7 +1372,7 @@ engine.runRenderLoop(()=>{
     const fwd=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
     if(!charMesh._vel)charMesh._vel=0;
     const tv=(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
-    const _lf=tv!==0?0.22:0.09; charMesh._vel+=(tv-charMesh._vel)*_lf;
+    const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
     if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;}
