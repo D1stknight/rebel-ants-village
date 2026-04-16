@@ -209,7 +209,7 @@ bamboo: {
 
 lantern_1: {
   path: "/assets/buildings/lantern_1.glb",
-  scale: 1.0,
+  scale: 0.027,
   rotation: new BABYLON.Vector3(0, Math.PI, 0)
 }
   
@@ -578,7 +578,7 @@ function fireBowl(x,z){
       cloneRoot.getChildMeshes().forEach(m=>{shadows.addShadowCaster(m);m.receiveShadows=true;});
     }
   }
-  const fl=new BABYLON.PointLight('fl'+x,new BABYLON.Vector3(x,4.0,z),scene);
+  const fl=new BABYLON.PointLight('fl'+x,new BABYLON.Vector3(x,3.0,z),scene);
   fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.intensity=1.8; fl.range=10; fl._b=1.8;
   fireLights.push(fl);
 }
@@ -1859,6 +1859,8 @@ const _lanternDefaultPositions = [[-4,95],[4,95],[-26,0],[26,0],[-4,-5],[4,-5],[
 let _lanternSystemDone = false;
 function startLanternSystem() {
   if (_lanternSystemDone) return;
+  // Hard guard: if clones already exist, don't spawn again
+  if (scene.transformNodes.filter(n => n.name && n.name.startsWith("lantern_1RootClone_")).some(n => n.metadata && n.metadata.isClone)) return;
   if (!lanternRoot || !lanternRoot.metadata || lanternRoot.metadata.loaded !== true) {
     setTimeout(startLanternSystem, 300); return;
   }
