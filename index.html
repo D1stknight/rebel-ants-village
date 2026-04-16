@@ -575,10 +575,11 @@ function fireBowl(x,z){
       cloneRoot.metadata={type:"lantern_1",isClone:true};
       cloneRoot.position=new BABYLON.Vector3(x,0,z);
       cloneRoot.rotation=new BABYLON.Vector3(0,Math.random()*Math.PI*2,0);
+      cloneRoot.scaling=new BABYLON.Vector3(0.027,0.027,0.027);
       cloneRoot.getChildMeshes().forEach(m=>{shadows.addShadowCaster(m);m.receiveShadows=true;});
     }
   }
-  const fl=new BABYLON.PointLight('fl'+x,new BABYLON.Vector3(x,3.0,z),scene);
+  const fl=new BABYLON.PointLight('fl'+x,new BABYLON.Vector3(x,2.6,z),scene);
   fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.intensity=1.8; fl.range=10; fl._b=1.8;
   fireLights.push(fl);
 }
