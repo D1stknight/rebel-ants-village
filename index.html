@@ -205,6 +205,12 @@ bamboo: {
   path: "/assets/buildings/bamboo.glb",
   scale: 1.0,
   rotation: new BABYLON.Vector3(0, Math.PI, 0)
+},
+
+lantern_1: {
+  path: "/assets/buildings/lantern_1.glb",
+  scale: 1.0,
+  rotation: new BABYLON.Vector3(0, Math.PI, 0)
 }
   
 };
@@ -563,20 +569,20 @@ torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0
 // ── FIRE BOWLS ───────────────────────────────
 const fireLights=[];
 function fireBowl(x,z){
-  const sm2=mat(new BABYLON.Color3(.22,.22,.25));
-  const bm2=mat(new BABYLON.Color3(.28,.28,.3));
-  const fm=pbr(new BABYLON.Color3(1,.5,.05),{e:new BABYLON.Color3(.8,.3,0),ei:1.4,r:.8});
-  cyl(.07,.07,1.4,6,sm2,[x,.7,z]);
-  cyl(.95,.55,.52,12,bm2,[x,1.46,z]);
-  sph(.42,fm,[x,1.7,z]);
-  const fl=new BABYLON.PointLight("fl"+x,new BABYLON.Vector3(x,2.2,z),scene);
+  if(lanternRootRef){
+    const cloneRoot=lanternRootRef.clone(makeCloneName("lantern_1")+"_"+Math.round(x)+"_"+Math.round(z));
+    if(cloneRoot){
+      cloneRoot.metadata={type:"lantern_1",isClone:true};
+      cloneRoot.position=new BABYLON.Vector3(x,0,z);
+      cloneRoot.rotation=new BABYLON.Vector3(0,Math.random()*Math.PI*2,0);
+      cloneRoot.getChildMeshes().forEach(m=>{shadows.addShadowCaster(m);m.receiveShadows=true;});
+    }
+  }
+  const fl=new BABYLON.PointLight('fl'+x,new BABYLON.Vector3(x,4.0,z),scene);
   fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.intensity=1.8; fl.range=10; fl._b=1.8;
   fireLights.push(fl);
 }
-// Reduced fire bowls: 19 → 8 lights (keep key positions only)
-[[-4,95],[4,95],[-26,0],[26,0],
- [-4,-5],[4,-5],[0,0],[-4,76]
-].forEach(([x,z])=>fireBowl(x,z));
+// Fire bowls now spawned by startLanternSystem() at bottom
 
 // ── HANGING LANTERNS (properly attached to posts) ──
 const lanLights=[];
@@ -1671,6 +1677,7 @@ const rockPlaceholderPoints = [
 let rock1RootRef = null;
 let cherryRootRef = null;
 let bambooRootRef = null;
+let lanternRootRef = null;
 const rock1Root = spawnAsset("rock_1", new BABYLON.Vector3(9999, 0, 9999));
 rock1Root.name = "rock1Root";
 rock1RootRef = rock1Root;
@@ -1841,6 +1848,47 @@ function startBambooSystem() {
 }
 
 startBambooSystem();
+
+// 🏮 LANTERN GLB SYSTEM
+const lanternRoot = spawnAsset("lantern_1", new BABYLON.Vector3(9999, 0, 9999));
+lanternRoot.name = "lanternRoot";
+lanternRootRef = lanternRoot;
+
+const _lanternDefaultPositions = [[-4,95],[4,95],[-26,0],[26,0],[-4,-5],[4,-5],[0,0],[-4,76]];
+
+let _lanternSystemDone = false;
+function startLanternSystem() {
+  if (_lanternSystemDone) return;
+  if (!lanternRoot || !lanternRoot.metadata || lanternRoot.metadata.loaded !== true) {
+    setTimeout(startLanternSystem, 300); return;
+  }
+  _lanternSystemDone = true;
+  scene.transformNodes
+    .filter(n => n.name && n.name.startsWith("lantern_1RootClone_"))
+    .forEach(n => n.dispose(false, false));
+  const raw = localStorage.getItem("rebelAntsWorldLayout");
+  if (raw) {
+    try {
+      const saved = JSON.parse(raw);
+      const items = saved.filter(i => i.type === "lantern_1");
+      if (items.length > 0) {
+        items.forEach((item, index) => {
+          const cloneRoot = lanternRoot.clone(makeCloneName("lantern_1") + "_s" + index);
+          if (!cloneRoot) return;
+          cloneRoot.metadata = { type: "lantern_1", isClone: true };
+          applyObjectTransform(cloneRoot, item);
+          cloneRoot.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; });
+        });
+        registerEditableRoot("lantern_1", lanternRoot);
+        return;
+      }
+    } catch(e) {}
+  }
+  _lanternDefaultPositions.forEach(([x,z]) => fireBowl(x,z));
+  registerEditableRoot("lantern_1", lanternRoot);
+}
+
+startLanternSystem();
 
 
 
