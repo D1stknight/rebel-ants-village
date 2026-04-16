@@ -569,8 +569,9 @@ torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0
 // ── FIRE BOWLS ───────────────────────────────
 const fireLights=[];
 function fireBowl(x,z){
+  let cloneRoot=null;
   if(lanternRootRef){
-    const cloneRoot=lanternRootRef.clone(makeCloneName("lantern_1")+"_"+Math.round(x)+"_"+Math.round(z));
+    cloneRoot=lanternRootRef.clone(makeCloneName("lantern_1")+"_"+Math.round(x)+"_"+Math.round(z));
     if(cloneRoot){
       cloneRoot.metadata={type:"lantern_1",isClone:true};
       cloneRoot.position=new BABYLON.Vector3(x,0,z);
@@ -579,8 +580,12 @@ function fireBowl(x,z){
       cloneRoot.getChildMeshes().forEach(m=>{shadows.addShadowCaster(m);m.receiveShadows=true;});
     }
   }
-  const fl=new BABYLON.PointLight('fl'+x,new BABYLON.Vector3(x,3.2,z),scene);
+  // Parent light to clone so it moves with the lantern in admin mode
+  // Clone scale is 0.027, so local Y=118 ≈ world Y=3.2 (glass panel height)
+  const fl=new BABYLON.PointLight('fl_'+x+'_'+z,new BABYLON.Vector3(0,118,0),scene);
   fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.intensity=1.8; fl.range=10; fl._b=1.8;
+  if(cloneRoot){ fl.parent=cloneRoot; }
+  else{ fl.position=new BABYLON.Vector3(x,3.2,z); }
   fireLights.push(fl);
 }
 // Fire bowls now spawned by startLanternSystem() at bottom
