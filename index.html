@@ -204,7 +204,7 @@ cherry_blossom: {
 bamboo: {
   path: "/assets/buildings/bamboo.glb",
   scale: 1.0,
-  rotation: new BABYLON.Vector3(Math.PI / 2, Math.PI, 0)
+  rotation: new BABYLON.Vector3(0, Math.PI, 0)
 }
   
 };
@@ -1801,7 +1801,7 @@ function spawnBambooFromPlaceholders() {
     if (!cloneRoot) return;
     cloneRoot.metadata = { type: "bamboo", isClone: true };
     cloneRoot.position = new BABYLON.Vector3(pt.x, 0, pt.z);
-    cloneRoot.rotation = new BABYLON.Vector3(Math.PI / 2, Math.random() * Math.PI * 2, 0);
+    cloneRoot.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
     const sc = (pt.s / 12) * 1.0;
     cloneRoot.scaling = new BABYLON.Vector3(sc, sc, sc);
     cloneRoot.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; });
