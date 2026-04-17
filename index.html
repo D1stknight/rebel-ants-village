@@ -580,7 +580,11 @@ function fireBowl(x,z){
       cloneRoot.position=new BABYLON.Vector3(x,0,z);
       cloneRoot.rotation=new BABYLON.Vector3(0,Math.random()*Math.PI*2,0);
       cloneRoot.scaling=new BABYLON.Vector3(0.027,0.027,0.027);
-      cloneRoot.getChildMeshes().forEach(m=>{shadows.addShadowCaster(m);m.receiveShadows=true;});
+           cloneRoot.getChildMeshes().forEach(m=>{
+        shadows.addShadowCaster(m);
+        m.receiveShadows=true;
+        m.isPickable=true;
+      });
     }
   }
     // Light parented to clone so it follows when moved in admin mode
@@ -1152,10 +1156,11 @@ function loadWorldLayout(){
 
     applyObjectTransform(cloneRoot, item);
 
-    cloneRoot.getChildMeshes().forEach(m => {
-      shadows.addShadowCaster(m);
-      m.receiveShadows = true;
-    });
+              cloneRoot.getChildMeshes().forEach(m => {
+            shadows.addShadowCaster(m);
+            m.receiveShadows = true;
+            m.isPickable = true;
+          });
   });
 
   selectedObject = null;
