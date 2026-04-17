@@ -1428,7 +1428,7 @@ engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
   fireLights.forEach(fl=>{fl.intensity=fl._b+Math.sin(Date.now()*0.009+fl.position.x*3)*0.65;});
   lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(Date.now()*0.0019+ll.position.x*0.3)*0.1;});
-  if(adminMode&&selectedObject&&!adminDragging)softSnapSelectedObject();
+    // do not auto-snap just because an object is selected
   if(walkMode&&charMesh){
     const moveSpeed=4.2*dt,turnSpeed=2.4*dt;
     const tf=runKey?0.18:0.35;
