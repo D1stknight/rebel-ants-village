@@ -1259,8 +1259,8 @@ function duplicateSelectedFence(){
   if (objectType === "lantern_1") {
     const originalLight = fireLights.find(l => l.parent === sourceObject);
 
-    if (originalLight) {
-      const newLight = new BABYLON.PointLight("fl_dup_" + Date.now(), originalLight.position.clone(), scene);
+       if (originalLight) {
+      const newLight = new BABYLON.PointLight("fl_dup_" + Date.now(), new BABYLON.Vector3(0, 0.6, 0), scene);
 
       newLight.diffuse = originalLight.diffuse.clone();
       newLight.intensity = originalLight.intensity;
@@ -1268,6 +1268,8 @@ function duplicateSelectedFence(){
       newLight._b = originalLight._b;
 
       newLight.parent = cloneRoot;
+      newLight.position = new BABYLON.Vector3(0, 0.6, 0);
+
       fireLights.push(newLight);
     } else {
       console.warn("No light found for duplicated lantern");
