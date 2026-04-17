@@ -1294,18 +1294,23 @@ function duplicateSelectedFence(){
         if (m.markSubMeshesAsLightDirty) m.markSubMeshesAsLightDirty();
       });
 
-      [ground, court, plaza].forEach(m => {
-        if (!m) return;
+      if (plaza && plaza._lightSources) {
+        const idx = plaza._lightSources.indexOf(sourceLight);
 
-        if (m._lightSources && !m._lightSources.includes(clonedLight)) {
-          m._lightSources.push(clonedLight);
+        if (idx !== -1) {
+          plaza._lightSources.splice(idx, 1, clonedLight);
+        } else if (!plaza._lightSources.includes(clonedLight)) {
+          plaza._lightSources.push(clonedLight);
         }
+      }
 
-        if (m.markSubMeshesAsLightDirty) m.markSubMeshesAsLightDirty();
-      });
+      if (plaza && plaza.markSubMeshesAsLightDirty) {
+        plaza.markSubMeshesAsLightDirty();
+      }
     }
 
     selectedObject = clone;
+    snapSelectedObjectToGround();
     updateSelectedBadge();
 
     gizmoManager.positionGizmoEnabled = true;
