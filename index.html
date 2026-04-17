@@ -603,7 +603,7 @@ function buildEditableLantern(cloneRoot, lightName){
 
   const fl = new BABYLON.PointLight(
     lightName,
-    new BABYLON.Vector3(editRoot.position.x, editRoot.position.y + 0.6, editRoot.position.z),
+    new BABYLON.Vector3(cloneRoot.absolutePosition.x, cloneRoot.absolutePosition.y + 3.2, cloneRoot.absolutePosition.z),
     scene
   );
   fl.diffuse = new BABYLON.Color3(1,.42,.07);
@@ -634,15 +634,7 @@ function fireBowl(x,z){
       buildEditableLantern(cloneRoot, 'fl_'+x+'_'+z);
     }
   }
-  // Point light parented to clone — moves with lantern in admin mode
-  const fl = new BABYLON.PointLight('fl_' + x + '_' + z, new BABYLON.Vector3(0, 118, 0), scene);
-  fl.diffuse = new BABYLON.Color3(1, .42, .07);
-  fl.intensity = 1.8;
-  fl.range = 10;
-  fl._b = 1.8;
-  if (cloneRoot) { fl.parent = cloneRoot; }
-  else { fl.position = new BABYLON.Vector3(x, 3.2, z); }
-  fireLights.push(fl);
+
 }
 function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   const root=new BABYLON.TransformNode("lan"+lIdx,scene);
