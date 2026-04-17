@@ -568,6 +568,9 @@ torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0
 
 // ── FIRE BOWLS ───────────────────────────────
 const fireLights=[];
+const lanLights=[];
+let lIdx=0;
+
 function fireBowl(x,z){
   let cloneRoot=null;
   if(lanternRootRef){
