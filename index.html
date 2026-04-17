@@ -1019,11 +1019,9 @@ canvas.addEventListener('click', () => {
     node = node.parent;
   }
 
-   if (!editableNode && pick.pickedMesh) {
-    editableNode = scene.transformNodes.find(root => {
-      if (!root || root.parent) return false;
-      if (!root.metadata || !root.metadata.type) return false;
-
+    if (!editableNode && pick.pickedMesh) {
+    editableNode = editableRoots.find(root => {
+      if (!root) return false;
       const childMeshes = root.getChildMeshes ? root.getChildMeshes() : [];
       return childMeshes.includes(pick.pickedMesh);
     }) || null;
