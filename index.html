@@ -583,12 +583,34 @@ function fireBowl(x,z){
       cloneRoot.getChildMeshes().forEach(m=>{shadows.addShadowCaster(m);m.receiveShadows=true;});
     }
   }
-  // Light parented to clone so it follows when moved in admin mode
-  // Local Y=118 ≈ world Y=3.2 with 0.027 scale (glass panel area)
-  const fl=new BABYLON.PointLight('fl_'+x+'_'+z,new BABYLON.Vector3(0,118,0),scene);
+   // Light parented to clone so it follows when moved in admin mode
+  let lightLocalPos = new BABYLON.Vector3(0,118,0);
+
+  if (cloneRoot) {
+    const childMeshes = cloneRoot.getChildMeshes();
+    if (childMeshes.length > 0) {
+      const bounds = cloneRoot.getHierarchyBoundingVectors();
+      const worldCenter = bounds.min.add(bounds.max).scale(0.5);
+
+      const localCenter = worldCenter.subtract(cloneRoot.getAbsolutePosition());
+
+      lightLocalPos = new BABYLON.Vector3(
+        localCenter.x,
+        localCenter.y,
+        localCenter.z
+      );
+    }
+  }
+
+  const fl=new BABYLON.PointLight('fl_'+x+'_'+z,lightLocalPos,scene);
   fl.diffuse=new BABYLON.Color3(1,.42,.07); fl.intensity=1.8; fl.range=10; fl._b=1.8;
-  if(cloneRoot){ fl.parent=cloneRoot; }
-  else{ fl.position=new BABYLON.Vector3(x,3.2,z); }
+
+  if(cloneRoot){
+    fl.parent=cloneRoot;
+  } else {
+    fl.position=new BABYLON.Vector3(x,3.2,z);
+  }
+
   fireLights.push(fl);
 }
 function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
