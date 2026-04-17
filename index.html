@@ -1243,6 +1243,32 @@ function duplicateSelectedFence(){
   const objectType = getObjectType(sourceObject);
   if (!objectType) return;
 
+  if (objectType === "lantern_1") {
+    const newPos = sourceObject.position.clone();
+    newPos.x += 12;
+
+    const baseLantern = lanternRootRef.clone(makeCloneName("lantern_1") + "_dup");
+    if (!baseLantern) return;
+
+    baseLantern.position = newPos;
+    baseLantern.rotation = sourceObject.rotation.clone();
+    baseLantern.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+
+    const newLantern = buildEditableLantern(baseLantern, "fl_dup_" + Date.now());
+    if (!newLantern) return;
+
+    selectedObject = newLantern;
+    snapSelectedObjectToGround();
+
+    updateSelectedBadge();
+
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+    return;
+  }
+
   const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
@@ -1255,26 +1281,6 @@ function duplicateSelectedFence(){
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
   });
-
-  if (objectType === "lantern_1") {
-    const originalLight = fireLights.find(l => l.parent === sourceObject);
-
-       if (originalLight) {
-      const newLight = new BABYLON.PointLight("fl_dup_" + Date.now(), new BABYLON.Vector3(0, 0.6, 0), scene);
-
-      newLight.diffuse = originalLight.diffuse.clone();
-      newLight.intensity = originalLight.intensity;
-      newLight.range = originalLight.range;
-      newLight._b = originalLight._b;
-
-      newLight.parent = cloneRoot;
-      newLight.position = new BABYLON.Vector3(0, 0.6, 0);
-
-      fireLights.push(newLight);
-    } else {
-      console.warn("No light found for duplicated lantern");
-    }
-  }
 
   selectedObject = cloneRoot;
   snapSelectedObjectToGround();
