@@ -1250,7 +1250,7 @@ function duplicateSelectedFence(){
   const objectType = getObjectType(sourceObject);
   if (!objectType) return;
 
-   if (objectType === "lantern_1") {
+    if (objectType === "lantern_1") {
     const newPos = sourceObject.position.clone();
     newPos.x += 12;
 
@@ -1261,39 +1261,11 @@ function duplicateSelectedFence(){
     baseLantern.rotation = sourceObject.rotation.clone();
     baseLantern.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
 
-    const tempLightName = "fl_dup_temp_" + Date.now();
-    const newLantern = buildEditableLantern(baseLantern, tempLightName);
+    const newLantern = buildEditableLantern(baseLantern, "fl_dup_" + Date.now());
     if (!newLantern) return;
 
     selectedObject = newLantern;
     snapSelectedObjectToGround();
-
-    // remove the temp light created by buildEditableLantern for this duplicate
-    const tempLightIndex = fireLights.findIndex(l => l.name === tempLightName);
-    if (tempLightIndex !== -1) {
-      fireLights[tempLightIndex].dispose();
-      fireLights.splice(tempLightIndex, 1);
-    }
-
-    // create a fresh duplicate-only follow light
-    const dupLight = new BABYLON.PointLight(
-      "fl_dup_" + Date.now(),
-      new BABYLON.Vector3(
-        selectedObject.position.x,
-        selectedObject.position.y + 0.6,
-        selectedObject.position.z
-      ),
-      scene
-    );
-    dupLight.diffuse = new BABYLON.Color3(1, .42, .07);
-    dupLight.intensity = 3.2;
-    dupLight.range = 14;
-    dupLight._b = 3.2;
-    dupLight.metadata = {
-      followLantern: true,
-      followNodeName: selectedObject.name
-    };
-    fireLights.push(dupLight);
 
     updateSelectedBadge();
 
@@ -1303,7 +1275,6 @@ function duplicateSelectedFence(){
     gizmoManager.attachToNode(selectedObject);
     return;
   }
-
   const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
