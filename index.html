@@ -584,19 +584,19 @@ function buildEditableLantern(cloneRoot, lightName){
   const bounds = cloneRoot.getHierarchyBoundingVectors();
   const worldCenter = BABYLON.Vector3.Center(bounds.min, bounds.max);
 
-  const originalPos = cloneRoot.position.clone();
-  const originalRot = cloneRoot.rotation.clone();
-  const originalScale = cloneRoot.scaling.clone();
-
   const editRoot = new BABYLON.TransformNode(makeCloneName("lantern_1"), scene);
-  editRoot.metadata = { type:"lantern_1", isClone:true };
-  editRoot.position = worldCenter.clone();
+editRoot.metadata = { type:"lantern_1", isClone:true };
 
-  cloneRoot.setParent(editRoot);
-  cloneRoot.position = originalPos.subtract(worldCenter);
-  cloneRoot.rotation = originalRot.clone();
-  cloneRoot.scaling = originalScale.clone();
+// place root exactly where the lantern already is
+editRoot.position = cloneRoot.position.clone();
+editRoot.rotation = cloneRoot.rotation.clone();
 
+// parent first
+cloneRoot.setParent(editRoot);
+
+// then reset LOCAL transform cleanly
+cloneRoot.position = BABYLON.Vector3.Zero();
+cloneRoot.rotation = BABYLON.Vector3.Zero();
    const pickProxy = BABYLON.MeshBuilder.CreateBox(
     makeCloneName("lantern_pick"),
     { width: 3.2, height: 6.5, depth: 3.2 },
