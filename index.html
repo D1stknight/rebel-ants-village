@@ -1013,10 +1013,21 @@ canvas.addEventListener('click', () => {
 
    while (node) {
     const isEditableRoot = editableRoots.includes(node);
-    const isEditableClone = node.name && node.name.includes("RootClone_");
-    const hasEditableType = node.metadata && node.metadata.type;
+    const isTopLevelClone =
+      node.name &&
+      node.name.includes("RootClone_") &&
+      !node.parent &&
+      node.getClassName &&
+      node.getClassName() === "TransformNode";
 
-    if (isEditableRoot || isEditableClone || hasEditableType) {
+    const isTopLevelTypedNode =
+      node.metadata &&
+      node.metadata.type &&
+      !node.parent &&
+      node.getClassName &&
+      node.getClassName() === "TransformNode";
+
+    if (isEditableRoot || isTopLevelClone || isTopLevelTypedNode) {
       editableNode = node;
       break;
     }
@@ -1024,14 +1035,12 @@ canvas.addEventListener('click', () => {
     node = node.parent;
   }
 
-   if (!editableNode && pick.pickedMesh) {
+  if (!editableNode && pick.pickedMesh && pick.pickedMesh.name) {
     editableNode = scene.transformNodes.find(root => {
       if (!root || root.parent) return false;
-      if (!root.metadata || !root.metadata.type) return false;
-      if (!root.metadata.isClone) return false;
+      if (!root.name || !root.name.includes("RootClone_")) return false;
 
-      const childMeshes = root.getChildMeshes ? root.getChildMeshes() : [];
-      return childMeshes.includes(pick.pickedMesh);
+      return pick.pickedMesh.name.startsWith(root.name);
     }) || null;
   }
 
