@@ -1243,44 +1243,46 @@ function duplicateSelectedFence(){
   const objectType = getObjectType(sourceObject);
   if (!objectType) return;
 
- if (objectType === "lantern_1") {
-  const newPos = sourceObject.position.clone();
-  newPos.x += 12;
+  if (objectType === "lantern_1") {
+    const newPos = sourceObject.position.clone();
+    newPos.x += 12;
 
-  const baseLantern = lanternRootRef.clone(makeCloneName("lantern_1") + "_dup");
-  if (!baseLantern) return;
+    const baseLantern = lanternRootRef.clone(makeCloneName("lantern_1") + "_dup");
+    if (!baseLantern) return;
 
-  baseLantern.position = newPos;
-  baseLantern.rotation = sourceObject.rotation.clone();
-  baseLantern.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+    baseLantern.position = newPos;
+    baseLantern.rotation = sourceObject.rotation.clone();
+    baseLantern.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
 
-  const lightName = "fl_dup_" + Date.now();
-  const newLantern = buildEditableLantern(baseLantern, lightName);
-  if (!newLantern) return;
+    const lightName = "fl_dup_" + Date.now();
+    const newLantern = buildEditableLantern(baseLantern, lightName);
+    if (!newLantern) return;
 
-  selectedObject = newLantern;
-  snapSelectedObjectToGround();
+    selectedObject = newLantern;
+    snapSelectedObjectToGround();
 
-  const newLight = fireLights.find(l => l.name === lightName);
-  if (newLight) {
-    newLight.parent = null;
-    newLight.position = new BABYLON.Vector3(
-      selectedObject.position.x,
-      selectedObject.position.y + 0.6,
-      selectedObject.position.z
-    );
-    newLight.parent = selectedObject;
-    newLight.position = new BABYLON.Vector3(0, 0.6, 0);
+    const newLight = fireLights.find(l => l.name === lightName);
+    if (newLight) {
+      newLight.parent = null;
+      newLight.metadata = {
+        followLantern: true,
+        followNodeName: selectedObject.name
+      };
+      newLight.position = new BABYLON.Vector3(
+        selectedObject.position.x,
+        selectedObject.position.y + 0.6,
+        selectedObject.position.z
+      );
+    }
+
+    updateSelectedBadge();
+
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+    return;
   }
-
-  updateSelectedBadge();
-
-  gizmoManager.positionGizmoEnabled = true;
-  gizmoManager.rotationGizmoEnabled = false;
-  gizmoManager.scaleGizmoEnabled = false;
-  gizmoManager.attachToNode(selectedObject);
-  return;
-}
 
   const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
@@ -1467,7 +1469,18 @@ window.addEventListener('resize',()=>engine.resize());
 let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
-  fireLights.forEach(fl=>{fl.intensity=fl._b+Math.sin(Date.now()*0.009+fl.position.x*3)*0.65;});
+    fireLights.forEach(fl=>{
+    if (fl.metadata && fl.metadata.followLantern && fl.metadata.followNodeName) {
+      const followNode = scene.transformNodes.find(n => n.name === fl.metadata.followNodeName);
+      if (followNode) {
+        fl.position.x = followNode.position.x;
+        fl.position.y = followNode.position.y + 0.6;
+        fl.position.z = followNode.position.z;
+      }
+    }
+
+    fl.intensity = fl._b + Math.sin(Date.now()*0.009 + fl.position.x*3) * 0.65;
+  });
   lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(Date.now()*0.0019+ll.position.x*0.3)*0.1;});
     // do not auto-snap just because an object is selected
   if(walkMode&&charMesh){
