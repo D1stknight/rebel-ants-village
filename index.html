@@ -1258,6 +1258,17 @@ function duplicateSelectedFence(){
     m.receiveShadows = true;
   });
 
+  if (objectType === "lantern_1") {
+    const fl = new BABYLON.PointLight("fl_dup_" + Date.now(), new BABYLON.Vector3(0, 0.6, 0), scene);
+    fl.diffuse = new BABYLON.Color3(1, .42, .07);
+    fl.intensity = 3.2;
+    fl.range = 14;
+    fl._b = 3.2;
+    fl.parent = cloneRoot;
+
+    fireLights.push(fl);
+  }
+
   updateSelectedBadge();
 
   gizmoManager.positionGizmoEnabled = true;
