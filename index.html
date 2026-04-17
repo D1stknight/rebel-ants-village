@@ -1096,8 +1096,11 @@ function getObjectType(node){
 
   return null;
 }
+let _cloneIdCounter = 0;
+
 function makeCloneName(type){
-  return type + "RootClone_" + Date.now();
+  _cloneIdCounter += 1;
+  return type + "RootClone_" + Date.now() + "_" + _cloneIdCounter;
 }
 
 function applyObjectTransform(node, data){
