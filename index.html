@@ -591,7 +591,7 @@ function buildEditableLantern(cloneRoot, lightName){
 
   cloneRoot.setParent(editRoot, true);
 
-  const pickProxy = BABYLON.MeshBuilder.CreateBox(
+   const pickProxy = BABYLON.MeshBuilder.CreateBox(
     makeCloneName("lantern_pick"),
     { width: 4.6, height: 8.0, depth: 4.6 },
     scene
@@ -601,6 +601,24 @@ function buildEditableLantern(cloneRoot, lightName){
   pickProxy.isPickable = true;
   pickProxy.visibility = 0;
   pickProxy.metadata = { type:"lantern_1", isPickProxy:true };
+
+  const glowDisc = BABYLON.MeshBuilder.CreateDisc(
+    makeCloneName("lantern_glow"),
+    { radius: 3.2, tessellation: 48 },
+    scene
+  );
+  glowDisc.parent = editRoot;
+  glowDisc.position = new BABYLON.Vector3(0, -2.05, 0);
+  glowDisc.rotation.x = Math.PI / 2;
+
+  const glowMat = new BABYLON.StandardMaterial(makeCloneName("lantern_glow_mat"), scene);
+  glowMat.emissiveColor = new BABYLON.Color3(1, 0.35, 0.08);
+  glowMat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+  glowMat.specularColor = new BABYLON.Color3(0, 0, 0);
+  glowMat.alpha = 0.55;
+  glowMat.backFaceCulling = false;
+
+  glowDisc.material = glowMat;
 
   const fl = new BABYLON.PointLight(
     lightName,
