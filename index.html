@@ -997,37 +997,20 @@ scene.onPointerObservable.add(evt=>{
 
 document.getElementById('pc').addEventListener('click',()=>panel.classList.remove('on'));
 
-canvas.addEventListener('click', () => {
+scene.onPointerObservable.add((evt) => {
   if (!adminMode) return;
+  if (evt.type !== BABYLON.PointerEventTypes.POINTERPICK) return;
 
-  const pick = scene.pick(
-    scene.pointerX,
-    scene.pointerY,
-    mesh => !BUILDINGS.some(b => b.mesh === mesh)
-  );
-
+  const pick = evt.pickInfo;
   if (!pick || !pick.hit || !pick.pickedMesh) return;
+  if (BUILDINGS.some(b => b.mesh === pick.pickedMesh)) return;
 
   const editableRoots = Object.values(editableRootRefs).filter(Boolean);
 
   let node = pick.pickedMesh;
   let editableNode = null;
 
-  console.log("=== ADMIN PICK START ===");
-  console.log("pickedMesh:", pick.pickedMesh.name, pick.pickedMesh);
-
-  let debugNode = pick.pickedMesh;
-  while (debugNode) {
-    console.log("node:", {
-      name: debugNode.name,
-      type: debugNode.getClassName ? debugNode.getClassName() : "unknown",
-      metadata: debugNode.metadata || null
-    });
-    debugNode = debugNode.parent;
-  }
-  console.log("=== ADMIN PICK END ===");
-
-   while (node) {
+  while (node) {
     const isEditableRoot = editableRoots.includes(node);
     const isTopLevelClone =
       node.name &&
@@ -1051,7 +1034,7 @@ canvas.addEventListener('click', () => {
     node = node.parent;
   }
 
-    if (!editableNode && pick.pickedMesh) {
+  if (!editableNode && pick.pickedMesh) {
     editableNode = scene.transformNodes.find(root => {
       if (!root || root.parent) return false;
       if (!root.metadata || !root.metadata.type) return false;
