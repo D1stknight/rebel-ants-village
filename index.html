@@ -1281,32 +1281,19 @@ function duplicateSelectedFence(){
       const cloneMeshes = clone.getChildMeshes().filter(m => m.material);
 
       cloneMeshes.forEach(m => {
-        if (m._lightSources) {
-          const idx = m._lightSources.indexOf(sourceLight);
-
-          if (idx !== -1) {
-            m._lightSources.splice(idx, 1, clonedLight);
-          } else if (!m._lightSources.includes(clonedLight)) {
-            m._lightSources.push(clonedLight);
-          }
+        if (m._lightSources && !m._lightSources.includes(clonedLight)) {
+          m._lightSources.push(clonedLight);
         }
-
         if (m.markSubMeshesAsLightDirty) m.markSubMeshesAsLightDirty();
       });
 
-      if (plaza && plaza._lightSources) {
-        const idx = plaza._lightSources.indexOf(sourceLight);
-
-        if (idx !== -1) {
-          plaza._lightSources.splice(idx, 1, clonedLight);
-        } else if (!plaza._lightSources.includes(clonedLight)) {
-          plaza._lightSources.push(clonedLight);
+      [ground, court, plaza].forEach(m => {
+        if (!m) return;
+        if (m._lightSources && !m._lightSources.includes(clonedLight)) {
+          m._lightSources.push(clonedLight);
         }
-      }
-
-      if (plaza && plaza.markSubMeshesAsLightDirty) {
-        plaza.markSubMeshesAsLightDirty();
-      }
+        if (m.markSubMeshesAsLightDirty) m.markSubMeshesAsLightDirty();
+      });
     }
 
     selectedObject = clone;
