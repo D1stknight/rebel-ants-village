@@ -1264,6 +1264,14 @@ function duplicateSelectedFence(){
 
     fireBowl(newPos.x, newPos.z);
 
+    // Add a dedicated point light for the new lantern
+    const _dupFL = new BABYLON.PointLight('fl_dup_' + Date.now(), new BABYLON.Vector3(newPos.x, 3.2, newPos.z), scene);
+    _dupFL.diffuse = new BABYLON.Color3(1, .42, .07);
+    _dupFL.intensity = 1.8;
+    _dupFL.range = 10;
+    _dupFL._b = 1.8;
+    fireLights.push(_dupFL);
+
     const newLantern = scene.transformNodes.find(n =>
       n.metadata &&
       n.metadata.type === "lantern_1" &&
@@ -1279,17 +1287,7 @@ function duplicateSelectedFence(){
     snapSelectedObjectToGround();
 
   
-  // If duplicating a lantern, create a point light at the new position
-  if (objectType === 'lantern_1') {
-    const _newLantern = selectedObject;
-    const _fl = new BABYLON.PointLight('fl_dup_' + Date.now(), new BABYLON.Vector3(0, 118, 0), scene);
-    _fl.diffuse = new BABYLON.Color3(1, .42, .07);
-    _fl.intensity = 1.8;
-    _fl.range = 10;
-    _fl._b = 1.8;
-    _fl.parent = _newLantern;
-    fireLights.push(_fl);
-  }
+
   updateSelectedBadge();
 
     gizmoManager.positionGizmoEnabled = true;
