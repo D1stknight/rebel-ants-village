@@ -632,7 +632,7 @@ function fireBowl(x,z){
       cloneRoot.rotation=new BABYLON.Vector3(0,Math.random()*Math.PI*2,0);
       cloneRoot.scaling=new BABYLON.Vector3(0.027,0.027,0.027);
 
-      buildEditableLantern(cloneRoot, 'fl_'+x+'_'+z);
+      buildEditableLantern(cloneRoot, 'fl_'+x+'_'+z+'_'+Date.now());
     }
   }
 
