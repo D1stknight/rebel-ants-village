@@ -986,21 +986,27 @@ canvas.addEventListener('click', () => {
 
   if (!pick || !pick.hit || !pick.pickedMesh) return;
 
+  const editableRoots = Object.values(editableRootRefs).filter(Boolean);
+
   let node = pick.pickedMesh;
-  while (node && node.parent) {
+  let editableNode = null;
+
+  while (node) {
+    const isEditableRoot = editableRoots.includes(node);
+    const isEditableClone = node.name && node.name.includes("RootClone_");
+    const hasEditableType = node.metadata && node.metadata.type;
+
+    if (isEditableRoot || isEditableClone || hasEditableType) {
+      editableNode = node;
+      break;
+    }
+
     node = node.parent;
   }
 
-  if (!node) return;
+  if (!editableNode) return;
 
-     const editableRoots = Object.values(editableRootRefs).filter(Boolean);
-
-  const isEditableRoot = editableRoots.includes(node);
-  const isEditableClone = node.name.includes("RootClone_");
-
-  if (!isEditableRoot && !isEditableClone) return;
-
-  selectedObject = node;
+  selectedObject = editableNode;
   updateSelectedBadge();
 
   gizmoManager.positionGizmoEnabled = true;
