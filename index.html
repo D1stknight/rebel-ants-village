@@ -1270,7 +1270,7 @@ function duplicateSelectedFence(){
   const objectType = getObjectType(sourceObject);
   if (!objectType) return;
 
-      if (objectType === "lantern_1") {
+  if (objectType === "lantern_1") {
     const newPos = sourceObject.position.clone();
     newPos.x += 12;
 
@@ -1278,6 +1278,28 @@ function duplicateSelectedFence(){
     if (!newLantern) return;
 
     newLantern.rotation = sourceObject.rotation.clone();
+
+    const getGlassMesh = (root) => root.getChildMeshes().find(m =>
+      (m.name && m.name.includes("polySurface170")) ||
+      (m.material && m.material.name === "lambert1")
+    );
+
+    const getGlowDisc = (root) => root.getChildMeshes().find(m =>
+      m.name && m.name.includes("lantern_glow")
+    );
+
+    const sourceGlass = getGlassMesh(sourceObject);
+    const newGlass = getGlassMesh(newLantern);
+    const sourceDisc = getGlowDisc(sourceObject);
+    const newDisc = getGlowDisc(newLantern);
+
+    if (sourceGlass && newGlass && sourceGlass.material) {
+      newGlass.material = sourceGlass.material.clone("dup_glass_" + Date.now());
+    }
+
+    if (sourceDisc && newDisc && sourceDisc.material) {
+      newDisc.material = sourceDisc.material.clone("dup_disc_" + Date.now());
+    }
 
     selectedObject = newLantern;
     snapSelectedObjectToGround();
@@ -1290,6 +1312,7 @@ function duplicateSelectedFence(){
     gizmoManager.attachToNode(selectedObject);
     return;
   }
+
   const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
