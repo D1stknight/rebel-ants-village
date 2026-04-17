@@ -1239,45 +1239,43 @@ function deleteSelectedFence(){
 function duplicateSelectedFence(){
   if (!selectedObject) return;
 
-  const objectType = getObjectType(selectedObject);
+  const sourceObject = selectedObject;
+  const objectType = getObjectType(sourceObject);
   if (!objectType) return;
 
-  const cloneRoot = selectedObject.clone(makeCloneName(objectType));
+  const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
-  cloneRoot.position = selectedObject.position.clone();
+  cloneRoot.position = sourceObject.position.clone();
   cloneRoot.position.x += 12;
-  cloneRoot.rotation = selectedObject.rotation.clone();
-  cloneRoot.scaling = selectedObject.scaling.clone();
-
-  selectedObject = cloneRoot;
-  snapSelectedObjectToGround();
+  cloneRoot.rotation = sourceObject.rotation.clone();
+  cloneRoot.scaling = sourceObject.scaling.clone();
 
   cloneRoot.getChildMeshes().forEach(m => {
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
   });
 
-if (objectType === "lantern_1") {
+  if (objectType === "lantern_1") {
+    const originalLight = fireLights.find(l => l.parent === sourceObject);
 
-  // find the original lantern's light
-  const originalLight = fireLights.find(l => l.parent === selectedObject);
+    if (originalLight) {
+      const newLight = new BABYLON.PointLight("fl_dup_" + Date.now(), originalLight.position.clone(), scene);
 
-  if (originalLight) {
-    const newLight = new BABYLON.PointLight("fl_dup_" + Date.now(), originalLight.position.clone(), scene);
+      newLight.diffuse = originalLight.diffuse.clone();
+      newLight.intensity = originalLight.intensity;
+      newLight.range = originalLight.range;
+      newLight._b = originalLight._b;
 
-    newLight.diffuse = originalLight.diffuse.clone();
-    newLight.intensity = originalLight.intensity;
-    newLight.range = originalLight.range;
-    newLight._b = originalLight._b;
-
-    newLight.parent = cloneRoot;
-
-    fireLights.push(newLight);
-  } else {
-    console.warn("No light found for duplicated lantern");
+      newLight.parent = cloneRoot;
+      fireLights.push(newLight);
+    } else {
+      console.warn("No light found for duplicated lantern");
+    }
   }
-}
+
+  selectedObject = cloneRoot;
+  snapSelectedObjectToGround();
 
   updateSelectedBadge();
 
