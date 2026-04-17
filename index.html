@@ -1172,13 +1172,14 @@ function loadWorldLayout(){
   if (baseShrine) applyObjectTransform(shrine2Root, baseShrine);
 
   data.forEach((item, index) => {
-    if (
+        if (
       item.name === "fenceRoot" ||
       item.name === "dojoRoot" ||
       item.name === "dojo6Root" ||
       item.name === "dojo7Root" ||
       item.name === "dojo9Root" ||
-      item.name === "shrine2Root"
+      item.name === "shrine2Root" ||
+      item.type === "lantern_1"
     ) return;
 
      let sourceRoot = editableRootRefs[item.type];
