@@ -594,7 +594,8 @@ function fireBowl(x,z){
       const worldCenter = BABYLON.Vector3.Center(bounds.min, bounds.max);
 
       const invWorld = cloneRoot.computeWorldMatrix(true).clone().invert();
-      lightLocalPos = BABYLON.Vector3.TransformCoordinates(worldCenter, invWorld);
+           lightLocalPos = BABYLON.Vector3.TransformCoordinates(worldCenter, invWorld);
+      lightLocalPos.y += 12;
     }
   }
 
