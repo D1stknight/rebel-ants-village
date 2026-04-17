@@ -597,13 +597,13 @@ function buildEditableLantern(cloneRoot, lightName){
   cloneRoot.rotation = originalRot.clone();
   cloneRoot.scaling = originalScale.clone();
 
-  const pickProxy = BABYLON.MeshBuilder.CreateBox(
+   const pickProxy = BABYLON.MeshBuilder.CreateBox(
     makeCloneName("lantern_pick"),
-    { width: 1.4, height: 4.2, depth: 1.4 },
+    { width: 3.2, height: 6.5, depth: 3.2 },
     scene
   );
   pickProxy.parent = editRoot;
-  pickProxy.position = BABYLON.Vector3.Zero();
+  pickProxy.position = new BABYLON.Vector3(0, 0.2, 0);
   pickProxy.isPickable = true;
   pickProxy.visibility = 0;
   pickProxy.metadata = { type:"lantern_1", isPickProxy:true };
