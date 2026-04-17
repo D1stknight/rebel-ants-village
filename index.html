@@ -1006,7 +1006,7 @@ canvas.addEventListener('click', () => {
   }
   console.log("=== ADMIN PICK END ===");
 
-  while (node) {
+   while (node) {
     const isEditableRoot = editableRoots.includes(node);
     const isEditableClone = node.name && node.name.includes("RootClone_");
     const hasEditableType = node.metadata && node.metadata.type;
@@ -1019,13 +1019,7 @@ canvas.addEventListener('click', () => {
     node = node.parent;
   }
 
-    if (!editableNode && pick.pickedMesh) {
-    editableNode = editableRoots.find(root => {
-      if (!root) return false;
-      const childMeshes = root.getChildMeshes ? root.getChildMeshes() : [];
-      return childMeshes.includes(pick.pickedMesh);
-    }) || null;
-  }
+  if (!editableNode && pick.pickedMesh) {
     editableNode = editableRoots.find(root => {
       if (!root) return false;
       const childMeshes = root.getChildMeshes ? root.getChildMeshes() : [];
