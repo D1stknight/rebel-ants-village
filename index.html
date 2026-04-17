@@ -573,37 +573,18 @@ let lIdx=0;
 
 function fireBowl(x,z){
   let cloneRoot=null;
-  let editRoot=null;
-
   if(lanternRootRef){
     cloneRoot=lanternRootRef.clone(makeCloneName("lantern_1")+"_"+Math.round(x)+"_"+Math.round(z));
-
     if(cloneRoot){
       cloneRoot.metadata={type:"lantern_1",isClone:true};
-
       cloneRoot.position=new BABYLON.Vector3(x,0,z);
       cloneRoot.rotation=new BABYLON.Vector3(0,Math.random()*Math.PI*2,0);
       cloneRoot.scaling=new BABYLON.Vector3(0.027,0.027,0.027);
-
       cloneRoot.getChildMeshes().forEach(m=>{
         shadows.addShadowCaster(m);
         m.receiveShadows=true;
         m.isPickable=true;
       });
-
-      const bounds = cloneRoot.getHierarchyBoundingVectors();
-      const worldCenter = BABYLON.Vector3.Center(bounds.min, bounds.max);
-
-      editRoot = new BABYLON.TransformNode(makeCloneName("lantern_1"), scene);
-      editRoot.metadata = { type:"lantern_1", isClone:true };
-
-      editRoot.position = worldCenter.clone();
-      editRoot.rotation = cloneRoot.rotation.clone();
-      editRoot.scaling = new BABYLON.Vector3(1,1,1);
-
-      cloneRoot.setParent(editRoot);
-      cloneRoot.position = cloneRoot.position.subtract(worldCenter);
-      cloneRoot.rotation = BABYLON.Vector3.Zero();
     }
   }
     // Light parented to clone so it follows when moved in admin mode
