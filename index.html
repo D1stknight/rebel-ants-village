@@ -1243,31 +1243,44 @@ function duplicateSelectedFence(){
   const objectType = getObjectType(sourceObject);
   if (!objectType) return;
 
-  if (objectType === "lantern_1") {
-    const newPos = sourceObject.position.clone();
-    newPos.x += 12;
+ if (objectType === "lantern_1") {
+  const newPos = sourceObject.position.clone();
+  newPos.x += 12;
 
-    const baseLantern = lanternRootRef.clone(makeCloneName("lantern_1") + "_dup");
-    if (!baseLantern) return;
+  const baseLantern = lanternRootRef.clone(makeCloneName("lantern_1") + "_dup");
+  if (!baseLantern) return;
 
-    baseLantern.position = newPos;
-    baseLantern.rotation = sourceObject.rotation.clone();
-    baseLantern.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+  baseLantern.position = newPos;
+  baseLantern.rotation = sourceObject.rotation.clone();
+  baseLantern.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
 
-    const newLantern = buildEditableLantern(baseLantern, "fl_dup_" + Date.now());
-    if (!newLantern) return;
+  const lightName = "fl_dup_" + Date.now();
+  const newLantern = buildEditableLantern(baseLantern, lightName);
+  if (!newLantern) return;
 
-    selectedObject = newLantern;
-    snapSelectedObjectToGround();
+  selectedObject = newLantern;
+  snapSelectedObjectToGround();
 
-    updateSelectedBadge();
-
-    gizmoManager.positionGizmoEnabled = true;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(selectedObject);
-    return;
+  const newLight = fireLights.find(l => l.name === lightName);
+  if (newLight) {
+    newLight.parent = null;
+    newLight.position = new BABYLON.Vector3(
+      selectedObject.position.x,
+      selectedObject.position.y + 0.6,
+      selectedObject.position.z
+    );
+    newLight.parent = selectedObject;
+    newLight.position = new BABYLON.Vector3(0, 0.6, 0);
   }
+
+  updateSelectedBadge();
+
+  gizmoManager.positionGizmoEnabled = true;
+  gizmoManager.rotationGizmoEnabled = false;
+  gizmoManager.scaleGizmoEnabled = false;
+  gizmoManager.attachToNode(selectedObject);
+  return;
+}
 
   const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
