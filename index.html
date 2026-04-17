@@ -576,20 +576,33 @@ let lIdx=0;
 function buildEditableLantern(cloneRoot, lightName){
   if (!cloneRoot) return null;
 
-  cloneRoot.getChildMeshes().forEach(m=>{
+  cloneRoot.getChildMeshes().forEach(m => {
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
     m.isPickable = false;
   });
 
-  const bounds = cloneRoot.getHierarchyBoundingVectors();
-  const worldCenter = BABYLON.Vector3.Center(bounds.min, bounds.max);
+  // force transforms to be up to date before we read them
+  cloneRoot.computeWorldMatrix(true);
+  cloneRoot.getChildMeshes().forEach(m => m.computeWorldMatrix(true));
+
+  const rootPos = cloneRoot.position.clone();
+  const rootRot = cloneRoot.rotation.clone();
+  const rootScale = cloneRoot.scaling.clone();
 
   const editRoot = new BABYLON.TransformNode(makeCloneName("lantern_1"), scene);
-  editRoot.metadata = { type:"lantern_1", isClone:true };
-  editRoot.position = worldCenter.clone();
+  editRoot.metadata = { type: "lantern_1", isClone: true };
 
-  cloneRoot.setParent(editRoot, true);
+  // use the clone's real transform, not hierarchy bounds
+  editRoot.position = rootPos.clone();
+  editRoot.rotation = rootRot.clone();
+  editRoot.scaling = rootScale.clone();
+
+  // parent lantern under the edit root and reset it locally
+  cloneRoot.setParent(editRoot);
+  cloneRoot.position = BABYLON.Vector3.Zero();
+  cloneRoot.rotation = BABYLON.Vector3.Zero();
+  cloneRoot.scaling = new BABYLON.Vector3(1, 1, 1);
 
   const pickProxy = BABYLON.MeshBuilder.CreateBox(
     makeCloneName("lantern_pick"),
@@ -600,14 +613,14 @@ function buildEditableLantern(cloneRoot, lightName){
   pickProxy.position = new BABYLON.Vector3(0, 0.6, 0);
   pickProxy.isPickable = true;
   pickProxy.visibility = 0;
-  pickProxy.metadata = { type:"lantern_1", isPickProxy:true };
+  pickProxy.metadata = { type: "lantern_1", isPickProxy: true };
 
   const fl = new BABYLON.PointLight(
     lightName,
-    new BABYLON.Vector3(cloneRoot.absolutePosition.x, cloneRoot.absolutePosition.y + 3.2, cloneRoot.absolutePosition.z),
+    new BABYLON.Vector3(editRoot.position.x, editRoot.position.y + 0.6, editRoot.position.z),
     scene
   );
-  fl.diffuse = new BABYLON.Color3(1,.42,.07);
+  fl.diffuse = new BABYLON.Color3(1, .42, .07);
   fl.intensity = 3.2;
   fl.range = 14;
   fl._b = 3.2;
@@ -620,7 +633,6 @@ function buildEditableLantern(cloneRoot, lightName){
 
   return editRoot;
 }
-
 function fireBowl(x,z){
   let cloneRoot = null;
 
