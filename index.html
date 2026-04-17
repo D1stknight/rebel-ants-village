@@ -578,19 +578,16 @@ function buildEditableLantern(cloneRoot, lightName){
   cloneRoot.getChildMeshes().forEach(m=>{
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
-
-    // let the invisible proxy catch the click, not the tiny GLB pieces
     m.isPickable = false;
   });
 
   const bounds = cloneRoot.getHierarchyBoundingVectors();
   const worldCenter = BABYLON.Vector3.Center(bounds.min, bounds.max);
 
-    const editRoot = new BABYLON.TransformNode(makeCloneName("lantern_1"), scene);
+  const editRoot = new BABYLON.TransformNode(makeCloneName("lantern_1"), scene);
   editRoot.metadata = { type:"lantern_1", isClone:true };
   editRoot.position = worldCenter.clone();
 
-  // Keep the lantern exactly where it already is in world space
   cloneRoot.setParent(editRoot, true);
 
   const pickProxy = BABYLON.MeshBuilder.CreateBox(
@@ -599,17 +596,24 @@ function buildEditableLantern(cloneRoot, lightName){
     scene
   );
   pickProxy.parent = editRoot;
-   pickProxy.position = new BABYLON.Vector3(0, 0.6, 0);
+  pickProxy.position = new BABYLON.Vector3(0, 0.6, 0);
   pickProxy.isPickable = true;
   pickProxy.visibility = 0;
   pickProxy.metadata = { type:"lantern_1", isPickProxy:true };
 
-     const fl = new BABYLON.PointLight(lightName, new BABYLON.Vector3(0, 0.6, 0), scene);
+  const fl = new BABYLON.PointLight(
+    lightName,
+    new BABYLON.Vector3(editRoot.position.x, editRoot.position.y + 0.6, editRoot.position.z),
+    scene
+  );
   fl.diffuse = new BABYLON.Color3(1,.42,.07);
   fl.intensity = 3.2;
   fl.range = 14;
   fl._b = 3.2;
-  fl.parent = editRoot;
+  fl.metadata = {
+    followLantern: true,
+    followNodeName: editRoot.name
+  };
 
   fireLights.push(fl);
 
@@ -1469,7 +1473,7 @@ window.addEventListener('resize',()=>engine.resize());
 let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
-    fireLights.forEach(fl=>{
+     fireLights.forEach(fl=>{
     if (fl.metadata && fl.metadata.followLantern && fl.metadata.followNodeName) {
       const followNode = scene.transformNodes.find(n => n.name === fl.metadata.followNodeName);
       if (followNode) {
