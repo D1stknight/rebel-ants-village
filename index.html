@@ -1258,16 +1258,26 @@ function duplicateSelectedFence(){
     m.receiveShadows = true;
   });
 
-  if (objectType === "lantern_1") {
-    const fl = new BABYLON.PointLight("fl_dup_" + Date.now(), new BABYLON.Vector3(0, 0.6, 0), scene);
-    fl.diffuse = new BABYLON.Color3(1, .42, .07);
-    fl.intensity = 3.2;
-    fl.range = 14;
-    fl._b = 3.2;
-    fl.parent = cloneRoot;
+if (objectType === "lantern_1") {
 
-    fireLights.push(fl);
+  // find the original lantern's light
+  const originalLight = fireLights.find(l => l.parent === selectedObject);
+
+  if (originalLight) {
+    const newLight = new BABYLON.PointLight("fl_dup_" + Date.now(), originalLight.position.clone(), scene);
+
+    newLight.diffuse = originalLight.diffuse.clone();
+    newLight.intensity = originalLight.intensity;
+    newLight.range = originalLight.range;
+    newLight._b = originalLight._b;
+
+    newLight.parent = cloneRoot;
+
+    fireLights.push(newLight);
+  } else {
+    console.warn("No light found for duplicated lantern");
   }
+}
 
   updateSelectedBadge();
 
