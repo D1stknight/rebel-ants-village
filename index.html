@@ -1254,15 +1254,24 @@ function duplicateSelectedFence(){
     const newPos = sourceObject.position.clone();
     newPos.x += 12;
 
-    const baseLantern = lanternRootRef.clone(makeCloneName("lantern_1") + "_dup");
-    if (!baseLantern) return;
+    const beforeNames = new Set(
+      scene.transformNodes
+        .filter(n => n.metadata && n.metadata.type === "lantern_1" && n.metadata.isClone)
+        .map(n => n.name)
+    );
 
-    baseLantern.position = newPos;
-    baseLantern.rotation = sourceObject.rotation.clone();
-    baseLantern.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+    fireBowl(newPos.x, newPos.z);
 
-    const newLantern = buildEditableLantern(baseLantern, "fl_dup_" + Date.now());
+    const newLantern = scene.transformNodes.find(n =>
+      n.metadata &&
+      n.metadata.type === "lantern_1" &&
+      n.metadata.isClone &&
+      !beforeNames.has(n.name)
+    );
+
     if (!newLantern) return;
+
+    newLantern.rotation = sourceObject.rotation.clone();
 
     selectedObject = newLantern;
     snapSelectedObjectToGround();
