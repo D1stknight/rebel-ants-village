@@ -1242,31 +1242,29 @@ function duplicateSelectedFence(){
   const objectType = getObjectType(selectedObject);
   if (!objectType) return;
 
-  if (objectType === "lantern_1") {
-    const newPos = selectedObject.position.clone();
-    newPos.x += 12;
+  const cloneRoot = selectedObject.clone(makeCloneName(objectType));
+  if (!cloneRoot) return;
 
-    const cloneRoot = lanternRoot.clone(makeCloneName("lantern_1"));
-    if (!cloneRoot) return;
+  cloneRoot.position = selectedObject.position.clone();
+  cloneRoot.position.x += 12;
+  cloneRoot.rotation = selectedObject.rotation.clone();
+  cloneRoot.scaling = selectedObject.scaling.clone();
 
-    cloneRoot.position = newPos;
-    cloneRoot.rotation = selectedObject.rotation.clone();
-    cloneRoot.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+  selectedObject = cloneRoot;
+  snapSelectedObjectToGround();
 
-    const newLantern = buildEditableLantern(cloneRoot, "fl_dup_" + Date.now());
-    if (!newLantern) return;
+  cloneRoot.getChildMeshes().forEach(m => {
+    shadows.addShadowCaster(m);
+    m.receiveShadows = true;
+  });
 
-    selectedObject = newLantern;
-    snapSelectedObjectToGround();
+  updateSelectedBadge();
 
-    updateSelectedBadge();
-
-    gizmoManager.positionGizmoEnabled = true;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(selectedObject);
-    return;
-  }
+  gizmoManager.positionGizmoEnabled = true;
+  gizmoManager.rotationGizmoEnabled = false;
+  gizmoManager.scaleGizmoEnabled = false;
+  gizmoManager.attachToNode(selectedObject);
+}
 
   const cloneRoot = selectedObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
