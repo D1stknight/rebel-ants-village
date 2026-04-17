@@ -599,12 +599,12 @@ function buildEditableLantern(cloneRoot, lightName){
     scene
   );
   pickProxy.parent = editRoot;
-  pickProxy.position = new BABYLON.Vector3(0, 0.6, 0);
+    pickProxy.position = new BABYLON.Vector3(0, 2.0, 0);
   pickProxy.isPickable = true;
   pickProxy.visibility = 0;
   pickProxy.metadata = { type:"lantern_1", isPickProxy:true };
 
-  const fl = new BABYLON.PointLight(lightName, new BABYLON.Vector3(0, 0.6, 0), scene);
+    const fl = new BABYLON.PointLight(lightName, new BABYLON.Vector3(0, 2.6, 0), scene);
   fl.diffuse = new BABYLON.Color3(1,.42,.07);
   fl.intensity = 3.2;
   fl.range = 14;
