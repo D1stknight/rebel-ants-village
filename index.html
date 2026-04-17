@@ -1278,7 +1278,19 @@ function duplicateSelectedFence(){
     selectedObject = newLantern;
     snapSelectedObjectToGround();
 
-    updateSelectedBadge();
+  
+  // If duplicating a lantern, create a point light at the new position
+  if (objectType === 'lantern_1') {
+    const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(cloneRoot.position.x, cloneRoot.position.y + 3.2, cloneRoot.position.z), scene);
+    fl.diffuse = new BABYLON.Color3(1, .42, .07);
+    fl.intensity = 1.8;
+    fl.range = 10;
+    fl._b = 1.8;
+    fl.parent = cloneRoot;
+    fl.position = new BABYLON.Vector3(0, 118, 0);
+    fireLights.push(fl);
+  }
+  updateSelectedBadge();
 
     gizmoManager.positionGizmoEnabled = true;
     gizmoManager.rotationGizmoEnabled = false;
