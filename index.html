@@ -1255,29 +1255,27 @@ function duplicateSelectedFence(){
   if (!objectType) return;
 
   if (objectType === "lantern_1") {
-    const newPos = sourceObject.position.clone();
-    newPos.x += 12;
+    const clone = sourceObject.clone(makeCloneName("lantern_1"));
+    if (!clone) return;
 
-    const newLantern = fireBowl(newPos.x, newPos.z);
-    if (!newLantern) return;
+    clone.metadata = { type: "lantern_1", isClone: true };
+    clone.position = sourceObject.position.clone();
+    clone.position.x += 12;
+    clone.rotation = sourceObject.rotation.clone();
+    clone.scaling = sourceObject.scaling.clone();
 
-    newLantern.rotation = sourceObject.rotation.clone();
-
-    const getGlassMesh = (root) => root.getChildMeshes().find(m =>
-      (m.name && m.name.includes("polySurface170")) ||
-      (m.material && m.material.name === "lambert1")
+    const sourceLight = fireLights.find(fl =>
+      fl.metadata && fl.metadata.followNodeName === sourceObject.name
     );
 
-    const sourceGlass = getGlassMesh(sourceObject);
-    const newGlass = getGlassMesh(newLantern);
-
-    if (sourceGlass && newGlass && sourceGlass.material) {
-      newGlass.material = sourceGlass.material.clone("dup_glass_" + Date.now());
+    if (sourceLight) {
+      sourceLight.metadata.followNodeName = clone.name;
+      sourceLight.intensity = 25;
+      sourceLight.range = 60;
+      sourceLight._b = 25;
     }
 
-    selectedObject = newLantern;
-    snapSelectedObjectToGround();
-
+    selectedObject = clone;
     updateSelectedBadge();
 
     gizmoManager.positionGizmoEnabled = true;
