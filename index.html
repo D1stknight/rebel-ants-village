@@ -992,6 +992,20 @@ canvas.addEventListener('click', () => {
   let node = pick.pickedMesh;
   let editableNode = null;
 
+  console.log("=== ADMIN PICK START ===");
+  console.log("pickedMesh:", pick.pickedMesh.name, pick.pickedMesh);
+
+  let debugNode = pick.pickedMesh;
+  while (debugNode) {
+    console.log("node:", {
+      name: debugNode.name,
+      type: debugNode.getClassName ? debugNode.getClassName() : "unknown",
+      metadata: debugNode.metadata || null
+    });
+    debugNode = debugNode.parent;
+  }
+  console.log("=== ADMIN PICK END ===");
+
   while (node) {
     const isEditableRoot = editableRoots.includes(node);
     const isEditableClone = node.name && node.name.includes("RootClone_");
