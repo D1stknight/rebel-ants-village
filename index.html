@@ -1242,6 +1242,32 @@ function duplicateSelectedFence(){
   const objectType = getObjectType(selectedObject);
   if (!objectType) return;
 
+  if (objectType === "lantern_1") {
+    const newPos = selectedObject.position.clone();
+    newPos.x += 12;
+
+    const cloneRoot = lanternRoot.clone(makeCloneName("lantern_1"));
+    if (!cloneRoot) return;
+
+    cloneRoot.position = newPos;
+    cloneRoot.rotation = selectedObject.rotation.clone();
+    cloneRoot.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+
+    const newLantern = buildEditableLantern(cloneRoot, "fl_dup_" + Date.now());
+    if (!newLantern) return;
+
+    selectedObject = newLantern;
+    snapSelectedObjectToGround();
+
+    updateSelectedBadge();
+
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+    return;
+  }
+
   const cloneRoot = selectedObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
