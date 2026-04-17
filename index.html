@@ -1292,29 +1292,6 @@ function duplicateSelectedFence(){
   gizmoManager.scaleGizmoEnabled = false;
   gizmoManager.attachToNode(selectedObject);
 }
-  const cloneRoot = sourceObject.clone(makeCloneName(objectType));
-  if (!cloneRoot) return;
-
-  cloneRoot.position = sourceObject.position.clone();
-  cloneRoot.position.x += 12;
-  cloneRoot.rotation = sourceObject.rotation.clone();
-  cloneRoot.scaling = sourceObject.scaling.clone();
-
-  cloneRoot.getChildMeshes().forEach(m => {
-    shadows.addShadowCaster(m);
-    m.receiveShadows = true;
-  });
-
-  selectedObject = cloneRoot;
-  snapSelectedObjectToGround();
-
-  updateSelectedBadge();
-
-  gizmoManager.positionGizmoEnabled = true;
-  gizmoManager.rotationGizmoEnabled = false;
-  gizmoManager.scaleGizmoEnabled = false;
-  gizmoManager.attachToNode(selectedObject);
-}
 function openPanel(b){
   document.getElementById('picon').textContent=b.icon;
   document.getElementById('ph2').textContent=b.title;
