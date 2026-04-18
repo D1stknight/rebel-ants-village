@@ -1549,24 +1549,29 @@ function spawnAssetFromPanel(key) {
       shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
     }
   });
-  // Special: lantern — place light at BB center, follow clone via render loop
+  // Special: lantern — shift clone to BB center so gizmo is on mesh, light follows
   if (key === 'lantern_1') {
     clone.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
-    // Use bounding box center for light position (GLB has internal offset)
     setTimeout(() => {
       const bb = clone.getHierarchyBoundingVectors();
       const cx = (bb.min.x + bb.max.x) / 2;
       const cy = bb.min.y + (bb.max.y - bb.min.y) * 0.6;
       const cz = (bb.min.z + bb.max.z) / 2;
-      // Store offset from clone origin so render loop can follow
-      clone._lightOffsetX = cx - clone.position.x;
+      // Move clone origin to BB center so gizmo sits on the lantern
+      clone.position.x = cx;
+      clone.position.z = cz;
+      // Light offsets are now zero (clone is at BB center)
+      clone._lightOffsetX = 0;
       clone._lightOffsetY = cy - clone.position.y;
-      clone._lightOffsetZ = cz - clone.position.z;
+      clone._lightOffsetZ = 0;
       const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(cx, cy, cz), scene);
       fl.diffuse = new BABYLON.Color3(1, .42, .07);
       fl.intensity = 2.0; fl.range = 12; fl._b = 2.0;
       fl._followClone = clone;
       fireLights.push(fl);
+      // Reattach gizmo to new position
+      gizmoManager.attachToNode(clone);
+      snapSelectedObjectToGround();
     }, 400);
   }
 
