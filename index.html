@@ -1426,9 +1426,17 @@ engine.runRenderLoop(()=>{
     if (fl._followMesh) {
       fl._followMesh.computeWorldMatrix(true);
       const bb = fl._followMesh.getBoundingInfo().boundingBox;
-      fl.position.x = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
-      fl.position.y = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
-      fl.position.z = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
+      const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
+      const cy = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
+      const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
+      fl.position.x = cx;
+      fl.position.y = cy;
+      fl.position.z = cz;
+      // Also move clone origin to mesh BB center so gizmo sits on lantern
+      if (fl._followClone) {
+        fl._followClone.position.x = cx;
+        fl._followClone.position.z = cz;
+      }
     } else if (fl._followClone) {
       fl.position.x = fl._followClone.position.x + (fl._followClone._lightOffsetX || 0);
       fl.position.y = fl._followClone.position.y + (fl._followClone._lightOffsetY || 0);
