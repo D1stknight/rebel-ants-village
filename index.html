@@ -1911,7 +1911,7 @@ const lanternRoot = spawnAsset("lantern_1", new BABYLON.Vector3(9999, 0, 9999));
 lanternRoot.name = "lanternRoot";
 lanternRootRef = lanternRoot;
 
-const _lanternDefaultPositions = [[-4,95],[4,95],[-26,0],[26,0],[-4,-5],[4,-5],[0,0],[-4,76]];
+const _lanternDefaultPositions = [[0, 20]]; // single starter lantern — duplicate in admin to place more
 
 let _lanternSystemDone = false;
 function startLanternSystem() {
