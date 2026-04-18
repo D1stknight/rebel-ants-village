@@ -1204,50 +1204,38 @@ function duplicateSelectedFence(){
   if (!objectType) return;
 
     if (objectType === "lantern_1") {
-    const newPos = sourceObject.position.clone();
-    newPos.x += 12;
-
-    const beforeNames = new Set(
-      scene.transformNodes
-        .filter(n => n.metadata && n.metadata.type === "lantern_1" && n.metadata.isClone)
-        .map(n => n.name)
-    );
-
-    fireBowl(newPos.x, newPos.z);
-
-    // Add a dedicated point light for the new lantern
-    const _dupFL = new BABYLON.PointLight('fl_dup_' + Date.now(), new BABYLON.Vector3(newPos.x, 3.2, newPos.z), scene);
-    _dupFL.diffuse = new BABYLON.Color3(1, .42, .07);
-    _dupFL.intensity = 1.8;
-    _dupFL.range = 10;
-    _dupFL._b = 1.8;
-    fireLights.push(_dupFL);
-
-    const newLantern = scene.transformNodes.find(n =>
-      n.metadata &&
-      n.metadata.type === "lantern_1" &&
-      n.metadata.isClone &&
-      !beforeNames.has(n.name)
-    );
-
-    if (!newLantern) return;
-
-    newLantern.rotation = sourceObject.rotation.clone();
-
-    selectedObject = newLantern;
-    snapSelectedObjectToGround();
-
-  
-
-  updateSelectedBadge();
-
-    gizmoManager.positionGizmoEnabled = true;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(selectedObject);
+    const source = _assetSources['lantern_1'];
+    if (!source) return;
+    const newClone = source.clone(makeCloneName('lantern_1'));
+    if (!newClone) return;
+    newClone.metadata = { type: 'lantern_1', isClone: true };
+    newClone.position = sourceObject.position.clone();
+    newClone.position.x += 12;
+    newClone.rotation = sourceObject.rotation.clone();
+    newClone.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+    newClone.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true; });
+    setTimeout(() => {
+      const mesh = newClone.getChildMeshes(false).find(m => m.getTotalVertices && m.getTotalVertices() > 0);
+      if (!mesh) return;
+      mesh.computeWorldMatrix(true);
+      const bb = mesh.getBoundingInfo().boundingBox;
+      newClone.position.y -= bb.minimumWorld.y;
+      const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(0,0,0), scene);
+      fl.diffuse = new BABYLON.Color3(1, .42, .07);
+      fl.intensity = 2.0; fl.range = 12; fl._b = 2.0;
+      fl._followMesh = mesh;
+      fl._followClone = newClone;
+      fireLights.push(fl);
+      selectedObject = newClone;
+      updateSelectedBadge();
+      gizmoManager.positionGizmoEnabled = true;
+      gizmoManager.rotationGizmoEnabled = false;
+      gizmoManager.scaleGizmoEnabled = false;
+      gizmoManager.attachToNode(newClone);
+    }, 500);
     return;
   }
-  const cloneRoot = sourceObject.clone(makeCloneName(objectType));
+    const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
   cloneRoot.position = sourceObject.position.clone();
@@ -1555,34 +1543,40 @@ function spawnAssetFromPanel(key) {
       shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
     }
   });
-  // Special: lantern — store mesh ref on light, render loop tracks BB center live
+  // Special: lantern — snap+gizmo+light all in setTimeout
   if (key === 'lantern_1') {
     clone.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+    selectedObject = clone;
     setTimeout(() => {
       const mesh = clone.getChildMeshes(false).find(m => m.getTotalVertices && m.getTotalVertices() > 0);
       if (!mesh) return;
       mesh.computeWorldMatrix(true);
       const bb = mesh.getBoundingInfo().boundingBox;
-      const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
-      const cy = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
-      const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
-      const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(cx, cy, cz), scene);
+      clone.position.y -= bb.minimumWorld.y;
+      const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(0,0,0), scene);
       fl.diffuse = new BABYLON.Color3(1, .42, .07);
       fl.intensity = 2.0; fl.range = 12; fl._b = 2.0;
       fl._followMesh = mesh;
       fl._followClone = clone;
       fireLights.push(fl);
+      selectedObject = clone;
+      updateSelectedBadge();
+      gizmoManager.positionGizmoEnabled = true;
+      gizmoManager.rotationGizmoEnabled = false;
+      gizmoManager.scaleGizmoEnabled = false;
+      gizmoManager.attachToNode(clone);
     }, 500);
   }
-
-  // Select it with gizmo
-  selectedObject = clone;
-  snapSelectedObjectToGround();
-  updateSelectedBadge();
-  gizmoManager.positionGizmoEnabled = true;
-  gizmoManager.rotationGizmoEnabled = false;
-  gizmoManager.scaleGizmoEnabled = false;
-  gizmoManager.attachToNode(selectedObject);
+  // Select with gizmo — lantern handles inside setTimeout
+  if (key !== 'lantern_1') {
+    selectedObject = clone;
+    snapSelectedObjectToGround();
+    updateSelectedBadge();
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+  }
 }
 
 function uploadGLB() {
