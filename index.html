@@ -1544,23 +1544,27 @@ function spawnAssetFromPanel(key) {
       shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
     }
   });
-  // Special: lantern — fix pivot offset and add light at actual mesh position
+  // Special: lantern — create a wrapper node at spawn pos, parent clone to it
+  // This makes the gizmo sit at the intended position regardless of GLB pivot
   if (key === 'lantern_1') {
-    setTimeout(() => {
-      const bb = clone.getHierarchyBoundingVectors();
-      const meshCenter = BABYLON.Vector3.Center(bb.min, bb.max);
-      // Shift clone so gizmo sits on visual center
-      clone.position.x -= (meshCenter.x - clone.position.x);
-      clone.position.z -= (meshCenter.z - clone.position.z);
-      // Place light at actual mesh position
-      const lightY = bb.min.y + (bb.max.y - bb.min.y) * 0.7;
-      const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(meshCenter.x, lightY, meshCenter.z), scene);
-      fl.diffuse = new BABYLON.Color3(1, .42, .07);
-      fl.intensity = 1.8; fl.range = 12; fl._b = 1.8;
-      fireLights.push(fl);
-      // Re-snap after position correction
-      snapSelectedObjectToGround();
-    }, 300);
+    const wrapper = new BABYLON.TransformNode(makeCloneName('lantern_1'), scene);
+    wrapper.metadata = { type: 'lantern_1', isClone: true };
+    wrapper.position = clone.position.clone();
+    clone.metadata = { type: 'lantern_1_mesh', isClone: false };
+    // Re-parent clone under wrapper, offset by negative of source pivot offset
+    // Source GLB pivot is offset ~-7.4 in X at scale 1 — at scale 0.027: -7.4/0.027 = -274 local units
+    // Easier: just zero out the clone's world position offset after parenting
+    clone.parent = wrapper;
+    clone.position = new BABYLON.Vector3(0, 0, 0);
+    // Add light at wrapper position (world center of lantern)
+    const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(wrapper.position.x, wrapper.position.y + 3, wrapper.position.z), scene);
+    fl.diffuse = new BABYLON.Color3(1, .42, .07);
+    fl.intensity = 1.8; fl.range = 12; fl._b = 1.8;
+    fireLights.push(fl);
+    // Override selectedObject to wrapper
+    selectedObject = wrapper;
+    gizmoManager.attachToNode(wrapper);
+    updateSelectedBadge();
   }
   // Select it with gizmo
   selectedObject = clone;
