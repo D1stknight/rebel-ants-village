@@ -1577,7 +1577,9 @@ function spawnAssetFromPanel(key) {
     ));
   }
   const source = _assetSources[key];
-  const clone = source.clone(makeCloneName(key));
+  // Lantern uses its own spawn system — must return before clone is created
+  if (key === 'lantern_1') { spawnLanternFull(spawnPos); return; }
+    const clone = source.clone(makeCloneName(key));
   if (!clone) return;
   clone.metadata = { type: key, isClone: true };
   clone.position = new BABYLON.Vector3(spawnPos.x, 0, spawnPos.z);
@@ -1592,8 +1594,7 @@ function spawnAssetFromPanel(key) {
       shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
     }
   });
-  // Special: lantern — uses pool lights + proxy gizmo
-  if (key === 'lantern_1') { spawnLanternFull(spawnPos); return; }
+  // lantern handled above
   // Select with gizmo — lantern handles inside setTimeout
   if (key !== 'lantern_1') {
     selectedObject = clone;
