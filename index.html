@@ -604,7 +604,7 @@ function buildEditableLantern(cloneRoot, lightName){
 
    // glow disc removed
 
-  const fl = new BABYLON.PointLight(
+   const fl = new BABYLON.PointLight(
     lightName,
     new BABYLON.Vector3(cloneRoot.absolutePosition.x, cloneRoot.absolutePosition.y + 3.2, cloneRoot.absolutePosition.z),
     scene
@@ -615,11 +615,12 @@ function buildEditableLantern(cloneRoot, lightName){
   fl._b = 3.2;
   fl.metadata = {
     followLantern: true,
-    followNodeName: editRoot.name
+    followNodeName: editRoot.name,
+    isDonorLanternLight: true,
+    donorInUse: false
   };
 
   fireLights.push(fl);
-
   return editRoot;
 }
 function fireBowl(x,z){
@@ -1254,77 +1255,64 @@ function duplicateSelectedFence(){
   const objectType = getObjectType(sourceObject);
   if (!objectType) return;
 
- if (objectType === "lantern_1") {
-  const clone = sourceObject.clone(makeCloneName("lantern_1"));
-  if (!clone) return;
+  if (objectType === "lantern_1") {
+    const clone = sourceObject.clone(makeCloneName("lantern_1"));
+    if (!clone) return;
 
-  clone.metadata = { type: "lantern_1", isClone: true };
-  clone.position = sourceObject.position.clone();
-  clone.position.x += 12;
-  clone.rotation = sourceObject.rotation.clone();
-  clone.scaling = sourceObject.scaling.clone();
+    clone.metadata = { type: "lantern_1", isClone: true };
+    clone.position = sourceObject.position.clone();
+    clone.position.x += 12;
+    clone.rotation = sourceObject.rotation.clone();
+    clone.scaling = sourceObject.scaling.clone();
 
-  const sourceLight = fireLights.find(fl =>
-    fl.metadata && fl.metadata.followNodeName === sourceObject.name
-  );
-
-  if (sourceLight) {
-    const originalRoot = sourceObject;
-    const originalMesh = originalRoot.getChildMeshes()[1];
     const cloneMesh = clone.getChildMeshes()[1];
 
-    const replacementLight = sourceLight.clone("fl_replacement_" + Date.now());
-    replacementLight.metadata = {
-      ...(sourceLight.metadata || {}),
-      followLantern: true,
-      followNodeName: originalRoot.name
-    };
-    replacementLight.intensity = sourceLight.intensity;
-    replacementLight.range = sourceLight.range;
-    replacementLight._b = sourceLight._b;
-    fireLights.push(replacementLight);
+    const donorLight = fireLights.find(fl =>
+      fl.metadata &&
+      fl.metadata.isDonorLanternLight === true &&
+      fl.metadata.donorInUse === false
+    );
 
-    const baselineLights = scene.lights.filter(l => {
-      return !(l.name && l.name.startsWith("fl_clone_")) &&
-             !(l.name && l.name.startsWith("fl_replacement_"));
-    });
+    if (donorLight && cloneMesh) {
+      donorLight.metadata.donorInUse = true;
+      donorLight.metadata.followLantern = true;
+      donorLight.metadata.followNodeName = clone.name;
 
-    sourceLight.metadata.followNodeName = clone.name;
-    sourceLight.intensity = 25;
-    sourceLight.range = 60;
-    sourceLight._b = 25;
+      const baselineLights = scene.lights.filter(l =>
+        !(l.metadata && l.metadata.isDonorLanternLight === true)
+      );
 
-    if (cloneMesh) {
       cloneMesh._lightSources = baselineLights.slice();
-      if (!cloneMesh._lightSources.includes(sourceLight)) {
-        cloneMesh._lightSources.push(sourceLight);
+      if (!cloneMesh._lightSources.includes(donorLight)) {
+        cloneMesh._lightSources.push(donorLight);
       }
       if (cloneMesh.markSubMeshesAsLightDirty) {
         cloneMesh.markSubMeshesAsLightDirty();
       }
+
+      [ground, court, plaza].forEach(m => {
+        if (!m) return;
+        if (m._lightSources && !m._lightSources.includes(donorLight)) {
+          m._lightSources = m._lightSources.slice();
+          m._lightSources.push(donorLight);
+        }
+        if (m.markSubMeshesAsLightDirty) {
+          m.markSubMeshesAsLightDirty();
+        }
+      });
     }
 
-    if (originalMesh) {
-      originalMesh._lightSources = baselineLights.slice();
-      if (!originalMesh._lightSources.includes(replacementLight)) {
-        originalMesh._lightSources.push(replacementLight);
-      }
-      if (originalMesh.markSubMeshesAsLightDirty) {
-        originalMesh.markSubMeshesAsLightDirty();
-      }
-    }
+    selectedObject = clone;
+    snapSelectedObjectToGround();
+    updateSelectedBadge();
+
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+    return;
   }
 
-  selectedObject = clone;
-  snapSelectedObjectToGround();
-  updateSelectedBadge();
-
-  gizmoManager.positionGizmoEnabled = true;
-  gizmoManager.rotationGizmoEnabled = false;
-  gizmoManager.scaleGizmoEnabled = false;
-  gizmoManager.attachToNode(selectedObject);
-  return;
-}
   const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
