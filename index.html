@@ -1435,7 +1435,13 @@ let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
   fireLights.forEach(fl=>{
-    if (fl._followClone) {
+    if (fl._followMesh) {
+      fl._followMesh.computeWorldMatrix(true);
+      const bb = fl._followMesh.getBoundingInfo().boundingBox;
+      fl.position.x = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
+      fl.position.y = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
+      fl.position.z = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
+    } else if (fl._followClone) {
       fl.position.x = fl._followClone.position.x + (fl._followClone._lightOffsetX || 0);
       fl.position.y = fl._followClone.position.y + (fl._followClone._lightOffsetY || 0);
       fl.position.z = fl._followClone.position.z + (fl._followClone._lightOffsetZ || 0);
@@ -1549,7 +1555,7 @@ function spawnAssetFromPanel(key) {
       shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
     }
   });
-  // Special: lantern — measure BB offset from clone, light follows via stored offset
+  // Special: lantern — store mesh ref on light, render loop tracks BB center live
   if (key === 'lantern_1') {
     clone.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
     setTimeout(() => {
@@ -1560,15 +1566,10 @@ function spawnAssetFromPanel(key) {
       const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
       const cy = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
       const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
-      // Store offset from clone origin to mesh BB center
-      // Render loop uses: light.pos = clone.pos + offset
-      clone._lightOffsetX = cx - clone.position.x;
-      clone._lightOffsetY = cy - clone.position.y;
-      clone._lightOffsetZ = cz - clone.position.z;
-      // Place light at mesh BB center
       const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(cx, cy, cz), scene);
       fl.diffuse = new BABYLON.Color3(1, .42, .07);
       fl.intensity = 2.0; fl.range = 12; fl._b = 2.0;
+      fl._followMesh = mesh;
       fl._followClone = clone;
       fireLights.push(fl);
     }, 500);
