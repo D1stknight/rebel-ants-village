@@ -1544,13 +1544,23 @@ function spawnAssetFromPanel(key) {
       shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
     }
   });
-  // Special: lantern gets a light
+  // Special: lantern — fix pivot offset and add light at actual mesh position
   if (key === 'lantern_1') {
-    const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(0, 118, 0), scene);
-    fl.diffuse = new BABYLON.Color3(1, .42, .07);
-    fl.intensity = 1.8; fl.range = 12; fl._b = 1.8;
-    fl.parent = clone;
-    fireLights.push(fl);
+    setTimeout(() => {
+      const bb = clone.getHierarchyBoundingVectors();
+      const meshCenter = BABYLON.Vector3.Center(bb.min, bb.max);
+      // Shift clone so gizmo sits on visual center
+      clone.position.x -= (meshCenter.x - clone.position.x);
+      clone.position.z -= (meshCenter.z - clone.position.z);
+      // Place light at actual mesh position
+      const lightY = bb.min.y + (bb.max.y - bb.min.y) * 0.7;
+      const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(meshCenter.x, lightY, meshCenter.z), scene);
+      fl.diffuse = new BABYLON.Color3(1, .42, .07);
+      fl.intensity = 1.8; fl.range = 12; fl._b = 1.8;
+      fireLights.push(fl);
+      // Re-snap after position correction
+      snapSelectedObjectToGround();
+    }, 300);
   }
   // Select it with gizmo
   selectedObject = clone;
