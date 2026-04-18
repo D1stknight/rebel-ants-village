@@ -1270,7 +1270,6 @@ function duplicateSelectedFence(){
    const donorLight = fireLights.find(fl =>
   fl.metadata &&
   fl.metadata.isDonorLanternLight === true &&
-  fl.metadata.isReserveDonor === true &&
   fl.metadata.donorInUse === false
 );
 
@@ -2047,35 +2046,7 @@ function startLanternSystem() {
 }
 
 startLanternSystem();
-
-  const _lanternDonorReserveCount = 12;
-
-function createLanternDonorReserve() {
-  for (let i = 0; i < _lanternDonorReserveCount; i++) {
-    const donorLantern = fireBowl(9999 + (i * 20), 9999);
-
-    if (!donorLantern) continue;
-
-    donorLantern.setEnabled(false);
-
-    const donorLight = fireLights.find(fl =>
-      fl.metadata &&
-      fl.metadata.followNodeName === donorLantern.name
-    );
-
-    if (donorLight) {
-      donorLight.metadata.isDonorLanternLight = true;
-      donorLight.metadata.donorInUse = false;
-      donorLight.metadata.isReserveDonor = true;
-    }
-  }
-}
-
-createLanternDonorReserve();
-
-
-
-  
+ 
 </script>
 </body>
 </html>
