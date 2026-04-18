@@ -1254,67 +1254,77 @@ function duplicateSelectedFence(){
   const objectType = getObjectType(sourceObject);
   if (!objectType) return;
 
-  if (objectType === "lantern_1") {
-    const clone = sourceObject.clone(makeCloneName("lantern_1"));
-    if (!clone) return;
+ if (objectType === "lantern_1") {
+  const clone = sourceObject.clone(makeCloneName("lantern_1"));
+  if (!clone) return;
 
-    clone.metadata = { type: "lantern_1", isClone: true };
-    clone.position = sourceObject.position.clone();
-    clone.position.x += 12;
-    clone.rotation = sourceObject.rotation.clone();
-    clone.scaling = sourceObject.scaling.clone();
+  clone.metadata = { type: "lantern_1", isClone: true };
+  clone.position = sourceObject.position.clone();
+  clone.position.x += 12;
+  clone.rotation = sourceObject.rotation.clone();
+  clone.scaling = sourceObject.scaling.clone();
 
-    const sourceLight = fireLights.find(fl =>
-      fl.metadata && fl.metadata.followNodeName === sourceObject.name
-    );
+  const sourceLight = fireLights.find(fl =>
+    fl.metadata && fl.metadata.followNodeName === sourceObject.name
+  );
 
-    if (sourceLight) {
-      const clonedLight = sourceLight.clone("fl_clone_" + Date.now());
-      clonedLight.metadata = {
-        ...(sourceLight.metadata || {}),
-        followLantern: true,
-        followNodeName: clone.name
-      };
-      clonedLight.intensity = sourceLight.intensity;
-      clonedLight.range = sourceLight.range;
-      clonedLight._b = sourceLight._b;
-      fireLights.push(clonedLight);
+  if (sourceLight) {
+    const originalRoot = sourceObject;
+    const originalMesh = originalRoot.getChildMeshes()[1];
+    const cloneMesh = clone.getChildMeshes()[1];
 
-      const cloneMesh = clone.getChildMeshes()[1];
+    const replacementLight = sourceLight.clone("fl_replacement_" + Date.now());
+    replacementLight.metadata = {
+      ...(sourceLight.metadata || {}),
+      followLantern: true,
+      followNodeName: originalRoot.name
+    };
+    replacementLight.intensity = sourceLight.intensity;
+    replacementLight.range = sourceLight.range;
+    replacementLight._b = sourceLight._b;
+    fireLights.push(replacementLight);
 
-      if (cloneMesh) {
-        const baselineLights = scene.lights.filter(l => {
-          return !(l.name && l.name.startsWith("fl_clone_"));
-        });
+    const baselineLights = scene.lights.filter(l => {
+      return !(l.name && l.name.startsWith("fl_clone_")) &&
+             !(l.name && l.name.startsWith("fl_replacement_"));
+    });
 
-        cloneMesh._lightSources = baselineLights.slice();
+    sourceLight.metadata.followNodeName = clone.name;
+    sourceLight.intensity = 25;
+    sourceLight.range = 60;
+    sourceLight._b = 25;
 
-        sourceLight.metadata.followNodeName = clone.name;
-        sourceLight.intensity = 25;
-        sourceLight.range = 60;
-        sourceLight._b = 25;
-
-        if (!cloneMesh._lightSources.includes(sourceLight)) {
-          cloneMesh._lightSources.push(sourceLight);
-        }
-
-        if (cloneMesh.markSubMeshesAsLightDirty) {
-          cloneMesh.markSubMeshesAsLightDirty();
-        }
+    if (cloneMesh) {
+      cloneMesh._lightSources = baselineLights.slice();
+      if (!cloneMesh._lightSources.includes(sourceLight)) {
+        cloneMesh._lightSources.push(sourceLight);
+      }
+      if (cloneMesh.markSubMeshesAsLightDirty) {
+        cloneMesh.markSubMeshesAsLightDirty();
       }
     }
 
-    selectedObject = clone;
-    snapSelectedObjectToGround();
-    updateSelectedBadge();
-
-    gizmoManager.positionGizmoEnabled = true;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(selectedObject);
-    return;
+    if (originalMesh) {
+      originalMesh._lightSources = baselineLights.slice();
+      if (!originalMesh._lightSources.includes(replacementLight)) {
+        originalMesh._lightSources.push(replacementLight);
+      }
+      if (originalMesh.markSubMeshesAsLightDirty) {
+        originalMesh.markSubMeshesAsLightDirty();
+      }
+    }
   }
 
+  selectedObject = clone;
+  snapSelectedObjectToGround();
+  updateSelectedBadge();
+
+  gizmoManager.positionGizmoEnabled = true;
+  gizmoManager.rotationGizmoEnabled = false;
+  gizmoManager.scaleGizmoEnabled = false;
+  gizmoManager.attachToNode(selectedObject);
+  return;
+}
   const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
