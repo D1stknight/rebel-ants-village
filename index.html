@@ -582,7 +582,7 @@ const fireLights=[];
 const _lanternLightPool = [];
 function initLanternLightPool() {
   for (let i = 0; i < 20; i++) {
-    const fl = new BABYLON.PointLight('lanternPool_' + i, new BABYLON.Vector3(0, -999, 0), scene);
+    const fl = new BABYLON.PointLight('lanternPool_' + i, new BABYLON.Vector3(9999, -999, 9999), scene);
     fl.diffuse = new BABYLON.Color3(1, .42, .07);
     fl.intensity = 0; fl.range = 12; fl._b = 2.0; fl._inUse = false;
     _lanternLightPool.push(fl);
@@ -1160,7 +1160,7 @@ function loadWorldLayout(){
       item.name === "dojo7Root" ||
       item.name === "dojo9Root" ||
       item.name === "shrine2Root" ||
-      item.type === "lantern_1" ||
+// lantern_1 handled below ||
       item.type === "cherry_blossom"
     ) return;
 
@@ -1179,7 +1179,13 @@ function loadWorldLayout(){
           });
   });
 
-  selectedObject = null;
+  // Restore saved lanterns
+  data.filter(item => item.type === 'lantern_1').forEach(item => {
+    const pos = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
+    spawnLanternFull(pos);
+  });
+
+    selectedObject = null;
   updateSelectedBadge();
   gizmoManager.attachToNode(null);
   gizmoManager.positionGizmoEnabled = false;
