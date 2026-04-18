@@ -293,6 +293,7 @@ function spawnAsset(type, position) {
 const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
 scene.maxLightsPerMesh = 64;
+scene.onNewMaterialAddedObservable.add(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 64; });
 scene.fogMode=BABYLON.Scene.FOGMODE_NONE;
 scene.fogDensity=0.006;
 scene.fogColor=new BABYLON.Color3(.55,.72,.9);
@@ -576,6 +577,26 @@ torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0
 
 // ── FIRE BOWLS ───────────────────────────────
 const fireLights=[];
+
+// Pre-create pool of 20 lantern lights so shaders compile with them from the start
+const _lanternLightPool = [];
+function initLanternLightPool() {
+  for (let i = 0; i < 20; i++) {
+    const fl = new BABYLON.PointLight('lanternPool_' + i, new BABYLON.Vector3(0, -999, 0), scene);
+    fl.diffuse = new BABYLON.Color3(1, .42, .07);
+    fl.intensity = 0; fl.range = 12; fl._b = 2.0; fl._inUse = false;
+    _lanternLightPool.push(fl);
+  }
+  // Force all materials to support 64 simultaneous lights
+  setTimeout(() => {
+    scene.materials.forEach(mat => {
+      if (mat.maxSimultaneousLights !== undefined) {
+        mat.maxSimultaneousLights = 64;
+        mat.markAsDirty(BABYLON.Material.LightDirtyFlag);
+      }
+    });
+  }, 2000);
+}
 const lanLights=[];
 let lIdx=0;
 
@@ -1204,10 +1225,8 @@ function duplicateSelectedFence(){
   if (!objectType) return;
 
     if (objectType === "lantern_1") {
-    const newPos = sourceObject.position.clone();
-    newPos.x += 12;
-    spawnLanternAtPos(newPos);
-    return;
+    const newPos = sourceObject.position.clone(); newPos.x += 12;
+    spawnLanternFull(newPos); return;
   }
     const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
@@ -1453,6 +1472,7 @@ function loadAssetSource(key) {
   registerEditableRoot(key, root);
 }
 Object.keys(ASSETS).forEach(key => loadAssetSource(key));
+initLanternLightPool();
 
 
 
@@ -1532,6 +1552,53 @@ function spawnLanternAtPos(spawnPos) {
     }, 500);
     return wrapper;
   }
+function spawnLanternFull(spawnPos) {
+  const source = _assetSources['lantern_1'];
+  if (!source) return;
+  const clone = source.clone(makeCloneName('lantern_1'));
+  clone.metadata = { type: 'lantern_1', isClone: true };
+  clone.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+  clone.rotation = source.rotation.clone();
+  clone.position = spawnPos.clone();
+  clone.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true; });
+  // Grab a pool light
+  const fl = _lanternLightPool.find(l => !l._inUse);
+  if (fl) fl._inUse = true;
+  setTimeout(() => {
+    const mesh = clone.getChildMeshes(false).find(m => m.getTotalVertices && m.getTotalVertices() > 0);
+    if (!mesh) return;
+    mesh.computeWorldMatrix(true);
+    const bb = mesh.getBoundingInfo().boundingBox;
+    // Snap to floor
+    clone.position.y -= bb.minimumWorld.y;
+    // Move clone to mesh BB center
+    const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
+    const cy = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
+    const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
+    clone.position.x = cx; clone.position.z = cz;
+    // Move pool light to lantern position
+    if (fl) {
+      fl.position.set(cx, cy, cz);
+      fl.intensity = 2.0; fl._b = 2.0;
+      fl._followMesh = mesh;
+      fireLights.push(fl);
+    }
+    // Invisible proxy box at mesh center for gizmo
+    const h = bb.maximumWorld.y - bb.minimumWorld.y;
+    const proxy = BABYLON.MeshBuilder.CreateBox('lp_' + clone.name, {width:1.5, height:h, depth:1.5}, scene);
+    proxy.position = new BABYLON.Vector3(cx, bb.minimumWorld.y + h/2, cz);
+    proxy.isPickable = true; proxy.visibility = 0;
+    proxy.metadata = { type:'lantern_1', isClone:true, proxyFor:clone };
+    selectedObject = proxy;
+    updateSelectedBadge();
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(proxy);
+  }, 500);
+  return clone;
+}
+
 function spawnAssetFromPanel(key) {
   if (!_assetSources[key]) { console.warn('Asset not loaded:', key); return; }
   // Spawn in front of camera
@@ -1560,11 +1627,8 @@ function spawnAssetFromPanel(key) {
       shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
     }
   });
-  // Special: lantern — use wrapper node so gizmo sits on mesh center
-  if (key === 'lantern_1') {
-    spawnLanternAtPos(spawnPos);
-    return;
-  }
+  // Special: lantern — uses pool lights + proxy gizmo
+  if (key === 'lantern_1') { spawnLanternFull(spawnPos); return; }
   // Select with gizmo — lantern handles inside setTimeout
   if (key !== 'lantern_1') {
     selectedObject = clone;
