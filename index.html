@@ -1432,11 +1432,6 @@ engine.runRenderLoop(()=>{
       fl.position.x = cx;
       fl.position.y = cy;
       fl.position.z = cz;
-      // Also move clone origin to mesh BB center so gizmo sits on lantern
-      if (fl._followClone) {
-        fl._followClone.position.x = cx;
-        fl._followClone.position.z = cz;
-      }
     } else if (fl._followClone) {
       fl.position.x = fl._followClone.position.x + (fl._followClone._lightOffsetX || 0);
       fl.position.y = fl._followClone.position.y + (fl._followClone._lightOffsetY || 0);
