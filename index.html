@@ -1544,28 +1544,15 @@ function spawnAssetFromPanel(key) {
       shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
     }
   });
-  // Special: lantern — create a wrapper node at spawn pos, parent clone to it
-  // This makes the gizmo sit at the intended position regardless of GLB pivot
+  // Special: lantern — use scale 0.027, light at world Y=4 (no parenting, no wrapper)
   if (key === 'lantern_1') {
-    const wrapper = new BABYLON.TransformNode(makeCloneName('lantern_1'), scene);
-    wrapper.metadata = { type: 'lantern_1', isClone: true };
-    wrapper.position = clone.position.clone();
-    clone.metadata = { type: 'lantern_1_mesh', isClone: false };
-    // Re-parent clone under wrapper, offset by negative of source pivot offset
-    // Source GLB pivot is offset ~-7.4 in X at scale 1 — at scale 0.027: -7.4/0.027 = -274 local units
-    // Easier: just zero out the clone's world position offset after parenting
-    clone.parent = wrapper;
-    clone.position = new BABYLON.Vector3(0, 0, 0);
-    // Add light at wrapper position (world center of lantern)
-    const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(wrapper.position.x, wrapper.position.y + 3, wrapper.position.z), scene);
+    clone.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+    const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(spawnPos.x, 4.0, spawnPos.z), scene);
     fl.diffuse = new BABYLON.Color3(1, .42, .07);
     fl.intensity = 1.8; fl.range = 12; fl._b = 1.8;
     fireLights.push(fl);
-    // Override selectedObject to wrapper
-    selectedObject = wrapper;
-    gizmoManager.attachToNode(wrapper);
-    updateSelectedBadge();
   }
+
   // Select it with gizmo
   selectedObject = clone;
   snapSelectedObjectToGround();
