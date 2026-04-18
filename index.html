@@ -1396,16 +1396,7 @@ window.addEventListener('resize',()=>engine.resize());
 let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
-     fireLights.forEach(fl=>{
-    if (fl.metadata && fl.metadata.followLantern && fl.metadata.followNodeName) {
-      const followNode = scene.transformNodes.find(n => n.name === fl.metadata.followNodeName);
-      if (followNode) {
-        fl.position.x = followNode.position.x;
-        fl.position.y = followNode.position.y + 0.6;
-        fl.position.z = followNode.position.z;
-      }
-    }
-
+  fireLights.forEach(fl=>{
     fl.intensity = fl._b + Math.sin(Date.now()*0.009 + fl.position.x*3) * 0.65;
   });
   lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(Date.now()*0.0019+ll.position.x*0.3)*0.1;});
@@ -1451,6 +1442,34 @@ Object.keys(ASSETS).forEach(key => loadAssetSource(key));
 
 
 
+
+// ── LOADING SCREEN + WORLD INIT ──────────────────
+async function initWorldLayout() {
+  if (window._ghToken) {
+    try {
+      const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/world-layout.json?ref=dev", {
+        headers: { "Authorization": "token " + window._ghToken }
+      });
+      if (resp.ok) {
+        const d = await resp.json();
+        const bytes = Uint8Array.from(atob(d.content.replace(/\n/g,'')), c => c.charCodeAt(0));
+        localStorage.setItem("rebelAntsWorldLayout", new TextDecoder('utf-8').decode(bytes));
+        console.log("Layout restored from GitHub");
+      }
+    } catch(e) { console.warn("Could not load layout from GitHub", e); }
+  }
+  // Dismiss loading screen
+  const ld = document.getElementById('ld');
+  if (ld) { ld.style.opacity='0'; setTimeout(()=>{ ld.style.display='none'; }, 900); }
+}
+
+function waitForWorldAndLoadLayout() {
+  const allReady = Object.values(_assetSources).every(r => r && r.metadata && r.metadata.loaded === true);
+  if (!allReady) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
+  loadWorldLayout();
+}
+
+initWorldLayout().then(() => waitForWorldAndLoadLayout());
   
 </script>
 </body>
