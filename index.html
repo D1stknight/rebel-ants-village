@@ -1160,7 +1160,7 @@ function loadWorldLayout(){
       item.name === "dojo7Root" ||
       item.name === "dojo9Root" ||
       item.name === "shrine2Root" ||
-// lantern_1 handled below ||
+item.type === "lantern_1" ||
       item.type === "cherry_blossom"
     ) return;
 
@@ -1518,92 +1518,6 @@ function toggleAssetPanel(show) {
   if (panel) panel.classList.toggle('on', show);
 }
 
-function spawnLanternAtPos(spawnPos) {
-    // Wrapper node = gizmo anchor, positioned at mesh visual center
-    const wrapper = new BABYLON.TransformNode(makeCloneName('lantern_1'), scene);
-    wrapper.metadata = { type: 'lantern_1', isClone: true };
-    wrapper.position = spawnPos.clone();
-    // Inner clone parented to wrapper with offset preserved
-    const source = _assetSources['lantern_1'];
-    const inner = source.clone('lantern_inner_' + Date.now());
-    inner.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
-    inner.rotation = source.rotation.clone();
-    inner.parent = wrapper;
-    inner.position = new BABYLON.Vector3(0, 0, 0);
-    inner.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = false; });
-    // After mesh loads: move wrapper to BB center, snap to floor, add light
-    setTimeout(() => {
-      const mesh = inner.getChildMeshes(false).find(m => m.getTotalVertices && m.getTotalVertices() > 0);
-      if (!mesh) return;
-      mesh.computeWorldMatrix(true);
-      const bb = mesh.getBoundingInfo().boundingBox;
-      const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
-      const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
-      wrapper.position.x = cx;
-      wrapper.position.z = cz;
-      wrapper.position.y -= bb.minimumWorld.y;
-      // Light at wrapper pos + height offset, tracked via _followMesh every frame
-      const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(cx, wrapper.position.y + 2.5, cz), scene);
-      fl.diffuse = new BABYLON.Color3(1, .42, .07);
-      fl.intensity = 2.0; fl.range = 12; fl._b = 2.0;
-      fl._followMesh = mesh;
-      fireLights.push(fl);
-      // Select wrapper with gizmo
-      selectedObject = wrapper;
-      updateSelectedBadge();
-      gizmoManager.positionGizmoEnabled = true;
-      gizmoManager.rotationGizmoEnabled = false;
-      gizmoManager.scaleGizmoEnabled = false;
-      gizmoManager.attachToNode(wrapper);
-    }, 500);
-    return wrapper;
-  }
-function spawnLanternFull(spawnPos) {
-  const source = _assetSources['lantern_1'];
-  if (!source) return;
-  const clone = source.clone(makeCloneName('lantern_1'));
-  clone.metadata = { type: 'lantern_1', isClone: true };
-  clone.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
-  clone.rotation = source.rotation.clone();
-  clone.position = spawnPos.clone();
-  clone.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true; });
-  // Grab a pool light
-  const fl = _lanternLightPool.find(l => !l._inUse);
-  if (fl) fl._inUse = true;
-  setTimeout(() => {
-    const mesh = clone.getChildMeshes(false).find(m => m.getTotalVertices && m.getTotalVertices() > 0);
-    if (!mesh) return;
-    mesh.computeWorldMatrix(true);
-    const bb = mesh.getBoundingInfo().boundingBox;
-    // Snap to floor
-    clone.position.y -= bb.minimumWorld.y;
-    // Move clone to mesh BB center
-    const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
-    const cy = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
-    const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
-    clone.position.x = cx; clone.position.z = cz;
-    // Move pool light to lantern position
-    if (fl) {
-      fl.position.set(cx, cy, cz);
-      fl.intensity = 2.0; fl._b = 2.0;
-      fl._followMesh = mesh;
-      fireLights.push(fl);
-    }
-    // Invisible proxy box at mesh center for gizmo
-    const h = bb.maximumWorld.y - bb.minimumWorld.y;
-    const proxy = BABYLON.MeshBuilder.CreateBox('lp_' + clone.name, {width:1.5, height:h, depth:1.5}, scene);
-    proxy.position = new BABYLON.Vector3(cx, bb.minimumWorld.y + h/2, cz);
-    proxy.isPickable = true; proxy.visibility = 0;
-    proxy.metadata = { type:'lantern_1', isClone:true, proxyFor:clone };
-    selectedObject = proxy;
-    updateSelectedBadge();
-    gizmoManager.positionGizmoEnabled = true;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(proxy);
-  }, 500);
-  return clone;
-}
 
 function spawnAssetFromPanel(key) {
   if (!_assetSources[key]) { console.warn('Asset not loaded:', key); return; }
