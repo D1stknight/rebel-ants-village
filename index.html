@@ -292,7 +292,7 @@ function spawnAsset(type, position) {
 // ── SCENE ───────────────────────────────────
 const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
-scene.maxLightsPerMesh = 16;
+scene.maxLightsPerMesh = 64;
 scene.fogMode=BABYLON.Scene.FOGMODE_NONE;
 scene.fogDensity=0.006;
 scene.fogColor=new BABYLON.Color3(.55,.72,.9);
@@ -1220,6 +1220,11 @@ function duplicateSelectedFence(){
       mesh.computeWorldMatrix(true);
       const bb = mesh.getBoundingInfo().boundingBox;
       newClone.position.y -= bb.minimumWorld.y;
+      const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
+      const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
+      newClone.position.x = cx;
+      newClone.position.z = cz;
+      newClone._pivotSynced = true;
       const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(0,0,0), scene);
       fl.diffuse = new BABYLON.Color3(1, .42, .07);
       fl.intensity = 2.0; fl.range = 12; fl._b = 2.0;
@@ -1555,7 +1560,14 @@ function spawnAssetFromPanel(key) {
       if (!mesh) return;
       mesh.computeWorldMatrix(true);
       const bb = mesh.getBoundingInfo().boundingBox;
+      // Snap to floor
       clone.position.y -= bb.minimumWorld.y;
+      // One-time: move clone origin to mesh BB center so gizmo sits on lantern
+      const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
+      const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
+      clone.position.x = cx;
+      clone.position.z = cz;
+      clone._pivotSynced = true;
       const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(0,0,0), scene);
       fl.diffuse = new BABYLON.Color3(1, .42, .07);
       fl.intensity = 2.0; fl.range = 12; fl._b = 2.0;
