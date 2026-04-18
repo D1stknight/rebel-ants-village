@@ -1519,6 +1519,51 @@ function toggleAssetPanel(show) {
 }
 
 
+function spawnLanternFull(spawnPos) {
+  const source = _assetSources['lantern_1'];
+  if (!source) return;
+  const clone = source.clone(makeCloneName('lantern_1'));
+  clone.metadata = { type: 'lantern_1', isClone: true };
+  clone.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+  clone.rotation = source.rotation.clone();
+  clone.position = spawnPos.clone();
+  clone.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true; });
+  const fl = _lanternLightPool.find(l => !l._inUse);
+  if (fl) fl._inUse = true;
+  setTimeout(() => {
+    const mesh = clone.getChildMeshes(false).find(m => m.getTotalVertices && m.getTotalVertices() > 0);
+    if (!mesh) return;
+    mesh.computeWorldMatrix(true);
+    const bb = mesh.getBoundingInfo().boundingBox;
+    clone.position.y -= bb.minimumWorld.y;
+    const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
+    const cy = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
+    const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
+    clone.position.x = cx;
+    clone.position.z = cz;
+    if (fl) {
+      fl.position.set(cx, cy, cz);
+      fl.intensity = 2.0;
+      fl._b = 2.0;
+      fl._followMesh = mesh;
+      fireLights.push(fl);
+    }
+    const h = bb.maximumWorld.y - bb.minimumWorld.y;
+    const proxy = BABYLON.MeshBuilder.CreateBox('lp_' + clone.name, {width:1.5, height:h, depth:1.5}, scene);
+    proxy.position = new BABYLON.Vector3(cx, bb.minimumWorld.y + h/2, cz);
+    proxy.isPickable = true;
+    proxy.visibility = 0;
+    proxy.metadata = { type: 'lantern_1', isClone: true, proxyFor: clone };
+    selectedObject = proxy;
+    updateSelectedBadge();
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(proxy);
+  }, 500);
+  return clone;
+}
+
 function spawnAssetFromPanel(key) {
   if (!_assetSources[key]) { console.warn('Asset not loaded:', key); return; }
   // Spawn in front of camera
