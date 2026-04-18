@@ -573,73 +573,30 @@ const fireLights=[];
 const lanLights=[];
 let lIdx=0;
 
-function buildEditableLantern(cloneRoot, lightName){
-  if (!cloneRoot) return null;
-
-  cloneRoot.getChildMeshes().forEach(m=>{
+function spawnLantern(x, z) {
+  if (!lanternRootRef) return null;
+  const clone = lanternRootRef.clone(makeCloneName("lantern_1"));
+  if (!clone) return null;
+  clone.metadata = { type: "lantern_1", isClone: true };
+  clone.position = new BABYLON.Vector3(x, 0, z);
+  clone.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
+  clone.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+  clone.getChildMeshes().forEach(m => {
     shadows.addShadowCaster(m);
     m.receiveShadows = true;
-    m.isPickable = false;
+    m.isPickable = true;
   });
-
-  const bounds = cloneRoot.getHierarchyBoundingVectors();
-  const worldCenter = BABYLON.Vector3.Center(bounds.min, bounds.max);
-
-  const editRoot = new BABYLON.TransformNode(makeCloneName("lantern_1"), scene);
-  editRoot.metadata = { type:"lantern_1", isClone:true };
-  editRoot.position = worldCenter.clone();
-
-  cloneRoot.setParent(editRoot, true);
-
-   const pickProxy = BABYLON.MeshBuilder.CreateBox(
-    makeCloneName("lantern_pick"),
-    { width: 4.6, height: 8.0, depth: 4.6 },
-    scene
-  );
-  pickProxy.parent = editRoot;
-  pickProxy.position = new BABYLON.Vector3(0, 0.6, 0);
-  pickProxy.isPickable = true;
-  pickProxy.visibility = 0;
-  pickProxy.metadata = { type:"lantern_1", isPickProxy:true };
-
-   // glow disc removed
-
-   const fl = new BABYLON.PointLight(
-    lightName,
-    new BABYLON.Vector3(cloneRoot.absolutePosition.x, cloneRoot.absolutePosition.y + 3.2, cloneRoot.absolutePosition.z),
-    scene
-  );
-  fl.diffuse = new BABYLON.Color3(1,.42,.07);
-  fl.intensity = 3.2;
-  fl.range = 14;
-  fl._b = 3.2;
-  fl.metadata = {
-    followLantern: true,
-    followNodeName: editRoot.name,
-    isDonorLanternLight: true,
-    donorInUse: false
-  };
-
+  const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(0, 118, 0), scene);
+  fl.diffuse = new BABYLON.Color3(1, .42, .07);
+  fl.intensity = 1.8;
+  fl.range = 12;
+  fl._b = 1.8;
+  fl.parent = clone;
   fireLights.push(fl);
-  return editRoot;
+  return clone;
 }
-function fireBowl(x,z){
-  let cloneRoot = null;
 
-  if (lanternRootRef) {
-    cloneRoot = lanternRootRef.clone(makeCloneName("lantern_1") + "_" + Math.round(x) + "_" + Math.round(z));
 
-    if (cloneRoot) {
-      cloneRoot.position = new BABYLON.Vector3(x, 0, z);
-      cloneRoot.rotation = new BABYLON.Vector3(0, Math.random() * Math.PI * 2, 0);
-      cloneRoot.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
-
-      return buildEditableLantern(cloneRoot, "fl_" + x + "_" + z + "_" + Date.now());
-    }
-  }
-
-  return null;
-}
 function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   const root=new BABYLON.TransformNode("lan"+lIdx,scene);
   root.position=new BABYLON.Vector3(x,y,z);
@@ -1256,63 +1213,20 @@ function duplicateSelectedFence(){
   if (!objectType) return;
 
   if (objectType === "lantern_1") {
-    const clone = sourceObject.clone(makeCloneName("lantern_1"));
-    if (!clone) return;
-
-    clone.metadata = { type: "lantern_1", isClone: true };
-    clone.position = sourceObject.position.clone();
-    clone.position.x += 12;
-    clone.rotation = sourceObject.rotation.clone();
-    clone.scaling = sourceObject.scaling.clone();
-
-    const cloneMesh = clone.getChildMeshes()[1];
-
-   const donorLight = fireLights.find(fl =>
-  fl.metadata &&
-  fl.metadata.isDonorLanternLight === true &&
-  fl.metadata.donorInUse === false
-);
-
-    if (donorLight && cloneMesh) {
-      donorLight.metadata.donorInUse = true;
-      donorLight.metadata.followLantern = true;
-      donorLight.metadata.followNodeName = clone.name;
-
-      const baselineLights = scene.lights.filter(l =>
-        !(l.metadata && l.metadata.isDonorLanternLight === true)
-      );
-
-      cloneMesh._lightSources = baselineLights.slice();
-      if (!cloneMesh._lightSources.includes(donorLight)) {
-        cloneMesh._lightSources.push(donorLight);
-      }
-      if (cloneMesh.markSubMeshesAsLightDirty) {
-        cloneMesh.markSubMeshesAsLightDirty();
-      }
-
-      [ground, court, plaza].forEach(m => {
-        if (!m) return;
-        if (m._lightSources && !m._lightSources.includes(donorLight)) {
-          m._lightSources = m._lightSources.slice();
-          m._lightSources.push(donorLight);
-        }
-        if (m.markSubMeshesAsLightDirty) {
-          m.markSubMeshesAsLightDirty();
-        }
-      });
-    }
-
-    selectedObject = clone;
+    const newPos = sourceObject.position.clone();
+    newPos.x += 12;
+    const newLantern = spawnLantern(newPos.x, newPos.z);
+    if (!newLantern) return;
+    newLantern.rotation = sourceObject.rotation.clone();
+    selectedObject = newLantern;
     snapSelectedObjectToGround();
     updateSelectedBadge();
-
     gizmoManager.positionGizmoEnabled = true;
     gizmoManager.rotationGizmoEnabled = false;
     gizmoManager.scaleGizmoEnabled = false;
     gizmoManager.attachToNode(selectedObject);
     return;
   }
-
   const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
@@ -1499,15 +1413,6 @@ let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
      fireLights.forEach(fl=>{
-    if (fl.metadata && fl.metadata.followLantern && fl.metadata.followNodeName) {
-      const followNode = scene.transformNodes.find(n => n.name === fl.metadata.followNodeName);
-      if (followNode) {
-        fl.position.x = followNode.position.x;
-        fl.position.y = followNode.position.y + 0.6;
-        fl.position.z = followNode.position.z;
-      }
-    }
-
     fl.intensity = fl._b + Math.sin(Date.now()*0.009 + fl.position.x*3) * 0.65;
   });
   lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(Date.now()*0.0019+ll.position.x*0.3)*0.1;});
@@ -2011,8 +1916,6 @@ const _lanternDefaultPositions = [[-4,95],[4,95],[-26,0],[26,0],[-4,-5],[4,-5],[
 let _lanternSystemDone = false;
 function startLanternSystem() {
   if (_lanternSystemDone) return;
-  // Hard guard: if clones already exist, don't spawn again
-  if (scene.transformNodes.filter(n => n.name && n.name.startsWith("lantern_1RootClone_")).some(n => n.metadata && n.metadata.isClone)) return;
   if (!lanternRoot || !lanternRoot.metadata || lanternRoot.metadata.loaded !== true) {
     setTimeout(startLanternSystem, 300); return;
   }
@@ -2026,22 +1929,19 @@ function startLanternSystem() {
       const saved = JSON.parse(raw);
       const items = saved.filter(i => i.type === "lantern_1");
       if (items.length > 0) {
-                      items.forEach((item, index) => {
-          const cloneRoot = lanternRoot.clone(makeCloneName("lantern_1") + "_s" + index);
-          if (!cloneRoot) return;
-
-          cloneRoot.position = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
-          cloneRoot.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
-          cloneRoot.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
-
-          buildEditableLantern(cloneRoot, "fl_saved_" + index);
+        items.forEach(item => {
+          const clone = spawnLantern(item.position.x, item.position.z);
+          if (!clone) return;
+          clone.position = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
+          clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
+          clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
         });
         registerEditableRoot("lantern_1", lanternRoot);
         return;
       }
     } catch(e) {}
   }
-  _lanternDefaultPositions.forEach(([x,z]) => fireBowl(x,z));
+  _lanternDefaultPositions.forEach(([x,z]) => spawnLantern(x, z));
   registerEditableRoot("lantern_1", lanternRoot);
 }
 
