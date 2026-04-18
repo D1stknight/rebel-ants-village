@@ -1115,24 +1115,37 @@ function saveWorldLayout(){
   const data = getEditableRoots().map(node => ({
     type: getObjectType(node),
     name: node.name,
-    position: {
-      x: node.position.x,
-      y: node.position.y,
-      z: node.position.z
-    },
-    rotation: {
-      x: node.rotation.x,
-      y: node.rotation.y,
-      z: node.rotation.z
-    },
-    scaling: {
-      x: node.scaling.x,
-      y: node.scaling.y,
-      z: node.scaling.z
-    }
+    position: { x: node.position.x, y: node.position.y, z: node.position.z },
+    rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
+    scaling: { x: node.scaling.x, y: node.scaling.y, z: node.scaling.z }
   }));
-
-  localStorage.setItem("rebelAntsWorldLayout", JSON.stringify(data));
+  const json = JSON.stringify(data, null, 2);
+  // Save to localStorage (fast cache for asset systems)
+  localStorage.setItem("rebelAntsWorldLayout", json);
+  // Save to GitHub (permanent backup — never lost)
+  if (window._ghToken) {
+    (async () => {
+      const LAYOUT_PATH = "assets/world-layout.json";
+      // Get current SHA if file exists
+      let sha = undefined;
+      try {
+        const check = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/" + LAYOUT_PATH + "?ref=dev", {
+          headers: { "Authorization": "token " + window._ghToken }
+        });
+        if (check.ok) { const cd = await check.json(); sha = cd.sha; }
+      } catch(e) {}
+      const enc = new TextEncoder();
+      const b = enc.encode(json);
+      let bin = ''; b.forEach(x => bin += String.fromCharCode(x));
+      const body = { message: "save: world layout", content: btoa(bin), branch: "dev" };
+      if (sha) body.sha = sha;
+      await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/" + LAYOUT_PATH, {
+        method: 'PUT',
+        headers: { "Authorization": "token " + window._ghToken, "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+    })();
+  }
   console.log("World layout saved", data);
   showSaveBadge();
 }
@@ -1648,6 +1661,22 @@ setTimeout(()=>{
 },1800);
 
 // ✅ LOAD SAVED LAYOUT (AFTER EVERYTHING EXISTS)
+// Load layout from GitHub into localStorage on startup (permanent backup)
+async function initWorldLayout() {
+  if (!window._ghToken) return;
+  try {
+    const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/world-layout.json?ref=dev", {
+      headers: { "Authorization": "token " + window._ghToken }
+    });
+    if (!resp.ok) return; // no saved layout yet
+    const d = await resp.json();
+    const bytes = Uint8Array.from(atob(d.content.replace(/\n/g,'')), c => c.charCodeAt(0));
+    const json = new TextDecoder('utf-8').decode(bytes);
+    localStorage.setItem("rebelAntsWorldLayout", json);
+    console.log("Layout restored from GitHub");
+  } catch(e) { console.warn("Could not load layout from GitHub", e); }
+}
+
 function waitForWorldAndLoadLayout() {
   const dojoReady = !!dojoRootRef && !!dojoRootRef.metadata && dojoRootRef.metadata.loaded === true;
   const dojo6Ready = !!dojo6RootRef && !!dojo6RootRef.metadata && dojo6RootRef.metadata.loaded === true;
@@ -1671,7 +1700,8 @@ function waitForWorldAndLoadLayout() {
   setTimeout(waitForWorldAndLoadLayout, 300);
 }
 
-waitForWorldAndLoadLayout();
+// Init layout from GitHub first, then load world
+initWorldLayout().then(() => waitForWorldAndLoadLayout());
 
 // 🌳 OAK TREE SOURCE
 const tree1Root = spawnAsset("tree_1", new BABYLON.Vector3(9999, 0, 9999));
