@@ -1435,6 +1435,11 @@ let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
   fireLights.forEach(fl=>{
+    if (fl._followClone) {
+      fl.position.x = fl._followClone.position.x + (fl._followClone._lightOffsetX || 0);
+      fl.position.y = fl._followClone.position.y + (fl._followClone._lightOffsetY || 0);
+      fl.position.z = fl._followClone.position.z + (fl._followClone._lightOffsetZ || 0);
+    }
     fl.intensity = fl._b + Math.sin(Date.now()*0.009 + fl.position.x*3) * 0.65;
   });
   lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(Date.now()*0.0019+ll.position.x*0.3)*0.1;});
@@ -1544,13 +1549,25 @@ function spawnAssetFromPanel(key) {
       shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
     }
   });
-  // Special: lantern — use scale 0.027, light at world Y=4 (no parenting, no wrapper)
+  // Special: lantern — place light at BB center, follow clone via render loop
   if (key === 'lantern_1') {
     clone.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
-    const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(spawnPos.x, 4.0, spawnPos.z), scene);
-    fl.diffuse = new BABYLON.Color3(1, .42, .07);
-    fl.intensity = 1.8; fl.range = 12; fl._b = 1.8;
-    fireLights.push(fl);
+    // Use bounding box center for light position (GLB has internal offset)
+    setTimeout(() => {
+      const bb = clone.getHierarchyBoundingVectors();
+      const cx = (bb.min.x + bb.max.x) / 2;
+      const cy = bb.min.y + (bb.max.y - bb.min.y) * 0.6;
+      const cz = (bb.min.z + bb.max.z) / 2;
+      // Store offset from clone origin so render loop can follow
+      clone._lightOffsetX = cx - clone.position.x;
+      clone._lightOffsetY = cy - clone.position.y;
+      clone._lightOffsetZ = cz - clone.position.z;
+      const fl = new BABYLON.PointLight('fl_' + Date.now(), new BABYLON.Vector3(cx, cy, cz), scene);
+      fl.diffuse = new BABYLON.Color3(1, .42, .07);
+      fl.intensity = 2.0; fl.range = 12; fl._b = 2.0;
+      fl._followClone = clone;
+      fireLights.push(fl);
+    }, 400);
   }
 
   // Select it with gizmo
