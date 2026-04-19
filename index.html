@@ -1241,6 +1241,13 @@ function saveWorldLayout(){
   showToast('✓ Saved ' + data.length + ' objects');
 }
 
+// ── AUTO-SAVE — debounced 2s, fires after any placement/delete/move ──
+let _autoSaveTimer = null;
+function triggerAutoSave() {
+  if (_autoSaveTimer) clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(() => { saveWorldLayout(); }, 2000);
+}
+
 function loadWorldLayout(){
   const raw = localStorage.getItem("rebelAntsWorldLayout");
   if (!raw) return;
@@ -1330,6 +1337,7 @@ function deleteSelectedFence(){
   updateSelectedBadge();
 
   nodeToDelete.dispose(false, false);
+  triggerAutoSave();
 }
 function duplicateSelectedFence(){
   if (!selectedObject) return;
@@ -1777,6 +1785,7 @@ function spawnAssetFromPanel(key) {
     gizmoManager.scaleGizmoEnabled = false;
     gizmoManager.attachToNode(selectedObject);
   }
+  triggerAutoSave();
 }
 
 function uploadGLB() {
