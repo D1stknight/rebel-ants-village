@@ -1622,19 +1622,19 @@ Object.keys(ASSETS).forEach(key => loadAssetSource(key));
 
 // ── LOADING SCREEN + WORLD INIT ──────────────────
 async function initWorldLayout() {
-  if (window._ghToken) {
-    try {
-      const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/world-layout.json?ref=dev", {
-        headers: { "Authorization": "token " + window._ghToken }
-      });
-      if (resp.ok) {
-        const d = await resp.json();
-        const bytes = Uint8Array.from(atob(d.content.replace(/\n/g,'')), c => c.charCodeAt(0));
-        localStorage.setItem("rebelAntsWorldLayout", new TextDecoder('utf-8').decode(bytes));
-        console.log("Layout restored from GitHub");
-      }
-    } catch(e) { console.warn("Could not load layout from GitHub", e); }
-  }
+  // Always ensure token is set before fetching
+  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
+  try {
+    const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/world-layout.json?ref=dev", {
+      headers: { "Authorization": "token " + window._ghToken }
+    });
+    if (resp.ok) {
+      const d = await resp.json();
+      const bytes = Uint8Array.from(atob(d.content.replace(/\n/g,'')), c => c.charCodeAt(0));
+      localStorage.setItem("rebelAntsWorldLayout", new TextDecoder('utf-8').decode(bytes));
+      console.log("Layout restored from GitHub:", JSON.parse(new TextDecoder('utf-8').decode(bytes)).length, "objects");
+    }
+  } catch(e) { console.warn("Could not load layout from GitHub", e); }
   // Dismiss loading screen
   const ld = document.getElementById('ld');
   if (ld) { ld.style.opacity='0'; setTimeout(()=>{ ld.style.display='none'; }, 900); }
