@@ -1629,11 +1629,48 @@ async function initWorldLayout() {
   if (ld) { ld.style.opacity='0'; setTimeout(()=>{ ld.style.display='none'; }, 900); }
 }
 
+function loadCustomAssets() {
+  // Auto-load any uploaded GLBs not in the default ASSETS list
+  const defaultKeys = ['dojo_5','dojo_6','dojo_7','dojo_9','fence_1','shrine_2','tree_1','pine_1','rock_1','cherry_blossom','bamboo','lantern_1'];
+  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
+  fetch('https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/buildings?ref=dev', {
+    headers: { Authorization: 'token ' + window._ghToken }
+  }).then(r => r.json()).then(files => {
+    if (!Array.isArray(files)) return;
+    const customGLBs = files.filter(f => f.name.endsWith('.glb') && !defaultKeys.includes(f.name.replace('.glb','')));
+    if (!customGLBs.length) return;
+    const grid = document.querySelector('#assetPanel .ap-grid:last-of-type');
+    customGLBs.forEach(f => {
+      const key = f.name.replace('.glb','');
+      if (ASSETS[key]) return; // already registered
+      ASSETS[key] = { path: '/assets/buildings/' + f.name, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0) };
+      loadAssetSource(key);
+      // Add card — wait for load
+      if (grid) {
+        const card = document.createElement('div');
+        card.className = 'ap-card';
+        card.style.opacity = '0.5';
+        card.innerHTML = '⏳<span class="ap-name">' + key + '</span>';
+        grid.appendChild(card);
+        const wait = setInterval(() => {
+          if (_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded) {
+            clearInterval(wait);
+            card.style.opacity = '1';
+            card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
+            card.onclick = () => spawnAssetFromPanel(key);
+          }
+        }, 300);
+      }
+    });
+  }).catch(() => {});
+}
+
 function waitForWorldAndLoadLayout() {
   const allReady = Object.values(_assetSources).every(r => r && r.metadata && r.metadata.loaded === true);
   if (!allReady) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
   // Ensure all materials support enough lights now that everything is loaded
   scene.materials.forEach(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 64; });
+  loadCustomAssets();
   loadWorldLayout();
 }
 
