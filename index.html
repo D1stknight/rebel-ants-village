@@ -197,7 +197,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
-<script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script>
 const canvas=document.getElementById('c');
 const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
@@ -432,28 +431,41 @@ function softSnapSelectedObject(){
 
 function snapSelectedObjectToGround(){
   if (!selectedObject) return;
+  // Skip hanging lanterns and lantern proxies — they should not snap to ground
+  const objType = selectedObject.metadata && selectedObject.metadata.type;
+  if (objType === 'hangingLantern') return;
 
   const origin = new BABYLON.Vector3(
     selectedObject.position.x,
     200,
     selectedObject.position.z
   );
-
   const ray = new BABYLON.Ray(origin, new BABYLON.Vector3(0, -1, 0), 500);
-
   const hit = scene.pickWithRay(ray, mesh =>
     mesh === ground || mesh === court || mesh === plaza
   );
-
   if (!hit || !hit.hit || !hit.pickedPoint) return;
 
-  let offset = 0;
-  const type = getObjectType(selectedObject);
-
-  if (type && ASSETS[type] && ASSETS[type].groundOffset) {
-    offset = ASSETS[type].groundOffset;
+  // Use mesh BB to find bottom of object and sit it on the ground
+  const meshes = selectedObject.getChildMeshes(false).filter(m => m.getTotalVertices && m.getTotalVertices() > 0);
+  if (meshes.length > 0) {
+    selectedObject.computeWorldMatrix(true);
+    let minY = Infinity;
+    meshes.forEach(m => {
+      m.computeWorldMatrix(true);
+      const bb = m.getBoundingInfo().boundingBox;
+      if (bb.minimumWorld.y < minY) minY = bb.minimumWorld.y;
+    });
+    if (isFinite(minY)) {
+      selectedObject.position.y += (hit.pickedPoint.y - minY);
+      return;
+    }
   }
-
+  // Fallback: use groundOffset from ASSETS
+  let offset = 0;
+  if (objType && ASSETS[objType] && ASSETS[objType].groundOffset) {
+    offset = ASSETS[objType].groundOffset;
+  }
   selectedObject.position.y = hit.pickedPoint.y + offset;
 }
 // ── LIGHTING ────────────────────────────────
