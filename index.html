@@ -1641,9 +1641,15 @@ async function initWorldLayout() {
 }
 
 function waitForWorldAndLoadLayout() {
+  if (!waitForWorldAndLoadLayout._start) waitForWorldAndLoadLayout._start = Date.now();
+  const elapsed = Date.now() - waitForWorldAndLoadLayout._start;
   const allReady = Object.keys(ASSETS).every(k => _assetSources[k] && _assetSources[k].metadata && _assetSources[k].metadata.loaded === true);
-  if (!allReady) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
-  // Ensure all materials support enough lights now that everything is loaded
+  // Wait up to 15 seconds — then load anyway with whatever is ready
+  if (!allReady && elapsed < 15000) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
+  if (!allReady) {
+    const notReady = Object.keys(ASSETS).filter(k => !(_assetSources[k] && _assetSources[k].metadata && _assetSources[k].metadata.loaded === true));
+    console.warn('waitForWorldAndLoadLayout: timed out waiting for:', notReady, '— loading layout anyway');
+  }
   scene.materials.forEach(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 64; });
   loadWorldLayout();
   restoreUploadedAssets();
