@@ -910,6 +910,73 @@ function doorFrame(x,y,z,w,h){
   addTrigger({id:'forge',x,z,title:'THE FORGE',sub:'Custom Trait Builder',icon:'🎨',desc:'Gear up your ants for battle. Add custom overlays — weapons, armor, accessories — to your Battle for the Colony ants. Free to use for all holders.',actions:[{label:'Open Forge',href:'https://builder.rebelants.io',t:true},{label:'View Site',href:'https://rebelants.io',g:true}]});
 })();
 
+// ── TEMP ZONE SIGNS — floating labels with down arrows ──────────────
+(function addZoneSigns() {
+  const zones = [
+    { x: 0,   z: -80, label: 'THE COLONY',  sub: 'Community Hub' },
+    { x: 80,  z: 0,   label: 'RADIO STAGE', sub: 'Podcast Studio' },
+    { x: 0,   z: 80,  label: 'THE ARCHIVE', sub: 'NFT Gallery' },
+    { x: -65, z: -65, label: 'THE VAULT',   sub: 'Staking' },
+    { x: 65,  z: -65, label: 'THE FORGE',   sub: 'Trait Builder' },
+  ];
+
+  zones.forEach(z => {
+    // Pole
+    const poleMat = new BABYLON.StandardMaterial('signPoleMat_'+z.label, scene);
+    poleMat.diffuseColor = new BABYLON.Color3(.45, .28, .12);
+    const pole = BABYLON.MeshBuilder.CreateCylinder('signPole_'+z.label, {height:8, diameter:0.4, tessellation:8}, scene);
+    pole.material = poleMat;
+    pole.position = new BABYLON.Vector3(z.x, 4, z.z);
+    pole.isPickable = false;
+
+    // Sign board
+    const boardMat = new BABYLON.StandardMaterial('signBoardMat_'+z.label, scene);
+    boardMat.diffuseColor = new BABYLON.Color3(.18, .10, .04);
+    boardMat.emissiveColor = new BABYLON.Color3(.08, .05, .02);
+    const board = BABYLON.MeshBuilder.CreateBox('signBoard_'+z.label, {width:12, height:3.5, depth:0.3}, scene);
+    board.material = boardMat;
+    board.position = new BABYLON.Vector3(z.x, 9.5, z.z);
+    board.isPickable = false;
+
+    // Glowing text plane using DynamicTexture
+    const dtSize = 512;
+    const dt = new BABYLON.DynamicTexture('signTex_'+z.label, {width:dtSize, height:dtSize/3}, scene, false);
+    const ctx = dt.getContext();
+    ctx.fillStyle = 'rgba(10,6,2,0)';
+    ctx.clearRect(0, 0, dtSize, dtSize/3);
+    // Label
+    ctx.fillStyle = '#e8c56a';
+    ctx.font = 'bold 64px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(z.label, dtSize/2, 100);
+    // Sub
+    ctx.fillStyle = '#5ecfca';
+    ctx.font = '38px serif';
+    ctx.fillText(z.sub, dtSize/2, 150);
+    // Down arrow
+    ctx.fillStyle = '#e8c56a';
+    ctx.font = 'bold 52px serif';
+    ctx.fillText('▼  ▼  ▼', dtSize/2, 165);
+    dt.update();
+
+    const textMat = new BABYLON.StandardMaterial('signTextMat_'+z.label, scene);
+    textMat.diffuseTexture = dt;
+    textMat.emissiveTexture = dt;
+    textMat.backFaceCulling = false;
+    textMat.alphaMode = BABYLON.Engine.ALPHA_COMBINE;
+    const textPlane = BABYLON.MeshBuilder.CreatePlane('signText_'+z.label, {width:11.5, height:3.2}, scene);
+    textPlane.material = textMat;
+    textPlane.position = new BABYLON.Vector3(z.x, 9.5, z.z - 0.2);
+    textPlane.isPickable = false;
+
+    // Glow light on sign
+    const signLight = new BABYLON.PointLight('signLight_'+z.label, new BABYLON.Vector3(z.x, 10, z.z-1), scene);
+    signLight.diffuse = new BABYLON.Color3(1, .82, .4);
+    signLight.intensity = 0.8;
+    signLight.range = 8;
+  });
+})();
+
 // ── WALKABLE CHARACTER ───────────────────────
 setSt("Loading character...");
 let charMesh=null, charAnims={}, isMoving=false;
