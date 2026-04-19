@@ -1170,8 +1170,8 @@ item.type === "lantern_1" ||
           });
   });
 
-  // Restore saved lanterns
-  data.filter(item => item.type === 'lantern_1').forEach(item => {
+  // Restore saved lanterns (skip any stuck at source position ~9999)
+  data.filter(item => item.type === 'lantern_1' && Math.abs(item.position.x) < 500 && Math.abs(item.position.z) < 500).forEach(item => {
     const pos = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
     spawnLanternFull(pos);
   });
