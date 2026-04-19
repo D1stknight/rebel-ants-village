@@ -144,7 +144,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-section">Buildings</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
     <div class="ap-section">Nature</div>
-    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">lantern_1</span></div></div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">lantern_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wooden_sign')"><span class="ap-icon">🪧</span><span class="ap-name">wooden_sign</span></div><div class="ap-card" onclick="spawnAssetFromPanel('small_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">small_bridge</span></div></div>
     <hr class="ap-divider">
     <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
   </div>
@@ -279,8 +279,19 @@ lantern_1: {
   scale: 0.027,
   rotation: new BABYLON.Vector3(0, Math.PI, 0),
   groundOffset: 0
-}
-  
+},
+  wooden_sign: {
+    path: '/assets/buildings/wooden_sign.glb',
+    scale: 1.0,
+    rotation: new BABYLON.Vector3(0, Math.PI, 0),
+    noShadows: true
+  },
+  small_bridge: {
+    path: '/assets/buildings/small_bridge.glb',
+    scale: 1.0,
+    rotation: new BABYLON.Vector3(0, Math.PI, 0),
+    noShadows: true
+  }
 };
 
   // ═══════════════════════════════════════
