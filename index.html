@@ -462,6 +462,7 @@ skyMat.useSunPosition=true; skyMat.sunPosition=sun.position;
 skybox.material=skyMat; skybox.infiniteDistance=true;
 
 function updateSky(){
+  if (_worklightOn) return; // don't override worklight
   const now=new Date(), h=now.getHours()+now.getMinutes()/60;
   const d=Math.max(0,Math.sin(((h/24)-.25)*Math.PI*2));
   skyMat.inclination=-Math.sin(((h/24)-.25)*Math.PI*2)*.5;
@@ -1544,8 +1545,8 @@ let _worklightOn = false;
 function toggleWorklight() {
   _worklightOn = !_worklightOn;
   // Boost hemi light to full daylight when on
-  hemi.intensity = _worklightOn ? 1.2 : (sun.intensity > 1 ? 0.65 : 0.18);
-  sun.intensity = _worklightOn ? 2.0 : (sun.intensity > 1 ? sun.intensity : 0.15);
+  hemi.intensity = _worklightOn ? 0.7 : (sun.intensity > 1 ? 0.65 : 0.18);
+  sun.intensity = _worklightOn ? 1.2 : (sun.intensity > 1 ? sun.intensity : 0.15);
   sun.diffuse = _worklightOn ? new BABYLON.Color3(1, .97, .88) : new BABYLON.Color3(1, .97, .88);
   // Update button
   const btn = document.getElementById('worklightBtn');
