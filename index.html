@@ -387,7 +387,7 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('on');
   clearTimeout(showToast._timer);
-  showToast._timer = setTimeout(() => t.classList.remove('on'), 2500);
+  showToast._timer = setTimeout(() => t.classList.remove('on'), 5000);
 }
 
 function showSaveBadge(){
