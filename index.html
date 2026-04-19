@@ -197,6 +197,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+<script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script>
 const canvas=document.getElementById('c');
 const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
@@ -225,7 +226,7 @@ const ASSETS = {
 dojo_9: {
   path: "/assets/buildings/dojo_9.glb",
   scale: 1.2,
-  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+  rotation: new BABYLON.Vector3(Math.PI / 2, 0, 0)
 },
 
 fence_1: {
@@ -238,7 +239,7 @@ shrine_2: {
   path: "/assets/buildings/shrine_2.glb",
   scale: 12,
   rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
-  groundOffset: 12
+  groundOffset: 0
 },
 tree_1: {
   path: "/assets/buildings/tree_1.glb",
@@ -586,7 +587,16 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
 
 // ── RIVER ────────────────────────────────────
 const rvr=BABYLON.MeshBuilder.CreateGround("rv",{width:22,height:320},scene);
-rvr.material=mat(new BABYLON.Color3(.1,.36,.68),{a:.82}); rvr.position=new BABYLON.Vector3(112,.14,0);
+const waterMat = new BABYLON.WaterMaterial("water", scene, new BABYLON.Vector2(512,512));
+  waterMat.backFaceCulling = false;
+  waterMat.bumpTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/waterbump.png", scene);
+  waterMat.windForce = -8; waterMat.waveHeight = 0.1;
+  waterMat.windDirection = new BABYLON.Vector2(1, 1);
+  waterMat.waterColor = new BABYLON.Color3(.01, .18, .38);
+  waterMat.colorBlendFactor = 0.3; waterMat.waveLength = 0.08;
+  waterMat.addToRenderList(ground); waterMat.addToRenderList(court); waterMat.addToRenderList(plaza);
+  rvr.material = waterMat;
+  rvr.position=new BABYLON.Vector3(112,.14,0);
 
 // ── 4 TYPES OF TREES ─────────────────────────
 setSt("Planting forest...");
@@ -715,7 +725,11 @@ function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   // Light
   const ll=new BABYLON.PointLight("ll"+lIdx,new BABYLON.Vector3(x,y-.46,z),scene);
   ll.diffuse=BABYLON.Color3.FromHexString(col); ll.intensity=0.9; ll.range=7; ll._b=0.9;
-  lanLights.push(ll); lIdx++;
+  lanLights.push(ll);
+  // Make selectable in admin
+  root.metadata = { type: 'hangingLantern', isClone: true };
+  root.getChildMeshes().forEach(m => { m.isPickable = true; m._hangRoot = root; });
+  lIdx++;
 }
 
 // Lantern STRING with posts — no floating!
@@ -947,8 +961,13 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
   r.transformNodes.forEach(tn => { if(tn!==playerRoot)tn.parent=playerRoot; if(tn.rotationQuaternion)tn.rotationQuaternion=null; });
   charMesh = playerRoot;
   if (r.animationGroups.length > 0) { animGroups[0]=r.animationGroups[0]; const _ta0=animGroups[0].targetedAnimations;for(let _j=_ta0.length-1;_j>=0;_j--){if(_ta0[_j].animation.targetProperty==='position'&&_ta0[_j].target&&_ta0[_j].target.name==='mixamorig_Hips')_ta0.splice(_j,1);} animState=0; animGroups[0].play(true); }
-  window.followLight = new BABYLON.PointLight("followLight", new BABYLON.Vector3(0,4,0), scene);
+  window.followLight = new BABYLON.PointLight("followLight", new BABYLON.Vector3(9999,-999,9999), scene);
   window.followLight.diffuse = new BABYLON.Color3(1,.82,.5);
+  window.followLight.intensity = 0;
+  const courtyardLight = new BABYLON.PointLight("courtyardGlow", new BABYLON.Vector3(0, 3, 0), scene);
+  courtyardLight.diffuse = new BABYLON.Color3(1, .82, .5);
+  courtyardLight.intensity = 1.2;
+  courtyardLight.range = 28;
   window.followLight.intensity = 2.8; window.followLight.range = 22;
   setSt("Character ready!");
   [{f:"ant_walk_c.glb",i:1},{f:"ant_run_c.glb",i:2},{f:"ant_flip_kick_c.glb",i:3},{f:"ant_jumping_c.glb",i:4}].forEach(({f,i}) => {
@@ -1487,7 +1506,7 @@ engine.runRenderLoop(()=>{
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
     if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
-    if(window.followLight){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;}
+    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8;}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
     if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
     _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
     const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
