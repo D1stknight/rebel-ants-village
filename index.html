@@ -392,13 +392,13 @@ function updateSelectedBadge(){
   }
 }
 
-function showToast(msg) {
+function showToast(msg, duration) {
   const t = document.getElementById('toast');
   if (!t) return;
   t.textContent = msg;
   t.classList.add('on');
   clearTimeout(showToast._timer);
-  showToast._timer = setTimeout(() => t.classList.remove('on'), 5000);
+  showToast._timer = setTimeout(() => t.classList.remove('on'), duration || 5000);
 }
 
 function showSaveBadge(){
@@ -1810,8 +1810,47 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
   const key = file.name.replace('.glb','');
   const reader = new FileReader();
   reader.onload = async function(ev) {
-    const b64 = ev.target.result.split(',')[1];
-    // Upload to GitHub
+    let b64 = ev.target.result.split(',')[1];
+    const originalSize = file.size;
+
+    // ── AUTO-COMPRESS via serverless function ──────────────
+    showToast('⏳ Compressing ' + file.name + ' (' + (originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB') + ')...');
+    let compressedSize = originalSize;
+    let compressionMsg = '';
+    try {
+      const compResp = await fetch('/api/compress-glb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: b64 })
+      });
+      if (compResp.ok) {
+        const compData = await compResp.json();
+        if (compData.warning) {
+          // Compression failed — show fallback message with free tool link
+          const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
+          compressionMsg = '⚠️ Could not auto-compress (' + origFmt + '). Pre-compress free at: gltf.report or meshoptimizer.org';
+          b64 = compData.data;
+          compressedSize = originalSize;
+        } else {
+          b64 = compData.data;
+          compressedSize = compData.outputSize;
+          const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
+          const compFmt = compressedSize >= 1048576 ? (compressedSize/1048576).toFixed(1)+' MB' : Math.round(compressedSize/1024)+' KB';
+          if (compData.savedPercent > 2) {
+            compressionMsg = '✨ Compressed: ' + origFmt + ' → ' + compFmt + ' (' + compData.savedPercent + '% smaller)';
+          } else {
+            compressionMsg = '✓ Already optimized (' + origFmt + ') — no compression needed';
+          }
+        }
+      }
+    } catch(compErr) {
+      console.warn('Compression skipped:', compErr.message);
+      const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
+      compressionMsg = '⚠️ Auto-compress unavailable (' + origFmt + '). Pre-compress free at: gltf.report or meshoptimizer.org';
+    }
+
+    // ── UPLOAD TO GITHUB ───────────────────────────────────
+    showToast('☁️ Uploading ' + file.name + '...');
     const path = 'assets/buildings/' + file.name;
     let sha;
     try {
@@ -1824,11 +1863,11 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
       method: 'PUT', headers: { Authorization: 'token ' + window._ghToken, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    if (!put.ok) { alert('Upload failed'); return; }
-    // Add to ASSETS and load source
+    if (!put.ok) { showToast('❌ Upload failed — try again'); return; }
+
+    // ── LOAD INTO SCENE ────────────────────────────────────
     ASSETS[key] = { path: '/assets/buildings/' + file.name, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0) };
     loadAssetSource(key);
-    // Add card to panel — wait for asset to load before enabling click
     const grid = document.querySelector('#assetPanel .ap-grid:last-of-type');
     if (grid) {
       const card = document.createElement('div');
@@ -1836,14 +1875,14 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
       card.style.opacity = '0.5';
       card.innerHTML = '⏳<span class="ap-name">' + key + '</span>';
       grid.appendChild(card);
-      // Poll until source is loaded then enable
       const waitForLoad = setInterval(() => {
         if (_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded) {
           clearInterval(waitForLoad);
           card.style.opacity = '1';
           card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
           card.onclick = () => spawnAssetFromPanel(key);
-          showToast('✓ ' + file.name + ' ready to place');
+          // Show final compression result toast
+          showToast(compressionMsg || ('✓ ' + file.name + ' ready to place'), 8000);
         }
       }, 300);
     }
