@@ -1,0 +1,11 @@
+{
+  "name": "rebel-ants-village",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@gltf-transform/core": "^4.3.0",
+    "@gltf-transform/extensions": "^4.3.0",
+    "@gltf-transform/functions": "^4.3.0",
+    "sharp": "^0.33.0"
+  }
+}
