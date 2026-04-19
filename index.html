@@ -199,8 +199,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script>
 const canvas=document.getElementById('c');
-const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:false});
-engine.setHardwareScalingLevel(1.3);
+const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
 const setSt=t=>{document.getElementById('ldst').textContent=t;};
 
 // ═══════════════════════════════════════
@@ -478,8 +477,8 @@ const hemi=new BABYLON.HemisphericLight("h",new BABYLON.Vector3(0,1,0),scene);
 hemi.intensity=0.65; hemi.diffuse=new BABYLON.Color3(.52,.7,.98);
 hemi.groundColor=new BABYLON.Color3(.25,.32,.16); hemi.specular=new BABYLON.Color3(0,0,0);
 
-const shadows=new BABYLON.ShadowGenerator(512,sun);
-shadows.useExponentialShadowMap=true; shadows.bias=0.005;
+const shadows=new BABYLON.ShadowGenerator(1024,sun);
+shadows.useBlurExponentialShadowMap=true; shadows.blurKernel=20; shadows.bias=0.001;
 
 // ── PROCEDURAL SKY ───────────────────────────
 const skybox=BABYLON.MeshBuilder.CreateBox("sky",{size:1400},scene);
@@ -600,7 +599,7 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
 
 // ── RIVER ────────────────────────────────────
 const rvr=BABYLON.MeshBuilder.CreateGround("rv",{width:22,height:320},scene);
-const waterMat = new BABYLON.WaterMaterial("water", scene, new BABYLON.Vector2(256,256));
+const waterMat = new BABYLON.WaterMaterial("water", scene, new BABYLON.Vector2(512,512));
   waterMat.backFaceCulling = false;
   waterMat.bumpTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/waterbump.png", scene);
   waterMat.windForce = -8; waterMat.waveHeight = 0.1;
@@ -646,7 +645,7 @@ const fireLights=[];
 // Pre-create pool of 20 lantern lights BEFORE ground so shader compiles with all lights
 const _lanternLightPool = [];
 (function initLanternLightPool() {
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 20; i++) {
     const fl = new BABYLON.PointLight('lanternPool_' + i, new BABYLON.Vector3(9999, -999, 9999), scene);
     fl.diffuse = new BABYLON.Color3(1, .42, .07);
     fl.intensity = 0; fl.range = 12; fl._b = 2.0; fl._inUse = false;
@@ -1489,7 +1488,7 @@ window.addEventListener('resize',()=>engine.resize());
 let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
-  if(scene.getFrameId()%2===0) fireLights.forEach(fl=>{
+  fireLights.forEach(fl=>{
     if (fl._followMesh) {
       fl._followMesh.computeWorldMatrix(true);
       const bb = fl._followMesh.getBoundingInfo().boundingBox;
@@ -1575,8 +1574,6 @@ function waitForWorldAndLoadLayout() {
   if (!allReady) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
   // Ensure all materials support enough lights now that everything is loaded
   scene.materials.forEach(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 64; });
-  [ground, court, plaza, skybox].forEach(m => { if(m) m.freezeWorldMatrix(); });
-  scene.createOrUpdateSelectionOctree(32, 2);
   loadWorldLayout();
 }
 
