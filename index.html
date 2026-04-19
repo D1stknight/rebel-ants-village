@@ -477,8 +477,8 @@ const hemi=new BABYLON.HemisphericLight("h",new BABYLON.Vector3(0,1,0),scene);
 hemi.intensity=0.65; hemi.diffuse=new BABYLON.Color3(.52,.7,.98);
 hemi.groundColor=new BABYLON.Color3(.25,.32,.16); hemi.specular=new BABYLON.Color3(0,0,0);
 
-const shadows=new BABYLON.ShadowGenerator(1024,sun);
-shadows.useBlurExponentialShadowMap=true; shadows.blurKernel=20; shadows.bias=0.001;
+const shadows=new BABYLON.ShadowGenerator(512,sun);
+shadows.useExponentialShadowMap=true; shadows.bias=0.005;
 
 // ── PROCEDURAL SKY ───────────────────────────
 const skybox=BABYLON.MeshBuilder.CreateBox("sky",{size:1400},scene);
