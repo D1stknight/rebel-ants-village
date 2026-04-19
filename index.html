@@ -324,6 +324,11 @@ function spawnAsset(type, position) {
       m.parent = root;
       if (!config.noShadows) shadows.addShadowCaster(m);
       m.receiveShadows = !config.noShadows;
+      // Force maxSimultaneousLights=4 on every material in this GLB
+      if (m.material) {
+        const mats = m.material.subMaterials || [m.material];
+        mats.forEach(mt => { if (mt && mt.maxSimultaneousLights !== undefined) mt.maxSimultaneousLights = 4; });
+      }
     });
 
     root.metadata.loaded = true;
