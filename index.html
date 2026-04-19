@@ -1319,8 +1319,13 @@ document.addEventListener('keydown', e => {
     updateAdminBadge();
 
     if (adminMode) {
-      orbit.detachControl();
+      // Keep orbit camera active in admin — unlock for free editing
       walk.detachControl();
+      orbit.attachControl(canvas, true);
+      orbit.upperBetaLimit = Math.PI; // allow top-down view
+      orbit.lowerRadiusLimit = 5;
+      orbit.upperRadiusLimit = 600;
+      orbit.panningSensibility = 50; // fast panning with right-click drag
       toggleAssetPanel(true);
     } else {
       toggleAssetPanel(false);
@@ -1330,6 +1335,11 @@ document.addEventListener('keydown', e => {
       gizmoManager.positionGizmoEnabled = false;
       gizmoManager.rotationGizmoEnabled = false;
       gizmoManager.scaleGizmoEnabled = false;
+      // Restore normal camera limits
+      orbit.upperBetaLimit = Math.PI / 2.05;
+      orbit.lowerRadiusLimit = 8;
+      orbit.upperRadiusLimit = 450;
+      orbit.panningSensibility = 1000;
       orbit.attachControl(canvas, true);
     }
     return;
@@ -1716,6 +1726,26 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
   };
   reader.readAsDataURL(file);
   e.target.value = '';
+});
+
+
+// ── ADMIN DOUBLE-CLICK TO FOCUS ──────────────────
+canvas.addEventListener('dblclick', (e) => {
+  if (!adminMode) return;
+  // Don't fire if clicking on panel
+  if (e.target !== canvas) return;
+  const pick = scene.pick(scene.pointerX, scene.pointerY, m => m === ground || m === court || m === plaza);
+  if (!pick || !pick.hit || !pick.pickedPoint) return;
+  // Smoothly move camera target to clicked point
+  const target = pick.pickedPoint;
+  const startTarget = orbit.target.clone();
+  let t = 0;
+  const flyInterval = setInterval(() => {
+    t += 0.08;
+    if (t >= 1) { orbit.target = new BABYLON.Vector3(target.x, target.y, target.z); clearInterval(flyInterval); return; }
+    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease in-out
+    orbit.target = BABYLON.Vector3.Lerp(startTarget, target, ease);
+  }, 16);
 });
 
 </script>
