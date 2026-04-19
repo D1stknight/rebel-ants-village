@@ -1565,7 +1565,7 @@ Object.keys(ASSETS).forEach(key => loadAssetSource(key));
 
 
 // ── LOADING SCREEN + WORLD INIT ──────────────────
-async function initWorldLayout() {
+async async function initWorldLayout() {
   if (window._ghToken) {
     try {
       const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/world-layout.json?ref=dev", {
