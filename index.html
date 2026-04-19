@@ -1741,16 +1741,25 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
     // Add to ASSETS and load source
     ASSETS[key] = { path: '/assets/buildings/' + file.name, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0) };
     loadAssetSource(key);
-    // Add card to panel
+    // Add card to panel — wait for asset to load before enabling click
     const grid = document.querySelector('#assetPanel .ap-grid:last-of-type');
     if (grid) {
       const card = document.createElement('div');
       card.className = 'ap-card';
-      card.onclick = () => spawnAssetFromPanel(key);
-      card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
+      card.style.opacity = '0.5';
+      card.innerHTML = '⏳<span class="ap-name">' + key + '</span>';
       grid.appendChild(card);
+      // Poll until source is loaded then enable
+      const waitForLoad = setInterval(() => {
+        if (_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded) {
+          clearInterval(waitForLoad);
+          card.style.opacity = '1';
+          card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
+          card.onclick = () => spawnAssetFromPanel(key);
+          showToast('✓ ' + file.name + ' ready to place');
+        }
+      }, 300);
     }
-    alert(file.name + ' uploaded!');
   };
   reader.readAsDataURL(file);
   e.target.value = '';
