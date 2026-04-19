@@ -479,6 +479,7 @@ hemi.groundColor=new BABYLON.Color3(.25,.32,.16); hemi.specular=new BABYLON.Colo
 
 const shadows=new BABYLON.ShadowGenerator(512,sun);
 shadows.useExponentialShadowMap=true; shadows.bias=0.005;
+shadows.darkness=0.4;
 
 // ── PROCEDURAL SKY ───────────────────────────
 const skybox=BABYLON.MeshBuilder.CreateBox("sky",{size:1400},scene);
