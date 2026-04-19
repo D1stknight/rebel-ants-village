@@ -1090,8 +1090,15 @@ function applyObjectTransform(node, data){
 }
 
 function saveWorldLayout(){
-  const data = getEditableRoots().map(node => ({
-    type: getObjectType(node),
+  // Only save actually placed objects — skip source roots at 9999 and untyped nodes
+  const allNodes = scene.transformNodes.filter(n =>
+    n.metadata && n.metadata.isClone &&
+    !n.metadata.isPickProxy &&
+    n.name && !n.name.includes('.') &&
+    Math.abs(n.position.x) < 500 && Math.abs(n.position.z) < 500
+  );
+  const data = allNodes.map(node => ({
+    type: node.metadata.type,
     name: node.name,
     position: { x: node.position.x, y: node.position.y, z: node.position.z },
     rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
