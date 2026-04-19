@@ -1136,90 +1136,66 @@ function saveWorldLayout(){
 }
 
 function loadWorldLayout(){
-  if (!fenceRootRef || !dojoRootRef || !dojo6RootRef || !dojo7RootRef || !dojo9RootRef) return;
-
   const raw = localStorage.getItem("rebelAntsWorldLayout");
   if (!raw) return;
-
   let data;
-  try {
-    data = JSON.parse(raw);
-  } catch (err) {
-    console.error("Failed to parse saved world layout", err);
-    return;
-  }
-
+  try { data = JSON.parse(raw); } catch(e) { return; }
   if (!Array.isArray(data) || !data.length) return;
 
-    scene.transformNodes
-    .filter(n =>
-      n.name.startsWith("fenceRootClone_") ||
-      n.name.startsWith("dojoRootClone_") ||
-      n.name.startsWith("dojo6RootClone_") ||
-      n.name.startsWith("dojo7RootClone_") ||
-      n.name.startsWith("dojo9RootClone_") ||
-      n.name.startsWith("shrine2RootClone_") ||
-      n.name.startsWith("tree_1RootClone_") ||
-      n.name.startsWith("pine_1RootClone_")
-    )
-    .forEach(n => n.dispose(false, false));
+  // Dispose existing clones before restoring
+  scene.transformNodes.filter(n =>
+    n.name && n.name.includes('RootClone_') && !n.name.includes('.')
+  ).forEach(n => n.dispose(false, false));
+  scene.meshes.filter(m => m.name && (m.name.startsWith('lp_') || m.name.startsWith('lanternProxy_'))).forEach(m => m.dispose());
+  _lanternLightPool.forEach(l => { l._inUse = false; l.intensity = 0; l.position.set(9999,-999,9999); l._followMesh = null; });
+  for (let i = fireLights.length-1; i>=0; i--) { if (fireLights[i].name && fireLights[i].name.startsWith('lanternPool')) fireLights.splice(i,1); }
 
-  const baseFence = data.find(d => d.name === "fenceRoot");
-  const baseDojo = data.find(d => d.name === "dojoRoot");
-  const baseDojo6 = data.find(d => d.name === "dojo6Root");
-  const baseDojo7 = data.find(d => d.name === "dojo7Root");
-  const baseDojo9 = data.find(d => d.name === "dojo9Root");
-  const baseShrine = data.find(d => d.name === "shrine2Root");
+  // Restore each saved object
+  data.forEach(item => {
+    if (!item.type || !item.position) return;
+    if (Math.abs(item.position.x) >= 500 || Math.abs(item.position.z) >= 500) return; // skip stuck
 
-  if (baseFence) applyObjectTransform(fenceRootRef, baseFence);
-  if (baseDojo) applyObjectTransform(dojoRootRef, baseDojo);
-  if (baseDojo6) applyObjectTransform(dojo6RootRef, baseDojo6);
-  if (baseDojo7) applyObjectTransform(dojo7RootRef, baseDojo7);
-  if (baseDojo9) applyObjectTransform(dojo9RootRef, baseDojo9);
-  if (baseShrine) applyObjectTransform(shrine2Root, baseShrine);
+    if (item.type === 'lantern_1') {
+      // Lanterns use pool light system
+      spawnLanternFull(new BABYLON.Vector3(item.position.x, item.position.y, item.position.z));
+      return;
+    }
 
-  data.forEach((item, index) => {
-           if (
-      item.name === "fenceRoot" ||
-      item.name === "dojoRoot" ||
-      item.name === "dojo6Root" ||
-      item.name === "dojo7Root" ||
-      item.name === "dojo9Root" ||
-      item.name === "shrine2Root" ||
-item.type === "lantern_1" ||
-      item.type === "cherry_blossom"
-    ) return;
+    if (item.type === 'torii') {
+      // Torii are procedural — restore via torii() function
+      const g = torii(item.position.x, item.position.z, item.rotation.y);
+      if (g) {
+        g.position.y = item.position.y;
+        g.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
+      }
+      return;
+    }
 
-     let sourceRoot = editableRootRefs[item.type];
-    if (!sourceRoot) return; // skip if source not loaded yet — its own system will handle it
-
-    const cloneRoot = sourceRoot.clone(makeCloneName(item.type) + "_" + index);
-    if (!cloneRoot) return;
-
-    applyObjectTransform(cloneRoot, item);
-
-              cloneRoot.getChildMeshes().forEach(m => {
-            shadows.addShadowCaster(m);
-            m.receiveShadows = true;
-            m.isPickable = true;
-          });
+    // All GLB assets — clone from source
+    const source = _assetSources[item.type];
+    if (!source) return;
+    const clone = source.clone(makeCloneName(item.type));
+    if (!clone) return;
+    clone.metadata = { type: item.type, isClone: true };
+    clone.position = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
+    clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
+    clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
+    clone.getChildMeshes().forEach(m => {
+      shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
+    });
   });
 
-  // Restore saved lanterns (skip any stuck at source position ~9999)
-  data.filter(item => item.type === 'lantern_1' && Math.abs(item.position.x) < 500 && Math.abs(item.position.z) < 500).forEach(item => {
-    const pos = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
-    spawnLanternFull(pos);
-  });
-
-    selectedObject = null;
+  selectedObject = null;
   updateSelectedBadge();
-  gizmoManager.attachToNode(null);
-  gizmoManager.positionGizmoEnabled = false;
-  gizmoManager.rotationGizmoEnabled = false;
-  gizmoManager.scaleGizmoEnabled = false;
-
-  console.log("World layout loaded", data);
+  if (gizmoManager) {
+    gizmoManager.attachToNode(null);
+    gizmoManager.positionGizmoEnabled = false;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+  }
+  console.log("World layout loaded", data.length, "objects");
 }
+
 function deleteSelectedFence(){
   if (!selectedObject) return;
 
