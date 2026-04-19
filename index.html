@@ -578,25 +578,16 @@ torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0
 // ── FIRE BOWLS ───────────────────────────────
 const fireLights=[];
 
-// Pre-create pool of 20 lantern lights so shaders compile with them from the start
+// Pre-create pool of 20 lantern lights BEFORE ground so shader compiles with all lights
 const _lanternLightPool = [];
-function initLanternLightPool() {
+(function initLanternLightPool() {
   for (let i = 0; i < 20; i++) {
     const fl = new BABYLON.PointLight('lanternPool_' + i, new BABYLON.Vector3(9999, -999, 9999), scene);
     fl.diffuse = new BABYLON.Color3(1, .42, .07);
     fl.intensity = 0; fl.range = 12; fl._b = 2.0; fl._inUse = false;
     _lanternLightPool.push(fl);
   }
-  // Force all materials to support 64 simultaneous lights
-  setTimeout(() => {
-    scene.materials.forEach(mat => {
-      if (mat.maxSimultaneousLights !== undefined) {
-        mat.maxSimultaneousLights = 64;
-        mat.markAsDirty(BABYLON.Material.LightDirtyFlag);
-      }
-    });
-  }, 2000);
-}
+})();
 const lanLights=[];
 let lIdx=0;
 
@@ -1478,7 +1469,6 @@ function loadAssetSource(key) {
   registerEditableRoot(key, root);
 }
 Object.keys(ASSETS).forEach(key => loadAssetSource(key));
-initLanternLightPool();
 
 
 
@@ -1506,6 +1496,8 @@ async function initWorldLayout() {
 function waitForWorldAndLoadLayout() {
   const allReady = Object.values(_assetSources).every(r => r && r.metadata && r.metadata.loaded === true);
   if (!allReady) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
+  // Ensure all materials support enough lights now that everything is loaded
+  scene.materials.forEach(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 64; });
   loadWorldLayout();
 }
 
