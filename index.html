@@ -1630,7 +1630,7 @@ async function initWorldLayout() {
 }
 
 function waitForWorldAndLoadLayout() {
-  const allReady = Object.values(_assetSources).every(r => r && r.metadata && r.metadata.loaded === true);
+  const allReady = Object.keys(ASSETS).every(k => _assetSources[k] && _assetSources[k].metadata && _assetSources[k].metadata.loaded === true);
   if (!allReady) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
   // Ensure all materials support enough lights now that everything is loaded
   scene.materials.forEach(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 64; });
