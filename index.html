@@ -494,7 +494,7 @@ function updateSky(){
   const now=new Date(), h=now.getHours()+now.getMinutes()/60;
   const d=Math.max(0,Math.sin(((h/24)-.25)*Math.PI*2));
   skyMat.inclination=-Math.sin(((h/24)-.25)*Math.PI*2)*.5;
-  sun.intensity=0.15+d*3.2; hemi.intensity=0.18+d*.62;
+  sun.intensity=0.15+d*1.8; hemi.intensity=0.18+d*.45;
   if(h>=6&&h<9){sun.diffuse=new BABYLON.Color3(1,.62,.3);}
   else if(h>=9&&h<17){sun.diffuse=new BABYLON.Color3(1,.97,.88);}
   else if(h>=17&&h<20){sun.diffuse=new BABYLON.Color3(1,.48,.15);}
