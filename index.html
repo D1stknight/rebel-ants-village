@@ -122,6 +122,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #assetPanel .ap-footer{padding:8px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:5px;flex-shrink:0}
 #assetPanel .ap-footer button{flex:1;padding:6px;font-size:9px;font-family:'Cinzel Decorative',serif;letter-spacing:1px;border:1px solid rgba(255,255,255,.12);border-radius:4px;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;transition:all .15s}
 #assetPanel .ap-footer button:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
+#assetPanel .ap-section{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;padding:8px 12px 4px}
+#assetPanel .ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 8px 6px}
+#assetPanel .ctrl-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:6px 4px;cursor:pointer;text-align:center;color:rgba(255,255,255,.7);font-size:9px;font-family:'Cinzel Decorative',serif;letter-spacing:.5px;transition:all .15s;display:block;width:100%}
+#assetPanel .ctrl-btn:hover{background:rgba(232,197,106,.12);border-color:rgba(232,197,106,.4);color:#e8c56a}
+#assetPanel .ctrl-btn kbd{display:block;font-size:8px;color:rgba(255,255,255,.25);margin-top:2px;font-family:monospace}
+#assetPanel .ctrl-btn.danger{border-color:rgba(220,60,60,.3);color:rgba(220,100,100,.8)}
+#assetPanel .ctrl-btn.danger:hover{background:rgba(220,60,60,.15);border-color:rgba(220,60,60,.6);color:#e86060}
+#assetPanel .ctrl-btn.full{grid-column:1/-1}
 </style>
 </head>
 <body>
@@ -136,6 +144,20 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <hr class="ap-divider">
     <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
   </div>
+  <div class="ap-section">Selected</div>
+  <div class="ctrl-grid">
+    <button class="ctrl-btn" onclick="setGizmoMode('move')">Move<kbd>G</kbd></button>
+    <button class="ctrl-btn" onclick="setGizmoMode('rotate')">Rotate<kbd>R</kbd></button>
+    <button class="ctrl-btn" onclick="setGizmoMode('scale')">Scale<kbd>Y</kbd></button>
+    <button class="ctrl-btn" onclick="flipSelected()">Flip<kbd>F</kbd></button>
+    <button class="ctrl-btn" onclick="rotateSelectedBy(-Math.PI/2)">&#x21BA; -90&#xB0;<kbd>Q</kbd></button>
+    <button class="ctrl-btn" onclick="rotateSelectedBy(Math.PI/2)">&#x21BB; +90&#xB0;<kbd>E</kbd></button>
+    <button class="ctrl-btn" onclick="scaleSelected(1.25)">Larger<kbd>+</kbd></button>
+    <button class="ctrl-btn" onclick="scaleSelected(0.8)">Smaller<kbd>-</kbd></button>
+    <button class="ctrl-btn" onclick="duplicateSelectedFence()">Duplicate<kbd>N</kbd></button>
+    <button class="ctrl-btn danger" onclick="deleteSelectedFence()">Delete<kbd>Del</kbd></button>
+  </div>
+  <hr class="ap-divider">
   <div class="ap-footer">
     <button onclick="saveWorldLayout()">Save (P)</button>
     <button onclick="loadWorldLayout()">Load (L)</button>
@@ -1368,6 +1390,12 @@ document.addEventListener('keydown', e => {
     selectedObject.rotation.y += Math.PI / 2;
     return;
   }
+  if (adminMode && selectedObject && (key === '+' || key === '=')) {
+    scaleSelected(1.25); return;
+  }
+  if (adminMode && selectedObject && key === '-') {
+    scaleSelected(0.8); return;
+  }
 
   if (key === 'w' || e.key === 'ArrowUp') moveForward = true;
   if (key === 's' || e.key === 'ArrowDown') moveBackward = true;
@@ -1505,6 +1533,28 @@ initWorldLayout().then(() => waitForWorldAndLoadLayout());
   
 
 // ── ADMIN ASSET PANEL ─────────────────────────
+function setGizmoMode(mode) {
+  if (!selectedObject) return;
+  gizmoManager.positionGizmoEnabled = mode === 'move';
+  gizmoManager.rotationGizmoEnabled = mode === 'rotate';
+  gizmoManager.scaleGizmoEnabled = mode === 'scale';
+  gizmoManager.attachToNode(selectedObject);
+}
+function flipSelected() {
+  if (!selectedObject) return;
+  selectedObject.scaling.x *= -1;
+}
+function rotateSelectedBy(angle) {
+  if (!selectedObject) return;
+  selectedObject.rotation.y += angle;
+}
+function scaleSelected(factor) {
+  if (!selectedObject) return;
+  selectedObject.scaling.x *= factor;
+  selectedObject.scaling.y *= factor;
+  selectedObject.scaling.z *= factor;
+}
+
 function toggleAssetPanel(show) {
   const panel = document.getElementById('assetPanel');
   if (panel) panel.classList.toggle('on', show);
