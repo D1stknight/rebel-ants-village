@@ -158,6 +158,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn danger" onclick="deleteSelectedFence()">Delete<kbd>Del</kbd></button>
   </div>
   <hr class="ap-divider">
+  <div style="padding:0 8px 6px">
+    <button class="ctrl-btn full" id="worklightBtn" onclick="toggleWorklight()" style="grid-column:1/-1;width:100%">&#x2600; Worklight (W)<kbd>W</kbd></button>
+  </div>
+  <hr class="ap-divider">
   <div class="ap-footer">
     <button onclick="saveWorldLayout()">Save (P)</button>
     <button onclick="loadWorldLayout()">Load (L)</button>
@@ -1396,6 +1400,9 @@ document.addEventListener('keydown', e => {
   if (adminMode && selectedObject && key === '-') {
     scaleSelected(0.8); return;
   }
+  if (adminMode && key === 'l') {
+    toggleWorklight(); return;
+  }
 
   if (key === 'w' || e.key === 'ArrowUp') moveForward = true;
   if (key === 's' || e.key === 'ArrowDown') moveBackward = true;
@@ -1533,6 +1540,23 @@ initWorldLayout().then(() => waitForWorldAndLoadLayout());
   
 
 // ── ADMIN ASSET PANEL ─────────────────────────
+let _worklightOn = false;
+function toggleWorklight() {
+  _worklightOn = !_worklightOn;
+  // Boost hemi light to full daylight when on
+  hemi.intensity = _worklightOn ? 2.5 : (sun.intensity > 1 ? 0.65 : 0.18);
+  sun.intensity = _worklightOn ? 4.0 : (sun.intensity > 1 ? sun.intensity : 0.15);
+  sun.diffuse = _worklightOn ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(1, .97, .88);
+  // Update button
+  const btn = document.getElementById('worklightBtn');
+  if (btn) {
+    btn.style.background = _worklightOn ? 'rgba(232,197,106,.3)' : '';
+    btn.style.borderColor = _worklightOn ? 'rgba(232,197,106,.8)' : '';
+    btn.style.color = _worklightOn ? '#e8c56a' : '';
+    btn.textContent = _worklightOn ? '☀ Worklight ON (W)' : '☀ Worklight (W)';
+  }
+}
+
 function setGizmoMode(mode) {
   if (!selectedObject) return;
   gizmoManager.positionGizmoEnabled = mode === 'move';
