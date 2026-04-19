@@ -325,10 +325,7 @@ function spawnAsset(type, position) {
       if (!config.noShadows) shadows.addShadowCaster(m);
       m.receiveShadows = !config.noShadows;
       // Force maxSimultaneousLights=4 on every material in this GLB
-      if (m.material) {
-        const mats = m.material.subMaterials || [m.material];
-        mats.forEach(mt => { if (mt && mt.maxSimultaneousLights !== undefined) mt.maxSimultaneousLights = 4; });
-      }
+      if (m.material) m.material.maxSimultaneousLights = 4;
     });
 
     root.metadata.loaded = true;
@@ -488,6 +485,7 @@ hemi.groundColor=new BABYLON.Color3(.55,.58,.48); hemi.specular=new BABYLON.Colo
 const shadows=new BABYLON.ShadowGenerator(512,sun);
 shadows.useExponentialShadowMap=true; shadows.bias=0.005;
 shadows.darkness=0.85;
+shadows.getShadowMap().refreshRate = BABYLON.RenderTargetTexture.REFRESHRATE_RENDER_ONCE;
 
 // ── PROCEDURAL SKY ───────────────────────────
 const skybox=BABYLON.MeshBuilder.CreateBox("sky",{size:1400},scene);
@@ -1305,6 +1303,7 @@ function loadWorldLayout(){
     clone.getChildMeshes().forEach(m => {
       if (!_noShadows) shadows.addShadowCaster(m);
       m.receiveShadows = !_noShadows; m.isPickable = true;
+      if (m.material) m.material.maxSimultaneousLights = 4;
     });
   });
 
