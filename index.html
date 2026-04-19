@@ -349,6 +349,7 @@ walk.minZ = 0.2;
 scene.activeCamera = orbit;
 let walkMode = false;
 let adminMode = false;
+let _worklightOn = false;
 let adminDragging = false;
 
 const GRID_SIZE = 6;
@@ -1541,7 +1542,6 @@ initWorldLayout().then(() => waitForWorldAndLoadLayout());
   
 
 // ── ADMIN ASSET PANEL ─────────────────────────
-let _worklightOn = false;
 function toggleWorklight() {
   _worklightOn = !_worklightOn;
   // Boost hemi light to full daylight when on
