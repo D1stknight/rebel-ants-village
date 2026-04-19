@@ -336,7 +336,7 @@ gizmoManager.scaleGizmoEnabled = false;
 gizmoManager.clearGizmoOnEmptyPointerEvent = false;
 
 // ── CAMERAS ─────────────────────────────────
-const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/3.6,320,new BABYLON.Vector3(0,6,0),scene);
+const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/3.6,150,new BABYLON.Vector3(0,6,0),scene);
 orbit.lowerRadiusLimit=8; orbit.upperRadiusLimit=450; orbit.upperBetaLimit=Math.PI/2.05;
 orbit.wheelPrecision=2;
 orbit.inertia = 0.35;
@@ -910,28 +910,73 @@ function doorFrame(x,y,z,w,h){
   addTrigger({id:'forge',x,z,title:'THE FORGE',sub:'Custom Trait Builder',icon:'🎨',desc:'Gear up your ants for battle. Add custom overlays — weapons, armor, accessories — to your Battle for the Colony ants. Free to use for all holders.',actions:[{label:'Open Forge',href:'https://builder.rebelants.io',t:true},{label:'View Site',href:'https://rebelants.io',g:true}]});
 })();
 
-// ── TEMP ZONE SIGNS — simple poles with colored boards ──────────────
+// ── TEMP ZONE SIGNS — floating labels with down arrows ──────────────
 (function addZoneSigns() {
   const zones = [
-    { x: 0,   z: -70, label: 'THE COLONY',   col: new BABYLON.Color3(.9,.5,.1) },
-    { x: 70,  z: 0,   label: 'RADIO STAGE',  col: new BABYLON.Color3(.1,.7,.9) },
-    { x: 0,   z: 70,  label: 'THE ARCHIVE',  col: new BABYLON.Color3(.5,.9,.2) },
-    { x: -58, z: -58, label: 'THE VAULT',    col: new BABYLON.Color3(.9,.9,.1) },
-    { x: 58,  z: -58, label: 'THE FORGE',    col: new BABYLON.Color3(.9,.2,.5) },
+    { x: 0,   z: -70, label: 'THE COLONY',  sub: 'Community Hub' },
+    { x: 70,  z: 0,   label: 'RADIO STAGE', sub: 'Podcast Studio' },
+    { x: 0,   z: 70,  label: 'THE ARCHIVE', sub: 'NFT Gallery' },
+    { x: -58, z: -58, label: 'THE VAULT',   sub: 'Staking' },
+    { x: 58,  z: -58, label: 'THE FORGE',   sub: 'Trait Builder' },
   ];
+
   zones.forEach(z => {
-    const poleMat = new BABYLON.StandardMaterial('sp_'+z.label, scene);
-    poleMat.diffuseColor = new BABYLON.Color3(.35,.2,.08);
-    const pole = BABYLON.MeshBuilder.CreateCylinder('sp_'+z.label, {height:8,diameter:0.4,tessellation:6}, scene);
-    pole.material = poleMat; pole.position = new BABYLON.Vector3(z.x, 4, z.z);
+    // Pole
+    const poleMat = new BABYLON.StandardMaterial('signPoleMat_'+z.label, scene);
+    poleMat.diffuseColor = new BABYLON.Color3(.45, .28, .12);
+    const pole = BABYLON.MeshBuilder.CreateCylinder('signPole_'+z.label, {height:8, diameter:0.4, tessellation:8}, scene);
+    pole.material = poleMat;
+    pole.position = new BABYLON.Vector3(z.x, 4, z.z);
     pole.isPickable = false;
-    const boardMat = new BABYLON.StandardMaterial('sb_'+z.label, scene);
-    boardMat.diffuseColor = z.col; boardMat.emissiveColor = z.col.scale(0.4);
-    const board = BABYLON.MeshBuilder.CreateBox('sb_'+z.label, {width:10,height:3,depth:0.3}, scene);
-    board.material = boardMat; board.position = new BABYLON.Vector3(z.x, 9.5, z.z);
+
+    // Sign board
+    const boardMat = new BABYLON.StandardMaterial('signBoardMat_'+z.label, scene);
+    boardMat.diffuseColor = new BABYLON.Color3(.18, .10, .04);
+    boardMat.emissiveColor = new BABYLON.Color3(.08, .05, .02);
+    const board = BABYLON.MeshBuilder.CreateBox('signBoard_'+z.label, {width:12, height:3.5, depth:0.3}, scene);
+    board.material = boardMat;
+    board.position = new BABYLON.Vector3(z.x, 9.5, z.z);
     board.isPickable = false;
+
+    // Glowing text plane using DynamicTexture
+    const dtSize = 512;
+    const dt = new BABYLON.DynamicTexture('signTex_'+z.label, {width:dtSize, height:dtSize/3}, scene, false);
+    const ctx = dt.getContext();
+    ctx.fillStyle = 'rgba(10,6,2,0)';
+    ctx.clearRect(0, 0, dtSize, dtSize/3);
+    // Label
+    ctx.fillStyle = '#e8c56a';
+    ctx.font = 'bold 64px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(z.label, dtSize/2, 100);
+    // Sub
+    ctx.fillStyle = '#5ecfca';
+    ctx.font = '38px serif';
+    ctx.fillText(z.sub, dtSize/2, 150);
+    // Down arrow
+    ctx.fillStyle = '#e8c56a';
+    ctx.font = 'bold 52px serif';
+    ctx.fillText('▼  ▼  ▼', dtSize/2, 165);
+    dt.update();
+
+    const textMat = new BABYLON.StandardMaterial('signTextMat_'+z.label, scene);
+    textMat.diffuseTexture = dt;
+    textMat.emissiveTexture = dt;
+    textMat.backFaceCulling = false;
+    textMat.alphaMode = BABYLON.Engine.ALPHA_COMBINE;
+    const textPlane = BABYLON.MeshBuilder.CreatePlane('signText_'+z.label, {width:11.5, height:3.2}, scene);
+    textPlane.material = textMat;
+    textPlane.position = new BABYLON.Vector3(z.x, 9.5, z.z - 0.2);
+    textPlane.isPickable = false;
+
+    // Glow light on sign
+    const signLight = new BABYLON.PointLight('signLight_'+z.label, new BABYLON.Vector3(z.x, 10, z.z-1), scene);
+    signLight.diffuse = new BABYLON.Color3(1, .82, .4);
+    signLight.intensity = 0.8;
+    signLight.range = 8;
   });
 })();
+
 // ── WALKABLE CHARACTER ───────────────────────
 setSt("Loading character...");
 let charMesh=null, charAnims={}, isMoving=false;
@@ -1565,7 +1610,7 @@ Object.keys(ASSETS).forEach(key => loadAssetSource(key));
 
 
 // ── LOADING SCREEN + WORLD INIT ──────────────────
-async async function initWorldLayout() {
+async function initWorldLayout() {
   if (window._ghToken) {
     try {
       const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/world-layout.json?ref=dev", {
@@ -1585,8 +1630,7 @@ async async function initWorldLayout() {
 }
 
 function waitForWorldAndLoadLayout() {
-  // Only check built-in ASSETS keys, not dynamically added ones
-  const allReady = Object.keys(ASSETS).every(k => _assetSources[k] && _assetSources[k].metadata && _assetSources[k].metadata.loaded === true);
+  const allReady = Object.values(_assetSources).every(r => r && r.metadata && r.metadata.loaded === true);
   if (!allReady) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
   // Ensure all materials support enough lights now that everything is loaded
   scene.materials.forEach(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 64; });
