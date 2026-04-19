@@ -198,7 +198,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script>
-window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
 const canvas=document.getElementById('c');
 const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
 const setSt=t=>{document.getElementById('ldst').textContent=t;};
@@ -1633,6 +1632,7 @@ async function initWorldLayout() {
 function loadCustomAssets() {
   // Auto-load any uploaded GLBs not in the default ASSETS list
   const defaultKeys = ['dojo_5','dojo_6','dojo_7','dojo_9','fence_1','shrine_2','tree_1','pine_1','rock_1','cherry_blossom','bamboo','lantern_1'];
+  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
   fetch('https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/buildings?ref=dev', {
     headers: { Authorization: 'token ' + window._ghToken }
   }).then(r => r.json()).then(files => {
