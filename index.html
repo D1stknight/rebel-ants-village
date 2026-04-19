@@ -1654,6 +1654,41 @@ function waitForWorldAndLoadLayout() {
   // Ensure all materials support enough lights now that everything is loaded
   scene.materials.forEach(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 64; });
   loadWorldLayout();
+  restoreUploadedAssets();
+}
+
+// ── RESTORE UPLOADED ASSETS FROM LOCALSTORAGE ──────────
+// Any GLB uploaded via admin panel gets re-added to the panel on refresh
+// using its permanent /assets/buildings/ URL (available after Vercel redeploys)
+function restoreUploadedAssets() {
+  const uploaded = JSON.parse(localStorage.getItem('rebelAntsUploadedAssets') || '[]');
+  if (!uploaded.length) return;
+  const grid = document.querySelector('#assetPanel .ap-grid:last-of-type');
+  uploaded.forEach(({ key, file }) => {
+    // Add to ASSETS registry with permanent URL
+    if (!ASSETS[key]) {
+      ASSETS[key] = { path: '/assets/buildings/' + file, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0) };
+    }
+    // Load source mesh
+    if (!_assetSources[key]) loadAssetSource(key);
+    // Add card to panel if not already there
+    if (grid && !document.querySelector('[data-asset-key="' + key + '"]')) {
+      const card = document.createElement('div');
+      card.className = 'ap-card';
+      card.dataset.assetKey = key;
+      card.style.opacity = '0.5';
+      card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
+      grid.appendChild(card);
+      // Enable card once loaded
+      const waitForLoad = setInterval(() => {
+        if (_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded) {
+          clearInterval(waitForLoad);
+          card.style.opacity = '1';
+          card.onclick = () => spawnAssetFromPanel(key);
+        }
+      }, 300);
+    }
+  });
 }
 
 initWorldLayout().then(() => waitForWorldAndLoadLayout());
@@ -1863,6 +1898,13 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
       body: JSON.stringify(body)
     });
     if (!put.ok) { showToast('❌ Upload failed — try again', 8000); return; }
+
+    // ── SAVE TO localStorage so asset survives page refresh ──
+    const _uploadedAssets = JSON.parse(localStorage.getItem('rebelAntsUploadedAssets') || '[]');
+    if (!_uploadedAssets.find(a => a.key === key)) {
+      _uploadedAssets.push({ key, file: file.name });
+      localStorage.setItem('rebelAntsUploadedAssets', JSON.stringify(_uploadedAssets));
+    }
 
     // ── LOAD INTO SCENE IMMEDIATELY via blob URL ───────────
     // Convert compressed b64 back to binary blob so Babylon loads it NOW
