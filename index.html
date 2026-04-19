@@ -231,7 +231,8 @@ dojo_9: {
 fence_1: {
   path: "/assets/buildings/fence_1.glb",
   scale: 2,
-  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
+  groundOffset: -1
 },
 
 shrine_2: {
@@ -418,20 +419,9 @@ function snapValue(value, size){
 function softSnapSelectedObject(){
   if (!selectedObject) return;
 
-  const targetX = snapValue(selectedObject.position.x, GRID_SIZE);
-  const targetZ = snapValue(selectedObject.position.z, GRID_SIZE);
-
-  if (Math.abs(selectedObject.position.x - targetX) <= SNAP_DISTANCE) {
-    selectedObject.position.x = targetX;
-  }
-
-  if (Math.abs(selectedObject.position.z - targetZ) <= SNAP_DISTANCE) {
-    selectedObject.position.z = targetZ;
-  }
-
+  // Rotation snap only — no X/Z grid snapping
   if (selectedObject.rotation) {
     const targetRotY = snapValue(selectedObject.rotation.y, ROT_SNAP);
-
     if (Math.abs(selectedObject.rotation.y - targetRotY) <= ROT_SNAP_DISTANCE) {
       selectedObject.rotation.y = targetRotY;
     }
@@ -442,22 +432,28 @@ function softSnapSelectedObject(){
 
 function snapSelectedObjectToGround(){
   if (!selectedObject) return;
-  // Skip hanging lanterns and lantern proxies — they should not snap to ground
   const objType = selectedObject.metadata && selectedObject.metadata.type;
-  if (objType === 'hangingLantern') return;
 
-  const origin = new BABYLON.Vector3(
-    selectedObject.position.x,
-    200,
-    selectedObject.position.z
-  );
+  // Skip types that should never ground-snap
+  if (objType === 'hangingLantern') return;
+  if (objType && ASSETS[objType] && ASSETS[objType].noGroundSnap) return;
+
+  const origin = new BABYLON.Vector3(selectedObject.position.x, 200, selectedObject.position.z);
   const ray = new BABYLON.Ray(origin, new BABYLON.Vector3(0, -1, 0), 500);
-  const hit = scene.pickWithRay(ray, mesh =>
-    mesh === ground || mesh === court || mesh === plaza
-  );
+  const hit = scene.pickWithRay(ray, mesh => mesh === ground || mesh === court || mesh === plaza);
   if (!hit || !hit.hit || !hit.pickedPoint) return;
 
-  // Use mesh BB to find bottom of object and sit it on the ground
+  // Get groundOffset from ASSETS (can be negative to sink below ground)
+  const assetCfg = objType && ASSETS[objType];
+  const groundOffset = (assetCfg && assetCfg.groundOffset !== undefined) ? assetCfg.groundOffset : null;
+
+  // If asset has explicit groundOffset, use it directly — don't use BB
+  if (groundOffset !== null) {
+    selectedObject.position.y = hit.pickedPoint.y + groundOffset;
+    return;
+  }
+
+  // Default: use BB to sit the bottom of the mesh on the ground
   const meshes = selectedObject.getChildMeshes(false).filter(m => m.getTotalVertices && m.getTotalVertices() > 0);
   if (meshes.length > 0) {
     selectedObject.computeWorldMatrix(true);
@@ -472,12 +468,7 @@ function snapSelectedObjectToGround(){
       return;
     }
   }
-  // Fallback: use groundOffset from ASSETS
-  let offset = 0;
-  if (objType && ASSETS[objType] && ASSETS[objType].groundOffset) {
-    offset = ASSETS[objType].groundOffset;
-  }
-  selectedObject.position.y = hit.pickedPoint.y + offset;
+  selectedObject.position.y = hit.pickedPoint.y;
 }
 // ── LIGHTING ────────────────────────────────
 const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.7,-1.1,.5),scene);
