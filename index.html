@@ -259,7 +259,7 @@ pine_1: {
 rock_1: {
   path: "/assets/buildings/rock_1.glb",
   scale: 1.0,
-  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+  rotation: new BABYLON.Vector3(0, Math.PI, 0)
 },
 
 cherry_blossom: {
@@ -607,6 +607,7 @@ const waterMat = new BABYLON.WaterMaterial("water", scene, new BABYLON.Vector2(5
   waterMat.waterColor = new BABYLON.Color3(.01, .18, .38);
   waterMat.colorBlendFactor = 0.3; waterMat.waveLength = 0.08;
   waterMat.addToRenderList(ground); waterMat.addToRenderList(court); waterMat.addToRenderList(plaza);
+  waterMat.addToRenderList(skybox);
   rvr.material = waterMat;
   rvr.position=new BABYLON.Vector3(112,.14,0);
 
@@ -768,8 +769,8 @@ lanternRow(38,-38,38,38,18,3,"#44aaff");
 [[-72,0],[72,0],[0,-72],[0,72],[-55,-55],[55,-55]].forEach(([x,z],i)=>{
   const cols=["#ffdd66","#00ffee","#ff5555","#ffaa22","#ffcc00","#cc44ff"];
   const pm2=mat(new BABYLON.Color3(.22,.13,.06));
-  cyl(.07,.09,6,8,pm2,[x+8,0,z]);
-  hangingLantern(x+8,6.5,z,cols[i],.8);
+  cyl(.07,.09,6.2,8,pm2,[x+8,0,z]);
+  hangingLantern(x+8,7.2,z,cols[i],1.0);
 });
 
 // ══════════════════════════════════════════════
