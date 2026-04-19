@@ -1544,9 +1544,9 @@ let _worklightOn = false;
 function toggleWorklight() {
   _worklightOn = !_worklightOn;
   // Boost hemi light to full daylight when on
-  hemi.intensity = _worklightOn ? 2.5 : (sun.intensity > 1 ? 0.65 : 0.18);
-  sun.intensity = _worklightOn ? 4.0 : (sun.intensity > 1 ? sun.intensity : 0.15);
-  sun.diffuse = _worklightOn ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(1, .97, .88);
+  hemi.intensity = _worklightOn ? 1.2 : (sun.intensity > 1 ? 0.65 : 0.18);
+  sun.intensity = _worklightOn ? 2.0 : (sun.intensity > 1 ? sun.intensity : 0.15);
+  sun.diffuse = _worklightOn ? new BABYLON.Color3(1, .97, .88) : new BABYLON.Color3(1, .97, .88);
   // Update button
   const btn = document.getElementById('worklightBtn');
   if (btn) {
