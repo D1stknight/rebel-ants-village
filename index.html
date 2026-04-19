@@ -1814,7 +1814,7 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
     const originalSize = file.size;
 
     // ── AUTO-COMPRESS via serverless function ──────────────
-    showToast('⏳ Compressing ' + file.name + ' (' + (originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB') + ')...');
+    showToast('⏳ Compressing ' + file.name + ' (' + (originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB') + ')...', 30000);
     let compressedSize = originalSize;
     let compressionMsg = '';
     try {
@@ -1826,9 +1826,8 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
       if (compResp.ok) {
         const compData = await compResp.json();
         if (compData.warning) {
-          // Compression failed — show fallback message with free tool link
           const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
-          compressionMsg = '⚠️ Could not auto-compress (' + origFmt + '). Pre-compress free at: gltf.report or meshoptimizer.org';
+          compressionMsg = '⚠️ Could not auto-compress (' + origFmt + '). Pre-compress free at gltf.report';
           b64 = compData.data;
           compressedSize = originalSize;
         } else {
@@ -1846,11 +1845,11 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
     } catch(compErr) {
       console.warn('Compression skipped:', compErr.message);
       const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
-      compressionMsg = '⚠️ Auto-compress unavailable (' + origFmt + '). Pre-compress free at: gltf.report or meshoptimizer.org';
+      compressionMsg = '⚠️ Auto-compress unavailable (' + origFmt + '). Pre-compress free at gltf.report';
     }
 
     // ── UPLOAD TO GITHUB ───────────────────────────────────
-    showToast('☁️ Uploading ' + file.name + '...');
+    showToast('☁️ Uploading ' + file.name + ' to GitHub...', 30000);
     const path = 'assets/buildings/' + file.name;
     let sha;
     try {
@@ -1863,11 +1862,22 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
       method: 'PUT', headers: { Authorization: 'token ' + window._ghToken, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    if (!put.ok) { showToast('❌ Upload failed — try again'); return; }
+    if (!put.ok) { showToast('❌ Upload failed — try again', 8000); return; }
 
-    // ── LOAD INTO SCENE ────────────────────────────────────
-    ASSETS[key] = { path: '/assets/buildings/' + file.name, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0) };
+    // ── LOAD INTO SCENE IMMEDIATELY via blob URL ───────────
+    // Convert compressed b64 back to binary blob so Babylon loads it NOW
+    // without waiting for Vercel to redeploy
+    const binStr = atob(b64);
+    const binArr = new Uint8Array(binStr.length);
+    for (let i = 0; i < binStr.length; i++) binArr[i] = binStr.charCodeAt(i);
+    const blob = new Blob([binArr], { type: 'model/gltf-binary' });
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Register in ASSETS using blob URL for immediate use
+    // Also store the real path so world-layout save/load uses the permanent URL
+    ASSETS[key] = { path: blobUrl, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _realPath: '/assets/buildings/' + file.name };
     loadAssetSource(key);
+
     const grid = document.querySelector('#assetPanel .ap-grid:last-of-type');
     if (grid) {
       const card = document.createElement('div');
@@ -1881,8 +1891,7 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
           card.style.opacity = '1';
           card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
           card.onclick = () => spawnAssetFromPanel(key);
-          // Show final compression result toast
-          showToast(compressionMsg || ('✓ ' + file.name + ' ready to place'), 8000);
+          showToast(compressionMsg || ('✓ ' + file.name + ' ready to place'), 10000);
         }
       }, 300);
     }
