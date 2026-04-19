@@ -196,6 +196,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script>
 const canvas=document.getElementById('c');
 const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
@@ -258,14 +259,12 @@ pine_1: {
 rock_1: {
   path: "/assets/buildings/rock_1.glb",
   scale: 1.0,
-  noShadows: true,
   rotation: new BABYLON.Vector3(0, Math.PI, 0)
 },
 
 cherry_blossom: {
   path: "/assets/buildings/cherry_blossom.glb",
   scale: 1.0,
-  noShadows: true,
   rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
 },
 
@@ -601,12 +600,15 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
 
 // ── RIVER ────────────────────────────────────
 const rvr=BABYLON.MeshBuilder.CreateGround("rv",{width:22,height:320},scene);
-const waterMat = new BABYLON.StandardMaterial("water", scene);
-  waterMat.diffuseColor = new BABYLON.Color3(.05, .22, .45);
-  waterMat.specularColor = new BABYLON.Color3(.3, .5, .8);
-  waterMat.specularPower = 64;
-  waterMat.alpha = 0.88;
+const waterMat = new BABYLON.WaterMaterial("water", scene, new BABYLON.Vector2(512,512));
   waterMat.backFaceCulling = false;
+  waterMat.bumpTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/waterbump.png", scene);
+  waterMat.windForce = -8; waterMat.waveHeight = 0.1;
+  waterMat.windDirection = new BABYLON.Vector2(1, 1);
+  waterMat.waterColor = new BABYLON.Color3(.01, .18, .38);
+  waterMat.colorBlendFactor = 0.3; waterMat.waveLength = 0.08;
+  waterMat.addToRenderList(ground); waterMat.addToRenderList(court); waterMat.addToRenderList(plaza);
+  waterMat.addToRenderList(skybox);
   rvr.material = waterMat;
   rvr.position=new BABYLON.Vector3(112,.14,0);
 
@@ -1486,8 +1488,6 @@ window.addEventListener('resize',()=>engine.resize());
 // ── RENDER LOOP ──────────────────────────────
 let t=0;
 engine.runRenderLoop(()=>{
-  if(typeof _riverT==='undefined') window._riverT=0; _riverT+=0.005;
-  if(waterMat) waterMat.diffuseColor=new BABYLON.Color3(.04+Math.sin(_riverT)*.01,.20+Math.sin(_riverT*.7)*.02,.44+Math.sin(_riverT*.5)*.03);
   const dt=engine.getDeltaTime()/1000;
   fireLights.forEach(fl=>{
     if (fl._followMesh) {
