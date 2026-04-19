@@ -196,7 +196,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-<script src="https://cdn.babylonjs.com/babylon.draco.decoder.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script>
 const canvas=document.getElementById('c');
@@ -334,13 +333,6 @@ function spawnAsset(type, position) {
 }
 // ── SCENE ───────────────────────────────────
 const scene=new BABYLON.Scene(engine);
-  BABYLON.DracoCompression.Configuration = {
-    decoder: {
-      wasmUrl: "https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js",
-      wasmBinaryUrl: "https://cdn.babylonjs.com/draco_decoder_gltf.wasm",
-      fallbackUrl: "https://cdn.babylonjs.com/draco_decoder_gltf.js"
-    }
-  };
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
 scene.maxLightsPerMesh = 64;
 scene.onNewMaterialAddedObservable.add(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 64; });
