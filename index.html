@@ -646,7 +646,7 @@ const fireLights=[];
 // Pre-create pool of 20 lantern lights BEFORE ground so shader compiles with all lights
 const _lanternLightPool = [];
 (function initLanternLightPool() {
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 10; i++) {
     const fl = new BABYLON.PointLight('lanternPool_' + i, new BABYLON.Vector3(9999, -999, 9999), scene);
     fl.diffuse = new BABYLON.Color3(1, .42, .07);
     fl.intensity = 0; fl.range = 12; fl._b = 2.0; fl._inUse = false;
