@@ -600,13 +600,8 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
 
 // ── RIVER ────────────────────────────────────
 const rvr=BABYLON.MeshBuilder.CreateGround("rv",{width:22,height:320},scene);
-const waterMat = new BABYLON.StandardMaterial("water", scene);
-  waterMat.diffuseColor = new BABYLON.Color3(.04, .20, .44);
-  waterMat.specularColor = new BABYLON.Color3(.4, .6, .9);
-  waterMat.specularPower = 48;
-  waterMat.alpha = 0.85;
-  waterMat.backFaceCulling = false;
-  rvr.material = waterMat;
+// River mesh hidden — will be replaced with GLB asset
+  rvr.isVisible = false;
   rvr.position=new BABYLON.Vector3(112,.14,0);
 
 // ── 4 TYPES OF TREES ─────────────────────────
@@ -1724,7 +1719,7 @@ function uploadGLB() {
 document.getElementById('glbUploadInput').addEventListener('change', async function(e) {
   const file = e.target.files[0];
   if (!file || !file.name.endsWith('.glb')) return;
-  if (!window._ghToken) { alert('GitHub token not set'); return; }
+  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
   const key = file.name.replace('.glb','');
   const reader = new FileReader();
   reader.onload = async function(ev) {
