@@ -600,15 +600,12 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
 
 // ── RIVER ────────────────────────────────────
 const rvr=BABYLON.MeshBuilder.CreateGround("rv",{width:22,height:320},scene);
-const waterMat = new BABYLON.WaterMaterial("water", scene, new BABYLON.Vector2(512,512));
+const waterMat = new BABYLON.StandardMaterial("water", scene);
+  waterMat.diffuseColor = new BABYLON.Color3(.04, .20, .44);
+  waterMat.specularColor = new BABYLON.Color3(.4, .6, .9);
+  waterMat.specularPower = 48;
+  waterMat.alpha = 0.85;
   waterMat.backFaceCulling = false;
-  waterMat.bumpTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/waterbump.png", scene);
-  waterMat.windForce = -8; waterMat.waveHeight = 0.1;
-  waterMat.windDirection = new BABYLON.Vector2(1, 1);
-  waterMat.waterColor = new BABYLON.Color3(.01, .18, .38);
-  waterMat.colorBlendFactor = 0.3; waterMat.waveLength = 0.08;
-  waterMat.addToRenderList(ground); waterMat.addToRenderList(court); waterMat.addToRenderList(plaza);
-  waterMat.addToRenderList(skybox);
   rvr.material = waterMat;
   rvr.position=new BABYLON.Vector3(112,.14,0);
 
