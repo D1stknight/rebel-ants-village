@@ -843,7 +843,7 @@ function doorFrame(x,y,z,w,h){
 
 // ── BUILDING 1: THE COLONY (REAL GLB + STRONG GLOW) ──
 (()=>{
-  const x = 0, z = -80;
+  const x = -63.5, z = -81.6;
 
   // ✅ KEEP TRIGGER (UNCHANGED)
   addTrigger({
@@ -873,13 +873,13 @@ function doorFrame(x,y,z,w,h){
 
 // ── BUILDING 3: RADIO STAGE — trigger only ──
 (()=>{
-  const x=80,z=0;
+  const x=68.1,z=-73.4;
   addTrigger({id:'radio',x,z,title:'REBEL ANTS RADIO',sub:'Live Podcast Studio · Every Week',icon:'🎙️',desc:'The crypto show for the little guys. Live shows every week — interviewing web3 creators, artists, and projects in the web3 space. Watch on YouTube or listen on Spotify & iTunes.',actions:[{label:'YouTube',href:'https://www.youtube.com/@rebelantsradio',r:true},{label:'Spotify',href:'https://open.spotify.com/show/00fDOHcJcJPW7XpEDwO6lk'},{label:'iTunes',href:'https://podcasts.apple.com/us/podcast/rebel-ants-radio-the-nft-show-for-the-little-guys/id1651171099',g:true}]});
 })();
 
 // ── BUILDING 4: ARCHIVE — Glow Zone ───────
 (()=>{
-  const x=0,z=80;
+  const x=-6.1,z=112.9;
 
     // Archive glow lights removed
 
@@ -903,77 +903,20 @@ function doorFrame(x,y,z,w,h){
 
 // ── BUILDING 5: THE VAULT — trigger only ──
 (()=>{
-  const x=-65,z=-65;
+  const x=-65.9,z=72.9;
   addTrigger({id:'vault',x,z,title:'THE VAULT',sub:'Staking · Earn Rewards',icon:'💰',desc:'Stake your Rebel Ants NFTs to earn rewards and grow the colony treasury. The more warriors you stake, the stronger your colony becomes.',actions:[{label:'Start Staking',href:'https://rebelants.stakeaway.io/'},{label:'Learn More',href:'https://rebelants.io',g:true}]});
 })();
 
 // ── BUILDING 6: THE FORGE — trigger only ──
 (()=>{
-  const x=65,z=-65;
+  const x=62.8,z=78.2;
   addTrigger({id:'forge',x,z,title:'THE FORGE',sub:'Custom Trait Builder',icon:'🎨',desc:'Gear up your ants for battle. Add custom overlays — weapons, armor, accessories — to your Battle for the Colony ants. Free to use for all holders.',actions:[{label:'Open Forge',href:'https://builder.rebelants.io',t:true},{label:'View Site',href:'https://rebelants.io',g:true}]});
 })();
 
 // ── TEMP ZONE SIGNS — floating labels with down arrows ──────────────
 (function addZoneSigns() {
-  const zones = [
-    { x: 0,   z: -70, label: 'THE COLONY',  sub: 'Community Hub' },
-    { x: 70,  z: 0,   label: 'RADIO STAGE', sub: 'Podcast Studio' },
-    { x: 0,   z: 70,  label: 'THE ARCHIVE', sub: 'NFT Gallery' },
-    { x: -58, z: -58, label: 'THE VAULT',   sub: 'Staking' },
-    { x: 58,  z: -58, label: 'THE FORGE',   sub: 'Trait Builder' },
-  ];
-
-  zones.forEach(z => {
-    // Pole
-    const poleMat = new BABYLON.StandardMaterial('signPoleMat_'+z.label, scene);
-    poleMat.diffuseColor = new BABYLON.Color3(.45, .28, .12);
-    const pole = BABYLON.MeshBuilder.CreateCylinder('signPole_'+z.label, {height:8, diameter:0.4, tessellation:8}, scene);
-    pole.material = poleMat;
-    pole.position = new BABYLON.Vector3(z.x, 4, z.z);
-    pole.isPickable = false;
-
-    // Sign board
-    const boardMat = new BABYLON.StandardMaterial('signBoardMat_'+z.label, scene);
-    boardMat.diffuseColor = new BABYLON.Color3(.18, .10, .04);
-    boardMat.emissiveColor = new BABYLON.Color3(.08, .05, .02);
-    const board = BABYLON.MeshBuilder.CreateBox('signBoard_'+z.label, {width:12, height:3.5, depth:0.3}, scene);
-    board.material = boardMat;
-    board.position = new BABYLON.Vector3(z.x, 9.5, z.z);
-    board.isPickable = false;
-
-    // Glowing text plane using DynamicTexture
-    const dtSize = 512;
-    const dt = new BABYLON.DynamicTexture('signTex_'+z.label, {width:dtSize, height:dtSize/3}, scene, false);
-    const ctx = dt.getContext();
-    ctx.fillStyle = 'rgba(10,6,2,0)';
-    ctx.clearRect(0, 0, dtSize, dtSize/3);
-    // Label
-    ctx.fillStyle = '#e8c56a';
-    ctx.font = 'bold 64px serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(z.label, dtSize/2, 100);
-    // Sub
-    ctx.fillStyle = '#5ecfca';
-    ctx.font = '38px serif';
-    ctx.fillText(z.sub, dtSize/2, 150);
-    // Down arrow
-    ctx.fillStyle = '#e8c56a';
-    ctx.font = 'bold 52px serif';
-    ctx.fillText('▼  ▼  ▼', dtSize/2, 165);
-    dt.update();
-
-    const textMat = new BABYLON.StandardMaterial('signTextMat_'+z.label, scene);
-    textMat.diffuseTexture = dt;
-    textMat.emissiveTexture = dt;
-    textMat.backFaceCulling = false;
-    textMat.alphaMode = BABYLON.Engine.ALPHA_COMBINE;
-    const textPlane = BABYLON.MeshBuilder.CreatePlane('signText_'+z.label, {width:11.5, height:3.2}, scene);
-    textPlane.material = textMat;
-    textPlane.position = new BABYLON.Vector3(z.x, 9.5, z.z - 0.2);
-    textPlane.isPickable = false;
-
-    // Sign is emissive — no PointLight needed
-  });
+  // Zone signs now use wooden_sign.glb placed in world via admin
+  // Triggers moved to match sign positions — no temp geometry needed
 })();
 
 // cache-bust: 1776624187298 ── WALKABLE CHARACTER ───────────────────────
