@@ -725,7 +725,7 @@ function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   const cm2=mat(new BABYLON.Color3(.5,.5,.5));
   cyl(.022,.022,chainH,4,cm2,[0,chainH/2,0]).parent=root;
   // Body
-  const bm3=pbr(new BABYLON.Color3(1,.94,.7),{e:BABYLON.Color3.FromHexString(col),ei:.75,a:.92,r:.5});
+  const bm3=pbr(new BABYLON.Color3(1,.94,.7),{e:BABYLON.Color3.FromHexString(col),ei:2.5,a:.92,r:.5});
   cyl(.28,.28,.68,10,bm3,[0,-.46,0]).parent=root;
   // Caps
   const capm=mat(new BABYLON.Color3(.22,.12,.05));
@@ -734,10 +734,7 @@ function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   // Ring details
   cyl(.3,.3,.05,10,capm,[0,-.25,0]).parent=root;
   cyl(.3,.3,.05,10,capm,[0,-.66,0]).parent=root;
-  // Light
-  const ll=new BABYLON.PointLight("ll"+lIdx,new BABYLON.Vector3(x,y-.46,z),scene);
-  ll.diffuse=BABYLON.Color3.FromHexString(col); ll.intensity=0.9; ll.range=7; ll._b=0.9;
-  lanLights.push(ll);
+  // No PointLight — emissive glow handles visual appearance, saves GPU
   // Make selectable in admin
   root.metadata = { type: 'hangingLantern', isClone: true };
   root.getChildMeshes().forEach(m => { m.isPickable = true; m._hangRoot = root; });
@@ -975,11 +972,7 @@ function doorFrame(x,y,z,w,h){
     textPlane.position = new BABYLON.Vector3(z.x, 9.5, z.z - 0.2);
     textPlane.isPickable = false;
 
-    // Glow light on sign
-    const signLight = new BABYLON.PointLight('signLight_'+z.label, new BABYLON.Vector3(z.x, 10, z.z-1), scene);
-    signLight.diffuse = new BABYLON.Color3(1, .82, .4);
-    signLight.intensity = 0.8;
-    signLight.range = 8;
+    // Sign is emissive — no PointLight needed
   });
 })();
 
