@@ -171,6 +171,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <input id="signColor" type="color" value="#5ecfca" style="width:40px;height:30px;border:none;background:none;cursor:pointer" title="Neon color">
       <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="signClickable" checked> Clickable</label>
     </div>
+    <input id="signUrl" placeholder="URL e.g. https://rebelants.io" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#aaa;padding:4px 6px;font-size:11px;margin-bottom:4px">
     <button class="ctrl-btn full" onclick="applySignEditor()" style="grid-column:1/-1;width:100%;background:#5ecfca;color:#000">Apply to Sign</button>
   </div>
   <hr class="ap-divider">
@@ -417,6 +418,7 @@ function updateSelectedBadge(){
     document.getElementById('signIcon').value = cfg.icon || '';
     document.getElementById('signColor').value = cfg.color || '#5ecfca';
     document.getElementById('signClickable').checked = cfg.clickable !== false;
+    document.getElementById('signUrl').value = cfg.url || '';
   }
 }
 
@@ -1081,11 +1083,15 @@ scene.onPointerObservable.add((evt) => {
       node.getClassName &&
       node.getClassName() === "TransformNode";
 
+    const isEditRootChild = node._editRoot && node._editRoot.metadata && node._editRoot.metadata.type;
     if (isEditableRoot || isTopLevelClone || isTopLevelTypedNode) {
       editableNode = node;
       break;
     }
-
+    if (isEditRootChild) {
+      editableNode = node._editRoot;
+      break;
+    }
     node = node.parent;
   }
 
@@ -1264,6 +1270,7 @@ function loadWorldLayout(){
     clone.getChildMeshes().forEach(m => {
       if (!_noShadows) shadows.addShadowCaster(m);
       m.receiveShadows = !_noShadows; m.isPickable = true;
+      m._editRoot = clone; // enables admin picker to find parent clone
       if (m.material) m.material.maxSimultaneousLights = 4;
     });
   });
@@ -1646,7 +1653,9 @@ function applyZoneSignTextures() {
     // Register zone trigger if clickable
     if (cfg.clickable !== false) {
       addTrigger({ id:'sign_'+clone.name, x:clone.position.x, z:clone.position.z,
-        title:cfg.label, sub:cfg.sub||'', icon:cfg.icon||'🏯', color:cfg.color||'#5ecfca' });
+        title:cfg.label, sub:cfg.sub||'', icon:cfg.icon||'🏯', color:cfg.color||'#5ecfca',
+        desc: cfg.url ? 'Tap to visit' : '',
+        actions: cfg.url ? [{label:'Visit →', href:cfg.url, g:true}] : [] });
       _signTriggers.push('sign_'+clone.name);
     }
   });
@@ -1708,14 +1717,17 @@ function applySignEditor() {
   const color = document.getElementById('signColor').value;
   const clickable = document.getElementById('signClickable').checked;
   if (!label) { showToast('Enter a label first'); return; }
-  const cfg = { label, sub, icon, color, clickable };
+  const url = document.getElementById('signUrl').value.trim();
+  const cfg = { label, sub, icon, color, clickable, url };
   selectedObject.metadata.signConfig = cfg;
   renderSignTexture(selectedObject, cfg);
   // Update trigger
   if (typeof removeTrigger === 'function') removeTrigger('sign_'+selectedObject.name);
   if (clickable) {
     addTrigger({ id:'sign_'+selectedObject.name, x:selectedObject.position.x, z:selectedObject.position.z,
-      title:label, sub:sub, icon:icon||'🏯', color:color });
+      title:label, sub:sub, icon:icon||'🏯', color:color,
+      desc: url ? 'Tap to visit' : '',
+      actions: url ? [{label:'Visit →', href:url, g:true}] : [] });
   }
   saveWorldLayout();
   showToast('✅ Sign saved: ' + label);
