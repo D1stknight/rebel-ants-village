@@ -162,6 +162,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn danger" onclick="deleteSelectedFence()">Delete<kbd>Del</kbd></button>
   </div>
   <hr class="ap-divider">
+  <div id="signEditorPanel" style="display:none;padding:0 8px 8px">
+    <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin-bottom:6px;text-transform:uppercase">Sign Editor</div>
+    <input id="signLabel" placeholder="Label e.g. THE COLONY" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #5ecfca;color:#e8c56a;padding:4px 6px;font-family:'Cinzel Decorative',serif;font-size:11px;margin-bottom:4px">
+    <input id="signSub" placeholder="Subtitle e.g. Community Hub" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:4px 6px;font-size:11px;margin-bottom:4px">
+    <div style="display:flex;gap:4px;margin-bottom:4px">
+      <input id="signIcon" placeholder="Icon e.g. 🐜" style="width:60px;background:#1a1a2e;border:1px solid #333;color:#fff;padding:4px 6px;font-size:16px;text-align:center">
+      <input id="signColor" type="color" value="#5ecfca" style="width:40px;height:30px;border:none;background:none;cursor:pointer" title="Neon color">
+      <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="signClickable" checked> Clickable</label>
+    </div>
+    <button class="ctrl-btn full" onclick="applySignEditor()" style="grid-column:1/-1;width:100%;background:#5ecfca;color:#000">Apply to Sign</button>
+  </div>
+  <hr class="ap-divider">
   <div style="padding:0 8px 6px">
     <button class="ctrl-btn full" id="worklightBtn" onclick="toggleWorklight()" style="grid-column:1/-1;width:100%">&#x2600; Worklight (W)<kbd>W</kbd></button>
   </div>
@@ -386,13 +398,25 @@ function updateAdminBadge(){
 function updateSelectedBadge(){
   const badge = document.getElementById('selectedBadge');
   if (!badge) return;
-
   if (selectedObject) {
     badge.textContent = 'SELECTED: ' + selectedObject.name.toUpperCase();
     badge.classList.add('on');
   } else {
     badge.textContent = 'SELECTED: NONE';
     badge.classList.remove('on');
+  }
+  // Show sign editor if wooden_sign selected
+  const signPanel = document.getElementById('signEditorPanel');
+  if (!signPanel) return;
+  const isSign = selectedObject && selectedObject.metadata && selectedObject.metadata.type === 'wooden_sign';
+  signPanel.style.display = isSign ? 'block' : 'none';
+  if (isSign) {
+    const cfg = selectedObject.metadata.signConfig || {};
+    document.getElementById('signLabel').value = cfg.label || '';
+    document.getElementById('signSub').value = cfg.sub || '';
+    document.getElementById('signIcon').value = cfg.icon || '';
+    document.getElementById('signColor').value = cfg.color || '#5ecfca';
+    document.getElementById('signClickable').checked = cfg.clickable !== false;
   }
 }
 
@@ -923,6 +947,7 @@ setSt("Loading character...");
 let charMesh=null, charAnims={}, isMoving=false;
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
+let _signTriggers = [];
 let fenceRootRef = null;
 let dojoRootRef = null;
 let dojo6RootRef = null;
@@ -1148,7 +1173,8 @@ function saveWorldLayout(){
     name: node.name,
     position: { x: node.position.x, y: node.position.y, z: node.position.z },
     rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
-    scaling: { x: node.scaling.x, y: node.scaling.y, z: node.scaling.z }
+    scaling: { x: node.scaling.x, y: node.scaling.y, z: node.scaling.z },
+    signConfig: node.metadata.signConfig || null
   }));
   const json = JSON.stringify(data, null, 2);
   // Save to localStorage (fast cache for asset systems)
@@ -1230,7 +1256,7 @@ function loadWorldLayout(){
     if (!source) return;
     const clone = source.clone(makeCloneName(item.type));
     if (!clone) return;
-    clone.metadata = { type: item.type, isClone: true };
+    clone.metadata = { type: item.type, isClone: true, signConfig: item.signConfig || null };
     clone.position = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
     clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
     clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
@@ -1602,51 +1628,97 @@ function waitForWorldAndLoadLayout() {
 // Applies styled DynamicTexture to Sign7_primitive1 (the board face)
 // Emissive glow is FREE — zero performance cost
 function applyZoneSignTextures() {
-  const zones = [
-    { x:-63.5, z:-81.6, label:'THE COLONY',  sub:'Community Hub',   icon:'🐜', color:'#5ecfca' },
-    { x:68.1,  z:-73.4, label:'RADIO STAGE', sub:'Podcast Studio',  icon:'🎙️', color:'#ff5555' },
-    { x:-6.1,  z:112.9, label:'THE ARCHIVE', sub:'NFT Gallery',      icon:'🖼️', color:'#e8c56a' },
-    { x:-65.9, z:72.9,  label:'THE VAULT',   sub:'Staking Rewards',  icon:'💰', color:'#5ecfca' },
-    { x:62.8,  z:78.2,  label:'THE FORGE',   sub:'Trait Builder',    icon:'🎨', color:'#cc44ff' }
-  ];
-  const clones = scene.transformNodes.filter(n => n.metadata && n.metadata.type === 'wooden_sign' && n.metadata.isClone);
-  zones.forEach(zone => {
-    let best = null, bestDist = Infinity;
-    clones.forEach(c => { const d = Math.sqrt((c.position.x-zone.x)**2+(c.position.z-zone.z)**2); if(d<bestDist){bestDist=d;best=c;} });
-    if (!best) return;
-    const board = best.getChildMeshes(false).find(m => m.name.includes('primitive1'));
-    if (!board) return;
-    board.computeWorldMatrix(true);
-    const bb = board.getBoundingInfo().boundingBox;
-    const worldCenter = BABYLON.Vector3.Center(bb.minimumWorld, bb.maximumWorld);
-    const localCenter = BABYLON.Vector3.TransformCoordinates(worldCenter, best.getWorldMatrix().clone().invert());
-    const localW = (bb.maximumWorld.x-bb.minimumWorld.x)/best.scaling.x;
-    const localH = (bb.maximumWorld.y-bb.minimumWorld.y)/best.scaling.y;
-    const textPlane = BABYLON.MeshBuilder.CreatePlane('zoneTextPlane_'+zone.label, {width:localW*0.88, height:localH*0.82}, scene);
-    textPlane.parent = best;
-    textPlane.position = new BABYLON.Vector3(localCenter.x, localCenter.y, localCenter.z+0.0003);
-    textPlane.alwaysSelectAsActiveMesh = true;
-    textPlane.isPickable = false;
-    const dt = new BABYLON.DynamicTexture('zoneSignDT_'+zone.label, {width:512, height:256}, scene, false);
-    const ctx = dt.getContext();
-    ctx.fillStyle = '#100800'; ctx.fillRect(0,0,512,256);
-    ctx.strokeStyle = zone.color; ctx.lineWidth = 5; ctx.shadowColor = zone.color; ctx.shadowBlur = 20;
-    ctx.strokeRect(6,6,500,244); ctx.shadowBlur = 0;
-    ctx.strokeStyle = 'rgba(232,197,106,0.4)'; ctx.lineWidth = 1; ctx.strokeRect(14,14,484,228);
-    ctx.save(); ctx.translate(512,0); ctx.scale(-1,1);
-    ctx.font='44px serif'; ctx.textAlign='center'; ctx.fillText(zone.icon, 256, 72);
-    ctx.font='bold 54px "Cinzel Decorative", serif'; ctx.fillStyle='#e8c56a'; ctx.shadowColor='#e8c56a'; ctx.shadowBlur=14;
-    ctx.fillText(zone.label, 256, 138); ctx.shadowBlur=0;
-    ctx.font='22px "Cinzel Decorative", serif'; ctx.fillStyle=zone.color; ctx.shadowColor=zone.color; ctx.shadowBlur=8;
-    ctx.fillText(zone.sub, 256, 175); ctx.shadowBlur=0;
-    ctx.font='italic 16px "Noto Serif JP", serif'; ctx.fillStyle='rgba(232,197,106,0.5)';
-    ctx.fillText('rebelants.io', 256, 218); ctx.restore(); dt.update();
-    const signMat = new BABYLON.StandardMaterial('zoneSignMat_'+zone.label, scene);
-    signMat.diffuseTexture = dt; signMat.emissiveTexture = dt;
-    signMat.emissiveColor = new BABYLON.Color3(1,1,1); signMat.backFaceCulling = false;
-    signMat.hasAlpha = true; signMat.maxSimultaneousLights = 4;
-    textPlane.material = signMat;
+  // Driven by signConfig stored in each wooden_sign clone's metadata
+  // Remove any old text planes first
+  scene.meshes.filter(m => m.name && m.name.startsWith('zoneTextPlane_')).forEach(m => m.dispose());
+  // Remove old triggers driven by signs
+  _signTriggers = _signTriggers || [];
+  _signTriggers.forEach(id => removeTrigger && removeTrigger(id));
+  _signTriggers = [];
+
+  const clones = scene.transformNodes.filter(n =>
+    n.metadata && n.metadata.type === 'wooden_sign' && n.metadata.isClone
+  );
+  clones.forEach(clone => {
+    const cfg = clone.metadata.signConfig;
+    if (!cfg || !cfg.label) return;
+    renderSignTexture(clone, cfg);
+    // Register zone trigger if clickable
+    if (cfg.clickable !== false) {
+      addTrigger({ id:'sign_'+clone.name, x:clone.position.x, z:clone.position.z,
+        title:cfg.label, sub:cfg.sub||'', icon:cfg.icon||'🏯', color:cfg.color||'#5ecfca' });
+      _signTriggers.push('sign_'+clone.name);
+    }
   });
+}
+
+function renderSignTexture(clone, cfg) {
+  // Remove existing plane for this clone
+  const existing = scene.getMeshByName('zoneTextPlane_'+clone.name);
+  if (existing) existing.dispose();
+
+  const board = clone.getChildMeshes(false).find(m => m.name.includes('primitive1'));
+  if (!board) return;
+  board.computeWorldMatrix(true);
+  const bb = board.getBoundingInfo().boundingBox;
+  const worldCenter = BABYLON.Vector3.Center(bb.minimumWorld, bb.maximumWorld);
+  const localCenter = BABYLON.Vector3.TransformCoordinates(worldCenter, clone.getWorldMatrix().clone().invert());
+  const localW = (bb.maximumWorld.x-bb.minimumWorld.x)/clone.scaling.x;
+  const localH = (bb.maximumWorld.y-bb.minimumWorld.y)/clone.scaling.y;
+
+  const textPlane = BABYLON.MeshBuilder.CreatePlane('zoneTextPlane_'+clone.name, {width:localW*0.88, height:localH*0.82}, scene);
+  textPlane.parent = clone;
+  textPlane.position = new BABYLON.Vector3(localCenter.x, localCenter.y, localCenter.z+0.0003);
+  textPlane.alwaysSelectAsActiveMesh = true;
+  textPlane.isPickable = false;
+
+  const color = cfg.color || '#5ecfca';
+  const dt = new BABYLON.DynamicTexture('zoneSignDT_'+clone.name, {width:512, height:256}, scene, false);
+  const ctx = dt.getContext();
+  ctx.fillStyle = '#100800'; ctx.fillRect(0,0,512,256);
+  ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.shadowColor = color; ctx.shadowBlur = 20;
+  ctx.strokeRect(6,6,500,244); ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(232,197,106,0.4)'; ctx.lineWidth = 1; ctx.strokeRect(14,14,484,228);
+  ctx.save(); ctx.translate(512,0); ctx.scale(-1,1);
+  if (cfg.icon) { ctx.font='44px serif'; ctx.textAlign='center'; ctx.fillText(cfg.icon, 256, 70); }
+  ctx.font='bold 54px "Cinzel Decorative",serif'; ctx.fillStyle='#e8c56a';
+  ctx.shadowColor='#e8c56a'; ctx.shadowBlur=14; ctx.textAlign='center';
+  ctx.fillText(cfg.label, 256, cfg.icon ? 138 : 120); ctx.shadowBlur=0;
+  if (cfg.sub) {
+    ctx.font='22px "Cinzel Decorative",serif'; ctx.fillStyle=color;
+    ctx.shadowColor=color; ctx.shadowBlur=8;
+    ctx.fillText(cfg.sub, 256, cfg.icon ? 175 : 165); ctx.shadowBlur=0;
+  }
+  ctx.font='italic 16px serif'; ctx.fillStyle='rgba(232,197,106,0.5)';
+  ctx.fillText('rebelants.io', 256, 220);
+  ctx.restore(); dt.update();
+
+  const signMat = new BABYLON.StandardMaterial('zoneSignMat_'+clone.name, scene);
+  signMat.diffuseTexture = dt; signMat.emissiveTexture = dt;
+  signMat.emissiveColor = new BABYLON.Color3(1,1,1); signMat.backFaceCulling = false;
+  signMat.hasAlpha = true; signMat.maxSimultaneousLights = 4;
+  textPlane.material = signMat;
+}
+
+function applySignEditor() {
+  if (!selectedObject || !selectedObject.metadata || selectedObject.metadata.type !== 'wooden_sign') return;
+  const label = document.getElementById('signLabel').value.trim().toUpperCase();
+  const sub = document.getElementById('signSub').value.trim();
+  const icon = document.getElementById('signIcon').value.trim();
+  const color = document.getElementById('signColor').value;
+  const clickable = document.getElementById('signClickable').checked;
+  if (!label) { showToast('Enter a label first'); return; }
+  const cfg = { label, sub, icon, color, clickable };
+  selectedObject.metadata.signConfig = cfg;
+  renderSignTexture(selectedObject, cfg);
+  // Update trigger
+  if (typeof removeTrigger === 'function') removeTrigger('sign_'+selectedObject.name);
+  if (clickable) {
+    addTrigger({ id:'sign_'+selectedObject.name, x:selectedObject.position.x, z:selectedObject.position.z,
+      title:label, sub:sub, icon:icon||'🏯', color:color });
+  }
+  saveWorldLayout();
+  showToast('✅ Sign saved: ' + label);
 }
 
 // ── RESTORE UPLOADED ASSETS FROM LOCALSTORAGE ──────────
