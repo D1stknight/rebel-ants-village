@@ -1603,93 +1603,49 @@ function waitForWorldAndLoadLayout() {
 // Emissive glow is FREE — zero performance cost
 function applyZoneSignTextures() {
   const zones = [
-    { x:-63.5, z:-81.6, label:'THE COLONY',  sub:'Community Hub',    icon:'🐜', color:'#5ecfca' },
-    { x:68.1,  z:-73.4, label:'RADIO STAGE', sub:'Podcast Studio',   icon:'🎙️', color:'#ff5555' },
-    { x:-6.1,  z:112.9, label:'THE ARCHIVE', sub:'NFT Gallery',       icon:'🖼️', color:'#e8c56a' },
-    { x:-65.9, z:72.9,  label:'THE VAULT',   sub:'Staking Rewards',   icon:'💰', color:'#7CFF B2' },
-    { x:62.8,  z:78.2,  label:'THE FORGE',   sub:'Trait Builder',     icon:'🎨', color:'#cc44ff' }
+    { x:-63.5, z:-81.6, label:'THE COLONY',  sub:'Community Hub',   icon:'🐜', color:'#5ecfca' },
+    { x:68.1,  z:-73.4, label:'RADIO STAGE', sub:'Podcast Studio',  icon:'🎙️', color:'#ff5555' },
+    { x:-6.1,  z:112.9, label:'THE ARCHIVE', sub:'NFT Gallery',      icon:'🖼️', color:'#e8c56a' },
+    { x:-65.9, z:72.9,  label:'THE VAULT',   sub:'Staking Rewards',  icon:'💰', color:'#5ecfca' },
+    { x:62.8,  z:78.2,  label:'THE FORGE',   sub:'Trait Builder',    icon:'🎨', color:'#cc44ff' }
   ];
-
-  const clones = scene.transformNodes.filter(n =>
-    n.metadata && n.metadata.type === 'wooden_sign' && n.metadata.isClone
-  );
-
+  const clones = scene.transformNodes.filter(n => n.metadata && n.metadata.type === 'wooden_sign' && n.metadata.isClone);
   zones.forEach(zone => {
-    // Find closest wooden_sign clone
     let best = null, bestDist = Infinity;
-    clones.forEach(c => {
-      const d = Math.sqrt((c.position.x - zone.x)**2 + (c.position.z - zone.z)**2);
-      if (d < bestDist) { bestDist = d; best = c; }
-    });
+    clones.forEach(c => { const d = Math.sqrt((c.position.x-zone.x)**2+(c.position.z-zone.z)**2); if(d<bestDist){bestDist=d;best=c;} });
     if (!best) return;
-
-    // Find the board face mesh
-    const boardMesh = best.getChildMeshes(false).find(m => m.name.includes('primitive1'));
-    if (!boardMesh) return;
-
-    // Create DynamicTexture for this sign
-    const dtW = 512, dtH = 256;
-    const dt = new BABYLON.DynamicTexture('zoneSign_' + zone.label, { width: dtW, height: dtH }, scene, false);
+    const board = best.getChildMeshes(false).find(m => m.name.includes('primitive1'));
+    if (!board) return;
+    board.computeWorldMatrix(true);
+    const bb = board.getBoundingInfo().boundingBox;
+    const worldCenter = BABYLON.Vector3.Center(bb.minimumWorld, bb.maximumWorld);
+    const localCenter = BABYLON.Vector3.TransformCoordinates(worldCenter, best.getWorldMatrix().clone().invert());
+    const localW = (bb.maximumWorld.x-bb.minimumWorld.x)/best.scaling.x;
+    const localH = (bb.maximumWorld.y-bb.minimumWorld.y)/best.scaling.y;
+    const textPlane = BABYLON.MeshBuilder.CreatePlane('zoneTextPlane_'+zone.label, {width:localW*0.88, height:localH*0.82}, scene);
+    textPlane.parent = best;
+    textPlane.position = new BABYLON.Vector3(localCenter.x, localCenter.y, localCenter.z+0.0003);
+    textPlane.alwaysSelectAsActiveMesh = true;
+    textPlane.isPickable = false;
+    const dt = new BABYLON.DynamicTexture('zoneSignDT_'+zone.label, {width:512, height:256}, scene, false);
     const ctx = dt.getContext();
-
-    // Dark wood background
-    ctx.fillStyle = '#1a0e05';
-    ctx.fillRect(0, 0, dtW, dtH);
-
-    // Neon border glow — emissive, free
-    ctx.strokeStyle = zone.color;
-    ctx.lineWidth = 6;
-    ctx.shadowColor = zone.color;
-    ctx.shadowBlur = 18;
-    ctx.strokeRect(8, 8, dtW-16, dtH-16);
-    ctx.shadowBlur = 0;
-
-    // Icon
-    ctx.font = 'bold 52px serif';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = zone.color;
-    ctx.shadowColor = zone.color;
-    ctx.shadowBlur = 12;
-    ctx.fillText(zone.icon, 52, 100);
-    ctx.shadowBlur = 0;
-
-    // Zone label
-    ctx.font = 'bold 52px serif';
-    ctx.fillStyle = '#e8c56a';
-    ctx.shadowColor = '#e8c56a';
-    ctx.shadowBlur = 10;
-    ctx.textAlign = 'left';
-    ctx.fillText(zone.label, 110, 90);
-    ctx.shadowBlur = 0;
-
-    // Sub label
-    ctx.font = '32px serif';
-    ctx.fillStyle = zone.color;
-    ctx.fillText(zone.sub, 110, 135);
-
-    // Decorative line
-    ctx.strokeStyle = zone.color;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(16, 155); ctx.lineTo(dtW-16, 155);
-    ctx.stroke();
-
-    // Bottom tagline
-    ctx.font = 'italic 24px serif';
-    ctx.fillStyle = 'rgba(232,197,106,0.6)';
-    ctx.textAlign = 'center';
-    ctx.fillText('rebelants.io', dtW/2, 195);
-
-    dt.update();
-
-    // Apply as emissive material — glows, no light cost
-    const signMat = new BABYLON.StandardMaterial('zoneSignMat_' + zone.label, scene);
-    signMat.diffuseTexture = dt;
-    signMat.emissiveTexture = dt;
-    signMat.emissiveColor = new BABYLON.Color3(0.8, 0.8, 0.8);
-    signMat.backFaceCulling = false;
-    signMat.maxSimultaneousLights = 4;
-    boardMesh.material = signMat;
+    ctx.fillStyle = '#100800'; ctx.fillRect(0,0,512,256);
+    ctx.strokeStyle = zone.color; ctx.lineWidth = 5; ctx.shadowColor = zone.color; ctx.shadowBlur = 20;
+    ctx.strokeRect(6,6,500,244); ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(232,197,106,0.4)'; ctx.lineWidth = 1; ctx.strokeRect(14,14,484,228);
+    ctx.save(); ctx.translate(512,0); ctx.scale(-1,1);
+    ctx.font='44px serif'; ctx.textAlign='center'; ctx.fillText(zone.icon, 256, 72);
+    ctx.font='bold 54px "Cinzel Decorative", serif'; ctx.fillStyle='#e8c56a'; ctx.shadowColor='#e8c56a'; ctx.shadowBlur=14;
+    ctx.fillText(zone.label, 256, 138); ctx.shadowBlur=0;
+    ctx.font='22px "Cinzel Decorative", serif'; ctx.fillStyle=zone.color; ctx.shadowColor=zone.color; ctx.shadowBlur=8;
+    ctx.fillText(zone.sub, 256, 175); ctx.shadowBlur=0;
+    ctx.font='italic 16px "Noto Serif JP", serif'; ctx.fillStyle='rgba(232,197,106,0.5)';
+    ctx.fillText('rebelants.io', 256, 218); ctx.restore(); dt.update();
+    const signMat = new BABYLON.StandardMaterial('zoneSignMat_'+zone.label, scene);
+    signMat.diffuseTexture = dt; signMat.emissiveTexture = dt;
+    signMat.emissiveColor = new BABYLON.Color3(1,1,1); signMat.backFaceCulling = false;
+    signMat.hasAlpha = true; signMat.maxSimultaneousLights = 4;
+    textPlane.material = signMat;
   });
 }
 
