@@ -1386,6 +1386,9 @@ function toggleWalk() {
   }
 }
 document.addEventListener('keydown', e => {
+  // Don't fire shortcuts when typing in an input field
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
   const key = e.key.toLowerCase();
 
   if (key === 'm') {
