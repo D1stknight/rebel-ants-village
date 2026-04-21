@@ -3691,7 +3691,7 @@
     "name": "wooden_signRootClone_1776733323050_168",
     "position": {
       "x": -6.120001316070557,
-      "y": 0.010793939570458683,
+      "y": 0.010793940331831689,
       "z": 112.85455322265625
     },
     "rotation": {
@@ -3705,8 +3705,8 @@
       "z": 390.625162608851
     },
     "signConfig": {
-      "label": "WELCOME TO THE COLONY",
-      "sub": "ASHIGARU",
+      "label": "ASHIGARU",
+      "sub": "Welcome to the Colony",
       "icon": "🐜",
       "color": "#1cf019",
       "clickable": true,
