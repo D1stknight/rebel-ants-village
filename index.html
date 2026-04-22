@@ -144,7 +144,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-section">Buildings</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
     <div class="ap-section">Nature</div>
-    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">lantern_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wooden_sign')"><span class="ap-icon">🪧</span><span class="ap-name">wooden_sign</span></div><div class="ap-card" onclick="spawnAssetFromPanel('small_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">small_bridge</span></div></div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">lantern_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wooden_sign')"><span class="ap-icon">🪧</span><span class="ap-name">wooden_sign</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🏯</span><span class="ap-name">toro_lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('small_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">small_bridge</span></div></div>
     <hr class="ap-divider">
     <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
   </div>
@@ -176,6 +176,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div id="signBtnsContainer" style="margin-bottom:4px"></div>
     <button onclick="addSignButton()" style="width:100%;background:#1a1a2e;border:1px dashed #5ecfca;color:#5ecfca;padding:3px;font-size:10px;cursor:pointer;margin-bottom:6px">+ Add Button</button>
     <button class="ctrl-btn full" onclick="applySignEditor()" style="width:100%;background:#5ecfca;color:#000">Apply to Sign</button>
+  </div>
+  <div id="toroEditorPanel" style="display:none;padding:0 8px 8px">
+    <div style="font-size:9px;letter-spacing:2px;color:#ffdd88;margin-bottom:6px;text-transform:uppercase">Lantern Color</div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input id="toroColor" type="color" value="#ffdd88" style="width:44px;height:32px;border:none;background:none;cursor:pointer">
+      <span style="color:#aaa;font-size:10px">Pick glow color</span>
+    </div>
+    <button class="ctrl-btn full" onclick="applyToroColor()" style="width:100%;background:#ffdd88;color:#000">Apply Color</button>
   </div>
   <hr class="ap-divider">
   <div style="padding:0 8px 6px">
@@ -309,47 +317,105 @@ lantern_1: {
     scale: 1.0,
     rotation: new BABYLON.Vector3(0, Math.PI, 0),
     noShadows: true
+  },
+  toro_lantern: {
+    procedural: true,
+    scale: 1.0,
+    noShadows: true,
+    groundOffset: 0
   }
 };
 
   // ═══════════════════════════════════════
 // SPAWN ASSET FUNCTION (MASTER SYSTEM)
 // ═══════════════════════════════════════
-function spawnAsset(type, position) {
+function spawnAsset(type, position, extraMeta) {
   const config = ASSETS[type];
-  if (!config) {
-    console.warn("Missing asset:", type);
-    return null;
-  }
+  if (!config) { console.warn("Missing asset:", type); return null; }
 
   const root = new BABYLON.TransformNode(type + "_root", scene);
-
   root.position = position.clone();
   root.scaling = new BABYLON.Vector3(config.scale, config.scale, config.scale);
+  if (config.rotation) root.rotation = config.rotation.clone();
+  root.isPickable = true;
+  root.metadata = { type, loaded: false, ...(extraMeta||{}) };
 
-  if (config.rotation) {
-    root.rotation = config.rotation.clone();
-  }
-
-    root.isPickable = true;
-  root.metadata = { type, loaded: false };
-
-      BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
-
-    meshes.forEach(m => {
-      m.parent = root;
-      if (!config.noShadows) shadows.addShadowCaster(m);
-      m.receiveShadows = !config.noShadows;
-      // Force maxSimultaneousLights=4 on every material in this GLB
-      if (m.material) m.material.maxSimultaneousLights = 4;
-    });
-
+  if (config.procedural) {
+    // Build procedural asset immediately
+    if (type === 'toro_lantern') buildToro(root, root.metadata.toroColor || '#ffdd88');
     root.metadata.loaded = true;
-    console.log("Spawned:", type);
-
-  });
-
+    console.log("Spawned procedural:", type);
+  } else {
+    BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
+      meshes.forEach(m => {
+        m.parent = root;
+        if (!config.noShadows) shadows.addShadowCaster(m);
+        m.receiveShadows = !config.noShadows;
+        m._editRoot = root;
+        if (m.material) m.material.maxSimultaneousLights = 4;
+      });
+      root.metadata.loaded = true;
+      console.log("Spawned:", type);
+    });
+  }
   return root;
+}
+
+// ── TŌRŌ LANTERN BUILDER ─────────────────────────────────────
+// Traditional Japanese stone lantern (tōrō) built from primitives
+// All emissive — zero performance cost, unlimited placement
+function buildToro(root, glowColor) {
+  glowColor = glowColor || '#ffdd88';
+  const glow = BABYLON.Color3.FromHexString(glowColor);
+  const stone = new BABYLON.Color3(0.28, 0.24, 0.20);
+  const darkStone = new BABYLON.Color3(0.18, 0.15, 0.12);
+  const stoneMat = () => { const m = new BABYLON.StandardMaterial('toroStone_'+Math.random(),scene); m.diffuseColor=stone; m.maxSimultaneousLights=4; return m; };
+  const darkMat = () => { const m = new BABYLON.StandardMaterial('toroDark_'+Math.random(),scene); m.diffuseColor=darkStone; m.maxSimultaneousLights=4; return m; };
+  const glowMat = () => { const m = new BABYLON.StandardMaterial('toroGlow_'+Math.random(),scene); m.diffuseColor=glow; m.emissiveColor=glow; m.maxSimultaneousLights=4; return m; };
+
+  const attach = (mesh) => { mesh.parent=root; mesh.isPickable=true; mesh._editRoot=root; return mesh; };
+
+  // Base platform — wide stone slab
+  attach(BABYLON.MeshBuilder.CreateCylinder('tb0',{diameterTop:1.8,diameterBottom:2.0,height:0.25,tessellation:8},scene)).material=stoneMat();
+  // Base step
+  attach(BABYLON.MeshBuilder.CreateCylinder('tb1',{diameterTop:1.4,diameterBottom:1.6,height:0.2,tessellation:8},scene)).material=stoneMat();
+  const b1 = attach(BABYLON.MeshBuilder.CreateCylinder('tb1b',{diameterTop:1.4,diameterBottom:1.6,height:0.2,tessellation:8},scene));
+  b1.material=stoneMat(); b1.position.y=0.2;
+  // Post — tapered octagonal shaft
+  const post = attach(BABYLON.MeshBuilder.CreateCylinder('tp',{diameterTop:0.38,diameterBottom:0.55,height:4.8,tessellation:8},scene));
+  post.material=stoneMat(); post.position.y=2.6;
+  // Middle cap / waist ring
+  const waist = attach(BABYLON.MeshBuilder.CreateCylinder('tw',{diameterTop:0.7,diameterBottom:0.7,height:0.22,tessellation:8},scene));
+  waist.material=darkMat(); waist.position.y=3.0;
+  // Fire box platform
+  const fbBase = attach(BABYLON.MeshBuilder.CreateCylinder('tfb',{diameterTop:1.1,diameterBottom:0.9,height:0.18,tessellation:8},scene));
+  fbBase.material=darkMat(); fbBase.position.y=5.1;
+  // Fire box body — the glowing chamber
+  const fb = attach(BABYLON.MeshBuilder.CreateBox('tfbody',{width:0.9,height:1.0,depth:0.9},scene));
+  fb.material=glowMat(); fb.position.y=5.68;
+  // Fire box frame corners — dark stone surround
+  [[-0.4,-0.4],[0.4,-0.4],[-0.4,0.4],[0.4,0.4]].forEach(([ox,oz]) => {
+    const col = attach(BABYLON.MeshBuilder.CreateCylinder('tfc_'+ox,{diameterTop:0.1,diameterBottom:0.1,height:1.05,tessellation:6},scene));
+    col.material=darkMat(); col.position=new BABYLON.Vector3(ox,5.68,oz);
+  });
+  // Cap base
+  const capBase = attach(BABYLON.MeshBuilder.CreateCylinder('tcb',{diameterTop:1.3,diameterBottom:1.2,height:0.15,tessellation:8},scene));
+  capBase.material=darkMat(); capBase.position.y=6.22;
+  // Pagoda cap — two tiers
+  const cap1 = attach(BABYLON.MeshBuilder.CreateCylinder('tc1',{diameterTop:0.05,diameterBottom:1.4,height:0.55,tessellation:8},scene));
+  cap1.material=stoneMat(); cap1.position.y=6.62;
+  const cap2 = attach(BABYLON.MeshBuilder.CreateCylinder('tc2',{diameterTop:0.05,diameterBottom:0.85,height:0.35,tessellation:8},scene));
+  cap2.material=stoneMat(); cap2.position.y=7.02;
+  // Finial top
+  const fin = attach(BABYLON.MeshBuilder.CreateSphere('tfin',{diameter:0.18,segments:6},scene));
+  fin.material=darkMat(); fin.position.y=7.22;
+
+  // Ground glow disc — emissive pool of light on floor, free
+  const gDisc = attach(BABYLON.MeshBuilder.CreateDisc('tgdisc',{radius:2.2,tessellation:20},scene));
+  const gDiscMat = new BABYLON.StandardMaterial('tgdiscMat_'+Math.random(),scene);
+  gDiscMat.emissiveColor = new BABYLON.Color3(glow.r*0.3, glow.g*0.3, glow.b*0.3);
+  gDiscMat.backFaceCulling=false; gDiscMat.maxSimultaneousLights=4;
+  gDisc.material=gDiscMat; gDisc.position.y=0.02; gDisc.rotation.x=Math.PI/2;
 }
 // ── SCENE ───────────────────────────────────
 const scene=new BABYLON.Scene(engine);
@@ -414,6 +480,12 @@ function updateSelectedBadge(){
   if (!signPanel) return;
   const isSign = selectedObject && selectedObject.metadata && selectedObject.metadata.type === 'wooden_sign';
   signPanel.style.display = isSign ? 'block' : 'none';
+  const toroPanel = document.getElementById('toroEditorPanel');
+  if (toroPanel) {
+    const isToro = selectedObject && selectedObject.metadata && selectedObject.metadata.type === 'toro_lantern';
+    toroPanel.style.display = isToro ? 'block' : 'none';
+    if (isToro) document.getElementById('toroColor').value = selectedObject.metadata.toroColor || '#ffdd88';
+  }
   if (isSign) {
     const cfg = selectedObject.metadata.signConfig || {};
     document.getElementById('signLabel').value = cfg.label || '';
@@ -790,14 +862,7 @@ lanternRow(-38,-38,38,-38,18,3,"#ffdd88");
 lanternRow(-38,38,38,38,18,3,"#ff9944");
 lanternRow(-38,-38,-38,38,18,3,"#ff5555");
 lanternRow(38,-38,38,38,18,3,"#44aaff");
-// Building accent lanterns — on posts near each dojo
-// One accent lantern per building (not two)
-[[-72,0],[72,0],[0,-72],[0,72],[-55,-55],[55,-55]].forEach(([x,z],i)=>{
-  const cols=["#ffdd66","#00ffee","#ff5555","#ffaa22","#ffcc00","#cc44ff"];
-  const pm2=mat(new BABYLON.Color3(.22,.13,.06));
-  cyl(.07,.09,6.2,8,pm2,[x+8,0,z]);
-  hangingLantern(x+8,7.2,z,cols[i],1.0);
-});
+// Building accent lanterns removed — replaced by placeable toro_lantern asset
 
 // ══════════════════════════════════════════════
 //  6 UNIQUE DOJOS — each different architecture
@@ -1129,7 +1194,8 @@ function saveWorldLayout(){
     position: { x: node.position.x, y: node.position.y, z: node.position.z },
     rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
     scaling: { x: node.scaling.x, y: node.scaling.y, z: node.scaling.z },
-    signConfig: node.metadata.signConfig || null
+    signConfig: node.metadata.signConfig || null,
+    toroColor: node.metadata.toroColor || null
   }));
   const json = JSON.stringify(data, null, 2);
   // Save to localStorage (fast cache for asset systems)
@@ -1207,11 +1273,21 @@ function loadWorldLayout(){
     }
 
     // All GLB assets — clone from source
+    // Handle procedural assets (no GLB source needed)
+    if (ASSETS[item.type] && ASSETS[item.type].procedural) {
+      const pos = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
+      const clone = spawnAsset(item.type, pos, { isClone: true, toroColor: item.toroColor || '#ffdd88' });
+      if (!clone) return;
+      clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
+      clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
+      registerEditableRoot(clone.name, clone);
+      return;
+    }
     const source = _assetSources[item.type];
     if (!source) return;
     const clone = source.clone(makeCloneName(item.type));
     if (!clone) return;
-    clone.metadata = { type: item.type, isClone: true, signConfig: item.signConfig || null };
+    clone.metadata = { type: item.type, isClone: true, signConfig: item.signConfig || null, toroColor: item.toroColor || null };
     clone.position = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
     clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
     clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
@@ -1530,6 +1606,7 @@ engine.runRenderLoop(()=>{
 const _assetSources = {};
 function loadAssetSource(key) {
   if (_assetSources[key]) return;
+  if (ASSETS[key] && ASSETS[key].procedural) { _assetSources[key] = { metadata: { loaded: true }, procedural: true }; return; }
   const root = spawnAsset(key, new BABYLON.Vector3(9999, 0, 9999));
   root.name = key + "Root";
   _assetSources[key] = root;
@@ -1569,7 +1646,10 @@ async function initWorldLayout() {
 function waitForWorldAndLoadLayout() {
   if (!waitForWorldAndLoadLayout._start) waitForWorldAndLoadLayout._start = Date.now();
   const elapsed = Date.now() - waitForWorldAndLoadLayout._start;
-  const allReady = Object.keys(ASSETS).every(k => _assetSources[k] && _assetSources[k].metadata && _assetSources[k].metadata.loaded === true);
+  const allReady = Object.keys(ASSETS).every(k => {
+    if (ASSETS[k].procedural) return true; // procedural assets are always ready
+    return _assetSources[k] && _assetSources[k].metadata && _assetSources[k].metadata.loaded;
+  });
   // Wait up to 15 seconds — then load anyway with whatever is ready
   if (!allReady && elapsed < 15000) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
   if (!allReady) {
@@ -1714,6 +1794,17 @@ function applySignEditor() {
   showToast('✅ Sign saved: ' + label);
 }
 
+function applyToroColor() {
+  if (!selectedObject || selectedObject.metadata.type !== 'toro_lantern') return;
+  const color = document.getElementById('toroColor').value;
+  selectedObject.metadata.toroColor = color;
+  // Dispose old meshes and rebuild with new color
+  selectedObject.getChildMeshes(false).forEach(m => m.dispose());
+  buildToro(selectedObject, color);
+  saveWorldLayout();
+  showToast('🏯 Lantern color updated');
+}
+
 // ── RESTORE UPLOADED ASSETS FROM LOCALSTORAGE ──────────
 // Any GLB uploaded via admin panel gets re-added to the panel on refresh
 // using its permanent /assets/buildings/ URL (available after Vercel redeploys)
@@ -1848,6 +1939,29 @@ function spawnLanternFull(spawnPos) {
 }
 
 function spawnAssetFromPanel(key) {
+  // Handle procedural assets — no GLB source needed
+  if (ASSETS[key] && ASSETS[key].procedural) {
+    let spawnPos;
+    if (walkMode && charMesh) {
+      const fwd = new BABYLON.Vector3(Math.sin(charMesh.rotation.y), 0, Math.cos(charMesh.rotation.y));
+      spawnPos = charMesh.position.add(fwd.scale(8));
+    } else {
+      spawnPos = orbit.target.add(new BABYLON.Vector3(Math.sin(orbit.alpha)*12, 0, Math.cos(orbit.alpha)*12));
+    }
+    const pos = new BABYLON.Vector3(spawnPos.x, 0, spawnPos.z);
+    const clone = spawnAsset(key, pos, { isClone: true, toroColor: '#ffdd88' });
+    if (!clone) return;
+    registerEditableRoot(clone.name, clone);
+    selectedObject = clone;
+    snapSelectedObjectToGround();
+    updateSelectedBadge();
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+    triggerAutoSave();
+    return;
+  }
   if (!_assetSources[key]) { console.warn('Asset not loaded:', key); return; }
   // Spawn in front of camera
   let spawnPos;
