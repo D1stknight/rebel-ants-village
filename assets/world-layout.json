@@ -3876,7 +3876,7 @@
     "position": {
       "x": -106.79315185546875,
       "y": 0.05999999865886707,
-      "z": -22.936031341552734
+      "z": -26.481781005859375
     },
     "rotation": {
       "x": 0,
@@ -3890,5 +3890,47 @@
     },
     "signConfig": null,
     "toroColor": "#aaeed7"
+  },
+  {
+    "type": "toro_lantern",
+    "name": "toro_lanternRootClone_1776818479929_173",
+    "position": {
+      "x": -106.34178161621094,
+      "y": 0.05999999865886707,
+      "z": 27.13014793395996
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": "#aaeed7"
+  },
+  {
+    "type": "lantern_1",
+    "name": "lantern_1RootClone_1776818556292_174",
+    "position": {
+      "x": -110.54688732170175,
+      "y": -0.026297980752273187,
+      "z": -14.625595092773438
+    },
+    "rotation": {
+      "x": 0,
+      "y": 3.141592653589793,
+      "z": 0
+    },
+    "scaling": {
+      "x": 0.027,
+      "y": 0.027,
+      "z": 0.027
+    },
+    "signConfig": null,
+    "toroColor": null
   }
 ]
