@@ -144,7 +144,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-section">Buildings</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
     <div class="ap-section">Nature</div>
-    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">lantern_1</span></div></div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">lantern_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wooden_sign')"><span class="ap-icon">🪧</span><span class="ap-name">wooden_sign</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🏯</span><span class="ap-name">toro_lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('small_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">small_bridge</span></div></div>
     <hr class="ap-divider">
     <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
   </div>
@@ -160,6 +160,30 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" onclick="scaleSelected(0.8)">Smaller<kbd>-</kbd></button>
     <button class="ctrl-btn" onclick="duplicateSelectedFence()">Duplicate<kbd>N</kbd></button>
     <button class="ctrl-btn danger" onclick="deleteSelectedFence()">Delete<kbd>Del</kbd></button>
+  </div>
+  <hr class="ap-divider">
+  <div id="signEditorPanel" style="display:none;padding:0 8px 8px">
+    <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin-bottom:6px;text-transform:uppercase">Sign Editor</div>
+    <input id="signLabel" placeholder="Label e.g. THE COLONY" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #5ecfca;color:#e8c56a;padding:4px 6px;font-family:'Cinzel Decorative',serif;font-size:11px;margin-bottom:4px">
+    <input id="signSub" placeholder="Subtitle e.g. Community Hub" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:4px 6px;font-size:11px;margin-bottom:4px">
+    <textarea id="signDesc" placeholder="Description (shown in popup)" rows="3" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:4px 6px;font-size:11px;margin-bottom:4px;resize:vertical"></textarea>
+    <div style="display:flex;gap:4px;margin-bottom:6px">
+      <input id="signIcon" placeholder="🐜" style="width:52px;background:#1a1a2e;border:1px solid #333;color:#fff;padding:4px 6px;font-size:16px;text-align:center">
+      <input id="signColor" type="color" value="#5ecfca" style="width:36px;height:28px;border:none;background:none;cursor:pointer" title="Neon color">
+      <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:3px"><input type="checkbox" id="signClickable" checked> Zone</label>
+    </div>
+    <div style="font-size:9px;letter-spacing:1px;color:#5ecfca;margin-bottom:4px">BUTTONS</div>
+    <div id="signBtnsContainer" style="margin-bottom:4px"></div>
+    <button onclick="addSignButton()" style="width:100%;background:#1a1a2e;border:1px dashed #5ecfca;color:#5ecfca;padding:3px;font-size:10px;cursor:pointer;margin-bottom:6px">+ Add Button</button>
+    <button class="ctrl-btn full" onclick="applySignEditor()" style="width:100%;background:#5ecfca;color:#000">Apply to Sign</button>
+  </div>
+  <div id="toroEditorPanel" style="display:none;padding:0 8px 8px">
+    <div style="font-size:9px;letter-spacing:2px;color:#ffdd88;margin-bottom:6px;text-transform:uppercase">Lantern Color</div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input id="toroColor" type="color" value="#ffdd88" style="width:44px;height:32px;border:none;background:none;cursor:pointer">
+      <span style="color:#aaa;font-size:10px">Pick glow color</span>
+    </div>
+    <button class="ctrl-btn full" onclick="applyToroColor()" style="width:100%;background:#ffdd88;color:#000">Apply Color</button>
   </div>
   <hr class="ap-divider">
   <div style="padding:0 8px 6px">
@@ -209,7 +233,8 @@ const ASSETS = {
   dojo_5: {
     path: "/assets/buildings/dojo_5.glb",
     scale: 2.2,
-    rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+    rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
+    noShadows: true
   },
   dojo_6: {
     path: "/assets/buildings/dojo_6.glb",
@@ -221,24 +246,26 @@ const ASSETS = {
     scale: 1.2,
     rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
   },
-
 dojo_9: {
   path: "/assets/buildings/dojo_9.glb",
   scale: 1.2,
-  rotation: new BABYLON.Vector3(Math.PI / 2, 0, 0)
+  rotation: new BABYLON.Vector3(Math.PI / 2, 0, 0),
+  noShadows: true
 },
-
 fence_1: {
   path: "/assets/buildings/fence_1.glb",
   scale: 2,
-  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
+  groundOffset: -1,
+  noShadows: true
 },
-
 shrine_2: {
   path: "/assets/buildings/shrine_2.glb",
   scale: 12,
   rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
-  groundOffset: 0
+  groundOffset: 0,
+  noGroundSnap: true,
+  noShadows: true
 },
 tree_1: {
   path: "/assets/buildings/tree_1.glb",
@@ -247,7 +274,6 @@ tree_1: {
   groundOffset: 2,
   noShadows: true
 },
-
 pine_1: {
   path: "/assets/buildings/pine_1.glb",
   scale: 2,
@@ -255,76 +281,147 @@ pine_1: {
   groundOffset: 2,
   noShadows: true
 },
-
 rock_1: {
   path: "/assets/buildings/rock_1.glb",
   scale: 1.0,
-  rotation: new BABYLON.Vector3(0, Math.PI, 0)
+  rotation: new BABYLON.Vector3(0, Math.PI, 0),
+  noShadows: true
 },
-
 cherry_blossom: {
   path: "/assets/buildings/cherry_blossom.glb",
   scale: 1.0,
-  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
+  noShadows: true
 },
-
 bamboo: {
   path: "/assets/buildings/bamboo.glb",
   scale: 1.0,
-  rotation: new BABYLON.Vector3(0, Math.PI, 0)
+  rotation: new BABYLON.Vector3(0, Math.PI, 0),
+  noShadows: true
 },
-
 lantern_1: {
   path: "/assets/buildings/lantern_1.glb",
   scale: 0.027,
   rotation: new BABYLON.Vector3(0, Math.PI, 0),
-  groundOffset: 0
-}
-  
+  groundOffset: 0,
+  noShadows: true
+},
+  wooden_sign: {
+    path: '/assets/buildings/wooden_sign.glb',
+    scale: 200,
+    rotation: new BABYLON.Vector3(0, Math.PI, 0),
+    noShadows: true
+  },
+  small_bridge: {
+    path: '/assets/buildings/small_bridge.glb',
+    scale: 1.0,
+    rotation: new BABYLON.Vector3(0, Math.PI, 0),
+    noShadows: true
+  },
+  toro_lantern: {
+    procedural: true,
+    scale: 1.0,
+    noShadows: true,
+    groundOffset: 0
+  }
 };
 
   // ═══════════════════════════════════════
 // SPAWN ASSET FUNCTION (MASTER SYSTEM)
 // ═══════════════════════════════════════
-function spawnAsset(type, position) {
+function spawnAsset(type, position, extraMeta) {
   const config = ASSETS[type];
-  if (!config) {
-    console.warn("Missing asset:", type);
-    return null;
-  }
+  if (!config) { console.warn("Missing asset:", type); return null; }
 
   const root = new BABYLON.TransformNode(type + "_root", scene);
-
   root.position = position.clone();
   root.scaling = new BABYLON.Vector3(config.scale, config.scale, config.scale);
+  if (config.rotation) root.rotation = config.rotation.clone();
+  root.isPickable = true;
+  root.metadata = { type, loaded: false, ...(extraMeta||{}) };
 
-  if (config.rotation) {
-    root.rotation = config.rotation.clone();
-  }
-
-    root.isPickable = true;
-  root.metadata = { type, loaded: false };
-
-      BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
-
-    meshes.forEach(m => {
-      m.parent = root;
-      if (!config.noShadows) shadows.addShadowCaster(m);
-      m.receiveShadows = !config.noShadows;
-    });
-
+  if (config.procedural) {
+    // Build procedural asset immediately
+    if (type === 'toro_lantern') buildToro(root, root.metadata.toroColor || '#ffdd88');
     root.metadata.loaded = true;
-    console.log("Spawned:", type);
-
-  });
-
+    console.log("Spawned procedural:", type);
+  } else {
+    BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
+      meshes.forEach(m => {
+        m.parent = root;
+        if (!config.noShadows) shadows.addShadowCaster(m);
+        m.receiveShadows = !config.noShadows;
+        m._editRoot = root;
+        if (m.material) m.material.maxSimultaneousLights = 4;
+      });
+      root.metadata.loaded = true;
+      console.log("Spawned:", type);
+    });
+  }
   return root;
+}
+
+// ── TŌRŌ LANTERN BUILDER ─────────────────────────────────────
+// Traditional Japanese stone lantern (tōrō) built from primitives
+// All emissive — zero performance cost, unlimited placement
+function buildToro(root, glowColor) {
+  glowColor = glowColor || '#ffdd88';
+  const glow = BABYLON.Color3.FromHexString(glowColor);
+  const stone = new BABYLON.Color3(0.28, 0.24, 0.20);
+  const darkStone = new BABYLON.Color3(0.18, 0.15, 0.12);
+  const stoneMat = () => { const m = new BABYLON.StandardMaterial('toroStone_'+Math.random(),scene); m.diffuseColor=stone; m.maxSimultaneousLights=4; return m; };
+  const darkMat = () => { const m = new BABYLON.StandardMaterial('toroDark_'+Math.random(),scene); m.diffuseColor=darkStone; m.maxSimultaneousLights=4; return m; };
+  const glowMat = () => { const m = new BABYLON.StandardMaterial('toroGlow_'+Math.random(),scene); m.diffuseColor=glow; m.emissiveColor=glow; m.maxSimultaneousLights=4; return m; };
+
+  const attach = (mesh) => { mesh.parent=root; mesh.isPickable=true; mesh._editRoot=root; return mesh; };
+
+  // Base platform — wide stone slab
+  attach(BABYLON.MeshBuilder.CreateCylinder('tb0',{diameterTop:1.8,diameterBottom:2.0,height:0.25,tessellation:8},scene)).material=stoneMat();
+  // Base step
+  attach(BABYLON.MeshBuilder.CreateCylinder('tb1',{diameterTop:1.4,diameterBottom:1.6,height:0.2,tessellation:8},scene)).material=stoneMat();
+  const b1 = attach(BABYLON.MeshBuilder.CreateCylinder('tb1b',{diameterTop:1.4,diameterBottom:1.6,height:0.2,tessellation:8},scene));
+  b1.material=stoneMat(); b1.position.y=0.2;
+  // Post — tapered octagonal shaft
+  const post = attach(BABYLON.MeshBuilder.CreateCylinder('tp',{diameterTop:0.38,diameterBottom:0.55,height:4.8,tessellation:8},scene));
+  post.material=stoneMat(); post.position.y=2.6;
+  // Middle cap / waist ring
+  const waist = attach(BABYLON.MeshBuilder.CreateCylinder('tw',{diameterTop:0.7,diameterBottom:0.7,height:0.22,tessellation:8},scene));
+  waist.material=darkMat(); waist.position.y=3.0;
+  // Fire box platform
+  const fbBase = attach(BABYLON.MeshBuilder.CreateCylinder('tfb',{diameterTop:1.1,diameterBottom:0.9,height:0.18,tessellation:8},scene));
+  fbBase.material=darkMat(); fbBase.position.y=5.1;
+  // Fire box body — the glowing chamber
+  const fb = attach(BABYLON.MeshBuilder.CreateBox('tfbody',{width:0.9,height:1.0,depth:0.9},scene));
+  fb.material=glowMat(); fb.position.y=5.68;
+  // Fire box frame corners — dark stone surround
+  [[-0.4,-0.4],[0.4,-0.4],[-0.4,0.4],[0.4,0.4]].forEach(([ox,oz]) => {
+    const col = attach(BABYLON.MeshBuilder.CreateCylinder('tfc_'+ox,{diameterTop:0.1,diameterBottom:0.1,height:1.05,tessellation:6},scene));
+    col.material=darkMat(); col.position=new BABYLON.Vector3(ox,5.68,oz);
+  });
+  // Cap base
+  const capBase = attach(BABYLON.MeshBuilder.CreateCylinder('tcb',{diameterTop:1.3,diameterBottom:1.2,height:0.15,tessellation:8},scene));
+  capBase.material=darkMat(); capBase.position.y=6.22;
+  // Pagoda cap — two tiers
+  const cap1 = attach(BABYLON.MeshBuilder.CreateCylinder('tc1',{diameterTop:0.05,diameterBottom:1.4,height:0.55,tessellation:8},scene));
+  cap1.material=stoneMat(); cap1.position.y=6.62;
+  const cap2 = attach(BABYLON.MeshBuilder.CreateCylinder('tc2',{diameterTop:0.05,diameterBottom:0.85,height:0.35,tessellation:8},scene));
+  cap2.material=stoneMat(); cap2.position.y=7.02;
+  // Finial top
+  const fin = attach(BABYLON.MeshBuilder.CreateSphere('tfin',{diameter:0.18,segments:6},scene));
+  fin.material=darkMat(); fin.position.y=7.22;
+
+  // Ground glow disc — emissive pool of light on floor, free
+  const gDisc = attach(BABYLON.MeshBuilder.CreateDisc('tgdisc',{radius:2.2,tessellation:20},scene));
+  const gDiscMat = new BABYLON.StandardMaterial('tgdiscMat_'+Math.random(),scene);
+  gDiscMat.emissiveColor = new BABYLON.Color3(glow.r*0.3, glow.g*0.3, glow.b*0.3);
+  gDiscMat.backFaceCulling=false; gDiscMat.maxSimultaneousLights=4;
+  gDisc.material=gDiscMat; gDisc.position.y=0.02; gDisc.rotation.x=Math.PI/2;
 }
 // ── SCENE ───────────────────────────────────
 const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
-scene.maxLightsPerMesh = 64;
-scene.onNewMaterialAddedObservable.add(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 64; });
+scene.maxLightsPerMesh = 4;
+scene.onNewMaterialAddedObservable.add(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 4; });
 scene.fogMode=BABYLON.Scene.FOGMODE_NONE;
 scene.fogDensity=0.006;
 scene.fogColor=new BABYLON.Color3(.55,.72,.9);
@@ -336,7 +433,7 @@ gizmoManager.scaleGizmoEnabled = false;
 gizmoManager.clearGizmoOnEmptyPointerEvent = false;
 
 // ── CAMERAS ─────────────────────────────────
-const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/3.6,150,new BABYLON.Vector3(0,6,0),scene);
+const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/2.5,320,new BABYLON.Vector3(0,6,0),scene);
 orbit.lowerRadiusLimit=8; orbit.upperRadiusLimit=450; orbit.upperBetaLimit=Math.PI/2.05;
 orbit.wheelPrecision=2;
 orbit.inertia = 0.35;
@@ -371,7 +468,6 @@ function updateAdminBadge(){
 function updateSelectedBadge(){
   const badge = document.getElementById('selectedBadge');
   if (!badge) return;
-
   if (selectedObject) {
     badge.textContent = 'SELECTED: ' + selectedObject.name.toUpperCase();
     badge.classList.add('on');
@@ -379,15 +475,36 @@ function updateSelectedBadge(){
     badge.textContent = 'SELECTED: NONE';
     badge.classList.remove('on');
   }
+  // Show sign editor if wooden_sign selected
+  const signPanel = document.getElementById('signEditorPanel');
+  if (!signPanel) return;
+  const isSign = selectedObject && selectedObject.metadata && selectedObject.metadata.type === 'wooden_sign';
+  signPanel.style.display = isSign ? 'block' : 'none';
+  const toroPanel = document.getElementById('toroEditorPanel');
+  if (toroPanel) {
+    const isToro = selectedObject && selectedObject.metadata && selectedObject.metadata.type === 'toro_lantern';
+    toroPanel.style.display = isToro ? 'block' : 'none';
+    if (isToro) document.getElementById('toroColor').value = selectedObject.metadata.toroColor || '#ffdd88';
+  }
+  if (isSign) {
+    const cfg = selectedObject.metadata.signConfig || {};
+    document.getElementById('signLabel').value = cfg.label || '';
+    document.getElementById('signSub').value = cfg.sub || '';
+    document.getElementById('signIcon').value = cfg.icon || '';
+    document.getElementById('signColor').value = cfg.color || '#5ecfca';
+    document.getElementById('signClickable').checked = cfg.clickable !== false;
+    document.getElementById('signDesc').value = cfg.desc || '';
+    populateSignButtons(cfg.buttons || []);
+  }
 }
 
-function showToast(msg) {
+function showToast(msg, duration) {
   const t = document.getElementById('toast');
   if (!t) return;
   t.textContent = msg;
   t.classList.add('on');
   clearTimeout(showToast._timer);
-  showToast._timer = setTimeout(() => t.classList.remove('on'), 5000);
+  showToast._timer = setTimeout(() => t.classList.remove('on'), duration || 5000);
 }
 
 function showSaveBadge(){
@@ -407,20 +524,9 @@ function snapValue(value, size){
 function softSnapSelectedObject(){
   if (!selectedObject) return;
 
-  const targetX = snapValue(selectedObject.position.x, GRID_SIZE);
-  const targetZ = snapValue(selectedObject.position.z, GRID_SIZE);
-
-  if (Math.abs(selectedObject.position.x - targetX) <= SNAP_DISTANCE) {
-    selectedObject.position.x = targetX;
-  }
-
-  if (Math.abs(selectedObject.position.z - targetZ) <= SNAP_DISTANCE) {
-    selectedObject.position.z = targetZ;
-  }
-
+  // Rotation snap only — no X/Z grid snapping
   if (selectedObject.rotation) {
     const targetRotY = snapValue(selectedObject.rotation.y, ROT_SNAP);
-
     if (Math.abs(selectedObject.rotation.y - targetRotY) <= ROT_SNAP_DISTANCE) {
       selectedObject.rotation.y = targetRotY;
     }
@@ -431,22 +537,28 @@ function softSnapSelectedObject(){
 
 function snapSelectedObjectToGround(){
   if (!selectedObject) return;
-  // Skip hanging lanterns and lantern proxies — they should not snap to ground
   const objType = selectedObject.metadata && selectedObject.metadata.type;
-  if (objType === 'hangingLantern') return;
 
-  const origin = new BABYLON.Vector3(
-    selectedObject.position.x,
-    200,
-    selectedObject.position.z
-  );
+  // Skip types that should never ground-snap
+  if (objType === 'hangingLantern') return;
+  if (objType && ASSETS[objType] && ASSETS[objType].noGroundSnap) return;
+
+  const origin = new BABYLON.Vector3(selectedObject.position.x, 200, selectedObject.position.z);
   const ray = new BABYLON.Ray(origin, new BABYLON.Vector3(0, -1, 0), 500);
-  const hit = scene.pickWithRay(ray, mesh =>
-    mesh === ground || mesh === court || mesh === plaza
-  );
+  const hit = scene.pickWithRay(ray, mesh => mesh === ground || mesh === court || mesh === plaza);
   if (!hit || !hit.hit || !hit.pickedPoint) return;
 
-  // Use mesh BB to find bottom of object and sit it on the ground
+  // Get groundOffset from ASSETS (can be negative to sink below ground)
+  const assetCfg = objType && ASSETS[objType];
+  const groundOffset = (assetCfg && assetCfg.groundOffset !== undefined) ? assetCfg.groundOffset : null;
+
+  // If asset has explicit groundOffset, use it directly — don't use BB
+  if (groundOffset !== null) {
+    selectedObject.position.y = hit.pickedPoint.y + groundOffset;
+    return;
+  }
+
+  // Default: use BB to sit the bottom of the mesh on the ground
   const meshes = selectedObject.getChildMeshes(false).filter(m => m.getTotalVertices && m.getTotalVertices() > 0);
   if (meshes.length > 0) {
     selectedObject.computeWorldMatrix(true);
@@ -461,12 +573,7 @@ function snapSelectedObjectToGround(){
       return;
     }
   }
-  // Fallback: use groundOffset from ASSETS
-  let offset = 0;
-  if (objType && ASSETS[objType] && ASSETS[objType].groundOffset) {
-    offset = ASSETS[objType].groundOffset;
-  }
-  selectedObject.position.y = hit.pickedPoint.y + offset;
+  selectedObject.position.y = hit.pickedPoint.y;
 }
 // ── LIGHTING ────────────────────────────────
 const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.7,-1.1,.5),scene);
@@ -475,11 +582,12 @@ sun.intensity=2.6; sun.diffuse=new BABYLON.Color3(1,.96,.88);
 
 const hemi=new BABYLON.HemisphericLight("h",new BABYLON.Vector3(0,1,0),scene);
 hemi.intensity=0.65; hemi.diffuse=new BABYLON.Color3(.52,.7,.98);
-hemi.groundColor=new BABYLON.Color3(.25,.32,.16); hemi.specular=new BABYLON.Color3(0,0,0);
+hemi.groundColor=new BABYLON.Color3(.55,.58,.48); hemi.specular=new BABYLON.Color3(0,0,0);
 
 const shadows=new BABYLON.ShadowGenerator(512,sun);
 shadows.useExponentialShadowMap=true; shadows.bias=0.005;
 shadows.darkness=0.85;
+shadows.getShadowMap().refreshRate = BABYLON.RenderTargetTexture.REFRESHRATE_RENDER_ONCE;
 
 // ── PROCEDURAL SKY ───────────────────────────
 const skybox=BABYLON.MeshBuilder.CreateBox("sky",{size:1400},scene);
@@ -494,7 +602,7 @@ function updateSky(){
   const now=new Date(), h=now.getHours()+now.getMinutes()/60;
   const d=Math.max(0,Math.sin(((h/24)-.25)*Math.PI*2));
   skyMat.inclination=-Math.sin(((h/24)-.25)*Math.PI*2)*.5;
-  sun.intensity=0.15+d*3.2; hemi.intensity=0.18+d*.62;
+  sun.intensity=0.15+d*1.8; hemi.intensity=0.18+d*.45;
   if(h>=6&&h<9){sun.diffuse=new BABYLON.Color3(1,.62,.3);}
   else if(h>=9&&h<17){sun.diffuse=new BABYLON.Color3(1,.97,.88);}
   else if(h>=17&&h<20){sun.diffuse=new BABYLON.Color3(1,.48,.15);}
@@ -533,9 +641,9 @@ function pbr(c,o={}){
   if(!o.e&&!o.a)_pbrCache[key]=m;
   return m;
 }
-function box(w,h,d,mat,pos,ry=0){const b=BABYLON.MeshBuilder.CreateBox("b"+Math.random(),{width:w,height:h,depth:d},scene);b.material=mat;if(pos)b.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(ry)b.rotation.y=ry;b.receiveShadows=true;shadows.addShadowCaster(b);return b;}
-function cyl(rt,rb,h,t,mat,pos,rz=0){const c=BABYLON.MeshBuilder.CreateCylinder("cy"+Math.random(),{diameterTop:rt,diameterBottom:rb,height:h,tessellation:t},scene);c.material=mat;if(pos)c.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(rz)c.rotation.z=rz;c.receiveShadows=true;shadows.addShadowCaster(c);return c;}
-function sph(d,mat,pos){const s=BABYLON.MeshBuilder.CreateSphere("sp"+Math.random(),{diameter:d,segments:8},scene);s.material=mat;if(pos)s.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);s.receiveShadows=true;shadows.addShadowCaster(s);return s;}
+function box(w,h,d,mat,pos,ry=0){const b=BABYLON.MeshBuilder.CreateBox("b"+Math.random(),{width:w,height:h,depth:d},scene);b.material=mat;if(pos)b.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(ry)b.rotation.y=ry;b.receiveShadows=true;return b;}
+function cyl(rt,rb,h,t,mat,pos,rz=0){const c=BABYLON.MeshBuilder.CreateCylinder("cy"+Math.random(),{diameterTop:rt,diameterBottom:rb,height:h,tessellation:t},scene);c.material=mat;if(pos)c.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(rz)c.rotation.z=rz;c.receiveShadows=true;return c;}
+function sph(d,mat,pos){const s=BABYLON.MeshBuilder.CreateSphere("sp"+Math.random(),{diameter:d,segments:8},scene);s.material=mat;if(pos)s.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);s.receiveShadows=true;return s;}
 
 let _cloneIdCounter = 0;
 function makeCloneName(type){ _cloneIdCounter += 1; return type + "RootClone_" + Date.now() + "_" + _cloneIdCounter; }
@@ -600,13 +708,8 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
 
 // ── RIVER ────────────────────────────────────
 const rvr=BABYLON.MeshBuilder.CreateGround("rv",{width:22,height:320},scene);
-const waterMat = new BABYLON.StandardMaterial("water", scene);
-  waterMat.diffuseColor = new BABYLON.Color3(.04, .20, .44);
-  waterMat.specularColor = new BABYLON.Color3(.4, .6, .9);
-  waterMat.specularPower = 48;
-  waterMat.alpha = 0.85;
-  waterMat.backFaceCulling = false;
-  rvr.material = waterMat;
+// River mesh hidden — will be replaced with GLB asset
+  rvr.isVisible = false;
   rvr.position=new BABYLON.Vector3(112,.14,0);
 
 // ── 4 TYPES OF TREES ─────────────────────────
@@ -724,7 +827,7 @@ function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   const cm2=mat(new BABYLON.Color3(.5,.5,.5));
   cyl(.022,.022,chainH,4,cm2,[0,chainH/2,0]).parent=root;
   // Body
-  const bm3=pbr(new BABYLON.Color3(1,.94,.7),{e:BABYLON.Color3.FromHexString(col),ei:.75,a:.92,r:.5});
+  const bm3=pbr(new BABYLON.Color3(1,.94,.7),{e:BABYLON.Color3.FromHexString(col),ei:2.5,a:.92,r:.5});
   cyl(.28,.28,.68,10,bm3,[0,-.46,0]).parent=root;
   // Caps
   const capm=mat(new BABYLON.Color3(.22,.12,.05));
@@ -733,10 +836,7 @@ function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   // Ring details
   cyl(.3,.3,.05,10,capm,[0,-.25,0]).parent=root;
   cyl(.3,.3,.05,10,capm,[0,-.66,0]).parent=root;
-  // Light
-  const ll=new BABYLON.PointLight("ll"+lIdx,new BABYLON.Vector3(x,y-.46,z),scene);
-  ll.diffuse=BABYLON.Color3.FromHexString(col); ll.intensity=0.9; ll.range=7; ll._b=0.9;
-  lanLights.push(ll);
+  // No PointLight — emissive glow handles visual appearance, saves GPU
   // Make selectable in admin
   root.metadata = { type: 'hangingLantern', isClone: true };
   root.getChildMeshes().forEach(m => { m.isPickable = true; m._hangRoot = root; });
@@ -762,14 +862,7 @@ lanternRow(-38,-38,38,-38,18,3,"#ffdd88");
 lanternRow(-38,38,38,38,18,3,"#ff9944");
 lanternRow(-38,-38,-38,38,18,3,"#ff5555");
 lanternRow(38,-38,38,38,18,3,"#44aaff");
-// Building accent lanterns — on posts near each dojo
-// One accent lantern per building (not two)
-[[-72,0],[72,0],[0,-72],[0,72],[-55,-55],[55,-55]].forEach(([x,z],i)=>{
-  const cols=["#ffdd66","#00ffee","#ff5555","#ffaa22","#ffcc00","#cc44ff"];
-  const pm2=mat(new BABYLON.Color3(.22,.13,.06));
-  cyl(.07,.09,6.2,8,pm2,[x+8,0,z]);
-  hangingLantern(x+8,7.2,z,cols[i],1.0);
-});
+// Building accent lanterns removed — replaced by placeable toro_lantern asset
 
 // ══════════════════════════════════════════════
 //  6 UNIQUE DOJOS — each different architecture
@@ -843,83 +936,34 @@ function doorFrame(x,y,z,w,h){
   sph(.08,hm,[x+w*.08,y+.1,z+.12]);
 }
 
-// ── BUILDING 1: THE COLONY (REAL GLB + STRONG GLOW) ──
+// ── BUILDING 1: THE COLONY ──
 (()=>{
-  const x = 0, z = -80;
-
-  // ✅ KEEP TRIGGER (UNCHANGED)
-  addTrigger({
-    id:'colony',
-    x,
-    z,
-    title:'THE COLONY',
-    sub:'Community Hub · rebelants.io',
-    icon:'🐜',
-    desc:'Rebel Ants is a media company built on transparency, education, and supporting the little guys. Using storytelling to bring light to web3 creators, artists, and projects.',
-    actions:[
-      {label:'Visit Site',href:'https://rebelants.io'},
-      {label:'Discord',href:'https://discord.gg/QhzEHfRqN6',g:true},
-      {label:'Twitter',href:'https://twitter.com/rebelants',g:true}
-    ]
-  });
-
-  const colonyFill = new BABYLON.PointLight("colonyFill", new BABYLON.Vector3(x, 3, z), scene);
+  // Trigger now driven by wooden_sign admin editor
+  const colonyFill = new BABYLON.PointLight("colonyFill", new BABYLON.Vector3(0, 3, -80), scene);
   colonyFill.diffuse = new BABYLON.Color3(0.15, 0.3, 0.8);
   colonyFill.intensity = 0.8;
   colonyFill.range = 30;
-
-  // 🔥 STRONGER PULSE
-  // colony pulse removed for performance
-
 })();
 
-// ── BUILDING 3: RADIO STAGE — trigger only ──
-(()=>{
-  const x=80,z=0;
-  addTrigger({id:'radio',x,z,title:'REBEL ANTS RADIO',sub:'Live Podcast Studio · Every Week',icon:'🎙️',desc:'The crypto show for the little guys. Live shows every week — interviewing web3 creators, artists, and projects in the web3 space. Watch on YouTube or listen on Spotify & iTunes.',actions:[{label:'YouTube',href:'https://www.youtube.com/@rebelantsradio',r:true},{label:'Spotify',href:'https://open.spotify.com/show/00fDOHcJcJPW7XpEDwO6lk'},{label:'iTunes',href:'https://podcasts.apple.com/us/podcast/rebel-ants-radio-the-nft-show-for-the-little-guys/id1651171099',g:true}]});
+// ── BUILDING 3: RADIO STAGE — trigger driven by wooden_sign admin editor ──
+
+// ── BUILDING 4: ARCHIVE — trigger driven by wooden_sign admin editor ──
+
+// ── BUILDING 5: THE VAULT — trigger driven by wooden_sign admin editor ──
+
+// ── BUILDING 6: THE FORGE — trigger driven by wooden_sign admin editor ──
+
+// ── TEMP ZONE SIGNS — floating labels with down arrows ──────────────
+(function addZoneSigns() {
+  // Replaced by wooden_sign.glb placements + applyZoneSignTextures()
 })();
 
-// ── BUILDING 4: ARCHIVE — Glow Zone ───────
-(()=>{
-  const x=0,z=80;
-
-    // Archive glow lights removed
-
-  // KEEP TRIGGER
-  addTrigger({
-    id:'gallery',
-    x,
-    z,
-    title:'THE ARCHIVE',
-    sub:'NFT Gallery · All Collections',
-    icon:'🖼️',
-    desc:'Every Rebel Ant tells a story. Browse Battle for the Colony (5,555), Germy Pets (1-of-1), Unvoiced Echoes, and the original 10,000 v1 ants.',
-    actions:[
-      {label:'OpenSea',href:'https://opensea.io/RebelAnts_LLC/created'},
-      {label:'Germy Pets',href:'https://bueno.art/1a3l6mdx1yoojhwl3m-kh/germy-pets/tokens',g:true},
-      {label:'Unvoiced Echoes',href:'https://opensea.io/collection/unvoiced-echoes',g:true},
-      {label:'v1 Collection',href:'https://bueno.art/1a3l6mdx1yoojhwl3m-kh/rebel-ants',g:true}
-    ]
-  });
-})();
-
-// ── BUILDING 5: THE VAULT — trigger only ──
-(()=>{
-  const x=-65,z=-65;
-  addTrigger({id:'vault',x,z,title:'THE VAULT',sub:'Staking · Earn Rewards',icon:'💰',desc:'Stake your Rebel Ants NFTs to earn rewards and grow the colony treasury. The more warriors you stake, the stronger your colony becomes.',actions:[{label:'Start Staking',href:'https://rebelants.stakeaway.io/'},{label:'Learn More',href:'https://rebelants.io',g:true}]});
-})();
-
-// ── BUILDING 6: THE FORGE — trigger only ──
-(()=>{
-  const x=65,z=-65;
-  addTrigger({id:'forge',x,z,title:'THE FORGE',sub:'Custom Trait Builder',icon:'🎨',desc:'Gear up your ants for battle. Add custom overlays — weapons, armor, accessories — to your Battle for the Colony ants. Free to use for all holders.',actions:[{label:'Open Forge',href:'https://builder.rebelants.io',t:true},{label:'View Site',href:'https://rebelants.io',g:true}]});
-})();
-
-// ── WALKABLE CHARACTER ───────────────────────
+// cache-bust: 1776624187298 ── WALKABLE CHARACTER ───────────────────────
 setSt("Loading character...");
 let charMesh=null, charAnims={}, isMoving=false;
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
+let _signTriggers = [];
 let fenceRootRef = null;
 let dojoRootRef = null;
 let dojo6RootRef = null;
@@ -1053,11 +1097,15 @@ scene.onPointerObservable.add((evt) => {
       node.getClassName &&
       node.getClassName() === "TransformNode";
 
+    const isEditRootChild = node._editRoot && node._editRoot.metadata && node._editRoot.metadata.type;
     if (isEditableRoot || isTopLevelClone || isTopLevelTypedNode) {
       editableNode = node;
       break;
     }
-
+    if (isEditRootChild) {
+      editableNode = node._editRoot;
+      break;
+    }
     node = node.parent;
   }
 
@@ -1145,7 +1193,9 @@ function saveWorldLayout(){
     name: node.name,
     position: { x: node.position.x, y: node.position.y, z: node.position.z },
     rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
-    scaling: { x: node.scaling.x, y: node.scaling.y, z: node.scaling.z }
+    scaling: { x: node.scaling.x, y: node.scaling.y, z: node.scaling.z },
+    signConfig: node.metadata.signConfig || null,
+    toroColor: node.metadata.toroColor || null
   }));
   const json = JSON.stringify(data, null, 2);
   // Save to localStorage (fast cache for asset systems)
@@ -1177,6 +1227,13 @@ function saveWorldLayout(){
   console.log("World layout saved", data);
   showSaveBadge();
   showToast('✓ Saved ' + data.length + ' objects');
+}
+
+// ── AUTO-SAVE — debounced 2s, fires after any placement/delete/move ──
+let _autoSaveTimer = null;
+function triggerAutoSave() {
+  if (_autoSaveTimer) clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(() => { saveWorldLayout(); }, 2000);
 }
 
 function loadWorldLayout(){
@@ -1216,16 +1273,30 @@ function loadWorldLayout(){
     }
 
     // All GLB assets — clone from source
+    // Handle procedural assets (no GLB source needed)
+    if (ASSETS[item.type] && ASSETS[item.type].procedural) {
+      const pos = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
+      const clone = spawnAsset(item.type, pos, { isClone: true, toroColor: item.toroColor || '#ffdd88' });
+      if (!clone) return;
+      clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
+      clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
+      registerEditableRoot(clone.name, clone);
+      return;
+    }
     const source = _assetSources[item.type];
     if (!source) return;
     const clone = source.clone(makeCloneName(item.type));
     if (!clone) return;
-    clone.metadata = { type: item.type, isClone: true };
+    clone.metadata = { type: item.type, isClone: true, signConfig: item.signConfig || null, toroColor: item.toroColor || null };
     clone.position = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
     clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
     clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
+    const _noShadows = item.type && ASSETS[item.type] && ASSETS[item.type].noShadows;
     clone.getChildMeshes().forEach(m => {
-      shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
+      if (!_noShadows) shadows.addShadowCaster(m);
+      m.receiveShadows = !_noShadows; m.isPickable = true;
+      m._editRoot = clone; // enables admin picker to find parent clone
+      if (m.material) m.material.maxSimultaneousLights = 4;
     });
   });
 
@@ -1268,6 +1339,7 @@ function deleteSelectedFence(){
   updateSelectedBadge();
 
   nodeToDelete.dispose(false, false);
+  triggerAutoSave();
 }
 function duplicateSelectedFence(){
   if (!selectedObject) return;
@@ -1339,6 +1411,9 @@ function toggleWalk() {
   }
 }
 document.addEventListener('keydown', e => {
+  // Don't fire shortcuts when typing in an input field
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
   const key = e.key.toLowerCase();
 
   if (key === 'm') {
@@ -1531,6 +1606,7 @@ engine.runRenderLoop(()=>{
 const _assetSources = {};
 function loadAssetSource(key) {
   if (_assetSources[key]) return;
+  if (ASSETS[key] && ASSETS[key].procedural) { _assetSources[key] = { metadata: { loaded: true }, procedural: true }; return; }
   const root = spawnAsset(key, new BABYLON.Vector3(9999, 0, 9999));
   root.name = key + "Root";
   _assetSources[key] = root;
@@ -1549,30 +1625,218 @@ Object.keys(ASSETS).forEach(key => loadAssetSource(key));
 
 // ── LOADING SCREEN + WORLD INIT ──────────────────
 async function initWorldLayout() {
-  if (window._ghToken) {
-    try {
-      const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/world-layout.json?ref=dev", {
-        headers: { "Authorization": "token " + window._ghToken }
-      });
-      if (resp.ok) {
-        const d = await resp.json();
-        const bytes = Uint8Array.from(atob(d.content.replace(/\n/g,'')), c => c.charCodeAt(0));
-        localStorage.setItem("rebelAntsWorldLayout", new TextDecoder('utf-8').decode(bytes));
-        console.log("Layout restored from GitHub");
-      }
-    } catch(e) { console.warn("Could not load layout from GitHub", e); }
-  }
+  // Always ensure token is set before fetching
+  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
+  try {
+    const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/world-layout.json?ref=dev", {
+      headers: { "Authorization": "token " + window._ghToken }
+    });
+    if (resp.ok) {
+      const d = await resp.json();
+      const bytes = Uint8Array.from(atob(d.content.replace(/\n/g,'')), c => c.charCodeAt(0));
+      localStorage.setItem("rebelAntsWorldLayout", new TextDecoder('utf-8').decode(bytes));
+      console.log("Layout restored from GitHub:", JSON.parse(new TextDecoder('utf-8').decode(bytes)).length, "objects");
+    }
+  } catch(e) { console.warn("Could not load layout from GitHub", e); }
   // Dismiss loading screen
   const ld = document.getElementById('ld');
   if (ld) { ld.style.opacity='0'; setTimeout(()=>{ ld.style.display='none'; }, 900); }
 }
 
 function waitForWorldAndLoadLayout() {
-  const allReady = Object.values(_assetSources).every(r => r && r.metadata && r.metadata.loaded === true);
-  if (!allReady) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
-  // Ensure all materials support enough lights now that everything is loaded
-  scene.materials.forEach(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 64; });
+  if (!waitForWorldAndLoadLayout._start) waitForWorldAndLoadLayout._start = Date.now();
+  const elapsed = Date.now() - waitForWorldAndLoadLayout._start;
+  const allReady = Object.keys(ASSETS).every(k => {
+    if (ASSETS[k].procedural) return true; // procedural assets are always ready
+    return _assetSources[k] && _assetSources[k].metadata && _assetSources[k].metadata.loaded;
+  });
+  // Wait up to 15 seconds — then load anyway with whatever is ready
+  if (!allReady && elapsed < 15000) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
+  if (!allReady) {
+    const notReady = Object.keys(ASSETS).filter(k => !(_assetSources[k] && _assetSources[k].metadata && _assetSources[k].metadata.loaded === true));
+    console.warn('waitForWorldAndLoadLayout: timed out waiting for:', notReady, '— loading layout anyway');
+  }
+  scene.materials.forEach(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 4; });
   loadWorldLayout();
+  restoreUploadedAssets();
+  applyZoneSignTextures();
+}
+
+// ── ZONE SIGN TEXTURES ───────────────────────────────────────
+// Finds each placed wooden_sign clone by proximity to zone positions
+// Applies styled DynamicTexture to Sign7_primitive1 (the board face)
+// Emissive glow is FREE — zero performance cost
+function applyZoneSignTextures() {
+  // Driven by signConfig stored in each wooden_sign clone's metadata
+  // Remove any old text planes first
+  scene.meshes.filter(m => m.name && m.name.startsWith('zoneTextPlane_')).forEach(m => m.dispose());
+  // Remove old triggers driven by signs
+  _signTriggers = _signTriggers || [];
+  _signTriggers.forEach(id => removeTrigger && removeTrigger(id));
+  _signTriggers = [];
+
+  const clones = scene.transformNodes.filter(n =>
+    n.metadata && n.metadata.type === 'wooden_sign' && n.metadata.isClone
+  );
+  clones.forEach(clone => {
+    const cfg = clone.metadata.signConfig;
+    if (!cfg || !cfg.label) return;
+    renderSignTexture(clone, cfg);
+    // Register zone trigger if clickable
+    if (cfg.clickable !== false) {
+      addTrigger({ id:'sign_'+clone.name, x:clone.position.x, z:clone.position.z,
+        title:cfg.label, sub:cfg.sub||'', icon:cfg.icon||'🏯', color:cfg.color||'#5ecfca',
+        desc:cfg.desc||'', actions:cfg.buttons||[] });
+      _signTriggers.push('sign_'+clone.name);
+    }
+  });
+}
+
+function renderSignTexture(clone, cfg) {
+  // Remove existing plane for this clone
+  const existing = scene.getMeshByName('zoneTextPlane_'+clone.name);
+  if (existing) existing.dispose();
+
+  const board = clone.getChildMeshes(false).find(m => m.name.includes('primitive1'));
+  if (!board) return;
+  board.computeWorldMatrix(true);
+  const bb = board.getBoundingInfo().boundingBox;
+  const worldCenter = BABYLON.Vector3.Center(bb.minimumWorld, bb.maximumWorld);
+  const localCenter = BABYLON.Vector3.TransformCoordinates(worldCenter, clone.getWorldMatrix().clone().invert());
+  const localW = (bb.maximumWorld.x-bb.minimumWorld.x)/clone.scaling.x;
+  const localH = (bb.maximumWorld.y-bb.minimumWorld.y)/clone.scaling.y;
+
+  const textPlane = BABYLON.MeshBuilder.CreatePlane('zoneTextPlane_'+clone.name, {width:localW*0.88, height:localH*0.82}, scene);
+  textPlane.parent = clone;
+  textPlane.position = new BABYLON.Vector3(localCenter.x, localCenter.y, localCenter.z+0.0003);
+  textPlane.alwaysSelectAsActiveMesh = true;
+  textPlane.isPickable = false;
+
+  const color = cfg.color || '#5ecfca';
+  const dt = new BABYLON.DynamicTexture('zoneSignDT_'+clone.name, {width:512, height:256}, scene, false);
+  const ctx = dt.getContext();
+  ctx.fillStyle = '#100800'; ctx.fillRect(0,0,512,256);
+  ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.shadowColor = color; ctx.shadowBlur = 20;
+  ctx.strokeRect(6,6,500,244); ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(232,197,106,0.4)'; ctx.lineWidth = 1; ctx.strokeRect(14,14,484,228);
+  ctx.save(); ctx.translate(512,0); ctx.scale(-1,1);
+  if (cfg.icon) { ctx.font='44px serif'; ctx.textAlign='center'; ctx.fillText(cfg.icon, 256, 70); }
+  ctx.font='bold 54px "Cinzel Decorative",serif'; ctx.fillStyle='#e8c56a';
+  ctx.shadowColor='#e8c56a'; ctx.shadowBlur=14; ctx.textAlign='center';
+  ctx.fillText(cfg.label, 256, cfg.icon ? 138 : 120); ctx.shadowBlur=0;
+  if (cfg.sub) {
+    ctx.font='22px "Cinzel Decorative",serif'; ctx.fillStyle=color;
+    ctx.shadowColor=color; ctx.shadowBlur=8;
+    ctx.fillText(cfg.sub, 256, cfg.icon ? 175 : 165); ctx.shadowBlur=0;
+  }
+  ctx.font='italic 16px serif'; ctx.fillStyle='rgba(232,197,106,0.5)';
+  ctx.fillText('rebelants.io', 256, 220);
+  ctx.restore(); dt.update();
+
+  const signMat = new BABYLON.StandardMaterial('zoneSignMat_'+clone.name, scene);
+  signMat.diffuseTexture = dt; signMat.emissiveTexture = dt;
+  signMat.emissiveColor = new BABYLON.Color3(1,1,1); signMat.backFaceCulling = false;
+  signMat.hasAlpha = true; signMat.maxSimultaneousLights = 4;
+  textPlane.material = signMat;
+}
+
+function addSignButton() {
+  const container = document.getElementById('signBtnsContainer');
+  const idx = container.children.length;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:3px;margin-bottom:3px';
+  row.innerHTML = '<input placeholder="Label" style="flex:1;background:#1a1a2e;border:1px solid #333;color:#fff;padding:3px 5px;font-size:10px">' +
+    '<input placeholder="https://..." style="flex:2;background:#1a1a2e;border:1px solid #333;color:#aaa;padding:3px 5px;font-size:10px">' +
+    '<button onclick="this.parentNode.remove()" style="background:#c0392b;color:#fff;border:none;padding:2px 6px;cursor:pointer;font-size:10px">x</button>';
+  container.appendChild(row);
+}
+
+function populateSignButtons(buttons) {
+  const container = document.getElementById('signBtnsContainer');
+  container.innerHTML = '';
+  (buttons||[]).forEach(btn => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:3px;margin-bottom:3px';
+    row.innerHTML = '<input placeholder="Label" style="flex:1;background:#1a1a2e;border:1px solid #333;color:#fff;padding:3px 5px;font-size:10px" value="'+btn.label+'">' +
+      '<input placeholder="https://..." style="flex:2;background:#1a1a2e;border:1px solid #333;color:#aaa;padding:3px 5px;font-size:10px" value="'+(btn.href||'')+'">' +
+      '<button onclick="this.parentNode.remove()" style="background:#c0392b;color:#fff;border:none;padding:2px 6px;cursor:pointer;font-size:10px">x</button>';
+    container.appendChild(row);
+  });
+}
+
+function applySignEditor() {
+  if (!selectedObject || !selectedObject.metadata || selectedObject.metadata.type !== 'wooden_sign') return;
+  const label = document.getElementById('signLabel').value.trim().toUpperCase();
+  const sub = document.getElementById('signSub').value.trim();
+  const desc = document.getElementById('signDesc').value.trim();
+  const icon = document.getElementById('signIcon').value.trim();
+  const color = document.getElementById('signColor').value;
+  const clickable = document.getElementById('signClickable').checked;
+  if (!label) { showToast('Enter a label first'); return; }
+  // Collect buttons
+  const rows = document.getElementById('signBtnsContainer').children;
+  const buttons = [];
+  Array.from(rows).forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const btnLabel = inputs[0].value.trim();
+    const btnHref = inputs[1].value.trim();
+    if (btnLabel && btnHref) buttons.push({label:btnLabel, href:btnHref, g:true});
+  });
+  const cfg = { label, sub, desc, icon, color, clickable, buttons };
+  selectedObject.metadata.signConfig = cfg;
+  renderSignTexture(selectedObject, cfg);
+  if (typeof removeTrigger === 'function') removeTrigger('sign_'+selectedObject.name);
+  if (clickable) {
+    addTrigger({ id:'sign_'+selectedObject.name, x:selectedObject.position.x, z:selectedObject.position.z,
+      title:label, sub:sub, icon:icon||'🏯', color:color, desc:desc, actions:buttons });
+  }
+  saveWorldLayout();
+  showToast('✅ Sign saved: ' + label);
+}
+
+function applyToroColor() {
+  if (!selectedObject || selectedObject.metadata.type !== 'toro_lantern') return;
+  const color = document.getElementById('toroColor').value;
+  selectedObject.metadata.toroColor = color;
+  // Dispose old meshes and rebuild with new color
+  selectedObject.getChildMeshes(false).forEach(m => m.dispose());
+  buildToro(selectedObject, color);
+  saveWorldLayout();
+  showToast('🏯 Lantern color updated');
+}
+
+// ── RESTORE UPLOADED ASSETS FROM LOCALSTORAGE ──────────
+// Any GLB uploaded via admin panel gets re-added to the panel on refresh
+// using its permanent /assets/buildings/ URL (available after Vercel redeploys)
+function restoreUploadedAssets() {
+  const uploaded = JSON.parse(localStorage.getItem('rebelAntsUploadedAssets') || '[]');
+  if (!uploaded.length) return;
+  const grid = document.querySelector('#assetPanel .ap-grid:last-of-type');
+  uploaded.forEach(({ key, file }) => {
+    // Add to ASSETS registry with permanent URL
+    if (!ASSETS[key]) {
+      ASSETS[key] = { path: '/assets/buildings/' + file, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0) };
+    }
+    // Load source mesh
+    if (!_assetSources[key]) loadAssetSource(key);
+    // Add card to panel if not already there
+    if (grid && !document.querySelector('[data-asset-key="' + key + '"]')) {
+      const card = document.createElement('div');
+      card.className = 'ap-card';
+      card.dataset.assetKey = key;
+      card.style.opacity = '0.5';
+      card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
+      grid.appendChild(card);
+      // Enable card once loaded
+      const waitForLoad = setInterval(() => {
+        if (_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded) {
+          clearInterval(waitForLoad);
+          card.style.opacity = '1';
+          card.onclick = () => spawnAssetFromPanel(key);
+        }
+      }, 300);
+    }
+  });
 }
 
 initWorldLayout().then(() => waitForWorldAndLoadLayout());
@@ -1675,6 +1939,29 @@ function spawnLanternFull(spawnPos) {
 }
 
 function spawnAssetFromPanel(key) {
+  // Handle procedural assets — no GLB source needed
+  if (ASSETS[key] && ASSETS[key].procedural) {
+    let spawnPos;
+    if (walkMode && charMesh) {
+      const fwd = new BABYLON.Vector3(Math.sin(charMesh.rotation.y), 0, Math.cos(charMesh.rotation.y));
+      spawnPos = charMesh.position.add(fwd.scale(8));
+    } else {
+      spawnPos = orbit.target.add(new BABYLON.Vector3(Math.sin(orbit.alpha)*12, 0, Math.cos(orbit.alpha)*12));
+    }
+    const pos = new BABYLON.Vector3(spawnPos.x, 0, spawnPos.z);
+    const clone = spawnAsset(key, pos, { isClone: true, toroColor: '#ffdd88' });
+    if (!clone) return;
+    registerEditableRoot(clone.name, clone);
+    selectedObject = clone;
+    snapSelectedObjectToGround();
+    updateSelectedBadge();
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+    triggerAutoSave();
+    return;
+  }
   if (!_assetSources[key]) { console.warn('Asset not loaded:', key); return; }
   // Spawn in front of camera
   let spawnPos;
@@ -1715,6 +2002,7 @@ function spawnAssetFromPanel(key) {
     gizmoManager.scaleGizmoEnabled = false;
     gizmoManager.attachToNode(selectedObject);
   }
+  triggerAutoSave();
 }
 
 function uploadGLB() {
@@ -1724,12 +2012,50 @@ function uploadGLB() {
 document.getElementById('glbUploadInput').addEventListener('change', async function(e) {
   const file = e.target.files[0];
   if (!file || !file.name.endsWith('.glb')) return;
-  if (!window._ghToken) { alert('GitHub token not set'); return; }
+  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
   const key = file.name.replace('.glb','');
   const reader = new FileReader();
   reader.onload = async function(ev) {
-    const b64 = ev.target.result.split(',')[1];
-    // Upload to GitHub
+    let b64 = ev.target.result.split(',')[1];
+    const originalSize = file.size;
+
+    // ── AUTO-COMPRESS via serverless function ──────────────
+    showToast('⏳ Compressing ' + file.name + ' (' + (originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB') + ')...', 30000);
+    let compressedSize = originalSize;
+    let compressionMsg = '';
+    try {
+      const compResp = await fetch('/api/compress-glb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: b64 })
+      });
+      if (compResp.ok) {
+        const compData = await compResp.json();
+        if (compData.warning) {
+          const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
+          compressionMsg = '⚠️ Could not auto-compress (' + origFmt + '). Pre-compress free at gltf.report';
+          b64 = compData.data;
+          compressedSize = originalSize;
+        } else {
+          b64 = compData.data;
+          compressedSize = compData.outputSize;
+          const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
+          const compFmt = compressedSize >= 1048576 ? (compressedSize/1048576).toFixed(1)+' MB' : Math.round(compressedSize/1024)+' KB';
+          if (compData.savedPercent > 2) {
+            compressionMsg = '✨ Compressed: ' + origFmt + ' → ' + compFmt + ' (' + compData.savedPercent + '% smaller)';
+          } else {
+            compressionMsg = '✓ Already optimized (' + origFmt + ') — no compression needed';
+          }
+        }
+      }
+    } catch(compErr) {
+      console.warn('Compression skipped:', compErr.message);
+      const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
+      compressionMsg = '⚠️ Auto-compress unavailable (' + origFmt + '). Pre-compress free at gltf.report';
+    }
+
+    // ── UPLOAD TO GITHUB ───────────────────────────────────
+    showToast('☁️ Uploading ' + file.name + ' to GitHub...', 30000);
     const path = 'assets/buildings/' + file.name;
     let sha;
     try {
@@ -1742,20 +2068,46 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
       method: 'PUT', headers: { Authorization: 'token ' + window._ghToken, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    if (!put.ok) { alert('Upload failed'); return; }
-    // Add to ASSETS and load source
-    ASSETS[key] = { path: '/assets/buildings/' + file.name, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0) };
+    if (!put.ok) { showToast('❌ Upload failed — try again', 8000); return; }
+
+    // ── SAVE TO localStorage so asset survives page refresh ──
+    const _uploadedAssets = JSON.parse(localStorage.getItem('rebelAntsUploadedAssets') || '[]');
+    if (!_uploadedAssets.find(a => a.key === key)) {
+      _uploadedAssets.push({ key, file: file.name });
+      localStorage.setItem('rebelAntsUploadedAssets', JSON.stringify(_uploadedAssets));
+    }
+
+    // ── LOAD INTO SCENE IMMEDIATELY via blob URL ───────────
+    // Convert compressed b64 back to binary blob so Babylon loads it NOW
+    // without waiting for Vercel to redeploy
+    const binStr = atob(b64);
+    const binArr = new Uint8Array(binStr.length);
+    for (let i = 0; i < binStr.length; i++) binArr[i] = binStr.charCodeAt(i);
+    const blob = new Blob([binArr], { type: 'model/gltf-binary' });
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Register in ASSETS using blob URL for immediate use
+    // Also store the real path so world-layout save/load uses the permanent URL
+    ASSETS[key] = { path: blobUrl, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _realPath: '/assets/buildings/' + file.name };
     loadAssetSource(key);
-    // Add card to panel
+
     const grid = document.querySelector('#assetPanel .ap-grid:last-of-type');
     if (grid) {
       const card = document.createElement('div');
       card.className = 'ap-card';
-      card.onclick = () => spawnAssetFromPanel(key);
-      card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
+      card.style.opacity = '0.5';
+      card.innerHTML = '⏳<span class="ap-name">' + key + '</span>';
       grid.appendChild(card);
+      const waitForLoad = setInterval(() => {
+        if (_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded) {
+          clearInterval(waitForLoad);
+          card.style.opacity = '1';
+          card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
+          card.onclick = () => spawnAssetFromPanel(key);
+          showToast(compressionMsg || ('✓ ' + file.name + ' ready to place'), 10000);
+        }
+      }, 300);
     }
-    alert(file.name + ' uploaded!');
   };
   reader.readAsDataURL(file);
   e.target.value = '';

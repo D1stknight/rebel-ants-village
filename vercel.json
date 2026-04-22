@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/compress-glb.mjs": {
+      "maxDuration": 60
+    }
+  }
+}
