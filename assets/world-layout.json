@@ -4021,9 +4021,114 @@
     "type": "toro_lantern",
     "name": "toro_lantern_root",
     "position": {
-      "x": 5.095306396484375,
-      "y": 0.05999999865889549,
-      "z": 97.7824478149414
+      "x": 7.189175128936768,
+      "y": 0.05999999865886707,
+      "z": 107.7699966430664
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": "#ffdd88"
+  },
+  {
+    "type": "toro_lantern",
+    "name": "toro_lanternRootClone_1776819176337_178",
+    "position": {
+      "x": -7.040159225463867,
+      "y": 0.05999999865886707,
+      "z": 107.7699966430664
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": "#ffdd88"
+  },
+  {
+    "type": "toro_lantern",
+    "name": "toro_lanternRootClone_1776819182221_179",
+    "position": {
+      "x": 6.833641052246094,
+      "y": 0.05999999865886707,
+      "z": 87.67276000976562
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": "#ffdd88"
+  },
+  {
+    "type": "toro_lantern",
+    "name": "toro_lanternRootClone_1776819192763_180",
+    "position": {
+      "x": -7.127112865447998,
+      "y": 0.05999999865886707,
+      "z": 87.67276000976562
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": "#ffdd88"
+  },
+  {
+    "type": "toro_lantern",
+    "name": "toro_lantern_root",
+    "position": {
+      "x": 6.672444820404053,
+      "y": -2.842170943040401e-14,
+      "z": -112.3707504272461
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": "#ffdd88"
+  },
+  {
+    "type": "toro_lantern",
+    "name": "toro_lanternRootClone_1776819238498_181",
+    "position": {
+      "x": -6.539290428161621,
+      "y": 0,
+      "z": -112.3707504272461
     },
     "rotation": {
       "x": 0,
