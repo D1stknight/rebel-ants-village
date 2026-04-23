@@ -226,11 +226,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script>
 const canvas=document.getElementById('c');
 const setSt=t=>{document.getElementById('ldst').textContent=t;};
+let engine, scene; // declared at top level so all functions have access
 
 // ── ENGINE INIT: WebGPU with WebGL fallback ──────────────────
 // window._gpuMode: 'webgpu' | 'webgl' — check this anywhere in code
 // Designed to be upgradeable: swap engine here without touching scene code
-let engine;
 async function initEngine() {
   const supportsWebGPU = typeof BABYLON.WebGPUEngine !== 'undefined' && await BABYLON.WebGPUEngine.IsSupportedAsync;
   if (supportsWebGPU) {
@@ -460,8 +460,10 @@ function buildToro(root, glowColor) {
 // ── SCENE ───────────────────────────────────
 // initEngine() is async — it sets window.engine then calls startVillage()
 // All scene code runs inside startVillage() after engine is ready
-async function startVillage() {
-const scene=new BABYLON.Scene(engine);
+// ── BOOT: async IIFE so we can await initEngine ─────────────
+(async () => {
+await initEngine();
+scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
 scene.maxLightsPerMesh = 4;
 scene.onNewMaterialAddedObservable.add(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 4; });
@@ -2176,17 +2178,13 @@ canvas.addEventListener('dblclick', (e) => {
   }, 16);
 });
 
-} // end startVillage()
-
-// ── BOOT ─────────────────────────────────────────────────────
-initEngine().then(() => {
-  startVillage();
-  // Show/hide GPU badge with admin mode — updates on any keypress
-  document.addEventListener('keydown', () => {
-    const gpuBadge = document.getElementById('gpuBadge');
-    if (gpuBadge) setTimeout(() => { gpuBadge.style.display = adminMode ? 'block' : 'none'; }, 50);
-  });
+// ── GPU BADGE TOGGLE ──────────────────────────────────────────
+document.addEventListener('keydown', () => {
+  const gpuBadge = document.getElementById('gpuBadge');
+  if (gpuBadge) setTimeout(() => { gpuBadge.style.display = adminMode ? 'block' : 'none'; }, 50);
 });
+
+})(); // end async boot IIFE
 
 </script>
 </body>
