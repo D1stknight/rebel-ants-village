@@ -227,24 +227,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 const canvas=document.getElementById('c');
 const setSt=t=>{document.getElementById('ldst').textContent=t;};
 // ── ENGINE INIT: WebGPU with WebGL fallback ──────────────────
-// window._gpuMode: 'webgpu' | 'webgl' — readable anywhere
-// WebGPUEngine.initAsync() runs after scene setup via deferred call
-// All scene code stays synchronous — no scope issues
-const _useWebGPU = typeof BABYLON.WebGPUEngine !== 'undefined';
-let engine;
-if (_useWebGPU) {
-  try {
-    engine = new BABYLON.WebGPUEngine(canvas, {antialias:true, adaptToDeviceRatio:true, powerPreference:'high-performance'});
-    window._gpuMode = 'webgpu';
-  } catch(e) {
-    engine = new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
-    window._gpuMode = 'webgl';
-  }
-} else {
-  engine = new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
-  window._gpuMode = 'webgl';
-}
-
+// window._gpuMode: 'webgpu' | 'webgl' — readable anywhere in code
+// All scene variables assigned to window.* so they're globally accessible
 function updateGPUBadge() {
   const badge = document.getElementById('gpuBadge');
   if (!badge) return;
@@ -254,6 +238,27 @@ function updateGPUBadge() {
   badge.style.color = isWebGPU ? '#00ffcc' : '#888';
   badge.style.borderColor = isWebGPU ? '#00ffcc' : '#555';
 }
+(async () => {
+  const supportsWebGPU = typeof BABYLON.WebGPUEngine !== 'undefined' && await BABYLON.WebGPUEngine.IsSupportedAsync;
+  if (supportsWebGPU) {
+    try {
+      window.engine = new BABYLON.WebGPUEngine(canvas, {antialias:true, adaptToDeviceRatio:true, powerPreference:'high-performance'});
+      await window.engine.initAsync();
+      window._gpuMode = 'webgpu';
+      console.log('%c⚡ WebGPU active', 'color:#00ffcc;font-weight:bold');
+    } catch(e) {
+      console.warn('WebGPU failed, using WebGL:', e);
+      window.engine = new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+      window._gpuMode = 'webgl';
+    }
+  } else {
+    window.engine = new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+    window._gpuMode = 'webgl';
+  }
+  updateGPUBadge();
+  startScene();
+})();
+function startScene() {
 
 // ═══════════════════════════════════════
 // ASSET REGISTRY (ALL GLBs LIVE HERE)
@@ -450,7 +455,7 @@ function buildToro(root, glowColor) {
 // initEngine() is async — it sets window.engine then calls startVillage()
 // All scene code runs inside startVillage() after engine is ready
 // ── SCENE ───────────────────────────────────
-// WebGPU initAsync runs after scene setup below
+const engine = window.engine; // local alias
 const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
 scene.maxLightsPerMesh = 4;
@@ -2168,23 +2173,9 @@ canvas.addEventListener('dblclick', (e) => {
   }, 16);
 });
 
-// GPU badge visibility handled in updateAdminBadge
 
-// ── WEBGPU ASYNC INIT ─────────────────────────────────────────
-// Called after all scene setup — deferred so scene code stays synchronous
-if (window._gpuMode === 'webgpu' && engine.initAsync) {
-  engine.initAsync().then(() => {
-    window._gpuMode = 'webgpu';
-    updateGPUBadge();
-    console.log('%c⚡ WebGPU engine active', 'color:#00ffcc;font-weight:bold;font-size:14px');
-  }).catch(e => {
-    console.warn('WebGPU initAsync failed, scene continues on WebGL:', e);
-    window._gpuMode = 'webgl';
-    updateGPUBadge();
-  });
-} else {
-  updateGPUBadge();
-}
+
+} // end startScene()
 
 </script>
 </body>
