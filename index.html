@@ -226,34 +226,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script>
 const canvas=document.getElementById('c');
 const setSt=t=>{document.getElementById('ldst').textContent=t;};
-// engine + scene set via window.* inside async boot IIFE
-
 // ── ENGINE INIT: WebGPU with WebGL fallback ──────────────────
-// window._gpuMode: 'webgpu' | 'webgl' — check this anywhere in code
-// Designed to be upgradeable: swap engine here without touching scene code
-async function initEngine() {
-  const supportsWebGPU = typeof BABYLON.WebGPUEngine !== 'undefined' && await BABYLON.WebGPUEngine.IsSupportedAsync;
-  if (supportsWebGPU) {
-    try {
-      engine = new BABYLON.WebGPUEngine(canvas, {
-        antialias: true,
-        adaptToDeviceRatio: true,
-        powerPreference: 'high-performance'
-      });
-      await engine.initAsync();
-      window._gpuMode = 'webgpu';
-      console.log('%c⚡ WebGPU engine active', 'color:#00ffcc;font-weight:bold;font-size:14px');
-    } catch(e) {
-      console.warn('WebGPU init failed, falling back to WebGL:', e);
-      engine = new BABYLON.Engine(canvas, true, {preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
-      window._gpuMode = 'webgl';
-    }
-  } else {
-    engine = new BABYLON.Engine(canvas, true, {preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+// window._gpuMode: 'webgpu' | 'webgl' — readable anywhere
+// WebGPUEngine.initAsync() runs after scene setup via deferred call
+// All scene code stays synchronous — no scope issues
+const _useWebGPU = typeof BABYLON.WebGPUEngine !== 'undefined';
+let engine;
+if (_useWebGPU) {
+  try {
+    engine = new BABYLON.WebGPUEngine(canvas, {antialias:true, adaptToDeviceRatio:true, powerPreference:'high-performance'});
+    window._gpuMode = 'webgpu';
+  } catch(e) {
+    engine = new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
     window._gpuMode = 'webgl';
-    console.log('WebGPU not supported — using WebGL');
   }
-  updateGPUBadge();
+} else {
+  engine = new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+  window._gpuMode = 'webgl';
 }
 
 function updateGPUBadge() {
@@ -460,12 +449,9 @@ function buildToro(root, glowColor) {
 // ── SCENE ───────────────────────────────────
 // initEngine() is async — it sets window.engine then calls startVillage()
 // All scene code runs inside startVillage() after engine is ready
-// ── BOOT: async IIFE so we can await initEngine ─────────────
-(async () => {
-await initEngine();
-window.engine = engine;
-window.scene = new BABYLON.Scene(engine);
-scene = window.scene;
+// ── SCENE ───────────────────────────────────
+// WebGPU initAsync runs after scene setup below
+const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
 scene.maxLightsPerMesh = 4;
 scene.onNewMaterialAddedObservable.add(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 4; });
@@ -507,6 +493,8 @@ const SNAP_DISTANCE = 1.5;
 const ROT_SNAP_DISTANCE = 0.18;
 
 function updateAdminBadge(){
+  const gpuBadge = document.getElementById('gpuBadge');
+  if (gpuBadge) gpuBadge.style.display = adminMode ? 'block' : 'none';
   const badge = document.getElementById('adminBadge');
   if (!badge) return;
   badge.classList.toggle('on', adminMode);
@@ -2180,13 +2168,23 @@ canvas.addEventListener('dblclick', (e) => {
   }, 16);
 });
 
-// ── GPU BADGE TOGGLE ──────────────────────────────────────────
-document.addEventListener('keydown', () => {
-  const gpuBadge = document.getElementById('gpuBadge');
-  if (gpuBadge) setTimeout(() => { gpuBadge.style.display = adminMode ? 'block' : 'none'; }, 50);
-});
+// GPU badge visibility handled in updateAdminBadge
 
-})(); // end async boot IIFE
+// ── WEBGPU ASYNC INIT ─────────────────────────────────────────
+// Called after all scene setup — deferred so scene code stays synchronous
+if (window._gpuMode === 'webgpu' && engine.initAsync) {
+  engine.initAsync().then(() => {
+    window._gpuMode = 'webgpu';
+    updateGPUBadge();
+    console.log('%c⚡ WebGPU engine active', 'color:#00ffcc;font-weight:bold;font-size:14px');
+  }).catch(e => {
+    console.warn('WebGPU initAsync failed, scene continues on WebGL:', e);
+    window._gpuMode = 'webgl';
+    updateGPUBadge();
+  });
+} else {
+  updateGPUBadge();
+}
 
 </script>
 </body>
