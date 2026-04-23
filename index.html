@@ -226,7 +226,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script>
 const canvas=document.getElementById('c');
 const setSt=t=>{document.getElementById('ldst').textContent=t;};
-var engine, scene; // var = global scope, accessible inside async IIFE and all functions
+// engine + scene set via window.* inside async boot IIFE
 
 // ── ENGINE INIT: WebGPU with WebGL fallback ──────────────────
 // window._gpuMode: 'webgpu' | 'webgl' — check this anywhere in code
@@ -463,7 +463,9 @@ function buildToro(root, glowColor) {
 // ── BOOT: async IIFE so we can await initEngine ─────────────
 (async () => {
 await initEngine();
-scene=new BABYLON.Scene(engine);
+window.engine = engine;
+window.scene = new BABYLON.Scene(engine);
+scene = window.scene;
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
 scene.maxLightsPerMesh = 4;
 scene.onNewMaterialAddedObservable.add(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 4; });
