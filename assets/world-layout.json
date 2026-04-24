@@ -3693,7 +3693,7 @@
     "name": "wooden_signRootClone_1777058896711_165",
     "position": {
       "x": -63.53282928466797,
-      "y": 0.06230970701182059,
+      "y": 0.062309704849440095,
       "z": -81.57077026367188
     },
     "rotation": {
@@ -4142,7 +4142,7 @@
       "z": 1
     },
     "signConfig": null,
-    "toroColor": "#ffdd88"
+    "toroColor": "#ffb700"
   },
   {
     "type": "lantern_1",
