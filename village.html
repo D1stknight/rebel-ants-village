@@ -1820,13 +1820,23 @@ engine.runRenderLoop(()=>{
     const tv=(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
     if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
-    // Terrain following — raycast down, store terrainY for camera use too
+    // Terrain following — 4 rays to get slope normal, tilt character to match
     const _tRay = new BABYLON.Ray(new BABYLON.Vector3(charMesh.position.x, 80, charMesh.position.z), new BABYLON.Vector3(0,-1,0), 200);
     const _tHit = scene.pickWithRay(_tRay, m => m === ground || m === court || m === plaza);
     if (_tHit && _tHit.hit && _tHit.pickedPoint) {
-      const targetY = _tHit.pickedPoint.y + 0.12;
-      charMesh.position.y += (targetY - charMesh.position.y) * 0.18;
+      // Snap feet to ground — no offset needed, origin is at feet
+      charMesh.position.y += (_tHit.pickedPoint.y - charMesh.position.y) * 0.25;
       charMesh._terrainY = _tHit.pickedPoint.y;
+      // Sample slope — raycast ahead and behind to get pitch angle
+      const _fwd = new BABYLON.Vector3(Math.sin(charMesh.rotation.y), 0, Math.cos(charMesh.rotation.y));
+      const _rF = new BABYLON.Ray(new BABYLON.Vector3(charMesh.position.x+_fwd.x*1.5, 80, charMesh.position.z+_fwd.z*1.5), new BABYLON.Vector3(0,-1,0), 200);
+      const _rB = new BABYLON.Ray(new BABYLON.Vector3(charMesh.position.x-_fwd.x*1.5, 80, charMesh.position.z-_fwd.z*1.5), new BABYLON.Vector3(0,-1,0), 200);
+      const _hF = scene.pickWithRay(_rF, m => m === ground || m === court || m === plaza);
+      const _hB = scene.pickWithRay(_rB, m => m === ground || m === court || m === plaza);
+      if (_hF && _hF.hit && _hB && _hB.hit) {
+        const _slope = Math.atan2(_hF.pickedPoint.y - _hB.pickedPoint.y, 3.0);
+        charMesh.rotation.x += (_slope * 0.6 - charMesh.rotation.x) * 0.15;
+      }
     }
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8;}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
