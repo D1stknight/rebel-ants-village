@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebel Ants — Village WebGPU Smart Cap 4 Test</title>
+<style>
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #020818;
+    color: #e8c56a;
+    font-family: Arial, sans-serif;
+  }
+  #boot {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+  }
+  #boot h1 {
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: 3px;
+  }
+  #boot p {
+    max-width: 620px;
+    color: rgba(255,255,255,.72);
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div id="boot">
+  <h1>REBEL ANTS WEBGPU SMART CAP 4 TEST</h1>
+  <p>Loading the current village through a smarter WebGPU wrapper. The real village.html file is not changed.</p>
+</div>
+<script>
+(async function(){
+  try {
+    let html = await fetch('village.html?webgpu_smart_cap4_cache=' + Date.now(), { cache: 'no-store' }).then(r => r.text());
+    const scriptClose = '<' + '/script>';
+
+    html = html.replace(
+      '<title>Rebel Ants — The Hidden Village</title>',
+      '<title>Rebel Ants — The Hidden Village [WebGPU Smart Cap 4]</title>'
+    );
+
+    html = html.replace(
+      '<script>\nconst canvas=document.getElementById(\'c\');',
+      '<script>\n(async function(){\nconst canvas=document.getElementById(\'c\');'
+    );
+
+    const oldEngineBlock = `// ── ENGINE ───────────────────────────────────
+// WebGPU support coming — using stable WebGL
+// window._gpuMode reserved for future GPU upgrade path
+const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+window._gpuMode = 'webgl';
+function updateGPUBadge() {
+  const badge = document.getElementById('gpuBadge');
+  if (!badge) return;
+  badge.textContent = 'WebGL';
+  badge.style.color = '#888';
+  badge.style.borderColor = '#555';
+}`;
+
+    const newEngineBlock = `// ── ENGINE ───────────────────────────────────
+let engine;
+window._gpuMode = 'webgl';
+
+async function createPreferredEngine() {
+  if (navigator.gpu && BABYLON.WebGPUEngine) {
+    try {
+      setSt('Initializing WebGPU...');
+      const webgpuEngine = new BABYLON.WebGPUEngine(canvas, {
+        antialias: true,
+        adaptToDeviceRatio: true
+      });
+      await webgpuEngine.initAsync();
+      window._gpuMode = 'webgpu';
+      return webgpuEngine;
+    } catch (err) {
+      console.warn('WebGPU failed. Falling back to WebGL.', err);
+    }
+  }
+
+  window._gpuMode = 'webgl';
+  return new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+}
+
+engine = await createPreferredEngine();
+
+function updateGPUBadge() {
+  const badge = document.getElementById('gpuBadge');
+  if (!badge) return;
+  badge.style.display = 'block';
+  if (window._gpuMode === 'webgpu') {
+    badge.textContent = 'WebGPU TEST — SMART CAP 4';
+    badge.style.color = '#5ecfca';
+    badge.style.borderColor = '#5ecfca';
+  } else {
+    badge.textContent = 'WebGL FALLBACK';
+    badge.style.color = '#e8c56a';
+    badge.style.borderColor = '#e8c56a';
+  }
+}
+updateGPUBadge();
+
+function webgpuCapMaterial4(mat) {
+  if (window._gpuMode !== 'webgpu' || !mat) return;
+  if (!('maxSimultaneousLights' in mat)) return;
+
+  if (mat.maxSimultaneousLights !== 4 || !mat._webgpuSmartCap4Applied) {
+    mat.maxSimultaneousLights = 4;
+    mat._webgpuSmartCap4Applied = true;
+    if (mat.markAsDirty && BABYLON.Material && BABYLON.Material.LightDirtyFlag !== undefined) {
+      mat.markAsDirty(BABYLON.Material.LightDirtyFlag);
+    }
+  }
+}
+
+function webgpuSmartCap4Sweep() {
+  if (window._gpuMode !== 'webgpu' || !scene) return;
+
+  scene.materials.forEach(webgpuCapMaterial4);
+  scene.meshes.forEach(function(mesh) {
+    if (mesh && mesh.material) webgpuCapMaterial4(mesh.material);
+  });
+}
+
+let _webgpuSmartCapFrame = 0;`;
+
+    if (!html.includes(oldEngineBlock)) {
+      throw new Error('Could not find the expected engine bootstrap block in village.html. Wrapper did not modify the village.');
+    }
+
+    html = html.replace(oldEngineBlock, newEngineBlock);
+
+    html = html.replace(
+      'if (m.material) m.material.maxSimultaneousLights = 4;',
+      `if (m.material) {
+          m.material.maxSimultaneousLights = 4;
+          if (window._gpuMode === 'webgpu') webgpuCapMaterial4(m.material);
+        }`
+    );
+
+    html = html.replace(
+      'root.metadata.loaded = true;\n      console.log("Spawned:", type);',
+      `root.metadata.loaded = true;
+      if (window._gpuMode === 'webgpu') webgpuSmartCap4Sweep();
+      console.log("Spawned:", type);`
+    );
+
+    html = html.replace(
+      'root.metadata.loaded = true;\n    console.log("Spawned procedural:", type);',
+      `root.metadata.loaded = true;
+    if (window._gpuMode === 'webgpu') webgpuSmartCap4Sweep();
+    console.log("Spawned procedural:", type);`
+    );
+
+    html = html.replace(
+      'scene.render();',
+      `if (window._gpuMode === 'webgpu') {
+      _webgpuSmartCapFrame++;
+      if (_webgpuSmartCapFrame < 360 || _webgpuSmartCapFrame % 180 === 0) {
+        webgpuSmartCap4Sweep();
+      }
+    }
+    scene.render();`
+    );
+
+    const endWrapper = `
+})();`;
+
+    html = html.replace('\n' + scriptClose + '\n</body>\n</html>', endWrapper + '\n' + scriptClose + '\n</body>\n</html>');
+
+    document.open();
+    document.write(html);
+    document.close();
+  } catch (err) {
+    console.error(err);
+    document.body.innerHTML = '<div id="boot"><h1>WEBGPU SMART CAP 4 TEST FAILED</h1><p>' + err.message + '</p><p>The real village.html file was not changed.</p></div>';
+  }
+})();
+</script>
+</body>
+</html>
