@@ -220,46 +220,26 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 </div>
 
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
-<script src="https://cdn.babylonjs.com/babylon.webgpu.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script>
 const canvas=document.getElementById('c');
 const setSt=t=>{document.getElementById('ldst').textContent=t;};
-// ── ENGINE INIT: WebGPU with WebGL fallback ──────────────────
-// window._gpuMode: 'webgpu' | 'webgl' — readable anywhere in code
-// All scene variables assigned to window.* so they're globally accessible
+// ── ENGINE ───────────────────────────────────
+// WebGPU support coming — using stable WebGL
+// window._gpuMode reserved for future GPU upgrade path
+const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+window._gpuMode = 'webgl';
 function updateGPUBadge() {
   const badge = document.getElementById('gpuBadge');
   if (!badge) return;
-  const isWebGPU = window._gpuMode === 'webgpu';
-  badge.textContent = isWebGPU ? '⚡ WebGPU' : 'WebGL';
-  badge.style.background = isWebGPU ? 'rgba(0,255,180,0.15)' : 'rgba(255,255,255,0.08)';
-  badge.style.color = isWebGPU ? '#00ffcc' : '#888';
-  badge.style.borderColor = isWebGPU ? '#00ffcc' : '#555';
+  badge.textContent = 'WebGL';
+  badge.style.color = '#888';
+  badge.style.borderColor = '#555';
 }
-(async () => {
-  const supportsWebGPU = typeof BABYLON.WebGPUEngine !== 'undefined' && await BABYLON.WebGPUEngine.IsSupportedAsync;
-  if (supportsWebGPU) {
-    try {
-      window.engine = new BABYLON.WebGPUEngine(canvas, {antialias:true, adaptToDeviceRatio:true, powerPreference:'high-performance'});
-      await window.engine.initAsync();
-      window._gpuMode = 'webgpu';
-      console.log('%c⚡ WebGPU active', 'color:#00ffcc;font-weight:bold');
-    } catch(e) {
-      console.warn('WebGPU failed, using WebGL:', e);
-      window.engine = new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
-      window._gpuMode = 'webgl';
-    }
-  } else {
-    window.engine = new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
-    window._gpuMode = 'webgl';
-  }
-  updateGPUBadge();
-  startScene();
-})();
-function startScene() {
 
+// ═══════════════════════════════════════
+// ASSET REGISTR
 // ═══════════════════════════════════════
 // ASSET REGISTRY (ALL GLBs LIVE HERE)
 // ═══════════════════════════════════════
@@ -2175,7 +2155,6 @@ canvas.addEventListener('dblclick', (e) => {
 
 
 
-} // end startScene()
 
 </script>
 </body>
