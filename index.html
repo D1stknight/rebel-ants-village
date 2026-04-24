@@ -681,7 +681,12 @@ ground.material=grassMat; ground.receiveShadows=true;
 
 // Courtyard — stone tiles
 const court=BABYLON.MeshBuilder.CreateGround("ct",{width:220,height:220},scene);
-court.material=mat(new BABYLON.Color3(.52,.49,.42)); court.position.y=.06; court.receiveShadows=true;
+const courtMat=new BABYLON.StandardMaterial("courtMat",scene);
+const courtDiff=new BABYLON.Texture("assets/stone_diffuse.jpg",scene);
+courtDiff.uScale=20;courtDiff.vScale=20;
+courtMat.diffuseTexture=courtDiff;
+courtMat.specularColor=new BABYLON.Color3(0.06,0.06,0.06);
+court.material=courtMat; court.position.y=.06; court.receiveShadows=true;
 
 // Inner plaza
 const plaza=BABYLON.MeshBuilder.CreateGround("pl",{width:90,height:90},scene);
@@ -693,7 +698,12 @@ stoneMat.specularColor=new BABYLON.Color3(0.08,0.08,0.08);
 plaza.material=stoneMat; plaza.position.y=.1; plaza.receiveShadows=true;
 
 // Paths
-const pm=mat(new BABYLON.Color3(.44,.41,.34));
+const pathMat=new BABYLON.StandardMaterial("pathMat",scene);
+const pathDiff=new BABYLON.Texture("assets/stone_diffuse.jpg",scene);
+pathDiff.uScale=6;pathDiff.vScale=6;
+pathMat.diffuseTexture=pathDiff;
+pathMat.specularColor=new BABYLON.Color3(0.06,0.06,0.06);
+const pm=pathMat;
 [[8,300,0,0],[300,8,0,0]].forEach(([w,h,x,z])=>{
   const p=BABYLON.MeshBuilder.CreateGround("pa",{width:w,height:h},scene);
   p.material=pm; p.position=new BABYLON.Vector3(x,.08,z); p.receiveShadows=true;
