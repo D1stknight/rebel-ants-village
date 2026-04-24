@@ -105,7 +105,7 @@ function updateGPUBadge() {
   if (!badge) return;
   badge.style.display = 'block';
   if (window._gpuMode === 'webgpu') {
-    badge.textContent = 'WebGPU TEST — LIGHT CAP 3';
+    badge.textContent = 'WebGPU TEST — LIGHT CAP 4';
     badge.style.color = '#5ecfca';
     badge.style.borderColor = '#5ecfca';
   } else {
@@ -122,7 +122,7 @@ function applyWebGPUTestLightCap() {
   scene.materials.forEach(function(mat) {
     if (!mat) return;
     if ('maxSimultaneousLights' in mat) {
-      mat.maxSimultaneousLights = 3;
+      mat.maxSimultaneousLights = 4;
       if (mat.markAsDirty && BABYLON.Material && BABYLON.Material.LightDirtyFlag !== undefined) {
         mat.markAsDirty(BABYLON.Material.LightDirtyFlag);
       }
@@ -132,7 +132,7 @@ function applyWebGPUTestLightCap() {
   scene.meshes.forEach(function(mesh) {
     if (!mesh || !mesh.material) return;
     if ('maxSimultaneousLights' in mesh.material) {
-      mesh.material.maxSimultaneousLights = 3;
+      mesh.material.maxSimultaneousLights = 4;
       if (mesh.material.markAsDirty && BABYLON.Material && BABYLON.Material.LightDirtyFlag !== undefined) {
         mesh.material.markAsDirty(BABYLON.Material.LightDirtyFlag);
       }
