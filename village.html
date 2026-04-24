@@ -229,17 +229,68 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 const canvas=document.getElementById('c');
 const setSt=t=>{document.getElementById('ldst').textContent=t;};
 // ── ENGINE ───────────────────────────────────
-// WebGPU support coming — using stable WebGL
-// window._gpuMode reserved for future GPU upgrade path
-const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+// Optional WebGPU test mode: /village.html?engine=webgpu
+let engine;
 window._gpuMode = 'webgl';
+
+async function createPreferredEngine() {
+  const useWebGPU = new URLSearchParams(window.location.search).get('engine') === 'webgpu';
+
+  if (useWebGPU && navigator.gpu && BABYLON.WebGPUEngine) {
+    try {
+      setSt('Initializing WebGPU...');
+      const webgpuEngine = new BABYLON.WebGPUEngine(canvas, {
+        antialias: true,
+        adaptToDeviceRatio: true
+      });
+      await webgpuEngine.initAsync();
+      window._gpuMode = 'webgpu';
+      return webgpuEngine;
+    } catch (err) {
+      console.warn('WebGPU failed. Falling back to WebGL.', err);
+    }
+  }
+
+  window._gpuMode = 'webgl';
+  return new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+}
+
+engine = await createPreferredEngine();
+
 function updateGPUBadge() {
   const badge = document.getElementById('gpuBadge');
   if (!badge) return;
-  badge.textContent = 'WebGL';
-  badge.style.color = '#888';
-  badge.style.borderColor = '#555';
+  if (window._gpuMode === 'webgpu') {
+    badge.textContent = 'WebGPU TEST — SMART CAP 4';
+    badge.style.color = '#5ecfca';
+    badge.style.borderColor = '#5ecfca';
+  } else {
+    badge.textContent = 'WebGL';
+    badge.style.color = '#888';
+    badge.style.borderColor = '#555';
+  }
 }
+
+function webgpuCapMaterial4(mat) {
+  if (window._gpuMode !== 'webgpu' || !mat) return;
+  if (!('maxSimultaneousLights' in mat)) return;
+
+  if (mat.maxSimultaneousLights !== 4 || !mat._webgpuSmartCap4Applied) {
+    mat.maxSimultaneousLights = 4;
+    mat._webgpuSmartCap4Applied = true;
+    if (mat.markAsDirty && BABYLON.Material && BABYLON.Material.LightDirtyFlag !== undefined) {
+      mat.markAsDirty(BABYLON.Material.LightDirtyFlag);
+    }
+  }
+}
+
+function webgpuSmartCap4Sweep() {
+  if (window._gpuMode !== 'webgpu' || typeof scene === 'undefined' || !scene) return;
+  scene.materials.forEach(webgpuCapMaterial4);
+  scene.meshes.forEach(mesh => { if (mesh && mesh.material) webgpuCapMaterial4(mesh.material); });
+}
+
+let _webgpuSmartCapFrame = 0;
 
 // ═══════════════════════════════════════
 // ASSET REGISTR
