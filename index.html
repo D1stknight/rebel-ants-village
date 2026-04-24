@@ -682,10 +682,11 @@ ground.material=grassMat; ground.receiveShadows=true;
 // Courtyard — stone tiles
 const court=BABYLON.MeshBuilder.CreateGround("ct",{width:220,height:220},scene);
 const courtMat=new BABYLON.StandardMaterial("courtMat",scene);
-const courtDiff=new BABYLON.Texture("assets/stone_diffuse.jpg",scene);
-courtDiff.uScale=20;courtDiff.vScale=20;
+const courtDiff=new BABYLON.Texture("assets/cracked_concrete.jpg",scene);
+courtDiff.uScale=18;courtDiff.vScale=18;
 courtMat.diffuseTexture=courtDiff;
-courtMat.specularColor=new BABYLON.Color3(0.06,0.06,0.06);
+courtMat.diffuseColor=new BABYLON.Color3(1.6,1.5,1.4);
+courtMat.specularColor=new BABYLON.Color3(0.05,0.05,0.05);
 court.material=courtMat; court.position.y=.06; court.receiveShadows=true;
 
 // Inner plaza
