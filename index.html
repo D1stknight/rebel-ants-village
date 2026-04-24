@@ -160,7 +160,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ge
 
   <!-- Character Select -->
   <div id="char-section">
-    <div id="char-label">Select Your Ant</div>
+    <div id="char-label">Select Your Rebel</div>
     <div id="char-row" id="charRow"></div>
   </div>
 
@@ -192,10 +192,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ge
 <script>
 // ── ANTS CONFIG ──
 const ANTS = [
-  { id:'ant_1', name:'Ant #001', src:'assets/lobby/ant_1.JPG', locked:false },
-  { id:'ant_2', name:'Ant #002', src:'assets/lobby/ant_2.png', locked:true },
-  { id:'ant_3', name:'Ant #003', src:'assets/lobby/ant_3.png', locked:true },
-  { id:'ant_4', name:'Ant #004', src:'assets/lobby/ant_4.png', locked:true },
+  { id:'ant_1', name:'Rebel #001', src:'assets/lobby/ant_1.JPG', locked:false },
+  { id:'ant_2', name:'Rebel #002', src:'assets/lobby/ant_2.png', locked:true },
+  { id:'ant_3', name:'Rebel #003', src:'assets/lobby/ant_3.png', locked:true },
+  { id:'ant_4', name:'Rebel #004', src:'assets/lobby/ant_4.png', locked:true },
 ];
 
 let selectedAnt = 'ant_1';
@@ -223,6 +223,13 @@ function selectAnt(id) {
 let walletConnected = false;
 async function connectWallet() {
   const btn = document.getElementById('btn-wallet');
+  // Disconnect if already connected
+  if (walletConnected) {
+    walletConnected = false;
+    btn.textContent = 'Connect Wallet';
+    btn.classList.remove('connected');
+    return;
+  }
   if (typeof window.ethereum === 'undefined') {
     btn.textContent = 'No Wallet Found';
     return;
@@ -233,6 +240,7 @@ async function connectWallet() {
     const addr = accounts[0];
     btn.textContent = addr.slice(0,6) + '...' + addr.slice(-4);
     btn.classList.add('connected');
+    btn.title = 'Click to disconnect';
   } catch(e) {
     btn.textContent = 'Rejected';
   }
@@ -354,6 +362,12 @@ function setProgress(p) {
   progress = p;
   bar.style.width = p + '%';
 }
+
+// Start music on first user interaction
+document.addEventListener('click', function startOnClick() {
+  startMusic();
+  document.removeEventListener('click', startOnClick);
+}, { once: true });
 
 window.addEventListener('load', () => {
   setProgress(20);
