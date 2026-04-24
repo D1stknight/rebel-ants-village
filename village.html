@@ -1604,26 +1604,32 @@ window.addEventListener('resize',()=>engine.resize());
 
 // ── MOON & STARS ──────────────────────────────
 (()=>{
-  // Stars — single particle system, 1 draw call instead of 200 meshes
-  const starPs = new BABYLON.ParticleSystem('stars', 300, scene);
-  starPs.particleTexture = new BABYLON.Texture('https://assets.babylonjs.com/particles/textures/explosion/Flare.png', scene);
-  starPs.emitter = new BABYLON.Vector3(0, 0, 0);
-  starPs.minEmitBox = new BABYLON.Vector3(-480, 180, -480);
-  starPs.maxEmitBox = new BABYLON.Vector3(480, 380, 480);
-  starPs.color1 = new BABYLON.Color4(1,1,1,1);
-  starPs.color2 = new BABYLON.Color4(0.9,0.95,1,0.8);
-  starPs.colorDead = new BABYLON.Color4(1,1,1,1); // stars don't die
-  starPs.minSize = 0.8; starPs.maxSize = 2.0;
-  starPs.minLifeTime = 99999; starPs.maxLifeTime = 99999; // permanent
-  starPs.emitRate = 300; // emit all at once then stop
-  starPs.gravity = new BABYLON.Vector3(0,0,0);
-  starPs.minEmitPower = 0; starPs.maxEmitPower = 0; // stationary
-  starPs.minAngularSpeed = 0; starPs.maxAngularSpeed = 0;
-  starPs.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
-  starPs.updateSpeed = 0;
-  starPs.start();
-  // Stop emitting after 1 frame — stars are permanent, just freeze them
-  setTimeout(()=>{ starPs.emitRate = 0; }, 100);
+  // Stars — create individually then MERGE into 1 mesh = 1 draw call
+  const starMat = new BABYLON.StandardMaterial('starMat',scene);
+  starMat.emissiveColor = new BABYLON.Color3(1,1,1);
+  starMat.disableLighting = true;
+  starMat.freeze();
+  const starMeshes = [];
+  for(let i=0;i<200;i++){
+    const theta = Math.random()*Math.PI*2;
+    const phi = Math.random()*Math.PI*0.45;
+    const r = 490;
+    const star = BABYLON.MeshBuilder.CreateSphere('stmp',{diameter:0.5+Math.random()*1.2,segments:2},scene);
+    star.position.set(
+      r*Math.sin(phi)*Math.cos(theta),
+      r*Math.cos(phi)*0.7+80,
+      r*Math.sin(phi)*Math.sin(theta)
+    );
+    starMeshes.push(star);
+  }
+  // Merge all into one single mesh — 1 draw call
+  const merged = BABYLON.Mesh.MergeMeshes(starMeshes, true, true, undefined, false, false);
+  if(merged){
+    merged.name = 'starfield';
+    merged.material = starMat;
+    merged.isPickable = false;
+    merged.freezeWorldMatrix();
+  }
 
   // Moon — large bright glowing disc (just 1 mesh, fine)
   const moonMat = new BABYLON.StandardMaterial('moonMat',scene);
