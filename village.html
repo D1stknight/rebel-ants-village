@@ -420,7 +420,10 @@ function spawnAsset(type, position, extraMeta) {
         if (!config.noShadows) shadows.addShadowCaster(m);
         m.receiveShadows = !config.noShadows;
         m._editRoot = root;
-        if (m.material) m.material.maxSimultaneousLights = 4;
+        if (m.material) {
+  m.material.maxSimultaneousLights = 4;
+  if (window._gpuMode === 'webgpu') webgpuCapMaterial4(m.material);
+}
       });
       root.metadata.loaded = true;
       console.log("Spawned:", type);
