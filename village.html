@@ -1914,6 +1914,13 @@ engine.runRenderLoop(()=>{
     walk.position=BABYLON.Vector3.Lerp(walk.position,dc,0.1);
     walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
   }
+  if (window._gpuMode === 'webgpu') {
+    _webgpuSmartCapFrame++;
+    if (_webgpuSmartCapFrame < 360 || _webgpuSmartCapFrame % 180 === 0) {
+      webgpuSmartCap4Sweep();
+    }
+  }
+
   scene.render();
 });
 
