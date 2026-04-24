@@ -675,10 +675,7 @@ const ground=BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdiv
 const grassMat=new BABYLON.StandardMaterial("grassMat",scene);
 const grassDiff=new BABYLON.Texture("assets/ground_diffuse.jpg",scene);
 grassDiff.uScale=40;grassDiff.vScale=40;
-const grassNorm=new BABYLON.Texture("assets/ground_normal.jpg",scene);
-grassNorm.uScale=40;grassNorm.vScale=40;
 grassMat.diffuseTexture=grassDiff;
-grassMat.bumpTexture=grassNorm;
 grassMat.specularColor=new BABYLON.Color3(0.05,0.05,0.05);
 
 ground.material=grassMat; ground.receiveShadows=true;
@@ -1710,6 +1707,35 @@ window.addEventListener('resize',()=>engine.resize());
       });
     }, 3000); // wait for GLBs to finish loading
   });
+})();
+
+
+// ── CHERRY BLOSSOM PETALS ─────────────────────
+(()=>{
+  function makePetalSystem(name, count, emitY, boxSize, rate){
+    const ps = new BABYLON.ParticleSystem(name, count, scene);
+    ps.particleTexture = new BABYLON.Texture('https://assets.babylonjs.com/particles/textures/explosion/Flare.png',scene);
+    ps.emitter = new BABYLON.Vector3(0, emitY, 0);
+    ps.minEmitBox = new BABYLON.Vector3(-boxSize,0,-boxSize);
+    ps.maxEmitBox = new BABYLON.Vector3(boxSize,4,boxSize);
+    ps.color1 = new BABYLON.Color4(1.0,0.65,0.78,1.0);
+    ps.color2 = new BABYLON.Color4(1.0,0.50,0.68,0.8);
+    ps.colorDead = new BABYLON.Color4(0.98,0.6,0.72,0.0);
+    ps.minSize = 0.35; ps.maxSize = 0.75;
+    ps.minScaleX = 0.4; ps.maxScaleX = 1.0;
+    ps.minScaleY = 0.3; ps.maxScaleY = 0.7;
+    ps.minLifeTime = 8; ps.maxLifeTime = 16;
+    ps.emitRate = rate;
+    ps.gravity = new BABYLON.Vector3(0.15,-0.6,0.08);
+    ps.minEmitPower = 0.05; ps.maxEmitPower = 0.25;
+    ps.minAngularSpeed = -2.0; ps.maxAngularSpeed = 2.0;
+    ps.updateSpeed = 0.016;
+    ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+    ps.start();
+    return ps;
+  }
+  makePetalSystem('petals1', 200, 20, 55, 14);
+  makePetalSystem('petals2', 120, 35, 90, 8);
 })();
 
 // ── RENDER LOOP ──────────────────────────────
