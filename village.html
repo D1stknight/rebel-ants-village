@@ -1907,6 +1907,23 @@ function waitForWorldAndLoadLayout() {
   loadWorldLayout();
   restoreUploadedAssets();
   applyZoneSignTextures();
+  // Snap all placed objects to terrain height so trees sit on hills not flat ground
+  setTimeout(() => {
+    scene.transformNodes.forEach(node => {
+      if (!node.metadata || !node.metadata.isClone) return;
+      if (node.metadata.type === 'hangingLantern') return;
+      const ox = node.position.x, oz = node.position.z;
+      // Only snap objects outside the flat courtyard
+      if (Math.sqrt(ox*ox + oz*oz) < 115) return;
+      const ray = new BABYLON.Ray(new BABYLON.Vector3(ox, 80, oz), new BABYLON.Vector3(0,-1,0), 200);
+      const hit = scene.pickWithRay(ray, m => m === ground);
+      if (hit && hit.hit && hit.pickedPoint) {
+        const cfg = node.metadata.type && ASSETS[node.metadata.type];
+        const offset = (cfg && cfg.groundOffset !== undefined) ? cfg.groundOffset : 0;
+        node.position.y = hit.pickedPoint.y + offset;
+      }
+    });
+  }, 800);
 }
 
 // ── ZONE SIGN TEXTURES ───────────────────────────────────────
