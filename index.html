@@ -136,8 +136,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 </head>
 <body>
 
-<!-- Background village render -->
-<canvas id="bgCanvas"></canvas>
+<!-- Background flyover video -->
+<video id="bgVideo" autoplay loop muted playsinline
+  style="position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0;transition:opacity 2s ease;">
+  <source src="assets/lobby/flyover.mp4" type="video/mp4">
+</video>
 <div id="vignette"></div>
 <div id="scanlines"></div>
 
@@ -188,9 +191,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 
 <div id="version">v0.1 DEV</div>
 
-<!-- Babylon.js for background cinematic -->
-<script src="https://cdn.babylonjs.com/babylon.js"></script>
-<script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+<!-- Video background — no Babylon needed for lobby -->
 
 <script>
 // ── ANTS CONFIG ──
@@ -278,85 +279,6 @@ function startMusic() {
   window._music = audio;
 }
 
-// ── BABYLON BACKGROUND SCENE ──
-function initBgScene() {
-  const canvas = document.getElementById('bgCanvas');
-  const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer:false, stencil:false });
-
-  const scene = new BABYLON.Scene(engine);
-  scene.clearColor = new BABYLON.Color4(0.02, 0.03, 0.04, 1);
-  scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
-  scene.fogDensity = 0.008;
-  scene.fogColor = new BABYLON.Color3(0.02, 0.03, 0.04);
-
-  // Cinematic camera — slow orbital sweep
-  const cam = new BABYLON.ArcRotateCamera('cam', -Math.PI/3, Math.PI/3.5, 180, new BABYLON.Vector3(0,10,0), scene);
-  cam.lowerRadiusLimit = 160;
-  cam.upperRadiusLimit = 220;
-
-  // Lighting — moody night
-  const hemi = new BABYLON.HemisphericLight('hemi', new BABYLON.Vector3(0,1,0), scene);
-  hemi.intensity = 0.15;
-  hemi.diffuse = new BABYLON.Color3(0.4, 0.5, 0.7);
-  hemi.groundColor = new BABYLON.Color3(0.05, 0.05, 0.1);
-
-  const dir = new BABYLON.DirectionalLight('dir', new BABYLON.Vector3(-1,-2,-1), scene);
-  dir.intensity = 0.4;
-  dir.diffuse = new BABYLON.Color3(0.6, 0.7, 1.0);
-
-  // Ground plane
-  const ground = BABYLON.MeshBuilder.CreateGround('g', {width:700, height:700}, scene);
-  const gMat = new BABYLON.StandardMaterial('gm', scene);
-  gMat.diffuseColor = new BABYLON.Color3(0.08, 0.12, 0.06);
-  gMat.specularColor = new BABYLON.Color3(0,0,0);
-  ground.material = gMat;
-
-  // A few silhouette mountains for depth
-  const mColors = [
-    new BABYLON.Color3(0.06,0.09,0.07),
-    new BABYLON.Color3(0.05,0.08,0.06),
-    new BABYLON.Color3(0.07,0.10,0.08),
-  ];
-  [[-260,-200,80,160],[-180,-300,65,130],[300,-220,75,150],
-   [-300,220,70,140],[250,260,85,165],[0,-360,90,175]].forEach(([x,z,r,h],i) => {
-    const m = BABYLON.MeshBuilder.CreateCylinder('mt'+i,{diameterTop:0,diameterBottom:r*2,height:h,tessellation:8},scene);
-    m.position.set(x, h/2-2, z);
-    const mm = new BABYLON.StandardMaterial('mtm'+i, scene);
-    mm.diffuseColor = mColors[i % mColors.length];
-    mm.specularColor = new BABYLON.Color3(0,0,0);
-    m.material = mm;
-  });
-
-  // Floating particles (fireflies)
-  const ps = new BABYLON.ParticleSystem('fireflies', 60, scene);
-  ps.particleTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png', scene);
-  ps.emitter = new BABYLON.Vector3(0,5,0);
-  ps.minEmitBox = new BABYLON.Vector3(-80,0,-80);
-  ps.maxEmitBox = new BABYLON.Vector3(80,20,80);
-  ps.color1 = new BABYLON.Color4(0.8,1.0,0.4,1);
-  ps.color2 = new BABYLON.Color4(0.6,0.9,0.2,0.8);
-  ps.colorDead = new BABYLON.Color4(0,0,0,0);
-  ps.minSize = 0.3; ps.maxSize = 0.8;
-  ps.minLifeTime = 3; ps.maxLifeTime = 8;
-  ps.emitRate = 8;
-  ps.minEmitPower = 0.1; ps.maxEmitPower = 0.3;
-  ps.updateSpeed = 0.01;
-  ps.start();
-
-  // Slow camera orbit
-  let angle = -Math.PI/3;
-  engine.runRenderLoop(() => {
-    angle += 0.0003;
-    cam.alpha = angle;
-    cam.radius = 185 + Math.sin(angle * 0.3) * 20;
-    cam.beta = Math.PI/3.5 + Math.sin(angle * 0.2) * 0.05;
-    scene.render();
-  });
-
-  window.addEventListener('resize', () => engine.resize());
-  return scene;
-}
-
 // ── BOOT SEQUENCE ──
 let progress = 0;
 const bar = document.getElementById('loading-bar');
@@ -375,7 +297,13 @@ document.addEventListener('click', function startOnClick() {
 window.addEventListener('load', () => {
   setProgress(20);
   setTimeout(() => {
-    initBgScene();
+    // Fade in video when ready
+    const vid = document.getElementById('bgVideo');
+    vid.addEventListener('canplay', () => {
+      vid.style.opacity = '0.85';
+    }, { once: true });
+    // Fallback fade in after 1s regardless
+    setTimeout(() => { vid.style.opacity = '0.85'; }, 1000);
     setProgress(60);
     setTimeout(() => {
       setProgress(100);
