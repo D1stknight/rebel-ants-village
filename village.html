@@ -671,7 +671,7 @@ function makeCloneName(type){ _cloneIdCounter += 1; return type + "RootClone_" +
 // ── GROUND / TERRAIN ─────────────────────────
 setSt("Building terrain...");
 // Large grass base
-const ground=BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:6},scene);
+const ground=BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:120},scene);
 const grassMat=new BABYLON.StandardMaterial("grassMat",scene);
 const grassDiff=new BABYLON.Texture("assets/ground_diffuse.jpg",scene);
 grassDiff.uScale=40;grassDiff.vScale=40;
@@ -679,6 +679,25 @@ grassMat.diffuseTexture=grassDiff;
 grassMat.specularColor=new BABYLON.Color3(0.05,0.05,0.05);
 
 ground.material=grassMat; ground.receiveShadows=true;
+        // Terrain displacement — gentle rolling peaks and valleys on outer forest ground
+        const gndPos = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+        for (let gi = 0; gi < gndPos.length; gi += 3) {
+            const vx = gndPos[gi];
+            const vz = gndPos[gi + 2];
+            const dist = Math.sqrt(vx * vx + vz * vz);
+            // Flat inside courtyard (r=110), smooth blend to full displacement at r=160
+            const blend = Math.max(0, Math.min(1, (dist - 110) / 50));
+            // Layered sine waves for organic rolling terrain
+            const hy = (
+                Math.sin(vx * 0.04  + vz * 0.031) * 3.5 +
+                Math.sin(vx * 0.018 + vz * 0.052) * 2.2 +
+                Math.sin(vx * 0.071 + vz * 0.019) * 1.4 +
+                Math.sin(vx * 0.13  + vz * 0.09)  * 0.6
+            ) * blend;
+            gndPos[gi + 1] = hy;
+        }
+        ground.updateVerticesData(BABYLON.VertexBuffer.PositionKind, gndPos);
+        ground.createNormals(true);
 
 // Courtyard — stone tiles
 const court=BABYLON.MeshBuilder.CreateGround("ct",{width:220,height:220},scene);
