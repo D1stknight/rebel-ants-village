@@ -47,21 +47,18 @@
 
   try {
     let html = await fetch('village.html?webgpu_test_cache=' + Date.now(), { cache: 'no-store' }).then(r => r.text());
+    const scriptClose = '<' + '/script>';
 
-    // Keep this test visually obvious in the browser title.
     html = html.replace(
       '<title>Rebel Ants — The Hidden Village</title>',
       '<title>Rebel Ants — The Hidden Village [WebGPU Test]</title>'
     );
 
-    // Wrap the large village script in an async function so WebGPU initAsync can be awaited
-    // without changing the real village.html file.
     html = html.replace(
       '<script>\nconst canvas=document.getElementById(\'c\');',
       '<script>\n(async function(){\nconst canvas=document.getElementById(\'c\');'
     );
 
-    // Replace only the current WebGL engine bootstrap with a WebGPU-preferred bootstrap.
     const oldEngineBlock = `// ── ENGINE ───────────────────────────────────
 // WebGPU support coming — using stable WebGL
 // window._gpuMode reserved for future GPU upgrade path
@@ -154,7 +151,7 @@ try {
 }
 })();`;
 
-    html = html.replace('\n</script>\n</body>\n</html>', exposeGlobals + '\n</script>\n</body>\n</html>');
+    html = html.replace('\n' + scriptClose + '\n</body>\n</html>', exposeGlobals + '\n' + scriptClose + '\n</body>\n</html>');
 
     document.open();
     document.write(html);
