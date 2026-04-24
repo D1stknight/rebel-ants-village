@@ -59,7 +59,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 /* ── CHARACTER SELECT ── */
 #char-section{display:flex;flex-direction:column;align-items:center;gap:16px;}
 #char-label{color:#c8b68a;font-size:10px;letter-spacing:5px;text-transform:uppercase;font-family:'Cinzel',serif;text-shadow:0 1px 6px rgba(0,0,0,1);}
-#char-row{display:flex;gap:16px;align-items:center;}
+#char-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:520px;max-height:220px;overflow-y:auto;padding:4px;}
+#char-row::-webkit-scrollbar{width:4px;}
+#char-row::-webkit-scrollbar-thumb{background:rgba(200,146,42,0.5);border-radius:2px;}
+#char-status{color:#c8b68a;font-size:10px;letter-spacing:3px;font-family:'Cinzel',serif;text-align:center;min-height:20px;text-shadow:0 1px 4px rgba(0,0,0,1);}
 
 .ant-card{
   width:90px;height:90px;border-radius:8px;cursor:pointer;
@@ -175,7 +178,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   <!-- Character Select -->
   <div id="char-section">
     <div id="char-label">Select Your Rebel</div>
-    <div id="char-row" id="charRow"></div>
+    <div id="char-row"></div>
+    <div id="char-status"></div>
   </div>
 
   <!-- Buttons -->
@@ -202,34 +206,79 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 <!-- Video background — no Babylon needed for lobby -->
 
 <script>
-// ── ANTS CONFIG ──
-const ANTS = [
-  { id:'ant_1', name:'Rebel #001', src:'assets/lobby/ant_1.JPG', locked:false },
-  { id:'ant_2', name:'Rebel #002', src:'assets/lobby/ant_2.png', locked:true },
-  { id:'ant_3', name:'Rebel #003', src:'assets/lobby/ant_3.png', locked:true },
-  { id:'ant_4', name:'Rebel #004', src:'assets/lobby/ant_4.png', locked:true },
-];
+// ── NFT CONFIG ──
+const NFT_CONTRACT = '0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221';
+let selectedAnt = null;
+let ownedRebels = [];
 
-let selectedAnt = 'ant_1';
-
-// Build character cards
-const charRow = document.getElementById('char-row');
-ANTS.forEach(ant => {
-  const card = document.createElement('div');
-  card.className = 'ant-card' + (ant.locked ? ' locked' : '') + (ant.id === selectedAnt ? ' selected' : '');
-  card.id = 'card_' + ant.id;
-  if (!ant.locked) card.onclick = () => selectAnt(ant.id);
-  card.innerHTML = ant.locked
-    ? `<span class="lock-icon">🔒</span><div class="ant-name">${ant.name}</div>`
-    : `<img src="${ant.src}" onerror="this.style.display='none'"/><div class="ant-name">${ant.name}</div>`;
-  charRow.appendChild(card);
-});
+function setStatus(msg) {
+  const el = document.getElementById('char-status');
+  if (el) el.textContent = msg;
+}
 
 function selectAnt(id) {
   selectedAnt = id;
   document.querySelectorAll('.ant-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('card_' + id).classList.add('selected');
+  const card = document.getElementById('card_' + id);
+  if (card) card.classList.add('selected');
+  try { localStorage.setItem('selectedRebel', JSON.stringify(ownedRebels.find(r => r.id === id) || {})); } catch(e){}
 }
+
+function buildCard(rebel) {
+  const charRow = document.getElementById('char-row');
+  const card = document.createElement('div');
+  card.className = 'ant-card' + (rebel.id === selectedAnt ? ' selected' : '');
+  card.id = 'card_' + rebel.id;
+  card.onclick = () => selectAnt(rebel.id);
+  card.innerHTML = `<img src="${rebel.image}" onerror="this.src='assets/lobby/ant_1.JPG'"/>
+    <div class="ant-name">${rebel.name}</div>`;
+  charRow.appendChild(card);
+}
+
+function showDefaultCard() {
+  const charRow = document.getElementById('char-row');
+  charRow.innerHTML = '';
+  ownedRebels = [{ id:'ant_1', name:'Rebel #001', image:'assets/lobby/ant_1.JPG' }];
+  selectedAnt = 'ant_1';
+  buildCard(ownedRebels[0]);
+}
+
+async function loadNFTs(walletAddress) {
+  const charRow = document.getElementById('char-row');
+  charRow.innerHTML = '';
+  setStatus('Loading your Rebels...');
+  try {
+    const url = `https://api.opensea.io/api/v2/chain/ethereum/account/${walletAddress}/nfts?limit=50`;
+    const r = await fetch(url, { headers: { 'accept': 'application/json' } });
+    if (!r.ok) throw new Error('status ' + r.status);
+    const data = await r.json();
+    const rebels = (data.nfts || []).filter(n =>
+      n.contract?.toLowerCase() === NFT_CONTRACT.toLowerCase()
+    );
+    if (rebels.length === 0) {
+      setStatus('No Rebels found — showing default');
+      showDefaultCard();
+      return;
+    }
+    ownedRebels = rebels.map(n => ({
+      id: 'rebel_' + n.identifier,
+      name: n.name || ('Rebel #' + n.identifier),
+      image: n.image_url || 'assets/lobby/ant_1.JPG',
+      tokenId: n.identifier
+    }));
+    selectedAnt = ownedRebels[0].id;
+    ownedRebels.forEach(r => buildCard(r));
+    setStatus(ownedRebels.length + ' Rebel' + (ownedRebels.length > 1 ? 's' : '') + ' found');
+    document.getElementById('btn-enter').disabled = false;
+  } catch(e) {
+    console.warn('NFT load failed:', e);
+    setStatus('Could not load — showing default');
+    showDefaultCard();
+  }
+}
+
+// Init default card on load
+document.addEventListener('DOMContentLoaded', () => showDefaultCard());
 
 // ── WALLET ──
 let walletConnected = false;
@@ -240,6 +289,8 @@ async function connectWallet() {
     walletConnected = false;
     btn.textContent = 'Connect Wallet';
     btn.classList.remove('connected');
+    setStatus('');
+    showDefaultCard();
     return;
   }
   if (typeof window.ethereum === 'undefined') {
@@ -253,6 +304,7 @@ async function connectWallet() {
     btn.textContent = addr.slice(0,6) + '...' + addr.slice(-4);
     btn.classList.add('connected');
     btn.title = 'Click to disconnect';
+    loadNFTs(addr);
   } catch(e) {
     btn.textContent = 'Rejected';
   }
