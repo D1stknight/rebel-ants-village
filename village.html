@@ -1696,44 +1696,41 @@ window.addEventListener('resize',()=>engine.resize());
 // ── COLLISION ─────────────────────────────────
 (()=>{
   scene.collisionsEnabled = true;
-  scene.gravity = new BABYLON.Vector3(0,-9.81,0);
 
-  // Set up character collision ellipsoid when walk mode starts
-  scene.onAfterRenderObservable.add(()=>{
-    if(window.charMesh && !window.charMesh._collisionSet){
-      window.charMesh.ellipsoid = new BABYLON.Vector3(1.5,3.0,1.5);
-      window.charMesh.ellipsoidOffset = new BABYLON.Vector3(0,3.0,0);
-      window.charMesh.checkCollisions = true;
-      window.charMesh._collisionSet = true;
-    }
-  });
-
-  // Enable collisions on all solid meshes — broad approach using actual mesh names
   function enableCollisions(){
     scene.meshes.forEach(m=>{
-      if(!m.name || m.name==='gnd' || m.name.startsWith('s') || m.name==='sky' ||
-         m.name.startsWith('petals') || m.name==='moon' || m.name.startsWith('halo') ||
-         m.name.startsWith('star') || m.isPickable===false) return;
+      if(!m.name) return;
       const n = m.name.toLowerCase();
-      // Skip ground planes, paths, trees, rocks, particles
-      if(n==='gnd'||n==='ct'||n==='pl'||n==='pa'||n==='rv') return;
-      if(n.includes('tree')||n.includes('pine')||n.includes('bamboo')||
-         n.includes('cherry')||n.includes('rock')||n.includes('rock_medium')) return;
-      // Enable on buildings, fences, structures
+      // Skip non-solid things
+      if(n==='sky'||n==='gnd'||n==='ct'||n==='pl'||n==='pa'||n==='rv') return;
+      if(n.startsWith('s0')||n.startsWith('s1')||n.startsWith('s2')||n.startsWith('s3')||
+         n.startsWith('s4')||n.startsWith('s5')||n.startsWith('s6')||n.startsWith('s7')||
+         n.startsWith('s8')||n.startsWith('s9')) return; // stars
+      if(n==='moon'||n.startsWith('halo')||n.startsWith('petals')||n.startsWith('star')) return;
+      if(n.includes('bubinga')||n.includes('bamboo')||n.includes('pine_')||
+         n.includes('rock_medium')||n.includes('cherry_blossom')) return;
+      // Everything else solid gets collision
       if(n.includes('house')||n.includes('dojo')||n.includes('shrine')||
          n.includes('fence')||n.includes('torii')||n.includes('pillar')||
          n.includes('object_')||n.includes('polysurface')||n.includes('mesh_')||
-         n.includes('cube')||n.includes('japanese')||n.includes('main ')||
-         n.includes('bridge')||n.includes('sign')){
+         n.includes('cube')||n.includes('japanese')||n.includes('bridge')||
+         n.includes('sign')||n.includes('main')||n.includes('rootclone')){
         m.checkCollisions = true;
       }
     });
+    // Always set character collision
+    if(window.charMesh && !window.charMesh._collisionSet){
+      window.charMesh.ellipsoid = new BABYLON.Vector3(1.2,2.8,1.2);
+      window.charMesh.ellipsoidOffset = new BABYLON.Vector3(0,2.8,0);
+      window.charMesh.checkCollisions = false; // char doesn't need this, moveWithCollisions handles it
+      window.charMesh._collisionSet = true;
+    }
   }
 
-  // Run immediately + again after GLBs fully load
   enableCollisions();
-  setTimeout(enableCollisions, 2000);
-  setTimeout(enableCollisions, 5000);
+  setTimeout(enableCollisions, 1500);
+  setTimeout(enableCollisions, 4000);
+  setTimeout(enableCollisions, 8000);
 })();
 
 // ── RENDER LOOP ──────────────────────────────
@@ -1769,7 +1766,7 @@ engine.runRenderLoop(()=>{
     if(!charMesh._vel)charMesh._vel=0;
     const tv=(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
-    if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
+    if(Math.abs(charMesh._vel)>0.0001)charMesh.moveWithCollisions(fwd.scale(charMesh._vel));
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8;}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
     if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
