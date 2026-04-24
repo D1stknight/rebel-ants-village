@@ -1823,8 +1823,21 @@ engine.runRenderLoop(()=>{
     const _tRay = new BABYLON.Ray(new BABYLON.Vector3(charMesh.position.x, 80, charMesh.position.z), new BABYLON.Vector3(0,-1,0), 200);
     const _tHit = scene.pickWithRay(_tRay, m => m === ground || m === court || m === plaza);
     if (_tHit && _tHit.hit && _tHit.pickedPoint) {
-      // Snap feet to ground — no offset needed, origin is at feet
-      charMesh.position.y += (_tHit.pickedPoint.y - charMesh.position.y) * 0.25;
+      // Character's origin is not at feet — compute foot offset once and cache it
+      if (charMesh._footOffset === undefined) {
+        charMesh.computeWorldMatrix(true);
+        let _minY = Infinity;
+        charMesh.getChildMeshes(false).forEach(m => {
+          if (!m.getTotalVertices || m.getTotalVertices() === 0) return;
+          m.computeWorldMatrix(true);
+          const bb = m.getBoundingInfo().boundingBox;
+          if (bb.minimumWorld.y < _minY) _minY = bb.minimumWorld.y;
+        });
+        charMesh._footOffset = isFinite(_minY) ? (charMesh.position.y - _minY) : 0;
+      }
+      // Snap feet to ground — origin sits at terrainY + footOffset so feet touch the terrain
+      const _targetY = _tHit.pickedPoint.y + charMesh._footOffset;
+      charMesh.position.y += (_targetY - charMesh.position.y) * 0.25;
       charMesh._terrainY = _tHit.pickedPoint.y;
       // Slope tilt removed — character stays upright
     }
