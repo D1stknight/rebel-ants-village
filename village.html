@@ -1757,12 +1757,12 @@ engine.runRenderLoop(()=>{
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
     if(Math.abs(charMesh._vel)>0.0001){
     const moveVec = fwd.scale(charMesh._vel);
-    // Raycast forward to check for wall collision before moving
+    // Raycast forward — only block if wall is within 1.5 units
     const origin = charMesh.position.clone();
-    origin.y += 1.5; // chest height
-    const ray = new BABYLON.Ray(origin, fwd, Math.abs(charMesh._vel) + 1.0);
+    origin.y += 1.5;
+    const ray = new BABYLON.Ray(origin, fwd, 1.5);
     const hit = scene.pickWithRay(ray, m => m._isWall === true);
-    if(!hit || !hit.hit || hit.distance > Math.abs(charMesh._vel) + 0.8){
+    if(!hit || !hit.hit){
       charMesh.position.addInPlace(moveVec);
     }
   }
