@@ -669,7 +669,15 @@ function makeCloneName(type){ _cloneIdCounter += 1; return type + "RootClone_" +
 setSt("Building terrain...");
 // Large grass base
 const ground=BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:6},scene);
-ground.material=mat(new BABYLON.Color3(.24,.38,.15)); ground.receiveShadows=true;
+const grassMat=new BABYLON.StandardMaterial("grassMat",scene);
+const grassDiff=new BABYLON.Texture("assets/ground_diffuse.jpg",scene);
+grassDiff.uScale=40;grassDiff.vScale=40;
+const grassNorm=new BABYLON.Texture("assets/ground_normal.jpg",scene);
+grassNorm.uScale=40;grassNorm.vScale=40;
+grassMat.diffuseTexture=grassDiff;
+grassMat.bumpTexture=grassNorm;
+grassMat.specularColor=new BABYLON.Color3(0.05,0.05,0.05);
+ground.material=grassMat; ground.receiveShadows=true;
 
 // Courtyard — stone tiles
 const court=BABYLON.MeshBuilder.CreateGround("ct",{width:220,height:220},scene);
