@@ -176,6 +176,25 @@ let _webgpuSmartCapFrame = 0;`;
     );
 
     const endWrapper = `
+try {
+  window.toggleWalk = toggleWalk;
+  window.spawnAssetFromPanel = spawnAssetFromPanel;
+  window.uploadGLB = uploadGLB;
+  window.setGizmoMode = setGizmoMode;
+  window.flipSelected = flipSelected;
+  window.rotateSelectedBy = rotateSelectedBy;
+  window.scaleSelected = scaleSelected;
+  window.duplicateSelectedFence = duplicateSelectedFence;
+  window.deleteSelectedFence = deleteSelectedFence;
+  window.addSignButton = addSignButton;
+  window.applySignEditor = applySignEditor;
+  window.applyToroColor = applyToroColor;
+  window.toggleWorklight = toggleWorklight;
+  window.saveWorldLayout = saveWorldLayout;
+  window.loadWorldLayout = loadWorldLayout;
+} catch (e) {
+  console.warn('WebGPU smart cap controls expose skipped:', e);
+}
 })();`;
 
     html = html.replace('\n' + scriptClose + '\n</body>\n</html>', endWrapper + '\n' + scriptClose + '\n</body>\n</html>');
