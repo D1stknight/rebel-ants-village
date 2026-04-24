@@ -698,11 +698,10 @@ ground.material=grassMat; ground.receiveShadows=true; shadows.addShadowCaster(gr
             }
             function fbm(x, z) {
                 // 5 octaves of noise — large hills + medium bumps + small detail
-                return smoothNoise(x*0.008, z*0.008) * 28.0
-                     + smoothNoise(x*0.022, z*0.022) * 14.0
-                     + smoothNoise(x*0.055, z*0.055) *  6.0
-                     + smoothNoise(x*0.13,  z*0.13)  *  2.5
-                     + smoothNoise(x*0.30,  z*0.30)  *  1.0;
+                return smoothNoise(x*0.012, z*0.012) *  4.0
+                     + smoothNoise(x*0.028, z*0.028) *  2.0
+                     + smoothNoise(x*0.065, z*0.065) *  0.8
+                     + smoothNoise(x*0.15,  z*0.15)  *  0.3;
             }
             const gndPos = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind);
             for (let gi = 0; gi < gndPos.length; gi += 3) {
@@ -710,7 +709,7 @@ ground.material=grassMat; ground.receiveShadows=true; shadows.addShadowCaster(gr
                 const dist = Math.sqrt(vx * vx + vz * vz);
                 // Flat zone inside courtyard, smooth blend from r=100 to r=155
                 const blend = Math.max(0, Math.min(1, (dist - 100) / 55));
-                gndPos[gi + 1] = (fbm(vx, vz) - 10.0) * blend;
+                gndPos[gi + 1] = (fbm(vx, vz) - 3.5) * blend;
             }
             ground.updateVerticesData(BABYLON.VertexBuffer.PositionKind, gndPos);
             ground.createNormals(true);
@@ -1827,16 +1826,7 @@ engine.runRenderLoop(()=>{
       // Snap feet to ground — no offset needed, origin is at feet
       charMesh.position.y += (_tHit.pickedPoint.y - charMesh.position.y) * 0.25;
       charMesh._terrainY = _tHit.pickedPoint.y;
-      // Sample slope — raycast ahead and behind to get pitch angle
-      const _fwd = new BABYLON.Vector3(Math.sin(charMesh.rotation.y), 0, Math.cos(charMesh.rotation.y));
-      const _rF = new BABYLON.Ray(new BABYLON.Vector3(charMesh.position.x+_fwd.x*1.5, 80, charMesh.position.z+_fwd.z*1.5), new BABYLON.Vector3(0,-1,0), 200);
-      const _rB = new BABYLON.Ray(new BABYLON.Vector3(charMesh.position.x-_fwd.x*1.5, 80, charMesh.position.z-_fwd.z*1.5), new BABYLON.Vector3(0,-1,0), 200);
-      const _hF = scene.pickWithRay(_rF, m => m === ground || m === court || m === plaza);
-      const _hB = scene.pickWithRay(_rB, m => m === ground || m === court || m === plaza);
-      if (_hF && _hF.hit && _hB && _hB.hit) {
-        const _slope = Math.atan2(_hF.pickedPoint.y - _hB.pickedPoint.y, 3.0);
-        charMesh.rotation.x += (_slope * 0.6 - charMesh.rotation.x) * 0.15;
-      }
+      // Slope tilt removed — character stays upright
     }
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8;}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
@@ -1907,23 +1897,7 @@ function waitForWorldAndLoadLayout() {
   loadWorldLayout();
   restoreUploadedAssets();
   applyZoneSignTextures();
-  // Snap all placed objects to terrain height so trees sit on hills not flat ground
-  setTimeout(() => {
-    scene.transformNodes.forEach(node => {
-      if (!node.metadata || !node.metadata.isClone) return;
-      if (node.metadata.type === 'hangingLantern') return;
-      const ox = node.position.x, oz = node.position.z;
-      // Only snap objects outside the flat courtyard
-      if (Math.sqrt(ox*ox + oz*oz) < 115) return;
-      const ray = new BABYLON.Ray(new BABYLON.Vector3(ox, 80, oz), new BABYLON.Vector3(0,-1,0), 200);
-      const hit = scene.pickWithRay(ray, m => m === ground);
-      if (hit && hit.hit && hit.pickedPoint) {
-        const cfg = node.metadata.type && ASSETS[node.metadata.type];
-        const offset = (cfg && cfg.groundOffset !== undefined) ? cfg.groundOffset : 0;
-        node.position.y = hit.pickedPoint.y + offset;
-      }
-    });
-  }, 800);
+
 }
 
 // ── ZONE SIGN TEXTURES ───────────────────────────────────────
