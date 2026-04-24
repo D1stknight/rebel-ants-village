@@ -1700,20 +1700,21 @@ window.addEventListener('resize',()=>engine.resize());
     scene.meshes.forEach(m=>{
       if(!m.name) return;
       const n = m.name.toLowerCase();
-      if(n==='sky'||n==='gnd'||n==='ct'||n==='pl'||n==='pa'||n==='rv') return;
-      if(n.startsWith('s0')||n.startsWith('s1')||n.startsWith('s2')||n.startsWith('s3')||
-         n.startsWith('s4')||n.startsWith('s5')||n.startsWith('s6')||n.startsWith('s7')||
-         n.startsWith('s8')||n.startsWith('s9')) return;
-      if(n==='moon'||n.startsWith('halo')||n.startsWith('petals')) return;
-      if(n.includes('bubinga')||n.includes('bamboo')||n.includes('pine_')||
-         n.includes('rock_medium')||n.includes('cherry_blossom')) return;
-      if(n.includes('house')||n.includes('dojo')||n.includes('shrine')||
-         n.includes('fence')||n.includes('torii')||n.includes('pillar')||
-         n.includes('object_')||n.includes('polysurface')||n.includes('mesh_')||
-         n.includes('cube')||n.includes('japanese')||n.includes('bridge')||
-         n.includes('sign')||n.includes('main')||n.includes('rootclone')){
-        m._isWall = true;
-      }
+      // ONLY tag clearly-named building meshes — never Object_ (that's the character)
+      const isBuilding =
+        n.includes('house') ||
+        n.includes('dojo') ||
+        n.includes('shrine') ||
+        n.includes('japanese_shrine') ||
+        n.includes('mainFence') ||
+        n.includes('fencecorner') ||
+        n.includes('torii') ||
+        n.includes('bridge_small') ||
+        n.includes('polysurface') ||
+        (n.includes('rootclone') && (
+          n.includes('dojo') || n.includes('fence') || n.includes('shrine') || n.includes('torii')
+        ));
+      if(isBuilding) m._isWall = true;
     });
   }
   tagWalls();
