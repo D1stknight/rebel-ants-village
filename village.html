@@ -679,25 +679,41 @@ grassMat.diffuseTexture=grassDiff;
 grassMat.specularColor=new BABYLON.Color3(0.05,0.05,0.05);
 
 ground.material=grassMat; ground.receiveShadows=true;
-        // Terrain displacement — gentle rolling peaks and valleys on outer forest ground
-        const gndPos = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-        for (let gi = 0; gi < gndPos.length; gi += 3) {
-            const vx = gndPos[gi];
-            const vz = gndPos[gi + 2];
-            const dist = Math.sqrt(vx * vx + vz * vz);
-            // Flat inside courtyard (r=110), smooth blend to full displacement at r=160
-            const blend = Math.max(0, Math.min(1, (dist - 110) / 50));
-            // Layered sine waves for organic rolling terrain
-            const hy = (
-                Math.sin(vx * 0.04  + vz * 0.031) * 10.0 +
-                Math.sin(vx * 0.018 + vz * 0.052) *  6.0 +
-                Math.sin(vx * 0.071 + vz * 0.019) *  3.5 +
-                Math.sin(vx * 0.13  + vz * 0.09)  *  1.5
-            ) * blend;
-            gndPos[gi + 1] = hy;
-        }
-        ground.updateVerticesData(BABYLON.VertexBuffer.PositionKind, gndPos);
-        ground.createNormals(true);
+        // Terrain displacement — organic forest floor with pseudo-random noise
+        // Uses a seeded hash to break up the sine regularity into natural-looking terrain
+        (function applyTerrain() {
+            // Fast hash noise — breaks up sine patterns into organic shapes
+            function hash(x, z) {
+                const n = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
+                return n - Math.floor(n);
+            }
+            function smoothNoise(x, z) {
+                const ix = Math.floor(x), iz = Math.floor(z);
+                const fx = x - ix, fz = z - iz;
+                const ux = fx * fx * (3 - 2 * fx);
+                const uz = fz * fz * (3 - 2 * fz);
+                return hash(ix,iz)*(1-ux)*(1-uz) + hash(ix+1,iz)*ux*(1-uz) +
+                       hash(ix,iz+1)*(1-ux)*uz   + hash(ix+1,iz+1)*ux*uz;
+            }
+            function fbm(x, z) {
+                // 5 octaves of noise — large hills + medium bumps + small detail
+                return smoothNoise(x*0.008, z*0.008) * 18.0
+                     + smoothNoise(x*0.022, z*0.022) *  8.0
+                     + smoothNoise(x*0.055, z*0.055) *  3.5
+                     + smoothNoise(x*0.13,  z*0.13)  *  1.5
+                     + smoothNoise(x*0.30,  z*0.30)  *  0.6;
+            }
+            const gndPos = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+            for (let gi = 0; gi < gndPos.length; gi += 3) {
+                const vx = gndPos[gi], vz = gndPos[gi + 2];
+                const dist = Math.sqrt(vx * vx + vz * vz);
+                // Flat zone inside courtyard, smooth blend from r=100 to r=155
+                const blend = Math.max(0, Math.min(1, (dist - 100) / 55));
+                gndPos[gi + 1] = (fbm(vx, vz) - 10.0) * blend;
+            }
+            ground.updateVerticesData(BABYLON.VertexBuffer.PositionKind, gndPos);
+            ground.createNormals(true);
+        })();
 
 // Courtyard — stone tiles
 const court=BABYLON.MeshBuilder.CreateGround("ct",{width:220,height:220},scene);
