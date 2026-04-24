@@ -1038,12 +1038,6 @@ function registerEditableRoot(key, root) {
   editableRootRefs[key] = root;
 }
 
-gizmoManager = new BABYLON.GizmoManager(scene);
-gizmoManager.positionGizmoEnabled = false;
-gizmoManager.rotationGizmoEnabled = false;
-gizmoManager.scaleGizmoEnabled = false;
-gizmoManager.clearGizmoOnEmptyPointerEvent = false;
-
 let animState = -1, animGroups = [];
 function switchAnim(idx, loop) {
   if (animState === idx) return;
@@ -1198,9 +1192,11 @@ window.addEventListener('pointerdown', () => {
 });
 
 window.addEventListener('pointerup', () => {
+  const wasDragging = adminDragging;
   adminDragging = false;
 
-  if (adminMode && selectedObject) {
+  // Only snap to ground if the object was actually moved — not just clicked to select
+  if (adminMode && selectedObject && wasDragging) {
     softSnapSelectedObject();
   }
 });
