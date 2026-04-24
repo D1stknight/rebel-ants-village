@@ -674,9 +674,10 @@ setSt("Building terrain...");
 const ground=BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:120},scene);
 const grassMat=new BABYLON.StandardMaterial("grassMat",scene);
 const grassDiff=new BABYLON.Texture("assets/ground_diffuse.jpg",scene);
-grassDiff.uScale=40;grassDiff.vScale=40;
+grassDiff.uScale=14;grassDiff.vScale=14;
 grassMat.diffuseTexture=grassDiff;
-grassMat.specularColor=new BABYLON.Color3(0.05,0.05,0.05);
+grassMat.specularColor=new BABYLON.Color3(0.18,0.22,0.12);
+grassMat.specularPower=8;
 
 ground.material=grassMat; ground.receiveShadows=true;
         // Terrain displacement — organic forest floor with pseudo-random noise
