@@ -1714,7 +1714,7 @@ window.addEventListener('resize',()=>engine.resize());
 (()=>{
   function makePetalSystem(name, count, emitY, boxSize, rate){
     const ps = new BABYLON.ParticleSystem(name, count, scene);
-    ps.particleTexture = new BABYLON.Texture('https://assets.babylonjs.com/particles/textures/explosion/Flare.png',scene);
+    ps.particleTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/dot.png',scene);
     ps.emitter = new BABYLON.Vector3(0, emitY, 0);
     ps.minEmitBox = new BABYLON.Vector3(-boxSize,0,-boxSize);
     ps.maxEmitBox = new BABYLON.Vector3(boxSize,4,boxSize);
@@ -1730,7 +1730,7 @@ window.addEventListener('resize',()=>engine.resize());
     ps.minEmitPower = 0.05; ps.maxEmitPower = 0.25;
     ps.minAngularSpeed = -2.0; ps.maxAngularSpeed = 2.0;
     ps.updateSpeed = 0.016;
-    ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+    ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
     ps.start();
     return ps;
   }
