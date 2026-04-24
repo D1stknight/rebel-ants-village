@@ -490,7 +490,10 @@ function buildToro(root, glowColor) {
 const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
 scene.maxLightsPerMesh = 4;
-scene.onNewMaterialAddedObservable.add(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 4; });
+scene.onNewMaterialAddedObservable.add(mat => {
+  if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 4;
+  if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mat);
+});
 scene.fogMode=BABYLON.Scene.FOGMODE_NONE;
 scene.fogDensity=0.006;
 scene.fogColor=new BABYLON.Color3(.55,.72,.9);
