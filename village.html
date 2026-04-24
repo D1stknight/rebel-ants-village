@@ -1693,35 +1693,7 @@ window.addEventListener('resize',()=>engine.resize());
   });
 })();
 
-// ── COLLISION ─────────────────────────────────
-(()=>{
-  // Tag wall meshes with _isWall=true for raycast detection
-  function tagWalls(){
-    scene.meshes.forEach(m=>{
-      if(!m.name) return;
-      const n = m.name.toLowerCase();
-      // ONLY tag clearly-named building meshes — never Object_ (that's the character)
-      const isBuilding =
-        n.includes('house') ||
-        n.includes('dojo') ||
-        n.includes('shrine') ||
-        n.includes('japanese_shrine') ||
-        n.includes('mainFence') ||
-        n.includes('fencecorner') ||
-        n.includes('torii') ||
-        n.includes('bridge_small') ||
-        n.includes('polysurface') ||
-        (n.includes('rootclone') && (
-          n.includes('dojo') || n.includes('fence') || n.includes('shrine') || n.includes('torii')
-        ));
-      if(isBuilding) m._isWall = true;
-    });
-  }
-  tagWalls();
-  setTimeout(tagWalls, 1500);
-  setTimeout(tagWalls, 4000);
-  setTimeout(tagWalls, 8000);
-})();
+// ── COLLISION — TODO: implement properly with invisible wall meshes ──
 
 // ── RENDER LOOP ──────────────────────────────
 let t=0;
@@ -1756,17 +1728,7 @@ engine.runRenderLoop(()=>{
     if(!charMesh._vel)charMesh._vel=0;
     const tv=(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
-    if(Math.abs(charMesh._vel)>0.0001){
-    const moveVec = fwd.scale(charMesh._vel);
-    // Raycast forward — only block if wall is within 1.5 units
-    const origin = charMesh.position.clone();
-    origin.y += 1.5;
-    const ray = new BABYLON.Ray(origin, fwd, 1.5);
-    const hit = scene.pickWithRay(ray, m => m._isWall === true);
-    if(!hit || !hit.hit){
-      charMesh.position.addInPlace(moveVec);
-    }
-  }
+    if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8;}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
     if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
