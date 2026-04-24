@@ -1488,7 +1488,8 @@ function toggleWalk() {
         charMesh.position.x + Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),
         charMesh.position.y + _orbitDist*Math.sin(_orbitAngleV) + 2,
         charMesh.position.z + Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
-      walk.setTarget(new BABYLON.Vector3(charMesh.position.x, charMesh.position.y+2.8, charMesh.position.z));
+      const _eyeY = (charMesh._terrainY !== undefined ? charMesh._terrainY : charMesh.position.y) + 2.8;
+    walk.setTarget(new BABYLON.Vector3(charMesh.position.x, _eyeY, charMesh.position.z));
     }
     scene.activeCamera = walk; walk.detachControl(); orbit.detachControl();
     wb.textContent = '🌐  EXIT WALK MODE'; wb.classList.add('on'); xh.classList.remove('on');
@@ -1819,12 +1820,13 @@ engine.runRenderLoop(()=>{
     const tv=(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
     if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
-    // Terrain following — raycast down to get ground height under character
+    // Terrain following — raycast down, store terrainY for camera use too
     const _tRay = new BABYLON.Ray(new BABYLON.Vector3(charMesh.position.x, 80, charMesh.position.z), new BABYLON.Vector3(0,-1,0), 200);
     const _tHit = scene.pickWithRay(_tRay, m => m === ground || m === court || m === plaza);
     if (_tHit && _tHit.hit && _tHit.pickedPoint) {
       const targetY = _tHit.pickedPoint.y + 0.12;
       charMesh.position.y += (targetY - charMesh.position.y) * 0.18;
+      charMesh._terrainY = _tHit.pickedPoint.y;
     }
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8;}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
