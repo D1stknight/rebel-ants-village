@@ -2458,9 +2458,33 @@ canvas.addEventListener('dblclick', (e) => {
   }, 16);
 });
 
+// ── MODULE GLOBAL EXPOSE ─────────────────────────
+// Needed because this file now runs as type="module"
+window.toggleWalk = toggleWalk;
+window.spawnAssetFromPanel = spawnAssetFromPanel;
+window.uploadGLB = uploadGLB;
+window.setGizmoMode = setGizmoMode;
+window.flipSelected = flipSelected;
+window.rotateSelectedBy = rotateSelectedBy;
+window.scaleSelected = scaleSelected;
+window.duplicateSelectedFence = duplicateSelectedFence;
+window.deleteSelectedFence = deleteSelectedFence;
+window.addSignButton = addSignButton;
+window.applySignEditor = applySignEditor;
+window.applyToroColor = applyToroColor;
+window.toggleWorklight = toggleWorklight;
+window.saveWorldLayout = saveWorldLayout;
+window.loadWorldLayout = loadWorldLayout;
+
+// Show the GPU badge automatically only in WebGPU test mode.
+updateGPUBadge();
+if (window._gpuMode === 'webgpu') {
+  const gpuBadge = document.getElementById('gpuBadge');
+  if (gpuBadge) gpuBadge.style.display = 'block';
+}
+
 
 
 
 </script>
-</body>
 </html>
