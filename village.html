@@ -481,12 +481,71 @@ function buildToro(root, glowColor) {
   const fin = attach(BABYLON.MeshBuilder.CreateSphere('tfin',{diameter:0.18,segments:6},scene));
   fin.material=darkMat(); fin.position.y=7.22;
 
-  // Ground glow disc — emissive pool of light on floor, free
-  const gDisc = attach(BABYLON.MeshBuilder.CreateDisc('tgdisc',{radius:2.2,tessellation:20},scene));
-  const gDiscMat = new BABYLON.StandardMaterial('tgdiscMat_'+Math.random(),scene);
-  gDiscMat.emissiveColor = new BABYLON.Color3(glow.r*0.3, glow.g*0.3, glow.b*0.3);
-  gDiscMat.backFaceCulling=false; gDiscMat.maxSimultaneousLights=4;
-  gDisc.material=gDiscMat; gDisc.position.y=0.02; gDisc.rotation.x=Math.PI/2;
+   // Soft fake lighting system — emissive only, no real point light, very cheap.
+  // Layer 1: wide soft pool on the ground
+  const gDiscOuter = attach(BABYLON.MeshBuilder.CreateDisc('tgdiscOuter',{radius:2.8,tessellation:40},scene));
+  const gDiscOuterMat = new BABYLON.StandardMaterial('tgdiscOuterMat_'+Math.random(),scene);
+  gDiscOuterMat.diffuseColor = new BABYLON.Color3(0,0,0);
+  gDiscOuterMat.emissiveColor = new BABYLON.Color3(glow.r*0.55, glow.g*0.45, glow.b*0.28);
+  gDiscOuterMat.alpha = 0.18;
+  gDiscOuterMat.disableLighting = true;
+  gDiscOuterMat.backFaceCulling = false;
+  gDiscOuterMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+  gDiscOuterMat.maxSimultaneousLights = 0;
+  gDiscOuter.material = gDiscOuterMat;
+  gDiscOuter.position.y = 0.025;
+  gDiscOuter.rotation.x = Math.PI/2;
+  gDiscOuter.isPickable = false;
+
+  // Layer 2: smaller hotter glow near the lantern base
+  const gDiscInner = attach(BABYLON.MeshBuilder.CreateDisc('tgdiscInner',{radius:1.35,tessellation:40},scene));
+  const gDiscInnerMat = new BABYLON.StandardMaterial('tgdiscInnerMat_'+Math.random(),scene);
+  gDiscInnerMat.diffuseColor = new BABYLON.Color3(0,0,0);
+  gDiscInnerMat.emissiveColor = new BABYLON.Color3(glow.r*0.95, glow.g*0.75, glow.b*0.38);
+  gDiscInnerMat.alpha = 0.28;
+  gDiscInnerMat.disableLighting = true;
+  gDiscInnerMat.backFaceCulling = false;
+  gDiscInnerMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+  gDiscInnerMat.maxSimultaneousLights = 0;
+  gDiscInner.material = gDiscInnerMat;
+  gDiscInner.position.y = 0.035;
+  gDiscInner.rotation.x = Math.PI/2;
+  gDiscInner.isPickable = false;
+
+  // Camera-facing glow halo around the lantern chamber
+  const haloTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png', scene);
+  const haloMat = new BABYLON.StandardMaterial('toroHaloMat_'+Math.random(), scene);
+  haloMat.diffuseTexture = haloTexture;
+  haloMat.emissiveTexture = haloTexture;
+  haloMat.opacityTexture = haloTexture;
+  haloMat.emissiveColor = new BABYLON.Color3(glow.r*1.2, glow.g*0.95, glow.b*0.55);
+  haloMat.diffuseColor = new BABYLON.Color3(0,0,0);
+  haloMat.alpha = 0.42;
+  haloMat.disableLighting = true;
+  haloMat.backFaceCulling = false;
+  haloMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+  haloMat.maxSimultaneousLights = 0;
+
+  const halo = attach(BABYLON.MeshBuilder.CreatePlane('toroHalo',{width:2.4,height:2.4},scene));
+  halo.material = haloMat;
+  halo.position.y = 5.68;
+  halo.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+  halo.isPickable = false;
+
+  // Slightly brighter core glow in the fire box
+  const coreHaloMat = haloMat.clone('toroCoreHaloMat_'+Math.random());
+  coreHaloMat.alpha = 0.6;
+  coreHaloMat.emissiveColor = new BABYLON.Color3(glow.r*1.5, glow.g*1.15, glow.b*0.65);
+
+  const coreHalo = attach(BABYLON.MeshBuilder.CreatePlane('toroCoreHalo',{width:1.25,height:1.25},scene));
+  coreHalo.material = coreHaloMat;
+  coreHalo.position.y = 5.68;
+  coreHalo.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+  coreHalo.isPickable = false;
+
+  // Store glow materials so we can animate flicker later.
+  root.metadata = root.metadata || {};
+  root.metadata._toroGlowMats = [gDiscOuterMat, gDiscInnerMat, haloMat, coreHaloMat];
 }
 // ── SCENE ───────────────────────────────────
 // ── SCENE ───────────────────────────────────
