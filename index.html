@@ -249,7 +249,7 @@ async function loadNFTs(walletAddress) {
   setStatus('Loading your Rebels...');
   try {
     const url = `https://api.opensea.io/api/v2/chain/ethereum/account/${walletAddress}/nfts?limit=50`;
-    const r = await fetch(url, { headers: { 'accept': 'application/json' } });
+    const r = await fetch(url, { headers: { 'accept': 'application/json', 'x-api-key': '9c35627b295643e4aeb495a43d102928' } });
     if (!r.ok) throw new Error('status ' + r.status);
     const data = await r.json();
     const rebels = (data.nfts || []).filter(n =>
