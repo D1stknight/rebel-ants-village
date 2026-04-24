@@ -596,7 +596,7 @@ function snapSelectedObjectToGround(){
   selectedObject.position.y = hit.pickedPoint.y;
 }
 // ── LIGHTING ────────────────────────────────
-const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.7,-1.1,.5),scene);
+const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.9,-.45,.3),scene);
 sun.position=new BABYLON.Vector3(160,260,-160);
 sun.intensity=2.6; sun.diffuse=new BABYLON.Color3(1,.96,.88);
 
@@ -607,7 +607,7 @@ hemi.groundColor=new BABYLON.Color3(.55,.58,.48); hemi.specular=new BABYLON.Colo
 const shadows=new BABYLON.ShadowGenerator(512,sun);
 shadows.useExponentialShadowMap=true; shadows.bias=0.005;
 shadows.darkness=0.85;
-shadows.getShadowMap().refreshRate = BABYLON.RenderTargetTexture.REFRESHRATE_RENDER_ONCE;
+shadows.getShadowMap().refreshRate = BABYLON.RenderTargetTexture.REFRESHRATE_RENDER_EVERYFIRSTFRAME;
 
 // ── PROCEDURAL SKY ───────────────────────────
 const skybox=BABYLON.MeshBuilder.CreateBox("sky",{size:1400},scene);
@@ -679,7 +679,7 @@ grassMat.diffuseTexture=grassDiff;
 grassMat.specularColor=new BABYLON.Color3(0.18,0.22,0.12);
 grassMat.specularPower=8;
 
-ground.material=grassMat; ground.receiveShadows=true;
+ground.material=grassMat; ground.receiveShadows=true; shadows.addShadowCaster(ground);
         // Terrain displacement — organic forest floor with pseudo-random noise
         // Uses a seeded hash to break up the sine regularity into natural-looking terrain
         (function applyTerrain() {
@@ -2163,8 +2163,7 @@ function spawnLanternFull(spawnPos) {
     proxy.isPickable = true;
     proxy.visibility = 0;
     proxy.metadata = { type: 'lantern_1', isClone: true, proxyFor: clone };
-    selectedObject = proxy;
-        updateSelectedBadge();
+    if (adminMode) { selectedObject = proxy; updateSelectedBadge(); }
         if (adminMode) {
           gizmoManager.positionGizmoEnabled = true;
           gizmoManager.rotationGizmoEnabled = false;
