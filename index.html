@@ -685,7 +685,12 @@ court.material=mat(new BABYLON.Color3(.52,.49,.42)); court.position.y=.06; court
 
 // Inner plaza
 const plaza=BABYLON.MeshBuilder.CreateGround("pl",{width:90,height:90},scene);
-plaza.material=mat(new BABYLON.Color3(.62,.58,.48)); plaza.position.y=.1; plaza.receiveShadows=true;
+const stoneMat=new BABYLON.StandardMaterial("stoneMat",scene);
+const stoneDiff=new BABYLON.Texture("assets/stone_diffuse.jpg",scene);
+stoneDiff.uScale=12;stoneDiff.vScale=12;
+stoneMat.diffuseTexture=stoneDiff;
+stoneMat.specularColor=new BABYLON.Color3(0.08,0.08,0.08);
+plaza.material=stoneMat; plaza.position.y=.1; plaza.receiveShadows=true;
 
 // Paths
 const pm=mat(new BABYLON.Color3(.44,.41,.34));
