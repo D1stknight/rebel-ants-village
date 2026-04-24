@@ -565,7 +565,7 @@ function snapSelectedObjectToGround(){
 
   const origin = new BABYLON.Vector3(selectedObject.position.x, 200, selectedObject.position.z);
   const ray = new BABYLON.Ray(origin, new BABYLON.Vector3(0, -1, 0), 500);
-  const hit = scene.pickWithRay(ray, mesh => mesh === ground || mesh === court || mesh === plaza);
+  const hit = scene.pickWithRay(ray, mesh => mesh === court || mesh === plaza);
   if (!hit || !hit.hit || !hit.pickedPoint) return;
 
   // Get groundOffset from ASSETS (can be negative to sink below ground)
@@ -2140,11 +2140,12 @@ function spawnLanternFull(spawnPos) {
     proxy.visibility = 0;
     proxy.metadata = { type: 'lantern_1', isClone: true, proxyFor: clone };
     selectedObject = proxy;
-    updateSelectedBadge();
-    gizmoManager.positionGizmoEnabled = true;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(proxy);
+        updateSelectedBadge();
+        if (adminMode) {
+          gizmoManager.positionGizmoEnabled = true;
+          gizmoManager.rotationGizmoEnabled = false;
+          gizmoManager.scaleGizmoEnabled = false;
+          gizmoManager.attachToNode(proxy);
   }, 500);
   return clone;
 }
