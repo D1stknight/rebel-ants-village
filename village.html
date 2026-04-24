@@ -1439,7 +1439,15 @@ function loadWorldLayout(){
       if (!_noShadows) shadows.addShadowCaster(m);
       m.receiveShadows = !_noShadows; m.isPickable = true;
       m._editRoot = clone; // enables admin picker to find parent clone
-      if (m.material) m.material.maxSimultaneousLights = 4;
+     clone.getChildMeshes().forEach(m => {
+  if (!_noShadows) shadows.addShadowCaster(m);
+  m.receiveShadows = !_noShadows; m.isPickable = true;
+  m._editRoot = clone; // enables admin picker to find parent clone
+if (m.material) {
+  m.material.maxSimultaneousLights = 4;
+  if (window._gpuMode === 'webgpu') webgpuCapMaterial4(m.material);
+}
+});
     });
   });
 
