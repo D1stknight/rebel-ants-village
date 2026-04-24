@@ -105,7 +105,7 @@ function updateGPUBadge() {
   if (!badge) return;
   badge.style.display = 'block';
   if (window._gpuMode === 'webgpu') {
-    badge.textContent = 'WebGPU TEST';
+    badge.textContent = 'WebGPU TEST — LIGHT CAP 1';
     badge.style.color = '#5ecfca';
     badge.style.borderColor = '#5ecfca';
   } else {
@@ -114,13 +114,50 @@ function updateGPUBadge() {
     badge.style.borderColor = '#e8c56a';
   }
 }
-updateGPUBadge();`;
+updateGPUBadge();
+
+function applyWebGPUTestLightCap() {
+  if (window._gpuMode !== 'webgpu' || !scene) return;
+
+  scene.materials.forEach(function(mat) {
+    if (!mat) return;
+    if ('maxSimultaneousLights' in mat) {
+      mat.maxSimultaneousLights = 1;
+      if (mat.markAsDirty && BABYLON.Material && BABYLON.Material.LightDirtyFlag !== undefined) {
+        mat.markAsDirty(BABYLON.Material.LightDirtyFlag);
+      }
+    }
+  });
+
+  scene.meshes.forEach(function(mesh) {
+    if (!mesh || !mesh.material) return;
+    if ('maxSimultaneousLights' in mesh.material) {
+      mesh.material.maxSimultaneousLights = 1;
+      if (mesh.material.markAsDirty && BABYLON.Material && BABYLON.Material.LightDirtyFlag !== undefined) {
+        mesh.material.markAsDirty(BABYLON.Material.LightDirtyFlag);
+      }
+    }
+  });
+}
+
+let _webgpuLightCapFrame = 0;`;
 
     if (!html.includes(oldEngineBlock)) {
       throw new Error('Could not find the expected engine bootstrap block in village.html. Wrapper did not modify the village.');
     }
 
     html = html.replace(oldEngineBlock, newEngineBlock);
+
+    html = html.replace(
+      'scene.render();',
+      `if (window._gpuMode === 'webgpu') {
+      _webgpuLightCapFrame++;
+      if (_webgpuLightCapFrame < 240 || _webgpuLightCapFrame % 60 === 0) {
+        applyWebGPUTestLightCap();
+      }
+    }
+    scene.render();`
+    );
 
     const exposeGlobals = `
 try {
