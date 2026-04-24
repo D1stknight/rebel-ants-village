@@ -1693,7 +1693,48 @@ window.addEventListener('resize',()=>engine.resize());
   });
 })();
 
-// ── COLLISION — TODO: implement properly with invisible wall meshes ──
+// ── COLLISION ─────────────────────────────────
+(()=>{
+  scene.collisionsEnabled = true;
+  scene.gravity = new BABYLON.Vector3(0,-9.81,0);
+
+  // Set up character collision ellipsoid when walk mode starts
+  scene.onAfterRenderObservable.add(()=>{
+    if(window.charMesh && !window.charMesh._collisionSet){
+      window.charMesh.ellipsoid = new BABYLON.Vector3(1.5,3.0,1.5);
+      window.charMesh.ellipsoidOffset = new BABYLON.Vector3(0,3.0,0);
+      window.charMesh.checkCollisions = true;
+      window.charMesh._collisionSet = true;
+    }
+  });
+
+  // Enable collisions on all solid meshes — broad approach using actual mesh names
+  function enableCollisions(){
+    scene.meshes.forEach(m=>{
+      if(!m.name || m.name==='gnd' || m.name.startsWith('s') || m.name==='sky' ||
+         m.name.startsWith('petals') || m.name==='moon' || m.name.startsWith('halo') ||
+         m.name.startsWith('star') || m.isPickable===false) return;
+      const n = m.name.toLowerCase();
+      // Skip ground planes, paths, trees, rocks, particles
+      if(n==='gnd'||n==='ct'||n==='pl'||n==='pa'||n==='rv') return;
+      if(n.includes('tree')||n.includes('pine')||n.includes('bamboo')||
+         n.includes('cherry')||n.includes('rock')||n.includes('rock_medium')) return;
+      // Enable on buildings, fences, structures
+      if(n.includes('house')||n.includes('dojo')||n.includes('shrine')||
+         n.includes('fence')||n.includes('torii')||n.includes('pillar')||
+         n.includes('object_')||n.includes('polysurface')||n.includes('mesh_')||
+         n.includes('cube')||n.includes('japanese')||n.includes('main ')||
+         n.includes('bridge')||n.includes('sign')){
+        m.checkCollisions = true;
+      }
+    });
+  }
+
+  // Run immediately + again after GLBs fully load
+  enableCollisions();
+  setTimeout(enableCollisions, 2000);
+  setTimeout(enableCollisions, 5000);
+})();
 
 // ── RENDER LOOP ──────────────────────────────
 let t=0;
