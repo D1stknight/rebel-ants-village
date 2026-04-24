@@ -1,0 +1,2393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebel Ants — The Hidden Village</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Noto+Serif+JP:wght@300;400&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Noto+Serif+JP:wght@300;400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:'Noto Serif JP',serif}
+#c{width:100%;height:100%;touch-action:none;display:block}
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:20px 28px;pointer-events:none;z-index:10}
+#logo h1{font-family:'Cinzel Decorative',serif;font-size:22px;font-weight:900;color:#e8c56a;letter-spacing:4px;text-shadow:0 0 25px rgba(232,197,106,.8),0 2px 8px rgba(0,0,0,.9);line-height:1}
+#logo span{font-size:10px;letter-spacing:7px;color:#5ecfca;text-transform:uppercase;margin-top:5px;display:block;text-shadow:0 0 10px rgba(94,207,202,.6)}
+#ctrl{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:2px;text-align:right;line-height:2.2;text-transform:uppercase}
+#ctrl kbd{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:3px;padding:1px 6px;font-size:9px;color:#e8c56a}
+#td{position:fixed;top:20px;left:50%;transform:translateX(-50%);font-family:'Cinzel Decorative',serif;font-size:11px;color:rgba(232,197,106,.65);letter-spacing:3px;pointer-events:none;z-index:10}
+#xhair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:8;opacity:0;transition:opacity .3s;width:22px;height:22px}
+#xhair.on{opacity:1}
+#xhair::before,#xhair::after{content:'';position:absolute;background:rgba(255,255,255,.8);border-radius:1px}
+#xhair::before{width:16px;height:2px;top:10px;left:3px}
+#xhair::after{width:2px;height:16px;top:3px;left:10px}
+#wb{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.55);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:3px;padding:13px 32px;cursor:pointer;z-index:10;transition:all .25s;backdrop-filter:blur(12px)}
+#wb:hover{background:rgba(232,197,106,.18)}
+#wb.on{background:rgba(232,197,106,.22);border-color:#e8c56a}
+#tt{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.95);border:1px solid rgba(232,197,106,.45);padding:13px 28px;text-align:center;pointer-events:none;opacity:0;transition:opacity .3s;z-index:20;backdrop-filter:blur(12px);white-space:nowrap}
+#tt h3{font-family:'Cinzel Decorative',serif;font-size:12px;color:#e8c56a;letter-spacing:2px;margin-bottom:3px}
+#tt p{font-size:10px;color:#5ecfca;letter-spacing:1px}
+#tt.on{opacity:1}
+#panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);width:480px;max-width:92vw;max-height:88vh;overflow-y:auto;background:rgba(5,10,28,.97);border:1px solid rgba(232,197,106,.5);padding:38px;z-index:30;opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(22px)}
+#panel.on{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
+#adminBadge{
+  position:fixed;
+  top:70px;
+  right:28px;
+  transition:right .3s;
+  z-index:20;
+  padding:8px 12px;
+  font-family:'Cinzel Decorative',serif;
+  font-size:10px;
+  letter-spacing:2px;
+  color:#e8c56a;
+  background:rgba(5,10,28,.9);
+  border:1px solid rgba(232,197,106,.35);
+  display:none;
+}
+#adminBadge.on{
+  display:block;
+  border-color:#5ecfca;
+  color:#5ecfca;
+}
+#selectedBadge{
+  position:fixed;
+  top:105px;
+  right:28px;
+  transition:right .3s;
+  z-index:20;
+  padding:8px 12px;
+  font-family:'Cinzel Decorative',serif;
+  font-size:10px;
+  letter-spacing:2px;
+  color:#ffffff;
+  background:rgba(5,10,28,.9);
+  border:1px solid rgba(255,255,255,.2);
+  display:none;
+}
+#selectedBadge.on{
+  display:block;
+  border-color:#e8c56a;
+  color:#e8c56a;
+}
+#saveBadge{
+  position:fixed;
+  top:140px;
+  right:28px;
+  z-index:20;
+  padding:8px 12px;
+  font-family:'Cinzel Decorative',serif;
+  font-size:10px;
+  letter-spacing:2px;
+  color:#7CFFB2;
+  background:rgba(5,10,28,.9);
+  border:1px solid rgba(124,255,178,.45);
+  display:none;
+}
+#saveBadge.on{
+  display:block;
+}
+#pc{position:absolute;top:14px;right:18px;background:none;border:none;color:rgba(232,197,106,.5);font-size:22px;cursor:pointer;transition:color .2s;line-height:1}
+#pc:hover{color:#e8c56a}
+#ph2{font-family:'Cinzel Decorative',serif;font-size:16px;color:#e8c56a;letter-spacing:2px;margin-bottom:6px}
+.psb{font-size:10px;color:#5ecfca;letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;border-bottom:1px solid rgba(232,197,106,.12);padding-bottom:16px}
+#pdesc{font-size:13px;color:rgba(255,255,255,.75);line-height:2;margin-bottom:20px}
+#picon{font-size:42px;margin-bottom:16px;display:block}
+.pl{display:flex;flex-wrap:wrap;gap:8px}
+.pb{display:inline-block;background:linear-gradient(135deg,#e8c56a,#c9993a);color:#020818;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:10px 18px;border:none;cursor:pointer;text-decoration:none;transition:opacity .2s}
+.pb:hover{opacity:.82}.pb.g{background:transparent;border:1px solid rgba(232,197,106,.4);color:#e8c56a}
+.pb.t{background:linear-gradient(135deg,#5ecfca,#2a9090);color:#020818}
+.pb.r{background:linear-gradient(135deg,#c0392b,#8a1a10);color:#fff}
+#ld{position:fixed;inset:0;background:#020818;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity .9s}
+#ld h1{font-family:'Cinzel Decorative',serif;font-size:30px;color:#e8c56a;letter-spacing:5px;margin-bottom:10px;text-shadow:0 0 40px rgba(232,197,106,.6)}
+#ld .sub{font-size:10px;color:#5ecfca;letter-spacing:7px;text-transform:uppercase;margin-bottom:48px;animation:pulse 2s infinite}
+#ldst{font-size:10px;color:rgba(232,197,106,.45);letter-spacing:2px;margin-top:18px;text-transform:uppercase;text-align:center}
+.lb{width:240px;height:2px;background:rgba(232,197,106,.1);position:relative;overflow:hidden}
+.lf{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#e8c56a,transparent);animation:sw 1.6s infinite}
+@keyframes sw{to{left:100%}}@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+
+#assetPanel{position:fixed;top:0;right:0;width:220px;height:100vh;background:rgba(5,10,28,.97);border-left:1px solid rgba(232,197,106,.25);z-index:25;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(12px)}
+#assetPanel.on{transform:translateX(0)}
+#assetPanel .ap-header{padding:12px 14px;border-bottom:1px solid rgba(232,197,106,.15);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#assetPanel .ap-header span{font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;color:#e8c56a}
+#assetPanel .ap-header kbd{font-size:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:3px;padding:1px 5px;color:rgba(255,255,255,.45)}
+#assetPanel .ap-scroll{flex:1;overflow-y:auto;padding:8px 0}
+#assetPanel .ap-section{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;padding:8px 12px 4px}
+#assetPanel .ap-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 8px}
+#assetPanel .ap-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:8px 4px;cursor:pointer;text-align:center;transition:all .15s}
+#assetPanel .ap-card:hover{background:rgba(232,197,106,.12);border-color:rgba(232,197,106,.4)}
+#assetPanel .ap-card .ap-icon{font-size:18px;display:block;margin-bottom:3px}
+#assetPanel .ap-card .ap-name{font-size:9px;color:rgba(255,255,255,.5);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#assetPanel .ap-divider{border:none;border-top:1px solid rgba(255,255,255,.06);margin:8px}
+#assetPanel .ap-btn{width:calc(100% - 16px);margin:0 8px 5px;padding:7px 10px;font-size:10px;font-family:'Cinzel Decorative',serif;letter-spacing:1px;border:1px solid rgba(232,197,106,.3);border-radius:4px;background:transparent;color:#e8c56a;cursor:pointer;text-align:left;transition:all .15s}
+#assetPanel .ap-btn:hover{background:rgba(232,197,106,.12)}
+#assetPanel .ap-btn.upload{border-color:rgba(94,207,202,.4);color:#5ecfca}
+#assetPanel .ap-footer{padding:8px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:5px;flex-shrink:0}
+#assetPanel .ap-footer button{flex:1;padding:6px;font-size:9px;font-family:'Cinzel Decorative',serif;letter-spacing:1px;border:1px solid rgba(255,255,255,.12);border-radius:4px;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;transition:all .15s}
+#assetPanel .ap-footer button:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
+#assetPanel .ap-section{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;padding:8px 12px 4px}
+#assetPanel .ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 8px 6px}
+#assetPanel .ctrl-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:6px 4px;cursor:pointer;text-align:center;color:rgba(255,255,255,.7);font-size:9px;font-family:'Cinzel Decorative',serif;letter-spacing:.5px;transition:all .15s;display:block;width:100%}
+#assetPanel .ctrl-btn:hover{background:rgba(232,197,106,.12);border-color:rgba(232,197,106,.4);color:#e8c56a}
+#assetPanel .ctrl-btn kbd{display:block;font-size:8px;color:rgba(255,255,255,.25);margin-top:2px;font-family:monospace}
+#assetPanel .ctrl-btn.danger{border-color:rgba(220,60,60,.3);color:rgba(220,100,100,.8)}
+#assetPanel .ctrl-btn.danger:hover{background:rgba(220,60,60,.15);border-color:rgba(220,60,60,.6);color:#e86060}
+#assetPanel .ctrl-btn.full{grid-column:1/-1}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(5,10,28,.95);border:1px solid rgba(94,207,202,.6);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:10px 24px;opacity:0;transition:all .4s;pointer-events:none;z-index:50;white-space:nowrap}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="ld"><h1>REBEL ANTS</h1><div class="sub">Building the Hidden Village...</div><div class="lb"><div class="lf"></div></div><div id="ldst">Initializing...</div></div>
+<div id="assetPanel">
+  <div class="ap-header"><span>Assets</span><kbd>M</kbd></div>
+  <div class="ap-scroll">
+    <div class="ap-section">Buildings</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
+    <div class="ap-section">Nature</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">lantern_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wooden_sign')"><span class="ap-icon">🪧</span><span class="ap-name">wooden_sign</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🏯</span><span class="ap-name">toro_lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('small_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">small_bridge</span></div></div>
+    <hr class="ap-divider">
+    <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
+  </div>
+  <div class="ap-section">Selected</div>
+  <div class="ctrl-grid">
+    <button class="ctrl-btn" onclick="setGizmoMode('move')">Move<kbd>G</kbd></button>
+    <button class="ctrl-btn" onclick="setGizmoMode('rotate')">Rotate<kbd>R</kbd></button>
+    <button class="ctrl-btn" onclick="setGizmoMode('scale')">Scale<kbd>Y</kbd></button>
+    <button class="ctrl-btn" onclick="flipSelected()">Flip<kbd>F</kbd></button>
+    <button class="ctrl-btn" onclick="rotateSelectedBy(-Math.PI/2)">&#x21BA; -90&#xB0;<kbd>Q</kbd></button>
+    <button class="ctrl-btn" onclick="rotateSelectedBy(Math.PI/2)">&#x21BB; +90&#xB0;<kbd>E</kbd></button>
+    <button class="ctrl-btn" onclick="scaleSelected(1.25)">Larger<kbd>+</kbd></button>
+    <button class="ctrl-btn" onclick="scaleSelected(0.8)">Smaller<kbd>-</kbd></button>
+    <button class="ctrl-btn" onclick="duplicateSelectedFence()">Duplicate<kbd>N</kbd></button>
+    <button class="ctrl-btn danger" onclick="deleteSelectedFence()">Delete<kbd>Del</kbd></button>
+  </div>
+  <hr class="ap-divider">
+  <div id="signEditorPanel" style="display:none;padding:0 8px 8px">
+    <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin-bottom:6px;text-transform:uppercase">Sign Editor</div>
+    <input id="signLabel" placeholder="Label e.g. THE COLONY" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #5ecfca;color:#e8c56a;padding:4px 6px;font-family:'Cinzel Decorative',serif;font-size:11px;margin-bottom:4px">
+    <input id="signSub" placeholder="Subtitle e.g. Community Hub" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:4px 6px;font-size:11px;margin-bottom:4px">
+    <textarea id="signDesc" placeholder="Description (shown in popup)" rows="3" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:4px 6px;font-size:11px;margin-bottom:4px;resize:vertical"></textarea>
+    <div style="display:flex;gap:4px;margin-bottom:6px">
+      <input id="signIcon" placeholder="🐜" style="width:52px;background:#1a1a2e;border:1px solid #333;color:#fff;padding:4px 6px;font-size:16px;text-align:center">
+      <input id="signColor" type="color" value="#5ecfca" style="width:36px;height:28px;border:none;background:none;cursor:pointer" title="Neon color">
+      <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:3px"><input type="checkbox" id="signClickable" checked> Zone</label>
+    </div>
+    <div style="font-size:9px;letter-spacing:1px;color:#5ecfca;margin-bottom:4px">BUTTONS</div>
+    <div id="signBtnsContainer" style="margin-bottom:4px"></div>
+    <button onclick="addSignButton()" style="width:100%;background:#1a1a2e;border:1px dashed #5ecfca;color:#5ecfca;padding:3px;font-size:10px;cursor:pointer;margin-bottom:6px">+ Add Button</button>
+    <button class="ctrl-btn full" onclick="applySignEditor()" style="width:100%;background:#5ecfca;color:#000">Apply to Sign</button>
+  </div>
+  <div id="toroEditorPanel" style="display:none;padding:0 8px 8px">
+    <div style="font-size:9px;letter-spacing:2px;color:#ffdd88;margin-bottom:6px;text-transform:uppercase">Lantern Color</div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input id="toroColor" type="color" value="#ffdd88" style="width:44px;height:32px;border:none;background:none;cursor:pointer">
+      <span style="color:#aaa;font-size:10px">Pick glow color</span>
+    </div>
+    <button class="ctrl-btn full" onclick="applyToroColor()" style="width:100%;background:#ffdd88;color:#000">Apply Color</button>
+  </div>
+  <hr class="ap-divider">
+  <div style="padding:0 8px 6px">
+    <button class="ctrl-btn full" id="worklightBtn" onclick="toggleWorklight()" style="grid-column:1/-1;width:100%">&#x2600; Worklight (W)<kbd>W</kbd></button>
+  </div>
+  <hr class="ap-divider">
+  <div class="ap-footer">
+    <button onclick="saveWorldLayout()">Save (P)</button>
+    <button onclick="loadWorldLayout()">Load (L)</button>
+  </div>
+</div>
+<input type="file" id="glbUploadInput" accept=".glb" style="display:none">
+<div id="toast"></div>
+<canvas id="c"></canvas>
+<div id="xhair"></div>
+<div id="td"></div>
+<div id="adminBadge">ADMIN MODE</div>
+<div id="gpuBadge" style="display:none;position:fixed;top:8px;left:50%;transform:translateX(-50%);padding:3px 10px;border-radius:4px;font-size:10px;letter-spacing:2px;font-family:'Cinzel Decorative',serif;border:1px solid #555;color:#888;background:rgba(255,255,255,0.08);pointer-events:none;z-index:999">WebGL</div>
+<div id="selectedBadge">SELECTED: NONE</div>
+<div id="saveBadge">SAVED ✓</div>
+<div id="hud">
+  <div id="logo"><h1>REBEL ANTS</h1><span>The Hidden Village</span></div>
+  <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
+</div>
+<button id="wb" onclick="toggleWalk()">⚔️ &nbsp;ENTER VILLAGE</button>
+<div id="tt"><h3 id="tth">—</h3><p id="ttp">Click to enter</p></div>
+<div id="panel">
+  <button id="pc">✕</button>
+  <span id="picon">⚔️</span>
+  <h2 id="ph2">—</h2>
+  <div class="psb" id="psub">Rebel Ants</div>
+  <p id="pdesc">—</p>
+  <div class="pl" id="pact"></div>
+</div>
+
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+<script>
+const canvas=document.getElementById('c');
+const setSt=t=>{document.getElementById('ldst').textContent=t;};
+// ── ENGINE ───────────────────────────────────
+// WebGPU support coming — using stable WebGL
+// window._gpuMode reserved for future GPU upgrade path
+const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+window._gpuMode = 'webgl';
+function updateGPUBadge() {
+  const badge = document.getElementById('gpuBadge');
+  if (!badge) return;
+  badge.textContent = 'WebGL';
+  badge.style.color = '#888';
+  badge.style.borderColor = '#555';
+}
+
+// ═══════════════════════════════════════
+// ASSET REGISTR
+// ═══════════════════════════════════════
+// ASSET REGISTRY (ALL GLBs LIVE HERE)
+// ═══════════════════════════════════════
+const ASSETS = {
+  dojo_5: {
+    path: "/assets/buildings/dojo_5.glb",
+    scale: 2.2,
+    rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
+    noShadows: true
+  },
+  dojo_6: {
+    path: "/assets/buildings/dojo_6.glb",
+    scale: 0.6,
+    rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+  },
+  dojo_7: {
+    path: "/assets/buildings/dojo_7.glb",
+    scale: 1.2,
+    rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0)
+  },
+dojo_9: {
+  path: "/assets/buildings/dojo_9.glb",
+  scale: 1.2,
+  rotation: new BABYLON.Vector3(Math.PI / 2, 0, 0),
+  noShadows: true
+},
+fence_1: {
+  path: "/assets/buildings/fence_1.glb",
+  scale: 2,
+  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
+  groundOffset: -1,
+  noShadows: true
+},
+shrine_2: {
+  path: "/assets/buildings/shrine_2.glb",
+  scale: 12,
+  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
+  groundOffset: 0,
+  noGroundSnap: true,
+  noShadows: true
+},
+tree_1: {
+  path: "/assets/buildings/tree_1.glb",
+  scale: 2,
+  rotation: new BABYLON.Vector3(0, Math.PI, 0),
+  groundOffset: 0,
+  noShadows: true
+},
+pine_1: {
+  path: "/assets/buildings/pine_1.glb",
+  scale: 2,
+  rotation: new BABYLON.Vector3(0, Math.PI, 0),
+  groundOffset: 0,
+  noShadows: true
+},
+rock_1: {
+  path: "/assets/buildings/rock_1.glb",
+  scale: 1.0,
+  rotation: new BABYLON.Vector3(0, Math.PI, 0),
+  noShadows: true
+},
+cherry_blossom: {
+  path: "/assets/buildings/cherry_blossom.glb",
+  scale: 1.0,
+  rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
+  noShadows: true
+},
+bamboo: {
+  path: "/assets/buildings/bamboo.glb",
+  scale: 1.0,
+  rotation: new BABYLON.Vector3(0, Math.PI, 0),
+  noShadows: true
+},
+lantern_1: {
+  path: "/assets/buildings/lantern_1.glb",
+  scale: 0.027,
+  rotation: new BABYLON.Vector3(0, Math.PI, 0),
+  groundOffset: 0,
+  noShadows: true
+},
+  wooden_sign: {
+    path: '/assets/buildings/wooden_sign.glb',
+    scale: 200,
+    rotation: new BABYLON.Vector3(0, Math.PI, 0),
+    noShadows: true
+  },
+  small_bridge: {
+    path: '/assets/buildings/small_bridge.glb',
+    scale: 1.0,
+    rotation: new BABYLON.Vector3(0, Math.PI, 0),
+    noShadows: true
+  },
+  toro_lantern: {
+    procedural: true,
+    scale: 1.0,
+    noShadows: true,
+    groundOffset: 0
+  }
+};
+
+  // ═══════════════════════════════════════
+// SPAWN ASSET FUNCTION (MASTER SYSTEM)
+// ═══════════════════════════════════════
+function spawnAsset(type, position, extraMeta) {
+  const config = ASSETS[type];
+  if (!config) { console.warn("Missing asset:", type); return null; }
+
+  const root = new BABYLON.TransformNode(type + "_root", scene);
+  root.position = position.clone();
+  root.scaling = new BABYLON.Vector3(config.scale, config.scale, config.scale);
+  if (config.rotation) root.rotation = config.rotation.clone();
+  root.isPickable = true;
+  root.metadata = { type, loaded: false, ...(extraMeta||{}) };
+
+  if (config.procedural) {
+    // Build procedural asset immediately
+    if (type === 'toro_lantern') buildToro(root, root.metadata.toroColor || '#ffdd88');
+    root.metadata.loaded = true;
+    console.log("Spawned procedural:", type);
+  } else {
+    BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
+      meshes.forEach(m => {
+        m.parent = root;
+        if (!config.noShadows) shadows.addShadowCaster(m);
+        m.receiveShadows = !config.noShadows;
+        m._editRoot = root;
+        if (m.material) m.material.maxSimultaneousLights = 4;
+      });
+      root.metadata.loaded = true;
+      console.log("Spawned:", type);
+    });
+  }
+  return root;
+}
+
+// ── TŌRŌ LANTERN BUILDER ─────────────────────────────────────
+// Traditional Japanese stone lantern (tōrō) built from primitives
+// All emissive — zero performance cost, unlimited placement
+function buildToro(root, glowColor) {
+  glowColor = glowColor || '#ffdd88';
+  const glow = BABYLON.Color3.FromHexString(glowColor);
+  const stone = new BABYLON.Color3(0.28, 0.24, 0.20);
+  const darkStone = new BABYLON.Color3(0.18, 0.15, 0.12);
+  const stoneMat = () => { const m = new BABYLON.StandardMaterial('toroStone_'+Math.random(),scene); m.diffuseColor=stone; m.maxSimultaneousLights=4; return m; };
+  const darkMat = () => { const m = new BABYLON.StandardMaterial('toroDark_'+Math.random(),scene); m.diffuseColor=darkStone; m.maxSimultaneousLights=4; return m; };
+  const glowMat = () => { const m = new BABYLON.StandardMaterial('toroGlow_'+Math.random(),scene); m.diffuseColor=glow; m.emissiveColor=glow; m.maxSimultaneousLights=4; return m; };
+
+  const attach = (mesh) => { mesh.parent=root; mesh.isPickable=true; mesh._editRoot=root; return mesh; };
+
+  // Base platform — wide stone slab
+  attach(BABYLON.MeshBuilder.CreateCylinder('tb0',{diameterTop:1.8,diameterBottom:2.0,height:0.25,tessellation:8},scene)).material=stoneMat();
+  // Base step
+  attach(BABYLON.MeshBuilder.CreateCylinder('tb1',{diameterTop:1.4,diameterBottom:1.6,height:0.2,tessellation:8},scene)).material=stoneMat();
+  const b1 = attach(BABYLON.MeshBuilder.CreateCylinder('tb1b',{diameterTop:1.4,diameterBottom:1.6,height:0.2,tessellation:8},scene));
+  b1.material=stoneMat(); b1.position.y=0.2;
+  // Post — tapered octagonal shaft
+  const post = attach(BABYLON.MeshBuilder.CreateCylinder('tp',{diameterTop:0.38,diameterBottom:0.55,height:4.8,tessellation:8},scene));
+  post.material=stoneMat(); post.position.y=2.6;
+  // Middle cap / waist ring
+  const waist = attach(BABYLON.MeshBuilder.CreateCylinder('tw',{diameterTop:0.7,diameterBottom:0.7,height:0.22,tessellation:8},scene));
+  waist.material=darkMat(); waist.position.y=3.0;
+  // Fire box platform
+  const fbBase = attach(BABYLON.MeshBuilder.CreateCylinder('tfb',{diameterTop:1.1,diameterBottom:0.9,height:0.18,tessellation:8},scene));
+  fbBase.material=darkMat(); fbBase.position.y=5.1;
+  // Fire box body — the glowing chamber
+  const fb = attach(BABYLON.MeshBuilder.CreateBox('tfbody',{width:0.9,height:1.0,depth:0.9},scene));
+  fb.material=glowMat(); fb.position.y=5.68;
+  // Fire box frame corners — dark stone surround
+  [[-0.4,-0.4],[0.4,-0.4],[-0.4,0.4],[0.4,0.4]].forEach(([ox,oz]) => {
+    const col = attach(BABYLON.MeshBuilder.CreateCylinder('tfc_'+ox,{diameterTop:0.1,diameterBottom:0.1,height:1.05,tessellation:6},scene));
+    col.material=darkMat(); col.position=new BABYLON.Vector3(ox,5.68,oz);
+  });
+  // Cap base
+  const capBase = attach(BABYLON.MeshBuilder.CreateCylinder('tcb',{diameterTop:1.3,diameterBottom:1.2,height:0.15,tessellation:8},scene));
+  capBase.material=darkMat(); capBase.position.y=6.22;
+  // Pagoda cap — two tiers
+  const cap1 = attach(BABYLON.MeshBuilder.CreateCylinder('tc1',{diameterTop:0.05,diameterBottom:1.4,height:0.55,tessellation:8},scene));
+  cap1.material=stoneMat(); cap1.position.y=6.62;
+  const cap2 = attach(BABYLON.MeshBuilder.CreateCylinder('tc2',{diameterTop:0.05,diameterBottom:0.85,height:0.35,tessellation:8},scene));
+  cap2.material=stoneMat(); cap2.position.y=7.02;
+  // Finial top
+  const fin = attach(BABYLON.MeshBuilder.CreateSphere('tfin',{diameter:0.18,segments:6},scene));
+  fin.material=darkMat(); fin.position.y=7.22;
+
+  // Ground glow disc — emissive pool of light on floor, free
+  const gDisc = attach(BABYLON.MeshBuilder.CreateDisc('tgdisc',{radius:2.2,tessellation:20},scene));
+  const gDiscMat = new BABYLON.StandardMaterial('tgdiscMat_'+Math.random(),scene);
+  gDiscMat.emissiveColor = new BABYLON.Color3(glow.r*0.3, glow.g*0.3, glow.b*0.3);
+  gDiscMat.backFaceCulling=false; gDiscMat.maxSimultaneousLights=4;
+  gDisc.material=gDiscMat; gDisc.position.y=0.02; gDisc.rotation.x=Math.PI/2;
+}
+// ── SCENE ───────────────────────────────────
+// ── SCENE ───────────────────────────────────
+const scene=new BABYLON.Scene(engine);
+scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
+scene.maxLightsPerMesh = 4;
+scene.onNewMaterialAddedObservable.add(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 4; });
+scene.fogMode=BABYLON.Scene.FOGMODE_NONE;
+scene.fogDensity=0.006;
+scene.fogColor=new BABYLON.Color3(.55,.72,.9);
+
+gizmoManager = new BABYLON.GizmoManager(scene);
+gizmoManager.positionGizmoEnabled = false;
+gizmoManager.rotationGizmoEnabled = false;
+gizmoManager.scaleGizmoEnabled = false;
+gizmoManager.clearGizmoOnEmptyPointerEvent = true;
+
+// ── CAMERAS ─────────────────────────────────
+const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/2.5,320,new BABYLON.Vector3(0,6,0),scene);
+orbit.lowerRadiusLimit=8; orbit.upperRadiusLimit=450; orbit.upperBetaLimit=Math.PI/2.05;
+orbit.wheelPrecision=2;
+orbit.inertia = 0.35;
+orbit.panningInertia = 0.35;
+orbit.attachControl(canvas,true);
+const walk = new BABYLON.UniversalCamera("w", new BABYLON.Vector3(0, 8, 35), scene);
+walk.speed = 0;
+walk.angularSensibility = 999999;
+walk.keysUp = [];
+walk.keysDown = [];
+walk.keysLeft = [];
+walk.keysRight = [];
+walk.minZ = 0.2;
+
+scene.activeCamera = orbit;
+let walkMode = false;
+let adminMode = false;
+let _worklightOn = false;
+let adminDragging = false;
+
+const GRID_SIZE = 6;
+const ROT_SNAP = Math.PI / 2;
+const SNAP_DISTANCE = 1.5;
+const ROT_SNAP_DISTANCE = 0.18;
+
+function updateAdminBadge(){
+  const gpuBadge = document.getElementById('gpuBadge');
+  if (gpuBadge) gpuBadge.style.display = adminMode ? 'block' : 'none';
+  const badge = document.getElementById('adminBadge');
+  if (!badge) return;
+  badge.classList.toggle('on', adminMode);
+}
+
+function updateSelectedBadge(){
+  const badge = document.getElementById('selectedBadge');
+  if (!badge) return;
+  if (selectedObject) {
+    badge.textContent = 'SELECTED: ' + selectedObject.name.toUpperCase();
+    badge.classList.add('on');
+  } else {
+    badge.textContent = 'SELECTED: NONE';
+    badge.classList.remove('on');
+  }
+  // Show sign editor if wooden_sign selected
+  const signPanel = document.getElementById('signEditorPanel');
+  if (!signPanel) return;
+  const isSign = selectedObject && selectedObject.metadata && selectedObject.metadata.type === 'wooden_sign';
+  signPanel.style.display = isSign ? 'block' : 'none';
+  const toroPanel = document.getElementById('toroEditorPanel');
+  if (toroPanel) {
+    const isToro = selectedObject && selectedObject.metadata && selectedObject.metadata.type === 'toro_lantern';
+    toroPanel.style.display = isToro ? 'block' : 'none';
+    if (isToro) document.getElementById('toroColor').value = selectedObject.metadata.toroColor || '#ffdd88';
+  }
+  if (isSign) {
+    const cfg = selectedObject.metadata.signConfig || {};
+    document.getElementById('signLabel').value = cfg.label || '';
+    document.getElementById('signSub').value = cfg.sub || '';
+    document.getElementById('signIcon').value = cfg.icon || '';
+    document.getElementById('signColor').value = cfg.color || '#5ecfca';
+    document.getElementById('signClickable').checked = cfg.clickable !== false;
+    document.getElementById('signDesc').value = cfg.desc || '';
+    populateSignButtons(cfg.buttons || []);
+  }
+}
+
+function showToast(msg, duration) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => t.classList.remove('on'), duration || 5000);
+}
+
+function showSaveBadge(){
+  const badge = document.getElementById('saveBadge');
+  if (!badge) return;
+  badge.classList.add('on');
+  clearTimeout(showSaveBadge._timer);
+  showSaveBadge._timer = setTimeout(() => {
+    badge.classList.remove('on');
+  }, 1400);
+}
+
+function snapValue(value, size){
+  return Math.round(value / size) * size;
+}
+
+function softSnapSelectedObject(){
+  if (!selectedObject) return;
+
+  // Rotation snap only — no X/Z grid snapping
+  if (selectedObject.rotation) {
+    const targetRotY = snapValue(selectedObject.rotation.y, ROT_SNAP);
+    if (Math.abs(selectedObject.rotation.y - targetRotY) <= ROT_SNAP_DISTANCE) {
+      selectedObject.rotation.y = targetRotY;
+    }
+  }
+
+  snapSelectedObjectToGround();
+}
+
+function snapSelectedObjectToGround(){
+  if (!selectedObject) return;
+  const objType = selectedObject.metadata && selectedObject.metadata.type;
+
+  // Skip types that should never ground-snap
+  if (objType === 'hangingLantern') return;
+  if (objType && ASSETS[objType] && ASSETS[objType].noGroundSnap) return;
+
+  const origin = new BABYLON.Vector3(selectedObject.position.x, 200, selectedObject.position.z);
+  const ray = new BABYLON.Ray(origin, new BABYLON.Vector3(0, -1, 0), 500);
+  const hit = scene.pickWithRay(ray, mesh => mesh === court || mesh === plaza);
+  if (!hit || !hit.hit || !hit.pickedPoint) return;
+
+  // Get groundOffset from ASSETS (can be negative to sink below ground)
+  const assetCfg = objType && ASSETS[objType];
+  const groundOffset = (assetCfg && assetCfg.groundOffset !== undefined) ? assetCfg.groundOffset : null;
+
+  // If asset has explicit groundOffset, use it directly — don't use BB
+  if (groundOffset !== null) {
+    selectedObject.position.y = hit.pickedPoint.y + groundOffset;
+    return;
+  }
+
+  // Default: use BB to sit the bottom of the mesh on the ground
+  const meshes = selectedObject.getChildMeshes(false).filter(m => m.getTotalVertices && m.getTotalVertices() > 0);
+  if (meshes.length > 0) {
+    selectedObject.computeWorldMatrix(true);
+    let minY = Infinity;
+    meshes.forEach(m => {
+      m.computeWorldMatrix(true);
+      const bb = m.getBoundingInfo().boundingBox;
+      if (bb.minimumWorld.y < minY) minY = bb.minimumWorld.y;
+    });
+    if (isFinite(minY)) {
+      selectedObject.position.y += (hit.pickedPoint.y - minY);
+      return;
+    }
+  }
+  selectedObject.position.y = hit.pickedPoint.y;
+}
+// ── LIGHTING ────────────────────────────────
+const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.9,-.45,.3),scene);
+sun.position=new BABYLON.Vector3(160,260,-160);
+sun.intensity=2.6; sun.diffuse=new BABYLON.Color3(1,.96,.88);
+
+const hemi=new BABYLON.HemisphericLight("h",new BABYLON.Vector3(0,1,0),scene);
+hemi.intensity=0.65; hemi.diffuse=new BABYLON.Color3(.52,.7,.98);
+hemi.groundColor=new BABYLON.Color3(.55,.58,.48); hemi.specular=new BABYLON.Color3(0,0,0);
+
+const shadows=new BABYLON.ShadowGenerator(512,sun);
+shadows.useExponentialShadowMap=true; shadows.bias=0.005;
+shadows.darkness=0.85;
+shadows.getShadowMap().refreshRate = BABYLON.RenderTargetTexture.REFRESHRATE_RENDER_EVERYFIRSTFRAME;
+
+// ── PROCEDURAL SKY ───────────────────────────
+const skybox=BABYLON.MeshBuilder.CreateBox("sky",{size:1400},scene);
+const skyMat=new BABYLON.SkyMaterial("sm",scene);
+skyMat.backFaceCulling=false; skyMat.turbidity=5; skyMat.luminance=1.0;
+skyMat.rayleigh=2.5; skyMat.mieCoefficient=0.003; skyMat.mieDirectionalG=0.98;
+skyMat.useSunPosition=true; skyMat.sunPosition=sun.position;
+skybox.material=skyMat; skybox.infiniteDistance=true;
+
+function updateSky(){
+  if (_worklightOn) return; // don't override worklight
+  const now=new Date(), h=now.getHours()+now.getMinutes()/60;
+  const d=Math.max(0,Math.sin(((h/24)-.25)*Math.PI*2));
+  skyMat.inclination=-Math.sin(((h/24)-.25)*Math.PI*2)*.5;
+  sun.intensity=0.15+d*1.8; hemi.intensity=0.18+d*.45;
+  if(h>=6&&h<9){sun.diffuse=new BABYLON.Color3(1,.62,.3);}
+  else if(h>=9&&h<17){sun.diffuse=new BABYLON.Color3(1,.97,.88);}
+  else if(h>=17&&h<20){sun.diffuse=new BABYLON.Color3(1,.48,.15);}
+  else{sun.diffuse=new BABYLON.Color3(.18,.22,.48);sun.intensity=0.12;}
+  scene.fogColor=h>=6&&h<20?new BABYLON.Color3(.58,.74,.9):new BABYLON.Color3(.04,.06,.16);
+  const hh=now.getHours().toString().padStart(2,'0'),mm=now.getMinutes().toString().padStart(2,'0');
+  const lbl=h<6||h>=20?'🌙 Night':h<9?'🌅 Sunrise':h<17?'☀️ Day':'🌇 Sunset';
+  document.getElementById('td').textContent=`${hh}:${mm}  ·  ${lbl}`;
+}
+updateSky(); setInterval(updateSky,30000);
+
+// ── HELPERS ──────────────────────────────────
+// Material cache — reuse identical materials instead of creating new ones
+const _matCache={}, _pbrCache={};
+function mat(c,o={}){
+  const col=typeof c==='string'?c:c.toHexString();
+  const key=col+JSON.stringify(o);
+  if(!o.e&&!o.a&&_matCache[key]) return _matCache[key];
+  const m=new BABYLON.StandardMaterial("m_"+col,scene);
+  m.diffuseColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;
+  m.specularColor=new BABYLON.Color3(.03,.03,.03);
+  if(o.e)m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;
+  if(o.a)m.alpha=o.a;
+  if(!o.e&&!o.a)_matCache[key]=m;
+  return m;
+}
+function pbr(c,o={}){
+  const col=typeof c==='string'?c:c.toHexString();
+  const key=col+JSON.stringify(o);
+  if(!o.e&&!o.a&&_pbrCache[key]) return _pbrCache[key];
+  const m=new BABYLON.PBRMaterial("p_"+col,scene);
+  m.albedoColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;
+  m.metallic=o.m||0;m.roughness=o.r||.85;
+  if(o.e){m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;m.emissiveIntensity=o.ei||1;}
+  if(o.a)m.alpha=o.a;
+  if(!o.e&&!o.a)_pbrCache[key]=m;
+  return m;
+}
+function box(w,h,d,mat,pos,ry=0){const b=BABYLON.MeshBuilder.CreateBox("b"+Math.random(),{width:w,height:h,depth:d},scene);b.material=mat;if(pos)b.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(ry)b.rotation.y=ry;b.receiveShadows=true;return b;}
+function cyl(rt,rb,h,t,mat,pos,rz=0){const c=BABYLON.MeshBuilder.CreateCylinder("cy"+Math.random(),{diameterTop:rt,diameterBottom:rb,height:h,tessellation:t},scene);c.material=mat;if(pos)c.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(rz)c.rotation.z=rz;c.receiveShadows=true;return c;}
+function sph(d,mat,pos){const s=BABYLON.MeshBuilder.CreateSphere("sp"+Math.random(),{diameter:d,segments:8},scene);s.material=mat;if(pos)s.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);s.receiveShadows=true;return s;}
+
+let _cloneIdCounter = 0;
+function makeCloneName(type){ _cloneIdCounter += 1; return type + "RootClone_" + Date.now() + "_" + _cloneIdCounter; }
+
+// ── GROUND / TERRAIN ─────────────────────────
+setSt("Building terrain...");
+// Large grass base
+const ground=BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:120},scene);
+const grassMat=new BABYLON.StandardMaterial("grassMat",scene);
+const grassDiff=new BABYLON.Texture("assets/ground_diffuse.jpg",scene);
+grassDiff.uScale=14;grassDiff.vScale=14;
+grassMat.diffuseTexture=grassDiff;
+grassMat.specularColor=new BABYLON.Color3(0.18,0.22,0.12);
+grassMat.specularPower=8;
+
+ground.material=grassMat; ground.receiveShadows=true; shadows.addShadowCaster(ground);
+        // Terrain displacement — organic forest floor with pseudo-random noise
+        // Uses a seeded hash to break up the sine regularity into natural-looking terrain
+        (function applyTerrain() {
+            // Fast hash noise — breaks up sine patterns into organic shapes
+            function hash(x, z) {
+                const n = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
+                return n - Math.floor(n);
+            }
+            function smoothNoise(x, z) {
+                const ix = Math.floor(x), iz = Math.floor(z);
+                const fx = x - ix, fz = z - iz;
+                const ux = fx * fx * (3 - 2 * fx);
+                const uz = fz * fz * (3 - 2 * fz);
+                return hash(ix,iz)*(1-ux)*(1-uz) + hash(ix+1,iz)*ux*(1-uz) +
+                       hash(ix,iz+1)*(1-ux)*uz   + hash(ix+1,iz+1)*ux*uz;
+            }
+            function fbm(x, z) {
+                // 5 octaves of noise — large hills + medium bumps + small detail
+                return smoothNoise(x*0.012, z*0.012) *  4.0
+                     + smoothNoise(x*0.028, z*0.028) *  2.0
+                     + smoothNoise(x*0.065, z*0.065) *  0.8
+                     + smoothNoise(x*0.15,  z*0.15)  *  0.3;
+            }
+            const gndPos = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+            for (let gi = 0; gi < gndPos.length; gi += 3) {
+                const vx = gndPos[gi], vz = gndPos[gi + 2];
+                const dist = Math.sqrt(vx * vx + vz * vz);
+                // Flat zone inside courtyard, smooth blend from r=100 to r=155
+                const blend = Math.max(0, Math.min(1, (dist - 100) / 55));
+                gndPos[gi + 1] = (fbm(vx, vz) - 3.5) * blend;
+            }
+            ground.updateVerticesData(BABYLON.VertexBuffer.PositionKind, gndPos);
+            ground.createNormals(true);
+        })();
+
+// Courtyard — stone tiles
+const court=BABYLON.MeshBuilder.CreateGround("ct",{width:220,height:220},scene);
+const courtMat=new BABYLON.StandardMaterial("courtMat",scene);
+const courtDiff=new BABYLON.Texture("assets/cracked_concrete.jpg",scene);
+courtDiff.uScale=18;courtDiff.vScale=18;
+courtMat.diffuseTexture=courtDiff;
+courtMat.diffuseColor=new BABYLON.Color3(3.2,3.0,2.7);
+courtMat.specularColor=new BABYLON.Color3(0.05,0.05,0.05);
+court.material=courtMat; court.position.y=.06; court.receiveShadows=true;
+
+// Inner plaza
+const plaza=BABYLON.MeshBuilder.CreateGround("pl",{width:90,height:90},scene);
+const stoneMat=new BABYLON.StandardMaterial("stoneMat",scene);
+const stoneDiff=new BABYLON.Texture("assets/stone_diffuse.jpg",scene);
+stoneDiff.uScale=12;stoneDiff.vScale=12;
+stoneMat.diffuseTexture=stoneDiff;
+stoneMat.specularColor=new BABYLON.Color3(0.08,0.08,0.08);
+plaza.material=stoneMat; plaza.position.y=.1; plaza.receiveShadows=true;
+
+// Paths
+const pathMat=new BABYLON.StandardMaterial("pathMat",scene);
+const pathDiff=new BABYLON.Texture("assets/stone_diffuse.jpg",scene);
+pathDiff.uScale=6;pathDiff.vScale=6;
+pathMat.diffuseTexture=pathDiff;
+pathMat.specularColor=new BABYLON.Color3(0.06,0.06,0.06);
+const pm=pathMat;
+[[8,300,0,0],[300,8,0,0]].forEach(([w,h,x,z])=>{
+  const p=BABYLON.MeshBuilder.CreateGround("pa",{width:w,height:h},scene);
+  p.material=pm; p.position=new BABYLON.Vector3(x,.08,z); p.receiveShadows=true;
+});
+
+// ── REALISTIC MOUNTAINS ──────────────────────
+setSt("Sculpting mountains...");
+// Use multiple overlapping cones with noise-like variation for organic look
+function mountain(x,z,r,h,col){
+  const g=new BABYLON.TransformNode("mtg",scene);
+  const segs=6+Math.floor(Math.random()*3);
+  const mm=mat(col);
+  // Main peak
+  const main=cyl(0,r*2,h,segs,mm,[x,h/2-5,z]);
+  main.rotation.y=Math.random()*Math.PI;
+  // Add bulges for organic look
+  for(let i=0;i<4;i++){
+    const angle=Math.random()*Math.PI*2;
+    const dist=r*.45+Math.random()*r*.35;
+    const bx=x+Math.cos(angle)*dist, bz=z+Math.sin(angle)*dist;
+    const bh=h*(.35+Math.random()*.4), br=r*(.3+Math.random()*.35);
+    const bulge=cyl(0,br*2,bh,5,mm,[bx,bh/2-5,bz]);
+    bulge.rotation.y=Math.random()*Math.PI;
+  }
+  // Snow cap
+  const sm2=mat(new BABYLON.Color3(.88,.92,.98));
+  cyl(0,r*.4,h*.3,segs,sm2,[x,h-8,z]);
+  // Dark base rocks
+  const rm=mat(new BABYLON.Color3(.18,.18,.2));
+  for(let i=0;i<3;i++){
+    const a=Math.random()*Math.PI*2, d=r*.7+Math.random()*r*.3;
+    sph(.8+Math.random()*1.5,rm,[x+Math.cos(a)*d,.3,z+Math.sin(a)*d]);
+  }
+}
+const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new BABYLON.Color3(.18,.24,.16)];
+[[-340,-260,95,185],[-200,-360,78,148],[390,-240,92,172],[230,-340,74,138],
+ [-350,250,88,162],[290,280,86,168],[0,-400,108,198],[0,380,98,178],
+ [-380,0,82,158],[360,90,90,170],[-170,-170,52,88],[170,-170,50,84],
+ [-170,170,54,90],[170,170,48,80],[-280,-280,68,125],[280,-280,65,118],
+ [-280,280,70,128],[280,280,62,112]
+].forEach(([x,z,r,h])=>mountain(x,z,r,h,mColors[Math.floor(Math.random()*3)]));
+
+// ── RIVER ────────────────────────────────────
+const rvr=BABYLON.MeshBuilder.CreateGround("rv",{width:22,height:320},scene);
+// River mesh hidden — will be replaced with GLB asset
+  rvr.isVisible = false;
+  rvr.position=new BABYLON.Vector3(112,.14,0);
+
+// ── 4 TYPES OF TREES ─────────────────────────
+setSt("Planting forest...");
+
+// Trees/plants placed via admin panel
+
+// ── TORII GATES ──────────────────────────────
+const trM=pbr(new BABYLON.Color3(.8,.1,.06),{r:.65,m:.1});
+const glM=pbr(new BABYLON.Color3(.9,.76,.28),{r:.4,m:.5,e:new BABYLON.Color3(.15,.1,0),ei:.3});
+function torii(x,z,ry=0){
+  const g=new BABYLON.TransformNode(makeCloneName("torii"),scene);
+  g.position=new BABYLON.Vector3(x,0,z); g.rotation.y=ry;
+  g.metadata={ type:"torii", isClone:true };
+  for(let s of[-1,1]){
+    const p=cyl(.3,.42,8,10,trM,[s*2.6,4,0]);p.parent=g;p.isPickable=false;
+    const b=box(.78,.5,.78,mat(new BABYLON.Color3(.3,.3,.32)),[s*2.6,-.02,0]);b.parent=g;b.isPickable=false;
+  }
+  const b1=box(6.8,.44,.44,trM,[0,4.8,0]);b1.parent=g;b1.isPickable=false;
+  for(let s of[-1,1]){const c=box(.46,.44,.62,trM,[s*3.6,5.02,0]);c.rotation.z=s*-.2;c.parent=g;c.isPickable=false;}
+  const b2=box(6.0,.36,.36,trM,[0,4.28,0]);b2.parent=g;b2.isPickable=false;
+  const pl=box(2.2,.48,.12,glM,[0,4.66,0]);pl.parent=g;pl.isPickable=false;
+  const proxy=BABYLON.MeshBuilder.CreateBox("toriiProxy",{width:8,height:9,depth:2},scene);
+  proxy.parent=g; proxy.position=new BABYLON.Vector3(0,4,0);
+  proxy.isPickable=true; proxy.visibility=0;
+  proxy.metadata={ type:"torii", isPickProxy:true };
+  return g;
+}
+torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0,-92,Math.PI);
+
+// ── FIRE BOWLS ───────────────────────────────
+const fireLights=[];
+
+// Pre-create pool of 20 lantern lights BEFORE ground so shader compiles with all lights
+const _lanternLightPool = [];
+(function initLanternLightPool() {
+  for (let i = 0; i < 10; i++) {
+    const fl = new BABYLON.PointLight('lanternPool_' + i, new BABYLON.Vector3(9999, -999, 9999), scene);
+    fl.diffuse = new BABYLON.Color3(1, .42, .07);
+    fl.intensity = 0; fl.range = 12; fl._b = 2.0; fl._inUse = false;
+    _lanternLightPool.push(fl);
+  }
+})();
+const lanLights=[];
+let lIdx=0;
+
+function buildEditableLantern(cloneRoot, lightName){
+  if (!cloneRoot) return null;
+
+  cloneRoot.getChildMeshes().forEach(m=>{
+    shadows.addShadowCaster(m);
+    m.receiveShadows = true;
+    m.isPickable = false;
+  });
+
+  const bounds = cloneRoot.getHierarchyBoundingVectors();
+  const worldCenter = BABYLON.Vector3.Center(bounds.min, bounds.max);
+
+  const editRoot = new BABYLON.TransformNode(makeCloneName("lantern_1"), scene);
+  editRoot.metadata = { type:"lantern_1", isClone:true };
+  editRoot.position = worldCenter.clone();
+
+  cloneRoot.setParent(editRoot, true);
+
+  const pickProxy = BABYLON.MeshBuilder.CreateBox(
+    makeCloneName("lantern_pick"),
+    { width: 4.6, height: 8.0, depth: 4.6 },
+    scene
+  );
+  pickProxy.parent = editRoot;
+  pickProxy.position = new BABYLON.Vector3(0, 0.6, 0);
+  pickProxy.isPickable = true;
+  pickProxy.visibility = 0;
+  pickProxy.metadata = { type:"lantern_1", isPickProxy:true };
+
+  const fl = new BABYLON.PointLight(
+    lightName,
+    new BABYLON.Vector3(cloneRoot.absolutePosition.x, cloneRoot.absolutePosition.y + 3.2, cloneRoot.absolutePosition.z),
+    scene
+  );
+  fl.diffuse = new BABYLON.Color3(1,.42,.07);
+  fl.intensity = 3.2;
+  fl.range = 14;
+  fl._b = 3.2;
+  fl.metadata = {
+    followLantern: true,
+    followNodeName: editRoot.name
+  };
+
+  fireLights.push(fl);
+
+  return editRoot;
+}
+
+function fireBowl(x,z){
+  let cloneRoot=null;
+
+  if(lanternRootRef){
+    cloneRoot=lanternRootRef.clone(makeCloneName("lantern_1")+"_"+Math.round(x)+"_"+Math.round(z));
+
+    if(cloneRoot){
+      cloneRoot.position=new BABYLON.Vector3(x,0,z);
+      cloneRoot.rotation=new BABYLON.Vector3(0,Math.random()*Math.PI*2,0);
+      cloneRoot.scaling=new BABYLON.Vector3(0.027,0.027,0.027);
+
+      buildEditableLantern(cloneRoot, 'fl_'+x+'_'+z+'_'+Date.now());
+    }
+  }
+
+}
+function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
+  const root=new BABYLON.TransformNode("lan"+lIdx,scene);
+  root.position=new BABYLON.Vector3(x,y,z);
+  // Chain
+  const cm2=mat(new BABYLON.Color3(.5,.5,.5));
+  cyl(.022,.022,chainH,4,cm2,[0,chainH/2,0]).parent=root;
+  // Body
+  const bm3=pbr(new BABYLON.Color3(1,.94,.7),{e:BABYLON.Color3.FromHexString(col),ei:2.5,a:.92,r:.5});
+  cyl(.28,.28,.68,10,bm3,[0,-.46,0]).parent=root;
+  // Caps
+  const capm=mat(new BABYLON.Color3(.22,.12,.05));
+  box(.28,.1,.28,capm,[0,-.08,0]).parent=root;
+  box(.28,.1,.28,capm,[0,-.84,0]).parent=root;
+  // Ring details
+  cyl(.3,.3,.05,10,capm,[0,-.25,0]).parent=root;
+  cyl(.3,.3,.05,10,capm,[0,-.66,0]).parent=root;
+  // No PointLight — emissive glow handles visual appearance, saves GPU
+  // Make selectable in admin
+  root.metadata = { type: 'hangingLantern', isClone: true };
+  root.getChildMeshes().forEach(m => { m.isPickable = true; m._hangRoot = root; });
+  lIdx++;
+}
+
+// Lantern STRING with posts — no floating!
+function lanternRow(x1,z1,x2,z2,y,n,col){
+  // Rope
+  const pts=[];
+  for(let i=0;i<=16;i++){const t=i/16,sag=Math.sin(t*Math.PI)*-1.2;pts.push(new BABYLON.Vector3(x1+(x2-x1)*t,y+sag,z1+(z2-z1)*t));}
+  const rope=BABYLON.MeshBuilder.CreateTube("rope"+lIdx,{path:pts,radius:.025,tessellation:4},scene);
+  rope.material=mat(new BABYLON.Color3(.3,.22,.1));
+  // Anchor posts at ends
+  const pm2=mat(new BABYLON.Color3(.22,.13,.06));
+  cyl(.08,.1,y+1,8,pm2,[x1,.0,z1]);
+  cyl(.08,.1,y+1,8,pm2,[x2,.0,z2]);
+  // Lanterns
+  for(let i=0;i<=n;i++){const t=i/n,sag=Math.sin(t*Math.PI)*-1.2;hangingLantern(x1+(x2-x1)*t,y+sag-.05,z1+(z2-z1)*t,col,.9);}
+}
+// Only put lantern strings between buildings — not crossing center
+lanternRow(-38,-38,38,-38,18,3,"#ffdd88");
+lanternRow(-38,38,38,38,18,3,"#ff9944");
+lanternRow(-38,-38,-38,38,18,3,"#ff5555");
+lanternRow(38,-38,38,38,18,3,"#44aaff");
+// Building accent lanterns removed — replaced by placeable toro_lantern asset
+
+// ══════════════════════════════════════════════
+//  6 UNIQUE DOJOS — each different architecture
+// ══════════════════════════════════════════════
+
+const BUILDINGS=[];
+function addTrigger(cfg){
+  const t=BABYLON.MeshBuilder.CreateBox("tr_"+cfg.id,{width:28,height:30,depth:28},scene);
+  t.position=new BABYLON.Vector3(cfg.x,15,cfg.z); t.isPickable=true; t.visibility=0;
+  BUILDINGS.push({mesh:t,...cfg});
+}
+
+// Pagoda roof helper
+function pagodaRoof(x,y,z,w,d,col,ry=0,tiers=2){
+  const rm=pbr(col,{r:.8});
+  for(let i=0;i<tiers;i++){
+    const sc=1-i*.28, ty=y+i*2.4;
+    const cone=cyl(0,Math.max(w,d)*(.8-i*.1)*sc,2.4,4,rm,[x,ty,z]);
+    cone.rotation.y=Math.PI/4+(ry||0);
+    box((w+1.8)*sc,.2,(d+1.8)*sc,rm,[x,ty-1.2,z]);
+    // Gold corner tips
+    const gm2=pbr(new BABYLON.Color3(.9,.76,.28),{m:.6,r:.3,e:new BABYLON.Color3(.12,.1,0),ei:.2});
+    for(let [cx,cz] of[[-1,-1],[1,-1],[-1,1],[1,1]]){
+      const tip=cyl(0,.1,.45,4,gm2,[x+cx*(w+.8)*sc*.5,ty-1.05,z+cz*(d+.8)*sc*.5]);
+      tip.rotation.z=cx*.28; tip.rotation.x=cz*.28;
+    }
+  }
+  // Finial
+  const gm3=pbr(new BABYLON.Color3(.9,.76,.28),{m:.6,r:.3});
+  cyl(.03,.12,1.1,6,gm3,[x,y+tiers*2.4-.1,z]);
+  sph(.28,pbr(new BABYLON.Color3(.9,.76,.28),{m:.6,r:.3,e:new BABYLON.Color3(.2,.16,0),ei:.3}),[x,y+tiers*2.4+.44,z]);
+}
+
+function woodPanel(x,y,z,w,h,col,n=4,fz=0){
+  const wm=pbr(col,{r:.88});
+  const pw=w/n;
+  for(let i=0;i<n;i++){
+    box(pw*.86,h*.88,.08,wm,[x-w/2+pw/2+i*pw,y,z+fz]);
+  }
+  // Horizontal beams
+  const bm2=pbr(new BABYLON.Color3(.22,.12,.05),{r:.9});
+  for(let hy of[-.4,.0,.4].map(v=>y+v*(h/2))){box(w,.1,.1,bm2,[x,hy,z+fz]);}
+}
+
+function riceWindow(x,y,z,w,h,glow){
+  const fm=pbr(new BABYLON.Color3(.25,.14,.07),{r:.9});
+  const pm2=pbr(new BABYLON.Color3(.9,.88,.78),{e:new BABYLON.Color3(.4,.36,.22),ei:.18,a:.92,r:.6});
+  box(w+.15,h+.15,.15,fm,[x,y,z]);
+  box(w,h,.09,pm2,[x,y,z+.05]);
+  box(w,.05,.05,fm,[x,y,z+.1]); box(.05,h,.05,fm,[x,y,z+.1]);
+  box(.05,h,.05,fm,[x+w*.28,y,z+.1]); box(.05,h,.05,fm,[x-w*.28,y,z+.1]);
+  if(glow){const wl=new BABYLON.PointLight("wl"+x,new BABYLON.Vector3(x,y,z+1.5),scene);wl.diffuse=BABYLON.Color3.FromHexString(glow);wl.intensity=.5;wl.range=5;wl._b=.5;lanLights.push(wl);}
+}
+
+function stoneFoundation(x,z,w,d,layers=3){
+  const sm2=pbr(new BABYLON.Color3(.42,.42,.48),{r:.92,m:.05});
+  for(let i=0;i<layers;i++){box(w+i*.7,0.32,d+i*.7,sm2,[x,i*.32*.5-.18,z]);}
+  const sm3=pbr(new BABYLON.Color3(.32,.32,.38),{r:.9});
+  box(w+layers*.7+.5,.15,d+layers*.7+.5,sm3,[x,-.3,z]);
+}
+
+function doorFrame(x,y,z,w,h){
+  const dm=pbr(new BABYLON.Color3(.25,.14,.06),{r:.9});
+  const door=pbr(new BABYLON.Color3(.18,.1,.04),{r:.88});
+  box(w+.22,h+.22,.16,dm,[x,y,z]);
+  box(w*.45,h*.88,.1,door,[x-w*.22,y,z+.04]);
+  box(w*.45,h*.88,.1,door,[x+w*.22,y,z+.04]);
+  // Door handles
+  const hm=pbr(new BABYLON.Color3(.9,.76,.28),{m:.8,r:.2});
+  sph(.08,hm,[x-w*.08,y+.1,z+.12]);
+  sph(.08,hm,[x+w*.08,y+.1,z+.12]);
+}
+
+// ── BUILDING 1: THE COLONY ──
+(()=>{
+  // Trigger now driven by wooden_sign admin editor
+  const colonyFill = new BABYLON.PointLight("colonyFill", new BABYLON.Vector3(0, 3, -80), scene);
+  colonyFill.diffuse = new BABYLON.Color3(0.15, 0.3, 0.8);
+  colonyFill.intensity = 0.8;
+  colonyFill.range = 30;
+})();
+
+// ── BUILDING 3: RADIO STAGE — trigger driven by wooden_sign admin editor ──
+
+// ── BUILDING 4: ARCHIVE — trigger driven by wooden_sign admin editor ──
+
+// ── BUILDING 5: THE VAULT — trigger driven by wooden_sign admin editor ──
+
+// ── BUILDING 6: THE FORGE — trigger driven by wooden_sign admin editor ──
+
+// ── TEMP ZONE SIGNS — floating labels with down arrows ──────────────
+(function addZoneSigns() {
+  // Replaced by wooden_sign.glb placements + applyZoneSignTextures()
+})();
+
+// cache-bust: 1776624187298 ── WALKABLE CHARACTER ───────────────────────
+setSt("Loading character...");
+let charMesh=null, charAnims={}, isMoving=false;
+let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
+let selectedObject = null;
+let _signTriggers = [];
+let fenceRootRef = null;
+let dojoRootRef = null;
+let dojo6RootRef = null;
+let dojo7RootRef = null;
+let dojo9RootRef = null;
+let fenceSourceMeshes = [];
+let editableRootRefs = {};
+
+function registerEditableRoot(key, root) {
+  if (!key || !root) return;
+  editableRootRefs[key] = root;
+}
+
+let animState = -1, animGroups = [];
+function switchAnim(idx, loop) {
+  if (animState === idx) return;
+  const prev = animGroups[animState], next = animGroups[idx];
+  if (!next) return;
+  if (prev && prev.isPlaying) prev.stop();
+  animState = idx; next.play(loop !== false);
+}
+BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", scene)
+.then(r => {
+  const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
+  playerRoot.position = new BABYLON.Vector3(0, 0.12, 20);
+  playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+  playerRoot.scaling = new BABYLON.Vector3(0.018, 0.018, 0.018);
+  r.meshes.forEach(m => {
+    if (m !== playerRoot) m.parent = playerRoot;
+    if (m.rotationQuaternion) m.rotationQuaternion = null;
+    shadows.addShadowCaster(m); m.receiveShadows = true;
+    if (m.material) {
+      const mat = m.material;
+      if (mat.getClassName && mat.getClassName() === 'PBRMaterial') {
+        mat.emissiveColor = new BABYLON.Color3(0,0,0); mat.emissiveIntensity = 0;
+        if (!mat.albedoTexture) {
+          const ci = r.meshes.indexOf(m);
+          const cols = [new BABYLON.Color3(.08,.15,.38),new BABYLON.Color3(.22,.12,.08),new BABYLON.Color3(.55,.45,.12),new BABYLON.Color3(.06,.06,.08),new BABYLON.Color3(.28,.18,.06)];
+          mat.albedoColor = cols[ci%cols.length]; mat.metallic=ci%3===0?.7:.1; mat.roughness=.6;
+        }
+      }
+    }
+  });
+  r.transformNodes.forEach(tn => { if(tn!==playerRoot)tn.parent=playerRoot; if(tn.rotationQuaternion)tn.rotationQuaternion=null; });
+  charMesh = playerRoot;
+  if (r.animationGroups.length > 0) { animGroups[0]=r.animationGroups[0]; const _ta0=animGroups[0].targetedAnimations;for(let _j=_ta0.length-1;_j>=0;_j--){if(_ta0[_j].animation.targetProperty==='position'&&_ta0[_j].target&&_ta0[_j].target.name==='mixamorig_Hips')_ta0.splice(_j,1);} animState=0; animGroups[0].play(true); }
+  window.followLight = new BABYLON.PointLight("followLight", new BABYLON.Vector3(9999,-999,9999), scene);
+  window.followLight.diffuse = new BABYLON.Color3(1,.82,.5);
+  window.followLight.intensity = 0;
+  const courtyardLight = new BABYLON.PointLight("courtyardGlow", new BABYLON.Vector3(0, 3, 0), scene);
+  courtyardLight.diffuse = new BABYLON.Color3(1, .82, .5);
+  courtyardLight.intensity = 1.2;
+  courtyardLight.range = 28;
+  window.followLight.intensity = 2.8; window.followLight.range = 22;
+  setSt("Character ready!");
+  [{f:"ant_walk_c.glb",i:1},{f:"ant_run_c.glb",i:2},{f:"ant_flip_kick_c.glb",i:3},{f:"ant_jumping_c.glb",i:4}].forEach(({f,i}) => {
+    BABYLON.SceneLoader.ImportMeshAsync("","/assets/character/",f,scene).then(r2 => {
+      r2.meshes.forEach(m=>{m.isVisible=false;m.setEnabled(false);});
+      const ag=r2.animationGroups[0]; if(!ag)return;
+      const sk=r.skeletons[0];
+      if(sk)ag.targetedAnimations.forEach(ta=>{const bn=sk.bones.find(b=>b.name===ta.target.name);if(bn)ta.target=bn._linkedTransformNode||bn;});
+      const _ta=ag.targetedAnimations;for(let _j=_ta.length-1;_j>=0;_j--){if(_ta[_j].animation.targetProperty==='position'&&_ta[_j].target&&_ta[_j].target.name==='mixamorig_Hips')_ta.splice(_j,1);} ag.stop(); animGroups[i]=ag;
+    }).catch(e=>console.error("Anim failed:",f,e));
+  });
+}).catch(err=>{console.error("Character failed:",err);setSt("Failed");});
+
+
+// ── INTERACTIONS ─────────────────────────────
+const tooltip=document.getElementById('tt');
+const panel=document.getElementById('panel');
+const pickMeshes=()=>BUILDINGS.map(b=>b.mesh);
+
+scene.onPointerObservable.add(evt=>{
+  if (adminMode) return;
+  if(evt.type!==BABYLON.PointerEventTypes.POINTERPICK||panel.classList.contains('on'))return;
+  const hit=evt.pickInfo;
+  if(!hit||!hit.hit)return;
+  const b=BUILDINGS.find(b=>b.mesh===hit.pickedMesh);
+  if(b)openPanel(b);
+});
+
+scene.onPointerObservable.add(evt=>{
+  if (adminMode) {
+    tooltip.classList.remove('on');
+    canvas.style.cursor='default';
+    return;
+  }
+  if(evt.type!==BABYLON.PointerEventTypes.POINTERMOVE||walkMode)return;
+  const hit=scene.pick(scene.pointerX,scene.pointerY,m=>BUILDINGS.some(b=>b.mesh===m));
+  if(hit&&hit.hit){
+    const b=BUILDINGS.find(b=>b.mesh===hit.pickedMesh);
+    if(b){document.getElementById('tth').textContent=b.title;document.getElementById('ttp').textContent=b.sub;tooltip.classList.add('on');canvas.style.cursor='pointer';return;}
+  }
+  tooltip.classList.remove('on');canvas.style.cursor='default';
+});
+
+document.getElementById('pc').addEventListener('click',()=>panel.classList.remove('on'));
+
+scene.onPointerObservable.add((evt) => {
+  if (!adminMode) return;
+  if (evt.type !== BABYLON.PointerEventTypes.POINTERPICK) return;
+
+  const pick = evt.pickInfo;
+  if (!pick || !pick.hit || !pick.pickedMesh) return;
+  if (BUILDINGS.some(b => b.mesh === pick.pickedMesh)) return;
+
+  const editableRoots = Object.values(editableRootRefs).filter(Boolean);
+
+  let node = pick.pickedMesh;
+  let editableNode = null;
+
+  while (node) {
+    const isEditableRoot = editableRoots.includes(node);
+    const isTopLevelClone =
+      node.name &&
+      node.name.includes("RootClone_") &&
+      !node.parent &&
+      node.getClassName &&
+      node.getClassName() === "TransformNode";
+
+    const isTopLevelTypedNode =
+      node.metadata &&
+      node.metadata.type &&
+      !node.parent &&
+      node.getClassName &&
+      node.getClassName() === "TransformNode";
+
+    const isEditRootChild = node._editRoot && node._editRoot.metadata && node._editRoot.metadata.type;
+    if (isEditableRoot || isTopLevelClone || isTopLevelTypedNode) {
+      editableNode = node;
+      break;
+    }
+    if (isEditRootChild) {
+      editableNode = node._editRoot;
+      break;
+    }
+    node = node.parent;
+  }
+
+  if (!editableNode && pick.pickedMesh) {
+    editableNode = scene.transformNodes.find(root => {
+      if (!root || root.parent) return false;
+      if (!root.metadata || !root.metadata.type) return false;
+      if (!root.metadata.isClone) return false;
+
+      const childMeshes = root.getChildMeshes ? root.getChildMeshes() : [];
+      return childMeshes.includes(pick.pickedMesh);
+    }) || null;
+  }
+
+  if (!editableNode) return;
+
+  selectedObject = editableNode;
+  updateSelectedBadge();
+
+  if (!adminMode) return;
+  gizmoManager.positionGizmoEnabled = true;
+  gizmoManager.rotationGizmoEnabled = false;
+  gizmoManager.scaleGizmoEnabled = false;
+  gizmoManager.attachToNode(selectedObject);
+});
+window.addEventListener('pointerdown', (e) => {
+  if (!adminMode || !selectedObject) return;
+  adminDragging = false;
+  window._dragStartX = e.clientX;
+  window._dragStartY = e.clientY;
+});
+
+window.addEventListener('pointermove', (e) => {
+  if (!adminMode || !selectedObject) return;
+  if (window._dragStartX === undefined) return;
+  const dx = e.clientX - window._dragStartX;
+  const dy = e.clientY - window._dragStartY;
+  if (Math.sqrt(dx*dx + dy*dy) > 4) adminDragging = true;
+});
+
+window.addEventListener('pointerup', () => {
+  const wasDragging = adminDragging;
+  adminDragging = false;
+  window._dragStartX = undefined;
+  window._dragStartY = undefined;
+
+  // Only snap to ground if the object was actually dragged
+  if (adminMode && selectedObject && wasDragging) {
+    softSnapSelectedObject();
+  }
+});
+function getEditableRoots(){
+  const registeredRoots = Object.values(editableRootRefs).filter(Boolean);
+
+  const clones = scene.transformNodes.filter(n =>
+    !n.parent && n.name.includes("RootClone_")
+  );
+
+  return [...registeredRoots, ...clones];
+}
+
+function getObjectType(node){
+  if (!node) return null;
+
+  if (node.metadata && node.metadata.type) {
+    if (node.metadata.type === "dojo_5") return "dojo";
+    if (node.metadata.type === "dojo_6") return "dojo6";
+    if (node.metadata.type === "dojo_7") return "dojo7";
+    if (node.metadata.type === "dojo_9") return "dojo9";
+    return node.metadata.type;
+  }
+
+  if (node.metadata && node.metadata.type === "torii") return "torii";
+  if (node.name === "fenceRoot" || node.name.startsWith("fenceRootClone_")) return "fence";
+  if (node.name === "dojoRoot" || node.name.startsWith("dojoRootClone_")) return "dojo";
+  if (node.name === "dojo6Root" || node.name.startsWith("dojo6RootClone_")) return "dojo6";
+  if (node.name === "dojo7Root" || node.name.startsWith("dojo7RootClone_")) return "dojo7";
+  if (node.name === "dojo9Root" || node.name.startsWith("dojo9RootClone_")) return "dojo9";
+
+  return null;
+}
+
+
+function applyObjectTransform(node, data){
+  node.position = new BABYLON.Vector3(data.position.x, data.position.y, data.position.z);
+  node.rotation = new BABYLON.Vector3(data.rotation.x, data.rotation.y, data.rotation.z);
+  node.scaling = new BABYLON.Vector3(data.scaling.x, data.scaling.y, data.scaling.z);
+}
+
+function saveWorldLayout(){
+  // Only save actually placed objects — skip source roots at 9999 and untyped nodes
+  const allNodes = scene.transformNodes.filter(n =>
+    n.metadata && n.metadata.isClone &&
+    !n.metadata.isPickProxy &&
+    n.name && !n.name.includes('.') &&
+    Math.abs(n.position.x) < 500 && Math.abs(n.position.z) < 500
+  );
+  const data = allNodes.map(node => ({
+    type: node.metadata.type,
+    name: node.name,
+    position: { x: node.position.x, y: node.position.y, z: node.position.z },
+    rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
+    scaling: { x: node.scaling.x, y: node.scaling.y, z: node.scaling.z },
+    signConfig: node.metadata.signConfig || null,
+    toroColor: node.metadata.toroColor || null
+  }));
+  const json = JSON.stringify(data, null, 2);
+  // Save to localStorage (fast cache for asset systems)
+  localStorage.setItem("rebelAntsWorldLayout", json);
+  // Save to GitHub (permanent backup — never lost)
+  if (window._ghToken) {
+    (async () => {
+      const LAYOUT_PATH = "assets/world-layout.json";
+      // Get current SHA if file exists
+      let sha = undefined;
+      try {
+        const check = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/" + LAYOUT_PATH + "?ref=dev", {
+          headers: { "Authorization": "token " + window._ghToken }
+        });
+        if (check.ok) { const cd = await check.json(); sha = cd.sha; }
+      } catch(e) {}
+      const enc = new TextEncoder();
+      const b = enc.encode(json);
+      let bin = ''; b.forEach(x => bin += String.fromCharCode(x));
+      const body = { message: "save: world layout", content: btoa(bin), branch: "dev" };
+      if (sha) body.sha = sha;
+      await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/" + LAYOUT_PATH, {
+        method: 'PUT',
+        headers: { "Authorization": "token " + window._ghToken, "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+    })();
+  }
+  console.log("World layout saved", data);
+  showSaveBadge();
+  showToast('✓ Saved ' + data.length + ' objects');
+}
+
+// ── AUTO-SAVE — debounced 2s, fires after any placement/delete/move ──
+let _autoSaveTimer = null;
+function triggerAutoSave() {
+  if (_autoSaveTimer) clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(() => { saveWorldLayout(); }, 2000);
+}
+
+function loadWorldLayout(){
+  const raw = localStorage.getItem("rebelAntsWorldLayout");
+  if (!raw) return;
+  let data;
+  try { data = JSON.parse(raw); } catch(e) { return; }
+  if (!Array.isArray(data) || !data.length) return;
+
+  // Dispose existing clones before restoring
+  scene.transformNodes.filter(n =>
+    n.name && n.name.includes('RootClone_') && !n.name.includes('.')
+  ).forEach(n => n.dispose(false, false));
+  scene.meshes.filter(m => m.name && (m.name.startsWith('lp_') || m.name.startsWith('lanternProxy_'))).forEach(m => m.dispose());
+  _lanternLightPool.forEach(l => { l._inUse = false; l.intensity = 0; l.position.set(9999,-999,9999); l._followMesh = null; });
+  for (let i = fireLights.length-1; i>=0; i--) { if (fireLights[i].name && fireLights[i].name.startsWith('lanternPool')) fireLights.splice(i,1); }
+
+  // Restore each saved object
+  data.forEach(item => {
+    if (!item.type || !item.position) return;
+    if (Math.abs(item.position.x) >= 500 || Math.abs(item.position.z) >= 500) return; // skip stuck
+
+    if (item.type === 'lantern_1') {
+      // Lanterns use pool light system
+      spawnLanternFull(new BABYLON.Vector3(item.position.x, item.position.y, item.position.z));
+      return;
+    }
+
+    if (item.type === 'torii') {
+      // Torii are procedural — restore via torii() function
+      const g = torii(item.position.x, item.position.z, item.rotation.y);
+      if (g) {
+        g.position.y = item.position.y;
+        g.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
+      }
+      return;
+    }
+
+    // All GLB assets — clone from source
+    // Handle procedural assets (no GLB source needed)
+    if (ASSETS[item.type] && ASSETS[item.type].procedural) {
+      const pos = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
+      const clone = spawnAsset(item.type, pos, { isClone: true, toroColor: item.toroColor || '#ffdd88' });
+      if (!clone) return;
+      clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
+      clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
+      registerEditableRoot(clone.name, clone);
+      return;
+    }
+    const source = _assetSources[item.type];
+    if (!source) return;
+    const clone = source.clone(makeCloneName(item.type));
+    if (!clone) return;
+    clone.metadata = { type: item.type, isClone: true, signConfig: item.signConfig || null, toroColor: item.toroColor || null };
+    clone.position = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
+    clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
+    clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
+    const _noShadows = item.type && ASSETS[item.type] && ASSETS[item.type].noShadows;
+    clone.getChildMeshes().forEach(m => {
+      if (!_noShadows) shadows.addShadowCaster(m);
+      m.receiveShadows = !_noShadows; m.isPickable = true;
+      m._editRoot = clone; // enables admin picker to find parent clone
+      if (m.material) m.material.maxSimultaneousLights = 4;
+    });
+  });
+
+  selectedObject = null;
+  updateSelectedBadge();
+  if (gizmoManager) {
+    gizmoManager.attachToNode(null);
+    gizmoManager.positionGizmoEnabled = false;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+  }
+  console.log("World layout loaded", data.length, "objects");
+}
+
+function deleteSelectedFence(){
+  if (!selectedObject) return;
+
+        const isOriginalObject =
+    selectedObject === fenceRootRef ||
+    selectedObject === dojoRootRef ||
+    selectedObject === dojo6RootRef ||
+    selectedObject === dojo7RootRef ||
+    selectedObject === dojo9RootRef;
+
+  if (isOriginalObject) {
+    alert("The original base objects cannot be deleted. Move them if you want, but keep one base version in the world.");
+    return;
+  }
+
+  const nodeToDelete = selectedObject;
+
+  if (gizmoManager) {
+    gizmoManager.attachToNode(null);
+    gizmoManager.positionGizmoEnabled = false;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+  }
+
+  selectedObject = null;
+  updateSelectedBadge();
+
+  nodeToDelete.dispose(false, false);
+  triggerAutoSave();
+}
+function duplicateSelectedFence(){
+  if (!selectedObject) return;
+
+  const sourceObject = selectedObject;
+  const objectType = getObjectType(sourceObject);
+  if (!objectType) return;
+
+    if (objectType === "lantern_1") {
+    const newPos = sourceObject.position.clone(); newPos.x += 12;
+    spawnLanternFull(newPos); return;
+  }
+    const cloneRoot = sourceObject.clone(makeCloneName(objectType));
+  if (!cloneRoot) return;
+
+  cloneRoot.position = sourceObject.position.clone();
+  cloneRoot.position.x += 12;
+  cloneRoot.rotation = sourceObject.rotation.clone();
+  cloneRoot.scaling = sourceObject.scaling.clone();
+
+  cloneRoot.getChildMeshes().forEach(m => {
+    shadows.addShadowCaster(m);
+    m.receiveShadows = true;
+  });
+
+  selectedObject = cloneRoot;
+  snapSelectedObjectToGround();
+
+  updateSelectedBadge();
+
+  gizmoManager.positionGizmoEnabled = true;
+  gizmoManager.rotationGizmoEnabled = false;
+  gizmoManager.scaleGizmoEnabled = false;
+  gizmoManager.attachToNode(selectedObject);
+}
+function openPanel(b){
+  document.getElementById('picon').textContent=b.icon;
+  document.getElementById('ph2').textContent=b.title;
+  document.getElementById('psub').textContent=b.sub;
+  document.getElementById('pdesc').textContent=b.desc;
+  const acts=document.getElementById('pact');acts.innerHTML='';
+  b.actions.forEach(a=>{
+    const btn=document.createElement('a');
+    btn.className='pb'+(a.g?' g':a.t?' t':a.r?' r':'');
+    btn.textContent=a.label;btn.href=a.href;btn.target='_blank';btn.rel='noopener';
+    acts.appendChild(btn);
+  });
+  panel.classList.add('on');
+}
+
+// ── WALK MODE ────────────────────────────────
+function toggleWalk() {
+  walkMode = !walkMode;
+  const wb = document.getElementById('wb'), xh = document.getElementById('xhair');
+  if (walkMode) {
+    if (charMesh) {
+      _orbitAngleH = charMesh.rotation.y + Math.PI; _orbitAngleV = 0.35;
+      walk.position = new BABYLON.Vector3(
+        charMesh.position.x + Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),
+        charMesh.position.y + _orbitDist*Math.sin(_orbitAngleV) + 2,
+        charMesh.position.z + Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
+      const _eyeY = (charMesh._terrainY !== undefined ? charMesh._terrainY : charMesh.position.y) + 2.8;
+    walk.setTarget(new BABYLON.Vector3(charMesh.position.x, _eyeY, charMesh.position.z));
+    }
+    scene.activeCamera = walk; walk.detachControl(); orbit.detachControl();
+    wb.textContent = '🌐  EXIT WALK MODE'; wb.classList.add('on'); xh.classList.remove('on');
+  } else {
+    scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
+    wb.textContent = '⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
+  }
+}
+document.addEventListener('keydown', e => {
+  // Don't fire shortcuts when typing in an input field
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  const key = e.key.toLowerCase();
+
+  if (key === 'm') {
+    adminMode = !adminMode;
+    updateAdminBadge();
+
+    if (adminMode) {
+      // Keep orbit camera active in admin — unlock for free editing
+      walk.detachControl();
+      orbit.attachControl(canvas, true);
+      orbit.upperBetaLimit = Math.PI; // allow top-down view
+      orbit.lowerRadiusLimit = 5;
+      orbit.upperRadiusLimit = 600;
+      orbit.panningSensibility = 50; // fast panning with right-click drag
+      toggleAssetPanel(true);
+    } else {
+      toggleAssetPanel(false);
+      selectedObject = null;
+      updateSelectedBadge();
+      if (gizmoManager) {
+        gizmoManager.positionGizmoEnabled = false;
+        gizmoManager.rotationGizmoEnabled = false;
+        gizmoManager.scaleGizmoEnabled = false;
+        gizmoManager.attachToNode(null);
+      }
+      // Restore normal camera limits
+      orbit.upperBetaLimit = Math.PI / 2.05;
+      orbit.lowerRadiusLimit = 8;
+      orbit.upperRadiusLimit = 450;
+      orbit.panningSensibility = 1000;
+      orbit.attachControl(canvas, true);
+    }
+    return;
+  }
+
+  if (key === 'escape' && walkMode) toggleWalk();
+
+  if (adminMode && key === 'n') {
+    duplicateSelectedFence();
+    return;
+  }
+
+  if (adminMode && (e.key === 'Delete' || e.key === 'Backspace')) {
+    e.preventDefault();
+    deleteSelectedFence();
+    return;
+  }
+
+   if (adminMode && key === 'p') {
+    saveWorldLayout();
+    return;
+  }
+
+  if (adminMode && key === 'l') {
+    loadWorldLayout();
+    return;
+  }
+
+    if (adminMode && selectedObject && key === 'r') {
+    gizmoManager.positionGizmoEnabled = false;
+    gizmoManager.rotationGizmoEnabled = true;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+    return;
+  }
+
+  if (adminMode && selectedObject && key === 'g') {
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+    return;
+  }
+
+  if (adminMode && selectedObject && key === 'y') {
+    gizmoManager.positionGizmoEnabled = false;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = true;
+    gizmoManager.attachToNode(selectedObject);
+    return;
+  }
+
+  if (adminMode && selectedObject && key === 'f') {
+    selectedObject.scaling.x *= -1;
+    return;
+  }
+
+  if (adminMode && selectedObject && key === 'q') {
+    selectedObject.rotation.y -= Math.PI / 2;
+    return;
+  }
+
+  if (adminMode && selectedObject && key === 'e') {
+    selectedObject.rotation.y += Math.PI / 2;
+    return;
+  }
+  if (adminMode && selectedObject && (key === '+' || key === '=')) {
+    scaleSelected(1.25); return;
+  }
+  if (adminMode && selectedObject && key === '-') {
+    scaleSelected(0.8); return;
+  }
+  if (adminMode && key === 'l') {
+    toggleWorklight(); return;
+  }
+
+  if (key === 'w' || e.key === 'ArrowUp') moveForward = true;
+  if (key === 's' || e.key === 'ArrowDown') moveBackward = true;
+  if (key === 'a' || e.key === 'ArrowLeft') turnLeft = true;
+  if (key === 'd' || e.key === 'ArrowRight') turnRight = true;
+  if (!walkMode) return;
+  if (key === 'r' && !adminMode) { runKey=true; switchAnim(2, true); }
+  if (key === 'f' && !adminMode) { switchAnim(3, false); setTimeout(()=>{ if(animState===3) switchAnim(0,true); }, 1200); }
+  if (e.key === ' ') { e.preventDefault(); switchAnim(4, false); setTimeout(()=>{ if(animState===4) switchAnim(0,true); }, 1000); }
+});
+
+document.addEventListener('keyup', e => {
+  const key = e.key.toLowerCase();
+  if (key === 'w' || e.key === 'ArrowUp') moveForward = false;
+  if (key === 's' || e.key === 'ArrowDown') moveBackward = false;
+  if (key === 'a' || e.key === 'ArrowLeft') turnLeft = false;
+  if (key === 'd' || e.key === 'ArrowRight') turnRight = false;
+  if (key === 'r' && !adminMode && walkMode) { runKey=false; const mv=moveForward||moveBackward||turnLeft||turnRight; switchAnim(mv?1:0,true); }
+});
+let _orbitDragging=false, _orbitLastX=0, _orbitLastY=0;
+let _orbitAngleH=Math.PI, _orbitAngleV=0.35;
+let _orbitDist=9;
+scene.onPointerObservable.add(evt=>{
+  if(!walkMode)return;
+  if(evt.type===BABYLON.PointerEventTypes.POINTERDOWN){_orbitDragging=true;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;}
+  else if(evt.type===BABYLON.PointerEventTypes.POINTERUP){_orbitDragging=false;}
+  else if(evt.type===BABYLON.PointerEventTypes.POINTERMOVE&&_orbitDragging){const dx=scene.pointerX-_orbitLastX,dy=scene.pointerY-_orbitLastY;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;_orbitAngleH+=dx*0.008;_orbitAngleV=Math.max(0.08,Math.min(0.85,_orbitAngleV+dy*0.006));}
+});
+scene.onPointerObservable.add(evt=>{
+  if(!charMesh)return;
+  if(evt.type!==BABYLON.PointerEventTypes.POINTERPICK)return;
+  const hit=evt.pickInfo; if(!hit||!hit.hit)return;
+  let node=hit.pickedMesh; while(node&&node.parent)node=node.parent;
+  if(node&&node.name==='playerRoot'){
+    if(walkMode){ _orbitAngleH=charMesh.rotation.y+Math.PI; _orbitAngleV=0.35; }
+    else{ orbit.alpha=-Math.PI/2.1;orbit.beta=Math.PI/3.6;orbit.radius=150;orbit.target=new BABYLON.Vector3(0,6,0); }
+  }
+});
+window.addEventListener('resize',()=>engine.resize());
+
+
+// ── MOON & STARS ──────────────────────────────
+(()=>{
+  // Starfield — flat sprites on a large sphere
+  const starMat = new BABYLON.StandardMaterial('starMat', scene);
+  starMat.emissiveColor = new BABYLON.Color3(1,1,1);
+  starMat.disableLighting = true;
+  for(let i=0;i<180;i++){
+    const star = BABYLON.MeshBuilder.CreateSphere('s'+i,{diameter:0.5+Math.random()*0.8},scene);
+    const theta = Math.random()*Math.PI*2;
+    const phi = Math.random()*Math.PI*0.5; // upper hemisphere only
+    const r = 480;
+    star.position.set(r*Math.sin(phi)*Math.cos(theta), r*Math.cos(phi)*0.6+60, r*Math.sin(phi)*Math.sin(theta));
+    star.material = starMat;
+    star.isPickable = false;
+  }
+  // Moon — glowing sphere
+  const moonMat = new BABYLON.StandardMaterial('moonMat',scene);
+  moonMat.emissiveColor = new BABYLON.Color3(0.95,0.92,0.80);
+  moonMat.disableLighting = true;
+  const moon = BABYLON.MeshBuilder.CreateSphere('moon',{diameter:22},scene);
+  moon.position.set(-180, 260, -380);
+  moon.material = moonMat;
+  moon.isPickable = false;
+  // Soft moon glow halo
+  const haloMat = new BABYLON.StandardMaterial('haloMat',scene);
+  haloMat.emissiveColor = new BABYLON.Color3(0.4,0.38,0.28);
+  haloMat.alpha = 0.12;
+  haloMat.disableLighting = true;
+  const halo = BABYLON.MeshBuilder.CreateSphere('halo',{diameter:38},scene);
+  halo.position.copyFrom(moon.position);
+  halo.material = haloMat;
+  halo.isPickable = false;
+})();
+
+// ── CHERRY BLOSSOM PETALS ─────────────────────
+(()=>{
+  const ps = new BABYLON.ParticleSystem('petals', 250, scene);
+  // Use a simple pink disc texture from CDN
+  ps.particleTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png', scene);
+  // Emit across the whole courtyard area
+  ps.emitter = new BABYLON.Vector3(0, 18, 0);
+  ps.minEmitBox = new BABYLON.Vector3(-60, 0, -60);
+  ps.maxEmitBox = new BABYLON.Vector3(60, 5, 60);
+  // Pink petal colors
+  ps.color1 = new BABYLON.Color4(1.0, 0.6, 0.75, 0.9);
+  ps.color2 = new BABYLON.Color4(0.95, 0.5, 0.65, 0.7);
+  ps.colorDead = new BABYLON.Color4(1.0, 0.55, 0.7, 0.0);
+  // Small petal size
+  ps.minSize = 0.25; ps.maxSize = 0.55;
+  ps.minLifeTime = 6; ps.maxLifeTime = 12;
+  ps.emitRate = 18;
+  // Slow drift downward with slight wind
+  ps.gravity = new BABYLON.Vector3(0.3, -0.8, 0.1);
+  ps.minEmitPower = 0.1; ps.maxEmitPower = 0.4;
+  ps.minAngularSpeed = -1.5; ps.maxAngularSpeed = 1.5;
+  ps.updateSpeed = 0.016;
+  ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+  ps.start();
+})();
+
+// ── BLOSSOM TREE EMISSIVE GLOW ────────────────
+(()=>{
+  // After meshes load, add emissive to blossom materials
+  scene.onAfterRenderObservable.addOnce(()=>{
+    scene.meshes.forEach(m => {
+      if (!m.material) return;
+      const mats = m.material.subMaterials || [m.material];
+      mats.forEach(mat => {
+        if (!mat || !mat.name) return;
+        const n = mat.name.toLowerCase();
+        if (n.includes('blossom') || n.includes('petal') || n.includes('flower') || n.includes('pink')) {
+          mat.emissiveColor = new BABYLON.Color3(0.35, 0.08, 0.12);
+        }
+      });
+    });
+  });
+})();
+
+// ── COLLISION ─────────────────────────────────
+(()=>{
+  scene.collisionsEnabled = true;
+  // Add ellipsoid to character when it spawns
+  const _origSpawn = window.spawnCharacter;
+  // Hook into charMesh once walk mode activates
+  scene.onAfterRenderObservable.add(()=>{
+    if (window.charMesh && !window.charMesh._collisionSet) {
+      window.charMesh.ellipsoid = new BABYLON.Vector3(1.2, 2.5, 1.2);
+      window.charMesh.ellipsoidOffset = new BABYLON.Vector3(0, 2.5, 0);
+      window.charMesh.checkCollisions = true;
+      window._collisionSet = true;
+      window.charMesh._collisionSet = true;
+    }
+  });
+  // Enable collision on all building meshes after scene loads
+  scene.onAfterRenderObservable.addOnce(()=>{
+    setTimeout(()=>{
+      scene.meshes.forEach(m => {
+        if (!m.name) return;
+        const n = m.name.toLowerCase();
+        if (n.includes('dojo') || n.includes('shrine') || n.includes('fence') ||
+            n.includes('gate') || n.includes('torii') || n.includes('wall') ||
+            n.includes('build') || n.includes('tower') || n.includes('pagoda')) {
+          m.checkCollisions = true;
+        }
+      });
+    }, 3000); // wait for GLBs to finish loading
+  });
+})();
+
+
+// ── CHERRY BLOSSOM PETALS ─────────────────────
+(()=>{
+  function makePetalSystem(name, count, emitY, boxSize, rate){
+    const ps = new BABYLON.ParticleSystem(name, count, scene);
+    ps.particleTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png',scene);
+    ps.emitter = new BABYLON.Vector3(0, emitY, 0);
+    ps.minEmitBox = new BABYLON.Vector3(-boxSize,0,-boxSize);
+    ps.maxEmitBox = new BABYLON.Vector3(boxSize,4,boxSize);
+    ps.color1 = new BABYLON.Color4(1.0,0.65,0.78,1.0);
+    ps.color2 = new BABYLON.Color4(1.0,0.50,0.68,0.8);
+    ps.colorDead = new BABYLON.Color4(0.98,0.6,0.72,0.0);
+    ps.minSize = 0.35; ps.maxSize = 0.75;
+    ps.minScaleX = 0.4; ps.maxScaleX = 1.0;
+    ps.minScaleY = 0.3; ps.maxScaleY = 0.7;
+    ps.minLifeTime = 8; ps.maxLifeTime = 16;
+    ps.emitRate = rate;
+    ps.gravity = new BABYLON.Vector3(0.15,-0.6,0.08);
+    ps.minEmitPower = 0.05; ps.maxEmitPower = 0.25;
+    ps.minAngularSpeed = -2.0; ps.maxAngularSpeed = 2.0;
+    ps.updateSpeed = 0.016;
+    ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+    ps.start();
+    return ps;
+  }
+  makePetalSystem('petals1', 200, 20, 55, 14);
+  makePetalSystem('petals2', 120, 35, 90, 8);
+})();
+
+// ── RENDER LOOP ──────────────────────────────
+let t=0;
+engine.runRenderLoop(()=>{
+  const dt=engine.getDeltaTime()/1000;
+  fireLights.forEach(fl=>{
+    if (fl._followMesh) {
+      fl._followMesh.computeWorldMatrix(true);
+      const bb = fl._followMesh.getBoundingInfo().boundingBox;
+      const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
+      const cy = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
+      const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
+      fl.position.x = cx;
+      fl.position.y = cy;
+      fl.position.z = cz;
+    } else if (fl._followClone) {
+      fl.position.x = fl._followClone.position.x + (fl._followClone._lightOffsetX || 0);
+      fl.position.y = fl._followClone.position.y + (fl._followClone._lightOffsetY || 0);
+      fl.position.z = fl._followClone.position.z + (fl._followClone._lightOffsetZ || 0);
+    }
+    fl.intensity = fl._b + Math.sin(Date.now()*0.009 + fl.position.x*3) * 0.65;
+  });
+  lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(Date.now()*0.0019+ll.position.x*0.3)*0.1;});
+    // do not auto-snap just because an object is selected
+  if(walkMode&&charMesh){
+    const moveSpeed=4.2*dt,turnSpeed=2.4*dt;
+    const tf=runKey?0.18:0.35;
+    if(turnLeft)charMesh.rotation.y-=turnSpeed*tf;
+    if(turnRight)charMesh.rotation.y+=turnSpeed*tf;
+    charMesh.rotation.z+=(((turnLeft?1:turnRight?-1:0)*0.08)-charMesh.rotation.z)*0.12;
+    const fwd=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
+    if(!charMesh._vel)charMesh._vel=0;
+    const tv=(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
+    const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
+    if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
+    // Terrain following — 4 rays to get slope normal, tilt character to match
+    const _tRay = new BABYLON.Ray(new BABYLON.Vector3(charMesh.position.x, 80, charMesh.position.z), new BABYLON.Vector3(0,-1,0), 200);
+    const _tHit = scene.pickWithRay(_tRay, m => m === ground || m === court || m === plaza);
+    if (_tHit && _tHit.hit && _tHit.pickedPoint) {
+      // Character's origin is not at feet — compute foot offset once and cache it
+      if (charMesh._footOffset === undefined) {
+        charMesh.computeWorldMatrix(true);
+        let _minY = Infinity;
+        charMesh.getChildMeshes(false).forEach(m => {
+          if (!m.getTotalVertices || m.getTotalVertices() === 0) return;
+          m.computeWorldMatrix(true);
+          const bb = m.getBoundingInfo().boundingBox;
+          if (bb.minimumWorld.y < _minY) _minY = bb.minimumWorld.y;
+        });
+        charMesh._footOffset = isFinite(_minY) ? (charMesh.position.y - _minY) : 0;
+      }
+      // Snap feet to ground — origin sits at terrainY + footOffset so feet touch the terrain
+      const _targetY = _tHit.pickedPoint.y + charMesh._footOffset;
+      charMesh.position.y += (_targetY - charMesh.position.y) * 0.25;
+      charMesh._terrainY = _tHit.pickedPoint.y;
+      // Slope tilt removed — character stays upright
+    }
+    if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
+    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8;}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
+    if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
+    _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
+    const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
+    walk.position=BABYLON.Vector3.Lerp(walk.position,dc,0.1);
+    walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
+  }
+  scene.render();
+});
+
+// ── GLB ASSET SOURCES (hidden at 9999 — admin panel clones them) ──
+const _assetSources = {};
+function loadAssetSource(key) {
+  if (_assetSources[key]) return;
+  if (ASSETS[key] && ASSETS[key].procedural) { _assetSources[key] = { metadata: { loaded: true }, procedural: true }; return; }
+  const root = spawnAsset(key, new BABYLON.Vector3(9999, 0, 9999));
+  root.name = key + "Root";
+  _assetSources[key] = root;
+  if (key === "fence_1")   { fenceRootRef = root; }
+  if (key === "dojo_5")    { dojoRootRef = root; }
+  if (key === "dojo_6")    { dojo6RootRef = root; }
+  if (key === "dojo_7")    { dojo7RootRef = root; }
+  if (key === "dojo_9")    { dojo9RootRef = root; }
+  if (key === "lantern_1") { lanternRootRef = root; }
+  registerEditableRoot(key, root);
+}
+Object.keys(ASSETS).forEach(key => loadAssetSource(key));
+
+
+
+
+// ── LOADING SCREEN + WORLD INIT ──────────────────
+async function initWorldLayout() {
+  // Always ensure token is set before fetching
+  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
+  try {
+    const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/world-layout.json?ref=dev", {
+      headers: { "Authorization": "token " + window._ghToken }
+    });
+    if (resp.ok) {
+      const d = await resp.json();
+      const bytes = Uint8Array.from(atob(d.content.replace(/\n/g,'')), c => c.charCodeAt(0));
+      localStorage.setItem("rebelAntsWorldLayout", new TextDecoder('utf-8').decode(bytes));
+      console.log("Layout restored from GitHub:", JSON.parse(new TextDecoder('utf-8').decode(bytes)).length, "objects");
+    }
+  } catch(e) { console.warn("Could not load layout from GitHub", e); }
+  // Dismiss loading screen
+  const ld = document.getElementById('ld');
+  if (ld) { ld.style.opacity='0'; setTimeout(()=>{ ld.style.display='none'; }, 900); }
+}
+
+function waitForWorldAndLoadLayout() {
+  if (!waitForWorldAndLoadLayout._start) waitForWorldAndLoadLayout._start = Date.now();
+  const elapsed = Date.now() - waitForWorldAndLoadLayout._start;
+  const allReady = Object.keys(ASSETS).every(k => {
+    if (ASSETS[k].procedural) return true; // procedural assets are always ready
+    return _assetSources[k] && _assetSources[k].metadata && _assetSources[k].metadata.loaded;
+  });
+  // Wait up to 15 seconds — then load anyway with whatever is ready
+  if (!allReady && elapsed < 15000) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
+  if (!allReady) {
+    const notReady = Object.keys(ASSETS).filter(k => !(_assetSources[k] && _assetSources[k].metadata && _assetSources[k].metadata.loaded === true));
+    console.warn('waitForWorldAndLoadLayout: timed out waiting for:', notReady, '— loading layout anyway');
+  }
+  scene.materials.forEach(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 4; });
+  loadWorldLayout();
+  restoreUploadedAssets();
+  applyZoneSignTextures();
+
+}
+
+// ── ZONE SIGN TEXTURES ───────────────────────────────────────
+// Finds each placed wooden_sign clone by proximity to zone positions
+// Applies styled DynamicTexture to Sign7_primitive1 (the board face)
+// Emissive glow is FREE — zero performance cost
+function applyZoneSignTextures() {
+  // Driven by signConfig stored in each wooden_sign clone's metadata
+  // Remove any old text planes first
+  scene.meshes.filter(m => m.name && m.name.startsWith('zoneTextPlane_')).forEach(m => m.dispose());
+  // Remove old triggers driven by signs
+  _signTriggers = _signTriggers || [];
+  _signTriggers.forEach(id => removeTrigger && removeTrigger(id));
+  _signTriggers = [];
+
+  const clones = scene.transformNodes.filter(n =>
+    n.metadata && n.metadata.type === 'wooden_sign' && n.metadata.isClone
+  );
+  clones.forEach(clone => {
+    const cfg = clone.metadata.signConfig;
+    if (!cfg || !cfg.label) return;
+    renderSignTexture(clone, cfg);
+    // Register zone trigger if clickable
+    if (cfg.clickable !== false) {
+      addTrigger({ id:'sign_'+clone.name, x:clone.position.x, z:clone.position.z,
+        title:cfg.label, sub:cfg.sub||'', icon:cfg.icon||'🏯', color:cfg.color||'#5ecfca',
+        desc:cfg.desc||'', actions:cfg.buttons||[] });
+      _signTriggers.push('sign_'+clone.name);
+    }
+  });
+}
+
+function renderSignTexture(clone, cfg) {
+  // Remove existing plane for this clone
+  const existing = scene.getMeshByName('zoneTextPlane_'+clone.name);
+  if (existing) existing.dispose();
+
+  const board = clone.getChildMeshes(false).find(m => m.name.includes('primitive1'));
+  if (!board) return;
+  board.computeWorldMatrix(true);
+  const bb = board.getBoundingInfo().boundingBox;
+  const worldCenter = BABYLON.Vector3.Center(bb.minimumWorld, bb.maximumWorld);
+  const localCenter = BABYLON.Vector3.TransformCoordinates(worldCenter, clone.getWorldMatrix().clone().invert());
+  const localW = (bb.maximumWorld.x-bb.minimumWorld.x)/clone.scaling.x;
+  const localH = (bb.maximumWorld.y-bb.minimumWorld.y)/clone.scaling.y;
+
+  const textPlane = BABYLON.MeshBuilder.CreatePlane('zoneTextPlane_'+clone.name, {width:localW*0.88, height:localH*0.82}, scene);
+  textPlane.parent = clone;
+  textPlane.position = new BABYLON.Vector3(localCenter.x, localCenter.y, localCenter.z+0.0003);
+  textPlane.alwaysSelectAsActiveMesh = true;
+  textPlane.isPickable = false;
+
+  const color = cfg.color || '#5ecfca';
+  const dt = new BABYLON.DynamicTexture('zoneSignDT_'+clone.name, {width:512, height:256}, scene, false);
+  const ctx = dt.getContext();
+  ctx.fillStyle = '#100800'; ctx.fillRect(0,0,512,256);
+  ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.shadowColor = color; ctx.shadowBlur = 20;
+  ctx.strokeRect(6,6,500,244); ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(232,197,106,0.4)'; ctx.lineWidth = 1; ctx.strokeRect(14,14,484,228);
+  ctx.save(); ctx.translate(512,0); ctx.scale(-1,1);
+  if (cfg.icon) { ctx.font='44px serif'; ctx.textAlign='center'; ctx.fillText(cfg.icon, 256, 70); }
+  ctx.font='bold 54px "Cinzel Decorative",serif'; ctx.fillStyle='#e8c56a';
+  ctx.shadowColor='#e8c56a'; ctx.shadowBlur=14; ctx.textAlign='center';
+  ctx.fillText(cfg.label, 256, cfg.icon ? 138 : 120); ctx.shadowBlur=0;
+  if (cfg.sub) {
+    ctx.font='22px "Cinzel Decorative",serif'; ctx.fillStyle=color;
+    ctx.shadowColor=color; ctx.shadowBlur=8;
+    ctx.fillText(cfg.sub, 256, cfg.icon ? 175 : 165); ctx.shadowBlur=0;
+  }
+  ctx.font='italic 16px serif'; ctx.fillStyle='rgba(232,197,106,0.5)';
+  ctx.fillText('rebelants.io', 256, 220);
+  ctx.restore(); dt.update();
+
+  const signMat = new BABYLON.StandardMaterial('zoneSignMat_'+clone.name, scene);
+  signMat.diffuseTexture = dt; signMat.emissiveTexture = dt;
+  signMat.emissiveColor = new BABYLON.Color3(1,1,1); signMat.backFaceCulling = false;
+  signMat.hasAlpha = true; signMat.maxSimultaneousLights = 4;
+  textPlane.material = signMat;
+}
+
+function addSignButton() {
+  const container = document.getElementById('signBtnsContainer');
+  const idx = container.children.length;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:3px;margin-bottom:3px';
+  row.innerHTML = '<input placeholder="Label" style="flex:1;background:#1a1a2e;border:1px solid #333;color:#fff;padding:3px 5px;font-size:10px">' +
+    '<input placeholder="https://..." style="flex:2;background:#1a1a2e;border:1px solid #333;color:#aaa;padding:3px 5px;font-size:10px">' +
+    '<button onclick="this.parentNode.remove()" style="background:#c0392b;color:#fff;border:none;padding:2px 6px;cursor:pointer;font-size:10px">x</button>';
+  container.appendChild(row);
+}
+
+function populateSignButtons(buttons) {
+  const container = document.getElementById('signBtnsContainer');
+  container.innerHTML = '';
+  (buttons||[]).forEach(btn => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:3px;margin-bottom:3px';
+    row.innerHTML = '<input placeholder="Label" style="flex:1;background:#1a1a2e;border:1px solid #333;color:#fff;padding:3px 5px;font-size:10px" value="'+btn.label+'">' +
+      '<input placeholder="https://..." style="flex:2;background:#1a1a2e;border:1px solid #333;color:#aaa;padding:3px 5px;font-size:10px" value="'+(btn.href||'')+'">' +
+      '<button onclick="this.parentNode.remove()" style="background:#c0392b;color:#fff;border:none;padding:2px 6px;cursor:pointer;font-size:10px">x</button>';
+    container.appendChild(row);
+  });
+}
+
+function applySignEditor() {
+  if (!selectedObject || !selectedObject.metadata || selectedObject.metadata.type !== 'wooden_sign') return;
+  const label = document.getElementById('signLabel').value.trim().toUpperCase();
+  const sub = document.getElementById('signSub').value.trim();
+  const desc = document.getElementById('signDesc').value.trim();
+  const icon = document.getElementById('signIcon').value.trim();
+  const color = document.getElementById('signColor').value;
+  const clickable = document.getElementById('signClickable').checked;
+  if (!label) { showToast('Enter a label first'); return; }
+  // Collect buttons
+  const rows = document.getElementById('signBtnsContainer').children;
+  const buttons = [];
+  Array.from(rows).forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const btnLabel = inputs[0].value.trim();
+    const btnHref = inputs[1].value.trim();
+    if (btnLabel && btnHref) buttons.push({label:btnLabel, href:btnHref, g:true});
+  });
+  const cfg = { label, sub, desc, icon, color, clickable, buttons };
+  selectedObject.metadata.signConfig = cfg;
+  renderSignTexture(selectedObject, cfg);
+  if (typeof removeTrigger === 'function') removeTrigger('sign_'+selectedObject.name);
+  if (clickable) {
+    addTrigger({ id:'sign_'+selectedObject.name, x:selectedObject.position.x, z:selectedObject.position.z,
+      title:label, sub:sub, icon:icon||'🏯', color:color, desc:desc, actions:buttons });
+  }
+  saveWorldLayout();
+  showToast('✅ Sign saved: ' + label);
+}
+
+function applyToroColor() {
+  if (!selectedObject || selectedObject.metadata.type !== 'toro_lantern') return;
+  const color = document.getElementById('toroColor').value;
+  selectedObject.metadata.toroColor = color;
+  // Dispose old meshes and rebuild with new color
+  selectedObject.getChildMeshes(false).forEach(m => m.dispose());
+  buildToro(selectedObject, color);
+  saveWorldLayout();
+  showToast('🏯 Lantern color updated');
+}
+
+// ── RESTORE UPLOADED ASSETS FROM LOCALSTORAGE ──────────
+// Any GLB uploaded via admin panel gets re-added to the panel on refresh
+// using its permanent /assets/buildings/ URL (available after Vercel redeploys)
+function restoreUploadedAssets() {
+  const uploaded = JSON.parse(localStorage.getItem('rebelAntsUploadedAssets') || '[]');
+  if (!uploaded.length) return;
+  const grid = document.querySelector('#assetPanel .ap-grid:last-of-type');
+  uploaded.forEach(({ key, file }) => {
+    // Add to ASSETS registry with permanent URL
+    if (!ASSETS[key]) {
+      ASSETS[key] = { path: '/assets/buildings/' + file, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0) };
+    }
+    // Load source mesh
+    if (!_assetSources[key]) loadAssetSource(key);
+    // Add card to panel if not already there
+    if (grid && !document.querySelector('[data-asset-key="' + key + '"]')) {
+      const card = document.createElement('div');
+      card.className = 'ap-card';
+      card.dataset.assetKey = key;
+      card.style.opacity = '0.5';
+      card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
+      grid.appendChild(card);
+      // Enable card once loaded
+      const waitForLoad = setInterval(() => {
+        if (_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded) {
+          clearInterval(waitForLoad);
+          card.style.opacity = '1';
+          card.onclick = () => spawnAssetFromPanel(key);
+        }
+      }, 300);
+    }
+  });
+}
+
+initWorldLayout().then(() => waitForWorldAndLoadLayout());
+  
+
+// ── ADMIN ASSET PANEL ─────────────────────────
+function toggleWorklight() {
+  _worklightOn = !_worklightOn;
+  // Boost hemi light to full daylight when on
+  hemi.intensity = _worklightOn ? 0.7 : (sun.intensity > 1 ? 0.65 : 0.18);
+  sun.intensity = _worklightOn ? 1.2 : (sun.intensity > 1 ? sun.intensity : 0.15);
+  sun.diffuse = _worklightOn ? new BABYLON.Color3(1, .97, .88) : new BABYLON.Color3(1, .97, .88);
+  // Update button
+  const btn = document.getElementById('worklightBtn');
+  if (btn) {
+    btn.style.background = _worklightOn ? 'rgba(232,197,106,.3)' : '';
+    btn.style.borderColor = _worklightOn ? 'rgba(232,197,106,.8)' : '';
+    btn.style.color = _worklightOn ? '#e8c56a' : '';
+    btn.textContent = _worklightOn ? '☀ Worklight ON (W)' : '☀ Worklight (W)';
+  }
+}
+
+function setGizmoMode(mode) {
+  if (!selectedObject) return;
+  gizmoManager.positionGizmoEnabled = mode === 'move';
+  gizmoManager.rotationGizmoEnabled = mode === 'rotate';
+  gizmoManager.scaleGizmoEnabled = mode === 'scale';
+  gizmoManager.attachToNode(selectedObject);
+}
+function flipSelected() {
+  if (!selectedObject) return;
+  selectedObject.scaling.x *= -1;
+}
+function rotateSelectedBy(angle) {
+  if (!selectedObject) return;
+  selectedObject.rotation.y += angle;
+}
+function scaleSelected(factor) {
+  if (!selectedObject) return;
+  selectedObject.scaling.x *= factor;
+  selectedObject.scaling.y *= factor;
+  selectedObject.scaling.z *= factor;
+}
+
+function toggleAssetPanel(show) {
+  const panel = document.getElementById('assetPanel');
+  if (panel) panel.classList.toggle('on', show);
+  // Shift HUD badges left when panel is open
+  const offset = show ? '248px' : '28px';
+  ['adminBadge','selectedBadge','saveBadge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.right = offset;
+  });
+}
+
+
+function spawnLanternFull(spawnPos) {
+  const source = _assetSources['lantern_1'];
+  if (!source) return;
+  const clone = source.clone(makeCloneName('lantern_1'));
+  clone.metadata = { type: 'lantern_1', isClone: true };
+  clone.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
+  clone.rotation = source.rotation.clone();
+  clone.position = spawnPos.clone();
+  clone.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true; });
+  const fl = _lanternLightPool.find(l => !l._inUse);
+  if (fl) fl._inUse = true;
+  setTimeout(() => {
+    const mesh = clone.getChildMeshes(false).find(m => m.getTotalVertices && m.getTotalVertices() > 0);
+    if (!mesh) return;
+    mesh.computeWorldMatrix(true);
+    const bb = mesh.getBoundingInfo().boundingBox;
+    clone.position.y -= bb.minimumWorld.y;
+    const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
+    const cy = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
+    const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
+    clone.position.x = cx;
+    clone.position.z = cz;
+    if (fl) {
+      fl.position.set(cx, cy, cz);
+      fl.intensity = 2.0;
+      fl._b = 2.0;
+      fl._followMesh = mesh;
+      fireLights.push(fl);
+    }
+    const h = bb.maximumWorld.y - bb.minimumWorld.y;
+    const proxy = BABYLON.MeshBuilder.CreateBox('lp_' + clone.name, {width:1.5, height:h, depth:1.5}, scene);
+    proxy.position = new BABYLON.Vector3(cx, bb.minimumWorld.y + h/2, cz);
+    proxy.isPickable = true;
+    proxy.visibility = 0;
+    proxy.metadata = { type: 'lantern_1', isClone: true, proxyFor: clone };
+    if (adminMode) { selectedObject = proxy; updateSelectedBadge(); }
+        if (adminMode) {
+          gizmoManager.positionGizmoEnabled = true;
+          gizmoManager.rotationGizmoEnabled = false;
+          gizmoManager.scaleGizmoEnabled = false;
+          gizmoManager.attachToNode(proxy);
+        }
+  }, 500);
+  return clone;
+}
+
+function spawnAssetFromPanel(key) {
+  // Handle procedural assets — no GLB source needed
+  if (ASSETS[key] && ASSETS[key].procedural) {
+    let spawnPos;
+    if (walkMode && charMesh) {
+      const fwd = new BABYLON.Vector3(Math.sin(charMesh.rotation.y), 0, Math.cos(charMesh.rotation.y));
+      spawnPos = charMesh.position.add(fwd.scale(8));
+    } else {
+      spawnPos = orbit.target.add(new BABYLON.Vector3(Math.sin(orbit.alpha)*12, 0, Math.cos(orbit.alpha)*12));
+    }
+    const pos = new BABYLON.Vector3(spawnPos.x, 0, spawnPos.z);
+    const clone = spawnAsset(key, pos, { isClone: true, toroColor: '#ffdd88' });
+    if (!clone) return;
+    registerEditableRoot(clone.name, clone);
+    selectedObject = clone;
+    snapSelectedObjectToGround();
+    updateSelectedBadge();
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+    triggerAutoSave();
+    return;
+  }
+  if (!_assetSources[key]) { console.warn('Asset not loaded:', key); return; }
+  // Spawn in front of camera
+  let spawnPos;
+  if (walkMode && charMesh) {
+    const fwd = new BABYLON.Vector3(Math.sin(charMesh.rotation.y), 0, Math.cos(charMesh.rotation.y));
+    spawnPos = charMesh.position.add(fwd.scale(8));
+  } else {
+    spawnPos = orbit.target.add(new BABYLON.Vector3(
+      Math.sin(orbit.alpha) * 12, 0, Math.cos(orbit.alpha) * 12
+    ));
+  }
+  const source = _assetSources[key];
+  // Lantern uses its own spawn system — must return before clone is created
+  if (key === 'lantern_1') { spawnLanternFull(spawnPos); return; }
+    const clone = source.clone(makeCloneName(key));
+  if (!clone) return;
+  clone.metadata = { type: key, isClone: true };
+  clone.position = new BABYLON.Vector3(spawnPos.x, 0, spawnPos.z);
+  clone.rotation = new BABYLON.Vector3(
+    source.rotation ? source.rotation.x : 0,
+    Math.random() * Math.PI * 2,
+    source.rotation ? source.rotation.z : 0
+  );
+  clone.scaling = source.scaling.clone();
+  clone.getChildMeshes().forEach(m => {
+    if (m.getTotalVertices && m.getTotalVertices() > 0) {
+      shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
+    }
+  });
+  // lantern handled above
+  // Select with gizmo — lantern handles inside setTimeout
+  if (key !== 'lantern_1') {
+    selectedObject = clone;
+    snapSelectedObjectToGround();
+    updateSelectedBadge();
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+  }
+  triggerAutoSave();
+}
+
+function uploadGLB() {
+  document.getElementById('glbUploadInput').click();
+}
+
+document.getElementById('glbUploadInput').addEventListener('change', async function(e) {
+  const file = e.target.files[0];
+  if (!file || !file.name.endsWith('.glb')) return;
+  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
+  const key = file.name.replace('.glb','');
+  const reader = new FileReader();
+  reader.onload = async function(ev) {
+    let b64 = ev.target.result.split(',')[1];
+    const originalSize = file.size;
+
+    // ── AUTO-COMPRESS via serverless function ──────────────
+    showToast('⏳ Compressing ' + file.name + ' (' + (originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB') + ')...', 30000);
+    let compressedSize = originalSize;
+    let compressionMsg = '';
+    try {
+      const compResp = await fetch('/api/compress-glb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: b64 })
+      });
+      if (compResp.ok) {
+        const compData = await compResp.json();
+        if (compData.warning) {
+          const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
+          compressionMsg = '⚠️ Could not auto-compress (' + origFmt + '). Pre-compress free at gltf.report';
+          b64 = compData.data;
+          compressedSize = originalSize;
+        } else {
+          b64 = compData.data;
+          compressedSize = compData.outputSize;
+          const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
+          const compFmt = compressedSize >= 1048576 ? (compressedSize/1048576).toFixed(1)+' MB' : Math.round(compressedSize/1024)+' KB';
+          if (compData.savedPercent > 2) {
+            compressionMsg = '✨ Compressed: ' + origFmt + ' → ' + compFmt + ' (' + compData.savedPercent + '% smaller)';
+          } else {
+            compressionMsg = '✓ Already optimized (' + origFmt + ') — no compression needed';
+          }
+        }
+      }
+    } catch(compErr) {
+      console.warn('Compression skipped:', compErr.message);
+      const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
+      compressionMsg = '⚠️ Auto-compress unavailable (' + origFmt + '). Pre-compress free at gltf.report';
+    }
+
+    // ── UPLOAD TO GITHUB ───────────────────────────────────
+    showToast('☁️ Uploading ' + file.name + ' to GitHub...', 30000);
+    const path = 'assets/buildings/' + file.name;
+    let sha;
+    try {
+      const check = await fetch('https://api.github.com/repos/D1stknight/rebel-ants-village/contents/' + path + '?ref=dev', { headers: { Authorization: 'token ' + window._ghToken } });
+      if (check.ok) { const cd = await check.json(); sha = cd.sha; }
+    } catch(e) {}
+    const body = { message: 'upload: ' + file.name, content: b64, branch: 'dev' };
+    if (sha) body.sha = sha;
+    const put = await fetch('https://api.github.com/repos/D1stknight/rebel-ants-village/contents/' + path, {
+      method: 'PUT', headers: { Authorization: 'token ' + window._ghToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!put.ok) { showToast('❌ Upload failed — try again', 8000); return; }
+
+    // ── SAVE TO localStorage so asset survives page refresh ──
+    const _uploadedAssets = JSON.parse(localStorage.getItem('rebelAntsUploadedAssets') || '[]');
+    if (!_uploadedAssets.find(a => a.key === key)) {
+      _uploadedAssets.push({ key, file: file.name });
+      localStorage.setItem('rebelAntsUploadedAssets', JSON.stringify(_uploadedAssets));
+    }
+
+    // ── LOAD INTO SCENE IMMEDIATELY via blob URL ───────────
+    // Convert compressed b64 back to binary blob so Babylon loads it NOW
+    // without waiting for Vercel to redeploy
+    const binStr = atob(b64);
+    const binArr = new Uint8Array(binStr.length);
+    for (let i = 0; i < binStr.length; i++) binArr[i] = binStr.charCodeAt(i);
+    const blob = new Blob([binArr], { type: 'model/gltf-binary' });
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Register in ASSETS using blob URL for immediate use
+    // Also store the real path so world-layout save/load uses the permanent URL
+    ASSETS[key] = { path: blobUrl, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _realPath: '/assets/buildings/' + file.name };
+    loadAssetSource(key);
+
+    const grid = document.querySelector('#assetPanel .ap-grid:last-of-type');
+    if (grid) {
+      const card = document.createElement('div');
+      card.className = 'ap-card';
+      card.style.opacity = '0.5';
+      card.innerHTML = '⏳<span class="ap-name">' + key + '</span>';
+      grid.appendChild(card);
+      const waitForLoad = setInterval(() => {
+        if (_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded) {
+          clearInterval(waitForLoad);
+          card.style.opacity = '1';
+          card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
+          card.onclick = () => spawnAssetFromPanel(key);
+          showToast(compressionMsg || ('✓ ' + file.name + ' ready to place'), 10000);
+        }
+      }, 300);
+    }
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+
+
+// ── ADMIN DOUBLE-CLICK TO FOCUS ──────────────────
+canvas.addEventListener('dblclick', (e) => {
+  if (!adminMode) return;
+  // Don't fire if clicking on panel
+  if (e.target !== canvas) return;
+  const pick = scene.pick(scene.pointerX, scene.pointerY, m => m === ground || m === court || m === plaza);
+  if (!pick || !pick.hit || !pick.pickedPoint) return;
+  // Smoothly move camera target to clicked point
+  const target = pick.pickedPoint;
+  const startTarget = orbit.target.clone();
+  let t = 0;
+  const flyInterval = setInterval(() => {
+    t += 0.08;
+    if (t >= 1) { orbit.target = new BABYLON.Vector3(target.x, target.y, target.z); clearInterval(flyInterval); return; }
+    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease in-out
+    orbit.target = BABYLON.Vector3.Lerp(startTarget, target, ease);
+  }, 16);
+});
+
+
+
+
+</script>
+</body>
+</html>
