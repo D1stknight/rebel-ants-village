@@ -689,10 +689,10 @@ ground.material=grassMat; ground.receiveShadows=true;
             const blend = Math.max(0, Math.min(1, (dist - 110) / 50));
             // Layered sine waves for organic rolling terrain
             const hy = (
-                Math.sin(vx * 0.04  + vz * 0.031) * 3.5 +
-                Math.sin(vx * 0.018 + vz * 0.052) * 2.2 +
-                Math.sin(vx * 0.071 + vz * 0.019) * 1.4 +
-                Math.sin(vx * 0.13  + vz * 0.09)  * 0.6
+                Math.sin(vx * 0.04  + vz * 0.031) * 10.0 +
+                Math.sin(vx * 0.018 + vz * 0.052) *  6.0 +
+                Math.sin(vx * 0.071 + vz * 0.019) *  3.5 +
+                Math.sin(vx * 0.13  + vz * 0.09)  *  1.5
             ) * blend;
             gndPos[gi + 1] = hy;
         }
@@ -1186,6 +1186,7 @@ scene.onPointerObservable.add((evt) => {
   selectedObject = editableNode;
   updateSelectedBadge();
 
+  if (!adminMode) return;
   gizmoManager.positionGizmoEnabled = true;
   gizmoManager.rotationGizmoEnabled = false;
   gizmoManager.scaleGizmoEnabled = false;
