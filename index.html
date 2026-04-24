@@ -432,10 +432,7 @@ function buildToro(root, glowColor) {
   gDisc.material=gDiscMat; gDisc.position.y=0.02; gDisc.rotation.x=Math.PI/2;
 }
 // ── SCENE ───────────────────────────────────
-// initEngine() is async — it sets window.engine then calls startVillage()
-// All scene code runs inside startVillage() after engine is ready
 // ── SCENE ───────────────────────────────────
-const engine = window.engine; // local alias
 const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color4(.45,.65,.88,1);
 scene.maxLightsPerMesh = 4;
