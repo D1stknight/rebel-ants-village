@@ -4,9 +4,12 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Rebel Ants — The Hidden Village</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600&family=Noto+Serif+JP:wght@300;400&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Georgia',serif;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Cinzel', serif;}
 
 /* ── BABYLON BACKGROUND ── */
 #bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;}
@@ -37,18 +40,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ge
 #logo{width:320px;max-width:80vw;filter:drop-shadow(0 0 30px rgba(255,180,50,0.4));
   animation:float 4s ease-in-out infinite;}
 #logo-placeholder{
-  color:#c8922a;font-size:42px;font-weight:bold;letter-spacing:8px;text-transform:uppercase;
+  color:#c8922a;font-size:42px;font-weight:900;letter-spacing:8px;text-transform:uppercase;font-family:'Cinzel Decorative',serif;
   text-shadow:0 0 40px rgba(200,146,42,0.8),0 2px 4px rgba(0,0,0,0.9);
   display:none;
 }
-#logo-sub{color:#8a7a5a;font-size:13px;letter-spacing:6px;text-transform:uppercase;
+#logo-sub{color:#8a7a5a;font-size:11px;letter-spacing:8px;text-transform:uppercase;font-family:'Cinzel',serif;
   text-shadow:0 1px 3px rgba(0,0,0,0.9);}
 
 @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
 
 /* ── CHARACTER SELECT ── */
 #char-section{display:flex;flex-direction:column;align-items:center;gap:16px;}
-#char-label{color:#8a7a5a;font-size:11px;letter-spacing:5px;text-transform:uppercase;}
+#char-label{color:#8a7a5a;font-size:10px;letter-spacing:5px;text-transform:uppercase;font-family:'Cinzel',serif;}
 #char-row{display:flex;gap:16px;align-items:center;}
 
 .ant-card{
@@ -75,8 +78,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ge
 #btn-row{display:flex;gap:16px;align-items:center;}
 
 .btn{
-  padding:14px 36px;font-size:13px;letter-spacing:4px;text-transform:uppercase;
-  border:none;cursor:pointer;transition:all 0.2s ease;font-family:'Georgia',serif;
+  padding:14px 36px;font-size:11px;letter-spacing:4px;text-transform:uppercase;
+  border:none;cursor:pointer;transition:all 0.2s ease;font-family:'Cinzel',serif;
 }
 #btn-enter{
   background:linear-gradient(135deg,#c8922a,#8a5e1a);color:#fff;
@@ -101,7 +104,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ge
 #ticker-inner{
   display:inline-block;white-space:nowrap;
   animation:ticker 30s linear infinite;
-  color:#8a7a5a;font-size:11px;letter-spacing:3px;
+  color:#8a7a5a;font-size:10px;letter-spacing:3px;font-family:'Cinzel',serif;
 }
 @keyframes ticker{0%{transform:translateX(100vw);}100%{transform:translateX(-100%);}}
 
@@ -113,7 +116,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ge
   transition:opacity 1s ease;
 }
 #loading.hidden{opacity:0;pointer-events:none;}
-#loading-text{color:#8a7a5a;font-size:11px;letter-spacing:5px;text-transform:uppercase;}
+#loading-text{color:#8a7a5a;font-size:10px;letter-spacing:5px;text-transform:uppercase;font-family:'Cinzel',serif;}
 #loading-bar-wrap{width:200px;height:2px;background:rgba(255,255,255,0.1);}
 #loading-bar{height:100%;width:0%;background:#c8922a;transition:width 0.3s ease;}
 
