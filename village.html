@@ -2475,12 +2475,9 @@ function spawnLanternFull(spawnPos) {
     if (!mesh) return;
     mesh.computeWorldMatrix(true);
     const bb = mesh.getBoundingInfo().boundingBox;
-    clone.position.y -= bb.minimumWorld.y;
     const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
     const cy = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
     const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
-    clone.position.x = cx;
-    clone.position.z = cz;
     const floorTex = _makeBlurRadialTexture('lan_floor_' + clone.name, 256);
     const topTex = _makeBlurRadialTexture('lan_top_' + clone.name, 256);
     const haze = BABYLON.MeshBuilder.CreateDisc('lan_haze_' + clone.name, { radius: 22, tessellation: 48 }, scene);
