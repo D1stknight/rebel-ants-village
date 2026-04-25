@@ -482,62 +482,103 @@ function buildToro(root, glowColor) {
   fin.material=darkMat(); fin.position.y=7.22;
 
    // Soft fake lighting system — emissive only, no real point light, very cheap.
-  // Layer 1: wide soft pool on the ground
-  const gDiscOuter = attach(BABYLON.MeshBuilder.CreateDisc('tgdiscOuter',{radius:2.8,tessellation:40},scene));
-  const gDiscOuterMat = new BABYLON.StandardMaterial('tgdiscOuterMat_'+Math.random(),scene);
-  gDiscOuterMat.diffuseColor = new BABYLON.Color3(0,0,0);
-  gDiscOuterMat.emissiveColor = new BABYLON.Color3(glow.r*0.55, glow.g*0.45, glow.b*0.28);
-  gDiscOuterMat.alpha = 0.18;
-  gDiscOuterMat.disableLighting = true;
-  gDiscOuterMat.backFaceCulling = false;
-  gDiscOuterMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
-  gDiscOuterMat.maxSimultaneousLights = 0;
-  gDiscOuter.material = gDiscOuterMat;
-  gDiscOuter.position.y = 0.025;
-  gDiscOuter.rotation.x = Math.PI/2;
-  gDiscOuter.isPickable = false;
+  // Uses multiple transparent layers so the floor glow fades gradually.
 
-  // Layer 2: smaller hotter glow near the lantern base
-  const gDiscInner = attach(BABYLON.MeshBuilder.CreateDisc('tgdiscInner',{radius:1.35,tessellation:40},scene));
-  const gDiscInnerMat = new BABYLON.StandardMaterial('tgdiscInnerMat_'+Math.random(),scene);
-  gDiscInnerMat.diffuseColor = new BABYLON.Color3(0,0,0);
-  gDiscInnerMat.emissiveColor = new BABYLON.Color3(glow.r*0.95, glow.g*0.75, glow.b*0.38);
-  gDiscInnerMat.alpha = 0.28;
-  gDiscInnerMat.disableLighting = true;
-  gDiscInnerMat.backFaceCulling = false;
-  gDiscInnerMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
-  gDiscInnerMat.maxSimultaneousLights = 0;
-  gDiscInner.material = gDiscInnerMat;
-  gDiscInner.position.y = 0.035;
-  gDiscInner.rotation.x = Math.PI/2;
-  gDiscInner.isPickable = false;
+  function makeGlowDisc(name, radius, y, alpha, strength) {
+    const disc = attach(BABYLON.MeshBuilder.CreateDisc(name, { radius, tessellation: 56 }, scene));
+    const discMat = new BABYLON.StandardMaterial(name + 'Mat_' + Math.random(), scene);
 
-  // Camera-facing glow halo around the lantern chamber
+    discMat.diffuseColor = new BABYLON.Color3(0,0,0);
+    discMat.emissiveColor = new BABYLON.Color3(
+      glow.r * strength.r,
+      glow.g * strength.g,
+      glow.b * strength.b
+    );
+    discMat.alpha = alpha;
+    discMat.disableLighting = true;
+    discMat.backFaceCulling = false;
+    discMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+    discMat.maxSimultaneousLights = 0;
+
+    disc.material = discMat;
+    disc.position.y = y;
+    disc.rotation.x = Math.PI / 2;
+    disc.isPickable = false;
+
+    return discMat;
+  }
+
+  // Very wide, barely visible falloff.
+  const gDiscFarMat = makeGlowDisc(
+    'tgdiscFar',
+    4.25,
+    0.018,
+    0.07,
+    { r: 0.45, g: 0.34, b: 0.16 }
+  );
+
+  // Main warm reflection on the floor.
+  const gDiscOuterMat = makeGlowDisc(
+    'tgdiscOuter',
+    3.15,
+    0.026,
+    0.14,
+    { r: 0.75, g: 0.52, b: 0.22 }
+  );
+
+  // Mid glow, stronger but still soft.
+  const gDiscMidMat = makeGlowDisc(
+    'tgdiscMid',
+    2.05,
+    0.034,
+    0.22,
+    { r: 1.0, g: 0.72, b: 0.30 }
+  );
+
+  // Hotter center near the lantern base.
+  const gDiscInnerMat = makeGlowDisc(
+    'tgdiscInner',
+    1.05,
+    0.042,
+    0.34,
+    { r: 1.25, g: 0.88, b: 0.38 }
+  );
+
+  // Tiny core reflection, gives the ground a warm center point.
+  const gDiscCoreMat = makeGlowDisc(
+    'tgdiscCore',
+    0.48,
+    0.05,
+    0.42,
+    { r: 1.55, g: 1.05, b: 0.45 }
+  );
+
+  // Camera-facing glow halo around the lantern chamber.
   const haloTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png', scene);
-  const haloMat = new BABYLON.StandardMaterial('toroHaloMat_'+Math.random(), scene);
+  const haloMat = new BABYLON.StandardMaterial('toroHaloMat_' + Math.random(), scene);
   haloMat.diffuseTexture = haloTexture;
   haloMat.emissiveTexture = haloTexture;
   haloMat.opacityTexture = haloTexture;
-  haloMat.emissiveColor = new BABYLON.Color3(glow.r*1.2, glow.g*0.95, glow.b*0.55);
+  haloMat.emissiveColor = new BABYLON.Color3(glow.r * 1.85, glow.g * 1.35, glow.b * 0.7);
   haloMat.diffuseColor = new BABYLON.Color3(0,0,0);
-  haloMat.alpha = 0.42;
+  haloMat.alpha = 0.58;
   haloMat.disableLighting = true;
   haloMat.backFaceCulling = false;
   haloMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
   haloMat.maxSimultaneousLights = 0;
 
-  const halo = attach(BABYLON.MeshBuilder.CreatePlane('toroHalo',{width:2.4,height:2.4},scene));
+  const halo = attach(BABYLON.MeshBuilder.CreatePlane('toroHalo', { width: 3.0, height: 3.0 }, scene));
   halo.material = haloMat;
   halo.position.y = 5.68;
   halo.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
   halo.isPickable = false;
 
-  // Slightly brighter core glow in the fire box
-  const coreHaloMat = haloMat.clone('toroCoreHaloMat_'+Math.random());
-  coreHaloMat.alpha = 0.6;
-  coreHaloMat.emissiveColor = new BABYLON.Color3(glow.r*1.5, glow.g*1.15, glow.b*0.65);
+  // Brighter core glow in the fire box.
+  const coreHaloMat = haloMat.clone('toroCoreHaloMat_' + Math.random());
+  coreHaloMat.alpha = 0.72;
+  coreHaloMat.emissiveColor = new BABYLON.Color3(glow.r * 2.2, glow.g * 1.55, glow.b * 0.85);
 
-  const coreHalo = attach(BABYLON.MeshBuilder.CreatePlane('toroCoreHalo',{width:1.25,height:1.25},scene));
+  const coreHalo = attach(BABYLON.MeshBuilder.CreatePlane('toroCoreHalo', { width: 1.45, height: 1.45 }, scene));
   coreHalo.material = coreHaloMat;
   coreHalo.position.y = 5.68;
   coreHalo.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
@@ -545,7 +586,15 @@ function buildToro(root, glowColor) {
 
   // Store glow materials so we can animate flicker later.
   root.metadata = root.metadata || {};
-  root.metadata._toroGlowMats = [gDiscOuterMat, gDiscInnerMat, haloMat, coreHaloMat];
+  root.metadata._toroGlowMats = [
+    gDiscFarMat,
+    gDiscOuterMat,
+    gDiscMidMat,
+    gDiscInnerMat,
+    gDiscCoreMat,
+    haloMat,
+    coreHaloMat
+  ];
 }
 // ── SCENE ───────────────────────────────────
 // ── SCENE ───────────────────────────────────
