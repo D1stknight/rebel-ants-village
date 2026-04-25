@@ -511,46 +511,46 @@ function buildToro(root, glowColor) {
   // Very wide, barely visible falloff.
   const gDiscFarMat = makeGlowDisc(
     'tgdiscFar',
-    4.25,
+    5.2,
     0.018,
-    0.07,
-    { r: 0.45, g: 0.34, b: 0.16 }
+    0.105,
+    { r: 0.55, g: 0.42, b: 0.20 }
   );
 
   // Main warm reflection on the floor.
   const gDiscOuterMat = makeGlowDisc(
     'tgdiscOuter',
-    3.15,
+    4.1,
     0.026,
-    0.14,
-    { r: 0.75, g: 0.52, b: 0.22 }
+    0.18,
+    { r: 0.82, g: 0.60, b: 0.28 }
   );
 
   // Mid glow, stronger but still soft.
   const gDiscMidMat = makeGlowDisc(
     'tgdiscMid',
-    2.05,
+    3.0,
     0.034,
-    0.22,
-    { r: 1.0, g: 0.72, b: 0.30 }
+    0.27,
+    { r: 1.05, g: 0.78, b: 0.36 }
   );
 
   // Hotter center near the lantern base.
   const gDiscInnerMat = makeGlowDisc(
     'tgdiscInner',
-    1.05,
+    1.9,
     0.042,
-    0.34,
-    { r: 1.25, g: 0.88, b: 0.38 }
+    0.36,
+    { r: 1.32, g: 0.96, b: 0.44 }
   );
 
   // Tiny core reflection, gives the ground a warm center point.
   const gDiscCoreMat = makeGlowDisc(
     'tgdiscCore',
-    0.48,
+    0.95,
     0.05,
-    0.42,
-    { r: 1.55, g: 1.05, b: 0.45 }
+    0.48,
+    { r: 1.65, g: 1.12, b: 0.52 }
   );
 
   // Camera-facing glow halo around the lantern chamber.
@@ -559,9 +559,9 @@ function buildToro(root, glowColor) {
   haloMat.diffuseTexture = haloTexture;
   haloMat.emissiveTexture = haloTexture;
   haloMat.opacityTexture = haloTexture;
-  haloMat.emissiveColor = new BABYLON.Color3(glow.r * 1.85, glow.g * 1.35, glow.b * 0.7);
+   haloMat.emissiveColor = new BABYLON.Color3(glow.r * 2.15, glow.g * 1.6, glow.b * 0.85);
   haloMat.diffuseColor = new BABYLON.Color3(0,0,0);
-  haloMat.alpha = 0.58;
+  haloMat.alpha = 0.68;
   haloMat.disableLighting = true;
   haloMat.backFaceCulling = false;
   haloMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
@@ -575,8 +575,8 @@ function buildToro(root, glowColor) {
 
   // Brighter core glow in the fire box.
   const coreHaloMat = haloMat.clone('toroCoreHaloMat_' + Math.random());
-  coreHaloMat.alpha = 0.72;
-  coreHaloMat.emissiveColor = new BABYLON.Color3(glow.r * 2.2, glow.g * 1.55, glow.b * 0.85);
+    coreHaloMat.alpha = 0.82;
+  coreHaloMat.emissiveColor = new BABYLON.Color3(glow.r * 2.65, glow.g * 1.9, glow.b * 1.0);
 
   const coreHalo = attach(BABYLON.MeshBuilder.CreatePlane('toroCoreHalo', { width: 1.45, height: 1.45 }, scene));
   coreHalo.material = coreHaloMat;
