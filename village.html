@@ -1395,7 +1395,11 @@ scene.onPointerObservable.add((evt) => {
   const editableRoots = Object.values(editableRootRefs).filter(Boolean);
 
   let node = pick.pickedMesh;
-  let editableNode = null;
+let editableNode = null;
+
+if (pick.pickedMesh.metadata?.isPickProxy) {
+  editableNode = pick.pickedMesh;
+}
 
   while (node) {
     const isEditableRoot = editableRoots.includes(node);
