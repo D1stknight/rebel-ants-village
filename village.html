@@ -505,6 +505,7 @@ function buildToro(root, glowColor) {
     disc.rotation.x = Math.PI / 2;
     disc.isPickable = false;
 
+       discMat._toroGlowMesh = disc;
     return discMat;
   }
 
@@ -586,12 +587,12 @@ function buildToro(root, glowColor) {
 
   // Store glow materials so we can animate flicker later.
   root.metadata = root.metadata || {};
-  root.metadata._toroGlowMeshes = [
-    gDiscFar,
-    gDiscOuter,
-    gDiscMid,
-    gDiscInner,
-    gDiscCore,
+   root.metadata._toroGlowMeshes = [
+    gDiscFarMat._toroGlowMesh,
+    gDiscOuterMat._toroGlowMesh,
+    gDiscMidMat._toroGlowMesh,
+    gDiscInnerMat._toroGlowMesh,
+    gDiscCoreMat._toroGlowMesh,
     halo,
     coreHalo
   ];
