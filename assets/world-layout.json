@@ -4079,7 +4079,7 @@
       "z": 1
     },
     "signConfig": null,
-    "toroColor": "#ffdd88"
+    "toroColor": "#85ffba"
   },
   {
     "type": "toro_lantern",
@@ -4266,27 +4266,6 @@
       "x": 1.9531249850065542,
       "y": 1.953125,
       "z": 1.9531249850065542
-    },
-    "signConfig": null,
-    "toroColor": null
-  },
-  {
-    "type": "lantern_1",
-    "name": "lantern_1RootClone_1777088105955_182",
-    "position": {
-      "x": -16.075491829148035,
-      "y": -0.02629798075225942,
-      "z": 8.250805854797363
-    },
-    "rotation": {
-      "x": 0,
-      "y": 3.141592653589793,
-      "z": 0
-    },
-    "scaling": {
-      "x": 0.027,
-      "y": 0.027,
-      "z": 0.027
     },
     "signConfig": null,
     "toroColor": null
