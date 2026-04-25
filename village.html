@@ -511,46 +511,46 @@ function buildToro(root, glowColor) {
   // Very wide, barely visible falloff.
   const gDiscFarMat = makeGlowDisc(
     'tgdiscFar',
-    5.2,
+    5.8,
     0.018,
-    0.105,
-    { r: 0.55, g: 0.42, b: 0.20 }
+    0.12,
+    { r: 0.58, g: 0.44, b: 0.21 }
   );
 
   // Main warm reflection on the floor.
   const gDiscOuterMat = makeGlowDisc(
     'tgdiscOuter',
-    4.1,
-    0.026,
-    0.18,
-    { r: 0.82, g: 0.60, b: 0.28 }
+    4.9,
+    0.024,
+    0.16,
+    { r: 0.78, g: 0.58, b: 0.27 }
   );
 
   // Mid glow, stronger but still soft.
   const gDiscMidMat = makeGlowDisc(
     'tgdiscMid',
-    3.0,
-    0.034,
-    0.27,
-    { r: 1.05, g: 0.78, b: 0.36 }
+    3.9,
+    0.03,
+    0.20,
+    { r: 0.96, g: 0.72, b: 0.33 }
   );
 
   // Hotter center near the lantern base.
   const gDiscInnerMat = makeGlowDisc(
     'tgdiscInner',
-    1.9,
-    0.042,
-    0.36,
-    { r: 1.32, g: 0.96, b: 0.44 }
+    2.8,
+    0.038,
+    0.26,
+    { r: 1.18, g: 0.86, b: 0.40 }
   );
 
   // Tiny core reflection, gives the ground a warm center point.
   const gDiscCoreMat = makeGlowDisc(
     'tgdiscCore',
-    0.95,
-    0.05,
-    0.48,
-    { r: 1.65, g: 1.12, b: 0.52 }
+    1.45,
+    0.048,
+    0.34,
+    { r: 1.48, g: 1.02, b: 0.48 }
   );
 
   // Camera-facing glow halo around the lantern chamber.
