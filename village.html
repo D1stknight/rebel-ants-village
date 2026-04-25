@@ -2540,7 +2540,7 @@ function spawnLanternFull(spawnPos) {
     proxy.position = new BABYLON.Vector3(cx, bb.minimumWorld.y + h/2, cz);
     proxy.isPickable = true;
     proxy.visibility = 0;
-    proxy.metadata = { type: 'lantern_1', isClone: true, proxyFor: clone };
+    proxy.metadata = { type: 'lantern_1', isClone: true, isPickProxy: true, proxyFor: clone };
     if (adminMode) { selectedObject = proxy; updateSelectedBadge(); }
         if (adminMode) {
           gizmoManager.positionGizmoEnabled = true;
