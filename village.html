@@ -1674,8 +1674,13 @@ function deleteSelectedFence(){
     gizmoManager.scaleGizmoEnabled = false;
   }
 
-  selectedObject = null;
+   selectedObject = null;
   updateSelectedBadge();
+
+  if (nodeToDelete?.metadata?._toroFlickerObserver) {
+    scene.onBeforeRenderObservable.remove(nodeToDelete.metadata._toroFlickerObserver);
+    nodeToDelete.metadata._toroFlickerObserver = null;
+  }
 
   nodeToDelete.dispose(false, false);
   triggerAutoSave();
