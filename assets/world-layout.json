@@ -3781,9 +3781,15 @@
       "sub": "Welcome to the Colony",
       "desc": "",
       "icon": "🐜",
-      "color": "#3b1ae0",
+      "color": "#b1ffff",
       "clickable": true,
-      "buttons": []
+      "buttons": [
+        {
+          "label": "Rebel Ants",
+          "href": "https://www.rebelants.io/",
+          "g": true
+        }
+      ]
     },
     "toroColor": null
   },
@@ -4058,7 +4064,7 @@
       "z": 1
     },
     "signConfig": null,
-    "toroColor": "#ffdd88"
+    "toroColor": "#a1fff2"
   },
   {
     "type": "toro_lantern",
