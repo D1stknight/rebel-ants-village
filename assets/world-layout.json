@@ -361,7 +361,7 @@
     "name": "toriiRootClone_1777088083235_7",
     "position": {
       "x": -0.2919794023036957,
-      "y": 0.5600000508128744,
+      "y": 0.5599997974930204,
       "z": 86.1494369506836
     },
     "rotation": {
@@ -4037,7 +4037,7 @@
       "z": 1
     },
     "signConfig": null,
-    "toroColor": "#ffdd88"
+    "toroColor": "#a4fffd"
   },
   {
     "type": "toro_lantern",
@@ -4100,7 +4100,7 @@
       "z": 1
     },
     "signConfig": null,
-    "toroColor": "#ffdd88"
+    "toroColor": "#93ffd6"
   },
   {
     "type": "toro_lantern",
