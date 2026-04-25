@@ -586,6 +586,16 @@ function buildToro(root, glowColor) {
 
   // Store glow materials so we can animate flicker later.
   root.metadata = root.metadata || {};
+  root.metadata._toroGlowMeshes = [
+    gDiscFar,
+    gDiscOuter,
+    gDiscMid,
+    gDiscInner,
+    gDiscCore,
+    halo,
+    coreHalo
+  ];
+
   root.metadata._toroGlowMats = [
     gDiscFarMat,
     gDiscOuterMat,
@@ -595,6 +605,74 @@ function buildToro(root, glowColor) {
     haloMat,
     coreHaloMat
   ];
+
+  root.metadata._toroFlickerSeed = Math.random() * Math.PI * 2;
+
+  root.metadata._toroGlowMeshes.forEach((mesh, i) => {
+    if (!mesh.metadata) mesh.metadata = {};
+    mesh.metadata._toroBaseScale = mesh.scaling.clone();
+    mesh.metadata._toroBaseAlpha =
+      typeof mesh.material?.alpha === "number" ? mesh.material.alpha : 1;
+    mesh.metadata._toroBaseEmissive =
+      mesh.material?.emissiveColor ? mesh.material.emissiveColor.clone() : null;
+    mesh.metadata._toroPulseSeed = root.metadata._toroFlickerSeed + i * 0.73;
+    mesh.isPickable = false;
+  });
+
+  root.metadata._toroFlickerObserver = scene.onBeforeRenderObservable.add(() => {
+    const t = performance.now() * 0.001;
+
+    root.metadata._toroGlowMeshes.forEach((mesh, i) => {
+      if (!mesh || mesh.isDisposed()) return;
+
+      const name = mesh.name.toLowerCase();
+      const seed = mesh.metadata?._toroPulseSeed || i;
+      const baseScale = mesh.metadata?._toroBaseScale;
+      const mat = mesh.material;
+
+      const isFloor = name.includes("tgdisc");
+      const isCore = name.includes("core");
+      const isHalo = name.includes("halo");
+
+      let pulse;
+
+      if (isFloor) {
+        pulse =
+          1 +
+          Math.sin(t * 1.35 + seed) * 0.055 +
+          Math.sin(t * 2.1 + seed * 1.7) * 0.025;
+      } else if (isCore) {
+        pulse =
+          1 +
+          Math.sin(t * 3.8 + seed) * 0.09 +
+          Math.sin(t * 7.1 + seed * 1.5) * 0.04;
+      } else if (isHalo) {
+        pulse =
+          1 +
+          Math.sin(t * 2.8 + seed) * 0.075 +
+          Math.sin(t * 5.3 + seed * 1.6) * 0.035;
+      } else {
+        pulse = 1;
+      }
+
+      if (baseScale) {
+        mesh.scaling.x = baseScale.x * pulse;
+        mesh.scaling.y = baseScale.y * pulse;
+        mesh.scaling.z = baseScale.z * pulse;
+      }
+
+      if (mat && typeof mat.alpha === "number") {
+        const baseAlpha = mesh.metadata?._toroBaseAlpha ?? mat.alpha;
+        mat.alpha = Math.max(0.02, baseAlpha * (0.96 + (pulse - 1) * 0.8));
+      }
+
+      if (mat && mat.emissiveColor && mesh.metadata?._toroBaseEmissive) {
+        mat.emissiveColor.copyFrom(
+          mesh.metadata._toroBaseEmissive.scale(0.98 + (pulse - 1) * 1.2)
+        );
+      }
+    });
+  });
 }
 // ── SCENE ───────────────────────────────────
 // ── SCENE ───────────────────────────────────
