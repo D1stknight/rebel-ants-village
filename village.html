@@ -1665,7 +1665,18 @@ function deleteSelectedFence(){
     return;
   }
 
-  const nodeToDelete = selectedObject;
+  let nodeToDelete = selectedObject;
+  let extraNodeToDelete = null;
+  let lanternCloneForCleanup = null;
+  if (nodeToDelete?.metadata?.type === "lantern_1") {
+    if (nodeToDelete.metadata.proxyFor) {
+      lanternCloneForCleanup = nodeToDelete.metadata.proxyFor;
+      extraNodeToDelete = nodeToDelete;
+      nodeToDelete = lanternCloneForCleanup;
+    } else {
+      lanternCloneForCleanup = nodeToDelete;
+    }
+  }
 
   if (gizmoManager) {
     gizmoManager.attachToNode(null);
@@ -1682,6 +1693,16 @@ function deleteSelectedFence(){
     nodeToDelete.metadata._toroFlickerObserver = null;
   }
 
+  if (lanternCloneForCleanup && lanternCloneForCleanup.metadata && lanternCloneForCleanup.metadata._lanternGlow) {
+    const g = lanternCloneForCleanup.metadata._lanternGlow;
+    if (g.observer) scene.onBeforeRenderObservable.remove(g.observer);
+    (g.meshes || []).forEach(m => { try { m.dispose(); } catch(e){} });
+    (g.materials || []).forEach(m => { try { m.dispose(); } catch(e){} });
+    (g.textures || []).forEach(t => { try { t.dispose(); } catch(e){} });
+    lanternCloneForCleanup.metadata._lanternGlow = null;
+  }
+
+  if (extraNodeToDelete && !extraNodeToDelete.isDisposed()) extraNodeToDelete.dispose(false, false);
   nodeToDelete.dispose(false, false);
   triggerAutoSave();
 }
@@ -2410,6 +2431,37 @@ function toggleAssetPanel(show) {
 
 
 function spawnLanternFull(spawnPos) {
+  function _makeBlurRadialTexture(name, size) {
+    const dt = new BABYLON.DynamicTexture(name, { width: size, height: size }, scene, true);
+    const ctx = dt.getContext();
+    const c = size * 0.5;
+    const g = ctx.createRadialGradient(c, c, size * 0.05, c, c, c);
+    g.addColorStop(0.0, 'rgba(255,235,170,1.0)');
+    g.addColorStop(0.22, 'rgba(255,210,130,0.85)');
+    g.addColorStop(0.55, 'rgba(255,170,90,0.45)');
+    g.addColorStop(0.8, 'rgba(255,130,60,0.16)');
+    g.addColorStop(1.0, 'rgba(255,110,40,0.0)');
+    ctx.clearRect(0, 0, size, size);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+    dt.hasAlpha = true;
+    dt.update();
+    return dt;
+  }
+  function _makeAddGlowMaterial(name, texture, emissiveColor, alpha) {
+    const m = new BABYLON.StandardMaterial(name, scene);
+    m.diffuseColor = BABYLON.Color3.Black();
+    m.specularColor = BABYLON.Color3.Black();
+    m.emissiveColor = emissiveColor;
+    m.alpha = alpha;
+    m.diffuseTexture = texture;
+    m.useAlphaFromDiffuseTexture = true;
+    m.alphaMode = BABYLON.Engine.ALPHA_ADD;
+    m.disableLighting = true;
+    m.maxSimultaneousLights = 0;
+    m.backFaceCulling = false;
+    return m;
+  }
   const source = _assetSources['lantern_1'];
   if (!source) return;
   const clone = source.clone(makeCloneName('lantern_1'));
@@ -2418,8 +2470,6 @@ function spawnLanternFull(spawnPos) {
   clone.rotation = source.rotation.clone();
   clone.position = spawnPos.clone();
   clone.getChildMeshes().forEach(m => { shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true; });
-  const fl = _lanternLightPool.find(l => !l._inUse);
-  if (fl) fl._inUse = true;
   setTimeout(() => {
     const mesh = clone.getChildMeshes(false).find(m => m.getTotalVertices && m.getTotalVertices() > 0);
     if (!mesh) return;
@@ -2431,13 +2481,63 @@ function spawnLanternFull(spawnPos) {
     const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
     clone.position.x = cx;
     clone.position.z = cz;
-    if (fl) {
-      fl.position.set(cx, cy, cz);
-      fl.intensity = 2.0;
-      fl._b = 2.0;
-      fl._followMesh = mesh;
-      fireLights.push(fl);
-    }
+    const floorTex = _makeBlurRadialTexture('lan_floor_' + clone.name, 256);
+    const topTex = _makeBlurRadialTexture('lan_top_' + clone.name, 256);
+    const haze = BABYLON.MeshBuilder.CreateDisc('lan_haze_' + clone.name, { radius: 22, tessellation: 48 }, scene);
+    const outer = BABYLON.MeshBuilder.CreateDisc('lan_outer_' + clone.name, { radius: 14, tessellation: 48 }, scene);
+    const core = BABYLON.MeshBuilder.CreateDisc('lan_core_' + clone.name, { radius: 6.5, tessellation: 48 }, scene);
+    [haze, outer, core].forEach(m => { m.rotation.x = Math.PI/2; m.isPickable = false; });
+    const halo = BABYLON.MeshBuilder.CreatePlane('lan_halo_' + clone.name, { size: 4.4 }, scene);
+    const hot = BABYLON.MeshBuilder.CreatePlane('lan_hot_' + clone.name, { size: 2.0 }, scene);
+    halo.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+    hot.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+    halo.isPickable = false; hot.isPickable = false;
+    const hazeMat = _makeAddGlowMaterial('lan_haze_m_' + clone.name, floorTex, new BABYLON.Color3(1.2, 0.95, 0.5), 0.8);
+    const outerMat = _makeAddGlowMaterial('lan_outer_m_' + clone.name, floorTex, new BABYLON.Color3(1.9, 1.35, 0.72), 0.95);
+    const coreMat = _makeAddGlowMaterial('lan_core_m_' + clone.name, floorTex, new BABYLON.Color3(2.6, 1.9, 1.0), 1.0);
+    const haloMat = _makeAddGlowMaterial('lan_halo_m_' + clone.name, topTex, new BABYLON.Color3(7.5, 5.8, 3.0), 0.98);
+    const hotMat = _makeAddGlowMaterial('lan_hot_m_' + clone.name, topTex, new BABYLON.Color3(11.0, 8.5, 4.2), 1.0);
+    haze.material = hazeMat; outer.material = outerMat; core.material = coreMat; halo.material = haloMat; hot.material = hotMat;
+    const seed = Math.random() * 1000;
+    const observer = scene.onBeforeRenderObservable.add(() => {
+      if (!mesh || mesh.isDisposed() || clone.isDisposed()) return;
+      mesh.computeWorldMatrix(true);
+      const b = mesh.getBoundingInfo().boundingBox;
+      const mx = (b.minimumWorld.x + b.maximumWorld.x) * 0.5;
+      const mz = (b.minimumWorld.z + b.maximumWorld.z) * 0.5;
+      const minY = b.minimumWorld.y;
+      const maxY = b.maximumWorld.y;
+      const haloY = minY + Math.max(0.45, (maxY - minY) * 0.65);
+      const t = performance.now() * 0.0018 + seed;
+      const p1 = Math.sin(t);
+      const p2 = Math.sin(t * 1.17 + 1.1);
+      haze.position.set(mx, minY + 0.01, mz);
+      outer.position.set(mx, minY + 0.018, mz);
+      core.position.set(mx, minY + 0.026, mz);
+      halo.position.set(mx, haloY, mz);
+      hot.position.set(mx, haloY, mz);
+      const sHaze = 1 + p1 * 0.025;
+      const sOuter = 1 + p2 * 0.04;
+      const sCore = 1 + p1 * 0.06;
+      const sHalo = 1 + p2 * 0.08;
+      const sHot = 1 + p1 * 0.10;
+      haze.scaling.set(sHaze, sHaze, sHaze);
+      outer.scaling.set(sOuter, sOuter, sOuter);
+      core.scaling.set(sCore, sCore, sCore);
+      halo.scaling.set(sHalo, sHalo, sHalo);
+      hot.scaling.set(sHot, sHot, sHot);
+      hazeMat.alpha = 0.78 + p1 * 0.02;
+      outerMat.alpha = 0.94 + p2 * 0.03;
+      coreMat.alpha = 0.98 + p1 * 0.04;
+      haloMat.alpha = 0.98 + p2 * 0.02;
+      hotMat.alpha = 1.0;
+    });
+    clone.metadata._lanternGlow = {
+      observer,
+      meshes: [haze, outer, core, halo, hot],
+      materials: [hazeMat, outerMat, coreMat, haloMat, hotMat],
+      textures: [floorTex, topTex]
+    };
     const h = bb.maximumWorld.y - bb.minimumWorld.y;
     const proxy = BABYLON.MeshBuilder.CreateBox('lp_' + clone.name, {width:1.5, height:h, depth:1.5}, scene);
     proxy.position = new BABYLON.Vector3(cx, bb.minimumWorld.y + h/2, cz);
