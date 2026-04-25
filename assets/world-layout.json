@@ -4107,7 +4107,7 @@
     "name": "toro_lantern_root",
     "position": {
       "x": 6.672444820404053,
-      "y": -2.842170943040401e-14,
+      "y": 0.14357365667819977,
       "z": -112.3707504272461
     },
     "rotation": {
@@ -4128,7 +4128,7 @@
     "name": "toro_lantern_root",
     "position": {
       "x": -6.539290428161621,
-      "y": 0,
+      "y": 0.13753396272659302,
       "z": -112.3707504272461
     },
     "rotation": {
@@ -4142,7 +4142,7 @@
       "z": 1
     },
     "signConfig": null,
-    "toroColor": "#ffb700"
+    "toroColor": "#ffe602"
   },
   {
     "type": "lantern_1",
