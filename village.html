@@ -2672,12 +2672,14 @@ const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
       haloMat.alpha = 0.98 + p2 * 0.02;
       hotMat.alpha = 1.0;
     });
-    clone.metadata._lanternGlow = {
-      observer,
-      meshes: [haze, outer, core, halo, hot],
-      materials: [hazeMat, outerMat, coreMat, haloMat, hotMat],
-      textures: [floorTex, topTex]
-    };
+   clone.metadata._lanternGlow = {
+  observer,
+  meshes: [haze, outer, core, halo, hot],
+  materials: [hazeMat, outerMat, coreMat, haloMat, hotMat],
+  textures: [floorTex, topTex]
+};
+
+applyLanternGlowToClone(clone);
     const h = bb.maximumWorld.y - bb.minimumWorld.y;
     const proxy = BABYLON.MeshBuilder.CreateBox('lp_' + clone.name, {width:1.5, height:h, depth:1.5}, scene);
     proxy.position = new BABYLON.Vector3(cx, bb.minimumWorld.y + h/2, cz);
