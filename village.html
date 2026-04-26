@@ -753,12 +753,29 @@ function updateSelectedBadge(){
   if (!signPanel) return;
   const isSign = selectedObject && selectedObject.metadata && selectedObject.metadata.type === 'wooden_sign';
   signPanel.style.display = isSign ? 'block' : 'none';
-  const toroPanel = document.getElementById('toroEditorPanel');
-  if (toroPanel) {
-    const isToro = selectedObject && selectedObject.metadata && selectedObject.metadata.type === 'toro_lantern';
-    toroPanel.style.display = isToro ? 'block' : 'none';
-    if (isToro) document.getElementById('toroColor').value = selectedObject.metadata.toroColor || '#ffdd88';
+ const toroPanel = document.getElementById('toroEditorPanel');
+if (toroPanel) {
+  const isToro = selectedObject && selectedObject.metadata && selectedObject.metadata.type === 'toro_lantern';
+  toroPanel.style.display = isToro ? 'block' : 'none';
+  if (isToro) document.getElementById('toroColor').value = selectedObject.metadata.toroColor || '#ffdd88';
+}
+
+const lanternPanel = document.getElementById('lanternEditorPanel');
+if (lanternPanel) {
+  const lanternClone =
+    selectedObject &&
+    selectedObject.metadata &&
+    selectedObject.metadata.type === 'lantern_1'
+      ? (selectedObject.metadata.proxyFor || selectedObject)
+      : null;
+
+  lanternPanel.style.display = lanternClone ? 'block' : 'none';
+
+  if (lanternClone) {
+    document.getElementById('lanternColor').value = lanternClone.metadata.lanternColor || '#ffdd88';
+    document.getElementById('lanternBrightness').value = lanternClone.metadata.lanternBrightness || 1;
   }
+}
   if (isSign) {
     const cfg = selectedObject.metadata.signConfig || {};
     document.getElementById('signLabel').value = cfg.label || '';
