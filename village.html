@@ -2543,21 +2543,18 @@ function rotateSelectedBy(angle) {
 function scaleSelected(factor) {
   if (!selectedObject) return;
 
-    if (
+      if (
     selectedObject.metadata?.isPickProxy &&
     selectedObject.metadata?.type === 'lantern_1' &&
     selectedObject.metadata?.proxyFor
   ) {
     const proxy = selectedObject;
     const clone = proxy.metadata.proxyFor;
-
-    clone.scaling.x *= factor;
-    clone.scaling.y *= factor;
-    clone.scaling.z *= factor;
-
     const meshes = clone.getChildMeshes(false).filter(m => m.getTotalVertices && m.getTotalVertices() > 0);
 
-    if (meshes.length > 0) {
+    function getLanternBounds() {
+      if (!meshes.length) return null;
+
       clone.computeWorldMatrix(true);
 
       let minX = Infinity, minY = Infinity, minZ = Infinity;
@@ -2575,27 +2572,54 @@ function scaleSelected(factor) {
       });
 
       if (
-        isFinite(minX) && isFinite(minY) && isFinite(minZ) &&
-        isFinite(maxX) && isFinite(maxY) && isFinite(maxZ)
+        !isFinite(minX) || !isFinite(minY) || !isFinite(minZ) ||
+        !isFinite(maxX) || !isFinite(maxY) || !isFinite(maxZ)
       ) {
-        proxy.position.set(
+        return null;
+      }
+
+      return {
+        minX, minY, minZ,
+        maxX, maxY, maxZ,
+        bottomCenter: new BABYLON.Vector3(
+          (minX + maxX) / 2,
+          minY,
+          (minZ + maxZ) / 2
+        ),
+        center: new BABYLON.Vector3(
           (minX + maxX) / 2,
           minY + (maxY - minY) / 2,
           (minZ + maxZ) / 2
-        );
+        )
+      };
+    }
 
-        proxy.scaling.set(1, 1, 1);
+    const before = getLanternBounds();
+    if (!before) return;
 
-        if (proxy.metadata._lastProxyPos) {
-          proxy.metadata._lastProxyPos = proxy.position.clone();
-        }
+    clone.scaling.x *= factor;
+    clone.scaling.y *= factor;
+    clone.scaling.z *= factor;
+
+    const after = getLanternBounds();
+    if (!after) return;
+
+    const keepInPlaceDelta = before.bottomCenter.subtract(after.bottomCenter);
+    clone.position.addInPlace(keepInPlaceDelta);
+
+    const finalBounds = getLanternBounds();
+    if (finalBounds) {
+      proxy.position.copyFrom(finalBounds.center);
+      proxy.scaling.set(1, 1, 1);
+
+      if (proxy.metadata._lastProxyPos) {
+        proxy.metadata._lastProxyPos = proxy.position.clone();
       }
     }
 
     snapSelectedObjectToGround();
     return;
   }
-
   selectedObject.scaling.x *= factor;
   selectedObject.scaling.y *= factor;
   selectedObject.scaling.z *= factor;
