@@ -2543,23 +2543,53 @@ function rotateSelectedBy(angle) {
 function scaleSelected(factor) {
   if (!selectedObject) return;
 
-  if (
+    if (
     selectedObject.metadata?.isPickProxy &&
     selectedObject.metadata?.type === 'lantern_1' &&
     selectedObject.metadata?.proxyFor
   ) {
-    const clone = selectedObject.metadata.proxyFor;
+    const proxy = selectedObject;
+    const clone = proxy.metadata.proxyFor;
 
     clone.scaling.x *= factor;
     clone.scaling.y *= factor;
     clone.scaling.z *= factor;
 
-    selectedObject.scaling.x *= factor;
-    selectedObject.scaling.y *= factor;
-    selectedObject.scaling.z *= factor;
+    const meshes = clone.getChildMeshes(false).filter(m => m.getTotalVertices && m.getTotalVertices() > 0);
 
-    if (selectedObject.metadata._lastProxyPos) {
-      selectedObject.metadata._lastProxyPos = selectedObject.position.clone();
+    if (meshes.length > 0) {
+      clone.computeWorldMatrix(true);
+
+      let minX = Infinity, minY = Infinity, minZ = Infinity;
+      let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+
+      meshes.forEach(m => {
+        m.computeWorldMatrix(true);
+        const bb = m.getBoundingInfo().boundingBox;
+        minX = Math.min(minX, bb.minimumWorld.x);
+        minY = Math.min(minY, bb.minimumWorld.y);
+        minZ = Math.min(minZ, bb.minimumWorld.z);
+        maxX = Math.max(maxX, bb.maximumWorld.x);
+        maxY = Math.max(maxY, bb.maximumWorld.y);
+        maxZ = Math.max(maxZ, bb.maximumWorld.z);
+      });
+
+      if (
+        isFinite(minX) && isFinite(minY) && isFinite(minZ) &&
+        isFinite(maxX) && isFinite(maxY) && isFinite(maxZ)
+      ) {
+        proxy.position.set(
+          (minX + maxX) / 2,
+          minY + (maxY - minY) / 2,
+          (minZ + maxZ) / 2
+        );
+
+        proxy.scaling.set(1, 1, 1);
+
+        if (proxy.metadata._lastProxyPos) {
+          proxy.metadata._lastProxyPos = proxy.position.clone();
+        }
+      }
     }
 
     snapSelectedObjectToGround();
