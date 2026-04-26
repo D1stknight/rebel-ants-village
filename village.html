@@ -2398,14 +2398,66 @@ function applySignEditor() {
 }
 
 function applyToroColor() {
-  if (!selectedObject || selectedObject.metadata.type !== 'toro_lantern') return;
+  if (!selectedObject || selectedObject.metadata?.type !== 'toro_lantern') return;
   const color = document.getElementById('toroColor').value;
   selectedObject.metadata.toroColor = color;
-  // Dispose old meshes and rebuild with new color
   selectedObject.getChildMeshes(false).forEach(m => m.dispose());
   buildToro(selectedObject, color);
   saveWorldLayout();
   showToast('🏯 Lantern color updated');
+}
+
+function resolveLanternClone(node) {
+  if (!node || !node.metadata || node.metadata.type !== 'lantern_1') return null;
+  return node.metadata.proxyFor || node;
+}
+
+function clampLanternBrightness(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 1;
+  return Math.max(0.2, Math.min(3.0, n));
+}
+
+function applyLanternGlowToClone(clone) {
+  if (!clone || !clone.metadata || !clone.metadata._lanternGlow) return;
+
+  const glow = clone.metadata._lanternGlow;
+  const mats = glow.materials || [];
+
+  const defaultColor = BABYLON.Color3.FromHexString('#ffdd88');
+  const color = BABYLON.Color3.FromHexString(clone.metadata.lanternColor || '#ffdd88');
+  const brightness = clampLanternBrightness(clone.metadata.lanternBrightness);
+
+  const ratio = new BABYLON.Color3(
+    color.r / defaultColor.r,
+    color.g / defaultColor.g,
+    color.b / defaultColor.b
+  );
+
+  const baseEmissive = glow.baseEmissive || mats.map(m => m?.emissiveColor?.clone?.() || BABYLON.Color3.White());
+
+  mats.forEach((mat, i) => {
+    const base = baseEmissive[i];
+    if (!mat || !base) return;
+
+    mat.emissiveColor = new BABYLON.Color3(
+      base.r * ratio.r * brightness,
+      base.g * ratio.g * brightness,
+      base.b * ratio.b * brightness
+    );
+  });
+}
+
+function applyLanternGlowSettings() {
+  const clone = resolveLanternClone(selectedObject);
+  if (!clone) return;
+
+  clone.metadata.lanternColor = document.getElementById('lanternColor').value || '#ffdd88';
+  clone.metadata.lanternBrightness = clampLanternBrightness(document.getElementById('lanternBrightness').value);
+
+  applyLanternGlowToClone(clone);
+  saveWorldLayout();
+  showToast('🏮 Lantern glow updated');
 }
 
 // ── RESTORE UPLOADED ASSETS FROM LOCALSTORAGE ──────────
@@ -2851,6 +2903,7 @@ window.deleteSelectedFence = deleteSelectedFence;
 window.addSignButton = addSignButton;
 window.applySignEditor = applySignEditor;
 window.applyToroColor = applyToroColor;
+window.applyLanternGlowSettings = applyLanternGlowSettings;
 window.toggleWorklight = toggleWorklight;
 window.saveWorldLayout = saveWorldLayout;
 window.loadWorldLayout = loadWorldLayout;
