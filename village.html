@@ -2477,11 +2477,20 @@ function spawnLanternFull(spawnPos) {
   setTimeout(() => {
     const mesh = clone.getChildMeshes(false).find(m => m.getTotalVertices && m.getTotalVertices() > 0);
     if (!mesh) return;
-    mesh.computeWorldMatrix(true);
-    const bb = mesh.getBoundingInfo().boundingBox;
-    const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
-    const cy = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
-    const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
+   mesh.computeWorldMatrix(true);
+let bb = mesh.getBoundingInfo().boundingBox;
+
+// Ground-correct lantern_1 vertically only.
+// Do not recenter X/Z, because that causes spawn/duplicate drift.
+if (bb.minimumWorld.y < -0.001) {
+  clone.position.y -= bb.minimumWorld.y;
+  mesh.computeWorldMatrix(true);
+  bb = mesh.getBoundingInfo().boundingBox;
+}
+
+const cx = (bb.minimumWorld.x + bb.maximumWorld.x) / 2;
+const cy = bb.minimumWorld.y + (bb.maximumWorld.y - bb.minimumWorld.y) * 0.6;
+const cz = (bb.minimumWorld.z + bb.maximumWorld.z) / 2;
     const floorTex = _makeBlurRadialTexture('lan_floor_' + clone.name, 256);
     const topTex = _makeBlurRadialTexture('lan_top_' + clone.name, 256);
     const haze = BABYLON.MeshBuilder.CreateDisc('lan_haze_' + clone.name, { radius: 22, tessellation: 48 }, scene);
