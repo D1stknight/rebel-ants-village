@@ -1591,8 +1591,10 @@ function saveWorldLayout(){
     position: { x: node.position.x, y: node.position.y, z: node.position.z },
     rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
     scaling: { x: node.scaling.x, y: node.scaling.y, z: node.scaling.z },
-    signConfig: node.metadata.signConfig || null,
-    toroColor: node.metadata.toroColor || null
+   signConfig: node.metadata.signConfig || null,
+toroColor: node.metadata.toroColor || null,
+lanternColor: node.metadata.lanternColor || null,
+lanternBrightness: node.metadata.lanternBrightness || null
   }));
   const json = JSON.stringify(data, null, 2);
   // Save to localStorage (fast cache for asset systems)
@@ -1654,10 +1656,12 @@ function loadWorldLayout(){
     if (Math.abs(item.position.x) >= 500 || Math.abs(item.position.z) >= 500) return; // skip stuck
 
     if (item.type === 'lantern_1') {
-      // Lanterns use pool light system
-      spawnLanternFull(new BABYLON.Vector3(item.position.x, item.position.y, item.position.z));
-      return;
-    }
+  spawnLanternFull(new BABYLON.Vector3(item.position.x, item.position.y, item.position.z), {
+    lanternColor: item.lanternColor || '#ffdd88',
+    lanternBrightness: item.lanternBrightness || 1
+  });
+  return;
+}
 
     if (item.type === 'torii') {
       // Torii are procedural — restore via torii() function
@@ -2555,7 +2559,7 @@ function toggleAssetPanel(show) {
 }
 
 
-function spawnLanternFull(spawnPos) {
+function spawnLanternFull(spawnPos, options = {}) {
   function _makeBlurRadialTexture(name, size) {
     const dt = new BABYLON.DynamicTexture(name, { width: size, height: size }, scene, true);
     const ctx = dt.getContext();
@@ -2590,7 +2594,12 @@ function spawnLanternFull(spawnPos) {
   const source = _assetSources['lantern_1'];
   if (!source) return;
   const clone = source.clone(makeCloneName('lantern_1'));
-  clone.metadata = { type: 'lantern_1', isClone: true };
+ clone.metadata = {
+  type: 'lantern_1',
+  isClone: true,
+  lanternColor: options.lanternColor || '#ffdd88',
+  lanternBrightness: clampLanternBrightness(options.lanternBrightness || 1)
+};
   clone.scaling = new BABYLON.Vector3(0.027, 0.027, 0.027);
   clone.rotation = source.rotation.clone();
   clone.position = spawnPos.clone();
