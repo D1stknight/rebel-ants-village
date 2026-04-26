@@ -4224,8 +4224,8 @@
     "type": "lantern_1",
     "name": "lantern_1RootClone_1777170443806_172",
     "position": {
-      "x": -29.882709503173828,
-      "y": 0.03370201917982851,
+      "x": -40.93306262947013,
+      "y": 0.03370201624933311,
       "z": 74.71442413330078
     },
     "rotation": {
@@ -4240,8 +4240,8 @@
     },
     "signConfig": null,
     "toroColor": null,
-    "lanternColor": "#ffdd88",
-    "lanternBrightness": 1
+    "lanternColor": "#f70202",
+    "lanternBrightness": 0.2
   },
   {
     "type": "toro_lantern",
@@ -4569,9 +4569,9 @@
     "type": "lantern_1",
     "name": "lantern_1RootClone_1777170443865_176",
     "position": {
-      "x": -54.467149009015856,
-      "y": 0.03370201716390531,
-      "z": 72.16009521484375
+      "x": -54.026336669921875,
+      "y": 0.05999999865886707,
+      "z": 62.08755111694336
     },
     "rotation": {
       "x": 0,
@@ -4579,14 +4579,14 @@
       "z": 0
     },
     "scaling": {
-      "x": 0.027,
-      "y": 0.027,
-      "z": 0.027
+      "x": 0.027000000700354576,
+      "y": 0.027000000700354576,
+      "z": 0.027000000700354576
     },
     "signConfig": null,
     "toroColor": null,
     "lanternColor": "#26ab7f",
-    "lanternBrightness": 0.2
+    "lanternBrightness": 0.6
   },
   {
     "type": "pine_1",
