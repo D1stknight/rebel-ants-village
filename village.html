@@ -2434,7 +2434,15 @@ function applyLanternGlowToClone(clone) {
     color.b / defaultColor.b
   );
 
-  const baseEmissive = glow.baseEmissive || mats.map(m => m?.emissiveColor?.clone?.() || BABYLON.Color3.White());
+  // Fixed original glow colors.
+  // This prevents brightness/color from compounding every time Apply Glow is clicked.
+  const baseEmissive = [
+    new BABYLON.Color3(1.2, 0.95, 0.5),   // haze
+    new BABYLON.Color3(1.9, 1.35, 0.72),  // outer floor glow
+    new BABYLON.Color3(2.6, 1.9, 1.0),    // core floor glow
+    new BABYLON.Color3(7.5, 5.8, 3.0),    // lamp halo
+    new BABYLON.Color3(11.0, 8.5, 4.2)    // hot core
+  ];
 
   mats.forEach((mat, i) => {
     const base = baseEmissive[i];
