@@ -2542,6 +2542,30 @@ function rotateSelectedBy(angle) {
 }
 function scaleSelected(factor) {
   if (!selectedObject) return;
+
+  if (
+    selectedObject.metadata?.isPickProxy &&
+    selectedObject.metadata?.type === 'lantern_1' &&
+    selectedObject.metadata?.proxyFor
+  ) {
+    const clone = selectedObject.metadata.proxyFor;
+
+    clone.scaling.x *= factor;
+    clone.scaling.y *= factor;
+    clone.scaling.z *= factor;
+
+    selectedObject.scaling.x *= factor;
+    selectedObject.scaling.y *= factor;
+    selectedObject.scaling.z *= factor;
+
+    if (selectedObject.metadata._lastProxyPos) {
+      selectedObject.metadata._lastProxyPos = selectedObject.position.clone();
+    }
+
+    snapSelectedObjectToGround();
+    return;
+  }
+
   selectedObject.scaling.x *= factor;
   selectedObject.scaling.y *= factor;
   selectedObject.scaling.z *= factor;
