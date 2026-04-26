@@ -2764,7 +2764,16 @@ applyLanternGlowToClone(clone);
     proxy.isPickable = true;
     proxy.visibility = 0;
     proxy.metadata = { type: 'lantern_1', isClone: true, isPickProxy: true, proxyFor: clone };
-    clone.metadata.pickProxy = proxy;
+   proxy.metadata = { type: 'lantern_1', isClone: true, isPickProxy: true, proxyFor: clone };
+
+clone.metadata.pickProxy = proxy;
+
+// Make every visible lantern mesh select the proxy handle.
+// This prevents switching between the offset clone root and the correct proxy gizmo.
+clone.getChildMeshes(false).forEach(m => {
+  m._editRoot = proxy;
+});
+
 proxy.metadata._lastProxyPos = proxy.position.clone();
 const proxyMoveObserver = scene.onBeforeRenderObservable.add(() => {
   if (proxy.isDisposed() || clone.isDisposed()) {
