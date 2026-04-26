@@ -2545,6 +2545,21 @@ function spawnLanternFull(spawnPos) {
     proxy.isPickable = true;
     proxy.visibility = 0;
     proxy.metadata = { type: 'lantern_1', isClone: true, isPickProxy: true, proxyFor: clone };
+    clone.metadata.pickProxy = proxy;
+proxy.metadata._lastProxyPos = proxy.position.clone();
+const proxyMoveObserver = scene.onBeforeRenderObservable.add(() => {
+  if (proxy.isDisposed() || clone.isDisposed()) {
+    scene.onBeforeRenderObservable.remove(proxyMoveObserver);
+    return;
+  }
+  const delta = proxy.position.subtract(proxy.metadata._lastProxyPos);
+  if (delta.lengthSquared() > 0.000001) {
+    clone.position.addInPlace(delta);
+  }
+  proxy.metadata._lastProxyPos = proxy.position.clone();
+});
+proxy.metadata._proxyMoveObserver = proxyMoveObserver;
+clone.metadata._proxyMoveObserver = proxyMoveObserver;
     if (adminMode) { selectedObject = proxy; updateSelectedBadge(); }
         if (adminMode) {
           gizmoManager.positionGizmoEnabled = true;
