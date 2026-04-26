@@ -337,7 +337,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1777164270725_6",
+    "name": "toriiRootClone_1777164593088_6",
     "position": {
       "x": 0,
       "y": 0.5600000582635118,
@@ -358,7 +358,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1777164270726_7",
+    "name": "toriiRootClone_1777164593089_7",
     "position": {
       "x": -0.2919794023036957,
       "y": 0.5599997974930204,
@@ -379,7 +379,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1777164270727_8",
+    "name": "toriiRootClone_1777164593090_8",
     "position": {
       "x": -151.2589111328125,
       "y": 0.5000001192092043,
@@ -400,7 +400,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1777164270728_9",
+    "name": "toriiRootClone_1777164593090_9",
     "position": {
       "x": 149.70745849609375,
       "y": 0.5000000596046448,
@@ -421,7 +421,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1777164270728_10",
+    "name": "toriiRootClone_1777164593091_10",
     "position": {
       "x": 2.514643038204834e-15,
       "y": 0.5000000596046448,
@@ -442,7 +442,7 @@
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1777164270729_11",
+    "name": "wooden_signRootClone_1777164593091_11",
     "position": {
       "x": -65.91902923583984,
       "y": 0.1,
@@ -463,7 +463,7 @@
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1777164270731_12",
+    "name": "cherry_blossomRootClone_1777164593094_12",
     "position": {
       "x": -1.5127732753753662,
       "y": 0.0010486979269391655,
@@ -484,7 +484,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1777164270737_13",
+    "name": "fence_1RootClone_1777164593101_13",
     "position": {
       "x": -44.32334899902344,
       "y": -0.8999999985098839,
@@ -505,7 +505,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1777164270739_14",
+    "name": "fence_1RootClone_1777164593103_14",
     "position": {
       "x": 44.25136947631836,
       "y": -0.8999999985098839,
@@ -526,7 +526,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1777164270741_15",
+    "name": "fence_1RootClone_1777164593104_15",
     "position": {
       "x": 44.01362609863281,
       "y": -0.8999999985098839,
@@ -547,7 +547,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1777164270743_16",
+    "name": "fence_1RootClone_1777164593106_16",
     "position": {
       "x": -44.58077621459961,
       "y": -0.8999999985098839,
@@ -568,7 +568,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1777164270745_17",
+    "name": "fence_1RootClone_1777164593108_17",
     "position": {
       "x": -5.2516303062438965,
       "y": -0.8999999985098839,
@@ -589,7 +589,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1777164270746_18",
+    "name": "fence_1RootClone_1777164593110_18",
     "position": {
       "x": 5.329242706298828,
       "y": -0.8999999985098839,
@@ -610,7 +610,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1777164270748_19",
+    "name": "fence_1RootClone_1777164593112_19",
     "position": {
       "x": -5.405943870544434,
       "y": -0.8999999985098839,
@@ -631,7 +631,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1777164270749_20",
+    "name": "fence_1RootClone_1777164593113_20",
     "position": {
       "x": 5.35489559173584,
       "y": -0.8999999985098839,
@@ -652,7 +652,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1777164270751_21",
+    "name": "fence_1RootClone_1777164593115_21",
     "position": {
       "x": -110.55400848388672,
       "y": -1.0000000000000284,
@@ -673,7 +673,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1777164270752_22",
+    "name": "fence_1RootClone_1777164593117_22",
     "position": {
       "x": 110.58026123046875,
       "y": -1,
@@ -694,7 +694,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1777164270754_23",
+    "name": "fence_1RootClone_1777164593118_23",
     "position": {
       "x": 110.51719665527344,
       "y": -1.0000000000000284,
@@ -715,7 +715,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1777164270755_24",
+    "name": "fence_1RootClone_1777164593120_24",
     "position": {
       "x": -109.29263305664062,
       "y": -0.9400000013411329,
@@ -736,7 +736,7 @@
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1777164270757_25",
+    "name": "cherry_blossomRootClone_1777164593122_25",
     "position": {
       "x": 37.48526382446289,
       "y": 0.005657816305759206,
@@ -757,7 +757,7 @@
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1777164270761_26",
+    "name": "cherry_blossomRootClone_1777164593126_26",
     "position": {
       "x": -39.50407028198242,
       "y": 0.005657816305759206,
@@ -778,7 +778,7 @@
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1777164270768_27",
+    "name": "cherry_blossomRootClone_1777164593134_27",
     "position": {
       "x": 37.97743225097656,
       "y": 0.005657816305759206,
@@ -799,7 +799,7 @@
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1777164270773_28",
+    "name": "cherry_blossomRootClone_1777164593139_28",
     "position": {
       "x": -38.921661376953125,
       "y": 0.005657816305756569,
@@ -820,7 +820,7 @@
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1777164270777_29",
+    "name": "dojo_6RootClone_1777164593143_29",
     "position": {
       "x": -58.36362838745117,
       "y": 0.05999999865879707,
@@ -841,7 +841,7 @@
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1777164270780_30",
+    "name": "dojo_6RootClone_1777164593147_30",
     "position": {
       "x": 87.0399398803711,
       "y": 0.0599999986588669,
@@ -862,7 +862,7 @@
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1777164270783_31",
+    "name": "dojo_6RootClone_1777164593151_31",
     "position": {
       "x": 80.53135681152344,
       "y": 0.059999998658833126,
@@ -883,7 +883,7 @@
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1777164270786_32",
+    "name": "dojo_6RootClone_1777164593154_32",
     "position": {
       "x": -80.51283264160156,
       "y": 0.059999998658853915,
@@ -904,7 +904,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164270789_33",
+    "name": "rock_1RootClone_1777164593157_33",
     "position": {
       "x": -78.15025329589844,
       "y": 0.18412497171067344,
@@ -925,7 +925,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164270789_34",
+    "name": "rock_1RootClone_1777164593158_34",
     "position": {
       "x": -81.75777435302734,
       "y": 0.13943998073224861,
@@ -946,7 +946,7 @@
   },
   {
     "type": "dojo_5",
-    "name": "dojo_5RootClone_1777164270790_35",
+    "name": "dojo_5RootClone_1777164593158_35",
     "position": {
       "x": -287.8810119628906,
       "y": 1.614841887286965,
@@ -967,7 +967,7 @@
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1777164270795_36",
+    "name": "dojo_9RootClone_1777164593163_36",
     "position": {
       "x": -285.0631103515625,
       "y": 0.6000000238417806,
@@ -988,7 +988,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270819_37",
+    "name": "tree_1RootClone_1777164593184_37",
     "position": {
       "x": -295.31884765625,
       "y": 0,
@@ -1009,7 +1009,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270820_38",
+    "name": "tree_1RootClone_1777164593185_38",
     "position": {
       "x": -275.4000549316406,
       "y": 0,
@@ -1030,7 +1030,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270821_39",
+    "name": "tree_1RootClone_1777164593189_39",
     "position": {
       "x": -287.54498291015625,
       "y": -4.868645619854988,
@@ -1051,7 +1051,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270821_40",
+    "name": "tree_1RootClone_1777164593190_40",
     "position": {
       "x": -240.4627685546875,
       "y": 0,
@@ -1072,7 +1072,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270822_41",
+    "name": "tree_1RootClone_1777164593190_41",
     "position": {
       "x": -161.17611694335938,
       "y": -2.842170943040401e-14,
@@ -1093,7 +1093,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270823_42",
+    "name": "tree_1RootClone_1777164593191_42",
     "position": {
       "x": -214.0258026123047,
       "y": 0,
@@ -1114,7 +1114,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270824_43",
+    "name": "tree_1RootClone_1777164593192_43",
     "position": {
       "x": -185.4727783203125,
       "y": 0,
@@ -1135,7 +1135,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270824_44",
+    "name": "tree_1RootClone_1777164593193_44",
     "position": {
       "x": -139.9174041748047,
       "y": 0,
@@ -1156,7 +1156,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270825_45",
+    "name": "tree_1RootClone_1777164593193_45",
     "position": {
       "x": -239.7017364501953,
       "y": -2.842170943040401e-14,
@@ -1177,7 +1177,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270826_46",
+    "name": "tree_1RootClone_1777164593194_46",
     "position": {
       "x": -137.85165405273438,
       "y": -2.842170943040401e-14,
@@ -1198,7 +1198,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164270826_47",
+    "name": "rock_1RootClone_1777164593195_47",
     "position": {
       "x": -148.0175323486328,
       "y": 0.12412497507466469,
@@ -1219,7 +1219,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164270827_48",
+    "name": "rock_1RootClone_1777164593196_48",
     "position": {
       "x": -282.62526624272346,
       "y": 0.05084158852696419,
@@ -1240,7 +1240,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164270827_49",
+    "name": "rock_1RootClone_1777164593196_49",
     "position": {
       "x": -282.62526624272346,
       "y": 0.05084158852696419,
@@ -1261,7 +1261,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164270828_50",
+    "name": "rock_1RootClone_1777164593197_50",
     "position": {
       "x": -148.35511779785156,
       "y": 0.1551562149870449,
@@ -1282,7 +1282,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270828_51",
+    "name": "pine_1RootClone_1777164593197_51",
     "position": {
       "x": -310.0801086425781,
       "y": 0,
@@ -1303,7 +1303,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270829_52",
+    "name": "pine_1RootClone_1777164593198_52",
     "position": {
       "x": -256.87158203125,
       "y": 0,
@@ -1324,7 +1324,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270830_53",
+    "name": "pine_1RootClone_1777164593199_53",
     "position": {
       "x": -273.0927429199219,
       "y": -2.842170943040401e-14,
@@ -1345,7 +1345,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270831_54",
+    "name": "pine_1RootClone_1777164593200_54",
     "position": {
       "x": -245.5555877685547,
       "y": 1.9999999999999716,
@@ -1366,7 +1366,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270831_55",
+    "name": "pine_1RootClone_1777164593201_55",
     "position": {
       "x": -196.73983764648438,
       "y": 0,
@@ -1387,7 +1387,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270832_56",
+    "name": "pine_1RootClone_1777164593202_56",
     "position": {
       "x": -134.66259765625,
       "y": 0,
@@ -1408,7 +1408,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270833_57",
+    "name": "pine_1RootClone_1777164593203_57",
     "position": {
       "x": -196.6193389892578,
       "y": -2.842170943040401e-14,
@@ -1429,7 +1429,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270834_58",
+    "name": "pine_1RootClone_1777164593204_58",
     "position": {
       "x": -202.62120056152344,
       "y": -2.842170943040401e-14,
@@ -1450,7 +1450,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270834_59",
+    "name": "pine_1RootClone_1777164593205_59",
     "position": {
       "x": -134.1143035888672,
       "y": -2.842170943040401e-14,
@@ -1471,7 +1471,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270835_60",
+    "name": "pine_1RootClone_1777164593206_60",
     "position": {
       "x": -159.71694946289062,
       "y": 0,
@@ -1492,7 +1492,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270836_61",
+    "name": "pine_1RootClone_1777164593207_61",
     "position": {
       "x": -159.3542938232422,
       "y": -2.842170943040401e-14,
@@ -1513,7 +1513,7 @@
   },
   {
     "type": "dojo_5",
-    "name": "dojo_5RootClone_1777164270837_62",
+    "name": "dojo_5RootClone_1777164593207_62",
     "position": {
       "x": -142.77371215820312,
       "y": 1.6148418999699174,
@@ -1534,7 +1534,7 @@
   },
   {
     "type": "shrine_2",
-    "name": "shrine_2RootClone_1777164270838_63",
+    "name": "shrine_2RootClone_1777164593209_63",
     "position": {
       "x": -6.835771083831787,
       "y": 10.52955150604248,
@@ -1555,7 +1555,7 @@
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1777164270840_64",
+    "name": "dojo_9RootClone_1777164593212_64",
     "position": {
       "x": 111.6062240600586,
       "y": 0.6000000238419239,
@@ -1576,7 +1576,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270862_65",
+    "name": "tree_1RootClone_1777164593235_65",
     "position": {
       "x": -185.5862274169922,
       "y": 0,
@@ -1597,7 +1597,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270863_66",
+    "name": "tree_1RootClone_1777164593235_66",
     "position": {
       "x": -172.9210968017578,
       "y": 0,
@@ -1618,7 +1618,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270867_67",
+    "name": "tree_1RootClone_1777164593236_67",
     "position": {
       "x": -115.01297760009766,
       "y": 0,
@@ -1639,7 +1639,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270868_68",
+    "name": "tree_1RootClone_1777164593240_68",
     "position": {
       "x": -121.22317504882812,
       "y": -2.842170943040401e-14,
@@ -1660,7 +1660,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270868_69",
+    "name": "tree_1RootClone_1777164593241_69",
     "position": {
       "x": -55.797119140625,
       "y": -2.842170943040401e-14,
@@ -1681,7 +1681,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270869_70",
+    "name": "tree_1RootClone_1777164593242_70",
     "position": {
       "x": -54.70589828491211,
       "y": -2.842170943040401e-14,
@@ -1702,7 +1702,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270870_71",
+    "name": "tree_1RootClone_1777164593243_71",
     "position": {
       "x": -32.078922271728516,
       "y": 0,
@@ -1723,7 +1723,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270871_72",
+    "name": "tree_1RootClone_1777164593243_72",
     "position": {
       "x": 177.91067504882812,
       "y": 2.842170943040401e-14,
@@ -1744,7 +1744,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270872_73",
+    "name": "tree_1RootClone_1777164593244_73",
     "position": {
       "x": 49.94673156738281,
       "y": 2.842170943040401e-14,
@@ -1765,7 +1765,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270872_74",
+    "name": "tree_1RootClone_1777164593245_74",
     "position": {
       "x": 10.96203327178955,
       "y": 0,
@@ -1786,7 +1786,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270873_75",
+    "name": "tree_1RootClone_1777164593246_75",
     "position": {
       "x": 70.02649688720703,
       "y": 0,
@@ -1807,7 +1807,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270874_76",
+    "name": "tree_1RootClone_1777164593246_76",
     "position": {
       "x": 97.71456909179688,
       "y": 0,
@@ -1828,7 +1828,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270875_77",
+    "name": "tree_1RootClone_1777164593247_77",
     "position": {
       "x": 162.3306427001953,
       "y": 2.842170943040401e-14,
@@ -1849,7 +1849,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270876_78",
+    "name": "pine_1RootClone_1777164593248_78",
     "position": {
       "x": 87.18683624267578,
       "y": 2.77860164642334,
@@ -1870,7 +1870,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270876_79",
+    "name": "pine_1RootClone_1777164593249_79",
     "position": {
       "x": 105.76976013183594,
       "y": 2.842170943040401e-14,
@@ -1891,7 +1891,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270877_80",
+    "name": "pine_1RootClone_1777164593250_80",
     "position": {
       "x": 141.73410034179688,
       "y": 2.842170943040401e-14,
@@ -1912,7 +1912,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270878_81",
+    "name": "pine_1RootClone_1777164593250_81",
     "position": {
       "x": 196.33148193359375,
       "y": 2.842170943040401e-14,
@@ -1933,7 +1933,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270879_82",
+    "name": "pine_1RootClone_1777164593251_82",
     "position": {
       "x": 53.964839935302734,
       "y": 0,
@@ -1954,7 +1954,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270879_83",
+    "name": "pine_1RootClone_1777164593252_83",
     "position": {
       "x": 103.8597412109375,
       "y": 2,
@@ -1975,7 +1975,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270880_84",
+    "name": "pine_1RootClone_1777164593253_84",
     "position": {
       "x": -5.619314670562744,
       "y": 0,
@@ -1996,7 +1996,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270881_85",
+    "name": "pine_1RootClone_1777164593254_85",
     "position": {
       "x": -85.45462036132812,
       "y": 0,
@@ -2017,7 +2017,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270882_86",
+    "name": "pine_1RootClone_1777164593254_86",
     "position": {
       "x": -21.33271026611328,
       "y": -2.842170943040401e-14,
@@ -2038,7 +2038,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270883_87",
+    "name": "pine_1RootClone_1777164593255_87",
     "position": {
       "x": -90.55915069580078,
       "y": 1.9999999999999716,
@@ -2059,7 +2059,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270884_88",
+    "name": "pine_1RootClone_1777164593256_88",
     "position": {
       "x": 31.31947898864746,
       "y": 0,
@@ -2080,7 +2080,7 @@
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1777164270884_89",
+    "name": "dojo_9RootClone_1777164593257_89",
     "position": {
       "x": 251.22068786621094,
       "y": 0.6734113637940311,
@@ -2101,7 +2101,7 @@
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1777164270908_90",
+    "name": "dojo_9RootClone_1777164593280_90",
     "position": {
       "x": 276.7698059082031,
       "y": 0.6875063902698457,
@@ -2122,7 +2122,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164270930_91",
+    "name": "rock_1RootClone_1777164593302_91",
     "position": {
       "x": -129.68966674804688,
       "y": 0.09929997759172693,
@@ -2143,7 +2143,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164270931_92",
+    "name": "rock_1RootClone_1777164593303_92",
     "position": {
       "x": -46.00360107421875,
       "y": 0.12412497024342883,
@@ -2164,7 +2164,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164270931_93",
+    "name": "rock_1RootClone_1777164593303_93",
     "position": {
       "x": -34.00360107421875,
       "y": 0.1551562149870449,
@@ -2185,7 +2185,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164270932_94",
+    "name": "rock_1RootClone_1777164593304_94",
     "position": {
       "x": 83.87603759765625,
       "y": 0.2424315859173305,
@@ -2206,7 +2206,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164270932_95",
+    "name": "rock_1RootClone_1777164593304_95",
     "position": {
       "x": 91.7766342163086,
       "y": 0.12412497156901736,
@@ -2227,7 +2227,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270933_96",
+    "name": "tree_1RootClone_1777164593305_96",
     "position": {
       "x": 323.7712707519531,
       "y": 2.0000000000000284,
@@ -2248,7 +2248,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270933_97",
+    "name": "tree_1RootClone_1777164593306_97",
     "position": {
       "x": 194.757568359375,
       "y": 0,
@@ -2269,7 +2269,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270934_98",
+    "name": "tree_1RootClone_1777164593306_98",
     "position": {
       "x": 234.23793029785156,
       "y": 2.842170943040401e-14,
@@ -2290,7 +2290,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270935_99",
+    "name": "tree_1RootClone_1777164593308_99",
     "position": {
       "x": 146.28541564941406,
       "y": 0,
@@ -2311,7 +2311,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270938_100",
+    "name": "tree_1RootClone_1777164593309_100",
     "position": {
       "x": 192.28195190429688,
       "y": 0,
@@ -2332,7 +2332,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270939_101",
+    "name": "tree_1RootClone_1777164593309_101",
     "position": {
       "x": 286.03961181640625,
       "y": 0,
@@ -2353,7 +2353,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270940_102",
+    "name": "tree_1RootClone_1777164593313_102",
     "position": {
       "x": 263.7978210449219,
       "y": 2.842170943040401e-14,
@@ -2374,7 +2374,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270941_103",
+    "name": "tree_1RootClone_1777164593313_103",
     "position": {
       "x": 309.4603576660156,
       "y": 0,
@@ -2395,7 +2395,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270941_104",
+    "name": "tree_1RootClone_1777164593314_104",
     "position": {
       "x": 199.6636962890625,
       "y": -2.842170943040401e-14,
@@ -2416,7 +2416,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270942_105",
+    "name": "tree_1RootClone_1777164593315_105",
     "position": {
       "x": 158.87864685058594,
       "y": -2.842170943040401e-14,
@@ -2437,7 +2437,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270943_106",
+    "name": "tree_1RootClone_1777164593316_106",
     "position": {
       "x": 230.9588623046875,
       "y": -2.842170943040401e-14,
@@ -2458,7 +2458,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270944_107",
+    "name": "tree_1RootClone_1777164593316_107",
     "position": {
       "x": 289.14251708984375,
       "y": 0,
@@ -2479,7 +2479,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270944_108",
+    "name": "tree_1RootClone_1777164593317_108",
     "position": {
       "x": 229.73110961914062,
       "y": -2.842170943040401e-14,
@@ -2500,7 +2500,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270945_109",
+    "name": "tree_1RootClone_1777164593318_109",
     "position": {
       "x": 215.2500762939453,
       "y": -2.842170943040401e-14,
@@ -2521,7 +2521,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164270946_110",
+    "name": "tree_1RootClone_1777164593319_110",
     "position": {
       "x": 132.82373046875,
       "y": -2.842170943040401e-14,
@@ -2542,7 +2542,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270947_111",
+    "name": "pine_1RootClone_1777164593320_111",
     "position": {
       "x": 201.67100926809968,
       "y": 0,
@@ -2563,7 +2563,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270947_112",
+    "name": "pine_1RootClone_1777164593320_112",
     "position": {
       "x": 255.62411499023438,
       "y": 2.842170943040401e-14,
@@ -2584,7 +2584,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270948_113",
+    "name": "pine_1RootClone_1777164593321_113",
     "position": {
       "x": 142.17849731445312,
       "y": 0,
@@ -2605,7 +2605,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270949_114",
+    "name": "pine_1RootClone_1777164593322_114",
     "position": {
       "x": 252.3280487060547,
       "y": 2.842170943040401e-14,
@@ -2626,7 +2626,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270950_115",
+    "name": "pine_1RootClone_1777164593323_115",
     "position": {
       "x": 315.92022705078125,
       "y": 0,
@@ -2647,7 +2647,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270951_116",
+    "name": "pine_1RootClone_1777164593324_116",
     "position": {
       "x": 271.8819274902344,
       "y": 0,
@@ -2668,7 +2668,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270952_117",
+    "name": "pine_1RootClone_1777164593325_117",
     "position": {
       "x": 283.8819274902344,
       "y": 0,
@@ -2689,7 +2689,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270953_118",
+    "name": "pine_1RootClone_1777164593326_118",
     "position": {
       "x": 214.1583709716797,
       "y": -2.842170943040401e-14,
@@ -2710,7 +2710,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270953_119",
+    "name": "pine_1RootClone_1777164593326_119",
     "position": {
       "x": 198.91201782226562,
       "y": -2.842170943040401e-14,
@@ -2731,7 +2731,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270954_120",
+    "name": "pine_1RootClone_1777164593327_120",
     "position": {
       "x": 204.65579223632812,
       "y": -2.842170943040401e-14,
@@ -2752,7 +2752,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164270955_121",
+    "name": "pine_1RootClone_1777164593328_121",
     "position": {
       "x": 136.32131958007812,
       "y": 1.9999999999999716,
@@ -2773,7 +2773,7 @@
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1777164270956_122",
+    "name": "dojo_9RootClone_1777164593329_122",
     "position": {
       "x": -110.505859375,
       "y": 0.600000023841782,
@@ -2794,7 +2794,7 @@
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1777164270977_123",
+    "name": "dojo_9RootClone_1777164593352_123",
     "position": {
       "x": 102.01013946533203,
       "y": 0.600000023841861,
@@ -2815,7 +2815,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271000_124",
+    "name": "pine_1RootClone_1777164593372_124",
     "position": {
       "x": 3.8495049476623535,
       "y": 0,
@@ -2836,7 +2836,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271001_125",
+    "name": "pine_1RootClone_1777164593373_125",
     "position": {
       "x": 162.885986328125,
       "y": 2,
@@ -2857,7 +2857,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271002_126",
+    "name": "pine_1RootClone_1777164593374_126",
     "position": {
       "x": 147.60107421875,
       "y": 2,
@@ -2878,7 +2878,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271003_127",
+    "name": "pine_1RootClone_1777164593375_127",
     "position": {
       "x": 68.52266693115234,
       "y": 0,
@@ -2899,7 +2899,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271003_128",
+    "name": "pine_1RootClone_1777164593376_128",
     "position": {
       "x": 129.0229949951172,
       "y": 2,
@@ -2920,7 +2920,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271004_129",
+    "name": "pine_1RootClone_1777164593376_129",
     "position": {
       "x": 71.07998657226562,
       "y": -2.842170943040401e-14,
@@ -2941,7 +2941,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271005_130",
+    "name": "pine_1RootClone_1777164593377_130",
     "position": {
       "x": 101.5054702758789,
       "y": -2.842170943040401e-14,
@@ -2962,7 +2962,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271006_131",
+    "name": "pine_1RootClone_1777164593378_131",
     "position": {
       "x": 39.703773498535156,
       "y": -2.842170943040401e-14,
@@ -2983,7 +2983,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271006_132",
+    "name": "pine_1RootClone_1777164593378_132",
     "position": {
       "x": 10.949362754821777,
       "y": -2.842170943040401e-14,
@@ -3004,7 +3004,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271007_133",
+    "name": "pine_1RootClone_1777164593379_133",
     "position": {
       "x": -62.730262756347656,
       "y": 0,
@@ -3025,7 +3025,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271008_134",
+    "name": "pine_1RootClone_1777164593380_134",
     "position": {
       "x": -97.5146484375,
       "y": 1.9999999999999716,
@@ -3046,7 +3046,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271009_135",
+    "name": "pine_1RootClone_1777164593381_135",
     "position": {
       "x": -70.47767639160156,
       "y": -2.842170943040401e-14,
@@ -3067,7 +3067,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271010_136",
+    "name": "pine_1RootClone_1777164593382_136",
     "position": {
       "x": -158.8830108642578,
       "y": -2.842170943040401e-14,
@@ -3088,7 +3088,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271010_137",
+    "name": "pine_1RootClone_1777164593383_137",
     "position": {
       "x": -114.21900939941406,
       "y": 2,
@@ -3109,7 +3109,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271014_138",
+    "name": "pine_1RootClone_1777164593386_138",
     "position": {
       "x": -51.49044418334961,
       "y": 2,
@@ -3130,7 +3130,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271015_139",
+    "name": "pine_1RootClone_1777164593387_139",
     "position": {
       "x": -111.46060943603516,
       "y": 2,
@@ -3151,7 +3151,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164271016_140",
+    "name": "tree_1RootClone_1777164593388_140",
     "position": {
       "x": -45.01457214355469,
       "y": 0,
@@ -3172,7 +3172,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164271016_141",
+    "name": "tree_1RootClone_1777164593389_141",
     "position": {
       "x": -30.709901809692383,
       "y": 0,
@@ -3193,7 +3193,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164271017_142",
+    "name": "tree_1RootClone_1777164593390_142",
     "position": {
       "x": -28.662263870239258,
       "y": -2.842170943040401e-14,
@@ -3214,7 +3214,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164271018_143",
+    "name": "tree_1RootClone_1777164593391_143",
     "position": {
       "x": 62.61634826660156,
       "y": 2,
@@ -3235,7 +3235,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164271019_144",
+    "name": "tree_1RootClone_1777164593391_144",
     "position": {
       "x": 122.9904556274414,
       "y": 0,
@@ -3256,7 +3256,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164271020_145",
+    "name": "tree_1RootClone_1777164593392_145",
     "position": {
       "x": 101.41629791259766,
       "y": -2.842170943040401e-14,
@@ -3277,7 +3277,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164271020_146",
+    "name": "tree_1RootClone_1777164593393_146",
     "position": {
       "x": 59.066471099853516,
       "y": -2.842170943040401e-14,
@@ -3298,7 +3298,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164271021_147",
+    "name": "tree_1RootClone_1777164593394_147",
     "position": {
       "x": 87.70879364013672,
       "y": -2.842170943040401e-14,
@@ -3319,7 +3319,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164271022_148",
+    "name": "tree_1RootClone_1777164593394_148",
     "position": {
       "x": 34.418033599853516,
       "y": -2.842170943040401e-14,
@@ -3340,7 +3340,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164271023_149",
+    "name": "tree_1RootClone_1777164593395_149",
     "position": {
       "x": -78.95976257324219,
       "y": 0,
@@ -3361,7 +3361,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1777164271023_150",
+    "name": "tree_1RootClone_1777164593396_150",
     "position": {
       "x": -103.30167388916016,
       "y": 0,
@@ -3382,7 +3382,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271024_151",
+    "name": "rock_1RootClone_1777164593397_151",
     "position": {
       "x": 16.782644271850586,
       "y": 0.3030394736165931,
@@ -3403,7 +3403,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271025_152",
+    "name": "rock_1RootClone_1777164593397_152",
     "position": {
       "x": 28.782644271850586,
       "y": 0.12412496534668094,
@@ -3424,7 +3424,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271025_153",
+    "name": "rock_1RootClone_1777164593398_153",
     "position": {
       "x": 100.89200592041016,
       "y": 0.12412497198965866,
@@ -3445,7 +3445,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271026_154",
+    "name": "rock_1RootClone_1777164593398_154",
     "position": {
       "x": 112.89200592041016,
       "y": 0.12412496996694244,
@@ -3466,7 +3466,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271026_155",
+    "name": "rock_1RootClone_1777164593399_155",
     "position": {
       "x": 143.13743591308594,
       "y": 0.12412497539480682,
@@ -3487,7 +3487,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271027_156",
+    "name": "rock_1RootClone_1777164593399_156",
     "position": {
       "x": -109.32402038574219,
       "y": 0.050841588526935766,
@@ -3508,7 +3508,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271027_157",
+    "name": "rock_1RootClone_1777164593400_157",
     "position": {
       "x": -113.24408721923828,
       "y": 0.050841588526935766,
@@ -3529,7 +3529,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271028_158",
+    "name": "rock_1RootClone_1777164593400_158",
     "position": {
       "x": -105.06820678710938,
       "y": 0.050841588526935766,
@@ -3550,7 +3550,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271028_159",
+    "name": "rock_1RootClone_1777164593401_159",
     "position": {
       "x": -93.06820678710938,
       "y": 0.07943998300470412,
@@ -3571,7 +3571,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271029_160",
+    "name": "rock_1RootClone_1777164593401_160",
     "position": {
       "x": -54.975364685058594,
       "y": 0.09929997759172693,
@@ -3592,7 +3592,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271029_161",
+    "name": "rock_1RootClone_1777164593402_161",
     "position": {
       "x": -21.290668487548828,
       "y": 0.3030394823966276,
@@ -3613,7 +3613,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271030_162",
+    "name": "rock_1RootClone_1777164593402_162",
     "position": {
       "x": 9.679296493530273,
       "y": 0.12412497539472156,
@@ -3634,7 +3634,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271030_163",
+    "name": "rock_1RootClone_1777164593403_163",
     "position": {
       "x": -10.215073585510254,
       "y": 0.12412497273180634,
@@ -3655,7 +3655,7 @@
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1777164271030_164",
+    "name": "wooden_signRootClone_1777164593403_164",
     "position": {
       "x": 68.09320068359375,
       "y": 0.0623097050314243,
@@ -3690,7 +3690,7 @@
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1777164271031_165",
+    "name": "wooden_signRootClone_1777164593404_165",
     "position": {
       "x": -63.53282928466797,
       "y": 0.062309704849440095,
@@ -3718,7 +3718,7 @@
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1777164271032_166",
+    "name": "wooden_signRootClone_1777164593405_166",
     "position": {
       "x": 62.75960159301758,
       "y": 0.06230970628388377,
@@ -3739,7 +3739,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271033_167",
+    "name": "rock_1RootClone_1777164593406_167",
     "position": {
       "x": -22.00360107421875,
       "y": 0.1551562149870449,
@@ -3760,7 +3760,7 @@
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1777164271034_168",
+    "name": "wooden_signRootClone_1777164593407_168",
     "position": {
       "x": -6.120001316070557,
       "y": 0.010793939991932552,
@@ -3795,7 +3795,7 @@
   },
   {
     "type": "dojo_7",
-    "name": "dojo_7RootClone_1777164271035_169",
+    "name": "dojo_7RootClone_1777164593408_169",
     "position": {
       "x": 0.06390538811683655,
       "y": 0.05999999865867541,
@@ -3816,7 +3816,7 @@
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1777164271037_170",
+    "name": "lantern_1RootClone_1777164593410_170",
     "position": {
       "x": -156.95057384513925,
       "y": -0.026297980441055024,
@@ -3837,7 +3837,7 @@
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1777164271037_171",
+    "name": "lantern_1RootClone_1777164593410_171",
     "position": {
       "x": -138.04544067382812,
       "y": -0.026297953736420743,
@@ -3858,10 +3858,10 @@
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1777164271038_172",
+    "name": "lantern_1RootClone_1777164593411_172",
     "position": {
-      "x": -29.882708473435144,
-      "y": -0.026297980441055024,
+      "x": -29.882709503173828,
+      "y": 0.03370201917982851,
       "z": 74.71442413330078
     },
     "rotation": {
@@ -3921,7 +3921,7 @@
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1777164271049_173",
+    "name": "lantern_1RootClone_1777164593424_173",
     "position": {
       "x": -107.08583538078378,
       "y": -0.026297980441055024,
@@ -3942,7 +3942,7 @@
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1777164271049_174",
+    "name": "lantern_1RootClone_1777164593425_174",
     "position": {
       "x": -86.62274639152596,
       "y": -0.026297980441055024,
@@ -3984,7 +3984,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271054_175",
+    "name": "rock_1RootClone_1777164593429_175",
     "position": {
       "x": -75.79802703857422,
       "y": 0.15929996926544732,
@@ -4173,11 +4173,11 @@
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1777164271089_176",
+    "name": "lantern_1RootClone_1777164593469_176",
     "position": {
-      "x": -73.36368385269026,
-      "y": 0.033702019161812036,
-      "z": 13.035785675048828
+      "x": -54.467149009015856,
+      "y": 0.033702016565702486,
+      "z": 72.16009521484375
     },
     "rotation": {
       "x": 0,
@@ -4194,7 +4194,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271089_177",
+    "name": "pine_1RootClone_1777164593470_177",
     "position": {
       "x": -277.9487609863281,
       "y": 0,
@@ -4215,7 +4215,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271090_178",
+    "name": "rock_1RootClone_1777164593471_178",
     "position": {
       "x": -285.5400695800781,
       "y": -0.28839176893234253,
@@ -4236,7 +4236,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1777164271091_179",
+    "name": "rock_1RootClone_1777164593471_179",
     "position": {
       "x": -286.3059997558594,
       "y": -0.28839176893234253,
@@ -4257,7 +4257,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1777164271091_180",
+    "name": "pine_1RootClone_1777164593472_180",
     "position": {
       "x": 43.469017028808594,
       "y": 0,
