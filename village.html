@@ -812,6 +812,42 @@ function snapSelectedObjectToGround(){
   const hit = scene.pickWithRay(ray, mesh => mesh === court || mesh === plaza);
   if (!hit || !hit.hit || !hit.pickedPoint) return;
 
+  // Lantern proxies are centered around the lamp body.
+  // Do not snap the proxy center to the floor, or the real lamp sinks.
+  // Instead, snap the real lantern mesh bottom to the hit surface.
+  if (
+    selectedObject.metadata?.isPickProxy &&
+    selectedObject.metadata?.proxyFor &&
+    selectedObject.metadata?.type === 'lantern_1'
+  ) {
+    const clone = selectedObject.metadata.proxyFor;
+    const meshes = clone.getChildMeshes(false).filter(m => m.getTotalVertices && m.getTotalVertices() > 0);
+
+    if (meshes.length > 0) {
+      clone.computeWorldMatrix(true);
+
+      let minY = Infinity;
+      meshes.forEach(m => {
+        m.computeWorldMatrix(true);
+        const bb = m.getBoundingInfo().boundingBox;
+        if (bb.minimumWorld.y < minY) minY = bb.minimumWorld.y;
+      });
+
+      if (isFinite(minY)) {
+        const deltaY = hit.pickedPoint.y - minY;
+
+        clone.position.y += deltaY;
+        selectedObject.position.y += deltaY;
+
+        if (selectedObject.metadata._lastProxyPos) {
+          selectedObject.metadata._lastProxyPos = selectedObject.position.clone();
+        }
+
+        return;
+      }
+    }
+  }
+
   // Get groundOffset from ASSETS (can be negative to sink below ground)
   const assetCfg = objType && ASSETS[objType];
   const groundOffset = (assetCfg && assetCfg.groundOffset !== undefined) ? assetCfg.groundOffset : null;
