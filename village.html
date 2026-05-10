@@ -2075,10 +2075,39 @@ function duplicateSelectedFence(){
   const objectType = getObjectType(sourceObject);
   if (!objectType) return;
 
-    if (objectType === "lantern_1") {
+       if (objectType === "lantern_1") {
     const newPos = sourceObject.position.clone(); newPos.x += 12;
     spawnLanternFull(newPos); return;
   }
+
+    if (objectType === "ambient_glow") {
+    const newPos = sourceObject.position.clone();
+    newPos.x += 12;
+
+    const cloneRoot = spawnAsset("ambient_glow", newPos, {
+      isClone: true,
+      glowColor: sourceObject.metadata.glowColor || "#ffdd88",
+      glowBrightness: sourceObject.metadata.glowBrightness || 1
+    });
+
+    if (!cloneRoot) return;
+
+    cloneRoot.rotation = sourceObject.rotation.clone();
+    cloneRoot.scaling = sourceObject.scaling.clone();
+
+    registerEditableRoot(cloneRoot.name, cloneRoot);
+    selectedObject = cloneRoot;
+
+    updateSelectedBadge();
+
+    gizmoManager.positionGizmoEnabled = true;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+    gizmoManager.attachToNode(selectedObject);
+
+    return;
+  }
+
     const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
