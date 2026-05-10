@@ -360,6 +360,28 @@ body{
   font-size:11px;
   line-height:1.9;
 }
+.collection-actions{
+  display:flex;
+  gap:10px;
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:14px;
+}
+.collection-delete-btn{
+  padding:10px 14px;
+  background:transparent;
+  border:1px solid rgba(255,139,139,.35);
+  color:#ff8b8b;
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.collection-delete-btn:hover{
+  background:rgba(255,139,139,.1);
+  border-color:rgba(255,139,139,.7);
+}
 .empty-state{
   padding:28px;
   border:1px dashed rgba(200,146,42,.3);
@@ -853,6 +875,57 @@ async function saveNewCollection() {
   }
 }
 
+async function deleteCollection(collectionKey) {
+  const config = window._forgeCollectionsConfig;
+  const status = document.getElementById('status');
+
+  if (!config || !config.collections || !config.collections[collectionKey]) {
+    if (status) status.textContent = 'Collection not found.';
+    return;
+  }
+
+  const collection = config.collections[collectionKey];
+  const confirmed = window.confirm(
+    'Delete this Forge collection?\n\n' +
+    (collection.displayName || collection.collectionKey) +
+    '\nKey: ' + collection.collectionKey
+  );
+
+  if (!confirmed) return;
+
+  const nextCollections = { ...config.collections };
+  delete nextCollections[collectionKey];
+
+  const nextConfig = {
+    ...config,
+    collections: nextCollections
+  };
+
+  if (status) status.textContent = 'Deleting collection...';
+
+  try {
+    const response = await fetch('/api/forge-save-collections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: nextConfig })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Delete failed');
+    }
+
+    window._forgeCollectionsConfig = nextConfig;
+    renderCollections(nextConfig);
+
+    if (status) status.textContent = 'Collection deleted from GitHub.';
+  } catch(e) {
+    console.warn('Could not delete collection:', e);
+    if (status) status.textContent = 'Could not delete collection.';
+  }
+}
+
 function renderCollections(config) {
   const grid = document.getElementById('collections-grid');
   const status = document.getElementById('status');
@@ -905,12 +978,20 @@ function renderCollections(config) {
         ${(collection.traitCategories || []).length} discovered trait categories<br>
         ${Object.keys(collection.traitMap || {}).length} mapped Forge slots
       </div>
+
+      <div class="collection-actions">
+        <button class="collection-delete-btn" type="button">Delete</button>
+      </div>
     `;
+
+    const deleteButton = card.querySelector('.collection-delete-btn');
+    if (deleteButton) {
+      deleteButton.addEventListener('click', () => deleteCollection(collection.collectionKey));
+    }
 
     grid.appendChild(card);
   });
 }
-
 async function loadForgeCollections() {
   const status = document.getElementById('status');
 
