@@ -20,7 +20,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -43,7 +45,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -66,7 +70,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -89,7 +95,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -112,7 +120,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -135,7 +145,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -158,7 +170,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -181,7 +195,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -204,7 +220,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -227,7 +245,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -250,7 +270,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -273,7 +295,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -296,7 +320,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -319,7 +345,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -342,7 +370,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "hangingLantern",
@@ -365,11 +395,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1778420437289_6",
+    "name": "toriiRootClone_1778422716817_6",
     "position": {
       "x": 0,
       "y": 0.5600000582635118,
@@ -388,11 +420,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1778420437290_7",
+    "name": "toriiRootClone_1778422716818_7",
     "position": {
       "x": -0.2919794023036957,
       "y": 0.5599997974930204,
@@ -411,11 +445,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1778420437291_8",
+    "name": "toriiRootClone_1778422716819_8",
     "position": {
       "x": -151.2589111328125,
       "y": 0.5000001192092043,
@@ -434,11 +470,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1778420437291_9",
+    "name": "toriiRootClone_1778422716819_9",
     "position": {
       "x": 149.70745849609375,
       "y": 0.5000000596046448,
@@ -457,11 +495,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1778420437292_10",
+    "name": "toriiRootClone_1778422716820_10",
     "position": {
       "x": 2.514643038204834e-15,
       "y": 0.5000000596046448,
@@ -480,11 +520,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1778420437292_11",
+    "name": "wooden_signRootClone_1778422716820_11",
     "position": {
       "x": -65.91902923583984,
       "y": 0.1,
@@ -503,11 +545,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1778420437294_12",
+    "name": "cherry_blossomRootClone_1778422716823_12",
     "position": {
       "x": -1.5127732753753662,
       "y": 0.0010486979269391655,
@@ -526,11 +570,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778420437301_13",
+    "name": "fence_1RootClone_1778422716830_13",
     "position": {
       "x": -44.32334899902344,
       "y": -0.8999999985098839,
@@ -549,11 +595,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778420437302_14",
+    "name": "fence_1RootClone_1778422716832_14",
     "position": {
       "x": 44.25136947631836,
       "y": -0.8999999985098839,
@@ -572,11 +620,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778420437304_15",
+    "name": "fence_1RootClone_1778422716834_15",
     "position": {
       "x": 44.01362609863281,
       "y": -0.8999999985098839,
@@ -595,11 +645,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778420437305_16",
+    "name": "fence_1RootClone_1778422716836_16",
     "position": {
       "x": -44.58077621459961,
       "y": -0.8999999985098839,
@@ -618,11 +670,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778420437307_17",
+    "name": "fence_1RootClone_1778422716837_17",
     "position": {
       "x": -5.2516303062438965,
       "y": -0.8999999985098839,
@@ -641,11 +695,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778420437308_18",
+    "name": "fence_1RootClone_1778422716839_18",
     "position": {
       "x": 5.329242706298828,
       "y": -0.8999999985098839,
@@ -664,11 +720,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778420437310_19",
+    "name": "fence_1RootClone_1778422716841_19",
     "position": {
       "x": -5.405943870544434,
       "y": -0.8999999985098839,
@@ -687,11 +745,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778420437311_20",
+    "name": "fence_1RootClone_1778422716842_20",
     "position": {
       "x": 5.35489559173584,
       "y": -0.8999999985098839,
@@ -710,11 +770,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778420437313_21",
+    "name": "fence_1RootClone_1778422716844_21",
     "position": {
       "x": -110.55400848388672,
       "y": -1.0000000000000284,
@@ -733,11 +795,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778420437314_22",
+    "name": "fence_1RootClone_1778422716845_22",
     "position": {
       "x": 110.58026123046875,
       "y": -1,
@@ -756,11 +820,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778420437315_23",
+    "name": "fence_1RootClone_1778422716847_23",
     "position": {
       "x": 110.51719665527344,
       "y": -1.0000000000000284,
@@ -779,11 +845,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778420437317_24",
+    "name": "fence_1RootClone_1778422716849_24",
     "position": {
       "x": -109.29263305664062,
       "y": -0.9400000013411329,
@@ -802,11 +870,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1778420437318_25",
+    "name": "cherry_blossomRootClone_1778422716850_25",
     "position": {
       "x": 37.48526382446289,
       "y": 0.005657816305759206,
@@ -825,11 +895,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1778420437322_26",
+    "name": "cherry_blossomRootClone_1778422716857_26",
     "position": {
       "x": -39.50407028198242,
       "y": 0.005657816305759206,
@@ -848,11 +920,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1778420437326_27",
+    "name": "cherry_blossomRootClone_1778422716862_27",
     "position": {
       "x": 37.97743225097656,
       "y": 0.005657816305759206,
@@ -871,11 +945,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1778420437333_28",
+    "name": "cherry_blossomRootClone_1778422716867_28",
     "position": {
       "x": -38.921661376953125,
       "y": 0.005657816305756569,
@@ -894,11 +970,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1778420437337_29",
+    "name": "dojo_6RootClone_1778422716871_29",
     "position": {
       "x": -58.36362838745117,
       "y": 0.05999999865879707,
@@ -917,11 +995,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1778420437340_30",
+    "name": "dojo_6RootClone_1778422716876_30",
     "position": {
       "x": 87.0399398803711,
       "y": 0.0599999986588669,
@@ -940,11 +1020,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1778420437343_31",
+    "name": "dojo_6RootClone_1778422716881_31",
     "position": {
       "x": 80.53135681152344,
       "y": 0.059999998658833126,
@@ -963,11 +1045,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1778420437345_32",
+    "name": "dojo_6RootClone_1778422716890_32",
     "position": {
       "x": -80.51283264160156,
       "y": 0.059999998658853915,
@@ -986,11 +1070,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437348_33",
+    "name": "rock_1RootClone_1778422716893_33",
     "position": {
       "x": -78.15025329589844,
       "y": 0.18412497171067344,
@@ -1009,11 +1095,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437349_34",
+    "name": "rock_1RootClone_1778422716894_34",
     "position": {
       "x": -81.75777435302734,
       "y": 0.13943998073224861,
@@ -1032,11 +1120,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_5",
-    "name": "dojo_5RootClone_1778420437349_35",
+    "name": "dojo_5RootClone_1778422716894_35",
     "position": {
       "x": -287.8810119628906,
       "y": 1.614841887286965,
@@ -1055,11 +1145,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1778420437354_36",
+    "name": "dojo_9RootClone_1778422716896_36",
     "position": {
       "x": -285.0631103515625,
       "y": 0.6000000238417806,
@@ -1078,11 +1170,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437373_37",
+    "name": "tree_1RootClone_1778422716919_37",
     "position": {
       "x": -295.31884765625,
       "y": 0,
@@ -1101,11 +1195,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437374_38",
+    "name": "tree_1RootClone_1778422716920_38",
     "position": {
       "x": -275.4000549316406,
       "y": 0,
@@ -1124,11 +1220,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437377_39",
+    "name": "tree_1RootClone_1778422716921_39",
     "position": {
       "x": -287.54498291015625,
       "y": -4.868645619854988,
@@ -1147,11 +1245,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437377_40",
+    "name": "tree_1RootClone_1778422716922_40",
     "position": {
       "x": -240.4627685546875,
       "y": 0,
@@ -1170,11 +1270,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437378_41",
+    "name": "tree_1RootClone_1778422716923_41",
     "position": {
       "x": -161.17611694335938,
       "y": -2.842170943040401e-14,
@@ -1193,11 +1295,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437379_42",
+    "name": "tree_1RootClone_1778422716923_42",
     "position": {
       "x": -214.0258026123047,
       "y": 0,
@@ -1216,11 +1320,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437380_43",
+    "name": "tree_1RootClone_1778422716924_43",
     "position": {
       "x": -185.4727783203125,
       "y": 0,
@@ -1239,11 +1345,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437380_44",
+    "name": "tree_1RootClone_1778422716925_44",
     "position": {
       "x": -139.9174041748047,
       "y": 0,
@@ -1262,11 +1370,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437381_45",
+    "name": "tree_1RootClone_1778422716926_45",
     "position": {
       "x": -239.7017364501953,
       "y": -2.842170943040401e-14,
@@ -1285,11 +1395,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437382_46",
+    "name": "tree_1RootClone_1778422716927_46",
     "position": {
       "x": -137.85165405273438,
       "y": -2.842170943040401e-14,
@@ -1308,11 +1420,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437382_47",
+    "name": "rock_1RootClone_1778422716927_47",
     "position": {
       "x": -148.0175323486328,
       "y": 0.12412497507466469,
@@ -1331,11 +1445,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437383_48",
+    "name": "rock_1RootClone_1778422716928_48",
     "position": {
       "x": -282.62526624272346,
       "y": 0.05084158852696419,
@@ -1354,11 +1470,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437383_49",
+    "name": "rock_1RootClone_1778422716928_49",
     "position": {
       "x": -282.62526624272346,
       "y": 0.05084158852696419,
@@ -1377,11 +1495,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437384_50",
+    "name": "rock_1RootClone_1778422716929_50",
     "position": {
       "x": -148.35511779785156,
       "y": 0.1551562149870449,
@@ -1400,11 +1520,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437384_51",
+    "name": "pine_1RootClone_1778422716929_51",
     "position": {
       "x": -310.0801086425781,
       "y": 0,
@@ -1423,11 +1545,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437385_52",
+    "name": "pine_1RootClone_1778422716930_52",
     "position": {
       "x": -256.87158203125,
       "y": 0,
@@ -1446,11 +1570,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437386_53",
+    "name": "pine_1RootClone_1778422716931_53",
     "position": {
       "x": -273.0927429199219,
       "y": -2.842170943040401e-14,
@@ -1469,11 +1595,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437386_54",
+    "name": "pine_1RootClone_1778422716932_54",
     "position": {
       "x": -245.5555877685547,
       "y": 1.9999999999999716,
@@ -1492,11 +1620,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437387_55",
+    "name": "pine_1RootClone_1778422716933_55",
     "position": {
       "x": -196.73983764648438,
       "y": 0,
@@ -1515,11 +1645,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437388_56",
+    "name": "pine_1RootClone_1778422716934_56",
     "position": {
       "x": -134.66259765625,
       "y": 0,
@@ -1538,11 +1670,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437389_57",
+    "name": "pine_1RootClone_1778422716935_57",
     "position": {
       "x": -196.6193389892578,
       "y": -2.842170943040401e-14,
@@ -1561,11 +1695,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437389_58",
+    "name": "pine_1RootClone_1778422716936_58",
     "position": {
       "x": -202.62120056152344,
       "y": -2.842170943040401e-14,
@@ -1584,11 +1720,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437390_59",
+    "name": "pine_1RootClone_1778422716936_59",
     "position": {
       "x": -134.1143035888672,
       "y": -2.842170943040401e-14,
@@ -1607,11 +1745,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437391_60",
+    "name": "pine_1RootClone_1778422716937_60",
     "position": {
       "x": -159.71694946289062,
       "y": 0,
@@ -1630,11 +1770,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437392_61",
+    "name": "pine_1RootClone_1778422716938_61",
     "position": {
       "x": -159.3542938232422,
       "y": -2.842170943040401e-14,
@@ -1653,11 +1795,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_5",
-    "name": "dojo_5RootClone_1778420437392_62",
+    "name": "dojo_5RootClone_1778422716939_62",
     "position": {
       "x": -142.77371215820312,
       "y": 1.6148418999699174,
@@ -1676,11 +1820,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "shrine_2",
-    "name": "shrine_2RootClone_1778420437394_63",
+    "name": "shrine_2RootClone_1778422716940_63",
     "position": {
       "x": -6.835771083831787,
       "y": 10.52955150604248,
@@ -1699,11 +1845,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1778420437397_64",
+    "name": "dojo_9RootClone_1778422716949_64",
     "position": {
       "x": 111.6062240600586,
       "y": 0.6000000238419239,
@@ -1722,11 +1870,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437417_65",
+    "name": "tree_1RootClone_1778422716971_65",
     "position": {
       "x": -185.5862274169922,
       "y": 0,
@@ -1745,11 +1895,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437418_66",
+    "name": "tree_1RootClone_1778422716972_66",
     "position": {
       "x": -172.9210968017578,
       "y": 0,
@@ -1768,11 +1920,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437418_67",
+    "name": "tree_1RootClone_1778422716973_67",
     "position": {
       "x": -115.01297760009766,
       "y": 0,
@@ -1791,11 +1945,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437422_68",
+    "name": "tree_1RootClone_1778422716974_68",
     "position": {
       "x": -121.22317504882812,
       "y": -2.842170943040401e-14,
@@ -1814,11 +1970,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437423_69",
+    "name": "tree_1RootClone_1778422716975_69",
     "position": {
       "x": -55.797119140625,
       "y": -2.842170943040401e-14,
@@ -1837,11 +1995,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437423_70",
+    "name": "tree_1RootClone_1778422716975_70",
     "position": {
       "x": -54.70589828491211,
       "y": -2.842170943040401e-14,
@@ -1860,11 +2020,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437424_71",
+    "name": "tree_1RootClone_1778422716976_71",
     "position": {
       "x": -32.078922271728516,
       "y": 0,
@@ -1883,11 +2045,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437425_72",
+    "name": "tree_1RootClone_1778422716977_72",
     "position": {
       "x": 177.91067504882812,
       "y": 2.842170943040401e-14,
@@ -1906,11 +2070,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437425_73",
+    "name": "tree_1RootClone_1778422716978_73",
     "position": {
       "x": 49.94673156738281,
       "y": 2.842170943040401e-14,
@@ -1929,11 +2095,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437426_74",
+    "name": "tree_1RootClone_1778422716978_74",
     "position": {
       "x": 10.96203327178955,
       "y": 0,
@@ -1952,11 +2120,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437427_75",
+    "name": "tree_1RootClone_1778422716979_75",
     "position": {
       "x": 70.02649688720703,
       "y": 0,
@@ -1975,11 +2145,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437428_76",
+    "name": "tree_1RootClone_1778422716980_76",
     "position": {
       "x": 97.71456909179688,
       "y": 0,
@@ -1998,11 +2170,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437428_77",
+    "name": "tree_1RootClone_1778422716981_77",
     "position": {
       "x": 162.3306427001953,
       "y": 2.842170943040401e-14,
@@ -2021,11 +2195,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437429_78",
+    "name": "pine_1RootClone_1778422716981_78",
     "position": {
       "x": 87.18683624267578,
       "y": 2.77860164642334,
@@ -2044,11 +2220,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437430_79",
+    "name": "pine_1RootClone_1778422716982_79",
     "position": {
       "x": 105.76976013183594,
       "y": 2.842170943040401e-14,
@@ -2067,11 +2245,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437430_80",
+    "name": "pine_1RootClone_1778422716983_80",
     "position": {
       "x": 141.73410034179688,
       "y": 2.842170943040401e-14,
@@ -2090,11 +2270,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437431_81",
+    "name": "pine_1RootClone_1778422716984_81",
     "position": {
       "x": 196.33148193359375,
       "y": 2.842170943040401e-14,
@@ -2113,11 +2295,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437432_82",
+    "name": "pine_1RootClone_1778422716985_82",
     "position": {
       "x": 53.964839935302734,
       "y": 0,
@@ -2136,11 +2320,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437433_83",
+    "name": "pine_1RootClone_1778422716986_83",
     "position": {
       "x": 103.8597412109375,
       "y": 2,
@@ -2159,11 +2345,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437434_84",
+    "name": "pine_1RootClone_1778422716986_84",
     "position": {
       "x": -5.619314670562744,
       "y": 0,
@@ -2182,11 +2370,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437434_85",
+    "name": "pine_1RootClone_1778422716987_85",
     "position": {
       "x": -85.45462036132812,
       "y": 0,
@@ -2205,11 +2395,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437435_86",
+    "name": "pine_1RootClone_1778422716988_86",
     "position": {
       "x": -21.33271026611328,
       "y": -2.842170943040401e-14,
@@ -2228,11 +2420,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437436_87",
+    "name": "pine_1RootClone_1778422716989_87",
     "position": {
       "x": -90.55915069580078,
       "y": 1.9999999999999716,
@@ -2251,11 +2445,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437437_88",
+    "name": "pine_1RootClone_1778422716990_88",
     "position": {
       "x": 31.31947898864746,
       "y": 0,
@@ -2274,11 +2470,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1778420437438_89",
+    "name": "dojo_9RootClone_1778422716990_89",
     "position": {
       "x": 251.22068786621094,
       "y": 0.6734113637940311,
@@ -2297,11 +2495,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1778420437459_90",
+    "name": "dojo_9RootClone_1778422717013_90",
     "position": {
       "x": 276.7698059082031,
       "y": 0.6875063902698457,
@@ -2320,11 +2520,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437479_91",
+    "name": "rock_1RootClone_1778422717034_91",
     "position": {
       "x": -129.68966674804688,
       "y": 0.09929997759172693,
@@ -2343,11 +2545,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437480_92",
+    "name": "rock_1RootClone_1778422717035_92",
     "position": {
       "x": -46.00360107421875,
       "y": 0.12412497024342883,
@@ -2366,11 +2570,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437480_93",
+    "name": "rock_1RootClone_1778422717035_93",
     "position": {
       "x": -34.00360107421875,
       "y": 0.1551562149870449,
@@ -2389,11 +2595,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437481_94",
+    "name": "rock_1RootClone_1778422717036_94",
     "position": {
       "x": 83.87603759765625,
       "y": 0.2424315859173305,
@@ -2412,11 +2620,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437481_95",
+    "name": "rock_1RootClone_1778422717036_95",
     "position": {
       "x": 91.7766342163086,
       "y": 0.12412497156901736,
@@ -2435,11 +2645,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437481_96",
+    "name": "tree_1RootClone_1778422717037_96",
     "position": {
       "x": 323.7712707519531,
       "y": 2.0000000000000284,
@@ -2458,11 +2670,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437482_97",
+    "name": "tree_1RootClone_1778422717040_97",
     "position": {
       "x": 194.757568359375,
       "y": 0,
@@ -2481,11 +2695,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437483_98",
+    "name": "tree_1RootClone_1778422717041_98",
     "position": {
       "x": 234.23793029785156,
       "y": 2.842170943040401e-14,
@@ -2504,11 +2720,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437484_99",
+    "name": "tree_1RootClone_1778422717042_99",
     "position": {
       "x": 146.28541564941406,
       "y": 0,
@@ -2527,11 +2745,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437485_100",
+    "name": "tree_1RootClone_1778422717043_100",
     "position": {
       "x": 192.28195190429688,
       "y": 0,
@@ -2550,11 +2770,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437485_101",
+    "name": "tree_1RootClone_1778422717044_101",
     "position": {
       "x": 286.03961181640625,
       "y": 0,
@@ -2573,11 +2795,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437489_102",
+    "name": "tree_1RootClone_1778422717045_102",
     "position": {
       "x": 263.7978210449219,
       "y": 2.842170943040401e-14,
@@ -2596,11 +2820,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437490_103",
+    "name": "tree_1RootClone_1778422717046_103",
     "position": {
       "x": 309.4603576660156,
       "y": 0,
@@ -2619,11 +2845,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437490_104",
+    "name": "tree_1RootClone_1778422717046_104",
     "position": {
       "x": 199.6636962890625,
       "y": -2.842170943040401e-14,
@@ -2642,11 +2870,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437491_105",
+    "name": "tree_1RootClone_1778422717047_105",
     "position": {
       "x": 158.87864685058594,
       "y": -2.842170943040401e-14,
@@ -2665,11 +2895,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437492_106",
+    "name": "tree_1RootClone_1778422717048_106",
     "position": {
       "x": 230.9588623046875,
       "y": -2.842170943040401e-14,
@@ -2688,11 +2920,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437492_107",
+    "name": "tree_1RootClone_1778422717049_107",
     "position": {
       "x": 289.14251708984375,
       "y": 0,
@@ -2711,11 +2945,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437493_108",
+    "name": "tree_1RootClone_1778422717049_108",
     "position": {
       "x": 229.73110961914062,
       "y": -2.842170943040401e-14,
@@ -2734,11 +2970,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437494_109",
+    "name": "tree_1RootClone_1778422717050_109",
     "position": {
       "x": 215.2500762939453,
       "y": -2.842170943040401e-14,
@@ -2757,11 +2995,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437494_110",
+    "name": "tree_1RootClone_1778422717051_110",
     "position": {
       "x": 132.82373046875,
       "y": -2.842170943040401e-14,
@@ -2780,11 +3020,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437495_111",
+    "name": "pine_1RootClone_1778422717052_111",
     "position": {
       "x": 201.67100926809968,
       "y": 0,
@@ -2803,11 +3045,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437496_112",
+    "name": "pine_1RootClone_1778422717053_112",
     "position": {
       "x": 255.62411499023438,
       "y": 2.842170943040401e-14,
@@ -2826,11 +3070,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437497_113",
+    "name": "pine_1RootClone_1778422717054_113",
     "position": {
       "x": 142.17849731445312,
       "y": 0,
@@ -2849,11 +3095,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437497_114",
+    "name": "pine_1RootClone_1778422717054_114",
     "position": {
       "x": 252.3280487060547,
       "y": 2.842170943040401e-14,
@@ -2872,11 +3120,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437498_115",
+    "name": "pine_1RootClone_1778422717055_115",
     "position": {
       "x": 315.92022705078125,
       "y": 0,
@@ -2895,11 +3145,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437499_116",
+    "name": "pine_1RootClone_1778422717056_116",
     "position": {
       "x": 271.8819274902344,
       "y": 0,
@@ -2918,11 +3170,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437500_117",
+    "name": "pine_1RootClone_1778422717057_117",
     "position": {
       "x": 283.8819274902344,
       "y": 0,
@@ -2941,11 +3195,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437501_118",
+    "name": "pine_1RootClone_1778422717058_118",
     "position": {
       "x": 214.1583709716797,
       "y": -2.842170943040401e-14,
@@ -2964,11 +3220,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437501_119",
+    "name": "pine_1RootClone_1778422717059_119",
     "position": {
       "x": 198.91201782226562,
       "y": -2.842170943040401e-14,
@@ -2987,11 +3245,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437502_120",
+    "name": "pine_1RootClone_1778422717060_120",
     "position": {
       "x": 204.65579223632812,
       "y": -2.842170943040401e-14,
@@ -3010,11 +3270,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437503_121",
+    "name": "pine_1RootClone_1778422717060_121",
     "position": {
       "x": 136.32131958007812,
       "y": 1.9999999999999716,
@@ -3033,11 +3295,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1778420437504_122",
+    "name": "dojo_9RootClone_1778422717061_122",
     "position": {
       "x": -110.505859375,
       "y": 0.600000023841782,
@@ -3056,11 +3320,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1778420437529_123",
+    "name": "dojo_9RootClone_1778422717083_123",
     "position": {
       "x": 102.01013946533203,
       "y": 0.600000023841861,
@@ -3079,11 +3345,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437551_124",
+    "name": "pine_1RootClone_1778422717104_124",
     "position": {
       "x": 3.8495049476623535,
       "y": 0,
@@ -3102,11 +3370,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437551_125",
+    "name": "pine_1RootClone_1778422717105_125",
     "position": {
       "x": 162.885986328125,
       "y": 2,
@@ -3125,11 +3395,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437552_126",
+    "name": "pine_1RootClone_1778422717106_126",
     "position": {
       "x": 147.60107421875,
       "y": 2,
@@ -3148,11 +3420,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437553_127",
+    "name": "pine_1RootClone_1778422717107_127",
     "position": {
       "x": 68.52266693115234,
       "y": 0,
@@ -3171,11 +3445,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437554_128",
+    "name": "pine_1RootClone_1778422717108_128",
     "position": {
       "x": 129.0229949951172,
       "y": 2,
@@ -3194,11 +3470,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437554_129",
+    "name": "pine_1RootClone_1778422717111_129",
     "position": {
       "x": 71.07998657226562,
       "y": -2.842170943040401e-14,
@@ -3217,11 +3495,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437555_130",
+    "name": "pine_1RootClone_1778422717112_130",
     "position": {
       "x": 101.5054702758789,
       "y": -2.842170943040401e-14,
@@ -3240,11 +3520,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437556_131",
+    "name": "pine_1RootClone_1778422717113_131",
     "position": {
       "x": 39.703773498535156,
       "y": -2.842170943040401e-14,
@@ -3263,11 +3545,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437556_132",
+    "name": "pine_1RootClone_1778422717114_132",
     "position": {
       "x": 10.949362754821777,
       "y": -2.842170943040401e-14,
@@ -3286,11 +3570,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437557_133",
+    "name": "pine_1RootClone_1778422717115_133",
     "position": {
       "x": -62.730262756347656,
       "y": 0,
@@ -3309,11 +3595,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437558_134",
+    "name": "pine_1RootClone_1778422717116_134",
     "position": {
       "x": -97.5146484375,
       "y": 1.9999999999999716,
@@ -3332,11 +3620,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437559_135",
+    "name": "pine_1RootClone_1778422717116_135",
     "position": {
       "x": -70.47767639160156,
       "y": -2.842170943040401e-14,
@@ -3355,11 +3645,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437562_136",
+    "name": "pine_1RootClone_1778422717117_136",
     "position": {
       "x": -158.8830108642578,
       "y": -2.842170943040401e-14,
@@ -3378,11 +3670,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437563_137",
+    "name": "pine_1RootClone_1778422717118_137",
     "position": {
       "x": -114.21900939941406,
       "y": 2,
@@ -3401,11 +3695,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437564_138",
+    "name": "pine_1RootClone_1778422717119_138",
     "position": {
       "x": -51.49044418334961,
       "y": 2,
@@ -3424,11 +3720,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437565_139",
+    "name": "pine_1RootClone_1778422717120_139",
     "position": {
       "x": -111.46060943603516,
       "y": 2,
@@ -3447,11 +3745,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437575_140",
+    "name": "tree_1RootClone_1778422717121_140",
     "position": {
       "x": -45.01457214355469,
       "y": 0,
@@ -3470,11 +3770,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437576_141",
+    "name": "tree_1RootClone_1778422717121_141",
     "position": {
       "x": -30.709901809692383,
       "y": 0,
@@ -3493,11 +3795,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437577_142",
+    "name": "tree_1RootClone_1778422717122_142",
     "position": {
       "x": -28.662263870239258,
       "y": -2.842170943040401e-14,
@@ -3516,11 +3820,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437578_143",
+    "name": "tree_1RootClone_1778422717123_143",
     "position": {
       "x": 62.61634826660156,
       "y": 2,
@@ -3539,11 +3845,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437578_144",
+    "name": "tree_1RootClone_1778422717124_144",
     "position": {
       "x": 122.9904556274414,
       "y": 0,
@@ -3562,11 +3870,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437579_145",
+    "name": "tree_1RootClone_1778422717124_145",
     "position": {
       "x": 101.41629791259766,
       "y": -2.842170943040401e-14,
@@ -3585,11 +3895,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437580_146",
+    "name": "tree_1RootClone_1778422717125_146",
     "position": {
       "x": 59.066471099853516,
       "y": -2.842170943040401e-14,
@@ -3608,11 +3920,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437581_147",
+    "name": "tree_1RootClone_1778422717126_147",
     "position": {
       "x": 87.70879364013672,
       "y": -2.842170943040401e-14,
@@ -3631,11 +3945,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437582_148",
+    "name": "tree_1RootClone_1778422717127_148",
     "position": {
       "x": 34.418033599853516,
       "y": -2.842170943040401e-14,
@@ -3654,11 +3970,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437583_149",
+    "name": "tree_1RootClone_1778422717127_149",
     "position": {
       "x": -78.95976257324219,
       "y": 0,
@@ -3677,11 +3995,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778420437583_150",
+    "name": "tree_1RootClone_1778422717128_150",
     "position": {
       "x": -103.30167388916016,
       "y": 0,
@@ -3700,11 +4020,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437584_151",
+    "name": "rock_1RootClone_1778422717129_151",
     "position": {
       "x": 16.782644271850586,
       "y": 0.3030394736165931,
@@ -3723,11 +4045,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437585_152",
+    "name": "rock_1RootClone_1778422717129_152",
     "position": {
       "x": 28.782644271850586,
       "y": 0.12412496534668094,
@@ -3746,11 +4070,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437585_153",
+    "name": "rock_1RootClone_1778422717130_153",
     "position": {
       "x": 100.89200592041016,
       "y": 0.12412497198965866,
@@ -3769,11 +4095,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437586_154",
+    "name": "rock_1RootClone_1778422717131_154",
     "position": {
       "x": 112.89200592041016,
       "y": 0.12412496996694244,
@@ -3792,11 +4120,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437586_155",
+    "name": "rock_1RootClone_1778422717131_155",
     "position": {
       "x": 143.13743591308594,
       "y": 0.12412497539480682,
@@ -3815,11 +4145,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437587_156",
+    "name": "rock_1RootClone_1778422717132_156",
     "position": {
       "x": -109.32402038574219,
       "y": 0.050841588526935766,
@@ -3838,11 +4170,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437587_157",
+    "name": "rock_1RootClone_1778422717132_157",
     "position": {
       "x": -113.24408721923828,
       "y": 0.050841588526935766,
@@ -3861,11 +4195,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437588_158",
+    "name": "rock_1RootClone_1778422717133_158",
     "position": {
       "x": -105.06820678710938,
       "y": 0.050841588526935766,
@@ -3884,11 +4220,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437588_159",
+    "name": "rock_1RootClone_1778422717133_159",
     "position": {
       "x": -93.06820678710938,
       "y": 0.07943998300470412,
@@ -3907,11 +4245,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437588_160",
+    "name": "rock_1RootClone_1778422717134_160",
     "position": {
       "x": -54.975364685058594,
       "y": 0.09929997759172693,
@@ -3930,11 +4270,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437589_161",
+    "name": "rock_1RootClone_1778422717134_161",
     "position": {
       "x": -21.290668487548828,
       "y": 0.3030394823966276,
@@ -3953,11 +4295,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437589_162",
+    "name": "rock_1RootClone_1778422717135_162",
     "position": {
       "x": 9.679296493530273,
       "y": 0.12412497539472156,
@@ -3976,11 +4320,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437590_163",
+    "name": "rock_1RootClone_1778422717135_163",
     "position": {
       "x": -10.215073585510254,
       "y": 0.12412497273180634,
@@ -3999,11 +4345,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1778420437590_164",
+    "name": "wooden_signRootClone_1778422717136_164",
     "position": {
       "x": 68.09320068359375,
       "y": 0.0623097050314243,
@@ -4036,11 +4384,13 @@
     },
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1778420437591_165",
+    "name": "wooden_signRootClone_1778422717137_165",
     "position": {
       "x": -63.53282928466797,
       "y": 0.062309704849440095,
@@ -4066,11 +4416,13 @@
     },
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1778420437592_166",
+    "name": "wooden_signRootClone_1778422717138_166",
     "position": {
       "x": 62.75960159301758,
       "y": 0.06230970628388377,
@@ -4089,11 +4441,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437593_167",
+    "name": "rock_1RootClone_1778422717139_167",
     "position": {
       "x": -22.00360107421875,
       "y": 0.1551562149870449,
@@ -4112,11 +4466,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1778420437593_168",
+    "name": "wooden_signRootClone_1778422717139_168",
     "position": {
       "x": -6.120001316070557,
       "y": 0.010793939991932552,
@@ -4149,11 +4505,13 @@
     },
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "dojo_7",
-    "name": "dojo_7RootClone_1778420437594_169",
+    "name": "dojo_7RootClone_1778422717140_169",
     "position": {
       "x": 0.06390538811683655,
       "y": 0.05999999865867541,
@@ -4172,11 +4530,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437596_171",
+    "name": "pine_1RootClone_1778422717146_170",
     "position": {
       "x": 43.469017028808594,
       "y": 0,
@@ -4195,11 +4555,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1778420437597_172",
+    "name": "lantern_1RootClone_1778422717147_171",
     "position": {
       "x": -30.585576892927975,
       "y": 0.033702017254453986,
@@ -4218,7 +4580,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": "#2caa58",
-    "lanternBrightness": 0.2
+    "lanternBrightness": 0.2,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "toro_lantern",
@@ -4241,7 +4605,9 @@
     "signConfig": null,
     "toroColor": "#aaeed7",
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "toro_lantern",
@@ -4264,11 +4630,13 @@
     "signConfig": null,
     "toroColor": "#aaeed7",
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1778420437623_173",
+    "name": "lantern_1RootClone_1778422717171_172",
     "position": {
       "x": -107.08583538078378,
       "y": -0.026297980441055024,
@@ -4287,11 +4655,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": "#ffdd88",
-    "lanternBrightness": 1
+    "lanternBrightness": 1,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1778420437624_174",
+    "name": "lantern_1RootClone_1778422717171_173",
     "position": {
       "x": -86.62274639152596,
       "y": -0.026297980441055024,
@@ -4310,7 +4680,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": "#ffdd88",
-    "lanternBrightness": 1
+    "lanternBrightness": 1,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "toro_lantern",
@@ -4333,11 +4705,13 @@
     "signConfig": null,
     "toroColor": "#ffdd88",
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437632_175",
+    "name": "rock_1RootClone_1778422717180_174",
     "position": {
       "x": -75.79802703857422,
       "y": 0.15929996926544732,
@@ -4356,7 +4730,9 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "toro_lantern",
@@ -4379,7 +4755,9 @@
     "signConfig": null,
     "toroColor": "#ffdd88",
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "toro_lantern",
@@ -4402,7 +4780,9 @@
     "signConfig": null,
     "toroColor": "#ffdd88",
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "toro_lantern",
@@ -4425,7 +4805,9 @@
     "signConfig": null,
     "toroColor": "#a4fffd",
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "toro_lantern",
@@ -4448,7 +4830,9 @@
     "signConfig": null,
     "toroColor": "#a1fff2",
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "toro_lantern",
@@ -4471,7 +4855,9 @@
     "signConfig": null,
     "toroColor": "#85ffba",
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "toro_lantern",
@@ -4494,7 +4880,9 @@
     "signConfig": null,
     "toroColor": "#ffcd00",
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "toro_lantern",
@@ -4517,11 +4905,13 @@
     "signConfig": null,
     "toroColor": "#ffe602",
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1778420437682_176",
+    "name": "lantern_1RootClone_1778422717231_175",
     "position": {
       "x": -41.325042893712265,
       "y": 0.01890940452765344,
@@ -4540,11 +4930,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": "#141761",
-    "lanternBrightness": 0.2
+    "lanternBrightness": 0.2,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778420437682_177",
+    "name": "pine_1RootClone_1778422717231_176",
     "position": {
       "x": -277.9487609863281,
       "y": 0,
@@ -4563,11 +4955,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437683_178",
+    "name": "rock_1RootClone_1778422717232_177",
     "position": {
       "x": -285.5400695800781,
       "y": -0.28839176893234253,
@@ -4586,11 +4980,13 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778420437684_179",
+    "name": "rock_1RootClone_1778422717232_178",
     "position": {
       "x": -286.3059997558594,
       "y": -0.28839176893234253,
@@ -4609,6 +5005,33 @@
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
-    "lanternBrightness": null
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null
+  },
+  {
+    "type": "ambient_glow",
+    "name": "ambient_glow_root",
+    "position": {
+      "x": -11.966445566174162,
+      "y": 0.10000000149011612,
+      "z": 0.8967611230370927
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": "#ffdd88",
+    "glowBrightness": 1
   }
 ]
