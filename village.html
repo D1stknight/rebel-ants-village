@@ -1807,14 +1807,9 @@ function getSelectedRebel() {
   }
 }
 
-function resolveCharacterConfig(rebel) {
-  // V1: every selected Rebel uses the same starter 3D character bundle.
-  // Later, the NFT → 3D Forge pipeline can return token-specific generated GLBs here.
-  return {
-    rebel,
-    characterId: rebel.id || 'ant_1',
-    displayName: rebel.name || 'Rebel #001',
-    previewImage: rebel.image || 'assets/lobby/ant_1.JPG',
+const CHARACTER_REGISTRY = {
+  starter_ant: {
+    bundleId: 'starter_ant',
     formType: 'starter',
     formLabel: 'Starter 3D Form',
     hasGeneratedModel: false,
@@ -1826,6 +1821,26 @@ function resolveCharacterConfig(rebel) {
       { f: 'ant_flip_kick_c.glb', i: 3 },
       { f: 'ant_jumping_c.glb', i: 4 }
     ]
+  }
+};
+
+function resolveCharacterConfig(rebel) {
+  // V1: every selected Rebel uses the same starter 3D character bundle.
+  // Later, the NFT → 3D Forge pipeline can choose a token-specific registry entry here.
+  const bundle = CHARACTER_REGISTRY.starter_ant;
+
+  return {
+    rebel,
+    characterId: rebel.id || 'ant_1',
+    displayName: rebel.name || 'Rebel #001',
+    previewImage: rebel.image || 'assets/lobby/ant_1.JPG',
+    bundleId: bundle.bundleId,
+    formType: bundle.formType,
+    formLabel: bundle.formLabel,
+    hasGeneratedModel: bundle.hasGeneratedModel,
+    basePath: bundle.basePath,
+    idleFile: bundle.idleFile,
+    animations: bundle.animations
   };
 }
 
