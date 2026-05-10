@@ -147,6 +147,125 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   position:fixed;bottom:36px;right:16px;z-index:12;
   color:rgba(138,122,90,0.4);font-size:10px;letter-spacing:2px;
 }
+
+/* ── SECRET ADMIN ENTRANCE ── */
+#admin-ant{
+  position:fixed;
+  bottom:34px;
+  left:16px;
+  z-index:12;
+  background:transparent;
+  border:none;
+  color:rgba(200,146,42,0.38);
+  font-size:16px;
+  cursor:pointer;
+  opacity:.55;
+  transition:all .2s ease;
+  filter:drop-shadow(0 0 6px rgba(200,146,42,.15));
+}
+#admin-ant:hover{
+  opacity:1;
+  color:#c8922a;
+  transform:translateY(-2px) scale(1.08);
+  filter:drop-shadow(0 0 10px rgba(200,146,42,.45));
+}
+
+#admin-modal-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:120;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(8px);
+}
+#admin-modal-backdrop.open{
+  display:flex;
+}
+#admin-modal{
+  width:min(360px, calc(100vw - 32px));
+  background:rgba(5,8,18,.96);
+  border:1px solid rgba(200,146,42,.45);
+  box-shadow:0 0 35px rgba(0,0,0,.7), 0 0 24px rgba(200,146,42,.12);
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+#admin-modal-title{
+  color:#c8922a;
+  font-family:'Cinzel Decorative',serif;
+  font-size:15px;
+  letter-spacing:3px;
+  text-align:center;
+}
+#admin-modal-sub{
+  color:#8a7a5a;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  text-align:center;
+}
+#admin-password{
+  width:100%;
+  padding:12px 13px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(200,146,42,.25);
+  color:#f3e6bf;
+  font-family:'Cinzel',serif;
+  font-size:13px;
+  outline:none;
+}
+#admin-password:focus{
+  border-color:rgba(200,146,42,.75);
+  box-shadow:0 0 0 1px rgba(200,146,42,.25);
+}
+#admin-modal-actions{
+  display:flex;
+  gap:10px;
+}
+.admin-modal-btn{
+  flex:1;
+  padding:11px 14px;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  border:none;
+  cursor:pointer;
+  transition:all .2s ease;
+  font-family:'Cinzel',serif;
+}
+#admin-login-btn{
+  background:linear-gradient(135deg,#c8922a,#8a5e1a);
+  color:#fff;
+}
+#admin-login-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 5px 18px rgba(200,146,42,.35);
+}
+#admin-cancel-btn{
+  background:transparent;
+  color:#8a7a5a;
+  border:1px solid rgba(138,122,90,.35);
+}
+#admin-cancel-btn:hover{
+  color:#c8922a;
+  border-color:rgba(200,146,42,.6);
+}
+#admin-login-status{
+  min-height:16px;
+  color:#8a7a5a;
+  font-size:10px;
+  letter-spacing:2px;
+  text-align:center;
+}
+#admin-login-status.error{
+  color:#ff8b8b;
+}
+#admin-login-status.success{
+  color:#7cffb2;
+}
 </style>
 </head>
 <body>
@@ -207,6 +326,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 </div>
 
 <div id="version">v0.1 DEV</div>
+
+<button id="admin-ant" type="button" onclick="openAdminModal()" aria-label="Admin access">🐜</button>
+
+<div id="admin-modal-backdrop" onclick="closeAdminModalFromBackdrop(event)">
+  <div id="admin-modal">
+    <div id="admin-modal-title">ADMIN ACCESS</div>
+    <div id="admin-modal-sub">Rebel Ants Command Gate</div>
+    <input id="admin-password" type="password" placeholder="Enter password" autocomplete="current-password">
+    <div id="admin-modal-actions">
+      <button class="admin-modal-btn" id="admin-cancel-btn" type="button" onclick="closeAdminModal()">Cancel</button>
+      <button class="admin-modal-btn" id="admin-login-btn" type="button" onclick="submitAdminLogin()">Enter</button>
+    </div>
+    <div id="admin-login-status"></div>
+  </div>
+</div>
 
 <!-- Video background — no Babylon needed for lobby -->
 
@@ -411,6 +545,115 @@ function enterVillage() {
     window.location.href = 'village.html';
   }, 900);
 }
+
+// ── SECRET ADMIN ENTRANCE ──
+function openAdminModal() {
+  const backdrop = document.getElementById('admin-modal-backdrop');
+  const input = document.getElementById('admin-password');
+  const status = document.getElementById('admin-login-status');
+
+  if (status) {
+    status.textContent = '';
+    status.className = '';
+  }
+
+  if (input) {
+    input.value = '';
+  }
+
+  if (backdrop) {
+    backdrop.classList.add('open');
+  }
+
+  setTimeout(() => {
+    if (input) input.focus();
+  }, 0);
+}
+
+function closeAdminModal() {
+  const backdrop = document.getElementById('admin-modal-backdrop');
+  const input = document.getElementById('admin-password');
+  const status = document.getElementById('admin-login-status');
+
+  if (backdrop) backdrop.classList.remove('open');
+  if (input) input.value = '';
+  if (status) {
+    status.textContent = '';
+    status.className = '';
+  }
+}
+
+function closeAdminModalFromBackdrop(event) {
+  if (event.target && event.target.id === 'admin-modal-backdrop') {
+    closeAdminModal();
+  }
+}
+
+async function submitAdminLogin() {
+  const input = document.getElementById('admin-password');
+  const status = document.getElementById('admin-login-status');
+  const loginBtn = document.getElementById('admin-login-btn');
+  const password = input ? input.value : '';
+
+  if (!password) {
+    if (status) {
+      status.textContent = 'Enter password';
+      status.className = 'error';
+    }
+    return;
+  }
+
+  if (loginBtn) loginBtn.disabled = true;
+
+  try {
+    const response = await fetch('/api/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.authenticated) {
+      if (status) {
+        status.textContent = 'Access denied';
+        status.className = 'error';
+      }
+      return;
+    }
+
+    if (status) {
+      status.textContent = 'Access granted';
+      status.className = 'success';
+    }
+  } catch(e) {
+    console.warn('Admin login failed:', e);
+    if (status) {
+      status.textContent = 'Login unavailable';
+      status.className = 'error';
+    }
+  } finally {
+    if (loginBtn) loginBtn.disabled = false;
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  const backdrop = document.getElementById('admin-modal-backdrop');
+  const input = document.getElementById('admin-password');
+
+  if (e.key === 'Escape' && backdrop && backdrop.classList.contains('open')) {
+    closeAdminModal();
+  }
+
+  if (
+    e.key === 'Enter' &&
+    backdrop &&
+    backdrop.classList.contains('open') &&
+    document.activeElement === input
+  ) {
+    submitAdminLogin();
+  }
+});
 
 // ── AMBIENT MUSIC ──
 function startMusic() {
