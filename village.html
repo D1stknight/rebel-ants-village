@@ -1905,9 +1905,10 @@ function buildCharacterBlueprint(rebel, character) {
     tokenId: rebel.tokenId || null,
     name: rebel.name || 'Rebel #001',
     sourceImage: rebel.image || 'assets/lobby/ant_1.JPG',
-  sourceType: rebel.tokenId ? 'nft' : 'default',
-colony: rebel.gangName || null,
-bodyType: 'universal_ant_v1',
+    sourceType: rebel.tokenId ? 'nft' : 'default',
+    sourceTraits: rebel.traits || {},
+    colony: rebel.gangName || null,
+    bodyType: 'universal_ant_v1',
     formType: character.formType || 'starter',
     formLabel: character.formLabel || 'Starter 3D Form',
     forgeStatus: character.hasGeneratedModel ? 'forged' : 'not_forged',
@@ -1973,6 +1974,7 @@ function getOrCreateCharacterBlueprint(rebel, character) {
       name: rebel.name || savedBlueprint.name || 'Rebel #001',
       sourceImage: rebel.image || savedBlueprint.sourceImage || 'assets/lobby/ant_1.JPG',
       sourceType: rebel.tokenId ? 'nft' : (savedBlueprint.sourceType || 'default'),
+      sourceTraits: rebel.traits || savedBlueprint.sourceTraits || {},
       colony: rebel.gangName || savedBlueprint.colony || null
     };
 
