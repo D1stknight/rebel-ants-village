@@ -2146,23 +2146,68 @@ function resolveWeaponForgeProfile(weaponName) {
     : null;
 }
 
+function buildForgeLayers(traitSlots, colonyProfile, weaponProfile) {
+  traitSlots = traitSlots || {};
+
+  return {
+    identity: {
+      colony: traitSlots.colony || null,
+      colonyProfile: colonyProfile || null
+    },
+    body: {
+      head: traitSlots.head || null,
+      mouth: traitSlots.mouth || null,
+      eyes: traitSlots.eyes || null
+    },
+    outfit: {
+      outfit: traitSlots.outfit || null
+    },
+    headwear: {
+      skullCap: traitSlots.skullCap || null,
+      skullyFlap: traitSlots.skullyFlap || null,
+      rangerHelmet: traitSlots.rangerHelmet || null,
+      foreheadBandana: traitSlots.foreheadBandana || null
+    },
+    facewear: {
+      fullFaceMask: traitSlots.fullFaceMask || null,
+      mouthMask: traitSlots.mouthMask || null,
+      ninjaMask: traitSlots.ninjaMask || null
+    },
+    accessories: {
+      bandana: traitSlots.bandana || null,
+      bandanaTail: traitSlots.bandanaTail || null,
+      headAccessory: traitSlots.headAccessory || null
+    },
+    weapon: {
+      sourceWeapon: traitSlots.weapon || null,
+      weaponProfile: weaponProfile || null
+    },
+    environment: {
+      background: traitSlots.background || null,
+      dojo: traitSlots.dojo || null
+    }
+  };
+}
+
 function buildCharacterBlueprint(rebel, character) {
   const sourceTraits = rebel.traits || {};
   const traitSlots = buildTraitSlots(sourceTraits, rebel.collectionKey || 'battle_for_colony');
   const colony = rebel.gangName || traitSlots.colony || null;
   const colonyProfile = resolveColonyForgeProfile(colony);
   const weaponProfile = resolveWeaponForgeProfile(traitSlots.weapon);
+  const forgeLayers = buildForgeLayers(traitSlots, colonyProfile, weaponProfile);
 
   return {
     blueprintVersion: 'v1',
-   rebelId: rebel.id || 'ant_1',
-tokenId: rebel.tokenId || null,
-collectionKey: rebel.collectionKey || 'battle_for_colony',
-name: rebel.name || 'Rebel #001',
+    rebelId: rebel.id || 'ant_1',
+    tokenId: rebel.tokenId || null,
+    collectionKey: rebel.collectionKey || 'battle_for_colony',
+    name: rebel.name || 'Rebel #001',
     sourceImage: rebel.image || 'assets/lobby/ant_1.JPG',
     sourceType: rebel.tokenId ? 'nft' : 'default',
     sourceTraits,
     traitSlots,
+    forgeLayers,
     colony,
     colonyProfile,
     weaponProfile,
@@ -2230,17 +2275,19 @@ function getOrCreateCharacterBlueprint(rebel, character) {
     const colony = rebel.gangName || traitSlots.colony || savedBlueprint.colony || null;
     const colonyProfile = resolveColonyForgeProfile(colony);
     const weaponProfile = resolveWeaponForgeProfile(traitSlots.weapon);
+    const forgeLayers = buildForgeLayers(traitSlots, colonyProfile, weaponProfile);
 
     const hydratedBlueprint = {
       ...savedBlueprint,
-     rebelId: rebel.id || savedBlueprint.rebelId || 'ant_1',
-tokenId: rebel.tokenId || savedBlueprint.tokenId || null,
-collectionKey: rebel.collectionKey || savedBlueprint.collectionKey || 'battle_for_colony',
-name: rebel.name || savedBlueprint.name || 'Rebel #001',
+      rebelId: rebel.id || savedBlueprint.rebelId || 'ant_1',
+      tokenId: rebel.tokenId || savedBlueprint.tokenId || null,
+      collectionKey: rebel.collectionKey || savedBlueprint.collectionKey || 'battle_for_colony',
+      name: rebel.name || savedBlueprint.name || 'Rebel #001',
       sourceImage: rebel.image || savedBlueprint.sourceImage || 'assets/lobby/ant_1.JPG',
       sourceType: rebel.tokenId ? 'nft' : (savedBlueprint.sourceType || 'default'),
       sourceTraits,
       traitSlots,
+      forgeLayers,
       colony,
       colonyProfile,
       weaponProfile,
