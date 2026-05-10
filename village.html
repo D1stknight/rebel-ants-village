@@ -561,78 +561,7 @@ function buildAmbientGlow(root, glowColor, glowBrightness, glowShape) {
     texture: glowTexture
   };
 }
-  glowColor = glowColor || '#ffdd88';
-  glowBrightness = glowBrightness || 1;
 
-  const glow = BABYLON.Color3.FromHexString(glowColor);
-
-  const attach = (mesh) => {
-    mesh.parent = root;
-    mesh.isPickable = true;
-    mesh._editRoot = root;
-    return mesh;
-  };
-
-  function makeAmbientGlowTexture(name) {
-    const tex = new BABYLON.DynamicTexture(name, { width: 512, height: 512 }, scene, true);
-    const ctx = tex.getContext();
-    const size = 512;
-    const c = size * 0.5;
-
-    ctx.clearRect(0, 0, size, size);
-
-    const gradient = ctx.createRadialGradient(c, c, 0, c, c, c);
-    gradient.addColorStop(0.00, 'rgba(255,255,255,1.00)');
-    gradient.addColorStop(0.20, 'rgba(255,255,255,0.94)');
-    gradient.addColorStop(0.48, 'rgba(255,255,255,0.50)');
-    gradient.addColorStop(0.74, 'rgba(255,255,255,0.14)');
-    gradient.addColorStop(1.00, 'rgba(255,255,255,0.00)');
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, size, size);
-
-    tex.hasAlpha = true;
-    tex.update();
-    return tex;
-  }
-
-  const glowTexture = makeAmbientGlowTexture('ambientGlowTex_' + Math.random());
-
-  const disc = attach(BABYLON.MeshBuilder.CreateDisc(
-    'ambientGlowDisc',
-    { radius: 4.5, tessellation: 64 },
-    scene
-  ));
-
-  const mat = new BABYLON.StandardMaterial('ambientGlowMat_' + Math.random(), scene);
-  mat.diffuseColor = new BABYLON.Color3(0, 0, 0);
-  mat.emissiveColor = new BABYLON.Color3(
-    glow.r * 1.8 * glowBrightness,
-    glow.g * 1.35 * glowBrightness,
-    glow.b * 0.72 * glowBrightness
-  );
-  mat.opacityTexture = glowTexture;
-  mat.alpha = 0.78;
-  mat.disableLighting = true;
-  mat.backFaceCulling = false;
-  mat.alphaMode = BABYLON.Engine.ALPHA_ADD;
-  mat.maxSimultaneousLights = 0;
-
-  disc.material = mat;
-  disc.position.y = 0.03;
-  disc.rotation.x = Math.PI / 2;
-
-  root.metadata = root.metadata || {};
-  root.metadata.glowColor = glowColor;
-  root.metadata.glowBrightness = glowBrightness;
-  root.metadata._ambientGlow = {
-    mesh: disc,
-    material: mat,
-    texture: glowTexture
-  };
-}
-
-  
 // ── TŌRŌ LANTERN BUILDER ─────────────────────────────────────
 // Traditional Japanese stone lantern (tōrō) built from primitives
 // All emissive — zero performance cost, unlimited placement
