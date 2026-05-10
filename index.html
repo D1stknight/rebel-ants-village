@@ -449,7 +449,12 @@ function buildCard(rebel) {
 function showDefaultCard() {
   const charRow = document.getElementById('char-row');
   charRow.innerHTML = '';
-  ownedRebels = [{ id:'ant_1', name:'Rebel #001', image:'assets/lobby/ant_1.JPG' }];
+  ownedRebels = [{
+    id: 'ant_1',
+    name: 'Rebel #001',
+    image: 'assets/lobby/ant_1.JPG',
+    collectionKey: 'battle_for_colony'
+  }];
   selectedAnt = 'ant_1';
   buildCard(ownedRebels[0]);
   try { localStorage.setItem('selectedRebel', JSON.stringify(ownedRebels[0])); } catch(e){}
@@ -486,7 +491,8 @@ async function loadNFTs(walletAddress) {
   id: 'rebel_' + n.identifier,
   name: n.name || ('Rebel #' + n.identifier),
   image: n.image_url || 'assets/lobby/ant_1.JPG',
-  tokenId: n.identifier
+  tokenId: n.identifier,
+  collectionKey: 'battle_for_colony'
 }));
 selectedAnt = ownedRebels[0].id;
 ownedRebels.forEach(r => buildCard(r));
