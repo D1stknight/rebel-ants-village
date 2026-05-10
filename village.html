@@ -1938,7 +1938,9 @@ function applyObjectTransform(node, data){
   node.scaling = new BABYLON.Vector3(data.scaling.x, data.scaling.y, data.scaling.z);
 }
 
-function saveWorldLayout(){
+let _worldLayoutSaveChain = Promise.resolve();
+
+function saveWorldLayout(saveToGitHub = true){
   // Only save actually placed objects — skip source roots at 9999 and untyped nodes
   const allNodes = scene.transformNodes.filter(n =>
     n.metadata && n.metadata.isClone &&
@@ -1946,59 +1948,115 @@ function saveWorldLayout(){
     n.name && !n.name.includes('.') &&
     Math.abs(n.position.x) < 500 && Math.abs(n.position.z) < 500
   );
+
   const data = allNodes.map(node => ({
     type: node.metadata.type,
     name: node.name,
     position: { x: node.position.x, y: node.position.y, z: node.position.z },
     rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
     scaling: { x: node.scaling.x, y: node.scaling.y, z: node.scaling.z },
-     signConfig: node.metadata.signConfig || null,
-toroColor: node.metadata.toroColor || null,
-lanternColor: node.metadata.lanternColor || null,
-lanternBrightness: node.metadata.lanternBrightness || null,
-glowColor: node.metadata.glowColor || null,
-glowBrightness: node.metadata.glowBrightness || null,
-glowShape: node.metadata.glowShape || null,
-glowWidth: node.metadata.glowWidth || null,
-glowDepth: node.metadata.glowDepth || null
+    signConfig: node.metadata.signConfig || null,
+    toroColor: node.metadata.toroColor || null,
+    lanternColor: node.metadata.lanternColor || null,
+    lanternBrightness: node.metadata.lanternBrightness || null,
+    glowColor: node.metadata.glowColor || null,
+    glowBrightness: node.metadata.glowBrightness || null,
+    glowShape: node.metadata.glowShape || null,
+    glowWidth: node.metadata.glowWidth || null,
+    glowDepth: node.metadata.glowDepth || null
   }));
+
   const json = JSON.stringify(data, null, 2);
-  // Save to localStorage (fast cache for asset systems)
+
+  // Always update local cache immediately.
   localStorage.setItem("rebelAntsWorldLayout", json);
-  // Save to GitHub (permanent backup — never lost)
-  if (window._ghToken) {
-    (async () => {
+
+  // Auto-save/local-cache path only.
+  // This must never become a permanent GitHub save.
+  if (!saveToGitHub) {
+   console.log("World layout cached locally", data);
+showToast('Cached locally');
+return Promise.resolve(true);
+  }
+
+  // Manual Save / P path:
+  // queue GitHub saves so two saves can never overlap and fight over SHA.
+  _worldLayoutSaveChain = _worldLayoutSaveChain.then(async () => {
+    if (!window._ghToken) {
+      console.warn("World layout saved locally, but no GitHub token was available.");
+      showToast('⚠ Saved locally only');
+      return false;
+    }
+
+    showToast('Saving world layout...');
+
+    try {
       const LAYOUT_PATH = "assets/world-layout.json";
-      // Get current SHA if file exists
+
+      // Get current SHA from GitHub before writing.
       let sha = undefined;
-      try {
-        const check = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/" + LAYOUT_PATH + "?ref=dev", {
+      const check = await fetch(
+        "https://api.github.com/repos/D1stknight/rebel-ants-village/contents/" + LAYOUT_PATH + "?ref=dev",
+        {
           headers: { "Authorization": "token " + window._ghToken }
-        });
-        if (check.ok) { const cd = await check.json(); sha = cd.sha; }
-      } catch(e) {}
+        }
+      );
+
+      if (check.ok) {
+        const cd = await check.json();
+        sha = cd.sha;
+      } else if (check.status !== 404) {
+        throw new Error("Could not read current GitHub layout SHA. Status: " + check.status);
+      }
+
       const enc = new TextEncoder();
       const b = enc.encode(json);
-      let bin = ''; b.forEach(x => bin += String.fromCharCode(x));
-      const body = { message: "save: world layout", content: btoa(bin), branch: "dev" };
+      let bin = '';
+      b.forEach(x => bin += String.fromCharCode(x));
+
+      const body = {
+        message: "save: world layout",
+        content: btoa(bin),
+        branch: "dev"
+      };
+
       if (sha) body.sha = sha;
-      await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/" + LAYOUT_PATH, {
-        method: 'PUT',
-        headers: { "Authorization": "token " + window._ghToken, "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-    })();
-  }
-  console.log("World layout saved", data);
-  showSaveBadge();
-  showToast('✓ Saved ' + data.length + ' objects');
+
+      const put = await fetch(
+        "https://api.github.com/repos/D1stknight/rebel-ants-village/contents/" + LAYOUT_PATH,
+        {
+          method: 'PUT',
+          headers: {
+            "Authorization": "token " + window._ghToken,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(body)
+        }
+      );
+
+      if (!put.ok) {
+        throw new Error("GitHub layout save failed. Status: " + put.status);
+      }
+
+      console.log("World layout saved to GitHub", data);
+      showSaveBadge();
+     showToast('✓ Saved to GitHub — ' + data.length + ' objects');
+      return true;
+    } catch (e) {
+      console.error("World layout GitHub save failed", e);
+      showToast('⚠ Save failed — try again');
+      return false;
+    }
+  });
+
+  return _worldLayoutSaveChain;
 }
 
-// ── AUTO-SAVE — debounced 2s, fires after any placement/delete/move ──
+// ── AUTO-SAVE — local browser cache only, never GitHub persistence ──
 let _autoSaveTimer = null;
 function triggerAutoSave() {
   if (_autoSaveTimer) clearTimeout(_autoSaveTimer);
-  _autoSaveTimer = setTimeout(() => { saveWorldLayout(); }, 2000);
+  _autoSaveTimer = setTimeout(() => { saveWorldLayout(false); }, 2000);
 }
 
 function loadWorldLayout(){
