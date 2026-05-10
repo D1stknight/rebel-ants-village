@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebel Ants — Forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  width:100%;
+  min-height:100%;
+  background:#050812;
+  color:#f3e6bf;
+  font-family:'Cinzel',serif;
+}
+body{
+  padding:28px;
+  background:
+    radial-gradient(circle at top center, rgba(200,146,42,.13), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(94,207,202,.08), transparent 38%),
+    #050812;
+}
+#page{
+  width:min(1100px,100%);
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+}
+#page-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  border-bottom:1px solid rgba(200,146,42,.18);
+  padding-bottom:22px;
+}
+#page-title h1{
+  font-family:'Cinzel Decorative',serif;
+  font-size:28px;
+  letter-spacing:4px;
+  color:#c8922a;
+  text-shadow:0 0 28px rgba(200,146,42,.25);
+}
+#page-title p{
+  margin-top:8px;
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+.header-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.header-btn{
+  padding:11px 16px;
+  background:transparent;
+  border:1px solid rgba(200,146,42,.35);
+  color:#c8922a;
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  cursor:pointer;
+  text-decoration:none;
+  transition:all .2s ease;
+}
+.header-btn:hover{
+  background:rgba(200,146,42,.12);
+  border-color:rgba(200,146,42,.7);
+}
+#forge-layout{
+  display:grid;
+  grid-template-columns:minmax(280px,360px) minmax(320px,1fr);
+  gap:22px;
+}
+.forge-card{
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.08);
+  padding:22px;
+}
+#forge-preview{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+#forge-image{
+  width:100%;
+  aspect-ratio:1/1;
+  object-fit:cover;
+  border:1px solid rgba(200,146,42,.18);
+  background:rgba(0,0,0,.2);
+}
+#forge-name{
+  font-family:'Cinzel Decorative',serif;
+  font-size:18px;
+  color:#c8922a;
+  line-height:1.5;
+}
+#forge-sub{
+  color:#8a7a5a;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
+#forge-details{
+  display:grid;
+  gap:10px;
+}
+.detail-row{
+  display:grid;
+  grid-template-columns:140px 1fr;
+  gap:10px;
+  font-size:12px;
+  line-height:1.8;
+}
+.detail-label{
+  color:#8a7a5a;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.detail-value{
+  color:#f3e6bf;
+  word-break:break-word;
+}
+#forge-right{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.section-title{
+  font-family:'Cinzel Decorative',serif;
+  font-size:16px;
+  color:#c8922a;
+  letter-spacing:2px;
+}
+.section-copy{
+  color:#b7a98b;
+  font-size:12px;
+  line-height:1.9;
+}
+#forge-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.action-btn{
+  padding:12px 18px;
+  border:none;
+  cursor:pointer;
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  transition:all .2s ease;
+}
+#generate-btn{
+  background:linear-gradient(135deg,#5ecfca,#2c8d89);
+  color:#fff;
+}
+#generate-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(94,207,202,.25);
+}
+#enter-village-btn{
+  background:linear-gradient(135deg,#c8922a,#8a5e1a);
+  color:#fff;
+}
+#enter-village-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(200,146,42,.25);
+}
+#forge-status{
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:2px;
+  min-height:18px;
+}
+#forge-status.success{
+  color:#7cffb2;
+}
+#forge-status.error{
+  color:#ff8b8b;
+}
+@media (max-width:850px){
+  body{padding:18px}
+  #page-header{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  #page-title h1{
+    font-size:22px;
+  }
+  #forge-layout{
+    grid-template-columns:1fr;
+  }
+  .detail-row{
+    grid-template-columns:1fr;
+    gap:2px;
+  }
+}
+</style>
+</head>
+<body>
+
+<main id="page">
+  <header id="page-header">
+    <div id="page-title">
+      <h1>CHARACTER FORGE</h1>
+      <p>Rebel Ants 3D Character Pipeline</p>
+    </div>
+
+    <div class="header-actions">
+      <a class="header-btn" href="index.html">← Back to Lobby</a>
+      <a class="header-btn" href="village.html">Enter Village</a>
+    </div>
+  </header>
+
+  <section id="forge-layout">
+    <div class="forge-card" id="forge-preview">
+      <img id="forge-image" src="assets/lobby/ant_1.JPG" alt="Selected Rebel">
+      <div id="forge-name">Rebel #001</div>
+      <div id="forge-sub">Selected Rebel</div>
+
+      <div id="forge-details">
+        <div class="detail-row">
+          <div class="detail-label">Collection</div>
+          <div class="detail-value" id="detail-collection">battle_for_colony</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Token ID</div>
+          <div class="detail-value" id="detail-token">—</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Colony</div>
+          <div class="detail-value" id="detail-colony">—</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Source Type</div>
+          <div class="detail-value" id="detail-source-type">default</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="forge-card" id="forge-right">
+      <div>
+        <div class="section-title">Forge Input</div>
+        <div class="section-copy">
+          This is the first public Rebel Ants Forge screen. It reads the selected NFT from the lobby and prepares the character for the future image-to-3D generation pipeline.
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">What comes next</div>
+        <div class="section-copy">
+          The next step is wiring this screen into the real generation-ready Blueprint / Forge input system so you can preview, generate, and eventually save a playable 3D Rebel character.
+        </div>
+      </div>
+
+      <div id="forge-actions">
+        <button class="action-btn" id="generate-btn" type="button" onclick="generatePreviewStub()">Generate 3D Preview</button>
+        <button class="action-btn" id="enter-village-btn" type="button" onclick="window.location.href='village.html'">Enter Village</button>
+      </div>
+
+      <div id="forge-status"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+function getSelectedRebel() {
+  try {
+    const raw = localStorage.getItem('selectedRebel');
+    const rebel = raw ? JSON.parse(raw) : null;
+    return rebel && rebel.id ? rebel : {
+      id: 'ant_1',
+      name: 'Rebel #001',
+      image: 'assets/lobby/ant_1.JPG',
+      tokenId: null,
+      collectionKey: 'battle_for_colony'
+    };
+  } catch(e) {
+    return {
+      id: 'ant_1',
+      name: 'Rebel #001',
+      image: 'assets/lobby/ant_1.JPG',
+      tokenId: null,
+      collectionKey: 'battle_for_colony'
+    };
+  }
+}
+
+function hydrateForgeScreen(rebel) {
+  document.getElementById('forge-image').src = rebel.image || 'assets/lobby/ant_1.JPG';
+  document.getElementById('forge-name').textContent = rebel.name || 'Rebel #001';
+  document.getElementById('detail-collection').textContent = rebel.collectionKey || 'battle_for_colony';
+  document.getElementById('detail-token').textContent = rebel.tokenId || '—';
+  document.getElementById('detail-colony').textContent = rebel.gangName || '—';
+  document.getElementById('detail-source-type').textContent = rebel.tokenId ? 'nft' : 'default';
+}
+
+function generatePreviewStub() {
+  const status = document.getElementById('forge-status');
+  status.textContent = '3D preview generation will be connected next.';
+  status.className = 'success';
+}
+
+const selectedRebel = getSelectedRebel();
+window.selectedForgeRebel = selectedRebel;
+hydrateForgeScreen(selectedRebel);
+</script>
+
+</body>
+</html>
