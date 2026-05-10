@@ -1966,7 +1966,18 @@ function getOrCreateCharacterBlueprint(rebel, character) {
   const savedBlueprint = loadSavedCharacterBlueprint(rebel);
 
   if (savedBlueprint && savedBlueprint.blueprintVersion === 'v1') {
-    return savedBlueprint;
+    const hydratedBlueprint = {
+      ...savedBlueprint,
+      rebelId: rebel.id || savedBlueprint.rebelId || 'ant_1',
+      tokenId: rebel.tokenId || savedBlueprint.tokenId || null,
+      name: rebel.name || savedBlueprint.name || 'Rebel #001',
+      sourceImage: rebel.image || savedBlueprint.sourceImage || 'assets/lobby/ant_1.JPG',
+      sourceType: rebel.tokenId ? 'nft' : (savedBlueprint.sourceType || 'default'),
+      colony: rebel.gangName || savedBlueprint.colony || null
+    };
+
+    saveCharacterBlueprint(rebel, hydratedBlueprint);
+    return hydratedBlueprint;
   }
 
   const newBlueprint = buildCharacterBlueprint(rebel, character);
