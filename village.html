@@ -1824,16 +1824,31 @@ const CHARACTER_REGISTRY = {
   }
 };
 
+// Per-Rebel character records.
+// V1: no forged NFT characters exist yet, so records fall back to starter_ant.
+// Later, the NFT → 3D Forge pipeline can save token-specific bundle choices here.
+const REBEL_CHARACTER_RECORDS = {};
+
+function getRebelCharacterRecord(rebel) {
+  if (!rebel || !rebel.tokenId) return null;
+  return REBEL_CHARACTER_RECORDS[String(rebel.tokenId)] || null;
+}
+
 function resolveCharacterConfig(rebel) {
-  // V1: every selected Rebel uses the same starter 3D character bundle.
-  // Later, the NFT → 3D Forge pipeline can choose a token-specific registry entry here.
-  const bundle = CHARACTER_REGISTRY.starter_ant;
+  const characterRecord = getRebelCharacterRecord(rebel);
+  const requestedBundleId = characterRecord && characterRecord.bundleId
+    ? characterRecord.bundleId
+    : 'starter_ant';
+
+  const bundle = CHARACTER_REGISTRY[requestedBundleId] || CHARACTER_REGISTRY.starter_ant;
 
   return {
     rebel,
     characterId: rebel.id || 'ant_1',
     displayName: rebel.name || 'Rebel #001',
     previewImage: rebel.image || 'assets/lobby/ant_1.JPG',
+    tokenId: rebel.tokenId || null,
+    characterRecord,
     bundleId: bundle.bundleId,
     formType: bundle.formType,
     formLabel: bundle.formLabel,
