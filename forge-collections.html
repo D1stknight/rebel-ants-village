@@ -229,6 +229,73 @@ body{
   font-size:11px;
   line-height:1.8;
 }
+#trait-mapping-builder{
+  display:none;
+  flex-direction:column;
+  gap:14px;
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:18px;
+}
+#trait-mapping-builder.open{
+  display:flex;
+}
+#trait-mapping-title{
+  font-family:'Cinzel Decorative',serif;
+  color:#c8922a;
+  font-size:15px;
+  letter-spacing:2px;
+}
+#trait-mapping-subtitle{
+  color:#8a7a5a;
+  font-size:11px;
+  line-height:1.8;
+}
+#trait-mapping-grid{
+  display:grid;
+  gap:12px;
+}
+.mapping-row{
+  display:grid;
+  grid-template-columns:180px minmax(220px,1fr) minmax(260px,1.2fr);
+  gap:12px;
+  align-items:start;
+  padding:14px;
+  background:rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.07);
+}
+.mapping-slot{
+  color:#c8922a;
+  font-size:12px;
+  letter-spacing:1px;
+}
+.mapping-select{
+  width:100%;
+  padding:10px 11px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.12);
+  color:#f3e6bf;
+  font-family:'Cinzel',serif;
+  font-size:12px;
+  outline:none;
+}
+.mapping-select:focus{
+  border-color:rgba(200,146,42,.65);
+  box-shadow:0 0 0 1px rgba(200,146,42,.2);
+}
+.mapping-preview{
+  color:#b7a98b;
+  font-size:11px;
+  line-height:1.8;
+}
+.mapping-preview.unused{
+  color:#8a7a5a;
+  font-style:italic;
+}
+@media (max-width:800px){
+  .mapping-row{
+    grid-template-columns:1fr;
+  }
+}
 #status{
   color:#8a7a5a;
   font-size:11px;
@@ -381,6 +448,15 @@ body{
       <div id="trait-results-summary"></div>
       <div id="trait-results-grid"></div>
     </div>
+
+    <div id="trait-mapping-builder">
+      <div id="trait-mapping-title">FORGE TRAIT MAPPING</div>
+      <div id="trait-mapping-subtitle">
+        Map this collection’s real trait names into the universal Forge slots.
+        Leave any slot as Not used if that collection does not have a matching trait.
+      </div>
+      <div id="trait-mapping-grid"></div>
+    </div>
   </div>
 
   <div id="status">Loading collections...</div>
@@ -441,6 +517,8 @@ function clearNewCollectionForm() {
   const results = document.getElementById('trait-discovery-results');
   const summary = document.getElementById('trait-results-summary');
   const grid = document.getElementById('trait-results-grid');
+  const mappingBuilder = document.getElementById('trait-mapping-builder');
+  const mappingGrid = document.getElementById('trait-mapping-grid');
 
   if (status) {
     status.textContent = '';
@@ -449,8 +527,132 @@ function clearNewCollectionForm() {
   if (results) results.classList.remove('open');
   if (summary) summary.textContent = '';
   if (grid) grid.innerHTML = '';
+  if (mappingBuilder) mappingBuilder.classList.remove('open');
+  if (mappingGrid) mappingGrid.innerHTML = '';
 
   window._newCollectionTraitDiscovery = null;
+  window._newCollectionTraitMap = null;
+}
+
+const UNIVERSAL_FORGE_SLOTS = [
+  'bandana',
+  'bandanaTail',
+  'background',
+  'dojo',
+  'eyes',
+  'foreheadBandana',
+  'fullFaceMask',
+  'colony',
+  'headAccessory',
+  'head',
+  'outfit',
+  'mouthMask',
+  'mouth',
+  'ninjaMask',
+  'rangerHelmet',
+  'skullCap',
+  'skullyFlap',
+  'weapon'
+];
+
+const TRAIT_MAPPING_SUGGESTIONS = {
+  bandana: ['Bandanas'],
+  bandanaTail: ['Bandana Tails'],
+  background: ['Color Backgrounds', 'Backgrounds', 'Background'],
+  dojo: ['Dojos', 'Dojo'],
+  eyes: ['Eyes'],
+  foreheadBandana: ['Forehead Bandannas', 'Forehead Bandanas'],
+  fullFaceMask: ['Full Face Masks', 'Full Face Mask'],
+  colony: ['Gang Names', 'Faction', 'Colony', 'Gang'],
+  headAccessory: ['Head Accessories', 'Head Accessory'],
+  head: ['Heads', 'Head'],
+  outfit: ['Kimonos and Suits', 'Outfits', 'Outfit', 'Armor', 'Clothing'],
+  mouthMask: ['Mouth Mask', 'Mouth Masks'],
+  mouth: ['Mouths', 'Mouth'],
+  ninjaMask: ['Ninja Masks', 'Ninja Mask'],
+  rangerHelmet: ['Ranger Helmets', 'Ranger Helmet'],
+  skullCap: ['Skull Caps', 'Skull Cap'],
+  skullyFlap: ['Skully Flaps', 'Skully Flap'],
+  weapon: ['Weapons', 'Weapon', 'Weapon Type']
+};
+
+function getSuggestedTraitForSlot(slot, traitCategories) {
+  const suggestions = TRAIT_MAPPING_SUGGESTIONS[slot] || [];
+  return suggestions.find(name => traitCategories.includes(name)) || '';
+}
+
+function getTraitPreviewText(traitName, traitValues) {
+  if (!traitName) return 'Not used for this collection.';
+
+  const values = traitValues[traitName] || [];
+  if (!values.length) return 'No sample values found.';
+
+  const previewValues = values.slice(0, 8);
+  const extraCount = Math.max(0, values.length - previewValues.length);
+
+  return previewValues.join(', ') + (extraCount ? ' +' + extraCount + ' more' : '');
+}
+
+function updateTraitMappingPreview(slot) {
+  const select = document.querySelector(`[data-mapping-slot="${slot}"]`);
+  const preview = document.querySelector(`[data-mapping-preview="${slot}"]`);
+  const discovery = window._newCollectionTraitDiscovery;
+
+  if (!select || !preview || !discovery) return;
+
+  const selectedTrait = select.value;
+  preview.textContent = getTraitPreviewText(selectedTrait, discovery.traitValues || {});
+  preview.classList.toggle('unused', !selectedTrait);
+
+  if (!window._newCollectionTraitMap) window._newCollectionTraitMap = {};
+  window._newCollectionTraitMap[slot] = selectedTrait || null;
+}
+
+function renderTraitMappingBuilder(data) {
+  const builder = document.getElementById('trait-mapping-builder');
+  const grid = document.getElementById('trait-mapping-grid');
+  const traitCategories = data.traitCategories || [];
+  const traitValues = data.traitValues || {};
+
+  if (!builder || !grid) return;
+
+  grid.innerHTML = '';
+  window._newCollectionTraitMap = {};
+
+  UNIVERSAL_FORGE_SLOTS.forEach(slot => {
+    const suggestedTrait = getSuggestedTraitForSlot(slot, traitCategories);
+    window._newCollectionTraitMap[slot] = suggestedTrait || null;
+
+    const row = document.createElement('div');
+    row.className = 'mapping-row';
+
+    const options = [
+      '<option value="">Not used</option>',
+      ...traitCategories.map(traitName => {
+        const selected = traitName === suggestedTrait ? ' selected' : '';
+        return `<option value="${traitName}"${selected}>${traitName}</option>`;
+      })
+    ].join('');
+
+    row.innerHTML = `
+      <div class="mapping-slot">${slot}</div>
+      <select class="mapping-select" data-mapping-slot="${slot}">
+        ${options}
+      </select>
+      <div class="mapping-preview${suggestedTrait ? '' : ' unused'}" data-mapping-preview="${slot}">
+        ${getTraitPreviewText(suggestedTrait, traitValues)}
+      </div>
+    `;
+
+    const select = row.querySelector('select');
+    if (select) {
+      select.addEventListener('change', () => updateTraitMappingPreview(slot));
+    }
+
+    grid.appendChild(row);
+  });
+
+  builder.classList.add('open');
 }
 
 function renderTraitDiscoveryResults(data) {
@@ -491,7 +693,8 @@ function renderTraitDiscoveryResults(data) {
     });
   }
 
-  if (results) results.classList.add('open');
+   if (results) results.classList.add('open');
+  renderTraitMappingBuilder(data);
 }
 
 async function fetchNewCollectionTraits() {
