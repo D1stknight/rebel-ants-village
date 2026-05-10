@@ -1902,15 +1902,24 @@ function buildTraitSlots(sourceTraits) {
   sourceTraits = sourceTraits || {};
 
   return {
+    bandana: sourceTraits['Bandanas'] || null,
+    bandanaTail: sourceTraits['Bandana Tails'] || null,
+    background: sourceTraits['Color Backgrounds'] || null,
+    dojo: sourceTraits['Dojos'] || null,
     eyes: sourceTraits['Eyes'] || null,
-    head: sourceTraits['Heads'] || null,
-    mouth: sourceTraits['Mouths'] || null,
-    weapon: sourceTraits['Weapons'] || null,
+    foreheadBandana: sourceTraits['Forehead Bandannas'] || null,
+    fullFaceMask: sourceTraits['Full Face Masks'] || null,
     colony: sourceTraits['Gang Names'] || null,
+    headAccessory: sourceTraits['Head Accessories'] || null,
+    head: sourceTraits['Heads'] || null,
+    outfit: sourceTraits['Kimonos and Suits'] || null,
+    mouthMask: sourceTraits['Mouth Mask'] || null,
+    mouth: sourceTraits['Mouths'] || null,
+    ninjaMask: sourceTraits['Ninja Masks'] || null,
+    rangerHelmet: sourceTraits['Ranger Helmets'] || null,
     skullCap: sourceTraits['Skull Caps'] || null,
     skullyFlap: sourceTraits['Skully Flaps'] || null,
-    background: sourceTraits['Color Backgrounds'] || null,
-    outfit: sourceTraits['Kimonos and Suits'] || null
+    weapon: sourceTraits['Weapons'] || null
   };
 }
 
