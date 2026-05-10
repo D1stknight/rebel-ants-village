@@ -147,7 +147,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-section">Buildings</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
     <div class="ap-section">Nature</div>
-    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">lantern_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wooden_sign')"><span class="ap-icon">🪧</span><span class="ap-name">wooden_sign</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🏯</span><span class="ap-name">toro_lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('small_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">small_bridge</span></div></div>
+   <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">lantern_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wooden_sign')"><span class="ap-icon">🪧</span><span class="ap-name">wooden_sign</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🔥</span><span class="ap-name">toro_lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ambient_glow')"><span class="ap-icon">✨</span><span class="ap-name">ambient_glow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('small_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">small_bridge</span></div></div>
     <hr class="ap-divider">
     <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
   </div>
@@ -395,7 +395,13 @@ lantern_1: {
     rotation: new BABYLON.Vector3(0, Math.PI, 0),
     noShadows: true
   },
-  toro_lantern: {
+   toro_lantern: {
+    procedural: true,
+    scale: 1.0,
+    noShadows: true,
+    groundOffset: 0
+  },
+  ambient_glow: {
     procedural: true,
     scale: 1.0,
     noShadows: true,
@@ -417,9 +423,10 @@ function spawnAsset(type, position, extraMeta) {
   root.isPickable = true;
   root.metadata = { type, loaded: false, ...(extraMeta||{}) };
 
-  if (config.procedural) {
+   if (config.procedural) {
     // Build procedural asset immediately
     if (type === 'toro_lantern') buildToro(root, root.metadata.toroColor || '#ffdd88');
+    if (type === 'ambient_glow') buildAmbientGlow(root, root.metadata.glowColor || '#ffdd88', root.metadata.glowBrightness || 1);
     root.metadata.loaded = true;
     console.log("Spawned procedural:", type);
   } else {
@@ -441,6 +448,79 @@ function spawnAsset(type, position, extraMeta) {
   return root;
 }
 
+function buildAmbientGlow(root, glowColor, glowBrightness) {
+  glowColor = glowColor || '#ffdd88';
+  glowBrightness = glowBrightness || 1;
+
+  const glow = BABYLON.Color3.FromHexString(glowColor);
+
+  const attach = (mesh) => {
+    mesh.parent = root;
+    mesh.isPickable = true;
+    mesh._editRoot = root;
+    return mesh;
+  };
+
+  function makeAmbientGlowTexture(name) {
+    const tex = new BABYLON.DynamicTexture(name, { width: 512, height: 512 }, scene, true);
+    const ctx = tex.getContext();
+    const size = 512;
+    const c = size * 0.5;
+
+    ctx.clearRect(0, 0, size, size);
+
+    const gradient = ctx.createRadialGradient(c, c, 0, c, c, c);
+    gradient.addColorStop(0.00, 'rgba(255,255,255,1.00)');
+    gradient.addColorStop(0.20, 'rgba(255,255,255,0.94)');
+    gradient.addColorStop(0.48, 'rgba(255,255,255,0.50)');
+    gradient.addColorStop(0.74, 'rgba(255,255,255,0.14)');
+    gradient.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    tex.hasAlpha = true;
+    tex.update();
+    return tex;
+  }
+
+  const glowTexture = makeAmbientGlowTexture('ambientGlowTex_' + Math.random());
+
+  const disc = attach(BABYLON.MeshBuilder.CreateDisc(
+    'ambientGlowDisc',
+    { radius: 4.5, tessellation: 64 },
+    scene
+  ));
+
+  const mat = new BABYLON.StandardMaterial('ambientGlowMat_' + Math.random(), scene);
+  mat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+  mat.emissiveColor = new BABYLON.Color3(
+    glow.r * 1.8 * glowBrightness,
+    glow.g * 1.35 * glowBrightness,
+    glow.b * 0.72 * glowBrightness
+  );
+  mat.opacityTexture = glowTexture;
+  mat.alpha = 0.78;
+  mat.disableLighting = true;
+  mat.backFaceCulling = false;
+  mat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+  mat.maxSimultaneousLights = 0;
+
+  disc.material = mat;
+  disc.position.y = 0.03;
+  disc.rotation.x = Math.PI / 2;
+
+  root.metadata = root.metadata || {};
+  root.metadata.glowColor = glowColor;
+  root.metadata.glowBrightness = glowBrightness;
+  root.metadata._ambientGlow = {
+    mesh: disc,
+    material: mat,
+    texture: glowTexture
+  };
+}
+
+  
 // ── TŌRŌ LANTERN BUILDER ─────────────────────────────────────
 // Traditional Japanese stone lantern (tōrō) built from primitives
 // All emissive — zero performance cost, unlimited placement
@@ -1763,10 +1843,12 @@ function saveWorldLayout(){
     position: { x: node.position.x, y: node.position.y, z: node.position.z },
     rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
     scaling: { x: node.scaling.x, y: node.scaling.y, z: node.scaling.z },
-   signConfig: node.metadata.signConfig || null,
+     signConfig: node.metadata.signConfig || null,
 toroColor: node.metadata.toroColor || null,
 lanternColor: node.metadata.lanternColor || null,
-lanternBrightness: node.metadata.lanternBrightness || null
+lanternBrightness: node.metadata.lanternBrightness || null,
+glowColor: node.metadata.glowColor || null,
+glowBrightness: node.metadata.glowBrightness || null
   }));
   const json = JSON.stringify(data, null, 2);
   // Save to localStorage (fast cache for asset systems)
@@ -1847,9 +1929,22 @@ function loadWorldLayout(){
 
     // All GLB assets — clone from source
     // Handle procedural assets (no GLB source needed)
-    if (ASSETS[item.type] && ASSETS[item.type].procedural) {
+       if (ASSETS[item.type] && ASSETS[item.type].procedural) {
       const pos = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
-      const clone = spawnAsset(item.type, pos, { isClone: true, toroColor: item.toroColor || '#ffdd88' });
+
+      const proceduralMeta =
+        item.type === 'ambient_glow'
+          ? {
+              isClone: true,
+              glowColor: item.glowColor || '#ffdd88',
+              glowBrightness: item.glowBrightness || 1
+            }
+          : {
+              isClone: true,
+              toroColor: item.toroColor || '#ffdd88'
+            };
+
+      const clone = spawnAsset(item.type, pos, proceduralMeta);
       if (!clone) return;
       clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
       clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
@@ -2982,7 +3077,12 @@ function spawnAssetFromPanel(key) {
       spawnPos = orbit.target.add(new BABYLON.Vector3(Math.sin(orbit.alpha)*12, 0, Math.cos(orbit.alpha)*12));
     }
     const pos = new BABYLON.Vector3(spawnPos.x, 0, spawnPos.z);
-    const clone = spawnAsset(key, pos, { isClone: true, toroColor: '#ffdd88' });
+        const proceduralMeta =
+      key === 'ambient_glow'
+        ? { isClone: true, glowColor: '#ffdd88', glowBrightness: 1 }
+        : { isClone: true, toroColor: '#ffdd88' };
+
+    const clone = spawnAsset(key, pos, proceduralMeta);
     if (!clone) return;
     registerEditableRoot(clone.name, clone);
     selectedObject = clone;
