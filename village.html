@@ -1815,6 +1815,9 @@ function resolveCharacterConfig(rebel) {
     characterId: rebel.id || 'ant_1',
     displayName: rebel.name || 'Rebel #001',
     previewImage: rebel.image || 'assets/lobby/ant_1.JPG',
+    formType: 'starter',
+    formLabel: 'Starter 3D Form',
+    hasGeneratedModel: false,
     basePath: '/assets/character/',
     idleFile: 'ant_idle_c.glb',
     animations: [
@@ -1829,6 +1832,7 @@ function resolveCharacterConfig(rebel) {
 function hydrateSelectedRebelPanel(character) {
   const image = document.getElementById('selectedRebelImage');
   const name = document.getElementById('selectedRebelName');
+  const form = document.getElementById('selectedRebelForm');
 
   if (image) {
     image.src = character.previewImage || 'assets/lobby/ant_1.JPG';
@@ -1837,6 +1841,10 @@ function hydrateSelectedRebelPanel(character) {
 
   if (name) {
     name.textContent = character.displayName || 'Rebel #001';
+  }
+
+  if (form) {
+    form.textContent = character.formLabel || 'Starter 3D Form';
   }
 }
 
