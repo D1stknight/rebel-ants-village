@@ -1821,14 +1821,34 @@ const CHARACTER_REGISTRY = {
       { f: 'ant_flip_kick_c.glb', i: 3 },
       { f: 'ant_jumping_c.glb', i: 4 }
     ]
+  },
+
+  // Temporary forged-path test bundle.
+  // Uses the same starter GLBs for now, but proves the future NFT-specific bundle logic works.
+  forged_test_ant: {
+    bundleId: 'forged_test_ant',
+    formType: 'forged',
+    formLabel: 'Forged 3D Form',
+    hasGeneratedModel: true,
+    basePath: '/assets/character/',
+    idleFile: 'ant_idle_c.glb',
+    animations: [
+      { f: 'ant_walk_c.glb', i: 1 },
+      { f: 'ant_run_c.glb', i: 2 },
+      { f: 'ant_flip_kick_c.glb', i: 3 },
+      { f: 'ant_jumping_c.glb', i: 4 }
+    ]
   }
 };
 
 // Per-Rebel character records.
-// V1: no forged NFT characters exist yet, so records fall back to starter_ant.
-// Later, the NFT → 3D Forge pipeline can save token-specific bundle choices here.
-const REBEL_CHARACTER_RECORDS = {};
-
+// V1 test: Rebel #469 temporarily resolves to a forged bundle so we can prove the future path works.
+// Later, the NFT → 3D Forge pipeline can save real token-specific bundle choices here.
+const REBEL_CHARACTER_RECORDS = {
+  "469": {
+    bundleId: "forged_test_ant"
+  }
+};
 function getRebelCharacterRecord(rebel) {
   if (!rebel || !rebel.tokenId) return null;
   return REBEL_CHARACTER_RECORDS[String(rebel.tokenId)] || null;
