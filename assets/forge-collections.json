@@ -68,6 +68,54 @@
         "skullyFlap": "Skully Flaps",
         "weapon": "Weapons"
       }
+    },
+    "battle_for_colony_test": {
+      "collectionKey": "battle_for_colony_test",
+      "displayName": "Rebel Ants: Battle for the Colony",
+      "chain": "ethereum",
+      "contractAddress": "0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221",
+      "openSeaSlug": "rebel-ants-battle-for-the-colony",
+      "enabled": true,
+      "traitCategories": [
+        "Bandana Tails",
+        "Bandanas",
+        "Color Backgrounds",
+        "Dojos",
+        "Eyes",
+        "Forehead Bandannas",
+        "Full Face Masks",
+        "Gang Names",
+        "Head Accessories",
+        "Heads",
+        "Kimonos and Suits",
+        "Mouth Mask",
+        "Mouths",
+        "Ninja Masks",
+        "Ranger Helmets",
+        "Skull Caps",
+        "Skully Flaps",
+        "Weapons"
+      ],
+      "traitMap": {
+        "bandana": "Bandanas",
+        "bandanaTail": "Bandana Tails",
+        "background": "Color Backgrounds",
+        "dojo": "Dojos",
+        "eyes": "Eyes",
+        "foreheadBandana": "Forehead Bandannas",
+        "fullFaceMask": "Full Face Masks",
+        "colony": "Gang Names",
+        "headAccessory": "Head Accessories",
+        "head": "Heads",
+        "outfit": "Kimonos and Suits",
+        "mouthMask": "Mouth Mask",
+        "mouth": "Mouths",
+        "ninjaMask": "Ninja Masks",
+        "rangerHelmet": "Ranger Helmets",
+        "skullCap": "Skull Caps",
+        "skullyFlap": "Skully Flaps",
+        "weapon": "Weapons"
+      }
     }
   }
 }
