@@ -84,6 +84,151 @@ body{
   background:rgba(200,146,42,.12);
   border-color:rgba(200,146,42,.7);
 }
+.header-btn.primary{
+  background:linear-gradient(135deg,#c8922a,#8a5e1a);
+  color:#fff;
+  border-color:rgba(200,146,42,.6);
+}
+.header-btn.primary:hover{
+  background:linear-gradient(135deg,#d8a23a,#9a6e2a);
+}
+
+#add-collection-panel{
+  display:none;
+  padding:22px;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(200,146,42,.22);
+}
+#add-collection-panel.open{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.panel-title{
+  font-family:'Cinzel Decorative',serif;
+  color:#c8922a;
+  font-size:16px;
+  letter-spacing:2px;
+}
+.panel-subtitle{
+  color:#8a7a5a;
+  font-size:11px;
+  line-height:1.8;
+}
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px;
+}
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+.field label{
+  color:#8a7a5a;
+  font-size:10px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.field input,
+.field select{
+  width:100%;
+  padding:11px 12px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.12);
+  color:#f3e6bf;
+  font-family:'Cinzel',serif;
+  font-size:12px;
+  outline:none;
+}
+.field input:focus,
+.field select:focus{
+  border-color:rgba(200,146,42,.65);
+  box-shadow:0 0 0 1px rgba(200,146,42,.2);
+}
+.panel-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.action-btn{
+  padding:11px 16px;
+  background:transparent;
+  border:1px solid rgba(200,146,42,.35);
+  color:#c8922a;
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.action-btn:hover{
+  background:rgba(200,146,42,.12);
+  border-color:rgba(200,146,42,.7);
+}
+.action-btn.primary{
+  background:linear-gradient(135deg,#c8922a,#8a5e1a);
+  color:#fff;
+}
+.action-btn.primary:hover{
+  background:linear-gradient(135deg,#d8a23a,#9a6e2a);
+}
+.action-btn:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+#trait-discovery-status{
+  min-height:16px;
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:2px;
+}
+#trait-discovery-status.error{
+  color:#ff8b8b;
+}
+#trait-discovery-status.success{
+  color:#7cffb2;
+}
+#trait-discovery-results{
+  display:none;
+  flex-direction:column;
+  gap:14px;
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:18px;
+}
+#trait-discovery-results.open{
+  display:flex;
+}
+#trait-results-summary{
+  color:#b7a98b;
+  font-size:11px;
+  line-height:1.8;
+}
+#trait-results-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:12px;
+}
+.trait-result-card{
+  padding:14px;
+  background:rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.07);
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+}
+.trait-result-name{
+  color:#c8922a;
+  font-size:12px;
+  letter-spacing:1px;
+}
+.trait-result-values{
+  color:#b7a98b;
+  font-size:11px;
+  line-height:1.8;
+}
 #status{
   color:#8a7a5a;
   font-size:11px;
@@ -175,17 +320,68 @@ body{
 <div id="auth-loading">Checking admin access...</div>
 
 <main id="page">
-  <header id="page-header">
+ <header id="page-header">
     <div id="page-title">
       <h1>FORGE COLLECTION MANAGER</h1>
       <p>Admin Collection Registry</p>
     </div>
 
     <div class="header-actions">
+      <button class="header-btn primary" type="button" onclick="toggleAddCollectionPanel()">+ Add Collection</button>
       <a class="header-btn" href="admin.html">← Admin Hub</a>
       <button class="header-btn" type="button" onclick="logoutAdmin()">Log Out</button>
     </div>
   </header>
+
+ <div id="add-collection-panel">
+    <div>
+      <div class="panel-title">ADD COLLECTION</div>
+      <div class="panel-subtitle">
+        Enter a collection once, fetch its real trait structure from OpenSea, then we will map only the traits that matter to the Forge.
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="new-display-name">Display Name</label>
+        <input id="new-display-name" placeholder="Rebel Ants: Battle for the Colony">
+      </div>
+
+      <div class="field">
+        <label for="new-collection-key">Collection Key</label>
+        <input id="new-collection-key" placeholder="battle_for_colony">
+      </div>
+
+      <div class="field">
+        <label for="new-chain">Chain</label>
+        <select id="new-chain">
+          <option value="ethereum">Ethereum</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="new-contract-address">Contract Address</label>
+        <input id="new-contract-address" placeholder="0x...">
+      </div>
+
+      <div class="field">
+        <label for="new-opensea-slug">OpenSea Slug</label>
+        <input id="new-opensea-slug" placeholder="collection-slug">
+      </div>
+    </div>
+
+    <div class="panel-actions">
+      <button class="action-btn primary" id="fetch-traits-btn" type="button" onclick="fetchNewCollectionTraits()">Fetch Traits</button>
+      <button class="action-btn" type="button" onclick="clearNewCollectionForm()">Clear</button>
+    </div>
+
+    <div id="trait-discovery-status"></div>
+
+    <div id="trait-discovery-results">
+      <div id="trait-results-summary"></div>
+      <div id="trait-results-grid"></div>
+    </div>
+  </div>
 
   <div id="status">Loading collections...</div>
   <section id="collections-grid"></section>
@@ -220,6 +416,145 @@ async function logoutAdmin() {
   }
 
   window.location.href = 'index.html';
+}
+
+function toggleAddCollectionPanel() {
+  const panel = document.getElementById('add-collection-panel');
+  if (panel) panel.classList.toggle('open');
+}
+
+function clearNewCollectionForm() {
+  [
+    'new-display-name',
+    'new-collection-key',
+    'new-contract-address',
+    'new-opensea-slug'
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  const chain = document.getElementById('new-chain');
+  if (chain) chain.value = 'ethereum';
+
+  const status = document.getElementById('trait-discovery-status');
+  const results = document.getElementById('trait-discovery-results');
+  const summary = document.getElementById('trait-results-summary');
+  const grid = document.getElementById('trait-results-grid');
+
+  if (status) {
+    status.textContent = '';
+    status.className = '';
+  }
+  if (results) results.classList.remove('open');
+  if (summary) summary.textContent = '';
+  if (grid) grid.innerHTML = '';
+
+  window._newCollectionTraitDiscovery = null;
+}
+
+function renderTraitDiscoveryResults(data) {
+  const results = document.getElementById('trait-discovery-results');
+  const summary = document.getElementById('trait-results-summary');
+  const grid = document.getElementById('trait-results-grid');
+  const categories = data.traitCategories || [];
+  const traitValues = data.traitValues || {};
+
+  if (summary) {
+    summary.textContent =
+      categories.length +
+      ' trait categor' +
+      (categories.length === 1 ? 'y' : 'ies') +
+      ' found for this collection.';
+  }
+
+  if (grid) {
+    grid.innerHTML = '';
+
+    categories.forEach(traitName => {
+      const values = traitValues[traitName] || [];
+      const card = document.createElement('article');
+      card.className = 'trait-result-card';
+
+      const previewValues = values.slice(0, 8);
+      const extraCount = Math.max(0, values.length - previewValues.length);
+
+      card.innerHTML = `
+        <div class="trait-result-name">${traitName}</div>
+        <div class="trait-result-values">
+          ${previewValues.length ? previewValues.join(', ') : 'No values found'}
+          ${extraCount ? ' +' + extraCount + ' more' : ''}
+        </div>
+      `;
+
+      grid.appendChild(card);
+    });
+  }
+
+  if (results) results.classList.add('open');
+}
+
+async function fetchNewCollectionTraits() {
+  const displayName = document.getElementById('new-display-name').value.trim();
+  const collectionKey = document.getElementById('new-collection-key').value.trim();
+  const chain = document.getElementById('new-chain').value.trim();
+  const contractAddress = document.getElementById('new-contract-address').value.trim();
+  const openSeaSlug = document.getElementById('new-opensea-slug').value.trim();
+  const status = document.getElementById('trait-discovery-status');
+  const button = document.getElementById('fetch-traits-btn');
+
+  if (!displayName || !collectionKey || !chain || !contractAddress || !openSeaSlug) {
+    if (status) {
+      status.textContent = 'Fill in every field before fetching traits.';
+      status.className = 'error';
+    }
+    return;
+  }
+
+  if (status) {
+    status.textContent = 'Fetching collection traits...';
+    status.className = '';
+  }
+  if (button) button.disabled = true;
+
+  try {
+    const response = await fetch('/api/forge-fetch-traits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ openSeaSlug })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Trait fetch failed');
+    }
+
+    window._newCollectionTraitDiscovery = {
+      displayName,
+      collectionKey,
+      chain,
+      contractAddress,
+      openSeaSlug,
+      traitCategories: data.traitCategories || [],
+      traitValues: data.traitValues || {}
+    };
+
+    renderTraitDiscoveryResults(data);
+
+    if (status) {
+      status.textContent = 'Traits fetched successfully.';
+      status.className = 'success';
+    }
+  } catch(e) {
+    console.warn('Could not fetch new collection traits:', e);
+    if (status) {
+      status.textContent = 'Could not fetch traits. Check the OpenSea slug and try again.';
+      status.className = 'error';
+    }
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 function renderCollections(config) {
