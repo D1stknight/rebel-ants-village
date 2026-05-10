@@ -1914,9 +1914,97 @@ function buildTraitSlots(sourceTraits) {
   };
 }
 
+const COLONY_FORGE_PROFILES = {
+  Samurai: {
+    colonyId: 'samurai',
+    displayName: 'Samurai',
+    baseStyle: 'disciplined_swordsman',
+    emblem: 'samurai',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Ronin: {
+    colonyId: 'ronin',
+    displayName: 'Ronin',
+    baseStyle: 'lone_swordsman',
+    emblem: 'ronin',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Bushi: {
+    colonyId: 'bushi',
+    displayName: 'Bushi',
+    baseStyle: 'armored_warrior',
+    emblem: 'bushi',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Warrior: {
+    colonyId: 'warrior',
+    displayName: 'Warrior',
+    baseStyle: 'battle_hardened_fighter',
+    emblem: 'warrior',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Shogun: {
+    colonyId: 'shogun',
+    displayName: 'Shogun',
+    baseStyle: 'warlord_commander',
+    emblem: 'shogun',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Buke: {
+    colonyId: 'buke',
+    displayName: 'Buke',
+    baseStyle: 'noble_guardian',
+    emblem: 'buke',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Kenshi: {
+    colonyId: 'kenshi',
+    displayName: 'Kenshi',
+    baseStyle: 'master_bladesman',
+    emblem: 'kenshi',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Wokou: {
+    colonyId: 'wokou',
+    displayName: 'Wokou',
+    baseStyle: 'raider_pirate',
+    emblem: 'wokou',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Ashigaru: {
+    colonyId: 'ashigaru',
+    displayName: 'Ashigaru',
+    baseStyle: 'foot_soldier',
+    emblem: 'ashigaru',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Sohei: {
+    colonyId: 'sohei',
+    displayName: 'Sohei',
+    baseStyle: 'monk_warrior',
+    emblem: 'sohei',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Yamabushi: {
+    colonyId: 'yamabushi',
+    displayName: 'Yamabushi',
+    baseStyle: 'mountain_ascetic',
+    emblem: 'yamabushi',
+    preferredBodyType: 'universal_ant_v1'
+  }
+};
+
+function resolveColonyForgeProfile(colonyName) {
+  return colonyName && COLONY_FORGE_PROFILES[colonyName]
+    ? COLONY_FORGE_PROFILES[colonyName]
+    : null;
+}
+
 function buildCharacterBlueprint(rebel, character) {
   const sourceTraits = rebel.traits || {};
   const traitSlots = buildTraitSlots(sourceTraits);
+  const colony = rebel.gangName || traitSlots.colony || null;
+  const colonyProfile = resolveColonyForgeProfile(colony);
 
   return {
     blueprintVersion: 'v1',
@@ -1927,8 +2015,9 @@ function buildCharacterBlueprint(rebel, character) {
     sourceType: rebel.tokenId ? 'nft' : 'default',
     sourceTraits,
     traitSlots,
-    colony: rebel.gangName || traitSlots.colony || null,
-    bodyType: 'universal_ant_v1',
+    colony,
+    colonyProfile,
+    bodyType: colonyProfile?.preferredBodyType || 'universal_ant_v1',
     formType: character.formType || 'starter',
     formLabel: character.formLabel || 'Starter 3D Form',
     forgeStatus: character.hasGeneratedModel ? 'forged' : 'not_forged',
@@ -1941,7 +2030,7 @@ function buildCharacterBlueprint(rebel, character) {
       cape: null,
       weaponLeft: null,
       weaponRight: null,
-      emblem: null
+      emblem: colonyProfile?.emblem || null
     },
     colors: {
       body: null,
@@ -1950,7 +2039,7 @@ function buildCharacterBlueprint(rebel, character) {
       eyes: null
     },
     confidence: {
-      colony: null,
+      colony: colonyProfile ? 1 : null,
       parts: null,
       colors: null
     }
@@ -1988,6 +2077,8 @@ function getOrCreateCharacterBlueprint(rebel, character) {
   if (savedBlueprint && savedBlueprint.blueprintVersion === 'v1') {
     const sourceTraits = rebel.traits || savedBlueprint.sourceTraits || {};
     const traitSlots = buildTraitSlots(sourceTraits);
+    const colony = rebel.gangName || traitSlots.colony || savedBlueprint.colony || null;
+    const colonyProfile = resolveColonyForgeProfile(colony);
 
     const hydratedBlueprint = {
       ...savedBlueprint,
@@ -1998,7 +2089,17 @@ function getOrCreateCharacterBlueprint(rebel, character) {
       sourceType: rebel.tokenId ? 'nft' : (savedBlueprint.sourceType || 'default'),
       sourceTraits,
       traitSlots,
-      colony: rebel.gangName || traitSlots.colony || savedBlueprint.colony || null
+      colony,
+      colonyProfile,
+      bodyType: colonyProfile?.preferredBodyType || savedBlueprint.bodyType || 'universal_ant_v1',
+      parts: {
+        ...(savedBlueprint.parts || {}),
+        emblem: savedBlueprint.parts?.emblem || colonyProfile?.emblem || null
+      },
+      confidence: {
+        ...(savedBlueprint.confidence || {}),
+        colony: colonyProfile ? 1 : null
+      }
     };
 
     saveCharacterBlueprint(rebel, hydratedBlueprint);
@@ -2009,7 +2110,6 @@ function getOrCreateCharacterBlueprint(rebel, character) {
   saveCharacterBlueprint(rebel, newBlueprint);
   return newBlueprint;
 }
-
 window.backToLobby = function backToLobby() {
   window.location.href = 'index.html';
 };
