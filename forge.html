@@ -272,6 +272,7 @@ body{
   </section>
 </main>
 
+<script src="assets/forge-core.js"></script>
 <script>
 function getSelectedRebel() {
   try {
@@ -311,7 +312,21 @@ function generatePreviewStub() {
 }
 
 const selectedRebel = getSelectedRebel();
+
+const forgeCharacter = {
+  formType: 'starter',
+  formLabel: 'Starter 3D Form',
+  hasGeneratedModel: false,
+  bundleId: 'starter_ant'
+};
+
+const forgeCharacterBlueprint = buildCharacterBlueprint(selectedRebel, forgeCharacter);
+const forgeGenerationInput = buildForgeGenerationInput(forgeCharacterBlueprint);
+
 window.selectedForgeRebel = selectedRebel;
+window.forgeCharacterBlueprint = forgeCharacterBlueprint;
+window.forgeGenerationInput = forgeGenerationInput;
+
 hydrateForgeScreen(selectedRebel);
 </script>
 
