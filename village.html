@@ -1936,13 +1936,49 @@ function buildCharacterBlueprint(rebel, character) {
   };
 }
 
+function getCharacterBlueprintStorageKey(rebel) {
+  return rebel && rebel.tokenId
+    ? 'rebelCharacterBlueprint_' + String(rebel.tokenId)
+    : 'rebelCharacterBlueprint_default';
+}
+
+function loadSavedCharacterBlueprint(rebel) {
+  try {
+    const raw = localStorage.getItem(getCharacterBlueprintStorageKey(rebel));
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) {
+    return null;
+  }
+}
+
+function saveCharacterBlueprint(rebel, blueprint) {
+  try {
+    localStorage.setItem(
+      getCharacterBlueprintStorageKey(rebel),
+      JSON.stringify(blueprint)
+    );
+  } catch(e) {}
+}
+
+function getOrCreateCharacterBlueprint(rebel, character) {
+  const savedBlueprint = loadSavedCharacterBlueprint(rebel);
+
+  if (savedBlueprint && savedBlueprint.blueprintVersion === 'v1') {
+    return savedBlueprint;
+  }
+
+  const newBlueprint = buildCharacterBlueprint(rebel, character);
+  saveCharacterBlueprint(rebel, newBlueprint);
+  return newBlueprint;
+}
+
 window.backToLobby = function backToLobby() {
   window.location.href = 'index.html';
 };
 
 const activeRebel = getSelectedRebel();
 const activeCharacter = resolveCharacterConfig(activeRebel);
-const activeCharacterBlueprint = buildCharacterBlueprint(activeRebel, activeCharacter);
+const activeCharacterBlueprint = getOrCreateCharacterBlueprint(activeRebel, activeCharacter);
 
 window.activeRebel = activeRebel;
 window.activeCharacter = activeCharacter;
