@@ -1146,6 +1146,17 @@ let adminMode = false;
 let _worklightOn = false;
 let adminDragging = false;
 
+async function hasActiveAdminSession() {
+  try {
+    const response = await fetch('/api/admin-session');
+    const data = await response.json();
+    return data.authenticated === true;
+  } catch(e) {
+    console.warn('Admin session check failed:', e);
+    return false;
+  }
+}
+
 const GRID_SIZE = 6;
 const ROT_SNAP = Math.PI / 2;
 const SNAP_DISTANCE = 1.5;
@@ -2821,13 +2832,22 @@ function toggleWalk() {
     wb.textContent = '⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
   }
 }
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', async e => {
   // Don't fire shortcuts when typing in an input field
   const tag = document.activeElement && document.activeElement.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;
   const key = e.key.toLowerCase();
 
   if (key === 'm') {
+    if (!adminMode) {
+      const authenticated = await hasActiveAdminSession();
+
+      if (!authenticated) {
+        showToast('Admin login required');
+        return;
+      }
+    }
+
     adminMode = !adminMode;
     updateAdminBadge();
 
@@ -2859,7 +2879,6 @@ document.addEventListener('keydown', e => {
     }
     return;
   }
-
   if (key === 'escape' && walkMode) toggleWalk();
 
   if (adminMode && key === 'n') {
