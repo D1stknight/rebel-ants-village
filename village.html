@@ -1898,7 +1898,26 @@ function hydrateSelectedRebelPanel(character) {
   }
 }
 
+function buildTraitSlots(sourceTraits) {
+  sourceTraits = sourceTraits || {};
+
+  return {
+    eyes: sourceTraits['Eyes'] || null,
+    head: sourceTraits['Heads'] || null,
+    mouth: sourceTraits['Mouths'] || null,
+    weapon: sourceTraits['Weapons'] || null,
+    colony: sourceTraits['Gang Names'] || null,
+    skullCap: sourceTraits['Skull Caps'] || null,
+    skullyFlap: sourceTraits['Skully Flaps'] || null,
+    background: sourceTraits['Color Backgrounds'] || null,
+    outfit: sourceTraits['Kimonos and Suits'] || null
+  };
+}
+
 function buildCharacterBlueprint(rebel, character) {
+  const sourceTraits = rebel.traits || {};
+  const traitSlots = buildTraitSlots(sourceTraits);
+
   return {
     blueprintVersion: 'v1',
     rebelId: rebel.id || 'ant_1',
@@ -1906,8 +1925,9 @@ function buildCharacterBlueprint(rebel, character) {
     name: rebel.name || 'Rebel #001',
     sourceImage: rebel.image || 'assets/lobby/ant_1.JPG',
     sourceType: rebel.tokenId ? 'nft' : 'default',
-    sourceTraits: rebel.traits || {},
-    colony: rebel.gangName || null,
+    sourceTraits,
+    traitSlots,
+    colony: rebel.gangName || traitSlots.colony || null,
     bodyType: 'universal_ant_v1',
     formType: character.formType || 'starter',
     formLabel: character.formLabel || 'Starter 3D Form',
@@ -1936,7 +1956,6 @@ function buildCharacterBlueprint(rebel, character) {
     }
   };
 }
-
 function getCharacterBlueprintStorageKey(rebel) {
   return rebel && rebel.tokenId
     ? 'rebelCharacterBlueprint_' + String(rebel.tokenId)
@@ -1967,6 +1986,9 @@ function getOrCreateCharacterBlueprint(rebel, character) {
   const savedBlueprint = loadSavedCharacterBlueprint(rebel);
 
   if (savedBlueprint && savedBlueprint.blueprintVersion === 'v1') {
+    const sourceTraits = rebel.traits || savedBlueprint.sourceTraits || {};
+    const traitSlots = buildTraitSlots(sourceTraits);
+
     const hydratedBlueprint = {
       ...savedBlueprint,
       rebelId: rebel.id || savedBlueprint.rebelId || 'ant_1',
@@ -1974,8 +1996,9 @@ function getOrCreateCharacterBlueprint(rebel, character) {
       name: rebel.name || savedBlueprint.name || 'Rebel #001',
       sourceImage: rebel.image || savedBlueprint.sourceImage || 'assets/lobby/ant_1.JPG',
       sourceType: rebel.tokenId ? 'nft' : (savedBlueprint.sourceType || 'default'),
-      sourceTraits: rebel.traits || savedBlueprint.sourceTraits || {},
-      colony: rebel.gangName || savedBlueprint.colony || null
+      sourceTraits,
+      traitSlots,
+      colony: rebel.gangName || traitSlots.colony || savedBlueprint.colony || null
     };
 
     saveCharacterBlueprint(rebel, hydratedBlueprint);
