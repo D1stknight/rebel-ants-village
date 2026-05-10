@@ -1705,7 +1705,53 @@ function doorFrame(x,y,z,w,h){
 })();
 
 // cache-bust: 1776624187298 ── WALKABLE CHARACTER ───────────────────────
-setSt("Loading character...");
+function getSelectedRebel() {
+  try {
+    const raw = localStorage.getItem('selectedRebel');
+    const rebel = raw ? JSON.parse(raw) : null;
+    return rebel && rebel.id ? rebel : {
+      id: 'ant_1',
+      name: 'Rebel #001',
+      image: 'assets/lobby/ant_1.JPG',
+      tokenId: null
+    };
+  } catch(e) {
+    return {
+      id: 'ant_1',
+      name: 'Rebel #001',
+      image: 'assets/lobby/ant_1.JPG',
+      tokenId: null
+    };
+  }
+}
+
+function resolveCharacterConfig(rebel) {
+  // V1: every selected Rebel uses the same starter 3D character bundle.
+  // Later, the NFT → 3D Forge pipeline can return token-specific generated GLBs here.
+  return {
+    rebel,
+    characterId: rebel.id || 'ant_1',
+    displayName: rebel.name || 'Rebel #001',
+    previewImage: rebel.image || 'assets/lobby/ant_1.JPG',
+    basePath: '/assets/character/',
+    idleFile: 'ant_idle_c.glb',
+    animations: [
+      { f: 'ant_walk_c.glb', i: 1 },
+      { f: 'ant_run_c.glb', i: 2 },
+      { f: 'ant_flip_kick_c.glb', i: 3 },
+      { f: 'ant_jumping_c.glb', i: 4 }
+    ]
+  };
+}
+
+const activeRebel = getSelectedRebel();
+const activeCharacter = resolveCharacterConfig(activeRebel);
+window.activeRebel = activeRebel;
+window.activeCharacter = activeCharacter;
+console.log('Active Rebel selected for village:', activeRebel);
+console.log('Resolved character config:', activeCharacter);
+
+setSt("Loading " + activeCharacter.displayName + "...");
 let charMesh=null, charAnims={}, isMoving=false;
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
@@ -1732,7 +1778,7 @@ function switchAnim(idx, loop) {
   if (prev && prev.isPlaying) prev.stop();
   animState = idx; next.play(loop !== false);
 }
-BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", scene)
+BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacter.idleFile, scene)
 .then(r => {
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
   playerRoot.position = new BABYLON.Vector3(0, 0.12, 20);
@@ -1766,7 +1812,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", "/assets/character/", "ant_idle_c.glb", 
   courtyardLight.range = 28;
   window.followLight.intensity = 2.8; window.followLight.range = 22;
   setSt("Character ready!");
-  [{f:"ant_walk_c.glb",i:1},{f:"ant_run_c.glb",i:2},{f:"ant_flip_kick_c.glb",i:3},{f:"ant_jumping_c.glb",i:4}].forEach(({f,i}) => {
+  activeCharacter.animations.forEach(({f,i}) => {
     BABYLON.SceneLoader.ImportMeshAsync("","/assets/character/",f,scene).then(r2 => {
       r2.meshes.forEach(m=>{m.isVisible=false;m.setEnabled(false);});
       const ag=r2.animationGroups[0]; if(!ag)return;
