@@ -5605,5 +5605,33 @@
     "glowShape": null,
     "glowWidth": null,
     "glowDepth": null
+  },
+  {
+    "type": "ambient_glow",
+    "name": "ambient_glow_root",
+    "position": {
+      "x": 62.53873825073242,
+      "y": 3.1254775524139404,
+      "z": 3.2264649868011475
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": "#15077d",
+    "glowBrightness": 2.4,
+    "glowShape": "rectangle",
+    "glowWidth": 8.5,
+    "glowDepth": 35.5
   }
 ]
