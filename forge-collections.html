@@ -366,17 +366,28 @@ body{
   border-top:1px solid rgba(255,255,255,.06);
   padding-top:14px;
 }
+.collection-edit-btn,
 .collection-delete-btn{
   padding:10px 14px;
   background:transparent;
-  border:1px solid rgba(255,139,139,.35);
-  color:#ff8b8b;
   font-family:'Cinzel',serif;
   font-size:10px;
   letter-spacing:3px;
   text-transform:uppercase;
   cursor:pointer;
   transition:all .2s ease;
+}
+.collection-edit-btn{
+  border:1px solid rgba(94,207,202,.35);
+  color:#5ecfca;
+}
+.collection-edit-btn:hover{
+  background:rgba(94,207,202,.1);
+  border-color:rgba(94,207,202,.7);
+}
+.collection-delete-btn{
+  border:1px solid rgba(255,139,139,.35);
+  color:#ff8b8b;
 }
 .collection-delete-btn:hover{
   background:rgba(255,139,139,.1);
@@ -538,13 +549,22 @@ function clearNewCollectionForm() {
   const chain = document.getElementById('new-chain');
   if (chain) chain.value = 'ethereum';
 
+  const collectionKeyInput = document.getElementById('new-collection-key');
+  const panelTitle = document.querySelector('#add-collection-panel .panel-title');
+  const saveButton = document.getElementById('save-collection-btn');
   const status = document.getElementById('trait-discovery-status');
   const results = document.getElementById('trait-discovery-results');
   const summary = document.getElementById('trait-results-summary');
   const grid = document.getElementById('trait-results-grid');
   const mappingBuilder = document.getElementById('trait-mapping-builder');
   const mappingGrid = document.getElementById('trait-mapping-grid');
-  const saveButton = document.getElementById('save-collection-btn');
+
+  if (collectionKeyInput) collectionKeyInput.disabled = false;
+  if (panelTitle) panelTitle.textContent = 'ADD COLLECTION';
+  if (saveButton) {
+    saveButton.disabled = false;
+    saveButton.textContent = 'Save Collection';
+  }
 
   if (status) {
     status.textContent = '';
@@ -555,8 +575,8 @@ function clearNewCollectionForm() {
   if (grid) grid.innerHTML = '';
   if (mappingBuilder) mappingBuilder.classList.remove('open');
   if (mappingGrid) mappingGrid.innerHTML = '';
-  if (saveButton) saveButton.disabled = false;
 
+  window._editingCollectionKey = null;
   window._newCollectionTraitDiscovery = null;
   window._newCollectionTraitMap = null;
 }
@@ -634,7 +654,7 @@ function updateTraitMappingPreview(slot) {
   window._newCollectionTraitMap[slot] = selectedTrait || null;
 }
 
-function renderTraitMappingBuilder(data) {
+function renderTraitMappingBuilder(data, existingTraitMap = null) {
   const builder = document.getElementById('trait-mapping-builder');
   const grid = document.getElementById('trait-mapping-grid');
   const traitCategories = data.traitCategories || [];
@@ -646,7 +666,11 @@ function renderTraitMappingBuilder(data) {
   window._newCollectionTraitMap = {};
 
   UNIVERSAL_FORGE_SLOTS.forEach(slot => {
-    const suggestedTrait = getSuggestedTraitForSlot(slot, traitCategories);
+    const savedTrait = existingTraitMap && existingTraitMap[slot]
+      ? existingTraitMap[slot]
+      : '';
+    const suggestedTrait = savedTrait || getSuggestedTraitForSlot(slot, traitCategories);
+
     window._newCollectionTraitMap[slot] = suggestedTrait || null;
 
     const row = document.createElement('div');
@@ -680,7 +704,6 @@ function renderTraitMappingBuilder(data) {
 
   builder.classList.add('open');
 }
-
 function renderTraitDiscoveryResults(data) {
   const results = document.getElementById('trait-discovery-results');
   const summary = document.getElementById('trait-results-summary');
@@ -719,8 +742,19 @@ function renderTraitDiscoveryResults(data) {
     });
   }
 
-   if (results) results.classList.add('open');
-  renderTraitMappingBuilder(data);
+  if (results) results.classList.add('open');
+
+  const editingCollection =
+    window._editingCollectionKey &&
+    window._forgeCollectionsConfig &&
+    window._forgeCollectionsConfig.collections
+      ? window._forgeCollectionsConfig.collections[window._editingCollectionKey]
+      : null;
+
+  renderTraitMappingBuilder(
+    data,
+    editingCollection ? editingCollection.traitMap || {} : null
+  );
 }
 
 async function fetchNewCollectionTraits() {
@@ -790,6 +824,7 @@ async function saveNewCollection() {
   const discovery = window._newCollectionTraitDiscovery;
   const traitMap = window._newCollectionTraitMap;
   const config = window._forgeCollectionsConfig;
+  const editingKey = window._editingCollectionKey;
   const status = document.getElementById('trait-discovery-status');
   const saveButton = document.getElementById('save-collection-btn');
 
@@ -809,7 +844,7 @@ async function saveNewCollection() {
     return;
   }
 
-  if (config.collections[discovery.collectionKey]) {
+  if (!editingKey && config.collections[discovery.collectionKey]) {
     if (status) {
       status.textContent = 'That collection key already exists.';
       status.className = 'error';
@@ -821,25 +856,29 @@ async function saveNewCollection() {
     Object.entries(traitMap).filter(([, rawTraitName]) => rawTraitName)
   );
 
+  const previousCollection = editingKey ? config.collections[editingKey] : null;
+
+  const nextCollection = {
+    collectionKey: discovery.collectionKey,
+    displayName: discovery.displayName,
+    chain: discovery.chain,
+    contractAddress: discovery.contractAddress,
+    openSeaSlug: discovery.openSeaSlug,
+    enabled: previousCollection ? previousCollection.enabled !== false : true,
+    traitCategories: discovery.traitCategories || [],
+    traitMap: cleanedTraitMap
+  };
+
   const nextConfig = {
     ...config,
     collections: {
       ...config.collections,
-      [discovery.collectionKey]: {
-        collectionKey: discovery.collectionKey,
-        displayName: discovery.displayName,
-        chain: discovery.chain,
-        contractAddress: discovery.contractAddress,
-        openSeaSlug: discovery.openSeaSlug,
-        enabled: true,
-        traitCategories: discovery.traitCategories || [],
-        traitMap: cleanedTraitMap
-      }
+      [discovery.collectionKey]: nextCollection
     }
   };
 
   if (status) {
-    status.textContent = 'Saving collection...';
+    status.textContent = editingKey ? 'Updating collection...' : 'Saving collection...';
     status.className = '';
   }
   if (saveButton) saveButton.disabled = true;
@@ -861,18 +900,56 @@ async function saveNewCollection() {
     renderCollections(nextConfig);
 
     if (status) {
-      status.textContent = 'Collection saved to GitHub.';
+      status.textContent = editingKey
+        ? 'Collection updated on GitHub.'
+        : 'Collection saved to GitHub.';
       status.className = 'success';
     }
   } catch(e) {
-    console.warn('Could not save new collection:', e);
+    console.warn('Could not save collection:', e);
     if (status) {
-      status.textContent = 'Could not save collection.';
+      status.textContent = editingKey
+        ? 'Could not update collection.'
+        : 'Could not save collection.';
       status.className = 'error';
     }
   } finally {
     if (saveButton) saveButton.disabled = false;
   }
+}
+
+async function editCollection(collectionKey) {
+  const config = window._forgeCollectionsConfig;
+  const collection = config && config.collections ? config.collections[collectionKey] : null;
+  const panel = document.getElementById('add-collection-panel');
+  const panelTitle = document.querySelector('#add-collection-panel .panel-title');
+  const collectionKeyInput = document.getElementById('new-collection-key');
+  const saveButton = document.getElementById('save-collection-btn');
+  const status = document.getElementById('trait-discovery-status');
+
+  if (!collection) return;
+
+  clearNewCollectionForm();
+
+  window._editingCollectionKey = collectionKey;
+
+  document.getElementById('new-display-name').value = collection.displayName || '';
+  document.getElementById('new-collection-key').value = collection.collectionKey || '';
+  document.getElementById('new-chain').value = collection.chain || 'ethereum';
+  document.getElementById('new-contract-address').value = collection.contractAddress || '';
+  document.getElementById('new-opensea-slug').value = collection.openSeaSlug || '';
+
+  if (collectionKeyInput) collectionKeyInput.disabled = true;
+  if (panelTitle) panelTitle.textContent = 'EDIT COLLECTION';
+  if (saveButton) saveButton.textContent = 'Update Collection';
+  if (panel) panel.classList.add('open');
+
+  if (status) {
+    status.textContent = 'Fetching current traits for edit...';
+    status.className = '';
+  }
+
+  await fetchNewCollectionTraits();
 }
 
 async function deleteCollection(collectionKey) {
@@ -980,9 +1057,15 @@ function renderCollections(config) {
       </div>
 
       <div class="collection-actions">
+        <button class="collection-edit-btn" type="button">Edit</button>
         <button class="collection-delete-btn" type="button">Delete</button>
       </div>
     `;
+
+    const editButton = card.querySelector('.collection-edit-btn');
+    if (editButton) {
+      editButton.addEventListener('click', () => editCollection(collection.collectionKey));
+    }
 
     const deleteButton = card.querySelector('.collection-delete-btn');
     if (deleteButton) {
