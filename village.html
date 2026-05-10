@@ -1898,16 +1898,59 @@ function hydrateSelectedRebelPanel(character) {
   }
 }
 
+function buildCharacterBlueprint(rebel, character) {
+  return {
+    blueprintVersion: 'v1',
+    rebelId: rebel.id || 'ant_1',
+    tokenId: rebel.tokenId || null,
+    name: rebel.name || 'Rebel #001',
+    sourceImage: rebel.image || 'assets/lobby/ant_1.JPG',
+    sourceType: rebel.tokenId ? 'nft' : 'default',
+    colony: null,
+    bodyType: 'universal_ant_v1',
+    formType: character.formType || 'starter',
+    formLabel: character.formLabel || 'Starter 3D Form',
+    forgeStatus: character.hasGeneratedModel ? 'forged' : 'not_forged',
+    bundleId: character.bundleId || 'starter_ant',
+    hasGeneratedModel: character.hasGeneratedModel === true,
+    parts: {
+      helmet: null,
+      mask: null,
+      armor: null,
+      cape: null,
+      weaponLeft: null,
+      weaponRight: null,
+      emblem: null
+    },
+    colors: {
+      body: null,
+      armor: null,
+      accent: null,
+      eyes: null
+    },
+    confidence: {
+      colony: null,
+      parts: null,
+      colors: null
+    }
+  };
+}
+
 window.backToLobby = function backToLobby() {
   window.location.href = 'index.html';
 };
 
 const activeRebel = getSelectedRebel();
 const activeCharacter = resolveCharacterConfig(activeRebel);
+const activeCharacterBlueprint = buildCharacterBlueprint(activeRebel, activeCharacter);
+
 window.activeRebel = activeRebel;
 window.activeCharacter = activeCharacter;
+window.activeCharacterBlueprint = activeCharacterBlueprint;
+
 console.log('Active Rebel selected for village:', activeRebel);
 console.log('Resolved character config:', activeCharacter);
+console.log('Active character blueprint:', activeCharacterBlueprint);
 
 hydrateSelectedRebelPanel(activeCharacter);
 setSt("Loading " + activeCharacter.displayName + "...");
