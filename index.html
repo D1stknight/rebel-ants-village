@@ -246,6 +246,7 @@ function showDefaultCard() {
   ownedRebels = [{ id:'ant_1', name:'Rebel #001', image:'assets/lobby/ant_1.JPG' }];
   selectedAnt = 'ant_1';
   buildCard(ownedRebels[0]);
+  try { localStorage.setItem('selectedRebel', JSON.stringify(ownedRebels[0])); } catch(e){}
 }
 
 async function loadNFTs(walletAddress) {
@@ -276,13 +277,14 @@ async function loadNFTs(walletAddress) {
       return;
     }
     ownedRebels = allRebels.map(n => ({
-      id: 'rebel_' + n.identifier,
-      name: n.name || ('Rebel #' + n.identifier),
-      image: n.image_url || 'assets/lobby/ant_1.JPG',
-      tokenId: n.identifier
-    }));
-    selectedAnt = ownedRebels[0].id;
-    ownedRebels.forEach(r => buildCard(r));
+  id: 'rebel_' + n.identifier,
+  name: n.name || ('Rebel #' + n.identifier),
+  image: n.image_url || 'assets/lobby/ant_1.JPG',
+  tokenId: n.identifier
+}));
+selectedAnt = ownedRebels[0].id;
+try { localStorage.setItem('selectedRebel', JSON.stringify(ownedRebels[0])); } catch(e){}
+ownedRebels.forEach(r => buildCard(r));
     setStatus(ownedRebels.length + ' Rebel' + (ownedRebels.length > 1 ? 's' : '') + ' found');
     document.getElementById('btn-enter').disabled = false;
   } catch(e) {
