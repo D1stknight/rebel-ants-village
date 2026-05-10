@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebel Ants — Admin Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  width:100%;
+  min-height:100%;
+  background:#050812;
+  color:#f3e6bf;
+  font-family:'Cinzel',serif;
+}
+body{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:28px;
+  background:
+    radial-gradient(circle at top center, rgba(200,146,42,.13), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(94,207,202,.08), transparent 38%),
+    #050812;
+}
+#auth-loading{
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+#admin-hub{
+  width:min(920px,100%);
+  display:none;
+  flex-direction:column;
+  gap:28px;
+}
+#hub-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  border-bottom:1px solid rgba(200,146,42,.18);
+  padding-bottom:22px;
+}
+#hub-title h1{
+  font-family:'Cinzel Decorative',serif;
+  font-size:28px;
+  letter-spacing:4px;
+  color:#c8922a;
+  text-shadow:0 0 28px rgba(200,146,42,.25);
+}
+#hub-title p{
+  margin-top:8px;
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+#logout-btn{
+  padding:11px 16px;
+  background:transparent;
+  border:1px solid rgba(200,146,42,.35);
+  color:#c8922a;
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+#logout-btn:hover{
+  background:rgba(200,146,42,.12);
+  border-color:rgba(200,146,42,.7);
+}
+#hub-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:16px;
+}
+.hub-card{
+  min-height:180px;
+  padding:22px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  gap:18px;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.08);
+  text-decoration:none;
+  color:inherit;
+  transition:all .2s ease;
+}
+.hub-card:hover{
+  transform:translateY(-3px);
+  border-color:rgba(200,146,42,.45);
+  background:rgba(200,146,42,.06);
+  box-shadow:0 14px 35px rgba(0,0,0,.3);
+}
+.hub-card.locked{
+  opacity:.7;
+  cursor:default;
+}
+.hub-card.locked:hover{
+  transform:none;
+  border-color:rgba(255,255,255,.08);
+  background:rgba(255,255,255,.025);
+  box-shadow:none;
+}
+.card-icon{
+  font-size:28px;
+}
+.card-title{
+  font-family:'Cinzel Decorative',serif;
+  color:#c8922a;
+  font-size:16px;
+  letter-spacing:2px;
+}
+.card-desc{
+  margin-top:10px;
+  color:#b7a98b;
+  font-size:12px;
+  line-height:1.8;
+}
+.card-status{
+  color:#5ecfca;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
+.card-status.soon{
+  color:#8a7a5a;
+}
+#hub-note{
+  color:#8a7a5a;
+  font-size:11px;
+  line-height:1.9;
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:18px;
+}
+@media (max-width:600px){
+  body{padding:18px}
+  #hub-header{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  #hub-title h1{
+    font-size:22px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="auth-loading">Checking admin access...</div>
+
+<main id="admin-hub">
+  <header id="hub-header">
+    <div id="hub-title">
+      <h1>ADMIN HUB</h1>
+      <p>Rebel Ants Command Center</p>
+    </div>
+    <button id="logout-btn" type="button" onclick="logoutAdmin()">Log Out</button>
+  </header>
+
+  <section id="hub-grid">
+    <a class="hub-card" href="village.html">
+      <div>
+        <div class="card-icon">🏯</div>
+        <div class="card-title">Village Builder</div>
+        <div class="card-desc">Enter the village to build, place assets, control lighting, and shape the world.</div>
+      </div>
+      <div class="card-status">Available</div>
+    </a>
+
+    <div class="hub-card locked">
+      <div>
+        <div class="card-icon">⚒️</div>
+        <div class="card-title">Forge Collection Manager</div>
+        <div class="card-desc">Add NFT collections, fetch traits, and map them into the Character Forge without touching code.</div>
+      </div>
+      <div class="card-status soon">Coming Next</div>
+    </div>
+  </section>
+
+  <div id="hub-note">
+    This hub will become the private entrance for all Rebel Ants Universe admin tools:
+    Village Builder, Forge Collection Manager, Character Parts Manager, generated characters,
+    economy controls, and future systems.
+  </div>
+</main>
+
+<script>
+async function checkAdminSession() {
+  try {
+    const response = await fetch('/api/admin-session');
+    const data = await response.json();
+
+    if (!data.authenticated) {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    document.getElementById('auth-loading').style.display = 'none';
+    document.getElementById('admin-hub').style.display = 'flex';
+  } catch(e) {
+    console.warn('Admin session check failed:', e);
+    window.location.href = 'index.html';
+  }
+}
+
+async function logoutAdmin() {
+  try {
+    await fetch('/api/admin-logout', { method: 'POST' });
+  } catch(e) {
+    console.warn('Admin logout failed:', e);
+  }
+
+  window.location.href = 'index.html';
+}
+
+checkAdminSession();
+</script>
+
+</body>
+</html>
