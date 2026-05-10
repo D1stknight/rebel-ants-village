@@ -2266,6 +2266,32 @@ function saveCharacterBlueprint(rebel, blueprint) {
 
 window.saveCharacterBlueprint = saveCharacterBlueprint;
 
+function buildForgeGenerationInput(blueprint) {
+  blueprint = blueprint || {};
+
+  return {
+    generationInputVersion: 'v1',
+    blueprintVersion: blueprint.blueprintVersion || 'v1',
+    rebelId: blueprint.rebelId || 'ant_1',
+    tokenId: blueprint.tokenId || null,
+    collectionKey: blueprint.collectionKey || 'battle_for_colony',
+    name: blueprint.name || 'Rebel #001',
+    sourceType: blueprint.sourceType || 'default',
+    sourceImage: blueprint.sourceImage || 'assets/lobby/ant_1.JPG',
+    bodyType: blueprint.bodyType || 'universal_ant_v1',
+    forgeStatus: blueprint.forgeStatus || 'not_forged',
+    sourceTraits: blueprint.sourceTraits || {},
+    traitSlots: blueprint.traitSlots || {},
+    forgeLayers: blueprint.forgeLayers || {},
+    colony: blueprint.colony || null,
+    colonyProfile: blueprint.colonyProfile || null,
+    weaponProfile: blueprint.weaponProfile || null,
+    parts: blueprint.parts || {},
+    colors: blueprint.colors || {},
+    confidence: blueprint.confidence || {}
+  };
+}
+
 function getOrCreateCharacterBlueprint(rebel, character) {
   const savedBlueprint = loadSavedCharacterBlueprint(rebel);
 
@@ -2318,10 +2344,12 @@ window.backToLobby = function backToLobby() {
 const activeRebel = getSelectedRebel();
 const activeCharacter = resolveCharacterConfig(activeRebel);
 const activeCharacterBlueprint = getOrCreateCharacterBlueprint(activeRebel, activeCharacter);
+const activeForgeGenerationInput = buildForgeGenerationInput(activeCharacterBlueprint);
 
 window.activeRebel = activeRebel;
 window.activeCharacter = activeCharacter;
 window.activeCharacterBlueprint = activeCharacterBlueprint;
+window.activeForgeGenerationInput = activeForgeGenerationInput;
 
 console.log('Active Rebel selected for village:', activeRebel);
 console.log('Resolved character config:', activeCharacter);
