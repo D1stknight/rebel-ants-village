@@ -334,15 +334,23 @@ function buildCharacterBlueprint(rebel, character) {
 function buildForgeGenerationInput(blueprint) {
   blueprint = blueprint || {};
 
+  const collectionKey = blueprint.collectionKey || 'battle_for_colony';
+
   return {
     generationInputVersion: 'v1',
     blueprintVersion: blueprint.blueprintVersion || 'v1',
     rebelId: blueprint.rebelId || 'ant_1',
     tokenId: blueprint.tokenId || null,
-    collectionKey: blueprint.collectionKey || 'battle_for_colony',
+    collectionKey,
     name: blueprint.name || 'Rebel #001',
     sourceType: blueprint.sourceType || 'default',
     sourceImage: blueprint.sourceImage || 'assets/lobby/ant_1.JPG',
+
+    // Source art can be partial, but Forge output must become a playable full-body character.
+    sourceFraming: collectionKey === 'battle_for_colony' ? 'chest_up' : 'unknown',
+    targetOutput: 'full_body_3d_character',
+    requiresFullBodyCompletion: true,
+
     bodyType: blueprint.bodyType || 'universal_ant_v1',
     forgeStatus: blueprint.forgeStatus || 'not_forged',
     sourceTraits: blueprint.sourceTraits || {},
