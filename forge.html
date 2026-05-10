@@ -385,10 +385,48 @@ function hydrateForgeScreen(rebel, generationInput) {
     JSON.stringify(snapshot, null, 2);
 }
 
-function generatePreviewStub() {
+async function generatePreviewStub() {
   const status = document.getElementById('forge-status');
-  status.textContent = 'Forge input is ready. The real 3D preview generator will connect next.';
-  status.className = 'success';
+  const button = document.getElementById('generate-btn');
+
+  if (status) {
+    status.textContent = 'Sending Forge preview request...';
+    status.className = '';
+  }
+
+  if (button) button.disabled = true;
+
+  try {
+    const response = await fetch('/api/forge-generate-preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        generationInput: forgeGenerationInput
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Preview request failed');
+    }
+
+    window.lastForgePreviewResponse = data;
+
+    if (status) {
+      status.textContent = data.message || 'Forge preview request accepted.';
+      status.className = 'success';
+    }
+  } catch(e) {
+    console.warn('Forge preview request failed:', e);
+
+    if (status) {
+      status.textContent = 'Could not start Forge preview.';
+      status.className = 'error';
+    }
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 const selectedRebel = getSelectedRebel();
