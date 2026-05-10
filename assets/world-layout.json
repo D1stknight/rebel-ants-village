@@ -5011,11 +5011,11 @@
   },
   {
     "type": "ambient_glow",
-    "name": "ambient_glowRootClone_1778425924679_179",
+    "name": "ambient_glow_root",
     "position": {
-      "x": 75.91018676757812,
-      "y": 2.389927387237549,
-      "z": -29.551025390625
+      "x": 68.7661361694336,
+      "y": 2.753812313079834,
+      "z": -5.051625728607178
     },
     "rotation": {
       "x": 0,
@@ -5023,15 +5023,15 @@
       "z": 0
     },
     "scaling": {
-      "x": 1,
-      "y": 1,
-      "z": 1
+      "x": 1.953125,
+      "y": 1.953125,
+      "z": 1.953125
     },
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
     "lanternBrightness": null,
-    "glowColor": "#9d0b34",
+    "glowColor": "#a21144",
     "glowBrightness": 1
   }
 ]
