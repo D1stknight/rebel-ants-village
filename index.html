@@ -622,10 +622,14 @@ async function submitAdminLogin() {
       return;
     }
 
-    if (status) {
-      status.textContent = 'Access granted';
-      status.className = 'success';
-    }
+   if (status) {
+  status.textContent = 'Access granted';
+  status.className = 'success';
+}
+
+setTimeout(() => {
+  window.location.href = 'admin.html';
+}, 500);
   } catch(e) {
     console.warn('Admin login failed:', e);
     if (status) {
