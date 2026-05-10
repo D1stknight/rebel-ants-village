@@ -205,10 +205,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <input id="ambientGlowBrightness" type="range" min="0.2" max="3" step="0.1" value="1" style="flex:1">
   </div>
   <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-    <select id="ambientGlowShape" style="flex:1;height:30px;background:#15151f;color:#ffdd88;border:1px solid rgba(255,221,136,0.35);border-radius:6px;padding:0 8px">
+    <select id="ambientGlowShape" onchange="toggleAmbientGlowRectangleControls()" style="flex:1;height:30px;background:#15151f;color:#ffdd88;border:1px solid rgba(255,221,136,0.35);border-radius:6px;padding:0 8px">
       <option value="circle">Circle</option>
       <option value="square">Square</option>
+      <option value="rectangle">Rectangle</option>
     </select>
+  </div>
+  <div id="ambientGlowRectangleControls" style="display:none;margin-bottom:6px">
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <label style="width:42px;font-size:10px;color:#ffdd88">Width</label>
+      <input id="ambientGlowWidth" type="range" min="1" max="40" step="0.5" value="12" style="flex:1">
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <label style="width:42px;font-size:10px;color:#ffdd88">Depth</label>
+      <input id="ambientGlowDepth" type="range" min="1" max="40" step="0.5" value="6" style="flex:1">
+    </div>
   </div>
   <button class="ctrl-btn full" onclick="applyAmbientGlowSettings()" style="width:100%;background:#ffdd88;color:#000">Apply Glow</button>
 </div>
@@ -442,11 +453,13 @@ function spawnAsset(type, position, extraMeta) {
    if (config.procedural) {
     // Build procedural asset immediately
     if (type === 'toro_lantern') buildToro(root, root.metadata.toroColor || '#ffdd88');
-    if (type === 'ambient_glow') buildAmbientGlow(
+   if (type === 'ambient_glow') buildAmbientGlow(
   root,
   root.metadata.glowColor || '#ffdd88',
   root.metadata.glowBrightness || 1,
-  root.metadata.glowShape || 'circle'
+  root.metadata.glowShape || 'circle',
+  root.metadata.glowWidth || ((root.metadata.glowShape || 'circle') === 'rectangle' ? 12 : 9),
+  root.metadata.glowDepth || ((root.metadata.glowShape || 'circle') === 'rectangle' ? 6 : 9)
 );
     root.metadata.loaded = true;
     console.log("Spawned procedural:", type);
@@ -469,10 +482,15 @@ function spawnAsset(type, position, extraMeta) {
   return root;
 }
 
-function buildAmbientGlow(root, glowColor, glowBrightness, glowShape) {
+function buildAmbientGlow(root, glowColor, glowBrightness, glowShape, glowWidth, glowDepth) {
   glowColor = glowColor || '#ffdd88';
   glowBrightness = glowBrightness || 1;
   glowShape = glowShape || 'circle';
+
+  const defaultWidth = glowShape === 'rectangle' ? 12 : 9;
+  const defaultDepth = glowShape === 'rectangle' ? 6 : 9;
+  glowWidth = Number(glowWidth) || defaultWidth;
+  glowDepth = Number(glowDepth) || defaultDepth;
 
   const glow = BABYLON.Color3.FromHexString(glowColor);
 
@@ -491,44 +509,42 @@ function buildAmbientGlow(root, glowColor, glowBrightness, glowShape) {
 
     ctx.clearRect(0, 0, size, size);
 
-   if (shape === 'square') {
-  const image = ctx.createImageData(size, size);
+    if (shape === 'square' || shape === 'rectangle') {
+      const image = ctx.createImageData(size, size);
 
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const nx = Math.abs((x - c) / c);
-      const ny = Math.abs((y - c) / c);
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const nx = Math.abs((x - c) / c);
+          const ny = Math.abs((y - c) / c);
 
-      // Square distance field:
-      // uses the farther axis instead of radial distance,
-      // so the fade follows a square shape instead of a circle.
-      const d = Math.max(nx, ny);
+          // Square distance field:
+          // uses the farther axis instead of radial distance,
+          // so the fade follows a square/rectangle shape instead of a circle.
+          const d = Math.max(nx, ny);
 
-      let alpha;
-      if (d <= 0.18) {
-        alpha = 1.0;
-      } else if (d <= 0.48) {
-        alpha = 1.0 - ((d - 0.18) / 0.30) * 0.18;
-      } else if (d <= 0.76) {
-        alpha = 0.82 - ((d - 0.48) / 0.28) * 0.58;
-      } else if (d <= 1.0) {
-        alpha = 0.24 - ((d - 0.76) / 0.24) * 0.24;
-      } else {
-        alpha = 0;
+          let alpha;
+          if (d <= 0.18) {
+            alpha = 1.0;
+          } else if (d <= 0.48) {
+            alpha = 1.0 - ((d - 0.18) / 0.30) * 0.18;
+          } else if (d <= 0.76) {
+            alpha = 0.82 - ((d - 0.48) / 0.28) * 0.58;
+          } else if (d <= 1.0) {
+            alpha = 0.24 - ((d - 0.76) / 0.24) * 0.24;
+          } else {
+            alpha = 0;
+          }
+
+          const i = (y * size + x) * 4;
+          image.data[i] = 255;
+          image.data[i + 1] = 255;
+          image.data[i + 2] = 255;
+          image.data[i + 3] = Math.max(0, Math.min(255, Math.round(alpha * 255)));
+        }
       }
 
-      const i = (y * size + x) * 4;
-      image.data[i] = 255;
-      image.data[i + 1] = 255;
-      image.data[i + 2] = 255;
-      image.data[i + 3] = Math.max(0, Math.min(255, Math.round(alpha * 255)));
-    }
-  }
-
-  ctx.putImageData(image, 0, 0);
-}
-    
-    else {
+      ctx.putImageData(image, 0, 0);
+    } else {
       const gradient = ctx.createRadialGradient(c, c, 0, c, c, c);
       gradient.addColorStop(0.00, 'rgba(255,255,255,1.00)');
       gradient.addColorStop(0.20, 'rgba(255,255,255,0.94)');
@@ -548,10 +564,10 @@ function buildAmbientGlow(root, glowColor, glowBrightness, glowShape) {
   const glowTexture = makeAmbientGlowTexture('ambientGlowTex_' + Math.random(), glowShape);
 
   const glowMesh =
-    glowShape === 'square'
+    glowShape === 'square' || glowShape === 'rectangle'
       ? attach(BABYLON.MeshBuilder.CreatePlane(
-          'ambientGlowSquare',
-          { width: 9, height: 9 },
+          glowShape === 'rectangle' ? 'ambientGlowRectangle' : 'ambientGlowSquare',
+          { width: glowWidth, height: glowDepth },
           scene
         ))
       : attach(BABYLON.MeshBuilder.CreateDisc(
@@ -582,13 +598,14 @@ function buildAmbientGlow(root, glowColor, glowBrightness, glowShape) {
   root.metadata.glowColor = glowColor;
   root.metadata.glowBrightness = glowBrightness;
   root.metadata.glowShape = glowShape;
+  root.metadata.glowWidth = glowWidth;
+  root.metadata.glowDepth = glowDepth;
   root.metadata._ambientGlow = {
     mesh: glowMesh,
     material: mat,
     texture: glowTexture
   };
 }
-
 // ── TŌRŌ LANTERN BUILDER ─────────────────────────────────────
 // Traditional Japanese stone lantern (tōrō) built from primitives
 // All emissive — zero performance cost, unlimited placement
@@ -1107,9 +1124,17 @@ if (ambientGlowPanel) {
   ambientGlowPanel.style.display = isAmbientGlow ? 'block' : 'none';
 
   if (isAmbientGlow) {
+    const glowShape = selectedObject.metadata.glowShape || 'circle';
+
     document.getElementById('ambientGlowColor').value = selectedObject.metadata.glowColor || '#ffdd88';
     document.getElementById('ambientGlowBrightness').value = selectedObject.metadata.glowBrightness || 1;
-    document.getElementById('ambientGlowShape').value = selectedObject.metadata.glowShape || 'circle';
+    document.getElementById('ambientGlowShape').value = glowShape;
+    document.getElementById('ambientGlowWidth').value =
+      selectedObject.metadata.glowWidth || (glowShape === 'rectangle' ? 12 : 9);
+    document.getElementById('ambientGlowDepth').value =
+      selectedObject.metadata.glowDepth || (glowShape === 'rectangle' ? 6 : 9);
+
+    toggleAmbientGlowRectangleControls();
   }
 }
   if (isSign) {
@@ -1933,7 +1958,9 @@ lanternColor: node.metadata.lanternColor || null,
 lanternBrightness: node.metadata.lanternBrightness || null,
 glowColor: node.metadata.glowColor || null,
 glowBrightness: node.metadata.glowBrightness || null,
-glowShape: node.metadata.glowShape || null
+glowShape: node.metadata.glowShape || null,
+glowWidth: node.metadata.glowWidth || null,
+glowDepth: node.metadata.glowDepth || null
   }));
   const json = JSON.stringify(data, null, 2);
   // Save to localStorage (fast cache for asset systems)
@@ -2019,12 +2046,14 @@ function loadWorldLayout(){
 
       const proceduralMeta =
        item.type === 'ambient_glow'
-  ? {
-      isClone: true,
-      glowColor: item.glowColor || '#ffdd88',
-      glowBrightness: item.glowBrightness || 1,
-      glowShape: item.glowShape || 'circle'
-    }
+ ? {
+    isClone: true,
+    glowColor: item.glowColor || '#ffdd88',
+    glowBrightness: item.glowBrightness || 1,
+    glowShape: item.glowShape || 'circle',
+    glowWidth: item.glowWidth || ((item.glowShape || 'circle') === 'rectangle' ? 12 : 9),
+    glowDepth: item.glowDepth || ((item.glowShape || 'circle') === 'rectangle' ? 6 : 9)
+  }
           : {
               isClone: true,
               toroColor: item.toroColor || '#ffdd88'
@@ -2149,7 +2178,9 @@ function duplicateSelectedFence(){
   isClone: true,
   glowColor: sourceObject.metadata.glowColor || "#ffdd88",
   glowBrightness: sourceObject.metadata.glowBrightness || 1,
-  glowShape: sourceObject.metadata.glowShape || "circle"
+  glowShape: sourceObject.metadata.glowShape || "circle",
+  glowWidth: sourceObject.metadata.glowWidth || ((sourceObject.metadata.glowShape || "circle") === "rectangle" ? 12 : 9),
+  glowDepth: sourceObject.metadata.glowDepth || ((sourceObject.metadata.glowShape || "circle") === "rectangle" ? 6 : 9)
 });
 
     if (!cloneRoot) return;
@@ -2860,6 +2891,20 @@ function clampAmbientGlowBrightness(value) {
   return Math.max(0.2, Math.min(3.0, n));
 }
 
+function toggleAmbientGlowRectangleControls() {
+  const shapeSelect = document.getElementById('ambientGlowShape');
+  const rectangleControls = document.getElementById('ambientGlowRectangleControls');
+  if (!shapeSelect || !rectangleControls) return;
+
+  rectangleControls.style.display = shapeSelect.value === 'rectangle' ? 'block' : 'none';
+}
+
+function clampAmbientGlowDimension(value, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(1, Math.min(40, n));
+}
+
 function applyAmbientGlowSettings() {
   if (!selectedObject || selectedObject.metadata?.type !== 'ambient_glow') return;
 
@@ -2867,13 +2912,34 @@ function applyAmbientGlowSettings() {
   const brightness = clampAmbientGlowBrightness(document.getElementById('ambientGlowBrightness').value);
   const shape = document.getElementById('ambientGlowShape').value || 'circle';
   const previousShape = selectedObject.metadata.glowShape || 'circle';
+
+  const previousWidth = selectedObject.metadata.glowWidth || (previousShape === 'rectangle' ? 12 : 9);
+  const previousDepth = selectedObject.metadata.glowDepth || (previousShape === 'rectangle' ? 6 : 9);
+
+  const width =
+    shape === 'rectangle'
+      ? clampAmbientGlowDimension(document.getElementById('ambientGlowWidth').value, 12)
+      : 9;
+
+  const depth =
+    shape === 'rectangle'
+      ? clampAmbientGlowDimension(document.getElementById('ambientGlowDepth').value, 6)
+      : 9;
+
   const glow = BABYLON.Color3.FromHexString(colorHex);
 
   selectedObject.metadata.glowColor = colorHex;
   selectedObject.metadata.glowBrightness = brightness;
   selectedObject.metadata.glowShape = shape;
+  selectedObject.metadata.glowWidth = width;
+  selectedObject.metadata.glowDepth = depth;
 
-  if (shape !== previousShape) {
+  const needsRebuild =
+    shape !== previousShape ||
+    width !== previousWidth ||
+    depth !== previousDepth;
+
+  if (needsRebuild) {
     const oldGlow = selectedObject.metadata._ambientGlow;
 
     if (oldGlow) {
@@ -2882,7 +2948,7 @@ function applyAmbientGlowSettings() {
       if (oldGlow.texture) oldGlow.texture.dispose();
     }
 
-    buildAmbientGlow(selectedObject, colorHex, brightness, shape);
+    buildAmbientGlow(selectedObject, colorHex, brightness, shape, width, depth);
   } else {
     const ambientGlow = selectedObject.metadata._ambientGlow;
 
@@ -2895,9 +2961,9 @@ function applyAmbientGlowSettings() {
     }
   }
 
+  toggleAmbientGlowRectangleControls();
   showToast('✨ Ambient glow applied');
 }
-
 // ── RESTORE UPLOADED ASSETS FROM LOCALSTORAGE ──────────
 // Any GLB uploaded via admin panel gets re-added to the panel on refresh
 // using its permanent /assets/buildings/ URL (available after Vercel redeploys)
@@ -3239,7 +3305,7 @@ function spawnAssetFromPanel(key) {
     const pos = new BABYLON.Vector3(spawnPos.x, 0, spawnPos.z);
         const proceduralMeta =
   key === 'ambient_glow'
-    ? { isClone: true, glowColor: '#ffdd88', glowBrightness: 1, glowShape: 'circle' }
+   ? { isClone: true, glowColor: '#ffdd88', glowBrightness: 1, glowShape: 'circle', glowWidth: 9, glowDepth: 9 }
     : { isClone: true, toroColor: '#ffdd88' };
 
     const clone = spawnAsset(key, pos, proceduralMeta);
