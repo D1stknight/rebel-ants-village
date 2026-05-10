@@ -187,6 +187,37 @@ body{
 #forge-status.error{
   color:#ff8b8b;
 }
+#generation-summary{
+  display:grid;
+  gap:10px;
+}
+.summary-row{
+  display:grid;
+  grid-template-columns:160px 1fr;
+  gap:10px;
+  font-size:12px;
+  line-height:1.8;
+}
+.summary-label{
+  color:#8a7a5a;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.summary-value{
+  color:#f3e6bf;
+  word-break:break-word;
+}
+#generation-snapshot{
+  margin-top:8px;
+  padding:14px;
+  background:rgba(0,0,0,.22);
+  border:1px solid rgba(255,255,255,.08);
+  color:#b7a98b;
+  font-size:11px;
+  line-height:1.7;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
 @media (max-width:850px){
   body{padding:18px}
   #page-header{
@@ -247,19 +278,42 @@ body{
       </div>
     </div>
 
-    <div class="forge-card" id="forge-right">
+       <div class="forge-card" id="forge-right">
       <div>
         <div class="section-title">Forge Input</div>
         <div class="section-copy">
-          This is the first public Rebel Ants Forge screen. It reads the selected NFT from the lobby and prepares the character for the future image-to-3D generation pipeline.
+          This Rebel is now being read through the shared Forge core. Below is the real generation-ready summary the future image-to-3D pipeline will use.
         </div>
       </div>
 
       <div>
-        <div class="section-title">What comes next</div>
-        <div class="section-copy">
-          The next step is wiring this screen into the real generation-ready Blueprint / Forge input system so you can preview, generate, and eventually save a playable 3D Rebel character.
+        <div class="section-title">Generation Summary</div>
+        <div id="generation-summary">
+          <div class="summary-row">
+            <div class="summary-label">Forge Status</div>
+            <div class="summary-value" id="summary-forge-status">—</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Body Type</div>
+            <div class="summary-value" id="summary-body-type">—</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Colony Style</div>
+            <div class="summary-value" id="summary-colony-style">—</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Weapon Family</div>
+            <div class="summary-value" id="summary-weapon-family">—</div>
+          </div>
         </div>
+      </div>
+
+      <div>
+        <div class="section-title">Generation Input Snapshot</div>
+        <div class="section-copy">
+          This is a compact preview of the actual Forge input object the future 3D generator will consume.
+        </div>
+        <pre id="generation-snapshot">Loading Forge input...</pre>
       </div>
 
       <div id="forge-actions">
@@ -296,18 +350,44 @@ function getSelectedRebel() {
   }
 }
 
-function hydrateForgeScreen(rebel) {
+function hydrateForgeScreen(rebel, generationInput) {
   document.getElementById('forge-image').src = rebel.image || 'assets/lobby/ant_1.JPG';
   document.getElementById('forge-name').textContent = rebel.name || 'Rebel #001';
   document.getElementById('detail-collection').textContent = rebel.collectionKey || 'battle_for_colony';
   document.getElementById('detail-token').textContent = rebel.tokenId || '—';
-  document.getElementById('detail-colony').textContent = rebel.gangName || '—';
+  document.getElementById('detail-colony').textContent = rebel.gangName || generationInput?.colony || '—';
   document.getElementById('detail-source-type').textContent = rebel.tokenId ? 'nft' : 'default';
+
+  document.getElementById('summary-forge-status').textContent =
+    generationInput?.forgeStatus || 'not_forged';
+
+  document.getElementById('summary-body-type').textContent =
+    generationInput?.bodyType || 'universal_ant_v1';
+
+  document.getElementById('summary-colony-style').textContent =
+    generationInput?.colonyProfile?.baseStyle || '—';
+
+  document.getElementById('summary-weapon-family').textContent =
+    generationInput?.weaponProfile?.family || '—';
+
+  const snapshot = {
+    rebelId: generationInput?.rebelId || null,
+    tokenId: generationInput?.tokenId || null,
+    collectionKey: generationInput?.collectionKey || null,
+    colony: generationInput?.colony || null,
+    bodyType: generationInput?.bodyType || null,
+    forgeStatus: generationInput?.forgeStatus || null,
+    traitSlots: generationInput?.traitSlots || {},
+    forgeLayers: generationInput?.forgeLayers || {}
+  };
+
+  document.getElementById('generation-snapshot').textContent =
+    JSON.stringify(snapshot, null, 2);
 }
 
 function generatePreviewStub() {
   const status = document.getElementById('forge-status');
-  status.textContent = '3D preview generation will be connected next.';
+  status.textContent = 'Forge input is ready. The real 3D preview generator will connect next.';
   status.className = 'success';
 }
 
@@ -327,7 +407,7 @@ window.selectedForgeRebel = selectedRebel;
 window.forgeCharacterBlueprint = forgeCharacterBlueprint;
 window.forgeGenerationInput = forgeGenerationInput;
 
-hydrateForgeScreen(selectedRebel);
+hydrateForgeScreen(selectedRebel, forgeGenerationInput);
 </script>
 
 </body>
