@@ -1994,9 +1994,73 @@ const COLONY_FORGE_PROFILES = {
   }
 };
 
+const WEAPON_FORGE_PROFILES = {
+  'Celestial-Fang': {
+    weaponId: 'celestial_fang',
+    displayName: 'Celestial-Fang',
+    family: 'blade'
+  },
+  'Celestial-Fang-2': {
+    weaponId: 'celestial_fang_2',
+    displayName: 'Celestial-Fang-2',
+    family: 'blade'
+  },
+  "Dawn's-Light-Arrows": {
+    weaponId: 'dawns_light_arrows',
+    displayName: "Dawn's-Light-Arrows",
+    family: 'ranged'
+  },
+  "Dawn's-Light-Arrows-2": {
+    weaponId: 'dawns_light_arrows_2',
+    displayName: "Dawn's-Light-Arrows-2",
+    family: 'ranged'
+  },
+  'Eclipse-Edge': {
+    weaponId: 'eclipse_edge',
+    displayName: 'Eclipse-Edge',
+    family: 'blade'
+  },
+  'Eclipse-Edge-2': {
+    weaponId: 'eclipse_edge_2',
+    displayName: 'Eclipse-Edge-2',
+    family: 'blade'
+  },
+  'Soulrender': {
+    weaponId: 'soulrender',
+    displayName: 'Soulrender',
+    family: 'blade'
+  },
+  'Stormbringer-Blade': {
+    weaponId: 'stormbringer_blade',
+    displayName: 'Stormbringer-Blade',
+    family: 'blade'
+  },
+  'Stormbringer-Blade-2': {
+    weaponId: 'stormbringer_blade_2',
+    displayName: 'Stormbringer-Blade-2',
+    family: 'blade'
+  },
+  'Whisper-of-Dawn': {
+    weaponId: 'whisper_of_dawn',
+    displayName: 'Whisper-of-Dawn',
+    family: 'blade'
+  },
+  'Whisper-of-Dawn-2': {
+    weaponId: 'whisper_of_dawn_2',
+    displayName: 'Whisper-of-Dawn-2',
+    family: 'blade'
+  }
+};
+
 function resolveColonyForgeProfile(colonyName) {
   return colonyName && COLONY_FORGE_PROFILES[colonyName]
     ? COLONY_FORGE_PROFILES[colonyName]
+    : null;
+}
+
+function resolveWeaponForgeProfile(weaponName) {
+  return weaponName && WEAPON_FORGE_PROFILES[weaponName]
+    ? WEAPON_FORGE_PROFILES[weaponName]
     : null;
 }
 
@@ -2005,6 +2069,7 @@ function buildCharacterBlueprint(rebel, character) {
   const traitSlots = buildTraitSlots(sourceTraits);
   const colony = rebel.gangName || traitSlots.colony || null;
   const colonyProfile = resolveColonyForgeProfile(colony);
+  const weaponProfile = resolveWeaponForgeProfile(traitSlots.weapon);
 
   return {
     blueprintVersion: 'v1',
@@ -2017,6 +2082,7 @@ function buildCharacterBlueprint(rebel, character) {
     traitSlots,
     colony,
     colonyProfile,
+    weaponProfile,
     bodyType: colonyProfile?.preferredBodyType || 'universal_ant_v1',
     formType: character.formType || 'starter',
     formLabel: character.formLabel || 'Starter 3D Form',
@@ -2040,6 +2106,7 @@ function buildCharacterBlueprint(rebel, character) {
     },
     confidence: {
       colony: colonyProfile ? 1 : null,
+      weapon: weaponProfile ? 1 : null,
       parts: null,
       colors: null
     }
@@ -2079,6 +2146,7 @@ function getOrCreateCharacterBlueprint(rebel, character) {
     const traitSlots = buildTraitSlots(sourceTraits);
     const colony = rebel.gangName || traitSlots.colony || savedBlueprint.colony || null;
     const colonyProfile = resolveColonyForgeProfile(colony);
+    const weaponProfile = resolveWeaponForgeProfile(traitSlots.weapon);
 
     const hydratedBlueprint = {
       ...savedBlueprint,
@@ -2091,6 +2159,7 @@ function getOrCreateCharacterBlueprint(rebel, character) {
       traitSlots,
       colony,
       colonyProfile,
+      weaponProfile,
       bodyType: colonyProfile?.preferredBodyType || savedBlueprint.bodyType || 'universal_ant_v1',
       parts: {
         ...(savedBlueprint.parts || {}),
@@ -2098,7 +2167,8 @@ function getOrCreateCharacterBlueprint(rebel, character) {
       },
       confidence: {
         ...(savedBlueprint.confidence || {}),
-        colony: colonyProfile ? 1 : null
+        colony: colonyProfile ? 1 : null,
+        weapon: weaponProfile ? 1 : null
       }
     };
 
