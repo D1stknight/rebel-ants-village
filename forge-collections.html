@@ -449,13 +449,16 @@ body{
       <div id="trait-results-grid"></div>
     </div>
 
-    <div id="trait-mapping-builder">
+       <div id="trait-mapping-builder">
       <div id="trait-mapping-title">FORGE TRAIT MAPPING</div>
       <div id="trait-mapping-subtitle">
         Map this collection’s real trait names into the universal Forge slots.
         Leave any slot as Not used if that collection does not have a matching trait.
       </div>
       <div id="trait-mapping-grid"></div>
+      <div class="panel-actions">
+        <button class="action-btn primary" id="save-collection-btn" type="button" onclick="saveNewCollection()">Save Collection</button>
+      </div>
     </div>
   </div>
 
@@ -519,6 +522,7 @@ function clearNewCollectionForm() {
   const grid = document.getElementById('trait-results-grid');
   const mappingBuilder = document.getElementById('trait-mapping-builder');
   const mappingGrid = document.getElementById('trait-mapping-grid');
+  const saveButton = document.getElementById('save-collection-btn');
 
   if (status) {
     status.textContent = '';
@@ -529,11 +533,11 @@ function clearNewCollectionForm() {
   if (grid) grid.innerHTML = '';
   if (mappingBuilder) mappingBuilder.classList.remove('open');
   if (mappingGrid) mappingGrid.innerHTML = '';
+  if (saveButton) saveButton.disabled = false;
 
   window._newCollectionTraitDiscovery = null;
   window._newCollectionTraitMap = null;
 }
-
 const UNIVERSAL_FORGE_SLOTS = [
   'bandana',
   'bandanaTail',
@@ -757,6 +761,95 @@ async function fetchNewCollectionTraits() {
     }
   } finally {
     if (button) button.disabled = false;
+  }
+}
+
+async function saveNewCollection() {
+  const discovery = window._newCollectionTraitDiscovery;
+  const traitMap = window._newCollectionTraitMap;
+  const config = window._forgeCollectionsConfig;
+  const status = document.getElementById('trait-discovery-status');
+  const saveButton = document.getElementById('save-collection-btn');
+
+  if (!discovery || !traitMap) {
+    if (status) {
+      status.textContent = 'Fetch traits before saving a collection.';
+      status.className = 'error';
+    }
+    return;
+  }
+
+  if (!config || !config.collections) {
+    if (status) {
+      status.textContent = 'Forge collections config is not loaded.';
+      status.className = 'error';
+    }
+    return;
+  }
+
+  if (config.collections[discovery.collectionKey]) {
+    if (status) {
+      status.textContent = 'That collection key already exists.';
+      status.className = 'error';
+    }
+    return;
+  }
+
+  const cleanedTraitMap = Object.fromEntries(
+    Object.entries(traitMap).filter(([, rawTraitName]) => rawTraitName)
+  );
+
+  const nextConfig = {
+    ...config,
+    collections: {
+      ...config.collections,
+      [discovery.collectionKey]: {
+        collectionKey: discovery.collectionKey,
+        displayName: discovery.displayName,
+        chain: discovery.chain,
+        contractAddress: discovery.contractAddress,
+        openSeaSlug: discovery.openSeaSlug,
+        enabled: true,
+        traitCategories: discovery.traitCategories || [],
+        traitMap: cleanedTraitMap
+      }
+    }
+  };
+
+  if (status) {
+    status.textContent = 'Saving collection...';
+    status.className = '';
+  }
+  if (saveButton) saveButton.disabled = true;
+
+  try {
+    const response = await fetch('/api/forge-save-collections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: nextConfig })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Save failed');
+    }
+
+    window._forgeCollectionsConfig = nextConfig;
+    renderCollections(nextConfig);
+
+    if (status) {
+      status.textContent = 'Collection saved to GitHub.';
+      status.className = 'success';
+    }
+  } catch(e) {
+    console.warn('Could not save new collection:', e);
+    if (status) {
+      status.textContent = 'Could not save collection.';
+      status.className = 'error';
+    }
+  } finally {
+    if (saveButton) saveButton.disabled = false;
   }
 }
 
