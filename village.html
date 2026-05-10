@@ -623,6 +623,31 @@ function buildToro(root, glowColor) {
   // ── SOFT FAKE LIGHTING SYSTEM ───────────────────────────
   // Emissive only, no real point light.
 
+   function makeFloorGlowTexture(name) {
+    const tex = new BABYLON.DynamicTexture(name, { width: 512, height: 512 }, scene, true);
+    const ctx = tex.getContext();
+    const size = 512;
+    const c = size * 0.5;
+
+    ctx.clearRect(0, 0, size, size);
+
+    const gradient = ctx.createRadialGradient(c, c, 0, c, c, c);
+    gradient.addColorStop(0.00, 'rgba(255,255,255,1.00)');
+    gradient.addColorStop(0.22, 'rgba(255,255,255,0.92)');
+    gradient.addColorStop(0.48, 'rgba(255,255,255,0.52)');
+    gradient.addColorStop(0.72, 'rgba(255,255,255,0.16)');
+    gradient.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    tex.hasAlpha = true;
+    tex.update();
+    return tex;
+  }
+
+  const floorGlowTexture = makeFloorGlowTexture('firebowlFloorGlowTex_' + Math.random());
+
   function makeGlowDisc(name, radius, y, alpha, strength) {
     const disc = attach(BABYLON.MeshBuilder.CreateDisc(name, { radius, tessellation: 56 }, scene));
     const discMat = new BABYLON.StandardMaterial(name + 'Mat_' + Math.random(), scene);
@@ -633,6 +658,7 @@ function buildToro(root, glowColor) {
       glow.g * strength.g,
       glow.b * strength.b
     );
+    discMat.opacityTexture = floorGlowTexture;
     discMat.alpha = alpha;
     discMat.disableLighting = true;
     discMat.backFaceCulling = false;
