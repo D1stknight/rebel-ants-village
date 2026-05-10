@@ -446,58 +446,188 @@ function spawnAsset(type, position, extraMeta) {
 // All emissive — zero performance cost, unlimited placement
 function buildToro(root, glowColor) {
   glowColor = glowColor || '#ffdd88';
+
   const glow = BABYLON.Color3.FromHexString(glowColor);
-  const stone = new BABYLON.Color3(0.28, 0.24, 0.20);
-  const darkStone = new BABYLON.Color3(0.18, 0.15, 0.12);
-  const stoneMat = () => { const m = new BABYLON.StandardMaterial('toroStone_'+Math.random(),scene); m.diffuseColor=stone; m.maxSimultaneousLights=4; return m; };
-  const darkMat = () => { const m = new BABYLON.StandardMaterial('toroDark_'+Math.random(),scene); m.diffuseColor=darkStone; m.maxSimultaneousLights=4; return m; };
-  const glowMat = () => { const m = new BABYLON.StandardMaterial('toroGlow_'+Math.random(),scene); m.diffuseColor=glow; m.emissiveColor=glow; m.maxSimultaneousLights=4; return m; };
+  const stone = new BABYLON.Color3(0.25, 0.22, 0.19);
+  const darkStone = new BABYLON.Color3(0.14, 0.12, 0.10);
+  const iron = new BABYLON.Color3(0.10, 0.09, 0.08);
 
-  const attach = (mesh) => { mesh.parent=root; mesh.isPickable=true; mesh._editRoot=root; return mesh; };
+  const stoneMat = () => {
+    const m = new BABYLON.StandardMaterial('firebowlStone_' + Math.random(), scene);
+    m.diffuseColor = stone;
+    m.maxSimultaneousLights = 4;
+    return m;
+  };
 
-  // Base platform — wide stone slab
-  attach(BABYLON.MeshBuilder.CreateCylinder('tb0',{diameterTop:1.8,diameterBottom:2.0,height:0.25,tessellation:8},scene)).material=stoneMat();
-  // Base step
-  attach(BABYLON.MeshBuilder.CreateCylinder('tb1',{diameterTop:1.4,diameterBottom:1.6,height:0.2,tessellation:8},scene)).material=stoneMat();
-  const b1 = attach(BABYLON.MeshBuilder.CreateCylinder('tb1b',{diameterTop:1.4,diameterBottom:1.6,height:0.2,tessellation:8},scene));
-  b1.material=stoneMat(); b1.position.y=0.2;
-  // Post — tapered octagonal shaft
-  const post = attach(BABYLON.MeshBuilder.CreateCylinder('tp',{diameterTop:0.38,diameterBottom:0.55,height:4.8,tessellation:8},scene));
-  post.material=stoneMat(); post.position.y=2.6;
-  // Middle cap / waist ring
-  const waist = attach(BABYLON.MeshBuilder.CreateCylinder('tw',{diameterTop:0.7,diameterBottom:0.7,height:0.22,tessellation:8},scene));
-  waist.material=darkMat(); waist.position.y=3.0;
-  // Fire box platform
-  const fbBase = attach(BABYLON.MeshBuilder.CreateCylinder('tfb',{diameterTop:1.1,diameterBottom:0.9,height:0.18,tessellation:8},scene));
-  fbBase.material=darkMat(); fbBase.position.y=5.1;
-  // Fire box body — the glowing chamber
-  const fb = attach(BABYLON.MeshBuilder.CreateBox('tfbody',{width:0.9,height:1.0,depth:0.9},scene));
-  fb.material=glowMat(); fb.position.y=5.68;
-  // Fire box frame corners — dark stone surround
-  [[-0.4,-0.4],[0.4,-0.4],[-0.4,0.4],[0.4,0.4]].forEach(([ox,oz]) => {
-    const col = attach(BABYLON.MeshBuilder.CreateCylinder('tfc_'+ox,{diameterTop:0.1,diameterBottom:0.1,height:1.05,tessellation:6},scene));
-    col.material=darkMat(); col.position=new BABYLON.Vector3(ox,5.68,oz);
-  });
-  // Cap base
-  const capBase = attach(BABYLON.MeshBuilder.CreateCylinder('tcb',{diameterTop:1.3,diameterBottom:1.2,height:0.15,tessellation:8},scene));
-  capBase.material=darkMat(); capBase.position.y=6.22;
-  // Pagoda cap — two tiers
-  const cap1 = attach(BABYLON.MeshBuilder.CreateCylinder('tc1',{diameterTop:0.05,diameterBottom:1.4,height:0.55,tessellation:8},scene));
-  cap1.material=stoneMat(); cap1.position.y=6.62;
-  const cap2 = attach(BABYLON.MeshBuilder.CreateCylinder('tc2',{diameterTop:0.05,diameterBottom:0.85,height:0.35,tessellation:8},scene));
-  cap2.material=stoneMat(); cap2.position.y=7.02;
-  // Finial top
-  const fin = attach(BABYLON.MeshBuilder.CreateSphere('tfin',{diameter:0.18,segments:6},scene));
-  fin.material=darkMat(); fin.position.y=7.22;
+  const darkStoneMat = () => {
+    const m = new BABYLON.StandardMaterial('firebowlDarkStone_' + Math.random(), scene);
+    m.diffuseColor = darkStone;
+    m.maxSimultaneousLights = 4;
+    return m;
+  };
 
-   // Soft fake lighting system — emissive only, no real point light, very cheap.
-  // Uses multiple transparent layers so the floor glow fades gradually.
+  const ironMat = () => {
+    const m = new BABYLON.StandardMaterial('firebowlIron_' + Math.random(), scene);
+    m.diffuseColor = iron;
+    m.maxSimultaneousLights = 4;
+    return m;
+  };
+
+  const emberMat = () => {
+    const m = new BABYLON.StandardMaterial('firebowlEmber_' + Math.random(), scene);
+    m.diffuseColor = new BABYLON.Color3(0, 0, 0);
+    m.emissiveColor = new BABYLON.Color3(glow.r * 1.8, glow.g * 1.25, glow.b * 0.55);
+    m.disableLighting = true;
+    m.maxSimultaneousLights = 0;
+    return m;
+  };
+
+  const attach = (mesh) => {
+    mesh.parent = root;
+    mesh.isPickable = true;
+    mesh._editRoot = root;
+    return mesh;
+  };
+
+  // ── JAPANESE FIREBOWL BODY ─────────────────────────────
+
+  // Broad octagonal stone footing
+  const base0 = attach(BABYLON.MeshBuilder.CreateCylinder(
+    'fbBase0',
+    { diameterTop: 2.15, diameterBottom: 2.35, height: 0.22, tessellation: 8 },
+    scene
+  ));
+  base0.material = stoneMat();
+  base0.position.y = 0.11;
+
+  // Smaller raised step
+  const base1 = attach(BABYLON.MeshBuilder.CreateCylinder(
+    'fbBase1',
+    { diameterTop: 1.55, diameterBottom: 1.75, height: 0.22, tessellation: 8 },
+    scene
+  ));
+  base1.material = darkStoneMat();
+  base1.position.y = 0.33;
+
+  // Short pedestal
+  const pedestal = attach(BABYLON.MeshBuilder.CreateCylinder(
+    'fbPedestal',
+    { diameterTop: 0.72, diameterBottom: 0.92, height: 0.72, tessellation: 8 },
+    scene
+  ));
+  pedestal.material = stoneMat();
+  pedestal.position.y = 0.80;
+
+  // Collar under bowl
+  const collar = attach(BABYLON.MeshBuilder.CreateCylinder(
+    'fbCollar',
+    { diameterTop: 1.10, diameterBottom: 0.78, height: 0.22, tessellation: 8 },
+    scene
+  ));
+  collar.material = darkStoneMat();
+  collar.position.y = 1.27;
+
+  // Main bowl body
+  const bowl = attach(BABYLON.MeshBuilder.CreateCylinder(
+    'fbBowl',
+    { diameterTop: 2.15, diameterBottom: 1.28, height: 0.58, tessellation: 32 },
+    scene
+  ));
+  bowl.material = ironMat();
+  bowl.position.y = 1.62;
+
+  // Thick bowl rim
+  const rim = attach(BABYLON.MeshBuilder.CreateTorus(
+    'fbRim',
+    { diameter: 2.06, thickness: 0.16, tessellation: 48 },
+    scene
+  ));
+  rim.material = darkStoneMat();
+  rim.position.y = 1.92;
+  rim.rotation.x = Math.PI / 2;
+
+  // Hot ember bed inside the bowl
+  const embers = attach(BABYLON.MeshBuilder.CreateDisc(
+    'fbEmbers',
+    { radius: 0.86, tessellation: 48 },
+    scene
+  ));
+  embers.material = emberMat();
+  embers.position.y = 1.93;
+  embers.rotation.x = Math.PI / 2;
+  embers.isPickable = false;
+
+  // ── FAKE FIRE SHAPES ────────────────────────────────────
+
+  function makeFlameTexture(name) {
+    const tex = new BABYLON.DynamicTexture(name, { width: 256, height: 256 }, scene, true);
+    const ctx = tex.getContext();
+
+    ctx.clearRect(0, 0, 256, 256);
+
+    const g = ctx.createLinearGradient(128, 240, 128, 18);
+    g.addColorStop(0.00, 'rgba(255,80,0,0.00)');
+    g.addColorStop(0.10, 'rgba(255,90,0,0.95)');
+    g.addColorStop(0.42, 'rgba(255,185,40,0.98)');
+    g.addColorStop(0.72, 'rgba(255,235,150,0.92)');
+    g.addColorStop(1.00, 'rgba(255,255,220,0.00)');
+
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(128, 16);
+    ctx.bezierCurveTo(174, 72, 202, 132, 188, 188);
+    ctx.bezierCurveTo(178, 224, 153, 242, 128, 244);
+    ctx.bezierCurveTo(103, 242, 78, 224, 68, 188);
+    ctx.bezierCurveTo(54, 132, 82, 72, 128, 16);
+    ctx.closePath();
+    ctx.fill();
+
+    tex.hasAlpha = true;
+    tex.update();
+    return tex;
+  }
+
+  const flameTexture = makeFlameTexture('firebowlFlameTex_' + Math.random());
+
+  function makeFlame(name, width, height, y, rotY, alpha) {
+    const flame = attach(BABYLON.MeshBuilder.CreatePlane(
+      name,
+      { width, height },
+      scene
+    ));
+
+    const mat = new BABYLON.StandardMaterial(name + 'Mat_' + Math.random(), scene);
+    mat.diffuseTexture = flameTexture;
+    mat.opacityTexture = flameTexture;
+    mat.emissiveTexture = flameTexture;
+    mat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+    mat.emissiveColor = new BABYLON.Color3(glow.r * 2.4, glow.g * 1.65, glow.b * 0.70);
+    mat.alpha = alpha;
+    mat.disableLighting = true;
+    mat.backFaceCulling = false;
+    mat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+    mat.maxSimultaneousLights = 0;
+
+    flame.material = mat;
+    flame.position.y = y;
+    flame.rotation.y = rotY;
+    flame.isPickable = false;
+
+    return flame;
+  }
+
+  const flameA = makeFlame('fbFlameA', 1.16, 1.65, 2.63, 0, 0.95);
+  const flameB = makeFlame('fbFlameB', 1.08, 1.55, 2.59, Math.PI / 2, 0.88);
+  const flameC = makeFlame('fbFlameC', 0.86, 1.34, 2.54, Math.PI / 4, 0.82);
+
+  // ── SOFT FAKE LIGHTING SYSTEM ───────────────────────────
+  // Emissive only, no real point light.
 
   function makeGlowDisc(name, radius, y, alpha, strength) {
     const disc = attach(BABYLON.MeshBuilder.CreateDisc(name, { radius, tessellation: 56 }, scene));
     const discMat = new BABYLON.StandardMaterial(name + 'Mat_' + Math.random(), scene);
 
-    discMat.diffuseColor = new BABYLON.Color3(0,0,0);
+    discMat.diffuseColor = new BABYLON.Color3(0, 0, 0);
     discMat.emissiveColor = new BABYLON.Color3(
       glow.r * strength.r,
       glow.g * strength.g,
@@ -514,96 +644,96 @@ function buildToro(root, glowColor) {
     disc.rotation.x = Math.PI / 2;
     disc.isPickable = false;
 
-       discMat._toroGlowMesh = disc;
+    discMat._toroGlowMesh = disc;
     return discMat;
   }
 
-  // Very wide, barely visible falloff.
   const gDiscFarMat = makeGlowDisc(
     'tgdiscFar',
-    5.8,
+    6.4,
     0.018,
-    0.12,
-    { r: 0.58, g: 0.44, b: 0.21 }
+    0.13,
+    { r: 0.58, g: 0.40, b: 0.18 }
   );
 
-  // Main warm reflection on the floor.
   const gDiscOuterMat = makeGlowDisc(
     'tgdiscOuter',
-    4.9,
+    5.3,
     0.024,
-    0.16,
-    { r: 0.78, g: 0.58, b: 0.27 }
+    0.18,
+    { r: 0.80, g: 0.54, b: 0.22 }
   );
 
-  // Mid glow, stronger but still soft.
   const gDiscMidMat = makeGlowDisc(
     'tgdiscMid',
-    3.9,
+    4.1,
     0.03,
-    0.20,
-    { r: 0.96, g: 0.72, b: 0.33 }
+    0.23,
+    { r: 1.02, g: 0.68, b: 0.28 }
   );
 
-  // Hotter center near the lantern base.
   const gDiscInnerMat = makeGlowDisc(
     'tgdiscInner',
-    2.8,
+    2.9,
     0.038,
-    0.26,
-    { r: 1.18, g: 0.86, b: 0.40 }
+    0.30,
+    { r: 1.28, g: 0.82, b: 0.34 }
   );
 
-  // Tiny core reflection, gives the ground a warm center point.
   const gDiscCoreMat = makeGlowDisc(
     'tgdiscCore',
-    1.45,
+    1.55,
     0.048,
-    0.34,
-    { r: 1.48, g: 1.02, b: 0.48 }
+    0.38,
+    { r: 1.60, g: 0.98, b: 0.42 }
   );
 
-  // Camera-facing glow halo around the lantern chamber.
+  // Camera-facing glow halo around the flame
   const haloTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png', scene);
+
   const haloMat = new BABYLON.StandardMaterial('toroHaloMat_' + Math.random(), scene);
   haloMat.diffuseTexture = haloTexture;
   haloMat.emissiveTexture = haloTexture;
   haloMat.opacityTexture = haloTexture;
-   haloMat.emissiveColor = new BABYLON.Color3(glow.r * 2.15, glow.g * 1.6, glow.b * 0.85);
-  haloMat.diffuseColor = new BABYLON.Color3(0,0,0);
-  haloMat.alpha = 0.68;
+  haloMat.emissiveColor = new BABYLON.Color3(glow.r * 2.4, glow.g * 1.7, glow.b * 0.72);
+  haloMat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+  haloMat.alpha = 0.72;
   haloMat.disableLighting = true;
   haloMat.backFaceCulling = false;
   haloMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
   haloMat.maxSimultaneousLights = 0;
 
-  const halo = attach(BABYLON.MeshBuilder.CreatePlane('toroHalo', { width: 3.0, height: 3.0 }, scene));
+  const halo = attach(BABYLON.MeshBuilder.CreatePlane('toroHalo', { width: 3.6, height: 3.6 }, scene));
   halo.material = haloMat;
-  halo.position.y = 5.68;
+  halo.position.y = 2.60;
   halo.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
   halo.isPickable = false;
 
-  // Brighter core glow in the fire box.
   const coreHaloMat = haloMat.clone('toroCoreHaloMat_' + Math.random());
-    coreHaloMat.alpha = 0.82;
-  coreHaloMat.emissiveColor = new BABYLON.Color3(glow.r * 2.65, glow.g * 1.9, glow.b * 1.0);
+  coreHaloMat.alpha = 0.88;
+  coreHaloMat.emissiveColor = new BABYLON.Color3(glow.r * 2.95, glow.g * 2.05, glow.b * 0.88);
 
-  const coreHalo = attach(BABYLON.MeshBuilder.CreatePlane('toroCoreHalo', { width: 1.45, height: 1.45 }, scene));
+  const coreHalo = attach(BABYLON.MeshBuilder.CreatePlane('toroCoreHalo', { width: 1.72, height: 1.72 }, scene));
   coreHalo.material = coreHaloMat;
-  coreHalo.position.y = 5.68;
+  coreHalo.position.y = 2.46;
   coreHalo.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
   coreHalo.isPickable = false;
 
-  // Store glow materials so we can animate flicker later.
+  // Store glow/fire materials so we can animate flicker.
   root.metadata = root.metadata || {};
-   root.metadata._toroGlowMeshes = [
+
+  root.metadata._toroGlowMeshes = [
     gDiscFarMat._toroGlowMesh,
     gDiscOuterMat._toroGlowMesh,
     gDiscMidMat._toroGlowMesh,
     gDiscInnerMat._toroGlowMesh,
     gDiscCoreMat._toroGlowMesh,
     halo,
-    coreHalo
+    coreHalo,
+    flameA,
+    flameB,
+    flameC,
+    embers
   ];
 
   root.metadata._toroGlowMats = [
@@ -613,7 +743,11 @@ function buildToro(root, glowColor) {
     gDiscInnerMat,
     gDiscCoreMat,
     haloMat,
-    coreHaloMat
+    coreHaloMat,
+    flameA.material,
+    flameB.material,
+    flameC.material,
+    embers.material
   ];
 
   root.metadata._toroFlickerSeed = Math.random() * Math.PI * 2;
@@ -622,7 +756,7 @@ function buildToro(root, glowColor) {
     if (!mesh.metadata) mesh.metadata = {};
     mesh.metadata._toroBaseScale = mesh.scaling.clone();
     mesh.metadata._toroBaseAlpha =
-      typeof mesh.material?.alpha === "number" ? mesh.material.alpha : 1;
+      typeof mesh.material?.alpha === 'number' ? mesh.material.alpha : 1;
     mesh.metadata._toroBaseEmissive =
       mesh.material?.emissiveColor ? mesh.material.emissiveColor.clone() : null;
     mesh.metadata._toroPulseSeed = root.metadata._toroFlickerSeed + i * 0.73;
@@ -640,9 +774,11 @@ function buildToro(root, glowColor) {
       const baseScale = mesh.metadata?._toroBaseScale;
       const mat = mesh.material;
 
-      const isFloor = name.includes("tgdisc");
-      const isCore = name.includes("core");
-      const isHalo = name.includes("halo");
+      const isFloor = name.includes('tgdisc');
+      const isCore = name.includes('core');
+      const isHalo = name.includes('halo');
+      const isFlame = name.includes('flame');
+      const isEmbers = name.includes('embers');
 
       let pulse;
 
@@ -651,6 +787,16 @@ function buildToro(root, glowColor) {
           1 +
           Math.sin(t * 1.35 + seed) * 0.055 +
           Math.sin(t * 2.1 + seed * 1.7) * 0.025;
+      } else if (isFlame) {
+        pulse =
+          1 +
+          Math.sin(t * 4.4 + seed) * 0.10 +
+          Math.sin(t * 8.2 + seed * 1.5) * 0.05;
+      } else if (isEmbers) {
+        pulse =
+          1 +
+          Math.sin(t * 3.2 + seed) * 0.05 +
+          Math.sin(t * 6.1 + seed * 1.4) * 0.03;
       } else if (isCore) {
         pulse =
           1 +
@@ -671,7 +817,7 @@ function buildToro(root, glowColor) {
         mesh.scaling.z = baseScale.z * pulse;
       }
 
-      if (mat && typeof mat.alpha === "number") {
+      if (mat && typeof mat.alpha === 'number') {
         const baseAlpha = mesh.metadata?._toroBaseAlpha ?? mat.alpha;
         mat.alpha = Math.max(0.02, baseAlpha * (0.96 + (pulse - 1) * 0.8));
       }
