@@ -4633,28 +4633,5 @@
     "toroColor": null,
     "lanternColor": null,
     "lanternBrightness": null
-  },
-  {
-    "type": "toro_lantern",
-    "name": "toro_lantern_root",
-    "position": {
-      "x": -2.9896263232300893,
-      "y": 0.10000000149011612,
-      "z": -5.0939364880211135
-    },
-    "rotation": {
-      "x": 0,
-      "y": 0,
-      "z": 0
-    },
-    "scaling": {
-      "x": 1,
-      "y": 1,
-      "z": 1
-    },
-    "signConfig": null,
-    "toroColor": "#ffdd88",
-    "lanternColor": null,
-    "lanternBrightness": null
   }
 ]
