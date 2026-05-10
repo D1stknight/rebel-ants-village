@@ -417,7 +417,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1778429476105_6",
+    "name": "toriiRootClone_1778429945274_6",
     "position": {
       "x": 0,
       "y": 0.5600000582635118,
@@ -443,7 +443,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1778429476106_7",
+    "name": "toriiRootClone_1778429945275_7",
     "position": {
       "x": -0.2919794023036957,
       "y": 0.5599997974930204,
@@ -469,7 +469,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1778429476107_8",
+    "name": "toriiRootClone_1778429945276_8",
     "position": {
       "x": -151.2589111328125,
       "y": 0.5000001192092043,
@@ -495,7 +495,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1778429476107_9",
+    "name": "toriiRootClone_1778429945276_9",
     "position": {
       "x": 149.70745849609375,
       "y": 0.5000000596046448,
@@ -521,7 +521,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1778429476108_10",
+    "name": "toriiRootClone_1778429945277_10",
     "position": {
       "x": 2.514643038204834e-15,
       "y": 0.5000000596046448,
@@ -547,7 +547,7 @@
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1778429476108_11",
+    "name": "wooden_signRootClone_1778429945277_11",
     "position": {
       "x": -65.91902923583984,
       "y": 0.1,
@@ -573,7 +573,7 @@
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1778429476110_12",
+    "name": "cherry_blossomRootClone_1778429945280_12",
     "position": {
       "x": -1.5127732753753662,
       "y": 0.0010486979269391655,
@@ -599,7 +599,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778429476120_13",
+    "name": "fence_1RootClone_1778429945286_13",
     "position": {
       "x": -44.32334899902344,
       "y": -0.8999999985098839,
@@ -625,7 +625,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778429476122_14",
+    "name": "fence_1RootClone_1778429945288_14",
     "position": {
       "x": 44.25136947631836,
       "y": -0.8999999985098839,
@@ -651,7 +651,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778429476124_15",
+    "name": "fence_1RootClone_1778429945290_15",
     "position": {
       "x": 44.01362609863281,
       "y": -0.8999999985098839,
@@ -677,7 +677,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778429476125_16",
+    "name": "fence_1RootClone_1778429945292_16",
     "position": {
       "x": -44.58077621459961,
       "y": -0.8999999985098839,
@@ -703,7 +703,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778429476127_17",
+    "name": "fence_1RootClone_1778429945293_17",
     "position": {
       "x": -5.2516303062438965,
       "y": -0.8999999985098839,
@@ -729,7 +729,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778429476128_18",
+    "name": "fence_1RootClone_1778429945295_18",
     "position": {
       "x": 5.329242706298828,
       "y": -0.8999999985098839,
@@ -755,7 +755,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778429476130_19",
+    "name": "fence_1RootClone_1778429945296_19",
     "position": {
       "x": -5.405943870544434,
       "y": -0.8999999985098839,
@@ -781,7 +781,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778429476131_20",
+    "name": "fence_1RootClone_1778429945298_20",
     "position": {
       "x": 5.35489559173584,
       "y": -0.8999999985098839,
@@ -807,7 +807,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778429476133_21",
+    "name": "fence_1RootClone_1778429945299_21",
     "position": {
       "x": -110.55400848388672,
       "y": -1.0000000000000284,
@@ -833,7 +833,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778429476134_22",
+    "name": "fence_1RootClone_1778429945301_22",
     "position": {
       "x": 110.58026123046875,
       "y": -1,
@@ -859,7 +859,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778429476135_23",
+    "name": "fence_1RootClone_1778429945302_23",
     "position": {
       "x": 110.51719665527344,
       "y": -1.0000000000000284,
@@ -885,7 +885,7 @@
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1778429476137_24",
+    "name": "fence_1RootClone_1778429945304_24",
     "position": {
       "x": -109.29263305664062,
       "y": -0.9400000013411329,
@@ -911,7 +911,7 @@
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1778429476139_25",
+    "name": "cherry_blossomRootClone_1778429945306_25",
     "position": {
       "x": 37.48526382446289,
       "y": 0.005657816305759206,
@@ -937,7 +937,7 @@
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1778429476143_26",
+    "name": "cherry_blossomRootClone_1778429945313_26",
     "position": {
       "x": -39.50407028198242,
       "y": 0.005657816305759206,
@@ -963,7 +963,7 @@
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1778429476150_27",
+    "name": "cherry_blossomRootClone_1778429945317_27",
     "position": {
       "x": 37.97743225097656,
       "y": 0.005657816305759206,
@@ -989,7 +989,7 @@
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1778429476154_28",
+    "name": "cherry_blossomRootClone_1778429945321_28",
     "position": {
       "x": -38.921661376953125,
       "y": 0.005657816305756569,
@@ -1015,7 +1015,7 @@
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1778429476158_29",
+    "name": "dojo_6RootClone_1778429945327_29",
     "position": {
       "x": -58.36362838745117,
       "y": 0.05999999865879707,
@@ -1041,7 +1041,7 @@
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1778429476161_30",
+    "name": "dojo_6RootClone_1778429945330_30",
     "position": {
       "x": 87.0399398803711,
       "y": 0.0599999986588669,
@@ -1067,7 +1067,7 @@
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1778429476164_31",
+    "name": "dojo_6RootClone_1778429945339_31",
     "position": {
       "x": 80.53135681152344,
       "y": 0.059999998658833126,
@@ -1093,7 +1093,7 @@
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1778429476166_32",
+    "name": "dojo_6RootClone_1778429945342_32",
     "position": {
       "x": -80.51283264160156,
       "y": 0.059999998658853915,
@@ -1119,7 +1119,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476169_33",
+    "name": "rock_1RootClone_1778429945345_33",
     "position": {
       "x": -78.15025329589844,
       "y": 0.18412497171067344,
@@ -1145,7 +1145,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476170_34",
+    "name": "rock_1RootClone_1778429945346_34",
     "position": {
       "x": -81.75777435302734,
       "y": 0.13943998073224861,
@@ -1171,7 +1171,7 @@
   },
   {
     "type": "dojo_5",
-    "name": "dojo_5RootClone_1778429476170_35",
+    "name": "dojo_5RootClone_1778429945346_35",
     "position": {
       "x": -287.8810119628906,
       "y": 1.614841887286965,
@@ -1197,7 +1197,7 @@
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1778429476175_36",
+    "name": "dojo_9RootClone_1778429945348_36",
     "position": {
       "x": -285.0631103515625,
       "y": 0.6000000238417806,
@@ -1223,7 +1223,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476192_37",
+    "name": "tree_1RootClone_1778429945373_37",
     "position": {
       "x": -295.31884765625,
       "y": 0,
@@ -1249,7 +1249,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476193_38",
+    "name": "tree_1RootClone_1778429945374_38",
     "position": {
       "x": -275.4000549316406,
       "y": 0,
@@ -1275,7 +1275,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476197_39",
+    "name": "tree_1RootClone_1778429945374_39",
     "position": {
       "x": -287.54498291015625,
       "y": -4.868645619854988,
@@ -1301,7 +1301,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476198_40",
+    "name": "tree_1RootClone_1778429945375_40",
     "position": {
       "x": -240.4627685546875,
       "y": 0,
@@ -1327,7 +1327,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476199_41",
+    "name": "tree_1RootClone_1778429945376_41",
     "position": {
       "x": -161.17611694335938,
       "y": -2.842170943040401e-14,
@@ -1353,7 +1353,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476199_42",
+    "name": "tree_1RootClone_1778429945377_42",
     "position": {
       "x": -214.0258026123047,
       "y": 0,
@@ -1379,7 +1379,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476200_43",
+    "name": "tree_1RootClone_1778429945377_43",
     "position": {
       "x": -185.4727783203125,
       "y": 0,
@@ -1405,7 +1405,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476201_44",
+    "name": "tree_1RootClone_1778429945378_44",
     "position": {
       "x": -139.9174041748047,
       "y": 0,
@@ -1431,7 +1431,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476202_45",
+    "name": "tree_1RootClone_1778429945379_45",
     "position": {
       "x": -239.7017364501953,
       "y": -2.842170943040401e-14,
@@ -1457,7 +1457,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476203_46",
+    "name": "tree_1RootClone_1778429945380_46",
     "position": {
       "x": -137.85165405273438,
       "y": -2.842170943040401e-14,
@@ -1483,7 +1483,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476203_47",
+    "name": "rock_1RootClone_1778429945381_47",
     "position": {
       "x": -148.0175323486328,
       "y": 0.12412497507466469,
@@ -1509,7 +1509,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476204_48",
+    "name": "rock_1RootClone_1778429945382_48",
     "position": {
       "x": -282.62526624272346,
       "y": 0.05084158852696419,
@@ -1535,7 +1535,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476204_49",
+    "name": "rock_1RootClone_1778429945382_49",
     "position": {
       "x": -282.62526624272346,
       "y": 0.05084158852696419,
@@ -1561,7 +1561,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476205_50",
+    "name": "rock_1RootClone_1778429945383_50",
     "position": {
       "x": -148.35511779785156,
       "y": 0.1551562149870449,
@@ -1587,7 +1587,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476205_51",
+    "name": "pine_1RootClone_1778429945384_51",
     "position": {
       "x": -310.0801086425781,
       "y": 0,
@@ -1613,7 +1613,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476206_52",
+    "name": "pine_1RootClone_1778429945386_52",
     "position": {
       "x": -256.87158203125,
       "y": 0,
@@ -1639,7 +1639,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476207_53",
+    "name": "pine_1RootClone_1778429945386_53",
     "position": {
       "x": -273.0927429199219,
       "y": -2.842170943040401e-14,
@@ -1665,7 +1665,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476208_54",
+    "name": "pine_1RootClone_1778429945388_54",
     "position": {
       "x": -245.5555877685547,
       "y": 1.9999999999999716,
@@ -1691,7 +1691,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476208_55",
+    "name": "pine_1RootClone_1778429945389_55",
     "position": {
       "x": -196.73983764648438,
       "y": 0,
@@ -1717,7 +1717,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476209_56",
+    "name": "pine_1RootClone_1778429945389_56",
     "position": {
       "x": -134.66259765625,
       "y": 0,
@@ -1743,7 +1743,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476210_57",
+    "name": "pine_1RootClone_1778429945390_57",
     "position": {
       "x": -196.6193389892578,
       "y": -2.842170943040401e-14,
@@ -1769,7 +1769,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476211_58",
+    "name": "pine_1RootClone_1778429945391_58",
     "position": {
       "x": -202.62120056152344,
       "y": -2.842170943040401e-14,
@@ -1795,7 +1795,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476211_59",
+    "name": "pine_1RootClone_1778429945392_59",
     "position": {
       "x": -134.1143035888672,
       "y": -2.842170943040401e-14,
@@ -1821,7 +1821,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476212_60",
+    "name": "pine_1RootClone_1778429945393_60",
     "position": {
       "x": -159.71694946289062,
       "y": 0,
@@ -1847,7 +1847,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476213_61",
+    "name": "pine_1RootClone_1778429945394_61",
     "position": {
       "x": -159.3542938232422,
       "y": -2.842170943040401e-14,
@@ -1873,7 +1873,7 @@
   },
   {
     "type": "dojo_5",
-    "name": "dojo_5RootClone_1778429476214_62",
+    "name": "dojo_5RootClone_1778429945396_62",
     "position": {
       "x": -142.77371215820312,
       "y": 1.6148418999699174,
@@ -1899,7 +1899,7 @@
   },
   {
     "type": "shrine_2",
-    "name": "shrine_2RootClone_1778429476215_63",
+    "name": "shrine_2RootClone_1778429945403_63",
     "position": {
       "x": -6.835771083831787,
       "y": 10.52955150604248,
@@ -1925,7 +1925,7 @@
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1778429476219_64",
+    "name": "dojo_9RootClone_1778429945407_64",
     "position": {
       "x": 111.6062240600586,
       "y": 0.6000000238419239,
@@ -1951,7 +1951,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476240_65",
+    "name": "tree_1RootClone_1778429945435_65",
     "position": {
       "x": -185.5862274169922,
       "y": 0,
@@ -1977,7 +1977,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476241_66",
+    "name": "tree_1RootClone_1778429945436_66",
     "position": {
       "x": -172.9210968017578,
       "y": 0,
@@ -2003,7 +2003,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476242_67",
+    "name": "tree_1RootClone_1778429945437_67",
     "position": {
       "x": -115.01297760009766,
       "y": 0,
@@ -2029,7 +2029,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476246_68",
+    "name": "tree_1RootClone_1778429945437_68",
     "position": {
       "x": -121.22317504882812,
       "y": -2.842170943040401e-14,
@@ -2055,7 +2055,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476247_69",
+    "name": "tree_1RootClone_1778429945438_69",
     "position": {
       "x": -55.797119140625,
       "y": -2.842170943040401e-14,
@@ -2081,7 +2081,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476248_70",
+    "name": "tree_1RootClone_1778429945439_70",
     "position": {
       "x": -54.70589828491211,
       "y": -2.842170943040401e-14,
@@ -2107,7 +2107,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476249_71",
+    "name": "tree_1RootClone_1778429945439_71",
     "position": {
       "x": -32.078922271728516,
       "y": 0,
@@ -2133,7 +2133,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476250_72",
+    "name": "tree_1RootClone_1778429945440_72",
     "position": {
       "x": 177.91067504882812,
       "y": 2.842170943040401e-14,
@@ -2159,7 +2159,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476250_73",
+    "name": "tree_1RootClone_1778429945441_73",
     "position": {
       "x": 49.94673156738281,
       "y": 2.842170943040401e-14,
@@ -2185,7 +2185,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476251_74",
+    "name": "tree_1RootClone_1778429945441_74",
     "position": {
       "x": 10.96203327178955,
       "y": 0,
@@ -2211,7 +2211,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476252_75",
+    "name": "tree_1RootClone_1778429945442_75",
     "position": {
       "x": 70.02649688720703,
       "y": 0,
@@ -2237,7 +2237,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476253_76",
+    "name": "tree_1RootClone_1778429945443_76",
     "position": {
       "x": 97.71456909179688,
       "y": 0,
@@ -2263,7 +2263,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476254_77",
+    "name": "tree_1RootClone_1778429945444_77",
     "position": {
       "x": 162.3306427001953,
       "y": 2.842170943040401e-14,
@@ -2289,7 +2289,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476255_78",
+    "name": "pine_1RootClone_1778429945444_78",
     "position": {
       "x": 87.18683624267578,
       "y": 2.77860164642334,
@@ -2315,7 +2315,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476256_79",
+    "name": "pine_1RootClone_1778429945445_79",
     "position": {
       "x": 105.76976013183594,
       "y": 2.842170943040401e-14,
@@ -2341,7 +2341,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476257_80",
+    "name": "pine_1RootClone_1778429945446_80",
     "position": {
       "x": 141.73410034179688,
       "y": 2.842170943040401e-14,
@@ -2367,7 +2367,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476258_81",
+    "name": "pine_1RootClone_1778429945447_81",
     "position": {
       "x": 196.33148193359375,
       "y": 2.842170943040401e-14,
@@ -2393,7 +2393,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476259_82",
+    "name": "pine_1RootClone_1778429945448_82",
     "position": {
       "x": 53.964839935302734,
       "y": 0,
@@ -2419,7 +2419,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476260_83",
+    "name": "pine_1RootClone_1778429945448_83",
     "position": {
       "x": 103.8597412109375,
       "y": 2,
@@ -2445,7 +2445,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476260_84",
+    "name": "pine_1RootClone_1778429945449_84",
     "position": {
       "x": -5.619314670562744,
       "y": 0,
@@ -2471,7 +2471,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476261_85",
+    "name": "pine_1RootClone_1778429945450_85",
     "position": {
       "x": -85.45462036132812,
       "y": 0,
@@ -2497,7 +2497,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476262_86",
+    "name": "pine_1RootClone_1778429945451_86",
     "position": {
       "x": -21.33271026611328,
       "y": -2.842170943040401e-14,
@@ -2523,7 +2523,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476263_87",
+    "name": "pine_1RootClone_1778429945451_87",
     "position": {
       "x": -90.55915069580078,
       "y": 1.9999999999999716,
@@ -2549,7 +2549,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476264_88",
+    "name": "pine_1RootClone_1778429945455_88",
     "position": {
       "x": 31.31947898864746,
       "y": 0,
@@ -2575,7 +2575,7 @@
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1778429476265_89",
+    "name": "dojo_9RootClone_1778429945457_89",
     "position": {
       "x": 251.22068786621094,
       "y": 0.6734113637940311,
@@ -2601,7 +2601,7 @@
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1778429476289_90",
+    "name": "dojo_9RootClone_1778429945476_90",
     "position": {
       "x": 276.7698059082031,
       "y": 0.6875063902698457,
@@ -2627,7 +2627,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476312_91",
+    "name": "rock_1RootClone_1778429945501_91",
     "position": {
       "x": -129.68966674804688,
       "y": 0.09929997759172693,
@@ -2653,7 +2653,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476313_92",
+    "name": "rock_1RootClone_1778429945501_92",
     "position": {
       "x": -46.00360107421875,
       "y": 0.12412497024342883,
@@ -2679,7 +2679,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476313_93",
+    "name": "rock_1RootClone_1778429945502_93",
     "position": {
       "x": -34.00360107421875,
       "y": 0.1551562149870449,
@@ -2705,7 +2705,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476314_94",
+    "name": "rock_1RootClone_1778429945502_94",
     "position": {
       "x": 83.87603759765625,
       "y": 0.2424315859173305,
@@ -2731,7 +2731,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476315_95",
+    "name": "rock_1RootClone_1778429945503_95",
     "position": {
       "x": 91.7766342163086,
       "y": 0.12412497156901736,
@@ -2757,7 +2757,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476315_96",
+    "name": "tree_1RootClone_1778429945503_96",
     "position": {
       "x": 323.7712707519531,
       "y": 2.0000000000000284,
@@ -2783,7 +2783,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476316_97",
+    "name": "tree_1RootClone_1778429945504_97",
     "position": {
       "x": 194.757568359375,
       "y": 0,
@@ -2809,7 +2809,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476317_98",
+    "name": "tree_1RootClone_1778429945505_98",
     "position": {
       "x": 234.23793029785156,
       "y": 2.842170943040401e-14,
@@ -2835,7 +2835,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476318_99",
+    "name": "tree_1RootClone_1778429945506_99",
     "position": {
       "x": 146.28541564941406,
       "y": 0,
@@ -2861,7 +2861,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476319_100",
+    "name": "tree_1RootClone_1778429945507_100",
     "position": {
       "x": 192.28195190429688,
       "y": 0,
@@ -2887,7 +2887,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476322_101",
+    "name": "tree_1RootClone_1778429945507_101",
     "position": {
       "x": 286.03961181640625,
       "y": 0,
@@ -2913,7 +2913,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476323_102",
+    "name": "tree_1RootClone_1778429945508_102",
     "position": {
       "x": 263.7978210449219,
       "y": 2.842170943040401e-14,
@@ -2939,7 +2939,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476324_103",
+    "name": "tree_1RootClone_1778429945509_103",
     "position": {
       "x": 309.4603576660156,
       "y": 0,
@@ -2965,7 +2965,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476325_104",
+    "name": "tree_1RootClone_1778429945510_104",
     "position": {
       "x": 199.6636962890625,
       "y": -2.842170943040401e-14,
@@ -2991,7 +2991,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476325_105",
+    "name": "tree_1RootClone_1778429945510_105",
     "position": {
       "x": 158.87864685058594,
       "y": -2.842170943040401e-14,
@@ -3017,7 +3017,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476326_106",
+    "name": "tree_1RootClone_1778429945511_106",
     "position": {
       "x": 230.9588623046875,
       "y": -2.842170943040401e-14,
@@ -3043,7 +3043,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476327_107",
+    "name": "tree_1RootClone_1778429945512_107",
     "position": {
       "x": 289.14251708984375,
       "y": 0,
@@ -3069,7 +3069,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476328_108",
+    "name": "tree_1RootClone_1778429945513_108",
     "position": {
       "x": 229.73110961914062,
       "y": -2.842170943040401e-14,
@@ -3095,7 +3095,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476329_109",
+    "name": "tree_1RootClone_1778429945513_109",
     "position": {
       "x": 215.2500762939453,
       "y": -2.842170943040401e-14,
@@ -3121,7 +3121,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476329_110",
+    "name": "tree_1RootClone_1778429945514_110",
     "position": {
       "x": 132.82373046875,
       "y": -2.842170943040401e-14,
@@ -3147,7 +3147,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476330_111",
+    "name": "pine_1RootClone_1778429945515_111",
     "position": {
       "x": 201.67100926809968,
       "y": 0,
@@ -3173,7 +3173,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476331_112",
+    "name": "pine_1RootClone_1778429945516_112",
     "position": {
       "x": 255.62411499023438,
       "y": 2.842170943040401e-14,
@@ -3199,7 +3199,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476332_113",
+    "name": "pine_1RootClone_1778429945517_113",
     "position": {
       "x": 142.17849731445312,
       "y": 0,
@@ -3225,7 +3225,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476332_114",
+    "name": "pine_1RootClone_1778429945517_114",
     "position": {
       "x": 252.3280487060547,
       "y": 2.842170943040401e-14,
@@ -3251,7 +3251,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476333_115",
+    "name": "pine_1RootClone_1778429945518_115",
     "position": {
       "x": 315.92022705078125,
       "y": 0,
@@ -3277,7 +3277,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476334_116",
+    "name": "pine_1RootClone_1778429945519_116",
     "position": {
       "x": 271.8819274902344,
       "y": 0,
@@ -3303,7 +3303,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476335_117",
+    "name": "pine_1RootClone_1778429945520_117",
     "position": {
       "x": 283.8819274902344,
       "y": 0,
@@ -3329,7 +3329,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476335_118",
+    "name": "pine_1RootClone_1778429945520_118",
     "position": {
       "x": 214.1583709716797,
       "y": -2.842170943040401e-14,
@@ -3355,7 +3355,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476336_119",
+    "name": "pine_1RootClone_1778429945521_119",
     "position": {
       "x": 198.91201782226562,
       "y": -2.842170943040401e-14,
@@ -3381,7 +3381,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476337_120",
+    "name": "pine_1RootClone_1778429945522_120",
     "position": {
       "x": 204.65579223632812,
       "y": -2.842170943040401e-14,
@@ -3407,7 +3407,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476338_121",
+    "name": "pine_1RootClone_1778429945523_121",
     "position": {
       "x": 136.32131958007812,
       "y": 1.9999999999999716,
@@ -3433,7 +3433,7 @@
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1778429476338_122",
+    "name": "dojo_9RootClone_1778429945523_122",
     "position": {
       "x": -110.505859375,
       "y": 0.600000023841782,
@@ -3459,7 +3459,7 @@
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1778429476358_123",
+    "name": "dojo_9RootClone_1778429945544_123",
     "position": {
       "x": 102.01013946533203,
       "y": 0.600000023841861,
@@ -3485,7 +3485,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476381_124",
+    "name": "pine_1RootClone_1778429945564_124",
     "position": {
       "x": 3.8495049476623535,
       "y": 0,
@@ -3511,7 +3511,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476382_125",
+    "name": "pine_1RootClone_1778429945567_125",
     "position": {
       "x": 162.885986328125,
       "y": 2,
@@ -3537,7 +3537,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476383_126",
+    "name": "pine_1RootClone_1778429945568_126",
     "position": {
       "x": 147.60107421875,
       "y": 2,
@@ -3563,7 +3563,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476384_127",
+    "name": "pine_1RootClone_1778429945569_127",
     "position": {
       "x": 68.52266693115234,
       "y": 0,
@@ -3589,7 +3589,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476384_128",
+    "name": "pine_1RootClone_1778429945570_128",
     "position": {
       "x": 129.0229949951172,
       "y": 2,
@@ -3615,7 +3615,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476385_129",
+    "name": "pine_1RootClone_1778429945571_129",
     "position": {
       "x": 71.07998657226562,
       "y": -2.842170943040401e-14,
@@ -3641,7 +3641,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476386_130",
+    "name": "pine_1RootClone_1778429945572_130",
     "position": {
       "x": 101.5054702758789,
       "y": -2.842170943040401e-14,
@@ -3667,7 +3667,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476387_131",
+    "name": "pine_1RootClone_1778429945572_131",
     "position": {
       "x": 39.703773498535156,
       "y": -2.842170943040401e-14,
@@ -3693,7 +3693,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476388_132",
+    "name": "pine_1RootClone_1778429945573_132",
     "position": {
       "x": 10.949362754821777,
       "y": -2.842170943040401e-14,
@@ -3719,7 +3719,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476389_133",
+    "name": "pine_1RootClone_1778429945574_133",
     "position": {
       "x": -62.730262756347656,
       "y": 0,
@@ -3745,7 +3745,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476390_134",
+    "name": "pine_1RootClone_1778429945575_134",
     "position": {
       "x": -97.5146484375,
       "y": 1.9999999999999716,
@@ -3771,7 +3771,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476391_135",
+    "name": "pine_1RootClone_1778429945576_135",
     "position": {
       "x": -70.47767639160156,
       "y": -2.842170943040401e-14,
@@ -3797,7 +3797,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476392_136",
+    "name": "pine_1RootClone_1778429945576_136",
     "position": {
       "x": -158.8830108642578,
       "y": -2.842170943040401e-14,
@@ -3823,7 +3823,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476393_137",
+    "name": "pine_1RootClone_1778429945577_137",
     "position": {
       "x": -114.21900939941406,
       "y": 2,
@@ -3849,7 +3849,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476394_138",
+    "name": "pine_1RootClone_1778429945578_138",
     "position": {
       "x": -51.49044418334961,
       "y": 2,
@@ -3875,7 +3875,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476397_139",
+    "name": "pine_1RootClone_1778429945579_139",
     "position": {
       "x": -111.46060943603516,
       "y": 2,
@@ -3901,7 +3901,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476398_140",
+    "name": "tree_1RootClone_1778429945580_140",
     "position": {
       "x": -45.01457214355469,
       "y": 0,
@@ -3927,7 +3927,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476399_141",
+    "name": "tree_1RootClone_1778429945581_141",
     "position": {
       "x": -30.709901809692383,
       "y": 0,
@@ -3953,7 +3953,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476400_142",
+    "name": "tree_1RootClone_1778429945581_142",
     "position": {
       "x": -28.662263870239258,
       "y": -2.842170943040401e-14,
@@ -3979,7 +3979,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476400_143",
+    "name": "tree_1RootClone_1778429945582_143",
     "position": {
       "x": 62.61634826660156,
       "y": 2,
@@ -4005,7 +4005,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476401_144",
+    "name": "tree_1RootClone_1778429945583_144",
     "position": {
       "x": 122.9904556274414,
       "y": 0,
@@ -4031,7 +4031,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476402_145",
+    "name": "tree_1RootClone_1778429945584_145",
     "position": {
       "x": 101.41629791259766,
       "y": -2.842170943040401e-14,
@@ -4057,7 +4057,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476403_146",
+    "name": "tree_1RootClone_1778429945584_146",
     "position": {
       "x": 59.066471099853516,
       "y": -2.842170943040401e-14,
@@ -4083,7 +4083,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476403_147",
+    "name": "tree_1RootClone_1778429945585_147",
     "position": {
       "x": 87.70879364013672,
       "y": -2.842170943040401e-14,
@@ -4109,7 +4109,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476404_148",
+    "name": "tree_1RootClone_1778429945586_148",
     "position": {
       "x": 34.418033599853516,
       "y": -2.842170943040401e-14,
@@ -4135,7 +4135,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476405_149",
+    "name": "tree_1RootClone_1778429945587_149",
     "position": {
       "x": -78.95976257324219,
       "y": 0,
@@ -4161,7 +4161,7 @@
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1778429476406_150",
+    "name": "tree_1RootClone_1778429945587_150",
     "position": {
       "x": -103.30167388916016,
       "y": 0,
@@ -4187,7 +4187,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476407_151",
+    "name": "rock_1RootClone_1778429945588_151",
     "position": {
       "x": 16.782644271850586,
       "y": 0.3030394736165931,
@@ -4213,7 +4213,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476407_152",
+    "name": "rock_1RootClone_1778429945589_152",
     "position": {
       "x": 28.782644271850586,
       "y": 0.12412496534668094,
@@ -4239,7 +4239,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476408_153",
+    "name": "rock_1RootClone_1778429945589_153",
     "position": {
       "x": 100.89200592041016,
       "y": 0.12412497198965866,
@@ -4265,7 +4265,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476408_154",
+    "name": "rock_1RootClone_1778429945590_154",
     "position": {
       "x": 112.89200592041016,
       "y": 0.12412496996694244,
@@ -4291,7 +4291,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476409_155",
+    "name": "rock_1RootClone_1778429945590_155",
     "position": {
       "x": 143.13743591308594,
       "y": 0.12412497539480682,
@@ -4317,7 +4317,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476409_156",
+    "name": "rock_1RootClone_1778429945591_156",
     "position": {
       "x": -109.32402038574219,
       "y": 0.050841588526935766,
@@ -4343,7 +4343,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476410_157",
+    "name": "rock_1RootClone_1778429945591_157",
     "position": {
       "x": -113.24408721923828,
       "y": 0.050841588526935766,
@@ -4369,7 +4369,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476410_158",
+    "name": "rock_1RootClone_1778429945592_158",
     "position": {
       "x": -105.06820678710938,
       "y": 0.050841588526935766,
@@ -4395,7 +4395,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476411_159",
+    "name": "rock_1RootClone_1778429945592_159",
     "position": {
       "x": -93.06820678710938,
       "y": 0.07943998300470412,
@@ -4421,7 +4421,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476412_160",
+    "name": "rock_1RootClone_1778429945592_160",
     "position": {
       "x": -54.975364685058594,
       "y": 0.09929997759172693,
@@ -4447,7 +4447,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476412_161",
+    "name": "rock_1RootClone_1778429945593_161",
     "position": {
       "x": -21.290668487548828,
       "y": 0.3030394823966276,
@@ -4473,7 +4473,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476413_162",
+    "name": "rock_1RootClone_1778429945593_162",
     "position": {
       "x": 9.679296493530273,
       "y": 0.12412497539472156,
@@ -4499,7 +4499,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476413_163",
+    "name": "rock_1RootClone_1778429945594_163",
     "position": {
       "x": -10.215073585510254,
       "y": 0.12412497273180634,
@@ -4525,7 +4525,7 @@
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1778429476414_164",
+    "name": "wooden_signRootClone_1778429945594_164",
     "position": {
       "x": 68.09320068359375,
       "y": 0.0623097050314243,
@@ -4565,7 +4565,7 @@
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1778429476415_165",
+    "name": "wooden_signRootClone_1778429945595_165",
     "position": {
       "x": -63.53282928466797,
       "y": 0.062309704849440095,
@@ -4598,7 +4598,7 @@
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1778429476416_166",
+    "name": "wooden_signRootClone_1778429945596_166",
     "position": {
       "x": 62.75960159301758,
       "y": 0.06230970628388377,
@@ -4624,7 +4624,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476417_167",
+    "name": "rock_1RootClone_1778429945597_167",
     "position": {
       "x": -22.00360107421875,
       "y": 0.1551562149870449,
@@ -4650,7 +4650,7 @@
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1778429476417_168",
+    "name": "wooden_signRootClone_1778429945597_168",
     "position": {
       "x": -6.120001316070557,
       "y": 0.010793939991932552,
@@ -4690,7 +4690,7 @@
   },
   {
     "type": "dojo_7",
-    "name": "dojo_7RootClone_1778429476418_169",
+    "name": "dojo_7RootClone_1778429945598_169",
     "position": {
       "x": 0.06390538811683655,
       "y": 0.05999999865867541,
@@ -4716,7 +4716,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476420_170",
+    "name": "pine_1RootClone_1778429945602_170",
     "position": {
       "x": 43.469017028808594,
       "y": 0,
@@ -4742,7 +4742,7 @@
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1778429476421_171",
+    "name": "lantern_1RootClone_1778429945603_171",
     "position": {
       "x": -30.585576892927975,
       "y": 0.033702017254453986,
@@ -4820,7 +4820,7 @@
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1778429476445_172",
+    "name": "lantern_1RootClone_1778429945623_172",
     "position": {
       "x": -107.08583538078378,
       "y": -0.026297980441055024,
@@ -4846,7 +4846,7 @@
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1778429476446_173",
+    "name": "lantern_1RootClone_1778429945623_173",
     "position": {
       "x": -86.62274639152596,
       "y": -0.026297980441055024,
@@ -4898,7 +4898,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476453_174",
+    "name": "rock_1RootClone_1778429945631_174",
     "position": {
       "x": -75.79802703857422,
       "y": 0.15929996926544732,
@@ -5106,7 +5106,7 @@
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1778429476506_175",
+    "name": "lantern_1RootClone_1778429945683_175",
     "position": {
       "x": -41.325042893712265,
       "y": 0.01890940452765344,
@@ -5132,7 +5132,7 @@
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1778429476507_176",
+    "name": "pine_1RootClone_1778429945684_176",
     "position": {
       "x": -277.9487609863281,
       "y": 0,
@@ -5158,7 +5158,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476508_177",
+    "name": "rock_1RootClone_1778429945685_177",
     "position": {
       "x": -285.5400695800781,
       "y": -0.28839176893234253,
@@ -5184,7 +5184,7 @@
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1778429476508_178",
+    "name": "rock_1RootClone_1778429945685_178",
     "position": {
       "x": -286.3059997558594,
       "y": -0.28839176893234253,
@@ -5212,9 +5212,9 @@
     "type": "ambient_glow",
     "name": "ambient_glow_root",
     "position": {
-      "x": -11.994470596313477,
+      "x": 69.36485290527344,
       "y": 5.661020278930664,
-      "z": 0.36424702405929565
+      "z": 2.1561014652252197
     },
     "rotation": {
       "x": 0,
@@ -5222,16 +5222,16 @@
       "z": 0
     },
     "scaling": {
-      "x": 1,
-      "y": 1,
-      "z": 1
+      "x": 1.5625,
+      "y": 1.5625,
+      "z": 1.5625
     },
     "signConfig": null,
     "toroColor": null,
     "lanternColor": null,
     "lanternBrightness": null,
-    "glowColor": "#ffdd88",
+    "glowColor": "#34d813",
     "glowBrightness": 1,
-    "glowShape": "circle"
+    "glowShape": "square"
   }
 ]
