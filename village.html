@@ -197,6 +197,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <button class="ctrl-btn full" onclick="applyLanternGlowSettings()" style="width:100%;background:#ffdd88;color:#000">Apply Glow</button>
 </div>
+
+<div id="ambientGlowEditorPanel" style="display:none;padding:0 8px 8px">
+  <div style="font-size:9px;letter-spacing:2px;color:#ffdd88;margin-bottom:6px;text-transform:uppercase">Ambient Glow</div>
+  <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+    <input id="ambientGlowColor" type="color" value="#ffdd88" style="width:44px;height:32px;border:none;background:none;cursor:pointer">
+    <input id="ambientGlowBrightness" type="range" min="0.2" max="3" step="0.1" value="1" style="flex:1">
+  </div>
+  <button class="ctrl-btn full" onclick="applyAmbientGlowSettings()" style="width:100%;background:#ffdd88;color:#000">Apply Glow</button>
+</div>
   <hr class="ap-divider">
   <div style="padding:0 8px 6px">
     <button class="ctrl-btn full" id="worklightBtn" onclick="toggleWorklight()" style="grid-column:1/-1;width:100%">&#x2600; Worklight (W)<kbd>W</kbd></button>
@@ -1026,6 +1035,21 @@ if (lanternPanel) {
   if (lanternClone) {
     document.getElementById('lanternColor').value = lanternClone.metadata.lanternColor || '#ffdd88';
     document.getElementById('lanternBrightness').value = lanternClone.metadata.lanternBrightness || 1;
+  }
+}
+
+const ambientGlowPanel = document.getElementById('ambientGlowEditorPanel');
+if (ambientGlowPanel) {
+  const isAmbientGlow =
+    selectedObject &&
+    selectedObject.metadata &&
+    selectedObject.metadata.type === 'ambient_glow';
+
+  ambientGlowPanel.style.display = isAmbientGlow ? 'block' : 'none';
+
+  if (isAmbientGlow) {
+    document.getElementById('ambientGlowColor').value = selectedObject.metadata.glowColor || '#ffdd88';
+    document.getElementById('ambientGlowBrightness').value = selectedObject.metadata.glowBrightness || 1;
   }
 }
   if (isSign) {
@@ -2738,6 +2762,34 @@ function applyLanternGlowSettings() {
   showToast('🏮 Lantern glow applied');
 }
 
+function clampAmbientGlowBrightness(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 1;
+  return Math.max(0.2, Math.min(3.0, n));
+}
+
+function applyAmbientGlowSettings() {
+  if (!selectedObject || selectedObject.metadata?.type !== 'ambient_glow') return;
+
+  const colorHex = document.getElementById('ambientGlowColor').value || '#ffdd88';
+  const brightness = clampAmbientGlowBrightness(document.getElementById('ambientGlowBrightness').value);
+  const glow = BABYLON.Color3.FromHexString(colorHex);
+  const ambientGlow = selectedObject.metadata._ambientGlow;
+
+  selectedObject.metadata.glowColor = colorHex;
+  selectedObject.metadata.glowBrightness = brightness;
+
+  if (ambientGlow && ambientGlow.material) {
+    ambientGlow.material.emissiveColor = new BABYLON.Color3(
+      glow.r * 1.8 * brightness,
+      glow.g * 1.35 * brightness,
+      glow.b * 0.72 * brightness
+    );
+  }
+
+  showToast('✨ Ambient glow applied');
+}
+
 // ── RESTORE UPLOADED ASSETS FROM LOCALSTORAGE ──────────
 // Any GLB uploaded via admin panel gets re-added to the panel on refresh
 // using its permanent /assets/buildings/ URL (available after Vercel redeploys)
@@ -3281,6 +3333,7 @@ window.addSignButton = addSignButton;
 window.applySignEditor = applySignEditor;
 window.applyToroColor = applyToroColor;
 window.applyLanternGlowSettings = applyLanternGlowSettings;
+window.applyAmbientGlowSettings = applyAmbientGlowSettings;
 window.toggleWorklight = toggleWorklight;
 window.saveWorldLayout = saveWorldLayout;
 window.loadWorldLayout = loadWorldLayout;
