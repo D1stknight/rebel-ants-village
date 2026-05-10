@@ -17,6 +17,77 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #logo span{font-size:10px;letter-spacing:7px;color:#5ecfca;text-transform:uppercase;margin-top:5px;display:block;text-shadow:0 0 10px rgba(94,207,202,.6)}
 #ctrl{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:2px;text-align:right;line-height:2.2;text-transform:uppercase}
 #ctrl kbd{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:3px;padding:1px 6px;font-size:9px;color:#e8c56a}
+
+#selectedRebelPanel{
+  position:fixed;
+  top:82px;
+  left:28px;
+  width:220px;
+  padding:10px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  background:rgba(5,10,28,.92);
+  border:1px solid rgba(232,197,106,.35);
+  backdrop-filter:blur(12px);
+  z-index:12;
+}
+#selectedRebelImage{
+  width:56px;
+  height:56px;
+  object-fit:cover;
+  border:1px solid rgba(232,197,106,.45);
+  flex-shrink:0;
+}
+#selectedRebelMeta{
+  min-width:0;
+  flex:1;
+}
+#selectedRebelLabel{
+  font-size:8px;
+  color:rgba(255,255,255,.35);
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:3px;
+}
+#selectedRebelName{
+  font-family:'Cinzel Decorative',serif;
+  font-size:10px;
+  color:#e8c56a;
+  letter-spacing:1px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  margin-bottom:4px;
+}
+#selectedRebelForm{
+  font-size:8px;
+  color:#5ecfca;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+#backToLobbyBtn{
+  position:fixed;
+  top:154px;
+  left:28px;
+  width:220px;
+  padding:8px 10px;
+  background:rgba(5,10,28,.92);
+  border:1px solid rgba(94,207,202,.4);
+  color:#5ecfca;
+  font-family:'Cinzel Decorative',serif;
+  font-size:9px;
+  letter-spacing:2px;
+  cursor:pointer;
+  z-index:12;
+  transition:all .2s;
+  backdrop-filter:blur(12px);
+}
+#backToLobbyBtn:hover{
+  background:rgba(94,207,202,.12);
+  border-color:#5ecfca;
+}
+
 #td{position:fixed;top:20px;left:50%;transform:translateX(-50%);font-family:'Cinzel Decorative',serif;font-size:11px;color:rgba(232,197,106,.65);letter-spacing:3px;pointer-events:none;z-index:10}
 #xhair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:8;opacity:0;transition:opacity .3s;width:22px;height:22px}
 #xhair.on{opacity:1}
@@ -248,6 +319,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div id="logo"><h1>REBEL ANTS</h1><span>The Hidden Village</span></div>
   <div id="ctrl"><kbd>W A S D</kbd> Walk<br><kbd>Mouse</kbd> Look<br><kbd>Click</kbd> Enter<br><kbd>ESC</kbd> Orbit</div>
 </div>
+
+<div id="selectedRebelPanel">
+  <img id="selectedRebelImage" src="assets/lobby/ant_1.JPG" alt="Selected Rebel">
+  <div id="selectedRebelMeta">
+    <div id="selectedRebelLabel">Selected Rebel</div>
+    <div id="selectedRebelName">Rebel #001</div>
+    <div id="selectedRebelForm">Starter 3D Form</div>
+  </div>
+</div>
+<button id="backToLobbyBtn" onclick="backToLobby()">← Back to Lobby</button>
+
 <button id="wb" onclick="toggleWalk()">⚔️ &nbsp;ENTER VILLAGE</button>
 <div id="tt"><h3 id="tth">—</h3><p id="ttp">Click to enter</p></div>
 <div id="panel">
@@ -1744,6 +1826,24 @@ function resolveCharacterConfig(rebel) {
   };
 }
 
+function hydrateSelectedRebelPanel(character) {
+  const image = document.getElementById('selectedRebelImage');
+  const name = document.getElementById('selectedRebelName');
+
+  if (image) {
+    image.src = character.previewImage || 'assets/lobby/ant_1.JPG';
+    image.onerror = function() { this.src = 'assets/lobby/ant_1.JPG'; };
+  }
+
+  if (name) {
+    name.textContent = character.displayName || 'Rebel #001';
+  }
+}
+
+function backToLobby() {
+  window.location.href = 'index.html';
+}
+
 const activeRebel = getSelectedRebel();
 const activeCharacter = resolveCharacterConfig(activeRebel);
 window.activeRebel = activeRebel;
@@ -1751,6 +1851,7 @@ window.activeCharacter = activeCharacter;
 console.log('Active Rebel selected for village:', activeRebel);
 console.log('Resolved character config:', activeCharacter);
 
+hydrateSelectedRebelPanel(activeCharacter);
 setSt("Loading " + activeCharacter.displayName + "...");
 let charMesh=null, charAnims={}, isMoving=false;
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
