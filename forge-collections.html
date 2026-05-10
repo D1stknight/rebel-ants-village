@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebel Ants — Forge Collection Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  width:100%;
+  min-height:100%;
+  background:#050812;
+  color:#f3e6bf;
+  font-family:'Cinzel',serif;
+}
+body{
+  padding:28px;
+  background:
+    radial-gradient(circle at top center, rgba(200,146,42,.13), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(94,207,202,.08), transparent 38%),
+    #050812;
+}
+#auth-loading{
+  min-height:calc(100vh - 56px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+#page{
+  width:min(1100px,100%);
+  margin:0 auto;
+  display:none;
+  flex-direction:column;
+  gap:24px;
+}
+#page-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  border-bottom:1px solid rgba(200,146,42,.18);
+  padding-bottom:22px;
+}
+#page-title h1{
+  font-family:'Cinzel Decorative',serif;
+  font-size:28px;
+  letter-spacing:4px;
+  color:#c8922a;
+  text-shadow:0 0 28px rgba(200,146,42,.25);
+}
+#page-title p{
+  margin-top:8px;
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+.header-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.header-btn{
+  padding:11px 16px;
+  background:transparent;
+  border:1px solid rgba(200,146,42,.35);
+  color:#c8922a;
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  cursor:pointer;
+  text-decoration:none;
+  transition:all .2s ease;
+}
+.header-btn:hover{
+  background:rgba(200,146,42,.12);
+  border-color:rgba(200,146,42,.7);
+}
+#status{
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:2px;
+}
+#collections-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:16px;
+}
+.collection-card{
+  padding:22px;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.08);
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.collection-top{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+}
+.collection-name{
+  font-family:'Cinzel Decorative',serif;
+  color:#c8922a;
+  font-size:16px;
+  letter-spacing:2px;
+  line-height:1.5;
+}
+.collection-enabled{
+  color:#7cffb2;
+  font-size:9px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.collection-meta{
+  display:grid;
+  gap:8px;
+}
+.meta-row{
+  display:grid;
+  grid-template-columns:120px 1fr;
+  gap:10px;
+  font-size:11px;
+  line-height:1.7;
+}
+.meta-label{
+  color:#8a7a5a;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.meta-value{
+  color:#f3e6bf;
+  word-break:break-word;
+}
+.collection-summary{
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:14px;
+  color:#b7a98b;
+  font-size:11px;
+  line-height:1.9;
+}
+.empty-state{
+  padding:28px;
+  border:1px dashed rgba(200,146,42,.3);
+  color:#8a7a5a;
+  text-align:center;
+  letter-spacing:2px;
+}
+@media (max-width:700px){
+  body{padding:18px}
+  #page-header{
+    flex-direction:column;
+  }
+  #page-title h1{
+    font-size:22px;
+  }
+  .meta-row{
+    grid-template-columns:1fr;
+    gap:2px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="auth-loading">Checking admin access...</div>
+
+<main id="page">
+  <header id="page-header">
+    <div id="page-title">
+      <h1>FORGE COLLECTION MANAGER</h1>
+      <p>Admin Collection Registry</p>
+    </div>
+
+    <div class="header-actions">
+      <a class="header-btn" href="admin.html">← Admin Hub</a>
+      <button class="header-btn" type="button" onclick="logoutAdmin()">Log Out</button>
+    </div>
+  </header>
+
+  <div id="status">Loading collections...</div>
+  <section id="collections-grid"></section>
+</main>
+
+<script>
+async function checkAdminSession() {
+  try {
+    const response = await fetch('/api/admin-session');
+    const data = await response.json();
+
+    if (!data.authenticated) {
+      window.location.href = 'index.html';
+      return false;
+    }
+
+    document.getElementById('auth-loading').style.display = 'none';
+    document.getElementById('page').style.display = 'flex';
+    return true;
+  } catch(e) {
+    console.warn('Admin session check failed:', e);
+    window.location.href = 'index.html';
+    return false;
+  }
+}
+
+async function logoutAdmin() {
+  try {
+    await fetch('/api/admin-logout', { method: 'POST' });
+  } catch(e) {
+    console.warn('Admin logout failed:', e);
+  }
+
+  window.location.href = 'index.html';
+}
+
+function renderCollections(config) {
+  const grid = document.getElementById('collections-grid');
+  const status = document.getElementById('status');
+  const collections = config && config.collections ? Object.values(config.collections) : [];
+
+  grid.innerHTML = '';
+
+  if (!collections.length) {
+    status.textContent = 'No collections configured yet.';
+    grid.innerHTML = '<div class="empty-state">No Forge collections found.</div>';
+    return;
+  }
+
+  status.textContent =
+    collections.length +
+    ' collection' +
+    (collections.length === 1 ? '' : 's') +
+    ' loaded';
+
+  collections.forEach(collection => {
+    const card = document.createElement('article');
+    card.className = 'collection-card';
+
+    card.innerHTML = `
+      <div class="collection-top">
+        <div class="collection-name">${collection.displayName || collection.collectionKey}</div>
+        <div class="collection-enabled">${collection.enabled ? 'Enabled' : 'Disabled'}</div>
+      </div>
+
+      <div class="collection-meta">
+        <div class="meta-row">
+          <div class="meta-label">Key</div>
+          <div class="meta-value">${collection.collectionKey || '—'}</div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-label">Chain</div>
+          <div class="meta-value">${collection.chain || '—'}</div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-label">Contract</div>
+          <div class="meta-value">${collection.contractAddress || '—'}</div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-label">OpenSea Slug</div>
+          <div class="meta-value">${collection.openSeaSlug || '—'}</div>
+        </div>
+      </div>
+
+      <div class="collection-summary">
+        ${(collection.traitCategories || []).length} discovered trait categories<br>
+        ${Object.keys(collection.traitMap || {}).length} mapped Forge slots
+      </div>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+async function loadForgeCollections() {
+  const status = document.getElementById('status');
+
+  try {
+    const response = await fetch('/assets/forge-collections.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('status ' + response.status);
+
+    const config = await response.json();
+    window._forgeCollectionsConfig = config;
+    renderCollections(config);
+  } catch(e) {
+    console.warn('Could not load Forge collections config:', e);
+    status.textContent = 'Could not load Forge collections.';
+  }
+}
+
+(async function bootForgeCollectionManager() {
+  const authenticated = await checkAdminSession();
+  if (!authenticated) return;
+  await loadForgeCollections();
+})();
+</script>
+
+</body>
+</html>
