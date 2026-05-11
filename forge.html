@@ -299,25 +299,6 @@ body{
           <div class="detail-value" id="detail-source-type">default</div>
         </div>
       </div>
-
-          <div id="fullbody-preview-wrap">
-        <div id="fullbody-preview-label">Generated Full-Body Preview</div>
-        <img id="fullbody-preview-image" alt="Generated full-body Rebel Ant preview">
-
-        <div id="forge-preview-actions" style="display:none; margin-top:14px; gap:10px; flex-wrap:wrap;">
-          <button class="action-btn" id="save-concept-btn" type="button" onclick="saveCurrentForgeConcept()">Save This Version</button>
-          <button class="action-btn" id="generate-another-btn" type="button" onclick="generatePreviewStub()">Generate Another</button>
-          <button class="action-btn" id="set-selected-concept-btn" type="button" onclick="setCurrentForgeConceptSelected()">Set as Selected</button>
-        </div>
-      </div>
-
-      <div id="forge-concepts-section" style="margin-top:22px;">
-        <div class="section-title">Saved Concepts</div>
-        <div class="section-copy">
-          Generate multiple full-body versions for this Rebel, then choose the one you want to keep.
-        </div>
-        <div id="forge-concepts-gallery" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:14px; margin-top:14px;"></div>
-      </div>
     </div>
 
        <div class="forge-card" id="forge-right">
@@ -358,9 +339,31 @@ body{
         <pre id="generation-snapshot">Loading Forge input...</pre>
       </div>
 
-      <div id="forge-actions">
+           <div id="forge-actions">
         <button class="action-btn" id="generate-btn" type="button" onclick="generatePreviewStub()">Generate Full-Body Preview</button>
         <button class="action-btn" id="enter-village-btn" type="button" onclick="window.location.href='village.html'">Enter Village</button>
+      </div>
+
+      <div id="forge-right-results" style="margin-top:18px;">
+        <div id="fullbody-preview-wrap">
+          <div id="fullbody-preview-label">Generated Full-Body Preview</div>
+          <img id="fullbody-preview-image" alt="Generated full-body Rebel Ant preview">
+
+          <div id="forge-preview-actions" style="display:none; margin-top:14px; gap:10px; flex-wrap:wrap;">
+            <button class="action-btn" id="save-concept-btn" type="button" onclick="saveCurrentForgeConcept()">Save This Version</button>
+            <button class="action-btn" id="generate-another-btn" type="button" onclick="generatePreviewStub()">Generate Another</button>
+            <button class="action-btn" id="set-selected-concept-btn" type="button" onclick="setCurrentForgeConceptSelected()">Set as Selected</button>
+          </div>
+        </div>
+
+        <div id="forge-concepts-section" style="margin-top:22px;">
+          <div class="section-title">Saved Concepts</div>
+          <div class="section-copy">
+            Generate multiple full-body versions for this Rebel, then choose the one you want to keep.
+          </div>
+          <div id="forge-concepts-gallery" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:14px; margin-top:14px;"></div>
+        </div>
+      </div>
       </div>
 
       <div id="forge-status"></div>
@@ -618,6 +621,27 @@ function setCurrentForgeConceptSelected() {
   }
 }
 
+function ensureForgeLoadingStyles() {
+  if (document.getElementById('forge-loading-styles')) return;
+
+  const style = document.createElement('style');
+  style.id = 'forge-loading-styles';
+  style.textContent = `
+    @keyframes forgePulse {
+      0% { opacity: .45; }
+      50% { opacity: 1; }
+      100% { opacity: .45; }
+    }
+
+    .forge-loading-pulse {
+      display: inline-block;
+      animation: forgePulse 1s ease-in-out infinite;
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
 async function generatePreviewStub() {
   const status = document.getElementById('forge-status');
   const button = document.getElementById('generate-btn');
@@ -626,8 +650,10 @@ async function generatePreviewStub() {
   const previewImage = document.getElementById('fullbody-preview-image');
   const previewActions = document.getElementById('forge-preview-actions');
 
+  ensureForgeLoadingStyles();
+
   if (status) {
-    status.textContent = 'Generating full-body Rebel preview...';
+    status.innerHTML = '<span class="forge-loading-pulse">Generating full-body Rebel preview...</span>';
     status.className = '';
   }
 
