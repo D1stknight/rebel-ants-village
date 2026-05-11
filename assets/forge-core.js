@@ -377,3 +377,207 @@ window.resolveWeaponForgeProfile = resolveWeaponForgeProfile;
 window.buildForgeLayers = buildForgeLayers;
 window.buildCharacterBlueprint = buildCharacterBlueprint;
 window.buildForgeGenerationInput = buildForgeGenerationInput;
+
+(function setupForgeSelectedConceptPanelExtension() {
+  function isForgePage() {
+    return Boolean(
+      document.getElementById('forge-concepts-section') &&
+      document.getElementById('forge-concepts-gallery')
+    );
+  }
+
+  function ensureSelectedConceptStyles() {
+    if (document.getElementById('forge-selected-concept-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'forge-selected-concept-styles';
+    style.textContent = `
+      #forge-selected-concept-panel {
+        margin-top: 18px;
+        padding: 14px;
+        border: 1px solid rgba(94,207,202,.22);
+        background: rgba(94,207,202,.055);
+        border-radius: 18px;
+      }
+
+      .forge-selected-empty {
+        color: rgba(243,230,191,.72);
+        font-size: 12px;
+        line-height: 1.8;
+        border: 1px dashed rgba(255,255,255,.14);
+        border-radius: 14px;
+        padding: 14px;
+        margin-top: 12px;
+      }
+
+      .forge-selected-card {
+        display: grid;
+        grid-template-columns: minmax(110px,150px) 1fr;
+        gap: 14px;
+        align-items: center;
+        margin-top: 12px;
+      }
+
+      .forge-selected-card img {
+        width: 100%;
+        aspect-ratio: 1 / 1.25;
+        object-fit: cover;
+        object-position: top center;
+        border-radius: 14px;
+        border: 1px solid rgba(94,207,202,.28);
+        background: rgba(0,0,0,.24);
+      }
+
+      .forge-selected-kicker {
+        color: #5ecfca;
+        font-size: 10px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+
+      .forge-selected-meta {
+        color: rgba(243,230,191,.76);
+        font-size: 11px;
+        line-height: 1.8;
+        margin-top: 8px;
+      }
+
+      .forge-disabled-build-btn {
+        margin-top: 12px;
+        padding: 11px 14px;
+        border: 1px solid rgba(200,146,42,.28);
+        background: rgba(200,146,42,.08);
+        color: rgba(243,230,191,.58);
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        cursor: not-allowed;
+      }
+
+      @media (max-width: 700px) {
+        .forge-selected-card {
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function ensureSelectedConceptPanel() {
+    if (!isForgePage()) return null;
+
+    let panel = document.getElementById('forge-selected-concept-panel');
+    if (panel) return panel;
+
+    const conceptsSection = document.getElementById('forge-concepts-section');
+    if (!conceptsSection || !conceptsSection.parentNode) return null;
+
+    panel = document.createElement('div');
+    panel.id = 'forge-selected-concept-panel';
+    panel.innerHTML = `
+      <div class="section-title">Selected Concept</div>
+      <div id="forge-selected-concept-content" class="forge-selected-empty">
+        No concept selected yet. Select a saved concept to choose the version that will move forward into the 3D character step.
+      </div>
+    `;
+
+    conceptsSection.parentNode.insertBefore(panel, conceptsSection);
+    return panel;
+  }
+
+  async function renderSelectedConceptPanel() {
+    ensureSelectedConceptStyles();
+
+    const panel = ensureSelectedConceptPanel();
+    const content = document.getElementById('forge-selected-concept-content');
+    if (!panel || !content) return;
+
+    if (
+      typeof window.getSelectedForgeConceptStorageKey !== 'function' ||
+      typeof window.loadForgeConcepts !== 'function'
+    ) {
+      return;
+    }
+
+    const selectedConceptId = localStorage.getItem(window.getSelectedForgeConceptStorageKey());
+    const concepts = window.loadForgeConcepts();
+    const concept = concepts.find((item) => item.id === selectedConceptId);
+
+    if (!selectedConceptId || !concept) {
+      content.className = 'forge-selected-empty';
+      content.innerHTML = 'No concept selected yet. Select a saved concept to choose the version that will move forward into the 3D character step.';
+      return;
+    }
+
+    let imageDataUrl = '';
+
+    if (typeof window.loadForgeConceptImage === 'function') {
+      try {
+        imageDataUrl = await window.loadForgeConceptImage(concept.id);
+      } catch(e) {
+        console.warn('Could not load selected Forge concept image:', e);
+      }
+    }
+
+    const tokenText = concept.tokenId || concept.rebelId || '—';
+    const colonyText = concept.colony || 'Unknown Colony';
+    const imgHtml = imageDataUrl
+      ? `<img src="${imageDataUrl}" alt="Selected Forge concept">`
+      : '<div class="forge-selected-empty">Selected image missing.</div>';
+
+    content.className = 'forge-selected-card';
+    content.innerHTML = `
+      ${imgHtml}
+      <div>
+        <div class="forge-selected-kicker">Selected for Future 3D Build</div>
+        <div class="forge-selected-meta">
+          Colony: ${colonyText}<br>
+          Token ID: ${tokenText}
+        </div>
+        <button class="forge-disabled-build-btn" type="button" disabled>Build 3D Character — Coming Soon</button>
+      </div>
+    `;
+  }
+
+  function wrapForgeConceptFunction(name) {
+    const original = window[name];
+    if (typeof original !== 'function' || original.__selectedConceptWrapped) return;
+
+    const wrapped = function(...args) {
+      const result = original.apply(this, args);
+      Promise.resolve(result).finally(() => {
+        renderSelectedConceptPanel();
+      });
+      return result;
+    };
+
+    wrapped.__selectedConceptWrapped = true;
+    window[name] = wrapped;
+  }
+
+  function bootSelectedConceptPanel() {
+    if (!isForgePage()) return;
+
+    ensureSelectedConceptStyles();
+    ensureSelectedConceptPanel();
+
+    [
+      'selectForgeConcept',
+      'saveCurrentForgeConcept',
+      'setCurrentForgeConceptSelected',
+      'deleteForgeConcept',
+      'renderForgeConceptGallery'
+    ].forEach(wrapForgeConceptFunction);
+
+    renderSelectedConceptPanel();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(bootSelectedConceptPanel, 0);
+  });
+
+  window.renderForgeSelectedConceptPanel = renderSelectedConceptPanel;
+})();
