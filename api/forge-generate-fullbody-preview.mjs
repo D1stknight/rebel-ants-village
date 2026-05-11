@@ -24,6 +24,25 @@ async function fetchSourceImageAsDataUrl(imageUrl) {
   return `data:${contentType};base64,${base64}`;
 }
 
+async function fetchBodyReferenceDataUrls(baseOrigin) {
+  const bodyReferencePaths = [
+    '/assets/forge-references/body/red-kimono-clean.png',
+    '/assets/forge-references/body/orange-shinobi-layered.png',
+    '/assets/forge-references/body/navy-wave-kimono.png',
+    '/assets/forge-references/body/pale-pink-tactical-kimono.png'
+  ];
+
+  const results = [];
+
+  for (const path of bodyReferencePaths) {
+    const absoluteUrl = new URL(path, baseOrigin).toString();
+    const dataUrl = await fetchSourceImageAsDataUrl(absoluteUrl);
+    results.push(dataUrl);
+  }
+
+  return results;
+}
+
 function buildFullBodyPreviewPrompt(generationInput) {
   const colony = generationInput.colony || 'Rebel Ant';
   const colonyStyle = generationInput.colonyProfile?.baseStyle || 'warrior';
@@ -38,13 +57,19 @@ function buildFullBodyPreviewPrompt(generationInput) {
   const background = generationInput.traitSlots?.background || 'none';
 
   return `
-Use the provided source NFT image as the identity reference.
+You will receive multiple reference images.
 
-Create a clean full-body Rebel Ant character reference image based on that source image.
+Reference priority:
+- Image 1 is the PRIMARY identity reference. It is the actual Rebel Ant NFT and must control the character identity.
+- Images 2 through 5 are BODY-ONLY style references. Use them only to guide the lower-body completion, outfit continuation, wraps, shin guards, footwear, sash structure, silhouette, and ninja-warrior body design.
+- Do not copy the face, eyes, mouth, or upper-head identity from Images 2 through 5.
+- If there is any conflict between the references, Image 1 wins for everything from the top of the head through the chest.
+
+Create a clean full-body Rebel Ant character reference image based on Image 1.
 The source NFT may be chest-up only, so you must complete the missing lower body and produce a full-body result.
 
 Absolute highest priority:
-- Treat the source image as the canonical design for everything visible in the upper body.
+- Treat Image 1 as the canonical design for everything visible in the upper body.
 - Do not redesign the face.
 - Do not reinterpret the eyes.
 - Do not significantly change the mouth.
@@ -55,11 +80,17 @@ Absolute highest priority:
 - Think of this as extending the character downward, not redesigning the character.
 
 Upper-body preservation rules:
-- The area from the top of the head down through the chest should closely match the source image.
+- The area from the top of the head down through the chest should closely match Image 1.
 - Keep the same recognizable facial expression and upper-body styling.
 - Keep the same line-language and stylized cartoon ant identity.
 - Do not make the face more human or more realistic than the source.
 - Do not replace or restyle the upper features unless absolutely necessary for image coherence.
+
+Body-reference rules:
+- Use Images 2 through 5 only to improve the body design and lower-body structure.
+- Borrow body language from those references: better waist sash structure, robe continuation, layered shinobi / samurai lower-body design, wrapped lower legs, shin guards, footwear, and stronger ninja-warrior silhouette.
+- Do not borrow their face or head design.
+- Creative changes should happen mainly below the chest.
 
 Important requirements:
 - Output must be a full-body character from head to feet.
@@ -90,9 +121,8 @@ Character identity details:
 
 Generation rules:
 - If the source image is chest-up, continue the visible upper-body design downward into a believable full-body design.
-- Creative changes should happen mainly below the chest.
 - Preserve the upper body styling and colors, then complete the torso, waist, legs, feet, and outfit continuation.
-- Extend the outfit into a more ninja-warrior full-body design: layered shinobi/samurai-inspired wraps, tied waist sash, fitted sleeves, stronger lower-body garment structure, shin guards or wrapped lower legs, and warrior-style sandals or footwear that matches the character.
+- Use the body reference images to improve the lower-body structure and ninja-warrior styling.
 - Keep the weapon visible if appropriate.
 - Maintain the character’s outfit logic and faction identity.
 - This is a single full-body character reference image, not a collage and not a turnaround sheet.
@@ -133,6 +163,9 @@ export default async function handler(req, res) {
         const prompt = buildFullBodyPreviewPrompt(generationInput);
     const sourceImageDataUrl = await fetchSourceImageAsDataUrl(generationInput.sourceImage);
 
+      const baseOrigin = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
+    const bodyReferenceDataUrls = await fetchBodyReferenceDataUrls(baseOrigin);
+
     const openaiResponse = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
@@ -151,8 +184,12 @@ export default async function handler(req, res) {
               },
               {
                 type: 'input_image',
-                               image_url: sourceImageDataUrl
-              }
+                image_url: sourceImageDataUrl
+              },
+              ...bodyReferenceDataUrls.map(imageUrl => ({
+                type: 'input_image',
+                image_url: imageUrl
+              }))
             ]
           }
         ],
