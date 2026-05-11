@@ -175,16 +175,22 @@ body{
   transform:translateY(-2px);
   box-shadow:0 8px 24px rgba(200,146,42,.25);
 }
-#forge-status{
+#forge-status,
+#forge-inline-status{
   color:#8a7a5a;
   font-size:11px;
   letter-spacing:2px;
   min-height:18px;
 }
-#forge-status.success{
+#forge-inline-status{
+  margin-top:-6px;
+}
+#forge-status.success,
+#forge-inline-status.success{
   color:#7cffb2;
 }
-#forge-status.error{
+#forge-status.error,
+#forge-inline-status.error{
   color:#ff8b8b;
 }
 #fullbody-preview-wrap{
@@ -281,7 +287,7 @@ body{
       <div id="forge-name">Rebel #001</div>
       <div id="forge-sub">Selected Rebel</div>
 
-          <div id="forge-details">
+      <div id="forge-details">
         <div class="detail-row">
           <div class="detail-label">Collection</div>
           <div class="detail-value" id="detail-collection">battle_for_colony</div>
@@ -301,7 +307,7 @@ body{
       </div>
     </div>
 
-       <div class="forge-card" id="forge-right">
+    <div class="forge-card" id="forge-right">
       <div>
         <div class="section-title">Forge Input</div>
         <div class="section-copy">
@@ -331,7 +337,7 @@ body{
         </div>
       </div>
 
-           <div id="generation-snapshot-shell" style="display:none;">
+      <div id="generation-snapshot-shell" style="display:none;">
         <div class="section-title">Generation Input Snapshot</div>
         <div class="section-copy">
           Dev-only preview of the actual Forge input object the future 3D generator will consume.
@@ -339,12 +345,14 @@ body{
         <pre id="generation-snapshot">Loading Forge input...</pre>
       </div>
 
-           <div id="forge-actions">
+      <div id="forge-actions">
         <button class="action-btn" id="generate-btn" type="button" onclick="generatePreviewStub()">Generate Full-Body Preview</button>
         <button class="action-btn" id="enter-village-btn" type="button" onclick="window.location.href='village.html'">Enter Village</button>
       </div>
 
-           <div id="forge-right-results" style="margin-top:14px;">
+      <div id="forge-inline-status" aria-live="polite"></div>
+
+      <div id="forge-right-results" style="margin-top:14px;">
         <div id="fullbody-preview-wrap" style="display:none;">
           <div id="fullbody-preview-label">Latest Generated Preview</div>
           <img id="fullbody-preview-image" alt="Generated full-body Rebel Ant preview" style="max-width:260px; width:100%; border-radius:18px; display:block; margin-top:12px;">
@@ -363,7 +371,6 @@ body{
           </div>
           <div id="forge-concepts-gallery" style="display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; margin-top:14px;"></div>
         </div>
-      </div>
       </div>
 
       <div id="forge-status"></div>
@@ -447,6 +454,26 @@ function hydrateForgeScreen(rebel, generationInput) {
   }
 }
 
+function getForgeStatusElement() {
+  return document.getElementById('forge-inline-status') || document.getElementById('forge-status');
+}
+
+function setForgeStatus(message, className = '') {
+  const status = getForgeStatusElement();
+  if (!status) return;
+
+  status.textContent = message;
+  status.className = className;
+}
+
+function setForgeStatusHtml(html, className = '') {
+  const status = getForgeStatusElement();
+  if (!status) return;
+
+  status.innerHTML = html;
+  status.className = className;
+}
+
 function getForgeConceptStorageKey() {
   const collectionKey = forgeGenerationInput?.collectionKey || 'unknown_collection';
   const tokenId = forgeGenerationInput?.tokenId || forgeGenerationInput?.rebelId || 'unknown_token';
@@ -455,6 +482,84 @@ function getForgeConceptStorageKey() {
 
 function getSelectedForgeConceptStorageKey() {
   return `${getForgeConceptStorageKey()}:selected`;
+}
+
+function getForgeConceptDbName() {
+  return 'rebelForgeConceptImages:v1';
+}
+
+function openForgeConceptDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(getForgeConceptDbName(), 1);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('conceptImages')) {
+        db.createObjectStore('conceptImages', { keyPath: 'id' });
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function saveForgeConceptImage(conceptId, imageDataUrl) {
+  if (!conceptId || !imageDataUrl) return;
+
+  const db = await openForgeConceptDb();
+
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction('conceptImages', 'readwrite');
+    transaction.objectStore('conceptImages').put({
+      id: conceptId,
+      imageDataUrl,
+      updatedAt: new Date().toISOString()
+    });
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error);
+  });
+
+  db.close();
+}
+
+async function loadForgeConceptImage(conceptId) {
+  if (!conceptId) return '';
+
+  const db = await openForgeConceptDb();
+
+  const result = await new Promise((resolve, reject) => {
+    const transaction = db.transaction('conceptImages', 'readonly');
+    const request = transaction.objectStore('conceptImages').get(conceptId);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+  });
+
+  db.close();
+
+  return result?.imageDataUrl || '';
+}
+
+async function deleteForgeConceptImage(conceptId) {
+  if (!conceptId) return;
+
+  const db = await openForgeConceptDb();
+
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction('conceptImages', 'readwrite');
+    transaction.objectStore('conceptImages').delete(conceptId);
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error);
+  });
+
+  db.close();
+}
+
+function stripForgeConceptImageData(concept) {
+  if (!concept) return concept;
+
+  const { imageDataUrl, ...metadata } = concept;
+  return metadata;
 }
 
 function loadForgeConcepts() {
@@ -468,10 +573,28 @@ function loadForgeConcepts() {
 
 function saveForgeConcepts(concepts) {
   try {
-    localStorage.setItem(getForgeConceptStorageKey(), JSON.stringify(concepts));
+    const metadataOnly = concepts.map(stripForgeConceptImageData);
+    localStorage.setItem(getForgeConceptStorageKey(), JSON.stringify(metadataOnly));
   } catch(e) {
-    console.warn('Could not save Forge concepts:', e);
+    console.warn('Could not save Forge concept metadata:', e);
   }
+}
+
+async function migrateForgeConceptImagesToIndexedDb() {
+  const concepts = loadForgeConcepts();
+  const conceptsWithImages = concepts.filter((concept) => concept.imageDataUrl);
+
+  if (!conceptsWithImages.length) return;
+
+  for (const concept of conceptsWithImages) {
+    try {
+      await saveForgeConceptImage(concept.id, concept.imageDataUrl);
+    } catch(e) {
+      console.warn('Could not migrate Forge concept image:', e);
+    }
+  }
+
+  saveForgeConcepts(concepts);
 }
 
 function getCurrentForgeConceptFromPreview() {
@@ -493,7 +616,7 @@ function getCurrentForgeConceptFromPreview() {
   };
 }
 
-function renderForgeConceptGallery() {
+async function renderForgeConceptGallery() {
   ensureForgeLoadingStyles();
 
   const gallery = document.getElementById('forge-concepts-gallery');
@@ -517,11 +640,8 @@ function renderForgeConceptGallery() {
     const safeId = String(concept.id).replace(/'/g, "\\'");
 
     return `
-      <div class="forge-concept-card ${isSelected ? 'selected' : ''}">
-        <img
-          src="${concept.imageDataUrl}"
-          alt="${label}"
-        >
+      <div class="forge-concept-card ${isSelected ? 'selected' : ''}" data-concept-id="${safeId}">
+        <div class="forge-concept-thumb" data-concept-image="${safeId}">Loading...</div>
         <div class="forge-concept-card-title">${label}</div>
         <div class="forge-concept-card-meta">${concept.colony || 'Unknown Colony'}</div>
 
@@ -533,23 +653,45 @@ function renderForgeConceptGallery() {
       </div>
     `;
   }).join('');
+
+  for (const concept of concepts.slice(0, 12)) {
+    const imageSlot = gallery.querySelector(`[data-concept-image="${CSS.escape(concept.id)}"]`);
+    if (!imageSlot) continue;
+
+    try {
+      const imageDataUrl = await loadForgeConceptImage(concept.id);
+
+      if (imageDataUrl) {
+        imageSlot.innerHTML = `<img src="${imageDataUrl}" alt="Saved Forge concept">`;
+      } else {
+        imageSlot.textContent = 'Image missing';
+      }
+    } catch(e) {
+      console.warn('Could not load Forge concept image:', e);
+      imageSlot.textContent = 'Image failed';
+    }
+  }
 }
 
-function selectForgeConcept(conceptId) {
+async function selectForgeConcept(conceptId) {
   const concepts = loadForgeConcepts();
   const concept = concepts.find((item) => item.id === conceptId);
   const previewWrap = document.getElementById('fullbody-preview-wrap');
   const previewImage = document.getElementById('fullbody-preview-image');
   const previewActions = document.getElementById('forge-preview-actions');
-  const status = document.getElementById('forge-status');
 
   if (!concept) return;
 
-  localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
-  window.currentForgeConcept = concept;
+  const imageDataUrl = await loadForgeConceptImage(concept.id);
 
-  if (previewImage && concept.imageDataUrl) {
-    previewImage.src = concept.imageDataUrl;
+  localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
+  window.currentForgeConcept = {
+    ...concept,
+    imageDataUrl
+  };
+
+  if (previewImage && imageDataUrl) {
+    previewImage.src = imageDataUrl;
   }
 
   if (previewWrap) {
@@ -561,108 +703,123 @@ function selectForgeConcept(conceptId) {
     previewActions.style.display = 'flex';
   }
 
-  if (status) {
-    status.textContent = 'Selected Forge concept is ready for the future 3D character step.';
-    status.className = 'success';
-  }
+  setForgeStatus('Selected Forge concept is ready for the future 3D character step.', 'success');
 
   renderForgeConceptGallery();
 }
 
-function downloadForgeConcept(conceptId) {
+async function downloadForgeConcept(conceptId) {
   const concepts = loadForgeConcepts();
   const concept = concepts.find((item) => item.id === conceptId);
 
-  if (!concept || !concept.imageDataUrl) return;
+  if (!concept) return;
+
+  const imageDataUrl = await loadForgeConceptImage(concept.id);
+
+  if (!imageDataUrl) {
+    setForgeStatus('Could not download this concept because the saved image is missing.', 'error');
+    return;
+  }
 
   const link = document.createElement('a');
   const tokenId = concept.tokenId || concept.rebelId || 'rebel';
-  link.href = concept.imageDataUrl;
+  link.href = imageDataUrl;
   link.download = `rebel-forge-${tokenId}-${concept.id}.png`;
   document.body.appendChild(link);
   link.click();
   link.remove();
 }
 
-function deleteForgeConcept(conceptId) {
+async function deleteForgeConcept(conceptId) {
   const concepts = loadForgeConcepts();
   const nextConcepts = concepts.filter((item) => item.id !== conceptId);
   const selectedConceptId = localStorage.getItem(getSelectedForgeConceptStorageKey());
-  const status = document.getElementById('forge-status');
 
   saveForgeConcepts(nextConcepts);
+  await deleteForgeConceptImage(conceptId);
 
   if (selectedConceptId === conceptId) {
     localStorage.removeItem(getSelectedForgeConceptStorageKey());
     window.currentForgeConcept = null;
   }
 
-  if (status) {
-    status.textContent = 'Forge concept deleted.';
-    status.className = 'success';
-  }
+  setForgeStatus('Forge concept deleted.', 'success');
 
   renderForgeConceptGallery();
 }
-function saveCurrentForgeConcept() {
-  const status = document.getElementById('forge-status');
+
+async function saveCurrentForgeConcept() {
   const concept = window.currentForgeConcept || getCurrentForgeConceptFromPreview();
 
   if (!concept || !concept.imageDataUrl) {
-    if (status) {
-      status.textContent = 'Generate a full-body preview before saving a version.';
-      status.className = 'error';
-    }
+    setForgeStatus('Generate a full-body preview before saving a version.', 'error');
     return;
   }
 
-  const concepts = loadForgeConcepts();
-  const alreadySaved = concepts.some((item) => item.id === concept.id);
+  try {
+    await saveForgeConceptImage(concept.id, concept.imageDataUrl);
 
-  if (!alreadySaved) {
-    const nextConcepts = [concept, ...concepts].slice(0, 12);
-    saveForgeConcepts(nextConcepts);
-  }
+    const concepts = loadForgeConcepts();
+    const alreadySaved = concepts.some((item) => item.id === concept.id);
+    let nextConcepts = concepts;
 
-  localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
-  window.currentForgeConcept = concept;
+    if (!alreadySaved) {
+      nextConcepts = [stripForgeConceptImageData(concept), ...concepts].slice(0, 12);
+      const removedConcepts = [stripForgeConceptImageData(concept), ...concepts].slice(12);
 
-  renderForgeConceptGallery();
+      for (const removedConcept of removedConcepts) {
+        await deleteForgeConceptImage(removedConcept.id);
+      }
 
-  if (status) {
-    status.textContent = 'Forge concept saved and selected.';
-    status.className = 'success';
+      saveForgeConcepts(nextConcepts);
+    }
+
+    localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
+    window.currentForgeConcept = concept;
+
+    await renderForgeConceptGallery();
+
+    setForgeStatus('Forge concept saved and selected.', 'success');
+  } catch(e) {
+    console.warn('Could not save Forge concept:', e);
+    setForgeStatus('Could not save this Forge concept. Please try again.', 'error');
   }
 }
 
-function setCurrentForgeConceptSelected() {
-  const status = document.getElementById('forge-status');
+async function setCurrentForgeConceptSelected() {
   const concept = window.currentForgeConcept || getCurrentForgeConceptFromPreview();
 
   if (!concept || !concept.imageDataUrl) {
-    if (status) {
-      status.textContent = 'Generate or choose a concept before setting it as selected.';
-      status.className = 'error';
-    }
+    setForgeStatus('Generate or choose a concept before setting it as selected.', 'error');
     return;
   }
 
-  const concepts = loadForgeConcepts();
-  const alreadySaved = concepts.some((item) => item.id === concept.id);
+  try {
+    await saveForgeConceptImage(concept.id, concept.imageDataUrl);
 
-  if (!alreadySaved) {
-    const nextConcepts = [concept, ...concepts].slice(0, 12);
-    saveForgeConcepts(nextConcepts);
-  }
+    const concepts = loadForgeConcepts();
+    const alreadySaved = concepts.some((item) => item.id === concept.id);
 
-  localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
-  window.currentForgeConcept = concept;
+    if (!alreadySaved) {
+      const nextConcepts = [stripForgeConceptImageData(concept), ...concepts].slice(0, 12);
+      const removedConcepts = [stripForgeConceptImageData(concept), ...concepts].slice(12);
 
-  renderForgeConceptGallery();
+      for (const removedConcept of removedConcepts) {
+        await deleteForgeConceptImage(removedConcept.id);
+      }
 
-  if (status) {
-    status.textContent = 'This Forge concept is now selected.';
-    status.className = 'success';
+      saveForgeConcepts(nextConcepts);
+    }
+
+    localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
+    window.currentForgeConcept = concept;
+
+    await renderForgeConceptGallery();
+
+    setForgeStatus('This Forge concept is now selected.', 'success');
+  } catch(e) {
+    console.warn('Could not set Forge concept as selected:', e);
+    setForgeStatus('Could not select this Forge concept. Please try again.', 'error');
   }
 }
 
@@ -680,7 +837,7 @@ function ensureForgeLoadingStyles() {
 
     .forge-loading-pulse {
       display: block;
-      margin-top: 12px;
+      margin-top: 0;
       animation: forgePulse 1s ease-in-out infinite;
     }
 
@@ -698,15 +855,27 @@ function ensureForgeLoadingStyles() {
       box-shadow: 0 0 22px rgba(255,60,60,.18);
     }
 
-    .forge-concept-card img {
+    .forge-concept-thumb {
       width: 100%;
       aspect-ratio: 1 / 1.25;
-      object-fit: cover;
-      object-position: top center;
       border-radius: 12px;
-      display: block;
       margin-bottom: 8px;
       background: rgba(255,255,255,.04);
+      color: rgba(243,230,191,.55);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:10px;
+      text-align:center;
+      overflow:hidden;
+    }
+
+    .forge-concept-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
     }
 
     .forge-concept-card-title {
@@ -761,7 +930,6 @@ function ensureForgeLoadingStyles() {
 }
 
 async function generatePreviewStub() {
-  const status = document.getElementById('forge-status');
   const button = document.getElementById('generate-btn');
   const generateAnotherButton = document.getElementById('generate-another-btn');
   const previewWrap = document.getElementById('fullbody-preview-wrap');
@@ -770,11 +938,7 @@ async function generatePreviewStub() {
 
   ensureForgeLoadingStyles();
 
-  if (status) {
-    status.innerHTML = '<span class="forge-loading-pulse">Generating full-body Rebel preview... this can take a moment.</span>';
-    status.className = '';
-    status.scrollIntoView({ block: 'nearest' });
-  }
+  setForgeStatusHtml('<span class="forge-loading-pulse">Generating full-body Rebel preview... this can take a moment.</span>', '');
 
   if (button) button.disabled = true;
   if (generateAnotherButton) generateAnotherButton.disabled = true;
@@ -813,7 +977,7 @@ async function generatePreviewStub() {
       previewImage.src = concept.imageDataUrl;
     }
 
-      if (previewWrap) {
+    if (previewWrap) {
       previewWrap.style.display = 'block';
       previewWrap.classList.add('open');
     }
@@ -822,19 +986,10 @@ async function generatePreviewStub() {
       previewActions.style.display = 'flex';
     }
 
-    saveCurrentForgeConcept();
-
-    if (status) {
-      status.textContent = data.message || 'Full-body Forge preview generated and saved.';
-      status.className = 'success';
-    }
+    setForgeStatus('Full-body Forge preview generated. Click Save This Version to keep it.', 'success');
   } catch(e) {
     console.warn('Full-body Forge preview request failed:', e);
-
-    if (status) {
-      status.textContent = 'Could not generate full-body preview.';
-      status.className = 'error';
-    }
+    setForgeStatus('Could not generate full-body preview.', 'error');
   } finally {
     if (button) button.disabled = false;
     if (generateAnotherButton) generateAnotherButton.disabled = false;
@@ -858,7 +1013,7 @@ window.forgeCharacterBlueprint = forgeCharacterBlueprint;
 window.forgeGenerationInput = forgeGenerationInput;
 
 hydrateForgeScreen(selectedRebel, forgeGenerationInput);
-renderForgeConceptGallery();
+migrateForgeConceptImagesToIndexedDb().then(renderForgeConceptGallery);
 </script>
 
 </body>
