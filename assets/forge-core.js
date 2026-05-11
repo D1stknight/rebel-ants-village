@@ -581,3 +581,199 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
   window.renderForgeSelectedConceptPanel = renderSelectedConceptPanel;
 })();
+
+(function setupForgeConceptModeSelectorExtension() {
+  function isForgePage() {
+    return Boolean(
+      document.getElementById('forge-actions') &&
+      document.getElementById('generate-btn')
+    );
+  }
+
+  function getForgeModeStorageKey() {
+    const collectionKey = window.forgeGenerationInput?.collectionKey || 'unknown_collection';
+    const tokenId = window.forgeGenerationInput?.tokenId || window.forgeGenerationInput?.rebelId || 'unknown_token';
+    return `rebelForgeMode:v1:${collectionKey}:${tokenId}`;
+  }
+
+  function getForgeMode() {
+    return localStorage.getItem(getForgeModeStorageKey()) || 'full_body_concept';
+  }
+
+  function setForgeMode(mode) {
+    localStorage.setItem(getForgeModeStorageKey(), mode);
+    window.currentForgeMode = mode;
+
+    if (window.forgeGenerationInput) {
+      window.forgeGenerationInput.forgeMode = mode;
+    }
+
+    renderForgeModeSelector();
+  }
+
+  function ensureForgeModeStyles() {
+    if (document.getElementById('forge-mode-selector-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'forge-mode-selector-styles';
+    style.textContent = `
+      #forge-mode-selector {
+        padding: 14px;
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.035);
+        border-radius: 18px;
+      }
+
+      .forge-mode-title {
+        color: #c8922a;
+        font-family: 'Cinzel Decorative', serif;
+        font-size: 14px;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+      }
+
+      .forge-mode-copy {
+        color: rgba(243,230,191,.72);
+        font-size: 11px;
+        line-height: 1.7;
+        margin-bottom: 12px;
+      }
+
+      .forge-mode-options {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .forge-mode-option {
+        text-align: left;
+        padding: 11px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(0,0,0,.22);
+        color: rgba(243,230,191,.72);
+        border-radius: 14px;
+        cursor: pointer;
+        font-family: 'Cinzel', serif;
+      }
+
+      .forge-mode-option.active {
+        border-color: rgba(94,207,202,.65);
+        background: rgba(94,207,202,.10);
+        color: #f3e6bf;
+        box-shadow: 0 0 20px rgba(94,207,202,.12);
+      }
+
+      .forge-mode-option.disabled {
+        opacity: .48;
+        cursor: not-allowed;
+      }
+
+      .forge-mode-name {
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+
+      .forge-mode-status {
+        margin-top: 6px;
+        font-size: 10px;
+        color: rgba(243,230,191,.55);
+      }
+
+      @media (max-width: 900px) {
+        .forge-mode-options {
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function ensureForgeModeSelector() {
+    if (!isForgePage()) return null;
+
+    let selector = document.getElementById('forge-mode-selector');
+    if (selector) return selector;
+
+    const actions = document.getElementById('forge-actions');
+    if (!actions || !actions.parentNode) return null;
+
+    selector = document.createElement('div');
+    selector.id = 'forge-mode-selector';
+
+    actions.parentNode.insertBefore(selector, actions);
+    return selector;
+  }
+
+  function renderForgeModeSelector() {
+    ensureForgeModeStyles();
+
+    const selector = ensureForgeModeSelector();
+    if (!selector) return;
+
+    const currentMode = getForgeMode();
+    window.currentForgeMode = currentMode;
+
+    if (window.forgeGenerationInput) {
+      window.forgeGenerationInput.forgeMode = currentMode;
+    }
+
+    selector.innerHTML = `
+      <div class="forge-mode-title">Concept Mode</div>
+      <div class="forge-mode-copy">
+        Start with full-body concept art. Production A-pose and separate weapon generation will come later for the real 3D character pipeline.
+      </div>
+
+      <div class="forge-mode-options">
+        <button
+          class="forge-mode-option ${currentMode === 'full_body_concept' ? 'active' : ''}"
+          type="button"
+          onclick="window.setForgeMode('full_body_concept')"
+        >
+          <div class="forge-mode-name">Full-Body Concept</div>
+          <div class="forge-mode-status">Available now</div>
+        </button>
+
+        <button
+          class="forge-mode-option disabled"
+          type="button"
+          onclick="window.setForgeModeComingSoon('Production A-Pose')"
+        >
+          <div class="forge-mode-name">Production A-Pose</div>
+          <div class="forge-mode-status">Coming soon</div>
+        </button>
+
+        <button
+          class="forge-mode-option disabled"
+          type="button"
+          onclick="window.setForgeModeComingSoon('Weapon Separate')"
+        >
+          <div class="forge-mode-name">Weapon Separate</div>
+          <div class="forge-mode-status">Coming soon</div>
+        </button>
+      </div>
+    `;
+  }
+
+  function setForgeModeComingSoon(label) {
+    if (typeof window.setForgeStatus === 'function') {
+      window.setForgeStatus(`${label} mode is coming soon. Full-Body Concept mode is available now.`, 'error');
+    }
+  }
+
+  function bootForgeModeSelector() {
+    if (!isForgePage()) return;
+
+    renderForgeModeSelector();
+  }
+
+  window.setForgeMode = setForgeMode;
+  window.setForgeModeComingSoon = setForgeModeComingSoon;
+  window.renderForgeModeSelector = renderForgeModeSelector;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(bootForgeModeSelector, 0);
+  });
+})();
