@@ -1,6 +1,8 @@
 const RESPONSES_MODEL = 'gpt-5.5';
 const DEFAULT_SIZE = '1024x1536';
-
+const FORGE_ECONOMY_VERSION = 'v0_testing_free';
+const FORGE_ECONOMY_MODE = 'testing_free';
+const FUTURE_REBEL_POINTS_CURRENCY = 'REBEL_POINTS';
 async function fetchSourceImageAsDataUrl(imageUrl) {
   const response = await fetch(imageUrl, {
     headers: {
@@ -37,6 +39,37 @@ async function fetchBodyReferenceDataUrls() {
   }
 
   return results;
+}
+
+function buildForgeEconomyPlan(generationInput) {
+  const variantIntent = generationInput.variantIntent || 'default';
+  const forgeMode = generationInput.forgeMode || 'full_body_concept';
+
+  return {
+    economyVersion: FORGE_ECONOMY_VERSION,
+    economyMode: FORGE_ECONOMY_MODE,
+    charged: false,
+    cost: 0,
+    currency: FUTURE_REBEL_POINTS_CURRENCY,
+    source: 'testing_free_preview',
+    reason: 'Forge generations are free during testing. This object is reserved for the future Rebel-owned REBEL Points economy.',
+    futureRules: {
+      holderOnlyAccess: true,
+      oneFreeGenerationPerEligibleNft: true,
+      extraGenerationsMayUseRebelPoints: true,
+      variantGenerationsMayUseRebelPoints: true,
+      cleaner3dReferenceMayUseRebelPoints: true,
+      build3dCharacterMayUseRebelPoints: true,
+      villageUtilityMayUseRebelPointsLater: true
+    },
+    requestContext: {
+      forgeMode,
+      variantIntent,
+      rebelId: generationInput.rebelId || null,
+      tokenId: generationInput.tokenId || null,
+      collectionKey: generationInput.collectionKey || null
+    }
+  };
 }
 
 function buildVariantIntentRules(variantIntent) {
@@ -211,9 +244,10 @@ export default async function handler(req, res) {
       });
     }
 
-    const prompt = buildFullBodyPreviewPrompt(generationInput);
+        const prompt = buildFullBodyPreviewPrompt(generationInput);
     const sourceImageDataUrl = await fetchSourceImageAsDataUrl(generationInput.sourceImage);
     const bodyReferenceDataUrls = await fetchBodyReferenceDataUrls();
+    const economyPlan = buildForgeEconomyPlan(generationInput);
 
     const openaiResponse = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
@@ -273,7 +307,7 @@ export default async function handler(req, res) {
       throw new Error('OpenAI did not return image data');
     }
 
-    const previewPlan = {
+       const previewPlan = {
       previewVersion: 'v1',
       requestAccepted: true,
       rebelId: generationInput.rebelId || null,
@@ -288,16 +322,18 @@ export default async function handler(req, res) {
       colony: generationInput.colony || null,
       colonyStyle: generationInput.colonyProfile?.baseStyle || null,
       weaponFamily: generationInput.weaponProfile?.family || null,
+      economyPlan,
       size: DEFAULT_SIZE,
       nextStep: 'fullbody_preview_generated'
     };
 
-    return res.status(200).json({
+        return res.status(200).json({
       ok: true,
       generated: true,
       mode: 'fullbody_preview',
       message: 'Full-body Forge preview generated.',
       promptUsed: prompt,
+      economyPlan,
       previewPlan,
       previewImage: {
         mimeType: 'image/png',
