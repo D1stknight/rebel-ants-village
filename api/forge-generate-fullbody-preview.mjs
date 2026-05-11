@@ -51,6 +51,18 @@ Variant intent: MORE FAITHFUL FACE.
 `.trim();
   }
 
+  if (variantIntent === 'stronger_warrior_body') {
+    return `
+Variant intent: STRONGER WARRIOR BODY.
+- Keep the original face, eyes, mouth, teeth, expression, antennae, headwear, and upper-body identity locked to Image 1.
+- Improve only the body strength, outfit structure, warrior silhouette, and lower-body design.
+- Make the body feel more heroic, game-ready, balanced, and battle-capable without making it bulky or monstrous.
+- Improve the torso continuation, belt/sash, robe layers, armor accents, wrapped legs, shin guards, boots/feet, and stance.
+- Do not let the stronger body alter the head, face, eyes, mouth, or upper identity.
+- If there is a tradeoff between a stronger body and a faithful face, keep the faithful face.
+`.trim();
+  }
+
   return '';
 }
 
