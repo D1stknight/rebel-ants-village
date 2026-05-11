@@ -70,6 +70,8 @@ function sanitizeConceptPayload(payload) {
 
   const conceptId = String(concept.conceptId || concept.id);
   const now = new Date().toISOString();
+  const imageStorage = concept.imageStorage || 'browser_indexeddb_now_server_later';
+  const hasBlobImage = imageStorage === 'vercel_blob' && Boolean(concept.imageUrl);
 
   const sanitized = {
     conceptId,
@@ -84,13 +86,15 @@ function sanitizeConceptPayload(payload) {
     forgeMode: concept.forgeMode || payload?.forgeMode || 'full_body_concept',
     variantIntent: concept.variantIntent || payload?.variantIntent || 'default',
     selected: concept.selected === true,
-    imageStorage: concept.imageStorage || 'browser_indexeddb_now_server_later',
+    imageStorage,
     imageUrl: concept.imageUrl || null,
     imageBlobPath: concept.imageBlobPath || null,
     economyPlan: concept.economyPlan || payload?.economyPlan || null,
     storageVersion: 'v1',
     serverStorageReady: true,
-    note: 'Metadata saved server-side. Image bytes remain browser-side until Blob storage wiring is enabled.'
+    note: hasBlobImage
+      ? 'Metadata saved server-side. Image is stored in Vercel Blob.'
+      : 'Metadata saved server-side. Image bytes remain browser-side until Blob storage wiring is enabled.'
   };
 
   const byteSize = Buffer.byteLength(JSON.stringify(sanitized), 'utf8');
@@ -141,7 +145,9 @@ export default async function handler(req, res) {
       ok: true,
       concept,
       storageResult,
-      nextStep: 'wire_blob_image_storage_later'
+      nextStep: concept.imageStorage === 'vercel_blob'
+        ? 'server_concept_image_saved'
+        : 'wire_blob_image_storage_later'
     });
   } catch (err) {
     console.error('forge-concepts-save error:', err);
