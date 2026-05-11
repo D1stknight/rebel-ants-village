@@ -1,4 +1,4 @@
-const OPENAI_IMAGE_MODEL = 'gpt-image-1.5';
+const RESPONSES_MODEL = 'gpt-5.5';
 const DEFAULT_SIZE = '1024x1536';
 
 function buildFullBodyPreviewPrompt(generationInput) {
@@ -55,17 +55,6 @@ Generation rules:
 `.trim();
 }
 
-async function fetchImageAsBlob(imageUrl) {
-  const response = await fetch(imageUrl);
-  if (!response.ok) {
-    throw new Error('Could not fetch source image. Status: ' + response.status);
-  }
-
-  const contentType = response.headers.get('content-type') || 'image/png';
-  const arrayBuffer = await response.arrayBuffer();
-  return new Blob([arrayBuffer], { type: contentType });
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -74,6 +63,7 @@ export default async function handler(req, res) {
 
   try {
     const apiKey = process.env.OPENAI_API_KEY;
+
     if (!apiKey) {
       return res.status(500).json({
         ok: false,
@@ -98,35 +88,56 @@ export default async function handler(req, res) {
     }
 
     const prompt = buildFullBodyPreviewPrompt(generationInput);
-    const sourceImageBlob = await fetchImageAsBlob(generationInput.sourceImage);
 
-    const form = new FormData();
-    form.append('model', OPENAI_IMAGE_MODEL);
-    form.append('prompt', prompt);
-    form.append('size', DEFAULT_SIZE);
-    // Quality is intentionally omitted here because the live image edit endpoint
-// rejected the parameter; the API will use its default quality behavior.
-    form.append('image', sourceImageBlob, 'source-reference.png');
-
-    const openaiResponse = await fetch('https://api.openai.com/v1/images/edits', {
+    const openaiResponse = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
       },
-      body: form
+      body: JSON.stringify({
+        model: RESPONSES_MODEL,
+        input: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_text',
+                text: prompt
+              },
+              {
+                type: 'input_image',
+                image_url: generationInput.sourceImage
+              }
+            ]
+          }
+        ],
+        tools: [
+          {
+            type: 'image_generation',
+            action: 'edit',
+            size: DEFAULT_SIZE
+          }
+        ]
+      })
     });
 
     const openaiData = await openaiResponse.json();
 
     if (!openaiResponse.ok) {
       console.error('OpenAI fullbody preview error:', openaiData);
+
       throw new Error(
         openaiData?.error?.message ||
-        ('OpenAI image request failed. Status: ' + openaiResponse.status)
+        ('OpenAI response request failed. Status: ' + openaiResponse.status)
       );
     }
 
-    const imageBase64 = openaiData?.data?.[0]?.b64_json;
+    const imageGenerationCall = (openaiData.output || []).find(
+      item => item.type === 'image_generation_call' && item.result
+    );
+
+    const imageBase64 = imageGenerationCall?.result || null;
 
     if (!imageBase64) {
       throw new Error('OpenAI did not return image data');
@@ -145,8 +156,7 @@ export default async function handler(req, res) {
       colony: generationInput.colony || null,
       colonyStyle: generationInput.colonyProfile?.baseStyle || null,
       weaponFamily: generationInput.weaponProfile?.family || null,
-      quality: 'auto',
-size: DEFAULT_SIZE,
+      size: DEFAULT_SIZE,
       nextStep: 'fullbody_preview_generated'
     };
 
@@ -163,7 +173,7 @@ size: DEFAULT_SIZE,
         dataUrl: `data:image/png;base64,${imageBase64}`
       }
     });
-   } catch (err) {
+  } catch (err) {
     console.error('forge-generate-fullbody-preview error:', err);
 
     return res.status(500).json({
