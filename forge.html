@@ -300,9 +300,23 @@ body{
         </div>
       </div>
 
-      <div id="fullbody-preview-wrap">
+          <div id="fullbody-preview-wrap">
         <div id="fullbody-preview-label">Generated Full-Body Preview</div>
         <img id="fullbody-preview-image" alt="Generated full-body Rebel Ant preview">
+
+        <div id="forge-preview-actions" style="display:none; margin-top:14px; gap:10px; flex-wrap:wrap;">
+          <button class="action-btn" id="save-concept-btn" type="button" onclick="saveCurrentForgeConcept()">Save This Version</button>
+          <button class="action-btn" id="generate-another-btn" type="button" onclick="generatePreviewStub()">Generate Another</button>
+          <button class="action-btn" id="set-selected-concept-btn" type="button" onclick="setCurrentForgeConceptSelected()">Set as Selected</button>
+        </div>
+      </div>
+
+      <div id="forge-concepts-section" style="margin-top:22px;">
+        <div class="section-title">Saved Concepts</div>
+        <div class="section-copy">
+          Generate multiple full-body versions for this Rebel, then choose the one you want to keep.
+        </div>
+        <div id="forge-concepts-gallery" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:14px; margin-top:14px;"></div>
       </div>
     </div>
 
@@ -336,10 +350,10 @@ body{
         </div>
       </div>
 
-      <div>
+           <div id="generation-snapshot-shell" style="display:none;">
         <div class="section-title">Generation Input Snapshot</div>
         <div class="section-copy">
-          This is a compact preview of the actual Forge input object the future 3D generator will consume.
+          Dev-only preview of the actual Forge input object the future 3D generator will consume.
         </div>
         <pre id="generation-snapshot">Loading Forge input...</pre>
       </div>
@@ -398,26 +412,219 @@ function hydrateForgeScreen(rebel, generationInput) {
   document.getElementById('summary-weapon-family').textContent =
     generationInput?.weaponProfile?.family || '—';
 
-  const snapshot = {
-    rebelId: generationInput?.rebelId || null,
-    tokenId: generationInput?.tokenId || null,
-    collectionKey: generationInput?.collectionKey || null,
-    colony: generationInput?.colony || null,
-    bodyType: generationInput?.bodyType || null,
-    forgeStatus: generationInput?.forgeStatus || null,
-    traitSlots: generationInput?.traitSlots || {},
-    forgeLayers: generationInput?.forgeLayers || {}
-  };
+  const params = new URLSearchParams(window.location.search);
+  const showDevSnapshot =
+    params.get('admin') === '1' ||
+    params.get('dev') === '1' ||
+    localStorage.getItem('rebelForgeDevMode') === '1';
 
-  document.getElementById('generation-snapshot').textContent =
-    JSON.stringify(snapshot, null, 2);
+  const snapshotShell = document.getElementById('generation-snapshot-shell');
+  const snapshotEl = document.getElementById('generation-snapshot');
+
+  if (snapshotShell) {
+    snapshotShell.style.display = showDevSnapshot ? 'block' : 'none';
+  }
+
+  if (snapshotEl) {
+    const snapshot = {
+      rebelId: generationInput?.rebelId || null,
+      tokenId: generationInput?.tokenId || null,
+      collectionKey: generationInput?.collectionKey || null,
+      colony: generationInput?.colony || null,
+      bodyType: generationInput?.bodyType || null,
+      forgeStatus: generationInput?.forgeStatus || null,
+      sourceFraming: generationInput?.sourceFraming || null,
+      targetOutput: generationInput?.targetOutput || null,
+      requiresFullBodyCompletion: generationInput?.requiresFullBodyCompletion || false,
+      traitSlots: generationInput?.traitSlots || {},
+      forgeLayers: generationInput?.forgeLayers || {}
+    };
+
+    snapshotEl.textContent = JSON.stringify(snapshot, null, 2);
+  }
+}
+
+function getForgeConceptStorageKey() {
+  const collectionKey = forgeGenerationInput?.collectionKey || 'unknown_collection';
+  const tokenId = forgeGenerationInput?.tokenId || forgeGenerationInput?.rebelId || 'unknown_token';
+  return `rebelForgeConcepts:v1:${collectionKey}:${tokenId}`;
+}
+
+function getSelectedForgeConceptStorageKey() {
+  return `${getForgeConceptStorageKey()}:selected`;
+}
+
+function loadForgeConcepts() {
+  try {
+    return JSON.parse(localStorage.getItem(getForgeConceptStorageKey()) || '[]');
+  } catch(e) {
+    console.warn('Could not load saved Forge concepts:', e);
+    return [];
+  }
+}
+
+function saveForgeConcepts(concepts) {
+  try {
+    localStorage.setItem(getForgeConceptStorageKey(), JSON.stringify(concepts));
+  } catch(e) {
+    console.warn('Could not save Forge concepts:', e);
+  }
+}
+
+function getCurrentForgeConceptFromPreview() {
+  const previewImage = document.getElementById('fullbody-preview-image');
+
+  if (!previewImage || !previewImage.src) {
+    return null;
+  }
+
+  return {
+    id: `concept_${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    imageDataUrl: previewImage.src,
+    tokenId: forgeGenerationInput?.tokenId || null,
+    rebelId: forgeGenerationInput?.rebelId || null,
+    collectionKey: forgeGenerationInput?.collectionKey || null,
+    colony: forgeGenerationInput?.colony || null,
+    bodyType: forgeGenerationInput?.bodyType || null
+  };
+}
+
+function renderForgeConceptGallery() {
+  const gallery = document.getElementById('forge-concepts-gallery');
+  if (!gallery) return;
+
+  const concepts = loadForgeConcepts();
+  const selectedConceptId = localStorage.getItem(getSelectedForgeConceptStorageKey());
+
+  if (!concepts.length) {
+    gallery.innerHTML = `
+      <div style="opacity:.75; border:1px solid rgba(255,255,255,.14); border-radius:16px; padding:16px;">
+        No saved concepts yet. Generate a full-body preview to start building versions.
+      </div>
+    `;
+    return;
+  }
+
+  gallery.innerHTML = concepts.map((concept, index) => {
+    const isSelected = concept.id === selectedConceptId;
+    const border = isSelected ? '2px solid rgba(255,80,80,.95)' : '1px solid rgba(255,255,255,.14)';
+    const label = isSelected ? 'Selected Version' : `Version ${index + 1}`;
+
+    return `
+      <button
+        type="button"
+        onclick="selectForgeConcept('${concept.id}')"
+        style="text-align:left; cursor:pointer; background:rgba(0,0,0,.28); border:${border}; border-radius:18px; padding:10px; color:inherit;"
+      >
+        <img
+          src="${concept.imageDataUrl}"
+          alt="${label}"
+          style="width:100%; border-radius:14px; display:block; margin-bottom:10px;"
+        >
+        <div style="font-weight:800;">${label}</div>
+        <div style="opacity:.72; font-size:12px; margin-top:4px;">${concept.colony || 'Unknown Colony'}</div>
+      </button>
+    `;
+  }).join('');
+}
+
+function selectForgeConcept(conceptId) {
+  const concepts = loadForgeConcepts();
+  const concept = concepts.find((item) => item.id === conceptId);
+  const previewWrap = document.getElementById('fullbody-preview-wrap');
+  const previewImage = document.getElementById('fullbody-preview-image');
+  const previewActions = document.getElementById('forge-preview-actions');
+
+  if (!concept) return;
+
+  localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
+  window.currentForgeConcept = concept;
+
+  if (previewImage && concept.imageDataUrl) {
+    previewImage.src = concept.imageDataUrl;
+  }
+
+  if (previewWrap) {
+    previewWrap.classList.add('open');
+  }
+
+  if (previewActions) {
+    previewActions.style.display = 'flex';
+  }
+
+  renderForgeConceptGallery();
+}
+
+function saveCurrentForgeConcept() {
+  const status = document.getElementById('forge-status');
+  const concept = window.currentForgeConcept || getCurrentForgeConceptFromPreview();
+
+  if (!concept || !concept.imageDataUrl) {
+    if (status) {
+      status.textContent = 'Generate a full-body preview before saving a version.';
+      status.className = 'error';
+    }
+    return;
+  }
+
+  const concepts = loadForgeConcepts();
+  const alreadySaved = concepts.some((item) => item.id === concept.id);
+
+  if (!alreadySaved) {
+    const nextConcepts = [concept, ...concepts].slice(0, 12);
+    saveForgeConcepts(nextConcepts);
+  }
+
+  localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
+  window.currentForgeConcept = concept;
+
+  renderForgeConceptGallery();
+
+  if (status) {
+    status.textContent = 'Forge concept saved and selected.';
+    status.className = 'success';
+  }
+}
+
+function setCurrentForgeConceptSelected() {
+  const status = document.getElementById('forge-status');
+  const concept = window.currentForgeConcept || getCurrentForgeConceptFromPreview();
+
+  if (!concept || !concept.imageDataUrl) {
+    if (status) {
+      status.textContent = 'Generate or choose a concept before setting it as selected.';
+      status.className = 'error';
+    }
+    return;
+  }
+
+  const concepts = loadForgeConcepts();
+  const alreadySaved = concepts.some((item) => item.id === concept.id);
+
+  if (!alreadySaved) {
+    const nextConcepts = [concept, ...concepts].slice(0, 12);
+    saveForgeConcepts(nextConcepts);
+  }
+
+  localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
+  window.currentForgeConcept = concept;
+
+  renderForgeConceptGallery();
+
+  if (status) {
+    status.textContent = 'This Forge concept is now selected.';
+    status.className = 'success';
+  }
 }
 
 async function generatePreviewStub() {
   const status = document.getElementById('forge-status');
   const button = document.getElementById('generate-btn');
+  const generateAnotherButton = document.getElementById('generate-another-btn');
   const previewWrap = document.getElementById('fullbody-preview-wrap');
   const previewImage = document.getElementById('fullbody-preview-image');
+  const previewActions = document.getElementById('forge-preview-actions');
 
   if (status) {
     status.textContent = 'Generating full-body Rebel preview...';
@@ -425,6 +632,7 @@ async function generatePreviewStub() {
   }
 
   if (button) button.disabled = true;
+  if (generateAnotherButton) generateAnotherButton.disabled = true;
 
   try {
     const response = await fetch('/api/forge-generate-fullbody-preview', {
@@ -443,16 +651,35 @@ async function generatePreviewStub() {
 
     window.lastFullBodyForgePreviewResponse = data;
 
-    if (previewImage && data.previewImage?.dataUrl) {
-      previewImage.src = data.previewImage.dataUrl;
+    const concept = {
+      id: `concept_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      imageDataUrl: data.previewImage?.dataUrl || '',
+      tokenId: forgeGenerationInput?.tokenId || null,
+      rebelId: forgeGenerationInput?.rebelId || null,
+      collectionKey: forgeGenerationInput?.collectionKey || null,
+      colony: forgeGenerationInput?.colony || null,
+      bodyType: forgeGenerationInput?.bodyType || null
+    };
+
+    window.currentForgeConcept = concept;
+
+    if (previewImage && concept.imageDataUrl) {
+      previewImage.src = concept.imageDataUrl;
     }
 
     if (previewWrap) {
       previewWrap.classList.add('open');
     }
 
+    if (previewActions) {
+      previewActions.style.display = 'flex';
+    }
+
+    saveCurrentForgeConcept();
+
     if (status) {
-      status.textContent = data.message || 'Full-body Forge preview generated.';
+      status.textContent = data.message || 'Full-body Forge preview generated and saved.';
       status.className = 'success';
     }
   } catch(e) {
@@ -464,6 +691,7 @@ async function generatePreviewStub() {
     }
   } finally {
     if (button) button.disabled = false;
+    if (generateAnotherButton) generateAnotherButton.disabled = false;
   }
 }
 
@@ -484,6 +712,7 @@ window.forgeCharacterBlueprint = forgeCharacterBlueprint;
 window.forgeGenerationInput = forgeGenerationInput;
 
 hydrateForgeScreen(selectedRebel, forgeGenerationInput);
+renderForgeConceptGallery();
 </script>
 
 </body>
