@@ -39,6 +39,21 @@ async function fetchBodyReferenceDataUrls() {
   return results;
 }
 
+function buildVariantIntentRules(variantIntent) {
+  if (variantIntent === 'more_faithful_face') {
+    return `
+Variant intent: MORE FAITHFUL FACE.
+- This generation should prioritize identity accuracy over body creativity.
+- Face, eyes, eye covering, mouth, teeth, expression, antennae, headwear, and upper-body silhouette should stay even closer to Image 1 than in a standard generation.
+- If there is a tradeoff between a cooler body design and a more faithful upper face, choose the more faithful upper face.
+- Reduce reinterpretation. Reduce stylization drift. Reduce facial embellishment.
+- Preserve the exact source facial feeling even if the lower body becomes simpler.
+`.trim();
+  }
+
+  return '';
+}
+
 function buildFullBodyPreviewPrompt(generationInput) {
   const colony = generationInput.colony || 'Rebel Ant';
   const colonyStyle = generationInput.colonyProfile?.baseStyle || 'warrior';
@@ -52,6 +67,8 @@ function buildFullBodyPreviewPrompt(generationInput) {
   const skullyFlap = generationInput.traitSlots?.skullyFlap || 'none';
   const background = generationInput.traitSlots?.background || 'none';
   const forgeMode = generationInput.forgeMode || 'full_body_concept';
+  const variantIntent = generationInput.variantIntent || 'default';
+  const variantIntentRules = buildVariantIntentRules(variantIntent);
 
   return `
 You will receive multiple reference images.
@@ -65,7 +82,7 @@ Reference priority:
 Create a clean full-body Rebel Ant character reference image based on Image 1.
 The source NFT may be chest-up only, so you must extend the character downward into a full-body result.
 
-NON-NEGOTIABLE IDENTITY LOCK:
+${variantIntentRules ? `${variantIntentRules}\n\n` : ''}NON-NEGOTIABLE IDENTITY LOCK:
 - The head, face, eyes, eye covering, mouth, teeth, facial expression, antennae, headwear, skull cap, skully flap, mask pieces, and upper clothing wrap must remain as close to Image 1 as possible.
 - Do not improve, beautify, humanize, mature, simplify, or reinterpret the face.
 - Do not make the mouth calmer, angrier, larger, smaller, straighter, or more detailed than the source.
@@ -114,6 +131,7 @@ Character identity details:
 - Colony style: ${colonyStyle}
 - Body type: ${generationInput.bodyType || 'universal_ant_v1'}
 - Forge mode: ${forgeMode}
+- Variant intent: ${variantIntent}
 - Weapon trait: ${weaponName}
 - Weapon family: ${weaponFamily}
 - Outfit trait: ${outfit}
@@ -240,6 +258,7 @@ export default async function handler(req, res) {
       requiresFullBodyCompletion: generationInput.requiresFullBodyCompletion === true,
       bodyType: generationInput.bodyType || 'universal_ant_v1',
       forgeMode: generationInput.forgeMode || 'full_body_concept',
+      variantIntent: generationInput.variantIntent || 'default',
       colony: generationInput.colony || null,
       colonyStyle: generationInput.colonyProfile?.baseStyle || null,
       weaponFamily: generationInput.weaponProfile?.family || null,
