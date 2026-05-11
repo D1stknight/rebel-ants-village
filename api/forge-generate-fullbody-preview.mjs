@@ -38,6 +38,7 @@ async function fetchBodyReferenceDataUrls() {
 
   return results;
 }
+
 function buildFullBodyPreviewPrompt(generationInput) {
   const colony = generationInput.colony || 'Rebel Ant';
   const colonyStyle = generationInput.colonyProfile?.baseStyle || 'warrior';
@@ -50,42 +51,50 @@ function buildFullBodyPreviewPrompt(generationInput) {
   const skullCap = generationInput.traitSlots?.skullCap || 'none';
   const skullyFlap = generationInput.traitSlots?.skullyFlap || 'none';
   const background = generationInput.traitSlots?.background || 'none';
+  const forgeMode = generationInput.forgeMode || 'full_body_concept';
 
   return `
 You will receive multiple reference images.
 
 Reference priority:
 - Image 1 is the PRIMARY identity reference. It is the actual Rebel Ant NFT and must control the character identity.
-- Any images after Image 1 are BODY-ONLY style references. Use them only to guide the lower-body completion, outfit continuation, wraps, shin guards, footwear, sash structure, silhouette, and ninja-warrior body design.
-- Do not copy the face, eyes, mouth, or upper-head identity from the body reference images.
-- If there is any conflict between the references, Image 1 wins for everything from the top of the head through the chest.
+- Any images after Image 1 are BODY-ONLY style references. Use them only to guide the missing lower body, outfit continuation, wraps, shin guards, footwear, sash structure, silhouette, and ninja-warrior body design.
+- Do not copy the face, eyes, mouth, head, antennae, headwear, or upper-body identity from the body reference images.
+- If there is any conflict between the references, Image 1 always wins.
 
 Create a clean full-body Rebel Ant character reference image based on Image 1.
-The source NFT may be chest-up only, so you must complete the missing lower body and produce a full-body result.
+The source NFT may be chest-up only, so you must extend the character downward into a full-body result.
 
-Absolute highest priority:
-- Treat Image 1 as the canonical design for everything visible in the upper body.
-- Do not redesign the face.
-- Do not reinterpret the eyes.
-- Do not change the mouth.
-- Do not change the head shape.
-- Do not change the headwear, skull cap, skully flap, eyepatch/eye covering, antenna placement, or visible upper clothing wrap.
-- Do not change the main visible colors of the upper body.
-- Preserve the upper-body identity as closely as possible.
-- Think of this as extending the character downward, not redesigning the character.
+NON-NEGOTIABLE IDENTITY LOCK:
+- The head, face, eyes, eye covering, mouth, teeth, facial expression, antennae, headwear, skull cap, skully flap, mask pieces, and upper clothing wrap must remain as close to Image 1 as possible.
+- Do not improve, beautify, humanize, mature, simplify, or reinterpret the face.
+- Do not make the mouth calmer, angrier, larger, smaller, straighter, or more detailed than the source.
+- Do not change the eye shapes, eye colors, eyepatch/eye covering, grid pattern, visor shape, or visible facial proportions.
+- Do not change the head silhouette or antenna placement.
+- Do not change the visible upper-body colors or garment layout.
+- Treat Image 1 like a locked character sheet for the upper half.
+- Think of the task as: keep the original top half, then invent only the missing lower half.
 
-Upper-body preservation rules:
-- The area from the top of the head down through the chest should match Image 1.
-- Keep the same recognizable facial expression and upper-body styling.
-- Keep the same line-language and stylized cartoon ant identity.
-- Do not make the face more human or more realistic than the source.
-- Do not replace or restyle the upper features unless absolutely necessary for image coherence.
+Face and upper-body preservation checklist:
+- Same head shape as Image 1.
+- Same antennae placement and antenna style as Image 1.
+- Same eyes / eye covering / visor / patch shape as Image 1.
+- Same mouth and teeth shape as Image 1.
+- Same facial expression as Image 1.
+- Same headwear and head wraps as Image 1.
+- Same upper robe / chest wrap / shoulder layout as Image 1.
+- Same stylized cartoon ant linework as Image 1.
+- Same level of cartoon stylization as Image 1. Do not push the face toward realism.
+
+Allowed creative area:
+- Creative invention should happen mainly below the chest.
+- Complete the torso, waist, legs, boots, wraps, lower robe, belt/sash, shin guards, and lower-body silhouette.
+- You may slightly extend the existing upper outfit downward, but do not redesign the upper identity.
 
 Body-reference rules:
-- Use the body reference images only to improve the body design and lower-body structure.
-- Borrow body language from those references: better waist sash structure, robe continuation, layered shinobi / samurai lower-body design, wrapped lower legs, shin guards, footwear, and stronger ninja-warrior silhouette.
-- Do not borrow their face or head design.
-- Creative changes should happen mainly below the chest.
+- Use the body reference images only to improve the lower-body structure and ninja-warrior styling.
+- Borrow body language from those references: waist sash structure, robe continuation, layered shinobi / samurai lower-body design, wrapped lower legs, shin guards, footwear, and stronger warrior silhouette.
+- Do not borrow their face, head, colors, expression, eyes, mouth, antennae, or upper-body identity.
 
 Important requirements:
 - Output must be a full-body character from head to feet.
@@ -104,6 +113,7 @@ Character identity details:
 - Colony: ${colony}
 - Colony style: ${colonyStyle}
 - Body type: ${generationInput.bodyType || 'universal_ant_v1'}
+- Forge mode: ${forgeMode}
 - Weapon trait: ${weaponName}
 - Weapon family: ${weaponFamily}
 - Outfit trait: ${outfit}
@@ -118,11 +128,13 @@ Generation rules:
 - If the source image is chest-up, continue the visible upper-body design downward into a believable full-body design.
 - Preserve the upper body styling and colors, then complete the torso, waist, legs, feet, and outfit continuation.
 - Use the body reference images to improve the lower-body structure and ninja-warrior styling.
-- Keep the weapon visible if appropriate.
+- Keep the weapon visible only if it already feels naturally connected to the source identity.
+- Do not let a weapon cover the face, eyes, mouth, torso details, or body silhouette.
 - Maintain the character’s outfit logic and faction identity.
 - This is a single full-body character reference image, not a collage and not a turnaround sheet.
 `.trim();
 }
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -155,10 +167,9 @@ export default async function handler(req, res) {
       });
     }
 
-        const prompt = buildFullBodyPreviewPrompt(generationInput);
+    const prompt = buildFullBodyPreviewPrompt(generationInput);
     const sourceImageDataUrl = await fetchSourceImageAsDataUrl(generationInput.sourceImage);
-
-         const bodyReferenceDataUrls = await fetchBodyReferenceDataUrls();
+    const bodyReferenceDataUrls = await fetchBodyReferenceDataUrls();
 
     const openaiResponse = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
@@ -228,6 +239,7 @@ export default async function handler(req, res) {
       targetOutput: generationInput.targetOutput || 'full_body_3d_character',
       requiresFullBodyCompletion: generationInput.requiresFullBodyCompletion === true,
       bodyType: generationInput.bodyType || 'universal_ant_v1',
+      forgeMode: generationInput.forgeMode || 'full_body_concept',
       colony: generationInput.colony || null,
       colonyStyle: generationInput.colonyProfile?.baseStyle || null,
       weaponFamily: generationInput.weaponProfile?.family || null,
