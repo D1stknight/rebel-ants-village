@@ -24,12 +24,9 @@ async function fetchSourceImageAsDataUrl(imageUrl) {
   return `data:${contentType};base64,${base64}`;
 }
 
-fasync function fetchBodyReferenceDataUrls() {
+async function fetchBodyReferenceDataUrls() {
   const bodyReferenceUrls = [
-    'https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/assets/forge-references/body/red-kimono-clean.png',
-    'https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/assets/forge-references/body/orange-shinobi-layered.png',
-    'https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/assets/forge-references/body/navy-wave-kimono.png',
-    'https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/assets/forge-references/body/pale-pink-tactical-kimono.png'
+    'https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/assets/forge-references/body/orange-shinobi-layered.png'
   ];
 
   const results = [];
@@ -59,8 +56,8 @@ You will receive multiple reference images.
 
 Reference priority:
 - Image 1 is the PRIMARY identity reference. It is the actual Rebel Ant NFT and must control the character identity.
-- Images 2 through 5 are BODY-ONLY style references. Use them only to guide the lower-body completion, outfit continuation, wraps, shin guards, footwear, sash structure, silhouette, and ninja-warrior body design.
-- Do not copy the face, eyes, mouth, or upper-head identity from Images 2 through 5.
+- Any images after Image 1 are BODY-ONLY style references. Use them only to guide the lower-body completion, outfit continuation, wraps, shin guards, footwear, sash structure, silhouette, and ninja-warrior body design.
+- Do not copy the face, eyes, mouth, or upper-head identity from the body reference images.
 - If there is any conflict between the references, Image 1 wins for everything from the top of the head through the chest.
 
 Create a clean full-body Rebel Ant character reference image based on Image 1.
@@ -85,7 +82,7 @@ Upper-body preservation rules:
 - Do not replace or restyle the upper features unless absolutely necessary for image coherence.
 
 Body-reference rules:
-- Use Images 2 through 5 only to improve the body design and lower-body structure.
+- Use the body reference images only to improve the body design and lower-body structure.
 - Borrow body language from those references: better waist sash structure, robe continuation, layered shinobi / samurai lower-body design, wrapped lower legs, shin guards, footwear, and stronger ninja-warrior silhouette.
 - Do not borrow their face or head design.
 - Creative changes should happen mainly below the chest.
