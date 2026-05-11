@@ -929,6 +929,37 @@ function ensureForgeLoadingStyles() {
   document.head.appendChild(style);
 }
 
+function setForgeGeneratingButton(button, isLoading) {
+  if (!button) return;
+
+  if (!document.getElementById('forge-button-loading-styles')) {
+    const style = document.createElement('style');
+    style.id = 'forge-button-loading-styles';
+    style.textContent = `
+      @keyframes forgeButtonPulse {
+        0% { opacity: .55; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.025); }
+        100% { opacity: .55; transform: scale(1); }
+      }
+
+      .forge-button-loading {
+        animation: forgeButtonPulse 1s ease-in-out infinite;
+        pointer-events: none;
+        filter: brightness(1.15);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  if (isLoading) {
+    button.classList.add('forge-button-loading');
+    button.disabled = true;
+  } else {
+    button.classList.remove('forge-button-loading');
+    button.disabled = false;
+  }
+}
+ 
 async function generatePreviewStub() {
   const button = document.getElementById('generate-btn');
   const generateAnotherButton = document.getElementById('generate-another-btn');
@@ -936,12 +967,22 @@ async function generatePreviewStub() {
   const previewImage = document.getElementById('fullbody-preview-image');
   const previewActions = document.getElementById('forge-preview-actions');
 
+  const clickedButton =
+    window.currentForgeTriggerButton ||
+    (
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : button
+    );
+
   ensureForgeLoadingStyles();
 
   setForgeStatusHtml('<span class="forge-loading-pulse">Generating full-body Rebel preview... this can take a moment.</span>', '');
 
   if (button) button.disabled = true;
   if (generateAnotherButton) generateAnotherButton.disabled = true;
+  setForgeGeneratingButton(clickedButton, true);
 
   try {
     const response = await fetch('/api/forge-generate-fullbody-preview', {
@@ -991,11 +1032,14 @@ async function generatePreviewStub() {
     console.warn('Full-body Forge preview request failed:', e);
     setForgeStatus('Could not generate full-body preview.', 'error');
   } finally {
+    setForgeGeneratingButton(clickedButton, false);
+
     if (button) button.disabled = false;
     if (generateAnotherButton) generateAnotherButton.disabled = false;
+
+    window.currentForgeTriggerButton = null;
   }
 }
-
 const selectedRebel = getSelectedRebel();
 
 const forgeCharacter = {
