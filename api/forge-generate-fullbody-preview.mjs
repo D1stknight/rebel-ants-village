@@ -1,6 +1,29 @@
 const RESPONSES_MODEL = 'gpt-5.5';
 const DEFAULT_SIZE = '1024x1536';
 
+async function fetchSourceImageAsDataUrl(imageUrl) {
+  const response = await fetch(imageUrl, {
+    headers: {
+      Accept: 'image/png,image/jpeg,image/webp,image/gif'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Could not fetch source image. Status: ' + response.status);
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+
+  if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(contentType)) {
+    throw new Error('Unsupported source image type: ' + (contentType || 'unknown'));
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString('base64');
+
+  return `data:${contentType};base64,${base64}`;
+}
+
 function buildFullBodyPreviewPrompt(generationInput) {
   const colony = generationInput.colony || 'Rebel Ant';
   const colonyStyle = generationInput.colonyProfile?.baseStyle || 'warrior';
@@ -87,7 +110,8 @@ export default async function handler(req, res) {
       });
     }
 
-    const prompt = buildFullBodyPreviewPrompt(generationInput);
+        const prompt = buildFullBodyPreviewPrompt(generationInput);
+    const sourceImageDataUrl = await fetchSourceImageAsDataUrl(generationInput.sourceImage);
 
     const openaiResponse = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
@@ -107,7 +131,7 @@ export default async function handler(req, res) {
               },
               {
                 type: 'input_image',
-                image_url: generationInput.sourceImage
+                               image_url: sourceImageDataUrl
               }
             ]
           }
