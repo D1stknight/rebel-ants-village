@@ -759,6 +759,45 @@ async function deleteForgeConcept(conceptId) {
   renderForgeConceptGallery();
 }
 
+async function saveForgeConceptMetadataToServer(concept) {
+  if (!concept) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: 'Missing concept'
+    };
+  }
+
+  const metadata = stripForgeConceptImageData({
+    ...concept,
+    conceptId: concept.conceptId || concept.id,
+    forgeMode: forgeGenerationInput?.forgeMode || window.currentForgeMode || 'full_body_concept',
+    variantIntent: forgeGenerationInput?.variantIntent || window.currentForgeVariantIntent || 'default',
+    selected: true,
+    imageStorage: 'browser_indexeddb_now_server_later',
+    economyPlan: window.lastFullBodyForgePreviewResponse?.economyPlan || window.lastFullBodyForgePreviewResponse?.previewPlan?.economyPlan || null
+  });
+
+  const response = await fetch('/api/forge-concepts-save', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      concept: metadata
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || data.detail || 'Server concept metadata save failed');
+  }
+
+  window.lastForgeConceptServerSaveResponse = data;
+  return data;
+}
+
 async function saveCurrentForgeConcept() {
   const concept = window.currentForgeConcept || getCurrentForgeConceptFromPreview();
 
@@ -766,6 +805,9 @@ async function saveCurrentForgeConcept() {
     setForgeStatus('Generate a full-body preview before saving a version.', 'error');
     return;
   }
+
+  let localSaved = false;
+  let serverSaved = false;
 
   try {
     await saveForgeConceptImage(concept.id, concept.imageDataUrl);
@@ -787,10 +829,24 @@ async function saveCurrentForgeConcept() {
 
     localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
     window.currentForgeConcept = concept;
+    localSaved = true;
+
+    try {
+      const serverResult = await saveForgeConceptMetadataToServer(concept);
+      serverSaved = serverResult?.ok === true;
+    } catch(serverError) {
+      console.warn('Forge concept saved locally, but server metadata save failed:', serverError);
+    }
 
     await renderForgeConceptGallery();
 
-    setForgeStatus('Forge concept saved and selected.', 'success');
+    if (localSaved && serverSaved) {
+      setForgeStatus('Forge concept saved locally and synced to server.', 'success');
+    } else if (localSaved) {
+      setForgeStatus('Forge concept saved locally. Server sync will be retried later.', 'success');
+    } else {
+      setForgeStatus('Could not save this Forge concept. Please try again.', 'error');
+    }
   } catch(e) {
     console.warn('Could not save Forge concept:', e);
     setForgeStatus('Could not save this Forge concept. Please try again.', 'error');
