@@ -882,7 +882,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     return panel;
   }
 
-  function renderForgeVariantPanel() {
+   function renderForgeVariantPanel() {
     ensureForgeVariantStyles();
 
     const panel = ensureForgeVariantPanel();
@@ -891,7 +891,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     panel.innerHTML = `
       <div class="forge-variant-title">Generate Variant</div>
       <div class="forge-variant-copy">
-        Refine the next version without needing to understand prompts. More Faithful Face is available now.
+        Refine the next version without needing to understand prompts. Pick the direction that best fixes the current render.
       </div>
 
       <div class="forge-variant-options">
@@ -905,21 +905,21 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         </button>
 
         <button
-          class="forge-variant-option disabled"
+          class="forge-variant-option available"
           type="button"
-          onclick="window.setForgeVariantComingSoon('Stronger Warrior Body')"
+          onclick="window.generateForgeVariant('stronger_warrior_body')"
         >
           <div class="forge-variant-name">Stronger Warrior Body</div>
-          <div class="forge-variant-status">Coming soon</div>
+          <div class="forge-variant-status">Available now</div>
         </button>
 
         <button
-          class="forge-variant-option disabled"
+          class="forge-variant-option available"
           type="button"
-          onclick="window.setForgeVariantComingSoon('Cleaner 3D Reference')"
+          onclick="window.generateForgeVariant('cleaner_3d_reference')"
         >
           <div class="forge-variant-name">Cleaner 3D Reference</div>
-          <div class="forge-variant-status">Coming soon</div>
+          <div class="forge-variant-status">Available now</div>
         </button>
       </div>
     `;
