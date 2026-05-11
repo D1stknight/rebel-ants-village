@@ -777,3 +777,185 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     setTimeout(bootForgeModeSelector, 0);
   });
 })();
+
+(function setupForgeVariantIntentExtension() {
+  function isForgePage() {
+    return Boolean(
+      document.getElementById('fullbody-preview-wrap') &&
+      document.getElementById('forge-preview-actions')
+    );
+  }
+
+  function ensureForgeVariantStyles() {
+    if (document.getElementById('forge-variant-intent-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'forge-variant-intent-styles';
+    style.textContent = `
+      #forge-variant-intent-panel {
+        margin-top: 14px;
+        padding: 14px;
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.035);
+        border-radius: 18px;
+      }
+
+      .forge-variant-title {
+        color: #c8922a;
+        font-family: 'Cinzel Decorative', serif;
+        font-size: 14px;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+      }
+
+      .forge-variant-copy {
+        color: rgba(243,230,191,.72);
+        font-size: 11px;
+        line-height: 1.7;
+        margin-bottom: 12px;
+      }
+
+      .forge-variant-options {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .forge-variant-option {
+        text-align: left;
+        padding: 11px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(0,0,0,.22);
+        color: rgba(243,230,191,.72);
+        border-radius: 14px;
+        cursor: pointer;
+        font-family: 'Cinzel', serif;
+      }
+
+      .forge-variant-option.available:hover {
+        border-color: rgba(94,207,202,.65);
+        background: rgba(94,207,202,.10);
+        color: #f3e6bf;
+      }
+
+      .forge-variant-option.disabled {
+        opacity: .48;
+        cursor: not-allowed;
+      }
+
+      .forge-variant-name {
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+
+      .forge-variant-status {
+        margin-top: 6px;
+        font-size: 10px;
+        color: rgba(243,230,191,.55);
+      }
+
+      @media (max-width: 900px) {
+        .forge-variant-options {
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function ensureForgeVariantPanel() {
+    if (!isForgePage()) return null;
+
+    let panel = document.getElementById('forge-variant-intent-panel');
+    if (panel) return panel;
+
+    const previewActions = document.getElementById('forge-preview-actions');
+    if (!previewActions || !previewActions.parentNode) return null;
+
+    panel = document.createElement('div');
+    panel.id = 'forge-variant-intent-panel';
+
+    previewActions.parentNode.insertBefore(panel, previewActions.nextSibling);
+    return panel;
+  }
+
+  function renderForgeVariantPanel() {
+    ensureForgeVariantStyles();
+
+    const panel = ensureForgeVariantPanel();
+    if (!panel) return;
+
+    panel.innerHTML = `
+      <div class="forge-variant-title">Generate Variant</div>
+      <div class="forge-variant-copy">
+        Refine the next version without needing to understand prompts. More Faithful Face is available now.
+      </div>
+
+      <div class="forge-variant-options">
+        <button
+          class="forge-variant-option available"
+          type="button"
+          onclick="window.generateForgeVariant('more_faithful_face')"
+        >
+          <div class="forge-variant-name">More Faithful Face</div>
+          <div class="forge-variant-status">Available now</div>
+        </button>
+
+        <button
+          class="forge-variant-option disabled"
+          type="button"
+          onclick="window.setForgeVariantComingSoon('Stronger Warrior Body')"
+        >
+          <div class="forge-variant-name">Stronger Warrior Body</div>
+          <div class="forge-variant-status">Coming soon</div>
+        </button>
+
+        <button
+          class="forge-variant-option disabled"
+          type="button"
+          onclick="window.setForgeVariantComingSoon('Cleaner 3D Reference')"
+        >
+          <div class="forge-variant-name">Cleaner 3D Reference</div>
+          <div class="forge-variant-status">Coming soon</div>
+        </button>
+      </div>
+    `;
+  }
+
+  async function generateForgeVariant(intent) {
+    if (!window.forgeGenerationInput || typeof window.generatePreviewStub !== 'function') return;
+
+    window.currentForgeVariantIntent = intent;
+    window.forgeGenerationInput.variantIntent = intent;
+
+    try {
+      await window.generatePreviewStub();
+    } finally {
+      window.currentForgeVariantIntent = 'default';
+      window.forgeGenerationInput.variantIntent = 'default';
+    }
+  }
+
+  function setForgeVariantComingSoon(label) {
+    if (typeof window.setForgeStatus === 'function') {
+      window.setForgeStatus(`${label} variant is coming soon. More Faithful Face is available now.`, 'error');
+    }
+  }
+
+  function bootForgeVariantPanel() {
+    if (!isForgePage()) return;
+
+    renderForgeVariantPanel();
+  }
+
+  window.generateForgeVariant = generateForgeVariant;
+  window.setForgeVariantComingSoon = setForgeVariantComingSoon;
+  window.renderForgeVariantPanel = renderForgeVariantPanel;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(bootForgeVariantPanel, 0);
+  });
+})();
