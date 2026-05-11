@@ -43,12 +43,23 @@ Use the provided source NFT image as the identity reference.
 Create a clean full-body Rebel Ant character reference image based on that source image.
 The source NFT may be chest-up only, so you must complete the missing lower body and produce a full-body result.
 
-Top priority:
-- Preserve the visible upper-body identity from the source image as closely as possible.
-- Do not redesign or significantly change the head, eyes, mouth, face styling, upper clothing colors, or major upper-body features.
-- Keep the same recognizable character identity.
-- Keep the same main colors from the source image, especially the visible outfit colors and headwear colors.
-- Think of this as continuing and finishing the character, not inventing a brand new one.
+Absolute highest priority:
+- Treat the source image as the canonical design for everything visible in the upper body.
+- Do not redesign the face.
+- Do not reinterpret the eyes.
+- Do not significantly change the mouth.
+- Do not significantly change the head shape.
+- Do not significantly change the headwear, skull cap, skully flap, eyepatch/eye covering, antenna placement, or visible upper clothing wrap.
+- Do not change the main visible colors of the upper body.
+- Preserve the upper-body identity as closely as possible.
+- Think of this as extending the character downward, not redesigning the character.
+
+Upper-body preservation rules:
+- The area from the top of the head down through the chest should closely match the source image.
+- Keep the same recognizable facial expression and upper-body styling.
+- Keep the same line-language and stylized cartoon ant identity.
+- Do not make the face more human or more realistic than the source.
+- Do not replace or restyle the upper features unless absolutely necessary for image coherence.
 
 Important requirements:
 - Output must be a full-body character from head to feet.
@@ -58,7 +69,7 @@ Important requirements:
 - Use a clean neutral front-facing or slightly heroic pose that makes the body easy to understand for later 3D conversion.
 - The final image should be a polished full-body character concept suitable as the next step before 3D generation.
 - Keep the visual tone consistent with Rebel Ants: stylized warrior ant, Japanese-inspired, ninja-warrior, heroic, sharp, detailed, high-quality concept art.
-- The completed body should feel more like a stealthy ninja warrior / Japanese fighter than a plain robe character.
+- The completed lower body should feel more like a stealthy ninja warrior / Japanese fighter than a plain robe character.
 - Prefer a simple clean backdrop or subtle neutral studio-style background so the character remains the focus.
 
 Character identity details:
@@ -79,8 +90,8 @@ Character identity details:
 
 Generation rules:
 - If the source image is chest-up, continue the visible upper-body design downward into a believable full-body design.
+- Creative changes should happen mainly below the chest.
 - Preserve the upper body styling and colors, then complete the torso, waist, legs, feet, and outfit continuation.
-- Do not significantly alter the upper-body proportions, face details, eye styling, headwear, or visible clothing colors.
 - Extend the outfit into a more ninja-warrior full-body design: layered shinobi/samurai-inspired wraps, tied waist sash, fitted sleeves, stronger lower-body garment structure, shin guards or wrapped lower legs, and warrior-style sandals or footwear that matches the character.
 - Keep the weapon visible if appropriate.
 - Maintain the character’s outfit logic and faction identity.
