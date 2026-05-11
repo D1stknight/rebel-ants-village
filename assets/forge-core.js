@@ -928,6 +928,13 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   async function generateForgeVariant(intent) {
     if (!window.forgeGenerationInput || typeof window.generatePreviewStub !== 'function') return;
 
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    window.currentForgeTriggerButton = activeButton;
     window.currentForgeVariantIntent = intent;
     window.forgeGenerationInput.variantIntent = intent;
 
@@ -936,6 +943,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     } finally {
       window.currentForgeVariantIntent = 'default';
       window.forgeGenerationInput.variantIntent = 'default';
+      window.currentForgeTriggerButton = null;
     }
   }
 
