@@ -344,10 +344,10 @@ body{
         <button class="action-btn" id="enter-village-btn" type="button" onclick="window.location.href='village.html'">Enter Village</button>
       </div>
 
-      <div id="forge-right-results" style="margin-top:18px;">
-        <div id="fullbody-preview-wrap">
-          <div id="fullbody-preview-label">Generated Full-Body Preview</div>
-          <img id="fullbody-preview-image" alt="Generated full-body Rebel Ant preview">
+           <div id="forge-right-results" style="margin-top:14px;">
+        <div id="fullbody-preview-wrap" style="display:none;">
+          <div id="fullbody-preview-label">Latest Generated Preview</div>
+          <img id="fullbody-preview-image" alt="Generated full-body Rebel Ant preview" style="max-width:260px; width:100%; border-radius:18px; display:block; margin-top:12px;">
 
           <div id="forge-preview-actions" style="display:none; margin-top:14px; gap:10px; flex-wrap:wrap;">
             <button class="action-btn" id="save-concept-btn" type="button" onclick="saveCurrentForgeConcept()">Save This Version</button>
@@ -356,12 +356,12 @@ body{
           </div>
         </div>
 
-        <div id="forge-concepts-section" style="margin-top:22px;">
+        <div id="forge-concepts-section" style="margin-top:18px;">
           <div class="section-title">Saved Concepts</div>
           <div class="section-copy">
-            Generate multiple full-body versions for this Rebel, then choose the one you want to keep.
+            Choose the full-body concept you want to turn into the future 3D character. Saved concepts stay here so users can compare, download, select, or delete versions.
           </div>
-          <div id="forge-concepts-gallery" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:14px; margin-top:14px;"></div>
+          <div id="forge-concepts-gallery" style="display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; margin-top:14px;"></div>
         </div>
       </div>
       </div>
@@ -494,6 +494,8 @@ function getCurrentForgeConceptFromPreview() {
 }
 
 function renderForgeConceptGallery() {
+  ensureForgeLoadingStyles();
+
   const gallery = document.getElementById('forge-concepts-gallery');
   if (!gallery) return;
 
@@ -502,32 +504,33 @@ function renderForgeConceptGallery() {
 
   if (!concepts.length) {
     gallery.innerHTML = `
-      <div style="opacity:.75; border:1px solid rgba(255,255,255,.14); border-radius:16px; padding:16px;">
+      <div style="grid-column:1 / -1; opacity:.75; border:1px solid rgba(255,255,255,.14); border-radius:16px; padding:16px;">
         No saved concepts yet. Generate a full-body preview to start building versions.
       </div>
     `;
     return;
   }
 
-  gallery.innerHTML = concepts.map((concept, index) => {
+  gallery.innerHTML = concepts.slice(0, 12).map((concept, index) => {
     const isSelected = concept.id === selectedConceptId;
-    const border = isSelected ? '2px solid rgba(255,80,80,.95)' : '1px solid rgba(255,255,255,.14)';
-    const label = isSelected ? 'Selected Version' : `Version ${index + 1}`;
+    const label = isSelected ? 'Selected' : `Version ${index + 1}`;
+    const safeId = String(concept.id).replace(/'/g, "\\'");
 
     return `
-      <button
-        type="button"
-        onclick="selectForgeConcept('${concept.id}')"
-        style="text-align:left; cursor:pointer; background:rgba(0,0,0,.28); border:${border}; border-radius:18px; padding:10px; color:inherit;"
-      >
+      <div class="forge-concept-card ${isSelected ? 'selected' : ''}">
         <img
           src="${concept.imageDataUrl}"
           alt="${label}"
-          style="width:100%; border-radius:14px; display:block; margin-bottom:10px;"
         >
-        <div style="font-weight:800;">${label}</div>
-        <div style="opacity:.72; font-size:12px; margin-top:4px;">${concept.colony || 'Unknown Colony'}</div>
-      </button>
+        <div class="forge-concept-card-title">${label}</div>
+        <div class="forge-concept-card-meta">${concept.colony || 'Unknown Colony'}</div>
+
+        <div class="forge-concept-card-actions">
+          <button class="forge-mini-btn" type="button" onclick="selectForgeConcept('${safeId}')">Select</button>
+          <button class="forge-mini-btn" type="button" onclick="downloadForgeConcept('${safeId}')">Download</button>
+          <button class="forge-mini-btn danger" type="button" onclick="deleteForgeConcept('${safeId}')">Delete</button>
+        </div>
+      </div>
     `;
   }).join('');
 }
@@ -538,6 +541,7 @@ function selectForgeConcept(conceptId) {
   const previewWrap = document.getElementById('fullbody-preview-wrap');
   const previewImage = document.getElementById('fullbody-preview-image');
   const previewActions = document.getElementById('forge-preview-actions');
+  const status = document.getElementById('forge-status');
 
   if (!concept) return;
 
@@ -549,6 +553,7 @@ function selectForgeConcept(conceptId) {
   }
 
   if (previewWrap) {
+    previewWrap.style.display = 'block';
     previewWrap.classList.add('open');
   }
 
@@ -556,9 +561,49 @@ function selectForgeConcept(conceptId) {
     previewActions.style.display = 'flex';
   }
 
+  if (status) {
+    status.textContent = 'Selected Forge concept is ready for the future 3D character step.';
+    status.className = 'success';
+  }
+
   renderForgeConceptGallery();
 }
 
+function downloadForgeConcept(conceptId) {
+  const concepts = loadForgeConcepts();
+  const concept = concepts.find((item) => item.id === conceptId);
+
+  if (!concept || !concept.imageDataUrl) return;
+
+  const link = document.createElement('a');
+  const tokenId = concept.tokenId || concept.rebelId || 'rebel';
+  link.href = concept.imageDataUrl;
+  link.download = `rebel-forge-${tokenId}-${concept.id}.png`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+function deleteForgeConcept(conceptId) {
+  const concepts = loadForgeConcepts();
+  const nextConcepts = concepts.filter((item) => item.id !== conceptId);
+  const selectedConceptId = localStorage.getItem(getSelectedForgeConceptStorageKey());
+  const status = document.getElementById('forge-status');
+
+  saveForgeConcepts(nextConcepts);
+
+  if (selectedConceptId === conceptId) {
+    localStorage.removeItem(getSelectedForgeConceptStorageKey());
+    window.currentForgeConcept = null;
+  }
+
+  if (status) {
+    status.textContent = 'Forge concept deleted.';
+    status.className = 'success';
+  }
+
+  renderForgeConceptGallery();
+}
 function saveCurrentForgeConcept() {
   const status = document.getElementById('forge-status');
   const concept = window.currentForgeConcept || getCurrentForgeConceptFromPreview();
@@ -628,14 +673,87 @@ function ensureForgeLoadingStyles() {
   style.id = 'forge-loading-styles';
   style.textContent = `
     @keyframes forgePulse {
-      0% { opacity: .45; }
+      0% { opacity: .42; }
       50% { opacity: 1; }
-      100% { opacity: .45; }
+      100% { opacity: .42; }
     }
 
     .forge-loading-pulse {
-      display: inline-block;
+      display: block;
+      margin-top: 12px;
       animation: forgePulse 1s ease-in-out infinite;
+    }
+
+    .forge-concept-card {
+      background: rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      padding: 8px;
+      color: inherit;
+      overflow: hidden;
+    }
+
+    .forge-concept-card.selected {
+      border: 2px solid rgba(255,80,80,.95);
+      box-shadow: 0 0 22px rgba(255,60,60,.18);
+    }
+
+    .forge-concept-card img {
+      width: 100%;
+      aspect-ratio: 1 / 1.25;
+      object-fit: cover;
+      object-position: top center;
+      border-radius: 12px;
+      display: block;
+      margin-bottom: 8px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .forge-concept-card-title {
+      font-weight: 800;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .forge-concept-card-meta {
+      opacity: .72;
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    .forge-concept-card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .forge-mini-btn {
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: inherit;
+      border-radius: 10px;
+      padding: 7px 6px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .forge-mini-btn:hover {
+      background: rgba(255,255,255,.12);
+    }
+
+    .forge-mini-btn.danger {
+      color: #ff8a8a;
+      border-color: rgba(255,90,90,.35);
+    }
+
+    @media (max-width: 900px) {
+      #forge-concepts-gallery {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
     }
   `;
 
@@ -653,8 +771,9 @@ async function generatePreviewStub() {
   ensureForgeLoadingStyles();
 
   if (status) {
-    status.innerHTML = '<span class="forge-loading-pulse">Generating full-body Rebel preview...</span>';
+    status.innerHTML = '<span class="forge-loading-pulse">Generating full-body Rebel preview... this can take a moment.</span>';
     status.className = '';
+    status.scrollIntoView({ block: 'nearest' });
   }
 
   if (button) button.disabled = true;
@@ -694,7 +813,8 @@ async function generatePreviewStub() {
       previewImage.src = concept.imageDataUrl;
     }
 
-    if (previewWrap) {
+      if (previewWrap) {
+      previewWrap.style.display = 'block';
       previewWrap.classList.add('open');
     }
 
