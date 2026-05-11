@@ -1,6 +1,5 @@
 const OPENAI_IMAGE_MODEL = 'gpt-image-1.5';
 const DEFAULT_SIZE = '1024x1536';
-const DEFAULT_QUALITY = 'medium';
 
 function buildFullBodyPreviewPrompt(generationInput) {
   const colony = generationInput.colony || 'Rebel Ant';
@@ -105,7 +104,8 @@ export default async function handler(req, res) {
     form.append('model', OPENAI_IMAGE_MODEL);
     form.append('prompt', prompt);
     form.append('size', DEFAULT_SIZE);
-    form.append('quality', DEFAULT_QUALITY);
+    // Quality is intentionally omitted here because the live image edit endpoint
+// rejected the parameter; the API will use its default quality behavior.
     form.append('image', sourceImageBlob, 'source-reference.png');
 
     const openaiResponse = await fetch('https://api.openai.com/v1/images/edits', {
@@ -145,8 +145,8 @@ export default async function handler(req, res) {
       colony: generationInput.colony || null,
       colonyStyle: generationInput.colonyProfile?.baseStyle || null,
       weaponFamily: generationInput.weaponProfile?.family || null,
-      quality: DEFAULT_QUALITY,
-      size: DEFAULT_SIZE,
+      quality: 'auto',
+size: DEFAULT_SIZE,
       nextStep: 'fullbody_preview_generated'
     };
 
