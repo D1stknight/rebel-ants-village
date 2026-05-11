@@ -1,3 +1,6 @@
+import { readFile } from 'fs/promises';
+import path from 'path';
+
 const RESPONSES_MODEL = 'gpt-5.5';
 const DEFAULT_SIZE = '1024x1536';
 
@@ -24,19 +27,47 @@ async function fetchSourceImageAsDataUrl(imageUrl) {
   return `data:${contentType};base64,${base64}`;
 }
 
-async function fetchBodyReferenceDataUrls(baseOrigin) {
+function detectImageMimeType(buffer) {
+  if (buffer.length >= 4) {
+    const pngSignature = buffer.subarray(0, 4).toString('hex');
+    if (pngSignature === '89504e47') return 'image/png';
+  }
+
+  if (buffer.length >= 3) {
+    const jpgSignature = buffer.subarray(0, 3).toString('hex');
+    if (jpgSignature === 'ffd8ff') return 'image/jpeg';
+  }
+
+  if (
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+    buffer.subarray(8, 12).toString('ascii') === 'WEBP'
+  ) {
+    return 'image/webp';
+  }
+
+  throw new Error('Unsupported local body reference image format');
+}
+
+async function readLocalImageAsDataUrl(relativePath) {
+  const filePath = path.join(process.cwd(), relativePath);
+  const buffer = await readFile(filePath);
+  const mimeType = detectImageMimeType(buffer);
+  return `data:${mimeType};base64,${buffer.toString('base64')}`;
+}
+
+async function fetchBodyReferenceDataUrls() {
   const bodyReferencePaths = [
-    '/assets/forge-references/body/red-kimono-clean.png',
-    '/assets/forge-references/body/orange-shinobi-layered.png',
-    '/assets/forge-references/body/navy-wave-kimono.png',
-    '/assets/forge-references/body/pale-pink-tactical-kimono.png'
+    'assets/forge-references/body/red-kimono-clean.png',
+    'assets/forge-references/body/orange-shinobi-layered.png',
+    'assets/forge-references/body/navy-wave-kimono.png',
+    'assets/forge-references/body/pale-pink-tactical-kimono.png'
   ];
 
   const results = [];
 
-  for (const path of bodyReferencePaths) {
-    const absoluteUrl = new URL(path, baseOrigin).toString();
-    const dataUrl = await fetchSourceImageAsDataUrl(absoluteUrl);
+  for (const bodyReferencePath of bodyReferencePaths) {
+    const dataUrl = await readLocalImageAsDataUrl(bodyReferencePath);
     results.push(dataUrl);
   }
 
@@ -163,8 +194,7 @@ export default async function handler(req, res) {
         const prompt = buildFullBodyPreviewPrompt(generationInput);
     const sourceImageDataUrl = await fetchSourceImageAsDataUrl(generationInput.sourceImage);
 
-      const baseOrigin = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
-    const bodyReferenceDataUrls = await fetchBodyReferenceDataUrls(baseOrigin);
+         const bodyReferenceDataUrls = await fetchBodyReferenceDataUrls();
 
     const openaiResponse = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
