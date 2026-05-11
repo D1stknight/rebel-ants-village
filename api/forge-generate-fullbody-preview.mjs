@@ -67,15 +67,15 @@ Absolute highest priority:
 - Treat Image 1 as the canonical design for everything visible in the upper body.
 - Do not redesign the face.
 - Do not reinterpret the eyes.
-- Do not significantly change the mouth.
-- Do not significantly change the head shape.
-- Do not significantly change the headwear, skull cap, skully flap, eyepatch/eye covering, antenna placement, or visible upper clothing wrap.
+- Do not change the mouth.
+- Do not change the head shape.
+- Do not change the headwear, skull cap, skully flap, eyepatch/eye covering, antenna placement, or visible upper clothing wrap.
 - Do not change the main visible colors of the upper body.
 - Preserve the upper-body identity as closely as possible.
 - Think of this as extending the character downward, not redesigning the character.
 
 Upper-body preservation rules:
-- The area from the top of the head down through the chest should closely match Image 1.
+- The area from the top of the head down through the chest should match Image 1.
 - Keep the same recognizable facial expression and upper-body styling.
 - Keep the same line-language and stylized cartoon ant identity.
 - Do not make the face more human or more realistic than the source.
