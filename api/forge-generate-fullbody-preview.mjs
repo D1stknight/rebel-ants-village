@@ -163,12 +163,13 @@ export default async function handler(req, res) {
         dataUrl: `data:image/png;base64,${imageBase64}`
       }
     });
-  } catch (err) {
+   } catch (err) {
     console.error('forge-generate-fullbody-preview error:', err);
 
     return res.status(500).json({
       ok: false,
-      error: 'Could not generate full-body Forge preview'
+      error: 'Could not generate full-body Forge preview',
+      detail: err && err.message ? err.message : 'Unknown error'
     });
   }
 }
