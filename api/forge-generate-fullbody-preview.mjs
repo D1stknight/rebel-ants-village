@@ -43,15 +43,22 @@ Use the provided source NFT image as the identity reference.
 Create a clean full-body Rebel Ant character reference image based on that source image.
 The source NFT may be chest-up only, so you must complete the missing lower body and produce a full-body result.
 
+Top priority:
+- Preserve the visible upper-body identity from the source image as closely as possible.
+- Do not redesign or significantly change the head, eyes, mouth, face styling, upper clothing colors, or major upper-body features.
+- Keep the same recognizable character identity.
+- Keep the same main colors from the source image, especially the visible outfit colors and headwear colors.
+- Think of this as continuing and finishing the character, not inventing a brand new one.
+
 Important requirements:
-- Preserve the character’s identity from the source image.
 - Output must be a full-body character from head to feet.
 - Do not crop the legs or feet.
 - Keep the character centered and clearly readable.
 - Show a strong, game-ready character silhouette.
+- Use a clean neutral front-facing or slightly heroic pose that makes the body easy to understand for later 3D conversion.
 - The final image should be a polished full-body character concept suitable as the next step before 3D generation.
-- Use a clean neutral character pose that makes the body easy to understand for later 3D conversion.
-- Keep the visual tone consistent with Rebel Ants: stylized warrior ant, Japanese-inspired, heroic, sharp, detailed, high-quality concept art.
+- Keep the visual tone consistent with Rebel Ants: stylized warrior ant, Japanese-inspired, ninja-warrior, heroic, sharp, detailed, high-quality concept art.
+- The completed body should feel more like a stealthy ninja warrior / Japanese fighter than a plain robe character.
 - Prefer a simple clean backdrop or subtle neutral studio-style background so the character remains the focus.
 
 Character identity details:
@@ -71,13 +78,15 @@ Character identity details:
 - Background trait: ${background}
 
 Generation rules:
-- If the source image is chest-up, infer and design the missing torso, waist, legs, feet, and full outfit continuation in a way that matches the visible upper body.
+- If the source image is chest-up, continue the visible upper-body design downward into a believable full-body design.
+- Preserve the upper body styling and colors, then complete the torso, waist, legs, feet, and outfit continuation.
+- Do not significantly alter the upper-body proportions, face details, eye styling, headwear, or visible clothing colors.
+- Extend the outfit into a more ninja-warrior full-body design: layered shinobi/samurai-inspired wraps, tied waist sash, fitted sleeves, stronger lower-body garment structure, shin guards or wrapped lower legs, and warrior-style sandals or footwear that matches the character.
 - Keep the weapon visible if appropriate.
 - Maintain the character’s outfit logic and faction identity.
 - This is a single full-body character reference image, not a collage and not a turnaround sheet.
 `.trim();
 }
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
