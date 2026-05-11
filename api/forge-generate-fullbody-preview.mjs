@@ -63,6 +63,20 @@ Variant intent: STRONGER WARRIOR BODY.
 `.trim();
   }
 
+  if (variantIntent === 'cleaner_3d_reference') {
+    return `
+Variant intent: CLEANER 3D REFERENCE.
+- Create a cleaner, simpler full-body production reference that will be easier to turn into a future 3D character.
+- Keep the original face, eyes, mouth, teeth, expression, antennae, headwear, and upper-body identity locked to Image 1.
+- Use a mostly front-facing neutral stance with both arms, legs, hands, feet, torso, and silhouette clearly readable.
+- Avoid extreme cinematic poses, heavy shadows, motion blur, dramatic camera angles, cropped limbs, or complex backgrounds.
+- Keep the background simple and neutral.
+- Keep the full body visible from head to feet.
+- Avoid weapons covering the body. If a weapon is present, keep it small, clear, and away from the face, torso, hands, legs, and feet.
+- Prioritize clean shape readability, balanced proportions, visible limbs, and simple clothing structure over dramatic concept-art flair.
+`.trim();
+  }
+
   return '';
 }
 
