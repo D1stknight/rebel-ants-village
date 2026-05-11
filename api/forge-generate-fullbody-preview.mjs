@@ -1,4 +1,4 @@
-const OPENAI_IMAGE_MODEL = 'gpt-image-1';
+const OPENAI_IMAGE_MODEL = 'gpt-image-1.5';
 const DEFAULT_SIZE = '1024x1536';
 const DEFAULT_QUALITY = 'medium';
 
