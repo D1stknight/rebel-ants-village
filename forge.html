@@ -187,6 +187,29 @@ body{
 #forge-status.error{
   color:#ff8b8b;
 }
+#fullbody-preview-wrap{
+  display:none;
+  flex-direction:column;
+  gap:10px;
+  border-top:1px solid rgba(255,255,255,.08);
+  padding-top:16px;
+}
+#fullbody-preview-wrap.open{
+  display:flex;
+}
+#fullbody-preview-label{
+  color:#5ecfca;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
+#fullbody-preview-image{
+  width:100%;
+  aspect-ratio:2 / 3;
+  object-fit:contain;
+  background:rgba(0,0,0,.22);
+  border:1px solid rgba(94,207,202,.22);
+}
 #generation-summary{
   display:grid;
   gap:10px;
@@ -258,7 +281,7 @@ body{
       <div id="forge-name">Rebel #001</div>
       <div id="forge-sub">Selected Rebel</div>
 
-      <div id="forge-details">
+          <div id="forge-details">
         <div class="detail-row">
           <div class="detail-label">Collection</div>
           <div class="detail-value" id="detail-collection">battle_for_colony</div>
@@ -275,6 +298,11 @@ body{
           <div class="detail-label">Source Type</div>
           <div class="detail-value" id="detail-source-type">default</div>
         </div>
+      </div>
+
+      <div id="fullbody-preview-wrap">
+        <div id="fullbody-preview-label">Generated Full-Body Preview</div>
+        <img id="fullbody-preview-image" alt="Generated full-body Rebel Ant preview">
       </div>
     </div>
 
@@ -317,7 +345,7 @@ body{
       </div>
 
       <div id="forge-actions">
-        <button class="action-btn" id="generate-btn" type="button" onclick="generatePreviewStub()">Generate 3D Preview</button>
+        <button class="action-btn" id="generate-btn" type="button" onclick="generatePreviewStub()">Generate Full-Body Preview</button>
         <button class="action-btn" id="enter-village-btn" type="button" onclick="window.location.href='village.html'">Enter Village</button>
       </div>
 
@@ -388,16 +416,18 @@ function hydrateForgeScreen(rebel, generationInput) {
 async function generatePreviewStub() {
   const status = document.getElementById('forge-status');
   const button = document.getElementById('generate-btn');
+  const previewWrap = document.getElementById('fullbody-preview-wrap');
+  const previewImage = document.getElementById('fullbody-preview-image');
 
   if (status) {
-    status.textContent = 'Sending Forge preview request...';
+    status.textContent = 'Generating full-body Rebel preview...';
     status.className = '';
   }
 
   if (button) button.disabled = true;
 
   try {
-    const response = await fetch('/api/forge-generate-preview', {
+    const response = await fetch('/api/forge-generate-fullbody-preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -408,20 +438,28 @@ async function generatePreviewStub() {
     const data = await response.json();
 
     if (!response.ok || !data.ok) {
-      throw new Error(data.error || 'Preview request failed');
+      throw new Error(data.error || 'Full-body preview request failed');
     }
 
-    window.lastForgePreviewResponse = data;
+    window.lastFullBodyForgePreviewResponse = data;
+
+    if (previewImage && data.previewImage?.dataUrl) {
+      previewImage.src = data.previewImage.dataUrl;
+    }
+
+    if (previewWrap) {
+      previewWrap.classList.add('open');
+    }
 
     if (status) {
-      status.textContent = data.message || 'Forge preview request accepted.';
+      status.textContent = data.message || 'Full-body Forge preview generated.';
       status.className = 'success';
     }
   } catch(e) {
-    console.warn('Forge preview request failed:', e);
+    console.warn('Full-body Forge preview request failed:', e);
 
     if (status) {
-      status.textContent = 'Could not start Forge preview.';
+      status.textContent = 'Could not generate full-body preview.';
       status.className = 'error';
     }
   } finally {
