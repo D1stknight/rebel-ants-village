@@ -853,6 +853,7 @@ async function deleteForgeConcept(conceptId) {
   const selectedConceptId = localStorage.getItem(getSelectedForgeConceptStorageKey());
 
   let localDeleted = false;
+  let blobDeleted = false;
   let serverDeleted = false;
 
   saveForgeConcepts(nextConcepts);
@@ -862,6 +863,34 @@ async function deleteForgeConcept(conceptId) {
   if (selectedConceptId === conceptId) {
     localStorage.removeItem(getSelectedForgeConceptStorageKey());
     window.currentForgeConcept = null;
+  }
+
+  if (concept?.imageStorage === 'vercel_blob' && (concept.imageBlobPath || concept.imageUrl)) {
+    try {
+      const response = await fetch('/api/forge-concepts-delete-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          imageBlobPath: concept.imageBlobPath || null,
+          imageUrl: concept.imageUrl || null
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Blob image delete failed');
+      }
+
+      window.lastForgeConceptBlobDeleteResponse = data;
+      blobDeleted = true;
+    } catch(e) {
+      console.warn('Forge concept deleted locally, but Blob image delete failed:', e);
+    }
+  } else {
+    blobDeleted = true;
   }
 
   if (concept) {
@@ -892,17 +921,18 @@ async function deleteForgeConcept(conceptId) {
     }
   }
 
-  if (localDeleted && serverDeleted) {
-    setForgeStatus('Forge concept deleted locally and removed from server.', 'success');
+  if (localDeleted && blobDeleted && serverDeleted) {
+    setForgeStatus('Forge concept deleted locally, removed from Blob, and removed from server.', 'success');
+  } else if (localDeleted && serverDeleted) {
+    setForgeStatus('Forge concept deleted locally and removed from server. Blob cleanup will be retried later.', 'success');
   } else if (localDeleted) {
-    setForgeStatus('Forge concept deleted locally. Server delete will be retried later.', 'success');
+    setForgeStatus('Forge concept deleted locally. Server cleanup will be retried later.', 'success');
   } else {
     setForgeStatus('Could not delete this Forge concept. Please try again.', 'error');
   }
 
   renderForgeConceptGallery({ syncServer: true });
 }
-
 async function saveForgeConceptMetadataToServer(concept) {
   if (!concept) {
     return {
