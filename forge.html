@@ -788,18 +788,21 @@ async function renderForgeConceptGallery(options = {}) {
 }
 async function selectForgeConcept(conceptId) {
   const concepts = loadForgeConcepts();
-  const concept = concepts.find((item) => item.id === conceptId);
+  const concept = concepts.find((item) => (item.id || item.conceptId) === conceptId);
   const previewWrap = document.getElementById('fullbody-preview-wrap');
   const previewImage = document.getElementById('fullbody-preview-image');
   const previewActions = document.getElementById('forge-preview-actions');
 
   if (!concept) return;
 
-  const imageDataUrl = await loadForgeConceptImage(concept.id);
+  const id = concept.id || concept.conceptId;
+  const imageDataUrl = await loadForgeConceptImageForDisplay(concept);
 
-  localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
+  localStorage.setItem(getSelectedForgeConceptStorageKey(), id);
   window.currentForgeConcept = {
     ...concept,
+    id,
+    conceptId: concept.conceptId || id,
     imageDataUrl
   };
 
@@ -823,26 +826,26 @@ async function selectForgeConcept(conceptId) {
 
 async function downloadForgeConcept(conceptId) {
   const concepts = loadForgeConcepts();
-  const concept = concepts.find((item) => item.id === conceptId);
+  const concept = concepts.find((item) => (item.id || item.conceptId) === conceptId);
 
   if (!concept) return;
 
-  const imageDataUrl = await loadForgeConceptImage(concept.id);
+  const id = concept.id || concept.conceptId;
+  const imageUrl = await loadForgeConceptImageForDisplay(concept);
 
-  if (!imageDataUrl) {
+  if (!imageUrl) {
     setForgeStatus('Could not download this concept because the saved image is missing.', 'error');
     return;
   }
 
   const link = document.createElement('a');
   const tokenId = concept.tokenId || concept.rebelId || 'rebel';
-  link.href = imageDataUrl;
-  link.download = `rebel-forge-${tokenId}-${concept.id}.png`;
+  link.href = imageUrl;
+  link.download = `rebel-forge-${tokenId}-${id}.png`;
   document.body.appendChild(link);
   link.click();
   link.remove();
 }
-
 async function deleteForgeConcept(conceptId) {
   const concepts = loadForgeConcepts();
   const nextConcepts = concepts.filter((item) => item.id !== conceptId);
