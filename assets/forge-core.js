@@ -488,7 +488,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     return panel;
   }
 
-  async function renderSelectedConceptPanel() {
+    async function renderSelectedConceptPanel() {
     ensureSelectedConceptStyles();
 
     const panel = ensureSelectedConceptPanel();
@@ -504,7 +504,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     const selectedConceptId = localStorage.getItem(window.getSelectedForgeConceptStorageKey());
     const concepts = window.loadForgeConcepts();
-    const concept = concepts.find((item) => item.id === selectedConceptId);
+    const concept = concepts.find((item) => (item.id || item.conceptId) === selectedConceptId);
 
     if (!selectedConceptId || !concept) {
       content.className = 'forge-selected-empty';
@@ -512,20 +512,23 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       return;
     }
 
-    let imageDataUrl = '';
+    let imageUrl = '';
 
-    if (typeof window.loadForgeConceptImage === 'function') {
-      try {
-        imageDataUrl = await window.loadForgeConceptImage(concept.id);
-      } catch(e) {
-        console.warn('Could not load selected Forge concept image:', e);
+    try {
+      if (typeof window.loadForgeConceptImageForDisplay === 'function') {
+        imageUrl = await window.loadForgeConceptImageForDisplay(concept);
+      } else if (typeof window.loadForgeConceptImage === 'function') {
+        imageUrl = await window.loadForgeConceptImage(concept.id || concept.conceptId);
       }
+    } catch(e) {
+      console.warn('Could not load selected Forge concept image:', e);
     }
 
+    const id = concept.id || concept.conceptId;
     const tokenText = concept.tokenId || concept.rebelId || '—';
     const colonyText = concept.colony || 'Unknown Colony';
-    const imgHtml = imageDataUrl
-      ? `<img src="${imageDataUrl}" alt="Selected Forge concept">`
+    const imgHtml = imageUrl
+      ? `<img src="${imageUrl}" alt="Selected Forge concept">`
       : '<div class="forge-selected-empty">Selected image missing.</div>';
 
     content.className = 'forge-selected-card';
@@ -537,11 +540,124 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           Colony: ${colonyText}<br>
           Token ID: ${tokenText}
         </div>
-        <button class="forge-disabled-build-btn" type="button" disabled>Build 3D Character — Coming Soon</button>
+        <button class="forge-disabled-build-btn forge-build-production-btn" type="button" onclick="window.generateForgeProductionReference('${String(id).replace(/'/g, "\\'")}')">Create 3D Production Reference</button>
       </div>
     `;
   }
 
+  async function generateForgeProductionReference(conceptId) {
+    if (
+      typeof window.loadForgeConcepts !== 'function' ||
+      !window.forgeGenerationInput
+    ) {
+      return;
+    }
+
+    const concepts = window.loadForgeConcepts();
+    const concept = concepts.find((item) => (item.id || item.conceptId) === conceptId);
+
+    if (!concept) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Select a saved concept before creating a 3D production reference.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    if (typeof window.setForgeGeneratingButton === 'function') {
+      window.setForgeGeneratingButton(activeButton, true);
+    }
+
+    if (typeof window.setForgeStatusHtml === 'function') {
+      window.setForgeStatusHtml('<span class="forge-loading-pulse">Creating 3D production reference... this can take a moment.</span>', '');
+    }
+
+    try {
+      let selectedConceptImageDataUrl = '';
+      let selectedConceptImageUrl = concept.imageUrl || '';
+
+      if (typeof window.loadForgeConceptImage === 'function') {
+        selectedConceptImageDataUrl = await window.loadForgeConceptImage(concept.id || concept.conceptId);
+      }
+
+      const response = await fetch('/api/forge-generate-production-reference', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          generationInput: window.forgeGenerationInput,
+          selectedConcept: concept,
+          selectedConceptImageUrl,
+          selectedConceptImageDataUrl
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Production reference request failed');
+      }
+
+      window.lastForgeProductionReferenceResponse = data;
+
+      if (data.productionImage?.dataUrl) {
+        const previewWrap = document.getElementById('fullbody-preview-wrap');
+        const previewImage = document.getElementById('fullbody-preview-image');
+        const previewActions = document.getElementById('forge-preview-actions');
+
+        const productionConcept = {
+          id: `production_${Date.now()}`,
+          conceptId: `production_${Date.now()}`,
+          createdAt: new Date().toISOString(),
+          imageDataUrl: data.productionImage.dataUrl,
+          tokenId: concept.tokenId || window.forgeGenerationInput?.tokenId || null,
+          rebelId: concept.rebelId || window.forgeGenerationInput?.rebelId || null,
+          collectionKey: concept.collectionKey || window.forgeGenerationInput?.collectionKey || null,
+          colony: concept.colony || window.forgeGenerationInput?.colony || null,
+          bodyType: concept.bodyType || window.forgeGenerationInput?.bodyType || null,
+          forgeMode: 'production_reference',
+          variantIntent: 'clean_3d_production_reference',
+          sourceConceptId: concept.id || concept.conceptId
+        };
+
+        window.currentForgeConcept = productionConcept;
+
+        if (previewImage) {
+          previewImage.src = data.productionImage.dataUrl;
+        }
+
+        if (previewWrap) {
+          previewWrap.style.display = 'block';
+          previewWrap.classList.add('open');
+        }
+
+        if (previewActions) {
+          previewActions.style.display = 'flex';
+        }
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('3D production reference generated. Click Save This Version to keep it.', 'success');
+      }
+    } catch(e) {
+      console.warn('Forge production reference request failed:', e);
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not create 3D production reference.', 'error');
+      }
+    } finally {
+      if (typeof window.setForgeGeneratingButton === 'function') {
+        window.setForgeGeneratingButton(activeButton, false);
+      }
+    }
+  }
+  
   function wrapForgeConceptFunction(name) {
     const original = window[name];
     if (typeof original !== 'function' || original.__selectedConceptWrapped) return;
@@ -579,7 +695,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     setTimeout(bootSelectedConceptPanel, 0);
   });
 
-  window.renderForgeSelectedConceptPanel = renderSelectedConceptPanel;
+   window.renderForgeSelectedConceptPanel = renderSelectedConceptPanel;
+  window.generateForgeProductionReference = generateForgeProductionReference;
 })();
 
 (function setupForgeConceptModeSelectorExtension() {
