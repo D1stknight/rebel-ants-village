@@ -488,7 +488,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     return panel;
   }
 
-    async function renderSelectedConceptPanel() {
+  async function renderSelectedConceptPanel() {
     ensureSelectedConceptStyles();
 
     const panel = ensureSelectedConceptPanel();
@@ -527,9 +527,23 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const id = concept.id || concept.conceptId;
     const tokenText = concept.tokenId || concept.rebelId || '—';
     const colonyText = concept.colony || 'Unknown Colony';
+    const isProductionReference =
+      concept.forgeMode === 'production_reference' ||
+      concept.conceptType === 'production_reference' ||
+      concept.variantIntent === 'clean_3d_production_reference';
+
+    const safeId = String(id).replace(/'/g, "\\'");
     const imgHtml = imageUrl
       ? `<img src="${imageUrl}" alt="Selected Forge concept">`
       : '<div class="forge-selected-empty">Selected image missing.</div>';
+
+    const actionButtonHtml = isProductionReference
+      ? `<button class="forge-disabled-build-btn forge-start-3d-build-btn" type="button" onclick="window.startForge3dBuild('${safeId}')">Start 3D Build</button>`
+      : `<button class="forge-disabled-build-btn forge-build-production-btn" type="button" onclick="window.generateForgeProductionReference('${safeId}')">Create 3D Production Reference</button>`;
+
+    const helperText = isProductionReference
+      ? 'This production reference is ready to be queued for the future GLB character step.'
+      : 'Create a cleaner production reference before starting the 3D build step.';
 
     content.className = 'forge-selected-card';
     content.innerHTML = `
@@ -538,9 +552,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         <div class="forge-selected-kicker">Selected for Future 3D Build</div>
         <div class="forge-selected-meta">
           Colony: ${colonyText}<br>
-          Token ID: ${tokenText}
+          Token ID: ${tokenText}<br>
+          ${helperText}
         </div>
-        <button class="forge-disabled-build-btn forge-build-production-btn" type="button" onclick="window.generateForgeProductionReference('${String(id).replace(/'/g, "\\'")}')">Create 3D Production Reference</button>
+        ${actionButtonHtml}
       </div>
     `;
   }
@@ -657,6 +672,109 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
     }
   }
+
+  async function startForge3dBuild(conceptId) {
+    if (
+      typeof window.loadForgeConcepts !== 'function' ||
+      !window.forgeGenerationInput
+    ) {
+      return;
+    }
+
+    const concepts = window.loadForgeConcepts();
+    const concept = concepts.find((item) => (item.id || item.conceptId) === conceptId);
+
+    if (!concept) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Select a saved production reference before starting a 3D build.', 'error');
+      }
+      return;
+    }
+
+    if (!concept.imageUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Save this production reference to the server before starting a 3D build.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Start 3D Build';
+
+    if (activeButton) {
+      activeButton.textContent = 'Queuing 3D Build...';
+    }
+
+    if (typeof window.setForgeGeneratingButton === 'function') {
+      window.setForgeGeneratingButton(activeButton, true);
+    }
+
+    if (typeof window.setForgeStatusHtml === 'function') {
+      window.setForgeStatusHtml('<span class="forge-loading-pulse">Queuing 3D build request...</span>', '');
+    }
+
+    try {
+      const response = await fetch('/api/forge-build-3d-character', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          generationInput: window.forgeGenerationInput,
+          selectedConcept: concept,
+          productionReference: concept
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || '3D build request failed');
+      }
+
+      window.lastForge3dBuildResponse = data;
+
+      if (activeButton) {
+        activeButton.textContent = '3D Build Queued ✓';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Your 3D build request has been queued. The selected production reference will be used for the future GLB character step.', 'success');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Start 3D Build';
+        }
+      }, 2200);
+    } catch(e) {
+      console.warn('Forge 3D build request failed:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Queue Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not queue the 3D build request.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Start 3D Build';
+        }
+      }, 2400);
+    } finally {
+      if (typeof window.setForgeGeneratingButton === 'function') {
+        window.setForgeGeneratingButton(activeButton, false);
+      }
+    }
+  }
+  
   
   function wrapForgeConceptFunction(name) {
     const original = window[name];
@@ -695,8 +813,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     setTimeout(bootSelectedConceptPanel, 0);
   });
 
-   window.renderForgeSelectedConceptPanel = renderSelectedConceptPanel;
+    window.renderForgeSelectedConceptPanel = renderSelectedConceptPanel;
   window.generateForgeProductionReference = generateForgeProductionReference;
+  window.startForge3dBuild = startForge3dBuild;
 })();
 
 (function setupForgeConceptModeSelectorExtension() {
