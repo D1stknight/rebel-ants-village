@@ -1049,10 +1049,22 @@ async function saveForgeConceptMetadataToServer(concept) {
   
 async function saveCurrentForgeConcept() {
   const concept = window.currentForgeConcept || getCurrentForgeConceptFromPreview();
+  const saveButton = document.getElementById('save-concept-btn');
+  const originalButtonText = saveButton ? saveButton.textContent : 'Save This Version';
 
   if (!concept || !concept.imageDataUrl) {
     setForgeStatus('Generate a full-body preview before saving a version.', 'error');
     return;
+  }
+
+  if (saveButton) {
+    saveButton.textContent = 'Saving...';
+  }
+
+  if (typeof setForgeGeneratingButton === 'function') {
+    setForgeGeneratingButton(saveButton, true);
+  } else if (saveButton) {
+    saveButton.disabled = true;
   }
 
   let localSaved = false;
@@ -1103,6 +1115,10 @@ async function saveCurrentForgeConcept() {
 
     await renderForgeConceptGallery();
 
+    if (saveButton) {
+      saveButton.textContent = 'Saved ✓';
+    }
+
     if (localSaved && blobSaved && serverSaved) {
       setForgeStatus('Forge concept saved locally, uploaded to Blob, and synced to server.', 'success');
     } else if (localSaved && serverSaved) {
@@ -1110,11 +1126,38 @@ async function saveCurrentForgeConcept() {
     } else if (localSaved) {
       setForgeStatus('Forge concept saved locally. Server sync will be retried later.', 'success');
     } else {
+      if (saveButton) {
+        saveButton.textContent = 'Save Failed';
+      }
+
       setForgeStatus('Could not save this Forge concept. Please try again.', 'error');
     }
+
+    setTimeout(() => {
+      if (saveButton) {
+        saveButton.textContent = originalButtonText || 'Save This Version';
+      }
+    }, 1800);
   } catch(e) {
     console.warn('Could not save Forge concept:', e);
+
+    if (saveButton) {
+      saveButton.textContent = 'Save Failed';
+    }
+
     setForgeStatus('Could not save this Forge concept. Please try again.', 'error');
+
+    setTimeout(() => {
+      if (saveButton) {
+        saveButton.textContent = originalButtonText || 'Save This Version';
+      }
+    }, 2200);
+  } finally {
+    if (typeof setForgeGeneratingButton === 'function') {
+      setForgeGeneratingButton(saveButton, false);
+    } else if (saveButton) {
+      saveButton.disabled = false;
+    }
   }
 }
 async function setCurrentForgeConceptSelected() {
