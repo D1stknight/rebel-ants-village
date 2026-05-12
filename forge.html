@@ -551,6 +551,101 @@ async function loadForgeConceptImage(conceptId) {
   return result?.imageDataUrl || '';
 }
 
+async function loadForgeConceptImageForDisplay(concept) {
+  if (!concept) return '';
+
+  try {
+    const localImage = await loadForgeConceptImage(concept.id || concept.conceptId);
+
+    if (localImage) {
+      return localImage;
+    }
+  } catch(e) {
+    console.warn('Could not load local Forge concept image:', e);
+  }
+
+  return concept.imageUrl || '';
+}
+
+function mergeForgeConceptLists(localConcepts, serverConcepts) {
+  const mergedById = new Map();
+
+  [...serverConcepts, ...localConcepts].forEach((concept) => {
+    if (!concept) return;
+
+    const id = concept.id || concept.conceptId;
+    if (!id) return;
+
+    const existing = mergedById.get(id) || {};
+
+    mergedById.set(id, {
+      ...existing,
+      ...concept,
+      id,
+      conceptId: concept.conceptId || id
+    });
+  });
+
+  return Array.from(mergedById.values()).sort((a, b) => {
+    const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
+    const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+    return bTime - aTime;
+  });
+}
+
+async function fetchForgeConceptsFromServer() {
+  const collectionKey = forgeGenerationInput?.collectionKey || 'battle_for_colony';
+  const tokenId = forgeGenerationInput?.tokenId || '';
+  const rebelId = forgeGenerationInput?.rebelId || '';
+
+  const params = new URLSearchParams({
+    collectionKey
+  });
+
+  if (tokenId) {
+    params.set('tokenId', tokenId);
+  } else if (rebelId) {
+    params.set('rebelId', rebelId);
+  }
+
+  const response = await fetch(`/api/forge-concepts-list?${params.toString()}`);
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || data.detail || 'Could not load server Forge concepts');
+  }
+
+  return Array.isArray(data.concepts) ? data.concepts : [];
+}
+
+async function syncForgeConceptsFromServer() {
+  try {
+    const localConcepts = loadForgeConcepts();
+    const serverConcepts = await fetchForgeConceptsFromServer();
+    const mergedConcepts = mergeForgeConceptLists(localConcepts, serverConcepts).slice(0, 12);
+
+    saveForgeConcepts(mergedConcepts);
+
+    window.lastForgeConceptServerListResponse = {
+      ok: true,
+      count: serverConcepts.length,
+      mergedCount: mergedConcepts.length
+    };
+
+    return mergedConcepts;
+  } catch(e) {
+    console.warn('Could not sync Forge concepts from server:', e);
+
+    window.lastForgeConceptServerListResponse = {
+      ok: false,
+      error: e && e.message ? e.message : 'Unknown server sync error'
+    };
+
+    return loadForgeConcepts();
+  }
+}
+  
+
 async function deleteForgeConceptImage(conceptId) {
   if (!conceptId) return;
 
@@ -627,13 +722,18 @@ function getCurrentForgeConceptFromPreview() {
   };
 }
 
-async function renderForgeConceptGallery() {
+async function renderForgeConceptGallery(options = {}) {
   ensureForgeLoadingStyles();
 
   const gallery = document.getElementById('forge-concepts-gallery');
   if (!gallery) return;
 
-  const concepts = loadForgeConcepts();
+  let concepts = loadForgeConcepts();
+
+  if (options.syncServer === true) {
+    concepts = await syncForgeConceptsFromServer();
+  }
+
   const selectedConceptId = localStorage.getItem(getSelectedForgeConceptStorageKey());
 
   if (!concepts.length) {
@@ -646,15 +746,17 @@ async function renderForgeConceptGallery() {
   }
 
   gallery.innerHTML = concepts.slice(0, 12).map((concept, index) => {
-    const isSelected = concept.id === selectedConceptId;
+    const id = concept.id || concept.conceptId;
+    const isSelected = id === selectedConceptId;
     const label = isSelected ? 'Selected' : `Version ${index + 1}`;
-    const safeId = String(concept.id).replace(/'/g, "\\'");
+    const safeId = String(id).replace(/'/g, "\\'");
+    const storageLabel = concept.imageStorage === 'vercel_blob' ? 'Server Saved' : 'Local Saved';
 
     return `
       <div class="forge-concept-card ${isSelected ? 'selected' : ''}" data-concept-id="${safeId}">
         <div class="forge-concept-thumb" data-concept-image="${safeId}">Loading...</div>
         <div class="forge-concept-card-title">${label}</div>
-        <div class="forge-concept-card-meta">${concept.colony || 'Unknown Colony'}</div>
+        <div class="forge-concept-card-meta">${concept.colony || 'Unknown Colony'} · ${storageLabel}</div>
 
         <div class="forge-concept-card-actions">
           <button class="forge-mini-btn" type="button" onclick="selectForgeConcept('${safeId}')">Select</button>
@@ -666,14 +768,15 @@ async function renderForgeConceptGallery() {
   }).join('');
 
   for (const concept of concepts.slice(0, 12)) {
-    const imageSlot = gallery.querySelector(`[data-concept-image="${CSS.escape(concept.id)}"]`);
+    const id = concept.id || concept.conceptId;
+    const imageSlot = gallery.querySelector(`[data-concept-image="${CSS.escape(id)}"]`);
     if (!imageSlot) continue;
 
     try {
-      const imageDataUrl = await loadForgeConceptImage(concept.id);
+      const imageUrl = await loadForgeConceptImageForDisplay(concept);
 
-      if (imageDataUrl) {
-        imageSlot.innerHTML = `<img src="${imageDataUrl}" alt="Saved Forge concept">`;
+      if (imageUrl) {
+        imageSlot.innerHTML = `<img src="${imageUrl}" alt="Saved Forge concept">`;
       } else {
         imageSlot.textContent = 'Image missing';
       }
@@ -683,7 +786,6 @@ async function renderForgeConceptGallery() {
     }
   }
 }
-
 async function selectForgeConcept(conceptId) {
   const concepts = loadForgeConcepts();
   const concept = concepts.find((item) => item.id === conceptId);
@@ -1214,7 +1316,9 @@ window.forgeCharacterBlueprint = forgeCharacterBlueprint;
 window.forgeGenerationInput = forgeGenerationInput;
 
 hydrateForgeScreen(selectedRebel, forgeGenerationInput);
-migrateForgeConceptImagesToIndexedDb().then(renderForgeConceptGallery);
+migrateForgeConceptImagesToIndexedDb().then(() => {
+  renderForgeConceptGallery({ syncServer: true });
+});
 </script>
 
 </body>
