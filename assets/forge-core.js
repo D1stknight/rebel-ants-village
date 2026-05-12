@@ -1203,3 +1203,234 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     setTimeout(bootForgeVariantPanel, 0);
   });
 })();
+
+(function setupForge3dBuildStatusPanelExtension() {
+  function isForgePage() {
+    return Boolean(
+      document.getElementById('forge-selected-concept-panel') ||
+      document.getElementById('forge-concepts-section')
+    );
+  }
+
+  function ensure3dBuildStatusStyles() {
+    if (document.getElementById('forge-3d-build-status-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'forge-3d-build-status-styles';
+    style.textContent = `
+      #forge-3d-build-status-panel {
+        margin-top: 18px;
+        padding: 14px;
+        border: 1px solid rgba(200,146,42,.24);
+        background: rgba(200,146,42,.055);
+        border-radius: 18px;
+      }
+
+      .forge-3d-build-empty {
+        color: rgba(243,230,191,.72);
+        font-size: 12px;
+        line-height: 1.8;
+        border: 1px dashed rgba(255,255,255,.14);
+        border-radius: 14px;
+        padding: 14px;
+        margin-top: 12px;
+      }
+
+      .forge-3d-build-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .forge-3d-build-row {
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(0,0,0,.22);
+        border-radius: 14px;
+        padding: 12px;
+      }
+
+      .forge-3d-build-status {
+        color: #5ecfca;
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+
+      .forge-3d-build-meta {
+        color: rgba(243,230,191,.74);
+        font-size: 11px;
+        line-height: 1.7;
+        margin-top: 6px;
+      }
+
+      .forge-3d-build-refresh-btn {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border: 1px solid rgba(94,207,202,.28);
+        background: rgba(94,207,202,.08);
+        color: #f3e6bf;
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function ensure3dBuildStatusPanel() {
+    if (!isForgePage()) return null;
+
+    let panel = document.getElementById('forge-3d-build-status-panel');
+    if (panel) return panel;
+
+    const selectedPanel = document.getElementById('forge-selected-concept-panel');
+    const conceptsSection = document.getElementById('forge-concepts-section');
+    const anchor = selectedPanel || conceptsSection;
+
+    if (!anchor || !anchor.parentNode) return null;
+
+    panel = document.createElement('div');
+    panel.id = 'forge-3d-build-status-panel';
+    panel.innerHTML = `
+      <div class="section-title">3D Build Status</div>
+      <div id="forge-3d-build-status-content" class="forge-3d-build-empty">
+        No 3D build requests yet. Select a saved production reference, then click Start 3D Build.
+      </div>
+      <button class="forge-3d-build-refresh-btn" type="button" onclick="window.renderForge3dBuildStatusPanel()">Refresh Build Status</button>
+    `;
+
+    anchor.parentNode.insertBefore(panel, anchor.nextSibling);
+    return panel;
+  }
+
+  async function fetchForge3dBuildsFromServer() {
+    const collectionKey = window.forgeGenerationInput?.collectionKey || 'battle_for_colony';
+    const tokenId = window.forgeGenerationInput?.tokenId || '';
+    const rebelId = window.forgeGenerationInput?.rebelId || '';
+
+    const params = new URLSearchParams({ collectionKey });
+
+    if (tokenId) {
+      params.set('tokenId', tokenId);
+    } else if (rebelId) {
+      params.set('rebelId', rebelId);
+    }
+
+    const response = await fetch(`/api/forge-builds-list?${params.toString()}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || data.detail || 'Could not load 3D build status');
+    }
+
+    return Array.isArray(data.builds) ? data.builds : [];
+  }
+
+  function formatBuildStatus(status) {
+    if (status === 'queued_for_future_3d_generation') {
+      return 'Queued for Future 3D Generation';
+    }
+
+    if (status === 'in_progress') {
+      return 'In Progress';
+    }
+
+    if (status === 'completed') {
+      return 'Completed';
+    }
+
+    if (status === 'failed') {
+      return 'Failed';
+    }
+
+    return status || 'Unknown';
+  }
+
+  async function renderForge3dBuildStatusPanel() {
+    ensure3dBuildStatusStyles();
+
+    const panel = ensure3dBuildStatusPanel();
+    const content = document.getElementById('forge-3d-build-status-content');
+
+    if (!panel || !content) return;
+
+    content.className = 'forge-3d-build-empty';
+    content.innerHTML = 'Loading 3D build status...';
+
+    try {
+      const builds = await fetchForge3dBuildsFromServer();
+      window.lastForge3dBuildListResponse = {
+        ok: true,
+        builds
+      };
+
+      if (!builds.length) {
+        content.className = 'forge-3d-build-empty';
+        content.innerHTML = 'No 3D build requests yet. Select a saved production reference, then click Start 3D Build.';
+        return;
+      }
+
+      content.className = 'forge-3d-build-list';
+      content.innerHTML = builds.slice(0, 5).map((build, index) => {
+        const statusText = formatBuildStatus(build.status);
+        const created = build.createdAt ? new Date(build.createdAt).toLocaleString() : 'Unknown time';
+        const sourceConceptId = build.sourceConceptId || '—';
+
+        return `
+          <div class="forge-3d-build-row">
+            <div class="forge-3d-build-status">${index === 0 ? 'Latest Build — ' : ''}${statusText}</div>
+            <div class="forge-3d-build-meta">
+              Source: ${sourceConceptId}<br>
+              Created: ${created}<br>
+              Output: Future GLB Character
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch(e) {
+      console.warn('Could not render Forge 3D build status:', e);
+
+      window.lastForge3dBuildListResponse = {
+        ok: false,
+        error: e && e.message ? e.message : 'Unknown build status error'
+      };
+
+      content.className = 'forge-3d-build-empty';
+      content.innerHTML = 'Could not load 3D build status yet.';
+    }
+  }
+
+  function wrapStartForge3dBuild() {
+    const original = window.startForge3dBuild;
+
+    if (typeof original !== 'function' || original.__buildStatusWrapped) return;
+
+    const wrapped = async function(...args) {
+      const result = await original.apply(this, args);
+      await renderForge3dBuildStatusPanel();
+      return result;
+    };
+
+    wrapped.__buildStatusWrapped = true;
+    window.startForge3dBuild = wrapped;
+  }
+
+  function boot3dBuildStatusPanel() {
+    if (!isForgePage()) return;
+
+    ensure3dBuildStatusStyles();
+    ensure3dBuildStatusPanel();
+    wrapStartForge3dBuild();
+    renderForge3dBuildStatusPanel();
+  }
+
+  window.renderForge3dBuildStatusPanel = renderForge3dBuildStatusPanel;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(boot3dBuildStatusPanel, 200);
+  });
+})();
