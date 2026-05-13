@@ -2135,7 +2135,10 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
   playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
   playerRoot.scaling = new BABYLON.Vector3(0.018, 0.018, 0.018);
   r.meshes.forEach(m => {
-    if (m !== playerRoot) m.parent = playerRoot;
+   if (m !== playerRoot) {
+  m.parent = playerRoot;
+  m.position.y -= 8;
+}
     if (m.rotationQuaternion) m.rotationQuaternion = null;
     shadows.addShadowCaster(m); m.receiveShadows = true;
     if (m.material) {
