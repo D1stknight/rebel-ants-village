@@ -1874,8 +1874,9 @@ function resolveCharacterConfig(rebel) {
 
   const bundle = CHARACTER_REGISTRY[requestedBundleId] || CHARACTER_REGISTRY.starter_ant;
   const activeForgeCharacter = rebel?.activeForgeCharacter || null;
-  const activeGlbUrl = rebel?.activeGlbUrl || activeForgeCharacter?.activeGlbUrl || null;
-  const activeForgeBuildId = activeForgeCharacter?.activeForgeBuildId || null;
+  const characterBundle = activeForgeCharacter?.characterBundle || null;
+  const activeGlbUrl = rebel?.activeGlbUrl || activeForgeCharacter?.activeGlbUrl || characterBundle?.activeGlbUrl || null;
+  const activeForgeBuildId = activeForgeCharacter?.activeForgeBuildId || characterBundle?.sourceBuildId || null;
   const characterSource = activeGlbUrl ? 'forge_glb' : 'starter_bundle';
 
   return {
@@ -1895,84 +1896,63 @@ function resolveCharacterConfig(rebel) {
     idleFile: bundle.idleFile,
     animations: bundle.animations,
     activeForgeCharacter,
+    characterBundle,
     activeForgeBuildId,
     activeGlbUrl,
+    staticGlbUrl: activeForgeCharacter?.staticGlbUrl || characterBundle?.staticGlbUrl || null,
+    riggedGlbUrl: activeForgeCharacter?.riggedGlbUrl || characterBundle?.riggedGlbUrl || null,
+    walkingGlbUrl: activeForgeCharacter?.walkingGlbUrl || characterBundle?.animations?.walking?.glbUrl || null,
+    runningGlbUrl: activeForgeCharacter?.runningGlbUrl || characterBundle?.animations?.running?.glbUrl || null,
     characterSource
   };
 }
-
 async function resolveForgePreviewGlbUrlForVillage(activeCharacter) {
-  const fallbackGlbUrl = activeCharacter?.activeGlbUrl || '';
   const previewMode = localStorage.getItem('forgeVillagePreviewMode') || 'running';
 
-  if (!activeCharacter?.activeForgeBuildId) {
-    return fallbackGlbUrl;
+  const riggedGlbUrl =
+    activeCharacter?.riggedGlbUrl ||
+    activeCharacter?.characterBundle?.riggedGlbUrl ||
+    activeCharacter?.activeGlbUrl ||
+    '';
+
+  const walkingGlbUrl =
+    activeCharacter?.walkingGlbUrl ||
+    activeCharacter?.characterBundle?.animations?.walking?.glbUrl ||
+    '';
+
+  const runningGlbUrl =
+    activeCharacter?.runningGlbUrl ||
+    activeCharacter?.characterBundle?.animations?.running?.glbUrl ||
+    '';
+
+  if (previewMode === 'rigged' && riggedGlbUrl) {
+    console.log('Village Forge preview using bundle rigged GLB:', riggedGlbUrl);
+    return riggedGlbUrl;
   }
 
-  try {
-    const params = new URLSearchParams({
-      collectionKey: activeCharacter.collectionKey || 'battle_for_colony'
-    });
-
-    if (activeCharacter.tokenId) {
-      params.set('tokenId', activeCharacter.tokenId);
-    } else if (activeCharacter.rebelId) {
-      params.set('rebelId', activeCharacter.rebelId);
-    }
-
-    const response = await fetch(`/api/forge-builds-list?${params.toString()}`);
-    const data = await response.json();
-
-    if (!response.ok || !data.ok || !Array.isArray(data.builds)) {
-      return fallbackGlbUrl;
-    }
-
-    const build = data.builds.find((item) => item.buildId === activeCharacter.activeForgeBuildId);
-
-    const runningGlbUrl =
-      build?.output?.runningGlbUrl ||
-      build?.output?.storedAnimations?.running?.storedAnimationUrl ||
-      build?.rigging?.storedAnimations?.running?.storedAnimationUrl ||
-      '';
-
-    const walkingGlbUrl =
-      build?.output?.walkingGlbUrl ||
-      build?.output?.storedAnimations?.walking?.storedAnimationUrl ||
-      build?.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
-      '';
-
-    if (previewMode === 'rigged') {
-      console.log('Village Forge preview using rigged GLB:', fallbackGlbUrl);
-      return fallbackGlbUrl;
-    }
-
-    if (previewMode === 'walking' && walkingGlbUrl) {
-      console.log('Village Forge preview using stored walking GLB:', walkingGlbUrl);
-      return walkingGlbUrl;
-    }
-
-    if (previewMode === 'running' && runningGlbUrl) {
-      console.log('Village Forge preview using stored running GLB:', runningGlbUrl);
-      return runningGlbUrl;
-    }
-
-    if (runningGlbUrl) {
-      console.log('Village Forge preview fallback using stored running GLB:', runningGlbUrl);
-      return runningGlbUrl;
-    }
-
-    if (walkingGlbUrl) {
-      console.log('Village Forge preview fallback using stored walking GLB:', walkingGlbUrl);
-      return walkingGlbUrl;
-    }
-
-    return fallbackGlbUrl;
-  } catch(e) {
-    console.warn('Could not resolve Forge animation preview GLB:', e);
-    return fallbackGlbUrl;
+  if (previewMode === 'walking' && walkingGlbUrl) {
+    console.log('Village Forge preview using bundle walking GLB:', walkingGlbUrl);
+    return walkingGlbUrl;
   }
+
+  if (previewMode === 'running' && runningGlbUrl) {
+    console.log('Village Forge preview using bundle running GLB:', runningGlbUrl);
+    return runningGlbUrl;
+  }
+
+  if (runningGlbUrl) {
+    console.log('Village Forge preview fallback using bundle running GLB:', runningGlbUrl);
+    return runningGlbUrl;
+  }
+
+  if (walkingGlbUrl) {
+    console.log('Village Forge preview fallback using bundle walking GLB:', walkingGlbUrl);
+    return walkingGlbUrl;
+  }
+
+  console.log('Village Forge preview fallback using active GLB:', riggedGlbUrl);
+  return riggedGlbUrl;
 }
-
 function setForgeVillagePreviewMode(mode) {
   localStorage.setItem('forgeVillagePreviewMode', mode);
   location.reload();
