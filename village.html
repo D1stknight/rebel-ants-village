@@ -1928,6 +1928,17 @@ async function resolveForgePreviewGlbUrlForVillage(activeCharacter) {
 
     const build = data.builds.find((item) => item.buildId === activeCharacter.activeForgeBuildId);
 
+    const runningGlbUrl =
+      build?.output?.runningGlbUrl ||
+      build?.output?.storedAnimations?.running?.storedAnimationUrl ||
+      build?.rigging?.storedAnimations?.running?.storedAnimationUrl ||
+      '';
+
+    if (runningGlbUrl) {
+      console.log('Village Forge preview using stored running GLB:', runningGlbUrl);
+      return runningGlbUrl;
+    }
+
     const walkingGlbUrl =
       build?.output?.walkingGlbUrl ||
       build?.output?.storedAnimations?.walking?.storedAnimationUrl ||
@@ -1941,7 +1952,7 @@ async function resolveForgePreviewGlbUrlForVillage(activeCharacter) {
 
     return fallbackGlbUrl;
   } catch(e) {
-    console.warn('Could not resolve Forge walking preview GLB:', e);
+    console.warn('Could not resolve Forge animation preview GLB:', e);
     return fallbackGlbUrl;
   }
 }
