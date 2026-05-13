@@ -1650,7 +1650,105 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }, 2400);
     }
   }
-  
+
+  async function startMeshyRigTestForBuild(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build for rigging.', 'error');
+      }
+      return;
+    }
+
+    const glbUrl =
+      build.output?.rebelGlbUrl ||
+      build.output?.glbUrl ||
+      build.engine?.glbUrl ||
+      '';
+
+    if (!glbUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('This build does not have a GLB ready for rigging yet.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Start Meshy Rig Test';
+
+    if (activeButton) {
+      activeButton.textContent = 'Starting Rig Test...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-engine-meshy-rig-create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId: build.buildId,
+          glbUrl,
+          heightMeters: 1.7
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Could not start Meshy rig test');
+      }
+
+      window.lastForgeMeshyRigCreateResponse = data;
+
+      if (activeButton) {
+        activeButton.textContent = 'Rig Test Started ✓';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Meshy rigging test started. Next we will add a status check to see if it succeeds.', 'success');
+      }
+
+      if (typeof window.renderForge3dBuildStatusPanel === 'function') {
+        await window.renderForge3dBuildStatusPanel();
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Start Meshy Rig Test';
+          activeButton.disabled = false;
+        }
+      }, 2200);
+    } catch(e) {
+      console.warn('Could not start Meshy rig test:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Rig Test Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not start Meshy rigging test.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Start Meshy Rig Test';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
   async function renderForge3dBuildStatusPanel() {
     ensure3dBuildStatusStyles();
 
@@ -1683,6 +1781,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const glbUrl = build.output?.glbUrl || build.engine?.glbUrl || '';
         const rebelGlbUrl = build.output?.rebelGlbUrl || '';
         const activeGlbUrl = rebelGlbUrl || glbUrl;
+        const rigTaskId = build.rigging?.taskId || '';
         const isStoredInRebelBlob =
           build.status === 'completed_stored_in_rebel_blob' ||
           build.output?.source === 'rebel_blob' ||
@@ -1704,6 +1803,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Set as Active Character</button>`
           : '';
 
+        const rigTestHtml = activeGlbUrl && !rigTaskId
+          ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.startMeshyRigTestForBuild('${build.buildId}')">Start Meshy Rig Test</button>`
+          : '';
+
+        const rigStatusHtml = rigTaskId
+          ? `<br>Rigging: Meshy task submitted ✓`
+          : '';
+
         const storedHtml = isStoredInRebelBlob
           ? '<br>Storage: Rebel Forge Blob ✓'
           : '';
@@ -1718,7 +1825,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
               ${openGlbHtml}${downloadGlbHtml}
               ${storeGlbHtml}
               ${setActiveHtml}
+              ${rigTestHtml}
               ${storedHtml}
+              ${rigStatusHtml}
             </div>
           </div>
         `;
@@ -1762,6 +1871,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     window.renderForge3dBuildStatusPanel = renderForge3dBuildStatusPanel;
   window.storeForgeGlbInRebelBlob = storeForgeGlbInRebelBlob;
   window.setForgeBuildAsActiveCharacter = setForgeBuildAsActiveCharacter;
+  window.startMeshyRigTestForBuild = startMeshyRigTestForBuild;
 
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(boot3dBuildStatusPanel, 200);
