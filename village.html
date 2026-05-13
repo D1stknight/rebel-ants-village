@@ -2069,28 +2069,7 @@ async function loadForgePreviewModelInVillage(glbUrl) {
     const normalizedBounds = previewRoot.getHierarchyBoundingVectors(true);
     previewRoot.position.y += 0.12 - normalizedBounds.min.y;
 
-    const labelPlane = BABYLON.MeshBuilder.CreatePlane("forgePreviewLabel", {
-      width: 2.1,
-      height: 0.35
-    }, scene);
-
-    labelPlane.position = new BABYLON.Vector3(2.8, 2.55, 20);
-    labelPlane.rotation = new BABYLON.Vector3(0, Math.PI, 0);
-
-    const labelTexture = new BABYLON.DynamicTexture("forgePreviewLabelTexture", {
-      width: 512,
-      height: 128
-    }, scene, false);
-
-    labelTexture.hasAlpha = true;
-    labelTexture.drawText("FORGE GLB PREVIEW", null, 78, "bold 38px Arial", "#5ecfca", "transparent", true);
-
-    const labelMat = new BABYLON.StandardMaterial("forgePreviewLabelMat", scene);
-    labelMat.diffuseTexture = labelTexture;
-    labelMat.emissiveColor = new BABYLON.Color3(0.25, 0.95, 0.9);
-    labelMat.backFaceCulling = false;
-
-    labelPlane.material = labelMat;
+      // Preview label removed for cleaner Village testing.
 
     window.forgePreviewRoot = previewRoot;
     window.forgePreviewModel = result;
