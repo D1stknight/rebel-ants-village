@@ -455,11 +455,45 @@ async function loadActiveForgeCharacterForRebel(rebel) {
   }
 }
 
+function forgeCharacterMatchesRebel(activeForgeCharacter, rebel) {
+  if (!activeForgeCharacter || !rebel) return false;
+
+  const activeTokenId = activeForgeCharacter.tokenId ? String(activeForgeCharacter.tokenId) : '';
+  const rebelTokenId = rebel.tokenId ? String(rebel.tokenId) : '';
+
+  const activeRebelId = activeForgeCharacter.rebelId ? String(activeForgeCharacter.rebelId) : '';
+  const rebelRebelId = rebel.rebelId ? String(rebel.rebelId) : '';
+  const rebelId = rebel.id ? String(rebel.id) : '';
+
+  if (activeTokenId && rebelTokenId && activeTokenId === rebelTokenId) {
+    return true;
+  }
+
+  if (activeRebelId && rebelRebelId && activeRebelId === rebelRebelId) {
+    return true;
+  }
+
+  if (activeRebelId && rebelId && activeRebelId === rebelId) {
+    return true;
+  }
+
+  return false;
+}
+
 async function attachActiveForgeCharacter(rebel) {
   const activeForgeCharacter = await loadActiveForgeCharacterForRebel(rebel);
 
   if (!activeForgeCharacter) {
     return rebel;
+  }
+
+  if (!forgeCharacterMatchesRebel(activeForgeCharacter, rebel)) {
+    return {
+      ...rebel,
+      activeForgeCharacter: null,
+      activeGlbUrl: null,
+      characterSource: 'starter_bundle'
+    };
   }
 
   return {
