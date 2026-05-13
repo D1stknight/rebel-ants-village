@@ -423,6 +423,53 @@ async function loadSelectedRebelMetadata(rebel) {
   }
 }
 
+async function loadActiveForgeCharacterForRebel(rebel) {
+  if (!rebel) return null;
+
+  const collectionKey = rebel.collectionKey || 'battle_for_colony';
+  const tokenId = rebel.tokenId || '';
+  const rebelId = rebel.rebelId || rebel.id || '';
+
+  if (!tokenId && !rebelId) return null;
+
+  const params = new URLSearchParams({ collectionKey });
+
+  if (tokenId) {
+    params.set('tokenId', tokenId);
+  } else if (rebelId) {
+    params.set('rebelId', rebelId);
+  }
+
+  try {
+    const response = await fetch(`/api/forge-active-character-get?${params.toString()}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.ok || !data.hasActiveCharacter) {
+      return null;
+    }
+
+    return data.activeCharacter || null;
+  } catch(e) {
+    console.warn('Could not load active Forge character:', e);
+    return null;
+  }
+}
+
+async function attachActiveForgeCharacter(rebel) {
+  const activeForgeCharacter = await loadActiveForgeCharacterForRebel(rebel);
+
+  if (!activeForgeCharacter) {
+    return rebel;
+  }
+
+  return {
+    ...rebel,
+    activeForgeCharacter,
+    activeGlbUrl: activeForgeCharacter.activeGlbUrl || null,
+    characterSource: 'forge_glb'
+  };
+}
+ 
 async function selectAnt(id) {
   selectedAnt = id;
   document.querySelectorAll('.ant-card').forEach(c => c.classList.remove('selected'));
@@ -433,16 +480,23 @@ async function selectAnt(id) {
   const rebel = ownedRebels.find(r => r.id === id);
   if (!rebel) return;
 
-  setStatus('Loading Rebel details...');
+    setStatus('Loading Rebel details...');
   const enrichedRebel = await loadSelectedRebelMetadata(rebel);
+  const forgeReadyRebel = await attachActiveForgeCharacter(enrichedRebel);
 
   const rebelIndex = ownedRebels.findIndex(r => r.id === id);
   if (rebelIndex >= 0) {
-    ownedRebels[rebelIndex] = enrichedRebel;
+    ownedRebels[rebelIndex] = forgeReadyRebel;
+  }
+
+  const charRow = document.getElementById('char-row');
+  if (charRow) {
+    charRow.innerHTML = '';
+    ownedRebels.forEach(buildCard);
   }
 
   try {
-    localStorage.setItem('selectedRebel', JSON.stringify(enrichedRebel));
+    localStorage.setItem('selectedRebel', JSON.stringify(forgeReadyRebel));
   } catch(e) {}
 
   setStatus(
@@ -450,7 +504,8 @@ async function selectAnt(id) {
     ' Rebel' +
     (ownedRebels.length > 1 ? 's' : '') +
     ' found' +
-    (enrichedRebel.gangName ? ' — ' + enrichedRebel.gangName : '')
+    (forgeReadyRebel.gangName ? ' — ' + forgeReadyRebel.gangName : '') +
+    (forgeReadyRebel.activeForgeCharacter?.activeGlbUrl ? ' — 3D Forge Character Ready' : '')
   );
 }
 
@@ -460,23 +515,38 @@ function buildCard(rebel) {
   card.className = 'ant-card' + (rebel.id === selectedAnt ? ' selected' : '');
   card.id = 'card_' + rebel.id;
   card.onclick = () => selectAnt(rebel.id);
+
+  const forgeBadge = rebel.activeForgeCharacter?.activeGlbUrl
+    ? '<div class="ant-name" style="color:#5ecfca; font-size:10px; margin-top:4px;">3D Forge Character Ready ✓</div>'
+    : '';
+
   card.innerHTML = `<img src="${rebel.image}" onerror="this.src='assets/lobby/ant_1.JPG'"/>
-    <div class="ant-name">${rebel.name}</div>`;
+    <div class="ant-name">${rebel.name}</div>
+    ${forgeBadge}`;
   charRow.appendChild(card);
 }
 
-function showDefaultCard() {
+async function showDefaultCard() {
   const charRow = document.getElementById('char-row');
   charRow.innerHTML = '';
+
   ownedRebels = [{
     id: 'ant_1',
     name: 'Rebel #001',
     image: 'assets/lobby/ant_1.JPG',
     collectionKey: 'battle_for_colony'
   }];
+
   selectedAnt = 'ant_1';
-  buildCard(ownedRebels[0]);
-  try { localStorage.setItem('selectedRebel', JSON.stringify(ownedRebels[0])); } catch(e){}
+
+  const defaultRebel = await attachActiveForgeCharacter(ownedRebels[0]);
+  ownedRebels[0] = defaultRebel;
+
+  buildCard(defaultRebel);
+
+  try {
+    localStorage.setItem('selectedRebel', JSON.stringify(defaultRebel));
+  } catch(e) {}
 }
 
 async function loadNFTs(walletAddress) {
