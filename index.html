@@ -577,17 +577,18 @@ function buildCard(rebel) {
   card.id = 'card_' + rebel.id;
   card.onclick = () => selectAnt(rebel.id);
 
-  const forgeBadge = rebel.activeForgeCharacter?.activeGlbUrl
+  const hasForgeCharacter = Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
+
+  const cardLabel = hasForgeCharacter
     ? `
       <div class="forge-ready-marquee">
         <span>3D Forge Character Ready ✓</span>
       </div>
     `
-    : '';
+    : `<div class="ant-name">${rebel.name}</div>`;
 
   card.innerHTML = `<img src="${rebel.image}" onerror="this.src='assets/lobby/ant_1.JPG'"/>
-    <div class="ant-name">${rebel.name}</div>
-    ${forgeBadge}`;
+    ${cardLabel}`;
   charRow.appendChild(card);
 }
 
