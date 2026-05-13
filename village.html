@@ -1903,6 +1903,7 @@ function resolveCharacterConfig(rebel) {
 
 async function resolveForgePreviewGlbUrlForVillage(activeCharacter) {
   const fallbackGlbUrl = activeCharacter?.activeGlbUrl || '';
+  const previewMode = localStorage.getItem('forgeVillagePreviewMode') || 'running';
 
   if (!activeCharacter?.activeForgeBuildId) {
     return fallbackGlbUrl;
@@ -1934,19 +1935,34 @@ async function resolveForgePreviewGlbUrlForVillage(activeCharacter) {
       build?.rigging?.storedAnimations?.running?.storedAnimationUrl ||
       '';
 
-    if (runningGlbUrl) {
-      console.log('Village Forge preview using stored running GLB:', runningGlbUrl);
-      return runningGlbUrl;
-    }
-
     const walkingGlbUrl =
       build?.output?.walkingGlbUrl ||
       build?.output?.storedAnimations?.walking?.storedAnimationUrl ||
       build?.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
       '';
 
-    if (walkingGlbUrl) {
+    if (previewMode === 'rigged') {
+      console.log('Village Forge preview using rigged GLB:', fallbackGlbUrl);
+      return fallbackGlbUrl;
+    }
+
+    if (previewMode === 'walking' && walkingGlbUrl) {
       console.log('Village Forge preview using stored walking GLB:', walkingGlbUrl);
+      return walkingGlbUrl;
+    }
+
+    if (previewMode === 'running' && runningGlbUrl) {
+      console.log('Village Forge preview using stored running GLB:', runningGlbUrl);
+      return runningGlbUrl;
+    }
+
+    if (runningGlbUrl) {
+      console.log('Village Forge preview fallback using stored running GLB:', runningGlbUrl);
+      return runningGlbUrl;
+    }
+
+    if (walkingGlbUrl) {
+      console.log('Village Forge preview fallback using stored walking GLB:', walkingGlbUrl);
       return walkingGlbUrl;
     }
 
@@ -1956,6 +1972,65 @@ async function resolveForgePreviewGlbUrlForVillage(activeCharacter) {
     return fallbackGlbUrl;
   }
 }
+
+function setForgeVillagePreviewMode(mode) {
+  localStorage.setItem('forgeVillagePreviewMode', mode);
+  location.reload();
+}
+
+function createForgeVillagePreviewToggle() {
+  if (!window.activeCharacter?.activeGlbUrl) return;
+  if (document.getElementById('forge-village-preview-toggle')) return;
+
+  const panel = document.createElement('div');
+  panel.id = 'forge-village-preview-toggle';
+  panel.style.cssText = `
+    position: fixed;
+    right: 18px;
+    bottom: 72px;
+    z-index: 9999;
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid rgba(94,207,202,.35);
+    background: rgba(0,0,0,.72);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+  `;
+
+  const currentMode = localStorage.getItem('forgeVillagePreviewMode') || 'running';
+  const modes = [
+    { id: 'rigged', label: 'Rigged' },
+    { id: 'walking', label: 'Walk' },
+    { id: 'running', label: 'Run' }
+  ];
+
+  panel.innerHTML = modes.map((mode) => {
+    const active = mode.id === currentMode;
+
+    return `
+      <button
+        type="button"
+        onclick="setForgeVillagePreviewMode('${mode.id}')"
+        style="
+          padding: 8px 10px;
+          border: 1px solid ${active ? 'rgba(94,207,202,.85)' : 'rgba(255,255,255,.18)'};
+          background: ${active ? 'rgba(94,207,202,.18)' : 'rgba(255,255,255,.06)'};
+          color: ${active ? '#5ecfca' : '#f3e6bf'};
+          font-size: 10px;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          cursor: pointer;
+        "
+      >${mode.label}</button>
+    `;
+  }).join('');
+
+  document.body.appendChild(panel);
+}
+
+window.setForgeVillagePreviewMode = setForgeVillagePreviewMode;
+
   
 function hydrateSelectedRebelPanel(character) {
   const image = document.getElementById('selectedRebelImage');
@@ -2241,7 +2316,9 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
   window.followLight.intensity = 2.8; window.followLight.range = 22;
    setSt("Character ready!");
 
-   if (activeCharacter.activeGlbUrl) {
+    if (activeCharacter.activeGlbUrl) {
+    createForgeVillagePreviewToggle();
+
     resolveForgePreviewGlbUrlForVillage(activeCharacter).then((previewGlbUrl) => {
       return loadForgePreviewModelInVillage(previewGlbUrl);
     }).then((previewRoot) => {
