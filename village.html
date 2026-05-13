@@ -2091,7 +2091,20 @@ async function loadForgePreviewModelInVillage(glbUrl) {
     const normalizedBounds = previewRoot.getHierarchyBoundingVectors(true);
     previewRoot.position.y += 0.12 - normalizedBounds.min.y;
 
-    // Preview label removed for cleaner Village testing.
+    if (animationGroups.length > 0) {
+      animationGroups.forEach((group) => {
+        group.stop();
+      });
+
+      const previewAnimation = animationGroups[0];
+      previewAnimation.start(true);
+
+      window.forgePreviewAnimationGroup = previewAnimation;
+
+      console.log('Forge preview animation started:', previewAnimation.name);
+    } else {
+      console.log('Forge preview has no animation groups to play.');
+    }
 
     window.forgePreviewRoot = previewRoot;
     window.forgePreviewModel = result;
