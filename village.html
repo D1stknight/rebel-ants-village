@@ -2342,6 +2342,14 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
     riggedResult?.skeletons?.length;
 
   if (!previewIsRigged) {
+    if (previewRoot) {
+      try {
+        previewRoot.dispose(false, true);
+      } catch(e) {
+        console.warn('Could not remove old Forge preview before armature player load:', e);
+      }
+    }
+
     riggedRoot = await loadForgePreviewModelInVillage(riggedUrl);
     riggedResult = window.forgePreviewModel || null;
   }
