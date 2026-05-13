@@ -2027,6 +2027,28 @@ async function loadForgePreviewModelInVillage(glbUrl) {
 
     const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", glbUrl, scene);
 
+    const skeletons = result.skeletons || [];
+    const animationGroups = result.animationGroups || [];
+    const meshCount = result.meshes ? result.meshes.length : 0;
+    const transformNodeCount = result.transformNodes ? result.transformNodes.length : 0;
+    const boneCount = skeletons.reduce((total, skeleton) => {
+      return total + (skeleton.bones ? skeleton.bones.length : 0);
+    }, 0);
+
+    window.lastForgeGlbInspection = {
+      glbUrl,
+      meshCount,
+      transformNodeCount,
+      skeletonCount: skeletons.length,
+      boneCount,
+      animationGroupCount: animationGroups.length,
+      meshNames: (result.meshes || []).map((mesh) => mesh.name),
+      skeletonNames: skeletons.map((skeleton) => skeleton.name),
+      animationGroupNames: animationGroups.map((group) => group.name)
+    };
+
+    console.log('Forge GLB inspection:', window.lastForgeGlbInspection);
+
     const previewRoot = new BABYLON.TransformNode("forgePreviewRoot", scene);
     previewRoot.position = new BABYLON.Vector3(2.8, 0.12, 20);
     previewRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
@@ -2069,7 +2091,7 @@ async function loadForgePreviewModelInVillage(glbUrl) {
     const normalizedBounds = previewRoot.getHierarchyBoundingVectors(true);
     previewRoot.position.y += 0.12 - normalizedBounds.min.y;
 
-      // Preview label removed for cleaner Village testing.
+    // Preview label removed for cleaner Village testing.
 
     window.forgePreviewRoot = previewRoot;
     window.forgePreviewModel = result;
