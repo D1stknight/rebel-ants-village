@@ -1561,3 +1561,369 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     setTimeout(boot3dBuildStatusPanel, 200);
   });
 })();
+
+(function setupForge3dPreviewPanelExtension() {
+  let forge3dPreviewState = {
+    renderer: null,
+    scene: null,
+    camera: null,
+    controls: null,
+    model: null,
+    animationId: null,
+    currentGlbUrl: ''
+  };
+
+  function isForgePage() {
+    return Boolean(
+      document.getElementById('forge-3d-build-status-panel') ||
+      document.getElementById('forge-concepts-section')
+    );
+  }
+
+  function ensure3dPreviewStyles() {
+    if (document.getElementById('forge-3d-preview-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'forge-3d-preview-styles';
+    style.textContent = `
+      #forge-3d-preview-panel {
+        margin-top: 18px;
+        padding: 14px;
+        border: 1px solid rgba(94,207,202,.24);
+        background: rgba(94,207,202,.055);
+        border-radius: 18px;
+      }
+
+      .forge-3d-preview-empty {
+        color: rgba(243,230,191,.72);
+        font-size: 12px;
+        line-height: 1.8;
+        border: 1px dashed rgba(255,255,255,.14);
+        border-radius: 14px;
+        padding: 14px;
+        margin-top: 12px;
+      }
+
+      #forge-3d-preview-stage {
+        position: relative;
+        width: 100%;
+        height: 420px;
+        margin-top: 12px;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 18px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at top center, rgba(94,207,202,.11), transparent 42%),
+          radial-gradient(circle at bottom center, rgba(200,146,42,.08), transparent 48%),
+          rgba(0,0,0,.34);
+      }
+
+      #forge-3d-preview-stage canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .forge-3d-preview-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .forge-3d-preview-btn {
+        padding: 10px 12px;
+        border: 1px solid rgba(94,207,202,.28);
+        background: rgba(94,207,202,.08);
+        color: #f3e6bf;
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      .forge-3d-preview-btn:hover {
+        border-color: rgba(94,207,202,.7);
+        background: rgba(94,207,202,.16);
+      }
+
+      .forge-3d-preview-note {
+        color: rgba(243,230,191,.62);
+        font-size: 11px;
+        line-height: 1.7;
+        margin-top: 10px;
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function ensure3dPreviewPanel() {
+    if (!isForgePage()) return null;
+
+    let panel = document.getElementById('forge-3d-preview-panel');
+    if (panel) return panel;
+
+    const buildStatusPanel = document.getElementById('forge-3d-build-status-panel');
+    const conceptsSection = document.getElementById('forge-concepts-section');
+    const anchor = buildStatusPanel || conceptsSection;
+
+    if (!anchor || !anchor.parentNode) return null;
+
+    panel = document.createElement('div');
+    panel.id = 'forge-3d-preview-panel';
+    panel.innerHTML = `
+      <div class="section-title">3D Preview</div>
+      <div id="forge-3d-preview-content" class="forge-3d-preview-empty">
+        No GLB is ready yet. Start a 3D Build, then refresh the build status until the GLB is ready.
+      </div>
+    `;
+
+    anchor.parentNode.insertBefore(panel, anchor.nextSibling);
+    return panel;
+  }
+
+  function getLatestGlbBuild() {
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+
+    return builds.find((build) => {
+      return Boolean(build?.output?.glbUrl || build?.engine?.glbUrl);
+    }) || null;
+  }
+
+  function stopForge3dPreviewLoop() {
+    if (forge3dPreviewState.animationId) {
+      cancelAnimationFrame(forge3dPreviewState.animationId);
+      forge3dPreviewState.animationId = null;
+    }
+  }
+
+  function clearForge3dPreview() {
+    stopForge3dPreviewLoop();
+
+    if (forge3dPreviewState.renderer) {
+      forge3dPreviewState.renderer.dispose();
+    }
+
+    forge3dPreviewState = {
+      renderer: null,
+      scene: null,
+      camera: null,
+      controls: null,
+      model: null,
+      animationId: null,
+      currentGlbUrl: ''
+    };
+  }
+
+  async function loadThreeModules() {
+    const threeModule = await import('https://unpkg.com/three@0.160.0/build/three.module.js');
+    const loaderModule = await import('https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
+    const controlsModule = await import('https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js');
+
+    return {
+      THREE: threeModule,
+      GLTFLoader: loaderModule.GLTFLoader,
+      OrbitControls: controlsModule.OrbitControls
+    };
+  }
+
+  function fitCameraToObject(THREE, camera, object, controls) {
+    const box = new THREE.Box3().setFromObject(object);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+
+    const maxSize = Math.max(size.x, size.y, size.z) || 1;
+    const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camera.fov) / 360));
+    const fitWidthDistance = fitHeightDistance / camera.aspect;
+    const distance = 1.45 * Math.max(fitHeightDistance, fitWidthDistance);
+
+    camera.position.set(center.x, center.y + maxSize * 0.15, center.z + distance);
+    camera.near = distance / 100;
+    camera.far = distance * 100;
+    camera.updateProjectionMatrix();
+
+    if (controls) {
+      controls.target.copy(center);
+      controls.update();
+    }
+  }
+
+  async function renderThreeGlbPreview(glbUrl) {
+    const stage = document.getElementById('forge-3d-preview-stage');
+    if (!stage || !glbUrl) return;
+
+    clearForge3dPreview();
+
+    const { THREE, GLTFLoader, OrbitControls } = await loadThreeModules();
+
+    const scene = new THREE.Scene();
+    scene.background = null;
+
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      stage.clientWidth / Math.max(stage.clientHeight, 1),
+      0.01,
+      1000
+    );
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(stage.clientWidth, stage.clientHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    stage.innerHTML = '';
+    stage.appendChild(renderer.domElement);
+
+    const ambient = new THREE.HemisphereLight(0xffffff, 0x1b2433, 2.4);
+    scene.add(ambient);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+    keyLight.position.set(3, 5, 4);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x5ecfca, 1.4);
+    rimLight.position.set(-4, 3, -4);
+    scene.add(rimLight);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.enablePan = true;
+    controls.enableZoom = true;
+
+    const loader = new GLTFLoader();
+    loader.setCrossOrigin('anonymous');
+
+    const gltf = await new Promise((resolve, reject) => {
+      loader.load(glbUrl, resolve, undefined, reject);
+    });
+
+    const model = gltf.scene;
+    scene.add(model);
+
+    fitCameraToObject(THREE, camera, model, controls);
+
+    forge3dPreviewState = {
+      renderer,
+      scene,
+      camera,
+      controls,
+      model,
+      animationId: null,
+      currentGlbUrl: glbUrl
+    };
+
+    function animate() {
+      forge3dPreviewState.animationId = requestAnimationFrame(animate);
+
+      if (forge3dPreviewState.controls) {
+        forge3dPreviewState.controls.update();
+      }
+
+      if (forge3dPreviewState.renderer && forge3dPreviewState.scene && forge3dPreviewState.camera) {
+        forge3dPreviewState.renderer.render(forge3dPreviewState.scene, forge3dPreviewState.camera);
+      }
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      if (!forge3dPreviewState.renderer || !forge3dPreviewState.camera || !stage) return;
+
+      forge3dPreviewState.camera.aspect = stage.clientWidth / Math.max(stage.clientHeight, 1);
+      forge3dPreviewState.camera.updateProjectionMatrix();
+      forge3dPreviewState.renderer.setSize(stage.clientWidth, stage.clientHeight);
+    }, { passive: true });
+  }
+
+  async function renderForge3dPreviewPanel() {
+    ensure3dPreviewStyles();
+
+    const panel = ensure3dPreviewPanel();
+    const content = document.getElementById('forge-3d-preview-content');
+
+    if (!panel || !content) return;
+
+    const latestGlbBuild = getLatestGlbBuild();
+    const glbUrl = latestGlbBuild?.output?.glbUrl || latestGlbBuild?.engine?.glbUrl || '';
+
+    if (!glbUrl) {
+      clearForge3dPreview();
+      content.className = 'forge-3d-preview-empty';
+      content.innerHTML = 'No GLB is ready yet. Start a 3D Build, then refresh the build status until the GLB is ready.';
+      return;
+    }
+
+    content.className = '';
+    content.innerHTML = `
+      <div id="forge-3d-preview-stage">
+        <div class="forge-3d-preview-empty">Loading 3D preview...</div>
+      </div>
+
+      <div class="forge-3d-preview-actions">
+        <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
+        <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
+      </div>
+
+      <div class="forge-3d-preview-note">
+        This is a live Three.js preview of the generated GLB. Use this to inspect the model before we store it permanently and connect it to the Village.
+      </div>
+    `;
+
+    try {
+      await renderThreeGlbPreview(glbUrl);
+    } catch(e) {
+      console.warn('Could not render Forge 3D GLB preview:', e);
+      content.innerHTML = `
+        <div class="forge-3d-preview-empty">
+          GLB is ready, but the in-page 3D preview could not load. You can still open or download the GLB below.
+        </div>
+
+        <div class="forge-3d-preview-actions">
+          <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
+          <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
+        </div>
+      `;
+    }
+  }
+
+  function wrapBuildStatusRenderer() {
+    const original = window.renderForge3dBuildStatusPanel;
+
+    if (typeof original !== 'function' || original.__forge3dPreviewWrapped) return;
+
+    const wrapped = async function(...args) {
+      const result = await original.apply(this, args);
+      await renderForge3dPreviewPanel();
+      return result;
+    };
+
+    wrapped.__forge3dPreviewWrapped = true;
+    window.renderForge3dBuildStatusPanel = wrapped;
+  }
+
+  function boot3dPreviewPanel() {
+    if (!isForgePage()) return;
+
+    ensure3dPreviewStyles();
+    ensure3dPreviewPanel();
+    wrapBuildStatusRenderer();
+
+    setTimeout(() => {
+      renderForge3dPreviewPanel();
+    }, 400);
+  }
+
+  window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(boot3dPreviewPanel, 500);
+  });
+})();
