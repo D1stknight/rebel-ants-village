@@ -1873,6 +1873,9 @@ function resolveCharacterConfig(rebel) {
     : 'starter_ant';
 
   const bundle = CHARACTER_REGISTRY[requestedBundleId] || CHARACTER_REGISTRY.starter_ant;
+  const activeForgeCharacter = rebel?.activeForgeCharacter || null;
+  const activeGlbUrl = rebel?.activeGlbUrl || activeForgeCharacter?.activeGlbUrl || null;
+  const characterSource = activeGlbUrl ? 'forge_glb' : 'starter_bundle';
 
   return {
     rebel,
@@ -1887,10 +1890,12 @@ function resolveCharacterConfig(rebel) {
     hasGeneratedModel: bundle.hasGeneratedModel,
     basePath: bundle.basePath,
     idleFile: bundle.idleFile,
-    animations: bundle.animations
+    animations: bundle.animations,
+    activeForgeCharacter,
+    activeGlbUrl,
+    characterSource
   };
 }
-
 function hydrateSelectedRebelPanel(character) {
   const image = document.getElementById('selectedRebelImage');
   const name = document.getElementById('selectedRebelName');
@@ -2002,8 +2007,16 @@ console.log('Active Rebel selected for village:', activeRebel);
 console.log('Resolved character config:', activeCharacter);
 console.log('Active character blueprint:', activeCharacterBlueprint);
 
+if (activeCharacter.activeGlbUrl) {
+  console.log('Forge character detected for Village handoff:', activeCharacter.activeGlbUrl);
+}
+
 hydrateSelectedRebelPanel(activeCharacter);
-setSt("Loading " + activeCharacter.displayName + "...");
+setSt(
+  activeCharacter.activeGlbUrl
+    ? "Forge character detected. Loading " + activeCharacter.displayName + "..."
+    : "Loading " + activeCharacter.displayName + "..."
+);
 let charMesh=null, charAnims={}, isMoving=false;
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
