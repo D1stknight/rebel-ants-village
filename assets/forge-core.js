@@ -1821,6 +1821,98 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }, 2400);
     }
   }
+
+  async function storeForgeRunningGlbInRebelBlob(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build to store the running animation.', 'error');
+      }
+      return;
+    }
+
+    const runningGlbUrl =
+      build.output?.runningGlbUrl ||
+      build.output?.storedAnimations?.running?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.running?.storedAnimationUrl ||
+      build.rigging?.response?.result?.basic_animations?.running_glb_url ||
+      '';
+
+    if (!runningGlbUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('This build does not have a running animation ready to store yet.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Store Running Animation';
+
+    if (activeButton) {
+      activeButton.textContent = 'Storing Running...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-store-running-glb', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId,
+          runningGlbUrl
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Could not store running animation');
+      }
+
+      window.lastForgeStoreRunningGlbResponse = data;
+
+      if (activeButton) {
+        activeButton.textContent = 'Running Stored ✓';
+        activeButton.disabled = true;
+        activeButton.classList.add('forge-active-confirmed');
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Running animation stored in Rebel Forge Blob. Next we can test it inside the Village.', 'success');
+      }
+
+      await renderForge3dBuildStatusPanel();
+    } catch(e) {
+      console.warn('Could not store Forge running animation:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Running Store Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not store the running animation in Rebel Forge yet.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store Running Animation';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
   
      async function setForgeBuildAsActiveCharacter(buildId) {
     if (!buildId) return;
@@ -2128,7 +2220,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.storeForgeRiggedGlbInRebelBlob('${build.buildId}')">Store Rigged GLB in Rebel Forge</button>`
           : '';
 
-        const walkingMeshyGlbUrl =
+               const walkingMeshyGlbUrl =
           build.rigging?.response?.result?.basic_animations?.walking_glb_url ||
           '';
 
@@ -2152,6 +2244,29 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           ? '<br>Walking Animation: Rebel Forge Blob ✓'
           : '';
 
+        const runningMeshyGlbUrl =
+          build.rigging?.response?.result?.basic_animations?.running_glb_url ||
+          '';
+
+        const runningRebelGlbUrl =
+          build.output?.runningGlbUrl ||
+          build.output?.storedAnimations?.running?.storedAnimationUrl ||
+          build.rigging?.storedAnimations?.running?.storedAnimationUrl ||
+          '';
+
+        const runningGlbUrl = runningRebelGlbUrl || runningMeshyGlbUrl;
+
+        const runningGlbHtml = runningGlbUrl
+          ? `<br><a href="${runningGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open Running GLB</a> · <a href="${runningGlbUrl}" download style="color:#5ecfca;">Download Running GLB</a>`
+          : '';
+
+        const storeRunningGlbHtml = runningMeshyGlbUrl && !runningRebelGlbUrl
+          ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.storeForgeRunningGlbInRebelBlob('${build.buildId}')">Store Running Animation</button>`
+          : '';
+
+        const runningStoredHtml = runningRebelGlbUrl
+          ? '<br>Running Animation: Rebel Forge Blob ✓'
+          : '';
         const storedHtml = isStoredInRebelBlob
           ? '<br>Storage: Rebel Forge Blob ✓'
           : '';
@@ -2175,9 +2290,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
               ${riggedGlbHtml}
               ${storeRiggedGlbHtml}
               ${riggedStoredHtml}
-              ${walkingGlbHtml}
+                         ${walkingGlbHtml}
               ${storeWalkingGlbHtml}
               ${walkingStoredHtml}
+              ${runningGlbHtml}
+              ${storeRunningGlbHtml}
+              ${runningStoredHtml}
             </div>
           </div>
         `;
@@ -2218,10 +2336,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     renderForge3dBuildStatusPanel();
   }
 
-     window.renderForge3dBuildStatusPanel = renderForge3dBuildStatusPanel;
+      window.renderForge3dBuildStatusPanel = renderForge3dBuildStatusPanel;
   window.storeForgeGlbInRebelBlob = storeForgeGlbInRebelBlob;
   window.storeForgeRiggedGlbInRebelBlob = storeForgeRiggedGlbInRebelBlob;
   window.storeForgeWalkingGlbInRebelBlob = storeForgeWalkingGlbInRebelBlob;
+  window.storeForgeRunningGlbInRebelBlob = storeForgeRunningGlbInRebelBlob;
   window.setForgeBuildAsActiveCharacter = setForgeBuildAsActiveCharacter;
   window.startMeshyRigTestForBuild = startMeshyRigTestForBuild;
 
