@@ -1173,26 +1173,35 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     return panel;
   }
 
-   function renderForgeVariantPanel() {
+    function renderForgeVariantPanel() {
     ensureForgeVariantStyles();
 
     const panel = ensureForgeVariantPanel();
     if (!panel) return;
 
     panel.innerHTML = `
-      <div class="forge-variant-title">Generate Variant</div>
+      <div class="forge-variant-title">Generate Another Version</div>
       <div class="forge-variant-copy">
-        Refine the next version without needing to understand prompts. Pick the direction that best fixes the current render.
+        Create a new version or refine the latest render before saving the one you like best.
       </div>
 
       <div class="forge-variant-options">
         <button
           class="forge-variant-option available"
           type="button"
+          onclick="window.generatePreviewStub()"
+        >
+          <div class="forge-variant-name">Generate Another Version</div>
+          <div class="forge-variant-status">Fresh render</div>
+        </button>
+
+        <button
+          class="forge-variant-option available"
+          type="button"
           onclick="window.generateForgeVariant('more_faithful_face')"
         >
-          <div class="forge-variant-name">More Faithful Face</div>
-          <div class="forge-variant-status">Available now</div>
+          <div class="forge-variant-name">Generate with a More Faithful Face</div>
+          <div class="forge-variant-status">Face accuracy</div>
         </button>
 
         <button
@@ -1200,8 +1209,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           type="button"
           onclick="window.generateForgeVariant('stronger_warrior_body')"
         >
-          <div class="forge-variant-name">Stronger Warrior Body</div>
-          <div class="forge-variant-status">Available now</div>
+          <div class="forge-variant-name">Generate with a Stronger Warrior Body</div>
+          <div class="forge-variant-status">Body strength</div>
         </button>
 
         <button
@@ -1209,8 +1218,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           type="button"
           onclick="window.generateForgeVariant('cleaner_3d_reference')"
         >
-          <div class="forge-variant-name">Cleaner 3D Reference</div>
-          <div class="forge-variant-status">Available now</div>
+          <div class="forge-variant-name">Generate for a Cleaner 3D Reference</div>
+          <div class="forge-variant-status">3D prep</div>
         </button>
       </div>
     `;
