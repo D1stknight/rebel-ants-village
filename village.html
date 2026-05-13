@@ -2061,7 +2061,7 @@ async function loadForgePreviewModelInVillage(glbUrl) {
 
     const bounds = previewRoot.getHierarchyBoundingVectors(true);
     const height = Math.max(bounds.max.y - bounds.min.y, 0.001);
-    const targetHeight = 2.1;
+    const targetHeight = 3.8;
     const scale = targetHeight / height;
 
     previewRoot.scaling = new BABYLON.Vector3(scale, scale, scale);
