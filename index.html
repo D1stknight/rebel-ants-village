@@ -284,32 +284,48 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 #admin-login-status.success{
   color:#7cffb2;
 }
-.forge-ready-marquee {
-  width: 78px;
-  min-height: 12px;
-  margin-top: 4px;
-  overflow: hidden;
-  white-space: nowrap;
-  color: #5ecfca;
+.ant-card-marquee {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: rgba(0,0,0,0.78);
+  color: #c8922a;
   font-size: 8px;
-  line-height: 12px;
-  letter-spacing: 0.5px;
+  line-height: 14px;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-.forge-ready-marquee span {
+.ant-card:hover .ant-card-marquee,
+.ant-card.selected .ant-card-marquee {
+  opacity: 1;
+}
+
+.ant-card-marquee.forge-ready {
+  color: #5ecfca;
+}
+
+.ant-card-marquee span {
   display: inline-block;
   min-width: max-content;
-  animation: forgeReadyScroll 4.5s ease-in-out infinite alternate;
+  padding-left: 6px;
+  padding-right: 24px;
+  animation: antCardTextScroll 5.5s ease-in-out infinite alternate;
 }
 
-@keyframes forgeReadyScroll {
+@keyframes antCardTextScroll {
   0% {
     transform: translateX(0);
   }
 
   100% {
-    transform: translateX(-58%);
+    transform: translateX(-55%);
   }
 }
 </style>
@@ -579,14 +595,13 @@ function buildCard(rebel) {
   card.onclick = () => selectAnt(rebel.id);
 
   const hasForgeCharacter = Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
+  const labelText = hasForgeCharacter ? '3D Forge Character Ready ✓' : rebel.name;
 
-  const cardLabel = hasForgeCharacter
-    ? `
-      <div class="forge-ready-marquee">
-        <span>3D Forge Character Ready ✓</span>
-      </div>
-    `
-    : `<div class="ant-name">${rebel.name}</div>`;
+  const cardLabel = `
+    <div class="ant-card-marquee ${hasForgeCharacter ? 'forge-ready' : ''}">
+      <span>${labelText}</span>
+    </div>
+  `;
 
   card.innerHTML = `<img src="${rebel.image}" onerror="this.src='assets/lobby/ant_1.JPG'"/>
     ${cardLabel}`;
