@@ -2215,6 +2215,161 @@ async function preloadForgePlayerVisualModes(startingRoot) {
   console.log('Forge player visual modes preloaded.');
 }
 
+async function loadForgeArmatureAnimationForPlayer(mode, armatureGlbUrl, riggedSkeleton) {
+  if (!mode || !armatureGlbUrl || !riggedSkeleton) return null;
+
+  if (!window.forgeArmatureAnimationCache) {
+    window.forgeArmatureAnimationCache = {};
+  }
+
+  if (window.forgeArmatureAnimationCache[mode]) {
+    return window.forgeArmatureAnimationCache[mode];
+  }
+
+  const armatureResult = await BABYLON.SceneLoader.ImportMeshAsync("", "", armatureGlbUrl, scene);
+  const armatureAnimation = armatureResult.animationGroups?.[0] || null;
+
+  if (!armatureAnimation) {
+    console.warn('No armature animation found for Forge mode:', mode);
+    return null;
+  }
+
+  armatureResult.meshes.forEach((mesh) => {
+    mesh.isVisible = false;
+    mesh.setEnabled(false);
+  });
+
+  armatureResult.transformNodes.forEach((node) => {
+    node.setEnabled(false);
+  });
+
+  let retargetedCount = 0;
+  let missedCount = 0;
+  const missedTargets = [];
+
+  armatureAnimation.targetedAnimations.forEach((targetedAnimation) => {
+    const targetName = targetedAnimation.target?.name || '';
+    const matchingBone = riggedSkeleton.bones.find((bone) => bone.name === targetName);
+
+    if (matchingBone) {
+      targetedAnimation.target = matchingBone._linkedTransformNode || matchingBone;
+      retargetedCount++;
+    } else {
+      missedCount++;
+      if (targetName) missedTargets.push(targetName);
+    }
+  });
+
+  armatureAnimation.stop();
+
+  const entry = {
+    mode,
+    armatureGlbUrl,
+    armatureResult,
+    animationGroup: armatureAnimation,
+    retargetedCount,
+    missedCount,
+    missedTargets: [...new Set(missedTargets)]
+  };
+
+  window.forgeArmatureAnimationCache[mode] = entry;
+
+  console.log('Forge armature animation cached:', {
+    mode,
+    animationName: armatureAnimation.name,
+    retargetedCount,
+    missedCount,
+    missedTargets: entry.missedTargets
+  });
+
+  return entry;
+}
+
+function activateForgeArmaturePlayerMode(mode) {
+  const cache = window.forgeArmatureAnimationCache || {};
+
+  Object.keys(cache).forEach((key) => {
+    const group = cache[key]?.animationGroup;
+    if (group && group.isPlaying) {
+      group.stop();
+    }
+  });
+
+  if (mode === 'rigged') {
+    window.forgePlayerVisualCurrentMode = 'rigged';
+    return true;
+  }
+
+  const entry = cache[mode];
+
+  if (!entry?.animationGroup) {
+    return false;
+  }
+
+  entry.animationGroup.start(true);
+  window.forgePlayerVisualCurrentMode = mode;
+
+  return true;
+}
+
+async function preloadForgeArmaturePlayerVisual(previewRoot) {
+  const riggedUrl =
+    window.activeCharacter?.riggedGlbUrl ||
+    window.activeCharacter?.activeGlbUrl ||
+    '';
+
+  const walkingArmatureUrl =
+    window.activeCharacter?.walkingArmatureGlbUrl ||
+    window.activeCharacter?.characterBundle?.armatureAnimations?.walking?.glbUrl ||
+    '';
+
+  const runningArmatureUrl =
+    window.activeCharacter?.runningArmatureGlbUrl ||
+    window.activeCharacter?.characterBundle?.armatureAnimations?.running?.glbUrl ||
+    '';
+
+  if (!riggedUrl || !walkingArmatureUrl || !runningArmatureUrl) {
+    console.warn('Missing Forge armature player URLs. Falling back to full GLB visual swap.');
+    return false;
+  }
+
+  let riggedRoot = previewRoot;
+  let riggedResult = window.forgePreviewModel || null;
+
+  const previewMode = localStorage.getItem('forgeVillagePreviewMode') || 'running';
+  const previewIsRigged =
+    previewMode === 'rigged' &&
+    riggedResult?.skeletons?.length;
+
+  if (!previewIsRigged) {
+    riggedRoot = await loadForgePreviewModelInVillage(riggedUrl);
+    riggedResult = window.forgePreviewModel || null;
+  }
+
+  const riggedSkeleton = riggedResult?.skeletons?.[0] || null;
+
+  if (!riggedRoot || !riggedSkeleton) {
+    console.warn('Could not load Forge rigged model for armature player visual.');
+    return false;
+  }
+
+  window.forgeArmaturePlayerRoot = riggedRoot;
+  window.forgeArmaturePlayerModel = riggedResult;
+  window.forgeArmaturePlayerSkeleton = riggedSkeleton;
+
+  syncForgePreviewRootToPlayer(riggedRoot);
+  setForgePreviewRootVisible(riggedRoot, true);
+
+  await Promise.all([
+    loadForgeArmatureAnimationForPlayer('walking', walkingArmatureUrl, riggedSkeleton),
+    loadForgeArmatureAnimationForPlayer('running', runningArmatureUrl, riggedSkeleton)
+  ]);
+
+  console.log('Forge armature player visual ready.');
+
+  return true;
+}
+
 function applyForgePlayerVisualTest(previewRoot) {
   if (!previewRoot || !charMesh) return;
   if (localStorage.getItem('forgePlayerVisualTest') !== '1') return;
@@ -2223,10 +2378,17 @@ function applyForgePlayerVisualTest(previewRoot) {
 
   hideStarterPlayerVisualForForgeTest();
 
-  preloadForgePlayerVisualModes(previewRoot).then(() => {
-    const desiredMode = getForgePlayerDesiredPreviewMode();
+  preloadForgeArmaturePlayerVisual(previewRoot).then((armatureReady) => {
+    if (!armatureReady) {
+      preloadForgePlayerVisualModes(previewRoot).then(() => {
+        const desiredMode = getForgePlayerDesiredPreviewMode();
+        activateForgePlayerVisualMode(desiredMode);
+      });
+      return;
+    }
 
-    activateForgePlayerVisualMode(desiredMode);
+    const desiredMode = getForgePlayerDesiredPreviewMode();
+    activateForgeArmaturePlayerMode(desiredMode);
 
     if (window.forgePlayerVisualObserver) {
       scene.onBeforeRenderObservable.remove(window.forgePlayerVisualObserver);
@@ -2234,27 +2396,15 @@ function applyForgePlayerVisualTest(previewRoot) {
     }
 
     window.forgePlayerVisualObserver = scene.onBeforeRenderObservable.add(() => {
-      if (!charMesh) return;
+      if (!charMesh || !window.forgeArmaturePlayerRoot) return;
 
       const nextMode = getForgePlayerDesiredPreviewMode();
 
       if (nextMode !== window.forgePlayerVisualCurrentMode) {
-        const activated = activateForgePlayerVisualMode(nextMode);
-
-        if (!activated) {
-          loadForgePlayerVisualMode(nextMode).then(() => {
-            activateForgePlayerVisualMode(nextMode);
-          });
-        }
+        activateForgeArmaturePlayerMode(nextMode);
       }
 
-      const cache = getForgePlayerVisualCache();
-
-      Object.keys(cache).forEach((mode) => {
-        if (cache[mode]?.root) {
-          syncForgePreviewRootToPlayer(cache[mode].root);
-        }
-      });
+      syncForgePreviewRootToPlayer(window.forgeArmaturePlayerRoot);
     });
   });
 }
