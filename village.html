@@ -1912,8 +1912,8 @@ function resolveCharacterConfig(rebel) {
     characterSource
   };
 }
-async function resolveForgePreviewGlbUrlForVillage(activeCharacter) {
-  const previewMode = localStorage.getItem('forgeVillagePreviewMode') || 'running';
+async function resolveForgePreviewGlbUrlForVillage(activeCharacter, forcedMode = null) {
+  const previewMode = forcedMode || localStorage.getItem('forgeVillagePreviewMode') || 'running';
 
   const riggedGlbUrl =
     activeCharacter?.riggedGlbUrl ||
@@ -2062,18 +2062,98 @@ function setForgePlayerVisualTest(enabled) {
   location.reload();
 }
 
+function getForgePlayerDesiredPreviewMode() {
+  if (runKey) return 'running';
+
+  const moving =
+    moveForward ||
+    moveBackward ||
+    turnLeft ||
+    turnRight ||
+    Math.abs(charMesh?._vel || 0) > 0.02;
+
+  return moving ? 'walking' : 'rigged';
+}
+
+function syncForgePreviewRootToPlayer(previewRoot) {
+  if (!previewRoot || !charMesh) return;
+
+  previewRoot.position.x = charMesh.position.x;
+  previewRoot.position.y = charMesh.position.y;
+  previewRoot.position.z = charMesh.position.z;
+
+  previewRoot.rotation.x = charMesh.rotation.x;
+  previewRoot.rotation.y = charMesh.rotation.y;
+  previewRoot.rotation.z = charMesh.rotation.z;
+}
+
+function hideStarterPlayerVisualForForgeTest() {
+  if (!charMesh) return;
+
+  charMesh.getChildMeshes(false).forEach((mesh) => {
+    mesh.isVisible = false;
+  });
+}
+
+function disposeForgePreviewVisual() {
+  if (window.forgePreviewAnimationGroup) {
+    try {
+      window.forgePreviewAnimationGroup.stop();
+    } catch(e) {}
+    window.forgePreviewAnimationGroup = null;
+  }
+
+  if (window.forgePreviewRoot) {
+    try {
+      window.forgePreviewRoot.dispose(false, true);
+    } catch(e) {}
+    window.forgePreviewRoot = null;
+  }
+
+  window.forgePreviewModel = null;
+}
+
+async function loadForgePlayerVisualMode(mode) {
+  if (!window.activeCharacter?.activeGlbUrl) return null;
+
+  if (window.forgePlayerVisualLoadingMode === mode) return null;
+  if (window.forgePlayerVisualCurrentMode === mode && window.forgePreviewRoot) return window.forgePreviewRoot;
+
+  window.forgePlayerVisualLoadingMode = mode;
+
+  try {
+    const nextUrl = await resolveForgePreviewGlbUrlForVillage(window.activeCharacter, mode);
+
+    disposeForgePreviewVisual();
+
+    const nextRoot = await loadForgePreviewModelInVillage(nextUrl);
+
+    if (nextRoot) {
+      window.forgePlayerVisualCurrentMode = mode;
+      syncForgePreviewRootToPlayer(nextRoot);
+      hideStarterPlayerVisualForForgeTest();
+      console.log('Forge player visual mode active:', mode);
+    }
+
+    return nextRoot;
+  } catch(e) {
+    console.warn('Could not load Forge player visual mode:', mode, e);
+    return null;
+  } finally {
+    window.forgePlayerVisualLoadingMode = null;
+  }
+}
+
 function applyForgePlayerVisualTest(previewRoot) {
   if (!previewRoot || !charMesh) return;
   if (localStorage.getItem('forgePlayerVisualTest') !== '1') return;
 
   console.log('Forge player visual test enabled.');
 
-  charMesh.getChildMeshes(false).forEach((mesh) => {
-    mesh.isVisible = false;
-  });
+  hideStarterPlayerVisualForForgeTest();
+  syncForgePreviewRootToPlayer(previewRoot);
 
-  previewRoot.position = charMesh.position.clone();
-  previewRoot.rotation = charMesh.rotation.clone();
+  window.forgePlayerVisualCurrentMode = localStorage.getItem('forgeVillagePreviewMode') || 'running';
 
   if (window.forgePlayerVisualObserver) {
     scene.onBeforeRenderObservable.remove(window.forgePlayerVisualObserver);
@@ -2081,15 +2161,19 @@ function applyForgePlayerVisualTest(previewRoot) {
   }
 
   window.forgePlayerVisualObserver = scene.onBeforeRenderObservable.add(() => {
-    if (!charMesh || !previewRoot) return;
+    if (!charMesh || !window.forgePreviewRoot) return;
 
-    previewRoot.position.x = charMesh.position.x;
-    previewRoot.position.y = charMesh.position.y;
-    previewRoot.position.z = charMesh.position.z;
+    const desiredMode = getForgePlayerDesiredPreviewMode();
 
-    previewRoot.rotation.x = charMesh.rotation.x;
-    previewRoot.rotation.y = charMesh.rotation.y;
-    previewRoot.rotation.z = charMesh.rotation.z;
+    if (
+      desiredMode !== window.forgePlayerVisualCurrentMode &&
+      window.forgePlayerVisualLoadingMode !== desiredMode
+    ) {
+      loadForgePlayerVisualMode(desiredMode);
+      return;
+    }
+
+    syncForgePreviewRootToPlayer(window.forgePreviewRoot);
   });
 }
 
