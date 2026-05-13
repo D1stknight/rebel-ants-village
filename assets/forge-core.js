@@ -1428,16 +1428,25 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     return data.buildRecord || build;
   }
 
-  function shouldPollMeshyRigBuild(build) {
+   function shouldPollMeshyRigBuild(build) {
+    const riggedGlbUrl =
+      build?.output?.riggedGlbUrl ||
+      build?.rigging?.riggedGlbUrl ||
+      build?.rigging?.response?.result?.rigged_character_glb_url ||
+      '';
+
     return Boolean(
       build &&
       build.rigging?.provider === 'meshy' &&
       build.rigging?.taskId &&
-      [
-        'submitted_to_meshy_rigging',
-        'meshy_rigging_pending',
-        'meshy_rigging_in_progress'
-      ].includes(build.status)
+      (
+        [
+          'submitted_to_meshy_rigging',
+          'meshy_rigging_pending',
+          'meshy_rigging_in_progress'
+        ].includes(build.status) ||
+        (build.status === 'meshy_rigging_completed' && !riggedGlbUrl)
+      )
     );
   }
 
@@ -1848,7 +1857,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const rebelGlbUrl = build.output?.rebelGlbUrl || '';
         const activeGlbUrl = rebelGlbUrl || glbUrl;
         const rigTaskId = build.rigging?.taskId || '';
-        const riggedGlbUrl = build.output?.riggedGlbUrl || build.rigging?.riggedGlbUrl || '';
+               const riggedGlbUrl =
+          build.output?.riggedGlbUrl ||
+          build.rigging?.riggedGlbUrl ||
+          build.rigging?.response?.result?.rigged_character_glb_url ||
+          '';
         const isStoredInRebelBlob =
           build.status === 'completed_stored_in_rebel_blob' ||
           build.output?.source === 'rebel_blob' ||
