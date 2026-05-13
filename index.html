@@ -587,6 +587,7 @@ async function loadNFTs(walletAddress) {
   const charRow = document.getElementById('char-row');
   charRow.innerHTML = '';
   setStatus('Loading your Rebels...');
+
   try {
     // Query by collection slug + wallet — gets ALL owned ants, paginated
     const COLLECTION = 'rebel-ants-battle-for-the-colony';
@@ -594,14 +595,18 @@ async function loadNFTs(walletAddress) {
     let allRebels = [];
     let next = null;
     let pages = 0;
+
     do {
       const url = `https://api.opensea.io/api/v2/chain/ethereum/account/${walletAddress}/nfts?collection=${COLLECTION}&limit=50${next ? '&next=' + next : ''}`;
       const r = await fetch(url, { headers: { 'accept': 'application/json', 'x-api-key': API_KEY } });
+
       if (!r.ok) throw new Error('status ' + r.status);
+
       const data = await r.json();
       allRebels = allRebels.concat(data.nfts || []);
       next = data.next || null;
       pages++;
+
       setStatus('Loading... ' + allRebels.length + ' found');
     } while (next && pages < 10); // max 500 ants
 
@@ -610,17 +615,41 @@ async function loadNFTs(walletAddress) {
       showDefaultCard();
       return;
     }
-   ownedRebels = allRebels.map(n => ({
-  id: 'rebel_' + n.identifier,
-  name: n.name || ('Rebel #' + n.identifier),
-  image: n.image_url || 'assets/lobby/ant_1.JPG',
-  tokenId: n.identifier,
-  collectionKey: 'battle_for_colony'
-}));
-selectedAnt = ownedRebels[0].id;
-ownedRebels.forEach(r => buildCard(r));
-await selectAnt(selectedAnt);
-    setStatus(ownedRebels.length + ' Rebel' + (ownedRebels.length > 1 ? 's' : '') + ' found');
+
+    const mappedRebels = allRebels.map(n => ({
+      id: 'rebel_' + n.identifier,
+      rebelId: 'rebel_' + n.identifier,
+      name: n.name || ('Rebel #' + n.identifier),
+      image: n.image_url || 'assets/lobby/ant_1.JPG',
+      tokenId: n.identifier,
+      collectionKey: 'battle_for_colony'
+    }));
+
+    setStatus('Checking Forge characters...');
+
+    ownedRebels = await Promise.all(
+      mappedRebels.map((rebel) => attachActiveForgeCharacter(rebel))
+    );
+
+    const forgedReadyRebel = ownedRebels.find((rebel) => {
+      return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
+    });
+
+    selectedAnt = forgedReadyRebel ? forgedReadyRebel.id : ownedRebels[0].id;
+
+    charRow.innerHTML = '';
+    ownedRebels.forEach(r => buildCard(r));
+
+    await selectAnt(selectedAnt);
+
+    setStatus(
+      ownedRebels.length +
+      ' Rebel' +
+      (ownedRebels.length > 1 ? 's' : '') +
+      ' found' +
+      (forgedReadyRebel ? ' — 3D Forge Character Ready' : '')
+    );
+
     document.getElementById('btn-enter').disabled = false;
   } catch(e) {
     console.warn('NFT load failed:', e);
