@@ -456,6 +456,24 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         cursor: not-allowed;
       }
 
+      .forge-active-build-btn {
+  margin-top: 12px;
+  padding: 11px 14px;
+  border: 1px solid rgba(94,207,202,.35);
+  background: rgba(94,207,202,.12);
+  color: #f3e6bf;
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.forge-active-build-btn:hover {
+  border-color: rgba(94,207,202,.7);
+  background: rgba(94,207,202,.18);
+}
+
       @media (max-width: 700px) {
         .forge-selected-card {
           grid-template-columns: 1fr;
@@ -538,8 +556,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       : '<div class="forge-selected-empty">Selected image missing.</div>';
 
     const actionButtonHtml = isProductionReference
-      ? `<button class="forge-disabled-build-btn forge-start-3d-build-btn" type="button" onclick="window.startForge3dBuild('${safeId}')">Start 3D Build</button>`
-      : `<button class="forge-disabled-build-btn forge-build-production-btn" type="button" onclick="window.generateForgeProductionReference('${safeId}')">Create 3D Production Reference</button>`;
+      ? `<button class="forge-active-build-btn forge-start-3d-build-btn" type="button" onclick="window.startForge3dBuild('${safeId}')">Start 3D Build</button>`
+      : `<button class="forge-active-build-btn forge-build-production-btn" type="button" onclick="window.generateForgeProductionReference('${safeId}')">Create 3D Production Reference</button>`;
 
     const helperText = isProductionReference
       ? 'This production reference is ready to be queued for the future GLB character step.'
