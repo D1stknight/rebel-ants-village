@@ -1718,10 +1718,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     };
   }
 
-  async function loadThreeModules() {
-    const threeModule = await import('https://unpkg.com/three@0.160.0/build/three.module.js');
-    const loaderModule = await import('https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
-    const controlsModule = await import('https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js');
+    async function loadThreeModules() {
+    const threeModule = await import('https://esm.sh/three@0.160.0');
+    const loaderModule = await import('https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js?deps=three@0.160.0');
+    const controlsModule = await import('https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js?deps=three@0.160.0');
 
     return {
       THREE: threeModule,
