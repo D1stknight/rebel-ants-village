@@ -2477,6 +2477,49 @@ async function loadForgePreviewModelInVillage(glbUrl) {
     return null;
   }
 }
+
+window.inspectForgeArmatureGlb = async function(glbUrl) {
+  const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", glbUrl, scene);
+
+  const skeletons = result.skeletons || [];
+  const animationGroups = result.animationGroups || [];
+  const boneCount = skeletons.reduce((total, skeleton) => {
+    return total + (skeleton.bones ? skeleton.bones.length : 0);
+  }, 0);
+
+  const inspection = {
+    glbUrl,
+    meshCount: result.meshes?.length || 0,
+    meshNames: (result.meshes || []).map((mesh) => mesh.name),
+    transformNodeCount: result.transformNodes?.length || 0,
+    transformNodeNames: (result.transformNodes || []).map((node) => node.name),
+    skeletonCount: skeletons.length,
+    skeletonNames: skeletons.map((skeleton) => skeleton.name),
+    boneCount,
+    animationGroupCount: animationGroups.length,
+    animationGroupNames: animationGroups.map((group) => group.name),
+    firstTargets: animationGroups[0]?.targetedAnimations?.slice(0, 16).map((ta) => ({
+      targetName: ta.target?.name,
+      property: ta.animation?.targetProperty,
+      keyCount: ta.animation?.getKeys?.().length
+    })) || []
+  };
+
+  result.meshes.forEach((mesh) => {
+    mesh.isVisible = false;
+    mesh.setEnabled(false);
+  });
+
+  result.transformNodes.forEach((node) => {
+    node.setEnabled(false);
+  });
+
+  window.lastForgeArmatureInspection = inspection;
+  console.log('Forge armature GLB inspection:', inspection);
+
+  return inspection;
+};
+
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
 let _signTriggers = [];
