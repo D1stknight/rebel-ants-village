@@ -60,15 +60,52 @@ function sanitizeActiveCharacterPayload(payload) {
   const rebelId = body.rebelId || build.rebelId || null;
   const collectionKey = body.collectionKey || build.collectionKey || 'battle_for_colony';
 
-  const activeGlbUrl =
-    body.activeGlbUrl ||
-    body.glbUrl ||
-    build.output?.rebelGlbUrl ||
-    build.output?.glbUrl ||
+  const output = build.output || {};
+  const storedAnimations = output.storedAnimations || build.rigging?.storedAnimations || {};
+
+  const riggedGlbUrl =
+    output.riggedRebelGlbUrl ||
+    output.riggedGlbUrl ||
+    build.rigging?.riggedRebelGlbUrl ||
+    build.rigging?.riggedGlbUrl ||
+    build.rigging?.response?.result?.rigged_character_glb_url ||
+    null;
+
+  const staticGlbUrl =
+    output.rebelGlbUrl ||
+    output.glbUrl ||
     build.engine?.glbUrl ||
     null;
 
-  const glbBlobPath = body.glbBlobPath || build.output?.glbBlobPath || null;
+  const walkingGlbUrl =
+    output.walkingGlbUrl ||
+    storedAnimations.walking?.storedAnimationUrl ||
+    null;
+
+  const runningGlbUrl =
+    output.runningGlbUrl ||
+    storedAnimations.running?.storedAnimationUrl ||
+    null;
+
+  const activeGlbUrl =
+    body.activeGlbUrl ||
+    body.glbUrl ||
+    output.activeGlbUrl ||
+    riggedGlbUrl ||
+    staticGlbUrl ||
+    null;
+
+  const glbBlobPath =
+    body.glbBlobPath ||
+    output.riggedGlbBlobPath ||
+    output.glbBlobPath ||
+    null;
+
+  const activeCharacterModelType =
+    body.activeCharacterModelType ||
+    build.activeCharacterModelType ||
+    output.activeCharacterModelType ||
+    (riggedGlbUrl ? 'rigged_forge_glb' : 'static_forge_glb');
 
   if (!buildId) {
     throw new Error('Missing buildId');
@@ -84,6 +121,36 @@ function sanitizeActiveCharacterPayload(payload) {
 
   const now = new Date().toISOString();
 
+  const characterBundle = {
+    bundleVersion: 'v1',
+    bundleType: 'forge_character_bundle',
+    collectionKey,
+    tokenId,
+    rebelId,
+    sourceBuildId: buildId,
+    modelType: activeCharacterModelType,
+    activeGlbUrl,
+    staticGlbUrl,
+    riggedGlbUrl,
+    glbBlobPath,
+    animations: {
+      walking: walkingGlbUrl
+        ? {
+            name: 'walking',
+            glbUrl: walkingGlbUrl,
+            source: 'rebel_blob'
+          }
+        : null,
+      running: runningGlbUrl
+        ? {
+            name: 'running',
+            glbUrl: runningGlbUrl,
+            source: 'rebel_blob'
+          }
+        : null
+    }
+  };
+
   return {
     activeCharacterVersion: ACTIVE_CHARACTER_VERSION,
     walletAddress,
@@ -92,14 +159,20 @@ function sanitizeActiveCharacterPayload(payload) {
     rebelId,
     activeForgeBuildId: buildId,
     activeGlbUrl,
+    staticGlbUrl,
+    riggedGlbUrl,
+    walkingGlbUrl,
+    runningGlbUrl,
     glbBlobPath,
+    activeCharacterModelType,
+    characterBundle,
     activeCharacterSource: 'forge_glb',
     status: 'active_character_selected',
     selectedAt: now,
     updatedAt: now,
     sourceBuildStatus: build.status || null,
     sourceConceptId: build.sourceConceptId || null,
-    note: 'This record is the selected Forge GLB for the landing page and future Village character handoff.'
+    note: 'This record is the selected Forge character bundle for the landing page and future Village character handoff.'
   };
 }
 
