@@ -739,28 +739,49 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       window.lastForge3dBuildResponse = data;
 
+      const buildRequest = data.buildRequest || null;
+      const buildId = buildRequest?.buildId || null;
+
       if (activeButton) {
-        activeButton.textContent = '3D Build Queued ✓';
+        activeButton.textContent = 'Starting Meshy...';
+      }
+
+      if (typeof window.setForgeStatusHtml === 'function') {
+        window.setForgeStatusHtml('<span class="forge-loading-pulse">3D build queued. Starting Meshy generation...</span>', '');
+      }
+
+      const meshyResponse = await fetch('/api/forge-3d-engine-meshy-create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId,
+          buildRequest,
+          generationInput: window.forgeGenerationInput,
+          productionReference: concept,
+          selectedConcept: concept
+        })
+      });
+
+      const meshyData = await meshyResponse.json();
+
+      if (!meshyResponse.ok || !meshyData.ok) {
+        throw new Error(meshyData.error || meshyData.detail || 'Meshy task start failed');
+      }
+
+      window.lastForgeMeshyCreateResponse = meshyData;
+
+      if (activeButton) {
+        activeButton.textContent = 'Meshy Started ✓';
       }
 
       if (typeof window.setForgeStatus === 'function') {
-        window.setForgeStatus('Your 3D build request has been queued. The selected production reference will be used for the future GLB character step.', 'success');
+        window.setForgeStatus('3D build queued and Meshy generation started. The status panel will track the model build.', 'success');
       }
 
-      setTimeout(() => {
-        if (activeButton) {
-          activeButton.textContent = originalButtonText || 'Start 3D Build';
-        }
-      }, 2200);
-    } catch(e) {
-      console.warn('Forge 3D build request failed:', e);
-
-      if (activeButton) {
-        activeButton.textContent = 'Queue Failed';
-      }
-
-      if (typeof window.setForgeStatus === 'function') {
-        window.setForgeStatus('Could not queue the 3D build request.', 'error');
+      if (typeof window.renderForge3dBuildStatusPanel === 'function') {
+        window.renderForge3dBuildStatusPanel();
       }
 
       setTimeout(() => {
@@ -768,6 +789,22 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           activeButton.textContent = originalButtonText || 'Start 3D Build';
         }
       }, 2400);
+    } catch(e) {
+      console.warn('Forge 3D build or Meshy start failed:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Start Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not start the 3D build. Please try again.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Start 3D Build';
+        }
+      }, 2600);
     } finally {
       if (typeof window.setForgeGeneratingButton === 'function') {
         window.setForgeGeneratingButton(activeButton, false);
