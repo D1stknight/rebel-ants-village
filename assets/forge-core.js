@@ -1473,7 +1473,79 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     return status || 'Unknown';
   }
 
-   async function renderForge3dBuildStatusPanel() {
+  async function storeForgeGlbInRebelBlob(buildId) {
+    if (!buildId) return;
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Store GLB in Rebel Forge';
+
+    if (activeButton) {
+      activeButton.textContent = 'Storing GLB...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-store-glb', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Could not store GLB in Rebel Forge');
+      }
+
+      window.lastForgeStoreGlbResponse = data;
+
+      if (activeButton) {
+        activeButton.textContent = 'Stored ✓';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('GLB stored in Rebel Forge Blob. This model is now saved under Rebel-controlled storage.', 'success');
+      }
+
+      await renderForge3dBuildStatusPanel();
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store GLB in Rebel Forge';
+          activeButton.disabled = false;
+        }
+      }, 1800);
+    } catch(e) {
+      console.warn('Could not store Forge GLB:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Store Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not store this GLB in Rebel Forge yet.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store GLB in Rebel Forge';
+          activeButton.disabled = false;
+        }
+      }, 2200);
+    }
+  }
+
+  
+    async function renderForge3dBuildStatusPanel() {
     ensure3dBuildStatusStyles();
 
     const panel = ensure3dBuildStatusPanel();
@@ -1503,9 +1575,26 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const created = build.createdAt ? new Date(build.createdAt).toLocaleString() : 'Unknown time';
         const sourceConceptId = build.sourceConceptId || '—';
         const glbUrl = build.output?.glbUrl || build.engine?.glbUrl || '';
+        const rebelGlbUrl = build.output?.rebelGlbUrl || '';
+        const isStoredInRebelBlob =
+          build.status === 'completed_stored_in_rebel_blob' ||
+          build.output?.source === 'rebel_blob' ||
+          Boolean(rebelGlbUrl);
 
-        const glbHtml = glbUrl
+        const openGlbHtml = glbUrl
           ? `<br><a href="${glbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open GLB</a>`
+          : '';
+
+        const downloadGlbHtml = glbUrl
+          ? ` · <a href="${glbUrl}" download style="color:#5ecfca;">Download GLB</a>`
+          : '';
+
+        const storeGlbHtml = glbUrl && !isStoredInRebelBlob
+          ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.storeForgeGlbInRebelBlob('${build.buildId}')">Store GLB in Rebel Forge</button>`
+          : '';
+
+        const storedHtml = isStoredInRebelBlob
+          ? '<br>Storage: Rebel Forge Blob ✓'
           : '';
 
         return `
@@ -1514,7 +1603,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <div class="forge-3d-build-meta">
               Source: ${sourceConceptId}<br>
               Created: ${created}<br>
-              Output: ${glbUrl ? 'GLB Ready' : 'Future GLB Character'}${glbHtml}
+              Output: ${glbUrl ? 'GLB Ready' : 'Future GLB Character'}
+              ${openGlbHtml}${downloadGlbHtml}
+              ${storeGlbHtml}
+              ${storedHtml}
             </div>
           </div>
         `;
@@ -1555,7 +1647,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     renderForge3dBuildStatusPanel();
   }
 
-  window.renderForge3dBuildStatusPanel = renderForge3dBuildStatusPanel;
+   window.renderForge3dBuildStatusPanel = renderForge3dBuildStatusPanel;
+  window.storeForgeGlbInRebelBlob = storeForgeGlbInRebelBlob;
 
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(boot3dBuildStatusPanel, 200);
