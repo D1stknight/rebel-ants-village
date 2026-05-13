@@ -1335,7 +1335,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   cursor: default !important;
 }
 
-      .forge-3d-build-refresh-btn {
+         .forge-3d-build-refresh-btn {
         margin-top: 12px;
         padding: 10px 12px;
         border: 1px solid rgba(94,207,202,.28);
@@ -1347,7 +1347,13 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         text-transform: uppercase;
         cursor: pointer;
       }
-    `;
+
+      .forge-active-confirmed {
+        border-color: rgba(88, 255, 166, .7) !important;
+        background: rgba(88, 255, 166, .16) !important;
+        color: #9dffc7 !important;
+        cursor: default !important;
+      }
 
     document.head.appendChild(style);
   }
@@ -1814,8 +1820,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       window.lastForgeActiveCharacterSaveResponse = data;
 
-      if (activeButton) {
+           if (activeButton) {
         activeButton.textContent = riggedGlbUrl ? 'Rigged Character Active ✓' : 'Active Character ✓';
+        activeButton.disabled = true;
+        activeButton.classList.add('forge-active-confirmed');
       }
 
       if (typeof window.setForgeStatus === 'function') {
@@ -1826,13 +1834,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           'success'
         );
       }
-
-      setTimeout(() => {
-        if (activeButton) {
-          activeButton.textContent = originalButtonText || 'Set as Active Character';
-          activeButton.disabled = false;
-        }
-      }, 2200);
     } catch(e) {
       console.warn('Could not set Forge build as active character:', e);
 
