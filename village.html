@@ -1166,9 +1166,15 @@ const ROT_SNAP_DISTANCE = 0.18;
 function updateAdminBadge(){
   const gpuBadge = document.getElementById('gpuBadge');
   if (gpuBadge) gpuBadge.style.display = adminMode ? 'block' : 'none';
+
   const badge = document.getElementById('adminBadge');
-  if (!badge) return;
-  badge.classList.toggle('on', adminMode);
+  if (badge) {
+    badge.classList.toggle('on', adminMode);
+  }
+
+  if (typeof refreshForgeVillagePreviewToggle === 'function') {
+    refreshForgeVillagePreviewToggle();
+  }
 }
 
 function updateSelectedBadge(){
@@ -1959,13 +1965,7 @@ function setForgeVillagePreviewMode(mode) {
 }
 
 function isForgeVillageDevMode() {
-  const params = new URLSearchParams(window.location.search);
-
-  return (
-    params.get('forgeDev') === '1' ||
-    params.get('admin') === '1' ||
-    localStorage.getItem('forgeVillageDevMode') === '1'
-  );
+  return adminMode === true;
 }
   
 function createForgeVillagePreviewToggle() {
@@ -2041,6 +2041,17 @@ function createForgeVillagePreviewToggle() {
   document.body.appendChild(panel);
 }
 
+function refreshForgeVillagePreviewToggle() {
+  const panel = document.getElementById('forge-village-preview-toggle');
+
+  if (!isForgeVillageDevMode()) {
+    if (panel) panel.remove();
+    return;
+  }
+
+  createForgeVillagePreviewToggle();
+}
+  
 function setForgePlayerVisualTest(enabled) {
   if (enabled) {
     localStorage.setItem('forgePlayerVisualTest', '1');
