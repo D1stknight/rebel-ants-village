@@ -1328,14 +1328,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         margin-top: 6px;
       }
 
-      .forge-active-confirmed {
-  border-color: rgba(88, 255, 166, .7) !important;
-  background: rgba(88, 255, 166, .16) !important;
-  color: #9dffc7 !important;
-  cursor: default !important;
-}
-
-         .forge-3d-build-refresh-btn {
+      .forge-3d-build-refresh-btn {
         margin-top: 12px;
         padding: 10px 12px;
         border: 1px solid rgba(94,207,202,.28);
@@ -1354,10 +1347,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         color: #9dffc7 !important;
         cursor: default !important;
       }
+    `;
 
     document.head.appendChild(style);
   }
-
   function ensure3dBuildStatusPanel() {
     if (!isForgePage()) return null;
 
@@ -1621,7 +1614,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           activeButton.disabled = false;
         }
       }, 1800);
-    } catch(e) {
+     } catch(e) {
       console.warn('Could not store Forge GLB:', e);
 
       if (activeButton) {
@@ -1632,11 +1625,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         window.setForgeStatus('Could not store this GLB in Rebel Forge yet.', 'error');
       }
 
-           if (activeButton) {
-        activeButton.textContent = riggedGlbUrl ? 'Rigged Character Active ✓' : 'Active Character ✓';
-        activeButton.disabled = true;
-        activeButton.classList.add('forge-active-confirmed');
-      }
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store GLB in Rebel Forge';
+          activeButton.disabled = false;
+        }
+      }, 2200);
     }
   }
 
