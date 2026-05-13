@@ -1909,6 +1909,14 @@ function resolveCharacterConfig(rebel) {
     riggedGlbUrl: activeForgeCharacter?.riggedGlbUrl || characterBundle?.riggedGlbUrl || null,
     walkingGlbUrl: activeForgeCharacter?.walkingGlbUrl || characterBundle?.animations?.walking?.glbUrl || null,
     runningGlbUrl: activeForgeCharacter?.runningGlbUrl || characterBundle?.animations?.running?.glbUrl || null,
+    walkingArmatureGlbUrl:
+      activeForgeCharacter?.walkingArmatureGlbUrl ||
+      characterBundle?.armatureAnimations?.walking?.glbUrl ||
+      null,
+    runningArmatureGlbUrl:
+      activeForgeCharacter?.runningArmatureGlbUrl ||
+      characterBundle?.armatureAnimations?.running?.glbUrl ||
+      null,
     characterSource
   };
 }
