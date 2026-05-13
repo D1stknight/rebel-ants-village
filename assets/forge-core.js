@@ -1428,29 +1428,71 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     return data.buildRecord || build;
   }
 
-  async function fetchForge3dBuildsWithMeshyRefresh() {
+  function shouldPollMeshyRigBuild(build) {
+    return Boolean(
+      build &&
+      build.rigging?.provider === 'meshy' &&
+      build.rigging?.taskId &&
+      [
+        'submitted_to_meshy_rigging',
+        'meshy_rigging_pending',
+        'meshy_rigging_in_progress'
+      ].includes(build.status)
+    );
+  }
+
+  async function refreshMeshyRigStatus(build) {
+    const response = await fetch('/api/forge-3d-engine-meshy-rig-status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        buildId: build.buildId,
+        rigTaskId: build.rigging?.taskId
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || data.detail || 'Could not refresh Meshy rigging status');
+    }
+
+    return data.buildRecord || build;
+  }
+
+  
+   async function fetchForge3dBuildsWithMeshyRefresh() {
     const builds = await fetchForge3dBuildsFromServer();
     const refreshedBuilds = [];
 
     for (const build of builds) {
-      if (!shouldPollMeshyBuild(build)) {
-        refreshedBuilds.push(build);
-        continue;
+      let nextBuild = build;
+
+      if (shouldPollMeshyBuild(nextBuild)) {
+        try {
+          nextBuild = await refreshMeshyBuildStatus(nextBuild);
+        } catch(e) {
+          console.warn('Could not refresh Meshy build:', e);
+        }
       }
 
-      try {
-        const refreshedBuild = await refreshMeshyBuildStatus(build);
-        refreshedBuilds.push(refreshedBuild);
-      } catch(e) {
-        console.warn('Could not refresh Meshy build:', e);
-        refreshedBuilds.push(build);
+      if (shouldPollMeshyRigBuild(nextBuild)) {
+        try {
+          nextBuild = await refreshMeshyRigStatus(nextBuild);
+        } catch(e) {
+          console.warn('Could not refresh Meshy rigging build:', e);
+        }
       }
+
+      refreshedBuilds.push(nextBuild);
     }
 
     return refreshedBuilds;
   }
 
-   function formatBuildStatus(status, build = null) {
+     function formatBuildStatus(status, build = null) {
     if (status === 'queued_for_future_3d_generation') {
       return 'Queued for Future 3D Generation';
     }
@@ -1465,6 +1507,30 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     if (status === 'meshy_in_progress') {
       return 'Meshy In Progress';
+    }
+
+    if (status === 'submitted_to_meshy_rigging') {
+      return 'Submitted to Meshy Rigging';
+    }
+
+    if (status === 'meshy_rigging_pending') {
+      return 'Meshy Rigging Pending';
+    }
+
+    if (status === 'meshy_rigging_in_progress') {
+      return 'Meshy Rigging In Progress';
+    }
+
+    if (status === 'meshy_rigging_completed') {
+      return build?.output?.riggedGlbUrl ? 'Rigged GLB Ready' : 'Meshy Rigging Completed';
+    }
+
+    if (status === 'meshy_rigging_failed') {
+      return 'Meshy Rigging Failed';
+    }
+
+    if (status === 'completed_stored_in_rebel_blob') {
+      return 'Completed — Stored in Rebel Forge';
     }
 
     if (status === 'in_progress') {
@@ -1749,7 +1815,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   }
 
-  async function renderForge3dBuildStatusPanel() {
+   async function renderForge3dBuildStatusPanel() {
     ensure3dBuildStatusStyles();
 
     const panel = ensure3dBuildStatusPanel();
@@ -1782,6 +1848,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const rebelGlbUrl = build.output?.rebelGlbUrl || '';
         const activeGlbUrl = rebelGlbUrl || glbUrl;
         const rigTaskId = build.rigging?.taskId || '';
+        const riggedGlbUrl = build.output?.riggedGlbUrl || build.rigging?.riggedGlbUrl || '';
         const isStoredInRebelBlob =
           build.status === 'completed_stored_in_rebel_blob' ||
           build.output?.source === 'rebel_blob' ||
@@ -1808,7 +1875,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           : '';
 
         const rigStatusHtml = rigTaskId
-          ? `<br>Rigging: Meshy task submitted ✓`
+          ? `<br>Rigging: ${formatBuildStatus(build.status, build)} ✓`
+          : '';
+
+        const riggedGlbHtml = riggedGlbUrl
+          ? `<br><a href="${riggedGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open Rigged GLB</a> · <a href="${riggedGlbUrl}" download style="color:#5ecfca;">Download Rigged GLB</a>`
           : '';
 
         const storedHtml = isStoredInRebelBlob
@@ -1828,6 +1899,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
               ${rigTestHtml}
               ${storedHtml}
               ${rigStatusHtml}
+              ${riggedGlbHtml}
             </div>
           </div>
         `;
