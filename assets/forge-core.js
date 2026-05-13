@@ -1628,7 +1628,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   }
 
-    async function setForgeBuildAsActiveCharacter(buildId) {
+     async function setForgeBuildAsActiveCharacter(buildId) {
     if (!buildId) return;
 
     const builds = window.lastForge3dBuildListResponse?.builds || [];
@@ -1641,11 +1641,20 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       return;
     }
 
-    const activeGlbUrl =
+    const riggedGlbUrl =
+      build.output?.riggedGlbUrl ||
+      build.rigging?.riggedGlbUrl ||
+      build.rigging?.response?.result?.rigged_character_glb_url ||
+      '';
+
+    const staticGlbUrl =
       build.output?.rebelGlbUrl ||
       build.output?.glbUrl ||
       build.engine?.glbUrl ||
       '';
+
+    const activeGlbUrl = riggedGlbUrl || staticGlbUrl;
+    const activeCharacterModelType = riggedGlbUrl ? 'rigged_forge_glb' : 'static_forge_glb';
 
     if (!activeGlbUrl) {
       if (typeof window.setForgeStatus === 'function') {
@@ -1674,7 +1683,16 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          build,
+          build: {
+            ...build,
+            activeCharacterModelType,
+            activeGlbUrl,
+            output: {
+              ...(build.output || {}),
+              activeGlbUrl,
+              activeCharacterModelType
+            }
+          },
           buildId: build.buildId,
           tokenId: build.tokenId || null,
           rebelId: build.rebelId || null,
@@ -1693,11 +1711,16 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       window.lastForgeActiveCharacterSaveResponse = data;
 
       if (activeButton) {
-        activeButton.textContent = 'Active Character ✓';
+        activeButton.textContent = riggedGlbUrl ? 'Rigged Character Active ✓' : 'Active Character ✓';
       }
 
       if (typeof window.setForgeStatus === 'function') {
-        window.setForgeStatus('This Forge GLB is now set as the active character for the future landing page and Village handoff.', 'success');
+        window.setForgeStatus(
+          riggedGlbUrl
+            ? 'The rigged Forge GLB is now set as the active character for the landing page and Village handoff.'
+            : 'This Forge GLB is now set as the active character for the future landing page and Village handoff.',
+          'success'
+        );
       }
 
       setTimeout(() => {
