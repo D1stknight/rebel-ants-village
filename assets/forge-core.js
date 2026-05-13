@@ -1553,8 +1553,105 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   }
 
+    async function setForgeBuildAsActiveCharacter(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build to set as active.', 'error');
+      }
+      return;
+    }
+
+    const activeGlbUrl =
+      build.output?.rebelGlbUrl ||
+      build.output?.glbUrl ||
+      build.engine?.glbUrl ||
+      '';
+
+    if (!activeGlbUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('This 3D build does not have a GLB ready yet.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Set as Active Character';
+
+    if (activeButton) {
+      activeButton.textContent = 'Setting Active...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-active-character-save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          build,
+          buildId: build.buildId,
+          tokenId: build.tokenId || null,
+          rebelId: build.rebelId || null,
+          collectionKey: build.collectionKey || 'battle_for_colony',
+          activeGlbUrl,
+          glbBlobPath: build.output?.glbBlobPath || null
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Could not set active character');
+      }
+
+      window.lastForgeActiveCharacterSaveResponse = data;
+
+      if (activeButton) {
+        activeButton.textContent = 'Active Character ✓';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('This Forge GLB is now set as the active character for the future landing page and Village handoff.', 'success');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Set as Active Character';
+          activeButton.disabled = false;
+        }
+      }, 2200);
+    } catch(e) {
+      console.warn('Could not set Forge build as active character:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Set Active Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not set this GLB as the active character yet.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Set as Active Character';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
   
-    async function renderForge3dBuildStatusPanel() {
+  async function renderForge3dBuildStatusPanel() {
     ensure3dBuildStatusStyles();
 
     const panel = ensure3dBuildStatusPanel();
@@ -1585,21 +1682,26 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const sourceConceptId = build.sourceConceptId || '—';
         const glbUrl = build.output?.glbUrl || build.engine?.glbUrl || '';
         const rebelGlbUrl = build.output?.rebelGlbUrl || '';
+        const activeGlbUrl = rebelGlbUrl || glbUrl;
         const isStoredInRebelBlob =
           build.status === 'completed_stored_in_rebel_blob' ||
           build.output?.source === 'rebel_blob' ||
           Boolean(rebelGlbUrl);
 
-        const openGlbHtml = glbUrl
-          ? `<br><a href="${glbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open GLB</a>`
+        const openGlbHtml = activeGlbUrl
+          ? `<br><a href="${activeGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open GLB</a>`
           : '';
 
-        const downloadGlbHtml = glbUrl
-          ? ` · <a href="${glbUrl}" download style="color:#5ecfca;">Download GLB</a>`
+        const downloadGlbHtml = activeGlbUrl
+          ? ` · <a href="${activeGlbUrl}" download style="color:#5ecfca;">Download GLB</a>`
           : '';
 
         const storeGlbHtml = glbUrl && !isStoredInRebelBlob
           ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.storeForgeGlbInRebelBlob('${build.buildId}')">Store GLB in Rebel Forge</button>`
+          : '';
+
+        const setActiveHtml = activeGlbUrl
+          ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Set as Active Character</button>`
           : '';
 
         const storedHtml = isStoredInRebelBlob
@@ -1612,9 +1714,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <div class="forge-3d-build-meta">
               Source: ${sourceConceptId}<br>
               Created: ${created}<br>
-              Output: ${glbUrl ? 'GLB Ready' : 'Future GLB Character'}
+              Output: ${activeGlbUrl ? 'GLB Ready' : 'Future GLB Character'}
               ${openGlbHtml}${downloadGlbHtml}
               ${storeGlbHtml}
+              ${setActiveHtml}
               ${storedHtml}
             </div>
           </div>
@@ -1656,8 +1759,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     renderForge3dBuildStatusPanel();
   }
 
-   window.renderForge3dBuildStatusPanel = renderForge3dBuildStatusPanel;
+    window.renderForge3dBuildStatusPanel = renderForge3dBuildStatusPanel;
   window.storeForgeGlbInRebelBlob = storeForgeGlbInRebelBlob;
+  window.setForgeBuildAsActiveCharacter = setForgeBuildAsActiveCharacter;
 
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(boot3dBuildStatusPanel, 200);
