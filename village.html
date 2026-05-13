@@ -2520,6 +2520,128 @@ window.inspectForgeArmatureGlb = async function(glbUrl) {
   return inspection;
 };
 
+window.testForgeArmatureRetarget = async function(riggedGlbUrl, armatureGlbUrl) {
+  if (!riggedGlbUrl || !armatureGlbUrl) {
+    console.warn('Missing riggedGlbUrl or armatureGlbUrl');
+    return null;
+  }
+
+  console.log('Testing Forge armature retarget:', {
+    riggedGlbUrl,
+    armatureGlbUrl
+  });
+
+  const riggedResult = await BABYLON.SceneLoader.ImportMeshAsync("", "", riggedGlbUrl, scene);
+  const armatureResult = await BABYLON.SceneLoader.ImportMeshAsync("", "", armatureGlbUrl, scene);
+
+  const riggedSkeleton = riggedResult.skeletons?.[0] || null;
+  const armatureAnimation = armatureResult.animationGroups?.[0] || null;
+
+  if (!riggedSkeleton || !armatureAnimation) {
+    console.warn('Missing rigged skeleton or armature animation group:', {
+      riggedSkeleton,
+      armatureAnimation
+    });
+
+    return null;
+  }
+
+  const testRoot = new BABYLON.TransformNode("forgeRetargetTestRoot", scene);
+  testRoot.position = new BABYLON.Vector3(5.8, 0.12, 20);
+  testRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+
+  riggedResult.meshes.forEach((mesh) => {
+    if (!mesh || mesh === testRoot) return;
+
+    mesh.parent = testRoot;
+
+    if (mesh.rotationQuaternion) {
+      mesh.rotationQuaternion = null;
+    }
+
+    mesh.receiveShadows = true;
+
+    if (typeof shadows !== 'undefined' && shadows && mesh.getTotalVertices && mesh.getTotalVertices() > 0) {
+      shadows.addShadowCaster(mesh);
+    }
+  });
+
+  riggedResult.transformNodes.forEach((node) => {
+    if (!node || node === testRoot) return;
+
+    node.parent = testRoot;
+
+    if (node.rotationQuaternion) {
+      node.rotationQuaternion = null;
+    }
+  });
+
+  testRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+  const bounds = testRoot.getHierarchyBoundingVectors(true);
+  const height = Math.max(bounds.max.y - bounds.min.y, 0.001);
+  const targetHeight = 3.8;
+  const scale = targetHeight / height;
+
+  testRoot.scaling = new BABYLON.Vector3(scale, scale, scale);
+
+  const normalizedBounds = testRoot.getHierarchyBoundingVectors(true);
+  testRoot.position.y += 0.12 - normalizedBounds.min.y;
+
+  armatureResult.meshes.forEach((mesh) => {
+    mesh.isVisible = false;
+    mesh.setEnabled(false);
+  });
+
+  armatureResult.transformNodes.forEach((node) => {
+    node.setEnabled(false);
+  });
+
+  let retargetedCount = 0;
+  let missedCount = 0;
+  const missedTargets = [];
+
+  armatureAnimation.targetedAnimations.forEach((targetedAnimation) => {
+    const targetName = targetedAnimation.target?.name || '';
+    const matchingBone = riggedSkeleton.bones.find((bone) => bone.name === targetName);
+
+    if (matchingBone) {
+      targetedAnimation.target = matchingBone._linkedTransformNode || matchingBone;
+      retargetedCount++;
+    } else {
+      missedCount++;
+      if (targetName) missedTargets.push(targetName);
+    }
+  });
+
+  armatureAnimation.stop();
+  armatureAnimation.start(true);
+
+  window.forgeRetargetTest = {
+    riggedGlbUrl,
+    armatureGlbUrl,
+    testRoot,
+    riggedResult,
+    armatureResult,
+    riggedSkeleton,
+    armatureAnimation,
+    retargetedCount,
+    missedCount,
+    missedTargets: [...new Set(missedTargets)]
+  };
+
+  console.log('Forge armature retarget test started:', {
+    animationName: armatureAnimation.name,
+    riggedSkeletonName: riggedSkeleton.name,
+    riggedBoneCount: riggedSkeleton.bones.length,
+    retargetedCount,
+    missedCount,
+    missedTargets: [...new Set(missedTargets)]
+  });
+
+  return window.forgeRetargetTest;
+};
+    
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
 let _signTriggers = [];
