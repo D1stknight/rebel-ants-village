@@ -345,36 +345,44 @@ body{
         <pre id="generation-snapshot">Loading Forge input...</pre>
       </div>
 
-      <div id="forge-progress-guide" style="padding:14px; border:1px solid rgba(94,207,202,.22); background:rgba(94,207,202,.055); border-radius:18px;">
+           <div id="forge-progress-guide" style="padding:14px; border:1px solid rgba(94,207,202,.22); background:rgba(94,207,202,.055); border-radius:18px;">
         <div class="section-title" style="font-size:14px;">Forge Progress</div>
         <div class="section-copy" style="margin-top:8px;">
           Follow the path from concept art to a saved 3D character build.
         </div>
 
-        <div style="display:grid; gap:8px; margin-top:12px;">
-          <div style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+        <div id="forge-progress-steps" style="display:grid; gap:8px; margin-top:12px;">
+          <div class="forge-progress-step" data-forge-step="concept" style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+            <span class="forge-progress-step-status" style="width:18px; color:#5ecfca;">○</span>
             <span style="color:#5ecfca;">01</span>
             <span>Generate a full-body concept</span>
           </div>
-          <div style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+
+          <div class="forge-progress-step" data-forge-step="saved" style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+            <span class="forge-progress-step-status" style="width:18px; color:#5ecfca;">○</span>
             <span style="color:#5ecfca;">02</span>
             <span>Save your favorite version</span>
           </div>
-          <div style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+
+          <div class="forge-progress-step" data-forge-step="production" style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+            <span class="forge-progress-step-status" style="width:18px; color:#5ecfca;">○</span>
             <span style="color:#5ecfca;">03</span>
             <span>Create a clean 3D production reference</span>
           </div>
-          <div style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+
+          <div class="forge-progress-step" data-forge-step="build" style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+            <span class="forge-progress-step-status" style="width:18px; color:#5ecfca;">○</span>
             <span style="color:#5ecfca;">04</span>
             <span>Start the 3D build</span>
           </div>
-          <div style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+
+          <div class="forge-progress-step" data-forge-step="glb" style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+            <span class="forge-progress-step-status" style="width:18px; color:#5ecfca;">○</span>
             <span style="color:#5ecfca;">05</span>
             <span>Preview, download, or use the GLB later</span>
           </div>
         </div>
       </div>
-
       <div id="forge-actions">
         <button class="action-btn" id="generate-btn" type="button" onclick="generatePreviewStub()">Generate Full-Body Preview</button>
         <button class="action-btn" id="enter-village-btn" type="button" onclick="window.location.href='village.html'">Enter Village</button>
@@ -1560,6 +1568,93 @@ hydrateForgeScreen(selectedRebel, forgeGenerationInput);
 migrateForgeConceptImagesToIndexedDb().then(() => {
   renderForgeConceptGallery({ syncServer: true });
 });
+
+function getForgeProgressState() {
+  const previewImage = document.getElementById('fullbody-preview-image');
+  const previewHasImage = Boolean(
+    previewImage &&
+    previewImage.src &&
+    !previewImage.src.endsWith('#')
+  );
+
+  const concepts =
+    typeof loadForgeConcepts === 'function'
+      ? loadForgeConcepts()
+      : [];
+
+  const hasSavedConcept = concepts.length > 0;
+
+  const hasProductionReference = concepts.some((concept) => {
+    return (
+      concept.forgeMode === 'production_reference' ||
+      concept.conceptType === 'production_reference' ||
+      concept.variantIntent === 'clean_3d_production_reference'
+    );
+  });
+
+  const builds = window.lastForge3dBuildListResponse?.builds || [];
+  const has3dBuild = builds.length > 0;
+
+  const hasGlb = builds.some((build) => {
+    return Boolean(
+      build?.output?.glbUrl ||
+      build?.engine?.glbUrl ||
+      build?.output?.rebelGlbUrl
+    );
+  });
+
+  return {
+    concept: previewHasImage || hasSavedConcept,
+    saved: hasSavedConcept,
+    production: hasProductionReference,
+    build: has3dBuild,
+    glb: hasGlb
+  };
+}
+
+function updateForgeProgressGuide() {
+  const steps = Array.from(document.querySelectorAll('.forge-progress-step'));
+  if (!steps.length) return;
+
+  const state = getForgeProgressState();
+  const order = ['concept', 'saved', 'production', 'build', 'glb'];
+  const firstIncomplete = order.find((key) => !state[key]) || null;
+
+  steps.forEach((step) => {
+    const key = step.dataset.forgeStep;
+    const status = step.querySelector('.forge-progress-step-status');
+    if (!status) return;
+
+    const isDone = state[key] === true;
+    const isCurrent = !isDone && key === firstIncomplete;
+
+    if (isDone) {
+      status.textContent = '✓';
+      step.style.opacity = '1';
+      step.style.color = '#f3e6bf';
+      step.style.borderLeft = '2px solid rgba(94,207,202,.7)';
+      step.style.paddingLeft = '8px';
+    } else if (isCurrent) {
+      status.textContent = '→';
+      step.style.opacity = '1';
+      step.style.color = '#f3e6bf';
+      step.style.borderLeft = '2px solid rgba(200,146,42,.7)';
+      step.style.paddingLeft = '8px';
+    } else {
+      status.textContent = '○';
+      step.style.opacity = '.52';
+      step.style.color = 'rgba(243,230,191,.68)';
+      step.style.borderLeft = '2px solid transparent';
+      step.style.paddingLeft = '8px';
+    }
+  });
+}
+
+window.updateForgeProgressGuide = updateForgeProgressGuide;
+
+setInterval(updateForgeProgressGuide, 1200);
+setTimeout(updateForgeProgressGuide, 300);
+  
 </script>
 
 </body>
