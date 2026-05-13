@@ -1316,10 +1316,29 @@ function setForgeGeneratingButton(button, isLoading) {
         100% { opacity: .55; transform: scale(1); }
       }
 
-      .forge-button-loading {
+           .forge-button-loading {
         animation: forgeButtonPulse 1s ease-in-out infinite;
         pointer-events: none;
         filter: brightness(1.15);
+      }
+
+      .forge-busy-disabled,
+      #forge-right button:disabled,
+      #forge-actions button:disabled,
+      #forge-preview-actions button:disabled,
+      #forge-selected-concept-panel button:disabled,
+      #forge-3d-build-status-panel button:disabled {
+        opacity: .38 !important;
+        filter: grayscale(1) brightness(.65) !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+
+      .forge-button-loading:disabled {
+        opacity: .8 !important;
+        filter: brightness(1.15) !important;
+        grayscale: 0 !important;
       }
     `;
     document.head.appendChild(style);
@@ -1371,6 +1390,45 @@ function setForgeBusy(isBusy, activeButton = null) {
   }
 }
 
+function getForgeBusyButtons() {
+  return Array.from(document.querySelectorAll(`
+    #forge-right button,
+    #forge-actions button,
+    #forge-preview-actions button,
+    #forge-mode-selector button,
+    #forge-variant-intent-panel button,
+    #forge-selected-concept-panel button,
+    #forge-3d-build-status-panel button
+  `));
+}
+
+function setForgeBusy(isBusy, activeButton = null) {
+  window.forgeBusy = isBusy === true;
+
+  getForgeBusyButtons().forEach((button) => {
+    if (!button) return;
+
+    if (isBusy) {
+      if (!button.dataset.forgePrevDisabled) {
+        button.dataset.forgePrevDisabled = button.disabled ? '1' : '0';
+      }
+
+      button.disabled = true;
+      button.classList.add('forge-busy-disabled');
+    } else {
+      const wasDisabled = button.dataset.forgePrevDisabled === '1';
+      button.disabled = wasDisabled;
+      button.classList.remove('forge-busy-disabled');
+      delete button.dataset.forgePrevDisabled;
+    }
+  });
+
+  if (activeButton && isBusy) {
+    activeButton.disabled = true;
+    activeButton.classList.remove('forge-busy-disabled');
+  }
+}
+   
 async function generatePreviewStub() {
   if (window.forgeBusy) {
     setForgeStatus('Forge is already working. Please wait for the current action to finish.', 'error');
@@ -1394,7 +1452,15 @@ async function generatePreviewStub() {
 
   ensureForgeLoadingStyles();
 
+    if (window.forgeBusy) {
+    setForgeStatus('Forge is already working. Please wait for the current action to finish.', 'error');
+    return;
+  }
+
   setForgeBusy(true, clickedButton);
+
+  setForgeBusy(true, clickedButton);
+  
   setForgeStatusHtml('<span class="forge-loading-pulse">Generating full-body Rebel preview... this can take a moment.</span>', '');
 
   if (button) button.disabled = true;
