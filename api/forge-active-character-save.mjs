@@ -62,6 +62,10 @@ function sanitizeActiveCharacterPayload(payload) {
 
   const output = build.output || {};
   const storedAnimations = output.storedAnimations || build.rigging?.storedAnimations || {};
+  const storedArmatureAnimations =
+    output.storedArmatureAnimations ||
+    build.rigging?.storedArmatureAnimations ||
+    {};
 
   const riggedGlbUrl =
     output.riggedRebelGlbUrl ||
@@ -85,6 +89,16 @@ function sanitizeActiveCharacterPayload(payload) {
   const runningGlbUrl =
     output.runningGlbUrl ||
     storedAnimations.running?.storedAnimationUrl ||
+    null;
+
+  const walkingArmatureGlbUrl =
+    output.walkingArmatureGlbUrl ||
+    storedArmatureAnimations.walking_armature?.storedAnimationUrl ||
+    null;
+
+  const runningArmatureGlbUrl =
+    output.runningArmatureGlbUrl ||
+    storedArmatureAnimations.running_armature?.storedAnimationUrl ||
     null;
 
   const activeGlbUrl =
@@ -148,6 +162,24 @@ function sanitizeActiveCharacterPayload(payload) {
             source: 'rebel_blob'
           }
         : null
+    },
+    armatureAnimations: {
+      walking: walkingArmatureGlbUrl
+        ? {
+            name: 'walking',
+            glbUrl: walkingArmatureGlbUrl,
+            source: 'rebel_blob',
+            animationType: 'armature_only'
+          }
+        : null,
+      running: runningArmatureGlbUrl
+        ? {
+            name: 'running',
+            glbUrl: runningArmatureGlbUrl,
+            source: 'rebel_blob',
+            animationType: 'armature_only'
+          }
+        : null
     }
   };
 
@@ -163,6 +195,8 @@ function sanitizeActiveCharacterPayload(payload) {
     riggedGlbUrl,
     walkingGlbUrl,
     runningGlbUrl,
+    walkingArmatureGlbUrl,
+    runningArmatureGlbUrl,
     glbBlobPath,
     activeCharacterModelType,
     characterBundle,
