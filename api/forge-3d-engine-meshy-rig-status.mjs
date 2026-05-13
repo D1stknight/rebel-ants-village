@@ -78,6 +78,8 @@ function normalizeRigStatus(status) {
 
 function extractRiggedModelUrl(meshyData) {
   return (
+    meshyData?.result?.rigged_character_glb_url ||
+    meshyData?.rigged_character_glb_url ||
     meshyData?.rigged_model_url ||
     meshyData?.model_url ||
     meshyData?.model_urls?.glb ||
@@ -85,6 +87,7 @@ function extractRiggedModelUrl(meshyData) {
     meshyData?.result?.rigged_model_url ||
     meshyData?.result?.model_url ||
     meshyData?.result?.model_urls?.glb ||
+    meshyData?.output?.rigged_character_glb_url ||
     meshyData?.output?.rigged_model_url ||
     meshyData?.output?.model_url ||
     meshyData?.output?.model_urls?.glb ||
