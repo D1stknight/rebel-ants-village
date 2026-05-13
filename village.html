@@ -1875,6 +1875,7 @@ function resolveCharacterConfig(rebel) {
   const bundle = CHARACTER_REGISTRY[requestedBundleId] || CHARACTER_REGISTRY.starter_ant;
   const activeForgeCharacter = rebel?.activeForgeCharacter || null;
   const activeGlbUrl = rebel?.activeGlbUrl || activeForgeCharacter?.activeGlbUrl || null;
+  const activeForgeBuildId = activeForgeCharacter?.activeForgeBuildId || null;
   const characterSource = activeGlbUrl ? 'forge_glb' : 'starter_bundle';
 
   return {
@@ -1883,6 +1884,8 @@ function resolveCharacterConfig(rebel) {
     displayName: rebel.name || 'Rebel #001',
     previewImage: rebel.image || 'assets/lobby/ant_1.JPG',
     tokenId: rebel.tokenId || null,
+    collectionKey: rebel.collectionKey || 'battle_for_colony',
+    rebelId: rebel.rebelId || rebel.id || null,
     characterRecord,
     bundleId: bundle.bundleId,
     formType: bundle.formType,
@@ -1892,10 +1895,57 @@ function resolveCharacterConfig(rebel) {
     idleFile: bundle.idleFile,
     animations: bundle.animations,
     activeForgeCharacter,
+    activeForgeBuildId,
     activeGlbUrl,
     characterSource
   };
 }
+
+async function resolveForgePreviewGlbUrlForVillage(activeCharacter) {
+  const fallbackGlbUrl = activeCharacter?.activeGlbUrl || '';
+
+  if (!activeCharacter?.activeForgeBuildId) {
+    return fallbackGlbUrl;
+  }
+
+  try {
+    const params = new URLSearchParams({
+      collectionKey: activeCharacter.collectionKey || 'battle_for_colony'
+    });
+
+    if (activeCharacter.tokenId) {
+      params.set('tokenId', activeCharacter.tokenId);
+    } else if (activeCharacter.rebelId) {
+      params.set('rebelId', activeCharacter.rebelId);
+    }
+
+    const response = await fetch(`/api/forge-builds-list?${params.toString()}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.ok || !Array.isArray(data.builds)) {
+      return fallbackGlbUrl;
+    }
+
+    const build = data.builds.find((item) => item.buildId === activeCharacter.activeForgeBuildId);
+
+    const walkingGlbUrl =
+      build?.output?.walkingGlbUrl ||
+      build?.output?.storedAnimations?.walking?.storedAnimationUrl ||
+      build?.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
+      '';
+
+    if (walkingGlbUrl) {
+      console.log('Village Forge preview using stored walking GLB:', walkingGlbUrl);
+      return walkingGlbUrl;
+    }
+
+    return fallbackGlbUrl;
+  } catch(e) {
+    console.warn('Could not resolve Forge walking preview GLB:', e);
+    return fallbackGlbUrl;
+  }
+}
+  
 function hydrateSelectedRebelPanel(character) {
   const image = document.getElementById('selectedRebelImage');
   const name = document.getElementById('selectedRebelName');
@@ -2180,8 +2230,10 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
   window.followLight.intensity = 2.8; window.followLight.range = 22;
    setSt("Character ready!");
 
-  if (activeCharacter.activeGlbUrl) {
-    loadForgePreviewModelInVillage(activeCharacter.activeGlbUrl).then((previewRoot) => {
+   if (activeCharacter.activeGlbUrl) {
+    resolveForgePreviewGlbUrlForVillage(activeCharacter).then((previewGlbUrl) => {
+      return loadForgePreviewModelInVillage(previewGlbUrl);
+    }).then((previewRoot) => {
       if (previewRoot) {
         console.log('Forge preview model is visible beside the playable character.');
       }
