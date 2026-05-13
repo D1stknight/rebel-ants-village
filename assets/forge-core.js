@@ -1362,7 +1362,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     return panel;
   }
 
-  async function fetchForge3dBuildsFromServer() {
+   async function fetchForge3dBuildsFromServer() {
     const collectionKey = window.forgeGenerationInput?.collectionKey || 'battle_for_colony';
     const tokenId = window.forgeGenerationInput?.tokenId || '';
     const rebelId = window.forgeGenerationInput?.rebelId || '';
@@ -1385,9 +1385,77 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     return Array.isArray(data.builds) ? data.builds : [];
   }
 
-  function formatBuildStatus(status) {
+  function shouldPollMeshyBuild(build) {
+    return Boolean(
+      build &&
+      build.engine?.provider === 'meshy' &&
+      build.engine?.taskId &&
+      [
+        'submitted_to_meshy',
+        'meshy_pending',
+        'meshy_in_progress'
+      ].includes(build.status)
+    );
+  }
+
+  async function refreshMeshyBuildStatus(build) {
+    const response = await fetch('/api/forge-3d-engine-meshy-status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        buildId: build.buildId,
+        meshyTaskId: build.engine?.taskId
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || data.detail || 'Could not refresh Meshy build status');
+    }
+
+    return data.buildRecord || build;
+  }
+
+  async function fetchForge3dBuildsWithMeshyRefresh() {
+    const builds = await fetchForge3dBuildsFromServer();
+    const refreshedBuilds = [];
+
+    for (const build of builds) {
+      if (!shouldPollMeshyBuild(build)) {
+        refreshedBuilds.push(build);
+        continue;
+      }
+
+      try {
+        const refreshedBuild = await refreshMeshyBuildStatus(build);
+        refreshedBuilds.push(refreshedBuild);
+      } catch(e) {
+        console.warn('Could not refresh Meshy build:', e);
+        refreshedBuilds.push(build);
+      }
+    }
+
+    return refreshedBuilds;
+  }
+
+   function formatBuildStatus(status, build = null) {
     if (status === 'queued_for_future_3d_generation') {
       return 'Queued for Future 3D Generation';
+    }
+
+    if (status === 'submitted_to_meshy') {
+      return 'Submitted to Meshy';
+    }
+
+    if (status === 'meshy_pending') {
+      return 'Meshy Pending';
+    }
+
+    if (status === 'meshy_in_progress') {
+      return 'Meshy In Progress';
     }
 
     if (status === 'in_progress') {
@@ -1395,7 +1463,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
 
     if (status === 'completed') {
-      return 'Completed';
+      return build?.output?.glbUrl ? 'Completed — GLB Ready' : 'Completed';
     }
 
     if (status === 'failed') {
@@ -1405,7 +1473,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     return status || 'Unknown';
   }
 
-  async function renderForge3dBuildStatusPanel() {
+   async function renderForge3dBuildStatusPanel() {
     ensure3dBuildStatusStyles();
 
     const panel = ensure3dBuildStatusPanel();
@@ -1414,10 +1482,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     if (!panel || !content) return;
 
     content.className = 'forge-3d-build-empty';
-    content.innerHTML = 'Loading 3D build status...';
+    content.innerHTML = 'Checking 3D build status...';
 
     try {
-      const builds = await fetchForge3dBuildsFromServer();
+      const builds = await fetchForge3dBuildsWithMeshyRefresh();
       window.lastForge3dBuildListResponse = {
         ok: true,
         builds
@@ -1431,9 +1499,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       content.className = 'forge-3d-build-list';
       content.innerHTML = builds.slice(0, 5).map((build, index) => {
-        const statusText = formatBuildStatus(build.status);
+        const statusText = formatBuildStatus(build.status, build);
         const created = build.createdAt ? new Date(build.createdAt).toLocaleString() : 'Unknown time';
         const sourceConceptId = build.sourceConceptId || '—';
+        const glbUrl = build.output?.glbUrl || build.engine?.glbUrl || '';
+
+        const glbHtml = glbUrl
+          ? `<br><a href="${glbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open GLB</a>`
+          : '';
 
         return `
           <div class="forge-3d-build-row">
@@ -1441,7 +1514,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <div class="forge-3d-build-meta">
               Source: ${sourceConceptId}<br>
               Created: ${created}<br>
-              Output: Future GLB Character
+              Output: ${glbUrl ? 'GLB Ready' : 'Future GLB Character'}${glbHtml}
             </div>
           </div>
         `;
@@ -1458,7 +1531,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       content.innerHTML = 'Could not load 3D build status yet.';
     }
   }
-
   function wrapStartForge3dBuild() {
     const original = window.startForge3dBuild;
 
