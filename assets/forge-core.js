@@ -1628,6 +1628,104 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   }
 
+  async function storeForgeRiggedGlbInRebelBlob(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build to store the rigged GLB.', 'error');
+      }
+      return;
+    }
+
+    const riggedGlbUrl =
+      build.output?.riggedRebelGlbUrl ||
+      build.output?.riggedGlbUrl ||
+      build.rigging?.riggedRebelGlbUrl ||
+      build.rigging?.riggedGlbUrl ||
+      build.rigging?.response?.result?.rigged_character_glb_url ||
+      '';
+
+    if (!riggedGlbUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('This build does not have a rigged GLB ready to store yet.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Store Rigged GLB in Rebel Forge';
+
+    if (activeButton) {
+      activeButton.textContent = 'Storing Rigged GLB...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-store-rigged-glb', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId,
+          riggedGlbUrl
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Could not store rigged GLB in Rebel Forge');
+      }
+
+      window.lastForgeStoreRiggedGlbResponse = data;
+
+      if (activeButton) {
+        activeButton.textContent = 'Rigged GLB Stored ✓';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Rigged GLB stored in Rebel Forge Blob. Set it as active again before entering the Village.', 'success');
+      }
+
+      await renderForge3dBuildStatusPanel();
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store Rigged GLB in Rebel Forge';
+          activeButton.disabled = false;
+        }
+      }, 2200);
+    } catch(e) {
+      console.warn('Could not store rigged Forge GLB:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Store Rigged Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not store the rigged GLB in Rebel Forge yet.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store Rigged GLB in Rebel Forge';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
+  
      async function setForgeBuildAsActiveCharacter(buildId) {
     if (!buildId) return;
 
@@ -1879,12 +1977,29 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const glbUrl = build.output?.glbUrl || build.engine?.glbUrl || '';
         const rebelGlbUrl = build.output?.rebelGlbUrl || '';
         const activeGlbUrl = rebelGlbUrl || glbUrl;
-        const rigTaskId = build.rigging?.taskId || '';
-               const riggedGlbUrl =
-          build.output?.riggedGlbUrl ||
-          build.rigging?.riggedGlbUrl ||
+               const rigTaskId = build.rigging?.taskId || '';
+
+        const riggedMeshyGlbUrl =
+          build.output?.riggedMeshyGlbUrl ||
           build.rigging?.response?.result?.rigged_character_glb_url ||
           '';
+
+        const riggedRebelGlbUrl =
+          build.output?.riggedRebelGlbUrl ||
+          build.rigging?.riggedRebelGlbUrl ||
+          '';
+
+        const riggedGlbUrl =
+          riggedRebelGlbUrl ||
+          build.output?.riggedGlbUrl ||
+          build.rigging?.riggedGlbUrl ||
+          riggedMeshyGlbUrl ||
+          '';
+
+        const isRiggedStoredInRebelBlob =
+          build.status === 'rigged_glb_stored_in_rebel_blob' ||
+          build.output?.riggedSource === 'rebel_blob' ||
+          Boolean(riggedRebelGlbUrl);
         const isStoredInRebelBlob =
           build.status === 'completed_stored_in_rebel_blob' ||
           build.output?.source === 'rebel_blob' ||
@@ -1914,14 +2029,21 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           ? `<br>Rigging: ${formatBuildStatus(build.status, build)} ✓`
           : '';
 
-        const riggedGlbHtml = riggedGlbUrl
+              const riggedGlbHtml = riggedGlbUrl
           ? `<br><a href="${riggedGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open Rigged GLB</a> · <a href="${riggedGlbUrl}" download style="color:#5ecfca;">Download Rigged GLB</a>`
+          : '';
+
+        const storeRiggedGlbHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
+          ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.storeForgeRiggedGlbInRebelBlob('${build.buildId}')">Store Rigged GLB in Rebel Forge</button>`
           : '';
 
         const storedHtml = isStoredInRebelBlob
           ? '<br>Storage: Rebel Forge Blob ✓'
           : '';
 
+        const riggedStoredHtml = isRiggedStoredInRebelBlob
+          ? '<br>Rigged Storage: Rebel Forge Blob ✓'
+          : '';
         return `
           <div class="forge-3d-build-row">
             <div class="forge-3d-build-status">${index === 0 ? 'Latest Build — ' : ''}${statusText}</div>
@@ -1933,9 +2055,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
               ${storeGlbHtml}
               ${setActiveHtml}
               ${rigTestHtml}
-              ${storedHtml}
+                           ${storedHtml}
               ${rigStatusHtml}
               ${riggedGlbHtml}
+              ${storeRiggedGlbHtml}
+              ${riggedStoredHtml}
             </div>
           </div>
         `;
@@ -1976,8 +2100,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     renderForge3dBuildStatusPanel();
   }
 
-    window.renderForge3dBuildStatusPanel = renderForge3dBuildStatusPanel;
+     window.renderForge3dBuildStatusPanel = renderForge3dBuildStatusPanel;
   window.storeForgeGlbInRebelBlob = storeForgeGlbInRebelBlob;
+  window.storeForgeRiggedGlbInRebelBlob = storeForgeRiggedGlbInRebelBlob;
   window.setForgeBuildAsActiveCharacter = setForgeBuildAsActiveCharacter;
   window.startMeshyRigTestForBuild = startMeshyRigTestForBuild;
 
