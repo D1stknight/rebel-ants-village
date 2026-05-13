@@ -2018,6 +2018,91 @@ setSt(
     : "Loading " + activeCharacter.displayName + "..."
 );
 let charMesh=null, charAnims={}, isMoving=false;
+
+async function loadForgePreviewModelInVillage(glbUrl) {
+  if (!glbUrl) return null;
+
+  try {
+    console.log('Loading Forge GLB preview in Village:', glbUrl);
+
+    const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", glbUrl, scene);
+
+    const previewRoot = new BABYLON.TransformNode("forgePreviewRoot", scene);
+    previewRoot.position = new BABYLON.Vector3(2.8, 0.12, 20);
+    previewRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+
+    result.meshes.forEach((mesh) => {
+      if (!mesh || mesh === previewRoot) return;
+
+      mesh.parent = previewRoot;
+
+      if (mesh.rotationQuaternion) {
+        mesh.rotationQuaternion = null;
+      }
+
+      mesh.receiveShadows = true;
+
+      if (typeof shadows !== 'undefined' && shadows && mesh.getTotalVertices && mesh.getTotalVertices() > 0) {
+        shadows.addShadowCaster(mesh);
+      }
+    });
+
+    result.transformNodes.forEach((node) => {
+      if (!node || node === previewRoot) return;
+
+      node.parent = previewRoot;
+
+      if (node.rotationQuaternion) {
+        node.rotationQuaternion = null;
+      }
+    });
+
+    previewRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+    const bounds = previewRoot.getHierarchyBoundingVectors(true);
+    const height = Math.max(bounds.max.y - bounds.min.y, 0.001);
+    const targetHeight = 2.1;
+    const scale = targetHeight / height;
+
+    previewRoot.scaling = new BABYLON.Vector3(scale, scale, scale);
+
+    const normalizedBounds = previewRoot.getHierarchyBoundingVectors(true);
+    previewRoot.position.y += 0.12 - normalizedBounds.min.y;
+
+    const labelPlane = BABYLON.MeshBuilder.CreatePlane("forgePreviewLabel", {
+      width: 2.1,
+      height: 0.35
+    }, scene);
+
+    labelPlane.position = new BABYLON.Vector3(2.8, 2.55, 20);
+    labelPlane.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+
+    const labelTexture = new BABYLON.DynamicTexture("forgePreviewLabelTexture", {
+      width: 512,
+      height: 128
+    }, scene, false);
+
+    labelTexture.hasAlpha = true;
+    labelTexture.drawText("FORGE GLB PREVIEW", null, 78, "bold 38px Arial", "#5ecfca", "transparent", true);
+
+    const labelMat = new BABYLON.StandardMaterial("forgePreviewLabelMat", scene);
+    labelMat.diffuseTexture = labelTexture;
+    labelMat.emissiveColor = new BABYLON.Color3(0.25, 0.95, 0.9);
+    labelMat.backFaceCulling = false;
+
+    labelPlane.material = labelMat;
+
+    window.forgePreviewRoot = previewRoot;
+    window.forgePreviewModel = result;
+
+    console.log('Forge GLB preview loaded in Village:', previewRoot);
+
+    return previewRoot;
+  } catch(e) {
+    console.warn('Could not load Forge GLB preview in Village:', e);
+    return null;
+  }
+}
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
 let _signTriggers = [];
@@ -2076,7 +2161,16 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
   courtyardLight.intensity = 1.2;
   courtyardLight.range = 28;
   window.followLight.intensity = 2.8; window.followLight.range = 22;
-  setSt("Character ready!");
+   setSt("Character ready!");
+
+  if (activeCharacter.activeGlbUrl) {
+    loadForgePreviewModelInVillage(activeCharacter.activeGlbUrl).then((previewRoot) => {
+      if (previewRoot) {
+        console.log('Forge preview model is visible beside the playable character.');
+      }
+    });
+  }
+
   activeCharacter.animations.forEach(({f,i}) => {
     BABYLON.SceneLoader.ImportMeshAsync("","/assets/character/",f,scene).then(r2 => {
       r2.meshes.forEach(m=>{m.isVisible=false;m.setEnabled(false);});
