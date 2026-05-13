@@ -1958,7 +1958,18 @@ function setForgeVillagePreviewMode(mode) {
   location.reload();
 }
 
+function isForgeVillageDevMode() {
+  const params = new URLSearchParams(window.location.search);
+
+  return (
+    params.get('forgeDev') === '1' ||
+    params.get('admin') === '1' ||
+    localStorage.getItem('forgeVillageDevMode') === '1'
+  );
+}
+  
 function createForgeVillagePreviewToggle() {
+  if (!isForgeVillageDevMode()) return;
   if (!window.activeCharacter?.activeGlbUrl) return;
   if (document.getElementById('forge-village-preview-toggle')) return;
 
