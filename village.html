@@ -1985,7 +1985,7 @@ function createForgeVillagePreviewToggle() {
     { id: 'running', label: 'Run' }
   ];
 
-  panel.innerHTML = modes.map((mode) => {
+   const modeButtonsHtml = modes.map((mode) => {
     const active = mode.id === currentMode;
 
     return `
@@ -2006,9 +2006,74 @@ function createForgeVillagePreviewToggle() {
     `;
   }).join('');
 
+  const playerVisualTestEnabled = localStorage.getItem('forgePlayerVisualTest') === '1';
+
+  const playerTestButtonHtml = `
+    <button
+      type="button"
+      onclick="setForgePlayerVisualTest(${playerVisualTestEnabled ? 'false' : 'true'})"
+      style="
+        padding: 8px 10px;
+        border: 1px solid ${playerVisualTestEnabled ? 'rgba(88,255,166,.85)' : 'rgba(255,255,255,.18)'};
+        background: ${playerVisualTestEnabled ? 'rgba(88,255,166,.18)' : 'rgba(255,255,255,.06)'};
+        color: ${playerVisualTestEnabled ? '#9dffc7' : '#f3e6bf'};
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        cursor: pointer;
+      "
+    >${playerVisualTestEnabled ? 'Reset Player' : 'Use As Player'}</button>
+  `;
+
+  panel.innerHTML = modeButtonsHtml + playerTestButtonHtml;
+
   document.body.appendChild(panel);
 }
 
+function setForgePlayerVisualTest(enabled) {
+  if (enabled) {
+    localStorage.setItem('forgePlayerVisualTest', '1');
+  } else {
+    localStorage.removeItem('forgePlayerVisualTest');
+  }
+
+  location.reload();
+}
+
+function applyForgePlayerVisualTest(previewRoot) {
+  if (!previewRoot || !charMesh) return;
+  if (localStorage.getItem('forgePlayerVisualTest') !== '1') return;
+
+  console.log('Forge player visual test enabled.');
+
+  charMesh.getChildMeshes(false).forEach((mesh) => {
+    mesh.isVisible = false;
+  });
+
+  previewRoot.position = charMesh.position.clone();
+  previewRoot.rotation = charMesh.rotation.clone();
+
+  if (window.forgePlayerVisualObserver) {
+    scene.onBeforeRenderObservable.remove(window.forgePlayerVisualObserver);
+    window.forgePlayerVisualObserver = null;
+  }
+
+  window.forgePlayerVisualObserver = scene.onBeforeRenderObservable.add(() => {
+    if (!charMesh || !previewRoot) return;
+
+    previewRoot.position.x = charMesh.position.x;
+    previewRoot.position.y = charMesh.position.y;
+    previewRoot.position.z = charMesh.position.z;
+
+    previewRoot.rotation.x = charMesh.rotation.x;
+    previewRoot.rotation.y = charMesh.rotation.y;
+    previewRoot.rotation.z = charMesh.rotation.z;
+  });
+}
+
+window.setForgePlayerVisualTest = setForgePlayerVisualTest;
+
+  
 window.setForgeVillagePreviewMode = setForgeVillagePreviewMode;
 
   
@@ -2296,7 +2361,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
   window.followLight.intensity = 2.8; window.followLight.range = 22;
    setSt("Character ready!");
 
-    if (activeCharacter.activeGlbUrl) {
+     if (activeCharacter.activeGlbUrl) {
     createForgeVillagePreviewToggle();
 
     resolveForgePreviewGlbUrlForVillage(activeCharacter).then((previewGlbUrl) => {
@@ -2304,6 +2369,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
     }).then((previewRoot) => {
       if (previewRoot) {
         console.log('Forge preview model is visible beside the playable character.');
+        applyForgePlayerVisualTest(previewRoot);
       }
     });
   }
