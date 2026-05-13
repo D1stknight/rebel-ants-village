@@ -3075,7 +3075,7 @@ engine.runRenderLoop(()=>{
         charMesh._footOffset = isFinite(_minY) ? (charMesh.position.y - _minY) : 0;
       }
       // Snap feet to ground — origin sits at terrainY + footOffset so feet touch the terrain
-      const _targetY = _tHit.pickedPoint.y + charMesh._footOffset - 3;
+      const _targetY = _tHit.pickedPoint.y + charMesh._footOffset - 2;
       charMesh.position.y += (_targetY - charMesh.position.y) * 0.25;
       charMesh._terrainY = _tHit.pickedPoint.y;
       // Slope tilt removed — character stays upright
