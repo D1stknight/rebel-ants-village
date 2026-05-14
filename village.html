@@ -2898,7 +2898,58 @@ window.testForgeArmatureRetarget = async function(riggedGlbUrl, armatureGlbUrl) 
 
   return window.forgeRetargetTest;
 };
-    
+
+window.compareMainAndForgeSkeletons = function() {
+  function summarizeAnimationGroup(group) {
+    if (!group) return null;
+
+    return {
+      name: group.name,
+      targetCount: group.targetedAnimations?.length || 0,
+      targetNames: [...new Set((group.targetedAnimations || []).map((ta) => ta.target?.name || '(missing target)'))],
+      targetProperties: [...new Set((group.targetedAnimations || []).map((ta) => ta.animation?.targetProperty || '(missing property)'))]
+    };
+  }
+
+  function summarizeSkeleton(label, skeleton, groups) {
+    const summary = {
+      label,
+      skeletonName: skeleton?.name || null,
+      boneCount: skeleton?.bones?.length || 0,
+      boneNames: skeleton?.bones?.map((bone) => bone.name) || [],
+      animationGroups: (groups || []).filter(Boolean).map(summarizeAnimationGroup)
+    };
+
+    console.log(label, summary);
+    return summary;
+  }
+
+  const mainSkeleton =
+    scene.skeletons.find((skeleton) => skeleton.bones?.some((bone) => bone.name === 'mixamorig_Hips')) ||
+    scene.skeletons[0] ||
+    null;
+
+  const forgeSkeleton =
+    window.forgeArmaturePlayerSkeleton ||
+    window.forgePreviewModel?.skeletons?.[0] ||
+    window.forgeArmaturePlayerModel?.skeletons?.[0] ||
+    null;
+
+  const forgeGroups = [
+    ...(window.forgePreviewModel?.animationGroups || []),
+    ...Object.values(window.forgeArmatureAnimationCache || {}).map((entry) => entry.animationGroup)
+  ];
+
+  const result = {
+    mainPlayable: summarizeSkeleton('mainPlayable', mainSkeleton, animGroups || []),
+    forgeRigged: summarizeSkeleton('forgeRigged', forgeSkeleton, forgeGroups)
+  };
+
+  window.lastSkeletonComparison = result;
+
+  return result;
+};
+ 
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
 let _signTriggers = [];
