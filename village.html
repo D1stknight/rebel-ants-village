@@ -3400,6 +3400,87 @@ window.generateRebelFingerChainPlan = async function(glbUrl) {
 
   return plan;
 };
+
+window.simulateRebelStandardSkeletonFromForge = async function(glbUrl) {
+  const fingerPlan = await window.generateRebelFingerChainPlan(glbUrl);
+
+  if (!fingerPlan) return null;
+
+  const requiredBones = window.rebelStandardBoneNames || [];
+  const requiredBoneSet = new Set(requiredBones);
+
+  const mappedRebelBoneNames = (window.lastRebelRigFitReport?.mappedBones || [])
+    .map((item) => item.rebelBoneName)
+    .filter(Boolean);
+
+  const generatedFingerBoneNames = [
+    ...(fingerPlan.leftFingerPlan || []).flatMap((chain) => {
+      return (chain.generatedBones || []).map((bone) => bone.boneName);
+    }),
+    ...(fingerPlan.rightFingerPlan || []).flatMap((chain) => {
+      return (chain.generatedBones || []).map((bone) => bone.boneName);
+    })
+  ];
+
+  const generatedToeBoneNames = (fingerPlan.toeEndPlan || [])
+    .map((toePlan) => toePlan.generatedBone?.boneName)
+    .filter(Boolean);
+
+  const simulatedRebelBoneNames = [
+    ...mappedRebelBoneNames,
+    ...generatedFingerBoneNames,
+    ...generatedToeBoneNames
+  ];
+
+  const simulatedUniqueBoneNames = [...new Set(simulatedRebelBoneNames)];
+
+  const foundRequiredBones = requiredBones.filter((boneName) => {
+    return simulatedUniqueBoneNames.includes(boneName);
+  });
+
+  const missingRequiredBones = requiredBones.filter((boneName) => {
+    return !simulatedUniqueBoneNames.includes(boneName);
+  });
+
+  const extraSimulatedBones = simulatedUniqueBoneNames.filter((boneName) => {
+    return !requiredBoneSet.has(boneName);
+  });
+
+  const validation = {
+    glbUrl,
+    simulationType: 'virtual_rebel_standard_skeleton_from_forge',
+    sourceSkeletonName: fingerPlan.sourceSkeletonName,
+    sourceBoneCount: fingerPlan.sourceBoneCount,
+    mappedBoneCount: fingerPlan.mappedBoneCount,
+    plannedGeneratedBoneCount: fingerPlan.plannedGeneratedBoneCount,
+    requiredBoneCount: requiredBones.length,
+    simulatedUniqueBoneCount: simulatedUniqueBoneNames.length,
+    foundRequiredCount: foundRequiredBones.length,
+    missingRequiredCount: missingRequiredBones.length,
+    passesVirtualRebelStandard: missingRequiredBones.length === 0,
+    mappedRebelBoneNames,
+    generatedFingerBoneNames,
+    generatedToeBoneNames,
+    simulatedRebelBoneNames: simulatedUniqueBoneNames,
+    missingRequiredBones,
+    extraSimulatedBones,
+    warning:
+      'This is a virtual skeleton simulation only. It proves naming/structure coverage, not physical bone placement, skin weights, deformation, or GLB export.',
+    nextEngineeringStep:
+      'Create a real rig builder that physically inserts these bones, estimates positions, binds skin weights, exports GLB, and then re-runs validateRebelStandardRigFromUrl on the exported file.'
+  };
+
+  window.lastRebelStandardSkeletonSimulation = validation;
+
+  console.log(
+    validation.passesVirtualRebelStandard
+      ? `Virtual Rebel Standard Skeleton PASS — ${validation.foundRequiredCount}/${validation.requiredBoneCount} bones covered.`
+      : `Virtual Rebel Standard Skeleton FAIL — ${validation.foundRequiredCount}/${validation.requiredBoneCount} bones covered.`,
+    validation
+  );
+
+  return validation;
+};
   
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
