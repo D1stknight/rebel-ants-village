@@ -383,10 +383,20 @@ body{
           </div>
         </div>
       </div>
-      <div id="forge-actions">
-        <button class="action-btn" id="generate-btn" type="button" onclick="generatePreviewStub()">Generate Full-Body Preview</button>
-        <button class="action-btn" id="enter-village-btn" type="button" onclick="window.location.href='village.html'">Enter Village</button>
-      </div>
+     <div id="forge-actions">
+  <button class="action-btn" id="generate-btn" type="button" onclick="generatePreviewStub()">Generate Full-Body Preview</button>
+
+  <button
+    class="action-btn"
+    id="inspect-static-btn"
+    type="button"
+    onclick="inspectStaticSourceGlb()"
+  >
+    Inspect Static Source GLB
+  </button>
+
+  <button class="action-btn" id="enter-village-btn" type="button" onclick="window.location.href='village.html'">Enter Village</button>
+</div>
 
       <div id="forge-inline-status" aria-live="polite"></div>
       <div id="forge-right-results" style="margin-top:14px;">
@@ -414,6 +424,72 @@ body{
 </main>
 
 <script src="assets/forge-core.js"></script>
+
+<script type="module">
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+
+window.inspectStaticSourceGlb = async function inspectStaticSourceGlb() {
+  try {
+    setForgeStatus('Inspecting static source GLB...', '');
+
+    const loader = new GLTFLoader();
+
+    loader.load(
+      'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb',
+      (gltf) => {
+        let meshCount = 0;
+        let materialCount = 0;
+        let triangleCount = 0;
+        const materials = new Set();
+
+        gltf.scene.traverse((obj) => {
+          if (obj.isMesh) {
+            meshCount++;
+
+            if (obj.material) {
+              materials.add(obj.material.uuid);
+            }
+
+            const geometry = obj.geometry;
+
+            if (geometry?.index) {
+              triangleCount += geometry.index.count / 3;
+            } else if (geometry?.attributes?.position) {
+              triangleCount += geometry.attributes.position.count / 3;
+            }
+          }
+        });
+
+        materialCount = materials.size;
+        const animationCount = gltf.animations?.length || 0;
+
+        const box = new THREE.Box3().setFromObject(gltf.scene);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        setForgeStatus(
+          `Meshes: ${meshCount}
+Materials: ${materialCount}
+Triangles: ${Math.round(triangleCount)}
+Animations: ${animationCount}
+Size: ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}`,
+          'success'
+        );
+      },
+      undefined,
+      (err) => {
+        console.error(err);
+        setForgeStatus('Could not inspect static source GLB.', 'error');
+      }
+    );
+  } catch (err) {
+    console.error(err);
+    setForgeStatus('GLB inspection failed.', 'error');
+  }
+};
+</script>
+
 <script>
 function getSelectedRebel() {
   try {
@@ -436,7 +512,7 @@ function getSelectedRebel() {
     };
   }
 }
-
+  
 function hydrateForgeScreen(rebel, generationInput) {
   document.getElementById('forge-image').src = rebel.image || 'assets/lobby/ant_1.JPG';
   document.getElementById('forge-name').textContent = rebel.name || 'Rebel #001';
