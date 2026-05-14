@@ -3227,6 +3227,44 @@ window.analyzeForgeToRebelRigFit = async function(glbUrl) {
     ? Math.round((mappedBones.length / inspection.boneCount) * 100)
     : 0;
 
+   const missingLeftFingers =
+    generatedRequirementGroups.find((group) => group.groupName === 'leftHandFingers')?.missingCount || 0;
+
+  const missingRightFingers =
+    generatedRequirementGroups.find((group) => group.groupName === 'rightHandFingers')?.missingCount || 0;
+
+  const missingToeEnds =
+    generatedRequirementGroups.find((group) => group.groupName === 'toesAndEnds')?.missingCount || 0;
+
+  const coreBodyMappedCount = mappedBones.filter((item) => {
+    return !item.rebelBoneName.includes('HandThumb') &&
+      !item.rebelBoneName.includes('HandIndex') &&
+      !item.rebelBoneName.includes('HandMiddle') &&
+      !item.rebelBoneName.includes('HandRing') &&
+      !item.rebelBoneName.includes('HandPinky') &&
+      !item.rebelBoneName.includes('Toe_End');
+  }).length;
+
+  const rigFitSummary = {
+    coreBodyMappedCount,
+    coreBodyStatus: coreBodyMappedCount >= 20 ? 'good' : 'needs_review',
+    missingLeftFingers,
+    missingRightFingers,
+    missingToeEnds,
+    mainIssue:
+      missingLeftFingers || missingRightFingers
+        ? 'This rig is missing full finger chains, which is why it cannot match the current main playable character quality.'
+        : missingToeEnds
+          ? 'This rig is mostly mapped but still missing toe end bones.'
+          : 'This rig is close to Rebel Standard.',
+    recommendation:
+      missingLeftFingers || missingRightFingers
+        ? 'Generate or fit full Mixamo-style finger chains before using this as a final playable Forge character.'
+        : missingToeEnds
+          ? 'Generate toe end helper bones before final playable use.'
+          : 'This rig may be ready for Rebel Standard animation testing.'
+  };
+
   const report = {
     glbUrl,
     sourceSkeletonName: inspection.skeletonName,
@@ -3239,6 +3277,7 @@ window.analyzeForgeToRebelRigFit = async function(glbUrl) {
     missingStandardBoneCount: missingStandardBones.length,
     missingStandardBones,
     generatedRequirementGroups,
+    rigFitSummary,
     conclusion:
       missingStandardBones.length === 0
         ? 'This rig already matches the Rebel Standard Skeleton.'
