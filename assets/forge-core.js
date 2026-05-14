@@ -495,12 +495,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     panel = document.createElement('div');
     panel.id = 'forge-selected-concept-panel';
-    panel.innerHTML = `
-      <div class="section-title">Selected Concept</div>
-      <div id="forge-selected-concept-content" class="forge-selected-empty">
-        No concept selected yet. Select a saved concept to choose the version that will move forward into the 3D character step.
-      </div>
-    `;
+   panel.innerHTML = `
+  <div class="section-title">3D Build Status</div>
+  <div id="forge-3d-build-status-content" class="forge-3d-build-empty">
+    No 3D build requests yet. Select a saved production reference, then click Start 3D Build.
+  </div>
+  <button class="forge-3d-build-refresh-btn" type="button" onclick="window.renderForge3dBuildStatusPanel()">Refresh Build Status</button>
+  <button class="forge-3d-build-refresh-btn" type="button" onclick="window.inspectStaticSourceGlb()">Inspect Static Source GLB</button>
+`;
 
     conceptsSection.parentNode.insertBefore(panel, conceptsSection);
     return panel;
