@@ -2086,11 +2086,19 @@ function getForgePlayerDesiredPreviewMode() {
 function syncForgePreviewRootToPlayer(previewRoot) {
   if (!previewRoot || !charMesh) return;
 
+  const isForgeIdle =
+    localStorage.getItem('forgePlayerVisualTest') === '1' &&
+    window.forgePlayerVisualCurrentMode === 'rigged';
+
+  const idleTime = performance.now() * 0.001;
+  const idleBob = isForgeIdle ? Math.sin(idleTime * 2.1) * 0.025 : 0;
+  const idleLean = isForgeIdle ? Math.sin(idleTime * 1.4) * 0.018 : 0;
+
   previewRoot.position.x = charMesh.position.x;
-  previewRoot.position.y = charMesh.position.y;
+  previewRoot.position.y = charMesh.position.y + idleBob;
   previewRoot.position.z = charMesh.position.z;
 
-  previewRoot.rotation.x = charMesh.rotation.x;
+  previewRoot.rotation.x = charMesh.rotation.x + idleLean;
   previewRoot.rotation.y = charMesh.rotation.y;
   previewRoot.rotation.z = charMesh.rotation.z;
 }
