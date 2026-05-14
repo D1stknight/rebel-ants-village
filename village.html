@@ -1881,6 +1881,7 @@ function resolveCharacterConfig(rebel) {
   const bundle = CHARACTER_REGISTRY[requestedBundleId] || CHARACTER_REGISTRY.starter_ant;
   const activeForgeCharacter = rebel?.activeForgeCharacter || null;
   const characterBundle = activeForgeCharacter?.characterBundle || null;
+  const armatureAnimations = characterBundle?.armatureAnimations || {};
   const activeGlbUrl = rebel?.activeGlbUrl || activeForgeCharacter?.activeGlbUrl || characterBundle?.activeGlbUrl || null;
   const activeForgeBuildId = activeForgeCharacter?.activeForgeBuildId || characterBundle?.sourceBuildId || null;
   const characterSource = activeGlbUrl ? 'forge_glb' : 'starter_bundle';
@@ -1909,14 +1910,37 @@ function resolveCharacterConfig(rebel) {
     riggedGlbUrl: activeForgeCharacter?.riggedGlbUrl || characterBundle?.riggedGlbUrl || null,
     walkingGlbUrl: activeForgeCharacter?.walkingGlbUrl || characterBundle?.animations?.walking?.glbUrl || null,
     runningGlbUrl: activeForgeCharacter?.runningGlbUrl || characterBundle?.animations?.running?.glbUrl || null,
+
+    idleArmatureGlbUrl:
+      activeForgeCharacter?.idleArmatureGlbUrl ||
+      armatureAnimations?.idle?.glbUrl ||
+      null,
+
     walkingArmatureGlbUrl:
       activeForgeCharacter?.walkingArmatureGlbUrl ||
-      characterBundle?.armatureAnimations?.walking?.glbUrl ||
+      armatureAnimations?.walking?.glbUrl ||
       null,
+
     runningArmatureGlbUrl:
       activeForgeCharacter?.runningArmatureGlbUrl ||
-      characterBundle?.armatureAnimations?.running?.glbUrl ||
+      armatureAnimations?.running?.glbUrl ||
       null,
+
+    jumpArmatureGlbUrl:
+      activeForgeCharacter?.jumpArmatureGlbUrl ||
+      armatureAnimations?.jump?.glbUrl ||
+      null,
+
+    attackArmatureGlbUrl:
+      activeForgeCharacter?.attackArmatureGlbUrl ||
+      armatureAnimations?.attack?.glbUrl ||
+      null,
+
+    kickArmatureGlbUrl:
+      activeForgeCharacter?.kickArmatureGlbUrl ||
+      armatureAnimations?.kick?.glbUrl ||
+      null,
+
     characterSource
   };
 }
