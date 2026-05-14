@@ -1,4 +1,4 @@
-import { NodeIO } from '@gltf-transform/core';
+import { Accessor, NodeIO } from '@gltf-transform/core';
 import { put } from '@vercel/blob';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -645,6 +645,118 @@ function createToeEnds(document, skin, nodesByName) {
   return { created, skipped };
 }
 
+function bindMeshVerticesToNearestRebelJoint(document, skin) {
+  if (!skin) {
+    return {
+      weightedVertexCount: 0,
+      primitiveCount: 0,
+      skippedPrimitiveCount: 0,
+      warning: 'No skin available for vertex binding.'
+    };
+  }
+
+  const joints = getSkinJoints(skin);
+  const jointPositions = joints.map((joint, jointIndex) => {
+    const translation =
+      typeof joint.getTranslation === 'function'
+        ? joint.getTranslation()
+        : [0, 0, 0];
+
+    return {
+      joint,
+      jointIndex,
+      name: joint.getName?.() || `joint_${jointIndex}`,
+      position: translation || [0, 0, 0]
+    };
+  });
+
+  if (!jointPositions.length) {
+    return {
+      weightedVertexCount: 0,
+      primitiveCount: 0,
+      skippedPrimitiveCount: 0,
+      warning: 'Skin has no joints available for vertex binding.'
+    };
+  }
+
+  let weightedVertexCount = 0;
+  let primitiveCount = 0;
+  let skippedPrimitiveCount = 0;
+
+  document.getRoot().listNodes().forEach((node) => {
+    const mesh = typeof node.getMesh === 'function' ? node.getMesh() : null;
+    if (!mesh || typeof mesh.listPrimitives !== 'function') return;
+
+    mesh.listPrimitives().forEach((primitive) => {
+      primitiveCount++;
+
+      const position = primitive.getAttribute('POSITION');
+      if (!position || typeof position.getCount !== 'function' || typeof position.getElement !== 'function') {
+        skippedPrimitiveCount++;
+        return;
+      }
+
+      const vertexCount = position.getCount();
+      const jointsArray = new Uint16Array(vertexCount * 4);
+      const weightsArray = new Float32Array(vertexCount * 4);
+      const point = [0, 0, 0];
+
+      for (let vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+        position.getElement(vertexIndex, point);
+
+        let nearestJointIndex = 0;
+        let nearestDistance = Number.POSITIVE_INFINITY;
+
+        jointPositions.forEach((jointInfo) => {
+          const dx = point[0] - jointInfo.position[0];
+          const dy = point[1] - jointInfo.position[1];
+          const dz = point[2] - jointInfo.position[2];
+          const distance = dx * dx + dy * dy + dz * dz;
+
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestJointIndex = jointInfo.jointIndex;
+          }
+        });
+
+        const offset = vertexIndex * 4;
+        jointsArray[offset] = nearestJointIndex;
+        jointsArray[offset + 1] = 0;
+        jointsArray[offset + 2] = 0;
+        jointsArray[offset + 3] = 0;
+
+        weightsArray[offset] = 1;
+        weightsArray[offset + 1] = 0;
+        weightsArray[offset + 2] = 0;
+        weightsArray[offset + 3] = 0;
+
+        weightedVertexCount++;
+      }
+
+      const jointsAccessor = document
+        .createAccessor('JOINTS_0')
+        .setType(Accessor.Type.VEC4)
+        .setArray(jointsArray);
+
+      const weightsAccessor = document
+        .createAccessor('WEIGHTS_0')
+        .setType(Accessor.Type.VEC4)
+        .setArray(weightsArray);
+
+      primitive.setAttribute('JOINTS_0', jointsAccessor);
+      primitive.setAttribute('WEIGHTS_0', weightsAccessor);
+    });
+  });
+
+  return {
+    weightedVertexCount,
+    primitiveCount,
+    skippedPrimitiveCount,
+    jointCount: joints.length,
+    bindingMode: 'nearest_single_joint_weight_1'
+  };
+}
+
 function inspectRebelStandardCoverage(document) {
   const nodeNames = new Set(document.getRoot().listNodes().map((node) => node.getName()));
   const missingBones = REBEL_STANDARD_BONE_NAMES.filter((boneName) => !nodeNames.has(boneName));
@@ -745,7 +857,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: 'Missing source GLB URL' });
     }
 
-             const sourceBuffer = await fetchGlbAsBuffer(sourceGlbUrl);
+                 const sourceBuffer = await fetchGlbAsBuffer(sourceGlbUrl);
     const io = new NodeIO();
     const document = await io.readBinary(sourceBuffer);
     const modelBounds = calculateModelBounds(document);
@@ -760,8 +872,8 @@ export default async function handler(req, res) {
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
     const toeReport = createToeEnds(document, skin, nodesByName);
+    const vertexBindingReport = bindMeshVerticesToNearestRebelJoint(document, skin);
     const afterCoverage = inspectRebelStandardCoverage(document);
-
     const outputBuffer = Buffer.from(await io.writeBinary(document));
     const prototypePath = buildRiggedPrototypePath({ buildRecord, buildId });
 
@@ -789,12 +901,14 @@ export default async function handler(req, res) {
         rightFingerReport,
         toeReport
       },
-           skin: {
+              vertexBinding: vertexBindingReport,
+      skin: {
         hadSkin: !skinSetup.created && Boolean(skin),
         createdSkin: skinSetup.created,
         attachedMeshNodeName: skinSetup.meshNodeName,
         skinSetupWarning: skinSetup.warning || null,
-        jointCountAfter: skin ? getSkinJoints(skin).length : 0
+        jointCountAfter: skin ? getSkinJoints(skin).length : 0,
+        weightedVertexCount: vertexBindingReport.weightedVertexCount
       }
     };
 
