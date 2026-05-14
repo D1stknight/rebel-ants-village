@@ -430,13 +430,27 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: 'Missing buildId or sourceGlbUrl' });
     }
 
-    let recordKey = null;
+       let recordKey = null;
     let buildRecord = {};
 
     if (buildId) {
-      const loaded = await loadBuildRecord(buildId);
-      recordKey = loaded.recordKey;
-      buildRecord = loaded.buildRecord;
+      try {
+        const loaded = await loadBuildRecord(buildId);
+        recordKey = loaded.recordKey;
+        buildRecord = loaded.buildRecord;
+      } catch (err) {
+        if (!body.sourceGlbUrl && !body.glbUrl) {
+          throw err;
+        }
+
+        buildRecord = {
+          buildId,
+          collectionKey: body.collectionKey || 'battle_for_colony',
+          tokenId: body.tokenId || '469',
+          rebelId: body.rebelId || '469',
+          source: 'dev_static_source_test'
+        };
+      }
     }
 
     const sourceGlbUrl = getSourceGlbUrl({ body, buildRecord });
