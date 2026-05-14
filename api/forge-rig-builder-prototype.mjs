@@ -240,6 +240,64 @@ function listNodesByName(document) {
   );
 }
 
+function calculateModelBounds(document) {
+  const min = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY];
+  const max = [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
+  let vertexCount = 0;
+
+  document.getRoot().listNodes().forEach((node) => {
+    const mesh = typeof node.getMesh === 'function' ? node.getMesh() : null;
+    if (!mesh || typeof mesh.listPrimitives !== 'function') return;
+
+    mesh.listPrimitives().forEach((primitive) => {
+      const position = primitive.getAttribute('POSITION');
+      if (!position || typeof position.getCount !== 'function' || typeof position.getElement !== 'function') return;
+
+      const point = [0, 0, 0];
+
+      for (let index = 0; index < position.getCount(); index++) {
+        position.getElement(index, point);
+        vertexCount++;
+
+        for (let axis = 0; axis < 3; axis++) {
+          min[axis] = Math.min(min[axis], point[axis]);
+          max[axis] = Math.max(max[axis], point[axis]);
+        }
+      }
+    });
+  });
+
+  if (!vertexCount) {
+    return {
+      vertexCount: 0,
+      min: [0, 0, 0],
+      max: [0, 1, 0],
+      center: [0, 0.5, 0],
+      size: [1, 1, 1]
+    };
+  }
+
+  const size = [
+    max[0] - min[0],
+    max[1] - min[1],
+    max[2] - min[2]
+  ];
+
+  const center = [
+    min[0] + size[0] / 2,
+    min[1] + size[1] / 2,
+    min[2] + size[2] / 2
+  ];
+
+  return {
+    vertexCount,
+    min,
+    max,
+    center,
+    size
+  };
+}
+
 function listSkins(document) {
   return document.getRoot().listSkins ? document.getRoot().listSkins() : [];
 }
@@ -344,10 +402,91 @@ function getOrCreateNode(document, nodesByName, boneName, parentNode, translatio
   return { node, created: true };
 }
 
-function createRebelStandardSkeleton(document, skin, nodesByName) {
+function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds) {
   const created = [];
   const reused = [];
   const jointNames = [];
+  const size = modelBounds?.size || [1, 1, 1];
+  const center = modelBounds?.center || [0, 0.5, 0];
+  const min = modelBounds?.min || [0, 0, 0];
+  const height = Math.max(size[1] || 1, 0.001);
+  const width = Math.max(size[0] || 1, 0.001);
+  const depth = Math.max(size[2] || 1, 0.001);
+
+  function scaleX(value) {
+    return Number((value * width).toFixed(5));
+  }
+
+  function scaleY(value) {
+    return Number((value * height).toFixed(5));
+  }
+
+  function scaleZ(value) {
+    return Number((value * depth).toFixed(5));
+  }
+
+  function getRebelBoneLocalTranslation(boneName) {
+    const rootY = min[1] + height * 0.5;
+
+    const translations = {
+      mixamorig_Hips: [Number(center[0].toFixed(5)), Number(rootY.toFixed(5)), Number(center[2].toFixed(5))],
+
+      mixamorig_Spine: [0, scaleY(0.12), 0],
+      mixamorig_Spine1: [0, scaleY(0.12), 0],
+      mixamorig_Spine2: [0, scaleY(0.12), 0],
+      mixamorig_Neck: [0, scaleY(0.08), 0],
+      mixamorig_Head: [0, scaleY(0.09), 0],
+      mixamorig_HeadTop_End: [0, scaleY(0.12), 0],
+
+      mixamorig_LeftShoulder: [scaleX(0.12), scaleY(0.02), 0],
+      mixamorig_LeftArm: [scaleX(0.16), scaleY(-0.03), 0],
+      mixamorig_LeftForeArm: [scaleX(0.18), scaleY(-0.02), 0],
+      mixamorig_LeftHand: [scaleX(0.12), scaleY(-0.01), 0],
+
+      mixamorig_RightShoulder: [scaleX(-0.12), scaleY(0.02), 0],
+      mixamorig_RightArm: [scaleX(-0.16), scaleY(-0.03), 0],
+      mixamorig_RightForeArm: [scaleX(-0.18), scaleY(-0.02), 0],
+      mixamorig_RightHand: [scaleX(-0.12), scaleY(-0.01), 0],
+
+      mixamorig_LeftUpLeg: [scaleX(0.08), scaleY(-0.08), 0],
+      mixamorig_LeftLeg: [0, scaleY(-0.24), 0],
+      mixamorig_LeftFoot: [0, scaleY(-0.22), scaleZ(0.05)],
+      mixamorig_LeftToeBase: [0, scaleY(-0.03), scaleZ(0.10)],
+      mixamorig_LeftToe_End: [0, 0, scaleZ(0.08)],
+
+      mixamorig_RightUpLeg: [scaleX(-0.08), scaleY(-0.08), 0],
+      mixamorig_RightLeg: [0, scaleY(-0.24), 0],
+      mixamorig_RightFoot: [0, scaleY(-0.22), scaleZ(0.05)],
+      mixamorig_RightToeBase: [0, scaleY(-0.03), scaleZ(0.10)],
+      mixamorig_RightToe_End: [0, 0, scaleZ(0.08)]
+    };
+
+    ['Left', 'Right'].forEach((side) => {
+      const sideSign = side === 'Left' ? 1 : -1;
+      const fingerSpread = {
+        Thumb: [0.030, -0.006, 0.030],
+        Index: [0.015, 0.000, 0.045],
+        Middle: [0.000, 0.000, 0.050],
+        Ring: [-0.015, 0.000, 0.045],
+        Pinky: [-0.030, -0.004, 0.036]
+      };
+
+      FINGER_TYPES.forEach((fingerType) => {
+        const spread = fingerSpread[fingerType] || [0, 0, 0.04];
+
+        for (let index = 1; index <= 4; index++) {
+          const bone = `mixamorig_${side}Hand${fingerType}${index}`;
+          translations[bone] = [
+            scaleX(spread[0] * sideSign * (index === 1 ? 1 : 0.28)),
+            scaleY(spread[1]),
+            scaleZ(spread[2] * (index === 1 ? 1 : 0.65))
+          ];
+        }
+      });
+    });
+
+    return translations[boneName] || [0, 0, 0];
+  }
 
   const parentByBoneName = {
     mixamorig_Spine: 'mixamorig_Hips',
@@ -395,7 +534,8 @@ function createRebelStandardSkeleton(document, skin, nodesByName) {
   REBEL_STANDARD_BONE_NAMES.forEach((boneName) => {
     const parentName = parentByBoneName[boneName] || null;
     const parentNode = parentName ? nodesByName.get(parentName) || null : null;
-    const { node, created: wasCreated } = getOrCreateNode(document, nodesByName, boneName, parentNode, [0, 0, 0]);
+    const translation = getRebelBoneLocalTranslation(boneName);
+    const { node, created: wasCreated } = getOrCreateNode(document, nodesByName, boneName, parentNode, translation);
 
     if (wasCreated) {
       created.push({
@@ -605,9 +745,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: 'Missing source GLB URL' });
     }
 
-          const sourceBuffer = await fetchGlbAsBuffer(sourceGlbUrl);
+             const sourceBuffer = await fetchGlbAsBuffer(sourceGlbUrl);
     const io = new NodeIO();
     const document = await io.readBinary(sourceBuffer);
+    const modelBounds = calculateModelBounds(document);
     const skinSetup = getOrCreatePrimarySkin(document);
     const skin = skinSetup.skin;
 
@@ -615,7 +756,7 @@ export default async function handler(req, res) {
     const renameReport = renameMappedBones(document);
     const nodesByName = listNodesByName(document);
 
-    const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName);
+    const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds);
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
     const toeReport = createToeEnds(document, skin, nodesByName);
@@ -634,6 +775,7 @@ export default async function handler(req, res) {
       version: 'v0_structural_nodes_only',
       warning: 'Prototype only. This creates/renames skeleton nodes and adds missing Rebel Standard helper bones. It does not solve skin weights or final deformation quality yet.',
       sourceGlbUrl,
+           modelBounds,
       beforeCoverage,
       afterCoverage,
       renameReport,
