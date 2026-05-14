@@ -139,6 +139,21 @@ headfront
 
 This rig is useful for proof-of-concept testing because it can load, walk, run, and retarget simple armature animations. However, it is not the final release-quality rig because it lacks the full Mixamo-style bone structure, especially fingers and detailed hand motion.
 
+## Rig Fit Findings — Rebel #469 Test
+
+The first Rebel Rig Fit Map test compared Rebel #469's Meshy rig against the Rebel Standard Skeleton.
+
+Result:
+
+```text
+Source skeleton: Armature
+Source bone count: 24
+Rebel Standard target bone count: 65
+Mapped body bones: 23
+Source coverage: 96%
+Direct Rebel Standard coverage: 35%
+Missing Rebel Standard bones: 42
+
 ## Locked Direction
 
 The Forge character system should move toward this final pipeline:
