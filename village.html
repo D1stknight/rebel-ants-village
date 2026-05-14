@@ -2095,6 +2095,14 @@ function setForgePlayerVisualTest(enabled) {
 }
 
 function getForgePlayerDesiredPreviewMode() {
+  if (
+    window.forgePlayerForcedMode &&
+    window.forgePlayerForcedModeUntil &&
+    performance.now() < window.forgePlayerForcedModeUntil
+  ) {
+    return window.forgePlayerForcedMode;
+  }
+
   if (runKey) return 'running';
 
   const moving =
@@ -2327,7 +2335,7 @@ function activateForgeArmaturePlayerMode(mode) {
     }
   });
 
-  if (mode === 'rigged') {
+  if (mode === 'rigged' || mode === 'idle') {
     window.forgePlayerVisualCurrentMode = 'rigged';
     return true;
   }
@@ -2338,12 +2346,36 @@ function activateForgeArmaturePlayerMode(mode) {
     return false;
   }
 
-  entry.animationGroup.start(true);
+  const loop = !(mode === 'jump' || mode === 'kick' || mode === 'attack');
+
+  entry.animationGroup.start(loop);
   window.forgePlayerVisualCurrentMode = mode;
 
   return true;
 }
 
+function triggerForgeArmatureActionMode(mode, durationMs) {
+  if (localStorage.getItem('forgePlayerVisualTest') !== '1') return;
+  if (!mode) return;
+
+  window.forgePlayerForcedMode = mode;
+  window.forgePlayerForcedModeUntil = performance.now() + (durationMs || 1000);
+
+  if (typeof activateForgeArmaturePlayerMode === 'function') {
+    const activated = activateForgeArmaturePlayerMode(mode);
+
+    if (!activated) {
+      console.log('Forge action mode not available yet:', mode);
+    }
+  }
+
+  setTimeout(() => {
+    if (window.forgePlayerForcedMode === mode) {
+      window.forgePlayerForcedMode = null;
+      window.forgePlayerForcedModeUntil = null;
+    }
+  }, durationMs || 1000);
+}
 async function preloadForgeArmaturePlayerVisual(previewRoot) {
   const riggedUrl =
     window.activeCharacter?.riggedGlbUrl ||
@@ -3594,8 +3626,17 @@ document.addEventListener('keydown', async e => {
   if (key === 'd' || e.key === 'ArrowRight') turnRight = true;
   if (!walkMode) return;
   if (key === 'r' && !adminMode) { runKey=true; switchAnim(2, true); }
-  if (key === 'f' && !adminMode) { switchAnim(3, false); setTimeout(()=>{ if(animState===3) switchAnim(0,true); }, 1200); }
-  if (e.key === ' ') { e.preventDefault(); switchAnim(4, false); setTimeout(()=>{ if(animState===4) switchAnim(0,true); }, 1000); }
+    if (key === 'f' && !adminMode) {
+    switchAnim(3, false);
+    triggerForgeArmatureActionMode('kick', 1200);
+    setTimeout(()=>{ if(animState===3) switchAnim(0,true); }, 1200);
+  }
+   if (e.key === ' ') {
+    e.preventDefault();
+    switchAnim(4, false);
+    triggerForgeArmatureActionMode('jump', 1000);
+    setTimeout(()=>{ if(animState===4) switchAnim(0,true); }, 1000);
+  }
 });
 
 document.addEventListener('keyup', e => {
