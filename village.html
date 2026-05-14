@@ -2007,28 +2007,30 @@ function createForgeVillagePreviewToggle() {
 
   const panel = document.createElement('div');
   panel.id = 'forge-village-preview-toggle';
-   panel.style.cssText = `
+  panel.style.cssText = `
     position: fixed;
     right: 280px;
     bottom: 28px;
     z-index: 9999;
-    display: flex;
+    display: grid;
     gap: 8px;
-    padding: 10px;
+    min-width: 310px;
+    padding: 12px;
     border: 1px solid rgba(94,207,202,.35);
-    background: rgba(0,0,0,.72);
-    border-radius: 12px;
+    background: rgba(0,0,0,.78);
+    border-radius: 14px;
     backdrop-filter: blur(8px);
+    box-shadow: 0 12px 40px rgba(0,0,0,.35);
   `;
 
   const currentMode = localStorage.getItem('forgeVillagePreviewMode') || 'running';
   const modes = [
-    { id: 'rigged', label: 'Rigged' },
+    { id: 'rigged', label: 'Idle' },
     { id: 'walking', label: 'Walk' },
     { id: 'running', label: 'Run' }
   ];
 
-   const modeButtonsHtml = modes.map((mode) => {
+  const modeButtonsHtml = modes.map((mode) => {
     const active = mode.id === currentMode;
 
     return `
@@ -2056,19 +2058,44 @@ function createForgeVillagePreviewToggle() {
       type="button"
       onclick="setForgePlayerVisualTest(${playerVisualTestEnabled ? 'false' : 'true'})"
       style="
-        padding: 8px 10px;
-        border: 1px solid ${playerVisualTestEnabled ? 'rgba(88,255,166,.85)' : 'rgba(255,255,255,.18)'};
-        background: ${playerVisualTestEnabled ? 'rgba(88,255,166,.18)' : 'rgba(255,255,255,.06)'};
+        padding: 9px 12px;
+        border: 1px solid ${playerVisualTestEnabled ? 'rgba(88,255,166,.85)' : 'rgba(200,146,42,.42)'};
+        background: ${playerVisualTestEnabled ? 'rgba(88,255,166,.18)' : 'rgba(200,146,42,.10)'};
         color: ${playerVisualTestEnabled ? '#9dffc7' : '#f3e6bf'};
         font-size: 10px;
         letter-spacing: 1.5px;
         text-transform: uppercase;
         cursor: pointer;
       "
-    >${playerVisualTestEnabled ? 'Reset Player' : 'Use As Player'}</button>
+    >${playerVisualTestEnabled ? 'Reset Player Visual' : 'Use Forge As Player'}</button>
   `;
 
-  panel.innerHTML = modeButtonsHtml + playerTestButtonHtml;
+  panel.innerHTML = `
+    <div style="
+      color:#5ecfca;
+      font-size:10px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      font-weight:800;
+    ">
+      Forge Character Test
+    </div>
+
+    <div style="
+      color:rgba(243,230,191,.68);
+      font-size:10px;
+      line-height:1.5;
+      margin-top:-2px;
+    ">
+      ${window.activeCharacter?.displayName || 'Selected Rebel'}
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      ${modeButtonsHtml}
+    </div>
+
+    ${playerTestButtonHtml}
+  `;
 
   document.body.appendChild(panel);
 }
