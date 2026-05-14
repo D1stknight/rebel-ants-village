@@ -344,6 +344,87 @@ function getOrCreateNode(document, nodesByName, boneName, parentNode, translatio
   return { node, created: true };
 }
 
+function createRebelStandardSkeleton(document, skin, nodesByName) {
+  const created = [];
+  const reused = [];
+  const jointNames = [];
+
+  const parentByBoneName = {
+    mixamorig_Spine: 'mixamorig_Hips',
+    mixamorig_Spine1: 'mixamorig_Spine',
+    mixamorig_Spine2: 'mixamorig_Spine1',
+    mixamorig_Neck: 'mixamorig_Spine2',
+    mixamorig_Head: 'mixamorig_Neck',
+    mixamorig_HeadTop_End: 'mixamorig_Head',
+
+    mixamorig_LeftShoulder: 'mixamorig_Spine2',
+    mixamorig_LeftArm: 'mixamorig_LeftShoulder',
+    mixamorig_LeftForeArm: 'mixamorig_LeftArm',
+    mixamorig_LeftHand: 'mixamorig_LeftForeArm',
+
+    mixamorig_RightShoulder: 'mixamorig_Spine2',
+    mixamorig_RightArm: 'mixamorig_RightShoulder',
+    mixamorig_RightForeArm: 'mixamorig_RightArm',
+    mixamorig_RightHand: 'mixamorig_RightForeArm',
+
+    mixamorig_LeftUpLeg: 'mixamorig_Hips',
+    mixamorig_LeftLeg: 'mixamorig_LeftUpLeg',
+    mixamorig_LeftFoot: 'mixamorig_LeftLeg',
+    mixamorig_LeftToeBase: 'mixamorig_LeftFoot',
+    mixamorig_LeftToe_End: 'mixamorig_LeftToeBase',
+
+    mixamorig_RightUpLeg: 'mixamorig_Hips',
+    mixamorig_RightLeg: 'mixamorig_RightUpLeg',
+    mixamorig_RightFoot: 'mixamorig_RightLeg',
+    mixamorig_RightToeBase: 'mixamorig_RightFoot',
+    mixamorig_RightToe_End: 'mixamorig_RightToeBase'
+  };
+
+  ['Left', 'Right'].forEach((side) => {
+    FINGER_TYPES.forEach((fingerType) => {
+      for (let index = 1; index <= 4; index++) {
+        const boneName = `mixamorig_${side}Hand${fingerType}${index}`;
+        parentByBoneName[boneName] =
+          index === 1
+            ? `mixamorig_${side}Hand`
+            : `mixamorig_${side}Hand${fingerType}${index - 1}`;
+      }
+    });
+  });
+
+  REBEL_STANDARD_BONE_NAMES.forEach((boneName) => {
+    const parentName = parentByBoneName[boneName] || null;
+    const parentNode = parentName ? nodesByName.get(parentName) || null : null;
+    const { node, created: wasCreated } = getOrCreateNode(document, nodesByName, boneName, parentNode, [0, 0, 0]);
+
+    if (wasCreated) {
+      created.push({
+        boneName,
+        parentBoneName: parentName
+      });
+    } else {
+      reused.push({
+        boneName,
+        parentBoneName: parentName
+      });
+    }
+
+    if (addJointToSkin(skin, node)) {
+      jointNames.push(boneName);
+    }
+  });
+
+  return {
+    createdCount: created.length,
+    reusedCount: reused.length,
+    jointCount: skin ? getSkinJoints(skin).length : 0,
+    jointsAddedCount: jointNames.length,
+    created,
+    reused,
+    jointsAdded: jointNames
+  };
+}
+
 function createFingerChains(document, skin, nodesByName, side) {
   const created = [];
   const skipped = [];
@@ -524,7 +605,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: 'Missing source GLB URL' });
     }
 
-        const sourceBuffer = await fetchGlbAsBuffer(sourceGlbUrl);
+          const sourceBuffer = await fetchGlbAsBuffer(sourceGlbUrl);
     const io = new NodeIO();
     const document = await io.readBinary(sourceBuffer);
     const skinSetup = getOrCreatePrimarySkin(document);
@@ -534,6 +615,7 @@ export default async function handler(req, res) {
     const renameReport = renameMappedBones(document);
     const nodesByName = listNodesByName(document);
 
+    const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName);
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
     const toeReport = createToeEnds(document, skin, nodesByName);
@@ -555,11 +637,12 @@ export default async function handler(req, res) {
       beforeCoverage,
       afterCoverage,
       renameReport,
-      generatedBones: {
+            generatedBones: {
+        rebelStandardSkeleton: rebelStandardSkeletonReport,
         leftFingersCreated: leftFingerReport.created.length,
         rightFingersCreated: rightFingerReport.created.length,
         toeEndsCreated: toeReport.created.length,
-        totalCreated: leftFingerReport.created.length + rightFingerReport.created.length + toeReport.created.length,
+        totalCreated: rebelStandardSkeletonReport.createdCount + leftFingerReport.created.length + rightFingerReport.created.length + toeReport.created.length,
         leftFingerReport,
         rightFingerReport,
         toeReport
