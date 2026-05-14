@@ -3104,6 +3104,153 @@ window.validateRebelStandardRigFromUrl = async function(glbUrl) {
   return validation;
 };
 
+  window.rebelRigFitMap = {
+  Hips: 'mixamorig_Hips',
+
+  Spine: 'mixamorig_Spine',
+  Spine01: 'mixamorig_Spine1',
+  Spine02: 'mixamorig_Spine2',
+
+  neck: 'mixamorig_Neck',
+  Head: 'mixamorig_Head',
+  head_end: 'mixamorig_HeadTop_End',
+
+  LeftShoulder: 'mixamorig_LeftShoulder',
+  LeftArm: 'mixamorig_LeftArm',
+  LeftForeArm: 'mixamorig_LeftForeArm',
+  LeftHand: 'mixamorig_LeftHand',
+
+  RightShoulder: 'mixamorig_RightShoulder',
+  RightArm: 'mixamorig_RightArm',
+  RightForeArm: 'mixamorig_RightForeArm',
+  RightHand: 'mixamorig_RightHand',
+
+  LeftUpLeg: 'mixamorig_LeftUpLeg',
+  LeftLeg: 'mixamorig_LeftLeg',
+  LeftFoot: 'mixamorig_LeftFoot',
+  LeftToeBase: 'mixamorig_LeftToeBase',
+
+  RightUpLeg: 'mixamorig_RightUpLeg',
+  RightLeg: 'mixamorig_RightLeg',
+  RightFoot: 'mixamorig_RightFoot',
+  RightToeBase: 'mixamorig_RightToeBase'
+};
+
+window.rebelGeneratedBoneRequirements = {
+  leftHandFingers: [
+    'mixamorig_LeftHandThumb1',
+    'mixamorig_LeftHandThumb2',
+    'mixamorig_LeftHandThumb3',
+    'mixamorig_LeftHandThumb4',
+    'mixamorig_LeftHandIndex1',
+    'mixamorig_LeftHandIndex2',
+    'mixamorig_LeftHandIndex3',
+    'mixamorig_LeftHandIndex4',
+    'mixamorig_LeftHandMiddle1',
+    'mixamorig_LeftHandMiddle2',
+    'mixamorig_LeftHandMiddle3',
+    'mixamorig_LeftHandMiddle4',
+    'mixamorig_LeftHandRing1',
+    'mixamorig_LeftHandRing2',
+    'mixamorig_LeftHandRing3',
+    'mixamorig_LeftHandRing4',
+    'mixamorig_LeftHandPinky1',
+    'mixamorig_LeftHandPinky2',
+    'mixamorig_LeftHandPinky3',
+    'mixamorig_LeftHandPinky4'
+  ],
+
+  rightHandFingers: [
+    'mixamorig_RightHandThumb1',
+    'mixamorig_RightHandThumb2',
+    'mixamorig_RightHandThumb3',
+    'mixamorig_RightHandThumb4',
+    'mixamorig_RightHandIndex1',
+    'mixamorig_RightHandIndex2',
+    'mixamorig_RightHandIndex3',
+    'mixamorig_RightHandIndex4',
+    'mixamorig_RightHandMiddle1',
+    'mixamorig_RightHandMiddle2',
+    'mixamorig_RightHandMiddle3',
+    'mixamorig_RightHandMiddle4',
+    'mixamorig_RightHandRing1',
+    'mixamorig_RightHandRing2',
+    'mixamorig_RightHandRing3',
+    'mixamorig_RightHandRing4',
+    'mixamorig_RightHandPinky1',
+    'mixamorig_RightHandPinky2',
+    'mixamorig_RightHandPinky3',
+    'mixamorig_RightHandPinky4'
+  ],
+
+  toesAndEnds: [
+    'mixamorig_LeftToe_End',
+    'mixamorig_RightToe_End'
+  ]
+};
+
+window.analyzeForgeToRebelRigFit = async function(glbUrl) {
+  const inspection = await window.inspectRebelRigFromUrl(glbUrl);
+
+  if (!inspection) return null;
+
+  const sourceBones = new Set(inspection.boneNames || []);
+  const fitMap = window.rebelRigFitMap || {};
+  const requiredBones = window.rebelStandardBoneNames || [];
+
+  const mappedBones = Object.entries(fitMap)
+    .filter(([sourceBoneName]) => sourceBones.has(sourceBoneName))
+    .map(([sourceBoneName, rebelBoneName]) => ({
+      sourceBoneName,
+      rebelBoneName
+    }));
+
+  const mappedRebelBones = new Set(mappedBones.map((item) => item.rebelBoneName));
+  const missingStandardBones = requiredBones.filter((boneName) => !mappedRebelBones.has(boneName));
+
+  const generatedRequirementGroups = Object.entries(window.rebelGeneratedBoneRequirements || {}).map(([groupName, boneNames]) => {
+    const missingInGroup = boneNames.filter((boneName) => missingStandardBones.includes(boneName));
+
+    return {
+      groupName,
+      requiredCount: boneNames.length,
+      missingCount: missingInGroup.length,
+      missingBones: missingInGroup
+    };
+  });
+
+  const directMapCoverage = requiredBones.length
+    ? Math.round((mappedRebelBones.size / requiredBones.length) * 100)
+    : 0;
+
+  const sourceCoverage = inspection.boneCount
+    ? Math.round((mappedBones.length / inspection.boneCount) * 100)
+    : 0;
+
+  const report = {
+    glbUrl,
+    sourceSkeletonName: inspection.skeletonName,
+    sourceBoneCount: inspection.boneCount,
+    rebelStandardBoneCount: requiredBones.length,
+    mappedBoneCount: mappedBones.length,
+    mappedBones,
+    directMapCoverage,
+    sourceCoverage,
+    missingStandardBoneCount: missingStandardBones.length,
+    missingStandardBones,
+    generatedRequirementGroups,
+    conclusion:
+      missingStandardBones.length === 0
+        ? 'This rig already matches the Rebel Standard Skeleton.'
+        : 'This rig needs Rebel Standard bone generation / fitting before it can become a final playable Forge character.'
+  };
+
+  window.lastRebelRigFitReport = report;
+  console.log('Rebel Rig Fit Map report:', report);
+
+  return report;
+};
+ 
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
 let _signTriggers = [];
