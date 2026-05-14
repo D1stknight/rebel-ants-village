@@ -2949,7 +2949,161 @@ window.compareMainAndForgeSkeletons = function() {
 
   return result;
 };
- 
+
+window.rebelStandardBoneNames = [
+  'mixamorig_Hips',
+  'mixamorig_Spine',
+  'mixamorig_Spine1',
+  'mixamorig_Spine2',
+  'mixamorig_Neck',
+  'mixamorig_Head',
+  'mixamorig_HeadTop_End',
+  'mixamorig_LeftShoulder',
+  'mixamorig_LeftArm',
+  'mixamorig_LeftForeArm',
+  'mixamorig_LeftHand',
+  'mixamorig_LeftHandThumb1',
+  'mixamorig_LeftHandThumb2',
+  'mixamorig_LeftHandThumb3',
+  'mixamorig_LeftHandThumb4',
+  'mixamorig_LeftHandIndex1',
+  'mixamorig_LeftHandIndex2',
+  'mixamorig_LeftHandIndex3',
+  'mixamorig_LeftHandIndex4',
+  'mixamorig_LeftHandMiddle1',
+  'mixamorig_LeftHandMiddle2',
+  'mixamorig_LeftHandMiddle3',
+  'mixamorig_LeftHandMiddle4',
+  'mixamorig_LeftHandRing1',
+  'mixamorig_LeftHandRing2',
+  'mixamorig_LeftHandRing3',
+  'mixamorig_LeftHandRing4',
+  'mixamorig_LeftHandPinky1',
+  'mixamorig_LeftHandPinky2',
+  'mixamorig_LeftHandPinky3',
+  'mixamorig_LeftHandPinky4',
+  'mixamorig_RightShoulder',
+  'mixamorig_RightArm',
+  'mixamorig_RightForeArm',
+  'mixamorig_RightHand',
+  'mixamorig_RightHandThumb1',
+  'mixamorig_RightHandThumb2',
+  'mixamorig_RightHandThumb3',
+  'mixamorig_RightHandThumb4',
+  'mixamorig_RightHandIndex1',
+  'mixamorig_RightHandIndex2',
+  'mixamorig_RightHandIndex3',
+  'mixamorig_RightHandIndex4',
+  'mixamorig_RightHandMiddle1',
+  'mixamorig_RightHandMiddle2',
+  'mixamorig_RightHandMiddle3',
+  'mixamorig_RightHandMiddle4',
+  'mixamorig_RightHandRing1',
+  'mixamorig_RightHandRing2',
+  'mixamorig_RightHandRing3',
+  'mixamorig_RightHandRing4',
+  'mixamorig_RightHandPinky1',
+  'mixamorig_RightHandPinky2',
+  'mixamorig_RightHandPinky3',
+  'mixamorig_RightHandPinky4',
+  'mixamorig_LeftUpLeg',
+  'mixamorig_LeftLeg',
+  'mixamorig_LeftFoot',
+  'mixamorig_LeftToeBase',
+  'mixamorig_LeftToe_End',
+  'mixamorig_RightUpLeg',
+  'mixamorig_RightLeg',
+  'mixamorig_RightFoot',
+  'mixamorig_RightToeBase',
+  'mixamorig_RightToe_End'
+];
+
+window.inspectRebelRigFromUrl = async function(glbUrl) {
+  if (!glbUrl) {
+    console.warn('Missing GLB URL');
+    return null;
+  }
+
+  const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", glbUrl, scene);
+  const skeletons = result.skeletons || [];
+  const animationGroups = result.animationGroups || [];
+  const skeleton = skeletons[0] || null;
+  const boneNames = skeleton?.bones?.map((bone) => bone.name) || [];
+
+  const inspection = {
+    glbUrl,
+    meshCount: result.meshes?.length || 0,
+    meshNames: (result.meshes || []).map((mesh) => mesh.name),
+    transformNodeCount: result.transformNodes?.length || 0,
+    transformNodeNames: (result.transformNodes || []).map((node) => node.name),
+    skeletonCount: skeletons.length,
+    skeletonName: skeleton?.name || null,
+    boneCount: boneNames.length,
+    boneNames,
+    animationGroupCount: animationGroups.length,
+    animationGroupNames: animationGroups.map((group) => group.name),
+    animationTargets: animationGroups.map((group) => ({
+      name: group.name,
+      targetCount: group.targetedAnimations?.length || 0,
+      targetNames: [...new Set((group.targetedAnimations || []).map((ta) => ta.target?.name || '(missing target)'))],
+      targetProperties: [...new Set((group.targetedAnimations || []).map((ta) => ta.animation?.targetProperty || '(missing property)'))]
+    }))
+  };
+
+  result.meshes.forEach((mesh) => {
+    mesh.isVisible = false;
+    mesh.setEnabled(false);
+  });
+
+  result.transformNodes.forEach((node) => {
+    node.setEnabled(false);
+  });
+
+  window.lastRebelRigInspection = inspection;
+  console.log('Rebel rig inspection:', inspection);
+
+  return inspection;
+};
+
+window.validateRebelStandardRigFromUrl = async function(glbUrl) {
+  const inspection = await window.inspectRebelRigFromUrl(glbUrl);
+
+  if (!inspection) return null;
+
+  const requiredBones = window.rebelStandardBoneNames || [];
+  const foundBones = new Set(inspection.boneNames || []);
+
+  const missingBones = requiredBones.filter((boneName) => !foundBones.has(boneName));
+  const extraBones = (inspection.boneNames || []).filter((boneName) => !requiredBones.includes(boneName));
+  const foundRequiredCount = requiredBones.length - missingBones.length;
+  const matchPercent = requiredBones.length
+    ? Math.round((foundRequiredCount / requiredBones.length) * 100)
+    : 0;
+
+  const validation = {
+    glbUrl,
+    passed: missingBones.length === 0,
+    standardName: 'Rebel Standard Skeleton v1',
+    requiredBoneCount: requiredBones.length,
+    actualBoneCount: inspection.boneCount,
+    foundRequiredCount,
+    matchPercent,
+    missingBones,
+    extraBones,
+    skeletonName: inspection.skeletonName,
+    animationGroupCount: inspection.animationGroupCount,
+    animationGroupNames: inspection.animationGroupNames,
+    message: missingBones.length === 0
+      ? `PASS — ${foundRequiredCount}/${requiredBones.length} Rebel Standard bones found.`
+      : `FAIL — ${foundRequiredCount}/${requiredBones.length} Rebel Standard bones found. Missing ${missingBones.length}.`
+  };
+
+  window.lastRebelRigValidation = validation;
+  console.log('Rebel Standard Rig validation:', validation.message, validation);
+
+  return validation;
+};
+
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
 let _signTriggers = [];
