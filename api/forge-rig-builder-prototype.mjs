@@ -1,5 +1,7 @@
 import { NodeIO } from '@gltf-transform/core';
 import { put } from '@vercel/blob';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 const MAX_GLB_BYTES = 120 * 1024 * 1024;
 
@@ -186,6 +188,28 @@ function getSourceGlbUrl({ body, buildRecord }) {
 }
 
 async function fetchGlbAsBuffer(glbUrl) {
+  const normalizedLocalPath =
+    typeof glbUrl === 'string' && glbUrl.startsWith('/assets/')
+      ? glbUrl.slice(1)
+      : typeof glbUrl === 'string' && glbUrl.startsWith('assets/')
+        ? glbUrl
+        : null;
+
+  if (normalizedLocalPath) {
+    const localPath = path.join(process.cwd(), normalizedLocalPath);
+    const buffer = await readFile(localPath);
+
+    if (!buffer.length) {
+      throw new Error('Local source GLB is empty');
+    }
+
+    if (buffer.length > MAX_GLB_BYTES) {
+      throw new Error('Local source GLB is too large for prototype rig builder');
+    }
+
+    return buffer;
+  }
+
   const response = await fetch(glbUrl, {
     headers: {
       Accept: 'model/gltf-binary,application/octet-stream,*/*'
