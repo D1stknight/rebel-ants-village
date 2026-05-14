@@ -2652,7 +2652,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     if (!panel || !content) return;
 
     const latestGlbBuild = getLatestGlbBuild();
-    const glbUrl = latestGlbBuild?.output?.glbUrl || latestGlbBuild?.engine?.glbUrl || '';
+   const glbUrl = 'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb';
 
     if (!glbUrl) {
       clearForge3dPreview();
