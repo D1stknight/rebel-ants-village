@@ -96,20 +96,31 @@ Variant intent: STRONGER WARRIOR BODY.
 `.trim();
   }
 
-  if (variantIntent === 'cleaner_3d_reference') {
+   if (variantIntent === 'cleaner_3d_reference') {
     return `
-Variant intent: CLEANER 3D REFERENCE.
-- Create a cleaner, simpler full-body production reference that will be easier to turn into a future 3D character.
-- Keep the original face, eyes, mouth, teeth, expression, antennae, headwear, and upper-body identity locked to Image 1.
-- Use a mostly front-facing neutral stance with both arms, legs, hands, feet, torso, and silhouette clearly readable.
-- Avoid extreme cinematic poses, heavy shadows, motion blur, dramatic camera angles, cropped limbs, or complex backgrounds.
-- Keep the background simple and neutral.
+Variant intent: CLEAN STATIC 3D SOURCE MODEL.
+- Create a clean full-body static character reference for future Rebel Standard rigging.
+- No weapons.
+- No cape.
+- No floating accessories.
+- No animation pose.
+- No action pose.
+- Use a neutral A-pose or T-pose.
+- Keep the character front-facing and symmetrical.
+- Show both arms clearly.
+- Show both hands clearly.
+- Show separated fingers if possible.
+- Show both legs clearly.
+- Show both feet/boots clearly.
+- Do not crop the body.
 - Keep the full body visible from head to feet.
-- Avoid weapons covering the body. If a weapon is present, keep it small, clear, and away from the face, torso, hands, legs, and feet.
-- Prioritize clean shape readability, balanced proportions, visible limbs, and simple clothing structure over dramatic concept-art flair.
+- Use cleaner, more realistic playable-character proportions, closer to the main Rebel playable character.
+- Keep clothing simple enough for future rigging.
+- Avoid cloth crossing over hands, feet, knees, elbows, or shoulders.
+- Keep the background simple and neutral.
+- Prioritize clean riggable geometry, readable limbs, clean shoulders, clean elbows, clean knees, clean hands, and clean feet over cinematic style.
 `.trim();
   }
-
   return '';
 }
 
