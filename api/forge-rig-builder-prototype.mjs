@@ -248,6 +248,47 @@ function getPrimarySkin(document) {
   return listSkins(document)[0] || null;
 }
 
+function getPrimaryMeshNode(document) {
+  return document.getRoot().listNodes().find((node) => {
+    return typeof node.getMesh === 'function' && node.getMesh();
+  }) || null;
+}
+
+function getOrCreatePrimarySkin(document) {
+  const existingSkin = getPrimarySkin(document);
+  const meshNode = getPrimaryMeshNode(document);
+
+  if (existingSkin) {
+    if (meshNode && typeof meshNode.getSkin === 'function' && !meshNode.getSkin()) {
+      meshNode.setSkin(existingSkin);
+    }
+
+    return {
+      skin: existingSkin,
+      created: false,
+      meshNodeName: meshNode?.getName?.() || null
+    };
+  }
+
+  if (!meshNode || typeof meshNode.setSkin !== 'function') {
+    return {
+      skin: null,
+      created: false,
+      meshNodeName: null,
+      warning: 'No mesh node found to attach a new skin.'
+    };
+  }
+
+  const skin = document.createSkin('Rebel Standard Skin');
+  meshNode.setSkin(skin);
+
+  return {
+    skin,
+    created: true,
+    meshNodeName: meshNode.getName()
+  };
+}
+
 function getSkinJoints(skin) {
   if (!skin || typeof skin.listJoints !== 'function') return [];
   return skin.listJoints();
@@ -483,10 +524,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: 'Missing source GLB URL' });
     }
 
-    const sourceBuffer = await fetchGlbAsBuffer(sourceGlbUrl);
+        const sourceBuffer = await fetchGlbAsBuffer(sourceGlbUrl);
     const io = new NodeIO();
     const document = await io.readBinary(sourceBuffer);
-    const skin = getPrimarySkin(document);
+    const skinSetup = getOrCreatePrimarySkin(document);
+    const skin = skinSetup.skin;
 
     const beforeCoverage = inspectRebelStandardCoverage(document);
     const renameReport = renameMappedBones(document);
@@ -522,8 +564,11 @@ export default async function handler(req, res) {
         rightFingerReport,
         toeReport
       },
-      skin: {
-        hadSkin: Boolean(skin),
+           skin: {
+        hadSkin: !skinSetup.created && Boolean(skin),
+        createdSkin: skinSetup.created,
+        attachedMeshNodeName: skinSetup.meshNodeName,
+        skinSetupWarning: skinSetup.warning || null,
         jointCountAfter: skin ? getSkinJoints(skin).length : 0
       }
     };
