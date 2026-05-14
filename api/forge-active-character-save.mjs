@@ -163,7 +163,9 @@ function sanitizeActiveCharacterPayload(payload) {
           }
         : null
     },
-    armatureAnimations: {
+       armatureAnimations: {
+      idle: null,
+
       walking: walkingArmatureGlbUrl
         ? {
             name: 'walking',
@@ -172,6 +174,7 @@ function sanitizeActiveCharacterPayload(payload) {
             animationType: 'armature_only'
           }
         : null,
+
       running: runningArmatureGlbUrl
         ? {
             name: 'running',
@@ -179,7 +182,13 @@ function sanitizeActiveCharacterPayload(payload) {
             source: 'rebel_blob',
             animationType: 'armature_only'
           }
-        : null
+        : null,
+
+      jump: null,
+
+      attack: null,
+
+      kick: null
     }
   };
 
