@@ -3481,6 +3481,120 @@ window.simulateRebelStandardSkeletonFromForge = async function(glbUrl) {
 
   return validation;
 };
+
+window.planRebelGeneratedBonePositions = async function(glbUrl) {
+  const simulation = await window.simulateRebelStandardSkeletonFromForge(glbUrl);
+
+  if (!simulation) return null;
+
+  const fingerPlan = window.lastRebelFingerChainPlan || null;
+
+  if (!fingerPlan) {
+    console.warn('Missing Rebel finger chain plan.');
+    return null;
+  }
+
+  const fingerSpread = {
+    Thumb: { x: 0.10, y: -0.02, z: 0.10 },
+    Index: { x: 0.05, y: 0.00, z: 0.18 },
+    Middle: { x: 0.00, y: 0.00, z: 0.20 },
+    Ring: { x: -0.05, y: 0.00, z: 0.18 },
+    Pinky: { x: -0.10, y: -0.01, z: 0.15 }
+  };
+
+  function sideMultiplier(side) {
+    return side === 'Left' ? 1 : -1;
+  }
+
+  function buildGeneratedFingerPositionPlan(chain) {
+    const side = chain.side;
+    const fingerType = chain.fingerType;
+    const spread = fingerSpread[fingerType] || { x: 0, y: 0, z: 0.16 };
+    const sideSign = sideMultiplier(side);
+
+    return {
+      side,
+      fingerType,
+      sourceParentBone: chain.sourceParentBone,
+      rebelParentBone: chain.rebelParentBone,
+      placementStrategy: 'relative_to_hand_anchor',
+      generatedBones: (chain.generatedBones || []).map((bone, index) => {
+        const segment = index + 1;
+        const segmentLength = fingerType === 'Thumb' ? 0.055 : 0.065;
+
+        return {
+          boneName: bone.boneName,
+          parentBone: bone.parentBone,
+          estimatedLocalOffset: {
+            x: Number((spread.x * sideSign + sideSign * segmentLength * index * 0.18).toFixed(4)),
+            y: Number((spread.y - segment * 0.005).toFixed(4)),
+            z: Number((spread.z + segmentLength * segment).toFixed(4))
+          },
+          purpose: bone.purpose,
+          confidence: 'placeholder_estimate',
+          note: 'Position is a first-pass procedural estimate. Later this should be fitted from hand mesh bounds or manual guide points.'
+        };
+      })
+    };
+  }
+
+  const leftFingerPositionPlan = (fingerPlan.leftFingerPlan || []).map(buildGeneratedFingerPositionPlan);
+  const rightFingerPositionPlan = (fingerPlan.rightFingerPlan || []).map(buildGeneratedFingerPositionPlan);
+
+  const toeEndPositionPlan = (fingerPlan.toeEndPlan || []).map((toePlan) => {
+    const side = toePlan.side;
+    const sideSign = sideMultiplier(side);
+
+    return {
+      side,
+      sourceParentBone: toePlan.sourceParentBone,
+      rebelParentBone: toePlan.rebelParentBone,
+      generatedBone: {
+        boneName: toePlan.generatedBone.boneName,
+        parentBone: toePlan.generatedBone.parentBone,
+        estimatedLocalOffset: {
+          x: 0,
+          y: 0,
+          z: Number((0.16 * sideSign).toFixed(4))
+        },
+        purpose: toePlan.generatedBone.purpose,
+        confidence: 'placeholder_estimate',
+        note: 'Toe end position should later be fitted from foot/toe mesh bounds.'
+      }
+    };
+  });
+
+  const generatedFingerBoneCount =
+    leftFingerPositionPlan.reduce((total, chain) => total + chain.generatedBones.length, 0) +
+    rightFingerPositionPlan.reduce((total, chain) => total + chain.generatedBones.length, 0);
+
+  const generatedToeBoneCount = toeEndPositionPlan.length;
+
+  const positionPlan = {
+    glbUrl,
+    planType: 'rebel_generated_bone_position_plan_v1',
+    sourceSkeletonName: simulation.sourceSkeletonName,
+    sourceBoneCount: simulation.sourceBoneCount,
+    requiredBoneCount: simulation.requiredBoneCount,
+    passesVirtualRebelStandard: simulation.passesVirtualRebelStandard,
+    generatedFingerBoneCount,
+    generatedToeBoneCount,
+    totalGeneratedBoneCount: generatedFingerBoneCount + generatedToeBoneCount,
+    leftFingerPositionPlan,
+    rightFingerPositionPlan,
+    toeEndPositionPlan,
+    warning:
+      'This is a position plan only. It does not create bones, bind skin weights, deform mesh, or export GLB.',
+    nextEngineeringStep:
+      'Use this plan to create a real rig-builder prototype that inserts generated bones into a skeleton and validates the resulting exported GLB.'
+  };
+
+  window.lastRebelGeneratedBonePositionPlan = positionPlan;
+
+  console.log('Rebel Generated Bone Position Plan:', positionPlan);
+
+  return positionPlan;
+};
   
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
