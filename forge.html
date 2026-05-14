@@ -425,25 +425,25 @@ body{
 
 <script src="assets/forge-core.js"></script>
 
-<script type="module">
-import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
-import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
-window.inspectStaticSourceGlb = async function inspectStaticSourceGlb() {
+<script>
+window.inspectStaticSourceGlb = function inspectStaticSourceGlb() {
   try {
     setForgeStatus('Inspecting static source GLB...', '');
 
-    const loader = new GLTFLoader();
+    const loader = new THREE.GLTFLoader();
 
     loader.load(
       'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb',
-      (gltf) => {
+      function(gltf) {
         let meshCount = 0;
-        let materialCount = 0;
         let triangleCount = 0;
         const materials = new Set();
+        let boneCount = 0;
 
-        gltf.scene.traverse((obj) => {
+        gltf.scene.traverse(function(obj) {
           if (obj.isMesh) {
             meshCount++;
 
@@ -453,16 +453,17 @@ window.inspectStaticSourceGlb = async function inspectStaticSourceGlb() {
 
             const geometry = obj.geometry;
 
-            if (geometry?.index) {
+            if (geometry && geometry.index) {
               triangleCount += geometry.index.count / 3;
-            } else if (geometry?.attributes?.position) {
+            } else if (geometry && geometry.attributes && geometry.attributes.position) {
               triangleCount += geometry.attributes.position.count / 3;
             }
           }
-        });
 
-        materialCount = materials.size;
-        const animationCount = gltf.animations?.length || 0;
+          if (obj.isBone) {
+            boneCount++;
+          }
+        });
 
         const box = new THREE.Box3().setFromObject(gltf.scene);
         const size = new THREE.Vector3();
@@ -470,15 +471,16 @@ window.inspectStaticSourceGlb = async function inspectStaticSourceGlb() {
 
         setForgeStatus(
           `Meshes: ${meshCount}
-Materials: ${materialCount}
+Materials: ${materials.size}
 Triangles: ${Math.round(triangleCount)}
-Animations: ${animationCount}
+Bones: ${boneCount}
+Animations: ${gltf.animations.length}
 Size: ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}`,
           'success'
         );
       },
       undefined,
-      (err) => {
+      function(err) {
         console.error(err);
         setForgeStatus('Could not inspect static source GLB.', 'error');
       }
@@ -489,7 +491,6 @@ Size: ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}`,
   }
 };
 </script>
-
 <script>
 function getSelectedRebel() {
   try {
