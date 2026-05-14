@@ -3595,6 +3595,218 @@ window.planRebelGeneratedBonePositions = async function(glbUrl) {
 
   return positionPlan;
 };
+
+window.clearRebelGeneratedBoneMarkers = function() {
+  if (window.rebelGeneratedBoneMarkerRoot) {
+    try {
+      window.rebelGeneratedBoneMarkerRoot.dispose(false, true);
+    } catch(e) {
+      console.warn('Could not clear Rebel generated bone markers:', e);
+    }
+  }
+
+  window.rebelGeneratedBoneMarkerRoot = null;
+  window.lastRebelGeneratedBoneMarkerReport = null;
+};
+
+window.visualizeRebelGeneratedBonePlan = async function(glbUrl) {
+  const positionPlan = await window.planRebelGeneratedBonePositions(glbUrl);
+
+  if (!positionPlan) return null;
+
+  window.clearRebelGeneratedBoneMarkers();
+
+  const riggedResult = await BABYLON.SceneLoader.ImportMeshAsync("", "", glbUrl, scene);
+  const skeleton = riggedResult.skeletons?.[0] || null;
+
+  if (!skeleton) {
+    console.warn('Could not visualize generated bone plan. No skeleton found.');
+    return null;
+  }
+
+  const markerRoot = new BABYLON.TransformNode("rebelGeneratedBoneMarkerRoot", scene);
+  markerRoot.position = new BABYLON.Vector3(8.8, 0.12, 20);
+  markerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+
+  riggedResult.meshes.forEach((mesh) => {
+    if (!mesh || mesh === markerRoot) return;
+
+    mesh.parent = markerRoot;
+
+    if (mesh.rotationQuaternion) {
+      mesh.rotationQuaternion = null;
+    }
+
+    mesh.receiveShadows = true;
+
+    if (typeof shadows !== 'undefined' && shadows && mesh.getTotalVertices && mesh.getTotalVertices() > 0) {
+      shadows.addShadowCaster(mesh);
+    }
+  });
+
+  riggedResult.transformNodes.forEach((node) => {
+    if (!node || node === markerRoot) return;
+
+    node.parent = markerRoot;
+
+    if (node.rotationQuaternion) {
+      node.rotationQuaternion = null;
+    }
+  });
+
+  markerRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+  const bounds = markerRoot.getHierarchyBoundingVectors(true);
+  const height = Math.max(bounds.max.y - bounds.min.y, 0.001);
+  const targetHeight = 3.8;
+  const scale = targetHeight / height;
+
+  markerRoot.scaling = new BABYLON.Vector3(scale, scale, scale);
+
+  const normalizedBounds = markerRoot.getHierarchyBoundingVectors(true);
+  markerRoot.position.y += 0.12 - normalizedBounds.min.y;
+
+  const markerParent = new BABYLON.TransformNode("rebelGeneratedBoneMarkers", scene);
+  markerParent.parent = markerRoot;
+
+  const fingerMarkerMaterial = mat('#5ecfca', { e: '#5ecfca' });
+  const toeMarkerMaterial = mat('#f0c04a', { e: '#f0c04a' });
+
+  function getBoneNode(name) {
+    const bone = skeleton.bones.find((item) => item.name === name);
+    return bone?._linkedTransformNode || null;
+  }
+
+  function createMarker(name, parentBoneName, offset, material, diameter) {
+    const parentNode = getBoneNode(parentBoneName);
+
+    if (!parentNode) {
+      return null;
+    }
+
+    const marker = BABYLON.MeshBuilder.CreateSphere(name, {
+      diameter: diameter || 0.045,
+      segments: 8
+    }, scene);
+
+    marker.material = material;
+    marker.parent = parentNode;
+    marker.position = new BABYLON.Vector3(
+      offset.x || 0,
+      offset.y || 0,
+      offset.z || 0
+    );
+
+    marker.metadata = {
+      generatedBoneMarker: true,
+      boneName: name,
+      parentBoneName
+    };
+
+    return marker;
+  }
+
+  const createdMarkers = [];
+  const skippedMarkers = [];
+
+  function addFingerChainMarkers(chains) {
+    (chains || []).forEach((chain) => {
+      (chain.generatedBones || []).forEach((bone) => {
+        const sourceParentName =
+          bone.parentBone === chain.rebelParentBone
+            ? chain.sourceParentBone
+            : null;
+
+        const previousGeneratedBone = bone.parentBone !== chain.rebelParentBone
+          ? createdMarkers.find((marker) => marker?.metadata?.boneName === bone.parentBone)
+          : null;
+
+        let marker = null;
+
+        if (sourceParentName) {
+          marker = createMarker(
+            bone.boneName,
+            sourceParentName,
+            bone.estimatedLocalOffset,
+            fingerMarkerMaterial,
+            0.04
+          );
+        } else if (previousGeneratedBone) {
+          marker = BABYLON.MeshBuilder.CreateSphere(bone.boneName, {
+            diameter: 0.035,
+            segments: 8
+          }, scene);
+
+          marker.material = fingerMarkerMaterial;
+          marker.parent = previousGeneratedBone;
+          marker.position = new BABYLON.Vector3(
+            bone.estimatedLocalOffset.x || 0,
+            bone.estimatedLocalOffset.y || 0,
+            0.06
+          );
+
+          marker.metadata = {
+            generatedBoneMarker: true,
+            boneName: bone.boneName,
+            parentBoneName: bone.parentBone
+          };
+        }
+
+        if (marker) {
+          createdMarkers.push(marker);
+        } else {
+          skippedMarkers.push({
+            boneName: bone.boneName,
+            parentBone: bone.parentBone
+          });
+        }
+      });
+    });
+  }
+
+  addFingerChainMarkers(positionPlan.leftFingerPositionPlan);
+  addFingerChainMarkers(positionPlan.rightFingerPositionPlan);
+
+  (positionPlan.toeEndPositionPlan || []).forEach((toePlan) => {
+    const marker = createMarker(
+      toePlan.generatedBone.boneName,
+      toePlan.sourceParentBone,
+      toePlan.generatedBone.estimatedLocalOffset,
+      toeMarkerMaterial,
+      0.05
+    );
+
+    if (marker) {
+      createdMarkers.push(marker);
+    } else {
+      skippedMarkers.push({
+        boneName: toePlan.generatedBone.boneName,
+        parentBone: toePlan.sourceParentBone
+      });
+    }
+  });
+
+  window.rebelGeneratedBoneMarkerRoot = markerRoot;
+
+  const report = {
+    glbUrl,
+    markerRoot,
+    skeletonName: skeleton.name,
+    sourceBoneCount: skeleton.bones.length,
+    createdMarkerCount: createdMarkers.length,
+    skippedMarkerCount: skippedMarkers.length,
+    skippedMarkers,
+    expectedGeneratedBoneCount: positionPlan.totalGeneratedBoneCount,
+    note:
+      'These are debug markers only. They visualize the planned generated Rebel Standard finger/toe bones but do not create real bones or skin weights.'
+  };
+
+  window.lastRebelGeneratedBoneMarkerReport = report;
+
+  console.log('Rebel generated bone markers visualized:', report);
+
+  return report;
+};
   
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
