@@ -3289,7 +3289,118 @@ window.analyzeForgeToRebelRigFit = async function(glbUrl) {
 
   return report;
 };
- 
+
+window.generateRebelFingerChainPlan = async function(glbUrl) {
+  const fitReport = await window.analyzeForgeToRebelRigFit(glbUrl);
+
+  if (!fitReport) return null;
+
+  const mappedSourceBones = new Set(
+    (fitReport.mappedBones || []).map((item) => item.sourceBoneName)
+  );
+
+  const hasLeftHand = mappedSourceBones.has('LeftHand');
+  const hasRightHand = mappedSourceBones.has('RightHand');
+  const hasLeftToeBase = mappedSourceBones.has('LeftToeBase');
+  const hasRightToeBase = mappedSourceBones.has('RightToeBase');
+
+  const fingerTypes = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'];
+
+  function buildFingerChain(side, fingerType) {
+    const sourceHandBone = `${side}Hand`;
+    const rebelHandBone = `mixamorig_${side}Hand`;
+
+    return {
+      side,
+      fingerType,
+      sourceParentBone: sourceHandBone,
+      rebelParentBone: rebelHandBone,
+      generatedBones: [1, 2, 3, 4].map((index) => ({
+        boneName: `mixamorig_${side}Hand${fingerType}${index}`,
+        parentBone:
+          index === 1
+            ? rebelHandBone
+            : `mixamorig_${side}Hand${fingerType}${index - 1}`,
+        purpose:
+          index === 1
+            ? 'finger base / knuckle'
+            : index === 4
+              ? 'finger tip / end helper'
+              : 'finger bend segment'
+      }))
+    };
+  }
+
+  const leftFingerPlan = hasLeftHand
+    ? fingerTypes.map((fingerType) => buildFingerChain('Left', fingerType))
+    : [];
+
+  const rightFingerPlan = hasRightHand
+    ? fingerTypes.map((fingerType) => buildFingerChain('Right', fingerType))
+    : [];
+
+  const toeEndPlan = [
+    hasLeftToeBase
+      ? {
+          side: 'Left',
+          sourceParentBone: 'LeftToeBase',
+          rebelParentBone: 'mixamorig_LeftToeBase',
+          generatedBone: {
+            boneName: 'mixamorig_LeftToe_End',
+            parentBone: 'mixamorig_LeftToeBase',
+            purpose: 'toe tip / end helper'
+          }
+        }
+      : null,
+    hasRightToeBase
+      ? {
+          side: 'Right',
+          sourceParentBone: 'RightToeBase',
+          rebelParentBone: 'mixamorig_RightToeBase',
+          generatedBone: {
+            boneName: 'mixamorig_RightToe_End',
+            parentBone: 'mixamorig_RightToeBase',
+            purpose: 'toe tip / end helper'
+          }
+        }
+      : null
+  ].filter(Boolean);
+
+  const plannedGeneratedBoneCount =
+    leftFingerPlan.reduce((total, chain) => total + chain.generatedBones.length, 0) +
+    rightFingerPlan.reduce((total, chain) => total + chain.generatedBones.length, 0) +
+    toeEndPlan.length;
+
+  const plan = {
+    glbUrl,
+    sourceSkeletonName: fitReport.sourceSkeletonName,
+    sourceBoneCount: fitReport.sourceBoneCount,
+    rebelStandardBoneCount: fitReport.rebelStandardBoneCount,
+    mappedBoneCount: fitReport.mappedBoneCount,
+    currentMissingStandardBoneCount: fitReport.missingStandardBoneCount,
+    plannedGeneratedBoneCount,
+    projectedBoneCountAfterGeneration: fitReport.sourceBoneCount + plannedGeneratedBoneCount,
+    anchors: {
+      hasLeftHand,
+      hasRightHand,
+      hasLeftToeBase,
+      hasRightToeBase
+    },
+    leftFingerPlan,
+    rightFingerPlan,
+    toeEndPlan,
+    warning:
+      'This is a bone generation plan only. It does not yet create bones, bind skin weights, or export a new GLB.',
+    nextEngineeringStep:
+      'Create a rig builder that inserts these generated bones, parents them correctly, estimates positions from the mesh/hand bounds, and then tests skin weighting/deformation.'
+  };
+
+  window.lastRebelFingerChainPlan = plan;
+  console.log('Rebel Finger Chain Plan:', plan);
+
+  return plan;
+};
+  
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
 let _signTriggers = [];
