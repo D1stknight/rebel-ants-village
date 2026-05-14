@@ -2474,12 +2474,23 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     return panel;
   }
 
-  function getLatestGlbBuild() {
+    function getLatestGlbBuild() {
     const builds = window.lastForge3dBuildListResponse?.builds || [];
 
-    return builds.find((build) => {
+    const latestBuild = builds.find((build) => {
       return Boolean(build?.output?.glbUrl || build?.engine?.glbUrl);
     }) || null;
+
+    if (latestBuild) {
+      return latestBuild;
+    }
+
+    return {
+      output: {
+        glbUrl: 'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb'
+      },
+      source: 'local_static_source_test'
+    };
   }
 
   function stopForge3dPreviewLoop() {
