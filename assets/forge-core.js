@@ -2693,7 +2693,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('side')">Side View</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('top')">Top View</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeBodyZoneMode()">Start Body Zones</button>
+                <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeBodyZoneMode()">Start Body Zones</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeBodyZoneTool()">Body Zone Tool</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeBodyZoneMode()">Clear Body Zones</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeBodyZoneJson()">Copy Body Zone JSON</button>
       </div>
@@ -3364,15 +3365,15 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     console.log('Cleared Forge Rig Placement Mode');
   };
-    window.startForgeBodyZoneMode = async function() {
+       window.startForgeBodyZoneMode = async function() {
     const previewState = window.forge3dPreviewState;
 
-    if (!previewState?.scene || !previewState?.model) {
+    if (!previewState?.scene || !previewState?.model || !previewState?.camera || !previewState?.renderer) {
       alert('Load a 3D preview before starting Body Zones.');
       return;
     }
 
-    const { THREE } = await loadThreeModules();
+    const { THREE, TransformControls } = await loadThreeModules();
 
     window.clearForgeRigPlacementMode?.();
     window.clearForgeBodyZoneMode?.();
@@ -3385,6 +3386,13 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       color: 0x5ecfca,
       transparent: true,
       opacity: 0.18,
+      depthWrite: false
+    });
+
+    const selectedZoneMaterial = new THREE.MeshBasicMaterial({
+      color: 0xf3e6bf,
+      transparent: true,
+      opacity: 0.32,
       depthWrite: false
     });
 
@@ -3448,6 +3456,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       zone.scale.set(config.scale[0], config.scale[1], config.scale[2]);
       zone.renderOrder = 700;
       zone.userData.forgeBodyZoneName = config.name;
+      zone.userData.defaultMaterial = material;
 
       previewState.scene.add(zone);
       zonesByName[config.name] = zone;
@@ -3455,9 +3464,64 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       return zone;
     });
 
+    const transformControls = new TransformControls(previewState.camera, previewState.renderer.domElement);
+    transformControls.setMode('translate');
+    transformControls.setSize(0.85);
+    transformControls.addEventListener('dragging-changed', (event) => {
+      if (previewState.controls) {
+        previewState.controls.enabled = !event.value;
+      }
+    });
+
+    const transformControlsHelper = typeof transformControls.getHelper === 'function'
+      ? transformControls.getHelper()
+      : transformControls;
+
+    previewState.scene.add(transformControlsHelper);
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    function selectZone(zone) {
+      zones.forEach((item) => {
+        item.material = item.userData.defaultMaterial;
+      });
+
+      zone.material = selectedZoneMaterial;
+      transformControls.attach(zone);
+
+      window.forgeBodyZoneState.selectedZone = zone;
+
+      console.log('Selected Body Zone:', zone.userData?.forgeBodyZoneName || zone.name);
+    }
+
+    function pointerDownHandler(event) {
+      const rect = previewState.renderer.domElement.getBoundingClientRect();
+
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointer, previewState.camera);
+
+      const hits = raycaster.intersectObjects(zones, false);
+      if (!hits.length) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      selectZone(hits[0].object);
+    }
+
+    previewState.renderer.domElement.addEventListener('pointerdown', pointerDownHandler);
+
     window.forgeBodyZoneState = {
       zones,
       zonesByName,
+      selectedZone: null,
+      transformControls,
+      transformControlsHelper,
+      pointerDownHandler,
+      toolMode: 'move',
       currentGlbUrl: previewState.currentGlbUrl || '',
       bounds: {
         min: box.min.toArray(),
@@ -3470,24 +3534,55 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     console.log('Body Zones started', window.forgeBodyZoneState);
     alert('Body Zones started.');
   };
-
-  window.clearForgeBodyZoneMode = function() {
+    window.clearForgeBodyZoneMode = function() {
     const bodyZoneState = window.forgeBodyZoneState;
+    const previewState = window.forge3dPreviewState;
 
     if (!bodyZoneState?.zones?.length) {
       window.forgeBodyZoneState = null;
       return;
     }
 
+    if (previewState?.renderer?.domElement && bodyZoneState.pointerDownHandler) {
+      previewState.renderer.domElement.removeEventListener('pointerdown', bodyZoneState.pointerDownHandler);
+    }
+
+    if (previewState?.controls) {
+      previewState.controls.enabled = true;
+    }
+
+    if (bodyZoneState.transformControls) {
+      bodyZoneState.transformControls.detach();
+      bodyZoneState.transformControls.dispose?.();
+    }
+
+    if (bodyZoneState.transformControlsHelper) {
+      bodyZoneState.transformControlsHelper.parent?.remove(bodyZoneState.transformControlsHelper);
+    }
+
     bodyZoneState.zones.forEach((zone) => {
       zone.parent?.remove(zone);
       zone.geometry?.dispose?.();
       zone.material?.dispose?.();
+      zone.userData?.defaultMaterial?.dispose?.();
     });
 
     window.forgeBodyZoneState = null;
 
     console.log('Cleared Body Zones');
+  };
+   window.cycleForgeBodyZoneTool = function() {
+    const bodyZoneState = window.forgeBodyZoneState;
+
+    if (!bodyZoneState?.transformControls) {
+      alert('Start Body Zones before changing the Body Zone tool.');
+      return;
+    }
+
+    bodyZoneState.toolMode = bodyZoneState.toolMode === 'move' ? 'scale' : 'move';
+    bodyZoneState.transformControls.setMode(bodyZoneState.toolMode === 'scale' ? 'scale' : 'translate');
+
+    console.log('Body Zone tool:', bodyZoneState.toolMode === 'scale' ? 'Scale' : 'Move');
   };
 
   window.copyForgeBodyZoneJson = async function() {
