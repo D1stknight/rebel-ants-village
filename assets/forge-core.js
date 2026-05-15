@@ -2673,8 +2673,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     renderer.setSize(stage.clientWidth, stage.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-    stage.innerHTML = '';
-    stage.appendChild(renderer.domElement);
+      stage.querySelectorAll('canvas, .forge-3d-preview-empty').forEach((element) => {
+      element.remove();
+    });
+    stage.prepend(renderer.domElement);
 
     const ambient = new THREE.HemisphereLight(0xffffff, 0x1b2433, 2.4);
     scene.add(ambient);
