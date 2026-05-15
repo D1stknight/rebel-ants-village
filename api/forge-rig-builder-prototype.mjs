@@ -472,7 +472,7 @@ async function loadPlayableTemplateBoneTranslations() {
   };
 }
 
-function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, playableTemplate = {}) {
+function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, playableTemplate = {}, rigLayout = null) {
   const created = [];
   const reused = [];
   const jointNames = [];
@@ -486,6 +486,134 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
   const templateSize = playableTemplate.templateBounds?.size || [1, 1, 1];
   const templateHeight = Math.max(templateSize[1] || 1, 0.001);
   const templateScale = height / templateHeight;
+  const rigLayoutMarkers = rigLayout?.markers && typeof rigLayout.markers === 'object'
+    ? rigLayout.markers
+    : {};
+  const rigMarkerToBoneName = {
+    hips: 'mixamorig_Hips',
+    spine: 'mixamorig_Spine',
+    chest: 'mixamorig_Spine2',
+    neck: 'mixamorig_Neck',
+    head: 'mixamorig_Head',
+    'left shoulder': 'mixamorig_LeftShoulder',
+    'left elbow': 'mixamorig_LeftForeArm',
+    'left hand': 'mixamorig_LeftHand',
+    'right shoulder': 'mixamorig_RightShoulder',
+    'right elbow': 'mixamorig_RightForeArm',
+    'right hand': 'mixamorig_RightHand',
+    'left knee': 'mixamorig_LeftLeg',
+    'left foot': 'mixamorig_LeftFoot',
+    'right knee': 'mixamorig_RightLeg',
+    'right foot': 'mixamorig_RightFoot'
+  };
+  const rigBoneToMarkerName = Object.fromEntries(
+    Object.entries(rigMarkerToBoneName).map(([markerName, boneName]) => [boneName, markerName])
+  );
+  const rigLayoutMarkerCount = Object.keys(rigMarkerToBoneName).filter((markerName) => {
+    return isRigMarkerPosition(rigLayoutMarkers[markerName]);
+  }).length;
+
+  function isRigMarkerPosition(position) {
+    return Array.isArray(position) &&
+      position.length >= 3 &&
+      position.slice(0, 3).every((value) => Number.isFinite(Number(value)));
+  }
+
+  function normalizeRigMarkerPosition(position) {
+    return [
+      Number(position[0]),
+      Number(position[1]),
+      Number(position[2])
+    ];
+  }
+
+  function midpoint(a, b) {
+    return [
+      (a[0] + b[0]) / 2,
+      (a[1] + b[1]) / 2,
+      (a[2] + b[2]) / 2
+    ];
+  }
+
+  function getRigMarkerWorldPositionForBone(boneName) {
+    const markerName = rigBoneToMarkerName[boneName];
+
+    if (markerName && isRigMarkerPosition(rigLayoutMarkers[markerName])) {
+      return normalizeRigMarkerPosition(rigLayoutMarkers[markerName]);
+    }
+
+    if (boneName === 'mixamorig_Spine1') {
+      const spine = getRigMarkerWorldPositionForBone('mixamorig_Spine');
+      const chest = getRigMarkerWorldPositionForBone('mixamorig_Spine2');
+      return spine && chest ? midpoint(spine, chest) : null;
+    }
+
+    if (boneName === 'mixamorig_LeftArm') {
+      const shoulder = getRigMarkerWorldPositionForBone('mixamorig_LeftShoulder');
+      const elbow = getRigMarkerWorldPositionForBone('mixamorig_LeftForeArm');
+      return shoulder && elbow ? midpoint(shoulder, elbow) : null;
+    }
+
+    if (boneName === 'mixamorig_RightArm') {
+      const shoulder = getRigMarkerWorldPositionForBone('mixamorig_RightShoulder');
+      const elbow = getRigMarkerWorldPositionForBone('mixamorig_RightForeArm');
+      return shoulder && elbow ? midpoint(shoulder, elbow) : null;
+    }
+
+    if (boneName === 'mixamorig_LeftUpLeg') {
+      const hips = getRigMarkerWorldPositionForBone('mixamorig_Hips');
+      const knee = getRigMarkerWorldPositionForBone('mixamorig_LeftLeg');
+      return hips && knee ? midpoint(hips, knee) : null;
+    }
+
+    if (boneName === 'mixamorig_RightUpLeg') {
+      const hips = getRigMarkerWorldPositionForBone('mixamorig_Hips');
+      const knee = getRigMarkerWorldPositionForBone('mixamorig_RightLeg');
+      return hips && knee ? midpoint(hips, knee) : null;
+    }
+
+    return null;
+  }
+
+  function getRigMarkerLocalTranslationForBone(boneName) {
+    const worldPosition = getRigMarkerWorldPositionForBone(boneName);
+
+    if (!worldPosition) {
+      return null;
+    }
+
+    const parentName = {
+      mixamorig_Spine: 'mixamorig_Hips',
+      mixamorig_Spine1: 'mixamorig_Spine',
+      mixamorig_Spine2: 'mixamorig_Spine1',
+      mixamorig_Neck: 'mixamorig_Spine2',
+      mixamorig_Head: 'mixamorig_Neck',
+      mixamorig_LeftShoulder: 'mixamorig_Spine2',
+      mixamorig_LeftArm: 'mixamorig_LeftShoulder',
+      mixamorig_LeftForeArm: 'mixamorig_LeftArm',
+      mixamorig_LeftHand: 'mixamorig_LeftForeArm',
+      mixamorig_RightShoulder: 'mixamorig_Spine2',
+      mixamorig_RightArm: 'mixamorig_RightShoulder',
+      mixamorig_RightForeArm: 'mixamorig_RightArm',
+      mixamorig_RightHand: 'mixamorig_RightForeArm',
+      mixamorig_LeftUpLeg: 'mixamorig_Hips',
+      mixamorig_LeftLeg: 'mixamorig_LeftUpLeg',
+      mixamorig_LeftFoot: 'mixamorig_LeftLeg',
+      mixamorig_RightUpLeg: 'mixamorig_Hips',
+      mixamorig_RightLeg: 'mixamorig_RightUpLeg',
+      mixamorig_RightFoot: 'mixamorig_RightLeg'
+    }[boneName] || null;
+    const parentWorldPosition = parentName ? getRigMarkerWorldPositionForBone(parentName) : null;
+    const translation = parentWorldPosition
+      ? [
+          worldPosition[0] - parentWorldPosition[0],
+          worldPosition[1] - parentWorldPosition[1],
+          worldPosition[2] - parentWorldPosition[2]
+        ]
+      : worldPosition;
+
+    return translation.map((value) => Number(value.toFixed(5)));
+  }
 
   function scaleX(value) {
     return Number((value * width).toFixed(5));
@@ -499,7 +627,13 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
     return Number((value * depth).toFixed(5));
   }
 
-        function getRebelBoneLocalTranslation(boneName) {
+               function getRebelBoneLocalTranslation(boneName) {
+    const rigLayoutTranslation = getRigMarkerLocalTranslationForBone(boneName);
+
+    if (rigLayoutTranslation) {
+      return rigLayoutTranslation;
+    }
+
     const templateTranslation = templateBoneTranslations[boneName];
 
     if (Array.isArray(templateTranslation) && templateTranslation.length === 3) {
@@ -638,12 +772,14 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
     }
   });
 
-   return {
+    return {
     createdCount: created.length,
     reusedCount: reused.length,
     jointCount: skin ? getSkinJoints(skin).length : 0,
     jointsAddedCount: jointNames.length,
        templateBoneTranslationCount: Object.keys(templateBoneTranslations).length,
+    rigLayoutUsed: rigLayoutMarkerCount > 0,
+    rigLayoutMarkerCount,
     templateScale,
     templateHeight,
     created,
@@ -987,7 +1123,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ ok: false, error: 'Missing BLOB_READ_WRITE_TOKEN' });
     }
 
-    const body = req.body || {};
+       const body = req.body || {};
+    const rigLayout = body.rigLayout || (body.markers ? { markers: body.markers } : null);
     const { buildId } = body;
 
     if (!buildId && !body.sourceGlbUrl && !body.glbUrl) {
@@ -1035,7 +1172,7 @@ export default async function handler(req, res) {
     const renameReport = renameMappedBones(document);
     const nodesByName = listNodesByName(document);
 
-        const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, playableTemplate);
+    const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, playableTemplate, rigLayout);
     const inverseBindMatrixReport = attachIdentityInverseBindMatrices(document, skin);
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
