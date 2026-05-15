@@ -1031,8 +1031,50 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout = nu
     return 'mixamorig_Hips';
   }
 
+   function getRigRegionMarkerNames(point) {
+    const normalizedY = (point[1] - min[1]) / height;
+    const normalizedXFromCenter = (point[0] - center[0]) / width;
+    const absX = Math.abs(normalizedXFromCenter);
+    const side = normalizedXFromCenter > 0 ? 'left' : 'right';
+
+    if (normalizedY >= 0.82) {
+      return ['head', 'neck', 'chest', 'spine'];
+    }
+
+    if (normalizedY >= 0.42 && absX <= 0.18) {
+      return ['hips', 'spine', 'chest'];
+    }
+
+    if (normalizedY >= 0.42) {
+      return [
+        `${side} shoulder`,
+        `${side} elbow`,
+        `${side} hand`,
+        'chest',
+        'spine',
+        'neck',
+        'head'
+      ];
+    }
+
+    if (absX > 0.08) {
+      return [
+        `${side} knee`,
+        `${side} foot`,
+        'hips'
+      ];
+    }
+
+    return ['hips', 'left knee', 'right knee', 'left foot', 'right foot'];
+  }
+
   function getRigMarkerInfluences(point) {
-    const nearestMarkers = rigBindingMarkers
+    const regionMarkerNames = new Set(getRigRegionMarkerNames(point));
+    const regionMarkers = rigBindingMarkers.filter((marker) => {
+      return regionMarkerNames.has(marker.markerName);
+    });
+    const candidateMarkers = regionMarkers.length ? regionMarkers : rigBindingMarkers;
+    const nearestMarkers = candidateMarkers
       .map((marker) => {
         const dx = point[0] - marker.position[0];
         const dy = point[1] - marker.position[1];
@@ -1060,7 +1102,7 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout = nu
     }
 
     const rawWeights = nearestMarkers.map((marker) => {
-      return 1 / Math.max(Math.sqrt(marker.distanceSquared), 0.0001);
+      return 1 / Math.max(marker.distanceSquared, 0.0001);
     });
     const totalWeight = rawWeights.reduce((total, weight) => total + weight, 0) || 1;
 
@@ -1172,8 +1214,8 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout = nu
     jointCount: joints.length,
     countsByBoneName,
     rigLayoutMarkerCount: rigBindingMarkers.length,
-    bindingMode: useRigLayoutBinding
-      ? 'rig_layout_nearest_4_marker_blend'
+        bindingMode: useRigLayoutBinding
+      ? 'rig_layout_region_filtered_4_marker_blend'
       : 'body_zone_single_joint_weight_1'
   };
 }
