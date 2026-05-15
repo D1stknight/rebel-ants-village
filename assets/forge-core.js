@@ -2697,6 +2697,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeBodyZoneTool()">Body Zone Tool</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.shrinkForgeBodyZone()">Shrink Zone</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.growForgeBodyZone()">Grow Zone</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeBodyZones()">Save Body Zones</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeBodyZones()">Load Body Zones</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeBodyZoneMode()">Clear Body Zones</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeBodyZoneJson()">Copy Body Zone JSON</button>
       </div>
@@ -3607,6 +3609,83 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
 
     selectedZone.scale.multiplyScalar(1.1);
+  };
+
+    function getForgeBodyZoneStorageKey() {
+    const glbUrl = window.forge3dPreviewState?.currentGlbUrl || 'unknown-glb';
+    return `forgeBodyZoneLayout:${glbUrl}`;
+  }
+
+  function getForgeBodyZoneLayout() {
+    const bodyZoneState = window.forgeBodyZoneState;
+    const previewState = window.forge3dPreviewState;
+
+    if (!bodyZoneState?.zones?.length) return null;
+
+    return {
+      currentGlbUrl: previewState?.currentGlbUrl || bodyZoneState.currentGlbUrl || '',
+      savedAt: new Date().toISOString(),
+      zones: bodyZoneState.zones.map((zone) => {
+        return {
+          name: zone.userData?.forgeBodyZoneName || zone.name,
+          position: zone.position.toArray(),
+          scale: zone.scale.toArray()
+        };
+      }),
+      bounds: bodyZoneState.bounds || null
+    };
+  }
+
+  window.saveForgeBodyZones = function() {
+    const bodyZoneLayout = getForgeBodyZoneLayout();
+
+    if (!bodyZoneLayout) {
+      alert('Start Body Zones before saving.');
+      return;
+    }
+
+    localStorage.setItem(getForgeBodyZoneStorageKey(), JSON.stringify(bodyZoneLayout));
+
+    console.log('Saved Body Zones', bodyZoneLayout);
+    alert('Body Zones saved.');
+  };
+
+  window.loadForgeBodyZones = function() {
+    const bodyZoneState = window.forgeBodyZoneState;
+
+    if (!bodyZoneState?.zones?.length) {
+      alert('Start Body Zones before loading.');
+      return;
+    }
+
+    const rawLayout = localStorage.getItem(getForgeBodyZoneStorageKey());
+
+    if (!rawLayout) {
+      alert('No saved Body Zones found for this GLB.');
+      return;
+    }
+
+    let bodyZoneLayout;
+
+    try {
+      bodyZoneLayout = JSON.parse(rawLayout);
+    } catch(e) {
+      console.warn('Could not parse saved Body Zones:', e);
+      alert('Saved Body Zones could not be loaded.');
+      return;
+    }
+
+    (bodyZoneLayout.zones || []).forEach((savedZone) => {
+      const zone = bodyZoneState.zonesByName?.[savedZone.name];
+
+      if (!zone || !Array.isArray(savedZone.position) || !Array.isArray(savedZone.scale)) return;
+
+      zone.position.set(savedZone.position[0], savedZone.position[1], savedZone.position[2]);
+      zone.scale.set(savedZone.scale[0], savedZone.scale[1], savedZone.scale[2]);
+    });
+
+    console.log('Loaded Body Zones', bodyZoneLayout);
+    alert('Body Zones loaded.');
   };
 
   window.copyForgeBodyZoneJson = async function() {
