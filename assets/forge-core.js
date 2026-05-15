@@ -2394,7 +2394,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         margin-top: 12px;
       }
 
-      #forge-3d-preview-stage {
+           #forge-3d-preview-stage {
         position: relative;
         width: 100%;
         height: 420px;
@@ -2414,29 +2414,76 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         height: 100%;
       }
 
-            .forge-3d-preview-actions {
+      .forge-3d-stage-tools {
+        position: absolute;
+        z-index: 5;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        pointer-events: auto;
+      }
+
+      .forge-3d-stage-tools-top {
+        top: 12px;
+        right: 12px;
+        justify-content: flex-end;
+      }
+
+      .forge-3d-stage-tools-bottom {
+        right: 12px;
+        bottom: 12px;
+        justify-content: flex-end;
+      }
+
+      #forge-rig-selected-marker {
+        position: absolute;
+        z-index: 5;
+        left: 12px;
+        bottom: 12px;
+        margin: 0;
+        padding: 7px 10px;
+        border: 1px solid rgba(94,207,202,.28);
+        background: rgba(0,0,0,.58);
+        color: rgba(243,230,191,.84);
+        border-radius: 999px;
+        font-size: 11px;
+        line-height: 1;
+        pointer-events: none;
+      }
+
+      .forge-3d-preview-actions {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-        gap: 12px;
+        gap: 10px;
         margin-top: 12px;
       }
 
-      .forge-3d-tool-group {
-        display: grid;
-        gap: 8px;
-        align-content: start;
-        padding: 10px;
+      .forge-3d-tool-details {
         border: 1px solid rgba(255,255,255,.1);
         background: rgba(0,0,0,.16);
         border-radius: 12px;
+        overflow: hidden;
       }
 
-      .forge-3d-tool-group-title {
-        color: rgba(243,230,191,.72);
+      .forge-3d-tool-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 40px;
+        padding: 0 12px;
+        color: rgba(243,230,191,.8);
         font-family: 'Cinzel', serif;
-        font-size: 10px;
-        letter-spacing: 1.8px;
+        font-size: 11px;
+        letter-spacing: 1.5px;
         text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .forge-3d-tool-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 8px;
+        padding: 10px;
+        border-top: 1px solid rgba(255,255,255,.08);
       }
 
       .forge-3d-preview-btn {
@@ -2447,11 +2494,19 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         color: #f3e6bf;
         font-family: 'Cinzel', serif;
         font-size: 10px;
-        letter-spacing: 1.4px;
+        letter-spacing: 1.1px;
         text-transform: uppercase;
         cursor: pointer;
         text-decoration: none;
         text-align: center;
+        border-radius: 8px;
+      }
+
+      .forge-3d-stage-btn {
+        min-height: 30px;
+        padding: 7px 9px;
+        background: rgba(0,0,0,.58);
+        backdrop-filter: blur(8px);
       }
 
       .forge-3d-tool-toast {
@@ -2469,7 +2524,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-tool-toast.is-visible {
         display: block;
       }
-
       .forge-3d-preview-btn:hover {
         border-color: rgba(94,207,202,.7);
         background: rgba(94,207,202,.16);
@@ -2704,61 +2758,65 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       return;
     }
 
-    content.className = '';
+        content.className = '';
     content.innerHTML = `
       <div id="forge-3d-preview-stage">
         <div class="forge-3d-preview-empty">Loading 3D preview...</div>
+
+        <div class="forge-3d-stage-tools forge-3d-stage-tools-top">
+          <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.setForgeRigPlacementView('front')">Front</button>
+          <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.setForgeRigPlacementView('side')">Side</button>
+          <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.setForgeRigPlacementView('top')">Top</button>
+        </div>
+
+        <div class="forge-3d-stage-tools forge-3d-stage-tools-bottom">
+          <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.undoForgeRigPlacementMove()">Undo</button>
+          <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.resetForgeRigPlacementLayout()">Reset</button>
+        </div>
+
+        <div id="forge-rig-selected-marker" class="forge-3d-preview-note">Selected: none</div>
       </div>
 
-                                                                                                                                                     <div class="forge-3d-preview-actions">
-        <div class="forge-3d-tool-group">
-          <div class="forge-3d-tool-group-title">Preview</div>
-          <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
-          <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
-        </div>
+      <div class="forge-3d-preview-actions">
+        <details class="forge-3d-tool-details" open>
+          <summary class="forge-3d-tool-summary">Fit Skeleton</summary>
+          <div class="forge-3d-tool-grid">
+            <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeRigPlacementMode()">Start Rig Placement</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLabels()">Toggle Labels</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLines()">Toggle Lines</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigMarkerSize()">Marker Size</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigLabelSize()">Label Size</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeRigPlacementLayout()">Save Rig Layout</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeRigPlacementLayout()">Load Rig Layout</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
+          </div>
+        </details>
 
-        <div class="forge-3d-tool-group">
-          <div class="forge-3d-tool-group-title">Fit Skeleton</div>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeRigPlacementMode()">Start Rig Placement</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.undoForgeRigPlacementMove()">Undo Move</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.resetForgeRigPlacementLayout()">Reset Layout</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLabels()">Toggle Labels</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLines()">Toggle Lines</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigMarkerSize()">Marker Size</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigLabelSize()">Label Size</button>
-        </div>
+        <details class="forge-3d-tool-details">
+          <summary class="forge-3d-tool-summary">Shape Body Zones</summary>
+          <div class="forge-3d-tool-grid">
+            <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeBodyZoneMode()">Start Body Zones</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeBodyZoneTool()">Body Zone Tool</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.shrinkForgeBodyZone()">Shrink Zone</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.growForgeBodyZone()">Grow Zone</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeBodyZones()">Save Body Zones</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeBodyZones()">Load Body Zones</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeBodyZoneJson()">Copy Body Zone JSON</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeBodyZoneMode()">Clear Body Zones</button>
+          </div>
+        </details>
 
-        <div class="forge-3d-tool-group">
-          <div class="forge-3d-tool-group-title">Shape Body Zones</div>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeBodyZoneMode()">Start Body Zones</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeBodyZoneTool()">Body Zone Tool</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.shrinkForgeBodyZone()">Shrink Zone</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.growForgeBodyZone()">Grow Zone</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeBodyZoneMode()">Clear Body Zones</button>
-        </div>
-
-        <div class="forge-3d-tool-group">
-          <div class="forge-3d-tool-group-title">View Tools</div>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('front')">Front View</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('side')">Side View</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('top')">Top View</button>
-        </div>
-
-        <div class="forge-3d-tool-group">
-          <div class="forge-3d-tool-group-title">Export / Save</div>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeRigPlacementLayout()">Save Rig Layout</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeRigPlacementLayout()">Load Rig Layout</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeBodyZones()">Save Body Zones</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeBodyZones()">Load Body Zones</button>
-          <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeBodyZoneJson()">Copy Body Zone JSON</button>
-        </div>
+        <details class="forge-3d-tool-details">
+          <summary class="forge-3d-tool-summary">File</summary>
+          <div class="forge-3d-tool-grid">
+            <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
+            <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
+          </div>
+        </details>
       </div>
 
       <div id="forge-3d-tool-toast" class="forge-3d-tool-toast" aria-live="polite"></div>
-
-      <div id="forge-rig-selected-marker" class="forge-3d-preview-note">Selected Marker: none</div>
 
       <div class="forge-3d-preview-note">
         This is a live Three.js preview of the generated GLB. Use this to inspect the model before we store it permanently and connect it to the Village.
