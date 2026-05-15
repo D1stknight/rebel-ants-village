@@ -2352,7 +2352,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 })();
 
 (function setupForge3dPreviewPanelExtension() {
- AFTER
+
   let forge3dPreviewState = {
     renderer: null,
     scene: null,
@@ -2510,7 +2510,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       forge3dPreviewState.renderer.dispose();
     }
 
-  AFTER
     forge3dPreviewState = {
       renderer: null,
       scene: null,
@@ -2616,7 +2615,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     fitCameraToObject(THREE, camera, model, controls);
 
-   AFTER
     forge3dPreviewState = {
       renderer,
       scene,
@@ -2733,7 +2731,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
   window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
 
-AFTER
   window.startForgeRigPlacementMode = async function() {
     const previewState = window.forge3dPreviewState;
 
