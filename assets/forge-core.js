@@ -2676,10 +2676,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         <div class="forge-3d-preview-empty">Loading 3D preview...</div>
       </div>
 
-      <div class="forge-3d-preview-actions">
+           <div class="forge-3d-preview-actions">
         <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
         <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
         <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeRigPlacementMode()">Start Rig Placement</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeRigPlacementLayout()">Save Rig Layout</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeRigPlacementLayout()">Load Rig Layout</button>
       </div>
 
       <div class="forge-3d-preview-note">
@@ -2948,6 +2950,79 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     console.log('Rig Placement Mode started', window.forge3dPreviewState, window.forgeRigPlacementState);
     alert('Rig Placement Mode started. Next step: skeleton handles.');
   };
+
+  function getForgeRigPlacementStorageKey() {
+    const glbUrl = window.forge3dPreviewState?.currentGlbUrl || 'unknown-glb';
+    return `forgeRigPlacementLayout:${glbUrl}`;
+  }
+
+  window.saveForgeRigPlacementLayout = function() {
+    const placementState = window.forgeRigPlacementState;
+    const previewState = window.forge3dPreviewState;
+
+    if (!placementState?.markers?.length) {
+      alert('Start Rig Placement Mode before saving a rig layout.');
+      return;
+    }
+
+    const markers = {};
+
+    placementState.markers.forEach((marker) => {
+      const markerName = marker.userData?.forgeRigMarkerName || marker.name;
+      markers[markerName] = marker.position.toArray();
+    });
+
+    localStorage.setItem(getForgeRigPlacementStorageKey(), JSON.stringify({
+      glbUrl: previewState?.currentGlbUrl || '',
+      savedAt: new Date().toISOString(),
+      markers
+    }));
+
+    console.log('Saved Forge rig layout', markers);
+    alert('Rig layout saved for this GLB.');
+  };
+
+  window.loadForgeRigPlacementLayout = function() {
+    const placementState = window.forgeRigPlacementState;
+
+    if (!placementState?.markers?.length) {
+      alert('Start Rig Placement Mode before loading a rig layout.');
+      return;
+    }
+
+    const rawLayout = localStorage.getItem(getForgeRigPlacementStorageKey());
+
+    if (!rawLayout) {
+      alert('No saved rig layout found for this GLB.');
+      return;
+    }
+
+    let layout;
+
+    try {
+      layout = JSON.parse(rawLayout);
+    } catch(e) {
+      console.warn('Could not parse saved Forge rig layout:', e);
+      alert('Saved rig layout could not be loaded.');
+      return;
+    }
+
+    Object.entries(layout.markers || {}).forEach(([markerName, position]) => {
+      const marker = placementState.markersByName?.[markerName] || placementState.markers.find((item) => {
+        return item.userData?.forgeRigMarkerName === markerName || item.name === markerName;
+      });
+
+      if (!marker || !Array.isArray(position) || position.length < 3) return;
+
+      marker.position.set(position[0], position[1], position[2]);
+    });
+
+    placementState.updateRigPlacementLines?.();
+
+    console.log('Loaded Forge rig layout', layout);
+    alert('Rig layout loaded for this GLB.');
+  };
+
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(boot3dPreviewPanel, 500);
   });
