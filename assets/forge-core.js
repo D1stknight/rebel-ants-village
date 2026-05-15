@@ -3043,7 +3043,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       updateRigPlacementLines,
       updateSelectedMarkerDisplay,
       initialMarkerPositions,
-           initialMarkerPositions,
       lastMove: null,
       labelsVisible: true,
       linesVisible: true,
