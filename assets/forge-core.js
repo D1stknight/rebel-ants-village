@@ -2790,7 +2790,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigLabelSize()">Label Size</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeRigPlacementLayout()">Save Rig Layout</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeRigPlacementLayout()">Load Rig Layout</button>
-            <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
+                        <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.buildForgeRigFromLayout()">Build Rig From Layout</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
           </div>
         </details>
@@ -3438,6 +3439,85 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       console.warn('Could not copy rig layout JSON:', e);
       console.log('Rig layout JSON:', rigLayoutJson);
             showForgeToolToast('Could not copy. JSON logged to console');
+    }
+  };
+
+   window.buildForgeRigFromLayout = async function() {
+    const previewState = window.forge3dPreviewState;
+    const currentGlbUrl = previewState?.currentGlbUrl || '';
+
+    if (!currentGlbUrl) {
+      showForgeToolToast('Load a 3D preview first');
+      return;
+    }
+
+    const rawRigLayout = localStorage.getItem(getForgeRigPlacementStorageKey());
+
+    if (!rawRigLayout) {
+      showForgeToolToast('No saved rig layout found');
+      return;
+    }
+
+    let rigLayout;
+    let bodyZoneLayout = null;
+
+    try {
+      rigLayout = JSON.parse(rawRigLayout);
+    } catch(e) {
+      console.warn('Could not parse saved rig layout:', e);
+      showForgeToolToast('Saved rig layout could not be loaded');
+      return;
+    }
+
+    const rawBodyZoneLayout = localStorage.getItem(getForgeBodyZoneStorageKey());
+
+    if (rawBodyZoneLayout) {
+      try {
+        bodyZoneLayout = JSON.parse(rawBodyZoneLayout);
+      } catch(e) {
+        console.warn('Could not parse saved Body Zones:', e);
+      }
+    }
+
+    const buildId = `rebel_469_forge_layout_build_${Date.now()}`;
+
+    showForgeToolToast('Rig build started');
+
+    try {
+      const response = await fetch('/api/forge-rig-builder-prototype', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId,
+          sourceGlbUrl: currentGlbUrl,
+          rigLayout,
+          bodyZoneLayout
+        })
+      });
+
+      const data = await response.json();
+
+      console.log('Forge layout rig build response:', data);
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Rig build failed');
+      }
+
+      window.lastForgeLayoutRigBuild = {
+        buildId,
+        sourceGlbUrl: currentGlbUrl,
+        rigLayout,
+        bodyZoneLayout,
+        response: data,
+        prototypeGlbUrl: data.prototypeGlbUrl || data.prototypeUrl || data.url || ''
+      };
+
+      showForgeToolToast('Rig build complete');
+    } catch(e) {
+      console.warn('Could not build rig from layout:', e);
+      showForgeToolToast('Rig build failed');
     }
   };
 
