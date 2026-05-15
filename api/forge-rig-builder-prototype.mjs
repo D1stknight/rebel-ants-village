@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const MAX_GLB_BYTES = 120 * 1024 * 1024;
-const PLAYABLE_TEMPLATE_GLB_URL = 'https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/assets/character/ant_idle_c.glb';
+const PLAYABLE_TEMPLATE_JSON_PATH = 'assets/character/rebel_standard_ant_idle_c_template_v1.json';
 
 const REBEL_STANDARD_BONE_NAMES = [
   'mixamorig_Hips',
@@ -404,20 +404,14 @@ function getOrCreateNode(document, nodesByName, boneName, parentNode, translatio
 }
 
 async function loadPlayableTemplateBoneTranslations() {
-  const templateBuffer = await fetchGlbAsBuffer(PLAYABLE_TEMPLATE_GLB_URL);
-  const io = new NodeIO();
-  const templateDocument = await io.readBinary(templateBuffer);
+  const templatePath = path.join(process.cwd(), PLAYABLE_TEMPLATE_JSON_PATH);
+  const templateJson = JSON.parse(await readFile(templatePath, 'utf8'));
   const boneTranslations = {};
 
-  templateDocument.getRoot().listNodes().forEach((node) => {
-    const name = node.getName?.() || '';
+  Object.entries(templateJson.bones || {}).forEach(([boneName, boneData]) => {
+    const translation = boneData?.translation || [0, 0, 0];
 
-    if (!name.startsWith('mixamorig_')) return;
-    if (typeof node.getTranslation !== 'function') return;
-
-    const translation = node.getTranslation() || [0, 0, 0];
-
-    boneTranslations[name] = [
+    boneTranslations[boneName] = [
       Number((translation[0] || 0).toFixed(5)),
       Number((translation[1] || 0).toFixed(5)),
       Number((translation[2] || 0).toFixed(5))
@@ -425,7 +419,8 @@ async function loadPlayableTemplateBoneTranslations() {
   });
 
   return {
-    sourceGlbUrl: PLAYABLE_TEMPLATE_GLB_URL,
+    templatePath: PLAYABLE_TEMPLATE_JSON_PATH,
+    sourceFile: templateJson.sourceFile || null,
     boneCount: Object.keys(boneTranslations).length,
     boneTranslations
   };
@@ -1005,8 +1000,9 @@ export default async function handler(req, res) {
       warning: 'Prototype only. This creates/renames skeleton nodes and adds missing Rebel Standard helper bones. It does not solve skin weights or final deformation quality yet.',
       sourceGlbUrl,
                      modelBounds,
-      playableTemplate: {
-        sourceGlbUrl: playableTemplate.sourceGlbUrl,
+           playableTemplate: {
+        templatePath: playableTemplate.templatePath,
+        sourceFile: playableTemplate.sourceFile,
         boneCount: playableTemplate.boneCount
       },
       beforeCoverage,
