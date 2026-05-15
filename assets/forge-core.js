@@ -2693,8 +2693,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('side')">Side View</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('top')">Top View</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
-                <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeBodyZoneMode()">Start Body Zones</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeBodyZoneMode()">Start Body Zones</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeBodyZoneTool()">Body Zone Tool</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.shrinkForgeBodyZone()">Shrink Zone</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.growForgeBodyZone()">Grow Zone</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeBodyZoneMode()">Clear Body Zones</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeBodyZoneJson()">Copy Body Zone JSON</button>
       </div>
@@ -3571,7 +3573,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     console.log('Cleared Body Zones');
   };
-   window.cycleForgeBodyZoneTool = function() {
+     window.cycleForgeBodyZoneTool = function() {
     const bodyZoneState = window.forgeBodyZoneState;
 
     if (!bodyZoneState?.transformControls) {
@@ -3583,6 +3585,28 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     bodyZoneState.transformControls.setMode(bodyZoneState.toolMode === 'scale' ? 'scale' : 'translate');
 
     console.log('Body Zone tool:', bodyZoneState.toolMode === 'scale' ? 'Scale' : 'Move');
+  };
+
+  window.shrinkForgeBodyZone = function() {
+    const selectedZone = window.forgeBodyZoneState?.selectedZone;
+
+    if (!selectedZone) {
+      alert('Select a Body Zone first.');
+      return;
+    }
+
+    selectedZone.scale.multiplyScalar(0.9);
+  };
+
+  window.growForgeBodyZone = function() {
+    const selectedZone = window.forgeBodyZoneState?.selectedZone;
+
+    if (!selectedZone) {
+      alert('Select a Body Zone first.');
+      return;
+    }
+
+    selectedZone.scale.multiplyScalar(1.1);
   };
 
   window.copyForgeBodyZoneJson = async function() {
