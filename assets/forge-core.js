@@ -2834,7 +2834,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const previewState = window.forge3dPreviewState;
 
     if (!previewState?.scene || !previewState?.model || !previewState?.camera || !previewState?.renderer) {
-             alert('Body Zones started.');
+            showForgeToolToast('Load a 3D preview first');
       return;
     }
 
@@ -3678,7 +3678,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const selectedZone = window.forgeBodyZoneState?.selectedZone;
 
     if (!selectedZone) {
-      alert('Select a Body Zone first.');
+      showForgeToolToast('Select a Body Zone first');
       return;
     }
 
