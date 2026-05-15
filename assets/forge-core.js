@@ -2667,7 +2667,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         <div class="forge-3d-preview-empty">Loading 3D preview...</div>
       </div>
 
-     AFTER
       <div class="forge-3d-preview-actions">
         <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
         <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
