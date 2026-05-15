@@ -418,15 +418,61 @@ async function loadPlayableTemplateBoneTranslations() {
     ];
   });
 
+  const rawTemplateSize =
+    templateJson.bounds?.size ||
+    templateJson.modelBounds?.size ||
+    templateJson.size ||
+    null;
+
+  const templateSize = Array.isArray(rawTemplateSize) && rawTemplateSize.length >= 3
+    ? rawTemplateSize
+    : null;
+
+  let templateBounds = null;
+
+  if (templateSize) {
+    templateBounds = {
+      size: templateSize.map((value) => Number(value || 0))
+    };
+  } else {
+    const translations = Object.values(boneTranslations);
+    const min = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY];
+    const max = [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
+
+    translations.forEach((translation) => {
+      for (let axis = 0; axis < 3; axis++) {
+        min[axis] = Math.min(min[axis], translation[axis] || 0);
+        max[axis] = Math.max(max[axis], translation[axis] || 0);
+      }
+    });
+
+    templateBounds = translations.length
+      ? {
+          min,
+          max,
+          size: [
+            max[0] - min[0],
+            max[1] - min[1],
+            max[2] - min[2]
+          ]
+        }
+      : {
+          min: [0, 0, 0],
+          max: [0, 1, 0],
+          size: [1, 1, 1]
+        };
+  }
+
   return {
     templatePath: PLAYABLE_TEMPLATE_JSON_PATH,
     sourceFile: templateJson.sourceFile || null,
     boneCount: Object.keys(boneTranslations).length,
+    templateBounds,
     boneTranslations
   };
 }
 
-function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, templateBoneTranslations = {}) {
+function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, playableTemplate = {}) {
   const created = [];
   const reused = [];
   const jointNames = [];
@@ -435,7 +481,11 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, t
   const min = modelBounds?.min || [0, 0, 0];
   const height = Math.max(size[1] || 1, 0.001);
   const width = Math.max(size[0] || 1, 0.001);
-  const depth = Math.max(size[2] || 1, 0.001);
+   const depth = Math.max(size[2] || 1, 0.001);
+  const templateBoneTranslations = playableTemplate.boneTranslations || {};
+  const templateSize = playableTemplate.templateBounds?.size || [1, 1, 1];
+  const templateHeight = Math.max(templateSize[1] || 1, 0.001);
+  const templateScale = height / templateHeight;
 
   function scaleX(value) {
     return Number((value * width).toFixed(5));
@@ -449,11 +499,15 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, t
     return Number((value * depth).toFixed(5));
   }
 
-    function getRebelBoneLocalTranslation(boneName) {
+        function getRebelBoneLocalTranslation(boneName) {
     const templateTranslation = templateBoneTranslations[boneName];
 
     if (Array.isArray(templateTranslation) && templateTranslation.length === 3) {
-      return templateTranslation;
+      return [
+        Number(((templateTranslation[0] || 0) * templateScale).toFixed(5)),
+        Number(((templateTranslation[1] || 0) * templateScale).toFixed(5)),
+        Number(((templateTranslation[2] || 0) * templateScale).toFixed(5))
+      ];
     }
 
     const rootY = min[1] + height * 0.5;
@@ -589,7 +643,9 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, t
     reusedCount: reused.length,
     jointCount: skin ? getSkinJoints(skin).length : 0,
     jointsAddedCount: jointNames.length,
-    templateBoneTranslationCount: Object.keys(templateBoneTranslations).length,
+       templateBoneTranslationCount: Object.keys(templateBoneTranslations).length,
+    templateScale,
+    templateHeight,
     created,
     reused,
     jointsAdded: jointNames
@@ -979,7 +1035,7 @@ export default async function handler(req, res) {
     const renameReport = renameMappedBones(document);
     const nodesByName = listNodesByName(document);
 
-    const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, playableTemplate.boneTranslations);
+        const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, playableTemplate);
     const inverseBindMatrixReport = attachIdentityInverseBindMatrices(document, skin);
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
@@ -1000,10 +1056,11 @@ export default async function handler(req, res) {
       warning: 'Prototype only. This creates/renames skeleton nodes and adds missing Rebel Standard helper bones. It does not solve skin weights or final deformation quality yet.',
       sourceGlbUrl,
                      modelBounds,
-           playableTemplate: {
+                    playableTemplate: {
         templatePath: playableTemplate.templatePath,
         sourceFile: playableTemplate.sourceFile,
-        boneCount: playableTemplate.boneCount
+        boneCount: playableTemplate.boneCount,
+        templateBounds: playableTemplate.templateBounds
       },
       beforeCoverage,
       afterCoverage,
