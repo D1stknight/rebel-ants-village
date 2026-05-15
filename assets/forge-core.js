@@ -2676,13 +2676,18 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         <div class="forge-3d-preview-empty">Loading 3D preview...</div>
       </div>
 
-           <div class="forge-3d-preview-actions">
+                    <div class="forge-3d-preview-actions">
         <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
         <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
         <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeRigPlacementMode()">Start Rig Placement</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeRigPlacementLayout()">Save Rig Layout</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeRigPlacementLayout()">Load Rig Layout</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.undoForgeRigPlacementMove()">Undo Move</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.resetForgeRigPlacementLayout()">Reset Layout</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
       </div>
+
+      <div id="forge-rig-selected-marker" class="forge-3d-preview-note">Selected Marker: none</div>
 
       <div class="forge-3d-preview-note">
         This is a live Three.js preview of the generated GLB. Use this to inspect the model before we store it permanently and connect it to the Village.
@@ -2735,7 +2740,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
   window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
 
-  window.startForgeRigPlacementMode = async function() {
+    window.startForgeRigPlacementMode = async function() {
     const previewState = window.forge3dPreviewState;
 
     if (!previewState?.scene || !previewState?.model || !previewState?.camera || !previewState?.renderer) {
@@ -2745,31 +2750,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     const { THREE, TransformControls } = await loadThreeModules();
 
-    if (window.forgeRigPlacementState?.pointerDownHandler) {
-      previewState.renderer.domElement.removeEventListener('pointerdown', window.forgeRigPlacementState.pointerDownHandler);
-    }
-
-    if (window.forgeRigPlacementState?.transformControls) {
-      window.forgeRigPlacementState.transformControls.detach();
-      window.forgeRigPlacementState.transformControls.parent?.remove(window.forgeRigPlacementState.transformControls);
-      window.forgeRigPlacementState.transformControls.dispose?.();
-    }
-
-    if (window.forgeRigPlacementState?.markers?.length) {
-      window.forgeRigPlacementState.markers.forEach((marker) => {
-        marker.parent?.remove(marker);
-        marker.geometry?.dispose?.();
-        marker.material?.dispose?.();
-      });
-    }
-
-    if (window.forgeRigPlacementState?.lines?.length) {
-      window.forgeRigPlacementState.lines.forEach((line) => {
-        line.parent?.remove(line);
-        line.geometry?.dispose?.();
-        line.material?.dispose?.();
-      });
-    }
+    window.clearForgeRigPlacementMode?.();
 
     const box = new THREE.Box3().setFromObject(previewState.model);
     const size = box.getSize(new THREE.Vector3());
@@ -2793,6 +2774,47 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       opacity: 0.8
     });
 
+    function createMarkerLabel(name) {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      const fontSize = 42;
+      const paddingX = 24;
+      const paddingY = 14;
+
+      context.font = `${fontSize}px Arial`;
+      const textWidth = Math.ceil(context.measureText(name).width);
+
+      canvas.width = textWidth + paddingX * 2;
+      canvas.height = fontSize + paddingY * 2;
+
+      context.font = `${fontSize}px Arial`;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillStyle = 'rgba(0, 0, 0, 0.72)';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.strokeStyle = 'rgba(94, 207, 202, 0.9)';
+      context.lineWidth = 4;
+      context.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+      context.fillStyle = '#f3e6bf';
+      context.fillText(name, canvas.width / 2, canvas.height / 2);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({
+        map: texture,
+        depthTest: false,
+        transparent: true
+      });
+      const sprite = new THREE.Sprite(material);
+
+      sprite.name = `forge-rig-label-${name}`;
+      sprite.renderOrder = 1000;
+      sprite.position.set(0, markerRadius * 2.8, 0);
+      sprite.scale.set(markerRadius * 9, markerRadius * 2.5, 1);
+      sprite.userData.forgeRigLabelName = name;
+
+      return sprite;
+    }
+
     const markerPositions = {
       hips: [center.x, box.min.y + size.y * 0.5, center.z],
       spine: [center.x, box.min.y + size.y * 0.62, center.z],
@@ -2815,12 +2837,19 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       'right foot': [center.x + size.x * 0.16, box.min.y + size.y * 0.06, center.z]
     };
 
+    const initialMarkerPositions = Object.fromEntries(
+      Object.entries(markerPositions).map(([name, position]) => [name, position.slice()])
+    );
+
     const markersByName = {};
+    const labelsByName = {};
+    const labels = [];
     const markers = Object.entries(markerPositions).map(([name, position]) => {
       const marker = new THREE.Mesh(
         new THREE.SphereGeometry(markerRadius, 16, 16),
         markerMaterial.clone()
       );
+      const label = createMarkerLabel(name);
 
       marker.name = `forge-rig-marker-${name}`;
       marker.renderOrder = 999;
@@ -2828,8 +2857,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       marker.userData.forgeRigMarkerName = name;
       marker.userData.defaultMaterial = marker.material;
 
+      marker.add(label);
       previewState.scene.add(marker);
+
       markersByName[name] = marker;
+      labelsByName[name] = label;
+      labels.push(label);
 
       return marker;
     });
@@ -2887,26 +2920,47 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       });
     }
 
+    function updateSelectedMarkerDisplay(markerName = 'none') {
+      const selectedMarkerEl = document.getElementById('forge-rig-selected-marker');
+      if (selectedMarkerEl) {
+        selectedMarkerEl.textContent = `Selected Marker: ${markerName}`;
+      }
+    }
+
     const transformControls = new TransformControls(previewState.camera, previewState.renderer.domElement);
     transformControls.setMode('translate');
     transformControls.setSize(0.7);
+    transformControls.addEventListener('mouseDown', () => {
+      const selectedMarker = window.forgeRigPlacementState?.selectedMarker;
+      const markerName = selectedMarker?.userData?.forgeRigMarkerName;
+
+      if (!selectedMarker || !markerName) return;
+
+      window.forgeRigPlacementState.lastMove = {
+        markerName,
+        position: selectedMarker.position.toArray()
+      };
+    });
     transformControls.addEventListener('dragging-changed', (event) => {
       if (previewState.controls) {
         previewState.controls.enabled = !event.value;
       }
     });
     transformControls.addEventListener('change', updateRigPlacementLines);
+    transformControls.addEventListener('objectChange', updateRigPlacementLines);
 
-    if (typeof transformControls.getHelper === 'function') {
-      previewState.scene.add(transformControls.getHelper());
-    } else {
-      previewState.scene.add(transformControls);
-    }
+    const transformControlsHelper = typeof transformControls.getHelper === 'function'
+      ? transformControls.getHelper()
+      : transformControls;
+
+    previewState.scene.add(transformControlsHelper);
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
 
     function selectMarker(marker) {
+      const markerName = marker.userData?.forgeRigMarkerName || 'none';
+
       markers.forEach((item) => {
         item.material = item.userData.defaultMaterial;
       });
@@ -2915,6 +2969,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       transformControls.attach(marker);
 
       window.forgeRigPlacementState.selectedMarker = marker;
+      updateSelectedMarkerDisplay(markerName);
     }
 
     function pointerDownHandler(event) {
@@ -2939,18 +2994,25 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     window.forgeRigPlacementState = {
       markers,
       markersByName,
+      labels,
+      labelsByName,
       lines,
       connectionPairs,
       transformControls,
+      transformControlsHelper,
       selectedMarker: null,
       pointerDownHandler,
-      updateRigPlacementLines
+      updateRigPlacementLines,
+      updateSelectedMarkerDisplay,
+      initialMarkerPositions,
+      lastMove: null
     };
+
+    updateSelectedMarkerDisplay();
 
     console.log('Rig Placement Mode started', window.forge3dPreviewState, window.forgeRigPlacementState);
     alert('Rig Placement Mode started. Next step: skeleton handles.');
   };
-
   function getForgeRigPlacementStorageKey() {
     const glbUrl = window.forge3dPreviewState?.currentGlbUrl || 'unknown-glb';
     return `forgeRigPlacementLayout:${glbUrl}`;
@@ -2982,7 +3044,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     alert('Rig layout saved for this GLB.');
   };
 
-  window.loadForgeRigPlacementLayout = function() {
+    window.loadForgeRigPlacementLayout = function() {
     const placementState = window.forgeRigPlacementState;
 
     if (!placementState?.markers?.length) {
@@ -3023,6 +3085,110 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     alert('Rig layout loaded for this GLB.');
   };
 
+  window.undoForgeRigPlacementMove = function() {
+    const placementState = window.forgeRigPlacementState;
+    const lastMove = placementState?.lastMove;
+
+    if (!placementState?.markers?.length || !lastMove?.markerName || !Array.isArray(lastMove.position)) {
+      alert('No marker move to undo yet.');
+      return;
+    }
+
+    const marker = placementState.markersByName?.[lastMove.markerName];
+
+    if (!marker) {
+      alert('The last moved marker no longer exists.');
+      return;
+    }
+
+    marker.position.set(lastMove.position[0], lastMove.position[1], lastMove.position[2]);
+    placementState.updateRigPlacementLines?.();
+
+    console.log('Undid Forge rig marker move', lastMove);
+  };
+
+  window.resetForgeRigPlacementLayout = function() {
+    const placementState = window.forgeRigPlacementState;
+
+    if (!placementState?.markers?.length || !placementState?.initialMarkerPositions) {
+      alert('Start Rig Placement Mode before resetting the rig layout.');
+      return;
+    }
+
+    Object.entries(placementState.initialMarkerPositions).forEach(([markerName, position]) => {
+      const marker = placementState.markersByName?.[markerName];
+
+      if (!marker || !Array.isArray(position) || position.length < 3) return;
+
+      marker.position.set(position[0], position[1], position[2]);
+    });
+
+    placementState.lastMove = null;
+    placementState.updateRigPlacementLines?.();
+
+    console.log('Reset Forge rig layout');
+  };
+
+  window.clearForgeRigPlacementMode = function() {
+    const placementState = window.forgeRigPlacementState;
+    const previewState = window.forge3dPreviewState;
+
+    if (!placementState) {
+      const selectedMarkerEl = document.getElementById('forge-rig-selected-marker');
+      if (selectedMarkerEl) {
+        selectedMarkerEl.textContent = 'Selected Marker: none';
+      }
+      return;
+    }
+
+    if (previewState?.renderer?.domElement && placementState.pointerDownHandler) {
+      previewState.renderer.domElement.removeEventListener('pointerdown', placementState.pointerDownHandler);
+    }
+
+    if (previewState?.controls) {
+      previewState.controls.enabled = true;
+    }
+
+    if (placementState.transformControls) {
+      placementState.transformControls.detach();
+      placementState.transformControls.dispose?.();
+    }
+
+    if (placementState.transformControlsHelper) {
+      placementState.transformControlsHelper.parent?.remove(placementState.transformControlsHelper);
+    }
+
+    if (placementState.lines?.length) {
+      placementState.lines.forEach((line) => {
+        line.parent?.remove(line);
+        line.geometry?.dispose?.();
+        line.material?.dispose?.();
+      });
+    }
+
+    if (placementState.markers?.length) {
+      placementState.markers.forEach((marker) => {
+        marker.parent?.remove(marker);
+
+        marker.children?.forEach((child) => {
+          child.material?.map?.dispose?.();
+          child.material?.dispose?.();
+        });
+
+        marker.geometry?.dispose?.();
+        marker.material?.dispose?.();
+      });
+    }
+
+    window.forgeRigPlacementState = null;
+
+    const selectedMarkerEl = document.getElementById('forge-rig-selected-marker');
+    if (selectedMarkerEl) {
+      selectedMarkerEl.textContent = 'Selected Marker: none';
+    }
+
+    console.log('Cleared Forge Rig Placement Mode');
+  };
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(boot3dPreviewPanel, 500);
   });
