@@ -2729,11 +2729,13 @@ async function loadForgePreviewModelInVillage(glbUrl) {
     console.log('Forge GLB preview loaded in Village:', previewRoot);
 
     return previewRoot;
-  } catch(e) {
+   } catch(e) {
     console.warn('Could not load Forge GLB preview in Village:', e);
     return null;
   }
 }
+
+window.loadForgePreviewModelInVillage = loadForgePreviewModelInVillage;
 
 window.inspectForgeArmatureGlb = async function(glbUrl) {
   const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", glbUrl, scene);
