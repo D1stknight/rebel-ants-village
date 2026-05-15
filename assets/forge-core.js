@@ -2731,7 +2731,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
   window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
 
-  AFTER
   window.startForgeRigPlacementMode = async function() {
     const previewState = window.forge3dPreviewState;
 
