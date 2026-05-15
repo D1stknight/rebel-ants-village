@@ -2527,11 +2527,13 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const threeModule = await import('https://esm.sh/three@0.160.0');
     const loaderModule = await import('https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js?deps=three@0.160.0');
     const controlsModule = await import('https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js?deps=three@0.160.0');
+    const transformControlsModule = await import('https://esm.sh/three@0.160.0/examples/jsm/controls/TransformControls.js?deps=three@0.160.0');
 
     return {
       THREE: threeModule,
       GLTFLoader: loaderModule.GLTFLoader,
-      OrbitControls: controlsModule.OrbitControls
+      OrbitControls: controlsModule.OrbitControls,
+      TransformControls: transformControlsModule.TransformControls
     };
   }
 
@@ -2731,15 +2733,26 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
   window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
 
+  AFTER
   window.startForgeRigPlacementMode = async function() {
     const previewState = window.forge3dPreviewState;
 
-    if (!previewState?.scene || !previewState?.model) {
+    if (!previewState?.scene || !previewState?.model || !previewState?.camera || !previewState?.renderer) {
       alert('Load a 3D preview before starting Rig Placement Mode.');
       return;
     }
 
-    const { THREE } = await loadThreeModules();
+    const { THREE, TransformControls } = await loadThreeModules();
+
+    if (window.forgeRigPlacementState?.pointerDownHandler) {
+      previewState.renderer.domElement.removeEventListener('pointerdown', window.forgeRigPlacementState.pointerDownHandler);
+    }
+
+    if (window.forgeRigPlacementState?.transformControls) {
+      window.forgeRigPlacementState.transformControls.detach();
+      window.forgeRigPlacementState.transformControls.parent?.remove(window.forgeRigPlacementState.transformControls);
+      window.forgeRigPlacementState.transformControls.dispose?.();
+    }
 
     if (window.forgeRigPlacementState?.markers?.length) {
       window.forgeRigPlacementState.markers.forEach((marker) => {
@@ -2764,6 +2777,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     const markerMaterial = new THREE.MeshBasicMaterial({
       color: 0x5ecfca,
+      depthTest: false
+    });
+
+    const selectedMarkerMaterial = new THREE.MeshBasicMaterial({
+      color: 0xf3e6bf,
       depthTest: false
     });
 
@@ -2807,6 +2825,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       marker.renderOrder = 999;
       marker.position.set(position[0], position[1], position[2]);
       marker.userData.forgeRigMarkerName = name;
+      marker.userData.defaultMaterial = marker.material;
 
       previewState.scene.add(marker);
       markersByName[name] = marker;
@@ -2855,15 +2874,81 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       return line;
     });
 
+    function updateRigPlacementLines() {
+      lines.forEach((line) => {
+        const fromMarker = markersByName[line.userData.forgeRigLine.from];
+        const toMarker = markersByName[line.userData.forgeRigLine.to];
+
+        line.geometry.setFromPoints([
+          fromMarker.position,
+          toMarker.position
+        ]);
+      });
+    }
+
+    const transformControls = new TransformControls(previewState.camera, previewState.renderer.domElement);
+    transformControls.setMode('translate');
+    transformControls.setSize(0.7);
+    transformControls.addEventListener('dragging-changed', (event) => {
+      if (previewState.controls) {
+        previewState.controls.enabled = !event.value;
+      }
+    });
+    transformControls.addEventListener('change', updateRigPlacementLines);
+
+    if (typeof transformControls.getHelper === 'function') {
+      previewState.scene.add(transformControls.getHelper());
+    } else {
+      previewState.scene.add(transformControls);
+    }
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    function selectMarker(marker) {
+      markers.forEach((item) => {
+        item.material = item.userData.defaultMaterial;
+      });
+
+      marker.material = selectedMarkerMaterial;
+      transformControls.attach(marker);
+
+      window.forgeRigPlacementState.selectedMarker = marker;
+    }
+
+    function pointerDownHandler(event) {
+      const rect = previewState.renderer.domElement.getBoundingClientRect();
+
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointer, previewState.camera);
+
+      const hits = raycaster.intersectObjects(markers, false);
+      if (!hits.length) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      selectMarker(hits[0].object);
+    }
+
+    previewState.renderer.domElement.addEventListener('pointerdown', pointerDownHandler);
+
     window.forgeRigPlacementState = {
       markers,
-      lines
+      markersByName,
+      lines,
+      connectionPairs,
+      transformControls,
+      selectedMarker: null,
+      pointerDownHandler,
+      updateRigPlacementLines
     };
 
     console.log('Rig Placement Mode started', window.forge3dPreviewState, window.forgeRigPlacementState);
     alert('Rig Placement Mode started. Next step: skeleton handles.');
   };
-
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(boot3dPreviewPanel, 500);
   });
