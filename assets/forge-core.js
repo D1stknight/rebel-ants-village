@@ -2676,7 +2676,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         <div class="forge-3d-preview-empty">Loading 3D preview...</div>
       </div>
 
-                    <div class="forge-3d-preview-actions">
+                                       <div class="forge-3d-preview-actions">
         <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
         <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
         <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeRigPlacementMode()">Start Rig Placement</button>
@@ -2685,6 +2685,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         <button class="forge-3d-preview-btn" type="button" onclick="window.undoForgeRigPlacementMove()">Undo Move</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.resetForgeRigPlacementLayout()">Reset Layout</button>
         <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLabels()">Toggle Labels</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLines()">Toggle Lines</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigMarkerSize()">Marker Size</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigLabelSize()">Label Size</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('front')">Front View</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('side')">Side View</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('top')">Top View</button>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
       </div>
 
       <div id="forge-rig-selected-marker" class="forge-3d-preview-note">Selected Marker: none</div>
@@ -2755,7 +2763,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const box = new THREE.Box3().setFromObject(previewState.model);
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
-    const markerRadius = Math.max(size.x, size.y, size.z) * 0.025 || 0.05;
+       const markerRadius = Math.max(size.x, size.y, size.z) * 0.015 || 0.03;
+    const viewDistance = Math.max(size.x, size.y, size.z) * 1.8 || 2;
 
     const markerMaterial = new THREE.MeshBasicMaterial({
       color: 0x5ecfca,
@@ -2777,9 +2786,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     function createMarkerLabel(name) {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
-      const fontSize = 42;
-      const paddingX = 24;
-      const paddingY = 14;
+            const fontSize = 28;
+      const paddingX = 16;
+      const paddingY = 9;
 
       context.font = `${fontSize}px Arial`;
       const textWidth = Math.ceil(context.measureText(name).width);
@@ -2808,9 +2817,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       sprite.name = `forge-rig-label-${name}`;
       sprite.renderOrder = 1000;
-      sprite.position.set(0, markerRadius * 2.8, 0);
-      sprite.scale.set(markerRadius * 9, markerRadius * 2.5, 1);
+            sprite.position.set(0, markerRadius * 2.2, 0);
+      sprite.scale.set(markerRadius * 5.5, markerRadius * 1.55, 1);
       sprite.userData.forgeRigLabelName = name;
+      sprite.userData.baseScale = [markerRadius * 5.5, markerRadius * 1.55, 1];
 
       return sprite;
     }
@@ -2920,11 +2930,39 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       });
     }
 
-    function updateSelectedMarkerDisplay(markerName = 'none') {
+        function updateSelectedMarkerDisplay(markerName = 'none') {
       const selectedMarkerEl = document.getElementById('forge-rig-selected-marker');
       if (selectedMarkerEl) {
         selectedMarkerEl.textContent = `Selected Marker: ${markerName}`;
       }
+    }
+
+    function updateRigMarkerSizes() {
+      const placementState = window.forgeRigPlacementState;
+      const markerScaleMap = {
+        small: 1,
+        medium: 1.55,
+        large: 2.15
+      };
+      const scale = markerScaleMap[placementState?.markerSizeMode || 'small'] || 1;
+
+      markers.forEach((marker) => {
+        marker.scale.setScalar(scale);
+      });
+    }
+
+    function updateRigLabelSizes() {
+      const placementState = window.forgeRigPlacementState;
+      const labelScaleMap = {
+        small: 1,
+        medium: 1.45
+      };
+      const scale = labelScaleMap[placementState?.labelSizeMode || 'small'] || 1;
+
+      labels.forEach((label) => {
+        const baseScale = label.userData.baseScale || [markerRadius * 5.5, markerRadius * 1.55, 1];
+        label.scale.set(baseScale[0] * scale, baseScale[1] * scale, baseScale[2]);
+      });
     }
 
     const transformControls = new TransformControls(previewState.camera, previewState.renderer.domElement);
@@ -3005,7 +3043,18 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       updateRigPlacementLines,
       updateSelectedMarkerDisplay,
       initialMarkerPositions,
-      lastMove: null
+           initialMarkerPositions,
+      lastMove: null,
+      labelsVisible: true,
+      linesVisible: true,
+      markerSizeMode: 'small',
+      labelSizeMode: 'small',
+      markerSizeModes: ['small', 'medium', 'large'],
+      labelSizeModes: ['small', 'medium'],
+      updateRigMarkerSizes,
+      updateRigLabelSizes,
+      viewCenter: center.toArray(),
+      viewDistance
     };
 
     updateSelectedMarkerDisplay();
@@ -3034,10 +3083,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       markers[markerName] = marker.position.toArray();
     });
 
-    localStorage.setItem(getForgeRigPlacementStorageKey(), JSON.stringify({
+        localStorage.setItem(getForgeRigPlacementStorageKey(), JSON.stringify({
       glbUrl: previewState?.currentGlbUrl || '',
       savedAt: new Date().toISOString(),
-      markers
+      markers,
+      connectionPairs: placementState.connectionPairs || []
     }));
 
     console.log('Saved Forge rig layout', markers);
@@ -3127,6 +3177,129 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     placementState.updateRigPlacementLines?.();
 
     console.log('Reset Forge rig layout');
+  };
+
+   window.toggleForgeRigPlacementLabels = function() {
+    const placementState = window.forgeRigPlacementState;
+
+    if (!placementState?.labels?.length) {
+      alert('Start Rig Placement Mode before toggling labels.');
+      return;
+    }
+
+    placementState.labelsVisible = !placementState.labelsVisible;
+    placementState.labels.forEach((label) => {
+      label.visible = placementState.labelsVisible;
+    });
+  };
+
+  window.toggleForgeRigPlacementLines = function() {
+    const placementState = window.forgeRigPlacementState;
+
+    if (!placementState?.lines?.length) {
+      alert('Start Rig Placement Mode before toggling lines.');
+      return;
+    }
+
+    placementState.linesVisible = !placementState.linesVisible;
+    placementState.lines.forEach((line) => {
+      line.visible = placementState.linesVisible;
+    });
+  };
+
+  window.cycleForgeRigMarkerSize = function() {
+    const placementState = window.forgeRigPlacementState;
+
+    if (!placementState?.markers?.length) {
+      alert('Start Rig Placement Mode before changing marker size.');
+      return;
+    }
+
+    const modes = placementState.markerSizeModes || ['small', 'medium', 'large'];
+    const currentIndex = modes.indexOf(placementState.markerSizeMode || 'small');
+    placementState.markerSizeMode = modes[(currentIndex + 1) % modes.length];
+
+    placementState.updateRigMarkerSizes?.();
+    console.log('Forge rig marker size:', placementState.markerSizeMode);
+  };
+
+  window.cycleForgeRigLabelSize = function() {
+    const placementState = window.forgeRigPlacementState;
+
+    if (!placementState?.labels?.length) {
+      alert('Start Rig Placement Mode before changing label size.');
+      return;
+    }
+
+    const modes = placementState.labelSizeModes || ['small', 'medium'];
+    const currentIndex = modes.indexOf(placementState.labelSizeMode || 'small');
+    placementState.labelSizeMode = modes[(currentIndex + 1) % modes.length];
+
+    placementState.updateRigLabelSizes?.();
+    console.log('Forge rig label size:', placementState.labelSizeMode);
+  };
+
+  window.setForgeRigPlacementView = function(view) {
+    const placementState = window.forgeRigPlacementState;
+    const previewState = window.forge3dPreviewState;
+
+    if (!placementState?.viewCenter || !previewState?.camera) {
+      alert('Start Rig Placement Mode before changing views.');
+      return;
+    }
+
+    const center = placementState.viewCenter;
+    const distance = placementState.viewDistance || 2;
+
+    if (view === 'side') {
+      previewState.camera.position.set(center[0] + distance, center[1], center[2]);
+    } else if (view === 'top') {
+      previewState.camera.position.set(center[0], center[1] + distance, center[2] + distance * 0.01);
+    } else {
+      previewState.camera.position.set(center[0], center[1], center[2] + distance);
+    }
+
+    previewState.camera.lookAt(center[0], center[1], center[2]);
+
+    if (previewState.controls) {
+      previewState.controls.target.set(center[0], center[1], center[2]);
+      previewState.controls.update();
+    }
+  };
+
+  window.copyForgeRigPlacementJson = async function() {
+    const placementState = window.forgeRigPlacementState;
+    const previewState = window.forge3dPreviewState;
+
+    if (!placementState?.markers?.length) {
+      alert('Start Rig Placement Mode before copying rig layout JSON.');
+      return;
+    }
+
+    const markers = {};
+
+    placementState.markers.forEach((marker) => {
+      const markerName = marker.userData?.forgeRigMarkerName || marker.name;
+      markers[markerName] = marker.position.toArray();
+    });
+
+    const rigLayout = {
+      currentGlbUrl: previewState?.currentGlbUrl || '',
+      savedAt: new Date().toISOString(),
+      markers,
+      connectionPairs: placementState.connectionPairs || []
+    };
+
+    const rigLayoutJson = JSON.stringify(rigLayout, null, 2);
+
+    try {
+      await navigator.clipboard.writeText(rigLayoutJson);
+      alert('Rig layout JSON copied.');
+    } catch(e) {
+      console.warn('Could not copy rig layout JSON:', e);
+      console.log('Rig layout JSON:', rigLayoutJson);
+      alert('Could not copy automatically. Rig layout JSON was logged to the console.');
+    }
   };
 
   window.clearForgeRigPlacementMode = function() {
