@@ -645,60 +645,7 @@ function createToeEnds(document, skin, nodesByName) {
   return { created, skipped };
 }
 
-function invertMatrix4(matrix) {
-  const out = new Array(16);
-  const a00 = matrix[0], a01 = matrix[1], a02 = matrix[2], a03 = matrix[3];
-  const a10 = matrix[4], a11 = matrix[5], a12 = matrix[6], a13 = matrix[7];
-  const a20 = matrix[8], a21 = matrix[9], a22 = matrix[10], a23 = matrix[11];
-  const a30 = matrix[12], a31 = matrix[13], a32 = matrix[14], a33 = matrix[15];
-
-  const b00 = a00 * a11 - a01 * a10;
-  const b01 = a00 * a12 - a02 * a10;
-  const b02 = a00 * a13 - a03 * a10;
-  const b03 = a01 * a12 - a02 * a11;
-  const b04 = a01 * a13 - a03 * a11;
-  const b05 = a02 * a13 - a03 * a12;
-  const b06 = a20 * a31 - a21 * a30;
-  const b07 = a20 * a32 - a22 * a30;
-  const b08 = a20 * a33 - a23 * a30;
-  const b09 = a21 * a32 - a22 * a31;
-  const b10 = a21 * a33 - a23 * a31;
-  const b11 = a22 * a33 - a23 * a32;
-
-  let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-
-  if (!det) {
-    return [
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
-    ];
-  }
-
-  det = 1 / det;
-
-  out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
-  out[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
-  out[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
-  out[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
-  out[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
-  out[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
-  out[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
-  out[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
-  out[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
-  out[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
-  out[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
-  out[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
-  out[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det;
-  out[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
-  out[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
-  out[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
-
-  return out;
-}
-
-function attachRestPoseInverseBindMatrices(document, skin) {
+function attachIdentityInverseBindMatrices(document, skin) {
   if (!skin || typeof skin.setInverseBindMatrices !== 'function') {
     return {
       inverseBindMatrixCount: 0,
@@ -715,36 +662,43 @@ function attachRestPoseInverseBindMatrices(document, skin) {
     };
   }
 
-  const inverseBindMatrixArray = new Float32Array(joints.length * 16);
+  const identityMatrices = new Float32Array(joints.length * 16);
 
-  joints.forEach((joint, jointIndex) => {
-    const worldMatrix =
-      typeof joint.getWorldMatrix === 'function'
-        ? joint.getWorldMatrix()
-        : typeof joint.getMatrix === 'function'
-          ? joint.getMatrix()
-          : [
-              1, 0, 0, 0,
-              0, 1, 0, 0,
-              0, 0, 1, 0,
-              0, 0, 0, 1
-            ];
+  for (let jointIndex = 0; jointIndex < joints.length; jointIndex++) {
+    const offset = jointIndex * 16;
 
-    const inverseWorldMatrix = invertMatrix4(worldMatrix);
-    inverseBindMatrixArray.set(inverseWorldMatrix, jointIndex * 16);
-  });
+    identityMatrices[offset] = 1;
+    identityMatrices[offset + 1] = 0;
+    identityMatrices[offset + 2] = 0;
+    identityMatrices[offset + 3] = 0;
+
+    identityMatrices[offset + 4] = 0;
+    identityMatrices[offset + 5] = 1;
+    identityMatrices[offset + 6] = 0;
+    identityMatrices[offset + 7] = 0;
+
+    identityMatrices[offset + 8] = 0;
+    identityMatrices[offset + 9] = 0;
+    identityMatrices[offset + 10] = 1;
+    identityMatrices[offset + 11] = 0;
+
+    identityMatrices[offset + 12] = 0;
+    identityMatrices[offset + 13] = 0;
+    identityMatrices[offset + 14] = 0;
+    identityMatrices[offset + 15] = 1;
+  }
 
   const inverseBindMatrices = document
     .createAccessor('inverseBindMatrices')
     .setType(Accessor.Type.MAT4)
-    .setArray(inverseBindMatrixArray);
+    .setArray(identityMatrices);
 
   skin.setInverseBindMatrices(inverseBindMatrices);
 
   return {
     inverseBindMatrixCount: joints.length,
     accessorName: inverseBindMatrices.getName?.() || 'inverseBindMatrices',
-    mode: 'calculated_from_joint_world_rest_pose_v1'
+    mode: 'identity_matrices_v1'
   };
 }
 
@@ -971,8 +925,8 @@ export default async function handler(req, res) {
     const renameReport = renameMappedBones(document);
     const nodesByName = listNodesByName(document);
 
-               const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds);
-    const inverseBindMatrixReport = attachRestPoseInverseBindMatrices(document, skin);
+                             const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds);
+    const inverseBindMatrixReport = attachIdentityInverseBindMatrices(document, skin);
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
     const toeReport = createToeEnds(document, skin, nodesByName);
