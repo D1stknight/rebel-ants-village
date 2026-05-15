@@ -2352,6 +2352,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 })();
 
 (function setupForge3dPreviewPanelExtension() {
+ AFTER
   let forge3dPreviewState = {
     renderer: null,
     scene: null,
@@ -2361,6 +2362,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     animationId: null,
     currentGlbUrl: ''
   };
+
+  window.forge3dPreviewState = forge3dPreviewState;
 
   function isForgePage() {
     return Boolean(
@@ -2507,6 +2510,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       forge3dPreviewState.renderer.dispose();
     }
 
+  AFTER
     forge3dPreviewState = {
       renderer: null,
       scene: null,
@@ -2516,6 +2520,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       animationId: null,
       currentGlbUrl: ''
     };
+
+    window.forge3dPreviewState = forge3dPreviewState;
   }
 
     async function loadThreeModules() {
@@ -2610,6 +2616,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     fitCameraToObject(THREE, camera, model, controls);
 
+   AFTER
     forge3dPreviewState = {
       renderer,
       scene,
@@ -2619,6 +2626,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       animationId: null,
       currentGlbUrl: glbUrl
     };
+
+    window.forge3dPreviewState = forge3dPreviewState;
 
     function animate() {
       forge3dPreviewState.animationId = requestAnimationFrame(animate);
@@ -2724,8 +2733,65 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
   window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
 
-  window.startForgeRigPlacementMode = function() {
-    console.log('Rig Placement Mode started', window.forge3dPreviewState);
+AFTER
+  window.startForgeRigPlacementMode = async function() {
+    const previewState = window.forge3dPreviewState;
+
+    if (!previewState?.scene || !previewState?.model) {
+      alert('Load a 3D preview before starting Rig Placement Mode.');
+      return;
+    }
+
+    const { THREE } = await loadThreeModules();
+
+    if (window.forgeRigPlacementState?.markers?.length) {
+      window.forgeRigPlacementState.markers.forEach((marker) => {
+        marker.parent?.remove(marker);
+        marker.geometry?.dispose?.();
+        marker.material?.dispose?.();
+      });
+    }
+
+    const box = new THREE.Box3().setFromObject(previewState.model);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const markerRadius = Math.max(size.x, size.y, size.z) * 0.025 || 0.05;
+
+    const markerMaterial = new THREE.MeshBasicMaterial({
+      color: 0x5ecfca,
+      depthTest: false
+    });
+
+    const markerSpecs = [
+      ['hips', center.x, box.min.y + size.y * 0.5, center.z],
+      ['spine', center.x, box.min.y + size.y * 0.68, center.z],
+      ['head', center.x, box.min.y + size.y * 0.9, center.z],
+      ['left hand', center.x - size.x * 0.48, box.min.y + size.y * 0.58, center.z],
+      ['right hand', center.x + size.x * 0.48, box.min.y + size.y * 0.58, center.z],
+      ['left foot', center.x - size.x * 0.18, box.min.y + size.y * 0.06, center.z],
+      ['right foot', center.x + size.x * 0.18, box.min.y + size.y * 0.06, center.z]
+    ];
+
+    const markers = markerSpecs.map(([name, x, y, z]) => {
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(markerRadius, 16, 16),
+        markerMaterial.clone()
+      );
+
+      marker.name = `forge-rig-marker-${name}`;
+      marker.renderOrder = 999;
+      marker.position.set(x, y, z);
+      marker.userData.forgeRigMarkerName = name;
+
+      previewState.scene.add(marker);
+      return marker;
+    });
+
+    window.forgeRigPlacementState = {
+      markers
+    };
+
+    console.log('Rig Placement Mode started', window.forge3dPreviewState, window.forgeRigPlacementState);
     alert('Rig Placement Mode started. Next step: skeleton handles.');
   };
 
