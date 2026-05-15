@@ -645,6 +645,63 @@ function createToeEnds(document, skin, nodesByName) {
   return { created, skipped };
 }
 
+function attachIdentityInverseBindMatrices(document, skin) {
+  if (!skin || typeof skin.setInverseBindMatrices !== 'function') {
+    return {
+      inverseBindMatrixCount: 0,
+      warning: 'Skin does not support setInverseBindMatrices.'
+    };
+  }
+
+  const joints = getSkinJoints(skin);
+
+  if (!joints.length) {
+    return {
+      inverseBindMatrixCount: 0,
+      warning: 'Skin has no joints for inverse bind matrices.'
+    };
+  }
+
+  const identityMatrices = new Float32Array(joints.length * 16);
+
+  for (let jointIndex = 0; jointIndex < joints.length; jointIndex++) {
+    const offset = jointIndex * 16;
+
+    identityMatrices[offset] = 1;
+    identityMatrices[offset + 1] = 0;
+    identityMatrices[offset + 2] = 0;
+    identityMatrices[offset + 3] = 0;
+
+    identityMatrices[offset + 4] = 0;
+    identityMatrices[offset + 5] = 1;
+    identityMatrices[offset + 6] = 0;
+    identityMatrices[offset + 7] = 0;
+
+    identityMatrices[offset + 8] = 0;
+    identityMatrices[offset + 9] = 0;
+    identityMatrices[offset + 10] = 1;
+    identityMatrices[offset + 11] = 0;
+
+    identityMatrices[offset + 12] = 0;
+    identityMatrices[offset + 13] = 0;
+    identityMatrices[offset + 14] = 0;
+    identityMatrices[offset + 15] = 1;
+  }
+
+  const inverseBindMatrices = document
+    .createAccessor('inverseBindMatrices')
+    .setType(Accessor.Type.MAT4)
+    .setArray(identityMatrices);
+
+  skin.setInverseBindMatrices(inverseBindMatrices);
+
+  return {
+    inverseBindMatrixCount: joints.length,
+    accessorName: inverseBindMatrices.getName?.() || 'inverseBindMatrices',
+    mode: 'identity_matrices_v1'
+  };
+}
+
 function bindMeshVerticesToNearestRebelJoint(document, skin) {
   if (!skin) {
     return {
@@ -868,7 +925,8 @@ export default async function handler(req, res) {
     const renameReport = renameMappedBones(document);
     const nodesByName = listNodesByName(document);
 
-    const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds);
+        const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds);
+    const inverseBindMatrixReport = attachIdentityInverseBindMatrices(document, skin);
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
     const toeReport = createToeEnds(document, skin, nodesByName);
@@ -901,7 +959,8 @@ export default async function handler(req, res) {
         rightFingerReport,
         toeReport
       },
-              vertexBinding: vertexBindingReport,
+                    inverseBindMatrices: inverseBindMatrixReport,
+      vertexBinding: vertexBindingReport,
       skin: {
         hadSkin: !skinSetup.created && Boolean(skin),
         createdSkin: skinSetup.created,
