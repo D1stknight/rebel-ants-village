@@ -993,6 +993,7 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout = nu
       return {
         markerName,
         boneName,
+        jointIndex: jointIndexByName.get(boneName),
         position: [
           Number(position[0]),
           Number(position[1]),
@@ -1030,31 +1031,46 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout = nu
     return 'mixamorig_Hips';
   }
 
-  function chooseNearestRigMarkerBoneName(point) {
-    let nearest = null;
-    let nearestDistanceSquared = Infinity;
+  function getRigMarkerInfluences(point) {
+    const nearestMarkers = rigBindingMarkers
+      .map((marker) => {
+        const dx = point[0] - marker.position[0];
+        const dy = point[1] - marker.position[1];
+        const dz = point[2] - marker.position[2];
+        const distanceSquared = dx * dx + dy * dy + dz * dz;
 
-    rigBindingMarkers.forEach((marker) => {
-      const dx = point[0] - marker.position[0];
-      const dy = point[1] - marker.position[1];
-      const dz = point[2] - marker.position[2];
-      const distanceSquared = dx * dx + dy * dy + dz * dz;
+        return {
+          ...marker,
+          distanceSquared
+        };
+      })
+      .sort((a, b) => a.distanceSquared - b.distanceSquared)
+      .slice(0, 4);
 
-      if (distanceSquared < nearestDistanceSquared) {
-        nearest = marker;
-        nearestDistanceSquared = distanceSquared;
-      }
-    });
+    if (!nearestMarkers.length) return [];
 
-    return nearest?.boneName || chooseBodyZoneBoneName(point);
-  }
+    const exactMatch = nearestMarkers.find((marker) => marker.distanceSquared <= 0.00000001);
 
-  function chooseBoneName(point) {
-    if (useRigLayoutBinding) {
-      return chooseNearestRigMarkerBoneName(point);
+    if (exactMatch) {
+      return [{
+        boneName: exactMatch.boneName,
+        jointIndex: exactMatch.jointIndex,
+        weight: 1
+      }];
     }
 
-    return chooseBodyZoneBoneName(point);
+    const rawWeights = nearestMarkers.map((marker) => {
+      return 1 / Math.max(Math.sqrt(marker.distanceSquared), 0.0001);
+    });
+    const totalWeight = rawWeights.reduce((total, weight) => total + weight, 0) || 1;
+
+    return nearestMarkers.map((marker, index) => {
+      return {
+        boneName: marker.boneName,
+        jointIndex: marker.jointIndex,
+        weight: rawWeights[index] / totalWeight
+      };
+    });
   }
 
   function getJointIndexForBoneName(boneName) {
@@ -1064,6 +1080,8 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout = nu
   }
 
   let weightedVertexCount = 0;
+  let blendedVertexCount = 0;
+  let totalInfluenceCount = 0;
   let primitiveCount = 0;
   let skippedPrimitiveCount = 0;
   const countsByBoneName = {};
@@ -1089,21 +1107,42 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout = nu
       for (let vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
         position.getElement(vertexIndex, point);
 
-        const boneName = chooseBoneName(point);
-        const jointIndex = getJointIndexForBoneName(boneName);
         const offset = vertexIndex * 4;
 
-        jointsArray[offset] = jointIndex;
-        jointsArray[offset + 1] = 0;
-        jointsArray[offset + 2] = 0;
-        jointsArray[offset + 3] = 0;
+        if (useRigLayoutBinding) {
+          const influences = getRigMarkerInfluences(point);
 
-        weightsArray[offset] = 1;
-        weightsArray[offset + 1] = 0;
-        weightsArray[offset + 2] = 0;
-        weightsArray[offset + 3] = 0;
+          influences.forEach((influence, influenceIndex) => {
+            jointsArray[offset + influenceIndex] = influence.jointIndex;
+            weightsArray[offset + influenceIndex] = influence.weight;
+            countsByBoneName[influence.boneName] = (countsByBoneName[influence.boneName] || 0) + influence.weight;
+          });
 
-        countsByBoneName[boneName] = (countsByBoneName[boneName] || 0) + 1;
+          for (let influenceIndex = influences.length; influenceIndex < 4; influenceIndex++) {
+            jointsArray[offset + influenceIndex] = 0;
+            weightsArray[offset + influenceIndex] = 0;
+          }
+
+          blendedVertexCount++;
+          totalInfluenceCount += influences.length;
+        } else {
+          const boneName = chooseBodyZoneBoneName(point);
+          const jointIndex = getJointIndexForBoneName(boneName);
+
+          jointsArray[offset] = jointIndex;
+          jointsArray[offset + 1] = 0;
+          jointsArray[offset + 2] = 0;
+          jointsArray[offset + 3] = 0;
+
+          weightsArray[offset] = 1;
+          weightsArray[offset + 1] = 0;
+          weightsArray[offset + 2] = 0;
+          weightsArray[offset + 3] = 0;
+
+          countsByBoneName[boneName] = (countsByBoneName[boneName] || 0) + 1;
+          totalInfluenceCount++;
+        }
+
         weightedVertexCount++;
       }
 
@@ -1124,13 +1163,17 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout = nu
 
   return {
     weightedVertexCount,
+    blendedVertexCount,
+    averageInfluencesPerVertex: weightedVertexCount
+      ? Number((totalInfluenceCount / weightedVertexCount).toFixed(4))
+      : 0,
     primitiveCount,
     skippedPrimitiveCount,
     jointCount: joints.length,
     countsByBoneName,
     rigLayoutMarkerCount: rigBindingMarkers.length,
     bindingMode: useRigLayoutBinding
-      ? 'rig_layout_nearest_marker_weight_1'
+      ? 'rig_layout_nearest_4_marker_blend'
       : 'body_zone_single_joint_weight_1'
   };
 }
