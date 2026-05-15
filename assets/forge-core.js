@@ -2731,6 +2731,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
   window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
 
+  AFTER
   window.startForgeRigPlacementMode = async function() {
     const previewState = window.forge3dPreviewState;
 
@@ -2749,6 +2750,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       });
     }
 
+    if (window.forgeRigPlacementState?.lines?.length) {
+      window.forgeRigPlacementState.lines.forEach((line) => {
+        line.parent?.remove(line);
+        line.geometry?.dispose?.();
+        line.material?.dispose?.();
+      });
+    }
+
     const box = new THREE.Box3().setFromObject(previewState.model);
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
@@ -2759,17 +2768,37 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       depthTest: false
     });
 
-    const markerSpecs = [
-      ['hips', center.x, box.min.y + size.y * 0.5, center.z],
-      ['spine', center.x, box.min.y + size.y * 0.68, center.z],
-      ['head', center.x, box.min.y + size.y * 0.9, center.z],
-      ['left hand', center.x - size.x * 0.48, box.min.y + size.y * 0.58, center.z],
-      ['right hand', center.x + size.x * 0.48, box.min.y + size.y * 0.58, center.z],
-      ['left foot', center.x - size.x * 0.18, box.min.y + size.y * 0.06, center.z],
-      ['right foot', center.x + size.x * 0.18, box.min.y + size.y * 0.06, center.z]
-    ];
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0xf3e6bf,
+      depthTest: false,
+      transparent: true,
+      opacity: 0.8
+    });
 
-    const markers = markerSpecs.map(([name, x, y, z]) => {
+    const markerPositions = {
+      hips: [center.x, box.min.y + size.y * 0.5, center.z],
+      spine: [center.x, box.min.y + size.y * 0.62, center.z],
+      chest: [center.x, box.min.y + size.y * 0.74, center.z],
+      neck: [center.x, box.min.y + size.y * 0.84, center.z],
+      head: [center.x, box.min.y + size.y * 0.92, center.z],
+
+      'left shoulder': [center.x - size.x * 0.22, box.min.y + size.y * 0.74, center.z],
+      'left elbow': [center.x - size.x * 0.38, box.min.y + size.y * 0.62, center.z],
+      'left hand': [center.x - size.x * 0.5, box.min.y + size.y * 0.52, center.z],
+
+      'right shoulder': [center.x + size.x * 0.22, box.min.y + size.y * 0.74, center.z],
+      'right elbow': [center.x + size.x * 0.38, box.min.y + size.y * 0.62, center.z],
+      'right hand': [center.x + size.x * 0.5, box.min.y + size.y * 0.52, center.z],
+
+      'left knee': [center.x - size.x * 0.16, box.min.y + size.y * 0.28, center.z],
+      'left foot': [center.x - size.x * 0.16, box.min.y + size.y * 0.06, center.z],
+
+      'right knee': [center.x + size.x * 0.16, box.min.y + size.y * 0.28, center.z],
+      'right foot': [center.x + size.x * 0.16, box.min.y + size.y * 0.06, center.z]
+    };
+
+    const markersByName = {};
+    const markers = Object.entries(markerPositions).map(([name, position]) => {
       const marker = new THREE.Mesh(
         new THREE.SphereGeometry(markerRadius, 16, 16),
         markerMaterial.clone()
@@ -2777,15 +2806,59 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       marker.name = `forge-rig-marker-${name}`;
       marker.renderOrder = 999;
-      marker.position.set(x, y, z);
+      marker.position.set(position[0], position[1], position[2]);
       marker.userData.forgeRigMarkerName = name;
 
       previewState.scene.add(marker);
+      markersByName[name] = marker;
+
       return marker;
     });
 
+    const connectionPairs = [
+      ['hips', 'spine'],
+      ['spine', 'chest'],
+      ['chest', 'neck'],
+      ['neck', 'head'],
+
+      ['chest', 'left shoulder'],
+      ['left shoulder', 'left elbow'],
+      ['left elbow', 'left hand'],
+
+      ['chest', 'right shoulder'],
+      ['right shoulder', 'right elbow'],
+      ['right elbow', 'right hand'],
+
+      ['hips', 'left knee'],
+      ['left knee', 'left foot'],
+
+      ['hips', 'right knee'],
+      ['right knee', 'right foot']
+    ];
+
+    const lines = connectionPairs.map(([fromName, toName]) => {
+      const fromMarker = markersByName[fromName];
+      const toMarker = markersByName[toName];
+      const geometry = new THREE.BufferGeometry().setFromPoints([
+        fromMarker.position,
+        toMarker.position
+      ]);
+      const line = new THREE.Line(geometry, lineMaterial.clone());
+
+      line.name = `forge-rig-line-${fromName}-to-${toName}`;
+      line.renderOrder = 998;
+      line.userData.forgeRigLine = {
+        from: fromName,
+        to: toName
+      };
+
+      previewState.scene.add(line);
+      return line;
+    });
+
     window.forgeRigPlacementState = {
-      markers
+      markers,
+      lines
     };
 
     console.log('Rig Placement Mode started', window.forge3dPreviewState, window.forgeRigPlacementState);
