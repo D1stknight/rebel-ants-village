@@ -1051,20 +1051,58 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout = nu
       Math.abs(point[2] - zone.position[2]) <= zone.scale[2] / 2;
   }
 
+    function getZoneVolume(zone) {
+    return Math.max(zone.scale[0] * zone.scale[1] * zone.scale[2], 0.000001);
+  }
+
+  function normalizeInfluences(influences) {
+    const totalWeight = influences.reduce((total, influence) => total + influence.weight, 0) || 1;
+
+    return influences.slice(0, 4).map((influence) => {
+      return {
+        ...influence,
+        weight: influence.weight / totalWeight
+      };
+    });
+  }
+
   function getBodyZoneInfluences(point) {
-    const zone = bodyZones.find((candidate) => pointIsInsideBodyZone(point, candidate));
+    const matchingZones = bodyZones
+      .filter((candidate) => pointIsInsideBodyZone(point, candidate))
+      .sort((a, b) => getZoneVolume(a) - getZoneVolume(b));
 
-    if (!zone) return [];
+    if (!matchingZones.length) return [];
 
-    const weight = 1 / zone.boneNames.length;
-
-    return zone.boneNames.slice(0, 4).map((boneName) => {
+    const primaryZone = matchingZones[0];
+    const primaryBoneNames = primaryZone.boneNames.slice(0, 3);
+    const primaryWeight = 0.85 / primaryBoneNames.length;
+    const influences = primaryBoneNames.map((boneName) => {
       return {
         boneName,
         jointIndex: jointIndexByName.get(boneName),
-        weight
+        weight: primaryWeight
       };
     });
+
+    if (useRigLayoutBinding) {
+      const fallbackInfluence = getRigMarkerInfluences(point)[0];
+
+      if (fallbackInfluence && !primaryBoneNames.includes(fallbackInfluence.boneName)) {
+        influences.push({
+          boneName: fallbackInfluence.boneName,
+          jointIndex: fallbackInfluence.jointIndex,
+          weight: 0.15
+        });
+      } else if (fallbackInfluence) {
+        influences[0].weight += 0.15;
+      } else {
+        influences[0].weight += 0.15;
+      }
+    } else {
+      influences[0].weight += 0.15;
+    }
+
+    return normalizeInfluences(influences);
   }
 
   function chooseBodyZoneBoneName(point) {
@@ -1299,8 +1337,8 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout = nu
     bodyZoneLayoutUsed: bodyZoneHitVertexCount > 0,
     bodyZoneCount: bodyZones.length,
     bodyZoneHitVertexCount,
-        bindingMode: bodyZoneHitVertexCount > 0
-      ? 'body_zone_layout_filtered_weights'
+               bindingMode: bodyZoneHitVertexCount > 0
+      ? 'body_zone_primary_85_marker_fallback_15'
       : useRigLayoutBinding
         ? 'rig_layout_region_filtered_4_marker_blend'
         : 'body_zone_single_joint_weight_1'
