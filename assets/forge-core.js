@@ -2667,9 +2667,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         <div class="forge-3d-preview-empty">Loading 3D preview...</div>
       </div>
 
+     AFTER
       <div class="forge-3d-preview-actions">
         <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
         <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
+        <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeRigPlacementMode()">Start Rig Placement</button>
       </div>
 
       <div class="forge-3d-preview-note">
@@ -2721,7 +2723,13 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }, 400);
   }
 
+ AFTER
   window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
+
+  window.startForgeRigPlacementMode = function() {
+    console.log('Rig Placement Mode started', window.forge3dPreviewState);
+    alert('Rig Placement Mode started. Next step: skeleton handles.');
+  };
 
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(boot3dPreviewPanel, 500);
