@@ -2416,24 +2416,60 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         height: 100%;
       }
 
-      .forge-3d-preview-actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
+            .forge-3d-preview-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
         margin-top: 12px;
       }
 
+      .forge-3d-tool-group {
+        display: grid;
+        gap: 8px;
+        align-content: start;
+        padding: 10px;
+        border: 1px solid rgba(255,255,255,.1);
+        background: rgba(0,0,0,.16);
+        border-radius: 12px;
+      }
+
+      .forge-3d-tool-group-title {
+        color: rgba(243,230,191,.72);
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 1.8px;
+        text-transform: uppercase;
+      }
+
       .forge-3d-preview-btn {
-        padding: 10px 12px;
+        min-height: 36px;
+        padding: 9px 10px;
         border: 1px solid rgba(94,207,202,.28);
         background: rgba(94,207,202,.08);
         color: #f3e6bf;
         font-family: 'Cinzel', serif;
         font-size: 10px;
-        letter-spacing: 2px;
+        letter-spacing: 1.4px;
         text-transform: uppercase;
         cursor: pointer;
         text-decoration: none;
+        text-align: center;
+      }
+
+      .forge-3d-tool-toast {
+        display: none;
+        margin-top: 10px;
+        padding: 10px 12px;
+        border: 1px solid rgba(94,207,202,.35);
+        background: rgba(94,207,202,.12);
+        color: #f3e6bf;
+        font-size: 12px;
+        line-height: 1.5;
+        border-radius: 10px;
+      }
+
+      .forge-3d-tool-toast.is-visible {
+        display: block;
       }
 
       .forge-3d-preview-btn:hover {
@@ -2676,32 +2712,53 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         <div class="forge-3d-preview-empty">Loading 3D preview...</div>
       </div>
 
-                                                                            <div class="forge-3d-preview-actions">
-        <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
-        <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeRigPlacementMode()">Start Rig Placement</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeRigPlacementLayout()">Save Rig Layout</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeRigPlacementLayout()">Load Rig Layout</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.undoForgeRigPlacementMove()">Undo Move</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.resetForgeRigPlacementLayout()">Reset Layout</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLabels()">Toggle Labels</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLines()">Toggle Lines</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigMarkerSize()">Marker Size</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigLabelSize()">Label Size</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('front')">Front View</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('side')">Side View</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('top')">Top View</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeBodyZoneMode()">Start Body Zones</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeBodyZoneTool()">Body Zone Tool</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.shrinkForgeBodyZone()">Shrink Zone</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.growForgeBodyZone()">Grow Zone</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeBodyZones()">Save Body Zones</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeBodyZones()">Load Body Zones</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeBodyZoneMode()">Clear Body Zones</button>
-        <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeBodyZoneJson()">Copy Body Zone JSON</button>
+                                                                                                                                                     <div class="forge-3d-preview-actions">
+        <div class="forge-3d-tool-group">
+          <div class="forge-3d-tool-group-title">Preview</div>
+          <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
+          <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
+        </div>
+
+        <div class="forge-3d-tool-group">
+          <div class="forge-3d-tool-group-title">Fit Skeleton</div>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeRigPlacementMode()">Start Rig Placement</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.undoForgeRigPlacementMove()">Undo Move</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.resetForgeRigPlacementLayout()">Reset Layout</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLabels()">Toggle Labels</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLines()">Toggle Lines</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigMarkerSize()">Marker Size</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigLabelSize()">Label Size</button>
+        </div>
+
+        <div class="forge-3d-tool-group">
+          <div class="forge-3d-tool-group-title">Shape Body Zones</div>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeBodyZoneMode()">Start Body Zones</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeBodyZoneTool()">Body Zone Tool</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.shrinkForgeBodyZone()">Shrink Zone</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.growForgeBodyZone()">Grow Zone</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeBodyZoneMode()">Clear Body Zones</button>
+        </div>
+
+        <div class="forge-3d-tool-group">
+          <div class="forge-3d-tool-group-title">View Tools</div>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('front')">Front View</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('side')">Side View</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.setForgeRigPlacementView('top')">Top View</button>
+        </div>
+
+        <div class="forge-3d-tool-group">
+          <div class="forge-3d-tool-group-title">Export / Save</div>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeRigPlacementLayout()">Save Rig Layout</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeRigPlacementLayout()">Load Rig Layout</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeBodyZones()">Save Body Zones</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeBodyZones()">Load Body Zones</button>
+          <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeBodyZoneJson()">Copy Body Zone JSON</button>
+        </div>
       </div>
+
+      <div id="forge-3d-tool-toast" class="forge-3d-tool-toast" aria-live="polite"></div>
 
       <div id="forge-rig-selected-marker" class="forge-3d-preview-note">Selected Marker: none</div>
 
@@ -2754,13 +2811,30 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }, 400);
   }
 
-  window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
+   window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
+
+  function showForgeToolToast(message) {
+    const toast = document.getElementById('forge-3d-tool-toast');
+
+    if (!toast) {
+      console.log(message);
+      return;
+    }
+
+    toast.textContent = message;
+    toast.classList.add('is-visible');
+
+    clearTimeout(showForgeToolToast.hideTimer);
+    showForgeToolToast.hideTimer = setTimeout(() => {
+      toast.classList.remove('is-visible');
+    }, 2600);
+  }
 
     window.startForgeRigPlacementMode = async function() {
     const previewState = window.forge3dPreviewState;
 
     if (!previewState?.scene || !previewState?.model || !previewState?.camera || !previewState?.renderer) {
-      alert('Load a 3D preview before starting Rig Placement Mode.');
+             alert('Body Zones started.');
       return;
     }
 
@@ -3067,7 +3141,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     updateSelectedMarkerDisplay();
 
     console.log('Rig Placement Mode started', window.forge3dPreviewState, window.forgeRigPlacementState);
-    alert('Rig Placement Mode started. Next step: skeleton handles.');
+       showForgeToolToast('Rig Placement started');
   };
   function getForgeRigPlacementStorageKey() {
     const glbUrl = window.forge3dPreviewState?.currentGlbUrl || 'unknown-glb';
@@ -3079,7 +3153,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const previewState = window.forge3dPreviewState;
 
     if (!placementState?.markers?.length) {
-      alert('Start Rig Placement Mode before saving a rig layout.');
+          showForgeToolToast('Start Rig Placement first');
       return;
     }
 
@@ -3098,21 +3172,21 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }));
 
     console.log('Saved Forge rig layout', markers);
-    alert('Rig layout saved for this GLB.');
+       showForgeToolToast('Rig layout saved');
   };
 
     window.loadForgeRigPlacementLayout = function() {
     const placementState = window.forgeRigPlacementState;
 
     if (!placementState?.markers?.length) {
-      alert('Start Rig Placement Mode before loading a rig layout.');
+          showForgeToolToast('Start Rig Placement first');
       return;
     }
 
     const rawLayout = localStorage.getItem(getForgeRigPlacementStorageKey());
 
     if (!rawLayout) {
-      alert('No saved rig layout found for this GLB.');
+           showForgeToolToast('No saved layout found');
       return;
     }
 
@@ -3122,7 +3196,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       layout = JSON.parse(rawLayout);
     } catch(e) {
       console.warn('Could not parse saved Forge rig layout:', e);
-      alert('Saved rig layout could not be loaded.');
+            showForgeToolToast('Saved layout could not be loaded');
       return;
     }
 
@@ -3139,7 +3213,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     placementState.updateRigPlacementLines?.();
 
     console.log('Loaded Forge rig layout', layout);
-    alert('Rig layout loaded for this GLB.');
+       showForgeToolToast('Rig layout loaded');
   };
 
   window.undoForgeRigPlacementMove = function() {
@@ -3147,14 +3221,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const lastMove = placementState?.lastMove;
 
     if (!placementState?.markers?.length || !lastMove?.markerName || !Array.isArray(lastMove.position)) {
-      alert('No marker move to undo yet.');
+          showForgeToolToast('No move to undo');
       return;
     }
 
     const marker = placementState.markersByName?.[lastMove.markerName];
 
     if (!marker) {
-      alert('The last moved marker no longer exists.');
+           showForgeToolToast('Last moved marker is gone');
       return;
     }
 
@@ -3168,7 +3242,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const placementState = window.forgeRigPlacementState;
 
     if (!placementState?.markers?.length || !placementState?.initialMarkerPositions) {
-      alert('Start Rig Placement Mode before resetting the rig layout.');
+           showForgeToolToast('Start Rig Placement first');
       return;
     }
 
@@ -3190,7 +3264,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const placementState = window.forgeRigPlacementState;
 
     if (!placementState?.labels?.length) {
-      alert('Start Rig Placement Mode before toggling labels.');
+          showForgeToolToast('Start Rig Placement first');
       return;
     }
 
@@ -3204,7 +3278,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const placementState = window.forgeRigPlacementState;
 
     if (!placementState?.lines?.length) {
-      alert('Start Rig Placement Mode before toggling lines.');
+          showForgeToolToast('Start Rig Placement first');
       return;
     }
 
@@ -3218,7 +3292,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const placementState = window.forgeRigPlacementState;
 
     if (!placementState?.markers?.length) {
-      alert('Start Rig Placement Mode before changing marker size.');
+            showForgeToolToast('Start Rig Placement first');
       return;
     }
 
@@ -3234,7 +3308,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const placementState = window.forgeRigPlacementState;
 
     if (!placementState?.labels?.length) {
-      alert('Start Rig Placement Mode before changing label size.');
+            showForgeToolToast('Start Rig Placement first');
       return;
     }
 
@@ -3251,7 +3325,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const previewState = window.forge3dPreviewState;
 
     if (!placementState?.viewCenter || !previewState?.camera) {
-      alert('Start Rig Placement Mode before changing views.');
+           showForgeToolToast('Start Rig Placement first');
       return;
     }
 
@@ -3279,7 +3353,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const previewState = window.forge3dPreviewState;
 
     if (!placementState?.markers?.length) {
-      alert('Start Rig Placement Mode before copying rig layout JSON.');
+          showForgeToolToast('Start Rig Placement first');
       return;
     }
 
@@ -3301,11 +3375,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     try {
       await navigator.clipboard.writeText(rigLayoutJson);
-      alert('Rig layout JSON copied.');
+           showForgeToolToast('Rig layout JSON copied');
     } catch(e) {
       console.warn('Could not copy rig layout JSON:', e);
       console.log('Rig layout JSON:', rigLayoutJson);
-      alert('Could not copy automatically. Rig layout JSON was logged to the console.');
+            showForgeToolToast('Could not copy. JSON logged to console');
     }
   };
 
@@ -3373,7 +3447,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const previewState = window.forge3dPreviewState;
 
     if (!previewState?.scene || !previewState?.model || !previewState?.camera || !previewState?.renderer) {
-      alert('Load a 3D preview before starting Body Zones.');
+           showForgeToolToast('Load a 3D preview first');
       return;
     }
 
@@ -3536,7 +3610,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     };
 
     console.log('Body Zones started', window.forgeBodyZoneState);
-    alert('Body Zones started.');
+      showForgeToolToast('Body Zones started');
   };
     window.clearForgeBodyZoneMode = function() {
     const bodyZoneState = window.forgeBodyZoneState;
@@ -3579,7 +3653,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const bodyZoneState = window.forgeBodyZoneState;
 
     if (!bodyZoneState?.transformControls) {
-      alert('Start Body Zones before changing the Body Zone tool.');
+            showForgeToolToast('Start Body Zones first');
       return;
     }
 
@@ -3593,7 +3667,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const selectedZone = window.forgeBodyZoneState?.selectedZone;
 
     if (!selectedZone) {
-      alert('Select a Body Zone first.');
+           showForgeToolToast('Select a Body Zone first');
       return;
     }
 
@@ -3640,28 +3714,28 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const bodyZoneLayout = getForgeBodyZoneLayout();
 
     if (!bodyZoneLayout) {
-      alert('Start Body Zones before saving.');
+          showForgeToolToast('Start Body Zones first');
       return;
     }
 
     localStorage.setItem(getForgeBodyZoneStorageKey(), JSON.stringify(bodyZoneLayout));
 
     console.log('Saved Body Zones', bodyZoneLayout);
-    alert('Body Zones saved.');
+       showForgeToolToast('Body Zones saved');
   };
 
   window.loadForgeBodyZones = function() {
     const bodyZoneState = window.forgeBodyZoneState;
 
     if (!bodyZoneState?.zones?.length) {
-      alert('Start Body Zones before loading.');
+           showForgeToolToast('Start Body Zones first');
       return;
     }
 
     const rawLayout = localStorage.getItem(getForgeBodyZoneStorageKey());
 
     if (!rawLayout) {
-      alert('No saved Body Zones found for this GLB.');
+            showForgeToolToast('No saved Body Zones found');
       return;
     }
 
@@ -3671,7 +3745,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       bodyZoneLayout = JSON.parse(rawLayout);
     } catch(e) {
       console.warn('Could not parse saved Body Zones:', e);
-      alert('Saved Body Zones could not be loaded.');
+           showForgeToolToast('Saved Body Zones could not be loaded');
       return;
     }
 
@@ -3685,7 +3759,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     });
 
     console.log('Loaded Body Zones', bodyZoneLayout);
-    alert('Body Zones loaded.');
+       showForgeToolToast('Body Zones loaded');
   };
 
   window.copyForgeBodyZoneJson = async function() {
@@ -3693,7 +3767,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const previewState = window.forge3dPreviewState;
 
     if (!bodyZoneState?.zones?.length) {
-      alert('Start Body Zones before copying Body Zone JSON.');
+           showForgeToolToast('Start Body Zones first');
       return;
     }
 
@@ -3712,11 +3786,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     try {
       await navigator.clipboard.writeText(bodyZoneJson);
-      alert('Body Zone JSON copied.');
+          showForgeToolToast('Body Zone JSON copied');
     } catch(e) {
       console.warn('Could not copy Body Zone JSON:', e);
       console.log('Body Zone JSON:', bodyZoneJson);
-      alert('Could not copy automatically. Body Zone JSON was logged to the console.');
+            showForgeToolToast('Could not copy. JSON logged to console');
     }
   };
 
