@@ -925,7 +925,7 @@ function attachIdentityInverseBindMatrices(document, skin) {
   };
 }
 
-function bindMeshVerticesToBodyZones(document, skin, modelBounds) {
+function bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout = null) {
   if (!skin) {
     return {
       weightedVertexCount: 0,
@@ -956,8 +956,53 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds) {
   const center = modelBounds?.center || [0, 0.5, 0];
   const height = Math.max(size[1] || 1, 0.001);
   const width = Math.max(size[0] || 1, 0.001);
+  const rigLayoutMarkers = rigLayout?.markers && typeof rigLayout.markers === 'object'
+    ? rigLayout.markers
+    : {};
+  const rigMarkerToBoneName = {
+    hips: 'mixamorig_Hips',
+    spine: 'mixamorig_Spine',
+    chest: 'mixamorig_Spine2',
+    neck: 'mixamorig_Neck',
+    head: 'mixamorig_Head',
+    'left shoulder': 'mixamorig_LeftShoulder',
+    'left elbow': 'mixamorig_LeftForeArm',
+    'left hand': 'mixamorig_LeftHand',
+    'right shoulder': 'mixamorig_RightShoulder',
+    'right elbow': 'mixamorig_RightForeArm',
+    'right hand': 'mixamorig_RightHand',
+    'left knee': 'mixamorig_LeftLeg',
+    'left foot': 'mixamorig_LeftFoot',
+    'right knee': 'mixamorig_RightLeg',
+    'right foot': 'mixamorig_RightFoot'
+  };
 
-  function chooseBoneName(point) {
+  function isRigMarkerPosition(position) {
+    return Array.isArray(position) &&
+      position.length >= 3 &&
+      position.slice(0, 3).every((value) => Number.isFinite(Number(value)));
+  }
+
+  const rigBindingMarkers = Object.entries(rigMarkerToBoneName)
+    .filter(([markerName, boneName]) => {
+      return isRigMarkerPosition(rigLayoutMarkers[markerName]) && jointIndexByName.has(boneName);
+    })
+    .map(([markerName, boneName]) => {
+      const position = rigLayoutMarkers[markerName];
+
+      return {
+        markerName,
+        boneName,
+        position: [
+          Number(position[0]),
+          Number(position[1]),
+          Number(position[2])
+        ]
+      };
+    });
+  const useRigLayoutBinding = rigBindingMarkers.length > 0;
+
+  function chooseBodyZoneBoneName(point) {
     const normalizedY = (point[1] - min[1]) / height;
     const normalizedXFromCenter = (point[0] - center[0]) / width;
     const isLeftSide = normalizedXFromCenter > 0;
@@ -983,6 +1028,33 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds) {
     }
 
     return 'mixamorig_Hips';
+  }
+
+  function chooseNearestRigMarkerBoneName(point) {
+    let nearest = null;
+    let nearestDistanceSquared = Infinity;
+
+    rigBindingMarkers.forEach((marker) => {
+      const dx = point[0] - marker.position[0];
+      const dy = point[1] - marker.position[1];
+      const dz = point[2] - marker.position[2];
+      const distanceSquared = dx * dx + dy * dy + dz * dz;
+
+      if (distanceSquared < nearestDistanceSquared) {
+        nearest = marker;
+        nearestDistanceSquared = distanceSquared;
+      }
+    });
+
+    return nearest?.boneName || chooseBodyZoneBoneName(point);
+  }
+
+  function chooseBoneName(point) {
+    if (useRigLayoutBinding) {
+      return chooseNearestRigMarkerBoneName(point);
+    }
+
+    return chooseBodyZoneBoneName(point);
   }
 
   function getJointIndexForBoneName(boneName) {
@@ -1056,7 +1128,10 @@ function bindMeshVerticesToBodyZones(document, skin, modelBounds) {
     skippedPrimitiveCount,
     jointCount: joints.length,
     countsByBoneName,
-    bindingMode: 'body_zone_single_joint_weight_1'
+    rigLayoutMarkerCount: rigBindingMarkers.length,
+    bindingMode: useRigLayoutBinding
+      ? 'rig_layout_nearest_marker_weight_1'
+      : 'body_zone_single_joint_weight_1'
   };
 }
 function inspectRebelStandardCoverage(document) {
@@ -1177,7 +1252,7 @@ export default async function handler(req, res) {
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
        const toeReport = createToeEnds(document, skin, nodesByName);
-    const vertexBindingReport = bindMeshVerticesToBodyZones(document, skin, modelBounds);
+       const vertexBindingReport = bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout);
     const afterCoverage = inspectRebelStandardCoverage(document);
     const outputBuffer = Buffer.from(await io.writeBinary(document));
     const prototypePath = buildRiggedPrototypePath({ buildRecord, buildId });
