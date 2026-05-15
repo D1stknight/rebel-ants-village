@@ -702,43 +702,76 @@ function attachIdentityInverseBindMatrices(document, skin) {
   };
 }
 
-function bindMeshVerticesToNearestRebelJoint(document, skin) {
+function bindMeshVerticesToBodyZones(document, skin, modelBounds) {
   if (!skin) {
     return {
       weightedVertexCount: 0,
       primitiveCount: 0,
       skippedPrimitiveCount: 0,
+      countsByBoneName: {},
       warning: 'No skin available for vertex binding.'
     };
   }
 
   const joints = getSkinJoints(skin);
-  const jointPositions = joints.map((joint, jointIndex) => {
-    const translation =
-      typeof joint.getTranslation === 'function'
-        ? joint.getTranslation()
-        : [0, 0, 0];
+  const jointIndexByName = new Map(
+    joints.map((joint, jointIndex) => [joint.getName?.() || `joint_${jointIndex}`, jointIndex])
+  );
 
-    return {
-      joint,
-      jointIndex,
-      name: joint.getName?.() || `joint_${jointIndex}`,
-      position: translation || [0, 0, 0]
-    };
-  });
-
-  if (!jointPositions.length) {
+  if (!joints.length) {
     return {
       weightedVertexCount: 0,
       primitiveCount: 0,
       skippedPrimitiveCount: 0,
+      countsByBoneName: {},
       warning: 'Skin has no joints available for vertex binding.'
     };
+  }
+
+  const min = modelBounds?.min || [0, 0, 0];
+  const size = modelBounds?.size || [1, 1, 1];
+  const center = modelBounds?.center || [0, 0.5, 0];
+  const height = Math.max(size[1] || 1, 0.001);
+  const width = Math.max(size[0] || 1, 0.001);
+
+  function chooseBoneName(point) {
+    const normalizedY = (point[1] - min[1]) / height;
+    const normalizedXFromCenter = (point[0] - center[0]) / width;
+    const isLeftSide = normalizedXFromCenter > 0;
+    const sidePrefix = isLeftSide ? 'Left' : 'Right';
+    const absX = Math.abs(normalizedXFromCenter);
+
+    if (normalizedY >= 0.82) return 'mixamorig_Head';
+
+    if (normalizedY >= 0.56 && absX > 0.18) {
+      if (normalizedY >= 0.68) return `mixamorig_${sidePrefix}Arm`;
+      if (normalizedY >= 0.58) return `mixamorig_${sidePrefix}ForeArm`;
+      return `mixamorig_${sidePrefix}Hand`;
+    }
+
+    if (normalizedY >= 0.68) return 'mixamorig_Spine2';
+    if (normalizedY >= 0.54) return 'mixamorig_Spine1';
+    if (normalizedY >= 0.42) return 'mixamorig_Spine';
+
+    if (normalizedY < 0.42 && absX > 0.08) {
+      if (normalizedY >= 0.28) return `mixamorig_${sidePrefix}UpLeg`;
+      if (normalizedY >= 0.12) return `mixamorig_${sidePrefix}Leg`;
+      return `mixamorig_${sidePrefix}Foot`;
+    }
+
+    return 'mixamorig_Hips';
+  }
+
+  function getJointIndexForBoneName(boneName) {
+    if (jointIndexByName.has(boneName)) return jointIndexByName.get(boneName);
+    if (jointIndexByName.has('mixamorig_Hips')) return jointIndexByName.get('mixamorig_Hips');
+    return 0;
   }
 
   let weightedVertexCount = 0;
   let primitiveCount = 0;
   let skippedPrimitiveCount = 0;
+  const countsByBoneName = {};
 
   document.getRoot().listNodes().forEach((node) => {
     const mesh = typeof node.getMesh === 'function' ? node.getMesh() : null;
@@ -761,23 +794,11 @@ function bindMeshVerticesToNearestRebelJoint(document, skin) {
       for (let vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
         position.getElement(vertexIndex, point);
 
-        let nearestJointIndex = 0;
-        let nearestDistance = Number.POSITIVE_INFINITY;
-
-        jointPositions.forEach((jointInfo) => {
-          const dx = point[0] - jointInfo.position[0];
-          const dy = point[1] - jointInfo.position[1];
-          const dz = point[2] - jointInfo.position[2];
-          const distance = dx * dx + dy * dy + dz * dz;
-
-          if (distance < nearestDistance) {
-            nearestDistance = distance;
-            nearestJointIndex = jointInfo.jointIndex;
-          }
-        });
-
+        const boneName = chooseBoneName(point);
+        const jointIndex = getJointIndexForBoneName(boneName);
         const offset = vertexIndex * 4;
-        jointsArray[offset] = nearestJointIndex;
+
+        jointsArray[offset] = jointIndex;
         jointsArray[offset + 1] = 0;
         jointsArray[offset + 2] = 0;
         jointsArray[offset + 3] = 0;
@@ -787,6 +808,7 @@ function bindMeshVerticesToNearestRebelJoint(document, skin) {
         weightsArray[offset + 2] = 0;
         weightsArray[offset + 3] = 0;
 
+        countsByBoneName[boneName] = (countsByBoneName[boneName] || 0) + 1;
         weightedVertexCount++;
       }
 
@@ -810,10 +832,10 @@ function bindMeshVerticesToNearestRebelJoint(document, skin) {
     primitiveCount,
     skippedPrimitiveCount,
     jointCount: joints.length,
-    bindingMode: 'nearest_single_joint_weight_1'
+    countsByBoneName,
+    bindingMode: 'body_zone_single_joint_weight_1'
   };
 }
-
 function inspectRebelStandardCoverage(document) {
   const nodeNames = new Set(document.getRoot().listNodes().map((node) => node.getName()));
   const missingBones = REBEL_STANDARD_BONE_NAMES.filter((boneName) => !nodeNames.has(boneName));
@@ -929,8 +951,8 @@ export default async function handler(req, res) {
     const inverseBindMatrixReport = attachIdentityInverseBindMatrices(document, skin);
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
-    const toeReport = createToeEnds(document, skin, nodesByName);
-    const vertexBindingReport = bindMeshVerticesToNearestRebelJoint(document, skin);
+       const toeReport = createToeEnds(document, skin, nodesByName);
+    const vertexBindingReport = bindMeshVerticesToBodyZones(document, skin, modelBounds);
     const afterCoverage = inspectRebelStandardCoverage(document);
     const outputBuffer = Buffer.from(await io.writeBinary(document));
     const prototypePath = buildRiggedPrototypePath({ buildRecord, buildId });
