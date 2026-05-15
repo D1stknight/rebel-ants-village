@@ -2722,7 +2722,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }, 400);
   }
 
- AFTER
   window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
 
   window.startForgeRigPlacementMode = function() {
