@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const MAX_GLB_BYTES = 120 * 1024 * 1024;
+const PLAYABLE_TEMPLATE_GLB_URL = 'https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/assets/character/ant_idle_c.glb';
 
 const REBEL_STANDARD_BONE_NAMES = [
   'mixamorig_Hips',
@@ -402,7 +403,35 @@ function getOrCreateNode(document, nodesByName, boneName, parentNode, translatio
   return { node, created: true };
 }
 
-function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds) {
+async function loadPlayableTemplateBoneTranslations() {
+  const templateBuffer = await fetchGlbAsBuffer(PLAYABLE_TEMPLATE_GLB_URL);
+  const io = new NodeIO();
+  const templateDocument = await io.readBinary(templateBuffer);
+  const boneTranslations = {};
+
+  templateDocument.getRoot().listNodes().forEach((node) => {
+    const name = node.getName?.() || '';
+
+    if (!name.startsWith('mixamorig_')) return;
+    if (typeof node.getTranslation !== 'function') return;
+
+    const translation = node.getTranslation() || [0, 0, 0];
+
+    boneTranslations[name] = [
+      Number((translation[0] || 0).toFixed(5)),
+      Number((translation[1] || 0).toFixed(5)),
+      Number((translation[2] || 0).toFixed(5))
+    ];
+  });
+
+  return {
+    sourceGlbUrl: PLAYABLE_TEMPLATE_GLB_URL,
+    boneCount: Object.keys(boneTranslations).length,
+    boneTranslations
+  };
+}
+
+function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, templateBoneTranslations = {}) {
   const created = [];
   const reused = [];
   const jointNames = [];
@@ -425,7 +454,13 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds) {
     return Number((value * depth).toFixed(5));
   }
 
-  function getRebelBoneLocalTranslation(boneName) {
+    function getRebelBoneLocalTranslation(boneName) {
+    const templateTranslation = templateBoneTranslations[boneName];
+
+    if (Array.isArray(templateTranslation) && templateTranslation.length === 3) {
+      return templateTranslation;
+    }
+
     const rootY = min[1] + height * 0.5;
 
     const translations = {
@@ -554,11 +589,12 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds) {
     }
   });
 
-  return {
+   return {
     createdCount: created.length,
     reusedCount: reused.length,
     jointCount: skin ? getSkinJoints(skin).length : 0,
     jointsAddedCount: jointNames.length,
+    templateBoneTranslationCount: Object.keys(templateBoneTranslations).length,
     created,
     reused,
     jointsAdded: jointNames
@@ -936,7 +972,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: 'Missing source GLB URL' });
     }
 
-                 const sourceBuffer = await fetchGlbAsBuffer(sourceGlbUrl);
+                                 const sourceBuffer = await fetchGlbAsBuffer(sourceGlbUrl);
+    const playableTemplate = await loadPlayableTemplateBoneTranslations();
     const io = new NodeIO();
     const document = await io.readBinary(sourceBuffer);
     const modelBounds = calculateModelBounds(document);
@@ -947,7 +984,7 @@ export default async function handler(req, res) {
     const renameReport = renameMappedBones(document);
     const nodesByName = listNodesByName(document);
 
-                             const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds);
+    const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, playableTemplate.boneTranslations);
     const inverseBindMatrixReport = attachIdentityInverseBindMatrices(document, skin);
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
@@ -967,7 +1004,11 @@ export default async function handler(req, res) {
       version: 'v0_structural_nodes_only',
       warning: 'Prototype only. This creates/renames skeleton nodes and adds missing Rebel Standard helper bones. It does not solve skin weights or final deformation quality yet.',
       sourceGlbUrl,
-           modelBounds,
+                     modelBounds,
+      playableTemplate: {
+        sourceGlbUrl: playableTemplate.sourceGlbUrl,
+        boneCount: playableTemplate.boneCount
+      },
       beforeCoverage,
       afterCoverage,
       renameReport,
