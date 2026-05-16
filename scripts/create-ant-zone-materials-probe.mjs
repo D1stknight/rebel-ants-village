@@ -2,7 +2,6 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Accessor, NodeIO } from '@gltf-transform/core';
 import { KHRDracoMeshCompression } from '@gltf-transform/extensions';
-import { decompress } from '@gltf-transform/functions';
 
 const INPUT_GLB = 'assets/character/ant_idle_c.glb';
 const OUTPUT_GLB = 'assets/character/ant_idle_c_zone_materials_probe.glb';
@@ -192,7 +191,10 @@ async function main() {
     .registerDependencies(dracoDependencies);
   const document = await io.read(inputPath);
 
-  await document.transform(decompress());
+    document.getRoot()
+    .listExtensionsUsed()
+    .find((extension) => extension.extensionName === KHRDracoMeshCompression.EXTENSION_NAME)
+    ?.dispose();
 
   const root = document.getRoot();
   const mesh = root.listMeshes()[0];
