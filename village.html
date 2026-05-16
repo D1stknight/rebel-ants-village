@@ -3862,6 +3862,27 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
   });
   r.transformNodes.forEach(tn => { if(tn!==playerRoot)tn.parent=playerRoot; if(tn.rotationQuaternion)tn.rotationQuaternion=null; });
   charMesh = playerRoot;
+  const headBone = r.skeletons?.[0]?.bones?.find(bone => bone.name === 'mixamorig_Head');
+  const headNode = headBone?._linkedTransformNode || headBone?.getTransformNode?.();
+  if (headNode) {
+    const wrapMat = new BABYLON.StandardMaterial("headAttachmentTestMat", scene);
+    wrapMat.diffuseColor = new BABYLON.Color3(.42, .02, .02);
+    wrapMat.emissiveColor = new BABYLON.Color3(.04, 0, 0);
+    wrapMat.specularColor = new BABYLON.Color3(.08, .04, .04);
+    const headWrap = BABYLON.MeshBuilder.CreateTorus("headAttachmentTestWrap", {
+      diameter: 26,
+      thickness: 3,
+      tessellation: 48
+    }, scene);
+    headWrap.material = wrapMat;
+    headWrap.parent = headNode;
+    headWrap.position = new BABYLON.Vector3(0, 10, 1);
+    headWrap.rotation = new BABYLON.Vector3(Math.PI / 2, 0, 0);
+    headWrap.isPickable = false;
+    console.log("Head attachment test added", headWrap);
+  } else {
+    console.log("Head attachment test failed: mixamorig_Head not found");
+  }
   if (r.animationGroups.length > 0) { animGroups[0]=r.animationGroups[0]; const _ta0=animGroups[0].targetedAnimations;for(let _j=_ta0.length-1;_j>=0;_j--){if(_ta0[_j].animation.targetProperty==='position'&&_ta0[_j].target&&_ta0[_j].target.name==='mixamorig_Hips')_ta0.splice(_j,1);} animState=0; animGroups[0].play(true); }
   window.followLight = new BABYLON.PointLight("followLight", new BABYLON.Vector3(9999,-999,9999), scene);
   window.followLight.diffuse = new BABYLON.Color3(1,.82,.5);
