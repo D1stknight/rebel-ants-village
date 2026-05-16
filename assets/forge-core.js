@@ -3601,11 +3601,16 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         return;
       }
 
-            const targetNames = new Set();
+                       const targetNames = new Set();
       const rigBoneNames = new Set();
+      let skinnedMesh = null;
 
       previewState.model.traverse((object) => {
         if (object.name) targetNames.add(object.name);
+
+        if (!skinnedMesh && object.isSkinnedMesh && object.skeleton?.bones?.length) {
+          skinnedMesh = object;
+        }
 
         if (object.isSkinnedMesh && object.skeleton?.bones?.length) {
           object.skeleton.bones.forEach((bone) => {
@@ -3617,19 +3622,43 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         }
       });
 
+      if (!skinnedMesh?.skeleton?.bones?.length) {
+        showForgeToolToast('No built rig skeleton found');
+        return;
+      }
+
+      const boneLookup = new Map();
+
+      skinnedMesh.skeleton.bones.forEach((bone) => {
+        if (bone.name) boneLookup.set(bone.name, bone);
+      });
+
       const animationTargetNames = new Set(walkClip.tracks.map((track) => {
         return track.name.split('.')[0].replace(/\[.*?\]/g, '');
       }));
+
+      const retargetedTracks = walkClip.tracks.reduce((tracks, track) => {
+        const targetName = track.name.split('.')[0].replace(/\[.*?\]/g, '');
+        const propertyPath = track.name.slice(track.name.indexOf('.') + 1);
+        const matchingBone = boneLookup.get(targetName);
+
+        if (!matchingBone || !propertyPath || propertyPath === track.name) {
+          return tracks;
+        }
+
+        const clonedTrack = track.clone();
+        clonedTrack.name = `.bones[${matchingBone.name}].${propertyPath}`;
+        tracks.push(clonedTrack);
+
+        return tracks;
+      }, []);
+
+      const mixerRoot = skinnedMesh || previewState.model;
 
       console.log('Forge walk retarget names:', {
         rigTargetNamesFirst20: [...targetNames].slice(0, 20),
         rigBoneNamesFirst20: [...rigBoneNames].slice(0, 20),
         animationTargetNamesFirst20: [...animationTargetNames].slice(0, 20)
-      });
-
-      const retargetedTracks = walkClip.tracks.filter((track) => {
-        const targetName = track.name.split('.')[0].replace(/\[.*?\]/g, '');
-        return targetNames.has(targetName);
       });
 
       if (!retargetedTracks.length) {
@@ -3651,7 +3680,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         retargetedTracks
       );
 
-      previewState.mixer = new THREE.AnimationMixer(previewState.model);
+      previewState.mixer = new THREE.AnimationMixer(mixerRoot);
       previewState.walkAction = previewState.mixer.clipAction(retargetedClip);
       previewState.walkAnimationSource = walkAnimationGlbUrl;
       previewState.walkAction.reset();
@@ -3661,8 +3690,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       console.log('Forge walk test started:', {
         builtRigUrl: prototypeGlbUrl,
         walkAnimationGlbUrl,
-        originalTrackCount: walkClip.tracks.length,
-        retargetedTrackCount: retargetedTracks.length
+        mixerRootName: mixerRoot.name || '(unnamed mixer root)',
+        skinnedMeshName: skinnedMesh.name || '(unnamed skinned mesh)',
+        matchedTrackCount: retargetedTracks.length,
+        originalTrackCount: walkClip.tracks.length
       });
 
       showForgeToolToast('Walk test playing');
