@@ -5,6 +5,7 @@ import path from 'node:path';
 
 const MAX_GLB_BYTES = 120 * 1024 * 1024;
 const PLAYABLE_TEMPLATE_JSON_PATH = 'assets/character/rebel_standard_ant_idle_c_template_v1.json';
+const PLAYABLE_TEMPLATE_GLB_PATH = 'assets/character/ant_idle_c.glb';
 
 const REBEL_STANDARD_BONE_NAMES = [
   'mixamorig_Hips',
@@ -478,12 +479,49 @@ async function loadPlayableTemplateBoneTranslations() {
         };
   }
 
-  return {
+   return {
     templatePath: PLAYABLE_TEMPLATE_JSON_PATH,
     sourceFile: templateJson.sourceFile || null,
     boneCount: Object.keys(boneTranslations).length,
     templateBounds,
     boneTranslations
+  };
+}
+
+async function loadPlayableTemplateInverseBindMatrices() {
+  const templatePath = path.join(process.cwd(), PLAYABLE_TEMPLATE_GLB_PATH);
+  const templateBuffer = await readFile(templatePath);
+  const io = new NodeIO();
+  const templateDocument = await io.readBinary(templateBuffer);
+  const templateSkin = getPrimarySkin(templateDocument);
+  const templateJoints = getSkinJoints(templateSkin);
+  const inverseBindAccessor = templateSkin?.getInverseBindMatrices?.() || null;
+  const matricesByJointName = new Map();
+
+  if (!templateSkin || !inverseBindAccessor) {
+    return {
+      templatePath: PLAYABLE_TEMPLATE_GLB_PATH,
+      templateJointCount: templateJoints.length,
+      matricesByJointName,
+      warning: 'Template skin or inverse bind matrices were not found.'
+    };
+  }
+
+  const matrix = new Array(16);
+
+  templateJoints.forEach((joint, jointIndex) => {
+    const jointName = joint.getName?.() || `joint_${jointIndex}`;
+
+    if (typeof inverseBindAccessor.getElement === 'function') {
+      inverseBindAccessor.getElement(jointIndex, matrix);
+      matricesByJointName.set(jointName, matrix.map((value) => Number(value || 0)));
+    }
+  });
+
+  return {
+    templatePath: PLAYABLE_TEMPLATE_GLB_PATH,
+    templateJointCount: templateJoints.length,
+    matricesByJointName
   };
 }
 
@@ -1034,11 +1072,17 @@ function getNodeWorldMatrix(node) {
   return localMatrix;
 }
 
-function attachIdentityInverseBindMatrices(document, skin) {
+function attachTemplateInverseBindMatrices(document, skin, templateBindData) {
   if (!skin || typeof skin.setInverseBindMatrices !== 'function') {
     return {
+      mode: 'template_ant_idle_c_inverse_bind_matrices_v1',
+      templatePath: templateBindData?.templatePath || PLAYABLE_TEMPLATE_GLB_PATH,
+      templateJointCount: templateBindData?.templateJointCount || 0,
       inverseBindMatrixCount: 0,
       jointCountAtTimeOfCreation: 0,
+      matchedTemplateBindMatrixCount: 0,
+      missingTemplateBindMatrixCount: 0,
+      missingTemplateBindMatrixJointNames: [],
       warning: 'Skin does not support setInverseBindMatrices.'
     };
   }
@@ -1047,49 +1091,61 @@ function attachIdentityInverseBindMatrices(document, skin) {
 
   if (!joints.length) {
     return {
+      mode: 'template_ant_idle_c_inverse_bind_matrices_v1',
+      templatePath: templateBindData?.templatePath || PLAYABLE_TEMPLATE_GLB_PATH,
+      templateJointCount: templateBindData?.templateJointCount || 0,
       inverseBindMatrixCount: 0,
       jointCountAtTimeOfCreation: 0,
+      matchedTemplateBindMatrixCount: 0,
+      missingTemplateBindMatrixCount: 0,
+      missingTemplateBindMatrixJointNames: [],
       warning: 'Skin has no joints for inverse bind matrices.'
     };
   }
 
-  const identityMatrices = new Float32Array(joints.length * 16);
+  const matricesByJointName = templateBindData?.matricesByJointName || new Map();
+  const inverseMatrices = new Float32Array(joints.length * 16);
+  const missingTemplateBindMatrixJointNames = [];
+  let matchedTemplateBindMatrixCount = 0;
 
-  for (let jointIndex = 0; jointIndex < joints.length; jointIndex++) {
+  joints.forEach((joint, jointIndex) => {
+    const jointName = joint.getName?.() || `joint_${jointIndex}`;
+    const templateMatrix = matricesByJointName.get(jointName) || null;
     const offset = jointIndex * 16;
+    const matrix = templateMatrix || [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    ];
 
-    identityMatrices[offset] = 1;
-    identityMatrices[offset + 1] = 0;
-    identityMatrices[offset + 2] = 0;
-    identityMatrices[offset + 3] = 0;
+    if (templateMatrix) {
+      matchedTemplateBindMatrixCount++;
+    } else {
+      missingTemplateBindMatrixJointNames.push(jointName);
+    }
 
-    identityMatrices[offset + 4] = 0;
-    identityMatrices[offset + 5] = 1;
-    identityMatrices[offset + 6] = 0;
-    identityMatrices[offset + 7] = 0;
-
-    identityMatrices[offset + 8] = 0;
-    identityMatrices[offset + 9] = 0;
-    identityMatrices[offset + 10] = 1;
-    identityMatrices[offset + 11] = 0;
-
-    identityMatrices[offset + 12] = 0;
-    identityMatrices[offset + 13] = 0;
-    identityMatrices[offset + 14] = 0;
-    identityMatrices[offset + 15] = 1;
-  }
+    for (let matrixIndex = 0; matrixIndex < 16; matrixIndex++) {
+      inverseMatrices[offset + matrixIndex] = matrix[matrixIndex];
+    }
+  });
 
   const inverseBindMatrices = document
     .createAccessor('inverseBindMatrices')
     .setType(Accessor.Type.MAT4)
-    .setArray(identityMatrices);
+    .setArray(inverseMatrices);
 
   skin.setInverseBindMatrices(inverseBindMatrices);
 
   return {
-    mode: 'identity_matrices_after_all_joints_v1',
+    mode: 'template_ant_idle_c_inverse_bind_matrices_v1',
+    templatePath: templateBindData?.templatePath || PLAYABLE_TEMPLATE_GLB_PATH,
+    templateJointCount: templateBindData?.templateJointCount || 0,
     inverseBindMatrixCount: joints.length,
     jointCountAtTimeOfCreation: joints.length,
+    matchedTemplateBindMatrixCount,
+    missingTemplateBindMatrixCount: missingTemplateBindMatrixJointNames.length,
+    missingTemplateBindMatrixJointNames,
     accessorName: inverseBindMatrices.getName?.() || 'inverseBindMatrices'
   };
 }
@@ -1614,8 +1670,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: 'Missing source GLB URL' });
     }
 
-                                 const sourceBuffer = await fetchGlbAsBuffer(sourceGlbUrl);
+    const sourceBuffer = await fetchGlbAsBuffer(sourceGlbUrl);
     const playableTemplate = await loadPlayableTemplateBoneTranslations();
+    const playableTemplateBindData = await loadPlayableTemplateInverseBindMatrices();
     const io = new NodeIO();
     const document = await io.readBinary(sourceBuffer);
     const modelBounds = calculateModelBounds(document);
@@ -1630,7 +1687,7 @@ export default async function handler(req, res) {
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
     const toeReport = createToeEnds(document, skin, nodesByName);
-       const inverseBindMatrixReport = attachIdentityInverseBindMatrices(document, skin);
+    const inverseBindMatrixReport = attachTemplateInverseBindMatrices(document, skin, playableTemplateBindData);
     const vertexBindingReport = bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout, bodyZoneLayout);
     const afterCoverage = inspectRebelStandardCoverage(document);
     const outputBuffer = Buffer.from(await io.writeBinary(document));
