@@ -2824,6 +2824,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <button class="forge-3d-preview-btn" type="button" onclick="window.buildForgeRigFromLayout()">Build Rig From Layout</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.previewBuiltForgeRig()">Preview Built Rig</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.previewForgeWalkTest()">Preview Walk Test</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.applyForgeLookToPlayableRig()">Apply Look To Playable Rig</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
           </div>
         </details>
@@ -3550,7 +3551,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   };
 
-    window.previewBuiltForgeRig = async function() {
+      window.previewBuiltForgeRig = async function() {
     const prototypeGlbUrl = window.lastForgeLayoutRigBuild?.prototypeGlbUrl || '';
 
     if (!prototypeGlbUrl) {
@@ -3566,6 +3567,34 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     } catch(e) {
       console.warn('Could not preview built rig:', e);
       showForgeToolToast('Could not preview built rig');
+    }
+  };
+
+  window.applyForgeLookToPlayableRig = async function() {
+    showForgeToolToast('Applying look to playable rig');
+
+    try {
+      const response = await fetch('/api/forge-apply-look-to-playable-rig', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+
+      const data = await response.json();
+
+      console.log('Apply look to playable rig response:', data);
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.detail || data.error || 'Could not apply look');
+      }
+
+      window.lastForgePlayableLookBuild = data;
+      showForgeToolToast('Playable look ready');
+    } catch(e) {
+      console.warn('Could not apply look to playable rig:', e);
+      showForgeToolToast(`Playable look failed: ${e.message || e}`);
     }
   };
 
