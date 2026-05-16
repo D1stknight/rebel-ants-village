@@ -80,12 +80,14 @@ async function fetchGlbAsBuffer(glbUrl) {
     throw new Error('Missing sourceGlbUrl.');
   }
 
+  let resolvedGlbUrl = glbUrl;
+
   if (glbUrl.startsWith('/assets/') || glbUrl.startsWith('assets/')) {
     const normalizedLocalPath = glbUrl.replace(/^\/+/, '');
-    return readFile(path.join(process.cwd(), normalizedLocalPath));
+    resolvedGlbUrl = `https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/${normalizedLocalPath}`;
   }
 
-  const response = await fetch(glbUrl);
+  const response = await fetch(resolvedGlbUrl);
 
   if (!response.ok) {
     throw new Error(`Could not fetch source GLB: ${response.status}`);
