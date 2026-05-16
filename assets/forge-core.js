@@ -3646,14 +3646,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           return tracks;
         }
 
-        const clonedTrack = track.clone();
-        clonedTrack.name = `.bones[${matchingBone.name}].${propertyPath}`;
+                const clonedTrack = track.clone();
+        clonedTrack.name = `bones[${matchingBone.name}].${propertyPath}`;
         tracks.push(clonedTrack);
 
         return tracks;
       }, []);
 
-            const mixerRoot = previewState.model;
+            const mixerRoot = skinnedMesh;
 
       console.log('Forge walk retarget names:', {
         rigTargetNamesFirst20: [...targetNames].slice(0, 20),
