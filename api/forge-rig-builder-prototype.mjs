@@ -995,7 +995,7 @@ function getNodeWorldMatrix(node) {
   return localMatrix;
 }
 
-function attachCalculatedInverseBindMatrices(document, skin) {
+function attachIdentityInverseBindMatrices(document, skin) {
   if (!skin || typeof skin.setInverseBindMatrices !== 'function') {
     return {
       inverseBindMatrixCount: 0,
@@ -1014,42 +1014,43 @@ function attachCalculatedInverseBindMatrices(document, skin) {
     };
   }
 
-  const inverseMatrices = new Float32Array(joints.length * 16);
-  let nonInvertibleJointCount = 0;
+  const identityMatrices = new Float32Array(joints.length * 16);
 
-  joints.forEach((joint, jointIndex) => {
+  for (let jointIndex = 0; jointIndex < joints.length; jointIndex++) {
     const offset = jointIndex * 16;
-    const worldMatrix = getNodeWorldMatrix(joint);
-    const inverseMatrix = invertMat4(worldMatrix);
 
-    if (!inverseMatrix) {
-      nonInvertibleJointCount++;
-    }
+    identityMatrices[offset] = 1;
+    identityMatrices[offset + 1] = 0;
+    identityMatrices[offset + 2] = 0;
+    identityMatrices[offset + 3] = 0;
 
-    const matrix = inverseMatrix || [
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
-    ];
+    identityMatrices[offset + 4] = 0;
+    identityMatrices[offset + 5] = 1;
+    identityMatrices[offset + 6] = 0;
+    identityMatrices[offset + 7] = 0;
 
-    for (let matrixIndex = 0; matrixIndex < 16; matrixIndex++) {
-      inverseMatrices[offset + matrixIndex] = matrix[matrixIndex];
-    }
-  });
+    identityMatrices[offset + 8] = 0;
+    identityMatrices[offset + 9] = 0;
+    identityMatrices[offset + 10] = 1;
+    identityMatrices[offset + 11] = 0;
+
+    identityMatrices[offset + 12] = 0;
+    identityMatrices[offset + 13] = 0;
+    identityMatrices[offset + 14] = 0;
+    identityMatrices[offset + 15] = 1;
+  }
 
   const inverseBindMatrices = document
     .createAccessor('inverseBindMatrices')
     .setType(Accessor.Type.MAT4)
-    .setArray(inverseMatrices);
+    .setArray(identityMatrices);
 
   skin.setInverseBindMatrices(inverseBindMatrices);
 
   return {
-    mode: 'calculated_inverse_world_matrices_v1',
+    mode: 'identity_matrices_after_all_joints_v1',
     inverseBindMatrixCount: joints.length,
     jointCountAtTimeOfCreation: joints.length,
-    nonInvertibleJointCount,
     accessorName: inverseBindMatrices.getName?.() || 'inverseBindMatrices'
   };
 }
@@ -1591,7 +1592,7 @@ export default async function handler(req, res) {
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
     const toeReport = createToeEnds(document, skin, nodesByName);
-    const inverseBindMatrixReport = attachCalculatedInverseBindMatrices(document, skin);
+    const inverseBindMatrixReport = attachIdentityInverseBindMatrices(document, skin);
     const vertexBindingReport = bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout, bodyZoneLayout);
     const afterCoverage = inspectRebelStandardCoverage(document);
     const outputBuffer = Buffer.from(await io.writeBinary(document));
