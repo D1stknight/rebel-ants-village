@@ -3443,17 +3443,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   };
 
-       window.buildForgeRigFromLayout = async function() {
-    const previewState = window.forge3dPreviewState;
-    const currentGlbUrl = previewState?.currentGlbUrl || '';
-
-    if (!currentGlbUrl) {
-      showForgeToolToast('Load a 3D preview first');
-      return;
-    }
+            window.buildForgeRigFromLayout = async function() {
+    const sourceAssetGlbUrl = 'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb';
 
     const rawRigLayout = localStorage.getItem(getForgeRigPlacementStorageKey());
-
     if (!rawRigLayout) {
       showForgeToolToast('No saved rig layout found');
       return;
@@ -3480,11 +3473,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
     }
 
-    const buildId = `rebel_469_forge_layout_build_${Date.now()}`;
-    const normalizedGlbUrl = currentGlbUrl.replace(/^\/+/, '');
-    const sourceGlbUrl = normalizedGlbUrl.startsWith('assets/')
-      ? `https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/${normalizedGlbUrl}`
-      : currentGlbUrl;
+       const buildId = `rebel_469_forge_layout_build_${Date.now()}`;
+    const normalizedGlbUrl = sourceAssetGlbUrl.replace(/^\/+/, '');
+    const sourceGlbUrl = `https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/${normalizedGlbUrl}`;
 
     showForgeToolToast('Rig build started');
 
