@@ -623,11 +623,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          generationInput: window.forgeGenerationInput,
-          selectedConcept: concept,
-          selectedConceptImageUrl,
-          selectedConceptImageDataUrl
+               body: JSON.stringify({
+          buildId,
+          sourceGlbUrl,
+          rigLayout,
+          bodyZoneLayout,
+          rigBuildMode: 'preview_safe'
         })
       });
 
