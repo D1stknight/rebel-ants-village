@@ -2790,8 +2790,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigLabelSize()">Label Size</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeRigPlacementLayout()">Save Rig Layout</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeRigPlacementLayout()">Load Rig Layout</button>
-                        <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.buildForgeRigFromLayout()">Build Rig From Layout</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.previewBuiltForgeRig()">Preview Built Rig</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
           </div>
         </details>
@@ -3442,7 +3443,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   };
 
-    window.buildForgeRigFromLayout = async function() {
+       window.buildForgeRigFromLayout = async function() {
     const previewState = window.forge3dPreviewState;
     const currentGlbUrl = previewState?.currentGlbUrl || '';
 
@@ -3509,19 +3510,40 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         throw new Error(data.detail || data.error || 'Rig build failed');
       }
 
+      const prototypeGlbUrl = data.prototypeGlbUrl || data.prototypeUrl || data.url || '';
+
       window.lastForgeLayoutRigBuild = {
         buildId,
         sourceGlbUrl,
         rigLayout,
         bodyZoneLayout,
         response: data,
-        prototypeGlbUrl: data.prototypeGlbUrl || data.prototypeUrl || data.url || ''
+        prototypeGlbUrl
       };
 
       showForgeToolToast('Rig build complete');
     } catch(e) {
       console.warn('Could not build rig from layout:', e);
       showForgeToolToast(`Rig build failed: ${e.message || e}`);
+    }
+  };
+
+  window.previewBuiltForgeRig = async function() {
+    const prototypeGlbUrl = window.lastForgeLayoutRigBuild?.prototypeGlbUrl || '';
+
+    if (!prototypeGlbUrl) {
+      showForgeToolToast('Build a rig first');
+      return;
+    }
+
+    try {
+      window.clearForgeRigPlacementMode?.();
+      window.clearForgeBodyZoneMode?.();
+      await renderThreeGlbPreview(prototypeGlbUrl);
+      showForgeToolToast('Built rig preview loaded');
+    } catch(e) {
+      console.warn('Could not preview built rig:', e);
+      showForgeToolToast('Could not preview built rig');
     }
   };
 
