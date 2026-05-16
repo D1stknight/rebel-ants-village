@@ -749,9 +749,14 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
     });
   });
 
-  const skeletonRootName = 'FBX_Root';
+    const skeletonRootName = 'FBX_Root';
   const { node: skeletonRootNode } = getOrCreateNode(document, nodesByName, skeletonRootName, null, [0, 0, 0]);
   skeletonRootNode.setTranslation([0, 0, 0]);
+
+  if (skin && typeof skin.setSkeleton === 'function') {
+    skin.setSkeleton(skeletonRootNode);
+  }
+
   parentByBoneName.mixamorig_Hips = skeletonRootName;
 
   REBEL_STANDARD_BONE_NAMES.forEach((boneName) => {
@@ -783,9 +788,10 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
     jointCount: skin ? getSkinJoints(skin).length : 0,
     jointsAddedCount: jointNames.length,
        templateBoneTranslationCount: Object.keys(templateBoneTranslations).length,
-    rigLayoutUsed: rigLayoutMarkerCount > 0,
+       rigLayoutUsed: rigLayoutMarkerCount > 0,
     rigLayoutMarkerCount,
     skeletonRootName,
+    skinSkeletonRootName: skin?.getSkeleton?.()?.getName?.() || null,
     hipsParentName: parentByBoneName.mixamorig_Hips || null,
     templateScale,
     templateHeight,
