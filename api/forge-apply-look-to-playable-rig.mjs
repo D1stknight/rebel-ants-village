@@ -500,9 +500,10 @@ export default async function handler(req, res) {
         const colorReport = await extractDominantColorsFromSourceGlb(sourceGlbUrl);
         const inputPath = path.join(process.cwd(), INPUT_GLB);
     const inputBuffer = await readFile(inputPath);
-    let outputBuffer;
+        let outputBuffer;
     let primitiveCountsByZone = null;
     let playableLookMode = 'zone_materials';
+    let zoneGenerationError = null;
 
     try {
       const zoneLook = await applyPlayableZoneLook(inputBuffer, colorReport.zoneColors || FALLBACK_ZONE_COLORS);
@@ -510,6 +511,7 @@ export default async function handler(req, res) {
       primitiveCountsByZone = zoneLook.primitiveCountsByZone;
     } catch (zoneError) {
       console.warn('Could not create zone material playable GLB, using single-color fallback:', zoneError);
+      zoneGenerationError = zoneError.message || String(zoneError);
       outputBuffer = applyPlayableLook(inputBuffer, colorReport.extractedColor);
       playableLookMode = 'single_color_fallback';
     }
@@ -535,8 +537,9 @@ export default async function handler(req, res) {
             extractedColor: colorReport.extractedColor,
             extractedPalette: colorReport.extractedPalette || [],
       zoneColors: colorReport.zoneColors || FALLBACK_ZONE_COLORS,
-      primitiveCountsByZone,
+           primitiveCountsByZone,
       playableLookMode,
+      zoneGenerationError,
       extractedColorSource: colorReport.extractedColorSource,
       materialName: colorReport.materialName,
       extractionError: colorReport.extractionError || null
