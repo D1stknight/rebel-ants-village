@@ -3596,11 +3596,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         throw new Error(data.detail || data.error || 'Could not apply look');
       }
 
-           window.lastForgePlayableLookBuild = {
+      window.lastForgePlayableLookBuild = {
         sourceGlbUrl,
         response: data,
         playableGlbUrl: data.playableGlbUrl || ''
       };
+      console.log('Playable look URL:', data.playableGlbUrl);
       showForgeToolToast('Playable look ready');
     } catch(e) {
       console.warn('Could not apply look to playable rig:', e);
