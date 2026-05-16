@@ -3915,7 +3915,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       return;
     }
 
-    const { THREE } = await loadThreeModules();
+    const { THREE, GLTFLoader, DRACOLoader } = await loadThreeModules();
     let headBone = null;
 
     previewState.model.traverse((object) => {
@@ -3930,6 +3930,29 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       return;
     }
 
+    const attachmentGlbUrl = 'assets/forge/attachments/headwrap_test.glb';
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+
+    const loader = new GLTFLoader();
+    loader.setCrossOrigin('anonymous');
+    loader.setDRACOLoader(dracoLoader);
+
+    let attachmentGltf = null;
+
+    try {
+      attachmentGltf = await new Promise((resolve, reject) => {
+        loader.load(attachmentGlbUrl, resolve, undefined, reject);
+      });
+    } catch(e) {
+      console.warn('Forge head wrap GLB missing or failed to load:', e);
+      showForgeToolToast('Head wrap GLB missing');
+      dracoLoader.dispose();
+      return;
+    }
+
+    dracoLoader.dispose();
+
     if (window.forgeHeadAttachmentTest?.mesh) {
       const oldAttachment = window.forgeHeadAttachmentTest.mesh;
       oldAttachment.parent?.remove(oldAttachment);
@@ -3937,39 +3960,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
 
     const placement = getForgeHeadAttachmentPlacement(THREE, previewState, headBone);
-    const headWrap = new THREE.Group();
-    const maskMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1b0d24,
-      roughness: 0.68,
-      metalness: 0.04
-    });
-    const accentMaterial = new THREE.MeshStandardMaterial({
-      color: 0xd6a84f,
-      roughness: 0.4,
-      metalness: 0.35
-    });
-    const maskWidth = placement.ringRadius * 0.95;
-    const maskHeight = placement.ringRadius * 0.62;
-    const maskDepth = placement.tubeRadius * 1.6;
-    const faceDepth = placement.ringRadius * 0.58;
-    const maskPanel = new THREE.Mesh(
-      new THREE.BoxGeometry(maskWidth, maskHeight, maskDepth, 3, 2, 1),
-      maskMaterial
-    );
-    const accentStrip = new THREE.Mesh(
-      new THREE.BoxGeometry(maskWidth * 0.78, maskHeight * 0.1, maskDepth * 1.35),
-      accentMaterial
-    );
-
+    const headWrap = attachmentGltf.scene || new THREE.Group();
     headWrap.name = 'forgeHeadWrapAttachmentTest';
     headWrap.userData.forgeAttachmentTest = true;
-    maskPanel.name = 'forgeFaceMaskPanel';
-    accentStrip.name = 'forgeHeadWrapGoldAccent';
-    maskPanel.position.set(0, -placement.ringRadius * 0.03, faceDepth);
-    maskPanel.scale.x = 0.92;
-    accentStrip.position.set(0, placement.ringRadius * 0.09, faceDepth + maskDepth * 0.62);
-    accentStrip.rotation.set(0, 0, 0);
-    headWrap.add(maskPanel, accentStrip);
+    headWrap.traverse((object) => {
+      object.userData.forgeAttachmentTest = true;
+    });
     headWrap.position.copy(placement.ringLocalPosition);
     headWrap.rotation.set(Math.PI / 2, 0, 0);
     headWrap.scale.set(6, 6, 6);
