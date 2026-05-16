@@ -3953,16 +3953,19 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       roughness: 0.4,
       metalness: 0.35
     });
+    const faceDepth = placement.ringRadius * 1.05;
+    const maskWidth = placement.ringRadius * 1.22;
+    const maskHeight = placement.ringRadius * 0.95;
     const band = new THREE.Mesh(
-      new THREE.TorusGeometry(placement.ringRadius, placement.tubeRadius, 18, 72),
+      new THREE.TorusGeometry(placement.ringRadius * 0.94, placement.tubeRadius * 1.25, 18, 72),
       bandMaterial
     );
     const frontPlate = new THREE.Mesh(
-      new THREE.BoxGeometry(placement.ringRadius * 0.75, placement.ringRadius * 0.42, placement.tubeRadius * 2.4),
+      new THREE.BoxGeometry(maskWidth, maskHeight, placement.tubeRadius * 2.8),
       plateMaterial
     );
     const accentStrip = new THREE.Mesh(
-      new THREE.BoxGeometry(placement.ringRadius * 0.62, placement.ringRadius * 0.08, placement.tubeRadius * 2.8),
+      new THREE.BoxGeometry(maskWidth * 0.72, maskHeight * 0.12, placement.tubeRadius * 3.2),
       accentMaterial
     );
 
@@ -3971,9 +3974,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     band.name = 'forgeHeadWrapBand';
     frontPlate.name = 'forgeHeadWrapFrontPlate';
     accentStrip.name = 'forgeHeadWrapGoldAccent';
-    band.rotation.set(0, 0, 0);
-    frontPlate.position.set(0, -placement.ringRadius * 0.08, placement.ringRadius * 0.9);
-    accentStrip.position.set(0, placement.ringRadius * 0.14, placement.ringRadius * 0.92);
+    band.position.set(0, placement.ringRadius * 0.18, 0);
+    frontPlate.position.set(0, -placement.ringRadius * 0.08, faceDepth);
+    frontPlate.rotation.set(0, 0, 0);
+    accentStrip.position.set(0, placement.ringRadius * 0.18, faceDepth + placement.tubeRadius * 1.45);
+    accentStrip.rotation.set(0, 0, 0);
     headWrap.add(band, frontPlate, accentStrip);
     headWrap.position.copy(placement.ringLocalPosition);
     headWrap.rotation.set(Math.PI / 2, 0, 0);
