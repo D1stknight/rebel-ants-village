@@ -3646,8 +3646,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           return tracks;
         }
 
-                const clonedTrack = track.clone();
-        clonedTrack.name = `bones[${matchingBone.name}].${propertyPath}`;
+                               const clonedTrack = track.clone();
+        clonedTrack.name = `.bones[${matchingBone.name}].${propertyPath}`;
         tracks.push(clonedTrack);
 
         return tracks;
@@ -3689,10 +3689,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       previewState.walkAction.setLoop(THREE.LoopRepeat, Infinity);
       previewState.walkAction.play();
 
-      console.log('Forge walk test started:', {
+            console.log('Forge walk test started:', {
         builtRigUrl: prototypeGlbUrl,
         walkAnimationGlbUrl,
         mixerRootName: mixerRoot.name || '(unnamed mixer root)',
+        mixerRootHasSkeleton: !!mixerRoot.skeleton,
         skinnedMeshName: skinnedMesh.name || '(unnamed skinned mesh)',
         matchedTrackCount: retargetedTracks.length,
         originalTrackCount: walkClip.tracks.length
