@@ -3442,7 +3442,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   };
 
-   window.buildForgeRigFromLayout = async function() {
+    window.buildForgeRigFromLayout = async function() {
     const previewState = window.forge3dPreviewState;
     const currentGlbUrl = previewState?.currentGlbUrl || '';
 
@@ -3480,6 +3480,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
 
     const buildId = `rebel_469_forge_layout_build_${Date.now()}`;
+    const normalizedGlbUrl = currentGlbUrl.replace(/^\/+/, '');
+    const sourceGlbUrl = normalizedGlbUrl.startsWith('assets/')
+      ? `https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/${normalizedGlbUrl}`
+      : currentGlbUrl;
 
     showForgeToolToast('Rig build started');
 
@@ -3491,7 +3495,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         },
         body: JSON.stringify({
           buildId,
-          sourceGlbUrl: currentGlbUrl,
+          sourceGlbUrl,
           rigLayout,
           bodyZoneLayout
         })
@@ -3502,12 +3506,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       console.log('Forge layout rig build response:', data);
 
       if (!response.ok || !data.ok) {
-        throw new Error(data.error || data.detail || 'Rig build failed');
+        throw new Error(data.detail || data.error || 'Rig build failed');
       }
 
       window.lastForgeLayoutRigBuild = {
         buildId,
-        sourceGlbUrl: currentGlbUrl,
+        sourceGlbUrl,
         rigLayout,
         bodyZoneLayout,
         response: data,
@@ -3517,7 +3521,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       showForgeToolToast('Rig build complete');
     } catch(e) {
       console.warn('Could not build rig from layout:', e);
-      showForgeToolToast('Rig build failed');
+      showForgeToolToast(`Rig build failed: ${e.message || e}`);
     }
   };
 
