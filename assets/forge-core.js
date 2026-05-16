@@ -2825,6 +2825,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <button class="forge-3d-preview-btn" type="button" onclick="window.previewBuiltForgeRig()">Preview Built Rig</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.previewForgeWalkTest()">Preview Walk Test</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.applyForgeLookToPlayableRig()">Apply Look To Playable Rig</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.addForgeHeadWrapAttachmentTest()">Add Head Wrap Test</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
           </div>
         </details>
@@ -3602,11 +3603,90 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         playableGlbUrl: data.playableGlbUrl || ''
       };
       console.log('Playable look URL:', data.playableGlbUrl);
-      showForgeToolToast('Playable look ready');
+
+      if (data.playableGlbUrl) {
+        await renderThreeGlbPreview(data.playableGlbUrl);
+        showForgeToolToast('Playable look preview loaded');
+      } else {
+        showForgeToolToast('Playable look ready');
+      }
     } catch(e) {
       console.warn('Could not apply look to playable rig:', e);
       showForgeToolToast(`Playable look failed: ${e.message || e}`);
     }
+  };
+
+  window.logForgeHeadAttachmentTransform = function() {
+    const attachment = window.forgeHeadAttachmentTest?.mesh || null;
+
+    if (!attachment) {
+      console.log('Forge head attachment test is not active');
+      return null;
+    }
+
+    const transform = {
+      position: attachment.position.toArray(),
+      rotation: [attachment.rotation.x, attachment.rotation.y, attachment.rotation.z],
+      scale: attachment.scale.toArray()
+    };
+
+    console.log('Forge head attachment transform:', transform);
+    return transform;
+  };
+
+  window.addForgeHeadWrapAttachmentTest = async function() {
+    const previewState = window.forge3dPreviewState;
+
+    if (!previewState?.model || !previewState?.scene) {
+      showForgeToolToast('Load a playable preview first');
+      return;
+    }
+
+    const { THREE } = await loadThreeModules();
+    let headBone = null;
+
+    previewState.model.traverse((object) => {
+      if (!headBone && object.name === 'mixamorig_Head') {
+        headBone = object;
+      }
+    });
+
+    if (!headBone) {
+      console.log('Forge head attachment test failed: mixamorig_Head not found');
+      showForgeToolToast('Head bone not found');
+      return;
+    }
+
+    if (window.forgeHeadAttachmentTest?.mesh) {
+      const oldAttachment = window.forgeHeadAttachmentTest.mesh;
+      oldAttachment.parent?.remove(oldAttachment);
+      oldAttachment.geometry?.dispose?.();
+      oldAttachment.material?.dispose?.();
+    }
+
+    const headWrap = new THREE.Mesh(
+      new THREE.TorusGeometry(13, 1.5, 16, 64),
+      new THREE.MeshBasicMaterial({
+        color: 0x6b0505,
+        depthTest: true
+      })
+    );
+
+    headWrap.name = 'forgeHeadWrapAttachmentTest';
+    headWrap.position.set(0, 148, 12);
+    headWrap.rotation.set(Math.PI / 2, 0, 0);
+    headWrap.scale.set(0.62, 0.62, 0.62);
+    headBone.add(headWrap);
+
+    window.forgeHeadAttachmentTest = {
+      mesh: headWrap,
+      targetBoneName: 'mixamorig_Head',
+      playableGlbUrl: previewState.currentGlbUrl || ''
+    };
+
+    console.log('Forge head attachment test added', window.forgeHeadAttachmentTest);
+    window.logForgeHeadAttachmentTransform();
+    showForgeToolToast('Head Wrap Test added');
   };
 
   window.previewForgeWalkTest = async function() {
