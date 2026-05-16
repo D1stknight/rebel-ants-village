@@ -3877,7 +3877,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const visibleBounds = getForgeVisibleMeshBounds(THREE, previewState.model);
     const characterHeight = visibleBounds?.characterHeight || 2;
     const headWorldPosition = headBone.getWorldPosition(new THREE.Vector3());
-    const ringLocalPosition = new THREE.Vector3(0, 1.2, 0.6);
+    const ringLocalPosition = new THREE.Vector3(0, 60, 0.6);
     const ringRadius = THREE.MathUtils.clamp(characterHeight * 0.035, 0.025, characterHeight * 0.06);
     const tubeRadius = THREE.MathUtils.clamp(ringRadius * 0.12, 0.004, ringRadius * 0.22);
     const ringWorldPosition = headBone.localToWorld(ringLocalPosition.clone());
@@ -3937,7 +3937,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     headWrap.userData.forgeAttachmentTest = true;
     headWrap.position.copy(placement.ringLocalPosition);
     headWrap.rotation.set(Math.PI / 2, 0, 0);
-    headWrap.scale.set(1, 1, 1);
+    headWrap.scale.set(6, 6, 6);
     headBone.add(headWrap);
     headWrap.updateWorldMatrix(true, false);
 
