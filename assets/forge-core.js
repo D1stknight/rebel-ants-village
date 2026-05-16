@@ -3653,13 +3653,15 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         return tracks;
       }, []);
 
-      const mixerRoot = skinnedMesh || previewState.model;
+            const mixerRoot = previewState.model;
 
       console.log('Forge walk retarget names:', {
         rigTargetNamesFirst20: [...targetNames].slice(0, 20),
         rigBoneNamesFirst20: [...rigBoneNames].slice(0, 20),
         animationTargetNamesFirst20: [...animationTargetNames].slice(0, 20)
       });
+
+      console.log('Forge walk retargeted track names first20:', retargetedTracks.map((track) => track.name).slice(0, 20));
 
       if (!retargetedTracks.length) {
         showForgeToolToast('No matching walk bones found');
