@@ -3601,10 +3601,30 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         return;
       }
 
-      const targetNames = new Set();
+            const targetNames = new Set();
+      const rigBoneNames = new Set();
 
       previewState.model.traverse((object) => {
         if (object.name) targetNames.add(object.name);
+
+        if (object.isSkinnedMesh && object.skeleton?.bones?.length) {
+          object.skeleton.bones.forEach((bone) => {
+            if (bone.name) {
+              targetNames.add(bone.name);
+              rigBoneNames.add(bone.name);
+            }
+          });
+        }
+      });
+
+      const animationTargetNames = new Set(walkClip.tracks.map((track) => {
+        return track.name.split('.')[0].replace(/\[.*?\]/g, '');
+      }));
+
+      console.log('Forge walk retarget names:', {
+        rigTargetNamesFirst20: [...targetNames].slice(0, 20),
+        rigBoneNamesFirst20: [...rigBoneNames].slice(0, 20),
+        animationTargetNamesFirst20: [...animationTargetNames].slice(0, 20)
       });
 
       const retargetedTracks = walkClip.tracks.filter((track) => {
