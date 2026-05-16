@@ -2591,8 +2591,16 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   }
 
-  function clearForge3dPreview() {
+    function clearForge3dPreview() {
     stopForge3dPreviewLoop();
+
+    if (forge3dPreviewState.walkAction) {
+      forge3dPreviewState.walkAction.stop();
+    }
+
+    if (forge3dPreviewState.mixer) {
+      forge3dPreviewState.mixer.stopAllAction();
+    }
 
     if (forge3dPreviewState.renderer) {
       forge3dPreviewState.renderer.dispose();
@@ -2605,7 +2613,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       controls: null,
       model: null,
       animationId: null,
-      currentGlbUrl: ''
+      currentGlbUrl: '',
+      clock: null,
+      mixer: null,
+      walkAction: null,
+      walkAnimationSource: ''
     };
 
     window.forge3dPreviewState = forge3dPreviewState;
@@ -2707,20 +2719,30 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     fitCameraToObject(THREE, camera, model, controls);
 
-    forge3dPreviewState = {
+        forge3dPreviewState = {
       renderer,
       scene,
       camera,
       controls,
       model,
       animationId: null,
-      currentGlbUrl: glbUrl
+      currentGlbUrl: glbUrl,
+      clock: new THREE.Clock(),
+      mixer: null,
+      walkAction: null,
+      walkAnimationSource: ''
     };
 
     window.forge3dPreviewState = forge3dPreviewState;
 
     function animate() {
       forge3dPreviewState.animationId = requestAnimationFrame(animate);
+
+      const delta = forge3dPreviewState.clock ? forge3dPreviewState.clock.getDelta() : 0;
+
+      if (forge3dPreviewState.mixer && delta) {
+        forge3dPreviewState.mixer.update(delta);
+      }
 
       if (forge3dPreviewState.controls) {
         forge3dPreviewState.controls.update();
@@ -2793,6 +2815,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.buildForgeRigFromLayout()">Build Rig From Layout</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.previewBuiltForgeRig()">Preview Built Rig</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.previewForgeWalkTest()">Preview Walk Test</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
           </div>
         </details>
@@ -3519,7 +3542,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   };
 
-  window.previewBuiltForgeRig = async function() {
+    window.previewBuiltForgeRig = async function() {
     const prototypeGlbUrl = window.lastForgeLayoutRigBuild?.prototypeGlbUrl || '';
 
     if (!prototypeGlbUrl) {
@@ -3535,6 +3558,83 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     } catch(e) {
       console.warn('Could not preview built rig:', e);
       showForgeToolToast('Could not preview built rig');
+    }
+  };
+
+  window.previewForgeWalkTest = async function() {
+    const prototypeGlbUrl = window.lastForgeLayoutRigBuild?.prototypeGlbUrl || '';
+    const previewState = window.forge3dPreviewState;
+    const walkAnimationGlbUrl = '/assets/character/ant_walk_c.glb';
+
+    if (!prototypeGlbUrl || previewState?.currentGlbUrl !== prototypeGlbUrl || !previewState?.model) {
+      showForgeToolToast('Build and Preview a rig first');
+      return;
+    }
+
+    try {
+      const { THREE, GLTFLoader } = await loadThreeModules();
+      const loader = new GLTFLoader();
+      loader.setCrossOrigin('anonymous');
+
+      const animationGltf = await new Promise((resolve, reject) => {
+        loader.load(walkAnimationGlbUrl, resolve, undefined, reject);
+      });
+
+      const walkClip = animationGltf.animations?.[0] || null;
+
+      if (!walkClip) {
+        showForgeToolToast('Walk animation not found');
+        return;
+      }
+
+      const targetNames = new Set();
+
+      previewState.model.traverse((object) => {
+        if (object.name) targetNames.add(object.name);
+      });
+
+      const retargetedTracks = walkClip.tracks.filter((track) => {
+        const targetName = track.name.split('.')[0].replace(/\[.*?\]/g, '');
+        return targetNames.has(targetName);
+      });
+
+      if (!retargetedTracks.length) {
+        showForgeToolToast('No matching walk bones found');
+        return;
+      }
+
+      if (previewState.walkAction) {
+        previewState.walkAction.stop();
+      }
+
+      if (previewState.mixer) {
+        previewState.mixer.stopAllAction();
+      }
+
+      const retargetedClip = new THREE.AnimationClip(
+        `${walkClip.name || 'ForgeWalk'}_retargeted`,
+        walkClip.duration,
+        retargetedTracks
+      );
+
+      previewState.mixer = new THREE.AnimationMixer(previewState.model);
+      previewState.walkAction = previewState.mixer.clipAction(retargetedClip);
+      previewState.walkAnimationSource = walkAnimationGlbUrl;
+      previewState.walkAction.reset();
+      previewState.walkAction.setLoop(THREE.LoopRepeat, Infinity);
+      previewState.walkAction.play();
+
+      console.log('Forge walk test started:', {
+        builtRigUrl: prototypeGlbUrl,
+        walkAnimationGlbUrl,
+        originalTrackCount: walkClip.tracks.length,
+        retargetedTrackCount: retargetedTracks.length
+      });
+
+      showForgeToolToast('Walk test playing');
+    } catch(e) {
+      console.warn('Could not start Forge walk test:', e);
+      showForgeToolToast('Could not start walk test');
     }
   };
 
