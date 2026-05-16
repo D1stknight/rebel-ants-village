@@ -158,13 +158,14 @@ async function extractAverageColorFromSourceGlb(sourceGlbUrl) {
       extractedColorSource: 'source_glb_base_color_texture_average',
       materialName: material?.name || null
     };
-  } catch (error) {
+   } catch (error) {
     console.warn('Could not extract source GLB color, using fallback:', error);
 
     return {
       extractedColor: FALLBACK_BASE_COLOR,
       extractedColorSource: 'fallback_rebel_469',
-      materialName: null
+      materialName: null,
+      extractionError: error.message
     };
   }
 }
@@ -230,14 +231,15 @@ export default async function handler(req, res) {
       playableGlbUrl = blob.url;
     }
 
-    return res.status(200).json({
+      return res.status(200).json({
       ok: true,
       playableGlbUrl,
       playableGlbPath,
       sourceGlbUrl,
       extractedColor: colorReport.extractedColor,
       extractedColorSource: colorReport.extractedColorSource,
-      materialName: colorReport.materialName
+      materialName: colorReport.materialName,
+      extractionError: colorReport.extractionError || null
     });
   } catch (error) {
     console.error('forge-apply-look-to-playable-rig error:', error);
