@@ -3967,8 +3967,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       object.userData.forgeAttachmentTest = true;
     });
     headWrap.position.copy(placement.ringLocalPosition);
-    headWrap.rotation.set(Math.PI / 2, 0, 0);
-    headWrap.scale.set(6, 6, 6);
+    headWrap.rotation.set(0, 0, 0);
+    headWrap.scale.set(100, 100, 100);
     headBone.add(headWrap);
     headWrap.updateWorldMatrix(true, false);
 
