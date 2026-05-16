@@ -1,4 +1,5 @@
 import { Accessor, NodeIO } from '@gltf-transform/core';
+import { KHRDracoMeshCompression } from '@gltf-transform/extensions';
 import { put } from '@vercel/blob';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -491,7 +492,10 @@ async function loadPlayableTemplateBoneTranslations() {
 async function loadPlayableTemplateInverseBindMatrices() {
   const templatePath = path.join(process.cwd(), PLAYABLE_TEMPLATE_GLB_PATH);
   const templateBuffer = await readFile(templatePath);
-  const io = new NodeIO();
+  const io = new NodeIO()
+    .registerExtensions([
+      KHRDracoMeshCompression
+    ]);
   const templateDocument = await io.readBinary(templateBuffer);
   const templateSkin = getPrimarySkin(templateDocument);
   const templateJoints = getSkinJoints(templateSkin);
