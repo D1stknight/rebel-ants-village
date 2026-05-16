@@ -313,6 +313,21 @@ function getPrimaryMeshNode(document) {
   }) || null;
 }
 
+function getOrCreateDefaultScene(document) {
+  const root = document.getRoot();
+  const existingScene = root.getDefaultScene?.() || root.listScenes?.()[0] || null;
+
+  if (existingScene) return existingScene;
+
+  const scene = document.createScene('Scene');
+
+  if (typeof root.setDefaultScene === 'function') {
+    root.setDefaultScene(scene);
+  }
+
+  return scene;
+}
+
 function getOrCreatePrimarySkin(document) {
   const existingSkin = getPrimarySkin(document);
   const meshNode = getPrimaryMeshNode(document);
@@ -749,9 +764,19 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
     });
   });
 
-    const skeletonRootName = 'FBX_Root';
+        const skeletonRootName = 'FBX_Root';
   const { node: skeletonRootNode } = getOrCreateNode(document, nodesByName, skeletonRootName, null, [0, 0, 0]);
   skeletonRootNode.setTranslation([0, 0, 0]);
+
+  const scene = getOrCreateDefaultScene(document);
+  const skeletonRootAttachedToScene = Boolean(
+    scene &&
+    typeof scene.addChild === 'function' &&
+    (
+      scene.listChildren?.().includes(skeletonRootNode) ||
+      scene.addChild(skeletonRootNode)
+    )
+  );
 
   if (skin && typeof skin.setSkeleton === 'function') {
     skin.setSkeleton(skeletonRootNode);
@@ -790,8 +815,9 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
        templateBoneTranslationCount: Object.keys(templateBoneTranslations).length,
        rigLayoutUsed: rigLayoutMarkerCount > 0,
     rigLayoutMarkerCount,
-    skeletonRootName,
+       skeletonRootName,
     skinSkeletonRootName: skin?.getSkeleton?.()?.getName?.() || null,
+    skeletonRootAttachedToScene,
     hipsParentName: parentByBoneName.mixamorig_Hips || null,
     templateScale,
     templateHeight,
