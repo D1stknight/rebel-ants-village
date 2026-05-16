@@ -64,6 +64,49 @@ function getRigSourceGlbUrl(buildRecord, overrideUrl) {
   );
 }
 
+function buildSafeMeshyRigRequestDebug(request) {
+  return {
+    model_url: request?.model_url || null,
+    height_meters: request?.height_meters || null
+  };
+}
+
+async function readMeshyResponseBody(response) {
+  const text = await response.text();
+
+  if (!text) {
+    return {
+      raw: '',
+      parsed: null
+    };
+  }
+
+  try {
+    return {
+      raw: text,
+      parsed: JSON.parse(text)
+    };
+  } catch(e) {
+    return {
+      raw: text,
+      parsed: null
+    };
+  }
+}
+
+function getMeshyErrorMessage(meshyBody, status) {
+  const parsed = meshyBody?.parsed;
+
+  return (
+    parsed?.message ||
+    parsed?.error ||
+    parsed?.detail ||
+    parsed?.details ||
+    meshyBody?.raw ||
+    `Meshy rig create failed with status ${status}`
+  );
+}
+
 async function saveRigTaskToBuild({ recordKey, buildRecord, rigTaskId, meshyRigRequest, meshyRigResponse }) {
   const updatedRecord = {
     ...buildRecord,
@@ -127,11 +170,27 @@ export default async function handler(req, res) {
       body: JSON.stringify(meshyRigRequest)
     });
 
-    const meshyData = await meshyResponse.json();
+    const meshyBody = await readMeshyResponseBody(meshyResponse);
+    const meshyData = meshyBody.parsed || {};
 
     if (!meshyResponse.ok) {
-      console.error('Meshy rig create error:', meshyData);
-      throw new Error(meshyData?.message || meshyData?.error || `Meshy rig create failed with status ${meshyResponse.status}`);
+      const meshyError = {
+        status: meshyResponse.status,
+        statusText: meshyResponse.statusText,
+        responseBody: meshyBody.parsed || meshyBody.raw,
+        responseText: meshyBody.raw,
+        message: getMeshyErrorMessage(meshyBody, meshyResponse.status),
+        requestPayload: buildSafeMeshyRigRequestDebug(meshyRigRequest)
+      };
+
+      console.error('Meshy rig create error:', meshyError);
+
+      return res.status(meshyResponse.status).json({
+        ok: false,
+        error: 'Meshy rig create request failed',
+        detail: meshyError.message,
+        meshyError
+      });
     }
 
     const rigTaskId = meshyData?.result || meshyData?.id || meshyData?.task_id || null;

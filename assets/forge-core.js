@@ -2084,13 +2084,29 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         })
       });
 
-      const data = await response.json();
+      let data = null;
 
-      if (!response.ok || !data.ok) {
-        throw new Error(data.error || data.detail || 'Could not start Meshy rig test');
+      try {
+        data = await response.json();
+      } catch(parseError) {
+        data = {
+          ok: false,
+          error: 'Meshy rig create route did not return JSON',
+          detail: parseError?.message || 'Response JSON parse failed'
+        };
       }
 
+      console.log('Meshy rig create response:', {
+        httpStatus: response.status,
+        ok: response.ok,
+        data
+      });
+
       window.lastForgeMeshyRigCreateResponse = data;
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.detail || data.error || 'Could not start Meshy rig test');
+      }
 
       if (activeButton) {
         activeButton.textContent = 'Rig Test Started ✓';
@@ -2111,14 +2127,20 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         }
       }, 2200);
     } catch(e) {
-      console.warn('Could not start Meshy rig test:', e);
+      console.warn('Could not start Meshy rig test:', e, window.lastForgeMeshyRigCreateResponse);
 
       if (activeButton) {
         activeButton.textContent = 'Rig Test Failed';
       }
 
       if (typeof window.setForgeStatus === 'function') {
-        window.setForgeStatus('Could not start Meshy rigging test.', 'error');
+        const detail =
+          window.lastForgeMeshyRigCreateResponse?.detail ||
+          window.lastForgeMeshyRigCreateResponse?.meshyError?.message ||
+          e.message ||
+          'Unknown error';
+
+        window.setForgeStatus(`Could not start Meshy rigging test: ${detail}`, 'error');
       }
 
       setTimeout(() => {
