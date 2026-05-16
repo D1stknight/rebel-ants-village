@@ -3570,7 +3570,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   };
 
-  window.applyForgeLookToPlayableRig = async function() {
+   window.applyForgeLookToPlayableRig = async function() {
+    const previewState = window.forge3dPreviewState;
+    const fallbackSourceGlbUrl = 'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb';
+    const sourceGlbUrl = previewState?.currentGlbUrl || fallbackSourceGlbUrl;
+
     showForgeToolToast('Applying look to playable rig');
 
     try {
@@ -3579,7 +3583,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({})
+        body: JSON.stringify({
+          sourceGlbUrl
+        })
       });
 
       const data = await response.json();
@@ -3590,7 +3596,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         throw new Error(data.detail || data.error || 'Could not apply look');
       }
 
-      window.lastForgePlayableLookBuild = data;
+           window.lastForgePlayableLookBuild = {
+        sourceGlbUrl,
+        response: data,
+        playableGlbUrl: data.playableGlbUrl || ''
+      };
       showForgeToolToast('Playable look ready');
     } catch(e) {
       console.warn('Could not apply look to playable rig:', e);
