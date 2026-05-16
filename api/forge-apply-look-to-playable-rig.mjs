@@ -8,6 +8,24 @@ const FALLBACK_OUTPUT_GLB = 'assets/character/ant_idle_c_rebel469_color_probe.gl
 const TARGET_MATERIAL_NAME = 'Material.001';
 const FALLBACK_BASE_COLOR = [0.388, 0.176, 0.451, 1];
 
+const ZONE_ORDER = [
+  'head',
+  'body',
+  'leftArm',
+  'rightArm',
+  'leftLeg',
+  'rightLeg'
+];
+
+const FALLBACK_ZONE_COLORS = {
+  head: FALLBACK_BASE_COLOR,
+  body: FALLBACK_BASE_COLOR,
+  leftArm: FALLBACK_BASE_COLOR,
+  rightArm: FALLBACK_BASE_COLOR,
+  leftLeg: FALLBACK_BASE_COLOR,
+  rightLeg: FALLBACK_BASE_COLOR
+};
+
 function align4(value) {
   return (value + 3) & ~3;
 }
@@ -119,10 +137,34 @@ function getImageBufferFromGltf(gltf, binaryChunk, image) {
   return null;
 }
 
-async function extractAverageColorFromSourceGlb(sourceGlbUrl) {
+function normalizeColor(values) {
+  return [
+    Number((values[0] / 255).toFixed(4)),
+    Number((values[1] / 255).toFixed(4)),
+    Number((values[2] / 255).toFixed(4)),
+    1
+  ];
+}
+
+function buildZoneColorsFromPalette(palette) {
+  const colors = palette.length ? palette : [FALLBACK_BASE_COLOR];
+
+  return {
+    head: colors[1] || colors[0] || FALLBACK_BASE_COLOR,
+    body: colors[0] || FALLBACK_BASE_COLOR,
+    leftArm: colors[2] || colors[0] || FALLBACK_BASE_COLOR,
+    rightArm: colors[3] || colors[2] || colors[0] || FALLBACK_BASE_COLOR,
+    leftLeg: colors[4] || colors[0] || FALLBACK_BASE_COLOR,
+    rightLeg: colors[5] || colors[4] || colors[0] || FALLBACK_BASE_COLOR
+  };
+}
+
+async function extractDominantColorsFromSourceGlb(sourceGlbUrl) {
   if (!sourceGlbUrl) {
     return {
       extractedColor: FALLBACK_BASE_COLOR,
+      extractedPalette: [FALLBACK_BASE_COLOR],
+      zoneColors: FALLBACK_ZONE_COLORS,
       extractedColorSource: 'fallback_missing_source_glb_url',
       materialName: null
     };
@@ -145,19 +187,56 @@ async function extractAverageColorFromSourceGlb(sourceGlbUrl) {
     }
 
     const { data } = await sharp(imageBuffer)
-      .resize(1, 1, { fit: 'fill' })
+      .resize(96, 96, { fit: 'inside' })
       .removeAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
 
+    const buckets = new Map();
+    const bucketSize = 24;
+
+    for (let i = 0; i < data.length; i += 3) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const brightness = (r + g + b) / 3;
+
+      if (brightness < 8 || brightness > 248) continue;
+
+      const key = [
+        Math.round(r / bucketSize),
+        Math.round(g / bucketSize),
+        Math.round(b / bucketSize)
+      ].join(':');
+      const bucket = buckets.get(key) || { count: 0, r: 0, g: 0, b: 0 };
+
+      bucket.count += 1;
+      bucket.r += r;
+      bucket.g += g;
+      bucket.b += b;
+      buckets.set(key, bucket);
+    }
+
+    const extractedPalette = [...buckets.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+      .map((bucket) => normalizeColor([
+        bucket.r / bucket.count,
+        bucket.g / bucket.count,
+        bucket.b / bucket.count
+      ]));
+
+    while (extractedPalette.length < 6) {
+      extractedPalette.push(extractedPalette[0] || FALLBACK_BASE_COLOR);
+    }
+
+    const zoneColors = buildZoneColorsFromPalette(extractedPalette);
+
     return {
-      extractedColor: [
-        Number((data[0] / 255).toFixed(4)),
-        Number((data[1] / 255).toFixed(4)),
-        Number((data[2] / 255).toFixed(4)),
-        1
-      ],
-      extractedColorSource: 'source_glb_base_color_texture_average',
+      extractedColor: zoneColors.body,
+      extractedPalette,
+      zoneColors,
+      extractedColorSource: 'source_glb_base_color_texture_dominant_palette',
       materialName: material?.name || null
     };
    } catch (error) {
@@ -165,6 +244,8 @@ async function extractAverageColorFromSourceGlb(sourceGlbUrl) {
 
     return {
       extractedColor: FALLBACK_BASE_COLOR,
+      extractedPalette: [FALLBACK_BASE_COLOR],
+      zoneColors: FALLBACK_ZONE_COLORS,
       extractedColorSource: 'fallback_rebel_469',
       materialName: null,
       extractionError: error.message
@@ -216,7 +297,7 @@ export default async function handler(req, res) {
   try {
     const body = req.body || {};
     const sourceGlbUrl = body.sourceGlbUrl || body.glbUrl || '';
-    const colorReport = await extractAverageColorFromSourceGlb(sourceGlbUrl);
+        const colorReport = await extractDominantColorsFromSourceGlb(sourceGlbUrl);
     const inputPath = path.join(process.cwd(), INPUT_GLB);
     const inputBuffer = await readFile(inputPath);
     const outputBuffer = applyPlayableLook(inputBuffer, colorReport.extractedColor);
@@ -238,7 +319,9 @@ export default async function handler(req, res) {
       playableGlbUrl,
       playableGlbPath,
       sourceGlbUrl,
-      extractedColor: colorReport.extractedColor,
+            extractedColor: colorReport.extractedColor,
+      extractedPalette: colorReport.extractedPalette || [],
+      zoneColors: colorReport.zoneColors || FALLBACK_ZONE_COLORS,
       extractedColorSource: colorReport.extractedColorSource,
       materialName: colorReport.materialName,
       extractionError: colorReport.extractionError || null
