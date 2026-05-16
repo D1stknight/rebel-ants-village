@@ -3938,48 +3938,38 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     const placement = getForgeHeadAttachmentPlacement(THREE, previewState, headBone);
     const headWrap = new THREE.Group();
-    const bandMaterial = new THREE.MeshStandardMaterial({
-      color: 0x24102f,
-      roughness: 0.7,
-      metalness: 0.05
-    });
-    const plateMaterial = new THREE.MeshStandardMaterial({
-      color: 0x3a163f,
-      roughness: 0.62,
-      metalness: 0.08
+    const maskMaterial = new THREE.MeshStandardMaterial({
+      color: 0x1b0d24,
+      roughness: 0.68,
+      metalness: 0.04
     });
     const accentMaterial = new THREE.MeshStandardMaterial({
       color: 0xd6a84f,
       roughness: 0.4,
       metalness: 0.35
     });
-    const faceDepth = placement.ringRadius * 1.05;
-    const maskWidth = placement.ringRadius * 1.22;
-    const maskHeight = placement.ringRadius * 0.95;
-    const band = new THREE.Mesh(
-      new THREE.TorusGeometry(placement.ringRadius * 0.94, placement.tubeRadius * 1.25, 18, 72),
-      bandMaterial
-    );
-    const frontPlate = new THREE.Mesh(
-      new THREE.BoxGeometry(maskWidth, maskHeight, placement.tubeRadius * 2.8),
-      plateMaterial
+    const maskWidth = placement.ringRadius * 0.95;
+    const maskHeight = placement.ringRadius * 0.62;
+    const maskDepth = placement.tubeRadius * 1.6;
+    const faceDepth = placement.ringRadius * 0.58;
+    const maskPanel = new THREE.Mesh(
+      new THREE.BoxGeometry(maskWidth, maskHeight, maskDepth, 3, 2, 1),
+      maskMaterial
     );
     const accentStrip = new THREE.Mesh(
-      new THREE.BoxGeometry(maskWidth * 0.72, maskHeight * 0.12, placement.tubeRadius * 3.2),
+      new THREE.BoxGeometry(maskWidth * 0.78, maskHeight * 0.1, maskDepth * 1.35),
       accentMaterial
     );
 
     headWrap.name = 'forgeHeadWrapAttachmentTest';
     headWrap.userData.forgeAttachmentTest = true;
-    band.name = 'forgeHeadWrapBand';
-    frontPlate.name = 'forgeHeadWrapFrontPlate';
+    maskPanel.name = 'forgeFaceMaskPanel';
     accentStrip.name = 'forgeHeadWrapGoldAccent';
-    band.position.set(0, placement.ringRadius * 0.18, 0);
-    frontPlate.position.set(0, -placement.ringRadius * 0.08, faceDepth);
-    frontPlate.rotation.set(0, 0, 0);
-    accentStrip.position.set(0, placement.ringRadius * 0.18, faceDepth + placement.tubeRadius * 1.45);
+    maskPanel.position.set(0, -placement.ringRadius * 0.03, faceDepth);
+    maskPanel.scale.x = 0.92;
+    accentStrip.position.set(0, placement.ringRadius * 0.09, faceDepth + maskDepth * 0.62);
     accentStrip.rotation.set(0, 0, 0);
-    headWrap.add(band, frontPlate, accentStrip);
+    headWrap.add(maskPanel, accentStrip);
     headWrap.position.copy(placement.ringLocalPosition);
     headWrap.rotation.set(Math.PI / 2, 0, 0);
     headWrap.scale.set(6, 6, 6);
