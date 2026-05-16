@@ -3009,7 +3009,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <button class="forge-3d-preview-btn" type="button" onclick="window.previewBuiltForgeRig()">Preview Built Rig</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.previewForgeWalkTest()">Preview Walk Test</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.applyForgeLookToPlayableRig()">Apply Look To Playable Rig</button>
-            <button class="forge-3d-preview-btn" type="button" onclick="window.addForgeHeadWrapAttachmentTest()">Add Head Wrap Test</button>
+            <!-- Source-sliced attachments are paused because the Meshy source is one welded mesh and extraction is unreliable. -->
             <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
           </div>
         </details>
@@ -3907,6 +3907,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   }
 
   window.addForgeHeadWrapAttachmentTest = async function() {
+    // Source-sliced attachments are paused because the Meshy source is one welded mesh and extraction is unreliable.
+    showForgeToolToast('Head wrap attachment test paused');
+    return;
+
     const previewState = window.forge3dPreviewState;
     const stage = document.getElementById('forge-3d-preview-stage');
 
