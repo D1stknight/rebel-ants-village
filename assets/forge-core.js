@@ -2623,15 +2623,17 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     window.forge3dPreviewState = forge3dPreviewState;
   }
 
-    async function loadThreeModules() {
+       async function loadThreeModules() {
     const threeModule = await import('https://esm.sh/three@0.160.0');
     const loaderModule = await import('https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js?deps=three@0.160.0');
+    const dracoLoaderModule = await import('https://esm.sh/three@0.160.0/examples/jsm/loaders/DRACOLoader.js?deps=three@0.160.0');
     const controlsModule = await import('https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js?deps=three@0.160.0');
     const transformControlsModule = await import('https://esm.sh/three@0.160.0/examples/jsm/controls/TransformControls.js?deps=three@0.160.0');
 
     return {
       THREE: threeModule,
       GLTFLoader: loaderModule.GLTFLoader,
+      DRACOLoader: dracoLoaderModule.DRACOLoader,
       OrbitControls: controlsModule.OrbitControls,
       TransformControls: transformControlsModule.TransformControls
     };
@@ -2664,8 +2666,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     clearForge3dPreview();
 
-    const { THREE, GLTFLoader, OrbitControls } = await loadThreeModules();
-
+    const { THREE, GLTFLoader, DRACOLoader, OrbitControls } = await loadThreeModules();
     const scene = new THREE.Scene();
     scene.background = null;
 
@@ -2707,12 +2708,18 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     controls.enablePan = true;
     controls.enableZoom = true;
 
+        const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+
     const loader = new GLTFLoader();
     loader.setCrossOrigin('anonymous');
+    loader.setDRACOLoader(dracoLoader);
 
     const gltf = await new Promise((resolve, reject) => {
       loader.load(glbUrl, resolve, undefined, reject);
     });
+
+    dracoLoader.dispose();
 
     const model = gltf.scene;
     scene.add(model);
@@ -3572,13 +3579,20 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
 
     try {
-      const { THREE, GLTFLoader } = await loadThreeModules();
+            const { THREE, GLTFLoader, DRACOLoader } = await loadThreeModules();
+
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+
       const loader = new GLTFLoader();
       loader.setCrossOrigin('anonymous');
+      loader.setDRACOLoader(dracoLoader);
 
       const animationGltf = await new Promise((resolve, reject) => {
         loader.load(walkAnimationGlbUrl, resolve, undefined, reject);
       });
+
+      dracoLoader.dispose();
 
       const walkClip = animationGltf.animations?.[0] || null;
 
