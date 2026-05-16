@@ -2458,11 +2458,29 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         margin-top: 12px;
       }
 
+      .forge-3d-primary-actions {
+        display: grid;
+        grid-template-columns: minmax(220px, 360px);
+        gap: 10px;
+      }
+
+      .forge-3d-primary-btn {
+        min-height: 42px;
+        border-color: rgba(200,146,42,.55);
+        background: rgba(200,146,42,.18);
+        color: #fff3c9;
+      }
+
       .forge-3d-tool-details {
         border: 1px solid rgba(255,255,255,.1);
         background: rgba(0,0,0,.16);
         border-radius: 12px;
         overflow: hidden;
+      }
+
+      .forge-3d-dev-lab {
+        border-color: rgba(200,146,42,.18);
+        background: rgba(200,146,42,.06);
       }
 
       .forge-3d-tool-summary {
@@ -2994,8 +3012,20 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       </div>
 
       <div class="forge-3d-preview-actions">
-        <details class="forge-3d-tool-details" open>
-          <summary class="forge-3d-tool-summary">Fit Skeleton</summary>
+        <div class="forge-3d-primary-actions">
+          <button class="forge-3d-preview-btn forge-3d-primary-btn" type="button" onclick="window.applyForgeLookToPlayableRig()">Apply Look To Playable Rig</button>
+        </div>
+
+        <details class="forge-3d-tool-details">
+          <summary class="forge-3d-tool-summary">File</summary>
+          <div class="forge-3d-tool-grid">
+            <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
+            <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
+          </div>
+        </details>
+
+        <details class="forge-3d-tool-details forge-3d-dev-lab">
+          <summary class="forge-3d-tool-summary">Advanced Dev Lab</summary>
           <div class="forge-3d-tool-grid">
             <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeRigPlacementMode()">Start Rig Placement</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLabels()">Toggle Labels</button>
@@ -3008,15 +3038,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <button class="forge-3d-preview-btn" type="button" onclick="window.buildForgeRigFromLayout()">Build Rig From Layout</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.previewBuiltForgeRig()">Preview Built Rig</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.previewForgeWalkTest()">Preview Walk Test</button>
-            <button class="forge-3d-preview-btn" type="button" onclick="window.applyForgeLookToPlayableRig()">Apply Look To Playable Rig</button>
             <!-- Source-sliced attachments are paused because the Meshy source is one welded mesh and extraction is unreliable. -->
             <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
-          </div>
-        </details>
-
-        <details class="forge-3d-tool-details">
-          <summary class="forge-3d-tool-summary">Shape Body Zones</summary>
-          <div class="forge-3d-tool-grid">
             <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeBodyZoneMode()">Start Body Zones</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeBodyZoneTool()">Body Zone Tool</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.shrinkForgeBodyZone()">Shrink Zone</button>
@@ -3025,14 +3048,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeBodyZones()">Load Body Zones</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeBodyZoneJson()">Copy Body Zone JSON</button>
             <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeBodyZoneMode()">Clear Body Zones</button>
-          </div>
-        </details>
-
-        <details class="forge-3d-tool-details">
-          <summary class="forge-3d-tool-summary">File</summary>
-          <div class="forge-3d-tool-grid">
-            <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
-            <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
           </div>
         </details>
       </div>
