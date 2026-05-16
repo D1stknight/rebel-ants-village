@@ -2,6 +2,14 @@ import { put } from '@vercel/blob';
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb'
+    }
+  }
+};
+
 function sanitizePathPart(value, fallback) {
   return String(value || fallback || 'unknown')
     .toLowerCase()
@@ -69,7 +77,10 @@ export default async function handler(req, res) {
       rebelId,
       tokenId,
       collectionKey,
-      imageDataUrl
+      imageDataUrl,
+      originalSizeBytes,
+      uploadSizeBytes,
+      compressed
     } = req.body || {};
 
     if (!conceptId) {
@@ -101,15 +112,32 @@ export default async function handler(req, res) {
       imageUrl: blob.url,
       imageBlobPath: pathname,
       blob,
-      sizeBytes: parsedImage.sizeBytes
+      sizeBytes: parsedImage.sizeBytes,
+      uploadReport: {
+        originalSizeBytes: originalSizeBytes || null,
+        uploadSizeBytes: uploadSizeBytes || parsedImage.sizeBytes,
+        parsedSizeBytes: parsedImage.sizeBytes,
+        compressed: compressed === true
+      }
     });
   } catch (err) {
-    console.error('forge-concepts-upload-image error:', err);
+    console.error('forge-concepts-upload-image error:', {
+      message: err && err.message ? err.message : 'Unknown error',
+      stack: err && err.stack ? err.stack : null,
+      hasBlobToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+      contentLength: req.headers?.['content-length'] || null,
+      contentType: req.headers?.['content-type'] || null
+    });
 
     return res.status(500).json({
       ok: false,
       error: 'Could not upload Forge concept image',
-      detail: err && err.message ? err.message : 'Unknown error'
+      detail: err && err.message ? err.message : 'Unknown error',
+      debug: {
+        hasBlobToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+        contentLength: req.headers?.['content-length'] || null,
+        contentType: req.headers?.['content-type'] || null
+      }
     });
   }
 }

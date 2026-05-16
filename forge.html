@@ -1073,6 +1073,82 @@ async function saveForgeConceptMetadataToServer(concept) {
   return data;
 }
 
+function estimateDataUrlBytes(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== 'string') return 0;
+
+  const base64 = dataUrl.split(',')[1] || '';
+  return Math.floor((base64.length * 3) / 4);
+}
+
+function loadImageFromDataUrl(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Could not load Forge concept image for upload compression'));
+    image.src = dataUrl;
+  });
+}
+
+async function prepareForgeConceptImageDataUrlForServer(imageDataUrl) {
+  const originalSizeBytes = estimateDataUrlBytes(imageDataUrl);
+  const maxUploadBytes = 2.75 * 1024 * 1024;
+
+  if (originalSizeBytes > 0 && originalSizeBytes <= maxUploadBytes) {
+    return {
+      imageDataUrl,
+      originalSizeBytes,
+      uploadSizeBytes: originalSizeBytes,
+      compressed: false
+    };
+  }
+
+  const image = await loadImageFromDataUrl(imageDataUrl);
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  const attempts = [
+    { maxDimension: 1536, mimeType: 'image/webp', quality: 0.88 },
+    { maxDimension: 1280, mimeType: 'image/webp', quality: 0.82 },
+    { maxDimension: 1024, mimeType: 'image/webp', quality: 0.76 },
+    { maxDimension: 1024, mimeType: 'image/jpeg', quality: 0.82 },
+    { maxDimension: 896, mimeType: 'image/jpeg', quality: 0.74 }
+  ];
+
+  for (const attempt of attempts) {
+    const scale = Math.min(1, attempt.maxDimension / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+    canvas.width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+    canvas.height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const nextDataUrl = canvas.toDataURL(attempt.mimeType, attempt.quality);
+    const uploadSizeBytes = estimateDataUrlBytes(nextDataUrl);
+
+    if (uploadSizeBytes > 0 && uploadSizeBytes <= maxUploadBytes) {
+      console.log('Prepared Forge concept image for server upload:', {
+        originalSizeBytes,
+        uploadSizeBytes,
+        compressed: true,
+        width: canvas.width,
+        height: canvas.height,
+        mimeType: attempt.mimeType
+      });
+
+      return {
+        imageDataUrl: nextDataUrl,
+        originalSizeBytes,
+        uploadSizeBytes,
+        compressed: true,
+        width: canvas.width,
+        height: canvas.height,
+        mimeType: attempt.mimeType
+      };
+    }
+  }
+
+  throw new Error(`Forge concept image is too large to upload after compression (${originalSizeBytes} bytes)`);
+}
+
 async function uploadForgeConceptImageToServer(concept) {
   if (!concept || !concept.imageDataUrl) {
     return {
@@ -1081,6 +1157,8 @@ async function uploadForgeConceptImageToServer(concept) {
       reason: 'Missing concept image'
     };
   }
+
+  const preparedImage = await prepareForgeConceptImageDataUrlForServer(concept.imageDataUrl);
 
   const response = await fetch('/api/forge-concepts-upload-image', {
     method: 'POST',
@@ -1092,14 +1170,32 @@ async function uploadForgeConceptImageToServer(concept) {
       rebelId: concept.rebelId || forgeGenerationInput?.rebelId || null,
       tokenId: concept.tokenId || forgeGenerationInput?.tokenId || null,
       collectionKey: concept.collectionKey || forgeGenerationInput?.collectionKey || 'battle_for_colony',
-      imageDataUrl: concept.imageDataUrl
+      imageDataUrl: preparedImage.imageDataUrl,
+      originalSizeBytes: preparedImage.originalSizeBytes,
+      uploadSizeBytes: preparedImage.uploadSizeBytes,
+      compressed: preparedImage.compressed
     })
   });
 
-  const data = await response.json();
+  let data = null;
+
+  try {
+    data = await response.json();
+  } catch(parseError) {
+    data = {
+      ok: false,
+      error: 'Upload route did not return JSON',
+      detail: parseError?.message || 'Response JSON parse failed'
+    };
+  }
 
   if (!response.ok || !data.ok) {
-    throw new Error(data.error || data.detail || 'Blob image upload failed');
+    console.error('Forge concept image upload API failed:', {
+      status: response.status,
+      data
+    });
+
+    throw new Error(data.detail || data.error || `Blob image upload failed with status ${response.status}`);
   }
 
   window.lastForgeConceptBlobUploadResponse = data;
@@ -1202,6 +1298,13 @@ async function saveCurrentForgeConcept() {
         concept.imageUrl = blobResult.imageUrl;
         concept.imageBlobPath = blobResult.imageBlobPath || null;
         blobSaved = true;
+
+        const refreshedConcepts = loadForgeConcepts();
+        const updatedConcept = stripForgeConceptImageData(concept);
+        const updatedConcepts = refreshedConcepts.some((item) => item.id === concept.id)
+          ? refreshedConcepts.map((item) => item.id === concept.id ? { ...item, ...updatedConcept } : item)
+          : [updatedConcept, ...refreshedConcepts].slice(0, 12);
+        saveForgeConcepts(updatedConcepts);
       }
     } catch(blobError) {
       console.warn('Forge concept saved locally, but Blob image upload failed:', blobError);
