@@ -3876,8 +3876,9 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
     }, scene);
     headWrap.material = wrapMat;
     headWrap.parent = headNode;
-    headWrap.position = new BABYLON.Vector3(0, 10, 1);
+    headWrap.position = new BABYLON.Vector3(0, 125, 0);
     headWrap.rotation = new BABYLON.Vector3(Math.PI / 2, 0, 0);
+    headWrap.scaling = new BABYLON.Vector3(.72, .72, .72);
     headWrap.isPickable = false;
     console.log("Head attachment test added", headWrap);
   } else {
