@@ -487,7 +487,7 @@ async function loadPlayableTemplateBoneTranslations() {
   };
 }
 
-function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, playableTemplate = {}, rigLayout = null) {
+function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, playableTemplate = {}, rigLayout = null, rigBuildMode = 'preview_safe') {
   const created = [];
   const reused = [];
   const jointNames = [];
@@ -764,22 +764,26 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
     });
   });
 
-        const skeletonRootName = 'FBX_Root';
+               const skeletonRootName = 'FBX_Root';
   const { node: skeletonRootNode } = getOrCreateNode(document, nodesByName, skeletonRootName, null, [0, 0, 0]);
   skeletonRootNode.setTranslation([0, 0, 0]);
 
-  const scene = getOrCreateDefaultScene(document);
-  const skeletonRootAttachedToScene = Boolean(
-    scene &&
-    typeof scene.addChild === 'function' &&
-    (
-      scene.listChildren?.().includes(skeletonRootNode) ||
-      scene.addChild(skeletonRootNode)
-    )
-  );
+  let skeletonRootAttachedToScene = false;
 
-  if (skin && typeof skin.setSkeleton === 'function') {
-    skin.setSkeleton(skeletonRootNode);
+  if (rigBuildMode === 'hierarchy_test') {
+    const scene = getOrCreateDefaultScene(document);
+    skeletonRootAttachedToScene = Boolean(
+      scene &&
+      typeof scene.addChild === 'function' &&
+      (
+        scene.listChildren?.().includes(skeletonRootNode) ||
+        scene.addChild(skeletonRootNode)
+      )
+    );
+
+    if (skin && typeof skin.setSkeleton === 'function') {
+      skin.setSkeleton(skeletonRootNode);
+    }
   }
 
   parentByBoneName.mixamorig_Hips = skeletonRootName;
@@ -813,8 +817,9 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
     jointCount: skin ? getSkinJoints(skin).length : 0,
     jointsAddedCount: jointNames.length,
        templateBoneTranslationCount: Object.keys(templateBoneTranslations).length,
-       rigLayoutUsed: rigLayoutMarkerCount > 0,
+             rigLayoutUsed: rigLayoutMarkerCount > 0,
     rigLayoutMarkerCount,
+    rigBuildMode,
        skeletonRootName,
     skinSkeletonRootName: skin?.getSkeleton?.()?.getName?.() || null,
     skeletonRootAttachedToScene,
@@ -1576,9 +1581,10 @@ export default async function handler(req, res) {
       return res.status(500).json({ ok: false, error: 'Missing BLOB_READ_WRITE_TOKEN' });
     }
 
-             const body = req.body || {};
+                       const body = req.body || {};
     const rigLayout = body.rigLayout || (body.markers ? { markers: body.markers } : null);
     const bodyZoneLayout = body.bodyZoneLayout || body.bodyZones || null;
+    const rigBuildMode = body.rigBuildMode === 'hierarchy_test' ? 'hierarchy_test' : 'preview_safe';
     const { buildId } = body;
 
     if (!buildId && !body.sourceGlbUrl && !body.glbUrl) {
@@ -1626,7 +1632,7 @@ export default async function handler(req, res) {
     const renameReport = renameMappedBones(document);
     const nodesByName = listNodesByName(document);
 
-       const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, playableTemplate, rigLayout);
+              const rebelStandardSkeletonReport = createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, playableTemplate, rigLayout, rigBuildMode);
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
     const toeReport = createToeEnds(document, skin, nodesByName);
