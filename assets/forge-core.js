@@ -2592,6 +2592,20 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   }
 
+  function disposeForgeObject3d(object) {
+    if (!object) return;
+
+    object.traverse?.((child) => {
+      child.geometry?.dispose?.();
+
+      if (Array.isArray(child.material)) {
+        child.material.forEach((material) => material?.dispose?.());
+      } else {
+        child.material?.dispose?.();
+      }
+    });
+  }
+
     function clearForge3dPreview() {
     stopForge3dPreviewLoop();
 
@@ -2606,8 +2620,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     if (window.forgeHeadAttachmentTest?.mesh) {
       const attachment = window.forgeHeadAttachmentTest.mesh;
       attachment.parent?.remove(attachment);
-      attachment.geometry?.dispose?.();
-      attachment.material?.dispose?.();
+      disposeForgeObject3d(attachment);
       window.forgeHeadAttachmentTest = null;
     }
 
@@ -3920,21 +3933,48 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     if (window.forgeHeadAttachmentTest?.mesh) {
       const oldAttachment = window.forgeHeadAttachmentTest.mesh;
       oldAttachment.parent?.remove(oldAttachment);
-      oldAttachment.geometry?.dispose?.();
-      oldAttachment.material?.dispose?.();
+      disposeForgeObject3d(oldAttachment);
     }
 
     const placement = getForgeHeadAttachmentPlacement(THREE, previewState, headBone);
-    const headWrap = new THREE.Mesh(
-      new THREE.TorusGeometry(placement.ringRadius, placement.tubeRadius, 16, 64),
-      new THREE.MeshBasicMaterial({
-        color: 0x6b0505,
-        depthTest: true
-      })
+    const headWrap = new THREE.Group();
+    const bandMaterial = new THREE.MeshStandardMaterial({
+      color: 0x24102f,
+      roughness: 0.7,
+      metalness: 0.05
+    });
+    const plateMaterial = new THREE.MeshStandardMaterial({
+      color: 0x3a163f,
+      roughness: 0.62,
+      metalness: 0.08
+    });
+    const accentMaterial = new THREE.MeshStandardMaterial({
+      color: 0xd6a84f,
+      roughness: 0.4,
+      metalness: 0.35
+    });
+    const band = new THREE.Mesh(
+      new THREE.TorusGeometry(placement.ringRadius, placement.tubeRadius, 18, 72),
+      bandMaterial
+    );
+    const frontPlate = new THREE.Mesh(
+      new THREE.BoxGeometry(placement.ringRadius * 0.75, placement.ringRadius * 0.42, placement.tubeRadius * 2.4),
+      plateMaterial
+    );
+    const accentStrip = new THREE.Mesh(
+      new THREE.BoxGeometry(placement.ringRadius * 0.62, placement.ringRadius * 0.08, placement.tubeRadius * 2.8),
+      accentMaterial
     );
 
     headWrap.name = 'forgeHeadWrapAttachmentTest';
     headWrap.userData.forgeAttachmentTest = true;
+    band.name = 'forgeHeadWrapBand';
+    frontPlate.name = 'forgeHeadWrapFrontPlate';
+    accentStrip.name = 'forgeHeadWrapGoldAccent';
+    band.rotation.set(0, 0, 0);
+    frontPlate.position.set(0, -placement.ringRadius * 0.08, placement.ringRadius * 0.9);
+    accentStrip.position.set(0, placement.ringRadius * 0.14, placement.ringRadius * 0.92);
+    headWrap.add(band, frontPlate, accentStrip);
     headWrap.position.copy(placement.ringLocalPosition);
     headWrap.rotation.set(Math.PI / 2, 0, 0);
     headWrap.scale.set(6, 6, 6);
