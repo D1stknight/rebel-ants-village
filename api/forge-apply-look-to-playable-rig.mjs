@@ -6,6 +6,7 @@ import { KHRDracoMeshCompression } from '@gltf-transform/extensions';
 import { put } from '@vercel/blob';
 
 const INPUT_GLB = 'assets/character/ant_idle_c.glb';
+const ZONE_PROBE_GLB = 'assets/character/ant_idle_c_zone_materials_probe.glb';
 const FALLBACK_OUTPUT_GLB = 'assets/character/ant_idle_c_rebel469_color_probe.glb';
 const TARGET_MATERIAL_NAME = 'Material.001';
 const FALLBACK_BASE_COLOR = [0.388, 0.176, 0.451, 1];
@@ -26,6 +27,15 @@ const FALLBACK_ZONE_COLORS = {
   rightArm: FALLBACK_BASE_COLOR,
   leftLeg: FALLBACK_BASE_COLOR,
   rightLeg: FALLBACK_BASE_COLOR
+};
+
+const ZONE_MATERIAL_NAME_BY_ZONE = {
+  head: 'Zone_head',
+  body: 'Zone_body',
+  leftArm: 'Zone_leftArm',
+  rightArm: 'Zone_rightArm',
+  leftLeg: 'Zone_leftLeg',
+  rightLeg: 'Zone_rightLeg'
 };
 
 function align4(value) {
@@ -359,6 +369,59 @@ async function applyPlayableZoneLook(inputBuffer, zoneColors) {
   };
 }
 
+function applyZoneColorsToZoneProbe(inputBuffer, zoneColors) {
+  const { glb, gltf } = getGlbJsonAndBinary(inputBuffer);
+  const materials = gltf.materials || [];
+  const materialReport = {};
+
+  ZONE_ORDER.forEach((zone) => {
+    const materialName = ZONE_MATERIAL_NAME_BY_ZONE[zone];
+    const material = materials.find((candidate) => candidate.name === materialName);
+
+    if (!material) {
+      materialReport[zone] = {
+        materialName,
+        found: false
+      };
+      return;
+    }
+
+    material.doubleSided = true;
+    material.emissiveFactor = [0, 0, 0];
+    delete material.emissiveTexture;
+    material.pbrMetallicRoughness = material.pbrMetallicRoughness || {};
+    material.pbrMetallicRoughness.baseColorFactor = zoneColors[zone] || FALLBACK_ZONE_COLORS[zone] || FALLBACK_BASE_COLOR;
+    material.pbrMetallicRoughness.metallicFactor = 0;
+    material.pbrMetallicRoughness.roughnessFactor = 0.65;
+
+    materialReport[zone] = {
+      materialName,
+      found: true,
+      baseColorFactor: material.pbrMetallicRoughness.baseColorFactor
+    };
+  });
+
+  const updatedJsonBuffer = Buffer.from(JSON.stringify(gltf), 'utf8');
+  const paddedJsonLength = align4(updatedJsonBuffer.length);
+  const paddedJsonBuffer = Buffer.alloc(paddedJsonLength, 0x20);
+
+  updatedJsonBuffer.copy(paddedJsonBuffer);
+
+  const updatedChunks = glb.chunks.map((chunk) => {
+    if (chunk.chunkType !== 0x4e4f534a) return chunk;
+
+    return {
+      chunkType: chunk.chunkType,
+      chunkData: paddedJsonBuffer
+    };
+  });
+
+  return {
+    outputBuffer: createGlb(glb.version, updatedChunks),
+    materialReport
+  };
+}
+
 async function extractDominantColorsFromSourceGlb(sourceGlbUrl) {
   if (!sourceGlbUrl) {
     return {
@@ -498,20 +561,22 @@ export default async function handler(req, res) {
     const body = req.body || {};
     const sourceGlbUrl = body.sourceGlbUrl || body.glbUrl || '';
         const colorReport = await extractDominantColorsFromSourceGlb(sourceGlbUrl);
-        const inputPath = path.join(process.cwd(), INPUT_GLB);
-    const inputBuffer = await readFile(inputPath);
-        let outputBuffer;
+           let outputBuffer;
     let primitiveCountsByZone = null;
-    let playableLookMode = 'zone_materials';
+    let zoneMaterialReport = null;
+    let playableLookMode = 'zone_materials_from_zone_probe';
     let zoneGenerationError = null;
 
     try {
-      const zoneLook = await applyPlayableZoneLook(inputBuffer, colorReport.zoneColors || FALLBACK_ZONE_COLORS);
+      const zoneProbeBuffer = await fetchGlbAsBuffer(ZONE_PROBE_GLB);
+      const zoneLook = applyZoneColorsToZoneProbe(zoneProbeBuffer, colorReport.zoneColors || FALLBACK_ZONE_COLORS);
       outputBuffer = zoneLook.outputBuffer;
-      primitiveCountsByZone = zoneLook.primitiveCountsByZone;
+      zoneMaterialReport = zoneLook.materialReport;
     } catch (zoneError) {
-      console.warn('Could not create zone material playable GLB, using single-color fallback:', zoneError);
+      console.warn('Could not apply zone colors to zone probe GLB, using single-color fallback:', zoneError);
       zoneGenerationError = zoneError.message || String(zoneError);
+      const inputPath = path.join(process.cwd(), INPUT_GLB);
+      const inputBuffer = await readFile(inputPath);
       outputBuffer = applyPlayableLook(inputBuffer, colorReport.extractedColor);
       playableLookMode = 'single_color_fallback';
     }
@@ -536,8 +601,9 @@ export default async function handler(req, res) {
       sourceGlbUrl,
             extractedColor: colorReport.extractedColor,
             extractedPalette: colorReport.extractedPalette || [],
-      zoneColors: colorReport.zoneColors || FALLBACK_ZONE_COLORS,
-           primitiveCountsByZone,
+           zoneColors: colorReport.zoneColors || FALLBACK_ZONE_COLORS,
+      primitiveCountsByZone,
+      zoneMaterialReport,
       playableLookMode,
       zoneGenerationError,
       extractedColorSource: colorReport.extractedColorSource,
