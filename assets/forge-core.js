@@ -2690,6 +2690,45 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     };
   }
 
+  function frameForgeThreePreviewModel(THREE, previewState = window.forge3dPreviewState) {
+    if (!previewState?.model || !previewState?.camera) return null;
+
+    previewState.model.updateWorldMatrix(true, true);
+
+    const box = new THREE.Box3().setFromObject(previewState.model);
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    const radius = Math.max(sphere.radius, 0.001);
+    const center = sphere.center;
+    const camera = previewState.camera;
+    const controls = previewState.controls;
+    const verticalDistance = radius / Math.sin(THREE.MathUtils.degToRad(camera.fov * 0.5));
+    const horizontalDistance = verticalDistance / Math.max(camera.aspect, 0.001);
+    const distance = Math.max(verticalDistance, horizontalDistance) * 1.25;
+
+    camera.position.set(center.x, center.y + radius * 0.12, center.z + distance);
+    camera.near = Math.max(distance / 100, 0.001);
+    camera.far = distance + radius * 100;
+    camera.updateProjectionMatrix();
+
+    if (controls) {
+      controls.target.copy(center);
+      controls.update();
+    }
+
+    const report = {
+      center: center.toArray(),
+      radius,
+      boxMin: box.min.toArray(),
+      boxMax: box.max.toArray(),
+      cameraPosition: camera.position.toArray()
+    };
+
+    previewState.modelFrameReport = report;
+    console.log('Forge preview model framed:', report);
+
+    return report;
+  }
+
   async function renderThreeGlbPreview(glbUrl) {
     const stage = document.getElementById('forge-3d-preview-stage');
     if (!stage || !glbUrl) return;
@@ -2759,8 +2798,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     scene.add(model);
     const modelCenteringReport = centerThreePreviewModel(THREE, model);
 
-    fitCameraToObject(THREE, camera, model, controls);
-
         forge3dPreviewState = {
       renderer,
       scene,
@@ -2774,10 +2811,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       walkAction: null,
       walkAnimationSource: '',
       modelCenteringReport,
+      modelFrameReport: null,
       attachmentKeyHandler: null
     };
 
     window.forge3dPreviewState = forge3dPreviewState;
+    frameForgeThreePreviewModel(THREE, forge3dPreviewState);
 
     function animate() {
       forge3dPreviewState.animationId = requestAnimationFrame(animate);
@@ -2803,9 +2842,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       if (!forge3dPreviewState.renderer || !forge3dPreviewState.camera || !stage) return;
 
       forge3dPreviewState.camera.aspect = stage.clientWidth / Math.max(stage.clientHeight, 1);
-      forge3dPreviewState.camera.updateProjectionMatrix();
       forge3dPreviewState.renderer.setSize(stage.clientWidth, stage.clientHeight);
+      frameForgeThreePreviewModel(THREE, forge3dPreviewState);
     }, { passive: true });
+
+    return forge3dPreviewState;
   }
 
   async function renderForge3dPreviewPanel() {
@@ -3642,6 +3683,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       if (data.playableGlbUrl) {
         await renderThreeGlbPreview(data.playableGlbUrl);
+        const { THREE } = await loadThreeModules();
+        frameForgeThreePreviewModel(THREE, window.forge3dPreviewState);
         showForgeToolToast('Playable look preview loaded');
       } else {
         showForgeToolToast('Playable look ready');
@@ -3663,7 +3706,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const transform = {
       position: attachment.position.toArray(),
       rotation: [attachment.rotation.x, attachment.rotation.y, attachment.rotation.z],
-      scale: attachment.scale.toArray()
+      scale: attachment.scale.toArray(),
+      headWorldPosition: window.forgeHeadAttachmentTest?.headBone?.getWorldPosition?.(new window.forgeHeadAttachmentTest.THREE.Vector3())?.toArray?.() || null,
+      ringWorldPosition: attachment.getWorldPosition(new window.forgeHeadAttachmentTest.THREE.Vector3()).toArray()
     };
 
     console.log('Forge head attachment transform:', transform);
@@ -3731,6 +3776,30 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     window.forge3dPreviewState.attachmentKeyHandler = keyHandler;
   }
 
+  function getForgeHeadAttachmentPlacement(THREE, previewState, headBone) {
+    previewState.model.updateWorldMatrix(true, true);
+    headBone.updateWorldMatrix(true, false);
+
+    const modelBox = new THREE.Box3().setFromObject(previewState.model);
+    const modelSize = modelBox.getSize(new THREE.Vector3());
+    const headWorldPosition = headBone.getWorldPosition(new THREE.Vector3());
+    const heightAboveHead = Math.max(modelBox.max.y - headWorldPosition.y, modelSize.y * 0.04);
+    const ringWorldPosition = headWorldPosition.clone();
+
+    ringWorldPosition.y += heightAboveHead * 0.55;
+    ringWorldPosition.z += (modelBox.max.z - headWorldPosition.z) * 0.18;
+
+    return {
+      modelBox,
+      modelSize,
+      headWorldPosition,
+      ringWorldPosition,
+      ringLocalPosition: headBone.worldToLocal(ringWorldPosition.clone()),
+      ringRadius: Math.max(modelSize.x, modelSize.z, modelSize.y * 0.08) * 0.055,
+      tubeRadius: Math.max(modelSize.x, modelSize.z, modelSize.y * 0.08) * 0.006
+    };
+  }
+
   window.addForgeHeadWrapAttachmentTest = async function() {
     const previewState = window.forge3dPreviewState;
     const stage = document.getElementById('forge-3d-preview-stage');
@@ -3762,8 +3831,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       oldAttachment.material?.dispose?.();
     }
 
+    const placement = getForgeHeadAttachmentPlacement(THREE, previewState, headBone);
     const headWrap = new THREE.Mesh(
-      new THREE.TorusGeometry(8, 1, 16, 64),
+      new THREE.TorusGeometry(placement.ringRadius, placement.tubeRadius, 16, 64),
       new THREE.MeshBasicMaterial({
         color: 0x6b0505,
         depthTest: true
@@ -3771,18 +3841,31 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     );
 
     headWrap.name = 'forgeHeadWrapAttachmentTest';
-    headWrap.position.set(0, 96, 6);
+    headWrap.position.copy(placement.ringLocalPosition);
     headWrap.rotation.set(Math.PI / 2, 0, 0);
-    headWrap.scale.set(0.45, 0.45, 0.45);
+    headWrap.scale.set(1, 1, 1);
     headBone.add(headWrap);
 
     window.forgeHeadAttachmentTest = {
+      THREE,
       mesh: headWrap,
+      headBone,
       targetBoneName: 'mixamorig_Head',
-      playableGlbUrl: previewState.currentGlbUrl || ''
+      playableGlbUrl: previewState.currentGlbUrl || '',
+      placementReport: {
+        modelBoxMin: placement.modelBox.min.toArray(),
+        modelBoxMax: placement.modelBox.max.toArray(),
+        modelSize: placement.modelSize.toArray(),
+        headWorldPosition: placement.headWorldPosition.toArray(),
+        ringWorldPosition: placement.ringWorldPosition.toArray(),
+        ringLocalPosition: placement.ringLocalPosition.toArray(),
+        ringRadius: placement.ringRadius,
+        tubeRadius: placement.tubeRadius
+      }
     };
 
     console.log('Forge head attachment test added', window.forgeHeadAttachmentTest);
+    console.log('Forge head attachment placement:', window.forgeHeadAttachmentTest.placementReport);
     installForgeHeadAttachmentKeyboardControls(stage);
     stage.focus();
     window.logForgeHeadAttachmentTransform();
