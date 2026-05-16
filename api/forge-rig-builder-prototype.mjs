@@ -1034,11 +1034,13 @@ function getNodeWorldMatrix(node) {
   return localMatrix;
 }
 
-function attachIdentityInverseBindMatrices(document, skin) {
+function attachMeshRelativeInverseBindMatrices(document, skin, meshNode) {
   if (!skin || typeof skin.setInverseBindMatrices !== 'function') {
     return {
       inverseBindMatrixCount: 0,
       jointCountAtTimeOfCreation: 0,
+      nonInvertibleJointCount: 0,
+      meshNodeName: meshNode?.getName?.() || null,
       warning: 'Skin does not support setInverseBindMatrices.'
     };
   }
@@ -1049,51 +1051,60 @@ function attachIdentityInverseBindMatrices(document, skin) {
     return {
       inverseBindMatrixCount: 0,
       jointCountAtTimeOfCreation: 0,
+      nonInvertibleJointCount: 0,
+      meshNodeName: meshNode?.getName?.() || null,
       warning: 'Skin has no joints for inverse bind matrices.'
     };
   }
 
-  const identityMatrices = new Float32Array(joints.length * 16);
+  const meshWorldMatrix = meshNode ? getNodeWorldMatrix(meshNode) : [
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+  ];
+  const inverseMatrices = new Float32Array(joints.length * 16);
+  let nonInvertibleJointCount = 0;
 
-  for (let jointIndex = 0; jointIndex < joints.length; jointIndex++) {
+  joints.forEach((joint, jointIndex) => {
     const offset = jointIndex * 16;
+    const jointWorldMatrix = getNodeWorldMatrix(joint);
+    const inverseJointWorldMatrix = invertMat4(jointWorldMatrix);
 
-    identityMatrices[offset] = 1;
-    identityMatrices[offset + 1] = 0;
-    identityMatrices[offset + 2] = 0;
-    identityMatrices[offset + 3] = 0;
+    if (!inverseJointWorldMatrix) {
+      nonInvertibleJointCount++;
+    }
 
-    identityMatrices[offset + 4] = 0;
-    identityMatrices[offset + 5] = 1;
-    identityMatrices[offset + 6] = 0;
-    identityMatrices[offset + 7] = 0;
+    const inverseBindMatrix = inverseJointWorldMatrix
+      ? multiplyMat4(inverseJointWorldMatrix, meshWorldMatrix)
+      : [
+          1, 0, 0, 0,
+          0, 1, 0, 0,
+          0, 0, 1, 0,
+          0, 0, 0, 1
+        ];
 
-    identityMatrices[offset + 8] = 0;
-    identityMatrices[offset + 9] = 0;
-    identityMatrices[offset + 10] = 1;
-    identityMatrices[offset + 11] = 0;
-
-    identityMatrices[offset + 12] = 0;
-    identityMatrices[offset + 13] = 0;
-    identityMatrices[offset + 14] = 0;
-    identityMatrices[offset + 15] = 1;
-  }
+    for (let matrixIndex = 0; matrixIndex < 16; matrixIndex++) {
+      inverseMatrices[offset + matrixIndex] = inverseBindMatrix[matrixIndex];
+    }
+  });
 
   const inverseBindMatrices = document
     .createAccessor('inverseBindMatrices')
     .setType(Accessor.Type.MAT4)
-    .setArray(identityMatrices);
+    .setArray(inverseMatrices);
 
   skin.setInverseBindMatrices(inverseBindMatrices);
 
   return {
-    mode: 'identity_matrices_after_all_joints_v1',
+    mode: 'mesh_relative_inverse_bind_matrices_v1',
     inverseBindMatrixCount: joints.length,
     jointCountAtTimeOfCreation: joints.length,
+    nonInvertibleJointCount,
+    meshNodeName: meshNode?.getName?.() || null,
     accessorName: inverseBindMatrices.getName?.() || 'inverseBindMatrices'
   };
 }
-
 function bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout = null, bodyZoneLayout = null) {
   if (!skin) {
     return {
@@ -1631,7 +1642,7 @@ export default async function handler(req, res) {
     const leftFingerReport = createFingerChains(document, skin, nodesByName, 'Left');
     const rightFingerReport = createFingerChains(document, skin, nodesByName, 'Right');
     const toeReport = createToeEnds(document, skin, nodesByName);
-    const inverseBindMatrixReport = attachIdentityInverseBindMatrices(document, skin);
+    const inverseBindMatrixReport = attachMeshRelativeInverseBindMatrices(document, skin, skinSetup.meshNode || getPrimaryMeshNode(document));
     const vertexBindingReport = bindMeshVerticesToBodyZones(document, skin, modelBounds, rigLayout, bodyZoneLayout);
     const afterCoverage = inspectRebelStandardCoverage(document);
     const outputBuffer = Buffer.from(await io.writeBinary(document));
