@@ -78,10 +78,14 @@ async function main() {
     throw new Error('No material found in playable GLB.');
   }
 
-  material.name = material.name || TARGET_MATERIAL_NAME;
+   material.name = material.name || TARGET_MATERIAL_NAME;
   material.doubleSided = true;
+  material.emissiveFactor = [0, 0, 0];
+  delete material.emissiveTexture;
   material.pbrMetallicRoughness = material.pbrMetallicRoughness || {};
   material.pbrMetallicRoughness.baseColorFactor = REBEL_469_BASE_COLOR;
+  material.pbrMetallicRoughness.metallicFactor = 0;
+  material.pbrMetallicRoughness.roughnessFactor = 0.65;
 
   const updatedJsonBuffer = Buffer.from(JSON.stringify(gltf), 'utf8');
   const paddedJsonLength = align4(updatedJsonBuffer.length);
@@ -107,6 +111,10 @@ async function main() {
     baseColorFactor: material.pbrMetallicRoughness.baseColorFactor,
     keptBaseColorTexture: Boolean(material.pbrMetallicRoughness.baseColorTexture),
     keptNormalTexture: Boolean(material.normalTexture),
+    emissiveFactor: material.emissiveFactor,
+    hasEmissiveTexture: Boolean(material.emissiveTexture),
+    metallicFactor: material.pbrMetallicRoughness.metallicFactor,
+    roughnessFactor: material.pbrMetallicRoughness.roughnessFactor,
     doubleSided: material.doubleSided
   });
 }
