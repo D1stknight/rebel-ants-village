@@ -8,6 +8,7 @@ const SOURCE_GLB = path.join(repoRoot, 'assets/forge/sources/rebel_469_static_so
 const OUTPUT_GLB = path.join(repoRoot, 'assets/forge/attachments/headwrap_test.glb');
 const MIN_AVERAGE_Y = 0.70;
 const MIN_AVERAGE_Z = 0.00;
+const TARGET_ATTACHMENT_WIDTH = 50;
 
 const COMPONENT_SIZE = {
   5121: 1,
@@ -106,6 +107,10 @@ function calculateBounds(positions) {
   });
 
   return { min, max };
+}
+
+function getBoundsSize(bounds) {
+  return bounds.max.map((value, index) => value - bounds.min[index]);
 }
 
 function writeFloatArray(values, components) {
@@ -242,11 +247,11 @@ function main() {
     throw new Error('No triangles matched the head/front extraction filter.');
   }
 
-  const sourceBounds = calculateBounds(selectedPositions);
+  const originalBounds = calculateBounds(selectedPositions);
   const center = [
-    (sourceBounds.min[0] + sourceBounds.max[0]) / 2,
-    (sourceBounds.min[1] + sourceBounds.max[1]) / 2,
-    (sourceBounds.min[2] + sourceBounds.max[2]) / 2
+    (originalBounds.min[0] + originalBounds.max[0]) / 2,
+    (originalBounds.min[1] + originalBounds.max[1]) / 2,
+    (originalBounds.min[2] + originalBounds.max[2]) / 2
   ];
 
   selectedPositions.forEach((position) => {
@@ -255,7 +260,17 @@ function main() {
     position[2] -= center[2];
   });
 
-  const outputBounds = calculateBounds(selectedPositions);
+  const centeredBounds = calculateBounds(selectedPositions);
+  const centeredSize = getBoundsSize(centeredBounds);
+  const scaleFactor = TARGET_ATTACHMENT_WIDTH / Math.max(centeredSize[0], 0.0001);
+
+  selectedPositions.forEach((position) => {
+    position[0] *= scaleFactor;
+    position[1] *= scaleFactor;
+    position[2] *= scaleFactor;
+  });
+
+  const finalBounds = calculateBounds(selectedPositions);
   const chunks = [];
   const bufferViews = [];
   const accessors = [];
@@ -271,8 +286,8 @@ function main() {
     bufferView: 0,
     componentType: 5126,
     count: selectedPositions.length,
-    min: outputBounds.min,
-    max: outputBounds.max,
+    min: finalBounds.min,
+    max: finalBounds.max,
     type: 'VEC3'
   });
 
@@ -375,8 +390,11 @@ function main() {
       minAverageY: MIN_AVERAGE_Y,
       minAverageZ: MIN_AVERAGE_Z
     },
-    sourceBounds,
-    outputBounds
+    originalBounds,
+    centeredBounds,
+    finalBounds,
+    scaleFactor,
+    targetAttachmentWidth: TARGET_ATTACHMENT_WIDTH
   });
 }
 
