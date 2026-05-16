@@ -3877,19 +3877,17 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const visibleBounds = getForgeVisibleMeshBounds(THREE, previewState.model);
     const characterHeight = visibleBounds?.characterHeight || 2;
     const headWorldPosition = headBone.getWorldPosition(new THREE.Vector3());
-    const ringWorldPosition = headWorldPosition.clone();
+    const ringLocalPosition = new THREE.Vector3(0, 1.2, 0.6);
     const ringRadius = THREE.MathUtils.clamp(characterHeight * 0.035, 0.025, characterHeight * 0.06);
     const tubeRadius = THREE.MathUtils.clamp(ringRadius * 0.12, 0.004, ringRadius * 0.22);
-
-    ringWorldPosition.y += characterHeight * 0.035;
-    ringWorldPosition.z += characterHeight * 0.012;
+    const ringWorldPosition = headBone.localToWorld(ringLocalPosition.clone());
 
     return {
       visibleBounds,
       characterHeight,
       headWorldPosition,
       ringWorldPosition,
-      ringLocalPosition: headBone.worldToLocal(ringWorldPosition.clone()),
+      ringLocalPosition,
       ringRadius,
       tubeRadius
     };
