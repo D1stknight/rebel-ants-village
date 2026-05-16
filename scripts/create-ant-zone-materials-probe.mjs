@@ -124,14 +124,14 @@ function copyPrimitiveAttributes(sourcePrimitive, targetPrimitive) {
   });
 }
 
-function splitPrimitiveByDominantJointZone(document, mesh, primitive, skin) {
+function splitPrimitiveByDominantJointZone(document, mesh, primitive, skin, zoneColors = ZONE_COLORS) {
   const jointsAccessor = primitive.getAttribute('JOINTS_0');
   const weightsAccessor = primitive.getAttribute('WEIGHTS_0');
   const indicesAccessor = primitive.getIndices();
   const positionAccessor = primitive.getAttribute('POSITION');
   const sourceMaterial = primitive.getMaterial();
   const skinJoints = skin.listJoints();
-  const zoneMaterials = createZoneMaterials(document, sourceMaterial);
+  const zoneMaterials = createZoneMaterials(document, sourceMaterial, zoneColors);
   const indicesArray = indicesAccessor?.getArray();
   const vertexCount = positionAccessor.getCount();
   const zoneIndices = Object.fromEntries(ZONE_ORDER.map((zone) => [zone, []]));
@@ -209,11 +209,12 @@ async function main() {
     throw new Error(`Material ${SOURCE_MATERIAL_NAME} not found.`);
   }
 
-  const primitiveCountsByZone = splitPrimitiveByDominantJointZone(
+    const primitiveCountsByZone = splitPrimitiveByDominantJointZone(
     document,
     mesh,
     mesh.listPrimitives()[0],
-    skin
+    skin,
+    ZONE_COLORS
   );
 
   await mkdir(path.dirname(outputPath), { recursive: true });
