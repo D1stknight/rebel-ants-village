@@ -95,18 +95,17 @@ function chooseTriangleZone(vertexZones) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'body';
 }
 
-function createZoneMaterials(document, sourceMaterial) {
+function createZoneMaterials(document, sourceMaterial, zoneColors = ZONE_COLORS) {
   const materials = {};
 
   ZONE_ORDER.forEach((zone) => {
     const material = document.createMaterial(`Zone_${zone}`);
 
-    material.setBaseColorFactor(ZONE_COLORS[zone]);
+    material.setBaseColorFactor(zoneColors[zone] || ZONE_COLORS[zone]);
     material.setMetallicFactor(sourceMaterial?.getMetallicFactor?.() ?? 0);
     material.setRoughnessFactor(sourceMaterial?.getRoughnessFactor?.() ?? 0.65);
     material.setDoubleSided(true);
     material.setEmissiveFactor([0, 0, 0]);
-
     const baseColorTexture = sourceMaterial?.getBaseColorTexture?.();
     const normalTexture = sourceMaterial?.getNormalTexture?.();
 
