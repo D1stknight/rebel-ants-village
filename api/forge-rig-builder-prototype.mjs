@@ -737,7 +737,7 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
     mixamorig_RightToe_End: 'mixamorig_RightToeBase'
   };
 
-  ['Left', 'Right'].forEach((side) => {
+    ['Left', 'Right'].forEach((side) => {
     FINGER_TYPES.forEach((fingerType) => {
       for (let index = 1; index <= 4; index++) {
         const boneName = `mixamorig_${side}Hand${fingerType}${index}`;
@@ -748,6 +748,11 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
       }
     });
   });
+
+  const skeletonRootName = 'FBX_Root';
+  const { node: skeletonRootNode } = getOrCreateNode(document, nodesByName, skeletonRootName, null, [0, 0, 0]);
+  skeletonRootNode.setTranslation([0, 0, 0]);
+  parentByBoneName.mixamorig_Hips = skeletonRootName;
 
   REBEL_STANDARD_BONE_NAMES.forEach((boneName) => {
     const parentName = parentByBoneName[boneName] || null;
@@ -772,7 +777,7 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
     }
   });
 
-    return {
+       return {
     createdCount: created.length,
     reusedCount: reused.length,
     jointCount: skin ? getSkinJoints(skin).length : 0,
@@ -780,6 +785,8 @@ function createRebelStandardSkeleton(document, skin, nodesByName, modelBounds, p
        templateBoneTranslationCount: Object.keys(templateBoneTranslations).length,
     rigLayoutUsed: rigLayoutMarkerCount > 0,
     rigLayoutMarkerCount,
+    skeletonRootName,
+    hipsParentName: parentByBoneName.mixamorig_Hips || null,
     templateScale,
     templateHeight,
     created,
