@@ -2655,12 +2655,86 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     };
   }
 
+  function getForgeVisibleMeshBounds(THREE, model) {
+    if (!model) return null;
+
+    model.updateWorldMatrix(true, true);
+
+    const visibleBox = new THREE.Box3();
+    const meshBox = new THREE.Box3();
+    const meshSize = new THREE.Vector3();
+    let meshCount = 0;
+    let ignoredMeshCount = 0;
+
+    model.traverse((object) => {
+      if (!object || !(object.isMesh || object.isSkinnedMesh)) return;
+      if (object.userData?.forgeAttachmentTest || object.name === 'forgeHeadWrapAttachmentTest') return;
+
+      const geometry = object.geometry;
+      if (!geometry) return;
+
+      if (!geometry.boundingBox) {
+        geometry.computeBoundingBox();
+      }
+
+      if (!geometry.boundingBox) return;
+
+      object.updateWorldMatrix(true, false);
+      meshBox.copy(geometry.boundingBox).applyMatrix4(object.matrixWorld);
+      meshBox.getSize(meshSize);
+
+      const maxDimension = Math.max(meshSize.x, meshSize.y, meshSize.z);
+      const hasValidBounds = Number.isFinite(meshBox.min.x)
+        && Number.isFinite(meshBox.min.y)
+        && Number.isFinite(meshBox.min.z)
+        && Number.isFinite(meshBox.max.x)
+        && Number.isFinite(meshBox.max.y)
+        && Number.isFinite(meshBox.max.z)
+        && Number.isFinite(maxDimension)
+        && maxDimension > 0
+        && maxDimension < 10000;
+
+      if (!hasValidBounds) {
+        ignoredMeshCount += 1;
+        return;
+      }
+
+      visibleBox.union(meshBox);
+      meshCount += 1;
+    });
+
+    if (!meshCount || visibleBox.isEmpty()) return null;
+
+    const size = visibleBox.getSize(new THREE.Vector3());
+    const center = visibleBox.getCenter(new THREE.Vector3());
+    const sphere = visibleBox.getBoundingSphere(new THREE.Sphere());
+    const rawHeight = Math.max(size.y, 0.001);
+    const characterHeight = THREE.MathUtils.clamp(rawHeight, 0.25, 250);
+    const radius = THREE.MathUtils.clamp(
+      Math.max(sphere.radius, characterHeight * 0.35),
+      characterHeight * 0.35,
+      characterHeight * 1.15
+    );
+
+    return {
+      box: visibleBox.clone(),
+      size,
+      center,
+      radius,
+      characterHeight,
+      rawHeight,
+      meshCount,
+      ignoredMeshCount
+    };
+  }
+
   function fitCameraToObject(THREE, camera, object, controls) {
-    const box = new THREE.Box3().setFromObject(object);
+    const visibleBounds = getForgeVisibleMeshBounds(THREE, object);
+    const box = visibleBounds?.box || new THREE.Box3().setFromObject(object);
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
 
-    const maxSize = Math.max(size.x, size.y, size.z) || 1;
+    const maxSize = visibleBounds?.radius ? visibleBounds.radius * 2 : Math.max(size.x, size.y, size.z) || 1;
     const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camera.fov) / 360));
     const fitWidthDistance = fitHeightDistance / camera.aspect;
     const distance = 1.45 * Math.max(fitHeightDistance, fitWidthDistance);
@@ -2677,16 +2751,27 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   }
 
   function centerThreePreviewModel(THREE, model) {
-    const box = new THREE.Box3().setFromObject(model);
-    const center = box.getCenter(new THREE.Vector3());
+    const visibleBounds = getForgeVisibleMeshBounds(THREE, model);
+    const box = visibleBounds?.box || new THREE.Box3().setFromObject(model);
+    const center = visibleBounds?.center || box.getCenter(new THREE.Vector3());
 
     model.position.x -= center.x;
     model.position.y -= center.y;
     model.position.z -= center.z;
 
+    const centeredVisibleBounds = getForgeVisibleMeshBounds(THREE, model);
+
     return {
       center: center.toArray(),
-      size: box.getSize(new THREE.Vector3()).toArray()
+      size: box.getSize(new THREE.Vector3()).toArray(),
+      visibleBounds: centeredVisibleBounds ? {
+        center: centeredVisibleBounds.center.toArray(),
+        size: centeredVisibleBounds.size.toArray(),
+        radius: centeredVisibleBounds.radius,
+        characterHeight: centeredVisibleBounds.characterHeight,
+        meshCount: centeredVisibleBounds.meshCount,
+        ignoredMeshCount: centeredVisibleBounds.ignoredMeshCount
+      } : null
     };
   }
 
@@ -2695,19 +2780,20 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     previewState.model.updateWorldMatrix(true, true);
 
-    const box = new THREE.Box3().setFromObject(previewState.model);
+    const visibleBounds = getForgeVisibleMeshBounds(THREE, previewState.model);
+    const box = visibleBounds?.box || new THREE.Box3().setFromObject(previewState.model);
     const sphere = box.getBoundingSphere(new THREE.Sphere());
-    const radius = Math.max(sphere.radius, 0.001);
-    const center = sphere.center;
+    const radius = Math.max(visibleBounds?.radius || sphere.radius, 0.001);
+    const center = visibleBounds?.center || sphere.center;
     const camera = previewState.camera;
     const controls = previewState.controls;
     const verticalDistance = radius / Math.sin(THREE.MathUtils.degToRad(camera.fov * 0.5));
     const horizontalDistance = verticalDistance / Math.max(camera.aspect, 0.001);
     const distance = Math.max(verticalDistance, horizontalDistance) * 1.25;
 
-    camera.position.set(center.x, center.y + radius * 0.12, center.z + distance);
+    camera.position.set(center.x, center.y + (visibleBounds?.characterHeight || radius) * 0.06, center.z + distance);
     camera.near = Math.max(distance / 100, 0.001);
-    camera.far = distance + radius * 100;
+    camera.far = Math.max(distance + radius * 20, distance * 4);
     camera.updateProjectionMatrix();
 
     if (controls) {
@@ -2720,7 +2806,15 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       radius,
       boxMin: box.min.toArray(),
       boxMax: box.max.toArray(),
-      cameraPosition: camera.position.toArray()
+      cameraPosition: camera.position.toArray(),
+      visibleBounds: visibleBounds ? {
+        center: visibleBounds.center.toArray(),
+        size: visibleBounds.size.toArray(),
+        characterHeight: visibleBounds.characterHeight,
+        rawHeight: visibleBounds.rawHeight,
+        meshCount: visibleBounds.meshCount,
+        ignoredMeshCount: visibleBounds.ignoredMeshCount
+      } : null
     };
 
     previewState.modelFrameReport = report;
@@ -3780,23 +3874,24 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     previewState.model.updateWorldMatrix(true, true);
     headBone.updateWorldMatrix(true, false);
 
-    const modelBox = new THREE.Box3().setFromObject(previewState.model);
-    const modelSize = modelBox.getSize(new THREE.Vector3());
+    const visibleBounds = getForgeVisibleMeshBounds(THREE, previewState.model);
+    const characterHeight = visibleBounds?.characterHeight || 2;
     const headWorldPosition = headBone.getWorldPosition(new THREE.Vector3());
-    const heightAboveHead = Math.max(modelBox.max.y - headWorldPosition.y, modelSize.y * 0.04);
     const ringWorldPosition = headWorldPosition.clone();
+    const ringRadius = THREE.MathUtils.clamp(characterHeight * 0.035, 0.025, characterHeight * 0.06);
+    const tubeRadius = THREE.MathUtils.clamp(ringRadius * 0.12, 0.004, ringRadius * 0.22);
 
-    ringWorldPosition.y += heightAboveHead * 0.55;
-    ringWorldPosition.z += (modelBox.max.z - headWorldPosition.z) * 0.18;
+    ringWorldPosition.y += characterHeight * 0.035;
+    ringWorldPosition.z += characterHeight * 0.012;
 
     return {
-      modelBox,
-      modelSize,
+      visibleBounds,
+      characterHeight,
       headWorldPosition,
       ringWorldPosition,
       ringLocalPosition: headBone.worldToLocal(ringWorldPosition.clone()),
-      ringRadius: Math.max(modelSize.x, modelSize.z, modelSize.y * 0.08) * 0.055,
-      tubeRadius: Math.max(modelSize.x, modelSize.z, modelSize.y * 0.08) * 0.006
+      ringRadius,
+      tubeRadius
     };
   }
 
@@ -3841,10 +3936,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     );
 
     headWrap.name = 'forgeHeadWrapAttachmentTest';
+    headWrap.userData.forgeAttachmentTest = true;
     headWrap.position.copy(placement.ringLocalPosition);
     headWrap.rotation.set(Math.PI / 2, 0, 0);
     headWrap.scale.set(1, 1, 1);
     headBone.add(headWrap);
+    headWrap.updateWorldMatrix(true, false);
 
     window.forgeHeadAttachmentTest = {
       THREE,
@@ -3853,12 +3950,19 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       targetBoneName: 'mixamorig_Head',
       playableGlbUrl: previewState.currentGlbUrl || '',
       placementReport: {
-        modelBoxMin: placement.modelBox.min.toArray(),
-        modelBoxMax: placement.modelBox.max.toArray(),
-        modelSize: placement.modelSize.toArray(),
+        visibleBounds: placement.visibleBounds ? {
+          boxMin: placement.visibleBounds.box.min.toArray(),
+          boxMax: placement.visibleBounds.box.max.toArray(),
+          center: placement.visibleBounds.center.toArray(),
+          size: placement.visibleBounds.size.toArray(),
+          meshCount: placement.visibleBounds.meshCount,
+          ignoredMeshCount: placement.visibleBounds.ignoredMeshCount
+        } : null,
+        characterHeight: placement.characterHeight,
         headWorldPosition: placement.headWorldPosition.toArray(),
         ringWorldPosition: placement.ringWorldPosition.toArray(),
         ringLocalPosition: placement.ringLocalPosition.toArray(),
+        ringWorldPositionAfterParent: headWrap.getWorldPosition(new THREE.Vector3()).toArray(),
         ringRadius: placement.ringRadius,
         tubeRadius: placement.tubeRadius
       }
