@@ -2584,6 +2584,115 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     return panel;
   }
 
+  function getSelectedRebelForForgePreview() {
+    if (window.selectedForgeRebel) return window.selectedForgeRebel;
+
+    try {
+      const raw = localStorage.getItem('selectedRebel');
+      return raw ? JSON.parse(raw) : null;
+    } catch(e) {
+      return null;
+    }
+  }
+
+  function getActiveCharacterGlbUrl(activeCharacter) {
+    if (!activeCharacter) return '';
+
+    const bundle = activeCharacter.characterBundle || {};
+
+    return (
+      activeCharacter.activeGlbUrl ||
+      activeCharacter.riggedGlbUrl ||
+      bundle.activeGlbUrl ||
+      bundle.riggedGlbUrl ||
+      bundle.animations?.running?.glbUrl ||
+      bundle.animations?.walking?.glbUrl ||
+      bundle.staticGlbUrl ||
+      activeCharacter.staticGlbUrl ||
+      ''
+    );
+  }
+
+  function getLatestBuildGlbUrl(build) {
+    if (!build) return '';
+
+    return (
+      build.output?.riggedGlbUrl ||
+      build.rigging?.riggedGlbUrl ||
+      build.rigging?.response?.result?.rigged_character_glb_url ||
+      build.output?.rebelGlbUrl ||
+      build.output?.glbUrl ||
+      build.engine?.glbUrl ||
+      ''
+    );
+  }
+
+  async function loadActiveForgeCharacterForPreview(rebel) {
+    if (!rebel) return null;
+
+    try {
+      const params = new URLSearchParams();
+      const tokenId = rebel.tokenId ? String(rebel.tokenId) : '';
+      const rebelId = rebel.rebelId || rebel.id || '';
+      const walletAddress = rebel.walletAddress || rebel.owner || rebel.ownerAddress || '';
+
+      params.set('collectionKey', rebel.collectionKey || 'battle_for_colony');
+
+      if (walletAddress) params.set('walletAddress', walletAddress);
+      if (tokenId) params.set('tokenId', tokenId);
+      else if (rebelId) params.set('rebelId', rebelId);
+
+      const response = await fetch(`/api/forge-active-character-get?${params.toString()}`);
+      const data = await response.json();
+
+      if (!response.ok || !data.ok || !data.hasActiveCharacter) return null;
+
+      return data.activeCharacter || null;
+    } catch(e) {
+      console.warn('Could not resolve active Forge character for preview:', e);
+      return null;
+    }
+  }
+
+  async function resolveForge3dPreviewSource() {
+    const selectedRebel = getSelectedRebelForForgePreview();
+    const selectedActiveGlbUrl =
+      selectedRebel?.activeGlbUrl ||
+      getActiveCharacterGlbUrl(selectedRebel?.activeForgeCharacter);
+
+    if (selectedActiveGlbUrl) {
+      return {
+        glbUrl: selectedActiveGlbUrl,
+        reason: 'selected_rebel_active_glb'
+      };
+    }
+
+    const apiActiveCharacter = await loadActiveForgeCharacterForPreview(selectedRebel);
+    const apiActiveGlbUrl = getActiveCharacterGlbUrl(apiActiveCharacter);
+
+    if (apiActiveGlbUrl) {
+      return {
+        glbUrl: apiActiveGlbUrl,
+        reason: 'active_forge_character_api'
+      };
+    }
+
+    const latestGlbBuild = getLatestGlbBuild();
+    const latestBuildGlbUrl = getLatestBuildGlbUrl(latestGlbBuild);
+
+    if (latestBuildGlbUrl) {
+      return {
+        glbUrl: latestBuildGlbUrl,
+        reason: 'latest_forge_build'
+      };
+    }
+
+    return {
+      glbUrl: 'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb',
+      reason: 'fallback_static_test_source'
+    };
+  }
+
     function getLatestGlbBuild() {
     const builds = window.lastForge3dBuildListResponse?.builds || [];
 
@@ -2595,12 +2704,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       return latestBuild;
     }
 
-    return {
-      output: {
-        glbUrl: 'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb'
-      },
-      source: 'local_static_source_test'
-    };
+    return null;
   }
 
   function stopForge3dPreviewLoop() {
@@ -2982,8 +3086,13 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     if (!panel || !content) return;
 
-    const latestGlbBuild = getLatestGlbBuild();
-   const glbUrl = 'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb';
+    const previewSource = await resolveForge3dPreviewSource();
+    const glbUrl = previewSource.glbUrl;
+
+    console.log('Forge preview source resolved:', {
+      glbUrl,
+      reason: previewSource.reason
+    });
 
     if (!glbUrl) {
       clearForge3dPreview();
