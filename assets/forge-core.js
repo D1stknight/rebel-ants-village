@@ -1316,7 +1316,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           radial-gradient(circle at 77% 82%, rgba(88,255,166,.09), transparent 28%),
           linear-gradient(135deg, rgba(4,16,19,.98), rgba(3,7,12,.985) 58%, rgba(2,12,17,.98));
         border-radius: 8px;
-        padding: 18px 20px 20px;
+        padding: 24px 20px 20px;
         display: grid;
         grid-template-columns: minmax(142px, 178px) minmax(0, 1fr);
         gap: 20px;
@@ -1341,7 +1341,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         content: '◆';
         position: absolute;
         left: 50%;
-        top: -1px;
+        top: 1px;
         transform: translate(-50%, -50%);
         width: 32px;
         height: 20px;
@@ -1356,27 +1356,25 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       .forge-3d-build-collapse-toggle {
         position: absolute;
-        left: 50%;
-        top: 9px;
+        right: 14px;
+        top: 12px;
         z-index: 3;
-        transform: translateX(-50%);
-        width: 42px;
-        height: 22px;
+        width: 28px;
+        height: 28px;
         display: grid;
         place-items: center;
         border: 1px solid rgba(217,168,76,.5);
-        border-radius: 0 0 12px 12px;
+        border-radius: 999px;
         background: rgba(3,7,12,.94);
         color: #f3c45f;
-        font-size: 14px;
+        font-size: 12px;
         line-height: 1;
         cursor: pointer;
         box-shadow: 0 8px 18px rgba(0,0,0,.35);
       }
 
       .forge-3d-build-row.collapsed .forge-3d-build-collapse-toggle {
-        transform: translateX(-50%) rotate(-90deg);
-        border-radius: 12px;
+        transform: rotate(-90deg);
       }
 
       .forge-3d-build-row.collapsed .forge-3d-build-side-item,
@@ -1390,6 +1388,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-build-row.collapsed .forge-3d-build-header {
         border-bottom: 0;
         padding-bottom: 0;
+      }
+
+      .forge-3d-build-row.collapsed {
+        padding-top: 26px;
+        padding-bottom: 18px;
       }
 
       .forge-3d-build-thumb {
@@ -1430,6 +1433,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         text-transform: uppercase;
         font-weight: 800;
         line-height: 1.45;
+        overflow-wrap: anywhere;
       }
 
       .forge-3d-build-meta {
@@ -1516,6 +1520,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-build-title-area {
         display: grid;
         gap: 8px;
+        padding-right: 36px;
       }
 
       .forge-3d-build-badges,

@@ -2335,6 +2335,12 @@ function syncForgePreviewRootToPlayer(previewRoot) {
 }
 
 function removeForgeVisualRootMotion(animationGroups, mode = 'forge') {
+  const preserveRootMotionModes = new Set(['jump', 'runJump']);
+  if (preserveRootMotionModes.has(mode)) {
+    console.log('Forge visual root motion preserved:', mode);
+    return;
+  }
+
   const rootMotionTargets = new Set([
     'hips',
     'mixamorig_hips',
@@ -2408,18 +2414,6 @@ const FORGE_DONOR_ACTION_DURATIONS_MS = {
 };
 
 const FORGE_DONOR_ACTION_MOTION = {
-  jump: {
-    delayMs: 520,
-    durationMs: 760,
-    lift: 1.45,
-    forward: 0
-  },
-  runJump: {
-    delayMs: 180,
-    durationMs: 1180,
-    lift: 1.35,
-    forward: 5.2
-  }
 };
 
 const FORGE_DONOR_ACTION_LABELS = {
