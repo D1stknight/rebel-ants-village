@@ -1309,22 +1309,26 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       .forge-3d-build-row {
-        border: 1px solid rgba(255,255,255,.12);
-        background: rgba(0,0,0,.22);
-        border-radius: 14px;
-        padding: 12px;
+        position: relative;
+        border: 1px solid rgba(200,146,42,.34);
+        background:
+          linear-gradient(135deg, rgba(5,18,22,.94), rgba(4,8,14,.96)),
+          radial-gradient(circle at 24% 16%, rgba(94,207,202,.12), transparent 30%);
+        border-radius: 16px;
+        padding: 16px;
         display: grid;
-        grid-template-columns: 86px minmax(0, 1fr);
-        gap: 12px;
+        grid-template-columns: 170px minmax(0, 1fr);
+        gap: 18px;
         align-items: start;
+        box-shadow: inset 0 0 0 1px rgba(255,216,128,.08), 0 18px 46px rgba(0,0,0,.24);
       }
 
       .forge-3d-build-thumb {
-        width: 86px;
-        aspect-ratio: 1;
-        border: 1px solid rgba(255,255,255,.14);
-        border-radius: 10px;
-        background: rgba(255,255,255,.06);
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        border: 1px solid rgba(200,146,42,.58);
+        border-radius: 12px;
+        background: radial-gradient(circle at center, rgba(94,207,202,.16), rgba(0,0,0,.34));
         overflow: hidden;
         display: grid;
         place-items: center;
@@ -1339,7 +1343,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-build-thumb img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
         display: block;
       }
 
@@ -1348,35 +1352,210 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       .forge-3d-build-status {
-        color: #5ecfca;
+        color: #d9a84c;
+        font-size: 14px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 800;
+        line-height: 1.45;
+      }
+
+      .forge-3d-build-meta {
+        color: rgba(243,230,191,.74);
+        font-size: 12px;
+        line-height: 1.65;
+      }
+
+      .forge-3d-build-side {
+        display: grid;
+        gap: 12px;
+      }
+
+      .forge-3d-build-side-item {
+        display: grid;
+        grid-template-columns: 24px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255,255,255,.09);
+      }
+
+      .forge-3d-build-side-icon {
+        color: #d9a84c;
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .forge-3d-build-side-label {
+        color: #d9a84c;
+        font-family: 'Cinzel', serif;
         font-size: 10px;
         letter-spacing: 2px;
         text-transform: uppercase;
         font-weight: 800;
       }
 
-      .forge-3d-build-meta {
-        color: rgba(243,230,191,.74);
+      .forge-3d-build-side-value {
+        margin-top: 4px;
+        color: rgba(243,230,191,.84);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .forge-3d-build-header {
+        display: grid;
+        gap: 10px;
+      }
+
+      .forge-3d-build-badges,
+      .forge-3d-animation-pack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .forge-3d-build-badge,
+      .forge-3d-pack-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 32px;
+        padding: 7px 11px;
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 8px;
+        background: rgba(255,255,255,.045);
+        color: rgba(243,230,191,.76);
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .forge-3d-build-badge.ready,
+      .forge-3d-pack-pill.ready {
+        border-color: rgba(88,255,166,.38);
+        background: rgba(88,255,166,.09);
+        color: #9dffc7;
+      }
+
+      .forge-3d-build-badge.info {
+        border-color: rgba(94,207,202,.36);
+        background: rgba(94,207,202,.09);
+        color: #5ecfca;
+      }
+
+      .forge-3d-build-layout {
+        display: grid;
+        grid-template-columns: minmax(0, .82fr) minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .forge-3d-build-section {
+        border-top: 1px solid rgba(255,255,255,.09);
+        padding-top: 12px;
+      }
+
+      .forge-3d-build-section-title {
+        color: #d9a84c;
+        font-family: 'Cinzel', serif;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+
+      .forge-3d-status-row {
+        display: grid;
+        grid-template-columns: minmax(120px, .45fr) minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        padding: 9px 0;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+      }
+
+      .forge-3d-status-row:last-child {
+        border-bottom: 0;
+      }
+
+      .forge-3d-status-label {
+        color: #d9a84c;
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 1.6px;
+        text-transform: uppercase;
+      }
+
+      .forge-3d-status-value {
+        color: rgba(243,230,191,.84);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .forge-3d-status-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .forge-3d-link-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        padding: 8px 10px;
+        border: 1px solid rgba(94,207,202,.28);
+        background: rgba(94,207,202,.07);
+        color: #5ecfca;
+        border-radius: 7px;
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        text-decoration: none;
+      }
+
+      .forge-3d-dev-details {
+        margin-top: 10px;
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 8px;
+        background: rgba(0,0,0,.18);
+      }
+
+      .forge-3d-dev-details summary {
+        cursor: pointer;
+        padding: 9px 10px;
+        color: rgba(243,230,191,.68);
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .forge-3d-dev-details-content {
+        padding: 0 10px 10px;
+        color: rgba(243,230,191,.62);
         font-size: 11px;
         line-height: 1.7;
-        margin-top: 6px;
       }
 
       .forge-3d-build-steps {
         display: grid;
-        gap: 7px;
-        margin-top: 10px;
+        gap: 8px;
+        margin-top: 12px;
       }
 
       .forge-3d-build-step {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 8px;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        gap: 10px;
         align-items: center;
-        padding: 8px 9px;
-        border: 1px solid rgba(255,255,255,.1);
+        padding: 9px 10px;
+        border: 1px solid rgba(88,255,166,.18);
         border-radius: 10px;
-        background: rgba(255,255,255,.035);
+        background: rgba(88,255,166,.055);
         color: rgba(243,230,191,.66);
         font-size: 10px;
         letter-spacing: 1px;
@@ -1400,6 +1579,38 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         margin: 0;
         padding: 7px 9px;
         white-space: nowrap;
+      }
+
+      .forge-3d-step-number {
+        width: 24px;
+        height: 24px;
+        display: inline-grid;
+        place-items: center;
+        border: 1px solid rgba(88,255,166,.45);
+        border-radius: 999px;
+        color: #f3e6bf;
+        background: rgba(0,0,0,.28);
+      }
+
+      .forge-3d-build-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(200,146,42,.22);
+      }
+
+      .forge-3d-build-actions .forge-3d-step-action {
+        margin: 0;
+        min-height: 42px;
+        padding: 11px 14px;
+      }
+
+      .forge-3d-danger-action {
+        border-color: rgba(255,87,87,.38) !important;
+        background: rgba(255,87,87,.09) !important;
+        color: #ff8d74 !important;
       }
 
       .forge-3d-step-action + .forge-3d-step-action {
@@ -1428,14 +1639,26 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       @media (max-width: 640px) {
         .forge-3d-build-row {
-          grid-template-columns: 64px minmax(0, 1fr);
+          grid-template-columns: 1fr;
         }
 
         .forge-3d-build-thumb {
-          width: 64px;
+          width: min(220px, 100%);
         }
 
         .forge-3d-build-step {
+          grid-template-columns: 28px 1fr;
+        }
+
+        .forge-3d-build-step > span:last-child {
+          grid-column: 2;
+        }
+
+        .forge-3d-build-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .forge-3d-status-row {
           grid-template-columns: 1fr;
         }
       }
@@ -1940,6 +2163,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
           return `
             <div class="${className}">
+              <span class="forge-3d-step-number">${index + 1}</span>
               <span>${step.label}${step.done ? ' ✓' : ''}</span>
               ${step.done ? `<span>${step.doneHtml || 'Done'}</span>` : isNext ? step.actionHtml : '<span>Waiting</span>'}
             </div>
@@ -3020,6 +3244,22 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       content.className = 'forge-3d-build-list';
       content.innerHTML = builds.slice(0, 5).map((build, index) => {
+        const renderOpenDownloadLinks = (url, label) => {
+          if (!url) return '';
+
+          return `
+            <div class="forge-3d-status-links">
+              <a class="forge-3d-link-btn" href="${url}" target="_blank" rel="noopener">Open ${label}</a>
+              <a class="forge-3d-link-btn" href="${url}" download>Download ${label}</a>
+            </div>
+          `;
+        };
+        const renderStatusRow = ({ label, value, linksHtml = '' }) => `
+          <div class="forge-3d-status-row">
+            <div class="forge-3d-status-label">${label}</div>
+            <div class="forge-3d-status-value">${value}${linksHtml}</div>
+          </div>
+        `;
         const isActiveBuild = forgeBuildIsActive(build, activeForgeCharacter);
         const statusText = formatBuildStatus(build.status, build);
         const created = build.createdAt ? new Date(build.createdAt).toLocaleString() : 'Unknown time';
@@ -3164,7 +3404,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           ? '<br>Rigged Storage: Rebel Forge Blob ✓'
           : '';
         const deleteBuildHtml =
-          `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.deleteForge3dBuild('${build.buildId}')">Delete Build</button>`;
+          `<button class="forge-3d-build-refresh-btn forge-3d-step-action forge-3d-danger-action" type="button" onclick="window.deleteForge3dBuild('${build.buildId}')">Delete Build</button>`;
 
         const activeCharacterGlbUrl = riggedGlbUrl || activeGlbUrl;
         const isSavedForLanding = forgeBuildIsSavedForLanding(build);
@@ -3179,6 +3419,58 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           : glbUrl && !isStoredInRebelBlob
             ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeGlbInRebelBlob('${build.buildId}')">Store GLB</button>`
             : '';
+        const completedBadgeHtml = buildComplete
+          ? '<span class="forge-3d-build-badge ready">✓ Completed</span>'
+          : '<span class="forge-3d-build-badge">Queued</span>';
+        const glbReadyBadgeHtml = activeCharacterGlbUrl
+          ? '<span class="forge-3d-build-badge info">◇ GLB Ready</span>'
+          : '<span class="forge-3d-build-badge">GLB Pending</span>';
+        const animationPackHtml = `
+          <div class="forge-3d-animation-pack">
+            <span class="forge-3d-pack-pill${idleGlbUrl ? ' ready' : ''}">Idle ${idleGlbUrl ? '✓' : 'Pending'}</span>
+            <span class="forge-3d-pack-pill${walkingRebelGlbUrl ? ' ready' : ''}">Walk ${walkingRebelGlbUrl ? '✓' : 'Pending'}</span>
+            <span class="forge-3d-pack-pill${runningRebelGlbUrl ? ' ready' : ''}">Run ${runningRebelGlbUrl ? '✓' : 'Pending'}</span>
+            <span class="forge-3d-pack-pill">Jump Later</span>
+            <span class="forge-3d-pack-pill">Kick Later</span>
+          </div>
+        `;
+        const sourceLinksHtml = renderOpenDownloadLinks(activeGlbUrl, 'GLB');
+        const riggedLinksHtml = renderOpenDownloadLinks(riggedGlbUrl, 'Rigged GLB');
+        const idleLinksHtml = renderOpenDownloadLinks(idleGlbUrl, 'Idle GLB');
+        const walkingLinksHtml = renderOpenDownloadLinks(walkingGlbUrl, 'Walking GLB');
+        const runningLinksHtml = renderOpenDownloadLinks(runningGlbUrl, 'Running GLB');
+        const storageRowsHtml = [
+          renderStatusRow({
+            label: 'Storage',
+            value: isStoredInRebelBlob ? 'Rebel Forge Blob ✓' : 'Pending'
+          }),
+          renderStatusRow({
+            label: 'Rigging',
+            value: rigTaskId ? 'Completed ✓' : 'Not started'
+          }),
+          renderStatusRow({
+            label: 'Rigged Storage',
+            value: isRiggedStoredInRebelBlob ? 'Rebel Forge Blob ✓' : 'Pending',
+            linksHtml: riggedLinksHtml
+          })
+        ].join('');
+        const animationRowsHtml = [
+          renderStatusRow({
+            label: 'Idle Animation',
+            value: idleGlbUrl ? 'Rebel Forge Blob ✓' : idleAnimationTaskId ? 'Meshy idle ready for storage' : 'Not generated',
+            linksHtml: idleLinksHtml
+          }),
+          renderStatusRow({
+            label: 'Walking Animation',
+            value: walkingRebelGlbUrl ? 'Rebel Forge Blob ✓' : walkingMeshyGlbUrl ? 'Ready for storage' : 'Pending',
+            linksHtml: walkingLinksHtml
+          }),
+          renderStatusRow({
+            label: 'Running Animation',
+            value: runningRebelGlbUrl ? 'Rebel Forge Blob ✓' : runningMeshyGlbUrl ? 'Ready for storage' : 'Pending',
+            linksHtml: runningLinksHtml
+          })
+        ].join('');
         const stepHtml = renderForgeBuildSteps([
           {
             label: 'Step 1: Start 3D Build',
@@ -3198,21 +3490,26 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             actionHtml: storeBuildActionHtml
           },
           {
-            label: 'Step 4: Store Walking Animation',
+            label: 'Step 4: Store Idle Animation',
+            done: Boolean(idleGlbUrl),
+            actionHtml: storeMeshyIdleHtml
+          },
+          {
+            label: 'Step 5: Store Walking Animation',
             done: Boolean(walkingRebelGlbUrl),
             actionHtml: walkingMeshyGlbUrl && !walkingRebelGlbUrl
               ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeWalkingGlbInRebelBlob('${build.buildId}')">Store Walking</button>`
               : ''
           },
           {
-            label: 'Step 5: Store Running Animation',
+            label: 'Step 6: Store Running Animation',
             done: Boolean(runningRebelGlbUrl),
             actionHtml: runningMeshyGlbUrl && !runningRebelGlbUrl
               ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeRunningGlbInRebelBlob('${build.buildId}')">Store Running</button>`
               : ''
           },
           {
-            label: 'Step 6: Playable Character Saved',
+            label: 'Step 7: Playable Character Saved',
             done: isActiveBuild || isSavedForLanding,
             doneHtml: isActiveBuild ? 'Currently Active ✓' : 'Character Ready on Landing ✓',
             actionHtml: activeCharacterGlbUrl && !isSavedForLanding
@@ -3223,25 +3520,73 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
         return `
           <div class="forge-3d-build-row">
-            ${renderForgeBuildThumbnail(build)}
-            <div class="forge-3d-build-body">
-              <div class="forge-3d-build-status">${index === 0 ? 'Latest Build — ' : ''}${statusText}</div>
-              <div class="forge-3d-build-meta">
-                Source: ${sourceConceptId}<br>
-                Created: ${created}<br>
-                Output: ${activeCharacterGlbUrl ? 'GLB Ready' : 'Future GLB Character'}
-                ${openGlbHtml}${downloadGlbHtml}
-                ${storedHtml}
-                ${rigStatusHtml}
-                ${riggedGlbHtml}
-                ${riggedStoredHtml}
-                ${walkingGlbHtml}
-                ${walkingStoredHtml}
-                ${runningGlbHtml}
-                ${runningStoredHtml}
+            <div class="forge-3d-build-side">
+              ${renderForgeBuildThumbnail(build)}
+              <div class="forge-3d-build-side-item">
+                <div class="forge-3d-build-side-icon">▧</div>
+                <div>
+                  <div class="forge-3d-build-side-label">Source</div>
+                  <div class="forge-3d-build-side-value">${sourceConceptId}</div>
+                </div>
               </div>
+              <div class="forge-3d-build-side-item">
+                <div class="forge-3d-build-side-icon">◷</div>
+                <div>
+                  <div class="forge-3d-build-side-label">Created</div>
+                  <div class="forge-3d-build-side-value">${created}</div>
+                </div>
+              </div>
+              <div class="forge-3d-build-side-item">
+                <div class="forge-3d-build-side-icon">◇</div>
+                <div>
+                  <div class="forge-3d-build-side-label">Output</div>
+                  <div class="forge-3d-build-side-value">${activeCharacterGlbUrl ? 'GLB Ready' : 'Future GLB Character'}${sourceLinksHtml}</div>
+                </div>
+              </div>
+            </div>
+            <div class="forge-3d-build-body">
+              <div class="forge-3d-build-header">
+                <div class="forge-3d-build-status">${index === 0 ? 'Latest Build — ' : ''}${statusText}</div>
+                <div class="forge-3d-build-badges">${completedBadgeHtml}${glbReadyBadgeHtml}</div>
+                ${animationPackHtml}
+              </div>
+              <div class="forge-3d-build-layout">
+                <div class="forge-3d-build-section">
+                  <div class="forge-3d-build-section-title">Storage & Rigging</div>
+                  ${storageRowsHtml}
+                </div>
+                <div class="forge-3d-build-section">
+                  <div class="forge-3d-build-section-title">Animation Pack</div>
+                  ${animationRowsHtml}
+                </div>
+              </div>
+              <details class="forge-3d-dev-details">
+                <summary>Advanced / Dev Details</summary>
+                <div class="forge-3d-dev-details-content">
+                  Meshy Rig Task: ${rigTaskId || 'None'}<br>
+                  Raw Build Status: ${statusText}<br>
+                  ${storedHtml || ''}
+                  ${rigStatusHtml || ''}
+                  ${riggedStoredHtml || ''}
+                  ${walkingStoredHtml || ''}
+                  ${runningStoredHtml || ''}
+                  ${openGlbHtml || ''}${downloadGlbHtml || ''}
+                  ${riggedGlbHtml || ''}
+                  ${walkingGlbHtml || ''}
+                  ${runningGlbHtml || ''}
+                </div>
+              </details>
+              <div class="forge-3d-build-section">
+                <div class="forge-3d-build-section-title">Build Steps</div>
               ${stepHtml}
-              <div style="margin-top:10px;">${previewBuildHtml}${generateMeshyIdleHtml}${storeMeshyIdleHtml}${updateActiveCharacterHtml}${deleteBuildHtml}</div>
+              </div>
+            </div>
+            <div class="forge-3d-build-actions">
+              ${previewBuildHtml}
+              ${generateMeshyIdleHtml}
+              ${storeMeshyIdleHtml}
+              ${updateActiveCharacterHtml}
+              ${deleteBuildHtml}
             </div>
           </div>
         `;
