@@ -2168,6 +2168,30 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         build.rigging?.storedAnimations?.idle?.storedAnimationUrl ||
         build.output?.meshyAnimations?.idle?.animationGlbUrl ||
         null;
+      const jumpGlbUrl =
+        build.output?.jumpGlbUrl ||
+        build.output?.storedAnimations?.jump?.storedAnimationUrl ||
+        build.rigging?.storedAnimations?.jump?.storedAnimationUrl ||
+        build.output?.meshyAnimations?.jump?.animationGlbUrl ||
+        null;
+      const runJumpGlbUrl =
+        build.output?.runJumpGlbUrl ||
+        build.output?.storedAnimations?.runJump?.storedAnimationUrl ||
+        build.rigging?.storedAnimations?.runJump?.storedAnimationUrl ||
+        build.output?.meshyAnimations?.runJump?.animationGlbUrl ||
+        null;
+      const highKickGlbUrl =
+        build.output?.highKickGlbUrl ||
+        build.output?.storedAnimations?.highKick?.storedAnimationUrl ||
+        build.rigging?.storedAnimations?.highKick?.storedAnimationUrl ||
+        build.output?.meshyAnimations?.highKick?.animationGlbUrl ||
+        null;
+      const roundhouseKickGlbUrl =
+        build.output?.roundhouseKickGlbUrl ||
+        build.output?.storedAnimations?.roundhouseKick?.storedAnimationUrl ||
+        build.rigging?.storedAnimations?.roundhouseKick?.storedAnimationUrl ||
+        build.output?.meshyAnimations?.roundhouseKick?.animationGlbUrl ||
+        null;
 
       if (!activeGlbUrl) return;
 
@@ -2186,6 +2210,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         idleGlbUrl,
         walkingGlbUrl,
         runningGlbUrl,
+        jumpGlbUrl,
+        runJumpGlbUrl,
+        highKickGlbUrl,
+        roundhouseKickGlbUrl,
         activeCharacterModelType: riggedGlbUrl ? 'rigged_forge_glb' : 'static_forge_glb',
         activeCharacterSource: 'forge_glb',
         characterBundle: {
@@ -2201,7 +2229,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           animations: {
             idle: idleGlbUrl ? { name: 'idle', glbUrl: idleGlbUrl } : null,
             walking: walkingGlbUrl ? { name: 'walking', glbUrl: walkingGlbUrl } : null,
-            running: runningGlbUrl ? { name: 'running', glbUrl: runningGlbUrl } : null
+            running: runningGlbUrl ? { name: 'running', glbUrl: runningGlbUrl } : null,
+            jump: jumpGlbUrl ? { name: 'jump', glbUrl: jumpGlbUrl } : null,
+            runJump: runJumpGlbUrl ? { name: 'runJump', glbUrl: runJumpGlbUrl } : null,
+            highKick: highKickGlbUrl ? { name: 'highKick', glbUrl: highKickGlbUrl } : null,
+            roundhouseKick: roundhouseKickGlbUrl ? { name: 'roundhouseKick', glbUrl: roundhouseKickGlbUrl } : null
           },
           armatureAnimations: {
             idle: null,
@@ -3339,6 +3371,190 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   }
 
+  const FORGE_MESHY_NATIVE_ACTIONS = [
+    { key: 'jump', label: 'Jump', actionId: 86 },
+    { key: 'highKick', label: 'High Kick', actionId: 215 },
+    { key: 'roundhouseKick', label: 'Roundhouse Kick', actionId: 207 },
+    { key: 'runJump', label: 'Run Jump', actionId: 13 }
+  ];
+
+  function getForgeMeshyAnimationState(build, animationKey) {
+    const task = build?.rigging?.animationTasks?.[animationKey] || null;
+    const storedUrl =
+      build?.output?.[`${animationKey}GlbUrl`] ||
+      build?.output?.storedAnimations?.[animationKey]?.storedAnimationUrl ||
+      build?.rigging?.storedAnimations?.[animationKey]?.storedAnimationUrl ||
+      '';
+    const meshyUrl =
+      build?.output?.meshyAnimations?.[animationKey]?.animationGlbUrl ||
+      task?.response?.result?.animation_glb_url ||
+      task?.response?.animation_glb_url ||
+      '';
+
+    return {
+      task,
+      taskId: task?.taskId || '',
+      status: task?.status || build?.output?.meshyAnimations?.[animationKey]?.status || '',
+      storedUrl,
+      meshyUrl,
+      displayUrl: storedUrl || meshyUrl,
+      isStored: Boolean(storedUrl),
+      isReady: Boolean(storedUrl || meshyUrl)
+    };
+  }
+
+  function getForgeMeshyAnimationActionButtons(build, action) {
+    if (!build?.rigging?.taskId) return '';
+
+    const state = getForgeMeshyAnimationState(build, action.key);
+
+    if (state.isStored) return '';
+
+    if (state.meshyUrl) {
+      return `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeMeshyNativeAnimation('${build.buildId}', '${action.key}')">Store ${action.label}</button>`;
+    }
+
+    if (state.taskId) {
+      return `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.checkForgeMeshyNativeAnimation('${build.buildId}', '${action.key}')">Check ${action.label}</button>`;
+    }
+
+    return `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.generateForgeMeshyNativeAnimation('${build.buildId}', '${action.key}', ${action.actionId})">Generate ${action.label}</button>`;
+  }
+
+  async function runForgeMeshyNativeAnimationRequest({
+    buildId,
+    animationKey,
+    actionId = null,
+    endpoint,
+    loadingText,
+    successText,
+    defaultButtonText
+  }) {
+    if (!buildId || !animationKey || !endpoint) return;
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+    const originalButtonText = activeButton ? activeButton.textContent : defaultButtonText;
+
+    if (activeButton) {
+      activeButton.textContent = loadingText;
+      activeButton.disabled = true;
+    }
+
+    try {
+      const body = { buildId, animationKey };
+      if (actionId !== null && actionId !== undefined) body.actionId = actionId;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch(parseError) {
+        data = {
+          ok: false,
+          error: 'Meshy native animation route did not return JSON',
+          detail: parseError?.message || 'Response JSON parse failed'
+        };
+      }
+
+      console.log('Forge Meshy native animation response:', {
+        endpoint,
+        httpStatus: response.status,
+        ok: response.ok,
+        data
+      });
+
+      window.lastForgeMeshyNativeAnimationResponse = data;
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.detail || data.error || 'Meshy native animation request failed');
+      }
+
+      if (activeButton) {
+        activeButton.textContent = successText;
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus(successText, 'success');
+      }
+
+      if (typeof window.renderForge3dBuildStatusPanel === 'function') {
+        await window.renderForge3dBuildStatusPanel();
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || defaultButtonText;
+          activeButton.disabled = false;
+        }
+      }, 2200);
+    } catch(e) {
+      console.warn('Forge Meshy native animation request failed:', e, window.lastForgeMeshyNativeAnimationResponse);
+
+      if (activeButton) {
+        activeButton.textContent = 'Animation Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        const detail =
+          window.lastForgeMeshyNativeAnimationResponse?.detail ||
+          window.lastForgeMeshyNativeAnimationResponse?.meshyError?.message ||
+          e.message ||
+          'Unknown error';
+        window.setForgeStatus(`Could not update Meshy ${animationKey} animation: ${detail}`, 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || defaultButtonText;
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
+  async function generateForgeMeshyNativeAnimation(buildId, animationKey, actionId) {
+    return runForgeMeshyNativeAnimationRequest({
+      buildId,
+      animationKey,
+      actionId,
+      endpoint: '/api/forge-3d-engine-meshy-animation-create',
+      loadingText: 'Generating...',
+      successText: `${animationKey} generation started ✓`,
+      defaultButtonText: `Generate ${animationKey}`
+    });
+  }
+
+  async function checkForgeMeshyNativeAnimation(buildId, animationKey) {
+    return runForgeMeshyNativeAnimationRequest({
+      buildId,
+      animationKey,
+      endpoint: '/api/forge-3d-engine-meshy-animation-status',
+      loadingText: 'Checking...',
+      successText: `${animationKey} status updated ✓`,
+      defaultButtonText: `Check ${animationKey}`
+    });
+  }
+
+  async function storeForgeMeshyNativeAnimation(buildId, animationKey) {
+    return runForgeMeshyNativeAnimationRequest({
+      buildId,
+      animationKey,
+      endpoint: '/api/forge-3d-store-meshy-animation-glb',
+      loadingText: 'Storing...',
+      successText: `${animationKey} stored ✓`,
+      defaultButtonText: `Store ${animationKey}`
+    });
+  }
+
    async function renderForge3dBuildStatusPanel() {
     ensure3dBuildStatusStyles();
 
@@ -3556,10 +3772,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <span class="forge-3d-pack-pill${idleGlbUrl ? ' ready' : ''}">Idle ${idleGlbUrl ? '✓' : 'Pending'}</span>
             <span class="forge-3d-pack-pill${walkingRebelGlbUrl ? ' ready' : ''}">Walk ${walkingRebelGlbUrl ? '✓' : 'Pending'}</span>
             <span class="forge-3d-pack-pill${runningRebelGlbUrl ? ' ready' : ''}">Run ${runningRebelGlbUrl ? '✓' : 'Pending'}</span>
-            <span class="forge-3d-pack-pill ready">Jump ✓</span>
-            <span class="forge-3d-pack-pill ready">Run Jump ✓</span>
-            <span class="forge-3d-pack-pill ready">High Kick ✓</span>
-            <span class="forge-3d-pack-pill ready">Roundhouse ✓</span>
+            ${FORGE_MESHY_NATIVE_ACTIONS.map((action) => {
+              const state = getForgeMeshyAnimationState(build, action.key);
+              return `<span class="forge-3d-pack-pill${state.isStored ? ' ready' : ''}">${action.label} ${state.isStored ? '✓' : state.taskId ? 'Generating' : 'Pending'}</span>`;
+            }).join('')}
           </div>
         `;
         const sourceLinksHtml = renderOpenDownloadLinks(activeGlbUrl, 'GLB');
@@ -3570,14 +3786,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const idleStoredHtml = idleGlbUrl
           ? '<br>Idle Animation: Rebel Forge Blob ✓'
           : '';
-        const donorJumpGlbUrl = 'assets/forge-animations/build_1778974543200-jump.glb';
-        const donorRunJumpGlbUrl = 'assets/forge-animations/build_1778974543200-run-jump.glb';
-        const donorHighKickGlbUrl = 'assets/forge-animations/build_1778974543200-high-kick.glb';
-        const donorRoundhouseKickGlbUrl = 'assets/forge-animations/build_1778974543200-roundhouse-kick.glb';
-        const donorJumpLinksHtml = renderOpenDownloadLinks(donorJumpGlbUrl, 'Jump GLB');
-        const donorRunJumpLinksHtml = renderOpenDownloadLinks(donorRunJumpGlbUrl, 'Run Jump GLB');
-        const donorHighKickLinksHtml = renderOpenDownloadLinks(donorHighKickGlbUrl, 'High Kick GLB');
-        const donorRoundhouseKickLinksHtml = renderOpenDownloadLinks(donorRoundhouseKickGlbUrl, 'Roundhouse Kick GLB');
+        const nativeActionStates = FORGE_MESHY_NATIVE_ACTIONS.reduce((acc, action) => {
+          acc[action.key] = getForgeMeshyAnimationState(build, action.key);
+          return acc;
+        }, {});
+        const nativeActionButtonsHtml = FORGE_MESHY_NATIVE_ACTIONS
+          .map((action) => getForgeMeshyAnimationActionButtons(build, action))
+          .filter(Boolean)
+          .join('');
         const mainStatusRowsHtml = [
           renderStatusRow({
             label: 'Storage',
@@ -3607,25 +3823,13 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             value: runningRebelGlbUrl ? 'Rebel Forge Blob ✓' : runningMeshyGlbUrl ? 'Ready for storage' : 'Pending',
             linksHtml: runningLinksHtml
           }),
-          renderStatusRow({
-            label: 'Jump Animation',
-            value: 'Donor Ready ✓',
-            linksHtml: donorJumpLinksHtml
-          }),
-          renderStatusRow({
-            label: 'Run Jump Animation',
-            value: 'Donor Ready ✓',
-            linksHtml: donorRunJumpLinksHtml
-          }),
-          renderStatusRow({
-            label: 'High Kick Animation',
-            value: 'Donor Ready ✓',
-            linksHtml: donorHighKickLinksHtml
-          }),
-          renderStatusRow({
-            label: 'Roundhouse Kick',
-            value: 'Donor Ready ✓',
-            linksHtml: donorRoundhouseKickLinksHtml
+          ...FORGE_MESHY_NATIVE_ACTIONS.map((action) => {
+            const state = nativeActionStates[action.key];
+            return renderStatusRow({
+              label: `${action.label} Animation`,
+              value: state.isStored ? 'Rebel Forge Blob ✓' : state.isReady ? 'Ready for storage' : state.taskId ? 'Generating' : 'Not generated',
+              linksHtml: renderOpenDownloadLinks(state.displayUrl, `${action.label} GLB`)
+            });
           })
         ].join('');
         const stepHtml = renderForgeBuildSteps([
@@ -3743,6 +3947,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
               ${previewBuildHtml}
               ${generateMeshyIdleHtml}
               ${storeMeshyIdleHtml}
+              ${nativeActionButtonsHtml}
               ${updateActiveCharacterHtml}
               ${deleteBuildHtml}
             </div>
@@ -3796,6 +4001,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   window.generateMeshyIdleAnimationTestForBuild = generateMeshyIdleAnimationTestForBuild;
   window.checkMeshyIdleAnimationStatusForBuild = checkMeshyIdleAnimationStatusForBuild;
   window.storeMeshyIdleAnimationGlbInRebelBlob = storeMeshyIdleAnimationGlbInRebelBlob;
+  window.generateForgeMeshyNativeAnimation = generateForgeMeshyNativeAnimation;
+  window.checkForgeMeshyNativeAnimation = checkForgeMeshyNativeAnimation;
+  window.storeForgeMeshyNativeAnimation = storeForgeMeshyNativeAnimation;
 
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(boot3dBuildStatusPanel, 200);

@@ -70,6 +70,10 @@ function sanitizeActiveCharacterPayload(payload) {
   const outputIdleGlbUrl = output.idleGlbUrl || null;
   const outputWalkingGlbUrl = output.walkingGlbUrl || null;
   const outputRunningGlbUrl = output.runningGlbUrl || null;
+  const outputJumpGlbUrl = output.jumpGlbUrl || null;
+  const outputRunJumpGlbUrl = output.runJumpGlbUrl || null;
+  const outputHighKickGlbUrl = output.highKickGlbUrl || null;
+  const outputRoundhouseKickGlbUrl = output.roundhouseKickGlbUrl || null;
   const previewThumbnail =
     build.sourceImage?.imageUrl ||
     build.productionReference?.imageUrl ||
@@ -115,6 +119,30 @@ function sanitizeActiveCharacterPayload(payload) {
     output.runningGlbUrl ||
     storedAnimations.running?.storedAnimationUrl ||
     meshyBasicAnimations.running_glb_url ||
+    null;
+
+  const jumpGlbUrl =
+    output.jumpGlbUrl ||
+    storedAnimations.jump?.storedAnimationUrl ||
+    output.meshyAnimations?.jump?.animationGlbUrl ||
+    null;
+
+  const runJumpGlbUrl =
+    output.runJumpGlbUrl ||
+    storedAnimations.runJump?.storedAnimationUrl ||
+    output.meshyAnimations?.runJump?.animationGlbUrl ||
+    null;
+
+  const highKickGlbUrl =
+    output.highKickGlbUrl ||
+    storedAnimations.highKick?.storedAnimationUrl ||
+    output.meshyAnimations?.highKick?.animationGlbUrl ||
+    null;
+
+  const roundhouseKickGlbUrl =
+    output.roundhouseKickGlbUrl ||
+    storedAnimations.roundhouseKick?.storedAnimationUrl ||
+    output.meshyAnimations?.roundhouseKick?.animationGlbUrl ||
     null;
 
   const walkingArmatureGlbUrl =
@@ -166,9 +194,17 @@ function sanitizeActiveCharacterPayload(payload) {
     outputIdleGlbUrl,
     outputWalkingGlbUrl,
     outputRunningGlbUrl,
+    outputJumpGlbUrl,
+    outputRunJumpGlbUrl,
+    outputHighKickGlbUrl,
+    outputRoundhouseKickGlbUrl,
     savedIdleGlbUrl: idleGlbUrl,
     savedWalkingGlbUrl: walkingGlbUrl,
-    savedRunningGlbUrl: runningGlbUrl
+    savedRunningGlbUrl: runningGlbUrl,
+    savedJumpGlbUrl: jumpGlbUrl,
+    savedRunJumpGlbUrl: runJumpGlbUrl,
+    savedHighKickGlbUrl: highKickGlbUrl,
+    savedRoundhouseKickGlbUrl: roundhouseKickGlbUrl
   };
 
   const characterBundle = {
@@ -204,6 +240,34 @@ function sanitizeActiveCharacterPayload(payload) {
             name: 'running',
             glbUrl: runningGlbUrl,
             source: (storedAnimations.running?.storedAnimationUrl || outputRunningGlbUrl) ? 'rebel_blob' : 'meshy'
+          }
+        : null,
+      jump: jumpGlbUrl
+        ? {
+            name: 'jump',
+            glbUrl: jumpGlbUrl,
+            source: (storedAnimations.jump?.storedAnimationUrl || outputJumpGlbUrl) ? 'rebel_blob' : 'meshy'
+          }
+        : null,
+      runJump: runJumpGlbUrl
+        ? {
+            name: 'runJump',
+            glbUrl: runJumpGlbUrl,
+            source: (storedAnimations.runJump?.storedAnimationUrl || outputRunJumpGlbUrl) ? 'rebel_blob' : 'meshy'
+          }
+        : null,
+      highKick: highKickGlbUrl
+        ? {
+            name: 'highKick',
+            glbUrl: highKickGlbUrl,
+            source: (storedAnimations.highKick?.storedAnimationUrl || outputHighKickGlbUrl) ? 'rebel_blob' : 'meshy'
+          }
+        : null,
+      roundhouseKick: roundhouseKickGlbUrl
+        ? {
+            name: 'roundhouseKick',
+            glbUrl: roundhouseKickGlbUrl,
+            source: (storedAnimations.roundhouseKick?.storedAnimationUrl || outputRoundhouseKickGlbUrl) ? 'rebel_blob' : 'meshy'
           }
         : null
     },
@@ -252,6 +316,10 @@ function sanitizeActiveCharacterPayload(payload) {
     idleGlbUrl,
     walkingGlbUrl,
     runningGlbUrl,
+    jumpGlbUrl,
+    runJumpGlbUrl,
+    highKickGlbUrl,
+    roundhouseKickGlbUrl,
     walkingArmatureGlbUrl,
     runningArmatureGlbUrl,
     glbBlobPath,

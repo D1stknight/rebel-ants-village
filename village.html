@@ -2019,6 +2019,10 @@ function resolveCharacterConfig(rebel) {
     idleGlbUrl: activeForgeCharacter?.idleGlbUrl || characterBundle?.animations?.idle?.glbUrl || null,
     walkingGlbUrl: activeForgeCharacter?.walkingGlbUrl || characterBundle?.animations?.walking?.glbUrl || null,
     runningGlbUrl: activeForgeCharacter?.runningGlbUrl || characterBundle?.animations?.running?.glbUrl || null,
+    jumpGlbUrl: activeForgeCharacter?.jumpGlbUrl || characterBundle?.animations?.jump?.glbUrl || null,
+    runJumpGlbUrl: activeForgeCharacter?.runJumpGlbUrl || characterBundle?.animations?.runJump?.glbUrl || null,
+    highKickGlbUrl: activeForgeCharacter?.highKickGlbUrl || characterBundle?.animations?.highKick?.glbUrl || null,
+    roundhouseKickGlbUrl: activeForgeCharacter?.roundhouseKickGlbUrl || characterBundle?.animations?.roundhouseKick?.glbUrl || null,
 
     idleArmatureGlbUrl:
       activeForgeCharacter?.idleArmatureGlbUrl ||
@@ -2348,13 +2352,6 @@ function removeForgeVisualScaleTracks(animationGroups, mode = 'forge') {
   }
 }
 
-const FORGE_DONOR_ACTION_ANIMATION_URLS = {
-  jump: 'assets/forge-animations/build_1778974543200-jump.glb',
-  runJump: 'assets/forge-animations/build_1778974543200-run-jump.glb',
-  highKick: 'assets/forge-animations/build_1778974543200-high-kick.glb',
-  roundhouseKick: 'assets/forge-animations/build_1778974543200-roundhouse-kick.glb'
-};
-
 const FORGE_DONOR_ACTION_DURATIONS_MS = {
   jump: 1050,
   runJump: 1350,
@@ -2368,6 +2365,18 @@ const FORGE_DONOR_ACTION_LABELS = {
   highKick: 'High Kick',
   roundhouseKick: 'Roundhouse Kick'
 };
+
+function getForgeNativeActionAnimationUrls() {
+  const activeCharacter = window.activeCharacter || {};
+  const animations = activeCharacter.characterBundle?.animations || {};
+
+  return {
+    jump: activeCharacter.jumpGlbUrl || animations.jump?.glbUrl || '',
+    runJump: activeCharacter.runJumpGlbUrl || animations.runJump?.glbUrl || '',
+    highKick: activeCharacter.highKickGlbUrl || animations.highKick?.glbUrl || '',
+    roundhouseKick: activeCharacter.roundhouseKickGlbUrl || animations.roundhouseKick?.glbUrl || ''
+  };
+}
 
 function setForgePreviewRootVisible(previewRoot, visible) {
   if (!previewRoot) return;
@@ -3014,6 +3023,13 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
   if (localStorage.getItem('forgePlayerVisualTest') !== '1') return;
   if (!mode) return;
 
+  const actionUrls = getForgeNativeActionAnimationUrls();
+
+  if (FORGE_DONOR_ACTION_LABELS[mode] && !actionUrls[mode]) {
+    console.log('Forge native action animation is not ready yet:', mode);
+    return;
+  }
+
   window.forgePlayerForcedMode = mode;
   const resolvedDuration = durationMs || FORGE_DONOR_ACTION_DURATIONS_MS[mode] || 1000;
   window.forgePlayerForcedModeUntil = performance.now() + resolvedDuration;
@@ -3085,6 +3101,12 @@ function ensureForgeActionTestControls() {
     button.addEventListener('click', () => {
       triggerForgeArmatureActionMode(mode, FORGE_DONOR_ACTION_DURATIONS_MS[mode]);
     });
+    button.disabled = !getForgeNativeActionAnimationUrls()[mode];
+    if (button.disabled) {
+      button.title = `${label} Meshy animation is not stored yet`;
+      button.style.opacity = '.45';
+      button.style.cursor = 'not-allowed';
+    }
     panel.appendChild(button);
   });
 
@@ -3176,12 +3198,13 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
   setForgePreviewRootVisible(riggedRoot, true);
 
   try {
+    const actionAnimationUrls = getForgeNativeActionAnimationUrls();
     const animationLoads = [
       loadForgeArmatureAnimationForPlayer('walking', walkingAnimationUrl, riggedSkeleton),
       loadForgeArmatureAnimationForPlayer('running', runningAnimationUrl, riggedSkeleton),
-      ...Object.entries(FORGE_DONOR_ACTION_ANIMATION_URLS).map(([mode, url]) => (
-        loadForgeArmatureAnimationForPlayer(mode, url, riggedSkeleton)
-      ))
+      ...Object.entries(actionAnimationUrls)
+        .filter(([, url]) => Boolean(url))
+        .map(([mode, url]) => loadForgeArmatureAnimationForPlayer(mode, url, riggedSkeleton))
     ];
 
     if (idleAnimationUrl) {
@@ -3199,7 +3222,7 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
     idleAnimationUrl,
     walkingAnimationUrl,
     runningAnimationUrl,
-    actionAnimationUrls: FORGE_DONOR_ACTION_ANIMATION_URLS
+    actionAnimationUrls: getForgeNativeActionAnimationUrls()
   });
 
   return true;
