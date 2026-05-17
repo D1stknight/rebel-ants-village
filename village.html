@@ -2269,17 +2269,17 @@ function getForgePlayerDesiredPreviewMode() {
 
 function getForgeActionMotionOffset() {
   const motion = window.forgePlayerActionMotion || null;
-  if (!motion?.mode || !motion?.startedAt || !motion?.durationMs) {
+  if (!motion?.mode || !motion?.startedAt || !motion?.liftDurationMs) {
     return { y: 0, forward: 0 };
   }
 
   const now = performance.now();
   const elapsed = now - motion.startedAt - (motion.delayMs || 0);
-  if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed >= motion.durationMs) {
+  if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed >= motion.liftDurationMs) {
     return { y: 0, forward: 0 };
   }
 
-  const progress = Math.max(0, Math.min(1, elapsed / motion.durationMs));
+  const progress = Math.max(0, Math.min(1, elapsed / motion.liftDurationMs));
   const arc = Math.sin(progress * Math.PI);
 
   return {
@@ -2290,13 +2290,13 @@ function getForgeActionMotionOffset() {
 
 function updateForgeActionPlayerMotion() {
   const motion = window.forgePlayerActionMotion || null;
-  if (!charMesh || !motion?.mode || !motion?.startedAt || !motion?.durationMs) return;
+  if (!charMesh || !motion?.mode || !motion?.startedAt || !motion?.forwardDurationMs) return;
 
   const now = performance.now();
   const elapsed = now - motion.startedAt - (motion.delayMs || 0);
   if (!Number.isFinite(elapsed) || elapsed < 0) return;
 
-  const progress = Math.max(0, Math.min(1, elapsed / motion.durationMs));
+  const progress = Math.max(0, Math.min(1, elapsed / motion.forwardDurationMs));
   const easedProgress = 1 - Math.pow(1 - progress, 2);
   const targetForward = (motion.forward || 0) * easedProgress;
   const deltaForward = targetForward - (motion.forwardApplied || 0);
@@ -2307,7 +2307,7 @@ function updateForgeActionPlayerMotion() {
     motion.forwardApplied = targetForward;
   }
 
-  if (progress >= 1) {
+  if (progress >= 1 && elapsed >= Math.max(motion.forwardDurationMs || 0, motion.liftDurationMs || 0)) {
     window.forgePlayerActionMotion = null;
   }
 }
@@ -2335,7 +2335,7 @@ function syncForgePreviewRootToPlayer(previewRoot) {
 }
 
 function removeForgeVisualRootMotion(animationGroups, mode = 'forge') {
-  const preserveRootMotionModes = new Set(['jump', 'runJump']);
+  const preserveRootMotionModes = new Set(['jump']);
   if (preserveRootMotionModes.has(mode)) {
     console.log('Forge visual root motion preserved:', mode);
     return;
@@ -2413,7 +2413,19 @@ const FORGE_DONOR_ACTION_DURATIONS_MS = {
   roundhouseKick: 4200
 };
 
+const FORGE_DONOR_ACTION_SPEED_RATIOS = {
+  jump: 1.22,
+  runJump: 1.08
+};
+
 const FORGE_DONOR_ACTION_MOTION = {
+  runJump: {
+    delayMs: 180,
+    liftDurationMs: 1120,
+    forwardDurationMs: 2050,
+    lift: 1.2,
+    forward: 7.4
+  }
 };
 
 const FORGE_DONOR_ACTION_LABELS = {
@@ -3044,6 +3056,7 @@ function activateForgeArmaturePlayerMode(mode) {
 
   entry.animationGroup.stop();
   entry.animationGroup.reset();
+  entry.animationGroup.speedRatio = FORGE_DONOR_ACTION_SPEED_RATIOS[requestedMode] || 1;
   if (!loop) {
     entry.animationGroup.onAnimationGroupEndObservable.clear();
     entry.animationGroup.onAnimationGroupEndObservable.addOnce(() => {
@@ -3063,7 +3076,8 @@ function activateForgeArmaturePlayerMode(mode) {
 
   console.log('Forge visual animation playing:', {
     mode: requestedMode,
-    groupName: entry.animationGroup.name
+    groupName: entry.animationGroup.name,
+    speedRatio: entry.animationGroup.speedRatio
   });
 
   if (requestedMode === 'idle') {
@@ -3115,7 +3129,8 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
         mode,
         startedAt: window.forgePlayerForcedModeStartedAt,
         delayMs: actionMotion.delayMs || 0,
-        durationMs: actionMotion.durationMs,
+        liftDurationMs: actionMotion.liftDurationMs || actionMotion.durationMs || 0,
+        forwardDurationMs: actionMotion.forwardDurationMs || actionMotion.durationMs || 0,
         lift: actionMotion.lift,
         forward: actionMotion.forward,
         forwardApplied: 0
