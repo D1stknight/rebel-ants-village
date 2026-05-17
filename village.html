@@ -2269,13 +2269,21 @@ function getForgePlayerDesiredPreviewMode() {
 
 function getForgeActionMotionOffset() {
   const motion = window.forgePlayerActionMotion || null;
-  if (!motion?.mode || !motion?.startedAt || !motion?.liftDurationMs) {
+  if (!motion?.mode || !motion?.startedAt) {
     return { y: 0, forward: 0 };
   }
 
   const now = performance.now();
   const elapsed = now - motion.startedAt - (motion.delayMs || 0);
-  if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed >= motion.liftDurationMs) {
+  if (!Number.isFinite(elapsed) || elapsed < 0) {
+    return { y: 0, forward: 0 };
+  }
+
+  if (motion.rootMotion) {
+    return sampleForgeActionRootMotion(motion.rootMotion, elapsed, motion.speedRatio || 1);
+  }
+
+  if (!motion.liftDurationMs || elapsed >= motion.liftDurationMs) {
     return { y: 0, forward: 0 };
   }
 
@@ -2290,15 +2298,28 @@ function getForgeActionMotionOffset() {
 
 function updateForgeActionPlayerMotion() {
   const motion = window.forgePlayerActionMotion || null;
-  if (!charMesh || !motion?.mode || !motion?.startedAt || !motion?.forwardDurationMs) return;
+  if (!charMesh || !motion?.mode || !motion?.startedAt) return;
 
   const now = performance.now();
   const elapsed = now - motion.startedAt - (motion.delayMs || 0);
   if (!Number.isFinite(elapsed) || elapsed < 0) return;
 
-  const progress = Math.max(0, Math.min(1, elapsed / motion.forwardDurationMs));
-  const easedProgress = 1 - Math.pow(1 - progress, 2);
-  const targetForward = (motion.forward || 0) * easedProgress;
+  let targetForward = 0;
+  let complete = false;
+
+  if (motion.rootMotion) {
+    const sample = sampleForgeActionRootMotion(motion.rootMotion, elapsed, motion.speedRatio || 1);
+    targetForward = sample.forward || 0;
+    complete = elapsed >= (motion.rootMotion.durationMs / Math.max(motion.speedRatio || 1, 0.01));
+  } else if (motion.forwardDurationMs) {
+    const progress = Math.max(0, Math.min(1, elapsed / motion.forwardDurationMs));
+    const easedProgress = 1 - Math.pow(1 - progress, 2);
+    targetForward = (motion.forward || 0) * easedProgress;
+    complete = progress >= 1 && elapsed >= Math.max(motion.forwardDurationMs || 0, motion.liftDurationMs || 0);
+  } else {
+    return;
+  }
+
   const deltaForward = targetForward - (motion.forwardApplied || 0);
 
   if (Math.abs(deltaForward) > 0.0001) {
@@ -2307,7 +2328,7 @@ function updateForgeActionPlayerMotion() {
     motion.forwardApplied = targetForward;
   }
 
-  if (progress >= 1 && elapsed >= Math.max(motion.forwardDurationMs || 0, motion.liftDurationMs || 0)) {
+  if (complete) {
     window.forgePlayerActionMotion = null;
   }
 }
@@ -2319,7 +2340,9 @@ function isForgeActionMovementSuppressed() {
   const elapsed = performance.now() - motion.startedAt - (motion.delayMs || 0);
   if (!Number.isFinite(elapsed) || elapsed < 0) return true;
 
-  const motionWindow = Math.max(motion.forwardDurationMs || 0, motion.liftDurationMs || 0);
+  const motionWindow = motion.rootMotion
+    ? (motion.rootMotion.durationMs / Math.max(motion.speedRatio || 1, 0.01))
+    : Math.max(motion.forwardDurationMs || 0, motion.liftDurationMs || 0);
   return motionWindow > 0 && elapsed < motionWindow;
 }
 
@@ -2352,14 +2375,7 @@ function removeForgeVisualRootMotion(animationGroups, mode = 'forge') {
     return;
   }
 
-  const rootMotionTargets = new Set([
-    'hips',
-    'mixamorig_hips',
-    'root',
-    'fbx_root',
-    'armature',
-    'scene'
-  ]);
+  const rootMotionTargets = getForgeRootMotionTargetNames();
   let removedCount = 0;
   const removedTargets = [];
 
@@ -2388,20 +2404,25 @@ function removeForgeVisualRootMotion(animationGroups, mode = 'forge') {
   }
 }
 
-function normalizeForgeActionRootMotion(animationGroups, mode = 'forge') {
-  const normalizeModes = new Set(['jump', 'runJump']);
-  if (!normalizeModes.has(mode)) return;
-
-  const rootMotionTargets = new Set([
+function getForgeRootMotionTargetNames() {
+  return new Set([
     'hips',
     'mixamorig_hips',
+    'mixamorig:hips',
     'root',
     'fbx_root',
     'armature',
+    'armature|clip0|baselayer',
     'scene'
   ]);
-  let normalizedCount = 0;
-  const normalizedTargets = [];
+}
+
+function extractForgeActionRootMotion(animationGroups, mode = 'forge') {
+  const actionModes = new Set(['jump', 'runJump']);
+  if (!actionModes.has(mode)) return null;
+
+  const rootMotionTargets = getForgeRootMotionTargetNames();
+  const candidates = [];
 
   (animationGroups || []).forEach((group) => {
     const targetedAnimations = group?.targetedAnimations || [];
@@ -2416,24 +2437,114 @@ function normalizeForgeActionRootMotion(animationGroups, mode = 'forge') {
       const firstValue = keys[0]?.value;
       if (!firstValue || typeof firstValue.subtract !== 'function') return;
 
-      keys.forEach((key) => {
-        if (key?.value && typeof key.value.subtract === 'function') {
-          key.value = key.value.subtract(firstValue);
-        }
-      });
+      const fps = targetedAnimation?.animation?.framePerSecond || 30;
+      const firstFrame = keys[0]?.frame || 0;
+      const rawSamples = keys
+        .map((key) => {
+          const value = key?.value;
+          if (!value || typeof value.subtract !== 'function') return null;
 
-      normalizedCount++;
-      normalizedTargets.push(targetName);
+          const delta = value.subtract(firstValue);
+          const timeMs = ((key.frame || 0) - firstFrame) / Math.max(fps, 1) * 1000;
+
+          return {
+            timeMs,
+            x: Number(delta.x) || 0,
+            y: Number(delta.y) || 0,
+            z: Number(delta.z) || 0
+          };
+        })
+        .filter(Boolean);
+
+      if (rawSamples.length < 2) return;
+
+      const xRange = Math.max(...rawSamples.map((sample) => sample.x)) - Math.min(...rawSamples.map((sample) => sample.x));
+      const zRange = Math.max(...rawSamples.map((sample) => sample.z)) - Math.min(...rawSamples.map((sample) => sample.z));
+      const horizontalAxis = Math.abs(zRange) >= Math.abs(xRange) ? 'z' : 'x';
+      const finalHorizontal = rawSamples[rawSamples.length - 1]?.[horizontalAxis] || 0;
+      const horizontalSign = finalHorizontal < 0 ? -1 : 1;
+      const signedHorizontalValues = rawSamples.map((sample) => sample[horizontalAxis] * horizontalSign);
+      const minSignedHorizontal = Math.min(...signedHorizontalValues);
+      const forwardValues = signedHorizontalValues.map((value) => Math.max(0, value - minSignedHorizontal));
+      const maxForward = Math.max(...forwardValues);
+
+      const maxY = Math.max(...rawSamples.map((sample) => sample.y));
+      const minY = Math.min(...rawSamples.map((sample) => sample.y));
+      const verticalSign = Math.abs(minY) > Math.abs(maxY) ? -1 : 1;
+      const liftValues = rawSamples.map((sample) => Math.max(0, sample.y * verticalSign));
+      const maxLift = Math.max(...liftValues);
+
+      const targetLift = mode === 'runJump' ? 1.5 : 1.25;
+      const targetForward = mode === 'runJump' ? 8.5 : 0;
+      const samples = rawSamples.map((sample, index) => ({
+        timeMs: sample.timeMs,
+        y: maxLift > 0.0001 ? (liftValues[index] / maxLift) * targetLift : 0,
+        forward: maxForward > 0.0001 ? (forwardValues[index] / maxForward) * targetForward : 0
+      }));
+
+      candidates.push({
+        mode,
+        targetName,
+        durationMs: samples[samples.length - 1]?.timeMs || 0,
+        samples,
+        rawMaxLift: maxLift,
+        rawMaxForward: maxForward,
+        targetLift,
+        targetForward
+      });
     });
   });
 
-  if (normalizedCount > 0) {
-    console.log('Forge action root motion normalized:', {
+  const best = candidates
+    .filter((candidate) => candidate.durationMs > 0)
+    .sort((a, b) => (b.rawMaxLift + b.rawMaxForward) - (a.rawMaxLift + a.rawMaxForward))[0] || null;
+
+  if (best) {
+    console.log('Forge action root motion extracted:', {
       mode,
-      normalizedCount,
-      targets: [...new Set(normalizedTargets)]
+      targetName: best.targetName,
+      durationMs: best.durationMs,
+      rawMaxLift: best.rawMaxLift,
+      rawMaxForward: best.rawMaxForward,
+      targetLift: best.targetLift,
+      targetForward: best.targetForward,
+      sampleCount: best.samples.length
     });
   }
+
+  return best;
+}
+
+function sampleForgeActionRootMotion(rootMotion, elapsedMs, speedRatio = 1) {
+  const samples = rootMotion?.samples || [];
+  if (!samples.length) return { y: 0, forward: 0 };
+
+  const animationElapsedMs = Math.max(0, elapsedMs * Math.max(speedRatio || 1, 0.01));
+
+  if (animationElapsedMs <= samples[0].timeMs) {
+    return { y: samples[0].y || 0, forward: samples[0].forward || 0 };
+  }
+
+  const lastSample = samples[samples.length - 1];
+  if (animationElapsedMs >= lastSample.timeMs) {
+    return { y: lastSample.y || 0, forward: lastSample.forward || 0 };
+  }
+
+  for (let index = 1; index < samples.length; index++) {
+    const previous = samples[index - 1];
+    const next = samples[index];
+    if (animationElapsedMs > next.timeMs) continue;
+
+    const span = Math.max(next.timeMs - previous.timeMs, 0.0001);
+    const progress = Math.max(0, Math.min(1, (animationElapsedMs - previous.timeMs) / span));
+
+    return {
+      y: (previous.y || 0) + ((next.y || 0) - (previous.y || 0)) * progress,
+      forward: (previous.forward || 0) + ((next.forward || 0) - (previous.forward || 0)) * progress
+    };
+  }
+
+  return { y: lastSample.y || 0, forward: lastSample.forward || 0 };
 }
 
 function removeForgeVisualScaleTracks(animationGroups, mode = 'forge') {
@@ -3039,6 +3150,7 @@ async function loadForgeArmatureAnimationForPlayer(mode, armatureGlbUrl, riggedS
     }
   });
 
+  const rootMotion = extractForgeActionRootMotion([armatureAnimation], mode);
   removeForgeVisualRootMotion([armatureAnimation], mode);
   removeForgeVisualScaleTracks([armatureAnimation], mode);
   armatureAnimation.stop();
@@ -3048,6 +3160,7 @@ async function loadForgeArmatureAnimationForPlayer(mode, armatureGlbUrl, riggedS
     armatureGlbUrl,
     armatureResult,
     animationGroup: armatureAnimation,
+    rootMotion,
     retargetedCount,
     missedCount,
     missedTargets: [...new Set(missedTargets)]
@@ -3058,6 +3171,13 @@ async function loadForgeArmatureAnimationForPlayer(mode, armatureGlbUrl, riggedS
   console.log('Forge armature animation cached:', {
     mode,
     animationName: armatureAnimation.name,
+    rootMotion: rootMotion
+      ? {
+          targetName: rootMotion.targetName,
+          durationMs: rootMotion.durationMs,
+          sampleCount: rootMotion.samples.length
+        }
+      : null,
     retargetedCount,
     missedCount,
     missedTargets: entry.missedTargets
@@ -3191,15 +3311,19 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
   window.forgePlayerForcedMode = mode;
   window.forgePlayerForcedModeStartedAt = performance.now();
   const actionMotion = FORGE_DONOR_ACTION_MOTION[mode] || null;
+  const actionRootMotion = window.forgeArmatureAnimationCache?.[mode]?.rootMotion || null;
+  const actionSpeedRatio = FORGE_DONOR_ACTION_SPEED_RATIOS[mode] || 1;
   window.forgePlayerActionMotion = actionMotion
     ? {
         mode,
         startedAt: window.forgePlayerForcedModeStartedAt,
-        delayMs: actionMotion.delayMs || 0,
+        delayMs: actionRootMotion ? 0 : (actionMotion.delayMs || 0),
         liftDurationMs: actionMotion.liftDurationMs || actionMotion.durationMs || 0,
         forwardDurationMs: actionMotion.forwardDurationMs || actionMotion.durationMs || 0,
         lift: actionMotion.lift,
         forward: actionMotion.forward,
+        rootMotion: actionRootMotion,
+        speedRatio: actionSpeedRatio,
         forwardApplied: 0
       }
     : null;
