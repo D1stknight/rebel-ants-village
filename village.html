@@ -2270,10 +2270,11 @@ function syncForgePreviewRootToPlayer(previewRoot) {
   const idleTime = performance.now() * 0.001;
   const idleBob = isForgeIdle ? Math.sin(idleTime * 2.1) * 0.025 : 0;
   const idleLean = isForgeIdle ? Math.sin(idleTime * 1.4) * 0.018 : 0;
+  const alignmentOffset = previewRoot.metadata?.forgeVisualAlignmentOffset || null;
 
-  previewRoot.position.x = charMesh.position.x;
-  previewRoot.position.y = charMesh.position.y + idleBob;
-  previewRoot.position.z = charMesh.position.z;
+  previewRoot.position.x = charMesh.position.x + (alignmentOffset?.x || 0);
+  previewRoot.position.y = charMesh.position.y + idleBob + (alignmentOffset?.y || 0);
+  previewRoot.position.z = charMesh.position.z + (alignmentOffset?.z || 0);
 
   previewRoot.rotation.x = charMesh.rotation.x + idleLean;
   previewRoot.rotation.y = charMesh.rotation.y;
@@ -2392,52 +2393,177 @@ function getForgeVisualVisibleMeshBounds(previewRoot) {
     min,
     max,
     height: Math.max(max.y - min.y, 0),
+    center: BABYLON.Vector3.Center(min, max),
     meshCount: validMeshCount
   };
 }
 
-function normalizeForgeVisualModeScale(mode, previewRoot) {
+function getForgeVisualSkeletonRootInfo(modeModel) {
+  const skeleton = modeModel?.skeletons?.[0] || null;
+  const bone = skeleton?.bones?.[0] || null;
+  const linkedNode =
+    bone?._linkedTransformNode ||
+    (typeof bone?.getTransformNode === 'function' ? bone.getTransformNode() : null) ||
+    null;
+
+  if (linkedNode?.computeWorldMatrix) {
+    linkedNode.computeWorldMatrix(true);
+  }
+
+  const worldPosition =
+    linkedNode && typeof linkedNode.getAbsolutePosition === 'function'
+      ? linkedNode.getAbsolutePosition()
+      : null;
+
+  return {
+    skeletonName: skeleton?.name || null,
+    boneName: bone?.name || null,
+    nodeName: linkedNode?.name || null,
+    position: worldPosition
+      ? {
+          x: worldPosition.x,
+          y: worldPosition.y,
+          z: worldPosition.z
+        }
+      : null
+  };
+}
+
+function getForgeVisualAnimationRootName(animationGroups) {
+  const targetedAnimation = (animationGroups || [])
+    .flatMap((group) => group?.targetedAnimations || [])
+    .find((item) => item?.target?.name);
+
+  return targetedAnimation?.target?.name || null;
+}
+
+function getForgeVisualModeMetrics(mode, previewRoot, modeModel, animationGroups) {
+  const bounds = getForgeVisualVisibleMeshBounds(previewRoot);
+
+  if (!bounds) return null;
+
+  const rootPosition = previewRoot.position.clone();
+  const rootScaling = previewRoot.scaling.clone();
+  const centerRelativeToRoot = bounds.center.subtract(rootPosition);
+  const groundRelativeToRoot = bounds.min.y - rootPosition.y;
+
+  return {
+    mode,
+    rootPosition,
+    rootScaling,
+    bounds,
+    centerRelativeToRoot,
+    groundRelativeToRoot,
+    height: bounds.height,
+    skeletonRoot: getForgeVisualSkeletonRootInfo(modeModel),
+    animationRootNodeName: getForgeVisualAnimationRootName(animationGroups)
+  };
+}
+
+function logForgeVisualModeMetrics(metrics) {
+  if (!metrics) return;
+
+  console.log('Forge visual mode metrics', {
+    mode: metrics.mode,
+    rootScaling: {
+      x: metrics.rootScaling.x,
+      y: metrics.rootScaling.y,
+      z: metrics.rootScaling.z
+    },
+    rootPosition: {
+      x: metrics.rootPosition.x,
+      y: metrics.rootPosition.y,
+      z: metrics.rootPosition.z
+    },
+    meshBounds: {
+      min: {
+        x: metrics.bounds.min.x,
+        y: metrics.bounds.min.y,
+        z: metrics.bounds.min.z
+      },
+      max: {
+        x: metrics.bounds.max.x,
+        y: metrics.bounds.max.y,
+        z: metrics.bounds.max.z
+      },
+      center: {
+        x: metrics.bounds.center.x,
+        y: metrics.bounds.center.y,
+        z: metrics.bounds.center.z
+      },
+      height: metrics.bounds.height,
+      meshCount: metrics.bounds.meshCount
+    },
+    skeletonRoot: metrics.skeletonRoot,
+    animationRootNodeName: metrics.animationRootNodeName
+  });
+}
+
+function normalizeForgeVisualModeTransform(mode, previewRoot, modeModel, animationGroups) {
   if (!mode || !previewRoot) return null;
 
   const cache = getForgePlayerVisualCache();
-  const bounds = getForgeVisualVisibleMeshBounds(previewRoot);
-  const modeHeight = bounds?.height || 0;
+  const beforeMetrics = getForgeVisualModeMetrics(mode, previewRoot, modeModel, animationGroups);
+  const modeHeight = beforeMetrics?.height || 0;
+
+  logForgeVisualModeMetrics(beforeMetrics);
 
   if (!Number.isFinite(modeHeight) || modeHeight <= 0.001) {
-    console.warn('Could not normalize Forge visual mode scale; visible mesh height unavailable:', {
+    console.warn('Could not normalize Forge visual mode transform; visible mesh height unavailable:', {
       mode,
       modeHeight
     });
     return null;
   }
 
-  if (mode === 'rigged' || !cache.baselineVisibleHeight) {
-    if (mode === 'rigged') {
-      cache.baselineVisibleHeight = modeHeight;
-      cache.baselineMode = mode;
-    }
+  if (mode === 'rigged') {
+    const baselineCenter = beforeMetrics.centerRelativeToRoot.clone();
+    const baselineGround = beforeMetrics.groundRelativeToRoot;
 
-    const scaleReport = {
-      baselineHeight: cache.baselineVisibleHeight || modeHeight,
-      modeHeight,
-      scaleCorrection: 1
+    cache.baselineVisualMetrics = {
+      mode,
+      height: modeHeight,
+      centerRelativeToRoot: baselineCenter,
+      groundRelativeToRoot: baselineGround,
+      rootScaling: beforeMetrics.rootScaling.clone()
+    };
+    cache.baselineVisibleHeight = modeHeight;
+    cache.baselineMode = mode;
+
+    previewRoot.metadata = {
+      ...(previewRoot.metadata || {}),
+      forgeVisualTransformNormalized: true,
+      forgeVisualAlignmentOffset: { x: 0, y: 0, z: 0 }
     };
 
-    console.log('Forge visual mode scale normalized', {
+    const report = {
       mode,
-      baselineHeight: scaleReport.baselineHeight,
+      baselineHeight: modeHeight,
       modeHeight,
-      scaleCorrection: 1
-    });
+      scaleCorrection: 1,
+      centerOffset: { x: 0, y: 0, z: 0 },
+      groundOffset: 0
+    };
 
-    return scaleReport;
+    console.log('Forge visual mode normalized', report);
+
+    return report;
   }
 
-  if (previewRoot.metadata?.forgeVisualScaleNormalized) {
-    return previewRoot.metadata.forgeVisualScaleReport || null;
+  if (!cache.baselineVisualMetrics) {
+    if (mode === 'rigged') {
+      return null;
+    }
+
+    return null;
   }
 
-  const baselineHeight = cache.baselineVisibleHeight;
+  if (previewRoot.metadata?.forgeVisualTransformNormalized) {
+    return previewRoot.metadata.forgeVisualTransformReport || null;
+  }
+
+  const baseline = cache.baselineVisualMetrics;
+  const baselineHeight = baseline.height;
   const scaleCorrection = baselineHeight / modeHeight;
 
   if (!Number.isFinite(scaleCorrection) || scaleCorrection <= 0) {
@@ -2445,25 +2571,41 @@ function normalizeForgeVisualModeScale(mode, previewRoot) {
   }
 
   previewRoot.scaling = previewRoot.scaling.multiplyByFloats(scaleCorrection, scaleCorrection, scaleCorrection);
-  previewRoot.metadata = {
-    ...(previewRoot.metadata || {}),
-    forgeVisualScaleNormalized: true,
-    forgeVisualScaleReport: {
-      mode,
-      baselineHeight,
-      modeHeight,
-      scaleCorrection
-    }
-  };
+  previewRoot.computeWorldMatrix(true);
 
-  console.log('Forge visual mode scale normalized', {
+  const afterScaleMetrics = getForgeVisualModeMetrics(mode, previewRoot, modeModel, animationGroups);
+  const scaledCenter = afterScaleMetrics?.centerRelativeToRoot || beforeMetrics.centerRelativeToRoot;
+  const scaledGround = afterScaleMetrics?.groundRelativeToRoot ?? beforeMetrics.groundRelativeToRoot;
+  const centerOffset = baseline.centerRelativeToRoot.subtract(scaledCenter);
+  const groundOffset = baseline.groundRelativeToRoot - scaledGround;
+  const alignmentOffset = {
+    x: centerOffset.x,
+    y: groundOffset,
+    z: centerOffset.z
+  };
+  const report = {
     mode,
     baselineHeight,
     modeHeight,
-    scaleCorrection
-  });
+    scaleCorrection,
+    centerOffset: {
+      x: alignmentOffset.x,
+      y: centerOffset.y,
+      z: alignmentOffset.z
+    },
+    groundOffset
+  };
 
-  return previewRoot.metadata.forgeVisualScaleReport;
+  previewRoot.metadata = {
+    ...(previewRoot.metadata || {}),
+    forgeVisualTransformNormalized: true,
+    forgeVisualAlignmentOffset: alignmentOffset,
+    forgeVisualTransformReport: report
+  };
+
+  console.log('Forge visual mode normalized', report);
+
+  return report;
 }
 
 async function loadForgePlayerVisualMode(mode) {
@@ -2500,7 +2642,7 @@ async function loadForgePlayerVisualMode(mode) {
         ...(nextRoot.metadata || {}),
         forgePreviewMode: mode
       };
-      const scaleReport = normalizeForgeVisualModeScale(mode, nextRoot);
+      const transformReport = normalizeForgeVisualModeTransform(mode, nextRoot, modeModel, modeAnimationGroups);
 
       syncForgePreviewRootToPlayer(nextRoot);
       setForgePreviewRootVisible(nextRoot, false);
@@ -2514,8 +2656,10 @@ async function loadForgePlayerVisualMode(mode) {
         animationGroups: modeAnimationGroups,
         animationGroup: modeAnimationGroups[0] || null,
         url: nextUrl,
-        visibleMeshHeight: scaleReport?.modeHeight || null,
-        scaleCorrection: scaleReport?.scaleCorrection || 1
+        visibleMeshHeight: transformReport?.modeHeight || null,
+        scaleCorrection: transformReport?.scaleCorrection || 1,
+        centerOffset: transformReport?.centerOffset || null,
+        groundOffset: transformReport?.groundOffset || 0
       };
 
       console.log('Forge player visual cached:', mode);
@@ -2593,7 +2737,12 @@ async function preloadForgePlayerVisualModes(startingRoot) {
   if (startingRoot) {
     const startingAnimationGroups = window.forgePreviewModel?.animationGroups || [];
     removeForgeVisualRootMotion(startingAnimationGroups, startingMode);
-    const startingScaleReport = normalizeForgeVisualModeScale(startingMode, startingRoot);
+    const startingTransformReport = normalizeForgeVisualModeTransform(
+      startingMode,
+      startingRoot,
+      window.forgePreviewModel || null,
+      startingAnimationGroups
+    );
 
     cache[startingMode] = {
       root: startingRoot,
@@ -2601,8 +2750,10 @@ async function preloadForgePlayerVisualModes(startingRoot) {
       animationGroups: startingAnimationGroups,
       animationGroup: window.forgePreviewAnimationGroup || null,
       url: null,
-      visibleMeshHeight: startingScaleReport?.modeHeight || null,
-      scaleCorrection: startingScaleReport?.scaleCorrection || 1
+      visibleMeshHeight: startingTransformReport?.modeHeight || null,
+      scaleCorrection: startingTransformReport?.scaleCorrection || 1,
+      centerOffset: startingTransformReport?.centerOffset || null,
+      groundOffset: startingTransformReport?.groundOffset || 0
     };
 
     startingRoot.name = `forgePreviewRoot_${startingMode}`;
@@ -2619,13 +2770,20 @@ async function preloadForgePlayerVisualModes(startingRoot) {
   });
 
   Object.keys(cache).forEach((mode) => {
-    if (mode === 'baselineVisibleHeight' || mode === 'baselineMode') return;
+    if (mode === 'baselineVisibleHeight' || mode === 'baselineMode' || mode === 'baselineVisualMetrics') return;
     if (!cache[mode]?.root || mode === 'rigged') return;
 
-    const scaleReport = normalizeForgeVisualModeScale(mode, cache[mode].root);
-    if (scaleReport) {
-      cache[mode].visibleMeshHeight = scaleReport.modeHeight;
-      cache[mode].scaleCorrection = scaleReport.scaleCorrection;
+    const transformReport = normalizeForgeVisualModeTransform(
+      mode,
+      cache[mode].root,
+      cache[mode].model || null,
+      cache[mode].animationGroups || []
+    );
+    if (transformReport) {
+      cache[mode].visibleMeshHeight = transformReport.modeHeight;
+      cache[mode].scaleCorrection = transformReport.scaleCorrection;
+      cache[mode].centerOffset = transformReport.centerOffset || null;
+      cache[mode].groundOffset = transformReport.groundOffset || 0;
     }
   });
 
