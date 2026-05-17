@@ -1668,7 +1668,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     if (thumbnailUrl) {
       return `
         <div class="forge-3d-build-thumb">
-          <img src="${thumbnailUrl}" alt="3D build source thumbnail" loading="lazy">
+          <img
+            src="${thumbnailUrl}"
+            alt="3D build source thumbnail"
+            loading="lazy"
+            onerror="this.onerror=null; this.parentElement.textContent='No Image';"
+          >
         </div>
       `;
     }
@@ -2043,6 +2048,68 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           activeButton.disabled = false;
         }
       }, 2400);
+    }
+  }
+
+  async function deleteForge3dBuild(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId) || {};
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+    const originalButtonText = activeButton ? activeButton.textContent : 'Delete Build';
+
+    if (!window.confirm('Delete this Forge 3D build record and any safe build-owned Blob files? Active character files will be kept.')) {
+      return;
+    }
+
+    if (activeButton) {
+      activeButton.textContent = 'Deleting...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-build-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId,
+          collectionKey: build.collectionKey || window.forgeGenerationInput?.collectionKey || 'battle_for_colony',
+          tokenId: build.tokenId || window.forgeGenerationInput?.tokenId || null,
+          rebelId: build.rebelId || window.forgeGenerationInput?.rebelId || null
+        })
+      });
+      const data = await response.json();
+
+      console.log('Forge build delete response:', data);
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Could not delete Forge build');
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        const keptActiveFiles = data.activeBuild ? ' Active character files were kept.' : '';
+        window.setForgeStatus(`Forge build deleted.${keptActiveFiles}`, 'success');
+      }
+
+      await renderForge3dBuildStatusPanel();
+    } catch(e) {
+      console.warn('Could not delete Forge 3D build:', e);
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus(`Could not delete this Forge build: ${e.message || 'Unknown error'}`, 'error');
+      }
+
+      if (activeButton) {
+        activeButton.textContent = originalButtonText;
+        activeButton.disabled = false;
+      }
     }
   }
 
@@ -2450,6 +2517,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const riggedStoredHtml = isRiggedStoredInRebelBlob
           ? '<br>Rigged Storage: Rebel Forge Blob ✓'
           : '';
+        const deleteBuildHtml =
+          `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.deleteForge3dBuild('${build.buildId}')">Delete Build</button>`;
 
         const activeCharacterGlbUrl = riggedGlbUrl || activeGlbUrl;
         const storeBuildActionHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
@@ -2518,6 +2587,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
                 ${runningStoredHtml}
               </div>
               ${stepHtml}
+              <div style="margin-top:10px;">${deleteBuildHtml}</div>
             </div>
           </div>
         `;
@@ -2563,6 +2633,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   window.storeForgeRiggedGlbInRebelBlob = storeForgeRiggedGlbInRebelBlob;
   window.storeForgeWalkingGlbInRebelBlob = storeForgeWalkingGlbInRebelBlob;
   window.storeForgeRunningGlbInRebelBlob = storeForgeRunningGlbInRebelBlob;
+  window.deleteForge3dBuild = deleteForge3dBuild;
   window.setForgeBuildAsActiveCharacter = setForgeBuildAsActiveCharacter;
   window.startMeshyRigTestForBuild = startMeshyRigTestForBuild;
 
@@ -3140,21 +3211,21 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const box = visibleBounds?.box || new THREE.Box3().setFromObject(previewState.model);
     const sphere = box.getBoundingSphere(new THREE.Sphere());
     const visibleHeight = visibleBounds?.characterHeight || 0;
-    const radius = Math.max(visibleBounds?.radius || sphere.radius, visibleHeight * 0.62, 0.001);
+    const rawRadius = Math.max(visibleBounds?.radius || sphere.radius, visibleHeight * 0.62, 0.001);
+    const frameHeight = Math.max(visibleHeight, rawRadius * 2, 3.8);
+    const radius = Math.max(rawRadius, frameHeight * 0.55);
     const center = visibleBounds?.center || sphere.center;
     const target = center.clone();
-    if (visibleHeight) {
-      target.y += visibleHeight * 0.08;
-    }
+    target.y += frameHeight * 0.04;
     const camera = previewState.camera;
     const controls = previewState.controls;
-    const verticalDistance = (visibleHeight || radius * 2) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)));
+    const verticalDistance = frameHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)));
     const horizontalDistance = verticalDistance / Math.max(camera.aspect, 0.001);
-    const distance = Math.max(verticalDistance, horizontalDistance, radius * 2.1) * 2.25;
+    const distance = Math.max(verticalDistance, horizontalDistance, radius * 2.1, 5.5) * 1.8;
 
-    camera.position.set(target.x, target.y + (visibleHeight || radius) * 0.06, target.z + distance);
+    camera.position.set(target.x, target.y + frameHeight * 0.08, target.z + distance);
     camera.near = Math.max(distance / 100, 0.001);
-    camera.far = Math.max(distance + radius * 20, distance * 4);
+    camera.far = Math.max(distance + radius * 24, distance * 5);
     camera.updateProjectionMatrix();
 
     if (controls) {
@@ -3165,6 +3236,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const report = {
       center: target.toArray(),
       radius,
+      rawRadius,
+      frameHeight,
       boxMin: box.min.toArray(),
       boxMax: box.max.toArray(),
       cameraPosition: camera.position.toArray(),
