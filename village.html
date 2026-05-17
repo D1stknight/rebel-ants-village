@@ -2162,6 +2162,43 @@ function syncForgePreviewRootToPlayer(previewRoot) {
   previewRoot.rotation.z = charMesh.rotation.z;
 }
 
+function removeForgeVisualRootMotion(animationGroups, mode = 'forge') {
+  const rootMotionTargets = new Set([
+    'hips',
+    'mixamorig_hips',
+    'root',
+    'fbx_root',
+    'armature',
+    'scene'
+  ]);
+  let removedCount = 0;
+  const removedTargets = [];
+
+  (animationGroups || []).forEach((group) => {
+    const targetedAnimations = group?.targetedAnimations || [];
+
+    for (let index = targetedAnimations.length - 1; index >= 0; index--) {
+      const targetedAnimation = targetedAnimations[index];
+      const targetName = String(targetedAnimation?.target?.name || '').toLowerCase();
+      const targetProperty = targetedAnimation?.animation?.targetProperty || '';
+
+      if (targetProperty === 'position' && rootMotionTargets.has(targetName)) {
+        targetedAnimations.splice(index, 1);
+        removedCount++;
+        removedTargets.push(targetName);
+      }
+    }
+  });
+
+  if (removedCount > 0) {
+    console.log('Forge visual root motion removed:', {
+      mode,
+      removedCount,
+      targets: [...new Set(removedTargets)]
+    });
+  }
+}
+
 function setForgePreviewRootVisible(previewRoot, visible) {
   if (!previewRoot) return;
 
@@ -2213,6 +2250,7 @@ async function loadForgePlayerVisualMode(mode) {
     if (nextRoot) {
       const modeModel = window.forgePreviewModel || null;
       const modeAnimationGroups = modeModel?.animationGroups || [];
+      removeForgeVisualRootMotion(modeAnimationGroups, mode);
 
       nextRoot.name = `forgePreviewRoot_${mode}`;
       nextRoot.metadata = {
@@ -2304,6 +2342,7 @@ async function preloadForgePlayerVisualModes(startingRoot) {
 
   if (startingRoot) {
     const startingAnimationGroups = window.forgePreviewModel?.animationGroups || [];
+    removeForgeVisualRootMotion(startingAnimationGroups, startingMode);
 
     cache[startingMode] = {
       root: startingRoot,
@@ -2779,6 +2818,8 @@ async function loadForgePreviewModelInVillage(glbUrl) {
     previewRoot.position.y += 0.12 - normalizedBounds.min.y;
 
     if (animationGroups.length > 0) {
+      removeForgeVisualRootMotion(animationGroups, 'preview');
+
       animationGroups.forEach((group) => {
         group.stop();
       });
