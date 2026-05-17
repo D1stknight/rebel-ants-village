@@ -2335,7 +2335,7 @@ function syncForgePreviewRootToPlayer(previewRoot) {
 }
 
 function removeForgeVisualRootMotion(animationGroups, mode = 'forge') {
-  const preserveRootMotionModes = new Set(['jump']);
+  const preserveRootMotionModes = new Set(['jump', 'runJump']);
   if (preserveRootMotionModes.has(mode)) {
     console.log('Forge visual root motion preserved:', mode);
     return;
@@ -2377,6 +2377,54 @@ function removeForgeVisualRootMotion(animationGroups, mode = 'forge') {
   }
 }
 
+function normalizeForgeActionRootMotion(animationGroups, mode = 'forge') {
+  const normalizeModes = new Set(['jump', 'runJump']);
+  if (!normalizeModes.has(mode)) return;
+
+  const rootMotionTargets = new Set([
+    'hips',
+    'mixamorig_hips',
+    'root',
+    'fbx_root',
+    'armature',
+    'scene'
+  ]);
+  let normalizedCount = 0;
+  const normalizedTargets = [];
+
+  (animationGroups || []).forEach((group) => {
+    const targetedAnimations = group?.targetedAnimations || [];
+
+    targetedAnimations.forEach((targetedAnimation) => {
+      const targetName = String(targetedAnimation?.target?.name || '').toLowerCase();
+      const targetProperty = targetedAnimation?.animation?.targetProperty || '';
+      const keys = targetedAnimation?.animation?.getKeys?.() || [];
+
+      if (targetProperty !== 'position' || !rootMotionTargets.has(targetName) || !keys.length) return;
+
+      const firstValue = keys[0]?.value;
+      if (!firstValue || typeof firstValue.subtract !== 'function') return;
+
+      keys.forEach((key) => {
+        if (key?.value && typeof key.value.subtract === 'function') {
+          key.value = key.value.subtract(firstValue);
+        }
+      });
+
+      normalizedCount++;
+      normalizedTargets.push(targetName);
+    });
+  });
+
+  if (normalizedCount > 0) {
+    console.log('Forge action root motion normalized:', {
+      mode,
+      normalizedCount,
+      targets: [...new Set(normalizedTargets)]
+    });
+  }
+}
+
 function removeForgeVisualScaleTracks(animationGroups, mode = 'forge') {
   let removedCount = 0;
   const removedTargets = [];
@@ -2414,17 +2462,17 @@ const FORGE_DONOR_ACTION_DURATIONS_MS = {
 };
 
 const FORGE_DONOR_ACTION_SPEED_RATIOS = {
-  jump: 1.22,
-  runJump: 1.08
+  jump: 1.45,
+  runJump: 1
 };
 
 const FORGE_DONOR_ACTION_MOTION = {
   runJump: {
-    delayMs: 180,
-    liftDurationMs: 1120,
-    forwardDurationMs: 2050,
-    lift: 1.2,
-    forward: 7.4
+    delayMs: 240,
+    liftDurationMs: 0,
+    forwardDurationMs: 2600,
+    lift: 0,
+    forward: 5.8
   }
 };
 
@@ -2973,6 +3021,7 @@ async function loadForgeArmatureAnimationForPlayer(mode, armatureGlbUrl, riggedS
     }
   });
 
+  normalizeForgeActionRootMotion([armatureAnimation], mode);
   removeForgeVisualRootMotion([armatureAnimation], mode);
   removeForgeVisualScaleTracks([armatureAnimation], mode);
   armatureAnimation.stop();
