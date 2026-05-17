@@ -2341,6 +2341,131 @@ function getForgePlayerVisualCache() {
   return window.forgePlayerVisualCache;
 }
 
+function getForgeVisualVisibleMeshBounds(previewRoot) {
+  if (!previewRoot) return null;
+
+  const meshes = previewRoot.getChildMeshes(false).filter((mesh) => {
+    return (
+      mesh &&
+      mesh.isEnabled() &&
+      mesh.getTotalVertices &&
+      mesh.getTotalVertices() > 0 &&
+      mesh.getBoundingInfo
+    );
+  });
+
+  if (!meshes.length) return null;
+
+  const min = new BABYLON.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+  const max = new BABYLON.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+  let validMeshCount = 0;
+
+  meshes.forEach((mesh) => {
+    mesh.computeWorldMatrix(true);
+    const boundingBox = mesh.getBoundingInfo().boundingBox;
+    const boxMin = boundingBox.minimumWorld;
+    const boxMax = boundingBox.maximumWorld;
+
+    if (
+      !Number.isFinite(boxMin.x) ||
+      !Number.isFinite(boxMin.y) ||
+      !Number.isFinite(boxMin.z) ||
+      !Number.isFinite(boxMax.x) ||
+      !Number.isFinite(boxMax.y) ||
+      !Number.isFinite(boxMax.z)
+    ) {
+      return;
+    }
+
+    min.x = Math.min(min.x, boxMin.x);
+    min.y = Math.min(min.y, boxMin.y);
+    min.z = Math.min(min.z, boxMin.z);
+    max.x = Math.max(max.x, boxMax.x);
+    max.y = Math.max(max.y, boxMax.y);
+    max.z = Math.max(max.z, boxMax.z);
+    validMeshCount++;
+  });
+
+  if (!validMeshCount) return null;
+
+  return {
+    min,
+    max,
+    height: Math.max(max.y - min.y, 0),
+    meshCount: validMeshCount
+  };
+}
+
+function normalizeForgeVisualModeScale(mode, previewRoot) {
+  if (!mode || !previewRoot) return null;
+
+  const cache = getForgePlayerVisualCache();
+  const bounds = getForgeVisualVisibleMeshBounds(previewRoot);
+  const modeHeight = bounds?.height || 0;
+
+  if (!Number.isFinite(modeHeight) || modeHeight <= 0.001) {
+    console.warn('Could not normalize Forge visual mode scale; visible mesh height unavailable:', {
+      mode,
+      modeHeight
+    });
+    return null;
+  }
+
+  if (mode === 'rigged' || !cache.baselineVisibleHeight) {
+    if (mode === 'rigged') {
+      cache.baselineVisibleHeight = modeHeight;
+      cache.baselineMode = mode;
+    }
+
+    const scaleReport = {
+      baselineHeight: cache.baselineVisibleHeight || modeHeight,
+      modeHeight,
+      scaleCorrection: 1
+    };
+
+    console.log('Forge visual mode scale normalized', {
+      mode,
+      baselineHeight: scaleReport.baselineHeight,
+      modeHeight,
+      scaleCorrection: 1
+    });
+
+    return scaleReport;
+  }
+
+  if (previewRoot.metadata?.forgeVisualScaleNormalized) {
+    return previewRoot.metadata.forgeVisualScaleReport || null;
+  }
+
+  const baselineHeight = cache.baselineVisibleHeight;
+  const scaleCorrection = baselineHeight / modeHeight;
+
+  if (!Number.isFinite(scaleCorrection) || scaleCorrection <= 0) {
+    return null;
+  }
+
+  previewRoot.scaling = previewRoot.scaling.multiplyByFloats(scaleCorrection, scaleCorrection, scaleCorrection);
+  previewRoot.metadata = {
+    ...(previewRoot.metadata || {}),
+    forgeVisualScaleNormalized: true,
+    forgeVisualScaleReport: {
+      mode,
+      baselineHeight,
+      modeHeight,
+      scaleCorrection
+    }
+  };
+
+  console.log('Forge visual mode scale normalized', {
+    mode,
+    baselineHeight,
+    modeHeight,
+    scaleCorrection
+  });
+
+  return previewRoot.metadata.forgeVisualScaleReport;
+}
+
 async function loadForgePlayerVisualMode(mode) {
   if (!window.activeCharacter?.activeGlbUrl) return null;
 
@@ -2375,6 +2500,7 @@ async function loadForgePlayerVisualMode(mode) {
         ...(nextRoot.metadata || {}),
         forgePreviewMode: mode
       };
+      const scaleReport = normalizeForgeVisualModeScale(mode, nextRoot);
 
       syncForgePreviewRootToPlayer(nextRoot);
       setForgePreviewRootVisible(nextRoot, false);
@@ -2387,7 +2513,9 @@ async function loadForgePlayerVisualMode(mode) {
         model: modeModel,
         animationGroups: modeAnimationGroups,
         animationGroup: modeAnimationGroups[0] || null,
-        url: nextUrl
+        url: nextUrl,
+        visibleMeshHeight: scaleReport?.modeHeight || null,
+        scaleCorrection: scaleReport?.scaleCorrection || 1
       };
 
       console.log('Forge player visual cached:', mode);
@@ -2465,13 +2593,16 @@ async function preloadForgePlayerVisualModes(startingRoot) {
   if (startingRoot) {
     const startingAnimationGroups = window.forgePreviewModel?.animationGroups || [];
     removeForgeVisualRootMotion(startingAnimationGroups, startingMode);
+    const startingScaleReport = normalizeForgeVisualModeScale(startingMode, startingRoot);
 
     cache[startingMode] = {
       root: startingRoot,
       model: window.forgePreviewModel || null,
       animationGroups: startingAnimationGroups,
       animationGroup: window.forgePreviewAnimationGroup || null,
-      url: null
+      url: null,
+      visibleMeshHeight: startingScaleReport?.modeHeight || null,
+      scaleCorrection: startingScaleReport?.scaleCorrection || 1
     };
 
     startingRoot.name = `forgePreviewRoot_${startingMode}`;
@@ -2481,6 +2612,22 @@ async function preloadForgePlayerVisualModes(startingRoot) {
       if (group?.isPlaying) group.stop();
     });
   }
+
+  await loadForgePlayerVisualMode('rigged').catch((e) => {
+    console.warn('Could not preload Forge rigged baseline visual mode:', e);
+    return null;
+  });
+
+  Object.keys(cache).forEach((mode) => {
+    if (mode === 'baselineVisibleHeight' || mode === 'baselineMode') return;
+    if (!cache[mode]?.root || mode === 'rigged') return;
+
+    const scaleReport = normalizeForgeVisualModeScale(mode, cache[mode].root);
+    if (scaleReport) {
+      cache[mode].visibleMeshHeight = scaleReport.modeHeight;
+      cache[mode].scaleCorrection = scaleReport.scaleCorrection;
+    }
+  });
 
   const modes = ['idle', 'walking', 'running'];
 
