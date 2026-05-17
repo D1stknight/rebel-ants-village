@@ -1550,7 +1550,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-status-row {
         display: grid;
         grid-template-columns: minmax(140px, .34fr) minmax(0, 1fr);
-        gap: 14px;
+        gap: 6px 14px;
         align-items: center;
         padding: 8px 0;
         border-bottom: 1px solid rgba(255,255,255,.08);
@@ -1569,13 +1569,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       .forge-3d-status-value {
-        display: grid;
-        grid-template-columns: minmax(120px, 1fr) auto;
-        gap: 10px;
-        align-items: center;
         color: rgba(243,230,191,.84);
         font-size: 11px;
         line-height: 1.5;
+      }
+
+      .forge-3d-status-link-row {
+        grid-column: 1 / -1;
+        padding-left: min(150px, 34%);
       }
 
       .forge-3d-status-links {
@@ -1583,7 +1584,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         flex-wrap: wrap;
         gap: 6px;
         margin-top: 0;
-        justify-content: flex-end;
+        justify-content: flex-start;
       }
 
       .forge-3d-link-btn {
@@ -3380,7 +3381,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const renderStatusRow = ({ label, value, linksHtml = '' }) => `
           <div class="forge-3d-status-row">
             <div class="forge-3d-status-label">${label}</div>
-            <div class="forge-3d-status-value">${value}${linksHtml}</div>
+            <div class="forge-3d-status-value">${value}</div>
+            ${linksHtml ? `<div class="forge-3d-status-link-row">${linksHtml}</div>` : ''}
           </div>
         `;
         const isActiveBuild = forgeBuildIsActive(build, activeForgeCharacter);
