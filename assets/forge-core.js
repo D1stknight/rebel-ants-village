@@ -1701,6 +1701,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       collectionKey: activeCharacter.collectionKey || build?.collectionKey || 'battle_for_colony',
       activeGlbUrl: activeCharacter.activeGlbUrl,
       riggedGlbUrl: activeCharacter.riggedGlbUrl || null,
+      idleGlbUrl: activeCharacter.idleGlbUrl || null,
       walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
       runningGlbUrl: activeCharacter.runningGlbUrl || null,
       activeForgeCharacter: activeCharacter,
@@ -1728,6 +1729,59 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       localStorage.setItem(FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY, JSON.stringify(saved.slice(0, 12)));
     } catch(e) {
       console.warn('Could not save Forge playable character locally:', e);
+    }
+  }
+
+  function updateSelectedRebelActiveForgeCharacter(activeCharacter, build) {
+    if (!activeCharacter?.activeGlbUrl) return;
+
+    try {
+      const raw = localStorage.getItem('selectedRebel');
+      if (!raw) return;
+
+      const selectedRebel = JSON.parse(raw);
+      const buildId = activeCharacter.activeForgeBuildId || build?.buildId || '';
+      const tokenId = activeCharacter.tokenId || build?.tokenId || '';
+      const rebelId = activeCharacter.rebelId || build?.rebelId || '';
+      const selectedBuildId =
+        selectedRebel.buildId ||
+        selectedRebel.activeForgeCharacter?.activeForgeBuildId ||
+        selectedRebel.activeForgeCharacter?.characterBundle?.sourceBuildId ||
+        '';
+      const selectedTokenId = selectedRebel.tokenId || selectedRebel.activeForgeCharacter?.tokenId || '';
+      const selectedRebelId = selectedRebel.rebelId || selectedRebel.id || selectedRebel.activeForgeCharacter?.rebelId || '';
+      const matches =
+        (buildId && selectedBuildId && String(buildId) === String(selectedBuildId)) ||
+        (tokenId && selectedTokenId && String(tokenId) === String(selectedTokenId)) ||
+        (rebelId && selectedRebelId && String(rebelId) === String(selectedRebelId));
+
+      if (!matches) return;
+
+      const updatedSelectedRebel = {
+        ...selectedRebel,
+        playableType: 'forge_build',
+        buildId: buildId || selectedRebel.buildId || null,
+        activeForgeCharacter: activeCharacter,
+        activeGlbUrl: activeCharacter.activeGlbUrl || null,
+        riggedGlbUrl: activeCharacter.riggedGlbUrl || null,
+        idleGlbUrl: activeCharacter.idleGlbUrl || null,
+        walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
+        runningGlbUrl: activeCharacter.runningGlbUrl || null,
+        characterSource: 'forge_glb',
+        updatedAt: new Date().toISOString()
+      };
+
+      localStorage.setItem('selectedRebel', JSON.stringify(updatedSelectedRebel));
+
+      console.log('Forge selectedRebel active character refreshed:', {
+        buildId: updatedSelectedRebel.buildId,
+        idleGlbUrl: activeCharacter.idleGlbUrl || null,
+        bundleIdle: activeCharacter.characterBundle?.animations?.idle?.glbUrl || null,
+        walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
+        runningGlbUrl: activeCharacter.runningGlbUrl || null
+      });
+    } catch(e) {
+      console.warn('Could not refresh selectedRebel active Forge character:', e);
     }
   }
 
@@ -1760,6 +1814,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         build.rigging?.response?.result?.basic_animations?.running_glb_url ||
         null;
       const activeGlbUrl = riggedGlbUrl || staticGlbUrl;
+      const idleGlbUrl =
+        build.output?.idleGlbUrl ||
+        build.output?.storedAnimations?.idle?.storedAnimationUrl ||
+        build.rigging?.storedAnimations?.idle?.storedAnimationUrl ||
+        build.output?.meshyAnimations?.idle?.animationGlbUrl ||
+        null;
 
       if (!activeGlbUrl) return;
 
@@ -1775,6 +1835,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         activeGlbUrl,
         staticGlbUrl,
         riggedGlbUrl,
+        idleGlbUrl,
         walkingGlbUrl,
         runningGlbUrl,
         activeCharacterModelType: riggedGlbUrl ? 'rigged_forge_glb' : 'static_forge_glb',
@@ -1790,6 +1851,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           staticGlbUrl,
           riggedGlbUrl,
           animations: {
+            idle: idleGlbUrl ? { name: 'idle', glbUrl: idleGlbUrl } : null,
             walking: walkingGlbUrl ? { name: 'walking', glbUrl: walkingGlbUrl } : null,
             running: runningGlbUrl ? { name: 'running', glbUrl: runningGlbUrl } : null
           },
@@ -2342,6 +2404,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       build.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
       build.rigging?.response?.result?.basic_animations?.walking_glb_url ||
       null;
+    const idleGlbUrl =
+      build.output?.idleGlbUrl ||
+      build.output?.storedAnimations?.idle?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.idle?.storedAnimationUrl ||
+      build.output?.meshyAnimations?.idle?.animationGlbUrl ||
+      null;
     const runningGlbUrl =
       build.output?.runningGlbUrl ||
       build.output?.storedAnimations?.running?.storedAnimationUrl ||
@@ -2384,6 +2452,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
               ...(build.output || {}),
               activeGlbUrl,
               activeCharacterModelType,
+              idleGlbUrl,
               walkingGlbUrl,
               runningGlbUrl,
               storedAnimations: {
@@ -2410,6 +2479,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       window.lastForgeActiveCharacterSaveResponse = data;
       window.lastForgeActiveCharacter = data.activeCharacter || null;
       saveForgePlayableCharacter(data.activeCharacter, build);
+      updateSelectedRebelActiveForgeCharacter(data.activeCharacter, build);
       console.log('Forge active character animation URL report:', data.animationUrlReport || null);
 
            if (activeButton) {
@@ -3101,6 +3171,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const previewBuildHtml = activeCharacterGlbUrl
           ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.previewForge3dBuild('${build.buildId}')">Preview This Build</button>`
           : '';
+        const updateActiveCharacterHtml = isActiveBuild && activeCharacterGlbUrl
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Update Active Character</button>`
+          : '';
         const storeBuildActionHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
           ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeRiggedGlbInRebelBlob('${build.buildId}')">Store GLB</button>`
           : glbUrl && !isStoredInRebelBlob
@@ -3168,7 +3241,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
                 ${runningStoredHtml}
               </div>
               ${stepHtml}
-              <div style="margin-top:10px;">${previewBuildHtml}${generateMeshyIdleHtml}${storeMeshyIdleHtml}${deleteBuildHtml}</div>
+              <div style="margin-top:10px;">${previewBuildHtml}${generateMeshyIdleHtml}${storeMeshyIdleHtml}${updateActiveCharacterHtml}${deleteBuildHtml}</div>
             </div>
           </div>
         `;
