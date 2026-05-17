@@ -1972,7 +1972,6 @@ const REBEL_CHARACTER_RECORDS = {
     bundleId: "forged_test_ant"
   }
 };
-const FORGE_IDLE_ARMATURE_GLB_URL = '/assets/forge-animations/idle_armature.glb';
 function getRebelCharacterRecord(rebel) {
   if (!rebel || !rebel.tokenId) return null;
   return REBEL_CHARACTER_RECORDS[String(rebel.tokenId)] || null;
@@ -2131,7 +2130,7 @@ function createForgeVillagePreviewToggle() {
 
   const currentMode = localStorage.getItem('forgeVillagePreviewMode') || 'running';
   const modes = [
-    { id: 'idle', label: 'Idle' },
+    { id: 'rigged', label: 'Idle' },
     { id: 'walking', label: 'Walk' },
     { id: 'running', label: 'Run' }
   ];
@@ -2245,7 +2244,7 @@ function getForgePlayerDesiredPreviewMode() {
     turnRight ||
     Math.abs(charMesh?._vel || 0) > 0.02;
 
-  return moving ? 'walking' : 'idle';
+  return moving ? 'walking' : 'rigged';
 }
 
 function syncForgePreviewRootToPlayer(previewRoot) {
@@ -2253,7 +2252,7 @@ function syncForgePreviewRootToPlayer(previewRoot) {
 
   const isForgeIdle =
     localStorage.getItem('forgePlayerVisualTest') === '1' &&
-    (window.forgePlayerVisualCurrentMode === 'idle' || window.forgePlayerVisualCurrentMode === 'rigged');
+    window.forgePlayerVisualCurrentMode === 'rigged';
 
   const idleTime = performance.now() * 0.001;
   const idleBob = isForgeIdle ? Math.sin(idleTime * 2.1) * 0.025 : 0;
@@ -2357,26 +2356,6 @@ async function loadForgePlayerVisualMode(mode) {
       const modeModel = window.forgePreviewModel || null;
       const modeAnimationGroups = modeModel?.animationGroups || [];
       removeForgeVisualRootMotion(modeAnimationGroups, mode);
-      let visualAnimationGroups = modeAnimationGroups;
-
-      if (mode === 'idle') {
-        const modeSkeleton = modeModel?.skeletons?.[0] || null;
-
-        if (modeSkeleton) {
-          try {
-            const idleAnimationEntry = await loadForgeArmatureAnimationForPlayer('idle', FORGE_IDLE_ARMATURE_GLB_URL, modeSkeleton);
-
-            if (idleAnimationEntry?.animationGroup) {
-              removeForgeVisualRootMotion([idleAnimationEntry.animationGroup], mode);
-              visualAnimationGroups = [idleAnimationEntry.animationGroup];
-            }
-          } catch(e) {
-            console.warn('Could not load Forge idle animation mode:', e);
-          }
-        } else {
-          console.warn('Forge idle mode could not find a rigged skeleton.');
-        }
-      }
 
       nextRoot.name = `forgePreviewRoot_${mode}`;
       nextRoot.metadata = {
@@ -2386,15 +2365,15 @@ async function loadForgePlayerVisualMode(mode) {
 
       syncForgePreviewRootToPlayer(nextRoot);
       setForgePreviewRootVisible(nextRoot, false);
-      visualAnimationGroups.forEach((group) => {
+      modeAnimationGroups.forEach((group) => {
         if (group?.isPlaying) group.stop();
       });
 
       cache[mode] = {
         root: nextRoot,
         model: modeModel,
-        animationGroups: visualAnimationGroups,
-        animationGroup: visualAnimationGroups[0] || null,
+        animationGroups: modeAnimationGroups,
+        animationGroup: modeAnimationGroups[0] || null,
         url: nextUrl
       };
 
@@ -2453,10 +2432,6 @@ function activateForgePlayerVisualMode(mode) {
     });
   });
 
-  if (mode === 'idle') {
-    console.log('Forge visual animation playing: idle');
-  }
-
   const label = mode === 'rigged' ? 'idle' : mode;
   if (window.forgePlayerVisualLastLoggedMode !== label) {
     console.log(`Forge visual mode switched: ${label}`);
@@ -2490,7 +2465,7 @@ async function preloadForgePlayerVisualModes(startingRoot) {
     });
   }
 
-  const modes = ['idle', 'walking', 'running'];
+  const modes = ['rigged', 'walking', 'running'];
 
   await Promise.all(
     modes.map((mode) => loadForgePlayerVisualMode(mode).catch((e) => {
@@ -2599,7 +2574,7 @@ function activateForgeArmaturePlayerMode(mode) {
     }
   });
 
-  if (mode === 'rigged') {
+  if (mode === 'rigged' || mode === 'idle') {
     window.forgePlayerVisualCurrentMode = 'rigged';
     return true;
   }
@@ -2614,10 +2589,6 @@ function activateForgeArmaturePlayerMode(mode) {
 
   entry.animationGroup.start(loop);
   window.forgePlayerVisualCurrentMode = mode;
-
-  if (mode === 'idle') {
-    console.log('Forge visual animation playing: idle');
-  }
 
   return true;
 }
@@ -2659,10 +2630,6 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
     window.activeCharacter?.runningArmatureGlbUrl ||
     window.activeCharacter?.characterBundle?.armatureAnimations?.running?.glbUrl ||
     '';
-  const idleArmatureUrl =
-    window.activeCharacter?.idleArmatureGlbUrl ||
-    window.activeCharacter?.characterBundle?.armatureAnimations?.idle?.glbUrl ||
-    FORGE_IDLE_ARMATURE_GLB_URL;
 
   if (!riggedUrl || !walkingArmatureUrl || !runningArmatureUrl) {
     console.warn('Missing Forge armature player URLs. Falling back to full GLB visual swap.');
@@ -2714,7 +2681,6 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
 
   try {
     await Promise.all([
-      loadForgeArmatureAnimationForPlayer('idle', idleArmatureUrl, riggedSkeleton),
       loadForgeArmatureAnimationForPlayer('walking', walkingArmatureUrl, riggedSkeleton),
       loadForgeArmatureAnimationForPlayer('running', runningArmatureUrl, riggedSkeleton)
     ]);
