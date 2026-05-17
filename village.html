@@ -1885,6 +1885,7 @@ async function refreshActiveForgeCharacterForVillage() {
     console.log('Village using selected saved Forge playable without global active refresh:', {
       buildId: selectedRebel.buildId || selectedRebel.activeForgeCharacter.activeForgeBuildId || null,
       activeGlbUrl: selectedCharacter.activeGlbUrl,
+      idleGlbUrl: selectedCharacter.idleGlbUrl,
       walkingGlbUrl: selectedCharacter.walkingGlbUrl,
       runningGlbUrl: selectedCharacter.runningGlbUrl
     });
@@ -1921,6 +1922,7 @@ async function refreshActiveForgeCharacterForVillage() {
 
   console.log('Village active Forge character refreshed:', {
     activeGlbUrl: refreshedCharacter.activeGlbUrl,
+    idleGlbUrl: refreshedCharacter.idleGlbUrl,
     walkingGlbUrl: refreshedCharacter.walkingGlbUrl,
     runningGlbUrl: refreshedCharacter.runningGlbUrl,
     walkingArmatureGlbUrl: refreshedCharacter.walkingArmatureGlbUrl,
@@ -2013,6 +2015,7 @@ function resolveCharacterConfig(rebel) {
     activeGlbUrl,
     staticGlbUrl: activeForgeCharacter?.staticGlbUrl || characterBundle?.staticGlbUrl || null,
     riggedGlbUrl: activeForgeCharacter?.riggedGlbUrl || characterBundle?.riggedGlbUrl || null,
+    idleGlbUrl: activeForgeCharacter?.idleGlbUrl || characterBundle?.animations?.idle?.glbUrl || null,
     walkingGlbUrl: activeForgeCharacter?.walkingGlbUrl || characterBundle?.animations?.walking?.glbUrl || null,
     runningGlbUrl: activeForgeCharacter?.runningGlbUrl || characterBundle?.animations?.running?.glbUrl || null,
 
@@ -2058,6 +2061,11 @@ async function resolveForgePreviewGlbUrlForVillage(activeCharacter, forcedMode =
     activeCharacter?.activeGlbUrl ||
     '';
 
+  const idleGlbUrl =
+    activeCharacter?.idleGlbUrl ||
+    activeCharacter?.characterBundle?.animations?.idle?.glbUrl ||
+    '';
+
   const walkingGlbUrl =
     activeCharacter?.walkingGlbUrl ||
     activeCharacter?.characterBundle?.animations?.walking?.glbUrl ||
@@ -2067,6 +2075,11 @@ async function resolveForgePreviewGlbUrlForVillage(activeCharacter, forcedMode =
     activeCharacter?.runningGlbUrl ||
     activeCharacter?.characterBundle?.animations?.running?.glbUrl ||
     '';
+
+  if (previewMode === 'idle' && idleGlbUrl) {
+    console.log('Village Forge preview using bundle idle GLB:', idleGlbUrl);
+    return idleGlbUrl;
+  }
 
   if ((previewMode === 'idle' || previewMode === 'rigged') && riggedGlbUrl) {
     console.log('Village Forge preview using bundle rigged GLB:', riggedGlbUrl);
@@ -2130,7 +2143,7 @@ function createForgeVillagePreviewToggle() {
 
   const currentMode = localStorage.getItem('forgeVillagePreviewMode') || 'running';
   const modes = [
-    { id: 'rigged', label: 'Idle' },
+    { id: 'idle', label: 'Idle' },
     { id: 'walking', label: 'Walk' },
     { id: 'running', label: 'Run' }
   ];
@@ -2244,7 +2257,7 @@ function getForgePlayerDesiredPreviewMode() {
     turnRight ||
     Math.abs(charMesh?._vel || 0) > 0.02;
 
-  return moving ? 'walking' : 'rigged';
+  return moving ? 'walking' : 'idle';
 }
 
 function syncForgePreviewRootToPlayer(previewRoot) {
@@ -2252,7 +2265,7 @@ function syncForgePreviewRootToPlayer(previewRoot) {
 
   const isForgeIdle =
     localStorage.getItem('forgePlayerVisualTest') === '1' &&
-    window.forgePlayerVisualCurrentMode === 'rigged';
+    (window.forgePlayerVisualCurrentMode === 'idle' || window.forgePlayerVisualCurrentMode === 'rigged');
 
   const idleTime = performance.now() * 0.001;
   const idleBob = isForgeIdle ? Math.sin(idleTime * 2.1) * 0.025 : 0;
@@ -2433,6 +2446,10 @@ function activateForgePlayerVisualMode(mode) {
   });
 
   const label = mode === 'rigged' ? 'idle' : mode;
+  if (label === 'idle' && activeAnimationGroups.length) {
+    console.log('Forge visual animation playing: idle');
+  }
+
   if (window.forgePlayerVisualLastLoggedMode !== label) {
     console.log(`Forge visual mode switched: ${label}`);
     window.forgePlayerVisualLastLoggedMode = label;
@@ -2465,7 +2482,7 @@ async function preloadForgePlayerVisualModes(startingRoot) {
     });
   }
 
-  const modes = ['rigged', 'walking', 'running'];
+  const modes = ['idle', 'walking', 'running'];
 
   await Promise.all(
     modes.map((mode) => loadForgePlayerVisualMode(mode).catch((e) => {
@@ -2575,7 +2592,7 @@ function activateForgeArmaturePlayerMode(mode) {
   });
 
   if (mode === 'rigged' || mode === 'idle') {
-    window.forgePlayerVisualCurrentMode = 'rigged';
+    window.forgePlayerVisualCurrentMode = mode;
     return true;
   }
 
@@ -2621,6 +2638,11 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
     window.activeCharacter?.activeGlbUrl ||
     '';
 
+  const idleGlbUrl =
+    window.activeCharacter?.idleGlbUrl ||
+    window.activeCharacter?.characterBundle?.animations?.idle?.glbUrl ||
+    '';
+
   const walkingArmatureUrl =
     window.activeCharacter?.walkingArmatureGlbUrl ||
     window.activeCharacter?.characterBundle?.armatureAnimations?.walking?.glbUrl ||
@@ -2630,6 +2652,11 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
     window.activeCharacter?.runningArmatureGlbUrl ||
     window.activeCharacter?.characterBundle?.armatureAnimations?.running?.glbUrl ||
     '';
+
+  if (idleGlbUrl) {
+    console.log('Forge idle GLB available. Using full GLB visual swap for idle/walk/run modes.');
+    return false;
+  }
 
   if (!riggedUrl || !walkingArmatureUrl || !runningArmatureUrl) {
     console.warn('Missing Forge armature player URLs. Falling back to full GLB visual swap.');

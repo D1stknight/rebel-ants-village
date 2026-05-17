@@ -67,6 +67,7 @@ function sanitizeActiveCharacterPayload(payload) {
     build.rigging?.storedArmatureAnimations ||
     {};
   const meshyBasicAnimations = build.rigging?.response?.result?.basic_animations || {};
+  const outputIdleGlbUrl = output.idleGlbUrl || null;
   const outputWalkingGlbUrl = output.walkingGlbUrl || null;
   const outputRunningGlbUrl = output.runningGlbUrl || null;
   const previewThumbnail =
@@ -96,6 +97,12 @@ function sanitizeActiveCharacterPayload(payload) {
     output.rebelGlbUrl ||
     output.glbUrl ||
     build.engine?.glbUrl ||
+    null;
+
+  const idleGlbUrl =
+    output.idleGlbUrl ||
+    storedAnimations.idle?.storedAnimationUrl ||
+    output.meshyAnimations?.idle?.animationGlbUrl ||
     null;
 
   const walkingGlbUrl =
@@ -156,8 +163,10 @@ function sanitizeActiveCharacterPayload(payload) {
 
   const now = new Date().toISOString();
   const animationUrlReport = {
+    outputIdleGlbUrl,
     outputWalkingGlbUrl,
     outputRunningGlbUrl,
+    savedIdleGlbUrl: idleGlbUrl,
     savedWalkingGlbUrl: walkingGlbUrl,
     savedRunningGlbUrl: runningGlbUrl
   };
@@ -176,6 +185,13 @@ function sanitizeActiveCharacterPayload(payload) {
     glbBlobPath,
     storedAnimations,
     animations: {
+      idle: idleGlbUrl
+        ? {
+            name: 'idle',
+            glbUrl: idleGlbUrl,
+            source: (storedAnimations.idle?.storedAnimationUrl || outputIdleGlbUrl) ? 'rebel_blob' : 'meshy'
+          }
+        : null,
       walking: walkingGlbUrl
         ? {
             name: 'walking',
@@ -233,6 +249,7 @@ function sanitizeActiveCharacterPayload(payload) {
     activeGlbUrl,
     staticGlbUrl,
     riggedGlbUrl,
+    idleGlbUrl,
     walkingGlbUrl,
     runningGlbUrl,
     walkingArmatureGlbUrl,
