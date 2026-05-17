@@ -3556,8 +3556,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <span class="forge-3d-pack-pill${idleGlbUrl ? ' ready' : ''}">Idle ${idleGlbUrl ? '✓' : 'Pending'}</span>
             <span class="forge-3d-pack-pill${walkingRebelGlbUrl ? ' ready' : ''}">Walk ${walkingRebelGlbUrl ? '✓' : 'Pending'}</span>
             <span class="forge-3d-pack-pill${runningRebelGlbUrl ? ' ready' : ''}">Run ${runningRebelGlbUrl ? '✓' : 'Pending'}</span>
-            <span class="forge-3d-pack-pill">Jump Later</span>
-            <span class="forge-3d-pack-pill">Kick Later</span>
+            <span class="forge-3d-pack-pill ready">Jump ✓</span>
+            <span class="forge-3d-pack-pill ready">Run Jump ✓</span>
+            <span class="forge-3d-pack-pill ready">High Kick ✓</span>
+            <span class="forge-3d-pack-pill ready">Roundhouse ✓</span>
           </div>
         `;
         const sourceLinksHtml = renderOpenDownloadLinks(activeGlbUrl, 'GLB');
@@ -3568,6 +3570,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const idleStoredHtml = idleGlbUrl
           ? '<br>Idle Animation: Rebel Forge Blob ✓'
           : '';
+        const donorJumpGlbUrl = 'assets/forge-animations/build_1778974543200-jump.glb';
+        const donorRunJumpGlbUrl = 'assets/forge-animations/build_1778974543200-run-jump.glb';
+        const donorHighKickGlbUrl = 'assets/forge-animations/build_1778974543200-high-kick.glb';
+        const donorRoundhouseKickGlbUrl = 'assets/forge-animations/build_1778974543200-roundhouse-kick.glb';
+        const donorJumpLinksHtml = renderOpenDownloadLinks(donorJumpGlbUrl, 'Jump GLB');
+        const donorRunJumpLinksHtml = renderOpenDownloadLinks(donorRunJumpGlbUrl, 'Run Jump GLB');
+        const donorHighKickLinksHtml = renderOpenDownloadLinks(donorHighKickGlbUrl, 'High Kick GLB');
+        const donorRoundhouseKickLinksHtml = renderOpenDownloadLinks(donorRoundhouseKickGlbUrl, 'Roundhouse Kick GLB');
         const mainStatusRowsHtml = [
           renderStatusRow({
             label: 'Storage',
@@ -3596,6 +3606,26 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             label: 'Running Animation',
             value: runningRebelGlbUrl ? 'Rebel Forge Blob ✓' : runningMeshyGlbUrl ? 'Ready for storage' : 'Pending',
             linksHtml: runningLinksHtml
+          }),
+          renderStatusRow({
+            label: 'Jump Animation',
+            value: 'Donor Ready ✓',
+            linksHtml: donorJumpLinksHtml
+          }),
+          renderStatusRow({
+            label: 'Run Jump Animation',
+            value: 'Donor Ready ✓',
+            linksHtml: donorRunJumpLinksHtml
+          }),
+          renderStatusRow({
+            label: 'High Kick Animation',
+            value: 'Donor Ready ✓',
+            linksHtml: donorHighKickLinksHtml
+          }),
+          renderStatusRow({
+            label: 'Roundhouse Kick',
+            value: 'Donor Ready ✓',
+            linksHtml: donorRoundhouseKickLinksHtml
           })
         ].join('');
         const stepHtml = renderForgeBuildSteps([

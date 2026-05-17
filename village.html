@@ -2348,6 +2348,27 @@ function removeForgeVisualScaleTracks(animationGroups, mode = 'forge') {
   }
 }
 
+const FORGE_DONOR_ACTION_ANIMATION_URLS = {
+  jump: 'assets/forge-animations/build_1778974543200-jump.glb',
+  runJump: 'assets/forge-animations/build_1778974543200-run-jump.glb',
+  highKick: 'assets/forge-animations/build_1778974543200-high-kick.glb',
+  roundhouseKick: 'assets/forge-animations/build_1778974543200-roundhouse-kick.glb'
+};
+
+const FORGE_DONOR_ACTION_DURATIONS_MS = {
+  jump: 1050,
+  runJump: 1350,
+  highKick: 1250,
+  roundhouseKick: 1350
+};
+
+const FORGE_DONOR_ACTION_LABELS = {
+  jump: 'Jump',
+  runJump: 'Run Jump',
+  highKick: 'High Kick',
+  roundhouseKick: 'Roundhouse Kick'
+};
+
 function setForgePreviewRootVisible(previewRoot, visible) {
   if (!previewRoot) return;
 
@@ -2928,6 +2949,7 @@ function pickForgeBrowserLoadableGlbUrl(...urls) {
 function activateForgeArmaturePlayerMode(mode) {
   const cache = window.forgeArmatureAnimationCache || {};
   const requestedMode = mode === 'rigged' ? 'idle' : mode;
+  const actionModes = new Set(['jump', 'runJump', 'highKick', 'roundhouseKick', 'kick', 'attack']);
 
   Object.keys(cache).forEach((key) => {
     const group = cache[key]?.animationGroup;
@@ -2952,10 +2974,22 @@ function activateForgeArmaturePlayerMode(mode) {
     return false;
   }
 
-  const loop = !(requestedMode === 'jump' || requestedMode === 'kick' || requestedMode === 'attack');
+  const loop = !actionModes.has(requestedMode);
 
   entry.animationGroup.stop();
   entry.animationGroup.reset();
+  if (!loop) {
+    entry.animationGroup.onAnimationGroupEndObservable.clear();
+    entry.animationGroup.onAnimationGroupEndObservable.addOnce(() => {
+      if (window.forgePlayerForcedMode === requestedMode) {
+        window.forgePlayerForcedMode = null;
+        window.forgePlayerForcedModeUntil = null;
+      }
+
+      const nextMode = getForgePlayerDesiredPreviewMode();
+      activateForgeArmaturePlayerMode(nextMode);
+    });
+  }
   entry.animationGroup.start(loop);
   window.forgePlayerVisualCurrentMode = requestedMode;
 
@@ -2981,7 +3015,8 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
   if (!mode) return;
 
   window.forgePlayerForcedMode = mode;
-  window.forgePlayerForcedModeUntil = performance.now() + (durationMs || 1000);
+  const resolvedDuration = durationMs || FORGE_DONOR_ACTION_DURATIONS_MS[mode] || 1000;
+  window.forgePlayerForcedModeUntil = performance.now() + resolvedDuration;
 
   if (typeof activateForgeArmaturePlayerMode === 'function') {
     const activated = activateForgeArmaturePlayerMode(mode);
@@ -2996,7 +3031,64 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
       window.forgePlayerForcedMode = null;
       window.forgePlayerForcedModeUntil = null;
     }
-  }, durationMs || 1000);
+  }, resolvedDuration);
+}
+
+window.triggerForgeArmatureActionMode = triggerForgeArmatureActionMode;
+
+function ensureForgeActionTestControls() {
+  if (document.getElementById('forge-action-test-controls')) return;
+
+  const panel = document.createElement('div');
+  panel.id = 'forge-action-test-controls';
+  panel.style.cssText = `
+    position: fixed;
+    right: 18px;
+    bottom: 82px;
+    z-index: 80;
+    display: grid;
+    gap: 6px;
+    padding: 10px;
+    border: 1px solid rgba(200,146,42,.38);
+    background: rgba(3, 8, 15, .76);
+    box-shadow: 0 14px 34px rgba(0,0,0,.28);
+    backdrop-filter: blur(8px);
+  `;
+
+  const title = document.createElement('div');
+  title.textContent = 'Forge Actions';
+  title.style.cssText = `
+    color: #d9a84c;
+    font-family: Cinzel, serif;
+    font-size: 10px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+  `;
+  panel.appendChild(title);
+
+  Object.entries(FORGE_DONOR_ACTION_LABELS).forEach(([mode, label]) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    button.style.cssText = `
+      min-width: 138px;
+      min-height: 30px;
+      border: 1px solid rgba(94,207,202,.34);
+      background: rgba(94,207,202,.09);
+      color: #aaf8f4;
+      font-family: Cinzel, serif;
+      font-size: 10px;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      cursor: pointer;
+    `;
+    button.addEventListener('click', () => {
+      triggerForgeArmatureActionMode(mode, FORGE_DONOR_ACTION_DURATIONS_MS[mode]);
+    });
+    panel.appendChild(button);
+  });
+
+  document.body.appendChild(panel);
 }
 async function preloadForgeArmaturePlayerVisual(previewRoot) {
   const riggedUrl =
@@ -3086,7 +3178,10 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
   try {
     const animationLoads = [
       loadForgeArmatureAnimationForPlayer('walking', walkingAnimationUrl, riggedSkeleton),
-      loadForgeArmatureAnimationForPlayer('running', runningAnimationUrl, riggedSkeleton)
+      loadForgeArmatureAnimationForPlayer('running', runningAnimationUrl, riggedSkeleton),
+      ...Object.entries(FORGE_DONOR_ACTION_ANIMATION_URLS).map(([mode, url]) => (
+        loadForgeArmatureAnimationForPlayer(mode, url, riggedSkeleton)
+      ))
     ];
 
     if (idleAnimationUrl) {
@@ -3103,7 +3198,8 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
     riggedUrl,
     idleAnimationUrl,
     walkingAnimationUrl,
-    runningAnimationUrl
+    runningAnimationUrl,
+    actionAnimationUrls: FORGE_DONOR_ACTION_ANIMATION_URLS
   });
 
   return true;
@@ -3116,6 +3212,7 @@ function applyForgePlayerVisualTest(previewRoot) {
   console.log('Forge player visual test enabled.');
 
   hideStarterPlayerVisualForForgeTest();
+  ensureForgeActionTestControls();
 
   refreshActiveForgeCharacterForVillage().then(() => preloadForgeArmaturePlayerVisual(previewRoot)).then((armatureReady) => {
     if (!armatureReady) {
@@ -5227,13 +5324,13 @@ document.addEventListener('keydown', async e => {
   if (key === 'r' && !adminMode) { runKey=true; switchAnim(2, true); }
     if (key === 'f' && !adminMode) {
     switchAnim(3, false);
-    triggerForgeArmatureActionMode('kick', 1200);
+    triggerForgeArmatureActionMode('highKick', FORGE_DONOR_ACTION_DURATIONS_MS.highKick);
     setTimeout(()=>{ if(animState===3) switchAnim(0,true); }, 1200);
   }
    if (e.key === ' ') {
     e.preventDefault();
     switchAnim(4, false);
-    triggerForgeArmatureActionMode('jump', 1000);
+    triggerForgeArmatureActionMode('jump', FORGE_DONOR_ACTION_DURATIONS_MS.jump);
     setTimeout(()=>{ if(animState===4) switchAnim(0,true); }, 1000);
   }
 });
