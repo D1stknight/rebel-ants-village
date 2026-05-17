@@ -2274,7 +2274,7 @@ function getForgeActionMotionOffset() {
   }
 
   const now = performance.now();
-  const elapsed = now - motion.startedAt;
+  const elapsed = now - motion.startedAt - (motion.delayMs || 0);
   if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed >= motion.durationMs) {
     return { y: 0, forward: 0 };
   }
@@ -2293,7 +2293,10 @@ function updateForgeActionPlayerMotion() {
   if (!charMesh || !motion?.mode || !motion?.startedAt || !motion?.durationMs) return;
 
   const now = performance.now();
-  const progress = Math.max(0, Math.min(1, (now - motion.startedAt) / motion.durationMs));
+  const elapsed = now - motion.startedAt - (motion.delayMs || 0);
+  if (!Number.isFinite(elapsed) || elapsed < 0) return;
+
+  const progress = Math.max(0, Math.min(1, elapsed / motion.durationMs));
   const easedProgress = 1 - Math.pow(1 - progress, 2);
   const targetForward = (motion.forward || 0) * easedProgress;
   const deltaForward = targetForward - (motion.forwardApplied || 0);
@@ -2406,14 +2409,16 @@ const FORGE_DONOR_ACTION_DURATIONS_MS = {
 
 const FORGE_DONOR_ACTION_MOTION = {
   jump: {
-    durationMs: 900,
-    lift: 1.35,
+    delayMs: 520,
+    durationMs: 760,
+    lift: 1.45,
     forward: 0
   },
   runJump: {
-    durationMs: 1150,
-    lift: 1.18,
-    forward: 3.1
+    delayMs: 180,
+    durationMs: 1180,
+    lift: 1.35,
+    forward: 5.2
   }
 };
 
@@ -3115,6 +3120,7 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
     ? {
         mode,
         startedAt: window.forgePlayerForcedModeStartedAt,
+        delayMs: actionMotion.delayMs || 0,
         durationMs: actionMotion.durationMs,
         lift: actionMotion.lift,
         forward: actionMotion.forward,

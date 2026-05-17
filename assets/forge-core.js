@@ -1354,6 +1354,44 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         background: #03070c;
       }
 
+      .forge-3d-build-collapse-toggle {
+        position: absolute;
+        left: 50%;
+        top: 9px;
+        z-index: 3;
+        transform: translateX(-50%);
+        width: 42px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(217,168,76,.5);
+        border-radius: 0 0 12px 12px;
+        background: rgba(3,7,12,.94);
+        color: #f3c45f;
+        font-size: 14px;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(0,0,0,.35);
+      }
+
+      .forge-3d-build-row.collapsed .forge-3d-build-collapse-toggle {
+        transform: translateX(-50%) rotate(-90deg);
+        border-radius: 12px;
+      }
+
+      .forge-3d-build-row.collapsed .forge-3d-build-side-item,
+      .forge-3d-build-row.collapsed .forge-3d-build-layout,
+      .forge-3d-build-row.collapsed .forge-3d-dev-details,
+      .forge-3d-build-row.collapsed .forge-3d-steps-section,
+      .forge-3d-build-row.collapsed .forge-3d-build-actions {
+        display: none;
+      }
+
+      .forge-3d-build-row.collapsed .forge-3d-build-header {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+
       .forge-3d-build-thumb {
         width: 100%;
         aspect-ratio: 4 / 5;
@@ -1630,6 +1668,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         color: rgba(243,230,191,.62);
         font-size: 11px;
         line-height: 1.7;
+      }
+
+      .forge-3d-dev-details-content .forge-3d-status-links {
+        margin: 7px 0 16px;
       }
 
       .forge-3d-build-steps {
@@ -4010,6 +4052,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
         return `
           <div class="forge-3d-build-row">
+            <button class="forge-3d-build-collapse-toggle" type="button" aria-label="Collapse build card" onclick="this.closest('.forge-3d-build-row')?.classList.toggle('collapsed')">▾</button>
             <div class="forge-3d-build-side">
               ${renderForgeBuildThumbnail(build)}
               <div class="forge-3d-build-side-item">
