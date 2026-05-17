@@ -2319,6 +2319,35 @@ function removeForgeVisualRootMotion(animationGroups, mode = 'forge') {
   }
 }
 
+function removeForgeVisualScaleTracks(animationGroups, mode = 'forge') {
+  let removedCount = 0;
+  const removedTargets = [];
+
+  (animationGroups || []).forEach((group) => {
+    const targetedAnimations = group?.targetedAnimations || [];
+
+    for (let index = targetedAnimations.length - 1; index >= 0; index--) {
+      const targetedAnimation = targetedAnimations[index];
+      const targetName = String(targetedAnimation?.target?.name || '');
+      const targetProperty = targetedAnimation?.animation?.targetProperty || '';
+
+      if (targetProperty === 'scaling' || targetProperty === 'scale') {
+        targetedAnimations.splice(index, 1);
+        removedCount++;
+        if (targetName) removedTargets.push(targetName);
+      }
+    }
+  });
+
+  if (removedCount > 0) {
+    console.log('Forge visual scale tracks removed:', {
+      mode,
+      removedCount,
+      targets: [...new Set(removedTargets)].slice(0, 24)
+    });
+  }
+}
+
 function setForgePreviewRootVisible(previewRoot, visible) {
   if (!previewRoot) return;
 
@@ -2846,6 +2875,7 @@ async function loadForgeArmatureAnimationForPlayer(mode, armatureGlbUrl, riggedS
   });
 
   removeForgeVisualRootMotion([armatureAnimation], mode);
+  removeForgeVisualScaleTracks([armatureAnimation], mode);
   armatureAnimation.stop();
 
   const entry = {
