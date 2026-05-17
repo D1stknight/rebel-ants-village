@@ -1286,10 +1286,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     style.textContent = `
       #forge-3d-build-status-panel {
         margin-top: 18px;
-        padding: 14px;
+        padding: 12px;
         border: 1px solid rgba(200,146,42,.24);
         background: rgba(200,146,42,.055);
-        border-radius: 18px;
+        border-radius: 14px;
       }
 
       .forge-3d-build-empty {
@@ -1304,7 +1304,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       .forge-3d-build-list {
         display: grid;
-        gap: 22px;
+        gap: 16px;
         margin-top: 12px;
       }
 
@@ -1315,11 +1315,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           radial-gradient(circle at 21% 14%, rgba(26,111,104,.42), transparent 18%),
           radial-gradient(circle at 77% 82%, rgba(88,255,166,.09), transparent 28%),
           linear-gradient(135deg, rgba(4,16,19,.98), rgba(3,7,12,.985) 58%, rgba(2,12,17,.98));
-        border-radius: 10px;
-        padding: 26px 28px 30px;
+        border-radius: 8px;
+        padding: 18px 20px 20px;
         display: grid;
-        grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
-        gap: 26px;
+        grid-template-columns: minmax(142px, 178px) minmax(0, 1fr);
+        gap: 20px;
         align-items: start;
         box-shadow:
           inset 0 0 0 1px rgba(255,216,128,.18),
@@ -1331,7 +1331,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-build-row::before {
         content: '';
         position: absolute;
-        inset: 8px;
+        inset: 6px;
         border: 1px solid rgba(217,168,76,.32);
         border-radius: 8px;
         pointer-events: none;
@@ -1343,12 +1343,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         left: 50%;
         top: -1px;
         transform: translate(-50%, -50%);
-        width: 38px;
-        height: 24px;
+        width: 32px;
+        height: 20px;
         display: grid;
         place-items: center;
         color: #f3c45f;
-        font-size: 17px;
+        font-size: 14px;
         line-height: 1;
         text-shadow: 0 0 18px rgba(217,168,76,.62);
         background: #03070c;
@@ -1357,8 +1357,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-build-thumb {
         width: 100%;
         aspect-ratio: 4 / 5;
-        border: 2px solid rgba(217,168,76,.72);
-        border-radius: 10px;
+        border: 1px solid rgba(217,168,76,.72);
+        border-radius: 8px;
         background:
           radial-gradient(circle at center, rgba(26,111,104,.5), rgba(4,18,22,.8) 48%, rgba(0,0,0,.48)),
           linear-gradient(135deg, rgba(217,168,76,.12), transparent 42%);
@@ -1371,7 +1371,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 1px;
-        box-shadow: inset 0 0 0 1px rgba(0,0,0,.7), 0 14px 28px rgba(0,0,0,.32);
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,.7), 0 10px 22px rgba(0,0,0,.28);
       }
 
       .forge-3d-build-thumb img {
@@ -1387,8 +1387,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       .forge-3d-build-status {
         color: #d9a84c;
-        font-size: 14px;
-        letter-spacing: 2px;
+        font-size: 16px;
+        letter-spacing: 1.7px;
         text-transform: uppercase;
         font-weight: 800;
         line-height: 1.45;
@@ -1402,21 +1402,21 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       .forge-3d-build-side {
         display: grid;
-        gap: 18px;
+        gap: 12px;
       }
 
       .forge-3d-build-side-item {
         display: grid;
-        grid-template-columns: 34px minmax(0, 1fr);
-        gap: 13px;
+        grid-template-columns: 24px minmax(0, 1fr);
+        gap: 9px;
         align-items: start;
-        padding: 0 0 15px 2px;
+        padding: 0 0 10px 1px;
         border-bottom: 1px solid rgba(243,230,191,.13);
       }
 
       .forge-3d-build-side-icon {
         color: #d9a84c;
-        font-size: 22px;
+        font-size: 16px;
         line-height: 1;
         text-align: center;
         text-shadow: 0 0 14px rgba(217,168,76,.28);
@@ -1425,8 +1425,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-build-side-label {
         color: #d9a84c;
         font-family: 'Cinzel', serif;
-        font-size: 10px;
-        letter-spacing: 2px;
+        font-size: 9px;
+        letter-spacing: 1.7px;
         text-transform: uppercase;
         font-weight: 800;
       }
@@ -1434,26 +1434,26 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-build-side-value {
         margin-top: 4px;
         color: rgba(243,230,191,.84);
-        font-size: 14px;
+        font-size: 11px;
         line-height: 1.5;
       }
 
       .forge-3d-build-header {
         display: grid;
-        grid-template-columns: 58px minmax(0, 1fr);
-        gap: 12px 18px;
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 8px 14px;
         align-items: center;
-        padding-bottom: 18px;
+        padding-bottom: 12px;
         border-bottom: 1px solid rgba(243,230,191,.11);
       }
 
       .forge-3d-build-crest {
-        width: 54px;
-        height: 64px;
+        width: 42px;
+        height: 50px;
         display: grid;
         place-items: center;
         color: #f3c45f;
-        font-size: 28px;
+        font-size: 22px;
         background:
           linear-gradient(180deg, rgba(217,168,76,.16), rgba(0,0,0,.16)),
           radial-gradient(circle at center, rgba(217,168,76,.22), transparent 62%);
@@ -1464,14 +1464,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       .forge-3d-build-title-area {
         display: grid;
-        gap: 10px;
+        gap: 8px;
       }
 
       .forge-3d-build-badges,
       .forge-3d-animation-pack {
         display: flex;
         flex-wrap: wrap;
-        gap: 12px;
+        gap: 8px;
       }
 
       .forge-3d-build-badge,
@@ -1479,15 +1479,15 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         display: inline-flex;
         align-items: center;
         gap: 7px;
-        min-height: 42px;
-        padding: 9px 18px;
+        min-height: 30px;
+        padding: 6px 11px;
         border: 1px solid rgba(255,255,255,.14);
-        border-radius: 9px;
+        border-radius: 6px;
         background: rgba(255,255,255,.045);
         color: rgba(243,230,191,.76);
         font-family: 'Cinzel', serif;
-        font-size: 13px;
-        letter-spacing: 2px;
+        font-size: 9px;
+        letter-spacing: 1.45px;
         text-transform: uppercase;
       }
 
@@ -1509,33 +1509,33 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-build-layout {
         display: grid;
         grid-template-columns: minmax(0, .95fr) minmax(0, 1fr);
-        gap: 26px;
+        gap: 18px;
         align-items: start;
-        margin-top: 20px;
+        margin-top: 14px;
       }
 
       .forge-3d-build-section {
         border-top: 1px solid rgba(255,255,255,.09);
-        padding-top: 15px;
+        padding-top: 10px;
       }
 
       .forge-3d-build-section-title {
         color: #d9a84c;
         font-family: 'Cinzel', serif;
-        font-size: 13px;
-        letter-spacing: 2.3px;
+        font-size: 10px;
+        letter-spacing: 1.9px;
         text-transform: uppercase;
         font-weight: 800;
-        margin-bottom: 10px;
+        margin-bottom: 6px;
         text-align: center;
       }
 
       .forge-3d-status-row {
         display: grid;
-        grid-template-columns: minmax(150px, .42fr) minmax(0, 1fr);
-        gap: 16px;
+        grid-template-columns: minmax(120px, .42fr) minmax(0, 1fr);
+        gap: 10px;
         align-items: center;
-        padding: 12px 0;
+        padding: 8px 0;
         border-bottom: 1px solid rgba(255,255,255,.08);
       }
 
@@ -1546,44 +1546,44 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-status-label {
         color: #d9a84c;
         font-family: 'Cinzel', serif;
-        font-size: 12px;
-        letter-spacing: 2px;
+        font-size: 9px;
+        letter-spacing: 1.6px;
         text-transform: uppercase;
       }
 
       .forge-3d-status-value {
         color: rgba(243,230,191,.84);
-        font-size: 14px;
+        font-size: 11px;
         line-height: 1.5;
       }
 
       .forge-3d-status-links {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 8px;
+        gap: 6px;
+        margin-top: 6px;
       }
 
       .forge-3d-link-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 38px;
-        padding: 9px 14px;
+        min-height: 30px;
+        padding: 7px 10px;
         border: 1px solid rgba(94,207,202,.28);
         background: linear-gradient(180deg, rgba(94,207,202,.12), rgba(0,0,0,.14));
         color: #5ecfca;
         border-radius: 6px;
         font-family: 'Cinzel', serif;
-        font-size: 11px;
-        letter-spacing: 1.5px;
+        font-size: 9px;
+        letter-spacing: 1.25px;
         text-transform: uppercase;
         text-decoration: none;
         box-shadow: inset 0 0 0 1px rgba(94,207,202,.08);
       }
 
       .forge-3d-dev-details {
-        margin-top: 10px;
+        margin-top: 8px;
         border: 1px solid rgba(255,255,255,.1);
         border-radius: 8px;
         background: rgba(0,0,0,.18);
@@ -1608,19 +1608,19 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       .forge-3d-build-steps {
         display: grid;
-        gap: 6px;
-        margin-top: 14px;
+        gap: 5px;
+        margin-top: 10px;
         position: relative;
       }
 
       .forge-3d-build-step {
         position: relative;
         display: grid;
-        grid-template-columns: 46px minmax(0, 1fr) auto;
-        gap: 16px;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        gap: 10px;
         align-items: center;
-        min-height: 50px;
-        padding: 8px 16px;
+        min-height: 36px;
+        padding: 6px 10px;
         border: 1px solid rgba(88,255,166,.22);
         border-radius: 8px;
         background:
@@ -1628,8 +1628,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           radial-gradient(circle at left center, rgba(88,255,166,.13), transparent 36%);
         color: rgba(243,230,191,.66);
         font-family: 'Cinzel', serif;
-        font-size: 13px;
-        letter-spacing: 1.8px;
+        font-size: 10px;
+        letter-spacing: 1.45px;
         text-transform: uppercase;
         box-shadow: inset 0 0 0 1px rgba(88,255,166,.055);
       }
@@ -1650,22 +1650,22 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       .forge-3d-step-action {
-        margin: 0;
-        padding: 7px 9px;
+        margin: 0 !important;
+        padding: 6px 8px;
         white-space: nowrap;
       }
 
       .forge-3d-step-number {
         position: relative;
-        width: 36px;
-        height: 36px;
+        width: 26px;
+        height: 26px;
         display: inline-grid;
         place-items: center;
-        border: 2px solid rgba(88,255,166,.72);
+        border: 1px solid rgba(88,255,166,.72);
         border-radius: 999px;
         color: #f3e6bf;
         background: radial-gradient(circle at center, rgba(88,255,166,.18), rgba(0,0,0,.58));
-        box-shadow: 0 0 0 3px rgba(88,255,166,.08), 0 0 18px rgba(88,255,166,.2);
+        box-shadow: 0 0 0 2px rgba(88,255,166,.08), 0 0 12px rgba(88,255,166,.18);
         z-index: 1;
       }
 
@@ -1673,18 +1673,18 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         grid-column: 1 / -1;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
-        padding-top: 26px;
+        gap: 10px;
+        padding-top: 16px;
         border-top: 1px solid rgba(200,146,42,.22);
       }
 
       .forge-3d-build-actions .forge-3d-step-action {
         margin: 0;
-        min-height: 58px;
-        padding: 14px 18px;
+        min-height: 42px;
+        padding: 10px 12px;
         border-radius: 5px;
-        font-size: 12px;
-        letter-spacing: 2px;
+        font-size: 9px;
+        letter-spacing: 1.55px;
         background:
           linear-gradient(180deg, rgba(94,207,202,.12), rgba(4,24,31,.72)),
           linear-gradient(90deg, rgba(94,207,202,.24), transparent 18%, transparent 82%, rgba(94,207,202,.2));
