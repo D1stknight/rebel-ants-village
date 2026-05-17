@@ -2565,6 +2565,14 @@ const FORGE_REBEL_ACTION_CONTROLLERS = {
     landMs: 780,
     jumpHeight: 1.65,
     forwardDistance: 0
+  },
+  runJump: {
+    durationMs: 1550,
+    takeoffMs: 180,
+    peakMs: 650,
+    landMs: 1240,
+    jumpHeight: 1.55,
+    forwardDistance: 8.5
   }
 };
 
@@ -2641,14 +2649,14 @@ function removeForgeVisualScaleTracks(animationGroups, mode = 'forge') {
 
 const FORGE_DONOR_ACTION_DURATIONS_MS = {
   jump: 850,
-  runJump: 3100,
+  runJump: 1550,
   highKick: 3600,
   roundhouseKick: 4200
 };
 
 const FORGE_DONOR_ACTION_SPEED_RATIOS = {
   jump: 1,
-  runJump: 1.12
+  runJump: 1
 };
 
 const FORGE_DONOR_ACTION_MOTION = {
@@ -3433,13 +3441,13 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
   let resolvedDuration = actionController?.durationMs || durationMs || FORGE_DONOR_ACTION_DURATIONS_MS[mode] || 3000;
   window.forgePlayerForcedModeUntil = performance.now() + resolvedDuration;
 
-  if (mode === 'jump') {
-    console.log('Forge action started: jump');
+  if (actionController) {
+    console.log(`Forge action started: ${mode}`);
 
     const startedAt = window.forgePlayerForcedModeStartedAt;
     setTimeout(() => {
       if (window.forgePlayerForcedModeStartedAt === startedAt) {
-        console.log('Forge action landed: jump');
+        console.log(`Forge action landed: ${mode}`);
       }
     }, actionController?.landMs || 780);
   }
