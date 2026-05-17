@@ -2531,6 +2531,23 @@ async function loadForgeArmatureAnimationForPlayer(mode, armatureGlbUrl, riggedS
   return entry;
 }
 
+function isForgeBrowserLoadableGlbUrl(glbUrl) {
+  if (!glbUrl) return false;
+
+  try {
+    const url = new URL(glbUrl, window.location.href);
+    const hostname = url.hostname.toLowerCase();
+
+    if (hostname === window.location.hostname.toLowerCase()) return true;
+    if (hostname.endsWith('.public.blob.vercel-storage.com')) return true;
+    if (hostname === 'vg8yazzy1wnobiup.public.blob.vercel-storage.com') return true;
+
+    return false;
+  } catch(e) {
+    return !/^https?:\/\//i.test(glbUrl);
+  }
+}
+
 function activateForgeArmaturePlayerMode(mode) {
   const cache = window.forgeArmatureAnimationCache || {};
 
@@ -2603,6 +2620,14 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
     return false;
   }
 
+  if (!isForgeBrowserLoadableGlbUrl(walkingArmatureUrl) || !isForgeBrowserLoadableGlbUrl(runningArmatureUrl)) {
+    console.warn('Forge armature URLs are not browser-loadable. Falling back to full GLB visual swap.', {
+      walkingArmatureUrl,
+      runningArmatureUrl
+    });
+    return false;
+  }
+
   let riggedRoot = previewRoot;
   let riggedResult = window.forgePreviewModel || null;
 
@@ -2638,10 +2663,15 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
   syncForgePreviewRootToPlayer(riggedRoot);
   setForgePreviewRootVisible(riggedRoot, true);
 
-  await Promise.all([
-    loadForgeArmatureAnimationForPlayer('walking', walkingArmatureUrl, riggedSkeleton),
-    loadForgeArmatureAnimationForPlayer('running', runningArmatureUrl, riggedSkeleton)
-  ]);
+  try {
+    await Promise.all([
+      loadForgeArmatureAnimationForPlayer('walking', walkingArmatureUrl, riggedSkeleton),
+      loadForgeArmatureAnimationForPlayer('running', runningArmatureUrl, riggedSkeleton)
+    ]);
+  } catch(e) {
+    console.warn('Could not load Forge armature animations. Falling back to full GLB visual swap.', e);
+    return false;
+  }
 
   console.log('Forge armature player visual ready.');
 
