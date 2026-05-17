@@ -2241,6 +2241,11 @@ function activateForgePlayerVisualMode(mode) {
     if (cache[key]?.root) {
       setForgePreviewRootVisible(cache[key].root, key === mode);
     }
+
+    const animationGroup = cache[key]?.animationGroup;
+    if (animationGroup && key !== mode && animationGroup.isPlaying) {
+      animationGroup.stop();
+    }
   });
 
   syncForgePreviewRootToPlayer(entry.root);
@@ -2249,6 +2254,16 @@ function activateForgePlayerVisualMode(mode) {
   window.forgePreviewModel = entry.model || window.forgePreviewModel || null;
   window.forgePreviewAnimationGroup = entry.animationGroup || window.forgePreviewAnimationGroup || null;
   window.forgePlayerVisualCurrentMode = mode;
+
+  if (entry.animationGroup) {
+    entry.animationGroup.start(true);
+  }
+
+  const label = mode === 'rigged' ? 'idle' : mode;
+  if (window.forgePlayerVisualLastLoggedMode !== label) {
+    console.log(`Forge visual mode switched: ${label}`);
+    window.forgePlayerVisualLastLoggedMode = label;
+  }
 
   return true;
 }
