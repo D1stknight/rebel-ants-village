@@ -3459,10 +3459,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   }
 
   const FORGE_MESHY_NATIVE_ACTIONS = [
-    { key: 'jump', label: 'Jump', actionId: 86 },
-    { key: 'highKick', label: 'High Kick', actionId: 215 },
-    { key: 'roundhouseKick', label: 'Roundhouse Kick', actionId: 207 },
-    { key: 'runJump', label: 'Run Jump', actionId: 13 }
+    { key: 'jump', label: 'Jump Pose Clip', actionId: 86 },
+    { key: 'highKick', label: 'High Kick Pose Clip', actionId: 215 },
+    { key: 'roundhouseKick', label: 'Roundhouse Kick Pose Clip', actionId: 207 },
+    { key: 'runJump', label: 'Run-Jump Pose Clip', actionId: 13 }
   ];
 
   function getForgeMeshyAnimationState(build, animationKey) {
@@ -4008,7 +4008,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           ...FORGE_MESHY_NATIVE_ACTIONS.map((action) => {
             const state = nativeActionStates[action.key];
             return renderStatusRow({
-              label: `${action.label} Animation`,
+              label: action.label,
               value: state.isStored ? 'Rebel Forge Blob ✓' : state.isReady ? 'Ready for storage' : state.taskId ? 'Generating' : 'Not generated',
               linksHtml: renderOpenDownloadLinks(state.displayUrl, `${action.label} GLB`)
             });
