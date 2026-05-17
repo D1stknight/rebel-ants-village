@@ -3027,7 +3027,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         ? document.activeElement
         : null;
 
-    const originalButtonText = activeButton ? activeButton.textContent : 'Update / Resync Landing Character';
+    const originalButtonText = activeButton ? activeButton.textContent : 'Update Landing Page';
 
     if (activeButton) {
       activeButton.textContent = 'Resyncing...';
@@ -4015,11 +4015,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const previewBuildHtml = activeCharacterGlbUrl
           ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.previewForge3dBuild('${build.buildId}')">Preview This Build</button>`
           : '';
-        const updateActiveCharacterHtml = isActiveBuild && activeCharacterGlbUrl
-          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Update Active Character</button>`
+        const activeCharacterActionHtml = activeCharacterGlbUrl
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">${isActiveBuild ? 'Update Active Character' : 'Set Active Character'}</button>`
           : '';
         const resyncLandingCharacterHtml = isSavedForLanding && activeCharacterGlbUrl
-          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.resyncForgePlayableBuild('${build.buildId}')">Update / Resync Landing Character</button>`
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.resyncForgePlayableBuild('${build.buildId}')">Update Landing Page</button>`
           : '';
         const storeBuildActionHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
           ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeRiggedGlbInRebelBlob('${build.buildId}')">Store GLB</button>`
@@ -4148,7 +4148,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             doneHtml: isActiveBuild ? 'Currently Active ✓' : 'Character Ready on Landing ✓',
             actionHtml: activeCharacterGlbUrl
               ? isSavedForLanding
-                ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.resyncForgePlayableBuild('${build.buildId}')">Update / Resync</button>`
+                ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.resyncForgePlayableBuild('${build.buildId}')">Update Landing Page</button>`
                 : `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Set Active</button>`
               : ''
           }
@@ -4225,7 +4225,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
               ${generateMeshyIdleHtml}
               ${storeMeshyIdleHtml}
               ${nativeActionButtonsHtml}
-              ${updateActiveCharacterHtml}
+              ${activeCharacterActionHtml}
               ${resyncLandingCharacterHtml}
               ${deleteBuildHtml}
             </div>
