@@ -2568,6 +2568,120 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   }
 
+  async function generateMeshyIdleAnimationTestForBuild(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build for the idle animation test.', 'error');
+      }
+      return;
+    }
+
+    if (!build.rigging?.taskId) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Start the Meshy rig test before generating a Meshy idle animation.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Generate Meshy Idle Test';
+
+    if (activeButton) {
+      activeButton.textContent = 'Starting Idle Test...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-engine-meshy-animation-create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId: build.buildId,
+          animationKey: 'idle',
+          actionId: 0
+        })
+      });
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch(parseError) {
+        data = {
+          ok: false,
+          error: 'Meshy animation create route did not return JSON',
+          detail: parseError?.message || 'Response JSON parse failed'
+        };
+      }
+
+      console.log('Meshy idle animation create response:', {
+        httpStatus: response.status,
+        ok: response.ok,
+        data
+      });
+
+      window.lastForgeMeshyAnimationCreateResponse = data;
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.detail || data.error || 'Could not start Meshy idle animation test');
+      }
+
+      if (activeButton) {
+        activeButton.textContent = 'Idle Test Started ✓';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Meshy idle animation test started. Next we will add status polling after this task exists.', 'success');
+      }
+
+      if (typeof window.renderForge3dBuildStatusPanel === 'function') {
+        await window.renderForge3dBuildStatusPanel();
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Generate Meshy Idle Test';
+          activeButton.disabled = false;
+        }
+      }, 2200);
+    } catch(e) {
+      console.warn('Could not start Meshy idle animation test:', e, window.lastForgeMeshyAnimationCreateResponse);
+
+      if (activeButton) {
+        activeButton.textContent = 'Idle Test Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        const detail =
+          window.lastForgeMeshyAnimationCreateResponse?.detail ||
+          window.lastForgeMeshyAnimationCreateResponse?.meshyError?.message ||
+          e.message ||
+          'Unknown error';
+
+        window.setForgeStatus(`Could not start Meshy idle animation test: ${detail}`, 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Generate Meshy Idle Test';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
    async function renderForge3dBuildStatusPanel() {
     ensure3dBuildStatusStyles();
 
@@ -2714,6 +2828,19 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const runningStoredHtml = runningRebelGlbUrl
           ? '<br>Running Animation: Rebel Forge Blob ✓'
           : '';
+        const idleAnimationTaskId =
+          build.rigging?.animationTasks?.idle?.taskId ||
+          '';
+        const idleGlbUrl =
+          build.output?.idleGlbUrl ||
+          build.output?.storedAnimations?.idle?.storedAnimationUrl ||
+          build.rigging?.storedAnimations?.idle?.storedAnimationUrl ||
+          '';
+        const generateMeshyIdleHtml = rigTaskId && !idleGlbUrl
+          ? idleAnimationTaskId
+            ? `<span class="forge-3d-build-step done">Meshy Idle Test Queued ✓</span>`
+            : `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.generateMeshyIdleAnimationTestForBuild('${build.buildId}')">Generate Meshy Idle Test</button>`
+          : '';
         const storedHtml = isStoredInRebelBlob
           ? '<br>Storage: Rebel Forge Blob ✓'
           : '';
@@ -2796,7 +2923,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
                 ${runningStoredHtml}
               </div>
               ${stepHtml}
-              <div style="margin-top:10px;">${previewBuildHtml}${deleteBuildHtml}</div>
+              <div style="margin-top:10px;">${previewBuildHtml}${generateMeshyIdleHtml}${deleteBuildHtml}</div>
             </div>
           </div>
         `;
@@ -2845,6 +2972,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   window.deleteForge3dBuild = deleteForge3dBuild;
   window.setForgeBuildAsActiveCharacter = setForgeBuildAsActiveCharacter;
   window.startMeshyRigTestForBuild = startMeshyRigTestForBuild;
+  window.generateMeshyIdleAnimationTestForBuild = generateMeshyIdleAnimationTestForBuild;
 
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(boot3dBuildStatusPanel, 200);
