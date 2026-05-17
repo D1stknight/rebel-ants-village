@@ -2133,6 +2133,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       idleGlbUrl: activeCharacter.idleGlbUrl || null,
       walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
       runningGlbUrl: activeCharacter.runningGlbUrl || null,
+      jumpGlbUrl: activeCharacter.jumpGlbUrl || null,
+      runJumpGlbUrl: activeCharacter.runJumpGlbUrl || null,
+      highKickGlbUrl: activeCharacter.highKickGlbUrl || null,
+      roundhouseKickGlbUrl: activeCharacter.roundhouseKickGlbUrl || null,
       activeForgeCharacter: activeCharacter,
       updatedAt: new Date().toISOString()
     };
@@ -2220,69 +2224,68 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   }
 
-  function cacheForgePlayableBuilds(builds) {
-    if (!Array.isArray(builds)) return;
+  function buildForgePlayableActiveCharacterFromBuild(build) {
+    if (!build) return null;
 
-    builds.forEach((build) => {
-      const riggedGlbUrl =
-        build.output?.riggedRebelGlbUrl ||
-        build.output?.riggedGlbUrl ||
-        build.rigging?.riggedRebelGlbUrl ||
-        build.rigging?.riggedGlbUrl ||
-        build.rigging?.response?.result?.rigged_character_glb_url ||
-        null;
-      const staticGlbUrl =
-        build.output?.rebelGlbUrl ||
-        build.output?.glbUrl ||
-        build.engine?.glbUrl ||
-        null;
-      const walkingGlbUrl =
-        build.output?.walkingGlbUrl ||
-        build.output?.storedAnimations?.walking?.storedAnimationUrl ||
-        build.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
-        build.rigging?.response?.result?.basic_animations?.walking_glb_url ||
-        null;
-      const runningGlbUrl =
-        build.output?.runningGlbUrl ||
-        build.output?.storedAnimations?.running?.storedAnimationUrl ||
-        build.rigging?.storedAnimations?.running?.storedAnimationUrl ||
-        build.rigging?.response?.result?.basic_animations?.running_glb_url ||
-        null;
-      const activeGlbUrl = riggedGlbUrl || staticGlbUrl;
-      const idleGlbUrl =
-        build.output?.idleGlbUrl ||
-        build.output?.storedAnimations?.idle?.storedAnimationUrl ||
-        build.rigging?.storedAnimations?.idle?.storedAnimationUrl ||
-        build.output?.meshyAnimations?.idle?.animationGlbUrl ||
-        null;
-      const jumpGlbUrl =
-        build.output?.jumpGlbUrl ||
-        build.output?.storedAnimations?.jump?.storedAnimationUrl ||
-        build.rigging?.storedAnimations?.jump?.storedAnimationUrl ||
-        build.output?.meshyAnimations?.jump?.animationGlbUrl ||
-        null;
-      const runJumpGlbUrl =
-        build.output?.runJumpGlbUrl ||
-        build.output?.storedAnimations?.runJump?.storedAnimationUrl ||
-        build.rigging?.storedAnimations?.runJump?.storedAnimationUrl ||
-        build.output?.meshyAnimations?.runJump?.animationGlbUrl ||
-        null;
-      const highKickGlbUrl =
-        build.output?.highKickGlbUrl ||
-        build.output?.storedAnimations?.highKick?.storedAnimationUrl ||
-        build.rigging?.storedAnimations?.highKick?.storedAnimationUrl ||
-        build.output?.meshyAnimations?.highKick?.animationGlbUrl ||
-        null;
-      const roundhouseKickGlbUrl =
-        build.output?.roundhouseKickGlbUrl ||
-        build.output?.storedAnimations?.roundhouseKick?.storedAnimationUrl ||
-        build.rigging?.storedAnimations?.roundhouseKick?.storedAnimationUrl ||
-        build.output?.meshyAnimations?.roundhouseKick?.animationGlbUrl ||
-        null;
+    const riggedGlbUrl =
+      build.output?.riggedRebelGlbUrl ||
+      build.output?.riggedGlbUrl ||
+      build.rigging?.riggedRebelGlbUrl ||
+      build.rigging?.riggedGlbUrl ||
+      build.rigging?.response?.result?.rigged_character_glb_url ||
+      null;
+    const staticGlbUrl =
+      build.output?.rebelGlbUrl ||
+      build.output?.glbUrl ||
+      build.engine?.glbUrl ||
+      null;
+    const walkingGlbUrl =
+      build.output?.walkingGlbUrl ||
+      build.output?.storedAnimations?.walking?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
+      build.rigging?.response?.result?.basic_animations?.walking_glb_url ||
+      null;
+    const runningGlbUrl =
+      build.output?.runningGlbUrl ||
+      build.output?.storedAnimations?.running?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.running?.storedAnimationUrl ||
+      build.rigging?.response?.result?.basic_animations?.running_glb_url ||
+      null;
+    const activeGlbUrl = riggedGlbUrl || staticGlbUrl;
+    const idleGlbUrl =
+      build.output?.idleGlbUrl ||
+      build.output?.storedAnimations?.idle?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.idle?.storedAnimationUrl ||
+      build.output?.meshyAnimations?.idle?.animationGlbUrl ||
+      null;
+    const jumpGlbUrl =
+      build.output?.jumpGlbUrl ||
+      build.output?.storedAnimations?.jump?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.jump?.storedAnimationUrl ||
+      build.output?.meshyAnimations?.jump?.animationGlbUrl ||
+      null;
+    const runJumpGlbUrl =
+      build.output?.runJumpGlbUrl ||
+      build.output?.storedAnimations?.runJump?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.runJump?.storedAnimationUrl ||
+      build.output?.meshyAnimations?.runJump?.animationGlbUrl ||
+      null;
+    const highKickGlbUrl =
+      build.output?.highKickGlbUrl ||
+      build.output?.storedAnimations?.highKick?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.highKick?.storedAnimationUrl ||
+      build.output?.meshyAnimations?.highKick?.animationGlbUrl ||
+      null;
+    const roundhouseKickGlbUrl =
+      build.output?.roundhouseKickGlbUrl ||
+      build.output?.storedAnimations?.roundhouseKick?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.roundhouseKick?.storedAnimationUrl ||
+      build.output?.meshyAnimations?.roundhouseKick?.animationGlbUrl ||
+      null;
 
-      if (!activeGlbUrl) return;
+    if (!activeGlbUrl) return null;
 
-      saveForgePlayableCharacter({
+    return {
         activeCharacterVersion: 'v1',
         collectionKey: build.collectionKey || 'battle_for_colony',
         tokenId: build.tokenId || null,
@@ -2331,7 +2334,17 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             kick: null
           }
         }
-      }, build);
+      };
+  }
+
+  function cacheForgePlayableBuilds(builds) {
+    if (!Array.isArray(builds)) return;
+
+    builds.forEach((build) => {
+      const activeCharacter = buildForgePlayableActiveCharacterFromBuild(build);
+      if (!activeCharacter) return;
+
+      saveForgePlayableCharacter(activeCharacter, build);
     });
   }
 
@@ -2983,6 +2996,81 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           activeButton.disabled = false;
         }
       }, 2400);
+    }
+  }
+
+  async function resyncForgePlayableBuild(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this saved Forge build to resync.', 'error');
+      }
+      return;
+    }
+
+    const activeCharacter = buildForgePlayableActiveCharacterFromBuild(build);
+
+    if (!activeCharacter?.activeGlbUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('This Forge build is not ready to resync yet.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Update / Resync Landing Character';
+
+    if (activeButton) {
+      activeButton.textContent = 'Resyncing...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      saveForgePlayableCharacter(activeCharacter, build);
+      updateSelectedRebelActiveForgeCharacter(activeCharacter, build);
+
+      window.lastForgeResyncedPlayableCharacter = activeCharacter;
+
+      console.log('Forge landing character resync report:', {
+        buildId,
+        activeGlbUrl: activeCharacter.activeGlbUrl || null,
+        idleGlbUrl: activeCharacter.idleGlbUrl || null,
+        walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
+        runningGlbUrl: activeCharacter.runningGlbUrl || null,
+        jumpGlbUrl: activeCharacter.jumpGlbUrl || null,
+        runJumpGlbUrl: activeCharacter.runJumpGlbUrl || null,
+        highKickGlbUrl: activeCharacter.highKickGlbUrl || null,
+        roundhouseKickGlbUrl: activeCharacter.roundhouseKickGlbUrl || null,
+        bundleIdle: activeCharacter.characterBundle?.animations?.idle?.glbUrl || null,
+        bundleJump: activeCharacter.characterBundle?.animations?.jump?.glbUrl || null,
+        bundleRunJump: activeCharacter.characterBundle?.animations?.runJump?.glbUrl || null
+      });
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Landing playable character resynced with this build.', 'success');
+      }
+
+      await renderForge3dBuildStatusPanel();
+    } catch(e) {
+      console.warn('Could not resync Forge playable build:', e);
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus(`Could not resync this Forge character: ${e.message || 'Unknown error'}`, 'error');
+      }
+
+      if (activeButton) {
+        activeButton.textContent = originalButtonText;
+        activeButton.disabled = false;
+      }
     }
   }
 
@@ -3930,6 +4018,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const updateActiveCharacterHtml = isActiveBuild && activeCharacterGlbUrl
           ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Update Active Character</button>`
           : '';
+        const resyncLandingCharacterHtml = isSavedForLanding && activeCharacterGlbUrl
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.resyncForgePlayableBuild('${build.buildId}')">Update / Resync Landing Character</button>`
+          : '';
         const storeBuildActionHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
           ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeRiggedGlbInRebelBlob('${build.buildId}')">Store GLB</button>`
           : glbUrl && !isStoredInRebelBlob
@@ -4055,8 +4146,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             label: 'Playable Character Saved',
             done: isActiveBuild || isSavedForLanding,
             doneHtml: isActiveBuild ? 'Currently Active ✓' : 'Character Ready on Landing ✓',
-            actionHtml: activeCharacterGlbUrl && !isSavedForLanding
-              ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Set Active</button>`
+            actionHtml: activeCharacterGlbUrl
+              ? isSavedForLanding
+                ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.resyncForgePlayableBuild('${build.buildId}')">Update / Resync</button>`
+                : `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Set Active</button>`
               : ''
           }
         ]);
@@ -4133,6 +4226,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
               ${storeMeshyIdleHtml}
               ${nativeActionButtonsHtml}
               ${updateActiveCharacterHtml}
+              ${resyncLandingCharacterHtml}
               ${deleteBuildHtml}
             </div>
           </div>
@@ -4181,6 +4275,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   window.storeForgeRunningGlbInRebelBlob = storeForgeRunningGlbInRebelBlob;
   window.deleteForge3dBuild = deleteForge3dBuild;
   window.setForgeBuildAsActiveCharacter = setForgeBuildAsActiveCharacter;
+  window.resyncForgePlayableBuild = resyncForgePlayableBuild;
   window.startMeshyRigTestForBuild = startMeshyRigTestForBuild;
   window.generateMeshyIdleAnimationTestForBuild = generateMeshyIdleAnimationTestForBuild;
   window.checkMeshyIdleAnimationStatusForBuild = checkMeshyIdleAnimationStatusForBuild;
