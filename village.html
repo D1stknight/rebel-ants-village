@@ -2353,10 +2353,10 @@ function removeForgeVisualScaleTracks(animationGroups, mode = 'forge') {
 }
 
 const FORGE_DONOR_ACTION_DURATIONS_MS = {
-  jump: 1050,
-  runJump: 1350,
-  highKick: 1250,
-  roundhouseKick: 1350
+  jump: 4200,
+  runJump: 4600,
+  highKick: 3600,
+  roundhouseKick: 4200
 };
 
 const FORGE_DONOR_ACTION_LABELS = {
@@ -3019,6 +3019,24 @@ function activateForgeArmaturePlayerMode(mode) {
   return true;
 }
 
+function getForgeArmatureAnimationDurationMs(mode) {
+  const group = window.forgeArmatureAnimationCache?.[mode]?.animationGroup || null;
+  if (!group) return FORGE_DONOR_ACTION_DURATIONS_MS[mode] || 3000;
+
+  const targetedAnimation = group.targetedAnimations?.find((item) => item?.animation?.getKeys?.().length) || null;
+  const keys = targetedAnimation?.animation?.getKeys?.() || [];
+  const firstFrame = Number.isFinite(group.from) ? group.from : keys[0]?.frame || 0;
+  const lastFrame = Number.isFinite(group.to) ? group.to : keys[keys.length - 1]?.frame || firstFrame;
+  const fps = targetedAnimation?.animation?.framePerSecond || 30;
+  const durationMs = ((lastFrame - firstFrame) / Math.max(fps, 1)) * 1000;
+
+  if (!Number.isFinite(durationMs) || durationMs <= 0) {
+    return FORGE_DONOR_ACTION_DURATIONS_MS[mode] || 3000;
+  }
+
+  return Math.max(durationMs * 1.15, FORGE_DONOR_ACTION_DURATIONS_MS[mode] || 3000);
+}
+
 function triggerForgeArmatureActionMode(mode, durationMs) {
   if (localStorage.getItem('forgePlayerVisualTest') !== '1') return;
   if (!mode) return;
@@ -3031,7 +3049,7 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
   }
 
   window.forgePlayerForcedMode = mode;
-  const resolvedDuration = durationMs || FORGE_DONOR_ACTION_DURATIONS_MS[mode] || 1000;
+  let resolvedDuration = durationMs || FORGE_DONOR_ACTION_DURATIONS_MS[mode] || 3000;
   window.forgePlayerForcedModeUntil = performance.now() + resolvedDuration;
 
   if (typeof activateForgeArmaturePlayerMode === 'function') {
@@ -3041,6 +3059,9 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
       console.log('Forge action mode not available yet:', mode);
     }
   }
+
+  resolvedDuration = Math.max(resolvedDuration, getForgeArmatureAnimationDurationMs(mode));
+  window.forgePlayerForcedModeUntil = performance.now() + resolvedDuration;
 
   setTimeout(() => {
     if (window.forgePlayerForcedMode === mode) {

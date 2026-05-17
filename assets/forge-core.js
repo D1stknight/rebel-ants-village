@@ -1743,6 +1743,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       .forge-3d-build-refresh-btn {
+        position: relative;
+        overflow: hidden;
+        z-index: 0;
         margin-top: 12px;
         padding: 10px 12px;
         border: 1px solid rgba(94,207,202,.28);
@@ -1753,6 +1756,37 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         letter-spacing: 2px;
         text-transform: uppercase;
         cursor: pointer;
+      }
+
+      @keyframes forgeActionWaterFill {
+        0% { transform: translateY(105%); opacity: .86; }
+        46% { transform: translateY(28%); opacity: 1; }
+        100% { transform: translateY(-10%); opacity: .94; }
+      }
+
+      .forge-3d-build-refresh-btn:disabled::before,
+      .forge-3d-preview-btn:disabled::before,
+      .forge-button-loading::before {
+        content: '';
+        position: absolute;
+        inset: -42% -12%;
+        z-index: 0;
+        pointer-events: none;
+        opacity: .72;
+        background:
+          radial-gradient(circle at 20% 24%, rgba(255,255,255,.32), transparent 12%),
+          radial-gradient(circle at 66% 30%, rgba(255,255,255,.22), transparent 10%),
+          linear-gradient(180deg, rgba(94,207,202,.16), rgba(94,207,202,.7) 58%, rgba(25,112,136,.95));
+        animation: forgeActionWaterFill 2.2s ease-in-out infinite;
+      }
+
+      .forge-3d-build-refresh-btn:disabled,
+      .forge-3d-preview-btn:disabled,
+      .forge-button-loading {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        text-shadow: 0 1px 8px rgba(0,0,0,.72);
       }
 
       .forge-active-confirmed {
@@ -3442,6 +3476,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     if (activeButton) {
       activeButton.textContent = loadingText;
       activeButton.disabled = true;
+      activeButton.classList.add('forge-button-loading');
     }
 
     try {
@@ -3490,10 +3525,23 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         await window.renderForge3dBuildStatusPanel();
       }
 
+      if (endpoint === '/api/forge-3d-engine-meshy-animation-create') {
+        scheduleForgeMeshyNativeAnimationPoll(
+          buildId,
+          animationKey,
+          30,
+          activeButton,
+          originalButtonText,
+          defaultButtonText
+        );
+        return;
+      }
+
       setTimeout(() => {
         if (activeButton) {
           activeButton.textContent = originalButtonText || defaultButtonText;
           activeButton.disabled = false;
+          activeButton.classList.remove('forge-button-loading');
         }
       }, 2200);
     } catch(e) {
@@ -3516,6 +3564,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         if (activeButton) {
           activeButton.textContent = originalButtonText || defaultButtonText;
           activeButton.disabled = false;
+          activeButton.classList.remove('forge-button-loading');
         }
       }, 2400);
     }
@@ -3553,6 +3602,80 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       successText: `${animationKey} stored ✓`,
       defaultButtonText: `Store ${animationKey}`
     });
+  }
+
+  function scheduleForgeMeshyNativeAnimationPoll(
+    buildId,
+    animationKey,
+    attemptsRemaining = 30,
+    activeButton = null,
+    originalButtonText = '',
+    defaultButtonText = ''
+  ) {
+    if (!buildId || !animationKey) return;
+
+    if (attemptsRemaining <= 0) {
+      if (activeButton?.isConnected) {
+        activeButton.textContent = originalButtonText || defaultButtonText || `Check ${animationKey}`;
+        activeButton.disabled = false;
+        activeButton.classList.remove('forge-button-loading');
+      }
+      return;
+    }
+
+    setTimeout(async () => {
+      try {
+        const response = await fetch('/api/forge-3d-engine-meshy-animation-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ buildId, animationKey })
+        });
+        const data = await response.json().catch(() => null);
+
+        console.log('Forge Meshy native animation auto-poll:', {
+          animationKey,
+          attemptsRemaining,
+          httpStatus: response.status,
+          data
+        });
+
+        if (data?.animationGlbUrl) {
+          if (typeof window.setForgeStatus === 'function') {
+            window.setForgeStatus(`${animationKey} animation is ready to store.`, 'success');
+          }
+
+          if (activeButton?.isConnected) {
+            activeButton.textContent = `${animationKey} ready ✓`;
+            activeButton.disabled = false;
+            activeButton.classList.remove('forge-button-loading');
+          }
+
+          if (typeof window.renderForge3dBuildStatusPanel === 'function') {
+            await window.renderForge3dBuildStatusPanel();
+          }
+          return;
+        }
+
+        scheduleForgeMeshyNativeAnimationPoll(
+          buildId,
+          animationKey,
+          attemptsRemaining - 1,
+          activeButton,
+          originalButtonText,
+          defaultButtonText
+        );
+      } catch(e) {
+        console.warn('Forge Meshy native animation auto-poll failed:', animationKey, e);
+        scheduleForgeMeshyNativeAnimationPoll(
+          buildId,
+          animationKey,
+          attemptsRemaining - 1,
+          activeButton,
+          originalButtonText,
+          defaultButtonText
+        );
+      }
+    }, 8000);
   }
 
    async function renderForge3dBuildStatusPanel() {
@@ -3794,6 +3917,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           .map((action) => getForgeMeshyAnimationActionButtons(build, action))
           .filter(Boolean)
           .join('');
+        const nativeActionAdvancedLinksHtml = FORGE_MESHY_NATIVE_ACTIONS
+          .map((action) => {
+            const state = nativeActionStates[action.key];
+            return state.displayUrl
+              ? `<br>${action.label} GLB: ${renderOpenDownloadLinks(state.displayUrl, `${action.label} GLB`)}`
+              : '';
+          })
+          .join('');
         const mainStatusRowsHtml = [
           renderStatusRow({
             label: 'Storage',
@@ -3937,6 +4068,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
                 ${idleLinksHtml || ''}
                 ${walkingGlbHtml || ''}
                 ${runningGlbHtml || ''}
+                ${nativeActionAdvancedLinksHtml || ''}
               </div>
             </details>
             <div class="forge-3d-build-section forge-3d-steps-section">
@@ -4589,9 +4721,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const controls = previewState.controls;
     const verticalDistance = frameHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)));
     const horizontalDistance = verticalDistance / Math.max(camera.aspect, 0.001);
-    const distance = Math.max(verticalDistance, horizontalDistance, radius * 2.1, 5.5) * 1.8;
+    const distance = Math.max(verticalDistance, horizontalDistance, radius * 2.1, 4.8) * 1.35;
 
-    camera.position.set(target.x, target.y + frameHeight * 0.08, target.z + distance);
+    target.y += frameHeight * 0.06;
+    camera.position.set(target.x, target.y + frameHeight * 0.03, target.z + distance);
     camera.near = Math.max(distance / 100, 0.001);
     camera.far = Math.max(distance + radius * 24, distance * 5);
     camera.updateProjectionMatrix();
