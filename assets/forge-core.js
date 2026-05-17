@@ -1439,6 +1439,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       .forge-3d-build-side-value .forge-3d-status-links {
+        display: flex;
         gap: 5px;
         margin-top: 7px;
       }
@@ -1576,30 +1577,30 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       .forge-3d-status-link-row {
         grid-column: 1 / -1;
-        padding-left: min(150px, 34%);
       }
 
       .forge-3d-status-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
+        display: grid;
+        grid-template-columns: minmax(140px, .34fr) minmax(0, 1fr);
+        gap: 14px;
         margin-top: 0;
-        justify-content: flex-start;
+        align-items: center;
       }
 
       .forge-3d-link-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 30px;
-        padding: 7px 10px;
+        width: fit-content;
+        min-height: 24px;
+        padding: 5px 9px;
         border: 1px solid rgba(94,207,202,.28);
         background: linear-gradient(180deg, rgba(94,207,202,.12), rgba(0,0,0,.14));
         color: #5ecfca;
         border-radius: 6px;
         font-family: 'Cinzel', serif;
-        font-size: 9px;
-        letter-spacing: 1.25px;
+        font-size: 8px;
+        letter-spacing: 1.05px;
         text-transform: uppercase;
         text-decoration: none;
         box-shadow: inset 0 0 0 1px rgba(94,207,202,.08);
