@@ -2482,6 +2482,25 @@ function applyForgePlayerVisualTest(previewRoot) {
       preloadForgePlayerVisualModes(previewRoot).then(() => {
         const desiredMode = getForgePlayerDesiredPreviewMode();
         activateForgePlayerVisualMode(desiredMode);
+
+        if (window.forgePlayerVisualObserver) {
+          scene.onBeforeRenderObservable.remove(window.forgePlayerVisualObserver);
+          window.forgePlayerVisualObserver = null;
+        }
+
+        window.forgePlayerVisualObserver = scene.onBeforeRenderObservable.add(() => {
+          if (!charMesh) return;
+
+          const nextMode = getForgePlayerDesiredPreviewMode();
+
+          if (nextMode !== window.forgePlayerVisualCurrentMode) {
+            activateForgePlayerVisualMode(nextMode);
+          }
+
+          const cache = getForgePlayerVisualCache();
+          const activeRoot = cache[window.forgePlayerVisualCurrentMode]?.root || window.forgePreviewRoot;
+          syncForgePreviewRootToPlayer(activeRoot);
+        });
       });
       return;
     }
