@@ -72,6 +72,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   position:relative;
 }
 .ant-card img{width:100%;height:100%;object-fit:cover;}
+.ant-card.forge-playable-card img{
+  object-fit:contain;
+  padding:4px;
+  background:radial-gradient(circle at 50% 40%, rgba(200,146,42,0.16), rgba(0,0,0,0.62) 68%);
+}
 .ant-card:hover{border-color:rgba(200,146,42,0.9);transform:scale(1.08);
   box-shadow:0 0 20px rgba(200,146,42,0.4);}
 .ant-card.selected{border-color:#c8922a;box-shadow:0 0 25px rgba(200,146,42,0.6);}
@@ -428,13 +433,80 @@ function loadLocalForgePlayableCharacters() {
   }
 }
 
+function getForgePlayableActiveCharacter(source = {}) {
+  const nested = source.activeForgeCharacter || null;
+  const sourceBuildId = source.buildId || nested?.activeForgeBuildId || null;
+  const nestedBuildId = nested?.activeForgeBuildId || null;
+
+  if (nested?.activeGlbUrl && (!sourceBuildId || !nestedBuildId || sourceBuildId === nestedBuildId)) {
+    return {
+      ...nested,
+      activeForgeBuildId: nestedBuildId || sourceBuildId,
+      previewThumbnail: source.previewThumbnail || source.sourceImage || source.image || nested.previewThumbnail || nested.sourceImage || null,
+      sourceImage: source.sourceImage || source.previewThumbnail || source.image || nested.sourceImage || nested.previewThumbnail || null,
+      walkingGlbUrl: nested.walkingGlbUrl || source.walkingGlbUrl || null,
+      runningGlbUrl: nested.runningGlbUrl || source.runningGlbUrl || null,
+      riggedGlbUrl: nested.riggedGlbUrl || source.riggedGlbUrl || null
+    };
+  }
+
+  const activeGlbUrl = source.activeGlbUrl || source.riggedGlbUrl || source.riggedRebelGlbUrl || null;
+  if (!activeGlbUrl) return null;
+
+  return {
+    activeCharacterVersion: 'v1',
+    collectionKey: source.collectionKey || 'battle_for_colony',
+    tokenId: source.tokenId || null,
+    rebelId: source.rebelId || null,
+    activeForgeBuildId: sourceBuildId,
+    name: source.name || 'Forge Playable',
+    previewThumbnail: source.previewThumbnail || source.sourceImage || source.image || null,
+    sourceImage: source.sourceImage || source.previewThumbnail || source.image || null,
+    activeGlbUrl,
+    staticGlbUrl: source.staticGlbUrl || null,
+    riggedGlbUrl: source.riggedGlbUrl || activeGlbUrl,
+    walkingGlbUrl: source.walkingGlbUrl || null,
+    runningGlbUrl: source.runningGlbUrl || null,
+    activeCharacterModelType: source.riggedGlbUrl || source.riggedRebelGlbUrl ? 'rigged_forge_glb' : 'static_forge_glb',
+    activeCharacterSource: 'forge_glb',
+    characterBundle: {
+      bundleVersion: 'v1',
+      bundleType: 'forge_character_bundle',
+      collectionKey: source.collectionKey || 'battle_for_colony',
+      tokenId: source.tokenId || null,
+      rebelId: source.rebelId || null,
+      sourceBuildId,
+      activeGlbUrl,
+      staticGlbUrl: source.staticGlbUrl || null,
+      riggedGlbUrl: source.riggedGlbUrl || activeGlbUrl,
+      animations: {
+        walking: source.walkingGlbUrl ? { name: 'walking', glbUrl: source.walkingGlbUrl } : null,
+        running: source.runningGlbUrl ? { name: 'running', glbUrl: source.runningGlbUrl } : null
+      },
+      armatureAnimations: {
+        idle: null,
+        walking: null,
+        running: null,
+        jump: null,
+        attack: null,
+        kick: null
+      }
+    }
+  };
+}
+
 function buildForgePlayableCardFromActiveCharacter(activeForgeCharacter, source = {}) {
+  activeForgeCharacter = getForgePlayableActiveCharacter({
+    ...source,
+    activeForgeCharacter
+  });
+
   if (!activeForgeCharacter?.activeGlbUrl) return null;
 
   const buildId = activeForgeCharacter.activeForgeBuildId || source.buildId || '';
   const tokenId = activeForgeCharacter.tokenId || source.tokenId || '';
   const rebelId = activeForgeCharacter.rebelId || source.rebelId || '';
-  const id = source.id || `forge_playable_${buildId || tokenId || rebelId || Date.now()}`;
+  const id = `forge_playable_${buildId || tokenId || rebelId || source.id || Date.now()}`;
   const thumbnail =
     source.previewThumbnail ||
     source.sourceImage ||
@@ -486,13 +558,16 @@ async function loadSavedForgePlayableCards() {
   const playableById = new Map();
 
   loadLocalForgePlayableCharacters().forEach((saved) => {
-    const card = buildForgePlayableCardFromActiveCharacter(saved.activeForgeCharacter || saved, saved);
+    const card = buildForgePlayableCardFromActiveCharacter(getForgePlayableActiveCharacter(saved), saved);
     if (card?.activeGlbUrl) playableById.set(card.id, card);
   });
 
   const serverSelectedPlayable = await loadSelectedForgePlayableFromServer();
   if (serverSelectedPlayable?.activeGlbUrl) {
-    playableById.set(serverSelectedPlayable.id, serverSelectedPlayable);
+    playableById.set(serverSelectedPlayable.id, {
+      ...serverSelectedPlayable,
+      ...(playableById.get(serverSelectedPlayable.id) || {})
+    });
   }
 
   return [...playableById.values()];
@@ -639,7 +714,9 @@ async function selectAnt(id) {
   if (!rebel) return;
 
     setStatus('Loading Rebel details...');
-  const enrichedRebel = await loadSelectedRebelMetadata(rebel);
+  const enrichedRebel = rebel.playableType === 'forge_build'
+    ? rebel
+    : await loadSelectedRebelMetadata(rebel);
   const forgeReadyRebel =
     enrichedRebel.playableType === 'forge_build' && enrichedRebel.activeForgeCharacter?.activeGlbUrl
       ? enrichedRebel
@@ -673,7 +750,7 @@ async function selectAnt(id) {
 function buildCard(rebel) {
   const charRow = document.getElementById('char-row');
   const card = document.createElement('div');
-  card.className = 'ant-card' + (rebel.id === selectedAnt ? ' selected' : '');
+  card.className = 'ant-card' + (rebel.playableType === 'forge_build' ? ' forge-playable-card' : '') + (rebel.id === selectedAnt ? ' selected' : '');
   card.id = 'card_' + rebel.id;
   card.onclick = () => selectAnt(rebel.id);
 
@@ -690,7 +767,7 @@ function buildCard(rebel) {
     </div>
   `;
 
-  card.innerHTML = `<img src="${rebel.image}" onerror="this.src='assets/lobby/ant_1.JPG'"/>
+  card.innerHTML = `<img src="${rebel.image || 'assets/lobby/ant_1.JPG'}" onerror="this.onerror=null; this.src='assets/lobby/ant_1.JPG';"/>
     ${cardLabel}`;
   charRow.appendChild(card);
 }

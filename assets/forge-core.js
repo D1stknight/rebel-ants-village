@@ -2403,6 +2403,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       window.lastForgeActiveCharacterSaveResponse = data;
+      window.lastForgeActiveCharacter = data.activeCharacter || null;
       saveForgePlayableCharacter(data.activeCharacter, build);
       console.log('Forge active character animation URL report:', data.animationUrlReport || null);
 
@@ -2420,6 +2421,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           'success'
         );
       }
+
+      await renderForge3dBuildStatusPanel();
     } catch(e) {
       console.warn('Could not set Forge build as active character:', e);
 
