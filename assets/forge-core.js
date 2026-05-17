@@ -1313,6 +1313,38 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         background: rgba(0,0,0,.22);
         border-radius: 14px;
         padding: 12px;
+        display: grid;
+        grid-template-columns: 86px minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+      }
+
+      .forge-3d-build-thumb {
+        width: 86px;
+        aspect-ratio: 1;
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 10px;
+        background: rgba(255,255,255,.06);
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        color: rgba(243,230,191,.52);
+        font-size: 10px;
+        line-height: 1.4;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .forge-3d-build-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .forge-3d-build-body {
+        min-width: 0;
       }
 
       .forge-3d-build-status {
@@ -1328,6 +1360,46 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         font-size: 11px;
         line-height: 1.7;
         margin-top: 6px;
+      }
+
+      .forge-3d-build-steps {
+        display: grid;
+        gap: 7px;
+        margin-top: 10px;
+      }
+
+      .forge-3d-build-step {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 9px;
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 10px;
+        background: rgba(255,255,255,.035);
+        color: rgba(243,230,191,.66);
+        font-size: 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .forge-3d-build-step.done {
+        border-color: rgba(88,255,166,.28);
+        background: rgba(88,255,166,.07);
+        color: #9dffc7;
+      }
+
+      .forge-3d-build-step.next {
+        border-color: rgba(94,207,202,.72);
+        background: rgba(94,207,202,.12);
+        color: #f3e6bf;
+        box-shadow: 0 0 0 1px rgba(94,207,202,.12);
+      }
+
+      .forge-3d-step-action {
+        margin: 0;
+        padding: 7px 9px;
+        white-space: nowrap;
       }
 
       .forge-3d-build-refresh-btn {
@@ -1348,6 +1420,20 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         background: rgba(88, 255, 166, .16) !important;
         color: #9dffc7 !important;
         cursor: default !important;
+      }
+
+      @media (max-width: 640px) {
+        .forge-3d-build-row {
+          grid-template-columns: 64px minmax(0, 1fr);
+        }
+
+        .forge-3d-build-thumb {
+          width: 64px;
+        }
+
+        .forge-3d-build-step {
+          grid-template-columns: 1fr;
+        }
       }
     `;
 
@@ -1563,6 +1649,51 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
 
     return status || 'Unknown';
+  }
+
+  function getForgeBuildThumbnailUrl(build) {
+    return (
+      build?.sourceImage?.imageUrl ||
+      build?.productionReference?.imageUrl ||
+      build?.selectedConcept?.imageUrl ||
+      build?.concept?.imageUrl ||
+      build?.sourceImageUrl ||
+      ''
+    );
+  }
+
+  function renderForgeBuildThumbnail(build) {
+    const thumbnailUrl = getForgeBuildThumbnailUrl(build);
+
+    if (thumbnailUrl) {
+      return `
+        <div class="forge-3d-build-thumb">
+          <img src="${thumbnailUrl}" alt="3D build source thumbnail" loading="lazy">
+        </div>
+      `;
+    }
+
+    return '<div class="forge-3d-build-thumb">No<br>Image</div>';
+  }
+
+  function renderForgeBuildSteps(steps) {
+    const firstActionIndex = steps.findIndex((step) => !step.done && step.actionHtml);
+
+    return `
+      <div class="forge-3d-build-steps">
+        ${steps.map((step, index) => {
+          const isNext = index === firstActionIndex;
+          const className = `forge-3d-build-step${step.done ? ' done' : ''}${isNext ? ' next' : ''}`;
+
+          return `
+            <div class="${className}">
+              <span>${step.label}${step.done ? ' ✓' : ''}</span>
+              ${step.done ? '<span>Done</span>' : isNext ? step.actionHtml : '<span>Waiting</span>'}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 
   async function storeForgeGlbInRebelBlob(buildId) {
@@ -2231,6 +2362,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           build.output?.source === 'rebel_blob' ||
           Boolean(rebelGlbUrl);
 
+        const buildComplete = Boolean(glbUrl || rebelGlbUrl || build.engine?.taskId || build.status !== 'queued_for_future_3d_generation');
+
         const openGlbHtml = activeGlbUrl
           ? `<br><a href="${activeGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open GLB</a>`
           : '';
@@ -2317,28 +2450,74 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const riggedStoredHtml = isRiggedStoredInRebelBlob
           ? '<br>Rigged Storage: Rebel Forge Blob ✓'
           : '';
+
+        const activeCharacterGlbUrl = riggedGlbUrl || activeGlbUrl;
+        const storeBuildActionHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeRiggedGlbInRebelBlob('${build.buildId}')">Store GLB</button>`
+          : glbUrl && !isStoredInRebelBlob
+            ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeGlbInRebelBlob('${build.buildId}')">Store GLB</button>`
+            : '';
+        const stepHtml = renderForgeBuildSteps([
+          {
+            label: 'Step 1: Start 3D Build',
+            done: buildComplete,
+            actionHtml: ''
+          },
+          {
+            label: 'Step 2: Start Meshy Rig Test',
+            done: Boolean(rigTaskId),
+            actionHtml: activeGlbUrl && !rigTaskId
+              ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.startMeshyRigTestForBuild('${build.buildId}')">Start Meshy Rig Test</button>`
+              : ''
+          },
+          {
+            label: 'Step 3: Store GLB in Rebel Forge',
+            done: Boolean(riggedMeshyGlbUrl ? isRiggedStoredInRebelBlob : isStoredInRebelBlob),
+            actionHtml: storeBuildActionHtml
+          },
+          {
+            label: 'Step 4: Store Walking Animation',
+            done: Boolean(walkingRebelGlbUrl),
+            actionHtml: walkingMeshyGlbUrl && !walkingRebelGlbUrl
+              ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeWalkingGlbInRebelBlob('${build.buildId}')">Store Walking</button>`
+              : ''
+          },
+          {
+            label: 'Step 5: Store Running Animation',
+            done: Boolean(runningRebelGlbUrl),
+            actionHtml: runningMeshyGlbUrl && !runningRebelGlbUrl
+              ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeRunningGlbInRebelBlob('${build.buildId}')">Store Running</button>`
+              : ''
+          },
+          {
+            label: 'Step 6: Set As Active Character',
+            done: false,
+            actionHtml: activeCharacterGlbUrl
+              ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Set Active</button>`
+              : ''
+          }
+        ]);
+
         return `
           <div class="forge-3d-build-row">
-            <div class="forge-3d-build-status">${index === 0 ? 'Latest Build — ' : ''}${statusText}</div>
-            <div class="forge-3d-build-meta">
-              Source: ${sourceConceptId}<br>
-              Created: ${created}<br>
-              Output: ${activeGlbUrl ? 'GLB Ready' : 'Future GLB Character'}
-              ${openGlbHtml}${downloadGlbHtml}
-              ${storeGlbHtml}
-              ${setActiveHtml}
-              ${rigTestHtml}
-                                      ${storedHtml}
-              ${rigStatusHtml}
-              ${riggedGlbHtml}
-              ${storeRiggedGlbHtml}
-              ${riggedStoredHtml}
-                         ${walkingGlbHtml}
-              ${storeWalkingGlbHtml}
-              ${walkingStoredHtml}
-              ${runningGlbHtml}
-              ${storeRunningGlbHtml}
-              ${runningStoredHtml}
+            ${renderForgeBuildThumbnail(build)}
+            <div class="forge-3d-build-body">
+              <div class="forge-3d-build-status">${index === 0 ? 'Latest Build — ' : ''}${statusText}</div>
+              <div class="forge-3d-build-meta">
+                Source: ${sourceConceptId}<br>
+                Created: ${created}<br>
+                Output: ${activeCharacterGlbUrl ? 'GLB Ready' : 'Future GLB Character'}
+                ${openGlbHtml}${downloadGlbHtml}
+                ${storedHtml}
+                ${rigStatusHtml}
+                ${riggedGlbHtml}
+                ${riggedStoredHtml}
+                ${walkingGlbHtml}
+                ${walkingStoredHtml}
+                ${runningGlbHtml}
+                ${runningStoredHtml}
+              </div>
+              ${stepHtml}
             </div>
           </div>
         `;
@@ -2961,26 +3140,30 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const box = visibleBounds?.box || new THREE.Box3().setFromObject(previewState.model);
     const sphere = box.getBoundingSphere(new THREE.Sphere());
     const visibleHeight = visibleBounds?.characterHeight || 0;
-    const radius = Math.max(visibleBounds?.radius || sphere.radius, visibleHeight * 0.55, 0.001);
+    const radius = Math.max(visibleBounds?.radius || sphere.radius, visibleHeight * 0.62, 0.001);
     const center = visibleBounds?.center || sphere.center;
+    const target = center.clone();
+    if (visibleHeight) {
+      target.y += visibleHeight * 0.08;
+    }
     const camera = previewState.camera;
     const controls = previewState.controls;
-    const verticalDistance = radius / Math.sin(THREE.MathUtils.degToRad(camera.fov * 0.5));
+    const verticalDistance = (visibleHeight || radius * 2) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)));
     const horizontalDistance = verticalDistance / Math.max(camera.aspect, 0.001);
-    const distance = Math.max(verticalDistance, horizontalDistance) * 1.75;
+    const distance = Math.max(verticalDistance, horizontalDistance, radius * 2.1) * 2.25;
 
-    camera.position.set(center.x, center.y + (visibleHeight || radius) * 0.03, center.z + distance);
+    camera.position.set(target.x, target.y + (visibleHeight || radius) * 0.06, target.z + distance);
     camera.near = Math.max(distance / 100, 0.001);
     camera.far = Math.max(distance + radius * 20, distance * 4);
     camera.updateProjectionMatrix();
 
     if (controls) {
-      controls.target.copy(center);
+      controls.target.copy(target);
       controls.update();
     }
 
     const report = {
-      center: center.toArray(),
+      center: target.toArray(),
       radius,
       boxMin: box.min.toArray(),
       boxMax: box.max.toArray(),
