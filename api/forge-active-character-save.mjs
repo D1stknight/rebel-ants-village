@@ -66,6 +66,7 @@ function sanitizeActiveCharacterPayload(payload) {
     output.storedArmatureAnimations ||
     build.rigging?.storedArmatureAnimations ||
     {};
+  const meshyBasicAnimations = build.rigging?.response?.result?.basic_animations || {};
 
   const riggedGlbUrl =
     output.riggedRebelGlbUrl ||
@@ -84,21 +85,25 @@ function sanitizeActiveCharacterPayload(payload) {
   const walkingGlbUrl =
     output.walkingGlbUrl ||
     storedAnimations.walking?.storedAnimationUrl ||
+    meshyBasicAnimations.walking_glb_url ||
     null;
 
   const runningGlbUrl =
     output.runningGlbUrl ||
     storedAnimations.running?.storedAnimationUrl ||
+    meshyBasicAnimations.running_glb_url ||
     null;
 
   const walkingArmatureGlbUrl =
     output.walkingArmatureGlbUrl ||
     storedArmatureAnimations.walking_armature?.storedAnimationUrl ||
+    meshyBasicAnimations.walking_armature_glb_url ||
     null;
 
   const runningArmatureGlbUrl =
     output.runningArmatureGlbUrl ||
     storedArmatureAnimations.running_armature?.storedAnimationUrl ||
+    meshyBasicAnimations.running_armature_glb_url ||
     null;
 
   const activeGlbUrl =
