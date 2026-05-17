@@ -2203,9 +2203,17 @@ async function loadForgePlayerVisualMode(mode) {
 
   cache[mode].loadingPromise = (async () => {
     const nextUrl = await resolveForgePreviewGlbUrlForVillage(window.activeCharacter, mode);
+
+    if (mode === 'running' && !window.activeCharacter?.runningGlbUrl && !window.activeCharacter?.characterBundle?.animations?.running?.glbUrl) {
+      console.warn('Forge visual running URL missing. Running mode may fall back to another GLB.', window.activeCharacter);
+    }
+
     const nextRoot = await loadForgePreviewModelInVillage(nextUrl);
 
     if (nextRoot) {
+      const modeModel = window.forgePreviewModel || null;
+      const modeAnimationGroups = modeModel?.animationGroups || [];
+
       nextRoot.name = `forgePreviewRoot_${mode}`;
       nextRoot.metadata = {
         ...(nextRoot.metadata || {}),
@@ -2214,15 +2222,24 @@ async function loadForgePlayerVisualMode(mode) {
 
       syncForgePreviewRootToPlayer(nextRoot);
       setForgePreviewRootVisible(nextRoot, false);
+      modeAnimationGroups.forEach((group) => {
+        if (group?.isPlaying) group.stop();
+      });
 
       cache[mode] = {
         root: nextRoot,
-        model: window.forgePreviewModel || null,
-        animationGroup: window.forgePreviewAnimationGroup || null,
+        model: modeModel,
+        animationGroups: modeAnimationGroups,
+        animationGroup: modeAnimationGroups[0] || null,
         url: nextUrl
       };
 
       console.log('Forge player visual cached:', mode);
+      console.log('Forge visual animation groups available:', {
+        mode,
+        count: modeAnimationGroups.length,
+        names: modeAnimationGroups.map((group) => group.name)
+      });
     }
 
     return nextRoot;
@@ -2242,10 +2259,12 @@ function activateForgePlayerVisualMode(mode) {
       setForgePreviewRootVisible(cache[key].root, key === mode);
     }
 
-    const animationGroup = cache[key]?.animationGroup;
-    if (animationGroup && key !== mode && animationGroup.isPlaying) {
-      animationGroup.stop();
-    }
+    const animationGroups = cache[key]?.animationGroups || (cache[key]?.animationGroup ? [cache[key].animationGroup] : []);
+    animationGroups.forEach((group) => {
+      if (group && key !== mode && group.isPlaying) {
+        group.stop();
+      }
+    });
   });
 
   syncForgePreviewRootToPlayer(entry.root);
@@ -2255,9 +2274,20 @@ function activateForgePlayerVisualMode(mode) {
   window.forgePreviewAnimationGroup = entry.animationGroup || window.forgePreviewAnimationGroup || null;
   window.forgePlayerVisualCurrentMode = mode;
 
-  if (entry.animationGroup) {
-    entry.animationGroup.start(true);
-  }
+  const activeAnimationGroups = entry.animationGroups || (entry.animationGroup ? [entry.animationGroup] : []);
+
+  activeAnimationGroups.forEach((group) => {
+    if (!group) return;
+
+    group.stop();
+    group.reset();
+    group.start(true);
+
+    console.log('Forge visual animation playing:', {
+      mode,
+      groupName: group.name
+    });
+  });
 
   const label = mode === 'rigged' ? 'idle' : mode;
   if (window.forgePlayerVisualLastLoggedMode !== label) {
@@ -2273,9 +2303,12 @@ async function preloadForgePlayerVisualModes(startingRoot) {
   const cache = getForgePlayerVisualCache();
 
   if (startingRoot) {
+    const startingAnimationGroups = window.forgePreviewModel?.animationGroups || [];
+
     cache[startingMode] = {
       root: startingRoot,
       model: window.forgePreviewModel || null,
+      animationGroups: startingAnimationGroups,
       animationGroup: window.forgePreviewAnimationGroup || null,
       url: null
     };
@@ -2283,6 +2316,9 @@ async function preloadForgePlayerVisualModes(startingRoot) {
     startingRoot.name = `forgePreviewRoot_${startingMode}`;
     syncForgePreviewRootToPlayer(startingRoot);
     setForgePreviewRootVisible(startingRoot, false);
+    startingAnimationGroups.forEach((group) => {
+      if (group?.isPlaying) group.stop();
+    });
   }
 
   const modes = ['rigged', 'walking', 'running'];
