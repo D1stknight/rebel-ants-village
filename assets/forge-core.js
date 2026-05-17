@@ -2196,6 +2196,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         idleGlbUrl: activeCharacter.idleGlbUrl || null,
         walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
         runningGlbUrl: activeCharacter.runningGlbUrl || null,
+        jumpGlbUrl: activeCharacter.jumpGlbUrl || null,
+        runJumpGlbUrl: activeCharacter.runJumpGlbUrl || null,
+        highKickGlbUrl: activeCharacter.highKickGlbUrl || null,
+        roundhouseKickGlbUrl: activeCharacter.roundhouseKickGlbUrl || null,
         characterSource: 'forge_glb',
         updatedAt: new Date().toISOString()
       };
@@ -2207,7 +2211,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         idleGlbUrl: activeCharacter.idleGlbUrl || null,
         bundleIdle: activeCharacter.characterBundle?.animations?.idle?.glbUrl || null,
         walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
-        runningGlbUrl: activeCharacter.runningGlbUrl || null
+        runningGlbUrl: activeCharacter.runningGlbUrl || null,
+        jumpGlbUrl: activeCharacter.jumpGlbUrl || null,
+        runJumpGlbUrl: activeCharacter.runJumpGlbUrl || null
       });
     } catch(e) {
       console.warn('Could not refresh selectedRebel active Forge character:', e);

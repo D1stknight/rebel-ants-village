@@ -1879,6 +1879,40 @@ function forgeCharacterMatchesVillageRebel(activeForgeCharacter, rebel) {
 async function refreshActiveForgeCharacterForVillage() {
   const selectedRebel = window.activeRebel || getSelectedRebel();
   const activeForgeCharacter = await loadActiveForgeCharacterForVillage(selectedRebel);
+  const selectedBuildId =
+    selectedRebel?.buildId ||
+    selectedRebel?.activeForgeCharacter?.activeForgeBuildId ||
+    selectedRebel?.activeForgeCharacter?.characterBundle?.sourceBuildId ||
+    '';
+  const activeBuildId =
+    activeForgeCharacter?.activeForgeBuildId ||
+    activeForgeCharacter?.characterBundle?.sourceBuildId ||
+    '';
+
+  if (
+    selectedRebel?.playableType === 'forge_build' &&
+    selectedRebel.activeForgeCharacter?.activeGlbUrl &&
+    selectedBuildId &&
+    activeBuildId &&
+    String(selectedBuildId) !== String(activeBuildId)
+  ) {
+    const selectedCharacter = resolveCharacterConfig(selectedRebel);
+    window.activeRebel = selectedRebel;
+    window.activeCharacter = selectedCharacter;
+
+    console.log('Village kept selected saved Forge playable build instead of global active character:', {
+      selectedBuildId,
+      globalActiveBuildId: activeBuildId,
+      activeGlbUrl: selectedCharacter.activeGlbUrl,
+      idleGlbUrl: selectedCharacter.idleGlbUrl,
+      walkingGlbUrl: selectedCharacter.walkingGlbUrl,
+      runningGlbUrl: selectedCharacter.runningGlbUrl,
+      jumpGlbUrl: selectedCharacter.jumpGlbUrl,
+      runJumpGlbUrl: selectedCharacter.runJumpGlbUrl
+    });
+
+    return selectedCharacter;
+  }
 
   if (!activeForgeCharacter) {
     if (selectedRebel?.playableType === 'forge_build' && selectedRebel.activeForgeCharacter?.activeGlbUrl) {

@@ -492,13 +492,20 @@ function getForgePlayableActiveCharacter(source = {}) {
   const nestedBuildId = nested?.activeForgeBuildId || null;
 
   if (nested?.activeGlbUrl && (!sourceBuildId || !nestedBuildId || sourceBuildId === nestedBuildId)) {
+    const animations = nested.characterBundle?.animations || {};
+
     return {
       ...nested,
       activeForgeBuildId: nestedBuildId || sourceBuildId,
       previewThumbnail: source.previewThumbnail || source.sourceImage || source.image || nested.previewThumbnail || nested.sourceImage || null,
       sourceImage: source.sourceImage || source.previewThumbnail || source.image || nested.sourceImage || nested.previewThumbnail || null,
-      walkingGlbUrl: nested.walkingGlbUrl || source.walkingGlbUrl || null,
-      runningGlbUrl: nested.runningGlbUrl || source.runningGlbUrl || null,
+      idleGlbUrl: nested.idleGlbUrl || source.idleGlbUrl || animations.idle?.glbUrl || null,
+      walkingGlbUrl: nested.walkingGlbUrl || source.walkingGlbUrl || animations.walking?.glbUrl || null,
+      runningGlbUrl: nested.runningGlbUrl || source.runningGlbUrl || animations.running?.glbUrl || null,
+      jumpGlbUrl: nested.jumpGlbUrl || source.jumpGlbUrl || animations.jump?.glbUrl || null,
+      runJumpGlbUrl: nested.runJumpGlbUrl || source.runJumpGlbUrl || animations.runJump?.glbUrl || null,
+      highKickGlbUrl: nested.highKickGlbUrl || source.highKickGlbUrl || animations.highKick?.glbUrl || null,
+      roundhouseKickGlbUrl: nested.roundhouseKickGlbUrl || source.roundhouseKickGlbUrl || animations.roundhouseKick?.glbUrl || null,
       riggedGlbUrl: nested.riggedGlbUrl || source.riggedGlbUrl || null
     };
   }
@@ -518,8 +525,13 @@ function getForgePlayableActiveCharacter(source = {}) {
     activeGlbUrl,
     staticGlbUrl: source.staticGlbUrl || null,
     riggedGlbUrl: source.riggedGlbUrl || activeGlbUrl,
+    idleGlbUrl: source.idleGlbUrl || null,
     walkingGlbUrl: source.walkingGlbUrl || null,
     runningGlbUrl: source.runningGlbUrl || null,
+    jumpGlbUrl: source.jumpGlbUrl || null,
+    runJumpGlbUrl: source.runJumpGlbUrl || null,
+    highKickGlbUrl: source.highKickGlbUrl || null,
+    roundhouseKickGlbUrl: source.roundhouseKickGlbUrl || null,
     activeCharacterModelType: source.riggedGlbUrl || source.riggedRebelGlbUrl ? 'rigged_forge_glb' : 'static_forge_glb',
     activeCharacterSource: 'forge_glb',
     characterBundle: {
@@ -533,8 +545,13 @@ function getForgePlayableActiveCharacter(source = {}) {
       staticGlbUrl: source.staticGlbUrl || null,
       riggedGlbUrl: source.riggedGlbUrl || activeGlbUrl,
       animations: {
+        idle: source.idleGlbUrl ? { name: 'idle', glbUrl: source.idleGlbUrl } : null,
         walking: source.walkingGlbUrl ? { name: 'walking', glbUrl: source.walkingGlbUrl } : null,
-        running: source.runningGlbUrl ? { name: 'running', glbUrl: source.runningGlbUrl } : null
+        running: source.runningGlbUrl ? { name: 'running', glbUrl: source.runningGlbUrl } : null,
+        jump: source.jumpGlbUrl ? { name: 'jump', glbUrl: source.jumpGlbUrl } : null,
+        runJump: source.runJumpGlbUrl ? { name: 'runJump', glbUrl: source.runJumpGlbUrl } : null,
+        highKick: source.highKickGlbUrl ? { name: 'highKick', glbUrl: source.highKickGlbUrl } : null,
+        roundhouseKick: source.roundhouseKickGlbUrl ? { name: 'roundhouseKick', glbUrl: source.roundhouseKickGlbUrl } : null
       },
       armatureAnimations: {
         idle: null,
@@ -583,8 +600,13 @@ function buildForgePlayableCardFromActiveCharacter(activeForgeCharacter, source 
     activeForgeCharacter,
     activeGlbUrl: activeForgeCharacter.activeGlbUrl,
     riggedGlbUrl: activeForgeCharacter.riggedGlbUrl || null,
+    idleGlbUrl: activeForgeCharacter.idleGlbUrl || activeForgeCharacter.characterBundle?.animations?.idle?.glbUrl || null,
     walkingGlbUrl: activeForgeCharacter.walkingGlbUrl || null,
-    runningGlbUrl: activeForgeCharacter.runningGlbUrl || null
+    runningGlbUrl: activeForgeCharacter.runningGlbUrl || null,
+    jumpGlbUrl: activeForgeCharacter.jumpGlbUrl || activeForgeCharacter.characterBundle?.animations?.jump?.glbUrl || null,
+    runJumpGlbUrl: activeForgeCharacter.runJumpGlbUrl || activeForgeCharacter.characterBundle?.animations?.runJump?.glbUrl || null,
+    highKickGlbUrl: activeForgeCharacter.highKickGlbUrl || activeForgeCharacter.characterBundle?.animations?.highKick?.glbUrl || null,
+    roundhouseKickGlbUrl: activeForgeCharacter.roundhouseKickGlbUrl || activeForgeCharacter.characterBundle?.animations?.roundhouseKick?.glbUrl || null
   };
 }
 
@@ -767,8 +789,25 @@ async function selectAnt(id) {
   if (!rebel) return;
 
     setStatus('Loading Rebel details...');
+  const forgePlayableCharacter = rebel.playableType === 'forge_build'
+    ? getForgePlayableActiveCharacter(rebel)
+    : null;
   const enrichedRebel = rebel.playableType === 'forge_build'
-    ? rebel
+    ? {
+        ...rebel,
+        buildId: forgePlayableCharacter?.activeForgeBuildId || rebel.buildId || null,
+        activeForgeCharacter: forgePlayableCharacter,
+        activeGlbUrl: forgePlayableCharacter?.activeGlbUrl || rebel.activeGlbUrl || null,
+        riggedGlbUrl: forgePlayableCharacter?.riggedGlbUrl || rebel.riggedGlbUrl || null,
+        idleGlbUrl: forgePlayableCharacter?.idleGlbUrl || rebel.idleGlbUrl || null,
+        walkingGlbUrl: forgePlayableCharacter?.walkingGlbUrl || rebel.walkingGlbUrl || null,
+        runningGlbUrl: forgePlayableCharacter?.runningGlbUrl || rebel.runningGlbUrl || null,
+        jumpGlbUrl: forgePlayableCharacter?.jumpGlbUrl || rebel.jumpGlbUrl || null,
+        runJumpGlbUrl: forgePlayableCharacter?.runJumpGlbUrl || rebel.runJumpGlbUrl || null,
+        highKickGlbUrl: forgePlayableCharacter?.highKickGlbUrl || rebel.highKickGlbUrl || null,
+        roundhouseKickGlbUrl: forgePlayableCharacter?.roundhouseKickGlbUrl || rebel.roundhouseKickGlbUrl || null,
+        characterSource: 'forge_glb'
+      }
     : await loadSelectedRebelMetadata(rebel);
   const forgeReadyRebel =
     enrichedRebel.playableType === 'forge_build' && enrichedRebel.activeForgeCharacter?.activeGlbUrl
@@ -788,6 +827,17 @@ async function selectAnt(id) {
 
   try {
     localStorage.setItem('selectedRebel', JSON.stringify(forgeReadyRebel));
+    if (forgeReadyRebel.playableType === 'forge_build') {
+      console.log('Landing selected saved Forge playable:', {
+        buildId: forgeReadyRebel.buildId || forgeReadyRebel.activeForgeCharacter?.activeForgeBuildId || null,
+        activeGlbUrl: forgeReadyRebel.activeForgeCharacter?.activeGlbUrl || null,
+        idleGlbUrl: forgeReadyRebel.activeForgeCharacter?.idleGlbUrl || null,
+        walkingGlbUrl: forgeReadyRebel.activeForgeCharacter?.walkingGlbUrl || null,
+        runningGlbUrl: forgeReadyRebel.activeForgeCharacter?.runningGlbUrl || null,
+        jumpGlbUrl: forgeReadyRebel.activeForgeCharacter?.jumpGlbUrl || null,
+        runJumpGlbUrl: forgeReadyRebel.activeForgeCharacter?.runJumpGlbUrl || null
+      });
+    }
   } catch(e) {}
 
   setStatus(
