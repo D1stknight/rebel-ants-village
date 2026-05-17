@@ -6047,6 +6047,14 @@ window.addEventListener('resize',()=>engine.resize());
 
 const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
 const VILLAGE_BLOCKER_REBUILD_MS = 900;
+const VILLAGE_STRUCTURAL_PROXY_TYPES = new Set([
+  'dojo',
+  'dojo_5',
+  'dojo_6',
+  'dojo_7',
+  'dojo_9',
+  'shrine_2'
+]);
 const VILLAGE_BLOCKING_ASSET_TYPES = new Set([
   'dojo',
   'dojo_5',
@@ -6068,6 +6076,7 @@ const VILLAGE_BLOCKING_ASSET_TYPES = new Set([
   'bamboo'
 ]);
 let villageCollisionBlockers = [];
+let villageWalkableSurfaces = [];
 let villageLastBlockerRebuild = 0;
 
 function villageTerrainHash(x, z) {
@@ -6093,7 +6102,7 @@ function villageTerrainFbm(x, z) {
     villageTerrainSmoothNoise(x * 0.15, z * 0.15) * 0.3;
 }
 
-function getVillageGroundHeightAt(x, z) {
+function getVillageBaseGroundHeightAt(x, z) {
   let height = -Infinity;
 
   if (Math.abs(x) <= 45 && Math.abs(z) <= 45) height = Math.max(height, 0.1);
@@ -6111,6 +6120,45 @@ function getVillageGroundHeightAt(x, z) {
   const dist = Math.sqrt(x * x + z * z);
   const blend = Math.max(0, Math.min(1, (dist - 100) / 55));
   return (villageTerrainFbm(x, z) - 3.5) * blend;
+}
+
+function pointToVillageSurfaceLocal(surface, x, z) {
+  const dx = x - surface.centerX;
+  const dz = z - surface.centerZ;
+  const c = Math.cos(-surface.yaw);
+  const s = Math.sin(-surface.yaw);
+
+  return {
+    x: dx * c - dz * s,
+    z: dx * s + dz * c
+  };
+}
+
+function getVillageWalkableSurfaceHeightAt(x, z) {
+  let height = -Infinity;
+
+  villageWalkableSurfaces.forEach(surface => {
+    const local = pointToVillageSurfaceLocal(surface, x, z);
+
+    if (Math.abs(local.x) > surface.halfX || Math.abs(local.z) > surface.halfZ) return;
+
+    if (surface.kind === 'ramp') {
+      const t = Math.max(0, Math.min(1, (local.z + surface.halfZ) / (surface.halfZ * 2)));
+      height = Math.max(height, surface.startY + (surface.endY - surface.startY) * t);
+      return;
+    }
+
+    height = Math.max(height, surface.y);
+  });
+
+  return Number.isFinite(height) ? height : null;
+}
+
+function getVillageGroundHeightAt(x, z) {
+  const baseHeight = getVillageBaseGroundHeightAt(x, z);
+  const surfaceHeight = getVillageWalkableSurfaceHeightAt(x, z);
+
+  return Number.isFinite(surfaceHeight) ? Math.max(baseHeight, surfaceHeight) : baseHeight;
 }
 
 function getVillageBlockerTypeFromMesh(mesh) {
@@ -6168,6 +6216,7 @@ function shouldUseMeshAsVillageBlocker(mesh) {
   if (mesh.name && mesh.name.includes('forgePreview')) return false;
 
   const type = getVillageBlockerTypeFromMesh(mesh);
+  if (VILLAGE_STRUCTURAL_PROXY_TYPES.has(type)) return false;
   if (type && ASSETS[type]?.collisionRadius) return false;
   return VILLAGE_BLOCKING_ASSET_TYPES.has(type);
 }
@@ -6187,14 +6236,126 @@ function shouldKeepStructuralMeshBlocker(type, min, max, width, depth, height) {
   return true;
 }
 
+function villageLocalToWorld2D(centerX, centerZ, yaw, localX, localZ) {
+  const c = Math.cos(yaw);
+  const s = Math.sin(yaw);
+
+  return {
+    x: centerX + localX * c - localZ * s,
+    z: centerZ + localX * s + localZ * c
+  };
+}
+
+function addVillageObbBlocker(blockers, centerX, centerZ, yaw, localX, localZ, halfX, halfZ, type, name) {
+  const center = villageLocalToWorld2D(centerX, centerZ, yaw, localX, localZ);
+
+  blockers.push({
+    kind: 'obb',
+    centerX: center.x,
+    centerZ: center.z,
+    yaw,
+    halfX,
+    halfZ,
+    type,
+    name
+  });
+}
+
+function addVillageWalkableSurface(walkableSurfaces, centerX, centerZ, yaw, localX, localZ, halfX, halfZ, y, type, name) {
+  const center = villageLocalToWorld2D(centerX, centerZ, yaw, localX, localZ);
+
+  walkableSurfaces.push({
+    kind: 'flat',
+    centerX: center.x,
+    centerZ: center.z,
+    yaw,
+    halfX,
+    halfZ,
+    y,
+    type,
+    name
+  });
+}
+
+function addVillageRampSurface(walkableSurfaces, centerX, centerZ, yaw, localX, localZ, halfX, halfZ, startY, endY, type, name) {
+  const center = villageLocalToWorld2D(centerX, centerZ, yaw, localX, localZ);
+
+  walkableSurfaces.push({
+    kind: 'ramp',
+    centerX: center.x,
+    centerZ: center.z,
+    yaw,
+    halfX,
+    halfZ,
+    startY,
+    endY,
+    type,
+    name
+  });
+}
+
+function addVillageStructuralProxiesForNode(node, type, blockers, walkableSurfaces) {
+  if (!node || Math.abs(node.position.x) > 500 || Math.abs(node.position.z) > 500) return;
+
+  let bounds = null;
+
+  try {
+    bounds = node.getHierarchyBoundingVectors(true);
+  } catch(e) {
+    bounds = null;
+  }
+
+  if (!bounds || !bounds.min || !bounds.max) return;
+
+  const width = Math.max(6, Math.min(46, bounds.max.x - bounds.min.x));
+  const depth = Math.max(6, Math.min(38, bounds.max.z - bounds.min.z));
+  if (!Number.isFinite(width) || !Number.isFinite(depth)) return;
+
+  const centerX = (bounds.min.x + bounds.max.x) * 0.5;
+  const centerZ = (bounds.min.z + bounds.max.z) * 0.5;
+  const yaw = node.rotation?.y || 0;
+  const baseY = getVillageBaseGroundHeightAt(node.position.x, node.position.z);
+  const floorY = baseY + Math.max(0.45, Math.min(1.45, (bounds.max.y - bounds.min.y) * 0.08));
+
+  const halfX = width * 0.42;
+  const halfZ = depth * 0.38;
+  const wallThickness = 0.36;
+  const doorwayHalfX = Math.max(2.0, Math.min(4.6, halfX * 0.34));
+  const frontZ = -halfZ;
+  const backZ = halfZ;
+  const sideWallHalfZ = halfZ * 0.92;
+  const frontWallHalfX = Math.max(0.8, (halfX - doorwayHalfX) * 0.5);
+  const frontWallOffsetX = doorwayHalfX + frontWallHalfX;
+  const rampHalfZ = Math.max(1.8, Math.min(4.4, depth * 0.14));
+
+  addVillageWalkableSurface(walkableSurfaces, centerX, centerZ, yaw, 0, 0, halfX * 0.88, halfZ * 0.78, floorY, type, `${node.name}_floor`);
+  addVillageRampSurface(walkableSurfaces, centerX, centerZ, yaw, 0, frontZ - rampHalfZ + 0.12, doorwayHalfX * 0.92, rampHalfZ, baseY, floorY, type, `${node.name}_front_ramp`);
+
+  addVillageObbBlocker(blockers, centerX, centerZ, yaw, -halfX, 0, wallThickness, sideWallHalfZ, type, `${node.name}_left_wall`);
+  addVillageObbBlocker(blockers, centerX, centerZ, yaw, halfX, 0, wallThickness, sideWallHalfZ, type, `${node.name}_right_wall`);
+  addVillageObbBlocker(blockers, centerX, centerZ, yaw, 0, backZ, halfX, wallThickness, type, `${node.name}_back_wall`);
+  addVillageObbBlocker(blockers, centerX, centerZ, yaw, -frontWallOffsetX, frontZ, frontWallHalfX, wallThickness, type, `${node.name}_front_left_wall`);
+  addVillageObbBlocker(blockers, centerX, centerZ, yaw, frontWallOffsetX, frontZ, frontWallHalfX, wallThickness, type, `${node.name}_front_right_wall`);
+
+  // Small porch/rail corner blockers keep edges readable while leaving the center doorway clear.
+  addVillageObbBlocker(blockers, centerX, centerZ, yaw, -halfX * 0.82, frontZ - 0.4, wallThickness * 1.2, wallThickness * 1.2, type, `${node.name}_front_left_post`);
+  addVillageObbBlocker(blockers, centerX, centerZ, yaw, halfX * 0.82, frontZ - 0.4, wallThickness * 1.2, wallThickness * 1.2, type, `${node.name}_front_right_post`);
+}
+
 function rebuildVillageCollisionBlockers() {
   const blockers = [];
+  const walkableSurfaces = [];
 
   scene.transformNodes.forEach(node => {
     if (!node || node.isDisposed?.()) return;
     if (node.parent) return;
 
     const type = getVillageBlockerTypeFromNode(node);
+    if (VILLAGE_STRUCTURAL_PROXY_TYPES.has(type)) {
+      addVillageStructuralProxiesForNode(node, type, blockers, walkableSurfaces);
+      return;
+    }
+
     const collisionRadius = type && ASSETS[type]?.collisionRadius;
     if (!collisionRadius) return;
     if (Math.abs(node.position.x) > 500 || Math.abs(node.position.z) > 500) return;
@@ -6248,6 +6409,7 @@ function rebuildVillageCollisionBlockers() {
   });
 
   villageCollisionBlockers = blockers;
+  villageWalkableSurfaces = walkableSurfaces;
   villageLastBlockerRebuild = performance.now();
 }
 
@@ -6264,6 +6426,17 @@ function villagePointBlocked(x, z, radius = VILLAGE_PLAYER_COLLISION_RADIUS) {
       const dz = z - blocker.z;
       const hitRadius = blocker.radius + radius;
       return dx * dx + dz * dz <= hitRadius * hitRadius;
+    }
+
+    if (blocker.kind === 'obb') {
+      const local = pointToVillageSurfaceLocal({
+        centerX: blocker.centerX,
+        centerZ: blocker.centerZ,
+        yaw: blocker.yaw
+      }, x, z);
+
+      return Math.abs(local.x) <= blocker.halfX + radius &&
+        Math.abs(local.z) <= blocker.halfZ + radius;
     }
 
     return x >= blocker.minX - radius &&
