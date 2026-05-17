@@ -1426,11 +1426,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         cursor: default !important;
       }
 
-      .forge-3d-build-delete-disabled {
-        opacity: .72;
-        cursor: not-allowed;
-      }
-
       @media (max-width: 640px) {
         .forge-3d-build-row {
           grid-template-columns: 64px minmax(0, 1fr);
@@ -1851,20 +1846,6 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     if (!build?.buildId) return false;
 
     return loadForgePlayableCharacters().some((item) => item.buildId === build.buildId);
-  }
-
-  function forgeBuildIsSelectedForVillage(build) {
-    if (!build?.buildId) return false;
-
-    try {
-      const selectedRebel = JSON.parse(localStorage.getItem('selectedRebel') || '{}');
-      return (
-        selectedRebel?.buildId === build.buildId ||
-        selectedRebel?.activeForgeCharacter?.activeForgeBuildId === build.buildId
-      );
-    } catch(e) {
-      return false;
-    }
   }
 
   function renderForgeBuildThumbnail(build) {
@@ -2740,10 +2721,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const riggedStoredHtml = isRiggedStoredInRebelBlob
           ? '<br>Rigged Storage: Rebel Forge Blob ✓'
           : '';
-        const isSelectedForVillage = forgeBuildIsSelectedForVillage(build);
-        const deleteBuildHtml = isActiveBuild || isSelectedForVillage
-          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action forge-3d-build-delete-disabled" type="button" disabled title="This build is ${isActiveBuild ? 'currently active' : 'selected for Village'}. Select another character before deleting it.">${isActiveBuild ? 'Active Build' : 'Selected Build'}</button>`
-          : `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.deleteForge3dBuild('${build.buildId}')">Delete Build</button>`;
+        const deleteBuildHtml =
+          `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.deleteForge3dBuild('${build.buildId}')">Delete Build</button>`;
 
         const activeCharacterGlbUrl = riggedGlbUrl || activeGlbUrl;
         const isSavedForLanding = forgeBuildIsSavedForLanding(build);

@@ -73,7 +73,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 }
 .ant-card img{width:100%;height:100%;object-fit:cover;}
 .ant-card.forge-playable-card img{
-  object-fit:cover;
+  object-fit:contain;
   object-position:center;
   background:radial-gradient(circle at 50% 40%, rgba(200,146,42,0.16), rgba(0,0,0,0.62) 68%);
 }
@@ -320,6 +320,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 
 .ant-card:hover .ant-card-marquee,
 .ant-card.selected .ant-card-marquee {
+  opacity: 1;
+}
+
+.ant-card.forge-playable-card.selected .ant-card-marquee {
+  opacity: 0;
+}
+
+.ant-card.forge-playable-card:hover .ant-card-marquee {
   opacity: 1;
 }
 
