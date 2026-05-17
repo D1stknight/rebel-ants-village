@@ -6045,7 +6045,7 @@ window.addEventListener('resize',()=>engine.resize());
   });
 })();
 
-const VILLAGE_PLAYER_COLLISION_RADIUS = 1.25;
+const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
 const VILLAGE_BLOCKER_REBUILD_MS = 900;
 const VILLAGE_BLOCKING_ASSET_TYPES = new Set([
   'dojo',
@@ -6172,6 +6172,21 @@ function shouldUseMeshAsVillageBlocker(mesh) {
   return VILLAGE_BLOCKING_ASSET_TYPES.has(type);
 }
 
+function shouldKeepStructuralMeshBlocker(type, min, max, width, depth, height) {
+  const groundY = getVillageGroundHeightAt((min.x + max.x) * 0.5, (min.z + max.z) * 0.5);
+
+  if (min.y > groundY + 3.0) return false;
+
+  if (type === 'dojo' || type === 'dojo_5' || type === 'dojo_6' || type === 'dojo_7' || type === 'dojo_9' || type === 'shrine_2') {
+    // Keep collision close to structural parts. Broad floors, roofs, and whole-model boxes
+    // make the player stop far away and will block future stairs/interior entry work.
+    if (width > 10 && depth > 10) return false;
+    if (height < 0.75) return false;
+  }
+
+  return true;
+}
+
 function rebuildVillageCollisionBlockers() {
   const blockers = [];
 
@@ -6216,7 +6231,8 @@ function rebuildVillageCollisionBlockers() {
     if (!isFinite(width) || !isFinite(depth) || !isFinite(height)) return;
     if (width < 0.35 || depth < 0.35 || height < 0.45) return;
     if (width > 90 || depth > 90) return;
-    if (min.y > getVillageGroundHeightAt((min.x + max.x) * 0.5, (min.z + max.z) * 0.5) + 3.5) return;
+    const type = getVillageBlockerTypeFromMesh(mesh) || 'structure';
+    if (!shouldKeepStructuralMeshBlocker(type, min, max, width, depth, height)) return;
 
     blockers.push({
       kind: 'box',
@@ -6226,7 +6242,7 @@ function rebuildVillageCollisionBlockers() {
       maxZ: max.z,
       minY: min.y,
       maxY: max.y,
-      type: getVillageBlockerTypeFromMesh(mesh) || 'structure',
+      type,
       name: mesh.name
     });
   });
@@ -6364,7 +6380,7 @@ engine.runRenderLoop(()=>{
         charMesh._footOffset = isFinite(_minY) ? (charMesh.position.y - _minY) : 0;
       }
       // Snap feet to ground — origin sits at terrainY + footOffset so feet touch the terrain
-      const _targetY = _terrainY + charMesh._footOffset - 1.65;
+      const _targetY = _terrainY + charMesh._footOffset + 0.03;
       charMesh.position.y += (_targetY - charMesh.position.y) * 0.25;
       charMesh._terrainY = _terrainY;
       // Slope tilt removed — character stays upright
