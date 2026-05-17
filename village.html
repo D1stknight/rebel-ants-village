@@ -2312,6 +2312,18 @@ function updateForgeActionPlayerMotion() {
   }
 }
 
+function isForgeActionMovementSuppressed() {
+  if (
+    !window.forgePlayerForcedMode ||
+    !window.forgePlayerForcedModeUntil ||
+    performance.now() >= window.forgePlayerForcedModeUntil
+  ) {
+    return false;
+  }
+
+  return window.forgePlayerForcedMode === 'jump' || window.forgePlayerForcedMode === 'runJump';
+}
+
 function syncForgePreviewRootToPlayer(previewRoot) {
   if (!previewRoot || !charMesh) return;
 
@@ -2335,7 +2347,7 @@ function syncForgePreviewRootToPlayer(previewRoot) {
 }
 
 function removeForgeVisualRootMotion(animationGroups, mode = 'forge') {
-  const preserveRootMotionModes = new Set(['jump', 'runJump']);
+  const preserveRootMotionModes = new Set([]);
   if (preserveRootMotionModes.has(mode)) {
     console.log('Forge visual root motion preserved:', mode);
     return;
@@ -2462,17 +2474,24 @@ const FORGE_DONOR_ACTION_DURATIONS_MS = {
 };
 
 const FORGE_DONOR_ACTION_SPEED_RATIOS = {
-  jump: 1.45,
+  jump: 1.65,
   runJump: 1
 };
 
 const FORGE_DONOR_ACTION_MOTION = {
+  jump: {
+    delayMs: 320,
+    liftDurationMs: 680,
+    forwardDurationMs: 0,
+    lift: 1.25,
+    forward: 0
+  },
   runJump: {
-    delayMs: 240,
-    liftDurationMs: 0,
-    forwardDurationMs: 2600,
-    lift: 0,
-    forward: 5.8
+    delayMs: 220,
+    liftDurationMs: 1180,
+    forwardDurationMs: 2850,
+    lift: 1.45,
+    forward: 7.2
   }
 };
 
@@ -3021,7 +3040,6 @@ async function loadForgeArmatureAnimationForPlayer(mode, armatureGlbUrl, riggedS
     }
   });
 
-  normalizeForgeActionRootMotion([armatureAnimation], mode);
   removeForgeVisualRootMotion([armatureAnimation], mode);
   removeForgeVisualScaleTracks([armatureAnimation], mode);
   armatureAnimation.stop();
@@ -5749,7 +5767,8 @@ engine.runRenderLoop(()=>{
     charMesh.rotation.z+=(((turnLeft?1:turnRight?-1:0)*0.08)-charMesh.rotation.z)*0.12;
     const fwd=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
     if(!charMesh._vel)charMesh._vel=0;
-    const tv=(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
+    const actionMovementSuppressed = isForgeActionMovementSuppressed();
+    const tv=actionMovementSuppressed?0:(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
     if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
     // Terrain following — 4 rays to get slope normal, tilt character to match
