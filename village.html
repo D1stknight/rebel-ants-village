@@ -2313,15 +2313,14 @@ function updateForgeActionPlayerMotion() {
 }
 
 function isForgeActionMovementSuppressed() {
-  if (
-    !window.forgePlayerForcedMode ||
-    !window.forgePlayerForcedModeUntil ||
-    performance.now() >= window.forgePlayerForcedModeUntil
-  ) {
-    return false;
-  }
+  const motion = window.forgePlayerActionMotion || null;
+  if (!motion?.mode || !motion?.startedAt) return false;
 
-  return window.forgePlayerForcedMode === 'jump' || window.forgePlayerForcedMode === 'runJump';
+  const elapsed = performance.now() - motion.startedAt - (motion.delayMs || 0);
+  if (!Number.isFinite(elapsed) || elapsed < 0) return true;
+
+  const motionWindow = Math.max(motion.forwardDurationMs || 0, motion.liftDurationMs || 0);
+  return motionWindow > 0 && elapsed < motionWindow;
 }
 
 function syncForgePreviewRootToPlayer(previewRoot) {
@@ -2467,31 +2466,31 @@ function removeForgeVisualScaleTracks(animationGroups, mode = 'forge') {
 }
 
 const FORGE_DONOR_ACTION_DURATIONS_MS = {
-  jump: 4200,
-  runJump: 4600,
+  jump: 1900,
+  runJump: 3100,
   highKick: 3600,
   roundhouseKick: 4200
 };
 
 const FORGE_DONOR_ACTION_SPEED_RATIOS = {
-  jump: 1.65,
-  runJump: 1
+  jump: 1.9,
+  runJump: 1.12
 };
 
 const FORGE_DONOR_ACTION_MOTION = {
   jump: {
-    delayMs: 320,
-    liftDurationMs: 680,
+    delayMs: 180,
+    liftDurationMs: 760,
     forwardDurationMs: 0,
-    lift: 1.25,
+    lift: 1.38,
     forward: 0
   },
   runJump: {
-    delayMs: 220,
-    liftDurationMs: 1180,
-    forwardDurationMs: 2850,
-    lift: 1.45,
-    forward: 7.2
+    delayMs: 120,
+    liftDurationMs: 1150,
+    forwardDurationMs: 2550,
+    lift: 1.65,
+    forward: 10.5
   }
 };
 
@@ -3168,7 +3167,8 @@ function getForgeArmatureAnimationDurationMs(mode) {
   const firstFrame = Number.isFinite(group.from) ? group.from : keys[0]?.frame || 0;
   const lastFrame = Number.isFinite(group.to) ? group.to : keys[keys.length - 1]?.frame || firstFrame;
   const fps = targetedAnimation?.animation?.framePerSecond || 30;
-  const durationMs = ((lastFrame - firstFrame) / Math.max(fps, 1)) * 1000;
+  const speedRatio = FORGE_DONOR_ACTION_SPEED_RATIOS[mode] || group.speedRatio || 1;
+  const durationMs = ((lastFrame - firstFrame) / Math.max(fps, 1)) * 1000 / Math.max(speedRatio, 0.01);
 
   if (!Number.isFinite(durationMs) || durationMs <= 0) {
     return FORGE_DONOR_ACTION_DURATIONS_MS[mode] || 3000;
