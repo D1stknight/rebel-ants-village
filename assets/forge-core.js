@@ -1438,6 +1438,18 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         line-height: 1.5;
       }
 
+      .forge-3d-build-side-value .forge-3d-status-links {
+        gap: 5px;
+        margin-top: 7px;
+      }
+
+      .forge-3d-build-side-value .forge-3d-link-btn {
+        min-height: 24px;
+        padding: 5px 8px;
+        font-size: 8px;
+        letter-spacing: 1px;
+      }
+
       .forge-3d-build-header {
         display: grid;
         grid-template-columns: 44px minmax(0, 1fr);
@@ -1508,10 +1520,15 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       .forge-3d-build-layout {
         display: grid;
-        grid-template-columns: minmax(0, .95fr) minmax(0, 1fr);
-        gap: 18px;
+        grid-template-columns: 1fr;
+        gap: 0;
         align-items: start;
         margin-top: 14px;
+      }
+
+      .forge-3d-main-status {
+        border-top: 1px solid rgba(243,230,191,.11);
+        border-bottom: 1px solid rgba(243,230,191,.08);
       }
 
       .forge-3d-build-section {
@@ -1532,8 +1549,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       .forge-3d-status-row {
         display: grid;
-        grid-template-columns: minmax(120px, .42fr) minmax(0, 1fr);
-        gap: 10px;
+        grid-template-columns: minmax(140px, .34fr) minmax(0, 1fr);
+        gap: 14px;
         align-items: center;
         padding: 8px 0;
         border-bottom: 1px solid rgba(255,255,255,.08);
@@ -1552,6 +1569,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       .forge-3d-status-value {
+        display: grid;
+        grid-template-columns: minmax(120px, 1fr) auto;
+        gap: 10px;
+        align-items: center;
         color: rgba(243,230,191,.84);
         font-size: 11px;
         line-height: 1.5;
@@ -1561,7 +1582,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
-        margin-top: 6px;
+        margin-top: 0;
+        justify-content: flex-end;
       }
 
       .forge-3d-link-btn {
@@ -1583,7 +1605,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       .forge-3d-dev-details {
-        margin-top: 8px;
+        grid-column: 1 / -1;
+        width: min(520px, 86%);
+        margin: 12px auto 0;
         border: 1px solid rgba(255,255,255,.1);
         border-radius: 8px;
         background: rgba(0,0,0,.18);
@@ -1611,6 +1635,16 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         gap: 5px;
         margin-top: 10px;
         position: relative;
+      }
+
+      .forge-3d-steps-section {
+        grid-column: 1 / -1;
+        width: min(620px, 94%);
+        margin: 12px auto 0;
+        padding-top: 12px;
+        border-top: 1px solid rgba(200,146,42,.2);
+        border-bottom: 1px solid rgba(200,146,42,.16);
+        padding-bottom: 12px;
       }
 
       .forge-3d-build-step {
@@ -3531,7 +3565,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const idleStoredHtml = idleGlbUrl
           ? '<br>Idle Animation: Rebel Forge Blob ✓'
           : '';
-        const storageRowsHtml = [
+        const mainStatusRowsHtml = [
           renderStatusRow({
             label: 'Storage',
             value: isStoredInRebelBlob ? 'Rebel Forge Blob ✓' : 'Pending'
@@ -3544,9 +3578,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             label: 'Rigged Storage',
             value: isRiggedStoredInRebelBlob ? 'Rebel Forge Blob ✓' : 'Pending',
             linksHtml: riggedLinksHtml
-          })
-        ].join('');
-        const animationRowsHtml = [
+          }),
           renderStatusRow({
             label: 'Idle Animation',
             value: idleGlbUrl ? 'Rebel Forge Blob ✓' : idleAnimationTaskId ? 'Meshy idle ready for storage' : 'Not generated',
@@ -3646,37 +3678,33 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
                 </div>
               </div>
               <div class="forge-3d-build-layout">
-                <div class="forge-3d-build-section">
-                  <div class="forge-3d-build-section-title">Storage & Rigging</div>
-                  ${storageRowsHtml}
-                </div>
-                <div class="forge-3d-build-section">
-                  <div class="forge-3d-build-section-title">Animation Pack</div>
-                  ${animationRowsHtml}
+                <div class="forge-3d-build-section forge-3d-main-status">
+                  <div class="forge-3d-build-section-title">Storage, Rigging & Animations</div>
+                  ${mainStatusRowsHtml}
                 </div>
               </div>
-              <details class="forge-3d-dev-details">
-                <summary>Advanced / Dev Details</summary>
-                <div class="forge-3d-dev-details-content">
-                  Meshy Rig Task: ${rigTaskId || 'None'}<br>
-                  Raw Build Status: ${statusText}<br>
-                  ${storedHtml || ''}
-                  ${rigStatusHtml || ''}
-                  ${riggedStoredHtml || ''}
-                  ${idleStoredHtml || ''}
-                  ${walkingStoredHtml || ''}
-                  ${runningStoredHtml || ''}
-                  ${openGlbHtml || ''}${downloadGlbHtml || ''}
-                  ${riggedGlbHtml || ''}
-                  ${idleLinksHtml || ''}
-                  ${walkingGlbHtml || ''}
-                  ${runningGlbHtml || ''}
-                </div>
-              </details>
-              <div class="forge-3d-build-section">
-                <div class="forge-3d-build-section-title">Build Steps</div>
+            </div>
+            <details class="forge-3d-dev-details">
+              <summary>Advanced / Dev Details</summary>
+              <div class="forge-3d-dev-details-content">
+                Meshy Rig Task: ${rigTaskId || 'None'}<br>
+                Raw Build Status: ${statusText}<br>
+                ${storedHtml || ''}
+                ${rigStatusHtml || ''}
+                ${riggedStoredHtml || ''}
+                ${idleStoredHtml || ''}
+                ${walkingStoredHtml || ''}
+                ${runningStoredHtml || ''}
+                ${openGlbHtml || ''}${downloadGlbHtml || ''}
+                ${riggedGlbHtml || ''}
+                ${idleLinksHtml || ''}
+                ${walkingGlbHtml || ''}
+                ${runningGlbHtml || ''}
+              </div>
+            </details>
+            <div class="forge-3d-build-section forge-3d-steps-section">
+              <div class="forge-3d-build-section-title">Build Steps</div>
               ${stepHtml}
-              </div>
             </div>
             <div class="forge-3d-build-actions">
               ${previewBuildHtml}
