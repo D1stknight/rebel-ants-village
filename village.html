@@ -2844,6 +2844,7 @@ async function loadForgeArmatureAnimationForPlayer(mode, armatureGlbUrl, riggedS
     }
   });
 
+  removeForgeVisualRootMotion([armatureAnimation], mode);
   armatureAnimation.stop();
 
   const entry = {
@@ -2888,6 +2889,7 @@ function isForgeBrowserLoadableGlbUrl(glbUrl) {
 
 function activateForgeArmaturePlayerMode(mode) {
   const cache = window.forgeArmatureAnimationCache || {};
+  const requestedMode = mode === 'rigged' ? 'idle' : mode;
 
   Object.keys(cache).forEach((key) => {
     const group = cache[key]?.animationGroup;
@@ -2896,21 +2898,42 @@ function activateForgeArmaturePlayerMode(mode) {
     }
   });
 
-  if (mode === 'rigged' || mode === 'idle') {
-    window.forgePlayerVisualCurrentMode = mode;
+  if (mode === 'rigged') {
+    window.forgePlayerVisualCurrentMode = 'rigged';
     return true;
   }
 
-  const entry = cache[mode];
+  const entry = cache[requestedMode];
 
   if (!entry?.animationGroup) {
+    if (requestedMode === 'idle') {
+      window.forgePlayerVisualCurrentMode = 'rigged';
+      return true;
+    }
+
     return false;
   }
 
-  const loop = !(mode === 'jump' || mode === 'kick' || mode === 'attack');
+  const loop = !(requestedMode === 'jump' || requestedMode === 'kick' || requestedMode === 'attack');
 
+  entry.animationGroup.stop();
+  entry.animationGroup.reset();
   entry.animationGroup.start(loop);
-  window.forgePlayerVisualCurrentMode = mode;
+  window.forgePlayerVisualCurrentMode = requestedMode;
+
+  console.log('Forge visual animation playing:', {
+    mode: requestedMode,
+    groupName: entry.animationGroup.name
+  });
+
+  if (requestedMode === 'idle') {
+    console.log('Forge visual animation playing: idle');
+  }
+
+  if (window.forgePlayerVisualLastLoggedMode !== requestedMode) {
+    console.log(`Forge visual mode switched: ${requestedMode}`);
+    window.forgePlayerVisualLastLoggedMode = requestedMode;
+  }
 
   return true;
 }
@@ -2943,35 +2966,46 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
     window.activeCharacter?.activeGlbUrl ||
     '';
 
-  const idleGlbUrl =
+  const idleAnimationUrl =
+    window.activeCharacter?.idleArmatureGlbUrl ||
+    window.activeCharacter?.characterBundle?.armatureAnimations?.idle?.glbUrl ||
     window.activeCharacter?.idleGlbUrl ||
     window.activeCharacter?.characterBundle?.animations?.idle?.glbUrl ||
     '';
 
-  const walkingArmatureUrl =
+  const walkingAnimationUrl =
     window.activeCharacter?.walkingArmatureGlbUrl ||
     window.activeCharacter?.characterBundle?.armatureAnimations?.walking?.glbUrl ||
+    window.activeCharacter?.walkingGlbUrl ||
+    window.activeCharacter?.characterBundle?.animations?.walking?.glbUrl ||
     '';
 
-  const runningArmatureUrl =
+  const runningAnimationUrl =
     window.activeCharacter?.runningArmatureGlbUrl ||
     window.activeCharacter?.characterBundle?.armatureAnimations?.running?.glbUrl ||
+    window.activeCharacter?.runningGlbUrl ||
+    window.activeCharacter?.characterBundle?.animations?.running?.glbUrl ||
     '';
 
-  if (idleGlbUrl) {
-    console.log('Forge idle GLB available. Using full GLB visual swap for idle/walk/run modes.');
+  if (!riggedUrl || !walkingAnimationUrl || !runningAnimationUrl) {
+    console.warn('Missing Forge animation donor URLs. Falling back to full GLB visual swap.', {
+      riggedUrl,
+      idleAnimationUrl,
+      walkingAnimationUrl,
+      runningAnimationUrl
+    });
     return false;
   }
 
-  if (!riggedUrl || !walkingArmatureUrl || !runningArmatureUrl) {
-    console.warn('Missing Forge armature player URLs. Falling back to full GLB visual swap.');
-    return false;
-  }
-
-  if (!isForgeBrowserLoadableGlbUrl(walkingArmatureUrl) || !isForgeBrowserLoadableGlbUrl(runningArmatureUrl)) {
-    console.warn('Forge armature URLs are not browser-loadable. Falling back to full GLB visual swap.', {
-      walkingArmatureUrl,
-      runningArmatureUrl
+  if (
+    (idleAnimationUrl && !isForgeBrowserLoadableGlbUrl(idleAnimationUrl)) ||
+    !isForgeBrowserLoadableGlbUrl(walkingAnimationUrl) ||
+    !isForgeBrowserLoadableGlbUrl(runningAnimationUrl)
+  ) {
+    console.warn('Forge animation donor URLs are not browser-loadable. Falling back to full GLB visual swap.', {
+      idleAnimationUrl,
+      walkingAnimationUrl,
+      runningAnimationUrl
     });
     return false;
   }
@@ -3012,16 +3046,27 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
   setForgePreviewRootVisible(riggedRoot, true);
 
   try {
-    await Promise.all([
-      loadForgeArmatureAnimationForPlayer('walking', walkingArmatureUrl, riggedSkeleton),
-      loadForgeArmatureAnimationForPlayer('running', runningArmatureUrl, riggedSkeleton)
-    ]);
+    const animationLoads = [
+      loadForgeArmatureAnimationForPlayer('walking', walkingAnimationUrl, riggedSkeleton),
+      loadForgeArmatureAnimationForPlayer('running', runningAnimationUrl, riggedSkeleton)
+    ];
+
+    if (idleAnimationUrl) {
+      animationLoads.unshift(loadForgeArmatureAnimationForPlayer('idle', idleAnimationUrl, riggedSkeleton));
+    }
+
+    await Promise.all(animationLoads);
   } catch(e) {
-    console.warn('Could not load Forge armature animations. Falling back to full GLB visual swap.', e);
+    console.warn('Could not load Forge animation donors. Falling back to full GLB visual swap.', e);
     return false;
   }
 
-  console.log('Forge armature player visual ready.');
+  console.log('Forge single-mesh animation donor visual ready.', {
+    riggedUrl,
+    idleAnimationUrl,
+    walkingAnimationUrl,
+    runningAnimationUrl
+  });
 
   return true;
 }
