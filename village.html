@@ -1825,6 +1825,95 @@ function getSelectedRebel() {
   }
 }
 
+async function loadActiveForgeCharacterForVillage(rebel) {
+  if (!rebel) return null;
+
+  const collectionKey = rebel.collectionKey || 'battle_for_colony';
+  const tokenId = rebel.tokenId || '';
+  const rebelId = rebel.rebelId || rebel.id || '';
+
+  if (!tokenId && !rebelId) return null;
+
+  const params = new URLSearchParams({ collectionKey });
+
+  if (tokenId) {
+    params.set('tokenId', tokenId);
+  } else if (rebelId) {
+    params.set('rebelId', rebelId);
+  }
+
+  try {
+    const response = await fetch(`/api/forge-active-character-get?${params.toString()}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.ok || !data.hasActiveCharacter) {
+      return null;
+    }
+
+    return data.activeCharacter || null;
+  } catch(e) {
+    console.warn('Could not refresh active Forge character in Village:', e);
+    return null;
+  }
+}
+
+function forgeCharacterMatchesVillageRebel(activeForgeCharacter, rebel) {
+  if (!activeForgeCharacter || !rebel) return false;
+
+  const activeTokenId = activeForgeCharacter.tokenId ? String(activeForgeCharacter.tokenId) : '';
+  const rebelTokenId = rebel.tokenId ? String(rebel.tokenId) : '';
+
+  const activeRebelId = activeForgeCharacter.rebelId ? String(activeForgeCharacter.rebelId) : '';
+  const rebelRebelId = rebel.rebelId ? String(rebel.rebelId) : '';
+  const rebelId = rebel.id ? String(rebel.id) : '';
+
+  if (activeTokenId && rebelTokenId && activeTokenId === rebelTokenId) return true;
+  if (activeRebelId && rebelRebelId && activeRebelId === rebelRebelId) return true;
+  if (activeRebelId && rebelId && activeRebelId === rebelId) return true;
+
+  return false;
+}
+
+async function refreshActiveForgeCharacterForVillage() {
+  const selectedRebel = window.activeRebel || getSelectedRebel();
+  const activeForgeCharacter = await loadActiveForgeCharacterForVillage(selectedRebel);
+
+  if (!activeForgeCharacter) return window.activeCharacter || null;
+
+  if (!forgeCharacterMatchesVillageRebel(activeForgeCharacter, selectedRebel)) {
+    console.warn('Active Forge character did not match selected Rebel in Village:', {
+      selectedRebel,
+      activeForgeCharacter
+    });
+    return window.activeCharacter || null;
+  }
+
+  const refreshedRebel = {
+    ...selectedRebel,
+    activeForgeCharacter,
+    activeGlbUrl: activeForgeCharacter.activeGlbUrl || null,
+    characterSource: 'forge_glb'
+  };
+  const refreshedCharacter = resolveCharacterConfig(refreshedRebel);
+
+  try {
+    localStorage.setItem('selectedRebel', JSON.stringify(refreshedRebel));
+  } catch(e) {}
+
+  window.activeRebel = refreshedRebel;
+  window.activeCharacter = refreshedCharacter;
+
+  console.log('Village active Forge character refreshed:', {
+    activeGlbUrl: refreshedCharacter.activeGlbUrl,
+    walkingGlbUrl: refreshedCharacter.walkingGlbUrl,
+    runningGlbUrl: refreshedCharacter.runningGlbUrl,
+    walkingArmatureGlbUrl: refreshedCharacter.walkingArmatureGlbUrl,
+    runningArmatureGlbUrl: refreshedCharacter.runningArmatureGlbUrl
+  });
+
+  return refreshedCharacter;
+}
+
 const CHARACTER_REGISTRY = {
   starter_ant: {
     bundleId: 'starter_ant',
@@ -2567,7 +2656,7 @@ function applyForgePlayerVisualTest(previewRoot) {
 
   hideStarterPlayerVisualForForgeTest();
 
-  preloadForgeArmaturePlayerVisual(previewRoot).then((armatureReady) => {
+  refreshActiveForgeCharacterForVillage().then(() => preloadForgeArmaturePlayerVisual(previewRoot)).then((armatureReady) => {
     if (!armatureReady) {
       preloadForgePlayerVisualModes(previewRoot).then(() => {
         const desiredMode = getForgePlayerDesiredPreviewMode();
