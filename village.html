@@ -1876,26 +1876,27 @@ function forgeCharacterMatchesVillageRebel(activeForgeCharacter, rebel) {
 
 async function refreshActiveForgeCharacterForVillage() {
   const selectedRebel = window.activeRebel || getSelectedRebel();
-
-  if (selectedRebel?.playableType === 'forge_build' && selectedRebel.activeForgeCharacter?.activeGlbUrl) {
-    const selectedCharacter = resolveCharacterConfig(selectedRebel);
-    window.activeRebel = selectedRebel;
-    window.activeCharacter = selectedCharacter;
-
-    console.log('Village using selected saved Forge playable without global active refresh:', {
-      buildId: selectedRebel.buildId || selectedRebel.activeForgeCharacter.activeForgeBuildId || null,
-      activeGlbUrl: selectedCharacter.activeGlbUrl,
-      idleGlbUrl: selectedCharacter.idleGlbUrl,
-      walkingGlbUrl: selectedCharacter.walkingGlbUrl,
-      runningGlbUrl: selectedCharacter.runningGlbUrl
-    });
-
-    return selectedCharacter;
-  }
-
   const activeForgeCharacter = await loadActiveForgeCharacterForVillage(selectedRebel);
 
-  if (!activeForgeCharacter) return window.activeCharacter || null;
+  if (!activeForgeCharacter) {
+    if (selectedRebel?.playableType === 'forge_build' && selectedRebel.activeForgeCharacter?.activeGlbUrl) {
+      const selectedCharacter = resolveCharacterConfig(selectedRebel);
+      window.activeRebel = selectedRebel;
+      window.activeCharacter = selectedCharacter;
+
+      console.log('Village using selected saved Forge playable without global active refresh:', {
+        buildId: selectedRebel.buildId || selectedRebel.activeForgeCharacter.activeForgeBuildId || null,
+        activeGlbUrl: selectedCharacter.activeGlbUrl,
+        idleGlbUrl: selectedCharacter.idleGlbUrl,
+        walkingGlbUrl: selectedCharacter.walkingGlbUrl,
+        runningGlbUrl: selectedCharacter.runningGlbUrl
+      });
+
+      return selectedCharacter;
+    }
+
+    return window.activeCharacter || null;
+  }
 
   if (!forgeCharacterMatchesVillageRebel(activeForgeCharacter, selectedRebel)) {
     console.warn('Active Forge character did not match selected Rebel in Village:', {
@@ -2887,6 +2888,13 @@ function isForgeBrowserLoadableGlbUrl(glbUrl) {
   }
 }
 
+function pickForgeBrowserLoadableGlbUrl(...urls) {
+  const candidates = urls.filter(Boolean);
+  const browserLoadable = candidates.find((url) => isForgeBrowserLoadableGlbUrl(url));
+
+  return browserLoadable || candidates[0] || '';
+}
+
 function activateForgeArmaturePlayerMode(mode) {
   const cache = window.forgeArmatureAnimationCache || {};
   const requestedMode = mode === 'rigged' ? 'idle' : mode;
@@ -2966,26 +2974,26 @@ async function preloadForgeArmaturePlayerVisual(previewRoot) {
     window.activeCharacter?.activeGlbUrl ||
     '';
 
-  const idleAnimationUrl =
+  const idleAnimationUrl = pickForgeBrowserLoadableGlbUrl(
+    window.activeCharacter?.idleGlbUrl,
+    window.activeCharacter?.characterBundle?.animations?.idle?.glbUrl,
     window.activeCharacter?.idleArmatureGlbUrl ||
-    window.activeCharacter?.characterBundle?.armatureAnimations?.idle?.glbUrl ||
-    window.activeCharacter?.idleGlbUrl ||
-    window.activeCharacter?.characterBundle?.animations?.idle?.glbUrl ||
-    '';
+    window.activeCharacter?.characterBundle?.armatureAnimations?.idle?.glbUrl
+  );
 
-  const walkingAnimationUrl =
+  const walkingAnimationUrl = pickForgeBrowserLoadableGlbUrl(
+    window.activeCharacter?.walkingGlbUrl,
+    window.activeCharacter?.characterBundle?.animations?.walking?.glbUrl,
     window.activeCharacter?.walkingArmatureGlbUrl ||
-    window.activeCharacter?.characterBundle?.armatureAnimations?.walking?.glbUrl ||
-    window.activeCharacter?.walkingGlbUrl ||
-    window.activeCharacter?.characterBundle?.animations?.walking?.glbUrl ||
-    '';
+    window.activeCharacter?.characterBundle?.armatureAnimations?.walking?.glbUrl
+  );
 
-  const runningAnimationUrl =
+  const runningAnimationUrl = pickForgeBrowserLoadableGlbUrl(
+    window.activeCharacter?.runningGlbUrl,
+    window.activeCharacter?.characterBundle?.animations?.running?.glbUrl,
     window.activeCharacter?.runningArmatureGlbUrl ||
-    window.activeCharacter?.characterBundle?.armatureAnimations?.running?.glbUrl ||
-    window.activeCharacter?.runningGlbUrl ||
-    window.activeCharacter?.characterBundle?.animations?.running?.glbUrl ||
-    '';
+    window.activeCharacter?.characterBundle?.armatureAnimations?.running?.glbUrl
+  );
 
   if (!riggedUrl || !walkingAnimationUrl || !runningAnimationUrl) {
     console.warn('Missing Forge animation donor URLs. Falling back to full GLB visual swap.', {
