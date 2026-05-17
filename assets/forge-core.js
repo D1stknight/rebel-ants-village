@@ -1943,6 +1943,18 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     const activeGlbUrl = riggedGlbUrl || staticGlbUrl;
     const activeCharacterModelType = riggedGlbUrl ? 'rigged_forge_glb' : 'static_forge_glb';
+    const walkingGlbUrl =
+      build.output?.walkingGlbUrl ||
+      build.output?.storedAnimations?.walking?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
+      build.rigging?.response?.result?.basic_animations?.walking_glb_url ||
+      null;
+    const runningGlbUrl =
+      build.output?.runningGlbUrl ||
+      build.output?.storedAnimations?.running?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.running?.storedAnimationUrl ||
+      build.rigging?.response?.result?.basic_animations?.running_glb_url ||
+      null;
 
     if (!activeGlbUrl) {
       if (typeof window.setForgeStatus === 'function') {
@@ -1978,7 +1990,13 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             output: {
               ...(build.output || {}),
               activeGlbUrl,
-              activeCharacterModelType
+              activeCharacterModelType,
+              walkingGlbUrl,
+              runningGlbUrl,
+              storedAnimations: {
+                ...(build.rigging?.storedAnimations || {}),
+                ...(build.output?.storedAnimations || {})
+              }
             }
           },
           buildId: build.buildId,
@@ -1997,6 +2015,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       window.lastForgeActiveCharacterSaveResponse = data;
+      console.log('Forge active character animation URL report:', data.animationUrlReport || null);
 
            if (activeButton) {
         activeButton.textContent = riggedGlbUrl ? 'Rigged Character Active ✓' : 'Active Character ✓';

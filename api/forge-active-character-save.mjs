@@ -67,6 +67,8 @@ function sanitizeActiveCharacterPayload(payload) {
     build.rigging?.storedArmatureAnimations ||
     {};
   const meshyBasicAnimations = build.rigging?.response?.result?.basic_animations || {};
+  const outputWalkingGlbUrl = output.walkingGlbUrl || null;
+  const outputRunningGlbUrl = output.runningGlbUrl || null;
 
   const riggedGlbUrl =
     output.riggedRebelGlbUrl ||
@@ -139,6 +141,12 @@ function sanitizeActiveCharacterPayload(payload) {
   }
 
   const now = new Date().toISOString();
+  const animationUrlReport = {
+    outputWalkingGlbUrl,
+    outputRunningGlbUrl,
+    savedWalkingGlbUrl: walkingGlbUrl,
+    savedRunningGlbUrl: runningGlbUrl
+  };
 
   const characterBundle = {
     bundleVersion: 'v1',
@@ -152,19 +160,20 @@ function sanitizeActiveCharacterPayload(payload) {
     staticGlbUrl,
     riggedGlbUrl,
     glbBlobPath,
+    storedAnimations,
     animations: {
       walking: walkingGlbUrl
         ? {
             name: 'walking',
             glbUrl: walkingGlbUrl,
-            source: 'rebel_blob'
+            source: (storedAnimations.walking?.storedAnimationUrl || outputWalkingGlbUrl) ? 'rebel_blob' : 'meshy'
           }
         : null,
       running: runningGlbUrl
         ? {
             name: 'running',
             glbUrl: runningGlbUrl,
-            source: 'rebel_blob'
+            source: (storedAnimations.running?.storedAnimationUrl || outputRunningGlbUrl) ? 'rebel_blob' : 'meshy'
           }
         : null
     },
@@ -175,7 +184,7 @@ function sanitizeActiveCharacterPayload(payload) {
         ? {
             name: 'walking',
             glbUrl: walkingArmatureGlbUrl,
-            source: 'rebel_blob',
+            source: (storedArmatureAnimations.walking_armature?.storedAnimationUrl || output.walkingArmatureGlbUrl) ? 'rebel_blob' : 'meshy',
             animationType: 'armature_only'
           }
         : null,
@@ -184,7 +193,7 @@ function sanitizeActiveCharacterPayload(payload) {
         ? {
             name: 'running',
             glbUrl: runningArmatureGlbUrl,
-            source: 'rebel_blob',
+            source: (storedArmatureAnimations.running_armature?.storedAnimationUrl || output.runningArmatureGlbUrl) ? 'rebel_blob' : 'meshy',
             animationType: 'armature_only'
           }
         : null,
@@ -220,6 +229,7 @@ function sanitizeActiveCharacterPayload(payload) {
     updatedAt: now,
     sourceBuildStatus: build.status || null,
     sourceConceptId: build.sourceConceptId || null,
+    animationUrlReport,
     note: 'This record is the selected Forge character bundle for the landing page and future Village character handoff.'
   };
 }
@@ -263,6 +273,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: true,
       activeCharacter,
+      animationUrlReport: activeCharacter.animationUrlReport,
       storageResult,
       message: 'Forge GLB set as active character.'
     });
