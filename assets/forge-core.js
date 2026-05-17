@@ -3763,12 +3763,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const buildComplete = Boolean(glbUrl || rebelGlbUrl || build.engine?.taskId || build.status !== 'queued_for_future_3d_generation');
 
         const openGlbHtml = activeGlbUrl
-          ? `<br><a href="${activeGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open GLB</a>`
+          ? `<br>Source GLB:${renderOpenDownloadLinks(activeGlbUrl, 'GLB')}`
           : '';
 
-        const downloadGlbHtml = activeGlbUrl
-          ? ` · <a href="${activeGlbUrl}" download style="color:#5ecfca;">Download GLB</a>`
-          : '';
+        const downloadGlbHtml = '';
 
         const storeGlbHtml = glbUrl && !isStoredInRebelBlob
           ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.storeForgeGlbInRebelBlob('${build.buildId}')">Store GLB in Rebel Forge</button>`
@@ -3787,7 +3785,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           : '';
 
                     const riggedGlbHtml = riggedGlbUrl
-          ? `<br><a href="${riggedGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open Rigged GLB</a> · <a href="${riggedGlbUrl}" download style="color:#5ecfca;">Download Rigged GLB</a>`
+          ? `<br>Rigged GLB:${renderOpenDownloadLinks(riggedGlbUrl, 'Rigged GLB')}`
           : '';
 
         const storeRiggedGlbHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
@@ -3807,7 +3805,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const walkingGlbUrl = walkingRebelGlbUrl || walkingMeshyGlbUrl;
 
         const walkingGlbHtml = walkingGlbUrl
-          ? `<br><a href="${walkingGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open Walking GLB</a> · <a href="${walkingGlbUrl}" download style="color:#5ecfca;">Download Walking GLB</a>`
+          ? `<br>Walking GLB:${renderOpenDownloadLinks(walkingGlbUrl, 'Walking GLB')}`
           : '';
 
         const storeWalkingGlbHtml = walkingMeshyGlbUrl && !walkingRebelGlbUrl
@@ -3831,7 +3829,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const runningGlbUrl = runningRebelGlbUrl || runningMeshyGlbUrl;
 
         const runningGlbHtml = runningGlbUrl
-          ? `<br><a href="${runningGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open Running GLB</a> · <a href="${runningGlbUrl}" download style="color:#5ecfca;">Download Running GLB</a>`
+          ? `<br>Running GLB:${renderOpenDownloadLinks(runningGlbUrl, 'Running GLB')}`
           : '';
 
         const storeRunningGlbHtml = runningMeshyGlbUrl && !runningRebelGlbUrl
