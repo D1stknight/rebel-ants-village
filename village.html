@@ -6040,6 +6040,168 @@ window.addEventListener('resize',()=>engine.resize());
   });
 })();
 
+const VILLAGE_PLAYER_COLLISION_RADIUS = 1.25;
+const VILLAGE_BLOCKER_REBUILD_MS = 900;
+const VILLAGE_BLOCKING_ASSET_TYPES = new Set([
+  'dojo',
+  'dojo_5',
+  'dojo_6',
+  'dojo_7',
+  'dojo_9',
+  'shrine_2',
+  'fence',
+  'fence_1',
+  'torii',
+  'wooden_sign',
+  'small_bridge',
+  'toro_lantern',
+  'lantern_1'
+]);
+let villageCollisionBlockers = [];
+let villageLastBlockerRebuild = 0;
+
+function villageTerrainHash(x, z) {
+  const n = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+function villageTerrainSmoothNoise(x, z) {
+  const ix = Math.floor(x), iz = Math.floor(z);
+  const fx = x - ix, fz = z - iz;
+  const ux = fx * fx * (3 - 2 * fx);
+  const uz = fz * fz * (3 - 2 * fz);
+  return villageTerrainHash(ix, iz) * (1 - ux) * (1 - uz) +
+    villageTerrainHash(ix + 1, iz) * ux * (1 - uz) +
+    villageTerrainHash(ix, iz + 1) * (1 - ux) * uz +
+    villageTerrainHash(ix + 1, iz + 1) * ux * uz;
+}
+
+function villageTerrainFbm(x, z) {
+  return villageTerrainSmoothNoise(x * 0.012, z * 0.012) * 4.0 +
+    villageTerrainSmoothNoise(x * 0.028, z * 0.028) * 2.0 +
+    villageTerrainSmoothNoise(x * 0.065, z * 0.065) * 0.8 +
+    villageTerrainSmoothNoise(x * 0.15, z * 0.15) * 0.3;
+}
+
+function getVillageGroundHeightAt(x, z) {
+  const dist = Math.sqrt(x * x + z * z);
+  const blend = Math.max(0, Math.min(1, (dist - 100) / 55));
+  let height = (villageTerrainFbm(x, z) - 3.5) * blend;
+
+  if (Math.abs(x) <= 45 && Math.abs(z) <= 45) height = Math.max(height, 0.1);
+  if (Math.abs(x) <= 110 && Math.abs(z) <= 110) height = Math.max(height, 0.06);
+  if (Math.abs(x) <= 4 && Math.abs(z) <= 150) height = Math.max(height, 0.08);
+  if (Math.abs(x) <= 150 && Math.abs(z) <= 4) height = Math.max(height, 0.08);
+
+  return height;
+}
+
+function getVillageBlockerTypeFromMesh(mesh) {
+  if (!mesh) return null;
+
+  if (mesh.metadata?.type) return mesh.metadata.type;
+  if (mesh._editRoot?.metadata?.type) return mesh._editRoot.metadata.type;
+
+  let node = mesh.parent;
+  while (node) {
+    if (node.metadata?.type) return node.metadata.type;
+    node = node.parent;
+  }
+
+  const name = (mesh.name || '').toLowerCase();
+  if (name.startsWith('tr_')) return 'dojo';
+  if (name.includes('torii')) return 'torii';
+  if (name.includes('dojo')) return 'dojo';
+  if (name.includes('shrine')) return 'shrine_2';
+  if (name.includes('fence')) return 'fence_1';
+  if (name.includes('wooden_sign')) return 'wooden_sign';
+  if (name.includes('bridge')) return 'small_bridge';
+
+  return null;
+}
+
+function shouldUseMeshAsVillageBlocker(mesh) {
+  if (!mesh || mesh.isDisposed?.() || !mesh.isEnabled?.()) return false;
+  if (mesh === ground || mesh === court || mesh === plaza) return false;
+  if ((mesh.name || '').startsWith('pa') || mesh.name === 'rv') return false;
+  if (mesh.parent && mesh.parent.name === 'playerRoot') return false;
+  if (mesh.name && mesh.name.includes('forgePreview')) return false;
+
+  const type = getVillageBlockerTypeFromMesh(mesh);
+  return VILLAGE_BLOCKING_ASSET_TYPES.has(type);
+}
+
+function rebuildVillageCollisionBlockers() {
+  const blockers = [];
+
+  scene.meshes.forEach(mesh => {
+    if (!shouldUseMeshAsVillageBlocker(mesh)) return;
+
+    mesh.computeWorldMatrix(true);
+    const bb = mesh.getBoundingInfo?.().boundingBox;
+    if (!bb) return;
+
+    const min = bb.minimumWorld;
+    const max = bb.maximumWorld;
+    const width = max.x - min.x;
+    const depth = max.z - min.z;
+    const height = max.y - min.y;
+
+    if (!isFinite(width) || !isFinite(depth) || !isFinite(height)) return;
+    if (width < 0.35 || depth < 0.35 || height < 0.45) return;
+    if (width > 90 || depth > 90) return;
+
+    blockers.push({
+      minX: min.x,
+      maxX: max.x,
+      minZ: min.z,
+      maxZ: max.z,
+      minY: min.y,
+      maxY: max.y,
+      type: getVillageBlockerTypeFromMesh(mesh) || 'structure',
+      name: mesh.name
+    });
+  });
+
+  villageCollisionBlockers = blockers;
+  villageLastBlockerRebuild = performance.now();
+}
+
+function refreshVillageCollisionBlockersIfNeeded() {
+  if (performance.now() - villageLastBlockerRebuild > VILLAGE_BLOCKER_REBUILD_MS) {
+    rebuildVillageCollisionBlockers();
+  }
+}
+
+function villagePointBlocked(x, z, radius = VILLAGE_PLAYER_COLLISION_RADIUS) {
+  return villageCollisionBlockers.some(blocker => {
+    return x >= blocker.minX - radius &&
+      x <= blocker.maxX + radius &&
+      z >= blocker.minZ - radius &&
+      z <= blocker.maxZ + radius;
+  });
+}
+
+function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
+  refreshVillageCollisionBlockersIfNeeded();
+
+  if (!villagePointBlocked(proposedPosition.x, proposedPosition.z)) {
+    return { x: proposedPosition.x, z: proposedPosition.z, blocked: false };
+  }
+
+  const slideX = { x: proposedPosition.x, z: currentPosition.z };
+  if (!villagePointBlocked(slideX.x, slideX.z)) {
+    return { ...slideX, blocked: true };
+  }
+
+  const slideZ = { x: currentPosition.x, z: proposedPosition.z };
+  if (!villagePointBlocked(slideZ.x, slideZ.z)) {
+    return { ...slideZ, blocked: true };
+  }
+
+  return { x: currentPosition.x, z: currentPosition.z, blocked: true };
+}
+
 
 // ── CHERRY BLOSSOM PETALS ─────────────────────
 (()=>{
@@ -6104,11 +6266,16 @@ engine.runRenderLoop(()=>{
     const actionMovementSuppressed = isForgeActionMovementSuppressed();
     const tv=actionMovementSuppressed?0:(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
-    if(Math.abs(charMesh._vel)>0.0001)charMesh.position.addInPlace(fwd.scale(charMesh._vel));
-    // Terrain following — 4 rays to get slope normal, tilt character to match
-    const _tRay = new BABYLON.Ray(new BABYLON.Vector3(charMesh.position.x, 80, charMesh.position.z), new BABYLON.Vector3(0,-1,0), 200);
-    const _tHit = scene.pickWithRay(_tRay, m => m === ground || m === court || m === plaza);
-    if (_tHit && _tHit.hit && _tHit.pickedPoint) {
+    if(Math.abs(charMesh._vel)>0.0001){
+      const _currentPos = charMesh.position.clone();
+      const _proposedPos = _currentPos.add(fwd.scale(charMesh._vel));
+      const _resolvedPos = resolveVillagePlayerCollision(_currentPos, _proposedPos);
+      charMesh.position.x = _resolvedPos.x;
+      charMesh.position.z = _resolvedPos.z;
+      if (_resolvedPos.blocked) charMesh._vel *= 0.2;
+    }
+    const _terrainY = getVillageGroundHeightAt(charMesh.position.x, charMesh.position.z);
+    if (Number.isFinite(_terrainY)) {
       // Character's origin is not at feet — compute foot offset once and cache it
       if (charMesh._footOffset === undefined) {
         charMesh.computeWorldMatrix(true);
@@ -6122,9 +6289,9 @@ engine.runRenderLoop(()=>{
         charMesh._footOffset = isFinite(_minY) ? (charMesh.position.y - _minY) : 0;
       }
       // Snap feet to ground — origin sits at terrainY + footOffset so feet touch the terrain
-      const _targetY = _tHit.pickedPoint.y + charMesh._footOffset - 1.65;
+      const _targetY = _terrainY + charMesh._footOffset - 1.65;
       charMesh.position.y += (_targetY - charMesh.position.y) * 0.25;
-      charMesh._terrainY = _tHit.pickedPoint.y;
+      charMesh._terrainY = _terrainY;
       // Slope tilt removed — character stays upright
     }
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
