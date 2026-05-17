@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebel Ants — Forge Collection Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  width:100%;
+  min-height:100%;
+  background:#050812;
+  color:#f3e6bf;
+  font-family:'Cinzel',serif;
+}
+body{
+  padding:28px;
+  background:
+    radial-gradient(circle at top center, rgba(200,146,42,.13), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(94,207,202,.08), transparent 38%),
+    #050812;
+}
+#auth-loading{
+  min-height:calc(100vh - 56px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+#page{
+  width:min(1100px,100%);
+  margin:0 auto;
+  display:none;
+  flex-direction:column;
+  gap:24px;
+}
+#page-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  border-bottom:1px solid rgba(200,146,42,.18);
+  padding-bottom:22px;
+}
+#page-title h1{
+  font-family:'Cinzel Decorative',serif;
+  font-size:28px;
+  letter-spacing:4px;
+  color:#c8922a;
+  text-shadow:0 0 28px rgba(200,146,42,.25);
+}
+#page-title p{
+  margin-top:8px;
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+.header-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.header-btn{
+  padding:11px 16px;
+  background:transparent;
+  border:1px solid rgba(200,146,42,.35);
+  color:#c8922a;
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  cursor:pointer;
+  text-decoration:none;
+  transition:all .2s ease;
+}
+.header-btn:hover{
+  background:rgba(200,146,42,.12);
+  border-color:rgba(200,146,42,.7);
+}
+.header-btn.primary{
+  background:linear-gradient(135deg,#c8922a,#8a5e1a);
+  color:#fff;
+  border-color:rgba(200,146,42,.6);
+}
+.header-btn.primary:hover{
+  background:linear-gradient(135deg,#d8a23a,#9a6e2a);
+}
+
+#add-collection-panel{
+  display:none;
+  padding:22px;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(200,146,42,.22);
+}
+#add-collection-panel.open{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.panel-title{
+  font-family:'Cinzel Decorative',serif;
+  color:#c8922a;
+  font-size:16px;
+  letter-spacing:2px;
+}
+.panel-subtitle{
+  color:#8a7a5a;
+  font-size:11px;
+  line-height:1.8;
+}
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px;
+}
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+.field label{
+  color:#8a7a5a;
+  font-size:10px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.field input,
+.field select{
+  width:100%;
+  padding:11px 12px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.12);
+  color:#f3e6bf;
+  font-family:'Cinzel',serif;
+  font-size:12px;
+  outline:none;
+}
+.field input:focus,
+.field select:focus{
+  border-color:rgba(200,146,42,.65);
+  box-shadow:0 0 0 1px rgba(200,146,42,.2);
+}
+.panel-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.action-btn{
+  padding:11px 16px;
+  background:transparent;
+  border:1px solid rgba(200,146,42,.35);
+  color:#c8922a;
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.action-btn:hover{
+  background:rgba(200,146,42,.12);
+  border-color:rgba(200,146,42,.7);
+}
+.action-btn.primary{
+  background:linear-gradient(135deg,#c8922a,#8a5e1a);
+  color:#fff;
+}
+.action-btn.primary:hover{
+  background:linear-gradient(135deg,#d8a23a,#9a6e2a);
+}
+.action-btn:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+#trait-discovery-status{
+  min-height:16px;
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:2px;
+}
+#trait-discovery-status.error{
+  color:#ff8b8b;
+}
+#trait-discovery-status.success{
+  color:#7cffb2;
+}
+#trait-discovery-results{
+  display:none;
+  flex-direction:column;
+  gap:14px;
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:18px;
+}
+#trait-discovery-results.open{
+  display:flex;
+}
+#trait-results-summary{
+  color:#b7a98b;
+  font-size:11px;
+  line-height:1.8;
+}
+#trait-results-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:12px;
+}
+.trait-result-card{
+  padding:14px;
+  background:rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.07);
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+}
+.trait-result-name{
+  color:#c8922a;
+  font-size:12px;
+  letter-spacing:1px;
+}
+.trait-result-values{
+  color:#b7a98b;
+  font-size:11px;
+  line-height:1.8;
+}
+#trait-mapping-builder{
+  display:none;
+  flex-direction:column;
+  gap:14px;
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:18px;
+}
+#trait-mapping-builder.open{
+  display:flex;
+}
+#trait-mapping-title{
+  font-family:'Cinzel Decorative',serif;
+  color:#c8922a;
+  font-size:15px;
+  letter-spacing:2px;
+}
+#trait-mapping-subtitle{
+  color:#8a7a5a;
+  font-size:11px;
+  line-height:1.8;
+}
+#trait-mapping-grid{
+  display:grid;
+  gap:12px;
+}
+.mapping-row{
+  display:grid;
+  grid-template-columns:180px minmax(220px,1fr) minmax(260px,1.2fr);
+  gap:12px;
+  align-items:start;
+  padding:14px;
+  background:rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.07);
+}
+.mapping-slot{
+  color:#c8922a;
+  font-size:12px;
+  letter-spacing:1px;
+}
+.mapping-select{
+  width:100%;
+  padding:10px 11px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.12);
+  color:#f3e6bf;
+  font-family:'Cinzel',serif;
+  font-size:12px;
+  outline:none;
+}
+.mapping-select:focus{
+  border-color:rgba(200,146,42,.65);
+  box-shadow:0 0 0 1px rgba(200,146,42,.2);
+}
+.mapping-preview{
+  color:#b7a98b;
+  font-size:11px;
+  line-height:1.8;
+}
+.mapping-preview.unused{
+  color:#8a7a5a;
+  font-style:italic;
+}
+@media (max-width:800px){
+  .mapping-row{
+    grid-template-columns:1fr;
+  }
+}
+#status{
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:2px;
+}
+#collections-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:16px;
+}
+.collection-card{
+  padding:22px;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.08);
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.collection-top{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+}
+.collection-name{
+  font-family:'Cinzel Decorative',serif;
+  color:#c8922a;
+  font-size:16px;
+  letter-spacing:2px;
+  line-height:1.5;
+}
+.collection-enabled{
+  color:#7cffb2;
+  font-size:9px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.collection-meta{
+  display:grid;
+  gap:8px;
+}
+.meta-row{
+  display:grid;
+  grid-template-columns:120px 1fr;
+  gap:10px;
+  font-size:11px;
+  line-height:1.7;
+}
+.meta-label{
+  color:#8a7a5a;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.meta-value{
+  color:#f3e6bf;
+  word-break:break-word;
+}
+.collection-summary{
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:14px;
+  color:#b7a98b;
+  font-size:11px;
+  line-height:1.9;
+}
+.collection-actions{
+  display:flex;
+  gap:10px;
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:14px;
+}
+.collection-edit-btn,
+.collection-delete-btn{
+  padding:10px 14px;
+  background:transparent;
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.collection-edit-btn{
+  border:1px solid rgba(94,207,202,.35);
+  color:#5ecfca;
+}
+.collection-edit-btn:hover{
+  background:rgba(94,207,202,.1);
+  border-color:rgba(94,207,202,.7);
+}
+.collection-delete-btn{
+  border:1px solid rgba(255,139,139,.35);
+  color:#ff8b8b;
+}
+.collection-delete-btn:hover{
+  background:rgba(255,139,139,.1);
+  border-color:rgba(255,139,139,.7);
+}
+.empty-state{
+  padding:28px;
+  border:1px dashed rgba(200,146,42,.3);
+  color:#8a7a5a;
+  text-align:center;
+  letter-spacing:2px;
+}
+@media (max-width:700px){
+  body{padding:18px}
+  #page-header{
+    flex-direction:column;
+  }
+  #page-title h1{
+    font-size:22px;
+  }
+  .meta-row{
+    grid-template-columns:1fr;
+    gap:2px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="auth-loading">Checking admin access...</div>
+
+<main id="page">
+ <header id="page-header">
+    <div id="page-title">
+      <h1>FORGE COLLECTION MANAGER</h1>
+      <p>Admin Collection Registry</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="header-btn primary" type="button" onclick="toggleAddCollectionPanel()">+ Add Collection</button>
+      <a class="header-btn" href="admin.html">← Admin Hub</a>
+      <button class="header-btn" type="button" onclick="logoutAdmin()">Log Out</button>
+    </div>
+  </header>
+
+ <div id="add-collection-panel">
+    <div>
+      <div class="panel-title">ADD COLLECTION</div>
+      <div class="panel-subtitle">
+        Enter a collection once, fetch its real trait structure from OpenSea, then we will map only the traits that matter to the Forge.
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="new-display-name">Display Name</label>
+        <input id="new-display-name" placeholder="Rebel Ants: Battle for the Colony">
+      </div>
+
+      <div class="field">
+        <label for="new-collection-key">Collection Key</label>
+        <input id="new-collection-key" placeholder="battle_for_colony">
+      </div>
+
+      <div class="field">
+        <label for="new-chain">Chain</label>
+        <select id="new-chain">
+          <option value="ethereum">Ethereum</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="new-contract-address">Contract Address</label>
+        <input id="new-contract-address" placeholder="0x...">
+      </div>
+
+      <div class="field">
+        <label for="new-opensea-slug">OpenSea Slug</label>
+        <input id="new-opensea-slug" placeholder="collection-slug">
+      </div>
+    </div>
+
+    <div class="panel-actions">
+      <button class="action-btn primary" id="fetch-traits-btn" type="button" onclick="fetchNewCollectionTraits()">Fetch Traits</button>
+      <button class="action-btn" type="button" onclick="clearNewCollectionForm()">Clear</button>
+    </div>
+
+    <div id="trait-discovery-status"></div>
+
+    <div id="trait-discovery-results">
+      <div id="trait-results-summary"></div>
+      <div id="trait-results-grid"></div>
+    </div>
+
+       <div id="trait-mapping-builder">
+      <div id="trait-mapping-title">FORGE TRAIT MAPPING</div>
+      <div id="trait-mapping-subtitle">
+        Map this collection’s real trait names into the universal Forge slots.
+        Leave any slot as Not used if that collection does not have a matching trait.
+      </div>
+      <div id="trait-mapping-grid"></div>
+      <div class="panel-actions">
+        <button class="action-btn primary" id="save-collection-btn" type="button" onclick="saveNewCollection()">Save Collection</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="status">Loading collections...</div>
+  <section id="collections-grid"></section>
+</main>
+
+<script>
+async function checkAdminSession() {
+  try {
+    const response = await fetch('/api/admin-session');
+    const data = await response.json();
+
+    if (!data.authenticated) {
+      window.location.href = 'index.html';
+      return false;
+    }
+
+    document.getElementById('auth-loading').style.display = 'none';
+    document.getElementById('page').style.display = 'flex';
+    return true;
+  } catch(e) {
+    console.warn('Admin session check failed:', e);
+    window.location.href = 'index.html';
+    return false;
+  }
+}
+
+async function logoutAdmin() {
+  try {
+    await fetch('/api/admin-logout', { method: 'POST' });
+  } catch(e) {
+    console.warn('Admin logout failed:', e);
+  }
+
+  window.location.href = 'index.html';
+}
+
+function toggleAddCollectionPanel() {
+  const panel = document.getElementById('add-collection-panel');
+  if (panel) panel.classList.toggle('open');
+}
+
+function clearNewCollectionForm() {
+  [
+    'new-display-name',
+    'new-collection-key',
+    'new-contract-address',
+    'new-opensea-slug'
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  const chain = document.getElementById('new-chain');
+  if (chain) chain.value = 'ethereum';
+
+  const collectionKeyInput = document.getElementById('new-collection-key');
+  const panelTitle = document.querySelector('#add-collection-panel .panel-title');
+  const saveButton = document.getElementById('save-collection-btn');
+  const status = document.getElementById('trait-discovery-status');
+  const results = document.getElementById('trait-discovery-results');
+  const summary = document.getElementById('trait-results-summary');
+  const grid = document.getElementById('trait-results-grid');
+  const mappingBuilder = document.getElementById('trait-mapping-builder');
+  const mappingGrid = document.getElementById('trait-mapping-grid');
+
+  if (collectionKeyInput) collectionKeyInput.disabled = false;
+  if (panelTitle) panelTitle.textContent = 'ADD COLLECTION';
+  if (saveButton) {
+    saveButton.disabled = false;
+    saveButton.textContent = 'Save Collection';
+  }
+
+  if (status) {
+    status.textContent = '';
+    status.className = '';
+  }
+  if (results) results.classList.remove('open');
+  if (summary) summary.textContent = '';
+  if (grid) grid.innerHTML = '';
+  if (mappingBuilder) mappingBuilder.classList.remove('open');
+  if (mappingGrid) mappingGrid.innerHTML = '';
+
+  window._editingCollectionKey = null;
+  window._newCollectionTraitDiscovery = null;
+  window._newCollectionTraitMap = null;
+}
+const UNIVERSAL_FORGE_SLOTS = [
+  'bandana',
+  'bandanaTail',
+  'background',
+  'dojo',
+  'eyes',
+  'foreheadBandana',
+  'fullFaceMask',
+  'colony',
+  'headAccessory',
+  'head',
+  'outfit',
+  'mouthMask',
+  'mouth',
+  'ninjaMask',
+  'rangerHelmet',
+  'skullCap',
+  'skullyFlap',
+  'weapon'
+];
+
+const TRAIT_MAPPING_SUGGESTIONS = {
+  bandana: ['Bandanas'],
+  bandanaTail: ['Bandana Tails'],
+  background: ['Color Backgrounds', 'Backgrounds', 'Background'],
+  dojo: ['Dojos', 'Dojo'],
+  eyes: ['Eyes'],
+  foreheadBandana: ['Forehead Bandannas', 'Forehead Bandanas'],
+  fullFaceMask: ['Full Face Masks', 'Full Face Mask'],
+  colony: ['Gang Names', 'Faction', 'Colony', 'Gang'],
+  headAccessory: ['Head Accessories', 'Head Accessory'],
+  head: ['Heads', 'Head'],
+  outfit: ['Kimonos and Suits', 'Outfits', 'Outfit', 'Armor', 'Clothing'],
+  mouthMask: ['Mouth Mask', 'Mouth Masks'],
+  mouth: ['Mouths', 'Mouth'],
+  ninjaMask: ['Ninja Masks', 'Ninja Mask'],
+  rangerHelmet: ['Ranger Helmets', 'Ranger Helmet'],
+  skullCap: ['Skull Caps', 'Skull Cap'],
+  skullyFlap: ['Skully Flaps', 'Skully Flap'],
+  weapon: ['Weapons', 'Weapon', 'Weapon Type']
+};
+
+function getSuggestedTraitForSlot(slot, traitCategories) {
+  const suggestions = TRAIT_MAPPING_SUGGESTIONS[slot] || [];
+  return suggestions.find(name => traitCategories.includes(name)) || '';
+}
+
+function getTraitPreviewText(traitName, traitValues) {
+  if (!traitName) return 'Not used for this collection.';
+
+  const values = traitValues[traitName] || [];
+  if (!values.length) return 'No sample values found.';
+
+  const previewValues = values.slice(0, 8);
+  const extraCount = Math.max(0, values.length - previewValues.length);
+
+  return previewValues.join(', ') + (extraCount ? ' +' + extraCount + ' more' : '');
+}
+
+function updateTraitMappingPreview(slot) {
+  const select = document.querySelector(`[data-mapping-slot="${slot}"]`);
+  const preview = document.querySelector(`[data-mapping-preview="${slot}"]`);
+  const discovery = window._newCollectionTraitDiscovery;
+
+  if (!select || !preview || !discovery) return;
+
+  const selectedTrait = select.value;
+  preview.textContent = getTraitPreviewText(selectedTrait, discovery.traitValues || {});
+  preview.classList.toggle('unused', !selectedTrait);
+
+  if (!window._newCollectionTraitMap) window._newCollectionTraitMap = {};
+  window._newCollectionTraitMap[slot] = selectedTrait || null;
+}
+
+function renderTraitMappingBuilder(data, existingTraitMap = null) {
+  const builder = document.getElementById('trait-mapping-builder');
+  const grid = document.getElementById('trait-mapping-grid');
+  const traitCategories = data.traitCategories || [];
+  const traitValues = data.traitValues || {};
+
+  if (!builder || !grid) return;
+
+  grid.innerHTML = '';
+  window._newCollectionTraitMap = {};
+
+  UNIVERSAL_FORGE_SLOTS.forEach(slot => {
+    const savedTrait = existingTraitMap && existingTraitMap[slot]
+      ? existingTraitMap[slot]
+      : '';
+    const suggestedTrait = savedTrait || getSuggestedTraitForSlot(slot, traitCategories);
+
+    window._newCollectionTraitMap[slot] = suggestedTrait || null;
+
+    const row = document.createElement('div');
+    row.className = 'mapping-row';
+
+    const options = [
+      '<option value="">Not used</option>',
+      ...traitCategories.map(traitName => {
+        const selected = traitName === suggestedTrait ? ' selected' : '';
+        return `<option value="${traitName}"${selected}>${traitName}</option>`;
+      })
+    ].join('');
+
+    row.innerHTML = `
+      <div class="mapping-slot">${slot}</div>
+      <select class="mapping-select" data-mapping-slot="${slot}">
+        ${options}
+      </select>
+      <div class="mapping-preview${suggestedTrait ? '' : ' unused'}" data-mapping-preview="${slot}">
+        ${getTraitPreviewText(suggestedTrait, traitValues)}
+      </div>
+    `;
+
+    const select = row.querySelector('select');
+    if (select) {
+      select.addEventListener('change', () => updateTraitMappingPreview(slot));
+    }
+
+    grid.appendChild(row);
+  });
+
+  builder.classList.add('open');
+}
+function renderTraitDiscoveryResults(data) {
+  const results = document.getElementById('trait-discovery-results');
+  const summary = document.getElementById('trait-results-summary');
+  const grid = document.getElementById('trait-results-grid');
+  const categories = data.traitCategories || [];
+  const traitValues = data.traitValues || {};
+
+  if (summary) {
+    summary.textContent =
+      categories.length +
+      ' trait categor' +
+      (categories.length === 1 ? 'y' : 'ies') +
+      ' found for this collection.';
+  }
+
+  if (grid) {
+    grid.innerHTML = '';
+
+    categories.forEach(traitName => {
+      const values = traitValues[traitName] || [];
+      const card = document.createElement('article');
+      card.className = 'trait-result-card';
+
+      const previewValues = values.slice(0, 8);
+      const extraCount = Math.max(0, values.length - previewValues.length);
+
+      card.innerHTML = `
+        <div class="trait-result-name">${traitName}</div>
+        <div class="trait-result-values">
+          ${previewValues.length ? previewValues.join(', ') : 'No values found'}
+          ${extraCount ? ' +' + extraCount + ' more' : ''}
+        </div>
+      `;
+
+      grid.appendChild(card);
+    });
+  }
+
+  if (results) results.classList.add('open');
+
+  const editingCollection =
+    window._editingCollectionKey &&
+    window._forgeCollectionsConfig &&
+    window._forgeCollectionsConfig.collections
+      ? window._forgeCollectionsConfig.collections[window._editingCollectionKey]
+      : null;
+
+  renderTraitMappingBuilder(
+    data,
+    editingCollection ? editingCollection.traitMap || {} : null
+  );
+}
+
+async function fetchNewCollectionTraits() {
+  const displayName = document.getElementById('new-display-name').value.trim();
+  const collectionKey = document.getElementById('new-collection-key').value.trim();
+  const chain = document.getElementById('new-chain').value.trim();
+  const contractAddress = document.getElementById('new-contract-address').value.trim();
+  const openSeaSlug = document.getElementById('new-opensea-slug').value.trim();
+  const status = document.getElementById('trait-discovery-status');
+  const button = document.getElementById('fetch-traits-btn');
+
+  if (!displayName || !collectionKey || !chain || !contractAddress || !openSeaSlug) {
+    if (status) {
+      status.textContent = 'Fill in every field before fetching traits.';
+      status.className = 'error';
+    }
+    return;
+  }
+
+  if (status) {
+    status.textContent = 'Fetching collection traits...';
+    status.className = '';
+  }
+  if (button) button.disabled = true;
+
+  try {
+    const response = await fetch('/api/forge-fetch-traits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ openSeaSlug })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Trait fetch failed');
+    }
+
+    window._newCollectionTraitDiscovery = {
+      displayName,
+      collectionKey,
+      chain,
+      contractAddress,
+      openSeaSlug,
+      traitCategories: data.traitCategories || [],
+      traitValues: data.traitValues || {}
+    };
+
+    renderTraitDiscoveryResults(data);
+
+    if (status) {
+      status.textContent = 'Traits fetched successfully.';
+      status.className = 'success';
+    }
+  } catch(e) {
+    console.warn('Could not fetch new collection traits:', e);
+    if (status) {
+      status.textContent = 'Could not fetch traits. Check the OpenSea slug and try again.';
+      status.className = 'error';
+    }
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+async function saveNewCollection() {
+  const discovery = window._newCollectionTraitDiscovery;
+  const traitMap = window._newCollectionTraitMap;
+  const config = window._forgeCollectionsConfig;
+  const editingKey = window._editingCollectionKey;
+  const status = document.getElementById('trait-discovery-status');
+  const saveButton = document.getElementById('save-collection-btn');
+
+  if (!discovery || !traitMap) {
+    if (status) {
+      status.textContent = 'Fetch traits before saving a collection.';
+      status.className = 'error';
+    }
+    return;
+  }
+
+  if (!config || !config.collections) {
+    if (status) {
+      status.textContent = 'Forge collections config is not loaded.';
+      status.className = 'error';
+    }
+    return;
+  }
+
+  if (!editingKey && config.collections[discovery.collectionKey]) {
+    if (status) {
+      status.textContent = 'That collection key already exists.';
+      status.className = 'error';
+    }
+    return;
+  }
+
+  const cleanedTraitMap = Object.fromEntries(
+    Object.entries(traitMap).filter(([, rawTraitName]) => rawTraitName)
+  );
+
+  const previousCollection = editingKey ? config.collections[editingKey] : null;
+
+  const nextCollection = {
+    collectionKey: discovery.collectionKey,
+    displayName: discovery.displayName,
+    chain: discovery.chain,
+    contractAddress: discovery.contractAddress,
+    openSeaSlug: discovery.openSeaSlug,
+    enabled: previousCollection ? previousCollection.enabled !== false : true,
+    traitCategories: discovery.traitCategories || [],
+    traitMap: cleanedTraitMap
+  };
+
+  const nextConfig = {
+    ...config,
+    collections: {
+      ...config.collections,
+      [discovery.collectionKey]: nextCollection
+    }
+  };
+
+  if (status) {
+    status.textContent = editingKey ? 'Updating collection...' : 'Saving collection...';
+    status.className = '';
+  }
+  if (saveButton) saveButton.disabled = true;
+
+  try {
+    const response = await fetch('/api/forge-save-collections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: nextConfig })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Save failed');
+    }
+
+    window._forgeCollectionsConfig = nextConfig;
+    renderCollections(nextConfig);
+
+    if (status) {
+      status.textContent = editingKey
+        ? 'Collection updated on GitHub.'
+        : 'Collection saved to GitHub.';
+      status.className = 'success';
+    }
+  } catch(e) {
+    console.warn('Could not save collection:', e);
+    if (status) {
+      status.textContent = editingKey
+        ? 'Could not update collection.'
+        : 'Could not save collection.';
+      status.className = 'error';
+    }
+  } finally {
+    if (saveButton) saveButton.disabled = false;
+  }
+}
+
+async function editCollection(collectionKey) {
+  const config = window._forgeCollectionsConfig;
+  const collection = config && config.collections ? config.collections[collectionKey] : null;
+  const panel = document.getElementById('add-collection-panel');
+  const panelTitle = document.querySelector('#add-collection-panel .panel-title');
+  const collectionKeyInput = document.getElementById('new-collection-key');
+  const saveButton = document.getElementById('save-collection-btn');
+  const status = document.getElementById('trait-discovery-status');
+
+  if (!collection) return;
+
+  clearNewCollectionForm();
+
+  window._editingCollectionKey = collectionKey;
+
+  document.getElementById('new-display-name').value = collection.displayName || '';
+  document.getElementById('new-collection-key').value = collection.collectionKey || '';
+  document.getElementById('new-chain').value = collection.chain || 'ethereum';
+  document.getElementById('new-contract-address').value = collection.contractAddress || '';
+  document.getElementById('new-opensea-slug').value = collection.openSeaSlug || '';
+
+  if (collectionKeyInput) collectionKeyInput.disabled = true;
+  if (panelTitle) panelTitle.textContent = 'EDIT COLLECTION';
+  if (saveButton) saveButton.textContent = 'Update Collection';
+  if (panel) panel.classList.add('open');
+
+  if (status) {
+    status.textContent = 'Fetching current traits for edit...';
+    status.className = '';
+  }
+
+  await fetchNewCollectionTraits();
+}
+
+async function deleteCollection(collectionKey) {
+  const config = window._forgeCollectionsConfig;
+  const status = document.getElementById('status');
+
+  if (!config || !config.collections || !config.collections[collectionKey]) {
+    if (status) status.textContent = 'Collection not found.';
+    return;
+  }
+
+  const collection = config.collections[collectionKey];
+  const confirmed = window.confirm(
+    'Delete this Forge collection?\n\n' +
+    (collection.displayName || collection.collectionKey) +
+    '\nKey: ' + collection.collectionKey
+  );
+
+  if (!confirmed) return;
+
+  const nextCollections = { ...config.collections };
+  delete nextCollections[collectionKey];
+
+  const nextConfig = {
+    ...config,
+    collections: nextCollections
+  };
+
+  if (status) status.textContent = 'Deleting collection...';
+
+  try {
+    const response = await fetch('/api/forge-save-collections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: nextConfig })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Delete failed');
+    }
+
+    window._forgeCollectionsConfig = nextConfig;
+    renderCollections(nextConfig);
+
+    if (status) status.textContent = 'Collection deleted from GitHub.';
+  } catch(e) {
+    console.warn('Could not delete collection:', e);
+    if (status) status.textContent = 'Could not delete collection.';
+  }
+}
+
+function renderCollections(config) {
+  const grid = document.getElementById('collections-grid');
+  const status = document.getElementById('status');
+  const collections = config && config.collections ? Object.values(config.collections) : [];
+
+  grid.innerHTML = '';
+
+  if (!collections.length) {
+    status.textContent = 'No collections configured yet.';
+    grid.innerHTML = '<div class="empty-state">No Forge collections found.</div>';
+    return;
+  }
+
+  status.textContent =
+    collections.length +
+    ' collection' +
+    (collections.length === 1 ? '' : 's') +
+    ' loaded';
+
+  collections.forEach(collection => {
+    const card = document.createElement('article');
+    card.className = 'collection-card';
+
+    card.innerHTML = `
+      <div class="collection-top">
+        <div class="collection-name">${collection.displayName || collection.collectionKey}</div>
+        <div class="collection-enabled">${collection.enabled ? 'Enabled' : 'Disabled'}</div>
+      </div>
+
+      <div class="collection-meta">
+        <div class="meta-row">
+          <div class="meta-label">Key</div>
+          <div class="meta-value">${collection.collectionKey || '—'}</div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-label">Chain</div>
+          <div class="meta-value">${collection.chain || '—'}</div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-label">Contract</div>
+          <div class="meta-value">${collection.contractAddress || '—'}</div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-label">OpenSea Slug</div>
+          <div class="meta-value">${collection.openSeaSlug || '—'}</div>
+        </div>
+      </div>
+
+      <div class="collection-summary">
+        ${(collection.traitCategories || []).length} discovered trait categories<br>
+        ${Object.keys(collection.traitMap || {}).length} mapped Forge slots
+      </div>
+
+      <div class="collection-actions">
+        <button class="collection-edit-btn" type="button">Edit</button>
+        <button class="collection-delete-btn" type="button">Delete</button>
+      </div>
+    `;
+
+    const editButton = card.querySelector('.collection-edit-btn');
+    if (editButton) {
+      editButton.addEventListener('click', () => editCollection(collection.collectionKey));
+    }
+
+    const deleteButton = card.querySelector('.collection-delete-btn');
+    if (deleteButton) {
+      deleteButton.addEventListener('click', () => deleteCollection(collection.collectionKey));
+    }
+
+    grid.appendChild(card);
+  });
+}
+async function loadForgeCollections() {
+  const status = document.getElementById('status');
+
+  try {
+    const response = await fetch('/assets/forge-collections.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('status ' + response.status);
+
+    const config = await response.json();
+    window._forgeCollectionsConfig = config;
+    renderCollections(config);
+  } catch(e) {
+    console.warn('Could not load Forge collections config:', e);
+    status.textContent = 'Could not load Forge collections.';
+  }
+}
+
+(async function bootForgeCollectionManager() {
+  const authenticated = await checkAdminSession();
+  if (!authenticated) return;
+  await loadForgeCollections();
+})();
+</script>
+
+</body>
+</html>

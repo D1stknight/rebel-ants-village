@@ -72,6 +72,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   position:relative;
 }
 .ant-card img{width:100%;height:100%;object-fit:cover;}
+.ant-card.forge-playable-card img{
+  object-fit:contain;
+  object-position:center;
+  background:transparent;
+}
+.ant-card-placeholder{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  background:radial-gradient(circle at 50% 40%, rgba(200,146,42,0.2), rgba(0,0,0,0.72) 68%);
+  color:#c8922a;
+  font-size:34px;
+  line-height:1;
+}
 .ant-card:hover{border-color:rgba(200,146,42,0.9);transform:scale(1.08);
   box-shadow:0 0 20px rgba(200,146,42,0.4);}
 .ant-card.selected{border-color:#c8922a;box-shadow:0 0 25px rgba(200,146,42,0.6);}
@@ -102,6 +117,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 }
 #btn-enter:hover{box-shadow:0 6px 30px rgba(200,146,42,0.7);transform:translateY(-2px);}
 #btn-enter:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+
+#btn-forge{
+  background:transparent;
+  color:#5ecfca;
+  border:1px solid rgba(94,207,202,0.5);
+  box-shadow:0 0 0 1px rgba(94,207,202,0.08);
+}
+#btn-forge:hover{
+  background:rgba(94,207,202,0.12);
+  border-color:rgba(94,207,202,0.85);
+  box-shadow:0 6px 24px rgba(94,207,202,0.22);
+  transform:translateY(-2px);
+}
+#btn-forge:disabled{
+  opacity:0.4;
+  cursor:not-allowed;
+  transform:none;
+}
 
 #btn-wallet{
   background:transparent;color:#8a7a5a;
@@ -147,6 +180,178 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   position:fixed;bottom:36px;right:16px;z-index:12;
   color:rgba(138,122,90,0.4);font-size:10px;letter-spacing:2px;
 }
+
+/* ── SECRET ADMIN ENTRANCE ── */
+#admin-ant{
+  position:fixed;
+  bottom:34px;
+  left:16px;
+  z-index:12;
+  background:transparent;
+  border:none;
+  color:rgba(200,146,42,0.38);
+  font-size:16px;
+  cursor:pointer;
+  opacity:.55;
+  transition:all .2s ease;
+  filter:drop-shadow(0 0 6px rgba(200,146,42,.15));
+}
+#admin-ant:hover{
+  opacity:1;
+  color:#c8922a;
+  transform:translateY(-2px) scale(1.08);
+  filter:drop-shadow(0 0 10px rgba(200,146,42,.45));
+}
+
+#admin-modal-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:120;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(8px);
+}
+#admin-modal-backdrop.open{
+  display:flex;
+}
+#admin-modal{
+  width:min(360px, calc(100vw - 32px));
+  background:rgba(5,8,18,.96);
+  border:1px solid rgba(200,146,42,.45);
+  box-shadow:0 0 35px rgba(0,0,0,.7), 0 0 24px rgba(200,146,42,.12);
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+#admin-modal-title{
+  color:#c8922a;
+  font-family:'Cinzel Decorative',serif;
+  font-size:15px;
+  letter-spacing:3px;
+  text-align:center;
+}
+#admin-modal-sub{
+  color:#8a7a5a;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  text-align:center;
+}
+#admin-password{
+  width:100%;
+  padding:12px 13px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(200,146,42,.25);
+  color:#f3e6bf;
+  font-family:'Cinzel',serif;
+  font-size:13px;
+  outline:none;
+}
+#admin-password:focus{
+  border-color:rgba(200,146,42,.75);
+  box-shadow:0 0 0 1px rgba(200,146,42,.25);
+}
+#admin-modal-actions{
+  display:flex;
+  gap:10px;
+}
+.admin-modal-btn{
+  flex:1;
+  padding:11px 14px;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  border:none;
+  cursor:pointer;
+  transition:all .2s ease;
+  font-family:'Cinzel',serif;
+}
+#admin-login-btn{
+  background:linear-gradient(135deg,#c8922a,#8a5e1a);
+  color:#fff;
+}
+#admin-login-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 5px 18px rgba(200,146,42,.35);
+}
+#admin-cancel-btn{
+  background:transparent;
+  color:#8a7a5a;
+  border:1px solid rgba(138,122,90,.35);
+}
+#admin-cancel-btn:hover{
+  color:#c8922a;
+  border-color:rgba(200,146,42,.6);
+}
+#admin-login-status{
+  min-height:16px;
+  color:#8a7a5a;
+  font-size:10px;
+  letter-spacing:2px;
+  text-align:center;
+}
+#admin-login-status.error{
+  color:#ff8b8b;
+}
+#admin-login-status.success{
+  color:#7cffb2;
+}
+.ant-card-marquee {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: rgba(0,0,0,0.78);
+  color: #c8922a;
+  font-size: 8px;
+  line-height: 14px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events:none;
+}
+
+.ant-card:hover .ant-card-marquee,
+.ant-card.selected .ant-card-marquee {
+  opacity: 1;
+}
+
+.ant-card.forge-playable-card.selected .ant-card-marquee {
+  opacity: 0;
+}
+
+.ant-card.forge-playable-card:hover .ant-card-marquee {
+  opacity: 1;
+}
+
+.ant-card-marquee.forge-ready {
+  color: #5ecfca;
+}
+
+.ant-card-marquee span {
+  display: inline-block;
+  min-width: max-content;
+  padding-left: 6px;
+  padding-right: 24px;
+  animation: antCardTextScroll 5.5s ease-in-out infinite alternate;
+}
+
+@keyframes antCardTextScroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-55%);
+  }
+}
 </style>
 </head>
 <body>
@@ -187,9 +392,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
     <div id="char-status"></div>
   </div>
 
-  <!-- Buttons -->
+ <!-- Buttons -->
   <div id="btn-row">
     <button class="btn" id="btn-wallet" onclick="connectWallet()">Connect Wallet</button>
+    <button class="btn" id="btn-forge" onclick="enterForge()">Forge 3D Character</button>
     <button class="btn" id="btn-enter" onclick="enterVillage()">Enter Village</button>
   </div>
 
@@ -208,6 +414,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 
 <div id="version">v0.1 DEV</div>
 
+<button id="admin-ant" type="button" onclick="openAdminModal()" aria-label="Admin access">🐜</button>
+
+<div id="admin-modal-backdrop" onclick="closeAdminModalFromBackdrop(event)">
+  <div id="admin-modal">
+    <div id="admin-modal-title">ADMIN ACCESS</div>
+    <div id="admin-modal-sub">Rebel Ants Command Gate</div>
+    <input id="admin-password" type="password" placeholder="Enter password" autocomplete="current-password">
+    <div id="admin-modal-actions">
+      <button class="admin-modal-btn" id="admin-cancel-btn" type="button" onclick="closeAdminModal()">Cancel</button>
+      <button class="admin-modal-btn" id="admin-login-btn" type="button" onclick="submitAdminLogin()">Enter</button>
+    </div>
+    <div id="admin-login-status"></div>
+  </div>
+</div>
+
 <!-- Video background — no Babylon needed for lobby -->
 
 <script>
@@ -215,44 +436,435 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 const NFT_CONTRACT = '0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221';
 let selectedAnt = null;
 let ownedRebels = [];
+const FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY = 'rebelAntsForgePlayableCharacters';
 
 function setStatus(msg) {
   const el = document.getElementById('char-status');
   if (el) el.textContent = msg;
 }
 
-function selectAnt(id) {
+function loadLocalForgePlayableCharacters() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function matchAntCardBackground(img) {
+  const card = img && img.closest ? img.closest('.ant-card') : null;
+  if (!card || !img.naturalWidth || !img.naturalHeight) return;
+
+  try {
+    const canvas = document.createElement('canvas');
+    const size = 24;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, size, size);
+
+    const samplePoints = [
+      [1, 1], [size - 2, 1], [1, size - 2], [size - 2, size - 2],
+      [Math.floor(size / 2), 1], [Math.floor(size / 2), size - 2]
+    ];
+    const totals = samplePoints.reduce((acc, point) => {
+      const pixel = ctx.getImageData(point[0], point[1], 1, 1).data;
+      acc.r += pixel[0];
+      acc.g += pixel[1];
+      acc.b += pixel[2];
+      return acc;
+    }, { r: 0, g: 0, b: 0 });
+    const count = samplePoints.length;
+    const r = Math.round(totals.r / count);
+    const g = Math.round(totals.g / count);
+    const b = Math.round(totals.b / count);
+
+    card.style.background = `rgb(${r}, ${g}, ${b})`;
+  } catch(e) {
+    card.style.background = 'rgba(0,0,0,0.6)';
+  }
+}
+
+function getForgePlayableActiveCharacter(source = {}) {
+  const nested = source.activeForgeCharacter || null;
+  const sourceBuildId = source.buildId || nested?.activeForgeBuildId || null;
+  const nestedBuildId = nested?.activeForgeBuildId || null;
+
+  if (nested?.activeGlbUrl && (!sourceBuildId || !nestedBuildId || sourceBuildId === nestedBuildId)) {
+    return {
+      ...nested,
+      activeForgeBuildId: nestedBuildId || sourceBuildId,
+      previewThumbnail: source.previewThumbnail || source.sourceImage || source.image || nested.previewThumbnail || nested.sourceImage || null,
+      sourceImage: source.sourceImage || source.previewThumbnail || source.image || nested.sourceImage || nested.previewThumbnail || null,
+      walkingGlbUrl: nested.walkingGlbUrl || source.walkingGlbUrl || null,
+      runningGlbUrl: nested.runningGlbUrl || source.runningGlbUrl || null,
+      riggedGlbUrl: nested.riggedGlbUrl || source.riggedGlbUrl || null
+    };
+  }
+
+  const activeGlbUrl = source.activeGlbUrl || source.riggedGlbUrl || source.riggedRebelGlbUrl || null;
+  if (!activeGlbUrl) return null;
+
+  return {
+    activeCharacterVersion: 'v1',
+    collectionKey: source.collectionKey || 'battle_for_colony',
+    tokenId: source.tokenId || null,
+    rebelId: source.rebelId || null,
+    activeForgeBuildId: sourceBuildId,
+    name: source.name || 'Forge Playable',
+    previewThumbnail: source.previewThumbnail || source.sourceImage || source.image || null,
+    sourceImage: source.sourceImage || source.previewThumbnail || source.image || null,
+    activeGlbUrl,
+    staticGlbUrl: source.staticGlbUrl || null,
+    riggedGlbUrl: source.riggedGlbUrl || activeGlbUrl,
+    walkingGlbUrl: source.walkingGlbUrl || null,
+    runningGlbUrl: source.runningGlbUrl || null,
+    activeCharacterModelType: source.riggedGlbUrl || source.riggedRebelGlbUrl ? 'rigged_forge_glb' : 'static_forge_glb',
+    activeCharacterSource: 'forge_glb',
+    characterBundle: {
+      bundleVersion: 'v1',
+      bundleType: 'forge_character_bundle',
+      collectionKey: source.collectionKey || 'battle_for_colony',
+      tokenId: source.tokenId || null,
+      rebelId: source.rebelId || null,
+      sourceBuildId,
+      activeGlbUrl,
+      staticGlbUrl: source.staticGlbUrl || null,
+      riggedGlbUrl: source.riggedGlbUrl || activeGlbUrl,
+      animations: {
+        walking: source.walkingGlbUrl ? { name: 'walking', glbUrl: source.walkingGlbUrl } : null,
+        running: source.runningGlbUrl ? { name: 'running', glbUrl: source.runningGlbUrl } : null
+      },
+      armatureAnimations: {
+        idle: null,
+        walking: null,
+        running: null,
+        jump: null,
+        attack: null,
+        kick: null
+      }
+    }
+  };
+}
+
+function buildForgePlayableCardFromActiveCharacter(activeForgeCharacter, source = {}) {
+  activeForgeCharacter = getForgePlayableActiveCharacter({
+    ...source,
+    activeForgeCharacter
+  });
+
+  if (!activeForgeCharacter?.activeGlbUrl) return null;
+
+  const buildId = activeForgeCharacter.activeForgeBuildId || source.buildId || '';
+  const tokenId = activeForgeCharacter.tokenId || source.tokenId || '';
+  const rebelId = activeForgeCharacter.rebelId || source.rebelId || '';
+  const id = `forge_playable_${buildId || tokenId || rebelId || source.id || Date.now()}`;
+  const thumbnail =
+    source.previewThumbnail ||
+    source.sourceImage ||
+    source.image ||
+    activeForgeCharacter.previewThumbnail ||
+    activeForgeCharacter.sourceImage ||
+    'assets/lobby/ant_1.JPG';
+
+  return {
+    id,
+    rebelId: rebelId || id,
+    tokenId: tokenId || null,
+    buildId: buildId || null,
+    name: source.name || activeForgeCharacter.name || `Forge Playable${tokenId ? ' #' + tokenId : ''}`,
+    image: thumbnail,
+    previewThumbnail: thumbnail,
+    sourceImage: source.sourceImage || thumbnail,
+    collectionKey: activeForgeCharacter.collectionKey || source.collectionKey || 'battle_for_colony',
+    playableType: 'forge_build',
+    characterSource: 'forge_glb',
+    activeForgeCharacter,
+    activeGlbUrl: activeForgeCharacter.activeGlbUrl,
+    riggedGlbUrl: activeForgeCharacter.riggedGlbUrl || null,
+    walkingGlbUrl: activeForgeCharacter.walkingGlbUrl || null,
+    runningGlbUrl: activeForgeCharacter.runningGlbUrl || null
+  };
+}
+
+async function loadSelectedForgePlayableFromServer() {
+  try {
+    const response = await fetch('/api/forge-active-character-get?collectionKey=battle_for_colony');
+    const data = await response.json();
+
+    if (!response.ok || !data.ok || !data.hasActiveCharacter) {
+      return null;
+    }
+
+    return buildForgePlayableCardFromActiveCharacter(data.activeCharacter, {
+      id: `forge_playable_${data.activeCharacter?.activeForgeBuildId || 'selected'}`,
+      name: 'Active Forge Playable'
+    });
+  } catch(e) {
+    console.warn('Could not load saved Forge playable character:', e);
+    return null;
+  }
+}
+
+async function loadSavedForgePlayableCards() {
+  const playableById = new Map();
+
+  loadLocalForgePlayableCharacters().forEach((saved) => {
+    const card = buildForgePlayableCardFromActiveCharacter(getForgePlayableActiveCharacter(saved), saved);
+    if (card?.activeGlbUrl) playableById.set(card.id, card);
+  });
+
+  const serverSelectedPlayable = await loadSelectedForgePlayableFromServer();
+  if (serverSelectedPlayable?.activeGlbUrl) {
+    playableById.set(serverSelectedPlayable.id, {
+      ...serverSelectedPlayable,
+      ...(playableById.get(serverSelectedPlayable.id) || {})
+    });
+  }
+
+  return [...playableById.values()];
+}
+
+function normalizeRebelTraits(traits) {
+  const traitMap = {};
+
+  (traits || []).forEach(t => {
+    if (t && t.trait_type) {
+      traitMap[t.trait_type] = t.value || null;
+    }
+  });
+
+  return traitMap;
+}
+
+async function loadSelectedRebelMetadata(rebel) {
+  if (!rebel || !rebel.tokenId) return rebel;
+
+  try {
+    const CONTRACT = '0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221';
+    const API_KEY = '9c35627b295643e4aeb495a43d102928';
+    const url = `https://api.opensea.io/api/v2/metadata/ethereum/${CONTRACT}/${rebel.tokenId}`;
+
+    const r = await fetch(url, {
+      headers: {
+        accept: 'application/json',
+        'x-api-key': API_KEY
+      }
+    });
+
+    if (!r.ok) throw new Error('metadata status ' + r.status);
+
+    const metadata = await r.json();
+    const traits = normalizeRebelTraits(metadata.traits);
+
+    return {
+      ...rebel,
+      traits,
+      gangName: traits['Gang Names'] || null,
+      metadataLoaded: true
+    };
+  } catch(e) {
+    console.warn('Selected Rebel metadata load failed:', e);
+    return {
+      ...rebel,
+      traits: rebel.traits || {},
+      gangName: rebel.gangName || null,
+      metadataLoaded: false
+    };
+  }
+}
+
+async function loadActiveForgeCharacterForRebel(rebel) {
+  if (!rebel) return null;
+
+  const collectionKey = rebel.collectionKey || 'battle_for_colony';
+  const tokenId = rebel.tokenId || '';
+  const rebelId = rebel.rebelId || rebel.id || '';
+
+  if (!tokenId && !rebelId) return null;
+
+  const params = new URLSearchParams({ collectionKey });
+
+  if (tokenId) {
+    params.set('tokenId', tokenId);
+  } else if (rebelId) {
+    params.set('rebelId', rebelId);
+  }
+
+  try {
+    const response = await fetch(`/api/forge-active-character-get?${params.toString()}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.ok || !data.hasActiveCharacter) {
+      return null;
+    }
+
+    return data.activeCharacter || null;
+  } catch(e) {
+    console.warn('Could not load active Forge character:', e);
+    return null;
+  }
+}
+
+function forgeCharacterMatchesRebel(activeForgeCharacter, rebel) {
+  if (!activeForgeCharacter || !rebel) return false;
+
+  const activeTokenId = activeForgeCharacter.tokenId ? String(activeForgeCharacter.tokenId) : '';
+  const rebelTokenId = rebel.tokenId ? String(rebel.tokenId) : '';
+
+  const activeRebelId = activeForgeCharacter.rebelId ? String(activeForgeCharacter.rebelId) : '';
+  const rebelRebelId = rebel.rebelId ? String(rebel.rebelId) : '';
+  const rebelId = rebel.id ? String(rebel.id) : '';
+
+  if (activeTokenId && rebelTokenId && activeTokenId === rebelTokenId) {
+    return true;
+  }
+
+  if (activeRebelId && rebelRebelId && activeRebelId === rebelRebelId) {
+    return true;
+  }
+
+  if (activeRebelId && rebelId && activeRebelId === rebelId) {
+    return true;
+  }
+
+  return false;
+}
+
+async function attachActiveForgeCharacter(rebel) {
+  const activeForgeCharacter = await loadActiveForgeCharacterForRebel(rebel);
+
+  if (!activeForgeCharacter) {
+    return rebel;
+  }
+
+  if (!forgeCharacterMatchesRebel(activeForgeCharacter, rebel)) {
+    return {
+      ...rebel,
+      activeForgeCharacter: null,
+      activeGlbUrl: null,
+      characterSource: 'starter_bundle'
+    };
+  }
+
+  return {
+    ...rebel,
+    activeForgeCharacter,
+    activeGlbUrl: activeForgeCharacter.activeGlbUrl || null,
+    characterSource: 'forge_glb'
+  };
+}
+ 
+async function selectAnt(id) {
   selectedAnt = id;
   document.querySelectorAll('.ant-card').forEach(c => c.classList.remove('selected'));
+
   const card = document.getElementById('card_' + id);
   if (card) card.classList.add('selected');
-  try { localStorage.setItem('selectedRebel', JSON.stringify(ownedRebels.find(r => r.id === id) || {})); } catch(e){}
+
+  const rebel = ownedRebels.find(r => r.id === id);
+  if (!rebel) return;
+
+    setStatus('Loading Rebel details...');
+  const enrichedRebel = rebel.playableType === 'forge_build'
+    ? rebel
+    : await loadSelectedRebelMetadata(rebel);
+  const forgeReadyRebel =
+    enrichedRebel.playableType === 'forge_build' && enrichedRebel.activeForgeCharacter?.activeGlbUrl
+      ? enrichedRebel
+      : await attachActiveForgeCharacter(enrichedRebel);
+
+  const rebelIndex = ownedRebels.findIndex(r => r.id === id);
+  if (rebelIndex >= 0) {
+    ownedRebels[rebelIndex] = forgeReadyRebel;
+  }
+
+  const charRow = document.getElementById('char-row');
+  if (charRow) {
+    charRow.innerHTML = '';
+    ownedRebels.forEach(buildCard);
+  }
+
+  try {
+    localStorage.setItem('selectedRebel', JSON.stringify(forgeReadyRebel));
+  } catch(e) {}
+
+  setStatus(
+    ownedRebels.length +
+    ' Rebel' +
+    (ownedRebels.length > 1 ? 's' : '') +
+    ' found' +
+    (forgeReadyRebel.gangName ? ' — ' + forgeReadyRebel.gangName : '') +
+    (forgeReadyRebel.activeForgeCharacter?.activeGlbUrl ? ' — 3D Forge Character Ready' : '')
+  );
 }
 
 function buildCard(rebel) {
   const charRow = document.getElementById('char-row');
   const card = document.createElement('div');
-  card.className = 'ant-card' + (rebel.id === selectedAnt ? ' selected' : '');
+  card.className = 'ant-card' + (rebel.playableType === 'forge_build' ? ' forge-playable-card' : '') + (rebel.id === selectedAnt ? ' selected' : '');
   card.id = 'card_' + rebel.id;
   card.onclick = () => selectAnt(rebel.id);
-  card.innerHTML = `<img src="${rebel.image}" onerror="this.src='assets/lobby/ant_1.JPG'"/>
-    <div class="ant-name">${rebel.name}</div>`;
+
+  const hasForgeCharacter = Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
+  const labelText = rebel.playableType === 'forge_build'
+    ? 'Saved Forge Playable ✓'
+    : hasForgeCharacter
+      ? '3D Forge Character Ready ✓'
+      : rebel.name;
+
+  const cardLabel = `
+    <div class="ant-card-marquee ${hasForgeCharacter ? 'forge-ready' : ''}">
+      <span>${labelText}</span>
+    </div>
+  `;
+
+  const imageHtml = rebel.image
+    ? `<div class="ant-card-placeholder" style="display:none;">🐜</div><img crossorigin="anonymous" src="${rebel.image}" onload="matchAntCardBackground(this)" onerror="this.onerror=null; this.style.display='none'; this.previousElementSibling.style.display='grid';"/>`
+    : '<div class="ant-card-placeholder">🐜</div>';
+
+  card.innerHTML = `${imageHtml}
+    ${cardLabel}`;
   charRow.appendChild(card);
 }
 
-function showDefaultCard() {
+async function showDefaultCard() {
   const charRow = document.getElementById('char-row');
   charRow.innerHTML = '';
-  ownedRebels = [{ id:'ant_1', name:'Rebel #001', image:'assets/lobby/ant_1.JPG' }];
-  selectedAnt = 'ant_1';
-  buildCard(ownedRebels[0]);
-  try { localStorage.setItem('selectedRebel', JSON.stringify(ownedRebels[0])); } catch(e){}
+
+  const starterRebel = {
+    id: 'ant_1',
+    name: 'Rebel #001',
+    image: 'assets/lobby/ant_1.JPG',
+    collectionKey: 'battle_for_colony'
+  };
+
+  const defaultRebel = await attachActiveForgeCharacter(starterRebel);
+  const savedForgePlayables = await loadSavedForgePlayableCards();
+  ownedRebels = [defaultRebel, ...savedForgePlayables];
+
+  let storedSelectedId = '';
+
+  try {
+    storedSelectedId = JSON.parse(localStorage.getItem('selectedRebel') || '{}')?.id || '';
+  } catch(e) {}
+
+  selectedAnt = ownedRebels.some((rebel) => rebel.id === storedSelectedId)
+    ? storedSelectedId
+    : 'ant_1';
+
+  charRow.innerHTML = '';
+  ownedRebels.forEach(buildCard);
+
+  await selectAnt(selectedAnt);
 }
 
 async function loadNFTs(walletAddress) {
   const charRow = document.getElementById('char-row');
   charRow.innerHTML = '';
   setStatus('Loading your Rebels...');
+
   try {
     // Query by collection slug + wallet — gets ALL owned ants, paginated
     const COLLECTION = 'rebel-ants-battle-for-the-colony';
@@ -260,14 +872,18 @@ async function loadNFTs(walletAddress) {
     let allRebels = [];
     let next = null;
     let pages = 0;
+
     do {
       const url = `https://api.opensea.io/api/v2/chain/ethereum/account/${walletAddress}/nfts?collection=${COLLECTION}&limit=50${next ? '&next=' + next : ''}`;
       const r = await fetch(url, { headers: { 'accept': 'application/json', 'x-api-key': API_KEY } });
+
       if (!r.ok) throw new Error('status ' + r.status);
+
       const data = await r.json();
       allRebels = allRebels.concat(data.nfts || []);
       next = data.next || null;
       pages++;
+
       setStatus('Loading... ' + allRebels.length + ' found');
     } while (next && pages < 10); // max 500 ants
 
@@ -276,16 +892,47 @@ async function loadNFTs(walletAddress) {
       showDefaultCard();
       return;
     }
-    ownedRebels = allRebels.map(n => ({
-  id: 'rebel_' + n.identifier,
-  name: n.name || ('Rebel #' + n.identifier),
-  image: n.image_url || 'assets/lobby/ant_1.JPG',
-  tokenId: n.identifier
-}));
-selectedAnt = ownedRebels[0].id;
-try { localStorage.setItem('selectedRebel', JSON.stringify(ownedRebels[0])); } catch(e){}
-ownedRebels.forEach(r => buildCard(r));
-    setStatus(ownedRebels.length + ' Rebel' + (ownedRebels.length > 1 ? 's' : '') + ' found');
+
+    const mappedRebels = allRebels.map(n => ({
+      id: 'rebel_' + n.identifier,
+      rebelId: 'rebel_' + n.identifier,
+      name: n.name || ('Rebel #' + n.identifier),
+      image: n.image_url || 'assets/lobby/ant_1.JPG',
+      tokenId: n.identifier,
+      collectionKey: 'battle_for_colony'
+    }));
+
+    setStatus('Checking Forge characters...');
+
+    const walletRebels = await Promise.all(
+      mappedRebels.map((rebel) => attachActiveForgeCharacter(rebel))
+    );
+    const savedForgePlayables = await loadSavedForgePlayableCards();
+    const walletIds = new Set(walletRebels.map((rebel) => rebel.id));
+    ownedRebels = [
+      ...walletRebels,
+      ...savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id))
+    ];
+
+    const forgedReadyRebel = ownedRebels.find((rebel) => {
+      return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
+    });
+
+    selectedAnt = forgedReadyRebel ? forgedReadyRebel.id : ownedRebels[0].id;
+
+    charRow.innerHTML = '';
+    ownedRebels.forEach(r => buildCard(r));
+
+    await selectAnt(selectedAnt);
+
+    setStatus(
+      ownedRebels.length +
+      ' Rebel' +
+      (ownedRebels.length > 1 ? 's' : '') +
+      ' found' +
+      (forgedReadyRebel ? ' — 3D Forge Character Ready' : '')
+    );
+
     document.getElementById('btn-enter').disabled = false;
   } catch(e) {
     console.warn('NFT load failed:', e);
@@ -327,6 +974,20 @@ async function connectWallet() {
   }
 }
 
+// ── ENTER FORGE ──
+function enterForge() {
+  const blackout = document.getElementById('blackout');
+  blackout.classList.add('active');
+
+  if (window._music) {
+    window._music.volume = 0;
+  }
+
+  setTimeout(() => {
+    window.location.href = 'forge.html';
+  }, 900);
+}
+
 // ── ENTER VILLAGE ──
 function enterVillage() {
   const blackout = document.getElementById('blackout');
@@ -339,6 +1000,119 @@ function enterVillage() {
     window.location.href = 'village.html';
   }, 900);
 }
+
+// ── SECRET ADMIN ENTRANCE ──
+function openAdminModal() {
+  const backdrop = document.getElementById('admin-modal-backdrop');
+  const input = document.getElementById('admin-password');
+  const status = document.getElementById('admin-login-status');
+
+  if (status) {
+    status.textContent = '';
+    status.className = '';
+  }
+
+  if (input) {
+    input.value = '';
+  }
+
+  if (backdrop) {
+    backdrop.classList.add('open');
+  }
+
+  setTimeout(() => {
+    if (input) input.focus();
+  }, 0);
+}
+
+function closeAdminModal() {
+  const backdrop = document.getElementById('admin-modal-backdrop');
+  const input = document.getElementById('admin-password');
+  const status = document.getElementById('admin-login-status');
+
+  if (backdrop) backdrop.classList.remove('open');
+  if (input) input.value = '';
+  if (status) {
+    status.textContent = '';
+    status.className = '';
+  }
+}
+
+function closeAdminModalFromBackdrop(event) {
+  if (event.target && event.target.id === 'admin-modal-backdrop') {
+    closeAdminModal();
+  }
+}
+
+async function submitAdminLogin() {
+  const input = document.getElementById('admin-password');
+  const status = document.getElementById('admin-login-status');
+  const loginBtn = document.getElementById('admin-login-btn');
+  const password = input ? input.value : '';
+
+  if (!password) {
+    if (status) {
+      status.textContent = 'Enter password';
+      status.className = 'error';
+    }
+    return;
+  }
+
+  if (loginBtn) loginBtn.disabled = true;
+
+  try {
+    const response = await fetch('/api/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.authenticated) {
+      if (status) {
+        status.textContent = 'Access denied';
+        status.className = 'error';
+      }
+      return;
+    }
+
+   if (status) {
+  status.textContent = 'Access granted';
+  status.className = 'success';
+}
+
+setTimeout(() => {
+  window.location.href = 'admin.html';
+}, 500);
+  } catch(e) {
+    console.warn('Admin login failed:', e);
+    if (status) {
+      status.textContent = 'Login unavailable';
+      status.className = 'error';
+    }
+  } finally {
+    if (loginBtn) loginBtn.disabled = false;
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  const backdrop = document.getElementById('admin-modal-backdrop');
+  const input = document.getElementById('admin-password');
+
+  if (e.key === 'Escape' && backdrop && backdrop.classList.contains('open')) {
+    closeAdminModal();
+  }
+
+  if (
+    e.key === 'Enter' &&
+    backdrop &&
+    backdrop.classList.contains('open') &&
+    document.activeElement === input
+  ) {
+    submitAdminLogin();
+  }
+});
 
 // ── AMBIENT MUSIC ──
 function startMusic() {

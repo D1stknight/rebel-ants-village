@@ -1,0 +1,6150 @@
+const DEFAULT_BATTLE_FOR_COLONY_TRAIT_MAP = {
+  bandana: 'Bandanas',
+  bandanaTail: 'Bandana Tails',
+  background: 'Color Backgrounds',
+  dojo: 'Dojos',
+  eyes: 'Eyes',
+  foreheadBandana: 'Forehead Bandannas',
+  fullFaceMask: 'Full Face Masks',
+  colony: 'Gang Names',
+  headAccessory: 'Head Accessories',
+  head: 'Heads',
+  outfit: 'Kimonos and Suits',
+  mouthMask: 'Mouth Mask',
+  mouth: 'Mouths',
+  ninjaMask: 'Ninja Masks',
+  rangerHelmet: 'Ranger Helmets',
+  skullCap: 'Skull Caps',
+  skullyFlap: 'Skully Flaps',
+  weapon: 'Weapons'
+};
+
+const UNIVERSAL_FORGE_TRAIT_SLOTS = [
+  'bandana',
+  'bandanaTail',
+  'background',
+  'dojo',
+  'eyes',
+  'foreheadBandana',
+  'fullFaceMask',
+  'colony',
+  'headAccessory',
+  'head',
+  'outfit',
+  'mouthMask',
+  'mouth',
+  'ninjaMask',
+  'rangerHelmet',
+  'skullCap',
+  'skullyFlap',
+  'weapon'
+];
+
+function getForgeCollectionsConfig() {
+  if (window._forgeCollectionsConfig) {
+    return window._forgeCollectionsConfig;
+  }
+
+  try {
+    const raw = localStorage.getItem('rebelAntsForgeCollections');
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) {
+    return null;
+  }
+}
+
+function getCollectionTraitMap(collectionKey) {
+  const config = getForgeCollectionsConfig();
+  const savedCollection =
+    config &&
+    config.collections &&
+    collectionKey &&
+    config.collections[collectionKey]
+      ? config.collections[collectionKey]
+      : null;
+
+  if (savedCollection && savedCollection.traitMap) {
+    return savedCollection.traitMap;
+  }
+
+  if (collectionKey === 'battle_for_colony') {
+    return DEFAULT_BATTLE_FOR_COLONY_TRAIT_MAP;
+  }
+
+  return {};
+}
+
+function buildTraitSlots(sourceTraits, collectionKey) {
+  sourceTraits = sourceTraits || {};
+  const traitMap = getCollectionTraitMap(collectionKey);
+
+  return Object.fromEntries(
+    UNIVERSAL_FORGE_TRAIT_SLOTS.map(slot => {
+      const rawTraitName = traitMap[slot];
+      return [slot, rawTraitName ? sourceTraits[rawTraitName] || null : null];
+    })
+  );
+}
+
+const COLONY_FORGE_PROFILES = {
+  Samurai: {
+    colonyId: 'samurai',
+    displayName: 'Samurai',
+    baseStyle: 'disciplined_swordsman',
+    emblem: 'samurai',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Ronin: {
+    colonyId: 'ronin',
+    displayName: 'Ronin',
+    baseStyle: 'lone_swordsman',
+    emblem: 'ronin',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Bushi: {
+    colonyId: 'bushi',
+    displayName: 'Bushi',
+    baseStyle: 'armored_warrior',
+    emblem: 'bushi',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Warrior: {
+    colonyId: 'warrior',
+    displayName: 'Warrior',
+    baseStyle: 'battle_hardened_fighter',
+    emblem: 'warrior',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Shogun: {
+    colonyId: 'shogun',
+    displayName: 'Shogun',
+    baseStyle: 'warlord_commander',
+    emblem: 'shogun',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Buke: {
+    colonyId: 'buke',
+    displayName: 'Buke',
+    baseStyle: 'noble_guardian',
+    emblem: 'buke',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Kenshi: {
+    colonyId: 'kenshi',
+    displayName: 'Kenshi',
+    baseStyle: 'master_bladesman',
+    emblem: 'kenshi',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Wokou: {
+    colonyId: 'wokou',
+    displayName: 'Wokou',
+    baseStyle: 'raider_pirate',
+    emblem: 'wokou',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Ashigaru: {
+    colonyId: 'ashigaru',
+    displayName: 'Ashigaru',
+    baseStyle: 'foot_soldier',
+    emblem: 'ashigaru',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Sohei: {
+    colonyId: 'sohei',
+    displayName: 'Sohei',
+    baseStyle: 'monk_warrior',
+    emblem: 'sohei',
+    preferredBodyType: 'universal_ant_v1'
+  },
+  Yamabushi: {
+    colonyId: 'yamabushi',
+    displayName: 'Yamabushi',
+    baseStyle: 'mountain_ascetic',
+    emblem: 'yamabushi',
+    preferredBodyType: 'universal_ant_v1'
+  }
+};
+
+const WEAPON_FORGE_PROFILES = {
+  'Celestial-Fang': {
+    weaponId: 'celestial_fang',
+    displayName: 'Celestial-Fang',
+    family: 'blade'
+  },
+  'Celestial-Fang-2': {
+    weaponId: 'celestial_fang_2',
+    displayName: 'Celestial-Fang-2',
+    family: 'blade'
+  },
+  "Dawn's-Light-Arrows": {
+    weaponId: 'dawns_light_arrows',
+    displayName: "Dawn's-Light-Arrows",
+    family: 'ranged'
+  },
+  "Dawn's-Light-Arrows-2": {
+    weaponId: 'dawns_light_arrows_2',
+    displayName: "Dawn's-Light-Arrows-2",
+    family: 'ranged'
+  },
+  'Eclipse-Edge': {
+    weaponId: 'eclipse_edge',
+    displayName: 'Eclipse-Edge',
+    family: 'blade'
+  },
+  'Eclipse-Edge-2': {
+    weaponId: 'eclipse_edge_2',
+    displayName: 'Eclipse-Edge-2',
+    family: 'blade'
+  },
+  'Soulrender': {
+    weaponId: 'soulrender',
+    displayName: 'Soulrender',
+    family: 'blade'
+  },
+  'Stormbringer-Blade': {
+    weaponId: 'stormbringer_blade',
+    displayName: 'Stormbringer-Blade',
+    family: 'blade'
+  },
+  'Stormbringer-Blade-2': {
+    weaponId: 'stormbringer_blade_2',
+    displayName: 'Stormbringer-Blade-2',
+    family: 'blade'
+  },
+  'Whisper-of-Dawn': {
+    weaponId: 'whisper_of_dawn',
+    displayName: 'Whisper-of-Dawn',
+    family: 'blade'
+  },
+  'Whisper-of-Dawn-2': {
+    weaponId: 'whisper_of_dawn_2',
+    displayName: 'Whisper-of-Dawn-2',
+    family: 'blade'
+  }
+};
+
+function resolveColonyForgeProfile(colonyName) {
+  return colonyName && COLONY_FORGE_PROFILES[colonyName]
+    ? COLONY_FORGE_PROFILES[colonyName]
+    : null;
+}
+
+function resolveWeaponForgeProfile(weaponName) {
+  return weaponName && WEAPON_FORGE_PROFILES[weaponName]
+    ? WEAPON_FORGE_PROFILES[weaponName]
+    : null;
+}
+
+function buildForgeLayers(traitSlots, colonyProfile, weaponProfile) {
+  traitSlots = traitSlots || {};
+
+  return {
+    identity: {
+      colony: traitSlots.colony || null,
+      colonyProfile: colonyProfile || null
+    },
+    body: {
+      head: traitSlots.head || null,
+      mouth: traitSlots.mouth || null,
+      eyes: traitSlots.eyes || null
+    },
+    outfit: {
+      outfit: traitSlots.outfit || null
+    },
+    headwear: {
+      skullCap: traitSlots.skullCap || null,
+      skullyFlap: traitSlots.skullyFlap || null,
+      rangerHelmet: traitSlots.rangerHelmet || null,
+      foreheadBandana: traitSlots.foreheadBandana || null
+    },
+    facewear: {
+      fullFaceMask: traitSlots.fullFaceMask || null,
+      mouthMask: traitSlots.mouthMask || null,
+      ninjaMask: traitSlots.ninjaMask || null
+    },
+    accessories: {
+      bandana: traitSlots.bandana || null,
+      bandanaTail: traitSlots.bandanaTail || null,
+      headAccessory: traitSlots.headAccessory || null
+    },
+    weapon: {
+      sourceWeapon: traitSlots.weapon || null,
+      weaponProfile: weaponProfile || null
+    },
+    environment: {
+      background: traitSlots.background || null,
+      dojo: traitSlots.dojo || null
+    }
+  };
+}
+
+function buildCharacterBlueprint(rebel, character) {
+  const sourceTraits = rebel.traits || {};
+  const traitSlots = buildTraitSlots(sourceTraits, rebel.collectionKey || 'battle_for_colony');
+  const colony = rebel.gangName || traitSlots.colony || null;
+  const colonyProfile = resolveColonyForgeProfile(colony);
+  const weaponProfile = resolveWeaponForgeProfile(traitSlots.weapon);
+  const forgeLayers = buildForgeLayers(traitSlots, colonyProfile, weaponProfile);
+
+  return {
+    blueprintVersion: 'v1',
+    rebelId: rebel.id || 'ant_1',
+    tokenId: rebel.tokenId || null,
+    collectionKey: rebel.collectionKey || 'battle_for_colony',
+    name: rebel.name || 'Rebel #001',
+    sourceImage: rebel.image || 'assets/lobby/ant_1.JPG',
+    sourceType: rebel.tokenId ? 'nft' : 'default',
+    sourceTraits,
+    traitSlots,
+    forgeLayers,
+    colony,
+    colonyProfile,
+    weaponProfile,
+    bodyType: colonyProfile?.preferredBodyType || 'universal_ant_v1',
+    formType: character.formType || 'starter',
+    formLabel: character.formLabel || 'Starter 3D Form',
+    forgeStatus: character.hasGeneratedModel ? 'forged' : 'not_forged',
+    bundleId: character.bundleId || 'starter_ant',
+    hasGeneratedModel: character.hasGeneratedModel === true,
+    parts: {
+      helmet: null,
+      mask: null,
+      armor: null,
+      cape: null,
+      weaponLeft: null,
+      weaponRight: null,
+      emblem: colonyProfile?.emblem || null
+    },
+    colors: {
+      body: null,
+      armor: null,
+      accent: null,
+      eyes: null
+    },
+    confidence: {
+      colony: colonyProfile ? 1 : null,
+      weapon: weaponProfile ? 1 : null,
+      parts: null,
+      colors: null
+    }
+  };
+}
+
+function buildForgeGenerationInput(blueprint) {
+  blueprint = blueprint || {};
+
+  const collectionKey = blueprint.collectionKey || 'battle_for_colony';
+
+  return {
+    generationInputVersion: 'v1',
+    blueprintVersion: blueprint.blueprintVersion || 'v1',
+    rebelId: blueprint.rebelId || 'ant_1',
+    tokenId: blueprint.tokenId || null,
+    collectionKey,
+    name: blueprint.name || 'Rebel #001',
+    sourceType: blueprint.sourceType || 'default',
+    sourceImage: blueprint.sourceImage || 'assets/lobby/ant_1.JPG',
+
+    // Source art can be partial, but Forge output must become a playable full-body character.
+    sourceFraming: collectionKey === 'battle_for_colony' ? 'chest_up' : 'unknown',
+    targetOutput: 'full_body_3d_character',
+    requiresFullBodyCompletion: true,
+
+    bodyType: blueprint.bodyType || 'universal_ant_v1',
+    forgeStatus: blueprint.forgeStatus || 'not_forged',
+    sourceTraits: blueprint.sourceTraits || {},
+    traitSlots: blueprint.traitSlots || {},
+    forgeLayers: blueprint.forgeLayers || {},
+    colony: blueprint.colony || null,
+    colonyProfile: blueprint.colonyProfile || null,
+    weaponProfile: blueprint.weaponProfile || null,
+    parts: blueprint.parts || {},
+    colors: blueprint.colors || {},
+    confidence: blueprint.confidence || {}
+  };
+}
+
+window.DEFAULT_BATTLE_FOR_COLONY_TRAIT_MAP = DEFAULT_BATTLE_FOR_COLONY_TRAIT_MAP;
+window.UNIVERSAL_FORGE_TRAIT_SLOTS = UNIVERSAL_FORGE_TRAIT_SLOTS;
+window.COLONY_FORGE_PROFILES = COLONY_FORGE_PROFILES;
+window.WEAPON_FORGE_PROFILES = WEAPON_FORGE_PROFILES;
+window.getForgeCollectionsConfig = getForgeCollectionsConfig;
+window.getCollectionTraitMap = getCollectionTraitMap;
+window.buildTraitSlots = buildTraitSlots;
+window.resolveColonyForgeProfile = resolveColonyForgeProfile;
+window.resolveWeaponForgeProfile = resolveWeaponForgeProfile;
+window.buildForgeLayers = buildForgeLayers;
+window.buildCharacterBlueprint = buildCharacterBlueprint;
+window.buildForgeGenerationInput = buildForgeGenerationInput;
+
+(function setupForgeSelectedConceptPanelExtension() {
+  function isForgePage() {
+    return Boolean(
+      document.getElementById('forge-concepts-section') &&
+      document.getElementById('forge-concepts-gallery')
+    );
+  }
+
+  function ensureSelectedConceptStyles() {
+    if (document.getElementById('forge-selected-concept-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'forge-selected-concept-styles';
+    style.textContent = `
+      #forge-selected-concept-panel {
+        margin-top: 18px;
+        padding: 14px;
+        border: 1px solid rgba(94,207,202,.22);
+        background: rgba(94,207,202,.055);
+        border-radius: 18px;
+      }
+
+      .forge-selected-empty {
+        color: rgba(243,230,191,.72);
+        font-size: 12px;
+        line-height: 1.8;
+        border: 1px dashed rgba(255,255,255,.14);
+        border-radius: 14px;
+        padding: 14px;
+        margin-top: 12px;
+      }
+
+      .forge-selected-card {
+        display: grid;
+        grid-template-columns: minmax(110px,150px) 1fr;
+        gap: 14px;
+        align-items: center;
+        margin-top: 12px;
+      }
+
+      .forge-selected-card img {
+        width: 100%;
+        aspect-ratio: 1 / 1.25;
+        object-fit: cover;
+        object-position: top center;
+        border-radius: 14px;
+        border: 1px solid rgba(94,207,202,.28);
+        background: rgba(0,0,0,.24);
+      }
+
+      .forge-selected-kicker {
+        color: #5ecfca;
+        font-size: 10px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+
+      .forge-selected-meta {
+        color: rgba(243,230,191,.76);
+        font-size: 11px;
+        line-height: 1.8;
+        margin-top: 8px;
+      }
+
+      .forge-disabled-build-btn {
+        margin-top: 12px;
+        padding: 11px 14px;
+        border: 1px solid rgba(200,146,42,.28);
+        background: rgba(200,146,42,.08);
+        color: rgba(243,230,191,.58);
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        cursor: not-allowed;
+      }
+
+      .forge-active-build-btn {
+  margin-top: 12px;
+  padding: 11px 14px;
+  border: 1px solid rgba(94,207,202,.35);
+  background: rgba(94,207,202,.12);
+  color: #f3e6bf;
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.forge-active-build-btn:hover {
+  border-color: rgba(94,207,202,.7);
+  background: rgba(94,207,202,.18);
+}
+
+      @media (max-width: 700px) {
+        .forge-selected-card {
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function ensureSelectedConceptPanel() {
+    if (!isForgePage()) return null;
+
+    let panel = document.getElementById('forge-selected-concept-panel');
+    if (panel) return panel;
+
+    const conceptsSection = document.getElementById('forge-concepts-section');
+    if (!conceptsSection || !conceptsSection.parentNode) return null;
+
+    panel = document.createElement('div');
+    panel.id = 'forge-selected-concept-panel';
+     panel.innerHTML = `
+  <div class="section-title">Selected Production Reference</div>
+  <div id="forge-selected-concept-content" class="forge-selected-empty">
+    Select a saved production reference to prepare it for 3D building.
+  </div>
+`;
+
+    conceptsSection.parentNode.insertBefore(panel, conceptsSection);
+    return panel;
+  }
+
+  async function renderSelectedConceptPanel() {
+    ensureSelectedConceptStyles();
+
+    const panel = ensureSelectedConceptPanel();
+    const content = document.getElementById('forge-selected-concept-content');
+    if (!panel || !content) return;
+
+    if (
+      typeof window.getSelectedForgeConceptStorageKey !== 'function' ||
+      typeof window.loadForgeConcepts !== 'function'
+    ) {
+      return;
+    }
+
+    const selectedConceptId = localStorage.getItem(window.getSelectedForgeConceptStorageKey());
+    const concepts = window.loadForgeConcepts();
+    const concept = concepts.find((item) => (item.id || item.conceptId) === selectedConceptId);
+
+    if (!selectedConceptId || !concept) {
+      content.className = 'forge-selected-empty';
+      content.innerHTML = 'No concept selected yet. Select a saved concept to choose the version that will move forward into the 3D character step.';
+      return;
+    }
+
+    let imageUrl = '';
+
+    try {
+      if (typeof window.loadForgeConceptImageForDisplay === 'function') {
+        imageUrl = await window.loadForgeConceptImageForDisplay(concept);
+      } else if (typeof window.loadForgeConceptImage === 'function') {
+        imageUrl = await window.loadForgeConceptImage(concept.id || concept.conceptId);
+      }
+    } catch(e) {
+      console.warn('Could not load selected Forge concept image:', e);
+    }
+
+    const id = concept.id || concept.conceptId;
+    const tokenText = concept.tokenId || concept.rebelId || '—';
+    const colonyText = concept.colony || 'Unknown Colony';
+    const isProductionReference =
+      concept.forgeMode === 'production_reference' ||
+      concept.conceptType === 'production_reference' ||
+      concept.variantIntent === 'clean_3d_production_reference';
+
+    const safeId = String(id).replace(/'/g, "\\'");
+    const imgHtml = imageUrl
+      ? `<img src="${imageUrl}" alt="Selected Forge concept">`
+      : '<div class="forge-selected-empty">Selected image missing.</div>';
+
+    const actionButtonHtml = isProductionReference
+      ? `<button class="forge-active-build-btn forge-start-3d-build-btn" type="button" onclick="window.startForge3dBuild('${safeId}')">Start 3D Build</button>`
+      : `<button class="forge-active-build-btn forge-build-production-btn" type="button" onclick="window.generateForgeProductionReference('${safeId}')">Create 3D Production Reference</button>`;
+
+    const helperText = isProductionReference
+      ? 'This production reference is ready to be queued for the future GLB character step.'
+      : 'Create a cleaner production reference before starting the 3D build step.';
+
+    content.className = 'forge-selected-card';
+    content.innerHTML = `
+      ${imgHtml}
+      <div>
+        <div class="forge-selected-kicker">Selected for Future 3D Build</div>
+        <div class="forge-selected-meta">
+          Colony: ${colonyText}<br>
+          Token ID: ${tokenText}<br>
+          ${helperText}
+        </div>
+        ${actionButtonHtml}
+      </div>
+    `;
+  }
+
+  async function generateForgeProductionReference(conceptId) {
+    if (
+      typeof window.loadForgeConcepts !== 'function' ||
+      !window.forgeGenerationInput
+    ) {
+      return;
+    }
+
+    const concepts = window.loadForgeConcepts();
+    const concept = concepts.find((item) => (item.id || item.conceptId) === conceptId);
+
+    if (!concept) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Select a saved concept before creating a 3D production reference.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    if (typeof window.setForgeGeneratingButton === 'function') {
+      window.setForgeGeneratingButton(activeButton, true);
+    }
+
+    if (typeof window.setForgeStatusHtml === 'function') {
+      window.setForgeStatusHtml('<span class="forge-loading-pulse">Creating 3D production reference... this can take a moment.</span>', '');
+    }
+
+    try {
+      let selectedConceptImageDataUrl = '';
+      let selectedConceptImageUrl = concept.imageUrl || '';
+
+      if (typeof window.loadForgeConceptImage === 'function') {
+        selectedConceptImageDataUrl = await window.loadForgeConceptImage(concept.id || concept.conceptId);
+      }
+
+      const response = await fetch('/api/forge-generate-production-reference', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          conceptId,
+          selectedConceptImageDataUrl,
+          selectedConceptImageUrl,
+          selectedConcept: concept,
+          concept,
+          generationInput: window.forgeGenerationInput
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Production reference request failed');
+      }
+
+      window.lastForgeProductionReferenceResponse = data;
+
+      if (data.productionImage?.dataUrl) {
+        const previewWrap = document.getElementById('fullbody-preview-wrap');
+        const previewImage = document.getElementById('fullbody-preview-image');
+        const previewActions = document.getElementById('forge-preview-actions');
+
+        const productionConcept = {
+          id: `production_${Date.now()}`,
+          conceptId: `production_${Date.now()}`,
+          createdAt: new Date().toISOString(),
+          imageDataUrl: data.productionImage.dataUrl,
+          tokenId: concept.tokenId || window.forgeGenerationInput?.tokenId || null,
+          rebelId: concept.rebelId || window.forgeGenerationInput?.rebelId || null,
+          collectionKey: concept.collectionKey || window.forgeGenerationInput?.collectionKey || null,
+          colony: concept.colony || window.forgeGenerationInput?.colony || null,
+          bodyType: concept.bodyType || window.forgeGenerationInput?.bodyType || null,
+          forgeMode: 'production_reference',
+          variantIntent: 'clean_3d_production_reference',
+          sourceConceptId: concept.id || concept.conceptId
+        };
+
+        window.currentForgeConcept = productionConcept;
+
+        if (previewImage) {
+          previewImage.src = data.productionImage.dataUrl;
+        }
+
+        if (previewWrap) {
+          previewWrap.style.display = 'block';
+          previewWrap.classList.add('open');
+        }
+
+        if (previewActions) {
+          previewActions.style.display = 'flex';
+        }
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('3D production reference generated. Click Save This Version to keep it.', 'success');
+      }
+    } catch(e) {
+      console.warn('Forge production reference request failed:', e);
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not create 3D production reference.', 'error');
+      }
+    } finally {
+      if (typeof window.setForgeGeneratingButton === 'function') {
+        window.setForgeGeneratingButton(activeButton, false);
+      }
+    }
+  }
+
+  async function startForge3dBuild(conceptId) {
+    if (
+      typeof window.loadForgeConcepts !== 'function' ||
+      !window.forgeGenerationInput
+    ) {
+      return;
+    }
+
+    const concepts = window.loadForgeConcepts();
+    const concept = concepts.find((item) => (item.id || item.conceptId) === conceptId);
+
+    if (!concept) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Select a saved production reference before starting a 3D build.', 'error');
+      }
+      return;
+    }
+
+    if (!concept.imageUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Save this production reference to the server before starting a 3D build.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Start 3D Build';
+
+    if (activeButton) {
+      activeButton.textContent = 'Queuing 3D Build...';
+    }
+
+    if (typeof window.setForgeGeneratingButton === 'function') {
+      window.setForgeGeneratingButton(activeButton, true);
+    }
+
+    if (typeof window.setForgeStatusHtml === 'function') {
+      window.setForgeStatusHtml('<span class="forge-loading-pulse">Queuing 3D build request...</span>', '');
+    }
+
+    try {
+      const response = await fetch('/api/forge-build-3d-character', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          generationInput: window.forgeGenerationInput,
+          selectedConcept: concept,
+          productionReference: concept
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || '3D build request failed');
+      }
+
+      window.lastForge3dBuildResponse = data;
+
+      const buildRequest = data.buildRequest || null;
+      const buildId = buildRequest?.buildId || null;
+
+      if (activeButton) {
+        activeButton.textContent = 'Starting Meshy...';
+      }
+
+      if (typeof window.setForgeStatusHtml === 'function') {
+        window.setForgeStatusHtml('<span class="forge-loading-pulse">3D build queued. Starting Meshy generation...</span>', '');
+      }
+
+      const meshyResponse = await fetch('/api/forge-3d-engine-meshy-create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId,
+          buildRequest,
+          generationInput: window.forgeGenerationInput,
+          productionReference: concept,
+          selectedConcept: concept
+        })
+      });
+
+      const meshyData = await meshyResponse.json();
+
+      if (!meshyResponse.ok || !meshyData.ok) {
+        throw new Error(meshyData.error || meshyData.detail || 'Meshy task start failed');
+      }
+
+      window.lastForgeMeshyCreateResponse = meshyData;
+
+      if (activeButton) {
+        activeButton.textContent = 'Meshy Started ✓';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('3D build queued and Meshy generation started. The status panel will track the model build.', 'success');
+      }
+
+      if (typeof window.renderForge3dBuildStatusPanel === 'function') {
+        window.renderForge3dBuildStatusPanel();
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Start 3D Build';
+        }
+      }, 2400);
+    } catch(e) {
+      console.warn('Forge 3D build or Meshy start failed:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Start Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not start the 3D build. Please try again.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Start 3D Build';
+        }
+      }, 2600);
+    } finally {
+      if (typeof window.setForgeGeneratingButton === 'function') {
+        window.setForgeGeneratingButton(activeButton, false);
+      }
+    }
+  }
+  
+  
+  function wrapForgeConceptFunction(name) {
+    const original = window[name];
+    if (typeof original !== 'function' || original.__selectedConceptWrapped) return;
+
+    const wrapped = function(...args) {
+      const result = original.apply(this, args);
+      Promise.resolve(result).finally(() => {
+        renderSelectedConceptPanel();
+      });
+      return result;
+    };
+
+    wrapped.__selectedConceptWrapped = true;
+    window[name] = wrapped;
+  }
+
+  function bootSelectedConceptPanel() {
+    if (!isForgePage()) return;
+
+    ensureSelectedConceptStyles();
+    ensureSelectedConceptPanel();
+
+    [
+      'selectForgeConcept',
+      'saveCurrentForgeConcept',
+      'setCurrentForgeConceptSelected',
+      'deleteForgeConcept',
+      'renderForgeConceptGallery'
+    ].forEach(wrapForgeConceptFunction);
+
+    renderSelectedConceptPanel();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(bootSelectedConceptPanel, 0);
+  });
+
+    window.renderForgeSelectedConceptPanel = renderSelectedConceptPanel;
+  window.generateForgeProductionReference = generateForgeProductionReference;
+  window.startForge3dBuild = startForge3dBuild;
+})();
+
+(function setupForgeConceptModeSelectorExtension() {
+  function isForgePage() {
+    return Boolean(
+      document.getElementById('forge-actions') &&
+      document.getElementById('generate-btn')
+    );
+  }
+
+  function getForgeModeStorageKey() {
+    const collectionKey = window.forgeGenerationInput?.collectionKey || 'unknown_collection';
+    const tokenId = window.forgeGenerationInput?.tokenId || window.forgeGenerationInput?.rebelId || 'unknown_token';
+    return `rebelForgeMode:v1:${collectionKey}:${tokenId}`;
+  }
+
+  function getForgeMode() {
+    return localStorage.getItem(getForgeModeStorageKey()) || 'full_body_concept';
+  }
+
+  function setForgeMode(mode) {
+    localStorage.setItem(getForgeModeStorageKey(), mode);
+    window.currentForgeMode = mode;
+
+    if (window.forgeGenerationInput) {
+      window.forgeGenerationInput.forgeMode = mode;
+    }
+
+    renderForgeModeSelector();
+  }
+
+  function ensureForgeModeStyles() {
+    if (document.getElementById('forge-mode-selector-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'forge-mode-selector-styles';
+    style.textContent = `
+      #forge-mode-selector {
+        padding: 14px;
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.035);
+        border-radius: 18px;
+      }
+
+      .forge-mode-title {
+        color: #c8922a;
+        font-family: 'Cinzel Decorative', serif;
+        font-size: 14px;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+      }
+
+      .forge-mode-copy {
+        color: rgba(243,230,191,.72);
+        font-size: 11px;
+        line-height: 1.7;
+        margin-bottom: 12px;
+      }
+
+      .forge-mode-options {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .forge-mode-option {
+        text-align: left;
+        padding: 11px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(0,0,0,.22);
+        color: rgba(243,230,191,.72);
+        border-radius: 14px;
+        cursor: pointer;
+        font-family: 'Cinzel', serif;
+      }
+
+      .forge-mode-option.active {
+        border-color: rgba(94,207,202,.65);
+        background: rgba(94,207,202,.10);
+        color: #f3e6bf;
+        box-shadow: 0 0 20px rgba(94,207,202,.12);
+      }
+
+      .forge-mode-option.disabled {
+        opacity: .48;
+        cursor: not-allowed;
+      }
+
+      .forge-mode-name {
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+
+      .forge-mode-status {
+        margin-top: 6px;
+        font-size: 10px;
+        color: rgba(243,230,191,.55);
+      }
+
+      @media (max-width: 900px) {
+        .forge-mode-options {
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function ensureForgeModeSelector() {
+    if (!isForgePage()) return null;
+
+    let selector = document.getElementById('forge-mode-selector');
+    if (selector) return selector;
+
+    const actions = document.getElementById('forge-actions');
+    if (!actions || !actions.parentNode) return null;
+
+    selector = document.createElement('div');
+    selector.id = 'forge-mode-selector';
+
+    actions.parentNode.insertBefore(selector, actions);
+    return selector;
+  }
+
+  function renderForgeModeSelector() {
+    ensureForgeModeStyles();
+
+    const selector = ensureForgeModeSelector();
+    if (!selector) return;
+
+    const currentMode = getForgeMode();
+    window.currentForgeMode = currentMode;
+
+    if (window.forgeGenerationInput) {
+      window.forgeGenerationInput.forgeMode = currentMode;
+    }
+
+    selector.innerHTML = `
+      <div class="forge-mode-title">Concept Mode</div>
+      <div class="forge-mode-copy">
+        Start with full-body concept art. Production A-pose and separate weapon generation will come later for the real 3D character pipeline.
+      </div>
+
+      <div class="forge-mode-options">
+        <button
+          class="forge-mode-option ${currentMode === 'full_body_concept' ? 'active' : ''}"
+          type="button"
+          onclick="window.setForgeMode('full_body_concept')"
+        >
+          <div class="forge-mode-name">Full-Body Concept</div>
+          <div class="forge-mode-status">Available now</div>
+        </button>
+
+        <button
+          class="forge-mode-option disabled"
+          type="button"
+          onclick="window.setForgeModeComingSoon('Production A-Pose')"
+        >
+          <div class="forge-mode-name">Production A-Pose</div>
+          <div class="forge-mode-status">Coming soon</div>
+        </button>
+
+        <button
+          class="forge-mode-option disabled"
+          type="button"
+          onclick="window.setForgeModeComingSoon('Weapon Separate')"
+        >
+          <div class="forge-mode-name">Weapon Separate</div>
+          <div class="forge-mode-status">Coming soon</div>
+        </button>
+      </div>
+    `;
+  }
+
+  function setForgeModeComingSoon(label) {
+    if (typeof window.setForgeStatus === 'function') {
+      window.setForgeStatus(`${label} mode is coming soon. Full-Body Concept mode is available now.`, 'error');
+    }
+  }
+
+  function bootForgeModeSelector() {
+    if (!isForgePage()) return;
+
+    renderForgeModeSelector();
+  }
+
+  window.setForgeMode = setForgeMode;
+  window.setForgeModeComingSoon = setForgeModeComingSoon;
+  window.renderForgeModeSelector = renderForgeModeSelector;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(bootForgeModeSelector, 0);
+  });
+})();
+
+(function setupForgeVariantIntentExtension() {
+  function isForgePage() {
+    return Boolean(
+      document.getElementById('fullbody-preview-wrap') &&
+      document.getElementById('forge-preview-actions')
+    );
+  }
+
+  function ensureForgeVariantStyles() {
+    if (document.getElementById('forge-variant-intent-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'forge-variant-intent-styles';
+    style.textContent = `
+      #forge-variant-intent-panel {
+        margin-top: 14px;
+        padding: 14px;
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.035);
+        border-radius: 18px;
+      }
+
+      .forge-variant-title {
+        color: #c8922a;
+        font-family: 'Cinzel Decorative', serif;
+        font-size: 14px;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+      }
+
+      .forge-variant-copy {
+        color: rgba(243,230,191,.72);
+        font-size: 11px;
+        line-height: 1.7;
+        margin-bottom: 12px;
+      }
+
+      .forge-variant-options {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .forge-variant-option {
+        text-align: left;
+        padding: 11px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(0,0,0,.22);
+        color: rgba(243,230,191,.72);
+        border-radius: 14px;
+        cursor: pointer;
+        font-family: 'Cinzel', serif;
+      }
+
+      .forge-variant-option.available:hover {
+        border-color: rgba(94,207,202,.65);
+        background: rgba(94,207,202,.10);
+        color: #f3e6bf;
+      }
+
+      .forge-variant-option.disabled {
+        opacity: .48;
+        cursor: not-allowed;
+      }
+
+      .forge-variant-name {
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+
+      .forge-variant-status {
+        margin-top: 6px;
+        font-size: 10px;
+        color: rgba(243,230,191,.55);
+      }
+
+      @media (max-width: 900px) {
+        .forge-variant-options {
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function ensureForgeVariantPanel() {
+    if (!isForgePage()) return null;
+
+    let panel = document.getElementById('forge-variant-intent-panel');
+    if (panel) return panel;
+
+    const previewActions = document.getElementById('forge-preview-actions');
+    if (!previewActions || !previewActions.parentNode) return null;
+
+    panel = document.createElement('div');
+    panel.id = 'forge-variant-intent-panel';
+
+    previewActions.parentNode.insertBefore(panel, previewActions.nextSibling);
+    return panel;
+  }
+
+    function renderForgeVariantPanel() {
+    ensureForgeVariantStyles();
+
+    const panel = ensureForgeVariantPanel();
+    if (!panel) return;
+
+    panel.innerHTML = `
+      <div class="forge-variant-title">Generate Another Version</div>
+      <div class="forge-variant-copy">
+        Create a new version or refine the latest render before saving the one you like best.
+      </div>
+
+      <div class="forge-variant-options">
+        <button
+          class="forge-variant-option available"
+          type="button"
+          onclick="window.generatePreviewStub()"
+        >
+          <div class="forge-variant-name">Generate Another Version</div>
+          <div class="forge-variant-status">Fresh render</div>
+        </button>
+
+        <button
+          class="forge-variant-option available"
+          type="button"
+          onclick="window.generateForgeVariant('more_faithful_face')"
+        >
+          <div class="forge-variant-name">Generate with a More Faithful Face</div>
+          <div class="forge-variant-status">Face accuracy</div>
+        </button>
+
+        <button
+          class="forge-variant-option available"
+          type="button"
+          onclick="window.generateForgeVariant('stronger_warrior_body')"
+        >
+          <div class="forge-variant-name">Generate with a Stronger Warrior Body</div>
+          <div class="forge-variant-status">Body strength</div>
+        </button>
+
+        <button
+          class="forge-variant-option available"
+          type="button"
+          onclick="window.generateForgeVariant('cleaner_3d_reference')"
+        >
+          <div class="forge-variant-name">Generate for a Cleaner 3D Reference</div>
+          <div class="forge-variant-status">3D prep</div>
+        </button>
+      </div>
+    `;
+  }
+
+  async function generateForgeVariant(intent) {
+    if (!window.forgeGenerationInput || typeof window.generatePreviewStub !== 'function') return;
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    window.currentForgeTriggerButton = activeButton;
+    window.currentForgeVariantIntent = intent;
+    window.forgeGenerationInput.variantIntent = intent;
+
+    try {
+      await window.generatePreviewStub();
+    } finally {
+      window.currentForgeVariantIntent = 'default';
+      window.forgeGenerationInput.variantIntent = 'default';
+      window.currentForgeTriggerButton = null;
+    }
+  }
+
+  function setForgeVariantComingSoon(label) {
+    if (typeof window.setForgeStatus === 'function') {
+      window.setForgeStatus(`${label} variant is coming soon. More Faithful Face is available now.`, 'error');
+    }
+  }
+
+  function bootForgeVariantPanel() {
+    if (!isForgePage()) return;
+
+    renderForgeVariantPanel();
+  }
+
+  window.generateForgeVariant = generateForgeVariant;
+  window.setForgeVariantComingSoon = setForgeVariantComingSoon;
+  window.renderForgeVariantPanel = renderForgeVariantPanel;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(bootForgeVariantPanel, 0);
+  });
+})();
+
+(function setupForge3dBuildStatusPanelExtension() {
+  function isForgePage() {
+    return Boolean(
+      document.getElementById('forge-selected-concept-panel') ||
+      document.getElementById('forge-concepts-section')
+    );
+  }
+
+  function ensure3dBuildStatusStyles() {
+    if (document.getElementById('forge-3d-build-status-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'forge-3d-build-status-styles';
+    style.textContent = `
+      #forge-3d-build-status-panel {
+        margin-top: 18px;
+        padding: 12px;
+        border: 1px solid rgba(200,146,42,.24);
+        background: rgba(200,146,42,.055);
+        border-radius: 14px;
+      }
+
+      .forge-3d-build-empty {
+        color: rgba(243,230,191,.72);
+        font-size: 12px;
+        line-height: 1.8;
+        border: 1px dashed rgba(255,255,255,.14);
+        border-radius: 14px;
+        padding: 14px;
+        margin-top: 12px;
+      }
+
+      .forge-3d-build-list {
+        display: grid;
+        gap: 16px;
+        margin-top: 12px;
+      }
+
+      .forge-3d-build-row {
+        position: relative;
+        border: 1px solid rgba(217,168,76,.62);
+        background:
+          radial-gradient(circle at 21% 14%, rgba(26,111,104,.42), transparent 18%),
+          radial-gradient(circle at 77% 82%, rgba(88,255,166,.09), transparent 28%),
+          linear-gradient(135deg, rgba(4,16,19,.98), rgba(3,7,12,.985) 58%, rgba(2,12,17,.98));
+        border-radius: 8px;
+        padding: 18px 20px 20px;
+        display: grid;
+        grid-template-columns: minmax(142px, 178px) minmax(0, 1fr);
+        gap: 20px;
+        align-items: start;
+        box-shadow:
+          inset 0 0 0 1px rgba(255,216,128,.18),
+          inset 0 0 34px rgba(94,207,202,.045),
+          0 22px 64px rgba(0,0,0,.34);
+        overflow: hidden;
+      }
+
+      .forge-3d-build-row::before {
+        content: '';
+        position: absolute;
+        inset: 6px;
+        border: 1px solid rgba(217,168,76,.32);
+        border-radius: 8px;
+        pointer-events: none;
+      }
+
+      .forge-3d-build-row::after {
+        content: '◆';
+        position: absolute;
+        left: 50%;
+        top: -1px;
+        transform: translate(-50%, -50%);
+        width: 32px;
+        height: 20px;
+        display: grid;
+        place-items: center;
+        color: #f3c45f;
+        font-size: 14px;
+        line-height: 1;
+        text-shadow: 0 0 18px rgba(217,168,76,.62);
+        background: #03070c;
+      }
+
+      .forge-3d-build-thumb {
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        border: 1px solid rgba(217,168,76,.72);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at center, rgba(26,111,104,.5), rgba(4,18,22,.8) 48%, rgba(0,0,0,.48)),
+          linear-gradient(135deg, rgba(217,168,76,.12), transparent 42%);
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        color: rgba(243,230,191,.52);
+        font-size: 10px;
+        line-height: 1.4;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,.7), 0 10px 22px rgba(0,0,0,.28);
+      }
+
+      .forge-3d-build-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+      }
+
+      .forge-3d-build-body {
+        min-width: 0;
+      }
+
+      .forge-3d-build-status {
+        color: #d9a84c;
+        font-size: 16px;
+        letter-spacing: 1.7px;
+        text-transform: uppercase;
+        font-weight: 800;
+        line-height: 1.45;
+      }
+
+      .forge-3d-build-meta {
+        color: rgba(243,230,191,.74);
+        font-size: 12px;
+        line-height: 1.65;
+      }
+
+      .forge-3d-build-side {
+        display: grid;
+        gap: 12px;
+      }
+
+      .forge-3d-build-side-item {
+        display: grid;
+        grid-template-columns: 24px minmax(0, 1fr);
+        gap: 9px;
+        align-items: start;
+        padding: 0 0 10px 1px;
+        border-bottom: 1px solid rgba(243,230,191,.13);
+      }
+
+      .forge-3d-build-side-icon {
+        color: #d9a84c;
+        font-size: 16px;
+        line-height: 1;
+        text-align: center;
+        text-shadow: 0 0 14px rgba(217,168,76,.28);
+      }
+
+      .forge-3d-build-side-label {
+        color: #d9a84c;
+        font-family: 'Cinzel', serif;
+        font-size: 9px;
+        letter-spacing: 1.7px;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+
+      .forge-3d-build-side-value {
+        margin-top: 4px;
+        color: rgba(243,230,191,.84);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .forge-3d-build-side-value .forge-3d-status-links {
+        display: flex;
+        gap: 5px;
+        margin-top: 7px;
+      }
+
+      .forge-3d-build-side-value .forge-3d-link-btn {
+        min-height: 24px;
+        padding: 5px 8px;
+        font-size: 8px;
+        letter-spacing: 1px;
+      }
+
+      .forge-3d-build-header {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 8px 14px;
+        align-items: center;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(243,230,191,.11);
+      }
+
+      .forge-3d-build-crest {
+        width: 42px;
+        height: 50px;
+        display: grid;
+        place-items: center;
+        color: #f3c45f;
+        font-size: 22px;
+        background:
+          linear-gradient(180deg, rgba(217,168,76,.16), rgba(0,0,0,.16)),
+          radial-gradient(circle at center, rgba(217,168,76,.22), transparent 62%);
+        border: 1px solid rgba(217,168,76,.58);
+        clip-path: polygon(50% 0, 88% 14%, 88% 62%, 50% 100%, 12% 62%, 12% 14%);
+        text-shadow: 0 0 18px rgba(217,168,76,.44);
+      }
+
+      .forge-3d-build-title-area {
+        display: grid;
+        gap: 8px;
+      }
+
+      .forge-3d-build-badges,
+      .forge-3d-animation-pack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .forge-3d-build-badge,
+      .forge-3d-pack-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 30px;
+        padding: 6px 11px;
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 6px;
+        background: rgba(255,255,255,.045);
+        color: rgba(243,230,191,.76);
+        font-family: 'Cinzel', serif;
+        font-size: 9px;
+        letter-spacing: 1.45px;
+        text-transform: uppercase;
+      }
+
+      .forge-3d-build-badge.ready,
+      .forge-3d-pack-pill.ready {
+        border-color: rgba(88,255,166,.38);
+        background: linear-gradient(90deg, rgba(20,126,67,.28), rgba(88,255,166,.06));
+        color: #9dffc7;
+        box-shadow: inset 0 0 0 1px rgba(88,255,166,.1), 0 0 24px rgba(88,255,166,.07);
+      }
+
+      .forge-3d-build-badge.info {
+        border-color: rgba(94,207,202,.36);
+        background: linear-gradient(90deg, rgba(18,89,107,.28), rgba(94,207,202,.06));
+        color: #5ecfca;
+        box-shadow: inset 0 0 0 1px rgba(94,207,202,.1), 0 0 24px rgba(94,207,202,.07);
+      }
+
+      .forge-3d-build-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0;
+        align-items: start;
+        margin-top: 14px;
+      }
+
+      .forge-3d-main-status {
+        border-top: 1px solid rgba(243,230,191,.11);
+        border-bottom: 1px solid rgba(243,230,191,.08);
+      }
+
+      .forge-3d-build-section {
+        border-top: 1px solid rgba(255,255,255,.09);
+        padding-top: 10px;
+      }
+
+      .forge-3d-build-section-title {
+        color: #d9a84c;
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 1.9px;
+        text-transform: uppercase;
+        font-weight: 800;
+        margin-bottom: 6px;
+        text-align: center;
+      }
+
+      .forge-3d-status-row {
+        display: grid;
+        grid-template-columns: minmax(140px, .34fr) minmax(0, 1fr);
+        gap: 6px 14px;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+      }
+
+      .forge-3d-status-row:last-child {
+        border-bottom: 0;
+      }
+
+      .forge-3d-status-label {
+        color: #d9a84c;
+        font-family: 'Cinzel', serif;
+        font-size: 9px;
+        letter-spacing: 1.6px;
+        text-transform: uppercase;
+      }
+
+      .forge-3d-status-value {
+        color: rgba(243,230,191,.84);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .forge-3d-status-link-row {
+        grid-column: 1 / -1;
+      }
+
+      .forge-3d-status-links {
+        display: grid;
+        grid-template-columns: minmax(140px, .34fr) minmax(0, 1fr);
+        gap: 14px;
+        margin-top: 0;
+        align-items: center;
+      }
+
+      .forge-3d-link-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: fit-content;
+        min-height: 24px;
+        padding: 5px 9px;
+        border: 1px solid rgba(94,207,202,.28);
+        background: linear-gradient(180deg, rgba(94,207,202,.12), rgba(0,0,0,.14));
+        color: #5ecfca;
+        border-radius: 6px;
+        font-family: 'Cinzel', serif;
+        font-size: 8px;
+        letter-spacing: 1.05px;
+        text-transform: uppercase;
+        text-decoration: none;
+        box-shadow: inset 0 0 0 1px rgba(94,207,202,.08);
+      }
+
+      .forge-3d-dev-details {
+        grid-column: 1 / -1;
+        width: min(520px, 86%);
+        margin: 12px auto 0;
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 8px;
+        background: rgba(0,0,0,.18);
+      }
+
+      .forge-3d-dev-details summary {
+        cursor: pointer;
+        padding: 9px 10px;
+        color: rgba(243,230,191,.68);
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+
+      .forge-3d-dev-details-content {
+        padding: 0 10px 10px;
+        color: rgba(243,230,191,.62);
+        font-size: 11px;
+        line-height: 1.7;
+      }
+
+      .forge-3d-build-steps {
+        display: grid;
+        gap: 5px;
+        margin-top: 10px;
+        position: relative;
+      }
+
+      .forge-3d-steps-section {
+        grid-column: 1 / -1;
+        width: min(620px, 94%);
+        margin: 12px auto 0;
+        padding-top: 12px;
+        border-top: 1px solid rgba(200,146,42,.2);
+        border-bottom: 1px solid rgba(200,146,42,.16);
+        padding-bottom: 12px;
+      }
+
+      .forge-3d-build-step {
+        position: relative;
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        min-height: 36px;
+        padding: 6px 10px;
+        border: 1px solid rgba(88,255,166,.22);
+        border-radius: 8px;
+        background:
+          linear-gradient(90deg, rgba(27,101,61,.3), rgba(6,38,28,.56)),
+          radial-gradient(circle at left center, rgba(88,255,166,.13), transparent 36%);
+        color: rgba(243,230,191,.66);
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 1.45px;
+        text-transform: uppercase;
+        box-shadow: inset 0 0 0 1px rgba(88,255,166,.055);
+      }
+
+      .forge-3d-build-step.done {
+        border-color: rgba(88,255,166,.28);
+        background:
+          linear-gradient(90deg, rgba(27,101,61,.42), rgba(6,38,28,.66)),
+          radial-gradient(circle at left center, rgba(88,255,166,.17), transparent 36%);
+        color: #9dffc7;
+      }
+
+      .forge-3d-build-step.next {
+        border-color: rgba(94,207,202,.72);
+        background: linear-gradient(90deg, rgba(94,207,202,.18), rgba(5,37,43,.64));
+        color: #f3e6bf;
+        box-shadow: 0 0 0 1px rgba(94,207,202,.12);
+      }
+
+      .forge-3d-step-action {
+        margin: 0 !important;
+        padding: 6px 8px;
+        white-space: nowrap;
+      }
+
+      .forge-3d-step-number {
+        position: relative;
+        width: 26px;
+        height: 26px;
+        display: inline-grid;
+        place-items: center;
+        border: 1px solid rgba(88,255,166,.72);
+        border-radius: 999px;
+        color: #f3e6bf;
+        background: radial-gradient(circle at center, rgba(88,255,166,.18), rgba(0,0,0,.58));
+        box-shadow: 0 0 0 2px rgba(88,255,166,.08), 0 0 12px rgba(88,255,166,.18);
+        z-index: 1;
+      }
+
+      .forge-3d-build-actions {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(200,146,42,.22);
+      }
+
+      .forge-3d-build-actions .forge-3d-step-action {
+        margin: 0;
+        min-height: 42px;
+        padding: 10px 12px;
+        border-radius: 5px;
+        font-size: 9px;
+        letter-spacing: 1.55px;
+        background:
+          linear-gradient(180deg, rgba(94,207,202,.12), rgba(4,24,31,.72)),
+          linear-gradient(90deg, rgba(94,207,202,.24), transparent 18%, transparent 82%, rgba(94,207,202,.2));
+        border-color: rgba(94,207,202,.45);
+        color: #5ecfca;
+        box-shadow: inset 0 0 0 1px rgba(94,207,202,.12), 0 0 22px rgba(94,207,202,.06);
+      }
+
+      .forge-3d-danger-action {
+        border-color: rgba(255,87,87,.38) !important;
+        background:
+          linear-gradient(180deg, rgba(255,87,87,.14), rgba(43,8,8,.78)),
+          linear-gradient(90deg, rgba(255,87,87,.22), transparent 18%, transparent 82%, rgba(255,87,87,.18)) !important;
+        color: #ff8d74 !important;
+        box-shadow: inset 0 0 0 1px rgba(255,87,87,.12), 0 0 22px rgba(255,87,87,.07) !important;
+      }
+
+      .forge-3d-step-action + .forge-3d-step-action {
+        margin-left: 8px;
+      }
+
+      .forge-3d-build-refresh-btn {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border: 1px solid rgba(94,207,202,.28);
+        background: rgba(94,207,202,.08);
+        color: #f3e6bf;
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .forge-active-confirmed {
+        border-color: rgba(88, 255, 166, .7) !important;
+        background: rgba(88, 255, 166, .16) !important;
+        color: #9dffc7 !important;
+        cursor: default !important;
+      }
+
+      @media (max-width: 640px) {
+        .forge-3d-build-row {
+          grid-template-columns: 1fr;
+        }
+
+        .forge-3d-build-thumb {
+          width: min(220px, 100%);
+        }
+
+        .forge-3d-build-step {
+          grid-template-columns: 28px 1fr;
+        }
+
+        .forge-3d-build-step > span:last-child {
+          grid-column: 2;
+        }
+
+        .forge-3d-build-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .forge-3d-status-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+  function ensure3dBuildStatusPanel() {
+    if (!isForgePage()) return null;
+
+    let panel = document.getElementById('forge-3d-build-status-panel');
+    if (panel) return panel;
+
+    const selectedPanel = document.getElementById('forge-selected-concept-panel');
+    const conceptsSection = document.getElementById('forge-concepts-section');
+    const anchor = selectedPanel || conceptsSection;
+
+    if (!anchor || !anchor.parentNode) return null;
+
+    panel = document.createElement('div');
+    panel.id = 'forge-3d-build-status-panel';
+    panel.innerHTML = `
+      <div class="section-title">3D Build Status</div>
+      <div id="forge-3d-build-status-content" class="forge-3d-build-empty">
+        No 3D build requests yet. Select a saved production reference, then click Start 3D Build.
+      </div>
+      <button class="forge-3d-build-refresh-btn" type="button" onclick="window.renderForge3dBuildStatusPanel()">Refresh Build Status</button>
+    `;
+
+    anchor.parentNode.insertBefore(panel, anchor.nextSibling);
+    return panel;
+  }
+
+   async function fetchForge3dBuildsFromServer() {
+    const collectionKey = window.forgeGenerationInput?.collectionKey || 'battle_for_colony';
+    const tokenId = window.forgeGenerationInput?.tokenId || '';
+    const rebelId = window.forgeGenerationInput?.rebelId || '';
+
+    const params = new URLSearchParams({ collectionKey });
+
+    if (tokenId) {
+      params.set('tokenId', tokenId);
+    } else if (rebelId) {
+      params.set('rebelId', rebelId);
+    }
+
+    const response = await fetch(`/api/forge-builds-list?${params.toString()}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || data.detail || 'Could not load 3D build status');
+    }
+
+    return Array.isArray(data.builds) ? data.builds : [];
+  }
+
+  function shouldPollMeshyBuild(build) {
+    return Boolean(
+      build &&
+      build.engine?.provider === 'meshy' &&
+      build.engine?.taskId &&
+      [
+        'submitted_to_meshy',
+        'meshy_pending',
+        'meshy_in_progress'
+      ].includes(build.status)
+    );
+  }
+
+  async function refreshMeshyBuildStatus(build) {
+    const response = await fetch('/api/forge-3d-engine-meshy-status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        buildId: build.buildId,
+        meshyTaskId: build.engine?.taskId
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || data.detail || 'Could not refresh Meshy build status');
+    }
+
+    return data.buildRecord || build;
+  }
+
+   function shouldPollMeshyRigBuild(build) {
+    const riggedGlbUrl =
+      build?.output?.riggedGlbUrl ||
+      build?.rigging?.riggedGlbUrl ||
+      build?.rigging?.response?.result?.rigged_character_glb_url ||
+      '';
+
+    return Boolean(
+      build &&
+      build.rigging?.provider === 'meshy' &&
+      build.rigging?.taskId &&
+      (
+        [
+          'submitted_to_meshy_rigging',
+          'meshy_rigging_pending',
+          'meshy_rigging_in_progress'
+        ].includes(build.status) ||
+        (build.status === 'meshy_rigging_completed' && !riggedGlbUrl)
+      )
+    );
+  }
+
+  async function refreshMeshyRigStatus(build) {
+    const response = await fetch('/api/forge-3d-engine-meshy-rig-status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        buildId: build.buildId,
+        rigTaskId: build.rigging?.taskId
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || data.detail || 'Could not refresh Meshy rigging status');
+    }
+
+    return data.buildRecord || build;
+  }
+
+  
+   async function fetchForge3dBuildsWithMeshyRefresh() {
+    const builds = await fetchForge3dBuildsFromServer();
+    const refreshedBuilds = [];
+
+    for (const build of builds) {
+      let nextBuild = build;
+
+      if (shouldPollMeshyBuild(nextBuild)) {
+        try {
+          nextBuild = await refreshMeshyBuildStatus(nextBuild);
+        } catch(e) {
+          console.warn('Could not refresh Meshy build:', e);
+        }
+      }
+
+      if (shouldPollMeshyRigBuild(nextBuild)) {
+        try {
+          nextBuild = await refreshMeshyRigStatus(nextBuild);
+        } catch(e) {
+          console.warn('Could not refresh Meshy rigging build:', e);
+        }
+      }
+
+      refreshedBuilds.push(nextBuild);
+    }
+
+    return refreshedBuilds;
+  }
+
+     function formatBuildStatus(status, build = null) {
+    if (status === 'queued_for_future_3d_generation') {
+      return 'Queued for Future 3D Generation';
+    }
+
+    if (status === 'submitted_to_meshy') {
+      return 'Submitted to Meshy';
+    }
+
+    if (status === 'meshy_pending') {
+      return 'Meshy Pending';
+    }
+
+    if (status === 'meshy_in_progress') {
+      return 'Meshy In Progress';
+    }
+
+    if (status === 'submitted_to_meshy_rigging') {
+      return 'Submitted to Meshy Rigging';
+    }
+
+    if (status === 'meshy_rigging_pending') {
+      return 'Meshy Rigging Pending';
+    }
+
+    if (status === 'meshy_rigging_in_progress') {
+      return 'Meshy Rigging In Progress';
+    }
+
+    if (status === 'meshy_rigging_completed') {
+      return build?.output?.riggedGlbUrl ? 'Rigged GLB Ready' : 'Meshy Rigging Completed';
+    }
+
+    if (status === 'meshy_rigging_failed') {
+      return 'Meshy Rigging Failed';
+    }
+
+    if (status === 'completed_stored_in_rebel_blob') {
+      return 'Completed — Stored in Rebel Forge';
+    }
+
+    if (status === 'in_progress') {
+      return 'In Progress';
+    }
+
+    if (status === 'completed') {
+      return build?.output?.glbUrl ? 'Completed — GLB Ready' : 'Completed';
+    }
+
+    if (status === 'failed') {
+      return 'Failed';
+    }
+
+    return status || 'Unknown';
+  }
+
+  function getForgeBuildThumbnailUrl(build) {
+    return (
+      build?.sourceImage?.imageUrl ||
+      build?.productionReference?.imageUrl ||
+      build?.selectedConcept?.imageUrl ||
+      build?.concept?.imageUrl ||
+      build?.sourceImageUrl ||
+      ''
+    );
+  }
+
+  const FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY = 'rebelAntsForgePlayableCharacters';
+
+  function loadForgePlayableCharacters() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY) || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch(e) {
+      return [];
+    }
+  }
+
+  function saveForgePlayableCharacter(activeCharacter, build) {
+    if (!activeCharacter?.activeGlbUrl) return;
+
+    const buildId = activeCharacter.activeForgeBuildId || build?.buildId || '';
+    const tokenId = activeCharacter.tokenId || build?.tokenId || '';
+    const rebelId = activeCharacter.rebelId || build?.rebelId || '';
+    const thumbnailUrl =
+      getForgeBuildThumbnailUrl(build) ||
+      activeCharacter.previewThumbnail ||
+      activeCharacter.sourceImage ||
+      'assets/lobby/ant_1.JPG';
+    const savedPlayable = {
+      id: `forge_playable_${buildId || tokenId || rebelId || Date.now()}`,
+      playableType: 'forge_build',
+      name: activeCharacter.name || `Forge Playable${tokenId ? ' #' + tokenId : ''}`,
+      image: thumbnailUrl,
+      previewThumbnail: thumbnailUrl,
+      sourceImage: thumbnailUrl,
+      buildId: buildId || null,
+      tokenId: tokenId || null,
+      rebelId: rebelId || null,
+      collectionKey: activeCharacter.collectionKey || build?.collectionKey || 'battle_for_colony',
+      activeGlbUrl: activeCharacter.activeGlbUrl,
+      riggedGlbUrl: activeCharacter.riggedGlbUrl || null,
+      idleGlbUrl: activeCharacter.idleGlbUrl || null,
+      walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
+      runningGlbUrl: activeCharacter.runningGlbUrl || null,
+      activeForgeCharacter: activeCharacter,
+      updatedAt: new Date().toISOString()
+    };
+
+    const saved = loadForgePlayableCharacters();
+    const existingIndex = saved.findIndex((item) => {
+      return (
+        (buildId && item.buildId === buildId) ||
+        (savedPlayable.id && item.id === savedPlayable.id)
+      );
+    });
+
+    if (existingIndex >= 0) {
+      saved[existingIndex] = {
+        ...saved[existingIndex],
+        ...savedPlayable
+      };
+    } else {
+      saved.unshift(savedPlayable);
+    }
+
+    try {
+      localStorage.setItem(FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY, JSON.stringify(saved.slice(0, 12)));
+    } catch(e) {
+      console.warn('Could not save Forge playable character locally:', e);
+    }
+  }
+
+  function updateSelectedRebelActiveForgeCharacter(activeCharacter, build) {
+    if (!activeCharacter?.activeGlbUrl) return;
+
+    try {
+      const raw = localStorage.getItem('selectedRebel');
+      if (!raw) return;
+
+      const selectedRebel = JSON.parse(raw);
+      const buildId = activeCharacter.activeForgeBuildId || build?.buildId || '';
+      const tokenId = activeCharacter.tokenId || build?.tokenId || '';
+      const rebelId = activeCharacter.rebelId || build?.rebelId || '';
+      const selectedBuildId =
+        selectedRebel.buildId ||
+        selectedRebel.activeForgeCharacter?.activeForgeBuildId ||
+        selectedRebel.activeForgeCharacter?.characterBundle?.sourceBuildId ||
+        '';
+      const selectedTokenId = selectedRebel.tokenId || selectedRebel.activeForgeCharacter?.tokenId || '';
+      const selectedRebelId = selectedRebel.rebelId || selectedRebel.id || selectedRebel.activeForgeCharacter?.rebelId || '';
+      const matches =
+        (buildId && selectedBuildId && String(buildId) === String(selectedBuildId)) ||
+        (tokenId && selectedTokenId && String(tokenId) === String(selectedTokenId)) ||
+        (rebelId && selectedRebelId && String(rebelId) === String(selectedRebelId));
+
+      if (!matches) return;
+
+      const updatedSelectedRebel = {
+        ...selectedRebel,
+        playableType: 'forge_build',
+        buildId: buildId || selectedRebel.buildId || null,
+        activeForgeCharacter: activeCharacter,
+        activeGlbUrl: activeCharacter.activeGlbUrl || null,
+        riggedGlbUrl: activeCharacter.riggedGlbUrl || null,
+        idleGlbUrl: activeCharacter.idleGlbUrl || null,
+        walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
+        runningGlbUrl: activeCharacter.runningGlbUrl || null,
+        characterSource: 'forge_glb',
+        updatedAt: new Date().toISOString()
+      };
+
+      localStorage.setItem('selectedRebel', JSON.stringify(updatedSelectedRebel));
+
+      console.log('Forge selectedRebel active character refreshed:', {
+        buildId: updatedSelectedRebel.buildId,
+        idleGlbUrl: activeCharacter.idleGlbUrl || null,
+        bundleIdle: activeCharacter.characterBundle?.animations?.idle?.glbUrl || null,
+        walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
+        runningGlbUrl: activeCharacter.runningGlbUrl || null
+      });
+    } catch(e) {
+      console.warn('Could not refresh selectedRebel active Forge character:', e);
+    }
+  }
+
+  function cacheForgePlayableBuilds(builds) {
+    if (!Array.isArray(builds)) return;
+
+    builds.forEach((build) => {
+      const riggedGlbUrl =
+        build.output?.riggedRebelGlbUrl ||
+        build.output?.riggedGlbUrl ||
+        build.rigging?.riggedRebelGlbUrl ||
+        build.rigging?.riggedGlbUrl ||
+        build.rigging?.response?.result?.rigged_character_glb_url ||
+        null;
+      const staticGlbUrl =
+        build.output?.rebelGlbUrl ||
+        build.output?.glbUrl ||
+        build.engine?.glbUrl ||
+        null;
+      const walkingGlbUrl =
+        build.output?.walkingGlbUrl ||
+        build.output?.storedAnimations?.walking?.storedAnimationUrl ||
+        build.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
+        build.rigging?.response?.result?.basic_animations?.walking_glb_url ||
+        null;
+      const runningGlbUrl =
+        build.output?.runningGlbUrl ||
+        build.output?.storedAnimations?.running?.storedAnimationUrl ||
+        build.rigging?.storedAnimations?.running?.storedAnimationUrl ||
+        build.rigging?.response?.result?.basic_animations?.running_glb_url ||
+        null;
+      const activeGlbUrl = riggedGlbUrl || staticGlbUrl;
+      const idleGlbUrl =
+        build.output?.idleGlbUrl ||
+        build.output?.storedAnimations?.idle?.storedAnimationUrl ||
+        build.rigging?.storedAnimations?.idle?.storedAnimationUrl ||
+        build.output?.meshyAnimations?.idle?.animationGlbUrl ||
+        null;
+
+      if (!activeGlbUrl) return;
+
+      saveForgePlayableCharacter({
+        activeCharacterVersion: 'v1',
+        collectionKey: build.collectionKey || 'battle_for_colony',
+        tokenId: build.tokenId || null,
+        rebelId: build.rebelId || null,
+        activeForgeBuildId: build.buildId,
+        name: build.title || build.name || `Forge Playable${build.tokenId ? ' #' + build.tokenId : ''}`,
+        previewThumbnail: getForgeBuildThumbnailUrl(build) || null,
+        sourceImage: getForgeBuildThumbnailUrl(build) || null,
+        activeGlbUrl,
+        staticGlbUrl,
+        riggedGlbUrl,
+        idleGlbUrl,
+        walkingGlbUrl,
+        runningGlbUrl,
+        activeCharacterModelType: riggedGlbUrl ? 'rigged_forge_glb' : 'static_forge_glb',
+        activeCharacterSource: 'forge_glb',
+        characterBundle: {
+          bundleVersion: 'v1',
+          bundleType: 'forge_character_bundle',
+          collectionKey: build.collectionKey || 'battle_for_colony',
+          tokenId: build.tokenId || null,
+          rebelId: build.rebelId || null,
+          sourceBuildId: build.buildId,
+          activeGlbUrl,
+          staticGlbUrl,
+          riggedGlbUrl,
+          animations: {
+            idle: idleGlbUrl ? { name: 'idle', glbUrl: idleGlbUrl } : null,
+            walking: walkingGlbUrl ? { name: 'walking', glbUrl: walkingGlbUrl } : null,
+            running: runningGlbUrl ? { name: 'running', glbUrl: runningGlbUrl } : null
+          },
+          armatureAnimations: {
+            idle: null,
+            walking: null,
+            running: null,
+            jump: null,
+            attack: null,
+            kick: null
+          }
+        }
+      }, build);
+    });
+  }
+
+  async function fetchCurrentForgeActiveCharacter() {
+    const collectionKey = window.forgeGenerationInput?.collectionKey || 'battle_for_colony';
+    const tokenId = window.forgeGenerationInput?.tokenId || '';
+    const rebelId = window.forgeGenerationInput?.rebelId || '';
+    const params = new URLSearchParams({ collectionKey });
+
+    if (tokenId) {
+      params.set('tokenId', tokenId);
+    } else if (rebelId) {
+      params.set('rebelId', rebelId);
+    }
+
+    try {
+      const response = await fetch(`/api/forge-active-character-get?${params.toString()}`);
+      const data = await response.json();
+
+      if (!response.ok || !data.ok || !data.hasActiveCharacter) {
+        return null;
+      }
+
+      return data.activeCharacter || null;
+    } catch(e) {
+      console.warn('Could not load active Forge character for build status:', e);
+      return null;
+    }
+  }
+
+  function forgeBuildIsActive(build, activeForgeCharacter) {
+    if (!build?.buildId || !activeForgeCharacter) return false;
+
+    return (
+      activeForgeCharacter.activeForgeBuildId === build.buildId ||
+      activeForgeCharacter.characterBundle?.sourceBuildId === build.buildId
+    );
+  }
+
+  function forgeBuildIsSavedForLanding(build) {
+    if (!build?.buildId) return false;
+
+    return loadForgePlayableCharacters().some((item) => item.buildId === build.buildId);
+  }
+
+  function renderForgeBuildThumbnail(build) {
+    const thumbnailUrl = getForgeBuildThumbnailUrl(build);
+
+    if (thumbnailUrl) {
+      return `
+        <div class="forge-3d-build-thumb">
+          <img
+            src="${thumbnailUrl}"
+            alt="3D build source thumbnail"
+            loading="lazy"
+            onerror="this.onerror=null; this.parentElement.innerHTML='🐜<br>No Image';"
+          >
+        </div>
+      `;
+    }
+
+    return '<div class="forge-3d-build-thumb">🐜<br>No Image</div>';
+  }
+
+  function renderForgeBuildSteps(steps) {
+    const firstActionIndex = steps.findIndex((step) => !step.done && step.actionHtml);
+
+    return `
+      <div class="forge-3d-build-steps">
+        ${steps.map((step, index) => {
+          const isNext = index === firstActionIndex;
+          const className = `forge-3d-build-step${step.done ? ' done' : ''}${isNext ? ' next' : ''}`;
+
+          return `
+            <div class="${className}">
+              <span class="forge-3d-step-number">${index + 1}</span>
+              <span>${step.label}${step.done ? ' ✓' : ''}</span>
+              ${step.done ? `<span>${step.doneHtml || 'Done'}</span>` : isNext ? step.actionHtml : '<span>Waiting</span>'}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  async function storeForgeGlbInRebelBlob(buildId) {
+    if (!buildId) return;
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Store GLB in Rebel Forge';
+
+    if (activeButton) {
+      activeButton.textContent = 'Storing GLB...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-store-glb', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Could not store GLB in Rebel Forge');
+      }
+
+      window.lastForgeStoreGlbResponse = data;
+
+      if (activeButton) {
+        activeButton.textContent = 'Stored ✓';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('GLB stored in Rebel Forge Blob. This model is now saved under Rebel-controlled storage.', 'success');
+      }
+
+      await renderForge3dBuildStatusPanel();
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store GLB in Rebel Forge';
+          activeButton.disabled = false;
+        }
+      }, 1800);
+     } catch(e) {
+      console.warn('Could not store Forge GLB:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Store Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not store this GLB in Rebel Forge yet.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store GLB in Rebel Forge';
+          activeButton.disabled = false;
+        }
+      }, 2200);
+    }
+  }
+
+  async function storeForgeRiggedGlbInRebelBlob(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build to store the rigged GLB.', 'error');
+      }
+      return;
+    }
+
+    const riggedGlbUrl =
+      build.output?.riggedRebelGlbUrl ||
+      build.output?.riggedGlbUrl ||
+      build.rigging?.riggedRebelGlbUrl ||
+      build.rigging?.riggedGlbUrl ||
+      build.rigging?.response?.result?.rigged_character_glb_url ||
+      '';
+
+    if (!riggedGlbUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('This build does not have a rigged GLB ready to store yet.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Store Rigged GLB in Rebel Forge';
+
+    if (activeButton) {
+      activeButton.textContent = 'Storing Rigged GLB...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-store-rigged-glb', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId,
+          riggedGlbUrl
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Could not store rigged GLB in Rebel Forge');
+      }
+
+      window.lastForgeStoreRiggedGlbResponse = data;
+
+      if (activeButton) {
+        activeButton.textContent = 'Rigged GLB Stored ✓';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Rigged GLB stored in Rebel Forge Blob. Set it as active again before entering the Village.', 'success');
+      }
+
+      await renderForge3dBuildStatusPanel();
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store Rigged GLB in Rebel Forge';
+          activeButton.disabled = false;
+        }
+      }, 2200);
+    } catch(e) {
+      console.warn('Could not store rigged Forge GLB:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Store Rigged Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not store the rigged GLB in Rebel Forge yet.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store Rigged GLB in Rebel Forge';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
+  async function storeForgeWalkingGlbInRebelBlob(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build to store the walking animation.', 'error');
+      }
+      return;
+    }
+
+    const walkingGlbUrl =
+      build.output?.walkingGlbUrl ||
+      build.output?.storedAnimations?.walking?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
+      build.rigging?.response?.result?.basic_animations?.walking_glb_url ||
+      '';
+
+    if (!walkingGlbUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('This build does not have a walking animation ready to store yet.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Store Walking Animation';
+
+    if (activeButton) {
+      activeButton.textContent = 'Storing Walking...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-store-walking-glb', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId,
+          walkingGlbUrl
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Could not store walking animation');
+      }
+
+      window.lastForgeStoreWalkingGlbResponse = data;
+
+      if (activeButton) {
+        activeButton.textContent = 'Walking Stored ✓';
+        activeButton.disabled = true;
+        activeButton.classList.add('forge-active-confirmed');
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Walking animation stored in Rebel Forge Blob. Next we can test it inside the Village.', 'success');
+      }
+
+      await renderForge3dBuildStatusPanel();
+    } catch(e) {
+      console.warn('Could not store Forge walking animation:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Walking Store Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not store the walking animation in Rebel Forge yet.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store Walking Animation';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
+  async function storeForgeRunningGlbInRebelBlob(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build to store the running animation.', 'error');
+      }
+      return;
+    }
+
+    const runningGlbUrl =
+      build.output?.runningGlbUrl ||
+      build.output?.storedAnimations?.running?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.running?.storedAnimationUrl ||
+      build.rigging?.response?.result?.basic_animations?.running_glb_url ||
+      '';
+
+    if (!runningGlbUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('This build does not have a running animation ready to store yet.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Store Running Animation';
+
+    if (activeButton) {
+      activeButton.textContent = 'Storing Running...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-store-running-glb', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId,
+          runningGlbUrl
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Could not store running animation');
+      }
+
+      window.lastForgeStoreRunningGlbResponse = data;
+
+      if (activeButton) {
+        activeButton.textContent = 'Running Stored ✓';
+        activeButton.disabled = true;
+        activeButton.classList.add('forge-active-confirmed');
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Running animation stored in Rebel Forge Blob. Next we can test it inside the Village.', 'success');
+      }
+
+      await renderForge3dBuildStatusPanel();
+    } catch(e) {
+      console.warn('Could not store Forge running animation:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Running Store Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not store the running animation in Rebel Forge yet.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store Running Animation';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
+  async function deleteForge3dBuild(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId) || {};
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+    const originalButtonText = activeButton ? activeButton.textContent : 'Delete Build';
+
+    if (!window.confirm('Delete this Forge 3D build record and any safe build-owned Blob files? Active character files will be kept.')) {
+      return;
+    }
+
+    if (activeButton) {
+      activeButton.textContent = 'Deleting...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-build-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId,
+          collectionKey: build.collectionKey || window.forgeGenerationInput?.collectionKey || 'battle_for_colony',
+          tokenId: build.tokenId || window.forgeGenerationInput?.tokenId || null,
+          rebelId: build.rebelId || window.forgeGenerationInput?.rebelId || null
+        })
+      });
+      const data = await response.json();
+
+      console.log('Forge build delete response:', data);
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Could not delete Forge build');
+      }
+
+      if (!data.activeBuild) {
+        const savedPlayables = loadForgePlayableCharacters().filter((item) => item.buildId !== buildId);
+        try {
+          localStorage.setItem(FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY, JSON.stringify(savedPlayables));
+        } catch(e) {
+          console.warn('Could not remove deleted Forge build from local playable characters:', e);
+        }
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        const keptActiveFiles = data.activeBuild ? ' Active character files were kept.' : '';
+        window.setForgeStatus(`Forge build deleted.${keptActiveFiles}`, 'success');
+      }
+
+      await renderForge3dBuildStatusPanel();
+    } catch(e) {
+      console.warn('Could not delete Forge 3D build:', e);
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus(`Could not delete this Forge build: ${e.message || 'Unknown error'}`, 'error');
+      }
+
+      if (activeButton) {
+        activeButton.textContent = originalButtonText;
+        activeButton.disabled = false;
+      }
+    }
+  }
+
+  
+     async function setForgeBuildAsActiveCharacter(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build to set as active.', 'error');
+      }
+      return;
+    }
+
+    const riggedGlbUrl =
+      build.output?.riggedGlbUrl ||
+      build.rigging?.riggedGlbUrl ||
+      build.rigging?.response?.result?.rigged_character_glb_url ||
+      '';
+
+    const staticGlbUrl =
+      build.output?.rebelGlbUrl ||
+      build.output?.glbUrl ||
+      build.engine?.glbUrl ||
+      '';
+
+    const activeGlbUrl = riggedGlbUrl || staticGlbUrl;
+    const activeCharacterModelType = riggedGlbUrl ? 'rigged_forge_glb' : 'static_forge_glb';
+    const walkingGlbUrl =
+      build.output?.walkingGlbUrl ||
+      build.output?.storedAnimations?.walking?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
+      build.rigging?.response?.result?.basic_animations?.walking_glb_url ||
+      null;
+    const idleGlbUrl =
+      build.output?.idleGlbUrl ||
+      build.output?.storedAnimations?.idle?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.idle?.storedAnimationUrl ||
+      build.output?.meshyAnimations?.idle?.animationGlbUrl ||
+      null;
+    const runningGlbUrl =
+      build.output?.runningGlbUrl ||
+      build.output?.storedAnimations?.running?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.running?.storedAnimationUrl ||
+      build.rigging?.response?.result?.basic_animations?.running_glb_url ||
+      null;
+
+    if (!activeGlbUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('This 3D build does not have a GLB ready yet.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Set as Active Character';
+
+    if (activeButton) {
+      activeButton.textContent = 'Setting Active...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-active-character-save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          build: {
+            ...build,
+            activeCharacterModelType,
+            activeGlbUrl,
+            output: {
+              ...(build.output || {}),
+              activeGlbUrl,
+              activeCharacterModelType,
+              idleGlbUrl,
+              walkingGlbUrl,
+              runningGlbUrl,
+              storedAnimations: {
+                ...(build.rigging?.storedAnimations || {}),
+                ...(build.output?.storedAnimations || {})
+              }
+            }
+          },
+          buildId: build.buildId,
+          tokenId: build.tokenId || null,
+          rebelId: build.rebelId || null,
+          collectionKey: build.collectionKey || 'battle_for_colony',
+          activeGlbUrl,
+          glbBlobPath: build.output?.glbBlobPath || null
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Could not set active character');
+      }
+
+      window.lastForgeActiveCharacterSaveResponse = data;
+      window.lastForgeActiveCharacter = data.activeCharacter || null;
+      saveForgePlayableCharacter(data.activeCharacter, build);
+      updateSelectedRebelActiveForgeCharacter(data.activeCharacter, build);
+      console.log('Forge active character animation URL report:', data.animationUrlReport || null);
+
+           if (activeButton) {
+        activeButton.textContent = riggedGlbUrl ? 'Rigged Character Active ✓' : 'Active Character ✓';
+        activeButton.disabled = true;
+        activeButton.classList.add('forge-active-confirmed');
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus(
+          riggedGlbUrl
+            ? 'The rigged Forge GLB is now set as the active character for the landing page and Village handoff.'
+            : 'This Forge GLB is now set as the active character for the future landing page and Village handoff.',
+          'success'
+        );
+      }
+
+      await renderForge3dBuildStatusPanel();
+    } catch(e) {
+      console.warn('Could not set Forge build as active character:', e);
+
+      if (activeButton) {
+        activeButton.textContent = 'Set Active Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not set this GLB as the active character yet.', 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Set as Active Character';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
+  async function startMeshyRigTestForBuild(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build for rigging.', 'error');
+      }
+      return;
+    }
+
+    const glbUrl =
+      build.output?.rebelGlbUrl ||
+      build.output?.glbUrl ||
+      build.engine?.glbUrl ||
+      '';
+
+    if (!glbUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('This build does not have a GLB ready for rigging yet.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Start Meshy Rig Test';
+
+    if (activeButton) {
+      activeButton.textContent = 'Starting Rig Test...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-engine-meshy-rig-create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId: build.buildId,
+          glbUrl,
+          heightMeters: 1.7
+        })
+      });
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch(parseError) {
+        data = {
+          ok: false,
+          error: 'Meshy rig create route did not return JSON',
+          detail: parseError?.message || 'Response JSON parse failed'
+        };
+      }
+
+      console.log('Meshy rig create response:', {
+        httpStatus: response.status,
+        ok: response.ok,
+        data
+      });
+
+      window.lastForgeMeshyRigCreateResponse = data;
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.detail || data.error || 'Could not start Meshy rig test');
+      }
+
+      if (activeButton) {
+        activeButton.textContent = 'Rig Test Started ✓';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Meshy rigging test started. Next we will add a status check to see if it succeeds.', 'success');
+      }
+
+      if (typeof window.renderForge3dBuildStatusPanel === 'function') {
+        await window.renderForge3dBuildStatusPanel();
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Start Meshy Rig Test';
+          activeButton.disabled = false;
+        }
+      }, 2200);
+    } catch(e) {
+      console.warn('Could not start Meshy rig test:', e, window.lastForgeMeshyRigCreateResponse);
+
+      if (activeButton) {
+        activeButton.textContent = 'Rig Test Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        const detail =
+          window.lastForgeMeshyRigCreateResponse?.detail ||
+          window.lastForgeMeshyRigCreateResponse?.meshyError?.message ||
+          e.message ||
+          'Unknown error';
+
+        window.setForgeStatus(`Could not start Meshy rigging test: ${detail}`, 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Start Meshy Rig Test';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
+  async function generateMeshyIdleAnimationTestForBuild(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build for the idle animation test.', 'error');
+      }
+      return;
+    }
+
+    if (!build.rigging?.taskId) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Start the Meshy rig test before generating a Meshy idle animation.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Generate Meshy Idle Test';
+
+    if (activeButton) {
+      activeButton.textContent = 'Starting Idle Test...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-engine-meshy-animation-create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId: build.buildId,
+          animationKey: 'idle',
+          actionId: 0
+        })
+      });
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch(parseError) {
+        data = {
+          ok: false,
+          error: 'Meshy animation create route did not return JSON',
+          detail: parseError?.message || 'Response JSON parse failed'
+        };
+      }
+
+      console.log('Meshy idle animation create response:', {
+        httpStatus: response.status,
+        ok: response.ok,
+        data
+      });
+
+      window.lastForgeMeshyAnimationCreateResponse = data;
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.detail || data.error || 'Could not start Meshy idle animation test');
+      }
+
+      if (activeButton) {
+        activeButton.textContent = 'Idle Test Started ✓';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Meshy idle animation test started. Next we will add status polling after this task exists.', 'success');
+      }
+
+      if (typeof window.renderForge3dBuildStatusPanel === 'function') {
+        await window.renderForge3dBuildStatusPanel();
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Generate Meshy Idle Test';
+          activeButton.disabled = false;
+        }
+      }, 2200);
+    } catch(e) {
+      console.warn('Could not start Meshy idle animation test:', e, window.lastForgeMeshyAnimationCreateResponse);
+
+      if (activeButton) {
+        activeButton.textContent = 'Idle Test Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        const detail =
+          window.lastForgeMeshyAnimationCreateResponse?.detail ||
+          window.lastForgeMeshyAnimationCreateResponse?.meshyError?.message ||
+          e.message ||
+          'Unknown error';
+
+        window.setForgeStatus(`Could not start Meshy idle animation test: ${detail}`, 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Generate Meshy Idle Test';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
+  async function checkMeshyIdleAnimationStatusForBuild(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build for the idle animation status check.', 'error');
+      }
+      return;
+    }
+
+    if (!build.rigging?.animationTasks?.idle?.taskId) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Generate the Meshy idle test before checking its status.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Check Meshy Idle Status';
+
+    if (activeButton) {
+      activeButton.textContent = 'Checking Idle...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-engine-meshy-animation-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId: build.buildId,
+          animationKey: 'idle'
+        })
+      });
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch(parseError) {
+        data = {
+          ok: false,
+          error: 'Meshy animation status route did not return JSON',
+          detail: parseError?.message || 'Response JSON parse failed'
+        };
+      }
+
+      console.log('Meshy idle animation status response:', {
+        httpStatus: response.status,
+        ok: response.ok,
+        data
+      });
+
+      window.lastForgeMeshyAnimationStatusResponse = data;
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.detail || data.error || 'Could not check Meshy idle animation status');
+      }
+
+      const idleReady = Boolean(data.animationGlbUrl);
+
+      if (activeButton) {
+        activeButton.textContent = idleReady ? 'Idle Ready ✓' : 'Idle Still Processing';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus(
+          idleReady
+            ? 'Meshy idle animation GLB is ready. Blob storage comes next.'
+            : `Meshy idle animation status: ${data.status || 'processing'}.`,
+          idleReady ? 'success' : ''
+        );
+      }
+
+      if (typeof window.renderForge3dBuildStatusPanel === 'function') {
+        await window.renderForge3dBuildStatusPanel();
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Check Meshy Idle Status';
+          activeButton.disabled = false;
+        }
+      }, 2200);
+    } catch(e) {
+      console.warn('Could not check Meshy idle animation status:', e, window.lastForgeMeshyAnimationStatusResponse);
+
+      if (activeButton) {
+        activeButton.textContent = 'Idle Check Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        const detail =
+          window.lastForgeMeshyAnimationStatusResponse?.detail ||
+          window.lastForgeMeshyAnimationStatusResponse?.meshyError?.message ||
+          e.message ||
+          'Unknown error';
+
+        window.setForgeStatus(`Could not check Meshy idle animation status: ${detail}`, 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Check Meshy Idle Status';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
+  async function storeMeshyIdleAnimationGlbInRebelBlob(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this 3D build for idle animation storage.', 'error');
+      }
+      return;
+    }
+
+    const meshyIdleGlbUrl =
+      build.output?.meshyAnimations?.idle?.animationGlbUrl ||
+      build.rigging?.animationTasks?.idle?.response?.result?.animation_glb_url ||
+      '';
+
+    if (!meshyIdleGlbUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Check Meshy idle status before storing the idle animation.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Store Meshy Idle Animation';
+
+    if (activeButton) {
+      activeButton.textContent = 'Storing Idle...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/forge-3d-store-meshy-animation-glb', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId: build.buildId,
+          animationKey: 'idle'
+        })
+      });
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch(parseError) {
+        data = {
+          ok: false,
+          error: 'Meshy animation store route did not return JSON',
+          detail: parseError?.message || 'Response JSON parse failed'
+        };
+      }
+
+      console.log('Meshy idle animation store response:', {
+        httpStatus: response.status,
+        ok: response.ok,
+        data
+      });
+
+      window.lastForgeMeshyAnimationStoreResponse = data;
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.detail || data.error || 'Could not store Meshy idle animation');
+      }
+
+      if (activeButton) {
+        activeButton.textContent = 'Idle Stored ✓';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Meshy idle animation stored in Rebel Forge Blob.', 'success');
+      }
+
+      if (typeof window.renderForge3dBuildStatusPanel === 'function') {
+        await window.renderForge3dBuildStatusPanel();
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store Meshy Idle Animation';
+          activeButton.disabled = false;
+        }
+      }, 2200);
+    } catch(e) {
+      console.warn('Could not store Meshy idle animation:', e, window.lastForgeMeshyAnimationStoreResponse);
+
+      if (activeButton) {
+        activeButton.textContent = 'Idle Store Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        const detail =
+          window.lastForgeMeshyAnimationStoreResponse?.detail ||
+          window.lastForgeMeshyAnimationStoreResponse?.error ||
+          e.message ||
+          'Unknown error';
+
+        window.setForgeStatus(`Could not store Meshy idle animation: ${detail}`, 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || 'Store Meshy Idle Animation';
+          activeButton.disabled = false;
+        }
+      }, 2400);
+    }
+  }
+
+   async function renderForge3dBuildStatusPanel() {
+    ensure3dBuildStatusStyles();
+
+    const panel = ensure3dBuildStatusPanel();
+    const content = document.getElementById('forge-3d-build-status-content');
+
+    if (!panel || !content) return;
+
+    content.className = 'forge-3d-build-empty';
+    content.innerHTML = 'Checking 3D build status...';
+
+    try {
+      const builds = await fetchForge3dBuildsWithMeshyRefresh();
+      const activeForgeCharacter = await fetchCurrentForgeActiveCharacter();
+      cacheForgePlayableBuilds(builds);
+      window.lastForge3dBuildListResponse = {
+        ok: true,
+        builds,
+        activeForgeCharacter
+      };
+      window.lastForgeActiveCharacter = activeForgeCharacter;
+
+      if (!builds.length) {
+        content.className = 'forge-3d-build-empty';
+        content.innerHTML = 'No 3D build requests yet. Select a saved production reference, then click Start 3D Build.';
+        return;
+      }
+
+      content.className = 'forge-3d-build-list';
+      content.innerHTML = builds.slice(0, 5).map((build, index) => {
+        const renderOpenDownloadLinks = (url, label) => {
+          if (!url) return '';
+
+          return `
+            <div class="forge-3d-status-links">
+              <a class="forge-3d-link-btn" href="${url}" target="_blank" rel="noopener">Open ${label}</a>
+              <a class="forge-3d-link-btn" href="${url}" download>Download ${label}</a>
+            </div>
+          `;
+        };
+        const renderStatusRow = ({ label, value, linksHtml = '' }) => `
+          <div class="forge-3d-status-row">
+            <div class="forge-3d-status-label">${label}</div>
+            <div class="forge-3d-status-value">${value}</div>
+            ${linksHtml ? `<div class="forge-3d-status-link-row">${linksHtml}</div>` : ''}
+          </div>
+        `;
+        const isActiveBuild = forgeBuildIsActive(build, activeForgeCharacter);
+        const statusText = formatBuildStatus(build.status, build);
+        const created = build.createdAt ? new Date(build.createdAt).toLocaleString() : 'Unknown time';
+        const sourceConceptId = build.sourceConceptId || '—';
+        const glbUrl = build.output?.glbUrl || build.engine?.glbUrl || '';
+        const rebelGlbUrl = build.output?.rebelGlbUrl || '';
+        const activeGlbUrl = rebelGlbUrl || glbUrl;
+               const rigTaskId = build.rigging?.taskId || '';
+
+        const riggedMeshyGlbUrl =
+          build.output?.riggedMeshyGlbUrl ||
+          build.rigging?.response?.result?.rigged_character_glb_url ||
+          '';
+
+        const riggedRebelGlbUrl =
+          build.output?.riggedRebelGlbUrl ||
+          build.rigging?.riggedRebelGlbUrl ||
+          '';
+
+        const riggedGlbUrl =
+          riggedRebelGlbUrl ||
+          build.output?.riggedGlbUrl ||
+          build.rigging?.riggedGlbUrl ||
+          riggedMeshyGlbUrl ||
+          '';
+
+        const isRiggedStoredInRebelBlob =
+          build.status === 'rigged_glb_stored_in_rebel_blob' ||
+          build.output?.riggedSource === 'rebel_blob' ||
+          Boolean(riggedRebelGlbUrl);
+        const isStoredInRebelBlob =
+          build.status === 'completed_stored_in_rebel_blob' ||
+          build.output?.source === 'rebel_blob' ||
+          Boolean(rebelGlbUrl);
+
+        const buildComplete = Boolean(glbUrl || rebelGlbUrl || build.engine?.taskId || build.status !== 'queued_for_future_3d_generation');
+
+        const openGlbHtml = activeGlbUrl
+          ? `<br><a href="${activeGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open GLB</a>`
+          : '';
+
+        const downloadGlbHtml = activeGlbUrl
+          ? ` · <a href="${activeGlbUrl}" download style="color:#5ecfca;">Download GLB</a>`
+          : '';
+
+        const storeGlbHtml = glbUrl && !isStoredInRebelBlob
+          ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.storeForgeGlbInRebelBlob('${build.buildId}')">Store GLB in Rebel Forge</button>`
+          : '';
+
+        const setActiveHtml = activeGlbUrl
+          ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Set as Active Character</button>`
+          : '';
+
+        const rigTestHtml = activeGlbUrl && !rigTaskId
+          ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.startMeshyRigTestForBuild('${build.buildId}')">Start Meshy Rig Test</button>`
+          : '';
+
+        const rigStatusHtml = rigTaskId
+          ? `<br>Rigging: ${formatBuildStatus(build.status, build)} ✓`
+          : '';
+
+                    const riggedGlbHtml = riggedGlbUrl
+          ? `<br><a href="${riggedGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open Rigged GLB</a> · <a href="${riggedGlbUrl}" download style="color:#5ecfca;">Download Rigged GLB</a>`
+          : '';
+
+        const storeRiggedGlbHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
+          ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.storeForgeRiggedGlbInRebelBlob('${build.buildId}')">Store Rigged GLB in Rebel Forge</button>`
+          : '';
+
+               const walkingMeshyGlbUrl =
+          build.rigging?.response?.result?.basic_animations?.walking_glb_url ||
+          '';
+
+        const walkingRebelGlbUrl =
+          build.output?.walkingGlbUrl ||
+          build.output?.storedAnimations?.walking?.storedAnimationUrl ||
+          build.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
+          '';
+
+        const walkingGlbUrl = walkingRebelGlbUrl || walkingMeshyGlbUrl;
+
+        const walkingGlbHtml = walkingGlbUrl
+          ? `<br><a href="${walkingGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open Walking GLB</a> · <a href="${walkingGlbUrl}" download style="color:#5ecfca;">Download Walking GLB</a>`
+          : '';
+
+        const storeWalkingGlbHtml = walkingMeshyGlbUrl && !walkingRebelGlbUrl
+          ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.storeForgeWalkingGlbInRebelBlob('${build.buildId}')">Store Walking Animation</button>`
+          : '';
+
+        const walkingStoredHtml = walkingRebelGlbUrl
+          ? '<br>Walking Animation: Rebel Forge Blob ✓'
+          : '';
+
+        const runningMeshyGlbUrl =
+          build.rigging?.response?.result?.basic_animations?.running_glb_url ||
+          '';
+
+        const runningRebelGlbUrl =
+          build.output?.runningGlbUrl ||
+          build.output?.storedAnimations?.running?.storedAnimationUrl ||
+          build.rigging?.storedAnimations?.running?.storedAnimationUrl ||
+          '';
+
+        const runningGlbUrl = runningRebelGlbUrl || runningMeshyGlbUrl;
+
+        const runningGlbHtml = runningGlbUrl
+          ? `<br><a href="${runningGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open Running GLB</a> · <a href="${runningGlbUrl}" download style="color:#5ecfca;">Download Running GLB</a>`
+          : '';
+
+        const storeRunningGlbHtml = runningMeshyGlbUrl && !runningRebelGlbUrl
+          ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.storeForgeRunningGlbInRebelBlob('${build.buildId}')">Store Running Animation</button>`
+          : '';
+
+        const runningStoredHtml = runningRebelGlbUrl
+          ? '<br>Running Animation: Rebel Forge Blob ✓'
+          : '';
+        const idleAnimationTaskId =
+          build.rigging?.animationTasks?.idle?.taskId ||
+          '';
+        const idleGlbUrl =
+          build.output?.idleGlbUrl ||
+          build.output?.storedAnimations?.idle?.storedAnimationUrl ||
+          build.rigging?.storedAnimations?.idle?.storedAnimationUrl ||
+          '';
+        const meshyIdleGlbUrl =
+          build.output?.meshyAnimations?.idle?.animationGlbUrl ||
+          build.rigging?.animationTasks?.idle?.response?.result?.animation_glb_url ||
+          '';
+        const generateMeshyIdleHtml = rigTaskId && !idleGlbUrl
+          ? idleAnimationTaskId
+            ? `<span class="forge-3d-build-step done">${meshyIdleGlbUrl ? 'Meshy Idle GLB Ready ✓' : 'Meshy Idle Test Queued ✓'}</span><button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.checkMeshyIdleAnimationStatusForBuild('${build.buildId}')">Check Meshy Idle Status</button>`
+            : `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.generateMeshyIdleAnimationTestForBuild('${build.buildId}')">Generate Meshy Idle Test</button>`
+          : '';
+        const storeMeshyIdleHtml = meshyIdleGlbUrl && !idleGlbUrl
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeMeshyIdleAnimationGlbInRebelBlob('${build.buildId}')">Store Meshy Idle Animation</button>`
+          : '';
+        const storedHtml = isStoredInRebelBlob
+          ? '<br>Storage: Rebel Forge Blob ✓'
+          : '';
+
+        const riggedStoredHtml = isRiggedStoredInRebelBlob
+          ? '<br>Rigged Storage: Rebel Forge Blob ✓'
+          : '';
+        const deleteBuildHtml =
+          `<button class="forge-3d-build-refresh-btn forge-3d-step-action forge-3d-danger-action" type="button" onclick="window.deleteForge3dBuild('${build.buildId}')">Delete Build</button>`;
+
+        const activeCharacterGlbUrl = riggedGlbUrl || activeGlbUrl;
+        const isSavedForLanding = forgeBuildIsSavedForLanding(build);
+        const previewBuildHtml = activeCharacterGlbUrl
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.previewForge3dBuild('${build.buildId}')">Preview This Build</button>`
+          : '';
+        const updateActiveCharacterHtml = isActiveBuild && activeCharacterGlbUrl
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Update Active Character</button>`
+          : '';
+        const storeBuildActionHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeRiggedGlbInRebelBlob('${build.buildId}')">Store GLB</button>`
+          : glbUrl && !isStoredInRebelBlob
+            ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeGlbInRebelBlob('${build.buildId}')">Store GLB</button>`
+            : '';
+        const completedBadgeHtml = buildComplete
+          ? '<span class="forge-3d-build-badge ready">✓ Completed</span>'
+          : '<span class="forge-3d-build-badge">Queued</span>';
+        const glbReadyBadgeHtml = activeCharacterGlbUrl
+          ? '<span class="forge-3d-build-badge info">◇ GLB Ready</span>'
+          : '<span class="forge-3d-build-badge">GLB Pending</span>';
+        const animationPackHtml = `
+          <div class="forge-3d-animation-pack">
+            <span class="forge-3d-pack-pill${idleGlbUrl ? ' ready' : ''}">Idle ${idleGlbUrl ? '✓' : 'Pending'}</span>
+            <span class="forge-3d-pack-pill${walkingRebelGlbUrl ? ' ready' : ''}">Walk ${walkingRebelGlbUrl ? '✓' : 'Pending'}</span>
+            <span class="forge-3d-pack-pill${runningRebelGlbUrl ? ' ready' : ''}">Run ${runningRebelGlbUrl ? '✓' : 'Pending'}</span>
+            <span class="forge-3d-pack-pill">Jump Later</span>
+            <span class="forge-3d-pack-pill">Kick Later</span>
+          </div>
+        `;
+        const sourceLinksHtml = renderOpenDownloadLinks(activeGlbUrl, 'GLB');
+        const riggedLinksHtml = renderOpenDownloadLinks(riggedGlbUrl, 'Rigged GLB');
+        const idleLinksHtml = renderOpenDownloadLinks(idleGlbUrl, 'Idle GLB');
+        const walkingLinksHtml = renderOpenDownloadLinks(walkingGlbUrl, 'Walking GLB');
+        const runningLinksHtml = renderOpenDownloadLinks(runningGlbUrl, 'Running GLB');
+        const idleStoredHtml = idleGlbUrl
+          ? '<br>Idle Animation: Rebel Forge Blob ✓'
+          : '';
+        const mainStatusRowsHtml = [
+          renderStatusRow({
+            label: 'Storage',
+            value: isStoredInRebelBlob ? 'Rebel Forge Blob ✓' : 'Pending'
+          }),
+          renderStatusRow({
+            label: 'Rigging',
+            value: rigTaskId ? 'Completed ✓' : 'Not started'
+          }),
+          renderStatusRow({
+            label: 'Rigged Storage',
+            value: isRiggedStoredInRebelBlob ? 'Rebel Forge Blob ✓' : 'Pending',
+            linksHtml: riggedLinksHtml
+          }),
+          renderStatusRow({
+            label: 'Idle Animation',
+            value: idleGlbUrl ? 'Rebel Forge Blob ✓' : idleAnimationTaskId ? 'Meshy idle ready for storage' : 'Not generated',
+            linksHtml: idleLinksHtml
+          }),
+          renderStatusRow({
+            label: 'Walking Animation',
+            value: walkingRebelGlbUrl ? 'Rebel Forge Blob ✓' : walkingMeshyGlbUrl ? 'Ready for storage' : 'Pending',
+            linksHtml: walkingLinksHtml
+          }),
+          renderStatusRow({
+            label: 'Running Animation',
+            value: runningRebelGlbUrl ? 'Rebel Forge Blob ✓' : runningMeshyGlbUrl ? 'Ready for storage' : 'Pending',
+            linksHtml: runningLinksHtml
+          })
+        ].join('');
+        const stepHtml = renderForgeBuildSteps([
+          {
+            label: 'Start 3D Build',
+            done: buildComplete,
+            actionHtml: ''
+          },
+          {
+            label: 'Start Meshy Rig Test',
+            done: Boolean(rigTaskId),
+            actionHtml: activeGlbUrl && !rigTaskId
+              ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.startMeshyRigTestForBuild('${build.buildId}')">Start Meshy Rig Test</button>`
+              : ''
+          },
+          {
+            label: 'Store GLB in Rebel Forge',
+            done: Boolean(riggedMeshyGlbUrl ? isRiggedStoredInRebelBlob : isStoredInRebelBlob),
+            actionHtml: storeBuildActionHtml
+          },
+          {
+            label: 'Store Idle Animation',
+            done: Boolean(idleGlbUrl),
+            actionHtml: storeMeshyIdleHtml
+          },
+          {
+            label: 'Store Walking Animation',
+            done: Boolean(walkingRebelGlbUrl),
+            actionHtml: walkingMeshyGlbUrl && !walkingRebelGlbUrl
+              ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeWalkingGlbInRebelBlob('${build.buildId}')">Store Walking</button>`
+              : ''
+          },
+          {
+            label: 'Store Running Animation',
+            done: Boolean(runningRebelGlbUrl),
+            actionHtml: runningMeshyGlbUrl && !runningRebelGlbUrl
+              ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeRunningGlbInRebelBlob('${build.buildId}')">Store Running</button>`
+              : ''
+          },
+          {
+            label: 'Playable Character Saved',
+            done: isActiveBuild || isSavedForLanding,
+            doneHtml: isActiveBuild ? 'Currently Active ✓' : 'Character Ready on Landing ✓',
+            actionHtml: activeCharacterGlbUrl && !isSavedForLanding
+              ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Set Active</button>`
+              : ''
+          }
+        ]);
+
+        return `
+          <div class="forge-3d-build-row">
+            <div class="forge-3d-build-side">
+              ${renderForgeBuildThumbnail(build)}
+              <div class="forge-3d-build-side-item">
+                <div class="forge-3d-build-side-icon">▧</div>
+                <div>
+                  <div class="forge-3d-build-side-label">Source</div>
+                  <div class="forge-3d-build-side-value">${sourceConceptId}</div>
+                </div>
+              </div>
+              <div class="forge-3d-build-side-item">
+                <div class="forge-3d-build-side-icon">◷</div>
+                <div>
+                  <div class="forge-3d-build-side-label">Created</div>
+                  <div class="forge-3d-build-side-value">${created}</div>
+                </div>
+              </div>
+              <div class="forge-3d-build-side-item">
+                <div class="forge-3d-build-side-icon">◇</div>
+                <div>
+                  <div class="forge-3d-build-side-label">Output</div>
+                  <div class="forge-3d-build-side-value">${activeCharacterGlbUrl ? 'GLB Ready' : 'Future GLB Character'}${sourceLinksHtml}</div>
+                </div>
+              </div>
+            </div>
+            <div class="forge-3d-build-body">
+              <div class="forge-3d-build-header">
+                <div class="forge-3d-build-crest">⚜</div>
+                <div class="forge-3d-build-title-area">
+                  <div class="forge-3d-build-status">${index === 0 ? 'Latest Build — ' : ''}${statusText}</div>
+                  <div class="forge-3d-build-badges">${completedBadgeHtml}${glbReadyBadgeHtml}</div>
+                  ${animationPackHtml}
+                </div>
+              </div>
+              <div class="forge-3d-build-layout">
+                <div class="forge-3d-build-section forge-3d-main-status">
+                  <div class="forge-3d-build-section-title">Storage, Rigging & Animations</div>
+                  ${mainStatusRowsHtml}
+                </div>
+              </div>
+            </div>
+            <details class="forge-3d-dev-details">
+              <summary>Advanced / Dev Details</summary>
+              <div class="forge-3d-dev-details-content">
+                Meshy Rig Task: ${rigTaskId || 'None'}<br>
+                Raw Build Status: ${statusText}<br>
+                ${storedHtml || ''}
+                ${rigStatusHtml || ''}
+                ${riggedStoredHtml || ''}
+                ${idleStoredHtml || ''}
+                ${walkingStoredHtml || ''}
+                ${runningStoredHtml || ''}
+                ${openGlbHtml || ''}${downloadGlbHtml || ''}
+                ${riggedGlbHtml || ''}
+                ${idleLinksHtml || ''}
+                ${walkingGlbHtml || ''}
+                ${runningGlbHtml || ''}
+              </div>
+            </details>
+            <div class="forge-3d-build-section forge-3d-steps-section">
+              <div class="forge-3d-build-section-title">Build Steps</div>
+              ${stepHtml}
+            </div>
+            <div class="forge-3d-build-actions">
+              ${previewBuildHtml}
+              ${generateMeshyIdleHtml}
+              ${storeMeshyIdleHtml}
+              ${updateActiveCharacterHtml}
+              ${deleteBuildHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch(e) {
+      console.warn('Could not render Forge 3D build status:', e);
+
+      window.lastForge3dBuildListResponse = {
+        ok: false,
+        error: e && e.message ? e.message : 'Unknown build status error'
+      };
+
+      content.className = 'forge-3d-build-empty';
+      content.innerHTML = 'Could not load 3D build status yet.';
+    }
+  }
+  function wrapStartForge3dBuild() {
+    const original = window.startForge3dBuild;
+
+    if (typeof original !== 'function' || original.__buildStatusWrapped) return;
+
+    const wrapped = async function(...args) {
+      const result = await original.apply(this, args);
+      await renderForge3dBuildStatusPanel();
+      return result;
+    };
+
+    wrapped.__buildStatusWrapped = true;
+    window.startForge3dBuild = wrapped;
+  }
+
+  function boot3dBuildStatusPanel() {
+    if (!isForgePage()) return;
+
+    ensure3dBuildStatusStyles();
+    ensure3dBuildStatusPanel();
+    wrapStartForge3dBuild();
+    renderForge3dBuildStatusPanel();
+  }
+
+      window.renderForge3dBuildStatusPanel = renderForge3dBuildStatusPanel;
+  window.storeForgeGlbInRebelBlob = storeForgeGlbInRebelBlob;
+  window.storeForgeRiggedGlbInRebelBlob = storeForgeRiggedGlbInRebelBlob;
+  window.storeForgeWalkingGlbInRebelBlob = storeForgeWalkingGlbInRebelBlob;
+  window.storeForgeRunningGlbInRebelBlob = storeForgeRunningGlbInRebelBlob;
+  window.deleteForge3dBuild = deleteForge3dBuild;
+  window.setForgeBuildAsActiveCharacter = setForgeBuildAsActiveCharacter;
+  window.startMeshyRigTestForBuild = startMeshyRigTestForBuild;
+  window.generateMeshyIdleAnimationTestForBuild = generateMeshyIdleAnimationTestForBuild;
+  window.checkMeshyIdleAnimationStatusForBuild = checkMeshyIdleAnimationStatusForBuild;
+  window.storeMeshyIdleAnimationGlbInRebelBlob = storeMeshyIdleAnimationGlbInRebelBlob;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(boot3dBuildStatusPanel, 200);
+  });
+})();
+
+(function setupForge3dPreviewPanelExtension() {
+
+  let forge3dPreviewState = {
+    renderer: null,
+    scene: null,
+    camera: null,
+    controls: null,
+    model: null,
+    animationId: null,
+    currentGlbUrl: ''
+  };
+
+  window.forge3dPreviewState = forge3dPreviewState;
+
+  function isForgePage() {
+    return Boolean(
+      document.getElementById('forge-3d-build-status-panel') ||
+      document.getElementById('forge-concepts-section')
+    );
+  }
+
+  function ensure3dPreviewStyles() {
+    if (document.getElementById('forge-3d-preview-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'forge-3d-preview-styles';
+    style.textContent = `
+      #forge-3d-preview-panel {
+        margin-top: 18px;
+        padding: 14px;
+        border: 1px solid rgba(94,207,202,.24);
+        background: rgba(94,207,202,.055);
+        border-radius: 18px;
+      }
+
+      .forge-3d-preview-empty {
+        color: rgba(243,230,191,.72);
+        font-size: 12px;
+        line-height: 1.8;
+        border: 1px dashed rgba(255,255,255,.14);
+        border-radius: 14px;
+        padding: 14px;
+        margin-top: 12px;
+      }
+
+           #forge-3d-preview-stage {
+        position: relative;
+        width: 100%;
+        height: 420px;
+        margin-top: 12px;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 18px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at top center, rgba(94,207,202,.11), transparent 42%),
+          radial-gradient(circle at bottom center, rgba(200,146,42,.08), transparent 48%),
+          rgba(0,0,0,.34);
+      }
+
+      #forge-3d-preview-stage canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .forge-3d-stage-tools {
+        position: absolute;
+        z-index: 5;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        pointer-events: auto;
+      }
+
+      .forge-3d-stage-tools-top {
+        top: 12px;
+        right: 12px;
+        justify-content: flex-end;
+      }
+
+      .forge-3d-stage-tools-bottom {
+        right: 12px;
+        bottom: 12px;
+        justify-content: flex-end;
+      }
+
+      #forge-rig-selected-marker {
+        position: absolute;
+        z-index: 5;
+        left: 12px;
+        bottom: 12px;
+        margin: 0;
+        padding: 7px 10px;
+        border: 1px solid rgba(94,207,202,.28);
+        background: rgba(0,0,0,.58);
+        color: rgba(243,230,191,.84);
+        border-radius: 999px;
+        font-size: 11px;
+        line-height: 1;
+        pointer-events: none;
+      }
+
+      .forge-3d-preview-actions {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .forge-3d-primary-actions {
+        display: grid;
+        grid-template-columns: minmax(220px, 360px);
+        gap: 10px;
+      }
+
+      .forge-3d-primary-btn {
+        min-height: 42px;
+        border-color: rgba(200,146,42,.55);
+        background: rgba(200,146,42,.18);
+        color: #fff3c9;
+      }
+
+      .forge-3d-tool-details {
+        border: 1px solid rgba(255,255,255,.1);
+        background: rgba(0,0,0,.16);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .forge-3d-dev-lab {
+        border-color: rgba(200,146,42,.18);
+        background: rgba(200,146,42,.06);
+      }
+
+      .forge-3d-tool-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 40px;
+        padding: 0 12px;
+        color: rgba(243,230,191,.8);
+        font-family: 'Cinzel', serif;
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .forge-3d-tool-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 8px;
+        padding: 10px;
+        border-top: 1px solid rgba(255,255,255,.08);
+      }
+
+      .forge-3d-preview-btn {
+        min-height: 36px;
+        padding: 9px 10px;
+        border: 1px solid rgba(94,207,202,.28);
+        background: rgba(94,207,202,.08);
+        color: #f3e6bf;
+        font-family: 'Cinzel', serif;
+        font-size: 10px;
+        letter-spacing: 1.1px;
+        text-transform: uppercase;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        border-radius: 8px;
+      }
+
+      .forge-3d-stage-btn {
+        min-height: 30px;
+        padding: 7px 9px;
+        background: rgba(0,0,0,.58);
+        backdrop-filter: blur(8px);
+      }
+
+      .forge-3d-tool-toast {
+        display: none;
+        margin-top: 10px;
+        padding: 10px 12px;
+        border: 1px solid rgba(94,207,202,.35);
+        background: rgba(94,207,202,.12);
+        color: #f3e6bf;
+        font-size: 12px;
+        line-height: 1.5;
+        border-radius: 10px;
+      }
+
+      .forge-3d-tool-toast.is-visible {
+        display: block;
+      }
+      .forge-3d-preview-btn:hover {
+        border-color: rgba(94,207,202,.7);
+        background: rgba(94,207,202,.16);
+      }
+
+      .forge-3d-preview-note {
+        color: rgba(243,230,191,.62);
+        font-size: 11px;
+        line-height: 1.7;
+        margin-top: 10px;
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function ensure3dPreviewPanel() {
+    if (!isForgePage()) return null;
+
+    let panel = document.getElementById('forge-3d-preview-panel');
+    if (panel) return panel;
+
+    const buildStatusPanel = document.getElementById('forge-3d-build-status-panel');
+    const conceptsSection = document.getElementById('forge-concepts-section');
+    const anchor = buildStatusPanel || conceptsSection;
+
+    if (!anchor || !anchor.parentNode) return null;
+
+    panel = document.createElement('div');
+    panel.id = 'forge-3d-preview-panel';
+    panel.innerHTML = `
+      <div class="section-title">3D Preview</div>
+      <div id="forge-3d-preview-content" class="forge-3d-preview-empty">
+        No GLB is ready yet. Start a 3D Build, then refresh the build status until the GLB is ready.
+      </div>
+    `;
+
+    anchor.parentNode.insertBefore(panel, anchor.nextSibling);
+    return panel;
+  }
+
+  function getSelectedRebelForForgePreview() {
+    if (window.selectedForgeRebel) return window.selectedForgeRebel;
+
+    try {
+      const raw = localStorage.getItem('selectedRebel');
+      return raw ? JSON.parse(raw) : null;
+    } catch(e) {
+      return null;
+    }
+  }
+
+  function getActiveCharacterGlbUrl(activeCharacter) {
+    if (!activeCharacter) return '';
+
+    const bundle = activeCharacter.characterBundle || {};
+
+    return (
+      activeCharacter.activeGlbUrl ||
+      activeCharacter.riggedGlbUrl ||
+      bundle.activeGlbUrl ||
+      bundle.riggedGlbUrl ||
+      bundle.animations?.running?.glbUrl ||
+      bundle.animations?.walking?.glbUrl ||
+      bundle.staticGlbUrl ||
+      activeCharacter.staticGlbUrl ||
+      ''
+    );
+  }
+
+  function getLatestBuildGlbUrl(build) {
+    if (!build) return '';
+
+    return (
+      build.output?.riggedGlbUrl ||
+      build.rigging?.riggedGlbUrl ||
+      build.rigging?.response?.result?.rigged_character_glb_url ||
+      build.output?.rebelGlbUrl ||
+      build.output?.glbUrl ||
+      build.engine?.glbUrl ||
+      ''
+    );
+  }
+
+  async function loadActiveForgeCharacterForPreview(rebel) {
+    if (!rebel) return null;
+
+    try {
+      const params = new URLSearchParams();
+      const tokenId = rebel.tokenId ? String(rebel.tokenId) : '';
+      const rebelId = rebel.rebelId || rebel.id || '';
+      const walletAddress = rebel.walletAddress || rebel.owner || rebel.ownerAddress || '';
+
+      params.set('collectionKey', rebel.collectionKey || 'battle_for_colony');
+
+      if (walletAddress) params.set('walletAddress', walletAddress);
+      if (tokenId) params.set('tokenId', tokenId);
+      else if (rebelId) params.set('rebelId', rebelId);
+
+      const response = await fetch(`/api/forge-active-character-get?${params.toString()}`);
+      const data = await response.json();
+
+      if (!response.ok || !data.ok || !data.hasActiveCharacter) return null;
+
+      return data.activeCharacter || null;
+    } catch(e) {
+      console.warn('Could not resolve active Forge character for preview:', e);
+      return null;
+    }
+  }
+
+  async function resolveForge3dPreviewSource() {
+    const selectedRebel = getSelectedRebelForForgePreview();
+    const selectedActiveGlbUrl =
+      selectedRebel?.activeGlbUrl ||
+      getActiveCharacterGlbUrl(selectedRebel?.activeForgeCharacter);
+
+    if (selectedActiveGlbUrl) {
+      return {
+        glbUrl: selectedActiveGlbUrl,
+        reason: 'selected_rebel_active_glb'
+      };
+    }
+
+    const apiActiveCharacter = await loadActiveForgeCharacterForPreview(selectedRebel);
+    const apiActiveGlbUrl = getActiveCharacterGlbUrl(apiActiveCharacter);
+
+    if (apiActiveGlbUrl) {
+      return {
+        glbUrl: apiActiveGlbUrl,
+        reason: 'active_forge_character_api'
+      };
+    }
+
+    const latestGlbBuild = getLatestGlbBuild();
+    const latestBuildGlbUrl = getLatestBuildGlbUrl(latestGlbBuild);
+
+    if (latestBuildGlbUrl) {
+      return {
+        glbUrl: latestBuildGlbUrl,
+        reason: 'latest_forge_build'
+      };
+    }
+
+    return {
+      glbUrl: 'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb',
+      reason: 'fallback_static_test_source'
+    };
+  }
+
+    function getLatestGlbBuild() {
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+
+    const latestBuild = builds.find((build) => {
+      return Boolean(build?.output?.glbUrl || build?.engine?.glbUrl);
+    }) || null;
+
+    if (latestBuild) {
+      return latestBuild;
+    }
+
+    return null;
+  }
+
+  function stopForge3dPreviewLoop() {
+    if (forge3dPreviewState.animationId) {
+      cancelAnimationFrame(forge3dPreviewState.animationId);
+      forge3dPreviewState.animationId = null;
+    }
+  }
+
+  function disposeForgeObject3d(object) {
+    if (!object) return;
+
+    object.traverse?.((child) => {
+      child.geometry?.dispose?.();
+
+      if (Array.isArray(child.material)) {
+        child.material.forEach((material) => material?.dispose?.());
+      } else {
+        child.material?.dispose?.();
+      }
+    });
+  }
+
+    function clearForge3dPreview() {
+    stopForge3dPreviewLoop();
+
+    if (forge3dPreviewState.walkAction) {
+      forge3dPreviewState.walkAction.stop();
+    }
+
+    if (forge3dPreviewState.mixer) {
+      forge3dPreviewState.mixer.stopAllAction();
+    }
+
+    if (window.forgeHeadAttachmentTest?.mesh) {
+      const attachment = window.forgeHeadAttachmentTest.mesh;
+      attachment.parent?.remove(attachment);
+      disposeForgeObject3d(attachment);
+      window.forgeHeadAttachmentTest = null;
+    }
+
+    if (forge3dPreviewState.attachmentKeyHandler) {
+      const stage = document.getElementById('forge-3d-preview-stage');
+      stage?.removeEventListener('keydown', forge3dPreviewState.attachmentKeyHandler);
+    }
+
+    if (forge3dPreviewState.renderer) {
+      forge3dPreviewState.renderer.dispose();
+    }
+
+    forge3dPreviewState = {
+      renderer: null,
+      scene: null,
+      camera: null,
+      controls: null,
+      model: null,
+      animationId: null,
+      currentGlbUrl: '',
+      clock: null,
+      mixer: null,
+      walkAction: null,
+      walkAnimationSource: '',
+      modelCenteringReport: null,
+      attachmentKeyHandler: null
+    };
+
+    window.forge3dPreviewState = forge3dPreviewState;
+  }
+
+       async function loadThreeModules() {
+    const threeModule = await import('https://esm.sh/three@0.160.0');
+    const loaderModule = await import('https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js?deps=three@0.160.0');
+    const dracoLoaderModule = await import('https://esm.sh/three@0.160.0/examples/jsm/loaders/DRACOLoader.js?deps=three@0.160.0');
+    const controlsModule = await import('https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js?deps=three@0.160.0');
+    const transformControlsModule = await import('https://esm.sh/three@0.160.0/examples/jsm/controls/TransformControls.js?deps=three@0.160.0');
+
+    return {
+      THREE: threeModule,
+      GLTFLoader: loaderModule.GLTFLoader,
+      DRACOLoader: dracoLoaderModule.DRACOLoader,
+      OrbitControls: controlsModule.OrbitControls,
+      TransformControls: transformControlsModule.TransformControls
+    };
+  }
+
+  function getForgeVisibleMeshBounds(THREE, model) {
+    if (!model) return null;
+
+    model.updateWorldMatrix(true, true);
+
+    const visibleBox = new THREE.Box3();
+    const meshBox = new THREE.Box3();
+    const meshSize = new THREE.Vector3();
+    let meshCount = 0;
+    let ignoredMeshCount = 0;
+
+    model.traverse((object) => {
+      if (!object || !(object.isMesh || object.isSkinnedMesh)) return;
+      if (object.userData?.forgeAttachmentTest || object.name === 'forgeHeadWrapAttachmentTest') return;
+
+      const geometry = object.geometry;
+      if (!geometry) return;
+
+      if (!geometry.boundingBox) {
+        geometry.computeBoundingBox();
+      }
+
+      if (!geometry.boundingBox) return;
+
+      object.updateWorldMatrix(true, false);
+      meshBox.copy(geometry.boundingBox).applyMatrix4(object.matrixWorld);
+      meshBox.getSize(meshSize);
+
+      const maxDimension = Math.max(meshSize.x, meshSize.y, meshSize.z);
+      const hasValidBounds = Number.isFinite(meshBox.min.x)
+        && Number.isFinite(meshBox.min.y)
+        && Number.isFinite(meshBox.min.z)
+        && Number.isFinite(meshBox.max.x)
+        && Number.isFinite(meshBox.max.y)
+        && Number.isFinite(meshBox.max.z)
+        && Number.isFinite(maxDimension)
+        && maxDimension > 0
+        && maxDimension < 10000;
+
+      if (!hasValidBounds) {
+        ignoredMeshCount += 1;
+        return;
+      }
+
+      visibleBox.union(meshBox);
+      meshCount += 1;
+    });
+
+    if (!meshCount || visibleBox.isEmpty()) return null;
+
+    const size = visibleBox.getSize(new THREE.Vector3());
+    const center = visibleBox.getCenter(new THREE.Vector3());
+    const sphere = visibleBox.getBoundingSphere(new THREE.Sphere());
+    const rawHeight = Math.max(size.y, 0.001);
+    const characterHeight = THREE.MathUtils.clamp(rawHeight, 0.25, 250);
+    const radius = THREE.MathUtils.clamp(
+      Math.max(sphere.radius, characterHeight * 0.35),
+      characterHeight * 0.35,
+      characterHeight * 1.15
+    );
+
+    return {
+      box: visibleBox.clone(),
+      size,
+      center,
+      radius,
+      characterHeight,
+      rawHeight,
+      meshCount,
+      ignoredMeshCount
+    };
+  }
+
+  function fitCameraToObject(THREE, camera, object, controls) {
+    const visibleBounds = getForgeVisibleMeshBounds(THREE, object);
+    const box = visibleBounds?.box || new THREE.Box3().setFromObject(object);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+
+    const maxSize = visibleBounds?.radius ? visibleBounds.radius * 2 : Math.max(size.x, size.y, size.z) || 1;
+    const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camera.fov) / 360));
+    const fitWidthDistance = fitHeightDistance / camera.aspect;
+    const distance = 1.45 * Math.max(fitHeightDistance, fitWidthDistance);
+
+    camera.position.set(center.x, center.y + maxSize * 0.15, center.z + distance);
+    camera.near = distance / 100;
+    camera.far = distance * 100;
+    camera.updateProjectionMatrix();
+
+    if (controls) {
+      controls.target.copy(center);
+      controls.update();
+    }
+  }
+
+  function centerThreePreviewModel(THREE, model) {
+    const visibleBounds = getForgeVisibleMeshBounds(THREE, model);
+    const box = visibleBounds?.box || new THREE.Box3().setFromObject(model);
+    const center = visibleBounds?.center || box.getCenter(new THREE.Vector3());
+
+    model.position.x -= center.x;
+    model.position.y -= center.y;
+    model.position.z -= center.z;
+
+    const centeredVisibleBounds = getForgeVisibleMeshBounds(THREE, model);
+
+    return {
+      center: center.toArray(),
+      size: box.getSize(new THREE.Vector3()).toArray(),
+      visibleBounds: centeredVisibleBounds ? {
+        center: centeredVisibleBounds.center.toArray(),
+        size: centeredVisibleBounds.size.toArray(),
+        radius: centeredVisibleBounds.radius,
+        characterHeight: centeredVisibleBounds.characterHeight,
+        meshCount: centeredVisibleBounds.meshCount,
+        ignoredMeshCount: centeredVisibleBounds.ignoredMeshCount
+      } : null
+    };
+  }
+
+  function frameForgeThreePreviewModel(THREE, previewState = window.forge3dPreviewState) {
+    if (!previewState?.model || !previewState?.camera) return null;
+
+    previewState.model.updateWorldMatrix(true, true);
+
+    const visibleBounds = getForgeVisibleMeshBounds(THREE, previewState.model);
+    const box = visibleBounds?.box || new THREE.Box3().setFromObject(previewState.model);
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    const visibleHeight = visibleBounds?.characterHeight || 0;
+    const rawRadius = Math.max(visibleBounds?.radius || sphere.radius, visibleHeight * 0.62, 0.001);
+    const frameHeight = Math.max(visibleHeight, rawRadius * 2, 3.8);
+    const radius = Math.max(rawRadius, frameHeight * 0.55);
+    const center = visibleBounds?.center || sphere.center;
+    const target = center.clone();
+    target.y += frameHeight * 0.04;
+    const camera = previewState.camera;
+    const controls = previewState.controls;
+    const verticalDistance = frameHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)));
+    const horizontalDistance = verticalDistance / Math.max(camera.aspect, 0.001);
+    const distance = Math.max(verticalDistance, horizontalDistance, radius * 2.1, 5.5) * 1.8;
+
+    camera.position.set(target.x, target.y + frameHeight * 0.08, target.z + distance);
+    camera.near = Math.max(distance / 100, 0.001);
+    camera.far = Math.max(distance + radius * 24, distance * 5);
+    camera.updateProjectionMatrix();
+
+    if (controls) {
+      controls.target.copy(target);
+      controls.update();
+    }
+
+    const report = {
+      center: target.toArray(),
+      radius,
+      rawRadius,
+      frameHeight,
+      boxMin: box.min.toArray(),
+      boxMax: box.max.toArray(),
+      cameraPosition: camera.position.toArray(),
+      visibleBounds: visibleBounds ? {
+        center: visibleBounds.center.toArray(),
+        size: visibleBounds.size.toArray(),
+        characterHeight: visibleBounds.characterHeight,
+        rawHeight: visibleBounds.rawHeight,
+        meshCount: visibleBounds.meshCount,
+        ignoredMeshCount: visibleBounds.ignoredMeshCount
+      } : null
+    };
+
+    previewState.modelFrameReport = report;
+    console.log('Forge preview model framed:', report);
+
+    return report;
+  }
+
+  async function renderThreeGlbPreview(glbUrl) {
+    const stage = document.getElementById('forge-3d-preview-stage');
+    if (!stage || !glbUrl) return;
+
+    clearForge3dPreview();
+
+    const { THREE, GLTFLoader, DRACOLoader, OrbitControls } = await loadThreeModules();
+    const scene = new THREE.Scene();
+    scene.background = null;
+
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      stage.clientWidth / Math.max(stage.clientHeight, 1),
+      0.01,
+      1000
+    );
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(stage.clientWidth, stage.clientHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+        stage.querySelectorAll('canvas, .forge-3d-preview-empty').forEach((element) => {
+      element.remove();
+    });
+    stage.tabIndex = 0;
+    stage.prepend(renderer.domElement);
+    renderer.domElement.addEventListener('pointerdown', () => {
+      stage.focus();
+    });
+
+    const ambient = new THREE.HemisphereLight(0xffffff, 0x1b2433, 2.4);
+    scene.add(ambient);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+    keyLight.position.set(3, 5, 4);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x5ecfca, 1.4);
+    rimLight.position.set(-4, 3, -4);
+    scene.add(rimLight);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.enablePan = true;
+    controls.enableZoom = true;
+
+        const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+
+    const loader = new GLTFLoader();
+    loader.setCrossOrigin('anonymous');
+    loader.setDRACOLoader(dracoLoader);
+
+    const gltf = await new Promise((resolve, reject) => {
+      loader.load(glbUrl, resolve, undefined, reject);
+    });
+
+    dracoLoader.dispose();
+
+    const model = gltf.scene;
+    scene.add(model);
+    const modelCenteringReport = centerThreePreviewModel(THREE, model);
+
+        forge3dPreviewState = {
+      renderer,
+      scene,
+      camera,
+      controls,
+      model,
+      animationId: null,
+      currentGlbUrl: glbUrl,
+      clock: new THREE.Clock(),
+      mixer: null,
+      walkAction: null,
+      walkAnimationSource: '',
+      modelCenteringReport,
+      modelFrameReport: null,
+      attachmentKeyHandler: null
+    };
+
+    window.forge3dPreviewState = forge3dPreviewState;
+    frameForgeThreePreviewModel(THREE, forge3dPreviewState);
+
+    function animate() {
+      forge3dPreviewState.animationId = requestAnimationFrame(animate);
+
+      const delta = forge3dPreviewState.clock ? forge3dPreviewState.clock.getDelta() : 0;
+
+      if (forge3dPreviewState.mixer && delta) {
+        forge3dPreviewState.mixer.update(delta);
+      }
+
+      if (forge3dPreviewState.controls) {
+        forge3dPreviewState.controls.update();
+      }
+
+      if (forge3dPreviewState.renderer && forge3dPreviewState.scene && forge3dPreviewState.camera) {
+        forge3dPreviewState.renderer.render(forge3dPreviewState.scene, forge3dPreviewState.camera);
+      }
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      if (!forge3dPreviewState.renderer || !forge3dPreviewState.camera || !stage) return;
+
+      forge3dPreviewState.camera.aspect = stage.clientWidth / Math.max(stage.clientHeight, 1);
+      forge3dPreviewState.renderer.setSize(stage.clientWidth, stage.clientHeight);
+      frameForgeThreePreviewModel(THREE, forge3dPreviewState);
+    }, { passive: true });
+
+    return forge3dPreviewState;
+  }
+
+  async function renderForge3dPreviewPanel() {
+    ensure3dPreviewStyles();
+
+    const panel = ensure3dPreviewPanel();
+    const content = document.getElementById('forge-3d-preview-content');
+
+    if (!panel || !content) return;
+
+    const previewSource = await resolveForge3dPreviewSource();
+    const glbUrl = previewSource.glbUrl;
+
+    console.log('Forge preview source resolved:', {
+      glbUrl,
+      reason: previewSource.reason
+    });
+
+    if (!glbUrl) {
+      clearForge3dPreview();
+      content.className = 'forge-3d-preview-empty';
+      content.innerHTML = 'No GLB is ready yet. Start a 3D Build, then refresh the build status until the GLB is ready.';
+      return;
+    }
+
+        content.className = '';
+    content.innerHTML = `
+      <div id="forge-3d-preview-stage">
+        <div class="forge-3d-preview-empty">Loading 3D preview...</div>
+
+        <div class="forge-3d-stage-tools forge-3d-stage-tools-top">
+          <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.setForgeRigPlacementView('front')">Front</button>
+          <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.setForgeRigPlacementView('side')">Side</button>
+          <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.setForgeRigPlacementView('top')">Top</button>
+        </div>
+
+        <div class="forge-3d-stage-tools forge-3d-stage-tools-bottom">
+          <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.undoForgeRigPlacementMove()">Undo</button>
+          <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.resetForgeRigPlacementLayout()">Reset</button>
+        </div>
+
+        <div id="forge-rig-selected-marker" class="forge-3d-preview-note">Selected: none</div>
+      </div>
+
+      <div class="forge-3d-preview-actions">
+        <div class="forge-3d-primary-actions">
+          <button class="forge-3d-preview-btn forge-3d-primary-btn" type="button" onclick="window.applyForgeLookToPlayableRig()">Apply Look To Playable Rig</button>
+        </div>
+
+        <details class="forge-3d-tool-details">
+          <summary class="forge-3d-tool-summary">File</summary>
+          <div class="forge-3d-tool-grid">
+            <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
+            <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
+          </div>
+        </details>
+
+        <details class="forge-3d-tool-details forge-3d-dev-lab">
+          <summary class="forge-3d-tool-summary">Advanced Dev Lab</summary>
+          <div class="forge-3d-tool-grid">
+            <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeRigPlacementMode()">Start Rig Placement</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLabels()">Toggle Labels</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.toggleForgeRigPlacementLines()">Toggle Lines</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigMarkerSize()">Marker Size</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeRigLabelSize()">Label Size</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeRigPlacementLayout()">Save Rig Layout</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeRigPlacementLayout()">Load Rig Layout</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeRigPlacementJson()">Copy Rig Layout JSON</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.buildForgeRigFromLayout()">Build Rig From Layout</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.previewBuiltForgeRig()">Preview Built Rig</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.previewForgeWalkTest()">Preview Walk Test</button>
+            <!-- Source-sliced attachments are paused because the Meshy source is one welded mesh and extraction is unreliable. -->
+            <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeRigPlacementMode()">Clear Rig Mode</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeBodyZoneMode()">Start Body Zones</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.cycleForgeBodyZoneTool()">Body Zone Tool</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.shrinkForgeBodyZone()">Shrink Zone</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.growForgeBodyZone()">Grow Zone</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.saveForgeBodyZones()">Save Body Zones</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.loadForgeBodyZones()">Load Body Zones</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.copyForgeBodyZoneJson()">Copy Body Zone JSON</button>
+            <button class="forge-3d-preview-btn" type="button" onclick="window.clearForgeBodyZoneMode()">Clear Body Zones</button>
+          </div>
+        </details>
+      </div>
+
+      <div id="forge-3d-tool-toast" class="forge-3d-tool-toast" aria-live="polite"></div>
+
+      <div class="forge-3d-preview-note">
+        This is a live Three.js preview of the generated GLB. Use this to inspect the model before we store it permanently and connect it to the Village.
+      </div>
+    `;
+
+    try {
+      await renderThreeGlbPreview(glbUrl);
+    } catch(e) {
+      console.warn('Could not render Forge 3D GLB preview:', e);
+      content.innerHTML = `
+        <div class="forge-3d-preview-empty">
+          GLB is ready, but the in-page 3D preview could not load. You can still open or download the GLB below.
+        </div>
+
+        <div class="forge-3d-preview-actions">
+          <a class="forge-3d-preview-btn" href="${glbUrl}" target="_blank" rel="noopener">Open GLB</a>
+          <a class="forge-3d-preview-btn" href="${glbUrl}" download>Download GLB</a>
+        </div>
+      `;
+    }
+  }
+
+  function wrapBuildStatusRenderer() {
+    const original = window.renderForge3dBuildStatusPanel;
+
+    if (typeof original !== 'function' || original.__forge3dPreviewWrapped) return;
+
+    const wrapped = async function(...args) {
+      const result = await original.apply(this, args);
+      await renderForge3dPreviewPanel();
+      return result;
+    };
+
+    wrapped.__forge3dPreviewWrapped = true;
+    window.renderForge3dBuildStatusPanel = wrapped;
+  }
+
+  function boot3dPreviewPanel() {
+    if (!isForgePage()) return;
+
+    ensure3dPreviewStyles();
+    ensure3dPreviewPanel();
+    wrapBuildStatusRenderer();
+
+    setTimeout(() => {
+      renderForge3dPreviewPanel();
+    }, 400);
+  }
+
+   window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
+  window.previewForge3dBuild = async function(buildId) {
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      showForgeToolToast('Build not found');
+      return;
+    }
+
+    const glbUrl =
+      build.output?.riggedRebelGlbUrl ||
+      build.output?.riggedGlbUrl ||
+      build.rigging?.riggedRebelGlbUrl ||
+      build.rigging?.riggedGlbUrl ||
+      build.rigging?.response?.result?.rigged_character_glb_url ||
+      build.output?.rebelGlbUrl ||
+      build.output?.glbUrl ||
+      build.engine?.glbUrl ||
+      '';
+
+    if (!glbUrl) {
+      showForgeToolToast('No preview GLB found for this build');
+      return;
+    }
+
+    try {
+      await renderThreeGlbPreview(glbUrl);
+      showForgeToolToast('Build preview loaded');
+    } catch(e) {
+      console.warn('Could not preview Forge build:', e);
+      showForgeToolToast('Could not load build preview');
+    }
+  };
+
+  function showForgeToolToast(message) {
+    const toast = document.getElementById('forge-3d-tool-toast');
+
+    if (!toast) {
+      console.log(message);
+      return;
+    }
+
+    toast.textContent = message;
+    toast.classList.add('is-visible');
+
+    clearTimeout(showForgeToolToast.hideTimer);
+    showForgeToolToast.hideTimer = setTimeout(() => {
+      toast.classList.remove('is-visible');
+    }, 2600);
+  }
+
+    window.startForgeRigPlacementMode = async function() {
+    const previewState = window.forge3dPreviewState;
+
+    if (!previewState?.scene || !previewState?.model || !previewState?.camera || !previewState?.renderer) {
+            showForgeToolToast('Load a 3D preview first');
+      return;
+    }
+
+    const { THREE, TransformControls } = await loadThreeModules();
+
+    window.clearForgeRigPlacementMode?.();
+
+    const box = new THREE.Box3().setFromObject(previewState.model);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+       const markerRadius = Math.max(size.x, size.y, size.z) * 0.015 || 0.03;
+    const viewDistance = Math.max(size.x, size.y, size.z) * 1.8 || 2;
+
+    const markerMaterial = new THREE.MeshBasicMaterial({
+      color: 0x5ecfca,
+      depthTest: false
+    });
+
+    const selectedMarkerMaterial = new THREE.MeshBasicMaterial({
+      color: 0xf3e6bf,
+      depthTest: false
+    });
+
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0xf3e6bf,
+      depthTest: false,
+      transparent: true,
+      opacity: 0.8
+    });
+
+    function createMarkerLabel(name) {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+            const fontSize = 28;
+      const paddingX = 16;
+      const paddingY = 9;
+
+      context.font = `${fontSize}px Arial`;
+      const textWidth = Math.ceil(context.measureText(name).width);
+
+      canvas.width = textWidth + paddingX * 2;
+      canvas.height = fontSize + paddingY * 2;
+
+      context.font = `${fontSize}px Arial`;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillStyle = 'rgba(0, 0, 0, 0.72)';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.strokeStyle = 'rgba(94, 207, 202, 0.9)';
+      context.lineWidth = 4;
+      context.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+      context.fillStyle = '#f3e6bf';
+      context.fillText(name, canvas.width / 2, canvas.height / 2);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({
+        map: texture,
+        depthTest: false,
+        transparent: true
+      });
+      const sprite = new THREE.Sprite(material);
+
+      sprite.name = `forge-rig-label-${name}`;
+      sprite.renderOrder = 1000;
+            sprite.position.set(0, markerRadius * 2.2, 0);
+      sprite.scale.set(markerRadius * 5.5, markerRadius * 1.55, 1);
+      sprite.userData.forgeRigLabelName = name;
+      sprite.userData.baseScale = [markerRadius * 5.5, markerRadius * 1.55, 1];
+
+      return sprite;
+    }
+
+    const markerPositions = {
+      hips: [center.x, box.min.y + size.y * 0.5, center.z],
+      spine: [center.x, box.min.y + size.y * 0.62, center.z],
+      chest: [center.x, box.min.y + size.y * 0.74, center.z],
+      neck: [center.x, box.min.y + size.y * 0.84, center.z],
+      head: [center.x, box.min.y + size.y * 0.92, center.z],
+
+      'left shoulder': [center.x - size.x * 0.22, box.min.y + size.y * 0.74, center.z],
+      'left elbow': [center.x - size.x * 0.38, box.min.y + size.y * 0.62, center.z],
+      'left hand': [center.x - size.x * 0.5, box.min.y + size.y * 0.52, center.z],
+
+      'right shoulder': [center.x + size.x * 0.22, box.min.y + size.y * 0.74, center.z],
+      'right elbow': [center.x + size.x * 0.38, box.min.y + size.y * 0.62, center.z],
+      'right hand': [center.x + size.x * 0.5, box.min.y + size.y * 0.52, center.z],
+
+      'left knee': [center.x - size.x * 0.16, box.min.y + size.y * 0.28, center.z],
+      'left foot': [center.x - size.x * 0.16, box.min.y + size.y * 0.06, center.z],
+
+      'right knee': [center.x + size.x * 0.16, box.min.y + size.y * 0.28, center.z],
+      'right foot': [center.x + size.x * 0.16, box.min.y + size.y * 0.06, center.z]
+    };
+
+    const initialMarkerPositions = Object.fromEntries(
+      Object.entries(markerPositions).map(([name, position]) => [name, position.slice()])
+    );
+
+    const markersByName = {};
+    const labelsByName = {};
+    const labels = [];
+    const markers = Object.entries(markerPositions).map(([name, position]) => {
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(markerRadius, 16, 16),
+        markerMaterial.clone()
+      );
+      const label = createMarkerLabel(name);
+
+      marker.name = `forge-rig-marker-${name}`;
+      marker.renderOrder = 999;
+      marker.position.set(position[0], position[1], position[2]);
+      marker.userData.forgeRigMarkerName = name;
+      marker.userData.defaultMaterial = marker.material;
+
+      marker.add(label);
+      previewState.scene.add(marker);
+
+      markersByName[name] = marker;
+      labelsByName[name] = label;
+      labels.push(label);
+
+      return marker;
+    });
+
+    const connectionPairs = [
+      ['hips', 'spine'],
+      ['spine', 'chest'],
+      ['chest', 'neck'],
+      ['neck', 'head'],
+
+      ['chest', 'left shoulder'],
+      ['left shoulder', 'left elbow'],
+      ['left elbow', 'left hand'],
+
+      ['chest', 'right shoulder'],
+      ['right shoulder', 'right elbow'],
+      ['right elbow', 'right hand'],
+
+      ['hips', 'left knee'],
+      ['left knee', 'left foot'],
+
+      ['hips', 'right knee'],
+      ['right knee', 'right foot']
+    ];
+
+    const lines = connectionPairs.map(([fromName, toName]) => {
+      const fromMarker = markersByName[fromName];
+      const toMarker = markersByName[toName];
+      const geometry = new THREE.BufferGeometry().setFromPoints([
+        fromMarker.position,
+        toMarker.position
+      ]);
+      const line = new THREE.Line(geometry, lineMaterial.clone());
+
+      line.name = `forge-rig-line-${fromName}-to-${toName}`;
+      line.renderOrder = 998;
+      line.userData.forgeRigLine = {
+        from: fromName,
+        to: toName
+      };
+
+      previewState.scene.add(line);
+      return line;
+    });
+
+    function updateRigPlacementLines() {
+      lines.forEach((line) => {
+        const fromMarker = markersByName[line.userData.forgeRigLine.from];
+        const toMarker = markersByName[line.userData.forgeRigLine.to];
+
+        line.geometry.setFromPoints([
+          fromMarker.position,
+          toMarker.position
+        ]);
+      });
+    }
+
+        function updateSelectedMarkerDisplay(markerName = 'none') {
+      const selectedMarkerEl = document.getElementById('forge-rig-selected-marker');
+      if (selectedMarkerEl) {
+        selectedMarkerEl.textContent = `Selected Marker: ${markerName}`;
+      }
+    }
+
+    function updateRigMarkerSizes() {
+      const placementState = window.forgeRigPlacementState;
+      const markerScaleMap = {
+        small: 1,
+        medium: 1.55,
+        large: 2.15
+      };
+      const scale = markerScaleMap[placementState?.markerSizeMode || 'small'] || 1;
+
+      markers.forEach((marker) => {
+        marker.scale.setScalar(scale);
+      });
+    }
+
+    function updateRigLabelSizes() {
+      const placementState = window.forgeRigPlacementState;
+      const labelScaleMap = {
+        small: 1,
+        medium: 1.45
+      };
+      const scale = labelScaleMap[placementState?.labelSizeMode || 'small'] || 1;
+
+      labels.forEach((label) => {
+        const baseScale = label.userData.baseScale || [markerRadius * 5.5, markerRadius * 1.55, 1];
+        label.scale.set(baseScale[0] * scale, baseScale[1] * scale, baseScale[2]);
+      });
+    }
+
+    const transformControls = new TransformControls(previewState.camera, previewState.renderer.domElement);
+    transformControls.setMode('translate');
+    transformControls.setSize(0.7);
+    transformControls.addEventListener('mouseDown', () => {
+      const selectedMarker = window.forgeRigPlacementState?.selectedMarker;
+      const markerName = selectedMarker?.userData?.forgeRigMarkerName;
+
+      if (!selectedMarker || !markerName) return;
+
+      window.forgeRigPlacementState.lastMove = {
+        markerName,
+        position: selectedMarker.position.toArray()
+      };
+    });
+    transformControls.addEventListener('dragging-changed', (event) => {
+      if (previewState.controls) {
+        previewState.controls.enabled = !event.value;
+      }
+    });
+    transformControls.addEventListener('change', updateRigPlacementLines);
+    transformControls.addEventListener('objectChange', updateRigPlacementLines);
+
+    const transformControlsHelper = typeof transformControls.getHelper === 'function'
+      ? transformControls.getHelper()
+      : transformControls;
+
+    previewState.scene.add(transformControlsHelper);
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    function selectMarker(marker) {
+      const markerName = marker.userData?.forgeRigMarkerName || 'none';
+
+      markers.forEach((item) => {
+        item.material = item.userData.defaultMaterial;
+      });
+
+      marker.material = selectedMarkerMaterial;
+      transformControls.attach(marker);
+
+      window.forgeRigPlacementState.selectedMarker = marker;
+      updateSelectedMarkerDisplay(markerName);
+    }
+
+    function pointerDownHandler(event) {
+      const rect = previewState.renderer.domElement.getBoundingClientRect();
+
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointer, previewState.camera);
+
+      const hits = raycaster.intersectObjects(markers, false);
+      if (!hits.length) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      selectMarker(hits[0].object);
+    }
+
+    previewState.renderer.domElement.addEventListener('pointerdown', pointerDownHandler);
+
+    window.forgeRigPlacementState = {
+      markers,
+      markersByName,
+      labels,
+      labelsByName,
+      lines,
+      connectionPairs,
+      transformControls,
+      transformControlsHelper,
+      selectedMarker: null,
+      pointerDownHandler,
+      updateRigPlacementLines,
+      updateSelectedMarkerDisplay,
+      initialMarkerPositions,
+      lastMove: null,
+      labelsVisible: true,
+      linesVisible: true,
+      markerSizeMode: 'small',
+      labelSizeMode: 'small',
+      markerSizeModes: ['small', 'medium', 'large'],
+      labelSizeModes: ['small', 'medium'],
+      updateRigMarkerSizes,
+      updateRigLabelSizes,
+      viewCenter: center.toArray(),
+      viewDistance
+    };
+
+    updateSelectedMarkerDisplay();
+
+    console.log('Rig Placement Mode started', window.forge3dPreviewState, window.forgeRigPlacementState);
+       showForgeToolToast('Rig Placement started');
+  };
+  function getForgeRigPlacementStorageKey() {
+    const glbUrl = window.forge3dPreviewState?.currentGlbUrl || 'unknown-glb';
+    return `forgeRigPlacementLayout:${glbUrl}`;
+  }
+
+  window.saveForgeRigPlacementLayout = function() {
+    const placementState = window.forgeRigPlacementState;
+    const previewState = window.forge3dPreviewState;
+
+    if (!placementState?.markers?.length) {
+          showForgeToolToast('Start Rig Placement first');
+      return;
+    }
+
+    const markers = {};
+
+    placementState.markers.forEach((marker) => {
+      const markerName = marker.userData?.forgeRigMarkerName || marker.name;
+      markers[markerName] = marker.position.toArray();
+    });
+
+        localStorage.setItem(getForgeRigPlacementStorageKey(), JSON.stringify({
+      glbUrl: previewState?.currentGlbUrl || '',
+      savedAt: new Date().toISOString(),
+      markers,
+      connectionPairs: placementState.connectionPairs || []
+    }));
+
+    console.log('Saved Forge rig layout', markers);
+       showForgeToolToast('Rig layout saved');
+  };
+
+    window.loadForgeRigPlacementLayout = function() {
+    const placementState = window.forgeRigPlacementState;
+
+    if (!placementState?.markers?.length) {
+          showForgeToolToast('Start Rig Placement first');
+      return;
+    }
+
+    const rawLayout = localStorage.getItem(getForgeRigPlacementStorageKey());
+
+    if (!rawLayout) {
+           showForgeToolToast('No saved layout found');
+      return;
+    }
+
+    let layout;
+
+    try {
+      layout = JSON.parse(rawLayout);
+    } catch(e) {
+      console.warn('Could not parse saved Forge rig layout:', e);
+            showForgeToolToast('Saved layout could not be loaded');
+      return;
+    }
+
+    Object.entries(layout.markers || {}).forEach(([markerName, position]) => {
+      const marker = placementState.markersByName?.[markerName] || placementState.markers.find((item) => {
+        return item.userData?.forgeRigMarkerName === markerName || item.name === markerName;
+      });
+
+      if (!marker || !Array.isArray(position) || position.length < 3) return;
+
+      marker.position.set(position[0], position[1], position[2]);
+    });
+
+    placementState.updateRigPlacementLines?.();
+
+    console.log('Loaded Forge rig layout', layout);
+       showForgeToolToast('Rig layout loaded');
+  };
+
+  window.undoForgeRigPlacementMove = function() {
+    const placementState = window.forgeRigPlacementState;
+    const lastMove = placementState?.lastMove;
+
+    if (!placementState?.markers?.length || !lastMove?.markerName || !Array.isArray(lastMove.position)) {
+          showForgeToolToast('No move to undo');
+      return;
+    }
+
+    const marker = placementState.markersByName?.[lastMove.markerName];
+
+    if (!marker) {
+           showForgeToolToast('Last moved marker is gone');
+      return;
+    }
+
+    marker.position.set(lastMove.position[0], lastMove.position[1], lastMove.position[2]);
+    placementState.updateRigPlacementLines?.();
+
+    console.log('Undid Forge rig marker move', lastMove);
+  };
+
+  window.resetForgeRigPlacementLayout = function() {
+    const placementState = window.forgeRigPlacementState;
+
+    if (!placementState?.markers?.length || !placementState?.initialMarkerPositions) {
+           showForgeToolToast('Start Rig Placement first');
+      return;
+    }
+
+    Object.entries(placementState.initialMarkerPositions).forEach(([markerName, position]) => {
+      const marker = placementState.markersByName?.[markerName];
+
+      if (!marker || !Array.isArray(position) || position.length < 3) return;
+
+      marker.position.set(position[0], position[1], position[2]);
+    });
+
+    placementState.lastMove = null;
+    placementState.updateRigPlacementLines?.();
+
+    console.log('Reset Forge rig layout');
+  };
+
+   window.toggleForgeRigPlacementLabels = function() {
+    const placementState = window.forgeRigPlacementState;
+
+    if (!placementState?.labels?.length) {
+          showForgeToolToast('Start Rig Placement first');
+      return;
+    }
+
+    placementState.labelsVisible = !placementState.labelsVisible;
+    placementState.labels.forEach((label) => {
+      label.visible = placementState.labelsVisible;
+    });
+  };
+
+  window.toggleForgeRigPlacementLines = function() {
+    const placementState = window.forgeRigPlacementState;
+
+    if (!placementState?.lines?.length) {
+          showForgeToolToast('Start Rig Placement first');
+      return;
+    }
+
+    placementState.linesVisible = !placementState.linesVisible;
+    placementState.lines.forEach((line) => {
+      line.visible = placementState.linesVisible;
+    });
+  };
+
+  window.cycleForgeRigMarkerSize = function() {
+    const placementState = window.forgeRigPlacementState;
+
+    if (!placementState?.markers?.length) {
+            showForgeToolToast('Start Rig Placement first');
+      return;
+    }
+
+    const modes = placementState.markerSizeModes || ['small', 'medium', 'large'];
+    const currentIndex = modes.indexOf(placementState.markerSizeMode || 'small');
+    placementState.markerSizeMode = modes[(currentIndex + 1) % modes.length];
+
+    placementState.updateRigMarkerSizes?.();
+    console.log('Forge rig marker size:', placementState.markerSizeMode);
+  };
+
+  window.cycleForgeRigLabelSize = function() {
+    const placementState = window.forgeRigPlacementState;
+
+    if (!placementState?.labels?.length) {
+            showForgeToolToast('Start Rig Placement first');
+      return;
+    }
+
+    const modes = placementState.labelSizeModes || ['small', 'medium'];
+    const currentIndex = modes.indexOf(placementState.labelSizeMode || 'small');
+    placementState.labelSizeMode = modes[(currentIndex + 1) % modes.length];
+
+    placementState.updateRigLabelSizes?.();
+    console.log('Forge rig label size:', placementState.labelSizeMode);
+  };
+
+  window.setForgeRigPlacementView = function(view) {
+    const placementState = window.forgeRigPlacementState;
+    const previewState = window.forge3dPreviewState;
+
+    if (!placementState?.viewCenter || !previewState?.camera) {
+           showForgeToolToast('Start Rig Placement first');
+      return;
+    }
+
+    const center = placementState.viewCenter;
+    const distance = placementState.viewDistance || 2;
+
+    if (view === 'side') {
+      previewState.camera.position.set(center[0] + distance, center[1], center[2]);
+    } else if (view === 'top') {
+      previewState.camera.position.set(center[0], center[1] + distance, center[2] + distance * 0.01);
+    } else {
+      previewState.camera.position.set(center[0], center[1], center[2] + distance);
+    }
+
+    previewState.camera.lookAt(center[0], center[1], center[2]);
+
+    if (previewState.controls) {
+      previewState.controls.target.set(center[0], center[1], center[2]);
+      previewState.controls.update();
+    }
+  };
+
+  window.copyForgeRigPlacementJson = async function() {
+    const placementState = window.forgeRigPlacementState;
+    const previewState = window.forge3dPreviewState;
+
+    if (!placementState?.markers?.length) {
+          showForgeToolToast('Start Rig Placement first');
+      return;
+    }
+
+    const markers = {};
+
+    placementState.markers.forEach((marker) => {
+      const markerName = marker.userData?.forgeRigMarkerName || marker.name;
+      markers[markerName] = marker.position.toArray();
+    });
+
+    const rigLayout = {
+      currentGlbUrl: previewState?.currentGlbUrl || '',
+      savedAt: new Date().toISOString(),
+      markers,
+      connectionPairs: placementState.connectionPairs || []
+    };
+
+    const rigLayoutJson = JSON.stringify(rigLayout, null, 2);
+
+    try {
+      await navigator.clipboard.writeText(rigLayoutJson);
+           showForgeToolToast('Rig layout JSON copied');
+    } catch(e) {
+      console.warn('Could not copy rig layout JSON:', e);
+      console.log('Rig layout JSON:', rigLayoutJson);
+            showForgeToolToast('Could not copy. JSON logged to console');
+    }
+  };
+
+            window.buildForgeRigFromLayout = async function() {
+    const sourceAssetGlbUrl = 'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb';
+
+    const rawRigLayout = localStorage.getItem(getForgeRigPlacementStorageKey());
+    if (!rawRigLayout) {
+      showForgeToolToast('No saved rig layout found');
+      return;
+    }
+
+    let rigLayout;
+    let bodyZoneLayout = null;
+
+    try {
+      rigLayout = JSON.parse(rawRigLayout);
+    } catch(e) {
+      console.warn('Could not parse saved rig layout:', e);
+      showForgeToolToast('Saved rig layout could not be loaded');
+      return;
+    }
+
+    const rawBodyZoneLayout = localStorage.getItem(getForgeBodyZoneStorageKey());
+
+    if (rawBodyZoneLayout) {
+      try {
+        bodyZoneLayout = JSON.parse(rawBodyZoneLayout);
+      } catch(e) {
+        console.warn('Could not parse saved Body Zones:', e);
+      }
+    }
+
+       const buildId = `rebel_469_forge_layout_build_${Date.now()}`;
+    const normalizedGlbUrl = sourceAssetGlbUrl.replace(/^\/+/, '');
+    const sourceGlbUrl = `https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/${normalizedGlbUrl}`;
+
+    showForgeToolToast('Rig build started');
+
+    try {
+      const response = await fetch('/api/forge-rig-builder-prototype', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          buildId,
+          sourceGlbUrl,
+          rigLayout,
+          bodyZoneLayout
+        })
+      });
+
+      const data = await response.json();
+
+      console.log('Forge layout rig build response:', data);
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.detail || data.error || 'Rig build failed');
+      }
+
+      const prototypeGlbUrl = data.prototypeGlbUrl || data.prototypeUrl || data.url || '';
+
+      window.lastForgeLayoutRigBuild = {
+        buildId,
+        sourceGlbUrl,
+        rigLayout,
+        bodyZoneLayout,
+        response: data,
+        prototypeGlbUrl
+      };
+
+      showForgeToolToast('Rig build complete');
+    } catch(e) {
+      console.warn('Could not build rig from layout:', e);
+      showForgeToolToast(`Rig build failed: ${e.message || e}`);
+    }
+  };
+
+      window.previewBuiltForgeRig = async function() {
+    const prototypeGlbUrl = window.lastForgeLayoutRigBuild?.prototypeGlbUrl || '';
+
+    if (!prototypeGlbUrl) {
+      showForgeToolToast('Build a rig first');
+      return;
+    }
+
+    try {
+      window.clearForgeRigPlacementMode?.();
+      window.clearForgeBodyZoneMode?.();
+      await renderThreeGlbPreview(prototypeGlbUrl);
+      showForgeToolToast('Built rig preview loaded');
+    } catch(e) {
+      console.warn('Could not preview built rig:', e);
+      showForgeToolToast('Could not preview built rig');
+    }
+  };
+
+   window.applyForgeLookToPlayableRig = async function() {
+    const previewState = window.forge3dPreviewState;
+    const fallbackSourceGlbUrl = 'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb';
+    const sourceGlbUrl = previewState?.currentGlbUrl || fallbackSourceGlbUrl;
+
+    showForgeToolToast('Applying look to playable rig');
+
+    try {
+      const response = await fetch('/api/forge-apply-look-to-playable-rig', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sourceGlbUrl
+        })
+      });
+
+      const data = await response.json();
+
+      console.log('Apply look to playable rig response:', data);
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.detail || data.error || 'Could not apply look');
+      }
+
+      window.lastForgePlayableLookBuild = {
+        sourceGlbUrl,
+        response: data,
+        playableGlbUrl: data.playableGlbUrl || ''
+      };
+      console.log('Playable look URL:', data.playableGlbUrl);
+
+      if (data.playableGlbUrl) {
+        await renderThreeGlbPreview(data.playableGlbUrl);
+        const { THREE } = await loadThreeModules();
+        frameForgeThreePreviewModel(THREE, window.forge3dPreviewState);
+        showForgeToolToast('Playable look preview loaded');
+      } else {
+        showForgeToolToast('Playable look ready');
+      }
+    } catch(e) {
+      console.warn('Could not apply look to playable rig:', e);
+      showForgeToolToast(`Playable look failed: ${e.message || e}`);
+    }
+  };
+
+  window.logForgeHeadAttachmentTransform = function() {
+    const attachment = window.forgeHeadAttachmentTest?.mesh || null;
+
+    if (!attachment) {
+      console.log('Forge head attachment test is not active');
+      return null;
+    }
+
+    const transform = {
+      position: attachment.position.toArray(),
+      rotation: [attachment.rotation.x, attachment.rotation.y, attachment.rotation.z],
+      scale: attachment.scale.toArray(),
+      headWorldPosition: window.forgeHeadAttachmentTest?.headBone?.getWorldPosition?.(new window.forgeHeadAttachmentTest.THREE.Vector3())?.toArray?.() || null,
+      ringWorldPosition: attachment.getWorldPosition(new window.forgeHeadAttachmentTest.THREE.Vector3()).toArray()
+    };
+
+    console.log('Forge head attachment transform:', transform);
+    return transform;
+  };
+
+  window.setForgeHeadAttachmentTransform = function({ x, y, z, scale, rx, ry, rz } = {}) {
+    const attachment = window.forgeHeadAttachmentTest?.mesh || null;
+
+    if (!attachment) {
+      console.log('Forge head attachment test is not active');
+      return null;
+    }
+
+    if (typeof x === 'number') attachment.position.x = x;
+    if (typeof y === 'number') attachment.position.y = y;
+    if (typeof z === 'number') attachment.position.z = z;
+    if (typeof rx === 'number') attachment.rotation.x = rx;
+    if (typeof ry === 'number') attachment.rotation.y = ry;
+    if (typeof rz === 'number') attachment.rotation.z = rz;
+    if (typeof scale === 'number') attachment.scale.set(scale, scale, scale);
+
+    return window.logForgeHeadAttachmentTransform();
+  };
+
+  function installForgeHeadAttachmentKeyboardControls(stage) {
+    const previousHandler = window.forge3dPreviewState?.attachmentKeyHandler;
+
+    if (previousHandler) {
+      stage.removeEventListener('keydown', previousHandler);
+    }
+
+    const step = 2;
+    const scaleStep = 0.04;
+    const keyHandler = (event) => {
+      const attachment = window.forgeHeadAttachmentTest?.mesh || null;
+
+      if (!attachment || document.activeElement !== stage) return;
+
+      const key = event.key.toLowerCase();
+      let handled = true;
+
+      if (key === 'i') attachment.position.y += step;
+      else if (key === 'k') attachment.position.y -= step;
+      else if (key === 'j') attachment.position.x -= step;
+      else if (key === 'l') attachment.position.x += step;
+      else if (key === 'u') attachment.position.z -= step;
+      else if (key === 'o') attachment.position.z += step;
+      else if (event.key === '[') attachment.scale.multiplyScalar(Math.max(0.1, 1 - scaleStep));
+      else if (event.key === ']') attachment.scale.multiplyScalar(1 + scaleStep);
+      else if (key === 'p') window.logForgeHeadAttachmentTransform();
+      else handled = false;
+
+      if (!handled) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (key !== 'p') {
+        window.logForgeHeadAttachmentTransform();
+      }
+    };
+
+    stage.addEventListener('keydown', keyHandler);
+    window.forge3dPreviewState.attachmentKeyHandler = keyHandler;
+  }
+
+  function getForgeHeadAttachmentPlacement(THREE, previewState, headBone) {
+    previewState.model.updateWorldMatrix(true, true);
+    headBone.updateWorldMatrix(true, false);
+
+    const visibleBounds = getForgeVisibleMeshBounds(THREE, previewState.model);
+    const characterHeight = visibleBounds?.characterHeight || 2;
+    const headWorldPosition = headBone.getWorldPosition(new THREE.Vector3());
+    const ringLocalPosition = new THREE.Vector3(0, 2, 0.6);
+    const ringRadius = THREE.MathUtils.clamp(characterHeight * 0.035, 0.025, characterHeight * 0.06);
+    const tubeRadius = THREE.MathUtils.clamp(ringRadius * 0.12, 0.004, ringRadius * 0.22);
+    const ringWorldPosition = headBone.localToWorld(ringLocalPosition.clone());
+
+    return {
+      visibleBounds,
+      characterHeight,
+      headWorldPosition,
+      ringWorldPosition,
+      ringLocalPosition,
+      ringRadius,
+      tubeRadius
+    };
+  }
+
+  window.addForgeHeadWrapAttachmentTest = async function() {
+    // Source-sliced attachments are paused because the Meshy source is one welded mesh and extraction is unreliable.
+    showForgeToolToast('Head wrap attachment test paused');
+    return;
+
+    const previewState = window.forge3dPreviewState;
+    const stage = document.getElementById('forge-3d-preview-stage');
+
+    if (!previewState?.model || !previewState?.scene || !stage) {
+      showForgeToolToast('Load a playable preview first');
+      return;
+    }
+
+    const { THREE, GLTFLoader, DRACOLoader } = await loadThreeModules();
+    let headBone = null;
+
+    previewState.model.traverse((object) => {
+      if (!headBone && object.name === 'mixamorig_Head') {
+        headBone = object;
+      }
+    });
+
+    if (!headBone) {
+      console.log('Forge head attachment test failed: mixamorig_Head not found');
+      showForgeToolToast('Head bone not found');
+      return;
+    }
+
+    const attachmentGlbUrl = 'assets/forge/attachments/headwrap_test.glb';
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+
+    const loader = new GLTFLoader();
+    loader.setCrossOrigin('anonymous');
+    loader.setDRACOLoader(dracoLoader);
+
+    let attachmentGltf = null;
+
+    try {
+      attachmentGltf = await new Promise((resolve, reject) => {
+        loader.load(attachmentGlbUrl, resolve, undefined, reject);
+      });
+    } catch(e) {
+      console.warn('Forge head wrap GLB missing or failed to load:', e);
+      showForgeToolToast('Head wrap GLB missing');
+      dracoLoader.dispose();
+      return;
+    }
+
+    dracoLoader.dispose();
+
+    if (window.forgeHeadAttachmentTest?.mesh) {
+      const oldAttachment = window.forgeHeadAttachmentTest.mesh;
+      oldAttachment.parent?.remove(oldAttachment);
+      disposeForgeObject3d(oldAttachment);
+    }
+
+    const placement = getForgeHeadAttachmentPlacement(THREE, previewState, headBone);
+    const headWrap = attachmentGltf.scene || new THREE.Group();
+    headWrap.name = 'forgeHeadWrapAttachmentTest';
+    headWrap.userData.forgeAttachmentTest = true;
+    headWrap.traverse((object) => {
+      object.userData.forgeAttachmentTest = true;
+    });
+    headWrap.position.copy(placement.ringLocalPosition);
+    headWrap.rotation.set(0, 0, 0);
+    headWrap.scale.set(1, 1, 1);
+    headBone.add(headWrap);
+    headWrap.updateWorldMatrix(true, false);
+
+    window.forgeHeadAttachmentTest = {
+      THREE,
+      mesh: headWrap,
+      headBone,
+      targetBoneName: 'mixamorig_Head',
+      playableGlbUrl: previewState.currentGlbUrl || '',
+      placementReport: {
+        visibleBounds: placement.visibleBounds ? {
+          boxMin: placement.visibleBounds.box.min.toArray(),
+          boxMax: placement.visibleBounds.box.max.toArray(),
+          center: placement.visibleBounds.center.toArray(),
+          size: placement.visibleBounds.size.toArray(),
+          meshCount: placement.visibleBounds.meshCount,
+          ignoredMeshCount: placement.visibleBounds.ignoredMeshCount
+        } : null,
+        characterHeight: placement.characterHeight,
+        headWorldPosition: placement.headWorldPosition.toArray(),
+        ringWorldPosition: placement.ringWorldPosition.toArray(),
+        ringLocalPosition: placement.ringLocalPosition.toArray(),
+        ringWorldPositionAfterParent: headWrap.getWorldPosition(new THREE.Vector3()).toArray(),
+        ringRadius: placement.ringRadius,
+        tubeRadius: placement.tubeRadius
+      }
+    };
+
+    console.log('Forge head attachment test added', window.forgeHeadAttachmentTest);
+    console.log('Forge head attachment placement:', window.forgeHeadAttachmentTest.placementReport);
+    installForgeHeadAttachmentKeyboardControls(stage);
+    stage.focus();
+    window.logForgeHeadAttachmentTransform();
+    showForgeToolToast('Head Wrap Test added');
+  };
+
+  window.previewForgeWalkTest = async function() {
+    const prototypeGlbUrl = window.lastForgeLayoutRigBuild?.prototypeGlbUrl || '';
+    const previewState = window.forge3dPreviewState;
+    const walkAnimationGlbUrl = '/assets/character/ant_walk_c.glb';
+
+    if (!prototypeGlbUrl || previewState?.currentGlbUrl !== prototypeGlbUrl || !previewState?.model) {
+      showForgeToolToast('Build and Preview a rig first');
+      return;
+    }
+
+    try {
+            const { THREE, GLTFLoader, DRACOLoader } = await loadThreeModules();
+
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+
+      const loader = new GLTFLoader();
+      loader.setCrossOrigin('anonymous');
+      loader.setDRACOLoader(dracoLoader);
+
+      const animationGltf = await new Promise((resolve, reject) => {
+        loader.load(walkAnimationGlbUrl, resolve, undefined, reject);
+      });
+
+      dracoLoader.dispose();
+
+      const walkClip = animationGltf.animations?.[0] || null;
+
+      if (!walkClip) {
+        showForgeToolToast('Walk animation not found');
+        return;
+      }
+
+                       const targetNames = new Set();
+      const rigBoneNames = new Set();
+      let skinnedMesh = null;
+
+      previewState.model.traverse((object) => {
+        if (object.name) targetNames.add(object.name);
+
+        if (!skinnedMesh && object.isSkinnedMesh && object.skeleton?.bones?.length) {
+          skinnedMesh = object;
+        }
+
+        if (object.isSkinnedMesh && object.skeleton?.bones?.length) {
+          object.skeleton.bones.forEach((bone) => {
+            if (bone.name) {
+              targetNames.add(bone.name);
+              rigBoneNames.add(bone.name);
+            }
+          });
+        }
+      });
+
+      if (!skinnedMesh?.skeleton?.bones?.length) {
+        showForgeToolToast('No built rig skeleton found');
+        return;
+      }
+
+      const boneLookup = new Map();
+
+      skinnedMesh.skeleton.bones.forEach((bone) => {
+        if (bone.name) boneLookup.set(bone.name, bone);
+      });
+
+      const animationTargetNames = new Set(walkClip.tracks.map((track) => {
+        return track.name.split('.')[0].replace(/\[.*?\]/g, '');
+      }));
+
+      const retargetedTracks = walkClip.tracks.reduce((tracks, track) => {
+        const targetName = track.name.split('.')[0].replace(/\[.*?\]/g, '');
+        const propertyPath = track.name.slice(track.name.indexOf('.') + 1);
+        const matchingBone = boneLookup.get(targetName);
+
+        if (!matchingBone || !propertyPath || propertyPath === track.name) {
+          return tracks;
+        }
+
+                               const clonedTrack = track.clone();
+        clonedTrack.name = `.bones[${matchingBone.name}].${propertyPath}`;
+        tracks.push(clonedTrack);
+
+        return tracks;
+      }, []);
+
+            const mixerRoot = skinnedMesh;
+
+      console.log('Forge walk retarget names:', {
+        rigTargetNamesFirst20: [...targetNames].slice(0, 20),
+        rigBoneNamesFirst20: [...rigBoneNames].slice(0, 20),
+        animationTargetNamesFirst20: [...animationTargetNames].slice(0, 20)
+      });
+
+      console.log('Forge walk retargeted track names first20:', retargetedTracks.map((track) => track.name).slice(0, 20));
+
+      if (!retargetedTracks.length) {
+        showForgeToolToast('No matching walk bones found');
+        return;
+      }
+
+      if (previewState.walkAction) {
+        previewState.walkAction.stop();
+      }
+
+      if (previewState.mixer) {
+        previewState.mixer.stopAllAction();
+      }
+
+      const retargetedClip = new THREE.AnimationClip(
+        `${walkClip.name || 'ForgeWalk'}_retargeted`,
+        walkClip.duration,
+        retargetedTracks
+      );
+
+      previewState.mixer = new THREE.AnimationMixer(mixerRoot);
+      previewState.walkAction = previewState.mixer.clipAction(retargetedClip);
+      previewState.walkAnimationSource = walkAnimationGlbUrl;
+      previewState.walkAction.reset();
+      previewState.walkAction.setLoop(THREE.LoopRepeat, Infinity);
+      previewState.walkAction.play();
+
+            console.log('Forge walk test started:', {
+        builtRigUrl: prototypeGlbUrl,
+        walkAnimationGlbUrl,
+        mixerRootName: mixerRoot.name || '(unnamed mixer root)',
+        mixerRootHasSkeleton: !!mixerRoot.skeleton,
+        skinnedMeshName: skinnedMesh.name || '(unnamed skinned mesh)',
+        matchedTrackCount: retargetedTracks.length,
+        originalTrackCount: walkClip.tracks.length
+      });
+
+      showForgeToolToast('Walk test playing');
+    } catch(e) {
+      console.warn('Could not start Forge walk test:', e);
+      showForgeToolToast('Could not start walk test');
+    }
+  };
+
+  window.clearForgeRigPlacementMode = function() {
+    const placementState = window.forgeRigPlacementState;
+    const previewState = window.forge3dPreviewState;
+
+    if (!placementState) {
+      const selectedMarkerEl = document.getElementById('forge-rig-selected-marker');
+      if (selectedMarkerEl) {
+        selectedMarkerEl.textContent = 'Selected Marker: none';
+      }
+      return;
+    }
+
+    if (previewState?.renderer?.domElement && placementState.pointerDownHandler) {
+      previewState.renderer.domElement.removeEventListener('pointerdown', placementState.pointerDownHandler);
+    }
+
+    if (previewState?.controls) {
+      previewState.controls.enabled = true;
+    }
+
+    if (placementState.transformControls) {
+      placementState.transformControls.detach();
+      placementState.transformControls.dispose?.();
+    }
+
+    if (placementState.transformControlsHelper) {
+      placementState.transformControlsHelper.parent?.remove(placementState.transformControlsHelper);
+    }
+
+    if (placementState.lines?.length) {
+      placementState.lines.forEach((line) => {
+        line.parent?.remove(line);
+        line.geometry?.dispose?.();
+        line.material?.dispose?.();
+      });
+    }
+
+    if (placementState.markers?.length) {
+      placementState.markers.forEach((marker) => {
+        marker.parent?.remove(marker);
+
+        marker.children?.forEach((child) => {
+          child.material?.map?.dispose?.();
+          child.material?.dispose?.();
+        });
+
+        marker.geometry?.dispose?.();
+        marker.material?.dispose?.();
+      });
+    }
+
+    window.forgeRigPlacementState = null;
+
+    const selectedMarkerEl = document.getElementById('forge-rig-selected-marker');
+    if (selectedMarkerEl) {
+      selectedMarkerEl.textContent = 'Selected Marker: none';
+    }
+
+    console.log('Cleared Forge Rig Placement Mode');
+  };
+       window.startForgeBodyZoneMode = async function() {
+    const previewState = window.forge3dPreviewState;
+
+    if (!previewState?.scene || !previewState?.model || !previewState?.camera || !previewState?.renderer) {
+           showForgeToolToast('Load a 3D preview first');
+      return;
+    }
+
+    const { THREE, TransformControls } = await loadThreeModules();
+
+    window.clearForgeRigPlacementMode?.();
+    window.clearForgeBodyZoneMode?.();
+
+    const box = new THREE.Box3().setFromObject(previewState.model);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+
+    const zoneMaterial = new THREE.MeshBasicMaterial({
+      color: 0x5ecfca,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false
+    });
+
+    const selectedZoneMaterial = new THREE.MeshBasicMaterial({
+      color: 0xf3e6bf,
+      transparent: true,
+      opacity: 0.32,
+      depthWrite: false
+    });
+
+    const zoneConfigs = [
+      {
+        name: 'Head',
+        position: [center.x, box.min.y + size.y * 0.88, center.z],
+        scale: [size.x * 0.32, size.y * 0.18, size.z * 0.42],
+        color: 0xf3e6bf
+      },
+      {
+        name: 'Chest',
+        position: [center.x, box.min.y + size.y * 0.67, center.z],
+        scale: [size.x * 0.58, size.y * 0.28, size.z * 0.5],
+        color: 0x5ecfca
+      },
+      {
+        name: 'Hips',
+        position: [center.x, box.min.y + size.y * 0.45, center.z],
+        scale: [size.x * 0.52, size.y * 0.22, size.z * 0.48],
+        color: 0xc8922a
+      },
+      {
+        name: 'Left Arm',
+        position: [center.x - size.x * 0.38, box.min.y + size.y * 0.58, center.z],
+        scale: [size.x * 0.24, size.y * 0.42, size.z * 0.34],
+        color: 0x73d9ff
+      },
+      {
+        name: 'Right Arm',
+        position: [center.x + size.x * 0.38, box.min.y + size.y * 0.58, center.z],
+        scale: [size.x * 0.24, size.y * 0.42, size.z * 0.34],
+        color: 0x73d9ff
+      },
+      {
+        name: 'Left Leg',
+        position: [center.x - size.x * 0.16, box.min.y + size.y * 0.2, center.z],
+        scale: [size.x * 0.24, size.y * 0.42, size.z * 0.34],
+        color: 0xd98cff
+      },
+      {
+        name: 'Right Leg',
+        position: [center.x + size.x * 0.16, box.min.y + size.y * 0.2, center.z],
+        scale: [size.x * 0.24, size.y * 0.42, size.z * 0.34],
+        color: 0xd98cff
+      }
+    ];
+
+    const zonesByName = {};
+    const zones = zoneConfigs.map((config) => {
+      const material = zoneMaterial.clone();
+      material.color = new THREE.Color(config.color);
+
+      const zone = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        material
+      );
+
+      zone.name = `forge-body-zone-${config.name}`;
+      zone.position.set(config.position[0], config.position[1], config.position[2]);
+      zone.scale.set(config.scale[0], config.scale[1], config.scale[2]);
+      zone.renderOrder = 700;
+      zone.userData.forgeBodyZoneName = config.name;
+      zone.userData.defaultMaterial = material;
+
+      previewState.scene.add(zone);
+      zonesByName[config.name] = zone;
+
+      return zone;
+    });
+
+    const transformControls = new TransformControls(previewState.camera, previewState.renderer.domElement);
+    transformControls.setMode('translate');
+    transformControls.setSize(0.85);
+    transformControls.addEventListener('dragging-changed', (event) => {
+      if (previewState.controls) {
+        previewState.controls.enabled = !event.value;
+      }
+    });
+
+    const transformControlsHelper = typeof transformControls.getHelper === 'function'
+      ? transformControls.getHelper()
+      : transformControls;
+
+    previewState.scene.add(transformControlsHelper);
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    function selectZone(zone) {
+      zones.forEach((item) => {
+        item.material = item.userData.defaultMaterial;
+      });
+
+      zone.material = selectedZoneMaterial;
+      transformControls.attach(zone);
+
+      window.forgeBodyZoneState.selectedZone = zone;
+
+      console.log('Selected Body Zone:', zone.userData?.forgeBodyZoneName || zone.name);
+    }
+
+    function pointerDownHandler(event) {
+      const rect = previewState.renderer.domElement.getBoundingClientRect();
+
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointer, previewState.camera);
+
+      const hits = raycaster.intersectObjects(zones, false);
+      if (!hits.length) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      selectZone(hits[0].object);
+    }
+
+    previewState.renderer.domElement.addEventListener('pointerdown', pointerDownHandler);
+
+    window.forgeBodyZoneState = {
+      zones,
+      zonesByName,
+      selectedZone: null,
+      transformControls,
+      transformControlsHelper,
+      pointerDownHandler,
+      toolMode: 'move',
+      currentGlbUrl: previewState.currentGlbUrl || '',
+      bounds: {
+        min: box.min.toArray(),
+        max: box.max.toArray(),
+        center: center.toArray(),
+        size: size.toArray()
+      }
+    };
+
+    console.log('Body Zones started', window.forgeBodyZoneState);
+      showForgeToolToast('Body Zones started');
+  };
+    window.clearForgeBodyZoneMode = function() {
+    const bodyZoneState = window.forgeBodyZoneState;
+    const previewState = window.forge3dPreviewState;
+
+    if (!bodyZoneState?.zones?.length) {
+      window.forgeBodyZoneState = null;
+      return;
+    }
+
+    if (previewState?.renderer?.domElement && bodyZoneState.pointerDownHandler) {
+      previewState.renderer.domElement.removeEventListener('pointerdown', bodyZoneState.pointerDownHandler);
+    }
+
+    if (previewState?.controls) {
+      previewState.controls.enabled = true;
+    }
+
+    if (bodyZoneState.transformControls) {
+      bodyZoneState.transformControls.detach();
+      bodyZoneState.transformControls.dispose?.();
+    }
+
+    if (bodyZoneState.transformControlsHelper) {
+      bodyZoneState.transformControlsHelper.parent?.remove(bodyZoneState.transformControlsHelper);
+    }
+
+    bodyZoneState.zones.forEach((zone) => {
+      zone.parent?.remove(zone);
+      zone.geometry?.dispose?.();
+      zone.material?.dispose?.();
+      zone.userData?.defaultMaterial?.dispose?.();
+    });
+
+    window.forgeBodyZoneState = null;
+
+    console.log('Cleared Body Zones');
+  };
+     window.cycleForgeBodyZoneTool = function() {
+    const bodyZoneState = window.forgeBodyZoneState;
+
+    if (!bodyZoneState?.transformControls) {
+            showForgeToolToast('Start Body Zones first');
+      return;
+    }
+
+    bodyZoneState.toolMode = bodyZoneState.toolMode === 'move' ? 'scale' : 'move';
+    bodyZoneState.transformControls.setMode(bodyZoneState.toolMode === 'scale' ? 'scale' : 'translate');
+
+    console.log('Body Zone tool:', bodyZoneState.toolMode === 'scale' ? 'Scale' : 'Move');
+  };
+
+  window.shrinkForgeBodyZone = function() {
+    const selectedZone = window.forgeBodyZoneState?.selectedZone;
+
+    if (!selectedZone) {
+           showForgeToolToast('Select a Body Zone first');
+      return;
+    }
+
+    selectedZone.scale.multiplyScalar(0.9);
+  };
+
+  window.growForgeBodyZone = function() {
+    const selectedZone = window.forgeBodyZoneState?.selectedZone;
+
+    if (!selectedZone) {
+      showForgeToolToast('Select a Body Zone first');
+      return;
+    }
+
+    selectedZone.scale.multiplyScalar(1.1);
+  };
+
+    function getForgeBodyZoneStorageKey() {
+    const glbUrl = window.forge3dPreviewState?.currentGlbUrl || 'unknown-glb';
+    return `forgeBodyZoneLayout:${glbUrl}`;
+  }
+
+  function getForgeBodyZoneLayout() {
+    const bodyZoneState = window.forgeBodyZoneState;
+    const previewState = window.forge3dPreviewState;
+
+    if (!bodyZoneState?.zones?.length) return null;
+
+    return {
+      currentGlbUrl: previewState?.currentGlbUrl || bodyZoneState.currentGlbUrl || '',
+      savedAt: new Date().toISOString(),
+      zones: bodyZoneState.zones.map((zone) => {
+        return {
+          name: zone.userData?.forgeBodyZoneName || zone.name,
+          position: zone.position.toArray(),
+          scale: zone.scale.toArray()
+        };
+      }),
+      bounds: bodyZoneState.bounds || null
+    };
+  }
+
+  window.saveForgeBodyZones = function() {
+    const bodyZoneLayout = getForgeBodyZoneLayout();
+
+    if (!bodyZoneLayout) {
+          showForgeToolToast('Start Body Zones first');
+      return;
+    }
+
+    localStorage.setItem(getForgeBodyZoneStorageKey(), JSON.stringify(bodyZoneLayout));
+
+    console.log('Saved Body Zones', bodyZoneLayout);
+       showForgeToolToast('Body Zones saved');
+  };
+
+  window.loadForgeBodyZones = function() {
+    const bodyZoneState = window.forgeBodyZoneState;
+
+    if (!bodyZoneState?.zones?.length) {
+           showForgeToolToast('Start Body Zones first');
+      return;
+    }
+
+    const rawLayout = localStorage.getItem(getForgeBodyZoneStorageKey());
+
+    if (!rawLayout) {
+            showForgeToolToast('No saved Body Zones found');
+      return;
+    }
+
+    let bodyZoneLayout;
+
+    try {
+      bodyZoneLayout = JSON.parse(rawLayout);
+    } catch(e) {
+      console.warn('Could not parse saved Body Zones:', e);
+           showForgeToolToast('Saved Body Zones could not be loaded');
+      return;
+    }
+
+    (bodyZoneLayout.zones || []).forEach((savedZone) => {
+      const zone = bodyZoneState.zonesByName?.[savedZone.name];
+
+      if (!zone || !Array.isArray(savedZone.position) || !Array.isArray(savedZone.scale)) return;
+
+      zone.position.set(savedZone.position[0], savedZone.position[1], savedZone.position[2]);
+      zone.scale.set(savedZone.scale[0], savedZone.scale[1], savedZone.scale[2]);
+    });
+
+    console.log('Loaded Body Zones', bodyZoneLayout);
+       showForgeToolToast('Body Zones loaded');
+  };
+
+  window.copyForgeBodyZoneJson = async function() {
+    const bodyZoneState = window.forgeBodyZoneState;
+    const previewState = window.forge3dPreviewState;
+
+    if (!bodyZoneState?.zones?.length) {
+           showForgeToolToast('Start Body Zones first');
+      return;
+    }
+
+    const bodyZoneJson = JSON.stringify({
+      currentGlbUrl: previewState?.currentGlbUrl || bodyZoneState.currentGlbUrl || '',
+      savedAt: new Date().toISOString(),
+      zones: bodyZoneState.zones.map((zone) => {
+        return {
+          name: zone.userData?.forgeBodyZoneName || zone.name,
+          position: zone.position.toArray(),
+          scale: zone.scale.toArray()
+        };
+      }),
+      bounds: bodyZoneState.bounds || null
+    }, null, 2);
+
+    try {
+      await navigator.clipboard.writeText(bodyZoneJson);
+          showForgeToolToast('Body Zone JSON copied');
+    } catch(e) {
+      console.warn('Could not copy Body Zone JSON:', e);
+      console.log('Body Zone JSON:', bodyZoneJson);
+            showForgeToolToast('Could not copy. JSON logged to console');
+    }
+  };
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(boot3dPreviewPanel, 500);
+  });
+})();

@@ -344,6 +344,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+<script src="assets/forge-core.js"></script>
 <script type="module">
 const canvas=document.getElementById('c');
 const setSt=t=>{document.getElementById('ldst').textContent=t;};
@@ -1146,6 +1147,17 @@ let adminMode = false;
 let _worklightOn = false;
 let adminDragging = false;
 
+async function hasActiveAdminSession() {
+  try {
+    const response = await fetch('/api/admin-session');
+    const data = await response.json();
+    return data.authenticated === true;
+  } catch(e) {
+    console.warn('Admin session check failed:', e);
+    return false;
+  }
+}
+
 const GRID_SIZE = 6;
 const ROT_SNAP = Math.PI / 2;
 const SNAP_DISTANCE = 1.5;
@@ -1154,9 +1166,15 @@ const ROT_SNAP_DISTANCE = 0.18;
 function updateAdminBadge(){
   const gpuBadge = document.getElementById('gpuBadge');
   if (gpuBadge) gpuBadge.style.display = adminMode ? 'block' : 'none';
+
   const badge = document.getElementById('adminBadge');
-  if (!badge) return;
-  badge.classList.toggle('on', adminMode);
+  if (badge) {
+    badge.classList.toggle('on', adminMode);
+  }
+
+  if (typeof refreshForgeVillagePreviewToggle === 'function') {
+    refreshForgeVillagePreviewToggle();
+  }
 }
 
 function updateSelectedBadge(){
@@ -1807,14 +1825,117 @@ function getSelectedRebel() {
   }
 }
 
-function resolveCharacterConfig(rebel) {
-  // V1: every selected Rebel uses the same starter 3D character bundle.
-  // Later, the NFT → 3D Forge pipeline can return token-specific generated GLBs here.
-  return {
-    rebel,
-    characterId: rebel.id || 'ant_1',
-    displayName: rebel.name || 'Rebel #001',
-    previewImage: rebel.image || 'assets/lobby/ant_1.JPG',
+async function loadActiveForgeCharacterForVillage(rebel) {
+  if (!rebel) return null;
+
+  const collectionKey = rebel.collectionKey || 'battle_for_colony';
+  const tokenId = rebel.tokenId || '';
+  const rebelId = rebel.rebelId || rebel.id || '';
+
+  if (!tokenId && !rebelId) return null;
+
+  const params = new URLSearchParams({ collectionKey });
+
+  if (tokenId) {
+    params.set('tokenId', tokenId);
+  } else if (rebelId) {
+    params.set('rebelId', rebelId);
+  }
+
+  try {
+    const response = await fetch(`/api/forge-active-character-get?${params.toString()}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.ok || !data.hasActiveCharacter) {
+      return null;
+    }
+
+    return data.activeCharacter || null;
+  } catch(e) {
+    console.warn('Could not refresh active Forge character in Village:', e);
+    return null;
+  }
+}
+
+function forgeCharacterMatchesVillageRebel(activeForgeCharacter, rebel) {
+  if (!activeForgeCharacter || !rebel) return false;
+
+  const activeTokenId = activeForgeCharacter.tokenId ? String(activeForgeCharacter.tokenId) : '';
+  const rebelTokenId = rebel.tokenId ? String(rebel.tokenId) : '';
+
+  const activeRebelId = activeForgeCharacter.rebelId ? String(activeForgeCharacter.rebelId) : '';
+  const rebelRebelId = rebel.rebelId ? String(rebel.rebelId) : '';
+  const rebelId = rebel.id ? String(rebel.id) : '';
+
+  if (activeTokenId && rebelTokenId && activeTokenId === rebelTokenId) return true;
+  if (activeRebelId && rebelRebelId && activeRebelId === rebelRebelId) return true;
+  if (activeRebelId && rebelId && activeRebelId === rebelId) return true;
+
+  return false;
+}
+
+async function refreshActiveForgeCharacterForVillage() {
+  const selectedRebel = window.activeRebel || getSelectedRebel();
+  const activeForgeCharacter = await loadActiveForgeCharacterForVillage(selectedRebel);
+
+  if (!activeForgeCharacter) {
+    if (selectedRebel?.playableType === 'forge_build' && selectedRebel.activeForgeCharacter?.activeGlbUrl) {
+      const selectedCharacter = resolveCharacterConfig(selectedRebel);
+      window.activeRebel = selectedRebel;
+      window.activeCharacter = selectedCharacter;
+
+      console.log('Village using selected saved Forge playable without global active refresh:', {
+        buildId: selectedRebel.buildId || selectedRebel.activeForgeCharacter.activeForgeBuildId || null,
+        activeGlbUrl: selectedCharacter.activeGlbUrl,
+        idleGlbUrl: selectedCharacter.idleGlbUrl,
+        walkingGlbUrl: selectedCharacter.walkingGlbUrl,
+        runningGlbUrl: selectedCharacter.runningGlbUrl
+      });
+
+      return selectedCharacter;
+    }
+
+    return window.activeCharacter || null;
+  }
+
+  if (!forgeCharacterMatchesVillageRebel(activeForgeCharacter, selectedRebel)) {
+    console.warn('Active Forge character did not match selected Rebel in Village:', {
+      selectedRebel,
+      activeForgeCharacter
+    });
+    return window.activeCharacter || null;
+  }
+
+  const refreshedRebel = {
+    ...selectedRebel,
+    activeForgeCharacter,
+    activeGlbUrl: activeForgeCharacter.activeGlbUrl || null,
+    characterSource: 'forge_glb'
+  };
+  const refreshedCharacter = resolveCharacterConfig(refreshedRebel);
+
+  try {
+    localStorage.setItem('selectedRebel', JSON.stringify(refreshedRebel));
+  } catch(e) {}
+
+  window.activeRebel = refreshedRebel;
+  window.activeCharacter = refreshedCharacter;
+
+  console.log('Village active Forge character refreshed:', {
+    activeGlbUrl: refreshedCharacter.activeGlbUrl,
+    idleGlbUrl: refreshedCharacter.idleGlbUrl,
+    walkingGlbUrl: refreshedCharacter.walkingGlbUrl,
+    runningGlbUrl: refreshedCharacter.runningGlbUrl,
+    walkingArmatureGlbUrl: refreshedCharacter.walkingArmatureGlbUrl,
+    runningArmatureGlbUrl: refreshedCharacter.runningArmatureGlbUrl
+  });
+
+  return refreshedCharacter;
+}
+
+const CHARACTER_REGISTRY = {
+  starter_ant: {
+    bundleId: 'starter_ant',
     formType: 'starter',
     formLabel: 'Starter 3D Form',
     hasGeneratedModel: false,
@@ -1826,9 +1947,1231 @@ function resolveCharacterConfig(rebel) {
       { f: 'ant_flip_kick_c.glb', i: 3 },
       { f: 'ant_jumping_c.glb', i: 4 }
     ]
+  },
+
+  // Temporary forged-path test bundle.
+  // Uses the same starter GLBs for now, but proves the future NFT-specific bundle logic works.
+  forged_test_ant: {
+    bundleId: 'forged_test_ant',
+    formType: 'forged',
+    formLabel: 'Forged 3D Form',
+    hasGeneratedModel: true,
+    basePath: '/assets/character/',
+    idleFile: 'ant_idle_c.glb',
+    animations: [
+      { f: 'ant_walk_c.glb', i: 1 },
+      { f: 'ant_run_c.glb', i: 2 },
+      { f: 'ant_flip_kick_c.glb', i: 3 },
+      { f: 'ant_jumping_c.glb', i: 4 }
+    ]
+  }
+};
+
+// Per-Rebel character records.
+// V1 test: Rebel #469 temporarily resolves to a forged bundle so we can prove the future path works.
+// Later, the NFT → 3D Forge pipeline can save real token-specific bundle choices here.
+const REBEL_CHARACTER_RECORDS = {
+  "469": {
+    bundleId: "forged_test_ant"
+  }
+};
+function getRebelCharacterRecord(rebel) {
+  if (!rebel || !rebel.tokenId) return null;
+  return REBEL_CHARACTER_RECORDS[String(rebel.tokenId)] || null;
+}
+
+function resolveCharacterConfig(rebel) {
+  const characterRecord = getRebelCharacterRecord(rebel);
+  const requestedBundleId = characterRecord && characterRecord.bundleId
+    ? characterRecord.bundleId
+    : 'starter_ant';
+
+  const bundle = CHARACTER_REGISTRY[requestedBundleId] || CHARACTER_REGISTRY.starter_ant;
+  const activeForgeCharacter = rebel?.activeForgeCharacter || null;
+  const characterBundle = activeForgeCharacter?.characterBundle || null;
+  const armatureAnimations = characterBundle?.armatureAnimations || {};
+  const activeGlbUrl = rebel?.activeGlbUrl || activeForgeCharacter?.activeGlbUrl || characterBundle?.activeGlbUrl || null;
+  const activeForgeBuildId = activeForgeCharacter?.activeForgeBuildId || characterBundle?.sourceBuildId || null;
+  const characterSource = activeGlbUrl ? 'forge_glb' : 'starter_bundle';
+
+  return {
+    rebel,
+    characterId: rebel.id || 'ant_1',
+    displayName: rebel.name || 'Rebel #001',
+    previewImage: rebel.image || 'assets/lobby/ant_1.JPG',
+    tokenId: rebel.tokenId || null,
+    collectionKey: rebel.collectionKey || 'battle_for_colony',
+    rebelId: rebel.rebelId || rebel.id || null,
+    characterRecord,
+    bundleId: bundle.bundleId,
+    formType: bundle.formType,
+    formLabel: bundle.formLabel,
+    hasGeneratedModel: bundle.hasGeneratedModel,
+    basePath: bundle.basePath,
+    idleFile: bundle.idleFile,
+    animations: bundle.animations,
+    activeForgeCharacter,
+    characterBundle,
+    activeForgeBuildId,
+    activeGlbUrl,
+    staticGlbUrl: activeForgeCharacter?.staticGlbUrl || characterBundle?.staticGlbUrl || null,
+    riggedGlbUrl: activeForgeCharacter?.riggedGlbUrl || characterBundle?.riggedGlbUrl || null,
+    idleGlbUrl: activeForgeCharacter?.idleGlbUrl || characterBundle?.animations?.idle?.glbUrl || null,
+    walkingGlbUrl: activeForgeCharacter?.walkingGlbUrl || characterBundle?.animations?.walking?.glbUrl || null,
+    runningGlbUrl: activeForgeCharacter?.runningGlbUrl || characterBundle?.animations?.running?.glbUrl || null,
+
+    idleArmatureGlbUrl:
+      activeForgeCharacter?.idleArmatureGlbUrl ||
+      armatureAnimations?.idle?.glbUrl ||
+      null,
+
+    walkingArmatureGlbUrl:
+      activeForgeCharacter?.walkingArmatureGlbUrl ||
+      armatureAnimations?.walking?.glbUrl ||
+      null,
+
+    runningArmatureGlbUrl:
+      activeForgeCharacter?.runningArmatureGlbUrl ||
+      armatureAnimations?.running?.glbUrl ||
+      null,
+
+    jumpArmatureGlbUrl:
+      activeForgeCharacter?.jumpArmatureGlbUrl ||
+      armatureAnimations?.jump?.glbUrl ||
+      null,
+
+    attackArmatureGlbUrl:
+      activeForgeCharacter?.attackArmatureGlbUrl ||
+      armatureAnimations?.attack?.glbUrl ||
+      null,
+
+    kickArmatureGlbUrl:
+      activeForgeCharacter?.kickArmatureGlbUrl ||
+      armatureAnimations?.kick?.glbUrl ||
+      null,
+
+    characterSource
+  };
+}
+async function resolveForgePreviewGlbUrlForVillage(activeCharacter, forcedMode = null) {
+  const previewMode = forcedMode || localStorage.getItem('forgeVillagePreviewMode') || 'running';
+
+  const riggedGlbUrl =
+    activeCharacter?.riggedGlbUrl ||
+    activeCharacter?.characterBundle?.riggedGlbUrl ||
+    activeCharacter?.activeGlbUrl ||
+    '';
+
+  const idleGlbUrl =
+    activeCharacter?.idleGlbUrl ||
+    activeCharacter?.characterBundle?.animations?.idle?.glbUrl ||
+    '';
+
+  const walkingGlbUrl =
+    activeCharacter?.walkingGlbUrl ||
+    activeCharacter?.characterBundle?.animations?.walking?.glbUrl ||
+    '';
+
+  const runningGlbUrl =
+    activeCharacter?.runningGlbUrl ||
+    activeCharacter?.characterBundle?.animations?.running?.glbUrl ||
+    '';
+
+  if (previewMode === 'idle' && idleGlbUrl) {
+    console.log('Village Forge preview using bundle idle GLB:', idleGlbUrl);
+    return idleGlbUrl;
+  }
+
+  if ((previewMode === 'idle' || previewMode === 'rigged') && riggedGlbUrl) {
+    console.log('Village Forge preview using bundle rigged GLB:', riggedGlbUrl);
+    return riggedGlbUrl;
+  }
+
+  if (previewMode === 'walking' && walkingGlbUrl) {
+    console.log('Village Forge preview using bundle walking GLB:', walkingGlbUrl);
+    return walkingGlbUrl;
+  }
+
+  if (previewMode === 'running' && runningGlbUrl) {
+    console.log('Village Forge preview using bundle running GLB:', runningGlbUrl);
+    return runningGlbUrl;
+  }
+
+  if (runningGlbUrl) {
+    console.log('Village Forge preview fallback using bundle running GLB:', runningGlbUrl);
+    return runningGlbUrl;
+  }
+
+  if (walkingGlbUrl) {
+    console.log('Village Forge preview fallback using bundle walking GLB:', walkingGlbUrl);
+    return walkingGlbUrl;
+  }
+
+  console.log('Village Forge preview fallback using active GLB:', riggedGlbUrl);
+  return riggedGlbUrl;
+}
+function setForgeVillagePreviewMode(mode) {
+  localStorage.setItem('forgeVillagePreviewMode', mode);
+  location.reload();
+}
+
+function isForgeVillageDevMode() {
+  return adminMode === true;
+}
+  
+function createForgeVillagePreviewToggle() {
+  if (!isForgeVillageDevMode()) return;
+  if (!window.activeCharacter?.activeGlbUrl) return;
+  if (document.getElementById('forge-village-preview-toggle')) return;
+
+  const panel = document.createElement('div');
+  panel.id = 'forge-village-preview-toggle';
+  panel.style.cssText = `
+    position: fixed;
+    right: 280px;
+    bottom: 28px;
+    z-index: 9999;
+    display: grid;
+    gap: 8px;
+    min-width: 310px;
+    padding: 12px;
+    border: 1px solid rgba(94,207,202,.35);
+    background: rgba(0,0,0,.78);
+    border-radius: 14px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 12px 40px rgba(0,0,0,.35);
+  `;
+
+  const currentMode = localStorage.getItem('forgeVillagePreviewMode') || 'running';
+  const modes = [
+    { id: 'idle', label: 'Idle' },
+    { id: 'walking', label: 'Walk' },
+    { id: 'running', label: 'Run' }
+  ];
+
+  const modeButtonsHtml = modes.map((mode) => {
+    const active = mode.id === currentMode;
+
+    return `
+      <button
+        type="button"
+        onclick="setForgeVillagePreviewMode('${mode.id}')"
+        style="
+          padding: 8px 10px;
+          border: 1px solid ${active ? 'rgba(94,207,202,.85)' : 'rgba(255,255,255,.18)'};
+          background: ${active ? 'rgba(94,207,202,.18)' : 'rgba(255,255,255,.06)'};
+          color: ${active ? '#5ecfca' : '#f3e6bf'};
+          font-size: 10px;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          cursor: pointer;
+        "
+      >${mode.label}</button>
+    `;
+  }).join('');
+
+  const playerVisualTestEnabled = localStorage.getItem('forgePlayerVisualTest') === '1';
+
+  const playerTestButtonHtml = `
+    <button
+      type="button"
+      onclick="setForgePlayerVisualTest(${playerVisualTestEnabled ? 'false' : 'true'})"
+      style="
+        padding: 9px 12px;
+        border: 1px solid ${playerVisualTestEnabled ? 'rgba(88,255,166,.85)' : 'rgba(200,146,42,.42)'};
+        background: ${playerVisualTestEnabled ? 'rgba(88,255,166,.18)' : 'rgba(200,146,42,.10)'};
+        color: ${playerVisualTestEnabled ? '#9dffc7' : '#f3e6bf'};
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        cursor: pointer;
+      "
+    >${playerVisualTestEnabled ? 'Reset Player Visual' : 'Use Forge As Player'}</button>
+  `;
+
+  panel.innerHTML = `
+    <div style="
+      color:#5ecfca;
+      font-size:10px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      font-weight:800;
+    ">
+      Forge Character Test
+    </div>
+
+    <div style="
+      color:rgba(243,230,191,.68);
+      font-size:10px;
+      line-height:1.5;
+      margin-top:-2px;
+    ">
+      ${window.activeCharacter?.displayName || 'Selected Rebel'}
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      ${modeButtonsHtml}
+    </div>
+
+    ${playerTestButtonHtml}
+  `;
+
+  document.body.appendChild(panel);
+}
+
+function refreshForgeVillagePreviewToggle() {
+  const panel = document.getElementById('forge-village-preview-toggle');
+
+  if (!isForgeVillageDevMode()) {
+    if (panel) panel.remove();
+    return;
+  }
+
+  createForgeVillagePreviewToggle();
+}
+  
+function setForgePlayerVisualTest(enabled) {
+  if (enabled) {
+    localStorage.setItem('forgePlayerVisualTest', '1');
+  } else {
+    localStorage.removeItem('forgePlayerVisualTest');
+  }
+
+  location.reload();
+}
+
+function getForgePlayerDesiredPreviewMode() {
+  if (
+    window.forgePlayerForcedMode &&
+    window.forgePlayerForcedModeUntil &&
+    performance.now() < window.forgePlayerForcedModeUntil
+  ) {
+    return window.forgePlayerForcedMode;
+  }
+
+  if (runKey) return 'running';
+
+  const moving =
+    moveForward ||
+    moveBackward ||
+    turnLeft ||
+    turnRight ||
+    Math.abs(charMesh?._vel || 0) > 0.02;
+
+  return moving ? 'walking' : 'idle';
+}
+
+function syncForgePreviewRootToPlayer(previewRoot) {
+  if (!previewRoot || !charMesh) return;
+
+  const isForgeIdle =
+    localStorage.getItem('forgePlayerVisualTest') === '1' &&
+    (window.forgePlayerVisualCurrentMode === 'idle' || window.forgePlayerVisualCurrentMode === 'rigged');
+
+  const idleTime = performance.now() * 0.001;
+  const idleBob = isForgeIdle ? Math.sin(idleTime * 2.1) * 0.025 : 0;
+  const idleLean = isForgeIdle ? Math.sin(idleTime * 1.4) * 0.018 : 0;
+  const alignmentOffset = previewRoot.metadata?.forgeVisualAlignmentOffset || null;
+
+  previewRoot.position.x = charMesh.position.x + (alignmentOffset?.x || 0);
+  previewRoot.position.y = charMesh.position.y + idleBob + (alignmentOffset?.y || 0);
+  previewRoot.position.z = charMesh.position.z + (alignmentOffset?.z || 0);
+
+  previewRoot.rotation.x = charMesh.rotation.x + idleLean;
+  previewRoot.rotation.y = charMesh.rotation.y;
+  previewRoot.rotation.z = charMesh.rotation.z;
+}
+
+function removeForgeVisualRootMotion(animationGroups, mode = 'forge') {
+  const rootMotionTargets = new Set([
+    'hips',
+    'mixamorig_hips',
+    'root',
+    'fbx_root',
+    'armature',
+    'scene'
+  ]);
+  let removedCount = 0;
+  const removedTargets = [];
+
+  (animationGroups || []).forEach((group) => {
+    const targetedAnimations = group?.targetedAnimations || [];
+
+    for (let index = targetedAnimations.length - 1; index >= 0; index--) {
+      const targetedAnimation = targetedAnimations[index];
+      const targetName = String(targetedAnimation?.target?.name || '').toLowerCase();
+      const targetProperty = targetedAnimation?.animation?.targetProperty || '';
+
+      if (targetProperty === 'position' && rootMotionTargets.has(targetName)) {
+        targetedAnimations.splice(index, 1);
+        removedCount++;
+        removedTargets.push(targetName);
+      }
+    }
+  });
+
+  if (removedCount > 0) {
+    console.log('Forge visual root motion removed:', {
+      mode,
+      removedCount,
+      targets: [...new Set(removedTargets)]
+    });
+  }
+}
+
+function removeForgeVisualScaleTracks(animationGroups, mode = 'forge') {
+  let removedCount = 0;
+  const removedTargets = [];
+
+  (animationGroups || []).forEach((group) => {
+    const targetedAnimations = group?.targetedAnimations || [];
+
+    for (let index = targetedAnimations.length - 1; index >= 0; index--) {
+      const targetedAnimation = targetedAnimations[index];
+      const targetName = String(targetedAnimation?.target?.name || '');
+      const targetProperty = targetedAnimation?.animation?.targetProperty || '';
+
+      if (targetProperty === 'scaling' || targetProperty === 'scale') {
+        targetedAnimations.splice(index, 1);
+        removedCount++;
+        if (targetName) removedTargets.push(targetName);
+      }
+    }
+  });
+
+  if (removedCount > 0) {
+    console.log('Forge visual scale tracks removed:', {
+      mode,
+      removedCount,
+      targets: [...new Set(removedTargets)].slice(0, 24)
+    });
+  }
+}
+
+function setForgePreviewRootVisible(previewRoot, visible) {
+  if (!previewRoot) return;
+
+  previewRoot.getChildMeshes(false).forEach((mesh) => {
+    mesh.isVisible = visible;
+  });
+}
+
+function hideStarterPlayerVisualForForgeTest() {
+  if (!charMesh) return;
+
+  charMesh.getChildMeshes(false).forEach((mesh) => {
+    mesh.isVisible = false;
+  });
+}
+
+function getForgePlayerVisualCache() {
+  if (!window.forgePlayerVisualCache) {
+    window.forgePlayerVisualCache = {};
+  }
+
+  return window.forgePlayerVisualCache;
+}
+
+function getForgeVisualVisibleMeshBounds(previewRoot) {
+  if (!previewRoot) return null;
+
+  const meshes = previewRoot.getChildMeshes(false).filter((mesh) => {
+    return (
+      mesh &&
+      mesh.isEnabled() &&
+      mesh.getTotalVertices &&
+      mesh.getTotalVertices() > 0 &&
+      mesh.getBoundingInfo
+    );
+  });
+
+  if (!meshes.length) return null;
+
+  const min = new BABYLON.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+  const max = new BABYLON.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+  let validMeshCount = 0;
+
+  meshes.forEach((mesh) => {
+    mesh.computeWorldMatrix(true);
+    const boundingBox = mesh.getBoundingInfo().boundingBox;
+    const boxMin = boundingBox.minimumWorld;
+    const boxMax = boundingBox.maximumWorld;
+
+    if (
+      !Number.isFinite(boxMin.x) ||
+      !Number.isFinite(boxMin.y) ||
+      !Number.isFinite(boxMin.z) ||
+      !Number.isFinite(boxMax.x) ||
+      !Number.isFinite(boxMax.y) ||
+      !Number.isFinite(boxMax.z)
+    ) {
+      return;
+    }
+
+    min.x = Math.min(min.x, boxMin.x);
+    min.y = Math.min(min.y, boxMin.y);
+    min.z = Math.min(min.z, boxMin.z);
+    max.x = Math.max(max.x, boxMax.x);
+    max.y = Math.max(max.y, boxMax.y);
+    max.z = Math.max(max.z, boxMax.z);
+    validMeshCount++;
+  });
+
+  if (!validMeshCount) return null;
+
+  return {
+    min,
+    max,
+    height: Math.max(max.y - min.y, 0),
+    center: BABYLON.Vector3.Center(min, max),
+    meshCount: validMeshCount
   };
 }
 
+function getForgeVisualSkeletonRootInfo(modeModel) {
+  const skeleton = modeModel?.skeletons?.[0] || null;
+  const bone = skeleton?.bones?.[0] || null;
+  const linkedNode =
+    bone?._linkedTransformNode ||
+    (typeof bone?.getTransformNode === 'function' ? bone.getTransformNode() : null) ||
+    null;
+
+  if (linkedNode?.computeWorldMatrix) {
+    linkedNode.computeWorldMatrix(true);
+  }
+
+  const worldPosition =
+    linkedNode && typeof linkedNode.getAbsolutePosition === 'function'
+      ? linkedNode.getAbsolutePosition()
+      : null;
+
+  return {
+    skeletonName: skeleton?.name || null,
+    boneName: bone?.name || null,
+    nodeName: linkedNode?.name || null,
+    position: worldPosition
+      ? {
+          x: worldPosition.x,
+          y: worldPosition.y,
+          z: worldPosition.z
+        }
+      : null
+  };
+}
+
+function getForgeVisualAnimationRootName(animationGroups) {
+  const targetedAnimation = (animationGroups || [])
+    .flatMap((group) => group?.targetedAnimations || [])
+    .find((item) => item?.target?.name);
+
+  return targetedAnimation?.target?.name || null;
+}
+
+function getForgeVisualModeMetrics(mode, previewRoot, modeModel, animationGroups) {
+  const bounds = getForgeVisualVisibleMeshBounds(previewRoot);
+
+  if (!bounds) return null;
+
+  const rootPosition = previewRoot.position.clone();
+  const rootScaling = previewRoot.scaling.clone();
+  const centerRelativeToRoot = bounds.center.subtract(rootPosition);
+  const groundRelativeToRoot = bounds.min.y - rootPosition.y;
+
+  return {
+    mode,
+    rootPosition,
+    rootScaling,
+    bounds,
+    centerRelativeToRoot,
+    groundRelativeToRoot,
+    height: bounds.height,
+    skeletonRoot: getForgeVisualSkeletonRootInfo(modeModel),
+    animationRootNodeName: getForgeVisualAnimationRootName(animationGroups)
+  };
+}
+
+function logForgeVisualModeMetrics(metrics) {
+  if (!metrics) return;
+
+  console.log('Forge visual mode metrics', {
+    mode: metrics.mode,
+    rootScaling: {
+      x: metrics.rootScaling.x,
+      y: metrics.rootScaling.y,
+      z: metrics.rootScaling.z
+    },
+    rootPosition: {
+      x: metrics.rootPosition.x,
+      y: metrics.rootPosition.y,
+      z: metrics.rootPosition.z
+    },
+    meshBounds: {
+      min: {
+        x: metrics.bounds.min.x,
+        y: metrics.bounds.min.y,
+        z: metrics.bounds.min.z
+      },
+      max: {
+        x: metrics.bounds.max.x,
+        y: metrics.bounds.max.y,
+        z: metrics.bounds.max.z
+      },
+      center: {
+        x: metrics.bounds.center.x,
+        y: metrics.bounds.center.y,
+        z: metrics.bounds.center.z
+      },
+      height: metrics.bounds.height,
+      meshCount: metrics.bounds.meshCount
+    },
+    skeletonRoot: metrics.skeletonRoot,
+    animationRootNodeName: metrics.animationRootNodeName
+  });
+}
+
+function normalizeForgeVisualModeTransform(mode, previewRoot, modeModel, animationGroups) {
+  if (!mode || !previewRoot) return null;
+
+  const cache = getForgePlayerVisualCache();
+  const beforeMetrics = getForgeVisualModeMetrics(mode, previewRoot, modeModel, animationGroups);
+  const modeHeight = beforeMetrics?.height || 0;
+
+  logForgeVisualModeMetrics(beforeMetrics);
+
+  if (!Number.isFinite(modeHeight) || modeHeight <= 0.001) {
+    console.warn('Could not normalize Forge visual mode transform; visible mesh height unavailable:', {
+      mode,
+      modeHeight
+    });
+    return null;
+  }
+
+  if (mode === 'rigged') {
+    const baselineCenter = beforeMetrics.centerRelativeToRoot.clone();
+    const baselineGround = beforeMetrics.groundRelativeToRoot;
+
+    cache.baselineVisualMetrics = {
+      mode,
+      height: modeHeight,
+      centerRelativeToRoot: baselineCenter,
+      groundRelativeToRoot: baselineGround,
+      rootScaling: beforeMetrics.rootScaling.clone()
+    };
+    cache.baselineVisibleHeight = modeHeight;
+    cache.baselineMode = mode;
+
+    previewRoot.metadata = {
+      ...(previewRoot.metadata || {}),
+      forgeVisualTransformNormalized: true,
+      forgeVisualAlignmentOffset: { x: 0, y: 0, z: 0 }
+    };
+
+    const report = {
+      mode,
+      baselineHeight: modeHeight,
+      modeHeight,
+      scaleCorrection: 1,
+      centerOffset: { x: 0, y: 0, z: 0 },
+      groundOffset: 0
+    };
+
+    console.log('Forge visual mode normalized', report);
+
+    return report;
+  }
+
+  if (!cache.baselineVisualMetrics) {
+    if (mode === 'rigged') {
+      return null;
+    }
+
+    return null;
+  }
+
+  if (previewRoot.metadata?.forgeVisualTransformNormalized) {
+    return previewRoot.metadata.forgeVisualTransformReport || null;
+  }
+
+  const baseline = cache.baselineVisualMetrics;
+  const baselineHeight = baseline.height;
+  const scaleCorrection = baselineHeight / modeHeight;
+
+  if (!Number.isFinite(scaleCorrection) || scaleCorrection <= 0) {
+    return null;
+  }
+
+  previewRoot.scaling = previewRoot.scaling.multiplyByFloats(scaleCorrection, scaleCorrection, scaleCorrection);
+  previewRoot.computeWorldMatrix(true);
+
+  const afterScaleMetrics = getForgeVisualModeMetrics(mode, previewRoot, modeModel, animationGroups);
+  const scaledCenter = afterScaleMetrics?.centerRelativeToRoot || beforeMetrics.centerRelativeToRoot;
+  const scaledGround = afterScaleMetrics?.groundRelativeToRoot ?? beforeMetrics.groundRelativeToRoot;
+  const centerOffset = baseline.centerRelativeToRoot.subtract(scaledCenter);
+  const groundOffset = baseline.groundRelativeToRoot - scaledGround;
+  const alignmentOffset = {
+    x: centerOffset.x,
+    y: groundOffset,
+    z: centerOffset.z
+  };
+  const report = {
+    mode,
+    baselineHeight,
+    modeHeight,
+    scaleCorrection,
+    centerOffset: {
+      x: alignmentOffset.x,
+      y: centerOffset.y,
+      z: alignmentOffset.z
+    },
+    groundOffset
+  };
+
+  previewRoot.metadata = {
+    ...(previewRoot.metadata || {}),
+    forgeVisualTransformNormalized: true,
+    forgeVisualAlignmentOffset: alignmentOffset,
+    forgeVisualTransformReport: report
+  };
+
+  console.log('Forge visual mode normalized', report);
+
+  return report;
+}
+
+async function loadForgePlayerVisualMode(mode) {
+  if (!window.activeCharacter?.activeGlbUrl) return null;
+
+  const cache = getForgePlayerVisualCache();
+
+  if (cache[mode]?.root) {
+    return cache[mode].root;
+  }
+
+  if (cache[mode]?.loadingPromise) {
+    return cache[mode].loadingPromise;
+  }
+
+  cache[mode] = cache[mode] || {};
+
+  cache[mode].loadingPromise = (async () => {
+    const nextUrl = await resolveForgePreviewGlbUrlForVillage(window.activeCharacter, mode);
+
+    if (mode === 'running' && !window.activeCharacter?.runningGlbUrl && !window.activeCharacter?.characterBundle?.animations?.running?.glbUrl) {
+      console.warn('Forge visual running URL missing. Running mode may fall back to another GLB.', window.activeCharacter);
+    }
+
+    const nextRoot = await loadForgePreviewModelInVillage(nextUrl);
+
+    if (nextRoot) {
+      const modeModel = window.forgePreviewModel || null;
+      const modeAnimationGroups = modeModel?.animationGroups || [];
+      removeForgeVisualRootMotion(modeAnimationGroups, mode);
+
+      nextRoot.name = `forgePreviewRoot_${mode}`;
+      nextRoot.metadata = {
+        ...(nextRoot.metadata || {}),
+        forgePreviewMode: mode
+      };
+      const transformReport = normalizeForgeVisualModeTransform(mode, nextRoot, modeModel, modeAnimationGroups);
+
+      syncForgePreviewRootToPlayer(nextRoot);
+      setForgePreviewRootVisible(nextRoot, false);
+      modeAnimationGroups.forEach((group) => {
+        if (group?.isPlaying) group.stop();
+      });
+
+      cache[mode] = {
+        root: nextRoot,
+        model: modeModel,
+        animationGroups: modeAnimationGroups,
+        animationGroup: modeAnimationGroups[0] || null,
+        url: nextUrl,
+        visibleMeshHeight: transformReport?.modeHeight || null,
+        scaleCorrection: transformReport?.scaleCorrection || 1,
+        centerOffset: transformReport?.centerOffset || null,
+        groundOffset: transformReport?.groundOffset || 0
+      };
+
+      console.log('Forge player visual cached:', mode);
+      console.log('Forge visual animation groups available:', {
+        mode,
+        count: modeAnimationGroups.length,
+        names: modeAnimationGroups.map((group) => group.name)
+      });
+    }
+
+    return nextRoot;
+  })();
+
+  return cache[mode].loadingPromise;
+}
+
+function activateForgePlayerVisualMode(mode) {
+  const cache = getForgePlayerVisualCache();
+  const entry = cache[mode];
+
+  if (!entry?.root) return false;
+
+  Object.keys(cache).forEach((key) => {
+    if (cache[key]?.root) {
+      setForgePreviewRootVisible(cache[key].root, key === mode);
+    }
+
+    const animationGroups = cache[key]?.animationGroups || (cache[key]?.animationGroup ? [cache[key].animationGroup] : []);
+    animationGroups.forEach((group) => {
+      if (group && key !== mode && group.isPlaying) {
+        group.stop();
+      }
+    });
+  });
+
+  syncForgePreviewRootToPlayer(entry.root);
+
+  window.forgePreviewRoot = entry.root;
+  window.forgePreviewModel = entry.model || window.forgePreviewModel || null;
+  window.forgePreviewAnimationGroup = entry.animationGroup || window.forgePreviewAnimationGroup || null;
+  window.forgePlayerVisualCurrentMode = mode;
+
+  const activeAnimationGroups = entry.animationGroups || (entry.animationGroup ? [entry.animationGroup] : []);
+
+  activeAnimationGroups.forEach((group) => {
+    if (!group) return;
+
+    group.stop();
+    group.reset();
+    group.start(true);
+
+    console.log('Forge visual animation playing:', {
+      mode,
+      groupName: group.name
+    });
+  });
+
+  const label = mode === 'rigged' ? 'idle' : mode;
+  if (label === 'idle' && activeAnimationGroups.length) {
+    console.log('Forge visual animation playing: idle');
+  }
+
+  if (window.forgePlayerVisualLastLoggedMode !== label) {
+    console.log(`Forge visual mode switched: ${label}`);
+    window.forgePlayerVisualLastLoggedMode = label;
+  }
+
+  return true;
+}
+
+async function preloadForgePlayerVisualModes(startingRoot) {
+  const startingMode = localStorage.getItem('forgeVillagePreviewMode') || 'running';
+  const cache = getForgePlayerVisualCache();
+
+  if (startingRoot) {
+    const startingAnimationGroups = window.forgePreviewModel?.animationGroups || [];
+    removeForgeVisualRootMotion(startingAnimationGroups, startingMode);
+    const startingTransformReport = normalizeForgeVisualModeTransform(
+      startingMode,
+      startingRoot,
+      window.forgePreviewModel || null,
+      startingAnimationGroups
+    );
+
+    cache[startingMode] = {
+      root: startingRoot,
+      model: window.forgePreviewModel || null,
+      animationGroups: startingAnimationGroups,
+      animationGroup: window.forgePreviewAnimationGroup || null,
+      url: null,
+      visibleMeshHeight: startingTransformReport?.modeHeight || null,
+      scaleCorrection: startingTransformReport?.scaleCorrection || 1,
+      centerOffset: startingTransformReport?.centerOffset || null,
+      groundOffset: startingTransformReport?.groundOffset || 0
+    };
+
+    startingRoot.name = `forgePreviewRoot_${startingMode}`;
+    syncForgePreviewRootToPlayer(startingRoot);
+    setForgePreviewRootVisible(startingRoot, false);
+    startingAnimationGroups.forEach((group) => {
+      if (group?.isPlaying) group.stop();
+    });
+  }
+
+  await loadForgePlayerVisualMode('rigged').catch((e) => {
+    console.warn('Could not preload Forge rigged baseline visual mode:', e);
+    return null;
+  });
+
+  Object.keys(cache).forEach((mode) => {
+    if (mode === 'baselineVisibleHeight' || mode === 'baselineMode' || mode === 'baselineVisualMetrics') return;
+    if (!cache[mode]?.root || mode === 'rigged') return;
+
+    const transformReport = normalizeForgeVisualModeTransform(
+      mode,
+      cache[mode].root,
+      cache[mode].model || null,
+      cache[mode].animationGroups || []
+    );
+    if (transformReport) {
+      cache[mode].visibleMeshHeight = transformReport.modeHeight;
+      cache[mode].scaleCorrection = transformReport.scaleCorrection;
+      cache[mode].centerOffset = transformReport.centerOffset || null;
+      cache[mode].groundOffset = transformReport.groundOffset || 0;
+    }
+  });
+
+  const modes = ['idle', 'walking', 'running'];
+
+  await Promise.all(
+    modes.map((mode) => loadForgePlayerVisualMode(mode).catch((e) => {
+      console.warn('Could not preload Forge visual mode:', mode, e);
+      return null;
+    }))
+  );
+
+  console.log('Forge player visual modes preloaded.');
+}
+
+async function loadForgeArmatureAnimationForPlayer(mode, armatureGlbUrl, riggedSkeleton) {
+  if (!mode || !armatureGlbUrl || !riggedSkeleton) return null;
+
+  if (!window.forgeArmatureAnimationCache) {
+    window.forgeArmatureAnimationCache = {};
+  }
+
+  if (window.forgeArmatureAnimationCache[mode]) {
+    return window.forgeArmatureAnimationCache[mode];
+  }
+
+  const armatureResult = await BABYLON.SceneLoader.ImportMeshAsync("", "", armatureGlbUrl, scene);
+  const armatureAnimation = armatureResult.animationGroups?.[0] || null;
+
+  if (!armatureAnimation) {
+    console.warn('No armature animation found for Forge mode:', mode);
+    return null;
+  }
+
+  armatureResult.meshes.forEach((mesh) => {
+    mesh.isVisible = false;
+    mesh.setEnabled(false);
+  });
+
+  armatureResult.transformNodes.forEach((node) => {
+    node.setEnabled(false);
+  });
+
+  let retargetedCount = 0;
+  let missedCount = 0;
+  const missedTargets = [];
+
+  armatureAnimation.targetedAnimations.forEach((targetedAnimation) => {
+    const targetName = targetedAnimation.target?.name || '';
+    const matchingBone = riggedSkeleton.bones.find((bone) => bone.name === targetName);
+
+    if (matchingBone) {
+      targetedAnimation.target = matchingBone._linkedTransformNode || matchingBone;
+      retargetedCount++;
+    } else {
+      missedCount++;
+      if (targetName) missedTargets.push(targetName);
+    }
+  });
+
+  removeForgeVisualRootMotion([armatureAnimation], mode);
+  removeForgeVisualScaleTracks([armatureAnimation], mode);
+  armatureAnimation.stop();
+
+  const entry = {
+    mode,
+    armatureGlbUrl,
+    armatureResult,
+    animationGroup: armatureAnimation,
+    retargetedCount,
+    missedCount,
+    missedTargets: [...new Set(missedTargets)]
+  };
+
+  window.forgeArmatureAnimationCache[mode] = entry;
+
+  console.log('Forge armature animation cached:', {
+    mode,
+    animationName: armatureAnimation.name,
+    retargetedCount,
+    missedCount,
+    missedTargets: entry.missedTargets
+  });
+
+  return entry;
+}
+
+function isForgeBrowserLoadableGlbUrl(glbUrl) {
+  if (!glbUrl) return false;
+
+  try {
+    const url = new URL(glbUrl, window.location.href);
+    const hostname = url.hostname.toLowerCase();
+
+    if (hostname === window.location.hostname.toLowerCase()) return true;
+    if (hostname.endsWith('.public.blob.vercel-storage.com')) return true;
+    if (hostname === 'vg8yazzy1wnobiup.public.blob.vercel-storage.com') return true;
+
+    return false;
+  } catch(e) {
+    return !/^https?:\/\//i.test(glbUrl);
+  }
+}
+
+function pickForgeBrowserLoadableGlbUrl(...urls) {
+  const candidates = urls.filter(Boolean);
+  const browserLoadable = candidates.find((url) => isForgeBrowserLoadableGlbUrl(url));
+
+  return browserLoadable || candidates[0] || '';
+}
+
+function activateForgeArmaturePlayerMode(mode) {
+  const cache = window.forgeArmatureAnimationCache || {};
+  const requestedMode = mode === 'rigged' ? 'idle' : mode;
+
+  Object.keys(cache).forEach((key) => {
+    const group = cache[key]?.animationGroup;
+    if (group && group.isPlaying) {
+      group.stop();
+    }
+  });
+
+  if (mode === 'rigged') {
+    window.forgePlayerVisualCurrentMode = 'rigged';
+    return true;
+  }
+
+  const entry = cache[requestedMode];
+
+  if (!entry?.animationGroup) {
+    if (requestedMode === 'idle') {
+      window.forgePlayerVisualCurrentMode = 'rigged';
+      return true;
+    }
+
+    return false;
+  }
+
+  const loop = !(requestedMode === 'jump' || requestedMode === 'kick' || requestedMode === 'attack');
+
+  entry.animationGroup.stop();
+  entry.animationGroup.reset();
+  entry.animationGroup.start(loop);
+  window.forgePlayerVisualCurrentMode = requestedMode;
+
+  console.log('Forge visual animation playing:', {
+    mode: requestedMode,
+    groupName: entry.animationGroup.name
+  });
+
+  if (requestedMode === 'idle') {
+    console.log('Forge visual animation playing: idle');
+  }
+
+  if (window.forgePlayerVisualLastLoggedMode !== requestedMode) {
+    console.log(`Forge visual mode switched: ${requestedMode}`);
+    window.forgePlayerVisualLastLoggedMode = requestedMode;
+  }
+
+  return true;
+}
+
+function triggerForgeArmatureActionMode(mode, durationMs) {
+  if (localStorage.getItem('forgePlayerVisualTest') !== '1') return;
+  if (!mode) return;
+
+  window.forgePlayerForcedMode = mode;
+  window.forgePlayerForcedModeUntil = performance.now() + (durationMs || 1000);
+
+  if (typeof activateForgeArmaturePlayerMode === 'function') {
+    const activated = activateForgeArmaturePlayerMode(mode);
+
+    if (!activated) {
+      console.log('Forge action mode not available yet:', mode);
+    }
+  }
+
+  setTimeout(() => {
+    if (window.forgePlayerForcedMode === mode) {
+      window.forgePlayerForcedMode = null;
+      window.forgePlayerForcedModeUntil = null;
+    }
+  }, durationMs || 1000);
+}
+async function preloadForgeArmaturePlayerVisual(previewRoot) {
+  const riggedUrl =
+    window.activeCharacter?.riggedGlbUrl ||
+    window.activeCharacter?.activeGlbUrl ||
+    '';
+
+  const idleAnimationUrl = pickForgeBrowserLoadableGlbUrl(
+    window.activeCharacter?.idleGlbUrl,
+    window.activeCharacter?.characterBundle?.animations?.idle?.glbUrl,
+    window.activeCharacter?.idleArmatureGlbUrl ||
+    window.activeCharacter?.characterBundle?.armatureAnimations?.idle?.glbUrl
+  );
+
+  const walkingAnimationUrl = pickForgeBrowserLoadableGlbUrl(
+    window.activeCharacter?.walkingGlbUrl,
+    window.activeCharacter?.characterBundle?.animations?.walking?.glbUrl,
+    window.activeCharacter?.walkingArmatureGlbUrl ||
+    window.activeCharacter?.characterBundle?.armatureAnimations?.walking?.glbUrl
+  );
+
+  const runningAnimationUrl = pickForgeBrowserLoadableGlbUrl(
+    window.activeCharacter?.runningGlbUrl,
+    window.activeCharacter?.characterBundle?.animations?.running?.glbUrl,
+    window.activeCharacter?.runningArmatureGlbUrl ||
+    window.activeCharacter?.characterBundle?.armatureAnimations?.running?.glbUrl
+  );
+
+  if (!riggedUrl || !walkingAnimationUrl || !runningAnimationUrl) {
+    console.warn('Missing Forge animation donor URLs. Falling back to full GLB visual swap.', {
+      riggedUrl,
+      idleAnimationUrl,
+      walkingAnimationUrl,
+      runningAnimationUrl
+    });
+    return false;
+  }
+
+  if (
+    (idleAnimationUrl && !isForgeBrowserLoadableGlbUrl(idleAnimationUrl)) ||
+    !isForgeBrowserLoadableGlbUrl(walkingAnimationUrl) ||
+    !isForgeBrowserLoadableGlbUrl(runningAnimationUrl)
+  ) {
+    console.warn('Forge animation donor URLs are not browser-loadable. Falling back to full GLB visual swap.', {
+      idleAnimationUrl,
+      walkingAnimationUrl,
+      runningAnimationUrl
+    });
+    return false;
+  }
+
+  let riggedRoot = previewRoot;
+  let riggedResult = window.forgePreviewModel || null;
+
+  const previewMode = localStorage.getItem('forgeVillagePreviewMode') || 'running';
+  const previewIsRigged =
+    previewMode === 'rigged' &&
+    riggedResult?.skeletons?.length;
+
+  if (!previewIsRigged) {
+    if (previewRoot) {
+      try {
+        previewRoot.dispose(false, true);
+      } catch(e) {
+        console.warn('Could not remove old Forge preview before armature player load:', e);
+      }
+    }
+
+    riggedRoot = await loadForgePreviewModelInVillage(riggedUrl);
+    riggedResult = window.forgePreviewModel || null;
+  }
+
+  const riggedSkeleton = riggedResult?.skeletons?.[0] || null;
+
+  if (!riggedRoot || !riggedSkeleton) {
+    console.warn('Could not load Forge rigged model for armature player visual.');
+    return false;
+  }
+
+  window.forgeArmaturePlayerRoot = riggedRoot;
+  window.forgeArmaturePlayerModel = riggedResult;
+  window.forgeArmaturePlayerSkeleton = riggedSkeleton;
+
+  syncForgePreviewRootToPlayer(riggedRoot);
+  setForgePreviewRootVisible(riggedRoot, true);
+
+  try {
+    const animationLoads = [
+      loadForgeArmatureAnimationForPlayer('walking', walkingAnimationUrl, riggedSkeleton),
+      loadForgeArmatureAnimationForPlayer('running', runningAnimationUrl, riggedSkeleton)
+    ];
+
+    if (idleAnimationUrl) {
+      animationLoads.unshift(loadForgeArmatureAnimationForPlayer('idle', idleAnimationUrl, riggedSkeleton));
+    }
+
+    await Promise.all(animationLoads);
+  } catch(e) {
+    console.warn('Could not load Forge animation donors. Falling back to full GLB visual swap.', e);
+    return false;
+  }
+
+  console.log('Forge single-mesh animation donor visual ready.', {
+    riggedUrl,
+    idleAnimationUrl,
+    walkingAnimationUrl,
+    runningAnimationUrl
+  });
+
+  return true;
+}
+
+function applyForgePlayerVisualTest(previewRoot) {
+  if (!previewRoot || !charMesh) return;
+  if (localStorage.getItem('forgePlayerVisualTest') !== '1') return;
+
+  console.log('Forge player visual test enabled.');
+
+  hideStarterPlayerVisualForForgeTest();
+
+  refreshActiveForgeCharacterForVillage().then(() => preloadForgeArmaturePlayerVisual(previewRoot)).then((armatureReady) => {
+    if (!armatureReady) {
+      preloadForgePlayerVisualModes(previewRoot).then(() => {
+        const desiredMode = getForgePlayerDesiredPreviewMode();
+        activateForgePlayerVisualMode(desiredMode);
+
+        if (window.forgePlayerVisualObserver) {
+          scene.onBeforeRenderObservable.remove(window.forgePlayerVisualObserver);
+          window.forgePlayerVisualObserver = null;
+        }
+
+        window.forgePlayerVisualObserver = scene.onBeforeRenderObservable.add(() => {
+          if (!charMesh) return;
+
+          const nextMode = getForgePlayerDesiredPreviewMode();
+
+          if (nextMode !== window.forgePlayerVisualCurrentMode) {
+            activateForgePlayerVisualMode(nextMode);
+          }
+
+          const cache = getForgePlayerVisualCache();
+          const activeRoot = cache[window.forgePlayerVisualCurrentMode]?.root || window.forgePreviewRoot;
+          syncForgePreviewRootToPlayer(activeRoot);
+        });
+      });
+      return;
+    }
+
+    const desiredMode = getForgePlayerDesiredPreviewMode();
+    activateForgeArmaturePlayerMode(desiredMode);
+
+    if (window.forgePlayerVisualObserver) {
+      scene.onBeforeRenderObservable.remove(window.forgePlayerVisualObserver);
+      window.forgePlayerVisualObserver = null;
+    }
+
+    window.forgePlayerVisualObserver = scene.onBeforeRenderObservable.add(() => {
+      if (!charMesh || !window.forgeArmaturePlayerRoot) return;
+
+      const nextMode = getForgePlayerDesiredPreviewMode();
+
+      if (nextMode !== window.forgePlayerVisualCurrentMode) {
+        activateForgeArmaturePlayerMode(nextMode);
+      }
+
+      syncForgePreviewRootToPlayer(window.forgeArmaturePlayerRoot);
+    });
+  });
+}
+window.setForgePlayerVisualTest = setForgePlayerVisualTest;
+
+  
+window.setForgeVillagePreviewMode = setForgeVillagePreviewMode;
+
+  
 function hydrateSelectedRebelPanel(character) {
   const image = document.getElementById('selectedRebelImage');
   const name = document.getElementById('selectedRebelName');
@@ -1848,20 +3191,1286 @@ function hydrateSelectedRebelPanel(character) {
   }
 }
 
+// Shared Forge core functions are loaded from assets/forge-core.js
+function getCharacterBlueprintStorageKey(rebel) {
+  return rebel && rebel.tokenId
+    ? 'rebelCharacterBlueprint_' + String(rebel.tokenId)
+    : 'rebelCharacterBlueprint_default';
+}
+
+function loadSavedCharacterBlueprint(rebel) {
+  try {
+    const raw = localStorage.getItem(getCharacterBlueprintStorageKey(rebel));
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) {
+    return null;
+  }
+}
+
+function saveCharacterBlueprint(rebel, blueprint) {
+  try {
+    localStorage.setItem(
+      getCharacterBlueprintStorageKey(rebel),
+      JSON.stringify(blueprint)
+    );
+  } catch(e) {}
+}
+
+window.saveCharacterBlueprint = saveCharacterBlueprint;
+
+// buildForgeGenerationInput is loaded from assets/forge-core.js
+
+function getOrCreateCharacterBlueprint(rebel, character) {
+  const savedBlueprint = loadSavedCharacterBlueprint(rebel);
+
+  if (savedBlueprint && savedBlueprint.blueprintVersion === 'v1') {
+    const sourceTraits = rebel.traits || savedBlueprint.sourceTraits || {};
+    const traitSlots = buildTraitSlots(sourceTraits, rebel.collectionKey || savedBlueprint.collectionKey || 'battle_for_colony');
+    const colony = rebel.gangName || traitSlots.colony || savedBlueprint.colony || null;
+    const colonyProfile = resolveColonyForgeProfile(colony);
+    const weaponProfile = resolveWeaponForgeProfile(traitSlots.weapon);
+    const forgeLayers = buildForgeLayers(traitSlots, colonyProfile, weaponProfile);
+
+    const hydratedBlueprint = {
+      ...savedBlueprint,
+      rebelId: rebel.id || savedBlueprint.rebelId || 'ant_1',
+      tokenId: rebel.tokenId || savedBlueprint.tokenId || null,
+      collectionKey: rebel.collectionKey || savedBlueprint.collectionKey || 'battle_for_colony',
+      name: rebel.name || savedBlueprint.name || 'Rebel #001',
+      sourceImage: rebel.image || savedBlueprint.sourceImage || 'assets/lobby/ant_1.JPG',
+      sourceType: rebel.tokenId ? 'nft' : (savedBlueprint.sourceType || 'default'),
+      sourceTraits,
+      traitSlots,
+      forgeLayers,
+      colony,
+      colonyProfile,
+      weaponProfile,
+      bodyType: colonyProfile?.preferredBodyType || savedBlueprint.bodyType || 'universal_ant_v1',
+      parts: {
+        ...(savedBlueprint.parts || {}),
+        emblem: savedBlueprint.parts?.emblem || colonyProfile?.emblem || null
+      },
+      confidence: {
+        ...(savedBlueprint.confidence || {}),
+        colony: colonyProfile ? 1 : null,
+        weapon: weaponProfile ? 1 : null
+      }
+    };
+
+    saveCharacterBlueprint(rebel, hydratedBlueprint);
+    return hydratedBlueprint;
+  }
+
+  const newBlueprint = buildCharacterBlueprint(rebel, character);
+  saveCharacterBlueprint(rebel, newBlueprint);
+  return newBlueprint;
+}
 window.backToLobby = function backToLobby() {
   window.location.href = 'index.html';
 };
 
 const activeRebel = getSelectedRebel();
 const activeCharacter = resolveCharacterConfig(activeRebel);
+const activeCharacterBlueprint = getOrCreateCharacterBlueprint(activeRebel, activeCharacter);
+const activeForgeGenerationInput = buildForgeGenerationInput(activeCharacterBlueprint);
+
 window.activeRebel = activeRebel;
 window.activeCharacter = activeCharacter;
+window.activeCharacterBlueprint = activeCharacterBlueprint;
+window.activeForgeGenerationInput = activeForgeGenerationInput;
+
 console.log('Active Rebel selected for village:', activeRebel);
 console.log('Resolved character config:', activeCharacter);
+console.log('Active character blueprint:', activeCharacterBlueprint);
+
+if (activeCharacter.activeGlbUrl) {
+  console.log('Forge character detected for Village handoff:', activeCharacter.activeGlbUrl);
+}
 
 hydrateSelectedRebelPanel(activeCharacter);
-setSt("Loading " + activeCharacter.displayName + "...");
+setSt(
+  activeCharacter.activeGlbUrl
+    ? "Forge character detected. Loading " + activeCharacter.displayName + "..."
+    : "Loading " + activeCharacter.displayName + "..."
+);
 let charMesh=null, charAnims={}, isMoving=false;
+
+async function loadForgePreviewModelInVillage(glbUrl) {
+  if (!glbUrl) return null;
+
+  try {
+    console.log('Loading Forge GLB preview in Village:', glbUrl);
+
+    const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", glbUrl, scene);
+
+    const skeletons = result.skeletons || [];
+    const animationGroups = result.animationGroups || [];
+    const meshCount = result.meshes ? result.meshes.length : 0;
+    const transformNodeCount = result.transformNodes ? result.transformNodes.length : 0;
+    const boneCount = skeletons.reduce((total, skeleton) => {
+      return total + (skeleton.bones ? skeleton.bones.length : 0);
+    }, 0);
+
+    window.lastForgeGlbInspection = {
+      glbUrl,
+      meshCount,
+      transformNodeCount,
+      skeletonCount: skeletons.length,
+      boneCount,
+      animationGroupCount: animationGroups.length,
+      meshNames: (result.meshes || []).map((mesh) => mesh.name),
+      skeletonNames: skeletons.map((skeleton) => skeleton.name),
+      animationGroupNames: animationGroups.map((group) => group.name)
+    };
+
+    console.log('Forge GLB inspection:', window.lastForgeGlbInspection);
+
+    const previewRoot = new BABYLON.TransformNode("forgePreviewRoot", scene);
+    previewRoot.position = new BABYLON.Vector3(2.8, 0.12, 20);
+    previewRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+
+    result.meshes.forEach((mesh) => {
+      if (!mesh || mesh === previewRoot) return;
+
+      mesh.parent = previewRoot;
+
+      if (mesh.rotationQuaternion) {
+        mesh.rotationQuaternion = null;
+      }
+
+      mesh.receiveShadows = true;
+
+      if (typeof shadows !== 'undefined' && shadows && mesh.getTotalVertices && mesh.getTotalVertices() > 0) {
+        shadows.addShadowCaster(mesh);
+      }
+    });
+
+    result.transformNodes.forEach((node) => {
+      if (!node || node === previewRoot) return;
+
+      node.parent = previewRoot;
+
+      if (node.rotationQuaternion) {
+        node.rotationQuaternion = null;
+      }
+    });
+
+    previewRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+    const bounds = previewRoot.getHierarchyBoundingVectors(true);
+    const height = Math.max(bounds.max.y - bounds.min.y, 0.001);
+    const targetHeight = 3.8;
+    const scale = targetHeight / height;
+
+    previewRoot.scaling = new BABYLON.Vector3(scale, scale, scale);
+
+    const normalizedBounds = previewRoot.getHierarchyBoundingVectors(true);
+    previewRoot.position.y += 0.12 - normalizedBounds.min.y;
+
+    if (animationGroups.length > 0) {
+      removeForgeVisualRootMotion(animationGroups, 'preview');
+
+      animationGroups.forEach((group) => {
+        group.stop();
+      });
+
+      const previewAnimation = animationGroups[0];
+      previewAnimation.start(true);
+
+      window.forgePreviewAnimationGroup = previewAnimation;
+
+      console.log('Forge preview animation started:', previewAnimation.name);
+    } else {
+      console.log('Forge preview has no animation groups to play.');
+    }
+
+    window.forgePreviewRoot = previewRoot;
+    window.forgePreviewModel = result;
+
+    console.log('Forge GLB preview loaded in Village:', previewRoot);
+
+    return previewRoot;
+   } catch(e) {
+    console.warn('Could not load Forge GLB preview in Village:', e);
+    return null;
+  }
+}
+
+window.loadForgePreviewModelInVillage = loadForgePreviewModelInVillage;
+
+window.inspectForgeArmatureGlb = async function(glbUrl) {
+  const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", glbUrl, scene);
+
+  const skeletons = result.skeletons || [];
+  const animationGroups = result.animationGroups || [];
+  const boneCount = skeletons.reduce((total, skeleton) => {
+    return total + (skeleton.bones ? skeleton.bones.length : 0);
+  }, 0);
+
+  const inspection = {
+    glbUrl,
+    meshCount: result.meshes?.length || 0,
+    meshNames: (result.meshes || []).map((mesh) => mesh.name),
+    transformNodeCount: result.transformNodes?.length || 0,
+    transformNodeNames: (result.transformNodes || []).map((node) => node.name),
+    skeletonCount: skeletons.length,
+    skeletonNames: skeletons.map((skeleton) => skeleton.name),
+    boneCount,
+    animationGroupCount: animationGroups.length,
+    animationGroupNames: animationGroups.map((group) => group.name),
+    firstTargets: animationGroups[0]?.targetedAnimations?.slice(0, 16).map((ta) => ({
+      targetName: ta.target?.name,
+      property: ta.animation?.targetProperty,
+      keyCount: ta.animation?.getKeys?.().length
+    })) || []
+  };
+
+  result.meshes.forEach((mesh) => {
+    mesh.isVisible = false;
+    mesh.setEnabled(false);
+  });
+
+  result.transformNodes.forEach((node) => {
+    node.setEnabled(false);
+  });
+
+  window.lastForgeArmatureInspection = inspection;
+  console.log('Forge armature GLB inspection:', inspection);
+
+  return inspection;
+};
+
+window.testForgeArmatureRetarget = async function(riggedGlbUrl, armatureGlbUrl) {
+  if (!riggedGlbUrl || !armatureGlbUrl) {
+    console.warn('Missing riggedGlbUrl or armatureGlbUrl');
+    return null;
+  }
+
+  console.log('Testing Forge armature retarget:', {
+    riggedGlbUrl,
+    armatureGlbUrl
+  });
+
+  const riggedResult = await BABYLON.SceneLoader.ImportMeshAsync("", "", riggedGlbUrl, scene);
+  const armatureResult = await BABYLON.SceneLoader.ImportMeshAsync("", "", armatureGlbUrl, scene);
+
+  const riggedSkeleton = riggedResult.skeletons?.[0] || null;
+  const armatureAnimation = armatureResult.animationGroups?.[0] || null;
+
+  if (!riggedSkeleton || !armatureAnimation) {
+    console.warn('Missing rigged skeleton or armature animation group:', {
+      riggedSkeleton,
+      armatureAnimation
+    });
+
+    return null;
+  }
+
+  const testRoot = new BABYLON.TransformNode("forgeRetargetTestRoot", scene);
+  testRoot.position = new BABYLON.Vector3(5.8, 0.12, 20);
+  testRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+
+  riggedResult.meshes.forEach((mesh) => {
+    if (!mesh || mesh === testRoot) return;
+
+    mesh.parent = testRoot;
+
+    if (mesh.rotationQuaternion) {
+      mesh.rotationQuaternion = null;
+    }
+
+    mesh.receiveShadows = true;
+
+    if (typeof shadows !== 'undefined' && shadows && mesh.getTotalVertices && mesh.getTotalVertices() > 0) {
+      shadows.addShadowCaster(mesh);
+    }
+  });
+
+  riggedResult.transformNodes.forEach((node) => {
+    if (!node || node === testRoot) return;
+
+    node.parent = testRoot;
+
+    if (node.rotationQuaternion) {
+      node.rotationQuaternion = null;
+    }
+  });
+
+  testRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+  const bounds = testRoot.getHierarchyBoundingVectors(true);
+  const height = Math.max(bounds.max.y - bounds.min.y, 0.001);
+  const targetHeight = 3.8;
+  const scale = targetHeight / height;
+
+  testRoot.scaling = new BABYLON.Vector3(scale, scale, scale);
+
+  const normalizedBounds = testRoot.getHierarchyBoundingVectors(true);
+  testRoot.position.y += 0.12 - normalizedBounds.min.y;
+
+  armatureResult.meshes.forEach((mesh) => {
+    mesh.isVisible = false;
+    mesh.setEnabled(false);
+  });
+
+  armatureResult.transformNodes.forEach((node) => {
+    node.setEnabled(false);
+  });
+
+  let retargetedCount = 0;
+  let missedCount = 0;
+  const missedTargets = [];
+
+  armatureAnimation.targetedAnimations.forEach((targetedAnimation) => {
+    const targetName = targetedAnimation.target?.name || '';
+    const matchingBone = riggedSkeleton.bones.find((bone) => bone.name === targetName);
+
+    if (matchingBone) {
+      targetedAnimation.target = matchingBone._linkedTransformNode || matchingBone;
+      retargetedCount++;
+    } else {
+      missedCount++;
+      if (targetName) missedTargets.push(targetName);
+    }
+  });
+
+  armatureAnimation.stop();
+  armatureAnimation.start(true);
+
+  window.forgeRetargetTest = {
+    riggedGlbUrl,
+    armatureGlbUrl,
+    testRoot,
+    riggedResult,
+    armatureResult,
+    riggedSkeleton,
+    armatureAnimation,
+    retargetedCount,
+    missedCount,
+    missedTargets: [...new Set(missedTargets)]
+  };
+
+  console.log('Forge armature retarget test started:', {
+    animationName: armatureAnimation.name,
+    riggedSkeletonName: riggedSkeleton.name,
+    riggedBoneCount: riggedSkeleton.bones.length,
+    retargetedCount,
+    missedCount,
+    missedTargets: [...new Set(missedTargets)]
+  });
+
+  return window.forgeRetargetTest;
+};
+
+window.compareMainAndForgeSkeletons = function() {
+  function summarizeAnimationGroup(group) {
+    if (!group) return null;
+
+    return {
+      name: group.name,
+      targetCount: group.targetedAnimations?.length || 0,
+      targetNames: [...new Set((group.targetedAnimations || []).map((ta) => ta.target?.name || '(missing target)'))],
+      targetProperties: [...new Set((group.targetedAnimations || []).map((ta) => ta.animation?.targetProperty || '(missing property)'))]
+    };
+  }
+
+  function summarizeSkeleton(label, skeleton, groups) {
+    const summary = {
+      label,
+      skeletonName: skeleton?.name || null,
+      boneCount: skeleton?.bones?.length || 0,
+      boneNames: skeleton?.bones?.map((bone) => bone.name) || [],
+      animationGroups: (groups || []).filter(Boolean).map(summarizeAnimationGroup)
+    };
+
+    console.log(label, summary);
+    return summary;
+  }
+
+  const mainSkeleton =
+    scene.skeletons.find((skeleton) => skeleton.bones?.some((bone) => bone.name === 'mixamorig_Hips')) ||
+    scene.skeletons[0] ||
+    null;
+
+  const forgeSkeleton =
+    window.forgeArmaturePlayerSkeleton ||
+    window.forgePreviewModel?.skeletons?.[0] ||
+    window.forgeArmaturePlayerModel?.skeletons?.[0] ||
+    null;
+
+  const forgeGroups = [
+    ...(window.forgePreviewModel?.animationGroups || []),
+    ...Object.values(window.forgeArmatureAnimationCache || {}).map((entry) => entry.animationGroup)
+  ];
+
+  const result = {
+    mainPlayable: summarizeSkeleton('mainPlayable', mainSkeleton, animGroups || []),
+    forgeRigged: summarizeSkeleton('forgeRigged', forgeSkeleton, forgeGroups)
+  };
+
+  window.lastSkeletonComparison = result;
+
+  return result;
+};
+
+window.rebelStandardBoneNames = [
+  'mixamorig_Hips',
+  'mixamorig_Spine',
+  'mixamorig_Spine1',
+  'mixamorig_Spine2',
+  'mixamorig_Neck',
+  'mixamorig_Head',
+  'mixamorig_HeadTop_End',
+  'mixamorig_LeftShoulder',
+  'mixamorig_LeftArm',
+  'mixamorig_LeftForeArm',
+  'mixamorig_LeftHand',
+  'mixamorig_LeftHandThumb1',
+  'mixamorig_LeftHandThumb2',
+  'mixamorig_LeftHandThumb3',
+  'mixamorig_LeftHandThumb4',
+  'mixamorig_LeftHandIndex1',
+  'mixamorig_LeftHandIndex2',
+  'mixamorig_LeftHandIndex3',
+  'mixamorig_LeftHandIndex4',
+  'mixamorig_LeftHandMiddle1',
+  'mixamorig_LeftHandMiddle2',
+  'mixamorig_LeftHandMiddle3',
+  'mixamorig_LeftHandMiddle4',
+  'mixamorig_LeftHandRing1',
+  'mixamorig_LeftHandRing2',
+  'mixamorig_LeftHandRing3',
+  'mixamorig_LeftHandRing4',
+  'mixamorig_LeftHandPinky1',
+  'mixamorig_LeftHandPinky2',
+  'mixamorig_LeftHandPinky3',
+  'mixamorig_LeftHandPinky4',
+  'mixamorig_RightShoulder',
+  'mixamorig_RightArm',
+  'mixamorig_RightForeArm',
+  'mixamorig_RightHand',
+  'mixamorig_RightHandThumb1',
+  'mixamorig_RightHandThumb2',
+  'mixamorig_RightHandThumb3',
+  'mixamorig_RightHandThumb4',
+  'mixamorig_RightHandIndex1',
+  'mixamorig_RightHandIndex2',
+  'mixamorig_RightHandIndex3',
+  'mixamorig_RightHandIndex4',
+  'mixamorig_RightHandMiddle1',
+  'mixamorig_RightHandMiddle2',
+  'mixamorig_RightHandMiddle3',
+  'mixamorig_RightHandMiddle4',
+  'mixamorig_RightHandRing1',
+  'mixamorig_RightHandRing2',
+  'mixamorig_RightHandRing3',
+  'mixamorig_RightHandRing4',
+  'mixamorig_RightHandPinky1',
+  'mixamorig_RightHandPinky2',
+  'mixamorig_RightHandPinky3',
+  'mixamorig_RightHandPinky4',
+  'mixamorig_LeftUpLeg',
+  'mixamorig_LeftLeg',
+  'mixamorig_LeftFoot',
+  'mixamorig_LeftToeBase',
+  'mixamorig_LeftToe_End',
+  'mixamorig_RightUpLeg',
+  'mixamorig_RightLeg',
+  'mixamorig_RightFoot',
+  'mixamorig_RightToeBase',
+  'mixamorig_RightToe_End'
+];
+
+window.inspectRebelRigFromUrl = async function(glbUrl) {
+  if (!glbUrl) {
+    console.warn('Missing GLB URL');
+    return null;
+  }
+
+  const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", glbUrl, scene);
+  const skeletons = result.skeletons || [];
+  const animationGroups = result.animationGroups || [];
+  const skeleton = skeletons[0] || null;
+  const boneNames = skeleton?.bones?.map((bone) => bone.name) || [];
+
+  const inspection = {
+    glbUrl,
+    meshCount: result.meshes?.length || 0,
+    meshNames: (result.meshes || []).map((mesh) => mesh.name),
+    transformNodeCount: result.transformNodes?.length || 0,
+    transformNodeNames: (result.transformNodes || []).map((node) => node.name),
+    skeletonCount: skeletons.length,
+    skeletonName: skeleton?.name || null,
+    boneCount: boneNames.length,
+    boneNames,
+    animationGroupCount: animationGroups.length,
+    animationGroupNames: animationGroups.map((group) => group.name),
+    animationTargets: animationGroups.map((group) => ({
+      name: group.name,
+      targetCount: group.targetedAnimations?.length || 0,
+      targetNames: [...new Set((group.targetedAnimations || []).map((ta) => ta.target?.name || '(missing target)'))],
+      targetProperties: [...new Set((group.targetedAnimations || []).map((ta) => ta.animation?.targetProperty || '(missing property)'))]
+    }))
+  };
+
+  result.meshes.forEach((mesh) => {
+    mesh.isVisible = false;
+    mesh.setEnabled(false);
+  });
+
+  result.transformNodes.forEach((node) => {
+    node.setEnabled(false);
+  });
+
+  window.lastRebelRigInspection = inspection;
+  console.log('Rebel rig inspection:', inspection);
+
+  return inspection;
+};
+
+window.validateRebelStandardRigFromUrl = async function(glbUrl) {
+  const inspection = await window.inspectRebelRigFromUrl(glbUrl);
+
+  if (!inspection) return null;
+
+  const requiredBones = window.rebelStandardBoneNames || [];
+  const foundBones = new Set(inspection.boneNames || []);
+
+  const missingBones = requiredBones.filter((boneName) => !foundBones.has(boneName));
+  const extraBones = (inspection.boneNames || []).filter((boneName) => !requiredBones.includes(boneName));
+  const foundRequiredCount = requiredBones.length - missingBones.length;
+  const matchPercent = requiredBones.length
+    ? Math.round((foundRequiredCount / requiredBones.length) * 100)
+    : 0;
+
+  const validation = {
+    glbUrl,
+    passed: missingBones.length === 0,
+    standardName: 'Rebel Standard Skeleton v1',
+    requiredBoneCount: requiredBones.length,
+    actualBoneCount: inspection.boneCount,
+    foundRequiredCount,
+    matchPercent,
+    missingBones,
+    extraBones,
+    skeletonName: inspection.skeletonName,
+    animationGroupCount: inspection.animationGroupCount,
+    animationGroupNames: inspection.animationGroupNames,
+    message: missingBones.length === 0
+      ? `PASS — ${foundRequiredCount}/${requiredBones.length} Rebel Standard bones found.`
+      : `FAIL — ${foundRequiredCount}/${requiredBones.length} Rebel Standard bones found. Missing ${missingBones.length}.`
+  };
+
+  window.lastRebelRigValidation = validation;
+  console.log('Rebel Standard Rig validation:', validation.message, validation);
+
+  return validation;
+};
+
+  window.rebelRigFitMap = {
+  Hips: 'mixamorig_Hips',
+
+  Spine: 'mixamorig_Spine',
+  Spine01: 'mixamorig_Spine1',
+  Spine02: 'mixamorig_Spine2',
+
+  neck: 'mixamorig_Neck',
+  Head: 'mixamorig_Head',
+  head_end: 'mixamorig_HeadTop_End',
+
+  LeftShoulder: 'mixamorig_LeftShoulder',
+  LeftArm: 'mixamorig_LeftArm',
+  LeftForeArm: 'mixamorig_LeftForeArm',
+  LeftHand: 'mixamorig_LeftHand',
+
+  RightShoulder: 'mixamorig_RightShoulder',
+  RightArm: 'mixamorig_RightArm',
+  RightForeArm: 'mixamorig_RightForeArm',
+  RightHand: 'mixamorig_RightHand',
+
+  LeftUpLeg: 'mixamorig_LeftUpLeg',
+  LeftLeg: 'mixamorig_LeftLeg',
+  LeftFoot: 'mixamorig_LeftFoot',
+  LeftToeBase: 'mixamorig_LeftToeBase',
+
+  RightUpLeg: 'mixamorig_RightUpLeg',
+  RightLeg: 'mixamorig_RightLeg',
+  RightFoot: 'mixamorig_RightFoot',
+  RightToeBase: 'mixamorig_RightToeBase'
+};
+
+window.rebelGeneratedBoneRequirements = {
+  leftHandFingers: [
+    'mixamorig_LeftHandThumb1',
+    'mixamorig_LeftHandThumb2',
+    'mixamorig_LeftHandThumb3',
+    'mixamorig_LeftHandThumb4',
+    'mixamorig_LeftHandIndex1',
+    'mixamorig_LeftHandIndex2',
+    'mixamorig_LeftHandIndex3',
+    'mixamorig_LeftHandIndex4',
+    'mixamorig_LeftHandMiddle1',
+    'mixamorig_LeftHandMiddle2',
+    'mixamorig_LeftHandMiddle3',
+    'mixamorig_LeftHandMiddle4',
+    'mixamorig_LeftHandRing1',
+    'mixamorig_LeftHandRing2',
+    'mixamorig_LeftHandRing3',
+    'mixamorig_LeftHandRing4',
+    'mixamorig_LeftHandPinky1',
+    'mixamorig_LeftHandPinky2',
+    'mixamorig_LeftHandPinky3',
+    'mixamorig_LeftHandPinky4'
+  ],
+
+  rightHandFingers: [
+    'mixamorig_RightHandThumb1',
+    'mixamorig_RightHandThumb2',
+    'mixamorig_RightHandThumb3',
+    'mixamorig_RightHandThumb4',
+    'mixamorig_RightHandIndex1',
+    'mixamorig_RightHandIndex2',
+    'mixamorig_RightHandIndex3',
+    'mixamorig_RightHandIndex4',
+    'mixamorig_RightHandMiddle1',
+    'mixamorig_RightHandMiddle2',
+    'mixamorig_RightHandMiddle3',
+    'mixamorig_RightHandMiddle4',
+    'mixamorig_RightHandRing1',
+    'mixamorig_RightHandRing2',
+    'mixamorig_RightHandRing3',
+    'mixamorig_RightHandRing4',
+    'mixamorig_RightHandPinky1',
+    'mixamorig_RightHandPinky2',
+    'mixamorig_RightHandPinky3',
+    'mixamorig_RightHandPinky4'
+  ],
+
+  toesAndEnds: [
+    'mixamorig_LeftToe_End',
+    'mixamorig_RightToe_End'
+  ]
+};
+
+window.analyzeForgeToRebelRigFit = async function(glbUrl) {
+  const inspection = await window.inspectRebelRigFromUrl(glbUrl);
+
+  if (!inspection) return null;
+
+  const sourceBones = new Set(inspection.boneNames || []);
+  const fitMap = window.rebelRigFitMap || {};
+  const requiredBones = window.rebelStandardBoneNames || [];
+
+  const mappedBones = Object.entries(fitMap)
+    .filter(([sourceBoneName]) => sourceBones.has(sourceBoneName))
+    .map(([sourceBoneName, rebelBoneName]) => ({
+      sourceBoneName,
+      rebelBoneName
+    }));
+
+  const mappedRebelBones = new Set(mappedBones.map((item) => item.rebelBoneName));
+  const missingStandardBones = requiredBones.filter((boneName) => !mappedRebelBones.has(boneName));
+
+  const generatedRequirementGroups = Object.entries(window.rebelGeneratedBoneRequirements || {}).map(([groupName, boneNames]) => {
+    const missingInGroup = boneNames.filter((boneName) => missingStandardBones.includes(boneName));
+
+    return {
+      groupName,
+      requiredCount: boneNames.length,
+      missingCount: missingInGroup.length,
+      missingBones: missingInGroup
+    };
+  });
+
+  const directMapCoverage = requiredBones.length
+    ? Math.round((mappedRebelBones.size / requiredBones.length) * 100)
+    : 0;
+
+  const sourceCoverage = inspection.boneCount
+    ? Math.round((mappedBones.length / inspection.boneCount) * 100)
+    : 0;
+
+   const missingLeftFingers =
+    generatedRequirementGroups.find((group) => group.groupName === 'leftHandFingers')?.missingCount || 0;
+
+  const missingRightFingers =
+    generatedRequirementGroups.find((group) => group.groupName === 'rightHandFingers')?.missingCount || 0;
+
+  const missingToeEnds =
+    generatedRequirementGroups.find((group) => group.groupName === 'toesAndEnds')?.missingCount || 0;
+
+  const coreBodyMappedCount = mappedBones.filter((item) => {
+    return !item.rebelBoneName.includes('HandThumb') &&
+      !item.rebelBoneName.includes('HandIndex') &&
+      !item.rebelBoneName.includes('HandMiddle') &&
+      !item.rebelBoneName.includes('HandRing') &&
+      !item.rebelBoneName.includes('HandPinky') &&
+      !item.rebelBoneName.includes('Toe_End');
+  }).length;
+
+  const rigFitSummary = {
+    coreBodyMappedCount,
+    coreBodyStatus: coreBodyMappedCount >= 20 ? 'good' : 'needs_review',
+    missingLeftFingers,
+    missingRightFingers,
+    missingToeEnds,
+    mainIssue:
+      missingLeftFingers || missingRightFingers
+        ? 'This rig is missing full finger chains, which is why it cannot match the current main playable character quality.'
+        : missingToeEnds
+          ? 'This rig is mostly mapped but still missing toe end bones.'
+          : 'This rig is close to Rebel Standard.',
+    recommendation:
+      missingLeftFingers || missingRightFingers
+        ? 'Generate or fit full Mixamo-style finger chains before using this as a final playable Forge character.'
+        : missingToeEnds
+          ? 'Generate toe end helper bones before final playable use.'
+          : 'This rig may be ready for Rebel Standard animation testing.'
+  };
+
+  const report = {
+    glbUrl,
+    sourceSkeletonName: inspection.skeletonName,
+    sourceBoneCount: inspection.boneCount,
+    rebelStandardBoneCount: requiredBones.length,
+    mappedBoneCount: mappedBones.length,
+    mappedBones,
+    directMapCoverage,
+    sourceCoverage,
+    missingStandardBoneCount: missingStandardBones.length,
+    missingStandardBones,
+    generatedRequirementGroups,
+    rigFitSummary,
+    conclusion:
+      missingStandardBones.length === 0
+        ? 'This rig already matches the Rebel Standard Skeleton.'
+        : 'This rig needs Rebel Standard bone generation / fitting before it can become a final playable Forge character.'
+  };
+
+  window.lastRebelRigFitReport = report;
+  console.log('Rebel Rig Fit Map report:', report);
+
+  return report;
+};
+
+window.generateRebelFingerChainPlan = async function(glbUrl) {
+  const fitReport = await window.analyzeForgeToRebelRigFit(glbUrl);
+
+  if (!fitReport) return null;
+
+  const mappedSourceBones = new Set(
+    (fitReport.mappedBones || []).map((item) => item.sourceBoneName)
+  );
+
+  const hasLeftHand = mappedSourceBones.has('LeftHand');
+  const hasRightHand = mappedSourceBones.has('RightHand');
+  const hasLeftToeBase = mappedSourceBones.has('LeftToeBase');
+  const hasRightToeBase = mappedSourceBones.has('RightToeBase');
+
+  const fingerTypes = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'];
+
+  function buildFingerChain(side, fingerType) {
+    const sourceHandBone = `${side}Hand`;
+    const rebelHandBone = `mixamorig_${side}Hand`;
+
+    return {
+      side,
+      fingerType,
+      sourceParentBone: sourceHandBone,
+      rebelParentBone: rebelHandBone,
+      generatedBones: [1, 2, 3, 4].map((index) => ({
+        boneName: `mixamorig_${side}Hand${fingerType}${index}`,
+        parentBone:
+          index === 1
+            ? rebelHandBone
+            : `mixamorig_${side}Hand${fingerType}${index - 1}`,
+        purpose:
+          index === 1
+            ? 'finger base / knuckle'
+            : index === 4
+              ? 'finger tip / end helper'
+              : 'finger bend segment'
+      }))
+    };
+  }
+
+  const leftFingerPlan = hasLeftHand
+    ? fingerTypes.map((fingerType) => buildFingerChain('Left', fingerType))
+    : [];
+
+  const rightFingerPlan = hasRightHand
+    ? fingerTypes.map((fingerType) => buildFingerChain('Right', fingerType))
+    : [];
+
+  const toeEndPlan = [
+    hasLeftToeBase
+      ? {
+          side: 'Left',
+          sourceParentBone: 'LeftToeBase',
+          rebelParentBone: 'mixamorig_LeftToeBase',
+          generatedBone: {
+            boneName: 'mixamorig_LeftToe_End',
+            parentBone: 'mixamorig_LeftToeBase',
+            purpose: 'toe tip / end helper'
+          }
+        }
+      : null,
+    hasRightToeBase
+      ? {
+          side: 'Right',
+          sourceParentBone: 'RightToeBase',
+          rebelParentBone: 'mixamorig_RightToeBase',
+          generatedBone: {
+            boneName: 'mixamorig_RightToe_End',
+            parentBone: 'mixamorig_RightToeBase',
+            purpose: 'toe tip / end helper'
+          }
+        }
+      : null
+  ].filter(Boolean);
+
+  const plannedGeneratedBoneCount =
+    leftFingerPlan.reduce((total, chain) => total + chain.generatedBones.length, 0) +
+    rightFingerPlan.reduce((total, chain) => total + chain.generatedBones.length, 0) +
+    toeEndPlan.length;
+
+  const plan = {
+    glbUrl,
+    sourceSkeletonName: fitReport.sourceSkeletonName,
+    sourceBoneCount: fitReport.sourceBoneCount,
+    rebelStandardBoneCount: fitReport.rebelStandardBoneCount,
+    mappedBoneCount: fitReport.mappedBoneCount,
+    currentMissingStandardBoneCount: fitReport.missingStandardBoneCount,
+    plannedGeneratedBoneCount,
+    projectedBoneCountAfterGeneration: fitReport.sourceBoneCount + plannedGeneratedBoneCount,
+    anchors: {
+      hasLeftHand,
+      hasRightHand,
+      hasLeftToeBase,
+      hasRightToeBase
+    },
+    leftFingerPlan,
+    rightFingerPlan,
+    toeEndPlan,
+    warning:
+      'This is a bone generation plan only. It does not yet create bones, bind skin weights, or export a new GLB.',
+    nextEngineeringStep:
+      'Create a rig builder that inserts these generated bones, parents them correctly, estimates positions from the mesh/hand bounds, and then tests skin weighting/deformation.'
+  };
+
+  window.lastRebelFingerChainPlan = plan;
+  console.log('Rebel Finger Chain Plan:', plan);
+
+  return plan;
+};
+
+window.simulateRebelStandardSkeletonFromForge = async function(glbUrl) {
+  const fingerPlan = await window.generateRebelFingerChainPlan(glbUrl);
+
+  if (!fingerPlan) return null;
+
+  const requiredBones = window.rebelStandardBoneNames || [];
+  const requiredBoneSet = new Set(requiredBones);
+
+  const mappedRebelBoneNames = (window.lastRebelRigFitReport?.mappedBones || [])
+    .map((item) => item.rebelBoneName)
+    .filter(Boolean);
+
+  const generatedFingerBoneNames = [
+    ...(fingerPlan.leftFingerPlan || []).flatMap((chain) => {
+      return (chain.generatedBones || []).map((bone) => bone.boneName);
+    }),
+    ...(fingerPlan.rightFingerPlan || []).flatMap((chain) => {
+      return (chain.generatedBones || []).map((bone) => bone.boneName);
+    })
+  ];
+
+  const generatedToeBoneNames = (fingerPlan.toeEndPlan || [])
+    .map((toePlan) => toePlan.generatedBone?.boneName)
+    .filter(Boolean);
+
+  const simulatedRebelBoneNames = [
+    ...mappedRebelBoneNames,
+    ...generatedFingerBoneNames,
+    ...generatedToeBoneNames
+  ];
+
+  const simulatedUniqueBoneNames = [...new Set(simulatedRebelBoneNames)];
+
+  const foundRequiredBones = requiredBones.filter((boneName) => {
+    return simulatedUniqueBoneNames.includes(boneName);
+  });
+
+  const missingRequiredBones = requiredBones.filter((boneName) => {
+    return !simulatedUniqueBoneNames.includes(boneName);
+  });
+
+  const extraSimulatedBones = simulatedUniqueBoneNames.filter((boneName) => {
+    return !requiredBoneSet.has(boneName);
+  });
+
+  const validation = {
+    glbUrl,
+    simulationType: 'virtual_rebel_standard_skeleton_from_forge',
+    sourceSkeletonName: fingerPlan.sourceSkeletonName,
+    sourceBoneCount: fingerPlan.sourceBoneCount,
+    mappedBoneCount: fingerPlan.mappedBoneCount,
+    plannedGeneratedBoneCount: fingerPlan.plannedGeneratedBoneCount,
+    requiredBoneCount: requiredBones.length,
+    simulatedUniqueBoneCount: simulatedUniqueBoneNames.length,
+    foundRequiredCount: foundRequiredBones.length,
+    missingRequiredCount: missingRequiredBones.length,
+    passesVirtualRebelStandard: missingRequiredBones.length === 0,
+    mappedRebelBoneNames,
+    generatedFingerBoneNames,
+    generatedToeBoneNames,
+    simulatedRebelBoneNames: simulatedUniqueBoneNames,
+    missingRequiredBones,
+    extraSimulatedBones,
+    warning:
+      'This is a virtual skeleton simulation only. It proves naming/structure coverage, not physical bone placement, skin weights, deformation, or GLB export.',
+    nextEngineeringStep:
+      'Create a real rig builder that physically inserts these bones, estimates positions, binds skin weights, exports GLB, and then re-runs validateRebelStandardRigFromUrl on the exported file.'
+  };
+
+  window.lastRebelStandardSkeletonSimulation = validation;
+
+  console.log(
+    validation.passesVirtualRebelStandard
+      ? `Virtual Rebel Standard Skeleton PASS — ${validation.foundRequiredCount}/${validation.requiredBoneCount} bones covered.`
+      : `Virtual Rebel Standard Skeleton FAIL — ${validation.foundRequiredCount}/${validation.requiredBoneCount} bones covered.`,
+    validation
+  );
+
+  return validation;
+};
+
+window.planRebelGeneratedBonePositions = async function(glbUrl) {
+  const simulation = await window.simulateRebelStandardSkeletonFromForge(glbUrl);
+
+  if (!simulation) return null;
+
+  const fingerPlan = window.lastRebelFingerChainPlan || null;
+
+  if (!fingerPlan) {
+    console.warn('Missing Rebel finger chain plan.');
+    return null;
+  }
+
+  const fingerSpread = {
+    Thumb: { x: 0.10, y: -0.02, z: 0.10 },
+    Index: { x: 0.05, y: 0.00, z: 0.18 },
+    Middle: { x: 0.00, y: 0.00, z: 0.20 },
+    Ring: { x: -0.05, y: 0.00, z: 0.18 },
+    Pinky: { x: -0.10, y: -0.01, z: 0.15 }
+  };
+
+  function sideMultiplier(side) {
+    return side === 'Left' ? 1 : -1;
+  }
+
+  function buildGeneratedFingerPositionPlan(chain) {
+    const side = chain.side;
+    const fingerType = chain.fingerType;
+    const spread = fingerSpread[fingerType] || { x: 0, y: 0, z: 0.16 };
+    const sideSign = sideMultiplier(side);
+
+    return {
+      side,
+      fingerType,
+      sourceParentBone: chain.sourceParentBone,
+      rebelParentBone: chain.rebelParentBone,
+      placementStrategy: 'relative_to_hand_anchor',
+      generatedBones: (chain.generatedBones || []).map((bone, index) => {
+        const segment = index + 1;
+        const segmentLength = fingerType === 'Thumb' ? 0.055 : 0.065;
+
+        return {
+          boneName: bone.boneName,
+          parentBone: bone.parentBone,
+          estimatedLocalOffset: {
+            x: Number((spread.x * sideSign + sideSign * segmentLength * index * 0.18).toFixed(4)),
+            y: Number((spread.y - segment * 0.005).toFixed(4)),
+            z: Number((spread.z + segmentLength * segment).toFixed(4))
+          },
+          purpose: bone.purpose,
+          confidence: 'placeholder_estimate',
+          note: 'Position is a first-pass procedural estimate. Later this should be fitted from hand mesh bounds or manual guide points.'
+        };
+      })
+    };
+  }
+
+  const leftFingerPositionPlan = (fingerPlan.leftFingerPlan || []).map(buildGeneratedFingerPositionPlan);
+  const rightFingerPositionPlan = (fingerPlan.rightFingerPlan || []).map(buildGeneratedFingerPositionPlan);
+
+  const toeEndPositionPlan = (fingerPlan.toeEndPlan || []).map((toePlan) => {
+    const side = toePlan.side;
+    const sideSign = sideMultiplier(side);
+
+    return {
+      side,
+      sourceParentBone: toePlan.sourceParentBone,
+      rebelParentBone: toePlan.rebelParentBone,
+      generatedBone: {
+        boneName: toePlan.generatedBone.boneName,
+        parentBone: toePlan.generatedBone.parentBone,
+        estimatedLocalOffset: {
+          x: 0,
+          y: 0,
+          z: Number((0.16 * sideSign).toFixed(4))
+        },
+        purpose: toePlan.generatedBone.purpose,
+        confidence: 'placeholder_estimate',
+        note: 'Toe end position should later be fitted from foot/toe mesh bounds.'
+      }
+    };
+  });
+
+  const generatedFingerBoneCount =
+    leftFingerPositionPlan.reduce((total, chain) => total + chain.generatedBones.length, 0) +
+    rightFingerPositionPlan.reduce((total, chain) => total + chain.generatedBones.length, 0);
+
+  const generatedToeBoneCount = toeEndPositionPlan.length;
+
+  const positionPlan = {
+    glbUrl,
+    planType: 'rebel_generated_bone_position_plan_v1',
+    sourceSkeletonName: simulation.sourceSkeletonName,
+    sourceBoneCount: simulation.sourceBoneCount,
+    requiredBoneCount: simulation.requiredBoneCount,
+    passesVirtualRebelStandard: simulation.passesVirtualRebelStandard,
+    generatedFingerBoneCount,
+    generatedToeBoneCount,
+    totalGeneratedBoneCount: generatedFingerBoneCount + generatedToeBoneCount,
+    leftFingerPositionPlan,
+    rightFingerPositionPlan,
+    toeEndPositionPlan,
+    warning:
+      'This is a position plan only. It does not create bones, bind skin weights, deform mesh, or export GLB.',
+    nextEngineeringStep:
+      'Use this plan to create a real rig-builder prototype that inserts generated bones into a skeleton and validates the resulting exported GLB.'
+  };
+
+  window.lastRebelGeneratedBonePositionPlan = positionPlan;
+
+  console.log('Rebel Generated Bone Position Plan:', positionPlan);
+
+  return positionPlan;
+};
+
+window.clearRebelGeneratedBoneMarkers = function() {
+  if (window.rebelGeneratedBoneMarkerRoot) {
+    try {
+      window.rebelGeneratedBoneMarkerRoot.dispose(false, true);
+    } catch(e) {
+      console.warn('Could not clear Rebel generated bone markers:', e);
+    }
+  }
+
+  window.rebelGeneratedBoneMarkerRoot = null;
+  window.lastRebelGeneratedBoneMarkerReport = null;
+};
+
+window.visualizeRebelGeneratedBonePlan = async function(glbUrl) {
+  const positionPlan = await window.planRebelGeneratedBonePositions(glbUrl);
+
+  if (!positionPlan) return null;
+
+  window.clearRebelGeneratedBoneMarkers();
+
+  const riggedResult = await BABYLON.SceneLoader.ImportMeshAsync("", "", glbUrl, scene);
+  const skeleton = riggedResult.skeletons?.[0] || null;
+
+  if (!skeleton) {
+    console.warn('Could not visualize generated bone plan. No skeleton found.');
+    return null;
+  }
+
+  const markerRoot = new BABYLON.TransformNode("rebelGeneratedBoneMarkerRoot", scene);
+  markerRoot.position = new BABYLON.Vector3(8.8, 0.12, 20);
+  markerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+
+  riggedResult.meshes.forEach((mesh) => {
+    if (!mesh || mesh === markerRoot) return;
+
+    mesh.parent = markerRoot;
+
+    if (mesh.rotationQuaternion) {
+      mesh.rotationQuaternion = null;
+    }
+
+    mesh.receiveShadows = true;
+
+    if (typeof shadows !== 'undefined' && shadows && mesh.getTotalVertices && mesh.getTotalVertices() > 0) {
+      shadows.addShadowCaster(mesh);
+    }
+  });
+
+  riggedResult.transformNodes.forEach((node) => {
+    if (!node || node === markerRoot) return;
+
+    node.parent = markerRoot;
+
+    if (node.rotationQuaternion) {
+      node.rotationQuaternion = null;
+    }
+  });
+
+  markerRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+  const bounds = markerRoot.getHierarchyBoundingVectors(true);
+  const height = Math.max(bounds.max.y - bounds.min.y, 0.001);
+  const targetHeight = 3.8;
+  const scale = targetHeight / height;
+
+  markerRoot.scaling = new BABYLON.Vector3(scale, scale, scale);
+
+  const normalizedBounds = markerRoot.getHierarchyBoundingVectors(true);
+  markerRoot.position.y += 0.12 - normalizedBounds.min.y;
+
+  const markerParent = new BABYLON.TransformNode("rebelGeneratedBoneMarkers", scene);
+  markerParent.parent = markerRoot;
+
+  const fingerMarkerMaterial = mat('#5ecfca', { e: '#5ecfca' });
+  const toeMarkerMaterial = mat('#f0c04a', { e: '#f0c04a' });
+
+  function getBoneNode(name) {
+    const bone = skeleton.bones.find((item) => item.name === name);
+    return bone?._linkedTransformNode || null;
+  }
+
+  function createMarker(name, parentBoneName, offset, material, diameter) {
+    const parentNode = getBoneNode(parentBoneName);
+
+    if (!parentNode) {
+      return null;
+    }
+
+    const marker = BABYLON.MeshBuilder.CreateSphere(name, {
+      diameter: diameter || 0.045,
+      segments: 8
+    }, scene);
+
+    marker.material = material;
+    marker.parent = parentNode;
+    marker.position = new BABYLON.Vector3(
+      offset.x || 0,
+      offset.y || 0,
+      offset.z || 0
+    );
+
+    marker.metadata = {
+      generatedBoneMarker: true,
+      boneName: name,
+      parentBoneName
+    };
+
+    return marker;
+  }
+
+  const createdMarkers = [];
+  const skippedMarkers = [];
+
+  function addFingerChainMarkers(chains) {
+    (chains || []).forEach((chain) => {
+      (chain.generatedBones || []).forEach((bone) => {
+        const sourceParentName =
+          bone.parentBone === chain.rebelParentBone
+            ? chain.sourceParentBone
+            : null;
+
+        const previousGeneratedBone = bone.parentBone !== chain.rebelParentBone
+          ? createdMarkers.find((marker) => marker?.metadata?.boneName === bone.parentBone)
+          : null;
+
+        let marker = null;
+
+        if (sourceParentName) {
+          marker = createMarker(
+            bone.boneName,
+            sourceParentName,
+            bone.estimatedLocalOffset,
+            fingerMarkerMaterial,
+            0.04
+          );
+        } else if (previousGeneratedBone) {
+          marker = BABYLON.MeshBuilder.CreateSphere(bone.boneName, {
+            diameter: 0.035,
+            segments: 8
+          }, scene);
+
+          marker.material = fingerMarkerMaterial;
+          marker.parent = previousGeneratedBone;
+          marker.position = new BABYLON.Vector3(
+            bone.estimatedLocalOffset.x || 0,
+            bone.estimatedLocalOffset.y || 0,
+            0.06
+          );
+
+          marker.metadata = {
+            generatedBoneMarker: true,
+            boneName: bone.boneName,
+            parentBoneName: bone.parentBone
+          };
+        }
+
+        if (marker) {
+          createdMarkers.push(marker);
+        } else {
+          skippedMarkers.push({
+            boneName: bone.boneName,
+            parentBone: bone.parentBone
+          });
+        }
+      });
+    });
+  }
+
+  addFingerChainMarkers(positionPlan.leftFingerPositionPlan);
+  addFingerChainMarkers(positionPlan.rightFingerPositionPlan);
+
+  (positionPlan.toeEndPositionPlan || []).forEach((toePlan) => {
+    const marker = createMarker(
+      toePlan.generatedBone.boneName,
+      toePlan.sourceParentBone,
+      toePlan.generatedBone.estimatedLocalOffset,
+      toeMarkerMaterial,
+      0.05
+    );
+
+    if (marker) {
+      createdMarkers.push(marker);
+    } else {
+      skippedMarkers.push({
+        boneName: toePlan.generatedBone.boneName,
+        parentBone: toePlan.sourceParentBone
+      });
+    }
+  });
+
+  window.rebelGeneratedBoneMarkerRoot = markerRoot;
+
+  const report = {
+    glbUrl,
+    markerRoot,
+    skeletonName: skeleton.name,
+    sourceBoneCount: skeleton.bones.length,
+    createdMarkerCount: createdMarkers.length,
+    skippedMarkerCount: skippedMarkers.length,
+    skippedMarkers,
+    expectedGeneratedBoneCount: positionPlan.totalGeneratedBoneCount,
+    note:
+      'These are debug markers only. They visualize the planned generated Rebel Standard finger/toe bones but do not create real bones or skin weights.'
+  };
+
+  window.lastRebelGeneratedBoneMarkerReport = report;
+
+  console.log('Rebel generated bone markers visualized:', report);
+
+  return report;
+};
+  
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
 let _signTriggers = [];
@@ -1890,11 +4499,14 @@ function switchAnim(idx, loop) {
 BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacter.idleFile, scene)
 .then(r => {
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
-  playerRoot.position = new BABYLON.Vector3(0, 0.12, 20);
+  playerRoot.position = new BABYLON.Vector3(0, 0.25, 20);
   playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
   playerRoot.scaling = new BABYLON.Vector3(0.018, 0.018, 0.018);
   r.meshes.forEach(m => {
-    if (m !== playerRoot) m.parent = playerRoot;
+   if (m !== playerRoot) {
+  m.parent = playerRoot;
+  m.position.y -= 8;
+}
     if (m.rotationQuaternion) m.rotationQuaternion = null;
     shadows.addShadowCaster(m); m.receiveShadows = true;
     if (m.material) {
@@ -1920,7 +4532,21 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
   courtyardLight.intensity = 1.2;
   courtyardLight.range = 28;
   window.followLight.intensity = 2.8; window.followLight.range = 22;
-  setSt("Character ready!");
+   setSt("Character ready!");
+
+     if (activeCharacter.activeGlbUrl) {
+    createForgeVillagePreviewToggle();
+
+    resolveForgePreviewGlbUrlForVillage(activeCharacter).then((previewGlbUrl) => {
+      return loadForgePreviewModelInVillage(previewGlbUrl);
+    }).then((previewRoot) => {
+      if (previewRoot) {
+        console.log('Forge preview model is visible beside the playable character.');
+        applyForgePlayerVisualTest(previewRoot);
+      }
+    });
+  }
+
   activeCharacter.animations.forEach(({f,i}) => {
     BABYLON.SceneLoader.ImportMeshAsync("","/assets/character/",f,scene).then(r2 => {
       r2.meshes.forEach(m=>{m.isVisible=false;m.setEnabled(false);});
@@ -2475,13 +5101,22 @@ function toggleWalk() {
     wb.textContent = '⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
   }
 }
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', async e => {
   // Don't fire shortcuts when typing in an input field
   const tag = document.activeElement && document.activeElement.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;
   const key = e.key.toLowerCase();
 
   if (key === 'm') {
+    if (!adminMode) {
+      const authenticated = await hasActiveAdminSession();
+
+      if (!authenticated) {
+        showToast('Admin login required');
+        return;
+      }
+    }
+
     adminMode = !adminMode;
     updateAdminBadge();
 
@@ -2513,7 +5148,6 @@ document.addEventListener('keydown', e => {
     }
     return;
   }
-
   if (key === 'escape' && walkMode) toggleWalk();
 
   if (adminMode && key === 'n') {
@@ -2591,8 +5225,17 @@ document.addEventListener('keydown', e => {
   if (key === 'd' || e.key === 'ArrowRight') turnRight = true;
   if (!walkMode) return;
   if (key === 'r' && !adminMode) { runKey=true; switchAnim(2, true); }
-  if (key === 'f' && !adminMode) { switchAnim(3, false); setTimeout(()=>{ if(animState===3) switchAnim(0,true); }, 1200); }
-  if (e.key === ' ') { e.preventDefault(); switchAnim(4, false); setTimeout(()=>{ if(animState===4) switchAnim(0,true); }, 1000); }
+    if (key === 'f' && !adminMode) {
+    switchAnim(3, false);
+    triggerForgeArmatureActionMode('kick', 1200);
+    setTimeout(()=>{ if(animState===3) switchAnim(0,true); }, 1200);
+  }
+   if (e.key === ' ') {
+    e.preventDefault();
+    switchAnim(4, false);
+    triggerForgeArmatureActionMode('jump', 1000);
+    setTimeout(()=>{ if(animState===4) switchAnim(0,true); }, 1000);
+  }
 });
 
 document.addEventListener('keyup', e => {
@@ -2814,7 +5457,7 @@ engine.runRenderLoop(()=>{
         charMesh._footOffset = isFinite(_minY) ? (charMesh.position.y - _minY) : 0;
       }
       // Snap feet to ground — origin sits at terrainY + footOffset so feet touch the terrain
-      const _targetY = _tHit.pickedPoint.y + charMesh._footOffset;
+      const _targetY = _tHit.pickedPoint.y + charMesh._footOffset - 1.65;
       charMesh.position.y += (_targetY - charMesh.position.y) * 0.25;
       charMesh._terrainY = _tHit.pickedPoint.y;
       // Slope tilt removed — character stays upright
@@ -2862,6 +5505,7 @@ Object.keys(ASSETS).forEach(key => loadAssetSource(key));
 async function initWorldLayout() {
   // Always ensure token is set before fetching
   if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
+
   try {
     const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/world-layout.json?ref=dev", {
       headers: { "Authorization": "token " + window._ghToken }
@@ -2872,7 +5516,39 @@ async function initWorldLayout() {
       localStorage.setItem("rebelAntsWorldLayout", new TextDecoder('utf-8').decode(bytes));
       console.log("Layout restored from GitHub:", JSON.parse(new TextDecoder('utf-8').decode(bytes)).length, "objects");
     }
-  } catch(e) { console.warn("Could not load layout from GitHub", e); }
+  } catch(e) {
+    console.warn("Could not load layout from GitHub", e);
+  }
+
+  try {
+    const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/forge-collections.json?ref=dev", {
+      headers: { "Authorization": "token " + window._ghToken }
+    });
+
+    if (resp.ok) {
+      const d = await resp.json();
+      const bytes = Uint8Array.from(atob(d.content.replace(/\n/g,'')), c => c.charCodeAt(0));
+      const jsonText = new TextDecoder('utf-8').decode(bytes);
+      const forgeCollectionsConfig = JSON.parse(jsonText);
+
+      window._forgeCollectionsConfig = forgeCollectionsConfig;
+      localStorage.setItem("rebelAntsForgeCollections", jsonText);
+
+      console.log("Forge collections restored from GitHub:", Object.keys(forgeCollectionsConfig.collections || {}).length, "collections");
+    } else {
+      throw new Error("GitHub forge collections load failed. Status: " + resp.status);
+    }
+  } catch(e) {
+    console.warn("Could not load forge collections from GitHub", e);
+
+    try {
+      const fallbackRaw = localStorage.getItem("rebelAntsForgeCollections");
+      window._forgeCollectionsConfig = fallbackRaw ? JSON.parse(fallbackRaw) : null;
+    } catch(parseErr) {
+      window._forgeCollectionsConfig = null;
+    }
+  }
+
   // Dismiss loading screen
   const ld = document.getElementById('ld');
   if (ld) { ld.style.opacity='0'; setTimeout(()=>{ ld.style.display='none'; }, 900); }

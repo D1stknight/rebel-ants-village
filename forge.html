@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebel Ants — Forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  width:100%;
+  min-height:100%;
+  background:#050812;
+  color:#f3e6bf;
+  font-family:'Cinzel',serif;
+}
+body{
+  padding:28px;
+  background:
+    radial-gradient(circle at top center, rgba(200,146,42,.13), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(94,207,202,.08), transparent 38%),
+    #050812;
+}
+#page{
+  width:min(1100px,100%);
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+}
+#page-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  border-bottom:1px solid rgba(200,146,42,.18);
+  padding-bottom:22px;
+}
+#page-title h1{
+  font-family:'Cinzel Decorative',serif;
+  font-size:28px;
+  letter-spacing:4px;
+  color:#c8922a;
+  text-shadow:0 0 28px rgba(200,146,42,.25);
+}
+#page-title p{
+  margin-top:8px;
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+.header-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.header-btn{
+  padding:11px 16px;
+  background:transparent;
+  border:1px solid rgba(200,146,42,.35);
+  color:#c8922a;
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  cursor:pointer;
+  text-decoration:none;
+  transition:all .2s ease;
+}
+.header-btn:hover{
+  background:rgba(200,146,42,.12);
+  border-color:rgba(200,146,42,.7);
+}
+#forge-layout{
+  display:grid;
+  grid-template-columns:minmax(280px,360px) minmax(320px,1fr);
+  gap:22px;
+}
+.forge-card{
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.08);
+  padding:22px;
+}
+#forge-preview{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+#forge-image{
+  width:100%;
+  aspect-ratio:1/1;
+  object-fit:cover;
+  border:1px solid rgba(200,146,42,.18);
+  background:rgba(0,0,0,.2);
+}
+#forge-name{
+  font-family:'Cinzel Decorative',serif;
+  font-size:18px;
+  color:#c8922a;
+  line-height:1.5;
+}
+#forge-sub{
+  color:#8a7a5a;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
+#forge-details{
+  display:grid;
+  gap:10px;
+}
+.detail-row{
+  display:grid;
+  grid-template-columns:140px 1fr;
+  gap:10px;
+  font-size:12px;
+  line-height:1.8;
+}
+.detail-label{
+  color:#8a7a5a;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.detail-value{
+  color:#f3e6bf;
+  word-break:break-word;
+}
+#forge-right{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.section-title{
+  font-family:'Cinzel Decorative',serif;
+  font-size:16px;
+  color:#c8922a;
+  letter-spacing:2px;
+}
+.section-copy{
+  color:#b7a98b;
+  font-size:12px;
+  line-height:1.9;
+}
+#forge-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.action-btn{
+  padding:12px 18px;
+  border:none;
+  cursor:pointer;
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  transition:all .2s ease;
+}
+#generate-btn{
+  background:linear-gradient(135deg,#5ecfca,#2c8d89);
+  color:#fff;
+}
+#generate-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(94,207,202,.25);
+}
+#enter-village-btn{
+  background:linear-gradient(135deg,#c8922a,#8a5e1a);
+  color:#fff;
+}
+#enter-village-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(200,146,42,.25);
+}
+#forge-status,
+#forge-inline-status{
+  color:#8a7a5a;
+  font-size:11px;
+  letter-spacing:2px;
+  min-height:18px;
+}
+#forge-inline-status{
+  margin-top:-6px;
+}
+#forge-status.success,
+#forge-inline-status.success{
+  color:#7cffb2;
+}
+#forge-status.error,
+#forge-inline-status.error{
+  color:#ff8b8b;
+}
+#fullbody-preview-wrap{
+  display:none;
+  flex-direction:column;
+  gap:10px;
+  border-top:1px solid rgba(255,255,255,.08);
+  padding-top:16px;
+}
+#fullbody-preview-wrap.open{
+  display:flex;
+}
+#fullbody-preview-label{
+  color:#5ecfca;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
+#fullbody-preview-image{
+  width:100%;
+  aspect-ratio:2 / 3;
+  object-fit:contain;
+  background:rgba(0,0,0,.22);
+  border:1px solid rgba(94,207,202,.22);
+}
+#generation-summary{
+  display:grid;
+  gap:10px;
+}
+.summary-row{
+  display:grid;
+  grid-template-columns:160px 1fr;
+  gap:10px;
+  font-size:12px;
+  line-height:1.8;
+}
+.summary-label{
+  color:#8a7a5a;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.summary-value{
+  color:#f3e6bf;
+  word-break:break-word;
+}
+#generation-snapshot{
+  margin-top:8px;
+  padding:14px;
+  background:rgba(0,0,0,.22);
+  border:1px solid rgba(255,255,255,.08);
+  color:#b7a98b;
+  font-size:11px;
+  line-height:1.7;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+@media (max-width:850px){
+  body{padding:18px}
+  #page-header{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  #page-title h1{
+    font-size:22px;
+  }
+  #forge-layout{
+    grid-template-columns:1fr;
+  }
+  .detail-row{
+    grid-template-columns:1fr;
+    gap:2px;
+  }
+}
+</style>
+</head>
+<body>
+
+<main id="page">
+  <header id="page-header">
+    <div id="page-title">
+      <h1>CHARACTER FORGE</h1>
+      <p>Rebel Ants 3D Character Pipeline</p>
+    </div>
+
+    <div class="header-actions">
+      <a class="header-btn" href="index.html">← Back to Lobby</a>
+      <a class="header-btn" href="village.html">Enter Village</a>
+    </div>
+  </header>
+
+  <section id="forge-layout">
+    <div class="forge-card" id="forge-preview">
+      <img id="forge-image" src="assets/lobby/ant_1.JPG" alt="Selected Rebel">
+      <div id="forge-name">Rebel #001</div>
+      <div id="forge-sub">Selected Rebel</div>
+
+      <div id="forge-details">
+        <div class="detail-row">
+          <div class="detail-label">Collection</div>
+          <div class="detail-value" id="detail-collection">battle_for_colony</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Token ID</div>
+          <div class="detail-value" id="detail-token">—</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Colony</div>
+          <div class="detail-value" id="detail-colony">—</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Source Type</div>
+          <div class="detail-value" id="detail-source-type">default</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="forge-card" id="forge-right">
+      <div>
+        <div class="section-title">Forge Input</div>
+        <div class="section-copy">
+          This Rebel is now being read through the shared Forge core. Below is the real generation-ready summary the future image-to-3D pipeline will use.
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">Generation Summary</div>
+        <div id="generation-summary">
+          <div class="summary-row">
+            <div class="summary-label">Forge Status</div>
+            <div class="summary-value" id="summary-forge-status">—</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Body Type</div>
+            <div class="summary-value" id="summary-body-type">—</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Colony Style</div>
+            <div class="summary-value" id="summary-colony-style">—</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Weapon Family</div>
+            <div class="summary-value" id="summary-weapon-family">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="generation-snapshot-shell" style="display:none;">
+        <div class="section-title">Generation Input Snapshot</div>
+        <div class="section-copy">
+          Dev-only preview of the actual Forge input object the future 3D generator will consume.
+        </div>
+        <pre id="generation-snapshot">Loading Forge input...</pre>
+      </div>
+
+           <div id="forge-progress-guide" style="padding:14px; border:1px solid rgba(94,207,202,.22); background:rgba(94,207,202,.055); border-radius:18px;">
+        <div class="section-title" style="font-size:14px;">Forge Progress</div>
+        <div class="section-copy" style="margin-top:8px;">
+          Follow the path from concept art to a saved 3D character build.
+        </div>
+
+        <div id="forge-progress-steps" style="display:grid; gap:8px; margin-top:12px;">
+          <div class="forge-progress-step" data-forge-step="concept" style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+            <span class="forge-progress-step-status" style="width:18px; color:#5ecfca;">○</span>
+            <span style="color:#5ecfca;">01</span>
+            <span>Generate a full-body concept</span>
+          </div>
+
+          <div class="forge-progress-step" data-forge-step="saved" style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+            <span class="forge-progress-step-status" style="width:18px; color:#5ecfca;">○</span>
+            <span style="color:#5ecfca;">02</span>
+            <span>Save your favorite version</span>
+          </div>
+
+          <div class="forge-progress-step" data-forge-step="production" style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+            <span class="forge-progress-step-status" style="width:18px; color:#5ecfca;">○</span>
+            <span style="color:#5ecfca;">03</span>
+            <span>Create a clean 3D production reference</span>
+          </div>
+
+          <div class="forge-progress-step" data-forge-step="build" style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+            <span class="forge-progress-step-status" style="width:18px; color:#5ecfca;">○</span>
+            <span style="color:#5ecfca;">04</span>
+            <span>Start the 3D build</span>
+          </div>
+
+          <div class="forge-progress-step" data-forge-step="glb" style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">
+            <span class="forge-progress-step-status" style="width:18px; color:#5ecfca;">○</span>
+            <span style="color:#5ecfca;">05</span>
+            <span>Preview, download, or use the GLB later</span>
+          </div>
+        </div>
+      </div>
+     <div id="forge-actions">
+  <button class="action-btn" id="generate-btn" type="button" onclick="generatePreviewStub()">Generate Full-Body Preview</button>
+
+  <button
+    class="action-btn"
+    id="inspect-static-btn"
+    type="button"
+    onclick="inspectStaticSourceGlb()"
+  >
+    Inspect Static Source GLB
+  </button>
+
+  <button class="action-btn" id="enter-village-btn" type="button" onclick="window.location.href='village.html'">Enter Village</button>
+</div>
+
+      <div id="forge-inline-status" aria-live="polite"></div>
+      <div id="forge-right-results" style="margin-top:14px;">
+        <div id="fullbody-preview-wrap" style="display:none;">
+          <div id="fullbody-preview-label">Latest Generated Preview</div>
+          <img id="fullbody-preview-image" alt="Generated full-body Rebel Ant preview" style="max-width:260px; width:100%; border-radius:18px; display:block; margin-top:12px;">
+
+                                     <div id="forge-preview-actions" style="display:none; margin-top:14px; gap:10px; flex-wrap:wrap;">
+            <button class="action-btn" id="save-concept-btn" type="button" onclick="saveCurrentForgeConcept()">Save This Version</button>
+          </div>
+        </div>
+
+        <div id="forge-concepts-section" style="margin-top:18px;">
+          <div class="section-title">Saved Concepts</div>
+          <div class="section-copy">
+            Choose the full-body concept you want to turn into the future 3D character. Saved concepts stay here so users can compare, download, select, or delete versions.
+          </div>
+          <div id="forge-concepts-gallery" style="display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; margin-top:14px;"></div>
+        </div>
+      </div>
+
+      <div id="forge-status"></div>
+    </div>
+  </section>
+</main>
+
+<script src="assets/forge-core.js"></script>
+
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<script>
+window.inspectStaticSourceGlb = function inspectStaticSourceGlb() {
+  try {
+    setForgeStatus('Inspecting static source GLB...', '');
+
+    const loader = new THREE.GLTFLoader();
+
+    loader.load(
+      'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb',
+      function(gltf) {
+        let meshCount = 0;
+        let triangleCount = 0;
+        const materials = new Set();
+        let boneCount = 0;
+
+        gltf.scene.traverse(function(obj) {
+          if (obj.isMesh) {
+            meshCount++;
+
+            if (obj.material) {
+              materials.add(obj.material.uuid);
+            }
+
+            const geometry = obj.geometry;
+
+            if (geometry && geometry.index) {
+              triangleCount += geometry.index.count / 3;
+            } else if (geometry && geometry.attributes && geometry.attributes.position) {
+              triangleCount += geometry.attributes.position.count / 3;
+            }
+          }
+
+          if (obj.isBone) {
+            boneCount++;
+          }
+        });
+
+        const box = new THREE.Box3().setFromObject(gltf.scene);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        setForgeStatus(
+          `Meshes: ${meshCount}
+Materials: ${materials.size}
+Triangles: ${Math.round(triangleCount)}
+Bones: ${boneCount}
+Animations: ${gltf.animations.length}
+Size: ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}`,
+          'success'
+        );
+      },
+      undefined,
+      function(err) {
+        console.error(err);
+        setForgeStatus('Could not inspect static source GLB.', 'error');
+      }
+    );
+  } catch (err) {
+    console.error(err);
+    setForgeStatus('GLB inspection failed.', 'error');
+  }
+};
+</script>
+<script>
+function getSelectedRebel() {
+  try {
+    const raw = localStorage.getItem('selectedRebel');
+    const rebel = raw ? JSON.parse(raw) : null;
+    return rebel && rebel.id ? rebel : {
+      id: 'ant_1',
+      name: 'Rebel #001',
+      image: 'assets/lobby/ant_1.JPG',
+      tokenId: null,
+      collectionKey: 'battle_for_colony'
+    };
+  } catch(e) {
+    return {
+      id: 'ant_1',
+      name: 'Rebel #001',
+      image: 'assets/lobby/ant_1.JPG',
+      tokenId: null,
+      collectionKey: 'battle_for_colony'
+    };
+  }
+}
+  
+function hydrateForgeScreen(rebel, generationInput) {
+  document.getElementById('forge-image').src = rebel.image || 'assets/lobby/ant_1.JPG';
+  document.getElementById('forge-name').textContent = rebel.name || 'Rebel #001';
+  document.getElementById('detail-collection').textContent = rebel.collectionKey || 'battle_for_colony';
+  document.getElementById('detail-token').textContent = rebel.tokenId || '—';
+  document.getElementById('detail-colony').textContent = rebel.gangName || generationInput?.colony || '—';
+  document.getElementById('detail-source-type').textContent = rebel.tokenId ? 'nft' : 'default';
+
+  document.getElementById('summary-forge-status').textContent =
+    generationInput?.forgeStatus || 'not_forged';
+
+  document.getElementById('summary-body-type').textContent =
+    generationInput?.bodyType || 'universal_ant_v1';
+
+  document.getElementById('summary-colony-style').textContent =
+    generationInput?.colonyProfile?.baseStyle || '—';
+
+  document.getElementById('summary-weapon-family').textContent =
+    generationInput?.weaponProfile?.family || '—';
+
+  const params = new URLSearchParams(window.location.search);
+  const showDevSnapshot =
+    params.get('admin') === '1' ||
+    params.get('dev') === '1' ||
+    localStorage.getItem('rebelForgeDevMode') === '1';
+
+  const snapshotShell = document.getElementById('generation-snapshot-shell');
+  const snapshotEl = document.getElementById('generation-snapshot');
+
+  if (snapshotShell) {
+    snapshotShell.style.display = showDevSnapshot ? 'block' : 'none';
+  }
+
+  if (snapshotEl) {
+    const snapshot = {
+      rebelId: generationInput?.rebelId || null,
+      tokenId: generationInput?.tokenId || null,
+      collectionKey: generationInput?.collectionKey || null,
+      colony: generationInput?.colony || null,
+      bodyType: generationInput?.bodyType || null,
+      forgeStatus: generationInput?.forgeStatus || null,
+      sourceFraming: generationInput?.sourceFraming || null,
+      targetOutput: generationInput?.targetOutput || null,
+      requiresFullBodyCompletion: generationInput?.requiresFullBodyCompletion || false,
+      traitSlots: generationInput?.traitSlots || {},
+      forgeLayers: generationInput?.forgeLayers || {}
+    };
+
+    snapshotEl.textContent = JSON.stringify(snapshot, null, 2);
+  }
+}
+
+function getForgeStatusElement() {
+  return document.getElementById('forge-inline-status') || document.getElementById('forge-status');
+}
+
+function setForgeStatus(message, className = '') {
+  const status = getForgeStatusElement();
+  if (!status) return;
+
+  status.textContent = message;
+  status.className = className;
+}
+
+function setForgeStatusHtml(html, className = '') {
+  const status = getForgeStatusElement();
+  if (!status) return;
+
+  status.innerHTML = html;
+  status.className = className;
+}
+
+function getForgeConceptStorageKey() {
+  const collectionKey = forgeGenerationInput?.collectionKey || 'unknown_collection';
+  const tokenId = forgeGenerationInput?.tokenId || forgeGenerationInput?.rebelId || 'unknown_token';
+  return `rebelForgeConcepts:v1:${collectionKey}:${tokenId}`;
+}
+
+function getSelectedForgeConceptStorageKey() {
+  return `${getForgeConceptStorageKey()}:selected`;
+}
+
+function getForgeConceptDbName() {
+  return 'rebelForgeConceptImages:v1';
+}
+
+function openForgeConceptDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(getForgeConceptDbName(), 1);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('conceptImages')) {
+        db.createObjectStore('conceptImages', { keyPath: 'id' });
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function saveForgeConceptImage(conceptId, imageDataUrl) {
+  if (!conceptId || !imageDataUrl) return;
+
+  const db = await openForgeConceptDb();
+
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction('conceptImages', 'readwrite');
+    transaction.objectStore('conceptImages').put({
+      id: conceptId,
+      imageDataUrl,
+      updatedAt: new Date().toISOString()
+    });
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error);
+  });
+
+  db.close();
+}
+
+async function loadForgeConceptImage(conceptId) {
+  if (!conceptId) return '';
+
+  const db = await openForgeConceptDb();
+
+  const result = await new Promise((resolve, reject) => {
+    const transaction = db.transaction('conceptImages', 'readonly');
+    const request = transaction.objectStore('conceptImages').get(conceptId);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+  });
+
+  db.close();
+
+  return result?.imageDataUrl || '';
+}
+
+async function loadForgeConceptImageForDisplay(concept) {
+  if (!concept) return '';
+
+  try {
+    const localImage = await loadForgeConceptImage(concept.id || concept.conceptId);
+
+    if (localImage) {
+      return localImage;
+    }
+  } catch(e) {
+    console.warn('Could not load local Forge concept image:', e);
+  }
+
+  return concept.imageUrl || '';
+}
+
+function mergeForgeConceptLists(localConcepts, serverConcepts) {
+  const mergedById = new Map();
+
+  [...serverConcepts, ...localConcepts].forEach((concept) => {
+    if (!concept) return;
+
+    const id = concept.id || concept.conceptId;
+    if (!id) return;
+
+    const existing = mergedById.get(id) || {};
+
+    mergedById.set(id, {
+      ...existing,
+      ...concept,
+      id,
+      conceptId: concept.conceptId || id
+    });
+  });
+
+  return Array.from(mergedById.values()).sort((a, b) => {
+    const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
+    const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+    return bTime - aTime;
+  });
+}
+
+async function fetchForgeConceptsFromServer() {
+  const collectionKey = forgeGenerationInput?.collectionKey || 'battle_for_colony';
+  const tokenId = forgeGenerationInput?.tokenId || '';
+  const rebelId = forgeGenerationInput?.rebelId || '';
+
+  const params = new URLSearchParams({
+    collectionKey
+  });
+
+  if (tokenId) {
+    params.set('tokenId', tokenId);
+  } else if (rebelId) {
+    params.set('rebelId', rebelId);
+  }
+
+  const response = await fetch(`/api/forge-concepts-list?${params.toString()}`);
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || data.detail || 'Could not load server Forge concepts');
+  }
+
+  return Array.isArray(data.concepts) ? data.concepts : [];
+}
+
+async function syncForgeConceptsFromServer() {
+  try {
+    const localConcepts = loadForgeConcepts();
+    const serverConcepts = await fetchForgeConceptsFromServer();
+    const mergedConcepts = mergeForgeConceptLists(localConcepts, serverConcepts).slice(0, 12);
+
+    saveForgeConcepts(mergedConcepts);
+
+    window.lastForgeConceptServerListResponse = {
+      ok: true,
+      count: serverConcepts.length,
+      mergedCount: mergedConcepts.length
+    };
+
+    return mergedConcepts;
+  } catch(e) {
+    console.warn('Could not sync Forge concepts from server:', e);
+
+    window.lastForgeConceptServerListResponse = {
+      ok: false,
+      error: e && e.message ? e.message : 'Unknown server sync error'
+    };
+
+    return loadForgeConcepts();
+  }
+}
+  
+
+async function deleteForgeConceptImage(conceptId) {
+  if (!conceptId) return;
+
+  const db = await openForgeConceptDb();
+
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction('conceptImages', 'readwrite');
+    transaction.objectStore('conceptImages').delete(conceptId);
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error);
+  });
+
+  db.close();
+}
+
+function stripForgeConceptImageData(concept) {
+  if (!concept) return concept;
+
+  const { imageDataUrl, ...metadata } = concept;
+  return metadata;
+}
+
+function loadForgeConcepts() {
+  try {
+    return JSON.parse(localStorage.getItem(getForgeConceptStorageKey()) || '[]');
+  } catch(e) {
+    console.warn('Could not load saved Forge concepts:', e);
+    return [];
+  }
+}
+
+function saveForgeConcepts(concepts) {
+  try {
+    const metadataOnly = concepts.map(stripForgeConceptImageData);
+    localStorage.setItem(getForgeConceptStorageKey(), JSON.stringify(metadataOnly));
+  } catch(e) {
+    console.warn('Could not save Forge concept metadata:', e);
+  }
+}
+
+async function migrateForgeConceptImagesToIndexedDb() {
+  const concepts = loadForgeConcepts();
+  const conceptsWithImages = concepts.filter((concept) => concept.imageDataUrl);
+
+  if (!conceptsWithImages.length) return;
+
+  for (const concept of conceptsWithImages) {
+    try {
+      await saveForgeConceptImage(concept.id, concept.imageDataUrl);
+    } catch(e) {
+      console.warn('Could not migrate Forge concept image:', e);
+    }
+  }
+
+  saveForgeConcepts(concepts);
+}
+
+function getCurrentForgeConceptFromPreview() {
+  const previewImage = document.getElementById('fullbody-preview-image');
+
+  if (!previewImage || !previewImage.src) {
+    return null;
+  }
+
+  return {
+    id: `concept_${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    imageDataUrl: previewImage.src,
+    tokenId: forgeGenerationInput?.tokenId || null,
+    rebelId: forgeGenerationInput?.rebelId || null,
+    collectionKey: forgeGenerationInput?.collectionKey || null,
+    colony: forgeGenerationInput?.colony || null,
+    bodyType: forgeGenerationInput?.bodyType || null
+  };
+}
+
+async function renderForgeConceptGallery(options = {}) {
+  ensureForgeLoadingStyles();
+
+  const gallery = document.getElementById('forge-concepts-gallery');
+  if (!gallery) return;
+
+  let concepts = loadForgeConcepts();
+
+  if (options.syncServer === true) {
+    concepts = await syncForgeConceptsFromServer();
+  }
+
+  const selectedConceptId = localStorage.getItem(getSelectedForgeConceptStorageKey());
+
+  if (!concepts.length) {
+    gallery.innerHTML = `
+      <div style="grid-column:1 / -1; opacity:.75; border:1px solid rgba(255,255,255,.14); border-radius:16px; padding:16px;">
+        No saved concepts yet. Generate a full-body preview to start building versions.
+      </div>
+    `;
+    return;
+  }
+
+  gallery.innerHTML = concepts.slice(0, 12).map((concept, index) => {
+    const id = concept.id || concept.conceptId;
+    const isSelected = id === selectedConceptId;
+    const label = isSelected ? 'Selected' : `Version ${index + 1}`;
+    const safeId = String(id).replace(/'/g, "\\'");
+    const storageLabel = concept.imageStorage === 'vercel_blob' ? 'Server Saved' : 'Local Saved';
+
+    return `
+      <div class="forge-concept-card ${isSelected ? 'selected' : ''}" data-concept-id="${safeId}">
+        <div class="forge-concept-thumb" data-concept-image="${safeId}">Loading...</div>
+        <div class="forge-concept-card-title">${label}</div>
+        <div class="forge-concept-card-meta">${concept.colony || 'Unknown Colony'} · ${storageLabel}</div>
+
+        <div class="forge-concept-card-actions">
+          <button class="forge-mini-btn" type="button" onclick="selectForgeConcept('${safeId}')">Select</button>
+          <button class="forge-mini-btn" type="button" onclick="downloadForgeConcept('${safeId}')">Download</button>
+          <button class="forge-mini-btn danger" type="button" onclick="deleteForgeConcept('${safeId}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  for (const concept of concepts.slice(0, 12)) {
+    const id = concept.id || concept.conceptId;
+    const imageSlot = gallery.querySelector(`[data-concept-image="${CSS.escape(id)}"]`);
+    if (!imageSlot) continue;
+
+    try {
+      const imageUrl = await loadForgeConceptImageForDisplay(concept);
+
+      if (imageUrl) {
+        imageSlot.innerHTML = `<img src="${imageUrl}" alt="Saved Forge concept">`;
+      } else {
+        imageSlot.textContent = 'Image missing';
+      }
+    } catch(e) {
+      console.warn('Could not load Forge concept image:', e);
+      imageSlot.textContent = 'Image failed';
+    }
+  }
+}
+async function selectForgeConcept(conceptId) {
+  const concepts = loadForgeConcepts();
+  const concept = concepts.find((item) => (item.id || item.conceptId) === conceptId);
+  const previewWrap = document.getElementById('fullbody-preview-wrap');
+  const previewImage = document.getElementById('fullbody-preview-image');
+  const previewActions = document.getElementById('forge-preview-actions');
+
+  if (!concept) return;
+
+  const id = concept.id || concept.conceptId;
+  const imageDataUrl = await loadForgeConceptImageForDisplay(concept);
+
+  localStorage.setItem(getSelectedForgeConceptStorageKey(), id);
+  window.currentForgeConcept = {
+    ...concept,
+    id,
+    conceptId: concept.conceptId || id,
+    imageDataUrl
+  };
+
+  if (previewImage && imageDataUrl) {
+    previewImage.src = imageDataUrl;
+  }
+
+  if (previewWrap) {
+    previewWrap.style.display = 'block';
+    previewWrap.classList.add('open');
+  }
+
+  if (previewActions) {
+    previewActions.style.display = 'flex';
+  }
+
+  setForgeStatus('Selected Forge concept is ready for the future 3D character step.', 'success');
+
+  renderForgeConceptGallery();
+}
+
+async function downloadForgeConcept(conceptId) {
+  const concepts = loadForgeConcepts();
+  const concept = concepts.find((item) => (item.id || item.conceptId) === conceptId);
+
+  if (!concept) return;
+
+  const id = concept.id || concept.conceptId;
+  const imageUrl = await loadForgeConceptImageForDisplay(concept);
+
+  if (!imageUrl) {
+    setForgeStatus('Could not download this concept because the saved image is missing.', 'error');
+    return;
+  }
+
+  const link = document.createElement('a');
+  const tokenId = concept.tokenId || concept.rebelId || 'rebel';
+  link.href = imageUrl;
+  link.download = `rebel-forge-${tokenId}-${id}.png`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+async function deleteForgeConcept(conceptId) {
+  const concepts = loadForgeConcepts();
+  const concept = concepts.find((item) => (item.id || item.conceptId) === conceptId);
+  const nextConcepts = concepts.filter((item) => (item.id || item.conceptId) !== conceptId);
+  const selectedConceptId = localStorage.getItem(getSelectedForgeConceptStorageKey());
+
+  let localDeleted = false;
+  let blobDeleted = false;
+  let serverDeleted = false;
+
+  saveForgeConcepts(nextConcepts);
+  await deleteForgeConceptImage(conceptId);
+  localDeleted = true;
+
+  if (selectedConceptId === conceptId) {
+    localStorage.removeItem(getSelectedForgeConceptStorageKey());
+    window.currentForgeConcept = null;
+  }
+
+  if (concept?.imageStorage === 'vercel_blob' && (concept.imageBlobPath || concept.imageUrl)) {
+    try {
+      const response = await fetch('/api/forge-concepts-delete-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          imageBlobPath: concept.imageBlobPath || null,
+          imageUrl: concept.imageUrl || null
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Blob image delete failed');
+      }
+
+      window.lastForgeConceptBlobDeleteResponse = data;
+      blobDeleted = true;
+    } catch(e) {
+      console.warn('Forge concept deleted locally, but Blob image delete failed:', e);
+    }
+  } else {
+    blobDeleted = true;
+  }
+
+  if (concept) {
+    try {
+      const response = await fetch('/api/forge-concepts-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          conceptId: concept.id || concept.conceptId || conceptId,
+          collectionKey: concept.collectionKey || forgeGenerationInput?.collectionKey || 'battle_for_colony',
+          tokenId: concept.tokenId || forgeGenerationInput?.tokenId || null,
+          rebelId: concept.rebelId || forgeGenerationInput?.rebelId || null
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.detail || 'Server concept delete failed');
+      }
+
+      window.lastForgeConceptServerDeleteResponse = data;
+      serverDeleted = true;
+    } catch(e) {
+      console.warn('Forge concept deleted locally, but server metadata delete failed:', e);
+    }
+  }
+
+  if (localDeleted && blobDeleted && serverDeleted) {
+    setForgeStatus('Forge concept deleted locally, removed from Blob, and removed from server.', 'success');
+  } else if (localDeleted && serverDeleted) {
+    setForgeStatus('Forge concept deleted locally and removed from server. Blob cleanup will be retried later.', 'success');
+  } else if (localDeleted) {
+    setForgeStatus('Forge concept deleted locally. Server cleanup will be retried later.', 'success');
+  } else {
+    setForgeStatus('Could not delete this Forge concept. Please try again.', 'error');
+  }
+
+  renderForgeConceptGallery({ syncServer: true });
+}
+async function saveForgeConceptMetadataToServer(concept) {
+  if (!concept) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: 'Missing concept'
+    };
+  }
+
+  const metadata = stripForgeConceptImageData({
+    ...concept,
+    conceptId: concept.conceptId || concept.id,
+    forgeMode: forgeGenerationInput?.forgeMode || window.currentForgeMode || 'full_body_concept',
+    variantIntent: forgeGenerationInput?.variantIntent || window.currentForgeVariantIntent || 'default',
+    selected: true,
+    imageStorage: 'browser_indexeddb_now_server_later',
+    economyPlan: window.lastFullBodyForgePreviewResponse?.economyPlan || window.lastFullBodyForgePreviewResponse?.previewPlan?.economyPlan || null
+  });
+
+  const response = await fetch('/api/forge-concepts-save', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      concept: metadata
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || data.detail || 'Server concept metadata save failed');
+  }
+
+  window.lastForgeConceptServerSaveResponse = data;
+  return data;
+}
+
+function estimateDataUrlBytes(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== 'string') return 0;
+
+  const base64 = dataUrl.split(',')[1] || '';
+  return Math.floor((base64.length * 3) / 4);
+}
+
+function loadImageFromDataUrl(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Could not load Forge concept image for upload compression'));
+    image.src = dataUrl;
+  });
+}
+
+async function prepareForgeConceptImageDataUrlForServer(imageDataUrl) {
+  const originalSizeBytes = estimateDataUrlBytes(imageDataUrl);
+  const maxUploadBytes = 2.75 * 1024 * 1024;
+
+  if (originalSizeBytes > 0 && originalSizeBytes <= maxUploadBytes) {
+    return {
+      imageDataUrl,
+      originalSizeBytes,
+      uploadSizeBytes: originalSizeBytes,
+      compressed: false
+    };
+  }
+
+  const image = await loadImageFromDataUrl(imageDataUrl);
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  const attempts = [
+    { maxDimension: 1536, mimeType: 'image/webp', quality: 0.88 },
+    { maxDimension: 1280, mimeType: 'image/webp', quality: 0.82 },
+    { maxDimension: 1024, mimeType: 'image/webp', quality: 0.76 },
+    { maxDimension: 1024, mimeType: 'image/jpeg', quality: 0.82 },
+    { maxDimension: 896, mimeType: 'image/jpeg', quality: 0.74 }
+  ];
+
+  for (const attempt of attempts) {
+    const scale = Math.min(1, attempt.maxDimension / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+    canvas.width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+    canvas.height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const nextDataUrl = canvas.toDataURL(attempt.mimeType, attempt.quality);
+    const uploadSizeBytes = estimateDataUrlBytes(nextDataUrl);
+
+    if (uploadSizeBytes > 0 && uploadSizeBytes <= maxUploadBytes) {
+      console.log('Prepared Forge concept image for server upload:', {
+        originalSizeBytes,
+        uploadSizeBytes,
+        compressed: true,
+        width: canvas.width,
+        height: canvas.height,
+        mimeType: attempt.mimeType
+      });
+
+      return {
+        imageDataUrl: nextDataUrl,
+        originalSizeBytes,
+        uploadSizeBytes,
+        compressed: true,
+        width: canvas.width,
+        height: canvas.height,
+        mimeType: attempt.mimeType
+      };
+    }
+  }
+
+  throw new Error(`Forge concept image is too large to upload after compression (${originalSizeBytes} bytes)`);
+}
+
+async function uploadForgeConceptImageToServer(concept) {
+  if (!concept || !concept.imageDataUrl) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: 'Missing concept image'
+    };
+  }
+
+  const preparedImage = await prepareForgeConceptImageDataUrlForServer(concept.imageDataUrl);
+
+  const response = await fetch('/api/forge-concepts-upload-image', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      conceptId: concept.conceptId || concept.id,
+      rebelId: concept.rebelId || forgeGenerationInput?.rebelId || null,
+      tokenId: concept.tokenId || forgeGenerationInput?.tokenId || null,
+      collectionKey: concept.collectionKey || forgeGenerationInput?.collectionKey || 'battle_for_colony',
+      imageDataUrl: preparedImage.imageDataUrl,
+      originalSizeBytes: preparedImage.originalSizeBytes,
+      uploadSizeBytes: preparedImage.uploadSizeBytes,
+      compressed: preparedImage.compressed
+    })
+  });
+
+  let data = null;
+
+  try {
+    data = await response.json();
+  } catch(parseError) {
+    data = {
+      ok: false,
+      error: 'Upload route did not return JSON',
+      detail: parseError?.message || 'Response JSON parse failed'
+    };
+  }
+
+  if (!response.ok || !data.ok) {
+    console.error('Forge concept image upload API failed:', {
+      status: response.status,
+      data
+    });
+
+    throw new Error(data.detail || data.error || `Blob image upload failed with status ${response.status}`);
+  }
+
+  window.lastForgeConceptBlobUploadResponse = data;
+  return data;
+}
+
+async function saveForgeConceptMetadataToServer(concept) {
+  if (!concept) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: 'Missing concept'
+    };
+  }
+
+  const metadata = stripForgeConceptImageData({
+    ...concept,
+    conceptId: concept.conceptId || concept.id,
+    forgeMode: forgeGenerationInput?.forgeMode || window.currentForgeMode || 'full_body_concept',
+    variantIntent: forgeGenerationInput?.variantIntent || window.currentForgeVariantIntent || 'default',
+    selected: true,
+    imageStorage: concept.imageStorage || 'browser_indexeddb_now_server_later',
+    imageUrl: concept.imageUrl || null,
+    imageBlobPath: concept.imageBlobPath || null,
+    economyPlan: window.lastFullBodyForgePreviewResponse?.economyPlan || window.lastFullBodyForgePreviewResponse?.previewPlan?.economyPlan || null
+  });
+
+  const response = await fetch('/api/forge-concepts-save', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      concept: metadata
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || data.detail || 'Server concept metadata save failed');
+  }
+
+  window.lastForgeConceptServerSaveResponse = data;
+  return data;
+}
+  
+  
+async function saveCurrentForgeConcept() {
+  const concept = window.currentForgeConcept || getCurrentForgeConceptFromPreview();
+  const saveButton = document.getElementById('save-concept-btn');
+  const originalButtonText = saveButton ? saveButton.textContent : 'Save This Version';
+
+  if (!concept || !concept.imageDataUrl) {
+    setForgeStatus('Generate a full-body preview before saving a version.', 'error');
+    return;
+  }
+
+  if (saveButton) {
+    saveButton.textContent = 'Saving...';
+  }
+
+  if (typeof setForgeGeneratingButton === 'function') {
+    setForgeGeneratingButton(saveButton, true);
+  } else if (saveButton) {
+    saveButton.disabled = true;
+  }
+
+  let localSaved = false;
+  let blobSaved = false;
+  let serverSaved = false;
+
+  try {
+    await saveForgeConceptImage(concept.id, concept.imageDataUrl);
+
+    const concepts = loadForgeConcepts();
+    const alreadySaved = concepts.some((item) => item.id === concept.id);
+    let nextConcepts = concepts;
+
+    if (!alreadySaved) {
+      nextConcepts = [stripForgeConceptImageData(concept), ...concepts].slice(0, 12);
+      const removedConcepts = [stripForgeConceptImageData(concept), ...concepts].slice(12);
+
+      for (const removedConcept of removedConcepts) {
+        await deleteForgeConceptImage(removedConcept.id);
+      }
+
+      saveForgeConcepts(nextConcepts);
+    }
+
+    localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
+    window.currentForgeConcept = concept;
+    localSaved = true;
+
+    try {
+      const blobResult = await uploadForgeConceptImageToServer(concept);
+
+      if (blobResult?.ok && blobResult.imageUrl) {
+        concept.imageStorage = 'vercel_blob';
+        concept.imageUrl = blobResult.imageUrl;
+        concept.imageBlobPath = blobResult.imageBlobPath || null;
+        blobSaved = true;
+
+        const refreshedConcepts = loadForgeConcepts();
+        const updatedConcept = stripForgeConceptImageData(concept);
+        const updatedConcepts = refreshedConcepts.some((item) => item.id === concept.id)
+          ? refreshedConcepts.map((item) => item.id === concept.id ? { ...item, ...updatedConcept } : item)
+          : [updatedConcept, ...refreshedConcepts].slice(0, 12);
+        saveForgeConcepts(updatedConcepts);
+      }
+    } catch(blobError) {
+      console.warn('Forge concept saved locally, but Blob image upload failed:', blobError);
+    }
+
+    try {
+      const serverResult = await saveForgeConceptMetadataToServer(concept);
+      serverSaved = serverResult?.ok === true;
+    } catch(serverError) {
+      console.warn('Forge concept saved locally, but server metadata save failed:', serverError);
+    }
+
+    await renderForgeConceptGallery();
+
+    if (saveButton) {
+      saveButton.textContent = 'Saved ✓';
+    }
+
+    if (localSaved && blobSaved && serverSaved) {
+      setForgeStatus('Forge concept saved locally, uploaded to Blob, and synced to server.', 'success');
+    } else if (localSaved && serverSaved) {
+      setForgeStatus('Forge concept saved locally and synced to server. Blob upload will be retried later.', 'success');
+    } else if (localSaved) {
+      setForgeStatus('Forge concept saved locally. Server sync will be retried later.', 'success');
+    } else {
+      if (saveButton) {
+        saveButton.textContent = 'Save Failed';
+      }
+
+      setForgeStatus('Could not save this Forge concept. Please try again.', 'error');
+    }
+
+    setTimeout(() => {
+      if (saveButton) {
+        saveButton.textContent = originalButtonText || 'Save This Version';
+      }
+    }, 1800);
+  } catch(e) {
+    console.warn('Could not save Forge concept:', e);
+
+    if (saveButton) {
+      saveButton.textContent = 'Save Failed';
+    }
+
+    setForgeStatus('Could not save this Forge concept. Please try again.', 'error');
+
+    setTimeout(() => {
+      if (saveButton) {
+        saveButton.textContent = originalButtonText || 'Save This Version';
+      }
+    }, 2200);
+  } finally {
+    if (typeof setForgeGeneratingButton === 'function') {
+      setForgeGeneratingButton(saveButton, false);
+    } else if (saveButton) {
+      saveButton.disabled = false;
+    }
+  }
+}
+async function setCurrentForgeConceptSelected() {
+  const concept = window.currentForgeConcept || getCurrentForgeConceptFromPreview();
+
+  if (!concept || !concept.imageDataUrl) {
+    setForgeStatus('Generate or choose a concept before setting it as selected.', 'error');
+    return;
+  }
+
+  try {
+    await saveForgeConceptImage(concept.id, concept.imageDataUrl);
+
+    const concepts = loadForgeConcepts();
+    const alreadySaved = concepts.some((item) => item.id === concept.id);
+
+    if (!alreadySaved) {
+      const nextConcepts = [stripForgeConceptImageData(concept), ...concepts].slice(0, 12);
+      const removedConcepts = [stripForgeConceptImageData(concept), ...concepts].slice(12);
+
+      for (const removedConcept of removedConcepts) {
+        await deleteForgeConceptImage(removedConcept.id);
+      }
+
+      saveForgeConcepts(nextConcepts);
+    }
+
+    localStorage.setItem(getSelectedForgeConceptStorageKey(), concept.id);
+    window.currentForgeConcept = concept;
+
+    await renderForgeConceptGallery();
+
+    setForgeStatus('This Forge concept is now selected.', 'success');
+  } catch(e) {
+    console.warn('Could not set Forge concept as selected:', e);
+    setForgeStatus('Could not select this Forge concept. Please try again.', 'error');
+  }
+}
+
+function ensureForgeLoadingStyles() {
+  if (document.getElementById('forge-loading-styles')) return;
+
+  const style = document.createElement('style');
+  style.id = 'forge-loading-styles';
+  style.textContent = `
+    @keyframes forgePulse {
+      0% { opacity: .42; }
+      50% { opacity: 1; }
+      100% { opacity: .42; }
+    }
+
+    .forge-loading-pulse {
+      display: block;
+      margin-top: 0;
+      animation: forgePulse 1s ease-in-out infinite;
+    }
+
+    .forge-concept-card {
+      background: rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      padding: 8px;
+      color: inherit;
+      overflow: hidden;
+    }
+
+    .forge-concept-card.selected {
+      border: 2px solid rgba(255,80,80,.95);
+      box-shadow: 0 0 22px rgba(255,60,60,.18);
+    }
+
+    .forge-concept-thumb {
+      width: 100%;
+      aspect-ratio: 1 / 1.25;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      background: rgba(255,255,255,.04);
+      color: rgba(243,230,191,.55);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:10px;
+      text-align:center;
+      overflow:hidden;
+    }
+
+    .forge-concept-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+    }
+
+    .forge-concept-card-title {
+      font-weight: 800;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .forge-concept-card-meta {
+      opacity: .72;
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    .forge-concept-card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .forge-mini-btn {
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: inherit;
+      border-radius: 10px;
+      padding: 7px 6px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .forge-mini-btn:hover {
+      background: rgba(255,255,255,.12);
+    }
+
+    .forge-mini-btn.danger {
+      color: #ff8a8a;
+      border-color: rgba(255,90,90,.35);
+    }
+
+    @media (max-width: 900px) {
+      #forge-concepts-gallery {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
+function setForgeGeneratingButton(button, isLoading) {
+  if (!button) return;
+
+  if (!document.getElementById('forge-button-loading-styles')) {
+    const style = document.createElement('style');
+    style.id = 'forge-button-loading-styles';
+    style.textContent = `
+      @keyframes forgeButtonPulse {
+        0% { opacity: .55; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.025); }
+        100% { opacity: .55; transform: scale(1); }
+      }
+
+           .forge-button-loading {
+        animation: forgeButtonPulse 1s ease-in-out infinite;
+        pointer-events: none;
+        filter: brightness(1.15);
+      }
+
+      .forge-busy-disabled,
+      #forge-right button:disabled,
+      #forge-actions button:disabled,
+      #forge-preview-actions button:disabled,
+      #forge-selected-concept-panel button:disabled,
+      #forge-3d-build-status-panel button:disabled {
+        opacity: .38 !important;
+        filter: grayscale(1) brightness(.65) !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+
+      .forge-button-loading:disabled {
+        opacity: .8 !important;
+        filter: brightness(1.15) !important;
+        grayscale: 0 !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  if (isLoading) {
+    button.classList.add('forge-button-loading');
+    button.disabled = true;
+  } else {
+    button.classList.remove('forge-button-loading');
+    button.disabled = false;
+  }
+}
+
+function getForgeBusyButtons() {
+  return Array.from(document.querySelectorAll(`
+    #forge-actions button,
+    #forge-preview-actions button,
+    #forge-mode-selector button,
+    #forge-variant-intent-panel button,
+    #forge-selected-concept-panel button,
+    #forge-3d-build-status-panel button
+  `));
+}
+
+function setForgeBusy(isBusy, activeButton = null) {
+  window.forgeBusy = isBusy === true;
+
+  getForgeBusyButtons().forEach((button) => {
+    if (!button) return;
+
+    if (isBusy) {
+      if (!button.dataset.forgePrevDisabled) {
+        button.dataset.forgePrevDisabled = button.disabled ? '1' : '0';
+      }
+
+      button.disabled = true;
+      button.classList.add('forge-busy-disabled');
+    } else {
+      const wasDisabled = button.dataset.forgePrevDisabled === '1';
+      button.disabled = wasDisabled;
+      button.classList.remove('forge-busy-disabled');
+      delete button.dataset.forgePrevDisabled;
+    }
+  });
+
+  if (activeButton && isBusy) {
+    activeButton.disabled = true;
+  }
+}
+
+function getForgeBusyButtons() {
+  return Array.from(document.querySelectorAll(`
+    #forge-right button,
+    #forge-actions button,
+    #forge-preview-actions button,
+    #forge-mode-selector button,
+    #forge-variant-intent-panel button,
+    #forge-selected-concept-panel button,
+    #forge-3d-build-status-panel button
+  `));
+}
+
+function setForgeBusy(isBusy, activeButton = null) {
+  window.forgeBusy = isBusy === true;
+
+  getForgeBusyButtons().forEach((button) => {
+    if (!button) return;
+
+    if (isBusy) {
+      if (!button.dataset.forgePrevDisabled) {
+        button.dataset.forgePrevDisabled = button.disabled ? '1' : '0';
+      }
+
+      button.disabled = true;
+      button.classList.add('forge-busy-disabled');
+    } else {
+      const wasDisabled = button.dataset.forgePrevDisabled === '1';
+      button.disabled = wasDisabled;
+      button.classList.remove('forge-busy-disabled');
+      delete button.dataset.forgePrevDisabled;
+    }
+  });
+
+  if (activeButton && isBusy) {
+    activeButton.disabled = true;
+    activeButton.classList.remove('forge-busy-disabled');
+  }
+}
+   
+async function generatePreviewStub() {
+  if (window.forgeBusy) {
+    setForgeStatus('Forge is already working. Please wait for the current action to finish.', 'error');
+    return;
+  }
+
+  const button = document.getElementById('generate-btn');
+  const generateAnotherButton = document.getElementById('generate-another-btn');
+  const previewWrap = document.getElementById('fullbody-preview-wrap');
+  const previewImage = document.getElementById('fullbody-preview-image');
+  const previewActions = document.getElementById('forge-preview-actions');
+
+  const clickedButton =
+    window.currentForgeTriggerButton ||
+    (
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : button
+    );
+
+  ensureForgeLoadingStyles();
+
+    if (window.forgeBusy) {
+    setForgeStatus('Forge is already working. Please wait for the current action to finish.', 'error');
+    return;
+  }
+
+  setForgeBusy(true, clickedButton);
+
+  setForgeBusy(true, clickedButton);
+  
+  setForgeStatusHtml('<span class="forge-loading-pulse">Generating full-body Rebel preview... this can take a moment.</span>', '');
+
+  if (button) button.disabled = true;
+  if (generateAnotherButton) generateAnotherButton.disabled = true;
+  setForgeGeneratingButton(clickedButton, true);
+
+  try {
+    const response = await fetch('/api/forge-generate-fullbody-preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        generationInput: forgeGenerationInput
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Full-body preview request failed');
+    }
+
+    window.lastFullBodyForgePreviewResponse = data;
+
+    const concept = {
+      id: `concept_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      imageDataUrl: data.previewImage?.dataUrl || '',
+      tokenId: forgeGenerationInput?.tokenId || null,
+      rebelId: forgeGenerationInput?.rebelId || null,
+      collectionKey: forgeGenerationInput?.collectionKey || null,
+      colony: forgeGenerationInput?.colony || null,
+      bodyType: forgeGenerationInput?.bodyType || null
+    };
+
+    window.currentForgeConcept = concept;
+
+    if (previewImage && concept.imageDataUrl) {
+      previewImage.src = concept.imageDataUrl;
+    }
+
+    if (previewWrap) {
+      previewWrap.style.display = 'block';
+      previewWrap.classList.add('open');
+    }
+
+    if (previewActions) {
+      previewActions.style.display = 'flex';
+    }
+
+    setForgeStatus('Full-body Forge preview generated. Click Save This Version to keep it.', 'success');
+  } catch(e) {
+    console.warn('Full-body Forge preview request failed:', e);
+    setForgeStatus('Could not generate full-body preview.', 'error');
+  } finally {
+    setForgeGeneratingButton(clickedButton, false);
+
+    if (button) button.disabled = false;
+    if (generateAnotherButton) generateAnotherButton.disabled = false;
+
+    window.currentForgeTriggerButton = null;
+    setForgeBusy(false);
+  }
+}
+const selectedRebel = getSelectedRebel();
+
+const forgeCharacter = {
+  formType: 'starter',
+  formLabel: 'Starter 3D Form',
+  hasGeneratedModel: false,
+  bundleId: 'starter_ant'
+};
+
+const forgeCharacterBlueprint = buildCharacterBlueprint(selectedRebel, forgeCharacter);
+const forgeGenerationInput = buildForgeGenerationInput(forgeCharacterBlueprint);
+
+window.selectedForgeRebel = selectedRebel;
+window.forgeCharacterBlueprint = forgeCharacterBlueprint;
+window.forgeGenerationInput = forgeGenerationInput;
+
+hydrateForgeScreen(selectedRebel, forgeGenerationInput);
+migrateForgeConceptImagesToIndexedDb().then(() => {
+  renderForgeConceptGallery({ syncServer: true });
+});
+
+function getForgeProgressState() {
+  const previewImage = document.getElementById('fullbody-preview-image');
+  const previewHasImage = Boolean(
+    previewImage &&
+    previewImage.src &&
+    !previewImage.src.endsWith('#')
+  );
+
+  const concepts =
+    typeof loadForgeConcepts === 'function'
+      ? loadForgeConcepts()
+      : [];
+
+  const hasSavedConcept = concepts.length > 0;
+
+  const hasProductionReference = concepts.some((concept) => {
+    return (
+      concept.forgeMode === 'production_reference' ||
+      concept.conceptType === 'production_reference' ||
+      concept.variantIntent === 'clean_3d_production_reference'
+    );
+  });
+
+  const builds = window.lastForge3dBuildListResponse?.builds || [];
+  const has3dBuild = builds.length > 0;
+
+  const hasGlb = builds.some((build) => {
+    return Boolean(
+      build?.output?.glbUrl ||
+      build?.engine?.glbUrl ||
+      build?.output?.rebelGlbUrl
+    );
+  });
+
+  return {
+    concept: previewHasImage || hasSavedConcept,
+    saved: hasSavedConcept,
+    production: hasProductionReference,
+    build: has3dBuild,
+    glb: hasGlb
+  };
+}
+
+function updateForgeProgressGuide() {
+  const steps = Array.from(document.querySelectorAll('.forge-progress-step'));
+  if (!steps.length) return;
+
+  const state = getForgeProgressState();
+  const order = ['concept', 'saved', 'production', 'build', 'glb'];
+  const firstIncomplete = order.find((key) => !state[key]) || null;
+
+  steps.forEach((step) => {
+    const key = step.dataset.forgeStep;
+    const status = step.querySelector('.forge-progress-step-status');
+    if (!status) return;
+
+    const isDone = state[key] === true;
+    const isCurrent = !isDone && key === firstIncomplete;
+
+    if (isDone) {
+      status.textContent = '✓';
+      step.style.opacity = '1';
+      step.style.color = '#f3e6bf';
+      step.style.borderLeft = '2px solid rgba(94,207,202,.7)';
+      step.style.paddingLeft = '8px';
+    } else if (isCurrent) {
+      status.textContent = '→';
+      step.style.opacity = '1';
+      step.style.color = '#f3e6bf';
+      step.style.borderLeft = '2px solid rgba(200,146,42,.7)';
+      step.style.paddingLeft = '8px';
+    } else {
+      status.textContent = '○';
+      step.style.opacity = '.52';
+      step.style.color = 'rgba(243,230,191,.68)';
+      step.style.borderLeft = '2px solid transparent';
+      step.style.paddingLeft = '8px';
+    }
+  });
+}
+
+window.updateForgeProgressGuide = updateForgeProgressGuide;
+
+setInterval(updateForgeProgressGuide, 1200);
+setTimeout(updateForgeProgressGuide, 300);
+  
+</script>
+
+</body>
+</html>
