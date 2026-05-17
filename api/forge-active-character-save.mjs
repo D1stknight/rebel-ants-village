@@ -69,6 +69,20 @@ function sanitizeActiveCharacterPayload(payload) {
   const meshyBasicAnimations = build.rigging?.response?.result?.basic_animations || {};
   const outputWalkingGlbUrl = output.walkingGlbUrl || null;
   const outputRunningGlbUrl = output.runningGlbUrl || null;
+  const previewThumbnail =
+    build.sourceImage?.imageUrl ||
+    build.productionReference?.imageUrl ||
+    build.selectedConcept?.imageUrl ||
+    build.concept?.imageUrl ||
+    build.sourceImageUrl ||
+    null;
+  const characterName =
+    build.title ||
+    build.name ||
+    build.productionReference?.title ||
+    build.selectedConcept?.title ||
+    build.concept?.title ||
+    (tokenId ? `Forge Playable #${tokenId}` : 'Forge Playable');
 
   const riggedGlbUrl =
     output.riggedRebelGlbUrl ||
@@ -213,6 +227,9 @@ function sanitizeActiveCharacterPayload(payload) {
     tokenId,
     rebelId,
     activeForgeBuildId: buildId,
+    name: characterName,
+    previewThumbnail,
+    sourceImage: previewThumbnail,
     activeGlbUrl,
     staticGlbUrl,
     riggedGlbUrl,

@@ -1422,6 +1422,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         cursor: default !important;
       }
 
+      .forge-3d-build-delete-disabled {
+        opacity: .72;
+        cursor: not-allowed;
+      }
+
       @media (max-width: 640px) {
         .forge-3d-build-row {
           grid-template-columns: 64px minmax(0, 1fr);
@@ -1662,6 +1667,182 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     );
   }
 
+  const FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY = 'rebelAntsForgePlayableCharacters';
+
+  function loadForgePlayableCharacters() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY) || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch(e) {
+      return [];
+    }
+  }
+
+  function saveForgePlayableCharacter(activeCharacter, build) {
+    if (!activeCharacter?.activeGlbUrl) return;
+
+    const buildId = activeCharacter.activeForgeBuildId || build?.buildId || '';
+    const tokenId = activeCharacter.tokenId || build?.tokenId || '';
+    const rebelId = activeCharacter.rebelId || build?.rebelId || '';
+    const thumbnailUrl =
+      getForgeBuildThumbnailUrl(build) ||
+      activeCharacter.previewThumbnail ||
+      activeCharacter.sourceImage ||
+      'assets/lobby/ant_1.JPG';
+    const savedPlayable = {
+      id: `forge_playable_${buildId || tokenId || rebelId || Date.now()}`,
+      playableType: 'forge_build',
+      name: activeCharacter.name || `Forge Playable${tokenId ? ' #' + tokenId : ''}`,
+      image: thumbnailUrl,
+      previewThumbnail: thumbnailUrl,
+      sourceImage: thumbnailUrl,
+      buildId: buildId || null,
+      tokenId: tokenId || null,
+      rebelId: rebelId || null,
+      collectionKey: activeCharacter.collectionKey || build?.collectionKey || 'battle_for_colony',
+      activeGlbUrl: activeCharacter.activeGlbUrl,
+      riggedGlbUrl: activeCharacter.riggedGlbUrl || null,
+      walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
+      runningGlbUrl: activeCharacter.runningGlbUrl || null,
+      activeForgeCharacter: activeCharacter,
+      updatedAt: new Date().toISOString()
+    };
+
+    const saved = loadForgePlayableCharacters();
+    const existingIndex = saved.findIndex((item) => {
+      return (
+        (buildId && item.buildId === buildId) ||
+        (savedPlayable.id && item.id === savedPlayable.id)
+      );
+    });
+
+    if (existingIndex >= 0) {
+      saved[existingIndex] = {
+        ...saved[existingIndex],
+        ...savedPlayable
+      };
+    } else {
+      saved.unshift(savedPlayable);
+    }
+
+    try {
+      localStorage.setItem(FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY, JSON.stringify(saved.slice(0, 12)));
+    } catch(e) {
+      console.warn('Could not save Forge playable character locally:', e);
+    }
+  }
+
+  function cacheForgePlayableBuilds(builds) {
+    if (!Array.isArray(builds)) return;
+
+    builds.forEach((build) => {
+      const riggedGlbUrl =
+        build.output?.riggedRebelGlbUrl ||
+        build.output?.riggedGlbUrl ||
+        build.rigging?.riggedRebelGlbUrl ||
+        build.rigging?.riggedGlbUrl ||
+        build.rigging?.response?.result?.rigged_character_glb_url ||
+        null;
+      const staticGlbUrl =
+        build.output?.rebelGlbUrl ||
+        build.output?.glbUrl ||
+        build.engine?.glbUrl ||
+        null;
+      const walkingGlbUrl =
+        build.output?.walkingGlbUrl ||
+        build.output?.storedAnimations?.walking?.storedAnimationUrl ||
+        build.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
+        build.rigging?.response?.result?.basic_animations?.walking_glb_url ||
+        null;
+      const runningGlbUrl =
+        build.output?.runningGlbUrl ||
+        build.output?.storedAnimations?.running?.storedAnimationUrl ||
+        build.rigging?.storedAnimations?.running?.storedAnimationUrl ||
+        build.rigging?.response?.result?.basic_animations?.running_glb_url ||
+        null;
+      const activeGlbUrl = riggedGlbUrl || staticGlbUrl;
+
+      if (!activeGlbUrl) return;
+
+      saveForgePlayableCharacter({
+        activeCharacterVersion: 'v1',
+        collectionKey: build.collectionKey || 'battle_for_colony',
+        tokenId: build.tokenId || null,
+        rebelId: build.rebelId || null,
+        activeForgeBuildId: build.buildId,
+        name: build.title || build.name || `Forge Playable${build.tokenId ? ' #' + build.tokenId : ''}`,
+        previewThumbnail: getForgeBuildThumbnailUrl(build) || null,
+        sourceImage: getForgeBuildThumbnailUrl(build) || null,
+        activeGlbUrl,
+        staticGlbUrl,
+        riggedGlbUrl,
+        walkingGlbUrl,
+        runningGlbUrl,
+        activeCharacterModelType: riggedGlbUrl ? 'rigged_forge_glb' : 'static_forge_glb',
+        activeCharacterSource: 'forge_glb',
+        characterBundle: {
+          bundleVersion: 'v1',
+          bundleType: 'forge_character_bundle',
+          collectionKey: build.collectionKey || 'battle_for_colony',
+          tokenId: build.tokenId || null,
+          rebelId: build.rebelId || null,
+          sourceBuildId: build.buildId,
+          activeGlbUrl,
+          staticGlbUrl,
+          riggedGlbUrl,
+          animations: {
+            walking: walkingGlbUrl ? { name: 'walking', glbUrl: walkingGlbUrl } : null,
+            running: runningGlbUrl ? { name: 'running', glbUrl: runningGlbUrl } : null
+          },
+          armatureAnimations: {
+            idle: null,
+            walking: null,
+            running: null,
+            jump: null,
+            attack: null,
+            kick: null
+          }
+        }
+      }, build);
+    });
+  }
+
+  async function fetchCurrentForgeActiveCharacter() {
+    const collectionKey = window.forgeGenerationInput?.collectionKey || 'battle_for_colony';
+    const tokenId = window.forgeGenerationInput?.tokenId || '';
+    const rebelId = window.forgeGenerationInput?.rebelId || '';
+    const params = new URLSearchParams({ collectionKey });
+
+    if (tokenId) {
+      params.set('tokenId', tokenId);
+    } else if (rebelId) {
+      params.set('rebelId', rebelId);
+    }
+
+    try {
+      const response = await fetch(`/api/forge-active-character-get?${params.toString()}`);
+      const data = await response.json();
+
+      if (!response.ok || !data.ok || !data.hasActiveCharacter) {
+        return null;
+      }
+
+      return data.activeCharacter || null;
+    } catch(e) {
+      console.warn('Could not load active Forge character for build status:', e);
+      return null;
+    }
+  }
+
+  function forgeBuildIsActive(build, activeForgeCharacter) {
+    if (!build?.buildId || !activeForgeCharacter) return false;
+
+    return (
+      activeForgeCharacter.activeForgeBuildId === build.buildId ||
+      activeForgeCharacter.characterBundle?.sourceBuildId === build.buildId
+    );
+  }
+
   function renderForgeBuildThumbnail(build) {
     const thumbnailUrl = getForgeBuildThumbnailUrl(build);
 
@@ -1672,13 +1853,13 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             src="${thumbnailUrl}"
             alt="3D build source thumbnail"
             loading="lazy"
-            onerror="this.onerror=null; this.parentElement.textContent='No Image';"
+            onerror="this.onerror=null; this.parentElement.innerHTML='🐜<br>No Image';"
           >
         </div>
       `;
     }
 
-    return '<div class="forge-3d-build-thumb">No<br>Image</div>';
+    return '<div class="forge-3d-build-thumb">🐜<br>No Image</div>';
   }
 
   function renderForgeBuildSteps(steps) {
@@ -1693,7 +1874,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           return `
             <div class="${className}">
               <span>${step.label}${step.done ? ' ✓' : ''}</span>
-              ${step.done ? '<span>Done</span>' : isNext ? step.actionHtml : '<span>Waiting</span>'}
+              ${step.done ? `<span>${step.doneHtml || 'Done'}</span>` : isNext ? step.actionHtml : '<span>Waiting</span>'}
             </div>
           `;
         }).join('')}
@@ -2093,6 +2274,15 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         throw new Error(data.error || data.detail || 'Could not delete Forge build');
       }
 
+      if (!data.activeBuild) {
+        const savedPlayables = loadForgePlayableCharacters().filter((item) => item.buildId !== buildId);
+        try {
+          localStorage.setItem(FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY, JSON.stringify(savedPlayables));
+        } catch(e) {
+          console.warn('Could not remove deleted Forge build from local playable characters:', e);
+        }
+      }
+
       if (typeof window.setForgeStatus === 'function') {
         const keptActiveFiles = data.activeBuild ? ' Active character files were kept.' : '';
         window.setForgeStatus(`Forge build deleted.${keptActiveFiles}`, 'success');
@@ -2213,6 +2403,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       window.lastForgeActiveCharacterSaveResponse = data;
+      saveForgePlayableCharacter(data.activeCharacter, build);
       console.log('Forge active character animation URL report:', data.animationUrlReport || null);
 
            if (activeButton) {
@@ -2382,10 +2573,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
     try {
       const builds = await fetchForge3dBuildsWithMeshyRefresh();
+      const activeForgeCharacter = await fetchCurrentForgeActiveCharacter();
+      cacheForgePlayableBuilds(builds);
       window.lastForge3dBuildListResponse = {
         ok: true,
-        builds
+        builds,
+        activeForgeCharacter
       };
+      window.lastForgeActiveCharacter = activeForgeCharacter;
 
       if (!builds.length) {
         content.className = 'forge-3d-build-empty';
@@ -2395,6 +2590,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       content.className = 'forge-3d-build-list';
       content.innerHTML = builds.slice(0, 5).map((build, index) => {
+        const isActiveBuild = forgeBuildIsActive(build, activeForgeCharacter);
         const statusText = formatBuildStatus(build.status, build);
         const created = build.createdAt ? new Date(build.createdAt).toLocaleString() : 'Unknown time';
         const sourceConceptId = build.sourceConceptId || '—';
@@ -2517,8 +2713,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const riggedStoredHtml = isRiggedStoredInRebelBlob
           ? '<br>Rigged Storage: Rebel Forge Blob ✓'
           : '';
-        const deleteBuildHtml =
-          `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.deleteForge3dBuild('${build.buildId}')">Delete Build</button>`;
+        const deleteBuildHtml = isActiveBuild
+          ? '<button class="forge-3d-build-refresh-btn forge-3d-step-action forge-3d-build-delete-disabled" type="button" disabled title="This build is currently active. Set another character active before deleting it.">Active Build</button>'
+          : `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.deleteForge3dBuild('${build.buildId}')">Delete Build</button>`;
 
         const activeCharacterGlbUrl = riggedGlbUrl || activeGlbUrl;
         const storeBuildActionHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
@@ -2560,7 +2757,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           },
           {
             label: 'Step 6: Set As Active Character',
-            done: false,
+            done: isActiveBuild,
+            doneHtml: 'Active Character ✓',
             actionHtml: activeCharacterGlbUrl
               ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Set Active</button>`
               : ''

@@ -412,10 +412,90 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 const NFT_CONTRACT = '0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221';
 let selectedAnt = null;
 let ownedRebels = [];
+const FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY = 'rebelAntsForgePlayableCharacters';
 
 function setStatus(msg) {
   const el = document.getElementById('char-status');
   if (el) el.textContent = msg;
+}
+
+function loadLocalForgePlayableCharacters() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function buildForgePlayableCardFromActiveCharacter(activeForgeCharacter, source = {}) {
+  if (!activeForgeCharacter?.activeGlbUrl) return null;
+
+  const buildId = activeForgeCharacter.activeForgeBuildId || source.buildId || '';
+  const tokenId = activeForgeCharacter.tokenId || source.tokenId || '';
+  const rebelId = activeForgeCharacter.rebelId || source.rebelId || '';
+  const id = source.id || `forge_playable_${buildId || tokenId || rebelId || Date.now()}`;
+  const thumbnail =
+    source.previewThumbnail ||
+    source.sourceImage ||
+    source.image ||
+    activeForgeCharacter.previewThumbnail ||
+    activeForgeCharacter.sourceImage ||
+    'assets/lobby/ant_1.JPG';
+
+  return {
+    id,
+    rebelId: rebelId || id,
+    tokenId: tokenId || null,
+    buildId: buildId || null,
+    name: source.name || activeForgeCharacter.name || `Forge Playable${tokenId ? ' #' + tokenId : ''}`,
+    image: thumbnail,
+    previewThumbnail: thumbnail,
+    sourceImage: source.sourceImage || thumbnail,
+    collectionKey: activeForgeCharacter.collectionKey || source.collectionKey || 'battle_for_colony',
+    playableType: 'forge_build',
+    characterSource: 'forge_glb',
+    activeForgeCharacter,
+    activeGlbUrl: activeForgeCharacter.activeGlbUrl,
+    riggedGlbUrl: activeForgeCharacter.riggedGlbUrl || null,
+    walkingGlbUrl: activeForgeCharacter.walkingGlbUrl || null,
+    runningGlbUrl: activeForgeCharacter.runningGlbUrl || null
+  };
+}
+
+async function loadSelectedForgePlayableFromServer() {
+  try {
+    const response = await fetch('/api/forge-active-character-get?collectionKey=battle_for_colony');
+    const data = await response.json();
+
+    if (!response.ok || !data.ok || !data.hasActiveCharacter) {
+      return null;
+    }
+
+    return buildForgePlayableCardFromActiveCharacter(data.activeCharacter, {
+      id: `forge_playable_${data.activeCharacter?.activeForgeBuildId || 'selected'}`,
+      name: 'Active Forge Playable'
+    });
+  } catch(e) {
+    console.warn('Could not load saved Forge playable character:', e);
+    return null;
+  }
+}
+
+async function loadSavedForgePlayableCards() {
+  const playableById = new Map();
+
+  loadLocalForgePlayableCharacters().forEach((saved) => {
+    const card = buildForgePlayableCardFromActiveCharacter(saved.activeForgeCharacter || saved, saved);
+    if (card?.activeGlbUrl) playableById.set(card.id, card);
+  });
+
+  const serverSelectedPlayable = await loadSelectedForgePlayableFromServer();
+  if (serverSelectedPlayable?.activeGlbUrl) {
+    playableById.set(serverSelectedPlayable.id, serverSelectedPlayable);
+  }
+
+  return [...playableById.values()];
 }
 
 function normalizeRebelTraits(traits) {
@@ -560,7 +640,10 @@ async function selectAnt(id) {
 
     setStatus('Loading Rebel details...');
   const enrichedRebel = await loadSelectedRebelMetadata(rebel);
-  const forgeReadyRebel = await attachActiveForgeCharacter(enrichedRebel);
+  const forgeReadyRebel =
+    enrichedRebel.playableType === 'forge_build' && enrichedRebel.activeForgeCharacter?.activeGlbUrl
+      ? enrichedRebel
+      : await attachActiveForgeCharacter(enrichedRebel);
 
   const rebelIndex = ownedRebels.findIndex(r => r.id === id);
   if (rebelIndex >= 0) {
@@ -595,7 +678,11 @@ function buildCard(rebel) {
   card.onclick = () => selectAnt(rebel.id);
 
   const hasForgeCharacter = Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
-  const labelText = hasForgeCharacter ? '3D Forge Character Ready ✓' : rebel.name;
+  const labelText = rebel.playableType === 'forge_build'
+    ? 'Saved Forge Playable ✓'
+    : hasForgeCharacter
+      ? '3D Forge Character Ready ✓'
+      : rebel.name;
 
   const cardLabel = `
     <div class="ant-card-marquee ${hasForgeCharacter ? 'forge-ready' : ''}">
@@ -612,23 +699,31 @@ async function showDefaultCard() {
   const charRow = document.getElementById('char-row');
   charRow.innerHTML = '';
 
-  ownedRebels = [{
+  const starterRebel = {
     id: 'ant_1',
     name: 'Rebel #001',
     image: 'assets/lobby/ant_1.JPG',
     collectionKey: 'battle_for_colony'
-  }];
+  };
 
-  selectedAnt = 'ant_1';
+  const defaultRebel = await attachActiveForgeCharacter(starterRebel);
+  const savedForgePlayables = await loadSavedForgePlayableCards();
+  ownedRebels = [defaultRebel, ...savedForgePlayables];
 
-  const defaultRebel = await attachActiveForgeCharacter(ownedRebels[0]);
-  ownedRebels[0] = defaultRebel;
-
-  buildCard(defaultRebel);
+  let storedSelectedId = '';
 
   try {
-    localStorage.setItem('selectedRebel', JSON.stringify(defaultRebel));
+    storedSelectedId = JSON.parse(localStorage.getItem('selectedRebel') || '{}')?.id || '';
   } catch(e) {}
+
+  selectedAnt = ownedRebels.some((rebel) => rebel.id === storedSelectedId)
+    ? storedSelectedId
+    : 'ant_1';
+
+  charRow.innerHTML = '';
+  ownedRebels.forEach(buildCard);
+
+  await selectAnt(selectedAnt);
 }
 
 async function loadNFTs(walletAddress) {
@@ -675,9 +770,15 @@ async function loadNFTs(walletAddress) {
 
     setStatus('Checking Forge characters...');
 
-    ownedRebels = await Promise.all(
+    const walletRebels = await Promise.all(
       mappedRebels.map((rebel) => attachActiveForgeCharacter(rebel))
     );
+    const savedForgePlayables = await loadSavedForgePlayableCards();
+    const walletIds = new Set(walletRebels.map((rebel) => rebel.id));
+    ownedRebels = [
+      ...walletRebels,
+      ...savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id))
+    ];
 
     const forgedReadyRebel = ownedRebels.find((rebel) => {
       return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
