@@ -1304,31 +1304,64 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       .forge-3d-build-list {
         display: grid;
-        gap: 10px;
+        gap: 22px;
         margin-top: 12px;
       }
 
       .forge-3d-build-row {
         position: relative;
-        border: 1px solid rgba(200,146,42,.34);
+        border: 1px solid rgba(217,168,76,.62);
         background:
-          linear-gradient(135deg, rgba(5,18,22,.94), rgba(4,8,14,.96)),
-          radial-gradient(circle at 24% 16%, rgba(94,207,202,.12), transparent 30%);
-        border-radius: 16px;
-        padding: 16px;
+          radial-gradient(circle at 21% 14%, rgba(26,111,104,.42), transparent 18%),
+          radial-gradient(circle at 77% 82%, rgba(88,255,166,.09), transparent 28%),
+          linear-gradient(135deg, rgba(4,16,19,.98), rgba(3,7,12,.985) 58%, rgba(2,12,17,.98));
+        border-radius: 10px;
+        padding: 26px 28px 30px;
         display: grid;
-        grid-template-columns: 170px minmax(0, 1fr);
-        gap: 18px;
+        grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+        gap: 26px;
         align-items: start;
-        box-shadow: inset 0 0 0 1px rgba(255,216,128,.08), 0 18px 46px rgba(0,0,0,.24);
+        box-shadow:
+          inset 0 0 0 1px rgba(255,216,128,.18),
+          inset 0 0 34px rgba(94,207,202,.045),
+          0 22px 64px rgba(0,0,0,.34);
+        overflow: hidden;
+      }
+
+      .forge-3d-build-row::before {
+        content: '';
+        position: absolute;
+        inset: 8px;
+        border: 1px solid rgba(217,168,76,.32);
+        border-radius: 8px;
+        pointer-events: none;
+      }
+
+      .forge-3d-build-row::after {
+        content: '◆';
+        position: absolute;
+        left: 50%;
+        top: -1px;
+        transform: translate(-50%, -50%);
+        width: 38px;
+        height: 24px;
+        display: grid;
+        place-items: center;
+        color: #f3c45f;
+        font-size: 17px;
+        line-height: 1;
+        text-shadow: 0 0 18px rgba(217,168,76,.62);
+        background: #03070c;
       }
 
       .forge-3d-build-thumb {
         width: 100%;
         aspect-ratio: 4 / 5;
-        border: 1px solid rgba(200,146,42,.58);
-        border-radius: 12px;
-        background: radial-gradient(circle at center, rgba(94,207,202,.16), rgba(0,0,0,.34));
+        border: 2px solid rgba(217,168,76,.72);
+        border-radius: 10px;
+        background:
+          radial-gradient(circle at center, rgba(26,111,104,.5), rgba(4,18,22,.8) 48%, rgba(0,0,0,.48)),
+          linear-gradient(135deg, rgba(217,168,76,.12), transparent 42%);
         overflow: hidden;
         display: grid;
         place-items: center;
@@ -1338,6 +1371,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 1px;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,.7), 0 14px 28px rgba(0,0,0,.32);
       }
 
       .forge-3d-build-thumb img {
@@ -1368,22 +1402,24 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       .forge-3d-build-side {
         display: grid;
-        gap: 12px;
+        gap: 18px;
       }
 
       .forge-3d-build-side-item {
         display: grid;
-        grid-template-columns: 24px minmax(0, 1fr);
-        gap: 10px;
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 13px;
         align-items: start;
-        padding-bottom: 12px;
-        border-bottom: 1px solid rgba(255,255,255,.09);
+        padding: 0 0 15px 2px;
+        border-bottom: 1px solid rgba(243,230,191,.13);
       }
 
       .forge-3d-build-side-icon {
         color: #d9a84c;
-        font-size: 18px;
+        font-size: 22px;
         line-height: 1;
+        text-align: center;
+        text-shadow: 0 0 14px rgba(217,168,76,.28);
       }
 
       .forge-3d-build-side-label {
@@ -1398,11 +1434,35 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-build-side-value {
         margin-top: 4px;
         color: rgba(243,230,191,.84);
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.5;
       }
 
       .forge-3d-build-header {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 12px 18px;
+        align-items: center;
+        padding-bottom: 18px;
+        border-bottom: 1px solid rgba(243,230,191,.11);
+      }
+
+      .forge-3d-build-crest {
+        width: 54px;
+        height: 64px;
+        display: grid;
+        place-items: center;
+        color: #f3c45f;
+        font-size: 28px;
+        background:
+          linear-gradient(180deg, rgba(217,168,76,.16), rgba(0,0,0,.16)),
+          radial-gradient(circle at center, rgba(217,168,76,.22), transparent 62%);
+        border: 1px solid rgba(217,168,76,.58);
+        clip-path: polygon(50% 0, 88% 14%, 88% 62%, 50% 100%, 12% 62%, 12% 14%);
+        text-shadow: 0 0 18px rgba(217,168,76,.44);
+      }
+
+      .forge-3d-build-title-area {
         display: grid;
         gap: 10px;
       }
@@ -1411,7 +1471,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-animation-pack {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 12px;
       }
 
       .forge-3d-build-badge,
@@ -1419,59 +1479,63 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         display: inline-flex;
         align-items: center;
         gap: 7px;
-        min-height: 32px;
-        padding: 7px 11px;
+        min-height: 42px;
+        padding: 9px 18px;
         border: 1px solid rgba(255,255,255,.14);
-        border-radius: 8px;
+        border-radius: 9px;
         background: rgba(255,255,255,.045);
         color: rgba(243,230,191,.76);
         font-family: 'Cinzel', serif;
-        font-size: 10px;
-        letter-spacing: 1.5px;
+        font-size: 13px;
+        letter-spacing: 2px;
         text-transform: uppercase;
       }
 
       .forge-3d-build-badge.ready,
       .forge-3d-pack-pill.ready {
         border-color: rgba(88,255,166,.38);
-        background: rgba(88,255,166,.09);
+        background: linear-gradient(90deg, rgba(20,126,67,.28), rgba(88,255,166,.06));
         color: #9dffc7;
+        box-shadow: inset 0 0 0 1px rgba(88,255,166,.1), 0 0 24px rgba(88,255,166,.07);
       }
 
       .forge-3d-build-badge.info {
         border-color: rgba(94,207,202,.36);
-        background: rgba(94,207,202,.09);
+        background: linear-gradient(90deg, rgba(18,89,107,.28), rgba(94,207,202,.06));
         color: #5ecfca;
+        box-shadow: inset 0 0 0 1px rgba(94,207,202,.1), 0 0 24px rgba(94,207,202,.07);
       }
 
       .forge-3d-build-layout {
         display: grid;
-        grid-template-columns: minmax(0, .82fr) minmax(0, 1fr);
-        gap: 18px;
+        grid-template-columns: minmax(0, .95fr) minmax(0, 1fr);
+        gap: 26px;
         align-items: start;
+        margin-top: 20px;
       }
 
       .forge-3d-build-section {
         border-top: 1px solid rgba(255,255,255,.09);
-        padding-top: 12px;
+        padding-top: 15px;
       }
 
       .forge-3d-build-section-title {
         color: #d9a84c;
         font-family: 'Cinzel', serif;
-        font-size: 11px;
-        letter-spacing: 2px;
+        font-size: 13px;
+        letter-spacing: 2.3px;
         text-transform: uppercase;
         font-weight: 800;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
+        text-align: center;
       }
 
       .forge-3d-status-row {
         display: grid;
-        grid-template-columns: minmax(120px, .45fr) minmax(0, 1fr);
-        gap: 10px;
+        grid-template-columns: minmax(150px, .42fr) minmax(0, 1fr);
+        gap: 16px;
         align-items: center;
-        padding: 9px 0;
+        padding: 12px 0;
         border-bottom: 1px solid rgba(255,255,255,.08);
       }
 
@@ -1482,14 +1546,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-status-label {
         color: #d9a84c;
         font-family: 'Cinzel', serif;
-        font-size: 10px;
-        letter-spacing: 1.6px;
+        font-size: 12px;
+        letter-spacing: 2px;
         text-transform: uppercase;
       }
 
       .forge-3d-status-value {
         color: rgba(243,230,191,.84);
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.5;
       }
 
@@ -1504,17 +1568,18 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 32px;
-        padding: 8px 10px;
+        min-height: 38px;
+        padding: 9px 14px;
         border: 1px solid rgba(94,207,202,.28);
-        background: rgba(94,207,202,.07);
+        background: linear-gradient(180deg, rgba(94,207,202,.12), rgba(0,0,0,.14));
         color: #5ecfca;
-        border-radius: 7px;
+        border-radius: 6px;
         font-family: 'Cinzel', serif;
-        font-size: 10px;
+        font-size: 11px;
         letter-spacing: 1.5px;
         text-transform: uppercase;
         text-decoration: none;
+        box-shadow: inset 0 0 0 1px rgba(94,207,202,.08);
       }
 
       .forge-3d-dev-details {
@@ -1543,34 +1608,43 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
 
       .forge-3d-build-steps {
         display: grid;
-        gap: 8px;
-        margin-top: 12px;
+        gap: 6px;
+        margin-top: 14px;
+        position: relative;
       }
 
       .forge-3d-build-step {
+        position: relative;
         display: grid;
-        grid-template-columns: 34px minmax(0, 1fr) auto;
-        gap: 10px;
+        grid-template-columns: 46px minmax(0, 1fr) auto;
+        gap: 16px;
         align-items: center;
-        padding: 9px 10px;
-        border: 1px solid rgba(88,255,166,.18);
-        border-radius: 10px;
-        background: rgba(88,255,166,.055);
+        min-height: 50px;
+        padding: 8px 16px;
+        border: 1px solid rgba(88,255,166,.22);
+        border-radius: 8px;
+        background:
+          linear-gradient(90deg, rgba(27,101,61,.3), rgba(6,38,28,.56)),
+          radial-gradient(circle at left center, rgba(88,255,166,.13), transparent 36%);
         color: rgba(243,230,191,.66);
-        font-size: 10px;
-        letter-spacing: 1px;
+        font-family: 'Cinzel', serif;
+        font-size: 13px;
+        letter-spacing: 1.8px;
         text-transform: uppercase;
+        box-shadow: inset 0 0 0 1px rgba(88,255,166,.055);
       }
 
       .forge-3d-build-step.done {
         border-color: rgba(88,255,166,.28);
-        background: rgba(88,255,166,.07);
+        background:
+          linear-gradient(90deg, rgba(27,101,61,.42), rgba(6,38,28,.66)),
+          radial-gradient(circle at left center, rgba(88,255,166,.17), transparent 36%);
         color: #9dffc7;
       }
 
       .forge-3d-build-step.next {
         border-color: rgba(94,207,202,.72);
-        background: rgba(94,207,202,.12);
+        background: linear-gradient(90deg, rgba(94,207,202,.18), rgba(5,37,43,.64));
         color: #f3e6bf;
         box-shadow: 0 0 0 1px rgba(94,207,202,.12);
       }
@@ -1582,35 +1656,50 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       .forge-3d-step-number {
-        width: 24px;
-        height: 24px;
+        position: relative;
+        width: 36px;
+        height: 36px;
         display: inline-grid;
         place-items: center;
-        border: 1px solid rgba(88,255,166,.45);
+        border: 2px solid rgba(88,255,166,.72);
         border-radius: 999px;
         color: #f3e6bf;
-        background: rgba(0,0,0,.28);
+        background: radial-gradient(circle at center, rgba(88,255,166,.18), rgba(0,0,0,.58));
+        box-shadow: 0 0 0 3px rgba(88,255,166,.08), 0 0 18px rgba(88,255,166,.2);
+        z-index: 1;
       }
 
       .forge-3d-build-actions {
         grid-column: 1 / -1;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        padding-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        padding-top: 26px;
         border-top: 1px solid rgba(200,146,42,.22);
       }
 
       .forge-3d-build-actions .forge-3d-step-action {
         margin: 0;
-        min-height: 42px;
-        padding: 11px 14px;
+        min-height: 58px;
+        padding: 14px 18px;
+        border-radius: 5px;
+        font-size: 12px;
+        letter-spacing: 2px;
+        background:
+          linear-gradient(180deg, rgba(94,207,202,.12), rgba(4,24,31,.72)),
+          linear-gradient(90deg, rgba(94,207,202,.24), transparent 18%, transparent 82%, rgba(94,207,202,.2));
+        border-color: rgba(94,207,202,.45);
+        color: #5ecfca;
+        box-shadow: inset 0 0 0 1px rgba(94,207,202,.12), 0 0 22px rgba(94,207,202,.06);
       }
 
       .forge-3d-danger-action {
         border-color: rgba(255,87,87,.38) !important;
-        background: rgba(255,87,87,.09) !important;
+        background:
+          linear-gradient(180deg, rgba(255,87,87,.14), rgba(43,8,8,.78)),
+          linear-gradient(90deg, rgba(255,87,87,.22), transparent 18%, transparent 82%, rgba(255,87,87,.18)) !important;
         color: #ff8d74 !important;
+        box-shadow: inset 0 0 0 1px rgba(255,87,87,.12), 0 0 22px rgba(255,87,87,.07) !important;
       }
 
       .forge-3d-step-action + .forge-3d-step-action {
@@ -3439,6 +3528,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const idleLinksHtml = renderOpenDownloadLinks(idleGlbUrl, 'Idle GLB');
         const walkingLinksHtml = renderOpenDownloadLinks(walkingGlbUrl, 'Walking GLB');
         const runningLinksHtml = renderOpenDownloadLinks(runningGlbUrl, 'Running GLB');
+        const idleStoredHtml = idleGlbUrl
+          ? '<br>Idle Animation: Rebel Forge Blob ✓'
+          : '';
         const storageRowsHtml = [
           renderStatusRow({
             label: 'Storage',
@@ -3473,43 +3565,43 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         ].join('');
         const stepHtml = renderForgeBuildSteps([
           {
-            label: 'Step 1: Start 3D Build',
+            label: 'Start 3D Build',
             done: buildComplete,
             actionHtml: ''
           },
           {
-            label: 'Step 2: Start Meshy Rig Test',
+            label: 'Start Meshy Rig Test',
             done: Boolean(rigTaskId),
             actionHtml: activeGlbUrl && !rigTaskId
               ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.startMeshyRigTestForBuild('${build.buildId}')">Start Meshy Rig Test</button>`
               : ''
           },
           {
-            label: 'Step 3: Store GLB in Rebel Forge',
+            label: 'Store GLB in Rebel Forge',
             done: Boolean(riggedMeshyGlbUrl ? isRiggedStoredInRebelBlob : isStoredInRebelBlob),
             actionHtml: storeBuildActionHtml
           },
           {
-            label: 'Step 4: Store Idle Animation',
+            label: 'Store Idle Animation',
             done: Boolean(idleGlbUrl),
             actionHtml: storeMeshyIdleHtml
           },
           {
-            label: 'Step 5: Store Walking Animation',
+            label: 'Store Walking Animation',
             done: Boolean(walkingRebelGlbUrl),
             actionHtml: walkingMeshyGlbUrl && !walkingRebelGlbUrl
               ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeWalkingGlbInRebelBlob('${build.buildId}')">Store Walking</button>`
               : ''
           },
           {
-            label: 'Step 6: Store Running Animation',
+            label: 'Store Running Animation',
             done: Boolean(runningRebelGlbUrl),
             actionHtml: runningMeshyGlbUrl && !runningRebelGlbUrl
               ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeRunningGlbInRebelBlob('${build.buildId}')">Store Running</button>`
               : ''
           },
           {
-            label: 'Step 7: Playable Character Saved',
+            label: 'Playable Character Saved',
             done: isActiveBuild || isSavedForLanding,
             doneHtml: isActiveBuild ? 'Currently Active ✓' : 'Character Ready on Landing ✓',
             actionHtml: activeCharacterGlbUrl && !isSavedForLanding
@@ -3546,9 +3638,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             </div>
             <div class="forge-3d-build-body">
               <div class="forge-3d-build-header">
-                <div class="forge-3d-build-status">${index === 0 ? 'Latest Build — ' : ''}${statusText}</div>
-                <div class="forge-3d-build-badges">${completedBadgeHtml}${glbReadyBadgeHtml}</div>
-                ${animationPackHtml}
+                <div class="forge-3d-build-crest">⚜</div>
+                <div class="forge-3d-build-title-area">
+                  <div class="forge-3d-build-status">${index === 0 ? 'Latest Build — ' : ''}${statusText}</div>
+                  <div class="forge-3d-build-badges">${completedBadgeHtml}${glbReadyBadgeHtml}</div>
+                  ${animationPackHtml}
+                </div>
               </div>
               <div class="forge-3d-build-layout">
                 <div class="forge-3d-build-section">
@@ -3568,10 +3663,12 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
                   ${storedHtml || ''}
                   ${rigStatusHtml || ''}
                   ${riggedStoredHtml || ''}
+                  ${idleStoredHtml || ''}
                   ${walkingStoredHtml || ''}
                   ${runningStoredHtml || ''}
                   ${openGlbHtml || ''}${downloadGlbHtml || ''}
                   ${riggedGlbHtml || ''}
+                  ${idleLinksHtml || ''}
                   ${walkingGlbHtml || ''}
                   ${runningGlbHtml || ''}
                 </div>
