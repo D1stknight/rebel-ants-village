@@ -73,9 +73,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 }
 .ant-card img{width:100%;height:100%;object-fit:cover;}
 .ant-card.forge-playable-card img{
-  object-fit:contain;
-  padding:4px;
+  object-fit:cover;
+  object-position:center;
   background:radial-gradient(circle at 50% 40%, rgba(200,146,42,0.16), rgba(0,0,0,0.62) 68%);
+}
+.ant-card-placeholder{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  background:radial-gradient(circle at 50% 40%, rgba(200,146,42,0.2), rgba(0,0,0,0.72) 68%);
+  color:#c8922a;
+  font-size:34px;
+  line-height:1;
 }
 .ant-card:hover{border-color:rgba(200,146,42,0.9);transform:scale(1.08);
   box-shadow:0 0 20px rgba(200,146,42,0.4);}
@@ -305,6 +315,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   overflow: hidden;
   opacity: 0;
   transition: opacity 0.2s ease;
+  pointer-events:none;
 }
 
 .ant-card:hover .ant-card-marquee,
@@ -767,7 +778,11 @@ function buildCard(rebel) {
     </div>
   `;
 
-  card.innerHTML = `<img src="${rebel.image || 'assets/lobby/ant_1.JPG'}" onerror="this.onerror=null; this.src='assets/lobby/ant_1.JPG';"/>
+  const imageHtml = rebel.image
+    ? `<div class="ant-card-placeholder" style="display:none;">🐜</div><img src="${rebel.image}" onerror="this.onerror=null; this.style.display='none'; this.previousElementSibling.style.display='grid';"/>`
+    : '<div class="ant-card-placeholder">🐜</div>';
+
+  card.innerHTML = `${imageHtml}
     ${cardLabel}`;
   charRow.appendChild(card);
 }

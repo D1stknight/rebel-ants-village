@@ -1402,6 +1402,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         white-space: nowrap;
       }
 
+      .forge-3d-step-action + .forge-3d-step-action {
+        margin-left: 8px;
+      }
+
       .forge-3d-build-refresh-btn {
         margin-top: 12px;
         padding: 10px 12px;
@@ -1841,6 +1845,26 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       activeForgeCharacter.activeForgeBuildId === build.buildId ||
       activeForgeCharacter.characterBundle?.sourceBuildId === build.buildId
     );
+  }
+
+  function forgeBuildIsSavedForLanding(build) {
+    if (!build?.buildId) return false;
+
+    return loadForgePlayableCharacters().some((item) => item.buildId === build.buildId);
+  }
+
+  function forgeBuildIsSelectedForVillage(build) {
+    if (!build?.buildId) return false;
+
+    try {
+      const selectedRebel = JSON.parse(localStorage.getItem('selectedRebel') || '{}');
+      return (
+        selectedRebel?.buildId === build.buildId ||
+        selectedRebel?.activeForgeCharacter?.activeForgeBuildId === build.buildId
+      );
+    } catch(e) {
+      return false;
+    }
   }
 
   function renderForgeBuildThumbnail(build) {
@@ -2716,11 +2740,16 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const riggedStoredHtml = isRiggedStoredInRebelBlob
           ? '<br>Rigged Storage: Rebel Forge Blob ✓'
           : '';
-        const deleteBuildHtml = isActiveBuild
-          ? '<button class="forge-3d-build-refresh-btn forge-3d-step-action forge-3d-build-delete-disabled" type="button" disabled title="This build is currently active. Set another character active before deleting it.">Active Build</button>'
+        const isSelectedForVillage = forgeBuildIsSelectedForVillage(build);
+        const deleteBuildHtml = isActiveBuild || isSelectedForVillage
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action forge-3d-build-delete-disabled" type="button" disabled title="This build is ${isActiveBuild ? 'currently active' : 'selected for Village'}. Select another character before deleting it.">${isActiveBuild ? 'Active Build' : 'Selected Build'}</button>`
           : `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.deleteForge3dBuild('${build.buildId}')">Delete Build</button>`;
 
         const activeCharacterGlbUrl = riggedGlbUrl || activeGlbUrl;
+        const isSavedForLanding = forgeBuildIsSavedForLanding(build);
+        const previewBuildHtml = activeCharacterGlbUrl
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.previewForge3dBuild('${build.buildId}')">Preview This Build</button>`
+          : '';
         const storeBuildActionHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
           ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeRiggedGlbInRebelBlob('${build.buildId}')">Store GLB</button>`
           : glbUrl && !isStoredInRebelBlob
@@ -2759,10 +2788,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
               : ''
           },
           {
-            label: 'Step 6: Set As Active Character',
-            done: isActiveBuild,
-            doneHtml: 'Active Character ✓',
-            actionHtml: activeCharacterGlbUrl
+            label: 'Step 6: Playable Character Saved',
+            done: isActiveBuild || isSavedForLanding,
+            doneHtml: isActiveBuild ? 'Currently Active ✓' : 'Character Ready on Landing ✓',
+            actionHtml: activeCharacterGlbUrl && !isSavedForLanding
               ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Set Active</button>`
               : ''
           }
@@ -2788,7 +2817,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
                 ${runningStoredHtml}
               </div>
               ${stepHtml}
-              <div style="margin-top:10px;">${deleteBuildHtml}</div>
+              <div style="margin-top:10px;">${previewBuildHtml}${deleteBuildHtml}</div>
             </div>
           </div>
         `;
@@ -3713,6 +3742,39 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   }
 
    window.renderForge3dPreviewPanel = renderForge3dPreviewPanel;
+  window.previewForge3dBuild = async function(buildId) {
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      showForgeToolToast('Build not found');
+      return;
+    }
+
+    const glbUrl =
+      build.output?.riggedRebelGlbUrl ||
+      build.output?.riggedGlbUrl ||
+      build.rigging?.riggedRebelGlbUrl ||
+      build.rigging?.riggedGlbUrl ||
+      build.rigging?.response?.result?.rigged_character_glb_url ||
+      build.output?.rebelGlbUrl ||
+      build.output?.glbUrl ||
+      build.engine?.glbUrl ||
+      '';
+
+    if (!glbUrl) {
+      showForgeToolToast('No preview GLB found for this build');
+      return;
+    }
+
+    try {
+      await renderThreeGlbPreview(glbUrl);
+      showForgeToolToast('Build preview loaded');
+    } catch(e) {
+      console.warn('Could not preview Forge build:', e);
+      showForgeToolToast('Could not load build preview');
+    }
+  };
 
   function showForgeToolToast(message) {
     const toast = document.getElementById('forge-3d-tool-toast');
