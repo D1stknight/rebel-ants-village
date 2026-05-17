@@ -2279,6 +2279,10 @@ function getForgeActionMotionOffset() {
     return { y: 0, forward: 0 };
   }
 
+  if (motion.controller) {
+    return sampleForgeRebelActionController(motion.controller, elapsed);
+  }
+
   if (motion.rootMotion) {
     return sampleForgeActionRootMotion(motion.rootMotion, elapsed, motion.speedRatio || 1);
   }
@@ -2307,7 +2311,11 @@ function updateForgeActionPlayerMotion() {
   let targetForward = 0;
   let complete = false;
 
-  if (motion.rootMotion) {
+  if (motion.controller) {
+    const sample = sampleForgeRebelActionController(motion.controller, elapsed);
+    targetForward = sample.forward || 0;
+    complete = elapsed >= motion.controller.durationMs;
+  } else if (motion.rootMotion) {
     const sample = sampleForgeActionRootMotion(motion.rootMotion, elapsed, motion.speedRatio || 1);
     targetForward = sample.forward || 0;
     complete = elapsed >= (motion.rootMotion.durationMs / Math.max(motion.speedRatio || 1, 0.01));
@@ -2340,9 +2348,11 @@ function isForgeActionMovementSuppressed() {
   const elapsed = performance.now() - motion.startedAt - (motion.delayMs || 0);
   if (!Number.isFinite(elapsed) || elapsed < 0) return true;
 
-  const motionWindow = motion.rootMotion
-    ? (motion.rootMotion.durationMs / Math.max(motion.speedRatio || 1, 0.01))
-    : Math.max(motion.forwardDurationMs || 0, motion.liftDurationMs || 0);
+  const motionWindow = motion.controller
+    ? motion.controller.durationMs
+    : motion.rootMotion
+      ? (motion.rootMotion.durationMs / Math.max(motion.speedRatio || 1, 0.01))
+      : Math.max(motion.forwardDurationMs || 0, motion.liftDurationMs || 0);
   return motionWindow > 0 && elapsed < motionWindow;
 }
 
@@ -2547,6 +2557,59 @@ function sampleForgeActionRootMotion(rootMotion, elapsedMs, speedRatio = 1) {
   return { y: lastSample.y || 0, forward: lastSample.forward || 0 };
 }
 
+const FORGE_REBEL_ACTION_CONTROLLERS = {
+  jump: {
+    durationMs: 850,
+    takeoffMs: 100,
+    peakMs: 420,
+    landMs: 780,
+    jumpHeight: 1.4,
+    forwardDistance: 0
+  }
+};
+
+function easeForgeActionOutCubic(progress) {
+  const t = Math.max(0, Math.min(1, progress));
+  return 1 - Math.pow(1 - t, 3);
+}
+
+function easeForgeActionInCubic(progress) {
+  const t = Math.max(0, Math.min(1, progress));
+  return t * t * t;
+}
+
+function sampleForgeRebelActionController(controller, elapsedMs) {
+  if (!controller || !Number.isFinite(elapsedMs)) {
+    return { y: 0, forward: 0 };
+  }
+
+  const durationMs = Math.max(controller.durationMs || 0, 1);
+  const takeoffMs = Math.max(controller.takeoffMs || 0, 0);
+  const peakMs = Math.max(controller.peakMs || takeoffMs, takeoffMs + 1);
+  const landMs = Math.max(controller.landMs || durationMs, peakMs + 1);
+  const clampedElapsed = Math.max(0, Math.min(elapsedMs, durationMs));
+  const jumpHeight = controller.jumpHeight || 0;
+  const forwardDistance = controller.forwardDistance || 0;
+  let y = 0;
+
+  if (clampedElapsed < takeoffMs) {
+    y = 0;
+  } else if (clampedElapsed <= peakMs) {
+    const progress = (clampedElapsed - takeoffMs) / Math.max(peakMs - takeoffMs, 1);
+    y = jumpHeight * easeForgeActionOutCubic(progress);
+  } else if (clampedElapsed <= landMs) {
+    const progress = (clampedElapsed - peakMs) / Math.max(landMs - peakMs, 1);
+    y = jumpHeight * (1 - easeForgeActionInCubic(progress));
+  } else {
+    y = 0;
+  }
+
+  return {
+    y,
+    forward: forwardDistance * Math.max(0, Math.min(1, clampedElapsed / durationMs))
+  };
+}
+
 function removeForgeVisualScaleTracks(animationGroups, mode = 'forge') {
   let removedCount = 0;
   const removedTargets = [];
@@ -2577,14 +2640,14 @@ function removeForgeVisualScaleTracks(animationGroups, mode = 'forge') {
 }
 
 const FORGE_DONOR_ACTION_DURATIONS_MS = {
-  jump: 1900,
+  jump: 850,
   runJump: 3100,
   highKick: 3600,
   roundhouseKick: 4200
 };
 
 const FORGE_DONOR_ACTION_SPEED_RATIOS = {
-  jump: 1.9,
+  jump: 1,
   runJump: 1.12
 };
 
@@ -3150,7 +3213,9 @@ async function loadForgeArmatureAnimationForPlayer(mode, armatureGlbUrl, riggedS
     }
   });
 
-  const rootMotion = extractForgeActionRootMotion([armatureAnimation], mode);
+  const rootMotion = FORGE_REBEL_ACTION_CONTROLLERS[mode]
+    ? null
+    : extractForgeActionRootMotion([armatureAnimation], mode);
   removeForgeVisualRootMotion([armatureAnimation], mode);
   removeForgeVisualScaleTracks([armatureAnimation], mode);
   armatureAnimation.stop();
@@ -3214,6 +3279,7 @@ function activateForgeArmaturePlayerMode(mode) {
   const cache = window.forgeArmatureAnimationCache || {};
   const requestedMode = mode === 'rigged' ? 'idle' : mode;
   const actionModes = new Set(['jump', 'runJump', 'highKick', 'roundhouseKick', 'kick', 'attack']);
+  const actionController = FORGE_REBEL_ACTION_CONTROLLERS[requestedMode] || null;
 
   Object.keys(cache).forEach((key) => {
     const group = cache[key]?.animationGroup;
@@ -3242,7 +3308,14 @@ function activateForgeArmaturePlayerMode(mode) {
 
   entry.animationGroup.stop();
   entry.animationGroup.reset();
-  entry.animationGroup.speedRatio = FORGE_DONOR_ACTION_SPEED_RATIOS[requestedMode] || 1;
+  if (actionController) {
+    const naturalDurationMs = getForgeArmatureAnimationNaturalDurationMs(entry.animationGroup);
+    entry.animationGroup.speedRatio = naturalDurationMs > 0
+      ? Math.max(0.2, Math.min(4, naturalDurationMs / actionController.durationMs))
+      : 1;
+  } else {
+    entry.animationGroup.speedRatio = FORGE_DONOR_ACTION_SPEED_RATIOS[requestedMode] || 1;
+  }
   if (!loop) {
     entry.animationGroup.onAnimationGroupEndObservable.clear();
     entry.animationGroup.onAnimationGroupEndObservable.addOnce(() => {
@@ -3270,6 +3343,10 @@ function activateForgeArmaturePlayerMode(mode) {
     console.log('Forge visual animation playing: idle');
   }
 
+  if (requestedMode === 'jump') {
+    console.log('Forge visual animation playing: jump');
+  }
+
   if (window.forgePlayerVisualLastLoggedMode !== requestedMode) {
     console.log(`Forge visual mode switched: ${requestedMode}`);
     window.forgePlayerVisualLastLoggedMode = requestedMode;
@@ -3278,7 +3355,23 @@ function activateForgeArmaturePlayerMode(mode) {
   return true;
 }
 
+function getForgeArmatureAnimationNaturalDurationMs(group) {
+  if (!group) return 0;
+
+  const targetedAnimation = group.targetedAnimations?.find((item) => item?.animation?.getKeys?.().length) || null;
+  const keys = targetedAnimation?.animation?.getKeys?.() || [];
+  const firstFrame = Number.isFinite(group.from) ? group.from : keys[0]?.frame || 0;
+  const lastFrame = Number.isFinite(group.to) ? group.to : keys[keys.length - 1]?.frame || firstFrame;
+  const fps = targetedAnimation?.animation?.framePerSecond || 30;
+  const durationMs = ((lastFrame - firstFrame) / Math.max(fps, 1)) * 1000;
+
+  return Number.isFinite(durationMs) && durationMs > 0 ? durationMs : 0;
+}
+
 function getForgeArmatureAnimationDurationMs(mode) {
+  const actionController = FORGE_REBEL_ACTION_CONTROLLERS[mode] || null;
+  if (actionController) return actionController.durationMs;
+
   const group = window.forgeArmatureAnimationCache?.[mode]?.animationGroup || null;
   if (!group) return FORGE_DONOR_ACTION_DURATIONS_MS[mode] || 3000;
 
@@ -3300,6 +3393,7 @@ function getForgeArmatureAnimationDurationMs(mode) {
 function triggerForgeArmatureActionMode(mode, durationMs) {
   if (localStorage.getItem('forgePlayerVisualTest') !== '1') return;
   if (!mode) return;
+  if (window.forgePlayerForcedMode === mode && window.forgePlayerForcedModeUntil && performance.now() < window.forgePlayerForcedModeUntil) return;
 
   const actionUrls = getForgeNativeActionAnimationUrls();
 
@@ -3311,9 +3405,18 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
   window.forgePlayerForcedMode = mode;
   window.forgePlayerForcedModeStartedAt = performance.now();
   const actionMotion = FORGE_DONOR_ACTION_MOTION[mode] || null;
-  const actionRootMotion = window.forgeArmatureAnimationCache?.[mode]?.rootMotion || null;
+  const actionController = FORGE_REBEL_ACTION_CONTROLLERS[mode] || null;
+  const actionRootMotion = actionController ? null : window.forgeArmatureAnimationCache?.[mode]?.rootMotion || null;
   const actionSpeedRatio = FORGE_DONOR_ACTION_SPEED_RATIOS[mode] || 1;
-  window.forgePlayerActionMotion = actionMotion
+  window.forgePlayerActionMotion = actionController
+    ? {
+        mode,
+        startedAt: window.forgePlayerForcedModeStartedAt,
+        delayMs: 0,
+        controller: actionController,
+        forwardApplied: 0
+      }
+    : actionMotion
     ? {
         mode,
         startedAt: window.forgePlayerForcedModeStartedAt,
@@ -3327,8 +3430,19 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
         forwardApplied: 0
       }
     : null;
-  let resolvedDuration = durationMs || FORGE_DONOR_ACTION_DURATIONS_MS[mode] || 3000;
+  let resolvedDuration = actionController?.durationMs || durationMs || FORGE_DONOR_ACTION_DURATIONS_MS[mode] || 3000;
   window.forgePlayerForcedModeUntil = performance.now() + resolvedDuration;
+
+  if (mode === 'jump') {
+    console.log('Forge action started: jump');
+
+    const startedAt = window.forgePlayerForcedModeStartedAt;
+    setTimeout(() => {
+      if (window.forgePlayerForcedModeStartedAt === startedAt) {
+        console.log('Forge action landed: jump');
+      }
+    }, actionController?.landMs || 780);
+  }
 
   if (typeof activateForgeArmaturePlayerMode === 'function') {
     const activated = activateForgeArmaturePlayerMode(mode);
@@ -3338,7 +3452,9 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
     }
   }
 
-  resolvedDuration = Math.max(resolvedDuration, getForgeArmatureAnimationDurationMs(mode));
+  resolvedDuration = actionController
+    ? actionController.durationMs
+    : Math.max(resolvedDuration, getForgeArmatureAnimationDurationMs(mode));
   window.forgePlayerForcedModeUntil = performance.now() + resolvedDuration;
 
   setTimeout(() => {
@@ -3347,6 +3463,9 @@ function triggerForgeArmatureActionMode(mode, durationMs) {
       window.forgePlayerForcedModeStartedAt = null;
       window.forgePlayerForcedModeUntil = null;
       window.forgePlayerActionMotion = null;
+      if (typeof activateForgeArmaturePlayerMode === 'function') {
+        activateForgeArmaturePlayerMode(getForgePlayerDesiredPreviewMode());
+      }
     }
   }, resolvedDuration);
 }
@@ -5685,6 +5804,7 @@ document.addEventListener('keydown', async e => {
   }
    if (e.key === ' ') {
     e.preventDefault();
+    if (window.forgePlayerForcedMode === 'jump' && window.forgePlayerForcedModeUntil && performance.now() < window.forgePlayerForcedModeUntil) return;
     switchAnim(4, false);
     triggerForgeArmatureActionMode('jump', FORGE_DONOR_ACTION_DURATIONS_MS.jump);
     setTimeout(()=>{ if(animState===4) switchAnim(0,true); }, 1000);
