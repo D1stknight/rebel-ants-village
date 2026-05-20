@@ -651,7 +651,7 @@ function createCollisionProxyPiece(kind, position, options = {}) {
   const proxyKind = ['blocker', 'walk', 'ramp'].includes(kind) ? kind : 'blocker';
   collisionProxyCounter += 1;
 
-  const root = new BABYLON.TransformNode(options.name || `collision_proxyRootClone_${Date.now()}_${collisionProxyCounter}`, scene);
+  const root = BABYLON.MeshBuilder.CreateBox(options.name || `collision_proxyRootClone_${Date.now()}_${collisionProxyCounter}`, { width: 1, height: 1, depth: 1 }, scene);
   root.position = position.clone();
   root.rotation = options.rotation
     ? new BABYLON.Vector3(options.rotation.x || 0, options.rotation.y || 0, options.rotation.z || 0)
@@ -668,13 +668,10 @@ function createCollisionProxyPiece(kind, position, options = {}) {
     proxyOwnerName: options.proxyOwnerName || null,
     proxyOwnerType: options.proxyOwnerType || null
   };
-
-  const mesh = BABYLON.MeshBuilder.CreateBox(`${root.name}_box`, { width: 1, height: 1, depth: 1 }, scene);
-  mesh.parent = root;
-  mesh.material = getCollisionProxyMaterials()[proxyKind];
-  mesh.isPickable = true;
-  mesh._editRoot = root;
-  mesh.metadata = { type: 'collision_proxy', proxyPieceKind: proxyKind };
+  root.material = getCollisionProxyMaterials()[proxyKind];
+  root.isPickable = true;
+  root._editRoot = root;
+  root.receiveShadows = false;
 
   return root;
 }
@@ -884,7 +881,11 @@ function deleteAttachedCollisionProxyPieces() {
     node &&
     node.metadata?.type === 'collision_proxy' &&
     node.metadata?.proxyOwnerName === ownerName
-  );
+  ).concat(scene.meshes.filter(node =>
+    node &&
+    node.metadata?.type === 'collision_proxy' &&
+    node.metadata?.proxyOwnerName === ownerName
+  ));
 
   if (!pieces.length) {
     showToast('No attached pieces found');
@@ -907,7 +908,11 @@ function moveAttachedCollisionProxyPieces(ownerNode, delta) {
     node &&
     node.metadata?.type === 'collision_proxy' &&
     node.metadata?.proxyOwnerName === ownerNode.name
-  );
+  ).concat(scene.meshes.filter(node =>
+    node &&
+    node.metadata?.type === 'collision_proxy' &&
+    node.metadata?.proxyOwnerName === ownerNode.name
+  ));
 
   pieces.forEach(node => node.position.addInPlace(delta));
 }
@@ -929,7 +934,11 @@ function getAttachedCollisionProxyPieces(ownerNode) {
     node &&
     node.metadata?.type === 'collision_proxy' &&
     node.metadata?.proxyOwnerName === ownerNode.name
-  );
+  ).concat(scene.meshes.filter(node =>
+    node &&
+    node.metadata?.type === 'collision_proxy' &&
+    node.metadata?.proxyOwnerName === ownerNode.name
+  ));
 }
 
 function getEditableObjectsByType(type) {
@@ -1081,6 +1090,11 @@ function setCollisionProxyVisualsVisible(visible) {
       mesh.setEnabled(visible);
       mesh.isPickable = visible;
     });
+  });
+  scene.meshes.forEach(mesh => {
+    if (!mesh || mesh.metadata?.type !== 'collision_proxy') return;
+    mesh.setEnabled(visible);
+    mesh.isPickable = visible;
   });
 }
 
@@ -6100,12 +6114,22 @@ let _worldLayoutSaveChain = Promise.resolve();
 
 function saveWorldLayout(saveToGitHub = true){
   // Only save actually placed objects — skip source roots at 9999 and untyped nodes
-  const allNodes = scene.transformNodes.filter(n =>
+  const saveableTransformNodes = scene.transformNodes.filter(n =>
     n.metadata && n.metadata.isClone &&
     !n.metadata.isPickProxy &&
     n.name && !n.name.includes('.') &&
     Math.abs(n.position.x) < 500 && Math.abs(n.position.z) < 500
   );
+  const saveableProxyMeshes = scene.meshes.filter(n =>
+    n.metadata &&
+    n.metadata.isClone &&
+    n.metadata.type === 'collision_proxy' &&
+    !n.parent &&
+    n.name &&
+    Math.abs(n.position.x) < 500 &&
+    Math.abs(n.position.z) < 500
+  );
+  const allNodes = [...saveableTransformNodes, ...saveableProxyMeshes];
 
   const data = allNodes.map(node => ({
     type: node.metadata.type,
@@ -6238,7 +6262,14 @@ function loadWorldLayout(){
   scene.transformNodes.filter(n =>
     n.name && n.name.includes('RootClone_') && !n.name.includes('.')
   ).forEach(n => n.dispose(false, false));
-  scene.meshes.filter(m => m.name && (m.name.startsWith('lp_') || m.name.startsWith('lanternProxy_'))).forEach(m => m.dispose());
+  scene.meshes.filter(m =>
+    m.name &&
+    (
+      m.name.startsWith('lp_') ||
+      m.name.startsWith('lanternProxy_') ||
+      m.metadata?.type === 'collision_proxy'
+    )
+  ).forEach(m => m.dispose(false, false));
   _lanternLightPool.forEach(l => { l._inUse = false; l.intensity = 0; l.position.set(9999,-999,9999); l._followMesh = null; });
   for (let i = fireLights.length-1; i>=0; i--) { if (fireLights[i].name && fireLights[i].name.startsWith('lanternPool')) fireLights.splice(i,1); }
 
@@ -7420,7 +7451,7 @@ function rebuildVillageCollisionBlockers() {
   const blockers = [];
   const walkableSurfaces = [];
 
-  scene.transformNodes.forEach(node => {
+  [...scene.transformNodes, ...scene.meshes].forEach(node => {
     if (!node || node.isDisposed?.()) return;
     if (node.parent) return;
 
