@@ -7599,8 +7599,27 @@ function refreshVillageCollisionBlockersIfNeeded() {
   }
 }
 
+function liveManualCollisionProxyBlocksPoint(x, z, radius = VILLAGE_PLAYER_COLLISION_RADIUS) {
+  return scene.meshes.some(mesh => {
+    if (!mesh || mesh.isDisposed?.() || !mesh.isEnabled?.()) return false;
+    if (mesh.metadata?.type !== 'collision_proxy') return false;
+    if ((mesh.metadata.proxyPieceKind || 'blocker') !== 'blocker') return false;
+
+    const halfX = Math.max(0.15, Math.abs(mesh.scaling?.x || 1) * 0.5);
+    const halfZ = Math.max(0.15, Math.abs(mesh.scaling?.z || 1) * 0.5);
+    const local = pointToVillageSurfaceLocal({
+      centerX: mesh.position.x,
+      centerZ: mesh.position.z,
+      yaw: mesh.rotation?.y || 0
+    }, x, z);
+
+    return Math.abs(local.x) <= halfX + radius &&
+      Math.abs(local.z) <= halfZ + radius;
+  });
+}
+
 function villagePointBlocked(x, z, radius = VILLAGE_PLAYER_COLLISION_RADIUS) {
-  return villageCollisionBlockers.some(blocker => {
+  const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'circle') {
       const dx = x - blocker.x;
       const dz = z - blocker.z;
@@ -7624,6 +7643,8 @@ function villagePointBlocked(x, z, radius = VILLAGE_PLAYER_COLLISION_RADIUS) {
       z >= blocker.minZ - radius &&
       z <= blocker.maxZ + radius;
   });
+
+  return cachedBlockerHit || liveManualCollisionProxyBlocksPoint(x, z, radius);
 }
 
 function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
