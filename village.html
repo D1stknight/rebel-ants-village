@@ -304,6 +304,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:6px"><input type="checkbox" id="proxyAutoEnabled" checked> Use automatic barriers</label>
   <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:6px"><input type="checkbox" id="proxyWalkSurfaceEnabled"> Custom walk surface</label>
   <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:8px"><input type="checkbox" id="proxyDebugVisible" checked> Show transparent guide</label>
+  <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:8px"><input type="checkbox" id="proxyAttachToSelected" checked> Attach new pieces to selected object</label>
   <label style="display:block;color:#e8c56a;font-size:10px;letter-spacing:1px;margin-bottom:4px">Entrance Side</label>
   <select id="proxyEntranceSide" style="width:100%;height:30px;background:#15151f;color:#5ecfca;border:1px solid rgba(94,207,202,0.35);border-radius:6px;padding:0 8px;margin-bottom:6px">
     <option value="negZ">Local Front (-Z)</option>
@@ -342,6 +343,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('blocker')">Add Red Blocker</button>
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('walk')">Add Green Walk Floor</button>
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('ramp')">Add Blue Ramp</button>
+    <button class="ctrl-btn danger" onclick="deleteAttachedCollisionProxyPieces()">Delete Attached Pieces</button>
   </div>
 </div>
   <hr class="ap-divider">
@@ -661,7 +663,9 @@ function createCollisionProxyPiece(kind, position, options = {}) {
     isClone: true,
     proxyPieceKind: proxyKind,
     proxyAutoEnabled: false,
-    proxyWalkSurfaceEnabled: proxyKind !== 'blocker'
+    proxyWalkSurfaceEnabled: proxyKind !== 'blocker',
+    proxyOwnerName: options.proxyOwnerName || null,
+    proxyOwnerType: options.proxyOwnerType || null
   };
 
   const mesh = BABYLON.MeshBuilder.CreateBox(`${root.name}_box`, { width: 1, height: 1, depth: 1 }, scene);
@@ -674,17 +678,30 @@ function createCollisionProxyPiece(kind, position, options = {}) {
   return root;
 }
 
-function getCollisionProxySpawnPosition() {
-  if (selectedObject && selectedObject.position) {
-    const forward = new BABYLON.Vector3(Math.sin(selectedObject.rotation?.y || 0), 0, Math.cos(selectedObject.rotation?.y || 0));
-    return selectedObject.position.add(forward.scale(5));
-  }
+function getSelectedProxyOwner() {
+  const attachInput = document.getElementById('proxyAttachToSelected');
+  if (!attachInput || attachInput.checked !== true) return null;
+  if (!selectedObject || selectedObject.metadata?.type === 'collision_proxy') return null;
+  return {
+    name: selectedObject.name,
+    type: selectedObject.metadata?.type || getObjectType(selectedObject) || null
+  };
+}
 
-  if (charMesh && charMesh.position) {
-    return charMesh.position.add(new BABYLON.Vector3(0, 0, 4));
-  }
+function getCollisionProxyLabel(kind) {
+  if (kind === 'walk') return 'walk floor';
+  if (kind === 'ramp') return 'ramp';
+  return 'blocker';
+}
 
-  return new BABYLON.Vector3(0, getVillageGroundHeightAt(0, 0) + 0.3, 0);
+function setSelectedEditableObject(node) {
+  if (!node) return;
+  selectedObject = node;
+  updateSelectedBadge();
+  gizmoManager.positionGizmoEnabled = true;
+  gizmoManager.rotationGizmoEnabled = false;
+  gizmoManager.scaleGizmoEnabled = false;
+  gizmoManager.attachToNode(selectedObject);
 }
 
 function addCollisionProxyPiece(kind) {
@@ -693,25 +710,205 @@ function addCollisionProxyPiece(kind) {
     return;
   }
 
-  const position = getCollisionProxySpawnPosition();
-  const groundY = getVillageGroundHeightAt(position.x, position.z);
-  if (Number.isFinite(groundY)) position.y = groundY + (kind === 'blocker' ? 1.1 : 0.12);
+  beginAdminPlacement({
+    kind: 'collision_proxy',
+    proxyKind: ['blocker', 'walk', 'ramp'].includes(kind) ? kind : 'blocker',
+    owner: getSelectedProxyOwner()
+  });
+}
 
-  const proxy = createCollisionProxyPiece(kind, position);
-  if (!proxy) return;
+function getAdminPlacementGroundPick() {
+  return scene.pick(scene.pointerX, scene.pointerY, mesh => {
+    if (!mesh || mesh.isDisposed?.()) return false;
+    if (mesh.metadata?.isAdminPlacementMarker) return false;
+    return mesh === ground ||
+      mesh === court ||
+      mesh === plaza ||
+      mesh.name === 'pa' ||
+      mesh.name === 'rv' ||
+      mesh.name?.startsWith('pa');
+  });
+}
+
+function getOrCreateAdminPlacementMarker() {
+  if (adminPlacementMarker && !adminPlacementMarker.isDisposed?.()) return adminPlacementMarker;
+
+  const root = new BABYLON.TransformNode('adminPlacementMarker', scene);
+  root.metadata = { isAdminPlacementMarker: true };
+
+  const ringMat = new BABYLON.StandardMaterial('adminPlacementMarkerRingMat', scene);
+  ringMat.diffuseColor = new BABYLON.Color3(0.1, 0.9, 1);
+  ringMat.emissiveColor = new BABYLON.Color3(0.05, 0.45, 0.55);
+  ringMat.alpha = 0.75;
+
+  const fillMat = new BABYLON.StandardMaterial('adminPlacementMarkerFillMat', scene);
+  fillMat.diffuseColor = new BABYLON.Color3(0.1, 0.9, 1);
+  fillMat.emissiveColor = new BABYLON.Color3(0.03, 0.25, 0.3);
+  fillMat.alpha = 0.22;
+
+  const disc = BABYLON.MeshBuilder.CreateCylinder('adminPlacementMarkerDisc', {
+    diameter: 4,
+    height: 0.06,
+    tessellation: 48
+  }, scene);
+  disc.parent = root;
+  disc.position.y = 0.03;
+  disc.material = fillMat;
+  disc.isPickable = false;
+  disc.metadata = { isAdminPlacementMarker: true };
+
+  const ring = BABYLON.MeshBuilder.CreateTorus('adminPlacementMarkerRing', {
+    diameter: 4.2,
+    thickness: 0.06,
+    tessellation: 48
+  }, scene);
+  ring.parent = root;
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.09;
+  ring.material = ringMat;
+  ring.isPickable = false;
+  ring.metadata = { isAdminPlacementMarker: true };
+
+  adminPlacementMarker = root;
+  return root;
+}
+
+function clearAdminPlacement() {
+  pendingAdminPlacement = null;
+  if (adminPlacementMarker && !adminPlacementMarker.isDisposed?.()) {
+    adminPlacementMarker.dispose(false, true);
+  }
+  adminPlacementMarker = null;
+  canvas.style.cursor = adminMode ? 'default' : canvas.style.cursor;
+}
+
+function beginAdminPlacement(request) {
+  if (!adminMode) {
+    showToast('Enter Admin Mode first');
+    return;
+  }
+
+  pendingAdminPlacement = request;
+  const marker = getOrCreateAdminPlacementMarker();
+  marker.setEnabled(true);
+  updateAdminPlacementMarker();
+
+  if (gizmoManager) {
+    gizmoManager.attachToNode(null);
+    gizmoManager.positionGizmoEnabled = false;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+  }
+
+  const label = request.kind === 'asset'
+    ? `Place ${request.key}`
+    : `Place ${getCollisionProxyLabel(request.proxyKind)}`;
+  canvas.style.cursor = 'crosshair';
+  showToast(`${label}: click the ground where it should go`);
+}
+
+function updateAdminPlacementMarker() {
+  if (!pendingAdminPlacement || !adminMode) return;
+  const pick = getAdminPlacementGroundPick();
+  const marker = getOrCreateAdminPlacementMarker();
+  if (!pick || !pick.hit || !pick.pickedPoint) {
+    marker.setEnabled(false);
+    return;
+  }
+
+  marker.setEnabled(true);
+  marker.position.copyFrom(pick.pickedPoint);
+  marker.position.y += 0.04;
+  if (pendingAdminPlacement.kind === 'collision_proxy') {
+    const kind = pendingAdminPlacement.proxyKind;
+    marker.scaling.set(kind === 'blocker' ? 1.5 : 1.2, 1, kind === 'ramp' ? 1.8 : 1.1);
+  } else {
+    marker.scaling.set(1.25, 1, 1.25);
+  }
+}
+
+function placeCollisionProxyPieceAtPoint(kind, point, owner = null) {
+  const proxyKind = ['blocker', 'walk', 'ramp'].includes(kind) ? kind : 'blocker';
+  const position = point.clone();
+  position.y += proxyKind === 'blocker' ? 1.1 : 0.12;
+
+  const proxy = createCollisionProxyPiece(proxyKind, position, {
+    proxyOwnerName: owner?.name || null,
+    proxyOwnerType: owner?.type || null
+  });
+  if (!proxy) return null;
 
   registerEditableRoot(proxy.name, proxy);
-  selectedObject = proxy;
-  updateSelectedBadge();
+  setSelectedEditableObject(proxy);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
-
-  gizmoManager.positionGizmoEnabled = true;
-  gizmoManager.rotationGizmoEnabled = false;
-  gizmoManager.scaleGizmoEnabled = false;
-  gizmoManager.attachToNode(selectedObject);
   triggerAutoSave();
-  showToast(`${kind === 'blocker' ? 'Blocker' : kind === 'ramp' ? 'Ramp' : 'Walk floor'} piece added`);
+  showToast(`${getCollisionProxyLabel(proxyKind)} piece placed`);
+  return proxy;
+}
+
+function placePendingAdminPlacementAtPoint(point) {
+  if (!pendingAdminPlacement || !point) return false;
+  const request = pendingAdminPlacement;
+  clearAdminPlacement();
+
+  if (request.kind === 'collision_proxy') {
+    placeCollisionProxyPieceAtPoint(request.proxyKind, point, request.owner);
+    return true;
+  }
+
+  if (request.kind === 'asset') {
+    placeAssetAtPoint(request.key, point);
+    return true;
+  }
+
+  return false;
+}
+
+function deleteAttachedCollisionProxyPieces() {
+  if (!selectedObject) {
+    showToast('Select an object first');
+    return;
+  }
+
+  const ownerName = selectedObject.metadata?.type === 'collision_proxy'
+    ? selectedObject.metadata?.proxyOwnerName
+    : selectedObject.name;
+  if (!ownerName) {
+    showToast('No attached pieces found');
+    return;
+  }
+
+  const pieces = scene.transformNodes.filter(node =>
+    node &&
+    node.metadata?.type === 'collision_proxy' &&
+    node.metadata?.proxyOwnerName === ownerName
+  );
+
+  if (!pieces.length) {
+    showToast('No attached pieces found');
+    return;
+  }
+
+  pieces.forEach(node => node.dispose(false, false));
+  clearVillageProxyDebugMeshes();
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
+  showToast(`Deleted ${pieces.length} attached piece${pieces.length === 1 ? '' : 's'}`);
+}
+
+function moveAttachedCollisionProxyPieces(ownerNode, delta) {
+  if (!ownerNode || !delta || delta.lengthSquared() < 0.000001) return;
+  if (ownerNode.metadata?.type === 'collision_proxy') return;
+
+  const pieces = scene.transformNodes.filter(node =>
+    node &&
+    node.metadata?.type === 'collision_proxy' &&
+    node.metadata?.proxyOwnerName === ownerNode.name
+  );
+
+  pieces.forEach(node => node.position.addInPlace(delta));
 }
 
 function setCollisionProxyVisualsVisible(visible) {
@@ -1303,6 +1500,8 @@ let walkMode = false;
 let adminMode = false;
 let _worklightOn = false;
 let adminDragging = false;
+let pendingAdminPlacement = null;
+let adminPlacementMarker = null;
 
 async function hasActiveAdminSession() {
   try {
@@ -1609,7 +1808,14 @@ function snapSelectedObjectToGround(){
 
   const origin = new BABYLON.Vector3(selectedObject.position.x, 200, selectedObject.position.z);
   const ray = new BABYLON.Ray(origin, new BABYLON.Vector3(0, -1, 0), 500);
-  const hit = scene.pickWithRay(ray, mesh => mesh === court || mesh === plaza);
+  const hit = scene.pickWithRay(ray, mesh =>
+    mesh === ground ||
+    mesh === court ||
+    mesh === plaza ||
+    mesh.name === 'pa' ||
+    mesh.name === 'rv' ||
+    mesh.name?.startsWith('pa')
+  );
   if (!hit || !hit.hit || !hit.pickedPoint) return;
 
   // Lantern proxies are centered around the lamp body.
@@ -5563,7 +5769,21 @@ document.getElementById('pc').addEventListener('click',()=>panel.classList.remov
 
 scene.onPointerObservable.add((evt) => {
   if (!adminMode) return;
+  if (evt.type === BABYLON.PointerEventTypes.POINTERMOVE && pendingAdminPlacement) {
+    updateAdminPlacementMarker();
+    return;
+  }
   if (evt.type !== BABYLON.PointerEventTypes.POINTERPICK) return;
+
+  if (pendingAdminPlacement) {
+    const placementPick = getAdminPlacementGroundPick();
+    if (placementPick && placementPick.hit && placementPick.pickedPoint) {
+      placePendingAdminPlacementAtPoint(placementPick.pickedPoint);
+      return;
+    }
+    showToast('Click a ground or floor surface to place');
+    return;
+  }
 
   const pick = evt.pickInfo;
   if (!pick || !pick.hit || !pick.pickedMesh) return;
@@ -5621,6 +5841,7 @@ if (pick.pickedMesh.metadata?.isPickProxy) {
 
   selectedObject = editableNode;
   updateSelectedBadge();
+  renderSelectedWalkSurfaceGuide();
 
   if (!adminMode) return;
   gizmoManager.positionGizmoEnabled = true;
@@ -5633,6 +5854,8 @@ window.addEventListener('pointerdown', (e) => {
   adminDragging = false;
   window._dragStartX = e.clientX;
   window._dragStartY = e.clientY;
+  window._dragSelectedObject = selectedObject;
+  window._dragSelectedStartPos = selectedObject.position ? selectedObject.position.clone() : null;
 });
 
 window.addEventListener('pointermove', (e) => {
@@ -5651,8 +5874,24 @@ window.addEventListener('pointerup', () => {
 
   // Only snap to ground if the object was actually dragged
   if (adminMode && selectedObject && wasDragging) {
+    const draggedNode = window._dragSelectedObject;
+    const beforePos = window._dragSelectedStartPos;
     softSnapSelectedObject();
+    if (
+      draggedNode &&
+      draggedNode === selectedObject &&
+      beforePos &&
+      selectedObject.position &&
+      selectedObject.metadata?.type !== 'collision_proxy'
+    ) {
+      moveAttachedCollisionProxyPieces(selectedObject, selectedObject.position.subtract(beforePos));
+    }
+    rebuildVillageCollisionBlockers();
+    renderSelectedWalkSurfaceGuide();
+    triggerAutoSave();
   }
+  window._dragSelectedObject = null;
+  window._dragSelectedStartPos = null;
 });
 function getEditableRoots(){
   const registeredRoots = Object.values(editableRootRefs).filter(Boolean);
@@ -5725,7 +5964,9 @@ function saveWorldLayout(saveToGitHub = true){
     proxyRampWidth: Number.isFinite(node.metadata.proxyRampWidth) ? node.metadata.proxyRampWidth : null,
     proxyRampDepth: Number.isFinite(node.metadata.proxyRampDepth) ? node.metadata.proxyRampDepth : null,
     proxyFloorHeight: Number.isFinite(node.metadata.proxyFloorHeight) ? node.metadata.proxyFloorHeight : null,
-    proxyPieceKind: node.metadata.proxyPieceKind || null
+    proxyPieceKind: node.metadata.proxyPieceKind || null,
+    proxyOwnerName: node.metadata.proxyOwnerName || null,
+    proxyOwnerType: node.metadata.proxyOwnerType || null
   }));
 
   const json = JSON.stringify(data, null, 2);
@@ -5863,7 +6104,9 @@ function loadWorldLayout(){
       const proxy = createCollisionProxyPiece(item.proxyPieceKind || 'blocker', new BABYLON.Vector3(item.position.x, item.position.y, item.position.z), {
         name: item.name,
         rotation: item.rotation,
-        scaling: item.scaling
+        scaling: item.scaling,
+        proxyOwnerName: item.proxyOwnerName || null,
+        proxyOwnerType: item.proxyOwnerType || null
       });
       if (proxy) registerEditableRoot(proxy.name, proxy);
       return;
@@ -6111,6 +6354,12 @@ document.addEventListener('keydown', async e => {
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;
   const key = e.key.toLowerCase();
 
+  if (key === 'escape' && pendingAdminPlacement) {
+    clearAdminPlacement();
+    showToast('Placement cancelled');
+    return;
+  }
+
   if (key === 'm') {
     if (!adminMode) {
       const authenticated = await hasActiveAdminSession();
@@ -6136,6 +6385,7 @@ document.addEventListener('keydown', async e => {
       setCollisionProxyVisualsVisible(true);
     } else {
       toggleAssetPanel(false);
+      clearAdminPlacement();
       selectedObject = null;
       updateSelectedBadge();
       clearVillageProxyDebugMeshes();
@@ -7696,10 +7946,16 @@ function setGizmoMode(mode) {
 function flipSelected() {
   if (!selectedObject) return;
   selectedObject.scaling.x *= -1;
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
 }
 function rotateSelectedBy(angle) {
   if (!selectedObject) return;
   selectedObject.rotation.y += angle;
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
 }
 function scaleSelected(factor) {
   if (!selectedObject) return;
@@ -7784,6 +8040,9 @@ function scaleSelected(factor) {
   selectedObject.scaling.x *= factor;
   selectedObject.scaling.y *= factor;
   selectedObject.scaling.z *= factor;
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
 }
 
 function toggleAssetPanel(show) {
@@ -7960,17 +8219,11 @@ clone.metadata._proxyMoveObserver = proxyMoveObserver;
   return clone;
 }
 
-function spawnAssetFromPanel(key) {
+function placeAssetAtPoint(key, pickedPoint) {
+  const spawnPos = pickedPoint.clone();
   // Handle procedural assets — no GLB source needed
   if (ASSETS[key] && ASSETS[key].procedural) {
-    let spawnPos;
-    if (walkMode && charMesh) {
-      const fwd = new BABYLON.Vector3(Math.sin(charMesh.rotation.y), 0, Math.cos(charMesh.rotation.y));
-      spawnPos = charMesh.position.add(fwd.scale(8));
-    } else {
-      spawnPos = orbit.target.add(new BABYLON.Vector3(Math.sin(orbit.alpha)*12, 0, Math.cos(orbit.alpha)*12));
-    }
-    const pos = new BABYLON.Vector3(spawnPos.x, 0, spawnPos.z);
+    const pos = new BABYLON.Vector3(spawnPos.x, spawnPos.y, spawnPos.z);
         const proceduralMeta =
   key === 'ambient_glow'
    ? { isClone: true, glowColor: '#ffdd88', glowBrightness: 1, glowShape: 'circle', glowWidth: 9, glowDepth: 9 }
@@ -7990,16 +8243,6 @@ function spawnAssetFromPanel(key) {
     return;
   }
   if (!_assetSources[key]) { console.warn('Asset not loaded:', key); return; }
-  // Spawn in front of camera
-  let spawnPos;
-  if (walkMode && charMesh) {
-    const fwd = new BABYLON.Vector3(Math.sin(charMesh.rotation.y), 0, Math.cos(charMesh.rotation.y));
-    spawnPos = charMesh.position.add(fwd.scale(8));
-  } else {
-    spawnPos = orbit.target.add(new BABYLON.Vector3(
-      Math.sin(orbit.alpha) * 12, 0, Math.cos(orbit.alpha) * 12
-    ));
-  }
   const source = _assetSources[key];
   // Lantern uses its own spawn system — must return before clone is created
   if (key === 'lantern_1') { spawnLanternFull(spawnPos); return; }
@@ -8030,6 +8273,14 @@ function spawnAssetFromPanel(key) {
     gizmoManager.attachToNode(selectedObject);
   }
   triggerAutoSave();
+}
+
+function spawnAssetFromPanel(key) {
+  if (!adminMode) {
+    showToast('Enter Admin Mode first');
+    return;
+  }
+  beginAdminPlacement({ kind: 'asset', key });
 }
 
 function uploadGLB() {
@@ -8176,6 +8427,12 @@ window.applySignEditor = applySignEditor;
 window.applyToroColor = applyToroColor;
 window.applyLanternGlowSettings = applyLanternGlowSettings;
 window.applyAmbientGlowSettings = applyAmbientGlowSettings;
+window.applySelectedWalkSurfaceSettings = applySelectedWalkSurfaceSettings;
+window.applyWalkSurfaceSettingsToSameType = applyWalkSurfaceSettingsToSameType;
+window.refreshSelectedWalkSurfaceGuide = refreshSelectedWalkSurfaceGuide;
+window.addCollisionProxyPiece = addCollisionProxyPiece;
+window.deleteAttachedCollisionProxyPieces = deleteAttachedCollisionProxyPieces;
+window.clearAdminPlacement = clearAdminPlacement;
 window.toggleWorklight = toggleWorklight;
 window.saveWorldLayout = saveWorldLayout;
 window.loadWorldLayout = loadWorldLayout;
