@@ -300,7 +300,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="walkSurfaceEditorPanel" style="display:none;padding:0 8px 8px">
   <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin-bottom:6px;text-transform:uppercase">Walk Surface / Collision</div>
   <div style="font-size:10px;line-height:1.4;color:#aaa;margin-bottom:8px">Tune stair ramps, doorway gaps, bridge decks, and floor height for the selected object.</div>
-  <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:6px"><input type="checkbox" id="proxyAutoEnabled" checked> Use automatic barriers</label>
+  <label style="color:#777;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:6px"><input type="checkbox" id="proxyAutoEnabled" disabled> Automatic barriers paused</label>
   <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:6px"><input type="checkbox" id="proxyWalkSurfaceEnabled"> Custom walk surface</label>
   <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:8px"><input type="checkbox" id="proxyDebugVisible" checked> Show transparent guide</label>
   <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:8px"><input type="checkbox" id="proxyAttachToSelected" checked> Attach new pieces to selected object</label>
@@ -1856,13 +1856,13 @@ function loadWalkSurfaceControlsFromSelected() {
 
   if (autoInput) {
     const hasAutoProfile = VILLAGE_STRUCTURAL_PROXY_TYPES.has(metadata.type) || VILLAGE_BRIDGE_PROXY_TYPES.has(metadata.type);
-    autoInput.checked = hasAutoProfile ? metadata.proxyAutoEnabled !== false : false;
-    autoInput.disabled = !hasAutoProfile;
+    autoInput.checked = VILLAGE_ENABLE_AUTOMATIC_COLLISION && hasAutoProfile ? metadata.proxyAutoEnabled !== false : false;
+    autoInput.disabled = true;
   }
   if (customInput) {
     const autoEnabled = VILLAGE_STRUCTURAL_PROXY_TYPES.has(metadata.type) || VILLAGE_BRIDGE_PROXY_TYPES.has(metadata.type);
-    customInput.checked = autoEnabled || metadata.proxyWalkSurfaceEnabled === true;
-    customInput.disabled = autoEnabled;
+    customInput.checked = (VILLAGE_ENABLE_AUTOMATIC_COLLISION && autoEnabled) || metadata.proxyWalkSurfaceEnabled === true;
+    customInput.disabled = VILLAGE_ENABLE_AUTOMATIC_COLLISION && autoEnabled;
   }
   if (debugInput && debugInput.dataset.initialized !== 'true') {
     debugInput.checked = true;
@@ -1882,8 +1882,8 @@ function writeWalkSurfaceMetadata(metadata) {
   const autoInput = document.getElementById('proxyAutoEnabled');
   const customInput = document.getElementById('proxyWalkSurfaceEnabled');
   const autoEnabled = VILLAGE_STRUCTURAL_PROXY_TYPES.has(metadata.type) || VILLAGE_BRIDGE_PROXY_TYPES.has(metadata.type);
-  if (autoEnabled) metadata.proxyAutoEnabled = autoInput ? autoInput.checked === true : metadata.proxyAutoEnabled !== false;
-  metadata.proxyWalkSurfaceEnabled = autoEnabled || (customInput ? customInput.checked === true : metadata.proxyWalkSurfaceEnabled === true);
+  if (autoEnabled) metadata.proxyAutoEnabled = VILLAGE_ENABLE_AUTOMATIC_COLLISION && autoInput ? autoInput.checked === true : false;
+  metadata.proxyWalkSurfaceEnabled = (VILLAGE_ENABLE_AUTOMATIC_COLLISION && autoEnabled) || (customInput ? customInput.checked === true : metadata.proxyWalkSurfaceEnabled === true);
   metadata.proxyEntranceSide = normalizeVillageProxyEntranceSide(sideInput ? sideInput.value : metadata.proxyEntranceSide);
   metadata.proxyEntranceOffset = getWalkSurfaceControlValue('proxyEntranceOffset', 0);
   metadata.proxyRampWidth = getWalkSurfaceControlValue('proxyRampWidth', 5);
@@ -6883,6 +6883,10 @@ window.addEventListener('resize',()=>engine.resize());
 const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
 const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.16;
 const VILLAGE_BLOCKER_REBUILD_MS = 900;
+// Admin-authored manual collision pieces are the source of truth for gameplay.
+// Automatic blockers are kept as dev scaffolding only because broad generated
+// boxes can create invisible stuck zones and block future doorway/interior work.
+const VILLAGE_ENABLE_AUTOMATIC_COLLISION = false;
 const VILLAGE_STRUCTURAL_PROXY_TYPES = new Set([
   'dojo',
   'dojo_5',
@@ -7520,6 +7524,8 @@ function rebuildVillageCollisionBlockers() {
       return;
     }
 
+    if (!VILLAGE_ENABLE_AUTOMATIC_COLLISION) return;
+
     if (VILLAGE_STRUCTURAL_PROXY_TYPES.has(type)) {
       if (node.metadata?.proxyAutoEnabled === false) return;
       addVillageStructuralProxiesForNode(node, type, blockers, walkableSurfaces);
@@ -7555,6 +7561,13 @@ function rebuildVillageCollisionBlockers() {
       name: node.name
     });
   });
+
+  if (!VILLAGE_ENABLE_AUTOMATIC_COLLISION) {
+    villageCollisionBlockers = blockers;
+    villageWalkableSurfaces = walkableSurfaces;
+    villageLastBlockerRebuild = performance.now();
+    return;
+  }
 
   scene.meshes.forEach(mesh => {
     if (!shouldUseMeshAsVillageBlocker(mesh)) return;
@@ -7601,7 +7614,7 @@ function refreshVillageCollisionBlockersIfNeeded() {
 
 function liveManualCollisionProxyBlocksPoint(x, z, radius = VILLAGE_PLAYER_COLLISION_RADIUS) {
   return scene.meshes.some(mesh => {
-    if (!mesh || mesh.isDisposed?.() || !mesh.isEnabled?.()) return false;
+    if (!mesh || mesh.isDisposed?.()) return false;
     if (mesh.metadata?.type !== 'collision_proxy') return false;
     if ((mesh.metadata.proxyPieceKind || 'blocker') !== 'blocker') return false;
 
