@@ -3117,6 +3117,13 @@ function syncForgePreviewRootToPlayer(previewRoot) {
   previewRoot.rotation.x = charMesh.rotation.x + idleLean;
   previewRoot.rotation.y = charMesh.rotation.y;
   previewRoot.rotation.z = charMesh.rotation.z;
+
+  if (!isForgeActionMovementSuppressed()) {
+    const terrainY = getVillageGroundHeightAt(charMesh.position.x, charMesh.position.z);
+    if (Number.isFinite(terrainY)) {
+      groundVisualRootToTerrain(previewRoot, terrainY);
+    }
+  }
 }
 
 function getVisiblePlayableBounds(rootNode) {
@@ -3190,6 +3197,19 @@ function groundPlayableVisualToTerrain(terrainY) {
   charMesh.position.y += deltaY;
   charMesh._terrainY = terrainY;
   charMesh._footOffset = undefined;
+}
+
+function groundVisualRootToTerrain(rootNode, terrainY) {
+  if (!rootNode || !Number.isFinite(terrainY)) return;
+
+  const bounds = getVisiblePlayableBounds(rootNode);
+  if (!bounds) return;
+
+  const targetFootY = terrainY + VILLAGE_PLAYER_GROUND_CLEARANCE;
+  const deltaY = targetFootY - bounds.min.y;
+  if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.002) return;
+
+  rootNode.position.y += deltaY;
 }
 
 function removeForgeVisualRootMotion(animationGroups, mode = 'forge') {
@@ -6955,7 +6975,7 @@ window.addEventListener('resize',()=>engine.resize());
 })();
 
 const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
-const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.16;
+const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.025;
 const VILLAGE_BLOCKER_REBUILD_MS = 900;
 // Admin-authored manual collision pieces are the source of truth for gameplay.
 // Automatic blockers are kept as dev scaffolding only because broad generated
@@ -7826,6 +7846,10 @@ engine.runRenderLoop(()=>{
   });
   lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(Date.now()*0.0019+ll.position.x*0.3)*0.1;});
     // do not auto-snap just because an object is selected
+  if(!walkMode&&charMesh){
+    const _terrainY = getVillageGroundHeightAt(charMesh.position.x, charMesh.position.z);
+    if (Number.isFinite(_terrainY)) groundPlayableVisualToTerrain(_terrainY);
+  }
   if(walkMode&&charMesh){
     updateForgeActionPlayerMotion();
     const moveSpeed=4.2*dt,turnSpeed=2.4*dt;
