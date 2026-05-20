@@ -298,6 +298,41 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <button class="ctrl-btn full" onclick="applyAmbientGlowSettings()" style="width:100%;background:#ffdd88;color:#000">Apply Glow</button>
 </div>
+<div id="walkSurfaceEditorPanel" style="display:none;padding:0 8px 8px">
+  <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin-bottom:6px;text-transform:uppercase">Walk Surface / Collision</div>
+  <div style="font-size:10px;line-height:1.4;color:#aaa;margin-bottom:8px">Tune stair ramps, doorway gaps, bridge decks, and floor height for the selected object.</div>
+  <label style="display:block;color:#e8c56a;font-size:10px;letter-spacing:1px;margin-bottom:4px">Entrance Side</label>
+  <select id="proxyEntranceSide" style="width:100%;height:30px;background:#15151f;color:#5ecfca;border:1px solid rgba(94,207,202,0.35);border-radius:6px;padding:0 8px;margin-bottom:6px">
+    <option value="negZ">Local Front (-Z)</option>
+    <option value="posZ">Local Back (+Z)</option>
+    <option value="negX">Local Left (-X)</option>
+    <option value="posX">Local Right (+X)</option>
+  </select>
+  <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
+    <label style="width:58px;font-size:10px;color:#e8c56a">Offset</label>
+    <input id="proxyEntranceOffset" type="range" min="-12" max="12" step="0.25" value="0" style="flex:1">
+    <span id="proxyEntranceOffsetValue" style="width:38px;font-size:10px;color:#aaa;text-align:right">0</span>
+  </div>
+  <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
+    <label style="width:58px;font-size:10px;color:#e8c56a">Width</label>
+    <input id="proxyRampWidth" type="range" min="2" max="14" step="0.25" value="4" style="flex:1">
+    <span id="proxyRampWidthValue" style="width:38px;font-size:10px;color:#aaa;text-align:right">4</span>
+  </div>
+  <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
+    <label style="width:58px;font-size:10px;color:#e8c56a">Length</label>
+    <input id="proxyRampDepth" type="range" min="2" max="16" step="0.25" value="5" style="flex:1">
+    <span id="proxyRampDepthValue" style="width:38px;font-size:10px;color:#aaa;text-align:right">5</span>
+  </div>
+  <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+    <label style="width:58px;font-size:10px;color:#e8c56a">Height</label>
+    <input id="proxyFloorHeight" type="range" min="0.1" max="3" step="0.05" value="1" style="flex:1">
+    <span id="proxyFloorHeightValue" style="width:38px;font-size:10px;color:#aaa;text-align:right">1</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <button class="ctrl-btn" onclick="applySelectedWalkSurfaceSettings()">Apply Selected</button>
+    <button class="ctrl-btn" onclick="applyWalkSurfaceSettingsToSameType()">Apply Same Type</button>
+  </div>
+</div>
   <hr class="ap-divider">
   <div style="padding:0 8px 6px">
     <button class="ctrl-btn full" id="worklightBtn" onclick="toggleWorklight()" style="grid-column:1/-1;width:100%">&#x2600; Worklight (W)<kbd>W</kbd></button>
@@ -1246,6 +1281,23 @@ if (ambientGlowPanel) {
     toggleAmbientGlowRectangleControls();
   }
 }
+
+const walkSurfacePanel = document.getElementById('walkSurfaceEditorPanel');
+if (walkSurfacePanel) {
+  const selectedType = selectedObject && selectedObject.metadata && selectedObject.metadata.type;
+  const canEditWalkSurface =
+    selectedType &&
+    (
+      VILLAGE_STRUCTURAL_PROXY_TYPES.has(selectedType) ||
+      selectedType === 'small_bridge'
+    );
+
+  walkSurfacePanel.style.display = canEditWalkSurface ? 'block' : 'none';
+
+  if (canEditWalkSurface) {
+    loadWalkSurfaceControlsFromSelected();
+  }
+}
   if (isSign) {
     const cfg = selectedObject.metadata.signConfig || {};
     document.getElementById('signLabel').value = cfg.label || '';
@@ -1266,6 +1318,105 @@ function showToast(msg, duration) {
   clearTimeout(showToast._timer);
   showToast._timer = setTimeout(() => t.classList.remove('on'), duration || 5000);
 }
+
+function getSelectedWalkSurfaceMetadataTarget() {
+  if (!selectedObject || !selectedObject.metadata) return null;
+  const type = selectedObject.metadata.type;
+  if (!type) return null;
+  if (!VILLAGE_STRUCTURAL_PROXY_TYPES.has(type) && !VILLAGE_BRIDGE_PROXY_TYPES.has(type)) return null;
+  return selectedObject.metadata;
+}
+
+function getWalkSurfaceControlValue(id, fallback) {
+  const input = document.getElementById(id);
+  if (!input) return fallback;
+  const value = Number(input.value);
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function updateWalkSurfaceControlReadouts() {
+  [
+    ['proxyEntranceOffset', 'proxyEntranceOffsetValue'],
+    ['proxyRampWidth', 'proxyRampWidthValue'],
+    ['proxyRampDepth', 'proxyRampDepthValue'],
+    ['proxyFloorHeight', 'proxyFloorHeightValue']
+  ].forEach(([inputId, valueId]) => {
+    const input = document.getElementById(inputId);
+    const value = document.getElementById(valueId);
+    if (input && value) value.textContent = Number(input.value).toFixed(2).replace(/\.00$/, '');
+  });
+}
+
+function loadWalkSurfaceControlsFromSelected() {
+  const metadata = getSelectedWalkSurfaceMetadataTarget();
+  if (!metadata) return;
+
+  const defaults = getVillageStructuralProxyProfile(selectedObject, metadata.type);
+  const sideInput = document.getElementById('proxyEntranceSide');
+  const offsetInput = document.getElementById('proxyEntranceOffset');
+  const widthInput = document.getElementById('proxyRampWidth');
+  const depthInput = document.getElementById('proxyRampDepth');
+  const heightInput = document.getElementById('proxyFloorHeight');
+
+  if (sideInput) sideInput.value = normalizeVillageProxyEntranceSide(defaults.entranceSide);
+  if (offsetInput) offsetInput.value = Number.isFinite(defaults.entranceOffset) ? defaults.entranceOffset : 0;
+  if (widthInput) widthInput.value = Number.isFinite(defaults.rampWidth) ? defaults.rampWidth : 5;
+  if (depthInput) depthInput.value = Number.isFinite(defaults.rampDepth) ? defaults.rampDepth : 6;
+  if (heightInput) heightInput.value = Number.isFinite(defaults.floorHeight) ? defaults.floorHeight : 1;
+
+  updateWalkSurfaceControlReadouts();
+}
+
+function writeWalkSurfaceMetadata(metadata) {
+  const sideInput = document.getElementById('proxyEntranceSide');
+  metadata.proxyEntranceSide = normalizeVillageProxyEntranceSide(sideInput ? sideInput.value : metadata.proxyEntranceSide);
+  metadata.proxyEntranceOffset = getWalkSurfaceControlValue('proxyEntranceOffset', 0);
+  metadata.proxyRampWidth = getWalkSurfaceControlValue('proxyRampWidth', 5);
+  metadata.proxyRampDepth = getWalkSurfaceControlValue('proxyRampDepth', 6);
+  metadata.proxyFloorHeight = getWalkSurfaceControlValue('proxyFloorHeight', 1);
+}
+
+function applySelectedWalkSurfaceSettings() {
+  const metadata = getSelectedWalkSurfaceMetadataTarget();
+  if (!metadata) {
+    showToast('Select a dojo, shrine, or bridge first');
+    return;
+  }
+
+  writeWalkSurfaceMetadata(metadata);
+  rebuildVillageCollisionBlockers();
+  triggerAutoSave();
+  showToast('Walk surface updated');
+}
+
+function applyWalkSurfaceSettingsToSameType() {
+  const metadata = getSelectedWalkSurfaceMetadataTarget();
+  if (!metadata || !metadata.type) {
+    showToast('Select a dojo, shrine, or bridge first');
+    return;
+  }
+
+  const type = metadata.type;
+  const matching = scene.transformNodes.filter(node =>
+    node &&
+    node.metadata &&
+    node.metadata.isClone &&
+    node.metadata.type === type &&
+    !node.metadata.isPickProxy
+  );
+
+  matching.forEach(node => writeWalkSurfaceMetadata(node.metadata));
+  rebuildVillageCollisionBlockers();
+  triggerAutoSave();
+  showToast(`Applied walk surface to ${matching.length} ${type} object${matching.length === 1 ? '' : 's'}`);
+}
+
+['proxyEntranceOffset', 'proxyRampWidth', 'proxyRampDepth', 'proxyFloorHeight'].forEach(id => {
+  window.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById(id);
+    if (input) input.addEventListener('input', updateWalkSurfaceControlReadouts);
+  });
+});
 
 function showSaveBadge(){
   const badge = document.getElementById('saveBadge');
@@ -5413,7 +5564,12 @@ function saveWorldLayout(saveToGitHub = true){
     glowBrightness: node.metadata.glowBrightness || null,
     glowShape: node.metadata.glowShape || null,
     glowWidth: node.metadata.glowWidth || null,
-    glowDepth: node.metadata.glowDepth || null
+    glowDepth: node.metadata.glowDepth || null,
+    proxyEntranceSide: node.metadata.proxyEntranceSide || null,
+    proxyEntranceOffset: Number.isFinite(node.metadata.proxyEntranceOffset) ? node.metadata.proxyEntranceOffset : null,
+    proxyRampWidth: Number.isFinite(node.metadata.proxyRampWidth) ? node.metadata.proxyRampWidth : null,
+    proxyRampDepth: Number.isFinite(node.metadata.proxyRampDepth) ? node.metadata.proxyRampDepth : null,
+    proxyFloorHeight: Number.isFinite(node.metadata.proxyFloorHeight) ? node.metadata.proxyFloorHeight : null
   }));
 
   const json = JSON.stringify(data, null, 2);
@@ -5578,7 +5734,17 @@ function loadWorldLayout(){
     if (!source) return;
     const clone = source.clone(makeCloneName(item.type));
     if (!clone) return;
-    clone.metadata = { type: item.type, isClone: true, signConfig: item.signConfig || null, toroColor: item.toroColor || null };
+    clone.metadata = {
+      type: item.type,
+      isClone: true,
+      signConfig: item.signConfig || null,
+      toroColor: item.toroColor || null,
+      proxyEntranceSide: item.proxyEntranceSide || null,
+      proxyEntranceOffset: Number.isFinite(item.proxyEntranceOffset) ? item.proxyEntranceOffset : null,
+      proxyRampWidth: Number.isFinite(item.proxyRampWidth) ? item.proxyRampWidth : null,
+      proxyRampDepth: Number.isFinite(item.proxyRampDepth) ? item.proxyRampDepth : null,
+      proxyFloorHeight: Number.isFinite(item.proxyFloorHeight) ? item.proxyFloorHeight : null
+    };
     clone.position = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
     clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
     clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
@@ -6046,6 +6212,7 @@ window.addEventListener('resize',()=>engine.resize());
 })();
 
 const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
+const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.16;
 const VILLAGE_BLOCKER_REBUILD_MS = 900;
 const VILLAGE_STRUCTURAL_PROXY_TYPES = new Set([
   'dojo',
@@ -6055,13 +6222,17 @@ const VILLAGE_STRUCTURAL_PROXY_TYPES = new Set([
   'dojo_9',
   'shrine_2'
 ]);
+const VILLAGE_BRIDGE_PROXY_TYPES = new Set([
+  'small_bridge'
+]);
 const VILLAGE_STRUCTURAL_PROXY_PROFILES = {
   dojo: { entranceSide: 'negZ', entranceOffset: 0 },
   dojo_5: { entranceSide: 'negZ', entranceOffset: 0 },
   dojo_6: { entranceSide: 'negZ', entranceOffset: 0 },
   dojo_7: { entranceSide: 'negZ', entranceOffset: 0 },
   dojo_9: { entranceSide: 'posZ', entranceOffset: 0 },
-  shrine_2: { entranceSide: 'negZ', entranceOffset: 0 }
+  shrine_2: { entranceSide: 'negZ', entranceOffset: 0 },
+  small_bridge: { entranceSide: 'negZ', entranceOffset: 0, rampWidth: 8, rampDepth: 6, floorHeight: 0.75 }
 };
 const VILLAGE_BLOCKING_ASSET_TYPES = new Set([
   'dojo',
@@ -6232,6 +6403,7 @@ function shouldUseMeshAsVillageBlocker(mesh) {
 
   const type = getVillageBlockerTypeFromMesh(mesh);
   if (VILLAGE_STRUCTURAL_PROXY_TYPES.has(type)) return false;
+  if (VILLAGE_BRIDGE_PROXY_TYPES.has(type)) return false;
   if (type && ASSETS[type]?.collisionRadius) return false;
   return VILLAGE_BLOCKING_ASSET_TYPES.has(type);
 }
@@ -6318,8 +6490,17 @@ function getVillageStructuralProxyProfile(node, type) {
   const entranceOffset = Number.isFinite(metadata.proxyEntranceOffset)
     ? metadata.proxyEntranceOffset
     : (defaults.entranceOffset || 0);
+  const rampWidth = Number.isFinite(metadata.proxyRampWidth)
+    ? metadata.proxyRampWidth
+    : (defaults.rampWidth || null);
+  const rampDepth = Number.isFinite(metadata.proxyRampDepth)
+    ? metadata.proxyRampDepth
+    : (defaults.rampDepth || null);
+  const floorHeight = Number.isFinite(metadata.proxyFloorHeight)
+    ? metadata.proxyFloorHeight
+    : (defaults.floorHeight || null);
 
-  return { entranceSide, entranceOffset };
+  return { entranceSide, entranceOffset, rampWidth, rampDepth, floorHeight };
 }
 
 function normalizeVillageProxyEntranceSide(side) {
@@ -6348,24 +6529,32 @@ function addVillageStructuralProxiesForNode(node, type, blockers, walkableSurfac
   const centerZ = (bounds.min.z + bounds.max.z) * 0.5;
   const yaw = node.rotation?.y || 0;
   const baseY = getVillageBaseGroundHeightAt(node.position.x, node.position.z);
-  const floorY = baseY + Math.max(0.45, Math.min(1.45, (bounds.max.y - bounds.min.y) * 0.08));
+  const profile = getVillageStructuralProxyProfile(node, type);
+  const floorY = baseY + (
+    Number.isFinite(profile.floorHeight)
+      ? profile.floorHeight
+      : Math.max(0.45, Math.min(1.45, (bounds.max.y - bounds.min.y) * 0.08))
+  );
 
   const halfX = width * 0.42;
   const halfZ = depth * 0.38;
   const wallThickness = 0.36;
-  const profile = getVillageStructuralProxyProfile(node, type);
   const entranceSide = normalizeVillageProxyEntranceSide(profile.entranceSide);
   const frontAxis = entranceSide.endsWith('X') ? 'x' : 'z';
   const frontSign = entranceSide.startsWith('pos') ? 1 : -1;
   const sideLimit = frontAxis === 'z' ? halfX : halfZ;
   const depthLimit = frontAxis === 'z' ? halfZ : halfX;
-  const doorwayHalf = Math.max(2.0, Math.min(4.6, sideLimit * 0.34));
+  const doorwayHalf = Number.isFinite(profile.rampWidth)
+    ? Math.max(1.2, Math.min(sideLimit - 0.8, profile.rampWidth * 0.5))
+    : Math.max(2.0, Math.min(4.6, sideLimit * 0.34));
   const maxEntranceOffset = Math.max(0, sideLimit - doorwayHalf - 0.8);
   const entranceOffset = Math.max(-maxEntranceOffset, Math.min(maxEntranceOffset, profile.entranceOffset || 0));
   const sideWallHalfDepth = depthLimit * 0.92;
   const frontWallHalf = Math.max(0.8, (sideLimit - doorwayHalf) * 0.5);
   const frontWallOffset = doorwayHalf + frontWallHalf;
-  const rampHalfDepth = Math.max(1.8, Math.min(4.4, depthLimit * 0.28));
+  const rampHalfDepth = Number.isFinite(profile.rampDepth)
+    ? Math.max(1.0, Math.min(depthLimit * 0.85, profile.rampDepth * 0.5))
+    : Math.max(1.8, Math.min(4.4, depthLimit * 0.28));
   const frontCoord = frontSign * depthLimit;
   const backCoord = -frontSign * depthLimit;
   const rampCoord = frontSign * (depthLimit + rampHalfDepth - 0.12);
@@ -6416,6 +6605,72 @@ function addVillageStructuralProxiesForNode(node, type, blockers, walkableSurfac
   addVillageObbBlocker(blockers, centerX, centerZ, yaw, rightPostLocal.x, rightPostLocal.z, wallThickness * 1.2, wallThickness * 1.2, type, `${node.name}_front_right_post`);
 }
 
+function addVillageBridgeWalkProxiesForNode(node, type, walkableSurfaces) {
+  if (!node || Math.abs(node.position.x) > 500 || Math.abs(node.position.z) > 500) return;
+
+  let bounds = null;
+
+  try {
+    bounds = node.getHierarchyBoundingVectors(true);
+  } catch(e) {
+    bounds = null;
+  }
+
+  if (!bounds || !bounds.min || !bounds.max) return;
+
+  const width = Math.max(2, Math.min(26, bounds.max.x - bounds.min.x));
+  const depth = Math.max(2, Math.min(36, bounds.max.z - bounds.min.z));
+  if (!Number.isFinite(width) || !Number.isFinite(depth)) return;
+
+  const centerX = (bounds.min.x + bounds.max.x) * 0.5;
+  const centerZ = (bounds.min.z + bounds.max.z) * 0.5;
+  const yaw = node.rotation?.y || 0;
+  const baseY = getVillageBaseGroundHeightAt(node.position.x, node.position.z);
+  const profile = getVillageStructuralProxyProfile(node, type);
+  const deckY = baseY + (Number.isFinite(profile.floorHeight) ? profile.floorHeight : 0.75);
+  const entranceSide = normalizeVillageProxyEntranceSide(profile.entranceSide);
+  const frontAxis = entranceSide.endsWith('X') ? 'x' : 'z';
+  const frontSign = entranceSide.startsWith('pos') ? 1 : -1;
+  const deckHalfX = width * 0.42;
+  const deckHalfZ = depth * 0.42;
+  const sideLimit = frontAxis === 'z' ? deckHalfX : deckHalfZ;
+  const depthLimit = frontAxis === 'z' ? deckHalfZ : deckHalfX;
+  const rampHalfWidth = Number.isFinite(profile.rampWidth)
+    ? Math.max(1.2, Math.min(sideLimit, profile.rampWidth * 0.5))
+    : sideLimit * 0.72;
+  const rampHalfDepth = Number.isFinite(profile.rampDepth)
+    ? Math.max(1.0, Math.min(depthLimit, profile.rampDepth * 0.5))
+    : Math.max(1.8, Math.min(4.5, depthLimit * 0.45));
+  const entranceOffset = Math.max(-sideLimit + rampHalfWidth, Math.min(sideLimit - rampHalfWidth, profile.entranceOffset || 0));
+  const localFromEntranceAxes = (depthCoord, sideCoord) => (
+    frontAxis === 'z'
+      ? { x: sideCoord, z: depthCoord }
+      : { x: depthCoord, z: sideCoord }
+  );
+
+  addVillageWalkableSurface(walkableSurfaces, centerX, centerZ, yaw, 0, 0, deckHalfX, deckHalfZ, deckY, type, `${node.name}_bridge_deck`);
+
+  [-frontSign, frontSign].forEach(sign => {
+    const rampLocal = localFromEntranceAxes(sign * (depthLimit + rampHalfDepth - 0.1), entranceOffset);
+    addVillageRampSurface(
+      walkableSurfaces,
+      centerX,
+      centerZ,
+      yaw,
+      rampLocal.x,
+      rampLocal.z,
+      frontAxis === 'z' ? rampHalfWidth : rampHalfDepth,
+      frontAxis === 'z' ? rampHalfDepth : rampHalfWidth,
+      baseY,
+      deckY,
+      type,
+      `${node.name}_bridge_ramp_${sign > 0 ? 'pos' : 'neg'}`,
+      frontAxis,
+      sign
+    );
+  });
+}
+
 function rebuildVillageCollisionBlockers() {
   const blockers = [];
   const walkableSurfaces = [];
@@ -6427,6 +6682,11 @@ function rebuildVillageCollisionBlockers() {
     const type = getVillageBlockerTypeFromNode(node);
     if (VILLAGE_STRUCTURAL_PROXY_TYPES.has(type)) {
       addVillageStructuralProxiesForNode(node, type, blockers, walkableSurfaces);
+      return;
+    }
+
+    if (VILLAGE_BRIDGE_PROXY_TYPES.has(type)) {
+      addVillageBridgeWalkProxiesForNode(node, type, walkableSurfaces);
       return;
     }
 
@@ -6627,7 +6887,7 @@ engine.runRenderLoop(()=>{
         charMesh._footOffset = isFinite(_minY) ? (charMesh.position.y - _minY) : 0;
       }
       // Snap feet to ground — origin sits at terrainY + footOffset so feet touch the terrain
-      const _targetY = _terrainY + charMesh._footOffset + 0.03;
+      const _targetY = _terrainY + charMesh._footOffset + VILLAGE_PLAYER_GROUND_CLEARANCE;
       charMesh.position.y += (_targetY - charMesh.position.y) * 0.25;
       charMesh._terrainY = _terrainY;
       // Slope tilt removed — character stays upright
