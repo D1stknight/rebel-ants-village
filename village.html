@@ -299,45 +299,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 </div>
 <div id="walkSurfaceEditorPanel" style="display:none;padding:0 8px 8px">
   <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin-bottom:6px;text-transform:uppercase">Walk Surface / Collision</div>
-  <div style="font-size:10px;line-height:1.4;color:#aaa;margin-bottom:8px">Tune stair ramps, doorway gaps, bridge decks, and floor height for the selected object.</div>
-  <label style="color:#777;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:6px"><input type="checkbox" id="proxyAutoEnabled" disabled> Automatic barriers paused</label>
-  <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:6px"><input type="checkbox" id="proxyWalkSurfaceEnabled"> Custom walk surface</label>
-  <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:8px"><input type="checkbox" id="proxyDebugVisible" checked> Show transparent guide</label>
+  <div style="font-size:10px;line-height:1.4;color:#aaa;margin-bottom:8px">Manual pieces are the only gameplay blockers. Use visible pieces, then move, rotate, scale, duplicate, delete, or apply them to matching assets.</div>
   <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:8px"><input type="checkbox" id="proxyAttachToSelected" checked> Attach new pieces to selected object</label>
-  <label style="display:block;color:#e8c56a;font-size:10px;letter-spacing:1px;margin-bottom:4px">Entrance Side</label>
-  <select id="proxyEntranceSide" style="width:100%;height:30px;background:#15151f;color:#5ecfca;border:1px solid rgba(94,207,202,0.35);border-radius:6px;padding:0 8px;margin-bottom:6px">
-    <option value="negZ">Local Front (-Z)</option>
-    <option value="posZ">Local Back (+Z)</option>
-    <option value="negX">Local Left (-X)</option>
-    <option value="posX">Local Right (+X)</option>
-  </select>
-  <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
-    <label style="width:58px;font-size:10px;color:#e8c56a">Offset</label>
-    <input id="proxyEntranceOffset" type="range" min="-12" max="12" step="0.25" value="0" style="flex:1">
-    <span id="proxyEntranceOffsetValue" style="width:38px;font-size:10px;color:#aaa;text-align:right">0</span>
-  </div>
-  <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
-    <label style="width:58px;font-size:10px;color:#e8c56a">Width</label>
-    <input id="proxyRampWidth" type="range" min="2" max="14" step="0.25" value="4" style="flex:1">
-    <span id="proxyRampWidthValue" style="width:38px;font-size:10px;color:#aaa;text-align:right">4</span>
-  </div>
-  <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
-    <label style="width:58px;font-size:10px;color:#e8c56a">Length</label>
-    <input id="proxyRampDepth" type="range" min="2" max="16" step="0.25" value="5" style="flex:1">
-    <span id="proxyRampDepthValue" style="width:38px;font-size:10px;color:#aaa;text-align:right">5</span>
-  </div>
-  <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
-    <label style="width:58px;font-size:10px;color:#e8c56a">Height</label>
-    <input id="proxyFloorHeight" type="range" min="0.1" max="3" step="0.05" value="1" style="flex:1">
-    <span id="proxyFloorHeightValue" style="width:38px;font-size:10px;color:#aaa;text-align:right">1</span>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-    <button class="ctrl-btn" onclick="applySelectedWalkSurfaceSettings()">Save Manual Barriers</button>
-    <button class="ctrl-btn" onclick="applyWalkSurfaceSettingsToSameType()">Apply to Same Object</button>
-  </div>
-  <button class="ctrl-btn full" onclick="refreshSelectedWalkSurfaceGuide()" style="width:100%;margin-top:6px">Refresh Guide</button>
   <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin:10px 0 6px;text-transform:uppercase">Manual Pieces</div>
-  <div style="font-size:10px;line-height:1.4;color:#aaa;margin-bottom:8px">Add pieces, then use Move / Rotate / Scale. Leave gaps where doors should be.</div>
+  <div style="font-size:10px;line-height:1.4;color:#aaa;margin-bottom:8px">Red blocks movement, green raises walkable floors, blue creates ramps. Leave gaps where doors should be.</div>
   <div style="display:grid;grid-template-columns:1fr;gap:6px">
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('blocker')">Add Red Blocker</button>
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('walk')">Add Green Walk Floor</button>
@@ -346,6 +311,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" onclick="tiltSelectedRamp(-1)">Tilt Ramp Down</button>
     <button class="ctrl-btn" onclick="applyAttachedCollisionPiecesToSameType()">Apply to Same Object</button>
     <button class="ctrl-btn danger" onclick="deleteAttachedCollisionProxyPieces()">Delete Attached Pieces</button>
+    <button class="ctrl-btn" onclick="saveManualBarriersNow()">Save Manual Barriers</button>
   </div>
 </div>
   <hr class="ap-divider">
@@ -1853,7 +1819,6 @@ function loadWalkSurfaceControlsFromSelected() {
   if (!metadata) return;
 
   const defaults = getVillageStructuralProxyProfile(selectedObject, metadata.type);
-  const autoInput = document.getElementById('proxyAutoEnabled');
   const customInput = document.getElementById('proxyWalkSurfaceEnabled');
   const debugInput = document.getElementById('proxyDebugVisible');
   const sideInput = document.getElementById('proxyEntranceSide');
@@ -1862,15 +1827,9 @@ function loadWalkSurfaceControlsFromSelected() {
   const depthInput = document.getElementById('proxyRampDepth');
   const heightInput = document.getElementById('proxyFloorHeight');
 
-  if (autoInput) {
-    const hasAutoProfile = VILLAGE_STRUCTURAL_PROXY_TYPES.has(metadata.type) || VILLAGE_BRIDGE_PROXY_TYPES.has(metadata.type);
-    autoInput.checked = VILLAGE_ENABLE_AUTOMATIC_COLLISION && hasAutoProfile ? metadata.proxyAutoEnabled !== false : false;
-    autoInput.disabled = true;
-  }
   if (customInput) {
-    const autoEnabled = VILLAGE_STRUCTURAL_PROXY_TYPES.has(metadata.type) || VILLAGE_BRIDGE_PROXY_TYPES.has(metadata.type);
-    customInput.checked = (VILLAGE_ENABLE_AUTOMATIC_COLLISION && autoEnabled) || metadata.proxyWalkSurfaceEnabled === true;
-    customInput.disabled = VILLAGE_ENABLE_AUTOMATIC_COLLISION && autoEnabled;
+    customInput.checked = metadata.proxyWalkSurfaceEnabled === true;
+    customInput.disabled = false;
   }
   if (debugInput && debugInput.dataset.initialized !== 'true') {
     debugInput.checked = true;
@@ -1887,11 +1846,9 @@ function loadWalkSurfaceControlsFromSelected() {
 
 function writeWalkSurfaceMetadata(metadata) {
   const sideInput = document.getElementById('proxyEntranceSide');
-  const autoInput = document.getElementById('proxyAutoEnabled');
   const customInput = document.getElementById('proxyWalkSurfaceEnabled');
-  const autoEnabled = VILLAGE_STRUCTURAL_PROXY_TYPES.has(metadata.type) || VILLAGE_BRIDGE_PROXY_TYPES.has(metadata.type);
-  if (autoEnabled) metadata.proxyAutoEnabled = VILLAGE_ENABLE_AUTOMATIC_COLLISION && autoInput ? autoInput.checked === true : false;
-  metadata.proxyWalkSurfaceEnabled = (VILLAGE_ENABLE_AUTOMATIC_COLLISION && autoEnabled) || (customInput ? customInput.checked === true : metadata.proxyWalkSurfaceEnabled === true);
+  metadata.proxyAutoEnabled = false;
+  metadata.proxyWalkSurfaceEnabled = customInput ? customInput.checked === true : metadata.proxyWalkSurfaceEnabled === true;
   metadata.proxyEntranceSide = normalizeVillageProxyEntranceSide(sideInput ? sideInput.value : metadata.proxyEntranceSide);
   metadata.proxyEntranceOffset = getWalkSurfaceControlValue('proxyEntranceOffset', 0);
   metadata.proxyRampWidth = getWalkSurfaceControlValue('proxyRampWidth', 5);
@@ -1943,7 +1900,14 @@ function refreshSelectedWalkSurfaceGuide() {
   renderSelectedWalkSurfaceGuide();
 }
 
-['proxyEntranceOffset', 'proxyRampWidth', 'proxyRampDepth', 'proxyFloorHeight', 'proxyEntranceSide', 'proxyAutoEnabled', 'proxyWalkSurfaceEnabled', 'proxyDebugVisible'].forEach(id => {
+function saveManualBarriersNow() {
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  saveWorldLayout(false);
+  showToast('Manual barriers saved locally');
+}
+
+['proxyEntranceOffset', 'proxyRampWidth', 'proxyRampDepth', 'proxyFloorHeight', 'proxyEntranceSide', 'proxyWalkSurfaceEnabled', 'proxyDebugVisible'].forEach(id => {
   window.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById(id);
     if (input) {
@@ -6956,43 +6920,16 @@ window.addEventListener('resize',()=>engine.resize());
 
 // ── COLLISION ─────────────────────────────────
 (()=>{
-  scene.collisionsEnabled = true;
-  // Add ellipsoid to character when it spawns
-  const _origSpawn = window.spawnCharacter;
-  // Hook into charMesh once walk mode activates
-  scene.onAfterRenderObservable.add(()=>{
-    if (window.charMesh && !window.charMesh._collisionSet) {
-      window.charMesh.ellipsoid = new BABYLON.Vector3(1.2, 2.5, 1.2);
-      window.charMesh.ellipsoidOffset = new BABYLON.Vector3(0, 2.5, 0);
-      window.charMesh.checkCollisions = true;
-      window._collisionSet = true;
-      window.charMesh._collisionSet = true;
-    }
-  });
-  // Enable collision on all building meshes after scene loads
-  scene.onAfterRenderObservable.addOnce(()=>{
-    setTimeout(()=>{
-      scene.meshes.forEach(m => {
-        if (!m.name) return;
-        const n = m.name.toLowerCase();
-        if (n.includes('dojo') || n.includes('shrine') || n.includes('fence') ||
-            n.includes('gate') || n.includes('torii') || n.includes('wall') ||
-            n.includes('build') || n.includes('tower') || n.includes('pagoda')) {
-          m.checkCollisions = true;
-        }
-      });
-    }, 3000); // wait for GLBs to finish loading
-  });
+  // Gameplay collision is handled by admin-authored manual blocker pieces below.
+  // Babylon mesh collisions were too broad for dojos/interiors and caused
+  // invisible stuck zones, so keep the engine-level collision system off.
+  scene.collisionsEnabled = false;
 })();
 
 const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
 const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.025;
 const VILLAGE_STARTER_PLAYER_GROUND_OFFSET = -1.65;
 const VILLAGE_BLOCKER_REBUILD_MS = 900;
-// Admin-authored manual collision pieces are the source of truth for gameplay.
-// Automatic blockers are kept as dev scaffolding only because broad generated
-// boxes can create invisible stuck zones and block future doorway/interior work.
-const VILLAGE_ENABLE_AUTOMATIC_COLLISION = false;
 const VILLAGE_STRUCTURAL_PROXY_TYPES = new Set([
   'dojo',
   'dojo_5',
@@ -7627,84 +7564,7 @@ function rebuildVillageCollisionBlockers() {
     const type = getVillageBlockerTypeFromNode(node);
     if (type === 'collision_proxy') {
       addManualCollisionProxyToWorld(node, blockers, walkableSurfaces);
-      return;
     }
-
-    if (!VILLAGE_ENABLE_AUTOMATIC_COLLISION) return;
-
-    if (VILLAGE_STRUCTURAL_PROXY_TYPES.has(type)) {
-      if (node.metadata?.proxyAutoEnabled === false) return;
-      addVillageStructuralProxiesForNode(node, type, blockers, walkableSurfaces);
-      return;
-    }
-
-    if (VILLAGE_BRIDGE_PROXY_TYPES.has(type)) {
-      if (node.metadata?.proxyAutoEnabled === false) return;
-      addVillageBridgeWalkProxiesForNode(node, type, walkableSurfaces);
-      return;
-    }
-
-    if (node.metadata?.proxyWalkSurfaceEnabled === true) {
-      addVillageCustomWalkProxiesForNode(node, type, walkableSurfaces);
-    }
-
-    const collisionRadius = type && ASSETS[type]?.collisionRadius;
-    if (!collisionRadius) return;
-    if (Math.abs(node.position.x) > 500 || Math.abs(node.position.z) > 500) return;
-
-    const scale = Math.max(
-      Math.abs(node.scaling?.x || 1),
-      Math.abs(node.scaling?.z || 1),
-      1
-    );
-
-    blockers.push({
-      kind: 'circle',
-      x: node.position.x,
-      z: node.position.z,
-      radius: collisionRadius * scale,
-      type,
-      name: node.name
-    });
-  });
-
-  if (!VILLAGE_ENABLE_AUTOMATIC_COLLISION) {
-    villageCollisionBlockers = blockers;
-    villageWalkableSurfaces = walkableSurfaces;
-    villageLastBlockerRebuild = performance.now();
-    return;
-  }
-
-  scene.meshes.forEach(mesh => {
-    if (!shouldUseMeshAsVillageBlocker(mesh)) return;
-
-    mesh.computeWorldMatrix(true);
-    const bb = mesh.getBoundingInfo?.().boundingBox;
-    if (!bb) return;
-
-    const min = bb.minimumWorld;
-    const max = bb.maximumWorld;
-    const width = max.x - min.x;
-    const depth = max.z - min.z;
-    const height = max.y - min.y;
-
-    if (!isFinite(width) || !isFinite(depth) || !isFinite(height)) return;
-    if (width < 0.35 || depth < 0.35 || height < 0.45) return;
-    if (width > 90 || depth > 90) return;
-    const type = getVillageBlockerTypeFromMesh(mesh) || 'structure';
-    if (!shouldKeepStructuralMeshBlocker(type, min, max, width, depth, height)) return;
-
-    blockers.push({
-      kind: 'box',
-      minX: min.x,
-      maxX: max.x,
-      minZ: min.z,
-      maxZ: max.z,
-      minY: min.y,
-      maxY: max.y,
-      type,
-      name: mesh.name
-    });
   });
 
   villageCollisionBlockers = blockers;
