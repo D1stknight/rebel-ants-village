@@ -332,8 +332,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <span id="proxyFloorHeightValue" style="width:38px;font-size:10px;color:#aaa;text-align:right">1</span>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-    <button class="ctrl-btn" onclick="applySelectedWalkSurfaceSettings()">Apply Selected</button>
-    <button class="ctrl-btn" onclick="applyWalkSurfaceSettingsToSameType()">Apply Same Type</button>
+    <button class="ctrl-btn" onclick="applySelectedWalkSurfaceSettings()">Save Guide Settings</button>
+    <button class="ctrl-btn" onclick="applyWalkSurfaceSettingsToSameType()">Apply to Same Object</button>
   </div>
   <button class="ctrl-btn full" onclick="refreshSelectedWalkSurfaceGuide()" style="width:100%;margin-top:6px">Refresh Guide</button>
   <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin:10px 0 6px;text-transform:uppercase">Manual Pieces</div>
@@ -342,7 +342,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('blocker')">Add Red Blocker</button>
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('walk')">Add Green Walk Floor</button>
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('ramp')">Add Blue Ramp</button>
-    <button class="ctrl-btn" onclick="applyAttachedCollisionPiecesToSameType()">Apply Pieces Same Type</button>
+    <button class="ctrl-btn" onclick="applyAttachedCollisionPiecesToSameType()">Apply to Same Object</button>
     <button class="ctrl-btn danger" onclick="deleteAttachedCollisionProxyPieces()">Delete Attached Pieces</button>
   </div>
 </div>
@@ -1640,7 +1640,8 @@ let gizmoManager = new BABYLON.GizmoManager(scene);
 gizmoManager.positionGizmoEnabled = false;
 gizmoManager.rotationGizmoEnabled = false;
 gizmoManager.scaleGizmoEnabled = false;
-gizmoManager.clearGizmoOnEmptyPointerEvent = true;
+gizmoManager.clearGizmoOnEmptyPointerEvent = false;
+if ('usePointerToAttachGizmos' in gizmoManager) gizmoManager.usePointerToAttachGizmos = false;
 
 // ── CAMERAS ─────────────────────────────────
 const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/2.5,320,new BABYLON.Vector3(0,6,0),scene);
@@ -6596,26 +6597,17 @@ document.addEventListener('keydown', async e => {
   }
 
     if (adminMode && selectedObject && key === 'r') {
-    gizmoManager.positionGizmoEnabled = false;
-    gizmoManager.rotationGizmoEnabled = true;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(selectedObject);
+    setGizmoMode('rotate');
     return;
   }
 
   if (adminMode && selectedObject && key === 'g') {
-    gizmoManager.positionGizmoEnabled = true;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(selectedObject);
+    setGizmoMode('move');
     return;
   }
 
   if (adminMode && selectedObject && key === 'y') {
-    gizmoManager.positionGizmoEnabled = false;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = true;
-    gizmoManager.attachToNode(selectedObject);
+    setGizmoMode('scale');
     return;
   }
 
