@@ -342,6 +342,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('blocker')">Add Red Blocker</button>
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('walk')">Add Green Walk Floor</button>
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('ramp')">Add Blue Ramp</button>
+    <button class="ctrl-btn" onclick="tiltSelectedRamp(1)">Tilt Ramp Up</button>
+    <button class="ctrl-btn" onclick="tiltSelectedRamp(-1)">Tilt Ramp Down</button>
     <button class="ctrl-btn" onclick="applyAttachedCollisionPiecesToSameType()">Apply to Same Object</button>
     <button class="ctrl-btn danger" onclick="deleteAttachedCollisionProxyPieces()">Delete Attached Pieces</button>
   </div>
@@ -655,7 +657,7 @@ function createCollisionProxyPiece(kind, position, options = {}) {
   root.position = position.clone();
   root.rotation = options.rotation
     ? new BABYLON.Vector3(options.rotation.x || 0, options.rotation.y || 0, options.rotation.z || 0)
-    : new BABYLON.Vector3(0, 0, 0);
+    : new BABYLON.Vector3(proxyKind === 'ramp' ? -0.18 : 0, 0, 0);
   root.scaling = options.scaling
     ? new BABYLON.Vector3(options.scaling.x || 1, options.scaling.y || 1, options.scaling.z || 1)
     : new BABYLON.Vector3(proxyKind === 'blocker' ? 8 : 6, proxyKind === 'blocker' ? 2.2 : 0.25, proxyKind === 'ramp' ? 8 : 4);
@@ -6514,6 +6516,35 @@ function duplicateSelectedFence(){
     return;
   }
 
+  if (objectType === 'collision_proxy') {
+    const cloneRoot = sourceObject.clone(makeCloneName(objectType));
+    if (!cloneRoot) return;
+
+    cloneRoot.position = sourceObject.position.clone();
+    cloneRoot.position.x += 4;
+    cloneRoot.rotation = sourceObject.rotation.clone();
+    cloneRoot.scaling = sourceObject.scaling.clone();
+    cloneRoot.metadata = {
+      ...(sourceObject.metadata || {}),
+      isClone: true,
+      proxyOwnerName: sourceObject.metadata?.proxyOwnerName || null,
+      proxyOwnerType: sourceObject.metadata?.proxyOwnerType || null
+    };
+    cloneRoot.material = sourceObject.material || getCollisionProxyMaterials()[cloneRoot.metadata.proxyPieceKind || 'blocker'];
+    cloneRoot.isPickable = true;
+    cloneRoot._editRoot = cloneRoot;
+
+    registerEditableRoot(cloneRoot.name, cloneRoot);
+    selectedObject = cloneRoot;
+    updateSelectedBadge();
+    attachSelectedGizmo();
+    rebuildVillageCollisionBlockers();
+    renderSelectedWalkSurfaceGuide();
+    triggerAutoSave();
+    showToast('Duplicated collision piece');
+    return;
+  }
+
     const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
@@ -6533,10 +6564,7 @@ function duplicateSelectedFence(){
 
   updateSelectedBadge();
 
-  gizmoManager.positionGizmoEnabled = true;
-  gizmoManager.rotationGizmoEnabled = false;
-  gizmoManager.scaleGizmoEnabled = false;
-  gizmoManager.attachToNode(selectedObject);
+  attachSelectedGizmo();
 }
 function openPanel(b){
   document.getElementById('picon').textContent=b.icon;
@@ -7324,6 +7352,7 @@ function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
 
   const kind = node.metadata.proxyPieceKind || 'blocker';
   const yaw = node.rotation?.y || 0;
+  const pitch = node.rotation?.x || 0;
   const halfX = Math.max(0.15, Math.abs(node.scaling?.x || 1) * 0.5);
   const halfZ = Math.max(0.15, Math.abs(node.scaling?.z || 1) * 0.5);
   const y = Number.isFinite(node.position.y) ? node.position.y : getVillageGroundHeightAt(node.position.x, node.position.z);
@@ -7343,7 +7372,10 @@ function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
   }
 
   if (kind === 'ramp') {
-    const rise = Math.max(0.05, Math.abs(node.scaling?.y || 1));
+    const run = Math.max(0.1, halfZ * 2);
+    const pitchRise = Math.tan(-pitch) * run;
+    const fallbackRise = Math.max(0.05, Math.abs(node.scaling?.y || 1));
+    const rise = Math.abs(pitchRise) > 0.05 ? pitchRise : fallbackRise;
     addVillageRampSurface(
       walkableSurfaces,
       node.position.x,
@@ -7358,7 +7390,7 @@ function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
       'collision_proxy',
       `${node.name}_manual_ramp`,
       'z',
-      -1
+      rise >= 0 ? -1 : 1
     );
     return;
   }
@@ -8182,6 +8214,20 @@ function rotateSelectedBy(angle) {
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
 }
+function tiltSelectedRamp(direction) {
+  if (!selectedObject || selectedObject.metadata?.type !== 'collision_proxy' || selectedObject.metadata?.proxyPieceKind !== 'ramp') {
+    showToast('Select a blue ramp piece first');
+    return;
+  }
+
+  const step = 0.08;
+  const nextPitch = (selectedObject.rotation?.x || 0) - (direction > 0 ? step : -step);
+  selectedObject.rotation.x = Math.max(-0.75, Math.min(0.75, nextPitch));
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
+  showToast(direction > 0 ? 'Ramp tilted up' : 'Ramp tilted down');
+}
 function scaleSelected(factor) {
   if (!selectedObject) return;
 
@@ -8647,6 +8693,7 @@ window.uploadGLB = uploadGLB;
 window.setGizmoMode = setGizmoMode;
 window.flipSelected = flipSelected;
 window.rotateSelectedBy = rotateSelectedBy;
+window.tiltSelectedRamp = tiltSelectedRamp;
 window.scaleSelected = scaleSelected;
 window.duplicateSelectedFence = duplicateSelectedFence;
 window.deleteSelectedFence = deleteSelectedFence;
