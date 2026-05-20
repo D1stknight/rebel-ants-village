@@ -225,7 +225,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wooden_sign')"><span class="ap-icon">🪧</span><span class="ap-name">wooden_sign</span></div><div class="ap-card" onclick="spawnAssetFromPanel('small_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">small_bridge</span></div></div>
     <hr class="ap-divider">
     <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
-  </div>
   <div class="ap-section">Selected</div>
   <div class="ctrl-grid">
     <button class="ctrl-btn" onclick="setGizmoMode('move')">Move<kbd>G</kbd></button>
@@ -343,6 +342,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('blocker')">Add Red Blocker</button>
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('walk')">Add Green Walk Floor</button>
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('ramp')">Add Blue Ramp</button>
+    <button class="ctrl-btn" onclick="applyAttachedCollisionPiecesToSameType()">Apply Pieces Same Type</button>
     <button class="ctrl-btn danger" onclick="deleteAttachedCollisionProxyPieces()">Delete Attached Pieces</button>
   </div>
 </div>
@@ -351,6 +351,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn full" id="worklightBtn" onclick="toggleWorklight()" style="grid-column:1/-1;width:100%">&#x2600; Worklight (W)<kbd>W</kbd></button>
   </div>
   <hr class="ap-divider">
+  </div>
   <div class="ap-footer">
     <button onclick="saveWorldLayout()">Save (P)</button>
     <button onclick="loadWorldLayout()">Load (L)</button>
@@ -909,6 +910,168 @@ function moveAttachedCollisionProxyPieces(ownerNode, delta) {
   );
 
   pieces.forEach(node => node.position.addInPlace(delta));
+}
+
+function getCollisionProxyOwnerFromSelection() {
+  if (!selectedObject) return null;
+  if (selectedObject.metadata?.type === 'collision_proxy' && selectedObject.metadata?.proxyOwnerName) {
+    return scene.transformNodes.find(node => node.name === selectedObject.metadata.proxyOwnerName) ||
+      scene.meshes.find(mesh => mesh.name === selectedObject.metadata.proxyOwnerName) ||
+      null;
+  }
+  if (selectedObject.metadata?.type && selectedObject.metadata?.type !== 'collision_proxy') return selectedObject;
+  return null;
+}
+
+function getAttachedCollisionProxyPieces(ownerNode) {
+  if (!ownerNode) return [];
+  return scene.transformNodes.filter(node =>
+    node &&
+    node.metadata?.type === 'collision_proxy' &&
+    node.metadata?.proxyOwnerName === ownerNode.name
+  );
+}
+
+function getEditableObjectsByType(type) {
+  const transformNodes = scene.transformNodes.filter(node =>
+    node &&
+    !node.parent &&
+    node.metadata?.isClone &&
+    node.metadata?.type === type &&
+    node.metadata?.type !== 'collision_proxy' &&
+    !node.metadata?.isPickProxy
+  );
+  const pickMeshes = scene.meshes.filter(mesh =>
+    mesh &&
+    mesh.metadata?.isClone &&
+    mesh.metadata?.isPickProxy &&
+    mesh.metadata?.type === type
+  );
+  return [...transformNodes, ...pickMeshes];
+}
+
+function getCollisionTemplateStorageKey(type) {
+  return `rebelAntsCollisionProxyTemplate:${type}`;
+}
+
+function makeCollisionProxyTemplate(ownerNode) {
+  const ownerType = ownerNode?.metadata?.type || getObjectType(ownerNode);
+  if (!ownerNode || !ownerType) return null;
+  ownerNode.computeWorldMatrix?.(true);
+  const inverseOwner = ownerNode.getWorldMatrix ? ownerNode.getWorldMatrix().clone().invert() : BABYLON.Matrix.Identity();
+
+  const pieces = getAttachedCollisionProxyPieces(ownerNode).map(piece => {
+    piece.computeWorldMatrix?.(true);
+    const localPosition = BABYLON.Vector3.TransformCoordinates(piece.position, inverseOwner);
+    return {
+      proxyPieceKind: piece.metadata?.proxyPieceKind || 'blocker',
+      localPosition: { x: localPosition.x, y: localPosition.y, z: localPosition.z },
+      rotation: {
+        x: piece.rotation?.x || 0,
+        y: (piece.rotation?.y || 0) - (ownerNode.rotation?.y || 0),
+        z: piece.rotation?.z || 0
+      },
+      scaling: {
+        x: piece.scaling?.x || 1,
+        y: piece.scaling?.y || 1,
+        z: piece.scaling?.z || 1
+      }
+    };
+  });
+
+  return pieces.length ? { ownerType, pieces } : null;
+}
+
+function saveCollisionProxyTemplateForType(ownerNode) {
+  const template = makeCollisionProxyTemplate(ownerNode);
+  if (!template) return null;
+  localStorage.setItem(getCollisionTemplateStorageKey(template.ownerType), JSON.stringify(template));
+  return template;
+}
+
+function loadCollisionProxyTemplateForType(type) {
+  if (!type) return null;
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getCollisionTemplateStorageKey(type)) || 'null');
+    return parsed && Array.isArray(parsed.pieces) ? parsed : null;
+  } catch(e) {
+    return null;
+  }
+}
+
+function removeAttachedCollisionProxyPieces(ownerNode) {
+  getAttachedCollisionProxyPieces(ownerNode).forEach(piece => piece.dispose(false, false));
+}
+
+function applyCollisionProxyTemplateToOwner(ownerNode, template, options = {}) {
+  if (!ownerNode || !template || !Array.isArray(template.pieces)) return 0;
+  const ownerType = ownerNode.metadata?.type || getObjectType(ownerNode) || template.ownerType || null;
+  if (options.replace !== false) removeAttachedCollisionProxyPieces(ownerNode);
+
+  ownerNode.computeWorldMatrix?.(true);
+  const ownerMatrix = ownerNode.getWorldMatrix ? ownerNode.getWorldMatrix() : BABYLON.Matrix.Identity();
+  let created = 0;
+
+  template.pieces.forEach(piece => {
+    const local = piece.localPosition || { x: 0, y: 0, z: 0 };
+    const worldPosition = BABYLON.Vector3.TransformCoordinates(
+      new BABYLON.Vector3(local.x || 0, local.y || 0, local.z || 0),
+      ownerMatrix
+    );
+    const proxy = createCollisionProxyPiece(piece.proxyPieceKind || 'blocker', worldPosition, {
+      rotation: {
+        x: piece.rotation?.x || 0,
+        y: (ownerNode.rotation?.y || 0) + (piece.rotation?.y || 0),
+        z: piece.rotation?.z || 0
+      },
+      scaling: piece.scaling || { x: 1, y: 1, z: 1 },
+      proxyOwnerName: ownerNode.name,
+      proxyOwnerType: ownerType
+    });
+    if (!proxy) return;
+    registerEditableRoot(proxy.name, proxy);
+    created += 1;
+  });
+
+  return created;
+}
+
+function applySavedCollisionTemplateIfAvailable(ownerNode) {
+  const ownerType = ownerNode?.metadata?.type || getObjectType(ownerNode);
+  const template = loadCollisionProxyTemplateForType(ownerType);
+  if (!template) return 0;
+  const count = applyCollisionProxyTemplateToOwner(ownerNode, template, { replace: true });
+  if (count) {
+    rebuildVillageCollisionBlockers();
+    renderSelectedWalkSurfaceGuide();
+  }
+  return count;
+}
+
+function applyAttachedCollisionPiecesToSameType() {
+  const ownerNode = getCollisionProxyOwnerFromSelection();
+  if (!ownerNode) {
+    showToast('Select the object that owns the pieces first');
+    return;
+  }
+
+  const ownerType = ownerNode.metadata?.type || getObjectType(ownerNode);
+  const template = saveCollisionProxyTemplateForType(ownerNode);
+  if (!template) {
+    showToast('No attached pieces to apply');
+    return;
+  }
+
+  const targets = getEditableObjectsByType(ownerType).filter(node => node !== ownerNode);
+  let totalCreated = 0;
+  targets.forEach(node => {
+    totalCreated += applyCollisionProxyTemplateToOwner(node, template, { replace: true });
+  });
+
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
+  showToast(`Applied ${template.pieces.length} piece${template.pieces.length === 1 ? '' : 's'} to ${targets.length} ${ownerType} object${targets.length === 1 ? '' : 's'}`);
 }
 
 function setCollisionProxyVisualsVisible(visible) {
@@ -1785,9 +1948,10 @@ function snapValue(value, size){
 
 function softSnapSelectedObject(){
   if (!selectedObject) return;
+  const objType = selectedObject.metadata && selectedObject.metadata.type;
 
   // Rotation snap only — no X/Z grid snapping
-  if (selectedObject.rotation) {
+  if (selectedObject.rotation && objType !== 'collision_proxy') {
     const targetRotY = snapValue(selectedObject.rotation.y, ROT_SNAP);
     if (Math.abs(selectedObject.rotation.y - targetRotY) <= ROT_SNAP_DISTANCE) {
       selectedObject.rotation.y = targetRotY;
@@ -6243,7 +6407,10 @@ function deleteSelectedFence(){
   if (extraNodeToDelete && !extraNodeToDelete.isDisposed()) extraNodeToDelete.dispose(false, false);
   nodeToDelete.dispose(false, false);
   clearVillageProxyDebugMeshes();
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
+  showToast('Deleted selected object');
 }
 function duplicateSelectedFence(){
   if (!selectedObject) return;
@@ -7938,10 +8105,12 @@ function toggleWorklight() {
 
 function setGizmoMode(mode) {
   if (!selectedObject) return;
+  if (gizmoManager) gizmoManager.attachToNode(null);
   gizmoManager.positionGizmoEnabled = mode === 'move';
   gizmoManager.rotationGizmoEnabled = mode === 'rotate';
   gizmoManager.scaleGizmoEnabled = mode === 'scale';
   gizmoManager.attachToNode(selectedObject);
+  showToast(`${mode.charAt(0).toUpperCase()}${mode.slice(1)} mode`);
 }
 function flipSelected() {
   if (!selectedObject) return;
@@ -8209,6 +8378,7 @@ const proxyMoveObserver = scene.onBeforeRenderObservable.add(() => {
 proxy.metadata._proxyMoveObserver = proxyMoveObserver;
 clone.metadata._proxyMoveObserver = proxyMoveObserver;
     if (adminMode) { selectedObject = proxy; updateSelectedBadge(); }
+        applySavedCollisionTemplateIfAvailable(proxy);
         if (adminMode) {
           gizmoManager.positionGizmoEnabled = true;
           gizmoManager.rotationGizmoEnabled = false;
@@ -8234,6 +8404,7 @@ function placeAssetAtPoint(key, pickedPoint) {
     registerEditableRoot(clone.name, clone);
     selectedObject = clone;
     snapSelectedObjectToGround();
+    applySavedCollisionTemplateIfAvailable(clone);
     updateSelectedBadge();
     gizmoManager.positionGizmoEnabled = true;
     gizmoManager.rotationGizmoEnabled = false;
@@ -8266,6 +8437,7 @@ function placeAssetAtPoint(key, pickedPoint) {
   if (key !== 'lantern_1') {
     selectedObject = clone;
     snapSelectedObjectToGround();
+    applySavedCollisionTemplateIfAvailable(clone);
     updateSelectedBadge();
     gizmoManager.positionGizmoEnabled = true;
     gizmoManager.rotationGizmoEnabled = false;
@@ -8432,6 +8604,7 @@ window.applyWalkSurfaceSettingsToSameType = applyWalkSurfaceSettingsToSameType;
 window.refreshSelectedWalkSurfaceGuide = refreshSelectedWalkSurfaceGuide;
 window.addCollisionProxyPiece = addCollisionProxyPiece;
 window.deleteAttachedCollisionProxyPieces = deleteAttachedCollisionProxyPieces;
+window.applyAttachedCollisionPiecesToSameType = applyAttachedCollisionPiecesToSameType;
 window.clearAdminPlacement = clearAdminPlacement;
 window.toggleWorklight = toggleWorklight;
 window.saveWorldLayout = saveWorldLayout;
