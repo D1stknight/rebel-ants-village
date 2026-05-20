@@ -479,7 +479,6 @@ tree_1: {
   scale: 2,
   rotation: new BABYLON.Vector3(0, Math.PI, 0),
   groundOffset: 0,
-  collisionRadius: 1.25,
   noShadows: true
 },
 pine_1: {
@@ -487,28 +486,24 @@ pine_1: {
   scale: 2,
   rotation: new BABYLON.Vector3(0, Math.PI, 0),
   groundOffset: 0,
-  collisionRadius: 1.35,
   noShadows: true
 },
 rock_1: {
   path: "/assets/buildings/rock_1.glb",
   scale: 1.0,
   rotation: new BABYLON.Vector3(0, Math.PI, 0),
-  collisionRadius: 1.1,
   noShadows: true
 },
 cherry_blossom: {
   path: "/assets/buildings/cherry_blossom.glb",
   scale: 1.0,
   rotation: new BABYLON.Vector3(-Math.PI / 2, Math.PI, 0),
-  collisionRadius: 1.35,
   noShadows: true
 },
 bamboo: {
   path: "/assets/buildings/bamboo.glb",
   scale: 1.0,
   rotation: new BABYLON.Vector3(0, Math.PI, 0),
-  collisionRadius: 0.85,
   noShadows: true
 },
 lantern_1: {
@@ -1818,14 +1813,8 @@ function loadWalkSurfaceControlsFromSelected() {
   const metadata = getSelectedWalkSurfaceMetadataTarget();
   if (!metadata) return;
 
-  const defaults = getVillageStructuralProxyProfile(selectedObject, metadata.type);
   const customInput = document.getElementById('proxyWalkSurfaceEnabled');
   const debugInput = document.getElementById('proxyDebugVisible');
-  const sideInput = document.getElementById('proxyEntranceSide');
-  const offsetInput = document.getElementById('proxyEntranceOffset');
-  const widthInput = document.getElementById('proxyRampWidth');
-  const depthInput = document.getElementById('proxyRampDepth');
-  const heightInput = document.getElementById('proxyFloorHeight');
 
   if (customInput) {
     customInput.checked = metadata.proxyWalkSurfaceEnabled === true;
@@ -1835,25 +1824,14 @@ function loadWalkSurfaceControlsFromSelected() {
     debugInput.checked = true;
     debugInput.dataset.initialized = 'true';
   }
-  if (sideInput) sideInput.value = normalizeVillageProxyEntranceSide(defaults.entranceSide);
-  if (offsetInput) offsetInput.value = Number.isFinite(defaults.entranceOffset) ? defaults.entranceOffset : 0;
-  if (widthInput) widthInput.value = Number.isFinite(defaults.rampWidth) ? defaults.rampWidth : 5;
-  if (depthInput) depthInput.value = Number.isFinite(defaults.rampDepth) ? defaults.rampDepth : 6;
-  if (heightInput) heightInput.value = Number.isFinite(defaults.floorHeight) ? defaults.floorHeight : 1;
 
   updateWalkSurfaceControlReadouts();
 }
 
 function writeWalkSurfaceMetadata(metadata) {
-  const sideInput = document.getElementById('proxyEntranceSide');
   const customInput = document.getElementById('proxyWalkSurfaceEnabled');
   metadata.proxyAutoEnabled = false;
   metadata.proxyWalkSurfaceEnabled = customInput ? customInput.checked === true : metadata.proxyWalkSurfaceEnabled === true;
-  metadata.proxyEntranceSide = normalizeVillageProxyEntranceSide(sideInput ? sideInput.value : metadata.proxyEntranceSide);
-  metadata.proxyEntranceOffset = getWalkSurfaceControlValue('proxyEntranceOffset', 0);
-  metadata.proxyRampWidth = getWalkSurfaceControlValue('proxyRampWidth', 5);
-  metadata.proxyRampDepth = getWalkSurfaceControlValue('proxyRampDepth', 6);
-  metadata.proxyFloorHeight = getWalkSurfaceControlValue('proxyFloorHeight', 1);
 }
 
 function applySelectedWalkSurfaceSettings() {
@@ -1907,7 +1885,7 @@ function saveManualBarriersNow() {
   showToast('Manual barriers saved locally');
 }
 
-['proxyEntranceOffset', 'proxyRampWidth', 'proxyRampDepth', 'proxyFloorHeight', 'proxyEntranceSide', 'proxyWalkSurfaceEnabled', 'proxyDebugVisible'].forEach(id => {
+['proxyWalkSurfaceEnabled', 'proxyDebugVisible'].forEach(id => {
   window.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById(id);
     if (input) {
@@ -6927,49 +6905,10 @@ window.addEventListener('resize',()=>engine.resize());
 })();
 
 const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
+const VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING = 0.18;
 const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.025;
 const VILLAGE_STARTER_PLAYER_GROUND_OFFSET = -1.65;
 const VILLAGE_BLOCKER_REBUILD_MS = 900;
-const VILLAGE_STRUCTURAL_PROXY_TYPES = new Set([
-  'dojo',
-  'dojo_5',
-  'dojo_6',
-  'dojo_7',
-  'dojo_9',
-  'shrine_2'
-]);
-const VILLAGE_BRIDGE_PROXY_TYPES = new Set([
-  'small_bridge'
-]);
-const VILLAGE_STRUCTURAL_PROXY_PROFILES = {
-  dojo: { entranceSide: 'negZ', entranceOffset: 0 },
-  dojo_5: { entranceSide: 'negZ', entranceOffset: 0 },
-  dojo_6: { entranceSide: 'negZ', entranceOffset: 0 },
-  dojo_7: { entranceSide: 'negZ', entranceOffset: 0 },
-  dojo_9: { entranceSide: 'posZ', entranceOffset: 0 },
-  shrine_2: { entranceSide: 'negZ', entranceOffset: 0 },
-  small_bridge: { entranceSide: 'negZ', entranceOffset: 0, rampWidth: 8, rampDepth: 6, floorHeight: 0.75 }
-};
-const VILLAGE_BLOCKING_ASSET_TYPES = new Set([
-  'dojo',
-  'dojo_5',
-  'dojo_6',
-  'dojo_7',
-  'dojo_9',
-  'shrine_2',
-  'fence',
-  'fence_1',
-  'torii',
-  'wooden_sign',
-  'small_bridge',
-  'toro_lantern',
-  'lantern_1',
-  'tree_1',
-  'pine_1',
-  'rock_1',
-  'cherry_blossom',
-  'bamboo'
-]);
 let villageCollisionBlockers = [];
 let villageWalkableSurfaces = [];
 let villageLastBlockerRebuild = 0;
@@ -7109,39 +7048,6 @@ function getVillageBlockerTypeFromNode(node) {
   return null;
 }
 
-function shouldUseMeshAsVillageBlocker(mesh) {
-  if (!mesh || mesh.isDisposed?.() || !mesh.isEnabled?.()) return false;
-  if (mesh === ground || mesh === court || mesh === plaza) return false;
-  if ((mesh.name || '').startsWith('pa') || mesh.name === 'rv') return false;
-  if ((mesh.name || '').startsWith('tr_')) return false;
-  if (mesh.visibility === 0 || mesh.isVisible === false) return false;
-  if (mesh.metadata?.isPickProxy) return false;
-  if (mesh.parent && mesh.parent.name === 'playerRoot') return false;
-  if (mesh.name && mesh.name.includes('forgePreview')) return false;
-
-  const type = getVillageBlockerTypeFromMesh(mesh);
-  if (type === 'collision_proxy') return false;
-  if (VILLAGE_STRUCTURAL_PROXY_TYPES.has(type)) return false;
-  if (VILLAGE_BRIDGE_PROXY_TYPES.has(type)) return false;
-  if (type && ASSETS[type]?.collisionRadius) return false;
-  return VILLAGE_BLOCKING_ASSET_TYPES.has(type);
-}
-
-function shouldKeepStructuralMeshBlocker(type, min, max, width, depth, height) {
-  const groundY = getVillageGroundHeightAt((min.x + max.x) * 0.5, (min.z + max.z) * 0.5);
-
-  if (min.y > groundY + 3.0) return false;
-
-  if (type === 'dojo' || type === 'dojo_5' || type === 'dojo_6' || type === 'dojo_7' || type === 'dojo_9' || type === 'shrine_2') {
-    // Keep collision close to structural parts. Broad floors, roofs, and whole-model boxes
-    // make the player stop far away and will block future stairs/interior entry work.
-    if (width > 10 && depth > 10) return false;
-    if (height < 0.75) return false;
-  }
-
-  return true;
-}
-
 function villageLocalToWorld2D(centerX, centerZ, yaw, localX, localZ) {
   const c = Math.cos(yaw);
   const s = Math.sin(yaw);
@@ -7150,21 +7056,6 @@ function villageLocalToWorld2D(centerX, centerZ, yaw, localX, localZ) {
     x: centerX + localX * c - localZ * s,
     z: centerZ + localX * s + localZ * c
   };
-}
-
-function addVillageObbBlocker(blockers, centerX, centerZ, yaw, localX, localZ, halfX, halfZ, type, name) {
-  const center = villageLocalToWorld2D(centerX, centerZ, yaw, localX, localZ);
-
-  blockers.push({
-    kind: 'obb',
-    centerX: center.x,
-    centerZ: center.z,
-    yaw,
-    halfX,
-    halfZ,
-    type,
-    name
-  });
 }
 
 function addVillageWalkableSurface(walkableSurfaces, centerX, centerZ, yaw, localX, localZ, halfX, halfZ, y, type, name) {
@@ -7200,198 +7091,6 @@ function addVillageRampSurface(walkableSurfaces, centerX, centerZ, yaw, localX, 
     type,
     name
   });
-}
-
-function getVillageStructuralProxyProfile(node, type) {
-  const defaults = VILLAGE_STRUCTURAL_PROXY_PROFILES[type] || VILLAGE_STRUCTURAL_PROXY_PROFILES.dojo;
-  const metadata = node?.metadata || {};
-  const entranceSide = metadata.proxyEntranceSide || defaults.entranceSide || 'negZ';
-  const entranceOffset = Number.isFinite(metadata.proxyEntranceOffset)
-    ? metadata.proxyEntranceOffset
-    : (defaults.entranceOffset || 0);
-  const rampWidth = Number.isFinite(metadata.proxyRampWidth)
-    ? metadata.proxyRampWidth
-    : (defaults.rampWidth || null);
-  const rampDepth = Number.isFinite(metadata.proxyRampDepth)
-    ? metadata.proxyRampDepth
-    : (defaults.rampDepth || null);
-  const floorHeight = Number.isFinite(metadata.proxyFloorHeight)
-    ? metadata.proxyFloorHeight
-    : (defaults.floorHeight || null);
-
-  return { entranceSide, entranceOffset, rampWidth, rampDepth, floorHeight };
-}
-
-function normalizeVillageProxyEntranceSide(side) {
-  if (side === 'posX' || side === 'negX' || side === 'posZ' || side === 'negZ') return side;
-  return 'negZ';
-}
-
-function addVillageStructuralProxiesForNode(node, type, blockers, walkableSurfaces) {
-  if (!node || Math.abs(node.position.x) > 500 || Math.abs(node.position.z) > 500) return;
-
-  let bounds = null;
-
-  try {
-    bounds = node.getHierarchyBoundingVectors(true);
-  } catch(e) {
-    bounds = null;
-  }
-
-  if (!bounds || !bounds.min || !bounds.max) return;
-
-  const width = Math.max(6, Math.min(46, bounds.max.x - bounds.min.x));
-  const depth = Math.max(6, Math.min(38, bounds.max.z - bounds.min.z));
-  if (!Number.isFinite(width) || !Number.isFinite(depth)) return;
-
-  const centerX = (bounds.min.x + bounds.max.x) * 0.5;
-  const centerZ = (bounds.min.z + bounds.max.z) * 0.5;
-  const yaw = node.rotation?.y || 0;
-  const baseY = getVillageBaseGroundHeightAt(node.position.x, node.position.z);
-  const profile = getVillageStructuralProxyProfile(node, type);
-  const floorY = baseY + (
-    Number.isFinite(profile.floorHeight)
-      ? profile.floorHeight
-      : Math.max(0.45, Math.min(1.45, (bounds.max.y - bounds.min.y) * 0.08))
-  );
-
-  const halfX = width * 0.42;
-  const halfZ = depth * 0.38;
-  const wallThickness = 0.36;
-  const entranceSide = normalizeVillageProxyEntranceSide(profile.entranceSide);
-  const frontAxis = entranceSide.endsWith('X') ? 'x' : 'z';
-  const frontSign = entranceSide.startsWith('pos') ? 1 : -1;
-  const sideLimit = frontAxis === 'z' ? halfX : halfZ;
-  const depthLimit = frontAxis === 'z' ? halfZ : halfX;
-  const doorwayHalf = Number.isFinite(profile.rampWidth)
-    ? Math.max(1.2, Math.min(sideLimit - 0.8, profile.rampWidth * 0.5))
-    : Math.max(2.0, Math.min(4.6, sideLimit * 0.34));
-  const maxEntranceOffset = Math.max(0, sideLimit - doorwayHalf - 0.8);
-  const entranceOffset = Math.max(-maxEntranceOffset, Math.min(maxEntranceOffset, profile.entranceOffset || 0));
-  const sideWallHalfDepth = depthLimit * 0.92;
-  const frontWallHalf = Math.max(0.8, (sideLimit - doorwayHalf) * 0.5);
-  const frontWallOffset = doorwayHalf + frontWallHalf;
-  const rampHalfDepth = Number.isFinite(profile.rampDepth)
-    ? Math.max(1.0, Math.min(depthLimit * 0.85, profile.rampDepth * 0.5))
-    : Math.max(1.8, Math.min(4.4, depthLimit * 0.28));
-  const frontCoord = frontSign * depthLimit;
-  const backCoord = -frontSign * depthLimit;
-  const rampCoord = frontSign * (depthLimit + rampHalfDepth - 0.12);
-  const postCoord = frontSign * (depthLimit + 0.4);
-  const localFromEntranceAxes = (depthCoord, sideCoord) => (
-    frontAxis === 'z'
-      ? { x: sideCoord, z: depthCoord }
-      : { x: depthCoord, z: sideCoord }
-  );
-
-  addVillageWalkableSurface(walkableSurfaces, centerX, centerZ, yaw, 0, 0, halfX * 0.88, halfZ * 0.78, floorY, type, `${node.name}_floor`);
-  const rampLocal = localFromEntranceAxes(rampCoord, entranceOffset);
-  addVillageRampSurface(
-    walkableSurfaces,
-    centerX,
-    centerZ,
-    yaw,
-    rampLocal.x,
-    rampLocal.z,
-    frontAxis === 'z' ? doorwayHalf * 0.92 : rampHalfDepth,
-    frontAxis === 'z' ? rampHalfDepth : doorwayHalf * 0.92,
-    baseY,
-    floorY,
-    type,
-    `${node.name}_${entranceSide}_ramp`,
-    frontAxis,
-    frontSign
-  );
-
-  if (frontAxis === 'z') {
-    addVillageObbBlocker(blockers, centerX, centerZ, yaw, -halfX, 0, wallThickness, sideWallHalfDepth, type, `${node.name}_left_wall`);
-    addVillageObbBlocker(blockers, centerX, centerZ, yaw, halfX, 0, wallThickness, sideWallHalfDepth, type, `${node.name}_right_wall`);
-    addVillageObbBlocker(blockers, centerX, centerZ, yaw, 0, backCoord, halfX, wallThickness, type, `${node.name}_back_wall`);
-    addVillageObbBlocker(blockers, centerX, centerZ, yaw, entranceOffset - frontWallOffset, frontCoord, frontWallHalf, wallThickness, type, `${node.name}_front_left_wall`);
-    addVillageObbBlocker(blockers, centerX, centerZ, yaw, entranceOffset + frontWallOffset, frontCoord, frontWallHalf, wallThickness, type, `${node.name}_front_right_wall`);
-  } else {
-    addVillageObbBlocker(blockers, centerX, centerZ, yaw, 0, -halfZ, sideWallHalfDepth, wallThickness, type, `${node.name}_left_wall`);
-    addVillageObbBlocker(blockers, centerX, centerZ, yaw, 0, halfZ, sideWallHalfDepth, wallThickness, type, `${node.name}_right_wall`);
-    addVillageObbBlocker(blockers, centerX, centerZ, yaw, backCoord, 0, wallThickness, halfZ, type, `${node.name}_back_wall`);
-    addVillageObbBlocker(blockers, centerX, centerZ, yaw, frontCoord, entranceOffset - frontWallOffset, wallThickness, frontWallHalf, type, `${node.name}_front_left_wall`);
-    addVillageObbBlocker(blockers, centerX, centerZ, yaw, frontCoord, entranceOffset + frontWallOffset, wallThickness, frontWallHalf, type, `${node.name}_front_right_wall`);
-  }
-
-  // Small porch/rail corner blockers keep edges readable while leaving the center doorway clear.
-  const leftPostLocal = localFromEntranceAxes(postCoord, entranceOffset - doorwayHalf);
-  const rightPostLocal = localFromEntranceAxes(postCoord, entranceOffset + doorwayHalf);
-  addVillageObbBlocker(blockers, centerX, centerZ, yaw, leftPostLocal.x, leftPostLocal.z, wallThickness * 1.2, wallThickness * 1.2, type, `${node.name}_front_left_post`);
-  addVillageObbBlocker(blockers, centerX, centerZ, yaw, rightPostLocal.x, rightPostLocal.z, wallThickness * 1.2, wallThickness * 1.2, type, `${node.name}_front_right_post`);
-}
-
-function addVillageBridgeWalkProxiesForNode(node, type, walkableSurfaces) {
-  if (!node || Math.abs(node.position.x) > 500 || Math.abs(node.position.z) > 500) return;
-
-  let bounds = null;
-
-  try {
-    bounds = node.getHierarchyBoundingVectors(true);
-  } catch(e) {
-    bounds = null;
-  }
-
-  if (!bounds || !bounds.min || !bounds.max) return;
-
-  const width = Math.max(2, Math.min(26, bounds.max.x - bounds.min.x));
-  const depth = Math.max(2, Math.min(36, bounds.max.z - bounds.min.z));
-  if (!Number.isFinite(width) || !Number.isFinite(depth)) return;
-
-  const centerX = (bounds.min.x + bounds.max.x) * 0.5;
-  const centerZ = (bounds.min.z + bounds.max.z) * 0.5;
-  const yaw = node.rotation?.y || 0;
-  const baseY = getVillageBaseGroundHeightAt(node.position.x, node.position.z);
-  const profile = getVillageStructuralProxyProfile(node, type);
-  const deckY = baseY + (Number.isFinite(profile.floorHeight) ? profile.floorHeight : 0.75);
-  const entranceSide = normalizeVillageProxyEntranceSide(profile.entranceSide);
-  const frontAxis = entranceSide.endsWith('X') ? 'x' : 'z';
-  const frontSign = entranceSide.startsWith('pos') ? 1 : -1;
-  const deckHalfX = width * 0.42;
-  const deckHalfZ = depth * 0.42;
-  const sideLimit = frontAxis === 'z' ? deckHalfX : deckHalfZ;
-  const depthLimit = frontAxis === 'z' ? deckHalfZ : deckHalfX;
-  const rampHalfWidth = Number.isFinite(profile.rampWidth)
-    ? Math.max(1.2, Math.min(sideLimit, profile.rampWidth * 0.5))
-    : sideLimit * 0.72;
-  const rampHalfDepth = Number.isFinite(profile.rampDepth)
-    ? Math.max(1.0, Math.min(depthLimit, profile.rampDepth * 0.5))
-    : Math.max(1.8, Math.min(4.5, depthLimit * 0.45));
-  const entranceOffset = Math.max(-sideLimit + rampHalfWidth, Math.min(sideLimit - rampHalfWidth, profile.entranceOffset || 0));
-  const localFromEntranceAxes = (depthCoord, sideCoord) => (
-    frontAxis === 'z'
-      ? { x: sideCoord, z: depthCoord }
-      : { x: depthCoord, z: sideCoord }
-  );
-
-  addVillageWalkableSurface(walkableSurfaces, centerX, centerZ, yaw, 0, 0, deckHalfX, deckHalfZ, deckY, type, `${node.name}_bridge_deck`);
-
-  [-frontSign, frontSign].forEach(sign => {
-    const rampLocal = localFromEntranceAxes(sign * (depthLimit + rampHalfDepth - 0.1), entranceOffset);
-    addVillageRampSurface(
-      walkableSurfaces,
-      centerX,
-      centerZ,
-      yaw,
-      rampLocal.x,
-      rampLocal.z,
-      frontAxis === 'z' ? rampHalfWidth : rampHalfDepth,
-      frontAxis === 'z' ? rampHalfDepth : rampHalfWidth,
-      baseY,
-      deckY,
-      type,
-      `${node.name}_bridge_ramp_${sign > 0 ? 'pos' : 'neg'}`,
-      frontAxis,
-      sign
-    );
-  });
-}
-
-function addVillageCustomWalkProxiesForNode(node, type, walkableSurfaces) {
-  addVillageBridgeWalkProxiesForNode(node, type, walkableSurfaces);
 }
 
 function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
@@ -7455,6 +7154,76 @@ function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
     'collision_proxy',
     `${node.name}_manual_walk`
   );
+}
+
+function getManualBlockerObbFromProxy(proxyRoot) {
+  if (!proxyRoot || proxyRoot.isDisposed?.()) return null;
+  if (proxyRoot.metadata?.type !== 'collision_proxy') return null;
+  if ((proxyRoot.metadata?.proxyPieceKind || 'blocker') !== 'blocker') return null;
+
+  return {
+    kind: 'obb',
+    centerX: proxyRoot.position.x,
+    centerZ: proxyRoot.position.z,
+    yaw: proxyRoot.rotation?.y || 0,
+    halfX: Math.max(0.15, Math.abs(proxyRoot.scaling?.x || 1) * 0.5),
+    halfZ: Math.max(0.15, Math.abs(proxyRoot.scaling?.z || 1) * 0.5),
+    type: 'collision_proxy',
+    name: proxyRoot.name
+  };
+}
+
+function villageObbContainsPoint(blocker, x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
+  if (!blocker) return false;
+  const local = pointToVillageSurfaceLocal({
+    centerX: blocker.centerX,
+    centerZ: blocker.centerZ,
+    yaw: blocker.yaw || 0
+  }, x, z);
+
+  return Math.abs(local.x) <= blocker.halfX + padding &&
+    Math.abs(local.z) <= blocker.halfZ + padding;
+}
+
+function villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
+  if (!blocker) return false;
+
+  const start = pointToVillageSurfaceLocal({
+    centerX: blocker.centerX,
+    centerZ: blocker.centerZ,
+    yaw: blocker.yaw || 0
+  }, startX, startZ);
+  const end = pointToVillageSurfaceLocal({
+    centerX: blocker.centerX,
+    centerZ: blocker.centerZ,
+    yaw: blocker.yaw || 0
+  }, endX, endZ);
+
+  const minX = -blocker.halfX - padding;
+  const maxX = blocker.halfX + padding;
+  const minZ = -blocker.halfZ - padding;
+  const maxZ = blocker.halfZ + padding;
+  const dx = end.x - start.x;
+  const dz = end.z - start.z;
+  let tMin = 0;
+  let tMax = 1;
+
+  const clipAxis = (startValue, delta, minValue, maxValue) => {
+    if (Math.abs(delta) < 0.00001) return startValue >= minValue && startValue <= maxValue;
+    const inv = 1 / delta;
+    let t1 = (minValue - startValue) * inv;
+    let t2 = (maxValue - startValue) * inv;
+    if (t1 > t2) {
+      const temp = t1;
+      t1 = t2;
+      t2 = temp;
+    }
+    tMin = Math.max(tMin, t1);
+    tMax = Math.min(tMax, t2);
+    return tMin <= tMax;
+  };
+
+  return clipAxis(start.x, dx, minX, maxX) && clipAxis(start.z, dz, minZ, maxZ);
 }
 
 function getVillageProxyDebugMaterials() {
@@ -7578,7 +7347,7 @@ function refreshVillageCollisionBlockersIfNeeded() {
   }
 }
 
-function liveManualCollisionProxyBlocksPoint(x, z, radius = VILLAGE_PLAYER_COLLISION_RADIUS) {
+function liveManualCollisionProxyBlocksPoint(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   return scene.meshes.some(mesh => {
     if (!mesh || mesh.isDisposed?.()) return false;
     const proxyRoot = mesh.metadata?.type === 'collision_proxy'
@@ -7586,80 +7355,92 @@ function liveManualCollisionProxyBlocksPoint(x, z, radius = VILLAGE_PLAYER_COLLI
       : mesh._editRoot?.metadata?.type === 'collision_proxy'
         ? mesh._editRoot
         : null;
-    if (!proxyRoot) return false;
-    if ((proxyRoot.metadata?.proxyPieceKind || 'blocker') !== 'blocker') return false;
+    const blocker = getManualBlockerObbFromProxy(proxyRoot);
+    if (!blocker) return false;
 
-    const halfX = Math.max(0.15, Math.abs(proxyRoot.scaling?.x || 1) * 0.5);
-    const halfZ = Math.max(0.15, Math.abs(proxyRoot.scaling?.z || 1) * 0.5);
-    const local = pointToVillageSurfaceLocal({
-      centerX: proxyRoot.position.x,
-      centerZ: proxyRoot.position.z,
-      yaw: proxyRoot.rotation?.y || 0
-    }, x, z);
-
-    const orientedHit = Math.abs(local.x) <= halfX + radius &&
-      Math.abs(local.z) <= halfZ + radius;
-    if (orientedHit) return true;
-
-    // Fallback to the real visible bounds. This keeps manual blockers honest
-    // even if a proxy was duplicated, restored, or transformed in a way that
-    // leaves the simplified oriented values stale.
-    proxyRoot.computeWorldMatrix?.(true);
-    const bb = proxyRoot.getBoundingInfo?.().boundingBox;
-    if (!bb) return false;
-
-    const min = bb.minimumWorld;
-    const max = bb.maximumWorld;
-    return x >= min.x - radius &&
-      x <= max.x + radius &&
-      z >= min.z - radius &&
-      z <= max.z + radius;
+    return villageObbContainsPoint(blocker, x, z, padding);
   });
 }
 
-function villagePointBlocked(x, z, radius = VILLAGE_PLAYER_COLLISION_RADIUS) {
+function liveManualCollisionProxyBlocksSegment(startX, startZ, endX, endZ, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
+  return scene.meshes.some(mesh => {
+    if (!mesh || mesh.isDisposed?.()) return false;
+    const proxyRoot = mesh.metadata?.type === 'collision_proxy'
+      ? mesh
+      : mesh._editRoot?.metadata?.type === 'collision_proxy'
+        ? mesh._editRoot
+        : null;
+    const blocker = getManualBlockerObbFromProxy(proxyRoot);
+    if (!blocker) return false;
+
+    return villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ, padding);
+  });
+}
+
+function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'circle') {
       const dx = x - blocker.x;
       const dz = z - blocker.z;
-      const hitRadius = blocker.radius + radius;
+      const hitRadius = blocker.radius + padding;
       return dx * dx + dz * dz <= hitRadius * hitRadius;
     }
 
     if (blocker.kind === 'obb') {
-      const local = pointToVillageSurfaceLocal({
-        centerX: blocker.centerX,
-        centerZ: blocker.centerZ,
-        yaw: blocker.yaw
-      }, x, z);
-
-      return Math.abs(local.x) <= blocker.halfX + radius &&
-        Math.abs(local.z) <= blocker.halfZ + radius;
+      return villageObbContainsPoint(blocker, x, z, padding);
     }
 
-    return x >= blocker.minX - radius &&
-      x <= blocker.maxX + radius &&
-      z >= blocker.minZ - radius &&
-      z <= blocker.maxZ + radius;
+    return x >= blocker.minX - padding &&
+      x <= blocker.maxX + padding &&
+      z >= blocker.minZ - padding &&
+      z <= blocker.maxZ + padding;
   });
 
-  return cachedBlockerHit || liveManualCollisionProxyBlocksPoint(x, z, radius);
+  return cachedBlockerHit || liveManualCollisionProxyBlocksPoint(x, z, padding);
 }
+
+function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
+  const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
+    if (blocker.kind === 'circle') return villagePointBlocked(endX, endZ, padding);
+    if (blocker.kind === 'obb') return villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ, padding);
+    return villagePointBlocked(endX, endZ, padding);
+  });
+
+  return cachedBlockerHit || liveManualCollisionProxyBlocksSegment(startX, startZ, endX, endZ, padding);
+}
+
+window.auditVillageCollisionSources = function auditVillageCollisionSources() {
+  rebuildVillageCollisionBlockers();
+  const manualPieces = scene.meshes.filter(mesh => mesh?.metadata?.type === 'collision_proxy');
+  const report = {
+    engineCollisionsEnabled: scene.collisionsEnabled === true,
+    manualPieceCount: manualPieces.length,
+    manualBlockerCount: manualPieces.filter(mesh => (mesh.metadata?.proxyPieceKind || 'blocker') === 'blocker').length,
+    manualWalkFloorCount: manualPieces.filter(mesh => mesh.metadata?.proxyPieceKind === 'walk').length,
+    manualRampCount: manualPieces.filter(mesh => mesh.metadata?.proxyPieceKind === 'ramp').length,
+    activeGameplayBlockerCount: villageCollisionBlockers.length,
+    activeWalkSurfaceCount: villageWalkableSurfaces.length,
+    collisionPadding: VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING,
+    automaticBarriersActive: false
+  };
+  console.log('Village collision audit:', report);
+  return report;
+};
 
 function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
   refreshVillageCollisionBlockersIfNeeded();
 
-  if (!villagePointBlocked(proposedPosition.x, proposedPosition.z)) {
+  if (!villageSegmentBlocked(currentPosition.x, currentPosition.z, proposedPosition.x, proposedPosition.z)) {
     return { x: proposedPosition.x, z: proposedPosition.z, blocked: false };
   }
 
   const slideX = { x: proposedPosition.x, z: currentPosition.z };
-  if (!villagePointBlocked(slideX.x, slideX.z)) {
+  if (!villageSegmentBlocked(currentPosition.x, currentPosition.z, slideX.x, slideX.z)) {
     return { ...slideX, blocked: true };
   }
 
   const slideZ = { x: currentPosition.x, z: proposedPosition.z };
-  if (!villagePointBlocked(slideZ.x, slideZ.z)) {
+  if (!villageSegmentBlocked(currentPosition.x, currentPosition.z, slideZ.x, slideZ.z)) {
     return { ...slideZ, blocked: true };
   }
 
