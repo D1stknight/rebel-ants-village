@@ -301,6 +301,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="walkSurfaceEditorPanel" style="display:none;padding:0 8px 8px">
   <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin-bottom:6px;text-transform:uppercase">Walk Surface / Collision</div>
   <div style="font-size:10px;line-height:1.4;color:#aaa;margin-bottom:8px">Tune stair ramps, doorway gaps, bridge decks, and floor height for the selected object.</div>
+  <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:6px"><input type="checkbox" id="proxyWalkSurfaceEnabled"> Custom walk surface</label>
+  <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:8px"><input type="checkbox" id="proxyDebugVisible" checked> Show transparent guide</label>
   <label style="display:block;color:#e8c56a;font-size:10px;letter-spacing:1px;margin-bottom:4px">Entrance Side</label>
   <select id="proxyEntranceSide" style="width:100%;height:30px;background:#15151f;color:#5ecfca;border:1px solid rgba(94,207,202,0.35);border-radius:6px;padding:0 8px;margin-bottom:6px">
     <option value="negZ">Local Front (-Z)</option>
@@ -332,6 +334,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" onclick="applySelectedWalkSurfaceSettings()">Apply Selected</button>
     <button class="ctrl-btn" onclick="applyWalkSurfaceSettingsToSameType()">Apply Same Type</button>
   </div>
+  <button class="ctrl-btn full" onclick="refreshSelectedWalkSurfaceGuide()" style="width:100%;margin-top:6px">Refresh Guide</button>
 </div>
   <hr class="ap-divider">
   <div style="padding:0 8px 6px">
@@ -1287,15 +1290,15 @@ if (walkSurfacePanel) {
   const selectedType = selectedObject && selectedObject.metadata && selectedObject.metadata.type;
   const canEditWalkSurface =
     selectedType &&
-    (
-      VILLAGE_STRUCTURAL_PROXY_TYPES.has(selectedType) ||
-      selectedType === 'small_bridge'
-    );
+    selectedObject.metadata.isPickProxy !== true;
 
   walkSurfacePanel.style.display = canEditWalkSurface ? 'block' : 'none';
 
   if (canEditWalkSurface) {
     loadWalkSurfaceControlsFromSelected();
+    renderSelectedWalkSurfaceGuide();
+  } else {
+    clearVillageProxyDebugMeshes();
   }
 }
   if (isSign) {
@@ -1323,7 +1326,7 @@ function getSelectedWalkSurfaceMetadataTarget() {
   if (!selectedObject || !selectedObject.metadata) return null;
   const type = selectedObject.metadata.type;
   if (!type) return null;
-  if (!VILLAGE_STRUCTURAL_PROXY_TYPES.has(type) && !VILLAGE_BRIDGE_PROXY_TYPES.has(type)) return null;
+  if (selectedObject.metadata.isPickProxy) return null;
   return selectedObject.metadata;
 }
 
@@ -1352,12 +1355,23 @@ function loadWalkSurfaceControlsFromSelected() {
   if (!metadata) return;
 
   const defaults = getVillageStructuralProxyProfile(selectedObject, metadata.type);
+  const customInput = document.getElementById('proxyWalkSurfaceEnabled');
+  const debugInput = document.getElementById('proxyDebugVisible');
   const sideInput = document.getElementById('proxyEntranceSide');
   const offsetInput = document.getElementById('proxyEntranceOffset');
   const widthInput = document.getElementById('proxyRampWidth');
   const depthInput = document.getElementById('proxyRampDepth');
   const heightInput = document.getElementById('proxyFloorHeight');
 
+  if (customInput) {
+    const autoEnabled = VILLAGE_STRUCTURAL_PROXY_TYPES.has(metadata.type) || VILLAGE_BRIDGE_PROXY_TYPES.has(metadata.type);
+    customInput.checked = autoEnabled || metadata.proxyWalkSurfaceEnabled === true;
+    customInput.disabled = autoEnabled;
+  }
+  if (debugInput && debugInput.dataset.initialized !== 'true') {
+    debugInput.checked = true;
+    debugInput.dataset.initialized = 'true';
+  }
   if (sideInput) sideInput.value = normalizeVillageProxyEntranceSide(defaults.entranceSide);
   if (offsetInput) offsetInput.value = Number.isFinite(defaults.entranceOffset) ? defaults.entranceOffset : 0;
   if (widthInput) widthInput.value = Number.isFinite(defaults.rampWidth) ? defaults.rampWidth : 5;
@@ -1369,6 +1383,9 @@ function loadWalkSurfaceControlsFromSelected() {
 
 function writeWalkSurfaceMetadata(metadata) {
   const sideInput = document.getElementById('proxyEntranceSide');
+  const customInput = document.getElementById('proxyWalkSurfaceEnabled');
+  const autoEnabled = VILLAGE_STRUCTURAL_PROXY_TYPES.has(metadata.type) || VILLAGE_BRIDGE_PROXY_TYPES.has(metadata.type);
+  metadata.proxyWalkSurfaceEnabled = autoEnabled || (customInput ? customInput.checked === true : metadata.proxyWalkSurfaceEnabled === true);
   metadata.proxyEntranceSide = normalizeVillageProxyEntranceSide(sideInput ? sideInput.value : metadata.proxyEntranceSide);
   metadata.proxyEntranceOffset = getWalkSurfaceControlValue('proxyEntranceOffset', 0);
   metadata.proxyRampWidth = getWalkSurfaceControlValue('proxyRampWidth', 5);
@@ -1385,6 +1402,7 @@ function applySelectedWalkSurfaceSettings() {
 
   writeWalkSurfaceMetadata(metadata);
   rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
   showToast('Walk surface updated');
 }
@@ -1407,14 +1425,28 @@ function applyWalkSurfaceSettingsToSameType() {
 
   matching.forEach(node => writeWalkSurfaceMetadata(node.metadata));
   rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
   showToast(`Applied walk surface to ${matching.length} ${type} object${matching.length === 1 ? '' : 's'}`);
 }
 
-['proxyEntranceOffset', 'proxyRampWidth', 'proxyRampDepth', 'proxyFloorHeight'].forEach(id => {
+function refreshSelectedWalkSurfaceGuide() {
+  const metadata = getSelectedWalkSurfaceMetadataTarget();
+  if (metadata) writeWalkSurfaceMetadata(metadata);
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+}
+
+['proxyEntranceOffset', 'proxyRampWidth', 'proxyRampDepth', 'proxyFloorHeight', 'proxyEntranceSide', 'proxyWalkSurfaceEnabled', 'proxyDebugVisible'].forEach(id => {
   window.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById(id);
-    if (input) input.addEventListener('input', updateWalkSurfaceControlReadouts);
+    if (input) {
+      input.addEventListener('input', () => {
+        updateWalkSurfaceControlReadouts();
+        refreshSelectedWalkSurfaceGuide();
+      });
+      input.addEventListener('change', refreshSelectedWalkSurfaceGuide);
+    }
   });
 });
 
@@ -5565,6 +5597,7 @@ function saveWorldLayout(saveToGitHub = true){
     glowShape: node.metadata.glowShape || null,
     glowWidth: node.metadata.glowWidth || null,
     glowDepth: node.metadata.glowDepth || null,
+    proxyWalkSurfaceEnabled: node.metadata.proxyWalkSurfaceEnabled === true,
     proxyEntranceSide: node.metadata.proxyEntranceSide || null,
     proxyEntranceOffset: Number.isFinite(node.metadata.proxyEntranceOffset) ? node.metadata.proxyEntranceOffset : null,
     proxyRampWidth: Number.isFinite(node.metadata.proxyRampWidth) ? node.metadata.proxyRampWidth : null,
@@ -5739,6 +5772,7 @@ function loadWorldLayout(){
       isClone: true,
       signConfig: item.signConfig || null,
       toroColor: item.toroColor || null,
+      proxyWalkSurfaceEnabled: item.proxyWalkSurfaceEnabled === true,
       proxyEntranceSide: item.proxyEntranceSide || null,
       proxyEntranceOffset: Number.isFinite(item.proxyEntranceOffset) ? item.proxyEntranceOffset : null,
       proxyRampWidth: Number.isFinite(item.proxyRampWidth) ? item.proxyRampWidth : null,
@@ -5830,6 +5864,7 @@ function deleteSelectedFence(){
 
   if (extraNodeToDelete && !extraNodeToDelete.isDisposed()) extraNodeToDelete.dispose(false, false);
   nodeToDelete.dispose(false, false);
+  clearVillageProxyDebugMeshes();
   triggerAutoSave();
 }
 function duplicateSelectedFence(){
@@ -5966,6 +6001,7 @@ document.addEventListener('keydown', async e => {
       toggleAssetPanel(false);
       selectedObject = null;
       updateSelectedBadge();
+      clearVillageProxyDebugMeshes();
       if (gizmoManager) {
         gizmoManager.positionGizmoEnabled = false;
         gizmoManager.rotationGizmoEnabled = false;
@@ -6257,6 +6293,8 @@ const VILLAGE_BLOCKING_ASSET_TYPES = new Set([
 let villageCollisionBlockers = [];
 let villageWalkableSurfaces = [];
 let villageLastBlockerRebuild = 0;
+let villageProxyDebugMeshes = [];
+let villageProxyDebugMaterials = null;
 
 function villageTerrainHash(x, z) {
   const n = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
@@ -6671,6 +6709,106 @@ function addVillageBridgeWalkProxiesForNode(node, type, walkableSurfaces) {
   });
 }
 
+function addVillageCustomWalkProxiesForNode(node, type, walkableSurfaces) {
+  addVillageBridgeWalkProxiesForNode(node, type, walkableSurfaces);
+}
+
+function getVillageProxyDebugMaterials() {
+  if (villageProxyDebugMaterials) return villageProxyDebugMaterials;
+
+  const walk = new BABYLON.StandardMaterial('villageProxyDebugWalk', scene);
+  walk.diffuseColor = new BABYLON.Color3(0.1, 0.9, 0.45);
+  walk.emissiveColor = new BABYLON.Color3(0.02, 0.35, 0.18);
+  walk.alpha = 0.34;
+  walk.backFaceCulling = false;
+
+  const ramp = new BABYLON.StandardMaterial('villageProxyDebugRamp', scene);
+  ramp.diffuseColor = new BABYLON.Color3(0.1, 0.65, 1);
+  ramp.emissiveColor = new BABYLON.Color3(0.02, 0.22, 0.38);
+  ramp.alpha = 0.38;
+  ramp.backFaceCulling = false;
+
+  const block = new BABYLON.StandardMaterial('villageProxyDebugBlock', scene);
+  block.diffuseColor = new BABYLON.Color3(1, 0.12, 0.08);
+  block.emissiveColor = new BABYLON.Color3(0.36, 0.02, 0.02);
+  block.alpha = 0.28;
+  block.backFaceCulling = false;
+
+  villageProxyDebugMaterials = { walk, ramp, block };
+  return villageProxyDebugMaterials;
+}
+
+function clearVillageProxyDebugMeshes() {
+  villageProxyDebugMeshes.forEach(mesh => {
+    if (mesh && !mesh.isDisposed?.()) mesh.dispose();
+  });
+  villageProxyDebugMeshes = [];
+}
+
+function createVillageDebugBox(name, width, height, depth, position, yaw, material) {
+  const mesh = BABYLON.MeshBuilder.CreateBox(name, { width, height, depth }, scene);
+  mesh.position = position;
+  mesh.rotation.y = yaw || 0;
+  mesh.material = material;
+  mesh.isPickable = false;
+  mesh.metadata = { isVillageProxyDebug: true };
+  villageProxyDebugMeshes.push(mesh);
+  return mesh;
+}
+
+function renderSelectedWalkSurfaceGuide() {
+  clearVillageProxyDebugMeshes();
+
+  const debugInput = document.getElementById('proxyDebugVisible');
+  if (!adminMode || !selectedObject || !debugInput || debugInput.checked !== true) return;
+
+  const prefix = `${selectedObject.name}_`;
+  const materials = getVillageProxyDebugMaterials();
+
+  villageWalkableSurfaces
+    .filter(surface => surface.name && surface.name.startsWith(prefix))
+    .forEach(surface => {
+      const isRamp = surface.kind === 'ramp';
+      const y = isRamp
+        ? ((surface.startY || 0) + (surface.endY || 0)) * 0.5 + 0.06
+        : (surface.y || 0) + 0.06;
+      const mesh = createVillageDebugBox(
+        `walkGuide_${surface.name}`,
+        surface.halfX * 2,
+        0.08,
+        surface.halfZ * 2,
+        new BABYLON.Vector3(surface.centerX, y, surface.centerZ),
+        surface.yaw || 0,
+        isRamp ? materials.ramp : materials.walk
+      );
+
+      if (isRamp) {
+        const rise = (surface.endY || 0) - (surface.startY || 0);
+        const run = (surface.rampAxis === 'x' ? surface.halfX : surface.halfZ) * 2;
+        const tilt = run > 0 ? Math.atan2(rise, run) : 0;
+        if (surface.rampAxis === 'x') {
+          mesh.rotation.z = (surface.rampSign || -1) < 0 ? -tilt : tilt;
+        } else {
+          mesh.rotation.x = (surface.rampSign || -1) < 0 ? tilt : -tilt;
+        }
+      }
+    });
+
+  villageCollisionBlockers
+    .filter(blocker => blocker.name && blocker.name.startsWith(prefix) && blocker.kind === 'obb')
+    .forEach(blocker => {
+      createVillageDebugBox(
+        `blockGuide_${blocker.name}`,
+        blocker.halfX * 2,
+        2.2,
+        blocker.halfZ * 2,
+        new BABYLON.Vector3(blocker.centerX, getVillageGroundHeightAt(blocker.centerX, blocker.centerZ) + 1.1, blocker.centerZ),
+        blocker.yaw || 0,
+        materials.block
+      );
+    });
+}
+
 function rebuildVillageCollisionBlockers() {
   const blockers = [];
   const walkableSurfaces = [];
@@ -6688,6 +6826,10 @@ function rebuildVillageCollisionBlockers() {
     if (VILLAGE_BRIDGE_PROXY_TYPES.has(type)) {
       addVillageBridgeWalkProxiesForNode(node, type, walkableSurfaces);
       return;
+    }
+
+    if (node.metadata?.proxyWalkSurfaceEnabled === true) {
+      addVillageCustomWalkProxiesForNode(node, type, walkableSurfaces);
     }
 
     const collisionRadius = type && ASSETS[type]?.collisionRadius;
