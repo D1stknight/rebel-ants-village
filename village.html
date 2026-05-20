@@ -3198,7 +3198,7 @@ function groundPlayableVisualToTerrain(terrainY) {
   if (!bounds) return;
 
   const usesStarterCharacter = !window.activeCharacter?.activeGlbUrl;
-  const starterExtraGroundOffset = usesStarterCharacter ? -0.55 : 0;
+  const starterExtraGroundOffset = usesStarterCharacter ? VILLAGE_STARTER_PLAYER_GROUND_OFFSET : 0;
   const targetFootY = terrainY + VILLAGE_PLAYER_GROUND_CLEARANCE + starterExtraGroundOffset;
   const deltaY = targetFootY - bounds.min.y;
   if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.002) return;
@@ -6987,6 +6987,7 @@ window.addEventListener('resize',()=>engine.resize());
 
 const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
 const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.025;
+const VILLAGE_STARTER_PLAYER_GROUND_OFFSET = -1.65;
 const VILLAGE_BLOCKER_REBUILD_MS = 900;
 // Admin-authored manual collision pieces are the source of truth for gameplay.
 // Automatic blockers are kept as dev scaffolding only because broad generated
