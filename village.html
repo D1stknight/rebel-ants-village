@@ -3119,6 +3119,79 @@ function syncForgePreviewRootToPlayer(previewRoot) {
   previewRoot.rotation.z = charMesh.rotation.z;
 }
 
+function getVisiblePlayableBounds(rootNode) {
+  if (!rootNode || !rootNode.getChildMeshes) return null;
+
+  const min = new BABYLON.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+  const max = new BABYLON.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+  let meshCount = 0;
+
+  rootNode.getChildMeshes(false).forEach(mesh => {
+    if (!mesh || mesh.isDisposed?.()) return;
+    if (mesh.isEnabled?.() === false || mesh.isVisible === false || mesh.visibility === 0) return;
+    if (!mesh.getTotalVertices || mesh.getTotalVertices() === 0 || !mesh.getBoundingInfo) return;
+
+    mesh.computeWorldMatrix(true);
+    const box = mesh.getBoundingInfo().boundingBox;
+    if (!box) return;
+
+    const boxMin = box.minimumWorld;
+    const boxMax = box.maximumWorld;
+    if (
+      !Number.isFinite(boxMin.x) ||
+      !Number.isFinite(boxMin.y) ||
+      !Number.isFinite(boxMin.z) ||
+      !Number.isFinite(boxMax.x) ||
+      !Number.isFinite(boxMax.y) ||
+      !Number.isFinite(boxMax.z)
+    ) {
+      return;
+    }
+
+    min.x = Math.min(min.x, boxMin.x);
+    min.y = Math.min(min.y, boxMin.y);
+    min.z = Math.min(min.z, boxMin.z);
+    max.x = Math.max(max.x, boxMax.x);
+    max.y = Math.max(max.y, boxMax.y);
+    max.z = Math.max(max.z, boxMax.z);
+    meshCount++;
+  });
+
+  if (!meshCount) return null;
+
+  return { min, max, meshCount };
+}
+
+function getActivePlayableVisualRootForGrounding() {
+  if (localStorage.getItem('forgePlayerVisualTest') === '1') {
+    if (window.forgeArmaturePlayerRoot && !window.forgeArmaturePlayerRoot.isDisposed?.()) return window.forgeArmaturePlayerRoot;
+
+    const cache = getForgePlayerVisualCache?.();
+    const activeRoot = cache?.[window.forgePlayerVisualCurrentMode]?.root || window.forgePreviewRoot;
+    if (activeRoot && !activeRoot.isDisposed?.()) return activeRoot;
+  }
+
+  return charMesh;
+}
+
+function groundPlayableVisualToTerrain(terrainY) {
+  if (!charMesh || !Number.isFinite(terrainY)) return;
+
+  const actionMoving = isForgeActionMovementSuppressed();
+  const rootForBounds = actionMoving ? charMesh : getActivePlayableVisualRootForGrounding();
+  const bounds = getVisiblePlayableBounds(rootForBounds) || getVisiblePlayableBounds(charMesh);
+  if (!bounds) return;
+
+  const targetFootY = terrainY + VILLAGE_PLAYER_GROUND_CLEARANCE;
+  const deltaY = targetFootY - bounds.min.y;
+  if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.002) return;
+
+  // Correct the gameplay root, then let Forge visual sync follow it.
+  charMesh.position.y += deltaY;
+  charMesh._terrainY = terrainY;
+  charMesh._footOffset = undefined;
+}
+
 function removeForgeVisualRootMotion(animationGroups, mode = 'forge') {
   const preserveRootMotionModes = new Set([]);
   if (preserveRootMotionModes.has(mode)) {
@@ -7775,23 +7848,7 @@ engine.runRenderLoop(()=>{
     }
     const _terrainY = getVillageGroundHeightAt(charMesh.position.x, charMesh.position.z);
     if (Number.isFinite(_terrainY)) {
-      // Character's origin is not at feet — compute foot offset once and cache it
-      if (charMesh._footOffset === undefined) {
-        charMesh.computeWorldMatrix(true);
-        let _minY = Infinity;
-        charMesh.getChildMeshes(false).forEach(m => {
-          if (!m.getTotalVertices || m.getTotalVertices() === 0) return;
-          if (m.isEnabled?.() === false || m.isVisible === false || m.visibility === 0) return;
-          m.computeWorldMatrix(true);
-          const bb = m.getBoundingInfo().boundingBox;
-          if (bb.minimumWorld.y < _minY) _minY = bb.minimumWorld.y;
-        });
-        charMesh._footOffset = isFinite(_minY) ? (charMesh.position.y - _minY) : 0;
-      }
-      // Snap feet to ground — origin sits at terrainY + footOffset so feet touch the terrain
-      const _targetY = _terrainY + charMesh._footOffset + VILLAGE_PLAYER_GROUND_CLEARANCE;
-      charMesh.position.y += (_targetY - charMesh.position.y) * 0.25;
-      charMesh._terrainY = _terrainY;
+      groundPlayableVisualToTerrain(_terrainY);
       // Slope tilt removed — character stays upright
     }
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
