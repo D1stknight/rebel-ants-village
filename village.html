@@ -309,6 +309,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" onclick="addCollisionProxyPiece('ramp')">Add Blue Ramp</button>
     <button class="ctrl-btn" onclick="tiltSelectedRamp(1)">Tilt Ramp Up</button>
     <button class="ctrl-btn" onclick="tiltSelectedRamp(-1)">Tilt Ramp Down</button>
+    <button class="ctrl-btn" onclick="selectBlockingPieceAtPlayer()">Select Blocker Near Player</button>
     <button class="ctrl-btn" onclick="applyAttachedCollisionPiecesToSameType()">Apply to Same Object</button>
     <button class="ctrl-btn danger" onclick="deleteAttachedCollisionProxyPieces()">Delete Attached Pieces</button>
     <button class="ctrl-btn" onclick="saveManualBarriersNow()">Save Manual Barriers</button>
@@ -6905,7 +6906,7 @@ window.addEventListener('resize',()=>engine.resize());
 })();
 
 const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
-const VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING = 0.18;
+const VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING = 0.06;
 const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.025;
 const VILLAGE_STARTER_PLAYER_GROUND_OFFSET = -1.65;
 const VILLAGE_BLOCKER_REBUILD_MS = 900;
@@ -7409,9 +7410,117 @@ function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MAN
   return cachedBlockerHit || liveManualCollisionProxyBlocksSegment(startX, startZ, endX, endZ, padding);
 }
 
+function getVillageManualBlockerDiagnosticsAt(x, z) {
+  rebuildVillageCollisionBlockers();
+  return scene.meshes
+    .filter(mesh => mesh?.metadata?.type === 'collision_proxy' && (mesh.metadata?.proxyPieceKind || 'blocker') === 'blocker')
+    .map(mesh => {
+      const blocker = getManualBlockerObbFromProxy(mesh);
+      if (!blocker) return null;
+
+      const local = pointToVillageSurfaceLocal({
+        centerX: blocker.centerX,
+        centerZ: blocker.centerZ,
+        yaw: blocker.yaw || 0
+      }, x, z);
+      const edgeGapX = Math.abs(local.x) - blocker.halfX;
+      const edgeGapZ = Math.abs(local.z) - blocker.halfZ;
+      const signedGap = Math.max(edgeGapX, edgeGapZ);
+      const inside = signedGap <= VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING;
+
+      return {
+        mesh,
+        name: mesh.name,
+        ownerName: mesh.metadata?.proxyOwnerName || null,
+        ownerType: mesh.metadata?.proxyOwnerType || null,
+        inside,
+        signedGap,
+        distanceToCenter: Math.hypot(x - blocker.centerX, z - blocker.centerZ),
+        size: {
+          width: blocker.halfX * 2,
+          depth: blocker.halfZ * 2,
+          height: Math.abs(mesh.scaling?.y || 1)
+        },
+        position: {
+          x: mesh.position.x,
+          y: mesh.position.y,
+          z: mesh.position.z
+        },
+        rotationY: mesh.rotation?.y || 0
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      if (a.inside !== b.inside) return a.inside ? -1 : 1;
+      return a.signedGap - b.signedGap;
+    });
+}
+
+window.findVillageBlockersAtPlayer = function findVillageBlockersAtPlayer() {
+  if (!charMesh) {
+    console.warn('Village blocker finder: no player root available');
+    return [];
+  }
+
+  const diagnostics = getVillageManualBlockerDiagnosticsAt(charMesh.position.x, charMesh.position.z);
+  const report = diagnostics.slice(0, 8).map(item => ({
+    name: item.name,
+    ownerName: item.ownerName,
+    ownerType: item.ownerType,
+    inside: item.inside,
+    signedGap: Number(item.signedGap.toFixed(3)),
+    distanceToCenter: Number(item.distanceToCenter.toFixed(3)),
+    size: item.size,
+    position: item.position,
+    rotationY: Number(item.rotationY.toFixed(3))
+  }));
+  console.table(report);
+  return diagnostics;
+};
+
+function selectBlockingPieceAtPlayer() {
+  if (!adminMode) {
+    showToast('Enter Admin Mode first');
+    return;
+  }
+  if (!charMesh) {
+    showToast('Player is not loaded');
+    return;
+  }
+
+  const diagnostics = getVillageManualBlockerDiagnosticsAt(charMesh.position.x, charMesh.position.z);
+  const target = diagnostics.find(item => item.inside) || diagnostics[0];
+
+  if (!target || !target.mesh) {
+    showToast('No manual blockers found');
+    return;
+  }
+
+  setSelectedEditableObject(target.mesh);
+  if (target.inside) {
+    showToast(`Selected blocker holding player: ${target.name}`);
+  } else {
+    showToast(`Selected nearest blocker: ${target.name}`);
+  }
+  window.findVillageBlockersAtPlayer();
+}
+
 window.auditVillageCollisionSources = function auditVillageCollisionSources() {
   rebuildVillageCollisionBlockers();
   const manualPieces = scene.meshes.filter(mesh => mesh?.metadata?.type === 'collision_proxy');
+  const playerBlockers = charMesh
+    ? getVillageManualBlockerDiagnosticsAt(charMesh.position.x, charMesh.position.z)
+      .filter(item => item.inside)
+      .map(item => ({
+        name: item.name,
+        ownerName: item.ownerName,
+        ownerType: item.ownerType,
+        signedGap: Number(item.signedGap.toFixed(3)),
+        size: item.size,
+        position: item.position,
+        rotationY: Number(item.rotationY.toFixed(3))
+      }))
+    : [];
   const report = {
     engineCollisionsEnabled: scene.collisionsEnabled === true,
     manualPieceCount: manualPieces.length,
@@ -7421,7 +7530,8 @@ window.auditVillageCollisionSources = function auditVillageCollisionSources() {
     activeGameplayBlockerCount: villageCollisionBlockers.length,
     activeWalkSurfaceCount: villageWalkableSurfaces.length,
     collisionPadding: VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING,
-    automaticBarriersActive: false
+    automaticBarriersActive: false,
+    blockersTouchingPlayer: playerBlockers
   };
   console.log('Village collision audit:', report);
   return report;
