@@ -696,10 +696,7 @@ function setSelectedEditableObject(node) {
   if (!node) return;
   selectedObject = node;
   updateSelectedBadge();
-  gizmoManager.positionGizmoEnabled = true;
-  gizmoManager.rotationGizmoEnabled = false;
-  gizmoManager.scaleGizmoEnabled = false;
-  gizmoManager.attachToNode(selectedObject);
+  attachSelectedGizmo();
 }
 
 function addCollisionProxyPiece(kind) {
@@ -1680,6 +1677,8 @@ let _worklightOn = false;
 let adminDragging = false;
 let pendingAdminPlacement = null;
 let adminPlacementMarker = null;
+let adminGizmoMode = 'move';
+let adminManualProxyRotateDrag = null;
 
 async function hasActiveAdminSession() {
   try {
@@ -6023,13 +6022,26 @@ if (pick.pickedMesh.metadata?.isPickProxy) {
   renderSelectedWalkSurfaceGuide();
 
   if (!adminMode) return;
-  gizmoManager.positionGizmoEnabled = true;
-  gizmoManager.rotationGizmoEnabled = false;
-  gizmoManager.scaleGizmoEnabled = false;
-  gizmoManager.attachToNode(selectedObject);
+  attachSelectedGizmo();
 });
 window.addEventListener('pointerdown', (e) => {
   if (!adminMode || !selectedObject) return;
+  if (
+    e.target === canvas &&
+    adminGizmoMode === 'rotate' &&
+    selectedObject.metadata?.type === 'collision_proxy'
+  ) {
+    const pick = scene.pick(scene.pointerX, scene.pointerY, mesh => mesh === selectedObject || mesh._editRoot === selectedObject);
+    if (pick && pick.hit) {
+      adminManualProxyRotateDrag = {
+        startX: e.clientX,
+        startRotationY: selectedObject.rotation?.y || 0
+      };
+      orbit.detachControl();
+      e.preventDefault();
+      return;
+    }
+  }
   adminDragging = false;
   window._dragStartX = e.clientX;
   window._dragStartY = e.clientY;
@@ -6039,6 +6051,13 @@ window.addEventListener('pointerdown', (e) => {
 
 window.addEventListener('pointermove', (e) => {
   if (!adminMode || !selectedObject) return;
+  if (adminManualProxyRotateDrag && selectedObject.metadata?.type === 'collision_proxy') {
+    const dx = e.clientX - adminManualProxyRotateDrag.startX;
+    selectedObject.rotation.y = adminManualProxyRotateDrag.startRotationY + dx * 0.012;
+    rebuildVillageCollisionBlockers();
+    renderSelectedWalkSurfaceGuide();
+    return;
+  }
   if (window._dragStartX === undefined) return;
   const dx = e.clientX - window._dragStartX;
   const dy = e.clientY - window._dragStartY;
@@ -6046,6 +6065,14 @@ window.addEventListener('pointermove', (e) => {
 });
 
 window.addEventListener('pointerup', () => {
+  if (adminManualProxyRotateDrag) {
+    adminManualProxyRotateDrag = null;
+    if (adminMode) orbit.attachControl(canvas, true);
+    rebuildVillageCollisionBlockers();
+    renderSelectedWalkSurfaceGuide();
+    triggerAutoSave();
+    return;
+  }
   const wasDragging = adminDragging;
   adminDragging = false;
   window._dragStartX = undefined;
@@ -8128,12 +8155,18 @@ function toggleWorklight() {
 
 function setGizmoMode(mode) {
   if (!selectedObject) return;
+  adminGizmoMode = ['move', 'rotate', 'scale'].includes(mode) ? mode : 'move';
+  attachSelectedGizmo();
+  showToast(`${adminGizmoMode.charAt(0).toUpperCase()}${adminGizmoMode.slice(1)} mode`);
+}
+
+function attachSelectedGizmo() {
+  if (!selectedObject || !gizmoManager) return;
   if (gizmoManager) gizmoManager.attachToNode(null);
-  gizmoManager.positionGizmoEnabled = mode === 'move';
-  gizmoManager.rotationGizmoEnabled = mode === 'rotate';
-  gizmoManager.scaleGizmoEnabled = mode === 'scale';
+  gizmoManager.positionGizmoEnabled = adminGizmoMode === 'move';
+  gizmoManager.rotationGizmoEnabled = adminGizmoMode === 'rotate';
+  gizmoManager.scaleGizmoEnabled = adminGizmoMode === 'scale';
   gizmoManager.attachToNode(selectedObject);
-  showToast(`${mode.charAt(0).toUpperCase()}${mode.slice(1)} mode`);
 }
 function flipSelected() {
   if (!selectedObject) return;
