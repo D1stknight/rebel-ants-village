@@ -5880,6 +5880,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
   });
   r.transformNodes.forEach(tn => { if(tn!==playerRoot)tn.parent=playerRoot; if(tn.rotationQuaternion)tn.rotationQuaternion=null; });
   charMesh = playerRoot;
+  charMesh._footOffset = undefined;
   if (r.animationGroups.length > 0) { animGroups[0]=r.animationGroups[0]; const _ta0=animGroups[0].targetedAnimations;for(let _j=_ta0.length-1;_j>=0;_j--){if(_ta0[_j].animation.targetProperty==='position'&&_ta0[_j].target&&_ta0[_j].target.name==='mixamorig_Hips')_ta0.splice(_j,1);} animState=0; animGroups[0].play(true); }
   window.followLight = new BABYLON.PointLight("followLight", new BABYLON.Vector3(9999,-999,9999), scene);
   window.followLight.diffuse = new BABYLON.Color3(1,.82,.5);
@@ -7615,19 +7616,39 @@ function refreshVillageCollisionBlockersIfNeeded() {
 function liveManualCollisionProxyBlocksPoint(x, z, radius = VILLAGE_PLAYER_COLLISION_RADIUS) {
   return scene.meshes.some(mesh => {
     if (!mesh || mesh.isDisposed?.()) return false;
-    if (mesh.metadata?.type !== 'collision_proxy') return false;
-    if ((mesh.metadata.proxyPieceKind || 'blocker') !== 'blocker') return false;
+    const proxyRoot = mesh.metadata?.type === 'collision_proxy'
+      ? mesh
+      : mesh._editRoot?.metadata?.type === 'collision_proxy'
+        ? mesh._editRoot
+        : null;
+    if (!proxyRoot) return false;
+    if ((proxyRoot.metadata?.proxyPieceKind || 'blocker') !== 'blocker') return false;
 
-    const halfX = Math.max(0.15, Math.abs(mesh.scaling?.x || 1) * 0.5);
-    const halfZ = Math.max(0.15, Math.abs(mesh.scaling?.z || 1) * 0.5);
+    const halfX = Math.max(0.15, Math.abs(proxyRoot.scaling?.x || 1) * 0.5);
+    const halfZ = Math.max(0.15, Math.abs(proxyRoot.scaling?.z || 1) * 0.5);
     const local = pointToVillageSurfaceLocal({
-      centerX: mesh.position.x,
-      centerZ: mesh.position.z,
-      yaw: mesh.rotation?.y || 0
+      centerX: proxyRoot.position.x,
+      centerZ: proxyRoot.position.z,
+      yaw: proxyRoot.rotation?.y || 0
     }, x, z);
 
-    return Math.abs(local.x) <= halfX + radius &&
+    const orientedHit = Math.abs(local.x) <= halfX + radius &&
       Math.abs(local.z) <= halfZ + radius;
+    if (orientedHit) return true;
+
+    // Fallback to the real visible bounds. This keeps manual blockers honest
+    // even if a proxy was duplicated, restored, or transformed in a way that
+    // leaves the simplified oriented values stale.
+    proxyRoot.computeWorldMatrix?.(true);
+    const bb = proxyRoot.getBoundingInfo?.().boundingBox;
+    if (!bb) return false;
+
+    const min = bb.minimumWorld;
+    const max = bb.maximumWorld;
+    return x >= min.x - radius &&
+      x <= max.x + radius &&
+      z >= min.z - radius &&
+      z <= max.z + radius;
   });
 }
 
@@ -7760,6 +7781,7 @@ engine.runRenderLoop(()=>{
         let _minY = Infinity;
         charMesh.getChildMeshes(false).forEach(m => {
           if (!m.getTotalVertices || m.getTotalVertices() === 0) return;
+          if (m.isEnabled?.() === false || m.isVisible === false || m.visibility === 0) return;
           m.computeWorldMatrix(true);
           const bb = m.getBoundingInfo().boundingBox;
           if (bb.minimumWorld.y < _minY) _minY = bb.minimumWorld.y;
