@@ -7495,6 +7495,99 @@ window.findVillageBlockersAtPlayer = function findVillageBlockersAtPlayer() {
   return diagnostics;
 };
 
+function getVillageForwardBlockerDiagnostics(distance = 8, stepDistance = 0.35) {
+  if (!charMesh) return [];
+
+  rebuildVillageCollisionBlockers();
+  const startX = charMesh.position.x;
+  const startZ = charMesh.position.z;
+  const forward = {
+    x: Math.sin(charMesh.rotation.y),
+    z: Math.cos(charMesh.rotation.y)
+  };
+  const stepCount = Math.max(1, Math.ceil(distance / Math.max(0.1, stepDistance)));
+  const hitsByName = new Map();
+
+  scene.meshes
+    .filter(mesh => mesh?.metadata?.type === 'collision_proxy' && (mesh.metadata?.proxyPieceKind || 'blocker') === 'blocker')
+    .forEach(mesh => {
+      const blocker = getManualBlockerObbFromProxy(mesh);
+      if (!blocker) return;
+
+      for (let i = 1; i <= stepCount; i += 1) {
+        const distanceAhead = Math.min(distance, i * stepDistance);
+        const endX = startX + forward.x * distanceAhead;
+        const endZ = startZ + forward.z * distanceAhead;
+        if (!villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ)) continue;
+
+        hitsByName.set(mesh.name, {
+          mesh,
+          name: mesh.name,
+          ownerName: mesh.metadata?.proxyOwnerName || null,
+          ownerType: mesh.metadata?.proxyOwnerType || null,
+          distanceAhead,
+          size: {
+            width: blocker.halfX * 2,
+            depth: blocker.halfZ * 2,
+            height: Math.abs(mesh.scaling?.y || 1)
+          },
+          position: {
+            x: mesh.position.x,
+            y: mesh.position.y,
+            z: mesh.position.z
+          },
+          rotationY: mesh.rotation?.y || 0
+        });
+        break;
+      }
+    });
+
+  return [...hitsByName.values()].sort((a, b) => a.distanceAhead - b.distanceAhead);
+}
+
+window.findVillageBlockersInFrontOfPlayer = function findVillageBlockersInFrontOfPlayer(distance = 8) {
+  if (!charMesh) {
+    console.warn('Village forward blocker finder: no player root available');
+    return [];
+  }
+
+  const diagnostics = getVillageForwardBlockerDiagnostics(distance);
+  const report = diagnostics.map(item => ({
+    name: item.name,
+    ownerName: item.ownerName,
+    ownerType: item.ownerType,
+    distanceAhead: Number(item.distanceAhead.toFixed(2)),
+    size: item.size,
+    position: item.position,
+    rotationY: Number(item.rotationY.toFixed(3))
+  }));
+  console.table(report);
+  return diagnostics;
+};
+
+window.selectBlockingPieceInFrontOfPlayer = function selectBlockingPieceInFrontOfPlayer(distance = 8) {
+  if (!adminMode) {
+    showToast('Enter Admin Mode first');
+    return;
+  }
+  if (!charMesh) {
+    showToast('Player is not loaded');
+    return;
+  }
+
+  const diagnostics = getVillageForwardBlockerDiagnostics(distance);
+  const target = diagnostics[0];
+
+  if (!target || !target.mesh) {
+    showToast('No forward blocker found');
+    return;
+  }
+
+  setSelectedEditableObject(target.mesh);
+  showToast(`Selected forward blocker: ${target.name}`);
+  window.findVillageBlockersInFrontOfPlayer(distance);
+};
+
 window.selectBlockingPieceAtPlayer = function selectBlockingPieceAtPlayer() {
   if (!adminMode) {
     showToast('Enter Admin Mode first');
