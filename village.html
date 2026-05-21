@@ -6962,6 +6962,12 @@ function getVillageBaseGroundHeightAt(x, z) {
 function pointToVillageSurfaceLocal(surface, x, z) {
   const dx = x - surface.centerX;
   const dz = z - surface.centerZ;
+  if (surface.axisX && surface.axisZ) {
+    return {
+      x: dx * surface.axisX.x + dz * surface.axisX.z,
+      z: dx * surface.axisZ.x + dz * surface.axisZ.z
+    };
+  }
   const c = Math.cos(-surface.yaw);
   const s = Math.sin(-surface.yaw);
 
@@ -7105,16 +7111,8 @@ function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
   const y = Number.isFinite(node.position.y) ? node.position.y : getVillageGroundHeightAt(node.position.x, node.position.z);
 
   if (kind === 'blocker') {
-    blockers.push({
-      kind: 'obb',
-      centerX: node.position.x,
-      centerZ: node.position.z,
-      yaw,
-      halfX,
-      halfZ,
-      type: 'collision_proxy',
-      name: node.name
-    });
+    const blocker = getManualBlockerObbFromProxy(node);
+    if (blocker) blockers.push(blocker);
     return;
   }
 
@@ -7162,13 +7160,36 @@ function getManualBlockerObbFromProxy(proxyRoot) {
   if (proxyRoot.metadata?.type !== 'collision_proxy') return null;
   if ((proxyRoot.metadata?.proxyPieceKind || 'blocker') !== 'blocker') return null;
 
+  proxyRoot.computeWorldMatrix?.(true);
+  const world = proxyRoot.getWorldMatrix?.();
+  const center = proxyRoot.getAbsolutePosition?.() || proxyRoot.position;
+  let axisX = null;
+  let axisZ = null;
+  let halfX = Math.max(0.15, Math.abs(proxyRoot.scaling?.x || 1) * 0.5);
+  let halfZ = Math.max(0.15, Math.abs(proxyRoot.scaling?.z || 1) * 0.5);
+
+  if (world) {
+    const worldX = BABYLON.Vector3.TransformNormal(BABYLON.Axis.X, world);
+    const worldZ = BABYLON.Vector3.TransformNormal(BABYLON.Axis.Z, world);
+    const xLen = Math.hypot(worldX.x, worldX.z);
+    const zLen = Math.hypot(worldZ.x, worldZ.z);
+    if (xLen > 0.0001 && zLen > 0.0001) {
+      axisX = { x: worldX.x / xLen, z: worldX.z / xLen };
+      axisZ = { x: worldZ.x / zLen, z: worldZ.z / zLen };
+      halfX = Math.max(0.15, xLen * 0.5);
+      halfZ = Math.max(0.15, zLen * 0.5);
+    }
+  }
+
   return {
     kind: 'obb',
-    centerX: proxyRoot.position.x,
-    centerZ: proxyRoot.position.z,
+    centerX: center.x,
+    centerZ: center.z,
     yaw: proxyRoot.rotation?.y || 0,
-    halfX: Math.max(0.15, Math.abs(proxyRoot.scaling?.x || 1) * 0.5),
-    halfZ: Math.max(0.15, Math.abs(proxyRoot.scaling?.z || 1) * 0.5),
+    axisX,
+    axisZ,
+    halfX,
+    halfZ,
     type: 'collision_proxy',
     name: proxyRoot.name
   };
@@ -7418,11 +7439,7 @@ function getVillageManualBlockerDiagnosticsAt(x, z) {
       const blocker = getManualBlockerObbFromProxy(mesh);
       if (!blocker) return null;
 
-      const local = pointToVillageSurfaceLocal({
-        centerX: blocker.centerX,
-        centerZ: blocker.centerZ,
-        yaw: blocker.yaw || 0
-      }, x, z);
+      const local = pointToVillageSurfaceLocal(blocker, x, z);
       const edgeGapX = Math.abs(local.x) - blocker.halfX;
       const edgeGapZ = Math.abs(local.z) - blocker.halfZ;
       const signedGap = Math.max(edgeGapX, edgeGapZ);
@@ -7478,7 +7495,7 @@ window.findVillageBlockersAtPlayer = function findVillageBlockersAtPlayer() {
   return diagnostics;
 };
 
-function selectBlockingPieceAtPlayer() {
+window.selectBlockingPieceAtPlayer = function selectBlockingPieceAtPlayer() {
   if (!adminMode) {
     showToast('Enter Admin Mode first');
     return;
@@ -7503,7 +7520,7 @@ function selectBlockingPieceAtPlayer() {
     showToast(`Selected nearest blocker: ${target.name}`);
   }
   window.findVillageBlockersAtPlayer();
-}
+};
 
 window.auditVillageCollisionSources = function auditVillageCollisionSources() {
   rebuildVillageCollisionBlockers();
