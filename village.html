@@ -889,8 +889,29 @@ function getCollisionProxyOwnerFromSelection() {
   return null;
 }
 
+function getVillageNodeByName(name) {
+  if (!name) return null;
+  return scene.transformNodes.find(node => node.name === name) ||
+    scene.meshes.find(mesh => mesh.name === name) ||
+    null;
+}
+
+function sanitizeCollisionProxyOwner(node) {
+  if (!node || node.metadata?.type !== 'collision_proxy') return false;
+  const ownerName = node.metadata.proxyOwnerName;
+  if (!ownerName) return false;
+
+  const ownerNode = getVillageNodeByName(ownerName);
+  if (ownerNode?.metadata?.type !== 'collision_proxy') return false;
+
+  node.metadata.proxyOwnerName = null;
+  node.metadata.proxyOwnerType = null;
+  return true;
+}
+
 function getAttachedCollisionProxyPieces(ownerNode) {
   if (!ownerNode) return [];
+  if (ownerNode.metadata?.type === 'collision_proxy') return [];
   return scene.transformNodes.filter(node =>
     node &&
     node.metadata?.type === 'collision_proxy' &&
@@ -7197,11 +7218,7 @@ function getManualBlockerObbFromProxy(proxyRoot) {
 
 function villageObbContainsPoint(blocker, x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   if (!blocker) return false;
-  const local = pointToVillageSurfaceLocal({
-    centerX: blocker.centerX,
-    centerZ: blocker.centerZ,
-    yaw: blocker.yaw || 0
-  }, x, z);
+  const local = pointToVillageSurfaceLocal(blocker, x, z);
 
   return Math.abs(local.x) <= blocker.halfX + padding &&
     Math.abs(local.z) <= blocker.halfZ + padding;
@@ -7210,16 +7227,8 @@ function villageObbContainsPoint(blocker, x, z, padding = VILLAGE_MANUAL_BLOCKER
 function villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   if (!blocker) return false;
 
-  const start = pointToVillageSurfaceLocal({
-    centerX: blocker.centerX,
-    centerZ: blocker.centerZ,
-    yaw: blocker.yaw || 0
-  }, startX, startZ);
-  const end = pointToVillageSurfaceLocal({
-    centerX: blocker.centerX,
-    centerZ: blocker.centerZ,
-    yaw: blocker.yaw || 0
-  }, endX, endZ);
+  const start = pointToVillageSurfaceLocal(blocker, startX, startZ);
+  const end = pointToVillageSurfaceLocal(blocker, endX, endZ);
 
   const minX = -blocker.halfX - padding;
   const maxX = blocker.halfX + padding;
@@ -7351,6 +7360,7 @@ function rebuildVillageCollisionBlockers() {
   [...scene.transformNodes, ...scene.meshes].forEach(node => {
     if (!node || node.isDisposed?.()) return;
     if (node.parent) return;
+    sanitizeCollisionProxyOwner(node);
 
     const type = getVillageBlockerTypeFromNode(node);
     if (type === 'collision_proxy') {
@@ -7618,6 +7628,10 @@ window.selectBlockingPieceAtPlayer = function selectBlockingPieceAtPlayer() {
 window.auditVillageCollisionSources = function auditVillageCollisionSources() {
   rebuildVillageCollisionBlockers();
   const manualPieces = scene.meshes.filter(mesh => mesh?.metadata?.type === 'collision_proxy');
+  const nestedProxyOwnerCount = manualPieces.filter(mesh => {
+    const owner = getVillageNodeByName(mesh.metadata?.proxyOwnerName);
+    return owner?.metadata?.type === 'collision_proxy';
+  }).length;
   const playerBlockers = charMesh
     ? getVillageManualBlockerDiagnosticsAt(charMesh.position.x, charMesh.position.z)
       .filter(item => item.inside)
@@ -7641,6 +7655,7 @@ window.auditVillageCollisionSources = function auditVillageCollisionSources() {
     activeWalkSurfaceCount: villageWalkableSurfaces.length,
     collisionPadding: VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING,
     automaticBarriersActive: false,
+    nestedProxyOwnerCount,
     blockersTouchingPlayer: playerBlockers
   };
   console.log('Village collision audit:', report);
