@@ -7121,65 +7121,9 @@ function addVillageRampSurface(walkableSurfaces, centerX, centerZ, yaw, localX, 
   });
 }
 
-function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
-  if (!node || !node.metadata || node.metadata.type !== 'collision_proxy') return;
-
-  const kind = node.metadata.proxyPieceKind || 'blocker';
-  const yaw = node.rotation?.y || 0;
-  const pitch = node.rotation?.x || 0;
-  const halfX = Math.max(0.15, Math.abs(node.scaling?.x || 1) * 0.5);
-  const halfZ = Math.max(0.15, Math.abs(node.scaling?.z || 1) * 0.5);
-  const y = Number.isFinite(node.position.y) ? node.position.y : getVillageGroundHeightAt(node.position.x, node.position.z);
-
-  if (kind === 'blocker') {
-    const blocker = getManualBlockerObbFromProxy(node);
-    if (blocker) blockers.push(blocker);
-    return;
-  }
-
-  if (kind === 'ramp') {
-    const run = Math.max(0.1, halfZ * 2);
-    const pitchRise = Math.tan(-pitch) * run;
-    const fallbackRise = Math.max(0.05, Math.abs(node.scaling?.y || 1));
-    const rise = Math.abs(pitchRise) > 0.05 ? pitchRise : fallbackRise;
-    addVillageRampSurface(
-      walkableSurfaces,
-      node.position.x,
-      node.position.z,
-      yaw,
-      0,
-      0,
-      halfX,
-      halfZ,
-      y - rise * 0.5,
-      y + rise * 0.5,
-      'collision_proxy',
-      `${node.name}_manual_ramp`,
-      'z',
-      rise >= 0 ? -1 : 1
-    );
-    return;
-  }
-
-  addVillageWalkableSurface(
-    walkableSurfaces,
-    node.position.x,
-    node.position.z,
-    yaw,
-    0,
-    0,
-    halfX,
-    halfZ,
-    y,
-    'collision_proxy',
-    `${node.name}_manual_walk`
-  );
-}
-
-function getManualBlockerObbFromProxy(proxyRoot) {
+function getCollisionProxyWorldFootprint(proxyRoot) {
   if (!proxyRoot || proxyRoot.isDisposed?.()) return null;
   if (proxyRoot.metadata?.type !== 'collision_proxy') return null;
-  if ((proxyRoot.metadata?.proxyPieceKind || 'blocker') !== 'blocker') return null;
 
   proxyRoot.computeWorldMatrix?.(true);
   const world = proxyRoot.getWorldMatrix?.();
@@ -7188,6 +7132,7 @@ function getManualBlockerObbFromProxy(proxyRoot) {
   let axisZ = null;
   let halfX = Math.max(0.15, Math.abs(proxyRoot.scaling?.x || 1) * 0.5);
   let halfZ = Math.max(0.15, Math.abs(proxyRoot.scaling?.z || 1) * 0.5);
+  let yaw = proxyRoot.rotation?.y || 0;
 
   if (world) {
     const worldX = BABYLON.Vector3.TransformNormal(BABYLON.Axis.X, world);
@@ -7199,18 +7144,95 @@ function getManualBlockerObbFromProxy(proxyRoot) {
       axisZ = { x: worldZ.x / zLen, z: worldZ.z / zLen };
       halfX = Math.max(0.15, xLen * 0.5);
       halfZ = Math.max(0.15, zLen * 0.5);
+      yaw = Math.atan2(axisX.z, axisX.x);
     }
   }
 
   return {
-    kind: 'obb',
     centerX: center.x,
+    centerY: center.y,
     centerZ: center.z,
-    yaw: proxyRoot.rotation?.y || 0,
+    yaw,
     axisX,
     axisZ,
     halfX,
-    halfZ,
+    halfZ
+  };
+}
+
+function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
+  if (!node || !node.metadata || node.metadata.type !== 'collision_proxy') return;
+
+  const kind = node.metadata.proxyPieceKind || 'blocker';
+  const footprint = getCollisionProxyWorldFootprint(node);
+  if (!footprint) return;
+  const pitch = node.rotation?.x || 0;
+  const y = Number.isFinite(footprint.centerY)
+    ? footprint.centerY
+    : getVillageGroundHeightAt(footprint.centerX, footprint.centerZ);
+
+  if (kind === 'blocker') {
+    const blocker = getManualBlockerObbFromProxy(node);
+    if (blocker) blockers.push(blocker);
+    return;
+  }
+
+  if (kind === 'ramp') {
+    const run = Math.max(0.1, footprint.halfZ * 2);
+    const pitchRise = Math.tan(-pitch) * run;
+    const fallbackRise = Math.max(0.05, Math.abs(node.scaling?.y || 1));
+    const rise = Math.abs(pitchRise) > 0.05 ? pitchRise : fallbackRise;
+    walkableSurfaces.push({
+      kind: 'ramp',
+      centerX: footprint.centerX,
+      centerZ: footprint.centerZ,
+      yaw: footprint.yaw,
+      axisX: footprint.axisX,
+      axisZ: footprint.axisZ,
+      halfX: footprint.halfX,
+      halfZ: footprint.halfZ,
+      startY: y - rise * 0.5,
+      endY: y + rise * 0.5,
+      rampAxis: 'z',
+      rampSign: rise >= 0 ? -1 : 1,
+      type: 'collision_proxy',
+      name: `${node.name}_manual_ramp`
+    });
+    return;
+  }
+
+  walkableSurfaces.push({
+    kind: 'flat',
+    centerX: footprint.centerX,
+    centerZ: footprint.centerZ,
+    yaw: footprint.yaw,
+    axisX: footprint.axisX,
+    axisZ: footprint.axisZ,
+    halfX: footprint.halfX,
+    halfZ: footprint.halfZ,
+    y,
+    type: 'collision_proxy',
+    name: `${node.name}_manual_walk`
+  });
+}
+
+function getManualBlockerObbFromProxy(proxyRoot) {
+  if (!proxyRoot || proxyRoot.isDisposed?.()) return null;
+  if (proxyRoot.metadata?.type !== 'collision_proxy') return null;
+  if ((proxyRoot.metadata?.proxyPieceKind || 'blocker') !== 'blocker') return null;
+
+  const footprint = getCollisionProxyWorldFootprint(proxyRoot);
+  if (!footprint) return null;
+
+  return {
+    kind: 'obb',
+    centerX: footprint.centerX,
+    centerZ: footprint.centerZ,
+    yaw: footprint.yaw,
+    axisX: footprint.axisX,
+    axisZ: footprint.axisZ,
+    halfX: footprint.halfX,
+    halfZ: footprint.halfZ,
     type: 'collision_proxy',
     name: proxyRoot.name
   };
