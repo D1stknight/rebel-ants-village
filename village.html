@@ -311,9 +311,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" onclick="tiltSelectedRamp(-1)">Tilt Ramp Down</button>
     <button class="ctrl-btn" onclick="selectBlockingPieceAtPlayer()">Select Blocker Near Player</button>
     <button class="ctrl-btn" onclick="applyAttachedCollisionPiecesToSameType()">Apply to Same Object</button>
+    <button class="ctrl-btn" id="toggleManualPiecesBtn" onclick="toggleManualBarrierVisibility()">Hide Manual Pieces</button>
     <button class="ctrl-btn danger" onclick="deleteAttachedCollisionProxyPieces()">Delete Attached Pieces</button>
     <button class="ctrl-btn" onclick="saveManualBarriersNow()">Save Manual Barriers</button>
   </div>
+  <div id="manualBarrierSaveStatus" style="font-size:10px;line-height:1.35;color:#77e6df;margin-top:8px;min-height:16px"></div>
 </div>
   <hr class="ap-divider">
   <div style="padding:0 8px 6px">
@@ -589,6 +591,7 @@ function spawnAsset(type, position, extraMeta) {
 
 let collisionProxyCounter = 0;
 let collisionProxyMaterials = null;
+let manualBarrierVisualsVisible = localStorage.getItem('rebelAntsManualBarrierVisualsVisible') !== 'false';
 
 function getCollisionProxyMaterials() {
   if (collisionProxyMaterials) return collisionProxyMaterials;
@@ -880,10 +883,18 @@ function moveAttachedCollisionProxyPieces(ownerNode, delta) {
 
 function getCollisionProxyOwnerFromSelection() {
   if (!selectedObject) return null;
+  if (selectedObject._editRoot && selectedObject._editRoot !== selectedObject) {
+    if (selectedObject._editRoot.metadata?.type !== 'collision_proxy') return selectedObject._editRoot;
+    return null;
+  }
+  if (selectedObject.metadata?.isPickProxy) {
+    const root = selectedObject.metadata.proxyFor || selectedObject._editRoot || null;
+    if (root?.metadata?.type && root.metadata.type !== 'collision_proxy') return root;
+    return null;
+  }
   if (selectedObject.metadata?.type === 'collision_proxy' && selectedObject.metadata?.proxyOwnerName) {
-    return scene.transformNodes.find(node => node.name === selectedObject.metadata.proxyOwnerName) ||
-      scene.meshes.find(mesh => mesh.name === selectedObject.metadata.proxyOwnerName) ||
-      null;
+    const owner = getVillageNodeByName(selectedObject.metadata.proxyOwnerName);
+    return owner?.metadata?.type === 'collision_proxy' ? null : owner;
   }
   if (selectedObject.metadata?.type && selectedObject.metadata?.type !== 'collision_proxy') return selectedObject;
   return null;
@@ -924,7 +935,7 @@ function getAttachedCollisionProxyPieces(ownerNode) {
 }
 
 function getEditableObjectsByType(type) {
-  const transformNodes = scene.transformNodes.filter(node =>
+  return scene.transformNodes.filter(node =>
     node &&
     !node.parent &&
     node.metadata?.isClone &&
@@ -932,13 +943,6 @@ function getEditableObjectsByType(type) {
     node.metadata?.type !== 'collision_proxy' &&
     !node.metadata?.isPickProxy
   );
-  const pickMeshes = scene.meshes.filter(mesh =>
-    mesh &&
-    mesh.metadata?.isClone &&
-    mesh.metadata?.isPickProxy &&
-    mesh.metadata?.type === type
-  );
-  return [...transformNodes, ...pickMeshes];
 }
 
 function getCollisionTemplateStorageKey(type) {
@@ -1042,7 +1046,7 @@ function applySavedCollisionTemplateIfAvailable(ownerNode) {
 function applyAttachedCollisionPiecesToSameType() {
   const ownerNode = getCollisionProxyOwnerFromSelection();
   if (!ownerNode) {
-    showToast('Select the object that owns the pieces first');
+    showToast('Select the real object that owns the pieces first');
     return;
   }
 
@@ -1055,29 +1059,58 @@ function applyAttachedCollisionPiecesToSameType() {
 
   const targets = getEditableObjectsByType(ownerType).filter(node => node !== ownerNode);
   let totalCreated = 0;
+  const appliedTargets = [];
   targets.forEach(node => {
-    totalCreated += applyCollisionProxyTemplateToOwner(node, template, { replace: true });
+    const created = applyCollisionProxyTemplateToOwner(node, template, { replace: true });
+    totalCreated += created;
+    appliedTargets.push({ name: node.name, type: ownerType, piecesCreated: created });
   });
 
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
-  showToast(`Applied ${template.pieces.length} piece${template.pieces.length === 1 ? '' : 's'} to ${targets.length} ${ownerType} object${targets.length === 1 ? '' : 's'}`);
+  console.table(appliedTargets);
+  const status = document.getElementById('manualBarrierSaveStatus');
+  if (status) {
+    status.textContent = `Applied ${totalCreated} manual piece${totalCreated === 1 ? '' : 's'} to ${targets.length} matching ${ownerType} object${targets.length === 1 ? '' : 's'}.`;
+  }
+  showToast(`Applied ${totalCreated} manual piece${totalCreated === 1 ? '' : 's'} to ${targets.length} matching ${ownerType} object${targets.length === 1 ? '' : 's'}`);
+}
+
+function updateManualBarrierVisibilityButton() {
+  const button = document.getElementById('toggleManualPiecesBtn');
+  if (button) button.textContent = manualBarrierVisualsVisible ? 'Hide Manual Pieces' : 'Show Manual Pieces';
 }
 
 function setCollisionProxyVisualsVisible(visible) {
+  const shouldShow = visible && manualBarrierVisualsVisible;
   scene.transformNodes.forEach(node => {
     if (!node || node.metadata?.type !== 'collision_proxy') return;
     node.getChildMeshes?.(false).forEach(mesh => {
-      mesh.setEnabled(visible);
-      mesh.isPickable = visible;
+      mesh.setEnabled(true);
+      mesh.visibility = shouldShow ? 1 : 0;
+      mesh.isPickable = shouldShow;
     });
   });
   scene.meshes.forEach(mesh => {
     if (!mesh || mesh.metadata?.type !== 'collision_proxy') return;
-    mesh.setEnabled(visible);
-    mesh.isPickable = visible;
+    mesh.setEnabled(true);
+    mesh.visibility = shouldShow ? 1 : 0;
+    mesh.isPickable = shouldShow;
   });
+  updateManualBarrierVisibilityButton();
+}
+
+function toggleManualBarrierVisibility() {
+  manualBarrierVisualsVisible = !manualBarrierVisualsVisible;
+  localStorage.setItem('rebelAntsManualBarrierVisualsVisible', manualBarrierVisualsVisible ? 'true' : 'false');
+  setCollisionProxyVisualsVisible(adminMode);
+  if (!manualBarrierVisualsVisible && selectedObject?.metadata?.type === 'collision_proxy') {
+    selectedObject = null;
+    updateSelectedBadge();
+    gizmoManager?.attachToNode?.(null);
+  }
+  showToast(manualBarrierVisualsVisible ? 'Manual pieces visible' : 'Manual pieces hidden');
 }
 
 function buildAmbientGlow(root, glowColor, glowBrightness, glowShape, glowWidth, glowDepth) {
@@ -1900,11 +1933,20 @@ function refreshSelectedWalkSurfaceGuide() {
   renderSelectedWalkSurfaceGuide();
 }
 
-function saveManualBarriersNow() {
+async function saveManualBarriersNow() {
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
-  saveWorldLayout(false);
-  showToast('Manual barriers saved locally');
+  const manualPieces = scene.meshes.filter(mesh => mesh?.metadata?.type === 'collision_proxy');
+  const status = document.getElementById('manualBarrierSaveStatus');
+  if (status) status.textContent = 'Saving manual barriers...';
+  const saved = await saveWorldLayout(false);
+  const timestamp = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  if (status) {
+    status.textContent = saved
+      ? `Saved ${manualPieces.length} manual piece${manualPieces.length === 1 ? '' : 's'} locally at ${timestamp}.`
+      : 'Manual barrier save failed.';
+  }
+  showToast(saved ? `Manual barriers saved (${manualPieces.length} pieces)` : 'Manual barrier save failed');
 }
 
 ['proxyWalkSurfaceEnabled', 'proxyDebugVisible'].forEach(id => {
@@ -8755,6 +8797,8 @@ window.refreshSelectedWalkSurfaceGuide = refreshSelectedWalkSurfaceGuide;
 window.addCollisionProxyPiece = addCollisionProxyPiece;
 window.deleteAttachedCollisionProxyPieces = deleteAttachedCollisionProxyPieces;
 window.applyAttachedCollisionPiecesToSameType = applyAttachedCollisionPiecesToSameType;
+window.toggleManualBarrierVisibility = toggleManualBarrierVisibility;
+window.saveManualBarriersNow = saveManualBarriersNow;
 window.clearAdminPlacement = clearAdminPlacement;
 window.toggleWorklight = toggleWorklight;
 window.saveWorldLayout = saveWorldLayout;
