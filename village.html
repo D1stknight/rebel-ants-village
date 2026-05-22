@@ -310,6 +310,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" onclick="tiltSelectedRamp(1)">Tilt Ramp Up</button>
     <button class="ctrl-btn" onclick="tiltSelectedRamp(-1)">Tilt Ramp Down</button>
     <button class="ctrl-btn" onclick="selectBlockingPieceAtPlayer()">Select Blocker Near Player</button>
+    <button class="ctrl-btn" onclick="attachNearbyManualPiecesToSelectedObject()">Attach Nearby Pieces</button>
     <button class="ctrl-btn" onclick="applyAttachedCollisionPiecesToSameType()">Apply to Same Object</button>
     <button class="ctrl-btn" id="toggleManualPiecesBtn" onclick="toggleManualBarrierVisibility()">Hide Manual Pieces</button>
     <button class="ctrl-btn danger" onclick="deleteAttachedCollisionProxyPieces()">Delete Attached Pieces</button>
@@ -646,11 +647,26 @@ function createCollisionProxyPiece(kind, position, options = {}) {
 function getSelectedProxyOwner() {
   const attachInput = document.getElementById('proxyAttachToSelected');
   if (!attachInput || attachInput.checked !== true) return null;
-  if (!selectedObject || selectedObject.metadata?.type === 'collision_proxy') return null;
-  return {
-    name: selectedObject.name,
-    type: selectedObject.metadata?.type || getObjectType(selectedObject) || null
+  const ownerNode = selectedObject?.metadata?.type === 'collision_proxy'
+    ? getVillageNodeByName(activeCollisionProxyOwner?.name)
+    : getCollisionProxyOwnerFromSelection();
+  if (!ownerNode || ownerNode.metadata?.type === 'collision_proxy') return null;
+
+  activeCollisionProxyOwner = {
+    name: ownerNode.name,
+    type: ownerNode.metadata?.type || getObjectType(ownerNode) || null
   };
+  return activeCollisionProxyOwner;
+}
+
+function rememberCollisionProxyOwnerFromSelection(node = selectedObject) {
+  if (!node || !node.metadata) return;
+  if (node.metadata.type === 'collision_proxy') return;
+  if (node.metadata.isPickProxy) return;
+
+  const ownerType = node.metadata.type || getObjectType(node);
+  if (!ownerType) return;
+  activeCollisionProxyOwner = { name: node.name, type: ownerType };
 }
 
 function getCollisionProxyLabel(kind) {
@@ -662,6 +678,7 @@ function getCollisionProxyLabel(kind) {
 function setSelectedEditableObject(node) {
   if (!node) return;
   selectedObject = node;
+  rememberCollisionProxyOwnerFromSelection(node);
   updateSelectedBadge();
   attachSelectedGizmo();
 }
@@ -932,6 +949,56 @@ function getAttachedCollisionProxyPieces(ownerNode) {
     node.metadata?.type === 'collision_proxy' &&
     node.metadata?.proxyOwnerName === ownerNode.name
   ));
+}
+
+function getStandaloneCollisionProxyPiecesNear(ownerNode, radius = 28) {
+  if (!ownerNode || ownerNode.metadata?.type === 'collision_proxy') return [];
+  const ownerPosition = ownerNode.getAbsolutePosition?.() || ownerNode.position;
+  if (!ownerPosition) return [];
+  const radiusSq = radius * radius;
+
+  return scene.meshes.filter(mesh => {
+    if (!mesh || mesh.metadata?.type !== 'collision_proxy') return false;
+    if (mesh.metadata.proxyOwnerName) return false;
+    const dx = mesh.position.x - ownerPosition.x;
+    const dz = mesh.position.z - ownerPosition.z;
+    return dx * dx + dz * dz <= radiusSq;
+  });
+}
+
+function attachNearbyManualPiecesToSelectedObject(radius = 28) {
+  const ownerNode = getCollisionProxyOwnerFromSelection();
+  if (!ownerNode) {
+    showToast('Select the object that should own the pieces first');
+    return;
+  }
+
+  const ownerType = ownerNode.metadata?.type || getObjectType(ownerNode);
+  const pieces = getStandaloneCollisionProxyPiecesNear(ownerNode, radius);
+  if (!pieces.length) {
+    showToast('No nearby standalone manual pieces found');
+    return;
+  }
+
+  pieces.forEach(piece => {
+    piece.metadata.proxyOwnerName = ownerNode.name;
+    piece.metadata.proxyOwnerType = ownerType;
+  });
+
+  activeCollisionProxyOwner = { name: ownerNode.name, type: ownerType };
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
+  const status = document.getElementById('manualBarrierSaveStatus');
+  if (status) {
+    status.textContent = `Attached ${pieces.length} nearby manual piece${pieces.length === 1 ? '' : 's'} to ${ownerType}.`;
+  }
+  console.table(pieces.map(piece => ({
+    name: piece.name,
+    ownerName: piece.metadata.proxyOwnerName,
+    ownerType: piece.metadata.proxyOwnerType
+  })));
+  showToast(`Attached ${pieces.length} nearby manual piece${pieces.length === 1 ? '' : 's'} to selected object`);
 }
 
 function getEditableObjectsByType(type) {
@@ -5940,6 +6007,7 @@ window.visualizeRebelGeneratedBonePlan = async function(glbUrl) {
   
 let moveForward=false, moveBackward=false, turnLeft=false, turnRight=false, runKey=false;
 let selectedObject = null;
+let activeCollisionProxyOwner = null;
 let _signTriggers = [];
 let fenceRootRef = null;
 let dojoRootRef = null;
@@ -6131,6 +6199,7 @@ if (pick.pickedMesh.metadata?.isPickProxy) {
   if (!editableNode) return;
 
   selectedObject = editableNode;
+  rememberCollisionProxyOwnerFromSelection(editableNode);
   updateSelectedBadge();
   renderSelectedWalkSurfaceGuide();
 
@@ -8795,6 +8864,7 @@ window.applySelectedWalkSurfaceSettings = applySelectedWalkSurfaceSettings;
 window.applyWalkSurfaceSettingsToSameType = applyWalkSurfaceSettingsToSameType;
 window.refreshSelectedWalkSurfaceGuide = refreshSelectedWalkSurfaceGuide;
 window.addCollisionProxyPiece = addCollisionProxyPiece;
+window.attachNearbyManualPiecesToSelectedObject = attachNearbyManualPiecesToSelectedObject;
 window.deleteAttachedCollisionProxyPieces = deleteAttachedCollisionProxyPieces;
 window.applyAttachedCollisionPiecesToSameType = applyAttachedCollisionPiecesToSameType;
 window.toggleManualBarrierVisibility = toggleManualBarrierVisibility;
