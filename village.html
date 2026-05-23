@@ -2207,6 +2207,11 @@ function buildTreasureChest(root) {
   blackMat.diffuseColor = new BABYLON.Color3(0.012, 0.01, 0.009);
   blackMat.emissiveColor = new BABYLON.Color3(0, 0, 0);
 
+  const innerMat = new BABYLON.StandardMaterial(`${root.name}_treasureChestInnerMat`, scene);
+  innerMat.diffuseColor = new BABYLON.Color3(0.105, 0.055, 0.025);
+  innerMat.emissiveColor = new BABYLON.Color3(0.016, 0.008, 0.004);
+  innerMat.specularColor = new BABYLON.Color3(0.03, 0.02, 0.012);
+
   const glowMat = new BABYLON.StandardMaterial(`${root.name}_treasureChestGlowMat`, scene);
   glowMat.diffuseColor = new BABYLON.Color3(1, 0.72, 0.22);
   glowMat.emissiveColor = new BABYLON.Color3(0.9, 0.45, 0.08);
@@ -2253,6 +2258,10 @@ function buildTreasureChest(root) {
   lidPivot.position.set(0, 1.28, 0.9);
 
   const lid = addBox('lid', { width: 3.25, height: 0.58, depth: 2.1 }, { x: 0, y: 0.18, z: -0.9 }, lidMat, lidPivot);
+  addBox('lidInnerPanel', { width: 2.82, height: 0.08, depth: 1.62 }, { x: 0, y: -0.14, z: -0.9 }, innerMat, lidPivot);
+  addBox('lidInnerFrontLip', { width: 3.02, height: 0.14, depth: 0.12 }, { x: 0, y: -0.09, z: -1.74 }, metalMat, lidPivot);
+  addBox('lidInnerLeftLip', { width: 0.12, height: 0.14, depth: 1.62 }, { x: -1.5, y: -0.09, z: -0.9 }, metalMat, lidPivot);
+  addBox('lidInnerRightLip', { width: 0.12, height: 0.14, depth: 1.62 }, { x: 1.5, y: -0.09, z: -0.9 }, metalMat, lidPivot);
   [-0.42, -0.14, 0.14, 0.42].forEach((x, index) => {
     addBox(`lidPlankGroove_${index}`, { width: 0.035, height: 0.035, depth: 1.72 }, { x, y: 0.49, z: -0.9 }, grooveMat, lidPivot);
   });
@@ -2289,7 +2298,7 @@ function buildTreasureChest(root) {
   lidPivot.rotation.x = root.metadata.opened === true ? 1.05 : 0;
   root.metadata._chestLidPivot = lidPivot;
   root.metadata._chestGlow = glow;
-  root.metadata._chestMats = [woodMat, lidMat, metalMat, goldMat, grooveMat, blackMat, glowMat];
+  root.metadata._chestMats = [woodMat, lidMat, metalMat, goldMat, grooveMat, blackMat, innerMat, glowMat];
 }
 
 function getTreasureChestRoots() {
@@ -2320,8 +2329,38 @@ function getNearestTreasureChestInRange(range = 5.5) {
   return nearest;
 }
 
+function animateTreasureChestLid(chest, open) {
+  const lidPivot = chest?.metadata?._chestLidPivot;
+  if (!lidPivot) return;
+
+  const target = open ? 1.05 : 0;
+  const anim = new BABYLON.Animation(`${chest.name}_${open ? 'open' : 'close'}Lid`, 'rotation.x', 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+  anim.setKeys([
+    { frame: 0, value: lidPivot.rotation.x || 0 },
+    { frame: 18, value: target }
+  ]);
+  lidPivot.animations = [anim];
+  scene.beginAnimation(lidPivot, 0, 18, false);
+}
+
+function closeTreasureChest(chest) {
+  if (!chest || chest.metadata?.type !== 'treasure_chest') return false;
+  if (chest.metadata.opened !== true) return false;
+
+  chest.metadata.opened = false;
+  animateTreasureChestLid(chest, false);
+  if (chest.metadata._chestGlow) chest.metadata._chestGlow.setEnabled(false);
+  triggerAutoSave();
+  return true;
+}
+
 function updateTreasureChestPrompt() {
   const chest = walkMode && !adminMode ? getNearestTreasureChestInRange() : null;
+  getTreasureChestRoots().forEach(candidate => {
+    if (candidate !== chest && candidate.metadata?.opened === true) {
+      closeTreasureChest(candidate);
+    }
+  });
   window._nearestTreasureChest = chest;
   setInteractionPrompt('Press O to Open', Boolean(chest && chest.metadata?.opened !== true));
 }
@@ -2338,15 +2377,7 @@ function openTreasureChest(chest) {
   const glow = chest.metadata._chestGlow;
   if (glow) glow.setEnabled(true);
 
-  if (lidPivot) {
-    const anim = new BABYLON.Animation(`${chest.name}_openLid`, 'rotation.x', 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
-    anim.setKeys([
-      { frame: 0, value: lidPivot.rotation.x || 0 },
-      { frame: 18, value: 1.05 }
-    ]);
-    lidPivot.animations = [anim];
-    scene.beginAnimation(lidPivot, 0, 18, false);
-  }
+  if (lidPivot) animateTreasureChestLid(chest, true);
 
   // Reward payout intentionally stubbed for future $REBEL/economy API integration.
   triggerAutoSave();
