@@ -8,6 +8,15 @@ function getGitHubToken() {
   return process.env.GITHUB_TOKEN || '';
 }
 
+function getGitHubTokenDebug(token) {
+  return {
+    envVarName: 'GITHUB_TOKEN',
+    hasGithubToken: Boolean(token),
+    tokenLength: token ? token.length : 0,
+    tokenPrefix: token ? token.slice(0, 4) : ''
+  };
+}
+
 async function getGitHubErrorMessage(response) {
   const text = await response.text().catch(() => '');
 
@@ -145,10 +154,12 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, saved: true });
   } catch (err) {
     console.error('world-layout error:', err);
+    const token = getGitHubToken();
 
     return res.status(500).json({
       ok: false,
-      error: err?.message || 'Could not sync world layout'
+      error: err?.message || 'Could not sync world layout',
+      githubDebug: getGitHubTokenDebug(token)
     });
   }
 }
