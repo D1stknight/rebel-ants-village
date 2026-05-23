@@ -951,22 +951,63 @@ function getAttachedCollisionProxyPieces(ownerNode) {
   ));
 }
 
-function getStandaloneCollisionProxyPiecesNear(ownerNode, radius = 28) {
-  if (!ownerNode || ownerNode.metadata?.type === 'collision_proxy') return [];
+function getOwnerCollisionAttachArea(ownerNode, padding = 12) {
+  if (!ownerNode || ownerNode.metadata?.type === 'collision_proxy') return null;
   const ownerPosition = ownerNode.getAbsolutePosition?.() || ownerNode.position;
-  if (!ownerPosition) return [];
-  const radiusSq = radius * radius;
+  if (!ownerPosition) return null;
+
+  let minX = ownerPosition.x;
+  let maxX = ownerPosition.x;
+  let minZ = ownerPosition.z;
+  let maxZ = ownerPosition.z;
+  const meshes = ownerNode.getChildMeshes?.(false) || [];
+  meshes.forEach(mesh => {
+    if (!mesh || mesh.isDisposed?.() || !mesh.getBoundingInfo) return;
+    mesh.computeWorldMatrix?.(true);
+    const box = mesh.getBoundingInfo().boundingBox;
+    minX = Math.min(minX, box.minimumWorld.x);
+    maxX = Math.max(maxX, box.maximumWorld.x);
+    minZ = Math.min(minZ, box.minimumWorld.z);
+    maxZ = Math.max(maxZ, box.maximumWorld.z);
+  });
+
+  const centerX = (minX + maxX) * 0.5;
+  const centerZ = (minZ + maxZ) * 0.5;
+  const radius = Math.max(18, Math.hypot(maxX - minX, maxZ - minZ) * 0.5 + padding);
+
+  return {
+    centerX,
+    centerZ,
+    radius,
+    minX: minX - padding,
+    maxX: maxX + padding,
+    minZ: minZ - padding,
+    maxZ: maxZ + padding
+  };
+}
+
+function getStandaloneCollisionProxyPiecesNear(ownerNode, radius = null) {
+  if (!ownerNode || ownerNode.metadata?.type === 'collision_proxy') return [];
+  const area = getOwnerCollisionAttachArea(ownerNode, 14);
+  if (!area) return [];
+  const useRadius = Number.isFinite(radius) ? radius : area.radius;
+  const radiusSq = useRadius * useRadius;
 
   return scene.meshes.filter(mesh => {
     if (!mesh || mesh.metadata?.type !== 'collision_proxy') return false;
     if (mesh.metadata.proxyOwnerName) return false;
-    const dx = mesh.position.x - ownerPosition.x;
-    const dz = mesh.position.z - ownerPosition.z;
-    return dx * dx + dz * dz <= radiusSq;
+    const insideExpandedBounds =
+      mesh.position.x >= area.minX &&
+      mesh.position.x <= area.maxX &&
+      mesh.position.z >= area.minZ &&
+      mesh.position.z <= area.maxZ;
+    const dx = mesh.position.x - area.centerX;
+    const dz = mesh.position.z - area.centerZ;
+    return insideExpandedBounds || dx * dx + dz * dz <= radiusSq;
   });
 }
 
-function attachNearbyManualPiecesToSelectedObject(radius = 28) {
+function attachNearbyManualPiecesToSelectedObject(radius = null) {
   const ownerNode = getCollisionProxyOwnerFromSelection();
   if (!ownerNode) {
     showToast('Select the object that should own the pieces first');
@@ -1024,9 +1065,12 @@ function makeCollisionProxyTemplate(ownerNode) {
 
   const pieces = getAttachedCollisionProxyPieces(ownerNode).map(piece => {
     piece.computeWorldMatrix?.(true);
-    const localPosition = BABYLON.Vector3.TransformCoordinates(piece.position, inverseOwner);
+    const pieceWorld = piece.getWorldMatrix ? piece.getWorldMatrix() : BABYLON.Matrix.Translation(piece.position.x, piece.position.y, piece.position.z);
+    const localMatrix = pieceWorld.multiply(inverseOwner);
+    const localPosition = BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.Zero(), localMatrix);
     return {
       proxyPieceKind: piece.metadata?.proxyPieceKind || 'blocker',
+      localMatrix: localMatrix.toArray(),
       localPosition: { x: localPosition.x, y: localPosition.y, z: localPosition.z },
       rotation: {
         x: piece.rotation?.x || 0,
@@ -1075,18 +1119,35 @@ function applyCollisionProxyTemplateToOwner(ownerNode, template, options = {}) {
   let created = 0;
 
   template.pieces.forEach(piece => {
-    const local = piece.localPosition || { x: 0, y: 0, z: 0 };
-    const worldPosition = BABYLON.Vector3.TransformCoordinates(
-      new BABYLON.Vector3(local.x || 0, local.y || 0, local.z || 0),
-      ownerMatrix
-    );
+    let worldPosition;
+    let rotation = {
+      x: piece.rotation?.x || 0,
+      y: (ownerNode.rotation?.y || 0) + (piece.rotation?.y || 0),
+      z: piece.rotation?.z || 0
+    };
+    let scaling = piece.scaling || { x: 1, y: 1, z: 1 };
+
+    if (Array.isArray(piece.localMatrix) && piece.localMatrix.length === 16) {
+      const worldMatrix = BABYLON.Matrix.FromArray(piece.localMatrix).multiply(ownerMatrix);
+      const decomposedScale = new BABYLON.Vector3(1, 1, 1);
+      const decomposedRotation = new BABYLON.Quaternion();
+      const decomposedPosition = new BABYLON.Vector3();
+      worldMatrix.decompose(decomposedScale, decomposedRotation, decomposedPosition);
+      const euler = decomposedRotation.toEulerAngles();
+      worldPosition = decomposedPosition;
+      rotation = { x: euler.x, y: euler.y, z: euler.z };
+      scaling = { x: decomposedScale.x, y: decomposedScale.y, z: decomposedScale.z };
+    } else {
+      const local = piece.localPosition || { x: 0, y: 0, z: 0 };
+      worldPosition = BABYLON.Vector3.TransformCoordinates(
+        new BABYLON.Vector3(local.x || 0, local.y || 0, local.z || 0),
+        ownerMatrix
+      );
+    }
+
     const proxy = createCollisionProxyPiece(piece.proxyPieceKind || 'blocker', worldPosition, {
-      rotation: {
-        x: piece.rotation?.x || 0,
-        y: (ownerNode.rotation?.y || 0) + (piece.rotation?.y || 0),
-        z: piece.rotation?.z || 0
-      },
-      scaling: piece.scaling || { x: 1, y: 1, z: 1 },
+      rotation,
+      scaling,
       proxyOwnerName: ownerNode.name,
       proxyOwnerType: ownerType
     });
@@ -1135,6 +1196,7 @@ function applyAttachedCollisionPiecesToSameType() {
 
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
+  setCollisionProxyVisualsVisible(adminMode);
   triggerAutoSave();
   console.table(appliedTargets);
   const status = document.getElementById('manualBarrierSaveStatus');
