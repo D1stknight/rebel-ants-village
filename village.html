@@ -6629,7 +6629,7 @@ return Promise.resolve(true);
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ layout: data })
       });
-      const result = await response.json();
+      const result = await response.json().catch(() => ({}));
 
       if (!response.ok || !result.ok) {
         throw new Error(result.error || "World layout save failed. Status: " + response.status);
@@ -6641,7 +6641,7 @@ return Promise.resolve(true);
       return true;
     } catch (e) {
       console.error("World layout GitHub save failed", e);
-      showToast('⚠ Save failed — try again');
+      showToast('⚠ Save failed — ' + (e.message || 'try again'));
       return false;
     }
   });

@@ -4,6 +4,23 @@ const REPO = 'D1stknight/rebel-ants-village';
 const BRANCH = 'dev';
 const FILE_PATH = 'assets/world-layout.json';
 
+function getGitHubToken() {
+  return process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
+}
+
+async function getGitHubErrorMessage(response) {
+  const text = await response.text().catch(() => '');
+
+  if (!text) return '';
+
+  try {
+    const data = JSON.parse(text);
+    return data.message || text;
+  } catch {
+    return text;
+  }
+}
+
 async function readWorldLayout(token) {
   const response = await fetch(
     `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?ref=${BRANCH}`,
@@ -16,7 +33,12 @@ async function readWorldLayout(token) {
   );
 
   if (!response.ok) {
-    throw new Error('Could not read current world layout. Status: ' + response.status);
+    const detail = await getGitHubErrorMessage(response);
+    throw new Error(
+      'Could not read current world layout from GitHub. Status: ' +
+      response.status +
+      (detail ? '. ' + detail : '')
+    );
   }
 
   const file = await response.json();
@@ -49,7 +71,7 @@ async function writeWorldLayout(token, layout) {
 
   if (sha) body.sha = sha;
 
-  const response = await fetch(
+  let response = await fetch(
     `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
     {
       method: 'PUT',
@@ -62,8 +84,31 @@ async function writeWorldLayout(token, layout) {
     }
   );
 
+  if (response.status === 409) {
+    const current = await readWorldLayout(token);
+    body.sha = current.sha;
+
+    response = await fetch(
+      `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      }
+    );
+  }
+
   if (!response.ok) {
-    throw new Error('GitHub layout save failed. Status: ' + response.status);
+    const detail = await getGitHubErrorMessage(response);
+    throw new Error(
+      'GitHub layout save failed. Status: ' +
+      response.status +
+      (detail ? '. ' + detail : '')
+    );
   }
 }
 
@@ -78,10 +123,10 @@ export default async function handler(req, res) {
       return res.status(401).json({ ok: false, error: 'Admin authentication required' });
     }
 
-    const token = process.env.GITHUB_TOKEN;
+    const token = getGitHubToken();
 
     if (!token) {
-      throw new Error('Missing GITHUB_TOKEN environment variable');
+      throw new Error('Missing GITHUB_TOKEN or GH_TOKEN environment variable');
     }
 
     if (req.method === 'GET') {
@@ -103,7 +148,7 @@ export default async function handler(req, res) {
 
     return res.status(500).json({
       ok: false,
-      error: 'Could not sync world layout'
+      error: err?.message || 'Could not sync world layout'
     });
   }
 }
