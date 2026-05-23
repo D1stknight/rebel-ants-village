@@ -35,7 +35,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -73,7 +74,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -111,7 +113,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -149,7 +152,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -187,7 +191,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -225,7 +230,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -263,7 +269,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -301,7 +308,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -339,7 +347,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -377,7 +386,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -415,7 +425,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -453,7 +464,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -491,7 +503,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -529,7 +542,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -567,7 +581,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "hangingLantern",
@@ -605,11 +620,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1779576436640_6",
+    "name": "toriiRootClone_1779577519923_6",
     "position": {
       "x": 0,
       "y": 0.5600000582635118,
@@ -643,11 +659,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1779576436641_7",
+    "name": "toriiRootClone_1779577519924_7",
     "position": {
       "x": -0.2919794023036957,
       "y": 0.5599997974930204,
@@ -681,11 +698,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1779576436642_8",
+    "name": "toriiRootClone_1779577519925_8",
     "position": {
       "x": -151.2589111328125,
       "y": 0.5000001192092043,
@@ -719,11 +737,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1779576436642_9",
+    "name": "toriiRootClone_1779577519925_9",
     "position": {
       "x": 149.70745849609375,
       "y": 0.5000000596046448,
@@ -757,11 +776,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1779576436643_10",
+    "name": "toriiRootClone_1779577519926_10",
     "position": {
       "x": 2.514643038204834e-15,
       "y": 0.5000000596046448,
@@ -795,11 +815,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1779576436643_11",
+    "name": "wooden_signRootClone_1779577519926_11",
     "position": {
       "x": -65.91902923583984,
       "y": 0.1,
@@ -833,11 +854,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1779576436646_12",
+    "name": "cherry_blossomRootClone_1779577519928_12",
     "position": {
       "x": -1.5127732753753662,
       "y": 0.0010486979269391655,
@@ -871,11 +893,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1779576436652_13",
+    "name": "fence_1RootClone_1779577519934_13",
     "position": {
       "x": -44.32334899902344,
       "y": -0.8999999985098839,
@@ -909,11 +932,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1779576436654_14",
+    "name": "fence_1RootClone_1779577519936_14",
     "position": {
       "x": 44.25136947631836,
       "y": -0.8999999985098839,
@@ -947,11 +971,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1779576436656_15",
+    "name": "fence_1RootClone_1779577519938_15",
     "position": {
       "x": 44.01362609863281,
       "y": -0.8999999985098839,
@@ -985,11 +1010,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1779576436657_16",
+    "name": "fence_1RootClone_1779577519941_16",
     "position": {
       "x": -44.58077621459961,
       "y": -0.8999999985098839,
@@ -1023,11 +1049,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1779576436659_17",
+    "name": "fence_1RootClone_1779577519943_17",
     "position": {
       "x": -5.2516303062438965,
       "y": -0.8999999985098839,
@@ -1061,11 +1088,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1779576436660_18",
+    "name": "fence_1RootClone_1779577519945_18",
     "position": {
       "x": 5.329242706298828,
       "y": -0.8999999985098839,
@@ -1099,11 +1127,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1779576436662_19",
+    "name": "fence_1RootClone_1779577519946_19",
     "position": {
       "x": -5.405943870544434,
       "y": -0.8999999985098839,
@@ -1137,11 +1166,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1779576436663_20",
+    "name": "fence_1RootClone_1779577519948_20",
     "position": {
       "x": 5.35489559173584,
       "y": -0.8999999985098839,
@@ -1175,11 +1205,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1779576436665_21",
+    "name": "fence_1RootClone_1779577519950_21",
     "position": {
       "x": -110.55400848388672,
       "y": -1.0000000000000284,
@@ -1213,11 +1244,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1779576436666_22",
+    "name": "fence_1RootClone_1779577519951_22",
     "position": {
       "x": 110.58026123046875,
       "y": -1,
@@ -1251,11 +1283,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1779576436668_23",
+    "name": "fence_1RootClone_1779577519953_23",
     "position": {
       "x": 110.51719665527344,
       "y": -1.0000000000000284,
@@ -1289,11 +1322,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "fence_1",
-    "name": "fence_1RootClone_1779576436669_24",
+    "name": "fence_1RootClone_1779577519955_24",
     "position": {
       "x": -109.29263305664062,
       "y": -0.9400000013411329,
@@ -1327,11 +1361,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1779576436671_25",
+    "name": "cherry_blossomRootClone_1779577519956_25",
     "position": {
       "x": 37.48526382446289,
       "y": 0.005657816305759206,
@@ -1365,11 +1400,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1779576436675_26",
+    "name": "cherry_blossomRootClone_1779577519961_26",
     "position": {
       "x": -39.50407028198242,
       "y": 0.005657816305759206,
@@ -1403,11 +1439,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1779576436680_27",
+    "name": "cherry_blossomRootClone_1779577519965_27",
     "position": {
       "x": 37.97743225097656,
       "y": 0.005657816305759206,
@@ -1441,11 +1478,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "cherry_blossom",
-    "name": "cherry_blossomRootClone_1779576436684_28",
+    "name": "cherry_blossomRootClone_1779577519970_28",
     "position": {
       "x": -38.921661376953125,
       "y": 0.005657816305756569,
@@ -1479,11 +1517,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1779576436688_29",
+    "name": "dojo_6RootClone_1779577519976_29",
     "position": {
       "x": -58.36362838745117,
       "y": 0.05999999865879707,
@@ -1517,11 +1556,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1779576436691_30",
+    "name": "dojo_6RootClone_1779577519983_30",
     "position": {
       "x": 87.0399398803711,
       "y": 0.0599999986588669,
@@ -1555,11 +1595,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1779576436694_31",
+    "name": "dojo_6RootClone_1779577519986_31",
     "position": {
       "x": 80.53135681152344,
       "y": 0.059999998658833126,
@@ -1593,11 +1634,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_6",
-    "name": "dojo_6RootClone_1779576436697_32",
+    "name": "dojo_6RootClone_1779577519990_32",
     "position": {
       "x": -80.51283264160156,
       "y": 0.059999998658853915,
@@ -1631,11 +1673,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436702_33",
+    "name": "rock_1RootClone_1779577519993_33",
     "position": {
       "x": -78.15025329589844,
       "y": 0.18412497171067344,
@@ -1669,11 +1712,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436703_34",
+    "name": "rock_1RootClone_1779577519994_34",
     "position": {
       "x": -81.75777435302734,
       "y": 0.13943998073224861,
@@ -1707,11 +1751,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_5",
-    "name": "dojo_5RootClone_1779576436703_35",
+    "name": "dojo_5RootClone_1779577519995_35",
     "position": {
       "x": -287.8810119628906,
       "y": 1.614841887286965,
@@ -1745,11 +1790,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1779576436705_36",
+    "name": "dojo_9RootClone_1779577519996_36",
     "position": {
       "x": -285.0631103515625,
       "y": 0.6000000238417806,
@@ -1783,11 +1829,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436725_37",
+    "name": "tree_1RootClone_1779577520019_37",
     "position": {
       "x": -295.31884765625,
       "y": 0,
@@ -1821,11 +1868,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436726_38",
+    "name": "tree_1RootClone_1779577520020_38",
     "position": {
       "x": -275.4000549316406,
       "y": 0,
@@ -1859,11 +1907,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436727_39",
+    "name": "tree_1RootClone_1779577520021_39",
     "position": {
       "x": -287.54498291015625,
       "y": -4.868645619854988,
@@ -1897,11 +1946,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436727_40",
+    "name": "tree_1RootClone_1779577520021_40",
     "position": {
       "x": -240.4627685546875,
       "y": 0,
@@ -1935,11 +1985,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436728_41",
+    "name": "tree_1RootClone_1779577520022_41",
     "position": {
       "x": -161.17611694335938,
       "y": -2.842170943040401e-14,
@@ -1973,11 +2024,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436729_42",
+    "name": "tree_1RootClone_1779577520023_42",
     "position": {
       "x": -214.0258026123047,
       "y": 0,
@@ -2011,11 +2063,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436730_43",
+    "name": "tree_1RootClone_1779577520024_43",
     "position": {
       "x": -185.4727783203125,
       "y": 0,
@@ -2049,11 +2102,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436730_44",
+    "name": "tree_1RootClone_1779577520025_44",
     "position": {
       "x": -139.9174041748047,
       "y": 0,
@@ -2087,11 +2141,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436731_45",
+    "name": "tree_1RootClone_1779577520025_45",
     "position": {
       "x": -239.7017364501953,
       "y": -2.842170943040401e-14,
@@ -2125,11 +2180,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436732_46",
+    "name": "tree_1RootClone_1779577520026_46",
     "position": {
       "x": -137.85165405273438,
       "y": -2.842170943040401e-14,
@@ -2163,11 +2219,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436732_47",
+    "name": "rock_1RootClone_1779577520027_47",
     "position": {
       "x": -148.0175323486328,
       "y": 0.12412497507466469,
@@ -2201,11 +2258,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436733_48",
+    "name": "rock_1RootClone_1779577520027_48",
     "position": {
       "x": -282.62526624272346,
       "y": 0.05084158852696419,
@@ -2239,11 +2297,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436733_49",
+    "name": "rock_1RootClone_1779577520028_49",
     "position": {
       "x": -282.62526624272346,
       "y": 0.05084158852696419,
@@ -2277,11 +2336,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436734_50",
+    "name": "rock_1RootClone_1779577520028_50",
     "position": {
       "x": -148.35511779785156,
       "y": 0.1551562149870449,
@@ -2315,11 +2375,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436734_51",
+    "name": "pine_1RootClone_1779577520029_51",
     "position": {
       "x": -310.0801086425781,
       "y": 0,
@@ -2353,11 +2414,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436735_52",
+    "name": "pine_1RootClone_1779577520030_52",
     "position": {
       "x": -256.87158203125,
       "y": 0,
@@ -2391,11 +2453,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436736_53",
+    "name": "pine_1RootClone_1779577520033_53",
     "position": {
       "x": -273.0927429199219,
       "y": -2.842170943040401e-14,
@@ -2429,11 +2492,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436737_54",
+    "name": "pine_1RootClone_1779577520034_54",
     "position": {
       "x": -245.5555877685547,
       "y": 1.9999999999999716,
@@ -2467,11 +2531,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436737_55",
+    "name": "pine_1RootClone_1779577520035_55",
     "position": {
       "x": -196.73983764648438,
       "y": 0,
@@ -2505,11 +2570,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436738_56",
+    "name": "pine_1RootClone_1779577520036_56",
     "position": {
       "x": -134.66259765625,
       "y": 0,
@@ -2543,11 +2609,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436739_57",
+    "name": "pine_1RootClone_1779577520037_57",
     "position": {
       "x": -196.6193389892578,
       "y": -2.842170943040401e-14,
@@ -2581,11 +2648,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436740_58",
+    "name": "pine_1RootClone_1779577520038_58",
     "position": {
       "x": -202.62120056152344,
       "y": -2.842170943040401e-14,
@@ -2619,11 +2687,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436741_59",
+    "name": "pine_1RootClone_1779577520039_59",
     "position": {
       "x": -134.1143035888672,
       "y": -2.842170943040401e-14,
@@ -2657,11 +2726,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436742_60",
+    "name": "pine_1RootClone_1779577520040_60",
     "position": {
       "x": -159.71694946289062,
       "y": 0,
@@ -2695,11 +2765,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436743_61",
+    "name": "pine_1RootClone_1779577520041_61",
     "position": {
       "x": -159.3542938232422,
       "y": -2.842170943040401e-14,
@@ -2733,11 +2804,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_5",
-    "name": "dojo_5RootClone_1779576436743_62",
+    "name": "dojo_5RootClone_1779577520041_62",
     "position": {
       "x": -142.77371215820312,
       "y": 1.6148418999699174,
@@ -2771,11 +2843,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "shrine_2",
-    "name": "shrine_2RootClone_1779576436745_63",
+    "name": "shrine_2RootClone_1779577520043_63",
     "position": {
       "x": -6.835771083831787,
       "y": 10.52955150604248,
@@ -2809,11 +2882,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1779576436751_64",
+    "name": "dojo_9RootClone_1779577520046_64",
     "position": {
       "x": 111.6062240600586,
       "y": 0.6000000238419239,
@@ -2847,11 +2921,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436771_65",
+    "name": "tree_1RootClone_1779577520068_65",
     "position": {
       "x": -185.5862274169922,
       "y": 0,
@@ -2885,11 +2960,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436771_66",
+    "name": "tree_1RootClone_1779577520069_66",
     "position": {
       "x": -172.9210968017578,
       "y": 0,
@@ -2923,11 +2999,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436772_67",
+    "name": "tree_1RootClone_1779577520069_67",
     "position": {
       "x": -115.01297760009766,
       "y": 0,
@@ -2961,11 +3038,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436773_68",
+    "name": "tree_1RootClone_1779577520070_68",
     "position": {
       "x": -121.22317504882812,
       "y": -2.842170943040401e-14,
@@ -2999,11 +3077,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436774_69",
+    "name": "tree_1RootClone_1779577520071_69",
     "position": {
       "x": -55.797119140625,
       "y": -2.842170943040401e-14,
@@ -3037,11 +3116,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436774_70",
+    "name": "tree_1RootClone_1779577520072_70",
     "position": {
       "x": -54.70589828491211,
       "y": -2.842170943040401e-14,
@@ -3075,11 +3155,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436775_71",
+    "name": "tree_1RootClone_1779577520073_71",
     "position": {
       "x": -32.078922271728516,
       "y": 0,
@@ -3113,11 +3194,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436776_72",
+    "name": "tree_1RootClone_1779577520073_72",
     "position": {
       "x": 177.91067504882812,
       "y": 2.842170943040401e-14,
@@ -3151,11 +3233,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436776_73",
+    "name": "tree_1RootClone_1779577520074_73",
     "position": {
       "x": 49.94673156738281,
       "y": 2.842170943040401e-14,
@@ -3189,11 +3272,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436777_74",
+    "name": "tree_1RootClone_1779577520075_74",
     "position": {
       "x": 10.96203327178955,
       "y": 0,
@@ -3227,11 +3311,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436778_75",
+    "name": "tree_1RootClone_1779577520076_75",
     "position": {
       "x": 70.02649688720703,
       "y": 0,
@@ -3265,11 +3350,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436778_76",
+    "name": "tree_1RootClone_1779577520076_76",
     "position": {
       "x": 97.71456909179688,
       "y": 0,
@@ -3303,11 +3389,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436779_77",
+    "name": "tree_1RootClone_1779577520077_77",
     "position": {
       "x": 162.3306427001953,
       "y": 2.842170943040401e-14,
@@ -3341,11 +3428,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436780_78",
+    "name": "pine_1RootClone_1779577520080_78",
     "position": {
       "x": 87.18683624267578,
       "y": 2.77860164642334,
@@ -3379,11 +3467,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436780_79",
+    "name": "pine_1RootClone_1779577520081_79",
     "position": {
       "x": 105.76976013183594,
       "y": 2.842170943040401e-14,
@@ -3417,11 +3506,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436781_80",
+    "name": "pine_1RootClone_1779577520082_80",
     "position": {
       "x": 141.73410034179688,
       "y": 2.842170943040401e-14,
@@ -3455,11 +3545,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436782_81",
+    "name": "pine_1RootClone_1779577520083_81",
     "position": {
       "x": 196.33148193359375,
       "y": 2.842170943040401e-14,
@@ -3493,11 +3584,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436783_82",
+    "name": "pine_1RootClone_1779577520084_82",
     "position": {
       "x": 53.964839935302734,
       "y": 0,
@@ -3531,11 +3623,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436783_83",
+    "name": "pine_1RootClone_1779577520085_83",
     "position": {
       "x": 103.8597412109375,
       "y": 2,
@@ -3569,11 +3662,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436784_84",
+    "name": "pine_1RootClone_1779577520085_84",
     "position": {
       "x": -5.619314670562744,
       "y": 0,
@@ -3607,11 +3701,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436785_85",
+    "name": "pine_1RootClone_1779577520086_85",
     "position": {
       "x": -85.45462036132812,
       "y": 0,
@@ -3645,11 +3740,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436786_86",
+    "name": "pine_1RootClone_1779577520087_86",
     "position": {
       "x": -21.33271026611328,
       "y": -2.842170943040401e-14,
@@ -3683,11 +3779,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436787_87",
+    "name": "pine_1RootClone_1779577520088_87",
     "position": {
       "x": -90.55915069580078,
       "y": 1.9999999999999716,
@@ -3721,11 +3818,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436787_88",
+    "name": "pine_1RootClone_1779577520089_88",
     "position": {
       "x": 31.31947898864746,
       "y": 0,
@@ -3759,11 +3857,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1779576436788_89",
+    "name": "dojo_9RootClone_1779577520090_89",
     "position": {
       "x": 251.22068786621094,
       "y": 0.6734113637940311,
@@ -3797,11 +3896,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1779576436809_90",
+    "name": "dojo_9RootClone_1779577520111_90",
     "position": {
       "x": 276.7698059082031,
       "y": 0.6875063902698457,
@@ -3835,11 +3935,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436828_91",
+    "name": "rock_1RootClone_1779577520133_91",
     "position": {
       "x": -129.68966674804688,
       "y": 0.09929997759172693,
@@ -3873,11 +3974,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436828_92",
+    "name": "rock_1RootClone_1779577520134_92",
     "position": {
       "x": -46.00360107421875,
       "y": 0.12412497024342883,
@@ -3911,11 +4013,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436829_93",
+    "name": "rock_1RootClone_1779577520134_93",
     "position": {
       "x": -34.00360107421875,
       "y": 0.1551562149870449,
@@ -3949,11 +4052,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436829_94",
+    "name": "rock_1RootClone_1779577520135_94",
     "position": {
       "x": 83.87603759765625,
       "y": 0.2424315859173305,
@@ -3987,11 +4091,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436830_95",
+    "name": "rock_1RootClone_1779577520135_95",
     "position": {
       "x": 91.7766342163086,
       "y": 0.12412497156901736,
@@ -4025,11 +4130,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436830_96",
+    "name": "tree_1RootClone_1779577520136_96",
     "position": {
       "x": 323.7712707519531,
       "y": 2.0000000000000284,
@@ -4063,11 +4169,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436833_97",
+    "name": "tree_1RootClone_1779577520136_97",
     "position": {
       "x": 194.757568359375,
       "y": 0,
@@ -4101,11 +4208,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436834_98",
+    "name": "tree_1RootClone_1779577520137_98",
     "position": {
       "x": 234.23793029785156,
       "y": 2.842170943040401e-14,
@@ -4139,11 +4247,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436835_99",
+    "name": "tree_1RootClone_1779577520138_99",
     "position": {
       "x": 146.28541564941406,
       "y": 0,
@@ -4177,11 +4286,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436836_100",
+    "name": "tree_1RootClone_1779577520139_100",
     "position": {
       "x": 192.28195190429688,
       "y": 0,
@@ -4215,11 +4325,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436836_101",
+    "name": "tree_1RootClone_1779577520139_101",
     "position": {
       "x": 286.03961181640625,
       "y": 0,
@@ -4253,11 +4364,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436837_102",
+    "name": "tree_1RootClone_1779577520140_102",
     "position": {
       "x": 263.7978210449219,
       "y": 2.842170943040401e-14,
@@ -4291,11 +4403,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436838_103",
+    "name": "tree_1RootClone_1779577520141_103",
     "position": {
       "x": 309.4603576660156,
       "y": 0,
@@ -4329,11 +4442,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436839_104",
+    "name": "tree_1RootClone_1779577520142_104",
     "position": {
       "x": 199.6636962890625,
       "y": -2.842170943040401e-14,
@@ -4367,11 +4481,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436840_105",
+    "name": "tree_1RootClone_1779577520142_105",
     "position": {
       "x": 158.87864685058594,
       "y": -2.842170943040401e-14,
@@ -4405,11 +4520,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436840_106",
+    "name": "tree_1RootClone_1779577520143_106",
     "position": {
       "x": 230.9588623046875,
       "y": -2.842170943040401e-14,
@@ -4443,11 +4559,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436841_107",
+    "name": "tree_1RootClone_1779577520144_107",
     "position": {
       "x": 289.14251708984375,
       "y": 0,
@@ -4481,11 +4598,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436842_108",
+    "name": "tree_1RootClone_1779577520145_108",
     "position": {
       "x": 229.73110961914062,
       "y": -2.842170943040401e-14,
@@ -4519,11 +4637,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436843_109",
+    "name": "tree_1RootClone_1779577520145_109",
     "position": {
       "x": 215.2500762939453,
       "y": -2.842170943040401e-14,
@@ -4557,11 +4676,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436843_110",
+    "name": "tree_1RootClone_1779577520146_110",
     "position": {
       "x": 132.82373046875,
       "y": -2.842170943040401e-14,
@@ -4595,11 +4715,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436844_111",
+    "name": "pine_1RootClone_1779577520147_111",
     "position": {
       "x": 201.67100926809968,
       "y": 0,
@@ -4633,11 +4754,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436845_112",
+    "name": "pine_1RootClone_1779577520150_112",
     "position": {
       "x": 255.62411499023438,
       "y": 2.842170943040401e-14,
@@ -4671,11 +4793,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436846_113",
+    "name": "pine_1RootClone_1779577520151_113",
     "position": {
       "x": 142.17849731445312,
       "y": 0,
@@ -4709,11 +4832,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436847_114",
+    "name": "pine_1RootClone_1779577520152_114",
     "position": {
       "x": 252.3280487060547,
       "y": 2.842170943040401e-14,
@@ -4747,11 +4871,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436847_115",
+    "name": "pine_1RootClone_1779577520153_115",
     "position": {
       "x": 315.92022705078125,
       "y": 0,
@@ -4785,11 +4910,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436848_116",
+    "name": "pine_1RootClone_1779577520154_116",
     "position": {
       "x": 271.8819274902344,
       "y": 0,
@@ -4823,11 +4949,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436849_117",
+    "name": "pine_1RootClone_1779577520155_117",
     "position": {
       "x": 283.8819274902344,
       "y": 0,
@@ -4861,11 +4988,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436850_118",
+    "name": "pine_1RootClone_1779577520155_118",
     "position": {
       "x": 214.1583709716797,
       "y": -2.842170943040401e-14,
@@ -4899,11 +5027,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436850_119",
+    "name": "pine_1RootClone_1779577520156_119",
     "position": {
       "x": 198.91201782226562,
       "y": -2.842170943040401e-14,
@@ -4937,11 +5066,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436851_120",
+    "name": "pine_1RootClone_1779577520157_120",
     "position": {
       "x": 204.65579223632812,
       "y": -2.842170943040401e-14,
@@ -4975,11 +5105,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436852_121",
+    "name": "pine_1RootClone_1779577520158_121",
     "position": {
       "x": 136.32131958007812,
       "y": 1.9999999999999716,
@@ -5013,11 +5144,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1779576436853_122",
+    "name": "dojo_9RootClone_1779577520159_122",
     "position": {
       "x": -110.505859375,
       "y": 0.600000023841782,
@@ -5051,11 +5183,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_9",
-    "name": "dojo_9RootClone_1779576436873_123",
+    "name": "dojo_9RootClone_1779577520180_123",
     "position": {
       "x": 102.01013946533203,
       "y": 0.600000023841861,
@@ -5089,14 +5222,15 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436892_124",
+    "name": "pine_1RootClone_1779577520202_124",
     "position": {
       "x": 3.8495049476623535,
-      "y": 0,
+      "y": -0.06979741344596846,
       "z": -241.4272003173828
     },
     "rotation": {
@@ -5127,11 +5261,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436892_125",
+    "name": "pine_1RootClone_1779577520203_125",
     "position": {
       "x": 162.885986328125,
       "y": 2,
@@ -5165,11 +5300,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436893_126",
+    "name": "pine_1RootClone_1779577520203_126",
     "position": {
       "x": 147.60107421875,
       "y": 2,
@@ -5203,25 +5339,26 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436894_127",
+    "name": "pine_1RootClone_1779577520204_127",
     "position": {
-      "x": 68.52266693115234,
-      "y": 0,
-      "z": -307.7896423339844
+      "x": 82.84677124023438,
+      "y": 1.8074332640870239,
+      "z": -311.85296630859375
     },
     "rotation": {
       "x": 0,
-      "y": 1.8472109336166245,
+      "y": 1.8472109222188504,
       "z": 0
     },
     "scaling": {
-      "x": 2.499999989447311,
+      "x": 2.5000000837972594,
       "y": 2.5,
-      "z": 2.499999989447311
+      "z": 2.5000000837972594
     },
     "signConfig": null,
     "toroColor": null,
@@ -5241,11 +5378,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436894_128",
+    "name": "pine_1RootClone_1779577520205_128",
     "position": {
       "x": 129.0229949951172,
       "y": 2,
@@ -5279,11 +5417,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436895_129",
+    "name": "pine_1RootClone_1779577520206_129",
     "position": {
       "x": 71.07998657226562,
       "y": -2.842170943040401e-14,
@@ -5317,11 +5456,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436896_130",
+    "name": "pine_1RootClone_1779577520207_130",
     "position": {
       "x": 101.5054702758789,
       "y": -2.842170943040401e-14,
@@ -5355,11 +5495,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436897_131",
+    "name": "pine_1RootClone_1779577520208_131",
     "position": {
       "x": 39.703773498535156,
       "y": -2.842170943040401e-14,
@@ -5393,11 +5534,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436900_132",
+    "name": "pine_1RootClone_1779577520209_132",
     "position": {
       "x": 10.949362754821777,
       "y": -2.842170943040401e-14,
@@ -5431,11 +5573,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436901_133",
+    "name": "pine_1RootClone_1779577520210_133",
     "position": {
       "x": -62.730262756347656,
       "y": 0,
@@ -5469,11 +5612,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436901_134",
+    "name": "pine_1RootClone_1779577520210_134",
     "position": {
       "x": -97.5146484375,
       "y": 1.9999999999999716,
@@ -5507,11 +5651,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436902_135",
+    "name": "pine_1RootClone_1779577520211_135",
     "position": {
       "x": -70.47767639160156,
       "y": -2.842170943040401e-14,
@@ -5545,11 +5690,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436903_136",
+    "name": "pine_1RootClone_1779577520212_136",
     "position": {
       "x": -158.8830108642578,
       "y": -2.842170943040401e-14,
@@ -5583,11 +5729,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436904_137",
+    "name": "pine_1RootClone_1779577520213_137",
     "position": {
       "x": -114.21900939941406,
       "y": 2,
@@ -5621,11 +5768,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436904_138",
+    "name": "pine_1RootClone_1779577520214_138",
     "position": {
       "x": -51.49044418334961,
       "y": 2,
@@ -5659,11 +5807,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436905_139",
+    "name": "pine_1RootClone_1779577520214_139",
     "position": {
       "x": -111.46060943603516,
       "y": 2,
@@ -5697,11 +5846,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436906_140",
+    "name": "tree_1RootClone_1779577520215_140",
     "position": {
       "x": -45.01457214355469,
       "y": 0,
@@ -5735,11 +5885,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436906_141",
+    "name": "tree_1RootClone_1779577520216_141",
     "position": {
       "x": -30.709901809692383,
       "y": 0,
@@ -5773,11 +5924,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436907_142",
+    "name": "tree_1RootClone_1779577520217_142",
     "position": {
       "x": -28.662263870239258,
       "y": -2.842170943040401e-14,
@@ -5811,11 +5963,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436908_143",
+    "name": "tree_1RootClone_1779577520218_143",
     "position": {
       "x": 62.61634826660156,
       "y": 2,
@@ -5849,11 +6002,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436908_144",
+    "name": "tree_1RootClone_1779577520218_144",
     "position": {
       "x": 122.9904556274414,
       "y": 0,
@@ -5887,11 +6041,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436909_145",
+    "name": "tree_1RootClone_1779577520219_145",
     "position": {
       "x": 101.41629791259766,
       "y": -2.842170943040401e-14,
@@ -5925,11 +6080,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436910_146",
+    "name": "tree_1RootClone_1779577520220_146",
     "position": {
       "x": 59.066471099853516,
       "y": -2.842170943040401e-14,
@@ -5963,11 +6119,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436910_147",
+    "name": "tree_1RootClone_1779577520221_147",
     "position": {
       "x": 87.70879364013672,
       "y": -2.842170943040401e-14,
@@ -6001,11 +6158,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436911_148",
+    "name": "tree_1RootClone_1779577520222_148",
     "position": {
       "x": 34.418033599853516,
       "y": -2.842170943040401e-14,
@@ -6039,11 +6197,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436912_149",
+    "name": "tree_1RootClone_1779577520222_149",
     "position": {
       "x": -78.95976257324219,
       "y": 0,
@@ -6077,11 +6236,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "tree_1",
-    "name": "tree_1RootClone_1779576436912_150",
+    "name": "tree_1RootClone_1779577520225_150",
     "position": {
       "x": -103.30167388916016,
       "y": 0,
@@ -6115,11 +6275,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436913_151",
+    "name": "rock_1RootClone_1779577520226_151",
     "position": {
       "x": 16.782644271850586,
       "y": 0.3030394736165931,
@@ -6153,11 +6314,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436913_152",
+    "name": "rock_1RootClone_1779577520227_152",
     "position": {
       "x": 28.782644271850586,
       "y": 0.12412496534668094,
@@ -6191,11 +6353,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436914_153",
+    "name": "rock_1RootClone_1779577520227_153",
     "position": {
       "x": 100.89200592041016,
       "y": 0.12412497198965866,
@@ -6229,11 +6392,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436914_154",
+    "name": "rock_1RootClone_1779577520228_154",
     "position": {
       "x": 112.89200592041016,
       "y": 0.12412496996694244,
@@ -6267,11 +6431,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436915_155",
+    "name": "rock_1RootClone_1779577520228_155",
     "position": {
       "x": 143.13743591308594,
       "y": 0.12412497539480682,
@@ -6305,11 +6470,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436915_156",
+    "name": "rock_1RootClone_1779577520229_156",
     "position": {
       "x": -109.32402038574219,
       "y": 0.050841588526935766,
@@ -6343,11 +6509,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436915_157",
+    "name": "rock_1RootClone_1779577520229_157",
     "position": {
       "x": -113.24408721923828,
       "y": 0.050841588526935766,
@@ -6381,11 +6548,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436916_158",
+    "name": "rock_1RootClone_1779577520230_158",
     "position": {
       "x": -105.06820678710938,
       "y": 0.050841588526935766,
@@ -6419,11 +6587,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436916_159",
+    "name": "rock_1RootClone_1779577520230_159",
     "position": {
       "x": -93.06820678710938,
       "y": 0.07943998300470412,
@@ -6457,11 +6626,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436917_160",
+    "name": "rock_1RootClone_1779577520231_160",
     "position": {
       "x": -54.975364685058594,
       "y": 0.09929997759172693,
@@ -6495,11 +6665,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436917_161",
+    "name": "rock_1RootClone_1779577520231_161",
     "position": {
       "x": -21.290668487548828,
       "y": 0.3030394823966276,
@@ -6533,11 +6704,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436918_162",
+    "name": "rock_1RootClone_1779577520232_162",
     "position": {
       "x": 9.679296493530273,
       "y": 0.12412497539472156,
@@ -6571,11 +6743,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436918_163",
+    "name": "rock_1RootClone_1779577520232_163",
     "position": {
       "x": -10.215073585510254,
       "y": 0.12412497273180634,
@@ -6609,11 +6782,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1779576436918_164",
+    "name": "wooden_signRootClone_1779577520233_164",
     "position": {
       "x": 68.09320068359375,
       "y": 0.0623097050314243,
@@ -6661,11 +6835,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1779576436919_165",
+    "name": "wooden_signRootClone_1779577520234_165",
     "position": {
       "x": -63.53282928466797,
       "y": 0.062309704849440095,
@@ -6706,11 +6881,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1779576436920_166",
+    "name": "wooden_signRootClone_1779577520235_166",
     "position": {
       "x": 62.75960159301758,
       "y": 0.06230970628388377,
@@ -6744,11 +6920,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436921_167",
+    "name": "rock_1RootClone_1779577520236_167",
     "position": {
       "x": -22.00360107421875,
       "y": 0.1551562149870449,
@@ -6782,11 +6959,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "wooden_sign",
-    "name": "wooden_signRootClone_1779576436921_168",
+    "name": "wooden_signRootClone_1779577520236_168",
     "position": {
       "x": -6.120001316070557,
       "y": 0.010793939991932552,
@@ -6834,11 +7012,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "dojo_7",
-    "name": "dojo_7RootClone_1779576436922_169",
+    "name": "dojo_7RootClone_1779577520237_169",
     "position": {
       "x": 0.06390538811683655,
       "y": 0.05999999865867541,
@@ -6872,11 +7051,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576436924_170",
+    "name": "pine_1RootClone_1779577520239_170",
     "position": {
       "x": 43.469017028808594,
       "y": 0,
@@ -6910,11 +7090,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1779576436925_171",
+    "name": "lantern_1RootClone_1779577520241_171",
     "position": {
       "x": -30.585576892927975,
       "y": 0.033702017254453986,
@@ -6948,7 +7129,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "toro_lantern",
@@ -6986,7 +7168,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "toro_lantern",
@@ -7024,11 +7207,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1779576436948_172",
+    "name": "lantern_1RootClone_1779577520260_172",
     "position": {
       "x": -107.08583538078378,
       "y": -0.026297980441055024,
@@ -7062,11 +7246,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1779576436948_173",
+    "name": "lantern_1RootClone_1779577520261_173",
     "position": {
       "x": -86.62274639152596,
       "y": -0.026297980441055024,
@@ -7100,7 +7285,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "toro_lantern",
@@ -7138,11 +7324,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576436956_174",
+    "name": "rock_1RootClone_1779577520270_174",
     "position": {
       "x": -75.79802703857422,
       "y": 0.15929996926544732,
@@ -7176,7 +7363,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "toro_lantern",
@@ -7214,7 +7402,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "toro_lantern",
@@ -7252,7 +7441,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "toro_lantern",
@@ -7290,7 +7480,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "toro_lantern",
@@ -7328,7 +7519,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "toro_lantern",
@@ -7366,7 +7558,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "toro_lantern",
@@ -7404,7 +7597,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "toro_lantern",
@@ -7442,11 +7636,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "lantern_1",
-    "name": "lantern_1RootClone_1779576437005_175",
+    "name": "lantern_1RootClone_1779577520330_175",
     "position": {
       "x": -41.325042893712265,
       "y": 0.01890940452765344,
@@ -7480,11 +7675,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "pine_1",
-    "name": "pine_1RootClone_1779576437005_176",
+    "name": "pine_1RootClone_1779577520331_176",
     "position": {
       "x": -277.9487609863281,
       "y": 0,
@@ -7518,11 +7714,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576437008_177",
+    "name": "rock_1RootClone_1779577520332_177",
     "position": {
       "x": -285.5400695800781,
       "y": -0.28839176893234253,
@@ -7556,11 +7753,12 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "rock_1",
-    "name": "rock_1RootClone_1779576437009_178",
+    "name": "rock_1RootClone_1779577520332_178",
     "position": {
       "x": -286.3059997558594,
       "y": -0.28839176893234253,
@@ -7594,7 +7792,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "ambient_glow",
@@ -7632,7 +7831,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "ambient_glow",
@@ -7670,7 +7870,8 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "ambient_glow",
@@ -7708,15 +7909,55 @@
     "proxyFloorHeight": null,
     "proxyPieceKind": null,
     "proxyOwnerName": null,
-    "proxyOwnerType": null
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
+  },
+  {
+    "type": "pine_1",
+    "name": "pine_1RootClone_1779577847137_179",
+    "position": {
+      "x": 27.583963002390036,
+      "y": 0.5623882416550998,
+      "z": -251.0703463711552
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.6726486439465624,
+      "z": 0
+    },
+    "scaling": {
+      "x": 2,
+      "y": 2,
+      "z": 2
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null
   },
   {
     "type": "collision_proxy",
-    "name": "collision_proxyRootClone_1779576486806_2",
+    "name": "collision_proxyRootClone_1779577704680_51",
     "position": {
-      "x": 3.9140944480895996,
-      "y": 1.0400292873382568,
-      "z": -242.31471252441406
+      "x": -137.5377960205078,
+      "y": 1.5689935684204102,
+      "z": 108.72114562988281
     },
     "rotation": {
       "x": 0,
@@ -7724,9 +7965,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 6.279325485229492,
-      "y": 8.967316627502441,
-      "z": 5
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
     },
     "signConfig": null,
     "toroColor": null,
@@ -7745,7 +7986,3908 @@
     "proxyRampDepth": null,
     "proxyFloorHeight": null,
     "proxyPieceKind": "blocker",
-    "proxyOwnerName": "pine_1RootClone_1779576436892_124",
-    "proxyOwnerType": "pine_1"
+    "proxyOwnerName": "tree_1RootClone_1779577520026_46",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722577_52",
+    "position": {
+      "x": -294.46191233052,
+      "y": 1.255194902420044,
+      "z": 138.35216971932124
+    },
+    "rotation": {
+      "x": 0,
+      "y": 4.234368081888273,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520019_37",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722577_53",
+    "position": {
+      "x": -276.1268126636572,
+      "y": 1.255194902420044,
+      "z": 8.437939468491207
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.6635717550933764,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520020_38",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722577_54",
+    "position": {
+      "x": -286.9965443050745,
+      "y": -4.065320948436664,
+      "z": -97.58700670928326
+    },
+    "rotation": {
+      "x": 0,
+      "y": 4.234368081888273,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520021_39",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722577_55",
+    "position": {
+      "x": -240.92789349823627,
+      "y": 0.803324719593121,
+      "z": 76.16352802158566
+    },
+    "rotation": {
+      "x": 0,
+      "y": -3.6196135545358796,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520021_40",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722577_56",
+    "position": {
+      "x": -161.64124188690815,
+      "y": 0.8033247195930926,
+      "z": 43.840091284525116
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.6635717526437066,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520022_41",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722578_57",
+    "position": {
+      "x": -213.29904488028814,
+      "y": 1.255194902420044,
+      "z": -22.51990110026611
+    },
+    "rotation": {
+      "x": 0,
+      "y": -0.4780209009460865,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520023_42",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722578_58",
+    "position": {
+      "x": -184.74602058829595,
+      "y": 1.255194902420044,
+      "z": -105.51579457865967
+    },
+    "rotation": {
+      "x": 0,
+      "y": 5.8051644062335,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520024_43",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722578_59",
+    "position": {
+      "x": -139.5453042185016,
+      "y": 0.6426598205637646,
+      "z": -47.9984127484875
+    },
+    "rotation": {
+      "x": 0,
+      "y": 5.8051644062335,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520025_44",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722578_60",
+    "position": {
+      "x": -238.84480112446533,
+      "y": 1.2551949024200155,
+      "z": -198.04036262931157
+    },
+    "rotation": {
+      "x": 0,
+      "y": 4.234368079438603,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520025_45",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722578_61",
+    "position": {
+      "x": -185.94621166533338,
+      "y": 1.255194902420044,
+      "z": 305.0511799436098
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5514933719748196,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520068_65",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722578_62",
+    "position": {
+      "x": -173.281081050099,
+      "y": 1.255194902420044,
+      "z": 253.04712110571916
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5514933719748196,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520069_66",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722578_63",
+    "position": {
+      "x": -115.24336752567851,
+      "y": 0.803324719593121,
+      "z": 294.07379519009675
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5514933719748196,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520069_67",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722578_64",
+    "position": {
+      "x": -121.51116246964268,
+      "y": 1.0041558620836497,
+      "z": 212.17262726157713
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5514933719748196,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520070_68",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722578_65",
+    "position": {
+      "x": -56.08510656143956,
+      "y": 1.0041558620836497,
+      "z": 180.0892227205615
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5514933719748196,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520071_69",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722579_66",
+    "position": {
+      "x": -55.38710799387346,
+      "y": 0.8033247195930926,
+      "z": 129.09246576052664
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.122289698769716,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520072_70",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722579_67",
+    "position": {
+      "x": -32.52890259519115,
+      "y": 1.5689934783941624,
+      "z": 277.4490227965826
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5514933719748196,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520073_71",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722579_68",
+    "position": {
+      "x": 177.4606947253655,
+      "y": 1.5689934783941908,
+      "z": 297.4294610290045
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5514933719748196,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520073_72",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722579_69",
+    "position": {
+      "x": 49.65874414656825,
+      "y": 1.0041558620837066,
+      "z": 233.36935882895995
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5514933719748196,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520074_73",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722579_70",
+    "position": {
+      "x": 10.73164331692698,
+      "y": 0.803324719593121,
+      "z": 187.15944275685897
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5514933719748196,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520075_74",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722579_71",
+    "position": {
+      "x": 69.79610693234446,
+      "y": 0.803324719593121,
+      "z": 140.9209478838121
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5514933983304511,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520076_75",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722579_72",
+    "position": {
+      "x": 97.4841791369343,
+      "y": 0.803324719593121,
+      "z": 196.44969544240584
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5514933983304511,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520076_76",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722579_73",
+    "position": {
+      "x": 162.10025274533274,
+      "y": 0.8033247195931494,
+      "z": 244.31398377248397
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5514933983304511,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520077_77",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722579_74",
+    "position": {
+      "x": 323.36393334737164,
+      "y": 3.255194902420044,
+      "z": 182.2568335695444
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5963369369882452,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520136_96",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722579_75",
+    "position": {
+      "x": 195.4277651824168,
+      "y": 0.803324719593121,
+      "z": 116.32708786413932
+    },
+    "rotation": {
+      "x": 0,
+      "y": 5.308725945968903,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520136_97",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722580_76",
+    "position": {
+      "x": 234.90812712089337,
+      "y": 0.8033247195931494,
+      "z": 93.23239181921744
+    },
+    "rotation": {
+      "x": 0,
+      "y": 5.308725945968903,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520137_98",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722580_77",
+    "position": {
+      "x": 145.95954569975595,
+      "y": 1.0041558620836781,
+      "z": 65.50389829897065
+    },
+    "rotation": {
+      "x": 0,
+      "y": 6.8795222727638,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520138_99",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722580_78",
+    "position": {
+      "x": 191.95608195463876,
+      "y": 1.0041558620836781,
+      "z": 24.588493025533154
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5963369649578891,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520139_100",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722580_79",
+    "position": {
+      "x": 285.71374186674814,
+      "y": 1.0041558620836781,
+      "z": -28.9066737530313
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5963369649578891,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520139_101",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722580_80",
+    "position": {
+      "x": 263.63097562214335,
+      "y": 0.514127819043317,
+      "z": 12.712763366714254
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.5963369649578891,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520140_102",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722580_81",
+    "position": {
+      "x": 309.8892835998385,
+      "y": 0.5141278190432885,
+      "z": -81.02558718303244
+    },
+    "rotation": {
+      "x": 0,
+      "y": -0.9744593618370074,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520141_103",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722580_82",
+    "position": {
+      "x": 200.50144227720122,
+      "y": 1.0041558620836497,
+      "z": -48.623938949902254
+    },
+    "rotation": {
+      "x": 0,
+      "y": 5.308725945968903,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520142_104",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722580_83",
+    "position": {
+      "x": 159.414804281703,
+      "y": 0.6426597457482899,
+      "z": -92.36560020867937
+    },
+    "rotation": {
+      "x": 0,
+      "y": 5.308725945968903,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520142_105",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722580_84",
+    "position": {
+      "x": 231.49501973580456,
+      "y": 0.6426597457482899,
+      "z": -95.46423302117937
+    },
+    "rotation": {
+      "x": 0,
+      "y": 5.308725945968903,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520143_106",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722581_85",
+    "position": {
+      "x": 289.9802630779825,
+      "y": 1.0041558620836781,
+      "z": -150.39808979829093
+    },
+    "rotation": {
+      "x": 0,
+      "y": 5.308725945968903,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520144_107",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722581_86",
+    "position": {
+      "x": 230.56885560727935,
+      "y": 1.0041558620836497,
+      "z": -143.2915681918456
+    },
+    "rotation": {
+      "x": 0,
+      "y": 5.308725945968903,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520145_108",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722581_87",
+    "position": {
+      "x": 216.08782228208403,
+      "y": 1.0041558620836497,
+      "z": -217.17561665375968
+    },
+    "rotation": {
+      "x": 0,
+      "y": 5.308725945968903,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520145_109",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722581_88",
+    "position": {
+      "x": 133.8709129539234,
+      "y": 1.2551948276045692,
+      "z": -33.01510644952381
+    },
+    "rotation": {
+      "x": 0,
+      "y": 5.308725945968903,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520146_110",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722581_89",
+    "position": {
+      "x": -45.51729444480472,
+      "y": 0.803324719593121,
+      "z": -131.8742632771853
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.592838713216362,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520215_140",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722581_90",
+    "position": {
+      "x": -31.224096784460208,
+      "y": 0.803324719593121,
+      "z": -200.68588880515628
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.0220423864214654,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520216_141",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722581_91",
+    "position": {
+      "x": -28.159541554348365,
+      "y": 0.8033247195930926,
+      "z": -293.8613019002388
+    },
+    "rotation": {
+      "x": 0,
+      "y": -0.5487539666512831,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520217_142",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722582_92",
+    "position": {
+      "x": 63.13054324136939,
+      "y": 2.803324719593121,
+      "z": -271.10866685890625
+    },
+    "rotation": {
+      "x": 0,
+      "y": 4.1636350400112585,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520218_143",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722582_93",
+    "position": {
+      "x": 123.50465062657761,
+      "y": 0.803324719593121,
+      "z": -320.0808348715788
+    },
+    "rotation": {
+      "x": 0,
+      "y": 4.163635105516789,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520218_144",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722582_94",
+    "position": {
+      "x": 102.04470071801137,
+      "y": 1.0041558620836497,
+      "z": -198.76846088272447
+    },
+    "rotation": {
+      "x": 0,
+      "y": 5.734431432311686,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520219_145",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722582_95",
+    "position": {
+      "x": 58.737386323926025,
+      "y": 0.5141278190432601,
+      "z": -174.11432951765843
+    },
+    "rotation": {
+      "x": 0,
+      "y": 7.3052277532056955,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520220_146",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722582_96",
+    "position": {
+      "x": 87.37970886420922,
+      "y": 0.5141278190432601,
+      "z": -124.256312549885
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.0220424382896203,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520221_147",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722583_97",
+    "position": {
+      "x": 33.78963070659463,
+      "y": 1.0041558620836497,
+      "z": -227.5804924130826
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.59283868693851,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520222_148",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722583_98",
+    "position": {
+      "x": -79.58816546650108,
+      "y": 1.0041558620836781,
+      "z": -222.00778428319978
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.592838675391199,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520222_149",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577722583_99",
+    "position": {
+      "x": -103.62341616314731,
+      "y": 0.5141278190432885,
+      "z": -171.3212600930123
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.592838675391199,
+      "z": 0
+    },
+    "scaling": {
+      "x": 6.467436790466309,
+      "y": 8.457985877990723,
+      "z": 6.25
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779577520225_150",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577902838_152",
+    "position": {
+      "x": 3.6455938816070557,
+      "y": 1.0210113525390625,
+      "z": -241.3087921142578
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520202_124",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938532_153",
+    "position": {
+      "x": -309.9874983861451,
+      "y": 0.5584940779954195,
+      "z": 65.87591753564723
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.9712180030710114,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520029_51",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938532_154",
+    "position": {
+      "x": -256.77897177481697,
+      "y": 0.5584940779954195,
+      "z": 151.88806353174098
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.9712180030710114,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520030_52",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938532_155",
+    "position": {
+      "x": -273.00013266348884,
+      "y": 0.5584940779953911,
+      "z": -61.66002072729223
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.9712180030710114,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520033_53",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938533_156",
+    "position": {
+      "x": -245.49631720250036,
+      "y": 2.3574362099170685,
+      "z": -144.14075555197283
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.9712180030710114,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520034_54",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938533_157",
+    "position": {
+      "x": -196.62407482679666,
+      "y": 0.6981175974942744,
+      "z": -67.34464776152228
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.9712180030710114,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520035_55",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938533_158",
+    "position": {
+      "x": -134.54683483656228,
+      "y": 0.6981175974942744,
+      "z": -91.33670556181525
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.971217973268689,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520036_56",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938533_159",
+    "position": {
+      "x": -196.5035761695701,
+      "y": 0.698117597494246,
+      "z": 21.353548649610524
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.971217973268689,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520037_57",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938533_160",
+    "position": {
+      "x": -202.50543774183572,
+      "y": 0.698117597494246,
+      "z": 93.00404608613397
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.971217973268689,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520038_58",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938533_161",
+    "position": {
+      "x": -134.04021538618866,
+      "y": 0.4467952623963072,
+      "z": 65.90279854045562
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.971217973268689,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520039_59",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938533_162",
+    "position": {
+      "x": -159.65767890129888,
+      "y": 0.3574362099170685,
+      "z": -12.570607082817153
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.971217973268689,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520040_60",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938533_163",
+    "position": {
+      "x": -159.29502326165044,
+      "y": 0.35743620991704006,
+      "z": 12.338309390571519
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.971217973268689,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520041_61",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938534_164",
+    "position": {
+      "x": 87.11498662404894,
+      "y": 3.1360378563404083,
+      "z": 257.4489660441142
+    },
+    "rotation": {
+      "x": 0,
+      "y": -0.9027904265770285,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520080_78",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938534_165",
+    "position": {
+      "x": 105.84160975046278,
+      "y": 0.3574362099170969,
+      "z": 245.25067995197958
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.2388022270127648,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520081_79",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938534_166",
+    "position": {
+      "x": 141.84636537529838,
+      "y": 0.5584940779954479,
+      "z": 298.8073768931216
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.2388022270127648,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520082_80",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938534_167",
+    "position": {
+      "x": 196.44374696709525,
+      "y": 0.5584940779954479,
+      "z": 239.93692401226227
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.2388022270127648,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520083_81",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938534_168",
+    "position": {
+      "x": 54.03668955392957,
+      "y": 0.3574362099170685,
+      "z": 199.08280275471395
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.2388022270127648,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520084_82",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938534_169",
+    "position": {
+      "x": 103.97200624443902,
+      "y": 2.5584940779954195,
+      "z": 146.72729876812164
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.2388022270127648,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520085_83",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938534_170",
+    "position": {
+      "x": -5.507049637061235,
+      "y": 0.5584940779954195,
+      "z": 253.95242694194977
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.2388022270127648,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520085_84",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938534_171",
+    "position": {
+      "x": -85.38277074270128,
+      "y": 0.3574362099170685,
+      "z": 253.15364931233114
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.2388022270127648,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520086_85",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938534_172",
+    "position": {
+      "x": -21.260860647486442,
+      "y": 0.35743620991704006,
+      "z": 181.12012575276083
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.2388022270127648,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520087_86",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938535_173",
+    "position": {
+      "x": -90.44688566229927,
+      "y": 2.5584940779954195,
+      "z": 148.12541583355133
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.2388022270127648,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520088_87",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938535_174",
+    "position": {
+      "x": 31.3913286072743,
+      "y": 0.3574362099170685,
+      "z": 124.93797395832723
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.2388022270127648,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520089_88",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938535_175",
+    "position": {
+      "x": 201.68556229289703,
+      "y": 0.4467952623963356,
+      "z": 83.92173230395407
+    },
+    "rotation": {
+      "x": 0,
+      "y": 4.034969401140627,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520147_111",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938535_176",
+    "position": {
+      "x": 255.63867203410797,
+      "y": 0.446795262396364,
+      "z": 193.7352851603994
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.2482159135405375,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520150_112",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938535_177",
+    "position": {
+      "x": 142.193054360558,
+      "y": 0.4467952623963356,
+      "z": 35.91714322257448
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.2482159281393588,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520151_113",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938535_178",
+    "position": {
+      "x": 252.34260574992828,
+      "y": 0.446795262396364,
+      "z": 64.5329688762197
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.2482159135405375,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520152_114",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938535_179",
+    "position": {
+      "x": 315.93478409465484,
+      "y": 0.4467952623963356,
+      "z": -57.15291369213967
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.2482159135405375,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520153_115",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938535_180",
+    "position": {
+      "x": 271.8912440006448,
+      "y": 0.28594897219462645,
+      "z": -71.67270210259117
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.2482159281393588,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520154_116",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938536_181",
+    "position": {
+      "x": 283.8912440006448,
+      "y": 0.28594897219462645,
+      "z": -71.67270210259117
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.2482159281393588,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520155_117",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938536_182",
+    "position": {
+      "x": 214.1676874798588,
+      "y": 0.28594897219459803,
+      "z": -4.354877738313632
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.2482159281393588,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520155_118",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938536_183",
+    "position": {
+      "x": 198.9265748683705,
+      "y": 0.4467952623963072,
+      "z": -85.79198992561888
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.2482159281393588,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520156_119",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938536_184",
+    "position": {
+      "x": 204.67034928020172,
+      "y": 0.4467952623963072,
+      "z": -127.46800005688577
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.2482159135405375,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520157_120",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938536_185",
+    "position": {
+      "x": 136.335876626183,
+      "y": 2.4467952623963356,
+      "z": -112.82822954964232
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.2482159281393588,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520158_121",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938536_186",
+    "position": {
+      "x": 162.75548454347899,
+      "y": 2.6981175974942744,
+      "z": -237.367421796654
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520203_125",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938536_187",
+    "position": {
+      "x": 147.47057243410399,
+      "y": 2.6981175974942744,
+      "z": -333.55071037087276
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520203_126",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938536_188",
+    "position": {
+      "x": 82.89527363539328,
+      "y": 2.2542285099625587,
+      "z": -311.7694451629413
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963153971223,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520204_127",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938536_189",
+    "position": {
+      "x": 129.0714973902761,
+      "y": 2.4467952623963356,
+      "z": -240.91663144223816
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963153971223,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520205_128",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938537_190",
+    "position": {
+      "x": 71.21048836583682,
+      "y": 0.698117597494246,
+      "z": -221.2347357983956
+    },
+    "rotation": {
+      "x": 0,
+      "y": 3.141592642192019,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520206_129",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938537_191",
+    "position": {
+      "x": 101.6359720694501,
+      "y": 0.698117597494246,
+      "z": -156.2822211499581
+    },
+    "rotation": {
+      "x": 0,
+      "y": -3.141592683392115,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520207_130",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938537_192",
+    "position": {
+      "x": 39.83427529210636,
+      "y": 0.698117597494246,
+      "z": -135.3464301343331
+    },
+    "rotation": {
+      "x": 0,
+      "y": -3.141592683392115,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520208_131",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938537_193",
+    "position": {
+      "x": 11.009990747677215,
+      "y": 0.5584940779953911,
+      "z": -184.1811820589965
+    },
+    "rotation": {
+      "x": 0,
+      "y": -4.712389010187012,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520209_132",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938537_194",
+    "position": {
+      "x": -62.83466419173775,
+      "y": 0.5584940779954195,
+      "z": -159.9196271274038
+    },
+    "rotation": {
+      "x": 0,
+      "y": 7.862522521939752e-9,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520210_133",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938537_195",
+    "position": {
+      "x": -97.61904987345915,
+      "y": 2.5584940779954195,
+      "z": -324.8412885065882
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520210_134",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938537_196",
+    "position": {
+      "x": -70.58207782756071,
+      "y": 0.5584940779953911,
+      "z": -271.8337811823695
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520211_135",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938537_197",
+    "position": {
+      "x": -158.98741230021696,
+      "y": 0.5584940779953911,
+      "z": -243.3511456843226
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520212_136",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938538_198",
+    "position": {
+      "x": -114.2796373967321,
+      "y": 2.5584940779954195,
+      "z": -128.37091144572477
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520213_137",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938538_199",
+    "position": {
+      "x": -51.57396532843304,
+      "y": 2.4467952623963356,
+      "z": -223.03566508307856
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520214_138",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938538_200",
+    "position": {
+      "x": -111.54413058111858,
+      "y": 2.4467952623963356,
+      "z": -202.61942057624262
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520214_139",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938538_201",
+    "position": {
+      "x": 43.54086664743543,
+      "y": 0.3574362099170685,
+      "z": 125.04615877278036
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.2388022270127648,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520239_170",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938538_202",
+    "position": {
+      "x": -277.89479467641803,
+      "y": 0.3574362099170685,
+      "z": 111.7575901011002
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.81789664396196,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577520331_176",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779577938538_203",
+    "position": {
+      "x": 27.65938028301739,
+      "y": 0.9198244512081146,
+      "z": -251.05353880444596
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.3962340371248345,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.7443928718566895,
+      "y": 8.898713111877441,
+      "z": 5.138827323913574
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779577847137_179",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
   }
 ]
