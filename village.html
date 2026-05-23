@@ -314,6 +314,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" onclick="applyAttachedCollisionPiecesToSameType()">Apply to Same Object</button>
     <button class="ctrl-btn" id="toggleManualPiecesBtn" onclick="toggleManualBarrierVisibility()">Hide Manual Pieces</button>
     <button class="ctrl-btn danger" onclick="deleteAttachedCollisionProxyPieces()">Delete Attached Pieces</button>
+    <button class="ctrl-btn danger" onclick="deleteCollisionProxyPiecesForSameType()">Delete Same Object Barriers</button>
     <button class="ctrl-btn" onclick="saveManualBarriersNow()">Save Manual Barriers</button>
   </div>
   <div id="manualBarrierSaveStatus" style="font-size:10px;line-height:1.35;color:#77e6df;margin-top:8px;min-height:16px"></div>
@@ -1043,14 +1044,24 @@ function attachNearbyManualPiecesToSelectedObject(radius = null) {
 }
 
 function getEditableObjectsByType(type) {
+  const targetType = getCollisionProxyCanonicalOwnerType(type);
   return scene.transformNodes.filter(node =>
     node &&
     !node.parent &&
-    node.metadata?.isClone &&
-    node.metadata?.type === type &&
+    (node.metadata?.isClone || node.name?.includes('RootClone_')) &&
+    getCollisionProxyCanonicalOwnerType(node.metadata?.type || getObjectType(node)) === targetType &&
     node.metadata?.type !== 'collision_proxy' &&
     !node.metadata?.isPickProxy
   );
+}
+
+function getCollisionProxyCanonicalOwnerType(type) {
+  if (!type) return null;
+  if (type === 'dojo_5') return 'dojo';
+  if (type === 'dojo_6') return 'dojo6';
+  if (type === 'dojo_7') return 'dojo7';
+  if (type === 'dojo_9') return 'dojo9';
+  return type;
 }
 
 function getCollisionTemplateStorageKey(type) {
@@ -1136,8 +1147,18 @@ function makeCollisionProxyTemplate(ownerNode) {
   if (!ownerNode || !ownerType) return null;
   ownerNode.computeWorldMatrix?.(true);
   const inverseOwner = ownerNode.getWorldMatrix ? ownerNode.getWorldMatrix().clone().invert() : BABYLON.Matrix.Identity();
+  const sourceBounds = getCollisionProxyOwnerVisibleBounds(ownerNode);
   const sourceProfile = {
-    bounds: getCollisionProxyOwnerVisibleBounds(ownerNode),
+    bounds: sourceBounds,
+    centerLocal: sourceBounds?.center
+      ? (() => {
+          const local = BABYLON.Vector3.TransformCoordinates(
+            new BABYLON.Vector3(sourceBounds.center.x, sourceBounds.center.y, sourceBounds.center.z),
+            inverseOwner
+          );
+          return { x: local.x, y: local.y, z: local.z };
+        })()
+      : null,
     worldScale: getCollisionProxyOwnerWorldScale(ownerNode)
   };
 
@@ -1198,6 +1219,16 @@ function applyCollisionProxyTemplateToOwner(ownerNode, template, options = {}) {
     bounds: getCollisionProxyOwnerVisibleBounds(ownerNode),
     worldScale: getCollisionProxyOwnerWorldScale(ownerNode)
   };
+  const inverseOwner = ownerNode.getWorldMatrix ? ownerNode.getWorldMatrix().clone().invert() : BABYLON.Matrix.Identity();
+  targetProfile.centerLocal = targetProfile.bounds?.center
+    ? (() => {
+        const local = BABYLON.Vector3.TransformCoordinates(
+          new BABYLON.Vector3(targetProfile.bounds.center.x, targetProfile.bounds.center.y, targetProfile.bounds.center.z),
+          inverseOwner
+        );
+        return { x: local.x, y: local.y, z: local.z };
+      })()
+    : null;
   const extraFitScale = getCollisionTemplateExtraFitScale(template.sourceProfile, targetProfile);
   let created = 0;
 
@@ -1224,6 +1255,17 @@ function applyCollisionProxyTemplateToOwner(ownerNode, template, options = {}) {
         y: decomposedScale.y * extraFitScale.y,
         z: decomposedScale.z * extraFitScale.z
       };
+      const sourceCenter = template.sourceProfile?.centerLocal;
+      const targetCenter = targetProfile.centerLocal;
+      if (piece.localPosition && sourceCenter && targetCenter) {
+        const sourceLocal = piece.localPosition;
+        const fittedLocal = new BABYLON.Vector3(
+          targetCenter.x + ((sourceLocal.x || 0) - sourceCenter.x) * extraFitScale.x,
+          targetCenter.y + ((sourceLocal.y || 0) - sourceCenter.y) * extraFitScale.y,
+          targetCenter.z + ((sourceLocal.z || 0) - sourceCenter.z) * extraFitScale.z
+        );
+        worldPosition = BABYLON.Vector3.TransformCoordinates(fittedLocal, ownerMatrix);
+      }
     } else {
       const local = piece.localPosition || { x: 0, y: 0, z: 0 };
       worldPosition = BABYLON.Vector3.TransformCoordinates(
@@ -1291,6 +1333,37 @@ function applyAttachedCollisionPiecesToSameType() {
     status.textContent = `Applied ${totalCreated} manual piece${totalCreated === 1 ? '' : 's'} to ${targets.length} matching ${ownerType} object${targets.length === 1 ? '' : 's'}.`;
   }
   showToast(`Applied ${totalCreated} manual piece${totalCreated === 1 ? '' : 's'} to ${targets.length} matching ${ownerType} object${targets.length === 1 ? '' : 's'}`);
+}
+
+function deleteCollisionProxyPiecesForSameType() {
+  const ownerNode = getCollisionProxyOwnerFromSelection();
+  if (!ownerNode) {
+    showToast('Select the object type to clear first');
+    return;
+  }
+
+  const ownerType = ownerNode.metadata?.type || getObjectType(ownerNode);
+  const ownerCanonicalType = getCollisionProxyCanonicalOwnerType(ownerType);
+  const owners = getEditableObjectsByType(ownerType);
+  const ownerNames = new Set(owners.map(node => node.name));
+  let removed = 0;
+
+  scene.transformNodes.concat(scene.meshes).forEach(node => {
+    if (!node || node.metadata?.type !== 'collision_proxy') return;
+    const proxyOwnerType = getCollisionProxyCanonicalOwnerType(node.metadata.proxyOwnerType);
+    if (proxyOwnerType !== ownerCanonicalType && !ownerNames.has(node.metadata.proxyOwnerName)) return;
+    node.dispose(false, false);
+    removed += 1;
+  });
+
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
+  const status = document.getElementById('manualBarrierSaveStatus');
+  if (status) {
+    status.textContent = `Deleted ${removed} manual barrier${removed === 1 ? '' : 's'} from ${ownerType} objects only.`;
+  }
+  showToast(`Deleted ${removed} ${ownerType} barrier${removed === 1 ? '' : 's'}`);
 }
 
 function updateManualBarrierVisibilityButton() {
@@ -2152,17 +2225,28 @@ function refreshSelectedWalkSurfaceGuide() {
 async function saveManualBarriersNow() {
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
-  const manualPieces = scene.meshes.filter(mesh => mesh?.metadata?.type === 'collision_proxy');
+  const ownerNode = getCollisionProxyOwnerFromSelection();
+  const ownerType = ownerNode?.metadata?.type || getObjectType(ownerNode);
+  const ownerCanonicalType = getCollisionProxyCanonicalOwnerType(ownerType);
+  const selectedPieces = ownerNode ? getAttachedCollisionProxyPieces(ownerNode) : [];
+  const typePieces = ownerType
+    ? scene.meshes.filter(mesh =>
+        mesh?.metadata?.type === 'collision_proxy' &&
+        getCollisionProxyCanonicalOwnerType(mesh.metadata?.proxyOwnerType) === ownerCanonicalType
+      )
+    : scene.meshes.filter(mesh => mesh?.metadata?.type === 'collision_proxy');
   const status = document.getElementById('manualBarrierSaveStatus');
   if (status) status.textContent = 'Saving manual barriers...';
   const saved = await saveWorldLayout(false);
   const timestamp = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  const count = ownerNode ? selectedPieces.length : typePieces.length;
+  const scope = ownerNode ? `attached to selected ${ownerType}` : 'total';
   if (status) {
     status.textContent = saved
-      ? `Saved ${manualPieces.length} manual piece${manualPieces.length === 1 ? '' : 's'} locally at ${timestamp}.`
+      ? `Saved ${count} manual piece${count === 1 ? '' : 's'} ${scope} at ${timestamp}.`
       : 'Manual barrier save failed.';
   }
-  showToast(saved ? `Manual barriers saved (${manualPieces.length} pieces)` : 'Manual barrier save failed');
+  showToast(saved ? `Manual barriers saved (${count} pieces)` : 'Manual barrier save failed');
 }
 
 ['proxyWalkSurfaceEnabled', 'proxyDebugVisible'].forEach(id => {
@@ -6877,6 +6961,12 @@ function duplicateSelectedFence(){
     const cloneRoot = sourceObject.clone(makeCloneName(objectType));
   if (!cloneRoot) return;
 
+  cloneRoot.metadata = {
+    ...(sourceObject.metadata || {}),
+    type: sourceObject.metadata?.type || objectType,
+    isClone: true,
+    isPickProxy: false
+  };
   cloneRoot.position = sourceObject.position.clone();
   cloneRoot.position.x += 12;
   cloneRoot.rotation = sourceObject.rotation.clone();
@@ -6890,6 +6980,7 @@ function duplicateSelectedFence(){
 
   selectedObject = cloneRoot;
   snapSelectedObjectToGround();
+  registerEditableRoot(cloneRoot.name, cloneRoot);
 
   updateSelectedBadge();
 
@@ -9015,6 +9106,7 @@ window.refreshSelectedWalkSurfaceGuide = refreshSelectedWalkSurfaceGuide;
 window.addCollisionProxyPiece = addCollisionProxyPiece;
 window.attachNearbyManualPiecesToSelectedObject = attachNearbyManualPiecesToSelectedObject;
 window.deleteAttachedCollisionProxyPieces = deleteAttachedCollisionProxyPieces;
+window.deleteCollisionProxyPiecesForSameType = deleteCollisionProxyPiecesForSameType;
 window.applyAttachedCollisionPiecesToSameType = applyAttachedCollisionPiecesToSameType;
 window.toggleManualBarrierVisibility = toggleManualBarrierVisibility;
 window.saveManualBarriersNow = saveManualBarriersNow;
