@@ -3,6 +3,7 @@ import { isAdminRequest } from './_admin-auth.mjs';
 const REPO = 'D1stknight/rebel-ants-village';
 const BRANCH = 'dev';
 const FILE_PATH = 'assets/world-layout.json';
+const TESTED_BRANCH_ALIAS = 'rebel-ants-village-git-dev-miguel-concepcions-projects.vercel.app';
 
 function getGitHubToken() {
   return process.env.GITHUB_TOKEN || '';
@@ -13,7 +14,21 @@ function getGitHubTokenDebug(token) {
     envVarName: 'GITHUB_TOKEN',
     hasGithubToken: Boolean(token),
     tokenLength: token ? token.length : 0,
-    tokenPrefix: token ? token.slice(0, 4) : ''
+    tokenPrefix: token ? token.slice(0, 4) : '',
+    tokenLengthAfterRedeploy: token ? token.length : 0
+  };
+}
+
+function getVercelRuntimeDebug() {
+  const vercelUrl = process.env.VERCEL_URL || '';
+
+  return {
+    VERCEL_ENV: process.env.VERCEL_ENV || '',
+    VERCEL_GIT_COMMIT_REF: process.env.VERCEL_GIT_COMMIT_REF || '',
+    VERCEL_GIT_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA || '',
+    VERCEL_URL: vercelUrl,
+    testedBranchAlias: TESTED_BRANCH_ALIAS,
+    isTestedBranchAliasRequest: vercelUrl === TESTED_BRANCH_ALIAS
   };
 }
 
@@ -159,7 +174,8 @@ export default async function handler(req, res) {
     return res.status(500).json({
       ok: false,
       error: err?.message || 'Could not sync world layout',
-      githubDebug: getGitHubTokenDebug(token)
+      githubDebug: getGitHubTokenDebug(token),
+      vercelDebug: getVercelRuntimeDebug()
     });
   }
 }
