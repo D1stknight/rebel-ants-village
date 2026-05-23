@@ -1057,11 +1057,89 @@ function getCollisionTemplateStorageKey(type) {
   return `rebelAntsCollisionProxyTemplate:${type}`;
 }
 
+function getCollisionProxyOwnerWorldScale(ownerNode) {
+  if (!ownerNode) return { x: 1, y: 1, z: 1 };
+  ownerNode.computeWorldMatrix?.(true);
+  const matrix = ownerNode.getWorldMatrix ? ownerNode.getWorldMatrix() : BABYLON.Matrix.Identity();
+  const scale = new BABYLON.Vector3(1, 1, 1);
+  const rotation = new BABYLON.Quaternion();
+  const position = new BABYLON.Vector3();
+  matrix.decompose(scale, rotation, position);
+  return { x: Math.abs(scale.x) || 1, y: Math.abs(scale.y) || 1, z: Math.abs(scale.z) || 1 };
+}
+
+function getCollisionProxyOwnerVisibleBounds(ownerNode) {
+  if (!ownerNode || ownerNode.metadata?.type === 'collision_proxy') return null;
+  const ownerPosition = ownerNode.getAbsolutePosition?.() || ownerNode.position;
+  if (!ownerPosition) return null;
+
+  let minX = Infinity, minY = Infinity, minZ = Infinity;
+  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  const meshes = ownerNode.getChildMeshes?.(false) || [];
+  meshes.forEach(mesh => {
+    if (!mesh || mesh.isDisposed?.() || !mesh.getBoundingInfo) return;
+    if (mesh.metadata?.type === 'collision_proxy') return;
+    mesh.computeWorldMatrix?.(true);
+    const box = mesh.getBoundingInfo().boundingBox;
+    minX = Math.min(minX, box.minimumWorld.x);
+    minY = Math.min(minY, box.minimumWorld.y);
+    minZ = Math.min(minZ, box.minimumWorld.z);
+    maxX = Math.max(maxX, box.maximumWorld.x);
+    maxY = Math.max(maxY, box.maximumWorld.y);
+    maxZ = Math.max(maxZ, box.maximumWorld.z);
+  });
+
+  if (![minX, minY, minZ, maxX, maxY, maxZ].every(Number.isFinite)) {
+    minX = maxX = ownerPosition.x;
+    minY = maxY = ownerPosition.y;
+    minZ = maxZ = ownerPosition.z;
+  }
+
+  return {
+    center: {
+      x: (minX + maxX) * 0.5,
+      y: (minY + maxY) * 0.5,
+      z: (minZ + maxZ) * 0.5
+    },
+    size: {
+      x: Math.max(0.001, maxX - minX),
+      y: Math.max(0.001, maxY - minY),
+      z: Math.max(0.001, maxZ - minZ)
+    }
+  };
+}
+
+function getCollisionTemplateExtraFitScale(sourceProfile, targetProfile) {
+  if (!sourceProfile || !targetProfile) return { x: 1, y: 1, z: 1 };
+  const sourceBounds = sourceProfile.bounds?.size;
+  const targetBounds = targetProfile.bounds?.size;
+  const sourceScale = sourceProfile.worldScale || { x: 1, y: 1, z: 1 };
+  const targetScale = targetProfile.worldScale || { x: 1, y: 1, z: 1 };
+  if (!sourceBounds || !targetBounds) return { x: 1, y: 1, z: 1 };
+
+  const axisFit = axis => {
+    const boundsRatio = (targetBounds[axis] || 1) / (sourceBounds[axis] || 1);
+    const rootScaleRatio = (targetScale[axis] || 1) / (sourceScale[axis] || 1);
+    const fit = boundsRatio / (rootScaleRatio || 1);
+    return Number.isFinite(fit) ? BABYLON.Scalar.Clamp(fit, 0.25, 4) : 1;
+  };
+
+  return {
+    x: axisFit('x'),
+    y: axisFit('y'),
+    z: axisFit('z')
+  };
+}
+
 function makeCollisionProxyTemplate(ownerNode) {
   const ownerType = ownerNode?.metadata?.type || getObjectType(ownerNode);
   if (!ownerNode || !ownerType) return null;
   ownerNode.computeWorldMatrix?.(true);
   const inverseOwner = ownerNode.getWorldMatrix ? ownerNode.getWorldMatrix().clone().invert() : BABYLON.Matrix.Identity();
+  const sourceProfile = {
+    bounds: getCollisionProxyOwnerVisibleBounds(ownerNode),
+    worldScale: getCollisionProxyOwnerWorldScale(ownerNode)
+  };
 
   const pieces = getAttachedCollisionProxyPieces(ownerNode).map(piece => {
     piece.computeWorldMatrix?.(true);
@@ -1085,7 +1163,7 @@ function makeCollisionProxyTemplate(ownerNode) {
     };
   });
 
-  return pieces.length ? { ownerType, pieces } : null;
+  return pieces.length ? { ownerType, sourceProfile, pieces } : null;
 }
 
 function saveCollisionProxyTemplateForType(ownerNode) {
@@ -1116,6 +1194,11 @@ function applyCollisionProxyTemplateToOwner(ownerNode, template, options = {}) {
 
   ownerNode.computeWorldMatrix?.(true);
   const ownerMatrix = ownerNode.getWorldMatrix ? ownerNode.getWorldMatrix() : BABYLON.Matrix.Identity();
+  const targetProfile = {
+    bounds: getCollisionProxyOwnerVisibleBounds(ownerNode),
+    worldScale: getCollisionProxyOwnerWorldScale(ownerNode)
+  };
+  const extraFitScale = getCollisionTemplateExtraFitScale(template.sourceProfile, targetProfile);
   let created = 0;
 
   template.pieces.forEach(piece => {
@@ -1136,7 +1219,11 @@ function applyCollisionProxyTemplateToOwner(ownerNode, template, options = {}) {
       const euler = decomposedRotation.toEulerAngles();
       worldPosition = decomposedPosition;
       rotation = { x: euler.x, y: euler.y, z: euler.z };
-      scaling = { x: decomposedScale.x, y: decomposedScale.y, z: decomposedScale.z };
+      scaling = {
+        x: decomposedScale.x * extraFitScale.x,
+        y: decomposedScale.y * extraFitScale.y,
+        z: decomposedScale.z * extraFitScale.z
+      };
     } else {
       const local = piece.localPosition || { x: 0, y: 0, z: 0 };
       worldPosition = BABYLON.Vector3.TransformCoordinates(
