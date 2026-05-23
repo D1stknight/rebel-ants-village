@@ -635,7 +635,8 @@ function createCollisionProxyPiece(kind, position, options = {}) {
     proxyAutoEnabled: false,
     proxyWalkSurfaceEnabled: proxyKind !== 'blocker',
     proxyOwnerName: options.proxyOwnerName || null,
-    proxyOwnerType: options.proxyOwnerType || null
+    proxyOwnerType: options.proxyOwnerType || null,
+    proxyOwnerAssetKey: options.proxyOwnerAssetKey || options.proxyOwnerType || null
   };
   root.material = getCollisionProxyMaterials()[proxyKind];
   root.isPickable = true;
@@ -643,6 +644,32 @@ function createCollisionProxyPiece(kind, position, options = {}) {
   root.receiveShadows = false;
 
   return root;
+}
+
+function getManualCollisionProxyRoots() {
+  return scene.meshes.filter(mesh =>
+    mesh &&
+    !mesh.isDisposed?.() &&
+    !mesh.parent &&
+    mesh.metadata?.type === 'collision_proxy' &&
+    mesh.metadata?.isClone === true
+  );
+}
+
+function getCollisionProxyOwnerAssetKey(ownerNode) {
+  if (!ownerNode || ownerNode.metadata?.type === 'collision_proxy') return null;
+  return ownerNode.metadata?.type ||
+    getVillageBlockerTypeFromNode(ownerNode) ||
+    getObjectType(ownerNode) ||
+    null;
+}
+
+function getCollisionProxyOwnerKeyFromProxy(proxyNode) {
+  if (!proxyNode || proxyNode.metadata?.type !== 'collision_proxy') return null;
+  if (proxyNode.metadata.proxyOwnerAssetKey) return proxyNode.metadata.proxyOwnerAssetKey;
+  if (proxyNode.metadata.proxyOwnerType) return proxyNode.metadata.proxyOwnerType;
+  const ownerNode = getVillageNodeByName(proxyNode.metadata.proxyOwnerName);
+  return getCollisionProxyOwnerAssetKey(ownerNode);
 }
 
 function getSelectedProxyOwner() {
@@ -655,7 +682,7 @@ function getSelectedProxyOwner() {
 
   activeCollisionProxyOwner = {
     name: ownerNode.name,
-    type: ownerNode.metadata?.type || getObjectType(ownerNode) || null
+    type: getCollisionProxyOwnerAssetKey(ownerNode)
   };
   return activeCollisionProxyOwner;
 }
@@ -665,7 +692,7 @@ function rememberCollisionProxyOwnerFromSelection(node = selectedObject) {
   if (node.metadata.type === 'collision_proxy') return;
   if (node.metadata.isPickProxy) return;
 
-  const ownerType = node.metadata.type || getObjectType(node);
+  const ownerType = getCollisionProxyOwnerAssetKey(node);
   if (!ownerType) return;
   activeCollisionProxyOwner = { name: node.name, type: ownerType };
 }
@@ -814,7 +841,8 @@ function placeCollisionProxyPieceAtPoint(kind, point, owner = null) {
 
   const proxy = createCollisionProxyPiece(proxyKind, position, {
     proxyOwnerName: owner?.name || null,
-    proxyOwnerType: owner?.type || null
+    proxyOwnerType: owner?.type || null,
+    proxyOwnerAssetKey: owner?.type || null
   });
   if (!proxy) return null;
 
@@ -859,15 +887,9 @@ function deleteAttachedCollisionProxyPieces() {
     return;
   }
 
-  const pieces = scene.transformNodes.filter(node =>
-    node &&
-    node.metadata?.type === 'collision_proxy' &&
+  const pieces = getManualCollisionProxyRoots().filter(node =>
     node.metadata?.proxyOwnerName === ownerName
-  ).concat(scene.meshes.filter(node =>
-    node &&
-    node.metadata?.type === 'collision_proxy' &&
-    node.metadata?.proxyOwnerName === ownerName
-  ));
+  );
 
   if (!pieces.length) {
     showToast('No attached pieces found');
@@ -886,15 +908,9 @@ function moveAttachedCollisionProxyPieces(ownerNode, delta) {
   if (!ownerNode || !delta || delta.lengthSquared() < 0.000001) return;
   if (ownerNode.metadata?.type === 'collision_proxy') return;
 
-  const pieces = scene.transformNodes.filter(node =>
-    node &&
-    node.metadata?.type === 'collision_proxy' &&
+  const pieces = getManualCollisionProxyRoots().filter(node =>
     node.metadata?.proxyOwnerName === ownerNode.name
-  ).concat(scene.meshes.filter(node =>
-    node &&
-    node.metadata?.type === 'collision_proxy' &&
-    node.metadata?.proxyOwnerName === ownerNode.name
-  ));
+  );
 
   pieces.forEach(node => node.position.addInPlace(delta));
 }
@@ -941,15 +957,9 @@ function sanitizeCollisionProxyOwner(node) {
 function getAttachedCollisionProxyPieces(ownerNode) {
   if (!ownerNode) return [];
   if (ownerNode.metadata?.type === 'collision_proxy') return [];
-  return scene.transformNodes.filter(node =>
-    node &&
-    node.metadata?.type === 'collision_proxy' &&
+  return getManualCollisionProxyRoots().filter(node =>
     node.metadata?.proxyOwnerName === ownerNode.name
-  ).concat(scene.meshes.filter(node =>
-    node &&
-    node.metadata?.type === 'collision_proxy' &&
-    node.metadata?.proxyOwnerName === ownerNode.name
-  ));
+  );
 }
 
 function getOwnerCollisionAttachArea(ownerNode, padding = 12) {
@@ -994,7 +1004,7 @@ function getStandaloneCollisionProxyPiecesNear(ownerNode, radius = null) {
   const useRadius = Number.isFinite(radius) ? radius : area.radius;
   const radiusSq = useRadius * useRadius;
 
-  return scene.meshes.filter(mesh => {
+  return getManualCollisionProxyRoots().filter(mesh => {
     if (!mesh || mesh.metadata?.type !== 'collision_proxy') return false;
     if (mesh.metadata.proxyOwnerName) return false;
     const insideExpandedBounds =
@@ -1015,7 +1025,7 @@ function attachNearbyManualPiecesToSelectedObject(radius = null) {
     return;
   }
 
-  const ownerType = ownerNode.metadata?.type || getObjectType(ownerNode);
+  const ownerType = getCollisionProxyOwnerAssetKey(ownerNode);
   const pieces = getStandaloneCollisionProxyPiecesNear(ownerNode, radius);
   if (!pieces.length) {
     showToast('No nearby standalone manual pieces found');
@@ -1025,6 +1035,7 @@ function attachNearbyManualPiecesToSelectedObject(radius = null) {
   pieces.forEach(piece => {
     piece.metadata.proxyOwnerName = ownerNode.name;
     piece.metadata.proxyOwnerType = ownerType;
+    piece.metadata.proxyOwnerAssetKey = ownerType;
   });
 
   activeCollisionProxyOwner = { name: ownerNode.name, type: ownerType };
@@ -1044,12 +1055,16 @@ function attachNearbyManualPiecesToSelectedObject(radius = null) {
 }
 
 function getEditableObjectsByType(type) {
-  const targetType = getCollisionProxyCanonicalOwnerType(type);
+  const targetType = type;
+  const targetCanonicalType = getCollisionProxyCanonicalOwnerType(type);
   return scene.transformNodes.filter(node =>
     node &&
     !node.parent &&
     (node.metadata?.isClone || node.name?.includes('RootClone_')) &&
-    getCollisionProxyCanonicalOwnerType(node.metadata?.type || getObjectType(node)) === targetType &&
+    (
+      getCollisionProxyOwnerAssetKey(node) === targetType ||
+      getCollisionProxyCanonicalOwnerType(getCollisionProxyOwnerAssetKey(node)) === targetCanonicalType
+    ) &&
     node.metadata?.type !== 'collision_proxy' &&
     !node.metadata?.isPickProxy
   );
@@ -1173,7 +1188,7 @@ function getCollisionTemplateExtraFitScale(sourceProfile, targetProfile) {
 }
 
 function makeCollisionProxyTemplate(ownerNode) {
-  const ownerType = ownerNode?.metadata?.type || getObjectType(ownerNode);
+  const ownerType = getCollisionProxyOwnerAssetKey(ownerNode);
   if (!ownerNode || !ownerType) return null;
   ownerNode.computeWorldMatrix?.(true);
   const inverseOwner = ownerNode.getWorldMatrix ? ownerNode.getWorldMatrix().clone().invert() : BABYLON.Matrix.Identity();
@@ -1227,7 +1242,7 @@ function removeAttachedCollisionProxyPieces(ownerNode) {
 
 function applyCollisionProxyTemplateToOwner(ownerNode, template, options = {}) {
   if (!ownerNode || !template || !Array.isArray(template.pieces)) return 0;
-  const ownerType = ownerNode.metadata?.type || getObjectType(ownerNode) || template.ownerType || null;
+  const ownerType = getCollisionProxyOwnerAssetKey(ownerNode) || template.ownerType || null;
   if (options.replace !== false) removeAttachedCollisionProxyPieces(ownerNode);
 
   ownerNode.computeWorldMatrix?.(true);
@@ -1282,7 +1297,8 @@ function applyCollisionProxyTemplateToOwner(ownerNode, template, options = {}) {
       rotation,
       scaling,
       proxyOwnerName: ownerNode.name,
-      proxyOwnerType: ownerType
+      proxyOwnerType: ownerType,
+      proxyOwnerAssetKey: ownerType
     });
     if (!proxy) return;
     registerEditableRoot(proxy.name, proxy);
@@ -1293,7 +1309,7 @@ function applyCollisionProxyTemplateToOwner(ownerNode, template, options = {}) {
 }
 
 function applySavedCollisionTemplateIfAvailable(ownerNode) {
-  const ownerType = ownerNode?.metadata?.type || getObjectType(ownerNode);
+  const ownerType = getCollisionProxyOwnerAssetKey(ownerNode);
   const template = loadCollisionProxyTemplateForType(ownerType);
   if (!template) return 0;
   const count = applyCollisionProxyTemplateToOwner(ownerNode, template, { replace: true });
@@ -1311,7 +1327,7 @@ function applyAttachedCollisionPiecesToSameType() {
     return;
   }
 
-  const ownerType = ownerNode.metadata?.type || getObjectType(ownerNode);
+  const ownerType = getCollisionProxyOwnerAssetKey(ownerNode);
   const template = saveCollisionProxyTemplateForType(ownerNode);
   if (!template) {
     showToast('No attached pieces to apply');
@@ -1346,16 +1362,14 @@ function deleteCollisionProxyPiecesForSameType() {
     return;
   }
 
-  const ownerType = ownerNode.metadata?.type || getObjectType(ownerNode);
-  const ownerCanonicalType = getCollisionProxyCanonicalOwnerType(ownerType);
+  const ownerType = getCollisionProxyOwnerAssetKey(ownerNode);
   const owners = getEditableObjectsByType(ownerType);
   const ownerNames = new Set(owners.map(node => node.name));
   let removed = 0;
 
-  scene.transformNodes.concat(scene.meshes).forEach(node => {
+  getManualCollisionProxyRoots().forEach(node => {
     if (!node || node.metadata?.type !== 'collision_proxy') return;
-    const proxyOwnerType = getCollisionProxyCanonicalOwnerType(node.metadata.proxyOwnerType);
-    if (proxyOwnerType !== ownerCanonicalType && !ownerNames.has(node.metadata.proxyOwnerName)) return;
+    if (!ownerNames.has(node.metadata.proxyOwnerName)) return;
     node.dispose(false, false);
     removed += 1;
   });
@@ -2230,15 +2244,14 @@ async function saveManualBarriersNow() {
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   const ownerNode = getCollisionProxyOwnerFromSelection();
-  const ownerType = ownerNode?.metadata?.type || getObjectType(ownerNode);
-  const ownerCanonicalType = getCollisionProxyCanonicalOwnerType(ownerType);
+  const ownerType = getCollisionProxyOwnerAssetKey(ownerNode);
   const selectedPieces = ownerNode ? getAttachedCollisionProxyPieces(ownerNode) : [];
+  const ownerNames = ownerType
+    ? new Set(getEditableObjectsByType(ownerType).map(node => node.name))
+    : null;
   const typePieces = ownerType
-    ? scene.meshes.filter(mesh =>
-        mesh?.metadata?.type === 'collision_proxy' &&
-        getCollisionProxyCanonicalOwnerType(mesh.metadata?.proxyOwnerType) === ownerCanonicalType
-      )
-    : scene.meshes.filter(mesh => mesh?.metadata?.type === 'collision_proxy');
+    ? getManualCollisionProxyRoots().filter(mesh => ownerNames.has(mesh.metadata?.proxyOwnerName))
+    : getManualCollisionProxyRoots();
   const status = document.getElementById('manualBarrierSaveStatus');
   if (status) status.textContent = 'Saving manual barriers...';
   const saved = await saveWorldLayout(false);
@@ -6601,7 +6614,8 @@ function saveWorldLayout(saveToGitHub = true){
     proxyFloorHeight: Number.isFinite(node.metadata.proxyFloorHeight) ? node.metadata.proxyFloorHeight : null,
     proxyPieceKind: node.metadata.proxyPieceKind || null,
     proxyOwnerName: node.metadata.proxyOwnerName || null,
-    proxyOwnerType: node.metadata.proxyOwnerType || null
+    proxyOwnerType: node.metadata.proxyOwnerType || null,
+    proxyOwnerAssetKey: node.metadata.proxyOwnerAssetKey || node.metadata.proxyOwnerType || null
   }));
 
   const json = JSON.stringify(data, null, 2);
@@ -6707,7 +6721,8 @@ function loadWorldLayout(){
         rotation: item.rotation,
         scaling: item.scaling,
         proxyOwnerName: item.proxyOwnerName || null,
-        proxyOwnerType: item.proxyOwnerType || null
+        proxyOwnerType: item.proxyOwnerType || item.proxyOwnerAssetKey || null,
+        proxyOwnerAssetKey: item.proxyOwnerAssetKey || item.proxyOwnerType || null
       });
       if (proxy) registerEditableRoot(proxy.name, proxy);
       return;
@@ -6904,7 +6919,8 @@ function duplicateSelectedFence(){
       ...(sourceObject.metadata || {}),
       isClone: true,
       proxyOwnerName: sourceObject.metadata?.proxyOwnerName || null,
-      proxyOwnerType: sourceObject.metadata?.proxyOwnerType || null
+      proxyOwnerType: sourceObject.metadata?.proxyOwnerType || null,
+      proxyOwnerAssetKey: sourceObject.metadata?.proxyOwnerAssetKey || sourceObject.metadata?.proxyOwnerType || null
     };
     cloneRoot.material = sourceObject.material || getCollisionProxyMaterials()[cloneRoot.metadata.proxyPieceKind || 'blocker'];
     cloneRoot.isPickable = true;
