@@ -2179,60 +2179,152 @@ function buildTreasureChest(root) {
     ...getDefaultTreasureChestMetadata(root.metadata || {})
   };
 
-  const woodMat = new BABYLON.StandardMaterial(`${root.name}_treasureChestWoodMat`, scene);
-  woodMat.diffuseColor = new BABYLON.Color3(0.36, 0.17, 0.07);
-  woodMat.emissiveColor = new BABYLON.Color3(0.05, 0.025, 0.01);
-  woodMat.specularColor = new BABYLON.Color3(0.08, 0.05, 0.02);
+  const makeMat = (key, diffuse, emissive, specular) => {
+    const mat = new BABYLON.StandardMaterial(`${root.name}_${key}`, scene);
+    mat.diffuseColor = diffuse;
+    mat.emissiveColor = emissive || diffuse.scale(0.08);
+    mat.specularColor = specular || new BABYLON.Color3(0.12, 0.1, 0.08);
+    return mat;
+  };
 
-  const lidMat = new BABYLON.StandardMaterial(`${root.name}_treasureChestLidMat`, scene);
-  lidMat.diffuseColor = new BABYLON.Color3(0.43, 0.22, 0.09);
-  lidMat.emissiveColor = new BABYLON.Color3(0.06, 0.035, 0.015);
-  lidMat.specularColor = new BABYLON.Color3(0.1, 0.07, 0.025);
-
-  const metalMat = new BABYLON.StandardMaterial(`${root.name}_treasureChestMetalMat`, scene);
-  metalMat.diffuseColor = new BABYLON.Color3(0.92, 0.66, 0.22);
-  metalMat.emissiveColor = new BABYLON.Color3(0.18, 0.11, 0.025);
-  metalMat.specularColor = new BABYLON.Color3(0.55, 0.42, 0.18);
-
-  const glowMat = new BABYLON.StandardMaterial(`${root.name}_treasureChestGlowMat`, scene);
-  glowMat.diffuseColor = new BABYLON.Color3(1, 0.72, 0.22);
-  glowMat.emissiveColor = new BABYLON.Color3(0.9, 0.45, 0.08);
+  const woodMat = makeMat('treasureChestWarmWoodMat', new BABYLON.Color3(0.58, 0.28, 0.105), new BABYLON.Color3(0.075, 0.028, 0.01), new BABYLON.Color3(0.16, 0.08, 0.03));
+  const darkWoodMat = makeMat('treasureChestDarkGrooveMat', new BABYLON.Color3(0.16, 0.075, 0.035), new BABYLON.Color3(0.025, 0.01, 0.004));
+  const stoneMat = makeMat('treasureChestDarkStoneMat', new BABYLON.Color3(0.19, 0.19, 0.215), new BABYLON.Color3(0.028, 0.028, 0.035), new BABYLON.Color3(0.22, 0.22, 0.25));
+  const stoneHiMat = makeMat('treasureChestStoneHighlightMat', new BABYLON.Color3(0.46, 0.44, 0.46), new BABYLON.Color3(0.045, 0.043, 0.045), new BABYLON.Color3(0.35, 0.34, 0.36));
+  const goldMat = makeMat('treasureChestGoldMat', new BABYLON.Color3(0.9, 0.55, 0.12), new BABYLON.Color3(0.2, 0.11, 0.02), new BABYLON.Color3(0.72, 0.5, 0.22));
+  const blackMat = makeMat('treasureChestKeyholeMat', new BABYLON.Color3(0.018, 0.014, 0.012), new BABYLON.Color3(0, 0, 0), new BABYLON.Color3(0.02, 0.02, 0.02));
+  const glowMat = makeMat('treasureChestGlowMat', new BABYLON.Color3(1, 0.72, 0.22), new BABYLON.Color3(0.9, 0.45, 0.08), new BABYLON.Color3(0.75, 0.45, 0.12));
   glowMat.alpha = 0.18;
 
-  const body = BABYLON.MeshBuilder.CreateBox(`${root.name}_body`, { width: 3.2, height: 1.25, depth: 2.05 }, scene);
-  body.parent = root;
-  body.position.y = 0.65;
-  body.material = woodMat;
-  body.isPickable = true;
-  body._editRoot = root;
+  const markEditable = mesh => {
+    mesh.isPickable = true;
+    mesh._editRoot = root;
+    return mesh;
+  };
+
+  const addBox = (name, size, position, material, parent = root, rotation = null) => {
+    const mesh = BABYLON.MeshBuilder.CreateBox(`${root.name}_${name}`, size, scene);
+    mesh.parent = parent;
+    mesh.position.set(position.x, position.y, position.z);
+    if (rotation) mesh.rotation.set(rotation.x || 0, rotation.y || 0, rotation.z || 0);
+    mesh.material = material;
+    return markEditable(mesh);
+  };
+
+  const addCylinder = (name, options, position, material, parent = root, rotation = null, pickable = true) => {
+    const mesh = BABYLON.MeshBuilder.CreateCylinder(`${root.name}_${name}`, options, scene);
+    mesh.parent = parent;
+    mesh.position.set(position.x, position.y, position.z);
+    if (rotation) mesh.rotation.set(rotation.x || 0, rotation.y || 0, rotation.z || 0);
+    mesh.material = material;
+    if (pickable) markEditable(mesh);
+    else mesh.isPickable = false;
+    return mesh;
+  };
+
+  const body = addBox('body', { width: 3.8, height: 1.28, depth: 2.25 }, { x: 0, y: 0.66, z: 0 }, woodMat);
+  addBox('frontBottomStoneRail', { width: 4.05, height: 0.22, depth: 0.18 }, { x: 0, y: 0.14, z: -1.18 }, stoneMat);
+  addBox('frontTopStoneRail', { width: 4.12, height: 0.26, depth: 0.22 }, { x: 0, y: 1.26, z: -1.2 }, stoneMat);
+  addBox('backBottomStoneRail', { width: 4.05, height: 0.22, depth: 0.18 }, { x: 0, y: 0.14, z: 1.18 }, stoneMat);
+  addBox('backTopStoneRail', { width: 4.12, height: 0.26, depth: 0.22 }, { x: 0, y: 1.26, z: 1.2 }, stoneMat);
+
+  [-0.42, -0.18, 0.06, 0.3, 0.54, 0.78, 1.02].forEach((y, index) => {
+    addBox(`frontWoodGroove_${index}`, { width: 3.35, height: 0.035, depth: 0.035 }, { x: 0, y: y + 0.48, z: -1.145 }, darkWoodMat);
+    addBox(`backWoodGroove_${index}`, { width: 3.35, height: 0.035, depth: 0.035 }, { x: 0, y: y + 0.48, z: 1.145 }, darkWoodMat);
+  });
 
   const lidPivot = new BABYLON.TransformNode(`${root.name}_lidPivot`, scene);
   lidPivot.parent = root;
-  lidPivot.position.set(0, 1.28, -0.9);
+  lidPivot.position.set(0, 1.24, -1.02);
 
-  const lid = BABYLON.MeshBuilder.CreateBox(`${root.name}_lid`, { width: 3.25, height: 0.58, depth: 2.1 }, scene);
-  lid.parent = lidPivot;
-  lid.position.set(0, 0.18, 0.9);
-  lid.material = lidMat;
-  lid.isPickable = true;
-  lid._editRoot = root;
+  const lid = addCylinder(
+    'barrelLid',
+    { diameter: 2.22, height: 3.85, tessellation: 24 },
+    { x: 0, y: 0.08, z: 1.02 },
+    woodMat,
+    lidPivot,
+    { z: Math.PI / 2 }
+  );
+  lid.scaling.y = 0.54;
 
-  const bandPositions = [-1.22, 1.22];
-  bandPositions.forEach((x, index) => {
-    const band = BABYLON.MeshBuilder.CreateBox(`${root.name}_band_${index}`, { width: 0.18, height: 1.92, depth: 2.16 }, scene);
-    band.parent = root;
-    band.position.set(x, 1.02, 0);
-    band.material = metalMat;
-    band.isPickable = true;
-    band._editRoot = root;
+  [-0.48, -0.26, -0.04, 0.18, 0.4, 0.62].forEach((z, index) => {
+    addBox(`lidPlankLine_${index}`, { width: 3.35, height: 0.035, depth: 0.045 }, { x: 0, y: 0.86, z }, darkWoodMat, lidPivot, { x: -0.16 });
   });
 
-  const latch = BABYLON.MeshBuilder.CreateBox(`${root.name}_latch`, { width: 0.5, height: 0.58, depth: 0.14 }, scene);
-  latch.parent = root;
-  latch.position.set(0, 1.08, -1.08);
-  latch.material = metalMat;
-  latch.isPickable = true;
-  latch._editRoot = root;
+  const bandPositions = [-1.62, -0.52, 0.72, 1.62];
+  bandPositions.forEach((x, index) => {
+    addBox(`frontStoneRib_${index}`, { width: 0.24, height: 1.64, depth: 0.28 }, { x, y: 0.82, z: -1.21 }, stoneMat);
+    addBox(`backStoneRib_${index}`, { width: 0.24, height: 1.64, depth: 0.28 }, { x, y: 0.82, z: 1.21 }, stoneMat);
+    addBox(`lidStoneRib_${index}`, { width: 0.26, height: 0.32, depth: 2.24 }, { x, y: 0.72, z: 1.02 }, stoneMat, lidPivot, { x: -0.02 });
+    addBox(`ribTopHighlight_${index}`, { width: 0.04, height: 0.04, depth: 1.8 }, { x: x - 0.08, y: 0.92, z: 1.02 }, stoneHiMat, lidPivot, { x: -0.02 });
+    addBox(`frontRibBlock_${index}`, { width: 0.42, height: 0.34, depth: 0.34 }, { x, y: 1.22, z: -1.23 }, stoneMat);
+  });
+
+  [-1.76, 1.76].forEach(x => {
+    [-0.86, 0.86].forEach(z => {
+      addBox(`goldFoot_${x}_${z}`, { width: 0.36, height: 0.38, depth: 0.36 }, { x, y: 0.05, z }, goldMat);
+    });
+  });
+
+  [-1.08, 1.08].forEach(x => {
+    addBox(`frontGoldCorner_${x}`, { width: 0.42, height: 0.12, depth: 0.08 }, { x, y: 0.45, z: -1.25 }, goldMat);
+    addBox(`frontGoldCornerStep_${x}`, { width: 0.12, height: 0.42, depth: 0.08 }, { x: x + (x < 0 ? -0.15 : 0.15), y: 0.6, z: -1.25 }, goldMat);
+  });
+
+  const medallion = addCylinder(
+    'flowerMedallion',
+    { diameter: 0.76, height: 0.08, tessellation: 40 },
+    { x: 0, y: 0.68, z: -0.18 },
+    goldMat,
+    lidPivot,
+    { x: Math.PI / 2 }
+  );
+  medallion.scaling.y = 0.18;
+
+  for (let i = 0; i < 5; i++) {
+    const angle = (Math.PI * 2 * i) / 5;
+    const petal = addCylinder(
+      `flowerPetal_${i}`,
+      { diameter: 0.24, height: 0.045, tessellation: 18 },
+      { x: Math.cos(angle) * 0.19, y: 0.68 + Math.sin(angle) * 0.19, z: -0.24 },
+      goldMat,
+      lidPivot,
+      { x: Math.PI / 2, z: angle }
+    );
+    petal.scaling.x = 0.58;
+  }
+  addCylinder('flowerCenter', { diameter: 0.12, height: 0.05, tessellation: 18 }, { x: 0, y: 0.68, z: -0.27 }, goldMat, lidPivot, { x: Math.PI / 2 });
+
+  const lockPlate = addCylinder(
+    'lockPlate',
+    { diameter: 0.7, height: 0.12, tessellation: 5 },
+    { x: 0, y: 0.86, z: -1.31 },
+    goldMat,
+    root,
+    { x: Math.PI / 2, z: Math.PI }
+  );
+  lockPlate.scaling.y = 1.12;
+  addBox('lockTopBar', { width: 0.62, height: 0.18, depth: 0.16 }, { x: 0, y: 1.25, z: -1.31 }, goldMat);
+  addBox('lockShackleLeft', { width: 0.13, height: 0.42, depth: 0.14 }, { x: -0.26, y: 1.08, z: -1.31 }, goldMat);
+  addBox('lockShackleRight', { width: 0.13, height: 0.42, depth: 0.14 }, { x: 0.26, y: 1.08, z: -1.31 }, goldMat);
+  addCylinder('keyholeRound', { diameter: 0.18, height: 0.13, tessellation: 18 }, { x: 0, y: 0.9, z: -1.38 }, blackMat, root, { x: Math.PI / 2 });
+  addBox('keyholeSlot', { width: 0.11, height: 0.28, depth: 0.14 }, { x: 0, y: 0.72, z: -1.38 }, blackMat);
+
+  [-0.95, 0.95].forEach((x, i) => {
+    addCylinder(`frontSmallFlower_${i}`, { diameter: 0.22, height: 0.08, tessellation: 10 }, { x, y: 1.24, z: -1.32 }, goldMat, root, { x: Math.PI / 2 });
+  });
+
+  const ring = BABYLON.MeshBuilder.CreateTorus(`${root.name}_sideRing`, { diameter: 0.58, thickness: 0.08, tessellation: 36 }, scene);
+  ring.parent = root;
+  ring.position.set(1.96, 0.86, 0.36);
+  ring.rotation.y = Math.PI / 2;
+  ring.material = goldMat;
+  markEditable(ring);
+  addBox('sideRingPlate', { width: 0.1, height: 0.42, depth: 0.42 }, { x: 1.91, y: 0.86, z: 0.36 }, goldMat);
+
+  [-1.55, -0.75, 0.15, 0.95, 1.45].forEach((x, index) => {
+    addBox(`woodGrainFront_${index}`, { width: 0.34, height: 0.025, depth: 0.03 }, { x, y: 0.88 + (index % 2) * 0.22, z: -1.34 }, darkWoodMat);
+  });
 
   const glow = BABYLON.MeshBuilder.CreateCylinder(`${root.name}_rewardGlow`, { diameter: 2.2, height: 0.06, tessellation: 32 }, scene);
   glow.parent = root;
@@ -2244,7 +2336,7 @@ function buildTreasureChest(root) {
   lidPivot.rotation.x = root.metadata.opened === true ? -1.05 : 0;
   root.metadata._chestLidPivot = lidPivot;
   root.metadata._chestGlow = glow;
-  root.metadata._chestMats = [woodMat, lidMat, metalMat, glowMat];
+  root.metadata._chestMats = [woodMat, darkWoodMat, stoneMat, stoneHiMat, goldMat, blackMat, glowMat];
 }
 
 function getTreasureChestRoots() {
