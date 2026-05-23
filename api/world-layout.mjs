@@ -5,7 +5,7 @@ const BRANCH = 'dev';
 const FILE_PATH = 'assets/world-layout.json';
 
 function getGitHubToken() {
-  return process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
+  return process.env.GITHUB_TOKEN || '';
 }
 
 async function getGitHubErrorMessage(response) {
@@ -126,7 +126,7 @@ export default async function handler(req, res) {
     const token = getGitHubToken();
 
     if (!token) {
-      throw new Error('Missing GITHUB_TOKEN or GH_TOKEN environment variable');
+      throw new Error('Missing GITHUB_TOKEN environment variable');
     }
 
     if (req.method === 'GET') {
