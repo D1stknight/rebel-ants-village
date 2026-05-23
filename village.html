@@ -1120,6 +1120,36 @@ function getCollisionProxyOwnerVisibleBounds(ownerNode) {
   };
 }
 
+function isCollisionVegetationType(type) {
+  return ['pine_1', 'tree_1', 'cherry_blossom', 'bamboo'].includes(getCollisionProxyCanonicalOwnerType(type));
+}
+
+function getCollisionProxyOwnerFitProfile(ownerNode) {
+  if (!ownerNode) return null;
+  ownerNode.computeWorldMatrix?.(true);
+  const ownerType = ownerNode.metadata?.type || getObjectType(ownerNode);
+  const bounds = getCollisionProxyOwnerVisibleBounds(ownerNode);
+  const worldScale = getCollisionProxyOwnerWorldScale(ownerNode);
+  const inverseOwner = ownerNode.getWorldMatrix ? ownerNode.getWorldMatrix().clone().invert() : BABYLON.Matrix.Identity();
+  let centerLocal = bounds?.center
+    ? (() => {
+        const local = BABYLON.Vector3.TransformCoordinates(
+          new BABYLON.Vector3(bounds.center.x, bounds.center.y, bounds.center.z),
+          inverseOwner
+        );
+        return { x: local.x, y: local.y, z: local.z };
+      })()
+    : null;
+
+  // Trees need trunk-based placement. Full visible bounds include the canopy,
+  // which shifts copied blockers away from the actual trunk.
+  if (isCollisionVegetationType(ownerType)) {
+    centerLocal = { x: 0, y: 0, z: 0 };
+  }
+
+  return { bounds, centerLocal, worldScale };
+}
+
 function getCollisionTemplateExtraFitScale(sourceProfile, targetProfile) {
   if (!sourceProfile || !targetProfile) return { x: 1, y: 1, z: 1 };
   const sourceBounds = sourceProfile.bounds?.size;
@@ -1147,20 +1177,7 @@ function makeCollisionProxyTemplate(ownerNode) {
   if (!ownerNode || !ownerType) return null;
   ownerNode.computeWorldMatrix?.(true);
   const inverseOwner = ownerNode.getWorldMatrix ? ownerNode.getWorldMatrix().clone().invert() : BABYLON.Matrix.Identity();
-  const sourceBounds = getCollisionProxyOwnerVisibleBounds(ownerNode);
-  const sourceProfile = {
-    bounds: sourceBounds,
-    centerLocal: sourceBounds?.center
-      ? (() => {
-          const local = BABYLON.Vector3.TransformCoordinates(
-            new BABYLON.Vector3(sourceBounds.center.x, sourceBounds.center.y, sourceBounds.center.z),
-            inverseOwner
-          );
-          return { x: local.x, y: local.y, z: local.z };
-        })()
-      : null,
-    worldScale: getCollisionProxyOwnerWorldScale(ownerNode)
-  };
+  const sourceProfile = getCollisionProxyOwnerFitProfile(ownerNode);
 
   const pieces = getAttachedCollisionProxyPieces(ownerNode).map(piece => {
     piece.computeWorldMatrix?.(true);
@@ -1215,20 +1232,7 @@ function applyCollisionProxyTemplateToOwner(ownerNode, template, options = {}) {
 
   ownerNode.computeWorldMatrix?.(true);
   const ownerMatrix = ownerNode.getWorldMatrix ? ownerNode.getWorldMatrix() : BABYLON.Matrix.Identity();
-  const targetProfile = {
-    bounds: getCollisionProxyOwnerVisibleBounds(ownerNode),
-    worldScale: getCollisionProxyOwnerWorldScale(ownerNode)
-  };
-  const inverseOwner = ownerNode.getWorldMatrix ? ownerNode.getWorldMatrix().clone().invert() : BABYLON.Matrix.Identity();
-  targetProfile.centerLocal = targetProfile.bounds?.center
-    ? (() => {
-        const local = BABYLON.Vector3.TransformCoordinates(
-          new BABYLON.Vector3(targetProfile.bounds.center.x, targetProfile.bounds.center.y, targetProfile.bounds.center.z),
-          inverseOwner
-        );
-        return { x: local.x, y: local.y, z: local.z };
-      })()
-    : null;
+  const targetProfile = getCollisionProxyOwnerFitProfile(ownerNode);
   const extraFitScale = getCollisionTemplateExtraFitScale(template.sourceProfile, targetProfile);
   let created = 0;
 
