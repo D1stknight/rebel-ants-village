@@ -6620,60 +6620,19 @@ return Promise.resolve(true);
   // Manual Save / P path:
   // queue GitHub saves so two saves can never overlap and fight over SHA.
   _worldLayoutSaveChain = _worldLayoutSaveChain.then(async () => {
-    if (!window._ghToken) {
-      console.warn("World layout saved locally, but no GitHub token was available.");
-      showToast('⚠ Saved locally only');
-      return false;
-    }
-
     showToast('Saving world layout...');
 
     try {
-      const LAYOUT_PATH = "assets/world-layout.json";
+      const response = await fetch('/api/world-layout', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ layout: data })
+      });
+      const result = await response.json();
 
-      // Get current SHA from GitHub before writing.
-      let sha = undefined;
-      const check = await fetch(
-        "https://api.github.com/repos/D1stknight/rebel-ants-village/contents/" + LAYOUT_PATH + "?ref=dev",
-        {
-          headers: { "Authorization": "token " + window._ghToken }
-        }
-      );
-
-      if (check.ok) {
-        const cd = await check.json();
-        sha = cd.sha;
-      } else if (check.status !== 404) {
-        throw new Error("Could not read current GitHub layout SHA. Status: " + check.status);
-      }
-
-      const enc = new TextEncoder();
-      const b = enc.encode(json);
-      let bin = '';
-      b.forEach(x => bin += String.fromCharCode(x));
-
-      const body = {
-        message: "save: world layout",
-        content: btoa(bin),
-        branch: "dev"
-      };
-
-      if (sha) body.sha = sha;
-
-      const put = await fetch(
-        "https://api.github.com/repos/D1stknight/rebel-ants-village/contents/" + LAYOUT_PATH,
-        {
-          method: 'PUT',
-          headers: {
-            "Authorization": "token " + window._ghToken,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(body)
-        }
-      );
-
-      if (!put.ok) {
-        throw new Error("GitHub layout save failed. Status: " + put.status);
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || "World layout save failed. Status: " + response.status);
       }
 
       console.log("World layout saved to GitHub", data);
@@ -8181,22 +8140,21 @@ Object.keys(ASSETS).forEach(key => loadAssetSource(key));
 
 // ── LOADING SCREEN + WORLD INIT ──────────────────
 async function initWorldLayout() {
-  // Always ensure token is set before fetching
-  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
-
   try {
-    const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/world-layout.json?ref=dev", {
-      headers: { "Authorization": "token " + window._ghToken }
-    });
+    const resp = await fetch('/api/world-layout');
     if (resp.ok) {
       const d = await resp.json();
-      const bytes = Uint8Array.from(atob(d.content.replace(/\n/g,'')), c => c.charCodeAt(0));
-      localStorage.setItem("rebelAntsWorldLayout", new TextDecoder('utf-8').decode(bytes));
-      console.log("Layout restored from GitHub:", JSON.parse(new TextDecoder('utf-8').decode(bytes)).length, "objects");
+      if (d.ok && Array.isArray(d.layout)) {
+        localStorage.setItem("rebelAntsWorldLayout", JSON.stringify(d.layout));
+        console.log("Layout restored from GitHub:", d.layout.length, "objects");
+      }
     }
   } catch(e) {
     console.warn("Could not load layout from GitHub", e);
   }
+
+  // Still used by the existing Forge collections bootstrap below.
+  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
 
   try {
     const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/forge-collections.json?ref=dev", {
