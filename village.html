@@ -224,6 +224,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #villageGateList{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .village-gate-option{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.72);padding:11px 12px;text-align:left;cursor:pointer;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:1px;transition:all .15s}
 .village-gate-option:hover{background:rgba(232,197,106,.13);border-color:rgba(232,197,106,.48);color:#e8c56a}
+.village-gate-option:disabled{cursor:default;background:rgba(94,207,202,.08);border-color:rgba(94,207,202,.36);color:#5ecfca}
 .village-gate-option span{color:#5ecfca;margin-right:8px}
 #villageGateClose{display:block;margin:18px auto 0;background:transparent;border:1px solid rgba(94,207,202,.4);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 16px;cursor:pointer}
 @media (max-width:640px){#villageGateList{grid-template-columns:1fr}#villageGatePanel{padding:22px}}
@@ -235,7 +236,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div class="ap-header"><span>Assets</span><kbd>M</kbd></div>
   <div class="ap-scroll">
     <div class="ap-section">Buildings</div>
-    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
     <div class="ap-section">Light Director</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">Path Lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🔥</span><span class="ap-name">Fire Bowl</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ambient_glow')"><span class="ap-icon">✨</span><span class="ap-name">Ambient Glow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('treasure_chest')"><span class="ap-icon">💰</span><span class="ap-name">Treasure Chest</span></div></div>
     <div class="ap-section">Nature</div>
@@ -611,6 +612,12 @@ lantern_1: {
     scale: 1.0,
     noShadows: true,
     groundOffset: 0
+  },
+   village_gate: {
+    procedural: true,
+    scale: 1.0,
+    noShadows: true,
+    groundOffset: 0
   }
 };
 
@@ -640,6 +647,7 @@ function spawnAsset(type, position, extraMeta) {
   root.metadata.glowDepth || ((root.metadata.glowShape || 'circle') === 'rectangle' ? 6 : 9)
 );
     if (type === 'treasure_chest') buildTreasureChest(root);
+    if (type === 'village_gate') buildVillageGate(root);
     root.metadata.loaded = true;
     console.log("Spawned procedural:", type);
   } else {
@@ -2463,31 +2471,38 @@ function tryOpenNearbyTreasureChest() {
   return openTreasureChest(chest);
 }
 
-let hubVillagePortalRoot = null;
 let _villageGateNumberBuffer = '';
 let _villageGateNumberTimer = null;
 
-function createHubVillagePortal() {
-  if (CURRENT_VILLAGE_ID !== 'hub' || hubVillagePortalRoot) return null;
-
-  const root = new BABYLON.TransformNode('hubVillageGatePortalRoot', scene);
-  root.position = new BABYLON.Vector3(0, 0.2, -42);
-  root.rotation.y = Math.PI;
-  root.metadata = { type:'hub_village_gate_portal', visualOnly:true };
-
+function buildVillageGate(root) {
+  if (!root) return;
+  root.metadata = {
+    ...(root.metadata || {}),
+    type: 'village_gate',
+    villageId: root.metadata?.villageId || CURRENT_VILLAGE_ID
+  };
   const redMat = pbr(new BABYLON.Color3(.72,.08,.04), { r:.58, m:.08 });
   const darkMat = mat(new BABYLON.Color3(.075,.065,.075), { e:new BABYLON.Color3(.012,.01,.016) });
   const goldMat = pbr(new BABYLON.Color3(.95,.68,.18), { r:.34, m:.45, e:new BABYLON.Color3(.14,.08,.01), ei:.35 });
-  const glowMat = mat(new BABYLON.Color3(.35,.95,.92), { e:new BABYLON.Color3(.18,.95,.9), a:.34 });
+  const glowMat = mat(new BABYLON.Color3(.35,.95,.92), { e:new BABYLON.Color3(.18,.95,.9), a:.28 });
   glowMat.backFaceCulling = false;
   glowMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
 
   function attach(mesh) {
     mesh.parent = root;
+    mesh.isPickable = true;
+    mesh.checkCollisions = false;
+    mesh.receiveShadows = false;
+    mesh.metadata = { type:'village_gate', isPickProxy:true };
+    mesh._editRoot = root;
+    return mesh;
+  }
+  function attachEffect(mesh) {
+    mesh.parent = root;
     mesh.isPickable = false;
     mesh.checkCollisions = false;
     mesh.receiveShadows = false;
-    mesh.metadata = { type:'hub_village_gate_portal_part', visualOnly:true };
+    mesh.metadata = { type:'village_gate_effect', visualOnly:true };
     return mesh;
   }
 
@@ -2499,37 +2514,36 @@ function createHubVillagePortal() {
   attach(box(6.2,.48,.6,redMat,[0,5.7,0]));
   attach(box(7.1,.42,.74,redMat,[0,6.45,0]));
   attach(box(1.25,.34,.64,goldMat,[0,6.02,0]));
-  attach(cyl(0,1.18,.18,36,glowMat,[0,.12,0],Math.PI/2));
+  const floorGlow = attachEffect(cyl(0,1.02,.06,36,glowMat,[0,.1,0],Math.PI/2));
 
-  const aura = attach(BABYLON.MeshBuilder.CreateTorus('hubVillageGateAura',{diameter:4.4,thickness:.08,tessellation:48},scene));
+  const portalDisc = attachEffect(BABYLON.MeshBuilder.CreatePlane(`${root.name}_portalDisc`,{width:2.75,height:3.75},scene));
+  portalDisc.position.y = 3.05;
+  portalDisc.position.z = .03;
+  portalDisc.material = glowMat;
+
+  const aura = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalAura`,{diameter:2.82,thickness:.075,tessellation:48},scene));
   aura.position.y = 3.1;
-  aura.rotation.x = Math.PI / 2;
+  aura.position.z = .06;
   aura.material = glowMat;
 
-  const halo = attach(BABYLON.MeshBuilder.CreatePlane('hubVillageGateHalo',{width:5.7,height:5.7},scene));
-  halo.position.y = 3.1;
-  halo.position.z = .08;
-  halo.material = glowMat;
-  halo.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
-
-  const light = new BABYLON.PointLight('hubVillageGateLight', root.position.add(new BABYLON.Vector3(0,3.2,0)), scene);
+  const light = new BABYLON.PointLight(`${root.name}_portalLight`, new BABYLON.Vector3(0,3.2,.2), scene);
   light.diffuse = new BABYLON.Color3(.35,.95,.92);
   light.specular = new BABYLON.Color3(.35,.95,.92);
-  light.intensity = 1.1;
-  light.range = 18;
+  light.intensity = .78;
+  light.range = 11;
   light.parent = root;
 
-  const sparkle = new BABYLON.ParticleSystem('hubVillageGateSparkles', 70, scene);
+  const sparkle = new BABYLON.ParticleSystem(`${root.name}_portalSparkles`, 56, scene);
   sparkle.particleTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png', scene);
   sparkle.emitter = root;
-  sparkle.minEmitBox = new BABYLON.Vector3(-1.9,1.3,-.2);
-  sparkle.maxEmitBox = new BABYLON.Vector3(1.9,5.1,.2);
+  sparkle.minEmitBox = new BABYLON.Vector3(-1.05,1.55,-.08);
+  sparkle.maxEmitBox = new BABYLON.Vector3(1.05,4.55,.08);
   sparkle.color1 = new BABYLON.Color4(.35,1,.95,.8);
   sparkle.color2 = new BABYLON.Color4(1,.75,.25,.55);
   sparkle.colorDead = new BABYLON.Color4(.2,.6,.7,0);
   sparkle.minSize = .08; sparkle.maxSize = .24;
   sparkle.minLifeTime = .9; sparkle.maxLifeTime = 1.8;
-  sparkle.emitRate = 14;
+  sparkle.emitRate = 10;
   sparkle.minEmitPower = .05; sparkle.maxEmitPower = .18;
   sparkle.updateSpeed = .018;
   sparkle.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
@@ -2538,32 +2552,52 @@ function createHubVillagePortal() {
   scene.onBeforeRenderObservable.add(() => {
     if (!root || root.isDisposed?.()) return;
     const pulse = 1 + Math.sin(performance.now() * .0024) * .055;
+    portalDisc.scaling.set(.96 + (pulse - 1) * .55, .96 + (pulse - 1) * .55, 1);
     aura.scaling.set(pulse,pulse,pulse);
-    halo.scaling.set(pulse,pulse,pulse);
-    light.intensity = 1.0 + Math.sin(performance.now() * .0028) * .22;
+    floorGlow.scaling.set(pulse,pulse,pulse);
+    light.intensity = .72 + Math.sin(performance.now() * .0028) * .16;
   });
 
-  hubVillagePortalRoot = root;
   return root;
 }
 
+function getVillageGateRoots() {
+  return scene.transformNodes.filter(node =>
+    node &&
+    !node.isDisposed?.() &&
+    node.metadata?.type === 'village_gate' &&
+    node.metadata?.isClone === true
+  );
+}
+
 function getNearestVillageGateInRange(range = 7.2) {
-  if (!charMesh || !hubVillagePortalRoot || CURRENT_VILLAGE_ID !== 'hub') return null;
-  const dx = hubVillagePortalRoot.position.x - charMesh.position.x;
-  const dz = hubVillagePortalRoot.position.z - charMesh.position.z;
-  return dx * dx + dz * dz <= range * range ? hubVillagePortalRoot : null;
+  if (!charMesh) return null;
+  const rangeSq = range * range;
+  let nearest = null;
+  let nearestDistSq = Infinity;
+  getVillageGateRoots().forEach(gate => {
+    const dx = gate.position.x - charMesh.position.x;
+    const dz = gate.position.z - charMesh.position.z;
+    const distSq = dx * dx + dz * dz;
+    if (distSq <= rangeSq && distSq < nearestDistSq) {
+      nearest = gate;
+      nearestDistSq = distSq;
+    }
+  });
+  return nearest;
 }
 
 function openVillageGateMenu() {
-  if (CURRENT_VILLAGE_ID !== 'hub') return false;
   const overlay = document.getElementById('villageGateOverlay');
   const list = document.getElementById('villageGateList');
   if (!overlay || !list) return false;
 
-  const hubOption = `<button class="village-gate-option" type="button" data-village-id="hub" onclick="selectVillageGateDestination('hub')"><span>Hub</span>Hub Village${CURRENT_VILLAGE_ID === 'hub' ? ' (Current)' : ''}</button>`;
+  const hubDisabled = CURRENT_VILLAGE_ID === 'hub' ? ' disabled' : '';
+  const hubOption = `<button class="village-gate-option" type="button" data-village-id="hub" onclick="selectVillageGateDestination('hub')"${hubDisabled}><span>0</span>Hub Village${CURRENT_VILLAGE_ID === 'hub' ? ' (Current)' : ''}</button>`;
   const factionOptions = FACTION_VILLAGES.map((id, index) => {
     const village = VILLAGE_REGISTRY[id];
-    return `<button class="village-gate-option" type="button" data-village-id="${id}" onclick="selectVillageGateDestination('${id}')"><span>${index + 1}</span>${village.displayName}</button>`;
+    const disabled = CURRENT_VILLAGE_ID === id ? ' disabled' : '';
+    return `<button class="village-gate-option" type="button" data-village-id="${id}" onclick="selectVillageGateDestination('${id}')"${disabled}><span>${index + 1}</span>${village.displayName}${CURRENT_VILLAGE_ID === id ? ' (Current)' : ''}</button>`;
   }).join('');
   list.innerHTML = hubOption + factionOptions;
   overlay.classList.add('on');
@@ -2583,6 +2617,7 @@ function closeVillageGateMenu() {
 function selectVillageGateDestination(villageId) {
   const village = VILLAGE_REGISTRY[villageId];
   if (!village) return;
+  if (villageId === CURRENT_VILLAGE_ID) return;
   window.location.href = village.route;
 }
 
@@ -2599,6 +2634,10 @@ function isVillageGateMenuOpen() {
 function handleVillageGateNumberKey(key) {
   if (!isVillageGateMenuOpen()) return false;
   if (!/^[0-9]$/.test(key)) return true;
+  if (key === '0') {
+    selectVillageGateDestination('hub');
+    return true;
+  }
 
   _villageGateNumberBuffer += key;
   if (_villageGateNumberTimer) clearTimeout(_villageGateNumberTimer);
@@ -2621,6 +2660,18 @@ function handleVillageGateNumberKey(key) {
 
 window.closeVillageGateMenu = closeVillageGateMenu;
 window.selectVillageGateDestination = selectVillageGateDestination;
+
+function ensureDefaultVillageGate() {
+  if (getVillageGateRoots().length) return;
+  const gate = spawnAsset('village_gate', new BABYLON.Vector3(0, .2, -42), {
+    isClone: true,
+    villageId: CURRENT_VILLAGE_ID
+  });
+  if (!gate) return;
+  gate.name = makeCloneName('village_gate');
+  gate.rotation.y = Math.PI;
+  registerEditableRoot(gate.name, gate);
+}
 
 function getSelectedWalkSurfaceMetadataTarget() {
   if (!selectedObject || !selectedObject.metadata) return null;
@@ -3173,7 +3224,6 @@ function torii(x,z,ry=0){
   return g;
 }
 torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0,-92,Math.PI);
-createHubVillagePortal();
 
 // ── FIRE BOWLS ───────────────────────────────
 const fireLights=[];
@@ -7249,14 +7299,16 @@ function triggerAutoSave() {
 
 function loadWorldLayout(){
   const raw = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem("rebelAntsWorldLayout") : null);
-  if (!raw) return;
-  let data;
-  try { data = JSON.parse(raw); } catch(e) { return; }
-  if (!Array.isArray(data) || !data.length) return;
+  let data = [];
+  if (raw) {
+    try { data = JSON.parse(raw); } catch(e) { data = []; }
+  }
+  if (!Array.isArray(data)) data = [];
 
   // Dispose existing clones before restoring
   scene.transformNodes.filter(n =>
-    n.name && n.name.includes('RootClone_') && !n.name.includes('.')
+    n.metadata?.isClone === true ||
+    (n.name && n.name.includes('RootClone_') && !n.name.includes('.'))
   ).forEach(n => n.dispose(false, false));
   scene.meshes.filter(m =>
     m.name &&
@@ -7325,13 +7377,19 @@ function loadWorldLayout(){
                 isClone: true,
                 ...getDefaultTreasureChestMetadata(item)
               }
-            : {
+            : item.type === 'village_gate'
+              ? {
+                  isClone: true,
+                  villageId: item.villageId || CURRENT_VILLAGE_ID
+                }
+              : {
                 isClone: true,
                 toroColor: item.toroColor || '#ffdd88'
               };
 
       const clone = spawnAsset(item.type, pos, proceduralMeta);
       if (!clone) return;
+      if (item.name) clone.name = item.name;
       clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
       clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
       registerEditableRoot(clone.name, clone);
@@ -7384,6 +7442,7 @@ if (m.material) {
     gizmoManager.scaleGizmoEnabled = false;
   }
   console.log("World layout loaded", data.length, "objects");
+  ensureDefaultVillageGate();
 }
 
 function deleteSelectedFence(){
@@ -7828,6 +7887,7 @@ window.addEventListener('resize',()=>engine.resize());
 
 // ── CHERRY BLOSSOM PETALS ─────────────────────
 (()=>{
+  if (CURRENT_VILLAGE_ID !== 'hub') return;
   const ps = new BABYLON.ParticleSystem('petals', 250, scene);
   // Use a simple pink disc texture from CDN
   ps.particleTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png', scene);
@@ -8659,6 +8719,7 @@ function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
 
 // ── CHERRY BLOSSOM PETALS ─────────────────────
 (()=>{
+  if (CURRENT_VILLAGE_ID !== 'hub') return;
   function makePetalSystem(name, count, emitY, boxSize, rate){
     const ps = new BABYLON.ParticleSystem(name, count, scene);
     ps.particleTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png',scene);
