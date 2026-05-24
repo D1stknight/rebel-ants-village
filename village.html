@@ -191,6 +191,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #assetPanel .ap-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 8px}
 #assetPanel .ap-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:8px 4px;cursor:pointer;text-align:center;transition:all .15s}
 #assetPanel .ap-card:hover{background:rgba(232,197,106,.12);border-color:rgba(232,197,106,.4)}
+#assetPanel .ap-card.library-removable{position:relative;padding-right:20px}
+#assetPanel .ap-remove{position:absolute;top:3px;right:3px;width:16px;height:16px;border:1px solid rgba(220,80,80,.45);border-radius:4px;background:rgba(40,4,8,.86);color:#e86060;font-size:12px;line-height:12px;cursor:pointer;padding:0;opacity:.78}
+#assetPanel .ap-remove:hover{opacity:1;background:rgba(220,60,60,.2);border-color:rgba(220,80,80,.8)}
 #assetPanel .ap-card .ap-icon{font-size:18px;display:block;margin-bottom:3px}
 #assetPanel .ap-card .ap-name{font-size:9px;color:rgba(255,255,255,.5);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #assetPanel .ap-divider{border:none;border-top:1px solid rgba(255,255,255,.06);margin:8px}
@@ -243,6 +246,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">Path Lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🔥</span><span class="ap-name">Fire Bowl</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ambient_glow')"><span class="ap-icon">✨</span><span class="ap-name">Ambient Glow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('treasure_chest')"><span class="ap-icon">💰</span><span class="ap-name">Treasure Chest</span></div></div>
     <div class="ap-section">Nature</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wooden_sign')"><span class="ap-icon">🪧</span><span class="ap-name">wooden_sign</span></div><div class="ap-card" onclick="spawnAssetFromPanel('small_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">small_bridge</span></div></div>
+    <div class="ap-section" id="uploadedAssetsSection" style="display:none">Uploaded Assets</div>
+    <div class="ap-grid" id="uploadedAssetGrid" style="display:none"></div>
     <hr class="ap-divider">
     <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
   <div class="ap-section">Selected</div>
@@ -677,6 +682,8 @@ lantern_1: {
     groundOffset: 0
   }
 };
+
+const CORE_ASSET_KEYS = new Set(Object.keys(ASSETS));
 
   // ═══════════════════════════════════════
 // SPAWN ASSET FUNCTION (MASTER SYSTEM)
@@ -7583,6 +7590,57 @@ function triggerAutoSave() {
   _autoSaveTimer = setTimeout(() => { saveWorldLayout(false); }, 2000);
 }
 
+function createMissingAssetPlaceholder(item) {
+  const type = item.type || 'missing_asset';
+  const root = new BABYLON.TransformNode((item.name || makeCloneName(type + '_missing')), scene);
+  root.position = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
+  root.rotation = new BABYLON.Vector3(item.rotation?.x || 0, item.rotation?.y || 0, item.rotation?.z || 0);
+  root.scaling = new BABYLON.Vector3(item.scaling?.x || 1, item.scaling?.y || 1, item.scaling?.z || 1);
+  root.isPickable = true;
+  root.metadata = {
+    type,
+    isClone: true,
+    missingAsset: true,
+    signConfig: item.signConfig || null,
+    proxyAutoEnabled: item.proxyAutoEnabled !== false,
+    proxyWalkSurfaceEnabled: item.proxyWalkSurfaceEnabled === true,
+    proxyEntranceSide: item.proxyEntranceSide || null,
+    proxyEntranceOffset: Number.isFinite(item.proxyEntranceOffset) ? item.proxyEntranceOffset : null,
+    proxyRampWidth: Number.isFinite(item.proxyRampWidth) ? item.proxyRampWidth : null,
+    proxyRampDepth: Number.isFinite(item.proxyRampDepth) ? item.proxyRampDepth : null,
+    proxyFloorHeight: Number.isFinite(item.proxyFloorHeight) ? item.proxyFloorHeight : null
+  };
+
+  const mat = new BABYLON.StandardMaterial('missingAssetMat_' + root.name, scene);
+  mat.diffuseColor = new BABYLON.Color3(0.18, 0.02, 0.03);
+  mat.emissiveColor = new BABYLON.Color3(0.45, 0.02, 0.03);
+  mat.alpha = 0.72;
+  mat.backFaceCulling = false;
+
+  const box = BABYLON.MeshBuilder.CreateBox('missingAssetBox_' + root.name, { width: 1.6, height: 1.6, depth: 1.6 }, scene);
+  box.parent = root;
+  box.position.y = 0.8;
+  box.material = mat;
+  box.isPickable = true;
+  box._editRoot = root;
+
+  const slashA = BABYLON.MeshBuilder.CreateBox('missingAssetSlashA_' + root.name, { width: 0.16, height: 2.2, depth: 0.18 }, scene);
+  slashA.parent = root;
+  slashA.position.y = 0.8;
+  slashA.rotation.z = Math.PI / 4;
+  slashA.material = mat;
+  slashA.isPickable = true;
+  slashA._editRoot = root;
+
+  const slashB = slashA.clone('missingAssetSlashB_' + root.name);
+  slashB.rotation.z = -Math.PI / 4;
+  slashB._editRoot = root;
+
+  registerEditableRoot(root.name, root);
+  console.warn('Missing library asset restored as placeholder:', type);
+  return root;
+}
+
 function loadWorldLayout(){
   const raw = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem("rebelAntsWorldLayout") : null);
   let data = [];
@@ -7682,9 +7740,15 @@ function loadWorldLayout(){
       return;
     }
     const source = _assetSources[item.type];
-    if (!source) return;
+    if (!source) {
+      createMissingAssetPlaceholder(item);
+      return;
+    }
     const clone = source.clone(makeCloneName(item.type));
-    if (!clone) return;
+    if (!clone) {
+      createMissingAssetPlaceholder(item);
+      return;
+    }
     clone.metadata = {
       type: item.type,
       isClone: true,
@@ -9109,6 +9173,7 @@ function loadAssetSource(key) {
   if (_assetSources[key]) return;
   if (ASSETS[key] && ASSETS[key].procedural) { _assetSources[key] = { metadata: { loaded: true }, procedural: true }; return; }
   const root = spawnAsset(key, new BABYLON.Vector3(9999, 0, 9999));
+  if (!root) return;
   root.name = key + "Root";
   _assetSources[key] = root;
   if (key === "fence_1")   { fenceRootRef = root; }
@@ -9180,6 +9245,10 @@ async function initWorldLayout() {
 
 function waitForWorldAndLoadLayout() {
   if (!waitForWorldAndLoadLayout._start) waitForWorldAndLoadLayout._start = Date.now();
+  if (!waitForWorldAndLoadLayout._uploadedRestored) {
+    waitForWorldAndLoadLayout._uploadedRestored = true;
+    restoreUploadedAssets();
+  }
   const elapsed = Date.now() - waitForWorldAndLoadLayout._start;
   const allReady = Object.keys(ASSETS).every(k => {
     if (ASSETS[k].procedural) return true; // procedural assets are always ready
@@ -9479,30 +9548,124 @@ function applyAmbientGlowSettings() {
   toggleAmbientGlowRectangleControls();
   showToast('✨ Ambient glow applied');
 }
+function getUploadedAssets() {
+  try {
+    const uploaded = JSON.parse(localStorage.getItem('rebelAntsUploadedAssets') || '[]');
+    return Array.isArray(uploaded) ? uploaded.filter(a => a && a.key && a.file) : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function setUploadedAssets(uploaded) {
+  localStorage.setItem('rebelAntsUploadedAssets', JSON.stringify(uploaded));
+}
+
+function updateUploadedAssetsVisibility() {
+  const section = document.getElementById('uploadedAssetsSection');
+  const grid = document.getElementById('uploadedAssetGrid');
+  if (!section || !grid) return;
+  const hasUploads = grid.children.length > 0;
+  section.style.display = hasUploads ? '' : 'none';
+  grid.style.display = hasUploads ? '' : 'none';
+}
+
+function isLibraryAssetRemovable(key) {
+  if (!key || CORE_ASSET_KEYS.has(key)) return false;
+  return getUploadedAssets().some(a => a.key === key) || ASSETS[key]?._uploaded === true;
+}
+
+function getAssetLibraryCard(key) {
+  return Array.from(document.querySelectorAll('[data-asset-key]')).find(card => card.dataset.assetKey === key) || null;
+}
+
+function createUploadedAssetCard(key, loadingLabel) {
+  const grid = document.getElementById('uploadedAssetGrid');
+  if (!grid) return null;
+
+  const existing = getAssetLibraryCard(key);
+  if (existing) return existing;
+
+  const card = document.createElement('div');
+  card.className = 'ap-card library-removable';
+  card.dataset.assetKey = key;
+  card.style.opacity = '0.5';
+
+  const removeButton = document.createElement('button');
+  removeButton.type = 'button';
+  removeButton.className = 'ap-remove';
+  removeButton.title = 'Remove from library';
+  removeButton.textContent = 'x';
+  removeButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    removeAssetFromLibrary(key);
+  });
+
+  const icon = document.createElement('span');
+  icon.className = 'ap-icon';
+  icon.textContent = loadingLabel || '📦';
+
+  const name = document.createElement('span');
+  name.className = 'ap-name';
+  name.textContent = key;
+
+  card.appendChild(removeButton);
+  card.appendChild(icon);
+  card.appendChild(name);
+  grid.appendChild(card);
+  updateUploadedAssetsVisibility();
+  return card;
+}
+
+function removeAssetFromLibrary(key) {
+  if (!isLibraryAssetRemovable(key)) {
+    showToast('Core assets are protected');
+    return;
+  }
+
+  const confirmed = window.confirm('Remove "' + key + '" from the admin asset library? Existing placed objects will load as missing placeholders until the asset is restored.');
+  if (!confirmed) return;
+
+  setUploadedAssets(getUploadedAssets().filter(a => a.key !== key));
+
+  if (pendingAdminPlacement && pendingAdminPlacement.kind === 'asset' && pendingAdminPlacement.key === key) {
+    clearAdminPlacement();
+  }
+
+  if (_assetSources[key] && typeof _assetSources[key].dispose === 'function') {
+    _assetSources[key].dispose(false, true);
+  }
+  delete _assetSources[key];
+  delete ASSETS[key];
+
+  const card = getAssetLibraryCard(key);
+  if (card) card.remove();
+  updateUploadedAssetsVisibility();
+  showToast('Removed from library: ' + key);
+}
+
 // ── RESTORE UPLOADED ASSETS FROM LOCALSTORAGE ──────────
 // Any GLB uploaded via admin panel gets re-added to the panel on refresh
 // using its permanent /assets/buildings/ URL (available after Vercel redeploys)
 function restoreUploadedAssets() {
-  const uploaded = JSON.parse(localStorage.getItem('rebelAntsUploadedAssets') || '[]');
-  if (!uploaded.length) return;
-  const grid = document.querySelector('#assetPanel .ap-grid:last-of-type');
+  const uploaded = getUploadedAssets();
+  if (!uploaded.length) { updateUploadedAssetsVisibility(); return; }
   uploaded.forEach(({ key, file }) => {
     // Add to ASSETS registry with permanent URL
     if (!ASSETS[key]) {
-      ASSETS[key] = { path: '/assets/buildings/' + file, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0) };
+      ASSETS[key] = { path: '/assets/buildings/' + file, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _uploaded: true };
     }
     // Load source mesh
     if (!_assetSources[key]) loadAssetSource(key);
     // Add card to panel if not already there
-    if (grid && !document.querySelector('[data-asset-key="' + key + '"]')) {
-      const card = document.createElement('div');
-      card.className = 'ap-card';
-      card.dataset.assetKey = key;
-      card.style.opacity = '0.5';
-      card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
-      grid.appendChild(card);
+    const card = createUploadedAssetCard(key);
+    if (card) {
       // Enable card once loaded
       const waitForLoad = setInterval(() => {
+        if (!ASSETS[key]) {
+          clearInterval(waitForLoad);
+          return;
+        }
         if (_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded) {
           clearInterval(waitForLoad);
           card.style.opacity = '1';
@@ -9511,6 +9674,7 @@ function restoreUploadedAssets() {
       }, 300);
     }
   });
+  updateUploadedAssetsVisibility();
 }
 
 initWorldLayout().then(() => waitForWorldAndLoadLayout());
@@ -9904,6 +10068,10 @@ function spawnAssetFromPanel(key) {
     showToast('Enter Admin Mode first');
     return;
   }
+  if (!ASSETS[key]) {
+    showToast('Asset is no longer in the library');
+    return;
+  }
   beginAdminPlacement({ kind: 'asset', key });
 }
 
@@ -9973,10 +10141,10 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
     if (!put.ok) { showToast('❌ Upload failed — try again', 8000); return; }
 
     // ── SAVE TO localStorage so asset survives page refresh ──
-    const _uploadedAssets = JSON.parse(localStorage.getItem('rebelAntsUploadedAssets') || '[]');
+    const _uploadedAssets = getUploadedAssets();
     if (!_uploadedAssets.find(a => a.key === key)) {
       _uploadedAssets.push({ key, file: file.name });
-      localStorage.setItem('rebelAntsUploadedAssets', JSON.stringify(_uploadedAssets));
+      setUploadedAssets(_uploadedAssets);
     }
 
     // ── LOAD INTO SCENE IMMEDIATELY via blob URL ───────────
@@ -9990,21 +10158,22 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
 
     // Register in ASSETS using blob URL for immediate use
     // Also store the real path so world-layout save/load uses the permanent URL
-    ASSETS[key] = { path: blobUrl, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _realPath: '/assets/buildings/' + file.name };
+    ASSETS[key] = { path: blobUrl, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _realPath: '/assets/buildings/' + file.name, _uploaded: true };
     loadAssetSource(key);
 
-    const grid = document.querySelector('#assetPanel .ap-grid:last-of-type');
-    if (grid) {
-      const card = document.createElement('div');
-      card.className = 'ap-card';
+    const card = createUploadedAssetCard(key, '⏳');
+    if (card) {
       card.style.opacity = '0.5';
-      card.innerHTML = '⏳<span class="ap-name">' + key + '</span>';
-      grid.appendChild(card);
       const waitForLoad = setInterval(() => {
+        if (!ASSETS[key]) {
+          clearInterval(waitForLoad);
+          return;
+        }
         if (_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded) {
           clearInterval(waitForLoad);
           card.style.opacity = '1';
-          card.innerHTML = '<span class="ap-icon">📦</span><span class="ap-name">' + key + '</span>';
+          const icon = card.querySelector('.ap-icon');
+          if (icon) icon.textContent = '📦';
           card.onclick = () => spawnAssetFromPanel(key);
           showToast(compressionMsg || ('✓ ' + file.name + ' ready to place'), 10000);
         }
@@ -10040,6 +10209,7 @@ canvas.addEventListener('dblclick', (e) => {
 window.toggleWalk = toggleWalk;
 window.spawnAssetFromPanel = spawnAssetFromPanel;
 window.uploadGLB = uploadGLB;
+window.removeAssetFromLibrary = removeAssetFromLibrary;
 window.setGizmoMode = setGizmoMode;
 window.flipSelected = flipSelected;
 window.rotateSelectedBy = rotateSelectedBy;
