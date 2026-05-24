@@ -211,11 +211,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #assetPanel .ctrl-btn.danger{border-color:rgba(220,60,60,.3);color:rgba(220,100,100,.8)}
 #assetPanel .ctrl-btn.danger:hover{background:rgba(220,60,60,.15);border-color:rgba(220,60,60,.6);color:#e86060}
 #assetPanel .ctrl-btn.full{grid-column:1/-1}
+#assetPanel .admin-select{width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(94,207,202,.35);border-radius:5px;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:1px;padding:7px 8px;outline:none}
+#assetPanel .admin-select option{background:#050a1c;color:#e8c56a}
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(5,10,28,.95);border:1px solid rgba(94,207,202,.6);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:10px 24px;opacity:0;transition:all .4s;pointer-events:none;z-index:50;white-space:nowrap}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #interactionPrompt{position:fixed;bottom:122px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.7);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:2px;padding:9px 18px;opacity:0;transition:opacity .18s;pointer-events:none;z-index:49;white-space:nowrap}
 #interactionPrompt.on{opacity:1}
 #currentVillageBadge{position:fixed;top:46px;left:50%;transform:translateX(-50%);z-index:20;background:rgba(5,10,28,.88);border:1px solid rgba(94,207,202,.38);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:7px 12px;white-space:nowrap;pointer-events:none}
+#weatherDebugBadge{position:fixed;top:108px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.35);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;padding:6px 10px;white-space:nowrap;pointer-events:none}
+#weatherDebugBadge.on{display:block}
 #returnHubBtn{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.5);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 14px;cursor:pointer;backdrop-filter:blur(12px)}
 #returnHubBtn.on{display:block}
 #returnHubBtn:hover{background:rgba(232,197,106,.16)}
@@ -345,6 +349,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div id="manualBarrierSaveStatus" style="font-size:10px;line-height:1.35;color:#77e6df;margin-top:8px;min-height:16px"></div>
 </div>
   <hr class="ap-divider">
+  <div class="ap-section">Weather</div>
+  <div style="padding:0 8px 6px">
+    <select id="weatherSelect" class="admin-select" onchange="setWeatherMode(this.value, true)">
+      <option value="clear">Clear</option>
+      <option value="light-rain">Light Rain</option>
+      <option value="heavy-rain">Heavy Rain</option>
+      <option value="storm">Storm</option>
+      <option value="fog">Fog</option>
+      <option value="heat">Heat Haze / Hot Day</option>
+      <option value="cold">Cold / Frosty Mood</option>
+    </select>
+  </div>
+  <hr class="ap-divider">
   <div style="padding:0 8px 6px">
     <button class="ctrl-btn full" id="worklightBtn" onclick="toggleWorklight()" style="grid-column:1/-1;width:100%">&#x2600; Worklight (W)<kbd>W</kbd></button>
   </div>
@@ -370,6 +387,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="xhair"></div>
 <div id="td"></div>
 <div id="currentVillageBadge">Current Village: Hub Village</div>
+<div id="weatherDebugBadge">Weather: Clear</div>
 <button id="returnHubBtn" type="button" onclick="returnToHubVillage()">Return to Hub</button>
 <div id="adminBadge">ADMIN MODE</div>
 <div id="gpuBadge" style="display:none;position:fixed;top:8px;left:50%;transform:translateX(-50%);padding:3px 10px;border-radius:4px;font-size:10px;letter-spacing:2px;font-family:'Cinzel Decorative',serif;border:1px solid #555;color:#888;background:rgba(255,255,255,0.08);pointer-events:none;z-index:999">WebGL</div>
@@ -2198,6 +2216,7 @@ function updateAdminBadge(){
   if (badge) {
     badge.classList.toggle('on', adminMode);
   }
+  updateWeatherLabel();
 
   if (typeof refreshForgeVillagePreviewToggle === 'function') {
     refreshForgeVillagePreviewToggle();
@@ -3343,11 +3362,181 @@ function updateSky(){
   else if(h>=17&&h<20){sun.diffuse=new BABYLON.Color3(1,.48,.15);}
   else{sun.diffuse=new BABYLON.Color3(.18,.22,.48);sun.intensity=0.12;}
   scene.fogColor=h>=6&&h<20?new BABYLON.Color3(.58,.74,.9):new BABYLON.Color3(.04,.06,.16);
+  WeatherManager.baseSunIntensity = sun.intensity;
+  WeatherManager.baseHemiIntensity = hemi.intensity;
+  WeatherManager.baseSunDiffuse = sun.diffuse.clone();
+  WeatherManager.baseHemiDiffuse = hemi.diffuse.clone();
+  WeatherManager.baseFogColor = scene.fogColor.clone();
   const hh=now.getHours().toString().padStart(2,'0'),mm=now.getMinutes().toString().padStart(2,'0');
-  const lbl=h<6||h>=20?'🌙 Night':h<9?'🌅 Sunrise':h<17?'☀️ Day':'🌇 Sunset';
+  const lbl=h<6||h>=20?'Night':h<9?'Sunrise':h<17?'Day':'Sunset';
   document.getElementById('td').textContent=`${hh}:${mm}  ·  ${lbl}`;
+  applyWeatherLighting();
 }
-updateSky(); setInterval(updateSky,30000);
+
+const WEATHER_MODES = {
+  clear: { label:'Clear', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_NONE },
+  'light-rain': { label:'Light Rain', rain:48, speed:0.82, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.44,.55,.64), sun:.72, hemi:.86 },
+  'heavy-rain': { label:'Heavy Rain', rain:92, speed:1.08, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.008, fogColor:new BABYLON.Color3(.28,.36,.45), sun:.48, hemi:.68 },
+  storm: { label:'Storm', rain:132, speed:1.36, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.012, fogColor:new BABYLON.Color3(.12,.16,.22), sun:.22, hemi:.45, lightning:true },
+  fog: { label:'Fog', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.022, fogColor:new BABYLON.Color3(.58,.65,.68), sun:.66, hemi:.82 },
+  heat: { label:'Heat Haze / Hot Day', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.003, fogColor:new BABYLON.Color3(.86,.66,.42), sun:1.16, hemi:.98, warm:true },
+  cold: { label:'Cold / Frosty Mood', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.009, fogColor:new BABYLON.Color3(.62,.76,.86), sun:.82, hemi:.92, cold:true }
+};
+
+const WeatherManager = {
+  mode: 'clear',
+  cycleMs: 240000,
+  nextCycleAt: performance.now() + 240000,
+  rainMeshes: [],
+  lightningUntil: 0,
+  nextLightningAt: performance.now() + 9000,
+  rainMat: null,
+  baseSunIntensity: sun.intensity,
+  baseHemiIntensity: hemi.intensity,
+  baseSunDiffuse: sun.diffuse.clone(),
+  baseHemiDiffuse: hemi.diffuse.clone(),
+  baseFogColor: scene.fogColor.clone()
+};
+
+function getWeatherCenter() {
+  if (walkMode && charMesh) return charMesh.position;
+  const cam = scene.activeCamera || orbit;
+  return cam?.target || cam?.position || BABYLON.Vector3.Zero();
+}
+
+function ensureWeatherRainPool(count) {
+  if (!WeatherManager.rainMat) {
+    WeatherManager.rainMat = new BABYLON.StandardMaterial('weatherRainMat', scene);
+    WeatherManager.rainMat.diffuseColor = new BABYLON.Color3(.58,.88,1);
+    WeatherManager.rainMat.emissiveColor = new BABYLON.Color3(.32,.72,1);
+    WeatherManager.rainMat.alpha = .42;
+    WeatherManager.rainMat.disableLighting = true;
+    WeatherManager.rainMat.backFaceCulling = false;
+  }
+
+  while (WeatherManager.rainMeshes.length < count) {
+    const drop = BABYLON.MeshBuilder.CreateBox('weatherRainDrop_' + WeatherManager.rainMeshes.length, { width:.018, height:2.8, depth:.018 }, scene);
+    drop.material = WeatherManager.rainMat;
+    drop.isPickable = false;
+    drop.checkCollisions = false;
+    drop.receiveShadows = false;
+    drop.rotation.z = .22;
+    drop.setEnabled(false);
+    WeatherManager.rainMeshes.push(drop);
+  }
+
+  WeatherManager.rainMeshes.forEach((drop, index) => drop.setEnabled(index < count));
+}
+
+function resetWeatherRainDrop(drop, center) {
+  const angle = Math.random() * Math.PI * 2;
+  const radius = Math.sqrt(Math.random()) * 42;
+  drop.position.set(
+    center.x + Math.cos(angle) * radius,
+    center.y + 13 + Math.random() * 18,
+    center.z + Math.sin(angle) * radius
+  );
+}
+
+function updateWeatherRain() {
+  const cfg = WEATHER_MODES[WeatherManager.mode] || WEATHER_MODES.clear;
+  ensureWeatherRainPool(cfg.rain || 0);
+  if (!cfg.rain) return;
+
+  const center = getWeatherCenter();
+  const dt = Math.min(48, scene.getEngine().getDeltaTime()) / 16.67;
+  WeatherManager.rainMeshes.forEach((drop, index) => {
+    if (index >= cfg.rain) return;
+    if (
+      (drop.position.x === 0 && drop.position.y === 0 && drop.position.z === 0) ||
+      drop.position.y < center.y - 2 ||
+      Math.abs(drop.position.x - center.x) > 48 ||
+      Math.abs(drop.position.z - center.z) > 48
+    ) {
+      resetWeatherRainDrop(drop, center);
+      return;
+    }
+    drop.position.x -= .22 * cfg.speed * dt;
+    drop.position.y -= .95 * cfg.speed * dt;
+    drop.position.z += .08 * cfg.speed * dt;
+  });
+}
+
+function applyWeatherLighting() {
+  const cfg = WEATHER_MODES[WeatherManager.mode] || WEATHER_MODES.clear;
+  if (cfg.fog === BABYLON.Scene.FOGMODE_NONE) {
+    scene.fogMode = BABYLON.Scene.FOGMODE_NONE;
+  } else {
+    scene.fogMode = cfg.fog;
+    scene.fogDensity = cfg.fogDensity || 0.006;
+    scene.fogColor = cfg.fogColor || WeatherManager.baseFogColor;
+  }
+
+  if (_worklightOn) return;
+  sun.intensity = WeatherManager.baseSunIntensity * (cfg.sun || 1);
+  hemi.intensity = WeatherManager.baseHemiIntensity * (cfg.hemi || 1);
+  sun.diffuse.copyFrom(WeatherManager.baseSunDiffuse);
+  hemi.diffuse.copyFrom(WeatherManager.baseHemiDiffuse);
+  if (cfg.warm) {
+    sun.diffuse.set(1,.76,.46);
+    hemi.diffuse.set(.78,.66,.52);
+  } else if (cfg.cold) {
+    sun.diffuse.set(.64,.78,1);
+    hemi.diffuse.set(.55,.72,1);
+  } else if (cfg.lightning && performance.now() < WeatherManager.lightningUntil) {
+    sun.diffuse.set(.74,.9,1);
+    sun.intensity = Math.max(sun.intensity, 2.2);
+    hemi.intensity = Math.max(hemi.intensity, 1.0);
+  }
+}
+
+function updateWeatherLabel() {
+  const cfg = WEATHER_MODES[WeatherManager.mode] || WEATHER_MODES.clear;
+  const label = document.getElementById('weatherDebugBadge');
+  if (label) {
+    label.textContent = 'Weather: ' + cfg.label;
+    label.classList.toggle('on', adminMode === true);
+  }
+  const select = document.getElementById('weatherSelect');
+  if (select && select.value !== WeatherManager.mode) select.value = WeatherManager.mode;
+}
+
+function setWeatherMode(mode, manual = false) {
+  if (!WEATHER_MODES[mode]) mode = 'clear';
+  WeatherManager.mode = mode;
+  WeatherManager.nextCycleAt = performance.now() + WeatherManager.cycleMs;
+  if (manual) {
+    localStorage.setItem('rebelAntsWeatherMode', mode);
+    showToast('Weather: ' + WEATHER_MODES[mode].label);
+  }
+  updateWeatherLabel();
+  updateSky();
+}
+
+function updateWeatherManager() {
+  const now = performance.now();
+  if (now >= WeatherManager.nextCycleAt) {
+    const modes = Object.keys(WEATHER_MODES);
+    const next = modes[(modes.indexOf(WeatherManager.mode) + 1) % modes.length];
+    setWeatherMode(next, false);
+  }
+
+  if (WeatherManager.mode === 'storm' && now >= WeatherManager.nextLightningAt) {
+    WeatherManager.lightningUntil = now + 150;
+    WeatherManager.nextLightningAt = now + 6500 + Math.random() * 9000;
+  }
+
+  applyWeatherLighting();
+  updateWeatherRain();
+}
+
+function initWeatherManager() {
+  const saved = localStorage.getItem('rebelAntsWeatherMode');
+  setWeatherMode(WEATHER_MODES[saved] ? saved : 'clear', false);
+}
+
+initWeatherManager();
+setInterval(updateSky,30000);
 
 // ── HELPERS ──────────────────────────────────
 // Material cache — reuse identical materials instead of creating new ones
@@ -9307,6 +9496,7 @@ engine.runRenderLoop(()=>{
   }
   updateInteractionPrompt();
   tryAutoOpenVillageGateFromWalkthrough();
+  updateWeatherManager();
   if (window._gpuMode === 'webgpu') {
     _webgpuSmartCapFrame++;
     if (_webgpuSmartCapFrame < 360 || _webgpuSmartCapFrame % 180 === 0) {
@@ -9904,6 +10094,7 @@ function toggleWorklight() {
     btn.style.color = _worklightOn ? '#e8c56a' : '';
     btn.textContent = _worklightOn ? '☀ Worklight ON (W)' : '☀ Worklight (W)';
   }
+  if (!_worklightOn) updateSky();
 }
 
 function setGizmoMode(mode) {
@@ -10450,6 +10641,7 @@ window.toggleManualBarrierVisibility = toggleManualBarrierVisibility;
 window.saveManualBarriersNow = saveManualBarriersNow;
 window.clearAdminPlacement = clearAdminPlacement;
 window.toggleWorklight = toggleWorklight;
+window.setWeatherMode = setWeatherMode;
 window.saveWorldLayout = saveWorldLayout;
 window.loadWorldLayout = loadWorldLayout;
 
