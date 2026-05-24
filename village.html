@@ -2834,11 +2834,18 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
 (function createDistantBackdrop(){
   const root=new BABYLON.TransformNode("distantBackdropRoot",scene);
   root.metadata={ type:"visual_backdrop", visualOnly:true };
-  const farMountainMat=mat(new BABYLON.Color3(.07,.11,.13),{e:new BABYLON.Color3(.018,.028,.035)});
-  const hazeMat=mat(new BABYLON.Color3(.5,.62,.7),{e:new BABYLON.Color3(.16,.2,.24),a:.24});
+  const skirtMat=new BABYLON.StandardMaterial("distantBackdropSkirtMat",scene);
+  skirtMat.diffuseTexture=grassDiff;
+  skirtMat.diffuseColor=new BABYLON.Color3(.14,.2,.13);
+  skirtMat.specularColor=new BABYLON.Color3(0,0,0);
+  const ridgeMat=mat(new BABYLON.Color3(.16,.21,.18),{e:new BABYLON.Color3(.025,.035,.032)});
+  ridgeMat.backFaceCulling=false;
+  const farRidgeMat=mat(new BABYLON.Color3(.12,.16,.17),{e:new BABYLON.Color3(.035,.045,.05)});
+  farRidgeMat.backFaceCulling=false;
+  const hazeMat=mat(new BABYLON.Color3(.54,.64,.68),{e:new BABYLON.Color3(.17,.2,.22),a:.11});
   hazeMat.backFaceCulling=false;
   hazeMat.alphaMode=BABYLON.Engine.ALPHA_COMBINE;
-  const forestMat=mat(new BABYLON.Color3(.045,.085,.065),{e:new BABYLON.Color3(.01,.025,.02)});
+  const forestMat=mat(new BABYLON.Color3(.08,.14,.1),{e:new BABYLON.Color3(.015,.03,.02)});
 
   function markBackdrop(mesh){
     mesh.parent=root;
@@ -2849,57 +2856,56 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
     mesh.freezeWorldMatrix();
     return mesh;
   }
-  function faceCenter(mesh,x,z){
-    mesh.position.x=x; mesh.position.z=z;
-    mesh.rotation.y=Math.atan2(x,z);
-  }
-  function peak(name,x,z,w,h,y){
+  const skirt=BABYLON.MeshBuilder.CreateGround("distantBackdropGroundSkirt",{width:1250,height:1250,subdivisions:2},scene);
+  skirt.position.y=-14;
+  skirt.material=skirtMat;
+  markBackdrop(skirt);
+
+  function ridge(name,radius,segments,minH,maxH,bottomY,material,offset=0){
     const mesh=new BABYLON.Mesh(name,scene);
-    const positions=[
-      -w*.5,y,0, -w*.22,y+h*.68,0, 0,y+h,0,
-       w*.26,y+h*.58,0, w*.5,y,0, 0,y-10,0
-    ];
-    const indices=[0,1,5,1,2,5,2,3,5,3,4,5];
+    const positions=[], indices=[];
+    for(let i=0;i<=segments;i++){
+      const a=(i/segments)*Math.PI*2+offset;
+      const wave=Math.sin(i*1.73+offset*2)*.5+Math.sin(i*.67+1.8)*.5;
+      const h=minH+(maxH-minH)*(.5+wave*.25);
+      positions.push(Math.cos(a)*radius,bottomY+h,Math.sin(a)*radius);
+      positions.push(Math.cos(a)*radius,bottomY,Math.sin(a)*radius);
+    }
+    for(let i=0;i<segments;i++){
+      const n=i*2;
+      indices.push(n,n+1,n+2,n+1,n+3,n+2);
+    }
     const normals=[];
     BABYLON.VertexData.ComputeNormals(positions,indices,normals);
     const vd=new BABYLON.VertexData();
     vd.positions=positions; vd.indices=indices; vd.normals=normals;
     vd.applyToMesh(mesh);
-    mesh.material=farMountainMat;
-    faceCenter(mesh,x,z);
+    mesh.material=material;
     return markBackdrop(mesh);
   }
-  [
-    [-520,-300,210,150],[-360,-500,240,170],[-120,-540,260,190],[150,-520,220,155],[410,-440,250,180],[540,-150,220,145],
-    [525,170,240,170],[360,500,260,185],[80,550,250,165],[-180,530,230,150],[-430,440,260,178],[-545,100,230,160],[-520,-90,240,150]
-  ].forEach((p,i)=>peak("distantBackdropPeak"+i,p[0],p[1],p[2],p[3],-8));
+  ridge("distantBackdropFarRidge",610,40,42,82,-20,farRidgeMat,.22);
+  ridge("distantBackdropNearRidge",520,36,35,72,-18,ridgeMat,.74);
 
-  [
-    [0,535,1080,150,0],
-    [0,-535,1080,150,Math.PI],
-    [535,0,1080,150,Math.PI/2],
-    [-535,0,1080,150,-Math.PI/2]
-  ].forEach(([x,z,w,h,ry],i)=>{
-    const band=BABYLON.MeshBuilder.CreatePlane("distantHazeBand"+i,{width:w,height:h},scene);
-    band.position=new BABYLON.Vector3(x,48,z);
-    band.rotation.y=ry;
-    band.material=hazeMat;
-    markBackdrop(band);
-  });
+  const haze=BABYLON.MeshBuilder.CreateCylinder("distantBackdropHaze",{height:92,diameter:1060,tessellation:64,cap:BABYLON.Mesh.NO_CAP},scene);
+  haze.position.y=32;
+  haze.material=hazeMat;
+  markBackdrop(haze);
 
-  for(let i=0;i<44;i++){
-    const a=(i/44)*Math.PI*2;
-    const radius=450+((i*37)%45);
-    const h=15+((i*17)%14);
+  for(let i=0;i<56;i++){
+    const a=(i/56)*Math.PI*2;
+    const radius=410+((i*37)%28);
+    const h=9+((i*17)%10);
     const tree=BABYLON.MeshBuilder.CreateCylinder("distantForestSilhouette"+i,{
-      diameterTop:0,diameterBottom:7+((i*11)%5),height:h,tessellation:3
+      diameterTop:0,diameterBottom:4+((i*11)%4),height:h,tessellation:3
     },scene);
-    tree.position=new BABYLON.Vector3(Math.cos(a)*radius,h/2-3,Math.sin(a)*radius);
+    tree.position=new BABYLON.Vector3(Math.cos(a)*radius,h/2-9,Math.sin(a)*radius);
     tree.rotation.y=-a;
     tree.material=forestMat;
     markBackdrop(tree);
   }
-  farMountainMat.freeze();
+  skirtMat.freeze();
+  ridgeMat.freeze();
+  farRidgeMat.freeze();
   hazeMat.freeze();
   forestMat.freeze();
 })();
