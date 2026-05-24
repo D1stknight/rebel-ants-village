@@ -236,7 +236,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div class="ap-header"><span>Assets</span><kbd>M</kbd></div>
   <div class="ap-scroll">
     <div class="ap-section">Buildings</div>
-    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_altar')"><span class="ap-icon">⛩</span><span class="ap-name">Ronin Altar</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
+    <div class="ap-section">Faction Props</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ronin_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Ronin Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_dead_tree')"><span class="ap-icon">♜</span><span class="ap-name">Dead Tree</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_mist')"><span class="ap-icon">〰</span><span class="ap-name">Ronin Mist</span></div></div>
     <div class="ap-section">Light Director</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">Path Lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🔥</span><span class="ap-name">Fire Bowl</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ambient_glow')"><span class="ap-icon">✨</span><span class="ap-name">Ambient Glow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('treasure_chest')"><span class="ap-icon">💰</span><span class="ap-name">Treasure Chest</span></div></div>
     <div class="ap-section">Nature</div>
@@ -618,6 +620,31 @@ lantern_1: {
     scale: 1.0,
     noShadows: true,
     groundOffset: 0
+  },
+   ronin_banner: {
+    procedural: true,
+    scale: 1.0,
+    noShadows: true,
+    groundOffset: 0
+  },
+   ronin_dead_tree: {
+    procedural: true,
+    scale: 1.0,
+    noShadows: true,
+    groundOffset: 0
+  },
+   ronin_mist: {
+    procedural: true,
+    scale: 1.0,
+    noShadows: true,
+    groundOffset: 0,
+    noGroundSnap: true
+  },
+   ronin_altar: {
+    procedural: true,
+    scale: 1.0,
+    noShadows: true,
+    groundOffset: 0
   }
 };
 
@@ -648,6 +675,10 @@ function spawnAsset(type, position, extraMeta) {
 );
     if (type === 'treasure_chest') buildTreasureChest(root);
     if (type === 'village_gate') buildVillageGate(root);
+    if (type === 'ronin_banner') buildRoninBanner(root);
+    if (type === 'ronin_dead_tree') buildRoninDeadTree(root);
+    if (type === 'ronin_mist') buildRoninMist(root);
+    if (type === 'ronin_altar') buildRoninAltar(root);
     root.metadata.loaded = true;
     console.log("Spawned procedural:", type);
   } else {
@@ -2469,6 +2500,104 @@ function tryOpenNearbyTreasureChest() {
   const chest = getNearestTreasureChestInRange();
   if (!chest) return false;
   return openTreasureChest(chest);
+}
+
+function makeRoninMaterial(name, diffuse, emissive = null, alpha = null) {
+  const material = new BABYLON.StandardMaterial(name + '_' + Math.random(), scene);
+  material.diffuseColor = diffuse;
+  material.specularColor = new BABYLON.Color3(.08,.06,.06);
+  if (emissive) material.emissiveColor = emissive;
+  if (alpha !== null) {
+    material.alpha = alpha;
+    material.backFaceCulling = false;
+    material.alphaMode = BABYLON.Engine.ALPHA_COMBINE;
+  }
+  return material;
+}
+
+function markRoninEditable(mesh, root, pickable = true) {
+  mesh.parent = root;
+  mesh.isPickable = pickable;
+  mesh.checkCollisions = false;
+  mesh.receiveShadows = false;
+  mesh._editRoot = root;
+  return mesh;
+}
+
+function buildRoninBanner(root) {
+  if (!root) return;
+  root.metadata = { ...(root.metadata || {}), type:'ronin_banner', villageId: root.metadata?.villageId || CURRENT_VILLAGE_ID };
+  const black = makeRoninMaterial('roninBannerBlack', new BABYLON.Color3(.015,.014,.018), new BABYLON.Color3(.004,.003,.006));
+  const crimson = makeRoninMaterial('roninBannerCrimson', new BABYLON.Color3(.42,.02,.025), new BABYLON.Color3(.09,.005,.008));
+  const steel = makeRoninMaterial('roninBannerSteel', new BABYLON.Color3(.16,.15,.16), new BABYLON.Color3(.018,.016,.018));
+
+  const pole = markRoninEditable(BABYLON.MeshBuilder.CreateCylinder(`${root.name}_pole`, { diameter:.16, height:4.2, tessellation:8 }, scene), root);
+  pole.position.y = 2.1; pole.material = steel;
+  const cross = markRoninEditable(BABYLON.MeshBuilder.CreateBox(`${root.name}_cross`, { width:1.45, height:.12, depth:.12 }, scene), root);
+  cross.position.set(.48,3.85,0); cross.material = steel;
+  const cloth = markRoninEditable(BABYLON.MeshBuilder.CreateBox(`${root.name}_cloth`, { width:1.05, height:2.1, depth:.045 }, scene), root);
+  cloth.position.set(.5,2.76,-.03); cloth.material = black;
+  [-.36, 0, .36].forEach((x,i) => {
+    const strip = markRoninEditable(BABYLON.MeshBuilder.CreateBox(`${root.name}_tornStrip${i}`, { width:.23, height:.55 + i*.1, depth:.05 }, scene), root);
+    strip.position.set(.5 + x,1.46 - i*.03,-.04);
+    strip.rotation.z = (i - 1) * .08;
+    strip.material = black;
+  });
+  const sigil = markRoninEditable(BABYLON.MeshBuilder.CreateTorus(`${root.name}_sigil`, { diameter:.48, thickness:.035, tessellation:32 }, scene), root, false);
+  sigil.position.set(.5,2.95,-.075); sigil.material = crimson;
+}
+
+function buildRoninDeadTree(root) {
+  if (!root) return;
+  root.metadata = { ...(root.metadata || {}), type:'ronin_dead_tree', villageId: root.metadata?.villageId || CURRENT_VILLAGE_ID };
+  const bark = makeRoninMaterial('roninDeadTreeBark', new BABYLON.Color3(.07,.055,.045), new BABYLON.Color3(.008,.006,.005));
+  const ash = makeRoninMaterial('roninDeadTreeAsh', new BABYLON.Color3(.025,.024,.026), new BABYLON.Color3(.004,.003,.004));
+  const trunk = markRoninEditable(BABYLON.MeshBuilder.CreateCylinder(`${root.name}_trunk`, { diameterTop:.28, diameterBottom:.52, height:4.4, tessellation:7 }, scene), root);
+  trunk.position.y = 2.15; trunk.rotation.z = .08; trunk.material = bark;
+  [
+    [-.42,3.0,.78,.22,.85],
+    [.42,3.35,-.72,-.18,.72],
+    [-.24,2.25,-.54,.42,.58],
+    [.18,2.62,.5,-.34,.52]
+  ].forEach(([x,y,rz,ry,len],i) => {
+    const branch = markRoninEditable(BABYLON.MeshBuilder.CreateCylinder(`${root.name}_branch${i}`, { diameterTop:.06, diameterBottom:.17, height:len, tessellation:6 }, scene), root);
+    branch.position.set(x,y,0);
+    branch.rotation.z = rz;
+    branch.rotation.y = ry;
+    branch.material = i % 2 ? bark : ash;
+  });
+}
+
+function buildRoninMist(root) {
+  if (!root) return;
+  root.metadata = { ...(root.metadata || {}), type:'ronin_mist', villageId: root.metadata?.villageId || CURRENT_VILLAGE_ID };
+  const mistMat = makeRoninMaterial('roninMistMat', new BABYLON.Color3(.18,.19,.2), new BABYLON.Color3(.035,.04,.045), .22);
+  const mist = markRoninEditable(BABYLON.MeshBuilder.CreateCylinder(`${root.name}_mist`, { diameter:7.5, height:.035, tessellation:40 }, scene), root);
+  mist.position.y = .05;
+  mist.scaling.z = .48;
+  mist.material = mistMat;
+}
+
+function buildRoninAltar(root) {
+  if (!root) return;
+  root.metadata = { ...(root.metadata || {}), type:'ronin_altar', villageId: root.metadata?.villageId || CURRENT_VILLAGE_ID };
+  const black = makeRoninMaterial('roninAltarBlack', new BABYLON.Color3(.018,.016,.018), new BABYLON.Color3(.006,.004,.006));
+  const crimson = makeRoninMaterial('roninAltarCrimson', new BABYLON.Color3(.48,.025,.02), new BABYLON.Color3(.13,.008,.006));
+  const steel = makeRoninMaterial('roninAltarSteel', new BABYLON.Color3(.13,.13,.14), new BABYLON.Color3(.012,.012,.014));
+  const base = markRoninEditable(BABYLON.MeshBuilder.CreateBox(`${root.name}_base`, { width:5.2, height:.42, depth:3.6 }, scene), root);
+  base.position.y = .21; base.material = black;
+  const back = markRoninEditable(BABYLON.MeshBuilder.CreateBox(`${root.name}_back`, { width:4.4, height:2.4, depth:.28 }, scene), root);
+  back.position.set(0,1.62,1.4); back.material = black;
+  const roof = markRoninEditable(BABYLON.MeshBuilder.CreateBox(`${root.name}_brokenRoof`, { width:5.1, height:.28, depth:1.0 }, scene), root);
+  roof.position.set(-.25,2.9,1.2); roof.rotation.z = -.09; roof.material = steel;
+  [-1.75,1.75].forEach(x => {
+    const pillar = markRoninEditable(BABYLON.MeshBuilder.CreateBox(`${root.name}_pillar${x}`, { width:.26, height:2.25, depth:.26 }, scene), root);
+    pillar.position.set(x,1.55,-.95); pillar.material = steel;
+  });
+  const sigil = markRoninEditable(BABYLON.MeshBuilder.CreateTorus(`${root.name}_crimsonSigil`, { diameter:1.1, thickness:.05, tessellation:44 }, scene), root, false);
+  sigil.position.set(0,1.75,1.22); sigil.material = crimson;
+  const blade = markRoninEditable(BABYLON.MeshBuilder.CreateBox(`${root.name}_bladeLine`, { width:.08, height:1.5, depth:.05 }, scene), root, false);
+  blade.position.set(0,1.75,1.16); blade.rotation.z = .72; blade.material = crimson;
 }
 
 let _villageGateNumberBuffer = '';
