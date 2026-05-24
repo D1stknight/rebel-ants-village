@@ -212,6 +212,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #interactionPrompt{position:fixed;bottom:122px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.7);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:2px;padding:9px 18px;opacity:0;transition:opacity .18s;pointer-events:none;z-index:49;white-space:nowrap}
 #interactionPrompt.on{opacity:1}
+#villageGateOverlay{position:fixed;inset:0;background:rgba(2,8,18,.62);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:70;opacity:0;pointer-events:none;transition:opacity .22s}
+#villageGateOverlay.on{opacity:1;pointer-events:all}
+#villageGatePanel{width:min(560px,92vw);max-height:86vh;overflow:auto;background:rgba(5,10,28,.96);border:1px solid rgba(232,197,106,.55);box-shadow:0 0 60px rgba(94,207,202,.12);padding:28px}
+#villageGatePanel h2{font-family:'Cinzel Decorative',serif;font-size:18px;color:#e8c56a;letter-spacing:3px;text-align:center;margin-bottom:6px}
+#villageGatePanel .gate-sub{font-size:10px;color:#5ecfca;letter-spacing:3px;text-align:center;text-transform:uppercase;margin-bottom:20px}
+#villageGateList{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.village-gate-option{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.72);padding:11px 12px;text-align:left;cursor:pointer;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:1px;transition:all .15s}
+.village-gate-option:hover{background:rgba(232,197,106,.13);border-color:rgba(232,197,106,.48);color:#e8c56a}
+.village-gate-option span{color:#5ecfca;margin-right:8px}
+#villageGateClose{display:block;margin:18px auto 0;background:transparent;border:1px solid rgba(94,207,202,.4);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 16px;cursor:pointer}
+@media (max-width:640px){#villageGateList{grid-template-columns:1fr}#villageGatePanel{padding:22px}}
 </style>
 </head>
 <body>
@@ -335,6 +346,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <input type="file" id="glbUploadInput" accept=".glb" style="display:none">
 <div id="toast"></div>
 <div id="interactionPrompt">Press O to Open</div>
+<div id="villageGateOverlay" aria-hidden="true">
+  <div id="villageGatePanel" role="dialog" aria-modal="true" aria-labelledby="villageGateTitle">
+    <h2 id="villageGateTitle">Village Gate</h2>
+    <div class="gate-sub">Choose a faction village</div>
+    <div id="villageGateList"></div>
+    <button id="villageGateClose" type="button" onclick="closeVillageGateMenu()">Close</button>
+  </div>
+</div>
 <canvas id="c"></canvas>
 <div id="xhair"></div>
 <div id="td"></div>
@@ -375,6 +394,32 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script type="module">
 const canvas=document.getElementById('c');
 const setSt=t=>{document.getElementById('ldst').textContent=t;};
+const VILLAGE_REGISTRY = {
+  hub: { villageId:'hub', displayName:'Hub Village', route:'village.html?village=hub', themeColor:'#5ecfca', layoutPath:'assets/world-layout.json' },
+  ronin: { villageId:'ronin', displayName:'Ronin Village', route:'village.html?village=ronin', themeColor:'#8f8f8f', layoutPath:'assets/world-layouts/ronin.json' },
+  samurai: { villageId:'samurai', displayName:'Samurai Village', route:'village.html?village=samurai', themeColor:'#d23c3c', layoutPath:'assets/world-layouts/samurai.json' },
+  bushi: { villageId:'bushi', displayName:'Bushi Village', route:'village.html?village=bushi', themeColor:'#d69a35', layoutPath:'assets/world-layouts/bushi.json' },
+  warrior: { villageId:'warrior', displayName:'Warrior Village', route:'village.html?village=warrior', themeColor:'#7c4dff', layoutPath:'assets/world-layouts/warrior.json' },
+  shogun: { villageId:'shogun', displayName:'Shogun Village', route:'village.html?village=shogun', themeColor:'#e8c56a', layoutPath:'assets/world-layouts/shogun.json' },
+  buke: { villageId:'buke', displayName:'Buke Village', route:'village.html?village=buke', themeColor:'#6aa0e8', layoutPath:'assets/world-layouts/buke.json' },
+  kenshi: { villageId:'kenshi', displayName:'Kenshi Village', route:'village.html?village=kenshi', themeColor:'#5ecfca', layoutPath:'assets/world-layouts/kenshi.json' },
+  wokou: { villageId:'wokou', displayName:'Wokou Village', route:'village.html?village=wokou', themeColor:'#36a66f', layoutPath:'assets/world-layouts/wokou.json' },
+  ashigaru: { villageId:'ashigaru', displayName:'Ashigaru Village', route:'village.html?village=ashigaru', themeColor:'#b5d35a', layoutPath:'assets/world-layouts/ashigaru.json' },
+  sohei: { villageId:'sohei', displayName:'Sohei Village', route:'village.html?village=sohei', themeColor:'#f0f0d8', layoutPath:'assets/world-layouts/sohei.json' },
+  yamabushi: { villageId:'yamabushi', displayName:'Yamabushi Village', route:'village.html?village=yamabushi', themeColor:'#b06a3a', layoutPath:'assets/world-layouts/yamabushi.json' }
+};
+const FACTION_VILLAGES = ['ronin','samurai','bushi','warrior','shogun','buke','kenshi','wokou','ashigaru','sohei','yamabushi'];
+const urlVillageId = new URLSearchParams(window.location.search).get('village') || 'hub';
+const CURRENT_VILLAGE_ID = VILLAGE_REGISTRY[urlVillageId] ? urlVillageId : 'hub';
+const CURRENT_VILLAGE = VILLAGE_REGISTRY[CURRENT_VILLAGE_ID];
+const WORLD_LAYOUT_STORAGE_KEY = `rebelAntsWorldLayout:${CURRENT_VILLAGE_ID}`;
+window.REBEL_ANTS_VILLAGES = VILLAGE_REGISTRY;
+window.CURRENT_REBEL_ANTS_VILLAGE = CURRENT_VILLAGE;
+document.title = `Rebel Ants — ${CURRENT_VILLAGE.displayName}`;
+document.addEventListener('DOMContentLoaded', () => {
+  const logoSub = document.querySelector('#logo span');
+  if (logoSub) logoSub.textContent = CURRENT_VILLAGE_ID === 'hub' ? 'The Hub Village' : CURRENT_VILLAGE.displayName;
+});
 // ── ENGINE ───────────────────────────────────
 // Optional WebGPU test mode: /village.html?engine=webgpu
 let engine;
@@ -2162,13 +2207,13 @@ function setInteractionPrompt(text, visible) {
 
 function getDefaultTreasureChestMetadata(source = {}) {
   return {
-    chestId: source.chestId || `ashigaru-chest-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+    chestId: source.chestId || `${CURRENT_VILLAGE_ID}-chest-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
     rewardType: source.rewardType || 'none',
     rewardAmount: Number.isFinite(source.rewardAmount) ? source.rewardAmount : 0,
     opened: source.opened === true,
     cooldownSeconds: Number.isFinite(source.cooldownSeconds) ? source.cooldownSeconds : 0,
     requiresWallet: source.requiresWallet === true,
-    villageId: source.villageId || 'ashigaru'
+    villageId: source.villageId || CURRENT_VILLAGE_ID
   };
 }
 
@@ -2362,6 +2407,17 @@ function updateTreasureChestPrompt() {
     }
   });
   window._nearestTreasureChest = chest;
+}
+
+function updateInteractionPrompt() {
+  updateTreasureChestPrompt();
+
+  if (walkMode && !adminMode && getNearestVillageGateInRange()) {
+    setInteractionPrompt('Press O to Open Village Gate', true);
+    return;
+  }
+
+  const chest = window._nearestTreasureChest;
   setInteractionPrompt('Press O to Open', Boolean(chest && chest.metadata?.opened !== true));
 }
 
@@ -2391,6 +2447,163 @@ function tryOpenNearbyTreasureChest() {
   if (!chest) return false;
   return openTreasureChest(chest);
 }
+
+let hubVillagePortalRoot = null;
+let _villageGateNumberBuffer = '';
+let _villageGateNumberTimer = null;
+
+function createHubVillagePortal() {
+  if (CURRENT_VILLAGE_ID !== 'hub' || hubVillagePortalRoot) return null;
+
+  const root = new BABYLON.TransformNode('hubVillageGatePortalRoot', scene);
+  root.position = new BABYLON.Vector3(0, 0.2, -42);
+  root.rotation.y = Math.PI;
+  root.metadata = { type:'hub_village_gate_portal', visualOnly:true };
+
+  const redMat = pbr(new BABYLON.Color3(.72,.08,.04), { r:.58, m:.08 });
+  const darkMat = mat(new BABYLON.Color3(.075,.065,.075), { e:new BABYLON.Color3(.012,.01,.016) });
+  const goldMat = pbr(new BABYLON.Color3(.95,.68,.18), { r:.34, m:.45, e:new BABYLON.Color3(.14,.08,.01), ei:.35 });
+  const glowMat = mat(new BABYLON.Color3(.35,.95,.92), { e:new BABYLON.Color3(.18,.95,.9), a:.34 });
+  glowMat.backFaceCulling = false;
+  glowMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+
+  function attach(mesh) {
+    mesh.parent = root;
+    mesh.isPickable = false;
+    mesh.checkCollisions = false;
+    mesh.receiveShadows = false;
+    mesh.metadata = { type:'hub_village_gate_portal_part', visualOnly:true };
+    return mesh;
+  }
+
+  [-1,1].forEach(side => {
+    attach(box(.55,6.4,.55,redMat,[side*2.45,3.1,0]));
+    attach(box(.85,.36,.85,darkMat,[side*2.45,.18,0]));
+    attach(box(.72,.38,.72,goldMat,[side*2.45,6.45,0]));
+  });
+  attach(box(6.2,.48,.6,redMat,[0,5.7,0]));
+  attach(box(7.1,.42,.74,redMat,[0,6.45,0]));
+  attach(box(1.25,.34,.64,goldMat,[0,6.02,0]));
+  attach(cyl(0,1.18,.18,36,glowMat,[0,.12,0],Math.PI/2));
+
+  const aura = attach(BABYLON.MeshBuilder.CreateTorus('hubVillageGateAura',{diameter:4.4,thickness:.08,tessellation:48},scene));
+  aura.position.y = 3.1;
+  aura.rotation.x = Math.PI / 2;
+  aura.material = glowMat;
+
+  const halo = attach(BABYLON.MeshBuilder.CreatePlane('hubVillageGateHalo',{width:5.7,height:5.7},scene));
+  halo.position.y = 3.1;
+  halo.position.z = .08;
+  halo.material = glowMat;
+  halo.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+
+  const light = new BABYLON.PointLight('hubVillageGateLight', root.position.add(new BABYLON.Vector3(0,3.2,0)), scene);
+  light.diffuse = new BABYLON.Color3(.35,.95,.92);
+  light.specular = new BABYLON.Color3(.35,.95,.92);
+  light.intensity = 1.1;
+  light.range = 18;
+  light.parent = root;
+
+  const sparkle = new BABYLON.ParticleSystem('hubVillageGateSparkles', 70, scene);
+  sparkle.particleTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png', scene);
+  sparkle.emitter = root;
+  sparkle.minEmitBox = new BABYLON.Vector3(-1.9,1.3,-.2);
+  sparkle.maxEmitBox = new BABYLON.Vector3(1.9,5.1,.2);
+  sparkle.color1 = new BABYLON.Color4(.35,1,.95,.8);
+  sparkle.color2 = new BABYLON.Color4(1,.75,.25,.55);
+  sparkle.colorDead = new BABYLON.Color4(.2,.6,.7,0);
+  sparkle.minSize = .08; sparkle.maxSize = .24;
+  sparkle.minLifeTime = .9; sparkle.maxLifeTime = 1.8;
+  sparkle.emitRate = 14;
+  sparkle.minEmitPower = .05; sparkle.maxEmitPower = .18;
+  sparkle.updateSpeed = .018;
+  sparkle.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+  sparkle.start();
+
+  scene.onBeforeRenderObservable.add(() => {
+    if (!root || root.isDisposed?.()) return;
+    const pulse = 1 + Math.sin(performance.now() * .0024) * .055;
+    aura.scaling.set(pulse,pulse,pulse);
+    halo.scaling.set(pulse,pulse,pulse);
+    light.intensity = 1.0 + Math.sin(performance.now() * .0028) * .22;
+  });
+
+  hubVillagePortalRoot = root;
+  return root;
+}
+
+function getNearestVillageGateInRange(range = 7.2) {
+  if (!charMesh || !hubVillagePortalRoot || CURRENT_VILLAGE_ID !== 'hub') return null;
+  const dx = hubVillagePortalRoot.position.x - charMesh.position.x;
+  const dz = hubVillagePortalRoot.position.z - charMesh.position.z;
+  return dx * dx + dz * dz <= range * range ? hubVillagePortalRoot : null;
+}
+
+function openVillageGateMenu() {
+  if (CURRENT_VILLAGE_ID !== 'hub') return false;
+  const overlay = document.getElementById('villageGateOverlay');
+  const list = document.getElementById('villageGateList');
+  if (!overlay || !list) return false;
+
+  list.innerHTML = FACTION_VILLAGES.map((id, index) => {
+    const village = VILLAGE_REGISTRY[id];
+    return `<button class="village-gate-option" type="button" data-village-id="${id}" onclick="selectVillageGateDestination('${id}')"><span>${index + 1}</span>${village.displayName}</button>`;
+  }).join('');
+  overlay.classList.add('on');
+  overlay.setAttribute('aria-hidden','false');
+  return true;
+}
+
+function closeVillageGateMenu() {
+  const overlay = document.getElementById('villageGateOverlay');
+  if (!overlay) return;
+  overlay.classList.remove('on');
+  overlay.setAttribute('aria-hidden','true');
+  _villageGateNumberBuffer = '';
+  if (_villageGateNumberTimer) clearTimeout(_villageGateNumberTimer);
+}
+
+function selectVillageGateDestination(villageId) {
+  const village = VILLAGE_REGISTRY[villageId];
+  if (!village || villageId === 'hub') return;
+  window.location.href = village.route;
+}
+
+function tryOpenNearbyVillageGate() {
+  if (!walkMode || adminMode) return false;
+  if (!getNearestVillageGateInRange()) return false;
+  return openVillageGateMenu();
+}
+
+function isVillageGateMenuOpen() {
+  return document.getElementById('villageGateOverlay')?.classList.contains('on') === true;
+}
+
+function handleVillageGateNumberKey(key) {
+  if (!isVillageGateMenuOpen()) return false;
+  if (!/^[0-9]$/.test(key)) return true;
+
+  _villageGateNumberBuffer += key;
+  if (_villageGateNumberTimer) clearTimeout(_villageGateNumberTimer);
+
+  const pickBuffered = () => {
+    const index = Number(_villageGateNumberBuffer) - 1;
+    _villageGateNumberBuffer = '';
+    if (FACTION_VILLAGES[index]) selectVillageGateDestination(FACTION_VILLAGES[index]);
+  };
+
+  if (_villageGateNumberBuffer === '10' || _villageGateNumberBuffer === '11') {
+    pickBuffered();
+  } else if (_villageGateNumberBuffer.length >= 2) {
+    _villageGateNumberBuffer = '';
+  } else {
+    _villageGateNumberTimer = setTimeout(pickBuffered, 260);
+  }
+  return true;
+}
+
+window.closeVillageGateMenu = closeVillageGateMenu;
+window.selectVillageGateDestination = selectVillageGateDestination;
 
 function getSelectedWalkSurfaceMetadataTarget() {
   if (!selectedObject || !selectedObject.metadata) return null;
@@ -2943,6 +3156,7 @@ function torii(x,z,ry=0){
   return g;
 }
 torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0,-92,Math.PI);
+createHubVillagePortal();
 
 // ── FIRE BOWLS ───────────────────────────────
 const fireLights=[];
@@ -6941,7 +7155,7 @@ function saveWorldLayout(saveToGitHub = true){
     opened: node.metadata.opened === true,
     cooldownSeconds: Number.isFinite(node.metadata.cooldownSeconds) ? node.metadata.cooldownSeconds : null,
     requiresWallet: node.metadata.requiresWallet === true,
-    villageId: node.metadata.villageId || null,
+    villageId: node.metadata.villageId || CURRENT_VILLAGE_ID,
     proxyAutoEnabled: node.metadata.proxyAutoEnabled !== false,
     proxyWalkSurfaceEnabled: node.metadata.proxyWalkSurfaceEnabled === true,
     proxyEntranceSide: node.metadata.proxyEntranceSide || null,
@@ -6958,7 +7172,8 @@ function saveWorldLayout(saveToGitHub = true){
   const json = JSON.stringify(data, null, 2);
 
   // Always update local cache immediately.
-  localStorage.setItem("rebelAntsWorldLayout", json);
+  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, json);
+  if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem("rebelAntsWorldLayout", json);
 
   // Auto-save/local-cache path only.
   // This must never become a permanent GitHub save.
@@ -6974,7 +7189,7 @@ return Promise.resolve(true);
     showToast('Saving world layout...');
 
     try {
-      const response = await fetch('/api/world-layout', {
+      const response = await fetch(`/api/world-layout?village=${encodeURIComponent(CURRENT_VILLAGE_ID)}`, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
@@ -7008,7 +7223,7 @@ function triggerAutoSave() {
 }
 
 function loadWorldLayout(){
-  const raw = localStorage.getItem("rebelAntsWorldLayout");
+  const raw = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem("rebelAntsWorldLayout") : null);
   if (!raw) return;
   let data;
   try { data = JSON.parse(raw); } catch(e) { return; }
@@ -7378,6 +7593,13 @@ document.addEventListener('keydown', async e => {
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;
   const key = e.key.toLowerCase();
 
+  if (isVillageGateMenuOpen()) {
+    if (key === 'escape') closeVillageGateMenu();
+    else handleVillageGateNumberKey(key);
+    e.preventDefault();
+    return;
+  }
+
   if (key === 'escape' && pendingAdminPlacement) {
     clearAdminPlacement();
     showToast('Placement cancelled');
@@ -7481,7 +7703,7 @@ document.addEventListener('keydown', async e => {
     selectedObject.rotation.y += Math.PI / 2;
     return;
   }
-  if (!adminMode && key === 'o' && tryOpenNearbyTreasureChest()) {
+  if (!adminMode && key === 'o' && (tryOpenNearbyVillageGate() || tryOpenNearbyTreasureChest())) {
     e.preventDefault();
     return;
   }
@@ -8498,7 +8720,7 @@ engine.runRenderLoop(()=>{
     walk.position=BABYLON.Vector3.Lerp(walk.position,dc,0.1);
     walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
   }
-  updateTreasureChestPrompt();
+  updateInteractionPrompt();
   if (window._gpuMode === 'webgpu') {
     _webgpuSmartCapFrame++;
     if (_webgpuSmartCapFrame < 360 || _webgpuSmartCapFrame % 180 === 0) {
@@ -8533,12 +8755,14 @@ Object.keys(ASSETS).forEach(key => loadAssetSource(key));
 // ── LOADING SCREEN + WORLD INIT ──────────────────
 async function initWorldLayout() {
   try {
-    const resp = await fetch('/api/world-layout');
+    const resp = await fetch(`/api/world-layout?village=${encodeURIComponent(CURRENT_VILLAGE_ID)}`);
     if (resp.ok) {
       const d = await resp.json();
       if (d.ok && Array.isArray(d.layout)) {
-        localStorage.setItem("rebelAntsWorldLayout", JSON.stringify(d.layout));
-        console.log("Layout restored from GitHub:", d.layout.length, "objects");
+        const layoutJson = JSON.stringify(d.layout);
+        localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, layoutJson);
+        if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem("rebelAntsWorldLayout", layoutJson);
+        console.log("Layout restored from GitHub:", CURRENT_VILLAGE_ID, d.layout.length, "objects");
       }
     }
   } catch(e) {
