@@ -243,7 +243,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-section">Ronin Village Assets</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ronin_altar')"><span class="ap-icon">⛩</span><span class="ap-name">Ronin Altar</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Ronin Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_dead_tree')"><span class="ap-icon">♜</span><span class="ap-name">Dead Tree</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_mist')"><span class="ap-icon">〰</span><span class="ap-name">Ronin Mist</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_weapon_rack')"><span class="ap-icon">⚔</span><span class="ap-name">Weapon Rack</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_katana_sigil')"><span class="ap-icon">☾</span><span class="ap-name">Katana Sigil</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_brazier')"><span class="ap-icon">🔥</span><span class="ap-name">Crimson Brazier</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_broken_cart')"><span class="ap-icon">▰</span><span class="ap-name">Broken Cart</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_watch_post')"><span class="ap-icon">▴</span><span class="ap-name">Watch Post</span></div></div>
     <div class="ap-section">Light Director</div>
-    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">Path Lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🔥</span><span class="ap-name">Fire Bowl</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ambient_glow')"><span class="ap-icon">✨</span><span class="ap-name">Ambient Glow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('treasure_chest')"><span class="ap-icon">💰</span><span class="ap-name">Treasure Chest</span></div></div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">Path Lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('hanging_lantern')"><span class="ap-icon">🏮</span><span class="ap-name">Hanging Lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🔥</span><span class="ap-name">Fire Bowl</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ambient_glow')"><span class="ap-icon">✨</span><span class="ap-name">Ambient Glow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('treasure_chest')"><span class="ap-icon">💰</span><span class="ap-name">Treasure Chest</span></div></div>
     <div class="ap-section">Nature</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wooden_sign')"><span class="ap-icon">🪧</span><span class="ap-name">wooden_sign</span></div><div class="ap-card" onclick="spawnAssetFromPanel('small_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">small_bridge</span></div></div>
     <div class="ap-section" id="uploadedAssetsSection" style="display:none">Uploaded Assets</div>
@@ -607,6 +607,20 @@ lantern_1: {
     noShadows: true,
     groundOffset: 0
   },
+   hanging_lantern: {
+    procedural: true,
+    scale: 1.0,
+    noShadows: true,
+    groundOffset: 0,
+    noGroundSnap: true
+  },
+   hangingLantern: {
+    procedural: true,
+    scale: 1.0,
+    noShadows: true,
+    groundOffset: 0,
+    noGroundSnap: true
+  },
    ambient_glow: {
     procedural: true,
     scale: 1.0,
@@ -702,6 +716,7 @@ function spawnAsset(type, position, extraMeta) {
    if (config.procedural) {
     // Build procedural asset immediately
     if (type === 'toro_lantern') buildToro(root, root.metadata.toroColor || '#ffdd88');
+    if (type === 'hanging_lantern' || type === 'hangingLantern') buildHangingLantern(root, root.metadata.lanternColor || root.metadata.toroColor || '#ffdd88', root.metadata.chainHeight || 1.15);
    if (type === 'ambient_glow') buildAmbientGlow(
   root,
   root.metadata.glowColor || '#ffdd88',
@@ -3598,6 +3613,47 @@ function fireBowl(x,z){
   }
 
 }
+
+function buildHangingLantern(root, glowColor = "#ffdd88", chainHeight = 1.15) {
+  const attach = (mesh) => {
+    mesh.parent = root;
+    mesh.isPickable = true;
+    mesh._editRoot = root;
+    return mesh;
+  };
+
+  const glow = BABYLON.Color3.FromHexString(glowColor);
+  const ironMat = mat(new BABYLON.Color3(.09,.08,.075));
+  const capMat = mat(new BABYLON.Color3(.22,.12,.05));
+  const trimMat = pbr(new BABYLON.Color3(.42,.24,.08), { m:.35, r:.5 });
+  const paperMat = pbr(new BABYLON.Color3(1,.88,.55), { e: glow, ei: 2.8, a:.9, r:.5 });
+
+  attach(cyl(.026,.026,chainHeight,5,ironMat,[0,chainHeight/2,0]));
+  attach(BABYLON.MeshBuilder.CreateTorus(root.name + "_topRing", { diameter:.38, thickness:.035, tessellation:12 }, scene)).position.y = -.08;
+  const ring = root.getChildMeshes().find(m => m.name === root.name + "_topRing");
+  if (ring) ring.material = trimMat;
+
+  attach(cyl(.28,.28,.68,12,paperMat,[0,-.48,0]));
+  attach(box(.46,.08,.46,capMat,[0,-.11,0]));
+  attach(box(.42,.08,.42,capMat,[0,-.84,0]));
+  attach(cyl(.32,.32,.045,12,trimMat,[0,-.27,0]));
+  attach(cyl(.32,.32,.045,12,trimMat,[0,-.68,0]));
+  attach(box(.055,.58,.055,trimMat,[.26,-.48,.26]));
+  attach(box(.055,.58,.055,trimMat,[-.26,-.48,.26]));
+  attach(box(.055,.58,.055,trimMat,[.26,-.48,-.26]));
+  attach(box(.055,.58,.055,trimMat,[-.26,-.48,-.26]));
+
+  const ember = attach(BABYLON.MeshBuilder.CreateSphere(root.name + "_warmCore", { diameter:.34, segments:12 }, scene));
+  ember.position.y = -.48;
+  ember.material = paperMat;
+  ember.isPickable = false;
+
+  root.metadata = root.metadata || {};
+  root.metadata.type = root.metadata.type || 'hanging_lantern';
+  root.metadata.lanternColor = glowColor;
+  root.metadata.chainHeight = chainHeight;
+}
+
 function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
   const root=new BABYLON.TransformNode("lan"+lIdx,scene);
   root.position=new BABYLON.Vector3(x,y,z);
@@ -7512,6 +7568,7 @@ function saveWorldLayout(saveToGitHub = true){
     toroColor: node.metadata.toroColor || null,
     lanternColor: node.metadata.lanternColor || null,
     lanternBrightness: node.metadata.lanternBrightness || null,
+    chainHeight: Number.isFinite(node.metadata.chainHeight) ? node.metadata.chainHeight : null,
     glowColor: node.metadata.glowColor || null,
     glowBrightness: node.metadata.glowBrightness || null,
     glowShape: node.metadata.glowShape || null,
@@ -7721,6 +7778,12 @@ function loadWorldLayout(){
                 isClone: true,
                 ...getDefaultTreasureChestMetadata(item)
               }
+            : (item.type === 'hanging_lantern' || item.type === 'hangingLantern')
+              ? {
+                  isClone: true,
+                  lanternColor: item.lanternColor || item.toroColor || '#ffdd88',
+                  chainHeight: Number.isFinite(item.chainHeight) ? item.chainHeight : 1.15
+                }
             : item.type === 'village_gate'
               ? {
                   isClone: true,
@@ -7754,6 +7817,8 @@ function loadWorldLayout(){
       isClone: true,
       signConfig: item.signConfig || null,
       toroColor: item.toroColor || null,
+      lanternColor: item.lanternColor || null,
+      chainHeight: Number.isFinite(item.chainHeight) ? item.chainHeight : null,
       proxyAutoEnabled: item.proxyAutoEnabled !== false,
       proxyWalkSurfaceEnabled: item.proxyWalkSurfaceEnabled === true,
       proxyEntranceSide: item.proxyEntranceSide || null,
@@ -9561,6 +9626,23 @@ function setUploadedAssets(uploaded) {
   localStorage.setItem('rebelAntsUploadedAssets', JSON.stringify(uploaded));
 }
 
+function getHiddenLibraryAssets() {
+  try {
+    const hidden = JSON.parse(localStorage.getItem('rebelAntsHiddenLibraryAssets') || '[]');
+    return Array.isArray(hidden) ? hidden.filter(Boolean) : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function setHiddenLibraryAssets(hidden) {
+  localStorage.setItem('rebelAntsHiddenLibraryAssets', JSON.stringify([...new Set(hidden)]));
+}
+
+function isAssetLibraryHidden(key) {
+  return getHiddenLibraryAssets().includes(key);
+}
+
 function updateUploadedAssetsVisibility() {
   const section = document.getElementById('uploadedAssetsSection');
   const grid = document.getElementById('uploadedAssetGrid');
@@ -9571,8 +9653,7 @@ function updateUploadedAssetsVisibility() {
 }
 
 function isLibraryAssetRemovable(key) {
-  if (!key || CORE_ASSET_KEYS.has(key)) return false;
-  return getUploadedAssets().some(a => a.key === key) || ASSETS[key]?._uploaded === true;
+  return !!key && (CORE_ASSET_KEYS.has(key) || getUploadedAssets().some(a => a.key === key) || ASSETS[key]?._uploaded === true);
 }
 
 function getAssetLibraryCard(key) {
@@ -9582,6 +9663,7 @@ function getAssetLibraryCard(key) {
 function createUploadedAssetCard(key, loadingLabel) {
   const grid = document.getElementById('uploadedAssetGrid');
   if (!grid) return null;
+  if (isAssetLibraryHidden(key)) return null;
 
   const existing = getAssetLibraryCard(key);
   if (existing) return existing;
@@ -9619,29 +9701,70 @@ function createUploadedAssetCard(key, loadingLabel) {
 
 function removeAssetFromLibrary(key) {
   if (!isLibraryAssetRemovable(key)) {
-    showToast('Core assets are protected');
+    showToast('Asset cannot be removed');
     return;
   }
 
-  const confirmed = window.confirm('Remove "' + key + '" from the admin asset library? Existing placed objects will load as missing placeholders until the asset is restored.');
+  const isUploaded = getUploadedAssets().some(a => a.key === key) || ASSETS[key]?._uploaded === true;
+  const detail = isUploaded
+    ? 'Existing placed objects will load as missing placeholders until the asset is restored.'
+    : 'Existing placed objects stay in the village. This only hides the asset from the admin library.';
+  const confirmed = window.confirm('Remove "' + key + '" from the admin asset library? ' + detail);
   if (!confirmed) return;
 
-  setUploadedAssets(getUploadedAssets().filter(a => a.key !== key));
+  const hidden = getHiddenLibraryAssets();
+  if (!hidden.includes(key)) setHiddenLibraryAssets([...hidden, key]);
 
   if (pendingAdminPlacement && pendingAdminPlacement.kind === 'asset' && pendingAdminPlacement.key === key) {
     clearAdminPlacement();
   }
 
-  if (_assetSources[key] && typeof _assetSources[key].dispose === 'function') {
-    _assetSources[key].dispose(false, true);
+  if (isUploaded) {
+    setUploadedAssets(getUploadedAssets().filter(a => a.key !== key));
+    if (_assetSources[key] && typeof _assetSources[key].dispose === 'function') {
+      _assetSources[key].dispose(false, true);
+    }
+    delete _assetSources[key];
+    delete ASSETS[key];
   }
-  delete _assetSources[key];
-  delete ASSETS[key];
 
   const card = getAssetLibraryCard(key);
   if (card) card.remove();
   updateUploadedAssetsVisibility();
   showToast('Removed from library: ' + key);
+}
+
+function getAssetKeyFromCard(card) {
+  if (!card) return null;
+  if (card.dataset.assetKey) return card.dataset.assetKey;
+  const onclick = card.getAttribute('onclick') || '';
+  const match = onclick.match(/spawnAssetFromPanel\(['"]([^'"]+)['"]\)/);
+  return match ? match[1] : null;
+}
+
+function enhanceAssetLibraryCards() {
+  document.querySelectorAll('#assetPanel .ap-card').forEach(card => {
+    const key = getAssetKeyFromCard(card);
+    if (!key || card.dataset.libraryEnhanced === 'true') return;
+    card.dataset.assetKey = key;
+    if (isAssetLibraryHidden(key)) {
+      card.remove();
+      return;
+    }
+    card.classList.add('library-removable');
+    card.dataset.libraryEnhanced = 'true';
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'ap-remove';
+    removeButton.title = 'Remove from library';
+    removeButton.textContent = 'x';
+    removeButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      removeAssetFromLibrary(key);
+    });
+    card.insertBefore(removeButton, card.firstChild);
+  });
 }
 
 // ── RESTORE UPLOADED ASSETS FROM LOCALSTORAGE ──────────
@@ -9677,6 +9800,7 @@ function restoreUploadedAssets() {
   updateUploadedAssetsVisibility();
 }
 
+enhanceAssetLibraryCards();
 initWorldLayout().then(() => waitForWorldAndLoadLayout());
   
 
@@ -10013,6 +10137,8 @@ function placeAssetAtPoint(key, pickedPoint) {
    ? { isClone: true, glowColor: '#ffdd88', glowBrightness: 1, glowShape: 'circle', glowWidth: 9, glowDepth: 9 }
     : key === 'treasure_chest'
       ? { isClone: true, ...getDefaultTreasureChestMetadata() }
+      : key === 'hanging_lantern'
+        ? { isClone: true, lanternColor: '#ffdd88', chainHeight: 1.15 }
       : { isClone: true, toroColor: '#ffdd88' };
 
     const clone = spawnAsset(key, pos, proceduralMeta);
@@ -10070,6 +10196,10 @@ function spawnAssetFromPanel(key) {
   }
   if (!ASSETS[key]) {
     showToast('Asset is no longer in the library');
+    return;
+  }
+  if (isAssetLibraryHidden(key)) {
+    showToast('Asset was removed from the library');
     return;
   }
   beginAdminPlacement({ kind: 'asset', key });
@@ -10146,6 +10276,7 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
       _uploadedAssets.push({ key, file: file.name });
       setUploadedAssets(_uploadedAssets);
     }
+    setHiddenLibraryAssets(getHiddenLibraryAssets().filter(hiddenKey => hiddenKey !== key));
 
     // ── LOAD INTO SCENE IMMEDIATELY via blob URL ───────────
     // Convert compressed b64 back to binary blob so Babylon loads it NOW
