@@ -236,9 +236,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div class="ap-header"><span>Assets</span><kbd>M</kbd></div>
   <div class="ap-scroll">
     <div class="ap-section">Buildings</div>
-    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_altar')"><span class="ap-icon">⛩</span><span class="ap-name">Ronin Altar</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
-    <div class="ap-section">Faction Props</div>
-    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ronin_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Ronin Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_dead_tree')"><span class="ap-icon">♜</span><span class="ap-name">Dead Tree</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_mist')"><span class="ap-icon">〰</span><span class="ap-name">Ronin Mist</span></div></div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
+    <div class="ap-section">Ronin Village Assets</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ronin_altar')"><span class="ap-icon">⛩</span><span class="ap-name">Ronin Altar</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Ronin Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_dead_tree')"><span class="ap-icon">♜</span><span class="ap-name">Dead Tree</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_mist')"><span class="ap-icon">〰</span><span class="ap-name">Ronin Mist</span></div></div>
     <div class="ap-section">Light Director</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">Path Lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🔥</span><span class="ap-name">Fire Bowl</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ambient_glow')"><span class="ap-icon">✨</span><span class="ap-name">Ambient Glow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('treasure_chest')"><span class="ap-icon">💰</span><span class="ap-name">Treasure Chest</span></div></div>
     <div class="ap-section">Nature</div>
@@ -2554,17 +2554,37 @@ function buildRoninDeadTree(root) {
   const ash = makeRoninMaterial('roninDeadTreeAsh', new BABYLON.Color3(.025,.024,.026), new BABYLON.Color3(.004,.003,.004));
   const trunk = markRoninEditable(BABYLON.MeshBuilder.CreateCylinder(`${root.name}_trunk`, { diameterTop:.28, diameterBottom:.52, height:4.4, tessellation:7 }, scene), root);
   trunk.position.y = 2.15; trunk.rotation.z = .08; trunk.material = bark;
+
+  function addBranch(name, anchor, dir, len, thick, material) {
+    const v = new BABYLON.Vector3(dir.x, dir.y, dir.z || 0).normalize();
+    const branch = markRoninEditable(BABYLON.MeshBuilder.CreateCylinder(`${root.name}_${name}`, {
+      diameterTop: thick * .42,
+      diameterBottom: thick,
+      height: len,
+      tessellation: 6
+    }, scene), root);
+    branch.position.set(
+      anchor.x + v.x * len * .5,
+      anchor.y + v.y * len * .5,
+      anchor.z + v.z * len * .5
+    );
+    branch.rotation.z = -Math.atan2(v.x, v.y);
+    branch.rotation.y = Math.atan2(v.z, Math.max(.001, Math.sqrt(v.x * v.x + v.y * v.y)));
+    branch.material = material;
+    return { branch, end: new BABYLON.Vector3(anchor.x + v.x * len, anchor.y + v.y * len, anchor.z + v.z * len) };
+  }
+
   [
-    [-.42,3.0,.78,.22,.85],
-    [.42,3.35,-.72,-.18,.72],
-    [-.24,2.25,-.54,.42,.58],
-    [.18,2.62,.5,-.34,.52]
-  ].forEach(([x,y,rz,ry,len],i) => {
-    const branch = markRoninEditable(BABYLON.MeshBuilder.CreateCylinder(`${root.name}_branch${i}`, { diameterTop:.06, diameterBottom:.17, height:len, tessellation:6 }, scene), root);
-    branch.position.set(x,y,0);
-    branch.rotation.z = rz;
-    branch.rotation.y = ry;
-    branch.material = i % 2 ? bark : ash;
+    [{x:-.12,y:2.55,z:0},{x:-.68,y:.52,z:.16},1.18,.19,bark],
+    [{x:.12,y:2.95,z:0},{x:.7,y:.45,z:-.12},1.05,.17,bark],
+    [{x:-.05,y:3.35,z:0},{x:-.42,y:.74,z:-.08},.86,.14,ash],
+    [{x:.08,y:3.55,z:0},{x:.38,y:.7,z:.1},.78,.13,ash],
+    [{x:.02,y:2.05,z:0},{x:.52,y:.35,z:.2},.72,.15,bark]
+  ].forEach(([anchor,dir,len,thick,material],i) => {
+    const main = addBranch(`branch${i}`, anchor, dir, len, thick, material);
+    if (i < 4) {
+      addBranch(`twig${i}`, main.end, { x: dir.x * .45 + (i % 2 ? -.28 : .28), y: .45, z: -(dir.z || 0) * .4 }, len * .42, thick * .56, ash);
+    }
   });
 }
 
