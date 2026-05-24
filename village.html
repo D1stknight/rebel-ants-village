@@ -359,6 +359,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <option value="fog">Fog</option>
       <option value="heat">Heat Haze / Hot Day</option>
       <option value="cold">Cold / Frosty Mood</option>
+      <option value="snow">Snow</option>
     </select>
   </div>
   <hr class="ap-divider">
@@ -3367,6 +3368,7 @@ function updateSky(){
   WeatherManager.baseSunDiffuse = sun.diffuse.clone();
   WeatherManager.baseHemiDiffuse = hemi.diffuse.clone();
   WeatherManager.baseFogColor = scene.fogColor.clone();
+  WeatherManager.baseClearColor = scene.clearColor.clone();
   const hh=now.getHours().toString().padStart(2,'0'),mm=now.getMinutes().toString().padStart(2,'0');
   const lbl=h<6||h>=20?'Night':h<9?'Sunrise':h<17?'Day':'Sunset';
   document.getElementById('td').textContent=`${hh}:${mm}  ·  ${lbl}`;
@@ -3375,12 +3377,13 @@ function updateSky(){
 
 const WEATHER_MODES = {
   clear: { label:'Clear', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_NONE },
-  'light-rain': { label:'Light Rain', rain:48, speed:0.82, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.44,.55,.64), sun:.72, hemi:.86 },
-  'heavy-rain': { label:'Heavy Rain', rain:92, speed:1.08, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.008, fogColor:new BABYLON.Color3(.28,.36,.45), sun:.48, hemi:.68 },
-  storm: { label:'Storm', rain:132, speed:1.36, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.012, fogColor:new BABYLON.Color3(.12,.16,.22), sun:.22, hemi:.45, lightning:true },
+  'light-rain': { label:'Light Rain', rain:48, speed:0.82, splashes:8, puddles:4, wet:true, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.44,.55,.64), sun:.72, hemi:.86 },
+  'heavy-rain': { label:'Heavy Rain', rain:92, speed:1.08, splashes:14, puddles:6, wet:true, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.008, fogColor:new BABYLON.Color3(.28,.36,.45), sun:.48, hemi:.68 },
+  storm: { label:'Storm', rain:132, speed:1.36, splashes:18, puddles:7, wet:true, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.012, fogColor:new BABYLON.Color3(.12,.16,.22), sun:.22, hemi:.45, lightning:true },
   fog: { label:'Fog', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.022, fogColor:new BABYLON.Color3(.58,.65,.68), sun:.66, hemi:.82 },
   heat: { label:'Heat Haze / Hot Day', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.003, fogColor:new BABYLON.Color3(.86,.66,.42), sun:1.16, hemi:.98, warm:true },
-  cold: { label:'Cold / Frosty Mood', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.009, fogColor:new BABYLON.Color3(.62,.76,.86), sun:.82, hemi:.92, cold:true }
+  cold: { label:'Cold / Frosty Mood', rain:0, speed:0, frost:7, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.009, fogColor:new BABYLON.Color3(.62,.76,.86), sun:.82, hemi:.92, cold:true },
+  snow: { label:'Snow', rain:0, snow:72, snowSpeed:.34, frost:10, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.012, fogColor:new BABYLON.Color3(.72,.84,.92), sun:.74, hemi:1.02, cold:true }
 };
 
 const WeatherManager = {
@@ -3388,14 +3391,24 @@ const WeatherManager = {
   cycleMs: 240000,
   nextCycleAt: performance.now() + 240000,
   rainMeshes: [],
+  snowMeshes: [],
+  splashMeshes: [],
+  puddleMeshes: [],
+  frostMeshes: [],
   lightningUntil: 0,
+  thunderCueUntil: 0,
   nextLightningAt: performance.now() + 9000,
   rainMat: null,
+  snowMat: null,
+  splashMat: null,
+  puddleMat: null,
+  frostMat: null,
   baseSunIntensity: sun.intensity,
   baseHemiIntensity: hemi.intensity,
   baseSunDiffuse: sun.diffuse.clone(),
   baseHemiDiffuse: hemi.diffuse.clone(),
-  baseFogColor: scene.fogColor.clone()
+  baseFogColor: scene.fogColor.clone(),
+  baseClearColor: scene.clearColor.clone()
 };
 
 function getWeatherCenter() {
@@ -3438,6 +3451,170 @@ function resetWeatherRainDrop(drop, center) {
   );
 }
 
+function getWeatherGroundY(x, z) {
+  if (typeof getVillageGroundHeightAt === 'function') {
+    const y = getVillageGroundHeightAt(x, z);
+    if (Number.isFinite(y)) return y + 0.035;
+  }
+  return 0.04;
+}
+
+function ensureWeatherSnowPool(count) {
+  if (!WeatherManager.snowMat) {
+    WeatherManager.snowMat = new BABYLON.StandardMaterial('weatherSnowMat', scene);
+    WeatherManager.snowMat.diffuseColor = new BABYLON.Color3(.92,.98,1);
+    WeatherManager.snowMat.emissiveColor = new BABYLON.Color3(.62,.76,.9);
+    WeatherManager.snowMat.alpha = .86;
+    WeatherManager.snowMat.disableLighting = true;
+    WeatherManager.snowMat.backFaceCulling = false;
+  }
+
+  while (WeatherManager.snowMeshes.length < count) {
+    const flake = BABYLON.MeshBuilder.CreatePlane('weatherSnowFlake_' + WeatherManager.snowMeshes.length, { size:.22 }, scene);
+    flake.material = WeatherManager.snowMat;
+    flake.isPickable = false;
+    flake.checkCollisions = false;
+    flake.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+    flake.setEnabled(false);
+    WeatherManager.snowMeshes.push(flake);
+  }
+  WeatherManager.snowMeshes.forEach((flake, index) => flake.setEnabled(index < count));
+}
+
+function resetWeatherSnowFlake(flake, center) {
+  const angle = Math.random() * Math.PI * 2;
+  const radius = Math.sqrt(Math.random()) * 44;
+  flake.position.set(
+    center.x + Math.cos(angle) * radius,
+    center.y + 10 + Math.random() * 20,
+    center.z + Math.sin(angle) * radius
+  );
+  const s = .55 + Math.random() * .9;
+  flake.scaling.set(s, s, s);
+}
+
+function ensureWeatherRingPool(poolName, matName, color, emissive, alpha, count, makeMesh) {
+  const matKey = matName + 'Mat';
+  if (!WeatherManager[matKey]) {
+    WeatherManager[matKey] = new BABYLON.StandardMaterial(matName + 'Mat', scene);
+    WeatherManager[matKey].diffuseColor = color;
+    WeatherManager[matKey].emissiveColor = emissive;
+    WeatherManager[matKey].alpha = alpha;
+    WeatherManager[matKey].disableLighting = true;
+    WeatherManager[matKey].backFaceCulling = false;
+    WeatherManager[matKey].alphaMode = BABYLON.Engine.ALPHA_ADD;
+  }
+
+  const pool = WeatherManager[poolName];
+  while (pool.length < count) {
+    const mesh = makeMesh(pool.length);
+    mesh.material = WeatherManager[matKey];
+    mesh.isPickable = false;
+    mesh.checkCollisions = false;
+    mesh.receiveShadows = false;
+    mesh.setEnabled(false);
+    pool.push(mesh);
+  }
+  pool.forEach((mesh, index) => mesh.setEnabled(index < count));
+}
+
+function placeWeatherGroundMesh(mesh, center, radius = 34) {
+  const angle = Math.random() * Math.PI * 2;
+  const r = Math.sqrt(Math.random()) * radius;
+  const x = center.x + Math.cos(angle) * r;
+  const z = center.z + Math.sin(angle) * r;
+  mesh.position.set(x, getWeatherGroundY(x, z), z);
+}
+
+function updateWeatherSnow() {
+  const cfg = WEATHER_MODES[WeatherManager.mode] || WEATHER_MODES.clear;
+  ensureWeatherSnowPool(cfg.snow || 0);
+  if (!cfg.snow) return;
+
+  const center = getWeatherCenter();
+  const dt = Math.min(48, scene.getEngine().getDeltaTime()) / 16.67;
+  WeatherManager.snowMeshes.forEach((flake, index) => {
+    if (index >= cfg.snow) return;
+    if (
+      (flake.position.x === 0 && flake.position.y === 0 && flake.position.z === 0) ||
+      flake.position.y < center.y - 1.5 ||
+      Math.abs(flake.position.x - center.x) > 50 ||
+      Math.abs(flake.position.z - center.z) > 50
+    ) {
+      resetWeatherSnowFlake(flake, center);
+      return;
+    }
+    flake.position.x += Math.sin(performance.now() * .001 + index) * .018 * dt;
+    flake.position.y -= (cfg.snowSpeed || .32) * dt;
+    flake.position.z += Math.cos(performance.now() * .0008 + index) * .018 * dt;
+  });
+}
+
+function updateWeatherGroundEffects() {
+  const cfg = WEATHER_MODES[WeatherManager.mode] || WEATHER_MODES.clear;
+  const center = getWeatherCenter();
+  const now = performance.now() * .001;
+
+  ensureWeatherRingPool('splashMeshes', 'splash', new BABYLON.Color3(.55,.86,1), new BABYLON.Color3(.26,.6,.9), .42, cfg.splashes || 0, i => {
+    const ring = BABYLON.MeshBuilder.CreateTorus('weatherSplash_' + i, { diameter:.42, thickness:.012, tessellation:18 }, scene);
+    ring.rotation.x = Math.PI / 2;
+    ring.metadata = { phase: Math.random() * 10 };
+    return ring;
+  });
+
+  WeatherManager.splashMeshes.forEach((splash, index) => {
+    if (index >= (cfg.splashes || 0)) return;
+    if (!splash.metadata._placed || now + splash.metadata.phase > (splash.metadata.nextReset || 0)) {
+      placeWeatherGroundMesh(splash, center, 32);
+      splash.metadata._placed = true;
+      splash.metadata.nextReset = now + .65 + Math.random() * .9;
+      splash.metadata.phase = Math.random() * 10;
+    }
+    const life = 1 - Math.max(0, (splash.metadata.nextReset - now) / 1.55);
+    const scale = .35 + life * 1.2;
+    splash.scaling.set(scale, scale, scale);
+    if (splash.material) splash.material.alpha = .38 * (1 - life);
+  });
+
+  ensureWeatherRingPool('puddleMeshes', 'puddle', new BABYLON.Color3(.08,.16,.2), new BABYLON.Color3(.05,.13,.17), .28, cfg.puddles || 0, i => {
+    const puddle = BABYLON.MeshBuilder.CreateDisc('weatherPuddle_' + i, { radius:1.0, tessellation:28 }, scene);
+    puddle.rotation.x = Math.PI / 2;
+    puddle.metadata = { phase: Math.random() * 20 };
+    return puddle;
+  });
+
+  WeatherManager.puddleMeshes.forEach((puddle, index) => {
+    if (index >= (cfg.puddles || 0)) return;
+    if (!puddle.metadata._placed || Math.abs(puddle.position.x - center.x) > 44 || Math.abs(puddle.position.z - center.z) > 44) {
+      placeWeatherGroundMesh(puddle, center, 30);
+      puddle.metadata._placed = true;
+      const sx = .8 + Math.random() * 1.5;
+      const sz = .35 + Math.random() * .8;
+      puddle.scaling.set(sx, sz, 1);
+    }
+    if (puddle.material) puddle.material.alpha = .20 + Math.sin(now * 1.8 + puddle.metadata.phase) * .05;
+  });
+
+  ensureWeatherRingPool('frostMeshes', 'frost', new BABYLON.Color3(.86,.96,1), new BABYLON.Color3(.45,.62,.76), .22, cfg.frost || 0, i => {
+    const frost = BABYLON.MeshBuilder.CreateDisc('weatherFrost_' + i, { radius:1.0, tessellation:18 }, scene);
+    frost.rotation.x = Math.PI / 2;
+    frost.metadata = { phase: Math.random() * 20 };
+    return frost;
+  });
+
+  WeatherManager.frostMeshes.forEach((frost, index) => {
+    if (index >= (cfg.frost || 0)) return;
+    if (!frost.metadata._placed || Math.abs(frost.position.x - center.x) > 46 || Math.abs(frost.position.z - center.z) > 46) {
+      placeWeatherGroundMesh(frost, center, 34);
+      frost.metadata._placed = true;
+      const s = .8 + Math.random() * 1.4;
+      frost.scaling.set(s, s * (.45 + Math.random() * .45), 1);
+      frost.rotation.y = Math.random() * Math.PI;
+    }
+    if (frost.material) frost.material.alpha = .16 + Math.sin(now * 1.2 + frost.metadata.phase) * .03;
+  });
+}
+
 function updateWeatherRain() {
   const cfg = WEATHER_MODES[WeatherManager.mode] || WEATHER_MODES.clear;
   ensureWeatherRainPool(cfg.rain || 0);
@@ -3472,6 +3649,9 @@ function applyWeatherLighting() {
     scene.fogColor = cfg.fogColor || WeatherManager.baseFogColor;
   }
 
+  scene.clearColor.copyFrom(WeatherManager.baseClearColor);
+  if (cfg.wet) scene.clearColor.set(.24,.34,.43,1);
+  if (cfg.cold) scene.clearColor.set(.52,.66,.78,1);
   if (_worklightOn) return;
   sun.intensity = WeatherManager.baseSunIntensity * (cfg.sun || 1);
   hemi.intensity = WeatherManager.baseHemiIntensity * (cfg.hemi || 1);
@@ -3487,6 +3667,7 @@ function applyWeatherLighting() {
     sun.diffuse.set(.74,.9,1);
     sun.intensity = Math.max(sun.intensity, 2.2);
     hemi.intensity = Math.max(hemi.intensity, 1.0);
+    scene.clearColor.set(.7,.86,1,1);
   }
 }
 
@@ -3494,7 +3675,7 @@ function updateWeatherLabel() {
   const cfg = WEATHER_MODES[WeatherManager.mode] || WEATHER_MODES.clear;
   const label = document.getElementById('weatherDebugBadge');
   if (label) {
-    label.textContent = 'Weather: ' + cfg.label;
+    label.textContent = 'Weather: ' + cfg.label + (performance.now() < WeatherManager.thunderCueUntil ? ' · Thunder' : '');
     label.classList.toggle('on', adminMode === true);
   }
   const select = document.getElementById('weatherSelect');
@@ -3523,11 +3704,16 @@ function updateWeatherManager() {
 
   if (WeatherManager.mode === 'storm' && now >= WeatherManager.nextLightningAt) {
     WeatherManager.lightningUntil = now + 150;
+    WeatherManager.thunderCueUntil = now + 2200;
     WeatherManager.nextLightningAt = now + 6500 + Math.random() * 9000;
+    // Future audio hook: keep thunder sound disabled for now to avoid surprise autoplay/browser policy issues.
   }
 
   applyWeatherLighting();
   updateWeatherRain();
+  updateWeatherSnow();
+  updateWeatherGroundEffects();
+  updateWeatherLabel();
 }
 
 function initWeatherManager() {
