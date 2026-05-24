@@ -2781,6 +2781,7 @@ function buildRoninWatchPost(root) {
 
 let _villageGateNumberBuffer = '';
 let _villageGateNumberTimer = null;
+let _lastVillageGateAutoOpenAt = 0;
 
 function buildVillageGate(root) {
   if (!root) return;
@@ -2795,6 +2796,14 @@ function buildVillageGate(root) {
   const glowMat = mat(new BABYLON.Color3(.35,.95,.92), { e:new BABYLON.Color3(.18,.95,.9), a:.28 });
   glowMat.backFaceCulling = false;
   glowMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+  const coreMat = mat(new BABYLON.Color3(.12,1,.92), { e:new BABYLON.Color3(.2,1.2,1.1), a:.34 });
+  coreMat.backFaceCulling = false;
+  coreMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+  const purpleMat = mat(new BABYLON.Color3(.82,.22,1), { e:new BABYLON.Color3(.95,.24,1.2), a:.24 });
+  purpleMat.backFaceCulling = false;
+  purpleMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+  const starMat = mat(new BABYLON.Color3(1,.9,1), { e:new BABYLON.Color3(.95,1.2,1.25), a:.72 });
+  starMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
 
   function attach(mesh) {
     mesh.parent = root;
@@ -2822,17 +2831,58 @@ function buildVillageGate(root) {
   attach(box(6.2,.48,.6,redMat,[0,5.7,0]));
   attach(box(7.1,.42,.74,redMat,[0,6.45,0]));
   attach(box(1.25,.34,.64,goldMat,[0,6.02,0]));
-  const floorGlow = attachEffect(cyl(0,1.02,.06,36,glowMat,[0,.1,0],Math.PI/2));
+  const floorGlow = attachEffect(cyl(0,1.22,.06,40,glowMat,[0,.1,0],Math.PI/2));
 
-  const portalDisc = attachEffect(BABYLON.MeshBuilder.CreatePlane(`${root.name}_portalDisc`,{width:2.75,height:3.75},scene));
-  portalDisc.position.y = 3.05;
-  portalDisc.position.z = .03;
-  portalDisc.material = glowMat;
+  const portalBack = attachEffect(BABYLON.MeshBuilder.CreatePlane(`${root.name}_portalBack`,{width:3.85,height:4.65},scene));
+  portalBack.position.y = 3.12;
+  portalBack.position.z = .035;
+  portalBack.material = coreMat;
 
-  const aura = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalAura`,{diameter:2.82,thickness:.075,tessellation:48},scene));
-  aura.position.y = 3.1;
-  aura.position.z = .06;
+  const portalCore = attachEffect(BABYLON.MeshBuilder.CreateDisc(`${root.name}_portalCore`,{radius:1.72,tessellation:64},scene));
+  portalCore.position.y = 3.08;
+  portalCore.position.z = .06;
+  portalCore.scaling.y = 1.24;
+  portalCore.material = coreMat;
+
+  const aura = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalAura`,{diameter:3.65,thickness:.09,tessellation:72},scene));
+  aura.position.y = 3.08;
+  aura.position.z = .09;
+  aura.scaling.y = 1.24;
   aura.material = glowMat;
+
+  const innerAura = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalInnerAura`,{diameter:2.35,thickness:.055,tessellation:72},scene));
+  innerAura.position.y = 3.08;
+  innerAura.position.z = .11;
+  innerAura.scaling.y = 1.22;
+  innerAura.material = purpleMat;
+
+  const swirls = [];
+  [
+    { d:3.15, t:.035, sy:1.18, z:.14, mat:glowMat, speed:.48 },
+    { d:2.58, t:.028, sy:.88, z:.17, mat:purpleMat, speed:-.62 },
+    { d:1.86, t:.025, sy:1.36, z:.20, mat:glowMat, speed:.78 }
+  ].forEach((cfg, index) => {
+    const swirl = attachEffect(BABYLON.MeshBuilder.CreateTorus(`${root.name}_portalSwirl_${index}`,{diameter:cfg.d,thickness:cfg.t,tessellation:56},scene));
+    swirl.position.y = 3.08;
+    swirl.position.z = cfg.z;
+    swirl.scaling.y = cfg.sy;
+    swirl.rotation.z = index * .74;
+    swirl.material = cfg.mat;
+    swirls.push({ mesh: swirl, speed: cfg.speed, baseScaleY: cfg.sy });
+  });
+
+  const orbiters = [];
+  for (let i = 0; i < 14; i++) {
+    const orb = attachEffect(BABYLON.MeshBuilder.CreateSphere(`${root.name}_portalOrb_${i}`,{diameter:i % 4 === 0 ? .115 : .07,segments:8},scene));
+    orb.material = i % 3 === 0 ? purpleMat : starMat;
+    orbiters.push({
+      mesh: orb,
+      radius: .42 + (i % 5) * .28,
+      speed: .55 + (i % 6) * .13,
+      phase: i * 1.73,
+      yScale: .92 + (i % 4) * .12
+    });
+  }
 
   const light = new BABYLON.PointLight(`${root.name}_portalLight`, new BABYLON.Vector3(0,3.2,.2), scene);
   light.diffuse = new BABYLON.Color3(.35,.95,.92);
@@ -2841,30 +2891,39 @@ function buildVillageGate(root) {
   light.range = 11;
   light.parent = root;
 
-  const sparkle = new BABYLON.ParticleSystem(`${root.name}_portalSparkles`, 56, scene);
-  sparkle.particleTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png', scene);
-  sparkle.emitter = root;
-  sparkle.minEmitBox = new BABYLON.Vector3(-1.05,1.55,-.08);
-  sparkle.maxEmitBox = new BABYLON.Vector3(1.05,4.55,.08);
-  sparkle.color1 = new BABYLON.Color4(.35,1,.95,.8);
-  sparkle.color2 = new BABYLON.Color4(1,.75,.25,.55);
-  sparkle.colorDead = new BABYLON.Color4(.2,.6,.7,0);
-  sparkle.minSize = .08; sparkle.maxSize = .24;
-  sparkle.minLifeTime = .9; sparkle.maxLifeTime = 1.8;
-  sparkle.emitRate = 10;
-  sparkle.minEmitPower = .05; sparkle.maxEmitPower = .18;
-  sparkle.updateSpeed = .018;
-  sparkle.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
-  sparkle.start();
-
-  scene.onBeforeRenderObservable.add(() => {
-    if (!root || root.isDisposed?.()) return;
-    const pulse = 1 + Math.sin(performance.now() * .0024) * .055;
-    portalDisc.scaling.set(.96 + (pulse - 1) * .55, .96 + (pulse - 1) * .55, 1);
+  const observer = scene.onBeforeRenderObservable.add(() => {
+    if (!root || root.isDisposed?.()) {
+      scene.onBeforeRenderObservable.remove(observer);
+      return;
+    }
+    const now = performance.now() * .001;
+    const pulse = 1 + Math.sin(now * 2.4) * .055;
+    portalBack.scaling.set(1 + Math.sin(now * 1.5) * .018, 1 + Math.cos(now * 1.7) * .018, 1);
+    portalCore.rotation.z = now * .36;
+    portalCore.scaling.x = 1 + Math.sin(now * 1.9) * .035;
+    portalCore.scaling.y = 1.24 + Math.cos(now * 1.7) * .035;
     aura.scaling.set(pulse,pulse,pulse);
+    aura.scaling.y = 1.24 * pulse;
+    innerAura.rotation.z = -now * .44;
+    innerAura.scaling.x = .98 + Math.sin(now * 2.1) * .035;
+    innerAura.scaling.y = 1.22 + Math.cos(now * 2.1) * .045;
+    swirls.forEach(s => {
+      s.mesh.rotation.z += s.speed * scene.getEngine().getDeltaTime() * .001;
+      s.mesh.scaling.x = 1 + Math.sin(now * 1.8 + s.speed) * .025;
+      s.mesh.scaling.y = s.baseScaleY + Math.cos(now * 1.6 + s.speed) * .035;
+    });
+    orbiters.forEach(o => {
+      const angle = now * o.speed + o.phase;
+      o.mesh.position.x = Math.cos(angle) * o.radius;
+      o.mesh.position.y = 3.08 + Math.sin(angle) * o.radius * o.yScale;
+      o.mesh.position.z = .24 + Math.sin(angle * 1.7 + o.phase) * .04;
+      const flicker = .72 + Math.sin(now * 5.6 + o.phase) * .28;
+      o.mesh.scaling.set(flicker, flicker, flicker);
+    });
     floorGlow.scaling.set(pulse,pulse,pulse);
-    light.intensity = .72 + Math.sin(performance.now() * .0028) * .16;
+    light.intensity = .78 + Math.sin(now * 2.8) * .18;
   });
+  root.metadata._villageGateObserver = observer;
 
   return root;
 }
@@ -2893,6 +2952,13 @@ function getNearestVillageGateInRange(range = 7.2) {
     }
   });
   return nearest;
+}
+
+function isCharacterInsideVillageGateOpening(gate) {
+  if (!gate || !charMesh) return false;
+  const inverse = gate.getWorldMatrix().clone().invert();
+  const local = BABYLON.Vector3.TransformCoordinates(charMesh.position, inverse);
+  return Math.abs(local.x) <= 1.52 && Math.abs(local.z) <= 1.05 && local.y >= -1.1 && local.y <= 2.2;
 }
 
 function openVillageGateMenu() {
@@ -2932,6 +2998,16 @@ function selectVillageGateDestination(villageId) {
 function tryOpenNearbyVillageGate() {
   if (!walkMode || adminMode) return false;
   if (!getNearestVillageGateInRange()) return false;
+  return openVillageGateMenu();
+}
+
+function tryAutoOpenVillageGateFromWalkthrough() {
+  if (!walkMode || adminMode || isVillageGateMenuOpen()) return false;
+  const now = performance.now();
+  if (now - _lastVillageGateAutoOpenAt < 2600) return false;
+  const gate = getVillageGateRoots().find(candidate => isCharacterInsideVillageGateOpening(candidate));
+  if (!gate) return false;
+  _lastVillageGateAutoOpenAt = now;
   return openVillageGateMenu();
 }
 
@@ -7902,6 +7978,10 @@ function deleteSelectedFence(){
     scene.onBeforeRenderObservable.remove(nodeToDelete.metadata._toroFlickerObserver);
     nodeToDelete.metadata._toroFlickerObserver = null;
   }
+  if (nodeToDelete?.metadata?._villageGateObserver) {
+    scene.onBeforeRenderObservable.remove(nodeToDelete.metadata._villageGateObserver);
+    nodeToDelete.metadata._villageGateObserver = null;
+  }
 
   if (lanternCloneForCleanup && lanternCloneForCleanup.metadata && lanternCloneForCleanup.metadata._lanternGlow) {
     const g = lanternCloneForCleanup.metadata._lanternGlow;
@@ -9222,6 +9302,7 @@ engine.runRenderLoop(()=>{
     walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
   }
   updateInteractionPrompt();
+  tryAutoOpenVillageGateFromWalkthrough();
   if (window._gpuMode === 'webgpu') {
     _webgpuSmartCapFrame++;
     if (_webgpuSmartCapFrame < 360 || _webgpuSmartCapFrame % 180 === 0) {
