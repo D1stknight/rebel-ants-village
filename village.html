@@ -420,9 +420,12 @@ const VILLAGE_REGISTRY = {
   wokou: { villageId:'wokou', displayName:'Wokou Village', route:'village.html?village=wokou', themeColor:'#36a66f', layoutPath:'assets/world-layouts/wokou.json' },
   ashigaru: { villageId:'ashigaru', displayName:'Ashigaru Village', route:'village.html?village=ashigaru', themeColor:'#b5d35a', layoutPath:'assets/world-layouts/ashigaru.json' },
   sohei: { villageId:'sohei', displayName:'Sohei Village', route:'village.html?village=sohei', themeColor:'#f0f0d8', layoutPath:'assets/world-layouts/sohei.json' },
-  yamabushi: { villageId:'yamabushi', displayName:'Yamabushi Village', route:'village.html?village=yamabushi', themeColor:'#b06a3a', layoutPath:'assets/world-layouts/yamabushi.json' }
+  yamabushi: { villageId:'yamabushi', displayName:'Yamabushi Village', route:'village.html?village=yamabushi', themeColor:'#b06a3a', layoutPath:'assets/world-layouts/yamabushi.json' },
+  queens: { villageId:'queens', displayName:'Queen’s Village', route:'village.html?village=queens', themeColor:'#d86adf', layoutPath:'assets/world-layouts/queens.json' },
+  'cute-creepy': { villageId:'cute-creepy', displayName:'Cute & Creepy Village', route:'village.html?village=cute-creepy', themeColor:'#ff83c8', layoutPath:'assets/world-layouts/cute-creepy.json' },
+  'saints-la': { villageId:'saints-la', displayName:'Saints of LA Village', route:'village.html?village=saints-la', themeColor:'#8fd4ff', layoutPath:'assets/world-layouts/saints-la.json' }
 };
-const FACTION_VILLAGES = ['ronin','samurai','bushi','warrior','shogun','buke','kenshi','wokou','ashigaru','sohei','yamabushi'];
+const FACTION_VILLAGES = ['ronin','samurai','bushi','warrior','shogun','buke','kenshi','wokou','ashigaru','sohei','yamabushi','queens','cute-creepy','saints-la'];
 const urlVillageId = new URLSearchParams(window.location.search).get('village') || 'hub';
 const CURRENT_VILLAGE_ID = VILLAGE_REGISTRY[urlVillageId] ? urlVillageId : 'hub';
 const CURRENT_VILLAGE = VILLAGE_REGISTRY[CURRENT_VILLAGE_ID];
@@ -3032,7 +3035,8 @@ function handleVillageGateNumberKey(key) {
     if (FACTION_VILLAGES[index]) selectVillageGateDestination(FACTION_VILLAGES[index]);
   };
 
-  if (_villageGateNumberBuffer === '10' || _villageGateNumberBuffer === '11') {
+  const bufferedNumber = Number(_villageGateNumberBuffer);
+  if (_villageGateNumberBuffer.length >= 2 && bufferedNumber >= 1 && bufferedNumber <= FACTION_VILLAGES.length) {
     pickBuffered();
   } else if (_villageGateNumberBuffer.length >= 2) {
     _villageGateNumberBuffer = '';
