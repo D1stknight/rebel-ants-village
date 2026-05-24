@@ -212,6 +212,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #interactionPrompt{position:fixed;bottom:122px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.7);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:2px;padding:9px 18px;opacity:0;transition:opacity .18s;pointer-events:none;z-index:49;white-space:nowrap}
 #interactionPrompt.on{opacity:1}
+#currentVillageBadge{position:fixed;top:46px;left:50%;transform:translateX(-50%);z-index:20;background:rgba(5,10,28,.88);border:1px solid rgba(94,207,202,.38);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:7px 12px;white-space:nowrap;pointer-events:none}
+#returnHubBtn{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.5);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 14px;cursor:pointer;backdrop-filter:blur(12px)}
+#returnHubBtn.on{display:block}
+#returnHubBtn:hover{background:rgba(232,197,106,.16)}
 #villageGateOverlay{position:fixed;inset:0;background:rgba(2,8,18,.62);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:70;opacity:0;pointer-events:none;transition:opacity .22s}
 #villageGateOverlay.on{opacity:1;pointer-events:all}
 #villageGatePanel{width:min(560px,92vw);max-height:86vh;overflow:auto;background:rgba(5,10,28,.96);border:1px solid rgba(232,197,106,.55);box-shadow:0 0 60px rgba(94,207,202,.12);padding:28px}
@@ -357,6 +361,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <canvas id="c"></canvas>
 <div id="xhair"></div>
 <div id="td"></div>
+<div id="currentVillageBadge">Current Village: Hub Village</div>
+<button id="returnHubBtn" type="button" onclick="returnToHubVillage()">Return to Hub</button>
 <div id="adminBadge">ADMIN MODE</div>
 <div id="gpuBadge" style="display:none;position:fixed;top:8px;left:50%;transform:translateX(-50%);padding:3px 10px;border-radius:4px;font-size:10px;letter-spacing:2px;font-family:'Cinzel Decorative',serif;border:1px solid #555;color:#888;background:rgba(255,255,255,0.08);pointer-events:none;z-index:999">WebGL</div>
 <div id="selectedBadge">SELECTED: NONE</div>
@@ -416,10 +422,19 @@ const WORLD_LAYOUT_STORAGE_KEY = `rebelAntsWorldLayout:${CURRENT_VILLAGE_ID}`;
 window.REBEL_ANTS_VILLAGES = VILLAGE_REGISTRY;
 window.CURRENT_REBEL_ANTS_VILLAGE = CURRENT_VILLAGE;
 document.title = `Rebel Ants — ${CURRENT_VILLAGE.displayName}`;
-document.addEventListener('DOMContentLoaded', () => {
+function returnToHubVillage() {
+  window.location.href = VILLAGE_REGISTRY.hub.route;
+}
+function updateVillageChrome() {
   const logoSub = document.querySelector('#logo span');
   if (logoSub) logoSub.textContent = CURRENT_VILLAGE_ID === 'hub' ? 'The Hub Village' : CURRENT_VILLAGE.displayName;
-});
+  const villageBadge = document.getElementById('currentVillageBadge');
+  if (villageBadge) villageBadge.textContent = `Current Village: ${CURRENT_VILLAGE.displayName}`;
+  const returnBtn = document.getElementById('returnHubBtn');
+  if (returnBtn) returnBtn.classList.toggle('on', CURRENT_VILLAGE_ID !== 'hub');
+}
+window.returnToHubVillage = returnToHubVillage;
+document.addEventListener('DOMContentLoaded', updateVillageChrome);
 // ── ENGINE ───────────────────────────────────
 // Optional WebGPU test mode: /village.html?engine=webgpu
 let engine;
@@ -2545,10 +2560,12 @@ function openVillageGateMenu() {
   const list = document.getElementById('villageGateList');
   if (!overlay || !list) return false;
 
-  list.innerHTML = FACTION_VILLAGES.map((id, index) => {
+  const hubOption = `<button class="village-gate-option" type="button" data-village-id="hub" onclick="selectVillageGateDestination('hub')"><span>Hub</span>Hub Village${CURRENT_VILLAGE_ID === 'hub' ? ' (Current)' : ''}</button>`;
+  const factionOptions = FACTION_VILLAGES.map((id, index) => {
     const village = VILLAGE_REGISTRY[id];
     return `<button class="village-gate-option" type="button" data-village-id="${id}" onclick="selectVillageGateDestination('${id}')"><span>${index + 1}</span>${village.displayName}</button>`;
   }).join('');
+  list.innerHTML = hubOption + factionOptions;
   overlay.classList.add('on');
   overlay.setAttribute('aria-hidden','false');
   return true;
@@ -2565,7 +2582,7 @@ function closeVillageGateMenu() {
 
 function selectVillageGateDestination(villageId) {
   const village = VILLAGE_REGISTRY[villageId];
-  if (!village || villageId === 'hub') return;
+  if (!village) return;
   window.location.href = village.route;
 }
 
@@ -7116,6 +7133,14 @@ function applyObjectTransform(node, data){
 let _worldLayoutSaveChain = Promise.resolve();
 
 function saveWorldLayout(saveToGitHub = true){
+  if (saveToGitHub && CURRENT_VILLAGE_ID !== 'hub') {
+    const confirmed = window.confirm(`You are saving ${CURRENT_VILLAGE.displayName}. This will not overwrite Hub Village.`);
+    if (!confirmed) {
+      showToast('Save cancelled');
+      return Promise.resolve(false);
+    }
+  }
+
   // Only save actually placed objects — skip source roots at 9999 and untyped nodes
   const saveableTransformNodes = scene.transformNodes.filter(n =>
     n.metadata && n.metadata.isClone &&
