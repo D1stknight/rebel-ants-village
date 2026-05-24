@@ -220,6 +220,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #currentVillageBadge{position:fixed;top:46px;left:50%;transform:translateX(-50%);z-index:20;background:rgba(5,10,28,.88);border:1px solid rgba(94,207,202,.38);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:7px 12px;white-space:nowrap;pointer-events:none}
 #weatherDebugBadge{position:fixed;top:108px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.35);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;padding:6px 10px;white-space:nowrap;pointer-events:none}
 #weatherDebugBadge.on{display:block}
+#weatherLightningFlash{position:fixed;inset:0;z-index:18;pointer-events:none;background:rgba(210,235,255,.72);opacity:0;transition:opacity .16s ease-out;mix-blend-mode:screen}
 #returnHubBtn{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.5);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 14px;cursor:pointer;backdrop-filter:blur(12px)}
 #returnHubBtn.on{display:block}
 #returnHubBtn:hover{background:rgba(232,197,106,.16)}
@@ -389,6 +390,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="td"></div>
 <div id="currentVillageBadge">Current Village: Hub Village</div>
 <div id="weatherDebugBadge">Weather: Clear</div>
+<div id="weatherLightningFlash"></div>
 <button id="returnHubBtn" type="button" onclick="returnToHubVillage()">Return to Hub</button>
 <div id="adminBadge">ADMIN MODE</div>
 <div id="gpuBadge" style="display:none;position:fixed;top:8px;left:50%;transform:translateX(-50%);padding:3px 10px;border-radius:4px;font-size:10px;letter-spacing:2px;font-family:'Cinzel Decorative',serif;border:1px solid #555;color:#888;background:rgba(255,255,255,0.08);pointer-events:none;z-index:999">WebGL</div>
@@ -3377,13 +3379,13 @@ function updateSky(){
 
 const WEATHER_MODES = {
   clear: { label:'Clear', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_NONE },
-  'light-rain': { label:'Light Rain', rain:48, speed:0.82, splashes:8, puddles:4, wet:true, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.44,.55,.64), sun:.72, hemi:.86 },
-  'heavy-rain': { label:'Heavy Rain', rain:92, speed:1.08, splashes:14, puddles:6, wet:true, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.008, fogColor:new BABYLON.Color3(.28,.36,.45), sun:.48, hemi:.68 },
-  storm: { label:'Storm', rain:132, speed:1.36, splashes:18, puddles:7, wet:true, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.012, fogColor:new BABYLON.Color3(.12,.16,.22), sun:.22, hemi:.45, lightning:true },
+  'light-rain': { label:'Light Rain', rain:48, speed:0.82, splashes:16, puddles:5, wet:true, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.44,.55,.64), sun:.72, hemi:.86 },
+  'heavy-rain': { label:'Heavy Rain', rain:92, speed:1.08, splashes:30, puddles:7, wet:true, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.008, fogColor:new BABYLON.Color3(.28,.36,.45), sun:.48, hemi:.68 },
+  storm: { label:'Storm', rain:132, speed:1.36, splashes:42, puddles:9, wet:true, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.012, fogColor:new BABYLON.Color3(.12,.16,.22), sun:.22, hemi:.45, lightning:true },
   fog: { label:'Fog', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.022, fogColor:new BABYLON.Color3(.58,.65,.68), sun:.66, hemi:.82 },
   heat: { label:'Heat Haze / Hot Day', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.003, fogColor:new BABYLON.Color3(.86,.66,.42), sun:1.16, hemi:.98, warm:true },
-  cold: { label:'Cold / Frosty Mood', rain:0, speed:0, frost:7, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.009, fogColor:new BABYLON.Color3(.62,.76,.86), sun:.82, hemi:.92, cold:true },
-  snow: { label:'Snow', rain:0, snow:72, snowSpeed:.34, frost:10, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.012, fogColor:new BABYLON.Color3(.72,.84,.92), sun:.74, hemi:1.02, cold:true }
+  cold: { label:'Cold / Frosty Mood', rain:0, speed:0, frost:12, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.009, fogColor:new BABYLON.Color3(.62,.76,.86), sun:.82, hemi:.92, cold:true },
+  snow: { label:'Snow', rain:0, snow:84, snowSpeed:.34, frost:16, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.012, fogColor:new BABYLON.Color3(.72,.84,.92), sun:.74, hemi:1.02, cold:true }
 };
 
 const WeatherManager = {
@@ -3464,13 +3466,13 @@ function ensureWeatherSnowPool(count) {
     WeatherManager.snowMat = new BABYLON.StandardMaterial('weatherSnowMat', scene);
     WeatherManager.snowMat.diffuseColor = new BABYLON.Color3(.92,.98,1);
     WeatherManager.snowMat.emissiveColor = new BABYLON.Color3(.62,.76,.9);
-    WeatherManager.snowMat.alpha = .86;
+    WeatherManager.snowMat.alpha = .9;
     WeatherManager.snowMat.disableLighting = true;
     WeatherManager.snowMat.backFaceCulling = false;
   }
 
   while (WeatherManager.snowMeshes.length < count) {
-    const flake = BABYLON.MeshBuilder.CreatePlane('weatherSnowFlake_' + WeatherManager.snowMeshes.length, { size:.22 }, scene);
+    const flake = BABYLON.MeshBuilder.CreateDisc('weatherSnowFlake_' + WeatherManager.snowMeshes.length, { radius:.16, tessellation:6 }, scene);
     flake.material = WeatherManager.snowMat;
     flake.isPickable = false;
     flake.checkCollisions = false;
@@ -3491,6 +3493,7 @@ function resetWeatherSnowFlake(flake, center) {
   );
   const s = .55 + Math.random() * .9;
   flake.scaling.set(s, s, s);
+  flake.rotation.z = Math.random() * Math.PI;
 }
 
 function ensureWeatherRingPool(poolName, matName, color, emissive, alpha, count, makeMesh) {
@@ -3555,8 +3558,8 @@ function updateWeatherGroundEffects() {
   const center = getWeatherCenter();
   const now = performance.now() * .001;
 
-  ensureWeatherRingPool('splashMeshes', 'splash', new BABYLON.Color3(.55,.86,1), new BABYLON.Color3(.26,.6,.9), .42, cfg.splashes || 0, i => {
-    const ring = BABYLON.MeshBuilder.CreateTorus('weatherSplash_' + i, { diameter:.42, thickness:.012, tessellation:18 }, scene);
+  ensureWeatherRingPool('splashMeshes', 'splash', new BABYLON.Color3(.62,.9,1), new BABYLON.Color3(.32,.72,1), .58, cfg.splashes || 0, i => {
+    const ring = BABYLON.MeshBuilder.CreateTorus('weatherSplash_' + i, { diameter:.55, thickness:.016, tessellation:20 }, scene);
     ring.rotation.x = Math.PI / 2;
     ring.metadata = { phase: Math.random() * 10 };
     return ring;
@@ -3571,14 +3574,13 @@ function updateWeatherGroundEffects() {
       splash.metadata.phase = Math.random() * 10;
     }
     const life = 1 - Math.max(0, (splash.metadata.nextReset - now) / 1.55);
-    const scale = .35 + life * 1.2;
+    const scale = .45 + life * 1.55;
     splash.scaling.set(scale, scale, scale);
-    if (splash.material) splash.material.alpha = .38 * (1 - life);
+    if (splash.material) splash.material.alpha = .5 * (1 - life);
   });
 
-  ensureWeatherRingPool('puddleMeshes', 'puddle', new BABYLON.Color3(.08,.16,.2), new BABYLON.Color3(.05,.13,.17), .28, cfg.puddles || 0, i => {
-    const puddle = BABYLON.MeshBuilder.CreateDisc('weatherPuddle_' + i, { radius:1.0, tessellation:28 }, scene);
-    puddle.rotation.x = Math.PI / 2;
+  ensureWeatherRingPool('puddleMeshes', 'puddle', new BABYLON.Color3(.06,.15,.2), new BABYLON.Color3(.08,.22,.28), .42, cfg.puddles || 0, i => {
+    const puddle = BABYLON.MeshBuilder.CreateCylinder('weatherPuddle_' + i, { diameter:2.0, height:.05, tessellation:32 }, scene);
     puddle.metadata = { phase: Math.random() * 20 };
     return puddle;
   });
@@ -3588,15 +3590,15 @@ function updateWeatherGroundEffects() {
     if (!puddle.metadata._placed || Math.abs(puddle.position.x - center.x) > 44 || Math.abs(puddle.position.z - center.z) > 44) {
       placeWeatherGroundMesh(puddle, center, 30);
       puddle.metadata._placed = true;
-      const sx = .8 + Math.random() * 1.5;
-      const sz = .35 + Math.random() * .8;
-      puddle.scaling.set(sx, sz, 1);
+      const sx = 1.05 + Math.random() * 1.75;
+      const sz = .48 + Math.random() * .95;
+      puddle.scaling.set(sx, 1, sz);
     }
-    if (puddle.material) puddle.material.alpha = .20 + Math.sin(now * 1.8 + puddle.metadata.phase) * .05;
+    if (puddle.material) puddle.material.alpha = .34 + Math.sin(now * 2.2 + puddle.metadata.phase) * .08;
   });
 
-  ensureWeatherRingPool('frostMeshes', 'frost', new BABYLON.Color3(.86,.96,1), new BABYLON.Color3(.45,.62,.76), .22, cfg.frost || 0, i => {
-    const frost = BABYLON.MeshBuilder.CreateDisc('weatherFrost_' + i, { radius:1.0, tessellation:18 }, scene);
+  ensureWeatherRingPool('frostMeshes', 'frost', new BABYLON.Color3(.92,.98,1), new BABYLON.Color3(.58,.82,1), .42, cfg.frost || 0, i => {
+    const frost = BABYLON.MeshBuilder.CreateDisc('weatherFrost_' + i, { radius:1.0, tessellation:9 }, scene);
     frost.rotation.x = Math.PI / 2;
     frost.metadata = { phase: Math.random() * 20 };
     return frost;
@@ -3607,11 +3609,11 @@ function updateWeatherGroundEffects() {
     if (!frost.metadata._placed || Math.abs(frost.position.x - center.x) > 46 || Math.abs(frost.position.z - center.z) > 46) {
       placeWeatherGroundMesh(frost, center, 34);
       frost.metadata._placed = true;
-      const s = .8 + Math.random() * 1.4;
-      frost.scaling.set(s, s * (.45 + Math.random() * .45), 1);
-      frost.rotation.y = Math.random() * Math.PI;
+      const s = 1.0 + Math.random() * 1.9;
+      frost.scaling.set(s, s * (.38 + Math.random() * .55), 1);
+      frost.rotation.z = Math.random() * Math.PI;
     }
-    if (frost.material) frost.material.alpha = .16 + Math.sin(now * 1.2 + frost.metadata.phase) * .03;
+    if (frost.material) frost.material.alpha = .28 + Math.sin(now * 1.2 + frost.metadata.phase) * .06;
   });
 }
 
@@ -3641,6 +3643,9 @@ function updateWeatherRain() {
 
 function applyWeatherLighting() {
   const cfg = WEATHER_MODES[WeatherManager.mode] || WEATHER_MODES.clear;
+  const lightningActive = cfg.lightning && performance.now() < WeatherManager.lightningUntil;
+  const flash = document.getElementById('weatherLightningFlash');
+  if (flash) flash.style.opacity = lightningActive ? '0.78' : '0';
   if (cfg.fog === BABYLON.Scene.FOGMODE_NONE) {
     scene.fogMode = BABYLON.Scene.FOGMODE_NONE;
   } else {
@@ -3663,10 +3668,10 @@ function applyWeatherLighting() {
   } else if (cfg.cold) {
     sun.diffuse.set(.64,.78,1);
     hemi.diffuse.set(.55,.72,1);
-  } else if (cfg.lightning && performance.now() < WeatherManager.lightningUntil) {
+  } else if (lightningActive) {
     sun.diffuse.set(.74,.9,1);
-    sun.intensity = Math.max(sun.intensity, 2.2);
-    hemi.intensity = Math.max(hemi.intensity, 1.0);
+    sun.intensity = Math.max(sun.intensity, 3.4);
+    hemi.intensity = Math.max(hemi.intensity, 1.35);
     scene.clearColor.set(.7,.86,1,1);
   }
 }
@@ -3703,9 +3708,9 @@ function updateWeatherManager() {
   }
 
   if (WeatherManager.mode === 'storm' && now >= WeatherManager.nextLightningAt) {
-    WeatherManager.lightningUntil = now + 150;
+    WeatherManager.lightningUntil = now + 380;
     WeatherManager.thunderCueUntil = now + 2200;
-    WeatherManager.nextLightningAt = now + 6500 + Math.random() * 9000;
+    WeatherManager.nextLightningAt = now + 4200 + Math.random() * 7200;
     // Future audio hook: keep thunder sound disabled for now to avoid surprise autoplay/browser policy issues.
   }
 
