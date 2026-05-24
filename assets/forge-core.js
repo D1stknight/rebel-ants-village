@@ -1316,7 +1316,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           radial-gradient(circle at 77% 82%, rgba(88,255,166,.09), transparent 28%),
           linear-gradient(135deg, rgba(4,16,19,.98), rgba(3,7,12,.985) 58%, rgba(2,12,17,.98));
         border-radius: 8px;
-        padding: 18px 20px 20px;
+        padding: 24px 20px 20px;
         display: grid;
         grid-template-columns: minmax(142px, 178px) minmax(0, 1fr);
         gap: 20px;
@@ -1341,7 +1341,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         content: '◆';
         position: absolute;
         left: 50%;
-        top: -1px;
+        top: 1px;
         transform: translate(-50%, -50%);
         width: 32px;
         height: 20px;
@@ -1352,6 +1352,47 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         line-height: 1;
         text-shadow: 0 0 18px rgba(217,168,76,.62);
         background: #03070c;
+      }
+
+      .forge-3d-build-collapse-toggle {
+        position: absolute;
+        right: 14px;
+        top: 12px;
+        z-index: 3;
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(217,168,76,.5);
+        border-radius: 999px;
+        background: rgba(3,7,12,.94);
+        color: #f3c45f;
+        font-size: 12px;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(0,0,0,.35);
+      }
+
+      .forge-3d-build-row.collapsed .forge-3d-build-collapse-toggle {
+        transform: rotate(-90deg);
+      }
+
+      .forge-3d-build-row.collapsed .forge-3d-build-side-item,
+      .forge-3d-build-row.collapsed .forge-3d-build-layout,
+      .forge-3d-build-row.collapsed .forge-3d-dev-details,
+      .forge-3d-build-row.collapsed .forge-3d-steps-section,
+      .forge-3d-build-row.collapsed .forge-3d-build-actions {
+        display: none;
+      }
+
+      .forge-3d-build-row.collapsed .forge-3d-build-header {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .forge-3d-build-row.collapsed {
+        padding-top: 26px;
+        padding-bottom: 18px;
       }
 
       .forge-3d-build-thumb {
@@ -1392,6 +1433,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         text-transform: uppercase;
         font-weight: 800;
         line-height: 1.45;
+        overflow-wrap: anywhere;
       }
 
       .forge-3d-build-meta {
@@ -1478,6 +1520,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       .forge-3d-build-title-area {
         display: grid;
         gap: 8px;
+        padding-right: 36px;
       }
 
       .forge-3d-build-badges,
@@ -1632,6 +1675,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         line-height: 1.7;
       }
 
+      .forge-3d-dev-details-content .forge-3d-status-links {
+        margin: 7px 0 16px;
+      }
+
       .forge-3d-build-steps {
         display: grid;
         gap: 5px;
@@ -1743,6 +1790,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       }
 
       .forge-3d-build-refresh-btn {
+        position: relative;
+        overflow: hidden;
+        z-index: 0;
         margin-top: 12px;
         padding: 10px 12px;
         border: 1px solid rgba(94,207,202,.28);
@@ -1753,6 +1803,37 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         letter-spacing: 2px;
         text-transform: uppercase;
         cursor: pointer;
+      }
+
+      @keyframes forgeActionWaterFill {
+        0% { transform: translateY(105%); opacity: .86; }
+        46% { transform: translateY(28%); opacity: 1; }
+        100% { transform: translateY(-10%); opacity: .94; }
+      }
+
+      .forge-3d-build-refresh-btn:disabled::before,
+      .forge-3d-preview-btn:disabled::before,
+      .forge-button-loading::before {
+        content: '';
+        position: absolute;
+        inset: -42% -12%;
+        z-index: 0;
+        pointer-events: none;
+        opacity: .72;
+        background:
+          radial-gradient(circle at 20% 24%, rgba(255,255,255,.32), transparent 12%),
+          radial-gradient(circle at 66% 30%, rgba(255,255,255,.22), transparent 10%),
+          linear-gradient(180deg, rgba(94,207,202,.16), rgba(94,207,202,.7) 58%, rgba(25,112,136,.95));
+        animation: forgeActionWaterFill 2.2s ease-in-out infinite;
+      }
+
+      .forge-3d-build-refresh-btn:disabled,
+      .forge-3d-preview-btn:disabled,
+      .forge-button-loading {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        text-shadow: 0 1px 8px rgba(0,0,0,.72);
       }
 
       .forge-active-confirmed {
@@ -2052,6 +2133,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       idleGlbUrl: activeCharacter.idleGlbUrl || null,
       walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
       runningGlbUrl: activeCharacter.runningGlbUrl || null,
+      jumpGlbUrl: activeCharacter.jumpGlbUrl || null,
+      runJumpGlbUrl: activeCharacter.runJumpGlbUrl || null,
+      highKickGlbUrl: activeCharacter.highKickGlbUrl || null,
+      roundhouseKickGlbUrl: activeCharacter.roundhouseKickGlbUrl || null,
       activeForgeCharacter: activeCharacter,
       updatedAt: new Date().toISOString()
     };
@@ -2115,6 +2200,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         idleGlbUrl: activeCharacter.idleGlbUrl || null,
         walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
         runningGlbUrl: activeCharacter.runningGlbUrl || null,
+        jumpGlbUrl: activeCharacter.jumpGlbUrl || null,
+        runJumpGlbUrl: activeCharacter.runJumpGlbUrl || null,
+        highKickGlbUrl: activeCharacter.highKickGlbUrl || null,
+        roundhouseKickGlbUrl: activeCharacter.roundhouseKickGlbUrl || null,
         characterSource: 'forge_glb',
         updatedAt: new Date().toISOString()
       };
@@ -2126,52 +2215,77 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         idleGlbUrl: activeCharacter.idleGlbUrl || null,
         bundleIdle: activeCharacter.characterBundle?.animations?.idle?.glbUrl || null,
         walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
-        runningGlbUrl: activeCharacter.runningGlbUrl || null
+        runningGlbUrl: activeCharacter.runningGlbUrl || null,
+        jumpGlbUrl: activeCharacter.jumpGlbUrl || null,
+        runJumpGlbUrl: activeCharacter.runJumpGlbUrl || null
       });
     } catch(e) {
       console.warn('Could not refresh selectedRebel active Forge character:', e);
     }
   }
 
-  function cacheForgePlayableBuilds(builds) {
-    if (!Array.isArray(builds)) return;
+  function buildForgePlayableActiveCharacterFromBuild(build) {
+    if (!build) return null;
 
-    builds.forEach((build) => {
-      const riggedGlbUrl =
-        build.output?.riggedRebelGlbUrl ||
-        build.output?.riggedGlbUrl ||
-        build.rigging?.riggedRebelGlbUrl ||
-        build.rigging?.riggedGlbUrl ||
-        build.rigging?.response?.result?.rigged_character_glb_url ||
-        null;
-      const staticGlbUrl =
-        build.output?.rebelGlbUrl ||
-        build.output?.glbUrl ||
-        build.engine?.glbUrl ||
-        null;
-      const walkingGlbUrl =
-        build.output?.walkingGlbUrl ||
-        build.output?.storedAnimations?.walking?.storedAnimationUrl ||
-        build.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
-        build.rigging?.response?.result?.basic_animations?.walking_glb_url ||
-        null;
-      const runningGlbUrl =
-        build.output?.runningGlbUrl ||
-        build.output?.storedAnimations?.running?.storedAnimationUrl ||
-        build.rigging?.storedAnimations?.running?.storedAnimationUrl ||
-        build.rigging?.response?.result?.basic_animations?.running_glb_url ||
-        null;
-      const activeGlbUrl = riggedGlbUrl || staticGlbUrl;
-      const idleGlbUrl =
-        build.output?.idleGlbUrl ||
-        build.output?.storedAnimations?.idle?.storedAnimationUrl ||
-        build.rigging?.storedAnimations?.idle?.storedAnimationUrl ||
-        build.output?.meshyAnimations?.idle?.animationGlbUrl ||
-        null;
+    const riggedGlbUrl =
+      build.output?.riggedRebelGlbUrl ||
+      build.output?.riggedGlbUrl ||
+      build.rigging?.riggedRebelGlbUrl ||
+      build.rigging?.riggedGlbUrl ||
+      build.rigging?.response?.result?.rigged_character_glb_url ||
+      null;
+    const staticGlbUrl =
+      build.output?.rebelGlbUrl ||
+      build.output?.glbUrl ||
+      build.engine?.glbUrl ||
+      null;
+    const walkingGlbUrl =
+      build.output?.walkingGlbUrl ||
+      build.output?.storedAnimations?.walking?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.walking?.storedAnimationUrl ||
+      build.rigging?.response?.result?.basic_animations?.walking_glb_url ||
+      null;
+    const runningGlbUrl =
+      build.output?.runningGlbUrl ||
+      build.output?.storedAnimations?.running?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.running?.storedAnimationUrl ||
+      build.rigging?.response?.result?.basic_animations?.running_glb_url ||
+      null;
+    const activeGlbUrl = riggedGlbUrl || staticGlbUrl;
+    const idleGlbUrl =
+      build.output?.idleGlbUrl ||
+      build.output?.storedAnimations?.idle?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.idle?.storedAnimationUrl ||
+      build.output?.meshyAnimations?.idle?.animationGlbUrl ||
+      null;
+    const jumpGlbUrl =
+      build.output?.jumpGlbUrl ||
+      build.output?.storedAnimations?.jump?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.jump?.storedAnimationUrl ||
+      build.output?.meshyAnimations?.jump?.animationGlbUrl ||
+      null;
+    const runJumpGlbUrl =
+      build.output?.runJumpGlbUrl ||
+      build.output?.storedAnimations?.runJump?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.runJump?.storedAnimationUrl ||
+      build.output?.meshyAnimations?.runJump?.animationGlbUrl ||
+      null;
+    const highKickGlbUrl =
+      build.output?.highKickGlbUrl ||
+      build.output?.storedAnimations?.highKick?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.highKick?.storedAnimationUrl ||
+      build.output?.meshyAnimations?.highKick?.animationGlbUrl ||
+      null;
+    const roundhouseKickGlbUrl =
+      build.output?.roundhouseKickGlbUrl ||
+      build.output?.storedAnimations?.roundhouseKick?.storedAnimationUrl ||
+      build.rigging?.storedAnimations?.roundhouseKick?.storedAnimationUrl ||
+      build.output?.meshyAnimations?.roundhouseKick?.animationGlbUrl ||
+      null;
 
-      if (!activeGlbUrl) return;
+    if (!activeGlbUrl) return null;
 
-      saveForgePlayableCharacter({
+    return {
         activeCharacterVersion: 'v1',
         collectionKey: build.collectionKey || 'battle_for_colony',
         tokenId: build.tokenId || null,
@@ -2186,6 +2300,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         idleGlbUrl,
         walkingGlbUrl,
         runningGlbUrl,
+        jumpGlbUrl,
+        runJumpGlbUrl,
+        highKickGlbUrl,
+        roundhouseKickGlbUrl,
         activeCharacterModelType: riggedGlbUrl ? 'rigged_forge_glb' : 'static_forge_glb',
         activeCharacterSource: 'forge_glb',
         characterBundle: {
@@ -2201,7 +2319,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           animations: {
             idle: idleGlbUrl ? { name: 'idle', glbUrl: idleGlbUrl } : null,
             walking: walkingGlbUrl ? { name: 'walking', glbUrl: walkingGlbUrl } : null,
-            running: runningGlbUrl ? { name: 'running', glbUrl: runningGlbUrl } : null
+            running: runningGlbUrl ? { name: 'running', glbUrl: runningGlbUrl } : null,
+            jump: jumpGlbUrl ? { name: 'jump', glbUrl: jumpGlbUrl } : null,
+            runJump: runJumpGlbUrl ? { name: 'runJump', glbUrl: runJumpGlbUrl } : null,
+            highKick: highKickGlbUrl ? { name: 'highKick', glbUrl: highKickGlbUrl } : null,
+            roundhouseKick: roundhouseKickGlbUrl ? { name: 'roundhouseKick', glbUrl: roundhouseKickGlbUrl } : null
           },
           armatureAnimations: {
             idle: null,
@@ -2212,7 +2334,17 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             kick: null
           }
         }
-      }, build);
+      };
+  }
+
+  function cacheForgePlayableBuilds(builds) {
+    if (!Array.isArray(builds)) return;
+
+    builds.forEach((build) => {
+      const activeCharacter = buildForgePlayableActiveCharacterFromBuild(build);
+      if (!activeCharacter) return;
+
+      saveForgePlayableCharacter(activeCharacter, build);
     });
   }
 
@@ -2867,6 +2999,81 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   }
 
+  async function resyncForgePlayableBuild(buildId) {
+    if (!buildId) return;
+
+    const builds = window.lastForge3dBuildListResponse?.builds || [];
+    const build = builds.find((item) => item.buildId === buildId);
+
+    if (!build) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Could not find this saved Forge build to resync.', 'error');
+      }
+      return;
+    }
+
+    const activeCharacter = buildForgePlayableActiveCharacterFromBuild(build);
+
+    if (!activeCharacter?.activeGlbUrl) {
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('This Forge build is not ready to resync yet.', 'error');
+      }
+      return;
+    }
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+
+    const originalButtonText = activeButton ? activeButton.textContent : 'Update Landing Page';
+
+    if (activeButton) {
+      activeButton.textContent = 'Resyncing...';
+      activeButton.disabled = true;
+    }
+
+    try {
+      saveForgePlayableCharacter(activeCharacter, build);
+      updateSelectedRebelActiveForgeCharacter(activeCharacter, build);
+
+      window.lastForgeResyncedPlayableCharacter = activeCharacter;
+
+      console.log('Forge landing character resync report:', {
+        buildId,
+        activeGlbUrl: activeCharacter.activeGlbUrl || null,
+        idleGlbUrl: activeCharacter.idleGlbUrl || null,
+        walkingGlbUrl: activeCharacter.walkingGlbUrl || null,
+        runningGlbUrl: activeCharacter.runningGlbUrl || null,
+        jumpGlbUrl: activeCharacter.jumpGlbUrl || null,
+        runJumpGlbUrl: activeCharacter.runJumpGlbUrl || null,
+        highKickGlbUrl: activeCharacter.highKickGlbUrl || null,
+        roundhouseKickGlbUrl: activeCharacter.roundhouseKickGlbUrl || null,
+        bundleIdle: activeCharacter.characterBundle?.animations?.idle?.glbUrl || null,
+        bundleJump: activeCharacter.characterBundle?.animations?.jump?.glbUrl || null,
+        bundleRunJump: activeCharacter.characterBundle?.animations?.runJump?.glbUrl || null
+      });
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus('Landing playable character resynced with this build.', 'success');
+      }
+
+      await renderForge3dBuildStatusPanel();
+    } catch(e) {
+      console.warn('Could not resync Forge playable build:', e);
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus(`Could not resync this Forge character: ${e.message || 'Unknown error'}`, 'error');
+      }
+
+      if (activeButton) {
+        activeButton.textContent = originalButtonText;
+        activeButton.disabled = false;
+      }
+    }
+  }
+
   async function startMeshyRigTestForBuild(buildId) {
     if (!buildId) return;
 
@@ -3339,6 +3546,279 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
   }
 
+  const FORGE_MESHY_NATIVE_ACTIONS = [
+    { key: 'jump', label: 'Jump Pose Clip', actionId: 86 },
+    { key: 'highKick', label: 'High Kick Pose Clip', actionId: 215 },
+    { key: 'roundhouseKick', label: 'Roundhouse Kick Pose Clip', actionId: 207 },
+    { key: 'runJump', label: 'Run-Jump Pose Clip', actionId: 13 }
+  ];
+
+  function getForgeMeshyAnimationState(build, animationKey) {
+    const task = build?.rigging?.animationTasks?.[animationKey] || null;
+    const storedUrl =
+      build?.output?.[`${animationKey}GlbUrl`] ||
+      build?.output?.storedAnimations?.[animationKey]?.storedAnimationUrl ||
+      build?.rigging?.storedAnimations?.[animationKey]?.storedAnimationUrl ||
+      '';
+    const meshyUrl =
+      build?.output?.meshyAnimations?.[animationKey]?.animationGlbUrl ||
+      task?.response?.result?.animation_glb_url ||
+      task?.response?.animation_glb_url ||
+      '';
+
+    return {
+      task,
+      taskId: task?.taskId || '',
+      status: task?.status || build?.output?.meshyAnimations?.[animationKey]?.status || '',
+      storedUrl,
+      meshyUrl,
+      displayUrl: storedUrl || meshyUrl,
+      isStored: Boolean(storedUrl),
+      isReady: Boolean(storedUrl || meshyUrl)
+    };
+  }
+
+  function getForgeMeshyAnimationActionButtons(build, action) {
+    if (!build?.rigging?.taskId) return '';
+
+    const state = getForgeMeshyAnimationState(build, action.key);
+
+    if (state.isStored) return '';
+
+    if (state.meshyUrl) {
+      return `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeMeshyNativeAnimation('${build.buildId}', '${action.key}')">Store ${action.label}</button>`;
+    }
+
+    if (state.taskId) {
+      return `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.checkForgeMeshyNativeAnimation('${build.buildId}', '${action.key}')">Check ${action.label}</button>`;
+    }
+
+    return `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.generateForgeMeshyNativeAnimation('${build.buildId}', '${action.key}', ${action.actionId})">Generate ${action.label}</button>`;
+  }
+
+  async function runForgeMeshyNativeAnimationRequest({
+    buildId,
+    animationKey,
+    actionId = null,
+    endpoint,
+    loadingText,
+    successText,
+    defaultButtonText
+  }) {
+    if (!buildId || !animationKey || !endpoint) return;
+
+    const activeButton =
+      document.activeElement &&
+      document.activeElement.tagName === 'BUTTON'
+        ? document.activeElement
+        : null;
+    const originalButtonText = activeButton ? activeButton.textContent : defaultButtonText;
+
+    if (activeButton) {
+      activeButton.textContent = loadingText;
+      activeButton.disabled = true;
+      activeButton.classList.add('forge-button-loading');
+    }
+
+    try {
+      const body = { buildId, animationKey };
+      if (actionId !== null && actionId !== undefined) body.actionId = actionId;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch(parseError) {
+        data = {
+          ok: false,
+          error: 'Meshy native animation route did not return JSON',
+          detail: parseError?.message || 'Response JSON parse failed'
+        };
+      }
+
+      console.log('Forge Meshy native animation response:', {
+        endpoint,
+        httpStatus: response.status,
+        ok: response.ok,
+        data
+      });
+
+      window.lastForgeMeshyNativeAnimationResponse = data;
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.detail || data.error || 'Meshy native animation request failed');
+      }
+
+      if (activeButton) {
+        activeButton.textContent = successText;
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        window.setForgeStatus(successText, 'success');
+      }
+
+      if (typeof window.renderForge3dBuildStatusPanel === 'function') {
+        await window.renderForge3dBuildStatusPanel();
+      }
+
+      if (endpoint === '/api/forge-3d-engine-meshy-animation-create') {
+        scheduleForgeMeshyNativeAnimationPoll(
+          buildId,
+          animationKey,
+          30,
+          activeButton,
+          originalButtonText,
+          defaultButtonText
+        );
+        return;
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || defaultButtonText;
+          activeButton.disabled = false;
+          activeButton.classList.remove('forge-button-loading');
+        }
+      }, 2200);
+    } catch(e) {
+      console.warn('Forge Meshy native animation request failed:', e, window.lastForgeMeshyNativeAnimationResponse);
+
+      if (activeButton) {
+        activeButton.textContent = 'Animation Failed';
+      }
+
+      if (typeof window.setForgeStatus === 'function') {
+        const detail =
+          window.lastForgeMeshyNativeAnimationResponse?.detail ||
+          window.lastForgeMeshyNativeAnimationResponse?.meshyError?.message ||
+          e.message ||
+          'Unknown error';
+        window.setForgeStatus(`Could not update Meshy ${animationKey} animation: ${detail}`, 'error');
+      }
+
+      setTimeout(() => {
+        if (activeButton) {
+          activeButton.textContent = originalButtonText || defaultButtonText;
+          activeButton.disabled = false;
+          activeButton.classList.remove('forge-button-loading');
+        }
+      }, 2400);
+    }
+  }
+
+  async function generateForgeMeshyNativeAnimation(buildId, animationKey, actionId) {
+    return runForgeMeshyNativeAnimationRequest({
+      buildId,
+      animationKey,
+      actionId,
+      endpoint: '/api/forge-3d-engine-meshy-animation-create',
+      loadingText: 'Generating...',
+      successText: `${animationKey} generation started ✓`,
+      defaultButtonText: `Generate ${animationKey}`
+    });
+  }
+
+  async function checkForgeMeshyNativeAnimation(buildId, animationKey) {
+    return runForgeMeshyNativeAnimationRequest({
+      buildId,
+      animationKey,
+      endpoint: '/api/forge-3d-engine-meshy-animation-status',
+      loadingText: 'Checking...',
+      successText: `${animationKey} status updated ✓`,
+      defaultButtonText: `Check ${animationKey}`
+    });
+  }
+
+  async function storeForgeMeshyNativeAnimation(buildId, animationKey) {
+    return runForgeMeshyNativeAnimationRequest({
+      buildId,
+      animationKey,
+      endpoint: '/api/forge-3d-store-meshy-animation-glb',
+      loadingText: 'Storing...',
+      successText: `${animationKey} stored ✓`,
+      defaultButtonText: `Store ${animationKey}`
+    });
+  }
+
+  function scheduleForgeMeshyNativeAnimationPoll(
+    buildId,
+    animationKey,
+    attemptsRemaining = 30,
+    activeButton = null,
+    originalButtonText = '',
+    defaultButtonText = ''
+  ) {
+    if (!buildId || !animationKey) return;
+
+    if (attemptsRemaining <= 0) {
+      if (activeButton?.isConnected) {
+        activeButton.textContent = originalButtonText || defaultButtonText || `Check ${animationKey}`;
+        activeButton.disabled = false;
+        activeButton.classList.remove('forge-button-loading');
+      }
+      return;
+    }
+
+    setTimeout(async () => {
+      try {
+        const response = await fetch('/api/forge-3d-engine-meshy-animation-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ buildId, animationKey })
+        });
+        const data = await response.json().catch(() => null);
+
+        console.log('Forge Meshy native animation auto-poll:', {
+          animationKey,
+          attemptsRemaining,
+          httpStatus: response.status,
+          data
+        });
+
+        if (data?.animationGlbUrl) {
+          if (typeof window.setForgeStatus === 'function') {
+            window.setForgeStatus(`${animationKey} animation is ready to store.`, 'success');
+          }
+
+          if (activeButton?.isConnected) {
+            activeButton.textContent = `${animationKey} ready ✓`;
+            activeButton.disabled = false;
+            activeButton.classList.remove('forge-button-loading');
+          }
+
+          if (typeof window.renderForge3dBuildStatusPanel === 'function') {
+            await window.renderForge3dBuildStatusPanel();
+          }
+          return;
+        }
+
+        scheduleForgeMeshyNativeAnimationPoll(
+          buildId,
+          animationKey,
+          attemptsRemaining - 1,
+          activeButton,
+          originalButtonText,
+          defaultButtonText
+        );
+      } catch(e) {
+        console.warn('Forge Meshy native animation auto-poll failed:', animationKey, e);
+        scheduleForgeMeshyNativeAnimationPoll(
+          buildId,
+          animationKey,
+          attemptsRemaining - 1,
+          activeButton,
+          originalButtonText,
+          defaultButtonText
+        );
+      }
+    }, 8000);
+  }
+
    async function renderForge3dBuildStatusPanel() {
     ensure3dBuildStatusStyles();
 
@@ -3424,12 +3904,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const buildComplete = Boolean(glbUrl || rebelGlbUrl || build.engine?.taskId || build.status !== 'queued_for_future_3d_generation');
 
         const openGlbHtml = activeGlbUrl
-          ? `<br><a href="${activeGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open GLB</a>`
+          ? `<br>Source GLB:${renderOpenDownloadLinks(activeGlbUrl, 'GLB')}`
           : '';
 
-        const downloadGlbHtml = activeGlbUrl
-          ? ` · <a href="${activeGlbUrl}" download style="color:#5ecfca;">Download GLB</a>`
-          : '';
+        const downloadGlbHtml = '';
 
         const storeGlbHtml = glbUrl && !isStoredInRebelBlob
           ? `<br><button class="forge-3d-build-refresh-btn" type="button" onclick="window.storeForgeGlbInRebelBlob('${build.buildId}')">Store GLB in Rebel Forge</button>`
@@ -3448,7 +3926,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           : '';
 
                     const riggedGlbHtml = riggedGlbUrl
-          ? `<br><a href="${riggedGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open Rigged GLB</a> · <a href="${riggedGlbUrl}" download style="color:#5ecfca;">Download Rigged GLB</a>`
+          ? `<br>Rigged GLB:${renderOpenDownloadLinks(riggedGlbUrl, 'Rigged GLB')}`
           : '';
 
         const storeRiggedGlbHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
@@ -3468,7 +3946,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const walkingGlbUrl = walkingRebelGlbUrl || walkingMeshyGlbUrl;
 
         const walkingGlbHtml = walkingGlbUrl
-          ? `<br><a href="${walkingGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open Walking GLB</a> · <a href="${walkingGlbUrl}" download style="color:#5ecfca;">Download Walking GLB</a>`
+          ? `<br>Walking GLB:${renderOpenDownloadLinks(walkingGlbUrl, 'Walking GLB')}`
           : '';
 
         const storeWalkingGlbHtml = walkingMeshyGlbUrl && !walkingRebelGlbUrl
@@ -3492,7 +3970,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const runningGlbUrl = runningRebelGlbUrl || runningMeshyGlbUrl;
 
         const runningGlbHtml = runningGlbUrl
-          ? `<br><a href="${runningGlbUrl}" target="_blank" rel="noopener" style="color:#5ecfca;">Open Running GLB</a> · <a href="${runningGlbUrl}" download style="color:#5ecfca;">Download Running GLB</a>`
+          ? `<br>Running GLB:${renderOpenDownloadLinks(runningGlbUrl, 'Running GLB')}`
           : '';
 
         const storeRunningGlbHtml = runningMeshyGlbUrl && !runningRebelGlbUrl
@@ -3537,8 +4015,11 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const previewBuildHtml = activeCharacterGlbUrl
           ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.previewForge3dBuild('${build.buildId}')">Preview This Build</button>`
           : '';
-        const updateActiveCharacterHtml = isActiveBuild && activeCharacterGlbUrl
-          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Update Active Character</button>`
+        const activeCharacterActionHtml = activeCharacterGlbUrl
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">${isActiveBuild ? 'Update Active Character' : 'Set Active Character'}</button>`
+          : '';
+        const resyncLandingCharacterHtml = isSavedForLanding && activeCharacterGlbUrl
+          ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.resyncForgePlayableBuild('${build.buildId}')">Update Landing Page</button>`
           : '';
         const storeBuildActionHtml = riggedMeshyGlbUrl && !isRiggedStoredInRebelBlob
           ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.storeForgeRiggedGlbInRebelBlob('${build.buildId}')">Store GLB</button>`
@@ -3556,8 +4037,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             <span class="forge-3d-pack-pill${idleGlbUrl ? ' ready' : ''}">Idle ${idleGlbUrl ? '✓' : 'Pending'}</span>
             <span class="forge-3d-pack-pill${walkingRebelGlbUrl ? ' ready' : ''}">Walk ${walkingRebelGlbUrl ? '✓' : 'Pending'}</span>
             <span class="forge-3d-pack-pill${runningRebelGlbUrl ? ' ready' : ''}">Run ${runningRebelGlbUrl ? '✓' : 'Pending'}</span>
-            <span class="forge-3d-pack-pill">Jump Later</span>
-            <span class="forge-3d-pack-pill">Kick Later</span>
+            ${FORGE_MESHY_NATIVE_ACTIONS.map((action) => {
+              const state = getForgeMeshyAnimationState(build, action.key);
+              return `<span class="forge-3d-pack-pill${state.isStored ? ' ready' : ''}">${action.label} ${state.isStored ? '✓' : state.taskId ? 'Generating' : 'Pending'}</span>`;
+            }).join('')}
           </div>
         `;
         const sourceLinksHtml = renderOpenDownloadLinks(activeGlbUrl, 'GLB');
@@ -3568,6 +4051,22 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         const idleStoredHtml = idleGlbUrl
           ? '<br>Idle Animation: Rebel Forge Blob ✓'
           : '';
+        const nativeActionStates = FORGE_MESHY_NATIVE_ACTIONS.reduce((acc, action) => {
+          acc[action.key] = getForgeMeshyAnimationState(build, action.key);
+          return acc;
+        }, {});
+        const nativeActionButtonsHtml = FORGE_MESHY_NATIVE_ACTIONS
+          .map((action) => getForgeMeshyAnimationActionButtons(build, action))
+          .filter(Boolean)
+          .join('');
+        const nativeActionAdvancedLinksHtml = FORGE_MESHY_NATIVE_ACTIONS
+          .map((action) => {
+            const state = nativeActionStates[action.key];
+            return state.displayUrl
+              ? `<br>${action.label} GLB: ${renderOpenDownloadLinks(state.displayUrl, `${action.label} GLB`)}`
+              : '';
+          })
+          .join('');
         const mainStatusRowsHtml = [
           renderStatusRow({
             label: 'Storage',
@@ -3596,6 +4095,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             label: 'Running Animation',
             value: runningRebelGlbUrl ? 'Rebel Forge Blob ✓' : runningMeshyGlbUrl ? 'Ready for storage' : 'Pending',
             linksHtml: runningLinksHtml
+          }),
+          ...FORGE_MESHY_NATIVE_ACTIONS.map((action) => {
+            const state = nativeActionStates[action.key];
+            return renderStatusRow({
+              label: action.label,
+              value: state.isStored ? 'Rebel Forge Blob ✓' : state.isReady ? 'Ready for storage' : state.taskId ? 'Generating' : 'Not generated',
+              linksHtml: renderOpenDownloadLinks(state.displayUrl, `${action.label} GLB`)
+            });
           })
         ].join('');
         const stepHtml = renderForgeBuildSteps([
@@ -3639,14 +4146,17 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
             label: 'Playable Character Saved',
             done: isActiveBuild || isSavedForLanding,
             doneHtml: isActiveBuild ? 'Currently Active ✓' : 'Character Ready on Landing ✓',
-            actionHtml: activeCharacterGlbUrl && !isSavedForLanding
-              ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Set Active</button>`
+            actionHtml: activeCharacterGlbUrl
+              ? isSavedForLanding
+                ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.resyncForgePlayableBuild('${build.buildId}')">Update Landing Page</button>`
+                : `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.setForgeBuildAsActiveCharacter('${build.buildId}')">Set Active</button>`
               : ''
           }
         ]);
 
         return `
           <div class="forge-3d-build-row">
+            <button class="forge-3d-build-collapse-toggle" type="button" aria-label="Collapse build card" onclick="this.closest('.forge-3d-build-row')?.classList.toggle('collapsed')">▾</button>
             <div class="forge-3d-build-side">
               ${renderForgeBuildThumbnail(build)}
               <div class="forge-3d-build-side-item">
@@ -3703,6 +4213,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
                 ${idleLinksHtml || ''}
                 ${walkingGlbHtml || ''}
                 ${runningGlbHtml || ''}
+                ${nativeActionAdvancedLinksHtml || ''}
               </div>
             </details>
             <div class="forge-3d-build-section forge-3d-steps-section">
@@ -3713,7 +4224,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
               ${previewBuildHtml}
               ${generateMeshyIdleHtml}
               ${storeMeshyIdleHtml}
-              ${updateActiveCharacterHtml}
+              ${nativeActionButtonsHtml}
+              ${activeCharacterActionHtml}
+              ${resyncLandingCharacterHtml}
               ${deleteBuildHtml}
             </div>
           </div>
@@ -3762,10 +4275,14 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   window.storeForgeRunningGlbInRebelBlob = storeForgeRunningGlbInRebelBlob;
   window.deleteForge3dBuild = deleteForge3dBuild;
   window.setForgeBuildAsActiveCharacter = setForgeBuildAsActiveCharacter;
+  window.resyncForgePlayableBuild = resyncForgePlayableBuild;
   window.startMeshyRigTestForBuild = startMeshyRigTestForBuild;
   window.generateMeshyIdleAnimationTestForBuild = generateMeshyIdleAnimationTestForBuild;
   window.checkMeshyIdleAnimationStatusForBuild = checkMeshyIdleAnimationStatusForBuild;
   window.storeMeshyIdleAnimationGlbInRebelBlob = storeMeshyIdleAnimationGlbInRebelBlob;
+  window.generateForgeMeshyNativeAnimation = generateForgeMeshyNativeAnimation;
+  window.checkForgeMeshyNativeAnimation = checkForgeMeshyNativeAnimation;
+  window.storeForgeMeshyNativeAnimation = storeForgeMeshyNativeAnimation;
 
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(boot3dBuildStatusPanel, 200);
@@ -4351,9 +4868,10 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     const controls = previewState.controls;
     const verticalDistance = frameHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)));
     const horizontalDistance = verticalDistance / Math.max(camera.aspect, 0.001);
-    const distance = Math.max(verticalDistance, horizontalDistance, radius * 2.1, 5.5) * 1.8;
+    const distance = Math.max(verticalDistance, horizontalDistance, radius * 2.1, 4.8) * 1.35;
 
-    camera.position.set(target.x, target.y + frameHeight * 0.08, target.z + distance);
+    target.y += frameHeight * 0.06;
+    camera.position.set(target.x, target.y + frameHeight * 0.03, target.z + distance);
     camera.near = Math.max(distance / 100, 0.001);
     camera.far = Math.max(distance + radius * 24, distance * 5);
     camera.updateProjectionMatrix();

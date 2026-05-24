@@ -92,9 +92,10 @@ body{
 #forge-image{
   width:100%;
   aspect-ratio:1/1;
-  object-fit:cover;
+  object-fit:contain;
+  object-position:center;
   border:1px solid rgba(200,146,42,.18);
-  background:rgba(0,0,0,.2);
+  background:var(--forge-image-bg, rgba(0,0,0,.2));
 }
 #forge-name{
   font-family:'Cinzel Decorative',serif;
@@ -283,7 +284,7 @@ body{
 
   <section id="forge-layout">
     <div class="forge-card" id="forge-preview">
-      <img id="forge-image" src="assets/lobby/ant_1.JPG" alt="Selected Rebel">
+      <img id="forge-image" src="assets/lobby/ant_1.JPG" alt="Selected Rebel" crossorigin="anonymous">
       <div id="forge-name">Rebel #001</div>
       <div id="forge-sub">Selected Rebel</div>
 
@@ -513,9 +514,43 @@ function getSelectedRebel() {
     };
   }
 }
+
+function matchForgeImageBackground(image) {
+  if (!image || !image.complete || !image.naturalWidth || !image.naturalHeight) return;
+
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 8;
+    canvas.height = 8;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const samplePoints = [
+      [0, 0],
+      [7, 0],
+      [0, 7],
+      [7, 7]
+    ];
+    const totals = samplePoints.reduce((acc, point) => {
+      const pixel = context.getImageData(point[0], point[1], 1, 1).data;
+      acc.r += pixel[0];
+      acc.g += pixel[1];
+      acc.b += pixel[2];
+      return acc;
+    }, { r: 0, g: 0, b: 0 });
+    const count = samplePoints.length;
+    image.style.setProperty('--forge-image-bg', `rgb(${Math.round(totals.r / count)}, ${Math.round(totals.g / count)}, ${Math.round(totals.b / count)})`);
+  } catch(e) {
+    image.style.setProperty('--forge-image-bg', 'rgba(0,0,0,.2)');
+  }
+}
   
 function hydrateForgeScreen(rebel, generationInput) {
-  document.getElementById('forge-image').src = rebel.image || 'assets/lobby/ant_1.JPG';
+  const forgeImage = document.getElementById('forge-image');
+  if (forgeImage) {
+    forgeImage.onload = () => matchForgeImageBackground(forgeImage);
+    forgeImage.src = rebel.image || 'assets/lobby/ant_1.JPG';
+  }
   document.getElementById('forge-name').textContent = rebel.name || 'Rebel #001';
   document.getElementById('detail-collection').textContent = rebel.collectionKey || 'battle_for_colony';
   document.getElementById('detail-token').textContent = rebel.tokenId || '—';
@@ -1520,10 +1555,34 @@ function setForgeGeneratingButton(button, isLoading) {
         100% { opacity: .55; transform: scale(1); }
       }
 
-           .forge-button-loading {
+      @keyframes forgeButtonWaterFill {
+        0% { transform: translateY(105%); opacity: .9; }
+        45% { transform: translateY(30%); opacity: 1; }
+        100% { transform: translateY(-8%); opacity: .96; }
+      }
+
+      .forge-button-loading {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
         animation: forgeButtonPulse 1s ease-in-out infinite;
         pointer-events: none;
         filter: brightness(1.15);
+        text-shadow: 0 1px 8px rgba(0,0,0,.72);
+      }
+
+      .forge-button-loading::before {
+        content: '';
+        position: absolute;
+        inset: -40% -12%;
+        z-index: 0;
+        pointer-events: none;
+        opacity: .72;
+        background:
+          radial-gradient(circle at 22% 22%, rgba(255,255,255,.35), transparent 12%),
+          radial-gradient(circle at 70% 28%, rgba(255,255,255,.24), transparent 10%),
+          linear-gradient(180deg, rgba(94,207,202,.18), rgba(94,207,202,.72) 58%, rgba(39,134,156,.95));
+        animation: forgeButtonWaterFill 2.2s ease-in-out infinite;
       }
 
       .forge-busy-disabled,
