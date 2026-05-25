@@ -678,13 +678,42 @@ const NPC_DIALOGUES = {
   ]
 };
 const QUEST_DEFINITIONS = {
+  'village-gate': {
+    questId:'village-gate',
+    title:'The Village Gate',
+    steps:[
+      { id:'talk', objective:'Speak with a Hub guide about the Village Gate.' },
+      { id:'open-gate', objective:'Walk to the Village Gate and press O to open it.' },
+      { id:'travel-ronin', objective:'Use the Village Gate to travel to Ronin Village.' },
+      { id:'return-hub', objective:'Return to Hub Village through the Village Gate.' },
+      { id:'complete', objective:'Completed: You learned how the Village Gate connects colonies.' }
+    ]
+  },
   'first-warning': {
     questId:'first-warning',
     title:'The First Warning',
     steps:[
-      { id:'start', objective:'Speak with the Ashigaru villager in Hub Village.' },
+      { id:'talk', objective:'Speak with an Ashigaru guide about the first warning.' },
       { id:'ronin', objective:'Travel to Ronin Village and speak with the Ronin watcher.' },
       { id:'complete', objective:'Completed: The warning has reached the Ronin.' }
+    ]
+  },
+  'hidden-chest': {
+    questId:'hidden-chest',
+    title:'The Hidden Chest',
+    steps:[
+      { id:'talk', objective:'Speak with a Hub guide about hidden supplies.' },
+      { id:'open-chest', objective:'Find a treasure chest and press O to open it.' },
+      { id:'complete', objective:'Completed: You opened a hidden village chest.' }
+    ]
+  },
+  'dojo-path': {
+    questId:'dojo-path',
+    title:'The Dojo Path',
+    steps:[
+      { id:'talk', objective:'Speak with a Hub guide about the dojo path.' },
+      { id:'reach-dojo', objective:'Reach the dojo or training entrance.' },
+      { id:'complete', objective:'Completed: You found where training begins.' }
     ]
   }
 };
@@ -2837,6 +2866,9 @@ function openTreasureChest(chest) {
 
   // Reward payout intentionally stubbed for future $REBEL/economy API integration.
   playInteractionAudio('chestOpen');
+  if (QuestState.questId === 'hidden-chest' && QuestState.step === 'open-chest') {
+    completeTutorialQuest('hidden-chest');
+  }
   triggerAutoSave();
   showToast('Chest opened — reward system coming soon');
   return true;
@@ -3267,6 +3299,9 @@ function openVillageGateMenu() {
   overlay.classList.add('on');
   overlay.setAttribute('aria-hidden','false');
   playInteractionAudio('portalOpen');
+  if (QuestState.questId === 'village-gate' && QuestState.step === 'open-gate') {
+    setTutorialQuestStep('village-gate', 'travel-ronin');
+  }
   return true;
 }
 
@@ -3283,6 +3318,11 @@ function selectVillageGateDestination(villageId) {
   const village = VILLAGE_REGISTRY[villageId];
   if (!village) return;
   if (villageId === CURRENT_VILLAGE_ID) return;
+  if (QuestState.questId === 'village-gate' && QuestState.step === 'travel-ronin' && CURRENT_VILLAGE_ID === 'hub' && villageId === 'ronin') {
+    setTutorialQuestStep('village-gate', 'return-hub');
+  } else if (QuestState.questId === 'village-gate' && QuestState.step === 'return-hub' && CURRENT_VILLAGE_ID !== 'hub' && villageId === 'hub') {
+    localStorage.setItem(QUEST_RETURN_HUB_KEY, '1');
+  }
   playInteractionAudio('portalTravel');
   fadeOutVillageMusicForTravel();
   const fade = document.getElementById('villageTravelFade');
@@ -4754,19 +4794,22 @@ window.addEventListener('keydown', unlockVillageMusic, { once:true });
 setInterval(updateSky,30000);
 
 // ── NPC POPULATION V1 ─────────────────────────
-const QUEST_STATE_KEY = 'rebelAntsQuestState:first-warning';
+const QUEST_STATE_KEY = 'rebelAntsTutorialQuestChain:v1';
+const QUEST_RETURN_HUB_KEY = 'rebelAntsTutorialQuestChain:pendingHubReturn';
+const QUEST_ORDER = ['village-gate', 'first-warning', 'hidden-chest', 'dojo-path'];
 let activeNPCDialogue = null;
 let QuestState = loadQuestState();
 
 function loadQuestState() {
   try {
-    return JSON.parse(localStorage.getItem(QUEST_STATE_KEY)) || { questId:null, step:'start', completed:false };
+    return JSON.parse(localStorage.getItem(QUEST_STATE_KEY)) || { questId:'village-gate', step:'talk', completed:false, completedQuestIds:[] };
   } catch (_) {
-    return { questId:null, step:'start', completed:false };
+    return { questId:'village-gate', step:'talk', completed:false, completedQuestIds:[] };
   }
 }
 
 function saveQuestState() {
+  if (!Array.isArray(QuestState.completedQuestIds)) QuestState.completedQuestIds = [];
   localStorage.setItem(QUEST_STATE_KEY, JSON.stringify(QuestState));
   updateQuestTracker();
 }
@@ -4776,23 +4819,45 @@ function getQuestStep(questId, stepId) {
   return (quest?.steps || []).find(step => step.id === stepId) || null;
 }
 
-function startFirstWarningQuest() {
-  if (QuestState.questId === 'first-warning' && QuestState.completed) return;
-  if (QuestState.questId === 'first-warning' && QuestState.step === 'ronin') return;
-  QuestState = { questId:'first-warning', step:'ronin', completed:false };
+function setTutorialQuestStep(questId, step, toast = null) {
+  QuestState = {
+    ...QuestState,
+    questId,
+    step,
+    completed: step === 'complete',
+    completedQuestIds: Array.isArray(QuestState.completedQuestIds) ? QuestState.completedQuestIds : []
+  };
   saveQuestState();
-  showToast('Quest started: The First Warning');
+  if (toast) showToast(toast);
 }
 
-function completeFirstWarningQuest() {
-  if (QuestState.questId !== 'first-warning' || QuestState.completed) {
-    QuestState = { questId:'first-warning', step:'complete', completed:true };
-  } else {
-    QuestState.step = 'complete';
-    QuestState.completed = true;
+function completeTutorialQuest(questId) {
+  const completed = new Set(Array.isArray(QuestState.completedQuestIds) ? QuestState.completedQuestIds : []);
+  completed.add(questId);
+  const nextQuestId = QUEST_ORDER[QUEST_ORDER.indexOf(questId) + 1] || null;
+  if (nextQuestId) {
+    QuestState = { questId: nextQuestId, step:'talk', completed:false, completedQuestIds:[...completed] };
+    saveQuestState();
+    showToast(`Quest complete: ${QUEST_DEFINITIONS[questId]?.title || 'Quest'}`);
+    return;
   }
+  QuestState = { questId, step:'complete', completed:true, completedQuestIds:[...completed] };
   saveQuestState();
-  showToast('Quest complete: The First Warning');
+  showToast(`Quest complete: ${QUEST_DEFINITIONS[questId]?.title || 'Quest'}`);
+}
+
+function reconcileTutorialQuestOnLoad() {
+  if (CURRENT_VILLAGE_ID === 'hub' && localStorage.getItem(QUEST_RETURN_HUB_KEY) === '1') {
+    localStorage.removeItem(QUEST_RETURN_HUB_KEY);
+    if (QuestState.questId === 'village-gate' && QuestState.step === 'return-hub') {
+      completeTutorialQuest('village-gate');
+    }
+  }
+}
+
+function shouldHubNPCAdvanceTutorial(npc) {
+  if (!npc?.metadata || npc.metadata.villageId !== 'hub' || npc.metadata.factionId !== 'ashigaru') return false;
+  return ['village-gate', 'first-warning', 'hidden-chest', 'dojo-path'].includes(QuestState.questId);
 }
 
 function updateQuestTracker() {
@@ -4807,8 +4872,29 @@ function updateQuestTracker() {
   const quest = QUEST_DEFINITIONS[QuestState.questId];
   const step = getQuestStep(QuestState.questId, QuestState.step);
   title.textContent = QuestState.completed ? 'Completed Quest' : 'Active Quest';
-  objective.textContent = `${quest?.title || 'Quest'}: ${step?.objective || 'Continue the warning.'}`;
+  objective.textContent = `${quest?.title || 'Quest'}: ${step?.objective || 'Continue the tutorial path.'}`;
   tracker.classList.add('on');
+}
+
+function isNearDojoTutorialArea() {
+  if (!charMesh || CURRENT_VILLAGE_ID !== 'hub') return false;
+  const dojoTypes = new Set(['dojo', 'dojo_5', 'dojo_6', 'dojo_7', 'dojo_9']);
+  const candidates = scene.transformNodes.filter(node => {
+    const type = node.metadata?.type || '';
+    return dojoTypes.has(type) || String(node.name || '').toLowerCase().includes('dojo');
+  });
+  return candidates.some(node => {
+    if (!node.position || Math.abs(node.position.x) > 500 || Math.abs(node.position.z) > 500) return false;
+    const dx = node.position.x - charMesh.position.x;
+    const dz = node.position.z - charMesh.position.z;
+    return dx * dx + dz * dz <= 18 * 18;
+  });
+}
+
+function updateTutorialQuestWorldProgress() {
+  if (QuestState.questId === 'dojo-path' && QuestState.step === 'reach-dojo' && isNearDojoTutorialArea()) {
+    completeTutorialQuest('dojo-path');
+  }
 }
 
 const NPCManager = {
@@ -5261,12 +5347,71 @@ function getNearestNPCInRange(range = 4.8) {
 }
 
 function handleNPCQuestEvent(npc, finishedDialogue = false) {
-  if (!finishedDialogue || npc?.metadata?.questId !== 'first-warning') return;
-  if (npc.metadata.villageId === 'hub' && npc.metadata.factionId === 'ashigaru') {
-    startFirstWarningQuest();
-  } else if (npc.metadata.villageId === 'ronin' && QuestState.questId === 'first-warning' && QuestState.step === 'ronin') {
-    completeFirstWarningQuest();
+  if (!finishedDialogue || !npc?.metadata) return;
+  const meta = npc.metadata;
+  if (QuestState.questId === 'village-gate' && QuestState.step === 'talk' && shouldHubNPCAdvanceTutorial(npc)) {
+    setTutorialQuestStep('village-gate', 'open-gate', 'Quest started: The Village Gate');
+    return;
   }
+  if (QuestState.questId === 'first-warning' && QuestState.step === 'talk' && shouldHubNPCAdvanceTutorial(npc)) {
+    setTutorialQuestStep('first-warning', 'ronin', 'Quest started: The First Warning');
+    return;
+  }
+  if (
+    QuestState.questId === 'first-warning' &&
+    QuestState.step === 'ronin' &&
+    meta.villageId === 'ronin' &&
+    (meta.factionId === 'ronin' || meta.questId === 'first-warning')
+  ) {
+    completeTutorialQuest('first-warning');
+    return;
+  }
+  if (QuestState.questId === 'hidden-chest' && QuestState.step === 'talk' && shouldHubNPCAdvanceTutorial(npc)) {
+    setTutorialQuestStep('hidden-chest', 'open-chest', 'Quest started: The Hidden Chest');
+    return;
+  }
+  if (QuestState.questId === 'dojo-path' && QuestState.step === 'talk' && shouldHubNPCAdvanceTutorial(npc)) {
+    setTutorialQuestStep('dojo-path', 'reach-dojo', 'Quest started: The Dojo Path');
+  }
+}
+
+function getTutorialDialogueLines(npc) {
+  const meta = npc?.metadata || {};
+  if (meta.villageId === 'hub' && meta.factionId === 'ashigaru') {
+    if (QuestState.questId === 'village-gate' && QuestState.step === 'talk') {
+      return [
+        'The Village Gate is older than most of our maps. It connects the colonies when the paths above ground are no longer safe.',
+        'Walk to the gate, press O, and choose Ronin Village. Then return here so we know the route is open.'
+      ];
+    }
+    if (QuestState.questId === 'first-warning' && QuestState.step === 'talk') {
+      return [
+        'The tunnels have started breathing again. The old roots remember things we tried to forget.',
+        'Red dust is gathering in the cracks, and two scouts heard something moving beneath the floor of the world.',
+        'Find the Ronin watcher. If anyone understands buried truths, it is the exile at the edge of the colony.'
+      ];
+    }
+    if (QuestState.questId === 'hidden-chest' && QuestState.step === 'talk') {
+      return [
+        'Not every supply is stored in plain sight. Some were hidden before the tremors started.',
+        'Find a chest near the village and press O to open it. No reward is owed yet, but the habit may save you later.'
+      ];
+    }
+    if (QuestState.questId === 'dojo-path' && QuestState.step === 'talk') {
+      return [
+        'The dojo paths are quiet now, but they will prepare ants for what is waking below the roots.',
+        'Reach the dojo entrance. Remember the way before the cracks make the ground unfamiliar.'
+      ];
+    }
+  }
+  if (meta.villageId === 'ronin' && QuestState.questId === 'first-warning' && QuestState.step === 'ronin') {
+    return [
+      'You came from the Hub with dust on your feet.',
+      'The truth was not buried. It was waiting.',
+      'Tell them the Ronin heard the warning before the roots finished whispering.'
+    ];
+  }
+  return null;
 }
 
 function openNPCDialogue(npc) {
@@ -5277,7 +5422,7 @@ function openNPCDialogue(npc) {
     .split(/\n+/)
     .map(line => line.trim())
     .filter(Boolean);
-  const lines = customLines.length ? customLines : (NPC_DIALOGUES[npc.metadata.dialogueId] || NPC_DIALOGUES.default);
+  const lines = customLines.length ? customLines : (getTutorialDialogueLines(npc) || NPC_DIALOGUES[npc.metadata.dialogueId] || NPC_DIALOGUES.default);
   activeNPCDialogue = { npc, lines, index:0 };
   npc.metadata.dialogueOpen = true;
   renderNPCDialogue();
@@ -11363,6 +11508,7 @@ function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
 
 // ── RENDER LOOP ──────────────────────────────
 initNPCPopulation();
+reconcileTutorialQuestOnLoad();
 updateQuestTracker();
 let t=0;
 engine.runRenderLoop(()=>{
@@ -11425,6 +11571,7 @@ engine.runRenderLoop(()=>{
   }
   updateFootstepAudio();
   updateInteractionPrompt();
+  updateTutorialQuestWorldProgress();
   tryAutoOpenVillageGateFromWalkthrough();
   updateWeatherManager();
   updateNPCPopulation(dt);
