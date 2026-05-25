@@ -246,6 +246,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #weatherDebugBadge{position:fixed;top:108px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.35);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;padding:6px 10px;white-space:nowrap;pointer-events:none}
 #weatherDebugBadge.on{display:block}
 #weatherLightningFlash{position:fixed;inset:0;z-index:18;pointer-events:none;background:rgba(210,235,255,.72);opacity:0;transition:opacity .16s ease-out;mix-blend-mode:screen}
+#weatherHeatHaze{position:fixed;inset:-8%;z-index:17;pointer-events:none;opacity:0;transition:opacity .8s;background:repeating-linear-gradient(90deg,rgba(255,220,150,.035) 0 10px,rgba(255,255,255,0) 10px 26px);filter:blur(10px);mix-blend-mode:screen;animation:weatherHeatDrift 7s ease-in-out infinite alternate}
+@keyframes weatherHeatDrift{from{transform:translate3d(-10px,4px,0) skewX(-1deg)}to{transform:translate3d(12px,-4px,0) skewX(1deg)}}
 #returnHubBtn{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.5);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 14px;cursor:pointer;backdrop-filter:blur(12px)}
 #returnHubBtn.on{display:block}
 #returnHubBtn:hover{background:rgba(232,197,106,.16)}
@@ -400,6 +402,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <option value="test">Test</option>
     </select>
   </div>
+  <div style="padding:0 8px 6px">
+    <button class="ctrl-btn full" id="weatherAudioBtn" onclick="toggleWeatherAudio()" style="width:100%">Enable Weather Sound</button>
+  </div>
   <hr class="ap-divider">
   <div style="padding:0 8px 6px">
     <button class="ctrl-btn full" id="worklightBtn" onclick="toggleWorklight()" style="grid-column:1/-1;width:100%">&#x2600; Worklight (W)<kbd>W</kbd></button>
@@ -428,6 +433,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="currentVillageBadge">Current Village: Hub Village</div>
 <div id="weatherDebugBadge">Weather: Clear</div>
 <div id="weatherLightningFlash"></div>
+<div id="weatherHeatHaze"></div>
 <button id="returnHubBtn" type="button" onclick="returnToHubVillage()">Return to Hub</button>
 <div id="adminBadge">ADMIN MODE</div>
 <div id="gpuBadge" style="display:none;position:fixed;top:8px;left:50%;transform:translateX(-50%);padding:3px 10px;border-radius:4px;font-size:10px;letter-spacing:2px;font-family:'Cinzel Decorative',serif;border:1px solid #555;color:#888;background:rgba(255,255,255,0.08);pointer-events:none;z-index:999">WebGL</div>
@@ -3422,13 +3428,13 @@ function updateSky(){
 
 const WEATHER_MODES = {
   clear: { label:'Clear', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_NONE },
-  'light-rain': { label:'Light Rain', rain:48, speed:0.82, splashes:16, puddles:5, wet:true, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.44,.55,.64), sun:.72, hemi:.86 },
-  'heavy-rain': { label:'Heavy Rain', rain:92, speed:1.08, splashes:30, puddles:7, wet:true, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.008, fogColor:new BABYLON.Color3(.28,.36,.45), sun:.48, hemi:.68 },
-  storm: { label:'Storm', rain:132, speed:1.36, splashes:42, puddles:9, wet:true, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.012, fogColor:new BABYLON.Color3(.12,.16,.22), sun:.22, hemi:.45, lightning:true },
-  fog: { label:'Fog', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.022, fogColor:new BABYLON.Color3(.58,.65,.68), sun:.66, hemi:.82 },
-  heat: { label:'Heat Haze / Hot Day', rain:0, speed:0, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.003, fogColor:new BABYLON.Color3(.86,.66,.42), sun:1.16, hemi:.98, warm:true },
-  cold: { label:'Cold / Frosty Mood', rain:0, speed:0, frost:12, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.009, fogColor:new BABYLON.Color3(.62,.76,.86), sun:.82, hemi:.92, cold:true },
-  snow: { label:'Snow', rain:0, snow:84, snowSpeed:.34, frost:16, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.012, fogColor:new BABYLON.Color3(.72,.84,.92), sun:.74, hemi:1.02, cold:true }
+  'light-rain': { label:'Light Rain', rain:48, speed:0.82, splashes:16, puddles:5, wet:true, wind:.22, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.44,.55,.64), sun:.72, hemi:.86 },
+  'heavy-rain': { label:'Heavy Rain', rain:92, speed:1.08, splashes:30, puddles:7, wet:true, wind:.48, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.008, fogColor:new BABYLON.Color3(.28,.36,.45), sun:.48, hemi:.68 },
+  storm: { label:'Storm', rain:132, speed:1.36, splashes:42, puddles:9, wet:true, wind:.9, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.014, fogColor:new BABYLON.Color3(.09,.12,.18), sun:.16, hemi:.36, lightning:true },
+  fog: { label:'Fog', rain:0, speed:0, wind:.12, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.025, fogColor:new BABYLON.Color3(.5,.58,.62), sun:.58, hemi:.76 },
+  heat: { label:'Heat Haze / Hot Day', rain:0, speed:0, wind:.1, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.004, fogColor:new BABYLON.Color3(.9,.66,.38), sun:1.2, hemi:1.02, warm:true },
+  cold: { label:'Cold / Frosty Mood', rain:0, speed:0, wind:.18, frost:12, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.01, fogColor:new BABYLON.Color3(.62,.76,.86), sun:.78, hemi:.9, cold:true },
+  snow: { label:'Snow', rain:0, snow:84, snowSpeed:.34, wind:.16, frost:16, fog:BABYLON.Scene.FOGMODE_EXP2, fogDensity:0.013, fogColor:new BABYLON.Color3(.72,.84,.92), sun:.72, hemi:1.02, cold:true }
 };
 
 const WEATHER_ICONS = {
@@ -3448,6 +3454,18 @@ const WEATHER_CYCLE_SPEEDS = {
   fast: 90000,
   test: 20000
 };
+
+const WEATHER_AUDIO_TRACKS = {
+  'light-rain': [{ id:'rain-light', path:'/assets/audio/weather/rain-light.mp3', volume:.34 }],
+  'heavy-rain': [{ id:'rain-heavy', path:'/assets/audio/weather/rain-heavy.mp3', volume:.46 }, { id:'wind', path:'/assets/audio/weather/wind.mp3', volume:.16 }],
+  storm: [{ id:'storm', path:'/assets/audio/weather/storm.mp3', volume:.5 }, { id:'wind', path:'/assets/audio/weather/wind.mp3', volume:.28 }],
+  fog: [{ id:'wind', path:'/assets/audio/weather/wind.mp3', volume:.12 }],
+  heat: [{ id:'wind', path:'/assets/audio/weather/wind.mp3', volume:.08 }],
+  cold: [{ id:'snow-wind', path:'/assets/audio/weather/snow-wind.mp3', volume:.18 }],
+  snow: [{ id:'snow-wind', path:'/assets/audio/weather/snow-wind.mp3', volume:.25 }]
+};
+
+const WEATHER_THUNDER_AUDIO = '/assets/audio/weather/thunder-1.mp3';
 
 const WeatherManager = {
   mode: 'clear',
@@ -3471,6 +3489,13 @@ const WeatherManager = {
   splashMat: null,
   puddleMat: null,
   frostMat: null,
+  distantLightningRoot: null,
+  distantLightningUntil: 0,
+  distantLightningStrikeAt: performance.now() + 12000,
+  audioEnabled: false,
+  audioTracks: {},
+  thunderAudio: null,
+  _thunderPlayedForStrike: 0,
   baseSunIntensity: sun.intensity,
   baseHemiIntensity: hemi.intensity,
   baseSunDiffuse: sun.diffuse.clone(),
@@ -3532,7 +3557,7 @@ function getWeatherVisualConfig() {
   const from = WEATHER_MODES[WeatherManager.transitionFrom] || target;
   const t = getWeatherTransitionProgress();
   const cfg = { ...target };
-  ['rain','snow','splashes','puddles','frost','sun','hemi','fogDensity'].forEach(key => {
+  ['rain','snow','splashes','puddles','frost','sun','hemi','fogDensity','wind'].forEach(key => {
     if (from[key] !== undefined || target[key] !== undefined) cfg[key] = lerpWeatherNumber(from[key], target[key], t);
   });
   cfg.speed = t < 1 ? (target.speed || from.speed || 0) : (target.speed || 0);
@@ -3546,6 +3571,166 @@ function getWeatherVisualConfig() {
   cfg.warm = target.warm || (from.warm && t < 0.65);
   cfg.lightning = target.lightning;
   return cfg;
+}
+
+function getWeatherAudioTrack(id, path) {
+  if (!WeatherManager.audioTracks[id]) {
+    const audio = new Audio(path);
+    audio.loop = true;
+    audio.preload = 'none';
+    audio.volume = 0;
+    audio._targetVolume = 0;
+    audio._unavailable = false;
+    audio.onerror = () => { audio._unavailable = true; audio._targetVolume = 0; };
+    WeatherManager.audioTracks[id] = audio;
+  }
+  return WeatherManager.audioTracks[id];
+}
+
+function getWeatherAudioTargets() {
+  const targets = {};
+  if (!WeatherManager.audioEnabled) return targets;
+  (WEATHER_AUDIO_TRACKS[WeatherManager.mode] || []).forEach(track => {
+    targets[track.id] = Math.max(targets[track.id] || 0, track.volume || .2);
+    getWeatherAudioTrack(track.id, track.path);
+  });
+  return targets;
+}
+
+function updateWeatherAudio() {
+  const targets = getWeatherAudioTargets();
+  Object.entries(WeatherManager.audioTracks).forEach(([id, audio]) => {
+    if (!audio || audio._unavailable) return;
+    audio._targetVolume = targets[id] || 0;
+    audio.volume += (audio._targetVolume - audio.volume) * .045;
+    if (audio._targetVolume > .01 && audio.paused) {
+      audio.play().catch(() => { audio._unavailable = true; });
+    } else if (audio._targetVolume <= .01 && audio.volume < .015 && !audio.paused) {
+      audio.pause();
+    }
+  });
+}
+
+function playWeatherThunderAudio(strikeId) {
+  if (!WeatherManager.audioEnabled || WeatherManager._thunderPlayedForStrike === strikeId) return;
+  WeatherManager._thunderPlayedForStrike = strikeId;
+  if (!WeatherManager.thunderAudio) {
+    const audio = new Audio(WEATHER_THUNDER_AUDIO);
+    audio.preload = 'none';
+    audio.volume = .5;
+    audio.onerror = () => { audio._unavailable = true; };
+    WeatherManager.thunderAudio = audio;
+  }
+  if (WeatherManager.thunderAudio._unavailable) return;
+  WeatherManager.thunderAudio.currentTime = 0;
+  WeatherManager.thunderAudio.play().catch(() => { WeatherManager.thunderAudio._unavailable = true; });
+}
+
+function toggleWeatherAudio() {
+  WeatherManager.audioEnabled = !WeatherManager.audioEnabled;
+  localStorage.setItem('rebelAntsWeatherAudioEnabled', WeatherManager.audioEnabled ? '1' : '0');
+  if (!WeatherManager.audioEnabled) {
+    Object.values(WeatherManager.audioTracks).forEach(audio => { if (audio) audio._targetVolume = 0; });
+  }
+  updateWeatherLabel();
+  showToast(WeatherManager.audioEnabled ? 'Weather sound enabled' : 'Weather sound muted');
+}
+
+function getWeatherReactiveRoots() {
+  const reactiveTypes = new Set(['lantern_1','hanging_lantern','hangingLantern','toro_lantern','tree_1','pine_1','cherry_blossom','bamboo','ronin_dead_tree','ronin_mist']);
+  return scene.transformNodes.filter(node => node?.metadata?.type && reactiveTypes.has(node.metadata.type));
+}
+
+function animateWeatherChildSway(root, amount, now, speed = 1) {
+  if (!root || !root.getChildMeshes) return;
+  root.getChildMeshes(true).forEach((mesh, index) => {
+    if (!mesh || mesh.metadata?.isPickProxy || mesh.name?.includes('collision_proxy')) return;
+    if (!mesh.metadata) mesh.metadata = {};
+    if (!mesh.metadata.weatherBaseRotation) {
+      mesh.metadata.weatherBaseRotation = { x: mesh.rotation.x, y: mesh.rotation.y, z: mesh.rotation.z };
+    }
+    const base = mesh.metadata.weatherBaseRotation;
+    const phase = (mesh.uniqueId || index) * .37;
+    mesh.rotation.x = base.x + Math.sin(now * speed + phase) * amount * .38;
+    mesh.rotation.z = base.z + Math.sin(now * speed * 1.16 + phase) * amount;
+  });
+}
+
+function updateWeatherEnvironmentalReactions() {
+  const cfg = getWeatherVisualConfig();
+  const wind = cfg.wind || 0;
+  const now = performance.now() * .001;
+  getWeatherReactiveRoots().forEach(root => {
+    const type = root.metadata?.type || '';
+    if (type === 'ronin_mist') {
+      root.getChildMeshes(true).forEach(mesh => {
+        if (!mesh.metadata) mesh.metadata = {};
+        if (!mesh.metadata.weatherMistBase) {
+          mesh.metadata.weatherMistBase = { x: mesh.position.x, z: mesh.position.z, sx: mesh.scaling.x || 1, sz: mesh.scaling.z || 1, alpha: mesh.material?.alpha ?? .22 };
+        }
+        const base = mesh.metadata.weatherMistBase;
+        mesh.position.x = base.x + Math.sin(now * .13 + mesh.uniqueId) * (.12 + wind * .22);
+        mesh.position.z = base.z + Math.cos(now * .11 + mesh.uniqueId) * (.08 + wind * .18);
+        mesh.scaling.x = base.sx * (1 + Math.sin(now * .2 + mesh.uniqueId) * .035);
+        mesh.scaling.z = base.sz * (1 + Math.cos(now * .18 + mesh.uniqueId) * .04);
+        if (mesh.material) mesh.material.alpha = base.alpha * (1 + Math.sin(now * .35 + mesh.uniqueId) * .18);
+      });
+      return;
+    }
+    const lanternLike = type.includes('lantern') || type === 'toro_lantern';
+    const treeLike = type.includes('tree') || type === 'pine_1' || type === 'cherry_blossom' || type === 'bamboo';
+    if (lanternLike) animateWeatherChildSway(root, wind * .045, now, 1.6);
+    if (treeLike) animateWeatherChildSway(root, wind * .028, now, .85);
+  });
+  if (scene.fogMode !== BABYLON.Scene.FOGMODE_NONE && wind > 0) {
+    scene.fogDensity = Math.max(0, scene.fogDensity + Math.sin(now * .18) * wind * .00035);
+  }
+}
+
+function ensureDistantLightning() {
+  if (WeatherManager.distantLightningRoot) return WeatherManager.distantLightningRoot;
+  const root = new BABYLON.TransformNode('weatherDistantLightningRoot', scene);
+  const mat = new BABYLON.StandardMaterial('weatherDistantLightningMat', scene);
+  mat.diffuseColor = new BABYLON.Color3(.78,.9,1);
+  mat.emissiveColor = new BABYLON.Color3(.75,.9,1);
+  mat.alpha = .82;
+  mat.disableLighting = true;
+  mat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+  [[0,0,0,1.8,.05], [.42,-.88,.3,1.2,.04], [-.26,-1.55,-.2,.86,.035]].forEach((seg, i) => {
+    const bolt = BABYLON.MeshBuilder.CreateBox('weatherDistantLightning_' + i, { width:seg[4], height:seg[3], depth:.035 }, scene);
+    bolt.parent = root;
+    bolt.position.set(seg[0], seg[1], seg[2]);
+    bolt.rotation.z = (i === 0 ? -.28 : i === 1 ? .34 : -.22);
+    bolt.material = mat;
+    bolt.isPickable = false;
+    bolt.checkCollisions = false;
+  });
+  root.setEnabled(false);
+  WeatherManager.distantLightningRoot = root;
+  return root;
+}
+
+function triggerDistantLightning() {
+  const root = ensureDistantLightning();
+  const center = getWeatherCenter();
+  const angle = Math.random() * Math.PI * 2;
+  const radius = 115 + Math.random() * 55;
+  root.position.set(center.x + Math.cos(angle) * radius, 54 + Math.random() * 22, center.z + Math.sin(angle) * radius);
+  root.rotation.y = -angle + Math.PI / 2;
+  const scale = 3.2 + Math.random() * 1.8;
+  root.scaling.set(scale, scale, scale);
+  root.setEnabled(true);
+  WeatherManager.distantLightningUntil = performance.now() + 180;
+}
+
+function updateDistantLightning() {
+  const root = ensureDistantLightning();
+  const now = performance.now();
+  if (WeatherManager.mode === 'storm' && now >= WeatherManager.distantLightningStrikeAt) {
+    triggerDistantLightning();
+    WeatherManager.distantLightningStrikeAt = now + 6500 + Math.random() * 11000;
+  }
+  root.setEnabled(WeatherManager.mode === 'storm' && now < WeatherManager.distantLightningUntil);
 }
 
 function ensureWeatherRainPool(count) {
@@ -3780,6 +3965,8 @@ function applyWeatherLighting() {
   const lightningActive = cfg.lightning && performance.now() < WeatherManager.lightningUntil;
   const flash = document.getElementById('weatherLightningFlash');
   if (flash) flash.style.opacity = lightningActive ? '0.78' : '0';
+  const heat = document.getElementById('weatherHeatHaze');
+  if (heat) heat.style.opacity = cfg.warm ? '.22' : '0';
   if (cfg.fog === BABYLON.Scene.FOGMODE_NONE) {
     scene.fogMode = BABYLON.Scene.FOGMODE_NONE;
   } else {
@@ -3799,14 +3986,21 @@ function applyWeatherLighting() {
   if (cfg.warm) {
     sun.diffuse.set(1,.76,.46);
     hemi.diffuse.set(.78,.66,.52);
+    skyMat.turbidity = 8;
+    skyMat.mieCoefficient = 0.006;
   } else if (cfg.cold) {
     sun.diffuse.set(.64,.78,1);
     hemi.diffuse.set(.55,.72,1);
+    skyMat.turbidity = 4.5;
+    skyMat.mieCoefficient = 0.002;
   } else if (lightningActive) {
     sun.diffuse.set(.74,.9,1);
     sun.intensity = Math.max(sun.intensity, 3.4);
     hemi.intensity = Math.max(hemi.intensity, 1.35);
     scene.clearColor.set(.7,.86,1,1);
+  } else {
+    skyMat.turbidity = 5;
+    skyMat.mieCoefficient = 0.003;
   }
 }
 
@@ -3834,6 +4028,8 @@ function updateWeatherLabel() {
   const resumeBtn = document.getElementById('weatherResumeBtn');
   if (pauseBtn) pauseBtn.style.opacity = WeatherManager.paused ? '.55' : '1';
   if (resumeBtn) resumeBtn.style.opacity = WeatherManager.paused ? '1' : '.55';
+  const audioBtn = document.getElementById('weatherAudioBtn');
+  if (audioBtn) audioBtn.textContent = WeatherManager.audioEnabled ? 'Mute Weather Audio' : 'Enable Weather Sound';
 }
 
 function setWeatherMode(mode, manual = false) {
@@ -3882,13 +4078,17 @@ function updateWeatherManager() {
     WeatherManager.lightningUntil = now + 380;
     WeatherManager.thunderCueUntil = now + 2200;
     WeatherManager.nextLightningAt = now + 4200 + Math.random() * 7200;
-    // Future audio hook: keep thunder sound disabled for now to avoid surprise autoplay/browser policy issues.
+    triggerDistantLightning();
+    playWeatherThunderAudio(WeatherManager.nextLightningAt);
   }
 
   applyWeatherLighting();
   updateWeatherRain();
   updateWeatherSnow();
   updateWeatherGroundEffects();
+  updateWeatherEnvironmentalReactions();
+  updateDistantLightning();
+  updateWeatherAudio();
   updateWeatherLabel();
 }
 
@@ -11011,6 +11211,7 @@ window.toggleWorklight = toggleWorklight;
 window.setWeatherMode = setWeatherMode;
 window.setWeatherCyclePaused = setWeatherCyclePaused;
 window.setWeatherCycleSpeed = setWeatherCycleSpeed;
+window.toggleWeatherAudio = toggleWeatherAudio;
 window.saveWorldLayout = saveWorldLayout;
 window.loadWorldLayout = loadWorldLayout;
 
