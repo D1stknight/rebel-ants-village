@@ -2437,6 +2437,7 @@ let pendingAdminPlacement = null;
 let adminPlacementMarker = null;
 let adminGizmoMode = 'move';
 let adminManualProxyRotateDrag = null;
+let adminManualNPCRotateDrag = null;
 
 async function hasActiveAdminSession() {
   try {
@@ -9546,6 +9547,19 @@ window.addEventListener('pointerdown', (e) => {
       return;
     }
   }
+  if (
+    e.target === canvas &&
+    adminGizmoMode === 'rotate' &&
+    selectedObject.metadata?.type === 'npc'
+  ) {
+    adminManualNPCRotateDrag = {
+      startX: e.clientX,
+      startRotationY: selectedObject.rotation?.y || 0
+    };
+    orbit.detachControl();
+    e.preventDefault();
+    return;
+  }
   adminDragging = false;
   window._dragStartX = e.clientX;
   window._dragStartY = e.clientY;
@@ -9563,6 +9577,12 @@ window.addEventListener('pointermove', (e) => {
     renderSelectedWalkSurfaceGuide();
     return;
   }
+  if (adminManualNPCRotateDrag && selectedObject.metadata?.type === 'npc') {
+    const dx = e.clientX - adminManualNPCRotateDrag.startX;
+    selectedObject.rotation.y = adminManualNPCRotateDrag.startRotationY + dx * 0.012;
+    updateNPCAdminRotation(selectedObject);
+    return;
+  }
   if (window._dragStartX === undefined) return;
   const dx = e.clientX - window._dragStartX;
   const dy = e.clientY - window._dragStartY;
@@ -9575,6 +9595,13 @@ window.addEventListener('pointerup', () => {
     if (adminMode) orbit.attachControl(canvas, true);
     rebuildVillageCollisionBlockers();
     renderSelectedWalkSurfaceGuide();
+    triggerAutoSave();
+    return;
+  }
+  if (adminManualNPCRotateDrag) {
+    adminManualNPCRotateDrag = null;
+    if (selectedObject?.metadata?.type === 'npc') updateNPCAdminRotation(selectedObject);
+    if (adminMode) orbit.attachControl(canvas, true);
     triggerAutoSave();
     return;
   }
