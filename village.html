@@ -4939,6 +4939,7 @@ function createNPCFromDefinition(npc, savedState = null) {
   const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
   if (Number.isFinite(groundY)) root.position.y = groundY;
   const savedRotation = savedState?.rotation || {};
+  const baseRotationY = Number.isFinite(savedState?.baseRotationY) ? savedState.baseRotationY : (savedRotation.y || 0);
   const savedScaling = savedState?.scaling || null;
   root.metadata = {
     type: 'npc',
@@ -4955,6 +4956,7 @@ function createNPCFromDefinition(npc, savedState = null) {
     modelScale: Number.isFinite(npc.modelScale) ? npc.modelScale : 1,
     fallbackType: npc.fallbackType || 'ant',
     spawn: { x: root.position.x, y: root.position.y, z: root.position.z },
+    baseRotationY,
     patrolPoints: npc.patrolPoints || [],
     wanderRadius: npc.wanderRadius || 6,
     target: null,
@@ -5085,6 +5087,7 @@ function updateNPCPlacementOrigin(root, previousPosition = null) {
   const previousHome = previousPosition || meta.spawn || root.position;
   const delta = root.position.subtract(new BABYLON.Vector3(previousHome.x || 0, previousHome.y || 0, previousHome.z || 0));
   meta.spawn = { x: root.position.x, y: root.position.y, z: root.position.z };
+  meta.baseRotationY = root.rotation?.y || 0;
   meta.target = null;
   meta.waitUntil = performance.now() + 900;
   meta.turningInPlace = false;
@@ -5095,6 +5098,16 @@ function updateNPCPlacementOrigin(root, previousPosition = null) {
       z: (point.z || 0) + delta.z
     }));
   }
+}
+
+function updateNPCAdminRotation(root) {
+  if (!root || root.metadata?.type !== 'npc') return;
+  root.rotation.x = root.rotation.x || 0;
+  root.rotation.z = root.rotation.z || 0;
+  root.metadata.baseRotationY = root.rotation.y || 0;
+  root.metadata.target = null;
+  root.metadata.waitUntil = performance.now() + 900;
+  root.metadata.turningInPlace = false;
 }
 
 function chooseNPCWanderTarget(root) {
@@ -5121,6 +5134,12 @@ function turnNPCToward(root, targetYaw, dt) {
   while (delta < -Math.PI) delta += Math.PI * 2;
   root.rotation.y += delta * Math.min(1, dt * 4.2);
   return Math.abs(delta);
+}
+
+function returnNPCToBaseRotation(root, dt) {
+  const meta = root.metadata || {};
+  if (!Number.isFinite(meta.baseRotationY)) return;
+  turnNPCToward(root, meta.baseRotationY, dt);
 }
 
 function moveNPCToward(root, target, dt) {
@@ -5199,12 +5218,17 @@ function updateNPCPopulation(dt) {
         if (meta.target) {
           meta.target = null;
           meta.waitUntil = now + 1800 + Math.random() * 2600;
+        } else {
+          returnNPCToBaseRotation(root, dt);
         }
       }
     } else if (meta.behavior === 'patrol') {
       const target = getNPCPatrolTarget(root);
       moving = moveNPCToward(root, target, dt);
       if (!moving && (meta.patrolPoints || []).length) meta.targetIndex = (meta.targetIndex + 1) % meta.patrolPoints.length;
+      if (!moving) returnNPCToBaseRotation(root, dt);
+    } else {
+      returnNPCToBaseRotation(root, dt);
     }
     updateNPCAnimationState(root, moving, now);
   });
@@ -9527,6 +9551,7 @@ window.addEventListener('pointerdown', (e) => {
   window._dragStartY = e.clientY;
   window._dragSelectedObject = selectedObject;
   window._dragSelectedStartPos = selectedObject.position ? selectedObject.position.clone() : null;
+  window._dragSelectedStartRot = selectedObject.rotation ? selectedObject.rotation.clone() : null;
 });
 
 window.addEventListener('pointermove', (e) => {
@@ -9557,9 +9582,15 @@ window.addEventListener('pointerup', () => {
   adminDragging = false;
   window._dragStartX = undefined;
   window._dragStartY = undefined;
+  const beforeRot = window._dragSelectedStartRot;
+  const npcRotationChanged =
+    selectedObject?.metadata?.type === 'npc' &&
+    beforeRot &&
+    selectedObject.rotation &&
+    Math.abs((selectedObject.rotation.y || 0) - (beforeRot.y || 0)) > 0.0001;
 
   // Only snap to ground if the object was actually dragged
-  if (adminMode && selectedObject && wasDragging) {
+  if (adminMode && selectedObject && (wasDragging || npcRotationChanged)) {
     const draggedNode = window._dragSelectedObject;
     const beforePos = window._dragSelectedStartPos;
     softSnapSelectedObject();
@@ -9579,6 +9610,7 @@ window.addEventListener('pointerup', () => {
   }
   window._dragSelectedObject = null;
   window._dragSelectedStartPos = null;
+  window._dragSelectedStartRot = null;
 });
 function getEditableRoots(){
   const registeredRoots = Object.values(editableRootRefs).filter(Boolean);
@@ -9692,6 +9724,7 @@ function saveWorldLayout(saveToGitHub = true){
     dialogueId: node.metadata.dialogueId || null,
     customDialogue: node.metadata.customDialogue || null,
     questId: node.metadata.questId || null,
+    baseRotationY: Number.isFinite(node.metadata.baseRotationY) ? node.metadata.baseRotationY : null,
     moveSpeed: Number.isFinite(node.metadata.moveSpeed) ? node.metadata.moveSpeed : null,
     wanderRadius: Number.isFinite(node.metadata.wanderRadius) ? node.metadata.wanderRadius : null,
     animationMap: node.metadata.animationMap || null,
@@ -12011,6 +12044,7 @@ function setGizmoMode(mode) {
 
 function attachSelectedGizmo() {
   if (!selectedObject || !gizmoManager) return;
+  if (selectedObject._editRoot?.metadata?.type === 'npc') selectedObject = selectedObject._editRoot;
   if (gizmoManager) gizmoManager.attachToNode(null);
   gizmoManager.positionGizmoEnabled = adminGizmoMode === 'move';
   gizmoManager.rotationGizmoEnabled = adminGizmoMode === 'rotate';
@@ -12027,6 +12061,7 @@ function flipSelected() {
 function rotateSelectedBy(angle) {
   if (!selectedObject) return;
   selectedObject.rotation.y += angle;
+  if (selectedObject.metadata?.type === 'npc') updateNPCAdminRotation(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
