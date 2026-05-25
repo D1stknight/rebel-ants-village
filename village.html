@@ -4829,8 +4829,6 @@ function toggleNPCPause() {
   showToast(NPCManager.paused ? 'NPCs paused' : 'NPCs resumed');
 }
 
-initNPCPopulation();
-
 // ── HELPERS ──────────────────────────────────
 // Material cache — reuse identical materials instead of creating new ones
 const _matCache={}, _pbrCache={};
@@ -10728,6 +10726,7 @@ function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
 })();
 
 // ── RENDER LOOP ──────────────────────────────
+initNPCPopulation();
 let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
