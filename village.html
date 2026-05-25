@@ -429,6 +429,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <label style="font-size:9px;color:#8aa;letter-spacing:1px">Footsteps <input id="footstepVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.55" oninput="setFootstepVolume(this.value)" style="width:100%"></label>
   </div>
   <hr class="ap-divider">
+  <div class="ap-section">NPCs</div>
+  <div style="padding:0 8px 6px;display:grid;grid-template-columns:1fr 1fr;gap:5px">
+    <button class="ctrl-btn" id="npcVisibilityBtn" onclick="toggleNPCVisibility()">Hide NPCs</button>
+    <button class="ctrl-btn" id="npcPauseBtn" onclick="toggleNPCPause()">Pause NPCs</button>
+  </div>
+  <hr class="ap-divider">
   <div style="padding:0 8px 6px">
     <button class="ctrl-btn full" id="worklightBtn" onclick="toggleWorklight()" style="grid-column:1/-1;width:100%">&#x2600; Worklight (W)<kbd>W</kbd></button>
   </div>
@@ -528,6 +534,43 @@ const WORLD_LAYOUT_STORAGE_KEY = `rebelAntsWorldLayout:${CURRENT_VILLAGE_ID}`;
 window.REBEL_ANTS_VILLAGES = VILLAGE_REGISTRY;
 window.CURRENT_REBEL_ANTS_VILLAGE = CURRENT_VILLAGE;
 document.title = `Rebel Ants — ${CURRENT_VILLAGE.displayName}`;
+const NPC_FACTION_BY_VILLAGE = {
+  hub: 'ashigaru',
+  ronin: 'ronin',
+  samurai: 'samurai',
+  bushi: 'bushi',
+  warrior: 'warrior',
+  shogun: 'shogun',
+  buke: 'buke',
+  kenshi: 'kenshi',
+  wokou: 'wokou',
+  ashigaru: 'ashigaru',
+  sohei: 'sohei',
+  yamabushi: 'yamabushi',
+  queens: 'queens'
+};
+const NPC_FACTION_COLORS = {
+  ashigaru: '#b5d35a',
+  ronin: '#b01828',
+  samurai: '#d23c3c',
+  bushi: '#d69a35',
+  warrior: '#7c4dff',
+  shogun: '#e8c56a',
+  buke: '#6aa0e8',
+  kenshi: '#5ecfca',
+  wokou: '#36a66f',
+  sohei: '#f0f0d8',
+  yamabushi: '#b06a3a',
+  queens: '#d86adf'
+};
+const NPC_DEFINITIONS = [
+  { npcId:'hub-ashigaru-guard-01', villageId:'hub', factionId:'ashigaru', role:'guard', displayName:'Ashigaru Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'idle', spawn:{ x:-7, y:0, z:-28 } },
+  { npcId:'hub-ashigaru-villager-01', villageId:'hub', factionId:'ashigaru', role:'villager', displayName:'Ashigaru Villager', modelUrl:null, fallbackType:'ant', behavior:'wander', spawn:{ x:18, y:0, z:12 }, wanderRadius:7 },
+  { npcId:'ronin-guard-01', villageId:'ronin', factionId:'ronin', role:'guard', displayName:'Ronin Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'patrol', spawn:{ x:0, y:0, z:-34 }, patrolPoints:[{ x:-8, y:0, z:-34 }, { x:8, y:0, z:-34 }] },
+  { npcId:'ronin-wanderer-01', villageId:'ronin', factionId:'ronin', role:'villager', displayName:'Ronin Wanderer', modelUrl:null, fallbackType:'ant', behavior:'wander', spawn:{ x:-16, y:0, z:18 }, wanderRadius:8 },
+  { npcId:'samurai-guard-01', villageId:'samurai', factionId:'samurai', role:'guard', displayName:'Samurai Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'patrol', spawn:{ x:0, y:0, z:-32 }, patrolPoints:[{ x:-6, y:0, z:-32 }, { x:6, y:0, z:-32 }] },
+  { npcId:'samurai-villager-01', villageId:'samurai', factionId:'samurai', role:'villager', displayName:'Samurai Villager', modelUrl:null, fallbackType:'ant', behavior:'idle', spawn:{ x:14, y:0, z:10 } }
+];
 function returnToHubVillage() {
   window.location.href = VILLAGE_REGISTRY.hub.route;
 }
@@ -4563,6 +4606,230 @@ window.addEventListener('pointerdown', unlockVillageMusic, { once:true, passive:
 window.addEventListener('touchstart', unlockVillageMusic, { once:true, passive:true });
 window.addEventListener('keydown', unlockVillageMusic, { once:true });
 setInterval(updateSky,30000);
+
+// ── NPC POPULATION V1 ─────────────────────────
+const NPCManager = {
+  roots: [],
+  visible: localStorage.getItem('rebelAntsNPCsVisible') !== '0',
+  paused: localStorage.getItem('rebelAntsNPCsPaused') === '1',
+  materials: {}
+};
+
+function getNPCDefinitionsForCurrentVillage() {
+  const expectedFaction = NPC_FACTION_BY_VILLAGE[CURRENT_VILLAGE_ID];
+  if (!expectedFaction) return [];
+  return NPC_DEFINITIONS.filter(npc => npc.villageId === CURRENT_VILLAGE_ID && npc.factionId === expectedFaction);
+}
+
+function getNPCMaterial(key, color, emissive = '#000000') {
+  const cacheKey = `${key}:${color}:${emissive}`;
+  if (!NPCManager.materials[cacheKey]) {
+    const material = new BABYLON.StandardMaterial(`npc_${key}_${Object.keys(NPCManager.materials).length}`, scene);
+    material.diffuseColor = BABYLON.Color3.FromHexString(color);
+    material.emissiveColor = BABYLON.Color3.FromHexString(emissive).scale(.22);
+    material.specularColor = new BABYLON.Color3(.12,.12,.14);
+    NPCManager.materials[cacheKey] = material;
+  }
+  return NPCManager.materials[cacheKey];
+}
+
+function makeNPCMeshPickSafe(mesh) {
+  if (!mesh) return mesh;
+  mesh.isPickable = false;
+  mesh.checkCollisions = false;
+  mesh.metadata = { ...(mesh.metadata || {}), isNPCVisual:true };
+  return mesh;
+}
+
+function createPlaceholderAntNPC(root, npc) {
+  const factionColor = NPC_FACTION_COLORS[npc.factionId] || CURRENT_VILLAGE.themeColor || '#5ecfca';
+  const bodyMat = getNPCMaterial(`${npc.factionId}_body`, '#15171a', '#000000');
+  const accentMat = getNPCMaterial(`${npc.factionId}_accent`, factionColor, factionColor);
+  const eyeMat = getNPCMaterial('eyes', '#f7e7a0', '#f7e7a0');
+  const pieces = [];
+
+  const abdomen = makeNPCMeshPickSafe(BABYLON.MeshBuilder.CreateSphere(`${npc.npcId}_abdomen`, { diameter:.82, segments:10 }, scene));
+  abdomen.scaling.set(.72,.46,.95); abdomen.position.set(0,.58,-.24); abdomen.material = bodyMat; abdomen.parent = root; pieces.push(abdomen);
+  const thorax = makeNPCMeshPickSafe(BABYLON.MeshBuilder.CreateSphere(`${npc.npcId}_thorax`, { diameter:.62, segments:10 }, scene));
+  thorax.scaling.set(.72,.5,.68); thorax.position.set(0,.66,.36); thorax.material = bodyMat; thorax.parent = root; pieces.push(thorax);
+  const head = makeNPCMeshPickSafe(BABYLON.MeshBuilder.CreateSphere(`${npc.npcId}_head`, { diameter:.52, segments:10 }, scene));
+  head.scaling.set(.82,.68,.82); head.position.set(0,.76,.84); head.material = bodyMat; head.parent = root; pieces.push(head);
+  const sash = makeNPCMeshPickSafe(BABYLON.MeshBuilder.CreateTorus(`${npc.npcId}_sash`, { diameter:.72, thickness:.045, tessellation:16 }, scene));
+  sash.position.set(0,.67,.18); sash.rotation.x = Math.PI / 2; sash.material = accentMat; sash.parent = root; pieces.push(sash);
+  [-.14,.14].forEach(x => {
+    const eye = makeNPCMeshPickSafe(BABYLON.MeshBuilder.CreateSphere(`${npc.npcId}_eye_${x}`, { diameter:.055, segments:6 }, scene));
+    eye.position.set(x,.86,1.08); eye.material = eyeMat; eye.parent = root; pieces.push(eye);
+    const antenna = makeNPCMeshPickSafe(BABYLON.MeshBuilder.CreateCylinder(`${npc.npcId}_antenna_${x}`, { height:.42, diameter:.025, tessellation:5 }, scene));
+    antenna.position.set(x * 1.25,1.07,1.03); antenna.rotation.x = .75; antenna.rotation.z = -Math.sign(x) * .42; antenna.material = accentMat; antenna.parent = root; pieces.push(antenna);
+  });
+  [-.34,.34].forEach(side => {
+    [-.2,.22,.58].forEach((z, index) => {
+      const leg = makeNPCMeshPickSafe(BABYLON.MeshBuilder.CreateCylinder(`${npc.npcId}_leg_${side}_${index}`, { height:.66, diameter:.035, tessellation:5 }, scene));
+      leg.position.set(side,.42,z); leg.rotation.z = side > 0 ? .92 : -.92; leg.rotation.x = index === 1 ? .18 : -.12; leg.material = bodyMat; leg.parent = root; pieces.push(leg);
+    });
+  });
+  const roleMark = makeNPCMeshPickSafe(BABYLON.MeshBuilder.CreateCylinder(`${npc.npcId}_rolemark`, { height:.035, diameter:.34, tessellation:6 }, scene));
+  roleMark.position.set(0,1.08,.34); roleMark.rotation.x = Math.PI / 2; roleMark.material = accentMat; roleMark.parent = root; pieces.push(roleMark);
+  root.metadata.placeholderPieces = pieces;
+}
+
+async function tryLoadNPCModel(root, npc) {
+  if (!npc.modelUrl) return;
+  try {
+    const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", npc.modelUrl, scene);
+    if (!root || root.isDisposed?.()) return;
+    result.meshes.forEach(mesh => {
+      if (mesh === scene.meshes[0]) return;
+      makeNPCMeshPickSafe(mesh);
+      mesh.parent = root;
+    });
+    root.metadata.placeholderPieces?.forEach(mesh => mesh.setEnabled(false));
+    root.metadata.animationGroups = result.animationGroups || [];
+    root.metadata.modelLoaded = true;
+  } catch (_) {
+    root.metadata.modelFailed = true;
+  }
+}
+
+function createNPCFromDefinition(npc) {
+  const root = new BABYLON.TransformNode(`npc_${npc.npcId}`, scene);
+  const spawn = npc.spawn || { x:0, y:0, z:0 };
+  root.position.set(spawn.x || 0, spawn.y || 0, spawn.z || 0);
+  const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
+  if (Number.isFinite(groundY)) root.position.y = groundY;
+  root.metadata = {
+    type: 'npc',
+    npcId: npc.npcId,
+    villageId: npc.villageId,
+    factionId: npc.factionId,
+    role: npc.role,
+    displayName: npc.displayName,
+    behavior: npc.behavior || 'idle',
+    spawn: { x: root.position.x, y: root.position.y, z: root.position.z },
+    patrolPoints: npc.patrolPoints || [],
+    wanderRadius: npc.wanderRadius || 6,
+    target: null,
+    targetIndex: 0,
+    moveSpeed: npc.role === 'guard' ? 1.05 : .72,
+    idleSeed: Math.random() * Math.PI * 2
+  };
+  createPlaceholderAntNPC(root, npc);
+  tryLoadNPCModel(root, npc);
+  root.setEnabled(NPCManager.visible);
+  NPCManager.roots.push(root);
+  return root;
+}
+
+function initNPCPopulation() {
+  NPCManager.roots.forEach(root => root.dispose(false, true));
+  NPCManager.roots = [];
+  getNPCDefinitionsForCurrentVillage().forEach(createNPCFromDefinition);
+  updateNPCAdminControls();
+}
+
+function chooseNPCWanderTarget(root) {
+  const meta = root.metadata || {};
+  const origin = meta.spawn || root.position;
+  const radius = meta.wanderRadius || 6;
+  const angle = Math.random() * Math.PI * 2;
+  const distance = radius * (.35 + Math.random() * .65);
+  meta.target = new BABYLON.Vector3(origin.x + Math.sin(angle) * distance, root.position.y, origin.z + Math.cos(angle) * distance);
+  meta.waitUntil = 0;
+}
+
+function getNPCPatrolTarget(root) {
+  const meta = root.metadata || {};
+  const points = meta.patrolPoints || [];
+  if (!points.length) return null;
+  const point = points[meta.targetIndex % points.length];
+  return new BABYLON.Vector3(point.x || 0, point.y || 0, point.z || 0);
+}
+
+function moveNPCToward(root, target, dt) {
+  if (!target) return false;
+  const dx = target.x - root.position.x;
+  const dz = target.z - root.position.z;
+  const distance = Math.sqrt(dx * dx + dz * dz);
+  if (distance < .18) return false;
+  const step = Math.min(distance, (root.metadata.moveSpeed || .8) * dt);
+  root.position.x += (dx / distance) * step;
+  root.position.z += (dz / distance) * step;
+  const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
+  if (Number.isFinite(groundY)) root.position.y = groundY;
+  root.rotation.y = Math.atan2(dx, dz);
+  return true;
+}
+
+function updateNPCAnimationState(root, moving, now) {
+  const meta = root.metadata || {};
+  if (meta.modelLoaded && Array.isArray(meta.animationGroups) && meta.animationGroups.length) {
+    const wanted = moving ? 'walk' : 'idle';
+    if (meta.activeAnimation !== wanted) {
+      meta.animationGroups.forEach(group => group.stop());
+      const group = meta.animationGroups.find(candidate => candidate.name.toLowerCase().includes(wanted)) || meta.animationGroups[0];
+      group.start(true);
+      meta.activeAnimation = wanted;
+    }
+    return;
+  }
+  const bob = Math.sin(now * (moving ? .008 : .003) + (meta.idleSeed || 0)) * (moving ? .045 : .025);
+  root.scaling.y = 1 + bob;
+  if (moving) root.rotation.z = Math.sin(now * .01 + (meta.idleSeed || 0)) * .025;
+  else root.rotation.z *= .85;
+}
+
+function updateNPCPopulation(dt) {
+  if (!NPCManager.roots.length) return;
+  const now = performance.now();
+  NPCManager.roots.forEach(root => {
+    if (!root || root.isDisposed?.()) return;
+    root.setEnabled(NPCManager.visible);
+    if (!NPCManager.visible) return;
+    if (NPCManager.paused) {
+      updateNPCAnimationState(root, false, now);
+      return;
+    }
+    const meta = root.metadata || {};
+    let moving = false;
+    if (meta.behavior === 'wander') {
+      if (!meta.target || now > (meta.waitUntil || 0)) chooseNPCWanderTarget(root);
+      moving = moveNPCToward(root, meta.target, dt);
+      if (!moving) {
+        meta.target = null;
+        meta.waitUntil = now + 1800 + Math.random() * 2600;
+      }
+    } else if (meta.behavior === 'patrol') {
+      const target = getNPCPatrolTarget(root);
+      moving = moveNPCToward(root, target, dt);
+      if (!moving && (meta.patrolPoints || []).length) meta.targetIndex = (meta.targetIndex + 1) % meta.patrolPoints.length;
+    }
+    updateNPCAnimationState(root, moving, now);
+  });
+}
+
+function updateNPCAdminControls() {
+  const visibilityBtn = document.getElementById('npcVisibilityBtn');
+  if (visibilityBtn) visibilityBtn.textContent = NPCManager.visible ? 'Hide NPCs' : 'Show NPCs';
+  const pauseBtn = document.getElementById('npcPauseBtn');
+  if (pauseBtn) pauseBtn.textContent = NPCManager.paused ? 'Resume NPCs' : 'Pause NPCs';
+}
+
+function toggleNPCVisibility() {
+  NPCManager.visible = !NPCManager.visible;
+  localStorage.setItem('rebelAntsNPCsVisible', NPCManager.visible ? '1' : '0');
+  NPCManager.roots.forEach(root => root?.setEnabled(NPCManager.visible));
+  updateNPCAdminControls();
+  showToast(NPCManager.visible ? 'NPCs shown' : 'NPCs hidden');
+}
+
+function toggleNPCPause() {
+  NPCManager.paused = !NPCManager.paused;
+  localStorage.setItem('rebelAntsNPCsPaused', NPCManager.paused ? '1' : '0');
+  updateNPCAdminControls();
+  showToast(NPCManager.paused ? 'NPCs paused' : 'NPCs resumed');
+}
+
+initNPCPopulation();
 
 // ── HELPERS ──────────────────────────────────
 // Material cache — reuse identical materials instead of creating new ones
@@ -10524,6 +10791,7 @@ engine.runRenderLoop(()=>{
   updateInteractionPrompt();
   tryAutoOpenVillageGateFromWalkthrough();
   updateWeatherManager();
+  updateNPCPopulation(dt);
   if (window._gpuMode === 'webgpu') {
     _webgpuSmartCapFrame++;
     if (_webgpuSmartCapFrame < 360 || _webgpuSmartCapFrame % 180 === 0) {
@@ -11717,6 +11985,8 @@ window.setMusicVolume = setMusicVolume;
 window.setWeatherVolume = setWeatherVolume;
 window.setInteractionVolume = setInteractionVolume;
 window.setFootstepVolume = setFootstepVolume;
+window.toggleNPCVisibility = toggleNPCVisibility;
+window.toggleNPCPause = toggleNPCPause;
 window.saveWorldLayout = saveWorldLayout;
 window.loadWorldLayout = loadWorldLayout;
 
