@@ -4756,6 +4756,7 @@ function turnNPCToward(root, targetYaw, dt) {
   while (delta > Math.PI) delta -= Math.PI * 2;
   while (delta < -Math.PI) delta += Math.PI * 2;
   root.rotation.y += delta * Math.min(1, dt * 4.2);
+  return Math.abs(delta);
 }
 
 function moveNPCToward(root, target, dt) {
@@ -4763,13 +4764,16 @@ function moveNPCToward(root, target, dt) {
   const dx = target.x - root.position.x;
   const dz = target.z - root.position.z;
   const distance = Math.sqrt(dx * dx + dz * dz);
+  root.metadata.turningInPlace = false;
   if (distance < .18) return false;
+  const yawDelta = turnNPCToward(root, Math.atan2(dx, dz), dt);
+  root.metadata.turningInPlace = root.metadata.modelLoaded === true && yawDelta > .42;
+  if (root.metadata.turningInPlace) return true;
   const step = Math.min(distance, (root.metadata.moveSpeed || .8) * dt);
   root.position.x += (dx / distance) * step;
   root.position.z += (dz / distance) * step;
   const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
   if (Number.isFinite(groundY)) root.position.y = groundY;
-  turnNPCToward(root, Math.atan2(dx, dz), dt);
   return true;
 }
 
@@ -4801,7 +4805,7 @@ function findNPCAnimationGroup(meta, state) {
 function updateNPCAnimationState(root, moving, now) {
   const meta = root.metadata || {};
   if (meta.modelLoaded && Array.isArray(meta.animationGroups) && meta.animationGroups.length) {
-    const wanted = moving ? 'walk' : 'idle';
+    const wanted = moving && !meta.turningInPlace ? 'walk' : 'idle';
     if (meta.activeAnimation !== wanted) {
       meta.animationGroups.forEach(group => group.stop());
       const group = findNPCAnimationGroup(meta, wanted);
