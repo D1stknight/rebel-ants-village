@@ -4681,12 +4681,17 @@ async function tryLoadNPCModel(root, npc) {
     const modelRoot = new BABYLON.TransformNode(`${npc.npcId}_modelRoot`, scene);
     modelRoot.parent = root;
     modelRoot.scaling.setAll(npc.modelScale || 1);
-    result.meshes.forEach(mesh => {
-      if (mesh === scene.meshes[0]) return;
-      makeNPCMeshPickSafe(mesh);
-      mesh.parent = modelRoot;
+    const importedNodes = [
+      ...(result.transformNodes || []),
+      ...(result.meshes || []).filter(mesh => mesh !== scene.meshes[0])
+    ];
+    const importedNodeSet = new Set(importedNodes);
+    (result.meshes || []).forEach(mesh => {
+      if (mesh !== scene.meshes[0]) makeNPCMeshPickSafe(mesh);
     });
-    removeNPCRootMotion(result.animationGroups || []);
+    importedNodes.forEach(node => {
+      if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = modelRoot;
+    });
     root.metadata.placeholderPieces?.forEach(mesh => mesh.setEnabled(false));
     root.metadata.animationGroups = result.animationGroups || [];
     root.metadata.modelRoot = modelRoot;
@@ -4775,22 +4780,6 @@ function moveNPCToward(root, target, dt) {
   const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
   if (Number.isFinite(groundY)) root.position.y = groundY;
   return true;
-}
-
-function removeNPCRootMotion(animationGroups) {
-  (animationGroups || []).forEach(group => {
-    if (!group?.targetedAnimations) return;
-    for (let i = group.targetedAnimations.length - 1; i >= 0; i--) {
-      const targeted = group.targetedAnimations[i];
-      const targetName = String(targeted.target?.name || '').toLowerCase();
-      const property = String(targeted.animation?.targetProperty || '').toLowerCase();
-      const isTopRigNode = targetName.includes('root') || targetName.includes('armature');
-      const isTopTransform = property === 'position' || property === 'rotation' || property === 'rotationquaternion';
-      if (isTopRigNode && isTopTransform) {
-        group.targetedAnimations.splice(i, 1);
-      }
-    }
-  });
 }
 
 function findNPCAnimationGroup(meta, state) {
