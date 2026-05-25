@@ -3407,13 +3407,13 @@ function updateSky(){
   else if(h>=9&&h<17){sun.diffuse=new BABYLON.Color3(1,.97,.88);}
   else if(h>=17&&h<20){sun.diffuse=new BABYLON.Color3(1,.48,.15);}
   else{sun.diffuse=new BABYLON.Color3(.18,.22,.48);sun.intensity=0.12;}
-  scene.fogColor=h>=6&&h<20?new BABYLON.Color3(.58,.74,.9):new BABYLON.Color3(.04,.06,.16);
+  const clearFogColor=h>=6&&h<20?new BABYLON.Color3(.58,.74,.9):new BABYLON.Color3(.04,.06,.16);
+  scene.fogColor=clearFogColor;
   WeatherManager.baseSunIntensity = sun.intensity;
   WeatherManager.baseHemiIntensity = hemi.intensity;
   WeatherManager.baseSunDiffuse = sun.diffuse.clone();
   WeatherManager.baseHemiDiffuse = hemi.diffuse.clone();
-  WeatherManager.baseFogColor = scene.fogColor.clone();
-  WeatherManager.baseClearColor = scene.clearColor.clone();
+  WeatherManager.baseFogColor = clearFogColor.clone();
   const hh=now.getHours().toString().padStart(2,'0'),mm=now.getMinutes().toString().padStart(2,'0');
   const lbl=h<6||h>=20?'Night':h<9?'Sunrise':h<17?'Day':'Sunset';
   document.getElementById('td').textContent=`${hh}:${mm}  ·  ${lbl}`;
@@ -3843,6 +3843,10 @@ function setWeatherMode(mode, manual = false) {
   WeatherManager.transitionFrom = previousMode;
   WeatherManager.transitionStartedAt = performance.now();
   WeatherManager.nextCycleAt = performance.now() + WeatherManager.cycleMs;
+  if (mode === 'clear') {
+    WeatherManager.lightningUntil = 0;
+    WeatherManager.thunderCueUntil = 0;
+  }
   if (manual) {
     localStorage.setItem('rebelAntsWeatherMode', mode);
     showToast('Weather: ' + WEATHER_MODES[mode].label);
