@@ -248,6 +248,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #weatherLightningFlash{position:fixed;inset:0;z-index:18;pointer-events:none;background:rgba(210,235,255,.72);opacity:0;transition:opacity .16s ease-out;mix-blend-mode:screen}
 #weatherHeatHaze{position:fixed;inset:-8%;z-index:17;pointer-events:none;opacity:0;transition:opacity .8s;background:repeating-linear-gradient(90deg,rgba(255,220,150,.035) 0 10px,rgba(255,255,255,0) 10px 26px);filter:blur(10px);mix-blend-mode:screen;animation:weatherHeatDrift 7s ease-in-out infinite alternate}
 @keyframes weatherHeatDrift{from{transform:translate3d(-10px,4px,0) skewX(-1deg)}to{transform:translate3d(12px,-4px,0) skewX(1deg)}}
+#villageTravelFade{position:fixed;inset:0;z-index:95;pointer-events:none;opacity:0;transition:opacity .22s ease;background:radial-gradient(circle at 50% 52%,rgba(92,255,238,.22),rgba(128,42,180,.2) 22%,rgba(2,8,18,.96) 68%);display:flex;align-items:center;justify-content:center}
+#villageTravelFade.on{opacity:1;pointer-events:all}
+#villageTravelFade::before{content:'';width:min(52vmin,360px);height:min(52vmin,360px);border-radius:50%;border:2px solid rgba(94,207,202,.45);box-shadow:0 0 36px rgba(94,207,202,.35),inset 0 0 42px rgba(224,88,255,.18);animation:villageTravelSpin .7s linear infinite}
+@keyframes villageTravelSpin{to{transform:rotate(360deg)}}
 #returnHubBtn{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.5);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 14px;cursor:pointer;backdrop-filter:blur(12px)}
 #returnHubBtn.on{display:block}
 #returnHubBtn:hover{background:rgba(232,197,106,.16)}
@@ -403,14 +407,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     </select>
   </div>
   <div style="padding:0 8px 6px;display:grid;grid-template-columns:1fr;gap:5px">
+    <button class="ctrl-btn full" id="muteAllAudioBtn" onclick="muteAllAudio()" style="width:100%">Mute All Audio</button>
     <button class="ctrl-btn full" id="masterAudioBtn" onclick="toggleMasterAudio()" style="width:100%">Enable Ambience</button>
     <button class="ctrl-btn full" id="weatherAudioBtn" onclick="toggleWeatherAudio()" style="width:100%">Weather Audio: Off</button>
     <button class="ctrl-btn full" id="interactionAudioBtn" onclick="toggleInteractionAudio()" style="width:100%">Interaction Audio: On</button>
   </div>
   <div style="padding:0 8px 6px;display:grid;gap:5px">
+    <label style="font-size:9px;color:#8aa;letter-spacing:1px">Master <input id="masterVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.8" oninput="setMasterVolume(this.value)" style="width:100%"></label>
     <label style="font-size:9px;color:#8aa;letter-spacing:1px">Ambience <input id="ambienceVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.55" oninput="setAmbienceVolume(this.value)" style="width:100%"></label>
     <label style="font-size:9px;color:#8aa;letter-spacing:1px">Weather <input id="weatherVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.65" oninput="setWeatherVolume(this.value)" style="width:100%"></label>
     <label style="font-size:9px;color:#8aa;letter-spacing:1px">Interaction <input id="interactionVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.7" oninput="setInteractionVolume(this.value)" style="width:100%"></label>
+    <label style="font-size:9px;color:#8aa;letter-spacing:1px">Footsteps <input id="footstepVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.55" oninput="setFootstepVolume(this.value)" style="width:100%"></label>
   </div>
   <hr class="ap-divider">
   <div style="padding:0 8px 6px">
@@ -441,6 +448,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="weatherDebugBadge">Weather: Clear</div>
 <div id="weatherLightningFlash"></div>
 <div id="weatherHeatHaze"></div>
+<div id="villageTravelFade"></div>
 <button id="returnHubBtn" type="button" onclick="returnToHubVillage()">Return to Hub</button>
 <div id="adminBadge">ADMIN MODE</div>
 <div id="gpuBadge" style="display:none;position:fixed;top:8px;left:50%;transform:translateX(-50%);padding:3px 10px;border-radius:4px;font-size:10px;letter-spacing:2px;font-family:'Cinzel Decorative',serif;border:1px solid #555;color:#888;background:rgba(255,255,255,0.08);pointer-events:none;z-index:999">WebGL</div>
@@ -2587,6 +2595,7 @@ function closeTreasureChest(chest) {
   chest.metadata.opened = false;
   animateTreasureChestLid(chest, false);
   if (chest.metadata._chestGlow) chest.metadata._chestGlow.setEnabled(false);
+  playInteractionAudio('chestClose');
   triggerAutoSave();
   return true;
 }
@@ -3076,7 +3085,10 @@ function selectVillageGateDestination(villageId) {
   if (!village) return;
   if (villageId === CURRENT_VILLAGE_ID) return;
   playInteractionAudio('portalTravel');
-  window.location.href = village.route;
+  const fade = document.getElementById('villageTravelFade');
+  if (fade) fade.classList.add('on');
+  closeVillageGateMenu();
+  setTimeout(() => { window.location.href = village.route; }, 620);
 }
 
 function tryOpenNearbyVillageGate() {
@@ -3478,16 +3490,39 @@ const WEATHER_AUDIO_TRACKS = {
 const WEATHER_THUNDER_AUDIO = '/assets/audio/weather/thunder-1.mp3';
 
 const VILLAGE_AMBIENCE_PROFILES = {
-  hub: [{ id:'ambience-hub-day', path:'/assets/audio/ambience/hub-day.mp3', volume:.46 }],
-  ronin: [{ id:'ambience-ronin-wind', path:'/assets/audio/ambience/ronin-wind.mp3', volume:.52 }],
-  samurai: [{ id:'ambience-samurai-courtyard', path:'/assets/audio/ambience/samurai-courtyard.mp3', volume:.42 }]
+  hub: {
+    loops: [{ id:'ambience-hub-day', path:'/assets/audio/ambience/hub-day.mp3', volume:.46 }],
+    events: ['hubBirds','templeBell','bambooCreak','windGust']
+  },
+  ronin: {
+    loops: [{ id:'ambience-ronin-wind', path:'/assets/audio/ambience/ronin-wind.mp3', volume:.52 }],
+    events: ['distantCrow','metalCreak','windGust','lanternCreak']
+  },
+  samurai: {
+    loops: [{ id:'ambience-samurai-courtyard', path:'/assets/audio/ambience/samurai-courtyard.mp3', volume:.42 }],
+    events: ['softChime','templeBell','bambooCreak']
+  }
 };
-const DEFAULT_VILLAGE_AMBIENCE = [{ id:'ambience-hub-day', path:'/assets/audio/ambience/hub-day.mp3', volume:.24 }];
+const DEFAULT_VILLAGE_AMBIENCE = { loops:[{ id:'ambience-hub-day', path:'/assets/audio/ambience/hub-day.mp3', volume:.24 }], events:['windGust','templeBell'] };
 const PORTAL_HUM_AUDIO = { id:'portal-hum', path:'/assets/audio/ambience/portal-hum.mp3', volume:.28 };
 const INTERACTION_AUDIO = {
   chestOpen: { id:'chest-open', path:'/assets/audio/interactions/chest-open.mp3', volume:.72, cooldownMs:850 },
+  chestClose: { id:'chest-close', path:'/assets/audio/interactions/chest-close.mp3', volume:.52, cooldownMs:850 },
   portalOpen: { id:'portal-open', path:'/assets/audio/interactions/portal-open.mp3', volume:.58, cooldownMs:700 },
-  portalTravel: { id:'portal-travel', path:'/assets/audio/interactions/portal-travel.mp3', volume:.68, cooldownMs:700 }
+  portalTravel: { id:'portal-travel', path:'/assets/audio/interactions/portal-travel.mp3', volume:.68, cooldownMs:700 },
+  footstepDirt: { id:'footstep-dirt', path:'/assets/audio/footsteps/dirt-1.mp3', volume:.42, cooldownMs:120 },
+  footstepWet: { id:'footstep-wet', path:'/assets/audio/footsteps/wet-1.mp3', volume:.44, cooldownMs:120 },
+  footstepSnow: { id:'footstep-snow', path:'/assets/audio/footsteps/snow-1.mp3', volume:.48, cooldownMs:120 },
+  footstepStone: { id:'footstep-stone', path:'/assets/audio/footsteps/stone-1.mp3', volume:.4, cooldownMs:120 },
+  hubBirds: { id:'env-hub-birds', path:'/assets/audio/ambience/birds.mp3', volume:.28, cooldownMs:12000 },
+  distantCrow: { id:'env-distant-crow', path:'/assets/audio/ambience/distant-crow.mp3', volume:.34, cooldownMs:14000 },
+  templeBell: { id:'env-temple-bell', path:'/assets/audio/ambience/temple-bell.mp3', volume:.28, cooldownMs:16000 },
+  bambooCreak: { id:'env-bamboo-creak', path:'/assets/audio/ambience/bamboo-creak.mp3', volume:.24, cooldownMs:9000 },
+  windGust: { id:'env-wind-gust', path:'/assets/audio/ambience/wind-gust.mp3', volume:.3, cooldownMs:10000 },
+  distantThunder: { id:'env-distant-thunder', path:'/assets/audio/ambience/distant-thunder.mp3', volume:.32, cooldownMs:15000 },
+  lanternCreak: { id:'env-lantern-creak', path:'/assets/audio/ambience/lantern-creak.mp3', volume:.24, cooldownMs:10000 },
+  metalCreak: { id:'env-metal-creak', path:'/assets/audio/ambience/metal-creak.mp3', volume:.3, cooldownMs:11000 },
+  softChime: { id:'env-soft-chime', path:'/assets/audio/ambience/soft-chime.mp3', volume:.26, cooldownMs:10000 }
 };
 
 const WeatherManager = {
@@ -3518,12 +3553,18 @@ const WeatherManager = {
   masterAudioEnabled: false,
   audioEnabled: false,
   interactionAudioEnabled: true,
+  masterVolume: .8,
   ambienceVolume: .55,
   weatherVolume: .65,
   interactionVolume: .7,
+  footstepVolume: .55,
   audioTracks: {},
   oneShotTracks: {},
   audioCooldowns: {},
+  nextEnvironmentalAudioAt: performance.now() + 18000,
+  lastFootstepAt: 0,
+  footstepDistance: 0,
+  lastFootstepPosition: null,
   thunderAudio: null,
   _thunderPlayedForStrike: 0,
   baseSunIntensity: sun.intensity,
@@ -3621,7 +3662,7 @@ function getWeatherAudioTargets() {
   const targets = {};
   if (!WeatherManager.audioEnabled) return targets;
   (WEATHER_AUDIO_TRACKS[WeatherManager.mode] || []).forEach(track => {
-    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .2) * WeatherManager.weatherVolume);
+    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .2) * WeatherManager.masterVolume * WeatherManager.weatherVolume);
     getWeatherAudioTrack(track.id, track.path);
   });
   return targets;
@@ -3636,14 +3677,14 @@ function getVillageAmbienceTargets() {
     : (WeatherManager.mode === 'snow' || WeatherManager.mode === 'fog' || WeatherManager.mode === 'cold')
       ? .62
       : 1;
-  profile.forEach(track => {
-    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .25) * WeatherManager.ambienceVolume * moodScale);
+  (profile.loops || []).forEach(track => {
+    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .25) * WeatherManager.masterVolume * WeatherManager.ambienceVolume * moodScale);
     getWeatherAudioTrack(track.id, track.path);
   });
   const nearGate = walkMode && !adminMode && getNearestVillageGateInRange(10.5);
   if (nearGate || isVillageGateMenuOpen()) {
     const pulse = .82 + Math.sin(performance.now() * .003) * .18;
-    targets[PORTAL_HUM_AUDIO.id] = PORTAL_HUM_AUDIO.volume * WeatherManager.ambienceVolume * pulse;
+    targets[PORTAL_HUM_AUDIO.id] = PORTAL_HUM_AUDIO.volume * WeatherManager.masterVolume * WeatherManager.ambienceVolume * pulse;
     getWeatherAudioTrack(PORTAL_HUM_AUDIO.id, PORTAL_HUM_AUDIO.path);
   }
   return targets;
@@ -3698,18 +3739,78 @@ function playInteractionAudio(key) {
   WeatherManager.audioCooldowns[key] = now + (cfg.cooldownMs || 500);
   const audio = getInteractionAudioTrack(cfg.id, cfg.path);
   if (!audio || audio._unavailable) return;
-  audio.volume = (cfg.volume || .6) * WeatherManager.interactionVolume;
+  audio.volume = (cfg.volume || .6) * WeatherManager.masterVolume * WeatherManager.interactionVolume;
   audio.currentTime = 0;
   audio.play().catch(() => { audio._unavailable = true; });
+}
+
+function playFootstepAudio() {
+  if (!WeatherManager.interactionAudioEnabled) return;
+  let key = 'footstepDirt';
+  if (WeatherManager.mode === 'snow' || WeatherManager.mode === 'cold') key = 'footstepSnow';
+  else if (WeatherManager.mode === 'light-rain' || WeatherManager.mode === 'heavy-rain' || WeatherManager.mode === 'storm') key = 'footstepWet';
+  else if (charMesh && Math.abs(charMesh.position.x) < 64 && Math.abs(charMesh.position.z) < 64) key = 'footstepStone';
+  const cfg = INTERACTION_AUDIO[key];
+  const audio = getInteractionAudioTrack(cfg.id, cfg.path);
+  if (!audio || audio._unavailable) return;
+  audio.volume = (cfg.volume || .4) * WeatherManager.masterVolume * WeatherManager.footstepVolume;
+  audio.currentTime = 0;
+  audio.play().catch(() => { audio._unavailable = true; });
+}
+
+function updateFootstepAudio() {
+  if (!walkMode || adminMode || !charMesh || Math.abs(charMesh._vel || 0) < .015) {
+    WeatherManager.lastFootstepPosition = charMesh ? charMesh.position.clone() : null;
+    return;
+  }
+  const now = performance.now();
+  if (!WeatherManager.lastFootstepPosition) {
+    WeatherManager.lastFootstepPosition = charMesh.position.clone();
+    return;
+  }
+  const dx = charMesh.position.x - WeatherManager.lastFootstepPosition.x;
+  const dz = charMesh.position.z - WeatherManager.lastFootstepPosition.z;
+  WeatherManager.footstepDistance += Math.sqrt(dx * dx + dz * dz);
+  WeatherManager.lastFootstepPosition.copyFrom(charMesh.position);
+  const stride = runKey ? 1.8 : 1.35;
+  if (WeatherManager.footstepDistance >= stride && now - WeatherManager.lastFootstepAt > 180) {
+    WeatherManager.footstepDistance = 0;
+    WeatherManager.lastFootstepAt = now;
+    playFootstepAudio();
+  }
+}
+
+function updateEnvironmentalOneShotAudio() {
+  if (!WeatherManager.masterAudioEnabled) return;
+  const now = performance.now();
+  if (now < WeatherManager.nextEnvironmentalAudioAt) return;
+  const profile = VILLAGE_AMBIENCE_PROFILES[CURRENT_VILLAGE_ID] || DEFAULT_VILLAGE_AMBIENCE;
+  const events = [...(profile.events || [])];
+  if (WeatherManager.mode === 'storm') events.push('distantThunder', 'windGust');
+  if (WeatherManager.mode === 'heavy-rain' || WeatherManager.mode === 'fog') events.push('windGust');
+  if (!events.length) return;
+  const key = events[Math.floor(Math.random() * events.length)];
+  const cfg = INTERACTION_AUDIO[key];
+  if (cfg) {
+    const audio = getInteractionAudioTrack(cfg.id, cfg.path);
+    if (audio && !audio._unavailable) {
+      audio.volume = (cfg.volume || .25) * WeatherManager.masterVolume * WeatherManager.ambienceVolume;
+      audio.currentTime = 0;
+      audio.play().catch(() => { audio._unavailable = true; });
+    }
+  }
+  WeatherManager.nextEnvironmentalAudioAt = now + 22000 + Math.random() * 36000;
 }
 
 function persistAudioSettings() {
   localStorage.setItem('rebelAntsMasterAudioEnabled', WeatherManager.masterAudioEnabled ? '1' : '0');
   localStorage.setItem('rebelAntsWeatherAudioEnabled', WeatherManager.audioEnabled ? '1' : '0');
   localStorage.setItem('rebelAntsInteractionAudioEnabled', WeatherManager.interactionAudioEnabled ? '1' : '0');
+  localStorage.setItem('rebelAntsMasterVolume', String(WeatherManager.masterVolume));
   localStorage.setItem('rebelAntsAmbienceVolume', String(WeatherManager.ambienceVolume));
   localStorage.setItem('rebelAntsWeatherVolume', String(WeatherManager.weatherVolume));
   localStorage.setItem('rebelAntsInteractionVolume', String(WeatherManager.interactionVolume));
+  localStorage.setItem('rebelAntsFootstepVolume', String(WeatherManager.footstepVolume));
 }
 
 function setAudioSliderValue(id, value) {
@@ -3724,9 +3825,11 @@ function updateAudioControls() {
   if (audioBtn) audioBtn.textContent = 'Weather Audio: ' + (WeatherManager.audioEnabled ? 'On' : 'Off');
   const interactionBtn = document.getElementById('interactionAudioBtn');
   if (interactionBtn) interactionBtn.textContent = 'Interaction Audio: ' + (WeatherManager.interactionAudioEnabled ? 'On' : 'Off');
+  setAudioSliderValue('masterVolumeSlider', WeatherManager.masterVolume);
   setAudioSliderValue('ambienceVolumeSlider', WeatherManager.ambienceVolume);
   setAudioSliderValue('weatherVolumeSlider', WeatherManager.weatherVolume);
   setAudioSliderValue('interactionVolumeSlider', WeatherManager.interactionVolume);
+  setAudioSliderValue('footstepVolumeSlider', WeatherManager.footstepVolume);
 }
 
 function muteAllAudioTargets() {
@@ -3739,6 +3842,16 @@ function toggleMasterAudio() {
   persistAudioSettings();
   updateAudioControls();
   showToast(WeatherManager.masterAudioEnabled ? 'Ambience enabled' : 'Ambience muted');
+}
+
+function muteAllAudio() {
+  WeatherManager.masterAudioEnabled = false;
+  WeatherManager.audioEnabled = false;
+  WeatherManager.interactionAudioEnabled = false;
+  muteAllAudioTargets();
+  persistAudioSettings();
+  updateAudioControls();
+  showToast('All audio muted');
 }
 
 function toggleWeatherAudio() {
@@ -3760,6 +3873,11 @@ function clampAudioVolume(value) {
   return Math.max(0, Math.min(1, Number(value) || 0));
 }
 
+function setMasterVolume(value) {
+  WeatherManager.masterVolume = clampAudioVolume(value);
+  persistAudioSettings();
+}
+
 function setAmbienceVolume(value) {
   WeatherManager.ambienceVolume = clampAudioVolume(value);
   persistAudioSettings();
@@ -3772,6 +3890,11 @@ function setWeatherVolume(value) {
 
 function setInteractionVolume(value) {
   WeatherManager.interactionVolume = clampAudioVolume(value);
+  persistAudioSettings();
+}
+
+function setFootstepVolume(value) {
+  WeatherManager.footstepVolume = clampAudioVolume(value);
   persistAudioSettings();
 }
 
@@ -4227,15 +4350,18 @@ function updateWeatherManager() {
   updateWeatherEnvironmentalReactions();
   updateDistantLightning();
   updateWeatherAudio();
+  updateEnvironmentalOneShotAudio();
   updateWeatherLabel();
 }
 
 function initWeatherManager() {
   const saved = localStorage.getItem('rebelAntsWeatherMode');
   const savedSpeed = localStorage.getItem('rebelAntsWeatherCycleSpeed');
+  const savedMasterVolume = localStorage.getItem('rebelAntsMasterVolume');
   const savedAmbienceVolume = localStorage.getItem('rebelAntsAmbienceVolume');
   const savedWeatherVolume = localStorage.getItem('rebelAntsWeatherVolume');
   const savedInteractionVolume = localStorage.getItem('rebelAntsInteractionVolume');
+  const savedFootstepVolume = localStorage.getItem('rebelAntsFootstepVolume');
   if (WEATHER_CYCLE_SPEEDS[savedSpeed]) {
     WeatherManager.cycleSpeed = savedSpeed;
     WeatherManager.cycleMs = WEATHER_CYCLE_SPEEDS[savedSpeed];
@@ -4243,9 +4369,11 @@ function initWeatherManager() {
   WeatherManager.masterAudioEnabled = false;
   WeatherManager.audioEnabled = false;
   WeatherManager.interactionAudioEnabled = localStorage.getItem('rebelAntsInteractionAudioEnabled') !== '0';
+  if (savedMasterVolume !== null) WeatherManager.masterVolume = clampAudioVolume(savedMasterVolume);
   if (savedAmbienceVolume !== null) WeatherManager.ambienceVolume = clampAudioVolume(savedAmbienceVolume);
   if (savedWeatherVolume !== null) WeatherManager.weatherVolume = clampAudioVolume(savedWeatherVolume);
   if (savedInteractionVolume !== null) WeatherManager.interactionVolume = clampAudioVolume(savedInteractionVolume);
+  if (savedFootstepVolume !== null) WeatherManager.footstepVolume = clampAudioVolume(savedFootstepVolume);
   updateAudioControls();
   setWeatherMode(WEATHER_MODES[saved] ? saved : 'clear', false);
 }
@@ -10203,6 +10331,7 @@ engine.runRenderLoop(()=>{
     }
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8;}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
+    updateFootstepAudio();
     if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
     _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
     const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
@@ -11359,12 +11488,15 @@ window.toggleWorklight = toggleWorklight;
 window.setWeatherMode = setWeatherMode;
 window.setWeatherCyclePaused = setWeatherCyclePaused;
 window.setWeatherCycleSpeed = setWeatherCycleSpeed;
+window.muteAllAudio = muteAllAudio;
 window.toggleMasterAudio = toggleMasterAudio;
 window.toggleWeatherAudio = toggleWeatherAudio;
 window.toggleInteractionAudio = toggleInteractionAudio;
+window.setMasterVolume = setMasterVolume;
 window.setAmbienceVolume = setAmbienceVolume;
 window.setWeatherVolume = setWeatherVolume;
 window.setInteractionVolume = setInteractionVolume;
+window.setFootstepVolume = setFootstepVolume;
 window.saveWorldLayout = saveWorldLayout;
 window.loadWorldLayout = loadWorldLayout;
 
