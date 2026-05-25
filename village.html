@@ -3535,12 +3535,12 @@ function getWeatherVisualConfig() {
   ['rain','snow','splashes','puddles','frost','sun','hemi','fogDensity'].forEach(key => {
     if (from[key] !== undefined || target[key] !== undefined) cfg[key] = lerpWeatherNumber(from[key], target[key], t);
   });
-  cfg.speed = target.speed || from.speed || 0;
-  cfg.snowSpeed = target.snowSpeed || from.snowSpeed || 0;
+  cfg.speed = t < 1 ? (target.speed || from.speed || 0) : (target.speed || 0);
+  cfg.snowSpeed = t < 1 ? (target.snowSpeed || from.snowSpeed || 0) : (target.snowSpeed || 0);
   cfg.fogColor = lerpWeatherColor(from.fogColor || WeatherManager.baseFogColor, target.fogColor || WeatherManager.baseFogColor, t);
-  cfg.fog = target.fog !== BABYLON.Scene.FOGMODE_NONE || from.fog !== BABYLON.Scene.FOGMODE_NONE
+  cfg.fog = t < 1 && from.fog !== BABYLON.Scene.FOGMODE_NONE
     ? BABYLON.Scene.FOGMODE_EXP2
-    : BABYLON.Scene.FOGMODE_NONE;
+    : target.fog;
   cfg.wet = target.wet || (from.wet && t < 0.65);
   cfg.cold = target.cold || (from.cold && t < 0.65);
   cfg.warm = target.warm || (from.warm && t < 0.65);
