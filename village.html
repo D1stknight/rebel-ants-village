@@ -4681,15 +4681,20 @@ async function tryLoadNPCModel(root, npc) {
     const modelRoot = new BABYLON.TransformNode(`${npc.npcId}_modelRoot`, scene);
     modelRoot.parent = root;
     modelRoot.scaling.setAll(npc.modelScale || 1);
-    const importedRootMesh = (result.meshes || [])[0] || null;
+    const importedNodes = [
+      ...(result.transformNodes || []),
+      ...(result.meshes || [])
+    ];
+    const importedNodeSet = new Set(importedNodes);
     (result.meshes || []).forEach(mesh => {
       makeNPCMeshPickSafe(mesh);
+      mesh.setEnabled(true);
     });
-    if (importedRootMesh) importedRootMesh.parent = modelRoot;
-    (result.transformNodes || []).forEach(node => {
-      if (!node.parent) node.parent = modelRoot;
+    importedNodes.forEach(node => {
+      if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = modelRoot;
     });
-    root.metadata.placeholderPieces?.forEach(mesh => mesh.setEnabled(false));
+    const visibleMeshCount = (result.meshes || []).filter(mesh => mesh && mesh.isEnabled() && mesh.getTotalVertices && mesh.getTotalVertices() > 0).length;
+    if (visibleMeshCount > 0) root.metadata.placeholderPieces?.forEach(mesh => mesh.setEnabled(false));
     root.metadata.animationGroups = result.animationGroups || [];
     root.metadata.modelRoot = modelRoot;
     root.metadata.modelLoaded = true;
