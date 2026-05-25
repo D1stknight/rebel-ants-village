@@ -402,8 +402,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <option value="test">Test</option>
     </select>
   </div>
-  <div style="padding:0 8px 6px">
-    <button class="ctrl-btn full" id="weatherAudioBtn" onclick="toggleWeatherAudio()" style="width:100%">Enable Weather Sound</button>
+  <div style="padding:0 8px 6px;display:grid;grid-template-columns:1fr;gap:5px">
+    <button class="ctrl-btn full" id="masterAudioBtn" onclick="toggleMasterAudio()" style="width:100%">Enable Ambience</button>
+    <button class="ctrl-btn full" id="weatherAudioBtn" onclick="toggleWeatherAudio()" style="width:100%">Weather Audio: Off</button>
+    <button class="ctrl-btn full" id="interactionAudioBtn" onclick="toggleInteractionAudio()" style="width:100%">Interaction Audio: On</button>
+  </div>
+  <div style="padding:0 8px 6px;display:grid;gap:5px">
+    <label style="font-size:9px;color:#8aa;letter-spacing:1px">Ambience <input id="ambienceVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.55" oninput="setAmbienceVolume(this.value)" style="width:100%"></label>
+    <label style="font-size:9px;color:#8aa;letter-spacing:1px">Weather <input id="weatherVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.65" oninput="setWeatherVolume(this.value)" style="width:100%"></label>
+    <label style="font-size:9px;color:#8aa;letter-spacing:1px">Interaction <input id="interactionVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.7" oninput="setInteractionVolume(this.value)" style="width:100%"></label>
   </div>
   <hr class="ap-divider">
   <div style="padding:0 8px 6px">
@@ -2621,6 +2628,7 @@ function openTreasureChest(chest) {
   if (lidPivot) animateTreasureChestLid(chest, true);
 
   // Reward payout intentionally stubbed for future $REBEL/economy API integration.
+  playInteractionAudio('chestOpen');
   triggerAutoSave();
   showToast('Chest opened — reward system coming soon');
   return true;
@@ -3050,6 +3058,7 @@ function openVillageGateMenu() {
   list.innerHTML = hubOption + factionOptions;
   overlay.classList.add('on');
   overlay.setAttribute('aria-hidden','false');
+  playInteractionAudio('portalOpen');
   return true;
 }
 
@@ -3066,6 +3075,7 @@ function selectVillageGateDestination(villageId) {
   const village = VILLAGE_REGISTRY[villageId];
   if (!village) return;
   if (villageId === CURRENT_VILLAGE_ID) return;
+  playInteractionAudio('portalTravel');
   window.location.href = village.route;
 }
 
@@ -3467,6 +3477,19 @@ const WEATHER_AUDIO_TRACKS = {
 
 const WEATHER_THUNDER_AUDIO = '/assets/audio/weather/thunder-1.mp3';
 
+const VILLAGE_AMBIENCE_PROFILES = {
+  hub: [{ id:'ambience-hub-day', path:'/assets/audio/ambience/hub-day.mp3', volume:.46 }],
+  ronin: [{ id:'ambience-ronin-wind', path:'/assets/audio/ambience/ronin-wind.mp3', volume:.52 }],
+  samurai: [{ id:'ambience-samurai-courtyard', path:'/assets/audio/ambience/samurai-courtyard.mp3', volume:.42 }]
+};
+const DEFAULT_VILLAGE_AMBIENCE = [{ id:'ambience-hub-day', path:'/assets/audio/ambience/hub-day.mp3', volume:.24 }];
+const PORTAL_HUM_AUDIO = { id:'portal-hum', path:'/assets/audio/ambience/portal-hum.mp3', volume:.28 };
+const INTERACTION_AUDIO = {
+  chestOpen: { id:'chest-open', path:'/assets/audio/interactions/chest-open.mp3', volume:.72, cooldownMs:850 },
+  portalOpen: { id:'portal-open', path:'/assets/audio/interactions/portal-open.mp3', volume:.58, cooldownMs:700 },
+  portalTravel: { id:'portal-travel', path:'/assets/audio/interactions/portal-travel.mp3', volume:.68, cooldownMs:700 }
+};
+
 const WeatherManager = {
   mode: 'clear',
   cycleSpeed: 'normal',
@@ -3492,8 +3515,15 @@ const WeatherManager = {
   distantLightningRoot: null,
   distantLightningUntil: 0,
   distantLightningStrikeAt: performance.now() + 12000,
+  masterAudioEnabled: false,
   audioEnabled: false,
+  interactionAudioEnabled: true,
+  ambienceVolume: .55,
+  weatherVolume: .65,
+  interactionVolume: .7,
   audioTracks: {},
+  oneShotTracks: {},
+  audioCooldowns: {},
   thunderAudio: null,
   _thunderPlayedForStrike: 0,
   baseSunIntensity: sun.intensity,
@@ -3591,14 +3621,36 @@ function getWeatherAudioTargets() {
   const targets = {};
   if (!WeatherManager.audioEnabled) return targets;
   (WEATHER_AUDIO_TRACKS[WeatherManager.mode] || []).forEach(track => {
-    targets[track.id] = Math.max(targets[track.id] || 0, track.volume || .2);
+    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .2) * WeatherManager.weatherVolume);
     getWeatherAudioTrack(track.id, track.path);
   });
   return targets;
 }
 
+function getVillageAmbienceTargets() {
+  const targets = {};
+  if (!WeatherManager.masterAudioEnabled) return targets;
+  const profile = VILLAGE_AMBIENCE_PROFILES[CURRENT_VILLAGE_ID] || DEFAULT_VILLAGE_AMBIENCE;
+  const moodScale = WeatherManager.mode === 'storm'
+    ? .78
+    : (WeatherManager.mode === 'snow' || WeatherManager.mode === 'fog' || WeatherManager.mode === 'cold')
+      ? .62
+      : 1;
+  profile.forEach(track => {
+    targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .25) * WeatherManager.ambienceVolume * moodScale);
+    getWeatherAudioTrack(track.id, track.path);
+  });
+  const nearGate = walkMode && !adminMode && getNearestVillageGateInRange(10.5);
+  if (nearGate || isVillageGateMenuOpen()) {
+    const pulse = .82 + Math.sin(performance.now() * .003) * .18;
+    targets[PORTAL_HUM_AUDIO.id] = PORTAL_HUM_AUDIO.volume * WeatherManager.ambienceVolume * pulse;
+    getWeatherAudioTrack(PORTAL_HUM_AUDIO.id, PORTAL_HUM_AUDIO.path);
+  }
+  return targets;
+}
+
 function updateWeatherAudio() {
-  const targets = getWeatherAudioTargets();
+  const targets = { ...getVillageAmbienceTargets(), ...getWeatherAudioTargets() };
   Object.entries(WeatherManager.audioTracks).forEach(([id, audio]) => {
     if (!audio || audio._unavailable) return;
     audio._targetVolume = targets[id] || 0;
@@ -3626,14 +3678,101 @@ function playWeatherThunderAudio(strikeId) {
   WeatherManager.thunderAudio.play().catch(() => { WeatherManager.thunderAudio._unavailable = true; });
 }
 
+function getInteractionAudioTrack(id, path) {
+  if (!WeatherManager.oneShotTracks[id]) {
+    const audio = new Audio(path);
+    audio.preload = 'none';
+    audio.volume = 0;
+    audio._unavailable = false;
+    audio.onerror = () => { audio._unavailable = true; };
+    WeatherManager.oneShotTracks[id] = audio;
+  }
+  return WeatherManager.oneShotTracks[id];
+}
+
+function playInteractionAudio(key) {
+  const cfg = INTERACTION_AUDIO[key];
+  if (!cfg || !WeatherManager.interactionAudioEnabled) return;
+  const now = performance.now();
+  if (now < (WeatherManager.audioCooldowns[key] || 0)) return;
+  WeatherManager.audioCooldowns[key] = now + (cfg.cooldownMs || 500);
+  const audio = getInteractionAudioTrack(cfg.id, cfg.path);
+  if (!audio || audio._unavailable) return;
+  audio.volume = (cfg.volume || .6) * WeatherManager.interactionVolume;
+  audio.currentTime = 0;
+  audio.play().catch(() => { audio._unavailable = true; });
+}
+
+function persistAudioSettings() {
+  localStorage.setItem('rebelAntsMasterAudioEnabled', WeatherManager.masterAudioEnabled ? '1' : '0');
+  localStorage.setItem('rebelAntsWeatherAudioEnabled', WeatherManager.audioEnabled ? '1' : '0');
+  localStorage.setItem('rebelAntsInteractionAudioEnabled', WeatherManager.interactionAudioEnabled ? '1' : '0');
+  localStorage.setItem('rebelAntsAmbienceVolume', String(WeatherManager.ambienceVolume));
+  localStorage.setItem('rebelAntsWeatherVolume', String(WeatherManager.weatherVolume));
+  localStorage.setItem('rebelAntsInteractionVolume', String(WeatherManager.interactionVolume));
+}
+
+function setAudioSliderValue(id, value) {
+  const el = document.getElementById(id);
+  if (el && String(el.value) !== String(value)) el.value = value;
+}
+
+function updateAudioControls() {
+  const masterBtn = document.getElementById('masterAudioBtn');
+  if (masterBtn) masterBtn.textContent = WeatherManager.masterAudioEnabled ? 'Mute Ambience' : 'Enable Ambience';
+  const audioBtn = document.getElementById('weatherAudioBtn');
+  if (audioBtn) audioBtn.textContent = 'Weather Audio: ' + (WeatherManager.audioEnabled ? 'On' : 'Off');
+  const interactionBtn = document.getElementById('interactionAudioBtn');
+  if (interactionBtn) interactionBtn.textContent = 'Interaction Audio: ' + (WeatherManager.interactionAudioEnabled ? 'On' : 'Off');
+  setAudioSliderValue('ambienceVolumeSlider', WeatherManager.ambienceVolume);
+  setAudioSliderValue('weatherVolumeSlider', WeatherManager.weatherVolume);
+  setAudioSliderValue('interactionVolumeSlider', WeatherManager.interactionVolume);
+}
+
+function muteAllAudioTargets() {
+  Object.values(WeatherManager.audioTracks).forEach(audio => { if (audio) audio._targetVolume = 0; });
+}
+
+function toggleMasterAudio() {
+  WeatherManager.masterAudioEnabled = !WeatherManager.masterAudioEnabled;
+  if (!WeatherManager.masterAudioEnabled) muteAllAudioTargets();
+  persistAudioSettings();
+  updateAudioControls();
+  showToast(WeatherManager.masterAudioEnabled ? 'Ambience enabled' : 'Ambience muted');
+}
+
 function toggleWeatherAudio() {
   WeatherManager.audioEnabled = !WeatherManager.audioEnabled;
-  localStorage.setItem('rebelAntsWeatherAudioEnabled', WeatherManager.audioEnabled ? '1' : '0');
-  if (!WeatherManager.audioEnabled) {
-    Object.values(WeatherManager.audioTracks).forEach(audio => { if (audio) audio._targetVolume = 0; });
-  }
-  updateWeatherLabel();
-  showToast(WeatherManager.audioEnabled ? 'Weather sound enabled' : 'Weather sound muted');
+  if (!WeatherManager.audioEnabled) muteAllAudioTargets();
+  persistAudioSettings();
+  updateAudioControls();
+  showToast(WeatherManager.audioEnabled ? 'Weather audio enabled' : 'Weather audio muted');
+}
+
+function toggleInteractionAudio() {
+  WeatherManager.interactionAudioEnabled = !WeatherManager.interactionAudioEnabled;
+  persistAudioSettings();
+  updateAudioControls();
+  showToast(WeatherManager.interactionAudioEnabled ? 'Interaction audio enabled' : 'Interaction audio muted');
+}
+
+function clampAudioVolume(value) {
+  return Math.max(0, Math.min(1, Number(value) || 0));
+}
+
+function setAmbienceVolume(value) {
+  WeatherManager.ambienceVolume = clampAudioVolume(value);
+  persistAudioSettings();
+}
+
+function setWeatherVolume(value) {
+  WeatherManager.weatherVolume = clampAudioVolume(value);
+  persistAudioSettings();
+}
+
+function setInteractionVolume(value) {
+  WeatherManager.interactionVolume = clampAudioVolume(value);
+  persistAudioSettings();
 }
 
 function getWeatherReactiveRoots() {
@@ -4028,8 +4167,7 @@ function updateWeatherLabel() {
   const resumeBtn = document.getElementById('weatherResumeBtn');
   if (pauseBtn) pauseBtn.style.opacity = WeatherManager.paused ? '.55' : '1';
   if (resumeBtn) resumeBtn.style.opacity = WeatherManager.paused ? '1' : '.55';
-  const audioBtn = document.getElementById('weatherAudioBtn');
-  if (audioBtn) audioBtn.textContent = WeatherManager.audioEnabled ? 'Mute Weather Audio' : 'Enable Weather Sound';
+  updateAudioControls();
 }
 
 function setWeatherMode(mode, manual = false) {
@@ -4095,10 +4233,20 @@ function updateWeatherManager() {
 function initWeatherManager() {
   const saved = localStorage.getItem('rebelAntsWeatherMode');
   const savedSpeed = localStorage.getItem('rebelAntsWeatherCycleSpeed');
+  const savedAmbienceVolume = localStorage.getItem('rebelAntsAmbienceVolume');
+  const savedWeatherVolume = localStorage.getItem('rebelAntsWeatherVolume');
+  const savedInteractionVolume = localStorage.getItem('rebelAntsInteractionVolume');
   if (WEATHER_CYCLE_SPEEDS[savedSpeed]) {
     WeatherManager.cycleSpeed = savedSpeed;
     WeatherManager.cycleMs = WEATHER_CYCLE_SPEEDS[savedSpeed];
   }
+  WeatherManager.masterAudioEnabled = false;
+  WeatherManager.audioEnabled = false;
+  WeatherManager.interactionAudioEnabled = localStorage.getItem('rebelAntsInteractionAudioEnabled') !== '0';
+  if (savedAmbienceVolume !== null) WeatherManager.ambienceVolume = clampAudioVolume(savedAmbienceVolume);
+  if (savedWeatherVolume !== null) WeatherManager.weatherVolume = clampAudioVolume(savedWeatherVolume);
+  if (savedInteractionVolume !== null) WeatherManager.interactionVolume = clampAudioVolume(savedInteractionVolume);
+  updateAudioControls();
   setWeatherMode(WEATHER_MODES[saved] ? saved : 'clear', false);
 }
 
@@ -11211,7 +11359,12 @@ window.toggleWorklight = toggleWorklight;
 window.setWeatherMode = setWeatherMode;
 window.setWeatherCyclePaused = setWeatherCyclePaused;
 window.setWeatherCycleSpeed = setWeatherCycleSpeed;
+window.toggleMasterAudio = toggleMasterAudio;
 window.toggleWeatherAudio = toggleWeatherAudio;
+window.toggleInteractionAudio = toggleInteractionAudio;
+window.setAmbienceVolume = setAmbienceVolume;
+window.setWeatherVolume = setWeatherVolume;
+window.setInteractionVolume = setInteractionVolume;
 window.saveWorldLayout = saveWorldLayout;
 window.loadWorldLayout = loadWorldLayout;
 
