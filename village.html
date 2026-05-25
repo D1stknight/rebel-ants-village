@@ -206,21 +206,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 .lf{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#e8c56a,transparent);animation:sw 1.6s infinite}
 @keyframes sw{to{left:100%}}@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
 
-#assetPanel{position:fixed;top:0;right:0;width:220px;height:100vh;background:rgba(5,10,28,.97);border-left:1px solid rgba(232,197,106,.25);z-index:25;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(12px)}
+#assetPanel{position:fixed;top:0;right:0;width:min(360px,42vw);min-width:300px;height:100vh;background:rgba(5,10,28,.97);border-left:1px solid rgba(232,197,106,.25);z-index:25;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(12px)}
 #assetPanel.on{transform:translateX(0)}
 #assetPanel .ap-header{padding:12px 14px;border-bottom:1px solid rgba(232,197,106,.15);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 #assetPanel .ap-header span{font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;color:#e8c56a}
 #assetPanel .ap-header kbd{font-size:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:3px;padding:1px 5px;color:rgba(255,255,255,.45)}
 #assetPanel .ap-scroll{flex:1;overflow-y:auto;padding:8px 0}
 #assetPanel .ap-section{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;padding:8px 12px 4px}
-#assetPanel .ap-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 8px}
-#assetPanel .ap-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:8px 4px;cursor:pointer;text-align:center;transition:all .15s}
+#assetPanel .ap-section.collapsible{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;color:rgba(232,197,106,.62)}
+#assetPanel .ap-section.collapsible::after{content:'▾';font-size:10px;color:rgba(94,207,202,.55)}
+#assetPanel .ap-section.collapsed::after{content:'▸'}
+#assetPanel .ap-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:0 10px 4px}
+#assetPanel .ap-grid.collapsed{display:none!important}
+#assetPanel .ap-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:9px 5px;cursor:pointer;text-align:center;transition:all .15s;min-width:0}
 #assetPanel .ap-card:hover{background:rgba(232,197,106,.12);border-color:rgba(232,197,106,.4)}
 #assetPanel .ap-card.library-removable{position:relative;padding-right:20px}
 #assetPanel .ap-remove{position:absolute;top:3px;right:3px;width:16px;height:16px;border:1px solid rgba(220,80,80,.45);border-radius:4px;background:rgba(40,4,8,.86);color:#e86060;font-size:12px;line-height:12px;cursor:pointer;padding:0;opacity:.78}
 #assetPanel .ap-remove:hover{opacity:1;background:rgba(220,60,60,.2);border-color:rgba(220,80,80,.8)}
 #assetPanel .ap-card .ap-icon{font-size:18px;display:block;margin-bottom:3px}
-#assetPanel .ap-card .ap-name{font-size:9px;color:rgba(255,255,255,.5);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#assetPanel .ap-card .ap-name{font-size:9px;color:rgba(255,255,255,.5);display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.2}
 #assetPanel .ap-divider{border:none;border-top:1px solid rgba(255,255,255,.06);margin:8px}
 #assetPanel .ap-btn{width:calc(100% - 16px);margin:0 8px 5px;padding:7px 10px;font-size:10px;font-family:'Cinzel Decorative',serif;letter-spacing:1px;border:1px solid rgba(232,197,106,.3);border-radius:4px;background:transparent;color:#e8c56a;cursor:pointer;text-align:left;transition:all .15s}
 #assetPanel .ap-btn:hover{background:rgba(232,197,106,.12)}
@@ -228,7 +232,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #assetPanel .ap-footer{padding:8px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:5px;flex-shrink:0}
 #assetPanel .ap-footer button{flex:1;padding:6px;font-size:9px;font-family:'Cinzel Decorative',serif;letter-spacing:1px;border:1px solid rgba(255,255,255,.12);border-radius:4px;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;transition:all .15s}
 #assetPanel .ap-footer button:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
-#assetPanel .ap-section{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;padding:8px 12px 4px}
 #assetPanel .ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 8px 6px}
 #assetPanel .ctrl-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:6px 4px;cursor:pointer;text-align:center;color:rgba(255,255,255,.7);font-size:9px;font-family:'Cinzel Decorative',serif;letter-spacing:.5px;transition:all .15s;display:block;width:100%}
 #assetPanel .ctrl-btn:hover{background:rgba(232,197,106,.12);border-color:rgba(232,197,106,.4);color:#e8c56a}
@@ -238,6 +241,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #assetPanel .ctrl-btn.full{grid-column:1/-1}
 #assetPanel .admin-select{width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(94,207,202,.35);border-radius:5px;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:1px;padding:7px 8px;outline:none}
 #assetPanel .admin-select option{background:#050a1c;color:#e8c56a}
+@media (max-width:720px){#assetPanel{width:min(320px,88vw);min-width:0}#assetPanel .ap-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(5,10,28,.95);border:1px solid rgba(94,207,202,.6);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:10px 24px;opacity:0;transition:all .4s;pointer-events:none;z-index:50;white-space:nowrap}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #interactionPrompt{position:fixed;bottom:122px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.7);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:2px;padding:9px 18px;opacity:0;transition:opacity .18s;pointer-events:none;z-index:49;white-space:nowrap}
@@ -411,6 +415,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn full" id="masterAudioBtn" onclick="toggleMasterAudio()" style="width:100%">Enable Ambience</button>
     <button class="ctrl-btn full" id="weatherAudioBtn" onclick="toggleWeatherAudio()" style="width:100%">Weather Audio: Off</button>
     <button class="ctrl-btn full" id="interactionAudioBtn" onclick="toggleInteractionAudio()" style="width:100%">Interaction Audio: On</button>
+    <button class="ctrl-btn full" id="footstepAudioBtn" onclick="toggleFootstepAudio()" style="width:100%">Footsteps: On</button>
   </div>
   <div style="padding:0 8px 6px;display:grid;gap:5px">
     <label style="font-size:9px;color:#8aa;letter-spacing:1px">Master <input id="masterVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.8" oninput="setMasterVolume(this.value)" style="width:100%"></label>
@@ -3553,6 +3558,7 @@ const WeatherManager = {
   masterAudioEnabled: false,
   audioEnabled: false,
   interactionAudioEnabled: true,
+  footstepAudioEnabled: true,
   masterVolume: .8,
   ambienceVolume: .55,
   weatherVolume: .65,
@@ -3745,7 +3751,7 @@ function playInteractionAudio(key) {
 }
 
 function playFootstepAudio() {
-  if (!WeatherManager.interactionAudioEnabled) return;
+  if (!WeatherManager.footstepAudioEnabled) return;
   let key = 'footstepDirt';
   if (WeatherManager.mode === 'snow' || WeatherManager.mode === 'cold') key = 'footstepSnow';
   else if (WeatherManager.mode === 'light-rain' || WeatherManager.mode === 'heavy-rain' || WeatherManager.mode === 'storm') key = 'footstepWet';
@@ -3758,9 +3764,21 @@ function playFootstepAudio() {
   audio.play().catch(() => { audio._unavailable = true; });
 }
 
+function stopFootstepAudio() {
+  ['footstep-dirt','footstep-wet','footstep-snow','footstep-stone'].forEach(id => {
+    const audio = WeatherManager.oneShotTracks[id];
+    if (!audio || audio.paused) return;
+    audio.pause();
+    audio.currentTime = 0;
+  });
+  WeatherManager.footstepDistance = 0;
+}
+
 function updateFootstepAudio() {
-  if (!walkMode || adminMode || !charMesh || Math.abs(charMesh._vel || 0) < .015) {
+  const hasMoveInput = moveForward || moveBackward || runKey;
+  if (!walkMode || adminMode || !charMesh || !hasMoveInput || Math.abs(charMesh._vel || 0) < .015) {
     WeatherManager.lastFootstepPosition = charMesh ? charMesh.position.clone() : null;
+    stopFootstepAudio();
     return;
   }
   const now = performance.now();
@@ -3806,6 +3824,7 @@ function persistAudioSettings() {
   localStorage.setItem('rebelAntsMasterAudioEnabled', WeatherManager.masterAudioEnabled ? '1' : '0');
   localStorage.setItem('rebelAntsWeatherAudioEnabled', WeatherManager.audioEnabled ? '1' : '0');
   localStorage.setItem('rebelAntsInteractionAudioEnabled', WeatherManager.interactionAudioEnabled ? '1' : '0');
+  localStorage.setItem('rebelAntsFootstepAudioEnabled', WeatherManager.footstepAudioEnabled ? '1' : '0');
   localStorage.setItem('rebelAntsMasterVolume', String(WeatherManager.masterVolume));
   localStorage.setItem('rebelAntsAmbienceVolume', String(WeatherManager.ambienceVolume));
   localStorage.setItem('rebelAntsWeatherVolume', String(WeatherManager.weatherVolume));
@@ -3825,6 +3844,8 @@ function updateAudioControls() {
   if (audioBtn) audioBtn.textContent = 'Weather Audio: ' + (WeatherManager.audioEnabled ? 'On' : 'Off');
   const interactionBtn = document.getElementById('interactionAudioBtn');
   if (interactionBtn) interactionBtn.textContent = 'Interaction Audio: ' + (WeatherManager.interactionAudioEnabled ? 'On' : 'Off');
+  const footstepBtn = document.getElementById('footstepAudioBtn');
+  if (footstepBtn) footstepBtn.textContent = 'Footsteps: ' + (WeatherManager.footstepAudioEnabled ? 'On' : 'Off');
   setAudioSliderValue('masterVolumeSlider', WeatherManager.masterVolume);
   setAudioSliderValue('ambienceVolumeSlider', WeatherManager.ambienceVolume);
   setAudioSliderValue('weatherVolumeSlider', WeatherManager.weatherVolume);
@@ -3848,7 +3869,9 @@ function muteAllAudio() {
   WeatherManager.masterAudioEnabled = false;
   WeatherManager.audioEnabled = false;
   WeatherManager.interactionAudioEnabled = false;
+  WeatherManager.footstepAudioEnabled = false;
   muteAllAudioTargets();
+  stopFootstepAudio();
   persistAudioSettings();
   updateAudioControls();
   showToast('All audio muted');
@@ -3867,6 +3890,14 @@ function toggleInteractionAudio() {
   persistAudioSettings();
   updateAudioControls();
   showToast(WeatherManager.interactionAudioEnabled ? 'Interaction audio enabled' : 'Interaction audio muted');
+}
+
+function toggleFootstepAudio() {
+  WeatherManager.footstepAudioEnabled = !WeatherManager.footstepAudioEnabled;
+  if (!WeatherManager.footstepAudioEnabled) stopFootstepAudio();
+  persistAudioSettings();
+  updateAudioControls();
+  showToast(WeatherManager.footstepAudioEnabled ? 'Footsteps enabled' : 'Footsteps muted');
 }
 
 function clampAudioVolume(value) {
@@ -4369,6 +4400,7 @@ function initWeatherManager() {
   WeatherManager.masterAudioEnabled = false;
   WeatherManager.audioEnabled = false;
   WeatherManager.interactionAudioEnabled = localStorage.getItem('rebelAntsInteractionAudioEnabled') !== '0';
+  WeatherManager.footstepAudioEnabled = localStorage.getItem('rebelAntsFootstepAudioEnabled') !== '0';
   if (savedMasterVolume !== null) WeatherManager.masterVolume = clampAudioVolume(savedMasterVolume);
   if (savedAmbienceVolume !== null) WeatherManager.ambienceVolume = clampAudioVolume(savedAmbienceVolume);
   if (savedWeatherVolume !== null) WeatherManager.weatherVolume = clampAudioVolume(savedWeatherVolume);
@@ -10331,13 +10363,13 @@ engine.runRenderLoop(()=>{
     }
     if(animState!==2&&animState!==3&&animState!==4){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8;}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
-    updateFootstepAudio();
     if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
     _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
     const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
     walk.position=BABYLON.Vector3.Lerp(walk.position,dc,0.1);
     walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
   }
+  updateFootstepAudio();
   updateInteractionPrompt();
   tryAutoOpenVillageGateFromWalkthrough();
   updateWeatherManager();
@@ -10769,7 +10801,41 @@ function updateUploadedAssetsVisibility() {
   const hasUploads = grid.children.length > 0;
   section.style.display = hasUploads ? '' : 'none';
   grid.style.display = hasUploads ? '' : 'none';
+  initializeCollapsibleAssetCategories();
 }
+
+function getAssetCategoryStateKey(section) {
+  return (section.id || section.textContent || 'assets').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+}
+
+function initializeCollapsibleAssetCategories() {
+  document.querySelectorAll('#assetPanel .ap-section').forEach(section => {
+    const grid = section.nextElementSibling;
+    if (!grid || !grid.classList || !grid.classList.contains('ap-grid')) return;
+    if (section.dataset.collapsibleReady === 'true') return;
+    const key = getAssetCategoryStateKey(section);
+    const saved = localStorage.getItem('rebelAntsAssetCategoryCollapsed:' + key);
+    const toggle = collapsed => {
+      section.classList.toggle('collapsed', collapsed);
+      grid.classList.toggle('collapsed', collapsed);
+      section.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      localStorage.setItem('rebelAntsAssetCategoryCollapsed:' + key, collapsed ? '1' : '0');
+    };
+    section.dataset.collapsibleReady = 'true';
+    section.classList.add('collapsible');
+    section.setAttribute('role', 'button');
+    section.setAttribute('tabindex', '0');
+    section.addEventListener('click', () => toggle(!section.classList.contains('collapsed')));
+    section.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      toggle(!section.classList.contains('collapsed'));
+    });
+    toggle(saved === '1');
+  });
+}
+
+initializeCollapsibleAssetCategories();
 
 function isLibraryAssetRemovable(key) {
   return !!key && (CORE_ASSET_KEYS.has(key) || getUploadedAssets().some(a => a.key === key) || ASSETS[key]?._uploaded === true);
@@ -11076,7 +11142,7 @@ function toggleAssetPanel(show) {
   const panel = document.getElementById('assetPanel');
   if (panel) panel.classList.toggle('on', show);
   // Shift HUD badges left when panel is open
-  const offset = show ? '248px' : '28px';
+  const offset = show && panel ? `${Math.ceil(panel.getBoundingClientRect().width) + 28}px` : '28px';
   ['adminBadge','selectedBadge','saveBadge'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.right = offset;
@@ -11492,6 +11558,7 @@ window.muteAllAudio = muteAllAudio;
 window.toggleMasterAudio = toggleMasterAudio;
 window.toggleWeatherAudio = toggleWeatherAudio;
 window.toggleInteractionAudio = toggleInteractionAudio;
+window.toggleFootstepAudio = toggleFootstepAudio;
 window.setMasterVolume = setMasterVolume;
 window.setAmbienceVolume = setAmbienceVolume;
 window.setWeatherVolume = setWeatherVolume;
