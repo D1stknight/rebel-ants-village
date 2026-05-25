@@ -4922,9 +4922,28 @@ function restoreNPCFromLayoutItem(item) {
     fallbackType: item.fallbackType || base.fallbackType || 'ant',
     behavior: item.behavior || base.behavior || 'idle',
     dialogueId: item.dialogueId || base.dialogueId || 'default',
-    questId: item.questId || base.questId || null
+    questId: item.questId || base.questId || null,
+    patrolPoints: Array.isArray(item.patrolPoints) ? item.patrolPoints : base.patrolPoints
   };
   return createNPCFromDefinition(npc, item);
+}
+
+function updateNPCPlacementOrigin(root, previousPosition = null) {
+  if (!root || root.metadata?.type !== 'npc') return;
+  const meta = root.metadata;
+  const previousHome = previousPosition || meta.spawn || root.position;
+  const delta = root.position.subtract(new BABYLON.Vector3(previousHome.x || 0, previousHome.y || 0, previousHome.z || 0));
+  meta.spawn = { x: root.position.x, y: root.position.y, z: root.position.z };
+  meta.target = null;
+  meta.waitUntil = performance.now() + 900;
+  meta.turningInPlace = false;
+  if (Array.isArray(meta.patrolPoints) && meta.patrolPoints.length && delta.lengthSquared() > 0.000001) {
+    meta.patrolPoints = meta.patrolPoints.map(point => ({
+      x: (point.x || 0) + delta.x,
+      y: Number.isFinite(point.y) ? point.y + delta.y : point.y,
+      z: (point.z || 0) + delta.z
+    }));
+  }
 }
 
 function chooseNPCWanderTarget(root) {
@@ -5008,6 +5027,10 @@ function updateNPCPopulation(dt) {
     if (!root || root.isDisposed?.()) return;
     root.setEnabled(NPCManager.visible);
     if (!NPCManager.visible) return;
+    if (adminMode) {
+      updateNPCAnimationState(root, false, now);
+      return;
+    }
     if (NPCManager.paused) {
       updateNPCAnimationState(root, false, now);
       return;
@@ -9356,6 +9379,7 @@ window.addEventListener('pointerup', () => {
     ) {
       moveAttachedCollisionProxyPieces(selectedObject, selectedObject.position.subtract(beforePos));
     }
+    if (selectedObject.metadata?.type === 'npc') updateNPCPlacementOrigin(selectedObject, beforePos);
     rebuildVillageCollisionBlockers();
     renderSelectedWalkSurfaceGuide();
     triggerAutoSave();
@@ -9437,10 +9461,14 @@ function saveWorldLayout(saveToGitHub = true){
   );
   const allNodes = [...saveableTransformNodes, ...saveableProxyMeshes, ...saveableNPCNodes];
 
-  const data = allNodes.map(node => ({
+  const data = allNodes.map(node => {
+    const savePosition = node.metadata.type === 'npc' && node.metadata.spawn
+      ? node.metadata.spawn
+      : node.position;
+    return ({
     type: node.metadata.type,
     name: node.name,
-    position: { x: node.position.x, y: node.position.y, z: node.position.z },
+    position: { x: savePosition.x, y: savePosition.y, z: savePosition.z },
     rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
     scaling: { x: node.scaling.x, y: node.scaling.y, z: node.scaling.z },
     signConfig: node.metadata.signConfig || null,
@@ -9469,6 +9497,7 @@ function saveWorldLayout(saveToGitHub = true){
     behavior: node.metadata.behavior || null,
     dialogueId: node.metadata.dialogueId || null,
     questId: node.metadata.questId || null,
+    patrolPoints: Array.isArray(node.metadata.patrolPoints) ? node.metadata.patrolPoints : null,
     proxyAutoEnabled: node.metadata.proxyAutoEnabled !== false,
     proxyWalkSurfaceEnabled: node.metadata.proxyWalkSurfaceEnabled === true,
     proxyEntranceSide: node.metadata.proxyEntranceSide || null,
@@ -9480,7 +9509,8 @@ function saveWorldLayout(saveToGitHub = true){
     proxyOwnerName: node.metadata.proxyOwnerName || null,
     proxyOwnerType: node.metadata.proxyOwnerType || null,
     proxyOwnerAssetKey: node.metadata.proxyOwnerAssetKey || node.metadata.proxyOwnerType || null
-  }));
+  });
+  });
 
   const json = JSON.stringify(data, null, 2);
 
