@@ -467,9 +467,32 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <hr class="ap-divider">
   <div class="ap-section">NPCs</div>
+  <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('ashigaru_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Ashigaru Villager</span></div></div>
   <div style="padding:0 8px 6px;display:grid;grid-template-columns:1fr 1fr;gap:5px">
     <button class="ctrl-btn" id="npcVisibilityBtn" onclick="toggleNPCVisibility()">Hide NPCs</button>
     <button class="ctrl-btn" id="npcPauseBtn" onclick="toggleNPCPause()">Pause NPCs</button>
+    <button class="ctrl-btn full" onclick="duplicateSelectedNPC()">Duplicate Selected NPC</button>
+  </div>
+  <div id="npcEditorPanel" style="display:none;padding:0 8px 8px">
+    <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin-bottom:6px;text-transform:uppercase">Selected NPC</div>
+    <input id="npcDisplayNameInput" placeholder="Display Name" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #5ecfca;color:#e8c56a;padding:5px 7px;font-family:'Cinzel Decorative',serif;font-size:11px;margin-bottom:5px">
+    <select id="npcRoleInput" class="admin-select" style="margin-bottom:5px">
+      <option value="villager">villager</option>
+      <option value="guard">guard</option>
+      <option value="scout">scout</option>
+      <option value="elder">elder</option>
+      <option value="trainee">trainee</option>
+      <option value="questGiver">questGiver</option>
+      <option value="merchant">merchant</option>
+    </select>
+    <select id="npcBehaviorInput" class="admin-select" style="margin-bottom:5px">
+      <option value="idle">idle</option>
+      <option value="wander">wander</option>
+      <option value="patrol">patrol</option>
+    </select>
+    <textarea id="npcDialogueInput" placeholder="Custom dialogue text" rows="4" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:5px;resize:vertical"></textarea>
+    <input id="npcQuestIdInput" placeholder="Quest ID (optional)" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:6px">
+    <button class="ctrl-btn full" onclick="applySelectedNPCChanges()" style="width:100%;background:#5ecfca;color:#000">Apply NPC Changes</button>
   </div>
   <hr class="ap-divider">
   <div style="padding:0 8px 6px">
@@ -623,6 +646,22 @@ const NPC_DEFINITIONS = [
   { npcId:'samurai-guard-01', villageId:'samurai', factionId:'samurai', role:'guard', displayName:'Samurai Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'patrol', spawn:{ x:0, y:0, z:-32 }, patrolPoints:[{ x:-6, y:0, z:-32 }, { x:6, y:0, z:-32 }] },
   { npcId:'samurai-villager-01', villageId:'samurai', factionId:'samurai', role:'villager', displayName:'Samurai Villager', modelUrl:null, fallbackType:'ant', behavior:'idle', spawn:{ x:14, y:0, z:10 } }
 ];
+const NPC_LIBRARY = {
+  ashigaru_villager: {
+    npcIdPrefix: 'ashigaru-villager',
+    factionId: 'ashigaru',
+    role: 'villager',
+    displayName: 'Ashigaru Villager',
+    modelUrl: '/assets/npcs/ashigaru-villager.glb',
+    modelScale: 1.75,
+    fallbackType: 'ant',
+    behavior: 'wander',
+    wanderRadius: 7,
+    moveSpeed: 1.18,
+    animationMap: { idle:'Idle_11', walk:'Walking', run:'Running', talk:'Talk_with_Right_Hand_Open' },
+    animationSpeed: { idle:1, walk:.82, talk:1 }
+  }
+};
 const NPC_DIALOGUES = {
   'hub-first-warning': [
     'The tunnels have started breathing again. The old roots remember things we tried to forget.',
@@ -1194,7 +1233,9 @@ function beginAdminPlacement(request) {
 
   const label = request.kind === 'asset'
     ? `Place ${request.key}`
-    : `Place ${getCollisionProxyLabel(request.proxyKind)}`;
+    : request.kind === 'npc'
+      ? 'Place NPC'
+      : `Place ${getCollisionProxyLabel(request.proxyKind)}`;
   canvas.style.cursor = 'crosshair';
   showToast(`${label}: click the ground where it should go`);
 }
@@ -1214,6 +1255,8 @@ function updateAdminPlacementMarker() {
   if (pendingAdminPlacement.kind === 'collision_proxy') {
     const kind = pendingAdminPlacement.proxyKind;
     marker.scaling.set(kind === 'blocker' ? 1.5 : 1.2, 1, kind === 'ramp' ? 1.8 : 1.1);
+  } else if (pendingAdminPlacement.kind === 'npc') {
+    marker.scaling.set(.75, 1, .75);
   } else {
     marker.scaling.set(1.25, 1, 1.25);
   }
@@ -1252,6 +1295,11 @@ function placePendingAdminPlacementAtPoint(point) {
 
   if (request.kind === 'asset') {
     placeAssetAtPoint(request.key, point);
+    return true;
+  }
+
+  if (request.kind === 'npc') {
+    createNPCFromLibrary(request.key, point);
     return true;
   }
 
@@ -2506,6 +2554,20 @@ if (walkSurfacePanel) {
     renderSelectedWalkSurfaceGuide();
   } else {
     clearVillageProxyDebugMeshes();
+  }
+}
+
+const npcEditorPanel = document.getElementById('npcEditorPanel');
+if (npcEditorPanel) {
+  const npc = getSelectedNPC();
+  npcEditorPanel.style.display = npc ? 'block' : 'none';
+  if (npc) {
+    const meta = npc.metadata || {};
+    document.getElementById('npcDisplayNameInput').value = meta.displayName || '';
+    document.getElementById('npcRoleInput').value = meta.role || 'villager';
+    document.getElementById('npcBehaviorInput').value = meta.behavior || 'idle';
+    document.getElementById('npcDialogueInput').value = meta.customDialogue || '';
+    document.getElementById('npcQuestIdInput').value = meta.questId || '';
   }
 }
   if (isSign) {
@@ -4765,6 +4827,14 @@ function getNPCDefinitionById(npcId) {
   return NPC_DEFINITIONS.find(npc => npc.npcId === npcId) || null;
 }
 
+function makeNPCId(prefix = 'npc') {
+  return `${CURRENT_VILLAGE_ID}-${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+}
+
+function getSelectedNPC() {
+  return selectedObject && selectedObject.metadata?.type === 'npc' ? selectedObject : null;
+}
+
 function getNPCMaterial(key, color, emissive = '#000000') {
   const cacheKey = `${key}:${color}:${emissive}`;
   if (!NPCManager.materials[cacheKey]) {
@@ -4879,8 +4949,10 @@ function createNPCFromDefinition(npc, savedState = null) {
     displayName: npc.displayName,
     behavior: npc.behavior || 'idle',
     dialogueId: npc.dialogueId || 'default',
+    customDialogue: npc.customDialogue || '',
     questId: npc.questId || null,
     modelUrl: npc.modelUrl || null,
+    modelScale: Number.isFinite(npc.modelScale) ? npc.modelScale : 1,
     fallbackType: npc.fallbackType || 'ant',
     spawn: { x: root.position.x, y: root.position.y, z: root.position.z },
     patrolPoints: npc.patrolPoints || [],
@@ -4922,10 +4994,89 @@ function restoreNPCFromLayoutItem(item) {
     fallbackType: item.fallbackType || base.fallbackType || 'ant',
     behavior: item.behavior || base.behavior || 'idle',
     dialogueId: item.dialogueId || base.dialogueId || 'default',
+    customDialogue: item.customDialogue || base.customDialogue || '',
     questId: item.questId || base.questId || null,
+    modelScale: Number.isFinite(item.modelScale) ? item.modelScale : base.modelScale,
+    moveSpeed: Number.isFinite(item.moveSpeed) ? item.moveSpeed : base.moveSpeed,
+    animationMap: item.animationMap || base.animationMap || {},
+    animationSpeed: item.animationSpeed || base.animationSpeed || {},
+    wanderRadius: Number.isFinite(item.wanderRadius) ? item.wanderRadius : base.wanderRadius,
     patrolPoints: Array.isArray(item.patrolPoints) ? item.patrolPoints : base.patrolPoints
   };
   return createNPCFromDefinition(npc, item);
+}
+
+function createNPCFromLibrary(key, point = null, sourceMeta = null) {
+  const template = sourceMeta || NPC_LIBRARY[key];
+  if (!template) {
+    showToast('NPC template not found');
+    return null;
+  }
+  if (template.factionId === 'ashigaru' && !['hub', 'ashigaru'].includes(CURRENT_VILLAGE_ID)) {
+    showToast('Ashigaru NPCs are for Hub/Ashigaru villages');
+    return null;
+  }
+  const spawnPoint = point || new BABYLON.Vector3(0, 0, 0);
+  const npc = {
+    ...template,
+    npcId: makeNPCId(template.npcIdPrefix || template.factionId || 'npc'),
+    villageId: CURRENT_VILLAGE_ID,
+    spawn: { x: spawnPoint.x, y: spawnPoint.y, z: spawnPoint.z }
+  };
+  const root = createNPCFromDefinition(npc, {
+    position: npc.spawn,
+    rotation: { x: 0, y: 0, z: 0 }
+  });
+  if (root) {
+    updateNPCPlacementOrigin(root);
+    setSelectedEditableObject(root);
+    triggerAutoSave();
+    showToast('NPC placed: ' + (root.metadata.displayName || 'Villager'));
+  }
+  return root;
+}
+
+function duplicateSelectedNPC() {
+  const source = getSelectedNPC();
+  if (!source) {
+    showToast('Select an NPC first');
+    return;
+  }
+  const meta = source.metadata || {};
+  const offset = source.position.clone();
+  offset.x += 2.2;
+  offset.z += 1.4;
+  const npc = {
+    npcId: makeNPCId((meta.factionId || 'npc') + '-' + (meta.role || 'villager')),
+    villageId: CURRENT_VILLAGE_ID,
+    factionId: meta.factionId || NPC_FACTION_BY_VILLAGE[CURRENT_VILLAGE_ID] || 'ashigaru',
+    role: meta.role || 'villager',
+    displayName: meta.displayName || 'Villager',
+    modelUrl: meta.modelUrl || null,
+    modelScale: Number.isFinite(meta.modelScale) ? meta.modelScale : 1,
+    fallbackType: meta.fallbackType || 'ant',
+    behavior: meta.behavior || 'idle',
+    dialogueId: meta.dialogueId || 'default',
+    customDialogue: meta.customDialogue || '',
+    questId: meta.questId || null,
+    wanderRadius: meta.wanderRadius || 6,
+    moveSpeed: meta.moveSpeed,
+    animationMap: meta.animationMap || {},
+    animationSpeed: meta.animationSpeed || {},
+    patrolPoints: Array.isArray(meta.patrolPoints)
+      ? meta.patrolPoints.map(point => ({ x:(point.x || 0) + 2.2, y:point.y || 0, z:(point.z || 0) + 1.4 }))
+      : []
+  };
+  const clone = createNPCFromDefinition(npc, {
+    position: { x: offset.x, y: offset.y, z: offset.z },
+    rotation: { x: source.rotation.x, y: source.rotation.y, z: source.rotation.z },
+    scaling: { x: source.scaling.x, y: source.scaling.y, z: source.scaling.z }
+  });
+  if (!clone) return;
+  updateNPCPlacementOrigin(clone);
+  setSelectedEditableObject(clone);
+  triggerAutoSave();
+  showToast('Duplicated NPC');
 }
 
 function updateNPCPlacementOrigin(root, previousPosition = null) {
@@ -5097,7 +5248,11 @@ function openNPCDialogue(npc) {
   if (!npc || npc.metadata?.type !== 'npc') return false;
   const overlay = document.getElementById('npcDialogueOverlay');
   if (!overlay) return false;
-  const lines = NPC_DIALOGUES[npc.metadata.dialogueId] || NPC_DIALOGUES.default;
+  const customLines = String(npc.metadata.customDialogue || '')
+    .split(/\n+/)
+    .map(line => line.trim())
+    .filter(Boolean);
+  const lines = customLines.length ? customLines : (NPC_DIALOGUES[npc.metadata.dialogueId] || NPC_DIALOGUES.default);
   activeNPCDialogue = { npc, lines, index:0 };
   npc.metadata.dialogueOpen = true;
   renderNPCDialogue();
@@ -5162,6 +5317,44 @@ function toggleNPCPause() {
   localStorage.setItem('rebelAntsNPCsPaused', NPCManager.paused ? '1' : '0');
   updateNPCAdminControls();
   showToast(NPCManager.paused ? 'NPCs paused' : 'NPCs resumed');
+}
+
+function spawnNPCFromPanel(key) {
+  if (!adminMode) {
+    showToast('Enter Admin Mode first');
+    return;
+  }
+  if (!NPC_LIBRARY[key]) {
+    showToast('NPC template not found');
+    return;
+  }
+  beginAdminPlacement({ kind:'npc', key });
+}
+
+function applySelectedNPCChanges() {
+  const npc = getSelectedNPC();
+  if (!npc) {
+    showToast('Select an NPC first');
+    return;
+  }
+  const meta = npc.metadata || {};
+  const displayName = document.getElementById('npcDisplayNameInput')?.value?.trim();
+  const role = document.getElementById('npcRoleInput')?.value || 'villager';
+  const behavior = document.getElementById('npcBehaviorInput')?.value || 'idle';
+  const customDialogue = document.getElementById('npcDialogueInput')?.value?.trim() || '';
+  const questId = document.getElementById('npcQuestIdInput')?.value?.trim() || null;
+
+  meta.displayName = displayName || meta.displayName || 'Villager';
+  meta.role = role;
+  meta.behavior = behavior;
+  meta.customDialogue = customDialogue;
+  meta.questId = questId;
+  meta.target = null;
+  meta.waitUntil = performance.now() + 700;
+  updateNPCPlacementOrigin(npc);
+  updateSelectedBadge();
+  triggerAutoSave();
+  showToast('NPC changes applied');
 }
 
 // ── HELPERS ──────────────────────────────────
@@ -9493,10 +9686,16 @@ function saveWorldLayout(saveToGitHub = true){
     role: node.metadata.role || null,
     displayName: node.metadata.displayName || null,
     modelUrl: node.metadata.modelUrl || null,
+    modelScale: Number.isFinite(node.metadata.modelScale) ? node.metadata.modelScale : null,
     fallbackType: node.metadata.fallbackType || null,
     behavior: node.metadata.behavior || null,
     dialogueId: node.metadata.dialogueId || null,
+    customDialogue: node.metadata.customDialogue || null,
     questId: node.metadata.questId || null,
+    moveSpeed: Number.isFinite(node.metadata.moveSpeed) ? node.metadata.moveSpeed : null,
+    wanderRadius: Number.isFinite(node.metadata.wanderRadius) ? node.metadata.wanderRadius : null,
+    animationMap: node.metadata.animationMap || null,
+    animationSpeed: node.metadata.animationSpeed || null,
     patrolPoints: Array.isArray(node.metadata.patrolPoints) ? node.metadata.patrolPoints : null,
     proxyAutoEnabled: node.metadata.proxyAutoEnabled !== false,
     proxyWalkSurfaceEnabled: node.metadata.proxyWalkSurfaceEnabled === true,
@@ -9854,6 +10053,11 @@ function deleteSelectedFence(){
 }
 function duplicateSelectedFence(){
   if (!selectedObject) return;
+
+  if (selectedObject.metadata?.type === 'npc') {
+    duplicateSelectedNPC();
+    return;
+  }
 
   const sourceObject = selectedObject;
   const objectType = getObjectType(sourceObject);
@@ -12359,6 +12563,9 @@ window.setInteractionVolume = setInteractionVolume;
 window.setFootstepVolume = setFootstepVolume;
 window.toggleNPCVisibility = toggleNPCVisibility;
 window.toggleNPCPause = toggleNPCPause;
+window.spawnNPCFromPanel = spawnNPCFromPanel;
+window.duplicateSelectedNPC = duplicateSelectedNPC;
+window.applySelectedNPCChanges = applySelectedNPCChanges;
 window.advanceNPCDialogue = advanceNPCDialogue;
 window.closeNPCDialogue = closeNPCDialogue;
 window.saveWorldLayout = saveWorldLayout;
