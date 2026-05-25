@@ -3495,6 +3495,17 @@ const WEATHER_AUDIO_TRACKS = {
   snow: [{ id:'snow-wind', path:'/assets/audio/weather/snow-wind.mp3', volume:.25 }]
 };
 
+const WEATHER_AMBIENCE_MULTIPLIERS = {
+  clear: 1,
+  'light-rain': .68,
+  'heavy-rain': .22,
+  storm: .12,
+  fog: .28,
+  heat: .34,
+  cold: .2,
+  snow: .16
+};
+
 const WEATHER_THUNDER_AUDIO = '/assets/audio/weather/thunder-1.mp3';
 
 const VILLAGE_AMBIENCE_PROFILES = {
@@ -3658,6 +3669,12 @@ function getWeatherVisualConfig() {
   return cfg;
 }
 
+function getWeatherAmbienceMultiplier() {
+  const target = WEATHER_AMBIENCE_MULTIPLIERS[WeatherManager.mode] ?? 1;
+  const from = WEATHER_AMBIENCE_MULTIPLIERS[WeatherManager.transitionFrom] ?? target;
+  return lerpWeatherNumber(from, target, getWeatherTransitionProgress());
+}
+
 function getWeatherAudioTrack(id, path) {
   if (!WeatherManager.audioTracks[id]) {
     const audio = new Audio(path);
@@ -3686,11 +3703,7 @@ function getVillageAmbienceTargets() {
   const targets = {};
   if (!WeatherManager.masterAudioEnabled) return targets;
   const profile = VILLAGE_AMBIENCE_PROFILES[CURRENT_VILLAGE_ID] || DEFAULT_VILLAGE_AMBIENCE;
-  const moodScale = WeatherManager.mode === 'storm'
-    ? .78
-    : (WeatherManager.mode === 'snow' || WeatherManager.mode === 'fog' || WeatherManager.mode === 'cold')
-      ? .62
-      : 1;
+  const moodScale = getWeatherAmbienceMultiplier();
   (profile.loops || []).forEach(track => {
     targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .25) * WeatherManager.masterVolume * WeatherManager.ambienceVolume * moodScale);
     getWeatherAudioTrack(track.id, track.path);
