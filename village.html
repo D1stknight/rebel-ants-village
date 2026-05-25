@@ -565,7 +565,7 @@ const NPC_FACTION_COLORS = {
 };
 const NPC_DEFINITIONS = [
   { npcId:'hub-ashigaru-guard-01', villageId:'hub', factionId:'ashigaru', role:'guard', displayName:'Ashigaru Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'idle', spawn:{ x:-7, y:0, z:-28 } },
-  { npcId:'hub-ashigaru-villager-01', villageId:'hub', factionId:'ashigaru', role:'villager', displayName:'Ashigaru Villager', modelUrl:'/assets/npcs/ashigaru-villager.glb', fallbackType:'ant', behavior:'wander', spawn:{ x:18, y:0, z:12 }, wanderRadius:7, animationMap:{ idle:'Idle_11', walk:'Walking', run:'Running', talk:'Talk_with_Right_Hand_Open' } },
+  { npcId:'hub-ashigaru-villager-01', villageId:'hub', factionId:'ashigaru', role:'villager', displayName:'Ashigaru Villager', modelUrl:'/assets/npcs/ashigaru-villager.glb', modelScale:.02, fallbackType:'ant', behavior:'wander', spawn:{ x:18, y:0, z:12 }, wanderRadius:7, animationMap:{ idle:'Idle_11', walk:'Walking', run:'Running', talk:'Talk_with_Right_Hand_Open' } },
   { npcId:'ronin-guard-01', villageId:'ronin', factionId:'ronin', role:'guard', displayName:'Ronin Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'patrol', spawn:{ x:0, y:0, z:-34 }, patrolPoints:[{ x:-8, y:0, z:-34 }, { x:8, y:0, z:-34 }] },
   { npcId:'ronin-wanderer-01', villageId:'ronin', factionId:'ronin', role:'villager', displayName:'Ronin Wanderer', modelUrl:null, fallbackType:'ant', behavior:'wander', spawn:{ x:-16, y:0, z:18 }, wanderRadius:8 },
   { npcId:'samurai-guard-01', villageId:'samurai', factionId:'samurai', role:'guard', displayName:'Samurai Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'patrol', spawn:{ x:0, y:0, z:-32 }, patrolPoints:[{ x:-6, y:0, z:-32 }, { x:6, y:0, z:-32 }] },
@@ -4678,13 +4678,18 @@ async function tryLoadNPCModel(root, npc) {
   try {
     const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", npc.modelUrl, scene);
     if (!root || root.isDisposed?.()) return;
+    const modelRoot = new BABYLON.TransformNode(`${npc.npcId}_modelRoot`, scene);
+    modelRoot.parent = root;
+    modelRoot.scaling.setAll(npc.modelScale || 1);
     result.meshes.forEach(mesh => {
       if (mesh === scene.meshes[0]) return;
       makeNPCMeshPickSafe(mesh);
-      mesh.parent = root;
+      mesh.parent = modelRoot;
     });
+    removeNPCRootMotion(result.animationGroups || []);
     root.metadata.placeholderPieces?.forEach(mesh => mesh.setEnabled(false));
     root.metadata.animationGroups = result.animationGroups || [];
+    root.metadata.modelRoot = modelRoot;
     root.metadata.modelLoaded = true;
   } catch (_) {
     root.metadata.modelFailed = true;
@@ -4761,6 +4766,20 @@ function moveNPCToward(root, target, dt) {
   return true;
 }
 
+function removeNPCRootMotion(animationGroups) {
+  (animationGroups || []).forEach(group => {
+    if (!group?.targetedAnimations) return;
+    for (let i = group.targetedAnimations.length - 1; i >= 0; i--) {
+      const targeted = group.targetedAnimations[i];
+      const targetName = String(targeted.target?.name || '').toLowerCase();
+      const property = String(targeted.animation?.targetProperty || '').toLowerCase();
+      if (property === 'position' && (targetName.includes('hips') || targetName.includes('root') || targetName.includes('armature'))) {
+        group.targetedAnimations.splice(i, 1);
+      }
+    }
+  });
+}
+
 function findNPCAnimationGroup(meta, state) {
   const groups = Array.isArray(meta.animationGroups) ? meta.animationGroups : [];
   if (!groups.length) return null;
@@ -4802,11 +4821,13 @@ function updateNPCPopulation(dt) {
     const meta = root.metadata || {};
     let moving = false;
     if (meta.behavior === 'wander') {
-      if (!meta.target || now > (meta.waitUntil || 0)) chooseNPCWanderTarget(root);
-      moving = moveNPCToward(root, meta.target, dt);
+      if (!meta.target && now >= (meta.waitUntil || 0)) chooseNPCWanderTarget(root);
+      moving = meta.target ? moveNPCToward(root, meta.target, dt) : false;
       if (!moving) {
-        meta.target = null;
-        meta.waitUntil = now + 1800 + Math.random() * 2600;
+        if (meta.target) {
+          meta.target = null;
+          meta.waitUntil = now + 1800 + Math.random() * 2600;
+        }
       }
     } else if (meta.behavior === 'patrol') {
       const target = getNPCPatrolTarget(root);
