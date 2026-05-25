@@ -3530,6 +3530,11 @@ const INTERACTION_AUDIO = {
   softChime: { id:'env-soft-chime', path:'/assets/audio/ambience/soft-chime.mp3', volume:.26, cooldownMs:10000 }
 };
 
+const WALK_STEP_MS = 520;
+const RUN_STEP_MS = 320;
+const FOOTSTEP_MIN_VOLUME = 0.24;
+const FOOTSTEP_MAX_VOLUME = 0.62;
+
 const WeatherManager = {
   mode: 'clear',
   cycleSpeed: 'normal',
@@ -3569,7 +3574,6 @@ const WeatherManager = {
   audioCooldowns: {},
   nextEnvironmentalAudioAt: performance.now() + 18000,
   lastFootstepAt: 0,
-  footstepDistance: 0,
   lastFootstepPosition: null,
   thunderAudio: null,
   _thunderPlayedForStrike: 0,
@@ -3759,7 +3763,9 @@ function playFootstepAudio() {
   const cfg = INTERACTION_AUDIO[key];
   const audio = getInteractionAudioTrack(cfg.id, cfg.path);
   if (!audio || audio._unavailable) return;
-  audio.volume = (cfg.volume || .4) * WeatherManager.masterVolume * WeatherManager.footstepVolume;
+  const stepVolume = Math.max(FOOTSTEP_MIN_VOLUME, Math.min(FOOTSTEP_MAX_VOLUME, cfg.volume || .4));
+  audio.loop = false;
+  audio.volume = stepVolume * WeatherManager.masterVolume * WeatherManager.footstepVolume;
   audio.currentTime = 0;
   audio.play().catch(() => { audio._unavailable = true; });
 }
@@ -3771,28 +3777,25 @@ function stopFootstepAudio() {
     audio.pause();
     audio.currentTime = 0;
   });
-  WeatherManager.footstepDistance = 0;
+  WeatherManager.lastFootstepAt = 0;
 }
 
 function updateFootstepAudio() {
   const hasMoveInput = moveForward || moveBackward || runKey;
-  if (!walkMode || adminMode || !charMesh || !hasMoveInput || Math.abs(charMesh._vel || 0) < .015) {
+  const forcedMode = window.forgePlayerForcedMode || '';
+  const jumping = forcedMode === 'jump' || forcedMode === 'runJump';
+  const terrainY = charMesh && Number.isFinite(charMesh._terrainY) ? charMesh._terrainY : null;
+  const grounded = charMesh && !jumping && (terrainY === null || Math.abs((charMesh._terrainY || charMesh.position.y) - terrainY) < 0.75);
+  if (!walkMode || adminMode || !charMesh || !hasMoveInput || !grounded || Math.abs(charMesh._vel || 0) < .015) {
     WeatherManager.lastFootstepPosition = charMesh ? charMesh.position.clone() : null;
     stopFootstepAudio();
     return;
   }
   const now = performance.now();
-  if (!WeatherManager.lastFootstepPosition) {
-    WeatherManager.lastFootstepPosition = charMesh.position.clone();
-    return;
-  }
-  const dx = charMesh.position.x - WeatherManager.lastFootstepPosition.x;
-  const dz = charMesh.position.z - WeatherManager.lastFootstepPosition.z;
-  WeatherManager.footstepDistance += Math.sqrt(dx * dx + dz * dz);
+  if (!WeatherManager.lastFootstepPosition) WeatherManager.lastFootstepPosition = charMesh.position.clone();
   WeatherManager.lastFootstepPosition.copyFrom(charMesh.position);
-  const stride = runKey ? 1.8 : 1.35;
-  if (WeatherManager.footstepDistance >= stride && now - WeatherManager.lastFootstepAt > 180) {
-    WeatherManager.footstepDistance = 0;
+  const stepMs = runKey ? RUN_STEP_MS : WALK_STEP_MS;
+  if (!WeatherManager.lastFootstepAt || now - WeatherManager.lastFootstepAt >= stepMs) {
     WeatherManager.lastFootstepAt = now;
     playFootstepAudio();
   }
