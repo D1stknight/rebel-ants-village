@@ -4777,10 +4777,11 @@ function getNPCMaterial(key, color, emissive = '#000000') {
   return NPCManager.materials[cacheKey];
 }
 
-function makeNPCMeshPickSafe(mesh) {
+function makeNPCMeshPickSafe(mesh, editRoot = null) {
   if (!mesh) return mesh;
-  mesh.isPickable = false;
+  mesh.isPickable = true;
   mesh.checkCollisions = false;
+  if (editRoot) mesh._editRoot = editRoot;
   mesh.metadata = { ...(mesh.metadata || {}), isNPCVisual:true };
   return mesh;
 }
@@ -4823,6 +4824,10 @@ function createPlaceholderAntNPC(root, npc) {
   });
   const roleMark = makeNPCMeshPickSafe(BABYLON.MeshBuilder.CreateCylinder(`${npc.npcId}_rolemark`, { height:.035, diameter:.34, tessellation:6 }, scene));
   roleMark.position.set(0,1.08,.34); roleMark.rotation.x = Math.PI / 2; roleMark.material = accentMat; roleMark.parent = root; pieces.push(roleMark);
+  pieces.forEach(mesh => {
+    mesh.isPickable = true;
+    mesh._editRoot = root;
+  });
   root.metadata.placeholderPieces = pieces;
 }
 
@@ -4840,7 +4845,7 @@ async function tryLoadNPCModel(root, npc) {
     ];
     const importedNodeSet = new Set(importedNodes);
     (result.meshes || []).forEach(mesh => {
-      makeNPCMeshPickSafe(mesh);
+      makeNPCMeshPickSafe(mesh, root);
       mesh.setEnabled(true);
       makeNPCMaterialOpaque(mesh.material);
     });
