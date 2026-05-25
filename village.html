@@ -4543,8 +4543,8 @@ function initWeatherManager() {
     WeatherManager.cycleSpeed = savedSpeed;
     WeatherManager.cycleMs = WEATHER_CYCLE_SPEEDS[savedSpeed];
   }
-  WeatherManager.masterAudioEnabled = false;
-  WeatherManager.audioEnabled = false;
+  WeatherManager.masterAudioEnabled = localStorage.getItem('rebelAntsMasterAudioEnabled') !== '0';
+  WeatherManager.audioEnabled = localStorage.getItem('rebelAntsWeatherAudioEnabled') !== '0';
   WeatherManager.interactionAudioEnabled = localStorage.getItem('rebelAntsInteractionAudioEnabled') !== '0';
   WeatherManager.footstepAudioEnabled = localStorage.getItem('rebelAntsFootstepAudioEnabled') !== '0';
   WeatherManager.musicEnabled = localStorage.getItem('rebelAntsMusicAudioEnabled') !== '0';
