@@ -249,6 +249,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #currentVillageBadge{display:none}
 #weatherDebugBadge{position:fixed;top:108px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.35);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;padding:6px 10px;white-space:nowrap;pointer-events:none}
 #weatherDebugBadge.on{display:block}
+#footstepDebugBadge{position:fixed;top:138px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.88);border:1px solid rgba(94,207,202,.35);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;padding:6px 10px;white-space:nowrap;pointer-events:none}
+#footstepDebugBadge.on{display:block}
 #weatherLightningFlash{position:fixed;inset:0;z-index:18;pointer-events:none;background:rgba(210,235,255,.72);opacity:0;transition:opacity .16s ease-out;mix-blend-mode:screen}
 #weatherHeatHaze{position:fixed;inset:-8%;z-index:17;pointer-events:none;opacity:0;transition:opacity .8s;background:repeating-linear-gradient(90deg,rgba(255,220,150,.035) 0 10px,rgba(255,255,255,0) 10px 26px);filter:blur(10px);mix-blend-mode:screen;animation:weatherHeatDrift 7s ease-in-out infinite alternate}
 @keyframes weatherHeatDrift{from{transform:translate3d(-10px,4px,0) skewX(-1deg)}to{transform:translate3d(12px,-4px,0) skewX(1deg)}}
@@ -451,6 +453,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="td"></div>
 <div id="currentVillageBadge">Current Village: Hub Village</div>
 <div id="weatherDebugBadge">Weather: Clear</div>
+<div id="footstepDebugBadge">Footsteps: dirt</div>
 <div id="weatherLightningFlash"></div>
 <div id="weatherHeatHaze"></div>
 <div id="villageTravelFade"></div>
@@ -3575,6 +3578,7 @@ const WeatherManager = {
   nextEnvironmentalAudioAt: performance.now() + 18000,
   lastFootstepAt: 0,
   lastFootstepPosition: null,
+  currentFootstepSurface: 'dirt',
   thunderAudio: null,
   _thunderPlayedForStrike: 0,
   baseSunIntensity: sun.intensity,
@@ -3754,18 +3758,55 @@ function playInteractionAudio(key) {
   audio.play().catch(() => { audio._unavailable = true; });
 }
 
+function getFootstepSurfaceType() {
+  if (WeatherManager.mode === 'snow' || WeatherManager.mode === 'cold') return 'snow';
+  if (WeatherManager.mode === 'light-rain' || WeatherManager.mode === 'heavy-rain' || WeatherManager.mode === 'storm') return 'wet';
+  if (!charMesh) return 'dirt';
+  const x = charMesh.position.x;
+  const z = charMesh.position.z;
+  const inCourtyard = Math.abs(x) <= 110 && Math.abs(z) <= 110;
+  const onStonePath = (Math.abs(x) <= 5 && Math.abs(z) <= 150) || (Math.abs(z) <= 5 && Math.abs(x) <= 150);
+  return inCourtyard || onStonePath ? 'stone' : 'dirt';
+}
+
+function getFootstepKeyForSurface(surface) {
+  if (surface === 'snow') return 'footstepSnow';
+  if (surface === 'wet') return 'footstepWet';
+  if (surface === 'stone') return 'footstepStone';
+  return 'footstepDirt';
+}
+
+function updateFootstepDebug(surface) {
+  WeatherManager.currentFootstepSurface = surface || 'dirt';
+  const badge = document.getElementById('footstepDebugBadge');
+  if (!badge) return;
+  badge.textContent = 'Footsteps: ' + WeatherManager.currentFootstepSurface;
+  badge.classList.toggle('on', adminMode === true);
+}
+
+function getFootstepAudioForSurface(surface) {
+  const key = getFootstepKeyForSurface(surface);
+  const cfg = INTERACTION_AUDIO[key];
+  let audio = cfg ? getInteractionAudioTrack(cfg.id, cfg.path) : null;
+  if ((!audio || audio._unavailable) && key !== 'footstepDirt') {
+    const fallback = INTERACTION_AUDIO.footstepDirt;
+    audio = getInteractionAudioTrack(fallback.id, fallback.path);
+    return audio && !audio._unavailable ? { audio, cfg: fallback } : null;
+  }
+  return audio && !audio._unavailable ? { audio, cfg } : null;
+}
+
 function playFootstepAudio() {
   if (!WeatherManager.footstepAudioEnabled) return;
-  let key = 'footstepDirt';
-  if (WeatherManager.mode === 'snow' || WeatherManager.mode === 'cold') key = 'footstepSnow';
-  else if (WeatherManager.mode === 'light-rain' || WeatherManager.mode === 'heavy-rain' || WeatherManager.mode === 'storm') key = 'footstepWet';
-  else if (charMesh && Math.abs(charMesh.position.x) < 64 && Math.abs(charMesh.position.z) < 64) key = 'footstepStone';
-  const cfg = INTERACTION_AUDIO[key];
-  const audio = getInteractionAudioTrack(cfg.id, cfg.path);
-  if (!audio || audio._unavailable) return;
+  const surface = getFootstepSurfaceType();
+  updateFootstepDebug(surface);
+  const footstep = getFootstepAudioForSurface(surface);
+  if (!footstep) return;
+  const { audio, cfg } = footstep;
   const stepVolume = Math.max(FOOTSTEP_MIN_VOLUME, Math.min(FOOTSTEP_MAX_VOLUME, cfg.volume || .4));
   audio.loop = false;
   audio.volume = stepVolume * WeatherManager.masterVolume * WeatherManager.footstepVolume;
+  audio.pause();
   audio.currentTime = 0;
   audio.play().catch(() => { audio._unavailable = true; });
 }
@@ -3784,8 +3825,8 @@ function updateFootstepAudio() {
   const hasMoveInput = moveForward || moveBackward || runKey;
   const forcedMode = window.forgePlayerForcedMode || '';
   const jumping = forcedMode === 'jump' || forcedMode === 'runJump';
-  const terrainY = charMesh && Number.isFinite(charMesh._terrainY) ? charMesh._terrainY : null;
-  const grounded = charMesh && !jumping && (terrainY === null || Math.abs((charMesh._terrainY || charMesh.position.y) - terrainY) < 0.75);
+  const grounded = charMesh && !jumping;
+  updateFootstepDebug(getFootstepSurfaceType());
   if (!walkMode || adminMode || !charMesh || !hasMoveInput || !grounded || Math.abs(charMesh._vel || 0) < .015) {
     WeatherManager.lastFootstepPosition = charMesh ? charMesh.position.clone() : null;
     stopFootstepAudio();
