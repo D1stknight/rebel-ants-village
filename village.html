@@ -3590,6 +3590,12 @@ function snapValue(value, size){
   return Math.round(value / size) * size;
 }
 
+function isInEditorGroundSnapZone(x, z){
+  const inCourtyard = Math.abs(x) <= 110 && Math.abs(z) <= 110;
+  const onMainPath = (Math.abs(x) <= 5 && Math.abs(z) <= 150) || (Math.abs(z) <= 5 && Math.abs(x) <= 150);
+  return inCourtyard || onMainPath;
+}
+
 function softSnapSelectedObject(){
   if (!selectedObject) return;
   const objType = selectedObject.metadata && selectedObject.metadata.type;
@@ -3613,6 +3619,7 @@ function snapSelectedObjectToGround(){
   if (objType === 'hangingLantern') return;
   if (objType === 'collision_proxy') return;
   if (objType && ASSETS[objType] && ASSETS[objType].noGroundSnap) return;
+  if (!isInEditorGroundSnapZone(selectedObject.position.x, selectedObject.position.z)) return;
 
   const origin = new BABYLON.Vector3(selectedObject.position.x, 200, selectedObject.position.z);
   const ray = new BABYLON.Ray(origin, new BABYLON.Vector3(0, -1, 0), 500);
