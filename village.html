@@ -272,6 +272,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #assetPanel .ap-footer{padding:8px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:5px;flex-shrink:0}
 #assetPanel .ap-footer button{flex:1;padding:6px;font-size:9px;font-family:'Cinzel Decorative',serif;letter-spacing:1px;border:1px solid rgba(255,255,255,.12);border-radius:4px;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;transition:all .15s}
 #assetPanel .ap-footer button:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
+.worldbuilder-toolbar{padding:0 8px 8px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.tool-square{min-height:42px;border-radius:8px;border:1px solid rgba(94,207,202,.26);background:linear-gradient(160deg,rgba(26,29,46,.95),rgba(7,11,25,.95));color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:.8px;cursor:pointer;box-shadow:inset 0 0 12px rgba(94,207,202,.06);transition:transform .15s,border-color .15s,box-shadow .15s}
+.tool-square:hover{transform:translateY(-1px);border-color:rgba(94,207,202,.7);box-shadow:0 0 14px rgba(94,207,202,.18),inset 0 0 14px rgba(232,197,106,.06)}
+.tool-square.danger{border-color:rgba(201,75,75,.42);color:#ff8b8b}
+.tool-square kbd{display:block;margin-top:3px;color:#7bded8;font-size:8px}
+.admin-step{border:1px solid rgba(94,207,202,.14);border-radius:7px;padding:7px;margin:6px 0;background:rgba(94,207,202,.035)}
+.admin-step strong{display:block;color:#e8c56a;font-size:10px;letter-spacing:1px;margin-bottom:3px}
+.admin-pill{display:inline-block;margin-top:4px;padding:2px 6px;border:1px solid rgba(94,207,202,.25);border-radius:999px;color:#77e6df;font-size:9px;letter-spacing:1px}
+.health-good{color:#7dffa4}.health-warn{color:#ff8b8b}.health-muted{color:#8aa}
 #assetPanel .ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 8px 6px}
 #assetPanel .ctrl-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:6px 4px;cursor:pointer;text-align:center;color:rgba(255,255,255,.7);font-size:9px;font-family:'Cinzel Decorative',serif;letter-spacing:.5px;transition:all .15s;display:block;width:100%}
 #assetPanel .ctrl-btn:hover{background:rgba(232,197,106,.12);border-color:rgba(232,197,106,.4);color:#e8c56a}
@@ -342,6 +351,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <hr class="ap-divider">
     <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
   <div class="ap-section">Selected</div>
+  <div class="worldbuilder-toolbar">
+    <button class="tool-square" onclick="undoEditorAction()">↶ Undo<kbd>Z</kbd></button>
+    <button class="tool-square" onclick="redoEditorAction()">↷ Redo<kbd>Shift+Z</kbd></button>
+    <button class="tool-square" onclick="addSelectedToMultiSelect()">＋ Group<kbd>M</kbd></button>
+    <button class="tool-square" onclick="clearMultiSelect()">◇ Clear<kbd></kbd></button>
+  </div>
   <div class="ctrl-grid">
     <button class="ctrl-btn" onclick="setGizmoMode('move')">Move<kbd>G</kbd></button>
     <button class="ctrl-btn" onclick="setGizmoMode('rotate')">Rotate<kbd>R</kbd></button>
@@ -353,6 +368,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" onclick="scaleSelected(0.8)">Smaller<kbd>-</kbd></button>
     <button class="ctrl-btn" onclick="duplicateSelectedFence()">Duplicate<kbd>N</kbd></button>
     <button class="ctrl-btn danger" onclick="deleteSelectedFence()">Delete<kbd>Del</kbd></button>
+    <button class="ctrl-btn" onclick="hideSelectedObject()">Hide Selected</button>
+    <button class="ctrl-btn" onclick="showHiddenEditorObjects()">Show Hidden</button>
+    <button class="ctrl-btn" onclick="lockSelectedObject()">Lock Selected</button>
+    <button class="ctrl-btn" onclick="unlockAllEditorObjects()">Unlock All</button>
+    <button class="ctrl-btn" onclick="saveSelectedAsPrefab()">Save Prefab</button>
+    <button class="ctrl-btn" onclick="spawnSelectedPrefab()">Spawn Prefab</button>
+    <button class="ctrl-btn" onclick="duplicateMultiSelected()">Duplicate Group</button>
+    <button class="ctrl-btn danger" onclick="deleteMultiSelected()">Delete Group</button>
   </div>
   <hr class="ap-divider">
   <div id="signEditorPanel" style="display:none;padding:0 8px 8px">
@@ -414,15 +437,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <button class="ctrl-btn full" onclick="applyAmbientGlowSettings()" style="width:100%;background:#ffdd88;color:#000">Apply Glow</button>
 </div>
 <div id="walkSurfaceEditorPanel" style="display:none;padding:0 8px 8px">
-  <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin-bottom:6px;text-transform:uppercase">Walk Surface / Collision</div>
-  <div style="font-size:10px;line-height:1.4;color:#aaa;margin-bottom:8px">Manual pieces are the only gameplay blockers. Use visible pieces, then move, rotate, scale, duplicate, delete, or apply them to matching assets.</div>
+  <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin-bottom:6px;text-transform:uppercase">Walk Surface / Collision Builder</div>
+  <div style="font-size:10px;line-height:1.4;color:#aaa;margin-bottom:8px">Manual pieces are gameplay collision helpers. Terrain patches are visual/walk-surface helpers. Keep blockers here; sculpt/look-dev patches in Terrain Builder.</div>
   <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:8px"><input type="checkbox" id="proxyAttachToSelected" checked> Attach new pieces to selected object</label>
-  <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin:10px 0 6px;text-transform:uppercase">Manual Pieces</div>
-  <div style="font-size:10px;line-height:1.4;color:#aaa;margin-bottom:8px">Red blocks movement, green raises walkable floors, blue creates ramps. Leave gaps where doors should be.</div>
+  <div class="admin-step"><strong>Step 1 - Add a piece</strong><span style="color:#aaa;font-size:10px">Red blocks movement, green creates a walk floor, blue creates a ramp.</span></div>
+  <div class="admin-step"><strong>Step 2 - Shape it</strong><span style="color:#aaa;font-size:10px">Use Move, Rotate, Scale, Larger/Smaller, and ramp tilt from Selected controls.</span></div>
+  <div class="admin-step"><strong>Step 3 - Apply/save</strong><span style="color:#aaa;font-size:10px">Save Manual Barriers, then select a matching object and Apply To Same Object if needed.</span></div>
   <div style="display:grid;grid-template-columns:1fr;gap:6px">
-    <button class="ctrl-btn" onclick="addCollisionProxyPiece('blocker')">Add Red Blocker</button>
-    <button class="ctrl-btn" onclick="addCollisionProxyPiece('walk')">Add Green Walk Floor</button>
-    <button class="ctrl-btn" onclick="addCollisionProxyPiece('ramp')">Add Blue Ramp</button>
+    <button class="ctrl-btn" onclick="addCollisionProxyPiece('blocker')">1 Add Red Blocker</button>
+    <button class="ctrl-btn" onclick="addCollisionProxyPiece('walk')">1 Add Green Walk Floor</button>
+    <button class="ctrl-btn" onclick="addCollisionProxyPiece('ramp')">1 Add Blue Ramp</button>
     <button class="ctrl-btn" onclick="tiltSelectedRamp(1)">Tilt Ramp Up</button>
     <button class="ctrl-btn" onclick="tiltSelectedRamp(-1)">Tilt Ramp Down</button>
     <button class="ctrl-btn" onclick="selectBlockingPieceAtPlayer()">Select Blocker Near Player</button>
@@ -431,14 +455,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn" id="toggleManualPiecesBtn" onclick="toggleManualBarrierVisibility()">Hide Manual Pieces</button>
     <button class="ctrl-btn danger" onclick="deleteAttachedCollisionProxyPieces()">Delete Attached Pieces</button>
     <button class="ctrl-btn danger" onclick="deleteCollisionProxyPiecesForSameType()">Delete Same Object Barriers</button>
-    <button class="ctrl-btn" onclick="saveManualBarriersNow()">Save Manual Barriers</button>
+    <button class="ctrl-btn" onclick="saveManualBarriersNow()">3 Save Manual Barriers</button>
   </div>
   <div id="manualBarrierSaveStatus" style="font-size:10px;line-height:1.35;color:#77e6df;margin-top:8px;min-height:16px"></div>
 </div>
   <hr class="ap-divider">
   <div class="ap-section">Terrain Tools</div>
   <div class="admin-section-body" data-admin-section-body="terrain-tools">
-    <div class="admin-note">Paint lightweight walk-surface patches for roots, mounds, slopes, paths, and terrain fixes. These are visual/editor-safe proxy surfaces and save with the village.</div>
+    <div class="admin-note">Terrain patches are editable ground helpers for roots, hills, paths, and footstep surface painting. They are not red blockers.</div>
+    <div class="admin-pill">Selected Surface: <span id="selectedSurfaceTypeLabel">none</span></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <label class="admin-field">Brush Size <input id="terrainBrushSize" type="range" min="2" max="36" step="1" value="10"></label>
       <label class="admin-field">Height <input id="terrainBrushHeight" type="range" min="-2" max="8" step="0.1" value="0"></label>
@@ -453,12 +478,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       </select>
     </label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <button class="ctrl-btn" onclick="paintWalkSurfaceBrush()">Paint Walk Surface</button>
+      <button class="ctrl-btn" onclick="paintWalkSurfaceBrush()">Paint Flat Patch</button>
       <button class="ctrl-btn" onclick="flattenSelectedWalkSurfacePatch()">Flatten Selected</button>
       <button class="ctrl-btn" onclick="raiseSelectedWalkSurfacePatch(0.25)">Raise</button>
       <button class="ctrl-btn" onclick="raiseSelectedWalkSurfacePatch(-0.25)">Lower</button>
       <button class="ctrl-btn" onclick="smoothSelectedWalkSurfacePatch()">Smooth</button>
       <button class="ctrl-btn" onclick="setSelectedWalkSurfaceType()">Apply Type</button>
+      <button class="ctrl-btn" onclick="deleteSelectedTerrainPatch()">Erase Selected</button>
+      <button class="ctrl-btn" id="terrainPatchVisibilityBtn" onclick="toggleTerrainPatchVisibility()">Hide Terrain Patches</button>
+      <button class="ctrl-btn" id="walkPatchVisibilityBtn" onclick="toggleWalkPatchVisibility()">Hide Walk Surfaces</button>
     </div>
   </div>
   <div class="ap-section">Terrain Stamps</div>
@@ -484,25 +512,51 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <div class="ap-section">Quest Editor</div>
   <div class="admin-section-body" data-admin-section-body="quest-editor">
-    <div class="admin-note">Foundation only: creates local draft quest data for later database/reward integration.</div>
+    <div class="admin-note">Local quest editor foundation. It keeps the Hub tutorial quests safe and stores custom quest data locally for now.</div>
     <label class="admin-field">Quest ID <input id="questDraftId" placeholder="quest_the_warning"></label>
     <label class="admin-field">Title <input id="questDraftTitle" placeholder="The First Warning"></label>
-    <label class="admin-field">Objective <textarea id="questDraftObjective" rows="2" placeholder="Speak with the Ronin watcher"></textarea></label>
-    <button class="ctrl-btn full" onclick="saveQuestDraft()">Save Local Quest Draft</button>
+    <label class="admin-field">Description <textarea id="questDraftDescription" rows="2" placeholder="Story context"></textarea></label>
+    <label class="admin-field">Objective Type
+      <select id="questDraftObjectiveType" class="admin-select">
+        <option value="talkToNpc">talkToNpc</option>
+        <option value="visitVillage">visitVillage</option>
+        <option value="interactSign">interactSign</option>
+        <option value="openChest">openChest</option>
+        <option value="reachZone">reachZone</option>
+      </select>
+    </label>
+    <label class="admin-field">Objective Text <textarea id="questDraftObjective" rows="2" placeholder="Speak with the Ronin watcher"></textarea></label>
+    <label class="admin-field">Target ID <input id="questDraftTargetId" placeholder="npc/sign/chest/zone/village id"></label>
+    <label class="admin-field">Prerequisite Quest <input id="questDraftPrereq" placeholder="optional previous quest id"></label>
+    <label class="admin-field">State
+      <select id="questDraftState" class="admin-select">
+        <option value="locked">locked</option>
+        <option value="active">active</option>
+        <option value="completed">completed</option>
+      </select>
+    </label>
+    <button class="ctrl-btn full" onclick="saveQuestDraft()">Save Local Quest</button>
   </div>
   <div class="ap-section">Interaction Zones</div>
   <div class="admin-section-body" data-admin-section-body="interaction-zones">
-    <div class="admin-note">Future-ready trigger zones for story, audio, weather, cutscene, and danger events.</div>
+    <div class="admin-note">Trigger zones are story, audio, weather, quest, store, and dojo volumes. They are editable and save per village.</div>
     <label class="admin-field">Zone Type
       <select id="interactionZoneType" class="admin-select">
         <option value="story">story</option>
         <option value="audio">audio</option>
         <option value="weather">weather</option>
-        <option value="cutscene">cutscene</option>
-        <option value="danger">danger</option>
+        <option value="quest">quest</option>
+        <option value="store">store</option>
+        <option value="dojo">dojo</option>
       </select>
     </label>
-    <button class="ctrl-btn full" onclick="placeInteractionZone()">Place Trigger Zone</button>
+    <label class="admin-field">Quest Objective ID <input id="interactionZoneQuestId" placeholder="optional quest objective"></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="ctrl-btn" onclick="placeInteractionZone()">Add Zone</button>
+      <button class="ctrl-btn" onclick="deleteSelectedInteractionZone()">Delete Zone</button>
+      <button class="ctrl-btn" id="zoneVisibilityBtn" onclick="toggleInteractionZoneVisibility()">Hide Zones</button>
+      <button class="ctrl-btn" onclick="setGizmoMode('scale')">Resize Zone</button>
+    </div>
   </div>
   <hr class="ap-divider">
   <div class="ap-section">Weather</div>
@@ -574,6 +628,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <textarea id="npcDialogueInput" placeholder="Custom dialogue text" rows="4" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:5px;resize:vertical"></textarea>
     <input id="npcQuestIdInput" placeholder="Quest ID (optional)" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:6px">
     <button class="ctrl-btn full" onclick="applySelectedNPCChanges()" style="width:100%;background:#5ecfca;color:#000">Apply NPC Changes</button>
+    <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin:9px 0 6px;text-transform:uppercase">Patrol Route</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+      <button class="ctrl-btn" onclick="addPatrolNodeForSelectedNPC()">Add Node</button>
+      <button class="ctrl-btn" onclick="removeLastPatrolNodeForSelectedNPC()">Delete Node</button>
+      <button class="ctrl-btn" onclick="assignSelectedNPCToPatrol()">Assign Patrol</button>
+      <button class="ctrl-btn" id="patrolVisibilityBtn" onclick="togglePatrolRouteVisibility()">Show Routes</button>
+    </div>
+  </div>
+  <hr class="ap-divider">
+  <div class="ap-section">Backup / Restore</div>
+  <div class="admin-section-body" data-admin-section-body="backup-restore">
+    <div class="admin-note">Creates local backups before risky edits and lets you export/import the current village JSON.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="ctrl-btn" onclick="createLocalLayoutBackup()">Create Backup</button>
+      <button class="ctrl-btn" onclick="restorePreviousLocalBackup()">Restore Backup</button>
+      <button class="ctrl-btn" onclick="exportCurrentVillageLayout()">Export JSON</button>
+      <button class="ctrl-btn" onclick="document.getElementById('layoutImportInput').click()">Import JSON</button>
+    </div>
+    <input type="file" id="layoutImportInput" accept="application/json,.json" style="display:none" onchange="importVillageLayoutJSON(event)">
   </div>
   <hr class="ap-divider">
   <div style="padding:0 8px 6px">
@@ -1407,6 +1480,7 @@ function placePendingAdminPlacementAtPoint(point) {
   if (!pendingAdminPlacement || !point) return false;
   const request = pendingAdminPlacement;
   clearAdminPlacement();
+  recordEditorHistory('place object');
 
   if (request.kind === 'collision_proxy') {
     placeCollisionProxyPieceAtPoint(request.proxyKind, point, request.owner);
@@ -2602,6 +2676,7 @@ function updateForgeActionTestControlsVisibility() {
 }
 
 function updateSelectedBadge(){
+  if (typeof updateSelectedSurfaceTypeLabel === 'function') updateSelectedSurfaceTypeLabel();
   const badge = document.getElementById('selectedBadge');
   if (!badge) return;
   if (selectedObject) {
@@ -4229,7 +4304,7 @@ function getFootstepSurfaceType() {
 function getFootstepKeyForSurface(surface) {
   if (surface === 'snow') return 'footstepSnow';
   if (surface === 'wet') return 'footstepWet';
-  if (surface === 'stone') return 'footstepStone';
+  if (surface === 'stone' || surface === 'wood') return 'footstepStone';
   return 'footstepDirt';
 }
 
@@ -10047,15 +10122,7 @@ function applyObjectTransform(node, data){
 
 let _worldLayoutSaveChain = Promise.resolve();
 
-function saveWorldLayout(saveToGitHub = true){
-  if (saveToGitHub && CURRENT_VILLAGE_ID !== 'hub') {
-    const confirmed = window.confirm(`You are saving ${CURRENT_VILLAGE.displayName}. This will not overwrite Hub Village.`);
-    if (!confirmed) {
-      showToast('Save cancelled');
-      return Promise.resolve(false);
-    }
-  }
-
+function collectWorldLayoutData() {
   // Only save actually placed objects — skip source roots at 9999 and untyped nodes
   const saveableTransformNodes = scene.transformNodes.filter(n =>
     n.metadata && n.metadata.isClone &&
@@ -10081,7 +10148,7 @@ function saveWorldLayout(saveToGitHub = true){
   );
   const allNodes = [...saveableTransformNodes, ...saveableProxyMeshes, ...saveableNPCNodes];
 
-  const data = allNodes.map(node => {
+  return allNodes.map(node => {
     const savePosition = node.metadata.type === 'npc' && node.metadata.spawn
       ? node.metadata.spawn
       : node.position;
@@ -10139,13 +10206,29 @@ function saveWorldLayout(saveToGitHub = true){
     terrainSurfaceType: node.metadata.terrainSurfaceType || null,
     terrainToolPatch: node.metadata.terrainToolPatch === true,
     terrainStampType: node.metadata.terrainStampType || null,
-    interactionZoneType: node.metadata.interactionZoneType || null
+    interactionZoneType: node.metadata.interactionZoneType || null,
+    questObjectiveId: node.metadata.questObjectiveId || null,
+    editorLocked: node.metadata.editorLocked === true
   });
   });
+}
+
+function saveWorldLayout(saveToGitHub = true){
+  if (saveToGitHub && CURRENT_VILLAGE_ID !== 'hub') {
+    const confirmed = window.confirm(`You are saving ${CURRENT_VILLAGE.displayName}. This will not overwrite Hub Village.`);
+    if (!confirmed) {
+      showToast('Save cancelled');
+      return Promise.resolve(false);
+    }
+  }
+
+  const data = collectWorldLayoutData();
 
   const json = JSON.stringify(data, null, 2);
 
   // Always update local cache immediately.
+  const previousJson = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY);
+  if (previousJson) localStorage.setItem('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID, previousJson);
   localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, json);
   if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem("rebelAntsWorldLayout", json);
 
@@ -10314,7 +10397,10 @@ function loadWorldLayout(){
         terrainToolPatch: item.terrainToolPatch === true,
         terrainStampType: item.terrainStampType || null
       });
-      if (proxy) registerEditableRoot(proxy.name, proxy);
+      if (proxy) {
+        if (proxy.metadata.terrainToolPatch) styleTerrainPatchVisual(proxy, proxy.metadata.terrainStampType || 'flat_patch');
+        registerEditableRoot(proxy.name, proxy);
+      }
       return;
     }
 
@@ -10324,6 +10410,7 @@ function loadWorldLayout(){
         item.interactionZoneType || 'story'
       );
       if (item.name) zone.name = item.name;
+      zone.metadata.questObjectiveId = item.questObjectiveId || null;
       zone.rotation = new BABYLON.Vector3(item.rotation?.x || 0, item.rotation?.y || 0, item.rotation?.z || 0);
       zone.scaling = new BABYLON.Vector3(item.scaling?.x || 1, item.scaling?.y || 1, item.scaling?.z || 1);
       registerEditableRoot(zone.name, zone);
@@ -10437,6 +10524,7 @@ if (m.material) {
 
 function deleteSelectedFence(){
   if (!selectedObject) return;
+  recordEditorHistory('delete selected');
 
         const isOriginalObject =
     selectedObject === fenceRootRef ||
@@ -10501,6 +10589,7 @@ function deleteSelectedFence(){
 }
 function duplicateSelectedFence(){
   if (!selectedObject) return;
+  recordEditorHistory('duplicate selected');
 
   if (selectedObject.metadata?.type === 'npc') {
     duplicateSelectedNPC();
@@ -12679,7 +12768,19 @@ function updatePerformanceDebugPanel() {
     (WeatherManager.puddleMeshes?.filter(m => m.isEnabled()).length || 0) +
     (WeatherManager.frostMeshes?.filter(m => m.isEnabled()).length || 0);
   const drawCalls = scene.getEngine()?._drawCalls?.current || '--';
-  host.innerHTML = `<span>FPS: ${fps}</span><span>Draw: ${drawCalls}</span><span>NPCs: ${NPCManager.roots.length}</span><span>Audio: ${activeAudio}</span><span>Weather FX: ${weatherFx}</span><span>Collision: ${villageCollisionBlockers.length}</span><span>GPU: ${window._gpuMode || 'webgl'}</span><span>Meshes: ${scene.meshes.length}</span>`;
+  const glbCount = scene.transformNodes.filter(node => node.metadata?.modelUrl || node.metadata?.uploadedAsset).length;
+  const uploadedCount = getUploadedAssets().length;
+  const terrainCount = getTerrainPatchNodes().length;
+  const warnings = [];
+  if (fps && fps < 35) warnings.push('Low FPS');
+  if (glbCount > 35) warnings.push('Many GLBs');
+  if (NPCManager.roots.length > 20) warnings.push('Many NPCs');
+  if (villageCollisionBlockers.length > 260) warnings.push('Many collision pieces');
+  if (activeAudio > 8) warnings.push('Many sounds');
+  const health = warnings.length
+    ? `<span class="health-warn" title="${warnings.join(', ')}">! ${warnings[0]}</span>`
+    : '<span class="health-good">✓ Good</span>';
+  host.innerHTML = `<span>${health}</span><span>FPS: ${fps}</span><span>Draw: ${drawCalls}</span><span>NPCs: ${NPCManager.roots.length}</span><span>Audio: ${activeAudio}</span><span>Weather FX: ${weatherFx}</span><span>Collision: ${villageCollisionBlockers.length}</span><span>Terrain: ${terrainCount}</span><span>GLBs: ${glbCount}</span><span>Uploaded: ${uploadedCount}</span><span>GPU: ${window._gpuMode || 'webgl'}</span><span>Meshes: ${scene.meshes.length}</span>`;
 }
 
 initializeAdminBuilderSections();
@@ -12759,6 +12860,7 @@ function attachSelectedGizmo() {
 }
 function flipSelected() {
   if (!selectedObject) return;
+  recordEditorHistory('flip selected');
   selectedObject.scaling.x *= -1;
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
@@ -12766,6 +12868,7 @@ function flipSelected() {
 }
 function rotateSelectedBy(angle) {
   if (!selectedObject) return;
+  recordEditorHistory('rotate selected');
   selectedObject.rotation.y += angle;
   if (selectedObject.metadata?.type === 'npc') updateNPCAdminRotation(selectedObject);
   rebuildVillageCollisionBlockers();
@@ -12778,6 +12881,7 @@ function tiltSelectedRamp(direction) {
     return;
   }
 
+  recordEditorHistory('tilt ramp');
   const step = 0.08;
   const nextPitch = (selectedObject.rotation?.x || 0) - (direction > 0 ? step : -step);
   selectedObject.rotation.x = Math.max(-0.75, Math.min(0.75, nextPitch));
@@ -12804,6 +12908,7 @@ function getTerrainBrushSettings() {
 
 function paintWalkSurfaceBrush() {
   if (!adminMode) { showToast('Enter Admin Mode first'); return; }
+  recordEditorHistory('paint terrain patch');
   const point = getWorldBuilderPlacementPoint();
   const settings = getTerrainBrushSettings();
   const proxy = createCollisionProxyPiece('walk', new BABYLON.Vector3(point.x, point.y + settings.height + 0.06, point.z), {
@@ -12811,6 +12916,7 @@ function paintWalkSurfaceBrush() {
     terrainToolPatch: true
   });
   proxy.scaling = new BABYLON.Vector3(settings.size, 0.08, settings.size);
+  styleTerrainPatchVisual(proxy, 'flat_patch');
   registerEditableRoot(proxy.name, proxy);
   setSelectedEditableObject(proxy);
   rebuildVillageCollisionBlockers();
@@ -12833,6 +12939,7 @@ function placeTerrainStamp(stampType) {
   if (!adminMode) { showToast('Enter Admin Mode first'); return; }
   const stamp = TERRAIN_STAMPS[stampType];
   if (!stamp) return;
+  recordEditorHistory('place terrain stamp');
   const point = getWorldBuilderPlacementPoint();
   const proxy = createCollisionProxyPiece(stamp.kind, new BABYLON.Vector3(point.x, point.y + stamp.height, point.z), {
     terrainSurfaceType: stamp.surfaceType,
@@ -12841,6 +12948,7 @@ function placeTerrainStamp(stampType) {
   });
   proxy.scaling = new BABYLON.Vector3(stamp.sizeX, stamp.kind === 'ramp' ? 0.35 : 0.08, stamp.sizeZ);
   if (stamp.pitch) proxy.rotation.x = stamp.pitch;
+  styleTerrainPatchVisual(proxy, stampType);
   registerEditableRoot(proxy.name, proxy);
   setSelectedEditableObject(proxy);
   rebuildVillageCollisionBlockers();
@@ -12859,6 +12967,7 @@ function getSelectedWalkPatch() {
 function raiseSelectedWalkSurfacePatch(delta) {
   const patch = getSelectedWalkPatch();
   if (!patch) { showToast('Select a walk surface patch first'); return; }
+  recordEditorHistory('raise terrain patch');
   patch.position.y += delta;
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
@@ -12868,6 +12977,7 @@ function raiseSelectedWalkSurfacePatch(delta) {
 function flattenSelectedWalkSurfacePatch() {
   const patch = getSelectedWalkPatch();
   if (!patch) { showToast('Select a walk surface patch first'); return; }
+  recordEditorHistory('flatten terrain patch');
   const y = getVillageRaycastGroundHeightAt(patch.position.x, patch.position.z, { includeManualWalkSurfaces: false });
   if (Number.isFinite(y)) patch.position.y = y + 0.06;
   rebuildVillageCollisionBlockers();
@@ -12878,6 +12988,7 @@ function flattenSelectedWalkSurfacePatch() {
 function smoothSelectedWalkSurfacePatch() {
   const patch = getSelectedWalkPatch();
   if (!patch) { showToast('Select a walk surface patch first'); return; }
+  recordEditorHistory('smooth terrain patch');
   const y = getVillageRaycastGroundHeightAt(patch.position.x, patch.position.z, { includeManualWalkSurfaces: false });
   if (Number.isFinite(y)) patch.position.y = BABYLON.Scalar.Lerp(patch.position.y, y + 0.06, 0.5);
   rebuildVillageCollisionBlockers();
@@ -12888,7 +12999,9 @@ function smoothSelectedWalkSurfacePatch() {
 function setSelectedWalkSurfaceType() {
   const patch = getSelectedWalkPatch();
   if (!patch) { showToast('Select a walk surface patch first'); return; }
+  recordEditorHistory('set surface type');
   patch.metadata.terrainSurfaceType = getTerrainBrushSettings().surfaceType;
+  updateSelectedSurfaceTypeLabel();
   rebuildVillageCollisionBlockers();
   triggerAutoSave();
   showToast('Surface type: ' + patch.metadata.terrainSurfaceType);
@@ -12917,9 +13030,11 @@ function createInteractionZone(position, zoneType = 'story') {
 
 function placeInteractionZone() {
   if (!adminMode) { showToast('Enter Admin Mode first'); return; }
+  recordEditorHistory('place interaction zone');
   const point = getWorldBuilderPlacementPoint();
   const zoneType = document.getElementById('interactionZoneType')?.value || 'story';
   const zone = createInteractionZone(new BABYLON.Vector3(point.x, point.y, point.z), zoneType);
+  zone.metadata.questObjectiveId = document.getElementById('interactionZoneQuestId')?.value?.trim() || null;
   setSelectedEditableObject(zone);
   triggerAutoSave();
   showToast('Interaction zone placed: ' + zoneType);
@@ -12929,7 +13044,12 @@ function saveQuestDraft() {
   const draft = {
     id: document.getElementById('questDraftId')?.value?.trim() || ('quest_' + Date.now()),
     title: document.getElementById('questDraftTitle')?.value?.trim() || 'Untitled Quest',
+    description: document.getElementById('questDraftDescription')?.value?.trim() || '',
+    objectiveType: document.getElementById('questDraftObjectiveType')?.value || 'talkToNpc',
     objective: document.getElementById('questDraftObjective')?.value?.trim() || '',
+    targetId: document.getElementById('questDraftTargetId')?.value?.trim() || '',
+    prerequisiteQuestId: document.getElementById('questDraftPrereq')?.value?.trim() || '',
+    state: document.getElementById('questDraftState')?.value || 'locked',
     villageId: CURRENT_VILLAGE_ID,
     updatedAt: new Date().toISOString()
   };
@@ -12937,11 +13057,379 @@ function saveQuestDraft() {
   const drafts = JSON.parse(localStorage.getItem(key) || '[]').filter(item => item.id !== draft.id);
   drafts.push(draft);
   localStorage.setItem(key, JSON.stringify(drafts));
-  showToast('Quest draft saved locally');
+  showToast('Quest saved locally');
+}
+
+function styleTerrainPatchVisual(proxy, stampType = 'flat_patch') {
+  if (!proxy || !scene) return;
+  proxy.getChildren?.().filter(child => child.name?.startsWith('terrainVisual_')).forEach(child => child.dispose(false, true));
+  const mat = new BABYLON.StandardMaterial('terrainVisualMat_' + proxy.name, scene);
+  const surface = proxy.metadata?.terrainSurfaceType || 'dirt';
+  const colors = {
+    dirt: new BABYLON.Color3(.34, .25, .14),
+    stone: new BABYLON.Color3(.38, .39, .37),
+    wood: new BABYLON.Color3(.38, .21, .11),
+    wet: new BABYLON.Color3(.08, .14, .16),
+    snow: new BABYLON.Color3(.84, .91, .95)
+  };
+  mat.diffuseColor = colors[surface] || colors.dirt;
+  mat.emissiveColor = mat.diffuseColor.scale(.12);
+  mat.alpha = stampType === 'flat_patch' ? .28 : .42;
+  mat.backFaceCulling = false;
+
+  let visual;
+  if (stampType === 'root_mound' || stampType === 'hill') {
+    visual = BABYLON.MeshBuilder.CreateSphere('terrainVisual_' + stampType + '_' + proxy.name, { diameter: 1, segments: 10 }, scene);
+    visual.scaling = new BABYLON.Vector3(.5, stampType === 'hill' ? .18 : .12, .5);
+    visual.position.y = .06;
+  } else if (stampType === 'cave_entrance') {
+    visual = BABYLON.MeshBuilder.CreateTorus('terrainVisual_cave_' + proxy.name, { diameter: .72, thickness: .1, tessellation: 12 }, scene);
+    visual.rotation.x = Math.PI / 2;
+    visual.position.y = .16;
+  } else if (stampType === 'cliff_edge') {
+    visual = BABYLON.MeshBuilder.CreateBox('terrainVisual_cliff_' + proxy.name, { width: 1, height: .18, depth: 1 }, scene);
+    visual.position.y = .1;
+  } else {
+    visual = BABYLON.MeshBuilder.CreateDisc('terrainVisual_patch_' + proxy.name, { radius: .48, tessellation: 18 }, scene);
+    visual.rotation.x = Math.PI / 2;
+    visual.position.y = .08;
+  }
+  visual.parent = proxy;
+  visual.material = mat;
+  visual.isPickable = false;
+}
+
+let _terrainPatchesVisible = true;
+let _walkPatchesVisible = true;
+let _interactionZonesVisible = true;
+let _patrolRoutesVisible = false;
+const _editorHistory = { undo: [], redo: [], limit: 25, muted: false };
+let _multiSelectedNodes = [];
+
+function getTerrainPatchNodes() {
+  return scene.meshes.filter(node => node.metadata?.type === 'collision_proxy' && node.metadata?.terrainToolPatch === true);
+}
+
+function getManualWalkSurfaceNodes() {
+  return scene.meshes.filter(node =>
+    node.metadata?.type === 'collision_proxy' &&
+    node.metadata?.proxyWalkSurfaceEnabled === true &&
+    node.metadata?.terrainToolPatch !== true
+  );
+}
+
+function setNodeEditorVisible(node, visible) {
+  if (!node) return;
+  node.visibility = visible ? (node.metadata?.proxyPieceKind === 'blocker' ? .45 : .38) : 0;
+  node.getChildren?.().forEach(child => {
+    if ('visibility' in child) child.visibility = visible ? 1 : 0;
+  });
+}
+
+function toggleTerrainPatchVisibility() {
+  _terrainPatchesVisible = !_terrainPatchesVisible;
+  getTerrainPatchNodes().forEach(node => setNodeEditorVisible(node, _terrainPatchesVisible));
+  const btn = document.getElementById('terrainPatchVisibilityBtn');
+  if (btn) btn.textContent = _terrainPatchesVisible ? 'Hide Terrain Patches' : 'Show Terrain Patches';
+}
+
+function toggleWalkPatchVisibility() {
+  _walkPatchesVisible = !_walkPatchesVisible;
+  getManualWalkSurfaceNodes().forEach(node => setNodeEditorVisible(node, _walkPatchesVisible));
+  const btn = document.getElementById('walkPatchVisibilityBtn');
+  if (btn) btn.textContent = _walkPatchesVisible ? 'Hide Walk Surfaces' : 'Show Walk Surfaces';
+}
+
+function deleteSelectedTerrainPatch() {
+  const patch = getSelectedWalkPatch();
+  if (!patch) { showToast('Select a terrain/walk patch first'); return; }
+  recordEditorHistory('delete terrain patch');
+  patch.dispose(false, true);
+  selectedObject = null;
+  updateSelectedBadge();
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
+  showToast('Patch erased');
+}
+
+function deleteSelectedInteractionZone() {
+  if (selectedObject?.metadata?.type !== 'interaction_zone') { showToast('Select an interaction zone first'); return; }
+  recordEditorHistory('delete interaction zone');
+  selectedObject.dispose(false, true);
+  selectedObject = null;
+  updateSelectedBadge();
+  triggerAutoSave();
+}
+
+function toggleInteractionZoneVisibility() {
+  _interactionZonesVisible = !_interactionZonesVisible;
+  scene.transformNodes
+    .filter(node => node.metadata?.type === 'interaction_zone')
+    .forEach(node => node.setEnabled(_interactionZonesVisible));
+  const btn = document.getElementById('zoneVisibilityBtn');
+  if (btn) btn.textContent = _interactionZonesVisible ? 'Hide Zones' : 'Show Zones';
+}
+
+function updateSelectedSurfaceTypeLabel() {
+  const label = document.getElementById('selectedSurfaceTypeLabel');
+  if (!label) return;
+  label.textContent = selectedObject?.metadata?.terrainSurfaceType || selectedObject?.metadata?.surfaceType || 'none';
+}
+
+function recordEditorHistory(label = 'edit') {
+  if (_editorHistory.muted || !scene) return;
+  try {
+    _editorHistory.undo.push({ label, json: JSON.stringify(collectWorldLayoutData()) });
+    if (_editorHistory.undo.length > _editorHistory.limit) _editorHistory.undo.shift();
+    _editorHistory.redo = [];
+  } catch(e) {}
+}
+
+function restoreEditorSnapshot(entry) {
+  if (!entry?.json) return;
+  _editorHistory.muted = true;
+  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, entry.json);
+  if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem('rebelAntsWorldLayout', entry.json);
+  loadWorldLayout();
+  _editorHistory.muted = false;
+}
+
+function undoEditorAction() {
+  const entry = _editorHistory.undo.pop();
+  if (!entry) { showToast('Nothing to undo'); return; }
+  _editorHistory.redo.push({ label: 'redo point', json: JSON.stringify(collectWorldLayoutData()) });
+  restoreEditorSnapshot(entry);
+  showToast('Undo: ' + entry.label);
+}
+
+function redoEditorAction() {
+  const entry = _editorHistory.redo.pop();
+  if (!entry) { showToast('Nothing to redo'); return; }
+  _editorHistory.undo.push({ label: 'undo point', json: JSON.stringify(collectWorldLayoutData()) });
+  restoreEditorSnapshot(entry);
+  showToast('Redo');
+}
+
+function getSelectableNodeForBuilder(node) {
+  if (!node) return null;
+  if (node._editRoot) return node._editRoot;
+  return node.metadata?.isClone ? node : null;
+}
+
+function addSelectedToMultiSelect() {
+  const node = getSelectableNodeForBuilder(selectedObject);
+  if (!node) { showToast('Select an object first'); return; }
+  if (!_multiSelectedNodes.includes(node)) _multiSelectedNodes.push(node);
+  showToast('Group selection: ' + _multiSelectedNodes.length);
+}
+
+function clearMultiSelect() {
+  _multiSelectedNodes = [];
+  showToast('Group selection cleared');
+}
+
+function duplicateMultiSelected() {
+  const nodes = _multiSelectedNodes.filter(node => node && !node.isDisposed?.());
+  if (!nodes.length) { showToast('No grouped objects'); return; }
+  recordEditorHistory('duplicate group');
+  const previous = selectedObject;
+  nodes.forEach(node => {
+    selectedObject = node;
+    duplicateSelectedFence();
+  });
+  selectedObject = previous;
+  updateSelectedBadge();
+}
+
+function deleteMultiSelected() {
+  const nodes = _multiSelectedNodes.filter(node => node && !node.isDisposed?.());
+  if (!nodes.length) { showToast('No grouped objects'); return; }
+  recordEditorHistory('delete group');
+  nodes.forEach(node => {
+    try { node.dispose(false, true); } catch(e) {}
+  });
+  _multiSelectedNodes = [];
+  selectedObject = null;
+  updateSelectedBadge();
+  rebuildVillageCollisionBlockers();
+  triggerAutoSave();
+}
+
+function hideSelectedObject() {
+  if (!selectedObject) return;
+  selectedObject.metadata.editorHidden = true;
+  selectedObject.setEnabled(false);
+  showToast('Hidden selected object');
+}
+
+function showHiddenEditorObjects() {
+  scene.transformNodes
+    .filter(node => node.metadata?.editorHidden === true)
+    .forEach(node => {
+      node.metadata.editorHidden = false;
+      node.setEnabled(true);
+    });
+  scene.meshes
+    .filter(node => node.metadata?.editorHidden === true)
+    .forEach(node => {
+      node.metadata.editorHidden = false;
+      node.setEnabled(true);
+    });
+  showToast('Hidden editor objects restored');
+}
+
+function lockSelectedObject() {
+  if (!selectedObject) return;
+  selectedObject.metadata.editorLocked = true;
+  selectedObject.isPickable = false;
+  selectedObject.getChildMeshes?.(false).forEach(mesh => mesh.isPickable = false);
+  showToast('Locked selected object');
+}
+
+function unlockAllEditorObjects() {
+  [...scene.transformNodes, ...scene.meshes].forEach(node => {
+    if (!node?.metadata?.editorLocked) return;
+    node.metadata.editorLocked = false;
+    node.isPickable = true;
+    node.getChildMeshes?.(false).forEach(mesh => mesh.isPickable = true);
+  });
+  showToast('Editor locks cleared');
+}
+
+function saveSelectedAsPrefab() {
+  const nodes = (_multiSelectedNodes.length ? _multiSelectedNodes : [selectedObject]).filter(node => node && !node.isDisposed?.());
+  if (!nodes.length) { showToast('Select object(s) first'); return; }
+  const name = prompt('Prefab name?', 'New Prefab');
+  if (!name) return;
+  const names = new Set(nodes.map(node => node.name));
+  const origin = nodes[0].position.clone();
+  const items = collectWorldLayoutData()
+    .filter(item => names.has(item.name))
+    .map(item => ({
+      ...item,
+      position: {
+        x: item.position.x - origin.x,
+        y: item.position.y - origin.y,
+        z: item.position.z - origin.z
+      },
+      name: null
+    }));
+  const key = 'rebelAntsPrefabs:' + CURRENT_VILLAGE_ID;
+  const prefabs = JSON.parse(localStorage.getItem(key) || '[]').filter(item => item.name !== name);
+  prefabs.push({ name, items, updatedAt: new Date().toISOString() });
+  localStorage.setItem(key, JSON.stringify(prefabs));
+  showToast('Prefab saved: ' + name);
+}
+
+function spawnSelectedPrefab() {
+  const key = 'rebelAntsPrefabs:' + CURRENT_VILLAGE_ID;
+  const prefabs = JSON.parse(localStorage.getItem(key) || '[]');
+  if (!prefabs.length) { showToast('No saved prefabs'); return; }
+  const name = prompt('Spawn which prefab?', prefabs[prefabs.length - 1].name);
+  const prefab = prefabs.find(item => item.name === name);
+  if (!prefab) { showToast('Prefab not found'); return; }
+  recordEditorHistory('spawn prefab');
+  const point = getWorldBuilderPlacementPoint();
+  const current = collectWorldLayoutData();
+  prefab.items.forEach(item => {
+    current.push({
+      ...item,
+      name: null,
+      position: {
+        x: point.x + item.position.x,
+        y: point.y + item.position.y,
+        z: point.z + item.position.z
+      }
+    });
+  });
+  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, JSON.stringify(current, null, 2));
+  loadWorldLayout();
+  showToast('Prefab spawned: ' + prefab.name);
+}
+
+function createLocalLayoutBackup() {
+  const json = JSON.stringify(collectWorldLayoutData(), null, 2);
+  localStorage.setItem('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID, json);
+  showToast('Local backup created');
+}
+
+function restorePreviousLocalBackup() {
+  const json = localStorage.getItem('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID);
+  if (!json) { showToast('No local backup found'); return; }
+  recordEditorHistory('restore backup');
+  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, json);
+  loadWorldLayout();
+  showToast('Backup restored locally');
+}
+
+function exportCurrentVillageLayout() {
+  const json = JSON.stringify(collectWorldLayoutData(), null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${CURRENT_VILLAGE_ID || 'village'}-layout-backup.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function importVillageLayoutJSON(event) {
+  const file = event?.target?.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(String(reader.result || '[]'));
+      if (!Array.isArray(data)) throw new Error('Layout JSON must be an array');
+      createLocalLayoutBackup();
+      recordEditorHistory('import layout');
+      localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, JSON.stringify(data, null, 2));
+      loadWorldLayout();
+      showToast('Imported layout locally');
+    } catch(e) {
+      showToast('Import failed: ' + (e.message || 'bad JSON'));
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function addPatrolNodeForSelectedNPC() {
+  if (selectedObject?.metadata?.type !== 'npc') { showToast('Select an NPC first'); return; }
+  recordEditorHistory('add patrol node');
+  const point = getWorldBuilderPlacementPoint();
+  selectedObject.metadata.patrolPoints = selectedObject.metadata.patrolPoints || [];
+  selectedObject.metadata.patrolPoints.push({ x: point.x, y: point.y, z: point.z });
+  showToast('Patrol node added');
+}
+
+function removeLastPatrolNodeForSelectedNPC() {
+  if (selectedObject?.metadata?.type !== 'npc' || !selectedObject.metadata.patrolPoints?.length) {
+    showToast('No patrol node to remove');
+    return;
+  }
+  recordEditorHistory('remove patrol node');
+  selectedObject.metadata.patrolPoints.pop();
+  showToast('Patrol node removed');
+}
+
+function assignSelectedNPCToPatrol() {
+  if (selectedObject?.metadata?.type !== 'npc') { showToast('Select an NPC first'); return; }
+  recordEditorHistory('assign patrol');
+  selectedObject.metadata.behavior = 'patrol';
+  showToast('NPC assigned to patrol');
+}
+
+function togglePatrolRouteVisibility() {
+  _patrolRoutesVisible = !_patrolRoutesVisible;
+  const btn = document.getElementById('patrolVisibilityBtn');
+  if (btn) btn.textContent = _patrolRoutesVisible ? 'Hide Routes' : 'Show Routes';
+  showToast(_patrolRoutesVisible ? 'Patrol route preview enabled' : 'Patrol route preview hidden');
 }
 
 function scaleSelected(factor) {
   if (!selectedObject) return;
+  recordEditorHistory('scale selected');
 
       if (
     selectedObject.metadata?.isPickProxy &&
@@ -13427,10 +13915,35 @@ window.flattenSelectedWalkSurfacePatch = flattenSelectedWalkSurfacePatch;
 window.raiseSelectedWalkSurfacePatch = raiseSelectedWalkSurfacePatch;
 window.smoothSelectedWalkSurfacePatch = smoothSelectedWalkSurfacePatch;
 window.setSelectedWalkSurfaceType = setSelectedWalkSurfaceType;
+window.deleteSelectedTerrainPatch = deleteSelectedTerrainPatch;
+window.toggleTerrainPatchVisibility = toggleTerrainPatchVisibility;
+window.toggleWalkPatchVisibility = toggleWalkPatchVisibility;
 window.placeInteractionZone = placeInteractionZone;
+window.deleteSelectedInteractionZone = deleteSelectedInteractionZone;
+window.toggleInteractionZoneVisibility = toggleInteractionZoneVisibility;
 window.saveQuestDraft = saveQuestDraft;
 window.toggleAdminLayer = toggleAdminLayer;
 window.selectAdminLayer = selectAdminLayer;
+window.undoEditorAction = undoEditorAction;
+window.redoEditorAction = redoEditorAction;
+window.addSelectedToMultiSelect = addSelectedToMultiSelect;
+window.clearMultiSelect = clearMultiSelect;
+window.duplicateMultiSelected = duplicateMultiSelected;
+window.deleteMultiSelected = deleteMultiSelected;
+window.hideSelectedObject = hideSelectedObject;
+window.showHiddenEditorObjects = showHiddenEditorObjects;
+window.lockSelectedObject = lockSelectedObject;
+window.unlockAllEditorObjects = unlockAllEditorObjects;
+window.saveSelectedAsPrefab = saveSelectedAsPrefab;
+window.spawnSelectedPrefab = spawnSelectedPrefab;
+window.createLocalLayoutBackup = createLocalLayoutBackup;
+window.restorePreviousLocalBackup = restorePreviousLocalBackup;
+window.exportCurrentVillageLayout = exportCurrentVillageLayout;
+window.importVillageLayoutJSON = importVillageLayoutJSON;
+window.addPatrolNodeForSelectedNPC = addPatrolNodeForSelectedNPC;
+window.removeLastPatrolNodeForSelectedNPC = removeLastPatrolNodeForSelectedNPC;
+window.assignSelectedNPCToPatrol = assignSelectedNPCToPatrol;
+window.togglePatrolRouteVisibility = togglePatrolRouteVisibility;
 window.scaleSelected = scaleSelected;
 window.duplicateSelectedFence = duplicateSelectedFence;
 window.deleteSelectedFence = deleteSelectedFence;
