@@ -243,18 +243,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 .lf{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#e8c56a,transparent);animation:sw 1.6s infinite}
 @keyframes sw{to{left:100%}}@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
 
-#assetPanel{position:fixed;top:0;right:0;width:min(360px,42vw);min-width:300px;height:100vh;background:rgba(5,10,28,.97);border-left:1px solid rgba(232,197,106,.25);z-index:25;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(12px)}
+#assetPanel{position:fixed;top:0;right:0;width:min(520px,50vw);min-width:360px;height:100vh;background:rgba(5,10,28,.97);border-left:1px solid rgba(232,197,106,.25);z-index:25;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(12px)}
 #assetPanel.on{transform:translateX(0)}
 #assetPanel .ap-header{padding:12px 14px;border-bottom:1px solid rgba(232,197,106,.15);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 #assetPanel .ap-header span{font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;color:#e8c56a}
 #assetPanel .ap-header kbd{font-size:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:3px;padding:1px 5px;color:rgba(255,255,255,.45)}
+#assetPanel .ap-search-wrap{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.06);display:grid;gap:6px}
+#assetPanel .ap-search{width:100%;box-sizing:border-box;background:rgba(255,255,255,.045);border:1px solid rgba(94,207,202,.32);border-radius:5px;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:1px;padding:8px 10px;outline:none}
+#assetPanel .ap-search::placeholder{color:rgba(255,255,255,.32)}
 #assetPanel .ap-scroll{flex:1;overflow-y:auto;padding:8px 0}
 #assetPanel .ap-section{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;padding:8px 12px 4px}
 #assetPanel .ap-section.collapsible{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;color:rgba(232,197,106,.62)}
 #assetPanel .ap-section.collapsible::after{content:'▾';font-size:10px;color:rgba(94,207,202,.55)}
 #assetPanel .ap-section.collapsed::after{content:'▸'}
-#assetPanel .ap-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:0 10px 4px}
-#assetPanel .ap-grid.collapsed{display:none!important}
+#assetPanel .ap-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:0 10px 4px}
+#assetPanel .ap-grid.collapsed,#assetPanel .admin-section-body.collapsed{display:none!important}
 #assetPanel .ap-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:9px 5px;cursor:pointer;text-align:center;transition:all .15s;min-width:0}
 #assetPanel .ap-card:hover{background:rgba(232,197,106,.12);border-color:rgba(232,197,106,.4)}
 #assetPanel .ap-card.library-removable{position:relative;padding-right:20px}
@@ -278,6 +281,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #assetPanel .ctrl-btn.full{grid-column:1/-1}
 #assetPanel .admin-select{width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(94,207,202,.35);border-radius:5px;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:1px;padding:7px 8px;outline:none}
 #assetPanel .admin-select option{background:#050a1c;color:#e8c56a}
+#assetPanel .admin-section-body{padding:0 8px 8px}
+#assetPanel .admin-field{font-size:9px;color:#8aa;letter-spacing:1px;display:grid;gap:4px;margin-bottom:7px}
+#assetPanel .admin-field input,#assetPanel .admin-field textarea{width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(94,207,202,.28);border-radius:5px;color:#e8c56a;padding:7px 8px;font-family:inherit;font-size:10px}
+#assetPanel .admin-note{font-size:10px;line-height:1.4;color:rgba(255,255,255,.48);padding:0 2px 7px}
+#assetPanel .perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:9px;color:#8aa;letter-spacing:1px}
+#assetPanel .perf-grid span{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:5px;padding:6px}
 @media (max-width:720px){#assetPanel{width:min(320px,88vw);min-width:0}#assetPanel .ap-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(5,10,28,.95);border:1px solid rgba(94,207,202,.6);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:10px 24px;opacity:0;transition:all .4s;pointer-events:none;z-index:50;white-space:nowrap}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -316,6 +325,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="ld"><h1>REBEL ANTS</h1><div class="sub">Building the Hidden Village...</div><div class="lb"><div class="lf"></div></div><div id="ldst">Initializing...</div></div>
 <div id="assetPanel">
   <div class="ap-header"><span>Assets</span><kbd>M</kbd></div>
+  <div class="ap-search-wrap">
+    <input id="adminSearchInput" class="ap-search" placeholder="Search assets, NPCs, tools, sections..." oninput="filterAdminPanel(this.value)">
+  </div>
   <div class="ap-scroll">
     <div class="ap-section">Buildings</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
@@ -423,6 +435,75 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <div id="manualBarrierSaveStatus" style="font-size:10px;line-height:1.35;color:#77e6df;margin-top:8px;min-height:16px"></div>
 </div>
+  <hr class="ap-divider">
+  <div class="ap-section">Terrain Tools</div>
+  <div class="admin-section-body" data-admin-section-body="terrain-tools">
+    <div class="admin-note">Paint lightweight walk-surface patches for roots, mounds, slopes, paths, and terrain fixes. These are visual/editor-safe proxy surfaces and save with the village.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <label class="admin-field">Brush Size <input id="terrainBrushSize" type="range" min="2" max="36" step="1" value="10"></label>
+      <label class="admin-field">Height <input id="terrainBrushHeight" type="range" min="-2" max="8" step="0.1" value="0"></label>
+    </div>
+    <label class="admin-field">Surface Type
+      <select id="terrainSurfaceType" class="admin-select">
+        <option value="dirt">dirt</option>
+        <option value="stone">stone</option>
+        <option value="wood">wood</option>
+        <option value="wet">wet</option>
+        <option value="snow">snow</option>
+      </select>
+    </label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="ctrl-btn" onclick="paintWalkSurfaceBrush()">Paint Walk Surface</button>
+      <button class="ctrl-btn" onclick="flattenSelectedWalkSurfacePatch()">Flatten Selected</button>
+      <button class="ctrl-btn" onclick="raiseSelectedWalkSurfacePatch(0.25)">Raise</button>
+      <button class="ctrl-btn" onclick="raiseSelectedWalkSurfacePatch(-0.25)">Lower</button>
+      <button class="ctrl-btn" onclick="smoothSelectedWalkSurfacePatch()">Smooth</button>
+      <button class="ctrl-btn" onclick="setSelectedWalkSurfaceType()">Apply Type</button>
+    </div>
+  </div>
+  <div class="ap-section">Terrain Stamps</div>
+  <div class="ap-grid">
+    <div class="ap-card" onclick="placeTerrainStamp('root_mound')"><span class="ap-icon">⌁</span><span class="ap-name">Root Mound</span></div>
+    <div class="ap-card" onclick="placeTerrainStamp('hill')"><span class="ap-icon">▴</span><span class="ap-name">Hill</span></div>
+    <div class="ap-card" onclick="placeTerrainStamp('slope')"><span class="ap-icon">╱</span><span class="ap-name">Slope</span></div>
+    <div class="ap-card" onclick="placeTerrainStamp('stair_ramp')"><span class="ap-icon">▰</span><span class="ap-name">Stair Ramp</span></div>
+    <div class="ap-card" onclick="placeTerrainStamp('cliff_edge')"><span class="ap-icon">▔</span><span class="ap-name">Cliff Edge</span></div>
+    <div class="ap-card" onclick="placeTerrainStamp('cave_entrance')"><span class="ap-icon">◖</span><span class="ap-name">Cave Entrance</span></div>
+    <div class="ap-card" onclick="placeTerrainStamp('path_segment')"><span class="ap-icon">═</span><span class="ap-name">Path Segment</span></div>
+  </div>
+  <div class="ap-section">Layers</div>
+  <div class="admin-section-body" data-admin-section-body="layers">
+    <div class="admin-note">Layer controls are editor-only. Hide/lock does not change saved layout data.</div>
+    <div id="adminLayerControls" style="display:grid;grid-template-columns:1fr;gap:5px"></div>
+  </div>
+  <div class="ap-section">Performance</div>
+  <div class="admin-section-body" data-admin-section-body="performance">
+    <div class="perf-grid" id="performanceDebugGrid">
+      <span>FPS: --</span><span>Draw: --</span><span>NPCs: --</span><span>Audio: --</span><span>Weather FX: --</span><span>Collision: --</span><span>GPU: --</span><span>Meshes: --</span>
+    </div>
+  </div>
+  <div class="ap-section">Quest Editor</div>
+  <div class="admin-section-body" data-admin-section-body="quest-editor">
+    <div class="admin-note">Foundation only: creates local draft quest data for later database/reward integration.</div>
+    <label class="admin-field">Quest ID <input id="questDraftId" placeholder="quest_the_warning"></label>
+    <label class="admin-field">Title <input id="questDraftTitle" placeholder="The First Warning"></label>
+    <label class="admin-field">Objective <textarea id="questDraftObjective" rows="2" placeholder="Speak with the Ronin watcher"></textarea></label>
+    <button class="ctrl-btn full" onclick="saveQuestDraft()">Save Local Quest Draft</button>
+  </div>
+  <div class="ap-section">Interaction Zones</div>
+  <div class="admin-section-body" data-admin-section-body="interaction-zones">
+    <div class="admin-note">Future-ready trigger zones for story, audio, weather, cutscene, and danger events.</div>
+    <label class="admin-field">Zone Type
+      <select id="interactionZoneType" class="admin-select">
+        <option value="story">story</option>
+        <option value="audio">audio</option>
+        <option value="weather">weather</option>
+        <option value="cutscene">cutscene</option>
+        <option value="danger">danger</option>
+      </select>
+    </label>
+    <button class="ctrl-btn full" onclick="placeInteractionZone()">Place Trigger Zone</button>
+  </div>
   <hr class="ap-divider">
   <div class="ap-section">Weather</div>
   <div style="padding:0 8px 6px">
@@ -1095,7 +1176,10 @@ function createCollisionProxyPiece(kind, position, options = {}) {
     proxyWalkSurfaceEnabled: proxyKind !== 'blocker',
     proxyOwnerName: options.proxyOwnerName || null,
     proxyOwnerType: options.proxyOwnerType || null,
-    proxyOwnerAssetKey: options.proxyOwnerAssetKey || options.proxyOwnerType || null
+    proxyOwnerAssetKey: options.proxyOwnerAssetKey || options.proxyOwnerType || null,
+    terrainSurfaceType: options.terrainSurfaceType || 'dirt',
+    terrainToolPatch: options.terrainToolPatch === true,
+    terrainStampType: options.terrainStampType || null
   };
   root.material = getCollisionProxyMaterials()[proxyKind];
   root.isPickable = true;
@@ -4135,6 +4219,8 @@ function getFootstepSurfaceType() {
   if (!charMesh) return 'dirt';
   const x = charMesh.position.x;
   const z = charMesh.position.z;
+  const paintedSurface = typeof getVillageWalkSurfaceInfoAt === 'function' ? getVillageWalkSurfaceInfoAt(x, z) : null;
+  if (paintedSurface?.surfaceType) return paintedSurface.surfaceType;
   const inCourtyard = Math.abs(x) <= 110 && Math.abs(z) <= 110;
   const onStonePath = (Math.abs(x) <= 5 && Math.abs(z) <= 150) || (Math.abs(z) <= 5 && Math.abs(x) <= 150);
   return inCourtyard || onStonePath ? 'stone' : 'dirt';
@@ -10049,7 +10135,11 @@ function saveWorldLayout(saveToGitHub = true){
     proxyPieceKind: node.metadata.proxyPieceKind || null,
     proxyOwnerName: node.metadata.proxyOwnerName || null,
     proxyOwnerType: node.metadata.proxyOwnerType || null,
-    proxyOwnerAssetKey: node.metadata.proxyOwnerAssetKey || node.metadata.proxyOwnerType || null
+    proxyOwnerAssetKey: node.metadata.proxyOwnerAssetKey || node.metadata.proxyOwnerType || null,
+    terrainSurfaceType: node.metadata.terrainSurfaceType || null,
+    terrainToolPatch: node.metadata.terrainToolPatch === true,
+    terrainStampType: node.metadata.terrainStampType || null,
+    interactionZoneType: node.metadata.interactionZoneType || null
   });
   });
 
@@ -10219,9 +10309,24 @@ function loadWorldLayout(){
         scaling: item.scaling,
         proxyOwnerName: item.proxyOwnerName || null,
         proxyOwnerType: item.proxyOwnerType || item.proxyOwnerAssetKey || null,
-        proxyOwnerAssetKey: item.proxyOwnerAssetKey || item.proxyOwnerType || null
+        proxyOwnerAssetKey: item.proxyOwnerAssetKey || item.proxyOwnerType || null,
+        terrainSurfaceType: item.terrainSurfaceType || 'dirt',
+        terrainToolPatch: item.terrainToolPatch === true,
+        terrainStampType: item.terrainStampType || null
       });
       if (proxy) registerEditableRoot(proxy.name, proxy);
+      return;
+    }
+
+    if (item.type === 'interaction_zone') {
+      const zone = createInteractionZone(
+        new BABYLON.Vector3(item.position.x, item.position.y, item.position.z),
+        item.interactionZoneType || 'story'
+      );
+      if (item.name) zone.name = item.name;
+      zone.rotation = new BABYLON.Vector3(item.rotation?.x || 0, item.rotation?.y || 0, item.rotation?.z || 0);
+      zone.scaling = new BABYLON.Vector3(item.scaling?.x || 1, item.scaling?.y || 1, item.scaling?.z || 1);
+      registerEditableRoot(zone.name, zone);
       return;
     }
 
@@ -10326,6 +10431,7 @@ if (m.material) {
   console.log("World layout loaded", data.length, "objects");
   ensureDefaultVillageGate();
   if (!hasSavedNPCs) initNPCPopulation();
+  applyAdminLayerState();
   updateQuestTracker();
 }
 
@@ -10961,6 +11067,35 @@ function getVillageWalkableSurfaceHeightAt(x, z) {
   return Number.isFinite(height) ? height : null;
 }
 
+function getVillageWalkSurfaceInfoAt(x, z) {
+  let bestSurface = null;
+  let bestHeight = -Infinity;
+
+  villageWalkableSurfaces.forEach(surface => {
+    const local = pointToVillageSurfaceLocal(surface, x, z);
+    if (Math.abs(local.x) > surface.halfX || Math.abs(local.z) > surface.halfZ) return;
+
+    let y = surface.y;
+    if (surface.kind === 'ramp') {
+      const axis = surface.rampAxis || 'z';
+      const rampCoord = axis === 'x' ? local.x : local.z;
+      const rampHalf = axis === 'x' ? surface.halfX : surface.halfZ;
+      const sign = surface.rampSign || -1;
+      const rawT = sign < 0
+        ? (rampCoord + rampHalf) / (rampHalf * 2)
+        : (rampHalf - rampCoord) / (rampHalf * 2);
+      const t = Math.max(0, Math.min(1, rawT));
+      y = surface.startY + (surface.endY - surface.startY) * t;
+    }
+    if (Number.isFinite(y) && y > bestHeight) {
+      bestHeight = y;
+      bestSurface = surface;
+    }
+  });
+
+  return bestSurface ? { surface: bestSurface, height: bestHeight, surfaceType: bestSurface.surfaceType || 'dirt' } : null;
+}
+
 function getVillageGroundHeightAt(x, z) {
   const baseHeight = getVillageBaseGroundHeightAt(x, z);
   const surfaceHeight = getVillageWalkableSurfaceHeightAt(x, z);
@@ -11207,7 +11342,8 @@ function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
       rampAxis: 'z',
       rampSign: rise >= 0 ? -1 : 1,
       type: 'collision_proxy',
-      name: `${node.name}_manual_ramp`
+      name: `${node.name}_manual_ramp`,
+      surfaceType: node.metadata.terrainSurfaceType || 'dirt'
     });
     return;
   }
@@ -11223,7 +11359,8 @@ function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
     halfZ: footprint.halfZ,
     y,
     type: 'collision_proxy',
-    name: `${node.name}_manual_walk`
+    name: `${node.name}_manual_walk`,
+    surfaceType: node.metadata.terrainSurfaceType || 'dirt'
   });
 }
 
@@ -11814,6 +11951,7 @@ engine.runRenderLoop(()=>{
   tryAutoOpenVillageGateFromWalkthrough();
   updateWeatherManager();
   updateNPCPopulation(dt);
+  updatePerformanceDebugPanel();
   if (window._gpuMode === 'webgpu') {
     _webgpuSmartCapFrame++;
     if (_webgpuSmartCapFrame < 360 || _webgpuSmartCapFrame % 180 === 0) {
@@ -12393,6 +12531,161 @@ function enhanceAssetLibraryCards() {
   });
 }
 
+function initializeAdminBuilderSections() {
+  document.querySelectorAll('#assetPanel .admin-section-body').forEach(body => {
+    const section = body.previousElementSibling;
+    if (!section || !section.classList.contains('ap-section') || section.dataset.builderCollapsibleReady === 'true') return;
+    const key = getAssetCategoryStateKey(section);
+    const saved = localStorage.getItem('rebelAntsAdminSectionCollapsed:' + key);
+    const toggle = collapsed => {
+      section.classList.toggle('collapsed', collapsed);
+      body.classList.toggle('collapsed', collapsed);
+      section.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      localStorage.setItem('rebelAntsAdminSectionCollapsed:' + key, collapsed ? '1' : '0');
+    };
+    section.dataset.builderCollapsibleReady = 'true';
+    section.classList.add('collapsible');
+    section.setAttribute('role', 'button');
+    section.setAttribute('tabindex', '0');
+    section.addEventListener('click', () => toggle(!section.classList.contains('collapsed')));
+    section.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      toggle(!section.classList.contains('collapsed'));
+    });
+    toggle(saved === '1');
+  });
+}
+
+function filterAdminPanel(query) {
+  const q = (query || '').trim().toLowerCase();
+  const sections = Array.from(document.querySelectorAll('#assetPanel .ap-section'));
+  document.querySelectorAll('#assetPanel .ap-card').forEach(card => {
+    const text = card.textContent.toLowerCase();
+    card.style.display = !q || text.includes(q) ? '' : 'none';
+  });
+  sections.forEach(section => {
+    const body = section.nextElementSibling;
+    const sectionMatches = !q || section.textContent.toLowerCase().includes(q);
+    const cards = body?.querySelectorAll ? Array.from(body.querySelectorAll('.ap-card')) : [];
+    const hasVisibleCard = cards.some(card => card.style.display !== 'none');
+    if (body?.classList?.contains('ap-grid')) {
+      section.style.display = sectionMatches || hasVisibleCard ? '' : 'none';
+      body.style.display = sectionMatches || hasVisibleCard ? '' : 'none';
+    } else if (body?.classList?.contains('admin-section-body')) {
+      section.style.display = sectionMatches ? '' : 'none';
+      body.style.display = sectionMatches ? '' : 'none';
+    }
+  });
+}
+
+const ADMIN_LAYER_DEFS = [
+  ['terrain', 'Terrain'],
+  ['npcs', 'NPCs'],
+  ['buildings', 'Buildings'],
+  ['signs', 'Signs'],
+  ['lighting', 'Lighting'],
+  ['weather', 'Weather FX'],
+  ['walk', 'Walk Surfaces'],
+  ['collision', 'Collision'],
+  ['quests', 'Quests'],
+  ['zones', 'Interaction Zones']
+];
+
+function getAdminLayerState() {
+  try { return JSON.parse(localStorage.getItem('rebelAntsAdminLayerState') || '{}'); }
+  catch(e) { return {}; }
+}
+
+function setAdminLayerState(state) {
+  localStorage.setItem('rebelAntsAdminLayerState', JSON.stringify(state || {}));
+}
+
+function getNodeAdminLayer(node) {
+  const type = node?.metadata?.type || '';
+  if (type === 'npc') return 'npcs';
+  if (type === 'wooden_sign') return 'signs';
+  if (type === 'ambient_glow' || type === 'toro_lantern' || type === 'hanging_lantern' || type === 'lantern_1') return 'lighting';
+  if (type === 'collision_proxy') return node.metadata?.proxyPieceKind === 'blocker' ? 'collision' : 'walk';
+  if (type === 'interaction_zone') return 'zones';
+  if (type.includes('terrain')) return 'terrain';
+  return 'buildings';
+}
+
+function getAdminLayerNodes(layer) {
+  return [...scene.transformNodes, ...scene.meshes].filter(node =>
+    node &&
+    !node.isDisposed?.() &&
+    !node.parent &&
+    node.metadata?.isClone === true &&
+    getNodeAdminLayer(node) === layer
+  );
+}
+
+function applyAdminLayerState() {
+  const state = getAdminLayerState();
+  ADMIN_LAYER_DEFS.forEach(([layer]) => {
+    const cfg = state[layer] || {};
+    getAdminLayerNodes(layer).forEach(node => {
+      if (typeof node.setEnabled === 'function') node.setEnabled(cfg.hidden !== true);
+      node.isPickable = cfg.locked !== true;
+      node.getChildMeshes?.(false).forEach(mesh => { mesh.isPickable = cfg.locked !== true; });
+    });
+  });
+  renderAdminLayerControls();
+}
+
+function toggleAdminLayer(layer, key) {
+  const state = getAdminLayerState();
+  state[layer] = state[layer] || {};
+  state[layer][key] = !state[layer][key];
+  setAdminLayerState(state);
+  applyAdminLayerState();
+}
+
+function selectAdminLayer(layer) {
+  const node = getAdminLayerNodes(layer).find(item => item.isEnabled?.() !== false);
+  if (!node) { showToast('No visible objects in layer'); return; }
+  setSelectedEditableObject(node);
+  showToast('Selected layer: ' + layer);
+}
+
+function renderAdminLayerControls() {
+  const host = document.getElementById('adminLayerControls');
+  if (!host) return;
+  const state = getAdminLayerState();
+  host.innerHTML = ADMIN_LAYER_DEFS.map(([layer, label]) => {
+    const cfg = state[layer] || {};
+    return `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:5px;align-items:center">
+      <span style="font-size:9px;color:#8aa;letter-spacing:1px">${label}</span>
+      <button class="ctrl-btn" onclick="toggleAdminLayer('${layer}','hidden')">${cfg.hidden ? 'Show' : 'Hide'}</button>
+      <button class="ctrl-btn" onclick="toggleAdminLayer('${layer}','locked')">${cfg.locked ? 'Unlock' : 'Lock'}</button>
+      <button class="ctrl-btn" onclick="selectAdminLayer('${layer}')">Select</button>
+    </div>`;
+  }).join('');
+}
+
+let _lastPerfUpdateAt = 0;
+function updatePerformanceDebugPanel() {
+  if (!adminMode || performance.now() - _lastPerfUpdateAt < 700) return;
+  _lastPerfUpdateAt = performance.now();
+  const host = document.getElementById('performanceDebugGrid');
+  if (!host) return;
+  const fps = Math.round(engine.getFps ? engine.getFps() : 0);
+  const activeAudio = Object.values(WeatherManager.audioTracks || {}).filter(audio => audio && !audio.paused).length;
+  const weatherFx = (WeatherManager.rainMeshes?.filter(m => m.isEnabled()).length || 0) +
+    (WeatherManager.snowMeshes?.filter(m => m.isEnabled()).length || 0) +
+    (WeatherManager.splashMeshes?.filter(m => m.isEnabled()).length || 0) +
+    (WeatherManager.puddleMeshes?.filter(m => m.isEnabled()).length || 0) +
+    (WeatherManager.frostMeshes?.filter(m => m.isEnabled()).length || 0);
+  const drawCalls = scene.getEngine()?._drawCalls?.current || '--';
+  host.innerHTML = `<span>FPS: ${fps}</span><span>Draw: ${drawCalls}</span><span>NPCs: ${NPCManager.roots.length}</span><span>Audio: ${activeAudio}</span><span>Weather FX: ${weatherFx}</span><span>Collision: ${villageCollisionBlockers.length}</span><span>GPU: ${window._gpuMode || 'webgl'}</span><span>Meshes: ${scene.meshes.length}</span>`;
+}
+
+initializeAdminBuilderSections();
+renderAdminLayerControls();
+window.filterAdminPanel = filterAdminPanel;
+
 // ── RESTORE UPLOADED ASSETS FROM LOCALSTORAGE ──────────
 // Any GLB uploaded via admin panel gets re-added to the panel on refresh
 // using its permanent /assets/buildings/ URL (available after Vercel redeploys)
@@ -12493,6 +12786,160 @@ function tiltSelectedRamp(direction) {
   triggerAutoSave();
   showToast(direction > 0 ? 'Ramp tilted up' : 'Ramp tilted down');
 }
+
+function getWorldBuilderPlacementPoint() {
+  const pick = getAdminPlacementGroundPick();
+  if (pick?.hit && pick.pickedPoint) return pick.pickedPoint.clone();
+  const base = charMesh?.position || orbit?.target || BABYLON.Vector3.Zero();
+  const y = getVillageRaycastGroundHeightAt(base.x, base.z, { includeManualWalkSurfaces: false }) ?? getVillageGroundHeightAt(base.x, base.z) ?? 0;
+  return new BABYLON.Vector3(base.x, y, base.z);
+}
+
+function getTerrainBrushSettings() {
+  const size = Math.max(2, Number(document.getElementById('terrainBrushSize')?.value || 10));
+  const height = Number(document.getElementById('terrainBrushHeight')?.value || 0);
+  const surfaceType = document.getElementById('terrainSurfaceType')?.value || 'dirt';
+  return { size, height: Number.isFinite(height) ? height : 0, surfaceType };
+}
+
+function paintWalkSurfaceBrush() {
+  if (!adminMode) { showToast('Enter Admin Mode first'); return; }
+  const point = getWorldBuilderPlacementPoint();
+  const settings = getTerrainBrushSettings();
+  const proxy = createCollisionProxyPiece('walk', new BABYLON.Vector3(point.x, point.y + settings.height + 0.06, point.z), {
+    terrainSurfaceType: settings.surfaceType,
+    terrainToolPatch: true
+  });
+  proxy.scaling = new BABYLON.Vector3(settings.size, 0.08, settings.size);
+  registerEditableRoot(proxy.name, proxy);
+  setSelectedEditableObject(proxy);
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
+  showToast('Walk surface painted: ' + settings.surfaceType);
+}
+
+const TERRAIN_STAMPS = {
+  root_mound: { kind: 'walk', sizeX: 14, sizeZ: 9, height: .45, surfaceType: 'dirt' },
+  hill: { kind: 'walk', sizeX: 20, sizeZ: 18, height: .85, surfaceType: 'dirt' },
+  slope: { kind: 'ramp', sizeX: 12, sizeZ: 18, height: .35, pitch: -0.18, surfaceType: 'dirt' },
+  stair_ramp: { kind: 'ramp', sizeX: 8, sizeZ: 14, height: .45, pitch: -0.28, surfaceType: 'stone' },
+  cliff_edge: { kind: 'walk', sizeX: 22, sizeZ: 6, height: .55, surfaceType: 'stone' },
+  cave_entrance: { kind: 'walk', sizeX: 18, sizeZ: 10, height: .1, surfaceType: 'stone' },
+  path_segment: { kind: 'walk', sizeX: 8, sizeZ: 22, height: .08, surfaceType: 'dirt' }
+};
+
+function placeTerrainStamp(stampType) {
+  if (!adminMode) { showToast('Enter Admin Mode first'); return; }
+  const stamp = TERRAIN_STAMPS[stampType];
+  if (!stamp) return;
+  const point = getWorldBuilderPlacementPoint();
+  const proxy = createCollisionProxyPiece(stamp.kind, new BABYLON.Vector3(point.x, point.y + stamp.height, point.z), {
+    terrainSurfaceType: stamp.surfaceType,
+    terrainToolPatch: true,
+    terrainStampType: stampType
+  });
+  proxy.scaling = new BABYLON.Vector3(stamp.sizeX, stamp.kind === 'ramp' ? 0.35 : 0.08, stamp.sizeZ);
+  if (stamp.pitch) proxy.rotation.x = stamp.pitch;
+  registerEditableRoot(proxy.name, proxy);
+  setSelectedEditableObject(proxy);
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
+  showToast('Terrain stamp placed: ' + stampType.replace(/_/g, ' '));
+}
+
+function getSelectedWalkPatch() {
+  return selectedObject?.metadata?.type === 'collision_proxy' &&
+    selectedObject.metadata.proxyWalkSurfaceEnabled === true
+      ? selectedObject
+      : null;
+}
+
+function raiseSelectedWalkSurfacePatch(delta) {
+  const patch = getSelectedWalkPatch();
+  if (!patch) { showToast('Select a walk surface patch first'); return; }
+  patch.position.y += delta;
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
+}
+
+function flattenSelectedWalkSurfacePatch() {
+  const patch = getSelectedWalkPatch();
+  if (!patch) { showToast('Select a walk surface patch first'); return; }
+  const y = getVillageRaycastGroundHeightAt(patch.position.x, patch.position.z, { includeManualWalkSurfaces: false });
+  if (Number.isFinite(y)) patch.position.y = y + 0.06;
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
+}
+
+function smoothSelectedWalkSurfacePatch() {
+  const patch = getSelectedWalkPatch();
+  if (!patch) { showToast('Select a walk surface patch first'); return; }
+  const y = getVillageRaycastGroundHeightAt(patch.position.x, patch.position.z, { includeManualWalkSurfaces: false });
+  if (Number.isFinite(y)) patch.position.y = BABYLON.Scalar.Lerp(patch.position.y, y + 0.06, 0.5);
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
+}
+
+function setSelectedWalkSurfaceType() {
+  const patch = getSelectedWalkPatch();
+  if (!patch) { showToast('Select a walk surface patch first'); return; }
+  patch.metadata.terrainSurfaceType = getTerrainBrushSettings().surfaceType;
+  rebuildVillageCollisionBlockers();
+  triggerAutoSave();
+  showToast('Surface type: ' + patch.metadata.terrainSurfaceType);
+}
+
+function createInteractionZone(position, zoneType = 'story') {
+  const root = new BABYLON.TransformNode(makeUniqueVillageNodeName('interactionZoneRootClone_' + Date.now()), scene);
+  root.position = position.clone();
+  root.scaling = new BABYLON.Vector3(6, 1.2, 6);
+  root.metadata = { type: 'interaction_zone', isClone: true, interactionZoneType: zoneType };
+  const mat = new BABYLON.StandardMaterial('interactionZoneMat_' + root.name, scene);
+  mat.diffuseColor = new BABYLON.Color3(.45, .18, .9);
+  mat.emissiveColor = new BABYLON.Color3(.18, .06, .36);
+  mat.alpha = .26;
+  mat.backFaceCulling = false;
+  const box = BABYLON.MeshBuilder.CreateBox('interactionZoneBox_' + root.name, { width: 1, height: 1, depth: 1 }, scene);
+  box.parent = root;
+  box.position.y = .6;
+  box.material = mat;
+  box.isPickable = true;
+  box._editRoot = root;
+  root.isPickable = true;
+  registerEditableRoot(root.name, root);
+  return root;
+}
+
+function placeInteractionZone() {
+  if (!adminMode) { showToast('Enter Admin Mode first'); return; }
+  const point = getWorldBuilderPlacementPoint();
+  const zoneType = document.getElementById('interactionZoneType')?.value || 'story';
+  const zone = createInteractionZone(new BABYLON.Vector3(point.x, point.y, point.z), zoneType);
+  setSelectedEditableObject(zone);
+  triggerAutoSave();
+  showToast('Interaction zone placed: ' + zoneType);
+}
+
+function saveQuestDraft() {
+  const draft = {
+    id: document.getElementById('questDraftId')?.value?.trim() || ('quest_' + Date.now()),
+    title: document.getElementById('questDraftTitle')?.value?.trim() || 'Untitled Quest',
+    objective: document.getElementById('questDraftObjective')?.value?.trim() || '',
+    villageId: CURRENT_VILLAGE_ID,
+    updatedAt: new Date().toISOString()
+  };
+  const key = 'rebelAntsQuestDrafts';
+  const drafts = JSON.parse(localStorage.getItem(key) || '[]').filter(item => item.id !== draft.id);
+  drafts.push(draft);
+  localStorage.setItem(key, JSON.stringify(drafts));
+  showToast('Quest draft saved locally');
+}
+
 function scaleSelected(factor) {
   if (!selectedObject) return;
 
@@ -12974,6 +13421,16 @@ window.setGizmoMode = setGizmoMode;
 window.flipSelected = flipSelected;
 window.rotateSelectedBy = rotateSelectedBy;
 window.tiltSelectedRamp = tiltSelectedRamp;
+window.paintWalkSurfaceBrush = paintWalkSurfaceBrush;
+window.placeTerrainStamp = placeTerrainStamp;
+window.flattenSelectedWalkSurfacePatch = flattenSelectedWalkSurfacePatch;
+window.raiseSelectedWalkSurfacePatch = raiseSelectedWalkSurfacePatch;
+window.smoothSelectedWalkSurfacePatch = smoothSelectedWalkSurfacePatch;
+window.setSelectedWalkSurfaceType = setSelectedWalkSurfaceType;
+window.placeInteractionZone = placeInteractionZone;
+window.saveQuestDraft = saveQuestDraft;
+window.toggleAdminLayer = toggleAdminLayer;
+window.selectAdminLayer = selectAdminLayer;
 window.scaleSelected = scaleSelected;
 window.duplicateSelectedFence = duplicateSelectedFence;
 window.deleteSelectedFence = deleteSelectedFence;
