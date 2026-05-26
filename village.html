@@ -10839,6 +10839,8 @@ const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
 const VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING = 0.06;
 const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.025;
 const VILLAGE_STARTER_PLAYER_GROUND_OFFSET = -1.65;
+const VILLAGE_PLAYER_GROUND_SAMPLE_RADIUS = VILLAGE_PLAYER_COLLISION_RADIUS * 0.72;
+const VILLAGE_PLAYER_GROUND_MAX_STEP_UP = 0.28;
 const VILLAGE_BLOCKER_REBUILD_MS = 900;
 let villageCollisionBlockers = [];
 let villageWalkableSurfaces = [];
@@ -10966,8 +10968,39 @@ function getVillageRaycastGroundHeightAt(x, z) {
 }
 
 function getVillagePlayerGroundHeightAt(x, z) {
-  const raycastHeight = getVillageRaycastGroundHeightAt(x, z);
-  return Number.isFinite(raycastHeight) ? raycastHeight : getVillageGroundHeightAt(x, z);
+  const surfaceHeight = getVillageWalkableSurfaceHeightAt(x, z);
+  if (Number.isFinite(surfaceHeight)) return surfaceHeight;
+
+  const radius = VILLAGE_PLAYER_GROUND_SAMPLE_RADIUS;
+  const samples = [
+    [0, 0],
+    [radius, 0],
+    [-radius, 0],
+    [0, radius],
+    [0, -radius],
+    [radius * 0.65, radius * 0.65],
+    [-radius * 0.65, radius * 0.65],
+    [radius * 0.65, -radius * 0.65],
+    [-radius * 0.65, -radius * 0.65]
+  ];
+  const heights = samples
+    .map(([dx, dz]) => getVillageRaycastGroundHeightAt(x + dx, z + dz))
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b);
+
+  if (!heights.length) return getVillageGroundHeightAt(x, z);
+
+  const centerHeight = getVillageRaycastGroundHeightAt(x, z);
+  const medianHeight = heights[Math.floor(heights.length * 0.5)];
+  const upperSupportHeight = heights[Math.min(heights.length - 1, Math.floor(heights.length * 0.66))];
+  let supportHeight = Number.isFinite(upperSupportHeight) ? upperSupportHeight : medianHeight;
+
+  if (Number.isFinite(centerHeight)) {
+    supportHeight = Math.min(supportHeight, centerHeight + VILLAGE_PLAYER_GROUND_MAX_STEP_UP);
+    supportHeight = Math.max(supportHeight, centerHeight);
+  }
+
+  return Number.isFinite(supportHeight) ? supportHeight : getVillageGroundHeightAt(x, z);
 }
 
 function getVillageBlockerTypeFromMesh(mesh) {
