@@ -715,6 +715,15 @@ const QUEST_DEFINITIONS = {
       { id:'reach-dojo', objective:'Reach the dojo or training entrance.' },
       { id:'complete', objective:'Completed: You found where training begins.' }
     ]
+  },
+  'wooden-signs': {
+    questId:'wooden-signs',
+    title:'The Wooden Signs',
+    steps:[
+      { id:'talk', objective:'Speak with a Hub guide about wooden signs.' },
+      { id:'read-sign', objective:'Read any existing dojo sign.' },
+      { id:'complete', objective:'Completed: You learned that signs connect to Rebel Ants games, tools, stories, and future stores.' }
+    ]
   }
 };
 function returnToHubVillage() {
@@ -2833,6 +2842,35 @@ function updateTreasureChestPrompt() {
   window._nearestTreasureChest = chest;
 }
 
+function getNearestWalkModeSignInRange(range = 5.8) {
+  if (!walkMode || adminMode || !charMesh) return null;
+  const rangeSq = range * range;
+  let nearest = null;
+  let nearestDistSq = Infinity;
+  BUILDINGS.forEach(entry => {
+    if (!entry?.id || !String(entry.id).startsWith('sign_') || !entry.mesh || entry.mesh.isDisposed?.()) return;
+    const dx = entry.mesh.position.x - charMesh.position.x;
+    const dz = entry.mesh.position.z - charMesh.position.z;
+    const distSq = dx * dx + dz * dz;
+    if (distSq <= rangeSq && distSq < nearestDistSq) {
+      nearest = entry;
+      nearestDistSq = distSq;
+    }
+  });
+  return nearest;
+}
+
+function openWalkModeSign(signData) {
+  if (!signData) return false;
+  openPanel(signData);
+  return true;
+}
+
+function tryOpenNearbySign() {
+  if (!walkMode || adminMode) return false;
+  return openWalkModeSign(getNearestWalkModeSignInRange());
+}
+
 function updateInteractionPrompt() {
   updateTreasureChestPrompt();
 
@@ -2843,6 +2881,12 @@ function updateInteractionPrompt() {
 
   if (walkMode && !adminMode && getNearestNPCInRange()) {
     setInteractionPrompt('Press O to Talk', true);
+    return;
+  }
+
+  const sign = getNearestWalkModeSignInRange();
+  if (sign) {
+    setInteractionPrompt(sign.actions?.length ? 'Press O to Open' : 'Press O to Read', true);
     return;
   }
 
@@ -4048,10 +4092,20 @@ function getInteractionAudioTrack(id, path) {
     audio.preload = 'none';
     audio.volume = 0;
     audio._unavailable = false;
-    audio.onerror = () => { audio._unavailable = true; };
+    audio.onerror = () => { audio._unavailable = true; audio._unavailableAt = performance.now(); };
     WeatherManager.oneShotTracks[id] = audio;
   }
   return WeatherManager.oneShotTracks[id];
+}
+
+function canRetryUnavailableAudio(audio, retryMs = 8000) {
+  if (!audio || !audio._unavailable) return true;
+  if (!audio._unavailableAt || performance.now() - audio._unavailableAt > retryMs) {
+    audio._unavailable = false;
+    audio._unavailableAt = 0;
+    return true;
+  }
+  return false;
 }
 
 function playInteractionAudio(key) {
@@ -4064,7 +4118,7 @@ function playInteractionAudio(key) {
   if (!audio || audio._unavailable) return;
   audio.volume = (cfg.volume || .6) * WeatherManager.masterVolume * WeatherManager.interactionVolume;
   audio.currentTime = 0;
-  audio.play().catch(() => { audio._unavailable = true; });
+  audio.play().catch(() => { audio._unavailable = true; audio._unavailableAt = performance.now(); });
 }
 
 function getFootstepSurfaceType() {
@@ -4085,11 +4139,14 @@ function getFootstepKeyForSurface(surface) {
   return 'footstepDirt';
 }
 
-function updateFootstepDebug(surface) {
+function updateFootstepDebug(surface, status = {}) {
   WeatherManager.currentFootstepSurface = surface || 'dirt';
   const badge = document.getElementById('footstepDebugBadge');
   if (!badge) return;
-  badge.textContent = 'Footsteps: ' + WeatherManager.currentFootstepSurface;
+  const enabled = WeatherManager.footstepAudioEnabled ? 'enabled' : 'muted';
+  const moving = status.moving ? 'moving' : 'idle';
+  const grounded = status.grounded === false ? 'air' : 'grounded';
+  badge.textContent = `Footsteps: ${enabled} | ${moving} | ${grounded} | surface: ${WeatherManager.currentFootstepSurface}`;
   badge.classList.toggle('on', adminMode === true);
 }
 
@@ -4097,10 +4154,16 @@ function getFootstepAudioForSurface(surface) {
   const key = getFootstepKeyForSurface(surface);
   const cfg = INTERACTION_AUDIO[key];
   let audio = cfg ? getInteractionAudioTrack(cfg.id, cfg.path) : null;
+  if (audio && !canRetryUnavailableAudio(audio) && key !== 'footstepDirt') audio = null;
   if ((!audio || audio._unavailable) && key !== 'footstepDirt') {
     const fallback = INTERACTION_AUDIO.footstepDirt;
     audio = getInteractionAudioTrack(fallback.id, fallback.path);
+    if (audio) canRetryUnavailableAudio(audio);
     return audio && !audio._unavailable ? { audio, cfg: fallback } : null;
+  }
+  if (audio) canRetryUnavailableAudio(audio);
+  if ((!audio || audio._unavailable) && key === 'footstepDirt') {
+    return { audio:null, cfg:INTERACTION_AUDIO.footstepDirt, unavailable:true };
   }
   return audio && !audio._unavailable ? { audio, cfg } : null;
 }
@@ -4111,13 +4174,14 @@ function playFootstepAudio() {
   updateFootstepDebug(surface);
   const footstep = getFootstepAudioForSurface(surface);
   if (!footstep) return;
+  if (footstep.unavailable || !footstep.audio) return;
   const { audio, cfg } = footstep;
   const stepVolume = Math.max(FOOTSTEP_MIN_VOLUME, Math.min(FOOTSTEP_MAX_VOLUME, cfg.volume || .4));
   audio.loop = false;
   audio.volume = stepVolume * WeatherManager.masterVolume * WeatherManager.footstepVolume;
   audio.pause();
   audio.currentTime = 0;
-  audio.play().catch(() => { audio._unavailable = true; });
+  audio.play().catch(() => { audio._unavailable = true; audio._unavailableAt = performance.now(); });
 }
 
 function stopFootstepAudio() {
@@ -4135,7 +4199,9 @@ function updateFootstepAudio() {
   const forcedMode = window.forgePlayerForcedMode || '';
   const jumping = forcedMode === 'jump' || forcedMode === 'runJump';
   const grounded = charMesh && !jumping;
-  updateFootstepDebug(getFootstepSurfaceType());
+  const surface = getFootstepSurfaceType();
+  const moving = !!(walkMode && !adminMode && charMesh && hasMoveInput && grounded && Math.abs(charMesh._vel || 0) >= .015);
+  updateFootstepDebug(surface, { moving, grounded: !!grounded });
   if (!walkMode || adminMode || !charMesh || !hasMoveInput || !grounded || Math.abs(charMesh._vel || 0) < .015) {
     WeatherManager.lastFootstepPosition = charMesh ? charMesh.position.clone() : null;
     stopFootstepAudio();
@@ -4798,7 +4864,7 @@ setInterval(updateSky,30000);
 const QUEST_STATE_KEY = 'rebelAntsTutorialQuestChain:v1';
 const QUEST_RETURN_HUB_KEY = 'rebelAntsTutorialQuestChain:pendingHubReturn';
 const QUEST_LEFT_HUB_FOR_RONIN_KEY = 'rebelAntsTutorialQuestChain:leftHubForRonin';
-const QUEST_ORDER = ['village-gate', 'first-warning', 'hidden-chest', 'dojo-path'];
+const QUEST_ORDER = ['village-gate', 'first-warning', 'hidden-chest', 'dojo-path', 'wooden-signs'];
 let activeNPCDialogue = null;
 let QuestState = loadQuestState();
 
@@ -4871,7 +4937,7 @@ function reconcileTutorialQuestOnLoad() {
 
 function shouldHubNPCAdvanceTutorial(npc) {
   if (!npc?.metadata || npc.metadata.villageId !== 'hub' || npc.metadata.factionId !== 'ashigaru') return false;
-  return ['village-gate', 'first-warning', 'hidden-chest', 'dojo-path'].includes(QuestState.questId);
+  return ['village-gate', 'first-warning', 'hidden-chest', 'dojo-path', 'wooden-signs'].includes(QuestState.questId);
 }
 
 function updateQuestTracker() {
@@ -4908,6 +4974,13 @@ function isNearDojoTutorialArea() {
 function updateTutorialQuestWorldProgress() {
   if (QuestState.questId === 'dojo-path' && QuestState.step === 'reach-dojo' && isNearDojoTutorialArea()) {
     completeTutorialQuest('dojo-path');
+  }
+}
+
+function handleSignQuestEvent(signData) {
+  if (!signData || !String(signData.id || '').startsWith('sign_')) return;
+  if (QuestState.questId === 'wooden-signs' && QuestState.step === 'read-sign') {
+    completeTutorialQuest('wooden-signs');
   }
 }
 
@@ -5386,6 +5459,10 @@ function handleNPCQuestEvent(npc, finishedDialogue = false) {
   }
   if (QuestState.questId === 'dojo-path' && QuestState.step === 'talk' && shouldHubNPCAdvanceTutorial(npc)) {
     setTutorialQuestStep('dojo-path', 'reach-dojo', 'Quest started: The Dojo Path');
+    return;
+  }
+  if (QuestState.questId === 'wooden-signs' && QuestState.step === 'talk' && shouldHubNPCAdvanceTutorial(npc)) {
+    setTutorialQuestStep('wooden-signs', 'read-sign', 'Quest started: The Wooden Signs');
   }
 }
 
@@ -5415,6 +5492,12 @@ function getTutorialDialogueLines(npc) {
       return [
         'The dojo paths are quiet now, but they will prepare ants for what is waking below the roots.',
         'Reach the dojo entrance. Remember the way before the cracks make the ground unfamiliar.'
+      ];
+    }
+    if (QuestState.questId === 'wooden-signs' && QuestState.step === 'talk') {
+      return [
+        'Some paths are carved in wood. Read the signs near the dojos; they lead beyond the village.',
+        'Games, tools, stories, builders, and future stores will all have doors here before long.'
       ];
     }
   }
@@ -9588,7 +9671,9 @@ scene.onPointerObservable.add(evt=>{
   const hit=evt.pickInfo;
   if(!hit||!hit.hit)return;
   const b=BUILDINGS.find(b=>b.mesh===hit.pickedMesh);
-  if(b)openPanel(b);
+  if(b) {
+    if (!walkMode || String(b.id || '').startsWith('sign_')) openPanel(b);
+  }
 });
 
 scene.onPointerObservable.add(evt=>{
@@ -10406,6 +10491,7 @@ function duplicateSelectedFence(){
   attachSelectedGizmo();
 }
 function openPanel(b){
+  handleSignQuestEvent(b);
   document.getElementById('picon').textContent=b.icon;
   document.getElementById('ph2').textContent=b.title;
   document.getElementById('psub').textContent=b.sub;
@@ -10561,7 +10647,7 @@ document.addEventListener('keydown', async e => {
     selectedObject.rotation.y += Math.PI / 2;
     return;
   }
-  if (!adminMode && key === 'o' && (tryOpenNearbyVillageGate() || tryTalkToNearbyNPC() || tryOpenNearbyTreasureChest())) {
+  if (!adminMode && key === 'o' && (tryOpenNearbyVillageGate() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
     e.preventDefault();
     return;
   }
