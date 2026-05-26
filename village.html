@@ -10840,6 +10840,7 @@ const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
 const VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING = 0.06;
 const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.025;
 const VILLAGE_STARTER_FLAT_GROUND_OFFSET = -1.65;
+const VILLAGE_STARTER_OFFSET_BLEND_DISTANCE = 10;
 const VILLAGE_PLAYER_GROUND_SAMPLE_RADIUS = VILLAGE_PLAYER_COLLISION_RADIUS * 0.72;
 const VILLAGE_PLAYER_GROUND_MAX_STEP_UP = 0.28;
 const VILLAGE_PLAYER_WALK_SURFACE_MAX_RISE = 0.85;
@@ -10850,14 +10851,26 @@ let villageLastBlockerRebuild = 0;
 let villageProxyDebugMeshes = [];
 let villageProxyDebugMaterials = null;
 
-function isVillageFlatCourtyardOrPath(x, z) {
-  const inCourtyard = Math.abs(x) <= 110 && Math.abs(z) <= 110;
-  const onMainPath = (Math.abs(x) <= 5 && Math.abs(z) <= 150) || (Math.abs(z) <= 5 && Math.abs(x) <= 150);
-  return inCourtyard || onMainPath;
+function smoothstep01(value) {
+  const t = Math.max(0, Math.min(1, value));
+  return t * t * (3 - 2 * t);
+}
+
+function getRectBlendAt(x, z, halfX, halfZ, feather) {
+  const signedDistance = Math.min(halfX - Math.abs(x), halfZ - Math.abs(z));
+  return smoothstep01((signedDistance + feather) / (feather * 2));
+}
+
+function getVillageFlatCourtyardOrPathBlend(x, z) {
+  const feather = VILLAGE_STARTER_OFFSET_BLEND_DISTANCE;
+  const courtyardBlend = getRectBlendAt(x, z, 110, 110, feather);
+  const verticalPathBlend = getRectBlendAt(x, z, 5, 150, feather);
+  const horizontalPathBlend = getRectBlendAt(x, z, 150, 5, feather);
+  return Math.max(courtyardBlend, verticalPathBlend, horizontalPathBlend);
 }
 
 function getStarterPlayerGroundOffsetAt(x, z) {
-  return isVillageFlatCourtyardOrPath(x, z) ? VILLAGE_STARTER_FLAT_GROUND_OFFSET : 0;
+  return VILLAGE_STARTER_FLAT_GROUND_OFFSET * getVillageFlatCourtyardOrPathBlend(x, z);
 }
 
 function villageTerrainHash(x, z) {
