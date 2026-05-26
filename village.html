@@ -6800,9 +6800,11 @@ function syncForgePreviewRootToPlayer(previewRoot) {
   previewRoot.rotation.z = charMesh.rotation.z;
 
   if (!isForgeActionMovementSuppressed()) {
-    const terrainY = getVillageGroundHeightAt(charMesh.position.x, charMesh.position.z);
+    const terrainY = getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z);
     if (Number.isFinite(terrainY)) {
       groundVisualRootToTerrain(previewRoot, terrainY);
+      charMesh.position.y = previewRoot.position.y - idleBob - actionOffset.y - (alignmentOffset?.y || 0);
+      charMesh._terrainY = terrainY;
     }
   }
 }
