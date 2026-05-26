@@ -10941,25 +10941,33 @@ function getVillageGroundHeightAt(x, z) {
   return Number.isFinite(surfaceHeight) ? Math.max(baseHeight, surfaceHeight) : baseHeight;
 }
 
-function getVillagePlayerGroundHeightAt(x, z) {
-  const radius = VILLAGE_PLAYER_COLLISION_RADIUS * 0.82;
-  let height = getVillageBaseGroundHeightAt(x, z);
-  const samples = [
-    [0, 0],
-    [radius, 0],
-    [-radius, 0],
-    [0, radius],
-    [0, -radius],
-    [radius * 0.7, radius * 0.7],
-    [-radius * 0.7, radius * 0.7],
-    [radius * 0.7, -radius * 0.7],
-    [-radius * 0.7, -radius * 0.7]
-  ];
-  samples.forEach(([dx, dz]) => {
-    const surfaceHeight = getVillageWalkableSurfaceHeightAt(x + dx, z + dz);
-    if (Number.isFinite(surfaceHeight)) height = Math.max(height, surfaceHeight);
+function getVillageRaycastGroundHeightAt(x, z) {
+  if (!scene) return null;
+  const ray = new BABYLON.Ray(
+    new BABYLON.Vector3(x, 260, z),
+    new BABYLON.Vector3(0, -1, 0),
+    620
+  );
+  const hit = scene.pickWithRay(ray, mesh => {
+    if (!mesh || mesh.isDisposed?.()) return false;
+    if (
+      mesh === ground ||
+      mesh === court ||
+      mesh === plaza ||
+      mesh.name === 'pa' ||
+      mesh.name === 'rv' ||
+      mesh.name?.startsWith('pa')
+    ) {
+      return true;
+    }
+    return mesh.metadata?.type === 'collision_proxy' && mesh.metadata?.proxyWalkSurfaceEnabled === true;
   });
-  return Number.isFinite(height) ? height : getVillageGroundHeightAt(x, z);
+  return hit?.hit && hit.pickedPoint ? hit.pickedPoint.y : null;
+}
+
+function getVillagePlayerGroundHeightAt(x, z) {
+  const raycastHeight = getVillageRaycastGroundHeightAt(x, z);
+  return Number.isFinite(raycastHeight) ? raycastHeight : getVillageGroundHeightAt(x, z);
 }
 
 function getVillageBlockerTypeFromMesh(mesh) {
