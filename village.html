@@ -6872,9 +6872,7 @@ function groundPlayableVisualToTerrain(terrainY) {
   const bounds = getVisiblePlayableBounds(rootForBounds) || getVisiblePlayableBounds(charMesh);
   if (!bounds) return;
 
-  const usesStarterCharacter = !window.activeCharacter?.activeGlbUrl;
-  const starterExtraGroundOffset = usesStarterCharacter ? VILLAGE_STARTER_PLAYER_GROUND_OFFSET : 0;
-  const targetFootY = terrainY + VILLAGE_PLAYER_GROUND_CLEARANCE + starterExtraGroundOffset;
+  const targetFootY = terrainY + VILLAGE_PLAYER_GROUND_CLEARANCE;
   const deltaY = targetFootY - bounds.min.y;
   if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.002) return;
 
@@ -10838,7 +10836,6 @@ window.addEventListener('resize',()=>engine.resize());
 const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
 const VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING = 0.06;
 const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.025;
-const VILLAGE_STARTER_PLAYER_GROUND_OFFSET = -1.65;
 const VILLAGE_PLAYER_GROUND_SAMPLE_RADIUS = VILLAGE_PLAYER_COLLISION_RADIUS * 0.72;
 const VILLAGE_PLAYER_GROUND_MAX_STEP_UP = 0.28;
 const VILLAGE_BLOCKER_REBUILD_MS = 900;
