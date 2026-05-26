@@ -10838,6 +10838,7 @@ const VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING = 0.06;
 const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.025;
 const VILLAGE_PLAYER_GROUND_SAMPLE_RADIUS = VILLAGE_PLAYER_COLLISION_RADIUS * 0.72;
 const VILLAGE_PLAYER_GROUND_MAX_STEP_UP = 0.28;
+const VILLAGE_PLAYER_WALK_SURFACE_MAX_RISE = 0.85;
 const VILLAGE_BLOCKER_REBUILD_MS = 900;
 let villageCollisionBlockers = [];
 let villageWalkableSurfaces = [];
@@ -10940,8 +10941,9 @@ function getVillageGroundHeightAt(x, z) {
   return Number.isFinite(surfaceHeight) ? Math.max(baseHeight, surfaceHeight) : baseHeight;
 }
 
-function getVillageRaycastGroundHeightAt(x, z) {
+function getVillageRaycastGroundHeightAt(x, z, options = {}) {
   if (!scene) return null;
+  const includeManualWalkSurfaces = options.includeManualWalkSurfaces !== false;
   const ray = new BABYLON.Ray(
     new BABYLON.Vector3(x, 260, z),
     new BABYLON.Vector3(0, -1, 0),
@@ -10959,15 +10961,14 @@ function getVillageRaycastGroundHeightAt(x, z) {
     ) {
       return true;
     }
-    return mesh.metadata?.type === 'collision_proxy' && mesh.metadata?.proxyWalkSurfaceEnabled === true;
+    return includeManualWalkSurfaces &&
+      mesh.metadata?.type === 'collision_proxy' &&
+      mesh.metadata?.proxyWalkSurfaceEnabled === true;
   });
   return hit?.hit && hit.pickedPoint ? hit.pickedPoint.y : null;
 }
 
 function getVillagePlayerGroundHeightAt(x, z) {
-  const surfaceHeight = getVillageWalkableSurfaceHeightAt(x, z);
-  if (Number.isFinite(surfaceHeight)) return surfaceHeight;
-
   const radius = VILLAGE_PLAYER_GROUND_SAMPLE_RADIUS;
   const samples = [
     [0, 0],
@@ -10981,13 +10982,13 @@ function getVillagePlayerGroundHeightAt(x, z) {
     [-radius * 0.65, -radius * 0.65]
   ];
   const heights = samples
-    .map(([dx, dz]) => getVillageRaycastGroundHeightAt(x + dx, z + dz))
+    .map(([dx, dz]) => getVillageRaycastGroundHeightAt(x + dx, z + dz, { includeManualWalkSurfaces: false }))
     .filter(Number.isFinite)
     .sort((a, b) => a - b);
 
   if (!heights.length) return getVillageGroundHeightAt(x, z);
 
-  const centerHeight = getVillageRaycastGroundHeightAt(x, z);
+  const centerHeight = getVillageRaycastGroundHeightAt(x, z, { includeManualWalkSurfaces: false });
   const medianHeight = heights[Math.floor(heights.length * 0.5)];
   const upperSupportHeight = heights[Math.min(heights.length - 1, Math.floor(heights.length * 0.66))];
   let supportHeight = Number.isFinite(upperSupportHeight) ? upperSupportHeight : medianHeight;
@@ -10995,6 +10996,21 @@ function getVillagePlayerGroundHeightAt(x, z) {
   if (Number.isFinite(centerHeight)) {
     supportHeight = Math.min(supportHeight, centerHeight + VILLAGE_PLAYER_GROUND_MAX_STEP_UP);
     supportHeight = Math.max(supportHeight, centerHeight);
+  }
+
+  const surfaceHeight = getVillageWalkableSurfaceHeightAt(x, z);
+  const previousGroundHeight = charMesh?._terrainY;
+  const surfaceIsReachableStep =
+    Number.isFinite(surfaceHeight) &&
+    surfaceHeight >= supportHeight - 0.12 &&
+    surfaceHeight <= supportHeight + VILLAGE_PLAYER_WALK_SURFACE_MAX_RISE;
+  const surfaceIsCurrentPlatform =
+    Number.isFinite(surfaceHeight) &&
+    Number.isFinite(previousGroundHeight) &&
+    Math.abs(surfaceHeight - previousGroundHeight) <= VILLAGE_PLAYER_WALK_SURFACE_MAX_RISE;
+
+  if (surfaceIsReachableStep || surfaceIsCurrentPlatform) {
+    supportHeight = Math.max(supportHeight, surfaceHeight);
   }
 
   return Number.isFinite(supportHeight) ? supportHeight : getVillageGroundHeightAt(x, z);
