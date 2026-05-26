@@ -3319,6 +3319,7 @@ function selectVillageGateDestination(villageId) {
   if (!village) return;
   if (villageId === CURRENT_VILLAGE_ID) return;
   if (QuestState.questId === 'village-gate' && QuestState.step === 'travel-ronin' && CURRENT_VILLAGE_ID === 'hub' && villageId === 'ronin') {
+    localStorage.setItem(QUEST_LEFT_HUB_FOR_RONIN_KEY, '1');
     setTutorialQuestStep('village-gate', 'return-hub');
   } else if (QuestState.questId === 'village-gate' && QuestState.step === 'return-hub' && CURRENT_VILLAGE_ID !== 'hub' && villageId === 'hub') {
     localStorage.setItem(QUEST_RETURN_HUB_KEY, '1');
@@ -4796,6 +4797,7 @@ setInterval(updateSky,30000);
 // ── NPC POPULATION V1 ─────────────────────────
 const QUEST_STATE_KEY = 'rebelAntsTutorialQuestChain:v1';
 const QUEST_RETURN_HUB_KEY = 'rebelAntsTutorialQuestChain:pendingHubReturn';
+const QUEST_LEFT_HUB_FOR_RONIN_KEY = 'rebelAntsTutorialQuestChain:leftHubForRonin';
 const QUEST_ORDER = ['village-gate', 'first-warning', 'hidden-chest', 'dojo-path'];
 let activeNPCDialogue = null;
 let QuestState = loadQuestState();
@@ -4847,11 +4849,23 @@ function completeTutorialQuest(questId) {
 }
 
 function reconcileTutorialQuestOnLoad() {
-  if (CURRENT_VILLAGE_ID === 'hub' && localStorage.getItem(QUEST_RETURN_HUB_KEY) === '1') {
+  if (CURRENT_VILLAGE_ID === 'ronin' && QuestState.questId === 'village-gate' && QuestState.step === 'travel-ronin') {
+    localStorage.setItem(QUEST_LEFT_HUB_FOR_RONIN_KEY, '1');
+    setTutorialQuestStep('village-gate', 'return-hub');
+    return;
+  }
+  const returnedToHub =
+    CURRENT_VILLAGE_ID === 'hub' &&
+    QuestState.questId === 'village-gate' &&
+    QuestState.step === 'return-hub' &&
+    (
+      localStorage.getItem(QUEST_RETURN_HUB_KEY) === '1' ||
+      localStorage.getItem(QUEST_LEFT_HUB_FOR_RONIN_KEY) === '1'
+    );
+  if (returnedToHub) {
     localStorage.removeItem(QUEST_RETURN_HUB_KEY);
-    if (QuestState.questId === 'village-gate' && QuestState.step === 'return-hub') {
-      completeTutorialQuest('village-gate');
-    }
+    localStorage.removeItem(QUEST_LEFT_HUB_FOR_RONIN_KEY);
+    completeTutorialQuest('village-gate');
   }
 }
 
