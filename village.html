@@ -1002,7 +1002,8 @@ function spawnAsset(type, position, extraMeta) {
   const config = ASSETS[type];
   if (!config) { console.warn("Missing asset:", type); return null; }
 
-  const root = new BABYLON.TransformNode(type + "_root", scene);
+  const rootName = extraMeta?.isClone ? makeUniqueVillageNodeName(makeCloneName(type)) : type + "_root";
+  const root = new BABYLON.TransformNode(rootName, scene);
   root.position = position.clone();
   root.scaling = new BABYLON.Vector3(config.scale, config.scale, config.scale);
   if (config.rotation) root.rotation = config.rotation.clone();
@@ -1141,6 +1142,7 @@ function getSelectedProxyOwner() {
     ? getVillageNodeByName(activeCollisionProxyOwner?.name)
     : getCollisionProxyOwnerFromSelection();
   if (!ownerNode || ownerNode.metadata?.type === 'collision_proxy') return null;
+  ensureEditableRootUniqueName(ownerNode);
 
   activeCollisionProxyOwner = {
     name: ownerNode.name,
@@ -1496,6 +1498,7 @@ function attachNearbyManualPiecesToSelectedObject(radius = null) {
     return;
   }
 
+  ensureEditableRootUniqueName(ownerNode);
   const ownerType = getCollisionProxyOwnerAssetKey(ownerNode);
   const pieces = getStandaloneCollisionProxyPiecesNear(ownerNode, radius);
   if (!pieces.length) {
@@ -1798,6 +1801,7 @@ function applyAttachedCollisionPiecesToSameType() {
     return;
   }
 
+  ensureEditableRootUniqueName(ownerNode);
   const ownerType = getCollisionProxyOwnerAssetKey(ownerNode);
   const template = saveCollisionProxyTemplateForType(ownerNode);
   if (!template) {
@@ -1809,6 +1813,7 @@ function applyAttachedCollisionPiecesToSameType() {
   let totalCreated = 0;
   const appliedTargets = [];
   targets.forEach(node => {
+    ensureEditableRootUniqueName(node);
     const created = applyCollisionProxyTemplateToOwner(node, template, { replace: true });
     totalCreated += created;
     appliedTargets.push({ name: node.name, type: ownerType, piecesCreated: created });
@@ -5657,6 +5662,33 @@ function sph(d,mat,pos){const s=BABYLON.MeshBuilder.CreateSphere("sp"+Math.rando
 
 let _cloneIdCounter = 0;
 function makeCloneName(type){ _cloneIdCounter += 1; return type + "RootClone_" + Date.now() + "_" + _cloneIdCounter; }
+
+function isVillageNodeNameUsed(name, exceptNode = null) {
+  if (!name) return false;
+  return scene.transformNodes.some(node => node !== exceptNode && node.name === name) ||
+    scene.meshes.some(mesh => mesh !== exceptNode && mesh.name === name);
+}
+
+function makeUniqueVillageNodeName(baseName, exceptNode = null) {
+  let name = baseName || makeCloneName('asset');
+  if (!isVillageNodeNameUsed(name, exceptNode)) return name;
+  let index = 1;
+  while (isVillageNodeNameUsed(`${name}_${index}`, exceptNode)) index += 1;
+  return `${name}_${index}`;
+}
+
+function ensureEditableRootUniqueName(node) {
+  if (!node || !node.name) return;
+  if (!isVillageNodeNameUsed(node.name, node)) return;
+  const oldName = node.name;
+  const newName = makeUniqueVillageNodeName(makeCloneName(node.metadata?.type || 'asset'), node);
+  node.name = newName;
+  if (editableRootRefs[oldName] === node) delete editableRootRefs[oldName];
+  editableRootRefs[newName] = node;
+  getManualCollisionProxyRoots().forEach(proxy => {
+    if (proxy.metadata?.proxyOwnerName === oldName) proxy.metadata.proxyOwnerName = newName;
+  });
+}
 
 // ── GROUND / TERRAIN ─────────────────────────
 setSt("Building terrain...");
@@ -10904,6 +10936,27 @@ function getVillageGroundHeightAt(x, z) {
   return Number.isFinite(surfaceHeight) ? Math.max(baseHeight, surfaceHeight) : baseHeight;
 }
 
+function getVillagePlayerGroundHeightAt(x, z) {
+  const radius = VILLAGE_PLAYER_COLLISION_RADIUS * 0.82;
+  const samples = [
+    [0, 0],
+    [radius, 0],
+    [-radius, 0],
+    [0, radius],
+    [0, -radius],
+    [radius * 0.7, radius * 0.7],
+    [-radius * 0.7, radius * 0.7],
+    [radius * 0.7, -radius * 0.7],
+    [-radius * 0.7, -radius * 0.7]
+  ];
+  let height = -Infinity;
+  samples.forEach(([dx, dz]) => {
+    const sampleHeight = getVillageGroundHeightAt(x + dx, z + dz);
+    if (Number.isFinite(sampleHeight)) height = Math.max(height, sampleHeight);
+  });
+  return Number.isFinite(height) ? height : getVillageGroundHeightAt(x, z);
+}
+
 function getVillageBlockerTypeFromMesh(mesh) {
   if (!mesh) return null;
 
@@ -11633,7 +11686,7 @@ engine.runRenderLoop(()=>{
   lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(Date.now()*0.0019+ll.position.x*0.3)*0.1;});
     // do not auto-snap just because an object is selected
   if(!walkMode&&charMesh){
-    const _terrainY = getVillageGroundHeightAt(charMesh.position.x, charMesh.position.z);
+    const _terrainY = getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z);
     if (Number.isFinite(_terrainY)) groundPlayableVisualToTerrain(_terrainY);
   }
   if(walkMode&&charMesh){
@@ -11656,7 +11709,7 @@ engine.runRenderLoop(()=>{
       charMesh.position.z = _resolvedPos.z;
       if (_resolvedPos.blocked) charMesh._vel *= 0.2;
     }
-    const _terrainY = getVillageGroundHeightAt(charMesh.position.x, charMesh.position.z);
+    const _terrainY = getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z);
     if (Number.isFinite(_terrainY)) {
       groundPlayableVisualToTerrain(_terrainY);
       // Slope tilt removed — character stays upright
