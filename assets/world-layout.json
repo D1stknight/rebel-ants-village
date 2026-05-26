@@ -8516,7 +8516,7 @@
     "name": "pine_1RootClone_1779757720266_139",
     "position": {
       "x": 162.885986328125,
-      "y": 2,
+      "y": -1.0665308585392097,
       "z": -237.44320678710938
     },
     "rotation": {
@@ -8525,9 +8525,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 3.9062498944322224,
+      "x": 3.9062499835114233,
       "y": 3.90625,
-      "z": 3.9062498944322224
+      "z": 3.9062499835114233
     },
     "signConfig": null,
     "toroColor": null,
@@ -8580,7 +8580,7 @@
     "name": "pine_1RootClone_1779757720266_140",
     "position": {
       "x": 147.60107421875,
-      "y": 2,
+      "y": -0.49680625891423347,
       "z": -333.6264953613281
     },
     "rotation": {
@@ -8643,9 +8643,9 @@
     "type": "pine_1",
     "name": "pine_1RootClone_1779757720267_141",
     "position": {
-      "x": 82.84677124023438,
-      "y": 1.8074332640870239,
-      "z": -311.85296630859375
+      "x": 99.45162963867188,
+      "y": 1.2473045227595208,
+      "z": -310.57867431640625
     },
     "rotation": {
       "x": 0,
@@ -8708,7 +8708,7 @@
     "name": "pine_1RootClone_1779757720268_142",
     "position": {
       "x": 129.0229949951172,
-      "y": 2,
+      "y": -0.3672475231674923,
       "z": -241.00015258789062
     },
     "rotation": {
@@ -9603,19 +9603,19 @@
     "type": "tree_1",
     "name": "tree_1RootClone_1779757720280_156",
     "position": {
-      "x": -28.662263870239258,
-      "y": -2.842170943040401e-14,
-      "z": -293.34710693359375
+      "x": -22.744619369506836,
+      "y": -0.23817564341868547,
+      "z": -267.7276916503906
     },
     "rotation": {
       "x": 0,
-      "y": -3.4091862160646222,
+      "y": 2.873999117392816,
       "z": 0
     },
     "scaling": {
-      "x": 1.2800000846634252,
+      "x": 1.2800000767833517,
       "y": 1.2799999713897705,
-      "z": 1.2800000846634252
+      "z": 1.2800000767833517
     },
     "signConfig": null,
     "toroColor": null,
@@ -9668,18 +9668,18 @@
     "name": "tree_1RootClone_1779757720281_157",
     "position": {
       "x": 62.61634826660156,
-      "y": 2,
+      "y": 0.3014920072868108,
       "z": -271.61138916015625
     },
     "rotation": {
       "x": 0,
-      "y": 1.3032027905979193,
+      "y": 1.30320285610345,
       "z": 0
     },
     "scaling": {
-      "x": 1.2800000767833517,
+      "x": 1.2800000531431348,
       "y": 1.2799999713897705,
-      "z": 1.2800000767833517
+      "z": 1.2800000531431348
     },
     "signConfig": null,
     "toroColor": null,
@@ -10179,9 +10179,9 @@
     "type": "rock_1",
     "name": "rock_1RootClone_1779757720290_165",
     "position": {
-      "x": 16.782644271850586,
-      "y": 0.3030394736165931,
-      "z": -155.59193420410156
+      "x": 19.373729705810547,
+      "y": 2.0993838354912953,
+      "z": -155.43080139160156
     },
     "rotation": {
       "x": 0,
@@ -10819,9 +10819,9 @@
     "type": "rock_1",
     "name": "rock_1RootClone_1779757720294_175",
     "position": {
-      "x": -21.290668487548828,
-      "y": 0.3030394823966276,
-      "z": -158.52267456054688
+      "x": -21.680448532104492,
+      "y": 1.9914467630762829,
+      "z": -158.91294860839844
     },
     "rotation": {
       "x": 0,
@@ -12848,9 +12848,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 6.467436790466309,
-      "y": 8.457985877990723,
-      "z": 6.25
+      "x": 4.139159545898438,
+      "y": 5.413110961914064,
+      "z": 4
     },
     "signConfig": null,
     "toroColor": null,
@@ -14960,9 +14960,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 6.467436790466309,
-      "y": 8.457985877990723,
-      "z": 6.25
+      "x": 4.139159545898438,
+      "y": 5.413110961914064,
+      "z": 4
     },
     "signConfig": null,
     "toroColor": null,
@@ -15152,9 +15152,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 6.467436790466309,
-      "y": 8.457985877990723,
-      "z": 6.25
+      "x": 4.139159545898438,
+      "y": 5.413110961914064,
+      "z": 4
     },
     "signConfig": null,
     "toroColor": null,
@@ -15206,19 +15206,19 @@
     "type": "collision_proxy",
     "name": "collision_proxyRootClone_1779577722582_93",
     "position": {
-      "x": 123.50465062657761,
-      "y": 0.803324719593121,
-      "z": -320.0808348715788
+      "x": 123.24520874023438,
+      "y": 0.8033246994018555,
+      "z": -320.9227600097656
     },
     "rotation": {
       "x": 0,
-      "y": 4.163635105516789,
+      "y": -2.119550158310524,
       "z": 0
     },
     "scaling": {
-      "x": 6.467436790466309,
-      "y": 8.457985877990723,
-      "z": 6.25
+      "x": 3.3113275967629954,
+      "y": 4.330488681793213,
+      "z": 3.2000000624760783
     },
     "signConfig": null,
     "toroColor": null,
@@ -15270,19 +15270,19 @@
     "type": "collision_proxy",
     "name": "collision_proxyRootClone_1779577722582_94",
     "position": {
-      "x": 102.04470071801137,
-      "y": 1.0041558620836497,
-      "z": -198.76846088272447
+      "x": 101.50241088867188,
+      "y": 1.0041558742523193,
+      "z": -197.88148498535156
     },
     "rotation": {
       "x": 0,
-      "y": 5.734431432311686,
+      "y": -0.548753917793937,
       "z": 0
     },
     "scaling": {
-      "x": 5.173949432373047,
-      "y": 6.766388702392579,
-      "z": 5
+      "x": 4.139159502223412,
+      "y": 5.4131111145019535,
+      "z": 3.9999999928290024
     },
     "signConfig": null,
     "toroColor": null,
@@ -15344,9 +15344,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 6.467436790466309,
-      "y": 8.457985877990723,
-      "z": 6.25
+      "x": 3.3113276367187505,
+      "y": 4.330488769531251,
+      "z": 3.2
     },
     "signConfig": null,
     "toroColor": null,
@@ -15408,9 +15408,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 4.139159545898438,
-      "y": 5.413110961914064,
-      "z": 4
+      "x": 3.3113276367187505,
+      "y": 4.330488769531251,
+      "z": 3.2000000000000006
     },
     "signConfig": null,
     "toroColor": null,
@@ -15472,9 +15472,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 6.467436790466309,
-      "y": 8.457985877990723,
-      "z": 6.25
+      "x": 5.173949432373047,
+      "y": 6.766388702392579,
+      "z": 5
     },
     "signConfig": null,
     "toroColor": null,
@@ -17840,9 +17840,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 4.7443928718566895,
-      "y": 8.898713111877441,
-      "z": 5.138827323913574
+      "x": 3.0364114379882814,
+      "y": 5.695176391601564,
+      "z": 3.2888494873046876
     },
     "signConfig": null,
     "toroColor": null,
@@ -17904,9 +17904,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 4.7443928718566895,
-      "y": 8.898713111877441,
-      "z": 5.138827323913574
+      "x": 3.0364114379882814,
+      "y": 5.695176391601564,
+      "z": 3.2888494873046876
     },
     "signConfig": null,
     "toroColor": null,
@@ -18022,19 +18022,19 @@
     "type": "collision_proxy",
     "name": "collision_proxyRootClone_1779577938536_189",
     "position": {
-      "x": 129.0714973902761,
-      "y": 2.4467952623963356,
-      "z": -240.91663144223816
+      "x": 129.07150268554688,
+      "y": 0.9875882863998413,
+      "z": -240.9166259765625
     },
     "rotation": {
       "x": 0,
-      "y": 1.5707963153971223,
+      "y": 1.5707963153971225,
       "z": 0
     },
     "scaling": {
-      "x": 4.7443928718566895,
-      "y": 8.898713111877441,
-      "z": 5.138827323913574
+      "x": 2.429129123687744,
+      "y": 2.383833885192871,
+      "z": 2.63107967376709
     },
     "signConfig": null,
     "toroColor": null,
@@ -18416,9 +18416,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 4.7443928718566895,
-      "y": 8.898713111877441,
-      "z": 5.138827323913574
+      "x": 3.0364114379882814,
+      "y": 5.695176391601564,
+      "z": 3.2888494873046876
     },
     "signConfig": null,
     "toroColor": null,
@@ -19750,9 +19750,9 @@
     "type": "collision_proxy",
     "name": "collision_proxyRootClone_1779756100452_114",
     "position": {
-      "x": 16.521182330863724,
-      "y": 2.199816063824528,
-      "z": -156.56645475724463
+      "x": 19.463516235351562,
+      "y": 2.1998159885406494,
+      "z": -158.5477752685547
     },
     "rotation": {
       "x": 0,
@@ -19760,9 +19760,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 7.767914295196533,
-      "y": 2.200000047683716,
-      "z": 9.166374206542969
+      "x": 15.171708106994629,
+      "y": 4.296875,
+      "z": 17.903076171875
     },
     "signConfig": null,
     "toroColor": null,
@@ -19824,9 +19824,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 7.767914295196533,
-      "y": 2.200000047683716,
-      "z": 9.166374206542969
+      "x": 6.214331436157227,
+      "y": 1.7600000381469727,
+      "z": 7.333099365234375
     },
     "signConfig": null,
     "toroColor": null,
@@ -19888,9 +19888,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 7.767914295196533,
-      "y": 2.200000047683716,
-      "z": 9.166374206542969
+      "x": 6.214331436157227,
+      "y": 1.7600000381469727,
+      "z": 7.333099365234375
     },
     "signConfig": null,
     "toroColor": null,
@@ -19952,9 +19952,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 7.767914295196533,
-      "y": 2.200000047683716,
-      "z": 9.166374206542969
+      "x": 6.214331436157227,
+      "y": 1.7600000381469727,
+      "z": 7.333099365234375
     },
     "signConfig": null,
     "toroColor": null,
@@ -20016,9 +20016,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 7.767914295196533,
-      "y": 2.200000047683716,
-      "z": 9.166374206542969
+      "x": 6.214331436157227,
+      "y": 1.7600000381469727,
+      "z": 7.333099365234375
     },
     "signConfig": null,
     "toroColor": null,
@@ -20400,9 +20400,9 @@
       "z": 0
     },
     "scaling": {
-      "x": 7.767914295196533,
-      "y": 2.200000047683716,
-      "z": 9.166374206542969
+      "x": 15.171707607805729,
+      "y": 4.2968750931322575,
+      "z": 17.903074622154236
     },
     "signConfig": null,
     "toroColor": null,
@@ -21411,6 +21411,134 @@
     "proxyOwnerAssetKey": "toro_lantern"
   },
   {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779758169809_142",
+    "position": {
+      "x": -22.83470916748047,
+      "y": 0.9355014562606812,
+      "z": -267.709228515625
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 3.308323621749878,
+      "y": 4.383660793304443,
+      "z": 3.395339012145996
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "hub",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "tree_1RootClone_1779757720280_156",
+    "proxyOwnerType": "tree_1",
+    "proxyOwnerAssetKey": "tree_1"
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxyRootClone_1779758370826_143",
+    "position": {
+      "x": 99.76526641845703,
+      "y": 1.7300573587417603,
+      "z": -310.4625244140625
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4.351082801818848,
+      "y": 2.200000047683716,
+      "z": 2.683323383331299
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "hub",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "pine_1RootClone_1779757720267_141",
+    "proxyOwnerType": "pine_1",
+    "proxyOwnerAssetKey": "pine_1"
+  },
+  {
     "type": "npc",
     "name": "npc_hub-ashigaru-guard-01",
     "position": {
@@ -21425,7 +21553,7 @@
     },
     "scaling": {
       "x": 1,
-      "y": 0.99980536038135,
+      "y": 0.9999428297845016,
       "z": 1
     },
     "signConfig": null,
@@ -21484,7 +21612,7 @@
     },
     "rotation": {
       "x": -1.2410712543590996e-8,
-      "y": 2.838140209397794,
+      "y": 2.8381404612491434,
       "z": -0.02141666737340652
     },
     "scaling": {
@@ -21703,7 +21831,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": 6.283072760306182,
+      "y": 6.283188402101955,
       "z": 0.02327818961873115
     },
     "scaling": {
@@ -21849,7 +21977,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -6.28317570074981,
+      "y": -3.277798736929013,
       "z": -0.023956919159859008
     },
     "scaling": {
