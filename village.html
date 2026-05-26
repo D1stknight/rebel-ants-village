@@ -6872,7 +6872,10 @@ function groundPlayableVisualToTerrain(terrainY) {
   const bounds = getVisiblePlayableBounds(rootForBounds) || getVisiblePlayableBounds(charMesh);
   if (!bounds) return;
 
-  const targetFootY = terrainY + VILLAGE_PLAYER_GROUND_CLEARANCE;
+  const starterGroundOffset = !window.activeCharacter?.activeGlbUrl
+    ? getStarterPlayerGroundOffsetAt(charMesh.position.x, charMesh.position.z)
+    : 0;
+  const targetFootY = terrainY + VILLAGE_PLAYER_GROUND_CLEARANCE + starterGroundOffset;
   const deltaY = targetFootY - bounds.min.y;
   if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.002) return;
 
@@ -10836,6 +10839,7 @@ window.addEventListener('resize',()=>engine.resize());
 const VILLAGE_PLAYER_COLLISION_RADIUS = 0.58;
 const VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING = 0.06;
 const VILLAGE_PLAYER_GROUND_CLEARANCE = 0.025;
+const VILLAGE_STARTER_FLAT_GROUND_OFFSET = -1.65;
 const VILLAGE_PLAYER_GROUND_SAMPLE_RADIUS = VILLAGE_PLAYER_COLLISION_RADIUS * 0.72;
 const VILLAGE_PLAYER_GROUND_MAX_STEP_UP = 0.28;
 const VILLAGE_PLAYER_WALK_SURFACE_MAX_RISE = 0.85;
@@ -10845,6 +10849,16 @@ let villageWalkableSurfaces = [];
 let villageLastBlockerRebuild = 0;
 let villageProxyDebugMeshes = [];
 let villageProxyDebugMaterials = null;
+
+function isVillageFlatCourtyardOrPath(x, z) {
+  const inCourtyard = Math.abs(x) <= 110 && Math.abs(z) <= 110;
+  const onMainPath = (Math.abs(x) <= 5 && Math.abs(z) <= 150) || (Math.abs(z) <= 5 && Math.abs(x) <= 150);
+  return inCourtyard || onMainPath;
+}
+
+function getStarterPlayerGroundOffsetAt(x, z) {
+  return isVillageFlatCourtyardOrPath(x, z) ? VILLAGE_STARTER_FLAT_GROUND_OFFSET : 0;
+}
 
 function villageTerrainHash(x, z) {
   const n = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
