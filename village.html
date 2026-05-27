@@ -352,8 +352,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
   <div class="ap-section">Selected</div>
   <div class="worldbuilder-toolbar">
-    <button class="tool-square" onclick="undoEditorAction()">↶ Undo<kbd>Z</kbd></button>
-    <button class="tool-square" onclick="redoEditorAction()">↷ Redo<kbd>Shift+Z</kbd></button>
+    <button class="tool-square" onclick="undoEditorAction()">↶ Undo Soon<kbd></kbd></button>
+    <button class="tool-square" onclick="redoEditorAction()">↷ Redo Soon<kbd></kbd></button>
     <button class="tool-square" onclick="addSelectedToMultiSelect()">＋ Add Selected To Group<kbd>M</kbd></button>
     <button class="tool-square" onclick="clearMultiSelect()">◇ Clear Group Selection<kbd></kbd></button>
   </div>
@@ -483,7 +483,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       </select>
     </label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <button class="ctrl-btn" onclick="paintWalkSurfaceBrush()">Place Flat Patch</button>
+      <button class="ctrl-btn" onclick="paintWalkSurfaceBrush()">Brush Coming Later</button>
       <button class="ctrl-btn" onclick="flattenSelectedWalkSurfacePatch()">Flatten Selected</button>
       <button class="ctrl-btn" onclick="raiseSelectedWalkSurfacePatch(0.25)">Raise</button>
       <button class="ctrl-btn" onclick="raiseSelectedWalkSurfacePatch(-0.25)">Lower</button>
@@ -497,7 +497,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <div class="ap-section">Terrain Stamps</div>
   <div class="admin-section-body" data-admin-section-body="terrain-stamps">
-  <div class="admin-note">Terrain stamps are helper walk pieces with distinct editor visuals. They are not real sculpted terrain yet.</div>
+  <div class="admin-note">Terrain stamps create real low-poly walkable mesh pieces. Select one, then tune width, length, height, softness, and side heights below.</div>
   <div class="ap-grid" style="padding:0 0 4px">
     <div class="ap-card" onclick="placeTerrainStamp('root_mound')"><span class="ap-icon">⌁</span><span class="ap-name">Root Mound</span></div>
     <div class="ap-card" onclick="placeTerrainStamp('hill')"><span class="ap-icon">▴</span><span class="ap-name">Hill</span></div>
@@ -506,6 +506,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-card" onclick="placeTerrainStamp('cliff_edge')"><span class="ap-icon">▔</span><span class="ap-name">Cliff Edge</span></div>
     <div class="ap-card" onclick="placeTerrainStamp('cave_entrance')"><span class="ap-icon">◖</span><span class="ap-name">Cave Entrance</span></div>
     <div class="ap-card" onclick="placeTerrainStamp('path_segment')"><span class="ap-icon">═</span><span class="ap-name">Path Segment</span></div>
+  </div>
+  <div id="terrainStampEditorPanel" style="display:none;padding:6px 0 0">
+    <label class="admin-field">Width <input id="terrainStampWidth" type="range" min="3" max="50" step="0.5" value="12"></label>
+    <label class="admin-field">Length <input id="terrainStampLength" type="range" min="3" max="50" step="0.5" value="12"></label>
+    <label class="admin-field">Height <input id="terrainStampHeight" type="range" min="-2" max="10" step="0.1" value="1"></label>
+    <label class="admin-field">Softness <input id="terrainStampSoftness" type="range" min="0.4" max="3" step="0.1" value="1.4"></label>
+    <div class="admin-note">Control heights shape mound/hill stamps. Slope/stair/cliff/path use the same values where useful.</div>
+    <label class="admin-field">Center <input id="terrainStampCenterHeight" type="range" min="-3" max="10" step="0.1" value="1"></label>
+    <label class="admin-field">Left <input id="terrainStampLeftHeight" type="range" min="-3" max="10" step="0.1" value="0"></label>
+    <label class="admin-field">Right <input id="terrainStampRightHeight" type="range" min="-3" max="10" step="0.1" value="0"></label>
+    <label class="admin-field">Front <input id="terrainStampFrontHeight" type="range" min="-3" max="10" step="0.1" value="0"></label>
+    <label class="admin-field">Back <input id="terrainStampBackHeight" type="range" min="-3" max="10" step="0.1" value="0"></label>
+    <button class="ctrl-btn full" onclick="applySelectedTerrainStampSettings()">Apply Terrain Shape</button>
   </div>
   </div>
   <div class="ap-section">Layers</div>
@@ -2689,6 +2702,7 @@ function updateForgeActionTestControlsVisibility() {
 
 function updateSelectedBadge(){
   if (typeof updateSelectedSurfaceTypeLabel === 'function') updateSelectedSurfaceTypeLabel();
+  if (typeof updateTerrainStampEditorPanel === 'function') updateTerrainStampEditorPanel();
   const badge = document.getElementById('selectedBadge');
   if (!badge) return;
   if (selectedObject) {
@@ -10148,7 +10162,7 @@ function collectWorldLayoutData() {
   const saveableProxyMeshes = scene.meshes.filter(n =>
     n.metadata &&
     n.metadata.isClone &&
-    n.metadata.type === 'collision_proxy' &&
+    (n.metadata.type === 'collision_proxy' || n.metadata.type === 'terrain_stamp') &&
     !n.parent &&
     n.name &&
     Math.abs(n.position.x) < 500 &&
@@ -10221,6 +10235,7 @@ function collectWorldLayoutData() {
     terrainSurfaceType: node.metadata.terrainSurfaceType || null,
     terrainToolPatch: node.metadata.terrainToolPatch === true,
     terrainStampType: node.metadata.terrainStampType || null,
+    terrainStampShape: node.metadata.terrainStampShape || null,
     interactionZoneType: node.metadata.interactionZoneType || null,
     questObjectiveId: node.metadata.questObjectiveId || null,
     editorLocked: node.metadata.editorLocked === true
@@ -10366,7 +10381,8 @@ function loadWorldLayout(){
     (
       m.name.startsWith('lp_') ||
       m.name.startsWith('lanternProxy_') ||
-      m.metadata?.type === 'collision_proxy'
+      m.metadata?.type === 'collision_proxy' ||
+      m.metadata?.type === 'terrain_stamp'
     )
   ).forEach(m => m.dispose(false, false));
   _lanternLightPool.forEach(l => { l._inUse = false; l.intensity = 0; l.position.set(9999,-999,9999); l._followMesh = null; });
@@ -10419,6 +10435,22 @@ function loadWorldLayout(){
         }
         registerEditableRoot(proxy.name, proxy);
       }
+      return;
+    }
+
+    if (item.type === 'terrain_stamp') {
+      const stamp = createTerrainStampMesh(
+        item.terrainStampType || 'hill',
+        new BABYLON.Vector3(item.position.x, item.position.y, item.position.z),
+        {
+          name: item.name,
+          rotation: item.rotation,
+          scaling: item.scaling,
+          surfaceType: item.terrainSurfaceType || 'dirt',
+          shape: item.terrainStampShape || null
+        }
+      );
+      if (stamp) registerEditableRoot(stamp.name, stamp);
       return;
     }
 
@@ -11155,6 +11187,12 @@ function getVillageWalkableSurfaceHeightAt(x, z) {
 
     if (Math.abs(local.x) > surface.halfX || Math.abs(local.z) > surface.halfZ) return;
 
+    if (surface.kind === 'terrain_stamp') {
+      const localHeight = getTerrainStampLocalHeight(surface.terrainStampType, surface.shape, local.x, local.z);
+      if (Number.isFinite(localHeight)) height = Math.max(height, surface.centerY + localHeight);
+      return;
+    }
+
     if (surface.kind === 'ramp') {
       const axis = surface.rampAxis || 'z';
       const rampCoord = axis === 'x' ? local.x : local.z;
@@ -11183,6 +11221,11 @@ function getVillageWalkSurfaceInfoAt(x, z) {
     if (Math.abs(local.x) > surface.halfX || Math.abs(local.z) > surface.halfZ) return;
 
     let y = surface.y;
+    if (surface.kind === 'terrain_stamp') {
+      const height = getTerrainStampLocalHeight(surface.terrainStampType, surface.shape, local.x, local.z);
+      if (!Number.isFinite(height)) return;
+      y = surface.centerY + height;
+    }
     if (surface.kind === 'ramp') {
       const axis = surface.rampAxis || 'z';
       const rampCoord = axis === 'x' ? local.x : local.z;
@@ -11471,6 +11514,46 @@ function addManualCollisionProxyToWorld(node, blockers, walkableSurfaces) {
   });
 }
 
+function addTerrainStampToWorld(node, walkableSurfaces) {
+  if (!node || node.metadata?.type !== 'terrain_stamp') return;
+  const sourceShape = node.metadata.terrainStampShape || {};
+  const scaleX = Math.abs(node.scaling?.x || 1);
+  const scaleY = Math.abs(node.scaling?.y || 1);
+  const scaleZ = Math.abs(node.scaling?.z || 1);
+  const shape = {
+    ...sourceShape,
+    width: (sourceShape.width || 10) * scaleX,
+    length: (sourceShape.length || 10) * scaleZ,
+    height: (sourceShape.height || 1) * scaleY,
+    centerHeight: (sourceShape.centerHeight ?? sourceShape.height ?? 1) * scaleY,
+    leftHeight: (sourceShape.leftHeight || 0) * scaleY,
+    rightHeight: (sourceShape.rightHeight || 0) * scaleY,
+    frontHeight: (sourceShape.frontHeight || 0) * scaleY,
+    backHeight: (sourceShape.backHeight || 0) * scaleY
+  };
+  const width = Math.max(0.5, shape.width || 10);
+  const length = Math.max(0.5, shape.length || 10);
+  const yaw = node.rotation?.y || 0;
+  const cos = Math.cos(yaw);
+  const sin = Math.sin(yaw);
+  walkableSurfaces.push({
+    kind: 'terrain_stamp',
+    centerX: node.position.x,
+    centerY: node.position.y,
+    centerZ: node.position.z,
+    yaw,
+    axisX: { x: cos, z: sin },
+    axisZ: { x: -sin, z: cos },
+    halfX: width * 0.5,
+    halfZ: length * 0.5,
+    terrainStampType: node.metadata.terrainStampType || 'hill',
+    shape,
+    type: 'terrain_stamp',
+    name: node.name,
+    surfaceType: node.metadata.terrainSurfaceType || 'dirt'
+  });
+}
+
 function getManualBlockerObbFromProxy(proxyRoot) {
   if (!proxyRoot || proxyRoot.isDisposed?.()) return null;
   if (proxyRoot.metadata?.type !== 'collision_proxy') return null;
@@ -11642,6 +11725,8 @@ function rebuildVillageCollisionBlockers() {
     const type = getVillageBlockerTypeFromNode(node);
     if (type === 'collision_proxy') {
       addManualCollisionProxyToWorld(node, blockers, walkableSurfaces);
+    } else if (node.metadata?.type === 'terrain_stamp') {
+      addTerrainStampToWorld(node, walkableSurfaces);
     }
   });
 
@@ -12746,6 +12831,7 @@ function getNodeAdminLayer(node) {
   if (type === 'wooden_sign') return 'signs';
   if (type === 'ambient_glow' || type === 'toro_lantern' || type === 'hanging_lantern' || type === 'lantern_1') return 'lighting';
   if (type === 'collision_proxy') return node.metadata?.proxyPieceKind === 'blocker' ? 'collision' : 'walk';
+  if (type === 'terrain_stamp') return 'terrain';
   if (type === 'interaction_zone') return 'zones';
   if (type.includes('terrain')) return 'terrain';
   return 'buildings';
@@ -12986,59 +13072,163 @@ function updateTerrainBrushPreview() {
 }
 
 function paintWalkSurfaceBrush() {
-  if (!adminMode) { showToast('Enter Admin Mode first'); return; }
-  recordEditorHistory('paint terrain patch');
-  const point = getWorldBuilderPlacementPoint();
-  const settings = getTerrainBrushSettings();
-  const proxy = createCollisionProxyPiece('walk', new BABYLON.Vector3(point.x, point.y + settings.height + 0.06, point.z), {
-    terrainSurfaceType: settings.surfaceType,
-    terrainToolPatch: true
-  });
-  proxy.scaling = new BABYLON.Vector3(settings.size, 0.08, settings.size);
-  styleTerrainPatchVisual(proxy, 'flat_patch');
-  registerEditableRoot(proxy.name, proxy);
-  setSelectedEditableObject(proxy);
-  rebuildVillageCollisionBlockers();
-  renderSelectedWalkSurfaceGuide();
-  triggerAutoSave();
-  showToast('Flat patch placed at brush preview: ' + settings.surfaceType);
+  showToast('Brush sculpting is disabled for V1. Use Terrain Stamps, then shape the selected mesh.');
 }
 
 const TERRAIN_STAMPS = {
-  root_mound: { kind: 'walk', sizeX: 14, sizeZ: 9, height: .45, visualHeight: 1.1, surfaceType: 'dirt' },
-  hill: { kind: 'walk', sizeX: 22, sizeZ: 18, height: .9, visualHeight: 1.7, surfaceType: 'dirt' },
-  slope: { kind: 'ramp', sizeX: 12, sizeZ: 18, height: .35, pitch: -0.18, surfaceType: 'dirt' },
-  stair_ramp: { kind: 'ramp', sizeX: 8, sizeZ: 14, height: .45, pitch: -0.28, surfaceType: 'stone' },
-  cliff_edge: { kind: 'walk', sizeX: 20, sizeZ: 5, height: .3, visualHeight: 2.5, surfaceType: 'stone' },
-  cave_entrance: { kind: 'walk', sizeX: 15, sizeZ: 9, height: .1, visualHeight: 3.2, surfaceType: 'stone' },
-  path_segment: { kind: 'walk', sizeX: 7, sizeZ: 20, height: .08, surfaceType: 'dirt' }
+  root_mound: { width: 16, length: 8, height: 1.5, softness: 1.6, surfaceType: 'dirt' },
+  hill: { width: 22, length: 20, height: 2.4, softness: 1.25, surfaceType: 'dirt' },
+  slope: { width: 12, length: 18, height: 2.2, softness: 1, surfaceType: 'dirt' },
+  stair_ramp: { width: 10, length: 18, height: 2.4, softness: 1, surfaceType: 'stone' },
+  cliff_edge: { width: 20, length: 8, height: 2.8, softness: 1, surfaceType: 'stone' },
+  cave_entrance: { width: 16, length: 10, height: .45, softness: 1, surfaceType: 'stone' },
+  path_segment: { width: 8, length: 22, height: .08, softness: 1, surfaceType: 'dirt' }
 };
 
 function placeTerrainStamp(stampType) {
   if (!adminMode) { showToast('Enter Admin Mode first'); return; }
   const stamp = TERRAIN_STAMPS[stampType];
   if (!stamp) return;
-  recordEditorHistory('place terrain stamp');
   const point = getWorldBuilderPlacementPoint();
-  const proxy = createCollisionProxyPiece(stamp.kind, new BABYLON.Vector3(point.x, point.y + stamp.height, point.z), {
-    terrainSurfaceType: stamp.surfaceType,
-    terrainToolPatch: true,
-    terrainStampType: stampType
-  });
-  proxy.scaling = new BABYLON.Vector3(stamp.sizeX, stamp.kind === 'ramp' ? 0.35 : 0.08, stamp.sizeZ);
-  if (stamp.pitch) proxy.rotation.x = stamp.pitch;
-  styleTerrainPatchVisual(proxy, stampType);
-  registerEditableRoot(proxy.name, proxy);
-  setSelectedEditableObject(proxy);
+  const mesh = createTerrainStampMesh(stampType, new BABYLON.Vector3(point.x, point.y + 0.03, point.z));
+  if (!mesh) return;
+  registerEditableRoot(mesh.name, mesh);
+  setSelectedEditableObject(mesh);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
   showToast('Terrain stamp placed: ' + stampType.replace(/_/g, ' '));
 }
 
+function getDefaultTerrainStampShape(stampType, overrides = {}) {
+  const cfg = TERRAIN_STAMPS[stampType] || TERRAIN_STAMPS.hill;
+  const height = Number.isFinite(overrides.height) ? overrides.height : cfg.height;
+  return {
+    width: Number.isFinite(overrides.width) ? overrides.width : cfg.width,
+    length: Number.isFinite(overrides.length) ? overrides.length : cfg.length,
+    height,
+    softness: Number.isFinite(overrides.softness) ? overrides.softness : cfg.softness,
+    centerHeight: Number.isFinite(overrides.centerHeight) ? overrides.centerHeight : height,
+    leftHeight: Number.isFinite(overrides.leftHeight) ? overrides.leftHeight : 0,
+    rightHeight: Number.isFinite(overrides.rightHeight) ? overrides.rightHeight : 0,
+    frontHeight: Number.isFinite(overrides.frontHeight) ? overrides.frontHeight : 0,
+    backHeight: Number.isFinite(overrides.backHeight) ? overrides.backHeight : 0
+  };
+}
+
+function getTerrainStampLocalHeight(stampType, shape = {}, x = 0, z = 0) {
+  const width = Math.max(.1, shape.width || 10);
+  const length = Math.max(.1, shape.length || 10);
+  const nx = x / (width * .5);
+  const nz = z / (length * .5);
+  if (Math.abs(nx) > 1 || Math.abs(nz) > 1) return null;
+  const h = Number.isFinite(shape.height) ? shape.height : 1;
+  const center = Number.isFinite(shape.centerHeight) ? shape.centerHeight : h;
+  const side = (
+    (nx < 0 ? shape.leftHeight || 0 : shape.rightHeight || 0) * Math.abs(nx) +
+    (nz < 0 ? shape.frontHeight || 0 : shape.backHeight || 0) * Math.abs(nz)
+  ) * .45;
+  const softness = Math.max(.25, shape.softness || 1);
+  if (stampType === 'root_mound' || stampType === 'hill') {
+    const r = Math.sqrt(nx * nx + nz * nz);
+    if (r > 1) return null;
+    return Math.max(0, center * Math.pow(1 - r, softness) + side);
+  }
+  if (stampType === 'slope') return Math.max(0, ((nz + 1) * .5) * h + side);
+  if (stampType === 'stair_ramp') {
+    const t = Math.max(0, Math.min(1, (nz + 1) * .5));
+    return Math.floor(t * 5) / 5 * h + side;
+  }
+  if (stampType === 'cliff_edge') return (nz > -.15 ? h : Math.max(.08, h * .2)) + side;
+  if (stampType === 'cave_entrance') return Math.max(.02, h * .25);
+  if (stampType === 'path_segment') return Math.max(.02, h);
+  return Math.max(0, h + side);
+}
+
+function buildTerrainStampVertexData(stampType, shape) {
+  const width = Math.max(.5, shape.width || 10);
+  const length = Math.max(.5, shape.length || 10);
+  const segments = 10;
+  const positions = [];
+  const indices = [];
+  const normals = [];
+  const uvs = [];
+  for (let z = 0; z <= segments; z += 1) {
+    for (let x = 0; x <= segments; x += 1) {
+      const lx = -width * .5 + width * (x / segments);
+      const lz = -length * .5 + length * (z / segments);
+      const ly = getTerrainStampLocalHeight(stampType, shape, lx, lz) || 0;
+      positions.push(lx, ly, lz);
+      uvs.push(x / segments, z / segments);
+    }
+  }
+  for (let z = 0; z < segments; z += 1) {
+    for (let x = 0; x < segments; x += 1) {
+      const a = z * (segments + 1) + x;
+      const b = a + 1;
+      const c = a + (segments + 1);
+      const d = c + 1;
+      indices.push(a, c, b, b, c, d);
+    }
+  }
+  BABYLON.VertexData.ComputeNormals(positions, indices, normals);
+  const data = new BABYLON.VertexData();
+  data.positions = positions;
+  data.indices = indices;
+  data.normals = normals;
+  data.uvs = uvs;
+  return data;
+}
+
+function rebuildTerrainStampMesh(mesh) {
+  if (!mesh || mesh.metadata?.type !== 'terrain_stamp') return;
+  const data = buildTerrainStampVertexData(mesh.metadata.terrainStampType || 'hill', mesh.metadata.terrainStampShape || {});
+  data.applyToMesh(mesh, true);
+  mesh.refreshBoundingInfo?.();
+  mesh.material = getTerrainSurfaceMaterial(mesh.metadata.terrainSurfaceType || 'dirt', .92);
+  mesh.getChildren?.().filter(child => child.name?.startsWith('terrainStampVisual_')).forEach(child => child.dispose(false, true));
+  if (mesh.metadata.terrainStampType === 'cave_entrance') {
+    const archMat = getTerrainSurfaceMaterial('stone', .95);
+    const arch = BABYLON.MeshBuilder.CreateTorus('terrainStampVisual_caveArch_' + mesh.name, { diameter: .9, thickness: .11, tessellation: 18 }, scene);
+    arch.parent = mesh;
+    arch.scaling.set((mesh.metadata.terrainStampShape.width || 12) * .42, 1, 1);
+    arch.position.y = (mesh.metadata.terrainStampShape.height || .5) + 1.2;
+    arch.position.z = -(mesh.metadata.terrainStampShape.length || 10) * .35;
+    arch.rotation.x = Math.PI / 2;
+    arch.material = archMat;
+    arch.isPickable = false;
+  }
+}
+
+function createTerrainStampMesh(stampType, position, options = {}) {
+  const shape = getDefaultTerrainStampShape(stampType, options.shape || {});
+  const mesh = new BABYLON.Mesh(options.name || makeUniqueVillageNodeName('terrainStampRootClone_' + stampType + '_' + Date.now()), scene);
+  mesh.position = position.clone();
+  mesh.rotation = options.rotation
+    ? new BABYLON.Vector3(options.rotation.x || 0, options.rotation.y || 0, options.rotation.z || 0)
+    : BABYLON.Vector3.Zero();
+  mesh.scaling = options.scaling
+    ? new BABYLON.Vector3(options.scaling.x || 1, options.scaling.y || 1, options.scaling.z || 1)
+    : BABYLON.Vector3.One();
+  mesh.metadata = {
+    type: 'terrain_stamp',
+    isClone: true,
+    terrainStampType: stampType,
+    terrainSurfaceType: options.surfaceType || (TERRAIN_STAMPS[stampType]?.surfaceType || 'dirt'),
+    terrainStampShape: shape
+  };
+  mesh.isPickable = true;
+  mesh._editRoot = mesh;
+  mesh.receiveShadows = true;
+  rebuildTerrainStampMesh(mesh);
+  return mesh;
+}
+
 function getSelectedWalkPatch() {
-  return selectedObject?.metadata?.type === 'collision_proxy' &&
-    selectedObject.metadata.proxyWalkSurfaceEnabled === true
+  return (
+    selectedObject?.metadata?.type === 'terrain_stamp' ||
+    (selectedObject?.metadata?.type === 'collision_proxy' && selectedObject.metadata.proxyWalkSurfaceEnabled === true)
+  )
       ? selectedObject
       : null;
 }
@@ -13056,9 +13246,18 @@ function raiseSelectedWalkSurfacePatch(delta) {
 function flattenSelectedWalkSurfacePatch() {
   const patch = getSelectedWalkPatch();
   if (!patch) { showToast('Select a walk surface patch first'); return; }
-  recordEditorHistory('flatten terrain patch');
   const y = getVillageRaycastGroundHeightAt(patch.position.x, patch.position.z, { includeManualWalkSurfaces: false });
   if (Number.isFinite(y)) patch.position.y = y + 0.06;
+  if (patch.metadata?.type === 'terrain_stamp') {
+    patch.metadata.terrainStampShape.height = Math.max(.02, patch.metadata.terrainStampShape.height || 1);
+    patch.metadata.terrainStampShape.centerHeight = patch.metadata.terrainStampShape.height;
+    patch.metadata.terrainStampShape.leftHeight = 0;
+    patch.metadata.terrainStampShape.rightHeight = 0;
+    patch.metadata.terrainStampShape.frontHeight = 0;
+    patch.metadata.terrainStampShape.backHeight = 0;
+    rebuildTerrainStampMesh(patch);
+    updateTerrainStampEditorPanel();
+  }
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -13067,7 +13266,15 @@ function flattenSelectedWalkSurfacePatch() {
 function smoothSelectedWalkSurfacePatch() {
   const patch = getSelectedWalkPatch();
   if (!patch) { showToast('Select a walk surface patch first'); return; }
-  recordEditorHistory('smooth terrain patch');
+  if (patch.metadata?.type === 'terrain_stamp') {
+    patch.metadata.terrainStampShape.softness = Math.min(3, (patch.metadata.terrainStampShape.softness || 1) + .2);
+    rebuildTerrainStampMesh(patch);
+    updateTerrainStampEditorPanel();
+    rebuildVillageCollisionBlockers();
+    triggerAutoSave();
+    showToast('Terrain stamp smoothed');
+    return;
+  }
   const y = getVillageRaycastGroundHeightAt(patch.position.x, patch.position.z, { includeManualWalkSurfaces: false });
   if (Number.isFinite(y)) patch.position.y = BABYLON.Scalar.Lerp(patch.position.y, y + 0.06, 0.5);
   rebuildVillageCollisionBlockers();
@@ -13078,14 +13285,67 @@ function smoothSelectedWalkSurfacePatch() {
 function setSelectedWalkSurfaceType() {
   const patch = getSelectedWalkPatch();
   if (!patch) { showToast('Select a walk surface patch first'); return; }
-  recordEditorHistory('set surface type');
   patch.metadata.terrainSurfaceType = getTerrainBrushSettings().surfaceType;
-  patch.material = getTerrainSurfaceMaterial(patch.metadata.terrainSurfaceType, patch.metadata.terrainToolPatch ? .3 : .36);
+  patch.material = getTerrainSurfaceMaterial(patch.metadata.terrainSurfaceType, patch.metadata.type === 'terrain_stamp' ? .92 : (patch.metadata.terrainToolPatch ? .3 : .36));
+  if (patch.metadata.type === 'terrain_stamp') rebuildTerrainStampMesh(patch);
   if (patch.metadata.terrainToolPatch) styleTerrainPatchVisual(patch, patch.metadata.terrainStampType || 'flat_patch');
   updateSelectedSurfaceTypeLabel();
   rebuildVillageCollisionBlockers();
   triggerAutoSave();
   showToast('Surface type: ' + patch.metadata.terrainSurfaceType);
+}
+
+function setTerrainEditorValue(id, value) {
+  const input = document.getElementById(id);
+  if (input && Number.isFinite(value)) input.value = String(value);
+}
+
+function updateTerrainStampEditorPanel() {
+  const panel = document.getElementById('terrainStampEditorPanel');
+  if (!panel) return;
+  const isTerrain = selectedObject?.metadata?.type === 'terrain_stamp';
+  panel.style.display = isTerrain ? 'block' : 'none';
+  if (!isTerrain) return;
+  const shape = selectedObject.metadata.terrainStampShape || {};
+  setTerrainEditorValue('terrainStampWidth', shape.width || 10);
+  setTerrainEditorValue('terrainStampLength', shape.length || 10);
+  setTerrainEditorValue('terrainStampHeight', shape.height || 1);
+  setTerrainEditorValue('terrainStampSoftness', shape.softness || 1);
+  setTerrainEditorValue('terrainStampCenterHeight', shape.centerHeight || shape.height || 1);
+  setTerrainEditorValue('terrainStampLeftHeight', shape.leftHeight || 0);
+  setTerrainEditorValue('terrainStampRightHeight', shape.rightHeight || 0);
+  setTerrainEditorValue('terrainStampFrontHeight', shape.frontHeight || 0);
+  setTerrainEditorValue('terrainStampBackHeight', shape.backHeight || 0);
+}
+
+function numberFromInput(id, fallback) {
+  const value = Number(document.getElementById(id)?.value);
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function applySelectedTerrainStampSettings() {
+  if (selectedObject?.metadata?.type !== 'terrain_stamp') {
+    showToast('Select a terrain stamp first');
+    return;
+  }
+  const shape = selectedObject.metadata.terrainStampShape || {};
+  selectedObject.metadata.terrainStampShape = {
+    ...shape,
+    width: numberFromInput('terrainStampWidth', shape.width || 10),
+    length: numberFromInput('terrainStampLength', shape.length || 10),
+    height: numberFromInput('terrainStampHeight', shape.height || 1),
+    softness: numberFromInput('terrainStampSoftness', shape.softness || 1),
+    centerHeight: numberFromInput('terrainStampCenterHeight', shape.centerHeight || shape.height || 1),
+    leftHeight: numberFromInput('terrainStampLeftHeight', shape.leftHeight || 0),
+    rightHeight: numberFromInput('terrainStampRightHeight', shape.rightHeight || 0),
+    frontHeight: numberFromInput('terrainStampFrontHeight', shape.frontHeight || 0),
+    backHeight: numberFromInput('terrainStampBackHeight', shape.backHeight || 0)
+  };
+  rebuildTerrainStampMesh(selectedObject);
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  triggerAutoSave();
+  showToast('Terrain shape applied');
 }
 
 function createInteractionZone(position, zoneType = 'story') {
@@ -13219,7 +13479,10 @@ const _editorHistory = { undo: [], redo: [], limit: 25, muted: false };
 let _multiSelectedNodes = [];
 
 function getTerrainPatchNodes() {
-  return scene.meshes.filter(node => node.metadata?.type === 'collision_proxy' && node.metadata?.terrainToolPatch === true);
+  return scene.meshes.filter(node =>
+    node.metadata?.type === 'terrain_stamp' ||
+    (node.metadata?.type === 'collision_proxy' && node.metadata?.terrainToolPatch === true)
+  );
 }
 
 function getManualWalkSurfaceNodes() {
@@ -13302,12 +13565,7 @@ function updateSelectedSurfaceTypeLabel() {
 }
 
 function recordEditorHistory(label = 'edit') {
-  if (_editorHistory.muted || !scene) return;
-  try {
-    _editorHistory.undo.push({ label, json: JSON.stringify(collectWorldLayoutData()) });
-    if (_editorHistory.undo.length > _editorHistory.limit) _editorHistory.undo.shift();
-    _editorHistory.redo = [];
-  } catch(e) {}
+  // Snapshot undo was disabled because serializing/reloading the full village could freeze the browser.
 }
 
 function restoreEditorSnapshot(entry) {
@@ -13320,19 +13578,11 @@ function restoreEditorSnapshot(entry) {
 }
 
 function undoEditorAction() {
-  const entry = _editorHistory.undo.pop();
-  if (!entry) { showToast('Nothing to undo'); return; }
-  _editorHistory.redo.push({ label: 'redo point', json: JSON.stringify(collectWorldLayoutData()) });
-  restoreEditorSnapshot(entry);
-  showToast('Undo: ' + entry.label);
+  showToast('Undo is disabled for now to prevent browser freezes.');
 }
 
 function redoEditorAction() {
-  const entry = _editorHistory.redo.pop();
-  if (!entry) { showToast('Nothing to redo'); return; }
-  _editorHistory.undo.push({ label: 'undo point', json: JSON.stringify(collectWorldLayoutData()) });
-  restoreEditorSnapshot(entry);
-  showToast('Redo');
+  showToast('Redo is disabled for now to prevent browser freezes.');
 }
 
 function getSelectableNodeForBuilder(node) {
@@ -14039,6 +14289,7 @@ window.flattenSelectedWalkSurfacePatch = flattenSelectedWalkSurfacePatch;
 window.raiseSelectedWalkSurfacePatch = raiseSelectedWalkSurfacePatch;
 window.smoothSelectedWalkSurfacePatch = smoothSelectedWalkSurfacePatch;
 window.setSelectedWalkSurfaceType = setSelectedWalkSurfaceType;
+window.applySelectedTerrainStampSettings = applySelectedTerrainStampSettings;
 window.deleteSelectedTerrainPatch = deleteSelectedTerrainPatch;
 window.toggleTerrainPatchVisibility = toggleTerrainPatchVisibility;
 window.toggleWalkPatchVisibility = toggleWalkPatchVisibility;
