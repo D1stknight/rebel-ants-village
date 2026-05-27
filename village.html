@@ -354,8 +354,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div class="worldbuilder-toolbar">
     <button class="tool-square" onclick="undoEditorAction()">↶ Undo<kbd>Z</kbd></button>
     <button class="tool-square" onclick="redoEditorAction()">↷ Redo<kbd>Shift+Z</kbd></button>
-    <button class="tool-square" onclick="addSelectedToMultiSelect()">＋ Group<kbd>M</kbd></button>
-    <button class="tool-square" onclick="clearMultiSelect()">◇ Clear<kbd></kbd></button>
+    <button class="tool-square" onclick="addSelectedToMultiSelect()">＋ Add Selected To Group<kbd>M</kbd></button>
+    <button class="tool-square" onclick="clearMultiSelect()">◇ Clear Group Selection<kbd></kbd></button>
+  </div>
+  <div class="admin-note" style="margin:0 8px 8px">
+    Duplicate Group copies grouped objects. Save Prefab stores selected/grouped objects as a reusable cluster. Spawn Prefab places a saved cluster near the brush target.
   </div>
   <div class="ctrl-grid">
     <button class="ctrl-btn" onclick="setGizmoMode('move')">Move<kbd>G</kbd></button>
@@ -457,6 +460,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn danger" onclick="deleteCollisionProxyPiecesForSameType()">Delete Same Object Barriers</button>
     <button class="ctrl-btn" onclick="saveManualBarriersNow()">3 Save Manual Barriers</button>
   </div>
+  <div class="admin-step"><strong>Step 4 - Select matching object</strong><span style="color:#aaa;font-size:10px">Click the asset type that should receive the saved manual pieces.</span></div>
+  <div class="admin-step"><strong>Step 5 - Apply To Same Object</strong><span style="color:#aaa;font-size:10px">Copies the attached pieces only to matching assets.</span></div>
   <div id="manualBarrierSaveStatus" style="font-size:10px;line-height:1.35;color:#77e6df;margin-top:8px;min-height:16px"></div>
 </div>
   <hr class="ap-divider">
@@ -478,7 +483,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       </select>
     </label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <button class="ctrl-btn" onclick="paintWalkSurfaceBrush()">Paint Flat Patch</button>
+      <button class="ctrl-btn" onclick="paintWalkSurfaceBrush()">Place Flat Patch</button>
       <button class="ctrl-btn" onclick="flattenSelectedWalkSurfacePatch()">Flatten Selected</button>
       <button class="ctrl-btn" onclick="raiseSelectedWalkSurfacePatch(0.25)">Raise</button>
       <button class="ctrl-btn" onclick="raiseSelectedWalkSurfacePatch(-0.25)">Lower</button>
@@ -486,11 +491,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="setSelectedWalkSurfaceType()">Apply Type</button>
       <button class="ctrl-btn" onclick="deleteSelectedTerrainPatch()">Erase Selected</button>
       <button class="ctrl-btn" id="terrainPatchVisibilityBtn" onclick="toggleTerrainPatchVisibility()">Hide Terrain Patches</button>
-      <button class="ctrl-btn" id="walkPatchVisibilityBtn" onclick="toggleWalkPatchVisibility()">Hide Walk Surfaces</button>
+      <button class="ctrl-btn" id="manualWalkVisibilityBtn" onclick="toggleManualWalkSurfaceVisibility()">Hide Manual Walk Surfaces</button>
+      <button class="ctrl-btn" id="allWalkHelpersVisibilityBtn" onclick="toggleAllWalkHelperVisibility()">Hide All Walk Helpers</button>
     </div>
   </div>
   <div class="ap-section">Terrain Stamps</div>
-  <div class="ap-grid">
+  <div class="admin-section-body" data-admin-section-body="terrain-stamps">
+  <div class="admin-note">Terrain stamps are helper walk pieces with distinct editor visuals. They are not real sculpted terrain yet.</div>
+  <div class="ap-grid" style="padding:0 0 4px">
     <div class="ap-card" onclick="placeTerrainStamp('root_mound')"><span class="ap-icon">⌁</span><span class="ap-name">Root Mound</span></div>
     <div class="ap-card" onclick="placeTerrainStamp('hill')"><span class="ap-icon">▴</span><span class="ap-name">Hill</span></div>
     <div class="ap-card" onclick="placeTerrainStamp('slope')"><span class="ap-icon">╱</span><span class="ap-name">Slope</span></div>
@@ -498,6 +506,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-card" onclick="placeTerrainStamp('cliff_edge')"><span class="ap-icon">▔</span><span class="ap-name">Cliff Edge</span></div>
     <div class="ap-card" onclick="placeTerrainStamp('cave_entrance')"><span class="ap-icon">◖</span><span class="ap-name">Cave Entrance</span></div>
     <div class="ap-card" onclick="placeTerrainStamp('path_segment')"><span class="ap-icon">═</span><span class="ap-name">Path Segment</span></div>
+  </div>
   </div>
   <div class="ap-section">Layers</div>
   <div class="admin-section-body" data-admin-section-body="layers">
@@ -560,6 +569,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <hr class="ap-divider">
   <div class="ap-section">Weather</div>
+  <div class="admin-section-body" data-admin-section-body="weather">
   <div style="padding:0 8px 6px">
     <select id="weatherSelect" class="admin-select" onchange="setWeatherMode(this.value, true)">
       <option value="clear">Clear</option>
@@ -599,6 +609,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <label style="font-size:9px;color:#8aa;letter-spacing:1px">Weather <input id="weatherVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.65" oninput="setWeatherVolume(this.value)" style="width:100%"></label>
     <label style="font-size:9px;color:#8aa;letter-spacing:1px">Interaction <input id="interactionVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.7" oninput="setInteractionVolume(this.value)" style="width:100%"></label>
     <label style="font-size:9px;color:#8aa;letter-spacing:1px">Footsteps <input id="footstepVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.55" oninput="setFootstepVolume(this.value)" style="width:100%"></label>
+  </div>
   </div>
   <hr class="ap-divider">
   <div class="ap-section">NPCs</div>
@@ -2632,6 +2643,7 @@ let _worklightOn = false;
 let adminDragging = false;
 let pendingAdminPlacement = null;
 let adminPlacementMarker = null;
+let terrainBrushPreview = null;
 let adminGizmoMode = 'move';
 let adminManualProxyRotateDrag = null;
 let adminManualNPCRotateDrag = null;
@@ -9981,6 +9993,7 @@ window.addEventListener('pointerdown', (e) => {
   ) {
     const pick = scene.pick(scene.pointerX, scene.pointerY, mesh => mesh === selectedObject || mesh._editRoot === selectedObject);
     if (pick && pick.hit) {
+      recordEditorHistory('rotate selected');
       adminManualProxyRotateDrag = {
         startX: e.clientX,
         startRotationY: selectedObject.rotation?.y || 0
@@ -9995,6 +10008,7 @@ window.addEventListener('pointerdown', (e) => {
     adminGizmoMode === 'rotate' &&
     selectedObject.metadata?.type === 'npc'
   ) {
+    recordEditorHistory('rotate selected');
     adminManualNPCRotateDrag = {
       startX: e.clientX,
       startRotationY: selectedObject.rotation?.y || 0
@@ -10004,6 +10018,7 @@ window.addEventListener('pointerdown', (e) => {
     return;
   }
   adminDragging = false;
+  if (e.target === canvas) recordEditorHistory('transform selected');
   window._dragStartX = e.clientX;
   window._dragStartY = e.clientY;
   window._dragSelectedObject = selectedObject;
@@ -10399,6 +10414,9 @@ function loadWorldLayout(){
       });
       if (proxy) {
         if (proxy.metadata.terrainToolPatch) styleTerrainPatchVisual(proxy, proxy.metadata.terrainStampType || 'flat_patch');
+        else if (proxy.metadata.proxyWalkSurfaceEnabled && proxy.metadata.terrainSurfaceType) {
+          proxy.material = getTerrainSurfaceMaterial(proxy.metadata.terrainSurfaceType, .36);
+        }
         registerEditableRoot(proxy.name, proxy);
       }
       return;
@@ -12041,6 +12059,7 @@ engine.runRenderLoop(()=>{
   updateWeatherManager();
   updateNPCPopulation(dt);
   updatePerformanceDebugPanel();
+  updateTerrainBrushPreview();
   if (window._gpuMode === 'webgpu') {
     _webgpuSmartCapFrame++;
     if (_webgpuSmartCapFrame < 360 || _webgpuSmartCapFrame % 180 === 0) {
@@ -12646,6 +12665,37 @@ function initializeAdminBuilderSections() {
   });
 }
 
+function findAdminSectionByTitle(title) {
+  const wanted = String(title || '').trim().toLowerCase();
+  return Array.from(document.querySelectorAll('#assetPanel .ap-section'))
+    .find(section => section.textContent.trim().toLowerCase() === wanted) || null;
+}
+
+function moveAdminSectionBefore(title, beforeTitle) {
+  const section = findAdminSectionByTitle(title);
+  const before = findAdminSectionByTitle(beforeTitle);
+  if (!section || !before || section === before) return;
+  const body = section.nextElementSibling;
+  const scroll = section.parentElement;
+  if (!scroll) return;
+  scroll.insertBefore(section, before);
+  if (body && (body.classList.contains('admin-section-body') || body.classList.contains('ap-grid'))) {
+    scroll.insertBefore(body, before);
+  }
+}
+
+function reorderAdminPanelSections() {
+  const weather = findAdminSectionByTitle('Weather');
+  const worklight = document.getElementById('worklightBtn')?.parentElement;
+  if (weather && worklight?.parentElement) {
+    const divider = worklight.previousElementSibling?.classList?.contains('ap-divider') ? worklight.previousElementSibling : null;
+    if (divider) worklight.parentElement.insertBefore(divider, weather);
+    worklight.parentElement.insertBefore(worklight, weather);
+  }
+  moveAdminSectionBefore('Performance', 'Backup / Restore');
+  moveAdminSectionBefore('Weather', 'Performance');
+}
+
 function filterAdminPanel(query) {
   const q = (query || '').trim().toLowerCase();
   const sections = Array.from(document.querySelectorAll('#assetPanel .ap-section'));
@@ -12783,6 +12833,7 @@ function updatePerformanceDebugPanel() {
   host.innerHTML = `<span>${health}</span><span>FPS: ${fps}</span><span>Draw: ${drawCalls}</span><span>NPCs: ${NPCManager.roots.length}</span><span>Audio: ${activeAudio}</span><span>Weather FX: ${weatherFx}</span><span>Collision: ${villageCollisionBlockers.length}</span><span>Terrain: ${terrainCount}</span><span>GLBs: ${glbCount}</span><span>Uploaded: ${uploadedCount}</span><span>GPU: ${window._gpuMode || 'webgl'}</span><span>Meshes: ${scene.meshes.length}</span>`;
 }
 
+reorderAdminPanelSections();
 initializeAdminBuilderSections();
 renderAdminLayerControls();
 window.filterAdminPanel = filterAdminPanel;
@@ -12906,6 +12957,34 @@ function getTerrainBrushSettings() {
   return { size, height: Number.isFinite(height) ? height : 0, surfaceType };
 }
 
+function ensureTerrainBrushPreview() {
+  if (terrainBrushPreview && !terrainBrushPreview.isDisposed?.()) return terrainBrushPreview;
+  const mat = new BABYLON.StandardMaterial('terrainBrushPreviewMat', scene);
+  mat.diffuseColor = new BABYLON.Color3(.35, .95, .9);
+  mat.emissiveColor = new BABYLON.Color3(.15, .65, .62);
+  mat.alpha = .45;
+  mat.backFaceCulling = false;
+  terrainBrushPreview = BABYLON.MeshBuilder.CreateTorus('terrainBrushPreview', { diameter: 1, thickness: .035, tessellation: 48 }, scene);
+  terrainBrushPreview.material = mat;
+  terrainBrushPreview.rotation.x = Math.PI / 2;
+  terrainBrushPreview.isPickable = false;
+  terrainBrushPreview.setEnabled(false);
+  return terrainBrushPreview;
+}
+
+function updateTerrainBrushPreview() {
+  const preview = ensureTerrainBrushPreview();
+  if (!adminMode) {
+    preview.setEnabled(false);
+    return;
+  }
+  const point = getWorldBuilderPlacementPoint();
+  const settings = getTerrainBrushSettings();
+  preview.position.set(point.x, point.y + settings.height + .12, point.z);
+  preview.scaling.set(settings.size, settings.size, settings.size);
+  preview.setEnabled(true);
+}
+
 function paintWalkSurfaceBrush() {
   if (!adminMode) { showToast('Enter Admin Mode first'); return; }
   recordEditorHistory('paint terrain patch');
@@ -12922,17 +13001,17 @@ function paintWalkSurfaceBrush() {
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
-  showToast('Walk surface painted: ' + settings.surfaceType);
+  showToast('Flat patch placed at brush preview: ' + settings.surfaceType);
 }
 
 const TERRAIN_STAMPS = {
-  root_mound: { kind: 'walk', sizeX: 14, sizeZ: 9, height: .45, surfaceType: 'dirt' },
-  hill: { kind: 'walk', sizeX: 20, sizeZ: 18, height: .85, surfaceType: 'dirt' },
+  root_mound: { kind: 'walk', sizeX: 14, sizeZ: 9, height: .45, visualHeight: 1.1, surfaceType: 'dirt' },
+  hill: { kind: 'walk', sizeX: 22, sizeZ: 18, height: .9, visualHeight: 1.7, surfaceType: 'dirt' },
   slope: { kind: 'ramp', sizeX: 12, sizeZ: 18, height: .35, pitch: -0.18, surfaceType: 'dirt' },
   stair_ramp: { kind: 'ramp', sizeX: 8, sizeZ: 14, height: .45, pitch: -0.28, surfaceType: 'stone' },
-  cliff_edge: { kind: 'walk', sizeX: 22, sizeZ: 6, height: .55, surfaceType: 'stone' },
-  cave_entrance: { kind: 'walk', sizeX: 18, sizeZ: 10, height: .1, surfaceType: 'stone' },
-  path_segment: { kind: 'walk', sizeX: 8, sizeZ: 22, height: .08, surfaceType: 'dirt' }
+  cliff_edge: { kind: 'walk', sizeX: 20, sizeZ: 5, height: .3, visualHeight: 2.5, surfaceType: 'stone' },
+  cave_entrance: { kind: 'walk', sizeX: 15, sizeZ: 9, height: .1, visualHeight: 3.2, surfaceType: 'stone' },
+  path_segment: { kind: 'walk', sizeX: 7, sizeZ: 20, height: .08, surfaceType: 'dirt' }
 };
 
 function placeTerrainStamp(stampType) {
@@ -13001,6 +13080,8 @@ function setSelectedWalkSurfaceType() {
   if (!patch) { showToast('Select a walk surface patch first'); return; }
   recordEditorHistory('set surface type');
   patch.metadata.terrainSurfaceType = getTerrainBrushSettings().surfaceType;
+  patch.material = getTerrainSurfaceMaterial(patch.metadata.terrainSurfaceType, patch.metadata.terrainToolPatch ? .3 : .36);
+  if (patch.metadata.terrainToolPatch) styleTerrainPatchVisual(patch, patch.metadata.terrainStampType || 'flat_patch');
   updateSelectedSurfaceTypeLabel();
   rebuildVillageCollisionBlockers();
   triggerAutoSave();
@@ -13060,47 +13141,78 @@ function saveQuestDraft() {
   showToast('Quest saved locally');
 }
 
-function styleTerrainPatchVisual(proxy, stampType = 'flat_patch') {
-  if (!proxy || !scene) return;
-  proxy.getChildren?.().filter(child => child.name?.startsWith('terrainVisual_')).forEach(child => child.dispose(false, true));
-  const mat = new BABYLON.StandardMaterial('terrainVisualMat_' + proxy.name, scene);
-  const surface = proxy.metadata?.terrainSurfaceType || 'dirt';
+function getTerrainSurfaceMaterial(surface = 'dirt', alpha = .34) {
+  const key = `terrainSurfaceMat_${surface}_${String(alpha).replace('.', '_')}`;
+  if (scene.getMaterialByName(key)) return scene.getMaterialByName(key);
+  const mat = new BABYLON.StandardMaterial(key, scene);
   const colors = {
-    dirt: new BABYLON.Color3(.34, .25, .14),
+    dirt: new BABYLON.Color3(.36, .25, .13),
     stone: new BABYLON.Color3(.38, .39, .37),
-    wood: new BABYLON.Color3(.38, .21, .11),
-    wet: new BABYLON.Color3(.08, .14, .16),
+    wood: new BABYLON.Color3(.38, .2, .1),
+    wet: new BABYLON.Color3(.06, .13, .16),
     snow: new BABYLON.Color3(.84, .91, .95)
   };
   mat.diffuseColor = colors[surface] || colors.dirt;
-  mat.emissiveColor = mat.diffuseColor.scale(.12);
-  mat.alpha = stampType === 'flat_patch' ? .28 : .42;
+  mat.emissiveColor = mat.diffuseColor.scale(.1);
+  mat.alpha = alpha;
   mat.backFaceCulling = false;
+  return mat;
+}
+
+function styleTerrainPatchVisual(proxy, stampType = 'flat_patch') {
+  if (!proxy || !scene) return;
+  proxy.getChildren?.().filter(child => child.name?.startsWith('terrainVisual_')).forEach(child => child.dispose(false, true));
+  const surface = proxy.metadata?.terrainSurfaceType || 'dirt';
+  const mat = getTerrainSurfaceMaterial(surface, stampType === 'flat_patch' ? .32 : .48);
+  proxy.material = getTerrainSurfaceMaterial(surface, stampType === 'flat_patch' ? .24 : .3);
 
   let visual;
   if (stampType === 'root_mound' || stampType === 'hill') {
     visual = BABYLON.MeshBuilder.CreateSphere('terrainVisual_' + stampType + '_' + proxy.name, { diameter: 1, segments: 10 }, scene);
-    visual.scaling = new BABYLON.Vector3(.5, stampType === 'hill' ? .18 : .12, .5);
-    visual.position.y = .06;
-  } else if (stampType === 'cave_entrance') {
-    visual = BABYLON.MeshBuilder.CreateTorus('terrainVisual_cave_' + proxy.name, { diameter: .72, thickness: .1, tessellation: 12 }, scene);
-    visual.rotation.x = Math.PI / 2;
+    visual.scaling = new BABYLON.Vector3(.52, stampType === 'hill' ? .16 : .12, .52);
+    visual.position.y = stampType === 'hill' ? .1 : .07;
+  } else if (stampType === 'slope') {
+    visual = BABYLON.MeshBuilder.CreateBox('terrainVisual_slope_' + proxy.name, { width: 1, height: .08, depth: 1 }, scene);
+    visual.rotation.x = -.18;
     visual.position.y = .16;
+  } else if (stampType === 'stair_ramp') {
+    const steps = new BABYLON.TransformNode('terrainVisual_stairs_' + proxy.name, scene);
+    steps.parent = proxy;
+    for (let i = 0; i < 5; i += 1) {
+      const step = BABYLON.MeshBuilder.CreateBox('terrainVisual_stair_' + i + '_' + proxy.name, { width: .86, height: .08, depth: .16 }, scene);
+      step.parent = steps;
+      step.position.z = -.34 + i * .17;
+      step.position.y = .08 + i * .035;
+      step.material = mat;
+      step.isPickable = false;
+    }
+    visual = steps;
+  } else if (stampType === 'cave_entrance') {
+    visual = BABYLON.MeshBuilder.CreateTorus('terrainVisual_cave_' + proxy.name, { diameter: .78, thickness: .12, tessellation: 16 }, scene);
+    visual.rotation.x = Math.PI / 2;
+    visual.position.y = .28;
   } else if (stampType === 'cliff_edge') {
-    visual = BABYLON.MeshBuilder.CreateBox('terrainVisual_cliff_' + proxy.name, { width: 1, height: .18, depth: 1 }, scene);
-    visual.position.y = .1;
+    visual = BABYLON.MeshBuilder.CreateBox('terrainVisual_cliff_' + proxy.name, { width: 1, height: .55, depth: .18 }, scene);
+    visual.position.z = -.42;
+    visual.position.y = .26;
+  } else if (stampType === 'path_segment') {
+    visual = BABYLON.MeshBuilder.CreateBox('terrainVisual_path_' + proxy.name, { width: .9, height: .035, depth: .95 }, scene);
+    visual.position.y = .08;
   } else {
     visual = BABYLON.MeshBuilder.CreateDisc('terrainVisual_patch_' + proxy.name, { radius: .48, tessellation: 18 }, scene);
     visual.rotation.x = Math.PI / 2;
     visual.position.y = .08;
   }
-  visual.parent = proxy;
-  visual.material = mat;
-  visual.isPickable = false;
+  if (visual) {
+    visual.parent = proxy;
+    if (visual.material !== undefined) visual.material = mat;
+    visual.isPickable = false;
+  }
 }
 
 let _terrainPatchesVisible = true;
-let _walkPatchesVisible = true;
+let _manualWalkSurfacesVisible = true;
+let _allWalkHelpersVisible = true;
 let _interactionZonesVisible = true;
 let _patrolRoutesVisible = false;
 const _editorHistory = { undo: [], redo: [], limit: 25, muted: false };
@@ -13128,16 +13240,28 @@ function setNodeEditorVisible(node, visible) {
 
 function toggleTerrainPatchVisibility() {
   _terrainPatchesVisible = !_terrainPatchesVisible;
-  getTerrainPatchNodes().forEach(node => setNodeEditorVisible(node, _terrainPatchesVisible));
+  getTerrainPatchNodes().forEach(node => setNodeEditorVisible(node, _terrainPatchesVisible && _allWalkHelpersVisible));
   const btn = document.getElementById('terrainPatchVisibilityBtn');
   if (btn) btn.textContent = _terrainPatchesVisible ? 'Hide Terrain Patches' : 'Show Terrain Patches';
 }
 
+function toggleManualWalkSurfaceVisibility() {
+  _manualWalkSurfacesVisible = !_manualWalkSurfacesVisible;
+  getManualWalkSurfaceNodes().forEach(node => setNodeEditorVisible(node, _manualWalkSurfacesVisible && _allWalkHelpersVisible));
+  const btn = document.getElementById('manualWalkVisibilityBtn');
+  if (btn) btn.textContent = _manualWalkSurfacesVisible ? 'Hide Manual Walk Surfaces' : 'Show Manual Walk Surfaces';
+}
+
+function toggleAllWalkHelperVisibility() {
+  _allWalkHelpersVisible = !_allWalkHelpersVisible;
+  getManualWalkSurfaceNodes().forEach(node => setNodeEditorVisible(node, _manualWalkSurfacesVisible && _allWalkHelpersVisible));
+  getTerrainPatchNodes().forEach(node => setNodeEditorVisible(node, _terrainPatchesVisible && _allWalkHelpersVisible));
+  const btn = document.getElementById('allWalkHelpersVisibilityBtn');
+  if (btn) btn.textContent = _allWalkHelpersVisible ? 'Hide All Walk Helpers' : 'Show All Walk Helpers';
+}
+
 function toggleWalkPatchVisibility() {
-  _walkPatchesVisible = !_walkPatchesVisible;
-  getManualWalkSurfaceNodes().forEach(node => setNodeEditorVisible(node, _walkPatchesVisible));
-  const btn = document.getElementById('walkPatchVisibilityBtn');
-  if (btn) btn.textContent = _walkPatchesVisible ? 'Hide Walk Surfaces' : 'Show Walk Surfaces';
+  toggleManualWalkSurfaceVisibility();
 }
 
 function deleteSelectedTerrainPatch() {
@@ -13918,6 +14042,8 @@ window.setSelectedWalkSurfaceType = setSelectedWalkSurfaceType;
 window.deleteSelectedTerrainPatch = deleteSelectedTerrainPatch;
 window.toggleTerrainPatchVisibility = toggleTerrainPatchVisibility;
 window.toggleWalkPatchVisibility = toggleWalkPatchVisibility;
+window.toggleManualWalkSurfaceVisibility = toggleManualWalkSurfaceVisibility;
+window.toggleAllWalkHelperVisibility = toggleAllWalkHelperVisibility;
 window.placeInteractionZone = placeInteractionZone;
 window.deleteSelectedInteractionZone = deleteSelectedInteractionZone;
 window.toggleInteractionZoneVisibility = toggleInteractionZoneVisibility;
