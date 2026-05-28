@@ -270,6 +270,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #assetPanel .ap-btn{width:calc(100% - 16px);margin:0 8px 5px;padding:7px 10px;font-size:10px;font-family:'Cinzel Decorative',serif;letter-spacing:1px;border:1px solid rgba(232,197,106,.3);border-radius:4px;background:transparent;color:#e8c56a;cursor:pointer;text-align:left;transition:all .15s}
 #assetPanel .ap-btn:hover{background:rgba(232,197,106,.12)}
 #assetPanel .ap-btn.upload{border-color:rgba(94,207,202,.4);color:#5ecfca}
+#assetPanel .ap-search-wrap .ap-btn{width:100%;margin:0}
 #assetPanel .ap-footer{padding:8px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:5px;flex-shrink:0}
 #assetPanel .ap-footer button{flex:1;padding:6px;font-size:9px;font-family:'Cinzel Decorative',serif;letter-spacing:1px;border:1px solid rgba(255,255,255,.12);border-radius:4px;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;transition:all .15s}
 #assetPanel .ap-footer button:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
@@ -310,6 +311,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #assetPanel .admin-field{font-size:9px;color:#8aa;letter-spacing:1px;display:grid;gap:4px;margin-bottom:7px}
 #assetPanel .admin-field input,#assetPanel .admin-field textarea{width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(94,207,202,.28);border-radius:5px;color:#e8c56a;padding:7px 8px;font-family:inherit;font-size:10px}
 #assetPanel .admin-note{font-size:10px;line-height:1.4;color:rgba(255,255,255,.48);padding:0 2px 7px}
+#assetPanel .tool-group-label{margin:10px 2px 4px;color:rgba(232,197,106,.64);font-size:8px;letter-spacing:2px;text-transform:uppercase}
+#assetPanel .quest-help{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(94,207,202,.38);border-radius:999px;background:rgba(94,207,202,.06);color:#77e6df;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:1px;padding:4px 9px;cursor:help;margin:0 0 8px}
 #assetPanel .perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:9px;color:#8aa;letter-spacing:1px}
 #assetPanel .perf-grid span{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:5px;padding:6px}
 @media (max-width:720px){#assetPanel{width:min(320px,88vw);min-width:0}#assetPanel .ap-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -351,6 +354,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="assetPanel">
   <div class="ap-header"><span>Assets</span><kbd>M</kbd></div>
   <div class="ap-search-wrap">
+    <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
     <input id="adminSearchInput" class="ap-search" placeholder="Search assets, NPCs, tools, sections..." oninput="filterAdminPanel(this.value)">
   </div>
   <div class="ap-scroll">
@@ -365,16 +369,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-section" id="uploadedAssetsSection" style="display:none">Uploaded Assets</div>
     <div class="ap-grid" id="uploadedAssetGrid" style="display:none"></div>
     <hr class="ap-divider">
-    <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
   <div class="ap-section">Selected Tools</div>
   <div class="admin-section-body" data-admin-section-body="selected-tools">
     <div class="admin-note">Object tools affect the selected item only. Layer hide/lock controls affect entire categories.</div>
+    <div class="tool-group-label">History</div>
     <div class="manual-piece-grid">
       <button class="manual-piece-btn" onclick="undoEditorAction()" title="Undo the last world edit"><span class="mi">↶</span><span>Undo</span><span class="ms">History</span></button>
       <button class="manual-piece-btn" onclick="redoEditorAction()" title="Redo the last undone world edit"><span class="mi">↷</span><span>Redo</span><span class="ms">History</span></button>
-      <button class="manual-piece-btn" onclick="deselectAdminSelection()" title="Clear the active tool, gizmo, and selected village object"><span class="mi">◎</span><span>Deselect</span><span class="ms">Clear</span></button>
-      <button class="manual-piece-btn" onclick="addSelectedToMultiSelect()" title="Add selected object to group selection"><span class="mi">＋</span><span>Add Group</span><span class="ms">M</span></button>
-      <button class="manual-piece-btn" onclick="clearMultiSelect()" title="Clear grouped selected objects"><span class="mi">◇</span><span>Clear Group</span><span class="ms">Group</span></button>
+    </div>
+    <div class="tool-group-label">Transform</div>
+    <div class="manual-piece-grid">
       <button class="manual-piece-btn" onclick="setGizmoMode('move')" title="Move selected object"><span class="mi">↕</span><span>Move</span><span class="ms">G</span></button>
       <button class="manual-piece-btn" onclick="setGizmoMode('rotate')" title="Rotate selected object"><span class="mi">⟳</span><span>Rotate</span><span class="ms">R</span></button>
       <button class="manual-piece-btn" onclick="setGizmoMode('scale')" title="Scale selected object"><span class="mi">□</span><span>Scale</span><span class="ms">Y</span></button>
@@ -384,14 +388,26 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="manual-piece-btn" onclick="scaleSelected(1.25)" title="Make selected object larger"><span class="mi">＋</span><span>Larger</span><span class="ms">+</span></button>
       <button class="manual-piece-btn" onclick="scaleSelected(0.8)" title="Make selected object smaller"><span class="mi">−</span><span>Smaller</span><span class="ms">-</span></button>
       <button class="manual-piece-btn" onclick="duplicateSelectedFence()" title="Duplicate selected object"><span class="mi">⧉</span><span>Duplicate</span><span class="ms">N</span></button>
-      <button class="manual-piece-btn danger" onclick="deleteSelectedFence()" title="Delete selected object"><span class="mi">×</span><span>Delete</span><span class="ms">Del</span></button>
+    </div>
+    <div class="tool-group-label">Visibility / Lock</div>
+    <div class="manual-piece-grid">
       <button class="manual-piece-btn" onclick="hideSelectedObject()" title="Hide only the selected object"><span class="mi">◌</span><span>Hide One</span><span class="ms">Object</span></button>
       <button class="manual-piece-btn" onclick="showHiddenEditorObjects()" title="Show objects hidden with Hide One"><span class="mi">◉</span><span>Show Hidden</span><span class="ms">Object</span></button>
       <button class="manual-piece-btn" onclick="lockSelectedObject()" title="Lock only the selected object"><span class="mi">⌾</span><span>Lock One</span><span class="ms">Object</span></button>
       <button class="manual-piece-btn" onclick="unlockAllEditorObjects()" title="Unlock objects locked with Lock One"><span class="mi">◇</span><span>Unlock All</span><span class="ms">Object</span></button>
+    </div>
+    <div class="tool-group-label">Group / Prefab</div>
+    <div class="manual-piece-grid">
+      <button class="manual-piece-btn" onclick="addSelectedToMultiSelect()" title="Add selected object to group selection"><span class="mi">＋</span><span>Add Group</span><span class="ms">M</span></button>
+      <button class="manual-piece-btn" onclick="clearMultiSelect()" title="Clear grouped selected objects"><span class="mi">◇</span><span>Clear Group</span><span class="ms">Group</span></button>
+      <button class="manual-piece-btn" onclick="duplicateMultiSelected()" title="Duplicate currently grouped selected objects"><span class="mi">⧉</span><span>Dup Group</span><span class="ms">Group</span></button>
       <button class="manual-piece-btn save" onclick="saveSelectedAsPrefab()" title="Save selected or grouped objects as a reusable cluster"><span class="mi">★</span><span>Save Prefab</span><span class="ms">Cluster</span></button>
       <button class="manual-piece-btn save" onclick="spawnSelectedPrefab()" title="Spawn the saved reusable cluster near the brush target"><span class="mi">✦</span><span>Spawn Prefab</span><span class="ms">Cluster</span></button>
-      <button class="manual-piece-btn" onclick="duplicateMultiSelected()" title="Duplicate currently grouped selected objects"><span class="mi">⧉</span><span>Dup Group</span><span class="ms">Group</span></button>
+    </div>
+    <div class="tool-group-label">Clear / Delete</div>
+    <div class="manual-piece-grid">
+      <button class="manual-piece-btn" onclick="deselectAdminSelection()" title="Clear the active tool, gizmo, and selected village object"><span class="mi">◎</span><span>Deselect</span><span class="ms">Clear</span></button>
+      <button class="manual-piece-btn danger" onclick="deleteSelectedFence()" title="Delete selected object"><span class="mi">×</span><span>Delete</span><span class="ms">Del</span></button>
       <button class="manual-piece-btn danger" onclick="deleteMultiSelected()" title="Delete currently grouped selected objects"><span class="mi">×</span><span>Delete Group</span><span class="ms">Group</span></button>
     </div>
     <div class="admin-note" style="padding-top:8px">
@@ -559,7 +575,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <div class="ap-section">Quest Editor</div>
   <div class="admin-section-body" data-admin-section-body="quest-editor">
-    <div class="admin-note">Local quest editor foundation. It keeps the Hub tutorial quests safe and stores custom quest data locally for now.</div>
+    <button class="quest-help" type="button" title="Quest Editor How To: 1. Give the quest a simple ID like quest_hidden_chest. 2. Add a clear title and short story description. 3. Pick the objective type: talk to NPC, visit village, read sign, open chest, or reach zone. 4. Write exactly what the player should do. 5. Enter the target ID if you know it. 6. Add a prerequisite only if this quest must wait for another quest. 7. Choose locked, active, or completed. 8. Click Save Local Quest.">How To</button>
+    <div class="admin-note">Creates local quest drafts for this village. Existing Hub tutorial quests stay safe.</div>
     <label class="admin-field">Quest ID <input id="questDraftId" placeholder="quest_the_warning"></label>
     <label class="admin-field">Title <input id="questDraftTitle" placeholder="The First Warning"></label>
     <label class="admin-field">Description <textarea id="questDraftDescription" rows="2" placeholder="Story context"></textarea></label>
@@ -12930,13 +12947,6 @@ function moveAdminSectionBefore(title, beforeTitle) {
 }
 
 function reorderAdminPanelSections() {
-  const weather = findAdminSectionByTitle('Weather');
-  const worklight = document.getElementById('worklightBtn')?.parentElement;
-  if (weather && worklight?.parentElement) {
-    const divider = worklight.previousElementSibling?.classList?.contains('ap-divider') ? worklight.previousElementSibling : null;
-    if (divider) worklight.parentElement.insertBefore(divider, weather);
-    worklight.parentElement.insertBefore(worklight, weather);
-  }
   moveAdminSectionBefore('Performance', 'Backup / Restore');
   moveAdminSectionBefore('Weather', 'Performance');
   moveAdminSectionBefore('Audio', 'Weather');
