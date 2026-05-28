@@ -603,7 +603,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <div class="ap-section">Interaction Zones</div>
   <div class="admin-section-body" data-admin-section-body="interaction-zones">
-    <div class="admin-note">Trigger zones are story, audio, weather, quest, store, and dojo volumes. They are editable and save per village.</div>
+    <button class="quest-help" type="button" title="Interaction Zones How To: 1. Pick what the zone is for: story, audio, weather, quest, store, or dojo. 2. Add a Quest Objective ID only if a quest should look for this zone. 3. Click Add Zone. 4. Move it where the player should stand. 5. Use Resize Zone or the scale gizmo to set the area. 6. Click Apply Zone Settings after changing type or quest ID on a selected zone. 7. Save the village so the zone persists.">How To</button>
+    <div class="admin-note">Interaction zones are invisible trigger areas. Use them to mark story spots, quest targets, audio/weather areas, store/dojo entrances, or future cutscene triggers.</div>
     <label class="admin-field">Zone Type
       <select id="interactionZoneType" class="admin-select">
         <option value="story">story</option>
@@ -617,6 +618,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <label class="admin-field">Quest Objective ID <input id="interactionZoneQuestId" placeholder="optional quest objective"></label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <button class="ctrl-btn" onclick="placeInteractionZone()">Add Zone</button>
+      <button class="ctrl-btn" onclick="applySelectedInteractionZoneSettings()">Apply Settings</button>
       <button class="ctrl-btn" onclick="deleteSelectedInteractionZone()">Delete Zone</button>
       <button class="ctrl-btn" id="zoneVisibilityBtn" onclick="toggleInteractionZoneVisibility()">Hide Zones</button>
       <button class="ctrl-btn" onclick="setGizmoMode('scale')">Resize Zone</button>
@@ -2933,6 +2935,12 @@ if (npcEditorPanel) {
     document.getElementById('npcDialogueInput').value = meta.customDialogue || '';
     document.getElementById('npcQuestIdInput').value = meta.questId || '';
   }
+}
+if (selectedObject?.metadata?.type === 'interaction_zone') {
+  const zoneTypeInput = document.getElementById('interactionZoneType');
+  const zoneQuestInput = document.getElementById('interactionZoneQuestId');
+  if (zoneTypeInput) zoneTypeInput.value = selectedObject.metadata.interactionZoneType || 'story';
+  if (zoneQuestInput) zoneQuestInput.value = selectedObject.metadata.questObjectiveId || '';
 }
   if (isSign) {
     const cfg = selectedObject.metadata.signConfig || {};
@@ -13675,20 +13683,37 @@ function createInteractionZone(position, zoneType = 'story') {
   root.position = position.clone();
   root.scaling = new BABYLON.Vector3(6, 1.2, 6);
   root.metadata = { type: 'interaction_zone', isClone: true, interactionZoneType: zoneType };
-  const mat = new BABYLON.StandardMaterial('interactionZoneMat_' + root.name, scene);
-  mat.diffuseColor = new BABYLON.Color3(.45, .18, .9);
-  mat.emissiveColor = new BABYLON.Color3(.18, .06, .36);
-  mat.alpha = .26;
-  mat.backFaceCulling = false;
   const box = BABYLON.MeshBuilder.CreateBox('interactionZoneBox_' + root.name, { width: 1, height: 1, depth: 1 }, scene);
   box.parent = root;
   box.position.y = .6;
-  box.material = mat;
   box.isPickable = true;
   box._editRoot = root;
   root.isPickable = true;
+  styleInteractionZoneVisual(root);
   registerEditableRoot(root.name, root);
   return root;
+}
+
+function styleInteractionZoneVisual(zone) {
+  if (!zone || zone.metadata?.type !== 'interaction_zone') return;
+  const colorMap = {
+    story: new BABYLON.Color3(.45, .18, .9),
+    audio: new BABYLON.Color3(.16, .48, .9),
+    weather: new BABYLON.Color3(.1, .55, .5),
+    quest: new BABYLON.Color3(.9, .68, .18),
+    store: new BABYLON.Color3(.85, .38, .12),
+    dojo: new BABYLON.Color3(.78, .12, .16)
+  };
+  const color = colorMap[zone.metadata.interactionZoneType] || colorMap.story;
+  const matName = 'interactionZoneMat_' + zone.name;
+  const mat = scene.getMaterialByName(matName) || new BABYLON.StandardMaterial(matName, scene);
+  mat.diffuseColor = color;
+  mat.emissiveColor = color.scale(.35);
+  mat.alpha = .26;
+  mat.backFaceCulling = false;
+  zone.getChildMeshes?.(false).forEach(mesh => {
+    if (mesh.name.startsWith('interactionZoneBox_')) mesh.material = mat;
+  });
 }
 
 function placeInteractionZone() {
@@ -13701,6 +13726,19 @@ function placeInteractionZone() {
   setSelectedEditableObject(zone);
   triggerAutoSave();
   showToast('Interaction zone placed: ' + zoneType);
+}
+
+function applySelectedInteractionZoneSettings() {
+  if (selectedObject?.metadata?.type !== 'interaction_zone') {
+    showToast('Select an interaction zone first');
+    return;
+  }
+  recordEditorHistory('edit interaction zone');
+  selectedObject.metadata.interactionZoneType = document.getElementById('interactionZoneType')?.value || 'story';
+  selectedObject.metadata.questObjectiveId = document.getElementById('interactionZoneQuestId')?.value?.trim() || null;
+  styleInteractionZoneVisual(selectedObject);
+  triggerAutoSave();
+  showToast('Interaction zone updated');
 }
 
 function saveQuestDraft() {
@@ -14877,6 +14915,7 @@ window.toggleWalkPatchVisibility = toggleWalkPatchVisibility;
 window.toggleManualWalkSurfaceVisibility = toggleManualWalkSurfaceVisibility;
 window.toggleAllWalkHelperVisibility = toggleAllWalkHelperVisibility;
 window.placeInteractionZone = placeInteractionZone;
+window.applySelectedInteractionZoneSettings = applySelectedInteractionZoneSettings;
 window.deleteSelectedInteractionZone = deleteSelectedInteractionZone;
 window.toggleInteractionZoneVisibility = toggleInteractionZoneVisibility;
 window.saveQuestDraft = saveQuestDraft;
