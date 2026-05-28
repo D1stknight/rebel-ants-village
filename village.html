@@ -372,6 +372,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="manual-piece-grid">
       <button class="manual-piece-btn" onclick="undoEditorAction()" title="Undo the last world edit"><span class="mi">↶</span><span>Undo</span><span class="ms">History</span></button>
       <button class="manual-piece-btn" onclick="redoEditorAction()" title="Redo the last undone world edit"><span class="mi">↷</span><span>Redo</span><span class="ms">History</span></button>
+      <button class="manual-piece-btn" onclick="deselectAdminSelection()" title="Clear the active tool, gizmo, and selected village object"><span class="mi">◎</span><span>Deselect</span><span class="ms">Clear</span></button>
       <button class="manual-piece-btn" onclick="addSelectedToMultiSelect()" title="Add selected object to group selection"><span class="mi">＋</span><span>Add Group</span><span class="ms">M</span></button>
       <button class="manual-piece-btn" onclick="clearMultiSelect()" title="Clear grouped selected objects"><span class="mi">◇</span><span>Clear Group</span><span class="ms">Group</span></button>
       <button class="manual-piece-btn" onclick="setGizmoMode('move')" title="Move selected object"><span class="mi">↕</span><span>Move</span><span class="ms">G</span></button>
@@ -456,8 +457,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <button class="ctrl-btn full" onclick="applyAmbientGlowSettings()" style="width:100%;background:#ffdd88;color:#000">Apply Glow</button>
 </div>
-<div id="walkSurfaceEditorPanel" style="display:none;padding:0 8px 8px">
-  <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin-bottom:6px;text-transform:uppercase">Walk Surface / Collision Builder</div>
+<div class="ap-section" id="walkSurfaceEditorSection" style="display:none">Walk Surface / Collision Builder</div>
+<div id="walkSurfaceEditorPanel" class="admin-section-body" data-admin-section-body="walk-surface-collision" style="display:none">
   <div style="font-size:10px;line-height:1.4;color:#aaa;margin-bottom:8px">Manual pieces are gameplay collision helpers. Terrain patches are visual/walk-surface helpers. Keep blockers here; sculpt/look-dev patches in Terrain Builder.</div>
   <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:8px"><input type="checkbox" id="proxyAttachToSelected" checked> Attach new pieces to selected object</label>
   <div class="manual-flow">
@@ -607,6 +608,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <hr class="ap-divider">
   <div class="ap-section">Weather</div>
   <div class="admin-section-body" data-admin-section-body="weather">
+  <div class="admin-note">Weather controls change the current sky, cycle timing, and forecast only.</div>
   <div style="padding:0 8px 6px">
     <select id="weatherSelect" class="admin-select" onchange="setWeatherMode(this.value, true)">
       <option value="clear">Clear</option>
@@ -655,6 +657,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <hr class="ap-divider">
   <div class="ap-section">NPCs</div>
+  <div class="admin-section-body" data-admin-section-body="npcs">
   <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('ashigaru_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Ashigaru Villager</span></div></div>
   <div style="padding:0 8px 6px;display:grid;grid-template-columns:1fr 1fr;gap:5px">
     <button class="ctrl-btn" id="npcVisibilityBtn" onclick="toggleNPCVisibility()">Hide NPCs</button>
@@ -688,6 +691,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="assignSelectedNPCToPatrol()">Assign Patrol</button>
       <button class="ctrl-btn" id="patrolVisibilityBtn" onclick="togglePatrolRouteVisibility()">Show Routes</button>
     </div>
+  </div>
   </div>
   <hr class="ap-divider">
   <div class="ap-section">Backup / Restore</div>
@@ -1382,6 +1386,24 @@ function setSelectedEditableObject(node) {
   rememberCollisionProxyOwnerFromSelection(node);
   updateSelectedBadge();
   attachSelectedGizmo();
+}
+
+function deselectAdminSelection() {
+  clearAdminPlacement();
+  setTerrainSculptBrushActive(false);
+  selectedObject = null;
+  adminManualProxyRotateDrag = null;
+  adminManualNPCRotateDrag = null;
+  if (gizmoManager) {
+    gizmoManager.attachToNode(null);
+    gizmoManager.positionGizmoEnabled = false;
+    gizmoManager.rotationGizmoEnabled = false;
+    gizmoManager.scaleGizmoEnabled = false;
+  }
+  clearVillageProxyDebugMeshes();
+  renderSelectedWalkSurfaceGuide();
+  updateSelectedBadge();
+  showToast('Selection cleared');
 }
 
 function addCollisionProxyPiece(kind) {
@@ -2864,12 +2886,14 @@ if (ambientGlowPanel) {
 }
 
 const walkSurfacePanel = document.getElementById('walkSurfaceEditorPanel');
+const walkSurfaceSection = document.getElementById('walkSurfaceEditorSection');
 if (walkSurfacePanel) {
   const selectedType = selectedObject && selectedObject.metadata && selectedObject.metadata.type;
   const canEditWalkSurface =
     selectedType &&
     selectedObject.metadata.isPickProxy !== true;
 
+  if (walkSurfaceSection) walkSurfaceSection.style.display = canEditWalkSurface ? '' : 'none';
   walkSurfacePanel.style.display = canEditWalkSurface ? 'block' : 'none';
 
   if (canEditWalkSurface) {
@@ -13405,7 +13429,8 @@ function getTerrainStampLocalHeight(stampType, shape = {}, x = 0, z = 0) {
 function buildTerrainStampVertexData(stampType, shape) {
   const width = Math.max(.5, shape.width || 10);
   const length = Math.max(.5, shape.length || 10);
-  const segments = 10;
+  const roundedFootprint = stampType === 'root_mound_round';
+  const segments = roundedFootprint ? 18 : 10;
   const positions = [];
   const indices = [];
   const normals = [];
@@ -13425,6 +13450,13 @@ function buildTerrainStampVertexData(stampType, shape) {
       const b = a + 1;
       const c = a + (segments + 1);
       const d = c + 1;
+      if (roundedFootprint) {
+        const cx = -width * .5 + width * ((x + .5) / segments);
+        const cz = -length * .5 + length * ((z + .5) / segments);
+        const nx = cx / (width * .5);
+        const nz = cz / (length * .5);
+        if (Math.sqrt(nx * nx + nz * nz) > 1) continue;
+      }
       indices.push(a, c, b, b, c, d);
     }
   }
@@ -14879,6 +14911,7 @@ window.applyAttachedCollisionPiecesToSameType = applyAttachedCollisionPiecesToSa
 window.toggleManualBarrierVisibility = toggleManualBarrierVisibility;
 window.saveManualBarriersNow = saveManualBarriersNow;
 window.clearAdminPlacement = clearAdminPlacement;
+window.deselectAdminSelection = deselectAdminSelection;
 window.toggleWorklight = toggleWorklight;
 window.setWeatherMode = setWeatherMode;
 window.setWeatherCyclePaused = setWeatherCyclePaused;
