@@ -1015,10 +1015,10 @@ const PROGRESSION_POINTS = {
   secret: 20
 };
 const COLLECTIBLE_TYPES = {
-  flame_shard: { label:'Flame Shard', color:'#ff7a22', accent:'#ffd45c' },
-  ancient_scroll: { label:'Ancient Scroll', color:'#d8b36a', accent:'#fff0b6' },
-  red_dust_fragment: { label:'Red Dust Fragment', color:'#c92e35', accent:'#ff8b86' },
-  root_memory: { label:'Root Memory', color:'#5ecfca', accent:'#a7fff5' }
+  flame_shard: { label:'Flame Shard', color:'#ff7a22', accent:'#ffd45c', modelUrl:'/assets/collectibles/flame-shard.glb', modelScale:.9 },
+  ancient_scroll: { label:'Ancient Scroll', color:'#d8b36a', accent:'#fff0b6', modelUrl:'/assets/collectibles/ancient-scroll.glb', modelScale:.9 },
+  red_dust_fragment: { label:'Red Dust Fragment', color:'#c92e35', accent:'#ff8b86', modelUrl:'/assets/collectibles/red-dust-fragment.glb', modelScale:.9 },
+  root_memory: { label:'Root Memory', color:'#5ecfca', accent:'#a7fff5', modelUrl:'/assets/collectibles/root-memory.glb', modelScale:.9 }
 };
 
 function getDefaultProgressionState() {
@@ -3376,6 +3376,105 @@ function isCollectibleCollected(id) {
   return ProgressionState.collectiblesFound.includes(getCollectibleStateKey(id));
 }
 
+function markCollectibleVisualMesh(mesh, root, baseY = mesh.position.y, extra = {}) {
+  mesh.isPickable = true;
+  mesh._editRoot = root;
+  mesh.metadata = { ...(mesh.metadata || {}), collectibleVisual: true, baseY, ...extra };
+  return mesh;
+}
+
+function makeCollectibleMat(root, name, colorHex, emissiveHex = colorHex, alpha = .95) {
+  const mat = new BABYLON.StandardMaterial(`${root.name}_${name}`, scene);
+  mat.diffuseColor = BABYLON.Color3.FromHexString(colorHex);
+  mat.emissiveColor = BABYLON.Color3.FromHexString(emissiveHex).scale(.72);
+  mat.alpha = alpha;
+  mat.backFaceCulling = false;
+  return mat;
+}
+
+function addCollectibleAura(root, cfg) {
+  const auraMat = makeCollectibleMat(root, 'auraMat', cfg.accent, cfg.accent, .34);
+  auraMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+  const aura = BABYLON.MeshBuilder.CreateTorus(`collectibleAura_${root.name}`, {
+    diameter: 1.18,
+    thickness: .035,
+    tessellation: 36
+  }, scene);
+  aura.parent = root;
+  aura.position.y = 1.08;
+  aura.rotation.x = Math.PI / 2;
+  aura.material = auraMat;
+  markCollectibleVisualMesh(aura, root, aura.position.y, { collectibleEffect: true });
+
+  const sparkMat = makeCollectibleMat(root, 'sparkMat', cfg.accent, cfg.accent, .72);
+  for (let i = 0; i < 4; i += 1) {
+    const angle = i * Math.PI * .5;
+    const spark = BABYLON.MeshBuilder.CreateSphere(`collectibleSpark_${root.name}_${i}`, {
+      diameter: i % 2 ? .055 : .075,
+      segments: 8
+    }, scene);
+    spark.parent = root;
+    spark.position.set(Math.cos(angle) * .58, 1.08 + (i % 2) * .22, Math.sin(angle) * .58);
+    spark.material = sparkMat;
+    markCollectibleVisualMesh(spark, root, spark.position.y, {
+      collectibleEffect: true,
+      orbitAngle: angle,
+      orbitRadius: .58,
+      orbitSpeed: .65 + i * .08
+    });
+  }
+}
+
+async function tryLoadCollectibleModel(root, cfg) {
+  if (!root || root.isDisposed?.() || !cfg.modelUrl) return;
+  try {
+    // Collectible GLBs are optional lightweight art drops. Replace these files later
+    // with optimized tiny static models; gameplay and save data stay on the root.
+    const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", cfg.modelUrl, scene);
+    if (!root || root.isDisposed?.()) {
+      result.meshes?.forEach(mesh => mesh.dispose(false, true));
+      result.transformNodes?.forEach(node => node.dispose(false, true));
+      return;
+    }
+
+    const modelRoot = new BABYLON.TransformNode(`collectibleModel_${root.name}`, scene);
+    modelRoot.parent = root;
+    modelRoot.position.y = .98;
+    modelRoot.scaling.setAll(cfg.modelScale || 1);
+
+    const importedNodes = [...(result.transformNodes || []), ...(result.meshes || [])];
+    const importedNodeSet = new Set(importedNodes);
+    importedNodes.forEach(node => {
+      if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = modelRoot;
+    });
+
+    let visibleMeshCount = 0;
+    (result.meshes || []).forEach(mesh => {
+      if (!mesh) return;
+      mesh.setEnabled(true);
+      markCollectibleVisualMesh(mesh, root, mesh.position.y, { collectibleModel: true });
+      if (mesh.material) {
+        mesh.material.maxSimultaneousLights = 4;
+        if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mesh.material);
+      }
+      if (mesh.getTotalVertices && mesh.getTotalVertices() > 0) visibleMeshCount += 1;
+    });
+
+    if (!visibleMeshCount) {
+      modelRoot.dispose(false, true);
+      return;
+    }
+
+    (root.metadata._collectibleFallbackVisuals || []).forEach(mesh => mesh.dispose(false, true));
+    root.metadata._collectibleModelRoot = modelRoot;
+    root.metadata._collectibleBobRoot = modelRoot;
+    root.metadata.modelUrl = cfg.modelUrl;
+    root.metadata.modelLoaded = true;
+  } catch (_) {
+    root.metadata.modelFailed = true;
+  }
+}
+
 function createCollectible(type = 'flame_shard', position, options = {}) {
   const cfg = COLLECTIBLE_TYPES[type] || COLLECTIBLE_TYPES.flame_shard;
   const id = options.collectibleId || `${CURRENT_VILLAGE_ID}-${type}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
@@ -3392,23 +3491,13 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     villageId: CURRENT_VILLAGE_ID
   };
 
-  const makeMat = (name, colorHex, emissiveHex = colorHex, alpha = .95) => {
-    const mat = new BABYLON.StandardMaterial(`${root.name}_${name}`, scene);
-    mat.diffuseColor = BABYLON.Color3.FromHexString(colorHex);
-    mat.emissiveColor = BABYLON.Color3.FromHexString(emissiveHex).scale(.72);
-    mat.alpha = alpha;
-    mat.backFaceCulling = false;
-    return mat;
-  };
-  const coreMat = makeMat('coreMat', cfg.color, cfg.accent, .94);
-  const accentMat = makeMat('accentMat', cfg.accent, cfg.accent, .78);
+  const coreMat = makeCollectibleMat(root, 'coreMat', cfg.color, cfg.accent, .94);
+  const accentMat = makeCollectibleMat(root, 'accentMat', cfg.accent, cfg.accent, .78);
   const visuals = [];
   const markCollectibleMesh = (mesh, baseY = mesh.position.y) => {
     mesh.parent = root;
     mesh.material = mesh.material || coreMat;
-    mesh.isPickable = true;
-    mesh._editRoot = root;
-    mesh.metadata = { ...(mesh.metadata || {}), collectibleVisual: true, baseY };
+    markCollectibleVisualMesh(mesh, root, baseY, { proceduralFallback: true });
     visuals.push(mesh);
     return mesh;
   };
@@ -3420,8 +3509,8 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
   };
 
   if (type === 'ancient_scroll') {
-    const parchmentMat = makeMat('parchmentMat', '#d8b36a', '#fff0b6', .96);
-    const lineMat = makeMat('scrollLineMat', '#7b4d22', '#d8b36a', .88);
+    const parchmentMat = makeCollectibleMat(root, 'parchmentMat', '#d8b36a', '#fff0b6', .96);
+    const lineMat = makeCollectibleMat(root, 'scrollLineMat', '#7b4d22', '#d8b36a', .88);
     const body = BABYLON.MeshBuilder.CreateBox(`collectibleMesh_${root.name}_scrollBody`, { width: .92, height: .5, depth: .08 }, scene);
     body.position.y = 1.15;
     body.material = parchmentMat;
@@ -3440,8 +3529,8 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
       markCollectibleMesh(line, line.position.y);
     });
   } else if (type === 'root_memory') {
-    const seedMat = makeMat('seedMat', '#8ecf67', '#f0d478', .94);
-    const rootMat = makeMat('rootMat', '#5a351d', '#8ecf67', .9);
+    const seedMat = makeCollectibleMat(root, 'seedMat', '#8ecf67', '#f0d478', .94);
+    const rootMat = makeCollectibleMat(root, 'rootMat', '#5a351d', '#8ecf67', .9);
     const seed = BABYLON.MeshBuilder.CreateSphere(`collectibleMesh_${root.name}_seed`, { diameter: .58, segments: 14 }, scene);
     seed.position.y = 1.2;
     seed.scaling.set(.82, 1.12, .82);
@@ -3499,10 +3588,13 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
   light.range = type === 'red_dust_fragment' ? 6 : 5;
   root.metadata._collectibleLight = light;
   root.metadata._collectibleVisuals = visuals;
+  root.metadata._collectibleFallbackVisuals = visuals;
+  addCollectibleAura(root, cfg);
 
   root.isPickable = true;
   root.setEnabled(!isCollectibleCollected(id));
   registerEditableRoot(root.name, root);
+  tryLoadCollectibleModel(root, cfg);
   return root;
 }
 
@@ -3530,8 +3622,17 @@ function updateCollectibles(dt) {
     }
     if (!adminMode) root.rotation.y += dt * .8;
     const bob = Math.sin(Date.now() * .003 + root.position.x) * .12;
+    const bobRoot = root.metadata._collectibleBobRoot;
+    if (bobRoot && !bobRoot.isDisposed?.()) bobRoot.position.y = .98 + bob;
     root.getChildMeshes?.(false).forEach(mesh => {
-      if (mesh.metadata?.collectibleVisual) mesh.position.y = (mesh.metadata.baseY || 1.15) + bob;
+      if (!mesh.metadata?.collectibleVisual) return;
+      if (mesh.metadata.collectibleEffect && Number.isFinite(mesh.metadata.orbitAngle)) {
+        const angle = mesh.metadata.orbitAngle + Date.now() * .001 * (mesh.metadata.orbitSpeed || .7);
+        const radius = mesh.metadata.orbitRadius || .55;
+        mesh.position.x = Math.cos(angle) * radius;
+        mesh.position.z = Math.sin(angle) * radius;
+      }
+      if (!bobRoot || mesh.metadata.collectibleEffect) mesh.position.y = (mesh.metadata.baseY || 1.15) + bob;
     });
     if (root.metadata._collectibleLight) root.metadata._collectibleLight.intensity = .35 + Math.sin(Date.now() * .005) * .12;
     if (walkMode && !adminMode && charMesh) {
