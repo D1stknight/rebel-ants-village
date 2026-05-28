@@ -13632,12 +13632,224 @@ function recordEditorHistory(label = 'edit') {
   _editorHistory.redo = [];
 }
 
+function getLayoutItemKey(item) {
+  return item?.name ? `${item.type || 'unknown'}::${item.name}` : null;
+}
+
+function getCurrentLayoutNodeMap() {
+  const nodes = [
+    ...scene.transformNodes.filter(n =>
+      n.metadata?.isClone === true &&
+      !n.metadata?.isPickProxy &&
+      n.name &&
+      !n.name.includes('.') &&
+      Math.abs(n.position.x) < 500 &&
+      Math.abs(n.position.z) < 500
+    ),
+    ...scene.meshes.filter(n =>
+      n.metadata?.isClone === true &&
+      (n.metadata.type === 'collision_proxy' || n.metadata.type === 'terrain_stamp') &&
+      !n.parent &&
+      n.name &&
+      Math.abs(n.position.x) < 500 &&
+      Math.abs(n.position.z) < 500
+    ),
+    ...NPCManager.roots.filter(n =>
+      n &&
+      !n.isDisposed?.() &&
+      n.metadata?.type === 'npc' &&
+      Math.abs(n.position.x) < 500 &&
+      Math.abs(n.position.z) < 500
+    )
+  ];
+  const map = new Map();
+  nodes.forEach(node => {
+    const key = getLayoutItemKey({ type: node.metadata?.type, name: node.name });
+    if (key && !map.has(key)) map.set(key, node);
+  });
+  return map;
+}
+
+function applyLayoutItemToExistingNode(node, item) {
+  if (!node || !item) return;
+  applyObjectTransform(node, item);
+  node.metadata = {
+    ...(node.metadata || {}),
+    type: item.type,
+    isClone: true,
+    signConfig: item.signConfig || null,
+    toroColor: item.toroColor || null,
+    lanternColor: item.lanternColor || null,
+    lanternBrightness: item.lanternBrightness || null,
+    chainHeight: Number.isFinite(item.chainHeight) ? item.chainHeight : null,
+    glowColor: item.glowColor || null,
+    glowBrightness: item.glowBrightness || null,
+    glowShape: item.glowShape || null,
+    glowWidth: item.glowWidth || null,
+    glowDepth: item.glowDepth || null,
+    chestId: item.chestId || node.metadata?.chestId || null,
+    rewardType: item.rewardType || null,
+    rewardAmount: Number.isFinite(item.rewardAmount) ? item.rewardAmount : null,
+    opened: item.opened === true,
+    cooldownSeconds: Number.isFinite(item.cooldownSeconds) ? item.cooldownSeconds : null,
+    requiresWallet: item.requiresWallet === true,
+    villageId: item.villageId || CURRENT_VILLAGE_ID,
+    npcId: item.npcId || null,
+    factionId: item.factionId || null,
+    role: item.role || null,
+    displayName: item.displayName || null,
+    modelUrl: item.modelUrl || null,
+    modelScale: Number.isFinite(item.modelScale) ? item.modelScale : null,
+    fallbackType: item.fallbackType || null,
+    behavior: item.behavior || null,
+    dialogueId: item.dialogueId || null,
+    customDialogue: item.customDialogue || null,
+    questId: item.questId || null,
+    baseRotationY: Number.isFinite(item.baseRotationY) ? item.baseRotationY : null,
+    moveSpeed: Number.isFinite(item.moveSpeed) ? item.moveSpeed : null,
+    wanderRadius: Number.isFinite(item.wanderRadius) ? item.wanderRadius : null,
+    animationMap: item.animationMap || null,
+    animationSpeed: item.animationSpeed || null,
+    patrolPoints: Array.isArray(item.patrolPoints) ? item.patrolPoints : null,
+    proxyAutoEnabled: item.proxyAutoEnabled !== false,
+    proxyWalkSurfaceEnabled: item.proxyWalkSurfaceEnabled === true,
+    proxyEntranceSide: item.proxyEntranceSide || null,
+    proxyEntranceOffset: Number.isFinite(item.proxyEntranceOffset) ? item.proxyEntranceOffset : null,
+    proxyRampWidth: Number.isFinite(item.proxyRampWidth) ? item.proxyRampWidth : null,
+    proxyRampDepth: Number.isFinite(item.proxyRampDepth) ? item.proxyRampDepth : null,
+    proxyFloorHeight: Number.isFinite(item.proxyFloorHeight) ? item.proxyFloorHeight : null,
+    proxyPieceKind: item.proxyPieceKind || null,
+    proxyOwnerName: item.proxyOwnerName || null,
+    proxyOwnerType: item.proxyOwnerType || null,
+    proxyOwnerAssetKey: item.proxyOwnerAssetKey || item.proxyOwnerType || null,
+    terrainSurfaceType: item.terrainSurfaceType || null,
+    terrainToolPatch: item.terrainToolPatch === true,
+    terrainStampType: item.terrainStampType || null,
+    terrainStampShape: item.terrainStampShape || null,
+    interactionZoneType: item.interactionZoneType || null,
+    questObjectiveId: item.questObjectiveId || null,
+    editorLocked: item.editorLocked === true
+  };
+  if (item.type === 'terrain_stamp') rebuildTerrainStampMesh(node);
+  if (item.type === 'collision_proxy' && item.terrainSurfaceType) {
+    node.material = getTerrainSurfaceMaterial(item.terrainSurfaceType, item.terrainToolPatch ? .3 : .36);
+  }
+  if (item.type === 'npc') {
+    node.metadata.spawn = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
+    node.metadata.home = node.metadata.spawn.clone();
+    node.metadata.wanderOrigin = node.metadata.spawn.clone();
+    node.metadata.target = null;
+    node.metadata.waitUntil = performance.now() + 300;
+  }
+}
+
+function disposeLayoutNodeForHistory(node) {
+  if (!node || node.isDisposed?.()) return;
+  if (selectedObject === node) selectedObject = null;
+  if (node.metadata?.type === 'npc') {
+    NPCManager.roots = NPCManager.roots.filter(root => root !== node);
+  }
+  try { node.dispose(false, true); } catch(e) {}
+}
+
+function createLayoutNodeForHistory(item) {
+  if (!item?.type || !item.position) return null;
+  const pos = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
+  let node = null;
+  if (item.type === 'npc') {
+    restoreNPCFromLayoutItem(item);
+    node = NPCManager.roots.find(root => root.name === item.name) || null;
+  } else if (item.type === 'collision_proxy') {
+    node = createCollisionProxyPiece(item.proxyPieceKind || 'blocker', pos, {
+      name: item.name,
+      rotation: item.rotation,
+      scaling: item.scaling,
+      proxyOwnerName: item.proxyOwnerName || null,
+      proxyOwnerType: item.proxyOwnerType || item.proxyOwnerAssetKey || null,
+      proxyOwnerAssetKey: item.proxyOwnerAssetKey || item.proxyOwnerType || null,
+      terrainSurfaceType: item.terrainSurfaceType || 'dirt',
+      terrainToolPatch: item.terrainToolPatch === true,
+      terrainStampType: item.terrainStampType || null
+    });
+  } else if (item.type === 'terrain_stamp') {
+    node = createTerrainStampMesh(item.terrainStampType || 'hill', pos, {
+      name: item.name,
+      rotation: item.rotation,
+      scaling: item.scaling,
+      surfaceType: item.terrainSurfaceType || 'dirt',
+      shape: item.terrainStampShape || null
+    });
+  } else if (item.type === 'interaction_zone') {
+    node = createInteractionZone(pos, item.interactionZoneType || 'story');
+    if (item.name) node.name = item.name;
+  } else if (ASSETS[item.type]?.procedural) {
+    node = spawnAsset(item.type, pos, { isClone: true, ...item });
+    if (node && item.name) node.name = item.name;
+  } else if (_assetSources[item.type]) {
+    node = _assetSources[item.type].clone(item.name || makeCloneName(item.type));
+    if (node) {
+      node.name = item.name || node.name;
+      node.metadata = { type: item.type, isClone: true };
+      node.getChildMeshes?.().forEach(mesh => {
+        mesh.isPickable = true;
+        mesh._editRoot = node;
+        if (mesh.material) {
+          mesh.material.maxSimultaneousLights = 4;
+          if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mesh.material);
+        }
+      });
+    }
+  } else {
+    node = createMissingAssetPlaceholder(item);
+  }
+  if (node) {
+    applyLayoutItemToExistingNode(node, item);
+    registerEditableRoot(node.name, node);
+  }
+  return node;
+}
+
+function restoreEditorSnapshotIncremental(entry) {
+  const target = JSON.parse(entry.json || '[]');
+  if (!Array.isArray(target)) return false;
+  const targetMap = new Map();
+  target.forEach(item => {
+    const key = getLayoutItemKey(item);
+    if (key) targetMap.set(key, item);
+  });
+
+  const currentMap = getCurrentLayoutNodeMap();
+  currentMap.forEach((node, key) => {
+    if (!targetMap.has(key)) disposeLayoutNodeForHistory(node);
+  });
+  targetMap.forEach((item, key) => {
+    const node = currentMap.get(key);
+    if (node && !node.isDisposed?.()) applyLayoutItemToExistingNode(node, item);
+    else createLayoutNodeForHistory(item);
+  });
+
+  selectedObject = null;
+  updateSelectedBadge();
+  gizmoManager?.attachToNode?.(null);
+  rebuildVillageCollisionBlockers();
+  renderSelectedWalkSurfaceGuide();
+  setCollisionProxyVisualsVisible(adminMode);
+  applyAdminLayerState();
+  updateQuestTracker();
+  return true;
+}
+
 function restoreEditorSnapshot(entry) {
   if (!entry?.json) return;
   _editorHistory.muted = true;
   localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, entry.json);
   if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem('rebelAntsWorldLayout', entry.json);
-  loadWorldLayout();
+  try {
+    restoreEditorSnapshotIncremental(entry);
+  } catch (error) {
+    console.warn('Incremental undo restore failed:', error);
+    showToast('Undo restore failed safely');
+  }
   _editorHistory.muted = false;
 }
 
