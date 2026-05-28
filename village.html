@@ -490,9 +490,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="admin-pill">Selected Surface: <span id="selectedSurfaceTypeLabel">none</span></div>
     <div class="admin-note">Brush sculpts the selected terrain stamp/patch. Hover over selected terrain, then click or drag to raise/lower the walkable mesh.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:end">
-      <label class="admin-field" title="Brush Size changes the live sculpt footprint on the selected terrain mesh.">Brush Size <input id="terrainBrushSize" type="range" min="2" max="36" step="1" value="10" oninput="updateTerrainBrushToolLive()"></label>
-      <label class="admin-field" title="Height is sculpt strength. Positive raises terrain, negative lowers terrain.">Height <input id="terrainBrushHeight" type="range" min="-2" max="8" step="0.1" value="0.5" oninput="updateTerrainBrushToolLive()"></label>
+      <label class="admin-field" title="Brush Size changes the live sculpt footprint on the selected terrain mesh. Smaller values are best for detailed roots and bumps.">Brush Size <input id="terrainBrushSize" type="range" min="0.75" max="16" step="0.25" value="4" oninput="updateTerrainBrushToolLive()"></label>
+      <label class="admin-field" title="Brush Strength controls how much each brush stroke changes the terrain. Direction comes from Raise or Lower.">Brush Strength <input id="terrainBrushHeight" type="range" min="0.05" max="3" step="0.05" value="0.45" oninput="updateTerrainBrushToolLive()"></label>
       <button id="terrainBrushButton" class="ctrl-btn full" onclick="paintWalkSurfaceBrush()" title="Toggle sculpt brush mode. Select a terrain stamp/patch, then click or drag on it to sculpt vertices.">Sculpt Brush</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:7px">
+      <button id="terrainBrushRaiseBtn" class="ctrl-btn" onclick="setTerrainBrushMode('raise')" title="Raise mode pushes the selected terrain upward under the brush.">Raise</button>
+      <button id="terrainBrushLowerBtn" class="ctrl-btn" onclick="setTerrainBrushMode('lower')" title="Lower mode pulls the selected terrain downward under the brush.">Lower</button>
     </div>
     <label class="admin-field" title="Surface Type affects footstep sounds for terrain and walk patches.">Surface Type
       <select id="terrainSurfaceType" class="admin-select" onchange="updateTerrainBrushToolLive()">
@@ -2744,6 +2748,7 @@ let adminPlacementMarker = null;
 let terrainBrushPreview = null;
 let terrainSculptBrushActive = false;
 let terrainSculptDragging = false;
+let terrainBrushMode = 'raise';
 let adminGizmoMode = 'move';
 let adminManualProxyRotateDrag = null;
 let adminManualNPCRotateDrag = null;
@@ -13149,10 +13154,31 @@ function getWorldBuilderPlacementPoint() {
 }
 
 function getTerrainBrushSettings() {
-  const size = Math.max(2, Number(document.getElementById('terrainBrushSize')?.value || 10));
-  const height = Number(document.getElementById('terrainBrushHeight')?.value || 0);
+  const size = Math.max(0.75, Number(document.getElementById('terrainBrushSize')?.value || 4));
+  const strength = Math.max(0, Number(document.getElementById('terrainBrushHeight')?.value || 0.45));
+  const height = (terrainBrushMode === 'lower' ? -1 : 1) * strength;
   const surfaceType = document.getElementById('terrainSurfaceType')?.value || 'dirt';
-  return { size, height: Number.isFinite(height) ? height : 0, surfaceType };
+  return { size, strength: Number.isFinite(strength) ? strength : 0.45, mode: terrainBrushMode, height: Number.isFinite(height) ? height : 0, surfaceType };
+}
+
+function setTerrainBrushMode(mode) {
+  terrainBrushMode = mode === 'lower' ? 'lower' : 'raise';
+  updateTerrainBrushModeButtons();
+  updateTerrainBrushToolLive();
+  showToast(terrainBrushMode === 'lower' ? 'Brush mode: lower terrain' : 'Brush mode: raise terrain');
+}
+
+function updateTerrainBrushModeButtons() {
+  const raiseBtn = document.getElementById('terrainBrushRaiseBtn');
+  const lowerBtn = document.getElementById('terrainBrushLowerBtn');
+  const apply = (btn, active) => {
+    if (!btn) return;
+    btn.style.background = active ? 'rgba(94,207,202,.18)' : '';
+    btn.style.borderColor = active ? 'rgba(94,207,202,.65)' : '';
+    btn.style.color = active ? '#77e6df' : '';
+  };
+  apply(raiseBtn, terrainBrushMode !== 'lower');
+  apply(lowerBtn, terrainBrushMode === 'lower');
 }
 
 function ensureTerrainBrushPreview() {
@@ -13178,6 +13204,16 @@ function updateTerrainBrushPreview() {
     return;
   }
   const settings = getTerrainBrushSettings();
+  const mat = preview.material;
+  if (mat) {
+    if (settings.mode === 'lower') {
+      mat.diffuseColor = new BABYLON.Color3(0.32, 0.52, 1);
+      mat.emissiveColor = new BABYLON.Color3(0.06, 0.18, 0.65);
+    } else {
+      mat.diffuseColor = new BABYLON.Color3(0.35, 0.95, 0.9);
+      mat.emissiveColor = new BABYLON.Color3(0.15, 0.65, 0.62);
+    }
+  }
   preview.setEnabled(true);
   preview.position.copyFrom(pick.pickedPoint);
   preview.position.y += 0.08;
@@ -13197,6 +13233,7 @@ function paintWalkSurfaceBrush() {
 }
 
 function updateTerrainBrushToolLive() {
+  updateTerrainBrushModeButtons();
   updateTerrainBrushPreview();
 }
 
@@ -14764,6 +14801,7 @@ window.rotateSelectedBy = rotateSelectedBy;
 window.tiltSelectedRamp = tiltSelectedRamp;
 window.paintWalkSurfaceBrush = paintWalkSurfaceBrush;
 window.updateTerrainBrushToolLive = updateTerrainBrushToolLive;
+window.setTerrainBrushMode = setTerrainBrushMode;
 window.placeTerrainStamp = placeTerrainStamp;
 window.flattenSelectedWalkSurfacePatch = flattenSelectedWalkSurfacePatch;
 window.raiseSelectedWalkSurfacePatch = raiseSelectedWalkSurfacePatch;
