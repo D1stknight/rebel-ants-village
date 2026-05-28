@@ -366,35 +366,36 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-grid" id="uploadedAssetGrid" style="display:none"></div>
     <hr class="ap-divider">
     <button class="ap-btn upload" onclick="uploadGLB()">&#x2B; Upload GLB</button>
-  <div class="ap-section">Selected</div>
-  <div class="worldbuilder-toolbar">
-    <button class="tool-square" onclick="undoEditorAction()">↶ Undo Soon<kbd></kbd></button>
-    <button class="tool-square" onclick="redoEditorAction()">↷ Redo Soon<kbd></kbd></button>
-    <button class="tool-square" onclick="addSelectedToMultiSelect()">＋ Add Selected To Group<kbd>M</kbd></button>
-    <button class="tool-square" onclick="clearMultiSelect()">◇ Clear Group Selection<kbd></kbd></button>
-  </div>
-  <div class="admin-note" style="margin:0 8px 8px">
-    Duplicate Group copies grouped objects. Save Prefab stores selected/grouped objects as a reusable cluster. Spawn Prefab places a saved cluster near the brush target.
-  </div>
-  <div class="ctrl-grid">
-    <button class="ctrl-btn" onclick="setGizmoMode('move')">Move<kbd>G</kbd></button>
-    <button class="ctrl-btn" onclick="setGizmoMode('rotate')">Rotate<kbd>R</kbd></button>
-    <button class="ctrl-btn" onclick="setGizmoMode('scale')">Scale<kbd>Y</kbd></button>
-    <button class="ctrl-btn" onclick="flipSelected()">Flip<kbd>F</kbd></button>
-    <button class="ctrl-btn" onclick="rotateSelectedBy(-Math.PI/2)">&#x21BA; -90&#xB0;<kbd>Q</kbd></button>
-    <button class="ctrl-btn" onclick="rotateSelectedBy(Math.PI/2)">&#x21BB; +90&#xB0;<kbd>E</kbd></button>
-    <button class="ctrl-btn" onclick="scaleSelected(1.25)">Larger<kbd>+</kbd></button>
-    <button class="ctrl-btn" onclick="scaleSelected(0.8)">Smaller<kbd>-</kbd></button>
-    <button class="ctrl-btn" onclick="duplicateSelectedFence()">Duplicate<kbd>N</kbd></button>
-    <button class="ctrl-btn danger" onclick="deleteSelectedFence()">Delete<kbd>Del</kbd></button>
-    <button class="ctrl-btn" onclick="hideSelectedObject()">Hide Selected</button>
-    <button class="ctrl-btn" onclick="showHiddenEditorObjects()">Show Hidden</button>
-    <button class="ctrl-btn" onclick="lockSelectedObject()">Lock Selected</button>
-    <button class="ctrl-btn" onclick="unlockAllEditorObjects()">Unlock All</button>
-    <button class="ctrl-btn" onclick="saveSelectedAsPrefab()">Save Prefab</button>
-    <button class="ctrl-btn" onclick="spawnSelectedPrefab()">Spawn Prefab</button>
-    <button class="ctrl-btn" onclick="duplicateMultiSelected()">Duplicate Group</button>
-    <button class="ctrl-btn danger" onclick="deleteMultiSelected()">Delete Group</button>
+  <div class="ap-section">Selected Tools</div>
+  <div class="admin-section-body" data-admin-section-body="selected-tools">
+    <div class="admin-note">Object tools affect the selected item only. Layer hide/lock controls affect entire categories.</div>
+    <div class="manual-piece-grid">
+      <button class="manual-piece-btn" onclick="undoEditorAction()" title="Undo is not active yet"><span class="mi">↶</span><span>Undo Soon</span><span class="ms">History</span></button>
+      <button class="manual-piece-btn" onclick="redoEditorAction()" title="Redo is not active yet"><span class="mi">↷</span><span>Redo Soon</span><span class="ms">History</span></button>
+      <button class="manual-piece-btn" onclick="addSelectedToMultiSelect()" title="Add selected object to group selection"><span class="mi">＋</span><span>Add Group</span><span class="ms">M</span></button>
+      <button class="manual-piece-btn" onclick="clearMultiSelect()" title="Clear grouped selected objects"><span class="mi">◇</span><span>Clear Group</span><span class="ms">Group</span></button>
+      <button class="manual-piece-btn" onclick="setGizmoMode('move')" title="Move selected object"><span class="mi">↕</span><span>Move</span><span class="ms">G</span></button>
+      <button class="manual-piece-btn" onclick="setGizmoMode('rotate')" title="Rotate selected object"><span class="mi">⟳</span><span>Rotate</span><span class="ms">R</span></button>
+      <button class="manual-piece-btn" onclick="setGizmoMode('scale')" title="Scale selected object"><span class="mi">□</span><span>Scale</span><span class="ms">Y</span></button>
+      <button class="manual-piece-btn" onclick="flipSelected()" title="Flip selected object"><span class="mi">⇄</span><span>Flip</span><span class="ms">F</span></button>
+      <button class="manual-piece-btn" onclick="rotateSelectedBy(-Math.PI/2)" title="Rotate selected object left 90 degrees"><span class="mi">&#x21BA;</span><span>-90&#xB0;</span><span class="ms">Q</span></button>
+      <button class="manual-piece-btn" onclick="rotateSelectedBy(Math.PI/2)" title="Rotate selected object right 90 degrees"><span class="mi">&#x21BB;</span><span>+90&#xB0;</span><span class="ms">E</span></button>
+      <button class="manual-piece-btn" onclick="scaleSelected(1.25)" title="Make selected object larger"><span class="mi">＋</span><span>Larger</span><span class="ms">+</span></button>
+      <button class="manual-piece-btn" onclick="scaleSelected(0.8)" title="Make selected object smaller"><span class="mi">−</span><span>Smaller</span><span class="ms">-</span></button>
+      <button class="manual-piece-btn" onclick="duplicateSelectedFence()" title="Duplicate selected object"><span class="mi">⧉</span><span>Duplicate</span><span class="ms">N</span></button>
+      <button class="manual-piece-btn danger" onclick="deleteSelectedFence()" title="Delete selected object"><span class="mi">×</span><span>Delete</span><span class="ms">Del</span></button>
+      <button class="manual-piece-btn" onclick="hideSelectedObject()" title="Hide only the selected object"><span class="mi">◌</span><span>Hide One</span><span class="ms">Object</span></button>
+      <button class="manual-piece-btn" onclick="showHiddenEditorObjects()" title="Show objects hidden with Hide One"><span class="mi">◉</span><span>Show Hidden</span><span class="ms">Object</span></button>
+      <button class="manual-piece-btn" onclick="lockSelectedObject()" title="Lock only the selected object"><span class="mi">⌾</span><span>Lock One</span><span class="ms">Object</span></button>
+      <button class="manual-piece-btn" onclick="unlockAllEditorObjects()" title="Unlock objects locked with Lock One"><span class="mi">◇</span><span>Unlock All</span><span class="ms">Object</span></button>
+      <button class="manual-piece-btn save" onclick="saveSelectedAsPrefab()" title="Save selected or grouped objects as a reusable cluster"><span class="mi">★</span><span>Save Prefab</span><span class="ms">Cluster</span></button>
+      <button class="manual-piece-btn save" onclick="spawnSelectedPrefab()" title="Spawn the saved reusable cluster near the brush target"><span class="mi">✦</span><span>Spawn Prefab</span><span class="ms">Cluster</span></button>
+      <button class="manual-piece-btn" onclick="duplicateMultiSelected()" title="Duplicate currently grouped selected objects"><span class="mi">⧉</span><span>Dup Group</span><span class="ms">Group</span></button>
+      <button class="manual-piece-btn danger" onclick="deleteMultiSelected()" title="Delete currently grouped selected objects"><span class="mi">×</span><span>Delete Group</span><span class="ms">Group</span></button>
+    </div>
+    <div class="admin-note" style="padding-top:8px">
+      Prefabs save selected/grouped objects as reusable clusters. Group tools use the current group selection.
+    </div>
   </div>
   <hr class="ap-divider">
   <div id="signEditorPanel" style="display:none;padding:0 8px 8px">
