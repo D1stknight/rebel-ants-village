@@ -94,6 +94,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   white-space:normal;
   line-height:1.25;
 }
+#hudProgressBar{height:5px;background:rgba(255,255,255,.1);border:1px solid rgba(94,207,202,.18);border-radius:999px;overflow:hidden}
+#hudProgressFill{height:100%;width:0;background:linear-gradient(90deg,#5ecfca,#e8c56a);box-shadow:0 0 8px rgba(94,207,202,.35)}
+#journalBtn{margin-top:7px;width:100%;height:26px;border:1px solid rgba(94,207,202,.34);background:rgba(94,207,202,.05);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer}
+#journalBtn:hover{background:rgba(94,207,202,.13)}
 #questTracker{
   margin-top:7px;
   padding-top:7px;
@@ -346,7 +350,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 .village-gate-option:disabled{cursor:default;background:rgba(94,207,202,.08);border-color:rgba(94,207,202,.36);color:#5ecfca}
 .village-gate-option span{color:#5ecfca;margin-right:8px}
 #villageGateClose{display:block;margin:18px auto 0;background:transparent;border:1px solid rgba(94,207,202,.4);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 16px;cursor:pointer}
-@media (max-width:640px){#villageGateList{grid-template-columns:1fr}#villageGatePanel{padding:22px}}
+#progressionOverlay{position:fixed;inset:0;background:rgba(2,8,18,.62);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:71;opacity:0;pointer-events:none;transition:opacity .2s}
+#progressionOverlay.on{opacity:1;pointer-events:all}
+#progressionPanel{width:min(620px,92vw);max-height:84vh;overflow:auto;background:rgba(5,10,28,.96);border:1px solid rgba(232,197,106,.52);box-shadow:0 0 60px rgba(94,207,202,.12);padding:24px}
+#progressionPanel h2{font-family:'Cinzel Decorative',serif;font-size:17px;color:#e8c56a;letter-spacing:3px;text-align:center;margin-bottom:12px}
+.journal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.journal-card{border:1px solid rgba(94,207,202,.18);background:rgba(255,255,255,.035);border-radius:6px;padding:10px}
+.journal-card strong{display:block;color:#5ecfca;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.journal-card span{color:rgba(255,255,255,.72);font-size:12px;line-height:1.35}
+#journalClose{display:block;margin:16px auto 0;background:transparent;border:1px solid rgba(94,207,202,.4);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 16px;cursor:pointer}
+@media (max-width:640px){#villageGateList,.journal-grid{grid-template-columns:1fr}#villageGatePanel,#progressionPanel{padding:22px}}
 </style>
 </head>
 <body>
@@ -624,6 +637,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="setGizmoMode('scale')">Resize Zone</button>
     </div>
   </div>
+  <div class="ap-section">Collectibles</div>
+  <div class="admin-section-body" data-admin-section-body="collectibles">
+    <div class="admin-note">Floating collectibles are visual-only progression pickups. They save per village and collected state stays local for V1.</div>
+    <label class="admin-field">Collectible Type
+      <select id="collectibleTypeSelect" class="admin-select">
+        <option value="flame_shard">Flame Shard</option>
+        <option value="ancient_scroll">Ancient Scroll</option>
+        <option value="red_dust_fragment">Red Dust Fragment</option>
+        <option value="root_memory">Root Memory</option>
+      </select>
+    </label>
+    <button class="ctrl-btn full" onclick="placeCollectibleFromAdmin()">Add Collectible</button>
+  </div>
   <hr class="ap-divider">
   <div class="ap-section">Weather</div>
   <div class="admin-section-body" data-admin-section-body="weather">
@@ -757,6 +783,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button id="villageGateClose" type="button" onclick="closeVillageGateMenu()">Close</button>
   </div>
 </div>
+<div id="progressionOverlay" aria-hidden="true">
+  <div id="progressionPanel" role="dialog" aria-modal="true" aria-labelledby="progressionTitle">
+    <h2 id="progressionTitle">Player Journal</h2>
+    <div class="journal-grid" id="progressionJournalGrid"></div>
+    <button id="journalClose" type="button" onclick="closeProgressionJournal()">Close</button>
+  </div>
+</div>
 <canvas id="c"></canvas>
 <div id="xhair"></div>
 <div id="td"></div>
@@ -787,6 +820,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <div class="world-status-row"><span>Current</span><span class="world-status-value" id="hudWeatherName">Clear</span></div>
       <div class="world-status-row"><span>Next</span><span class="world-status-value" id="hudNextWeatherName">Light Rain</span></div>
       <div class="world-status-row"><span>Changes In</span><span class="world-status-value" id="hudWeatherCountdown">--:--</span></div>
+      <div class="world-status-row"><span>Badge</span><span class="world-status-value" id="hudBadgeName">Sprout Explorer</span></div>
+      <div id="hudProgressBar"><div id="hudProgressFill"></div></div>
+      <div class="world-status-row"><span>Items</span><span class="world-status-value" id="hudCollectibleCount">0</span></div>
+      <div class="world-status-row"><span>Quests</span><span class="world-status-value" id="hudQuestCount">0</span></div>
+      <button id="journalBtn" type="button" onclick="openProgressionJournal()">Journal</button>
     </div>
     <div id="questTracker">
       <div id="questTrackerTitle">Active Quest</div>
@@ -956,6 +994,162 @@ const QUEST_DEFINITIONS = {
     ]
   }
 };
+
+const PROGRESSION_KEY = 'rebelAntsProgression:v1';
+const PROGRESSION_BADGES = {
+  explorer: ['Sprout Explorer', 'Forest Wanderer', 'Pathfinder', 'Realm Traveler'],
+  story: ['The First Warning', 'Tunnel Witness', 'Dust Reader'],
+  ronin: ['Watcher', 'Shadow Walker'],
+  samurai: ['Initiate', 'Honor Guard'],
+  arcade: ['Arcade Initiate'],
+  community: ['Colony Caller'],
+  builder: ['World Builder']
+};
+const PROGRESSION_POINTS = {
+  quest: 40,
+  village: 15,
+  chest: 15,
+  collectible: 10,
+  sign: 8,
+  ecosystem: 12,
+  secret: 20
+};
+const COLLECTIBLE_TYPES = {
+  flame_shard: { label:'Flame Shard', color:'#ff7a22', accent:'#ffd45c' },
+  ancient_scroll: { label:'Ancient Scroll', color:'#d8b36a', accent:'#fff0b6' },
+  red_dust_fragment: { label:'Red Dust Fragment', color:'#c92e35', accent:'#ff8b86' },
+  root_memory: { label:'Root Memory', color:'#5ecfca', accent:'#a7fff5' }
+};
+
+function getDefaultProgressionState() {
+  return {
+    xp: 0,
+    badges: [],
+    completedQuests: [],
+    villagesVisited: [],
+    chestsOpened: [],
+    collectiblesFound: [],
+    secretsFound: [],
+    ecosystemActions: {},
+    updatedAt: null
+  };
+}
+
+function loadProgressionState() {
+  try {
+    return { ...getDefaultProgressionState(), ...(JSON.parse(localStorage.getItem(PROGRESSION_KEY) || '{}')) };
+  } catch (_) {
+    return getDefaultProgressionState();
+  }
+}
+
+let ProgressionState = loadProgressionState();
+
+function saveProgressionState() {
+  ProgressionState.updatedAt = new Date().toISOString();
+  localStorage.setItem(PROGRESSION_KEY, JSON.stringify(ProgressionState));
+  updateProgressionHud();
+}
+
+function addProgressionXP(amount) {
+  ProgressionState.xp = Math.max(0, (Number(ProgressionState.xp) || 0) + amount);
+}
+
+function getExplorerBadgeInfo() {
+  const xp = Number(ProgressionState.xp) || 0;
+  const level = Math.max(1, Math.floor(xp / 100) + 1);
+  const badges = PROGRESSION_BADGES.explorer;
+  const badgeIndex = Math.min(badges.length - 1, Math.floor(xp / 100));
+  return {
+    level,
+    currentBadge: badges[badgeIndex],
+    progressPercent: Math.min(100, xp % 100),
+    nextBadge: badges[Math.min(badges.length - 1, badgeIndex + 1)]
+  };
+}
+
+function awardBadge(name) {
+  if (!name || ProgressionState.badges.includes(name)) return;
+  ProgressionState.badges.push(name);
+}
+
+function recordProgressionEvent(kind, id, amount = 0, badge = null) {
+  if (!id) return false;
+  const listKey = kind === 'quest' ? 'completedQuests'
+    : kind === 'village' ? 'villagesVisited'
+      : kind === 'chest' ? 'chestsOpened'
+        : kind === 'collectible' ? 'collectiblesFound'
+          : kind === 'secret' ? 'secretsFound'
+            : null;
+  if (listKey) {
+    if (ProgressionState[listKey].includes(id)) return false;
+    ProgressionState[listKey].push(id);
+  } else if (kind === 'ecosystem') {
+    if (ProgressionState.ecosystemActions[id]) return false;
+    ProgressionState.ecosystemActions[id] = true;
+  }
+  addProgressionXP(amount);
+  if (badge) awardBadge(badge);
+  saveProgressionState();
+  return true;
+}
+
+function classifyEcosystemAction(signData, action = null) {
+  const text = `${signData?.title || ''} ${signData?.sub || ''} ${signData?.desc || ''} ${action?.label || ''} ${action?.href || ''}`.toLowerCase();
+  if (text.includes('youtube') || text.includes('youtu.be')) return 'youtube';
+  if (text.includes('arcade') || text.includes('game')) return 'arcade';
+  if (text.includes('overlay') || text.includes('builder')) return 'overlay_builder';
+  if (text.includes('discord')) return 'discord';
+  if (text.includes('book') || text.includes('store') || text.includes('shop') || text.includes('merch')) return 'book_store';
+  return 'website';
+}
+
+function markVillageVisited(villageId = CURRENT_VILLAGE_ID) {
+  recordProgressionEvent('village', villageId, PROGRESSION_POINTS.village);
+}
+
+function updateProgressionHud() {
+  const info = getExplorerBadgeInfo();
+  const badge = document.getElementById('hudBadgeName');
+  const fill = document.getElementById('hudProgressFill');
+  const items = document.getElementById('hudCollectibleCount');
+  const quests = document.getElementById('hudQuestCount');
+  if (badge) badge.textContent = info.currentBadge;
+  if (fill) fill.style.width = `${info.progressPercent}%`;
+  if (items) items.textContent = String(ProgressionState.collectiblesFound.length);
+  if (quests) quests.textContent = `${ProgressionState.completedQuests.length}/${Object.keys(QUEST_DEFINITIONS).length}`;
+}
+
+function openProgressionJournal() {
+  const overlay = document.getElementById('progressionOverlay');
+  const grid = document.getElementById('progressionJournalGrid');
+  if (!overlay || !grid) return;
+  const info = getExplorerBadgeInfo();
+  const ecosystemCount = Object.values(ProgressionState.ecosystemActions || {}).filter(Boolean).length;
+  const cards = [
+    ['Explorer Level', `Level ${info.level}`],
+    ['Current Badge', info.currentBadge],
+    ['Progress', `${info.progressPercent}/100 to ${info.nextBadge}`],
+    ['Completed Quests', ProgressionState.completedQuests.length],
+    ['Villages Visited', ProgressionState.villagesVisited.length],
+    ['Chests Opened', ProgressionState.chestsOpened.length],
+    ['Collectibles Found', ProgressionState.collectiblesFound.length],
+    ['Secrets Found', ProgressionState.secretsFound.length],
+    ['Ecosystem Actions', ecosystemCount],
+    ['Badges Earned', ProgressionState.badges.length ? ProgressionState.badges.join(', ') : 'None yet']
+  ];
+  grid.innerHTML = cards.map(([label, value]) => `<div class="journal-card"><strong>${label}</strong><span>${value}</span></div>`).join('');
+  overlay.classList.add('on');
+  overlay.setAttribute('aria-hidden', 'false');
+}
+
+function closeProgressionJournal() {
+  const overlay = document.getElementById('progressionOverlay');
+  if (!overlay) return;
+  overlay.classList.remove('on');
+  overlay.setAttribute('aria-hidden', 'true');
+}
+
 function returnToHubVillage() {
   window.location.href = VILLAGE_REGISTRY.hub.route;
 }
@@ -1572,7 +1766,9 @@ function beginAdminPlacement(request) {
       ? 'Place NPC'
       : request.kind === 'terrain_stamp'
         ? `Place ${String(request.stampType || 'terrain').replace(/_/g, ' ')}`
-        : `Place ${getCollisionProxyLabel(request.proxyKind)}`;
+        : request.kind === 'collectible'
+          ? `Place ${COLLECTIBLE_TYPES[request.collectibleType]?.label || 'Collectible'}`
+          : `Place ${getCollisionProxyLabel(request.proxyKind)}`;
   canvas.style.cursor = 'crosshair';
   showToast(`${label}: click the ground where it should go`);
 }
@@ -1601,6 +1797,8 @@ function updateAdminPlacementMarker() {
     marker.scaling.set(Math.max(1, (stamp.width || 10) / 8), 1, Math.max(1, (stamp.length || 10) / 8));
   } else if (pendingAdminPlacement.kind === 'npc') {
     marker.scaling.set(.75, 1, .75);
+  } else if (pendingAdminPlacement.kind === 'collectible') {
+    marker.scaling.set(.7, 1, .7);
   } else {
     marker.scaling.set(1.25, 1, 1.25);
   }
@@ -1650,6 +1848,11 @@ function placePendingAdminPlacementAtPoint(point) {
 
   if (request.kind === 'terrain_stamp') {
     createTerrainStampAtPoint(request.stampType, point);
+    return true;
+  }
+
+  if (request.kind === 'collectible') {
+    createCollectibleAtPoint(request.collectibleType, point);
     return true;
   }
 
@@ -3165,6 +3368,111 @@ function closeTreasureChest(chest) {
   return true;
 }
 
+function getCollectibleStateKey(id) {
+  return `${CURRENT_VILLAGE_ID}:${id}`;
+}
+
+function isCollectibleCollected(id) {
+  return ProgressionState.collectiblesFound.includes(getCollectibleStateKey(id));
+}
+
+function createCollectible(type = 'flame_shard', position, options = {}) {
+  const cfg = COLLECTIBLE_TYPES[type] || COLLECTIBLE_TYPES.flame_shard;
+  const id = options.collectibleId || `${CURRENT_VILLAGE_ID}-${type}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const root = new BABYLON.TransformNode(options.name || makeUniqueVillageNodeName('collectibleRootClone_' + type + '_' + Date.now()), scene);
+  root.position = position.clone();
+  root.rotation = options.rotation ? new BABYLON.Vector3(options.rotation.x || 0, options.rotation.y || 0, options.rotation.z || 0) : BABYLON.Vector3.Zero();
+  root.scaling = options.scaling ? new BABYLON.Vector3(options.scaling.x || 1, options.scaling.y || 1, options.scaling.z || 1) : BABYLON.Vector3.One();
+  root.metadata = {
+    type: 'collectible',
+    isClone: true,
+    collectibleId: id,
+    collectibleType: type,
+    collectibleLabel: cfg.label,
+    villageId: CURRENT_VILLAGE_ID
+  };
+
+  const mat = new BABYLON.StandardMaterial('collectibleMat_' + root.name, scene);
+  mat.diffuseColor = BABYLON.Color3.FromHexString(cfg.color);
+  mat.emissiveColor = BABYLON.Color3.FromHexString(cfg.accent).scale(.75);
+  mat.alpha = .92;
+  mat.backFaceCulling = false;
+
+  let mesh;
+  if (type === 'ancient_scroll') {
+    mesh = BABYLON.MeshBuilder.CreateCylinder('collectibleMesh_' + root.name, { height: 1.05, diameter: .28, tessellation: 12 }, scene);
+    mesh.rotation.z = Math.PI / 2;
+  } else if (type === 'root_memory') {
+    mesh = BABYLON.MeshBuilder.CreateTorus('collectibleMesh_' + root.name, { diameter: .72, thickness: .09, tessellation: 20 }, scene);
+  } else if (type === 'red_dust_fragment') {
+    mesh = BABYLON.MeshBuilder.CreatePolyhedron('collectibleMesh_' + root.name, { type: 1, size: .72 }, scene);
+  } else {
+    mesh = BABYLON.MeshBuilder.CreatePolyhedron('collectibleMesh_' + root.name, { type: 1, size: .82 }, scene);
+  }
+  mesh.parent = root;
+  mesh.position.y = 1.15;
+  mesh.material = mat;
+  mesh.isPickable = true;
+  mesh._editRoot = root;
+
+  const light = new BABYLON.PointLight('collectibleGlow_' + root.name, new BABYLON.Vector3(0, 1.25, 0), scene);
+  light.parent = root;
+  light.diffuse = BABYLON.Color3.FromHexString(cfg.accent);
+  light.intensity = .42;
+  light.range = 5;
+  root.metadata._collectibleLight = light;
+
+  root.isPickable = true;
+  root.setEnabled(!isCollectibleCollected(id));
+  registerEditableRoot(root.name, root);
+  return root;
+}
+
+function placeCollectibleFromAdmin() {
+  if (!adminMode) { showToast('Enter Admin Mode first'); return; }
+  const type = document.getElementById('collectibleTypeSelect')?.value || 'flame_shard';
+  beginAdminPlacement({ kind: 'collectible', collectibleType: type });
+}
+
+function createCollectibleAtPoint(type, point) {
+  const root = createCollectible(type, new BABYLON.Vector3(point.x, point.y + .08, point.z));
+  setSelectedEditableObject(root);
+  triggerAutoSave();
+  showToast('Collectible placed: ' + (COLLECTIBLE_TYPES[type]?.label || 'Collectible'));
+  return root;
+}
+
+function updateCollectibles(dt) {
+  if (!scene) return;
+  const roots = scene.transformNodes.filter(node => node.metadata?.type === 'collectible' && !node.isDisposed?.());
+  roots.forEach(root => {
+    if (isCollectibleCollected(root.metadata.collectibleId)) {
+      root.setEnabled(false);
+      return;
+    }
+    root.rotation.y += dt * .8;
+    const bob = Math.sin(Date.now() * .003 + root.position.x) * .12;
+    root.getChildMeshes?.(false).forEach(mesh => {
+      if (mesh.name.startsWith('collectibleMesh_')) mesh.position.y = 1.15 + bob;
+    });
+    if (root.metadata._collectibleLight) root.metadata._collectibleLight.intensity = .35 + Math.sin(Date.now() * .005) * .12;
+    if (walkMode && !adminMode && charMesh) {
+      const dx = root.position.x - charMesh.position.x;
+      const dz = root.position.z - charMesh.position.z;
+      if (dx * dx + dz * dz <= 2.2 * 2.2) collectProgressionCollectible(root);
+    }
+  });
+}
+
+function collectProgressionCollectible(root) {
+  if (!root || root.metadata?.type !== 'collectible') return;
+  const key = getCollectibleStateKey(root.metadata.collectibleId);
+  if (recordProgressionEvent('collectible', key, PROGRESSION_POINTS.collectible)) {
+    root.setEnabled(false);
+    showToast('Collected: ' + (root.metadata.collectibleLabel || 'Collectible'));
+  }
+}
+
 function updateTreasureChestPrompt() {
   const chest = walkMode && !adminMode ? getNearestTreasureChestInRange() : null;
   getTreasureChestRoots().forEach(candidate => {
@@ -3243,6 +3551,7 @@ function openTreasureChest(chest) {
 
   // Reward payout intentionally stubbed for future $REBEL/economy API integration.
   playInteractionAudio('chestOpen');
+  recordProgressionEvent('chest', chest.metadata.chestId || chest.name, PROGRESSION_POINTS.chest);
   if (QuestState.questId === 'hidden-chest' && QuestState.step === 'open-chest') {
     completeTutorialQuest('hidden-chest');
   }
@@ -5259,6 +5568,8 @@ function setTutorialQuestStep(questId, step, toast = null) {
 function completeTutorialQuest(questId) {
   const completed = new Set(Array.isArray(QuestState.completedQuestIds) ? QuestState.completedQuestIds : []);
   completed.add(questId);
+  const questBadge = questId === 'first-warning' ? 'The First Warning' : QUEST_DEFINITIONS[questId]?.title || null;
+  recordProgressionEvent('quest', questId, PROGRESSION_POINTS.quest, questBadge);
   const nextQuestId = QUEST_ORDER[QUEST_ORDER.indexOf(questId) + 1] || null;
   if (nextQuestId) {
     QuestState = { questId: nextQuestId, step:'talk', completed:false, completedQuestIds:[...completed] };
@@ -5336,6 +5647,8 @@ function updateTutorialQuestWorldProgress() {
 
 function handleSignQuestEvent(signData) {
   if (!signData || !String(signData.id || '').startsWith('sign_')) return;
+  const actionType = classifyEcosystemAction(signData);
+  recordProgressionEvent('ecosystem', actionType, PROGRESSION_POINTS.sign);
   if (QuestState.questId === 'wooden-signs' && QuestState.step === 'read-sign') {
     completeTutorialQuest('wooden-signs');
   }
@@ -10382,6 +10695,9 @@ function collectWorldLayoutData() {
     glowWidth: node.metadata.glowWidth || null,
     glowDepth: node.metadata.glowDepth || null,
     chestId: node.metadata.chestId || null,
+    collectibleId: node.metadata.collectibleId || null,
+    collectibleType: node.metadata.collectibleType || null,
+    collectibleLabel: node.metadata.collectibleLabel || null,
     rewardType: node.metadata.rewardType || null,
     rewardAmount: Number.isFinite(node.metadata.rewardAmount) ? node.metadata.rewardAmount : null,
     opened: node.metadata.opened === true,
@@ -10650,6 +10966,21 @@ function loadWorldLayout(){
       zone.rotation = new BABYLON.Vector3(item.rotation?.x || 0, item.rotation?.y || 0, item.rotation?.z || 0);
       zone.scaling = new BABYLON.Vector3(item.scaling?.x || 1, item.scaling?.y || 1, item.scaling?.z || 1);
       registerEditableRoot(zone.name, zone);
+      return;
+    }
+
+    if (item.type === 'collectible') {
+      const collectible = createCollectible(
+        item.collectibleType || 'flame_shard',
+        new BABYLON.Vector3(item.position.x, item.position.y, item.position.z),
+        {
+          name: item.name,
+          rotation: item.rotation,
+          scaling: item.scaling,
+          collectibleId: item.collectibleId || null
+        }
+      );
+      if (collectible) registerEditableRoot(collectible.name, collectible);
       return;
     }
 
@@ -10970,6 +11301,14 @@ function openPanel(b){
     const btn=document.createElement('a');
     btn.className='pb'+(a.g?' g':a.t?' t':a.r?' r':'');
     btn.textContent=a.label;btn.href=a.href;btn.target='_blank';btn.rel='noopener';
+    btn.addEventListener('click', () => {
+      const actionType = classifyEcosystemAction(b, a);
+      const badge = actionType === 'arcade' ? 'Arcade Initiate'
+        : actionType === 'overlay_builder' ? 'World Builder'
+          : actionType === 'discord' ? 'Colony Caller'
+            : null;
+      recordProgressionEvent('ecosystem', actionType, PROGRESSION_POINTS.ecosystem, badge);
+    }, { once:true });
     acts.appendChild(btn);
   });
   panel.classList.add('on');
@@ -12263,7 +12602,9 @@ function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
 // ── RENDER LOOP ──────────────────────────────
 initNPCPopulation();
 reconcileTutorialQuestOnLoad();
+markVillageVisited(CURRENT_VILLAGE_ID);
 updateQuestTracker();
+updateProgressionHud();
 let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
@@ -12327,6 +12668,7 @@ engine.runRenderLoop(()=>{
   updateInteractionPrompt();
   updateTutorialQuestWorldProgress();
   tryAutoOpenVillageGateFromWalkthrough();
+  updateCollectibles(dt);
   updateWeatherManager();
   updateNPCPopulation(dt);
   updatePerformanceDebugPanel();
@@ -14107,6 +14449,14 @@ function createLayoutNodeForHistory(item) {
   } else if (item.type === 'interaction_zone') {
     node = createInteractionZone(pos, item.interactionZoneType || 'story');
     if (item.name) node.name = item.name;
+    node.metadata.questObjectiveId = item.questObjectiveId || null;
+  } else if (item.type === 'collectible') {
+    node = createCollectible(item.collectibleType || 'flame_shard', pos, {
+      name: item.name,
+      rotation: item.rotation,
+      scaling: item.scaling,
+      collectibleId: item.collectibleId || null
+    });
   } else if (ASSETS[item.type]?.procedural) {
     node = spawnAsset(item.type, pos, { isClone: true, ...item });
     if (node && item.name) node.name = item.name;
@@ -14919,6 +15269,9 @@ window.applySelectedInteractionZoneSettings = applySelectedInteractionZoneSettin
 window.deleteSelectedInteractionZone = deleteSelectedInteractionZone;
 window.toggleInteractionZoneVisibility = toggleInteractionZoneVisibility;
 window.saveQuestDraft = saveQuestDraft;
+window.placeCollectibleFromAdmin = placeCollectibleFromAdmin;
+window.openProgressionJournal = openProgressionJournal;
+window.closeProgressionJournal = closeProgressionJournal;
 window.toggleAdminLayer = toggleAdminLayer;
 window.selectAdminLayer = selectAdminLayer;
 window.undoEditorAction = undoEditorAction;
