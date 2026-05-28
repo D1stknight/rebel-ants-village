@@ -3392,35 +3392,113 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     villageId: CURRENT_VILLAGE_ID
   };
 
-  const mat = new BABYLON.StandardMaterial('collectibleMat_' + root.name, scene);
-  mat.diffuseColor = BABYLON.Color3.FromHexString(cfg.color);
-  mat.emissiveColor = BABYLON.Color3.FromHexString(cfg.accent).scale(.75);
-  mat.alpha = .92;
-  mat.backFaceCulling = false;
+  const makeMat = (name, colorHex, emissiveHex = colorHex, alpha = .95) => {
+    const mat = new BABYLON.StandardMaterial(`${root.name}_${name}`, scene);
+    mat.diffuseColor = BABYLON.Color3.FromHexString(colorHex);
+    mat.emissiveColor = BABYLON.Color3.FromHexString(emissiveHex).scale(.72);
+    mat.alpha = alpha;
+    mat.backFaceCulling = false;
+    return mat;
+  };
+  const coreMat = makeMat('coreMat', cfg.color, cfg.accent, .94);
+  const accentMat = makeMat('accentMat', cfg.accent, cfg.accent, .78);
+  const visuals = [];
+  const markCollectibleMesh = (mesh, baseY = mesh.position.y) => {
+    mesh.parent = root;
+    mesh.material = mesh.material || coreMat;
+    mesh.isPickable = true;
+    mesh._editRoot = root;
+    mesh.metadata = { ...(mesh.metadata || {}), collectibleVisual: true, baseY };
+    visuals.push(mesh);
+    return mesh;
+  };
+  const addSparkle = (name, x, y, z, size, mat = accentMat) => {
+    const sparkle = BABYLON.MeshBuilder.CreateSphere(`collectibleMesh_${root.name}_${name}`, { diameter: size, segments: 8 }, scene);
+    sparkle.position.set(x, y, z);
+    sparkle.material = mat;
+    return markCollectibleMesh(sparkle, y);
+  };
 
-  let mesh;
   if (type === 'ancient_scroll') {
-    mesh = BABYLON.MeshBuilder.CreateCylinder('collectibleMesh_' + root.name, { height: 1.05, diameter: .28, tessellation: 12 }, scene);
-    mesh.rotation.z = Math.PI / 2;
+    const parchmentMat = makeMat('parchmentMat', '#d8b36a', '#fff0b6', .96);
+    const lineMat = makeMat('scrollLineMat', '#7b4d22', '#d8b36a', .88);
+    const body = BABYLON.MeshBuilder.CreateBox(`collectibleMesh_${root.name}_scrollBody`, { width: .92, height: .5, depth: .08 }, scene);
+    body.position.y = 1.15;
+    body.material = parchmentMat;
+    markCollectibleMesh(body, body.position.y);
+    [-.54, .54].forEach((x, index) => {
+      const roll = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_roll_${index}`, { height: .16, diameter: .55, tessellation: 14 }, scene);
+      roll.rotation.z = Math.PI / 2;
+      roll.position.set(x, 1.15, 0);
+      roll.material = parchmentMat;
+      markCollectibleMesh(roll, roll.position.y);
+    });
+    [-.18, .08].forEach((y, index) => {
+      const line = BABYLON.MeshBuilder.CreateBox(`collectibleMesh_${root.name}_ink_${index}`, { width: .48, height: .025, depth: .1 }, scene);
+      line.position.set(.02, 1.15 + y, -.055);
+      line.material = lineMat;
+      markCollectibleMesh(line, line.position.y);
+    });
   } else if (type === 'root_memory') {
-    mesh = BABYLON.MeshBuilder.CreateTorus('collectibleMesh_' + root.name, { diameter: .72, thickness: .09, tessellation: 20 }, scene);
+    const seedMat = makeMat('seedMat', '#8ecf67', '#f0d478', .94);
+    const rootMat = makeMat('rootMat', '#5a351d', '#8ecf67', .9);
+    const seed = BABYLON.MeshBuilder.CreateSphere(`collectibleMesh_${root.name}_seed`, { diameter: .58, segments: 14 }, scene);
+    seed.position.y = 1.2;
+    seed.scaling.set(.82, 1.12, .82);
+    seed.material = seedMat;
+    markCollectibleMesh(seed, seed.position.y);
+    for (let i = 0; i < 4; i += 1) {
+      const rootlet = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_rootlet_${i}`, { height: .58, diameter: .045, tessellation: 6 }, scene);
+      rootlet.position.set(Math.cos(i * Math.PI / 2) * .26, .88, Math.sin(i * Math.PI / 2) * .26);
+      rootlet.rotation.z = .55 + i * .12;
+      rootlet.rotation.y = i * Math.PI / 2;
+      rootlet.material = rootMat;
+      markCollectibleMesh(rootlet, rootlet.position.y);
+    }
+    const halo = BABYLON.MeshBuilder.CreateTorus(`collectibleMesh_${root.name}_memoryHalo`, { diameter: .82, thickness: .035, tessellation: 24 }, scene);
+    halo.position.y = 1.2;
+    halo.rotation.x = Math.PI / 2;
+    halo.material = accentMat;
+    markCollectibleMesh(halo, halo.position.y);
   } else if (type === 'red_dust_fragment') {
-    mesh = BABYLON.MeshBuilder.CreatePolyhedron('collectibleMesh_' + root.name, { type: 1, size: .72 }, scene);
+    for (let i = 0; i < 4; i += 1) {
+      const shard = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_dustShard_${i}`, { height: .62 - i * .06, diameterTop: .06, diameterBottom: .28 - i * .03, tessellation: 5 }, scene);
+      shard.position.set((i - 1.5) * .18, 1.08 + i * .04, (i % 2 ? .13 : -.08));
+      shard.rotation.x = .35 - i * .16;
+      shard.rotation.z = (i - 1.5) * .24;
+      shard.material = i === 0 ? accentMat : coreMat;
+      markCollectibleMesh(shard, shard.position.y);
+    }
+    addSparkle('sparkA', .42, 1.44, .1, .08);
+    addSparkle('sparkB', -.35, 1.35, -.14, .06);
+    addSparkle('sparkC', .1, .78, .28, .055);
   } else {
-    mesh = BABYLON.MeshBuilder.CreatePolyhedron('collectibleMesh_' + root.name, { type: 1, size: .82 }, scene);
+    const main = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_flameShard`, { height: 1.08, diameterTop: .04, diameterBottom: .42, tessellation: 5 }, scene);
+    main.position.y = 1.18;
+    main.rotation.z = .15;
+    main.material = coreMat;
+    markCollectibleMesh(main, main.position.y);
+    [-.28, .28].forEach((x, index) => {
+      const side = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_sideShard_${index}`, { height: .72, diameterTop: .035, diameterBottom: .26, tessellation: 4 }, scene);
+      side.position.set(x, 1.02, index ? .04 : -.04);
+      side.rotation.z = index ? -.42 : .42;
+      side.material = accentMat;
+      markCollectibleMesh(side, side.position.y);
+    });
+    const ember = BABYLON.MeshBuilder.CreateTorus(`collectibleMesh_${root.name}_emberRing`, { diameter: .84, thickness: .035, tessellation: 24 }, scene);
+    ember.position.y = .78;
+    ember.rotation.x = Math.PI / 2;
+    ember.material = accentMat;
+    markCollectibleMesh(ember, ember.position.y);
   }
-  mesh.parent = root;
-  mesh.position.y = 1.15;
-  mesh.material = mat;
-  mesh.isPickable = true;
-  mesh._editRoot = root;
 
   const light = new BABYLON.PointLight('collectibleGlow_' + root.name, new BABYLON.Vector3(0, 1.25, 0), scene);
   light.parent = root;
   light.diffuse = BABYLON.Color3.FromHexString(cfg.accent);
-  light.intensity = .42;
-  light.range = 5;
+  light.intensity = .62;
+  light.range = type === 'red_dust_fragment' ? 6 : 5;
   root.metadata._collectibleLight = light;
+  root.metadata._collectibleVisuals = visuals;
 
   root.isPickable = true;
   root.setEnabled(!isCollectibleCollected(id));
@@ -3450,10 +3528,10 @@ function updateCollectibles(dt) {
       root.setEnabled(false);
       return;
     }
-    root.rotation.y += dt * .8;
+    if (!adminMode) root.rotation.y += dt * .8;
     const bob = Math.sin(Date.now() * .003 + root.position.x) * .12;
     root.getChildMeshes?.(false).forEach(mesh => {
-      if (mesh.name.startsWith('collectibleMesh_')) mesh.position.y = 1.15 + bob;
+      if (mesh.metadata?.collectibleVisual) mesh.position.y = (mesh.metadata.baseY || 1.15) + bob;
     });
     if (root.metadata._collectibleLight) root.metadata._collectibleLight.intensity = .35 + Math.sin(Date.now() * .005) * .12;
     if (walkMode && !adminMode && charMesh) {
@@ -4259,6 +4337,7 @@ function snapSelectedObjectToGround(){
 
   // Skip types that should never ground-snap
   if (objType === 'hangingLantern') return;
+  if (objType === 'collectible') return;
   if (objType === 'collision_proxy') return;
   if (objType === 'terrain_stamp') return;
   if (objType && ASSETS[objType] && ASSETS[objType].noGroundSnap) return;
