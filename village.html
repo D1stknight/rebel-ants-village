@@ -488,11 +488,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div class="admin-section-body" data-admin-section-body="terrain-tools">
     <div class="admin-note">Terrain patches are editable ground helpers for roots, hills, paths, and footstep surface painting. They are not red blockers.</div>
     <div class="admin-pill">Selected Surface: <span id="selectedSurfaceTypeLabel">none</span></div>
-    <div class="admin-note">Brush creates a real walkable round terrain patch at the marker. Size controls footprint; Height controls the raised/lowered center.</div>
+    <div class="admin-note">Brush sculpts the selected terrain stamp/patch. Hover over selected terrain, then click or drag to raise/lower the walkable mesh.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:end">
-      <label class="admin-field" title="Brush Size changes the live brush footprint and the width/length of brush-created terrain patches.">Brush Size <input id="terrainBrushSize" type="range" min="2" max="36" step="1" value="10" oninput="updateTerrainBrushToolLive()"></label>
-      <label class="admin-field" title="Height changes the live brush preview and the center height of brush-created terrain patches.">Height <input id="terrainBrushHeight" type="range" min="-2" max="8" step="0.1" value="0" oninput="updateTerrainBrushToolLive()"></label>
-      <button class="ctrl-btn full" onclick="paintWalkSurfaceBrush()" title="Activate the terrain brush. Move the cyan footprint over the village and click ground to place a walkable terrain patch.">Use Brush</button>
+      <label class="admin-field" title="Brush Size changes the live sculpt footprint on the selected terrain mesh.">Brush Size <input id="terrainBrushSize" type="range" min="2" max="36" step="1" value="10" oninput="updateTerrainBrushToolLive()"></label>
+      <label class="admin-field" title="Height is sculpt strength. Positive raises terrain, negative lowers terrain.">Height <input id="terrainBrushHeight" type="range" min="-2" max="8" step="0.1" value="0.5" oninput="updateTerrainBrushToolLive()"></label>
+      <button id="terrainBrushButton" class="ctrl-btn full" onclick="paintWalkSurfaceBrush()" title="Toggle sculpt brush mode. Select a terrain stamp/patch, then click or drag on it to sculpt vertices.">Sculpt Brush</button>
     </div>
     <label class="admin-field" title="Surface Type affects footstep sounds for terrain and walk patches.">Surface Type
       <select id="terrainSurfaceType" class="admin-select" onchange="updateTerrainBrushToolLive()">
@@ -1366,6 +1366,9 @@ function getCollisionProxyLabel(kind) {
 function setSelectedEditableObject(node) {
   if (!node) return;
   selectedObject = node;
+  if (terrainSculptBrushActive && selectedObject?.metadata?.type !== 'terrain_stamp') {
+    setTerrainSculptBrushActive(false);
+  }
   rememberCollisionProxyOwnerFromSelection(node);
   updateSelectedBadge();
   attachSelectedGizmo();
@@ -1477,12 +1480,29 @@ function clearAdminPlacement() {
   canvas.style.cursor = adminMode ? 'default' : canvas.style.cursor;
 }
 
+function setTerrainSculptBrushActive(active) {
+  terrainSculptBrushActive = active === true;
+  terrainSculptDragging = false;
+  const button = document.getElementById('terrainBrushButton');
+  if (button) {
+    button.textContent = terrainSculptBrushActive ? 'Brush On' : 'Sculpt Brush';
+    button.style.background = terrainSculptBrushActive ? 'rgba(94,207,202,.18)' : '';
+    button.style.borderColor = terrainSculptBrushActive ? 'rgba(94,207,202,.65)' : '';
+    button.style.color = terrainSculptBrushActive ? '#77e6df' : '';
+  }
+  if (!terrainSculptBrushActive && terrainBrushPreview && !terrainBrushPreview.isDisposed?.()) {
+    terrainBrushPreview.setEnabled(false);
+  }
+  canvas.style.cursor = terrainSculptBrushActive ? 'crosshair' : (adminMode ? 'default' : canvas.style.cursor);
+}
+
 function beginAdminPlacement(request) {
   if (!adminMode) {
     showToast('Enter Admin Mode first');
     return;
   }
 
+  setTerrainSculptBrushActive(false);
   pendingAdminPlacement = request;
   const marker = getOrCreateAdminPlacementMarker();
   marker.setEnabled(true);
@@ -1525,19 +1545,6 @@ function updateAdminPlacementMarker() {
   if (pendingAdminPlacement.kind === 'collision_proxy') {
     const kind = pendingAdminPlacement.proxyKind;
     marker.scaling.set(kind === 'blocker' ? 1.5 : 1.2, 1, kind === 'ramp' ? 1.8 : 1.1);
-  } else if (pendingAdminPlacement.kind === 'terrain_brush') {
-    const settings = getTerrainBrushSettings();
-    const diameterScale = Math.max(.5, settings.size / 4);
-    marker.scaling.set(diameterScale, 1, diameterScale);
-    const height = Math.abs(settings.height);
-    if (height > 0.05 && stem && cap) {
-      stem.setEnabled(true);
-      cap.setEnabled(true);
-      stem.scaling.set(1 / diameterScale, Math.max(.12, height), 1 / diameterScale);
-      stem.position.y = settings.height >= 0 ? 0.08 + height * .5 : 0.08 - height * .5;
-      cap.scaling.set(1 / diameterScale, 1, 1 / diameterScale);
-      cap.position.y = settings.height >= 0 ? 0.14 + height : 0.02 - height;
-    }
   } else if (pendingAdminPlacement.kind === 'terrain_stamp') {
     const stamp = TERRAIN_STAMPS[pendingAdminPlacement.stampType] || TERRAIN_STAMPS.hill;
     marker.scaling.set(Math.max(1, (stamp.width || 10) / 8), 1, Math.max(1, (stamp.length || 10) / 8));
@@ -1592,11 +1599,6 @@ function placePendingAdminPlacementAtPoint(point) {
 
   if (request.kind === 'terrain_stamp') {
     createTerrainStampAtPoint(request.stampType, point);
-    return true;
-  }
-
-  if (request.kind === 'terrain_brush') {
-    createTerrainBrushPatchAtPoint(point);
     return true;
   }
 
@@ -2740,6 +2742,8 @@ let adminDragging = false;
 let pendingAdminPlacement = null;
 let adminPlacementMarker = null;
 let terrainBrushPreview = null;
+let terrainSculptBrushActive = false;
+let terrainSculptDragging = false;
 let adminGizmoMode = 'move';
 let adminManualProxyRotateDrag = null;
 let adminManualNPCRotateDrag = null;
@@ -10006,6 +10010,11 @@ document.getElementById('pc').addEventListener('click',()=>panel.classList.remov
 
 scene.onPointerObservable.add((evt) => {
   if (!adminMode) return;
+  if (evt.type === BABYLON.PointerEventTypes.POINTERMOVE && terrainSculptBrushActive) {
+    updateTerrainBrushPreview();
+    if (terrainSculptDragging) applyTerrainSculptBrushFromPointer();
+    return;
+  }
   if (evt.type === BABYLON.PointerEventTypes.POINTERMOVE && pendingAdminPlacement) {
     updateAdminPlacementMarker();
     return;
@@ -10086,6 +10095,14 @@ if (pick.pickedMesh.metadata?.isPickProxy) {
 });
 window.addEventListener('pointerdown', (e) => {
   if (!adminMode || !selectedObject) return;
+  if (e.target === canvas && terrainSculptBrushActive && selectedObject.metadata?.type === 'terrain_stamp') {
+    recordEditorHistory('sculpt terrain');
+    terrainSculptDragging = true;
+    orbit.detachControl();
+    applyTerrainSculptBrushFromPointer();
+    e.preventDefault();
+    return;
+  }
   if (
     e.target === canvas &&
     adminGizmoMode === 'rotate' &&
@@ -10148,6 +10165,14 @@ window.addEventListener('pointermove', (e) => {
 });
 
 window.addEventListener('pointerup', () => {
+  if (terrainSculptDragging) {
+    terrainSculptDragging = false;
+    if (adminMode) orbit.attachControl(canvas, true);
+    rebuildVillageCollisionBlockers();
+    renderSelectedWalkSurfaceGuide();
+    triggerAutoSave();
+    return;
+  }
   if (adminManualProxyRotateDrag) {
     adminManualProxyRotateDrag = null;
     if (adminMode) orbit.attachControl(canvas, true);
@@ -13135,7 +13160,7 @@ function ensureTerrainBrushPreview() {
   const mat = new BABYLON.StandardMaterial('terrainBrushPreviewMat', scene);
   mat.diffuseColor = new BABYLON.Color3(.35, .95, .9);
   mat.emissiveColor = new BABYLON.Color3(.15, .65, .62);
-  mat.alpha = .45;
+  mat.alpha = .82;
   mat.backFaceCulling = false;
   terrainBrushPreview = BABYLON.MeshBuilder.CreateTorus('terrainBrushPreview', { diameter: 1, thickness: .035, tessellation: 48 }, scene);
   terrainBrushPreview.material = mat;
@@ -13146,63 +13171,101 @@ function ensureTerrainBrushPreview() {
 }
 
 function updateTerrainBrushPreview() {
-  if (terrainBrushPreview && !terrainBrushPreview.isDisposed?.()) terrainBrushPreview.setEnabled(false);
+  const preview = ensureTerrainBrushPreview();
+  const pick = getTerrainSculptPick();
+  if (!terrainSculptBrushActive || !pick?.hit || !pick.pickedPoint) {
+    preview.setEnabled(false);
+    return;
+  }
+  const settings = getTerrainBrushSettings();
+  preview.setEnabled(true);
+  preview.position.copyFrom(pick.pickedPoint);
+  preview.position.y += 0.08;
+  preview.scaling.set(settings.size, settings.size, settings.size);
 }
 
 function paintWalkSurfaceBrush() {
   if (!adminMode) { showToast('Enter Admin Mode first'); return; }
-  beginAdminPlacement({ kind: 'terrain_brush' });
+  if (selectedObject?.metadata?.type !== 'terrain_stamp') {
+    showToast('Select a terrain stamp or brush patch first');
+    return;
+  }
+  clearAdminPlacement();
+  setTerrainSculptBrushActive(!terrainSculptBrushActive);
   updateTerrainBrushToolLive();
+  showToast(terrainSculptBrushActive ? 'Terrain sculpt brush active' : 'Terrain sculpt brush off');
 }
 
 function updateTerrainBrushToolLive() {
-  const settings = getTerrainBrushSettings();
-  if (pendingAdminPlacement?.kind === 'terrain_brush') updateAdminPlacementMarker();
-  if (selectedObject?.metadata?.type === 'terrain_stamp' && selectedObject.metadata.createdByTerrainBrush === true) {
-    recordLiveTerrainShapeHistory(selectedObject);
-    selectedObject.metadata.terrainSurfaceType = settings.surfaceType;
-    selectedObject.metadata.terrainStampShape = {
-      ...(selectedObject.metadata.terrainStampShape || {}),
-      width: settings.size,
-      length: settings.size,
-      height: settings.height,
-      centerHeight: settings.height,
-      softness: 1.35
-    };
-    rebuildTerrainStampMesh(selectedObject);
-    rebuildVillageCollisionBlockers();
-    renderSelectedWalkSurfaceGuide();
-    updateSelectedSurfaceTypeLabel();
-    triggerAutoSave();
-  }
+  updateTerrainBrushPreview();
 }
 
-function createTerrainBrushPatchAtPoint(point) {
+function getTerrainSculptPick() {
+  if (!selectedObject || selectedObject.metadata?.type !== 'terrain_stamp') return null;
+  return scene.pick(scene.pointerX, scene.pointerY, mesh => mesh === selectedObject);
+}
+
+function getTerrainSculptOffsets(shape) {
+  if (!Array.isArray(shape.vertexOffsets) || shape.vertexOffsets.length !== 121) {
+    shape.vertexOffsets = new Array(121).fill(0);
+  }
+  return shape.vertexOffsets;
+}
+
+function getTerrainStampSculptOffset(shape = {}, nx = 0, nz = 0) {
+  if (!Array.isArray(shape.vertexOffsets) || shape.vertexOffsets.length !== 121) return 0;
+  const segments = 10;
+  const gx = Math.max(0, Math.min(segments, (nx + 1) * .5 * segments));
+  const gz = Math.max(0, Math.min(segments, (nz + 1) * .5 * segments));
+  const x0 = Math.floor(gx), z0 = Math.floor(gz);
+  const x1 = Math.min(segments, x0 + 1), z1 = Math.min(segments, z0 + 1);
+  const tx = gx - x0, tz = gz - z0;
+  const sample = (x, z) => shape.vertexOffsets[z * (segments + 1) + x] || 0;
+  const a = BABYLON.Scalar.Lerp(sample(x0, z0), sample(x1, z0), tx);
+  const b = BABYLON.Scalar.Lerp(sample(x0, z1), sample(x1, z1), tx);
+  return BABYLON.Scalar.Lerp(a, b, tz);
+}
+
+function applyTerrainSculptBrushFromPointer() {
+  if (!terrainSculptBrushActive || selectedObject?.metadata?.type !== 'terrain_stamp') return false;
+  const pick = getTerrainSculptPick();
+  if (!pick?.hit || !pick.pickedPoint) return false;
+
+  const mesh = selectedObject;
   const settings = getTerrainBrushSettings();
-  const mesh = createTerrainStampMesh('hill', new BABYLON.Vector3(point.x, point.y + 0.03, point.z), {
-    surfaceType: settings.surfaceType,
-    shape: {
-      width: settings.size,
-      length: settings.size,
-      height: settings.height,
-      centerHeight: settings.height,
-      leftHeight: 0,
-      rightHeight: 0,
-      frontHeight: 0,
-      backHeight: 0,
-      softness: 1.35
+  const shape = mesh.metadata.terrainStampShape || getDefaultTerrainStampShape(mesh.metadata.terrainStampType || 'hill');
+  mesh.metadata.terrainStampShape = shape;
+  mesh.metadata.terrainSurfaceType = settings.surfaceType;
+  const offsets = getTerrainSculptOffsets(shape);
+  const local = BABYLON.Vector3.TransformCoordinates(pick.pickedPoint, mesh.getWorldMatrix().clone().invert());
+  const radius = Math.max(.35, settings.size * .5 / Math.max(.1, (Math.abs(mesh.scaling.x) + Math.abs(mesh.scaling.z)) * .5));
+  const strength = settings.height * .12;
+  if (Math.abs(strength) < 0.0001) return false;
+  const width = Math.max(.5, shape.width || 10);
+  const length = Math.max(.5, shape.length || 10);
+  const segments = 10;
+
+  for (let z = 0; z <= segments; z += 1) {
+    for (let x = 0; x <= segments; x += 1) {
+      const lx = -width * .5 + width * (x / segments);
+      const lz = -length * .5 + length * (z / segments);
+      const dx = lx - local.x;
+      const dz = lz - local.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist > radius) continue;
+      const falloff = Math.pow(1 - dist / radius, 1.75);
+      const index = z * (segments + 1) + x;
+      offsets[index] = Math.max(-6, Math.min(12, (offsets[index] || 0) + strength * falloff));
     }
-  });
-  if (!mesh) return null;
-  mesh.metadata.terrainStampType = 'hill';
-  mesh.metadata.createdByTerrainBrush = true;
-  registerEditableRoot(mesh.name, mesh);
-  setSelectedEditableObject(mesh);
+  }
+
+  rebuildTerrainStampMesh(mesh);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
+  updateSelectedSurfaceTypeLabel();
   triggerAutoSave();
-  showToast(`Brush patch placed: ${Math.round(settings.size)}m, ${settings.surfaceType}`);
-  return mesh;
+  updateTerrainBrushPreview();
+  return true;
 }
 
 const TERRAIN_STAMPS = {
@@ -13268,17 +13331,17 @@ function getTerrainStampLocalHeight(stampType, shape = {}, x = 0, z = 0) {
   if (stampType === 'root_mound' || stampType === 'hill') {
     const r = Math.sqrt(nx * nx + nz * nz);
     if (r > 1) return null;
-    return Math.max(0, center * Math.pow(1 - r, softness) + side);
+    return Math.max(0, center * Math.pow(1 - r, softness) + side) + getTerrainStampSculptOffset(shape, nx, nz);
   }
-  if (stampType === 'slope') return Math.max(0, ((nz + 1) * .5) * h + side);
+  if (stampType === 'slope') return Math.max(0, ((nz + 1) * .5) * h + side) + getTerrainStampSculptOffset(shape, nx, nz);
   if (stampType === 'stair_ramp') {
     const t = Math.max(0, Math.min(1, (nz + 1) * .5));
-    return Math.floor(t * 5) / 5 * h + side;
+    return Math.floor(t * 5) / 5 * h + side + getTerrainStampSculptOffset(shape, nx, nz);
   }
-  if (stampType === 'cliff_edge') return (nz > -.15 ? h : Math.max(.08, h * .2)) + side;
-  if (stampType === 'cave_entrance') return Math.max(.02, h * .25);
-  if (stampType === 'path_segment') return Math.max(.02, h);
-  return Math.max(0, h + side);
+  if (stampType === 'cliff_edge') return (nz > -.15 ? h : Math.max(.08, h * .2)) + side + getTerrainStampSculptOffset(shape, nx, nz);
+  if (stampType === 'cave_entrance') return Math.max(.02, h * .25) + getTerrainStampSculptOffset(shape, nx, nz);
+  if (stampType === 'path_segment') return Math.max(.02, h) + getTerrainStampSculptOffset(shape, nx, nz);
+  return Math.max(0, h + side) + getTerrainStampSculptOffset(shape, nx, nz);
 }
 
 function buildTerrainStampVertexData(stampType, shape) {
