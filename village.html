@@ -13672,6 +13672,7 @@ function getCurrentLayoutNodeMap() {
 
 function applyLayoutItemToExistingNode(node, item) {
   if (!node || !item) return;
+  const beforePosition = node.position?.clone?.() || null;
   applyObjectTransform(node, item);
   node.metadata = {
     ...(node.metadata || {}),
@@ -13731,8 +13732,23 @@ function applyLayoutItemToExistingNode(node, item) {
     editorLocked: item.editorLocked === true
   };
   if (item.type === 'terrain_stamp') rebuildTerrainStampMesh(node);
-  if (item.type === 'collision_proxy' && item.terrainSurfaceType) {
-    node.material = getTerrainSurfaceMaterial(item.terrainSurfaceType, item.terrainToolPatch ? .3 : .36);
+  if (item.type === 'collision_proxy') {
+    const proxyKind = item.proxyPieceKind || node.metadata?.proxyPieceKind || 'blocker';
+    if (item.terrainToolPatch) {
+      node.material = getTerrainSurfaceMaterial(item.terrainSurfaceType || 'dirt', .3);
+      styleTerrainPatchVisual(node, item.terrainStampType || 'flat_patch');
+    } else {
+      node.material = getCollisionProxyMaterials()[proxyKind] || getCollisionProxyMaterials().blocker;
+    }
+  }
+  if (
+    item.type !== 'collision_proxy' &&
+    beforePosition &&
+    node.position &&
+    node.metadata?.isClone === true
+  ) {
+    const delta = node.position.subtract(beforePosition);
+    if (delta.lengthSquared() > 0.000001) moveAttachedCollisionProxyPieces(node, delta);
   }
   if (item.type === 'npc') {
     node.metadata.spawn = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
