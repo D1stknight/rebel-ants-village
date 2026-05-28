@@ -280,6 +280,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 .tool-square kbd{display:block;margin-top:3px;color:#7bded8;font-size:8px}
 .admin-step{border:1px solid rgba(94,207,202,.14);border-radius:7px;padding:7px;margin:6px 0;background:rgba(94,207,202,.035)}
 .admin-step strong{display:block;color:#e8c56a;font-size:10px;letter-spacing:1px;margin-bottom:3px}
+.manual-flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:7px 0}
+.manual-step-chip{min-height:38px;border:1px solid rgba(94,207,202,.18);border-radius:6px;background:rgba(94,207,202,.04);padding:5px 4px;box-sizing:border-box;overflow:hidden}
+.manual-step-chip strong{display:block;color:#e8c56a;font-size:8px;letter-spacing:.8px;line-height:1.1;margin-bottom:2px}
+.manual-step-chip span{display:block;color:rgba(255,255,255,.5);font-size:7px;line-height:1.15;overflow-wrap:anywhere}
+.manual-piece-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
+.manual-piece-btn{min-height:56px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.015));color:rgba(255,255,255,.72);font-family:'Cinzel Decorative',serif;font-size:8px;letter-spacing:.6px;line-height:1.12;cursor:pointer;text-align:center;padding:5px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:all .15s;box-sizing:border-box}
+.manual-piece-btn:hover{background:rgba(232,197,106,.12);border-color:rgba(232,197,106,.45);color:#e8c56a;transform:translateY(-1px)}
+.manual-piece-btn .mi{font-size:14px;line-height:1}
+.manual-piece-btn .ms{font-size:7px;color:#77e6df;letter-spacing:.5px}
+.manual-piece-btn.blocker{border-color:rgba(224,70,70,.32)}
+.manual-piece-btn.walk{border-color:rgba(94,207,134,.32)}
+.manual-piece-btn.ramp{border-color:rgba(76,144,255,.34)}
+.manual-piece-btn.danger{border-color:rgba(220,60,60,.38);color:#ff8b8b}
+.manual-piece-btn.danger:hover{background:rgba(220,60,60,.14);border-color:rgba(220,60,60,.75);color:#ff9f9f}
+.manual-piece-btn.save{border-color:rgba(232,197,106,.34);color:#e8c56a}
 .admin-pill{display:inline-block;margin-top:4px;padding:2px 6px;border:1px solid rgba(94,207,202,.25);border-radius:999px;color:#77e6df;font-size:9px;letter-spacing:1px}
 .health-good{color:#7dffa4}.health-warn{color:#ff8b8b}.health-muted{color:#8aa}
 #assetPanel .ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 8px 6px}
@@ -444,25 +459,27 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin-bottom:6px;text-transform:uppercase">Walk Surface / Collision Builder</div>
   <div style="font-size:10px;line-height:1.4;color:#aaa;margin-bottom:8px">Manual pieces are gameplay collision helpers. Terrain patches are visual/walk-surface helpers. Keep blockers here; sculpt/look-dev patches in Terrain Builder.</div>
   <label style="color:#aaa;font-size:10px;display:flex;align-items:center;gap:5px;margin-bottom:8px"><input type="checkbox" id="proxyAttachToSelected" checked> Attach new pieces to selected object</label>
-  <div class="admin-step"><strong>Step 1 - Add a piece</strong><span style="color:#aaa;font-size:10px">Red blocks movement, green creates a walk floor, blue creates a ramp.</span></div>
-  <div class="admin-step"><strong>Step 2 - Shape it</strong><span style="color:#aaa;font-size:10px">Use Move, Rotate, Scale, Larger/Smaller, and ramp tilt from Selected controls.</span></div>
-  <div class="admin-step"><strong>Step 3 - Apply/save</strong><span style="color:#aaa;font-size:10px">Save Manual Barriers, then select a matching object and Apply To Same Object if needed.</span></div>
-  <div style="display:grid;grid-template-columns:1fr;gap:6px">
-    <button class="ctrl-btn" onclick="addCollisionProxyPiece('blocker')">1 Add Red Blocker</button>
-    <button class="ctrl-btn" onclick="addCollisionProxyPiece('walk')">1 Add Green Walk Floor</button>
-    <button class="ctrl-btn" onclick="addCollisionProxyPiece('ramp')">1 Add Blue Ramp</button>
-    <button class="ctrl-btn" onclick="tiltSelectedRamp(1)">Tilt Ramp Up</button>
-    <button class="ctrl-btn" onclick="tiltSelectedRamp(-1)">Tilt Ramp Down</button>
-    <button class="ctrl-btn" onclick="selectBlockingPieceAtPlayer()">Select Blocker Near Player</button>
-    <button class="ctrl-btn" onclick="attachNearbyManualPiecesToSelectedObject()">Attach Nearby Pieces</button>
-    <button class="ctrl-btn" onclick="applyAttachedCollisionPiecesToSameType()">Apply to Same Object</button>
-    <button class="ctrl-btn" id="toggleManualPiecesBtn" onclick="toggleManualBarrierVisibility()">Hide Manual Pieces</button>
-    <button class="ctrl-btn danger" onclick="deleteAttachedCollisionProxyPieces()">Delete Attached Pieces</button>
-    <button class="ctrl-btn danger" onclick="deleteCollisionProxyPiecesForSameType()">Delete Same Object Barriers</button>
-    <button class="ctrl-btn" onclick="saveManualBarriersNow()">3 Save Manual Barriers</button>
+  <div class="manual-flow">
+    <div class="manual-step-chip"><strong>1 Add</strong><span>Block, floor, or ramp</span></div>
+    <div class="manual-step-chip"><strong>2 Shape</strong><span>Move, rotate, scale</span></div>
+    <div class="manual-step-chip"><strong>3 Save</strong><span>Save manual pieces</span></div>
+    <div class="manual-step-chip"><strong>4 Match</strong><span>Select same asset</span></div>
+    <div class="manual-step-chip"><strong>5 Apply</strong><span>Copy to matches</span></div>
   </div>
-  <div class="admin-step"><strong>Step 4 - Select matching object</strong><span style="color:#aaa;font-size:10px">Click the asset type that should receive the saved manual pieces.</span></div>
-  <div class="admin-step"><strong>Step 5 - Apply To Same Object</strong><span style="color:#aaa;font-size:10px">Copies the attached pieces only to matching assets.</span></div>
+  <div class="manual-piece-grid">
+    <button class="manual-piece-btn blocker" onclick="addCollisionProxyPiece('blocker')" title="Add red blocker"><span class="mi">■</span><span>Red Blocker</span><span class="ms">Step 1</span></button>
+    <button class="manual-piece-btn walk" onclick="addCollisionProxyPiece('walk')" title="Add green walk floor"><span class="mi">■</span><span>Walk Floor</span><span class="ms">Step 1</span></button>
+    <button class="manual-piece-btn ramp" onclick="addCollisionProxyPiece('ramp')" title="Add blue ramp"><span class="mi">▰</span><span>Blue Ramp</span><span class="ms">Step 1</span></button>
+    <button class="manual-piece-btn" onclick="tiltSelectedRamp(1)" title="Tilt selected ramp up"><span class="mi">↗</span><span>Tilt Up</span><span class="ms">Shape</span></button>
+    <button class="manual-piece-btn" onclick="tiltSelectedRamp(-1)" title="Tilt selected ramp down"><span class="mi">↘</span><span>Tilt Down</span><span class="ms">Shape</span></button>
+    <button class="manual-piece-btn" onclick="selectBlockingPieceAtPlayer()" title="Select a blocker near the player"><span class="mi">⌖</span><span>Select Near</span><span class="ms">Find</span></button>
+    <button class="manual-piece-btn" onclick="attachNearbyManualPiecesToSelectedObject()" title="Attach nearby manual pieces to selected object"><span class="mi">＋</span><span>Attach Near</span><span class="ms">Attach</span></button>
+    <button class="manual-piece-btn" onclick="applyAttachedCollisionPiecesToSameType()" title="Apply attached pieces to matching asset type"><span class="mi">⧉</span><span>Apply Same</span><span class="ms">Step 5</span></button>
+    <button class="manual-piece-btn" id="toggleManualPiecesBtn" onclick="toggleManualBarrierVisibility()" title="Hide or show manual pieces"><span class="mi">◉</span><span>Hide Pieces</span><span class="ms">View</span></button>
+    <button class="manual-piece-btn danger" onclick="deleteAttachedCollisionProxyPieces()" title="Delete attached pieces from selected object"><span class="mi">×</span><span>Del Attached</span><span class="ms">Delete</span></button>
+    <button class="manual-piece-btn danger" onclick="deleteCollisionProxyPiecesForSameType()" title="Delete barriers for matching object type"><span class="mi">×</span><span>Del Same</span><span class="ms">Delete</span></button>
+    <button class="manual-piece-btn save" onclick="saveManualBarriersNow()" title="Save manual barriers"><span class="mi">✓</span><span>Save</span><span class="ms">Step 3</span></button>
+  </div>
   <div id="manualBarrierSaveStatus" style="font-size:10px;line-height:1.35;color:#77e6df;margin-top:8px;min-height:16px"></div>
 </div>
   <hr class="ap-divider">
@@ -2050,7 +2067,7 @@ function deleteCollisionProxyPiecesForSameType() {
 
 function updateManualBarrierVisibilityButton() {
   const button = document.getElementById('toggleManualPiecesBtn');
-  if (button) button.textContent = manualBarrierVisualsVisible ? 'Hide Manual Pieces' : 'Show Manual Pieces';
+  if (button) button.innerHTML = `<span class="mi">◉</span><span>${manualBarrierVisualsVisible ? 'Hide Pieces' : 'Show Pieces'}</span><span class="ms">View</span>`;
 }
 
 function setCollisionProxyVisualsVisible(visible) {
