@@ -17237,6 +17237,7 @@ async function renderInteriorGlbModel(parent, modelUrl) {
   clone.position = new BABYLON.Vector3(0, INTERIOR_FLOOR_Y, 0);
   clone.rotation = new BABYLON.Vector3(0, 0, 0);
   clone.scaling = new BABYLON.Vector3(1, 1, 1);
+  normalizeInteriorGlbModel(clone);
   clone.getChildMeshes?.(false).forEach(mesh => {
     mesh.isPickable = false;
     mesh.receiveShadows = false;
@@ -17244,6 +17245,51 @@ async function renderInteriorGlbModel(parent, modelUrl) {
     try { mesh.freezeWorldMatrix(); } catch(e) {}
   });
   return clone;
+}
+
+function getInteriorGlbModelBounds(root) {
+  const meshes = root?.getChildMeshes?.(false).filter(mesh =>
+    mesh &&
+    !mesh.isDisposed?.() &&
+    mesh.getTotalVertices?.() > 0 &&
+    mesh.getBoundingInfo
+  ) || [];
+  if (!meshes.length) return null;
+  root.computeWorldMatrix?.(true);
+  const min = new BABYLON.Vector3(Infinity, Infinity, Infinity);
+  const max = new BABYLON.Vector3(-Infinity, -Infinity, -Infinity);
+  meshes.forEach(mesh => {
+    mesh.computeWorldMatrix?.(true);
+    mesh.refreshBoundingInfo?.(true);
+    const box = mesh.getBoundingInfo().boundingBox;
+    min.x = Math.min(min.x, box.minimumWorld.x);
+    min.y = Math.min(min.y, box.minimumWorld.y);
+    min.z = Math.min(min.z, box.minimumWorld.z);
+    max.x = Math.max(max.x, box.maximumWorld.x);
+    max.y = Math.max(max.y, box.maximumWorld.y);
+    max.z = Math.max(max.z, box.maximumWorld.z);
+  });
+  if (![min.x, min.y, min.z, max.x, max.y, max.z].every(Number.isFinite)) return null;
+  const size = max.subtract(min);
+  return { min, max, size, center:BABYLON.Vector3.Center(min, max) };
+}
+
+function normalizeInteriorGlbModel(root) {
+  const initial = getInteriorGlbModelBounds(root);
+  if (!initial) return;
+  const footprint = Math.max(initial.size.x, initial.size.z);
+  const height = Math.max(initial.size.y, .001);
+  const targetFootprint = 20;
+  const targetHeight = 6.2;
+  let fitScale = footprint > .001 ? targetFootprint / footprint : targetHeight / height;
+  fitScale = Math.max(.05, Math.min(80, fitScale));
+  root.scaling = new BABYLON.Vector3(fitScale, fitScale, fitScale);
+  root.computeWorldMatrix?.(true);
+  const scaled = getInteriorGlbModelBounds(root);
+  if (!scaled) return;
+  root.position.x -= scaled.center.x;
+  root.position.z -= scaled.center.z;
+  root.position.y += INTERIOR_FLOOR_Y - scaled.min.y;
 }
 
 function buildInteriorProps(root, type, mats) {
@@ -17309,6 +17355,7 @@ function buildInteriorRoom(entrance) {
   const root = new BABYLON.TransformNode('activeInteriorRoot', scene);
   const targetInteriorId = entrance?.metadata?.targetInteriorId || type;
   root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:def.modelUrl || '', floorY:INTERIOR_FLOOR_Y };
+  const isCustomGlbInterior = !INTERIOR_TYPES[type] && Boolean(def.modelUrl);
 
   const floorColor = style === 'gallery' ? new BABYLON.Color3(.24,.23,.21)
     : style === 'theater' || style === 'arcade' ? new BABYLON.Color3(.05,.04,.08)
@@ -17318,24 +17365,28 @@ function buildInteriorRoom(entrance) {
     : style === 'theater' || style === 'arcade' ? new BABYLON.Color3(.04,.05,.09)
       : style === 'forge' ? new BABYLON.Color3(.16,.09,.07)
         : new BABYLON.Color3(.08,.11,.13);
-  const floorMat = makeInteriorMaterial('interiorFloorMat_' + type, floorColor, .05);
+  const floorMat = makeInteriorMaterial('interiorFloorMat_' + type, floorColor, .05, isCustomGlbInterior ? .12 : null);
   const wallMat = makeInteriorMaterial('interiorWallMat_' + type, wallColor, .1);
   const woodMat = makeInteriorMaterial('interiorWoodMat_' + type, new BABYLON.Color3(.35,.18,.08), .08);
   const accentMat = makeInteriorMaterial('interiorAccentMat_' + type, def.accent, .38);
   const exitMat = makeInteriorMaterial('interiorExitMat_' + type, new BABYLON.Color3(.9,.72,.24), .24);
 
   addInteriorBox(root, 'interiorFloor', { width:24, height:.22, depth:22 }, new BABYLON.Vector3(0, INTERIOR_FLOOR_Y - .11, 0), floorMat);
-  addInteriorBox(root, 'interiorBackWall', { width:24, height:6.5, depth:.5 }, new BABYLON.Vector3(0, 3.45, -11), wallMat);
-  addInteriorBox(root, 'interiorLeftWall', { width:.5, height:6.5, depth:22 }, new BABYLON.Vector3(-12, 3.45, 0), wallMat);
-  addInteriorBox(root, 'interiorRightWall', { width:.5, height:6.5, depth:22 }, new BABYLON.Vector3(12, 3.45, 0), wallMat);
-  addInteriorBox(root, 'interiorFrontWallLeft', { width:8.2, height:6.5, depth:.5 }, new BABYLON.Vector3(-7.9, 3.45, 11), wallMat);
-  addInteriorBox(root, 'interiorFrontWallRight', { width:8.2, height:6.5, depth:.5 }, new BABYLON.Vector3(7.9, 3.45, 11), wallMat);
-  addInteriorBox(root, 'interiorCeiling', { width:24, height:.18, depth:22 }, new BABYLON.Vector3(0, 6.78, 0), wallMat);
+  if (!isCustomGlbInterior) {
+    addInteriorBox(root, 'interiorBackWall', { width:24, height:6.5, depth:.5 }, new BABYLON.Vector3(0, 3.45, -11), wallMat);
+    addInteriorBox(root, 'interiorLeftWall', { width:.5, height:6.5, depth:22 }, new BABYLON.Vector3(-12, 3.45, 0), wallMat);
+    addInteriorBox(root, 'interiorRightWall', { width:.5, height:6.5, depth:22 }, new BABYLON.Vector3(12, 3.45, 0), wallMat);
+    addInteriorBox(root, 'interiorFrontWallLeft', { width:8.2, height:6.5, depth:.5 }, new BABYLON.Vector3(-7.9, 3.45, 11), wallMat);
+    addInteriorBox(root, 'interiorFrontWallRight', { width:8.2, height:6.5, depth:.5 }, new BABYLON.Vector3(7.9, 3.45, 11), wallMat);
+    addInteriorBox(root, 'interiorCeiling', { width:24, height:.18, depth:22 }, new BABYLON.Vector3(0, 6.78, 0), wallMat);
+  }
   addInteriorBox(root, 'interiorExitFrameTop', { width:4.6, height:.35, depth:.5 }, new BABYLON.Vector3(0, 4.82, 10.62), woodMat);
   addInteriorBox(root, 'interiorExitFrameLeft', { width:.35, height:4.5, depth:.5 }, new BABYLON.Vector3(-2.25, 2.7, 10.62), woodMat);
   addInteriorBox(root, 'interiorExitFrameRight', { width:.35, height:4.5, depth:.5 }, new BABYLON.Vector3(2.25, 2.7, 10.62), woodMat);
-  for (let i = 0; i < 5; i += 1) {
-    addInteriorBox(root, 'interiorWallPanelBack_' + i, { width:2.6, height:3.8, depth:.08 }, new BABYLON.Vector3(-8 + i * 4, 3.2, -10.72), accentMat);
+  if (!isCustomGlbInterior) {
+    for (let i = 0; i < 5; i += 1) {
+      addInteriorBox(root, 'interiorWallPanelBack_' + i, { width:2.6, height:3.8, depth:.08 }, new BABYLON.Vector3(-8 + i * 4, 3.2, -10.72), accentMat);
+    }
   }
   const exitDoor = addInteriorBox(root, 'interiorExitDoor', { width:3.8, height:4.4, depth:.34 }, new BABYLON.Vector3(0, 2.45, 10.75), exitMat);
   exitDoor.metadata = { type:'interior_exit', isInteriorExit:true };
