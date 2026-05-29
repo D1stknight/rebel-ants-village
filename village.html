@@ -779,6 +779,59 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn danger" onclick="deleteSelectedInteriorDisplay()">Delete Display</button>
       <button class="ctrl-btn" id="interiorDisplayVisibilityBtn" onclick="toggleInteriorDisplayVisibility()">Hide Displays</button>
     </div>
+    <div class="tool-group-label">Interior Asset Library</div>
+    <div class="admin-note">Use lightweight GLB/glTF assets, preferably CC0/free commercial use, optimized for web, ideally under 1-3MB each. Future folders: /assets/interiors/museum/, theater/, store/, library/, arcade/, forge/, training/, shared/.</div>
+    <label class="admin-field">Interior Asset
+      <select id="interiorAssetSelect" class="admin-select" onchange="loadSelectedInteriorAssetIntoAdmin()"></select>
+    </label>
+    <label class="admin-field">Asset ID <input id="interiorAssetId" placeholder="library_bookcase"></label>
+    <label class="admin-field">Asset Name <input id="interiorAssetName" placeholder="Low-poly Bookcase"></label>
+    <label class="admin-field">Category
+      <select id="interiorAssetCategory" class="admin-select">
+        <option value="shared">shared</option>
+        <option value="museum">museum</option>
+        <option value="theater">theater</option>
+        <option value="store">store</option>
+        <option value="library">library</option>
+        <option value="arcade">arcade</option>
+        <option value="forge">forge</option>
+        <option value="training">training</option>
+      </select>
+    </label>
+    <label class="admin-field">Room Type <input id="interiorAssetRoomType" placeholder="book_library or custom id"></label>
+    <label class="admin-field">Model URL <input id="interiorAssetModelUrl" placeholder="/assets/interiors/library/bookcase.glb"></label>
+    <label class="admin-field">Thumbnail URL <input id="interiorAssetThumbUrl" placeholder="/assets/interiors/library/bookcase.webp"></label>
+    <label class="admin-field">Default Scale <input id="interiorAssetScale" placeholder="1"></label>
+    <label class="admin-field">Default Rotation Y <input id="interiorAssetRotationY" placeholder="0"></label>
+    <label class="admin-field">Default Position X,Y,Z <input id="interiorAssetPosition" placeholder="0,0.5,-4"></label>
+    <label class="admin-field">Notes <textarea id="interiorAssetNotes" rows="2" placeholder="source/license/usage notes"></textarea></label>
+    <label class="admin-field"><span><input id="interiorAssetEnabled" type="checkbox" checked style="width:auto;margin-right:6px">Asset Enabled</span></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="ctrl-btn" onclick="saveInteriorAssetFromAdmin()">Add / Save Asset</button>
+      <button class="ctrl-btn danger" onclick="deleteSelectedInteriorAsset()">Delete Asset Record</button>
+      <button class="ctrl-btn" onclick="previewSelectedInteriorAssetPath()">Preview Path</button>
+      <button class="ctrl-btn" onclick="testLoadSelectedInteriorAsset()">Test Load Asset</button>
+      <button class="ctrl-btn danger full" onclick="removeInteriorTestAssets()">Remove Test Asset</button>
+    </div>
+    <div class="tool-group-label">Room Templates</div>
+    <label class="admin-field">Room Template
+      <select id="interiorTemplateSelect" class="admin-select" onchange="loadSelectedInteriorTemplateIntoAdmin()"></select>
+    </label>
+    <label class="admin-field">Template Name <input id="interiorTemplateName" placeholder="Book Library Default"></label>
+    <label class="admin-field">Template ID <input id="interiorTemplateId" placeholder="book_library_default"></label>
+    <label class="admin-field">Template Room Type <input id="interiorTemplateRoomType" placeholder="book_library"></label>
+    <label class="admin-field">Template Style <input id="interiorTemplateStyle" placeholder="library"></label>
+    <label class="admin-field">Default Floor <input id="interiorTemplateFloor" placeholder="wood"></label>
+    <label class="admin-field">Default Wall <input id="interiorTemplateWall" placeholder="dark plaster"></label>
+    <label class="admin-field">Ambience Path <input id="interiorTemplateAmbience" placeholder="/assets/audio/interiors/library.mp3"></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="ctrl-btn" onclick="saveInteriorTemplateFromAdmin()">Save Local Template</button>
+      <button class="ctrl-btn" onclick="duplicateSelectedInteriorTemplate()">Duplicate Template</button>
+      <button class="ctrl-btn" onclick="resetSelectedInteriorTemplateToDefault()">Reset To Default</button>
+      <button class="ctrl-btn" onclick="addSelectedAssetToActiveTemplate()">Add Asset To Template</button>
+      <button class="ctrl-btn danger" onclick="removeSelectedTemplateAssetPlacement()">Remove Template Asset</button>
+      <button class="ctrl-btn" onclick="restoreDefaultInteriorTemplate()">Restore Default Template</button>
+    </div>
   </div>
   <div class="ap-section">Collectibles</div>
   <div class="admin-section-body" data-admin-section-body="collectibles">
@@ -1388,9 +1441,13 @@ const INTERIOR_FLOOR_Y = 0.5;
 const INTERIOR_PLAYER_SPAWN_Y = INTERIOR_FLOOR_Y + 0.08;
 const CUSTOM_INTERIORS_KEY = 'rebelAntsCustomInteriors:v1';
 const INTERIOR_ROOM_CONFIG_KEY = 'rebelAntsInteriorRoomConfigs:v1';
+const INTERIOR_ASSET_LIBRARY_KEY = 'rebelAntsInteriorAssetLibrary:v1';
+const INTERIOR_TEMPLATE_CONFIG_KEY = 'rebelAntsInteriorTemplates:v1';
 let _interiorEntrancesVisible = true;
 let _interiorDisplaysVisible = true;
 let ActiveInterior = null;
+const InteriorAssetCache = new Map();
+let _activeInteriorTestAssets = [];
 
 function getDefaultProgressionState() {
   return {
@@ -15660,8 +15717,11 @@ function getPerformanceMetrics() {
     collectibles: { label:'Collectibles', value:getCollectibleRoots().length, status:'neutral' },
     activeInterior: { label:'Active Interior', value:ActiveInterior ? getInteriorTypeLabel(ActiveInterior.interiorType) : 'none', status:ActiveInterior ? 'good' : 'neutral' },
     interiorId: { label:'Interior ID', value:ActiveInterior?.targetInteriorId || 'none', status:'neutral' },
+    interiorTemplate: { label:'Interior Template', value:ActiveInterior?.templateId || 'none', status:'neutral' },
     interiorMeshes: { label:'Interior Meshes', value:ActiveInterior?.root?.getChildMeshes?.(false).length || 0, status:getPerfStatus(ActiveInterior?.root?.getChildMeshes?.(false).length || 0, { green:90, yellow:180 }) },
     interiorDisplays: { label:'Interior Displays', value:getInteriorDisplayRoots().length, status:getPerfStatus(getInteriorDisplayRoots().length, { green:12, yellow:30 }) },
+    interiorAssetPlacements: { label:'Interior Asset Placements', value:ActiveInterior?.assetPlacementCount || 0, status:getPerfStatus(ActiveInterior?.assetPlacementCount || 0, { green:12, yellow:28 }) },
+    interiorGlbCache: { label:'Interior GLB Cache', value:[...InteriorAssetCache.values()].filter(Boolean).length, status:getPerfStatus([...InteriorAssetCache.values()].filter(Boolean).length, { green:10, yellow:24 }) },
     terrain: { label:'Terrain Stamps', value:getTerrainPatchNodes().length, status:'neutral' },
     manualHelpers: { label:'Collision / Walk Helpers', value:manualHelpers, status:getPerfStatus(manualHelpers, { green:150, yellow:400 }) },
     weatherFx: { label:'Weather FX', value:getWeatherFxCount(), status:'neutral' },
@@ -16527,6 +16587,8 @@ function refreshInteriorAdminOptions() {
       custom.map(def => `<option value="${escapeHTML(def.id)}">${escapeHTML(def.name || def.id)}</option>`).join('');
     customSelect.value = custom.some(def => def.id === current) ? current : '';
   }
+  refreshInteriorAssetAdminOptions();
+  refreshInteriorTemplateAdminOptions();
 }
 
 function loadSelectedCustomInteriorIntoAdmin() {
@@ -16576,6 +16638,306 @@ function archiveSelectedCustomInterior() {
   localStorage.setItem(CUSTOM_INTERIORS_KEY, JSON.stringify(next));
   refreshInteriorAdminOptions();
   showToast('Custom interior archived');
+}
+
+function getInteriorAssetLibrary() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(INTERIOR_ASSET_LIBRARY_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function setInteriorAssetLibrary(assets) {
+  localStorage.setItem(INTERIOR_ASSET_LIBRARY_KEY, JSON.stringify(Array.isArray(assets) ? assets : []));
+  refreshInteriorAssetAdminOptions();
+}
+
+function getInteriorAssetById(assetId) {
+  return getInteriorAssetLibrary().find(asset => asset.assetId === assetId) || null;
+}
+
+function parseInteriorVectorInput(value, fallback = { x:0, y:0, z:0 }) {
+  if (value && typeof value === 'object') return {
+    x: Number(value.x) || 0,
+    y: Number(value.y) || 0,
+    z: Number(value.z) || 0
+  };
+  const parts = String(value || '').split(',').map(part => Number(part.trim()));
+  return {
+    x: Number.isFinite(parts[0]) ? parts[0] : fallback.x,
+    y: Number.isFinite(parts[1]) ? parts[1] : fallback.y,
+    z: Number.isFinite(parts[2]) ? parts[2] : fallback.z
+  };
+}
+
+function refreshInteriorAssetAdminOptions() {
+  const select = document.getElementById('interiorAssetSelect');
+  if (!select) return;
+  const current = select.value || '';
+  const assets = getInteriorAssetLibrary();
+  select.innerHTML = '<option value="">Select asset record</option>' +
+    assets.map(asset => `<option value="${escapeHTML(asset.assetId)}">${asset.enabled === false ? '[off] ' : ''}${escapeHTML(asset.name || asset.assetId)}</option>`).join('');
+  select.value = assets.some(asset => asset.assetId === current) ? current : '';
+}
+
+function loadSelectedInteriorAssetIntoAdmin() {
+  const asset = getInteriorAssetById(document.getElementById('interiorAssetSelect')?.value || '');
+  if (!asset) return;
+  const set = (id, value) => { const el = document.getElementById(id); if (el) el.value = value ?? ''; };
+  set('interiorAssetId', asset.assetId || '');
+  set('interiorAssetName', asset.name || '');
+  set('interiorAssetCategory', asset.category || 'shared');
+  set('interiorAssetRoomType', asset.roomType || '');
+  set('interiorAssetModelUrl', asset.modelUrl || '');
+  set('interiorAssetThumbUrl', asset.thumbnailUrl || '');
+  set('interiorAssetScale', asset.defaultScale || 1);
+  set('interiorAssetRotationY', asset.defaultRotation?.y || 0);
+  set('interiorAssetPosition', `${asset.defaultPosition?.x || 0},${asset.defaultPosition?.y ?? INTERIOR_FLOOR_Y},${asset.defaultPosition?.z || 0}`);
+  set('interiorAssetNotes', asset.notes || '');
+  const enabled = document.getElementById('interiorAssetEnabled');
+  if (enabled) enabled.checked = asset.enabled !== false;
+}
+
+function readInteriorAssetAdminSettings() {
+  const assetId = (document.getElementById('interiorAssetId')?.value || '').trim().replace(/\s+/g, '_').toLowerCase();
+  const position = parseInteriorVectorInput(document.getElementById('interiorAssetPosition')?.value || '', { x:0, y:INTERIOR_FLOOR_Y, z:0 });
+  const scale = Number(document.getElementById('interiorAssetScale')?.value || 1);
+  const rotationY = Number(document.getElementById('interiorAssetRotationY')?.value || 0);
+  return {
+    assetId,
+    name: document.getElementById('interiorAssetName')?.value?.trim() || assetId,
+    category: document.getElementById('interiorAssetCategory')?.value || 'shared',
+    roomType: document.getElementById('interiorAssetRoomType')?.value?.trim() || '',
+    modelUrl: document.getElementById('interiorAssetModelUrl')?.value?.trim() || '',
+    thumbnailUrl: document.getElementById('interiorAssetThumbUrl')?.value?.trim() || '',
+    defaultScale: Number.isFinite(scale) && scale > 0 ? scale : 1,
+    defaultRotation: { x:0, y:Number.isFinite(rotationY) ? rotationY : 0, z:0 },
+    defaultPosition: position,
+    notes: document.getElementById('interiorAssetNotes')?.value?.trim() || '',
+    enabled: document.getElementById('interiorAssetEnabled')?.checked !== false,
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function saveInteriorAssetFromAdmin() {
+  const asset = readInteriorAssetAdminSettings();
+  if (!asset.assetId || !asset.modelUrl) { showToast('Asset ID and model URL required'); return; }
+  const assets = getInteriorAssetLibrary().filter(item => item.assetId !== asset.assetId);
+  assets.push(asset);
+  setInteriorAssetLibrary(assets);
+  const select = document.getElementById('interiorAssetSelect');
+  if (select) select.value = asset.assetId;
+  showToast('Interior asset saved: ' + asset.name);
+}
+
+function deleteSelectedInteriorAsset() {
+  const assetId = document.getElementById('interiorAssetSelect')?.value || document.getElementById('interiorAssetId')?.value?.trim();
+  if (!assetId) { showToast('Select an interior asset first'); return; }
+  setInteriorAssetLibrary(getInteriorAssetLibrary().filter(asset => asset.assetId !== assetId));
+  showToast('Interior asset record deleted');
+}
+
+function previewSelectedInteriorAssetPath() {
+  const asset = getInteriorAssetById(document.getElementById('interiorAssetSelect')?.value || '') || readInteriorAssetAdminSettings();
+  showToast(asset.modelUrl || 'No model URL set', 8000);
+}
+
+function getDefaultInteriorTemplates() {
+  const base = {};
+  Object.entries(INTERIOR_TYPES).forEach(([roomType, def]) => {
+    const templateId = roomType + '_default';
+    base[templateId] = {
+      templateId,
+      name: def.title + ' Default',
+      roomType,
+      style: def.style || roomType,
+      defaultFloor: def.style === 'gallery' ? 'gallery stone' : def.style === 'arcade' ? 'dark arcade floor' : 'wood',
+      defaultWall: def.style === 'gallery' ? 'gallery wall panels' : 'dark plaster',
+      ambiencePath: '',
+      assetPlacements: [],
+      displayPlacements: getDefaultTemplateDisplayPlacements(roomType)
+    };
+  });
+  base.custom_interior_default = {
+    templateId:'custom_interior_default',
+    name:'Custom Interior Default',
+    roomType:'custom',
+    style:'dojo',
+    defaultFloor:'wood',
+    defaultWall:'dark plaster',
+    ambiencePath:'',
+    assetPlacements:[],
+    displayPlacements:[{
+      displayId:'custom_template_info',
+      label:'Custom Room',
+      actionType:'showInfo',
+      description:'Template-ready custom Rebel interior.',
+      position:{ x:0, y:1.55, z:-5.5 },
+      rotation:{ x:0, y:0, z:0 },
+      scaling:{ x:1, y:1, z:1 },
+      enabled:true
+    }]
+  };
+  return base;
+}
+
+function getDefaultTemplateDisplayPlacements(roomType) {
+  if (roomType === 'nft_museum') return [
+    { displayId:'museum_frame_slot_1', label:'Museum Frame Slot', actionType:'futureNFT', description:'Future Rebel NFT slot.', collectionKey:'rebel_ants', tokenId:'', imageUrl:'', title:'Rebel NFT', position:{ x:-7.2, y:2.1, z:-9.25 }, rotation:{ x:0, y:0, z:0 }, scaling:{ x:1, y:1, z:1 }, enabled:true }
+  ];
+  if (roomType === 'arcade_room') return [
+    { displayId:'arcade_cabinet_slot_1', gameId:'rebel_arcade_placeholder', label:'Rebel Arcade', actionType:'futureArcadeGame', url:'', description:'Future Rebel Arcade game launcher.', position:{ x:-5, y:2, z:-7.9 }, rotation:{ x:0, y:0, z:0 }, scaling:{ x:1, y:1, z:1 }, enabled:true }
+  ];
+  if (roomType === 'youtube_theater') return [
+    { displayId:'theater_video_slot_1', label:'Video Screen', actionType:'futureVideo', url:'https://www.youtube.com/', description:'Future Rebel video URL.', position:{ x:0, y:2.45, z:-9.25 }, rotation:{ x:0, y:0, z:0 }, scaling:{ x:1, y:1, z:1 }, enabled:true }
+  ];
+  if (roomType === 'rebel_store') return [
+    { displayId:'store_product_slot_1', label:'Product Slot', actionType:'futureStoreItem', url:'', description:'Future Rebel product URL.', position:{ x:0, y:1.8, z:.4 }, rotation:{ x:0, y:0, z:0 }, scaling:{ x:1, y:1, z:1 }, enabled:true }
+  ];
+  if (roomType === 'book_library') return [
+    { displayId:'library_book_slot_1', label:'Story Unlock', actionType:'futureQuest', description:'Future Book 1 / graphic novel unlock.', position:{ x:0, y:1.9, z:-1.2 }, rotation:{ x:0, y:0, z:0 }, scaling:{ x:1, y:1, z:1 }, enabled:true }
+  ];
+  if (roomType === 'forge_room') return [
+    { displayId:'forge_station_slot_1', label:'Forge Station', actionType:'openUrl', url:'/forge.html', description:'Open the Rebel Forge.', position:{ x:0, y:2.25, z:-4.2 }, rotation:{ x:0, y:0, z:0 }, scaling:{ x:1, y:1, z:1 }, enabled:true }
+  ];
+  return [
+    { displayId:'training_marker_slot_1', label:'Training Marker', actionType:'futureQuest', description:'Future tutorial or trial marker.', position:{ x:0, y:1.55, z:-5.5 }, rotation:{ x:0, y:0, z:0 }, scaling:{ x:1, y:1, z:1 }, enabled:true }
+  ];
+}
+
+function getInteriorTemplates() {
+  let custom = {};
+  try { custom = JSON.parse(localStorage.getItem(INTERIOR_TEMPLATE_CONFIG_KEY) || '{}') || {}; }
+  catch(e) { custom = {}; }
+  return { ...getDefaultInteriorTemplates(), ...custom };
+}
+
+function setInteriorTemplate(template) {
+  if (!template?.templateId) return;
+  let custom = {};
+  try { custom = JSON.parse(localStorage.getItem(INTERIOR_TEMPLATE_CONFIG_KEY) || '{}') || {}; }
+  catch(e) { custom = {}; }
+  custom[template.templateId] = template;
+  localStorage.setItem(INTERIOR_TEMPLATE_CONFIG_KEY, JSON.stringify(custom));
+  refreshInteriorTemplateAdminOptions();
+}
+
+function getInteriorTemplateFor(type, targetInteriorId = '') {
+  const templates = getInteriorTemplates();
+  const candidates = [
+    targetInteriorId ? targetInteriorId + '_template' : '',
+    type + '_default',
+    INTERIOR_TYPES[type] ? '' : 'custom_interior_default',
+    'training_dojo_default'
+  ].filter(Boolean);
+  return candidates.map(id => templates[id]).find(Boolean) || templates.training_dojo_default;
+}
+
+function refreshInteriorTemplateAdminOptions() {
+  const select = document.getElementById('interiorTemplateSelect');
+  if (!select) return;
+  const templates = Object.values(getInteriorTemplates());
+  const current = select.value || '';
+  select.innerHTML = '<option value="">Select room template</option>' +
+    templates.map(template => `<option value="${escapeHTML(template.templateId)}">${escapeHTML(template.name || template.templateId)}</option>`).join('');
+  select.value = templates.some(template => template.templateId === current) ? current : '';
+}
+
+function loadSelectedInteriorTemplateIntoAdmin() {
+  const template = getInteriorTemplates()[document.getElementById('interiorTemplateSelect')?.value || ''];
+  if (!template) return;
+  const set = (id, value) => { const el = document.getElementById(id); if (el) el.value = value || ''; };
+  set('interiorTemplateName', template.name || '');
+  set('interiorTemplateId', template.templateId || '');
+  set('interiorTemplateRoomType', template.roomType || '');
+  set('interiorTemplateStyle', template.style || '');
+  set('interiorTemplateFloor', template.defaultFloor || '');
+  set('interiorTemplateWall', template.defaultWall || '');
+  set('interiorTemplateAmbience', template.ambiencePath || '');
+}
+
+function readInteriorTemplateAdminSettings() {
+  const existing = getInteriorTemplates()[document.getElementById('interiorTemplateSelect')?.value || ''] || {};
+  const templateId = (document.getElementById('interiorTemplateId')?.value || existing.templateId || '').trim().replace(/\s+/g, '_').toLowerCase();
+  return {
+    ...existing,
+    templateId,
+    name: document.getElementById('interiorTemplateName')?.value?.trim() || templateId,
+    roomType: document.getElementById('interiorTemplateRoomType')?.value?.trim() || existing.roomType || 'custom',
+    style: document.getElementById('interiorTemplateStyle')?.value?.trim() || existing.style || 'dojo',
+    defaultFloor: document.getElementById('interiorTemplateFloor')?.value?.trim() || existing.defaultFloor || 'wood',
+    defaultWall: document.getElementById('interiorTemplateWall')?.value?.trim() || existing.defaultWall || 'dark plaster',
+    ambiencePath: document.getElementById('interiorTemplateAmbience')?.value?.trim() || '',
+    assetPlacements: Array.isArray(existing.assetPlacements) ? existing.assetPlacements : [],
+    displayPlacements: Array.isArray(existing.displayPlacements) ? existing.displayPlacements : [],
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function saveInteriorTemplateFromAdmin() {
+  const template = readInteriorTemplateAdminSettings();
+  if (!template.templateId) { showToast('Template ID required'); return; }
+  setInteriorTemplate(template);
+  const select = document.getElementById('interiorTemplateSelect');
+  if (select) select.value = template.templateId;
+  showToast('Interior template saved');
+}
+
+function duplicateSelectedInteriorTemplate() {
+  const template = getInteriorTemplates()[document.getElementById('interiorTemplateSelect')?.value || ''];
+  if (!template) { showToast('Select a template first'); return; }
+  const copy = JSON.parse(JSON.stringify(template));
+  copy.templateId = template.templateId + '_copy_' + Date.now();
+  copy.name = (template.name || template.templateId) + ' Copy';
+  setInteriorTemplate(copy);
+  const select = document.getElementById('interiorTemplateSelect');
+  if (select) select.value = copy.templateId;
+  loadSelectedInteriorTemplateIntoAdmin();
+  showToast('Template duplicated');
+}
+
+function resetSelectedInteriorTemplateToDefault() {
+  const id = document.getElementById('interiorTemplateSelect')?.value || '';
+  const defaults = getDefaultInteriorTemplates();
+  if (!id || !defaults[id]) { showToast('No default template for selection'); return; }
+  setInteriorTemplate(defaults[id]);
+  loadSelectedInteriorTemplateIntoAdmin();
+  showToast('Template reset to default');
+}
+
+function restoreDefaultInteriorTemplate() {
+  resetSelectedInteriorTemplateToDefault();
+}
+
+function addSelectedAssetToActiveTemplate() {
+  const asset = getInteriorAssetById(document.getElementById('interiorAssetSelect')?.value || '');
+  if (!asset) { showToast('Select an interior asset first'); return; }
+  let template = getInteriorTemplates()[document.getElementById('interiorTemplateSelect')?.value || ''];
+  if (!template) template = getInteriorTemplateFor(asset.roomType || 'custom');
+  const placement = {
+    assetId: asset.assetId,
+    modelUrl: asset.modelUrl,
+    label: asset.name || asset.assetId,
+    position: asset.defaultPosition || { x:0, y:INTERIOR_FLOOR_Y, z:0 },
+    rotation: asset.defaultRotation || { x:0, y:0, z:0 },
+    scale: asset.defaultScale || 1,
+    enabled: true
+  };
+  template = { ...template, assetPlacements:[...(template.assetPlacements || []), placement], updatedAt:new Date().toISOString() };
+  setInteriorTemplate(template);
+  showToast('Asset added to template');
+}
+
+function removeSelectedTemplateAssetPlacement() {
+  const templateId = document.getElementById('interiorTemplateSelect')?.value || '';
+  const assetId = document.getElementById('interiorAssetSelect')?.value || '';
+  const template = getInteriorTemplates()[templateId];
+  if (!template || !assetId) { showToast('Select template and asset first'); return; }
+  template.assetPlacements = (template.assetPlacements || []).filter(placement => placement.assetId !== assetId);
+  setInteriorTemplate(template);
+  showToast('Template asset placement removed');
 }
 
 function createInteriorEntrance(position, options = {}) {
@@ -16997,6 +17359,159 @@ function interactInteriorDisplay(display) {
   return true;
 }
 
+function createInteriorMissingAssetMarker(parent, placement, reason = 'missing') {
+  const marker = new BABYLON.TransformNode('interiorMissingAsset_' + (placement.assetId || Date.now()), scene);
+  marker.parent = parent;
+  const pos = placement.position || { x:0, y:INTERIOR_FLOOR_Y, z:0 };
+  marker.position = new BABYLON.Vector3(pos.x || 0, pos.y ?? INTERIOR_FLOOR_Y, pos.z || 0);
+  marker.metadata = { type:'interior_asset_placeholder', interiorRuntime:true, reason, assetId:placement.assetId || null, modelUrl:placement.modelUrl || '' };
+  const mat = makeInteriorMaterial('interiorMissingAssetMat_' + marker.name, new BABYLON.Color3(.85,.12,.08), .28, .72);
+  const box = BABYLON.MeshBuilder.CreateBox('interiorMissingAssetBox_' + marker.name, { width:1, height:1, depth:1 }, scene);
+  box.parent = marker;
+  box.position.y = .6;
+  box.material = mat;
+  box.isPickable = false;
+  box.freezeWorldMatrix();
+  return marker;
+}
+
+async function getInteriorAssetTemplateForUrl(modelUrl) {
+  if (!modelUrl) return null;
+  if (InteriorAssetCache.has(modelUrl)) return InteriorAssetCache.get(modelUrl);
+  const root = new BABYLON.TransformNode('interiorAssetCacheRoot_' + Math.abs(hashString(modelUrl)), scene);
+  root.position.set(9999, -999, 9999);
+  root.setEnabled(false);
+  try {
+    const result = await BABYLON.SceneLoader.ImportMeshAsync('', '', modelUrl, scene);
+    result.meshes.forEach(mesh => {
+      if (mesh === root) return;
+      mesh.parent = root;
+      mesh.isPickable = false;
+      mesh.receiveShadows = false;
+      if (mesh.material) {
+        mesh.material.maxSimultaneousLights = 4;
+        if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mesh.material);
+      }
+    });
+    InteriorAssetCache.set(modelUrl, root);
+    return root;
+  } catch(error) {
+    console.warn('Interior asset load failed:', modelUrl, error);
+    root.dispose(false, true);
+    InteriorAssetCache.set(modelUrl, null);
+    return null;
+  }
+}
+
+function hashString(value) {
+  let hash = 0;
+  String(value || '').split('').forEach(ch => { hash = ((hash << 5) - hash) + ch.charCodeAt(0); hash |= 0; });
+  return hash;
+}
+
+function applyInteriorPlacementTransform(root, placement = {}) {
+  const pos = placement.position || { x:0, y:INTERIOR_FLOOR_Y, z:0 };
+  const rot = placement.rotation || { x:0, y:0, z:0 };
+  const scale = placement.scale ?? placement.defaultScale ?? 1;
+  root.position = new BABYLON.Vector3(pos.x || 0, pos.y ?? INTERIOR_FLOOR_Y, pos.z || 0);
+  root.rotation = new BABYLON.Vector3(rot.x || 0, rot.y || 0, rot.z || 0);
+  if (typeof scale === 'number') root.scaling = new BABYLON.Vector3(scale, scale, scale);
+  else root.scaling = new BABYLON.Vector3(scale.x || 1, scale.y || 1, scale.z || 1);
+}
+
+async function renderInteriorAssetPlacement(parent, placement = {}, options = {}) {
+  if (placement.enabled === false) return null;
+  const asset = placement.assetId ? getInteriorAssetById(placement.assetId) : null;
+  const modelUrl = placement.modelUrl || asset?.modelUrl || '';
+  if (!modelUrl || asset?.enabled === false) return createInteriorMissingAssetMarker(parent, placement, 'disabled-or-missing-url');
+  const template = await getInteriorAssetTemplateForUrl(modelUrl);
+  if (!template) return createInteriorMissingAssetMarker(parent, placement, 'load-failed');
+  const clone = template.clone('interiorAssetPlacement_' + (placement.assetId || Math.abs(hashString(modelUrl))) + '_' + Date.now());
+  clone.parent = parent;
+  clone.setEnabled(true);
+  clone.metadata = {
+    type:'interior_asset_placement',
+    interiorRuntime:true,
+    assetId: placement.assetId || asset?.assetId || null,
+    modelUrl,
+    label: placement.label || asset?.name || ''
+  };
+  applyInteriorPlacementTransform(clone, {
+    ...placement,
+    position: placement.position || asset?.defaultPosition,
+    rotation: placement.rotation || asset?.defaultRotation,
+    scale: placement.scale || asset?.defaultScale || 1
+  });
+  clone.getChildMeshes?.(false).forEach(mesh => {
+    mesh.isPickable = options.pickable === true;
+    mesh.receiveShadows = false;
+    mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true, interiorAssetPlacement:true };
+    try { mesh.freezeWorldMatrix(); } catch(e) {}
+  });
+  return clone;
+}
+
+function renderInteriorTemplateDisplays(root, template, mats) {
+  (template.displayPlacements || []).forEach((display, index) => {
+    createInteriorDisplay(root, {
+      displayId: display.displayId || ('template_display_' + index),
+      label: display.label || 'Template Display',
+      actionType: display.actionType || 'showInfo',
+      url: display.url || '',
+      description: display.description || '',
+      enabled: display.enabled !== false,
+      position: display.position || { x:0, y:1.5, z:-4 },
+      rotation: display.rotation || { x:0, y:0, z:0 },
+      scaling: display.scaling || display.scale || { x:1, y:1, z:1 },
+      collectionKey: display.collectionKey || null,
+      tokenId: display.tokenId || null,
+      imageUrl: display.imageUrl || null,
+      gameId: display.gameId || null,
+      title: display.title || null
+    }, mats);
+  });
+}
+
+function renderInteriorTemplateAssets(root, template) {
+  const placements = (template.assetPlacements || []).filter(placement => placement && placement.enabled !== false);
+  root.metadata = { ...(root.metadata || {}), assetPlacementCount:placements.length };
+  placements.forEach(placement => {
+    renderInteriorAssetPlacement(root, placement).then(node => {
+      if (node && ActiveInterior?.root === root) ActiveInterior.loadedAssetNodes.push(node);
+    });
+  });
+}
+
+function testLoadSelectedInteriorAsset() {
+  if (!ActiveInterior?.root) { showToast('Enter an interior first'); return; }
+  const asset = getInteriorAssetById(document.getElementById('interiorAssetSelect')?.value || '') || readInteriorAssetAdminSettings();
+  if (!asset.modelUrl) { showToast('Asset model URL required'); return; }
+  const placement = {
+    assetId: asset.assetId,
+    modelUrl: asset.modelUrl,
+    label: asset.name,
+    position: asset.defaultPosition || { x:0, y:INTERIOR_FLOOR_Y, z:-2 },
+    rotation: asset.defaultRotation || { x:0, y:0, z:0 },
+    scale: asset.defaultScale || 1,
+    enabled: true
+  };
+  renderInteriorAssetPlacement(ActiveInterior.root, placement, { pickable:true }).then(node => {
+    if (node) {
+      node.metadata._interiorTestAsset = true;
+      _activeInteriorTestAssets.push(node);
+      showToast('Interior asset test loaded');
+    }
+  });
+}
+
+function removeInteriorTestAssets() {
+  _activeInteriorTestAssets.forEach(node => {
+    try { node.dispose(false, true); } catch(e) {}
+  });
+  _activeInteriorTestAssets = [];
+  showToast('Interior test assets removed');
+}
+
 function buildInteriorProps(root, type, mats) {
   const accent = mats.accent;
   const def = getInteriorDefinition(type);
@@ -17055,7 +17570,8 @@ function buildInteriorRoom(entrance) {
   const style = def.style || 'dojo';
   const root = new BABYLON.TransformNode('activeInteriorRoot', scene);
   const targetInteriorId = entrance?.metadata?.targetInteriorId || type;
-  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, floorY:INTERIOR_FLOOR_Y };
+  const template = getInteriorTemplateFor(type, targetInteriorId);
+  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, templateId:template?.templateId || '', floorY:INTERIOR_FLOOR_Y };
 
   const floorColor = style === 'gallery' ? new BABYLON.Color3(.24,.23,.21)
     : style === 'theater' || style === 'arcade' ? new BABYLON.Color3(.05,.04,.08)
@@ -17090,6 +17606,7 @@ function buildInteriorRoom(entrance) {
   exitDoor.unfreezeWorldMatrix();
 
   buildInteriorProps(root, type, { floor:floorMat, wall:wallMat, wood:woodMat, accent:accentMat, exit:exitMat });
+  renderInteriorTemplateDisplays(root, template || {}, { accent:accentMat });
 
   const light = new BABYLON.HemisphericLight('activeInteriorLight', new BABYLON.Vector3(0, 1, 0), scene);
   light.intensity = .78;
@@ -17097,6 +17614,7 @@ function buildInteriorRoom(entrance) {
   light.parent = root;
 
   getInteriorSavedDisplayConfigs(targetInteriorId).forEach(displayConfig => createInteriorDisplay(root, displayConfig, { accent:accentMat }));
+  renderInteriorTemplateAssets(root, template || {});
   if (!_interiorDisplaysVisible) getInteriorDisplayRoots().forEach(display => display.setEnabled(false));
 
   root.getChildMeshes?.(false).forEach(mesh => {
@@ -17142,6 +17660,9 @@ function enterInterior(entrance) {
       interiorType: type,
       targetInteriorId: entrance.metadata.targetInteriorId || '',
       floorY: INTERIOR_FLOOR_Y,
+      templateId: root.metadata?.templateId || '',
+      assetPlacementCount: root.metadata?.assetPlacementCount || 0,
+      loadedAssetNodes: [],
       musicPath: getInteriorDefinition(type).musicPath || entrance.metadata.interiorDefinition?.musicPath || '',
       previousVillageId: CURRENT_VILLAGE_ID
     };
@@ -17295,7 +17816,20 @@ Object.assign(window, {
   addInteriorDisplayFromAdmin,
   applySelectedInteriorDisplaySettings,
   deleteSelectedInteriorDisplay,
-  toggleInteriorDisplayVisibility
+  toggleInteriorDisplayVisibility,
+  loadSelectedInteriorAssetIntoAdmin,
+  saveInteriorAssetFromAdmin,
+  deleteSelectedInteriorAsset,
+  previewSelectedInteriorAssetPath,
+  testLoadSelectedInteriorAsset,
+  removeInteriorTestAssets,
+  loadSelectedInteriorTemplateIntoAdmin,
+  saveInteriorTemplateFromAdmin,
+  duplicateSelectedInteriorTemplate,
+  resetSelectedInteriorTemplateToDefault,
+  addSelectedAssetToActiveTemplate,
+  removeSelectedTemplateAssetPlacement,
+  restoreDefaultInteriorTemplate
 });
 
 function saveQuestDraft() {
@@ -18513,6 +19047,19 @@ window.addInteriorDisplayFromAdmin = addInteriorDisplayFromAdmin;
 window.applySelectedInteriorDisplaySettings = applySelectedInteriorDisplaySettings;
 window.deleteSelectedInteriorDisplay = deleteSelectedInteriorDisplay;
 window.toggleInteriorDisplayVisibility = toggleInteriorDisplayVisibility;
+window.loadSelectedInteriorAssetIntoAdmin = loadSelectedInteriorAssetIntoAdmin;
+window.saveInteriorAssetFromAdmin = saveInteriorAssetFromAdmin;
+window.deleteSelectedInteriorAsset = deleteSelectedInteriorAsset;
+window.previewSelectedInteriorAssetPath = previewSelectedInteriorAssetPath;
+window.testLoadSelectedInteriorAsset = testLoadSelectedInteriorAsset;
+window.removeInteriorTestAssets = removeInteriorTestAssets;
+window.loadSelectedInteriorTemplateIntoAdmin = loadSelectedInteriorTemplateIntoAdmin;
+window.saveInteriorTemplateFromAdmin = saveInteriorTemplateFromAdmin;
+window.duplicateSelectedInteriorTemplate = duplicateSelectedInteriorTemplate;
+window.resetSelectedInteriorTemplateToDefault = resetSelectedInteriorTemplateToDefault;
+window.addSelectedAssetToActiveTemplate = addSelectedAssetToActiveTemplate;
+window.removeSelectedTemplateAssetPlacement = removeSelectedTemplateAssetPlacement;
+window.restoreDefaultInteriorTemplate = restoreDefaultInteriorTemplate;
 window.saveQuestDraft = saveQuestDraft;
 window.placeCollectibleFromAdmin = placeCollectibleFromAdmin;
 window.spawnTestCollectibles = spawnTestCollectibles;
