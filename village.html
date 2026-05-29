@@ -715,6 +715,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     </label>
     <label class="admin-field">Requirement Type
       <select id="badgeBuilderRequirementType" class="admin-select">
+        <option value="progress">progress</option>
         <option value="xp">xp</option>
         <option value="quest">quest</option>
         <option value="village">village</option>
@@ -737,6 +738,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="badge-image-help">Permanent upload saves to /assets/badges/ using a safe badgeId filename. PNG/WebP preferred, square 512x512 preferred, 1024x1024 max, transparent background preferred, under 500KB if possible.</div>
     <div class="journal-card" style="margin:7px 0"><strong>Preview</strong><span id="badgeBuilderPreview">Select a badge.</span></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="ctrl-btn" onclick="createNewBadgeFromAdmin()">Create New Badge</button>
+      <button class="ctrl-btn" onclick="duplicateSelectedBadgeFromAdmin()">Duplicate Selected Badge</button>
+      <button class="ctrl-btn danger full" style="grid-column:1/-1" onclick="archiveSelectedBadgeFromAdmin()">Archive Selected Badge</button>
       <button class="ctrl-btn" onclick="saveBadgeBuilderConfig()">Save Badge Config</button>
       <button class="ctrl-btn" onclick="removeBadgeLocalPreviewImage()">Remove Local Preview Image</button>
       <button class="ctrl-btn" onclick="resetBadgeBuilderImage()">Reset Image Path</button>
@@ -754,6 +758,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="addProgressionDebugXP(100)">+100</button>
       <button class="ctrl-btn" onclick="testSelectedBadgePopup()">Test Badge Popup</button>
     </div>
+    <details class="journal-card full" style="margin-top:8px">
+      <summary><strong>Archived Badges</strong></summary>
+      <div class="admin-note">Archived badges stay editable later, but do not appear in the Journal, count toward progression, or unlock.</div>
+      <div id="archivedBadgeList" class="badge-archive-list">No archived badges.</div>
+    </details>
   </div>
   <hr class="ap-divider">
   <div class="ap-section">Weather</div>
@@ -1150,17 +1159,46 @@ function loadBadgeConfig() {
   catch (_) { return {}; }
 }
 let BadgeConfig = loadBadgeConfig();
-function getBadgeDefinitions() {
-  return DEFAULT_BADGE_DEFINITIONS.map(def => ({ ...def, ...(BadgeConfig[def.badgeId] || {}) }));
+function saveBadgeConfigState() {
+  localStorage.setItem(BADGE_CONFIG_KEY, JSON.stringify(BadgeConfig));
+}
+function getDefaultBadgeDefinitionById(id) {
+  return DEFAULT_BADGE_DEFINITIONS.find(badge => badge.badgeId === id) || null;
+}
+function isProgressBadgeType(type) {
+  return type === 'xp' || type === 'progress';
+}
+function getBadgeDefinitions(options = {}) {
+  const includeArchived = !!options.includeArchived;
+  const defaultIds = new Set(DEFAULT_BADGE_DEFINITIONS.map(badge => badge.badgeId));
+  const mergedDefaults = DEFAULT_BADGE_DEFINITIONS
+    .map(def => ({ ...def, ...(BadgeConfig[def.badgeId] || {}) }))
+    .filter(badge => !badge.deleted);
+  const customBadges = Object.entries(BadgeConfig)
+    .filter(([badgeId, badge]) => !defaultIds.has(badgeId) && badge && !badge.deleted)
+    .map(([badgeId, badge]) => ({
+      badgeId,
+      name: 'New Badge',
+      category: 'explorer',
+      rarity: 'Common',
+      requirementType: 'progress',
+      requirementValue: 10,
+      requirementText: 'Add requirement text',
+      description: 'Add description',
+      imageUrl: '',
+      custom: true,
+      ...badge
+    }));
+  return [...mergedDefaults, ...customBadges].filter(badge => includeArchived || !badge.archived);
 }
 function getBadgeImageSource(badge) {
   return badge.localImageDataUrl || badge.imageUrl || '';
 }
-function getBadgeDefinitionByName(name) {
-  return getBadgeDefinitions().find(badge => badge.name === name) || null;
+function getBadgeDefinitionByName(name, options = {}) {
+  return getBadgeDefinitions(options).find(badge => badge.name === name) || null;
 }
-function getBadgeDefinitionById(id) {
-  return getBadgeDefinitions().find(badge => badge.badgeId === id) || null;
+function getBadgeDefinitionById(id, options = {}) {
+  return getBadgeDefinitions(options).find(badge => badge.badgeId === id) || null;
 }
 function getProgressionBadgesByCategory() {
   return getBadgeDefinitions().reduce((acc, badge) => {
@@ -1235,8 +1273,21 @@ function getExplorerBadgeInfo() {
   const xp = Number(ProgressionState.xp) || 0;
   const level = Math.max(1, Math.floor(xp / 100) + 1);
   const explorerBadges = getBadgeDefinitions()
-    .filter(badge => badge.category === 'explorer' && badge.requirementType === 'xp')
+    .filter(badge => badge.category === 'explorer' && isProgressBadgeType(badge.requirementType))
     .sort((a, b) => (a.requirementValue || 0) - (b.requirementValue || 0));
+  if (!explorerBadges.length) {
+    return {
+      level,
+      currentBadge: 'No Active Badge',
+      progressPercent: 0,
+      nextBadge: 'No Active Badge',
+      currentThreshold: 0,
+      nextThreshold: 0,
+      progressCurrent: 0,
+      progressRequired: 1,
+      totalProgress: xp
+    };
+  }
   const badgeIndex = Math.max(0, explorerBadges.findLastIndex(badge => xp >= (Number(badge.requirementValue) || 0)));
   const current = explorerBadges[Math.min(explorerBadges.length - 1, badgeIndex)] || explorerBadges[0];
   const next = explorerBadges[Math.min(explorerBadges.length - 1, badgeIndex + 1)] || current;
@@ -1263,7 +1314,7 @@ function getBadgeMeta(name) {
     category: meta.category || 'explorer',
     categoryLabel: PROGRESSION_BADGE_CATEGORIES[meta.category || 'explorer'] || 'Explorer',
     requirement: meta.requirementText || 'Future milestone',
-    threshold: meta.requirementType === 'xp' && Number.isFinite(Number(meta.requirementValue)) ? Number(meta.requirementValue) : null,
+    threshold: isProgressBadgeType(meta.requirementType) && Number.isFinite(Number(meta.requirementValue)) ? Number(meta.requirementValue) : null,
     description: meta.description || 'A new mark has been added to your Rebel journal.',
     badgeId: meta.badgeId || name,
     rarity: meta.rarity || 'Common',
@@ -1317,7 +1368,7 @@ function awardBadge(name, silent = false) {
 
 function awardEarnedExplorerBadges(silent = false) {
   const xp = Number(ProgressionState.xp) || 0;
-  getBadgeDefinitions().filter(badge => badge.requirementType === 'xp').forEach(badge => {
+  getBadgeDefinitions().filter(badge => isProgressBadgeType(badge.requirementType)).forEach(badge => {
     const threshold = Number(badge.requirementValue);
     if (Number.isFinite(threshold) && xp >= threshold) awardBadge(badge.name, silent);
   });
@@ -1390,7 +1441,7 @@ function escapeHTML(value) {
 }
 
 function getBadgeProgressValue(badge) {
-  if (badge.requirementType === 'xp') return Number(ProgressionState.xp) || 0;
+  if (isProgressBadgeType(badge.requirementType)) return Number(ProgressionState.xp) || 0;
   if (badge.requirementType === 'quest') return ProgressionState.completedQuests.includes(badge.requirementValue) ? 1 : 0;
   if (badge.requirementType === 'village') return ProgressionState.villagesVisited.includes(badge.requirementValue) ? 1 : 0;
   if (badge.requirementType === 'ecosystem') return ProgressionState.ecosystemActions?.[badge.requirementValue] ? 1 : 0;
@@ -1418,7 +1469,7 @@ function renderBadgeCard(badge) {
   const name = hiddenLocked ? 'Unknown Badge' : badge.name;
   const desc = hiddenLocked ? 'A secret waits somewhere in the roots.' : badge.description;
   const req = unlocked ? 'Unlocked' : (hiddenLocked ? 'Hidden discovery' : badge.requirementText);
-  const progress = badge.requirementType === 'xp' && !unlocked
+  const progress = isProgressBadgeType(badge.requirementType) && !unlocked
     ? `<br>${Math.min(getBadgeProgressValue(badge), Number(badge.requirementValue) || 0)} / ${badge.requirementValue} progress`
     : '';
   const rarityClass = `rarity-${String(badge.rarity || 'Common').toLowerCase()}`;
@@ -1473,6 +1524,8 @@ function renderProgressionJournal() {
   const ecosystemCount = Object.values(ProgressionState.ecosystemActions || {}).filter(Boolean).length;
   const collectibleCounts = getCollectibleCountsByType();
   const totalCollectibles = ProgressionState.collectiblesFound.length;
+  const activeBadgeNames = new Set(getBadgeDefinitions().map(badge => badge.name));
+  const earnedActiveBadges = (ProgressionState.badges || []).filter(name => activeBadgeNames.has(name));
   const nextText = info.nextBadge === info.currentBadge
     ? `Top Badge: ${info.currentBadge}`
     : `${info.nextBadge} - ${info.progressCurrent} / ${info.progressRequired} progress`;
@@ -1517,7 +1570,7 @@ function renderProgressionJournal() {
     ['Collectibles Found', totalCollectibles],
     ['Secrets Found', ProgressionState.secretsFound.length],
     ['Ecosystem Actions', ecosystemCount],
-    ['Badges Earned', ProgressionState.badges.length ? ProgressionState.badges.length : 'None yet']
+    ['Badges Earned', earnedActiveBadges.length ? earnedActiveBadges.length : 'None yet']
   ];
   grid.innerHTML = cards.map(([label, value]) => `<div class="journal-card"><strong>${label}</strong><span>${value}</span></div>`).join('');
 }
@@ -1545,6 +1598,58 @@ function resetLocalProgression() {
   showToast('Local progression reset');
 }
 
+function makeSafeBadgeId(value) {
+  const safe = String(value || 'new-badge')
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return safe || 'new-badge';
+}
+
+function getUniqueBadgeId(base) {
+  const existing = new Set(getBadgeDefinitions({ includeArchived: true }).map(badge => badge.badgeId));
+  Object.keys(BadgeConfig || {}).forEach(id => existing.add(id));
+  const root = makeSafeBadgeId(base);
+  if (!existing.has(root)) return root;
+  let index = 2;
+  while (existing.has(`${root}-${index}`)) index += 1;
+  return `${root}-${index}`;
+}
+
+function setBadgeBuilderSelected(id) {
+  const select = document.getElementById('badgeBuilderSelect');
+  if (select && id) select.value = id;
+}
+
+function getSelectedBadgeBuilderBadge(options = {}) {
+  return getBadgeDefinitionById(document.getElementById('badgeBuilderSelect')?.value, options);
+}
+
+function removeBadgeFromProgressionState(badge) {
+  if (!badge) return;
+  ProgressionState.badges = (ProgressionState.badges || []).filter(name => name !== badge.name);
+  saveProgressionState();
+}
+
+function renderArchivedBadgeList() {
+  const target = document.getElementById('archivedBadgeList');
+  if (!target) return;
+  const archived = getBadgeDefinitions({ includeArchived: true }).filter(badge => badge.archived && !badge.deleted);
+  if (!archived.length) {
+    target.innerHTML = 'No archived badges.';
+    return;
+  }
+  target.innerHTML = archived.map(badge => `<div class="journal-row">
+    <b>${escapeHTML(badge.name)}</b><br>
+    ${escapeHTML(PROGRESSION_BADGE_CATEGORIES[badge.category] || badge.category || 'Badge')} - ${escapeHTML(badge.rarity || 'Common')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+      <button class="ctrl-btn" onclick="restoreArchivedBadge('${escapeHTML(badge.badgeId)}')">Restore Badge</button>
+      <button class="ctrl-btn danger" onclick="permanentlyDeleteArchivedBadge('${escapeHTML(badge.badgeId)}')">Permanently Delete</button>
+    </div>
+  </div>`).join('');
+}
+
 function refreshBadgeBuilderOptions() {
   const select = document.getElementById('badgeBuilderSelect');
   if (!select) return;
@@ -1553,11 +1658,12 @@ function refreshBadgeBuilderOptions() {
   if (current) select.value = current;
   if (!select.value && select.options.length) select.value = select.options[0].value;
   loadBadgeBuilderSelection();
+  renderArchivedBadgeList();
 }
 
 function loadBadgeBuilderSelection() {
   const id = document.getElementById('badgeBuilderSelect')?.value;
-  const badge = getBadgeDefinitionById(id);
+  const badge = getBadgeDefinitionById(id, { includeArchived: true });
   if (!badge) return;
   const setValue = (fieldId, value) => {
     const field = document.getElementById(fieldId);
@@ -1566,7 +1672,7 @@ function loadBadgeBuilderSelection() {
   setValue('badgeBuilderName', badge.name);
   setValue('badgeBuilderCategory', badge.category);
   setValue('badgeBuilderRarity', badge.rarity || 'Common');
-  setValue('badgeBuilderRequirementType', badge.requirementType || 'xp');
+  setValue('badgeBuilderRequirementType', badge.requirementType || 'progress');
   setValue('badgeBuilderRequirementValue', badge.requirementValue ?? '');
   setValue('badgeBuilderDescription', badge.description);
   setValue('badgeBuilderRequirement', badge.requirementText);
@@ -1576,7 +1682,7 @@ function loadBadgeBuilderSelection() {
 
 function previewBadgeBuilderImage() {
   const id = document.getElementById('badgeBuilderSelect')?.value;
-  const badge = getBadgeDefinitionById(id);
+  const badge = getBadgeDefinitionById(id, { includeArchived: true });
   const preview = document.getElementById('badgeBuilderPreview');
   if (!badge || !preview) return;
   const imageUrl = document.getElementById('badgeBuilderImageUrl')?.value || '';
@@ -1595,7 +1701,7 @@ function assignBadgeLocalImageDataUrl(dataUrl) {
   const id = document.getElementById('badgeBuilderSelect')?.value;
   if (!id || !dataUrl) return;
   BadgeConfig[id] = { ...(BadgeConfig[id] || {}), localImageDataUrl: dataUrl };
-  localStorage.setItem(BADGE_CONFIG_KEY, JSON.stringify(BadgeConfig));
+  saveBadgeConfigState();
   previewBadgeBuilderImage();
   if (activeJournalTab === 'badges') renderProgressionJournal();
   showToast('Local badge preview image assigned');
@@ -1621,10 +1727,6 @@ function handleBadgeImageDrop(event) {
   event.preventDefault();
   event.currentTarget.classList.remove('dragover');
   readBadgeImageFile(event.dataTransfer?.files?.[0]);
-}
-
-function getSelectedBadgeBuilderBadge() {
-  return getBadgeDefinitionById(document.getElementById('badgeBuilderSelect')?.value);
 }
 
 function getBadgePermanentUploadFileName(file, badge) {
@@ -1709,9 +1811,12 @@ function handlePermanentBadgeImageDrop(event) {
 
 function saveBadgeBuilderConfig() {
   const id = document.getElementById('badgeBuilderSelect')?.value;
-  const base = DEFAULT_BADGE_DEFINITIONS.find(badge => badge.badgeId === id);
+  const base = getBadgeDefinitionById(id, { includeArchived: true });
   if (!base) return;
+  const previous = BadgeConfig[id] || {};
   BadgeConfig[id] = {
+    custom: previous.custom || !getDefaultBadgeDefinitionById(id),
+    archived: !!previous.archived,
     name: document.getElementById('badgeBuilderName')?.value || base.name,
     category: document.getElementById('badgeBuilderCategory')?.value || base.category,
     rarity: document.getElementById('badgeBuilderRarity')?.value || base.rarity,
@@ -1720,10 +1825,13 @@ function saveBadgeBuilderConfig() {
     description: document.getElementById('badgeBuilderDescription')?.value || base.description,
     requirementText: document.getElementById('badgeBuilderRequirement')?.value || base.requirementText,
     imageUrl: document.getElementById('badgeBuilderImageUrl')?.value || '',
-    localImageDataUrl: BadgeConfig[id]?.localImageDataUrl || ''
+    localImageDataUrl: previous.localImageDataUrl || '',
+    hidden: !!base.hidden
   };
-  localStorage.setItem(BADGE_CONFIG_KEY, JSON.stringify(BadgeConfig));
+  saveBadgeConfigState();
   refreshBadgeBuilderOptions();
+  setBadgeBuilderSelected(id);
+  loadBadgeBuilderSelection();
   updateProgressionHud();
   showToast('Badge config saved locally');
 }
@@ -1738,7 +1846,7 @@ function removeBadgeLocalPreviewImage(showMessage = true) {
   const id = document.getElementById('badgeBuilderSelect')?.value;
   if (!id) return;
   if (BadgeConfig[id]) delete BadgeConfig[id].localImageDataUrl;
-  localStorage.setItem(BADGE_CONFIG_KEY, JSON.stringify(BadgeConfig));
+  saveBadgeConfigState();
   previewBadgeBuilderImage();
   if (activeJournalTab === 'badges') renderProgressionJournal();
   if (showMessage) showToast('Local preview image removed');
@@ -1760,6 +1868,121 @@ function assignLastUploadedBadgeImage() {
   saveBadgeBuilderConfig();
   previewBadgeBuilderImage();
   showToast('Uploaded image assigned');
+}
+
+async function deleteBadgeImagePath(imageUrl) {
+  const response = await fetch('/api/badge-image', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'delete', path: imageUrl })
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.ok) {
+    throw new Error(result.error || 'Badge image delete failed');
+  }
+  return result;
+}
+
+function createNewBadgeFromAdmin() {
+  const badgeId = getUniqueBadgeId('new-badge');
+  BadgeConfig[badgeId] = {
+    custom: true,
+    name: 'New Badge',
+    category: 'explorer',
+    rarity: 'Common',
+    requirementType: 'progress',
+    requirementValue: 10,
+    requirementText: 'Add requirement text',
+    description: 'Add description',
+    imageUrl: '',
+    hidden: false
+  };
+  saveBadgeConfigState();
+  refreshBadgeBuilderOptions();
+  setBadgeBuilderSelected(badgeId);
+  loadBadgeBuilderSelection();
+  showToast('New badge created');
+}
+
+function duplicateSelectedBadgeFromAdmin() {
+  const badge = getSelectedBadgeBuilderBadge({ includeArchived: true });
+  if (!badge) return;
+  const badgeId = getUniqueBadgeId(`${badge.badgeId}-copy`);
+  BadgeConfig[badgeId] = {
+    custom: true,
+    name: `${badge.name || 'Badge'} Copy`,
+    category: badge.category || 'explorer',
+    rarity: badge.rarity || 'Common',
+    requirementType: badge.requirementType || 'progress',
+    requirementValue: badge.requirementValue ?? 10,
+    requirementText: badge.requirementText || 'Add requirement text',
+    description: badge.description || 'Add description',
+    imageUrl: badge.imageUrl || '',
+    localImageDataUrl: badge.localImageDataUrl || '',
+    hidden: !!badge.hidden
+  };
+  saveBadgeConfigState();
+  refreshBadgeBuilderOptions();
+  setBadgeBuilderSelected(badgeId);
+  loadBadgeBuilderSelection();
+  showToast('Badge duplicated');
+}
+
+function archiveSelectedBadgeFromAdmin() {
+  const badge = getSelectedBadgeBuilderBadge({ includeArchived: true });
+  if (!badge) return;
+  const ok = window.confirm(`Archive "${badge.name}"? It will be hidden from the Journal and ignored by progression until restored.`);
+  if (!ok) return;
+  BadgeConfig[badge.badgeId] = { ...(BadgeConfig[badge.badgeId] || badge), archived: true, deleted: false };
+  removeBadgeFromProgressionState(badge);
+  saveBadgeConfigState();
+  refreshBadgeBuilderOptions();
+  showToast('Badge archived');
+}
+
+function restoreArchivedBadge(badgeId) {
+  const badge = getBadgeDefinitionById(badgeId, { includeArchived: true });
+  if (!badge || !badge.archived) return;
+  BadgeConfig[badgeId] = { ...(BadgeConfig[badgeId] || badge), archived: false, deleted: false };
+  saveBadgeConfigState();
+  refreshBadgeBuilderOptions();
+  setBadgeBuilderSelected(badgeId);
+  loadBadgeBuilderSelection();
+  showToast('Badge restored');
+}
+
+async function permanentlyDeleteArchivedBadge(badgeId) {
+  const badge = getBadgeDefinitionById(badgeId, { includeArchived: true });
+  if (!badge || !badge.archived) {
+    showToast('Archive the badge before permanently deleting it');
+    return;
+  }
+  const ok = window.confirm(`Permanently delete "${badge.name}" from local badge config? This cannot be undone.`);
+  if (!ok) return;
+  if (String(badge.imageUrl || '').startsWith('/assets/badges/')) {
+    const deleteImage = window.confirm('Also delete the uploaded badge image from /assets/badges/?');
+    if (deleteImage) {
+      showToast('Deleting badge image...', 30000);
+      try {
+        await deleteBadgeImagePath(badge.imageUrl);
+      } catch (err) {
+        showToast('Badge image delete failed: ' + (err.message || 'try again'), 9000);
+        return;
+      }
+    }
+  }
+  if (getDefaultBadgeDefinitionById(badgeId)) {
+    BadgeConfig[badgeId] = { ...(BadgeConfig[badgeId] || {}), archived: true, deleted: true };
+  } else {
+    delete BadgeConfig[badgeId];
+  }
+  removeBadgeFromProgressionState(badge);
+  saveBadgeConfigState();
+  refreshBadgeBuilderOptions();
+  updateProgressionHud();
+  if (activeJournalTab === 'badges') renderProgressionJournal();
+  showToast('Badge permanently deleted');
 }
 
 async function deleteUploadedBadgeImage() {
@@ -1785,16 +2008,7 @@ async function deleteUploadedBadgeImage() {
 
   showToast('Deleting badge image...', 30000);
   try {
-    const response = await fetch('/api/badge-image', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', path: imageUrl })
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || !result.ok) {
-      throw new Error(result.error || 'Badge image delete failed');
-    }
+    await deleteBadgeImagePath(imageUrl);
     if (field) field.value = '';
     removeBadgeLocalPreviewImage(false);
     saveBadgeBuilderConfig();
@@ -16213,6 +16427,11 @@ window.removeBadgeLocalPreviewImage = removeBadgeLocalPreviewImage;
 window.clearBadgeBuilderImage = clearBadgeBuilderImage;
 window.assignLastUploadedBadgeImage = assignLastUploadedBadgeImage;
 window.deleteUploadedBadgeImage = deleteUploadedBadgeImage;
+window.createNewBadgeFromAdmin = createNewBadgeFromAdmin;
+window.duplicateSelectedBadgeFromAdmin = duplicateSelectedBadgeFromAdmin;
+window.archiveSelectedBadgeFromAdmin = archiveSelectedBadgeFromAdmin;
+window.restoreArchivedBadge = restoreArchivedBadge;
+window.permanentlyDeleteArchivedBadge = permanentlyDeleteArchivedBadge;
 window.unlockSelectedBadgeFromAdmin = unlockSelectedBadgeFromAdmin;
 window.lockSelectedBadgeFromAdmin = lockSelectedBadgeFromAdmin;
 window.addProgressionDebugXP = addProgressionDebugXP;
