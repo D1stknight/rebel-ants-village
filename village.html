@@ -2656,7 +2656,13 @@ function getPerfNodeType(node) {
 
 function isPerformanceStaticRoot(root) {
   if (!root || root.isDisposed?.()) return false;
-  if (root === selectedObject || root.metadata?.isPickProxy || root.metadata?.isAdminPlacementMarker) return false;
+  if (
+    root === selectedObject ||
+    root.metadata?._editorActiveTransform === true ||
+    root.getDescendants?.(false)?.some?.(node => node?.metadata?._editorActiveTransform === true) ||
+    root.metadata?.isPickProxy ||
+    root.metadata?.isAdminPlacementMarker
+  ) return false;
   const type = getPerfNodeType(root);
   if (!type || PERF_DYNAMIC_TYPES.has(type)) return false;
   if (root.metadata?.editorHidden === true || root.metadata?._perfNeverFreeze === true) return false;
@@ -2667,6 +2673,10 @@ function isPerformanceStaticRoot(root) {
 function forEachRootRenderNode(root, callback) {
   if (!root) return;
   callback(root);
+  if (root.getDescendants) {
+    root.getDescendants(false).forEach(callback);
+    return;
+  }
   root.getChildMeshes?.(false).forEach(callback);
   root.getChildTransformNodes?.(false).forEach(callback);
 }
@@ -2776,10 +2786,9 @@ function getCollisionProxyLabel(kind) {
 
 function setSelectedEditableObject(node) {
   if (!node) return;
-  if (selectedObject && selectedObject !== node) freezeStaticRoot(selectedObject);
+  if (selectedObject && selectedObject !== node) releaseObjectAfterEditing(selectedObject);
   selectedObject = node;
-  unfreezeStaticRoot(selectedObject);
-  ensureSelectedNodeEditableForGizmo(selectedObject);
+  prepareObjectForEditing(selectedObject);
   if (terrainSculptBrushActive && selectedObject?.metadata?.type !== 'terrain_stamp') {
     setTerrainSculptBrushActive(false);
   }
@@ -2789,7 +2798,7 @@ function setSelectedEditableObject(node) {
 }
 
 function deselectAdminSelection() {
-  if (selectedObject) freezeStaticRoot(selectedObject);
+  if (selectedObject) releaseObjectAfterEditing(selectedObject);
   clearAdminPlacement();
   setTerrainSculptBrushActive(false);
   selectedObject = null;
@@ -2808,20 +2817,45 @@ function deselectAdminSelection() {
 }
 
 function ensureSelectedNodeEditableForGizmo(node) {
+  return prepareObjectForEditing(node);
+}
+
+function prepareObjectForEditing(node) {
   if (!node || node.isDisposed?.()) return null;
   unfreezeStaticRoot(node);
-  node.setEnabled?.(true);
-  node.isPickable = true;
-  node.computeWorldMatrix?.(true);
-  node.getChildMeshes?.(false).forEach(mesh => {
-    if (!mesh || mesh.isDisposed?.()) return;
-    if (mesh.metadata?.editorLocked === true) return;
-    if (mesh.metadata?.isAdminPlacementMarker) return;
-    mesh.isPickable = true;
-    mesh._editRoot = mesh._editRoot || node;
-    mesh.computeWorldMatrix?.(true);
+  forEachRootRenderNode(node, child => {
+    if (!child || child.isDisposed?.()) return;
+    child.metadata = { ...(child.metadata || {}), _editorActiveTransform: true };
+    if (typeof child.unfreezeWorldMatrix === 'function' && child._worldMatrixFrozen) child.unfreezeWorldMatrix();
+    child.setEnabled?.(true);
+    if (child.metadata?.editorLocked !== true && !child.metadata?.isAdminPlacementMarker) child.isPickable = true;
+    if (child !== node && child.getClassName?.() !== 'TransformNode') child._editRoot = child._editRoot || node;
+    child.computeWorldMatrix?.(true);
   });
+  refreshEditedObject(node);
   return node;
+}
+
+function refreshEditedObject(node) {
+  if (!node || node.isDisposed?.()) return;
+  forEachRootRenderNode(node, child => {
+    if (!child || child.isDisposed?.()) return;
+    if (typeof child.unfreezeWorldMatrix === 'function' && child._worldMatrixFrozen) child.unfreezeWorldMatrix();
+    child.computeWorldMatrix?.(true);
+    child.refreshBoundingInfo?.(true);
+  });
+}
+
+function releaseObjectAfterEditing(node) {
+  if (!node || node.isDisposed?.()) return;
+  refreshEditedObject(node);
+  forEachRootRenderNode(node, child => {
+    if (child?.metadata?._editorActiveTransform) child.metadata._editorActiveTransform = false;
+  });
+  const activeSelection = selectedObject;
+  if (selectedObject === node) selectedObject = null;
+  freezeStaticRoot(node);
+  selectedObject = activeSelection;
 }
 
 function disableAllGizmos() {
@@ -5861,6 +5895,7 @@ function softSnapSelectedObject(){
   if (!selectedObject) return;
   const objType = selectedObject.metadata && selectedObject.metadata.type;
   if (objType === 'terrain_stamp') return;
+  prepareObjectForEditing(selectedObject);
 
   // Rotation snap only — no X/Z grid snapping
   if (selectedObject.rotation && objType !== 'collision_proxy') {
@@ -5871,6 +5906,7 @@ function softSnapSelectedObject(){
   }
 
   snapSelectedObjectToGround();
+  refreshEditedObject(selectedObject);
 }
 
 function snapSelectedObjectToGround(){
@@ -5928,6 +5964,8 @@ function snapSelectedObjectToGround(){
           selectedObject.metadata._lastProxyPos = selectedObject.position.clone();
         }
 
+        refreshEditedObject(selectedObject);
+        refreshEditedObject(clone);
         return;
       }
     }
@@ -5940,6 +5978,7 @@ function snapSelectedObjectToGround(){
   // If asset has explicit groundOffset, use it directly — don't use BB
   if (groundOffset !== null) {
     selectedObject.position.y = hit.pickedPoint.y + groundOffset;
+    refreshEditedObject(selectedObject);
     return;
   }
 
@@ -5955,10 +5994,12 @@ function snapSelectedObjectToGround(){
     });
     if (isFinite(minY)) {
       selectedObject.position.y += (hit.pickedPoint.y - minY);
+      refreshEditedObject(selectedObject);
       return;
     }
   }
   selectedObject.position.y = hit.pickedPoint.y;
+  refreshEditedObject(selectedObject);
 }
 // ── LIGHTING ────────────────────────────────
 const sun=new BABYLON.DirectionalLight("sun",new BABYLON.Vector3(-.9,-.45,.3),scene);
@@ -12212,6 +12253,7 @@ window.addEventListener('pointermove', (e) => {
   if (adminManualProxyRotateDrag && selectedObject.metadata?.type === 'collision_proxy') {
     const dx = e.clientX - adminManualProxyRotateDrag.startX;
     selectedObject.rotation.y = adminManualProxyRotateDrag.startRotationY + dx * 0.012;
+    refreshEditedObject(selectedObject);
     rebuildVillageCollisionBlockers();
     renderSelectedWalkSurfaceGuide();
     return;
@@ -12219,6 +12261,7 @@ window.addEventListener('pointermove', (e) => {
   if (adminManualNPCRotateDrag && selectedObject.metadata?.type === 'npc') {
     const dx = e.clientX - adminManualNPCRotateDrag.startX;
     selectedObject.rotation.y = adminManualNPCRotateDrag.startRotationY + dx * 0.012;
+    refreshEditedObject(selectedObject);
     updateNPCAdminRotation(selectedObject);
     return;
   }
@@ -12234,6 +12277,7 @@ window.addEventListener('pointerup', () => {
     if (adminMode) orbit.attachControl(canvas, true);
     rebuildVillageCollisionBlockers();
     renderSelectedWalkSurfaceGuide();
+    refreshEditedObject(selectedObject);
     triggerAutoSave();
     return;
   }
@@ -12242,6 +12286,7 @@ window.addEventListener('pointerup', () => {
     if (adminMode) orbit.attachControl(canvas, true);
     rebuildVillageCollisionBlockers();
     renderSelectedWalkSurfaceGuide();
+    refreshEditedObject(selectedObject);
     triggerAutoSave();
     return;
   }
@@ -12249,6 +12294,7 @@ window.addEventListener('pointerup', () => {
     adminManualNPCRotateDrag = null;
     if (selectedObject?.metadata?.type === 'npc') updateNPCAdminRotation(selectedObject);
     if (adminMode) orbit.attachControl(canvas, true);
+    refreshEditedObject(selectedObject);
     triggerAutoSave();
     return;
   }
@@ -12278,6 +12324,7 @@ window.addEventListener('pointerup', () => {
       moveAttachedCollisionProxyPieces(selectedObject, selectedObject.position.subtract(beforePos));
     }
     if (selectedObject.metadata?.type === 'npc') updateNPCPlacementOrigin(selectedObject, beforePos);
+    refreshEditedObject(selectedObject);
     rebuildVillageCollisionBlockers();
     renderSelectedWalkSurfaceGuide();
     triggerAutoSave();
@@ -12319,10 +12366,12 @@ function getObjectType(node){
 
 
 function applyObjectTransform(node, data){
-  unfreezeStaticRoot(node);
+  if (node === selectedObject) prepareObjectForEditing(node);
+  else unfreezeStaticRoot(node);
   node.position = new BABYLON.Vector3(data.position.x, data.position.y, data.position.z);
   node.rotation = new BABYLON.Vector3(data.rotation.x, data.rotation.y, data.rotation.z);
   node.scaling = new BABYLON.Vector3(data.scaling.x, data.scaling.y, data.scaling.z);
+  refreshEditedObject(node);
 }
 
 let _worldLayoutSaveChain = Promise.resolve();
@@ -13135,7 +13184,7 @@ document.addEventListener('keydown', async e => {
     } else {
       toggleAssetPanel(false);
       clearAdminPlacement();
-      if (selectedObject) freezeStaticRoot(selectedObject);
+      if (selectedObject) releaseObjectAfterEditing(selectedObject);
       selectedObject = null;
       updateSelectedBadge();
       clearVillageProxyDebugMeshes();
@@ -13194,17 +13243,17 @@ document.addEventListener('keydown', async e => {
   }
 
   if (adminMode && selectedObject && key === 'f') {
-    selectedObject.scaling.x *= -1;
+    flipSelected();
     return;
   }
 
   if (adminMode && selectedObject && key === 'q') {
-    selectedObject.rotation.y -= Math.PI / 2;
+    rotateSelectedBy(-Math.PI / 2);
     return;
   }
 
   if (adminMode && selectedObject && key === 'e') {
-    selectedObject.rotation.y += Math.PI / 2;
+    rotateSelectedBy(Math.PI / 2);
     return;
   }
   if (!adminMode && key === 'o' && (tryOpenNearbyVillageGate() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
@@ -15498,14 +15547,17 @@ function attachAdminGizmoLifecycleObservers() {
     if (_gizmoLifecycleObserverSet.has(gizmo)) return;
     gizmo.onDragStartObservable?.add(() => {
       if (!selectedObject) return;
-      unfreezeStaticRoot(selectedObject);
-      ensureSelectedNodeEditableForGizmo(selectedObject);
+      prepareObjectForEditing(selectedObject);
       recordEditorHistory('transform selected');
       orbit.detachControl();
     });
+    gizmo.onDragObservable?.add(() => {
+      if (!selectedObject) return;
+      refreshEditedObject(selectedObject);
+    });
     gizmo.onDragEndObservable?.add(() => {
       if (!selectedObject) return;
-      ensureSelectedNodeEditableForGizmo(selectedObject);
+      refreshEditedObject(selectedObject);
       if (selectedObject.metadata?.type === 'npc') {
         updateNPCPlacementOrigin(selectedObject, null);
         updateNPCAdminRotation(selectedObject);
@@ -15523,7 +15575,9 @@ function attachAdminGizmoLifecycleObservers() {
 function flipSelected() {
   if (!selectedObject) return;
   recordEditorHistory('flip selected');
+  prepareObjectForEditing(selectedObject);
   selectedObject.scaling.x *= -1;
+  refreshEditedObject(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -15531,8 +15585,10 @@ function flipSelected() {
 function rotateSelectedBy(angle) {
   if (!selectedObject) return;
   recordEditorHistory('rotate selected');
+  prepareObjectForEditing(selectedObject);
   selectedObject.rotation.y += angle;
   if (selectedObject.metadata?.type === 'npc') updateNPCAdminRotation(selectedObject);
+  refreshEditedObject(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -15544,9 +15600,11 @@ function tiltSelectedRamp(direction) {
   }
 
   recordEditorHistory('tilt ramp');
+  prepareObjectForEditing(selectedObject);
   const step = 0.08;
   const nextPitch = (selectedObject.rotation?.x || 0) - (direction > 0 ? step : -step);
   selectedObject.rotation.x = Math.max(-0.75, Math.min(0.75, nextPitch));
+  refreshEditedObject(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -15835,6 +15893,7 @@ function buildTerrainStampVertexData(stampType, shape) {
 
 function rebuildTerrainStampMesh(mesh) {
   if (!mesh || mesh.metadata?.type !== 'terrain_stamp') return;
+  if (mesh === selectedObject) prepareObjectForEditing(mesh);
   const data = buildTerrainStampVertexData(mesh.metadata.terrainStampType || 'hill', mesh.metadata.terrainStampShape || {});
   data.applyToMesh(mesh, true);
   mesh.refreshBoundingInfo?.();
@@ -15851,6 +15910,7 @@ function rebuildTerrainStampMesh(mesh) {
     arch.material = archMat;
     arch.isPickable = false;
   }
+  if (mesh === selectedObject) refreshEditedObject(mesh);
 }
 
 function createTerrainStampMesh(stampType, position, options = {}) {
@@ -15891,7 +15951,9 @@ function raiseSelectedWalkSurfacePatch(delta) {
   const patch = getSelectedWalkPatch();
   if (!patch) { showToast('Select a walk surface patch first'); return; }
   recordEditorHistory('raise terrain patch');
+  prepareObjectForEditing(patch);
   patch.position.y += delta;
+  refreshEditedObject(patch);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -15901,6 +15963,7 @@ function flattenSelectedWalkSurfacePatch() {
   const patch = getSelectedWalkPatch();
   if (!patch) { showToast('Select a walk surface patch first'); return; }
   recordEditorHistory('flatten terrain patch');
+  prepareObjectForEditing(patch);
   const y = getVillageRaycastGroundHeightAt(patch.position.x, patch.position.z, { includeManualWalkSurfaces: false });
   if (Number.isFinite(y)) patch.position.y = y + 0.06;
   if (patch.metadata?.type === 'terrain_stamp') {
@@ -15913,6 +15976,7 @@ function flattenSelectedWalkSurfacePatch() {
     rebuildTerrainStampMesh(patch);
     updateTerrainStampEditorPanel();
   }
+  refreshEditedObject(patch);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -15922,10 +15986,12 @@ function smoothSelectedWalkSurfacePatch() {
   const patch = getSelectedWalkPatch();
   if (!patch) { showToast('Select a walk surface patch first'); return; }
   recordEditorHistory('smooth terrain patch');
+  prepareObjectForEditing(patch);
   if (patch.metadata?.type === 'terrain_stamp') {
     patch.metadata.terrainStampShape.softness = Math.min(3, (patch.metadata.terrainStampShape.softness || 1) + .2);
     rebuildTerrainStampMesh(patch);
     updateTerrainStampEditorPanel();
+    refreshEditedObject(patch);
     rebuildVillageCollisionBlockers();
     triggerAutoSave();
     showToast('Terrain stamp smoothed');
@@ -15933,6 +15999,7 @@ function smoothSelectedWalkSurfacePatch() {
   }
   const y = getVillageRaycastGroundHeightAt(patch.position.x, patch.position.z, { includeManualWalkSurfaces: false });
   if (Number.isFinite(y)) patch.position.y = BABYLON.Scalar.Lerp(patch.position.y, y + 0.06, 0.5);
+  refreshEditedObject(patch);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -15942,10 +16009,12 @@ function setSelectedWalkSurfaceType() {
   const patch = getSelectedWalkPatch();
   if (!patch) { showToast('Select a walk surface patch first'); return; }
   recordEditorHistory('set surface type');
+  prepareObjectForEditing(patch);
   patch.metadata.terrainSurfaceType = getTerrainBrushSettings().surfaceType;
   patch.material = getTerrainSurfaceMaterial(patch.metadata.terrainSurfaceType, patch.metadata.type === 'terrain_stamp' ? .92 : (patch.metadata.terrainToolPatch ? .3 : .36));
   if (patch.metadata.type === 'terrain_stamp') rebuildTerrainStampMesh(patch);
   if (patch.metadata.terrainToolPatch) styleTerrainPatchVisual(patch, patch.metadata.terrainStampType || 'flat_patch');
+  refreshEditedObject(patch);
   updateSelectedSurfaceTypeLabel();
   rebuildVillageCollisionBlockers();
   triggerAutoSave();
@@ -15999,6 +16068,7 @@ function applySelectedTerrainStampSettings(live = false) {
   }
   if (!live) recordEditorHistory('shape terrain stamp');
   else recordLiveTerrainShapeHistory(selectedObject);
+  prepareObjectForEditing(selectedObject);
   const shape = selectedObject.metadata.terrainStampShape || {};
   const nextHeight = numberFromInput('terrainStampHeight', shape.height || 1);
   const oldHeight = Number.isFinite(shape.height) ? shape.height : nextHeight;
@@ -16018,6 +16088,7 @@ function applySelectedTerrainStampSettings(live = false) {
   };
   if (centerShouldFollowHeight) setTerrainEditorValue('terrainStampCenterHeight', nextHeight);
   rebuildTerrainStampMesh(selectedObject);
+  refreshEditedObject(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -16775,6 +16846,7 @@ function togglePatrolRouteVisibility() {
 function scaleSelected(factor) {
   if (!selectedObject) return;
   recordEditorHistory('scale selected');
+  prepareObjectForEditing(selectedObject);
 
       if (
     selectedObject.metadata?.isPickProxy &&
@@ -16833,12 +16905,14 @@ function scaleSelected(factor) {
     clone.scaling.x *= factor;
     clone.scaling.y *= factor;
     clone.scaling.z *= factor;
+    refreshEditedObject(clone);
 
     const after = getLanternBounds();
     if (!after) return;
 
     const keepInPlaceDelta = before.bottomCenter.subtract(after.bottomCenter);
     clone.position.addInPlace(keepInPlaceDelta);
+    refreshEditedObject(clone);
 
     const finalBounds = getLanternBounds();
     if (finalBounds) {
@@ -16851,11 +16925,17 @@ function scaleSelected(factor) {
     }
 
     snapSelectedObjectToGround();
+    refreshEditedObject(proxy);
+    refreshEditedObject(clone);
+    rebuildVillageCollisionBlockers();
+    renderSelectedWalkSurfaceGuide();
+    triggerAutoSave();
     return;
   }
   selectedObject.scaling.x *= factor;
   selectedObject.scaling.y *= factor;
   selectedObject.scaling.z *= factor;
+  refreshEditedObject(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
