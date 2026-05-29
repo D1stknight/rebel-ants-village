@@ -733,6 +733,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="document.getElementById('interiorMusicUploadInput').click()">Upload Music MP3</button>
       <button class="ctrl-btn" onclick="saveCustomInteriorFromAdmin()">Save Interior</button>
       <button class="ctrl-btn danger" onclick="archiveSelectedCustomInterior()">Archive Interior</button>
+      <button class="ctrl-btn danger" onclick="removeCustomInteriorUpload('model')">Remove GLB</button>
+      <button class="ctrl-btn danger" onclick="removeCustomInteriorUpload('music')">Remove MP3</button>
     </div>
     <input type="file" id="interiorGlbUploadInput" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" style="display:none" onchange="handleInteriorGlbUpload(event)">
     <input type="file" id="interiorMusicUploadInput" accept=".mp3,audio/mpeg" style="display:none" onchange="handleInteriorMusicUpload(event)">
@@ -16641,6 +16643,101 @@ function archiveSelectedCustomInterior() {
   showToast('Custom interior archived');
 }
 
+function getSafeInteriorUploadPath(path) {
+  const clean = String(path || '').trim().replace(/^\/+/, '');
+  if (!clean.startsWith('assets/interiors/custom/')) return '';
+  if (clean.includes('..') || clean.includes('\\')) return '';
+  return clean;
+}
+
+async function getInteriorGitHubUploadAuth() {
+  const tokenResponse = await fetch('/api/github-upload-token', { cache:'no-store' });
+  const tokenRaw = await tokenResponse.text().catch(() => '');
+  let tokenResult = {};
+  try {
+    tokenResult = tokenRaw ? JSON.parse(tokenRaw) : {};
+  } catch(e) {
+    tokenResult = { error: tokenRaw || tokenResponse.statusText || 'Could not prepare GitHub upload' };
+  }
+  if (!tokenResponse.ok || !tokenResult.ok || !tokenResult.token) {
+    throw new Error(tokenResult.error || ('Could not prepare GitHub upload. Status: ' + tokenResponse.status));
+  }
+  return tokenResult;
+}
+
+async function deleteInteriorUploadFromGitHub(path) {
+  const safePath = getSafeInteriorUploadPath(path);
+  if (!safePath) return false;
+  const auth = await getInteriorGitHubUploadAuth();
+  const headers = {
+    Authorization:'Bearer ' + auth.token,
+    Accept:'application/vnd.github+json',
+    'Content-Type':'application/json'
+  };
+  const readResponse = await fetch(`https://api.github.com/repos/${auth.repo}/contents/${safePath}?ref=${auth.branch || 'dev'}`, { headers });
+  if (readResponse.status === 404) return false;
+  const current = await readResponse.json().catch(() => ({}));
+  if (!readResponse.ok || !current.sha) throw new Error(current.message || 'Could not find uploaded file in GitHub');
+  const deleteResponse = await fetch(`https://api.github.com/repos/${auth.repo}/contents/${safePath}`, {
+    method:'DELETE',
+    headers,
+    body: JSON.stringify({
+      message:'delete interior upload: ' + safePath,
+      sha: current.sha,
+      branch: auth.branch || 'dev'
+    })
+  });
+  const deleted = await deleteResponse.json().catch(() => ({}));
+  if (!deleteResponse.ok) throw new Error(deleted.message || 'Could not delete uploaded file from GitHub');
+  return true;
+}
+
+async function removeCustomInteriorUpload(kind) {
+  const isMusic = kind === 'music';
+  const input = document.getElementById(isMusic ? 'customInteriorMusic' : 'customInteriorModel');
+  const status = document.getElementById(isMusic ? 'customInteriorMusicStatus' : 'customInteriorModelStatus');
+  const path = input?.value?.trim() || '';
+  if (!input || !path) {
+    showToast(isMusic ? 'No MP3 set' : 'No GLB set');
+    return;
+  }
+  const deleteFile = window.confirm('Remove this ' + (isMusic ? 'MP3' : 'GLB') + ' from the interior? Click OK to also delete the uploaded file from GitHub. Click Cancel to only clear it from this interior.');
+  input.value = '';
+  if (status) status.textContent = (isMusic ? 'MP3' : 'GLB') + ': no file selected';
+  InteriorGlbCache.delete(path);
+  const id = document.getElementById('customInteriorId')?.value?.trim() || document.getElementById('customInteriorSelect')?.value || '';
+  if (id) {
+    const raw = JSON.parse(localStorage.getItem(CUSTOM_INTERIORS_KEY) || '[]');
+    if (Array.isArray(raw)) {
+      const next = raw.map(item => {
+        const itemId = INTERIOR_TYPES[item.id] ? 'custom_' + item.id : item.id;
+        if (itemId !== id && item.id !== id) return item;
+        return {
+          ...item,
+          id,
+          modelUrl: isMusic ? item.modelUrl : '',
+          musicPath: isMusic ? '' : item.musicPath,
+          updatedAt: new Date().toISOString()
+        };
+      });
+      localStorage.setItem(CUSTOM_INTERIORS_KEY, JSON.stringify(next));
+      refreshInteriorAdminOptions();
+      const customSelect = document.getElementById('customInteriorSelect');
+      if (customSelect) customSelect.value = id;
+    }
+  }
+  if (!deleteFile) {
+    showToast((isMusic ? 'MP3' : 'GLB') + ' removed from interior');
+    return;
+  }
+  try {
+    const deleted = await deleteInteriorUploadFromGitHub(path);
+    showToast(deleted ? 'Uploaded file deleted from GitHub' : 'Removed from interior; GitHub file not found');
+  } catch(error) {
+    showToast('Removed from interior. GitHub delete failed: ' + (error.message || 'try again'), 9000);
+  }
+}
+
 function getInteriorUploadStatus(file, type) {
   const mb = file ? file.size / 1048576 : 0;
   const limits = type === 'mp3'
@@ -16684,17 +16781,7 @@ async function uploadInteriorFileToGitHub(file, kind) {
     : makeCustomInteriorId(document.getElementById('customInteriorName')?.value || file.name);
   const idInput = document.getElementById('customInteriorId');
   if (idInput) idInput.value = interiorId;
-  const tokenResponse = await fetch('/api/github-upload-token', { cache:'no-store' });
-  const tokenRaw = await tokenResponse.text().catch(() => '');
-  let tokenResult = {};
-  try {
-    tokenResult = tokenRaw ? JSON.parse(tokenRaw) : {};
-  } catch(e) {
-    tokenResult = { error: tokenRaw || tokenResponse.statusText || 'Could not prepare GitHub upload' };
-  }
-  if (!tokenResponse.ok || !tokenResult.ok || !tokenResult.token) {
-    throw new Error(tokenResult.error || ('Could not prepare GitHub upload. Status: ' + tokenResponse.status));
-  }
+  const tokenResult = await getInteriorGitHubUploadAuth();
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
   const path = `assets/interiors/custom/${interiorId}/${kind}-${Date.now()}-${safeName}`;
@@ -16997,6 +17084,21 @@ function makeInteriorMaterial(name, color, emissiveScale = .08, alpha = null) {
   return mat;
 }
 
+function sharpenInteriorMaterialTextures(material) {
+  if (!material || material.metadata?.interiorTextureTuned === true) return;
+  material.metadata = { ...(material.metadata || {}), interiorTextureTuned:true };
+  material.maxSimultaneousLights = Math.max(material.maxSimultaneousLights || 0, 4);
+  const maxAnisotropy = Math.min(8, engine?.getCaps?.().maxAnisotropy || 4);
+  material.getActiveTextures?.().forEach(texture => {
+    if (!texture) return;
+    texture.anisotropicFilteringLevel = maxAnisotropy;
+    if (texture.updateSamplingMode && BABYLON.Texture?.TRILINEAR_SAMPLINGMODE !== undefined) {
+      texture.updateSamplingMode(BABYLON.Texture.TRILINEAR_SAMPLINGMODE);
+    }
+  });
+  if (window._gpuMode === 'webgpu') webgpuCapMaterial4(material);
+}
+
 function addInteriorBox(parent, name, size, position, material) {
   const mesh = BABYLON.MeshBuilder.CreateBox(name, size, scene);
   mesh.parent = parent;
@@ -17205,8 +17307,7 @@ async function getInteriorGlbTemplateForUrl(modelUrl) {
       mesh.isPickable = false;
       mesh.receiveShadows = false;
       if (mesh.material) {
-        mesh.material.maxSimultaneousLights = 4;
-        if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mesh.material);
+        sharpenInteriorMaterialTextures(mesh.material);
       }
     });
     InteriorGlbCache.set(modelUrl, root);
@@ -17244,6 +17345,7 @@ async function renderInteriorGlbModel(parent, modelUrl) {
   clone.getChildMeshes?.(false).forEach(mesh => {
     mesh.isPickable = false;
     mesh.receiveShadows = false;
+    if (mesh.material) sharpenInteriorMaterialTextures(mesh.material);
     mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true, interiorGlbModel:true };
     try { mesh.freezeWorldMatrix(); } catch(e) {}
   });
@@ -18853,6 +18955,7 @@ window.returnToVillageFromInterior = returnToVillageFromInterior;
 window.loadSelectedCustomInteriorIntoAdmin = loadSelectedCustomInteriorIntoAdmin;
 window.saveCustomInteriorFromAdmin = saveCustomInteriorFromAdmin;
 window.archiveSelectedCustomInterior = archiveSelectedCustomInterior;
+window.removeCustomInteriorUpload = removeCustomInteriorUpload;
 window.handleInteriorGlbUpload = handleInteriorGlbUpload;
 window.handleInteriorMusicUpload = handleInteriorMusicUpload;
 window.addInteriorDisplayFromAdmin = addInteriorDisplayFromAdmin;
