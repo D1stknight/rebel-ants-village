@@ -173,6 +173,98 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   border-color:rgba(138,122,90,0.36);
 }
 
+#wallet-modal-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:80;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.68);
+  backdrop-filter:blur(8px);
+}
+#wallet-modal-backdrop.open{display:flex;}
+#wallet-modal{
+  width:min(520px,calc(100vw - 32px));
+  border:1px solid rgba(200,146,42,0.35);
+  background:linear-gradient(160deg,rgba(5,8,16,0.96),rgba(12,16,27,0.94));
+  box-shadow:0 28px 80px rgba(0,0,0,0.58), inset 0 0 40px rgba(94,207,202,0.04);
+  padding:24px;
+}
+#wallet-modal h2{
+  margin:0 0 8px;
+  color:#d5aa46;
+  font-family:'Cinzel Decorative',serif;
+  font-size:19px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+#wallet-modal p{
+  color:#9fb6b8;
+  font-size:12px;
+  line-height:1.55;
+  letter-spacing:1.2px;
+}
+.wallet-option-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin:18px 0 14px;
+}
+.wallet-option{
+  border:1px solid rgba(94,207,202,0.28);
+  background:rgba(7,12,24,0.72);
+  color:#e9e0c8;
+  cursor:pointer;
+  min-height:128px;
+  padding:16px;
+  text-align:left;
+  font-family:'Cinzel',serif;
+  transition:transform 0.18s ease,border-color 0.18s ease,box-shadow 0.18s ease;
+}
+.wallet-option:hover{
+  transform:translateY(-2px);
+  border-color:rgba(94,207,202,0.76);
+  box-shadow:0 10px 30px rgba(94,207,202,0.12);
+}
+.wallet-option strong{
+  display:block;
+  color:#f1d077;
+  font-size:12px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+.wallet-option span{
+  display:block;
+  color:#9fb6b8;
+  font-size:11px;
+  line-height:1.45;
+  letter-spacing:1px;
+}
+#wallet-modal-status{
+  min-height:20px;
+  color:#5ecfca;
+  font-size:11px;
+  letter-spacing:1.5px;
+  line-height:1.45;
+}
+.wallet-modal-close{
+  width:100%;
+  margin-top:14px;
+  padding:11px 16px;
+  border:1px solid rgba(138,122,90,0.38);
+  background:transparent;
+  color:#8a7a5a;
+  cursor:pointer;
+  font-family:'Cinzel',serif;
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
+@media (max-width:640px){
+  .wallet-option-grid{grid-template-columns:1fr;}
+}
+
 /* ── NEWS TICKER ── */
 #ticker{
   position:fixed;bottom:0;left:0;right:0;z-index:11;
@@ -432,6 +524,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 </div>
 
 <button class="btn" id="btn-landing-audio" onclick="toggleLandingAudio()" aria-label="Toggle landing audio">🎵</button>
+
+<div id="wallet-modal-backdrop" onclick="closeWalletModalFromBackdrop(event)">
+  <div id="wallet-modal" role="dialog" aria-modal="true" aria-labelledby="wallet-modal-title">
+    <h2 id="wallet-modal-title">Connect Wallet</h2>
+    <p>Using a browser extension? Choose Browser Wallet. Using mobile, Safari, or no extension? Choose WalletConnect.</p>
+    <div class="wallet-option-grid">
+      <button class="wallet-option" type="button" onclick="connectBrowserWallet()">
+        <strong>Browser Wallet</strong>
+        <span>MetaMask, Coinbase Wallet, Rabby, Brave Wallet, or another injected Ethereum wallet.</span>
+      </button>
+      <button class="wallet-option" type="button" onclick="connectWalletConnect()">
+        <strong>WalletConnect / Mobile</strong>
+        <span>Scan a QR code or open your mobile wallet app. Works for mobile MetaMask, Rainbow, Trust, and more.</span>
+      </button>
+    </div>
+    <p id="wallet-modal-status">Wallet not detected? Unlock your extension and refresh, or use WalletConnect.</p>
+    <button class="wallet-modal-close" type="button" onclick="closeWalletModal()">Close</button>
+  </div>
+</div>
 
 <!-- News ticker -->
 <div id="ticker">
@@ -1033,6 +1144,9 @@ document.addEventListener('DOMContentLoaded', () => showDefaultCard());
 // ── WALLET ──
 let walletConnected = false;
 let activeWalletProvider = null;
+let activeWalletType = null;
+let walletConnectProvider = null;
+let walletConnectModulePromise = null;
 const announcedWalletProviders = [];
 let ethereumInitialized = false;
 
@@ -1131,41 +1245,189 @@ function formatWalletDiagnostics(diagnostics) {
   return parts.join(' ');
 }
 
-async function connectWallet() {
+function setWalletModalStatus(message) {
+  const el = document.getElementById('wallet-modal-status');
+  if (el) el.textContent = message || '';
+}
+
+function openWalletModal() {
+  const backdrop = document.getElementById('wallet-modal-backdrop');
+  if (backdrop) backdrop.classList.add('open');
+  setWalletModalStatus('Wallet not detected? Unlock your extension and refresh, or use WalletConnect.');
+}
+
+function closeWalletModal() {
+  const backdrop = document.getElementById('wallet-modal-backdrop');
+  if (backdrop) backdrop.classList.remove('open');
+}
+
+function closeWalletModalFromBackdrop(event) {
+  if (event.target && event.target.id === 'wallet-modal-backdrop') closeWalletModal();
+}
+
+function resetWalletUi() {
   const btn = document.getElementById('btn-wallet');
-  // Disconnect if already connected
-  if (walletConnected) {
-    walletConnected = false;
-    activeWalletProvider = null;
+  walletConnected = false;
+  activeWalletProvider = null;
+  activeWalletType = null;
+  if (btn) {
     btn.textContent = 'Connect Wallet';
     btn.classList.remove('connected');
-    setStatus('');
-    showDefaultCard();
+    btn.title = '';
+  }
+  setStatus('');
+  showDefaultCard();
+}
+
+function attachWalletProviderEvents(provider, type) {
+  if (!provider || typeof provider.on !== 'function') return;
+
+  provider.on('accountsChanged', (accounts) => {
+    const account = Array.isArray(accounts) ? accounts[0] : null;
+    if (!account) {
+      resetWalletUi();
+      return;
+    }
+    handleWalletConnected(provider, account, type);
+  });
+
+  provider.on('chainChanged', () => {
+    setStatus('Wallet network changed. Reloading Rebel lookup...');
+    if (walletConnected && activeWalletProvider?.request) {
+      activeWalletProvider.request({ method: 'eth_accounts' })
+        .then((accounts) => {
+          if (accounts && accounts[0]) loadNFTs(accounts[0]);
+        })
+        .catch(() => {});
+    }
+  });
+
+  provider.on('disconnect', () => {
+    resetWalletUi();
+  });
+}
+
+function handleWalletConnected(provider, account, type) {
+  const btn = document.getElementById('btn-wallet');
+  walletConnected = true;
+  activeWalletProvider = provider;
+  activeWalletType = type;
+  if (btn) {
+    btn.textContent = account.slice(0,6) + '...' + account.slice(-4);
+    btn.classList.add('connected');
+    btn.title = type === 'walletconnect' ? 'Click to disconnect WalletConnect' : 'Click to disconnect';
+  }
+  closeWalletModal();
+  setStatus('Wallet connected. Loading Rebels...');
+  loadNFTs(account);
+}
+
+async function disconnectWallet() {
+  try {
+    if (activeWalletType === 'walletconnect' && activeWalletProvider?.disconnect) {
+      await activeWalletProvider.disconnect();
+    }
+  } catch(e) {}
+  resetWalletUi();
+}
+
+async function connectWallet() {
+  // Disconnect if already connected
+  if (walletConnected) {
+    disconnectWallet();
     return;
   }
+  openWalletModal();
+}
+
+async function connectBrowserWallet() {
+  const btn = document.getElementById('btn-wallet');
   btn.textContent = 'Detecting Wallet...';
+  setWalletModalStatus('Looking for an unlocked browser wallet extension...');
   const provider = await waitForWalletProvider();
   if (!provider) {
     const diagnostics = getWalletProviderDiagnostics();
     btn.textContent = 'No Wallet Found';
-    setStatus('No wallet provider was injected into this page. Check the wallet extension is enabled for this site, then refresh. ' + formatWalletDiagnostics(diagnostics));
+    const message = 'No browser wallet detected. Open/unlock MetaMask, Coinbase Wallet, Rabby, or Brave Wallet, enable it for this site, then refresh — or use WalletConnect. ' + formatWalletDiagnostics(diagnostics);
+    setStatus(message);
+    setWalletModalStatus(message);
     console.info('Wallet provider diagnostics:', diagnostics);
     return;
   }
   try {
     btn.textContent = 'Open Wallet...';
+    setWalletModalStatus('Opening ' + getProviderLabel(provider) + '...');
     setStatus('Opening ' + getProviderLabel(provider) + '...');
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
-    walletConnected = true;
-    activeWalletProvider = provider;
-    const addr = accounts[0];
-    btn.textContent = addr.slice(0,6) + '...' + addr.slice(-4);
-    btn.classList.add('connected');
-    btn.title = 'Click to disconnect';
-    loadNFTs(addr);
+    if (!accounts || !accounts[0]) throw new Error('No account returned from wallet');
+    attachWalletProviderEvents(provider, 'browser');
+    handleWalletConnected(provider, accounts[0], 'browser');
   } catch(e) {
     btn.textContent = 'Rejected';
     setStatus('Wallet connection was rejected or cancelled.');
+    setWalletModalStatus('Wallet connection was rejected or cancelled.');
+  }
+}
+
+async function getWalletConnectProjectId() {
+  if (window.REBEL_WALLETCONNECT_PROJECT_ID) return window.REBEL_WALLETCONNECT_PROJECT_ID;
+  try {
+    const response = await fetch('/api/wallet-config', { cache: 'no-store' });
+    if (!response.ok) return '';
+    const config = await response.json();
+    return config.walletConnectProjectId || '';
+  } catch(e) {
+    return '';
+  }
+}
+
+async function loadWalletConnectProviderModule() {
+  if (!walletConnectModulePromise) {
+    walletConnectModulePromise = import('https://esm.sh/@walletconnect/ethereum-provider@2');
+  }
+  const module = await walletConnectModulePromise;
+  return module.default || module.EthereumProvider;
+}
+
+async function connectWalletConnect() {
+  const btn = document.getElementById('btn-wallet');
+  btn.textContent = 'WalletConnect...';
+  setWalletModalStatus('Preparing WalletConnect...');
+
+  const projectId = await getWalletConnectProjectId();
+  if (!projectId) {
+    const message = 'WalletConnect is not configured yet. Add WALLETCONNECT_PROJECT_ID in Vercel to enable mobile wallet QR connections.';
+    btn.textContent = 'Connect Wallet';
+    setStatus(message);
+    setWalletModalStatus(message);
+    return;
+  }
+
+  try {
+    const EthereumProvider = await loadWalletConnectProviderModule();
+    walletConnectProvider = await EthereumProvider.init({
+      projectId,
+      chains: [1],
+      optionalChains: [1],
+      showQrModal: true,
+      methods: ['eth_sendTransaction', 'personal_sign', 'eth_signTypedData', 'eth_requestAccounts'],
+      events: ['accountsChanged', 'chainChanged', 'disconnect'],
+      metadata: {
+        name: 'Rebel Ants',
+        description: 'Rebel Ants Universe wallet connection',
+        url: window.location.origin,
+        icons: [new URL('assets/lobby/logo.png', window.location.href).href]
+      }
+    });
+    attachWalletProviderEvents(walletConnectProvider, 'walletconnect');
+    const accounts = await walletConnectProvider.enable();
+    if (!accounts || !accounts[0]) throw new Error('No account returned from WalletConnect');
+    handleWalletConnected(walletConnectProvider, accounts[0], 'walletconnect');
+  } catch(e) {
+    console.info('WalletConnect connection failed:', e);
+    btn.textContent = 'Connect Wallet';
+    setStatus('WalletConnect connection was cancelled or unavailable.');
+    setWalletModalStatus('WalletConnect connection was cancelled or unavailable.');
   }
 }
 
@@ -1297,6 +1559,11 @@ document.addEventListener('keydown', (e) => {
 
   if (e.key === 'Escape' && backdrop && backdrop.classList.contains('open')) {
     closeAdminModal();
+  }
+
+  const walletBackdrop = document.getElementById('wallet-modal-backdrop');
+  if (e.key === 'Escape' && walletBackdrop && walletBackdrop.classList.contains('open')) {
+    closeWalletModal();
   }
 
   if (
