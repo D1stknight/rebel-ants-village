@@ -1396,6 +1396,9 @@ const INTERIOR_TYPES = {
 const INTERIOR_ENTRANCE_RANGE = 4.8;
 const INTERIOR_FLOOR_Y = 0.5;
 const INTERIOR_PLAYER_SPAWN_Y = INTERIOR_FLOOR_Y + 0.08;
+const CUSTOM_INTERIOR_ROOM_SIZE = 38;
+const CUSTOM_INTERIOR_WALL_HEIGHT = 12;
+const CUSTOM_INTERIOR_FLOOR_Y = INTERIOR_FLOOR_Y + 0.24;
 const CUSTOM_INTERIORS_KEY = 'rebelAntsCustomInteriors:v1';
 const INTERIOR_ROOM_CONFIG_KEY = 'rebelAntsInteriorRoomConfigs:v1';
 let _interiorEntrancesVisible = true;
@@ -17279,17 +17282,37 @@ function normalizeInteriorGlbModel(root) {
   if (!initial) return;
   const footprint = Math.max(initial.size.x, initial.size.z);
   const height = Math.max(initial.size.y, .001);
-  const targetFootprint = 20;
-  const targetHeight = 6.2;
-  let fitScale = footprint > .001 ? targetFootprint / footprint : targetHeight / height;
-  fitScale = Math.max(.05, Math.min(80, fitScale));
+  const targetFootprint = CUSTOM_INTERIOR_ROOM_SIZE * .72;
+  const targetHeight = CUSTOM_INTERIOR_WALL_HEIGHT * .58;
+  const footprintScale = footprint > .001 ? targetFootprint / footprint : Infinity;
+  const heightScale = height > .001 ? targetHeight / height : Infinity;
+  let fitScale = Math.min(footprintScale, heightScale);
+  if (!Number.isFinite(fitScale)) fitScale = 1;
+  fitScale = Math.max(.05, Math.min(24, fitScale));
   root.scaling = new BABYLON.Vector3(fitScale, fitScale, fitScale);
   root.computeWorldMatrix?.(true);
   const scaled = getInteriorGlbModelBounds(root);
   if (!scaled) return;
   root.position.x -= scaled.center.x;
   root.position.z -= scaled.center.z;
-  root.position.y += INTERIOR_FLOOR_Y - scaled.min.y;
+  root.position.y += INTERIOR_FLOOR_Y - scaled.min.y - .18;
+}
+
+function buildCustomInteriorRoomShell(root, mats) {
+  const half = CUSTOM_INTERIOR_ROOM_SIZE * .5;
+  const floorY = INTERIOR_FLOOR_Y - .12;
+  const wallY = INTERIOR_FLOOR_Y + CUSTOM_INTERIOR_WALL_HEIGHT * .5;
+  const roofY = INTERIOR_FLOOR_Y + CUSTOM_INTERIOR_WALL_HEIGHT;
+  const wallMat = mats.wall;
+  const floorMat = mats.floor;
+  const roofMat = mats.roof || mats.wall;
+  addInteriorBox(root, 'customInteriorFloor', { width:CUSTOM_INTERIOR_ROOM_SIZE, height:.24, depth:CUSTOM_INTERIOR_ROOM_SIZE }, new BABYLON.Vector3(0, floorY, 0), floorMat);
+  addInteriorBox(root, 'customInteriorBackWall', { width:CUSTOM_INTERIOR_ROOM_SIZE, height:CUSTOM_INTERIOR_WALL_HEIGHT, depth:.5 }, new BABYLON.Vector3(0, wallY, -half), wallMat);
+  addInteriorBox(root, 'customInteriorLeftWall', { width:.5, height:CUSTOM_INTERIOR_WALL_HEIGHT, depth:CUSTOM_INTERIOR_ROOM_SIZE }, new BABYLON.Vector3(-half, wallY, 0), wallMat);
+  addInteriorBox(root, 'customInteriorRightWall', { width:.5, height:CUSTOM_INTERIOR_WALL_HEIGHT, depth:CUSTOM_INTERIOR_ROOM_SIZE }, new BABYLON.Vector3(half, wallY, 0), wallMat);
+  addInteriorBox(root, 'customInteriorFrontWallLeft', { width:half - 2.4, height:CUSTOM_INTERIOR_WALL_HEIGHT, depth:.5 }, new BABYLON.Vector3(-(half + 2.4) * .5, wallY, half), wallMat);
+  addInteriorBox(root, 'customInteriorFrontWallRight', { width:half - 2.4, height:CUSTOM_INTERIOR_WALL_HEIGHT, depth:.5 }, new BABYLON.Vector3((half + 2.4) * .5, wallY, half), wallMat);
+  addInteriorBox(root, 'customInteriorRoof', { width:CUSTOM_INTERIOR_ROOM_SIZE, height:.35, depth:CUSTOM_INTERIOR_ROOM_SIZE }, new BABYLON.Vector3(0, roofY, 0), roofMat);
 }
 
 function buildInteriorProps(root, type, mats) {
@@ -17354,8 +17377,9 @@ function buildInteriorRoom(entrance) {
   const style = def.style || 'dojo';
   const root = new BABYLON.TransformNode('activeInteriorRoot', scene);
   const targetInteriorId = entrance?.metadata?.targetInteriorId || type;
-  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:def.modelUrl || '', floorY:INTERIOR_FLOOR_Y };
   const isCustomGlbInterior = !INTERIOR_TYPES[type] && Boolean(def.modelUrl);
+  const roomFloorY = isCustomGlbInterior ? CUSTOM_INTERIOR_FLOOR_Y : INTERIOR_FLOOR_Y;
+  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:def.modelUrl || '', floorY:roomFloorY };
 
   const floorColor = style === 'gallery' ? new BABYLON.Color3(.24,.23,.21)
     : style === 'theater' || style === 'arcade' ? new BABYLON.Color3(.05,.04,.08)
@@ -17371,8 +17395,14 @@ function buildInteriorRoom(entrance) {
   const accentMat = makeInteriorMaterial('interiorAccentMat_' + type, def.accent, .38);
   const exitMat = makeInteriorMaterial('interiorExitMat_' + type, new BABYLON.Color3(.9,.72,.24), .24);
 
-  addInteriorBox(root, 'interiorFloor', { width:24, height:.22, depth:22 }, new BABYLON.Vector3(0, INTERIOR_FLOOR_Y - .11, 0), floorMat);
-  if (!isCustomGlbInterior) {
+  if (isCustomGlbInterior) {
+    buildCustomInteriorRoomShell(root, {
+      floor: floorMat,
+      wall: makeInteriorMaterial('customInteriorWallMat_' + type, new BABYLON.Color3(.12,.14,.13), .04),
+      roof: makeInteriorMaterial('customInteriorRoofMat_' + type, new BABYLON.Color3(.07,.08,.07), .03)
+    });
+  } else {
+    addInteriorBox(root, 'interiorFloor', { width:24, height:.22, depth:22 }, new BABYLON.Vector3(0, INTERIOR_FLOOR_Y - .11, 0), floorMat);
     addInteriorBox(root, 'interiorBackWall', { width:24, height:6.5, depth:.5 }, new BABYLON.Vector3(0, 3.45, -11), wallMat);
     addInteriorBox(root, 'interiorLeftWall', { width:.5, height:6.5, depth:22 }, new BABYLON.Vector3(-12, 3.45, 0), wallMat);
     addInteriorBox(root, 'interiorRightWall', { width:.5, height:6.5, depth:22 }, new BABYLON.Vector3(12, 3.45, 0), wallMat);
@@ -17450,17 +17480,18 @@ function enterInterior(entrance) {
       returnRotationY: charMesh?.rotation?.y || 0,
       interiorType: type,
       targetInteriorId: entrance.metadata.targetInteriorId || '',
-      floorY: INTERIOR_FLOOR_Y,
+      floorY: root.metadata?.floorY || INTERIOR_FLOOR_Y,
       modelUrl: root.metadata?.modelUrl || '',
       loadedGlbRoot: null,
       musicPath: getInteriorDefinition(type).musicPath || entrance.metadata.interiorDefinition?.musicPath || '',
       previousVillageId: CURRENT_VILLAGE_ID
     };
     if (charMesh) {
-      charMesh.position.set(0, INTERIOR_PLAYER_SPAWN_Y, 7.1);
+      const activeFloorY = ActiveInterior.floorY || INTERIOR_FLOOR_Y;
+      charMesh.position.set(0, activeFloorY + 0.08, 7.1);
       charMesh.rotation.y = Math.PI;
       charMesh._vel = 0;
-      groundPlayableVisualToTerrain(INTERIOR_FLOOR_Y);
+      groundPlayableVisualToTerrain(activeFloorY);
     }
     walkMode = true;
     setInteriorTitle(getInteriorTypeLabel(type), entrance.metadata.targetInteriorId || 'Interior');
