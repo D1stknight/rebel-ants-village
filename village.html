@@ -16656,9 +16656,15 @@ async function uploadInteriorFileToGitHub(file, kind) {
       data: await readFileAsBase64(file)
     })
   });
-  const result = await response.json().catch(() => ({}));
+  const raw = await response.text().catch(() => '');
+  let result = {};
+  try {
+    result = raw ? JSON.parse(raw) : {};
+  } catch(e) {
+    result = { error: raw || response.statusText || 'Interior upload failed' };
+  }
   if (!response.ok || !result.ok) {
-    throw new Error(result.error || 'Interior upload failed');
+    throw new Error(result.error || ('Interior upload failed. Status: ' + response.status));
   }
   return result.path;
 }

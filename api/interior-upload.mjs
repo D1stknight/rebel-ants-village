@@ -9,6 +9,14 @@ const ALLOWED_KINDS = new Map([
   ['music', new Set(['mp3'])]
 ]);
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '100mb'
+    }
+  }
+};
+
 function getGitHubToken() {
   return process.env.GITHUB_TOKEN || '';
 }
