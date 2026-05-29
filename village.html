@@ -4191,6 +4191,18 @@ gizmoManager.clearGizmoOnEmptyPointerEvent = false;
 if ('usePointerToAttachGizmos' in gizmoManager) gizmoManager.usePointerToAttachGizmos = false;
 const _gizmoLifecycleObserverSet = new WeakSet();
 
+function configureRotationGizmoForScaledRoots() {
+  const rotationGizmo = gizmoManager?.gizmos?.rotationGizmo;
+  if (!rotationGizmo) return;
+  // Babylon warns and disables reliable rotation when a rotation gizmo tries to
+  // match a non-uniformly scaled attached mesh/root. World-builder assets are
+  // often scaled differently per axis, so keep the gizmo in world orientation.
+  if ('updateGizmoRotationToMatchAttachedMesh' in rotationGizmo) {
+    rotationGizmo.updateGizmoRotationToMatchAttachedMesh = false;
+  }
+}
+configureRotationGizmoForScaledRoots();
+
 // ── CAMERAS ─────────────────────────────────
 const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/2.5,320,new BABYLON.Vector3(0,6,0),scene);
 orbit.lowerRadiusLimit=8; orbit.upperRadiusLimit=450; orbit.upperBetaLimit=Math.PI/2.05;
@@ -15461,11 +15473,15 @@ function attachSelectedGizmo() {
   disableAllGizmos();
 
   if (adminGizmoMode === 'move') gizmoManager.positionGizmoEnabled = true;
-  if (adminGizmoMode === 'rotate') gizmoManager.rotationGizmoEnabled = true;
+  if (adminGizmoMode === 'rotate') {
+    gizmoManager.rotationGizmoEnabled = true;
+    configureRotationGizmoForScaledRoots();
+  }
   if (adminGizmoMode === 'scale') gizmoManager.scaleGizmoEnabled = true;
 
   node.computeWorldMatrix?.(true);
   gizmoManager.attachToNode(node);
+  if (adminGizmoMode === 'rotate') configureRotationGizmoForScaledRoots();
   attachAdminGizmoLifecycleObservers();
 }
 
