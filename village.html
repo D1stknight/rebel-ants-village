@@ -397,6 +397,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 .badge-image-drop{border:1px dashed rgba(94,207,202,.42);background:rgba(94,207,202,.045);border-radius:6px;padding:10px;text-align:center;color:rgba(255,255,255,.72);font-size:10px;line-height:1.45;cursor:pointer;margin:7px 0}
 .badge-image-drop.dragover{background:rgba(94,207,202,.12);border-color:#5ecfca;color:#5ecfca}
 .badge-image-help{font-size:9px;line-height:1.45;color:rgba(255,255,255,.58);padding:0 2px 6px}
+.badge-builder-list{display:grid;gap:5px;max-height:240px;overflow:auto;padding-right:2px;margin:7px 0}
+.badge-builder-card{border:1px solid rgba(255,255,255,.08);border-radius:7px;background:rgba(255,255,255,.035);padding:7px;text-align:left;color:rgba(255,255,255,.72);font-family:'Cinzel Decorative',serif;cursor:pointer;transition:all .15s}
+.badge-builder-card:hover{border-color:rgba(94,207,202,.45);background:rgba(94,207,202,.07);color:#e8c56a}
+.badge-builder-card.active{border-color:rgba(232,197,106,.75);box-shadow:0 0 12px rgba(232,197,106,.12);background:rgba(232,197,106,.08)}
+.badge-builder-card b{display:block;color:#e8c56a;font-size:10px;letter-spacing:.7px;margin-bottom:3px}
+.badge-builder-card span{display:block;font-size:8px;line-height:1.35;color:#8aa;overflow-wrap:anywhere}
+.badge-builder-card em{display:inline-block;margin-top:4px;font-style:normal;font-size:8px;color:#77e6df}
+.badge-builder-card.locked em{color:#ffca6a}
 #hudNextBadgeProgress{font-size:8px;color:rgba(232,197,106,.88);letter-spacing:1px;text-align:right;margin-top:3px;line-height:1.25}
 #journalClose,.badge-popup-close{display:block;margin:16px auto 0;background:transparent;border:1px solid rgba(94,207,202,.4);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 16px;cursor:pointer}
 #badgeUnlockPopup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);z-index:96;min-width:min(360px,86vw);max-width:460px;text-align:center;background:radial-gradient(circle at 50% 0%,rgba(232,197,106,.18),rgba(5,10,28,.96) 54%);border:1px solid rgba(232,197,106,.72);box-shadow:0 0 44px rgba(232,197,106,.18),0 0 80px rgba(94,207,202,.08);padding:22px 24px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
@@ -706,6 +714,26 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div class="admin-section-body" data-admin-section-body="badge-builder">
     <div class="admin-note">To add a new badge image, upload it manually to /assets/badges/, then paste the path here.</div>
     <div class="badge-image-help">Requirement guide: Common 10-50, Uncommon 50-150, Rare 150-500, Epic 500-1500, Legendary 1500-5000, Mythic secret or very high.</div>
+    <div class="journal-card full" style="margin:7px 0">
+      <strong>Badge List</strong>
+      <span>Click any active badge below to load it into the editor.</span>
+      <label class="admin-field" style="margin-top:7px">Search
+        <input id="badgeBuilderSearch" placeholder="Search name or badgeId" oninput="renderBadgeBuilderList()">
+      </label>
+      <label class="admin-field">Category Filter
+        <select id="badgeBuilderCategoryFilter" class="admin-select" onchange="renderBadgeBuilderList()">
+          <option value="">All Categories</option>
+          <option value="explorer">Explorer</option>
+          <option value="story">Story</option>
+          <option value="ronin">Ronin</option>
+          <option value="samurai">Samurai</option>
+          <option value="arcade">Arcade</option>
+          <option value="community">Community</option>
+          <option value="builder">Builder</option>
+        </select>
+      </label>
+      <div id="badgeBuilderList" class="badge-builder-list">Loading badges...</div>
+    </div>
     <label class="admin-field">Badge
       <select id="badgeBuilderSelect" class="admin-select" onchange="loadBadgeBuilderSelection()"></select>
     </label>
@@ -1663,6 +1691,42 @@ function renderArchivedBadgeList() {
   </div>`).join('');
 }
 
+function renderBadgeBuilderList() {
+  const host = document.getElementById('badgeBuilderList');
+  if (!host) return;
+  const selectedId = document.getElementById('badgeBuilderSelect')?.value || '';
+  const query = String(document.getElementById('badgeBuilderSearch')?.value || '').trim().toLowerCase();
+  const category = document.getElementById('badgeBuilderCategoryFilter')?.value || '';
+  const badges = getBadgeDefinitions()
+    .filter(badge => !category || badge.category === category)
+    .filter(badge => {
+      if (!query) return true;
+      return String(badge.name || '').toLowerCase().includes(query) ||
+        String(badge.badgeId || '').toLowerCase().includes(query);
+    });
+  if (!badges.length) {
+    host.innerHTML = '<div class="admin-note">No active badges match this filter.</div>';
+    return;
+  }
+  host.innerHTML = badges.map(badge => {
+    const unlocked = isBadgeUnlocked(badge);
+    const active = badge.badgeId === selectedId;
+    const categoryLabel = PROGRESSION_BADGE_CATEGORIES[badge.category] || badge.category || 'Badge';
+    return `<button type="button" class="badge-builder-card ${active ? 'active' : ''} ${unlocked ? 'unlocked' : 'locked'}" onclick="selectBadgeBuilderBadge('${escapeHTML(badge.badgeId)}')">
+      <b>${escapeHTML(badge.name)}</b>
+      <span>${escapeHTML(categoryLabel)} - ${escapeHTML(badge.rarity || 'Common')}</span>
+      <span>${escapeHTML(badge.badgeId)}</span>
+      <em>${unlocked ? 'Unlocked' : 'Locked'}</em>
+    </button>`;
+  }).join('');
+}
+
+function selectBadgeBuilderBadge(badgeId) {
+  setBadgeBuilderSelected(badgeId);
+  loadBadgeBuilderSelection();
+  renderBadgeBuilderList();
+}
+
 function refreshBadgeBuilderOptions() {
   const select = document.getElementById('badgeBuilderSelect');
   if (!select) return;
@@ -1672,6 +1736,7 @@ function refreshBadgeBuilderOptions() {
   if (!select.value && select.options.length) select.value = select.options[0].value;
   loadBadgeBuilderSelection();
   renderArchivedBadgeList();
+  renderBadgeBuilderList();
 }
 
 function loadBadgeBuilderSelection() {
@@ -1691,6 +1756,7 @@ function loadBadgeBuilderSelection() {
   setValue('badgeBuilderRequirement', badge.requirementText);
   setValue('badgeBuilderImageUrl', badge.imageUrl);
   previewBadgeBuilderImage();
+  renderBadgeBuilderList();
 }
 
 function previewBadgeBuilderImage() {
@@ -16599,6 +16665,8 @@ window.closeProgressionJournal = closeProgressionJournal;
 window.setProgressionJournalTab = setProgressionJournalTab;
 window.closeBadgeUnlockPopup = closeBadgeUnlockPopup;
 window.resetLocalProgression = resetLocalProgression;
+window.renderBadgeBuilderList = renderBadgeBuilderList;
+window.selectBadgeBuilderBadge = selectBadgeBuilderBadge;
 window.loadBadgeBuilderSelection = loadBadgeBuilderSelection;
 window.previewBadgeBuilderImage = previewBadgeBuilderImage;
 window.handleBadgeImageFileInput = handleBadgeImageFileInput;
