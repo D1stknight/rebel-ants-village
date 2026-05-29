@@ -337,6 +337,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #interactionPrompt{position:fixed;bottom:122px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.7);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:2px;padding:9px 18px;opacity:0;transition:opacity .18s;pointer-events:none;z-index:49;white-space:nowrap}
 #interactionPrompt.on{opacity:1}
+#interiorTitle{position:fixed;top:82px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:48;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;background:rgba(5,10,28,.9);border:1px solid rgba(94,207,202,.46);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;padding:10px 18px;box-shadow:0 0 24px rgba(94,207,202,.13)}
+#interiorTitle.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#interiorTitle small{display:block;margin-top:3px;color:#5ecfca;font-size:8px;letter-spacing:2px;text-align:center}
 #currentVillageBadge{display:none}
 #weatherDebugBadge{position:fixed;top:108px;left:50%;transform:translateX(-50%);z-index:20;display:none;background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.35);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;padding:6px 10px;white-space:nowrap;pointer-events:none}
 #weatherDebugBadge.on{display:block}
@@ -663,6 +666,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
         <option value="interactSign">interactSign</option>
         <option value="openChest">openChest</option>
         <option value="reachZone">reachZone</option>
+        <option value="enterInterior">enterInterior</option>
       </select>
     </label>
     <label class="admin-field">Objective Text <textarea id="questDraftObjective" rows="2" placeholder="Speak with the Ronin watcher"></textarea></label>
@@ -698,6 +702,34 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="deleteSelectedInteractionZone()">Delete Zone</button>
       <button class="ctrl-btn" id="zoneVisibilityBtn" onclick="toggleInteractionZoneVisibility()">Hide Zones</button>
       <button class="ctrl-btn" onclick="setGizmoMode('scale')">Resize Zone</button>
+    </div>
+  </div>
+  <div class="ap-section">Interiors / Dojo Doors</div>
+  <div class="admin-section-body" data-admin-section-body="interior-doors">
+    <div class="admin-note">Interior entrances are lightweight door zones. They save with the village and load only the active room shell when entered.</div>
+    <label class="admin-field">Name <input id="interiorEntranceName" placeholder="Dojo Museum Door"></label>
+    <label class="admin-field">Interior Type
+      <select id="interiorTypeSelect" class="admin-select">
+        <option value="nft_museum">NFT Museum</option>
+        <option value="youtube_theater">YouTube Theater</option>
+        <option value="rebel_store">Rebel Store</option>
+        <option value="book_library">Book Library</option>
+        <option value="arcade_room">Arcade Room</option>
+        <option value="forge_room">Forge Room</option>
+        <option value="training_dojo">Training Dojo</option>
+      </select>
+    </label>
+    <label class="admin-field">Target Interior ID <input id="interiorTargetId" placeholder="hub_dojo_museum"></label>
+    <label class="admin-field">Prompt Text <input id="interiorPromptText" placeholder="Press O to Enter"></label>
+    <label class="admin-field"><span><input id="interiorEntranceEnabled" type="checkbox" checked style="width:auto;margin-right:6px">Enabled</span></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="ctrl-btn" onclick="placeInteriorEntrance()">Add Interior Entrance</button>
+      <button class="ctrl-btn" onclick="applySelectedInteriorEntranceSettings()">Apply Settings</button>
+      <button class="ctrl-btn" onclick="deleteSelectedInteriorEntrance()">Delete Entrance</button>
+      <button class="ctrl-btn" id="interiorEntranceVisibilityBtn" onclick="toggleInteriorEntranceVisibility()">Hide Doors</button>
+      <button class="ctrl-btn" onclick="setGizmoMode('scale')">Resize Zone</button>
+      <button class="ctrl-btn" onclick="testEnterSelectedInterior()">Test Enter Selected</button>
+      <button class="ctrl-btn full" onclick="returnToVillageFromInterior()">Return To Village</button>
     </div>
   </div>
   <div class="ap-section">Collectibles</div>
@@ -933,6 +965,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <input type="file" id="glbUploadInput" accept=".glb" style="display:none">
 <div id="toast"></div>
 <div id="interactionPrompt">Press O to Open</div>
+<div id="interiorTitle" aria-live="polite"></div>
 <div id="npcDialogueOverlay" aria-hidden="true">
   <div id="npcDialoguePanel" role="dialog" aria-modal="true" aria-labelledby="npcDialogueName">
     <div id="npcDialogueName">Villager</div>
@@ -1293,6 +1326,18 @@ const COLLECTIBLE_TYPES = {
   red_dust_fragment: { label:'Red Dust Fragment', color:'#c92e35', accent:'#ff8b86', modelUrl:'/assets/collectibles/red-dust-fragment.glb', modelScale:COLLECTIBLE_MODEL_SCALES.redDustFragmentScale },
   root_memory: { label:'Root Memory', color:'#5ecfca', accent:'#a7fff5', modelUrl:'/assets/collectibles/root-memory.glb', modelScale:COLLECTIBLE_MODEL_SCALES.rootMemoryScale }
 };
+const INTERIOR_TYPES = {
+  nft_museum: { title:'NFT Museum', accent:new BABYLON.Color3(.85,.62,.22), prompt:'Press O to Enter Museum' },
+  youtube_theater: { title:'YouTube Theater', accent:new BABYLON.Color3(.86,.08,.08), prompt:'Press O to Enter Theater' },
+  rebel_store: { title:'Rebel Store', accent:new BABYLON.Color3(.1,.75,.62), prompt:'Press O to Enter Store' },
+  book_library: { title:'Book Library', accent:new BABYLON.Color3(.52,.3,.12), prompt:'Press O to Enter Library' },
+  arcade_room: { title:'Arcade Room', accent:new BABYLON.Color3(.55,.22,.92), prompt:'Press O to Enter Arcade' },
+  forge_room: { title:'Forge Room', accent:new BABYLON.Color3(.92,.38,.1), prompt:'Press O to Enter Forge' },
+  training_dojo: { title:'Training Dojo', accent:new BABYLON.Color3(.18,.62,.92), prompt:'Press O to Enter Dojo' }
+};
+const INTERIOR_ENTRANCE_RANGE = 4.8;
+let _interiorEntrancesVisible = true;
+let ActiveInterior = null;
 
 function getDefaultProgressionState() {
   return {
@@ -2647,7 +2692,9 @@ const PERF_DYNAMIC_TYPES = new Set([
   'hanging_lantern',
   'lantern_1',
   'ronin_mist',
-  'interaction_zone'
+  'interaction_zone',
+  'interior_entrance',
+  'interior_runtime'
 ]);
 
 function getPerfNodeType(node) {
@@ -2750,7 +2797,7 @@ function applyWalkModeHelperVisibility(force = false) {
     if (!mesh || mesh.isDisposed?.()) return;
     const type = mesh.metadata?.type;
     const isManualHelper = type === 'collision_proxy';
-    const isZoneHelper = type === 'interaction_zone' || mesh.name?.startsWith('interactionZone_');
+    const isZoneHelper = type === 'interaction_zone' || type === 'interior_entrance' || mesh.name?.startsWith('interactionZone_') || mesh.name?.startsWith('interiorEntrance_');
     const isPlacementHelper = mesh.metadata?.isAdminPlacementMarker || mesh.name?.includes('BrushPreview') || mesh.name?.startsWith('patrolRoute');
     if (!isManualHelper && !isZoneHelper && !isPlacementHelper) return;
     const visible = isManualHelper ? showManual : adminMode;
@@ -2760,7 +2807,7 @@ function applyWalkModeHelperVisibility(force = false) {
   });
   scene.transformNodes.forEach(node => {
     if (!node || node.isDisposed?.()) return;
-    const isZone = node.metadata?.type === 'interaction_zone';
+    const isZone = node.metadata?.type === 'interaction_zone' || node.metadata?.type === 'interior_entrance';
     const isPlacement = node.metadata?.isAdminPlacementMarker;
     if (!isZone && !isPlacement) return;
     node.getChildMeshes?.(false).forEach(mesh => {
@@ -4465,6 +4512,19 @@ if (selectedObject?.metadata?.type === 'interaction_zone') {
   if (zoneTypeInput) zoneTypeInput.value = selectedObject.metadata.interactionZoneType || 'story';
   if (zoneQuestInput) zoneQuestInput.value = selectedObject.metadata.questObjectiveId || '';
 }
+if (selectedObject?.metadata?.type === 'interior_entrance') {
+  const defaults = getInteriorEntranceDefaults(selectedObject.metadata.interiorType);
+  const nameInput = document.getElementById('interiorEntranceName');
+  const typeInput = document.getElementById('interiorTypeSelect');
+  const targetInput = document.getElementById('interiorTargetId');
+  const promptInput = document.getElementById('interiorPromptText');
+  const enabledInput = document.getElementById('interiorEntranceEnabled');
+  if (nameInput) nameInput.value = selectedObject.metadata.interiorName || defaults.name;
+  if (typeInput) typeInput.value = normalizeInteriorType(selectedObject.metadata.interiorType);
+  if (targetInput) targetInput.value = selectedObject.metadata.targetInteriorId || defaults.targetInteriorId;
+  if (promptInput) promptInput.value = selectedObject.metadata.promptText || defaults.promptText;
+  if (enabledInput) enabledInput.checked = selectedObject.metadata.enabled !== false;
+}
   if (isSign) {
     const cfg = selectedObject.metadata.signConfig || {};
     document.getElementById('signLabel').value = cfg.label || '';
@@ -5223,6 +5283,17 @@ function tryOpenNearbySign() {
 
 function updateInteractionPrompt() {
   updateTreasureChestPrompt();
+
+  if (ActiveInterior && getNearestInteriorExitInRange()) {
+    setInteractionPrompt('Press O to Exit', true);
+    return;
+  }
+
+  const interiorEntrance = getNearestInteriorEntranceInRange();
+  if (interiorEntrance) {
+    setInteractionPrompt(interiorEntrance.metadata.promptText || 'Press O to Enter', true);
+    return;
+  }
 
   if (walkMode && !adminMode && getNearestVillageGateInRange()) {
     setInteractionPrompt('Press O to Open Village Gate', true);
@@ -12530,6 +12601,11 @@ function collectWorldLayoutData() {
     terrainStampType: node.metadata.terrainStampType || null,
     terrainStampShape: node.metadata.terrainStampShape || null,
     interactionZoneType: node.metadata.interactionZoneType || null,
+    interiorName: node.metadata.interiorName || null,
+    interiorType: node.metadata.interiorType || null,
+    targetInteriorId: node.metadata.targetInteriorId || null,
+    promptText: node.metadata.promptText || null,
+    enabled: node.metadata.enabled !== false,
     questObjectiveId: node.metadata.questObjectiveId || null,
     editorLocked: node.metadata.editorLocked === true
   });
@@ -12830,6 +12906,25 @@ function loadWorldLayout(){
       zone.rotation = new BABYLON.Vector3(item.rotation?.x || 0, item.rotation?.y || 0, item.rotation?.z || 0);
       zone.scaling = new BABYLON.Vector3(item.scaling?.x || 1, item.scaling?.y || 1, item.scaling?.z || 1);
       registerEditableRoot(zone.name, zone);
+      return;
+    }
+
+    if (item.type === 'interior_entrance') {
+      const entrance = createInteriorEntrance(
+        new BABYLON.Vector3(item.position.x, item.position.y, item.position.z),
+        {
+          name: item.name,
+          rotation: item.rotation,
+          scaling: item.scaling,
+          interiorName: item.interiorName || null,
+          interiorType: item.interiorType || 'training_dojo',
+          targetInteriorId: item.targetInteriorId || item.questObjectiveId || null,
+          promptText: item.promptText || null,
+          enabled: item.enabled !== false,
+          questObjectiveId: item.questObjectiveId || item.targetInteriorId || null
+        }
+      );
+      registerEditableRoot(entrance.name, entrance);
       return;
     }
 
@@ -13317,7 +13412,7 @@ document.addEventListener('keydown', async e => {
     rotateSelectedBy(Math.PI / 2);
     return;
   }
-  if (!adminMode && key === 'o' && (tryOpenNearbyVillageGate() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
+  if (!adminMode && key === 'o' && ((ActiveInterior && returnToVillageFromInterior()) || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
     e.preventDefault();
     return;
   }
@@ -13372,6 +13467,22 @@ scene.onPointerObservable.add(evt=>{
   if(!charMesh)return;
   if(evt.type!==BABYLON.PointerEventTypes.POINTERPICK)return;
   const hit=evt.pickInfo; if(!hit||!hit.hit)return;
+  if (walkMode && !adminMode) {
+    const picked = hit.pickedMesh;
+    if (picked?.metadata?.isInteriorExit || picked?.parent?.metadata?.isInteriorExit) {
+      returnToVillageFromInterior();
+      return;
+    }
+    const entrance = picked?._editRoot?.metadata?.type === 'interior_entrance'
+      ? picked._editRoot
+      : picked?.metadata?.type === 'interior_entrance'
+        ? picked
+        : null;
+    if (entrance && entranceContainsPlayer(entrance)) {
+      enterInterior(entrance);
+      return;
+    }
+  }
   let node=hit.pickedMesh; while(node&&node.parent)node=node.parent;
   if(node&&node.name==='playerRoot'){
     if(walkMode){ _orbitAngleH=charMesh.rotation.y+Math.PI; _orbitAngleV=0.35; }
@@ -14131,6 +14242,7 @@ function refreshVillageCollisionBlockersIfNeeded() {
 function liveManualCollisionProxyBlocksPoint(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   return scene.meshes.some(mesh => {
     if (!mesh || mesh.isDisposed?.()) return false;
+    if (mesh.isEnabled?.() === false) return false;
     const proxyRoot = mesh.metadata?.type === 'collision_proxy'
       ? mesh
       : mesh._editRoot?.metadata?.type === 'collision_proxy'
@@ -14146,6 +14258,7 @@ function liveManualCollisionProxyBlocksPoint(x, z, padding = VILLAGE_MANUAL_BLOC
 function liveManualCollisionProxyBlocksSegment(startX, startZ, endX, endZ, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   return scene.meshes.some(mesh => {
     if (!mesh || mesh.isDisposed?.()) return false;
+    if (mesh.isEnabled?.() === false) return false;
     const proxyRoot = mesh.metadata?.type === 'collision_proxy'
       ? mesh
       : mesh._editRoot?.metadata?.type === 'collision_proxy'
@@ -14412,6 +14525,7 @@ window.auditVillageCollisionSources = function auditVillageCollisionSources() {
 };
 
 function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
+  if (ActiveInterior) return { x: proposedPosition.x, z: proposedPosition.z, blocked: false };
   refreshVillageCollisionBlockersIfNeeded();
 
   if (!villageSegmentBlocked(currentPosition.x, currentPosition.z, proposedPosition.x, proposedPosition.z)) {
@@ -15221,6 +15335,7 @@ function getNodeAdminLayer(node) {
   if (type === 'collision_proxy') return node.metadata?.proxyPieceKind === 'blocker' ? 'collision' : 'walk';
   if (type === 'terrain_stamp') return 'terrain';
   if (type === 'interaction_zone') return 'zones';
+  if (type === 'interior_entrance') return 'zones';
   if (type.includes('terrain')) return 'terrain';
   return 'buildings';
 }
@@ -15451,6 +15566,7 @@ function getPerformanceMetrics() {
     npcs: { label:'NPCs', value:NPCManager.roots.length, status:'neutral' },
     animatedNpcs: { label:'Animated NPCs', value:animatedNpcCount, status:'neutral' },
     collectibles: { label:'Collectibles', value:getCollectibleRoots().length, status:'neutral' },
+    activeInterior: { label:'Active Interior', value:ActiveInterior ? getInteriorTypeLabel(ActiveInterior.interiorType) : 'none', status:ActiveInterior ? 'good' : 'neutral' },
     terrain: { label:'Terrain Stamps', value:getTerrainPatchNodes().length, status:'neutral' },
     manualHelpers: { label:'Collision / Walk Helpers', value:manualHelpers, status:getPerfStatus(manualHelpers, { green:150, yellow:400 }) },
     weatherFx: { label:'Weather FX', value:getWeatherFxCount(), status:'neutral' },
@@ -16224,6 +16340,456 @@ function applySelectedInteractionZoneSettings() {
   showToast('Interaction zone updated');
 }
 
+function normalizeInteriorType(type) {
+  return INTERIOR_TYPES[type] ? type : 'training_dojo';
+}
+
+function getInteriorTypeLabel(type) {
+  return INTERIOR_TYPES[normalizeInteriorType(type)].title;
+}
+
+function getInteriorEntranceDefaults(type = 'training_dojo') {
+  const safeType = normalizeInteriorType(type);
+  return {
+    name: getInteriorTypeLabel(safeType) + ' Door',
+    interiorType: safeType,
+    targetInteriorId: CURRENT_VILLAGE_ID + '_' + safeType,
+    promptText: INTERIOR_TYPES[safeType].prompt,
+    enabled: true
+  };
+}
+
+function createInteriorEntrance(position, options = {}) {
+  const defaults = getInteriorEntranceDefaults(options.interiorType);
+  const root = new BABYLON.TransformNode(options.name || makeUniqueVillageNodeName('interiorEntranceRootClone_' + Date.now()), scene);
+  root.position = position.clone();
+  root.rotation = options.rotation
+    ? new BABYLON.Vector3(options.rotation.x || 0, options.rotation.y || 0, options.rotation.z || 0)
+    : new BABYLON.Vector3(0, 0, 0);
+  root.scaling = options.scaling
+    ? new BABYLON.Vector3(options.scaling.x || 1, options.scaling.y || 1, options.scaling.z || 1)
+    : new BABYLON.Vector3(5, 2.4, 3);
+  root.metadata = {
+    type: 'interior_entrance',
+    isClone: true,
+    interiorName: options.interiorName || defaults.name,
+    interiorType: normalizeInteriorType(options.interiorType || defaults.interiorType),
+    targetInteriorId: options.targetInteriorId || defaults.targetInteriorId,
+    promptText: options.promptText || defaults.promptText,
+    enabled: options.enabled !== false,
+    questObjectiveType: 'enterInterior',
+    questObjectiveId: options.questObjectiveId || options.targetInteriorId || defaults.targetInteriorId
+  };
+  root.isPickable = true;
+
+  const box = BABYLON.MeshBuilder.CreateBox('interiorEntranceBox_' + root.name, { width: 1, height: 1, depth: 1 }, scene);
+  box.parent = root;
+  box.position.y = .5;
+  box.isPickable = true;
+  box._editRoot = root;
+
+  styleInteriorEntranceVisual(root);
+  registerEditableRoot(root.name, root);
+  return root;
+}
+
+function styleInteriorEntranceVisual(entrance) {
+  if (!entrance || entrance.metadata?.type !== 'interior_entrance') return;
+  const type = normalizeInteriorType(entrance.metadata.interiorType);
+  const accent = INTERIOR_TYPES[type].accent;
+  const matName = 'interiorEntranceMat_' + entrance.name;
+  const mat = scene.getMaterialByName(matName) || new BABYLON.StandardMaterial(matName, scene);
+  mat.diffuseColor = accent;
+  mat.emissiveColor = accent.scale(entrance.metadata.enabled === false ? .12 : .42);
+  mat.alpha = entrance.metadata.enabled === false ? .12 : .28;
+  mat.backFaceCulling = false;
+  entrance.getChildMeshes?.(false).forEach(mesh => {
+    if (mesh.name.startsWith('interiorEntranceBox_')) mesh.material = mat;
+  });
+}
+
+function placeInteriorEntrance() {
+  if (!adminMode) { showToast('Enter Admin Mode first'); return; }
+  recordEditorHistory('place interior entrance');
+  const point = getWorldBuilderPlacementPoint();
+  const type = document.getElementById('interiorTypeSelect')?.value || 'training_dojo';
+  const entrance = createInteriorEntrance(new BABYLON.Vector3(point.x, point.y, point.z), readInteriorEntranceAdminSettings(type));
+  setSelectedEditableObject(entrance);
+  triggerAutoSave();
+  showToast('Interior entrance placed: ' + getInteriorTypeLabel(type));
+}
+
+function readInteriorEntranceAdminSettings(fallbackType = 'training_dojo') {
+  const type = normalizeInteriorType(document.getElementById('interiorTypeSelect')?.value || fallbackType);
+  const defaults = getInteriorEntranceDefaults(type);
+  return {
+    interiorName: document.getElementById('interiorEntranceName')?.value?.trim() || defaults.name,
+    interiorType: type,
+    targetInteriorId: document.getElementById('interiorTargetId')?.value?.trim() || defaults.targetInteriorId,
+    promptText: document.getElementById('interiorPromptText')?.value?.trim() || defaults.promptText,
+    enabled: document.getElementById('interiorEntranceEnabled')?.checked !== false
+  };
+}
+
+function applySelectedInteriorEntranceSettings() {
+  if (selectedObject?.metadata?.type !== 'interior_entrance') {
+    showToast('Select an interior entrance first');
+    return;
+  }
+  recordEditorHistory('edit interior entrance');
+  const settings = readInteriorEntranceAdminSettings(selectedObject.metadata.interiorType);
+  selectedObject.metadata.interiorName = settings.interiorName;
+  selectedObject.metadata.interiorType = settings.interiorType;
+  selectedObject.metadata.targetInteriorId = settings.targetInteriorId;
+  selectedObject.metadata.promptText = settings.promptText;
+  selectedObject.metadata.enabled = settings.enabled;
+  selectedObject.metadata.questObjectiveType = 'enterInterior';
+  selectedObject.metadata.questObjectiveId = settings.targetInteriorId;
+  styleInteriorEntranceVisual(selectedObject);
+  triggerAutoSave();
+  showToast('Interior entrance updated');
+}
+
+function deleteSelectedInteriorEntrance() {
+  if (selectedObject?.metadata?.type !== 'interior_entrance') { showToast('Select an interior entrance first'); return; }
+  recordEditorHistory('delete interior entrance');
+  selectedObject.dispose(false, true);
+  selectedObject = null;
+  updateSelectedBadge();
+  triggerAutoSave();
+}
+
+function toggleInteriorEntranceVisibility() {
+  _interiorEntrancesVisible = !_interiorEntrancesVisible;
+  scene.transformNodes
+    .filter(node => node.metadata?.type === 'interior_entrance')
+    .forEach(node => node.setEnabled(_interiorEntrancesVisible));
+  const btn = document.getElementById('interiorEntranceVisibilityBtn');
+  if (btn) btn.textContent = _interiorEntrancesVisible ? 'Hide Doors' : 'Show Doors';
+}
+
+function getInteriorEntranceFootprint(entrance) {
+  if (!entrance || entrance.metadata?.type !== 'interior_entrance') return null;
+  entrance.computeWorldMatrix?.(true);
+  const world = entrance.getWorldMatrix?.();
+  const center = entrance.getAbsolutePosition?.() || entrance.position;
+  let axisX = null;
+  let axisZ = null;
+  let halfX = Math.max(.3, Math.abs(entrance.scaling?.x || 1) * .5);
+  let halfZ = Math.max(.3, Math.abs(entrance.scaling?.z || 1) * .5);
+  let yaw = entrance.rotation?.y || 0;
+  if (world) {
+    const worldX = BABYLON.Vector3.TransformNormal(BABYLON.Axis.X, world);
+    const worldZ = BABYLON.Vector3.TransformNormal(BABYLON.Axis.Z, world);
+    const xLen = Math.hypot(worldX.x, worldX.z);
+    const zLen = Math.hypot(worldZ.x, worldZ.z);
+    if (xLen > .0001 && zLen > .0001) {
+      axisX = { x: worldX.x / xLen, z: worldX.z / xLen };
+      axisZ = { x: worldZ.x / zLen, z: worldZ.z / zLen };
+      halfX = Math.max(.3, xLen * .5);
+      halfZ = Math.max(.3, zLen * .5);
+      yaw = Math.atan2(axisX.z, axisX.x);
+    }
+  }
+  return { centerX:center.x, centerY:center.y, centerZ:center.z, yaw, axisX, axisZ, halfX, halfZ };
+}
+
+function entranceContainsPlayer(entrance) {
+  if (!charMesh || !entrance || entrance.metadata?.enabled === false) return false;
+  const footprint = getInteriorEntranceFootprint(entrance);
+  if (!footprint) return false;
+  const local = pointToVillageSurfaceLocal(footprint, charMesh.position.x, charMesh.position.z);
+  const inZone = Math.abs(local.x) <= footprint.halfX + .45 && Math.abs(local.z) <= footprint.halfZ + .45;
+  const closeEnough = Math.hypot(charMesh.position.x - footprint.centerX, charMesh.position.z - footprint.centerZ) <= INTERIOR_ENTRANCE_RANGE + Math.max(footprint.halfX, footprint.halfZ);
+  return inZone || closeEnough;
+}
+
+function getNearestInteriorEntranceInRange() {
+  if (!walkMode || adminMode || ActiveInterior) return null;
+  let nearest = null;
+  let nearestDistSq = Infinity;
+  scene.transformNodes.forEach(node => {
+    if (node.metadata?.type !== 'interior_entrance' || node.metadata.enabled === false) return;
+    if (!entranceContainsPlayer(node)) return;
+    const dx = node.position.x - charMesh.position.x;
+    const dz = node.position.z - charMesh.position.z;
+    const distSq = dx * dx + dz * dz;
+    if (distSq < nearestDistSq) {
+      nearest = node;
+      nearestDistSq = distSq;
+    }
+  });
+  return nearest;
+}
+
+function setInteriorTitle(text, subtext = '') {
+  const el = document.getElementById('interiorTitle');
+  if (!el) return;
+  el.innerHTML = `${escapeHTML(text || '')}${subtext ? '<small>' + escapeHTML(subtext) + '</small>' : ''}`;
+  el.classList.toggle('on', Boolean(text));
+}
+
+function setVillageTravelFade(on) {
+  const fade = document.getElementById('villageTravelFade');
+  if (fade) fade.classList.toggle('on', on === true);
+}
+
+function getInteriorReturnPosition(entrance) {
+  if (!entrance || !charMesh) return charMesh?.position?.clone?.() || new BABYLON.Vector3(0, 0, 0);
+  const yaw = entrance.rotation?.y || 0;
+  const back = new BABYLON.Vector3(Math.sin(yaw + Math.PI), 0, Math.cos(yaw + Math.PI));
+  const pos = entrance.position.add(back.scale(Math.max(3, Math.abs(entrance.scaling?.z || 1) + 1.4)));
+  const groundY = getVillagePlayerGroundHeightAt(pos.x, pos.z);
+  pos.y = Number.isFinite(groundY) ? groundY : entrance.position.y;
+  return pos;
+}
+
+function getInteriorGameplayRoots() {
+  return [
+    ...scene.transformNodes.filter(node =>
+      node?.metadata?.isClone === true &&
+      node.metadata?.type !== 'interior_entrance' &&
+      node.metadata?.type !== 'interior_runtime'
+    ),
+    ...scene.meshes.filter(mesh =>
+      !mesh.parent &&
+      (
+        mesh.metadata?.type === 'collision_proxy' ||
+        mesh.metadata?.type === 'terrain_stamp' ||
+        mesh.metadata?.type === 'collectible'
+      )
+    ),
+    ...NPCManager.roots,
+    ...(Array.isArray(BUILDINGS) ? BUILDINGS.map(entry => entry.mesh).filter(Boolean) : [])
+  ].filter(node => node && !node.isDisposed?.() && node !== charMesh);
+}
+
+function setVillageRuntimeEnabled(enabled) {
+  getInteriorGameplayRoots().forEach(node => {
+    if (enabled) {
+      if (node.metadata?._interiorDisabled === true) node.setEnabled?.(true);
+      if (node.metadata) delete node.metadata._interiorDisabled;
+    } else if (node.isEnabled?.() !== false) {
+      node.metadata = { ...(node.metadata || {}), _interiorDisabled:true };
+      node.setEnabled?.(false);
+    }
+  });
+  if (!enabled) {
+    NPCManager.paused = true;
+    setCollisionProxyVisualsVisible(false);
+  } else {
+    NPCManager.paused = false;
+    setCollisionProxyVisualsVisible(adminMode);
+    rebuildVillageCollisionBlockers();
+  }
+}
+
+function makeInteriorMaterial(name, color, emissiveScale = .08, alpha = null) {
+  const mat = new BABYLON.StandardMaterial(name, scene);
+  mat.diffuseColor = color;
+  mat.specularColor = new BABYLON.Color3(.05,.04,.04);
+  mat.emissiveColor = color.scale(emissiveScale);
+  if (alpha !== null) {
+    mat.alpha = alpha;
+    mat.backFaceCulling = false;
+  }
+  if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mat);
+  return mat;
+}
+
+function addInteriorBox(parent, name, size, position, material) {
+  const mesh = BABYLON.MeshBuilder.CreateBox(name, size, scene);
+  mesh.parent = parent;
+  mesh.position = position;
+  mesh.material = material;
+  mesh.isPickable = false;
+  mesh.receiveShadows = false;
+  mesh.freezeWorldMatrix();
+  return mesh;
+}
+
+function addInteriorPanel(parent, name, width, height, position, rotation, material) {
+  const mesh = BABYLON.MeshBuilder.CreatePlane(name, { width, height }, scene);
+  mesh.parent = parent;
+  mesh.position = position;
+  mesh.rotation = rotation || new BABYLON.Vector3(0, 0, 0);
+  mesh.material = material;
+  mesh.isPickable = false;
+  mesh.freezeWorldMatrix();
+  return mesh;
+}
+
+function buildInteriorProps(root, type, mats) {
+  const accent = mats.accent;
+  if (type === 'nft_museum') {
+    for (let i = 0; i < 6; i += 1) {
+      const x = -9 + i * 3.6;
+      addInteriorPanel(root, 'nftFrame_' + i, 2, 2.5, new BABYLON.Vector3(x, 3, -9.92), new BABYLON.Vector3(0, 0, 0), accent);
+      addInteriorBox(root, 'nftCardStand_' + i, { width:1.4, height:.08, depth:1.1 }, new BABYLON.Vector3(x, .68, 5.5), mats.wood);
+    }
+  } else if (type === 'youtube_theater') {
+    addInteriorPanel(root, 'theaterScreen', 10, 5.4, new BABYLON.Vector3(0, 4, -9.9), new BABYLON.Vector3(0, 0, 0), accent);
+    for (let row = 0; row < 3; row += 1) {
+      for (let col = 0; col < 5; col += 1) addInteriorBox(root, 'theaterSeat_' + row + '_' + col, { width:1.2, height:.8, depth:1 }, new BABYLON.Vector3(-4.8 + col * 2.4, .8, 1.5 + row * 2), mats.wood);
+    }
+  } else if (type === 'rebel_store') {
+    for (let i = 0; i < 4; i += 1) addInteriorBox(root, 'storeShelf_' + i, { width:1.2, height:2.8, depth:5.5 }, new BABYLON.Vector3(-8 + i * 5.3, 1.8, -7.5), mats.wood);
+    for (let i = 0; i < 5; i += 1) addInteriorBox(root, 'productStand_' + i, { width:1.4, height:1.2, depth:1.4 }, new BABYLON.Vector3(-5.6 + i * 2.8, 1, 3.5), accent);
+  } else if (type === 'book_library') {
+    for (let i = 0; i < 5; i += 1) addInteriorBox(root, 'bookShelf_' + i, { width:2.1, height:4, depth:.75 }, new BABYLON.Vector3(-8 + i * 4, 2.3, -9.4), mats.wood);
+    addInteriorBox(root, 'libraryTable', { width:5.5, height:.32, depth:2.4 }, new BABYLON.Vector3(0, 1.1, 3), mats.wood);
+  } else if (type === 'arcade_room') {
+    for (let i = 0; i < 6; i += 1) addInteriorBox(root, 'arcadeCabinet_' + i, { width:1.4, height:3, depth:1.1 }, new BABYLON.Vector3(-7.5 + i * 3, 1.8, -7.8), i % 2 ? accent : mats.wood);
+    addInteriorPanel(root, 'arcadePortalPlaceholder', 4.5, 3, new BABYLON.Vector3(0, 3.2, 9.9), new BABYLON.Vector3(0, Math.PI, 0), accent);
+  } else if (type === 'forge_room') {
+    addInteriorBox(root, 'forgeStation', { width:4.4, height:1.2, depth:2.4 }, new BABYLON.Vector3(0, 1, -4), mats.wood);
+    addInteriorBox(root, 'forgeAnvil', { width:1.6, height:.8, depth:1 }, new BABYLON.Vector3(0, 1.8, -4), accent);
+    addInteriorPanel(root, 'forgePortalPanel', 3.8, 3.8, new BABYLON.Vector3(6.5, 3, -9.9), new BABYLON.Vector3(0, 0, 0), accent);
+  } else {
+    addInteriorBox(root, 'trainingMat', { width:12, height:.08, depth:8 }, new BABYLON.Vector3(0, .58, -1), accent);
+    for (let i = 0; i < 4; i += 1) addInteriorBox(root, 'dojoPost_' + i, { width:.7, height:4.6, depth:.7 }, new BABYLON.Vector3(i < 2 ? -8 : 8, 2.8, i % 2 ? -7 : 7), mats.wood);
+  }
+}
+
+function buildInteriorRoom(entrance) {
+  const type = normalizeInteriorType(entrance?.metadata?.interiorType);
+  const root = new BABYLON.TransformNode('activeInteriorRoot', scene);
+  root.metadata = { type:'interior_runtime', interiorType:type };
+
+  const floorMat = makeInteriorMaterial('interiorFloorMat_' + type, new BABYLON.Color3(.16,.12,.08), .05);
+  const wallMat = makeInteriorMaterial('interiorWallMat_' + type, new BABYLON.Color3(.08,.11,.13), .1);
+  const woodMat = makeInteriorMaterial('interiorWoodMat_' + type, new BABYLON.Color3(.35,.18,.08), .08);
+  const accentMat = makeInteriorMaterial('interiorAccentMat_' + type, INTERIOR_TYPES[type].accent, .38);
+  const exitMat = makeInteriorMaterial('interiorExitMat_' + type, new BABYLON.Color3(.9,.72,.24), .24);
+
+  addInteriorBox(root, 'interiorFloor', { width:24, height:.45, depth:22 }, new BABYLON.Vector3(0, .25, 0), floorMat);
+  addInteriorBox(root, 'interiorBackWall', { width:24, height:6.5, depth:.5 }, new BABYLON.Vector3(0, 3.45, -11), wallMat);
+  addInteriorBox(root, 'interiorLeftWall', { width:.5, height:6.5, depth:22 }, new BABYLON.Vector3(-12, 3.45, 0), wallMat);
+  addInteriorBox(root, 'interiorRightWall', { width:.5, height:6.5, depth:22 }, new BABYLON.Vector3(12, 3.45, 0), wallMat);
+  addInteriorBox(root, 'interiorFrontWallLeft', { width:8.2, height:6.5, depth:.5 }, new BABYLON.Vector3(-7.9, 3.45, 11), wallMat);
+  addInteriorBox(root, 'interiorFrontWallRight', { width:8.2, height:6.5, depth:.5 }, new BABYLON.Vector3(7.9, 3.45, 11), wallMat);
+  const exitDoor = addInteriorBox(root, 'interiorExitDoor', { width:3.8, height:4.4, depth:.34 }, new BABYLON.Vector3(0, 2.45, 10.75), exitMat);
+  exitDoor.metadata = { type:'interior_exit', isInteriorExit:true };
+  exitDoor.isPickable = true;
+  exitDoor.unfreezeWorldMatrix();
+
+  buildInteriorProps(root, type, { floor:floorMat, wall:wallMat, wood:woodMat, accent:accentMat, exit:exitMat });
+
+  const light = new BABYLON.HemisphericLight('activeInteriorLight', new BABYLON.Vector3(0, 1, 0), scene);
+  light.intensity = .78;
+  light.diffuse = INTERIOR_TYPES[type].accent.scale(.45).add(new BABYLON.Color3(.42,.36,.3));
+  light.parent = root;
+
+  root.getChildMeshes?.(false).forEach(mesh => {
+    mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true };
+    mesh.doNotSyncBoundingInfo = true;
+  });
+  return root;
+}
+
+function recordInteriorQuestHook(entrance, actionType = 'enterInterior') {
+  const payload = {
+    actionType,
+    interiorType: normalizeInteriorType(entrance?.metadata?.interiorType),
+    targetInteriorId: entrance?.metadata?.targetInteriorId || '',
+    entranceName: entrance?.metadata?.interiorName || entrance?.name || '',
+    villageId: CURRENT_VILLAGE_ID,
+    at: new Date().toISOString()
+  };
+  try {
+    const key = 'rebelAntsInteriorQuestHooks:v1';
+    const hooks = JSON.parse(localStorage.getItem(key) || '[]');
+    hooks.push(payload);
+    localStorage.setItem(key, JSON.stringify(hooks.slice(-100)));
+  } catch(e) {}
+  window.dispatchEvent(new CustomEvent('rebelAntsInteriorEvent', { detail: payload }));
+  return payload;
+}
+
+function enterInterior(entrance) {
+  if (!entrance || entrance.metadata?.type !== 'interior_entrance' || entrance.metadata.enabled === false || ActiveInterior) return false;
+  const type = normalizeInteriorType(entrance.metadata.interiorType);
+  setVillageTravelFade(true);
+  playInteractionAudio('portalOpen');
+  setTimeout(() => {
+    const returnPosition = getInteriorReturnPosition(entrance);
+    setVillageRuntimeEnabled(false);
+    const root = buildInteriorRoom(entrance);
+    ActiveInterior = {
+      root,
+      entranceName: entrance.name,
+      returnPosition,
+      returnRotationY: charMesh?.rotation?.y || 0,
+      interiorType: type,
+      targetInteriorId: entrance.metadata.targetInteriorId || '',
+      previousVillageId: CURRENT_VILLAGE_ID
+    };
+    if (charMesh) {
+      charMesh.position.set(0, .7, 7.1);
+      charMesh.rotation.y = Math.PI;
+      charMesh._vel = 0;
+    }
+    walkMode = true;
+    setInteriorTitle(getInteriorTypeLabel(type), entrance.metadata.targetInteriorId || 'Interior');
+    recordInteriorQuestHook(entrance, 'enterInterior');
+    updateQuestTracker();
+    setVillageTravelFade(false);
+    setTimeout(() => setInteriorTitle('', ''), 2600);
+  }, 260);
+  return true;
+}
+
+function tryEnterNearbyInterior() {
+  if (!walkMode || adminMode || ActiveInterior) return false;
+  const entrance = getNearestInteriorEntranceInRange();
+  if (!entrance) return false;
+  return enterInterior(entrance);
+}
+
+function returnToVillageFromInterior() {
+  if (!ActiveInterior) {
+    showToast('Not inside an interior');
+    return false;
+  }
+  setVillageTravelFade(true);
+  setTimeout(() => {
+    ActiveInterior.root?.dispose(false, true);
+    const returnPosition = ActiveInterior.returnPosition?.clone?.() || new BABYLON.Vector3(0, 0, 0);
+    const returnRotationY = ActiveInterior.returnRotationY || 0;
+    ActiveInterior = null;
+    setVillageRuntimeEnabled(true);
+    if (charMesh) {
+      charMesh.position.copyFrom(returnPosition);
+      charMesh.rotation.y = returnRotationY;
+      charMesh._vel = 0;
+      const terrainY = getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z);
+      if (Number.isFinite(terrainY)) groundPlayableVisualToTerrain(terrainY);
+    }
+    setInteriorTitle('', '');
+    setVillageTravelFade(false);
+    showToast('Returned to village');
+  }, 220);
+  return true;
+}
+
+function getNearestInteriorExitInRange() {
+  if (!ActiveInterior || !charMesh) return null;
+  const exit = scene.getMeshByName('interiorExitDoor');
+  if (!exit || exit.isDisposed?.()) return null;
+  const pos = exit.getAbsolutePosition();
+  const dx = pos.x - charMesh.position.x;
+  const dz = pos.z - charMesh.position.z;
+  return dx * dx + dz * dz <= 14 ? exit : null;
+}
+
+function testEnterSelectedInterior() {
+  if (selectedObject?.metadata?.type !== 'interior_entrance') {
+    showToast('Select an interior entrance first');
+    return false;
+  }
+  return enterInterior(selectedObject);
+}
+
 function saveQuestDraft() {
   const draft = {
     id: document.getElementById('questDraftId')?.value?.trim() || ('quest_' + Date.now()),
@@ -16519,9 +17085,15 @@ function applyLayoutItemToExistingNode(node, item) {
     terrainStampType: item.terrainStampType || null,
     terrainStampShape: item.terrainStampShape || null,
     interactionZoneType: item.interactionZoneType || null,
+    interiorName: item.interiorName || null,
+    interiorType: item.interiorType || null,
+    targetInteriorId: item.targetInteriorId || null,
+    promptText: item.promptText || null,
+    enabled: item.enabled !== false,
     questObjectiveId: item.questObjectiveId || null,
     editorLocked: item.editorLocked === true
   };
+  if (item.type === 'interior_entrance') styleInteriorEntranceVisual(node);
   if (item.type === 'terrain_stamp') rebuildTerrainStampMesh(node);
   if (item.type === 'collision_proxy') {
     const proxyKind = item.proxyPieceKind || node.metadata?.proxyPieceKind || 'blocker';
@@ -16591,6 +17163,18 @@ function createLayoutNodeForHistory(item) {
     node = createInteractionZone(pos, item.interactionZoneType || 'story');
     if (item.name) node.name = item.name;
     node.metadata.questObjectiveId = item.questObjectiveId || null;
+  } else if (item.type === 'interior_entrance') {
+    node = createInteriorEntrance(pos, {
+      name: item.name,
+      rotation: item.rotation,
+      scaling: item.scaling,
+      interiorName: item.interiorName || null,
+      interiorType: item.interiorType || 'training_dojo',
+      targetInteriorId: item.targetInteriorId || item.questObjectiveId || null,
+      promptText: item.promptText || null,
+      enabled: item.enabled !== false,
+      questObjectiveId: item.questObjectiveId || item.targetInteriorId || null
+    });
   } else if (item.type === 'collectible') {
     node = createCollectible(item.collectibleType || 'flame_shard', pos, {
       name: item.name,
@@ -17406,6 +17990,12 @@ window.placeInteractionZone = placeInteractionZone;
 window.applySelectedInteractionZoneSettings = applySelectedInteractionZoneSettings;
 window.deleteSelectedInteractionZone = deleteSelectedInteractionZone;
 window.toggleInteractionZoneVisibility = toggleInteractionZoneVisibility;
+window.placeInteriorEntrance = placeInteriorEntrance;
+window.applySelectedInteriorEntranceSettings = applySelectedInteriorEntranceSettings;
+window.deleteSelectedInteriorEntrance = deleteSelectedInteriorEntrance;
+window.toggleInteriorEntranceVisibility = toggleInteriorEntranceVisibility;
+window.testEnterSelectedInterior = testEnterSelectedInterior;
+window.returnToVillageFromInterior = returnToVillageFromInterior;
 window.saveQuestDraft = saveQuestDraft;
 window.placeCollectibleFromAdmin = placeCollectibleFromAdmin;
 window.spawnTestCollectibles = spawnTestCollectibles;
