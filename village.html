@@ -275,9 +275,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #assetPanel .ap-btn:hover{background:rgba(232,197,106,.12)}
 #assetPanel .ap-btn.upload{border-color:rgba(94,207,202,.4);color:#5ecfca}
 #assetPanel .ap-search-wrap .ap-btn{width:100%;margin:0}
-#assetPanel .ap-footer{padding:8px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:5px;flex-shrink:0}
+#assetPanel .ap-footer{padding:8px;border-top:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;flex-shrink:0}
 #assetPanel .ap-footer button{flex:1;padding:6px;font-size:9px;font-family:'Cinzel Decorative',serif;letter-spacing:1px;border:1px solid rgba(255,255,255,.12);border-radius:4px;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;transition:all .15s}
 #assetPanel .ap-footer button:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
+#assetPanel .ap-footer button.primary{border-color:rgba(232,197,106,.34);color:#e8c56a}
+#assetPanel .ap-footer button.cache{border-color:rgba(94,207,202,.28);color:#77e6df}
+#assetPanel .ap-footer button.danger{border-color:rgba(220,60,60,.3);color:#ff8b8b}
+#assetPanel .ap-footer-status{grid-column:1/-1;min-height:16px;color:#8aa;font-size:8px;letter-spacing:1px;text-align:center;line-height:1.25}
 .worldbuilder-toolbar{padding:0 8px 8px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .tool-square{min-height:42px;border-radius:8px;border:1px solid rgba(94,207,202,.26);background:linear-gradient(160deg,rgba(26,29,46,.95),rgba(7,11,25,.95));color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:.8px;cursor:pointer;box-shadow:inset 0 0 12px rgba(94,207,202,.06);transition:transform .15s,border-color .15s,box-shadow .15s}
 .tool-square:hover{transform:translateY(-1px);border-color:rgba(94,207,202,.7);box-shadow:0 0 14px rgba(94,207,202,.18),inset 0 0 14px rgba(232,197,106,.06)}
@@ -918,8 +922,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <hr class="ap-divider">
   </div>
   <div class="ap-footer">
-    <button onclick="saveWorldLayout()">Save (P)</button>
-    <button onclick="loadWorldLayout()">Load (L)</button>
+    <div id="layoutCacheStatus" class="ap-footer-status">No unsaved changes</div>
+    <button class="cache" onclick="cacheLayoutLocally()">Cache Layout Locally</button>
+    <button class="cache" onclick="restoreLocalLayoutCache()">Restore Local Cache</button>
+    <button class="danger" onclick="clearLocalLayoutCache()">Clear Local Cache</button>
+    <button class="primary" onclick="hardSaveWorldLayout()">Hard Save Layout (P)</button>
+    <button onclick="loadWorldLayout()">Load Layout (L)</button>
   </div>
 </div>
 <input type="file" id="glbUploadInput" accept=".glb" style="display:none">
@@ -1046,6 +1054,16 @@ const CURRENT_VILLAGE = VILLAGE_REGISTRY[CURRENT_VILLAGE_ID];
 const WORLD_LAYOUT_STORAGE_KEY = `rebelAntsWorldLayout:${CURRENT_VILLAGE_ID}`;
 window.REBEL_ANTS_VILLAGES = VILLAGE_REGISTRY;
 window.CURRENT_REBEL_ANTS_VILLAGE = CURRENT_VILLAGE;
+// Inline admin buttons call window functions. Bind these wrappers early so
+// footer cache/save and core gizmo controls do not depend on the final export
+// block running after all async world setup.
+window.saveWorldLayout = (...args) => saveWorldLayout(...args);
+window.hardSaveWorldLayout = (...args) => hardSaveWorldLayout(...args);
+window.cacheLayoutLocally = (...args) => cacheLayoutLocally(...args);
+window.restoreLocalLayoutCache = (...args) => restoreLocalLayoutCache(...args);
+window.clearLocalLayoutCache = (...args) => clearLocalLayoutCache(...args);
+window.loadWorldLayout = (...args) => loadWorldLayout(...args);
+window.setGizmoMode = (...args) => setGizmoMode(...args);
 document.title = `Rebel Ants — ${CURRENT_VILLAGE.displayName}`;
 const NPC_FACTION_BY_VILLAGE = {
   hub: 'ashigaru',
@@ -2761,6 +2779,7 @@ function setSelectedEditableObject(node) {
   if (selectedObject && selectedObject !== node) freezeStaticRoot(selectedObject);
   selectedObject = node;
   unfreezeStaticRoot(selectedObject);
+  ensureSelectedNodeEditableForGizmo(selectedObject);
   if (terrainSculptBrushActive && selectedObject?.metadata?.type !== 'terrain_stamp') {
     setTerrainSculptBrushActive(false);
   }
@@ -2786,6 +2805,36 @@ function deselectAdminSelection() {
   renderSelectedWalkSurfaceGuide();
   updateSelectedBadge();
   showToast('Selection cleared');
+}
+
+function ensureSelectedNodeEditableForGizmo(node) {
+  if (!node || node.isDisposed?.()) return null;
+  unfreezeStaticRoot(node);
+  node.setEnabled?.(true);
+  node.isPickable = true;
+  node.computeWorldMatrix?.(true);
+  node.getChildMeshes?.(false).forEach(mesh => {
+    if (!mesh || mesh.isDisposed?.()) return;
+    if (mesh.metadata?.editorLocked === true) return;
+    if (mesh.metadata?.isAdminPlacementMarker) return;
+    mesh.isPickable = true;
+    mesh._editRoot = mesh._editRoot || node;
+    mesh.computeWorldMatrix?.(true);
+  });
+  return node;
+}
+
+function disableAllGizmos() {
+  if (!gizmoManager) return;
+  gizmoManager.positionGizmoEnabled = false;
+  gizmoManager.rotationGizmoEnabled = false;
+  gizmoManager.scaleGizmoEnabled = false;
+}
+
+function detachAdminGizmo() {
+  if (!gizmoManager) return;
+  gizmoManager.attachToNode(null);
+  disableAllGizmos();
 }
 
 function addCollisionProxyPiece(kind) {
@@ -4140,6 +4189,7 @@ gizmoManager.rotationGizmoEnabled = false;
 gizmoManager.scaleGizmoEnabled = false;
 gizmoManager.clearGizmoOnEmptyPointerEvent = false;
 if ('usePointerToAttachGizmos' in gizmoManager) gizmoManager.usePointerToAttachGizmos = false;
+const _gizmoLifecycleObserverSet = new WeakSet();
 
 // ── CAMERAS ─────────────────────────────────
 const orbit=new BABYLON.ArcRotateCamera("o",-Math.PI/2.1,Math.PI/2.5,320,new BABYLON.Vector3(0,6,0),scene);
@@ -12264,6 +12314,9 @@ function applyObjectTransform(node, data){
 }
 
 let _worldLayoutSaveChain = Promise.resolve();
+let _layoutDirty = false;
+let _lastLocalCacheAt = Number(localStorage.getItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID) || 0);
+let _lastHardSaveAt = Number(localStorage.getItem('rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID) || 0);
 
 function collectWorldLayoutData() {
   // Only save actually placed objects — skip source roots at 9999 and untyped nodes
@@ -12380,12 +12433,16 @@ function saveWorldLayout(saveToGitHub = true){
   if (previousJson) localStorage.setItem('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID, previousJson);
   localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, json);
   if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem("rebelAntsWorldLayout", json);
+  _lastLocalCacheAt = Date.now();
+  localStorage.setItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID, String(_lastLocalCacheAt));
 
   // Auto-save/local-cache path only.
   // This must never become a permanent GitHub save.
   if (!saveToGitHub) {
    console.log("World layout cached locally", data);
 showToast('Cached locally');
+_layoutDirty = false;
+updateLayoutCacheStatus();
 return Promise.resolve(true);
   }
 
@@ -12409,6 +12466,10 @@ return Promise.resolve(true);
 
       console.log("World layout saved to GitHub", data);
       showSaveBadge();
+      _layoutDirty = false;
+      _lastHardSaveAt = Date.now();
+      localStorage.setItem('rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID, String(_lastHardSaveAt));
+      updateLayoutCacheStatus();
      showToast('✓ Saved to GitHub — ' + data.length + ' objects');
       return true;
     } catch (e) {
@@ -12421,12 +12482,76 @@ return Promise.resolve(true);
   return _worldLayoutSaveChain;
 }
 
-// ── AUTO-SAVE — local browser cache only, never GitHub persistence ──
+// ── MANUAL LOCAL CACHE CONTROL ───────────────────────────────
 let _autoSaveTimer = null;
 function triggerAutoSave() {
+  // Intentional: editing now marks the layout dirty only. The world is not
+  // serialized after every tiny move/scale/rotate; use Cache Layout Locally or
+  // Hard Save Layout from the footer when ready.
+  _layoutDirty = true;
   if (_autoSaveTimer) clearTimeout(_autoSaveTimer);
-  _autoSaveTimer = setTimeout(() => { saveWorldLayout(false); }, 2000);
+  _autoSaveTimer = setTimeout(updateLayoutCacheStatus, 80);
 }
+
+function formatLayoutSaveTime(timestamp) {
+  if (!timestamp) return 'never';
+  try {
+    return new Date(timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  } catch(e) {
+    return 'unknown';
+  }
+}
+
+function updateLayoutCacheStatus() {
+  const el = document.getElementById('layoutCacheStatus');
+  if (!el) return;
+  const dirtyText = _layoutDirty ? 'Unsaved changes' : 'No unsaved changes';
+  el.textContent = `${dirtyText} | Local cache: ${formatLayoutSaveTime(_lastLocalCacheAt)} | Hard save: ${formatLayoutSaveTime(_lastHardSaveAt)}`;
+}
+
+function cacheLayoutLocally() {
+  return saveWorldLayout(false);
+}
+
+function hardSaveWorldLayout() {
+  return saveWorldLayout(true);
+}
+
+function restoreLocalLayoutCache() {
+  const raw = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem('rebelAntsWorldLayout') : null);
+  if (!raw) {
+    showToast('No local cache found');
+    return;
+  }
+  const confirmed = window.confirm('Restore Local Cache? This replaces the current in-scene layout with the cached local layout. It will not hard save to GitHub.');
+  if (!confirmed) return;
+  recordEditorHistory('restore local cache');
+  loadWorldLayout();
+  _layoutDirty = false;
+  updateLayoutCacheStatus();
+  showToast('Local cache restored');
+}
+
+function clearLocalLayoutCache() {
+  const confirmed = window.confirm('Clear Local Cache for this village? This does not delete the hard-saved GitHub layout.');
+  if (!confirmed) return;
+  localStorage.removeItem(WORLD_LAYOUT_STORAGE_KEY);
+  localStorage.removeItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID);
+  if (CURRENT_VILLAGE_ID === 'hub') localStorage.removeItem('rebelAntsWorldLayout');
+  _lastLocalCacheAt = 0;
+  updateLayoutCacheStatus();
+  showToast('Local cache cleared');
+}
+
+// Expose footer cache/save controls as soon as this block loads. The larger
+// module does more async scene work later, but these inline footer buttons
+// should never depend on the final export block completing.
+window.saveWorldLayout = saveWorldLayout;
+window.hardSaveWorldLayout = hardSaveWorldLayout;
+window.cacheLayoutLocally = cacheLayoutLocally;
+window.restoreLocalLayoutCache = restoreLocalLayoutCache;
+window.clearLocalLayoutCache = clearLocalLayoutCache;
+window.loadWorldLayout = loadWorldLayout;
 
 function createMissingAssetPlaceholder(item) {
   const type = item.type || 'missing_asset';
@@ -12706,6 +12831,8 @@ if (m.material) {
   applyAdminLayerState();
   runVillagePerformancePass(true);
   updateQuestTracker();
+  _layoutDirty = false;
+  updateLayoutCacheStatus();
 }
 
 function deleteSelectedFence(){
@@ -12810,14 +12937,8 @@ function duplicateSelectedFence(){
     cloneRoot.scaling = sourceObject.scaling.clone();
 
     registerEditableRoot(cloneRoot.name, cloneRoot);
-    selectedObject = cloneRoot;
-
-    updateSelectedBadge();
-
-    gizmoManager.positionGizmoEnabled = true;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(selectedObject);
+    adminGizmoMode = 'move';
+    setSelectedEditableObject(cloneRoot);
 
     return;
   }
@@ -13007,12 +13128,7 @@ document.addEventListener('keydown', async e => {
       updateSelectedBadge();
       clearVillageProxyDebugMeshes();
       setCollisionProxyVisualsVisible(false);
-      if (gizmoManager) {
-        gizmoManager.positionGizmoEnabled = false;
-        gizmoManager.rotationGizmoEnabled = false;
-        gizmoManager.scaleGizmoEnabled = false;
-        gizmoManager.attachToNode(null);
-      }
+      detachAdminGizmo();
       // Restore normal camera limits
       orbit.upperBetaLimit = Math.PI / 2.05;
       orbit.lowerRadiusLimit = 8;
@@ -13041,7 +13157,7 @@ document.addEventListener('keydown', async e => {
   }
 
    if (adminMode && key === 'p') {
-    saveWorldLayout();
+    hardSaveWorldLayout();
     return;
   }
 
@@ -15335,11 +15451,58 @@ function setGizmoMode(mode) {
 function attachSelectedGizmo() {
   if (!selectedObject || !gizmoManager) return;
   if (selectedObject._editRoot?.metadata?.type === 'npc') selectedObject = selectedObject._editRoot;
-  if (gizmoManager) gizmoManager.attachToNode(null);
-  gizmoManager.positionGizmoEnabled = adminGizmoMode === 'move';
-  gizmoManager.rotationGizmoEnabled = adminGizmoMode === 'rotate';
-  gizmoManager.scaleGizmoEnabled = adminGizmoMode === 'scale';
-  gizmoManager.attachToNode(selectedObject);
+  const node = ensureSelectedNodeEditableForGizmo(selectedObject);
+  if (!node) return;
+
+  // Rebuild the manager attachment every time modes switch. Babylon can keep
+  // stale axis drag behaviors after scale/move operations if we only flip
+  // enabled flags on the already-attached node.
+  gizmoManager.attachToNode(null);
+  disableAllGizmos();
+
+  if (adminGizmoMode === 'move') gizmoManager.positionGizmoEnabled = true;
+  if (adminGizmoMode === 'rotate') gizmoManager.rotationGizmoEnabled = true;
+  if (adminGizmoMode === 'scale') gizmoManager.scaleGizmoEnabled = true;
+
+  node.computeWorldMatrix?.(true);
+  gizmoManager.attachToNode(node);
+  attachAdminGizmoLifecycleObservers();
+}
+
+function attachAdminGizmoLifecycleObservers() {
+  if (!gizmoManager) return;
+  const gizmos = [
+    gizmoManager.gizmos?.positionGizmo,
+    gizmoManager.gizmos?.rotationGizmo,
+    gizmoManager.gizmos?.scaleGizmo
+  ].filter(Boolean);
+  if (!gizmos.length) return;
+
+  gizmos.forEach(gizmo => {
+    if (_gizmoLifecycleObserverSet.has(gizmo)) return;
+    gizmo.onDragStartObservable?.add(() => {
+      if (!selectedObject) return;
+      unfreezeStaticRoot(selectedObject);
+      ensureSelectedNodeEditableForGizmo(selectedObject);
+      recordEditorHistory('transform selected');
+      orbit.detachControl();
+    });
+    gizmo.onDragEndObservable?.add(() => {
+      if (!selectedObject) return;
+      ensureSelectedNodeEditableForGizmo(selectedObject);
+      if (selectedObject.metadata?.type === 'npc') {
+        updateNPCPlacementOrigin(selectedObject, null);
+        updateNPCAdminRotation(selectedObject);
+      }
+      rebuildVillageCollisionBlockers();
+      renderSelectedWalkSurfaceGuide();
+      if (adminMode) orbit.attachControl(canvas, true);
+      triggerAutoSave();
+      // Keep the active mode alive after a completed scale/move/rotate drag.
+      setTimeout(() => attachSelectedGizmo(), 0);
+    });
+    _gizmoLifecycleObserverSet.add(gizmo);
+  });
 }
 function flipSelected() {
   if (!selectedObject) return;
@@ -16845,14 +17008,8 @@ const proxyMoveObserver = scene.onBeforeRenderObservable.add(() => {
 });
 proxy.metadata._proxyMoveObserver = proxyMoveObserver;
 clone.metadata._proxyMoveObserver = proxyMoveObserver;
-    if (adminMode) { selectedObject = proxy; updateSelectedBadge(); }
+    if (adminMode) { adminGizmoMode = 'move'; setSelectedEditableObject(proxy); }
         applySavedCollisionTemplateIfAvailable(proxy);
-        if (adminMode) {
-          gizmoManager.positionGizmoEnabled = true;
-          gizmoManager.rotationGizmoEnabled = false;
-          gizmoManager.scaleGizmoEnabled = false;
-          gizmoManager.attachToNode(proxy);
-        }
   }, 500);
   return clone;
 }
@@ -16874,14 +17031,11 @@ function placeAssetAtPoint(key, pickedPoint) {
     const clone = spawnAsset(key, pos, proceduralMeta);
     if (!clone) return;
     registerEditableRoot(clone.name, clone);
+    adminGizmoMode = 'move';
     selectedObject = clone;
     snapSelectedObjectToGround();
     applySavedCollisionTemplateIfAvailable(clone);
-    updateSelectedBadge();
-    gizmoManager.positionGizmoEnabled = true;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(selectedObject);
+    setSelectedEditableObject(clone);
     triggerAutoSave();
     return;
   }
@@ -16907,14 +17061,11 @@ function placeAssetAtPoint(key, pickedPoint) {
   // lantern handled above
   // Select with gizmo — lantern handles inside setTimeout
   if (key !== 'lantern_1') {
+    adminGizmoMode = 'move';
     selectedObject = clone;
     snapSelectedObjectToGround();
     applySavedCollisionTemplateIfAvailable(clone);
-    updateSelectedBadge();
-    gizmoManager.positionGizmoEnabled = true;
-    gizmoManager.rotationGizmoEnabled = false;
-    gizmoManager.scaleGizmoEnabled = false;
-    gizmoManager.attachToNode(selectedObject);
+    setSelectedEditableObject(clone);
   }
   triggerAutoSave();
 }
@@ -17193,9 +17344,14 @@ window.applySelectedNPCChanges = applySelectedNPCChanges;
 window.advanceNPCDialogue = advanceNPCDialogue;
 window.closeNPCDialogue = closeNPCDialogue;
 window.saveWorldLayout = saveWorldLayout;
+window.hardSaveWorldLayout = hardSaveWorldLayout;
+window.cacheLayoutLocally = cacheLayoutLocally;
+window.restoreLocalLayoutCache = restoreLocalLayoutCache;
+window.clearLocalLayoutCache = clearLocalLayoutCache;
 window.loadWorldLayout = loadWorldLayout;
 
 // Show the GPU badge automatically only in WebGPU test mode.
+updateLayoutCacheStatus();
 updateGPUBadge();
 if (window._gpuMode === 'webgpu') {
   const gpuBadge = document.getElementById('gpuBadge');
