@@ -3178,16 +3178,34 @@ function moveAttachedCollisionProxyPieces(ownerNode, delta) {
   if (!ownerNode || !delta || delta.lengthSquared() < 0.000001) return;
   if (ownerNode.metadata?.type === 'collision_proxy') return;
 
-  const pieces = getManualCollisionProxyRoots().filter(node =>
-    node.metadata?.proxyOwnerName === ownerNode.name
-  );
+  const ownerType = getCollisionProxyOwnerAssetKey(ownerNode);
+  const ownerPosition = ownerNode.getAbsolutePosition?.() || ownerNode.position;
+  const pieces = getManualCollisionProxyRoots().filter(node => {
+    if (!node || node.metadata?.type !== 'collision_proxy') return false;
+    if (node.metadata?.proxyOwnerName === ownerNode.name) return true;
+
+    // Older saved layouts can contain manual pieces whose owner name no longer
+    // resolves after GLB clone/name churn. For the actively moved object only,
+    // recover nearby orphaned same-type pieces so blockers keep following.
+    if (!ownerType || !ownerPosition) return false;
+    if (node.metadata?.proxyOwnerName && getVillageNodeByName(node.metadata.proxyOwnerName)) return false;
+    const proxyType = node.metadata?.proxyOwnerAssetKey || node.metadata?.proxyOwnerType || null;
+    if (proxyType !== ownerType) return false;
+    const dx = node.position.x - ownerPosition.x;
+    const dz = node.position.z - ownerPosition.z;
+    return dx * dx + dz * dz <= 32 * 32;
+  });
 
   pieces.forEach(node => {
+    if (node.metadata?.proxyOwnerName !== ownerNode.name) node.metadata.proxyOwnerName = ownerNode.name;
+    node.metadata.proxyOwnerType = node.metadata.proxyOwnerType || ownerType;
+    node.metadata.proxyOwnerAssetKey = node.metadata.proxyOwnerAssetKey || ownerType;
     unfreezeStaticRoot(node);
     refreshEditedObject(node);
     node.position.addInPlace(delta);
     refreshEditedObject(node);
   });
+  if (pieces.length) rebuildVillageCollisionBlockers();
 }
 
 function getCollisionProxyOwnerFromSelection() {
