@@ -2827,9 +2827,14 @@ function prepareObjectForEditing(node) {
     if (!child || child.isDisposed?.()) return;
     child.metadata = { ...(child.metadata || {}), _editorActiveTransform: true };
     if (typeof child.unfreezeWorldMatrix === 'function' && child._worldMatrixFrozen) child.unfreezeWorldMatrix();
+    child.markAsDirty?.('worldMatrix');
     child.setEnabled?.(true);
     if (child.metadata?.editorLocked !== true && !child.metadata?.isAdminPlacementMarker) child.isPickable = true;
     if (child !== node && child.getClassName?.() !== 'TransformNode') child._editRoot = child._editRoot || node;
+    if (child.getClassName?.() !== 'TransformNode' && child.alwaysSelectAsActiveMesh !== true) {
+      child.metadata._editorPreviousAlwaysActive = child.alwaysSelectAsActiveMesh === true;
+      child.alwaysSelectAsActiveMesh = true;
+    }
     child.computeWorldMatrix?.(true);
   });
   refreshEditedObject(node);
@@ -2841,6 +2846,7 @@ function refreshEditedObject(node) {
   forEachRootRenderNode(node, child => {
     if (!child || child.isDisposed?.()) return;
     if (typeof child.unfreezeWorldMatrix === 'function' && child._worldMatrixFrozen) child.unfreezeWorldMatrix();
+    child.markAsDirty?.('worldMatrix');
     child.computeWorldMatrix?.(true);
     child.refreshBoundingInfo?.(true);
   });
@@ -2851,11 +2857,36 @@ function releaseObjectAfterEditing(node) {
   refreshEditedObject(node);
   forEachRootRenderNode(node, child => {
     if (child?.metadata?._editorActiveTransform) child.metadata._editorActiveTransform = false;
+    if (child?.metadata && child.metadata._editorPreviousAlwaysActive !== undefined) {
+      child.alwaysSelectAsActiveMesh = child.metadata._editorPreviousAlwaysActive === true;
+      delete child.metadata._editorPreviousAlwaysActive;
+    }
   });
   const activeSelection = selectedObject;
   if (selectedObject === node) selectedObject = null;
   freezeStaticRoot(node);
   selectedObject = activeSelection;
+}
+
+function syncLiveSelectedTransform() {
+  if (!adminMode || !selectedObject || selectedObject.isDisposed?.()) return;
+  prepareObjectForEditing(selectedObject);
+  refreshEditedObject(selectedObject);
+
+  const isDragEditing =
+    window._dragSelectedObject === selectedObject &&
+    window._dragSelectedStartPos &&
+    selectedObject.position &&
+    selectedObject.metadata?.type !== 'collision_proxy';
+  if (!isDragEditing) return;
+
+  const lastPos = window._dragSelectedLastLivePos || window._dragSelectedStartPos;
+  const delta = selectedObject.position.subtract(lastPos);
+  if (delta.lengthSquared() > 0.000001) {
+    moveAttachedCollisionProxyPieces(selectedObject, delta);
+    window._dragSelectedLastLivePos = selectedObject.position.clone();
+    window._dragSelectedBarriersSyncedLive = true;
+  }
 }
 
 function disableAllGizmos() {
@@ -4216,6 +4247,7 @@ scene.onNewMaterialAddedObservable.add(mat => {
 scene.fogMode=BABYLON.Scene.FOGMODE_NONE;
 scene.fogDensity=0.006;
 scene.fogColor=new BABYLON.Color3(.55,.72,.9);
+scene.onBeforeRenderObservable.add(syncLiveSelectedTransform);
 
 let gizmoManager = new BABYLON.GizmoManager(scene);
 gizmoManager.positionGizmoEnabled = false;
@@ -12245,6 +12277,8 @@ window.addEventListener('pointerdown', (e) => {
   window._dragStartY = e.clientY;
   window._dragSelectedObject = selectedObject;
   window._dragSelectedStartPos = selectedObject.position ? selectedObject.position.clone() : null;
+  window._dragSelectedLastLivePos = window._dragSelectedStartPos ? window._dragSelectedStartPos.clone() : null;
+  window._dragSelectedBarriersSyncedLive = false;
   window._dragSelectedStartRot = selectedObject.rotation ? selectedObject.rotation.clone() : null;
 });
 
@@ -12319,7 +12353,8 @@ window.addEventListener('pointerup', () => {
       draggedNode === selectedObject &&
       beforePos &&
       selectedObject.position &&
-      selectedObject.metadata?.type !== 'collision_proxy'
+      selectedObject.metadata?.type !== 'collision_proxy' &&
+      window._dragSelectedBarriersSyncedLive !== true
     ) {
       moveAttachedCollisionProxyPieces(selectedObject, selectedObject.position.subtract(beforePos));
     }
@@ -12331,6 +12366,8 @@ window.addEventListener('pointerup', () => {
   }
   window._dragSelectedObject = null;
   window._dragSelectedStartPos = null;
+  window._dragSelectedLastLivePos = null;
+  window._dragSelectedBarriersSyncedLive = false;
   window._dragSelectedStartRot = null;
 });
 function getEditableRoots(){
@@ -15548,6 +15585,10 @@ function attachAdminGizmoLifecycleObservers() {
     gizmo.onDragStartObservable?.add(() => {
       if (!selectedObject) return;
       prepareObjectForEditing(selectedObject);
+      window._dragSelectedObject = selectedObject;
+      window._dragSelectedStartPos = selectedObject.position ? selectedObject.position.clone() : null;
+      window._dragSelectedLastLivePos = window._dragSelectedStartPos ? window._dragSelectedStartPos.clone() : null;
+      window._dragSelectedBarriersSyncedLive = false;
       recordEditorHistory('transform selected');
       orbit.detachControl();
     });
