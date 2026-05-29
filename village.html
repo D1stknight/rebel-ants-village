@@ -329,6 +329,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #assetPanel .admin-field input,#assetPanel .admin-field textarea{width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(94,207,202,.28);border-radius:5px;color:#e8c56a;padding:7px 8px;font-family:inherit;font-size:10px}
 #assetPanel .admin-note{font-size:10px;line-height:1.4;color:rgba(255,255,255,.48);padding:0 2px 7px}
 #assetPanel .tool-group-label{margin:10px 2px 4px;color:rgba(232,197,106,.64);font-size:8px;letter-spacing:2px;text-transform:uppercase}
+#assetPanel .creator-steps{display:grid;gap:4px;margin:0 0 8px}
+#assetPanel .creator-steps span{display:block;border:1px solid rgba(94,207,202,.16);border-radius:5px;background:rgba(94,207,202,.035);color:rgba(255,255,255,.62);font-size:9px;line-height:1.3;letter-spacing:.7px;padding:6px 7px}
+#assetPanel .creator-steps b{color:#e8c56a;font-weight:400}
 #assetPanel .quest-help{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(94,207,202,.38);border-radius:999px;background:rgba(94,207,202,.06);color:#77e6df;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:1px;padding:4px 9px;cursor:help;margin:0 0 8px}
 #assetPanel .perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:9px;color:#8aa;letter-spacing:1px}
 #assetPanel .perf-grid span{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:5px;padding:6px}
@@ -704,12 +707,42 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="setGizmoMode('scale')">Resize Zone</button>
     </div>
   </div>
-  <div class="ap-section">Interiors / Dojo Doors</div>
-  <div class="admin-section-body" data-admin-section-body="interior-doors">
-    <div class="admin-note">Interior entrances are lightweight door zones. They save with the village and load only the active room shell when entered.</div>
-    <label class="admin-field">Name <input id="interiorEntranceName" placeholder="Dojo Museum Door"></label>
-    <label class="admin-field">Interior Type
-      <select id="interiorTypeSelect" class="admin-select">
+  <div class="ap-section">Interiors</div>
+  <div class="admin-section-body" data-admin-section-body="interiors">
+    <div class="creator-steps">
+      <span><b>Step 1:</b> Create Interior</span>
+      <span><b>Step 2:</b> Create Door</span>
+      <span><b>Step 3:</b> Assign Interior To Door</span>
+    </div>
+    <div class="admin-note">Add Interior: upload one room GLB, optional MP3 music, name it, describe it, then save.</div>
+    <label class="admin-field">Interior
+      <select id="customInteriorSelect" class="admin-select" onchange="loadSelectedCustomInteriorIntoAdmin()"></select>
+    </label>
+    <label class="admin-field">Name <input id="customInteriorName" placeholder="NFT Museum"></label>
+    <input id="customInteriorId" type="hidden">
+    <input id="customInteriorCategory" type="hidden" value="custom">
+    <input id="customInteriorStyle" type="hidden" value="custom_glb">
+    <input id="customInteriorPrompt" type="hidden" value="Press O to Enter">
+    <label class="admin-field">Upload GLB <input id="customInteriorModel" placeholder="/assets/interiors/custom/museum.glb" readonly></label>
+    <div id="customInteriorModelStatus" class="admin-note">GLB: no file selected</div>
+    <label class="admin-field">Upload MP3 <input id="customInteriorMusic" placeholder="/assets/interiors/custom/museum.mp3" readonly></label>
+    <div id="customInteriorMusicStatus" class="admin-note">MP3: no file selected</div>
+    <label class="admin-field">Description <textarea id="customInteriorDescription" rows="2" placeholder="Purpose of this room"></textarea></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="ctrl-btn" onclick="document.getElementById('interiorGlbUploadInput').click()">Upload GLB</button>
+      <button class="ctrl-btn" onclick="document.getElementById('interiorMusicUploadInput').click()">Upload Music MP3</button>
+      <button class="ctrl-btn" onclick="saveCustomInteriorFromAdmin()">Save Interior</button>
+      <button class="ctrl-btn danger" onclick="archiveSelectedCustomInterior()">Archive Interior</button>
+    </div>
+    <input type="file" id="interiorGlbUploadInput" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" style="display:none" onchange="handleInteriorGlbUpload(event)">
+    <input type="file" id="interiorMusicUploadInput" accept=".mp3,audio/mpeg" style="display:none" onchange="handleInteriorMusicUpload(event)">
+  </div>
+  <div class="ap-section">Doors</div>
+  <div class="admin-section-body" data-admin-section-body="doors">
+    <div class="admin-note">Add Door spawns a door zone at the player, selects it, and opens the move gizmo immediately.</div>
+    <label class="admin-field">Door Name <input id="interiorEntranceName" placeholder="Museum Door"></label>
+    <label class="admin-field">Target Interior
+      <select id="interiorTypeSelect" class="admin-select" onchange="syncDoorTargetInteriorId()">
         <option value="nft_museum">NFT Museum</option>
         <option value="youtube_theater">YouTube Theater</option>
         <option value="rebel_store">Rebel Store</option>
@@ -719,42 +752,22 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
         <option value="training_dojo">Training Dojo</option>
       </select>
     </label>
-    <label class="admin-field">Target Interior ID <input id="interiorTargetId" placeholder="hub_dojo_museum"></label>
+    <input id="interiorTargetId" type="hidden">
+    <input id="interiorEntranceEnabled" type="hidden" value="1">
     <label class="admin-field">Prompt Text <input id="interiorPromptText" placeholder="Press O to Enter"></label>
-    <label class="admin-field"><span><input id="interiorEntranceEnabled" type="checkbox" checked style="width:auto;margin-right:6px">Enabled</span></label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <button class="ctrl-btn" onclick="placeInteriorEntrance()">Add Interior Entrance</button>
-      <button class="ctrl-btn" onclick="applySelectedInteriorEntranceSettings()">Apply Settings</button>
-      <button class="ctrl-btn" onclick="deleteSelectedInteriorEntrance()">Delete Entrance</button>
+      <button class="ctrl-btn" onclick="placeInteriorEntrance()">Add Door</button>
+      <button class="ctrl-btn" onclick="applySelectedInteriorEntranceSettings()">Save Door</button>
+      <button class="ctrl-btn" onclick="deleteSelectedInteriorEntrance()">Delete Door</button>
       <button class="ctrl-btn" id="interiorEntranceVisibilityBtn" onclick="toggleInteriorEntranceVisibility()">Hide Doors</button>
       <button class="ctrl-btn" onclick="setGizmoMode('scale')">Resize Zone</button>
-      <button class="ctrl-btn" onclick="testEnterSelectedInterior()">Test Enter Selected</button>
+      <button class="ctrl-btn" onclick="testEnterSelectedInterior()">Test Door</button>
       <button class="ctrl-btn full" onclick="returnToVillageFromInterior()">Return To Village</button>
     </div>
-    <div class="tool-group-label">Add Interior</div>
-    <div class="admin-note">Create an interior by naming it, uploading one lightweight GLB, uploading optional MP3 music, then assigning a door to it.</div>
-    <label class="admin-field">Interior
-      <select id="customInteriorSelect" class="admin-select" onchange="loadSelectedCustomInteriorIntoAdmin()"></select>
-    </label>
-    <label class="admin-field">Interior Name <input id="customInteriorName" placeholder="NFT Museum"></label>
-    <input id="customInteriorId" type="hidden">
-    <input id="customInteriorCategory" type="hidden" value="custom">
-    <input id="customInteriorStyle" type="hidden" value="custom_glb">
-    <input id="customInteriorPrompt" type="hidden" value="Press O to Enter">
-    <label class="admin-field">Interior GLB <input id="customInteriorModel" placeholder="/assets/interiors/custom/museum.glb" readonly></label>
-    <div id="customInteriorModelStatus" class="admin-note">GLB: no file selected</div>
-    <label class="admin-field">Interior Music MP3 <input id="customInteriorMusic" placeholder="/assets/interiors/custom/museum.mp3" readonly></label>
-    <div id="customInteriorMusicStatus" class="admin-note">MP3: no file selected</div>
-    <label class="admin-field">Description <textarea id="customInteriorDescription" rows="2" placeholder="Purpose of this room"></textarea></label>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <button class="ctrl-btn" onclick="document.getElementById('interiorGlbUploadInput').click()">Upload Interior GLB</button>
-      <button class="ctrl-btn" onclick="document.getElementById('interiorMusicUploadInput').click()">Upload Music MP3</button>
-      <button class="ctrl-btn" onclick="saveCustomInteriorFromAdmin()">Save Interior</button>
-      <button class="ctrl-btn danger" onclick="archiveSelectedCustomInterior()">Archive Interior</button>
-    </div>
-    <input type="file" id="interiorGlbUploadInput" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" style="display:none" onchange="handleInteriorGlbUpload(event)">
-    <input type="file" id="interiorMusicUploadInput" accept=".mp3,audio/mpeg" style="display:none" onchange="handleInteriorMusicUpload(event)">
-    <div class="tool-group-label">Interior Display</div>
+  </div>
+  <div class="ap-section">Displays</div>
+  <div class="admin-section-body" data-admin-section-body="displays">
+    <div class="admin-note">Displays are interior links: arcade cabinets, YouTube screens, books, products, and future quest hooks.</div>
     <label class="admin-field">Display Label <input id="interiorDisplayLabel" placeholder="Featured Rebel NFT"></label>
     <label class="admin-field">Action Type
       <select id="interiorDisplayAction" class="admin-select">
@@ -16511,6 +16524,14 @@ function getInteriorEntranceDefaults(type = 'training_dojo') {
   };
 }
 
+function syncDoorTargetInteriorId() {
+  const type = normalizeInteriorType(document.getElementById('interiorTypeSelect')?.value || 'training_dojo');
+  const targetInput = document.getElementById('interiorTargetId');
+  if (targetInput) targetInput.value = getInteriorEntranceDefaults(type).targetInteriorId;
+  const promptInput = document.getElementById('interiorPromptText');
+  if (promptInput && !promptInput.value.trim()) promptInput.value = getInteriorEntranceDefaults(type).promptText;
+}
+
 function refreshInteriorAdminOptions() {
   const typeSelect = document.getElementById('interiorTypeSelect');
   const customSelect = document.getElementById('customInteriorSelect');
@@ -16522,6 +16543,7 @@ function refreshInteriorAdminOptions() {
       (custom.length ? '<option disabled>-- Custom Interiors --</option>' : '') +
       custom.map(def => `<option value="${escapeHTML(def.id)}">${escapeHTML(def.name || def.id)}</option>`).join('');
     typeSelect.value = [...Object.keys(INTERIOR_TYPES), ...custom.map(def => def.id)].includes(current) ? current : 'training_dojo';
+    syncDoorTargetInteriorId();
   }
   if (customSelect) {
     const current = customSelect.value || '';
@@ -16620,29 +16642,25 @@ function makeInteriorIdFromName(name) {
 
 async function uploadInteriorFileToGitHub(file, kind) {
   if (!file) return '';
-  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
   const interiorId = document.getElementById('customInteriorId')?.value?.trim() || makeInteriorIdFromName(document.getElementById('customInteriorName')?.value || file.name);
   const idInput = document.getElementById('customInteriorId');
   if (idInput && !idInput.value) idInput.value = interiorId;
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const path = `assets/interiors/custom/${interiorId}/${kind}-${Date.now()}-${safeName}`;
-  const content = await readFileAsBase64(file);
-  const check = await fetch('https://api.github.com/repos/D1stknight/rebel-ants-village/contents/' + path + '?ref=dev', { headers: { Authorization: 'token ' + window._ghToken } });
-  let sha = null;
-  if (check.ok) {
-    const current = await check.json();
-    sha = current.sha;
-  }
-  const put = await fetch('https://api.github.com/repos/D1stknight/rebel-ants-village/contents/' + path, {
-    method:'PUT',
-    headers: { Authorization:'token ' + window._ghToken, 'Content-Type':'application/json' },
-    body: JSON.stringify({ message:'upload interior ' + kind + ': ' + file.name, content, branch:'dev', ...(sha ? { sha } : {}) })
+  const response = await fetch('/api/interior-upload', {
+    method:'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      interiorId,
+      kind,
+      fileName: file.name,
+      mimeType: file.type || (kind === 'music' ? 'audio/mpeg' : 'model/gltf-binary'),
+      data: await readFileAsBase64(file)
+    })
   });
-  if (!put.ok) {
-    const error = await put.json().catch(() => ({}));
-    throw new Error(error.message || 'GitHub upload failed');
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.ok) {
+    throw new Error(result.error || 'Interior upload failed');
   }
-  return '/' + path;
+  return result.path;
 }
 
 async function handleInteriorGlbUpload(event) {
@@ -16732,12 +16750,16 @@ function styleInteriorEntranceVisual(entrance) {
 function placeInteriorEntrance() {
   if (!adminMode) { showToast('Enter Admin Mode first'); return; }
   recordEditorHistory('place interior entrance');
-  const point = getWorldBuilderPlacementPoint();
+  const base = charMesh?.position || orbit?.target || BABYLON.Vector3.Zero();
+  const y = getVillageRaycastGroundHeightAt(base.x, base.z, { includeManualWalkSurfaces: false }) ?? getVillageGroundHeightAt(base.x, base.z) ?? 0;
+  const point = new BABYLON.Vector3(base.x, y, base.z);
   const type = document.getElementById('interiorTypeSelect')?.value || 'training_dojo';
+  syncDoorTargetInteriorId();
   const entrance = createInteriorEntrance(new BABYLON.Vector3(point.x, point.y, point.z), readInteriorEntranceAdminSettings(type));
+  adminGizmoMode = 'move';
   setSelectedEditableObject(entrance);
   triggerAutoSave();
-  showToast('Interior entrance placed: ' + getInteriorTypeLabel(type));
+  showToast('Door placed. Move gizmo ready.');
 }
 
 function readInteriorEntranceAdminSettings(fallbackType = 'training_dojo') {
@@ -16748,7 +16770,7 @@ function readInteriorEntranceAdminSettings(fallbackType = 'training_dojo') {
     interiorType: type,
     targetInteriorId: document.getElementById('interiorTargetId')?.value?.trim() || defaults.targetInteriorId,
     promptText: document.getElementById('interiorPromptText')?.value?.trim() || defaults.promptText,
-    enabled: document.getElementById('interiorEntranceEnabled')?.checked !== false
+    enabled: true
   };
 }
 
