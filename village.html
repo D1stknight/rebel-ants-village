@@ -1298,6 +1298,29 @@ let activeJournalTab = 'overview';
 const badgeUnlockQueue = [];
 let badgePopupActive = false;
 let lastUploadedBadgeImagePath = '';
+const progressionAudioQueue = [];
+let progressionAudioQueueActive = false;
+
+function playProgressionAudio(key, options = {}) {
+  const queued = options.queue === true;
+  if (queued) {
+    progressionAudioQueue.push(key);
+    processProgressionAudioQueue();
+    return;
+  }
+  playInteractionAudio(key);
+}
+
+function processProgressionAudioQueue() {
+  if (progressionAudioQueueActive || !progressionAudioQueue.length) return;
+  progressionAudioQueueActive = true;
+  const key = progressionAudioQueue.shift();
+  playInteractionAudio(key);
+  setTimeout(() => {
+    progressionAudioQueueActive = false;
+    processProgressionAudioQueue();
+  }, 850);
+}
 
 function saveProgressionState() {
   ProgressionState.updatedAt = new Date().toISOString();
@@ -1306,7 +1329,14 @@ function saveProgressionState() {
 }
 
 function addProgressionXP(amount) {
+  const before = getExplorerBadgeInfo();
+  const beforeMilestone = Math.floor((Number(ProgressionState.xp) || 0) / 50);
   ProgressionState.xp = Math.max(0, (Number(ProgressionState.xp) || 0) + amount);
+  const after = getExplorerBadgeInfo();
+  const afterMilestone = Math.floor((Number(ProgressionState.xp) || 0) / 50);
+  // Progression audio hook: reward larger XP movement without changing progression math.
+  if (amount > 0 && after.level > before.level) playProgressionAudio('levelUp', { queue:true });
+  else if (amount > 0 && afterMilestone > beforeMilestone) playProgressionAudio('progressMilestone', { queue:true });
   awardEarnedExplorerBadges(false);
 }
 
@@ -1383,7 +1413,8 @@ function processBadgeUnlockQueue() {
   showBadgeUnlockPopup._timer = setTimeout(() => {
     closeBadgeUnlockPopup();
   }, 5600);
-  playInteractionAudio('badgeUnlock');
+  // Progression audio hook: badge popups queue their own reward sound.
+  playProgressionAudio('badgeUnlock', { queue:true });
 }
 
 function showBadgeUnlockPopup(name) {
@@ -1432,6 +1463,10 @@ function recordProgressionEvent(kind, id, amount = 0, badge = null) {
   }
   addProgressionXP(amount);
   if (badge) awardBadge(badge);
+  // Progression audio hooks: lightweight pickups play immediately; larger rewards queue.
+  if (kind === 'collectible') playProgressionAudio('collectiblePickup');
+  if (kind === 'quest') playProgressionAudio('questComplete', { queue:true });
+  if (kind === 'secret') playProgressionAudio('secretFound', { queue:true });
   saveProgressionState();
   return true;
 }
@@ -1552,9 +1587,12 @@ function setProgressionJournalTab(tab) {
 function openProgressionJournal() {
   const overlay = document.getElementById('progressionOverlay');
   if (!overlay) return;
+  const wasOpen = overlay.classList.contains('on');
   renderProgressionJournal();
   overlay.classList.add('on');
   overlay.setAttribute('aria-hidden', 'false');
+  // Progression audio hook: journal open is subtle and respects interaction audio settings.
+  if (!wasOpen) playProgressionAudio('journalOpen');
 }
 
 function renderProgressionJournal() {
@@ -1619,8 +1657,11 @@ function renderProgressionJournal() {
 function closeProgressionJournal() {
   const overlay = document.getElementById('progressionOverlay');
   if (!overlay) return;
+  const wasOpen = overlay.classList.contains('on');
   overlay.classList.remove('on');
   overlay.setAttribute('aria-hidden', 'true');
+  // Progression audio hook: journal close is subtle and optional.
+  if (wasOpen) playProgressionAudio('journalClose');
 }
 
 function resetLocalProgression() {
@@ -5675,7 +5716,14 @@ const INTERACTION_AUDIO = {
   chestClose: { id:'chest-close', path:'/assets/audio/interactions/chest-close.mp3', volume:.52, cooldownMs:850 },
   portalOpen: { id:'portal-open', path:'/assets/audio/interactions/portal-open.mp3', volume:.58, cooldownMs:700 },
   portalTravel: { id:'portal-travel', path:'/assets/audio/interactions/portal-travel.mp3', volume:.68, cooldownMs:700 },
-  badgeUnlock: { id:'badge-unlock', path:'/assets/audio/badge-unlock.mp3', volume:.62, cooldownMs:900 },
+  collectiblePickup: { id:'progression-collectible-pickup', path:'/assets/audio/progression/collectible-pickup.mp3', volume:.42, cooldownMs:110 },
+  badgeUnlock: { id:'progression-badge-unlock', path:'/assets/audio/progression/badge-unlock.mp3', volume:.58, cooldownMs:900 },
+  journalOpen: { id:'progression-journal-open', path:'/assets/audio/progression/journal-open.mp3', volume:.32, cooldownMs:450 },
+  journalClose: { id:'progression-journal-close', path:'/assets/audio/progression/journal-close.mp3', volume:.26, cooldownMs:450 },
+  questComplete: { id:'progression-quest-complete', path:'/assets/audio/progression/quest-complete.mp3', volume:.5, cooldownMs:1200 },
+  progressMilestone: { id:'progression-progress-milestone', path:'/assets/audio/progression/progress-milestone.mp3', volume:.36, cooldownMs:1600 },
+  levelUp: { id:'progression-level-up', path:'/assets/audio/progression/level-up.mp3', volume:.54, cooldownMs:1400 },
+  secretFound: { id:'progression-secret-found', path:'/assets/audio/progression/secret-found.mp3', volume:.5, cooldownMs:1400 },
   footstepDirt: { id:'footstep-dirt', path:'/assets/audio/footsteps/dirt-1.mp3', volume:.42, cooldownMs:120 },
   footstepWet: { id:'footstep-wet', path:'/assets/audio/footsteps/wet-1.mp3', volume:.44, cooldownMs:120 },
   footstepSnow: { id:'footstep-snow', path:'/assets/audio/footsteps/snow-1.mp3', volume:.48, cooldownMs:120 },
