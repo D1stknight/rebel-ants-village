@@ -144,15 +144,29 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 #btn-wallet.connected{color:#6abf6a;border-color:rgba(106,191,106,0.4);}
 
 #btn-landing-audio{
-  background:rgba(0,0,0,0.42);
+  position:fixed;
+  top:18px;
+  right:18px;
+  z-index:14;
+  width:48px;
+  height:48px;
+  min-width:0;
+  padding:0;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:rgba(0,0,0,0.58);
   color:#5ecfca;
   border:1px solid rgba(94,207,202,0.42);
-  min-width:150px;
+  font-size:20px;
+  letter-spacing:0;
+  box-shadow:0 0 18px rgba(0,0,0,0.42), inset 0 0 14px rgba(94,207,202,0.08);
 }
 #btn-landing-audio:hover{
   color:#fff;
   border-color:rgba(94,207,202,0.8);
   box-shadow:0 0 18px rgba(94,207,202,0.18);
+  transform:translateY(-1px);
 }
 #btn-landing-audio.muted{
   color:#8a7a5a;
@@ -413,10 +427,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
     <button class="btn" id="btn-wallet" onclick="connectWallet()">Connect Wallet</button>
     <button class="btn" id="btn-forge" onclick="enterForge()">Forge 3D Character</button>
     <button class="btn" id="btn-enter" onclick="enterVillage()">Enter Village</button>
-    <button class="btn" id="btn-landing-audio" onclick="toggleLandingAudio()">Audio On</button>
   </div>
 
 </div>
+
+<button class="btn" id="btn-landing-audio" onclick="toggleLandingAudio()" aria-label="Toggle landing audio">🎵</button>
 
 <!-- News ticker -->
 <div id="ticker">
@@ -1303,9 +1318,10 @@ function updateLandingAudioButton() {
   const btn = document.getElementById('btn-landing-audio');
   if (!btn) return;
   const muted = isLandingAudioMuted();
-  btn.textContent = muted ? 'Audio Off' : 'Audio On';
+  btn.textContent = muted ? '🔇' : '🎵';
   btn.classList.toggle('muted', muted);
   btn.title = muted ? 'Turn landing audio on' : 'Mute landing audio';
+  btn.setAttribute('aria-label', btn.title);
 }
 
 function fadeLandingAudioTo(targetVolume) {
