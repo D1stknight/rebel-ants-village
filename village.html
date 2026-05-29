@@ -352,22 +352,36 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #villageGateClose{display:block;margin:18px auto 0;background:transparent;border:1px solid rgba(94,207,202,.4);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 16px;cursor:pointer}
 #progressionOverlay{position:fixed;inset:0;background:rgba(2,8,18,.62);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:71;opacity:0;pointer-events:none;transition:opacity .2s}
 #progressionOverlay.on{opacity:1;pointer-events:all}
-#progressionPanel{width:min(620px,92vw);max-height:84vh;overflow:auto;background:rgba(5,10,28,.96);border:1px solid rgba(232,197,106,.52);box-shadow:0 0 60px rgba(94,207,202,.12);padding:24px}
+#progressionPanel{width:min(760px,94vw);max-height:86vh;overflow:auto;background:rgba(5,10,28,.96);border:1px solid rgba(232,197,106,.52);box-shadow:0 0 60px rgba(94,207,202,.12);padding:24px}
 #progressionPanel h2{font-family:'Cinzel Decorative',serif;font-size:17px;color:#e8c56a;letter-spacing:3px;text-align:center;margin-bottom:12px}
+.journal-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-bottom:12px}
+.journal-tab{border:1px solid rgba(94,207,202,.22);background:rgba(255,255,255,.035);color:rgba(255,255,255,.7);font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:1.4px;padding:8px 5px;cursor:pointer}
+.journal-tab.active{border-color:rgba(232,197,106,.65);color:#e8c56a;background:rgba(232,197,106,.1)}
 .journal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .journal-card{border:1px solid rgba(94,207,202,.18);background:rgba(255,255,255,.035);border-radius:6px;padding:10px}
 .journal-card.full{grid-column:1/-1}
 .journal-card strong{display:block;color:#5ecfca;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
 .journal-card span{color:rgba(255,255,255,.72);font-size:12px;line-height:1.35}
+.journal-section-title{grid-column:1/-1;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:12px;letter-spacing:2px;margin:6px 0 2px}
+.journal-progress{height:7px;background:rgba(255,255,255,.08);border:1px solid rgba(94,207,202,.18);border-radius:999px;overflow:hidden;margin-top:6px}
+.journal-progress div{height:100%;background:linear-gradient(90deg,#5ecfca,#e8c56a)}
 .badge-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:7px}
-.badge-chip{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.035);border-radius:6px;padding:8px;min-height:54px}
+.badge-chip{display:grid;grid-template-columns:44px 1fr;gap:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.035);border-radius:6px;padding:8px;min-height:64px}
 .badge-chip.unlocked{border-color:rgba(232,197,106,.55);box-shadow:0 0 18px rgba(232,197,106,.08)}
-.badge-chip.locked{opacity:.58}
+.badge-chip.locked{opacity:.58;filter:saturate(.35)}
+.badge-chip.current{border-color:rgba(94,207,202,.72);box-shadow:0 0 20px rgba(94,207,202,.16)}
+.badge-icon{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(232,197,106,.38);background:radial-gradient(circle,rgba(232,197,106,.22),rgba(94,207,202,.08));color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:16px;overflow:hidden}
+.badge-icon img{width:100%;height:100%;object-fit:cover}
+.badge-chip.locked .badge-icon{background:rgba(255,255,255,.05);color:rgba(255,255,255,.32);border-color:rgba(255,255,255,.16)}
 .badge-chip b{display:block;color:#e8c56a;font-size:10px;letter-spacing:1px;margin-bottom:3px}
 .badge-chip small{display:block;color:#5ecfca;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
 .badge-chip em{display:block;color:rgba(255,255,255,.68);font-size:10px;line-height:1.3;font-style:normal}
+.journal-list{display:grid;gap:7px}
+.journal-row{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);border-radius:6px;padding:10px;color:rgba(255,255,255,.74);font-size:12px;line-height:1.35}
+.journal-row.locked{opacity:.52}
+.journal-row b{color:#e8c56a;font-family:'Cinzel Decorative',serif;letter-spacing:1px}
 #hudNextBadgeProgress{font-size:8px;color:rgba(232,197,106,.88);letter-spacing:1px;text-align:right;margin-top:3px;line-height:1.25}
-#journalClose{display:block;margin:16px auto 0;background:transparent;border:1px solid rgba(94,207,202,.4);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 16px;cursor:pointer}
+#journalClose,.badge-popup-close{display:block;margin:16px auto 0;background:transparent;border:1px solid rgba(94,207,202,.4);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 16px;cursor:pointer}
 #badgeUnlockPopup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);z-index:96;min-width:min(360px,86vw);max-width:460px;text-align:center;background:radial-gradient(circle at 50% 0%,rgba(232,197,106,.18),rgba(5,10,28,.96) 54%);border:1px solid rgba(232,197,106,.72);box-shadow:0 0 44px rgba(232,197,106,.18),0 0 80px rgba(94,207,202,.08);padding:22px 24px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 #badgeUnlockPopup.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #badgeUnlockPopup .badge-kicker{font-family:'Cinzel Decorative',serif;color:#5ecfca;font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-bottom:7px}
@@ -375,7 +389,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #badgeUnlockPopup .badge-category{color:rgba(255,255,255,.72);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-top:6px}
 #badgeUnlockPopup .badge-desc{color:rgba(255,255,255,.78);font-size:12px;line-height:1.45;margin-top:10px}
 @keyframes badgePulse{from{text-shadow:0 0 8px rgba(232,197,106,.25)}to{text-shadow:0 0 22px rgba(232,197,106,.62)}}
-@media (max-width:640px){#villageGateList,.journal-grid,.badge-gallery{grid-template-columns:1fr}#villageGatePanel,#progressionPanel{padding:22px}}
+@media (max-width:640px){#villageGateList,.journal-grid,.badge-gallery,.journal-tabs{grid-template-columns:1fr 1fr}#villageGatePanel,#progressionPanel{padding:22px}}
 </style>
 </head>
 <body>
@@ -667,6 +681,43 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="ctrl-btn full" onclick="placeCollectibleFromAdmin()">Add Collectible</button>
   </div>
   <hr class="ap-divider">
+  <div class="ap-section">Badge Builder</div>
+  <div class="admin-section-body" data-admin-section-body="badge-builder">
+    <div class="admin-note">To add a new badge image, upload it manually to /assets/badges/, then paste the path here.</div>
+    <label class="admin-field">Badge
+      <select id="badgeBuilderSelect" class="admin-select" onchange="loadBadgeBuilderSelection()"></select>
+    </label>
+    <label class="admin-field">Name <input id="badgeBuilderName" placeholder="Badge name"></label>
+    <label class="admin-field">Category
+      <select id="badgeBuilderCategory" class="admin-select">
+        <option value="explorer">Explorer</option>
+        <option value="story">Story</option>
+        <option value="ronin">Ronin</option>
+        <option value="samurai">Samurai</option>
+        <option value="arcade">Arcade</option>
+        <option value="community">Community</option>
+        <option value="builder">Builder</option>
+      </select>
+    </label>
+    <label class="admin-field">Rarity
+      <select id="badgeBuilderRarity" class="admin-select">
+        <option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option><option>Legendary</option><option>Mythic</option>
+      </select>
+    </label>
+    <label class="admin-field">Description <textarea id="badgeBuilderDescription" rows="2"></textarea></label>
+    <label class="admin-field">Requirement Text <input id="badgeBuilderRequirement" placeholder="Reach 100 progress"></label>
+    <label class="admin-field">Image Path / URL <input id="badgeBuilderImageUrl" placeholder="/assets/badges/explorer-sprout.png" oninput="previewBadgeBuilderImage()"></label>
+    <div class="journal-card" style="margin:7px 0"><strong>Preview</strong><span id="badgeBuilderPreview">Select a badge.</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="ctrl-btn" onclick="saveBadgeBuilderConfig()">Save Badge Config</button>
+      <button class="ctrl-btn" onclick="resetBadgeBuilderImage()">Reset Image URL</button>
+      <button class="ctrl-btn" onclick="unlockSelectedBadgeFromAdmin()">Unlock Selected Badge</button>
+      <button class="ctrl-btn" onclick="lockSelectedBadgeFromAdmin()">Lock Selected Badge</button>
+      <button class="ctrl-btn" onclick="addProgressionDebugXP(10)">Add Progress +10</button>
+      <button class="ctrl-btn" onclick="testSelectedBadgePopup()">Test Badge Popup</button>
+    </div>
+  </div>
+  <hr class="ap-divider">
   <div class="ap-section">Weather</div>
   <div class="admin-section-body" data-admin-section-body="weather">
   <div class="admin-note">Weather controls change the current sky, cycle timing, and forecast only.</div>
@@ -803,6 +854,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="progressionOverlay" aria-hidden="true">
   <div id="progressionPanel" role="dialog" aria-modal="true" aria-labelledby="progressionTitle">
     <h2 id="progressionTitle">Player Journal</h2>
+    <div class="journal-tabs" id="progressionJournalTabs"></div>
     <div class="journal-grid" id="progressionJournalGrid"></div>
     <button id="journalClose" type="button" onclick="closeProgressionJournal()">Close</button>
   </div>
@@ -812,6 +864,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div class="badge-name" id="badgeUnlockName">Sprout Explorer</div>
   <div class="badge-category" id="badgeUnlockCategory">Explorer</div>
   <div class="badge-desc" id="badgeUnlockDesc">A new mark has been added to your Rebel journal.</div>
+  <button class="badge-popup-close" type="button" onclick="closeBadgeUnlockPopup()">Close</button>
 </div>
 <canvas id="c"></canvas>
 <div id="xhair"></div>
@@ -1020,6 +1073,7 @@ const QUEST_DEFINITIONS = {
 };
 
 const PROGRESSION_KEY = 'rebelAntsProgression:v1';
+const BADGE_CONFIG_KEY = 'rebelAntsBadgeConfig:v1';
 const PROGRESSION_BADGE_CATEGORIES = {
   explorer: 'Explorer',
   story: 'Story',
@@ -1029,31 +1083,52 @@ const PROGRESSION_BADGE_CATEGORIES = {
   community: 'Community',
   builder: 'Builder'
 };
-const PROGRESSION_BADGE_META = {
-  'Sprout Explorer': { category:'explorer', requirement:'Start your Rebel journey', threshold:0, description:'You stepped into the Rebel Ants Universe.' },
-  'Forest Wanderer': { category:'explorer', requirement:'Reach 100 progress', threshold:100, description:'You are learning the paths between roots, villages, and hidden signs.' },
-  Pathfinder: { category:'explorer', requirement:'Reach 200 progress', threshold:200, description:'You are finding routes others miss.' },
-  'Realm Traveler': { category:'explorer', requirement:'Reach 300 progress', threshold:300, description:'You have begun moving between colonies like a true traveler.' },
-  'The First Warning': { category:'story', requirement:'Complete The First Warning quest', description:'You heard the first truth about the breathing tunnels.' },
-  'Tunnel Witness': { category:'story', requirement:'Future story milestone', description:'You witnessed signs beneath the roots.' },
-  'Dust Reader': { category:'story', requirement:'Future story milestone', description:'You learned to read the red dust.' },
-  Watcher: { category:'ronin', requirement:'Meet the Ronin watcher', description:'The shadows have noticed you.' },
-  'Shadow Walker': { category:'ronin', requirement:'Future Ronin milestone', description:'You know how to move where warnings hide.' },
-  Initiate: { category:'samurai', requirement:'Future Samurai milestone', description:'You took your first step on the Samurai path.' },
-  'Honor Guard': { category:'samurai', requirement:'Future Samurai milestone', description:'You earned trust through discipline.' },
-  'Arcade Initiate': { category:'arcade', requirement:'Open an arcade/game sign', description:'You found where village paths become games.' },
-  'Colony Caller': { category:'community', requirement:'Future community action', description:'You reached beyond the village.' },
-  'World Builder': { category:'builder', requirement:'Use builder/admin progression hooks', description:'You helped shape the Rebel world.' }
-};
-const PROGRESSION_BADGES = {
-  explorer: ['Sprout Explorer', 'Forest Wanderer', 'Pathfinder', 'Realm Traveler'],
-  story: ['The First Warning', 'Tunnel Witness', 'Dust Reader'],
-  ronin: ['Watcher', 'Shadow Walker'],
-  samurai: ['Initiate', 'Honor Guard'],
-  arcade: ['Arcade Initiate'],
-  community: ['Colony Caller'],
-  builder: ['World Builder']
-};
+const BADGE_RARITIES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic'];
+const DEFAULT_BADGE_DEFINITIONS = [
+  { badgeId:'explorer-sprout', name:'Sprout Explorer', category:'explorer', rarity:'Common', imageUrl:'/assets/badges/explorer-sprout.png', requirementType:'xp', requirementValue:0, requirementText:'Start your Rebel journey', description:'You stepped into the Rebel Ants Universe.' },
+  { badgeId:'explorer-forest-wanderer', name:'Forest Wanderer', category:'explorer', rarity:'Common', imageUrl:'/assets/badges/explorer-forest-wanderer.png', requirementType:'xp', requirementValue:100, requirementText:'Reach 100 progress', description:'You are learning the paths between roots, villages, and hidden signs.' },
+  { badgeId:'explorer-pathfinder', name:'Pathfinder', category:'explorer', rarity:'Uncommon', imageUrl:'/assets/badges/explorer-pathfinder.png', requirementType:'xp', requirementValue:200, requirementText:'Reach 200 progress', description:'You are finding routes others miss.' },
+  { badgeId:'explorer-realm-traveler', name:'Realm Traveler', category:'explorer', rarity:'Rare', imageUrl:'/assets/badges/explorer-realm-traveler.png', requirementType:'xp', requirementValue:300, requirementText:'Reach 300 progress', description:'You have begun moving between colonies like a true traveler.' },
+  { badgeId:'explorer-root-runner', name:'Root Runner', category:'explorer', rarity:'Epic', imageUrl:'/assets/badges/explorer-root-runner.png', requirementType:'xp', requirementValue:600, requirementText:'Reach 600 progress', description:'You know the root paths by instinct.' },
+  { badgeId:'story-first-warning', name:'The First Warning', category:'story', rarity:'Common', imageUrl:'/assets/badges/story-first-warning.png', requirementType:'quest', requirementValue:'first-warning', requirementText:'Complete The First Warning quest', description:'You heard the first truth about the breathing tunnels.' },
+  { badgeId:'story-tunnel-witness', name:'Tunnel Witness', category:'story', rarity:'Uncommon', imageUrl:'/assets/badges/story-tunnel-witness.png', requirementType:'story', requirementValue:'future-tunnels', requirementText:'Future Book 1 story milestone', description:'You witnessed signs beneath the roots.' },
+  { badgeId:'story-dust-reader', name:'Dust Reader', category:'story', rarity:'Rare', imageUrl:'/assets/badges/story-dust-reader.png', requirementType:'story', requirementValue:'future-red-dust', requirementText:'Future Book 1 story milestone', description:'You learned to read the red dust.' },
+  { badgeId:'story-old-roots', name:'Old Roots Remember', category:'story', rarity:'Epic', imageUrl:'/assets/badges/story-old-roots.png', requirementType:'story', requirementValue:'future-old-roots', requirementText:'Future Book 1 story milestone', description:'The roots remembered what the colony buried.' },
+  { badgeId:'ronin-watcher', name:'Watcher', category:'ronin', rarity:'Common', imageUrl:'/assets/badges/ronin-watcher.png', requirementType:'quest', requirementValue:'first-warning', requirementText:'Meet the Ronin watcher', description:'The shadows have noticed you.' },
+  { badgeId:'ronin-shadow-walker', name:'Shadow Walker', category:'ronin', rarity:'Rare', imageUrl:'/assets/badges/ronin-shadow-walker.png', requirementType:'villageActions', requirementValue:'ronin:future', requirementText:'Future Ronin milestone', description:'You know how to move where warnings hide.' },
+  { badgeId:'ronin-unseen-hand', name:'Unseen Hand', category:'ronin', rarity:'Legendary', imageUrl:'/assets/badges/ronin-unseen-hand.png', requirementType:'secret', requirementValue:'unseen-hand', requirementText:'Secret Ronin discovery', description:'A hidden hand moved before the warning spread.', hidden:true },
+  { badgeId:'samurai-initiate', name:'Initiate', category:'samurai', rarity:'Common', imageUrl:'/assets/badges/samurai-initiate.png', requirementType:'village', requirementValue:'samurai', requirementText:'Visit Samurai Village', description:'You took your first step on the Samurai path.' },
+  { badgeId:'samurai-honor-guard', name:'Honor Guard', category:'samurai', rarity:'Rare', imageUrl:'/assets/badges/samurai-honor-guard.png', requirementType:'villageActions', requirementValue:'samurai:future', requirementText:'Future Samurai milestone', description:'You earned trust through discipline.' },
+  { badgeId:'arcade-initiate', name:'Arcade Initiate', category:'arcade', rarity:'Common', imageUrl:'/assets/badges/arcade-initiate.png', requirementType:'ecosystem', requirementValue:'arcade', requirementText:'Open an arcade/game sign', description:'You found where village paths become games.' },
+  { badgeId:'arcade-combo-spark', name:'Combo Spark', category:'arcade', rarity:'Uncommon', imageUrl:'/assets/badges/arcade-combo-spark.png', requirementType:'arcade', requirementValue:'future-score', requirementText:'Future arcade score milestone', description:'Your arcade reflexes are waking up.' },
+  { badgeId:'community-colony-caller', name:'Colony Caller', category:'community', rarity:'Common', imageUrl:'/assets/badges/community-colony-caller.png', requirementType:'ecosystem', requirementValue:'discord', requirementText:'Future community action', description:'You reached beyond the village.' },
+  { badgeId:'community-signal-carrier', name:'Signal Carrier', category:'community', rarity:'Uncommon', imageUrl:'/assets/badges/community-signal-carrier.png', requirementType:'ecosystem', requirementValue:'youtube', requirementText:'Open Rebel Ants content', description:'You carried the signal to another path.' },
+  { badgeId:'builder-world-builder', name:'World Builder', category:'builder', rarity:'Common', imageUrl:'/assets/badges/builder-world-builder.png', requirementType:'builder', requirementValue:'future-builder', requirementText:'Use builder/admin progression hooks', description:'You helped shape the Rebel world.' },
+  { badgeId:'builder-root-sculptor', name:'Root Sculptor', category:'builder', rarity:'Rare', imageUrl:'/assets/badges/builder-root-sculptor.png', requirementType:'builder', requirementValue:'future-terrain', requirementText:'Future terrain builder milestone', description:'You shaped land around the old roots.' },
+  { badgeId:'secret-beneath-roots', name:'Beneath the Roots', category:'story', rarity:'Mythic', imageUrl:'/assets/badges/secret-beneath-roots.png', requirementType:'secret', requirementValue:'beneath-roots', requirementText:'Hidden discovery', description:'Something beneath the roots answered back.', hidden:true }
+];
+function loadBadgeConfig() {
+  try { return JSON.parse(localStorage.getItem(BADGE_CONFIG_KEY) || '{}') || {}; }
+  catch (_) { return {}; }
+}
+let BadgeConfig = loadBadgeConfig();
+function getBadgeDefinitions() {
+  return DEFAULT_BADGE_DEFINITIONS.map(def => ({ ...def, ...(BadgeConfig[def.badgeId] || {}) }));
+}
+function getBadgeDefinitionByName(name) {
+  return getBadgeDefinitions().find(badge => badge.name === name) || null;
+}
+function getBadgeDefinitionById(id) {
+  return getBadgeDefinitions().find(badge => badge.badgeId === id) || null;
+}
+function getProgressionBadgesByCategory() {
+  return getBadgeDefinitions().reduce((acc, badge) => {
+    if (!acc[badge.category]) acc[badge.category] = [];
+    acc[badge.category].push(badge.name);
+    return acc;
+  }, {});
+}
+const PROGRESSION_BADGES = getProgressionBadgesByCategory();
 const PROGRESSION_POINTS = {
   quest: 40,
   village: 15,
@@ -1099,6 +1174,9 @@ function loadProgressionState() {
 }
 
 let ProgressionState = loadProgressionState();
+let activeJournalTab = 'overview';
+const badgeUnlockQueue = [];
+let badgePopupActive = false;
 
 function saveProgressionState() {
   ProgressionState.updatedAt = new Date().toISOString();
@@ -1114,30 +1192,39 @@ function addProgressionXP(amount) {
 function getExplorerBadgeInfo() {
   const xp = Number(ProgressionState.xp) || 0;
   const level = Math.max(1, Math.floor(xp / 100) + 1);
-  const badges = PROGRESSION_BADGES.explorer;
-  const badgeIndex = Math.min(badges.length - 1, Math.floor(xp / 100));
+  const explorerBadges = getBadgeDefinitions()
+    .filter(badge => badge.category === 'explorer' && badge.requirementType === 'xp')
+    .sort((a, b) => (a.requirementValue || 0) - (b.requirementValue || 0));
+  const badgeIndex = Math.max(0, explorerBadges.findLastIndex(badge => xp >= (Number(badge.requirementValue) || 0)));
+  const current = explorerBadges[Math.min(explorerBadges.length - 1, badgeIndex)] || explorerBadges[0];
+  const next = explorerBadges[Math.min(explorerBadges.length - 1, badgeIndex + 1)] || current;
   return {
     level,
-    currentBadge: badges[badgeIndex],
+    currentBadge: current?.name || 'Sprout Explorer',
     progressPercent: Math.min(100, xp % 100),
-    nextBadge: badges[Math.min(badges.length - 1, badgeIndex + 1)],
-    currentThreshold: badgeIndex * 100,
-    nextThreshold: Math.min((badgeIndex + 1) * 100, (badges.length - 1) * 100)
+    nextBadge: next?.name || current?.name || 'Sprout Explorer',
+    currentThreshold: Number(current?.requirementValue) || 0,
+    nextThreshold: Number(next?.requirementValue) || Number(current?.requirementValue) || 0
   };
 }
 
 function getBadgeMeta(name) {
-  const meta = PROGRESSION_BADGE_META[name] || {};
+  const meta = getBadgeDefinitionByName(name) || {};
   return {
     category: meta.category || 'explorer',
     categoryLabel: PROGRESSION_BADGE_CATEGORIES[meta.category || 'explorer'] || 'Explorer',
-    requirement: meta.requirement || 'Future milestone',
-    threshold: Number.isFinite(meta.threshold) ? meta.threshold : null,
-    description: meta.description || 'A new mark has been added to your Rebel journal.'
+    requirement: meta.requirementText || 'Future milestone',
+    threshold: meta.requirementType === 'xp' && Number.isFinite(Number(meta.requirementValue)) ? Number(meta.requirementValue) : null,
+    description: meta.description || 'A new mark has been added to your Rebel journal.',
+    badgeId: meta.badgeId || name,
+    rarity: meta.rarity || 'Common',
+    imageUrl: meta.imageUrl || ''
   };
 }
 
-function showBadgeUnlockPopup(name) {
+function processBadgeUnlockQueue() {
+  if (badgePopupActive || !badgeUnlockQueue.length) return;
+  const name = badgeUnlockQueue.shift();
   const popup = document.getElementById('badgeUnlockPopup');
   if (!popup) return;
   const meta = getBadgeMeta(name);
@@ -1147,14 +1234,29 @@ function showBadgeUnlockPopup(name) {
   if (nameEl) nameEl.textContent = name;
   if (categoryEl) categoryEl.textContent = meta.categoryLabel;
   if (descEl) descEl.textContent = meta.description;
+  badgePopupActive = true;
   popup.classList.add('on');
   popup.setAttribute('aria-hidden', 'false');
   clearTimeout(showBadgeUnlockPopup._timer);
   showBadgeUnlockPopup._timer = setTimeout(() => {
-    popup.classList.remove('on');
-    popup.setAttribute('aria-hidden', 'true');
-  }, 3600);
+    closeBadgeUnlockPopup();
+  }, 5600);
   playInteractionAudio('badgeUnlock');
+}
+
+function showBadgeUnlockPopup(name) {
+  badgeUnlockQueue.push(name);
+  processBadgeUnlockQueue();
+}
+
+function closeBadgeUnlockPopup() {
+  const popup = document.getElementById('badgeUnlockPopup');
+  if (!popup) return;
+  popup.classList.remove('on');
+  popup.setAttribute('aria-hidden', 'true');
+  badgePopupActive = false;
+  clearTimeout(showBadgeUnlockPopup._timer);
+  setTimeout(processBadgeUnlockQueue, 220);
 }
 
 function awardBadge(name, silent = false) {
@@ -1165,9 +1267,9 @@ function awardBadge(name, silent = false) {
 
 function awardEarnedExplorerBadges(silent = false) {
   const xp = Number(ProgressionState.xp) || 0;
-  (PROGRESSION_BADGES.explorer || []).forEach(name => {
-    const threshold = getBadgeMeta(name).threshold;
-    if (Number.isFinite(threshold) && xp >= threshold) awardBadge(name, silent);
+  getBadgeDefinitions().filter(badge => badge.requirementType === 'xp').forEach(badge => {
+    const threshold = Number(badge.requirementValue);
+    if (Number.isFinite(threshold) && xp >= threshold) awardBadge(badge.name, silent);
   });
 }
 
@@ -1236,43 +1338,140 @@ function getCollectibleCountsByType() {
   return counts;
 }
 
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+}
+
+function getBadgeProgressValue(badge) {
+  if (badge.requirementType === 'xp') return Number(ProgressionState.xp) || 0;
+  if (badge.requirementType === 'quest') return ProgressionState.completedQuests.includes(badge.requirementValue) ? 1 : 0;
+  if (badge.requirementType === 'village') return ProgressionState.villagesVisited.includes(badge.requirementValue) ? 1 : 0;
+  if (badge.requirementType === 'ecosystem') return ProgressionState.ecosystemActions?.[badge.requirementValue] ? 1 : 0;
+  if (badge.requirementType === 'secret') return ProgressionState.secretsFound.includes(badge.requirementValue) ? 1 : 0;
+  return 0;
+}
+
+function isBadgeUnlocked(badge) {
+  return ProgressionState.badges.includes(badge.name);
+}
+
+function renderBadgeIcon(badge, unlocked) {
+  if (badge.imageUrl) {
+    return `<div class="badge-icon"><img src="${escapeHTML(badge.imageUrl)}" alt="${escapeHTML(badge.name)}" onerror="this.style.display='none';this.parentElement.textContent='${unlocked ? '✦' : '?'}'"></div>`;
+  }
+  return `<div class="badge-icon">${unlocked ? '✦' : '?'}</div>`;
+}
+
+function renderBadgeCard(badge) {
+  const unlocked = isBadgeUnlocked(badge);
+  const meta = getBadgeMeta(badge.name);
+  const active = getExplorerBadgeInfo().currentBadge === badge.name;
+  const hiddenLocked = badge.hidden && !unlocked;
+  const name = hiddenLocked ? 'Unknown Badge' : badge.name;
+  const desc = hiddenLocked ? 'A secret waits somewhere in the roots.' : badge.description;
+  const req = unlocked ? 'Unlocked' : (hiddenLocked ? 'Hidden discovery' : badge.requirementText);
+  const progress = badge.requirementType === 'xp' && !unlocked
+    ? `<br>${Math.min(getBadgeProgressValue(badge), Number(badge.requirementValue) || 0)} / ${badge.requirementValue} progress`
+    : '';
+  return `<div class="badge-chip ${unlocked ? 'unlocked' : 'locked'} ${active ? 'current' : ''}">
+    ${renderBadgeIcon(badge, unlocked && !hiddenLocked)}
+    <div><small>${escapeHTML(meta.categoryLabel)} - ${escapeHTML(badge.rarity || 'Common')}</small><b>${escapeHTML(name)}</b><em>${escapeHTML(req)}${progress}<br>${escapeHTML(desc)}</em></div>
+  </div>`;
+}
+
 function renderBadgeGallery() {
-  return Object.entries(PROGRESSION_BADGES).map(([category, names]) => {
-    const categoryLabel = PROGRESSION_BADGE_CATEGORIES[category] || category;
-    const chips = names.map(name => {
-      const unlocked = ProgressionState.badges.includes(name);
-      const meta = getBadgeMeta(name);
-      const status = unlocked ? 'Unlocked' : meta.requirement;
-      return `<div class="badge-chip ${unlocked ? 'unlocked' : 'locked'}"><small>${categoryLabel} - ${unlocked ? 'Unlocked' : 'Locked'}</small><b>${name}</b><em>${status}<br>${meta.description}</em></div>`;
-    }).join('');
-    return `<div class="journal-card full"><strong>${categoryLabel} Badges</strong><div class="badge-gallery">${chips}</div></div>`;
+  const definitions = getBadgeDefinitions();
+  return Object.keys(PROGRESSION_BADGE_CATEGORIES).map(category => {
+    const badges = definitions.filter(badge => badge.category === category);
+    if (!badges.length) return '';
+    const open = category === 'explorer' ? ' open' : '';
+    return `<details class="journal-card full"${open}><summary><strong>${PROGRESSION_BADGE_CATEGORIES[category]} Badges</strong></summary><div class="badge-gallery">${badges.map(renderBadgeCard).join('')}</div></details>`;
   }).join('');
+}
+
+function renderJournalTabs() {
+  const tabs = [
+    ['overview', 'Overview'],
+    ['badges', 'Badges'],
+    ['collections', 'Collections'],
+    ['story', 'Story'],
+    ['villages', 'Villages'],
+    ['secrets', 'Secrets']
+  ];
+  const target = document.getElementById('progressionJournalTabs');
+  if (!target) return;
+  target.innerHTML = tabs.map(([id, label]) => `<button class="journal-tab ${activeJournalTab === id ? 'active' : ''}" type="button" onclick="setProgressionJournalTab('${id}')">${label}</button>`).join('');
+}
+
+function setProgressionJournalTab(tab) {
+  activeJournalTab = tab || 'overview';
+  renderProgressionJournal();
 }
 
 function openProgressionJournal() {
   const overlay = document.getElementById('progressionOverlay');
+  if (!overlay) return;
+  renderProgressionJournal();
+  overlay.classList.add('on');
+  overlay.setAttribute('aria-hidden', 'false');
+}
+
+function renderProgressionJournal() {
   const grid = document.getElementById('progressionJournalGrid');
-  if (!overlay || !grid) return;
+  if (!grid) return;
+  renderJournalTabs();
   const info = getExplorerBadgeInfo();
   const ecosystemCount = Object.values(ProgressionState.ecosystemActions || {}).filter(Boolean).length;
   const collectibleCounts = getCollectibleCountsByType();
-  const collectibleList = Object.entries(COLLECTIBLE_TYPES).map(([type, cfg]) => `${cfg.label}: ${collectibleCounts[type] || 0}`).join('<br>');
+  const totalCollectibles = ProgressionState.collectiblesFound.length;
   const xp = Number(ProgressionState.xp) || 0;
+  const nextText = info.nextBadge === info.currentBadge
+    ? `Top Badge: ${info.currentBadge}`
+    : `${info.nextBadge} - ${Math.max(0, Math.min(xp - (info.currentThreshold || 0), (info.nextThreshold || xp) - (info.currentThreshold || 0)))} / ${Math.max(1, (info.nextThreshold || xp) - (info.currentThreshold || 0))} progress`;
+  if (activeJournalTab === 'badges') {
+    grid.innerHTML = renderBadgeGallery();
+    return;
+  }
+  if (activeJournalTab === 'collections') {
+    const rows = Object.entries(COLLECTIBLE_TYPES).map(([type, cfg]) => `<div class="journal-row"><b>${escapeHTML(cfg.label)}</b><br>${collectibleCounts[type] || 0} collected</div>`).join('');
+    grid.innerHTML = `<div class="journal-card full"><strong>Collection Progress</strong><span>${totalCollectibles} total collectibles found</span><div class="journal-progress"><div style="width:${Math.min(100, totalCollectibles * 10)}%"></div></div></div>${rows}`;
+    return;
+  }
+  if (activeJournalTab === 'story') {
+    const entries = [
+      ['The First Warning', ProgressionState.completedQuests.includes('first-warning'), 'The tunnels have started breathing again.'],
+      ['The Breathing Tunnels', false, 'A future Book 1 entry waits below the roots.'],
+      ['The Red Dust', false, 'A future Book 1 entry waits in the red cracks.'],
+      ['The Ronin Watcher', ProgressionState.completedQuests.includes('first-warning'), 'The truth was not buried. It was waiting.']
+    ];
+    grid.innerHTML = entries.map(([title, unlocked, text]) => `<div class="journal-row ${unlocked ? '' : 'locked'}"><b>${unlocked ? title : 'Unknown Entry'}</b><br>${unlocked ? text : 'Locked story memory.'}</div>`).join('');
+    return;
+  }
+  if (activeJournalTab === 'villages') {
+    grid.innerHTML = Object.values(VILLAGE_REGISTRY).map(village => {
+      const visited = ProgressionState.villagesVisited.includes(village.villageId);
+      return `<div class="journal-row ${visited ? '' : 'locked'}"><b>${escapeHTML(visited ? village.displayName : 'Undiscovered Village')}</b><br>${visited ? 'Visited' : 'Not discovered yet'}</div>`;
+    }).join('');
+    return;
+  }
+  if (activeJournalTab === 'secrets') {
+    const known = ProgressionState.secretsFound.length;
+    grid.innerHTML = `<div class="journal-card full"><strong>Secrets</strong><span>${known} hidden discoveries found</span></div><div class="journal-row locked"><b>Unknown Secret</b><br>Something is still hidden beneath the village.</div>`;
+    return;
+  }
   const cards = [
     ['Explorer Level', `Level ${info.level}`],
     ['Current Badge', info.currentBadge],
-    ['Next Badge', info.nextBadge === info.currentBadge ? `Top Badge: ${info.currentBadge}` : `${info.nextBadge} - ${Math.max(0, Math.min(xp - (info.currentThreshold || 0), (info.nextThreshold || xp) - (info.currentThreshold || 0)))} / ${Math.max(1, (info.nextThreshold || xp) - (info.currentThreshold || 0))} progress`],
+    ['Next Badge', nextText],
     ['Completed Quests', ProgressionState.completedQuests.length],
     ['Villages Visited', ProgressionState.villagesVisited.length],
     ['Chests Opened', ProgressionState.chestsOpened.length],
-    ['Collectibles Found', `Total: ${ProgressionState.collectiblesFound.length}<br>${collectibleList}`],
+    ['Collectibles Found', totalCollectibles],
     ['Secrets Found', ProgressionState.secretsFound.length],
     ['Ecosystem Actions', ecosystemCount],
-    ['Badges Earned', ProgressionState.badges.length ? ProgressionState.badges.join(', ') : 'None yet']
+    ['Badges Earned', ProgressionState.badges.length ? ProgressionState.badges.length : 'None yet']
   ];
-  grid.innerHTML = cards.map(([label, value]) => `<div class="journal-card"><strong>${label}</strong><span>${value}</span></div>`).join('') + renderBadgeGallery();
-  overlay.classList.add('on');
-  overlay.setAttribute('aria-hidden', 'false');
+  grid.innerHTML = cards.map(([label, value]) => `<div class="journal-card"><strong>${label}</strong><span>${value}</span></div>`).join('');
 }
 
 function closeProgressionJournal() {
@@ -1288,11 +1487,102 @@ function resetLocalProgression() {
   ProgressionState = getDefaultProgressionState();
   localStorage.setItem(PROGRESSION_KEY, JSON.stringify(ProgressionState));
   scene?.transformNodes?.forEach(node => {
-    if (node.metadata?.type === 'collectible') node.setEnabled(true);
+    if (node.metadata?.type === 'collectible') {
+      resetCollectibleVisualState(node);
+      node.setEnabled(true);
+    }
   });
   updateProgressionHud();
   closeProgressionJournal();
   showToast('Local progression reset');
+}
+
+function refreshBadgeBuilderOptions() {
+  const select = document.getElementById('badgeBuilderSelect');
+  if (!select) return;
+  const current = select.value;
+  select.innerHTML = getBadgeDefinitions().map(badge => `<option value="${escapeHTML(badge.badgeId)}">${escapeHTML(badge.name)}</option>`).join('');
+  if (current) select.value = current;
+  if (!select.value && select.options.length) select.value = select.options[0].value;
+  loadBadgeBuilderSelection();
+}
+
+function loadBadgeBuilderSelection() {
+  const id = document.getElementById('badgeBuilderSelect')?.value;
+  const badge = getBadgeDefinitionById(id);
+  if (!badge) return;
+  const setValue = (fieldId, value) => {
+    const field = document.getElementById(fieldId);
+    if (field) field.value = value || '';
+  };
+  setValue('badgeBuilderName', badge.name);
+  setValue('badgeBuilderCategory', badge.category);
+  setValue('badgeBuilderRarity', badge.rarity || 'Common');
+  setValue('badgeBuilderDescription', badge.description);
+  setValue('badgeBuilderRequirement', badge.requirementText);
+  setValue('badgeBuilderImageUrl', badge.imageUrl);
+  previewBadgeBuilderImage();
+}
+
+function previewBadgeBuilderImage() {
+  const id = document.getElementById('badgeBuilderSelect')?.value;
+  const badge = getBadgeDefinitionById(id);
+  const preview = document.getElementById('badgeBuilderPreview');
+  if (!badge || !preview) return;
+  const imageUrl = document.getElementById('badgeBuilderImageUrl')?.value || '';
+  const previewBadge = { ...badge, imageUrl };
+  preview.innerHTML = `<div class="badge-gallery">${renderBadgeCard(previewBadge)}</div>`;
+}
+
+function saveBadgeBuilderConfig() {
+  const id = document.getElementById('badgeBuilderSelect')?.value;
+  const base = DEFAULT_BADGE_DEFINITIONS.find(badge => badge.badgeId === id);
+  if (!base) return;
+  BadgeConfig[id] = {
+    name: document.getElementById('badgeBuilderName')?.value || base.name,
+    category: document.getElementById('badgeBuilderCategory')?.value || base.category,
+    rarity: document.getElementById('badgeBuilderRarity')?.value || base.rarity,
+    description: document.getElementById('badgeBuilderDescription')?.value || base.description,
+    requirementText: document.getElementById('badgeBuilderRequirement')?.value || base.requirementText,
+    imageUrl: document.getElementById('badgeBuilderImageUrl')?.value || ''
+  };
+  localStorage.setItem(BADGE_CONFIG_KEY, JSON.stringify(BadgeConfig));
+  refreshBadgeBuilderOptions();
+  updateProgressionHud();
+  showToast('Badge config saved locally');
+}
+
+function resetBadgeBuilderImage() {
+  const field = document.getElementById('badgeBuilderImageUrl');
+  if (field) field.value = '';
+  previewBadgeBuilderImage();
+}
+
+function unlockSelectedBadgeFromAdmin() {
+  const badge = getBadgeDefinitionById(document.getElementById('badgeBuilderSelect')?.value);
+  if (!badge) return;
+  awardBadge(badge.name);
+  saveProgressionState();
+  showToast('Badge unlocked: ' + badge.name);
+}
+
+function lockSelectedBadgeFromAdmin() {
+  const badge = getBadgeDefinitionById(document.getElementById('badgeBuilderSelect')?.value);
+  if (!badge) return;
+  ProgressionState.badges = ProgressionState.badges.filter(name => name !== badge.name);
+  saveProgressionState();
+  showToast('Badge locked: ' + badge.name);
+}
+
+function addProgressionDebugXP(amount = 10) {
+  addProgressionXP(amount);
+  saveProgressionState();
+  showToast('Progress +' + amount);
+}
+
+function testSelectedBadgePopup() {
+  const badge = getBadgeDefinitionById(document.getElementById('badgeBuilderSelect')?.value);
+  if (badge) showBadgeUnlockPopup(badge.name);
 }
 
 function returnToHubVillage() {
@@ -3524,8 +3814,28 @@ function isCollectibleCollected(id) {
 function markCollectibleVisualMesh(mesh, root, baseY = mesh.position.y, extra = {}) {
   mesh.isPickable = true;
   mesh._editRoot = root;
-  mesh.metadata = { ...(mesh.metadata || {}), collectibleVisual: true, baseY, ...extra };
+  mesh.metadata = {
+    ...(mesh.metadata || {}),
+    collectibleVisual: true,
+    baseY,
+    baseScale: { x: mesh.scaling.x, y: mesh.scaling.y, z: mesh.scaling.z },
+    baseAlpha: mesh.material && 'alpha' in mesh.material ? mesh.material.alpha : null,
+    ...extra
+  };
   return mesh;
+}
+
+function resetCollectibleVisualState(root) {
+  root.metadata._collectiblePickupStartedAt = 0;
+  root.isPickable = true;
+  root.getChildMeshes?.(false).forEach(mesh => {
+    if (!mesh.metadata?.collectibleVisual) return;
+    mesh.isPickable = true;
+    const scale = mesh.metadata.baseScale;
+    if (scale) mesh.scaling.set(scale.x, scale.y, scale.z);
+    if (mesh.material && Number.isFinite(mesh.metadata.baseAlpha)) mesh.material.alpha = mesh.metadata.baseAlpha;
+  });
+  if (root.metadata._collectibleLight) root.metadata._collectibleLight.intensity = .62;
 }
 
 function makeCollectibleMat(root, name, colorHex, emissiveHex = colorHex, alpha = .95) {
@@ -3570,6 +3880,15 @@ function addCollectibleAura(root, cfg) {
   }
 }
 
+function setCollectibleVisualsVisible(root, visible, includeFallback = true) {
+  root.getChildMeshes?.(false).forEach(mesh => {
+    if (!mesh.metadata?.collectibleVisual) return;
+    if (!includeFallback && mesh.metadata.proceduralFallback) return;
+    mesh.setEnabled(visible);
+  });
+  if (root.metadata?._collectibleLight) root.metadata._collectibleLight.setEnabled(visible);
+}
+
 async function tryLoadCollectibleModel(root, cfg) {
   if (!root || root.isDisposed?.() || !cfg.modelUrl) return;
   try {
@@ -3607,6 +3926,9 @@ async function tryLoadCollectibleModel(root, cfg) {
 
     if (!visibleMeshCount) {
       modelRoot.dispose(false, true);
+      root.metadata.modelFailed = true;
+      root.metadata._collectibleLoadingModel = false;
+      setCollectibleVisualsVisible(root, true, true);
       return;
     }
 
@@ -3615,8 +3937,12 @@ async function tryLoadCollectibleModel(root, cfg) {
     root.metadata._collectibleBobRoot = modelRoot;
     root.metadata.modelUrl = cfg.modelUrl;
     root.metadata.modelLoaded = true;
+    root.metadata._collectibleLoadingModel = false;
+    setCollectibleVisualsVisible(root, true, false);
   } catch (_) {
     root.metadata.modelFailed = true;
+    root.metadata._collectibleLoadingModel = false;
+    setCollectibleVisualsVisible(root, true, true);
   }
 }
 
@@ -3633,7 +3959,8 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     collectibleId: id,
     collectibleType: type,
     collectibleLabel: cfg.label,
-    villageId: CURRENT_VILLAGE_ID
+    villageId: CURRENT_VILLAGE_ID,
+    _collectibleLoadingModel: !!cfg.modelUrl
   };
 
   const coreMat = makeCollectibleMat(root, 'coreMat', cfg.color, cfg.accent, .94);
@@ -3735,6 +4062,7 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
   root.metadata._collectibleVisuals = visuals;
   root.metadata._collectibleFallbackVisuals = visuals;
   addCollectibleAura(root, cfg);
+  if (cfg.modelUrl) setCollectibleVisualsVisible(root, false, true);
 
   root.isPickable = true;
   root.setEnabled(!isCollectibleCollected(id));
@@ -3761,6 +4089,22 @@ function updateCollectibles(dt) {
   if (!scene) return;
   const roots = scene.transformNodes.filter(node => node.metadata?.type === 'collectible' && !node.isDisposed?.());
   roots.forEach(root => {
+    if (root.metadata._collectiblePickupStartedAt) {
+      const progress = Math.min(1, (performance.now() - root.metadata._collectiblePickupStartedAt) / 620);
+      const lift = progress * .85;
+      const shrink = 1 - progress * .55;
+      const fade = 1 - progress;
+      root.getChildMeshes?.(false).forEach(mesh => {
+        if (!mesh.metadata?.collectibleVisual) return;
+        mesh.position.y = (mesh.metadata.baseY || mesh.position.y) + lift;
+        const baseScale = mesh.metadata.baseScale || { x:1, y:1, z:1 };
+        mesh.scaling.set(baseScale.x * Math.max(.05, shrink), baseScale.y * Math.max(.05, shrink), baseScale.z * Math.max(.05, shrink));
+        if (mesh.material && 'alpha' in mesh.material) mesh.material.alpha = Math.min(mesh.material.alpha, Math.max(0, fade));
+      });
+      if (root.metadata._collectibleLight) root.metadata._collectibleLight.intensity = .8 * fade;
+      if (progress >= 1) root.setEnabled(false);
+      return;
+    }
     if (isCollectibleCollected(root.metadata.collectibleId)) {
       root.setEnabled(false);
       return;
@@ -3790,9 +4134,12 @@ function updateCollectibles(dt) {
 
 function collectProgressionCollectible(root) {
   if (!root || root.metadata?.type !== 'collectible') return;
+  if (root.metadata._collectiblePickupStartedAt) return;
   const key = getCollectibleStateKey(root.metadata.collectibleId);
   if (recordProgressionEvent('collectible', key, PROGRESSION_POINTS.collectible)) {
-    root.setEnabled(false);
+    root.metadata._collectiblePickupStartedAt = performance.now();
+    root.isPickable = false;
+    root.getChildMeshes?.(false).forEach(mesh => { mesh.isPickable = false; });
     showToast('Collected: ' + (root.metadata.collectibleLabel || 'Collectible'));
   }
 }
@@ -12934,6 +13281,7 @@ const progressionBadgeSyncCount = ProgressionState.badges.length;
 awardEarnedExplorerBadges(true);
 if (ProgressionState.badges.length !== progressionBadgeSyncCount) saveProgressionState();
 else updateProgressionHud();
+refreshBadgeBuilderOptions();
 let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
@@ -15601,7 +15949,17 @@ window.saveQuestDraft = saveQuestDraft;
 window.placeCollectibleFromAdmin = placeCollectibleFromAdmin;
 window.openProgressionJournal = openProgressionJournal;
 window.closeProgressionJournal = closeProgressionJournal;
+window.setProgressionJournalTab = setProgressionJournalTab;
+window.closeBadgeUnlockPopup = closeBadgeUnlockPopup;
 window.resetLocalProgression = resetLocalProgression;
+window.loadBadgeBuilderSelection = loadBadgeBuilderSelection;
+window.previewBadgeBuilderImage = previewBadgeBuilderImage;
+window.saveBadgeBuilderConfig = saveBadgeBuilderConfig;
+window.resetBadgeBuilderImage = resetBadgeBuilderImage;
+window.unlockSelectedBadgeFromAdmin = unlockSelectedBadgeFromAdmin;
+window.lockSelectedBadgeFromAdmin = lockSelectedBadgeFromAdmin;
+window.addProgressionDebugXP = addProgressionDebugXP;
+window.testSelectedBadgePopup = testSelectedBadgePopup;
 window.toggleAdminLayer = toggleAdminLayer;
 window.selectAdminLayer = selectAdminLayer;
 window.undoEditorAction = undoEditorAction;
