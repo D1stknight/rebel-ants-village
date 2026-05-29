@@ -739,7 +739,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <div class="ap-section">Doors</div>
   <div class="admin-section-body" data-admin-section-body="doors">
-    <div class="admin-note">Add Door spawns a door zone at the player, selects it, and opens the move gizmo immediately.</div>
+    <div class="admin-note">Add Door starts placement mode. Click the ground to place the door zone, then the move gizmo appears. The door is a trigger zone; the selected interior GLB loads when the player enters.</div>
     <label class="admin-field">Door Name <input id="interiorEntranceName" placeholder="Museum Door"></label>
     <label class="admin-field">Target Interior
       <select id="interiorTypeSelect" class="admin-select" onchange="syncDoorTargetInteriorId()">
@@ -3162,7 +3162,9 @@ function beginAdminPlacement(request) {
         ? `Place ${String(request.stampType || 'terrain').replace(/_/g, ' ')}`
         : request.kind === 'collectible'
           ? `Place ${COLLECTIBLE_TYPES[request.collectibleType]?.label || 'Collectible'}`
-          : `Place ${getCollisionProxyLabel(request.proxyKind)}`;
+          : request.kind === 'interior_entrance'
+            ? 'Place Door'
+            : `Place ${getCollisionProxyLabel(request.proxyKind)}`;
   canvas.style.cursor = 'crosshair';
   showToast(`${label}: click the ground where it should go`);
 }
@@ -3247,6 +3249,15 @@ function placePendingAdminPlacementAtPoint(point) {
 
   if (request.kind === 'collectible') {
     createCollectibleAtPoint(request.collectibleType, point);
+    return true;
+  }
+
+  if (request.kind === 'interior_entrance') {
+    const entrance = createInteriorEntrance(point.clone(), request.settings || {});
+    adminGizmoMode = 'move';
+    setSelectedEditableObject(entrance);
+    triggerAutoSave();
+    showToast('Door placed. Move gizmo ready.');
     return true;
   }
 
@@ -16459,7 +16470,11 @@ function normalizeInteriorType(type) {
 function getCustomInteriorDefinitions() {
   try {
     const parsed = JSON.parse(localStorage.getItem(CUSTOM_INTERIORS_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed.filter(item => item && item.id && item.archived !== true) : [];
+    return Array.isArray(parsed)
+      ? parsed
+        .filter(item => item && item.id && item.archived !== true)
+        .map(item => INTERIOR_TYPES[item.id] ? { ...item, id:'custom_' + item.id } : item)
+      : [];
   } catch(e) {
     return [];
   }
@@ -16572,11 +16587,17 @@ function loadSelectedCustomInteriorIntoAdmin() {
   if (musicStatus) musicStatus.textContent = def.musicPath ? 'MP3: ' + def.musicPath : 'MP3: no file selected';
   const typeSelect = document.getElementById('interiorTypeSelect');
   if (typeSelect) typeSelect.value = def.id;
+  const doorName = document.getElementById('interiorEntranceName');
+  const promptInput = document.getElementById('interiorPromptText');
+  if (doorName && !doorName.value.trim()) doorName.value = (def.name || def.id) + ' Door';
+  if (promptInput && (!promptInput.value.trim() || promptInput.value === 'Press O to Enter')) promptInput.value = def.promptText || 'Press O to Enter';
+  syncDoorTargetInteriorId();
 }
 
 function saveCustomInteriorFromAdmin() {
   const name = document.getElementById('customInteriorName')?.value?.trim() || '';
-  const id = (document.getElementById('customInteriorId')?.value || makeInteriorIdFromName(name)).trim().replace(/\s+/g, '_').toLowerCase();
+  const rawId = (document.getElementById('customInteriorId')?.value || makeCustomInteriorId(name)).trim().replace(/\s+/g, '_').toLowerCase();
+  const id = INTERIOR_TYPES[rawId] ? 'custom_' + rawId : rawId;
   if (!name) { showToast('Interior name required'); return; }
   if (!document.getElementById('customInteriorModel')?.value?.trim()) { showToast('Upload an interior GLB first'); return; }
   const definitions = getCustomInteriorDefinitions().filter(item => item.id !== id);
@@ -16595,8 +16616,15 @@ function saveCustomInteriorFromAdmin() {
   setCustomInteriorDefinitions(definitions);
   const customSelect = document.getElementById('customInteriorSelect');
   const typeSelect = document.getElementById('interiorTypeSelect');
+  const idInput = document.getElementById('customInteriorId');
+  const doorName = document.getElementById('interiorEntranceName');
+  const promptInput = document.getElementById('interiorPromptText');
+  if (idInput) idInput.value = id;
   if (customSelect) customSelect.value = id;
   if (typeSelect) typeSelect.value = id;
+  if (doorName) doorName.value = def.name + ' Door';
+  if (promptInput) promptInput.value = def.promptText || 'Press O to Enter';
+  syncDoorTargetInteriorId();
   showToast('Custom interior saved: ' + def.name);
 }
 
@@ -16640,11 +16668,19 @@ function makeInteriorIdFromName(name) {
   return String(name || 'interior').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || ('interior_' + Date.now());
 }
 
+function makeCustomInteriorId(name) {
+  const base = makeInteriorIdFromName(name);
+  return INTERIOR_TYPES[base] ? 'custom_' + base : base;
+}
+
 async function uploadInteriorFileToGitHub(file, kind) {
   if (!file) return '';
-  const interiorId = document.getElementById('customInteriorId')?.value?.trim() || makeInteriorIdFromName(document.getElementById('customInteriorName')?.value || file.name);
+  const existingId = document.getElementById('customInteriorId')?.value?.trim() || '';
+  const interiorId = existingId && !INTERIOR_TYPES[existingId]
+    ? existingId
+    : makeCustomInteriorId(document.getElementById('customInteriorName')?.value || file.name);
   const idInput = document.getElementById('customInteriorId');
-  if (idInput && !idInput.value) idInput.value = interiorId;
+  if (idInput) idInput.value = interiorId;
   const tokenResponse = await fetch('/api/github-upload-token', { cache:'no-store' });
   const tokenRaw = await tokenResponse.text().catch(() => '');
   let tokenResult = {};
@@ -16771,17 +16807,12 @@ function styleInteriorEntranceVisual(entrance) {
 
 function placeInteriorEntrance() {
   if (!adminMode) { showToast('Enter Admin Mode first'); return; }
-  recordEditorHistory('place interior entrance');
-  const base = charMesh?.position || orbit?.target || BABYLON.Vector3.Zero();
-  const y = getVillageRaycastGroundHeightAt(base.x, base.z, { includeManualWalkSurfaces: false }) ?? getVillageGroundHeightAt(base.x, base.z) ?? 0;
-  const point = new BABYLON.Vector3(base.x, y, base.z);
   const type = document.getElementById('interiorTypeSelect')?.value || 'training_dojo';
   syncDoorTargetInteriorId();
-  const entrance = createInteriorEntrance(new BABYLON.Vector3(point.x, point.y, point.z), readInteriorEntranceAdminSettings(type));
-  adminGizmoMode = 'move';
-  setSelectedEditableObject(entrance);
-  triggerAutoSave();
-  showToast('Door placed. Move gizmo ready.');
+  beginAdminPlacement({
+    kind: 'interior_entrance',
+    settings: readInteriorEntranceAdminSettings(type)
+  });
 }
 
 function readInteriorEntranceAdminSettings(fallbackType = 'training_dojo') {
