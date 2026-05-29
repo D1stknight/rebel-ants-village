@@ -732,12 +732,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <input id="badgeBuilderImageFile" type="file" accept="image/png,image/webp,image/jpeg" style="display:none" onchange="handleBadgeImageFileInput(event)">
     <div id="badgeBuilderImageDrop" class="badge-image-drop" onclick="document.getElementById('badgeBuilderImageFile').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleBadgeImageDrop(event)">Click or drop PNG/WebP badge image for local preview</div>
     <div class="badge-image-help">For permanent badge images, upload PNG/WebP to /assets/badges/ in GitHub, then paste the path here. Drag/drop is local preview/testing only. Use square 512x512 images when possible, 1024x1024 max, transparent background preferred, under 500KB if possible.</div>
+    <input id="badgeBuilderPermanentImageFile" type="file" accept="image/png,image/webp,image/jpeg" style="display:none" onchange="handlePermanentBadgeImageFileInput(event)">
+    <div id="badgeBuilderPermanentDrop" class="badge-image-drop" onclick="document.getElementById('badgeBuilderPermanentImageFile').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handlePermanentBadgeImageDrop(event)">Upload Badge Image Permanently</div>
+    <div class="badge-image-help">Permanent upload saves to /assets/badges/ using a safe badgeId filename. PNG/WebP preferred, square 512x512 preferred, 1024x1024 max, transparent background preferred, under 500KB if possible.</div>
     <div class="journal-card" style="margin:7px 0"><strong>Preview</strong><span id="badgeBuilderPreview">Select a badge.</span></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <button class="ctrl-btn" onclick="saveBadgeBuilderConfig()">Save Badge Config</button>
       <button class="ctrl-btn" onclick="removeBadgeLocalPreviewImage()">Remove Local Preview Image</button>
       <button class="ctrl-btn" onclick="resetBadgeBuilderImage()">Reset Image Path</button>
       <button class="ctrl-btn" onclick="clearBadgeBuilderImage()">Clear Badge Image</button>
+      <button class="ctrl-btn" onclick="document.getElementById('badgeBuilderPermanentImageFile').click()">Upload Badge Image</button>
+      <button class="ctrl-btn" onclick="assignLastUploadedBadgeImage()">Assign Uploaded Image</button>
+      <button class="ctrl-btn danger full" style="grid-column:1/-1" onclick="deleteUploadedBadgeImage()">Delete Uploaded Badge Image</button>
       <button class="ctrl-btn" onclick="unlockSelectedBadgeFromAdmin()">Unlock Selected Badge</button>
       <button class="ctrl-btn" onclick="lockSelectedBadgeFromAdmin()">Lock Selected Badge</button>
       <label class="admin-field" style="margin:0">Progress Amount <input id="progressionDebugAmount" type="number" value="10" min="1" step="1"></label>
@@ -1212,6 +1218,7 @@ let ProgressionState = loadProgressionState();
 let activeJournalTab = 'overview';
 const badgeUnlockQueue = [];
 let badgePopupActive = false;
+let lastUploadedBadgeImagePath = '';
 
 function saveProgressionState() {
   ProgressionState.updatedAt = new Date().toISOString();
@@ -1616,6 +1623,90 @@ function handleBadgeImageDrop(event) {
   readBadgeImageFile(event.dataTransfer?.files?.[0]);
 }
 
+function getSelectedBadgeBuilderBadge() {
+  return getBadgeDefinitionById(document.getElementById('badgeBuilderSelect')?.value);
+}
+
+function getBadgePermanentUploadFileName(file, badge) {
+  const ext = String(file?.name || '').split('.').pop()?.toLowerCase() || 'png';
+  const safeExt = ext === 'jpeg' ? 'jpg' : ext;
+  return `${badge?.badgeId || 'badge-image'}.${safeExt}`;
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = event => resolve(String(event.target.result || '').split(',')[1] || '');
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadPermanentBadgeImageFile(file) {
+  const badge = getSelectedBadgeBuilderBadge();
+  if (!badge) {
+    showToast('Select a badge first');
+    return;
+  }
+  if (!file || !file.type?.startsWith('image/')) {
+    showToast('Choose a PNG, WebP, or JPG badge image');
+    return;
+  }
+  const allowed = ['image/png', 'image/webp', 'image/jpeg'];
+  if (!allowed.includes(file.type)) {
+    showToast('Badge image must be PNG, WebP, or JPG/JPEG');
+    return;
+  }
+  if (file.size > 1024 * 1024) {
+    showToast('Badge image is too large for admin upload. Use 1024x1024 max and under 1MB.');
+    return;
+  }
+  if (file.size > 500 * 1024) {
+    showToast('Uploading, but try to keep permanent badge images under 500KB when possible.', 5000);
+  }
+
+  showToast('Uploading badge image...', 30000);
+  try {
+    const data = await readFileAsBase64(file);
+    const response = await fetch('/api/badge-image', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'upload',
+        badgeId: badge.badgeId,
+        fileName: getBadgePermanentUploadFileName(file, badge),
+        mimeType: file.type,
+        data
+      })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok || !result.path) {
+      throw new Error(result.error || 'Badge image upload failed');
+    }
+    lastUploadedBadgeImagePath = result.path;
+    const field = document.getElementById('badgeBuilderImageUrl');
+    if (field) field.value = result.path;
+    removeBadgeLocalPreviewImage(false);
+    saveBadgeBuilderConfig();
+    previewBadgeBuilderImage();
+    showToast('Badge image uploaded: ' + result.path, 8000);
+  } catch (err) {
+    showToast('Badge image upload failed: ' + (err.message || 'try again'), 9000);
+  }
+}
+
+function handlePermanentBadgeImageFileInput(event) {
+  uploadPermanentBadgeImageFile(event.target.files?.[0]);
+  event.target.value = '';
+}
+
+function handlePermanentBadgeImageDrop(event) {
+  event.preventDefault();
+  event.currentTarget.classList.remove('dragover');
+  uploadPermanentBadgeImageFile(event.dataTransfer?.files?.[0]);
+}
+
 function saveBadgeBuilderConfig() {
   const id = document.getElementById('badgeBuilderSelect')?.value;
   const base = DEFAULT_BADGE_DEFINITIONS.find(badge => badge.badgeId === id);
@@ -1643,19 +1734,75 @@ function resetBadgeBuilderImage() {
   previewBadgeBuilderImage();
 }
 
-function removeBadgeLocalPreviewImage() {
+function removeBadgeLocalPreviewImage(showMessage = true) {
   const id = document.getElementById('badgeBuilderSelect')?.value;
   if (!id) return;
   if (BadgeConfig[id]) delete BadgeConfig[id].localImageDataUrl;
   localStorage.setItem(BADGE_CONFIG_KEY, JSON.stringify(BadgeConfig));
   previewBadgeBuilderImage();
   if (activeJournalTab === 'badges') renderProgressionJournal();
-  showToast('Local preview image removed');
+  if (showMessage) showToast('Local preview image removed');
 }
 
 function clearBadgeBuilderImage() {
   resetBadgeBuilderImage();
   removeBadgeLocalPreviewImage();
+}
+
+function assignLastUploadedBadgeImage() {
+  if (!lastUploadedBadgeImagePath) {
+    showToast('Upload a badge image first');
+    return;
+  }
+  const field = document.getElementById('badgeBuilderImageUrl');
+  if (field) field.value = lastUploadedBadgeImagePath;
+  removeBadgeLocalPreviewImage(false);
+  saveBadgeBuilderConfig();
+  previewBadgeBuilderImage();
+  showToast('Uploaded image assigned');
+}
+
+async function deleteUploadedBadgeImage() {
+  const field = document.getElementById('badgeBuilderImageUrl');
+  const imageUrl = String(field?.value || '').trim();
+  const badge = getSelectedBadgeBuilderBadge();
+  if (!badge) return;
+  if (!imageUrl) {
+    removeBadgeLocalPreviewImage();
+    showToast('Badge image already empty');
+    return;
+  }
+  if (!imageUrl.startsWith('/assets/badges/')) {
+    const ok = window.confirm('This is not a project badge image. Clear the badge image reference only?');
+    if (!ok) return;
+    clearBadgeBuilderImage();
+    saveBadgeBuilderConfig();
+    showToast('Badge image reference cleared');
+    return;
+  }
+  const ok = window.confirm('Delete this uploaded badge image from /assets/badges/ and clear the selected badge image?');
+  if (!ok) return;
+
+  showToast('Deleting badge image...', 30000);
+  try {
+    const response = await fetch('/api/badge-image', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', path: imageUrl })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) {
+      throw new Error(result.error || 'Badge image delete failed');
+    }
+    if (field) field.value = '';
+    removeBadgeLocalPreviewImage(false);
+    saveBadgeBuilderConfig();
+    previewBadgeBuilderImage();
+    showToast('Badge image deleted');
+  } catch (err) {
+    showToast('Badge image delete failed: ' + (err.message || 'try again'), 9000);
+  }
 }
 
 function unlockSelectedBadgeFromAdmin() {
@@ -16058,10 +16205,14 @@ window.loadBadgeBuilderSelection = loadBadgeBuilderSelection;
 window.previewBadgeBuilderImage = previewBadgeBuilderImage;
 window.handleBadgeImageFileInput = handleBadgeImageFileInput;
 window.handleBadgeImageDrop = handleBadgeImageDrop;
+window.handlePermanentBadgeImageFileInput = handlePermanentBadgeImageFileInput;
+window.handlePermanentBadgeImageDrop = handlePermanentBadgeImageDrop;
 window.saveBadgeBuilderConfig = saveBadgeBuilderConfig;
 window.resetBadgeBuilderImage = resetBadgeBuilderImage;
 window.removeBadgeLocalPreviewImage = removeBadgeLocalPreviewImage;
 window.clearBadgeBuilderImage = clearBadgeBuilderImage;
+window.assignLastUploadedBadgeImage = assignLastUploadedBadgeImage;
+window.deleteUploadedBadgeImage = deleteUploadedBadgeImage;
 window.unlockSelectedBadgeFromAdmin = unlockSelectedBadgeFromAdmin;
 window.lockSelectedBadgeFromAdmin = lockSelectedBadgeFromAdmin;
 window.addProgressionDebugXP = addProgressionDebugXP;
