@@ -105,7 +105,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 .ant-card.selected .ant-name{ opacity:1; }
 
 /* ── BUTTONS ── */
-#btn-row{display:flex;gap:16px;align-items:center;}
+#btn-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center;}
 
 .btn{
   padding:14px 36px;font-size:11px;letter-spacing:4px;text-transform:uppercase;
@@ -142,6 +142,22 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 }
 #btn-wallet:hover{color:#c8922a;border-color:rgba(200,146,42,0.6);}
 #btn-wallet.connected{color:#6abf6a;border-color:rgba(106,191,106,0.4);}
+
+#btn-landing-audio{
+  background:rgba(0,0,0,0.42);
+  color:#5ecfca;
+  border:1px solid rgba(94,207,202,0.42);
+  min-width:150px;
+}
+#btn-landing-audio:hover{
+  color:#fff;
+  border-color:rgba(94,207,202,0.8);
+  box-shadow:0 0 18px rgba(94,207,202,0.18);
+}
+#btn-landing-audio.muted{
+  color:#8a7a5a;
+  border-color:rgba(138,122,90,0.36);
+}
 
 /* ── NEWS TICKER ── */
 #ticker{
@@ -397,6 +413,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
     <button class="btn" id="btn-wallet" onclick="connectWallet()">Connect Wallet</button>
     <button class="btn" id="btn-forge" onclick="enterForge()">Forge 3D Character</button>
     <button class="btn" id="btn-enter" onclick="enterVillage()">Enter Village</button>
+    <button class="btn" id="btn-landing-audio" onclick="toggleLandingAudio()">Audio On</button>
   </div>
 
 </div>
@@ -437,6 +454,10 @@ const NFT_CONTRACT = '0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221';
 let selectedAnt = null;
 let ownedRebels = [];
 const FORGE_PLAYABLE_CHARACTERS_STORAGE_KEY = 'rebelAntsForgePlayableCharacters';
+const LANDING_AUDIO_MUTED_KEY = 'rebelAntsLandingAudioMuted';
+const LANDING_AUDIO_TARGET_VOLUME = 0.4;
+let landingAudioFadeTimer = null;
+let landingUserInteracted = false;
 
 function setStatus(msg) {
   const el = document.getElementById('char-status');
@@ -1051,7 +1072,7 @@ function getInjectedWalletProvider() {
   return isRequestCapableProvider(ethereum) ? ethereum : null;
 }
 
-function waitForWalletProvider(timeoutMs = 5200) {
+function waitForWalletProvider(timeoutMs = 8000) {
   requestWalletProviderAnnouncements();
   return new Promise((resolve) => {
     const immediate = getInjectedWalletProvider();
@@ -1085,6 +1106,16 @@ function getWalletProviderDiagnostics() {
   };
 }
 
+function formatWalletDiagnostics(diagnostics) {
+  const parts = [
+    'ethereum:' + (diagnostics.ethereum ? 'yes' : 'no'),
+    'multi:' + diagnostics.ethereumProviders,
+    'eip6963:' + diagnostics.eip6963Providers,
+    'legacy:' + (diagnostics.web3Provider ? 'yes' : 'no')
+  ];
+  return parts.join(' ');
+}
+
 async function connectWallet() {
   const btn = document.getElementById('btn-wallet');
   // Disconnect if already connected
@@ -1100,9 +1131,10 @@ async function connectWallet() {
   btn.textContent = 'Detecting Wallet...';
   const provider = await waitForWalletProvider();
   if (!provider) {
+    const diagnostics = getWalletProviderDiagnostics();
     btn.textContent = 'No Wallet Found';
-    setStatus('No browser wallet provider detected. Install/enable MetaMask or another Ethereum wallet for this site, then refresh.');
-    console.info('Wallet provider diagnostics:', getWalletProviderDiagnostics());
+    setStatus('No wallet provider was injected into this page. Check the wallet extension is enabled for this site, then refresh. ' + formatWalletDiagnostics(diagnostics));
+    console.info('Wallet provider diagnostics:', diagnostics);
     return;
   }
   try {
@@ -1263,19 +1295,75 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ── AMBIENT MUSIC ──
+function isLandingAudioMuted() {
+  return localStorage.getItem(LANDING_AUDIO_MUTED_KEY) === 'true';
+}
+
+function updateLandingAudioButton() {
+  const btn = document.getElementById('btn-landing-audio');
+  if (!btn) return;
+  const muted = isLandingAudioMuted();
+  btn.textContent = muted ? 'Audio Off' : 'Audio On';
+  btn.classList.toggle('muted', muted);
+  btn.title = muted ? 'Turn landing audio on' : 'Mute landing audio';
+}
+
+function fadeLandingAudioTo(targetVolume) {
+  if (!window._music) return;
+  clearInterval(landingAudioFadeTimer);
+  landingAudioFadeTimer = setInterval(() => {
+    const current = Number.isFinite(window._music.volume) ? window._music.volume : 0;
+    const next = current + Math.sign(targetVolume - current) * 0.025;
+    if (Math.abs(targetVolume - current) <= 0.03) {
+      window._music.volume = targetVolume;
+      clearInterval(landingAudioFadeTimer);
+      landingAudioFadeTimer = null;
+      if (targetVolume === 0) window._music.pause();
+      return;
+    }
+    window._music.volume = Math.max(0, Math.min(LANDING_AUDIO_TARGET_VOLUME, next));
+  }, 80);
+}
+
 function startMusic() {
-  const audio = new Audio('assets/lobby/ambient.mp3');
-  audio.loop = true;
-  audio.volume = 0;
-  audio.play().catch(() => {});
-  // Fade in
-  let v = 0;
-  const fade = setInterval(() => {
-    v = Math.min(v + 0.02, 0.4);
-    audio.volume = v;
-    if (v >= 0.4) clearInterval(fade);
-  }, 100);
-  window._music = audio;
+  if (isLandingAudioMuted()) {
+    updateLandingAudioButton();
+    return;
+  }
+
+  if (!window._music) {
+    const audio = new Audio('assets/lobby/ambient.mp3');
+    audio.loop = true;
+    audio.volume = 0;
+    window._music = audio;
+  }
+
+  if (!window._music.paused && window._music.volume > 0) return;
+  window._music.play()
+    .then(() => fadeLandingAudioTo(LANDING_AUDIO_TARGET_VOLUME))
+    .catch(() => {});
+  updateLandingAudioButton();
+}
+
+function stopLandingAudio() {
+  clearInterval(landingAudioFadeTimer);
+  landingAudioFadeTimer = null;
+  if (!window._music) return;
+  window._music.pause();
+  window._music.currentTime = 0;
+  window._music.volume = 0;
+}
+
+function toggleLandingAudio() {
+  landingUserInteracted = true;
+  const nextMuted = !isLandingAudioMuted();
+  localStorage.setItem(LANDING_AUDIO_MUTED_KEY, String(nextMuted));
+  if (nextMuted) {
+    fadeLandingAudioTo(0);
+  } else {
+    startMusic();
+  }
+  updateLandingAudioButton();
 }
 
 // ── BOOT SEQUENCE ──
@@ -1287,11 +1375,23 @@ function setProgress(p) {
   bar.style.width = p + '%';
 }
 
-// Start music on first user interaction
+updateLandingAudioButton();
+
+// Start music on first user interaction; keep it idempotent so clicks never stack audio.
 document.addEventListener('click', function startOnClick() {
+  landingUserInteracted = true;
   startMusic();
   document.removeEventListener('click', startOnClick);
 }, { once: true });
+
+window.addEventListener('pagehide', () => {
+  if (window._music) window._music.pause();
+});
+
+window.addEventListener('pageshow', () => {
+  updateLandingAudioButton();
+  if (landingUserInteracted && !isLandingAudioMuted()) startMusic();
+});
 
 window.addEventListener('load', () => {
   setProgress(20);
@@ -1309,7 +1409,7 @@ window.addEventListener('load', () => {
       setTimeout(() => {
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('ui').style.opacity = '1';
-        startMusic();
+        if (landingUserInteracted) startMusic();
       }, 600);
     }, 800);
   }, 300);
