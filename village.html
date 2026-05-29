@@ -301,7 +301,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 .manual-piece-btn.danger:hover{background:rgba(220,60,60,.14);border-color:rgba(220,60,60,.75);color:#ff9f9f}
 .manual-piece-btn.save{border-color:rgba(232,197,106,.34);color:#e8c56a}
 .admin-pill{display:inline-block;margin-top:4px;padding:2px 6px;border:1px solid rgba(94,207,202,.25);border-radius:999px;color:#77e6df;font-size:9px;letter-spacing:1px}
-.health-good{color:#7dffa4}.health-warn{color:#ff8b8b}.health-muted{color:#8aa}
+.health-good{color:#7dffa4}.health-warn{color:#ffca6a}.health-bad{color:#ff8b8b}.health-muted{color:#8aa}
+.perf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.perf-metric{border:1px solid rgba(255,255,255,.08);border-radius:5px;background:rgba(255,255,255,.035);padding:6px;font-size:9px;color:rgba(255,255,255,.72);letter-spacing:.5px;cursor:default}
+.perf-metric.warn,.perf-metric.bad{cursor:pointer}
+.perf-metric b{display:block;color:#e8c56a;font-size:8px;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+.perf-metric small{display:block;color:#8aa;font-size:8px;line-height:1.25;margin-top:2px}
+.perf-metric.good{border-color:rgba(125,255,164,.22)}.perf-metric.warn{border-color:rgba(255,202,106,.34)}.perf-metric.bad{border-color:rgba(255,139,139,.36)}
+.perf-details{margin-top:8px}
+.perf-details summary{cursor:pointer;color:#e8c56a;font-size:10px;letter-spacing:1.4px}
+.perf-detail-list{font-size:9px;line-height:1.45;color:#8aa;margin-top:6px;display:grid;gap:4px}
 #assetPanel .ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 8px 6px}
 #assetPanel .ctrl-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:6px 4px;cursor:pointer;text-align:center;color:rgba(255,255,255,.7);font-size:9px;font-family:'Cinzel Decorative',serif;letter-spacing:.5px;transition:all .15s;display:block;width:100%}
 #assetPanel .ctrl-btn:hover{background:rgba(232,197,106,.12);border-color:rgba(232,197,106,.4);color:#e8c56a}
@@ -621,8 +630,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div class="ap-section">Performance</div>
   <div class="admin-section-body" data-admin-section-body="performance">
     <div class="perf-grid" id="performanceDebugGrid">
-      <span>FPS: --</span><span>Draw: --</span><span>NPCs: --</span><span>Audio: --</span><span>Weather FX: --</span><span>Collision: --</span><span>GPU: --</span><span>Meshes: --</span>
+      <span class="perf-metric">Loading metrics...</span>
     </div>
+    <details class="perf-details">
+      <summary>Performance Details</summary>
+      <div class="perf-detail-list" id="performanceDetailsGrid">Diagnostics update every few seconds.</div>
+    </details>
   </div>
   <div class="ap-section">Quest Editor</div>
   <div class="admin-section-body" data-admin-section-body="quest-editor">
@@ -14552,32 +14565,203 @@ function renderAdminLayerControls() {
 }
 
 let _lastPerfUpdateAt = 0;
-function updatePerformanceDebugPanel() {
-  if (!adminMode || performance.now() - _lastPerfUpdateAt < 700) return;
-  _lastPerfUpdateAt = performance.now();
-  const host = document.getElementById('performanceDebugGrid');
-  if (!host) return;
-  const fps = Math.round(engine.getFps ? engine.getFps() : 0);
-  const activeAudio = Object.values(WeatherManager.audioTracks || {}).filter(audio => audio && !audio.paused).length;
-  const weatherFx = (WeatherManager.rainMeshes?.filter(m => m.isEnabled()).length || 0) +
+let _lastPerfDetailsAt = 0;
+
+function getPerfStatus(value, thresholds) {
+  if (!thresholds || !Number.isFinite(Number(value))) return 'neutral';
+  const number = Number(value);
+  if (number < thresholds.green) return 'good';
+  if (number < thresholds.yellow) return 'warn';
+  return 'bad';
+}
+
+function getFpsStatus(fps) {
+  if (!Number.isFinite(Number(fps)) || fps <= 0) return 'neutral';
+  if (fps >= 50) return 'good';
+  if (fps >= 35) return 'warn';
+  return 'bad';
+}
+
+function getPerformanceExplanation(key, metric) {
+  const explanations = {
+    fps: 'Low FPS means the scene is rendering slower than ideal. Possible causes: too many visible meshes, expensive materials, shadows, active animation loops, weather FX, or helper meshes.',
+    drawCalls: 'Draw calls are GPU render submissions per frame. High draw calls often come from many separate meshes, materials, transparent effects, shadows, or unmerged helper objects.',
+    visibleMeshes: 'Visible meshes are objects currently enabled and visible to the renderer. Too many visible meshes can increase culling, material, and draw overhead.',
+    glbRoots: 'GLB roots are imported model groups in the scene. Many GLBs can mean more child meshes, materials, textures, and animation work.',
+    manualHelpers: 'Manual collision and walk helpers are editor/gameplay support pieces. Too many can make movement checks and editor visibility heavier.',
+    audioSources: 'Active audio sources are currently playing browser audio elements. Too many simultaneous sounds can add browser overhead and muddy the soundscape.'
+  };
+  return `${metric.label}: ${metric.value}\n\n${explanations[key] || 'This metric is informational. We can use it to decide what to optimize later.'}`;
+}
+
+function renderPerfMetric(key, metric) {
+  const clickable = metric.status === 'warn' || metric.status === 'bad';
+  const title = clickable ? 'Click for explanation' : '';
+  const safeDetail = metric.detail ? `<small>${escapeHTML(metric.detail)}</small>` : '';
+  return `<button type="button" class="perf-metric ${metric.status || 'neutral'}" ${clickable ? `onclick="showPerformanceMetricHelp('${key}')"` : ''} title="${title}">
+    <b>${escapeHTML(metric.label)}</b>${escapeHTML(metric.value)}${safeDetail}
+  </button>`;
+}
+
+function getReliableDrawCallMetric() {
+  const counter = scene.getEngine()?._drawCalls;
+  const candidates = [
+    counter?.lastSecAverage,
+    counter?.average,
+    counter?.current
+  ].map(value => Number(value)).filter(value => Number.isFinite(value) && value >= 0);
+  const reliable = candidates.find(value => value < 100000);
+  if (!Number.isFinite(reliable)) {
+    return {
+      value: 'n/a',
+      numericValue: null,
+      reliable: false,
+      detail: 'Babylon counter unavailable or cumulative'
+    };
+  }
+  return {
+    value: Math.round(reliable),
+    numericValue: reliable,
+    reliable: true,
+    detail: counter?.lastSecAverage ? 'last-second average' : 'engine counter'
+  };
+}
+
+function getActiveAudioSourceCount() {
+  const tracks = [
+    ...Object.values(WeatherManager.audioTracks || {}),
+    ...Object.values(WeatherManager.oneShotTracks || {}),
+    WeatherManager.musicTrack,
+    WeatherManager.thunderAudio
+  ].filter(Boolean);
+  return tracks.filter(audio => !audio.paused && !audio.ended && !audio._unavailable).length;
+}
+
+function getWeatherFxCount() {
+  return (WeatherManager.rainMeshes?.filter(m => m.isEnabled()).length || 0) +
     (WeatherManager.snowMeshes?.filter(m => m.isEnabled()).length || 0) +
     (WeatherManager.splashMeshes?.filter(m => m.isEnabled()).length || 0) +
     (WeatherManager.puddleMeshes?.filter(m => m.isEnabled()).length || 0) +
     (WeatherManager.frostMeshes?.filter(m => m.isEnabled()).length || 0);
-  const drawCalls = scene.getEngine()?._drawCalls?.current || '--';
-  const glbCount = scene.transformNodes.filter(node => node.metadata?.modelUrl || node.metadata?.uploadedAsset).length;
-  const uploadedCount = getUploadedAssets().length;
-  const terrainCount = getTerrainPatchNodes().length;
-  const warnings = [];
-  if (fps && fps < 35) warnings.push('Low FPS');
-  if (glbCount > 35) warnings.push('Many GLBs');
-  if (NPCManager.roots.length > 20) warnings.push('Many NPCs');
-  if (villageCollisionBlockers.length > 260) warnings.push('Many collision pieces');
-  if (activeAudio > 8) warnings.push('Many sounds');
-  const health = warnings.length
-    ? `<span class="health-warn" title="${warnings.join(', ')}">! ${warnings[0]}</span>`
-    : '<span class="health-good">✓ Good</span>';
-  host.innerHTML = `<span>${health}</span><span>FPS: ${fps}</span><span>Draw: ${drawCalls}</span><span>NPCs: ${NPCManager.roots.length}</span><span>Audio: ${activeAudio}</span><span>Weather FX: ${weatherFx}</span><span>Collision: ${villageCollisionBlockers.length}</span><span>Terrain: ${terrainCount}</span><span>GLBs: ${glbCount}</span><span>Uploaded: ${uploadedCount}</span><span>GPU: ${window._gpuMode || 'webgl'}</span><span>Meshes: ${scene.meshes.length}</span>`;
+}
+
+function isPlacedGlbRoot(node) {
+  return !!(node?.metadata?.modelUrl || node?.metadata?.uploadedAsset || node?.metadata?.assetUrl);
+}
+
+function getPlacedGlbRoots() {
+  return scene.transformNodes.filter(node => isPlacedGlbRoot(node) && !node.isDisposed?.());
+}
+
+function getUploadedGlbRootCount() {
+  return getPlacedGlbRoots().filter(node => node.metadata?.uploadedAsset || String(node.metadata?.modelUrl || node.metadata?.assetUrl || '').includes('/assets/buildings/')).length;
+}
+
+function getManualHelperCount() {
+  return scene.meshes.filter(mesh => mesh?.metadata?.type === 'collision_proxy' && !mesh.isDisposed?.()).length;
+}
+
+function getHelperVisibleCount() {
+  return scene.meshes.filter(mesh =>
+    !mesh.isDisposed?.() &&
+    mesh.isEnabled?.() !== false &&
+    mesh.isVisible !== false &&
+    (mesh.metadata?.type === 'collision_proxy' || mesh.metadata?.type === 'terrain_stamp' || mesh.metadata?.terrainToolPatch === true)
+  ).length;
+}
+
+function getMaterialUsageSummary(limit = 5) {
+  const usage = new Map();
+  scene.meshes.forEach(mesh => {
+    const mat = mesh.material;
+    if (!mat) return;
+    const key = mat.name || mat.id || 'unnamed material';
+    usage.set(key, (usage.get(key) || 0) + 1);
+  });
+  return [...usage.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+}
+
+function getRootMeshCountSummary(limit = 5) {
+  const roots = [...scene.transformNodes, ...scene.meshes].filter(node => node && !node.parent && !node.isDisposed?.());
+  return roots.map(root => {
+    const childCount = root.getChildMeshes ? root.getChildMeshes(false).length : 0;
+    return { name: root.name || 'unnamed root', count: childCount };
+  }).filter(item => item.count > 0).sort((a, b) => b.count - a.count).slice(0, limit);
+}
+
+function getPerformanceMetrics() {
+  const fps = Math.round(engine.getFps ? engine.getFps() : 0);
+  const totalMeshes = scene.meshes.length;
+  const visibleMeshes = scene.meshes.filter(mesh => mesh && mesh.isEnabled?.() !== false && mesh.isVisible !== false).length;
+  const activeMeshes = scene.getActiveMeshes ? scene.getActiveMeshes().length : scene._activeMeshes?.length;
+  const draw = getReliableDrawCallMetric();
+  const glbRoots = getPlacedGlbRoots().length;
+  const manualHelpers = getManualHelperCount();
+  const renderer = window._gpuMode || ((engine.constructor?.Name || '').toLowerCase().includes('webgpu') ? 'webgpu' : 'webgl');
+  const shadowCasters = shadows?.getShadowMap?.()?.renderList?.length || 0;
+  const animatedNpcCount = NPCManager.roots.filter(root => root?.metadata?.activeAnimation && root.metadata.activeAnimation !== 'idle').length;
+  return {
+    fps: { label:'FPS', value:fps || '--', status:getFpsStatus(fps) },
+    gpu: { label:'GPU Mode', value:renderer, status:'neutral', detail:renderer === 'webgpu' ? 'Testing in WebGPU' : 'Testing in WebGL. WebGPU may perform differently.' },
+    totalMeshes: { label:'Total Meshes', value:totalMeshes, status:'neutral' },
+    visibleMeshes: { label:'Visible Meshes', value:visibleMeshes, status:getPerfStatus(visibleMeshes, { green:1000, yellow:2500 }) },
+    activeMeshes: { label:'Active Meshes', value:Number.isFinite(activeMeshes) ? activeMeshes : 'n/a', status:'neutral' },
+    drawCalls: { label:'Draw Calls', value:draw.value, status:draw.reliable ? getPerfStatus(draw.numericValue, { green:250, yellow:600 }) : 'neutral', detail:draw.detail },
+    materials: { label:'Materials', value:scene.materials.length, status:'neutral' },
+    textures: { label:'Textures', value:scene.textures.length, status:'neutral' },
+    lights: { label:'Lights', value:scene.lights.length, status:'neutral' },
+    shadowCasters: { label:'Shadow Casters', value:shadowCasters, status:'neutral' },
+    glbRoots: { label:'GLB Roots', value:glbRoots, status:getPerfStatus(glbRoots, { green:20, yellow:50 }) },
+    uploadedGlbs: { label:'Uploaded GLBs', value:getUploadedGlbRootCount(), status:'neutral', detail:`${getUploadedAssets().length} in library` },
+    npcs: { label:'NPCs', value:NPCManager.roots.length, status:'neutral' },
+    animatedNpcs: { label:'Animated NPCs', value:animatedNpcCount, status:'neutral' },
+    collectibles: { label:'Collectibles', value:scene.transformNodes.filter(node => node.metadata?.type === 'collectible' && !node.isDisposed?.()).length, status:'neutral' },
+    terrain: { label:'Terrain Stamps', value:getTerrainPatchNodes().length, status:'neutral' },
+    manualHelpers: { label:'Collision / Walk Helpers', value:manualHelpers, status:getPerfStatus(manualHelpers, { green:150, yellow:400 }) },
+    weatherFx: { label:'Weather FX', value:getWeatherFxCount(), status:'neutral' },
+    audioSources: { label:'Active Audio', value:getActiveAudioSourceCount(), status:'neutral' }
+  };
+}
+
+function showPerformanceMetricHelp(key) {
+  const metrics = getPerformanceMetrics();
+  const metric = metrics[key];
+  if (!metric) return;
+  window.alert(getPerformanceExplanation(key, metric));
+}
+
+function updatePerformanceDetailsPanel() {
+  const host = document.getElementById('performanceDetailsGrid');
+  if (!host) return;
+  const topGlbs = getPlacedGlbRoots()
+    .map(root => ({ name: root.name || root.metadata?.type || 'glb root', count: root.getChildMeshes?.(false).length || 0 }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+  const topRoots = getRootMeshCountSummary(5);
+  const topMaterials = getMaterialUsageSummary(5);
+  const helperVisible = getHelperVisibleCount();
+  const animatedObjects = NPCManager.roots.filter(root => root?.metadata?.activeAnimation).length +
+    scene.transformNodes.filter(node => node.metadata?.type === 'collectible' && !node.isDisposed?.()).length;
+  host.innerHTML = `
+    <div><b>Renderer:</b> ${escapeHTML(window._gpuMode || 'webgl')} - ${(window._gpuMode || 'webgl') === 'webgpu' ? 'Testing in WebGPU.' : 'Testing in WebGL. WebGPU may perform differently.'}</div>
+    <div><b>Top GLB roots by child meshes:</b> ${topGlbs.length ? topGlbs.map(item => `${escapeHTML(item.name)} (${item.count})`).join(', ') : 'None'}</div>
+    <div><b>Top parent/root groups by mesh count:</b> ${topRoots.length ? topRoots.map(item => `${escapeHTML(item.name)} (${item.count})`).join(', ') : 'None'}</div>
+    <div><b>Top materials by mesh usage:</b> ${topMaterials.length ? topMaterials.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
+    <div><b>Visible helper/admin meshes:</b> ${helperVisible}</div>
+    <div><b>Animated objects tracked:</b> ${animatedObjects}</div>`;
+}
+
+function updatePerformanceDebugPanel() {
+  if (!adminMode || performance.now() - _lastPerfUpdateAt < 900) return;
+  _lastPerfUpdateAt = performance.now();
+  const host = document.getElementById('performanceDebugGrid');
+  if (!host) return;
+  const metrics = getPerformanceMetrics();
+  host.innerHTML = Object.entries(metrics).map(([key, metric]) => renderPerfMetric(key, metric)).join('');
+  if (performance.now() - _lastPerfDetailsAt > 3500) {
+    _lastPerfDetailsAt = performance.now();
+    updatePerformanceDetailsPanel();
+  }
 }
 
 reorderAdminPanelSections();
@@ -16438,6 +16622,7 @@ window.addProgressionDebugXP = addProgressionDebugXP;
 window.testSelectedBadgePopup = testSelectedBadgePopup;
 window.toggleAdminLayer = toggleAdminLayer;
 window.selectAdminLayer = selectAdminLayer;
+window.showPerformanceMetricHelp = showPerformanceMetricHelp;
 window.undoEditorAction = undoEditorAction;
 window.redoEditorAction = redoEditorAction;
 window.addSelectedToMultiSelect = addSelectedToMultiSelect;
