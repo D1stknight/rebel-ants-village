@@ -3182,7 +3182,12 @@ function moveAttachedCollisionProxyPieces(ownerNode, delta) {
     node.metadata?.proxyOwnerName === ownerNode.name
   );
 
-  pieces.forEach(node => node.position.addInPlace(delta));
+  pieces.forEach(node => {
+    unfreezeStaticRoot(node);
+    refreshEditedObject(node);
+    node.position.addInPlace(delta);
+    refreshEditedObject(node);
+  });
 }
 
 function getCollisionProxyOwnerFromSelection() {
@@ -15595,6 +15600,7 @@ function attachAdminGizmoLifecycleObservers() {
     gizmo.onDragObservable?.add(() => {
       if (!selectedObject) return;
       refreshEditedObject(selectedObject);
+      syncLiveSelectedTransform();
     });
     gizmo.onDragEndObservable?.add(() => {
       if (!selectedObject) return;
