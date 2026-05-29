@@ -356,10 +356,26 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #progressionPanel h2{font-family:'Cinzel Decorative',serif;font-size:17px;color:#e8c56a;letter-spacing:3px;text-align:center;margin-bottom:12px}
 .journal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .journal-card{border:1px solid rgba(94,207,202,.18);background:rgba(255,255,255,.035);border-radius:6px;padding:10px}
+.journal-card.full{grid-column:1/-1}
 .journal-card strong{display:block;color:#5ecfca;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
 .journal-card span{color:rgba(255,255,255,.72);font-size:12px;line-height:1.35}
+.badge-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:7px}
+.badge-chip{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.035);border-radius:6px;padding:8px;min-height:54px}
+.badge-chip.unlocked{border-color:rgba(232,197,106,.55);box-shadow:0 0 18px rgba(232,197,106,.08)}
+.badge-chip.locked{opacity:.58}
+.badge-chip b{display:block;color:#e8c56a;font-size:10px;letter-spacing:1px;margin-bottom:3px}
+.badge-chip small{display:block;color:#5ecfca;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
+.badge-chip em{display:block;color:rgba(255,255,255,.68);font-size:10px;line-height:1.3;font-style:normal}
+#hudNextBadgeProgress{font-size:8px;color:rgba(232,197,106,.88);letter-spacing:1px;text-align:right;margin-top:3px;line-height:1.25}
 #journalClose{display:block;margin:16px auto 0;background:transparent;border:1px solid rgba(94,207,202,.4);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 16px;cursor:pointer}
-@media (max-width:640px){#villageGateList,.journal-grid{grid-template-columns:1fr}#villageGatePanel,#progressionPanel{padding:22px}}
+#badgeUnlockPopup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);z-index:96;min-width:min(360px,86vw);max-width:460px;text-align:center;background:radial-gradient(circle at 50% 0%,rgba(232,197,106,.18),rgba(5,10,28,.96) 54%);border:1px solid rgba(232,197,106,.72);box-shadow:0 0 44px rgba(232,197,106,.18),0 0 80px rgba(94,207,202,.08);padding:22px 24px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+#badgeUnlockPopup.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#badgeUnlockPopup .badge-kicker{font-family:'Cinzel Decorative',serif;color:#5ecfca;font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-bottom:7px}
+#badgeUnlockPopup .badge-name{font-family:'Cinzel Decorative',serif;color:#e8c56a;font-size:20px;letter-spacing:2px;text-shadow:0 0 14px rgba(232,197,106,.35);animation:badgePulse 1.2s ease-in-out infinite alternate}
+#badgeUnlockPopup .badge-category{color:rgba(255,255,255,.72);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-top:6px}
+#badgeUnlockPopup .badge-desc{color:rgba(255,255,255,.78);font-size:12px;line-height:1.45;margin-top:10px}
+@keyframes badgePulse{from{text-shadow:0 0 8px rgba(232,197,106,.25)}to{text-shadow:0 0 22px rgba(232,197,106,.62)}}
+@media (max-width:640px){#villageGateList,.journal-grid,.badge-gallery{grid-template-columns:1fr}#villageGatePanel,#progressionPanel{padding:22px}}
 </style>
 </head>
 <body>
@@ -747,6 +763,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="restorePreviousLocalBackup()">Restore Backup</button>
       <button class="ctrl-btn" onclick="exportCurrentVillageLayout()">Export JSON</button>
       <button class="ctrl-btn" onclick="document.getElementById('layoutImportInput').click()">Import JSON</button>
+      <button class="ctrl-btn danger full" style="grid-column:1/-1" onclick="resetLocalProgression()">Reset Local Progression</button>
     </div>
     <input type="file" id="layoutImportInput" accept="application/json,.json" style="display:none" onchange="importVillageLayoutJSON(event)">
   </div>
@@ -790,6 +807,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button id="journalClose" type="button" onclick="closeProgressionJournal()">Close</button>
   </div>
 </div>
+<div id="badgeUnlockPopup" aria-live="polite" aria-hidden="true">
+  <div class="badge-kicker">Badge Unlocked</div>
+  <div class="badge-name" id="badgeUnlockName">Sprout Explorer</div>
+  <div class="badge-category" id="badgeUnlockCategory">Explorer</div>
+  <div class="badge-desc" id="badgeUnlockDesc">A new mark has been added to your Rebel journal.</div>
+</div>
 <canvas id="c"></canvas>
 <div id="xhair"></div>
 <div id="td"></div>
@@ -822,6 +845,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <div class="world-status-row"><span>Changes In</span><span class="world-status-value" id="hudWeatherCountdown">--:--</span></div>
       <div class="world-status-row"><span>Badge</span><span class="world-status-value" id="hudBadgeName">Sprout Explorer</span></div>
       <div id="hudProgressBar"><div id="hudProgressFill"></div></div>
+      <div id="hudNextBadgeProgress">Next Badge: Forest Wanderer — 0 / 100 progress</div>
       <div class="world-status-row"><span>Items</span><span class="world-status-value" id="hudCollectibleCount">0</span></div>
       <div class="world-status-row"><span>Quests</span><span class="world-status-value" id="hudQuestCount">0</span></div>
       <button id="journalBtn" type="button" onclick="openProgressionJournal()">Journal</button>
@@ -996,6 +1020,31 @@ const QUEST_DEFINITIONS = {
 };
 
 const PROGRESSION_KEY = 'rebelAntsProgression:v1';
+const PROGRESSION_BADGE_CATEGORIES = {
+  explorer: 'Explorer',
+  story: 'Story',
+  ronin: 'Ronin',
+  samurai: 'Samurai',
+  arcade: 'Arcade',
+  community: 'Community',
+  builder: 'Builder'
+};
+const PROGRESSION_BADGE_META = {
+  'Sprout Explorer': { category:'explorer', requirement:'Start your Rebel journey', threshold:0, description:'You stepped into the Rebel Ants Universe.' },
+  'Forest Wanderer': { category:'explorer', requirement:'Reach 100 progress', threshold:100, description:'You are learning the paths between roots, villages, and hidden signs.' },
+  Pathfinder: { category:'explorer', requirement:'Reach 200 progress', threshold:200, description:'You are finding routes others miss.' },
+  'Realm Traveler': { category:'explorer', requirement:'Reach 300 progress', threshold:300, description:'You have begun moving between colonies like a true traveler.' },
+  'The First Warning': { category:'story', requirement:'Complete The First Warning quest', description:'You heard the first truth about the breathing tunnels.' },
+  'Tunnel Witness': { category:'story', requirement:'Future story milestone', description:'You witnessed signs beneath the roots.' },
+  'Dust Reader': { category:'story', requirement:'Future story milestone', description:'You learned to read the red dust.' },
+  Watcher: { category:'ronin', requirement:'Meet the Ronin watcher', description:'The shadows have noticed you.' },
+  'Shadow Walker': { category:'ronin', requirement:'Future Ronin milestone', description:'You know how to move where warnings hide.' },
+  Initiate: { category:'samurai', requirement:'Future Samurai milestone', description:'You took your first step on the Samurai path.' },
+  'Honor Guard': { category:'samurai', requirement:'Future Samurai milestone', description:'You earned trust through discipline.' },
+  'Arcade Initiate': { category:'arcade', requirement:'Open an arcade/game sign', description:'You found where village paths become games.' },
+  'Colony Caller': { category:'community', requirement:'Future community action', description:'You reached beyond the village.' },
+  'World Builder': { category:'builder', requirement:'Use builder/admin progression hooks', description:'You helped shape the Rebel world.' }
+};
 const PROGRESSION_BADGES = {
   explorer: ['Sprout Explorer', 'Forest Wanderer', 'Pathfinder', 'Realm Traveler'],
   story: ['The First Warning', 'Tunnel Witness', 'Dust Reader'],
@@ -1059,6 +1108,7 @@ function saveProgressionState() {
 
 function addProgressionXP(amount) {
   ProgressionState.xp = Math.max(0, (Number(ProgressionState.xp) || 0) + amount);
+  awardEarnedExplorerBadges(false);
 }
 
 function getExplorerBadgeInfo() {
@@ -1070,13 +1120,55 @@ function getExplorerBadgeInfo() {
     level,
     currentBadge: badges[badgeIndex],
     progressPercent: Math.min(100, xp % 100),
-    nextBadge: badges[Math.min(badges.length - 1, badgeIndex + 1)]
+    nextBadge: badges[Math.min(badges.length - 1, badgeIndex + 1)],
+    currentThreshold: badgeIndex * 100,
+    nextThreshold: Math.min((badgeIndex + 1) * 100, (badges.length - 1) * 100)
   };
 }
 
-function awardBadge(name) {
+function getBadgeMeta(name) {
+  const meta = PROGRESSION_BADGE_META[name] || {};
+  return {
+    category: meta.category || 'explorer',
+    categoryLabel: PROGRESSION_BADGE_CATEGORIES[meta.category || 'explorer'] || 'Explorer',
+    requirement: meta.requirement || 'Future milestone',
+    threshold: Number.isFinite(meta.threshold) ? meta.threshold : null,
+    description: meta.description || 'A new mark has been added to your Rebel journal.'
+  };
+}
+
+function showBadgeUnlockPopup(name) {
+  const popup = document.getElementById('badgeUnlockPopup');
+  if (!popup) return;
+  const meta = getBadgeMeta(name);
+  const nameEl = document.getElementById('badgeUnlockName');
+  const categoryEl = document.getElementById('badgeUnlockCategory');
+  const descEl = document.getElementById('badgeUnlockDesc');
+  if (nameEl) nameEl.textContent = name;
+  if (categoryEl) categoryEl.textContent = meta.categoryLabel;
+  if (descEl) descEl.textContent = meta.description;
+  popup.classList.add('on');
+  popup.setAttribute('aria-hidden', 'false');
+  clearTimeout(showBadgeUnlockPopup._timer);
+  showBadgeUnlockPopup._timer = setTimeout(() => {
+    popup.classList.remove('on');
+    popup.setAttribute('aria-hidden', 'true');
+  }, 3600);
+  playInteractionAudio('badgeUnlock');
+}
+
+function awardBadge(name, silent = false) {
   if (!name || ProgressionState.badges.includes(name)) return;
   ProgressionState.badges.push(name);
+  if (!silent) showBadgeUnlockPopup(name);
+}
+
+function awardEarnedExplorerBadges(silent = false) {
+  const xp = Number(ProgressionState.xp) || 0;
+  (PROGRESSION_BADGES.explorer || []).forEach(name => {
+    const threshold = getBadgeMeta(name).threshold;
+    if (Number.isFinite(threshold) && xp >= threshold) awardBadge(name, silent);
+  });
 }
 
 function recordProgressionEvent(kind, id, amount = 0, badge = null) {
@@ -1118,12 +1210,43 @@ function updateProgressionHud() {
   const info = getExplorerBadgeInfo();
   const badge = document.getElementById('hudBadgeName');
   const fill = document.getElementById('hudProgressFill');
+  const next = document.getElementById('hudNextBadgeProgress');
   const items = document.getElementById('hudCollectibleCount');
   const quests = document.getElementById('hudQuestCount');
   if (badge) badge.textContent = info.currentBadge;
   if (fill) fill.style.width = `${info.progressPercent}%`;
+  if (next) {
+    const xp = Number(ProgressionState.xp) || 0;
+    const goal = Math.max(1, (info.nextThreshold || xp) - (info.currentThreshold || 0));
+    const current = Math.max(0, Math.min(xp - (info.currentThreshold || 0), goal));
+    next.textContent = info.nextBadge === info.currentBadge
+      ? `Top Badge: ${info.currentBadge}`
+      : `Next Badge: ${info.nextBadge} — ${current} / ${goal} progress`;
+  }
   if (items) items.textContent = String(ProgressionState.collectiblesFound.length);
   if (quests) quests.textContent = `${ProgressionState.completedQuests.length}/${Object.keys(QUEST_DEFINITIONS).length}`;
+}
+
+function getCollectibleCountsByType() {
+  const counts = Object.fromEntries(Object.keys(COLLECTIBLE_TYPES).map(type => [type, 0]));
+  (ProgressionState.collectiblesFound || []).forEach(key => {
+    const foundType = Object.keys(COLLECTIBLE_TYPES).find(type => String(key).includes(`-${type}-`) || String(key).includes(`:${type}`));
+    if (foundType) counts[foundType] += 1;
+  });
+  return counts;
+}
+
+function renderBadgeGallery() {
+  return Object.entries(PROGRESSION_BADGES).map(([category, names]) => {
+    const categoryLabel = PROGRESSION_BADGE_CATEGORIES[category] || category;
+    const chips = names.map(name => {
+      const unlocked = ProgressionState.badges.includes(name);
+      const meta = getBadgeMeta(name);
+      const status = unlocked ? 'Unlocked' : meta.requirement;
+      return `<div class="badge-chip ${unlocked ? 'unlocked' : 'locked'}"><small>${categoryLabel} - ${unlocked ? 'Unlocked' : 'Locked'}</small><b>${name}</b><em>${status}<br>${meta.description}</em></div>`;
+    }).join('');
+    return `<div class="journal-card full"><strong>${categoryLabel} Badges</strong><div class="badge-gallery">${chips}</div></div>`;
+  }).join('');
 }
 
 function openProgressionJournal() {
@@ -1132,19 +1255,22 @@ function openProgressionJournal() {
   if (!overlay || !grid) return;
   const info = getExplorerBadgeInfo();
   const ecosystemCount = Object.values(ProgressionState.ecosystemActions || {}).filter(Boolean).length;
+  const collectibleCounts = getCollectibleCountsByType();
+  const collectibleList = Object.entries(COLLECTIBLE_TYPES).map(([type, cfg]) => `${cfg.label}: ${collectibleCounts[type] || 0}`).join('<br>');
+  const xp = Number(ProgressionState.xp) || 0;
   const cards = [
     ['Explorer Level', `Level ${info.level}`],
     ['Current Badge', info.currentBadge],
-    ['Progress', `${info.progressPercent}/100 to ${info.nextBadge}`],
+    ['Next Badge', info.nextBadge === info.currentBadge ? `Top Badge: ${info.currentBadge}` : `${info.nextBadge} - ${Math.max(0, Math.min(xp - (info.currentThreshold || 0), (info.nextThreshold || xp) - (info.currentThreshold || 0)))} / ${Math.max(1, (info.nextThreshold || xp) - (info.currentThreshold || 0))} progress`],
     ['Completed Quests', ProgressionState.completedQuests.length],
     ['Villages Visited', ProgressionState.villagesVisited.length],
     ['Chests Opened', ProgressionState.chestsOpened.length],
-    ['Collectibles Found', ProgressionState.collectiblesFound.length],
+    ['Collectibles Found', `Total: ${ProgressionState.collectiblesFound.length}<br>${collectibleList}`],
     ['Secrets Found', ProgressionState.secretsFound.length],
     ['Ecosystem Actions', ecosystemCount],
     ['Badges Earned', ProgressionState.badges.length ? ProgressionState.badges.join(', ') : 'None yet']
   ];
-  grid.innerHTML = cards.map(([label, value]) => `<div class="journal-card"><strong>${label}</strong><span>${value}</span></div>`).join('');
+  grid.innerHTML = cards.map(([label, value]) => `<div class="journal-card"><strong>${label}</strong><span>${value}</span></div>`).join('') + renderBadgeGallery();
   overlay.classList.add('on');
   overlay.setAttribute('aria-hidden', 'false');
 }
@@ -1154,6 +1280,19 @@ function closeProgressionJournal() {
   if (!overlay) return;
   overlay.classList.remove('on');
   overlay.setAttribute('aria-hidden', 'true');
+}
+
+function resetLocalProgression() {
+  const ok = window.confirm('Reset local progression, badges, collected collectibles, and ecosystem actions? This will not delete collectible placements or village layout.');
+  if (!ok) return;
+  ProgressionState = getDefaultProgressionState();
+  localStorage.setItem(PROGRESSION_KEY, JSON.stringify(ProgressionState));
+  scene?.transformNodes?.forEach(node => {
+    if (node.metadata?.type === 'collectible') node.setEnabled(true);
+  });
+  updateProgressionHud();
+  closeProgressionJournal();
+  showToast('Local progression reset');
 }
 
 function returnToHubVillage() {
@@ -4647,6 +4786,7 @@ const INTERACTION_AUDIO = {
   chestClose: { id:'chest-close', path:'/assets/audio/interactions/chest-close.mp3', volume:.52, cooldownMs:850 },
   portalOpen: { id:'portal-open', path:'/assets/audio/interactions/portal-open.mp3', volume:.58, cooldownMs:700 },
   portalTravel: { id:'portal-travel', path:'/assets/audio/interactions/portal-travel.mp3', volume:.68, cooldownMs:700 },
+  badgeUnlock: { id:'badge-unlock', path:'/assets/audio/badge-unlock.mp3', volume:.62, cooldownMs:900 },
   footstepDirt: { id:'footstep-dirt', path:'/assets/audio/footsteps/dirt-1.mp3', volume:.42, cooldownMs:120 },
   footstepWet: { id:'footstep-wet', path:'/assets/audio/footsteps/wet-1.mp3', volume:.44, cooldownMs:120 },
   footstepSnow: { id:'footstep-snow', path:'/assets/audio/footsteps/snow-1.mp3', volume:.48, cooldownMs:120 },
@@ -12790,7 +12930,10 @@ initNPCPopulation();
 reconcileTutorialQuestOnLoad();
 markVillageVisited(CURRENT_VILLAGE_ID);
 updateQuestTracker();
-updateProgressionHud();
+const progressionBadgeSyncCount = ProgressionState.badges.length;
+awardEarnedExplorerBadges(true);
+if (ProgressionState.badges.length !== progressionBadgeSyncCount) saveProgressionState();
+else updateProgressionHud();
 let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
@@ -15458,6 +15601,7 @@ window.saveQuestDraft = saveQuestDraft;
 window.placeCollectibleFromAdmin = placeCollectibleFromAdmin;
 window.openProgressionJournal = openProgressionJournal;
 window.closeProgressionJournal = closeProgressionJournal;
+window.resetLocalProgression = resetLocalProgression;
 window.toggleAdminLayer = toggleAdminLayer;
 window.selectAdminLayer = selectAdminLayer;
 window.undoEditorAction = undoEditorAction;
