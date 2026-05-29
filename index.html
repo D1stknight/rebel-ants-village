@@ -996,24 +996,73 @@ document.addEventListener('DOMContentLoaded', () => showDefaultCard());
 
 // ── WALLET ──
 let walletConnected = false;
+let activeWalletProvider = null;
+const announcedWalletProviders = [];
+
+window.addEventListener('eip6963:announceProvider', (event) => {
+  const detail = event.detail || {};
+  if (!detail.provider || announcedWalletProviders.some(item => item.provider === detail.provider)) return;
+  announcedWalletProviders.push(detail);
+});
+
+function requestWalletProviderAnnouncements() {
+  try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch(e) {}
+}
+
+function getInjectedWalletProvider() {
+  requestWalletProviderAnnouncements();
+  const announced = announcedWalletProviders.find(item => item.provider?.request)?.provider;
+  if (announced) return announced;
+  const ethereum = window.ethereum;
+  if (!ethereum) return null;
+  if (Array.isArray(ethereum.providers)) {
+    return ethereum.providers.find(provider => provider?.isMetaMask && provider.request) ||
+      ethereum.providers.find(provider => provider?.request) ||
+      ethereum;
+  }
+  return ethereum.request ? ethereum : null;
+}
+
+function waitForWalletProvider(timeoutMs = 1800) {
+  requestWalletProviderAnnouncements();
+  return new Promise((resolve) => {
+    const immediate = getInjectedWalletProvider();
+    if (immediate) { resolve(immediate); return; }
+    const startedAt = performance.now();
+    const timer = setInterval(() => {
+      const provider = getInjectedWalletProvider();
+      if (provider || performance.now() - startedAt >= timeoutMs) {
+        clearInterval(timer);
+        resolve(provider || null);
+      }
+    }, 120);
+  });
+}
+
+requestWalletProviderAnnouncements();
+
 async function connectWallet() {
   const btn = document.getElementById('btn-wallet');
   // Disconnect if already connected
   if (walletConnected) {
     walletConnected = false;
+    activeWalletProvider = null;
     btn.textContent = 'Connect Wallet';
     btn.classList.remove('connected');
     setStatus('');
     showDefaultCard();
     return;
   }
-  if (typeof window.ethereum === 'undefined') {
+  btn.textContent = 'Detecting Wallet...';
+  const provider = await waitForWalletProvider();
+  if (!provider) {
     btn.textContent = 'No Wallet Found';
     return;
   }
   try {
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const accounts = await provider.request({ method: 'eth_requestAccounts' });
     walletConnected = true;
+    activeWalletProvider = provider;
     const addr = accounts[0];
     btn.textContent = addr.slice(0,6) + '...' + addr.slice(-4);
     btn.classList.add('connected');
