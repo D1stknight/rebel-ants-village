@@ -16645,28 +16645,44 @@ async function uploadInteriorFileToGitHub(file, kind) {
   const interiorId = document.getElementById('customInteriorId')?.value?.trim() || makeInteriorIdFromName(document.getElementById('customInteriorName')?.value || file.name);
   const idInput = document.getElementById('customInteriorId');
   if (idInput && !idInput.value) idInput.value = interiorId;
-  const response = await fetch('/api/interior-upload', {
-    method:'POST',
-    headers: { 'Content-Type':'application/json' },
+  const tokenResponse = await fetch('/api/github-upload-token', { cache:'no-store' });
+  const tokenRaw = await tokenResponse.text().catch(() => '');
+  let tokenResult = {};
+  try {
+    tokenResult = tokenRaw ? JSON.parse(tokenRaw) : {};
+  } catch(e) {
+    tokenResult = { error: tokenRaw || tokenResponse.statusText || 'Could not prepare GitHub upload' };
+  }
+  if (!tokenResponse.ok || !tokenResult.ok || !tokenResult.token) {
+    throw new Error(tokenResult.error || ('Could not prepare GitHub upload. Status: ' + tokenResponse.status));
+  }
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = `assets/interiors/custom/${interiorId}/${kind}-${Date.now()}-${safeName}`;
+  const uploadResponse = await fetch(`https://api.github.com/repos/${tokenResult.repo}/contents/${path}`, {
+    method:'PUT',
+    headers: {
+      Authorization:'Bearer ' + tokenResult.token,
+      Accept:'application/vnd.github+json',
+      'Content-Type':'application/json'
+    },
     body: JSON.stringify({
-      interiorId,
-      kind,
-      fileName: file.name,
-      mimeType: file.type || (kind === 'music' ? 'audio/mpeg' : 'model/gltf-binary'),
-      data: await readFileAsBase64(file)
+      message:'upload interior ' + kind + ': ' + file.name,
+      content: await readFileAsBase64(file),
+      branch: tokenResult.branch || 'dev'
     })
   });
-  const raw = await response.text().catch(() => '');
-  let result = {};
+  const uploadRaw = await uploadResponse.text().catch(() => '');
+  let uploadResult = {};
   try {
-    result = raw ? JSON.parse(raw) : {};
+    uploadResult = uploadRaw ? JSON.parse(uploadRaw) : {};
   } catch(e) {
-    result = { error: raw || response.statusText || 'Interior upload failed' };
+    uploadResult = { message: uploadRaw || uploadResponse.statusText || 'GitHub upload failed' };
   }
-  if (!response.ok || !result.ok) {
-    throw new Error(result.error || ('Interior upload failed. Status: ' + response.status));
+  if (!uploadResponse.ok) {
+    throw new Error(uploadResult.message || ('GitHub upload failed. Status: ' + uploadResponse.status));
   }
-  return result.path;
+  return '/' + path;
 }
 
 async function handleInteriorGlbUpload(event) {
