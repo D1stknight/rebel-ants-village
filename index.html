@@ -998,6 +998,7 @@ document.addEventListener('DOMContentLoaded', () => showDefaultCard());
 let walletConnected = false;
 let activeWalletProvider = null;
 const announcedWalletProviders = [];
+let ethereumInitialized = false;
 
 window.addEventListener('eip6963:announceProvider', (event) => {
   const detail = event.detail || {};
@@ -1005,25 +1006,52 @@ window.addEventListener('eip6963:announceProvider', (event) => {
   announcedWalletProviders.push(detail);
 });
 
+window.addEventListener('ethereum#initialized', () => {
+  ethereumInitialized = true;
+}, { once: true });
+
 function requestWalletProviderAnnouncements() {
   try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch(e) {}
 }
 
-function getInjectedWalletProvider() {
-  requestWalletProviderAnnouncements();
-  const announced = announcedWalletProviders.find(item => item.provider?.request)?.provider;
-  if (announced) return announced;
-  const ethereum = window.ethereum;
-  if (!ethereum) return null;
-  if (Array.isArray(ethereum.providers)) {
-    return ethereum.providers.find(provider => provider?.isMetaMask && provider.request) ||
-      ethereum.providers.find(provider => provider?.request) ||
-      ethereum;
-  }
-  return ethereum.request ? ethereum : null;
+function isRequestCapableProvider(provider) {
+  return !!(provider && typeof provider.request === 'function');
 }
 
-function waitForWalletProvider(timeoutMs = 1800) {
+function getProviderLabel(provider) {
+  if (!provider) return 'Unknown Wallet';
+  if (provider.isMetaMask) return 'MetaMask';
+  if (provider.isCoinbaseWallet) return 'Coinbase Wallet';
+  if (provider.isRabby) return 'Rabby';
+  if (provider.isTrust) return 'Trust Wallet';
+  if (provider.isFrame) return 'Frame';
+  return 'Browser Wallet';
+}
+
+function getInjectedWalletProvider() {
+  requestWalletProviderAnnouncements();
+  const announced = announcedWalletProviders.find(item => isRequestCapableProvider(item.provider))?.provider;
+  if (announced) return announced;
+  const ethereum = window.ethereum;
+  if (!ethereum) {
+    const fallbackProviders = [
+      window.web3?.currentProvider,
+      window.coinbaseWalletExtension,
+      window.okxwallet,
+      window.trustwallet?.ethereum,
+      window.rabby
+    ];
+    return fallbackProviders.find(isRequestCapableProvider) || null;
+  }
+  if (Array.isArray(ethereum.providers)) {
+    return ethereum.providers.find(provider => provider?.isMetaMask && isRequestCapableProvider(provider)) ||
+      ethereum.providers.find(isRequestCapableProvider) ||
+      ethereum;
+  }
+  return isRequestCapableProvider(ethereum) ? ethereum : null;
+}
+
+function waitForWalletProvider(timeoutMs = 5200) {
   requestWalletProviderAnnouncements();
   return new Promise((resolve) => {
     const immediate = getInjectedWalletProvider();
@@ -1040,6 +1068,22 @@ function waitForWalletProvider(timeoutMs = 1800) {
 }
 
 requestWalletProviderAnnouncements();
+setTimeout(requestWalletProviderAnnouncements, 250);
+setTimeout(requestWalletProviderAnnouncements, 1000);
+
+function getWalletProviderDiagnostics() {
+  return {
+    ethereum: typeof window.ethereum !== 'undefined',
+    ethereumProviders: Array.isArray(window.ethereum?.providers) ? window.ethereum.providers.length : 0,
+    eip6963Providers: announcedWalletProviders.length,
+    ethereumInitialized,
+    web3Provider: !!window.web3?.currentProvider,
+    coinbase: !!window.coinbaseWalletExtension,
+    okx: !!window.okxwallet,
+    trust: !!window.trustwallet?.ethereum,
+    rabby: !!window.rabby
+  };
+}
 
 async function connectWallet() {
   const btn = document.getElementById('btn-wallet');
@@ -1057,9 +1101,13 @@ async function connectWallet() {
   const provider = await waitForWalletProvider();
   if (!provider) {
     btn.textContent = 'No Wallet Found';
+    setStatus('No browser wallet provider detected. Install/enable MetaMask or another Ethereum wallet for this site, then refresh.');
+    console.info('Wallet provider diagnostics:', getWalletProviderDiagnostics());
     return;
   }
   try {
+    btn.textContent = 'Open Wallet...';
+    setStatus('Opening ' + getProviderLabel(provider) + '...');
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
     walletConnected = true;
     activeWalletProvider = provider;
@@ -1070,6 +1118,7 @@ async function connectWallet() {
     loadNFTs(addr);
   } catch(e) {
     btn.textContent = 'Rejected';
+    setStatus('Wallet connection was rejected or cancelled.');
   }
 }
 
