@@ -17519,44 +17519,44 @@ function addTrainingDojoShoji(parent, name, position, rotation, width, height, m
 }
 
 function addTrainingDojoLantern(parent, name, position, mats) {
-  addInteriorBox(parent, name + '_glow', { width:.55, height:.9, depth:.55 }, position, mats.lantern);
-  addInteriorBox(parent, name + '_top', { width:.7, height:.08, depth:.7 }, position.add(new BABYLON.Vector3(0,.5,0)), mats.darkWood);
-  addInteriorBox(parent, name + '_bottom', { width:.7, height:.08, depth:.7 }, position.add(new BABYLON.Vector3(0,-.5,0)), mats.darkWood);
+  addInteriorBox(parent, name + '_glow', { width:.62, height:1.0, depth:.62 }, position, mats.lantern);
+  addInteriorBox(parent, name + '_top', { width:.78, height:.08, depth:.78 }, position.add(new BABYLON.Vector3(0,.55,0)), mats.darkWood);
+  addInteriorBox(parent, name + '_bottom', { width:.78, height:.08, depth:.78 }, position.add(new BABYLON.Vector3(0,-.55,0)), mats.darkWood);
   addInteriorBox(parent, name + '_postA', { width:.08, height:.98, depth:.08 }, position.add(new BABYLON.Vector3(.32,0,.32)), mats.darkWood);
   addInteriorBox(parent, name + '_postB', { width:.08, height:.98, depth:.08 }, position.add(new BABYLON.Vector3(-.32,0,-.32)), mats.darkWood);
 }
 
 function buildTrainingDojoInterior(root, mats) {
   const dojo = getTrainingDojoMaterials();
-  addInteriorBox(root, 'dojoMainWoodFloor', { width:18.6, height:.16, depth:17.4 }, new BABYLON.Vector3(0, INTERIOR_FLOOR_Y + .04, -1), dojo.wood);
-  for (let z = -7.4; z <= 6.8; z += 3.6) {
-    addInteriorBox(root, 'dojoTatamiLeft_' + z.toFixed(1), { width:3.2, height:.14, depth:3.2 }, new BABYLON.Vector3(-10.1, INTERIOR_FLOOR_Y + .08, z), dojo.tatami);
-    addInteriorBox(root, 'dojoTatamiRight_' + z.toFixed(1), { width:3.2, height:.14, depth:3.2 }, new BABYLON.Vector3(10.1, INTERIOR_FLOOR_Y + .08, z), dojo.tatami);
+  addInteriorBox(root, 'dojoMainWoodFloor', { width:25.2, height:.16, depth:23.2 }, new BABYLON.Vector3(0, INTERIOR_FLOOR_Y + .04, -1.2), dojo.wood);
+  for (let z = -10.6; z <= 9.6; z += 3.6) {
+    addInteriorBox(root, 'dojoTatamiLeft_' + z.toFixed(1), { width:3.25, height:.14, depth:3.25 }, new BABYLON.Vector3(-13.4, INTERIOR_FLOOR_Y + .08, z), dojo.tatami);
+    addInteriorBox(root, 'dojoTatamiRight_' + z.toFixed(1), { width:3.25, height:.14, depth:3.25 }, new BABYLON.Vector3(13.4, INTERIOR_FLOOR_Y + .08, z), dojo.tatami);
   }
-  for (let x = -6.4; x <= 6.5; x += 3.2) {
-    addInteriorBox(root, 'dojoTatamiFront_' + x.toFixed(1), { width:3, height:.14, depth:2.6 }, new BABYLON.Vector3(x, INTERIOR_FLOOR_Y + .08, 9.2), dojo.tatami);
+  for (let x = -9.6; x <= 9.7; x += 3.2) {
+    addInteriorBox(root, 'dojoTatamiFront_' + x.toFixed(1), { width:3, height:.14, depth:2.7 }, new BABYLON.Vector3(x, INTERIOR_FLOOR_Y + .08, 12.2), dojo.tatami);
   }
-  [-10.8,-5.4,0,5.4,10.8].forEach((x, i) => {
-    addInteriorBox(root, 'dojoBackPost_' + i, { width:.42, height:6.4, depth:.42 }, new BABYLON.Vector3(x,3.7,-10.35), dojo.darkWood);
+  [-14,-9.3,-4.65,0,4.65,9.3,14].forEach((x, i) => {
+    addInteriorBox(root, 'dojoBackPost_' + i, { width:.45, height:7.0, depth:.45 }, new BABYLON.Vector3(x,3.95,-12.85), dojo.darkWood);
   });
-  [-7,0,7].forEach((x, i) => {
-    addInteriorBox(root, 'dojoCenterPost_' + i, { width:.5, height:6.2, depth:.5 }, new BABYLON.Vector3(x,3.55,1.7), dojo.darkWood);
+  [-9,0,9].forEach((x, i) => {
+    addInteriorBox(root, 'dojoCenterPost_' + i, { width:.55, height:6.8, depth:.55 }, new BABYLON.Vector3(x,3.8,2.1), dojo.darkWood);
   });
-  addInteriorBox(root, 'dojoBackBeamLow', { width:22.6, height:.42, depth:.42 }, new BABYLON.Vector3(0,3.7,-10.34), dojo.darkWood);
-  addInteriorBox(root, 'dojoBackBeamHigh', { width:22.6, height:.5, depth:.5 }, new BABYLON.Vector3(0,6.15,-10.34), dojo.darkWood);
-  addInteriorBox(root, 'dojoFrontBeam', { width:16, height:.42, depth:.42 }, new BABYLON.Vector3(0,6.1,1.7), dojo.darkWood);
-  addInteriorBoxRot(root, 'dojoRoofLeftPlane', { width:12.4, height:.22, depth:22 }, new BABYLON.Vector3(-5.9,6.72,0), dojo.wood, new BABYLON.Vector3(0,0,.34));
-  addInteriorBoxRot(root, 'dojoRoofRightPlane', { width:12.4, height:.22, depth:22 }, new BABYLON.Vector3(5.9,6.72,0), dojo.wood, new BABYLON.Vector3(0,0,-.34));
-  addInteriorBox(root, 'dojoRoofRidge', { width:.55, height:.55, depth:22 }, new BABYLON.Vector3(0,7.78,0), dojo.darkWood);
-  for (let z = -8; z <= 8; z += 4) {
-    addInteriorBox(root, 'dojoRafter_' + z, { width:22, height:.22, depth:.22 }, new BABYLON.Vector3(0,6.96,z), dojo.darkWood);
+  addInteriorBox(root, 'dojoBackBeamLow', { width:29.5, height:.45, depth:.45 }, new BABYLON.Vector3(0,4.02,-12.84), dojo.darkWood);
+  addInteriorBox(root, 'dojoBackBeamHigh', { width:29.5, height:.55, depth:.55 }, new BABYLON.Vector3(0,6.72,-12.84), dojo.darkWood);
+  addInteriorBox(root, 'dojoFrontBeam', { width:21, height:.45, depth:.45 }, new BABYLON.Vector3(0,6.7,2.1), dojo.darkWood);
+  addInteriorBoxRot(root, 'dojoRoofLeftPlane', { width:15.4, height:.24, depth:28 }, new BABYLON.Vector3(-7.3,7.35,-.7), dojo.wood, new BABYLON.Vector3(0,0,.31));
+  addInteriorBoxRot(root, 'dojoRoofRightPlane', { width:15.4, height:.24, depth:28 }, new BABYLON.Vector3(7.3,7.35,-.7), dojo.wood, new BABYLON.Vector3(0,0,-.31));
+  addInteriorBox(root, 'dojoRoofRidge', { width:.62, height:.62, depth:28 }, new BABYLON.Vector3(0,8.58,-.7), dojo.darkWood);
+  for (let z = -10.8; z <= 10.9; z += 4.2) {
+    addInteriorBox(root, 'dojoRafter_' + z.toFixed(1), { width:28, height:.24, depth:.24 }, new BABYLON.Vector3(0,7.54,z), dojo.darkWood);
   }
-  [-7.2,0,7.2].forEach((x, i) => addTrainingDojoShoji(root, 'dojoBackShoji_' + i, new BABYLON.Vector3(x,2.72,-10.66), new BABYLON.Vector3(0,0,0), 4.1, 2.8, dojo));
-  [-5.3,0,5.3].forEach((z, i) => {
-    addTrainingDojoShoji(root, 'dojoLeftShoji_' + i, new BABYLON.Vector3(-11.73,2.6,z), new BABYLON.Vector3(0,Math.PI/2,0), 3.8, 2.75, dojo);
-    addTrainingDojoShoji(root, 'dojoRightShoji_' + i, new BABYLON.Vector3(11.73,2.6,z), new BABYLON.Vector3(0,-Math.PI/2,0), 3.8, 2.75, dojo);
+  [-10.4,-5.2,0,5.2,10.4].forEach((x, i) => addTrainingDojoShoji(root, 'dojoBackShoji_' + i, new BABYLON.Vector3(x,2.95,-13.16), new BABYLON.Vector3(0,0,0), 4.25, 3.05, dojo));
+  [-8.8,-4.4,0,4.4,8.8].forEach((z, i) => {
+    addTrainingDojoShoji(root, 'dojoLeftShoji_' + i, new BABYLON.Vector3(-15.05,2.9,z), new BABYLON.Vector3(0,Math.PI/2,0), 3.9, 3.0, dojo);
+    addTrainingDojoShoji(root, 'dojoRightShoji_' + i, new BABYLON.Vector3(15.05,2.9,z), new BABYLON.Vector3(0,-Math.PI/2,0), 3.9, 3.0, dojo);
   });
-  addInteriorBox(root, 'dojoAlcovePlatform', { width:6.8, height:.45, depth:1.8 }, new BABYLON.Vector3(0, INTERIOR_FLOOR_Y + .42, -9.1), dojo.wood);
+  addInteriorBox(root, 'dojoAlcovePlatform', { width:8.2, height:.5, depth:2.1 }, new BABYLON.Vector3(0, INTERIOR_FLOOR_Y + .45, -11.45), dojo.wood);
   const scrollMat = makeInteriorCanvasMaterial('trainingDojoScrollMat', 256, 512, (ctx, w, h) => {
     ctx.fillStyle = '#e7d0a6'; ctx.fillRect(0,0,w,h);
     ctx.fillStyle = '#b28a55'; ctx.fillRect(0,0,w,24); ctx.fillRect(0,h-24,w,24);
@@ -17564,14 +17564,14 @@ function buildTrainingDojoInterior(root, mats) {
     ctx.fillStyle = '#3b3f31'; ctx.beginPath(); ctx.moveTo(35,h*.72); ctx.lineTo(94,h*.48); ctx.lineTo(142,h*.72); ctx.fill();
     ctx.fillStyle = '#596653'; ctx.beginPath(); ctx.moveTo(100,h*.76); ctx.lineTo(168,h*.52); ctx.lineTo(220,h*.76); ctx.fill();
   });
-  addInteriorPanel(root, 'dojoWallScroll', 1.7, 3.2, new BABYLON.Vector3(0,3.2,-10.71), new BABYLON.Vector3(0,0,0), scrollMat);
-  [[-8.8,-7.4],[-3.3,-8.7],[3.3,-8.7],[8.8,-7.4],[-10.2,3.9],[10.2,3.9]].forEach((p, i) => addTrainingDojoLantern(root, 'dojoLantern_' + i, new BABYLON.Vector3(p[0],1.18,p[1]), dojo));
-  addInteriorBox(root, 'dojoWeaponRackLeft', { width:1.8, height:1.8, depth:.22 }, new BABYLON.Vector3(-9.3,1.45,-5.8), dojo.darkWood);
-  addInteriorBox(root, 'dojoWeaponRackRight', { width:1.8, height:1.8, depth:.22 }, new BABYLON.Vector3(9.3,1.45,-5.8), dojo.darkWood);
+  addInteriorPanel(root, 'dojoWallScroll', 1.9, 3.55, new BABYLON.Vector3(0,3.55,-13.21), new BABYLON.Vector3(0,0,0), scrollMat);
+  [[-12,-10.4],[-5.5,-11.4],[5.5,-11.4],[12,-10.4],[-13.4,5.9],[13.4,5.9],[-9.7,11.2],[9.7,11.2]].forEach((p, i) => addTrainingDojoLantern(root, 'dojoLantern_' + i, new BABYLON.Vector3(p[0],1.22,p[1]), dojo));
+  addInteriorBox(root, 'dojoWeaponRackLeft', { width:2.1, height:2, depth:.24 }, new BABYLON.Vector3(-12.6,1.55,-7.6), dojo.darkWood);
+  addInteriorBox(root, 'dojoWeaponRackRight', { width:2.1, height:2, depth:.24 }, new BABYLON.Vector3(12.6,1.55,-7.6), dojo.darkWood);
   for (let i = 0; i < 4; i += 1) {
-    addInteriorBoxRot(root, 'dojoPracticeSword_' + i, { width:.08, height:1.9, depth:.08 }, new BABYLON.Vector3(-9.75 + i * .3,1.58,-5.92), dojo.wood, new BABYLON.Vector3(.65,0,0));
+    addInteriorBoxRot(root, 'dojoPracticeSword_' + i, { width:.08, height:2.1, depth:.08 }, new BABYLON.Vector3(-13.1 + i * .34,1.72,-7.75), dojo.wood, new BABYLON.Vector3(.65,0,0));
   }
-  createInteriorDisplay(root, { displayId:'training_start', label:'Training Trial', actionType:'futureQuest', description:'Future movement/tutorial/combat trial.', position:{x:0,y:1.55,z:-5.5} }, { accent:mats.accent });
+  createInteriorDisplay(root, { displayId:'training_start', label:'Training Trial', actionType:'futureQuest', description:'Future movement/tutorial/combat trial.', position:{x:0,y:1.62,z:-7.2} }, { accent:mats.accent });
 }
 
 function buildInteriorProps(root, type, mats) {
@@ -17689,9 +17689,16 @@ function buildInteriorRoom(entrance) {
   }
 
   const light = new BABYLON.HemisphericLight('activeInteriorLight', new BABYLON.Vector3(0, 1, 0), scene);
-  light.intensity = .78;
+  light.intensity = type === 'training_dojo' ? 1.18 : .78;
   light.diffuse = def.accent.scale(.45).add(new BABYLON.Color3(.42,.36,.3));
   light.parent = root;
+  if (type === 'training_dojo') {
+    const dojoFill = new BABYLON.PointLight('trainingDojoWarmFill', new BABYLON.Vector3(0, 5.8, -2), scene);
+    dojoFill.intensity = .72;
+    dojoFill.range = 30;
+    dojoFill.diffuse = new BABYLON.Color3(1,.72,.42);
+    dojoFill.parent = root;
+  }
 
   getInteriorSavedDisplayConfigs(targetInteriorId).forEach(displayConfig => createInteriorDisplay(root, displayConfig, { accent:accentMat }));
   if (!_interiorDisplaysVisible) getInteriorDisplayRoots().forEach(display => display.setEnabled(false));
