@@ -2607,6 +2607,149 @@ function rememberCollisionProxyOwnerFromSelection(node = selectedObject) {
   activeCollisionProxyOwner = { name: node.name, type: ownerType };
 }
 
+const VillagePerformanceRuntime = {
+  frozenRoots: new Set(),
+  hiddenHelperMeshes: 0,
+  lastStaticPassAt: 0,
+  lastHelperPassAt: 0,
+  lastShadowPassAt: 0,
+  lastMaterialAuditAt: 0,
+  materialOffenders: [],
+  staticPassIntervalMs: 4500,
+  helperPassIntervalMs: 900
+};
+
+const PERF_DYNAMIC_TYPES = new Set([
+  'npc',
+  'collectible',
+  'village_gate',
+  'treasure_chest',
+  'ambient_glow',
+  'toro_lantern',
+  'hanging_lantern',
+  'lantern_1',
+  'ronin_mist',
+  'interaction_zone'
+]);
+
+function getPerfNodeType(node) {
+  return node?.metadata?.type || node?._editRoot?.metadata?.type || '';
+}
+
+function isPerformanceStaticRoot(root) {
+  if (!root || root.isDisposed?.()) return false;
+  if (root === selectedObject || root.metadata?.isPickProxy || root.metadata?.isAdminPlacementMarker) return false;
+  const type = getPerfNodeType(root);
+  if (!type || PERF_DYNAMIC_TYPES.has(type)) return false;
+  if (root.metadata?.editorHidden === true || root.metadata?._perfNeverFreeze === true) return false;
+  if (root.name?.startsWith('collectibleTemplate_')) return false;
+  return root.metadata?.isClone === true || type === 'collision_proxy' || type === 'terrain_stamp';
+}
+
+function forEachRootRenderNode(root, callback) {
+  if (!root) return;
+  callback(root);
+  root.getChildMeshes?.(false).forEach(callback);
+  root.getChildTransformNodes?.(false).forEach(callback);
+}
+
+function freezeStaticRoot(root) {
+  if (!isPerformanceStaticRoot(root)) return false;
+  let frozeAny = false;
+  forEachRootRenderNode(root, node => {
+    if (!node || node.isDisposed?.()) return;
+    if (node === selectedObject || node.metadata?._perfNeverFreeze === true) return;
+    if (typeof node.freezeWorldMatrix === 'function' && !node._worldMatrixFrozen) {
+      node.computeWorldMatrix?.(true);
+      node.freezeWorldMatrix();
+      node.metadata = { ...(node.metadata || {}), _perfFrozen: true };
+      frozeAny = true;
+    }
+    if (node.receiveShadows === true && shouldDisableDecorativeShadow(node)) node.receiveShadows = false;
+  });
+  if (frozeAny) VillagePerformanceRuntime.frozenRoots.add(root);
+  return frozeAny;
+}
+
+function unfreezeStaticRoot(root) {
+  if (!root) return;
+  forEachRootRenderNode(root, node => {
+    if (!node || node.isDisposed?.()) return;
+    if (typeof node.unfreezeWorldMatrix === 'function' && node._worldMatrixFrozen) node.unfreezeWorldMatrix();
+    if (node.metadata?._perfFrozen) node.metadata._perfFrozen = false;
+  });
+  VillagePerformanceRuntime.frozenRoots.delete(root);
+}
+
+function refreshStaticFreezing(force = false) {
+  const now = performance.now();
+  if (!force && now - VillagePerformanceRuntime.lastStaticPassAt < VillagePerformanceRuntime.staticPassIntervalMs) return;
+  VillagePerformanceRuntime.lastStaticPassAt = now;
+  VillagePerformanceRuntime.frozenRoots.forEach(root => {
+    if (!root || root.isDisposed?.() || !isPerformanceStaticRoot(root)) unfreezeStaticRoot(root);
+  });
+  getEditableRoots().forEach(root => freezeStaticRoot(root));
+}
+
+function shouldDisableDecorativeShadow(node) {
+  const type = getPerfNodeType(node);
+  if (!type) return false;
+  if (ASSETS[type]?.noShadows) return true;
+  if (type.includes('lantern') || type.includes('glow') || type.includes('mist')) return true;
+  if (type === 'collision_proxy' || type === 'terrain_stamp' || type === 'collectible') return true;
+  return false;
+}
+
+function applyDecorativeShadowBudget(force = false) {
+  const now = performance.now();
+  if (!force && now - VillagePerformanceRuntime.lastShadowPassAt < VillagePerformanceRuntime.staticPassIntervalMs) return;
+  VillagePerformanceRuntime.lastShadowPassAt = now;
+  const shadowMap = shadows?.getShadowMap?.();
+  if (!shadowMap?.renderList) return;
+  shadowMap.renderList = shadowMap.renderList.filter(mesh => {
+    if (!mesh || mesh.isDisposed?.()) return false;
+    return !shouldDisableDecorativeShadow(mesh) && !shouldDisableDecorativeShadow(mesh._editRoot);
+  });
+}
+
+function applyWalkModeHelperVisibility(force = false) {
+  const now = performance.now();
+  if (!force && now - VillagePerformanceRuntime.lastHelperPassAt < VillagePerformanceRuntime.helperPassIntervalMs) return;
+  VillagePerformanceRuntime.lastHelperPassAt = now;
+  let hidden = 0;
+  const showManual = adminMode && manualBarrierVisualsVisible;
+  scene.meshes.forEach(mesh => {
+    if (!mesh || mesh.isDisposed?.()) return;
+    const type = mesh.metadata?.type;
+    const isManualHelper = type === 'collision_proxy';
+    const isZoneHelper = type === 'interaction_zone' || mesh.name?.startsWith('interactionZone_');
+    const isPlacementHelper = mesh.metadata?.isAdminPlacementMarker || mesh.name?.includes('BrushPreview') || mesh.name?.startsWith('patrolRoute');
+    if (!isManualHelper && !isZoneHelper && !isPlacementHelper) return;
+    const visible = isManualHelper ? showManual : adminMode;
+    mesh.visibility = visible ? (isManualHelper ? (mesh.metadata?.proxyPieceKind === 'blocker' ? .45 : .38) : 1) : 0;
+    mesh.isPickable = visible;
+    if (!visible) hidden += 1;
+  });
+  scene.transformNodes.forEach(node => {
+    if (!node || node.isDisposed?.()) return;
+    const isZone = node.metadata?.type === 'interaction_zone';
+    const isPlacement = node.metadata?.isAdminPlacementMarker;
+    if (!isZone && !isPlacement) return;
+    node.getChildMeshes?.(false).forEach(mesh => {
+      mesh.visibility = adminMode ? 1 : 0;
+      mesh.isPickable = adminMode;
+      if (!adminMode) hidden += 1;
+    });
+  });
+  VillagePerformanceRuntime.hiddenHelperMeshes = hidden;
+}
+
+function runVillagePerformancePass(force = false) {
+  applyWalkModeHelperVisibility(force);
+  applyDecorativeShadowBudget(force);
+  refreshStaticFreezing(force);
+}
+
 function getCollisionProxyLabel(kind) {
   if (kind === 'walk') return 'walk floor';
   if (kind === 'ramp') return 'ramp';
@@ -2615,7 +2758,9 @@ function getCollisionProxyLabel(kind) {
 
 function setSelectedEditableObject(node) {
   if (!node) return;
+  if (selectedObject && selectedObject !== node) freezeStaticRoot(selectedObject);
   selectedObject = node;
+  unfreezeStaticRoot(selectedObject);
   if (terrainSculptBrushActive && selectedObject?.metadata?.type !== 'terrain_stamp') {
     setTerrainSculptBrushActive(false);
   }
@@ -2625,6 +2770,7 @@ function setSelectedEditableObject(node) {
 }
 
 function deselectAdminSelection() {
+  if (selectedObject) freezeStaticRoot(selectedObject);
   clearAdminPlacement();
   setTerrainSculptBrushActive(false);
   selectedObject = null;
@@ -7495,6 +7641,7 @@ function updateNPCPopulation(dt) {
   if (!NPCManager.roots.length) return;
   const now = performance.now();
   NPCManager.roots.forEach(root => {
+    let npcDt = dt;
     if (!root || root.isDisposed?.()) return;
     root.setEnabled(NPCManager.visible);
     if (!NPCManager.visible) return;
@@ -7507,6 +7654,20 @@ function updateNPCPopulation(dt) {
       return;
     }
     const meta = root.metadata || {};
+    const distSq = charMesh
+      ? ((root.position.x - charMesh.position.x) ** 2 + (root.position.z - charMesh.position.z) ** 2)
+      : 0;
+    if (!meta.dialogueOpen && root !== selectedObject && distSq > 140 * 140) {
+      if (now - (meta._lastFarNpcUpdateAt || 0) < 1600) return;
+      meta._lastFarNpcUpdateAt = now;
+      updateNPCAnimationState(root, false, now);
+      return;
+    }
+    if (!meta.dialogueOpen && root !== selectedObject && distSq > 80 * 80) {
+      if (now - (meta._lastFarNpcUpdateAt || 0) < 550) return;
+      meta._lastFarNpcUpdateAt = now;
+      npcDt = Math.min(dt * 2.5, 0.12);
+    }
     if (meta.dialogueOpen) {
       updateNPCAnimationState(root, false, now);
       return;
@@ -7514,22 +7675,22 @@ function updateNPCPopulation(dt) {
     let moving = false;
     if (meta.behavior === 'wander') {
       if (!meta.target && now >= (meta.waitUntil || 0)) chooseNPCWanderTarget(root);
-      moving = meta.target ? moveNPCToward(root, meta.target, dt) : false;
+      moving = meta.target ? moveNPCToward(root, meta.target, npcDt) : false;
       if (!moving) {
         if (meta.target) {
           meta.target = null;
           meta.waitUntil = now + 1800 + Math.random() * 2600;
         } else {
-          returnNPCToBaseRotation(root, dt);
+          returnNPCToBaseRotation(root, npcDt);
         }
       }
     } else if (meta.behavior === 'patrol') {
       const target = getNPCPatrolTarget(root);
-      moving = moveNPCToward(root, target, dt);
+      moving = moveNPCToward(root, target, npcDt);
       if (!moving && (meta.patrolPoints || []).length) meta.targetIndex = (meta.targetIndex + 1) % meta.patrolPoints.length;
-      if (!moving) returnNPCToBaseRotation(root, dt);
+      if (!moving) returnNPCToBaseRotation(root, npcDt);
     } else {
-      returnNPCToBaseRotation(root, dt);
+      returnNPCToBaseRotation(root, npcDt);
     }
     updateNPCAnimationState(root, moving, now);
   });
@@ -11928,9 +12089,7 @@ if (pick.pickedMesh.metadata?.isPickProxy) {
 
   if (!editableNode) return;
 
-  selectedObject = editableNode;
-  rememberCollisionProxyOwnerFromSelection(editableNode);
-  updateSelectedBadge();
+  setSelectedEditableObject(editableNode);
   renderSelectedWalkSurfaceGuide();
 
   if (!adminMode) return;
@@ -12098,6 +12257,7 @@ function getObjectType(node){
 
 
 function applyObjectTransform(node, data){
+  unfreezeStaticRoot(node);
   node.position = new BABYLON.Vector3(data.position.x, data.position.y, data.position.z);
   node.rotation = new BABYLON.Vector3(data.rotation.x, data.rotation.y, data.rotation.z);
   node.scaling = new BABYLON.Vector3(data.scaling.x, data.scaling.y, data.scaling.z);
@@ -12544,6 +12704,7 @@ if (m.material) {
   ensureDefaultVillageGate();
   if (!hasSavedNPCs) initNPCPopulation();
   applyAdminLayerState();
+  runVillagePerformancePass(true);
   updateQuestTracker();
 }
 
@@ -12788,9 +12949,11 @@ function toggleWalk() {
     }
     scene.activeCamera = walk; walk.detachControl(); orbit.detachControl();
     wb.textContent = '🌐  EXIT WALK MODE'; wb.classList.add('on'); xh.classList.remove('on');
+    runVillagePerformancePass(true);
   } else {
     scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
     wb.textContent = '⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
+    runVillagePerformancePass(true);
   }
 }
 document.addEventListener('keydown', async e => {
@@ -12835,9 +12998,11 @@ document.addEventListener('keydown', async e => {
       orbit.panningSensibility = 50; // fast panning with right-click drag
       toggleAssetPanel(true);
       setCollisionProxyVisualsVisible(true);
+      runVillagePerformancePass(true);
     } else {
       toggleAssetPanel(false);
       clearAdminPlacement();
+      if (selectedObject) freezeStaticRoot(selectedObject);
       selectedObject = null;
       updateSelectedBadge();
       clearVillageProxyDebugMeshes();
@@ -12854,6 +13019,7 @@ document.addEventListener('keydown', async e => {
       orbit.upperRadiusLimit = 450;
       orbit.panningSensibility = 1000;
       orbit.attachControl(canvas, true);
+      runVillagePerformancePass(true);
     }
     return;
   }
@@ -14133,6 +14299,7 @@ engine.runRenderLoop(()=>{
   updateCollectiblesSafe(dt);
   updateWeatherManager();
   updateNPCPopulation(dt);
+  runVillagePerformancePass(false);
   updatePerformanceDebugPanel();
   if (window._gpuMode === 'webgpu') {
     _webgpuSmartCapFrame++;
@@ -14979,6 +15146,17 @@ function getHelperVisibleCount() {
   ).length;
 }
 
+function getFrozenStaticRootCount() {
+  VillagePerformanceRuntime.frozenRoots.forEach(root => {
+    const rootFrozen = root?.metadata?._perfFrozen === true;
+    const childFrozen = root?.getChildMeshes?.(false).some(mesh => mesh.metadata?._perfFrozen === true) === true;
+    if (!root || root.isDisposed?.() || (!rootFrozen && !childFrozen)) {
+      VillagePerformanceRuntime.frozenRoots.delete(root);
+    }
+  });
+  return VillagePerformanceRuntime.frozenRoots.size;
+}
+
 function getMaterialUsageSummary(limit = 5) {
   const usage = new Map();
   scene.meshes.forEach(mesh => {
@@ -14990,6 +15168,12 @@ function getMaterialUsageSummary(limit = 5) {
   return [...usage.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
 }
 
+function updateMaterialOffenderAudit() {
+  if (performance.now() - VillagePerformanceRuntime.lastMaterialAuditAt < 4500) return;
+  VillagePerformanceRuntime.lastMaterialAuditAt = performance.now();
+  VillagePerformanceRuntime.materialOffenders = getMaterialUsageSummary(8);
+}
+
 function getRootMeshCountSummary(limit = 5) {
   const roots = [...scene.transformNodes, ...scene.meshes].filter(node => node && !node.parent && !node.isDisposed?.());
   return roots.map(root => {
@@ -14999,6 +15183,7 @@ function getRootMeshCountSummary(limit = 5) {
 }
 
 function getPerformanceMetrics() {
+  updateMaterialOffenderAudit();
   const fps = Math.round(engine.getFps ? engine.getFps() : 0);
   const totalMeshes = scene.meshes.length;
   const visibleMeshes = scene.meshes.filter(mesh => mesh && mesh.isEnabled?.() !== false && mesh.isVisible !== false).length;
@@ -15011,6 +15196,7 @@ function getPerformanceMetrics() {
   const animatedNpcCount = NPCManager.roots.filter(root => root?.metadata?.activeAnimation && root.metadata.activeAnimation !== 'idle').length;
   return {
     fps: { label:'FPS', value:fps || '--', status:getFpsStatus(fps) },
+    modeNote: { label: adminMode ? 'Admin Mode FPS' : 'Walk Mode FPS', value: adminMode ? 'editor overhead active' : 'runtime view', status:adminMode ? 'warn' : 'good', detail:adminMode ? 'Editor gizmos, picking, and helper UI are active' : 'Editor helpers are reduced/hidden' },
     gpu: { label:'GPU Mode', value:renderer, status:'neutral', detail:renderer === 'webgpu' ? 'Testing in WebGPU' : 'Testing in WebGL. WebGPU may perform differently.' },
     totalMeshes: { label:'Total Meshes', value:totalMeshes, status:'neutral' },
     visibleMeshes: { label:'Visible Meshes', value:visibleMeshes, status:getPerfStatus(visibleMeshes, { green:1000, yellow:2500 }) },
@@ -15020,6 +15206,8 @@ function getPerformanceMetrics() {
     textures: { label:'Textures', value:scene.textures.length, status:'neutral' },
     lights: { label:'Lights', value:scene.lights.length, status:'neutral' },
     shadowCasters: { label:'Shadow Casters', value:shadowCasters, status:'neutral' },
+    frozenStatic: { label:'Frozen Static Roots', value:getFrozenStaticRootCount(), status:'good', detail:'static world matrices cached' },
+    hiddenHelpers: { label:'Hidden Helpers', value:VillagePerformanceRuntime.hiddenHelperMeshes, status:'neutral', detail:adminMode ? 'admin helpers visible as needed' : 'editor helpers hidden/reduced' },
     glbRoots: { label:'GLB Roots', value:glbRoots, status:getPerfStatus(glbRoots, { green:20, yellow:50 }) },
     uploadedGlbs: { label:'Uploaded GLBs', value:getUploadedGlbRootCount(), status:'neutral', detail:`${getUploadedAssets().length} in library` },
     npcs: { label:'NPCs', value:NPCManager.roots.length, status:'neutral' },
@@ -15048,6 +15236,7 @@ function updatePerformanceDetailsPanel() {
     .slice(0, 5);
   const topRoots = getRootMeshCountSummary(5);
   const topMaterials = getMaterialUsageSummary(5);
+  const auditedMaterials = VillagePerformanceRuntime.materialOffenders || [];
   const helperVisible = getHelperVisibleCount();
   const animatedObjects = NPCManager.roots.filter(root => root?.metadata?.activeAnimation).length +
     CollectibleRuntime.stats.visible;
@@ -15056,7 +15245,10 @@ function updatePerformanceDetailsPanel() {
     <div><b>Top GLB roots by child meshes:</b> ${topGlbs.length ? topGlbs.map(item => `${escapeHTML(item.name)} (${item.count})`).join(', ') : 'None'}</div>
     <div><b>Top parent/root groups by mesh count:</b> ${topRoots.length ? topRoots.map(item => `${escapeHTML(item.name)} (${item.count})`).join(', ') : 'None'}</div>
     <div><b>Top materials by mesh usage:</b> ${topMaterials.length ? topMaterials.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
+    <div><b>Material audit offenders:</b> ${auditedMaterials.length ? auditedMaterials.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
     <div><b>Visible helper/admin meshes:</b> ${helperVisible}</div>
+    <div><b>Static roots frozen:</b> ${getFrozenStaticRootCount()}</div>
+    <div><b>Helper meshes hidden/reduced:</b> ${VillagePerformanceRuntime.hiddenHelperMeshes}</div>
     <div><b>Animated objects tracked:</b> ${animatedObjects}</div>`;
 }
 
