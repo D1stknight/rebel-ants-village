@@ -1014,11 +1014,17 @@ const PROGRESSION_POINTS = {
   ecosystem: 12,
   secret: 20
 };
+const COLLECTIBLE_MODEL_SCALES = {
+  flameShardScale: .45,
+  ancientScrollScale: .9,
+  redDustFragmentScale: .35,
+  rootMemoryScale: .4
+};
 const COLLECTIBLE_TYPES = {
-  flame_shard: { label:'Flame Shard', color:'#ff7a22', accent:'#ffd45c', modelUrl:'/assets/collectibles/flame-shard.glb', modelScale:.9 },
-  ancient_scroll: { label:'Ancient Scroll', color:'#d8b36a', accent:'#fff0b6', modelUrl:'/assets/collectibles/ancient-scroll.glb', modelScale:.9 },
-  red_dust_fragment: { label:'Red Dust Fragment', color:'#c92e35', accent:'#ff8b86', modelUrl:'/assets/collectibles/red-dust-fragment.glb', modelScale:.9 },
-  root_memory: { label:'Root Memory', color:'#5ecfca', accent:'#a7fff5', modelUrl:'/assets/collectibles/root-memory.glb', modelScale:.9 }
+  flame_shard: { label:'Flame Shard', color:'#ff7a22', accent:'#ffd45c', modelUrl:'/assets/collectibles/flame-shard.glb', modelScale:COLLECTIBLE_MODEL_SCALES.flameShardScale },
+  ancient_scroll: { label:'Ancient Scroll', color:'#d8b36a', accent:'#fff0b6', modelUrl:'/assets/collectibles/ancient-scroll.glb', modelScale:COLLECTIBLE_MODEL_SCALES.ancientScrollScale },
+  red_dust_fragment: { label:'Red Dust Fragment', color:'#c92e35', accent:'#ff8b86', modelUrl:'/assets/collectibles/red-dust-fragment.glb', modelScale:COLLECTIBLE_MODEL_SCALES.redDustFragmentScale },
+  root_memory: { label:'Root Memory', color:'#5ecfca', accent:'#a7fff5', modelUrl:'/assets/collectibles/root-memory.glb', modelScale:COLLECTIBLE_MODEL_SCALES.rootMemoryScale }
 };
 
 function getDefaultProgressionState() {
