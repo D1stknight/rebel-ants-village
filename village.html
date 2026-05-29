@@ -12884,6 +12884,7 @@ function loadWorldLayout(){
       createMissingAssetPlaceholder(item);
       return;
     }
+    if (item.name) clone.name = item.name;
     clone.metadata = {
       type: item.type,
       isClone: true,
