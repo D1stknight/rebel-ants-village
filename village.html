@@ -699,6 +699,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div class="ap-section">Collectibles</div>
   <div class="admin-section-body" data-admin-section-body="collectibles">
     <div class="admin-note">Floating collectibles are visual-only progression pickups. They save per village and collected state stays local for V1.</div>
+    <div id="collectiblePerfDebug" class="admin-note">Collectibles: --</div>
     <label class="admin-field">Collectible Type
       <select id="collectibleTypeSelect" class="admin-select">
         <option value="flame_shard">Flame Shard</option>
@@ -708,6 +709,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       </select>
     </label>
     <button class="ctrl-btn full" onclick="placeCollectibleFromAdmin()">Add Collectible</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+      <button class="ctrl-btn" onclick="spawnTestCollectibles()">Spawn 10 Test Collectibles</button>
+      <button class="ctrl-btn danger" onclick="clearTestCollectibles()">Clear Test Collectibles</button>
+    </div>
   </div>
   <hr class="ap-divider">
   <div class="ap-section">Badge Builder</div>
@@ -4394,6 +4399,41 @@ function isCollectibleCollected(id) {
   return ProgressionState.collectiblesFound.includes(getCollectibleStateKey(id));
 }
 
+const COLLECTIBLE_NEAR_UPDATE_DIST_SQ = 70 * 70;
+const COLLECTIBLE_FAR_UPDATE_DIST_SQ = 140 * 140;
+const COLLECTIBLE_HIDE_DIST_SQ = 220 * 220;
+const COLLECTIBLE_COLLECTION_DIST_SQ = 2.2 * 2.2;
+const COLLECTIBLE_CHECKS_PER_FRAME = 18;
+const CollectibleRuntime = {
+  roots: new Set(),
+  materialCache: new Map(),
+  modelCache: new Map(),
+  lastCheckIndex: 0,
+  lastDebugAt: 0,
+  stats: { total:0, active:0, visible:0, hidden:0, cachedModels:0 }
+};
+
+function getCollectibleRoots() {
+  CollectibleRuntime.roots.forEach(root => {
+    if (!root || root.isDisposed?.()) CollectibleRuntime.roots.delete(root);
+  });
+  return [...CollectibleRuntime.roots];
+}
+
+function getCollectibleMaterial(name, colorHex, emissiveHex = colorHex, alpha = .95) {
+  const key = `${name}:${colorHex}:${emissiveHex}:${alpha}`;
+  if (!CollectibleRuntime.materialCache.has(key)) {
+    const mat = new BABYLON.StandardMaterial(`collectibleShared_${name}_${CollectibleRuntime.materialCache.size}`, scene);
+    mat.diffuseColor = BABYLON.Color3.FromHexString(colorHex);
+    mat.emissiveColor = BABYLON.Color3.FromHexString(emissiveHex).scale(.72);
+    mat.alpha = alpha;
+    mat.backFaceCulling = false;
+    if (alpha < .8) mat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+    CollectibleRuntime.materialCache.set(key, mat);
+  }
+  return CollectibleRuntime.materialCache.get(key);
+}
+
 function markCollectibleVisualMesh(mesh, root, baseY = mesh.position.y, extra = {}) {
   mesh.isPickable = true;
   mesh._editRoot = root;
@@ -4402,7 +4442,7 @@ function markCollectibleVisualMesh(mesh, root, baseY = mesh.position.y, extra = 
     collectibleVisual: true,
     baseY,
     baseScale: { x: mesh.scaling.x, y: mesh.scaling.y, z: mesh.scaling.z },
-    baseAlpha: mesh.material && 'alpha' in mesh.material ? mesh.material.alpha : null,
+    baseVisibility: Number.isFinite(mesh.visibility) ? mesh.visibility : 1,
     ...extra
   };
   return mesh;
@@ -4416,27 +4456,20 @@ function resetCollectibleVisualState(root) {
     mesh.isPickable = true;
     const scale = mesh.metadata.baseScale;
     if (scale) mesh.scaling.set(scale.x, scale.y, scale.z);
-    if (mesh.material && Number.isFinite(mesh.metadata.baseAlpha)) mesh.material.alpha = mesh.metadata.baseAlpha;
+    if (Number.isFinite(mesh.metadata.baseVisibility)) mesh.visibility = mesh.metadata.baseVisibility;
   });
-  if (root.metadata._collectibleLight) root.metadata._collectibleLight.intensity = .62;
 }
 
 function makeCollectibleMat(root, name, colorHex, emissiveHex = colorHex, alpha = .95) {
-  const mat = new BABYLON.StandardMaterial(`${root.name}_${name}`, scene);
-  mat.diffuseColor = BABYLON.Color3.FromHexString(colorHex);
-  mat.emissiveColor = BABYLON.Color3.FromHexString(emissiveHex).scale(.72);
-  mat.alpha = alpha;
-  mat.backFaceCulling = false;
-  return mat;
+  return getCollectibleMaterial(name, colorHex, emissiveHex, alpha);
 }
 
 function addCollectibleAura(root, cfg) {
   const auraMat = makeCollectibleMat(root, 'auraMat', cfg.accent, cfg.accent, .34);
-  auraMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
   const aura = BABYLON.MeshBuilder.CreateTorus(`collectibleAura_${root.name}`, {
     diameter: 1.18,
     thickness: .035,
-    tessellation: 36
+    tessellation: 20
   }, scene);
   aura.parent = root;
   aura.position.y = 1.08;
@@ -4444,12 +4477,12 @@ function addCollectibleAura(root, cfg) {
   aura.material = auraMat;
   markCollectibleVisualMesh(aura, root, aura.position.y, { collectibleEffect: true });
 
-  const sparkMat = makeCollectibleMat(root, 'sparkMat', cfg.accent, cfg.accent, .72);
-  for (let i = 0; i < 4; i += 1) {
+  const sparkMat = makeCollectibleMat(root, 'sparkMat', cfg.accent, cfg.accent, .62);
+  for (let i = 0; i < 2; i += 1) {
     const angle = i * Math.PI * .5;
     const spark = BABYLON.MeshBuilder.CreateSphere(`collectibleSpark_${root.name}_${i}`, {
       diameter: i % 2 ? .055 : .075,
-      segments: 8
+      segments: 5
     }, scene);
     spark.parent = root;
     spark.position.set(Math.cos(angle) * .58, 1.08 + (i % 2) * .22, Math.sin(angle) * .58);
@@ -4469,41 +4502,54 @@ function setCollectibleVisualsVisible(root, visible, includeFallback = true) {
     if (!includeFallback && mesh.metadata.proceduralFallback) return;
     mesh.setEnabled(visible);
   });
-  if (root.metadata?._collectibleLight) root.metadata._collectibleLight.setEnabled(visible);
+}
+
+async function getCachedCollectibleModelTemplate(cfg) {
+  if (!cfg.modelUrl) return null;
+  if (CollectibleRuntime.modelCache.has(cfg.modelUrl)) return CollectibleRuntime.modelCache.get(cfg.modelUrl);
+  const promise = BABYLON.SceneLoader.ImportMeshAsync("", "", cfg.modelUrl, scene)
+    .then(result => {
+      const templateRoot = new BABYLON.TransformNode(`collectibleTemplate_${cfg.modelUrl.split('/').pop()}`, scene);
+      templateRoot.setEnabled(false);
+      templateRoot.position.set(9999, 9999, 9999);
+      const importedNodes = [...(result.transformNodes || []), ...(result.meshes || [])];
+      const importedNodeSet = new Set(importedNodes);
+      importedNodes.forEach(node => {
+        if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = templateRoot;
+      });
+      (result.meshes || []).forEach(mesh => {
+        mesh.isPickable = false;
+        mesh.setEnabled(false);
+        if (mesh.material) {
+          mesh.material.maxSimultaneousLights = 1;
+          if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mesh.material);
+        }
+      });
+      return templateRoot;
+    })
+    .catch(() => null);
+  CollectibleRuntime.modelCache.set(cfg.modelUrl, promise);
+  return promise;
 }
 
 async function tryLoadCollectibleModel(root, cfg) {
   if (!root || root.isDisposed?.() || !cfg.modelUrl) return;
   try {
     // Collectible GLBs are optional lightweight art drops. Replace these files later
-    // with optimized tiny static models; gameplay and save data stay on the root.
-    const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", cfg.modelUrl, scene);
-    if (!root || root.isDisposed?.()) {
-      result.meshes?.forEach(mesh => mesh.dispose(false, true));
-      result.transformNodes?.forEach(node => node.dispose(false, true));
-      return;
-    }
-
-    const modelRoot = new BABYLON.TransformNode(`collectibleModel_${root.name}`, scene);
-    modelRoot.parent = root;
-    modelRoot.position.y = .98;
+    // with optimized tiny static models. Each type is loaded once, then cloned.
+    const templateRoot = await getCachedCollectibleModelTemplate(cfg);
+    if (!root || root.isDisposed?.()) return;
+    if (!templateRoot) throw new Error('collectible model unavailable');
+    const modelRoot = templateRoot.clone(`collectibleModel_${root.name}`, root, false);
+    modelRoot.setEnabled(true);
+    modelRoot.position.set(0, .98, 0);
     modelRoot.scaling.setAll(cfg.modelScale || 1);
-
-    const importedNodes = [...(result.transformNodes || []), ...(result.meshes || [])];
-    const importedNodeSet = new Set(importedNodes);
-    importedNodes.forEach(node => {
-      if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = modelRoot;
-    });
-
+    modelRoot.getChildTransformNodes?.(false).forEach(node => node.setEnabled(true));
     let visibleMeshCount = 0;
-    (result.meshes || []).forEach(mesh => {
+    modelRoot.getChildMeshes(false).forEach(mesh => {
       if (!mesh) return;
       mesh.setEnabled(true);
       markCollectibleVisualMesh(mesh, root, mesh.position.y, { collectibleModel: true });
-      if (mesh.material) {
-        mesh.material.maxSimultaneousLights = 4;
-        if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mesh.material);
-      }
       if (mesh.getTotalVertices && mesh.getTotalVertices() > 0) visibleMeshCount += 1;
     });
 
@@ -4543,7 +4589,9 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     collectibleType: type,
     collectibleLabel: cfg.label,
     villageId: CURRENT_VILLAGE_ID,
-    _collectibleLoadingModel: !!cfg.modelUrl
+    _collectibleLoadingModel: !!cfg.modelUrl,
+    _collectibleFarHidden: false,
+    _collectibleTest: options.testOnly === true
   };
 
   const coreMat = makeCollectibleMat(root, 'coreMat', cfg.color, cfg.accent, .94);
@@ -4636,12 +4684,6 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     markCollectibleMesh(ember, ember.position.y);
   }
 
-  const light = new BABYLON.PointLight('collectibleGlow_' + root.name, new BABYLON.Vector3(0, 1.25, 0), scene);
-  light.parent = root;
-  light.diffuse = BABYLON.Color3.FromHexString(cfg.accent);
-  light.intensity = .62;
-  light.range = type === 'red_dust_fragment' ? 6 : 5;
-  root.metadata._collectibleLight = light;
   root.metadata._collectibleVisuals = visuals;
   root.metadata._collectibleFallbackVisuals = visuals;
   addCollectibleAura(root, cfg);
@@ -4650,6 +4692,7 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
   root.isPickable = true;
   root.setEnabled(!isCollectibleCollected(id));
   registerEditableRoot(root.name, root);
+  CollectibleRuntime.roots.add(root);
   tryLoadCollectibleModel(root, cfg);
   return root;
 }
@@ -4668,52 +4711,153 @@ function createCollectibleAtPoint(type, point) {
   return root;
 }
 
+function spawnTestCollectibles() {
+  if (!adminMode) { showToast('Enter Admin Mode first'); return; }
+  const center = selectedObject?.position || charMesh?.position || new BABYLON.Vector3(0, 0, 0);
+  const types = Object.keys(COLLECTIBLE_TYPES);
+  for (let i = 0; i < 10; i += 1) {
+    const angle = (Math.PI * 2 * i) / 10;
+    const radius = 5 + (i % 3) * 1.4;
+    createCollectible(types[i % types.length], new BABYLON.Vector3(
+      center.x + Math.cos(angle) * radius,
+      center.y + 1.1 + (i % 2) * .35,
+      center.z + Math.sin(angle) * radius
+    ), { testOnly:true });
+  }
+  showToast('Spawned 10 unsaved test collectibles');
+}
+
+function clearTestCollectibles() {
+  let removed = 0;
+  getCollectibleRoots().forEach(root => {
+    if (!root.metadata?._collectibleTest) return;
+    CollectibleRuntime.roots.delete(root);
+    root.dispose(false, true);
+    removed += 1;
+  });
+  showToast(`Cleared ${removed} test collectibles`);
+}
+
+function updateCollectiblePerfDebug(stats = CollectibleRuntime.stats) {
+  if (!adminMode || performance.now() - CollectibleRuntime.lastDebugAt < 1200) return;
+  CollectibleRuntime.lastDebugAt = performance.now();
+  const el = document.getElementById('collectiblePerfDebug');
+  if (!el) return;
+  el.textContent = `Collectibles: ${stats.total} total | ${stats.active} active | ${stats.visible} visible | ${stats.hidden} far hidden | ${stats.cachedModels} cached models`;
+}
+
+function updateCollectiblePickupAnimation(root) {
+  const progress = Math.min(1, (performance.now() - root.metadata._collectiblePickupStartedAt) / 620);
+  const lift = progress * .85;
+  const shrink = 1 - progress * .55;
+  const fade = 1 - progress;
+  root.getChildMeshes?.(false).forEach(mesh => {
+    if (!mesh.metadata?.collectibleVisual) return;
+    mesh.position.y = (mesh.metadata.baseY || mesh.position.y) + lift;
+    const baseScale = mesh.metadata.baseScale || { x:1, y:1, z:1 };
+    mesh.scaling.set(baseScale.x * Math.max(.05, shrink), baseScale.y * Math.max(.05, shrink), baseScale.z * Math.max(.05, shrink));
+    mesh.visibility = Math.min(mesh.visibility, Math.max(0, fade));
+  });
+  if (progress >= 1) root.setEnabled(false);
+}
+
+function updateCollectibleVisualMotion(root, dt, now, updateTier) {
+  if (updateTier === 'paused') return;
+  if (!adminMode) root.rotation.y += dt * (updateTier === 'near' ? .8 : .22);
+  const bob = Math.sin(now * .003 + root.position.x) * (updateTier === 'near' ? .12 : .045);
+  const bobRoot = root.metadata._collectibleBobRoot;
+  if (bobRoot && !bobRoot.isDisposed?.()) bobRoot.position.y = .98 + bob;
+  if (updateTier !== 'near') return;
+  root.getChildMeshes?.(false).forEach(mesh => {
+    if (!mesh.metadata?.collectibleVisual) return;
+    if (mesh.metadata.collectibleEffect && Number.isFinite(mesh.metadata.orbitAngle)) {
+      const angle = mesh.metadata.orbitAngle + now * .001 * (mesh.metadata.orbitSpeed || .7);
+      const radius = mesh.metadata.orbitRadius || .55;
+      mesh.position.x = Math.cos(angle) * radius;
+      mesh.position.z = Math.sin(angle) * radius;
+      mesh.position.y = (mesh.metadata.baseY || 1.15) + bob;
+    } else if (!bobRoot) {
+      mesh.position.y = (mesh.metadata.baseY || 1.15) + bob;
+    }
+  });
+}
+
+function updateCollectibleCollectionChecks(roots) {
+  if (!walkMode || adminMode || !charMesh || !roots.length) return;
+  const checks = Math.min(COLLECTIBLE_CHECKS_PER_FRAME, roots.length);
+  for (let i = 0; i < checks; i += 1) {
+    const index = (CollectibleRuntime.lastCheckIndex + i) % roots.length;
+    const root = roots[index];
+    if (!root || root.isDisposed?.() || !root.isEnabled?.() || root.metadata?._collectiblePickupStartedAt) continue;
+    if (root.metadata?._collectibleFarHidden) continue;
+    const dx = root.position.x - charMesh.position.x;
+    const dz = root.position.z - charMesh.position.z;
+    if (dx * dx + dz * dz <= COLLECTIBLE_COLLECTION_DIST_SQ) collectProgressionCollectible(root);
+  }
+  CollectibleRuntime.lastCheckIndex = (CollectibleRuntime.lastCheckIndex + checks) % roots.length;
+}
+
 function updateCollectibles(dt) {
   if (!scene) return;
-  const roots = scene.transformNodes.filter(node => node.metadata?.type === 'collectible' && !node.isDisposed?.());
+  const roots = getCollectibleRoots();
+  const now = performance.now();
+  let active = 0;
+  let visible = 0;
+  let hidden = 0;
   roots.forEach(root => {
     if (root.metadata._collectiblePickupStartedAt) {
-      const progress = Math.min(1, (performance.now() - root.metadata._collectiblePickupStartedAt) / 620);
-      const lift = progress * .85;
-      const shrink = 1 - progress * .55;
-      const fade = 1 - progress;
-      root.getChildMeshes?.(false).forEach(mesh => {
-        if (!mesh.metadata?.collectibleVisual) return;
-        mesh.position.y = (mesh.metadata.baseY || mesh.position.y) + lift;
-        const baseScale = mesh.metadata.baseScale || { x:1, y:1, z:1 };
-        mesh.scaling.set(baseScale.x * Math.max(.05, shrink), baseScale.y * Math.max(.05, shrink), baseScale.z * Math.max(.05, shrink));
-        if (mesh.material && 'alpha' in mesh.material) mesh.material.alpha = Math.min(mesh.material.alpha, Math.max(0, fade));
-      });
-      if (root.metadata._collectibleLight) root.metadata._collectibleLight.intensity = .8 * fade;
-      if (progress >= 1) root.setEnabled(false);
+      updateCollectiblePickupAnimation(root);
       return;
     }
     if (isCollectibleCollected(root.metadata.collectibleId)) {
       root.setEnabled(false);
       return;
     }
-    if (!adminMode) root.rotation.y += dt * .8;
-    const bob = Math.sin(Date.now() * .003 + root.position.x) * .12;
-    const bobRoot = root.metadata._collectibleBobRoot;
-    if (bobRoot && !bobRoot.isDisposed?.()) bobRoot.position.y = .98 + bob;
-    root.getChildMeshes?.(false).forEach(mesh => {
-      if (!mesh.metadata?.collectibleVisual) return;
-      if (mesh.metadata.collectibleEffect && Number.isFinite(mesh.metadata.orbitAngle)) {
-        const angle = mesh.metadata.orbitAngle + Date.now() * .001 * (mesh.metadata.orbitSpeed || .7);
-        const radius = mesh.metadata.orbitRadius || .55;
-        mesh.position.x = Math.cos(angle) * radius;
-        mesh.position.z = Math.sin(angle) * radius;
-      }
-      if (!bobRoot || mesh.metadata.collectibleEffect) mesh.position.y = (mesh.metadata.baseY || 1.15) + bob;
-    });
-    if (root.metadata._collectibleLight) root.metadata._collectibleLight.intensity = .35 + Math.sin(Date.now() * .005) * .12;
-    if (walkMode && !adminMode && charMesh) {
+    active += 1;
+    let distSq = 0;
+    if (charMesh) {
       const dx = root.position.x - charMesh.position.x;
       const dz = root.position.z - charMesh.position.z;
-      if (dx * dx + dz * dz <= 2.2 * 2.2) collectProgressionCollectible(root);
+      distSq = dx * dx + dz * dz;
     }
+    const shouldCull = !adminMode && charMesh && distSq > COLLECTIBLE_HIDE_DIST_SQ;
+    if (shouldCull) {
+      if (!root.metadata._collectibleFarHidden) {
+        root.metadata._collectibleFarHidden = true;
+        setCollectibleVisualsVisible(root, false, true);
+      }
+      hidden += 1;
+      return;
+    }
+    if (root.metadata._collectibleFarHidden) {
+      root.metadata._collectibleFarHidden = false;
+      setCollectibleVisualsVisible(root, true, true);
+    }
+    visible += 1;
+    const updateTier = charMesh && distSq > COLLECTIBLE_FAR_UPDATE_DIST_SQ
+      ? 'paused'
+      : charMesh && distSq > COLLECTIBLE_NEAR_UPDATE_DIST_SQ
+        ? 'far'
+        : 'near';
+    updateCollectibleVisualMotion(root, dt, now, updateTier);
   });
+  updateCollectibleCollectionChecks(roots);
+  CollectibleRuntime.stats = {
+    total: roots.length,
+    active,
+    visible,
+    hidden,
+    cachedModels: CollectibleRuntime.modelCache.size
+  };
+  updateCollectiblePerfDebug();
 }
+
+// Collectible performance audit V1:
+// - GLB files are loaded once per collectible type and cloned from a hidden template.
+// - Procedural/glow materials are shared by color/type instead of recreated per root.
+// - Real point lights were removed; collectibles now use cheap emissive meshes only.
+// - Update and pickup checks run through one shared loop with distance throttling/culling.
+// - Admin test collectibles are marked unsaved and excluded from world layout export.
 
 function collectProgressionCollectible(root) {
   if (!root || root.metadata?.type !== 'collectible') return;
@@ -11916,6 +12060,7 @@ function collectWorldLayoutData() {
   const saveableTransformNodes = scene.transformNodes.filter(n =>
     n.metadata && n.metadata.isClone &&
     !n.metadata.isPickProxy &&
+    n.metadata._collectibleTest !== true &&
     n.name && !n.name.includes('.') &&
     Math.abs(n.position.x) < 500 && Math.abs(n.position.z) < 500
   );
@@ -14829,7 +14974,7 @@ function getPerformanceMetrics() {
     uploadedGlbs: { label:'Uploaded GLBs', value:getUploadedGlbRootCount(), status:'neutral', detail:`${getUploadedAssets().length} in library` },
     npcs: { label:'NPCs', value:NPCManager.roots.length, status:'neutral' },
     animatedNpcs: { label:'Animated NPCs', value:animatedNpcCount, status:'neutral' },
-    collectibles: { label:'Collectibles', value:scene.transformNodes.filter(node => node.metadata?.type === 'collectible' && !node.isDisposed?.()).length, status:'neutral' },
+    collectibles: { label:'Collectibles', value:getCollectibleRoots().length, status:'neutral' },
     terrain: { label:'Terrain Stamps', value:getTerrainPatchNodes().length, status:'neutral' },
     manualHelpers: { label:'Collision / Walk Helpers', value:manualHelpers, status:getPerfStatus(manualHelpers, { green:150, yellow:400 }) },
     weatherFx: { label:'Weather FX', value:getWeatherFxCount(), status:'neutral' },
@@ -14855,7 +15000,7 @@ function updatePerformanceDetailsPanel() {
   const topMaterials = getMaterialUsageSummary(5);
   const helperVisible = getHelperVisibleCount();
   const animatedObjects = NPCManager.roots.filter(root => root?.metadata?.activeAnimation).length +
-    scene.transformNodes.filter(node => node.metadata?.type === 'collectible' && !node.isDisposed?.()).length;
+    CollectibleRuntime.stats.visible;
   host.innerHTML = `
     <div><b>Renderer:</b> ${escapeHTML(window._gpuMode || 'webgl')} - ${(window._gpuMode || 'webgl') === 'webgpu' ? 'Testing in WebGPU.' : 'Testing in WebGL. WebGPU may perform differently.'}</div>
     <div><b>Top GLB roots by child meshes:</b> ${topGlbs.length ? topGlbs.map(item => `${escapeHTML(item.name)} (${item.count})`).join(', ') : 'None'}</div>
@@ -14866,7 +15011,7 @@ function updatePerformanceDetailsPanel() {
 }
 
 function updatePerformanceDebugPanel() {
-  if (!adminMode || performance.now() - _lastPerfUpdateAt < 900) return;
+  if (!adminMode || performance.now() - _lastPerfUpdateAt < 1500) return;
   _lastPerfUpdateAt = performance.now();
   const host = document.getElementById('performanceDebugGrid');
   if (!host) return;
@@ -16708,6 +16853,8 @@ window.deleteSelectedInteractionZone = deleteSelectedInteractionZone;
 window.toggleInteractionZoneVisibility = toggleInteractionZoneVisibility;
 window.saveQuestDraft = saveQuestDraft;
 window.placeCollectibleFromAdmin = placeCollectibleFromAdmin;
+window.spawnTestCollectibles = spawnTestCollectibles;
+window.clearTestCollectibles = clearTestCollectibles;
 window.openProgressionJournal = openProgressionJournal;
 window.closeProgressionJournal = closeProgressionJournal;
 window.setProgressionJournalTab = setProgressionJournalTab;
