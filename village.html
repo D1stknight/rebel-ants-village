@@ -4410,6 +4410,7 @@ const CollectibleRuntime = {
   modelCache: new Map(),
   lastCheckIndex: 0,
   lastDebugAt: 0,
+  lastErrorAt: 0,
   stats: { total:0, active:0, visible:0, hidden:0, cachedModels:0 }
 };
 
@@ -4852,12 +4853,25 @@ function updateCollectibles(dt) {
   updateCollectiblePerfDebug();
 }
 
+function updateCollectiblesSafe(dt) {
+  try {
+    updateCollectibles(dt);
+  } catch (error) {
+    const now = performance.now();
+    if (now - CollectibleRuntime.lastErrorAt > 5000) {
+      CollectibleRuntime.lastErrorAt = now;
+      console.warn('Collectible update skipped this frame; other world systems continue.', error);
+    }
+  }
+}
+
 // Collectible performance audit V1:
 // - GLB files are loaded once per collectible type and cloned from a hidden template.
 // - Procedural/glow materials are shared by color/type instead of recreated per root.
 // - Real point lights were removed; collectibles now use cheap emissive meshes only.
 // - Update and pickup checks run through one shared loop with distance throttling/culling.
 // - Admin test collectibles are marked unsaved and excluded from world layout export.
+// - The collectible loop is isolated so an item/runtime error cannot skip audio/weather/NPC updates.
 
 function collectProgressionCollectible(root) {
   if (!root || root.metadata?.type !== 'collectible') return;
@@ -5914,6 +5928,7 @@ const WeatherManager = {
   distantLightningUntil: 0,
   distantLightningStrikeAt: performance.now() + 12000,
   masterAudioEnabled: false,
+  browserAudioUnlocked: false,
   audioEnabled: false,
   interactionAudioEnabled: true,
   footstepAudioEnabled: true,
@@ -5944,6 +5959,32 @@ const WeatherManager = {
   baseFogColor: scene.fogColor.clone(),
   baseClearColor: scene.clearColor.clone()
 };
+
+function isBrowserAutoplayBlock(error) {
+  const name = String(error?.name || '');
+  const message = String(error?.message || error || '');
+  return name === 'NotAllowedError' || /play\(\)|user didn't interact|user gesture|not allowed|autoplay/i.test(message);
+}
+
+function markAudioPlayFailure(audio, error) {
+  if (!audio) return;
+  if (isBrowserAutoplayBlock(error)) {
+    audio._blockedByAutoplay = true;
+    audio._unavailable = false;
+    return;
+  }
+  audio._unavailable = true;
+  audio._unavailableAt = performance.now();
+  audio._targetVolume = 0;
+}
+
+function recoverAutoplayBlockedAudio() {
+  [...Object.values(WeatherManager.audioTracks || {}), WeatherManager.musicTrack].forEach(audio => {
+    if (!audio || !audio._blockedByAutoplay) return;
+    audio._blockedByAutoplay = false;
+    audio._unavailable = false;
+  });
+}
 
 function getWeatherCenter() {
   if (walkMode && charMesh) return charMesh.position;
@@ -6069,7 +6110,8 @@ function updateWeatherAudio() {
     audio._targetVolume = targets[id] || 0;
     audio.volume += (audio._targetVolume - audio.volume) * .045;
     if (audio._targetVolume > .01 && audio.paused) {
-      audio.play().catch(() => { audio._unavailable = true; });
+      if (!WeatherManager.browserAudioUnlocked) return;
+      audio.play().catch(error => { markAudioPlayFailure(audio, error); });
     } else if (audio._targetVolume <= .01 && audio.volume < .015 && !audio.paused) {
       audio.pause();
     }
@@ -6112,15 +6154,23 @@ function updateVillageMusic() {
   audio._targetVolume = getVillageMusicTargetVolume();
   audio.volume += (audio._targetVolume - audio.volume) * .035;
   if (audio._targetVolume > .01 && audio.paused) {
-    audio.play().catch(() => { audio._unavailable = true; });
+    if (!WeatherManager.browserAudioUnlocked) return;
+    audio.play().catch(error => { markAudioPlayFailure(audio, error); });
   } else if (audio._targetVolume <= .01 && audio.volume < .012 && !audio.paused) {
     audio.pause();
   }
 }
 
 function unlockVillageMusic() {
-  if (WeatherManager.musicUnlocked) return;
+  WeatherManager.browserAudioUnlocked = true;
+  recoverAutoplayBlockedAudio();
+  if (WeatherManager.musicUnlocked) {
+    updateWeatherAudio();
+    updateVillageMusic();
+    return;
+  }
   WeatherManager.musicUnlocked = true;
+  updateWeatherAudio();
   updateVillageMusic();
 }
 
@@ -6141,7 +6191,7 @@ function playWeatherThunderAudio(strikeId) {
   }
   if (WeatherManager.thunderAudio._unavailable) return;
   WeatherManager.thunderAudio.currentTime = 0;
-  WeatherManager.thunderAudio.play().catch(() => { WeatherManager.thunderAudio._unavailable = true; });
+  WeatherManager.thunderAudio.play().catch(error => { markAudioPlayFailure(WeatherManager.thunderAudio, error); });
 }
 
 function getInteractionAudioTrack(id, path) {
@@ -6176,7 +6226,7 @@ function playInteractionAudio(key) {
   if (!audio || audio._unavailable) return;
   audio.volume = (cfg.volume || .6) * WeatherManager.masterVolume * WeatherManager.interactionVolume;
   audio.currentTime = 0;
-  audio.play().catch(() => { audio._unavailable = true; audio._unavailableAt = performance.now(); });
+  audio.play().catch(error => { markAudioPlayFailure(audio, error); });
 }
 
 function getFootstepSurfaceType() {
@@ -6241,7 +6291,7 @@ function playFootstepAudio() {
   audio.volume = stepVolume * WeatherManager.masterVolume * WeatherManager.footstepVolume;
   audio.pause();
   audio.currentTime = 0;
-  audio.play().catch(() => { audio._unavailable = true; audio._unavailableAt = performance.now(); });
+  audio.play().catch(error => { markAudioPlayFailure(audio, error); });
 }
 
 function stopFootstepAudio() {
@@ -6293,7 +6343,7 @@ function updateEnvironmentalOneShotAudio() {
     if (audio && !audio._unavailable) {
       audio.volume = (cfg.volume || .25) * WeatherManager.masterVolume * WeatherManager.ambienceVolume;
       audio.currentTime = 0;
-      audio.play().catch(() => { audio._unavailable = true; });
+      audio.play().catch(error => { markAudioPlayFailure(audio, error); });
     }
   }
   WeatherManager.nextEnvironmentalAudioAt = now + 22000 + Math.random() * 36000;
@@ -14080,7 +14130,7 @@ engine.runRenderLoop(()=>{
   updateInteractionPrompt();
   updateTutorialQuestWorldProgress();
   tryAutoOpenVillageGateFromWalkthrough();
-  updateCollectibles(dt);
+  updateCollectiblesSafe(dt);
   updateWeatherManager();
   updateNPCPopulation(dt);
   updatePerformanceDebugPanel();
