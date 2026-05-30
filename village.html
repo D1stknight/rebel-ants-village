@@ -1398,8 +1398,8 @@ const INTERIOR_TYPES = {
 const INTERIOR_ENTRANCE_RANGE = 4.8;
 const INTERIOR_FLOOR_Y = 0.5;
 const INTERIOR_PLAYER_SPAWN_Y = INTERIOR_FLOOR_Y + 0.08;
-const CUSTOM_INTERIOR_ROOM_SIZE = 38;
-const CUSTOM_INTERIOR_WALL_HEIGHT = 12;
+const CUSTOM_INTERIOR_ROOM_SIZE = 64;
+const CUSTOM_INTERIOR_WALL_HEIGHT = 18;
 const CUSTOM_INTERIOR_FLOOR_Y = INTERIOR_FLOOR_Y + 0.24;
 const CUSTOM_INTERIORS_KEY = 'rebelAntsCustomInteriors:v1';
 const INTERIOR_ROOM_CONFIG_KEY = 'rebelAntsInteriorRoomConfigs:v1';
@@ -17389,10 +17389,10 @@ function normalizeInteriorGlbModel(root) {
   root.rotationQuaternion = null;
   const uprightCandidates = [
     new BABYLON.Vector3(0, 0, 0),
-    new BABYLON.Vector3(Math.PI * .5, 0, 0),
     new BABYLON.Vector3(-Math.PI * .5, 0, 0),
-    new BABYLON.Vector3(0, 0, Math.PI * .5),
-    new BABYLON.Vector3(0, 0, -Math.PI * .5)
+    new BABYLON.Vector3(Math.PI * .5, 0, 0),
+    new BABYLON.Vector3(0, 0, -Math.PI * .5),
+    new BABYLON.Vector3(0, 0, Math.PI * .5)
   ];
   let bestFit = null;
   uprightCandidates.forEach(rotation => {
@@ -17408,8 +17408,8 @@ function normalizeInteriorGlbModel(root) {
   if (!initial) return;
   const footprint = Math.max(initial.size.x, initial.size.z);
   const height = Math.max(initial.size.y, .001);
-  const targetFootprint = CUSTOM_INTERIOR_ROOM_SIZE * .86;
-  const maxHeight = CUSTOM_INTERIOR_WALL_HEIGHT * .9;
+  const targetFootprint = CUSTOM_INTERIOR_ROOM_SIZE * .92;
+  const maxHeight = CUSTOM_INTERIOR_WALL_HEIGHT * .92;
   const footprintScale = footprint > .001 ? targetFootprint / footprint : Infinity;
   let fitScale = footprintScale;
   if (height * fitScale > maxHeight) fitScale = maxHeight / height;
