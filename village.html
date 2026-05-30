@@ -17388,13 +17388,13 @@ function normalizeInteriorGlbModel(root) {
   if (!initial) return;
   const footprint = Math.max(initial.size.x, initial.size.z);
   const height = Math.max(initial.size.y, .001);
-  const targetFootprint = CUSTOM_INTERIOR_ROOM_SIZE * .72;
-  const targetHeight = CUSTOM_INTERIOR_WALL_HEIGHT * .58;
+  const targetFootprint = CUSTOM_INTERIOR_ROOM_SIZE * .86;
+  const maxHeight = CUSTOM_INTERIOR_WALL_HEIGHT * .9;
   const footprintScale = footprint > .001 ? targetFootprint / footprint : Infinity;
-  const heightScale = height > .001 ? targetHeight / height : Infinity;
-  let fitScale = Math.min(footprintScale, heightScale);
+  let fitScale = footprintScale;
+  if (height * fitScale > maxHeight) fitScale = maxHeight / height;
   if (!Number.isFinite(fitScale)) fitScale = 1;
-  fitScale = Math.max(.05, Math.min(24, fitScale));
+  fitScale = Math.max(.05, Math.min(36, fitScale));
   root.scaling = new BABYLON.Vector3(fitScale, fitScale, fitScale);
   root.computeWorldMatrix?.(true);
   const scaled = getInteriorGlbModelBounds(root);
@@ -17641,7 +17641,7 @@ function buildInteriorRoom(entrance) {
   const isCustomGlbInterior = !INTERIOR_TYPES[type] && Boolean(def.modelUrl);
   const isTrainingDojoInterior = type === 'training_dojo';
   const roomFloorY = isCustomGlbInterior ? CUSTOM_INTERIOR_FLOOR_Y : INTERIOR_FLOOR_Y;
-  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:def.modelUrl || '', floorY:roomFloorY };
+  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:def.modelUrl || '', floorY:roomFloorY, isCustomGlbInterior };
 
   const floorColor = style === 'gallery' ? new BABYLON.Color3(.24,.23,.21)
     : style === 'theater' || style === 'arcade' ? new BABYLON.Color3(.05,.04,.08)
@@ -17757,7 +17757,9 @@ function enterInterior(entrance) {
     };
     if (charMesh) {
       const activeFloorY = ActiveInterior.floorY || INTERIOR_FLOOR_Y;
-      charMesh.position.set(0, activeFloorY + 0.08, 7.1);
+      const isCustomGlbInterior = root.metadata?.isCustomGlbInterior === true;
+      const spawnZ = isCustomGlbInterior ? 0 : 7.1;
+      charMesh.position.set(0, activeFloorY + 0.08, spawnZ);
       charMesh.rotation.y = Math.PI;
       charMesh._vel = 0;
       groundPlayableVisualToTerrain(activeFloorY);
