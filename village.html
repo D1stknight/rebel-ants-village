@@ -17384,7 +17384,27 @@ function getInteriorGlbModelBounds(root) {
 }
 
 function normalizeInteriorGlbModel(root) {
-  const initial = getInteriorGlbModelBounds(root);
+  root.position = new BABYLON.Vector3(0, INTERIOR_FLOOR_Y, 0);
+  root.scaling = new BABYLON.Vector3(1, 1, 1);
+  root.rotationQuaternion = null;
+  const uprightCandidates = [
+    new BABYLON.Vector3(0, 0, 0),
+    new BABYLON.Vector3(Math.PI * .5, 0, 0),
+    new BABYLON.Vector3(-Math.PI * .5, 0, 0),
+    new BABYLON.Vector3(0, 0, Math.PI * .5),
+    new BABYLON.Vector3(0, 0, -Math.PI * .5)
+  ];
+  let bestFit = null;
+  uprightCandidates.forEach(rotation => {
+    root.rotation = rotation;
+    root.computeWorldMatrix?.(true);
+    const bounds = getInteriorGlbModelBounds(root);
+    if (!bounds) return;
+    const footprintArea = Math.max(bounds.size.x * bounds.size.z, .001);
+    if (!bestFit || footprintArea > bestFit.footprintArea) bestFit = { rotation:rotation.clone(), bounds, footprintArea };
+  });
+  if (bestFit) root.rotation = bestFit.rotation;
+  const initial = bestFit?.bounds || getInteriorGlbModelBounds(root);
   if (!initial) return;
   const footprint = Math.max(initial.size.x, initial.size.z);
   const height = Math.max(initial.size.y, .001);
