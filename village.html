@@ -17257,16 +17257,20 @@ function getInteriorIsolationNodes() {
 function pauseInteriorOutdoorParticles() {
   InteriorIsolationRuntime.particleStates = [];
   (scene.particleSystems || []).forEach(ps => {
-    if (!ps || ps.isDisposed?.()) return;
-    const started = typeof ps.isStarted === 'function' ? ps.isStarted() : ps.started === true;
-    InteriorIsolationRuntime.particleStates.push({ ps, started });
-    if (started && typeof ps.stop === 'function') ps.stop();
+    try {
+      if (!ps || ps.isDisposed === true || ps._isDisposed === true) return;
+      const started = typeof ps.isStarted === 'function' ? ps.isStarted() : ps.started === true;
+      InteriorIsolationRuntime.particleStates.push({ ps, started });
+      if (started && typeof ps.stop === 'function') ps.stop();
+    } catch(e) {}
   });
 }
 
 function restoreInteriorOutdoorParticles() {
   InteriorIsolationRuntime.particleStates.forEach(({ ps, started }) => {
-    if (started && ps && !ps.isDisposed?.() && typeof ps.start === 'function') ps.start();
+    try {
+      if (started && ps && ps.isDisposed !== true && ps._isDisposed !== true && typeof ps.start === 'function') ps.start();
+    } catch(e) {}
   });
   InteriorIsolationRuntime.particleStates = [];
 }
