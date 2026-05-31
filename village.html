@@ -2806,6 +2806,9 @@ function spawnAsset(type, position, extraMeta) {
     if (type === 'ronin_broken_cart') buildRoninBrokenCart(root);
     if (type === 'ronin_watch_post') buildRoninWatchPost(root);
     root.metadata.loaded = true;
+    if (type === 'ambient_glow' || type === 'toro_lantern' || type === 'hanging_lantern' || type === 'hangingLantern' || type === 'ronin_brazier') {
+      applyFakeLightState(true);
+    }
     console.log("Spawned procedural:", type);
   } else {
     BABYLON.SceneLoader.ImportMesh("", "", config.path, scene, function (meshes) {
@@ -5898,6 +5901,9 @@ function buildRoninBrazier(root) {
   });
   const halo = markRoninEditable(BABYLON.MeshBuilder.CreateTorus(`${root.name}_halo`, { diameter:1.45, thickness:.035, tessellation:32 }, scene), root, false);
   halo.position.y = .99; halo.rotation.x = Math.PI / 2; halo.material = crimson;
+  registerFakeLightMaterial(root, crimson, { minFactor:.04 });
+  registerFakeLightMaterial(root, coal, { minFactor:.04 });
+  applyFakeLightState(true);
 }
 
 function buildRoninBrokenCart(root) {
@@ -13469,6 +13475,7 @@ if (m.material) {
   ensureDefaultVillageGate();
   if (!hasSavedNPCs) initNPCPopulation();
   applyAdminLayerState();
+  applyFakeLightState(true);
   runVillagePerformancePass(true);
   updateQuestTracker();
   _layoutDirty = false;
@@ -15508,7 +15515,7 @@ function applyLanternGlowToClone(clone) {
     );
   });
   clone.metadata._fakeLightMaterials = [];
-  mats.forEach(mat => registerFakeLightMaterial(clone, mat, { minFactor:.04 }));
+  mats.forEach(mat => registerFakeLightMaterial(clone, mat, { minFactor:.04, resetBase:true }));
   applyFakeLightState(true);
 }
 
@@ -17923,6 +17930,15 @@ function registerFakeLightMaterial(root, material, options = {}) {
   if (!root || !material) return;
   root.metadata = { ...(root.metadata || {}) };
   root.metadata._fakeLightMaterials = root.metadata._fakeLightMaterials || [];
+  const existing = root.metadata._fakeLightMaterials.find(entry => entry?.material === material);
+  if (existing) {
+    if (options.resetBase === true) {
+      existing.baseEmissive = material.emissiveColor?.clone?.() || existing.baseEmissive || new BABYLON.Color3(1, .75, .35);
+      existing.baseAlpha = Number.isFinite(material.alpha) ? material.alpha : existing.baseAlpha;
+    }
+    existing.minFactor = Number.isFinite(options.minFactor) ? options.minFactor : existing.minFactor;
+    return;
+  }
   root.metadata._fakeLightMaterials.push({
     material,
     baseEmissive: material.emissiveColor?.clone?.() || new BABYLON.Color3(1, .75, .35),
@@ -17940,10 +17956,10 @@ function getFakeLightStateFactor() {
   }
   const now = new Date();
   const h = now.getHours() + now.getMinutes() / 60;
-  let timeFactor = .18;
+  let timeFactor = .04;
   if (h >= 20 || h < 6) timeFactor = 1;
-  else if (h >= 17 && h < 20) timeFactor = .28 + ((h - 17) / 3) * .72;
-  else if (h >= 6 && h < 9) timeFactor = 1 - ((h - 6) / 3) * .72;
+  else if (h >= 17 && h < 20) timeFactor = .32 + ((h - 17) / 3) * .68;
+  else if (h >= 6 && h < 9) timeFactor = 1 - ((h - 6) / 3) * .96;
   let weatherMode = 'clear';
   try { weatherMode = WeatherManager?.mode || 'clear'; } catch(e) {}
   const weatherDarkness = {
@@ -17956,7 +17972,7 @@ function getFakeLightStateFactor() {
     'heavy-rain': .42,
     storm: .7
   }[weatherMode] || 0;
-  return Math.max(.12, Math.min(1.25, timeFactor + weatherDarkness));
+  return Math.max(.04, Math.min(1.25, timeFactor + weatherDarkness));
 }
 
 function updateFakeLightTestReadout(factor = getFakeLightStateFactor()) {
@@ -17974,10 +17990,62 @@ function setFakeLightTestMode(mode = 'auto') {
 }
 
 var _lastFakeLightStateUpdateAt = 0;
+var _lastFakeLightRegistrationAuditAt = 0;
+
+function ensureFakeLightRegistrations(force = false) {
+  const now = performance.now();
+  if (!force && now - _lastFakeLightRegistrationAuditAt < 2500) return;
+  _lastFakeLightRegistrationAuditAt = now;
+  if (!scene?.transformNodes) return;
+
+  scene.transformNodes.forEach(root => {
+    const type = root?.metadata?.type;
+    if (!type) return;
+
+    if (type === 'lantern_1') {
+      const clone = root.metadata.proxyFor || root;
+      const mats = clone?.metadata?._lanternGlow?.materials || [];
+      mats.forEach(mat => registerFakeLightMaterial(clone, mat, { minFactor:.04 }));
+      return;
+    }
+
+    if (type === 'ambient_glow') {
+      const mat = root.metadata?._ambientGlow?.material;
+      if (mat) registerFakeLightMaterial(root, mat, { minFactor:.04 });
+      return;
+    }
+
+    if (type === 'hanging_lantern' || type === 'hangingLantern') {
+      root.getChildMeshes?.(false).forEach(mesh => {
+        const mat = mesh?.material;
+        if (mat?.emissiveColor) registerFakeLightMaterial(root, mat, { minFactor:.05 });
+      });
+      return;
+    }
+
+    if (type === 'ronin_brazier') {
+      root.getChildMeshes?.(false).forEach(mesh => {
+        const name = (mesh?.name || '').toLowerCase();
+        const mat = mesh?.material;
+        if (mat?.emissiveColor && (name.includes('flame') || name.includes('halo') || name.includes('ember'))) {
+          registerFakeLightMaterial(root, mat, { minFactor:.04 });
+        }
+      });
+      return;
+    }
+
+    if (type === 'treasure_chest') {
+      const mat = root.metadata?._chestGlow?.material;
+      if (mat) registerFakeLightMaterial(root, mat, { minFactor:.04 });
+    }
+  });
+}
+
 function applyFakeLightState(force = false) {
   const now = performance.now();
   if (!force && now - _lastFakeLightStateUpdateAt < 900) return;
   _lastFakeLightStateUpdateAt = now;
+  ensureFakeLightRegistrations(force);
   const factor = getFakeLightStateFactor();
   updateFakeLightTestReadout(factor);
   applyActiveInteriorLightingState(factor);
