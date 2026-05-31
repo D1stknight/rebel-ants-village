@@ -899,6 +899,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="addInteriorNftFrameSlot()">Add NFT Frame Slot</button>
       <button class="ctrl-btn" onclick="duplicateSelectedInteriorNftFrame()">Duplicate Selected Frame</button>
       <button class="ctrl-btn" onclick="applySelectedInteriorNftFrameSettings()">Apply Frame Settings</button>
+      <button class="ctrl-btn" onclick="alignSelectedInteriorNftFrameToWall()">Hang Flat On Wall</button>
       <button class="ctrl-btn danger" onclick="deleteSelectedInteriorNftFrame()">Delete Selected Frame</button>
       <button class="ctrl-btn full" id="interiorNftFrameVisibilityBtn" onclick="toggleInteriorNftFrameHelpers()">Hide Frame Helpers</button>
     </div>
@@ -18205,8 +18206,8 @@ function interactInteriorDisplay(display) {
 function resolveInteriorNftFrameSource(meta = {}, frameIndex = 0) {
   const tokenId = String(meta.tokenId || '').trim();
   const fallbackUrl = String(meta.imageUrl || '').trim();
-  const collectionId = meta.collectionId || meta.collectionFilter || '';
   const collections = getInteriorSavedNftCollectionConfigs(getActiveInteriorConfigKey());
+  const collectionId = meta.collectionId || meta.collectionFilter || collections[0]?.collectionId || '';
   const collection = collections.find(item => item.collectionId === collectionId) || null;
   const items = Array.isArray(collection?.items) ? collection.items : [];
   const slot = Math.max(1, Number(meta.frameSlot || frameIndex + 1));
@@ -18304,7 +18305,7 @@ function applyInteriorNftFrameVisual(frame) {
     art.setEnabled(frame.metadata.enabled !== false);
     art.isPickable = true;
   }
-  const helperVisible = (adminMode || selectedObject === frame) && _interiorNftFrameHelpersVisible;
+  const helperVisible = _interiorNftFrameHelpersVisible;
   frame.getChildMeshes?.(false).forEach(mesh => {
     if (mesh.metadata?.isInteriorNftFrameHelper) {
       mesh.setEnabled(frame.metadata.enabled !== false && helperVisible);
@@ -18329,7 +18330,7 @@ function createInteriorNftFrameSlot(parent, config = {}) {
     interiorRuntime:true,
     frameId,
     frameName: config.frameName || config.label || 'Rebel Frame',
-    collectionId: config.collectionId || config.collectionFilter || '',
+    collectionId: config.collectionId || config.collectionFilter || getInteriorSavedNftCollectionConfigs(getActiveInteriorConfigKey())[0]?.collectionId || '',
     frameSlot: Number.isFinite(Number(config.frameSlot)) ? Math.max(1, Math.floor(Number(config.frameSlot))) : Math.max(1, getInteriorNftFrameRoots().length + 1),
     tokenId: config.tokenId || '',
     frameStatus: config.frameStatus || 'Owned',
@@ -18664,6 +18665,29 @@ function toggleInteriorNftFrameHelpers() {
   getInteriorNftFrameRoots().forEach(applyInteriorNftFrameVisual);
   const btn = document.getElementById('interiorNftFrameVisibilityBtn');
   if (btn) btn.textContent = _interiorNftFrameHelpersVisible ? 'Hide Frame Helpers' : 'Show Frame Helpers';
+}
+
+function alignSelectedInteriorNftFrameToWall() {
+  if (selectedObject?.metadata?.type !== 'interior_nft_frame') { showToast('Select an NFT frame slot first'); return; }
+  const bounds = getActiveInteriorBounds();
+  if (!bounds) { showToast('Enter an interior first'); return; }
+  prepareObjectForEditing(selectedObject);
+  const pos = selectedObject.position;
+  const options = [
+    { wall:'back', distance:Math.abs(pos.z + bounds.halfZ), apply:() => { pos.z = -bounds.halfZ + .12; selectedObject.rotation.y = 0; } },
+    { wall:'front', distance:Math.abs(bounds.halfZ - pos.z), apply:() => { pos.z = bounds.halfZ - .12; selectedObject.rotation.y = Math.PI; } },
+    { wall:'left', distance:Math.abs(pos.x + bounds.halfX), apply:() => { pos.x = -bounds.halfX + .12; selectedObject.rotation.y = Math.PI / 2; } },
+    { wall:'right', distance:Math.abs(bounds.halfX - pos.x), apply:() => { pos.x = bounds.halfX - .12; selectedObject.rotation.y = -Math.PI / 2; } }
+  ];
+  options.sort((a, b) => a.distance - b.distance);
+  options[0].apply();
+  selectedObject.rotation.x = 0;
+  selectedObject.rotation.z = 0;
+  refreshEditedObject(selectedObject);
+  applyInteriorNftFrameVisual(selectedObject);
+  saveInteriorNftFrameConfig(selectedObject);
+  attachSelectedGizmo();
+  showToast('Frame hung flat on ' + options[0].wall + ' wall');
 }
 
 function createInteriorMissingModelMarker(parent, modelUrl, reason = 'missing') {
@@ -19113,12 +19137,14 @@ function buildInteriorRoom(entrance) {
   light.metadata = { interiorRuntime:true, baseIntensity:light.intensity };
   light.parent = root;
   root.metadata.interiorLight = light;
+  root.metadata.interiorLights = [light];
   if (type === 'training_dojo') {
     const dojoFill = new BABYLON.PointLight('trainingDojoWarmFill', new BABYLON.Vector3(0, 5.8, -2), scene);
     dojoFill.intensity = .72;
     dojoFill.range = 30;
     dojoFill.diffuse = new BABYLON.Color3(1,.72,.42);
     dojoFill.parent = root;
+    root.metadata.interiorLights.push(dojoFill);
   }
 
   getInteriorSavedDisplayConfigs(targetInteriorId).forEach(displayConfig => createInteriorDisplay(root, displayConfig, { accent:accentMat }));
@@ -19203,7 +19229,7 @@ function enterInterior(entrance, options = {}) {
       setTimeout(() => setInteriorTitle('', ''), 2600);
     } catch(error) {
       console.error('Interior enter failed', error);
-      root?.dispose?.(false, true);
+      disposeInteriorRuntime(root);
       ActiveInterior = null;
       setVillageRuntimeEnabled(true);
       setVillageTravelFade(false);
@@ -19220,6 +19246,17 @@ function tryEnterNearbyInterior() {
   return enterInterior(entrance);
 }
 
+function disposeInteriorRuntime(interior) {
+  const root = interior?.root || interior;
+  if (!root) return;
+  const lights = root.metadata?.interiorLights || (root.metadata?.interiorLight ? [root.metadata.interiorLight] : []);
+  lights.forEach(light => {
+    try { light?.dispose?.(); } catch(e) {}
+  });
+  root.metadata && (root.metadata.interiorLights = []);
+  try { root.dispose?.(false, true); } catch(e) {}
+}
+
 function returnToVillageFromInterior() {
   if (!ActiveInterior) {
     showToast('Not inside an interior');
@@ -19227,7 +19264,7 @@ function returnToVillageFromInterior() {
   }
   setVillageTravelFade(true);
   setTimeout(() => {
-    ActiveInterior.root?.dispose(false, true);
+    disposeInteriorRuntime(ActiveInterior);
     const returnPosition = ActiveInterior.returnPosition?.clone?.() || new BABYLON.Vector3(0, 0, 0);
     const returnRotationY = ActiveInterior.returnRotationY || 0;
     ActiveInterior = null;
@@ -20653,6 +20690,7 @@ window.saveInteriorNftCollectionFromAdmin = saveInteriorNftCollectionFromAdmin;
 window.deleteSelectedInteriorNftCollection = deleteSelectedInteriorNftCollection;
 window.loadSelectedInteriorNftCollectionIntoAdmin = loadSelectedInteriorNftCollectionIntoAdmin;
 window.applySelectedInteriorNftFrameSettings = applySelectedInteriorNftFrameSettings;
+window.alignSelectedInteriorNftFrameToWall = alignSelectedInteriorNftFrameToWall;
 window.duplicateSelectedInteriorNftFrame = duplicateSelectedInteriorNftFrame;
 window.deleteSelectedInteriorNftFrame = deleteSelectedInteriorNftFrame;
 window.toggleInteriorNftFrameHelpers = toggleInteriorNftFrameHelpers;
