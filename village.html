@@ -773,6 +773,33 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn full" onclick="returnToVillageFromInterior()">Return To Village</button>
     </div>
   </div>
+  <div class="ap-section">Interior Assets</div>
+  <div class="admin-section-body" data-admin-section-body="interior-assets">
+    <div class="admin-note">Interior fake lights are cheap visual glow props. They are not real lights, so they are safe to use in rooms.</div>
+    <div class="creator-steps">
+      <span><b>1:</b> Enter interior</span>
+      <span><b>2:</b> Move exit door</span>
+      <span><b>3:</b> Add fake lanterns/glows</span>
+      <span><b>4:</b> Cache or hard save layout</span>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input id="interiorAssetColor" type="color" value="#ffdd88" style="width:44px;height:32px;border:none;background:none;cursor:pointer">
+      <input id="interiorAssetBrightness" type="range" min="0.2" max="3" step="0.1" value="1" style="flex:1">
+    </div>
+    <div class="manual-piece-grid">
+      <button class="manual-piece-btn" onclick="addInteriorFakeLightAsset('wall_lantern')"><span class="mi">▣</span><span>Wall Lantern</span><span class="ms">Glow</span></button>
+      <button class="manual-piece-btn" onclick="addInteriorFakeLightAsset('floor_lantern')"><span class="mi">▥</span><span>Floor Lantern</span><span class="ms">Glow</span></button>
+      <button class="manual-piece-btn" onclick="addInteriorFakeLightAsset('glow_panel')"><span class="mi">▭</span><span>Glow Panel</span><span class="ms">Wall</span></button>
+      <button class="manual-piece-btn" onclick="addInteriorFakeLightAsset('fire_bowl')"><span class="mi">◍</span><span>Fire Bowl</span><span class="ms">Glow</span></button>
+      <button class="manual-piece-btn" onclick="addInteriorFakeLightAsset('ceiling_glow')"><span class="mi">◎</span><span>Ceiling Glow</span><span class="ms">Roof</span></button>
+      <button class="manual-piece-btn" onclick="addInteriorFakeLightAsset('display_glow')"><span class="mi">◫</span><span>Display Glow</span><span class="ms">Frame</span></button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+      <button class="ctrl-btn" onclick="applySelectedInteriorFakeLightSettings()">Apply Light Settings</button>
+      <button class="ctrl-btn" onclick="duplicateSelectedInteriorAsset()">Duplicate Asset</button>
+      <button class="ctrl-btn danger" onclick="deleteSelectedInteriorAsset()">Delete Asset</button>
+    </div>
+  </div>
   <div class="ap-section">Displays</div>
   <div class="admin-section-body" data-admin-section-body="displays">
     <div class="admin-note">Displays are interior links: arcade cabinets, YouTube screens, books, products, and future quest hooks.</div>
@@ -3975,6 +4002,7 @@ function buildAmbientGlow(root, glowColor, glowBrightness, glowShape, glowWidth,
     material: mat,
     texture: glowTexture
   };
+  registerFakeLightMaterial(root, mat, { minFactor:.12 });
 }
 // ── TŌRŌ LANTERN BUILDER ─────────────────────────────────────
 // Traditional Japanese stone lantern (tōrō) built from primitives
@@ -4326,6 +4354,7 @@ function buildToro(root, glowColor) {
 
   root.metadata._toroFlickerObserver = scene.onBeforeRenderObservable.add(() => {
     const t = performance.now() * 0.001;
+    const fakeFactor = getFakeLightStateFactor();
 
     root.metadata._toroGlowMeshes.forEach((mesh, i) => {
       if (!mesh || mesh.isDisposed()) return;
@@ -4380,12 +4409,12 @@ function buildToro(root, glowColor) {
 
       if (mat && typeof mat.alpha === 'number') {
         const baseAlpha = mesh.metadata?._toroBaseAlpha ?? mat.alpha;
-        mat.alpha = Math.max(0.02, baseAlpha * (0.96 + (pulse - 1) * 0.8));
+        mat.alpha = Math.max(0.02, baseAlpha * Math.max(.22, fakeFactor) * (0.96 + (pulse - 1) * 0.8));
       }
 
       if (mat && mat.emissiveColor && mesh.metadata?._toroBaseEmissive) {
         mat.emissiveColor.copyFrom(
-          mesh.metadata._toroBaseEmissive.scale(0.98 + (pulse - 1) * 1.2)
+          mesh.metadata._toroBaseEmissive.scale(Math.max(.22, fakeFactor) * (0.98 + (pulse - 1) * 1.2))
         );
       }
     });
@@ -4632,6 +4661,12 @@ if (selectedObject?.metadata?.type === 'interior_display') {
   if (urlInput) urlInput.value = meta.url || '';
   if (descInput) descInput.value = meta.description || '';
   if (enabledInput) enabledInput.checked = meta.enabled !== false;
+}
+if (selectedObject?.metadata?.type === 'interior_fake_light') {
+  const colorInput = document.getElementById('interiorAssetColor');
+  const brightnessInput = document.getElementById('interiorAssetBrightness');
+  if (colorInput) colorInput.value = selectedObject.metadata.glowColor || '#ffdd88';
+  if (brightnessInput) brightnessInput.value = selectedObject.metadata.glowBrightness || 1;
 }
   if (isSign) {
     const cfg = selectedObject.metadata.signConfig || {};
@@ -6283,6 +6318,7 @@ function updateSky(){
   const lbl=h<6||h>=20?'Night':h<9?'Sunrise':h<17?'Day':'Sunset';
   document.getElementById('td').textContent=`${hh}:${mm}  ·  ${lbl}`;
   applyWeatherLighting();
+  applyFakeLightState(true);
 }
 
 const WEATHER_MODES = {
@@ -8665,6 +8701,7 @@ function buildHangingLantern(root, glowColor = "#ffdd88", chainHeight = 1.15) {
   root.metadata.type = root.metadata.type || 'hanging_lantern';
   root.metadata.lanternColor = glowColor;
   root.metadata.chainHeight = chainHeight;
+  registerFakeLightMaterial(root, paperMat, { minFactor:.2 });
 }
 
 function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
@@ -12554,7 +12591,7 @@ window.addEventListener('pointerup', () => {
   if (adminMode && selectedObject && (wasDragging || npcRotationChanged)) {
     const draggedNode = window._dragSelectedObject;
     const beforePos = window._dragSelectedStartPos;
-    if (selectedObject.metadata?.type !== 'interior_display') softSnapSelectedObject();
+    if (!['interior_display', 'interior_exit', 'interior_fake_light'].includes(selectedObject.metadata?.type)) softSnapSelectedObject();
     if (
       draggedNode &&
       draggedNode === selectedObject &&
@@ -12568,6 +12605,8 @@ window.addEventListener('pointerup', () => {
     if (selectedObject.metadata?.type === 'npc') updateNPCPlacementOrigin(selectedObject, beforePos);
     refreshEditedObject(selectedObject);
     if (selectedObject.metadata?.type === 'interior_display') saveInteriorDisplayConfig(selectedObject);
+    if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
+    if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
     rebuildVillageCollisionBlockers();
     renderSelectedWalkSurfaceGuide();
     triggerAutoSave();
@@ -13170,6 +13209,14 @@ if (m.material) {
 
 function deleteSelectedFence(){
   if (!selectedObject) return;
+  if (selectedObject.metadata?.type === 'interior_exit') {
+    showToast('Exit door stays in the room. Move it instead.');
+    return;
+  }
+  if (selectedObject.metadata?.type === 'interior_fake_light') {
+    deleteSelectedInteriorAsset();
+    return;
+  }
   recordEditorHistory('delete selected');
 
         const isOriginalObject =
@@ -13235,6 +13282,14 @@ function deleteSelectedFence(){
 }
 function duplicateSelectedFence(){
   if (!selectedObject) return;
+  if (selectedObject.metadata?.type === 'interior_fake_light') {
+    duplicateSelectedInteriorAsset();
+    return;
+  }
+  if (selectedObject.metadata?.type === 'interior_exit') {
+    showToast('Each interior has one exit door. Move it instead.');
+    return;
+  }
   recordEditorHistory('duplicate selected');
 
   if (selectedObject.metadata?.type === 'npc') {
@@ -14778,6 +14833,7 @@ engine.runRenderLoop(()=>{
   updateNPCPopulation(dt);
   runVillagePerformancePass(false);
   updatePerformanceDebugPanel();
+  applyFakeLightState(false);
   if (window._gpuMode === 'webgpu') {
     _webgpuSmartCapFrame++;
     if (_webgpuSmartCapFrame < 360 || _webgpuSmartCapFrame % 180 === 0) {
@@ -15624,6 +15680,19 @@ function getHelperVisibleCount() {
   ).length;
 }
 
+function getFakeLightRootCount(activeOnly = false) {
+  return scene.transformNodes.filter(node => {
+    const countable = node?.metadata?.type === 'interior_fake_light' || Array.isArray(node?.metadata?._fakeLightMaterials) || Array.isArray(node?.metadata?._toroGlowMats);
+    if (!countable || node.isDisposed?.()) return false;
+    if (!activeOnly) return true;
+    return node.isEnabled?.() !== false && node.metadata?.enabled !== false;
+  }).length;
+}
+
+function getInteriorAssetCount() {
+  return scene.transformNodes.filter(node => node?.metadata?.type === 'interior_fake_light' && !node.isDisposed?.()).length;
+}
+
 function getFrozenStaticRootCount() {
   VillagePerformanceRuntime.frozenRoots.forEach(root => {
     const rootFrozen = root?.metadata?._perfFrozen === true;
@@ -15696,6 +15765,9 @@ function getPerformanceMetrics() {
     interiorModel: { label:'Interior GLB', value:ActiveInterior?.modelUrl ? 'loaded' : 'none', status:ActiveInterior?.modelUrl ? 'good' : 'neutral', detail:ActiveInterior?.modelUrl || 'No custom GLB active' },
     interiorMeshes: { label:'Interior Meshes', value:ActiveInterior?.root?.getChildMeshes?.(false).length || 0, status:getPerfStatus(ActiveInterior?.root?.getChildMeshes?.(false).length || 0, { green:90, yellow:180 }) },
     interiorDisplays: { label:'Interior Displays', value:getInteriorDisplayRoots().length, status:getPerfStatus(getInteriorDisplayRoots().length, { green:12, yellow:30 }) },
+    interiorAssets: { label:'Interior Assets', value:getInteriorAssetCount(), status:getPerfStatus(getInteriorAssetCount(), { green:24, yellow:60 }) },
+    fakeLights: { label:'Fake Lights', value:getFakeLightRootCount(false), status:getPerfStatus(getFakeLightRootCount(false), { green:40, yellow:100 }) },
+    activeFakeLights: { label:'Active Fake Lights', value:getFakeLightRootCount(true), status:getPerfStatus(getFakeLightRootCount(true), { green:30, yellow:80 }) },
     interiorGlbCache: { label:'Interior GLB Cache', value:[...InteriorGlbCache.values()].filter(Boolean).length, status:getPerfStatus([...InteriorGlbCache.values()].filter(Boolean).length, { green:10, yellow:24 }) },
     terrain: { label:'Terrain Stamps', value:getTerrainPatchNodes().length, status:'neutral' },
     manualHelpers: { label:'Collision / Walk Helpers', value:manualHelpers, status:getPerfStatus(manualHelpers, { green:150, yellow:400 }) },
@@ -15731,6 +15803,7 @@ function updatePerformanceDetailsPanel() {
     <div><b>Top materials by mesh usage:</b> ${topMaterials.length ? topMaterials.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
     <div><b>Material audit offenders:</b> ${auditedMaterials.length ? auditedMaterials.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
     <div><b>Visible helper/admin meshes:</b> ${helperVisible}</div>
+    <div><b>Fake lights:</b> ${getFakeLightRootCount(false)} total, ${getFakeLightRootCount(true)} active, ${getInteriorAssetCount()} interior assets</div>
     <div><b>Static roots frozen:</b> ${getFrozenStaticRootCount()}</div>
     <div><b>Helper meshes hidden/reduced:</b> ${VillagePerformanceRuntime.hiddenHelperMeshes}</div>
     <div><b>Animated objects tracked:</b> ${animatedObjects}</div>`;
@@ -15875,6 +15948,8 @@ function attachAdminGizmoLifecycleObservers() {
         updateNPCAdminRotation(selectedObject);
       }
       if (selectedObject.metadata?.type === 'interior_display') saveInteriorDisplayConfig(selectedObject);
+      if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
+      if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
       rebuildVillageCollisionBlockers();
       renderSelectedWalkSurfaceGuide();
       if (adminMode) orbit.attachControl(canvas, true);
@@ -15891,6 +15966,8 @@ function flipSelected() {
   prepareObjectForEditing(selectedObject);
   selectedObject.scaling.x *= -1;
   refreshEditedObject(selectedObject);
+  if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
+  if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -15902,6 +15979,8 @@ function rotateSelectedBy(angle) {
   selectedObject.rotation.y += angle;
   if (selectedObject.metadata?.type === 'npc') updateNPCAdminRotation(selectedObject);
   refreshEditedObject(selectedObject);
+  if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
+  if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -17133,6 +17212,70 @@ function addInteriorPanel(parent, name, width, height, position, rotation, mater
   return mesh;
 }
 
+function makeInteriorGlowMaterial(name, colorHex = '#ffdd88', brightness = 1, alpha = .7) {
+  let color = new BABYLON.Color3(1, .86, .48);
+  try { color = BABYLON.Color3.FromHexString(colorHex); } catch(e) {}
+  const mat = new BABYLON.StandardMaterial(name, scene);
+  mat.diffuseColor = color.scale(.35);
+  mat.emissiveColor = color.scale(brightness);
+  mat.alpha = alpha;
+  mat.backFaceCulling = false;
+  mat.disableLighting = true;
+  if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mat);
+  return mat;
+}
+
+function registerFakeLightMaterial(root, material, options = {}) {
+  if (!root || !material) return;
+  root.metadata = { ...(root.metadata || {}) };
+  root.metadata._fakeLightMaterials = root.metadata._fakeLightMaterials || [];
+  root.metadata._fakeLightMaterials.push({
+    material,
+    baseEmissive: material.emissiveColor?.clone?.() || new BABYLON.Color3(1, .75, .35),
+    baseAlpha: Number.isFinite(material.alpha) ? material.alpha : 1,
+    minFactor: Number.isFinite(options.minFactor) ? options.minFactor : .18
+  });
+}
+
+function getFakeLightStateFactor() {
+  const now = new Date();
+  const h = now.getHours() + now.getMinutes() / 60;
+  let timeFactor = .18;
+  if (h >= 20 || h < 6) timeFactor = 1;
+  else if (h >= 17 && h < 20) timeFactor = .28 + ((h - 17) / 3) * .72;
+  else if (h >= 6 && h < 9) timeFactor = 1 - ((h - 6) / 3) * .72;
+  const weatherDarkness = {
+    clear: 0,
+    heat: 0,
+    cold: .08,
+    snow: .12,
+    fog: .24,
+    'light-rain': .22,
+    'heavy-rain': .42,
+    storm: .7
+  }[WeatherManager?.mode || 'clear'] || 0;
+  return Math.max(.12, Math.min(1.25, timeFactor + weatherDarkness));
+}
+
+let _lastFakeLightStateUpdateAt = 0;
+function applyFakeLightState(force = false) {
+  const now = performance.now();
+  if (!force && now - _lastFakeLightStateUpdateAt < 900) return;
+  _lastFakeLightStateUpdateAt = now;
+  const factor = getFakeLightStateFactor();
+  scene.transformNodes.forEach(root => {
+    const entries = root?.metadata?._fakeLightMaterials;
+    if (!Array.isArray(entries)) return;
+    entries.forEach(entry => {
+      const mat = entry.material;
+      if (!mat || mat.isDisposed?.()) return;
+      const applied = Math.max(entry.minFactor ?? .18, factor);
+      if (entry.baseEmissive) mat.emissiveColor = entry.baseEmissive.scale(applied);
+      if (Number.isFinite(entry.baseAlpha)) mat.alpha = Math.min(1, entry.baseAlpha * (.58 + applied * .42));
+    });
+  });
+}
+
 function getInteriorRoomConfigs() {
   try { return JSON.parse(localStorage.getItem(INTERIOR_ROOM_CONFIG_KEY) || '{}') || {}; }
   catch(e) { return {}; }
@@ -17233,6 +17376,74 @@ function deleteInteriorDisplayConfig(displayId) {
   const configs = getInteriorRoomConfigs();
   const current = configs[key] || {};
   current.displays = (Array.isArray(current.displays) ? current.displays : []).filter(item => item.displayId !== displayId);
+  configs[key] = { ...current, updatedAt:new Date().toISOString() };
+  setInteriorRoomConfigs(configs);
+}
+
+function serializeNodeTransform(node) {
+  return {
+    position: { x:node.position.x, y:node.position.y, z:node.position.z },
+    rotation: { x:node.rotation.x, y:node.rotation.y, z:node.rotation.z },
+    scaling: { x:node.scaling.x, y:node.scaling.y, z:node.scaling.z }
+  };
+}
+
+function applySerializedTransform(node, transform = {}) {
+  if (!node) return;
+  if (transform.position) node.position = new BABYLON.Vector3(transform.position.x || 0, transform.position.y || 0, transform.position.z || 0);
+  if (transform.rotation) node.rotation = new BABYLON.Vector3(transform.rotation.x || 0, transform.rotation.y || 0, transform.rotation.z || 0);
+  if (transform.scaling) node.scaling = new BABYLON.Vector3(transform.scaling.x || 1, transform.scaling.y || 1, transform.scaling.z || 1);
+}
+
+function getInteriorSavedAssetConfigs(interiorId) {
+  const configs = getInteriorRoomConfigs();
+  return Array.isArray(configs[interiorId]?.assets) ? configs[interiorId].assets : [];
+}
+
+function getInteriorSavedExitConfig(interiorId) {
+  const configs = getInteriorRoomConfigs();
+  return interiorId && configs[interiorId]?.exit ? configs[interiorId].exit : null;
+}
+
+function saveInteriorExitConfig(exitRoot) {
+  const key = getActiveInteriorConfigKey();
+  if (!key || !exitRoot) return;
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  configs[key] = { ...current, exit:serializeNodeTransform(exitRoot), updatedAt:new Date().toISOString() };
+  setInteriorRoomConfigs(configs);
+}
+
+function serializeInteriorAsset(asset) {
+  const meta = asset.metadata || {};
+  return {
+    assetId: meta.assetId,
+    assetType: meta.assetType || 'glow_panel',
+    color: meta.glowColor || '#ffdd88',
+    brightness: clampInteriorLightingBrightness(meta.glowBrightness ?? 1),
+    enabled: meta.enabled !== false,
+    ...serializeNodeTransform(asset)
+  };
+}
+
+function saveInteriorAssetConfig(asset) {
+  if (!ActiveInterior || !asset?.metadata?.assetId) return;
+  const key = getActiveInteriorConfigKey();
+  if (!key) return;
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  const assets = (Array.isArray(current.assets) ? current.assets : []).filter(item => item.assetId !== asset.metadata.assetId);
+  assets.push(serializeInteriorAsset(asset));
+  configs[key] = { ...current, assets, updatedAt:new Date().toISOString() };
+  setInteriorRoomConfigs(configs);
+}
+
+function deleteInteriorAssetConfig(assetId) {
+  const key = getActiveInteriorConfigKey();
+  if (!key || !assetId) return;
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  current.assets = (Array.isArray(current.assets) ? current.assets : []).filter(item => item.assetId !== assetId);
   configs[key] = { ...current, updatedAt:new Date().toISOString() };
   setInteriorRoomConfigs(configs);
 }
@@ -17352,6 +17563,115 @@ function interactInteriorDisplay(display) {
   }
   showToast((meta.label || 'Interior Display') + ': ' + (meta.description || meta.actionType || 'Future interaction'));
   return true;
+}
+
+function getInteriorForwardSpawn(distance = 4) {
+  if (!charMesh) return new BABYLON.Vector3(0, INTERIOR_FLOOR_Y + 1.2, -3);
+  const forward = new BABYLON.Vector3(Math.sin(charMesh.rotation.y), 0, Math.cos(charMesh.rotation.y));
+  const pos = charMesh.position.add(forward.scale(distance));
+  pos.y = (ActiveInterior?.floorY || INTERIOR_FLOOR_Y) + 1.2;
+  return pos;
+}
+
+function createInteriorFakeLightAsset(parent, config = {}) {
+  const assetType = config.assetType || 'glow_panel';
+  const assetId = config.assetId || ('light_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
+  const color = config.color || '#ffdd88';
+  const brightness = clampInteriorLightingBrightness(config.brightness ?? 1);
+  const root = new BABYLON.TransformNode('interiorAssetRoot_' + assetId, scene);
+  root.parent = parent;
+  root.position = config.position ? new BABYLON.Vector3(config.position.x || 0, config.position.y || 1, config.position.z || 0) : getInteriorForwardSpawn(4);
+  root.rotation = config.rotation ? new BABYLON.Vector3(config.rotation.x || 0, config.rotation.y || 0, config.rotation.z || 0) : new BABYLON.Vector3(0, charMesh?.rotation?.y || 0, 0);
+  root.scaling = config.scaling ? new BABYLON.Vector3(config.scaling.x || 1, config.scaling.y || 1, config.scaling.z || 1) : new BABYLON.Vector3(1, 1, 1);
+  root.metadata = { type:'interior_fake_light', interiorRuntime:true, assetId, assetType, glowColor:color, glowBrightness:brightness, enabled:config.enabled !== false };
+  root.isPickable = true;
+
+  const mat = makeInteriorGlowMaterial('interiorFakeLightMat_' + assetId, color, brightness, assetType === 'glow_panel' || assetType === 'display_glow' ? .62 : .82);
+  const frameMat = makeInteriorMaterial('interiorFakeLightFrameMat_' + assetId, new BABYLON.Color3(.16,.1,.045), .08);
+  const meshes = [];
+  const addBox = (name, size, position, material = frameMat) => meshes.push(addInteriorBox(root, name, size, position, material));
+  const addPanel = (name, width, height, position, rotation, material = mat) => meshes.push(addInteriorPanel(root, name, width, height, position, rotation, material));
+
+  if (assetType === 'wall_lantern') {
+    addBox('wallLanternBack_' + assetId, { width:.55, height:1.15, depth:.12 }, new BABYLON.Vector3(0, .2, -.08));
+    addPanel('wallLanternGlow_' + assetId, .9, 1.35, new BABYLON.Vector3(0, .2, -.16), new BABYLON.Vector3(0, 0, 0));
+  } else if (assetType === 'floor_lantern') {
+    addBox('floorLanternBase_' + assetId, { width:.75, height:.12, depth:.75 }, new BABYLON.Vector3(0, -.55, 0));
+    addBox('floorLanternCore_' + assetId, { width:.45, height:1.1, depth:.45 }, new BABYLON.Vector3(0, .05, 0), mat);
+  } else if (assetType === 'fire_bowl') {
+    const bowl = BABYLON.MeshBuilder.CreateCylinder('fakeFireBowl_' + assetId, { diameterTop:1.25, diameterBottom:.9, height:.42, tessellation:18 }, scene);
+    bowl.parent = root; bowl.position.y = -.32; bowl.material = frameMat; bowl.isPickable = false; meshes.push(bowl);
+    const flame = BABYLON.MeshBuilder.CreateCylinder('fakeFireGlow_' + assetId, { diameterTop:.15, diameterBottom:.85, height:1.05, tessellation:18 }, scene);
+    flame.parent = root; flame.position.y = .28; flame.material = mat; flame.isPickable = false; meshes.push(flame);
+  } else if (assetType === 'ceiling_glow') {
+    addPanel('ceilingGlow_' + assetId, 4.8, 4.8, new BABYLON.Vector3(0, 0, 0), new BABYLON.Vector3(Math.PI / 2, 0, 0));
+  } else if (assetType === 'display_glow') {
+    addPanel('displayGlow_' + assetId, 2.6, 2.9, new BABYLON.Vector3(0, 0, 0), new BABYLON.Vector3(0, 0, 0));
+  } else {
+    addPanel('glowPanel_' + assetId, 4.2, 2.4, new BABYLON.Vector3(0, 0, 0), new BABYLON.Vector3(0, 0, 0));
+  }
+
+  meshes.forEach(mesh => {
+    mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true };
+    mesh._editRoot = root;
+    mesh.isPickable = true;
+  });
+  registerEditableRoot(root.name, root);
+  registerFakeLightMaterial(root, mat, { minFactor:.12 });
+  applyFakeLightState(true);
+  return root;
+}
+
+function addInteriorFakeLightAsset(assetType) {
+  if (!ActiveInterior?.root) { showToast('Enter an interior first'); return; }
+  const color = document.getElementById('interiorAssetColor')?.value || '#ffdd88';
+  const brightness = clampInteriorLightingBrightness(document.getElementById('interiorAssetBrightness')?.value);
+  const asset = createInteriorFakeLightAsset(ActiveInterior.root, { assetType, color, brightness });
+  saveInteriorAssetConfig(asset);
+  adminGizmoMode = 'move';
+  setSelectedEditableObject(asset);
+  showToast('Interior fake light added');
+}
+
+function applySelectedInteriorFakeLightSettings() {
+  if (selectedObject?.metadata?.type !== 'interior_fake_light') { showToast('Select an interior fake light first'); return; }
+  const color = document.getElementById('interiorAssetColor')?.value || '#ffdd88';
+  const brightness = clampInteriorLightingBrightness(document.getElementById('interiorAssetBrightness')?.value);
+  selectedObject.metadata.glowColor = color;
+  selectedObject.metadata.glowBrightness = brightness;
+  selectedObject.metadata._fakeLightMaterials = [];
+  selectedObject.getChildMeshes?.(false).forEach(mesh => {
+    if (mesh.material && mesh.material.name?.startsWith('interiorFakeLightMat_')) {
+      mesh.material.dispose?.();
+      const mat = makeInteriorGlowMaterial('interiorFakeLightMat_' + selectedObject.metadata.assetId, color, brightness, .75);
+      mesh.material = mat;
+      registerFakeLightMaterial(selectedObject, mat, { minFactor:.12 });
+    }
+  });
+  applyFakeLightState(true);
+  saveInteriorAssetConfig(selectedObject);
+  showToast('Fake light settings saved');
+}
+
+function duplicateSelectedInteriorAsset() {
+  if (selectedObject?.metadata?.type !== 'interior_fake_light') { showToast('Select an interior fake light first'); return; }
+  const cfg = serializeInteriorAsset(selectedObject);
+  delete cfg.assetId;
+  cfg.position.x += 1.6;
+  const copy = createInteriorFakeLightAsset(ActiveInterior.root, cfg);
+  saveInteriorAssetConfig(copy);
+  setSelectedEditableObject(copy);
+  showToast('Interior asset duplicated');
+}
+
+function deleteSelectedInteriorAsset() {
+  if (selectedObject?.metadata?.type !== 'interior_fake_light') { showToast('Select an interior fake light first'); return; }
+  deleteInteriorAssetConfig(selectedObject.metadata.assetId);
+  selectedObject.dispose(false, true);
+  selectedObject = null;
+  updateSelectedBadge();
+  detachAdminGizmo();
+  showToast('Interior asset deleted');
 }
 
 function createInteriorMissingModelMarker(parent, modelUrl, reason = 'missing') {
@@ -17764,18 +18084,26 @@ function buildInteriorRoom(entrance) {
     addInteriorBox(root, 'interiorFrontWallRight', { width:8.2, height:6.5, depth:.5 }, new BABYLON.Vector3(7.9, 3.45, 11), wallMat);
     if (!isTrainingDojoInterior) addInteriorBox(root, 'interiorCeiling', { width:24, height:.18, depth:22 }, new BABYLON.Vector3(0, 6.78, 0), wallMat);
   }
-  addInteriorBox(root, 'interiorExitFrameTop', { width:4.6, height:.35, depth:.5 }, new BABYLON.Vector3(0, 4.82, 10.62), woodMat);
-  addInteriorBox(root, 'interiorExitFrameLeft', { width:.35, height:4.5, depth:.5 }, new BABYLON.Vector3(-2.25, 2.7, 10.62), woodMat);
-  addInteriorBox(root, 'interiorExitFrameRight', { width:.35, height:4.5, depth:.5 }, new BABYLON.Vector3(2.25, 2.7, 10.62), woodMat);
+  const exitRoot = new BABYLON.TransformNode('interiorExitRoot', scene);
+  exitRoot.parent = root;
+  exitRoot.position = new BABYLON.Vector3(0, 0, 10.62);
+  exitRoot.metadata = { type:'interior_exit', isInteriorExit:true, interiorRuntime:true };
+  applySerializedTransform(exitRoot, getInteriorSavedExitConfig(targetInteriorId) || {});
+  addInteriorBox(exitRoot, 'interiorExitFrameTop', { width:4.6, height:.35, depth:.5 }, new BABYLON.Vector3(0, 4.82, 0), woodMat);
+  addInteriorBox(exitRoot, 'interiorExitFrameLeft', { width:.35, height:4.5, depth:.5 }, new BABYLON.Vector3(-2.25, 2.7, 0), woodMat);
+  addInteriorBox(exitRoot, 'interiorExitFrameRight', { width:.35, height:4.5, depth:.5 }, new BABYLON.Vector3(2.25, 2.7, 0), woodMat);
   if (!isCustomGlbInterior && !isTrainingDojoInterior) {
     for (let i = 0; i < 5; i += 1) {
       addInteriorBox(root, 'interiorWallPanelBack_' + i, { width:2.6, height:3.8, depth:.08 }, new BABYLON.Vector3(-8 + i * 4, 3.2, -10.72), accentMat);
     }
   }
-  const exitDoor = addInteriorBox(root, 'interiorExitDoor', { width:3.8, height:4.4, depth:.34 }, new BABYLON.Vector3(0, 2.45, 10.75), exitMat);
-  exitDoor.metadata = { type:'interior_exit', isInteriorExit:true };
+  const exitDoor = addInteriorBox(exitRoot, 'interiorExitDoor', { width:3.8, height:4.4, depth:.34 }, new BABYLON.Vector3(0, 2.45, .13), exitMat);
+  exitDoor.metadata = { type:'interior_exit', isInteriorExit:true, interiorRuntime:true };
   exitDoor.isPickable = true;
+  exitDoor._editRoot = exitRoot;
   exitDoor.unfreezeWorldMatrix();
+  exitRoot.getChildMeshes?.(false).forEach(mesh => { mesh._editRoot = exitRoot; mesh.isPickable = true; });
+  registerEditableRoot(exitRoot.name, exitRoot);
 
   buildInteriorProps(root, type, { floor:floorMat, wall:wallMat, wood:woodMat, accent:accentMat, exit:exitMat });
   if (def.modelUrl) {
@@ -17799,6 +18127,7 @@ function buildInteriorRoom(entrance) {
   }
 
   getInteriorSavedDisplayConfigs(targetInteriorId).forEach(displayConfig => createInteriorDisplay(root, displayConfig, { accent:accentMat }));
+  getInteriorSavedAssetConfigs(targetInteriorId).forEach(assetConfig => createInteriorFakeLightAsset(root, assetConfig));
   if (!_interiorDisplaysVisible) getInteriorDisplayRoots().forEach(display => display.setEnabled(false));
 
   root.getChildMeshes?.(false).forEach(mesh => {
@@ -17905,7 +18234,7 @@ function returnToVillageFromInterior() {
 
 function getNearestInteriorExitInRange() {
   if (!ActiveInterior || !charMesh) return null;
-  const exit = scene.getMeshByName('interiorExitDoor');
+  const exit = scene.getTransformNodeByName('interiorExitRoot') || scene.getMeshByName('interiorExitDoor');
   if (!exit || exit.isDisposed?.()) return null;
   const pos = exit.getAbsolutePosition();
   const dx = pos.x - charMesh.position.x;
@@ -18006,7 +18335,11 @@ Object.assign(window, {
   addInteriorDisplayFromAdmin,
   applySelectedInteriorDisplaySettings,
   deleteSelectedInteriorDisplay,
-  toggleInteriorDisplayVisibility
+  toggleInteriorDisplayVisibility,
+  addInteriorFakeLightAsset,
+  applySelectedInteriorFakeLightSettings,
+  duplicateSelectedInteriorAsset,
+  deleteSelectedInteriorAsset
 });
 
 function saveQuestDraft() {
@@ -18807,6 +19140,8 @@ function scaleSelected(factor) {
   selectedObject.scaling.y *= factor;
   selectedObject.scaling.z *= factor;
   refreshEditedObject(selectedObject);
+  if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
+  if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -19291,6 +19626,10 @@ window.applyToroColor = applyToroColor;
 window.applyLanternGlowSettings = applyLanternGlowSettings;
 window.applyAmbientGlowSettings = applyAmbientGlowSettings;
 window.saveInteriorLightingFromAdmin = saveInteriorLightingFromAdmin;
+window.addInteriorFakeLightAsset = addInteriorFakeLightAsset;
+window.applySelectedInteriorFakeLightSettings = applySelectedInteriorFakeLightSettings;
+window.duplicateSelectedInteriorAsset = duplicateSelectedInteriorAsset;
+window.deleteSelectedInteriorAsset = deleteSelectedInteriorAsset;
 window.applySelectedWalkSurfaceSettings = applySelectedWalkSurfaceSettings;
 window.applyWalkSurfaceSettingsToSameType = applyWalkSurfaceSettingsToSameType;
 window.refreshSelectedWalkSurfaceGuide = refreshSelectedWalkSurfaceGuide;
