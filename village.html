@@ -6099,6 +6099,7 @@ function getVillageGateRoots() {
 }
 
 function getNearestVillageGateInRange(range = 7.2) {
+  if (ActiveInterior) return null;
   if (!charMesh) return null;
   const rangeSq = range * range;
   let nearest = null;
@@ -6123,6 +6124,7 @@ function isCharacterInsideVillageGateOpening(gate) {
 }
 
 function openVillageGateMenu() {
+  if (ActiveInterior) return false;
   const overlay = document.getElementById('villageGateOverlay');
   const list = document.getElementById('villageGateList');
   if (!overlay || !list) return false;
@@ -6172,13 +6174,13 @@ function selectVillageGateDestination(villageId) {
 }
 
 function tryOpenNearbyVillageGate() {
-  if (!walkMode || adminMode) return false;
+  if (!walkMode || adminMode || ActiveInterior) return false;
   if (!getNearestVillageGateInRange()) return false;
   return openVillageGateMenu();
 }
 
 function tryAutoOpenVillageGateFromWalkthrough() {
-  if (!walkMode || adminMode || isVillageGateMenuOpen()) return false;
+  if (!walkMode || adminMode || ActiveInterior || isVillageGateMenuOpen()) return false;
   const now = performance.now();
   if (now - _lastVillageGateAutoOpenAt < 2600) return false;
   const gate = getVillageGateRoots().find(candidate => isCharacterInsideVillageGateOpening(candidate));
@@ -8262,6 +8264,7 @@ function updateNPCAnimationState(root, moving, now) {
 
 function updateNPCPopulation(dt) {
   if (!NPCManager.roots.length) return;
+  if (ActiveInterior) return;
   const now = performance.now();
   NPCManager.roots.forEach(root => {
     let npcDt = dt;
@@ -17750,6 +17753,7 @@ function setInteriorWeatherOverlaysVisible(visible) {
 
 function enableInteriorIsolation() {
   if (InteriorIsolationRuntime.active) return;
+  closeVillageGateMenu();
   InteriorIsolationRuntime.active = true;
   InteriorIsolationRuntime.nodeStates = [];
   getInteriorIsolationNodes().forEach(hideInteriorIsolatedNode);
@@ -17788,7 +17792,7 @@ function restoreInteriorIsolation() {
   InteriorIsolationRuntime.nodeStates.forEach(state => {
     const node = state.node;
     if (!node || node.isDisposed?.()) return;
-    if (state.enabled) node.setEnabled?.(true);
+    node.setEnabled?.(state.enabled);
     if (state.visible !== undefined) node.isVisible = state.visible;
     if (node.metadata) delete node.metadata._interiorIsolated;
   });
@@ -17798,6 +17802,13 @@ function restoreInteriorIsolation() {
   if (InteriorIsolationRuntime.npcPaused !== null) NPCManager.paused = InteriorIsolationRuntime.npcPaused;
   InteriorIsolationRuntime.npcPaused = null;
   InteriorIsolationRuntime.active = false;
+  NPCManager.roots.forEach(root => {
+    if (!root || root.isDisposed?.()) return;
+    root.setEnabled(NPCManager.visible);
+  });
+  scene.transformNodes.forEach(node => {
+    if (node.metadata?.type === 'interior_entrance' && node.metadata.enabled !== false) node.setEnabled(_interiorEntrancesVisible);
+  });
   updateInteriorIsolationReadout();
 }
 
@@ -18749,7 +18760,7 @@ function makeInteriorVideoScreenMaterial(screen, allowPlay = false) {
       video.loop = meta.loop !== false;
       video.playsInline = true;
       video.preload = 'metadata';
-      const videoTexture = new BABYLON.VideoTexture('interiorVideoTexture_' + meta.screenId, video, scene, true, true);
+      const videoTexture = new BABYLON.VideoTexture('interiorVideoTexture_' + meta.screenId, video, scene, true, false);
       texture = videoTexture;
       meta._videoElement = video;
       meta._videoTexture = videoTexture;
