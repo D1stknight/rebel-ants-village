@@ -347,6 +347,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #interiorInfoPanel::before{content:'';position:absolute;left:18px;right:18px;top:8px;height:1px;background:linear-gradient(90deg,transparent,rgba(94,207,202,.64),rgba(232,197,106,.58),transparent)}
 #interiorInfoKicker{color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:7px}
 #interiorInfoTitle{color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:18px;letter-spacing:2px;line-height:1.3;margin-right:38px;text-shadow:0 0 16px rgba(232,197,106,.24)}
+#interiorInfoImage{display:none;margin:14px 0 4px;width:100%;max-height:260px;align-items:center;justify-content:center;background:rgba(94,207,202,.045);border:1px solid rgba(94,207,202,.22);overflow:hidden}
+#interiorInfoImage.on{display:flex}
+#interiorInfoImage img{max-width:100%;max-height:260px;object-fit:contain;display:block}
 #interiorInfoDescription{color:rgba(255,255,255,.82);font-size:13px;line-height:1.8;letter-spacing:.5px;margin-top:12px;white-space:pre-wrap}
 #interiorInfoClose{position:absolute;top:14px;right:14px;width:30px;height:30px;border:1px solid rgba(94,207,202,.38);background:rgba(94,207,202,.06);color:#5ecfca;font-size:18px;line-height:26px;cursor:pointer}
 #interiorInfoClose:hover{background:rgba(94,207,202,.15);border-color:rgba(94,207,202,.72)}
@@ -854,6 +857,46 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" id="interiorDisplayVisibilityBtn" onclick="toggleInteriorDisplayVisibility()">Hide Displays</button>
     </div>
   </div>
+  <div class="ap-section">Interior NFT Frames</div>
+  <div class="admin-section-body" data-admin-section-body="interior-nft-frames">
+    <div class="admin-note">Use NFT Frame Slots to place Rebel NFT art over the room’s existing wall frames. Move/scale/rotate them like any other object.</div>
+    <div class="creator-steps">
+      <span><b>1:</b> Enter interior</span>
+      <span><b>2:</b> Add NFT Frame Slot</span>
+      <span><b>3:</b> Move it over a wall frame</span>
+      <span><b>4:</b> Resize/rotate it</span>
+      <span><b>5:</b> Choose Rebel NFT source or custom image</span>
+      <span><b>6:</b> Save</span>
+    </div>
+    <label class="admin-field">Frame Name <input id="interiorNftFrameName" placeholder="Rebel Frame"></label>
+    <label class="admin-field">Source Type
+      <select id="interiorNftFrameSource" class="admin-select">
+        <option value="rebel_nfts">Rebel NFTs</option>
+        <option value="custom_image">Custom Image URL</option>
+        <option value="placeholder">Placeholder</option>
+      </select>
+    </label>
+    <label class="admin-field">Collection Filter
+      <select id="interiorNftFrameCollection" class="admin-select">
+        <option value="rebel_ants">Rebel Ants</option>
+        <option value="battle_for_colony">Battle for the Colony</option>
+        <option value="alpha_swarm">Alpha Swarm</option>
+        <option value="ascendants">Ascendants</option>
+        <option value="any_rebel">Any Rebel Collection</option>
+      </select>
+    </label>
+    <label class="admin-field">Token ID <input id="interiorNftFrameTokenId" placeholder="optional"></label>
+    <label class="admin-field">Image URL <input id="interiorNftFrameImageUrl" placeholder="https://..."></label>
+    <label class="admin-field">Title <input id="interiorNftFrameTitle" placeholder="Optional title"></label>
+    <label class="admin-field"><span><input id="interiorNftFrameEnabled" type="checkbox" checked style="width:auto;margin-right:6px">Frame Enabled</span></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="ctrl-btn" onclick="addInteriorNftFrameSlot()">Add NFT Frame Slot</button>
+      <button class="ctrl-btn" onclick="duplicateSelectedInteriorNftFrame()">Duplicate Selected Frame</button>
+      <button class="ctrl-btn" onclick="applySelectedInteriorNftFrameSettings()">Apply Frame Settings</button>
+      <button class="ctrl-btn danger" onclick="deleteSelectedInteriorNftFrame()">Delete Selected Frame</button>
+      <button class="ctrl-btn full" id="interiorNftFrameVisibilityBtn" onclick="toggleInteriorNftFrameHelpers()">Hide Frame Helpers</button>
+    </div>
+  </div>
   <div class="ap-section">Collectibles</div>
   <div class="admin-section-body" data-admin-section-body="collectibles">
     <div class="admin-note">Floating collectibles are visual-only progression pickups. They save per village and collected state stays local for V1.</div>
@@ -1093,6 +1136,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button id="interiorInfoClose" type="button" onclick="closeInteriorInfoPanel(event)" aria-label="Close interior information">×</button>
     <div id="interiorInfoKicker">Interior Record</div>
     <div id="interiorInfoTitle"></div>
+    <div id="interiorInfoImage"><img id="interiorInfoImageEl" alt=""></div>
     <div id="interiorInfoDescription"></div>
   </div>
 </div>
@@ -1476,7 +1520,9 @@ const CUSTOM_INTERIORS_KEY = 'rebelAntsCustomInteriors:v1';
 const INTERIOR_ROOM_CONFIG_KEY = 'rebelAntsInteriorRoomConfigs:v1';
 let _interiorEntrancesVisible = true;
 let _interiorDisplaysVisible = true;
+let _interiorNftFrameHelpersVisible = true;
 let ActiveInterior = null;
+const InteriorNftTextureCache = new Map();
 const InteriorIsolationRuntime = {
   active: false,
   nodeStates: [],
@@ -4714,6 +4760,23 @@ if (selectedObject?.metadata?.type === 'interior_fake_light') {
   if (colorInput) colorInput.value = selectedObject.metadata.glowColor || '#ffdd88';
   if (brightnessInput) brightnessInput.value = selectedObject.metadata.glowBrightness || 1;
 }
+if (selectedObject?.metadata?.type === 'interior_nft_frame') {
+  const meta = selectedObject.metadata || {};
+  const nameInput = document.getElementById('interiorNftFrameName');
+  const sourceInput = document.getElementById('interiorNftFrameSource');
+  const collectionInput = document.getElementById('interiorNftFrameCollection');
+  const tokenInput = document.getElementById('interiorNftFrameTokenId');
+  const imageInput = document.getElementById('interiorNftFrameImageUrl');
+  const titleInput = document.getElementById('interiorNftFrameTitle');
+  const enabledInput = document.getElementById('interiorNftFrameEnabled');
+  if (nameInput) nameInput.value = meta.frameName || '';
+  if (sourceInput) sourceInput.value = meta.sourceType || 'rebel_nfts';
+  if (collectionInput) collectionInput.value = meta.collectionFilter || 'rebel_ants';
+  if (tokenInput) tokenInput.value = meta.tokenId || '';
+  if (imageInput) imageInput.value = meta.imageUrl || '';
+  if (titleInput) titleInput.value = meta.title || '';
+  if (enabledInput) enabledInput.checked = meta.enabled !== false;
+}
   if (isSign) {
     const cfg = selectedObject.metadata.signConfig || {};
     document.getElementById('signLabel').value = cfg.label || '';
@@ -5476,6 +5539,11 @@ function updateInteractionPrompt() {
 
   if (ActiveInterior && getNearestInteriorExitInRange()) {
     setInteractionPrompt('Press O to Exit', true);
+    return;
+  }
+
+  if (ActiveInterior && getNearestInteriorNftFrameInRange()) {
+    setInteractionPrompt('Press O to Inspect', true);
     return;
   }
 
@@ -12671,6 +12739,7 @@ window.addEventListener('pointerup', () => {
     if (selectedObject.metadata?.type === 'interior_display') saveInteriorDisplayConfig(selectedObject);
     if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
     if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
+    if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
     rebuildVillageCollisionBlockers();
     renderSelectedWalkSurfaceGuide();
     triggerAutoSave();
@@ -12754,7 +12823,7 @@ function collectWorldLayoutData() {
   );
   const allNodes = [...saveableTransformNodes, ...saveableProxyMeshes, ...saveableNPCNodes];
 
-  return allNodes.map(node => {
+  const data = allNodes.map(node => {
     const savePosition = node.metadata.type === 'npc' && node.metadata.spawn
       ? node.metadata.spawn
       : node.position;
@@ -12828,6 +12897,18 @@ function collectWorldLayoutData() {
     editorLocked: node.metadata.editorLocked === true
   });
   });
+  const interiorRoomConfigs = getInteriorRoomConfigs();
+  if (Object.keys(interiorRoomConfigs).length) {
+    data.push({
+      type: 'interior_room_configs',
+      name: 'interiorRoomConfigs',
+      position: { x:0, y:0, z:0 },
+      rotation: { x:0, y:0, z:0 },
+      scaling: { x:1, y:1, z:1 },
+      configs: interiorRoomConfigs
+    });
+  }
+  return data;
 }
 
 function saveWorldLayout(saveToGitHub = true){
@@ -13051,6 +13132,11 @@ function loadWorldLayout(){
   data.forEach(item => {
     if (!item.type || !item.position) return;
     if (Math.abs(item.position.x) >= 500 || Math.abs(item.position.z) >= 500) return; // skip stuck
+
+    if (item.type === 'interior_room_configs') {
+      if (item.configs && typeof item.configs === 'object') setInteriorRoomConfigs(item.configs);
+      return;
+    }
 
     if (item.type === 'npc') {
       if ((item.villageId || CURRENT_VILLAGE_ID) === CURRENT_VILLAGE_ID) restoreNPCFromLayoutItem(item);
@@ -13279,6 +13365,10 @@ function deleteSelectedFence(){
   }
   if (selectedObject.metadata?.type === 'interior_fake_light') {
     deleteSelectedInteriorAsset();
+    return;
+  }
+  if (selectedObject.metadata?.type === 'interior_nft_frame') {
+    deleteSelectedInteriorNftFrame();
     return;
   }
   recordEditorHistory('delete selected');
@@ -13656,7 +13746,7 @@ document.addEventListener('keydown', async e => {
     enterInterior(selectedObject);
     return;
   }
-  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
+  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
     e.preventDefault();
     return;
   }
@@ -13715,6 +13805,15 @@ scene.onPointerObservable.add(evt=>{
     const picked = hit.pickedMesh;
     if (picked?.metadata?.isInteriorExit || picked?.parent?.metadata?.isInteriorExit) {
       returnToVillageFromInterior();
+      return;
+    }
+    const nftFrame = picked?._editRoot?.metadata?.type === 'interior_nft_frame'
+      ? picked._editRoot
+      : picked?.metadata?.type === 'interior_nft_frame'
+        ? picked
+        : null;
+    if (nftFrame) {
+      inspectInteriorNftFrame(nftFrame);
       return;
     }
     const display = picked?._editRoot?.metadata?.type === 'interior_display'
@@ -15878,6 +15977,8 @@ function getPerformanceMetrics() {
     interiorModel: { label:'Interior GLB', value:ActiveInterior?.modelUrl ? 'loaded' : 'none', status:ActiveInterior?.modelUrl ? 'good' : 'neutral', detail:ActiveInterior?.modelUrl || 'No custom GLB active' },
     interiorMeshes: { label:'Interior Meshes', value:ActiveInterior?.root?.getChildMeshes?.(false).length || 0, status:getPerfStatus(ActiveInterior?.root?.getChildMeshes?.(false).length || 0, { green:90, yellow:180 }) },
     interiorDisplays: { label:'Interior Displays', value:getInteriorDisplayRoots().length, status:getPerfStatus(getInteriorDisplayRoots().length, { green:12, yellow:30 }) },
+    interiorNftFrames: { label:'Interior NFT Frames', value:getInteriorNftFrameRoots().length, status:getPerfStatus(getInteriorNftFrameRoots().length, { green:24, yellow:60 }) },
+    interiorNftTextures: { label:'NFT Textures', value:InteriorNftTextureCache.size, status:getPerfStatus(InteriorNftTextureCache.size, { green:24, yellow:60 }) },
     interiorAssets: { label:'Interior Assets', value:getInteriorAssetCount(), status:getPerfStatus(getInteriorAssetCount(), { green:24, yellow:60 }) },
     fakeLights: { label:'Fake Lights', value:getFakeLightRootCount(false), status:getPerfStatus(getFakeLightRootCount(false), { green:40, yellow:100 }) },
     activeFakeLights: { label:'Active Fake Lights', value:getFakeLightRootCount(true), status:getPerfStatus(getFakeLightRootCount(true), { green:30, yellow:80 }) },
@@ -16063,6 +16164,7 @@ function attachAdminGizmoLifecycleObservers() {
       if (selectedObject.metadata?.type === 'interior_display') saveInteriorDisplayConfig(selectedObject);
       if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
       if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
+      if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
       rebuildVillageCollisionBlockers();
       renderSelectedWalkSurfaceGuide();
       if (adminMode) orbit.attachControl(canvas, true);
@@ -16081,6 +16183,7 @@ function flipSelected() {
   refreshEditedObject(selectedObject);
   if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
   if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
+  if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -16094,6 +16197,7 @@ function rotateSelectedBy(angle) {
   refreshEditedObject(selectedObject);
   if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
   if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
+  if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -17741,6 +17845,11 @@ function getInteriorSavedDisplayConfigs(interiorId) {
   return Array.isArray(configs[interiorId]?.displays) ? configs[interiorId].displays : [];
 }
 
+function getInteriorSavedNftFrameConfigs(interiorId) {
+  const configs = getInteriorRoomConfigs();
+  return Array.isArray(configs[interiorId]?.nftFrames) ? configs[interiorId].nftFrames : [];
+}
+
 function saveInteriorDisplayConfig(display) {
   if (!ActiveInterior || !display?.metadata?.displayId) return;
   const key = getActiveInteriorConfigKey();
@@ -17759,6 +17868,43 @@ function deleteInteriorDisplayConfig(displayId) {
   const configs = getInteriorRoomConfigs();
   const current = configs[key] || {};
   current.displays = (Array.isArray(current.displays) ? current.displays : []).filter(item => item.displayId !== displayId);
+  configs[key] = { ...current, updatedAt:new Date().toISOString() };
+  setInteriorRoomConfigs(configs);
+}
+
+function serializeInteriorNftFrame(frame) {
+  const meta = frame.metadata || {};
+  return {
+    frameId: meta.frameId,
+    frameName: meta.frameName || 'Rebel Frame',
+    sourceType: meta.sourceType || 'rebel_nfts',
+    collectionFilter: meta.collectionFilter || 'rebel_ants',
+    tokenId: meta.tokenId || '',
+    imageUrl: meta.imageUrl || '',
+    title: meta.title || '',
+    enabled: meta.enabled !== false,
+    ...serializeNodeTransform(frame)
+  };
+}
+
+function saveInteriorNftFrameConfig(frame) {
+  if (!ActiveInterior || !frame?.metadata?.frameId) return;
+  const key = getActiveInteriorConfigKey();
+  if (!key) return;
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  const nftFrames = (Array.isArray(current.nftFrames) ? current.nftFrames : []).filter(item => item.frameId !== frame.metadata.frameId);
+  nftFrames.push(serializeInteriorNftFrame(frame));
+  configs[key] = { ...current, nftFrames, updatedAt:new Date().toISOString() };
+  setInteriorRoomConfigs(configs);
+}
+
+function deleteInteriorNftFrameConfig(frameId) {
+  const key = getActiveInteriorConfigKey();
+  if (!key || !frameId) return;
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  current.nftFrames = (Array.isArray(current.nftFrames) ? current.nftFrames : []).filter(item => item.frameId !== frameId);
   configs[key] = { ...current, updatedAt:new Date().toISOString() };
   setInteriorRoomConfigs(configs);
 }
@@ -17939,16 +18085,28 @@ function getNearestInteriorDisplayInRange() {
   return nearest;
 }
 
-function openInteriorInfoPanel(title, description, kicker = 'Interior Record') {
+function openInteriorInfoPanel(title, description, kicker = 'Interior Record', options = {}) {
   const overlay = document.getElementById('interiorInfoOverlay');
   const titleEl = document.getElementById('interiorInfoTitle');
   const descEl = document.getElementById('interiorInfoDescription');
   const kickerEl = document.getElementById('interiorInfoKicker');
+  const imageWrap = document.getElementById('interiorInfoImage');
+  const imageEl = document.getElementById('interiorInfoImageEl');
   const closeBtn = document.getElementById('interiorInfoClose');
   if (!overlay || !titleEl || !descEl) return false;
   titleEl.textContent = title || 'Interior Display';
   descEl.textContent = description || 'No description has been added yet.';
   if (kickerEl) kickerEl.textContent = kicker || 'Interior Record';
+  if (imageWrap && imageEl) {
+    if (options.imageUrl) {
+      imageEl.src = options.imageUrl;
+      imageEl.alt = title || 'Interior image';
+      imageWrap.classList.add('on');
+    } else {
+      imageEl.removeAttribute('src');
+      imageWrap.classList.remove('on');
+    }
+  }
   if (closeBtn) {
     closeBtn.onclick = event => closeInteriorInfoPanel(event);
     closeBtn.disabled = false;
@@ -17980,6 +18138,250 @@ function interactInteriorDisplay(display) {
     return true;
   }
   openInteriorInfoPanel(meta.label || 'Interior Display', meta.description || meta.actionType || 'Future interaction', getInteriorTypeLabel(ActiveInterior?.interiorType || 'training_dojo'));
+  return true;
+}
+
+function normalizeInteriorNftCollection(value = '') {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+function getOwnedRebelNftsForInteriorFrames() {
+  const candidates = [
+    window.ownedRebelNfts,
+    window.rebelNfts,
+    window.walletRebelNfts,
+    window.loadedRebelNfts
+  ];
+  const localKeys = ['ownedRebelNfts', 'rebelAntsOwnedNfts', 'walletRebelNfts', 'loadedRebelNfts'];
+  localKeys.forEach(key => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) || 'null');
+      if (parsed) candidates.push(parsed);
+    } catch(e) {}
+  });
+  candidates.push(getSelectedRebel?.());
+  const flattened = [];
+  candidates.forEach(entry => {
+    if (!entry) return;
+    if (Array.isArray(entry)) flattened.push(...entry);
+    else if (Array.isArray(entry.nfts)) flattened.push(...entry.nfts);
+    else if (Array.isArray(entry.items)) flattened.push(...entry.items);
+    else if (entry.id || entry.tokenId || entry.image || entry.previewImage) flattened.push(entry);
+  });
+  return flattened.map(item => ({
+    raw: item,
+    title: item.name || item.title || item.displayName || (item.tokenId ? 'Rebel #' + item.tokenId : 'Rebel NFT'),
+    tokenId: item.tokenId || item.token_id || item.id || '',
+    image: item.image || item.imageUrl || item.image_url || item.previewImage || item.cachedImage || item.metadata?.image || '',
+    collection: item.collection || item.collectionName || item.collection_name || item.collectionKey || item.contractName || 'Rebel Ants',
+    collectionKey: normalizeInteriorNftCollection(item.collectionKey || item.collection || item.collectionName || item.contractName || 'rebel_ants')
+  })).filter(item => item.image || item.tokenId || item.title);
+}
+
+function interiorNftMatchesCollection(nft, filter) {
+  const normalized = normalizeInteriorNftCollection(filter || 'rebel_ants');
+  if (normalized === 'any_rebel') return true;
+  const haystack = normalizeInteriorNftCollection(`${nft.collection || ''} ${nft.collectionKey || ''}`);
+  if (normalized === 'rebel_ants') return /rebel|ant/.test(haystack);
+  if (normalized === 'battle_for_colony') return haystack.includes('battle') || haystack.includes('colony');
+  if (normalized === 'alpha_swarm') return haystack.includes('alpha') || haystack.includes('swarm');
+  if (normalized === 'ascendants') return haystack.includes('ascendant');
+  return haystack.includes(normalized);
+}
+
+function resolveInteriorNftFrameSource(meta = {}, frameIndex = 0) {
+  const sourceType = meta.sourceType || 'rebel_nfts';
+  const tokenId = String(meta.tokenId || '').trim();
+  const customUrl = String(meta.imageUrl || '').trim();
+  const owned = getOwnedRebelNftsForInteriorFrames().filter(nft => interiorNftMatchesCollection(nft, meta.collectionFilter));
+  let nft = null;
+  if (tokenId) nft = owned.find(item => String(item.tokenId || '') === tokenId) || null;
+  if (!nft && sourceType === 'rebel_nfts' && owned.length) nft = owned[Math.abs(frameIndex) % owned.length];
+  if (nft?.image) {
+    return {
+      imageUrl: nft.image,
+      title: meta.title || nft.title || 'Rebel NFT',
+      collection: nft.collection || 'Rebel Collection',
+      tokenId: nft.tokenId || tokenId,
+      sourceLabel: 'Rebel NFTs'
+    };
+  }
+  if (sourceType === 'custom_image' && customUrl) {
+    return {
+      imageUrl: customUrl,
+      title: meta.title || meta.frameName || 'Custom Image',
+      collection: 'Custom Image URL',
+      tokenId,
+      sourceLabel: 'Custom Image URL'
+    };
+  }
+  return {
+    imageUrl: '',
+    title: meta.title || meta.frameName || 'Rebel Frame',
+    collection: meta.collectionFilter || 'Placeholder',
+    tokenId,
+    sourceLabel: 'Placeholder'
+  };
+}
+
+function makeInteriorNftPlaceholderTexture(name, label = 'Rebel NFT') {
+  const dt = new BABYLON.DynamicTexture('interiorNftPlaceholder_' + name, { width:512, height:512 }, scene, false);
+  const ctx = dt.getContext();
+  ctx.fillStyle = '#07111d';
+  ctx.fillRect(0, 0, 512, 512);
+  const grd = ctx.createLinearGradient(0, 0, 512, 512);
+  grd.addColorStop(0, 'rgba(94,207,202,.38)');
+  grd.addColorStop(.52, 'rgba(232,197,106,.22)');
+  grd.addColorStop(1, 'rgba(14,22,42,.95)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(16, 16, 480, 480);
+  ctx.strokeStyle = '#e8c56a';
+  ctx.lineWidth = 8;
+  ctx.strokeRect(30, 30, 452, 452);
+  ctx.fillStyle = '#5ecfca';
+  ctx.font = 'bold 38px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('REBEL ANTS', 256, 218);
+  ctx.fillStyle = '#e8c56a';
+  ctx.font = 'bold 28px serif';
+  ctx.fillText(String(label || 'NFT FRAME').slice(0, 26).toUpperCase(), 256, 278);
+  ctx.font = '20px serif';
+  ctx.fillText('NFT FRAME SLOT', 256, 326);
+  dt.update();
+  return dt;
+}
+
+function getInteriorNftTexture(url, fallbackName, fallbackLabel) {
+  if (!url) return makeInteriorNftPlaceholderTexture(fallbackName, fallbackLabel);
+  if (InteriorNftTextureCache.has(url)) return InteriorNftTextureCache.get(url);
+  const texture = new BABYLON.Texture(url, scene, true, false, BABYLON.Texture.TRILINEAR_SAMPLINGMODE);
+  texture.name = 'interiorNftTexture_' + fallbackName;
+  texture.hasAlpha = true;
+  InteriorNftTextureCache.set(url, texture);
+  return texture;
+}
+
+function makeInteriorNftFrameMaterial(frame, resolved) {
+  const meta = frame.metadata || {};
+  const mat = new BABYLON.StandardMaterial('interiorNftFrameMat_' + meta.frameId, scene);
+  const texture = getInteriorNftTexture(resolved.imageUrl, meta.frameId, resolved.title);
+  mat.diffuseTexture = texture;
+  mat.emissiveTexture = texture;
+  mat.emissiveColor = new BABYLON.Color3(.34, .34, .34);
+  mat.specularColor = new BABYLON.Color3(.05, .05, .05);
+  mat.backFaceCulling = false;
+  mat.metadata = { ...(mat.metadata || {}), imageUrl:resolved.imageUrl || '', interiorNftFrame:true };
+  if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mat);
+  return mat;
+}
+
+function applyInteriorNftFrameVisual(frame) {
+  if (!frame || frame.isDisposed?.()) return;
+  const frames = getInteriorNftFrameRoots();
+  const frameIndex = Math.max(0, frames.findIndex(root => root === frame));
+  const resolved = resolveInteriorNftFrameSource(frame.metadata || {}, frameIndex);
+  frame.metadata.resolvedTitle = resolved.title;
+  frame.metadata.resolvedCollection = resolved.collection;
+  frame.metadata.resolvedTokenId = resolved.tokenId || '';
+  frame.metadata.resolvedImageUrl = resolved.imageUrl || '';
+  frame.metadata.resolvedSourceLabel = resolved.sourceLabel;
+  const art = frame.getChildMeshes?.(false).find(mesh => mesh.metadata?.isInteriorNftArt === true);
+  if (art) {
+    art.material?.dispose?.();
+    art.material = makeInteriorNftFrameMaterial(frame, resolved);
+  }
+  const helperVisible = _interiorNftFrameHelpersVisible && adminMode;
+  frame.getChildMeshes?.(false).forEach(mesh => {
+    if (mesh.metadata?.isInteriorNftFrameHelper) mesh.setEnabled(helperVisible);
+  });
+  frame.setEnabled(frame.metadata.enabled !== false);
+}
+
+function createInteriorNftFrameSlot(parent, config = {}) {
+  const frameId = config.frameId || ('nft_frame_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
+  const existing = scene.getTransformNodeByName('interiorNftFrameRoot_' + frameId);
+  if (existing && existing.parent === parent && !existing.isDisposed?.()) existing.dispose(false, true);
+  const root = new BABYLON.TransformNode('interiorNftFrameRoot_' + frameId, scene);
+  root.parent = parent;
+  root.position = config.position ? new BABYLON.Vector3(config.position.x || 0, config.position.y || 1.8, config.position.z || 0) : getInteriorForwardSpawn(3.2);
+  root.rotation = config.rotation ? new BABYLON.Vector3(config.rotation.x || 0, config.rotation.y || 0, config.rotation.z || 0) : new BABYLON.Vector3(0, charMesh?.rotation?.y || 0, 0);
+  root.scaling = config.scaling ? new BABYLON.Vector3(config.scaling.x || 1, config.scaling.y || 1, config.scaling.z || 1) : new BABYLON.Vector3(1.55, 1.95, 1);
+  root.metadata = {
+    type:'interior_nft_frame',
+    interiorRuntime:true,
+    frameId,
+    frameName: config.frameName || config.label || 'Rebel Frame',
+    sourceType: config.sourceType || 'rebel_nfts',
+    collectionFilter: config.collectionFilter || 'rebel_ants',
+    tokenId: config.tokenId || '',
+    imageUrl: config.imageUrl || '',
+    title: config.title || '',
+    enabled: config.enabled !== false,
+    questObjectiveType:'inspectInteriorNFTFrame'
+  };
+  root.isPickable = true;
+
+  const borderMat = makeInteriorMaterial('interiorNftFrameBorderMat_' + frameId, new BABYLON.Color3(.83,.66,.28), .22);
+  const art = BABYLON.MeshBuilder.CreatePlane('interiorNftFrameArt_' + frameId, { width:1, height:1 }, scene);
+  art.parent = root;
+  art.position.z = -.035;
+  art.metadata = { interiorRuntime:true, isInteriorNftArt:true };
+  art.isPickable = true;
+  art._editRoot = root;
+  const addBorder = (name, size, position) => {
+    const mesh = BABYLON.MeshBuilder.CreateBox(name + '_' + frameId, size, scene);
+    mesh.parent = root;
+    mesh.position = position;
+    mesh.material = borderMat;
+    mesh.metadata = { interiorRuntime:true, isInteriorNftFrameHelper:true };
+    mesh.isPickable = true;
+    mesh._editRoot = root;
+    return mesh;
+  };
+  addBorder('interiorNftFrameTop', { width:1.08, height:.035, depth:.035 }, new BABYLON.Vector3(0,.52,-.055));
+  addBorder('interiorNftFrameBottom', { width:1.08, height:.035, depth:.035 }, new BABYLON.Vector3(0,-.52,-.055));
+  addBorder('interiorNftFrameLeft', { width:.035, height:1.08, depth:.035 }, new BABYLON.Vector3(-.52,0,-.055));
+  addBorder('interiorNftFrameRight', { width:.035, height:1.08, depth:.035 }, new BABYLON.Vector3(.52,0,-.055));
+  registerEditableRoot(root.name, root);
+  applyInteriorNftFrameVisual(root);
+  return root;
+}
+
+function getInteriorNftFrameRoots() {
+  return scene.transformNodes.filter(node => node.metadata?.type === 'interior_nft_frame' && !node.isDisposed?.());
+}
+
+function getNearestInteriorNftFrameInRange() {
+  if (!ActiveInterior || !charMesh) return null;
+  let nearest = null;
+  let best = Infinity;
+  getInteriorNftFrameRoots().forEach(frame => {
+    if (frame.metadata?.enabled === false || frame.isEnabled?.() === false) return;
+    const pos = frame.getAbsolutePosition();
+    const dx = pos.x - charMesh.position.x;
+    const dz = pos.z - charMesh.position.z;
+    const distSq = dx * dx + dz * dz;
+    if (distSq <= 10.5 && distSq < best) {
+      nearest = frame;
+      best = distSq;
+    }
+  });
+  return nearest;
+}
+
+function inspectInteriorNftFrame(frame) {
+  if (!frame || frame.metadata?.enabled === false) return false;
+  applyInteriorNftFrameVisual(frame);
+  const meta = frame.metadata || {};
+  recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.frameName } }, 'inspectInteriorNFTFrame');
+  const title = meta.resolvedTitle || meta.title || meta.frameName || 'Rebel Frame';
+  const details = [
+    meta.frameName || title,
+    meta.resolvedCollection ? 'Collection: ' + meta.resolvedCollection : '',
+    meta.resolvedTokenId ? 'Token ID: ' + meta.resolvedTokenId : '',
+    meta.resolvedSourceLabel ? 'Source: ' + meta.resolvedSourceLabel : ''
+  ].filter(Boolean).join('\n');
+  openInteriorInfoPanel(title, details || 'Rebel NFT frame slot.', 'NFT Frame Slot', { imageUrl:meta.resolvedImageUrl || '' });
   return true;
 }
 
@@ -18090,6 +18492,71 @@ function deleteSelectedInteriorAsset() {
   updateSelectedBadge();
   detachAdminGizmo();
   showToast('Interior asset deleted');
+}
+
+function readInteriorNftFrameAdminSettings() {
+  return {
+    frameName: document.getElementById('interiorNftFrameName')?.value?.trim() || 'Rebel Frame',
+    sourceType: document.getElementById('interiorNftFrameSource')?.value || 'rebel_nfts',
+    collectionFilter: document.getElementById('interiorNftFrameCollection')?.value || 'rebel_ants',
+    tokenId: document.getElementById('interiorNftFrameTokenId')?.value?.trim() || '',
+    imageUrl: document.getElementById('interiorNftFrameImageUrl')?.value?.trim() || '',
+    title: document.getElementById('interiorNftFrameTitle')?.value?.trim() || '',
+    enabled: document.getElementById('interiorNftFrameEnabled')?.checked !== false
+  };
+}
+
+function addInteriorNftFrameSlot() {
+  if (!ActiveInterior?.root) { showToast('Enter an interior first'); return; }
+  const frame = createInteriorNftFrameSlot(ActiveInterior.root, readInteriorNftFrameAdminSettings());
+  saveInteriorNftFrameConfig(frame);
+  adminGizmoMode = 'move';
+  setSelectedEditableObject(frame);
+  showToast('NFT frame slot added');
+}
+
+function applySelectedInteriorNftFrameSettings() {
+  if (selectedObject?.metadata?.type !== 'interior_nft_frame') { showToast('Select an NFT frame slot first'); return; }
+  const settings = readInteriorNftFrameAdminSettings();
+  selectedObject.metadata.frameName = settings.frameName;
+  selectedObject.metadata.sourceType = settings.sourceType;
+  selectedObject.metadata.collectionFilter = settings.collectionFilter;
+  selectedObject.metadata.tokenId = settings.tokenId;
+  selectedObject.metadata.imageUrl = settings.imageUrl;
+  selectedObject.metadata.title = settings.title;
+  selectedObject.metadata.enabled = settings.enabled;
+  applyInteriorNftFrameVisual(selectedObject);
+  saveInteriorNftFrameConfig(selectedObject);
+  showToast('NFT frame settings saved');
+}
+
+function duplicateSelectedInteriorNftFrame() {
+  if (selectedObject?.metadata?.type !== 'interior_nft_frame') { showToast('Select an NFT frame slot first'); return; }
+  const cfg = serializeInteriorNftFrame(selectedObject);
+  delete cfg.frameId;
+  cfg.position.x += 1.25;
+  cfg.frameName = (cfg.frameName || 'Rebel Frame') + ' Copy';
+  const copy = createInteriorNftFrameSlot(ActiveInterior.root, cfg);
+  saveInteriorNftFrameConfig(copy);
+  setSelectedEditableObject(copy);
+  showToast('NFT frame duplicated');
+}
+
+function deleteSelectedInteriorNftFrame() {
+  if (selectedObject?.metadata?.type !== 'interior_nft_frame') { showToast('Select an NFT frame slot first'); return; }
+  deleteInteriorNftFrameConfig(selectedObject.metadata.frameId);
+  selectedObject.dispose(false, true);
+  selectedObject = null;
+  updateSelectedBadge();
+  detachAdminGizmo();
+  showToast('NFT frame deleted');
+}
+
+function toggleInteriorNftFrameHelpers() {
+  _interiorNftFrameHelpersVisible = !_interiorNftFrameHelpersVisible;
+  getInteriorNftFrameRoots().forEach(applyInteriorNftFrameVisual);
+  const btn = document.getElementById('interiorNftFrameVisibilityBtn');
+  if (btn) btn.textContent = _interiorNftFrameHelpersVisible ? 'Hide Frame Helpers' : 'Show Frame Helpers';
 }
 
 function createInteriorMissingModelMarker(parent, modelUrl, reason = 'missing') {
@@ -18548,8 +19015,10 @@ function buildInteriorRoom(entrance) {
   }
 
   getInteriorSavedDisplayConfigs(targetInteriorId).forEach(displayConfig => createInteriorDisplay(root, displayConfig, { accent:accentMat }));
+  getInteriorSavedNftFrameConfigs(targetInteriorId).forEach(frameConfig => createInteriorNftFrameSlot(root, frameConfig));
   getInteriorSavedAssetConfigs(targetInteriorId).forEach(assetConfig => createInteriorFakeLightAsset(root, assetConfig));
   if (!_interiorDisplaysVisible) getInteriorDisplayRoots().forEach(display => display.setEnabled(false));
+  getInteriorNftFrameRoots().forEach(applyInteriorNftFrameVisual);
 
   root.getChildMeshes?.(false).forEach(mesh => {
     mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true };
@@ -19580,6 +20049,7 @@ function scaleSelected(factor) {
   refreshEditedObject(selectedObject);
   if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
   if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
+  if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -20069,6 +20539,11 @@ window.addInteriorFakeLightAsset = addInteriorFakeLightAsset;
 window.applySelectedInteriorFakeLightSettings = applySelectedInteriorFakeLightSettings;
 window.duplicateSelectedInteriorAsset = duplicateSelectedInteriorAsset;
 window.deleteSelectedInteriorAsset = deleteSelectedInteriorAsset;
+window.addInteriorNftFrameSlot = addInteriorNftFrameSlot;
+window.applySelectedInteriorNftFrameSettings = applySelectedInteriorNftFrameSettings;
+window.duplicateSelectedInteriorNftFrame = duplicateSelectedInteriorNftFrame;
+window.deleteSelectedInteriorNftFrame = deleteSelectedInteriorNftFrame;
+window.toggleInteriorNftFrameHelpers = toggleInteriorNftFrameHelpers;
 window.applySelectedWalkSurfaceSettings = applySelectedWalkSurfaceSettings;
 window.applyWalkSurfaceSettingsToSameType = applyWalkSurfaceSettingsToSameType;
 window.refreshSelectedWalkSurfaceGuide = refreshSelectedWalkSurfaceGuide;
