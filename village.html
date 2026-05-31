@@ -442,6 +442,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ronin_altar')"><span class="ap-icon">⛩</span><span class="ap-name">Ronin Altar</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Ronin Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_dead_tree')"><span class="ap-icon">♜</span><span class="ap-name">Dead Tree</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_mist')"><span class="ap-icon">〰</span><span class="ap-name">Ronin Mist</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_weapon_rack')"><span class="ap-icon">⚔</span><span class="ap-name">Weapon Rack</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_katana_sigil')"><span class="ap-icon">☾</span><span class="ap-name">Katana Sigil</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_brazier')"><span class="ap-icon">🔥</span><span class="ap-name">Crimson Brazier</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_broken_cart')"><span class="ap-icon">▰</span><span class="ap-name">Broken Cart</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_watch_post')"><span class="ap-icon">▴</span><span class="ap-name">Watch Post</span></div></div>
     <div class="ap-section">Light Director</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">Path Lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('hanging_lantern')"><span class="ap-icon">🏮</span><span class="ap-name">Hanging Lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🔥</span><span class="ap-name">Fire Bowl</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ambient_glow')"><span class="ap-icon">✨</span><span class="ap-name">Ambient Glow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('treasure_chest')"><span class="ap-icon">💰</span><span class="ap-name">Treasure Chest</span></div></div>
+    <div class="admin-section-body" data-admin-section-body="light-director-test">
+      <div class="admin-note">Light Director test mode previews global fake-light timing for village lights and interior lighting.</div>
+      <label class="admin-field">Fake Light Test
+        <select id="fakeLightTestMode" class="admin-select" onchange="setFakeLightTestMode(this.value)">
+          <option value="auto">Auto Time + Weather</option>
+          <option value="day">Day / Clear</option>
+          <option value="sunset">Sunset</option>
+          <option value="night">Night</option>
+          <option value="storm">Storm</option>
+        </select>
+      </label>
+      <div id="fakeLightStateReadout" class="admin-note">Fake Light State: Auto</div>
+    </div>
     <div class="ap-section">Nature</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('cherry_blossom')"><span class="ap-icon">🌸</span><span class="ap-name">cherry_blossom</span></div><div class="ap-card" onclick="spawnAssetFromPanel('bamboo')"><span class="ap-icon">🎋</span><span class="ap-name">bamboo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('pine_1')"><span class="ap-icon">🌲</span><span class="ap-name">pine_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('tree_1')"><span class="ap-icon">🌳</span><span class="ap-name">tree_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('rock_1')"><span class="ap-icon">🪨</span><span class="ap-name">rock_1</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wooden_sign')"><span class="ap-icon">🪧</span><span class="ap-name">wooden_sign</span></div><div class="ap-card" onclick="spawnAssetFromPanel('small_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">small_bridge</span></div></div>
     <div class="ap-section" id="uploadedAssetsSection" style="display:none">Uploaded Assets</div>
@@ -4002,7 +4015,7 @@ function buildAmbientGlow(root, glowColor, glowBrightness, glowShape, glowWidth,
     material: mat,
     texture: glowTexture
   };
-  registerFakeLightMaterial(root, mat, { minFactor:.12 });
+  registerFakeLightMaterial(root, mat, { minFactor:.04 });
 }
 // ── TŌRŌ LANTERN BUILDER ─────────────────────────────────────
 // Traditional Japanese stone lantern (tōrō) built from primitives
@@ -4409,12 +4422,12 @@ function buildToro(root, glowColor) {
 
       if (mat && typeof mat.alpha === 'number') {
         const baseAlpha = mesh.metadata?._toroBaseAlpha ?? mat.alpha;
-        mat.alpha = Math.max(0.02, baseAlpha * Math.max(.22, fakeFactor) * (0.96 + (pulse - 1) * 0.8));
+        mat.alpha = Math.max(0.02, baseAlpha * Math.max(.06, fakeFactor) * (0.96 + (pulse - 1) * 0.8));
       }
 
       if (mat && mat.emissiveColor && mesh.metadata?._toroBaseEmissive) {
         mat.emissiveColor.copyFrom(
-          mesh.metadata._toroBaseEmissive.scale(Math.max(.22, fakeFactor) * (0.98 + (pulse - 1) * 1.2))
+          mesh.metadata._toroBaseEmissive.scale(Math.max(.06, fakeFactor) * (0.98 + (pulse - 1) * 1.2))
         );
       }
     });
@@ -4835,6 +4848,7 @@ function buildTreasureChest(root) {
   root.metadata._chestLidPivot = lidPivot;
   root.metadata._chestGlow = glow;
   root.metadata._chestMats = [woodMat, lidMat, metalMat, goldMat, grooveMat, blackMat, innerMat, glowMat];
+  registerFakeLightMaterial(root, glowMat, { minFactor:.04 });
 }
 
 function getTreasureChestRoots() {
@@ -8701,7 +8715,7 @@ function buildHangingLantern(root, glowColor = "#ffdd88", chainHeight = 1.15) {
   root.metadata.type = root.metadata.type || 'hanging_lantern';
   root.metadata.lanternColor = glowColor;
   root.metadata.chainHeight = chainHeight;
-  registerFakeLightMaterial(root, paperMat, { minFactor:.2 });
+  registerFakeLightMaterial(root, paperMat, { minFactor:.05 });
 }
 
 function hangingLantern(x,y,z,col="#ffdd88",chainH=1.2){
@@ -15081,6 +15095,8 @@ function applyToroColor() {
   const color = document.getElementById('toroColor').value;
   selectedObject.metadata.toroColor = color;
   selectedObject.getChildMeshes(false).forEach(m => m.dispose());
+  if (selectedObject.metadata._toroFlickerObserver) scene.onBeforeRenderObservable.remove(selectedObject.metadata._toroFlickerObserver);
+  selectedObject.metadata._toroFlickerObserver = null;
   buildToro(selectedObject, color);
   saveWorldLayout();
   showToast('🏯 Lantern color updated');
@@ -15134,7 +15150,7 @@ function applyLanternGlowToClone(clone) {
     );
   });
   clone.metadata._fakeLightMaterials = [];
-  mats.forEach(mat => registerFakeLightMaterial(clone, mat, { minFactor:.2 }));
+  mats.forEach(mat => registerFakeLightMaterial(clone, mat, { minFactor:.04 }));
   applyFakeLightState(true);
 }
 
@@ -15744,6 +15760,7 @@ function getPerformanceMetrics() {
   const renderer = window._gpuMode || ((engine.constructor?.Name || '').toLowerCase().includes('webgpu') ? 'webgpu' : 'webgl');
   const shadowCasters = shadows?.getShadowMap?.()?.renderList?.length || 0;
   const animatedNpcCount = NPCManager.roots.filter(root => root?.metadata?.activeAnimation && root.metadata.activeAnimation !== 'idle').length;
+  const fakeLightFactor = getFakeLightStateFactor();
   return {
     fps: { label:'FPS', value:fps || '--', status:getFpsStatus(fps) },
     modeNote: { label: adminMode ? 'Admin Mode FPS' : 'Walk Mode FPS', value: adminMode ? 'editor overhead active' : 'runtime view', status:adminMode ? 'warn' : 'good', detail:adminMode ? 'Editor gizmos, picking, and helper UI are active' : 'Editor helpers are reduced/hidden' },
@@ -15755,6 +15772,7 @@ function getPerformanceMetrics() {
     materials: { label:'Materials', value:scene.materials.length, status:'neutral' },
     textures: { label:'Textures', value:scene.textures.length, status:'neutral' },
     lights: { label:'Lights', value:scene.lights.length, status:'neutral' },
+    fakeLightState: { label:'Fake Light State', value:fakeLightFactor.toFixed(2), status:FakeLightDirectorTestMode === 'auto' ? 'neutral' : 'warn', detail:FakeLightDirectorTestMode === 'auto' ? 'auto time/weather' : 'test override: ' + FakeLightDirectorTestMode },
     shadowCasters: { label:'Shadow Casters', value:shadowCasters, status:'neutral' },
     frozenStatic: { label:'Frozen Static Roots', value:getFrozenStaticRootCount(), status:'good', detail:'static world matrices cached' },
     hiddenHelpers: { label:'Hidden Helpers', value:VillagePerformanceRuntime.hiddenHelperMeshes, status:'neutral', detail:adminMode ? 'admin helpers visible as needed' : 'editor helpers hidden/reduced' },
@@ -17240,7 +17258,13 @@ function registerFakeLightMaterial(root, material, options = {}) {
   });
 }
 
+var FakeLightDirectorTestMode = localStorage.getItem('rebelAntsFakeLightTestMode') || 'auto';
+const FAKE_LIGHT_TEST_FACTORS = { day:.04, sunset:.62, night:1, storm:1.25 };
+
 function getFakeLightStateFactor() {
+  if (FakeLightDirectorTestMode && FakeLightDirectorTestMode !== 'auto') {
+    return FAKE_LIGHT_TEST_FACTORS[FakeLightDirectorTestMode] || .18;
+  }
   const now = new Date();
   const h = now.getHours() + now.getMinutes() / 60;
   let timeFactor = .18;
@@ -17262,12 +17286,28 @@ function getFakeLightStateFactor() {
   return Math.max(.12, Math.min(1.25, timeFactor + weatherDarkness));
 }
 
+function updateFakeLightTestReadout(factor = getFakeLightStateFactor()) {
+  const select = document.getElementById('fakeLightTestMode');
+  if (select && select.value !== FakeLightDirectorTestMode) select.value = FakeLightDirectorTestMode;
+  const readout = document.getElementById('fakeLightStateReadout');
+  if (readout) readout.textContent = 'Fake Light State: ' + (FakeLightDirectorTestMode === 'auto' ? 'Auto Time + Weather' : FakeLightDirectorTestMode) + ' · ' + factor.toFixed(2);
+}
+
+function setFakeLightTestMode(mode = 'auto') {
+  FakeLightDirectorTestMode = FAKE_LIGHT_TEST_FACTORS[mode] !== undefined || mode === 'auto' ? mode : 'auto';
+  localStorage.setItem('rebelAntsFakeLightTestMode', FakeLightDirectorTestMode);
+  applyFakeLightState(true);
+  showToast('Fake light test: ' + (FakeLightDirectorTestMode === 'auto' ? 'Auto' : FakeLightDirectorTestMode));
+}
+
 var _lastFakeLightStateUpdateAt = 0;
 function applyFakeLightState(force = false) {
   const now = performance.now();
   if (!force && now - _lastFakeLightStateUpdateAt < 900) return;
   _lastFakeLightStateUpdateAt = now;
   const factor = getFakeLightStateFactor();
+  updateFakeLightTestReadout(factor);
+  applyActiveInteriorLightingState(factor);
   if (!scene?.transformNodes) return;
   scene.transformNodes.forEach(root => {
     const entries = root?.metadata?._fakeLightMaterials;
@@ -17328,9 +17368,20 @@ function applyInteriorLightingConfig(interiorId = getInteriorAdminLightingKey())
   let color = new BABYLON.Color3(1, .85, .54);
   try { color = BABYLON.Color3.FromHexString(config.color); } catch(e) {}
   const baseIntensity = Number.isFinite(light.metadata?.baseIntensity) ? light.metadata.baseIntensity : .78;
-  light.intensity = baseIntensity * config.brightness;
+  light.metadata = { ...(light.metadata || {}), userColor:color, userBrightness:config.brightness, baseIntensity };
+  applyActiveInteriorLightingState(getFakeLightStateFactor());
+}
+
+function applyActiveInteriorLightingState(fakeFactor = getFakeLightStateFactor()) {
+  const light = ActiveInterior?.root?.metadata?.interiorLight || null;
+  if (!light) return;
+  const baseIntensity = Number.isFinite(light.metadata?.baseIntensity) ? light.metadata.baseIntensity : .78;
+  const userBrightness = clampInteriorLightingBrightness(light.metadata?.userBrightness ?? 1);
+  const color = light.metadata?.userColor || new BABYLON.Color3(1, .85, .54);
+  const applied = Math.max(.18, Math.min(1.35, fakeFactor));
+  light.intensity = baseIntensity * userBrightness * applied;
   light.diffuse = color;
-  light.groundColor = color.scale(.32);
+  light.groundColor = color.scale(.32 + applied * .18);
 }
 
 function saveInteriorLightingConfigForKey(key) {
@@ -17623,7 +17674,7 @@ function createInteriorFakeLightAsset(parent, config = {}) {
     mesh.isPickable = true;
   });
   registerEditableRoot(root.name, root);
-  registerFakeLightMaterial(root, mat, { minFactor:.12 });
+  registerFakeLightMaterial(root, mat, { minFactor:.04 });
   applyFakeLightState(true);
   return root;
 }
@@ -17651,7 +17702,7 @@ function applySelectedInteriorFakeLightSettings() {
       mesh.material.dispose?.();
       const mat = makeInteriorGlowMaterial('interiorFakeLightMat_' + selectedObject.metadata.assetId, color, brightness, .75);
       mesh.material = mat;
-      registerFakeLightMaterial(selectedObject, mat, { minFactor:.12 });
+      registerFakeLightMaterial(selectedObject, mat, { minFactor:.04 });
     }
   });
   applyFakeLightState(true);
@@ -19632,6 +19683,7 @@ window.applyToroColor = applyToroColor;
 window.applyLanternGlowSettings = applyLanternGlowSettings;
 window.applyAmbientGlowSettings = applyAmbientGlowSettings;
 window.saveInteriorLightingFromAdmin = saveInteriorLightingFromAdmin;
+window.setFakeLightTestMode = setFakeLightTestMode;
 window.addInteriorFakeLightAsset = addInteriorFakeLightAsset;
 window.applySelectedInteriorFakeLightSettings = applySelectedInteriorFakeLightSettings;
 window.duplicateSelectedInteriorAsset = duplicateSelectedInteriorAsset;
