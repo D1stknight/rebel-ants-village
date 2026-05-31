@@ -17805,9 +17805,28 @@ function restoreInteriorIsolation() {
   NPCManager.roots.forEach(root => {
     if (!root || root.isDisposed?.()) return;
     root.setEnabled(NPCManager.visible);
+    root.getChildTransformNodes?.(false).forEach(node => {
+      if (!node || node.isDisposed?.()) return;
+      node.setEnabled(NPCManager.visible);
+      if (node.metadata) delete node.metadata._interiorIsolated;
+    });
+    root.getChildMeshes?.(false).forEach(mesh => {
+      if (!mesh || mesh.isDisposed?.()) return;
+      mesh.setEnabled(NPCManager.visible);
+      mesh.isVisible = NPCManager.visible;
+      if (mesh.metadata) delete mesh.metadata._interiorIsolated;
+    });
   });
   scene.transformNodes.forEach(node => {
-    if (node.metadata?.type === 'interior_entrance' && node.metadata.enabled !== false) node.setEnabled(_interiorEntrancesVisible);
+    if (node.metadata?.type === 'interior_entrance' && node.metadata.enabled !== false) {
+      node.setEnabled(_interiorEntrancesVisible);
+      node.getChildMeshes?.(false).forEach(mesh => {
+        if (!mesh || mesh.isDisposed?.()) return;
+        mesh.setEnabled(_interiorEntrancesVisible);
+        mesh.isVisible = _interiorEntrancesVisible;
+        if (mesh.metadata) delete mesh.metadata._interiorIsolated;
+      });
+    }
   });
   updateInteriorIsolationReadout();
 }
