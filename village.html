@@ -1088,9 +1088,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="toast"></div>
 <div id="interactionPrompt">Press O to Open</div>
 <div id="interiorTitle" aria-live="polite"></div>
-<div id="interiorInfoOverlay" aria-hidden="true" onclick="if(event.target===this)closeInteriorInfoPanel()">
-  <div id="interiorInfoPanel" role="dialog" aria-modal="true" aria-labelledby="interiorInfoTitle">
-    <button id="interiorInfoClose" type="button" onclick="closeInteriorInfoPanel()" aria-label="Close interior information">×</button>
+<div id="interiorInfoOverlay" aria-hidden="true" onclick="if(event.target===this)closeInteriorInfoPanel(event)">
+  <div id="interiorInfoPanel" role="dialog" aria-modal="true" aria-labelledby="interiorInfoTitle" onclick="event.stopPropagation()">
+    <button id="interiorInfoClose" type="button" onclick="closeInteriorInfoPanel(event)" aria-label="Close interior information">×</button>
     <div id="interiorInfoKicker">Interior Record</div>
     <div id="interiorInfoTitle"></div>
     <div id="interiorInfoDescription"></div>
@@ -1471,6 +1471,7 @@ const INTERIOR_PLAYER_SPAWN_Y = INTERIOR_FLOOR_Y + 0.08;
 const CUSTOM_INTERIOR_ROOM_SIZE = 88;
 const CUSTOM_INTERIOR_WALL_HEIGHT = 24;
 const CUSTOM_INTERIOR_FLOOR_Y = INTERIOR_FLOOR_Y + 0.24;
+const INTERIOR_PLAYER_COLLISION_RADIUS = 0.85;
 const CUSTOM_INTERIORS_KEY = 'rebelAntsCustomInteriors:v1';
 const INTERIOR_ROOM_CONFIG_KEY = 'rebelAntsInteriorRoomConfigs:v1';
 let _interiorEntrancesVisible = true;
@@ -14777,7 +14778,7 @@ window.auditVillageCollisionSources = function auditVillageCollisionSources() {
 };
 
 function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
-  if (ActiveInterior) return { x: proposedPosition.x, z: proposedPosition.z, blocked: false };
+  if (ActiveInterior) return resolveInteriorPlayerCollision(currentPosition, proposedPosition);
   refreshVillageCollisionBlockersIfNeeded();
 
   if (!villageSegmentBlocked(currentPosition.x, currentPosition.z, proposedPosition.x, proposedPosition.z)) {
@@ -14795,6 +14796,37 @@ function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
   }
 
   return { x: currentPosition.x, z: currentPosition.z, blocked: true };
+}
+
+function getInteriorBoundsForRoom(type, isCustomGlbInterior = false) {
+  if (isCustomGlbInterior) {
+    const half = CUSTOM_INTERIOR_ROOM_SIZE * .5 - 1.2;
+    return { halfX: half, halfZ: half };
+  }
+  if (type === 'training_dojo') return { halfX: 14.45, halfZ: 12.95 };
+  return { halfX: 11.25, halfZ: 10.25 };
+}
+
+function getActiveInteriorBounds() {
+  const bounds = ActiveInterior?.root?.metadata?.bounds;
+  if (bounds && Number.isFinite(bounds.halfX) && Number.isFinite(bounds.halfZ)) return bounds;
+  return getInteriorBoundsForRoom(ActiveInterior?.interiorType || 'training_dojo', ActiveInterior?.root?.metadata?.isCustomGlbInterior === true);
+}
+
+function resolveInteriorPlayerCollision(currentPosition, proposedPosition) {
+  const bounds = getActiveInteriorBounds();
+  if (!bounds) return { x: proposedPosition.x, z: proposedPosition.z, blocked: false };
+  const minX = -bounds.halfX + INTERIOR_PLAYER_COLLISION_RADIUS;
+  const maxX = bounds.halfX - INTERIOR_PLAYER_COLLISION_RADIUS;
+  const minZ = -bounds.halfZ + INTERIOR_PLAYER_COLLISION_RADIUS;
+  const maxZ = bounds.halfZ - INTERIOR_PLAYER_COLLISION_RADIUS;
+  const x = Math.min(maxX, Math.max(minX, proposedPosition.x));
+  const z = Math.min(maxZ, Math.max(minZ, proposedPosition.z));
+  return {
+    x,
+    z,
+    blocked: Math.abs(x - proposedPosition.x) > .001 || Math.abs(z - proposedPosition.z) > .001
+  };
 }
 
 
@@ -14906,6 +14938,7 @@ engine.runRenderLoop(()=>{
   runVillagePerformancePass(false);
   updatePerformanceDebugPanel();
   applyFakeLightState(false);
+  enforceInteriorIsolation();
   if (window._gpuMode === 'webgpu') {
     _webgpuSmartCapFrame++;
     if (_webgpuSmartCapFrame < 360 || _webgpuSmartCapFrame % 180 === 0) {
@@ -17276,6 +17309,25 @@ function getInteriorIsolationNodes() {
   ].filter(node => node && !shouldKeepNodeDuringInteriorIsolation(node));
 }
 
+function rememberInteriorIsolatedNode(node) {
+  if (!node || node.isDisposed?.()) return false;
+  if (InteriorIsolationRuntime.nodeStates.some(state => state.node === node)) return false;
+  InteriorIsolationRuntime.nodeStates.push({
+    node,
+    enabled: typeof node.isEnabled === 'function' ? node.isEnabled() : true,
+    visible: 'isVisible' in node ? node.isVisible : undefined
+  });
+  return true;
+}
+
+function hideInteriorIsolatedNode(node) {
+  if (!node || node.isDisposed?.() || shouldKeepNodeDuringInteriorIsolation(node)) return;
+  rememberInteriorIsolatedNode(node);
+  node.metadata = { ...(node.metadata || {}), _interiorIsolated:true };
+  node.setEnabled?.(false);
+  if ('isVisible' in node) node.isVisible = false;
+}
+
 function pauseInteriorOutdoorParticles() {
   InteriorIsolationRuntime.particleStates = [];
   (scene.particleSystems || []).forEach(ps => {
@@ -17317,21 +17369,32 @@ function enableInteriorIsolation() {
   if (InteriorIsolationRuntime.active) return;
   InteriorIsolationRuntime.active = true;
   InteriorIsolationRuntime.nodeStates = [];
-  getInteriorIsolationNodes().forEach(node => {
-    InteriorIsolationRuntime.nodeStates.push({
-      node,
-      enabled: typeof node.isEnabled === 'function' ? node.isEnabled() : true,
-      visible: 'isVisible' in node ? node.isVisible : undefined
-    });
-    node.metadata = { ...(node.metadata || {}), _interiorIsolated:true };
-    node.setEnabled?.(false);
-    if ('isVisible' in node) node.isVisible = false;
-  });
+  getInteriorIsolationNodes().forEach(hideInteriorIsolatedNode);
   InteriorIsolationRuntime.npcPaused = NPCManager.paused;
   NPCManager.paused = true;
   pauseInteriorOutdoorParticles();
   setInteriorWeatherOverlaysVisible(false);
   updateInteriorIsolationReadout();
+}
+
+function enforceInteriorIsolation() {
+  if (!ActiveInterior || !InteriorIsolationRuntime.active) return;
+  getInteriorIsolationNodes().forEach(hideInteriorIsolatedNode);
+  NPCManager.roots.forEach(root => {
+    if (!root || root.isDisposed?.()) return;
+    hideInteriorIsolatedNode(root);
+    root.getChildMeshes?.(false).forEach(mesh => {
+      if (!mesh || mesh.isDisposed?.()) return;
+      hideInteriorIsolatedNode(mesh);
+    });
+  });
+  (scene.particleSystems || []).forEach(ps => {
+    try {
+      if (!ps || ps.isDisposed === true || ps._isDisposed === true) return;
+      if (typeof ps.stop === 'function') ps.stop();
+    } catch(e) {}
+  });
+  setInteriorWeatherOverlaysVisible(false);
 }
 
 function restoreInteriorIsolation() {
@@ -17808,6 +17871,10 @@ function makeInteriorLabelMaterial(label, accent, name) {
 
 function createInteriorDisplay(parent, config = {}, mats = {}) {
   const displayId = config.displayId || ('display_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
+  const existing = scene.getTransformNodeByName('interiorDisplayRoot_' + displayId);
+  if (existing && existing.parent === parent && !existing.isDisposed?.()) {
+    existing.dispose(false, true);
+  }
   const root = new BABYLON.TransformNode('interiorDisplayRoot_' + displayId, scene);
   root.parent = parent;
   root.position = config.position
@@ -17877,20 +17944,29 @@ function openInteriorInfoPanel(title, description, kicker = 'Interior Record') {
   const titleEl = document.getElementById('interiorInfoTitle');
   const descEl = document.getElementById('interiorInfoDescription');
   const kickerEl = document.getElementById('interiorInfoKicker');
+  const closeBtn = document.getElementById('interiorInfoClose');
   if (!overlay || !titleEl || !descEl) return false;
   titleEl.textContent = title || 'Interior Display';
   descEl.textContent = description || 'No description has been added yet.';
   if (kickerEl) kickerEl.textContent = kicker || 'Interior Record';
+  if (closeBtn) {
+    closeBtn.onclick = event => closeInteriorInfoPanel(event);
+    closeBtn.disabled = false;
+  }
   overlay.classList.add('on');
   overlay.setAttribute('aria-hidden', 'false');
   return true;
 }
 
-function closeInteriorInfoPanel() {
+function closeInteriorInfoPanel(event = null) {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
   const overlay = document.getElementById('interiorInfoOverlay');
   if (!overlay || !overlay.classList.contains('on')) return false;
   overlay.classList.remove('on');
   overlay.setAttribute('aria-hidden', 'true');
+  const closeBtn = document.getElementById('interiorInfoClose');
+  if (closeBtn) closeBtn.blur?.();
   return true;
 }
 
@@ -18332,7 +18408,7 @@ function buildTrainingDojoInterior(root, mats) {
   createInteriorDisplay(root, { displayId:'training_start', label:'Training Trial', actionType:'futureQuest', description:'Future movement/tutorial/combat trial.', position:{x:0,y:1.62,z:-7.2} }, { accent:mats.accent });
 }
 
-function buildInteriorProps(root, type, mats) {
+function buildInteriorProps(root, type, mats, options = {}) {
   const accent = mats.accent;
   const def = getInteriorDefinition(type);
   const style = def.style || type;
@@ -18373,7 +18449,9 @@ function buildInteriorProps(root, type, mats) {
     createInteriorDisplay(root, { displayId:'forge_page_link', label:'Open Forge', actionType:'openUrl', url:'/forge.html', description:'Future selected Rebel forge station.', position:{x:0,y:2.25,z:-4.2} }, mats);
   } else {
     if (!INTERIOR_TYPES[type] && def.modelUrl) {
-      createInteriorDisplay(root, { displayId:'custom_room_info', label:def.title, actionType:'showInfo', description:def.description || 'Custom Rebel interior room.', position:{x:0,y:1.55,z:-5.5} }, mats);
+      const savedDisplays = getInteriorSavedDisplayConfigs(options.targetInteriorId || type);
+      const hasSavedRoomInfo = savedDisplays.some(display => display.displayId === 'custom_room_info' || display.label === def.title);
+      if (!hasSavedRoomInfo) createInteriorDisplay(root, { displayId:'custom_room_info', label:def.title, actionType:'showInfo', description:def.description || 'Custom Rebel interior room.', position:{x:0,y:1.55,z:-5.5} }, mats);
     } else if (type === 'training_dojo') {
       buildTrainingDojoInterior(root, mats);
     } else {
@@ -18396,7 +18474,7 @@ function buildInteriorRoom(entrance) {
   const isTrainingDojoInterior = type === 'training_dojo';
   const roomFloorY = isCustomGlbInterior ? CUSTOM_INTERIOR_FLOOR_Y : INTERIOR_FLOOR_Y;
   const playerFloorOffset = getInteriorPlayerFloorOffset(targetInteriorId);
-  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:def.modelUrl || '', floorY:roomFloorY + playerFloorOffset, baseFloorY:roomFloorY, playerFloorOffset, isCustomGlbInterior };
+  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:def.modelUrl || '', floorY:roomFloorY + playerFloorOffset, baseFloorY:roomFloorY, playerFloorOffset, isCustomGlbInterior, bounds:getInteriorBoundsForRoom(type, isCustomGlbInterior) };
 
   const floorColor = style === 'gallery' ? new BABYLON.Color3(.24,.23,.21)
     : style === 'theater' || style === 'arcade' ? new BABYLON.Color3(.05,.04,.08)
@@ -18448,7 +18526,7 @@ function buildInteriorRoom(entrance) {
   exitRoot.getChildMeshes?.(false).forEach(mesh => { mesh._editRoot = exitRoot; mesh.isPickable = true; });
   registerEditableRoot(exitRoot.name, exitRoot);
 
-  buildInteriorProps(root, type, { floor:floorMat, wall:wallMat, wood:woodMat, accent:accentMat, exit:exitMat });
+  buildInteriorProps(root, type, { floor:floorMat, wall:wallMat, wood:woodMat, accent:accentMat, exit:exitMat }, { targetInteriorId });
   if (def.modelUrl) {
     renderInteriorGlbModel(root, def.modelUrl).then(node => {
       if (node && ActiveInterior?.root === root) ActiveInterior.loadedGlbRoot = node;
@@ -18519,6 +18597,7 @@ function enterInterior(entrance, options = {}) {
         floorY: root.metadata?.floorY || INTERIOR_FLOOR_Y,
         baseFloorY: root.metadata?.baseFloorY || root.metadata?.floorY || INTERIOR_FLOOR_Y,
         playerFloorOffset: root.metadata?.playerFloorOffset || 0,
+        bounds: root.metadata?.bounds || null,
         modelUrl: root.metadata?.modelUrl || '',
         loadedGlbRoot: null,
         musicPath: getInteriorDefinition(type).musicPath || entrance.metadata.interiorDefinition?.musicPath || '',
