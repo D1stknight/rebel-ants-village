@@ -20112,6 +20112,7 @@ function returnToVillageFromInterior() {
     showToast('Not inside an interior');
     return false;
   }
+  playInteractionAudio('portalOpen');
   setVillageTravelFade(true);
   setTimeout(() => {
     disposeInteriorRuntime(ActiveInterior);
