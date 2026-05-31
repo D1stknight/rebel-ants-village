@@ -883,10 +883,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <div class="ap-section">Interior Video Screens</div>
   <div class="admin-section-body" data-admin-section-body="interior-video-screens">
-    <div class="admin-note">Use MP4 paths or URLs. Keep room videos short and compressed; poster images are the safe fallback when autoplay is blocked.</div>
+    <div class="admin-note">Upload an MP4 and optional poster image. Keep videos short and compressed; poster images are the safe fallback when autoplay is blocked. Free compressor: <a href="https://www.freeconvert.com/video-compressor" target="_blank" rel="noopener">FreeConvert Video Compressor</a></div>
+    <div class="creator-steps">
+      <span><b>1:</b> Upload MP4</span>
+      <span><b>2:</b> Optional poster</span>
+      <span><b>3:</b> Add Video Screen</span>
+      <span><b>4:</b> Move it</span>
+      <span><b>5:</b> Save</span>
+    </div>
     <label class="admin-field">Screen Name <input id="interiorVideoName" placeholder="Trailer Screen"></label>
     <label class="admin-field">Video MP4 URL / Path <input id="interiorVideoUrl" placeholder="/assets/video/interiors/trailer.mp4"></label>
     <label class="admin-field">Poster Image URL / Path <input id="interiorVideoPoster" placeholder="/assets/video/interiors/trailer-poster.jpg"></label>
+    <div id="interiorVideoUploadStatus" class="admin-note">MP4: no file selected</div>
+    <div id="interiorVideoPosterUploadStatus" class="admin-note">Poster: no file selected</div>
     <label class="admin-field">Click URL <input id="interiorVideoClickUrl" placeholder="https://..."></label>
     <label class="admin-field">Fallback URL <input id="interiorVideoFallbackUrl" placeholder="optional backup link"></label>
     <label class="admin-field">Future Live URL <input id="interiorVideoLiveUrl" placeholder="optional future live link"></label>
@@ -896,6 +905,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <label class="admin-field"><span><input id="interiorVideoFutureLiveMode" type="checkbox" style="width:auto;margin-right:6px">Future Live Placeholder</span></label>
     <label class="admin-field"><span><input id="interiorVideoEnabled" type="checkbox" checked style="width:auto;margin-right:6px">Screen Enabled</span></label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="ctrl-btn" onclick="document.getElementById('interiorVideoUploadInput').click()">Upload MP4</button>
+      <button class="ctrl-btn" onclick="document.getElementById('interiorVideoPosterUploadInput').click()">Upload Poster</button>
       <button class="ctrl-btn" onclick="addInteriorVideoScreenFromAdmin()">Add Video Screen</button>
       <button class="ctrl-btn" onclick="duplicateSelectedInteriorVideoScreen()">Duplicate Selected Screen</button>
       <button class="ctrl-btn" onclick="applySelectedInteriorVideoScreenSettings()">Apply Screen Settings</button>
@@ -903,6 +914,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn danger" onclick="deleteSelectedInteriorVideoScreen()">Delete Selected Screen</button>
       <button class="ctrl-btn full" id="interiorVideoVisibilityBtn" onclick="toggleInteriorVideoScreenHelpers()">Hide Screen Helpers</button>
     </div>
+    <input type="file" id="interiorVideoUploadInput" accept=".mp4,video/mp4" style="display:none" onchange="handleInteriorVideoUpload(event)">
+    <input type="file" id="interiorVideoPosterUploadInput" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" style="display:none" onchange="handleInteriorVideoPosterUpload(event)">
   </div>
   <div class="ap-section">Interior NFT Frames</div>
   <div class="admin-section-body" data-admin-section-body="interior-nft-frames">
@@ -17277,6 +17290,123 @@ async function uploadInteriorFileToGitHub(file, kind) {
   return '/' + path;
 }
 
+function getInteriorVideoUploadFolderKey() {
+  return makeInteriorIdFromName(
+    ActiveInterior?.targetInteriorId ||
+    document.getElementById('customInteriorId')?.value ||
+    document.getElementById('customInteriorSelect')?.value ||
+    document.getElementById('interiorTypeSelect')?.value ||
+    'shared'
+  );
+}
+
+function getInteriorVideoUploadStatus(file, kind = 'video') {
+  const mb = file ? file.size / 1048576 : 0;
+  const limits = kind === 'poster'
+    ? [
+      { max:1, label:'Excellent', color:'#7dffa4', recommendation:'Perfect poster size.' },
+      { max:3, label:'Good', color:'#5ecfca', recommendation:'Good for room posters.' },
+      { max:6, label:'Warning', color:'#ffca6a', recommendation:'Consider resizing/compressing.' },
+      { max:Infinity, label:'Danger', color:'#ff8b8b', recommendation:'Too large for a poster image.' }
+    ]
+    : [
+      { max:8, label:'Excellent', color:'#7dffa4', recommendation:'Best for fast interior loads.' },
+      { max:20, label:'Good', color:'#5ecfca', recommendation:'Good for one room video.' },
+      { max:45, label:'Warning', color:'#ffca6a', recommendation:'Compress if possible before production.' },
+      { max:95, label:'Large', color:'#ff9f6a', recommendation:'May upload, but expect slower deploy/load.' },
+      { max:Infinity, label:'Too Large', color:'#ff8b8b', recommendation:'GitHub browser uploads may fail above this size.' }
+    ];
+  const status = limits.find(item => mb <= item.max) || limits[limits.length - 1];
+  return { mb, ...status };
+}
+
+function renderInteriorVideoUploadStatus(elementId, file, kind = 'video', path = '') {
+  const el = document.getElementById(elementId);
+  if (!el || !file) return;
+  const status = getInteriorVideoUploadStatus(file, kind);
+  const label = kind === 'poster' ? 'Poster' : 'MP4';
+  el.innerHTML = `<span style="color:${status.color}">${label}: ${status.label}</span> - ${status.mb.toFixed(2)} MB. ${escapeHTML(status.recommendation)}${path ? '<br>' + escapeHTML(path) : ''}`;
+}
+
+async function uploadInteriorVideoAssetToGitHub(file, kind) {
+  if (!file) return '';
+  const tokenResult = await getInteriorGitHubUploadAuth();
+  const folderKey = getInteriorVideoUploadFolderKey();
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const prefix = kind === 'poster' ? 'poster' : 'video';
+  const path = `assets/video/interiors/${folderKey}/${prefix}-${Date.now()}-${safeName}`;
+  const uploadResponse = await fetch(`https://api.github.com/repos/${tokenResult.repo}/contents/${path}`, {
+    method:'PUT',
+    headers: {
+      Authorization:'Bearer ' + tokenResult.token,
+      Accept:'application/vnd.github+json',
+      'Content-Type':'application/json'
+    },
+    body: JSON.stringify({
+      message:'upload interior ' + prefix + ': ' + file.name,
+      content: await readFileAsBase64(file),
+      branch: tokenResult.branch || 'dev'
+    })
+  });
+  const uploadRaw = await uploadResponse.text().catch(() => '');
+  let uploadResult = {};
+  try {
+    uploadResult = uploadRaw ? JSON.parse(uploadRaw) : {};
+  } catch(e) {
+    uploadResult = { message: uploadRaw || uploadResponse.statusText || 'GitHub upload failed' };
+  }
+  if (!uploadResponse.ok) {
+    throw new Error(uploadResult.message || ('GitHub upload failed. Status: ' + uploadResponse.status));
+  }
+  return '/' + path;
+}
+
+async function handleInteriorVideoUpload(event) {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  if (!file) return;
+  if (!/\.mp4$/i.test(file.name)) { showToast('Choose an MP4 video'); return; }
+  renderInteriorVideoUploadStatus('interiorVideoUploadStatus', file, 'video');
+  showToast('Uploading interior MP4...', 30000);
+  try {
+    const path = await uploadInteriorVideoAssetToGitHub(file, 'video');
+    const input = document.getElementById('interiorVideoUrl');
+    if (input) input.value = path;
+    renderInteriorVideoUploadStatus('interiorVideoUploadStatus', file, 'video', path);
+    if (selectedObject?.metadata?.type === 'interior_video_screen') {
+      selectedObject.metadata.videoUrl = path;
+      saveInteriorVideoScreenConfig(selectedObject);
+      refreshInteriorVideoPlayback();
+    }
+    showToast('Interior MP4 uploaded');
+  } catch(error) {
+    showToast('Interior MP4 upload failed: ' + (error.message || 'try again'), 9000);
+  }
+}
+
+async function handleInteriorVideoPosterUpload(event) {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  if (!file) return;
+  if (!/\.(png|jpe?g|webp)$/i.test(file.name)) { showToast('Choose a PNG, JPG, or WebP poster'); return; }
+  renderInteriorVideoUploadStatus('interiorVideoPosterUploadStatus', file, 'poster');
+  showToast('Uploading interior poster...', 30000);
+  try {
+    const path = await uploadInteriorVideoAssetToGitHub(file, 'poster');
+    const input = document.getElementById('interiorVideoPoster');
+    if (input) input.value = path;
+    renderInteriorVideoUploadStatus('interiorVideoPosterUploadStatus', file, 'poster', path);
+    if (selectedObject?.metadata?.type === 'interior_video_screen') {
+      selectedObject.metadata.posterUrl = path;
+      saveInteriorVideoScreenConfig(selectedObject);
+      refreshInteriorVideoPlayback();
+    }
+    showToast('Interior poster uploaded');
+  } catch(error) {
+    showToast('Interior poster upload failed: ' + (error.message || 'try again'), 9000);
+  }
+}
+
 async function handleInteriorGlbUpload(event) {
   const file = event.target.files?.[0];
   event.target.value = '';
@@ -20144,6 +20274,8 @@ Object.assign(window, {
   archiveSelectedCustomInterior,
   handleInteriorGlbUpload,
   handleInteriorMusicUpload,
+  handleInteriorVideoUpload,
+  handleInteriorVideoPosterUpload,
   adjustActiveInteriorPlayerFloorOffset,
   resetActiveInteriorPlayerFloorOffset,
   addInteriorDisplayFromAdmin,
@@ -21386,6 +21518,8 @@ window.archiveSelectedCustomInterior = archiveSelectedCustomInterior;
 window.removeCustomInteriorUpload = removeCustomInteriorUpload;
 window.handleInteriorGlbUpload = handleInteriorGlbUpload;
 window.handleInteriorMusicUpload = handleInteriorMusicUpload;
+window.handleInteriorVideoUpload = handleInteriorVideoUpload;
+window.handleInteriorVideoPosterUpload = handleInteriorVideoPosterUpload;
 window.addInteriorDisplayFromAdmin = addInteriorDisplayFromAdmin;
 window.applySelectedInteriorDisplaySettings = applySelectedInteriorDisplaySettings;
 window.deleteSelectedInteriorDisplay = deleteSelectedInteriorDisplay;
