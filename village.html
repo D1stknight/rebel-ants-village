@@ -5467,7 +5467,7 @@ function updateInteractionPrompt() {
 
   const interiorEntrance = getNearestInteriorEntranceInRange();
   if (interiorEntrance) {
-    setInteractionPrompt(interiorEntrance.metadata.promptText || 'Press O to Enter', true);
+    setInteractionPrompt(getInteriorEntrancePromptText(interiorEntrance), true);
     return;
   }
 
@@ -16670,6 +16670,14 @@ function getInteriorTypeLabel(type) {
   return getInteriorDefinition(normalizeInteriorType(type)).title;
 }
 
+function getInteriorEntrancePromptText(entranceOrType) {
+  const type = typeof entranceOrType === 'string'
+    ? normalizeInteriorType(entranceOrType)
+    : normalizeInteriorType(entranceOrType?.metadata?.interiorType);
+  const title = getInteriorTypeLabel(type) || 'Interior';
+  return 'Press O to Enter the ' + title;
+}
+
 function getInteriorEntranceDefaults(type = 'training_dojo') {
   const safeType = normalizeInteriorType(type);
   const def = getInteriorDefinition(safeType);
@@ -16677,7 +16685,7 @@ function getInteriorEntranceDefaults(type = 'training_dojo') {
     name: def.title + ' Door',
     interiorType: safeType,
     targetInteriorId: def.builtIn ? CURRENT_VILLAGE_ID + '_' + safeType : safeType,
-    promptText: def.prompt,
+    promptText: getInteriorEntrancePromptText(safeType),
     enabled: true
   };
 }
@@ -16737,7 +16745,7 @@ function loadSelectedCustomInteriorIntoAdmin() {
   const doorName = document.getElementById('interiorEntranceName');
   const promptInput = document.getElementById('interiorPromptText');
   if (doorName) doorName.value = (def.name || def.id) + ' Door';
-  if (promptInput) promptInput.value = def.promptText || 'Press O to Enter';
+  if (promptInput) promptInput.value = getInteriorEntrancePromptText(def.id);
   syncDoorTargetInteriorId({ force:true });
   updateInteriorFloorOffsetReadout();
 }
@@ -16754,7 +16762,7 @@ function saveCustomInteriorFromAdmin() {
     name,
     category: document.getElementById('customInteriorCategory')?.value?.trim() || 'custom',
     style: document.getElementById('customInteriorStyle')?.value || 'custom_glb',
-    promptText: document.getElementById('customInteriorPrompt')?.value?.trim() || 'Press O to Enter',
+    promptText: document.getElementById('customInteriorPrompt')?.value?.trim() || getInteriorEntrancePromptText(id),
     modelUrl: document.getElementById('customInteriorModel')?.value?.trim() || '',
     musicPath: document.getElementById('customInteriorMusic')?.value?.trim() || '',
     description: document.getElementById('customInteriorDescription')?.value?.trim() || '',
@@ -16771,7 +16779,7 @@ function saveCustomInteriorFromAdmin() {
   if (customSelect) customSelect.value = id;
   if (typeSelect) typeSelect.value = id;
   if (doorName) doorName.value = def.name + ' Door';
-  if (promptInput) promptInput.value = def.promptText || 'Press O to Enter';
+  if (promptInput) promptInput.value = getInteriorEntrancePromptText(id);
   syncDoorTargetInteriorId({ force:true });
   saveInteriorLightingConfigForKey(id);
   updateInteriorFloorOffsetReadout();
@@ -18427,42 +18435,52 @@ function enterInterior(entrance) {
   setVillageTravelFade(true);
   playInteractionAudio('portalOpen');
   setTimeout(() => {
-    const returnPosition = getInteriorReturnPosition(entrance);
-    setVillageRuntimeEnabled(false);
-    const root = buildInteriorRoom(entrance);
-    ActiveInterior = {
-      root,
-      entranceName: entrance.name,
-      returnPosition,
-      returnRotationY: charMesh?.rotation?.y || 0,
-      interiorType: type,
-      targetInteriorId: entrance.metadata.targetInteriorId || '',
-      floorY: root.metadata?.floorY || INTERIOR_FLOOR_Y,
-      baseFloorY: root.metadata?.baseFloorY || root.metadata?.floorY || INTERIOR_FLOOR_Y,
-      playerFloorOffset: root.metadata?.playerFloorOffset || 0,
-      modelUrl: root.metadata?.modelUrl || '',
-      loadedGlbRoot: null,
-      musicPath: getInteriorDefinition(type).musicPath || entrance.metadata.interiorDefinition?.musicPath || '',
-      previousVillageId: CURRENT_VILLAGE_ID
-    };
-    hydrateInteriorLightingAdmin(ActiveInterior.targetInteriorId || type);
-    applyInteriorLightingConfig(ActiveInterior.targetInteriorId || type);
-    updateInteriorFloorOffsetReadout();
-    if (charMesh) {
-      const activeFloorY = getActiveInteriorPlayerFloorY();
-      const isCustomGlbInterior = root.metadata?.isCustomGlbInterior === true;
-      const spawnZ = isCustomGlbInterior ? 0 : 7.1;
-      charMesh.position.set(0, activeFloorY + 0.08, spawnZ);
-      charMesh.rotation.y = Math.PI;
-      charMesh._vel = 0;
-      groundPlayableVisualToTerrain(activeFloorY);
+    let root = null;
+    try {
+      const returnPosition = getInteriorReturnPosition(entrance);
+      root = buildInteriorRoom(entrance);
+      ActiveInterior = {
+        root,
+        entranceName: entrance.name,
+        returnPosition,
+        returnRotationY: charMesh?.rotation?.y || 0,
+        interiorType: type,
+        targetInteriorId: entrance.metadata.targetInteriorId || '',
+        floorY: root.metadata?.floorY || INTERIOR_FLOOR_Y,
+        baseFloorY: root.metadata?.baseFloorY || root.metadata?.floorY || INTERIOR_FLOOR_Y,
+        playerFloorOffset: root.metadata?.playerFloorOffset || 0,
+        modelUrl: root.metadata?.modelUrl || '',
+        loadedGlbRoot: null,
+        musicPath: getInteriorDefinition(type).musicPath || entrance.metadata.interiorDefinition?.musicPath || '',
+        previousVillageId: CURRENT_VILLAGE_ID
+      };
+      setVillageRuntimeEnabled(false);
+      hydrateInteriorLightingAdmin(ActiveInterior.targetInteriorId || type);
+      applyInteriorLightingConfig(ActiveInterior.targetInteriorId || type);
+      updateInteriorFloorOffsetReadout();
+      if (charMesh) {
+        const activeFloorY = getActiveInteriorPlayerFloorY();
+        const isCustomGlbInterior = root.metadata?.isCustomGlbInterior === true;
+        const spawnZ = isCustomGlbInterior ? 0 : 7.1;
+        charMesh.position.set(0, activeFloorY + 0.08, spawnZ);
+        charMesh.rotation.y = Math.PI;
+        charMesh._vel = 0;
+        groundPlayableVisualToTerrain(activeFloorY);
+      }
+      walkMode = true;
+      setInteriorTitle(getInteriorTypeLabel(type), entrance.metadata.targetInteriorId || 'Interior');
+      recordInteriorQuestHook(entrance, 'enterInterior');
+      updateQuestTracker();
+      setVillageTravelFade(false);
+      setTimeout(() => setInteriorTitle('', ''), 2600);
+    } catch(error) {
+      console.error('Interior enter failed', error);
+      root?.dispose?.(false, true);
+      ActiveInterior = null;
+      setVillageRuntimeEnabled(true);
+      setVillageTravelFade(false);
+      showToast('Interior failed to load: ' + (error?.message || 'try again'), 9000);
     }
-    walkMode = true;
-    setInteriorTitle(getInteriorTypeLabel(type), entrance.metadata.targetInteriorId || 'Interior');
-    recordInteriorQuestHook(entrance, 'enterInterior');
-    updateQuestTracker();
-    setVillageTravelFade(false);
-    setTimeout(() => setInteriorTitle('', ''), 2600);
   }, 260);
   return true;
 }
