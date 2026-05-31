@@ -15133,6 +15133,9 @@ function applyLanternGlowToClone(clone) {
       base.b * ratio.b * brightness
     );
   });
+  clone.metadata._fakeLightMaterials = [];
+  mats.forEach(mat => registerFakeLightMaterial(clone, mat, { minFactor:.2 }));
+  applyFakeLightState(true);
 }
 
 function applyLanternGlowSettings() {
