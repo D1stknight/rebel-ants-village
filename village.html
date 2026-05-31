@@ -17547,6 +17547,7 @@ function setVillageRuntimeEnabled(enabled) {
 
 function makeInteriorMaterial(name, color, emissiveScale = .08, alpha = null) {
   const mat = new BABYLON.StandardMaterial(name, scene);
+  mat.metadata = { ...(mat.metadata || {}), interiorGeneratedMaterial:true };
   mat.diffuseColor = color;
   mat.specularColor = new BABYLON.Color3(.05,.04,.04);
   mat.emissiveColor = color.scale(emissiveScale);
@@ -17599,6 +17600,7 @@ function makeInteriorGlowMaterial(name, colorHex = '#ffdd88', brightness = 1, al
   let color = new BABYLON.Color3(1, .86, .48);
   try { color = BABYLON.Color3.FromHexString(colorHex); } catch(e) {}
   const mat = new BABYLON.StandardMaterial(name, scene);
+  mat.metadata = { ...(mat.metadata || {}), interiorGeneratedMaterial:true };
   mat.diffuseColor = color.scale(.35);
   mat.emissiveColor = color.scale(brightness);
   mat.alpha = alpha;
@@ -18266,7 +18268,11 @@ function makeInteriorNftPlaceholderTexture(name, label = 'Rebel NFT') {
 
 function getInteriorNftTexture(url, fallbackName, fallbackLabel) {
   if (!url) return makeInteriorNftPlaceholderTexture(fallbackName, fallbackLabel);
-  if (InteriorNftTextureCache.has(url)) return InteriorNftTextureCache.get(url);
+  if (InteriorNftTextureCache.has(url)) {
+    const cached = InteriorNftTextureCache.get(url);
+    if (cached && !cached.isDisposed?.()) return cached;
+    InteriorNftTextureCache.delete(url);
+  }
   const texture = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.TRILINEAR_SAMPLINGMODE);
   texture.name = 'interiorNftTexture_' + fallbackName;
   texture.hasAlpha = true;
@@ -18277,13 +18283,14 @@ function getInteriorNftTexture(url, fallbackName, fallbackLabel) {
 function makeInteriorNftFrameMaterial(frame, resolved) {
   const meta = frame.metadata || {};
   const mat = new BABYLON.StandardMaterial('interiorNftFrameMat_' + meta.frameId, scene);
+  mat.metadata = { ...(mat.metadata || {}), interiorGeneratedMaterial:true };
   const texture = getInteriorNftTexture(resolved.imageUrl, meta.frameId, resolved.title);
   mat.diffuseTexture = texture;
   mat.emissiveTexture = texture;
   mat.emissiveColor = new BABYLON.Color3(.34, .34, .34);
   mat.specularColor = new BABYLON.Color3(.05, .05, .05);
   mat.backFaceCulling = false;
-  mat.metadata = { ...(mat.metadata || {}), imageUrl:resolved.imageUrl || '', interiorNftFrame:true };
+  mat.metadata = { ...(mat.metadata || {}), imageUrl:resolved.imageUrl || '', interiorNftFrame:true, interiorGeneratedMaterial:true };
   if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mat);
   return mat;
 }
@@ -18302,7 +18309,7 @@ function applyInteriorNftFrameVisual(frame) {
   frame.metadata.resolvedStatus = resolved.status || frame.metadata.frameStatus || 'Unknown';
   const art = frame.getChildMeshes?.(false).find(mesh => mesh.metadata?.isInteriorNftArt === true);
   if (art) {
-    art.material?.dispose?.();
+    art.material?.dispose?.(false, false, true);
     art.material = makeInteriorNftFrameMaterial(frame, resolved);
     art.setEnabled(frame.metadata.enabled !== false);
     art.isPickable = true;
@@ -19064,6 +19071,7 @@ function buildInteriorProps(root, type, mats, options = {}) {
 
 function buildInteriorRoom(entrance) {
   cleanupInteriorRuntimeLights();
+  cleanupOrphanInteriorRuntimeRoots();
   const type = normalizeInteriorType(entrance?.metadata?.interiorType);
   const savedDef = entrance?.metadata?.interiorDefinition || null;
   const def = savedDef && !INTERIOR_TYPES[type]
@@ -19263,6 +19271,24 @@ function cleanupInteriorRuntimeLights() {
   });
 }
 
+function disposeInteriorGeneratedMaterials(root) {
+  const materials = new Set();
+  root?.getChildMeshes?.(false).forEach(mesh => {
+    const mat = mesh.material;
+    if (mat?.metadata?.interiorGeneratedMaterial === true) materials.add(mat);
+  });
+  materials.forEach(mat => {
+    try { mat.dispose?.(false, false, true); } catch(e) {}
+  });
+}
+
+function cleanupOrphanInteriorRuntimeRoots() {
+  if (!scene?.transformNodes) return;
+  scene.transformNodes
+    .filter(node => node?.metadata?.type === 'interior_runtime' && node !== ActiveInterior?.root)
+    .forEach(node => disposeInteriorRuntime(node));
+}
+
 function disposeInteriorRuntime(interior) {
   const root = interior?.root || interior;
   if (root) {
@@ -19271,7 +19297,8 @@ function disposeInteriorRuntime(interior) {
       try { light?.dispose?.(); } catch(e) {}
     });
     root.metadata && (root.metadata.interiorLights = []);
-    try { root.dispose?.(false, true); } catch(e) {}
+    disposeInteriorGeneratedMaterials(root);
+    try { root.dispose?.(false, false); } catch(e) {}
   }
   cleanupInteriorRuntimeLights();
 }
