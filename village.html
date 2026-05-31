@@ -728,10 +728,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <label class="admin-field">Upload MP3 <input id="customInteriorMusic" placeholder="/assets/interiors/custom/museum.mp3" readonly></label>
     <div id="customInteriorMusicStatus" class="admin-note">MP3: no file selected</div>
     <label class="admin-field">Description <textarea id="customInteriorDescription" rows="2" placeholder="Purpose of this room"></textarea></label>
+    <div class="admin-note">Interior lighting is editable per room: dim it, brighten it, or shift the color without adding heavy real lights.</div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input id="interiorLightingColor" type="color" value="#ffd88a" style="width:44px;height:32px;border:none;background:none;cursor:pointer">
+      <input id="interiorLightingBrightness" type="range" min="0.2" max="3" step="0.1" value="1" style="flex:1">
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <button class="ctrl-btn" onclick="document.getElementById('interiorGlbUploadInput').click()">Upload GLB</button>
       <button class="ctrl-btn" onclick="document.getElementById('interiorMusicUploadInput').click()">Upload Music MP3</button>
       <button class="ctrl-btn" onclick="saveCustomInteriorFromAdmin()">Save Interior</button>
+      <button class="ctrl-btn" onclick="saveInteriorLightingFromAdmin()">Save Lighting</button>
       <button class="ctrl-btn danger" onclick="archiveSelectedCustomInterior()">Archive Interior</button>
       <button class="ctrl-btn danger" onclick="removeCustomInteriorUpload('model')">Remove GLB</button>
       <button class="ctrl-btn danger" onclick="removeCustomInteriorUpload('music')">Remove MP3</button>
@@ -16593,6 +16599,7 @@ function loadSelectedCustomInteriorIntoAdmin() {
   const musicStatus = document.getElementById('customInteriorMusicStatus');
   if (modelStatus) modelStatus.textContent = def.modelUrl ? 'GLB: ' + def.modelUrl : 'GLB: no file selected';
   if (musicStatus) musicStatus.textContent = def.musicPath ? 'MP3: ' + def.musicPath : 'MP3: no file selected';
+  hydrateInteriorLightingAdmin(def.id);
   const typeSelect = document.getElementById('interiorTypeSelect');
   if (typeSelect) typeSelect.value = def.id;
   const doorName = document.getElementById('interiorEntranceName');
@@ -16633,6 +16640,7 @@ function saveCustomInteriorFromAdmin() {
   if (doorName) doorName.value = def.name + ' Door';
   if (promptInput) promptInput.value = def.promptText || 'Press O to Enter';
   syncDoorTargetInteriorId({ force:true });
+  saveInteriorLightingConfigForKey(id);
   showToast('Custom interior saved: ' + def.name);
 }
 
@@ -17132,6 +17140,70 @@ function getInteriorRoomConfigs() {
 
 function setInteriorRoomConfigs(configs) {
   localStorage.setItem(INTERIOR_ROOM_CONFIG_KEY, JSON.stringify(configs || {}));
+}
+
+function clampInteriorLightingBrightness(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 1;
+  return Math.max(0.2, Math.min(3, n));
+}
+
+function getInteriorLightingConfig(interiorId) {
+  const configs = getInteriorRoomConfigs();
+  const lighting = interiorId && configs[interiorId]?.lighting ? configs[interiorId].lighting : null;
+  return {
+    color: lighting?.color || '#ffd88a',
+    brightness: clampInteriorLightingBrightness(lighting?.brightness ?? 1)
+  };
+}
+
+function getInteriorAdminLightingKey() {
+  return ActiveInterior?.targetInteriorId ||
+    document.getElementById('customInteriorSelect')?.value ||
+    document.getElementById('interiorTypeSelect')?.value ||
+    '';
+}
+
+function hydrateInteriorLightingAdmin(interiorId = getInteriorAdminLightingKey()) {
+  const config = getInteriorLightingConfig(interiorId);
+  const colorInput = document.getElementById('interiorLightingColor');
+  const brightnessInput = document.getElementById('interiorLightingBrightness');
+  if (colorInput) colorInput.value = config.color;
+  if (brightnessInput) brightnessInput.value = config.brightness;
+}
+
+function applyInteriorLightingConfig(interiorId = getInteriorAdminLightingKey()) {
+  const light = ActiveInterior?.root?.metadata?.interiorLight || null;
+  if (!light) return;
+  const config = getInteriorLightingConfig(interiorId);
+  let color = new BABYLON.Color3(1, .85, .54);
+  try { color = BABYLON.Color3.FromHexString(config.color); } catch(e) {}
+  const baseIntensity = Number.isFinite(light.metadata?.baseIntensity) ? light.metadata.baseIntensity : .78;
+  light.intensity = baseIntensity * config.brightness;
+  light.diffuse = color;
+  light.groundColor = color.scale(.32);
+}
+
+function saveInteriorLightingConfigForKey(key) {
+  if (!key) return false;
+  const color = document.getElementById('interiorLightingColor')?.value || '#ffd88a';
+  const brightness = clampInteriorLightingBrightness(document.getElementById('interiorLightingBrightness')?.value);
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  configs[key] = {
+    ...current,
+    lighting: { color, brightness },
+    updatedAt: new Date().toISOString()
+  };
+  setInteriorRoomConfigs(configs);
+  applyInteriorLightingConfig(key);
+  return true;
+}
+
+function saveInteriorLightingFromAdmin() {
+  const key = getInteriorAdminLightingKey();
+  if (!saveInteriorLightingConfigForKey(key)) { showToast('Select or enter an interior first'); return; }
+  showToast('Interior lighting saved');
 }
 
 function getActiveInteriorConfigKey() {
@@ -17715,7 +17787,9 @@ function buildInteriorRoom(entrance) {
   const light = new BABYLON.HemisphericLight('activeInteriorLight', new BABYLON.Vector3(0, 1, 0), scene);
   light.intensity = type === 'training_dojo' ? 1.18 : .78;
   light.diffuse = def.accent.scale(.45).add(new BABYLON.Color3(.42,.36,.3));
+  light.metadata = { interiorRuntime:true, baseIntensity:light.intensity };
   light.parent = root;
+  root.metadata.interiorLight = light;
   if (type === 'training_dojo') {
     const dojoFill = new BABYLON.PointLight('trainingDojoWarmFill', new BABYLON.Vector3(0, 5.8, -2), scene);
     dojoFill.intensity = .72;
@@ -17775,6 +17849,8 @@ function enterInterior(entrance) {
       musicPath: getInteriorDefinition(type).musicPath || entrance.metadata.interiorDefinition?.musicPath || '',
       previousVillageId: CURRENT_VILLAGE_ID
     };
+    hydrateInteriorLightingAdmin(ActiveInterior.targetInteriorId || type);
+    applyInteriorLightingConfig(ActiveInterior.targetInteriorId || type);
     if (charMesh) {
       const activeFloorY = ActiveInterior.floorY || INTERIOR_FLOOR_Y;
       const isCustomGlbInterior = root.metadata?.isCustomGlbInterior === true;
@@ -19214,6 +19290,7 @@ window.applySignEditor = applySignEditor;
 window.applyToroColor = applyToroColor;
 window.applyLanternGlowSettings = applyLanternGlowSettings;
 window.applyAmbientGlowSettings = applyAmbientGlowSettings;
+window.saveInteriorLightingFromAdmin = saveInteriorLightingFromAdmin;
 window.applySelectedWalkSurfaceSettings = applySelectedWalkSurfaceSettings;
 window.applyWalkSurfaceSettingsToSameType = applyWalkSurfaceSettingsToSameType;
 window.refreshSelectedWalkSurfaceGuide = refreshSelectedWalkSurfaceGuide;
