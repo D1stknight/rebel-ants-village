@@ -17892,6 +17892,7 @@ function deleteInteriorDisplayConfig(displayId) {
 function serializeInteriorNftFrame(frame) {
   const meta = frame.metadata || {};
   return {
+    interiorId: meta.interiorId || getActiveInteriorConfigKey(),
     frameId: meta.frameId,
     frameName: meta.frameName || 'Rebel Frame',
     collectionId: meta.collectionId || meta.collectionFilter || '',
@@ -18206,7 +18207,8 @@ function interactInteriorDisplay(display) {
 function resolveInteriorNftFrameSource(meta = {}, frameIndex = 0) {
   const tokenId = String(meta.tokenId || '').trim();
   const fallbackUrl = String(meta.imageUrl || '').trim();
-  const collections = getInteriorSavedNftCollectionConfigs(getActiveInteriorConfigKey());
+  const interiorId = meta.interiorId || getActiveInteriorConfigKey();
+  const collections = getInteriorSavedNftCollectionConfigs(interiorId);
   const collectionId = meta.collectionId || meta.collectionFilter || collections[0]?.collectionId || '';
   const collection = collections.find(item => item.collectionId === collectionId) || null;
   const items = Array.isArray(collection?.items) ? collection.items : [];
@@ -18328,9 +18330,10 @@ function createInteriorNftFrameSlot(parent, config = {}) {
   root.metadata = {
     type:'interior_nft_frame',
     interiorRuntime:true,
+    interiorId: config.interiorId || parent?.metadata?.targetInteriorId || getActiveInteriorConfigKey(),
     frameId,
     frameName: config.frameName || config.label || 'Rebel Frame',
-    collectionId: config.collectionId || config.collectionFilter || getInteriorSavedNftCollectionConfigs(getActiveInteriorConfigKey())[0]?.collectionId || '',
+    collectionId: config.collectionId || config.collectionFilter || getInteriorSavedNftCollectionConfigs(config.interiorId || parent?.metadata?.targetInteriorId || getActiveInteriorConfigKey())[0]?.collectionId || '',
     frameSlot: Number.isFinite(Number(config.frameSlot)) ? Math.max(1, Math.floor(Number(config.frameSlot))) : Math.max(1, getInteriorNftFrameRoots().length + 1),
     tokenId: config.tokenId || '',
     frameStatus: config.frameStatus || 'Owned',
@@ -19060,6 +19063,7 @@ function buildInteriorProps(root, type, mats, options = {}) {
 }
 
 function buildInteriorRoom(entrance) {
+  cleanupInteriorRuntimeLights();
   const type = normalizeInteriorType(entrance?.metadata?.interiorType);
   const savedDef = entrance?.metadata?.interiorDefinition || null;
   const def = savedDef && !INTERIOR_TYPES[type]
@@ -19148,7 +19152,7 @@ function buildInteriorRoom(entrance) {
   }
 
   getInteriorSavedDisplayConfigs(targetInteriorId).forEach(displayConfig => createInteriorDisplay(root, displayConfig, { accent:accentMat }));
-  getInteriorSavedNftFrameConfigs(targetInteriorId).forEach(frameConfig => createInteriorNftFrameSlot(root, frameConfig));
+  getInteriorSavedNftFrameConfigs(targetInteriorId).forEach(frameConfig => createInteriorNftFrameSlot(root, { ...frameConfig, interiorId:targetInteriorId }));
   getInteriorSavedAssetConfigs(targetInteriorId).forEach(assetConfig => createInteriorFakeLightAsset(root, assetConfig));
   if (!_interiorDisplaysVisible) getInteriorDisplayRoots().forEach(display => display.setEnabled(false));
   getInteriorNftFrameRoots().forEach(applyInteriorNftFrameVisual);
@@ -19210,6 +19214,7 @@ function enterInterior(entrance, options = {}) {
       applyInteriorLightingConfig(ActiveInterior.targetInteriorId || type);
       refreshInteriorNftCollectionSelect();
       loadSelectedInteriorNftCollectionIntoAdmin();
+      getInteriorNftFrameRoots().forEach(applyInteriorNftFrameVisual);
       updateInteriorFloorOffsetReadout();
       if (charMesh) {
         const activeFloorY = getActiveInteriorPlayerFloorY();
@@ -19246,15 +19251,29 @@ function tryEnterNearbyInterior() {
   return enterInterior(entrance);
 }
 
+function cleanupInteriorRuntimeLights() {
+  if (!scene?.lights) return;
+  [...scene.lights].forEach(light => {
+    const isInteriorLight =
+      light?.metadata?.interiorRuntime === true ||
+      light?.name === 'activeInteriorLight' ||
+      light?.name === 'trainingDojoWarmFill';
+    if (!isInteriorLight) return;
+    try { light.dispose?.(); } catch(e) {}
+  });
+}
+
 function disposeInteriorRuntime(interior) {
   const root = interior?.root || interior;
-  if (!root) return;
-  const lights = root.metadata?.interiorLights || (root.metadata?.interiorLight ? [root.metadata.interiorLight] : []);
-  lights.forEach(light => {
-    try { light?.dispose?.(); } catch(e) {}
-  });
-  root.metadata && (root.metadata.interiorLights = []);
-  try { root.dispose?.(false, true); } catch(e) {}
+  if (root) {
+    const lights = root.metadata?.interiorLights || (root.metadata?.interiorLight ? [root.metadata.interiorLight] : []);
+    lights.forEach(light => {
+      try { light?.dispose?.(); } catch(e) {}
+    });
+    root.metadata && (root.metadata.interiorLights = []);
+    try { root.dispose?.(false, true); } catch(e) {}
+  }
+  cleanupInteriorRuntimeLights();
 }
 
 function returnToVillageFromInterior() {
