@@ -746,11 +746,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <input id="interiorLightingColor" type="color" value="#ffd88a" style="width:44px;height:32px;border:none;background:none;cursor:pointer">
       <input id="interiorLightingBrightness" type="range" min="0.2" max="3" step="0.1" value="1" style="flex:1">
     </div>
+    <div class="admin-note">Interior isolation hides outside village visuals while inside rooms.</div>
+    <div id="interiorIsolationReadout" class="admin-note">Interior Isolation: Inactive</div>
+    <div id="interiorFloorOffsetReadout" class="admin-note">Player Floor Offset: 0.00</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <button class="ctrl-btn" onclick="document.getElementById('interiorGlbUploadInput').click()">Upload GLB</button>
       <button class="ctrl-btn" onclick="document.getElementById('interiorMusicUploadInput').click()">Upload Music MP3</button>
       <button class="ctrl-btn" onclick="saveCustomInteriorFromAdmin()">Save Interior</button>
       <button class="ctrl-btn" onclick="saveInteriorLightingFromAdmin()">Save Lighting</button>
+      <button class="ctrl-btn" onclick="adjustActiveInteriorPlayerFloorOffset(0.05)">Raise Player Floor</button>
+      <button class="ctrl-btn" onclick="adjustActiveInteriorPlayerFloorOffset(-0.05)">Lower Player Floor</button>
+      <button class="ctrl-btn" onclick="resetActiveInteriorPlayerFloorOffset()">Reset Player Floor Offset</button>
       <button class="ctrl-btn danger" onclick="archiveSelectedCustomInterior()">Archive Interior</button>
       <button class="ctrl-btn danger" onclick="removeCustomInteriorUpload('model')">Remove GLB</button>
       <button class="ctrl-btn danger" onclick="removeCustomInteriorUpload('music')">Remove MP3</button>
@@ -1452,6 +1458,14 @@ const INTERIOR_ROOM_CONFIG_KEY = 'rebelAntsInteriorRoomConfigs:v1';
 let _interiorEntrancesVisible = true;
 let _interiorDisplaysVisible = true;
 let ActiveInterior = null;
+const InteriorIsolationRuntime = {
+  active: false,
+  nodeStates: [],
+  particleStates: [],
+  npcPaused: null,
+  heatOpacity: null,
+  lightningOpacity: null
+};
 const InteriorGlbCache = new Map();
 
 function getDefaultProgressionState() {
@@ -6615,6 +6629,7 @@ function getWeatherAudioTrack(id, path) {
 
 function getWeatherAudioTargets() {
   const targets = {};
+  if (ActiveInterior) return targets;
   if (!WeatherManager.audioEnabled) return targets;
   (WEATHER_AUDIO_TRACKS[WeatherManager.mode] || []).forEach(track => {
     targets[track.id] = Math.max(targets[track.id] || 0, (track.volume || .2) * WeatherManager.masterVolume * WeatherManager.weatherVolume);
@@ -6625,6 +6640,7 @@ function getWeatherAudioTargets() {
 
 function getVillageAmbienceTargets() {
   const targets = {};
+  if (ActiveInterior) return targets;
   if (!WeatherManager.masterAudioEnabled) return targets;
   const profile = VILLAGE_AMBIENCE_PROFILES[CURRENT_VILLAGE_ID] || DEFAULT_VILLAGE_AMBIENCE;
   const moodScale = getWeatherAmbienceMultiplier();
@@ -6682,6 +6698,7 @@ function ensureVillageMusicTrack() {
 }
 
 function getVillageMusicTargetVolume() {
+  if (ActiveInterior) return 0;
   if (!WeatherManager.musicEnabled || !WeatherManager.musicUnlocked || WeatherManager.musicTravelMuted) return 0;
   return WeatherManager.masterVolume * WeatherManager.musicVolume;
 }
@@ -7462,6 +7479,20 @@ function setWeatherCycleSpeed(speed) {
 }
 
 function updateWeatherManager() {
+  if (ActiveInterior) {
+    [
+      ...(WeatherManager.rainMeshes || []),
+      ...(WeatherManager.snowMeshes || []),
+      ...(WeatherManager.splashMeshes || []),
+      ...(WeatherManager.puddleMeshes || []),
+      ...(WeatherManager.frostMeshes || [])
+    ].forEach(mesh => mesh?.setEnabled?.(false));
+    WeatherManager.distantLightningRoot?.setEnabled?.(false);
+    setInteriorWeatherOverlaysVisible(false);
+    updateWeatherAudio();
+    updateVillageMusic();
+    return;
+  }
   const now = performance.now();
   if (!WeatherManager.paused && now >= WeatherManager.nextCycleAt) {
     setWeatherMode(getNextWeatherMode(), false);
@@ -14802,7 +14833,7 @@ engine.runRenderLoop(()=>{
   lanLights.forEach(ll=>{if(ll._b)ll.intensity=ll._b+Math.sin(Date.now()*0.0019+ll.position.x*0.3)*0.1;});
     // do not auto-snap just because an object is selected
   if(!walkMode&&charMesh){
-    const _terrainY = ActiveInterior ? (ActiveInterior.floorY || INTERIOR_FLOOR_Y) : getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z);
+    const _terrainY = ActiveInterior ? getActiveInteriorPlayerFloorY() : getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z);
     if (Number.isFinite(_terrainY)) groundPlayableVisualToTerrain(_terrainY);
   }
   if(walkMode&&charMesh){
@@ -14825,7 +14856,7 @@ engine.runRenderLoop(()=>{
       charMesh.position.z = _resolvedPos.z;
       if (_resolvedPos.blocked) charMesh._vel *= 0.2;
     }
-    const _terrainY = ActiveInterior ? (ActiveInterior.floorY || INTERIOR_FLOOR_Y) : getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z);
+    const _terrainY = ActiveInterior ? getActiveInteriorPlayerFloorY() : getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z);
     if (Number.isFinite(_terrainY)) {
       groundPlayableVisualToTerrain(_terrainY);
       // Slope tilt removed — character stays upright
@@ -15782,6 +15813,7 @@ function getPerformanceMetrics() {
     animatedNpcs: { label:'Animated NPCs', value:animatedNpcCount, status:'neutral' },
     collectibles: { label:'Collectibles', value:getCollectibleRoots().length, status:'neutral' },
     activeInterior: { label:'Active Interior', value:ActiveInterior ? getInteriorTypeLabel(ActiveInterior.interiorType) : 'none', status:ActiveInterior ? 'good' : 'neutral' },
+    interiorIsolation: { label:'Interior Isolation', value:InteriorIsolationRuntime.active ? 'active' : 'inactive', status:InteriorIsolationRuntime.active ? 'good' : 'neutral', detail:InteriorIsolationRuntime.active ? `${InteriorIsolationRuntime.nodeStates.length} outside roots hidden` : 'outside village visible' },
     interiorId: { label:'Interior ID', value:ActiveInterior?.targetInteriorId || 'none', status:'neutral' },
     interiorModel: { label:'Interior GLB', value:ActiveInterior?.modelUrl ? 'loaded' : 'none', status:ActiveInterior?.modelUrl ? 'good' : 'neutral', detail:ActiveInterior?.modelUrl || 'No custom GLB active' },
     interiorMeshes: { label:'Interior Meshes', value:ActiveInterior?.root?.getChildMeshes?.(false).length || 0, status:getPerfStatus(ActiveInterior?.root?.getChildMeshes?.(false).length || 0, { green:90, yellow:180 }) },
@@ -16707,6 +16739,7 @@ function loadSelectedCustomInteriorIntoAdmin() {
   if (doorName) doorName.value = (def.name || def.id) + ' Door';
   if (promptInput) promptInput.value = def.promptText || 'Press O to Enter';
   syncDoorTargetInteriorId({ force:true });
+  updateInteriorFloorOffsetReadout();
 }
 
 function saveCustomInteriorFromAdmin() {
@@ -16741,6 +16774,7 @@ function saveCustomInteriorFromAdmin() {
   if (promptInput) promptInput.value = def.promptText || 'Press O to Enter';
   syncDoorTargetInteriorId({ force:true });
   saveInteriorLightingConfigForKey(id);
+  updateInteriorFloorOffsetReadout();
   showToast('Custom interior saved: ' + def.name);
 }
 
@@ -17163,21 +17197,131 @@ function getInteriorGameplayRoots() {
   ].filter(node => node && !node.isDisposed?.() && node !== charMesh);
 }
 
-function setVillageRuntimeEnabled(enabled) {
-  getInteriorGameplayRoots().forEach(node => {
-    if (enabled) {
-      if (node.metadata?._interiorDisabled === true) node.setEnabled?.(true);
-      if (node.metadata) delete node.metadata._interiorDisabled;
-    } else if (node.isEnabled?.() !== false) {
-      node.metadata = { ...(node.metadata || {}), _interiorDisabled:true };
-      node.setEnabled?.(false);
-    }
+function updateInteriorIsolationReadout() {
+  const el = document.getElementById('interiorIsolationReadout');
+  if (el) el.textContent = 'Interior Isolation: ' + (InteriorIsolationRuntime.active ? 'Active' : 'Inactive');
+}
+
+function isInteriorRuntimeNode(node) {
+  let current = node;
+  while (current) {
+    if (current.metadata?.interiorRuntime === true || current.metadata?.type === 'interior_runtime') return true;
+    if (current.name === 'activeInteriorRoot' || current.name === 'interiorExitRoot') return true;
+    current = current.parent || null;
+  }
+  return false;
+}
+
+function isPlayerRuntimeNode(node) {
+  if (!node) return false;
+  const activeVisual = (() => {
+    try { return getActivePlayableVisualRootForGrounding?.() || null; } catch(e) { return null; }
+  })();
+  let current = node;
+  while (current) {
+    if (current === charMesh || current === activeVisual || current === window.forgePreviewRoot || current === window.forgeArmaturePlayerRoot) return true;
+    if (current.name === 'playerRoot') return true;
+    current = current.parent || null;
+  }
+  return false;
+}
+
+function shouldKeepNodeDuringInteriorIsolation(node) {
+  if (!node || node.isDisposed?.()) return true;
+  if (isPlayerRuntimeNode(node) || isInteriorRuntimeNode(node)) return true;
+  if (node.metadata?.isPickProxy === true) return true;
+  if (node.name?.toLowerCase?.().includes('gizmo')) return true;
+  return false;
+}
+
+function getInteriorIsolationNodes() {
+  return [
+    ...scene.transformNodes.filter(node => !node.parent),
+    ...scene.meshes.filter(mesh => !mesh.parent)
+  ].filter(node => node && !shouldKeepNodeDuringInteriorIsolation(node));
+}
+
+function pauseInteriorOutdoorParticles() {
+  InteriorIsolationRuntime.particleStates = [];
+  (scene.particleSystems || []).forEach(ps => {
+    if (!ps || ps.isDisposed?.()) return;
+    const started = typeof ps.isStarted === 'function' ? ps.isStarted() : ps.started === true;
+    InteriorIsolationRuntime.particleStates.push({ ps, started });
+    if (started && typeof ps.stop === 'function') ps.stop();
   });
+}
+
+function restoreInteriorOutdoorParticles() {
+  InteriorIsolationRuntime.particleStates.forEach(({ ps, started }) => {
+    if (started && ps && !ps.isDisposed?.() && typeof ps.start === 'function') ps.start();
+  });
+  InteriorIsolationRuntime.particleStates = [];
+}
+
+function setInteriorWeatherOverlaysVisible(visible) {
+  const heat = document.getElementById('weatherHeatHaze');
+  const lightning = document.getElementById('weatherLightningFlash');
+  if (!visible) {
+    if (InteriorIsolationRuntime.heatOpacity === null) InteriorIsolationRuntime.heatOpacity = heat?.style?.opacity ?? '';
+    if (InteriorIsolationRuntime.lightningOpacity === null) InteriorIsolationRuntime.lightningOpacity = lightning?.style?.opacity ?? '';
+    if (heat) heat.style.opacity = '0';
+    if (lightning) lightning.style.opacity = '0';
+    return;
+  }
+  if (heat && InteriorIsolationRuntime.heatOpacity !== null) heat.style.opacity = InteriorIsolationRuntime.heatOpacity;
+  if (lightning && InteriorIsolationRuntime.lightningOpacity !== null) lightning.style.opacity = InteriorIsolationRuntime.lightningOpacity;
+  InteriorIsolationRuntime.heatOpacity = null;
+  InteriorIsolationRuntime.lightningOpacity = null;
+}
+
+function enableInteriorIsolation() {
+  if (InteriorIsolationRuntime.active) return;
+  InteriorIsolationRuntime.active = true;
+  InteriorIsolationRuntime.nodeStates = [];
+  getInteriorIsolationNodes().forEach(node => {
+    InteriorIsolationRuntime.nodeStates.push({
+      node,
+      enabled: typeof node.isEnabled === 'function' ? node.isEnabled() : true,
+      visible: 'isVisible' in node ? node.isVisible : undefined
+    });
+    node.metadata = { ...(node.metadata || {}), _interiorIsolated:true };
+    node.setEnabled?.(false);
+    if ('isVisible' in node) node.isVisible = false;
+  });
+  InteriorIsolationRuntime.npcPaused = NPCManager.paused;
+  NPCManager.paused = true;
+  pauseInteriorOutdoorParticles();
+  setInteriorWeatherOverlaysVisible(false);
+  updateInteriorIsolationReadout();
+}
+
+function restoreInteriorIsolation() {
+  if (!InteriorIsolationRuntime.active) {
+    updateInteriorIsolationReadout();
+    return;
+  }
+  InteriorIsolationRuntime.nodeStates.forEach(state => {
+    const node = state.node;
+    if (!node || node.isDisposed?.()) return;
+    if (state.enabled) node.setEnabled?.(true);
+    if (state.visible !== undefined) node.isVisible = state.visible;
+    if (node.metadata) delete node.metadata._interiorIsolated;
+  });
+  InteriorIsolationRuntime.nodeStates = [];
+  restoreInteriorOutdoorParticles();
+  setInteriorWeatherOverlaysVisible(true);
+  if (InteriorIsolationRuntime.npcPaused !== null) NPCManager.paused = InteriorIsolationRuntime.npcPaused;
+  InteriorIsolationRuntime.npcPaused = null;
+  InteriorIsolationRuntime.active = false;
+  updateInteriorIsolationReadout();
+}
+
+function setVillageRuntimeEnabled(enabled) {
   if (!enabled) {
-    NPCManager.paused = true;
+    enableInteriorIsolation();
     setCollisionProxyVisualsVisible(false);
   } else {
-    NPCManager.paused = false;
+    restoreInteriorIsolation();
     setCollisionProxyVisualsVisible(adminMode);
     rebuildVillageCollisionBlockers();
   }
@@ -17344,6 +17488,69 @@ function getInteriorLightingConfig(interiorId) {
     color: lighting?.color || '#ffd88a',
     brightness: clampInteriorLightingBrightness(lighting?.brightness ?? 1)
   };
+}
+
+function clampInteriorPlayerFloorOffset(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(-2, Math.min(2, n));
+}
+
+function getInteriorPlayerFloorOffset(interiorId) {
+  const configs = getInteriorRoomConfigs();
+  return clampInteriorPlayerFloorOffset(interiorId ? configs[interiorId]?.playerFloorOffset : 0);
+}
+
+function getActiveInteriorPlayerFloorY() {
+  if (!ActiveInterior) return INTERIOR_FLOOR_Y;
+  const base = Number.isFinite(ActiveInterior.baseFloorY) ? ActiveInterior.baseFloorY : (ActiveInterior.floorY || INTERIOR_FLOOR_Y);
+  return base + clampInteriorPlayerFloorOffset(ActiveInterior.playerFloorOffset || 0);
+}
+
+function updateInteriorFloorOffsetReadout() {
+  const el = document.getElementById('interiorFloorOffsetReadout');
+  if (!el) return;
+  const key = getInteriorAdminLightingKey();
+  const offset = ActiveInterior ? clampInteriorPlayerFloorOffset(ActiveInterior.playerFloorOffset || 0) : getInteriorPlayerFloorOffset(key);
+  el.textContent = 'Player Floor Offset: ' + offset.toFixed(2);
+}
+
+function saveInteriorPlayerFloorOffsetForKey(key, offset) {
+  if (!key) return false;
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  configs[key] = {
+    ...current,
+    playerFloorOffset: clampInteriorPlayerFloorOffset(offset),
+    updatedAt: new Date().toISOString()
+  };
+  setInteriorRoomConfigs(configs);
+  return true;
+}
+
+function applyActiveInteriorPlayerFloorOffset() {
+  if (!ActiveInterior || !charMesh) return;
+  ActiveInterior.floorY = getActiveInteriorPlayerFloorY();
+  groundPlayableVisualToTerrain(ActiveInterior.floorY);
+  updateInteriorFloorOffsetReadout();
+}
+
+function adjustActiveInteriorPlayerFloorOffset(delta = 0) {
+  if (!ActiveInterior) { showToast('Enter an interior first'); return; }
+  const key = getActiveInteriorConfigKey();
+  const next = clampInteriorPlayerFloorOffset((ActiveInterior.playerFloorOffset || 0) + Number(delta || 0));
+  ActiveInterior.playerFloorOffset = next;
+  saveInteriorPlayerFloorOffsetForKey(key, next);
+  applyActiveInteriorPlayerFloorOffset();
+  showToast('Player floor offset: ' + next.toFixed(2));
+}
+
+function resetActiveInteriorPlayerFloorOffset() {
+  if (!ActiveInterior) { showToast('Enter an interior first'); return; }
+  ActiveInterior.playerFloorOffset = 0;
+  saveInteriorPlayerFloorOffsetForKey(getActiveInteriorConfigKey(), 0);
+  applyActiveInteriorPlayerFloorOffset();
+  showToast('Player floor offset reset');
 }
 
 function getInteriorAdminLightingKey() {
@@ -18110,7 +18317,8 @@ function buildInteriorRoom(entrance) {
   const isCustomGlbInterior = !INTERIOR_TYPES[type] && Boolean(def.modelUrl);
   const isTrainingDojoInterior = type === 'training_dojo';
   const roomFloorY = isCustomGlbInterior ? CUSTOM_INTERIOR_FLOOR_Y : INTERIOR_FLOOR_Y;
-  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:def.modelUrl || '', floorY:roomFloorY, isCustomGlbInterior };
+  const playerFloorOffset = getInteriorPlayerFloorOffset(targetInteriorId);
+  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:def.modelUrl || '', floorY:roomFloorY + playerFloorOffset, baseFloorY:roomFloorY, playerFloorOffset, isCustomGlbInterior };
 
   const floorColor = style === 'gallery' ? new BABYLON.Color3(.24,.23,.21)
     : style === 'theater' || style === 'arcade' ? new BABYLON.Color3(.05,.04,.08)
@@ -18230,6 +18438,8 @@ function enterInterior(entrance) {
       interiorType: type,
       targetInteriorId: entrance.metadata.targetInteriorId || '',
       floorY: root.metadata?.floorY || INTERIOR_FLOOR_Y,
+      baseFloorY: root.metadata?.baseFloorY || root.metadata?.floorY || INTERIOR_FLOOR_Y,
+      playerFloorOffset: root.metadata?.playerFloorOffset || 0,
       modelUrl: root.metadata?.modelUrl || '',
       loadedGlbRoot: null,
       musicPath: getInteriorDefinition(type).musicPath || entrance.metadata.interiorDefinition?.musicPath || '',
@@ -18237,8 +18447,9 @@ function enterInterior(entrance) {
     };
     hydrateInteriorLightingAdmin(ActiveInterior.targetInteriorId || type);
     applyInteriorLightingConfig(ActiveInterior.targetInteriorId || type);
+    updateInteriorFloorOffsetReadout();
     if (charMesh) {
-      const activeFloorY = ActiveInterior.floorY || INTERIOR_FLOOR_Y;
+      const activeFloorY = getActiveInteriorPlayerFloorY();
       const isCustomGlbInterior = root.metadata?.isCustomGlbInterior === true;
       const spawnZ = isCustomGlbInterior ? 0 : 7.1;
       charMesh.position.set(0, activeFloorY + 0.08, spawnZ);
@@ -18389,6 +18600,8 @@ Object.assign(window, {
   archiveSelectedCustomInterior,
   handleInteriorGlbUpload,
   handleInteriorMusicUpload,
+  adjustActiveInteriorPlayerFloorOffset,
+  resetActiveInteriorPlayerFloorOffset,
   addInteriorDisplayFromAdmin,
   applySelectedInteriorDisplaySettings,
   deleteSelectedInteriorDisplay,
