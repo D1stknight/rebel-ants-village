@@ -1556,7 +1556,15 @@
       "y": 390.6,
       "z": 390.6
     },
-    "signConfig": null,
+    "signConfig": {
+      "label": "REBEL ARCADE",
+      "sub": "",
+      "desc": "The elders once believed war would decide the fate of the colony. They were wrong. The future would be decided by those who could master both the sword… and the game.",
+      "icon": "",
+      "color": "#5ecfca",
+      "clickable": true,
+      "buttons": []
+    },
     "toroColor": null,
     "lanternColor": null,
     "lanternBrightness": null,
@@ -15995,9 +16003,9 @@
     "type": "interior_entrance",
     "name": "interiorEntranceRootClone_1780266560554",
     "position": {
-      "x": -75.60240173339844,
-      "y": 1.8907076120376587,
-      "z": 80.26893615722656
+      "x": -76.26212310791016,
+      "y": 1.2172907590866089,
+      "z": 81.13593292236328
     },
     "rotation": {
       "x": 0,
@@ -28105,7 +28113,7 @@
     },
     "scaling": {
       "x": 1,
-      "y": 1.022598675238517,
+      "y": 1.024846555282009,
       "z": 1
     },
     "signConfig": null,
@@ -28181,7 +28189,7 @@
     },
     "rotation": {
       "x": -1.2410712543590996e-8,
-      "y": 8.618158125387238,
+      "y": 9.5779292304156,
       "z": -0.024454046495610948
     },
     "scaling": {
@@ -28451,7 +28459,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": 12.806076345660195,
+      "y": 12.806076345697425,
       "z": 0.024574645924071926
     },
     "scaling": {
