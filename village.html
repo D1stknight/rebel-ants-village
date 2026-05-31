@@ -859,34 +859,38 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <div class="ap-section">Interior NFT Frames</div>
   <div class="admin-section-body" data-admin-section-body="interior-nft-frames">
-    <div class="admin-note">Use NFT Frame Slots to place Rebel NFT art over the room’s existing wall frames. Move/scale/rotate them like any other object.</div>
+    <div class="admin-note">Add an NFT collection by contract, then place frame slots over the room’s wall frames. Frame 1 uses NFT 1, Frame 2 uses NFT 2, unless you enter a Token ID.</div>
     <div class="creator-steps">
       <span><b>1:</b> Enter interior</span>
-      <span><b>2:</b> Add NFT Frame Slot</span>
-      <span><b>3:</b> Move it over a wall frame</span>
-      <span><b>4:</b> Resize/rotate it</span>
-      <span><b>5:</b> Choose Rebel NFT source or custom image</span>
+      <span><b>2:</b> Add collection contract</span>
+      <span><b>3:</b> Add NFT Frame Slot</span>
+      <span><b>4:</b> Move/resize/rotate it</span>
+      <span><b>5:</b> Optional Token ID override</span>
       <span><b>6:</b> Save</span>
     </div>
+    <label class="admin-field">Collection Name <input id="interiorNftCollectionName" placeholder="Rebel Ants: Battle for the Colony"></label>
+    <label class="admin-field">Chain <input id="interiorNftCollectionChain" placeholder="ethereum" value="ethereum"></label>
+    <label class="admin-field">Contract Address <input id="interiorNftCollectionContract" placeholder="0x..."></label>
+    <label class="admin-field">Collection Link <input id="interiorNftCollectionUrl" placeholder="https://opensea.io/collection/..."></label>
+    <label class="admin-field">Max NFTs <input id="interiorNftCollectionLimit" type="number" min="1" max="100" value="50"></label>
+    <div class="admin-note" id="interiorNftCollectionStatus">Collection manifest: none loaded</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+      <button class="ctrl-btn" onclick="saveInteriorNftCollectionFromAdmin()">Fetch / Save Collection</button>
+      <button class="ctrl-btn danger" onclick="deleteSelectedInteriorNftCollection()">Delete Collection</button>
+    </div>
     <label class="admin-field">Frame Name <input id="interiorNftFrameName" placeholder="Rebel Frame"></label>
-    <label class="admin-field">Source Type
-      <select id="interiorNftFrameSource" class="admin-select">
-        <option value="rebel_nfts">Rebel NFTs</option>
-        <option value="custom_image">Custom Image URL</option>
-        <option value="placeholder">Placeholder</option>
+    <label class="admin-field">Frame Collection <select id="interiorNftFrameCollection" class="admin-select" onchange="loadSelectedInteriorNftCollectionIntoAdmin()"></select></label>
+    <label class="admin-field">Frame Slot <input id="interiorNftFrameSlot" type="number" min="1" value="1"></label>
+    <label class="admin-field">Token ID Override <input id="interiorNftFrameTokenId" placeholder="optional"></label>
+    <label class="admin-field">Frame Status
+      <select id="interiorNftFrameStatus" class="admin-select">
+        <option value="Owned">Owned</option>
+        <option value="For Sale">For Sale</option>
+        <option value="Unknown">Unknown</option>
+        <option value="Fallback">Fallback</option>
       </select>
     </label>
-    <label class="admin-field">Collection Filter
-      <select id="interiorNftFrameCollection" class="admin-select">
-        <option value="rebel_ants">Rebel Ants</option>
-        <option value="battle_for_colony">Battle for the Colony</option>
-        <option value="alpha_swarm">Alpha Swarm</option>
-        <option value="ascendants">Ascendants</option>
-        <option value="any_rebel">Any Rebel Collection</option>
-      </select>
-    </label>
-    <label class="admin-field">Token ID <input id="interiorNftFrameTokenId" placeholder="optional"></label>
-    <label class="admin-field">Image URL <input id="interiorNftFrameImageUrl" placeholder="https://..."></label>
+    <label class="admin-field">Fallback Image URL <input id="interiorNftFrameImageUrl" placeholder="optional fallback only"></label>
     <label class="admin-field">Title <input id="interiorNftFrameTitle" placeholder="Optional title"></label>
     <label class="admin-field"><span><input id="interiorNftFrameEnabled" type="checkbox" checked style="width:auto;margin-right:6px">Frame Enabled</span></label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
@@ -4763,16 +4767,19 @@ if (selectedObject?.metadata?.type === 'interior_fake_light') {
 if (selectedObject?.metadata?.type === 'interior_nft_frame') {
   const meta = selectedObject.metadata || {};
   const nameInput = document.getElementById('interiorNftFrameName');
-  const sourceInput = document.getElementById('interiorNftFrameSource');
   const collectionInput = document.getElementById('interiorNftFrameCollection');
+  const slotInput = document.getElementById('interiorNftFrameSlot');
   const tokenInput = document.getElementById('interiorNftFrameTokenId');
+  const statusInput = document.getElementById('interiorNftFrameStatus');
   const imageInput = document.getElementById('interiorNftFrameImageUrl');
   const titleInput = document.getElementById('interiorNftFrameTitle');
   const enabledInput = document.getElementById('interiorNftFrameEnabled');
   if (nameInput) nameInput.value = meta.frameName || '';
-  if (sourceInput) sourceInput.value = meta.sourceType || 'rebel_nfts';
-  if (collectionInput) collectionInput.value = meta.collectionFilter || 'rebel_ants';
+  refreshInteriorNftCollectionSelect(meta.collectionId || meta.collectionFilter || '');
+  if (collectionInput) collectionInput.value = meta.collectionId || meta.collectionFilter || collectionInput.value || '';
+  if (slotInput) slotInput.value = Math.max(1, Number(meta.frameSlot || 1));
   if (tokenInput) tokenInput.value = meta.tokenId || '';
+  if (statusInput) statusInput.value = meta.frameStatus || 'Owned';
   if (imageInput) imageInput.value = meta.imageUrl || '';
   if (titleInput) titleInput.value = meta.title || '';
   if (enabledInput) enabledInput.checked = meta.enabled !== false;
@@ -6307,6 +6314,7 @@ function snapSelectedObjectToGround(){
   if (objType === 'collectible') return;
   if (objType === 'collision_proxy') return;
   if (objType === 'terrain_stamp') return;
+  if (objType === 'interior_nft_frame') return;
   if (objType && ASSETS[objType] && ASSETS[objType].noGroundSnap) return;
   if (!isInEditorGroundSnapZone(selectedObject.position.x, selectedObject.position.z)) return;
 
@@ -12723,7 +12731,7 @@ window.addEventListener('pointerup', () => {
   if (adminMode && selectedObject && (wasDragging || npcRotationChanged)) {
     const draggedNode = window._dragSelectedObject;
     const beforePos = window._dragSelectedStartPos;
-    if (!['interior_display', 'interior_exit', 'interior_fake_light'].includes(selectedObject.metadata?.type)) softSnapSelectedObject();
+  if (!['interior_display', 'interior_exit', 'interior_fake_light', 'interior_nft_frame'].includes(selectedObject.metadata?.type)) softSnapSelectedObject();
     if (
       draggedNode &&
       draggedNode === selectedObject &&
@@ -17850,6 +17858,11 @@ function getInteriorSavedNftFrameConfigs(interiorId) {
   return Array.isArray(configs[interiorId]?.nftFrames) ? configs[interiorId].nftFrames : [];
 }
 
+function getInteriorSavedNftCollectionConfigs(interiorId) {
+  const configs = getInteriorRoomConfigs();
+  return Array.isArray(configs[interiorId]?.nftCollections) ? configs[interiorId].nftCollections : [];
+}
+
 function saveInteriorDisplayConfig(display) {
   if (!ActiveInterior || !display?.metadata?.displayId) return;
   const key = getActiveInteriorConfigKey();
@@ -17877,9 +17890,10 @@ function serializeInteriorNftFrame(frame) {
   return {
     frameId: meta.frameId,
     frameName: meta.frameName || 'Rebel Frame',
-    sourceType: meta.sourceType || 'rebel_nfts',
-    collectionFilter: meta.collectionFilter || 'rebel_ants',
+    collectionId: meta.collectionId || meta.collectionFilter || '',
+    frameSlot: Number.isFinite(meta.frameSlot) ? meta.frameSlot : 1,
     tokenId: meta.tokenId || '',
+    frameStatus: meta.frameStatus || 'Owned',
     imageUrl: meta.imageUrl || '',
     title: meta.title || '',
     enabled: meta.enabled !== false,
@@ -17907,6 +17921,38 @@ function deleteInteriorNftFrameConfig(frameId) {
   current.nftFrames = (Array.isArray(current.nftFrames) ? current.nftFrames : []).filter(item => item.frameId !== frameId);
   configs[key] = { ...current, updatedAt:new Date().toISOString() };
   setInteriorRoomConfigs(configs);
+}
+
+function makeInteriorNftCollectionId(name, contract) {
+  const base = String(name || contract || 'nft_collection')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return base || 'nft_collection';
+}
+
+function saveInteriorNftCollectionConfig(collection) {
+  const key = getActiveInteriorConfigKey();
+  if (!key || !collection?.collectionId) return false;
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  const nftCollections = (Array.isArray(current.nftCollections) ? current.nftCollections : []).filter(item => item.collectionId !== collection.collectionId);
+  nftCollections.push({ ...collection, updatedAt:new Date().toISOString() });
+  configs[key] = { ...current, nftCollections, updatedAt:new Date().toISOString() };
+  setInteriorRoomConfigs(configs);
+  return true;
+}
+
+function deleteInteriorNftCollectionConfig(collectionId) {
+  const key = getActiveInteriorConfigKey();
+  if (!key || !collectionId) return false;
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  current.nftCollections = (Array.isArray(current.nftCollections) ? current.nftCollections : []).filter(item => item.collectionId !== collectionId);
+  configs[key] = { ...current, updatedAt:new Date().toISOString() };
+  setInteriorRoomConfigs(configs);
+  return true;
 }
 
 function serializeNodeTransform(node) {
@@ -18141,86 +18187,35 @@ function interactInteriorDisplay(display) {
   return true;
 }
 
-function normalizeInteriorNftCollection(value = '') {
-  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-}
-
-function getOwnedRebelNftsForInteriorFrames() {
-  const candidates = [
-    window.ownedRebelNfts,
-    window.rebelNfts,
-    window.walletRebelNfts,
-    window.loadedRebelNfts
-  ];
-  const localKeys = ['ownedRebelNfts', 'rebelAntsOwnedNfts', 'walletRebelNfts', 'loadedRebelNfts'];
-  localKeys.forEach(key => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(key) || 'null');
-      if (parsed) candidates.push(parsed);
-    } catch(e) {}
-  });
-  candidates.push(getSelectedRebel?.());
-  const flattened = [];
-  candidates.forEach(entry => {
-    if (!entry) return;
-    if (Array.isArray(entry)) flattened.push(...entry);
-    else if (Array.isArray(entry.nfts)) flattened.push(...entry.nfts);
-    else if (Array.isArray(entry.items)) flattened.push(...entry.items);
-    else if (entry.id || entry.tokenId || entry.image || entry.previewImage) flattened.push(entry);
-  });
-  return flattened.map(item => ({
-    raw: item,
-    title: item.name || item.title || item.displayName || (item.tokenId ? 'Rebel #' + item.tokenId : 'Rebel NFT'),
-    tokenId: item.tokenId || item.token_id || item.id || '',
-    image: item.image || item.imageUrl || item.image_url || item.previewImage || item.cachedImage || item.metadata?.image || '',
-    collection: item.collection || item.collectionName || item.collection_name || item.collectionKey || item.contractName || 'Rebel Ants',
-    collectionKey: normalizeInteriorNftCollection(item.collectionKey || item.collection || item.collectionName || item.contractName || 'rebel_ants')
-  })).filter(item => item.image || item.tokenId || item.title);
-}
-
-function interiorNftMatchesCollection(nft, filter) {
-  const normalized = normalizeInteriorNftCollection(filter || 'rebel_ants');
-  if (normalized === 'any_rebel') return true;
-  const haystack = normalizeInteriorNftCollection(`${nft.collection || ''} ${nft.collectionKey || ''}`);
-  if (normalized === 'rebel_ants') return /rebel|ant/.test(haystack);
-  if (normalized === 'battle_for_colony') return haystack.includes('battle') || haystack.includes('colony');
-  if (normalized === 'alpha_swarm') return haystack.includes('alpha') || haystack.includes('swarm');
-  if (normalized === 'ascendants') return haystack.includes('ascendant');
-  return haystack.includes(normalized);
-}
-
 function resolveInteriorNftFrameSource(meta = {}, frameIndex = 0) {
-  const sourceType = meta.sourceType || 'rebel_nfts';
   const tokenId = String(meta.tokenId || '').trim();
-  const customUrl = String(meta.imageUrl || '').trim();
-  const owned = getOwnedRebelNftsForInteriorFrames().filter(nft => interiorNftMatchesCollection(nft, meta.collectionFilter));
-  let nft = null;
-  if (tokenId) nft = owned.find(item => String(item.tokenId || '') === tokenId) || null;
-  if (!nft && sourceType === 'rebel_nfts' && owned.length) nft = owned[Math.abs(frameIndex) % owned.length];
-  if (nft?.image) {
+  const fallbackUrl = String(meta.imageUrl || '').trim();
+  const collectionId = meta.collectionId || meta.collectionFilter || '';
+  const collections = getInteriorSavedNftCollectionConfigs(getActiveInteriorConfigKey());
+  const collection = collections.find(item => item.collectionId === collectionId) || null;
+  const items = Array.isArray(collection?.items) ? collection.items : [];
+  const slot = Math.max(1, Number(meta.frameSlot || frameIndex + 1));
+  let nft = tokenId ? items.find(item => String(item.tokenId || '') === tokenId) : null;
+  if (!nft && items.length) nft = items[(slot - 1) % items.length];
+  if (nft?.imageUrl) {
     return {
-      imageUrl: nft.image,
+      imageUrl: nft.imageUrl,
       title: meta.title || nft.title || 'Rebel NFT',
-      collection: nft.collection || 'Rebel Collection',
+      collection: collection?.name || nft.collection || 'NFT Collection',
       tokenId: nft.tokenId || tokenId,
-      sourceLabel: 'Rebel NFTs'
-    };
-  }
-  if (sourceType === 'custom_image' && customUrl) {
-    return {
-      imageUrl: customUrl,
-      title: meta.title || meta.frameName || 'Custom Image',
-      collection: 'Custom Image URL',
-      tokenId,
-      sourceLabel: 'Custom Image URL'
+      sourceLabel: collection?.name || 'Collection Manifest',
+      collectionUrl: collection?.collectionUrl || nft.openseaUrl || '',
+      status: meta.frameStatus || 'Owned'
     };
   }
   return {
-    imageUrl: '',
+    imageUrl: fallbackUrl,
     title: meta.title || meta.frameName || 'Rebel Frame',
-    collection: meta.collectionFilter || 'Placeholder',
+    collection: collection?.name || 'Fallback',
     tokenId,
-    sourceLabel: 'Placeholder'
+    sourceLabel: fallbackUrl ? 'Fallback Image' : 'Placeholder',
+    collectionUrl: collection?.collectionUrl || '',
+    status: meta.frameStatus || 'Fallback'
   };
 }
 
@@ -18254,7 +18249,7 @@ function makeInteriorNftPlaceholderTexture(name, label = 'Rebel NFT') {
 function getInteriorNftTexture(url, fallbackName, fallbackLabel) {
   if (!url) return makeInteriorNftPlaceholderTexture(fallbackName, fallbackLabel);
   if (InteriorNftTextureCache.has(url)) return InteriorNftTextureCache.get(url);
-  const texture = new BABYLON.Texture(url, scene, true, false, BABYLON.Texture.TRILINEAR_SAMPLINGMODE);
+  const texture = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.TRILINEAR_SAMPLINGMODE);
   texture.name = 'interiorNftTexture_' + fallbackName;
   texture.hasAlpha = true;
   InteriorNftTextureCache.set(url, texture);
@@ -18285,6 +18280,8 @@ function applyInteriorNftFrameVisual(frame) {
   frame.metadata.resolvedTokenId = resolved.tokenId || '';
   frame.metadata.resolvedImageUrl = resolved.imageUrl || '';
   frame.metadata.resolvedSourceLabel = resolved.sourceLabel;
+  frame.metadata.resolvedCollectionUrl = resolved.collectionUrl || '';
+  frame.metadata.resolvedStatus = resolved.status || frame.metadata.frameStatus || 'Unknown';
   const art = frame.getChildMeshes?.(false).find(mesh => mesh.metadata?.isInteriorNftArt === true);
   if (art) {
     art.material?.dispose?.();
@@ -18311,9 +18308,10 @@ function createInteriorNftFrameSlot(parent, config = {}) {
     interiorRuntime:true,
     frameId,
     frameName: config.frameName || config.label || 'Rebel Frame',
-    sourceType: config.sourceType || 'rebel_nfts',
-    collectionFilter: config.collectionFilter || 'rebel_ants',
+    collectionId: config.collectionId || config.collectionFilter || '',
+    frameSlot: Number.isFinite(Number(config.frameSlot)) ? Math.max(1, Math.floor(Number(config.frameSlot))) : Math.max(1, getInteriorNftFrameRoots().length + 1),
     tokenId: config.tokenId || '',
+    frameStatus: config.frameStatus || 'Owned',
     imageUrl: config.imageUrl || '',
     title: config.title || '',
     enabled: config.enabled !== false,
@@ -18379,7 +18377,9 @@ function inspectInteriorNftFrame(frame) {
     meta.frameName || title,
     meta.resolvedCollection ? 'Collection: ' + meta.resolvedCollection : '',
     meta.resolvedTokenId ? 'Token ID: ' + meta.resolvedTokenId : '',
-    meta.resolvedSourceLabel ? 'Source: ' + meta.resolvedSourceLabel : ''
+    meta.resolvedStatus ? 'Status: ' + meta.resolvedStatus : '',
+    meta.resolvedSourceLabel ? 'Source: ' + meta.resolvedSourceLabel : '',
+    meta.resolvedCollectionUrl ? 'Collection Link: ' + meta.resolvedCollectionUrl : ''
   ].filter(Boolean).join('\n');
   openInteriorInfoPanel(title, details || 'Rebel NFT frame slot.', 'NFT Frame Slot', { imageUrl:meta.resolvedImageUrl || '' });
   return true;
@@ -18497,13 +18497,94 @@ function deleteSelectedInteriorAsset() {
 function readInteriorNftFrameAdminSettings() {
   return {
     frameName: document.getElementById('interiorNftFrameName')?.value?.trim() || 'Rebel Frame',
-    sourceType: document.getElementById('interiorNftFrameSource')?.value || 'rebel_nfts',
-    collectionFilter: document.getElementById('interiorNftFrameCollection')?.value || 'rebel_ants',
+    collectionId: document.getElementById('interiorNftFrameCollection')?.value || '',
+    frameSlot: Math.max(1, Math.floor(Number(document.getElementById('interiorNftFrameSlot')?.value || 1))),
     tokenId: document.getElementById('interiorNftFrameTokenId')?.value?.trim() || '',
+    frameStatus: document.getElementById('interiorNftFrameStatus')?.value || 'Owned',
     imageUrl: document.getElementById('interiorNftFrameImageUrl')?.value?.trim() || '',
     title: document.getElementById('interiorNftFrameTitle')?.value?.trim() || '',
     enabled: document.getElementById('interiorNftFrameEnabled')?.checked !== false
   };
+}
+
+function refreshInteriorNftCollectionSelect(preferredValue = '') {
+  const select = document.getElementById('interiorNftFrameCollection');
+  if (!select) return;
+  const collections = getInteriorSavedNftCollectionConfigs(getActiveInteriorConfigKey());
+  const current = preferredValue || select.value || '';
+  select.innerHTML = collections.length
+    ? collections.map(collection => `<option value="${escapeHTML(collection.collectionId)}">${escapeHTML(collection.name || collection.collectionId)}</option>`).join('')
+    : '<option value="">No collection saved yet</option>';
+  select.value = collections.some(collection => collection.collectionId === current)
+    ? current
+    : (collections[0]?.collectionId || '');
+}
+
+function hydrateInteriorNftCollectionAdmin(collection = null) {
+  const set = (id, value) => { const el = document.getElementById(id); if (el) el.value = value || ''; };
+  set('interiorNftCollectionName', collection?.name || '');
+  set('interiorNftCollectionChain', collection?.chain || 'ethereum');
+  set('interiorNftCollectionContract', collection?.contract || '');
+  set('interiorNftCollectionUrl', collection?.collectionUrl || '');
+  set('interiorNftCollectionLimit', collection?.limit || 50);
+  const status = document.getElementById('interiorNftCollectionStatus');
+  if (status) status.textContent = collection
+    ? `Collection manifest: ${(collection.items || []).length} NFTs cached for ${collection.name || collection.collectionId}`
+    : 'Collection manifest: none loaded';
+}
+
+function loadSelectedInteriorNftCollectionIntoAdmin() {
+  const collectionId = document.getElementById('interiorNftFrameCollection')?.value || '';
+  const collection = getInteriorSavedNftCollectionConfigs(getActiveInteriorConfigKey()).find(item => item.collectionId === collectionId) || null;
+  hydrateInteriorNftCollectionAdmin(collection);
+}
+
+async function saveInteriorNftCollectionFromAdmin() {
+  if (!ActiveInterior?.root) { showToast('Enter an interior first'); return; }
+  const name = document.getElementById('interiorNftCollectionName')?.value?.trim() || '';
+  const chain = document.getElementById('interiorNftCollectionChain')?.value?.trim() || 'ethereum';
+  const contract = document.getElementById('interiorNftCollectionContract')?.value?.trim() || '';
+  const collectionUrl = document.getElementById('interiorNftCollectionUrl')?.value?.trim() || '';
+  const limit = Math.max(1, Math.min(100, Math.floor(Number(document.getElementById('interiorNftCollectionLimit')?.value || 50))));
+  if (!name) { showToast('Collection name required'); return; }
+  if (!/^0x[a-fA-F0-9]{40}$/.test(contract)) { showToast('Valid contract address required'); return; }
+  const status = document.getElementById('interiorNftCollectionStatus');
+  if (status) status.textContent = 'Collection manifest: fetching from OpenSea...';
+  try {
+    const params = new URLSearchParams({ chain, contract, limit:String(limit) });
+    const response = await fetch('/api/nft-collection?' + params.toString(), { credentials:'same-origin' });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) throw new Error(result.error || 'Collection fetch failed');
+    const collectionId = makeInteriorNftCollectionId(name, contract);
+    const collection = {
+      collectionId,
+      name,
+      chain: result.chain || chain,
+      contract: result.contract || contract,
+      collectionUrl,
+      limit,
+      source: result.source || 'opensea',
+      items: Array.isArray(result.items) ? result.items : []
+    };
+    saveInteriorNftCollectionConfig(collection);
+    hydrateInteriorNftCollectionAdmin(collection);
+    refreshInteriorNftCollectionSelect(collectionId);
+    getInteriorNftFrameRoots().forEach(applyInteriorNftFrameVisual);
+    showToast('NFT collection saved: ' + collection.items.length + ' images');
+  } catch (error) {
+    if (status) status.textContent = 'Collection manifest failed: ' + (error?.message || 'try again');
+    showToast('NFT collection failed: ' + (error?.message || 'try again'), 8000);
+  }
+}
+
+function deleteSelectedInteriorNftCollection() {
+  const collectionId = document.getElementById('interiorNftFrameCollection')?.value || '';
+  if (!collectionId) { showToast('Select a collection first'); return; }
+  deleteInteriorNftCollectionConfig(collectionId);
+  hydrateInteriorNftCollectionAdmin(null);
+  refreshInteriorNftCollectionSelect();
+  getInteriorNftFrameRoots().forEach(applyInteriorNftFrameVisual);
+  showToast('NFT collection removed from this interior');
 }
 
 function addInteriorNftFrameSlot() {
@@ -18519,9 +18600,10 @@ function applySelectedInteriorNftFrameSettings() {
   if (selectedObject?.metadata?.type !== 'interior_nft_frame') { showToast('Select an NFT frame slot first'); return; }
   const settings = readInteriorNftFrameAdminSettings();
   selectedObject.metadata.frameName = settings.frameName;
-  selectedObject.metadata.sourceType = settings.sourceType;
-  selectedObject.metadata.collectionFilter = settings.collectionFilter;
+  selectedObject.metadata.collectionId = settings.collectionId;
+  selectedObject.metadata.frameSlot = settings.frameSlot;
   selectedObject.metadata.tokenId = settings.tokenId;
+  selectedObject.metadata.frameStatus = settings.frameStatus;
   selectedObject.metadata.imageUrl = settings.imageUrl;
   selectedObject.metadata.title = settings.title;
   selectedObject.metadata.enabled = settings.enabled;
@@ -19075,6 +19157,8 @@ function enterInterior(entrance, options = {}) {
       setVillageRuntimeEnabled(false);
       hydrateInteriorLightingAdmin(ActiveInterior.targetInteriorId || type);
       applyInteriorLightingConfig(ActiveInterior.targetInteriorId || type);
+      refreshInteriorNftCollectionSelect();
+      loadSelectedInteriorNftCollectionIntoAdmin();
       updateInteriorFloorOffsetReadout();
       if (charMesh) {
         const activeFloorY = getActiveInteriorPlayerFloorY();
@@ -20540,6 +20624,9 @@ window.applySelectedInteriorFakeLightSettings = applySelectedInteriorFakeLightSe
 window.duplicateSelectedInteriorAsset = duplicateSelectedInteriorAsset;
 window.deleteSelectedInteriorAsset = deleteSelectedInteriorAsset;
 window.addInteriorNftFrameSlot = addInteriorNftFrameSlot;
+window.saveInteriorNftCollectionFromAdmin = saveInteriorNftCollectionFromAdmin;
+window.deleteSelectedInteriorNftCollection = deleteSelectedInteriorNftCollection;
+window.loadSelectedInteriorNftCollectionIntoAdmin = loadSelectedInteriorNftCollectionIntoAdmin;
 window.applySelectedInteriorNftFrameSettings = applySelectedInteriorNftFrameSettings;
 window.duplicateSelectedInteriorNftFrame = duplicateSelectedInteriorNftFrame;
 window.deleteSelectedInteriorNftFrame = deleteSelectedInteriorNftFrame;
@@ -20589,6 +20676,7 @@ window.loadWorldLayout = loadWorldLayout;
 
 // Show the GPU badge automatically only in WebGPU test mode.
 refreshInteriorAdminOptions();
+refreshInteriorNftCollectionSelect();
 updateLayoutCacheStatus();
 updateGPUBadge();
 if (window._gpuMode === 'webgpu') {
