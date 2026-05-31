@@ -6401,6 +6401,7 @@ function isInEditorGroundSnapZone(x, z){
 function softSnapSelectedObject(){
   if (!selectedObject) return;
   const objType = selectedObject.metadata && selectedObject.metadata.type;
+  if (objType === 'interior_entrance') return;
   if (objType === 'terrain_stamp') return;
   prepareObjectForEditing(selectedObject);
 
@@ -6425,6 +6426,7 @@ function snapSelectedObjectToGround(){
   if (objType === 'collectible') return;
   if (objType === 'collision_proxy') return;
   if (objType === 'terrain_stamp') return;
+  if (objType === 'interior_entrance') return;
   if (objType === 'interior_nft_frame') return;
   if (objType === 'interior_hotspot') return;
   if (objType === 'interior_video_screen') return;
@@ -12845,7 +12847,7 @@ window.addEventListener('pointerup', () => {
   if (adminMode && selectedObject && (wasDragging || npcRotationChanged)) {
     const draggedNode = window._dragSelectedObject;
     const beforePos = window._dragSelectedStartPos;
-  if (!['interior_display', 'interior_exit', 'interior_fake_light', 'interior_nft_frame', 'interior_hotspot', 'interior_video_screen'].includes(selectedObject.metadata?.type)) softSnapSelectedObject();
+  if (!['interior_display', 'interior_exit', 'interior_entrance', 'interior_fake_light', 'interior_nft_frame', 'interior_hotspot', 'interior_video_screen'].includes(selectedObject.metadata?.type)) softSnapSelectedObject();
     if (
       draggedNode &&
       draggedNode === selectedObject &&
