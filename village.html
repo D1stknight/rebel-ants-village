@@ -13628,6 +13628,11 @@ document.addEventListener('keydown', async e => {
     rotateSelectedBy(Math.PI / 2);
     return;
   }
+  if (key === 'o' && adminMode && selectedObject?.metadata?.type === 'interior_entrance' && !ActiveInterior) {
+    e.preventDefault();
+    enterInterior(selectedObject);
+    return;
+  }
   if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
     e.preventDefault();
     return;
@@ -17543,8 +17548,22 @@ function applyActiveInteriorPlayerFloorOffset() {
   updateInteriorFloorOffsetReadout();
 }
 
+function runWhenInteriorReady(callback) {
+  if (ActiveInterior) {
+    callback();
+    return true;
+  }
+  if (selectedObject?.metadata?.type !== 'interior_entrance') return false;
+  const entered = enterInterior(selectedObject, { onReady: callback });
+  if (entered) showToast('Entering selected interior first');
+  return entered;
+}
+
 function adjustActiveInteriorPlayerFloorOffset(delta = 0) {
-  if (!ActiveInterior) { showToast('Enter an interior first'); return; }
+  if (!ActiveInterior) {
+    if (!runWhenInteriorReady(() => adjustActiveInteriorPlayerFloorOffset(delta))) showToast('Enter an interior first');
+    return;
+  }
   const key = getActiveInteriorConfigKey();
   const next = clampInteriorPlayerFloorOffset((ActiveInterior.playerFloorOffset || 0) + Number(delta || 0));
   ActiveInterior.playerFloorOffset = next;
@@ -17554,7 +17573,10 @@ function adjustActiveInteriorPlayerFloorOffset(delta = 0) {
 }
 
 function resetActiveInteriorPlayerFloorOffset() {
-  if (!ActiveInterior) { showToast('Enter an interior first'); return; }
+  if (!ActiveInterior) {
+    if (!runWhenInteriorReady(() => resetActiveInteriorPlayerFloorOffset())) showToast('Enter an interior first');
+    return;
+  }
   ActiveInterior.playerFloorOffset = 0;
   saveInteriorPlayerFloorOffsetForKey(getActiveInteriorConfigKey(), 0);
   applyActiveInteriorPlayerFloorOffset();
@@ -18429,7 +18451,7 @@ function recordInteriorQuestHook(entrance, actionType = 'enterInterior') {
   return payload;
 }
 
-function enterInterior(entrance) {
+function enterInterior(entrance, options = {}) {
   if (!entrance || entrance.metadata?.type !== 'interior_entrance' || entrance.metadata.enabled === false || ActiveInterior) return false;
   const type = normalizeInteriorType(entrance.metadata.interiorType);
   setVillageTravelFade(true);
@@ -18472,6 +18494,7 @@ function enterInterior(entrance) {
       recordInteriorQuestHook(entrance, 'enterInterior');
       updateQuestTracker();
       setVillageTravelFade(false);
+      if (typeof options.onReady === 'function') options.onReady(ActiveInterior);
       setTimeout(() => setInteriorTitle('', ''), 2600);
     } catch(error) {
       console.error('Interior enter failed', error);
