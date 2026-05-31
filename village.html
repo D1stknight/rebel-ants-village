@@ -340,6 +340,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #interactionPrompt{position:fixed;bottom:122px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.7);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:2px;padding:9px 18px;opacity:0;transition:opacity .18s;pointer-events:none;z-index:49;white-space:nowrap}
 #interactionPrompt.on{opacity:1}
+#interiorInfoOverlay{position:fixed;inset:0;z-index:73;display:flex;align-items:flex-end;justify-content:center;padding:0 22px 112px;background:linear-gradient(to top,rgba(2,8,18,.58),rgba(2,8,18,0) 62%);opacity:0;pointer-events:none;transition:opacity .18s ease}
+#interiorInfoOverlay.on{opacity:1;pointer-events:all}
+#interiorInfoPanel{width:min(680px,92vw);max-height:min(52vh,440px);overflow:auto;background:linear-gradient(180deg,rgba(6,12,30,.98),rgba(3,8,20,.96));border:1px solid rgba(232,197,106,.62);box-shadow:0 18px 60px rgba(0,0,0,.46),0 0 38px rgba(94,207,202,.12),inset 0 0 22px rgba(232,197,106,.06);padding:22px 24px 20px;transform:translateY(24px) scale(.96);transition:transform .2s cubic-bezier(.16,1,.3,1);position:relative}
+#interiorInfoOverlay.on #interiorInfoPanel{transform:translateY(0) scale(1)}
+#interiorInfoPanel::before{content:'';position:absolute;left:18px;right:18px;top:8px;height:1px;background:linear-gradient(90deg,transparent,rgba(94,207,202,.64),rgba(232,197,106,.58),transparent)}
+#interiorInfoKicker{color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:7px}
+#interiorInfoTitle{color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:18px;letter-spacing:2px;line-height:1.3;margin-right:38px;text-shadow:0 0 16px rgba(232,197,106,.24)}
+#interiorInfoDescription{color:rgba(255,255,255,.82);font-size:13px;line-height:1.8;letter-spacing:.5px;margin-top:12px;white-space:pre-wrap}
+#interiorInfoClose{position:absolute;top:14px;right:14px;width:30px;height:30px;border:1px solid rgba(94,207,202,.38);background:rgba(94,207,202,.06);color:#5ecfca;font-size:18px;line-height:26px;cursor:pointer}
+#interiorInfoClose:hover{background:rgba(94,207,202,.15);border-color:rgba(94,207,202,.72)}
 #interiorTitle{position:fixed;top:82px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:48;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;background:rgba(5,10,28,.9);border:1px solid rgba(94,207,202,.46);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;padding:10px 18px;box-shadow:0 0 24px rgba(94,207,202,.13)}
 #interiorTitle.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #interiorTitle small{display:block;margin-top:3px;color:#5ecfca;font-size:8px;letter-spacing:2px;text-align:center}
@@ -1078,6 +1088,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="toast"></div>
 <div id="interactionPrompt">Press O to Open</div>
 <div id="interiorTitle" aria-live="polite"></div>
+<div id="interiorInfoOverlay" aria-hidden="true" onclick="if(event.target===this)closeInteriorInfoPanel()">
+  <div id="interiorInfoPanel" role="dialog" aria-modal="true" aria-labelledby="interiorInfoTitle">
+    <button id="interiorInfoClose" type="button" onclick="closeInteriorInfoPanel()" aria-label="Close interior information">×</button>
+    <div id="interiorInfoKicker">Interior Record</div>
+    <div id="interiorInfoTitle"></div>
+    <div id="interiorInfoDescription"></div>
+  </div>
+</div>
 <div id="npcDialogueOverlay" aria-hidden="true">
   <div id="npcDialoguePanel" role="dialog" aria-modal="true" aria-labelledby="npcDialogueName">
     <div id="npcDialogueName">Villager</div>
@@ -13528,6 +13546,10 @@ document.addEventListener('keydown', async e => {
     showToast('Placement cancelled');
     return;
   }
+  if (key === 'escape' && closeInteriorInfoPanel()) {
+    e.preventDefault();
+    return;
+  }
 
   if (key === 'm') {
     if (!adminMode) {
@@ -17850,6 +17872,28 @@ function getNearestInteriorDisplayInRange() {
   return nearest;
 }
 
+function openInteriorInfoPanel(title, description, kicker = 'Interior Record') {
+  const overlay = document.getElementById('interiorInfoOverlay');
+  const titleEl = document.getElementById('interiorInfoTitle');
+  const descEl = document.getElementById('interiorInfoDescription');
+  const kickerEl = document.getElementById('interiorInfoKicker');
+  if (!overlay || !titleEl || !descEl) return false;
+  titleEl.textContent = title || 'Interior Display';
+  descEl.textContent = description || 'No description has been added yet.';
+  if (kickerEl) kickerEl.textContent = kicker || 'Interior Record';
+  overlay.classList.add('on');
+  overlay.setAttribute('aria-hidden', 'false');
+  return true;
+}
+
+function closeInteriorInfoPanel() {
+  const overlay = document.getElementById('interiorInfoOverlay');
+  if (!overlay || !overlay.classList.contains('on')) return false;
+  overlay.classList.remove('on');
+  overlay.setAttribute('aria-hidden', 'true');
+  return true;
+}
+
 function interactInteriorDisplay(display) {
   if (!display || display.metadata?.enabled === false) return false;
   const meta = display.metadata || {};
@@ -17859,7 +17903,7 @@ function interactInteriorDisplay(display) {
     showToast('Opening: ' + (meta.label || 'Interior link'));
     return true;
   }
-  showToast((meta.label || 'Interior Display') + ': ' + (meta.description || meta.actionType || 'Future interaction'));
+  openInteriorInfoPanel(meta.label || 'Interior Display', meta.description || meta.actionType || 'Future interaction', getInteriorTypeLabel(ActiveInterior?.interiorType || 'training_dojo'));
   return true;
 }
 
