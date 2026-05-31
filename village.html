@@ -17247,6 +17247,8 @@ function getFakeLightStateFactor() {
   if (h >= 20 || h < 6) timeFactor = 1;
   else if (h >= 17 && h < 20) timeFactor = .28 + ((h - 17) / 3) * .72;
   else if (h >= 6 && h < 9) timeFactor = 1 - ((h - 6) / 3) * .72;
+  let weatherMode = 'clear';
+  try { weatherMode = WeatherManager?.mode || 'clear'; } catch(e) {}
   const weatherDarkness = {
     clear: 0,
     heat: 0,
@@ -17256,16 +17258,17 @@ function getFakeLightStateFactor() {
     'light-rain': .22,
     'heavy-rain': .42,
     storm: .7
-  }[WeatherManager?.mode || 'clear'] || 0;
+  }[weatherMode] || 0;
   return Math.max(.12, Math.min(1.25, timeFactor + weatherDarkness));
 }
 
-let _lastFakeLightStateUpdateAt = 0;
+var _lastFakeLightStateUpdateAt = 0;
 function applyFakeLightState(force = false) {
   const now = performance.now();
   if (!force && now - _lastFakeLightStateUpdateAt < 900) return;
   _lastFakeLightStateUpdateAt = now;
   const factor = getFakeLightStateFactor();
+  if (!scene?.transformNodes) return;
   scene.transformNodes.forEach(root => {
     const entries = root?.metadata?._fakeLightMaterials;
     if (!Array.isArray(entries)) return;
