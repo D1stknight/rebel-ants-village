@@ -1543,7 +1543,7 @@
     "name": "wooden_signRootClone_1780008817525_25",
     "position": {
       "x": -65.91902923583984,
-      "y": 0.07079324362749004,
+      "y": 0.0707932483165729,
       "z": 72.90644073486328
     },
     "rotation": {
@@ -1558,7 +1558,7 @@
     },
     "signConfig": {
       "label": "REBEL ARCADE",
-      "sub": "",
+      "sub": "Enter if you are up for the challenge",
       "desc": "The elders once believed war would decide the fate of the colony. They were wrong. The future would be decided by those who could master both the sword… and the game.",
       "icon": "",
       "color": "#5ecfca",
@@ -28113,7 +28113,7 @@
     },
     "scaling": {
       "x": 1,
-      "y": 1.0017959143036639,
+      "y": 1.017650366621195,
       "z": 1
     },
     "signConfig": null,
@@ -28189,7 +28189,7 @@
     },
     "rotation": {
       "x": -1.2410712543590996e-8,
-      "y": 9.5779292304156,
+      "y": 10.056124950848453,
       "z": -0.024454046495610948
     },
     "scaling": {
@@ -28459,7 +28459,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": 12.806076345697425,
+      "y": 14.560953562131564,
       "z": 0.024574645924071926
     },
     "scaling": {
