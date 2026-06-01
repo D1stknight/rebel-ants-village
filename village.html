@@ -1570,6 +1570,166 @@ const QUEST_DEFINITIONS = {
   }
 };
 
+const BOOK1_CHAPTERS = [
+  { chapterId:'book1-chapter-1', title:'The First Warning', range:'Main Quests 1-10', unlockQuestId:'hub-tutorial-complete', villageFocus:['hub','ronin','ashigaru'], journal:'The first tremors beneath the Hub become a warning carried through scouts, dojos, and the Ronin edge of the colony.' },
+  { chapterId:'book1-chapter-2', title:'Echoes Beneath', range:'Main Quests 11-20', unlockQuestId:'book1-main-10', villageFocus:['hub','sohei','yamabushi','buke'], journal:'Old tunnels answer back. The spiritual villages sense imbalance while the builders find proof in stone and root.' },
+  { chapterId:'book1-chapter-3', title:'Divided Paths', range:'Main Quests 21-30', unlockQuestId:'book1-main-20', villageFocus:['samurai','ronin','wokou','bushi'], journal:'The warning spreads unevenly. Order, exile, trade, and labor pull the factions toward different answers.' },
+  { chapterId:'book1-chapter-4', title:'Gathering Storm', range:'Main Quests 31-40', unlockQuestId:'book1-main-30', villageFocus:['warrior','shogun','kenshi','wokou'], journal:'The villages prepare for conflict as storms gather above and below, and the colony learns that unity is harder than alarm.' },
+  { chapterId:'book1-chapter-5', title:'The Awakening', range:'Main Quests 41-50', unlockQuestId:'book1-main-40', villageFocus:['hub','shogun','yamabushi','sohei','all factions'], journal:'The thing beneath the roots begins to wake. The factions must choose whether they are separate villages or one colony.' }
+];
+
+function makeBook1MainQuest(index, title, chapter, village, primaryNpc, description, objectives, rewards, journalEntry, prerequisite) {
+  const questId = index === 1 ? 'first-warning' : `book1-main-${String(index).padStart(2, '0')}`;
+  return { questId, title, chapter, village, primaryNpc, description, objectives, rewards, journalEntry, prerequisites:[prerequisite || (index === 1 ? 'hub-tutorial-complete' : `book1-main-${String(index - 1).padStart(2, '0')}`)], type:'main' };
+}
+
+function makeBook1SideQuest(index, title, village, primaryNpc, description, objectives, rewards, journalEntry, prerequisite = 'hub-tutorial-complete') {
+  return { questId:`book1-side-${String(index).padStart(2, '0')}`, title, chapter:'Side Stories', village, primaryNpc, description, objectives, rewards, journalEntry, prerequisites:[prerequisite], type:'side' };
+}
+
+const BOOK1_MAIN_QUESTS = [
+  makeBook1MainQuest(1, 'The First Warning', 'The First Warning', 'Hub Village -> Ronin Village', 'Hub Guide / Ronin Watcher', 'The Hub Guide sends the first warning to the Ronin after tremors stir beneath the roots.', [{ id:'talk', objective:'Speak with the Hub Guide.' }, { id:'ronin', objective:'Find the Ronin Watcher and deliver the warning.' }], ['+75 progress','Story entry: The First Warning','Badge progress: Watcher'], 'The tunnels have started breathing again, and the Ronin heard the warning before the Hub understood it.', 'hub-tutorial-complete'),
+  makeBook1MainQuest(2, 'Dust On The Roots', 'The First Warning', 'Ronin Village', 'Ronin Watcher', 'Red dust appears along old roots near the Ronin outskirts.', ['Inspect red dust traces near the Ronin edge.','Collect a sample for the Hub Guide.'], ['+60 progress','Journal: Red Dust Trace'], 'The red dust does not fall from above. It rises from cracks below.'),
+  makeBook1MainQuest(3, 'Scout Without A Shadow', 'The First Warning', 'Hub Village', 'Ashigaru Gate Guard', 'A returning scout reports movement in tunnels that should be sealed.', ['Question the Ashigaru Gate Guard.','Search the scout path outside the Hub.'], ['+60 progress','Journal: Missing Scout Report'], 'A scout returned with a warning but without the calm that usually follows a safe road.'),
+  makeBook1MainQuest(4, 'The Forest Dojos Stir', 'The First Warning', 'Hub Village', 'Forest Dojo Keeper', 'The forest dojos notice tremors before the village center does.', ['Visit a forest dojo.','Inspect training floor cracks.'], ['+70 progress','Journal: Dojo Cracks'], 'Training floors remember every footstep, and now they remember something beneath them.'),
+  makeBook1MainQuest(5, 'Signs In The Wood', 'The First Warning', 'Hub Village', 'Hub Guide', 'Old wooden signs point toward places that were not listed before.', ['Read three wooden signs.','Return the strange directions to the Hub Guide.'], ['+55 progress','Explorer progress'], 'The signs did not move, but the paths written on them have changed.'),
+  makeBook1MainQuest(6, 'Lanterns Before Night', 'The First Warning', 'Hub Village', 'Ashigaru Lantern Keeper', 'Village lights react to the tremors before the sun fully sets.', ['Observe village lights at dusk or night.','Report the timing shift.'], ['+55 progress','Journal: Restless Lanterns'], 'The lights woke early, as if something below had already decided it was night.'),
+  makeBook1MainQuest(7, 'A Ronin Debt', 'The First Warning', 'Ronin Village', 'Ronin Watcher', 'The Ronin know an old debt tied to the sealed tunnels.', ['Hear the Ronin account.','Find the old debt marker.'], ['+75 progress','Ronin lore entry'], 'The Ronin did not abandon the old tunnel stories. They carried them like a debt.'),
+  makeBook1MainQuest(8, 'Beneath The Hub', 'The First Warning', 'Hub Village', 'Hub Guide', 'The Hub Guide reveals that ancient tunnels run below the village square.', ['Return to the Hub.','Inspect the central ground marker.'], ['+70 progress','Journal: Ancient Hub Tunnels'], 'The Hub was not built over empty earth. It was built over memory.'),
+  makeBook1MainQuest(9, 'The Quiet Alarm', 'The First Warning', 'Ashigaru Village', 'Ashigaru Runner', 'Ashigaru runners carry the warning without causing panic.', ['Visit Ashigaru Village.','Deliver the sealed warning.'], ['+70 progress','Village lore: Ashigaru Runners'], 'A warning moves fastest when it does not become panic.'),
+  makeBook1MainQuest(10, 'Chapter One Council', 'The First Warning', 'Hub Village', 'Hub Guide', 'The first council gathers the warning into a plan.', ['Return to the Hub Guide.','Review the first warnings.'], ['+100 progress','Chapter entry: The First Warning'], 'The colony has heard the first warning. Now it must decide whether to listen.'),
+  makeBook1MainQuest(11, 'Echoes Beneath', 'Echoes Beneath', 'Hub Village', 'Hub Guide', 'A second tremor answers the first from under the Hub.', ['Stand near the Hub center.','Record the second tremor.'], ['+70 progress','Chapter entry: Echoes Beneath'], 'The first warning was a whisper. The second was an answer.'),
+  makeBook1MainQuest(12, 'Sohei Listening Bells', 'Echoes Beneath', 'Sohei Village', 'Sohei Bell Keeper', 'Sohei bells ring without wind when the tunnels shift.', ['Visit Sohei Village.','Inspect the listening bells.'], ['+70 progress','Sohei lore entry'], 'The bells heard what the ground tried to hide.'),
+  makeBook1MainQuest(13, 'Yamabushi Root Sense', 'Echoes Beneath', 'Yamabushi Village', 'Yamabushi Seer', 'Yamabushi scouts sense imbalance in the roots and stones.', ['Speak with the Yamabushi Seer.','Follow the root-sense markers.'], ['+75 progress','Yamabushi lore entry'], 'The mountain paths and root paths share one truth: balance breaks before walls do.'),
+  makeBook1MainQuest(14, 'Buke Survey Lines', 'Echoes Beneath', 'Buke Village', 'Buke Engineer', 'Buke engineers map tunnel pressure beneath old roads.', ['Collect three survey marks.','Bring the marks to the engineer.'], ['+75 progress','Journal: Pressure Map'], 'The Buke do not trust rumors. They trust lines, measures, and stone.'),
+  makeBook1MainQuest(15, 'The Hollow Step', 'Echoes Beneath', 'Hub Village', 'Hub Guide', 'A hollow step in the Hub reveals a sealed chamber nearby.', ['Find the hollow floor sound.','Mark the sealed chamber.'], ['+80 progress','Journal: Sealed Chamber'], 'A hollow sound beneath a busy path can be louder than a shout.'),
+  makeBook1MainQuest(16, 'Tunnel Air', 'Echoes Beneath', 'Sohei Village', 'Sohei Bell Keeper', 'Cold air rises from vents that should be blocked.', ['Find two cold vents.','Record the air direction.'], ['+65 progress','Collectible unlock: Cold Vent Memory'], 'The tunnels breathe in one place and exhale in another.'),
+  makeBook1MainQuest(17, 'The Old Root Map', 'Echoes Beneath', 'Yamabushi Village', 'Yamabushi Seer', 'An old root map marks crossings beneath several villages.', ['Recover the old root map.','Compare it with current village paths.'], ['+85 progress','Journal: Old Root Map'], 'The map is old, but the danger on it feels newly awake.'),
+  makeBook1MainQuest(18, 'What The Ronin Omitted', 'Echoes Beneath', 'Ronin Village', 'Ronin Watcher', 'The Ronin reveal a missing piece of the tunnel story.', ['Return to the Ronin Watcher.','Ask about the omitted tunnel mark.'], ['+70 progress','Ronin trust progress'], 'The Ronin did not lie. They left room for you to survive the truth.'),
+  makeBook1MainQuest(19, 'Three Villages, One Tremor', 'Echoes Beneath', 'Hub / Sohei / Buke', 'Hub Guide', 'Reports from three villages confirm the same underground movement.', ['Collect reports from Hub, Sohei, and Buke.','Assemble the tremor pattern.'], ['+100 progress','Journal: Shared Tremor Pattern'], 'Three villages felt one movement. The ground is drawing a map.'),
+  makeBook1MainQuest(20, 'The Chamber Seal', 'Echoes Beneath', 'Hub Village', 'Hub Guide', 'The sealed chamber below the Hub is confirmed as ancient colony work.', ['Return to the sealed chamber marker.','Record the seal symbol.'], ['+100 progress','Chapter entry: Echoes Beneath'], 'The seal is not a lock. It is a warning made of stone.'),
+  makeBook1MainQuest(21, 'Divided Paths', 'Divided Paths', 'Samurai Village', 'Samurai Captain', 'Samurai leadership demands order before exploration continues.', ['Visit Samurai Village.','Hear the captain decree.'], ['+70 progress','Chapter entry: Divided Paths'], 'Order can protect a colony. It can also slow the truth.'),
+  makeBook1MainQuest(22, 'Ronin Refusal', 'Divided Paths', 'Ronin Village', 'Ronin Watcher', 'The Ronin refuse to place the tunnels under Samurai command.', ['Carry the Samurai decree to Ronin Village.','Hear the Ronin refusal.'], ['+70 progress','Journal: Ronin Refusal'], 'The Ronin have lived outside order too long to kneel to fear.'),
+  makeBook1MainQuest(23, 'Wokou Opportunity', 'Divided Paths', 'Wokou Village', 'Wokou Broker', 'Wokou traders see profit in rare relics rising from tunnel cracks.', ['Visit Wokou Village.','Inspect a traded tunnel relic.'], ['+70 progress','Wokou lore entry'], 'Where some see warning, Wokou eyes see opportunity.'),
+  makeBook1MainQuest(24, 'Bushi Work Songs', 'Divided Paths', 'Bushi Village', 'Bushi Foreman', 'Bushi workers hear old rhythms in the tremors.', ['Listen near a Bushi worksite.','Compare rhythm notes.'], ['+65 progress','Bushi lore entry'], 'The work songs changed tempo when the ground joined in.'),
+  makeBook1MainQuest(25, 'Kenshi Edge Marks', 'Divided Paths', 'Kenshi Village', 'Kenshi Duelist', 'Kenshi blades pick up residue from tunnel metal.', ['Inspect Kenshi blade marks.','Collect the residue reading.'], ['+75 progress','Kenshi lore entry'], 'A blade can remember what it cuts, even when the enemy stays underground.'),
+  makeBook1MainQuest(26, 'A Fractured Council', 'Divided Paths', 'Hub Village', 'Hub Guide', 'The faction reports contradict each other and tension grows.', ['Bring four faction reports to the Hub.','Attend the fractured council.'], ['+100 progress','Journal: Fractured Council'], 'The warning did not unite the villages. It gave each one a different fear.'),
+  makeBook1MainQuest(27, 'Hidden Terms', 'Divided Paths', 'Wokou Village', 'Wokou Broker', 'The Wokou offer tunnel access for favors the Hub cannot ignore.', ['Read the Wokou terms.','Choose to report them to the Hub.'], ['+70 progress','Journal: Wokou Terms'], 'Every shortcut has a price. The Wokou simply write theirs clearly.'),
+  makeBook1MainQuest(28, 'Samurai Watch Posts', 'Divided Paths', 'Samurai Village', 'Samurai Captain', 'Samurai watch posts begin blocking roads near tunnel signs.', ['Inspect two watch posts.','Find a safe alternate route.'], ['+75 progress','Traveler progress'], 'Protection becomes a wall when trust runs thin.'),
+  makeBook1MainQuest(29, 'Ronin Old Passage', 'Divided Paths', 'Ronin Village', 'Ronin Watcher', 'The Ronin reveal an old passage that avoids the watch posts.', ['Enter the old passage marker.','Return with proof of the route.'], ['+85 progress','Journal: Old Passage'], 'Exiles remember roads that maps prefer to forget.'),
+  makeBook1MainQuest(30, 'The Colony Splits', 'Divided Paths', 'Hub Village', 'Hub Guide', 'The Hub records the first open split between faction plans.', ['Return to the Hub council.','Record each faction position.'], ['+100 progress','Chapter entry: Divided Paths'], 'The colony is still one body, but its legs are pulling in different directions.'),
+  makeBook1MainQuest(31, 'Gathering Storm', 'Gathering Storm', 'Warrior Village', 'Warrior Drillmaster', 'Warrior Village prepares for conflict before the enemy is visible.', ['Visit Warrior Village.','Observe the emergency drills.'], ['+75 progress','Chapter entry: Gathering Storm'], 'A storm can gather in armor before it gathers in clouds.'),
+  makeBook1MainQuest(32, 'Shogun Summons', 'Gathering Storm', 'Shogun Village', 'Shogun Herald', 'The Shogun summons faction voices to prevent open conflict.', ['Travel to Shogun Village.','Hear the summons.'], ['+75 progress','Shogun lore entry'], 'A summons is not peace. It is a pause with authority.'),
+  makeBook1MainQuest(33, 'Warrior Stores', 'Gathering Storm', 'Warrior Village', 'Warrior Quartermaster', 'Supplies disappear from Warrior stores during storm preparations.', ['Inspect the missing stores.','Find signs of tunnel dust.'], ['+70 progress','Journal: Missing Stores'], 'The supplies were not stolen from the door. They vanished from below.'),
+  makeBook1MainQuest(34, 'Kenshi Witness', 'Gathering Storm', 'Kenshi Village', 'Kenshi Duelist', 'A Kenshi witness saw movement beneath a cracked practice ring.', ['Speak with the Kenshi witness.','Inspect the cracked ring.'], ['+70 progress','Kenshi trust progress'], 'The witness trusted their blade more than their eyes, but both told the same story.'),
+  makeBook1MainQuest(35, 'Storm Over Wokou', 'Gathering Storm', 'Wokou Village', 'Wokou Broker', 'Weather turns violent over Wokou trade paths near tunnel vents.', ['Experience the storm over Wokou paths.','Check the vent markers.'], ['+80 progress','Weather lore entry'], 'The sky answered the tunnels, and the Wokou counted the cost.'),
+  makeBook1MainQuest(36, 'The Shogun Table', 'Gathering Storm', 'Shogun Village', 'Shogun Herald', 'Faction reports are placed before the Shogun table.', ['Present three faction reports.','Record the Shogun response.'], ['+90 progress','Journal: Shogun Table'], 'The table held many reports and only one silence.'),
+  makeBook1MainQuest(37, 'Buke Reinforcements', 'Gathering Storm', 'Buke Village', 'Buke Engineer', 'Buke supports the Shogun with braces for unstable tunnel roads.', ['Gather brace plans.','Deliver them to the Shogun Herald.'], ['+80 progress','Builder progress'], 'Not every defense is a blade. Some are beams placed before panic.'),
+  makeBook1MainQuest(38, 'Sohei Warning Rite', 'Gathering Storm', 'Sohei Village', 'Sohei Bell Keeper', 'Sohei rites warn that the conflict is feeding the imbalance.', ['Attend the warning rite.','Carry the rite message to the Hub.'], ['+75 progress','Sohei trust progress'], 'The bells rang softer this time, which frightened the Sohei more.'),
+  makeBook1MainQuest(39, 'No Single Enemy', 'Gathering Storm', 'Hub Village', 'Hub Guide', 'The Hub realizes the danger is both underground and between factions.', ['Review all storm reports.','Separate tunnel threats from faction threats.'], ['+95 progress','Journal: No Single Enemy'], 'The colony looked for one enemy and found two: what wakes below, and what wakes within.'),
+  makeBook1MainQuest(40, 'Before The Awakening', 'Gathering Storm', 'Shogun Village', 'Shogun Herald', 'The Shogun orders a united watch before the ancient seal fails.', ['Accept the united watch order.','Return to the Hub with the decree.'], ['+100 progress','Chapter entry: Gathering Storm'], 'The villages did not agree, but they agreed to look in the same direction.'),
+  makeBook1MainQuest(41, 'The Awakening', 'The Awakening', 'Hub Village', 'Hub Guide', 'The Hub seal begins to fail and the ancient tunnels stir openly.', ['Inspect the Hub seal.','Record the first open fracture.'], ['+100 progress','Chapter entry: The Awakening'], 'The seal stopped warning and started breaking.'),
+  makeBook1MainQuest(42, 'Yamabushi Descent', 'The Awakening', 'Yamabushi Village', 'Yamabushi Seer', 'Yamabushi guides prepare a descent path through old roots.', ['Meet the Yamabushi Seer.','Mark the descent path.'], ['+85 progress','Journal: Descent Path'], 'The descent was never lost. It was waiting for courage to catch up.'),
+  makeBook1MainQuest(43, 'Sohei Balance Thread', 'The Awakening', 'Sohei Village', 'Sohei Bell Keeper', 'Sohei weave a balance thread to steady the first descent.', ['Collect three balance tokens.','Receive the Sohei thread.'], ['+85 progress','Collectible unlock: Balance Tokens'], 'A thread is small until every village holds one end.'),
+  makeBook1MainQuest(44, 'Samurai Hold The Roads', 'The Awakening', 'Samurai Village', 'Samurai Captain', 'Samurai hold faction roads open despite earlier tension.', ['Confirm two road watches.','Thank the Samurai Captain.'], ['+80 progress','Samurai trust progress'], 'Order became useful when it guarded roads instead of pride.'),
+  makeBook1MainQuest(45, 'Ronin Opens The Old Door', 'The Awakening', 'Ronin Village', 'Ronin Watcher', 'The Ronin open an old door they once swore to keep sealed.', ['Return to the Ronin Watcher.','Witness the old door opening.'], ['+100 progress','Ronin trust progress'], 'The Ronin broke an oath because the colony needed a road more than a secret.'),
+  makeBook1MainQuest(46, 'Wokou Carries The Price', 'The Awakening', 'Wokou Village', 'Wokou Broker', 'The Wokou move supplies without charging while the crisis peaks.', ['Collect Wokou supply ledgers.','Deliver supplies to the Hub.'], ['+85 progress','Wokou trust progress'], 'Profit paused. Not gone, perhaps, but paused. That was enough.'),
+  makeBook1MainQuest(47, 'Bushi Brace The Breach', 'The Awakening', 'Bushi Village', 'Bushi Foreman', 'Bushi workers brace the breach beneath the Hub.', ['Gather brace materials.','Support the breach work.'], ['+90 progress','Bushi trust progress'], 'The Bushi did not sing over the tremor. They worked until it listened.'),
+  makeBook1MainQuest(48, 'All Villages Answer', 'The Awakening', 'Hub Village', 'Hub Guide', 'Faction messages confirm every village has answered the call.', ['Collect responses from five faction villages.','Return to the Hub Guide.'], ['+125 progress','Journal: All Villages Answer'], 'The colony sounded different when every village answered in its own voice.'),
+  makeBook1MainQuest(49, 'The Thing Below', 'The Awakening', 'Ancient Hub Tunnels', 'Hub Guide', 'The first glimpse of the awakening threat appears below the Hub.', ['Approach the ancient tunnel threshold.','Record the first glimpse.'], ['+150 progress','Story entry: The Thing Below'], 'The thing below was not fully seen. That made it worse.'),
+  makeBook1MainQuest(50, 'Book One: Colony Awake', 'The Awakening', 'Hub Village', 'Hub Guide', 'Book 1 closes with the colony awake, warned, and not yet safe.', ['Return to the Hub Guide.','Complete the Book 1 council record.'], ['+250 progress','Badge progress: Book 1 Survivor','Final Book 1 journal entry'], 'The colony is awake now. So is the danger beneath it.')
+];
+
+const BOOK1_SIDE_QUESTS = [
+  makeBook1SideQuest(1, 'Lost Scrolls', 'Hub Village', 'Hub Archivist', 'Recover scattered scrolls from the Hub paths.', ['Find three lost scroll markers.','Return them to the archive.'], ['+40 progress','Journal: Lost Scrolls'], 'The Hub loses nothing forever; it only waits for better eyes.'),
+  makeBook1SideQuest(2, 'Forest Memories', 'Hub Village', 'Forest Dojo Keeper', 'Collect memories hidden near the forest dojos.', ['Collect three forest memories.'], ['+45 progress','Collector progress'], 'The forest keeps the softest parts of the warning.'),
+  makeBook1SideQuest(3, 'Weather Watcher', 'Hub Village', 'Ashigaru Lantern Keeper', 'Observe how weather changes village light and sound.', ['Experience two weather states.'], ['+35 progress','Journal: Weather Watcher'], 'Weather is another storyteller in the Hub.'),
+  makeBook1SideQuest(4, 'Forgotten Shrine', 'Hub Village', 'Hub Guide', 'Find a small shrine left behind the main path.', ['Discover the forgotten shrine.','Inspect its mark.'], ['+45 progress','Secret progress'], 'The shrine was forgotten by maps, not by the colony.'),
+  makeBook1SideQuest(5, 'Silent Ronin', 'Ronin Village', 'Silent Ronin', 'A quiet Ronin leaves signs instead of answers.', ['Follow three silent marks.','Return to the Ronin Watcher.'], ['+50 progress','Ronin lore entry'], 'Silence can be a language if you stop interrupting it.'),
+  makeBook1SideQuest(6, 'Exile Campfire', 'Ronin Village', 'Ronin Wanderer', 'Hear an exile story beside an old campfire.', ['Find the campfire.','Listen to the exile story.'], ['+35 progress','Journal: Exile Campfire'], 'The Ronin warm themselves with stories they pretend not to need.'),
+  makeBook1SideQuest(7, 'Samurai Patrol Route', 'Samurai Village', 'Samurai Captain', 'Help verify a patrol route without alarming villagers.', ['Walk the patrol route.','Report blocked paths.'], ['+45 progress','Samurai trust progress'], 'Patrol is order written in footsteps.'),
+  makeBook1SideQuest(8, 'Blade Etiquette', 'Samurai Village', 'Samurai Instructor', 'Learn why Samurai discipline matters during faction tension.', ['Visit the training yard.','Inspect three etiquette markers.'], ['+35 progress','Samurai lore entry'], 'A blade is only as honorable as the ant carrying it.'),
+  makeBook1SideQuest(9, 'Bushi Missing Scout', 'Bushi Village', 'Bushi Foreman', 'A Bushi scout vanished while checking work tunnels.', ['Search the work path.','Recover the scout tag.'], ['+55 progress','Journal: Missing Scout'], 'The scout left a tag where the ground became too quiet.'),
+  makeBook1SideQuest(10, 'Worksite Relics', 'Bushi Village', 'Bushi Foreman', 'Ancient relic chips appear in fresh work piles.', ['Collect three relic chips.'], ['+45 progress','Collectible unlock: Relic Chips'], 'The workers uncovered yesterday, but found something older.'),
+  makeBook1SideQuest(11, 'Warrior Drill Bells', 'Warrior Village', 'Warrior Drillmaster', 'Tune drill bells to avoid panic during tremors.', ['Test three drill bells.','Report the safe signal.'], ['+45 progress','Warrior lore entry'], 'A good alarm tells ants where to go, not only what to fear.'),
+  makeBook1SideQuest(12, 'Sparring Shadows', 'Warrior Village', 'Warrior Trainer', 'Shadows under the sparring ring move out of rhythm.', ['Inspect the sparring ring.','Complete one training check.'], ['+50 progress','Journal: Sparring Shadows'], 'Even the shadows seemed to be practicing for something.'),
+  makeBook1SideQuest(13, 'Shogun Seal Ribbons', 'Shogun Village', 'Shogun Herald', 'Recover ribbons used to seal official warnings.', ['Find three seal ribbons.'], ['+40 progress','Shogun lore entry'], 'Authority travels farther when tied with the right ribbon.'),
+  makeBook1SideQuest(14, 'The Quiet Court', 'Shogun Village', 'Court Scribe', 'The court records a silence after every tremor.', ['Read two court notes.','Speak with the scribe.'], ['+45 progress','Journal: Quiet Court'], 'Silence can be evidence when everyone hears it at once.'),
+  makeBook1SideQuest(15, 'Buke Bridge Stress', 'Buke Village', 'Buke Engineer', 'Check bridges for underground pressure damage.', ['Inspect three bridge points.'], ['+50 progress','Builder progress'], 'A bridge complains before it fails.'),
+  makeBook1SideQuest(16, 'Blueprints In Rain', 'Buke Village', 'Buke Engineer', 'Recover wet blueprints before tunnel markings fade.', ['Find the blueprint case.','Dry it near a lantern.'], ['+45 progress','Journal: Wet Blueprint'], 'Rain tried to erase what the Buke had already measured.'),
+  makeBook1SideQuest(17, 'Kenshi Edge Trial', 'Kenshi Village', 'Kenshi Duelist', 'A Kenshi trial tests focus amid tremors.', ['Visit the trial marker.','Hold position through the tremor.'], ['+50 progress','Kenshi trust progress'], 'The edge is not on the blade. It is in the breath before movement.'),
+  makeBook1SideQuest(18, 'Duelist Witness', 'Kenshi Village', 'Kenshi Duelist', 'A duelist saw an old tunnel symbol on broken stone.', ['Find the broken stone.','Sketch the symbol.'], ['+45 progress','Journal: Broken Stone Symbol'], 'The symbol looked carved, then grown, then carved again.'),
+  makeBook1SideQuest(19, 'Wokou Ledger', 'Wokou Village', 'Wokou Broker', 'A Wokou ledger lists relics that should not exist.', ['Inspect the ledger.','Mark three suspicious relics.'], ['+50 progress','Wokou lore entry'], 'The ledger was honest enough to be dangerous.'),
+  makeBook1SideQuest(20, 'Market Of Echoes', 'Wokou Village', 'Wokou Broker', 'Market stalls echo tunnel sounds through hollow goods.', ['Listen at three stalls.','Find the hollow good.'], ['+45 progress','Journal: Market Echoes'], 'The market repeated the tunnels in the language of trade.'),
+  makeBook1SideQuest(21, 'Ashigaru Runner Route', 'Ashigaru Village', 'Ashigaru Runner', 'Help Ashigaru runners keep warning routes open.', ['Check three route markers.'], ['+45 progress','Traveler progress'], 'A message is only as strong as the road beneath it.'),
+  makeBook1SideQuest(22, 'Starter Lanterns', 'Ashigaru Village', 'Ashigaru Lantern Keeper', 'Tune starter lanterns for new travelers.', ['Light three starter lanterns.'], ['+35 progress','Explorer progress'], 'Every beginning deserves a light that knows its job.'),
+  makeBook1SideQuest(23, 'Sohei Bell Notes', 'Sohei Village', 'Sohei Bell Keeper', 'Recover notes on bell tones tied to tunnel depth.', ['Find three bell notes.'], ['+50 progress','Sohei lore entry'], 'The bells made a map without drawing one.'),
+  makeBook1SideQuest(24, 'Prayer Thread', 'Sohei Village', 'Sohei Acolyte', 'Carry a prayer thread between quiet markers.', ['Visit three prayer markers.'], ['+45 progress','Journal: Prayer Thread'], 'The thread did not stop the tremor, but it steadied the hands that felt it.'),
+  makeBook1SideQuest(25, 'Yamabushi Stone Breath', 'Yamabushi Village', 'Yamabushi Seer', 'Find stones that breathe cold tunnel air.', ['Inspect three breathing stones.'], ['+50 progress','Yamabushi lore entry'], 'The stones breathed like they were remembering a mountain underground.'),
+  makeBook1SideQuest(26, 'Mountain Root Tea', 'Yamabushi Village', 'Yamabushi Seer', 'Gather herbs used to calm tremor-sick scouts.', ['Collect three root herbs.'], ['+40 progress','Collectible unlock: Root Herbs'], 'The tea did not cure fear. It gave fear a smaller chair.'),
+  makeBook1SideQuest(27, 'Friend Village Welcome', 'Friend Villages', 'Traveling Guide', 'Visit a friend village signpost and record its welcome.', ['Visit any friend village marker.'], ['+45 progress','Community progress'], 'The Universe grows wider when friends build beside it.'),
+  makeBook1SideQuest(28, 'Friend Village Gift', 'Friend Villages', 'Traveling Guide', 'Find a small gift left by a friend village.', ['Find one friend village gift marker.'], ['+45 progress','Journal: Friend Gift'], 'A gift from another village can make the colony feel less alone.'),
+  makeBook1SideQuest(29, 'Hidden Tunnels', 'Hub / Any Village', 'Hub Guide', 'Find optional tunnel signs hidden away from main roads.', ['Discover two hidden tunnel signs.'], ['+60 progress','Secret progress'], 'The hidden tunnels do not ask to be found. That is why finding them matters.'),
+  makeBook1SideQuest(30, 'Ancient Relics', 'Any Faction Village', 'Hub Archivist', 'Collect relic fragments from across faction villages.', ['Collect five ancient relic fragments.','Return to the Hub archive.'], ['+75 progress','Collector progress','Journal: Ancient Relics'], 'Every fragment is small until the archive teaches it where to stand.')
+];
+
+function registerBook1QuestDefinitions() {
+  [...BOOK1_MAIN_QUESTS, ...BOOK1_SIDE_QUESTS].forEach(quest => {
+    QUEST_DEFINITIONS[quest.questId] = {
+      questId: quest.questId,
+      title: quest.title,
+      chapter: quest.chapter,
+      village: quest.village,
+      primaryNpc: quest.primaryNpc,
+      description: quest.description,
+      objectives: quest.objectives,
+      rewards: quest.rewards,
+      journalEntry: quest.journalEntry,
+      prerequisites: quest.prerequisites,
+      type: quest.type,
+      steps: quest.objectives.map(objective => typeof objective === 'string'
+        ? { id:makeSafeQuestStepId(objective), objective }
+        : { id:objective.id || makeSafeQuestStepId(objective.objective), objective:objective.objective || String(objective) }
+      ).concat({ id:'complete', objective:`Completed: ${quest.title}` })
+    };
+  });
+}
+
+function makeSafeQuestStepId(value) {
+  return String(value || 'objective').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'objective';
+}
+
+function isBook1QuestUnlocked(quest) {
+  if (!quest) return false;
+  const prerequisites = Array.isArray(quest.prerequisites) ? quest.prerequisites : [];
+  return prerequisites.every(id => ProgressionState.completedQuests.includes(id));
+}
+
+function getBook1StoryJournalEntries() {
+  const chapterEntries = BOOK1_CHAPTERS.map(chapter => [
+    chapter.title,
+    ProgressionState.completedQuests.includes(chapter.unlockQuestId),
+    chapter.journal
+  ]);
+  const mainEntries = BOOK1_MAIN_QUESTS
+    .filter((quest, index) => index === 0 || index % 5 === 4 || ProgressionState.completedQuests.includes(quest.questId))
+    .map(quest => [
+      quest.title,
+      isBook1QuestUnlocked(quest) || ProgressionState.completedQuests.includes(quest.questId),
+      quest.journalEntry
+    ]);
+  const sideEntries = BOOK1_SIDE_QUESTS
+    .filter((quest, index) => index < 6 || ProgressionState.completedQuests.includes(quest.questId))
+    .map(quest => [
+      quest.title,
+      isBook1QuestUnlocked(quest) || ProgressionState.completedQuests.includes(quest.questId),
+      quest.journalEntry
+    ]);
+  return [...chapterEntries, ...mainEntries, ...sideEntries];
+}
+
+registerBook1QuestDefinitions();
+
 const PROGRESSION_KEY = 'rebelAntsProgression:v1';
 const BADGE_CONFIG_KEY = 'rebelAntsBadgeConfig:v1';
 const PROGRESSION_BADGE_CATEGORIES = {
@@ -1590,6 +1750,10 @@ const DEFAULT_BADGE_DEFINITIONS = [
   { badgeId:'explorer-root-runner', name:'Root Runner', category:'explorer', rarity:'Epic', imageUrl:'/assets/badges/explorer-root-runner.png', requirementType:'xp', requirementValue:3000, requirementText:'Reach 3000 progress', description:'You know the root paths by instinct.' },
   { badgeId:'story-hub-initiate', name:'Hub Initiate', category:'story', rarity:'Common', imageUrl:'/assets/badges/story-hub-initiate.png', requirementType:'quest', requirementValue:'hub-tutorial-complete', requirementText:'Complete the Hub Journey', description:'You learned the first paths through the Rebel Ants Universe.' },
   { badgeId:'story-first-warning', name:'The First Warning', category:'story', rarity:'Common', imageUrl:'/assets/badges/story-first-warning.png', requirementType:'quest', requirementValue:'first-warning', requirementText:'Complete The First Warning quest', description:'You heard the first truth about the breathing tunnels.' },
+  { badgeId:'book1-echo-witness', name:'Echo Witness', category:'story', rarity:'Uncommon', imageUrl:'/assets/badges/book1-echo-witness.png', requirementType:'quest', requirementValue:'book1-main-20', requirementText:'Complete Book 1 Chapter 2', description:'You heard the old tunnels answer back.' },
+  { badgeId:'book1-faction-envoy', name:'Faction Envoy', category:'story', rarity:'Rare', imageUrl:'/assets/badges/book1-faction-envoy.png', requirementType:'quest', requirementValue:'book1-main-30', requirementText:'Complete Book 1 Chapter 3', description:'You carried truth between divided villages.' },
+  { badgeId:'book1-storm-watcher', name:'Storm Watcher', category:'story', rarity:'Epic', imageUrl:'/assets/badges/book1-storm-watcher.png', requirementType:'quest', requirementValue:'book1-main-40', requirementText:'Complete Book 1 Chapter 4', description:'You stood with the colony before the awakening.' },
+  { badgeId:'book1-colony-awake', name:'Colony Awake', category:'story', rarity:'Legendary', imageUrl:'/assets/badges/book1-colony-awake.png', requirementType:'quest', requirementValue:'book1-main-50', requirementText:'Complete Book 1', description:'You helped the villages remember they are one colony.' },
   { badgeId:'story-tunnel-witness', name:'Tunnel Witness', category:'story', rarity:'Uncommon', imageUrl:'/assets/badges/story-tunnel-witness.png', requirementType:'story', requirementValue:'future-tunnels', requirementText:'Future Book 1 story milestone', description:'You witnessed signs beneath the roots.' },
   { badgeId:'story-dust-reader', name:'Dust Reader', category:'story', rarity:'Rare', imageUrl:'/assets/badges/story-dust-reader.png', requirementType:'story', requirementValue:'future-red-dust', requirementText:'Future Book 1 story milestone', description:'You learned to read the red dust.' },
   { badgeId:'story-old-roots', name:'Old Roots Remember', category:'story', rarity:'Epic', imageUrl:'/assets/badges/story-old-roots.png', requirementType:'story', requirementValue:'future-old-roots', requirementText:'Future Book 1 story milestone', description:'The roots remembered what the colony buried.' },
@@ -2070,10 +2234,8 @@ function renderProgressionJournal() {
   if (activeJournalTab === 'story') {
     const entries = [
       ['The Hub Journey', ProgressionState.completedQuests.includes('hub-tutorial-complete'), 'You learned the living systems of the Hub: paths, memories, doors, frames, weather, gates, and the first shape of the larger colony.'],
-      ['The First Warning', ProgressionState.completedQuests.includes('hub-tutorial-complete'), 'Beneath the Hub, old tunnels breathe again. The villages are calm, but the colony remembers what the surface has forgotten.'],
-      ['The Breathing Tunnels', false, 'A future Book 1 entry waits below the roots.'],
-      ['The Red Dust', false, 'A future Book 1 entry waits in the red cracks.'],
-      ['The Ronin Watcher', ProgressionState.completedQuests.includes('first-warning'), 'The truth was not buried. It was waiting.']
+      ['Book 1: Narrative Backbone', ProgressionState.completedQuests.includes('hub-tutorial-complete'), 'After the Hub Journey, Book 1 opens into 50 main quests and 30 side quests across the faction villages.'],
+      ...getBook1StoryJournalEntries()
     ];
     grid.innerHTML = entries.map(([title, unlocked, text]) => `<div class="journal-row ${unlocked ? '' : 'locked'}"><b>${unlocked ? title : 'Unknown Entry'}</b><br>${unlocked ? text : 'Locked story memory.'}</div>`).join('');
     return;
@@ -7981,7 +8143,9 @@ function completeTutorialQuest(questId) {
   completed.add(questId);
   const questBadge = questId === 'hub-tutorial-complete' ? 'Hub Initiate' : null;
   recordProgressionEvent('quest', questId, PROGRESSION_POINTS.quest, questBadge);
-  const nextQuestId = QUEST_ORDER[QUEST_ORDER.indexOf(questId) + 1] || null;
+  const questOrderIndex = QUEST_ORDER.indexOf(questId);
+  let nextQuestId = questOrderIndex >= 0 ? (QUEST_ORDER[questOrderIndex + 1] || null) : null;
+  if (!nextQuestId && questId === 'hub-tutorial-complete') nextQuestId = 'first-warning';
   if (nextQuestId) {
     QuestState = { ...QuestState, questId: nextQuestId, step:getFirstQuestStepId(nextQuestId), completed:false, completedQuestIds:[...completed] };
     saveQuestState();
