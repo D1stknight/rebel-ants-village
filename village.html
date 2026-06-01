@@ -155,7 +155,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #xhair::after{width:2px;height:16px;top:3px;left:10px}
 #wb{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.55);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:3px;padding:13px 32px;cursor:pointer;z-index:10;transition:all .25s;backdrop-filter:blur(12px)}
 #wb:hover{background:rgba(232,197,106,.18)}
-#wb.on{background:rgba(232,197,106,.22);border-color:#e8c56a}
+#wb.on{top:92px;bottom:auto;left:228px;width:92px;min-height:31px;transform:none;padding:7px 8px;background:rgba(5,10,28,.95);border-color:rgba(94,207,202,.62);color:#5ecfca;font-size:8px;letter-spacing:1.5px;z-index:14;box-shadow:0 0 18px rgba(94,207,202,.12)}
+#wb.on:hover{background:rgba(94,207,202,.14);border-color:#5ecfca}
 #tt{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.95);border:1px solid rgba(232,197,106,.45);padding:13px 28px;text-align:center;pointer-events:none;opacity:0;transition:opacity .3s;z-index:20;backdrop-filter:blur(12px);white-space:nowrap}
 #tt h3{font-family:'Cinzel Decorative',serif;font-size:12px;color:#e8c56a;letter-spacing:2px;margin-bottom:3px}
 #tt p{font-size:10px;color:#5ecfca;letter-spacing:1px}
@@ -1984,7 +1985,7 @@ function processQuestCelebrationQueue() {
     root.setAttribute('aria-hidden', 'true');
     questCelebrationActive = false;
     setTimeout(processQuestCelebrationQueue, 260);
-  }, event.duration || 4700);
+  }, event.duration || 6200);
 }
 
 function burstQuestCelebrationSparks() {
@@ -2119,7 +2120,7 @@ function processBadgeUnlockQueue() {
   clearTimeout(showBadgeUnlockPopup._timer);
   showBadgeUnlockPopup._timer = setTimeout(() => {
     closeBadgeUnlockPopup();
-  }, 5600);
+  }, 7600);
   // Progression audio hook: badge popups queue their own reward sound.
   playProgressionAudio('badgeUnlock', { queue:true });
 }
@@ -8277,7 +8278,7 @@ function showQuestCompleteCelebration(questId, nextQuestId = null, beforeInfo = 
       quest.journalEntry ? `<b>Journal:</b> ${escapeHTML(quest.journalEntry)}` : ''
     ].filter(Boolean).join('<br>'),
     chips,
-    duration:5200
+    duration:7000
   });
   if (nextQuestId && QUEST_DEFINITIONS[nextQuestId]) {
     const nextQuest = QUEST_DEFINITIONS[nextQuestId];
@@ -8286,7 +8287,7 @@ function showQuestCompleteCelebration(questId, nextQuestId = null, beforeInfo = 
       title:nextQuest.title || 'New Quest',
       body:escapeHTML(getQuestObjectiveDisplayText(nextQuestId, getFirstQuestStepId(nextQuestId))),
       chips:nextQuest.primaryNpc ? [{ label:nextQuest.primaryNpc, tone:'gold' }] : [],
-      duration:4300
+      duration:6200
     });
   }
 }
@@ -8316,13 +8317,11 @@ function completeTutorialQuest(questId) {
   if (nextQuestId) {
     QuestState = { ...QuestState, questId: nextQuestId, step:getFirstQuestStepId(nextQuestId), completed:false, completedQuestIds:[...completed] };
     saveQuestState();
-    showToast(`Quest complete: ${QUEST_DEFINITIONS[questId]?.title || 'Quest'}`);
     showQuestCompleteCelebration(questId, nextQuestId, beforeInfo, beforeBadges);
     return;
   }
   QuestState = { ...QuestState, questId, step:'complete', completed:true, completedQuestIds:[...completed] };
   saveQuestState();
-  showToast(`Quest complete: ${QUEST_DEFINITIONS[questId]?.title || 'Quest'}`);
   showQuestCompleteCelebration(questId, null, beforeInfo, beforeBadges);
 }
 
@@ -14520,7 +14519,7 @@ function toggleWalk() {
     walk.setTarget(new BABYLON.Vector3(charMesh.position.x, _eyeY, charMesh.position.z));
     }
     scene.activeCamera = walk; walk.detachControl(); orbit.detachControl();
-    wb.textContent = '🌐  EXIT WALK MODE'; wb.classList.add('on'); xh.classList.remove('on');
+    wb.textContent = 'EXIT WALK'; wb.classList.add('on'); xh.classList.remove('on');
     runVillagePerformancePass(true);
   } else {
     scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
