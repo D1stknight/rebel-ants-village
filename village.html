@@ -711,6 +711,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       </select>
     </label>
     <button class="ctrl-btn full" onclick="saveQuestDraft()">Save Local Quest</button>
+    <button class="ctrl-btn danger full" onclick="resetHubTutorialQuest()">Reset Hub Tutorial Quest</button>
   </div>
   <div class="ap-section">Interaction Zones</div>
   <div class="admin-section-body" data-admin-section-body="interaction-zones">
@@ -2039,6 +2040,20 @@ function resetLocalProgression() {
   updateProgressionHud();
   closeProgressionJournal();
   showToast('Local progression reset');
+}
+
+function resetHubTutorialQuest() {
+  const ok = window.confirm('Reset the Hub Tutorial Quest to The First Step? This keeps your placed world objects. To retest collectibles/chests from zero, also use Reset Local Progression.');
+  if (!ok) return;
+  QuestState = getDefaultQuestState();
+  localStorage.removeItem(QUEST_RETURN_HUB_KEY);
+  localStorage.removeItem(QUEST_LEFT_HUB_FOR_RONIN_KEY);
+  saveQuestState();
+  ProgressionState.completedQuests = (ProgressionState.completedQuests || []).filter(id => !QUEST_ORDER.includes(id));
+  ProgressionState.badges = (ProgressionState.badges || []).filter(name => name !== 'Hub Initiate');
+  saveProgressionState();
+  if (activeJournalTab === 'story' || activeJournalTab === 'badges') renderProgressionJournal();
+  showToast('Hub Tutorial Quest reset');
 }
 
 function makeSafeBadgeId(value) {
@@ -21784,6 +21799,7 @@ window.deleteSelectedInteriorVideoScreen = deleteSelectedInteriorVideoScreen;
 window.toggleInteriorVideoScreenHelpers = toggleInteriorVideoScreenHelpers;
 window.alignSelectedInteriorVideoScreenToWall = alignSelectedInteriorVideoScreenToWall;
 window.saveQuestDraft = saveQuestDraft;
+window.resetHubTutorialQuest = resetHubTutorialQuest;
 window.placeCollectibleFromAdmin = placeCollectibleFromAdmin;
 window.spawnTestCollectibles = spawnTestCollectibles;
 window.clearTestCollectibles = clearTestCollectibles;
