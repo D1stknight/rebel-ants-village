@@ -1369,7 +1369,7 @@ const NPC_FACTION_COLORS = {
 };
 const NPC_DEFINITIONS = [
   { npcId:'hub-ashigaru-guard-01', villageId:'hub', factionId:'ashigaru', role:'guard', displayName:'Ashigaru Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'idle', spawn:{ x:-7, y:0, z:-28 } },
-  { npcId:'hub-ashigaru-villager-01', villageId:'hub', factionId:'ashigaru', role:'villager', displayName:'Ashigaru Villager', modelUrl:'/assets/npcs/ashigaru-villager.glb', modelScale:1.75, fallbackType:'ant', behavior:'wander', spawn:{ x:18, y:0, z:12 }, wanderRadius:7, moveSpeed:1.18, dialogueId:'hub-first-warning', questId:'first-warning', animationMap:{ idle:'Idle_11', walk:'Walking', run:'Running', talk:'Talk_with_Right_Hand_Open' }, animationSpeed:{ idle:1, walk:.82, talk:1 } },
+  { npcId:'hub-ashigaru-villager-01', villageId:'hub', factionId:'ashigaru', role:'villager', displayName:'Hub Guide', modelUrl:'/assets/npcs/ashigaru-villager.glb', modelScale:1.75, fallbackType:'ant', behavior:'wander', spawn:{ x:18, y:0, z:12 }, wanderRadius:7, moveSpeed:1.18, dialogueId:'hub-first-warning', questId:'hub-tutorial', animationMap:{ idle:'Idle_11', walk:'Walking', run:'Running', talk:'Talk_with_Right_Hand_Open' }, animationSpeed:{ idle:1, walk:.82, talk:1 } },
   { npcId:'ronin-guard-01', villageId:'ronin', factionId:'ronin', role:'guard', displayName:'Ronin Watcher', modelUrl:null, fallbackType:'ant', behavior:'patrol', spawn:{ x:0, y:0, z:-34 }, patrolPoints:[{ x:-8, y:0, z:-34 }, { x:8, y:0, z:-34 }], dialogueId:'ronin-first-warning', questId:'first-warning' },
   { npcId:'ronin-wanderer-01', villageId:'ronin', factionId:'ronin', role:'villager', displayName:'Ronin Wanderer', modelUrl:null, fallbackType:'ant', behavior:'wander', spawn:{ x:-16, y:0, z:18 }, wanderRadius:8 },
   { npcId:'samurai-guard-01', villageId:'samurai', factionId:'samurai', role:'guard', displayName:'Samurai Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'patrol', spawn:{ x:0, y:0, z:-32 }, patrolPoints:[{ x:-6, y:0, z:-32 }, { x:6, y:0, z:-32 }] },
@@ -1380,7 +1380,7 @@ const NPC_LIBRARY = {
     npcIdPrefix: 'ashigaru-villager',
     factionId: 'ashigaru',
     role: 'villager',
-    displayName: 'Ashigaru Villager',
+    displayName: 'Hub Guide',
     modelUrl: '/assets/npcs/ashigaru-villager.glb',
     modelScale: 1.75,
     fallbackType: 'ant',
@@ -1407,51 +1407,76 @@ const NPC_DIALOGUES = {
   ]
 };
 const QUEST_DEFINITIONS = {
-  'village-gate': {
-    questId:'village-gate',
-    title:'The Village Gate',
+  'hub-first-step': {
+    questId:'hub-first-step',
+    title:'The First Step',
     steps:[
-      { id:'talk', objective:'Speak with a Hub guide about the Village Gate.' },
-      { id:'open-gate', objective:'Walk to the Village Gate and press O to open it.' },
-      { id:'travel-ronin', objective:'Use the Village Gate to travel to Ronin Village.' },
-      { id:'return-hub', objective:'Return to Hub Village through the Village Gate.' },
-      { id:'complete', objective:'Completed: You learned how the Village Gate connects colonies.' }
+      { id:'talk', objective:'Talk to the Hub Guide NPC.' },
+      { id:'complete', objective:'Completed: You learned how to talk to NPCs.' }
     ]
   },
-  'first-warning': {
-    questId:'first-warning',
-    title:'The First Warning',
+  'hub-signs': {
+    questId:'hub-signs',
+    title:'Signs of the Colony',
     steps:[
-      { id:'talk', objective:'Speak with an Ashigaru guide about the first warning.' },
-      { id:'ronin', objective:'Travel to Ronin Village and speak with the Ronin watcher.' },
-      { id:'complete', objective:'Completed: The warning has reached the Ronin.' }
+      { id:'read-sign', objective:'Interact with one wooden sign.' },
+      { id:'complete', objective:'Completed: You learned that signs connect to the Rebel ecosystem.' }
     ]
   },
-  'hidden-chest': {
-    questId:'hidden-chest',
+  'hub-first-collectible': {
+    questId:'hub-first-collectible',
+    title:'First Collectible',
+    steps:[
+      { id:'collect-one', objective:'Collect one floating collectible.' },
+      { id:'complete', objective:'Completed: You collected your first village memory.' }
+    ]
+  },
+  'hub-hidden-chest': {
+    questId:'hub-hidden-chest',
     title:'The Hidden Chest',
     steps:[
-      { id:'talk', objective:'Speak with a Hub guide about hidden supplies.' },
-      { id:'open-chest', objective:'Find a treasure chest and press O to open it.' },
-      { id:'complete', objective:'Completed: You opened a hidden village chest.' }
+      { id:'open-chest', objective:'Open one treasure chest.' },
+      { id:'complete', objective:'Completed: You learned that rewards can be hidden.' }
     ]
   },
-  'dojo-path': {
-    questId:'dojo-path',
-    title:'The Dojo Path',
+  'hub-enter-dojo': {
+    questId:'hub-enter-dojo',
+    title:'Enter the Dojo',
     steps:[
-      { id:'talk', objective:'Speak with a Hub guide about the dojo path.' },
-      { id:'reach-dojo', objective:'Reach the dojo or training entrance.' },
-      { id:'complete', objective:'Completed: You found where training begins.' }
+      { id:'enter-interior', objective:'Enter any interior dojo room.' },
+      { id:'complete', objective:'Completed: You learned how interior doors work.' }
     ]
   },
-  'wooden-signs': {
-    questId:'wooden-signs',
-    title:'The Wooden Signs',
+  'hub-inspect-walls': {
+    questId:'hub-inspect-walls',
+    title:'Inspect the Walls',
     steps:[
-      { id:'talk', objective:'Speak with a Hub guide about wooden signs.' },
-      { id:'read-sign', objective:'Read any existing dojo sign.' },
-      { id:'complete', objective:'Completed: You learned that signs connect to Rebel Ants games, tools, stories, and future stores.' }
+      { id:'inspect-frame', objective:'Inspect one NFT frame inside an interior.' },
+      { id:'complete', objective:'Completed: You learned how Rebel NFT displays work.' }
+    ]
+  },
+  'hub-arcade-doorway': {
+    questId:'hub-arcade-doorway',
+    title:'Arcade Doorway',
+    steps:[
+      { id:'use-interior-link', objective:'Use one interior link hotspot, display, or arcade cabinet link.' },
+      { id:'complete', objective:'Completed: You learned that rooms connect to the Rebel ecosystem.' }
+    ]
+  },
+  'hub-open-journal': {
+    questId:'hub-open-journal',
+    title:'Open the Journal',
+    steps:[
+      { id:'open-journal', objective:'Open the Player Journal.' },
+      { id:'complete', objective:'Completed: You learned where badges, stories, secrets, and collections live.' }
+    ]
+  },
+  'hub-tutorial-complete': {
+    questId:'hub-tutorial-complete',
+    title:'The Hub Remembers',
+    steps:[
+      { id:'return-guide', objective:'Return to the Hub Guide.' },
+      { id:'complete', objective:'Completed: The Hub Tutorial Path is complete.' }
     ]
   }
 };
@@ -1474,6 +1499,7 @@ const DEFAULT_BADGE_DEFINITIONS = [
   { badgeId:'explorer-pathfinder', name:'Pathfinder', category:'explorer', rarity:'Uncommon', imageUrl:'/assets/badges/explorer-pathfinder.png', requirementType:'xp', requirementValue:250, requirementText:'Reach 250 progress', description:'You are finding routes others miss.' },
   { badgeId:'explorer-realm-traveler', name:'Realm Traveler', category:'explorer', rarity:'Rare', imageUrl:'/assets/badges/explorer-realm-traveler.png', requirementType:'xp', requirementValue:1000, requirementText:'Reach 1000 progress', description:'You have begun moving between colonies like a true traveler.' },
   { badgeId:'explorer-root-runner', name:'Root Runner', category:'explorer', rarity:'Epic', imageUrl:'/assets/badges/explorer-root-runner.png', requirementType:'xp', requirementValue:3000, requirementText:'Reach 3000 progress', description:'You know the root paths by instinct.' },
+  { badgeId:'story-hub-initiate', name:'Hub Initiate', category:'story', rarity:'Common', imageUrl:'/assets/badges/story-hub-initiate.png', requirementType:'quest', requirementValue:'hub-tutorial-complete', requirementText:'Complete the Hub Tutorial Path', description:'You learned the first paths through the Rebel Ants Universe.' },
   { badgeId:'story-first-warning', name:'The First Warning', category:'story', rarity:'Common', imageUrl:'/assets/badges/story-first-warning.png', requirementType:'quest', requirementValue:'first-warning', requirementText:'Complete The First Warning quest', description:'You heard the first truth about the breathing tunnels.' },
   { badgeId:'story-tunnel-witness', name:'Tunnel Witness', category:'story', rarity:'Uncommon', imageUrl:'/assets/badges/story-tunnel-witness.png', requirementType:'story', requirementValue:'future-tunnels', requirementText:'Future Book 1 story milestone', description:'You witnessed signs beneath the roots.' },
   { badgeId:'story-dust-reader', name:'Dust Reader', category:'story', rarity:'Rare', imageUrl:'/assets/badges/story-dust-reader.png', requirementType:'story', requirementValue:'future-red-dust', requirementText:'Future Book 1 story milestone', description:'You learned to read the red dust.' },
@@ -1927,6 +1953,7 @@ function openProgressionJournal() {
   overlay.setAttribute('aria-hidden', 'false');
   // Progression audio hook: journal open is subtle and respects interaction audio settings.
   if (!wasOpen) playProgressionAudio('journalOpen');
+  if (advanceHubTutorialObjective('openJournal')) renderProgressionJournal();
 }
 
 function renderProgressionJournal() {
@@ -1953,7 +1980,7 @@ function renderProgressionJournal() {
   }
   if (activeJournalTab === 'story') {
     const entries = [
-      ['The First Warning', ProgressionState.completedQuests.includes('first-warning'), 'The tunnels have started breathing again.'],
+      ['The First Warning', ProgressionState.completedQuests.includes('hub-tutorial-complete'), 'Beneath the Hub, old tunnels breathe again. The villages are calm, but the colony remembers what the surface has forgotten.'],
       ['The Breathing Tunnels', false, 'A future Book 1 entry waits below the roots.'],
       ['The Red Dust', false, 'A future Book 1 entry waits in the red cracks.'],
       ['The Ronin Watcher', ProgressionState.completedQuests.includes('first-warning'), 'The truth was not buried. It was waiting.']
@@ -5599,6 +5626,7 @@ function collectProgressionCollectible(root) {
     root.metadata._collectiblePickupStartedAt = performance.now();
     root.isPickable = false;
     root.getChildMeshes?.(false).forEach(mesh => { mesh.isPickable = false; });
+    advanceHubTutorialObjective('collectCollectible');
     showToast('Collected: ' + (root.metadata.collectibleLabel || 'Collectible'));
   }
 }
@@ -5708,9 +5736,7 @@ function openTreasureChest(chest) {
   // Reward payout intentionally stubbed for future $REBEL/economy API integration.
   playInteractionAudio('chestOpen');
   recordProgressionEvent('chest', chest.metadata.chestId || chest.name, PROGRESSION_POINTS.chest);
-  if (QuestState.questId === 'hidden-chest' && QuestState.step === 'open-chest') {
-    completeTutorialQuest('hidden-chest');
-  }
+  advanceHubTutorialObjective('openChest');
   triggerAutoSave();
   showToast('Chest opened — reward system coming soon');
   return true;
@@ -7766,15 +7792,31 @@ setInterval(updateSky,30000);
 const QUEST_STATE_KEY = 'rebelAntsTutorialQuestChain:v1';
 const QUEST_RETURN_HUB_KEY = 'rebelAntsTutorialQuestChain:pendingHubReturn';
 const QUEST_LEFT_HUB_FOR_RONIN_KEY = 'rebelAntsTutorialQuestChain:leftHubForRonin';
-const QUEST_ORDER = ['village-gate', 'first-warning', 'hidden-chest', 'dojo-path', 'wooden-signs'];
+const QUEST_ORDER = [
+  'hub-first-step',
+  'hub-signs',
+  'hub-first-collectible',
+  'hub-hidden-chest',
+  'hub-enter-dojo',
+  'hub-inspect-walls',
+  'hub-arcade-doorway',
+  'hub-open-journal',
+  'hub-tutorial-complete'
+];
 let activeNPCDialogue = null;
 let QuestState = loadQuestState();
 
+function getDefaultQuestState() {
+  return { questId:QUEST_ORDER[0], step:'talk', completed:false, completedQuestIds:[] };
+}
+
 function loadQuestState() {
   try {
-    return JSON.parse(localStorage.getItem(QUEST_STATE_KEY)) || { questId:'village-gate', step:'talk', completed:false, completedQuestIds:[] };
+    const parsed = JSON.parse(localStorage.getItem(QUEST_STATE_KEY));
+    if (!parsed || !QUEST_DEFINITIONS[parsed.questId]) return getDefaultQuestState();
+    return { ...getDefaultQuestState(), ...parsed, completedQuestIds:Array.isArray(parsed.completedQuestIds) ? parsed.completedQuestIds : [] };
   } catch (_) {
-    return { questId:'village-gate', step:'talk', completed:false, completedQuestIds:[] };
+    return getDefaultQuestState();
   }
 }
 
@@ -7787,6 +7829,10 @@ function saveQuestState() {
 function getQuestStep(questId, stepId) {
   const quest = QUEST_DEFINITIONS[questId];
   return (quest?.steps || []).find(step => step.id === stepId) || null;
+}
+
+function getFirstQuestStepId(questId) {
+  return (QUEST_DEFINITIONS[questId]?.steps || []).find(step => step.id !== 'complete')?.id || 'complete';
 }
 
 function setTutorialQuestStep(questId, step, toast = null) {
@@ -7804,11 +7850,11 @@ function setTutorialQuestStep(questId, step, toast = null) {
 function completeTutorialQuest(questId) {
   const completed = new Set(Array.isArray(QuestState.completedQuestIds) ? QuestState.completedQuestIds : []);
   completed.add(questId);
-  const questBadge = questId === 'first-warning' ? 'The First Warning' : QUEST_DEFINITIONS[questId]?.title || null;
+  const questBadge = questId === 'hub-tutorial-complete' ? 'Hub Initiate' : null;
   recordProgressionEvent('quest', questId, PROGRESSION_POINTS.quest, questBadge);
   const nextQuestId = QUEST_ORDER[QUEST_ORDER.indexOf(questId) + 1] || null;
   if (nextQuestId) {
-    QuestState = { questId: nextQuestId, step:'talk', completed:false, completedQuestIds:[...completed] };
+    QuestState = { questId: nextQuestId, step:getFirstQuestStepId(nextQuestId), completed:false, completedQuestIds:[...completed] };
     saveQuestState();
     showToast(`Quest complete: ${QUEST_DEFINITIONS[questId]?.title || 'Quest'}`);
     return;
@@ -7819,6 +7865,11 @@ function completeTutorialQuest(questId) {
 }
 
 function reconcileTutorialQuestOnLoad() {
+  if (!QUEST_DEFINITIONS[QuestState.questId]) {
+    QuestState = getDefaultQuestState();
+    saveQuestState();
+    return;
+  }
   if (CURRENT_VILLAGE_ID === 'ronin' && QuestState.questId === 'village-gate' && QuestState.step === 'travel-ronin') {
     localStorage.setItem(QUEST_LEFT_HUB_FOR_RONIN_KEY, '1');
     setTutorialQuestStep('village-gate', 'return-hub');
@@ -7841,7 +7892,24 @@ function reconcileTutorialQuestOnLoad() {
 
 function shouldHubNPCAdvanceTutorial(npc) {
   if (!npc?.metadata || npc.metadata.villageId !== 'hub' || npc.metadata.factionId !== 'ashigaru') return false;
-  return ['village-gate', 'first-warning', 'hidden-chest', 'dojo-path', 'wooden-signs'].includes(QuestState.questId);
+  return ['hub-first-step', 'hub-tutorial-complete'].includes(QuestState.questId);
+}
+
+function advanceHubTutorialObjective(actionType) {
+  const expected = {
+    'hub-first-step': { step:'talk', action:'talkToNpc' },
+    'hub-signs': { step:'read-sign', action:'interactSign' },
+    'hub-first-collectible': { step:'collect-one', action:'collectCollectible' },
+    'hub-hidden-chest': { step:'open-chest', action:'openChest' },
+    'hub-enter-dojo': { step:'enter-interior', action:'enterInterior' },
+    'hub-inspect-walls': { step:'inspect-frame', action:'inspectInteriorNFTFrame' },
+    'hub-arcade-doorway': { step:'use-interior-link', action:'interactInteriorLink' },
+    'hub-open-journal': { step:'open-journal', action:'openJournal' },
+    'hub-tutorial-complete': { step:'return-guide', action:'returnToNpc' }
+  }[QuestState.questId];
+  if (!expected || QuestState.step !== expected.step || actionType !== expected.action) return false;
+  completeTutorialQuest(QuestState.questId);
+  return true;
 }
 
 function updateQuestTracker() {
@@ -7876,18 +7944,14 @@ function isNearDojoTutorialArea() {
 }
 
 function updateTutorialQuestWorldProgress() {
-  if (QuestState.questId === 'dojo-path' && QuestState.step === 'reach-dojo' && isNearDojoTutorialArea()) {
-    completeTutorialQuest('dojo-path');
-  }
+  // Hub Tutorial V1 advances from direct interactions, not exact placement checks.
 }
 
 function handleSignQuestEvent(signData) {
   if (!signData || !String(signData.id || '').startsWith('sign_')) return;
   const actionType = classifyEcosystemAction(signData);
   recordProgressionEvent('ecosystem', actionType, PROGRESSION_POINTS.sign);
-  if (QuestState.questId === 'wooden-signs' && QuestState.step === 'read-sign') {
-    completeTutorialQuest('wooden-signs');
-  }
+  advanceHubTutorialObjective('interactSign');
 }
 
 const NPCManager = {
@@ -8358,6 +8422,14 @@ function getNearestNPCInRange(range = 4.8) {
 function handleNPCQuestEvent(npc, finishedDialogue = false) {
   if (!finishedDialogue || !npc?.metadata) return;
   const meta = npc.metadata;
+  if (QuestState.questId === 'hub-first-step' && QuestState.step === 'talk' && shouldHubNPCAdvanceTutorial(npc)) {
+    advanceHubTutorialObjective('talkToNpc');
+    return;
+  }
+  if (QuestState.questId === 'hub-tutorial-complete' && QuestState.step === 'return-guide' && shouldHubNPCAdvanceTutorial(npc)) {
+    advanceHubTutorialObjective('returnToNpc');
+    return;
+  }
   if (QuestState.questId === 'village-gate' && QuestState.step === 'talk' && shouldHubNPCAdvanceTutorial(npc)) {
     setTutorialQuestStep('village-gate', 'open-gate', 'Quest started: The Village Gate');
     return;
@@ -8391,6 +8463,61 @@ function handleNPCQuestEvent(npc, finishedDialogue = false) {
 function getTutorialDialogueLines(npc) {
   const meta = npc?.metadata || {};
   if (meta.villageId === 'hub' && meta.factionId === 'ashigaru') {
+    if (QuestState.questId === 'hub-first-step' && QuestState.step === 'talk') {
+      return [
+        'Welcome to the Hub, traveler. Every colony has a beginning, and yours starts here.',
+        'Talk, explore, collect, and remember: the village always rewards those who pay attention.'
+      ];
+    }
+    if (QuestState.questId === 'hub-signs') {
+      return [
+        'The wooden signs are not decoration. They are paths to everything we have built.',
+        'Find one and read it. Games, books, videos, tools, and the world beyond this village all begin with clear paths.'
+      ];
+    }
+    if (QuestState.questId === 'hub-first-collectible') {
+      return [
+        'Some memories float where the colony has been touched by story.',
+        'Collect one. Small things build legends.'
+      ];
+    }
+    if (QuestState.questId === 'hub-hidden-chest') {
+      return [
+        'Not every reward is in plain sight.',
+        'Some are hidden, some are earned, and some are waiting for the ant who looks twice.'
+      ];
+    }
+    if (QuestState.questId === 'hub-enter-dojo') {
+      return [
+        'Every building has a deeper purpose.',
+        'Walk through a dojo door and you may find a museum, a library, an arcade, a forge, or something still waiting to be discovered.'
+      ];
+    }
+    if (QuestState.questId === 'hub-inspect-walls') {
+      return [
+        'These walls carry the faces of the colony.',
+        'Every Rebel has a story, and every holder leaves a mark inside the Universe.'
+      ];
+    }
+    if (QuestState.questId === 'hub-arcade-doorway') {
+      return [
+        'The Universe is not one room.',
+        'It is connected to every game, every show, every build, and every story we create.'
+      ];
+    }
+    if (QuestState.questId === 'hub-open-journal') {
+      return [
+        'Your Journal remembers what the world forgets.',
+        'Badges, stories, secrets, collections: this is where your path becomes proof.'
+      ];
+    }
+    if (QuestState.questId === 'hub-tutorial-complete' && QuestState.step === 'return-guide') {
+      return [
+        'You have taken your first steps. The Hub has opened its doors to you.',
+        'But beneath the villages, something older is stirring.',
+        'When you are ready, the First Warning will begin.'
+      ];
+    }
     if (QuestState.questId === 'village-gate' && QuestState.step === 'talk') {
       return [
         'The Village Gate is older than most of our maps. It connects the colonies when the paths above ground are no longer safe.',
@@ -8441,7 +8568,8 @@ function openNPCDialogue(npc) {
     .split(/\n+/)
     .map(line => line.trim())
     .filter(Boolean);
-  const lines = customLines.length ? customLines : (getTutorialDialogueLines(npc) || NPC_DIALOGUES[npc.metadata.dialogueId] || NPC_DIALOGUES.default);
+  const tutorialLines = getTutorialDialogueLines(npc);
+  const lines = tutorialLines || (customLines.length ? customLines : (NPC_DIALOGUES[npc.metadata.dialogueId] || NPC_DIALOGUES.default));
   activeNPCDialogue = { npc, lines, index:0 };
   npc.metadata.dialogueOpen = true;
   renderNPCDialogue();
@@ -19987,6 +20115,13 @@ function recordInteriorQuestHook(entrance, actionType = 'enterInterior') {
     localStorage.setItem(key, JSON.stringify(hooks.slice(-100)));
   } catch(e) {}
   window.dispatchEvent(new CustomEvent('rebelAntsInteriorEvent', { detail: payload }));
+  if (actionType === 'enterInterior') advanceHubTutorialObjective('enterInterior');
+  if (actionType === 'inspectInteriorNFTFrame') advanceHubTutorialObjective('inspectInteriorNFTFrame');
+  if (
+    actionType === 'interactInteriorHotspot' ||
+    actionType === 'interactInteriorDisplay' ||
+    actionType === 'interactInteriorVideoScreen'
+  ) advanceHubTutorialObjective('interactInteriorLink');
   return payload;
 }
 
