@@ -338,6 +338,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 @media (max-width:720px){#assetPanel{width:min(320px,88vw);min-width:0}#assetPanel .ap-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(5,10,28,.95);border:1px solid rgba(94,207,202,.6);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:10px 24px;opacity:0;transition:all .4s;pointer-events:none;z-index:50;white-space:nowrap}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#questCelebration{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-18px) scale(.96);z-index:98;width:min(620px,calc(100vw - 34px));pointer-events:none;opacity:0;transition:opacity .22s,transform .22s}
+#questCelebration.on{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+#questCelebrationPanel{position:relative;overflow:hidden;text-align:center;background:radial-gradient(circle at 50% 0%,rgba(232,197,106,.22),rgba(91,14,24,.82) 42%,rgba(5,10,28,.97) 78%);border:1px solid rgba(232,197,106,.78);box-shadow:0 18px 52px rgba(0,0,0,.45),0 0 48px rgba(232,197,106,.18),inset 0 0 30px rgba(94,207,202,.08);padding:18px 24px 17px}
+#questCelebrationPanel::before{content:'';position:absolute;inset:-35%;background:conic-gradient(from 0deg,transparent,rgba(232,197,106,.16),transparent,rgba(94,207,202,.12),transparent);animation:questGlowSpin 5s linear infinite}
+#questCelebrationPanel::after{content:'';position:absolute;inset:6px;border:1px solid rgba(94,207,202,.26);pointer-events:none}
+#questCelebrationContent{position:relative;z-index:1;display:grid;gap:6px}
+#questCelebrationKicker{font-family:'Cinzel Decorative',serif;color:#5ecfca;font-size:10px;letter-spacing:4px;text-transform:uppercase}
+#questCelebrationTitle{font-family:'Cinzel Decorative',serif;color:#e8c56a;font-size:22px;letter-spacing:2px;text-shadow:0 0 20px rgba(232,197,106,.5);animation:questTitlePulse 1.25s ease-in-out infinite alternate}
+#questCelebrationBody{color:rgba(255,255,255,.82);font-size:12px;line-height:1.45;letter-spacing:.5px}
+#questCelebrationBody b{color:#e8c56a;font-weight:400}
+#questCelebrationMeta{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:2px}
+.quest-celebration-chip{border:1px solid rgba(94,207,202,.28);background:rgba(94,207,202,.08);color:#b9fffb;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;padding:4px 7px}
+.quest-celebration-chip.gold{border-color:rgba(232,197,106,.42);background:rgba(232,197,106,.1);color:#e8c56a}
+#questCelebrationSparks{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.quest-spark{position:absolute;width:4px;height:4px;background:#e8c56a;box-shadow:0 0 10px rgba(232,197,106,.9);animation:questSparkBurst 1.1s ease-out forwards}
+@keyframes questGlowSpin{to{transform:rotate(360deg)}}
+@keyframes questTitlePulse{from{text-shadow:0 0 10px rgba(232,197,106,.3)}to{text-shadow:0 0 28px rgba(232,197,106,.72)}}
+@keyframes questSparkBurst{from{opacity:0;transform:translate3d(0,0,0) scale(.4)}16%{opacity:1}to{opacity:0;transform:translate3d(var(--spark-x),var(--spark-y),0) scale(1.15)}}
 #interactionPrompt{position:fixed;bottom:122px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.7);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:2px;padding:9px 18px;opacity:0;transition:opacity .18s;pointer-events:none;z-index:49;white-space:nowrap}
 #interactionPrompt.on{opacity:1}
 #interiorInfoOverlay{position:fixed;inset:0;z-index:73;display:flex;align-items:flex-end;justify-content:center;padding:0 22px 112px;background:linear-gradient(to top,rgba(2,8,18,.58),rgba(2,8,18,0) 62%);opacity:0;pointer-events:none;transition:opacity .18s ease}
@@ -355,6 +373,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #interiorInfoLink.on{display:inline-block}
 #interiorInfoClose{position:absolute;top:14px;right:14px;width:30px;height:30px;border:1px solid rgba(94,207,202,.38);background:rgba(94,207,202,.06);color:#5ecfca;font-size:18px;line-height:26px;cursor:pointer}
 #interiorInfoClose:hover{background:rgba(94,207,202,.15);border-color:rgba(94,207,202,.72)}
+#interiorInfoOverlay.compact-info{align-items:center;padding:18px;background:radial-gradient(circle at 50% 58%,rgba(2,8,18,.35),rgba(2,8,18,.72))}
+#interiorInfoOverlay.compact-info #interiorInfoPanel{width:min(560px,94vw);max-height:min(76vh,430px);overflow:visible;padding:18px;display:grid;grid-template-columns:150px minmax(0,1fr);grid-template-areas:"kicker kicker" "title title" "image description" "image link";column-gap:14px;row-gap:8px}
+#interiorInfoOverlay.compact-info #interiorInfoKicker{grid-area:kicker;margin-bottom:0}
+#interiorInfoOverlay.compact-info #interiorInfoTitle{grid-area:title;font-size:15px;margin-right:38px}
+#interiorInfoOverlay.compact-info #interiorInfoImage{grid-area:image;margin:0;max-height:190px;align-self:start;aspect-ratio:1/1}
+#interiorInfoOverlay.compact-info #interiorInfoImage img{max-height:188px}
+#interiorInfoOverlay.compact-info #interiorInfoDescription{grid-area:description;margin-top:0;font-size:11px;line-height:1.48;align-self:start}
+#interiorInfoOverlay.compact-info #interiorInfoLink{grid-area:link;margin-top:2px;justify-self:start}
 #interiorTitle{position:fixed;top:82px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:48;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;background:rgba(5,10,28,.9);border:1px solid rgba(94,207,202,.46);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;padding:10px 18px;box-shadow:0 0 24px rgba(94,207,202,.13)}
 #interiorTitle.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #interiorTitle small{display:block;margin-top:3px;color:#5ecfca;font-size:8px;letter-spacing:2px;text-align:center}
@@ -432,14 +458,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 .badge-builder-card.locked em{color:#ffca6a}
 #hudNextBadgeProgress{font-size:8px;color:rgba(232,197,106,.88);letter-spacing:1px;text-align:right;margin-top:3px;line-height:1.25}
 #journalClose,.badge-popup-close{display:block;margin:16px auto 0;background:transparent;border:1px solid rgba(94,207,202,.4);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 16px;cursor:pointer}
-#badgeUnlockPopup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);z-index:96;min-width:min(360px,86vw);max-width:460px;text-align:center;background:radial-gradient(circle at 50% 0%,rgba(232,197,106,.18),rgba(5,10,28,.96) 54%);border:1px solid rgba(232,197,106,.72);box-shadow:0 0 44px rgba(232,197,106,.18),0 0 80px rgba(94,207,202,.08);padding:22px 24px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+#badgeUnlockPopup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);z-index:99;min-width:min(360px,86vw);max-width:460px;text-align:center;background:radial-gradient(circle at 50% 0%,rgba(232,197,106,.18),rgba(5,10,28,.96) 54%);border:1px solid rgba(232,197,106,.72);box-shadow:0 0 44px rgba(232,197,106,.18),0 0 80px rgba(94,207,202,.08);padding:22px 24px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 #badgeUnlockPopup.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #badgeUnlockPopup .badge-kicker{font-family:'Cinzel Decorative',serif;color:#5ecfca;font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-bottom:7px}
+#badgeUnlockIcon{width:74px;height:74px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(232,197,106,.62);background:radial-gradient(circle,rgba(232,197,106,.28),rgba(94,207,202,.08));box-shadow:0 0 28px rgba(232,197,106,.18);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:22px}
+#badgeUnlockIcon img{width:100%;height:100%;object-fit:cover}
 #badgeUnlockPopup .badge-name{font-family:'Cinzel Decorative',serif;color:#e8c56a;font-size:20px;letter-spacing:2px;text-shadow:0 0 14px rgba(232,197,106,.35);animation:badgePulse 1.2s ease-in-out infinite alternate}
 #badgeUnlockPopup .badge-category{color:rgba(255,255,255,.72);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-top:6px}
 #badgeUnlockPopup .badge-desc{color:rgba(255,255,255,.78);font-size:12px;line-height:1.45;margin-top:10px}
 @keyframes badgePulse{from{text-shadow:0 0 8px rgba(232,197,106,.25)}to{text-shadow:0 0 22px rgba(232,197,106,.62)}}
-@media (max-width:640px){#villageGateList,.journal-grid,.badge-gallery,.journal-tabs{grid-template-columns:1fr 1fr}#villageGatePanel,#progressionPanel{padding:22px}}
+@media (max-width:640px){#villageGateList,.journal-grid,.badge-gallery,.journal-tabs{grid-template-columns:1fr 1fr}#villageGatePanel,#progressionPanel{padding:22px}#interiorInfoOverlay.compact-info #interiorInfoPanel{grid-template-columns:1fr;grid-template-areas:"kicker" "title" "image" "description" "link";overflow:auto;max-height:82vh}#interiorInfoOverlay.compact-info #interiorInfoImage{max-height:220px;aspect-ratio:16/10}#questCelebrationTitle{font-size:18px}}
 </style>
 </head>
 <body>
@@ -1207,6 +1235,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <a id="interiorInfoLink" href="#" target="_blank" rel="noopener">Open Collection</a>
   </div>
 </div>
+<div id="questCelebration" aria-live="polite" aria-hidden="true">
+  <div id="questCelebrationPanel">
+    <div id="questCelebrationSparks"></div>
+    <div id="questCelebrationContent">
+      <div id="questCelebrationKicker">Quest Complete</div>
+      <div id="questCelebrationTitle">The First Step</div>
+      <div id="questCelebrationBody"></div>
+      <div id="questCelebrationMeta"></div>
+    </div>
+  </div>
+</div>
 <div id="npcDialogueOverlay" aria-hidden="true">
   <div id="npcDialoguePanel" role="dialog" aria-modal="true" aria-labelledby="npcDialogueName">
     <div id="npcDialogueName">Villager</div>
@@ -1236,6 +1275,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 </div>
 <div id="badgeUnlockPopup" aria-live="polite" aria-hidden="true">
   <div class="badge-kicker">Badge Unlocked</div>
+  <div id="badgeUnlockIcon">★</div>
   <div class="badge-name" id="badgeUnlockName">Sprout Explorer</div>
   <div class="badge-category" id="badgeUnlockCategory">Explorer</div>
   <div class="badge-desc" id="badgeUnlockDesc">A new mark has been added to your Rebel journal.</div>
@@ -1913,6 +1953,55 @@ let badgePopupActive = false;
 let lastUploadedBadgeImagePath = '';
 const progressionAudioQueue = [];
 let progressionAudioQueueActive = false;
+const questCelebrationQueue = [];
+let questCelebrationActive = false;
+
+function queueQuestCelebration(event) {
+  questCelebrationQueue.push(event);
+  processQuestCelebrationQueue();
+}
+
+function processQuestCelebrationQueue() {
+  if (questCelebrationActive || !questCelebrationQueue.length) return;
+  const event = questCelebrationQueue.shift();
+  const root = document.getElementById('questCelebration');
+  const kicker = document.getElementById('questCelebrationKicker');
+  const title = document.getElementById('questCelebrationTitle');
+  const body = document.getElementById('questCelebrationBody');
+  const meta = document.getElementById('questCelebrationMeta');
+  if (!root || !kicker || !title || !body || !meta) return;
+  kicker.textContent = event.kicker || 'Quest Complete';
+  title.textContent = event.title || 'Quest Updated';
+  body.innerHTML = event.body || '';
+  meta.innerHTML = (event.chips || []).map(chip => `<span class="quest-celebration-chip ${chip.tone === 'gold' ? 'gold' : ''}">${escapeHTML(chip.label)}</span>`).join('');
+  burstQuestCelebrationSparks();
+  questCelebrationActive = true;
+  root.classList.add('on');
+  root.setAttribute('aria-hidden', 'false');
+  clearTimeout(processQuestCelebrationQueue._timer);
+  processQuestCelebrationQueue._timer = setTimeout(() => {
+    root.classList.remove('on');
+    root.setAttribute('aria-hidden', 'true');
+    questCelebrationActive = false;
+    setTimeout(processQuestCelebrationQueue, 260);
+  }, event.duration || 4700);
+}
+
+function burstQuestCelebrationSparks() {
+  const sparks = document.getElementById('questCelebrationSparks');
+  if (!sparks) return;
+  sparks.innerHTML = '';
+  for (let i = 0; i < 20; i += 1) {
+    const spark = document.createElement('span');
+    spark.className = 'quest-spark';
+    spark.style.left = (42 + Math.random() * 16).toFixed(1) + '%';
+    spark.style.top = (48 + Math.random() * 12).toFixed(1) + '%';
+    spark.style.setProperty('--spark-x', ((Math.random() - .5) * 360).toFixed(0) + 'px');
+    spark.style.setProperty('--spark-y', (-40 - Math.random() * 130).toFixed(0) + 'px');
+    spark.style.animationDelay = (Math.random() * .2).toFixed(2) + 's';
+    sparks.appendChild(spark);
+  }
+}
 
 function playProgressionAudio(key, options = {}) {
   const queued = options.queue === true;
@@ -2016,9 +2105,14 @@ function processBadgeUnlockQueue() {
   const nameEl = document.getElementById('badgeUnlockName');
   const categoryEl = document.getElementById('badgeUnlockCategory');
   const descEl = document.getElementById('badgeUnlockDesc');
+  const iconEl = document.getElementById('badgeUnlockIcon');
   if (nameEl) nameEl.textContent = name;
-  if (categoryEl) categoryEl.textContent = meta.categoryLabel;
-  if (descEl) descEl.textContent = meta.description;
+  if (categoryEl) categoryEl.textContent = `${meta.categoryLabel} / ${meta.rarity}`;
+  if (descEl) descEl.textContent = meta.requirement ? `${meta.requirement}. ${meta.description}` : meta.description;
+  if (iconEl) {
+    const image = meta.localImageDataUrl || meta.imageUrl;
+    iconEl.innerHTML = image ? `<img src="${escapeHTML(image)}" alt="">` : '★';
+  }
   badgePopupActive = true;
   popup.classList.add('on');
   popup.setAttribute('aria-hidden', 'false');
@@ -8126,6 +8220,77 @@ function getFirstQuestStepId(questId) {
   return (QUEST_DEFINITIONS[questId]?.steps || []).find(step => step.id !== 'complete')?.id || 'complete';
 }
 
+function getQuestObjectiveDisplayText(questId = QuestState.questId, stepId = QuestState.step) {
+  const quest = QUEST_DEFINITIONS[questId] || {};
+  const step = getQuestStep(questId, stepId);
+  const raw = step?.objective || quest.objectives?.[0]?.objective || quest.objectives?.[0] || 'Continue the journey.';
+  const npc = quest.primaryNpc || '';
+  const village = quest.village || '';
+  const lower = String(raw).toLowerCase();
+  if (npc && lower.includes('speak')) return `Speak to ${npc}${village ? ' in ' + village : ''}.`;
+  if (npc && lower.includes('talk')) return `Talk to ${npc}${village ? ' in ' + village : ''}.`;
+  if (npc && lower.includes('find')) return `Find ${npc}${village ? ' near ' + village : ''}.`;
+  if (npc && (lower.includes('return') || lower.includes('report'))) return `Return to ${npc}${village ? ' in ' + village : ''}.`;
+  if (questId === 'hub-through-gate') return 'Use the village portal, then prepare to return to the Hub Guide.';
+  if (questId === 'hub-world-larger') return 'Visit another village, then return to the Hub Guide.';
+  if (questId === 'hub-library-door') return 'Enter the Library or book room and look for the story path.';
+  if (questId === 'hub-forge-awaits') return 'Enter the Forge room and find the character forge path.';
+  return String(raw);
+}
+
+function getQuestRewardSummary(questId) {
+  const quest = QUEST_DEFINITIONS[questId] || {};
+  if (Array.isArray(quest.rewards) && quest.rewards.length) return quest.rewards.join(' / ');
+  return `+${PROGRESSION_POINTS.quest} progress`;
+}
+
+function getQuestBadgeUnlocks(beforeBadges = []) {
+  const before = new Set(beforeBadges);
+  return (ProgressionState.badges || []).filter(name => !before.has(name));
+}
+
+function getQuestBadgeProgressText(beforeInfo, afterInfo, unlockedBadges = []) {
+  if (unlockedBadges.length) return `Unlocked ${unlockedBadges.join(', ')}`;
+  if (!beforeInfo || !afterInfo) return '';
+  if (afterInfo.totalProgress > beforeInfo.totalProgress && afterInfo.nextBadge) {
+    return `${afterInfo.nextBadge}: ${afterInfo.progressCurrent} / ${afterInfo.progressRequired}`;
+  }
+  return '';
+}
+
+function showQuestCompleteCelebration(questId, nextQuestId = null, beforeInfo = null, beforeBadges = []) {
+  const quest = QUEST_DEFINITIONS[questId] || {};
+  const afterInfo = getExplorerBadgeInfo();
+  const unlockedBadges = getQuestBadgeUnlocks(beforeBadges);
+  const badgeText = getQuestBadgeProgressText(beforeInfo, afterInfo, unlockedBadges);
+  const chips = [
+    { label:getQuestRewardSummary(questId), tone:'gold' }
+  ];
+  if (quest.journalEntry) chips.push({ label:'Journal Updated' });
+  if (badgeText) chips.push({ label:'Badge Progress', tone:unlockedBadges.length ? 'gold' : '' });
+  queueQuestCelebration({
+    kicker:'Quest Complete',
+    title:quest.title || 'Quest',
+    body:[
+      quest.description ? escapeHTML(quest.description) : '',
+      badgeText ? `<b>Badge:</b> ${escapeHTML(badgeText)}` : '',
+      quest.journalEntry ? `<b>Journal:</b> ${escapeHTML(quest.journalEntry)}` : ''
+    ].filter(Boolean).join('<br>'),
+    chips,
+    duration:5200
+  });
+  if (nextQuestId && QUEST_DEFINITIONS[nextQuestId]) {
+    const nextQuest = QUEST_DEFINITIONS[nextQuestId];
+    queueQuestCelebration({
+      kicker:'New Quest',
+      title:nextQuest.title || 'New Quest',
+      body:escapeHTML(getQuestObjectiveDisplayText(nextQuestId, getFirstQuestStepId(nextQuestId))),
+      chips:nextQuest.primaryNpc ? [{ label:nextQuest.primaryNpc, tone:'gold' }] : [],
+      duration:4300
+    });
+  }
+}
+
 function setTutorialQuestStep(questId, step, toast = null) {
   QuestState = {
     ...QuestState,
@@ -8142,6 +8307,8 @@ function completeTutorialQuest(questId) {
   const completed = new Set(Array.isArray(QuestState.completedQuestIds) ? QuestState.completedQuestIds : []);
   completed.add(questId);
   const questBadge = questId === 'hub-tutorial-complete' ? 'Hub Initiate' : null;
+  const beforeInfo = getExplorerBadgeInfo();
+  const beforeBadges = [...(ProgressionState.badges || [])];
   recordProgressionEvent('quest', questId, PROGRESSION_POINTS.quest, questBadge);
   const questOrderIndex = QUEST_ORDER.indexOf(questId);
   let nextQuestId = questOrderIndex >= 0 ? (QUEST_ORDER[questOrderIndex + 1] || null) : null;
@@ -8150,11 +8317,13 @@ function completeTutorialQuest(questId) {
     QuestState = { ...QuestState, questId: nextQuestId, step:getFirstQuestStepId(nextQuestId), completed:false, completedQuestIds:[...completed] };
     saveQuestState();
     showToast(`Quest complete: ${QUEST_DEFINITIONS[questId]?.title || 'Quest'}`);
+    showQuestCompleteCelebration(questId, nextQuestId, beforeInfo, beforeBadges);
     return;
   }
   QuestState = { ...QuestState, questId, step:'complete', completed:true, completedQuestIds:[...completed] };
   saveQuestState();
   showToast(`Quest complete: ${QUEST_DEFINITIONS[questId]?.title || 'Quest'}`);
+  showQuestCompleteCelebration(questId, null, beforeInfo, beforeBadges);
 }
 
 function reconcileTutorialQuestOnLoad() {
@@ -8283,7 +8452,7 @@ function updateQuestTracker() {
   const progressText = QuestState.questId === 'hub-wall-echoes' && progress?.count
     ? ` (${Math.min(progress.count, 3)}/3)`
     : '';
-  objective.textContent = `${quest?.title || 'Quest'}: ${step?.objective || 'Continue the tutorial path.'}${progressText}`;
+  objective.textContent = `${quest?.title || 'Quest'}: ${getQuestObjectiveDisplayText(QuestState.questId, QuestState.step)}${progressText}`;
   tracker.classList.add('on');
 }
 
@@ -19209,6 +19378,7 @@ function openInteriorInfoPanel(title, description, kicker = 'Interior Record', o
   const linkEl = document.getElementById('interiorInfoLink');
   const closeBtn = document.getElementById('interiorInfoClose');
   if (!overlay || !titleEl || !descEl) return false;
+  overlay.classList.toggle('compact-info', options.compact === true);
   titleEl.textContent = title || 'Interior Display';
   descEl.textContent = description || 'No description has been added yet.';
   if (kickerEl) kickerEl.textContent = kicker || 'Interior Record';
@@ -19247,6 +19417,7 @@ function closeInteriorInfoPanel(event = null) {
   const overlay = document.getElementById('interiorInfoOverlay');
   if (!overlay || !overlay.classList.contains('on')) return false;
   overlay.classList.remove('on');
+  overlay.classList.remove('compact-info');
   overlay.setAttribute('aria-hidden', 'true');
   const closeBtn = document.getElementById('interiorInfoClose');
   if (closeBtn) closeBtn.blur?.();
@@ -19795,7 +19966,7 @@ function inspectInteriorNftFrame(frame) {
   recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.frameName, frameId:meta.frameId, label:meta.frameName, title:meta.resolvedTitle || meta.title || meta.frameName, collection:meta.resolvedCollection } }, 'inspectInteriorNFTFrame');
   const title = meta.resolvedTitle || meta.title || meta.frameName || 'Rebel Frame';
   const details = [
-    meta.frameName || title,
+    meta.frameName && meta.frameName !== title ? meta.frameName : '',
     meta.resolvedCollection ? 'Collection: ' + meta.resolvedCollection : '',
     meta.resolvedTokenId ? 'Token ID: ' + meta.resolvedTokenId : '',
     meta.resolvedStatus ? 'Status: ' + meta.resolvedStatus : '',
@@ -19804,7 +19975,8 @@ function inspectInteriorNftFrame(frame) {
   openInteriorInfoPanel(title, details || 'Rebel NFT frame slot.', 'NFT Frame Slot', {
     imageUrl: meta.resolvedImageUrl || '',
     linkUrl: meta.resolvedCollectionUrl || '',
-    linkLabel: meta.resolvedCollection ? 'Open ' + meta.resolvedCollection : 'Open Collection'
+    linkLabel: 'Open NFT',
+    compact: true
   });
   return true;
 }
