@@ -1416,6 +1416,14 @@ const QUEST_DEFINITIONS = {
       { id:'complete', objective:'Completed: You learned how to talk to NPCs.' }
     ]
   },
+  'hub-walk-village': {
+    questId:'hub-walk-village',
+    title:'Walk The Village',
+    steps:[
+      { id:'reach-forest-path', objective:'Reach the forest path area.' },
+      { id:'complete', objective:'Completed: You stepped beyond the center of the Hub.' }
+    ]
+  },
   'hub-signs': {
     questId:'hub-signs',
     title:'Signs of the Colony',
@@ -1432,12 +1440,28 @@ const QUEST_DEFINITIONS = {
       { id:'complete', objective:'Completed: You collected your first village memory.' }
     ]
   },
+  'hub-trees-remember': {
+    questId:'hub-trees-remember',
+    title:'The Trees Remember',
+    steps:[
+      { id:'collect-forest-memory', objective:'Collect a floating collectible away from the village center.' },
+      { id:'complete', objective:'Completed: You found story memory among the trees.' }
+    ]
+  },
   'hub-hidden-chest': {
     questId:'hub-hidden-chest',
     title:'The Hidden Chest',
     steps:[
       { id:'open-chest', objective:'Open one treasure chest.' },
       { id:'complete', objective:'Completed: You learned that rewards can be hidden.' }
+    ]
+  },
+  'hub-hidden-dojo': {
+    questId:'hub-hidden-dojo',
+    title:'The Hidden Dojo',
+    steps:[
+      { id:'discover-dojo', objective:'Discover any forest dojo or training doorway.' },
+      { id:'complete', objective:'Completed: You found a hidden training path.' }
     ]
   },
   'hub-enter-dojo': {
@@ -1448,12 +1472,36 @@ const QUEST_DEFINITIONS = {
       { id:'complete', objective:'Completed: You learned how interior doors work.' }
     ]
   },
+  'hub-light-changes': {
+    questId:'hub-light-changes',
+    title:'The Light Changes',
+    steps:[
+      { id:'observe-time', objective:'Observe the Hub clock and changing light.' },
+      { id:'complete', objective:'Completed: You noticed the village has its own time.' }
+    ]
+  },
+  'hub-sky-watches': {
+    questId:'hub-sky-watches',
+    title:'The Sky Watches',
+    steps:[
+      { id:'experience-weather', objective:'Experience the active sky and weather system.' },
+      { id:'complete', objective:'Completed: You learned that weather changes the world.' }
+    ]
+  },
   'hub-inspect-walls': {
     questId:'hub-inspect-walls',
     title:'Inspect the Walls',
     steps:[
       { id:'inspect-frame', objective:'Inspect one NFT frame inside an interior.' },
       { id:'complete', objective:'Completed: You learned how Rebel NFT displays work.' }
+    ]
+  },
+  'hub-wall-echoes': {
+    questId:'hub-wall-echoes',
+    title:'Echoes On The Wall',
+    steps:[
+      { id:'inspect-three-frames', objective:'Inspect 3 NFT frames inside an interior.' },
+      { id:'complete', objective:'Completed: You studied the faces of the colony.' }
     ]
   },
   'hub-arcade-doorway': {
@@ -1464,6 +1512,30 @@ const QUEST_DEFINITIONS = {
       { id:'complete', objective:'Completed: You learned that rooms connect to the Rebel ecosystem.' }
     ]
   },
+  'hub-arcade-calls': {
+    questId:'hub-arcade-calls',
+    title:'The Arcade Calls',
+    steps:[
+      { id:'use-arcade-link', objective:'Use an arcade hotspot, cabinet, display, or video screen.' },
+      { id:'complete', objective:'Completed: You heard the arcade calling from inside the world.' }
+    ]
+  },
+  'hub-library-door': {
+    questId:'hub-library-door',
+    title:'The Library Door',
+    steps:[
+      { id:'visit-library', objective:'Visit the library or book interior.' },
+      { id:'complete', objective:'Completed: You found where stories will live.' }
+    ]
+  },
+  'hub-forge-awaits': {
+    questId:'hub-forge-awaits',
+    title:'The Forge Awaits',
+    steps:[
+      { id:'visit-forge', objective:'Visit the forge interior.' },
+      { id:'complete', objective:'Completed: You found the character forge path.' }
+    ]
+  },
   'hub-open-journal': {
     questId:'hub-open-journal',
     title:'Open the Journal',
@@ -1472,12 +1544,28 @@ const QUEST_DEFINITIONS = {
       { id:'complete', objective:'Completed: You learned where badges, stories, secrets, and collections live.' }
     ]
   },
+  'hub-through-gate': {
+    questId:'hub-through-gate',
+    title:'Through The Gate',
+    steps:[
+      { id:'use-portal', objective:'Use a village portal or gate.' },
+      { id:'complete', objective:'Completed: You opened a path beyond the Hub.' }
+    ]
+  },
+  'hub-world-larger': {
+    questId:'hub-world-larger',
+    title:'The World Is Larger',
+    steps:[
+      { id:'visit-village-return', objective:'Visit another village, then return to the Hub.' },
+      { id:'complete', objective:'Completed: You completed the village travel loop.' }
+    ]
+  },
   'hub-tutorial-complete': {
     questId:'hub-tutorial-complete',
-    title:'The Hub Remembers',
+    title:'The Colony Remembers',
     steps:[
       { id:'return-guide', objective:'Return to the Hub Guide.' },
-      { id:'complete', objective:'Completed: The Hub Tutorial Path is complete.' }
+      { id:'complete', objective:'Completed: The Hub Journey is complete.' }
     ]
   }
 };
@@ -1500,7 +1588,7 @@ const DEFAULT_BADGE_DEFINITIONS = [
   { badgeId:'explorer-pathfinder', name:'Pathfinder', category:'explorer', rarity:'Uncommon', imageUrl:'/assets/badges/explorer-pathfinder.png', requirementType:'xp', requirementValue:250, requirementText:'Reach 250 progress', description:'You are finding routes others miss.' },
   { badgeId:'explorer-realm-traveler', name:'Realm Traveler', category:'explorer', rarity:'Rare', imageUrl:'/assets/badges/explorer-realm-traveler.png', requirementType:'xp', requirementValue:1000, requirementText:'Reach 1000 progress', description:'You have begun moving between colonies like a true traveler.' },
   { badgeId:'explorer-root-runner', name:'Root Runner', category:'explorer', rarity:'Epic', imageUrl:'/assets/badges/explorer-root-runner.png', requirementType:'xp', requirementValue:3000, requirementText:'Reach 3000 progress', description:'You know the root paths by instinct.' },
-  { badgeId:'story-hub-initiate', name:'Hub Initiate', category:'story', rarity:'Common', imageUrl:'/assets/badges/story-hub-initiate.png', requirementType:'quest', requirementValue:'hub-tutorial-complete', requirementText:'Complete the Hub Tutorial Path', description:'You learned the first paths through the Rebel Ants Universe.' },
+  { badgeId:'story-hub-initiate', name:'Hub Initiate', category:'story', rarity:'Common', imageUrl:'/assets/badges/story-hub-initiate.png', requirementType:'quest', requirementValue:'hub-tutorial-complete', requirementText:'Complete the Hub Journey', description:'You learned the first paths through the Rebel Ants Universe.' },
   { badgeId:'story-first-warning', name:'The First Warning', category:'story', rarity:'Common', imageUrl:'/assets/badges/story-first-warning.png', requirementType:'quest', requirementValue:'first-warning', requirementText:'Complete The First Warning quest', description:'You heard the first truth about the breathing tunnels.' },
   { badgeId:'story-tunnel-witness', name:'Tunnel Witness', category:'story', rarity:'Uncommon', imageUrl:'/assets/badges/story-tunnel-witness.png', requirementType:'story', requirementValue:'future-tunnels', requirementText:'Future Book 1 story milestone', description:'You witnessed signs beneath the roots.' },
   { badgeId:'story-dust-reader', name:'Dust Reader', category:'story', rarity:'Rare', imageUrl:'/assets/badges/story-dust-reader.png', requirementType:'story', requirementValue:'future-red-dust', requirementText:'Future Book 1 story milestone', description:'You learned to read the red dust.' },
@@ -1981,6 +2069,7 @@ function renderProgressionJournal() {
   }
   if (activeJournalTab === 'story') {
     const entries = [
+      ['The Hub Journey', ProgressionState.completedQuests.includes('hub-tutorial-complete'), 'You learned the living systems of the Hub: paths, memories, doors, frames, weather, gates, and the first shape of the larger colony.'],
       ['The First Warning', ProgressionState.completedQuests.includes('hub-tutorial-complete'), 'Beneath the Hub, old tunnels breathe again. The villages are calm, but the colony remembers what the surface has forgotten.'],
       ['The Breathing Tunnels', false, 'A future Book 1 entry waits below the roots.'],
       ['The Red Dust', false, 'A future Book 1 entry waits in the red cracks.'],
@@ -2043,17 +2132,18 @@ function resetLocalProgression() {
 }
 
 function resetHubTutorialQuest() {
-  const ok = window.confirm('Reset the Hub Tutorial Quest to The First Step? This keeps your placed world objects. To retest collectibles/chests from zero, also use Reset Local Progression.');
+  const ok = window.confirm('Reset the Hub Journey to The First Step? This keeps your placed world objects. To retest collectibles/chests from zero, also use Reset Local Progression.');
   if (!ok) return;
   QuestState = getDefaultQuestState();
   localStorage.removeItem(QUEST_RETURN_HUB_KEY);
   localStorage.removeItem(QUEST_LEFT_HUB_FOR_RONIN_KEY);
+  localStorage.removeItem(HUB_TUTORIAL_TRAVEL_AWAY_KEY);
   saveQuestState();
-  ProgressionState.completedQuests = (ProgressionState.completedQuests || []).filter(id => !QUEST_ORDER.includes(id));
+  ProgressionState.completedQuests = (ProgressionState.completedQuests || []).filter(id => !HUB_TUTORIAL_QUEST_IDS.has(id));
   ProgressionState.badges = (ProgressionState.badges || []).filter(name => name !== 'Hub Initiate');
   saveProgressionState();
   if (activeJournalTab === 'story' || activeJournalTab === 'badges') renderProgressionJournal();
-  showToast('Hub Tutorial Quest reset');
+  showToast('Hub Journey reset');
 }
 
 function makeSafeBadgeId(value) {
@@ -5641,7 +5731,7 @@ function collectProgressionCollectible(root) {
     root.metadata._collectiblePickupStartedAt = performance.now();
     root.isPickable = false;
     root.getChildMeshes?.(false).forEach(mesh => { mesh.isPickable = false; });
-    advanceHubTutorialObjective('collectCollectible');
+    advanceHubTutorialObjective('collectCollectible', { inForest:isInHubForestPathArea(root.position) });
     showToast('Collected: ' + (root.metadata.collectibleLabel || 'Collectible'));
   }
 }
@@ -6187,6 +6277,7 @@ function openVillageGateMenu() {
   overlay.classList.add('on');
   overlay.setAttribute('aria-hidden','false');
   playInteractionAudio('portalOpen');
+  advanceHubTutorialObjective('usePortal', { gate:'village_gate', villageId:CURRENT_VILLAGE_ID });
   if (QuestState.questId === 'village-gate' && QuestState.step === 'open-gate') {
     setTutorialQuestStep('village-gate', 'travel-ronin');
   }
@@ -6211,6 +6302,10 @@ function selectVillageGateDestination(villageId) {
     setTutorialQuestStep('village-gate', 'return-hub');
   } else if (QuestState.questId === 'village-gate' && QuestState.step === 'return-hub' && CURRENT_VILLAGE_ID !== 'hub' && villageId === 'hub') {
     localStorage.setItem(QUEST_RETURN_HUB_KEY, '1');
+  }
+  if (CURRENT_VILLAGE_ID === 'hub' && villageId !== 'hub') {
+    advanceHubTutorialObjective('usePortal', { gate:'village_gate', targetVillageId:villageId });
+    if (QuestState.questId === 'hub-world-larger') localStorage.setItem(HUB_TUTORIAL_TRAVEL_AWAY_KEY, '1');
   }
   playInteractionAudio('portalTravel');
   fadeOutVillageMusicForTravel();
@@ -7809,27 +7904,45 @@ const QUEST_RETURN_HUB_KEY = 'rebelAntsTutorialQuestChain:pendingHubReturn';
 const QUEST_LEFT_HUB_FOR_RONIN_KEY = 'rebelAntsTutorialQuestChain:leftHubForRonin';
 const QUEST_ORDER = [
   'hub-first-step',
+  'hub-walk-village',
   'hub-signs',
   'hub-first-collectible',
+  'hub-trees-remember',
   'hub-hidden-chest',
+  'hub-hidden-dojo',
   'hub-enter-dojo',
   'hub-inspect-walls',
+  'hub-light-changes',
+  'hub-sky-watches',
+  'hub-wall-echoes',
   'hub-arcade-doorway',
+  'hub-arcade-calls',
+  'hub-library-door',
+  'hub-forge-awaits',
   'hub-open-journal',
+  'hub-through-gate',
+  'hub-world-larger',
   'hub-tutorial-complete'
 ];
+const HUB_TUTORIAL_TRAVEL_AWAY_KEY = 'rebelAntsTutorialQuestChain:hubJourneyVisitedAway';
+const HUB_TUTORIAL_QUEST_IDS = new Set(QUEST_ORDER);
 let activeNPCDialogue = null;
 let QuestState = loadQuestState();
 
 function getDefaultQuestState() {
-  return { questId:QUEST_ORDER[0], step:'talk', completed:false, completedQuestIds:[] };
+  return { questId:QUEST_ORDER[0], step:'talk', completed:false, completedQuestIds:[], objectiveProgress:{} };
 }
 
 function loadQuestState() {
   try {
     const parsed = JSON.parse(localStorage.getItem(QUEST_STATE_KEY));
     if (!parsed || !QUEST_DEFINITIONS[parsed.questId]) return getDefaultQuestState();
-    return { ...getDefaultQuestState(), ...parsed, completedQuestIds:Array.isArray(parsed.completedQuestIds) ? parsed.completedQuestIds : [] };
+    return {
+      ...getDefaultQuestState(),
+      ...parsed,
+      completedQuestIds:Array.isArray(parsed.completedQuestIds) ? parsed.completedQuestIds : [],
+      objectiveProgress:parsed.objectiveProgress && typeof parsed.objectiveProgress === 'object' ? parsed.objectiveProgress : {}
+    };
   } catch (_) {
     return getDefaultQuestState();
   }
@@ -7837,6 +7950,7 @@ function loadQuestState() {
 
 function saveQuestState() {
   if (!Array.isArray(QuestState.completedQuestIds)) QuestState.completedQuestIds = [];
+  if (!QuestState.objectiveProgress || typeof QuestState.objectiveProgress !== 'object') QuestState.objectiveProgress = {};
   localStorage.setItem(QUEST_STATE_KEY, JSON.stringify(QuestState));
   updateQuestTracker();
 }
@@ -7869,12 +7983,12 @@ function completeTutorialQuest(questId) {
   recordProgressionEvent('quest', questId, PROGRESSION_POINTS.quest, questBadge);
   const nextQuestId = QUEST_ORDER[QUEST_ORDER.indexOf(questId) + 1] || null;
   if (nextQuestId) {
-    QuestState = { questId: nextQuestId, step:getFirstQuestStepId(nextQuestId), completed:false, completedQuestIds:[...completed] };
+    QuestState = { ...QuestState, questId: nextQuestId, step:getFirstQuestStepId(nextQuestId), completed:false, completedQuestIds:[...completed] };
     saveQuestState();
     showToast(`Quest complete: ${QUEST_DEFINITIONS[questId]?.title || 'Quest'}`);
     return;
   }
-  QuestState = { questId, step:'complete', completed:true, completedQuestIds:[...completed] };
+  QuestState = { ...QuestState, questId, step:'complete', completed:true, completedQuestIds:[...completed] };
   saveQuestState();
   showToast(`Quest complete: ${QUEST_DEFINITIONS[questId]?.title || 'Quest'}`);
 }
@@ -7884,6 +7998,15 @@ function reconcileTutorialQuestOnLoad() {
     QuestState = getDefaultQuestState();
     saveQuestState();
     return;
+  }
+  if (QuestState.questId === 'hub-world-larger' && QuestState.step === 'visit-village-return') {
+    if (CURRENT_VILLAGE_ID !== 'hub') {
+      localStorage.setItem(HUB_TUTORIAL_TRAVEL_AWAY_KEY, '1');
+    } else if (localStorage.getItem(HUB_TUTORIAL_TRAVEL_AWAY_KEY) === '1') {
+      localStorage.removeItem(HUB_TUTORIAL_TRAVEL_AWAY_KEY);
+      advanceHubTutorialObjective('visitVillage', { returnedToHub:true });
+      return;
+    }
   }
   if (CURRENT_VILLAGE_ID === 'ronin' && QuestState.questId === 'village-gate' && QuestState.step === 'travel-ronin') {
     localStorage.setItem(QUEST_LEFT_HUB_FOR_RONIN_KEY, '1');
@@ -7910,19 +8033,72 @@ function shouldHubNPCAdvanceTutorial(npc) {
   return ['hub-first-step', 'hub-tutorial-complete'].includes(QuestState.questId);
 }
 
-function advanceHubTutorialObjective(actionType) {
+function getHubTutorialProgress(questId = QuestState.questId) {
+  if (!QuestState.objectiveProgress || typeof QuestState.objectiveProgress !== 'object') QuestState.objectiveProgress = {};
+  if (!QuestState.objectiveProgress[questId]) QuestState.objectiveProgress[questId] = { count:0, ids:[], startedAt:performance.now() };
+  return QuestState.objectiveProgress[questId];
+}
+
+function getContextSearchText(context = {}) {
+  return [
+    context.interiorType,
+    context.targetInteriorId,
+    context.interiorName,
+    context.title,
+    context.label,
+    context.name,
+    context.collection,
+    context.frameId,
+    context.displayId,
+    context.hotspotId,
+    context.screenId,
+    context.url,
+    context.actionType,
+    context.sourceActionType
+  ].filter(Boolean).join(' ').toLowerCase();
+}
+
+function contextIncludesAny(context, keywords) {
+  const text = getContextSearchText(context);
+  return keywords.some(keyword => text.includes(keyword));
+}
+
+function advanceHubTutorialObjective(actionType, context = {}) {
   const expected = {
     'hub-first-step': { step:'talk', action:'talkToNpc' },
+    'hub-walk-village': { step:'reach-forest-path', action:'visitArea', match:ctx => ctx.inForest === true },
     'hub-signs': { step:'read-sign', action:'interactSign' },
     'hub-first-collectible': { step:'collect-one', action:'collectCollectible' },
+    'hub-trees-remember': { step:'collect-forest-memory', action:'collectCollectible', match:ctx => ctx.inForest === true },
     'hub-hidden-chest': { step:'open-chest', action:'openChest' },
+    'hub-hidden-dojo': { step:'discover-dojo', action:'discoverDojo' },
     'hub-enter-dojo': { step:'enter-interior', action:'enterInterior' },
+    'hub-light-changes': { step:'observe-time', action:'observeTime' },
+    'hub-sky-watches': { step:'experience-weather', action:'experienceWeather' },
     'hub-inspect-walls': { step:'inspect-frame', action:'inspectInteriorNFTFrame' },
+    'hub-wall-echoes': { step:'inspect-three-frames', action:'inspectInteriorNFTFrame', count:3 },
     'hub-arcade-doorway': { step:'use-interior-link', action:'interactInteriorLink' },
+    'hub-arcade-calls': { step:'use-arcade-link', action:'interactInteriorLink', match:ctx => contextIncludesAny(ctx, ['arcade', 'game', 'cabinet']) },
+    'hub-library-door': { step:'visit-library', action:'enterInterior', match:ctx => contextIncludesAny(ctx, ['library', 'book']) },
+    'hub-forge-awaits': { step:'visit-forge', action:'enterInterior', match:ctx => contextIncludesAny(ctx, ['forge']) },
     'hub-open-journal': { step:'open-journal', action:'openJournal' },
+    'hub-through-gate': { step:'use-portal', action:'usePortal' },
+    'hub-world-larger': { step:'visit-village-return', action:'visitVillage', match:ctx => ctx.returnedToHub === true },
     'hub-tutorial-complete': { step:'return-guide', action:'returnToNpc' }
   }[QuestState.questId];
   if (!expected || QuestState.step !== expected.step || actionType !== expected.action) return false;
+  if (expected.match && !expected.match(context)) return false;
+  if (expected.count) {
+    const progress = getHubTutorialProgress(QuestState.questId);
+    const id = String(context.id || context.frameId || context.name || `${QuestState.questId}_${progress.ids.length + 1}`);
+    if (!progress.ids.includes(id)) progress.ids.push(id);
+    progress.count = Math.max(progress.count || 0, progress.ids.length);
+    if (progress.count < expected.count) {
+      saveQuestState();
+      showToast(`${QUEST_DEFINITIONS[QuestState.questId]?.title || 'Quest'}: ${progress.count}/${expected.count}`);
+      return false;
+    }
+  }
   completeTutorialQuest(QuestState.questId);
   return true;
 }
@@ -7939,7 +8115,11 @@ function updateQuestTracker() {
   const quest = QUEST_DEFINITIONS[QuestState.questId];
   const step = getQuestStep(QuestState.questId, QuestState.step);
   title.textContent = QuestState.completed ? 'Completed Quest' : 'Active Quest';
-  objective.textContent = `${quest?.title || 'Quest'}: ${step?.objective || 'Continue the tutorial path.'}`;
+  const progress = QuestState.objectiveProgress?.[QuestState.questId];
+  const progressText = QuestState.questId === 'hub-wall-echoes' && progress?.count
+    ? ` (${Math.min(progress.count, 3)}/3)`
+    : '';
+  objective.textContent = `${quest?.title || 'Quest'}: ${step?.objective || 'Continue the tutorial path.'}${progressText}`;
   tracker.classList.add('on');
 }
 
@@ -7948,7 +8128,8 @@ function isNearDojoTutorialArea() {
   const dojoTypes = new Set(['dojo', 'dojo_5', 'dojo_6', 'dojo_7', 'dojo_9']);
   const candidates = scene.transformNodes.filter(node => {
     const type = node.metadata?.type || '';
-    return dojoTypes.has(type) || String(node.name || '').toLowerCase().includes('dojo');
+    const search = `${type} ${node.name || ''} ${node.metadata?.interiorName || ''} ${node.metadata?.targetInteriorId || ''}`.toLowerCase();
+    return dojoTypes.has(type) || search.includes('dojo') || search.includes('training');
   });
   return candidates.some(node => {
     if (!node.position || Math.abs(node.position.x) > 500 || Math.abs(node.position.z) > 500) return false;
@@ -7958,8 +8139,47 @@ function isNearDojoTutorialArea() {
   });
 }
 
+function isHubForestNatureNode(node) {
+  const text = `${node?.metadata?.type || ''} ${node?.name || ''}`.toLowerCase();
+  return ['forest', 'tree', 'pine', 'bamboo', 'blossom', 'rock', 'bridge', 'shrine'].some(keyword => text.includes(keyword));
+}
+
+function isInHubForestPathArea(position) {
+  if (!position || CURRENT_VILLAGE_ID !== 'hub') return false;
+  const distanceFromCenterSq = position.x * position.x + position.z * position.z;
+  if (distanceFromCenterSq >= 34 * 34) return true;
+  return scene.transformNodes.some(node => {
+    if (!node?.position || !isHubForestNatureNode(node)) return false;
+    const dx = node.position.x - position.x;
+    const dz = node.position.z - position.z;
+    return dx * dx + dz * dz <= 18 * 18;
+  });
+}
+
 function updateTutorialQuestWorldProgress() {
-  // Hub Tutorial V1 advances from direct interactions, not exact placement checks.
+  if (!charMesh) return;
+  if (QuestState.questId === 'hub-walk-village' && QuestState.step === 'reach-forest-path') {
+    if (ActiveInterior) return;
+    advanceHubTutorialObjective('visitArea', { area:'forest-path', inForest:isInHubForestPathArea(charMesh.position) });
+    return;
+  }
+  if (QuestState.questId === 'hub-hidden-dojo' && QuestState.step === 'discover-dojo' && isNearDojoTutorialArea()) {
+    if (ActiveInterior) return;
+    advanceHubTutorialObjective('discoverDojo', { area:'forest-dojo', isDojo:true });
+    return;
+  }
+  if (QuestState.questId === 'hub-light-changes' && QuestState.step === 'observe-time') {
+    const progress = getHubTutorialProgress('hub-light-changes');
+    const elapsed = performance.now() - (progress.startedAt || performance.now());
+    if (elapsed > 4200) advanceHubTutorialObjective('observeTime', { clockLabel:document.getElementById('td')?.textContent || '' });
+    return;
+  }
+  if (QuestState.questId === 'hub-sky-watches' && QuestState.step === 'experience-weather') {
+    const progress = getHubTutorialProgress('hub-sky-watches');
+    const elapsed = performance.now() - (progress.startedAt || performance.now());
+    const weatherMode = WeatherManager?.mode || 'clear';
+    if (weatherMode !== 'clear' || elapsed > 4200) advanceHubTutorialObjective('experienceWeather', { weatherMode });
+  }
 }
 
 function handleSignQuestEvent(signData) {
@@ -8484,6 +8704,12 @@ function getTutorialDialogueLines(npc) {
         'Talk, explore, collect, and remember: the village always rewards those who pay attention.'
       ];
     }
+    if (QuestState.questId === 'hub-walk-village') {
+      return [
+        'The Hub is more than the square beneath your feet.',
+        'Walk toward the forest path. The trees will teach you how far this world already reaches.'
+      ];
+    }
     if (QuestState.questId === 'hub-signs') {
       return [
         'The wooden signs are not decoration. They are paths to everything we have built.',
@@ -8496,10 +8722,22 @@ function getTutorialDialogueLines(npc) {
         'Collect one. Small things build legends.'
       ];
     }
+    if (QuestState.questId === 'hub-trees-remember') {
+      return [
+        'The trees keep small memories where the village grows quiet.',
+        'Find one away from the center. The colony hides stories for ants willing to wander.'
+      ];
+    }
     if (QuestState.questId === 'hub-hidden-chest') {
       return [
         'Not every reward is in plain sight.',
         'Some are hidden, some are earned, and some are waiting for the ant who looks twice.'
+      ];
+    }
+    if (QuestState.questId === 'hub-hidden-dojo') {
+      return [
+        'Not every dojo announces itself from the main road.',
+        'Search the forest edge. Training places often wait where the path gets quiet.'
       ];
     }
     if (QuestState.questId === 'hub-enter-dojo') {
@@ -8514,10 +8752,46 @@ function getTutorialDialogueLines(npc) {
         'Every Rebel has a story, and every holder leaves a mark inside the Universe.'
       ];
     }
+    if (QuestState.questId === 'hub-light-changes') {
+      return [
+        'Watch the hour at the top of the sky.',
+        'The Hub has its own rhythm. Morning, day, sunset, and night all change what the village asks of its lights.'
+      ];
+    }
+    if (QuestState.questId === 'hub-sky-watches') {
+      return [
+        'Weather is a mood the village wears.',
+        'Clear skies, rain, fog, heat, cold: each one changes the feel of the same path.'
+      ];
+    }
+    if (QuestState.questId === 'hub-wall-echoes') {
+      return [
+        'One face is a portrait. Three begin to sound like a chorus.',
+        'Inspect more frames and let the walls remind you that this colony is made of Rebels.'
+      ];
+    }
     if (QuestState.questId === 'hub-arcade-doorway') {
       return [
         'The Universe is not one room.',
         'It is connected to every game, every show, every build, and every story we create.'
+      ];
+    }
+    if (QuestState.questId === 'hub-arcade-calls') {
+      return [
+        'The arcade does not wait quietly. It hums behind the wall like a challenge.',
+        'Use one arcade hotspot or cabinet. The games are part of the world, not outside it.'
+      ];
+    }
+    if (QuestState.questId === 'hub-library-door') {
+      return [
+        'Every colony needs a place where its stories can sleep until someone brave opens them.',
+        'Find the library or book room. That is where the old warnings will begin to make sense.'
+      ];
+    }
+    if (QuestState.questId === 'hub-forge-awaits') {
+      return [
+        'A Rebel is not only found. A Rebel can be forged.',
+        'Visit the forge path and remember where your character can become something more deliberate.'
       ];
     }
     if (QuestState.questId === 'hub-open-journal') {
@@ -8526,9 +8800,21 @@ function getTutorialDialogueLines(npc) {
         'Badges, stories, secrets, collections: this is where your path becomes proof.'
       ];
     }
+    if (QuestState.questId === 'hub-through-gate') {
+      return [
+        'The gate is not an exit. It is a promise.',
+        'Use a village portal and you will feel the Hub open toward the rest of the colony.'
+      ];
+    }
+    if (QuestState.questId === 'hub-world-larger') {
+      return [
+        'Leave the Hub and come back with dust from another village on your feet.',
+        'The world is larger than one safe square, and the colony needs ants who can return with what they learned.'
+      ];
+    }
     if (QuestState.questId === 'hub-tutorial-complete' && QuestState.step === 'return-guide') {
       return [
-        'You have taken your first steps. The Hub has opened its doors to you.',
+        'You walked the Hub as a traveler, not a checklist. The village knows your footsteps now.',
         'But beneath the villages, something older is stirring.',
         'When you are ready, the First Warning will begin.'
       ];
@@ -18807,7 +19093,7 @@ function closeInteriorInfoPanel(event = null) {
 function interactInteriorDisplay(display) {
   if (!display || display.metadata?.enabled === false) return false;
   const meta = display.metadata || {};
-  recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: ActiveInterior?.targetInteriorId } }, 'interactInteriorDisplay');
+  recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.label || ActiveInterior?.targetInteriorId, displayId:meta.displayId, label:meta.label, title:meta.label, url:meta.url, actionType:meta.actionType } }, 'interactInteriorDisplay');
   if (meta.actionType === 'openUrl' && meta.url) {
     window.open(meta.url, '_blank', 'noopener');
     showToast('Opening: ' + (meta.label || 'Interior link'));
@@ -18915,7 +19201,7 @@ function getNearestInteriorHotspotInRange() {
 function interactInteriorHotspot(hotspot) {
   if (!hotspot || hotspot.metadata?.enabled === false) return false;
   const meta = hotspot.metadata || {};
-  recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.linkName } }, 'interactInteriorHotspot');
+  recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.linkName, hotspotId:meta.hotspotId, label:meta.linkName, title:meta.linkName, url:meta.url, actionType:meta.actionType } }, 'interactInteriorHotspot');
   if (meta.actionType === 'openUrl' && meta.url) {
     window.open(meta.url, '_blank', 'noopener');
     showToast('Opening: ' + (meta.linkName || 'Interior link'));
@@ -19133,7 +19419,7 @@ function getNearestInteriorVideoScreenInRange() {
 function interactInteriorVideoScreen(screen) {
   if (!screen || screen.metadata?.enabled === false) return false;
   const meta = screen.metadata || {};
-  recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.screenName } }, 'interactInteriorVideoScreen');
+  recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.screenName, screenId:meta.screenId, label:meta.screenName, title:meta.screenName, url:meta.clickUrl || meta.liveUrl || meta.fallbackUrl || meta.videoUrl, actionType:'videoScreen' } }, 'interactInteriorVideoScreen');
   const url = meta.clickUrl || meta.liveUrl || meta.fallbackUrl || '';
   if (url) {
     window.open(url, '_blank', 'noopener');
@@ -19342,7 +19628,7 @@ function inspectInteriorNftFrame(frame) {
   if (!frame || frame.metadata?.enabled === false) return false;
   applyInteriorNftFrameVisual(frame);
   const meta = frame.metadata || {};
-  recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.frameName } }, 'inspectInteriorNFTFrame');
+  recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.frameName, frameId:meta.frameId, label:meta.frameName, title:meta.resolvedTitle || meta.title || meta.frameName, collection:meta.resolvedCollection } }, 'inspectInteriorNFTFrame');
   const title = meta.resolvedTitle || meta.title || meta.frameName || 'Rebel Frame';
   const details = [
     meta.frameName || title,
@@ -20115,11 +20401,22 @@ function buildInteriorRoom(entrance) {
 }
 
 function recordInteriorQuestHook(entrance, actionType = 'enterInterior') {
+  const meta = entrance?.metadata || {};
   const payload = {
     actionType,
-    interiorType: normalizeInteriorType(entrance?.metadata?.interiorType),
-    targetInteriorId: entrance?.metadata?.targetInteriorId || '',
-    entranceName: entrance?.metadata?.interiorName || entrance?.name || '',
+    interiorType: normalizeInteriorType(meta.interiorType),
+    targetInteriorId: meta.targetInteriorId || '',
+    entranceName: meta.interiorName || entrance?.name || '',
+    interiorName: meta.interiorName || meta.label || meta.title || meta.targetInteriorId || '',
+    label: meta.label || meta.interiorName || '',
+    title: meta.title || meta.label || meta.interiorName || '',
+    url: meta.url || '',
+    frameId: meta.frameId || '',
+    displayId: meta.displayId || '',
+    hotspotId: meta.hotspotId || '',
+    screenId: meta.screenId || '',
+    collection: meta.collection || '',
+    sourceActionType: meta.actionType || '',
     villageId: CURRENT_VILLAGE_ID,
     at: new Date().toISOString()
   };
@@ -20130,13 +20427,13 @@ function recordInteriorQuestHook(entrance, actionType = 'enterInterior') {
     localStorage.setItem(key, JSON.stringify(hooks.slice(-100)));
   } catch(e) {}
   window.dispatchEvent(new CustomEvent('rebelAntsInteriorEvent', { detail: payload }));
-  if (actionType === 'enterInterior') advanceHubTutorialObjective('enterInterior');
-  if (actionType === 'inspectInteriorNFTFrame') advanceHubTutorialObjective('inspectInteriorNFTFrame');
+  if (actionType === 'enterInterior') advanceHubTutorialObjective('enterInterior', payload);
+  if (actionType === 'inspectInteriorNFTFrame') advanceHubTutorialObjective('inspectInteriorNFTFrame', payload);
   if (
     actionType === 'interactInteriorHotspot' ||
     actionType === 'interactInteriorDisplay' ||
     actionType === 'interactInteriorVideoScreen'
-  ) advanceHubTutorialObjective('interactInteriorLink');
+  ) advanceHubTutorialObjective('interactInteriorLink', payload);
   return payload;
 }
 
