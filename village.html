@@ -8666,46 +8666,45 @@ function buildSmallVillageAnt(root) {
   ringMat.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
   const parts = [];
 
-  const abdomen = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_abdomen', { diameter:.52, segments:12 }, scene), root, 'body');
-  abdomen.scaling.set(.9,.48,1.08); abdomen.position.set(0,.32,-.23); abdomen.material = bodyMat; parts.push(abdomen);
-  [-.36,-.13].forEach((z, index) => {
-    const band = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_abdomenBand_' + index, { diameter:.5, thickness:.035, tessellation:20 }, scene), root, 'ring');
-    band.scaling.set(.88,.5,1);
-    band.position.set(0,.34,z);
+  const abdomen = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_abdomen', { diameter:.5, segments:12 }, scene), root, 'body');
+  abdomen.scaling.set(.94,.46,1.02); abdomen.position.set(0,.28,-.14); abdomen.material = bodyMat; parts.push(abdomen);
+  [-.27,-.08].forEach((z, index) => {
+    const band = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_abdomenBand_' + index, { diameter:.46, thickness:.03, tessellation:20 }, scene), root, 'ring');
+    band.scaling.set(.9,.48,1);
+    band.position.set(0,.3,z);
     band.rotation.x = Math.PI / 2;
     band.material = ringMat;
     parts.push(band);
   });
-  const thorax = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_thorax', { diameter:.42, segments:12 }, scene), root, 'body');
-  thorax.scaling.set(.86,.52,.82); thorax.position.set(0,.35,.23); thorax.material = bellyMat; parts.push(thorax);
-  const headBand = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_antennaBand', { diameter:.48, thickness:.06, tessellation:20 }, scene), root, 'antenna');
-  headBand.position.set(0,.46,.58); headBand.rotation.x = Math.PI / 2; headBand.material = antennaMat; parts.push(headBand);
-  const headCap = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_antennaCap', { diameter:.25, segments:10 }, scene), root, 'antenna');
-  headCap.scaling.set(1,.38,1); headCap.position.set(0,.62,.58); headCap.material = antennaMat; parts.push(headCap);
-  const head = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_head', { diameter:.36, segments:12 }, scene), root, 'body');
-  head.scaling.set(.9,.72,.86); head.position.set(0,.41,.6); head.material = bodyMat; parts.push(head);
-  const ring = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ring', { diameter:.62, thickness:.055, tessellation:24 }, scene), root, 'ring');
-  ring.position.set(0,.38,.08); ring.rotation.x = Math.PI / 2; ring.material = ringMat; parts.push(ring);
-  const halo = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_halo', { diameter:1.46, thickness:.028, tessellation:32 }, scene), root, 'ring');
+  const thorax = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_thorax', { diameter:.4, segments:12 }, scene), root, 'body');
+  thorax.scaling.set(.9,.5,.86); thorax.position.set(0,.3,.11); thorax.material = bellyMat; parts.push(thorax);
+  const headBand = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_antennaBand', { diameter:.34, thickness:.04, tessellation:18 }, scene), root, 'antenna');
+  headBand.position.set(0,.39,.38); headBand.rotation.x = Math.PI / 2; headBand.material = antennaMat; parts.push(headBand);
+  const headCap = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_antennaCap', { diameter:.18, segments:10 }, scene), root, 'antenna');
+  headCap.scaling.set(1,.34,1); headCap.position.set(0,.49,.38); headCap.material = antennaMat; parts.push(headCap);
+  const head = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_head', { diameter:.34, segments:12 }, scene), root, 'body');
+  head.scaling.set(.92,.68,.88); head.position.set(0,.32,.39); head.material = bodyMat; parts.push(head);
+  const ring = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ring', { diameter:.48, thickness:.045, tessellation:22 }, scene), root, 'ring');
+  ring.position.set(0,.31,.06); ring.rotation.x = Math.PI / 2; ring.material = ringMat; parts.push(ring);
+  const halo = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_halo', { diameter:1.2, thickness:.024, tessellation:30 }, scene), root, 'ring');
   halo.position.set(0,.035,0); halo.rotation.x = Math.PI / 2; halo.material = ringMat; halo.isPickable = false; parts.push(halo);
   [-.08,.08].forEach(x => {
-    const eye = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_eye_' + x, { diameter:.13, segments:8 }, scene), root, 'eye');
-    eye.position.set(x,.49,.79); eye.material = eyeMat; parts.push(eye);
-    const antenna = makeSmallAntPart(BABYLON.MeshBuilder.CreateCylinder(root.name + '_antenna_' + x, { height:.52, diameter:.04, tessellation:6 }, scene), root, 'antenna');
-    antenna.position.set(x * 1.75,.74,.74); antenna.rotation.x = .75; antenna.rotation.z = -Math.sign(x || 1) * .5; antenna.material = antennaMat; parts.push(antenna);
+    const eye = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_eye_' + x, { diameter:.1, segments:8 }, scene), root, 'eye');
+    eye.position.set(x,.38,.55); eye.material = eyeMat; parts.push(eye);
+    const antenna = makeSmallAntPart(BABYLON.MeshBuilder.CreateCylinder(root.name + '_antenna_' + x, { height:.38, diameter:.032, tessellation:6 }, scene), root, 'antenna');
+    antenna.position.set(x * 1.45,.58,.52); antenna.rotation.x = .78; antenna.rotation.z = -Math.sign(x || 1) * .44; antenna.material = antennaMat; parts.push(antenna);
   });
-  [-.24,.24].forEach(side => {
-    [-.18,.18,.48].forEach((z, index) => {
-      const leg = makeSmallAntPart(BABYLON.MeshBuilder.CreateCylinder(root.name + '_leg_' + side + '_' + index, { height:.46, diameter:.026, tessellation:5 }, scene), root, 'leg');
-      leg.position.set(side,.2,z);
-      leg.rotation.z = side > 0 ? 1.12 : -1.12;
-      leg.rotation.x = [-.26,.08,.24][index] || 0;
+  [-1,1].forEach(side => {
+    [-.2,.03,.26].forEach((z, index) => {
+      const leg = makeSmallAntPart(BABYLON.MeshBuilder.CreateBox(root.name + '_leg_' + side + '_' + index, { width:.5, height:.035, depth:.05 }, scene), root, 'leg');
+      leg.position.set(side * .3,.16,z);
+      leg.rotation.y = side * [-.34,0,.34][index];
       leg.material = bodyMat;
       leg.metadata.smallAntLegSide = side;
       leg.metadata.smallAntLegIndex = index;
       leg.metadata.basePositionY = leg.position.y;
-      leg.metadata.baseRotationX = leg.rotation.x;
-      leg.metadata.baseRotationZ = leg.rotation.z;
+      leg.metadata.basePositionZ = leg.position.z;
+      leg.metadata.baseRotationY = leg.rotation.y;
       parts.push(leg);
     });
   });
@@ -9540,29 +9539,32 @@ function moveSmallVillageAntToward(root, target, dt) {
   root.position.x = nextX;
   root.position.z = nextZ;
   const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
-  if (Number.isFinite(groundY)) root.position.y = groundY;
+  if (Number.isFinite(groundY)) {
+    const yDelta = groundY - root.position.y;
+    root.position.y += Math.sign(yDelta) * Math.min(Math.abs(yDelta), Math.max(.005, dt * .6));
+  }
+  root.metadata.walkCycle = (Number(root.metadata.walkCycle) || 0) + step * 13;
   const desired = Math.atan2(dx, dz);
   root.rotation.y += normalizeAngle(desired - root.rotation.y) * Math.min(1, dt * 5);
   return true;
 }
 
 function updateSmallAntLegMotion(root, moving, now) {
-  const phase = now * (moving ? .014 : .002) + (root.metadata?.idleSeed || 0);
+  const phase = moving ? (Number(root.metadata?.walkCycle) || 0) : now * .0015 + (root.metadata?.idleSeed || 0);
   root.getChildMeshes?.(false).forEach(mesh => {
     if (mesh.metadata?.smallAntPart !== 'leg') return;
-    const baseX = Number.isFinite(mesh.metadata.baseRotationX) ? mesh.metadata.baseRotationX : mesh.rotation.x;
-    const baseZ = Number.isFinite(mesh.metadata.baseRotationZ) ? mesh.metadata.baseRotationZ : mesh.rotation.z;
     const baseY = Number.isFinite(mesh.metadata.basePositionY) ? mesh.metadata.basePositionY : mesh.position.y;
+    const baseZ = Number.isFinite(mesh.metadata.basePositionZ) ? mesh.metadata.basePositionZ : mesh.position.z;
+    const baseRotY = Number.isFinite(mesh.metadata.baseRotationY) ? mesh.metadata.baseRotationY : mesh.rotation.y;
     const index = Number(mesh.metadata.smallAntLegIndex) || 0;
     const side = Number(mesh.metadata.smallAntLegSide) || 1;
     const tripod = (index % 2 === 0 ? 0 : Math.PI) + (side > 0 ? 0 : Math.PI);
     const stride = moving ? Math.sin(phase + tripod) : 0;
-    const lift = moving ? Math.max(0, Math.cos(phase + tripod)) : 0;
-    mesh.rotation.x = baseX + stride * .34;
-    mesh.rotation.z = baseZ + stride * .035;
-    mesh.position.y = baseY + lift * .035;
+    mesh.rotation.y = baseRotY + stride * side * .42;
+    mesh.position.z = baseZ + stride * .075;
+    mesh.position.y = baseY;
   });
-  if (moving) root.rotation.z = Math.sin(now * .008 + (root.metadata?.idleSeed || 0)) * .006;
+  if (moving) root.rotation.z = Math.sin((Number(root.metadata?.walkCycle) || 0) * .5) * .003;
   else root.rotation.z *= .88;
 }
 
