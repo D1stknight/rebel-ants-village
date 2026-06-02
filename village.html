@@ -5209,7 +5209,7 @@ if (smallAntEditorPanel) {
   smallAntEditorPanel.style.display = 'block';
   const hint = document.getElementById('smallAntEditorHint');
   if (hint) hint.textContent = ant
-    ? 'Editing selected Small Village Ant. Click Apply, then exit Admin Mode to let it wander.'
+    ? 'Editing selected Small Village Ant. Movement: npc-controller. Click Apply, then exit Admin Mode to let it wander.'
     : 'Select a Small Village Ant in the scene to edit it. It walks only after Admin Mode is off.';
   if (ant) {
     const meta = ant.metadata || {};
@@ -8733,12 +8733,15 @@ function buildSmallVillageAnt(root) {
   const meta = root.metadata || {};
   meta.type = 'small_village_ant';
   meta.displayName = meta.displayName || 'Little Village Ant';
+  meta.villageId = meta.villageId || CURRENT_VILLAGE_ID;
+  meta.role = meta.role || 'small ant';
   meta.customDialogue = meta.customDialogue || 'Tiny steps still carry the colony forward.';
   meta.ringColor = meta.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca';
   meta.haloColor = meta.haloColor || meta.ringColor || '#e8c56a';
   meta.ringVerticalOffset = Number.isFinite(meta.ringVerticalOffset) ? meta.ringVerticalOffset : 0;
   meta.haloVerticalOffset = Number.isFinite(meta.haloVerticalOffset) ? meta.haloVerticalOffset : null;
   meta.behavior = meta.behavior || 'wander';
+  meta.movementController = 'npc-controller';
   meta.wanderRadius = Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5;
   meta.moveSpeed = Number.isFinite(meta.moveSpeed) ? meta.moveSpeed : .9;
   const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
@@ -8802,8 +8805,20 @@ function buildSmallVillageAnt(root) {
   root.metadata.smallAntParts = parts;
   ensureSmallAntAccentMeshes(root);
   applySmallAntVisualColors(root);
-  if (!SmallVillageAntManager.roots.includes(root)) SmallVillageAntManager.roots.push(root);
+  registerSmallAntNpcController(root);
   tryLoadSmallVillageAntModel(root);
+}
+
+function registerSmallAntNpcController(root) {
+  if (!root || root.metadata?.type !== 'small_village_ant') return;
+  if (!SmallVillageAntManager.roots.includes(root)) SmallVillageAntManager.roots.push(root);
+  root.metadata.movementController = 'npc-controller';
+  if (!root.metadata.spawn) root.metadata.spawn = { x:root.position.x, y:root.position.y, z:root.position.z };
+  if (!Number.isFinite(root.metadata.baseRotationY)) root.metadata.baseRotationY = root.rotation?.y || 0;
+  if (!root.metadata._movementControllerLogged) {
+    console.info('small ant movement: npc-controller', root.name);
+    root.metadata._movementControllerLogged = true;
+  }
 }
 
 function refreshSmallVillageAntVisual(root) {
@@ -8874,7 +8889,9 @@ async function tryLoadSmallVillageAntModel(root) {
     meta.modelUrl = modelUrl;
     meta.modelScale = Number.isFinite(meta.modelScale) ? meta.modelScale : SMALL_VILLAGE_ANT_MODEL_SCALE;
     meta.smallAntModelRoot = modelRoot;
-    meta.smallAntAnimationGroups = result.animationGroups || [];
+    meta.smallAntAnimationGroups = [];
+    meta.smallAntAnimationDisabled = true;
+    (result.animationGroups || []).forEach(group => group.stop());
     meta.smallAntModelLoaded = true;
     meta.smallAntModelFailed = false;
     meta.smallAntAccentPlaced = false;
@@ -9277,6 +9294,11 @@ function findNPCAnimationGroup(meta, state) {
 
 function updateNPCAnimationState(root, moving, now) {
   const meta = root.metadata || {};
+  if (meta.type === 'small_village_ant') {
+    if (meta.smallAntAnimationGroups?.length) meta.smallAntAnimationGroups.forEach(group => group.stop());
+    meta.activeAnimation = moving ? 'walk' : 'idle';
+    return;
+  }
   if (meta.modelLoaded && Array.isArray(meta.animationGroups) && meta.animationGroups.length) {
     const wanted = meta.dialogueOpen ? 'talk' : (moving && !meta.turningInPlace ? 'walk' : 'idle');
     if (meta.activeAnimation !== wanted) {
@@ -9297,10 +9319,15 @@ function updateNPCAnimationState(root, moving, now) {
 }
 
 function updateNPCPopulation(dt) {
-  if (!NPCManager.roots.length) return;
+  const npcControllerRoots = [
+    ...NPCManager.roots,
+    ...SmallVillageAntManager.roots.filter(root => root && !NPCManager.roots.includes(root))
+  ];
+  if (!npcControllerRoots.length) return;
   if (ActiveInterior) return;
   const now = performance.now();
-  NPCManager.roots.forEach(root => {
+  SmallVillageAntManager.roots = SmallVillageAntManager.roots.filter(root => root && !root.isDisposed?.());
+  npcControllerRoots.forEach(root => {
     let npcDt = dt;
     if (!root || root.isDisposed?.()) return;
     root.setEnabled(NPCManager.visible);
@@ -9675,113 +9702,6 @@ function tryTalkToNearbySmallAnt() {
   const ant = getNearestSmallVillageAntInRange();
   if (!ant) return false;
   return openNPCDialogue(ant);
-}
-
-function normalizeAngle(angle) {
-  return Math.atan2(Math.sin(angle), Math.cos(angle));
-}
-
-function chooseSmallVillageAntTarget(root) {
-  if (!root || root.metadata?.type !== 'small_village_ant') return;
-  chooseNPCWanderTarget(root);
-}
-
-function moveSmallVillageAntToward(root, target, dt) {
-  const before = root?.position?.clone?.();
-  const moving = moveNPCToward(root, target, Math.min(Math.max(dt || 0, 0), .05));
-  if (moving && before) {
-    const dx = root.position.x - before.x;
-    const dz = root.position.z - before.z;
-    root.metadata.walkCycle = (Number(root.metadata.walkCycle) || 0) + Math.hypot(dx, dz) * 10;
-  }
-  return moving;
-}
-
-function getSmallAntWalkAnimationGroup(meta) {
-  const groups = Array.isArray(meta?.smallAntAnimationGroups) ? meta.smallAntAnimationGroups : [];
-  if (!groups.length) return null;
-  return groups.find(group => /walk|run|crawl|move|locomotion/i.test(group?.name || '')) || (groups.length === 1 ? groups[0] : null);
-}
-
-function updateSmallAntLegMotion(root, moving, now) {
-  const meta = root.metadata || {};
-  if (meta.smallAntModelLoaded && Array.isArray(meta.smallAntAnimationGroups) && meta.smallAntAnimationGroups.length) {
-    if (meta.smallAntModelRoot && !meta.smallAntModelRoot.isDisposed?.()) {
-      meta.smallAntModelRoot.position.set(0, 0, 0);
-      meta.smallAntModelRoot.rotation.set(0, 0, 0);
-    }
-    const group = getSmallAntWalkAnimationGroup(meta);
-    if (moving && group) {
-      if (meta.smallAntActiveAnimation !== 'walk') {
-        meta.smallAntAnimationGroups.forEach(animationGroup => animationGroup.stop());
-        group.speedRatio = 1;
-        group.start(true);
-        meta.smallAntActiveAnimation = 'walk';
-      }
-    } else if (meta.smallAntActiveAnimation) {
-      meta.smallAntAnimationGroups.forEach(animationGroup => animationGroup.stop());
-      meta.smallAntActiveAnimation = '';
-    }
-    if (group) return;
-  }
-  const cycle = Number(root.metadata?.walkCycle) || 0;
-  const hop = 0;
-  root.getChildMeshes?.(false).forEach(mesh => {
-    const role = mesh.metadata?.smallAntPart;
-    if (role === 'body' || role === 'ring' || role === 'antenna' || role === 'eye') {
-      if (!Number.isFinite(mesh.metadata.basePositionY)) mesh.metadata.basePositionY = mesh.position.y;
-      mesh.position.y = mesh.metadata.basePositionY + hop;
-    }
-    if (role !== 'leg') return;
-    const index = Number(mesh.metadata.smallAntLegIndex) || 0;
-    const side = Number(mesh.metadata.smallAntLegSide) || 1;
-    const tripod = (index % 2 === 0 ? 0 : Math.PI) + (side > 0 ? 0 : Math.PI);
-    const swing = moving ? Math.sin(cycle * 2 + tripod) : 0;
-    const baseX = Number.isFinite(mesh.metadata.baseRotationX) ? mesh.metadata.baseRotationX : mesh.rotation.x;
-    const baseZ = Number.isFinite(mesh.metadata.baseRotationZ) ? mesh.metadata.baseRotationZ : mesh.rotation.z;
-    mesh.rotation.x = baseX + swing * .18;
-    mesh.rotation.z = baseZ + swing * side * .08;
-  });
-  if (moving && !meta.smallAntModelLoaded) root.rotation.z = Math.sin(cycle * 2) * .003;
-  else root.rotation.z *= .88;
-}
-
-function updateSmallVillageAnts(dt) {
-  if (!SmallVillageAntManager.roots.length || ActiveInterior) return;
-  const now = performance.now();
-  SmallVillageAntManager.roots = SmallVillageAntManager.roots.filter(root => root && !root.isDisposed?.());
-  SmallVillageAntManager.roots.forEach(root => {
-    if (!root.isEnabled() || root.metadata?.type !== 'small_village_ant') return;
-    if (adminMode && getSelectedSmallVillageAnt() === root) {
-      readSmallAntControlsIntoMetadata(root, { resetHome:false });
-      const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
-      if (Number.isFinite(groundY)) root.position.y = groundY;
-    }
-    if (!root.metadata.spawn) {
-      root.metadata.spawn = { x:root.position.x, y:root.position.y, z:root.position.z };
-    }
-    if (!Number.isFinite(root.metadata.baseRotationY)) root.metadata.baseRotationY = root.rotation?.y || 0;
-    const adminPreviewActive = adminMode && Number(root.metadata.adminPreviewUntil || 0) > now;
-    const movingAllowed = (!adminMode || adminPreviewActive) && root.metadata.dialogueOpen !== true;
-    let moving = false;
-    if (movingAllowed) {
-      const radius = Math.max(0, Number(root.metadata.wanderRadius) || 0);
-      if (radius > .1) {
-        if (!root.metadata.target && now >= Number(root.metadata.waitUntil || 0)) {
-          chooseSmallVillageAntTarget(root);
-        }
-        if (root.metadata.target) {
-          moving = moveSmallVillageAntToward(root, root.metadata.target, dt);
-          if (!moving) {
-            root.metadata.target = null;
-            root.metadata.waitUntil = now + 1800 + Math.random() * 2600;
-          }
-        }
-      }
-    }
-    if (!moving && typeof returnNPCToBaseRotation === 'function') returnNPCToBaseRotation(root, Math.min(Math.max(dt || 0, 0), .05));
-    updateSmallAntLegMotion(root, moving, now);
-  });
 }
 
 function toggleNPCVisibility() {
@@ -14267,7 +14187,7 @@ function collectWorldLayoutData() {
   const allNodes = [...saveableTransformNodes, ...saveableProxyMeshes, ...saveableNPCNodes];
 
   const data = allNodes.map(node => {
-    const savePosition = node.metadata.type === 'npc' && node.metadata.spawn
+    const savePosition = (node.metadata.type === 'npc' || node.metadata.type === 'small_village_ant') && node.metadata.spawn
       ? node.metadata.spawn
       : node.position;
     return ({
@@ -16537,7 +16457,6 @@ engine.runRenderLoop(()=>{
   updateCollectiblesSafe(dt);
   updateWeatherManager();
   updateNPCPopulation(dt);
-  updateSmallVillageAnts(dt);
   runVillagePerformancePass(false);
   updatePerformanceDebugPanel();
   applyFakeLightState(false);
