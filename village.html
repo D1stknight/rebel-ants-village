@@ -484,6 +484,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
     <div class="ap-section">Ronin Village Assets</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ronin_altar')"><span class="ap-icon">⛩</span><span class="ap-name">Ronin Altar</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Ronin Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_dead_tree')"><span class="ap-icon">♜</span><span class="ap-name">Dead Tree</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_mist')"><span class="ap-icon">〰</span><span class="ap-name">Ronin Mist</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_weapon_rack')"><span class="ap-icon">⚔</span><span class="ap-name">Weapon Rack</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_katana_sigil')"><span class="ap-icon">☾</span><span class="ap-name">Katana Sigil</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_brazier')"><span class="ap-icon">🔥</span><span class="ap-name">Crimson Brazier</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_broken_cart')"><span class="ap-icon">▰</span><span class="ap-name">Broken Cart</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_watch_post')"><span class="ap-icon">▴</span><span class="ap-name">Watch Post</span></div></div>
+    <div class="ap-section">Village Life</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('small_village_ant')"><span class="ap-icon">🐜</span><span class="ap-name">Small Village Ant</span></div></div>
     <div class="ap-section">Light Director</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('lantern_1')"><span class="ap-icon">🏮</span><span class="ap-name">Path Lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('hanging_lantern')"><span class="ap-icon">🏮</span><span class="ap-name">Hanging Lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('toro_lantern')"><span class="ap-icon">🔥</span><span class="ap-name">Fire Bowl</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ambient_glow')"><span class="ap-icon">✨</span><span class="ap-name">Ambient Glow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('treasure_chest')"><span class="ap-icon">💰</span><span class="ap-name">Treasure Chest</span></div></div>
     <div class="admin-section-body" data-admin-section-body="light-director-test">
@@ -1192,6 +1194,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="assignSelectedNPCToPatrol()">Assign Patrol</button>
       <button class="ctrl-btn" id="patrolVisibilityBtn" onclick="togglePatrolRouteVisibility()">Show Routes</button>
     </div>
+  </div>
+  <div id="smallAntEditorPanel" style="display:none;padding:0 8px 8px">
+    <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin:9px 0 6px;text-transform:uppercase">Small Village Ant</div>
+    <input id="smallAntNameInput" placeholder="Name" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #5ecfca;color:#e8c56a;padding:5px 7px;font-family:'Cinzel Decorative',serif;font-size:11px;margin-bottom:5px">
+    <textarea id="smallAntDialogueInput" placeholder="What this little ant says" rows="3" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:6px;resize:vertical"></textarea>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:6px">
+      <label style="font-size:8px;color:#8aa;letter-spacing:1px">Antenna <input id="smallAntAntennaColor" type="color" value="#ff8a24" style="width:100%;height:30px;border:none;background:none"></label>
+      <label style="font-size:8px;color:#8aa;letter-spacing:1px">Eyes <input id="smallAntEyeColor" type="color" value="#fff4b8" style="width:100%;height:30px;border:none;background:none"></label>
+      <label style="font-size:8px;color:#8aa;letter-spacing:1px">Ring <input id="smallAntRingColor" type="color" value="#5ecfca" style="width:100%;height:30px;border:none;background:none"></label>
+    </div>
+    <button class="ctrl-btn full" onclick="applySmallAntSettings()" style="width:100%;background:#5ecfca;color:#000">Apply Small Ant</button>
   </div>
   </div>
   <hr class="ap-divider">
@@ -3091,6 +3104,12 @@ lantern_1: {
     noShadows: true,
     groundOffset: 0
   },
+   small_village_ant: {
+    procedural: true,
+    scale: 1.0,
+    noShadows: true,
+    groundOffset: 0
+  },
    village_gate: {
     procedural: true,
     scale: 1.0,
@@ -3175,7 +3194,7 @@ function spawnAsset(type, position, extraMeta) {
     // Build procedural asset immediately
     if (type === 'toro_lantern') buildToro(root, root.metadata.toroColor || '#ffdd88');
     if (type === 'hanging_lantern' || type === 'hangingLantern') buildHangingLantern(root, root.metadata.lanternColor || root.metadata.toroColor || '#ffdd88', root.metadata.chainHeight || 1.15);
-   if (type === 'ambient_glow') buildAmbientGlow(
+    if (type === 'ambient_glow') buildAmbientGlow(
   root,
   root.metadata.glowColor || '#ffdd88',
   root.metadata.glowBrightness || 1,
@@ -3184,6 +3203,7 @@ function spawnAsset(type, position, extraMeta) {
   root.metadata.glowDepth || ((root.metadata.glowShape || 'circle') === 'rectangle' ? 6 : 9)
 );
     if (type === 'treasure_chest') buildTreasureChest(root);
+    if (type === 'small_village_ant') buildSmallVillageAnt(root);
     if (type === 'village_gate') buildVillageGate(root);
     if (type === 'ronin_banner') buildRoninBanner(root);
     if (type === 'ronin_dead_tree') buildRoninDeadTree(root);
@@ -5177,6 +5197,19 @@ if (npcEditorPanel) {
     document.getElementById('npcQuestIdInput').value = meta.questId || '';
   }
 }
+const smallAntEditorPanel = document.getElementById('smallAntEditorPanel');
+if (smallAntEditorPanel) {
+  const ant = getSelectedSmallVillageAnt();
+  smallAntEditorPanel.style.display = ant ? 'block' : 'none';
+  if (ant) {
+    const meta = ant.metadata || {};
+    document.getElementById('smallAntNameInput').value = meta.displayName || 'Little Village Ant';
+    document.getElementById('smallAntDialogueInput').value = meta.customDialogue || '';
+    document.getElementById('smallAntAntennaColor').value = meta.antennaColor || '#ff8a24';
+    document.getElementById('smallAntEyeColor').value = meta.eyeColor || '#fff4b8';
+    document.getElementById('smallAntRingColor').value = meta.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca';
+  }
+}
 if (selectedObject?.metadata?.type === 'interaction_zone') {
   const zoneTypeInput = document.getElementById('interactionZoneType');
   const zoneQuestInput = document.getElementById('interactionZoneQuestId');
@@ -6063,6 +6096,11 @@ function updateInteractionPrompt() {
 
   if (walkMode && !adminMode && getNearestVillageGateInRange()) {
     setInteractionPrompt('Press O to Open Village Gate', true);
+    return;
+  }
+
+  if (walkMode && !adminMode && getNearestSmallVillageAntInRange()) {
+    setInteractionPrompt('Press O to Talk', true);
     return;
   }
 
@@ -8558,6 +8596,89 @@ function getNPCMaterial(key, color, emissive = '#000000') {
   return NPCManager.materials[cacheKey];
 }
 
+const SmallVillageAntManager = {
+  roots: []
+};
+
+function getSelectedSmallVillageAnt() {
+  return selectedObject && selectedObject.metadata?.type === 'small_village_ant' ? selectedObject : null;
+}
+
+function makeSmallAntMaterial(key, color, emissive = '#000000') {
+  const material = new BABYLON.StandardMaterial(`smallAnt_${key}_${Date.now()}_${Math.floor(Math.random() * 10000)}`, scene);
+  material.diffuseColor = BABYLON.Color3.FromHexString(color);
+  material.emissiveColor = BABYLON.Color3.FromHexString(emissive).scale(.28);
+  material.specularColor = new BABYLON.Color3(.18,.16,.12);
+  return material;
+}
+
+function makeSmallAntPart(mesh, root, role) {
+  if (!mesh) return mesh;
+  mesh.parent = root;
+  mesh.isPickable = true;
+  mesh.checkCollisions = false;
+  mesh._editRoot = root;
+  mesh.metadata = { ...(mesh.metadata || {}), smallAntPart: role };
+  return mesh;
+}
+
+function buildSmallVillageAnt(root) {
+  if (!root) return;
+  const meta = root.metadata || {};
+  meta.type = 'small_village_ant';
+  meta.displayName = meta.displayName || 'Little Village Ant';
+  meta.customDialogue = meta.customDialogue || 'Tiny steps still carry the colony forward.';
+  meta.antennaColor = meta.antennaColor || '#ff8a24';
+  meta.eyeColor = meta.eyeColor || '#fff4b8';
+  meta.ringColor = meta.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca';
+  meta.behavior = meta.behavior || 'wander';
+  meta.wanderRadius = Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5;
+  meta.moveSpeed = Number.isFinite(meta.moveSpeed) ? meta.moveSpeed : .9;
+  meta.home = meta.home || root.position.clone();
+  meta.waitUntil = performance.now() + Math.random() * 900;
+  root.metadata = meta;
+  root.getChildren?.().forEach(child => child.dispose?.(false, true));
+
+  const bodyMat = makeSmallAntMaterial('body', '#08090b', '#000000');
+  const bellyMat = makeSmallAntMaterial('belly', '#15161a', '#000000');
+  const antennaMat = makeSmallAntMaterial('antenna', meta.antennaColor, meta.antennaColor);
+  const eyeMat = makeSmallAntMaterial('eye', meta.eyeColor, meta.eyeColor);
+  const ringMat = makeSmallAntMaterial('ring', meta.ringColor, meta.ringColor);
+  ringMat.alpha = .72;
+  ringMat.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
+  const parts = [];
+
+  const abdomen = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_abdomen', { diameter:.52, segments:12 }, scene), root, 'body');
+  abdomen.scaling.set(.9,.48,1.08); abdomen.position.set(0,.32,-.23); abdomen.material = bodyMat; parts.push(abdomen);
+  const thorax = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_thorax', { diameter:.42, segments:12 }, scene), root, 'body');
+  thorax.scaling.set(.86,.52,.82); thorax.position.set(0,.35,.23); thorax.material = bellyMat; parts.push(thorax);
+  const head = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_head', { diameter:.36, segments:12 }, scene), root, 'body');
+  head.scaling.set(.9,.72,.86); head.position.set(0,.41,.6); head.material = bodyMat; parts.push(head);
+  const ring = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ring', { diameter:.52, thickness:.035, tessellation:24 }, scene), root, 'ring');
+  ring.position.set(0,.38,.08); ring.rotation.x = Math.PI / 2; ring.material = ringMat; parts.push(ring);
+  const halo = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_halo', { diameter:1.34, thickness:.018, tessellation:32 }, scene), root, 'ring');
+  halo.position.set(0,.035,0); halo.rotation.x = Math.PI / 2; halo.material = ringMat; halo.isPickable = false; parts.push(halo);
+  [-.08,.08].forEach(x => {
+    const eye = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_eye_' + x, { diameter:.055, segments:8 }, scene), root, 'eye');
+    eye.position.set(x,.49,.79); eye.material = eyeMat; parts.push(eye);
+    const antenna = makeSmallAntPart(BABYLON.MeshBuilder.CreateCylinder(root.name + '_antenna_' + x, { height:.42, diameter:.022, tessellation:6 }, scene), root, 'antenna');
+    antenna.position.set(x * 1.65,.68,.74); antenna.rotation.x = .75; antenna.rotation.z = -Math.sign(x || 1) * .5; antenna.material = antennaMat; parts.push(antenna);
+  });
+  [-.24,.24].forEach(side => {
+    [-.18,.18,.48].forEach((z, index) => {
+      const leg = makeSmallAntPart(BABYLON.MeshBuilder.CreateCylinder(root.name + '_leg_' + side + '_' + index, { height:.46, diameter:.026, tessellation:5 }, scene), root, 'body');
+      leg.position.set(side,.2,z); leg.rotation.z = side > 0 ? .98 : -.98; leg.rotation.x = index === 1 ? .12 : -.16; leg.material = bodyMat; parts.push(leg);
+    });
+  });
+  root.metadata.smallAntParts = parts;
+  if (!SmallVillageAntManager.roots.includes(root)) SmallVillageAntManager.roots.push(root);
+}
+
+function refreshSmallVillageAntVisual(root) {
+  if (!root || root.metadata?.type !== 'small_village_ant') return;
+  buildSmallVillageAnt(root);
+}
+
 function makeNPCMeshPickSafe(mesh, editRoot = null) {
   if (!mesh) return mesh;
   mesh.isPickable = true;
@@ -8608,6 +8729,7 @@ function createPlaceholderAntNPC(root, npc) {
   pieces.forEach(mesh => {
     mesh.isPickable = true;
     mesh._editRoot = root;
+    mesh.metadata = { ...(mesh.metadata || {}), isNPCFallbackVisual:true };
   });
   root.metadata.placeholderPieces = pieces;
 }
@@ -8634,7 +8756,10 @@ async function tryLoadNPCModel(root, npc) {
       if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = modelRoot;
     });
     const visibleMeshCount = (result.meshes || []).filter(mesh => mesh && mesh.isEnabled() && mesh.getTotalVertices && mesh.getTotalVertices() > 0).length;
-    if (visibleMeshCount > 0) root.metadata.placeholderPieces?.forEach(mesh => mesh.setEnabled(false));
+    if (visibleMeshCount > 0) root.metadata.placeholderPieces?.forEach(mesh => {
+      mesh.setEnabled(false);
+      mesh.isVisible = false;
+    });
     root.metadata.animationGroups = result.animationGroups || [];
     root.metadata.modelRoot = modelRoot;
     root.metadata.modelLoaded = true;
@@ -9194,7 +9319,7 @@ function getTutorialDialogueLines(npc) {
 }
 
 function openNPCDialogue(npc) {
-  if (!npc || npc.metadata?.type !== 'npc') return false;
+  if (!npc || !['npc','small_village_ant'].includes(npc.metadata?.type)) return false;
   const overlay = document.getElementById('npcDialogueOverlay');
   if (!overlay) return false;
   const customLines = String(npc.metadata.customDialogue || '')
@@ -9219,7 +9344,9 @@ function renderNPCDialogue() {
   const text = document.getElementById('npcDialogueText');
   const next = document.getElementById('npcDialogueNextBtn');
   if (name) name.textContent = npc.metadata.displayName || 'Villager';
-  if (meta) meta.textContent = `${npc.metadata.factionId || 'village'} / ${npc.metadata.role || 'villager'}`;
+  if (meta) meta.textContent = npc.metadata.type === 'small_village_ant'
+    ? `${CURRENT_VILLAGE.displayName || 'Village'} / small ant`
+    : `${npc.metadata.factionId || 'village'} / ${npc.metadata.role || 'villager'}`;
   if (text) text.textContent = activeNPCDialogue.lines[activeNPCDialogue.index] || '';
   if (next) next.textContent = activeNPCDialogue.index >= activeNPCDialogue.lines.length - 1 ? 'Finish' : 'Next';
 }
@@ -9252,6 +9379,91 @@ function tryTalkToNearbyNPC() {
   const npc = getNearestNPCInRange();
   if (!npc) return false;
   return openNPCDialogue(npc);
+}
+
+function getNearestSmallVillageAntInRange(range = 3.2) {
+  if (!charMesh || ActiveInterior) return null;
+  const rangeSq = range * range;
+  let nearest = null;
+  let nearestDistSq = Infinity;
+  SmallVillageAntManager.roots.forEach(root => {
+    if (!root || root.isDisposed?.() || !root.isEnabled() || root.metadata?.type !== 'small_village_ant') return;
+    const dx = root.position.x - charMesh.position.x;
+    const dz = root.position.z - charMesh.position.z;
+    const distSq = dx * dx + dz * dz;
+    if (distSq <= rangeSq && distSq < nearestDistSq) {
+      nearest = root;
+      nearestDistSq = distSq;
+    }
+  });
+  return nearest;
+}
+
+function tryTalkToNearbySmallAnt() {
+  if (!walkMode || adminMode) return false;
+  if (activeNPCDialogue) return false;
+  const ant = getNearestSmallVillageAntInRange();
+  if (!ant) return false;
+  return openNPCDialogue(ant);
+}
+
+function normalizeAngle(angle) {
+  return Math.atan2(Math.sin(angle), Math.cos(angle));
+}
+
+function chooseSmallVillageAntTarget(root) {
+  const meta = root.metadata || {};
+  const home = meta.home || root.position;
+  const radius = Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5;
+  const angle = Math.random() * Math.PI * 2;
+  const dist = 1.2 + Math.random() * radius;
+  const target = new BABYLON.Vector3(
+    home.x + Math.sin(angle) * dist,
+    root.position.y,
+    home.z + Math.cos(angle) * dist
+  );
+  const groundY = getVillageGroundHeightAt(target.x, target.z);
+  if (Number.isFinite(groundY)) target.y = groundY;
+  meta.target = target;
+}
+
+function moveSmallVillageAntToward(root, target, dt) {
+  if (!root || !target) return false;
+  const dx = target.x - root.position.x;
+  const dz = target.z - root.position.z;
+  const dist = Math.hypot(dx, dz);
+  if (dist < .18) return false;
+  const speed = Number.isFinite(root.metadata?.moveSpeed) ? root.metadata.moveSpeed : .9;
+  const step = Math.min(dist, speed * dt);
+  root.position.x += (dx / dist) * step;
+  root.position.z += (dz / dist) * step;
+  const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
+  if (Number.isFinite(groundY)) root.position.y = groundY;
+  const desired = Math.atan2(dx, dz);
+  root.rotation.y += normalizeAngle(desired - root.rotation.y) * Math.min(1, dt * 8);
+  return true;
+}
+
+function updateSmallVillageAnts(dt) {
+  if (!SmallVillageAntManager.roots.length || ActiveInterior) return;
+  const now = performance.now();
+  SmallVillageAntManager.roots = SmallVillageAntManager.roots.filter(root => root && !root.isDisposed?.());
+  SmallVillageAntManager.roots.forEach(root => {
+    if (!root.isEnabled() || root.metadata?.type !== 'small_village_ant') return;
+    if (!root.metadata.home) root.metadata.home = root.position.clone();
+    const movingAllowed = !adminMode && root.metadata.dialogueOpen !== true;
+    let moving = false;
+    if (movingAllowed) {
+      if (!root.metadata.target && now >= (root.metadata.waitUntil || 0)) chooseSmallVillageAntTarget(root);
+      moving = root.metadata.target ? moveSmallVillageAntToward(root, root.metadata.target, dt) : false;
+      if (!moving) {
+        root.metadata.target = null;
+        root.metadata.waitUntil = now + 900 + Math.random() * 2400;
+      }
+    }
+    if (moving) root.rotation.z = Math.sin(now * .012 + (root.metadata.idleSeed || 0)) * .025;
+    else root.rotation.z *= .88;
+  });
 }
 
 function toggleNPCVisibility() {
@@ -9306,6 +9518,29 @@ function applySelectedNPCChanges() {
   updateSelectedBadge();
   triggerAutoSave();
   showToast('NPC changes applied');
+}
+
+function applySmallAntSettings() {
+  const ant = getSelectedSmallVillageAnt();
+  if (!ant) {
+    showToast('Select a small village ant first');
+    return;
+  }
+  recordEditorHistory('edit small ant');
+  const meta = ant.metadata || {};
+  meta.displayName = document.getElementById('smallAntNameInput')?.value?.trim() || meta.displayName || 'Little Village Ant';
+  meta.customDialogue = document.getElementById('smallAntDialogueInput')?.value?.trim() || '';
+  meta.antennaColor = document.getElementById('smallAntAntennaColor')?.value || '#ff8a24';
+  meta.eyeColor = document.getElementById('smallAntEyeColor')?.value || '#fff4b8';
+  meta.ringColor = document.getElementById('smallAntRingColor')?.value || CURRENT_VILLAGE.themeColor || '#5ecfca';
+  meta.home = ant.position.clone();
+  meta.target = null;
+  meta.waitUntil = performance.now() + 700;
+  ant.metadata = meta;
+  refreshSmallVillageAntVisual(ant);
+  updateSelectedBadge();
+  triggerAutoSave();
+  showToast('Small ant updated');
 }
 
 // ── HELPERS ──────────────────────────────────
@@ -13751,6 +13986,9 @@ function collectWorldLayoutData() {
     dialogueId: node.metadata.dialogueId || null,
     customDialogue: node.metadata.customDialogue || null,
     questId: node.metadata.questId || null,
+    antennaColor: node.metadata.antennaColor || null,
+    eyeColor: node.metadata.eyeColor || null,
+    ringColor: node.metadata.ringColor || null,
     baseRotationY: Number.isFinite(node.metadata.baseRotationY) ? node.metadata.baseRotationY : null,
     moveSpeed: Number.isFinite(node.metadata.moveSpeed) ? node.metadata.moveSpeed : null,
     wanderRadius: Number.isFinite(node.metadata.wanderRadius) ? node.metadata.wanderRadius : null,
@@ -14003,6 +14241,7 @@ function loadWorldLayout(){
     n.metadata?.isClone === true ||
     (n.name && n.name.includes('RootClone_') && !n.name.includes('.'))
   ).forEach(n => n.dispose(false, false));
+  SmallVillageAntManager.roots = [];
   scene.meshes.filter(m =>
     m.name &&
     (
@@ -14155,6 +14394,18 @@ function loadWorldLayout(){
                 isClone: true,
                 ...getDefaultTreasureChestMetadata(item)
               }
+            : item.type === 'small_village_ant'
+              ? {
+                  isClone: true,
+                  displayName: item.displayName || 'Little Village Ant',
+                  customDialogue: item.customDialogue || '',
+                  antennaColor: item.antennaColor || '#ff8a24',
+                  eyeColor: item.eyeColor || '#fff4b8',
+                  ringColor: item.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca',
+                  behavior: item.behavior || 'wander',
+                  wanderRadius: Number.isFinite(item.wanderRadius) ? item.wanderRadius : 5,
+                  moveSpeed: Number.isFinite(item.moveSpeed) ? item.moveSpeed : .9
+                }
             : (item.type === 'hanging_lantern' || item.type === 'hangingLantern')
               ? {
                   isClone: true,
@@ -14323,6 +14574,9 @@ function deleteSelectedFence(){
   }
 
   if (extraNodeToDelete && !extraNodeToDelete.isDisposed()) extraNodeToDelete.dispose(false, false);
+  if (nodeToDelete?.metadata?.type === 'small_village_ant') {
+    SmallVillageAntManager.roots = SmallVillageAntManager.roots.filter(root => root !== nodeToDelete);
+  }
   nodeToDelete.dispose(false, false);
   clearVillageProxyDebugMeshes();
   rebuildVillageCollisionBlockers();
@@ -14654,7 +14908,7 @@ document.addEventListener('keydown', async e => {
     enterInterior(selectedObject);
     return;
   }
-  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
+  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryTalkToNearbySmallAnt() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
     e.preventDefault();
     return;
   }
@@ -15960,6 +16214,7 @@ engine.runRenderLoop(()=>{
   updateCollectiblesSafe(dt);
   updateWeatherManager();
   updateNPCPopulation(dt);
+  updateSmallVillageAnts(dt);
   runVillagePerformancePass(false);
   updatePerformanceDebugPanel();
   applyFakeLightState(false);
@@ -16657,7 +16912,7 @@ function setAdminLayerState(state) {
 
 function getNodeAdminLayer(node) {
   const type = node?.metadata?.type || '';
-  if (type === 'npc') return 'npcs';
+  if (type === 'npc' || type === 'small_village_ant') return 'npcs';
   if (type === 'wooden_sign') return 'signs';
   if (type === 'ambient_glow' || type === 'toro_lantern' || type === 'hanging_lantern' || type === 'lantern_1') return 'lighting';
   if (type === 'collision_proxy') return node.metadata?.proxyPieceKind === 'blocker' ? 'collision' : 'walk';
@@ -21466,6 +21721,9 @@ function applyLayoutItemToExistingNode(node, item) {
     dialogueId: item.dialogueId || null,
     customDialogue: item.customDialogue || null,
     questId: item.questId || null,
+    antennaColor: item.antennaColor || null,
+    eyeColor: item.eyeColor || null,
+    ringColor: item.ringColor || null,
     baseRotationY: Number.isFinite(item.baseRotationY) ? item.baseRotationY : null,
     moveSpeed: Number.isFinite(item.moveSpeed) ? item.moveSpeed : null,
     wanderRadius: Number.isFinite(item.wanderRadius) ? item.wanderRadius : null,
@@ -21499,6 +21757,12 @@ function applyLayoutItemToExistingNode(node, item) {
     editorLocked: item.editorLocked === true
   };
   if (item.type === 'interior_entrance') styleInteriorEntranceVisual(node);
+  if (item.type === 'small_village_ant') {
+    node.metadata.home = node.position.clone();
+    node.metadata.target = null;
+    node.metadata.waitUntil = performance.now() + 500;
+    refreshSmallVillageAntVisual(node);
+  }
   if (item.type === 'terrain_stamp') rebuildTerrainStampMesh(node);
   if (item.type === 'collision_proxy') {
     const proxyKind = item.proxyPieceKind || node.metadata?.proxyPieceKind || 'blocker';
@@ -21532,6 +21796,9 @@ function disposeLayoutNodeForHistory(node) {
   if (selectedObject === node) selectedObject = null;
   if (node.metadata?.type === 'npc') {
     NPCManager.roots = NPCManager.roots.filter(root => root !== node);
+  }
+  if (node.metadata?.type === 'small_village_ant') {
+    SmallVillageAntManager.roots = SmallVillageAntManager.roots.filter(root => root !== node);
   }
   try { node.dispose(false, true); } catch(e) {}
 }
@@ -22181,6 +22448,18 @@ function placeAssetAtPoint(key, pickedPoint) {
    ? { isClone: true, glowColor: '#ffdd88', glowBrightness: 1, glowShape: 'circle', glowWidth: 9, glowDepth: 9 }
     : key === 'treasure_chest'
       ? { isClone: true, ...getDefaultTreasureChestMetadata() }
+      : key === 'small_village_ant'
+        ? {
+            isClone: true,
+            displayName: 'Little Village Ant',
+            customDialogue: 'Tiny steps still carry the colony forward.',
+            antennaColor: '#ff8a24',
+            eyeColor: '#fff4b8',
+            ringColor: CURRENT_VILLAGE.themeColor || '#5ecfca',
+            behavior: 'wander',
+            wanderRadius: 5,
+            moveSpeed: .9
+          }
       : key === 'hanging_lantern'
         ? { isClone: true, lanternColor: '#ffdd88', chainHeight: 1.15 }
       : { isClone: true, toroColor: '#ffdd88' };
