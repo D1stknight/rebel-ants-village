@@ -8660,14 +8660,6 @@ function updateSmallAntTexture(root, moving = false) {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  ctx.strokeStyle = ringColor;
-  ctx.globalAlpha = .34;
-  ctx.lineWidth = 8;
-  ctx.beginPath();
-  ctx.ellipse(0, 14, 68, 46, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-
   ctx.strokeStyle = '#050507';
   ctx.lineWidth = 9;
   [-32, 0, 30].forEach((y, index) => {
@@ -8751,10 +8743,31 @@ function buildSmallVillageAnt(root) {
   material.emissiveColor = new BABYLON.Color3(.05,.05,.05);
   material.specularColor = new BABYLON.Color3(0,0,0);
   material.backFaceCulling = false;
-  const antPlane = BABYLON.MeshBuilder.CreatePlane(root.name + '_animatedSprite', { width:1.06, height:1.06 }, scene);
+  const shadowTexture = new BABYLON.DynamicTexture(root.name + '_shadowTexture', { width:128, height:128 }, scene, false);
+  shadowTexture.hasAlpha = true;
+  const shadowCtx = shadowTexture.getContext();
+  shadowCtx.clearRect(0, 0, 128, 128);
+  shadowCtx.fillStyle = 'rgba(0,0,0,.28)';
+  shadowCtx.beginPath();
+  shadowCtx.ellipse(64, 64, 42, 20, 0, 0, Math.PI * 2);
+  shadowCtx.fill();
+  shadowTexture.update();
+  const shadowMat = new BABYLON.StandardMaterial(root.name + '_shadowMaterial', scene);
+  shadowMat.diffuseTexture = shadowTexture;
+  shadowMat.opacityTexture = shadowTexture;
+  shadowMat.specularColor = new BABYLON.Color3(0,0,0);
+  shadowMat.backFaceCulling = false;
+  const shadow = BABYLON.MeshBuilder.CreatePlane(root.name + '_shadow', { width:.84, height:.42 }, scene);
+  shadow.parent = root;
+  shadow.position.set(0,.012,0);
+  shadow.rotation.x = Math.PI / 2;
+  shadow.material = shadowMat;
+  shadow.isPickable = false;
+  shadow.metadata = { smallAntPart:'shadow' };
+  const antPlane = BABYLON.MeshBuilder.CreatePlane(root.name + '_animatedSprite', { width:.94, height:.94 }, scene);
   antPlane.parent = root;
-  antPlane.position.set(0,.16,0);
-  antPlane.rotation.x = 1.12;
+  antPlane.position.set(0,.34,-.08);
+  antPlane.rotation.x = .52;
   antPlane.material = material;
   antPlane.isPickable = true;
   antPlane.checkCollisions = false;
@@ -8762,7 +8775,7 @@ function buildSmallVillageAnt(root) {
   antPlane.metadata = { smallAntPart:'sprite', baseY:antPlane.position.y, baseRotationX:antPlane.rotation.x };
   root.metadata.smallAntTexture = texture;
   root.metadata.smallAntMaterial = material;
-  root.metadata.smallAntParts = [antPlane];
+  root.metadata.smallAntParts = [antPlane, shadow];
   updateSmallAntTexture(root, false);
   if (!SmallVillageAntManager.roots.includes(root)) SmallVillageAntManager.roots.push(root);
 }
@@ -9592,12 +9605,12 @@ function updateSmallAntLegMotion(root, moving, now) {
   const sprite = root.metadata?.smallAntParts?.find(part => part?.metadata?.smallAntPart === 'sprite')
     || root.getChildMeshes?.(false).find(mesh => mesh?.metadata?.smallAntPart === 'sprite');
   if (sprite) {
-    const baseY = Number.isFinite(sprite.metadata?.baseY) ? sprite.metadata.baseY : .16;
-    const baseRotationX = Number.isFinite(sprite.metadata?.baseRotationX) ? sprite.metadata.baseRotationX : 1.12;
+    const baseY = Number.isFinite(sprite.metadata?.baseY) ? sprite.metadata.baseY : .34;
+    const baseRotationX = Number.isFinite(sprite.metadata?.baseRotationX) ? sprite.metadata.baseRotationX : .52;
     const cycle = Number(root.metadata?.walkCycle) || 0;
-    const tinyHop = moving ? Math.max(0, Math.sin(cycle * 2)) * .035 : 0;
+    const tinyHop = moving ? Math.max(0, Math.sin(cycle * 2)) * .025 : 0;
     sprite.position.y = baseY + tinyHop;
-    sprite.rotation.x = baseRotationX + (moving ? Math.sin(cycle * 2) * .025 : 0);
+    sprite.rotation.x = baseRotationX + (moving ? Math.sin(cycle * 2) * .018 : 0);
   }
   if (moving) root.rotation.z = 0;
   else root.rotation.z *= .88;
