@@ -8615,6 +8615,8 @@ function getNPCMaterial(key, color, emissive = '#000000') {
 const SmallVillageAntManager = {
   roots: []
 };
+const SMALL_VILLAGE_ANT_MODEL_URL = '/assets/village-life/small-ant/small-village-ant.glb';
+const SMALL_VILLAGE_ANT_MODEL_SCALE = .35;
 
 function getSelectedSmallVillageAnt() {
   if (selectedObject?.metadata?.type === 'small_village_ant') return selectedObject;
@@ -8710,11 +8712,67 @@ function buildSmallVillageAnt(root) {
   });
   root.metadata.smallAntParts = parts;
   if (!SmallVillageAntManager.roots.includes(root)) SmallVillageAntManager.roots.push(root);
+  tryLoadSmallVillageAntModel(root);
 }
 
 function refreshSmallVillageAntVisual(root) {
   if (!root || root.metadata?.type !== 'small_village_ant') return;
   buildSmallVillageAnt(root);
+}
+
+async function tryLoadSmallVillageAntModel(root) {
+  if (!root || root.isDisposed?.() || root.metadata?.type !== 'small_village_ant') return;
+  const meta = root.metadata || {};
+  if (meta.smallAntModelLoading || meta.smallAntModelLoaded || meta.smallAntModelFailed) return;
+  meta.smallAntModelLoading = true;
+  try {
+    const modelUrl = meta.modelUrl || SMALL_VILLAGE_ANT_MODEL_URL;
+    const exists = await fetch(modelUrl, { method:'HEAD' }).then(response => response.ok).catch(() => false);
+    if (!exists) {
+      meta.smallAntModelFailed = true;
+      return;
+    }
+    const result = await BABYLON.SceneLoader.ImportMeshAsync('', '', modelUrl, scene);
+    if (!root || root.isDisposed?.()) return;
+    const modelRoot = new BABYLON.TransformNode(root.name + '_modelRoot', scene);
+    modelRoot.parent = root;
+    modelRoot.scaling.setAll(Number.isFinite(meta.modelScale) ? meta.modelScale : SMALL_VILLAGE_ANT_MODEL_SCALE);
+    const importedNodes = [
+      ...(result.transformNodes || []),
+      ...(result.meshes || [])
+    ];
+    const importedNodeSet = new Set(importedNodes);
+    importedNodes.forEach(node => {
+      if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = modelRoot;
+    });
+    (result.meshes || []).forEach(mesh => {
+      mesh.setEnabled(true);
+      mesh.isPickable = true;
+      mesh.checkCollisions = false;
+      mesh._editRoot = root;
+      mesh.metadata = { ...(mesh.metadata || {}), smallAntModelMesh:true };
+      if (mesh.material) {
+        mesh.material.maxSimultaneousLights = 4;
+        if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mesh.material);
+      }
+    });
+    (meta.smallAntParts || []).forEach(part => {
+      if (part?.metadata?.smallAntPart === 'shadow') return;
+      part?.setEnabled?.(false);
+      part.isVisible = false;
+    });
+    meta.modelUrl = modelUrl;
+    meta.modelScale = Number.isFinite(meta.modelScale) ? meta.modelScale : SMALL_VILLAGE_ANT_MODEL_SCALE;
+    meta.smallAntModelRoot = modelRoot;
+    meta.smallAntAnimationGroups = result.animationGroups || [];
+    meta.smallAntModelLoaded = true;
+    meta.smallAntModelFailed = false;
+  } catch (error) {
+    meta.smallAntModelFailed = true;
+    console.warn('Small Village Ant GLB failed to load; using procedural fallback:', error);
+  } finally {
+    meta.smallAntModelLoading = false;
+  }
 }
 
 function applySmallAntVisualColors(root) {
@@ -9542,6 +9600,22 @@ function moveSmallVillageAntToward(root, target, dt) {
 }
 
 function updateSmallAntLegMotion(root, moving, now) {
+  const meta = root.metadata || {};
+  if (meta.smallAntModelLoaded && Array.isArray(meta.smallAntAnimationGroups) && meta.smallAntAnimationGroups.length) {
+    const group = meta.smallAntAnimationGroups[0];
+    if (moving) {
+      if (meta.smallAntActiveAnimation !== 'walk') {
+        meta.smallAntAnimationGroups.forEach(animationGroup => animationGroup.stop());
+        group.speedRatio = Math.max(.1, Number(meta.moveSpeed) || .9);
+        group.start(true);
+        meta.smallAntActiveAnimation = 'walk';
+      }
+    } else if (meta.smallAntActiveAnimation) {
+      meta.smallAntAnimationGroups.forEach(animationGroup => animationGroup.stop());
+      meta.smallAntActiveAnimation = '';
+    }
+    return;
+  }
   const cycle = Number(root.metadata?.walkCycle) || 0;
   const hop = moving ? Math.max(0, Math.sin(cycle * 2)) * .018 : 0;
   root.getChildMeshes?.(false).forEach(mesh => {
