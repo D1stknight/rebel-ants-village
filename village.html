@@ -493,9 +493,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
         <input id="smallAntNameInput" placeholder="Name" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #5ecfca;color:#e8c56a;padding:5px 7px;font-family:'Cinzel Decorative',serif;font-size:11px;margin-bottom:5px">
         <textarea id="smallAntDialogueInput" placeholder="What this little ant says" rows="3" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:6px;resize:vertical"></textarea>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:6px">
-          <label style="font-size:8px;color:#8aa;letter-spacing:1px">Antenna <input id="smallAntAntennaColor" type="color" value="#ff8a24" style="width:100%;height:30px;border:none;background:none"></label>
-          <label style="font-size:8px;color:#8aa;letter-spacing:1px">Eyes <input id="smallAntEyeColor" type="color" value="#fff4b8" style="width:100%;height:30px;border:none;background:none"></label>
-          <label style="font-size:8px;color:#8aa;letter-spacing:1px">Ring <input id="smallAntRingColor" type="color" value="#5ecfca" style="width:100%;height:30px;border:none;background:none"></label>
+          <label style="font-size:8px;color:#8aa;letter-spacing:1px">Antenna <input id="smallAntAntennaColor" type="color" value="#ff8a24" oninput="previewSmallAntSettingsFromControls()" style="width:100%;height:30px;border:none;background:none"></label>
+          <label style="font-size:8px;color:#8aa;letter-spacing:1px">Eyes <input id="smallAntEyeColor" type="color" value="#fff4b8" oninput="previewSmallAntSettingsFromControls()" style="width:100%;height:30px;border:none;background:none"></label>
+          <label style="font-size:8px;color:#8aa;letter-spacing:1px">Ring <input id="smallAntRingColor" type="color" value="#5ecfca" oninput="previewSmallAntSettingsFromControls()" style="width:100%;height:30px;border:none;background:none"></label>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
           <label style="font-size:8px;color:#8aa;letter-spacing:1px">Wander Radius <input id="smallAntWanderRadius" type="number" min="0" max="30" step="1" value="5" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#e8c56a;padding:5px 7px"></label>
@@ -5214,13 +5214,16 @@ if (smallAntEditorPanel) {
     : 'Select a Small Village Ant in the scene to edit it. It walks only after Admin Mode is off.';
   if (ant) {
     const meta = ant.metadata || {};
-    document.getElementById('smallAntNameInput').value = meta.displayName || 'Little Village Ant';
-    document.getElementById('smallAntDialogueInput').value = meta.customDialogue || '';
-    document.getElementById('smallAntAntennaColor').value = meta.antennaColor || '#ff8a24';
-    document.getElementById('smallAntEyeColor').value = meta.eyeColor || '#fff4b8';
-    document.getElementById('smallAntRingColor').value = meta.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca';
-    document.getElementById('smallAntWanderRadius').value = Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5;
-    document.getElementById('smallAntMoveSpeed').value = Number.isFinite(meta.moveSpeed) ? meta.moveSpeed : .9;
+    const editingSmallAntField = smallAntEditorPanel.contains(document.activeElement);
+    if (!editingSmallAntField) {
+      document.getElementById('smallAntNameInput').value = meta.displayName || 'Little Village Ant';
+      document.getElementById('smallAntDialogueInput').value = meta.customDialogue || '';
+      document.getElementById('smallAntAntennaColor').value = meta.antennaColor || '#ff8a24';
+      document.getElementById('smallAntEyeColor').value = meta.eyeColor || '#fff4b8';
+      document.getElementById('smallAntRingColor').value = meta.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca';
+      document.getElementById('smallAntWanderRadius').value = Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5;
+      document.getElementById('smallAntMoveSpeed').value = Number.isFinite(meta.moveSpeed) ? meta.moveSpeed : .9;
+    }
   }
 }
 if (selectedObject?.metadata?.type === 'interaction_zone') {
@@ -8665,12 +8668,14 @@ function buildSmallVillageAnt(root) {
 
   const abdomen = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_abdomen', { diameter:.52, segments:12 }, scene), root, 'body');
   abdomen.scaling.set(.9,.48,1.08); abdomen.position.set(0,.32,-.23); abdomen.material = bodyMat; parts.push(abdomen);
-  const backStripe = makeSmallAntPart(BABYLON.MeshBuilder.CreateBox(root.name + '_ringStripe', { width:.48, height:.055, depth:.36 }, scene), root, 'ring');
-  backStripe.position.set(0,.58,-.24); backStripe.material = ringMat; parts.push(backStripe);
+  const backStripe = makeSmallAntPart(BABYLON.MeshBuilder.CreateBox(root.name + '_ringStripe', { width:.58, height:.075, depth:.58 }, scene), root, 'ring');
+  backStripe.position.set(0,.58,-.2); backStripe.material = ringMat; parts.push(backStripe);
   const thorax = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_thorax', { diameter:.42, segments:12 }, scene), root, 'body');
   thorax.scaling.set(.86,.52,.82); thorax.position.set(0,.35,.23); thorax.material = bellyMat; parts.push(thorax);
-  const headBand = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_antennaBand', { diameter:.4, thickness:.045, tessellation:20 }, scene), root, 'antenna');
+  const headBand = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_antennaBand', { diameter:.48, thickness:.06, tessellation:20 }, scene), root, 'antenna');
   headBand.position.set(0,.46,.58); headBand.rotation.x = Math.PI / 2; headBand.material = antennaMat; parts.push(headBand);
+  const headCap = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_antennaCap', { diameter:.25, segments:10 }, scene), root, 'antenna');
+  headCap.scaling.set(1,.38,1); headCap.position.set(0,.62,.58); headCap.material = antennaMat; parts.push(headCap);
   const head = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_head', { diameter:.36, segments:12 }, scene), root, 'body');
   head.scaling.set(.9,.72,.86); head.position.set(0,.41,.6); head.material = bodyMat; parts.push(head);
   const ring = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ring', { diameter:.62, thickness:.055, tessellation:24 }, scene), root, 'ring');
@@ -8678,7 +8683,7 @@ function buildSmallVillageAnt(root) {
   const halo = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_halo', { diameter:1.46, thickness:.028, tessellation:32 }, scene), root, 'ring');
   halo.position.set(0,.035,0); halo.rotation.x = Math.PI / 2; halo.material = ringMat; halo.isPickable = false; parts.push(halo);
   [-.08,.08].forEach(x => {
-    const eye = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_eye_' + x, { diameter:.085, segments:8 }, scene), root, 'eye');
+    const eye = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_eye_' + x, { diameter:.13, segments:8 }, scene), root, 'eye');
     eye.position.set(x,.49,.79); eye.material = eyeMat; parts.push(eye);
     const antenna = makeSmallAntPart(BABYLON.MeshBuilder.CreateCylinder(root.name + '_antenna_' + x, { height:.52, diameter:.04, tessellation:6 }, scene), root, 'antenna');
     antenna.position.set(x * 1.75,.74,.74); antenna.rotation.x = .75; antenna.rotation.z = -Math.sign(x || 1) * .5; antenna.material = antennaMat; parts.push(antenna);
@@ -8710,7 +8715,9 @@ function applySmallAntVisualColors(root) {
   materials.ring.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
   root.getChildMeshes?.(false).forEach(mesh => {
     const role = mesh.metadata?.smallAntPart;
-    if (role && materials[role]) mesh.material = materials[role];
+    const name = String(mesh.name || '').toLowerCase();
+    const inferredRole = role || (name.includes('antenna') ? 'antenna' : name.includes('eye') ? 'eye' : name.includes('ring') || name.includes('halo') || name.includes('stripe') ? 'ring' : '');
+    if (inferredRole && materials[inferredRole]) mesh.material = materials[inferredRole];
   });
   root.metadata._lastAppliedColors = {
     antennaColor: meta.antennaColor,
@@ -9501,7 +9508,8 @@ function updateSmallVillageAnts(dt) {
       const home = root.metadata.home || root.position;
       root.metadata.home = new BABYLON.Vector3(home.x || root.position.x, home.y || root.position.y, home.z || root.position.z);
     }
-    const movingAllowed = !adminMode && root.metadata.dialogueOpen !== true;
+    const adminPreviewActive = adminMode && Number(root.metadata.adminPreviewUntil || 0) > now;
+    const movingAllowed = (!adminMode || adminPreviewActive) && root.metadata.dialogueOpen !== true;
     let moving = false;
     if (movingAllowed) {
       if (!root.metadata.target && now >= (root.metadata.waitUntil || 0)) chooseSmallVillageAntTarget(root);
@@ -9570,13 +9578,13 @@ function applySelectedNPCChanges() {
   showToast('NPC changes applied');
 }
 
-function applySmallAntSettings() {
+function updateSmallAntFromControls(options = {}) {
   const ant = getSelectedSmallVillageAnt();
   if (!ant) {
-    showToast('Select a small village ant first');
+    if (options.toast) showToast('Select a small village ant first');
     return;
   }
-  recordEditorHistory('edit small ant');
+  if (options.history) recordEditorHistory('edit small ant');
   const meta = ant.metadata || {};
   meta.displayName = document.getElementById('smallAntNameInput')?.value?.trim() || meta.displayName || 'Little Village Ant';
   meta.customDialogue = document.getElementById('smallAntDialogueInput')?.value?.trim() || '';
@@ -9586,16 +9594,25 @@ function applySmallAntSettings() {
   meta.behavior = 'wander';
   meta.wanderRadius = Math.max(0, Math.min(30, Number(document.getElementById('smallAntWanderRadius')?.value) || 5));
   meta.moveSpeed = Math.max(.1, Math.min(4, Number(document.getElementById('smallAntMoveSpeed')?.value) || .9));
-  meta.home = ant.position.clone();
+  if (options.resetHome !== false) meta.home = ant.position.clone();
   meta.target = null;
   meta.waitUntil = performance.now();
+  if (options.previewWalk) meta.adminPreviewUntil = performance.now() + 9000;
   ant.metadata = meta;
   refreshSmallVillageAntVisual(ant);
   applySmallAntVisualColors(ant);
   chooseSmallVillageAntTarget(ant);
-  updateSelectedBadge();
-  triggerAutoSave();
-  showToast(adminMode ? 'Small ant updated. Exit Admin Mode to let it walk.' : 'Small ant updated');
+  if (options.refreshPanel !== false) updateSelectedBadge();
+  if (options.save) triggerAutoSave();
+  if (options.toast) showToast(adminMode ? 'Small ant updated. Preview walking for a few seconds.' : 'Small ant updated');
+}
+
+function previewSmallAntSettingsFromControls() {
+  updateSmallAntFromControls({ resetHome:false, refreshPanel:false, save:false, toast:false, history:false });
+}
+
+function applySmallAntSettings() {
+  updateSmallAntFromControls({ resetHome:true, previewWalk:true, save:true, toast:true, history:true });
 }
 
 // ── HELPERS ──────────────────────────────────
