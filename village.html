@@ -8668,10 +8668,14 @@ function buildSmallVillageAnt(root) {
 
   const abdomen = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_abdomen', { diameter:.52, segments:12 }, scene), root, 'body');
   abdomen.scaling.set(.9,.48,1.08); abdomen.position.set(0,.32,-.23); abdomen.material = bodyMat; parts.push(abdomen);
-  const backStripe = makeSmallAntPart(BABYLON.MeshBuilder.CreateBox(root.name + '_ringStripe', { width:.58, height:.075, depth:.58 }, scene), root, 'ring');
-  backStripe.position.set(0,.58,-.2); backStripe.material = ringMat; parts.push(backStripe);
-  const sideGlow = makeSmallAntPart(BABYLON.MeshBuilder.CreateBox(root.name + '_ringSideGlow', { width:.76, height:.04, depth:.28 }, scene), root, 'ring');
-  sideGlow.position.set(0,.41,-.31); sideGlow.material = ringMat; parts.push(sideGlow);
+  [-.36,-.13].forEach((z, index) => {
+    const band = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_abdomenBand_' + index, { diameter:.5, thickness:.035, tessellation:20 }, scene), root, 'ring');
+    band.scaling.set(.88,.5,1);
+    band.position.set(0,.34,z);
+    band.rotation.x = Math.PI / 2;
+    band.material = ringMat;
+    parts.push(band);
+  });
   const thorax = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_thorax', { diameter:.42, segments:12 }, scene), root, 'body');
   thorax.scaling.set(.86,.52,.82); thorax.position.set(0,.35,.23); thorax.material = bellyMat; parts.push(thorax);
   const headBand = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_antennaBand', { diameter:.48, thickness:.06, tessellation:20 }, scene), root, 'antenna');
@@ -8694,11 +8698,12 @@ function buildSmallVillageAnt(root) {
     [-.18,.18,.48].forEach((z, index) => {
       const leg = makeSmallAntPart(BABYLON.MeshBuilder.CreateCylinder(root.name + '_leg_' + side + '_' + index, { height:.46, diameter:.026, tessellation:5 }, scene), root, 'leg');
       leg.position.set(side,.2,z);
-      leg.rotation.z = side > 0 ? .98 : -.98;
-      leg.rotation.x = index === 1 ? .12 : -.16;
+      leg.rotation.z = side > 0 ? 1.12 : -1.12;
+      leg.rotation.x = [-.26,.08,.24][index] || 0;
       leg.material = bodyMat;
       leg.metadata.smallAntLegSide = side;
       leg.metadata.smallAntLegIndex = index;
+      leg.metadata.basePositionY = leg.position.y;
       leg.metadata.baseRotationX = leg.rotation.x;
       leg.metadata.baseRotationZ = leg.rotation.z;
       parts.push(leg);
@@ -9529,7 +9534,7 @@ function moveSmallVillageAntToward(root, target, dt) {
   const dist = Math.hypot(dx, dz);
   if (dist < .08) return false;
   const speed = Number.isFinite(root.metadata?.moveSpeed) ? root.metadata.moveSpeed : .9;
-  const step = Math.min(dist, Math.max(.15, speed) * Math.min(Math.max(dt, 0), .05));
+  const step = Math.min(dist, Math.max(.08, speed) * Math.min(Math.max(dt, 0), .033));
   const nextX = root.position.x + (dx / dist) * step;
   const nextZ = root.position.z + (dz / dist) * step;
   root.position.x = nextX;
@@ -9537,23 +9542,27 @@ function moveSmallVillageAntToward(root, target, dt) {
   const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
   if (Number.isFinite(groundY)) root.position.y = groundY;
   const desired = Math.atan2(dx, dz);
-  root.rotation.y += normalizeAngle(desired - root.rotation.y) * Math.min(1, dt * 8);
+  root.rotation.y += normalizeAngle(desired - root.rotation.y) * Math.min(1, dt * 5);
   return true;
 }
 
 function updateSmallAntLegMotion(root, moving, now) {
-  const phase = now * (moving ? .018 : .006) + (root.metadata?.idleSeed || 0);
+  const phase = now * (moving ? .014 : .002) + (root.metadata?.idleSeed || 0);
   root.getChildMeshes?.(false).forEach(mesh => {
     if (mesh.metadata?.smallAntPart !== 'leg') return;
     const baseX = Number.isFinite(mesh.metadata.baseRotationX) ? mesh.metadata.baseRotationX : mesh.rotation.x;
     const baseZ = Number.isFinite(mesh.metadata.baseRotationZ) ? mesh.metadata.baseRotationZ : mesh.rotation.z;
+    const baseY = Number.isFinite(mesh.metadata.basePositionY) ? mesh.metadata.basePositionY : mesh.position.y;
     const index = Number(mesh.metadata.smallAntLegIndex) || 0;
     const side = Number(mesh.metadata.smallAntLegSide) || 1;
-    const stride = moving ? Math.sin(phase + index * 1.7 + (side > 0 ? 0 : Math.PI)) : 0;
-    mesh.rotation.x = baseX + stride * .22;
-    mesh.rotation.z = baseZ + (moving ? Math.cos(phase + index * 1.25) * .04 : 0);
+    const tripod = (index % 2 === 0 ? 0 : Math.PI) + (side > 0 ? 0 : Math.PI);
+    const stride = moving ? Math.sin(phase + tripod) : 0;
+    const lift = moving ? Math.max(0, Math.cos(phase + tripod)) : 0;
+    mesh.rotation.x = baseX + stride * .34;
+    mesh.rotation.z = baseZ + stride * .035;
+    mesh.position.y = baseY + lift * .035;
   });
-  if (moving) root.rotation.z = Math.sin(now * .012 + (root.metadata?.idleSeed || 0)) * .018;
+  if (moving) root.rotation.z = Math.sin(now * .008 + (root.metadata?.idleSeed || 0)) * .006;
   else root.rotation.z *= .88;
 }
 
@@ -9570,8 +9579,7 @@ function updateSmallVillageAnts(dt) {
       const home = root.metadata.home || root.position;
       root.metadata.home = new BABYLON.Vector3(home.x || root.position.x, home.y || root.position.y, home.z || root.position.z);
     }
-    const adminPreviewActive = adminMode && Number(root.metadata.adminPreviewUntil || 0) > now;
-    const movingAllowed = (!adminMode || adminPreviewActive) && root.metadata.dialogueOpen !== true;
+    const movingAllowed = !adminMode && root.metadata.dialogueOpen !== true;
     let moving = false;
     if (movingAllowed) {
       const radius = Math.max(0, Number(root.metadata.wanderRadius) || 0);
