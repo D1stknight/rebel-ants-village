@@ -8753,13 +8753,13 @@ function buildSmallVillageAnt(root) {
   material.backFaceCulling = false;
   const antPlane = BABYLON.MeshBuilder.CreatePlane(root.name + '_animatedSprite', { width:1.06, height:1.06 }, scene);
   antPlane.parent = root;
-  antPlane.position.set(0,.08,0);
-  antPlane.rotation.x = Math.PI / 2;
+  antPlane.position.set(0,.16,0);
+  antPlane.rotation.x = 1.12;
   antPlane.material = material;
   antPlane.isPickable = true;
   antPlane.checkCollisions = false;
   antPlane._editRoot = root;
-  antPlane.metadata = { smallAntPart:'sprite' };
+  antPlane.metadata = { smallAntPart:'sprite', baseY:antPlane.position.y, baseRotationX:antPlane.rotation.x };
   root.metadata.smallAntTexture = texture;
   root.metadata.smallAntMaterial = material;
   root.metadata.smallAntParts = [antPlane];
@@ -9589,6 +9589,16 @@ function moveSmallVillageAntToward(root, target, dt) {
 
 function updateSmallAntLegMotion(root, moving, now) {
   updateSmallAntTexture(root, moving);
+  const sprite = root.metadata?.smallAntParts?.find(part => part?.metadata?.smallAntPart === 'sprite')
+    || root.getChildMeshes?.(false).find(mesh => mesh?.metadata?.smallAntPart === 'sprite');
+  if (sprite) {
+    const baseY = Number.isFinite(sprite.metadata?.baseY) ? sprite.metadata.baseY : .16;
+    const baseRotationX = Number.isFinite(sprite.metadata?.baseRotationX) ? sprite.metadata.baseRotationX : 1.12;
+    const cycle = Number(root.metadata?.walkCycle) || 0;
+    const tinyHop = moving ? Math.max(0, Math.sin(cycle * 2)) * .035 : 0;
+    sprite.position.y = baseY + tinyHop;
+    sprite.rotation.x = baseRotationX + (moving ? Math.sin(cycle * 2) * .025 : 0);
+  }
   if (moving) root.rotation.z = 0;
   else root.rotation.z *= .88;
 }
