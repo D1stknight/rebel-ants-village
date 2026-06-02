@@ -362,13 +362,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 @keyframes questSparkBurst{from{opacity:0;transform:translate3d(0,0,0) scale(.4)}16%{opacity:1}to{opacity:0;transform:translate3d(var(--spark-x),var(--spark-y),0) scale(1.15)}}
 #interactionPrompt{position:fixed;bottom:122px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.88);border:1px solid rgba(232,197,106,.7);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:2px;padding:9px 18px;opacity:0;transition:opacity .18s;pointer-events:none;z-index:49;white-space:nowrap}
 #interactionPrompt.on{opacity:1}
-#playerStartupOverlay{position:fixed;inset:0;z-index:74;display:flex;align-items:center;justify-content:flex-start;padding:92px 24px 34px;background:linear-gradient(90deg,rgba(2,8,18,.72),rgba(2,8,18,.26) 46%,rgba(2,8,18,0));opacity:0;pointer-events:none;transition:opacity .2s}
+#playerStartupOverlay{position:fixed;inset:0;z-index:74;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 50% 50%,rgba(2,8,18,.52),rgba(2,8,18,.84));opacity:0;pointer-events:none;transition:opacity .2s}
 #playerStartupOverlay.on{opacity:1;pointer-events:auto}
-#playerStartupPanel{width:min(360px,calc(100vw - 44px));max-height:calc(100vh - 126px);overflow:auto;background:rgba(5,10,28,.96);border:1px solid rgba(232,197,106,.58);box-shadow:0 18px 60px rgba(0,0,0,.44),0 0 34px rgba(94,207,202,.1);padding:20px 22px}
+#playerStartupPanel{width:min(620px,calc(100vw - 44px));max-height:calc(100vh - 48px);overflow:auto;background:rgba(5,10,28,.97);border:1px solid rgba(232,197,106,.58);box-shadow:0 18px 60px rgba(0,0,0,.44),0 0 34px rgba(94,207,202,.1);padding:24px 28px;text-align:center}
 #playerStartupKicker{font-family:'Cinzel Decorative',serif;color:#5ecfca;font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
 #playerStartupPanel h2{font-family:'Cinzel Decorative',serif;color:#e8c56a;font-size:20px;letter-spacing:2px;line-height:1.2;margin:0 0 12px}
-#playerStartupPanel p{color:rgba(255,255,255,.78);font-size:12px;line-height:1.55;letter-spacing:.4px;margin:0 0 12px}
-#playerStartupList{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:12px 0 16px}
+#playerStartupPanel p{color:rgba(255,255,255,.78);font-size:12px;line-height:1.55;letter-spacing:.4px;margin:0 0 12px;text-align:left}
+#playerStartupList{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0 16px;text-align:left}
 .startup-control{border:1px solid rgba(94,207,202,.2);background:rgba(94,207,202,.045);padding:8px;color:rgba(255,255,255,.74);font-size:10px;line-height:1.3}
 .startup-control b{display:block;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:1.2px;margin-bottom:3px}
 #playerStartupEnter{width:100%;background:linear-gradient(90deg,#5ecfca,#e8c56a);border:1px solid rgba(232,197,106,.75);color:#06101d;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:11px 14px;cursor:pointer}
@@ -474,7 +474,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #hudNextBadgeProgress{font-size:8px;color:rgba(232,197,106,.88);letter-spacing:1px;text-align:right;margin-top:3px;line-height:1.25}
 #journalClose,.badge-popup-close{display:block;margin:16px auto 0;background:transparent;border:1px solid rgba(94,207,202,.4);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:2px;padding:8px 16px;cursor:pointer}
 #badgeUnlockPopup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);z-index:99;min-width:min(360px,86vw);max-width:460px;text-align:center;background:radial-gradient(circle at 50% 0%,rgba(232,197,106,.18),rgba(5,10,28,.96) 54%);border:1px solid rgba(232,197,106,.72);box-shadow:0 0 44px rgba(232,197,106,.18),0 0 80px rgba(94,207,202,.08);padding:22px 24px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
-#badgeUnlockPopup.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#badgeUnlockPopup.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
 #badgeUnlockPopup .badge-kicker{font-family:'Cinzel Decorative',serif;color:#5ecfca;font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-bottom:7px}
 #badgeUnlockIcon{width:74px;height:74px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(232,197,106,.62);background:radial-gradient(circle,rgba(232,197,106,.28),rgba(94,207,202,.08));box-shadow:0 0 28px rgba(232,197,106,.18);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:22px}
 #badgeUnlockIcon img{width:100%;height:100%;object-fit:cover}
@@ -497,6 +497,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-section">Admin Session</div>
     <div class="admin-section-body" data-admin-section-body="admin-session">
       <button class="ctrl-btn danger full" onclick="exitAdminToPlayerFlow()" style="width:100%">Exit Admin / Test Player Mode</button>
+      <button class="ctrl-btn full" onclick="resetPlayerOnboardingForAdmin()" style="width:100%">Reset Player Onboarding</button>
     </div>
     <div class="ap-section">Buildings</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
@@ -504,10 +505,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ronin_altar')"><span class="ap-icon">⛩</span><span class="ap-name">Ronin Altar</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Ronin Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_dead_tree')"><span class="ap-icon">♜</span><span class="ap-name">Dead Tree</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_mist')"><span class="ap-icon">〰</span><span class="ap-name">Ronin Mist</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_weapon_rack')"><span class="ap-icon">⚔</span><span class="ap-name">Weapon Rack</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_katana_sigil')"><span class="ap-icon">☾</span><span class="ap-name">Katana Sigil</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_brazier')"><span class="ap-icon">🔥</span><span class="ap-name">Crimson Brazier</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_broken_cart')"><span class="ap-icon">▰</span><span class="ap-name">Broken Cart</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_watch_post')"><span class="ap-icon">▴</span><span class="ap-name">Watch Post</span></div></div>
     <div class="ap-section">Village Life</div>
     <div class="admin-section-body" data-admin-section-body="village-life">
-      <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('small_village_ant')"><span class="ap-icon">🐜</span><span class="ap-name">Small Village Ant</span></div></div>
+      <div class="ap-grid"><div class="ap-card" onclick="showSmallAntDisabledNotice()"><span class="ap-icon">🐜</span><span class="ap-name">Small Village Ant</span></div></div>
       <div id="smallAntEditorPanel" style="padding:0 8px 8px">
         <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin:9px 0 6px;text-transform:uppercase">Small Village Ant</div>
-        <div id="smallAntEditorHint" class="admin-note">Select a Small Village Ant to edit it. It walks only after Admin Mode is off.</div>
+        <div id="smallAntEditorHint" class="admin-note">Small Village Ant runtime is disabled until its GLB/root motion can be rebuilt without hopping or duplicate meshes.</div>
         <input id="smallAntNameInput" placeholder="Name" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #5ecfca;color:#e8c56a;padding:5px 7px;font-family:'Cinzel Decorative',serif;font-size:11px;margin-bottom:5px">
         <textarea id="smallAntDialogueInput" placeholder="What this little ant says" rows="3" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:6px;resize:vertical"></textarea>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
@@ -1333,7 +1334,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div id="playerStartupPanel" role="dialog" aria-modal="true" aria-labelledby="playerStartupTitle">
     <div id="playerStartupKicker">Welcome</div>
     <h2 id="playerStartupTitle">Hub Village</h2>
-    <p>The Hub Village is the living center of the Rebel Ants Universe. Talk with villagers, follow quests, collect memories, enter interiors, inspect frames, visit village gates, and track progress in your journal.</p>
+    <p>Hub Village is the living center of the Rebel Ants Universe. Talk to NPCs, follow Hub Journey quests, collect floating items, open chests, enter dojos and interiors, inspect NFT frames, use arcade/store/video links, open your Journal, travel through portals, and watch weather and time change the village.</p>
     <div id="playerStartupList">
       <div class="startup-control"><b>Move</b>WASD or arrows</div>
       <div class="startup-control"><b>Look</b>Mouse</div>
@@ -1342,7 +1343,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <div class="startup-control"><b>Interact</b>O</div>
       <div class="startup-control"><b>Journal</b>Journal button</div>
     </div>
-    <button id="playerStartupEnter" type="button" onclick="enterHubVillageFromStartup()">Enter Hub Village</button>
+    <button id="playerStartupEnter" type="button" onclick="enterHubVillageFromStartup()">Begin Hub Journey</button>
   </div>
 </div>
 <button id="returnHubBtn" type="button" onclick="returnToHubVillage()">Return to Hub</button>
@@ -1421,6 +1422,7 @@ const urlVillageId = new URLSearchParams(window.location.search).get('village') 
 const CURRENT_VILLAGE_ID = VILLAGE_REGISTRY[urlVillageId] ? urlVillageId : 'hub';
 const CURRENT_VILLAGE = VILLAGE_REGISTRY[CURRENT_VILLAGE_ID];
 const WORLD_LAYOUT_STORAGE_KEY = `rebelAntsWorldLayout:${CURRENT_VILLAGE_ID}`;
+const PLAYER_ONBOARDING_SEEN_KEY = 'rebelAntsHubOnboardingSeen:v1';
 window.REBEL_ANTS_VILLAGES = VILLAGE_REGISTRY;
 window.CURRENT_REBEL_ANTS_VILLAGE = CURRENT_VILLAGE;
 // Inline admin buttons call window functions. Bind these wrappers early so
@@ -1436,6 +1438,8 @@ window.setGizmoMode = (...args) => setGizmoMode(...args);
 window.enterHubVillageFromStartup = (...args) => enterHubVillageFromStartup(...args);
 window.exitAdminToPlayerFlow = (...args) => exitAdminToPlayerFlow(...args);
 window.dismissQuestCelebration = (...args) => dismissQuestCelebration(...args);
+window.resetPlayerOnboardingForAdmin = (...args) => resetPlayerOnboardingForAdmin(...args);
+window.showSmallAntDisabledNotice = (...args) => showSmallAntDisabledNotice(...args);
 document.title = `Rebel Ants — ${CURRENT_VILLAGE.displayName}`;
 const NPC_FACTION_BY_VILLAGE = {
   hub: 'ashigaru',
@@ -2186,9 +2190,6 @@ function processBadgeUnlockQueue() {
   popup.classList.add('on');
   popup.setAttribute('aria-hidden', 'false');
   clearTimeout(showBadgeUnlockPopup._timer);
-  showBadgeUnlockPopup._timer = setTimeout(() => {
-    closeBadgeUnlockPopup();
-  }, 7600);
   // Progression audio hook: badge popups queue their own reward sound.
   playProgressionAudio('badgeUnlock', { queue:true });
 }
@@ -3234,6 +3235,10 @@ const CORE_ASSET_KEYS = new Set(Object.keys(ASSETS));
 // SPAWN ASSET FUNCTION (MASTER SYSTEM)
 // ═══════════════════════════════════════
 function spawnAsset(type, position, extraMeta) {
+  if (type === 'small_village_ant' && !SMALL_VILLAGE_ANT_RUNTIME_ENABLED) {
+    showSmallAntDisabledNotice();
+    return null;
+  }
   const config = ASSETS[type];
   if (!config) { console.warn("Missing asset:", type); return null; }
 
@@ -5135,6 +5140,7 @@ function setPlayerStartupVisible(visible) {
 }
 
 function enterHubVillageFromStartup() {
+  localStorage.setItem(PLAYER_ONBOARDING_SEEN_KEY, '1');
   setPlayerStartupVisible(false);
   if (adminMode) exitAdminToPlayerFlow({ showStartup:false, enterWalk:true });
   if (!walkMode) toggleWalk();
@@ -5144,12 +5150,19 @@ function enterHubVillageFromStartup() {
 async function showPlayerStartupForNormalUsers(options = {}) {
   if (ActiveInterior) return;
   if (adminMode && options.force !== true) return;
+  if (options.force !== true && localStorage.getItem(PLAYER_ONBOARDING_SEEN_KEY) === '1') return;
   if (options.force !== true) {
     const authenticated = await hasActiveAdminSession();
     if (authenticated) return;
   }
   if (walkMode) return;
   setPlayerStartupVisible(true);
+}
+
+function resetPlayerOnboardingForAdmin() {
+  localStorage.removeItem(PLAYER_ONBOARDING_SEEN_KEY);
+  showPlayerStartupForNormalUsers({ force:true });
+  showToast('Player onboarding reset');
 }
 
 function exitAdminToPlayerFlow(options = {}) {
@@ -5175,7 +5188,7 @@ function exitAdminToPlayerFlow(options = {}) {
     if (!walkMode) toggleWalk();
   } else if (options.showStartup !== false) {
     if (walkMode) toggleWalk();
-    setPlayerStartupVisible(true);
+    showPlayerStartupForNormalUsers({ force:true });
   }
   showToast('Admin tools hidden: testing player mode');
 }
@@ -8781,8 +8794,13 @@ function getNPCMaterial(key, color, emissive = '#000000') {
 const SmallVillageAntManager = {
   roots: []
 };
+const SMALL_VILLAGE_ANT_RUNTIME_ENABLED = false;
 const SMALL_VILLAGE_ANT_MODEL_URL = '/assets/village-life/small-ant/small-village-ant.glb';
 const SMALL_VILLAGE_ANT_MODEL_SCALE = .35;
+
+function showSmallAntDisabledNotice() {
+  showToast('Small Village Ant disabled until movement is rebuilt');
+}
 
 function getSelectedSmallVillageAnt() {
   if (selectedObject?.metadata?.type === 'small_village_ant') return selectedObject;
@@ -8897,6 +8915,10 @@ function updateSmallAntAccentPlacement(root, force = false) {
 }
 
 function buildSmallVillageAnt(root) {
+  if (!SMALL_VILLAGE_ANT_RUNTIME_ENABLED) {
+    root?.dispose?.(false, true);
+    return;
+  }
   if (!root) return;
   const meta = root.metadata || {};
   if (Array.isArray(meta.smallAntAnimationGroups)) meta.smallAntAnimationGroups.forEach(group => group.stop?.());
@@ -9286,10 +9308,12 @@ async function tryLoadNPCModel(root, npc) {
       if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = modelRoot;
     });
     const visibleMeshCount = (result.meshes || []).filter(mesh => mesh && mesh.isEnabled() && mesh.getTotalVertices && mesh.getTotalVertices() > 0).length;
-    if (visibleMeshCount > 0) root.metadata.placeholderPieces?.forEach(mesh => {
-      mesh.setEnabled(false);
-      mesh.isVisible = false;
-    });
+    if (visibleMeshCount > 0) {
+      root.metadata.placeholderPieces?.forEach(mesh => {
+        try { mesh.dispose(false, true); } catch(e) {}
+      });
+      root.metadata.placeholderPieces = [];
+    }
     root.metadata.animationGroups = result.animationGroups || [];
     root.metadata.modelRoot = modelRoot;
     root.metadata.modelLoaded = true;
@@ -9971,6 +9995,7 @@ function tryTalkToNearbyNPC() {
 }
 
 function getNearestSmallVillageAntInRange(range = 3.2) {
+  if (!SMALL_VILLAGE_ANT_RUNTIME_ENABLED) return null;
   if (!charMesh || ActiveInterior) return null;
   const rangeSq = range * range;
   let nearest = null;
@@ -10051,6 +10076,10 @@ function applySelectedNPCChanges() {
 }
 
 function updateSmallAntFromControls(options = {}) {
+  if (!SMALL_VILLAGE_ANT_RUNTIME_ENABLED) {
+    if (options.toast) showSmallAntDisabledNotice();
+    return;
+  }
   const ant = getSelectedSmallVillageAnt();
   if (!ant) {
     if (options.toast) showToast('Select a small village ant first');
@@ -14771,11 +14800,13 @@ function loadWorldLayout(){
   // Dispose existing clones before restoring
   NPCManager.roots.forEach(root => root?.dispose(false, true));
   NPCManager.roots = [];
+  SmallVillageAntManager.roots.forEach(root => root?.dispose(false, true));
+  SmallVillageAntManager.roots = [];
   scene.transformNodes.filter(n =>
     n.metadata?.isClone === true ||
+    n.metadata?.type === 'small_village_ant' ||
     (n.name && n.name.includes('RootClone_') && !n.name.includes('.'))
   ).forEach(n => n.dispose(false, false));
-  SmallVillageAntManager.roots = [];
   scene.meshes.filter(m =>
     m.name &&
     (
@@ -14792,6 +14823,10 @@ function loadWorldLayout(){
   data.forEach(item => {
     if (!item.type || !item.position) return;
     if (Math.abs(item.position.x) >= 500 || Math.abs(item.position.z) >= 500) return; // skip stuck
+    if (item.type === 'small_village_ant' && !SMALL_VILLAGE_ANT_RUNTIME_ENABLED) {
+      console.info('Skipping disabled Small Village Ant layout item:', item.name || item.type);
+      return;
+    }
 
     if (item.type === 'interior_room_configs') {
       if (item.configs && typeof item.configs === 'object') setInteriorRoomConfigs(item.configs);
@@ -16751,7 +16786,7 @@ engine.runRenderLoop(()=>{
   updateCollectiblesSafe(dt);
   updateWeatherManager();
   updateNPCPopulation(dt);
-  SmallVillageAntManager.roots.forEach(root => updateSmallAntAccentPulse(root));
+  if (SMALL_VILLAGE_ANT_RUNTIME_ENABLED) SmallVillageAntManager.roots.forEach(root => updateSmallAntAccentPulse(root));
   runVillagePerformancePass(false);
   updatePerformanceDebugPanel();
   applyFakeLightState(false);
@@ -22354,6 +22389,7 @@ function disposeLayoutNodeForHistory(node) {
 
 function createLayoutNodeForHistory(item) {
   if (!item?.type || !item.position) return null;
+  if (item.type === 'small_village_ant' && !SMALL_VILLAGE_ANT_RUNTIME_ENABLED) return null;
   const pos = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
   let node = null;
   if (item.type === 'npc') {
@@ -23059,6 +23095,10 @@ function placeAssetAtPoint(key, pickedPoint) {
 function spawnAssetFromPanel(key) {
   if (!adminMode) {
     showToast('Enter Admin Mode first');
+    return;
+  }
+  if (key === 'small_village_ant' && !SMALL_VILLAGE_ANT_RUNTIME_ENABLED) {
+    showSmallAntDisabledNotice();
     return;
   }
   if (!ASSETS[key]) {
