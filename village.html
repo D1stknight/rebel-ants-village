@@ -8741,8 +8741,10 @@ function buildSmallVillageAnt(root) {
   meta.behavior = meta.behavior || 'wander';
   meta.wanderRadius = Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5;
   meta.moveSpeed = Number.isFinite(meta.moveSpeed) ? meta.moveSpeed : .9;
-  meta.home = meta.home || root.position.clone();
-  meta.walkY = Number.isFinite(meta.walkY) ? meta.walkY : root.position.y;
+  const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
+  if (Number.isFinite(groundY)) root.position.y = groundY;
+  meta.spawn = meta.spawn || { x:root.position.x, y:root.position.y, z:root.position.z };
+  meta.baseRotationY = Number.isFinite(meta.baseRotationY) ? meta.baseRotationY : (root.rotation?.y || 0);
   meta.waitUntil = performance.now() + Math.random() * 900;
   root.metadata = meta;
   root.getChildren?.().forEach(child => child.dispose?.(false, true));
@@ -8928,13 +8930,23 @@ function readSmallAntControlsIntoMetadata(root, options = {}) {
   const changed = Object.keys(next).some(key => meta[key] !== next[key]);
   Object.assign(meta, next, { behavior:'wander' });
   if (options.resetHome) {
-    meta.home = root.position.clone();
-    meta.wanderTime = 0;
-    meta.wanderAngle = Math.random() * Math.PI * 2;
+    updateSmallAntPlacementOrigin(root);
   }
   root.metadata = meta;
   if (changed || options.forceColors) applySmallAntVisualColors(root);
   return changed;
+}
+
+function updateSmallAntPlacementOrigin(root, previousPosition = null) {
+  if (!root || root.metadata?.type !== 'small_village_ant') return;
+  const meta = root.metadata || {};
+  const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
+  if (Number.isFinite(groundY)) root.position.y = groundY;
+  meta.spawn = { x:root.position.x, y:root.position.y, z:root.position.z };
+  meta.baseRotationY = root.rotation?.y || 0;
+  meta.target = null;
+  meta.waitUntil = performance.now() + 900;
+  meta.turningInPlace = false;
 }
 
 function makeNPCMeshPickSafe(mesh, editRoot = null) {
@@ -9670,51 +9682,19 @@ function normalizeAngle(angle) {
 }
 
 function chooseSmallVillageAntTarget(root) {
-  const meta = root.metadata || {};
-  const home = meta.home || root.position.clone();
-  const radius = Math.max(0, Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5);
-  if (radius <= .2) {
-    meta.target = null;
-    meta.waitUntil = performance.now() + 1200;
-    return;
-  }
-  let target = null;
-  for (let attempt = 0; attempt < 8; attempt++) {
-    const angle = Math.random() * Math.PI * 2;
-    const dist = Math.max(.8, radius * (.28 + Math.random() * .72));
-    const candidate = new BABYLON.Vector3(
-      home.x + Math.sin(angle) * dist,
-      Number.isFinite(meta.walkY) ? meta.walkY : root.position.y,
-      home.z + Math.cos(angle) * dist
-    );
-    const dx = candidate.x - root.position.x;
-    const dz = candidate.z - root.position.z;
-    if (Math.hypot(dx, dz) > .55 || attempt === 7) {
-      target = candidate;
-      break;
-    }
-  }
-  meta.target = target;
+  if (!root || root.metadata?.type !== 'small_village_ant') return;
+  chooseNPCWanderTarget(root);
 }
 
 function moveSmallVillageAntToward(root, target, dt) {
-  if (!root || !target) return false;
-  const dx = target.x - root.position.x;
-  const dz = target.z - root.position.z;
-  const dist = Math.hypot(dx, dz);
-  if (dist < .04) return false;
-  const speed = Math.max(.05, Number.isFinite(root.metadata?.moveSpeed) ? root.metadata.moveSpeed : .9);
-  const frameDt = Math.min(Math.max(dt || 0, 0), .05);
-  const step = Math.min(dist, speed * frameDt);
-  const nextX = root.position.x + (dx / dist) * step;
-  const nextZ = root.position.z + (dz / dist) * step;
-  root.position.x = nextX;
-  root.position.z = nextZ;
-  if (Number.isFinite(root.metadata?.walkY)) root.position.y = root.metadata.walkY;
-  root.metadata.walkCycle = (Number(root.metadata.walkCycle) || 0) + step * 10;
-  const desired = Math.atan2(dx, dz);
-  root.rotation.y += normalizeAngle(desired - root.rotation.y) * Math.min(1, frameDt * 6);
-  return true;
+  const before = root?.position?.clone?.();
+  const moving = moveNPCToward(root, target, Math.min(Math.max(dt || 0, 0), .05));
+  if (moving && before) {
+    const dx = root.position.x - before.x;
+    const dz = root.position.z - before.z;
+    root.metadata.walkCycle = (Number(root.metadata.walkCycle) || 0) + Math.hypot(dx, dz) * 10;
+  }
+  return moving;
 }
 
 function getSmallAntWalkAnimationGroup(meta) {
@@ -9745,7 +9725,7 @@ function updateSmallAntLegMotion(root, moving, now) {
     if (group) return;
   }
   const cycle = Number(root.metadata?.walkCycle) || 0;
-  const hop = moving && !meta.smallAntModelLoaded ? Math.max(0, Math.sin(cycle * 2)) * .008 : 0;
+  const hop = 0;
   root.getChildMeshes?.(false).forEach(mesh => {
     const role = mesh.metadata?.smallAntPart;
     if (role === 'body' || role === 'ring' || role === 'antenna' || role === 'eye') {
@@ -9774,13 +9754,13 @@ function updateSmallVillageAnts(dt) {
     if (!root.isEnabled() || root.metadata?.type !== 'small_village_ant') return;
     if (adminMode && getSelectedSmallVillageAnt() === root) {
       readSmallAntControlsIntoMetadata(root, { resetHome:false });
-      root.metadata.walkY = root.position.y;
+      const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
+      if (Number.isFinite(groundY)) root.position.y = groundY;
     }
-    if (!root.metadata.home || typeof root.metadata.home.clone !== 'function') {
-      const home = root.metadata.home || root.position;
-      root.metadata.home = new BABYLON.Vector3(home.x || root.position.x, home.y || root.position.y, home.z || root.position.z);
+    if (!root.metadata.spawn) {
+      root.metadata.spawn = { x:root.position.x, y:root.position.y, z:root.position.z };
     }
-    if (!Number.isFinite(root.metadata.walkY)) root.metadata.walkY = root.position.y;
+    if (!Number.isFinite(root.metadata.baseRotationY)) root.metadata.baseRotationY = root.rotation?.y || 0;
     const adminPreviewActive = adminMode && Number(root.metadata.adminPreviewUntil || 0) > now;
     const movingAllowed = (!adminMode || adminPreviewActive) && root.metadata.dialogueOpen !== true;
     let moving = false;
@@ -9794,11 +9774,12 @@ function updateSmallVillageAnts(dt) {
           moving = moveSmallVillageAntToward(root, root.metadata.target, dt);
           if (!moving) {
             root.metadata.target = null;
-            root.metadata.waitUntil = now + 650 + Math.random() * 1200;
+            root.metadata.waitUntil = now + 1800 + Math.random() * 2600;
           }
         }
       }
     }
+    if (!moving && typeof returnNPCToBaseRotation === 'function') returnNPCToBaseRotation(root, Math.min(Math.max(dt || 0, 0), .05));
     updateSmallAntLegMotion(root, moving, now);
   });
 }
@@ -22101,7 +22082,10 @@ function applyLayoutItemToExistingNode(node, item) {
   };
   if (item.type === 'interior_entrance') styleInteriorEntranceVisual(node);
   if (item.type === 'small_village_ant') {
-    node.metadata.home = node.position.clone();
+    const groundY = getVillageGroundHeightAt(node.position.x, node.position.z);
+    if (Number.isFinite(groundY)) node.position.y = groundY;
+    node.metadata.spawn = { x:node.position.x, y:node.position.y, z:node.position.z };
+    node.metadata.baseRotationY = Number.isFinite(node.metadata.baseRotationY) ? node.metadata.baseRotationY : (node.rotation?.y || 0);
     node.metadata.target = null;
     node.metadata.waitUntil = performance.now() + 500;
     refreshSmallVillageAntVisual(node);
