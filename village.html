@@ -8651,7 +8651,6 @@ function ensureSmallAntAccentMeshes(root) {
       thickness:.028,
       tessellation:36
     }, scene), root, 'accentRing');
-    ring.position.set(0,.04,0);
     ring.rotation.x = Math.PI / 2;
     ring.isPickable = false;
     parts.push(ring);
@@ -8663,13 +8662,70 @@ function ensureSmallAntAccentMeshes(root) {
       thickness:.022,
       tessellation:28
     }, scene), root, 'accentHalo');
-    halo.position.set(0,.86,.28);
     halo.rotation.x = Math.PI / 2;
     halo.isPickable = false;
     parts.push(halo);
   }
   meta.smallAntParts = parts;
+  updateSmallAntAccentPlacement(root, true);
   return [ring, halo];
+}
+
+function getSmallAntVisualBounds(root) {
+  if (!root || root.isDisposed?.()) return null;
+  const meshes = (root.getChildMeshes?.(false) || []).filter(mesh => {
+    if (!mesh || mesh.isDisposed?.() || !mesh.isEnabled?.() || mesh.isVisible === false) return false;
+    const role = mesh.metadata?.smallAntPart;
+    if (role === 'shadow' || role === 'accentRing' || role === 'accentHalo') return false;
+    return mesh.metadata?.smallAntModelMesh || role === 'body' || role === 'ring' || role === 'antenna' || role === 'eye' || role === 'leg';
+  });
+  if (!meshes.length) return null;
+  root.computeWorldMatrix(true);
+  const inverse = root.getWorldMatrix().clone().invert();
+  const min = new BABYLON.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+  const max = new BABYLON.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+  meshes.forEach(mesh => {
+    mesh.computeWorldMatrix(true);
+    const box = mesh.getBoundingInfo?.().boundingBox;
+    if (!box) return;
+    box.vectorsWorld.forEach(point => {
+      const local = BABYLON.Vector3.TransformCoordinates(point, inverse);
+      min.minimizeInPlace(local);
+      max.maximizeInPlace(local);
+    });
+  });
+  if (!Number.isFinite(min.x) || !Number.isFinite(max.x)) return null;
+  return { min, max, center:min.add(max).scale(.5), size:max.subtract(min) };
+}
+
+function updateSmallAntAccentPlacement(root, force = false) {
+  if (!root || root.metadata?.type !== 'small_village_ant') return;
+  const meta = root.metadata || {};
+  if (!force && meta.smallAntAccentPlaced) return;
+  const parts = meta.smallAntParts || [];
+  const ring = parts.find(part => part?.metadata?.smallAntPart === 'accentRing');
+  const halo = parts.find(part => part?.metadata?.smallAntPart === 'accentHalo');
+  const bounds = getSmallAntVisualBounds(root);
+  if (!bounds) {
+    if (ring) ring.position.set(0,.28,0);
+    if (halo) halo.position.set(0,.86,.22);
+    return;
+  }
+  const width = Math.max(bounds.size.x, bounds.size.z, .45);
+  const height = Math.max(bounds.size.y, .35);
+  const ringOffset = Number.isFinite(meta.ringVerticalOffset) ? meta.ringVerticalOffset : 0;
+  const haloOffset = Number.isFinite(meta.haloVerticalOffset) ? meta.haloVerticalOffset : Math.max(.08, height * .08);
+  if (ring) {
+    ring.position.set(bounds.center.x, bounds.min.y + height * .48 + ringOffset, bounds.center.z);
+    const diameter = Math.max(.28, width * .92);
+    ring.scaling.setAll(diameter / .86);
+  }
+  if (halo) {
+    halo.position.set(bounds.center.x, bounds.max.y + haloOffset, bounds.center.z + bounds.size.z * .18);
+    const diameter = Math.max(.18, Math.min(width * .36, height * .46));
+    halo.scaling.setAll(diameter / .34);
+  }
+  meta.smallAntAccentPlaced = true;
 }
 
 function buildSmallVillageAnt(root) {
@@ -8680,6 +8736,8 @@ function buildSmallVillageAnt(root) {
   meta.customDialogue = meta.customDialogue || 'Tiny steps still carry the colony forward.';
   meta.ringColor = meta.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca';
   meta.haloColor = meta.haloColor || meta.ringColor || '#e8c56a';
+  meta.ringVerticalOffset = Number.isFinite(meta.ringVerticalOffset) ? meta.ringVerticalOffset : 0;
+  meta.haloVerticalOffset = Number.isFinite(meta.haloVerticalOffset) ? meta.haloVerticalOffset : null;
   meta.behavior = meta.behavior || 'wander';
   meta.wanderRadius = Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5;
   meta.moveSpeed = Number.isFinite(meta.moveSpeed) ? meta.moveSpeed : .9;
@@ -8759,10 +8817,7 @@ function stripSmallAntRootMotion(animationGroups, modelRoot) {
       const targeted = group.targetedAnimations[index];
       const target = targeted?.target;
       const property = targeted?.animation?.targetProperty || '';
-      const className = target?.getClassName?.() || '';
-      const isBone = className === 'Bone' || (BABYLON.Bone && target instanceof BABYLON.Bone);
-      const isRootNode = target === modelRoot || target?.parent === modelRoot || !target?.parent;
-      if (!isBone && isRootNode && property.startsWith('position')) {
+      if (target && property.startsWith('position')) {
         group.targetedAnimations.splice(index, 1);
       }
     }
@@ -8820,6 +8875,8 @@ async function tryLoadSmallVillageAntModel(root) {
     meta.smallAntAnimationGroups = result.animationGroups || [];
     meta.smallAntModelLoaded = true;
     meta.smallAntModelFailed = false;
+    meta.smallAntAccentPlaced = false;
+    updateSmallAntAccentPlacement(root, true);
   } catch (error) {
     meta.smallAntModelFailed = true;
     console.warn('Small Village Ant GLB failed to load; using procedural fallback:', error);
@@ -8853,6 +8910,8 @@ function applySmallAntVisualColors(root) {
     ringColor: meta.ringColor,
     haloColor: meta.haloColor
   };
+  meta.smallAntAccentPlaced = false;
+  updateSmallAntAccentPlacement(root, true);
 }
 
 function readSmallAntControlsIntoMetadata(root, options = {}) {
@@ -9643,18 +9702,25 @@ function moveSmallVillageAntToward(root, target, dt) {
   const dx = target.x - root.position.x;
   const dz = target.z - root.position.z;
   const dist = Math.hypot(dx, dz);
-  if (dist < .08) return false;
-  const speed = Number.isFinite(root.metadata?.moveSpeed) ? root.metadata.moveSpeed : .9;
-  const step = Math.min(dist, Math.max(.08, speed) * Math.min(Math.max(dt, 0), .033));
+  if (dist < .04) return false;
+  const speed = Math.max(.05, Number.isFinite(root.metadata?.moveSpeed) ? root.metadata.moveSpeed : .9);
+  const frameDt = Math.min(Math.max(dt || 0, 0), .05);
+  const step = Math.min(dist, speed * frameDt);
   const nextX = root.position.x + (dx / dist) * step;
   const nextZ = root.position.z + (dz / dist) * step;
   root.position.x = nextX;
   root.position.z = nextZ;
   if (Number.isFinite(root.metadata?.walkY)) root.position.y = root.metadata.walkY;
-  root.metadata.walkCycle = (Number(root.metadata.walkCycle) || 0) + step * 13;
+  root.metadata.walkCycle = (Number(root.metadata.walkCycle) || 0) + step * 10;
   const desired = Math.atan2(dx, dz);
-  root.rotation.y += normalizeAngle(desired - root.rotation.y) * Math.min(1, dt * 5);
+  root.rotation.y += normalizeAngle(desired - root.rotation.y) * Math.min(1, frameDt * 6);
   return true;
+}
+
+function getSmallAntWalkAnimationGroup(meta) {
+  const groups = Array.isArray(meta?.smallAntAnimationGroups) ? meta.smallAntAnimationGroups : [];
+  if (!groups.length) return null;
+  return groups.find(group => /walk|run|crawl|move|locomotion/i.test(group?.name || '')) || (groups.length === 1 ? groups[0] : null);
 }
 
 function updateSmallAntLegMotion(root, moving, now) {
@@ -9664,8 +9730,8 @@ function updateSmallAntLegMotion(root, moving, now) {
       meta.smallAntModelRoot.position.set(0, 0, 0);
       meta.smallAntModelRoot.rotation.set(0, 0, 0);
     }
-    const group = meta.smallAntAnimationGroups[0];
-    if (moving) {
+    const group = getSmallAntWalkAnimationGroup(meta);
+    if (moving && group) {
       if (meta.smallAntActiveAnimation !== 'walk') {
         meta.smallAntAnimationGroups.forEach(animationGroup => animationGroup.stop());
         group.speedRatio = 1;
@@ -9676,10 +9742,10 @@ function updateSmallAntLegMotion(root, moving, now) {
       meta.smallAntAnimationGroups.forEach(animationGroup => animationGroup.stop());
       meta.smallAntActiveAnimation = '';
     }
-    return;
+    if (group) return;
   }
   const cycle = Number(root.metadata?.walkCycle) || 0;
-  const hop = moving ? Math.max(0, Math.sin(cycle * 2)) * .018 : 0;
+  const hop = moving && !meta.smallAntModelLoaded ? Math.max(0, Math.sin(cycle * 2)) * .008 : 0;
   root.getChildMeshes?.(false).forEach(mesh => {
     const role = mesh.metadata?.smallAntPart;
     if (role === 'body' || role === 'ring' || role === 'antenna' || role === 'eye') {
@@ -9696,7 +9762,7 @@ function updateSmallAntLegMotion(root, moving, now) {
     mesh.rotation.x = baseX + swing * .18;
     mesh.rotation.z = baseZ + swing * side * .08;
   });
-  if (moving) root.rotation.z = Math.sin(cycle * 2) * .004;
+  if (moving && !meta.smallAntModelLoaded) root.rotation.z = Math.sin(cycle * 2) * .003;
   else root.rotation.z *= .88;
 }
 
@@ -14262,6 +14328,8 @@ function collectWorldLayoutData() {
     questId: node.metadata.questId || null,
     ringColor: node.metadata.ringColor || null,
     haloColor: node.metadata.haloColor || null,
+    ringVerticalOffset: Number.isFinite(node.metadata.ringVerticalOffset) ? node.metadata.ringVerticalOffset : null,
+    haloVerticalOffset: Number.isFinite(node.metadata.haloVerticalOffset) ? node.metadata.haloVerticalOffset : null,
     baseRotationY: Number.isFinite(node.metadata.baseRotationY) ? node.metadata.baseRotationY : null,
     moveSpeed: Number.isFinite(node.metadata.moveSpeed) ? node.metadata.moveSpeed : null,
     wanderRadius: Number.isFinite(node.metadata.wanderRadius) ? node.metadata.wanderRadius : null,
@@ -14674,6 +14742,8 @@ function loadWorldLayout(){
                   customDialogue: item.customDialogue || '',
                   ringColor: item.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca',
                   haloColor: item.haloColor || item.ringColor || '#e8c56a',
+                  ringVerticalOffset: Number.isFinite(item.ringVerticalOffset) ? item.ringVerticalOffset : 0,
+                  haloVerticalOffset: Number.isFinite(item.haloVerticalOffset) ? item.haloVerticalOffset : null,
                   behavior: item.behavior || 'wander',
                   wanderRadius: Number.isFinite(item.wanderRadius) ? item.wanderRadius : 5,
                   moveSpeed: Number.isFinite(item.moveSpeed) ? item.moveSpeed : .9
@@ -21995,6 +22065,8 @@ function applyLayoutItemToExistingNode(node, item) {
     questId: item.questId || null,
     ringColor: item.ringColor || null,
     haloColor: item.haloColor || null,
+    ringVerticalOffset: Number.isFinite(item.ringVerticalOffset) ? item.ringVerticalOffset : null,
+    haloVerticalOffset: Number.isFinite(item.haloVerticalOffset) ? item.haloVerticalOffset : null,
     baseRotationY: Number.isFinite(item.baseRotationY) ? item.baseRotationY : null,
     moveSpeed: Number.isFinite(item.moveSpeed) ? item.moveSpeed : null,
     wanderRadius: Number.isFinite(item.wanderRadius) ? item.wanderRadius : null,
@@ -22726,6 +22798,8 @@ function placeAssetAtPoint(key, pickedPoint) {
             customDialogue: 'Tiny steps still carry the colony forward.',
             ringColor: CURRENT_VILLAGE.themeColor || '#5ecfca',
             haloColor: '#e8c56a',
+            ringVerticalOffset: 0,
+            haloVerticalOffset: null,
             behavior: 'wander',
             wanderRadius: 5,
             moveSpeed: .9
