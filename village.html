@@ -8670,6 +8670,8 @@ function buildSmallVillageAnt(root) {
   abdomen.scaling.set(.9,.48,1.08); abdomen.position.set(0,.32,-.23); abdomen.material = bodyMat; parts.push(abdomen);
   const backStripe = makeSmallAntPart(BABYLON.MeshBuilder.CreateBox(root.name + '_ringStripe', { width:.58, height:.075, depth:.58 }, scene), root, 'ring');
   backStripe.position.set(0,.58,-.2); backStripe.material = ringMat; parts.push(backStripe);
+  const sideGlow = makeSmallAntPart(BABYLON.MeshBuilder.CreateBox(root.name + '_ringSideGlow', { width:.76, height:.04, depth:.28 }, scene), root, 'ring');
+  sideGlow.position.set(0,.41,-.31); sideGlow.material = ringMat; parts.push(sideGlow);
   const thorax = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_thorax', { diameter:.42, segments:12 }, scene), root, 'body');
   thorax.scaling.set(.86,.52,.82); thorax.position.set(0,.35,.23); thorax.material = bellyMat; parts.push(thorax);
   const headBand = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_antennaBand', { diameter:.48, thickness:.06, tessellation:20 }, scene), root, 'antenna');
@@ -8724,6 +8726,30 @@ function applySmallAntVisualColors(root) {
     eyeColor: meta.eyeColor,
     ringColor: meta.ringColor
   };
+}
+
+function readSmallAntControlsIntoMetadata(root, options = {}) {
+  if (!root || root.metadata?.type !== 'small_village_ant') return false;
+  const meta = root.metadata || {};
+  const next = {
+    displayName: document.getElementById('smallAntNameInput')?.value?.trim() || meta.displayName || 'Little Village Ant',
+    customDialogue: document.getElementById('smallAntDialogueInput')?.value?.trim() || '',
+    antennaColor: document.getElementById('smallAntAntennaColor')?.value || '#ff8a24',
+    eyeColor: document.getElementById('smallAntEyeColor')?.value || '#fff4b8',
+    ringColor: document.getElementById('smallAntRingColor')?.value || CURRENT_VILLAGE.themeColor || '#5ecfca',
+    wanderRadius: Math.max(0, Math.min(30, Number(document.getElementById('smallAntWanderRadius')?.value) || 5)),
+    moveSpeed: Math.max(.1, Math.min(4, Number(document.getElementById('smallAntMoveSpeed')?.value) || .9))
+  };
+  const changed = Object.keys(next).some(key => meta[key] !== next[key]);
+  Object.assign(meta, next, { behavior:'wander' });
+  if (options.resetHome) {
+    meta.home = root.position.clone();
+    meta.wanderTime = 0;
+    meta.wanderAngle = Math.random() * Math.PI * 2;
+  }
+  root.metadata = meta;
+  if (changed || options.forceColors) applySmallAntVisualColors(root);
+  return changed;
 }
 
 function makeNPCMeshPickSafe(mesh, editRoot = null) {
@@ -9504,6 +9530,9 @@ function updateSmallVillageAnts(dt) {
   SmallVillageAntManager.roots = SmallVillageAntManager.roots.filter(root => root && !root.isDisposed?.());
   SmallVillageAntManager.roots.forEach(root => {
     if (!root.isEnabled() || root.metadata?.type !== 'small_village_ant') return;
+    if (adminMode && getSelectedSmallVillageAnt() === root) {
+      readSmallAntControlsIntoMetadata(root, { resetHome:false });
+    }
     if (!root.metadata.home || typeof root.metadata.home.clone !== 'function') {
       const home = root.metadata.home || root.position;
       root.metadata.home = new BABYLON.Vector3(home.x || root.position.x, home.y || root.position.y, home.z || root.position.z);
@@ -9512,11 +9541,27 @@ function updateSmallVillageAnts(dt) {
     const movingAllowed = (!adminMode || adminPreviewActive) && root.metadata.dialogueOpen !== true;
     let moving = false;
     if (movingAllowed) {
-      if (!root.metadata.target && now >= (root.metadata.waitUntil || 0)) chooseSmallVillageAntTarget(root);
-      moving = root.metadata.target ? moveSmallVillageAntToward(root, root.metadata.target, dt) : false;
-      if (!moving) {
-        root.metadata.target = null;
-        root.metadata.waitUntil = now + 900 + Math.random() * 2400;
+      const radius = Math.max(0, Number(root.metadata.wanderRadius) || 0);
+      if (radius > .1) {
+        root.metadata.wanderAngle = Number.isFinite(root.metadata.wanderAngle) ? root.metadata.wanderAngle : Math.random() * Math.PI * 2;
+        root.metadata.wanderTime = (Number(root.metadata.wanderTime) || 0) + dt * Math.max(.15, Number(root.metadata.moveSpeed) || .9) * .62;
+        const angle = root.metadata.wanderAngle + root.metadata.wanderTime;
+        const home = root.metadata.home;
+        const targetX = home.x + Math.cos(angle) * radius;
+        const targetZ = home.z + Math.sin(angle * .83) * radius * .72;
+        const beforeX = root.position.x;
+        const beforeZ = root.position.z;
+        root.position.x += (targetX - root.position.x) * Math.min(1, dt * 2.8);
+        root.position.z += (targetZ - root.position.z) * Math.min(1, dt * 2.8);
+        const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
+        if (Number.isFinite(groundY)) root.position.y = groundY;
+        const dx = root.position.x - beforeX;
+        const dz = root.position.z - beforeZ;
+        moving = Math.hypot(dx, dz) > .001;
+        if (moving) {
+          const desired = Math.atan2(dx, dz);
+          root.rotation.y += normalizeAngle(desired - root.rotation.y) * Math.min(1, dt * 8);
+        }
       }
     }
     if (moving) root.rotation.z = Math.sin(now * .012 + (root.metadata.idleSeed || 0)) * .025;
@@ -9585,23 +9630,12 @@ function updateSmallAntFromControls(options = {}) {
     return;
   }
   if (options.history) recordEditorHistory('edit small ant');
-  const meta = ant.metadata || {};
-  meta.displayName = document.getElementById('smallAntNameInput')?.value?.trim() || meta.displayName || 'Little Village Ant';
-  meta.customDialogue = document.getElementById('smallAntDialogueInput')?.value?.trim() || '';
-  meta.antennaColor = document.getElementById('smallAntAntennaColor')?.value || '#ff8a24';
-  meta.eyeColor = document.getElementById('smallAntEyeColor')?.value || '#fff4b8';
-  meta.ringColor = document.getElementById('smallAntRingColor')?.value || CURRENT_VILLAGE.themeColor || '#5ecfca';
-  meta.behavior = 'wander';
-  meta.wanderRadius = Math.max(0, Math.min(30, Number(document.getElementById('smallAntWanderRadius')?.value) || 5));
-  meta.moveSpeed = Math.max(.1, Math.min(4, Number(document.getElementById('smallAntMoveSpeed')?.value) || .9));
-  if (options.resetHome !== false) meta.home = ant.position.clone();
-  meta.target = null;
-  meta.waitUntil = performance.now();
-  if (options.previewWalk) meta.adminPreviewUntil = performance.now() + 9000;
-  ant.metadata = meta;
+  readSmallAntControlsIntoMetadata(ant, { resetHome:options.resetHome !== false, forceColors:true });
+  ant.metadata.target = null;
+  ant.metadata.waitUntil = performance.now();
+  if (options.previewWalk) ant.metadata.adminPreviewUntil = performance.now() + 12000;
   refreshSmallVillageAntVisual(ant);
   applySmallAntVisualColors(ant);
-  chooseSmallVillageAntTarget(ant);
   if (options.refreshPanel !== false) updateSelectedBadge();
   if (options.save) triggerAutoSave();
   if (options.toast) showToast(adminMode ? 'Small ant updated. Preview walking for a few seconds.' : 'Small ant updated');
