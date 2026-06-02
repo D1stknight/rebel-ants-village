@@ -5209,7 +5209,7 @@ if (smallAntEditorPanel) {
   smallAntEditorPanel.style.display = 'block';
   const hint = document.getElementById('smallAntEditorHint');
   if (hint) hint.textContent = ant
-    ? 'Editing selected Small Village Ant. Movement: npc-controller. Click Apply, then exit Admin Mode to let it wander.'
+    ? 'Editing selected Small Village Ant. Controller: stable-root + glb-animation. Click Apply, then exit Admin Mode to let it wander.'
     : 'Select a Small Village Ant in the scene to edit it. It walks only after Admin Mode is off.';
   if (ant) {
     const meta = ant.metadata || {};
@@ -8731,6 +8731,14 @@ function updateSmallAntAccentPlacement(root, force = false) {
 function buildSmallVillageAnt(root) {
   if (!root) return;
   const meta = root.metadata || {};
+  if (Array.isArray(meta.smallAntAnimationGroups)) meta.smallAntAnimationGroups.forEach(group => group.stop?.());
+  meta.smallAntAnimationGroups = [];
+  meta.activeSmallAntAnimation = null;
+  meta.smallAntModelRoot = null;
+  meta.smallAntVisualRoot = null;
+  meta.smallAntModelLoaded = false;
+  meta.smallAntModelLoading = false;
+  meta.smallAntModelFailed = false;
   meta.type = 'small_village_ant';
   meta.displayName = meta.displayName || 'Little Village Ant';
   meta.villageId = meta.villageId || CURRENT_VILLAGE_ID;
@@ -8741,7 +8749,7 @@ function buildSmallVillageAnt(root) {
   meta.ringVerticalOffset = Number.isFinite(meta.ringVerticalOffset) ? meta.ringVerticalOffset : 0;
   meta.haloVerticalOffset = Number.isFinite(meta.haloVerticalOffset) ? meta.haloVerticalOffset : null;
   meta.behavior = meta.behavior || 'wander';
-  meta.movementController = 'npc-controller';
+  meta.movementController = 'stable-root + glb-animation';
   meta.wanderRadius = Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5;
   meta.moveSpeed = Number.isFinite(meta.moveSpeed) ? meta.moveSpeed : .9;
   const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
@@ -8812,11 +8820,11 @@ function buildSmallVillageAnt(root) {
 function registerSmallAntNpcController(root) {
   if (!root || root.metadata?.type !== 'small_village_ant') return;
   if (!SmallVillageAntManager.roots.includes(root)) SmallVillageAntManager.roots.push(root);
-  root.metadata.movementController = 'npc-controller';
+  root.metadata.movementController = 'stable-root + glb-animation';
   if (!root.metadata.spawn) root.metadata.spawn = { x:root.position.x, y:root.position.y, z:root.position.z };
   if (!Number.isFinite(root.metadata.baseRotationY)) root.metadata.baseRotationY = root.rotation?.y || 0;
   if (!root.metadata._movementControllerLogged) {
-    console.info('small ant movement: npc-controller', root.name);
+    console.info('small ant controller: stable-root + glb-animation', root.name);
     root.metadata._movementControllerLogged = true;
   }
 }
@@ -8826,7 +8834,7 @@ function refreshSmallVillageAntVisual(root) {
   buildSmallVillageAnt(root);
 }
 
-function stripSmallAntRootMotion(animationGroups, modelRoot) {
+function isolateSmallAntRootMotion(animationGroups, modelRoot) {
   if (!Array.isArray(animationGroups) || !modelRoot) return;
   animationGroups.forEach(group => {
     if (!Array.isArray(group.targetedAnimations)) return;
@@ -8834,11 +8842,43 @@ function stripSmallAntRootMotion(animationGroups, modelRoot) {
       const targeted = group.targetedAnimations[index];
       const target = targeted?.target;
       const property = targeted?.animation?.targetProperty || '';
-      if (target && property.startsWith('position')) {
+      const isTopVisualRoot = target === modelRoot || target?.parent === modelRoot;
+      if (target && isTopVisualRoot && property.startsWith('position')) {
         group.targetedAnimations.splice(index, 1);
       }
     }
   });
+}
+
+function getSmallAntAnimationGroup(meta, state = 'walk') {
+  const groups = Array.isArray(meta.smallAntAnimationGroups) ? meta.smallAntAnimationGroups : [];
+  if (!groups.length) return null;
+  const wanted = String(state || '').toLowerCase();
+  const walkMatch = groups.find(group => /walk|run|move|crawl|anim/i.test(group.name || ''));
+  const idleMatch = groups.find(group => /idle|stand|rest/i.test(group.name || ''));
+  if (wanted === 'idle') return idleMatch || walkMatch || groups[0];
+  return walkMatch || groups[0];
+}
+
+function updateSmallAntAnimationState(root, moving) {
+  const meta = root?.metadata || {};
+  const groups = Array.isArray(meta.smallAntAnimationGroups) ? meta.smallAntAnimationGroups : [];
+  if (!groups.length) return;
+  const wanted = moving && !meta.turningInPlace ? 'walk' : 'idle';
+  const group = getSmallAntAnimationGroup(meta, wanted);
+  const walkSpeed = Math.max(.35, Math.min(1.8, (meta.moveSpeed || .9) / .9));
+  const idleSpeed = Math.max(.08, Math.min(.32, walkSpeed * .18));
+  if (meta.activeAnimation === wanted && meta.activeSmallAntAnimation === group) {
+    if (group) group.speedRatio = wanted === 'walk' ? walkSpeed : idleSpeed;
+    return;
+  }
+  groups.forEach(animationGroup => animationGroup.stop());
+  if (group) {
+    group.speedRatio = wanted === 'walk' ? walkSpeed : idleSpeed;
+    group.start(true);
+  }
+  meta.activeAnimation = wanted;
+  meta.activeSmallAntAnimation = group || null;
 }
 
 async function tryLoadSmallVillageAntModel(root) {
@@ -8885,13 +8925,21 @@ async function tryLoadSmallVillageAntModel(root) {
       part?.setEnabled?.(false);
       part.isVisible = false;
     });
-    stripSmallAntRootMotion(result.animationGroups || [], modelRoot);
+    const animationGroups = result.animationGroups || [];
+    isolateSmallAntRootMotion(animationGroups, modelRoot);
     meta.modelUrl = modelUrl;
     meta.modelScale = Number.isFinite(meta.modelScale) ? meta.modelScale : SMALL_VILLAGE_ANT_MODEL_SCALE;
     meta.smallAntModelRoot = modelRoot;
-    meta.smallAntAnimationGroups = [];
-    meta.smallAntAnimationDisabled = true;
-    (result.animationGroups || []).forEach(group => group.stop());
+    meta.smallAntVisualRoot = modelRoot;
+    meta.smallAntAnimationGroups = animationGroups;
+    meta.smallAntAnimationDisabled = false;
+    meta.smallAntWalkAnimationSpeed = Number.isFinite(meta.smallAntWalkAnimationSpeed) ? meta.smallAntWalkAnimationSpeed : 1;
+    meta.smallAntIdleAnimationSpeed = Number.isFinite(meta.smallAntIdleAnimationSpeed) ? meta.smallAntIdleAnimationSpeed : .18;
+    if (!meta._smallAntAnimationNamesLogged) {
+      console.info('small ant animation groups:', animationGroups.map(group => group.name));
+      meta._smallAntAnimationNamesLogged = true;
+    }
+    updateSmallAntAnimationState(root, false);
     meta.smallAntModelLoaded = true;
     meta.smallAntModelFailed = false;
     meta.smallAntAccentPlaced = false;
@@ -9279,7 +9327,10 @@ function moveNPCToward(root, target, dt) {
   root.position.x += (dx / distance) * step;
   root.position.z += (dz / distance) * step;
   const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
-  if (Number.isFinite(groundY)) root.position.y = groundY;
+  if (Number.isFinite(groundY)) {
+    if (root.metadata?.type === 'small_village_ant') root.position.y += (groundY - root.position.y) * Math.min(1, dt * 8);
+    else root.position.y = groundY;
+  }
   return true;
 }
 
@@ -9295,8 +9346,8 @@ function findNPCAnimationGroup(meta, state) {
 function updateNPCAnimationState(root, moving, now) {
   const meta = root.metadata || {};
   if (meta.type === 'small_village_ant') {
-    if (meta.smallAntAnimationGroups?.length) meta.smallAntAnimationGroups.forEach(group => group.stop());
-    meta.activeAnimation = moving ? 'walk' : 'idle';
+    updateSmallAntAnimationState(root, moving);
+    if (!meta.smallAntAnimationGroups?.length) meta.activeAnimation = moving ? 'walk' : 'idle';
     return;
   }
   if (meta.modelLoaded && Array.isArray(meta.animationGroups) && meta.animationGroups.length) {
