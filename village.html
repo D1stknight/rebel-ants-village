@@ -8665,8 +8665,12 @@ function buildSmallVillageAnt(root) {
 
   const abdomen = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_abdomen', { diameter:.52, segments:12 }, scene), root, 'body');
   abdomen.scaling.set(.9,.48,1.08); abdomen.position.set(0,.32,-.23); abdomen.material = bodyMat; parts.push(abdomen);
+  const backStripe = makeSmallAntPart(BABYLON.MeshBuilder.CreateBox(root.name + '_ringStripe', { width:.48, height:.055, depth:.36 }, scene), root, 'ring');
+  backStripe.position.set(0,.58,-.24); backStripe.material = ringMat; parts.push(backStripe);
   const thorax = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_thorax', { diameter:.42, segments:12 }, scene), root, 'body');
   thorax.scaling.set(.86,.52,.82); thorax.position.set(0,.35,.23); thorax.material = bellyMat; parts.push(thorax);
+  const headBand = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_antennaBand', { diameter:.4, thickness:.045, tessellation:20 }, scene), root, 'antenna');
+  headBand.position.set(0,.46,.58); headBand.rotation.x = Math.PI / 2; headBand.material = antennaMat; parts.push(headBand);
   const head = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_head', { diameter:.36, segments:12 }, scene), root, 'body');
   head.scaling.set(.9,.72,.86); head.position.set(0,.41,.6); head.material = bodyMat; parts.push(head);
   const ring = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ring', { diameter:.62, thickness:.055, tessellation:24 }, scene), root, 'ring');
@@ -8708,6 +8712,11 @@ function applySmallAntVisualColors(root) {
     const role = mesh.metadata?.smallAntPart;
     if (role && materials[role]) mesh.material = materials[role];
   });
+  root.metadata._lastAppliedColors = {
+    antennaColor: meta.antennaColor,
+    eyeColor: meta.eyeColor,
+    ringColor: meta.ringColor
+  };
 }
 
 function makeNPCMeshPickSafe(mesh, editRoot = null) {
@@ -9444,10 +9453,15 @@ function normalizeAngle(angle) {
 
 function chooseSmallVillageAntTarget(root) {
   const meta = root.metadata || {};
-  const home = meta.home || root.position;
-  const radius = Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5;
+  const home = meta.home || root.position.clone();
+  const radius = Math.max(0, Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5);
+  if (radius <= .2) {
+    meta.target = null;
+    meta.waitUntil = performance.now() + 1200;
+    return;
+  }
   const angle = Math.random() * Math.PI * 2;
-  const dist = 1.2 + Math.random() * radius;
+  const dist = Math.max(1, radius * (.35 + Math.random() * .65));
   const target = new BABYLON.Vector3(
     home.x + Math.sin(angle) * dist,
     root.position.y,
@@ -9463,11 +9477,13 @@ function moveSmallVillageAntToward(root, target, dt) {
   const dx = target.x - root.position.x;
   const dz = target.z - root.position.z;
   const dist = Math.hypot(dx, dz);
-  if (dist < .18) return false;
+  if (dist < .08) return false;
   const speed = Number.isFinite(root.metadata?.moveSpeed) ? root.metadata.moveSpeed : .9;
-  const step = Math.min(dist, speed * dt);
-  root.position.x += (dx / dist) * step;
-  root.position.z += (dz / dist) * step;
+  const step = Math.min(dist, Math.max(.15, speed) * Math.max(dt, 1 / 60));
+  const nextX = root.position.x + (dx / dist) * step;
+  const nextZ = root.position.z + (dz / dist) * step;
+  root.position.x = nextX;
+  root.position.z = nextZ;
   const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
   if (Number.isFinite(groundY)) root.position.y = groundY;
   const desired = Math.atan2(dx, dz);
@@ -9481,7 +9497,10 @@ function updateSmallVillageAnts(dt) {
   SmallVillageAntManager.roots = SmallVillageAntManager.roots.filter(root => root && !root.isDisposed?.());
   SmallVillageAntManager.roots.forEach(root => {
     if (!root.isEnabled() || root.metadata?.type !== 'small_village_ant') return;
-    if (!root.metadata.home) root.metadata.home = root.position.clone();
+    if (!root.metadata.home || typeof root.metadata.home.clone !== 'function') {
+      const home = root.metadata.home || root.position;
+      root.metadata.home = new BABYLON.Vector3(home.x || root.position.x, home.y || root.position.y, home.z || root.position.z);
+    }
     const movingAllowed = !adminMode && root.metadata.dialogueOpen !== true;
     let moving = false;
     if (movingAllowed) {
@@ -9569,10 +9588,11 @@ function applySmallAntSettings() {
   meta.moveSpeed = Math.max(.1, Math.min(4, Number(document.getElementById('smallAntMoveSpeed')?.value) || .9));
   meta.home = ant.position.clone();
   meta.target = null;
-  meta.waitUntil = performance.now() + 700;
+  meta.waitUntil = performance.now();
   ant.metadata = meta;
   refreshSmallVillageAntVisual(ant);
   applySmallAntVisualColors(ant);
+  chooseSmallVillageAntTarget(ant);
   updateSelectedBadge();
   triggerAutoSave();
   showToast(adminMode ? 'Small ant updated. Exit Admin Mode to let it walk.' : 'Small ant updated');
