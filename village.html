@@ -8666,6 +8666,7 @@ function buildSmallVillageAnt(root) {
   ringMat.alpha = .72;
   ringMat.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
   const parts = [];
+  const legPivots = [];
 
   const abdomen = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_abdomen', { diameter:.5, segments:12 }, scene), root, 'body');
   abdomen.scaling.set(.94,.46,1.02); abdomen.position.set(0,.28,-.14); abdomen.material = bodyMat; parts.push(abdomen);
@@ -8697,20 +8698,29 @@ function buildSmallVillageAnt(root) {
   });
   [-1,1].forEach(side => {
     [-.2,.03,.26].forEach((z, index) => {
-      const leg = makeSmallAntPart(BABYLON.MeshBuilder.CreateBox(root.name + '_leg_' + side + '_' + index, { width:.42, height:.025, depth:.04 }, scene), root, 'leg');
-      leg.position.set(side * .31,.13,z);
-      leg.rotation.y = side * [-.48,-.08,.42][index];
+      const pivot = new BABYLON.TransformNode(root.name + '_legPivot_' + side + '_' + index, scene);
+      pivot.parent = root;
+      pivot.position.set(side * .18,.16,z);
+      pivot.rotation.y = side * [-.62,-.08,.5][index];
+      pivot.metadata = { smallAntPart:'legPivot', smallAntLegSide:side, smallAntLegIndex:index, baseRotationY:pivot.rotation.y };
+      const leg = BABYLON.MeshBuilder.CreateBox(root.name + '_leg_' + side + '_' + index, { width:.42, height:.022, depth:.038 }, scene);
+      leg.parent = pivot;
+      leg.isPickable = true;
+      leg.checkCollisions = false;
+      leg._editRoot = root;
+      leg.metadata = { smallAntPart:'leg', smallAntLegSide:side, smallAntLegIndex:index };
+      leg.position.set(side * .22,0,0);
       leg.material = bodyMat;
-      leg.metadata.smallAntLegSide = side;
-      leg.metadata.smallAntLegIndex = index;
       leg.metadata.basePositionX = leg.position.x;
       leg.metadata.basePositionY = leg.position.y;
       leg.metadata.basePositionZ = leg.position.z;
       leg.metadata.baseRotationY = leg.rotation.y;
+      legPivots.push(pivot);
       parts.push(leg);
     });
   });
   root.metadata.smallAntParts = parts;
+  root.metadata.smallAntLegPivots = legPivots;
   if (!SmallVillageAntManager.roots.includes(root)) SmallVillageAntManager.roots.push(root);
 }
 
@@ -8729,7 +8739,7 @@ function applySmallAntVisualColors(root) {
   };
   materials.ring.alpha = .72;
   materials.ring.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
-  root.getChildMeshes?.(false).forEach(mesh => {
+  root.getChildMeshes?.(true).forEach(mesh => {
     const role = mesh.metadata?.smallAntPart;
     const name = String(mesh.name || '').toLowerCase();
     const inferredRole = role || (name.includes('antenna') ? 'antenna' : name.includes('eye') ? 'eye' : name.includes('ring') || name.includes('halo') || name.includes('stripe') ? 'ring' : '');
@@ -9547,20 +9557,15 @@ function moveSmallVillageAntToward(root, target, dt) {
 
 function updateSmallAntLegMotion(root, moving, now) {
   const phase = moving ? (Number(root.metadata?.walkCycle) || 0) : now * .0015 + (root.metadata?.idleSeed || 0);
-  root.getChildMeshes?.(false).forEach(mesh => {
-    if (mesh.metadata?.smallAntPart !== 'leg') return;
-    const baseX = Number.isFinite(mesh.metadata.basePositionX) ? mesh.metadata.basePositionX : mesh.position.x;
-    const baseY = Number.isFinite(mesh.metadata.basePositionY) ? mesh.metadata.basePositionY : mesh.position.y;
-    const baseZ = Number.isFinite(mesh.metadata.basePositionZ) ? mesh.metadata.basePositionZ : mesh.position.z;
-    const baseRotY = Number.isFinite(mesh.metadata.baseRotationY) ? mesh.metadata.baseRotationY : mesh.rotation.y;
-    const index = Number(mesh.metadata.smallAntLegIndex) || 0;
-    const side = Number(mesh.metadata.smallAntLegSide) || 1;
+  const pivots = root.getChildren?.().filter(child => child?.metadata?.smallAntPart === 'legPivot') || [];
+  pivots.forEach(pivot => {
+    const baseRotY = Number.isFinite(pivot.metadata.baseRotationY) ? pivot.metadata.baseRotationY : pivot.rotation.y;
+    const index = Number(pivot.metadata.smallAntLegIndex) || 0;
+    const side = Number(pivot.metadata.smallAntLegSide) || 1;
     const tripod = (index % 2 === 0 ? 0 : Math.PI) + (side > 0 ? 0 : Math.PI);
     const stride = moving ? Math.sin(phase + tripod) : 0;
-    mesh.rotation.y = baseRotY + stride * side * .28;
-    mesh.position.x = baseX + Math.abs(stride) * side * .035;
-    mesh.position.z = baseZ;
-    mesh.position.y = baseY;
+    pivot.rotation.y = baseRotY + stride * side * .42;
+    pivot.rotation.z = moving ? Math.cos(phase + tripod) * side * .08 : 0;
   });
   if (moving) root.rotation.z = 0;
   else root.rotation.z *= .88;
@@ -9581,7 +9586,8 @@ function updateSmallVillageAnts(dt) {
       root.metadata.home = new BABYLON.Vector3(home.x || root.position.x, home.y || root.position.y, home.z || root.position.z);
     }
     if (!Number.isFinite(root.metadata.walkY)) root.metadata.walkY = root.position.y;
-    const movingAllowed = !adminMode && root.metadata.dialogueOpen !== true;
+    const adminPreviewActive = adminMode && Number(root.metadata.adminPreviewUntil || 0) > now;
+    const movingAllowed = (!adminMode || adminPreviewActive) && root.metadata.dialogueOpen !== true;
     let moving = false;
     if (movingAllowed) {
       const radius = Math.max(0, Number(root.metadata.wanderRadius) || 0);
