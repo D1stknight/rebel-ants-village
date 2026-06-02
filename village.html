@@ -8640,83 +8640,6 @@ function makeSmallAntPart(mesh, root, role) {
   return mesh;
 }
 
-function updateSmallAntTexture(root, moving = false) {
-  const meta = root?.metadata || {};
-  const texture = meta.smallAntTexture;
-  if (!texture?.getContext) return;
-  const frame = moving ? Math.floor((Number(meta.walkCycle) || 0) * 1.4) % 4 : 0;
-  const key = [frame, meta.antennaColor, meta.eyeColor, meta.ringColor].join('|');
-  if (meta.smallAntTextureKey === key) return;
-  meta.smallAntTextureKey = key;
-  const ctx = texture.getContext();
-  const size = 256;
-  const antennaColor = meta.antennaColor || '#ff8a24';
-  const eyeColor = meta.eyeColor || '#fff4b8';
-  const ringColor = meta.ringColor || '#5ecfca';
-  const legPhase = frame * Math.PI / 2;
-  ctx.clearRect(0, 0, size, size);
-  ctx.save();
-  ctx.translate(128, 130);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
-  ctx.strokeStyle = '#050507';
-  ctx.lineWidth = 9;
-  [-32, 0, 30].forEach((y, index) => {
-    [-1, 1].forEach(side => {
-      const tripod = (index % 2 === 0 ? 0 : Math.PI) + (side > 0 ? 0 : Math.PI);
-      const swing = moving ? Math.sin(legPhase + tripod) * 12 : 0;
-      ctx.beginPath();
-      ctx.moveTo(side * 24, y);
-      ctx.quadraticCurveTo(side * 54, y + swing * .35, side * 78, y + swing);
-      ctx.stroke();
-    });
-  });
-
-  ctx.fillStyle = '#050507';
-  ctx.beginPath();
-  ctx.ellipse(0, 36, 36, 46, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(0, 0, 29, 31, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(0, -34, 27, 27, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = ringColor;
-  ctx.globalAlpha = .75;
-  ctx.lineWidth = 6;
-  [-2, 20].forEach(y => {
-    ctx.beginPath();
-    ctx.ellipse(0, y, 31, 18, 0, 0, Math.PI * 2);
-    ctx.stroke();
-  });
-  ctx.globalAlpha = 1;
-
-  ctx.strokeStyle = antennaColor;
-  ctx.lineWidth = 7;
-  [-1, 1].forEach(side => {
-    ctx.beginPath();
-    ctx.moveTo(side * 12, -54);
-    ctx.quadraticCurveTo(side * 36, -80, side * 54, -68);
-    ctx.stroke();
-  });
-  ctx.fillStyle = antennaColor;
-  ctx.beginPath();
-  ctx.ellipse(0, -55, 20, 8, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = eyeColor;
-  [-1, 1].forEach(side => {
-    ctx.beginPath();
-    ctx.arc(side * 10, -42, 7, 0, Math.PI * 2);
-    ctx.fill();
-  });
-  ctx.restore();
-  texture.update();
-}
-
 function buildSmallVillageAnt(root) {
   if (!root) return;
   const meta = root.metadata || {};
@@ -8735,48 +8658,57 @@ function buildSmallVillageAnt(root) {
   root.metadata = meta;
   root.getChildren?.().forEach(child => child.dispose?.(false, true));
 
-  const texture = new BABYLON.DynamicTexture(root.name + '_walkTexture', { width:256, height:256 }, scene, false);
-  texture.hasAlpha = true;
-  const material = new BABYLON.StandardMaterial(root.name + '_walkMaterial', scene);
-  material.diffuseTexture = texture;
-  material.opacityTexture = texture;
-  material.emissiveColor = new BABYLON.Color3(.05,.05,.05);
-  material.specularColor = new BABYLON.Color3(0,0,0);
-  material.backFaceCulling = false;
-  const shadowTexture = new BABYLON.DynamicTexture(root.name + '_shadowTexture', { width:128, height:128 }, scene, false);
-  shadowTexture.hasAlpha = true;
-  const shadowCtx = shadowTexture.getContext();
-  shadowCtx.clearRect(0, 0, 128, 128);
-  shadowCtx.fillStyle = 'rgba(0,0,0,.28)';
-  shadowCtx.beginPath();
-  shadowCtx.ellipse(64, 64, 42, 20, 0, 0, Math.PI * 2);
-  shadowCtx.fill();
-  shadowTexture.update();
-  const shadowMat = new BABYLON.StandardMaterial(root.name + '_shadowMaterial', scene);
-  shadowMat.diffuseTexture = shadowTexture;
-  shadowMat.opacityTexture = shadowTexture;
-  shadowMat.specularColor = new BABYLON.Color3(0,0,0);
-  shadowMat.backFaceCulling = false;
-  const shadow = BABYLON.MeshBuilder.CreatePlane(root.name + '_shadow', { width:.84, height:.42 }, scene);
-  shadow.parent = root;
+  const bodyMat = makeSmallAntMaterial('body', '#050507', '#000000');
+  const bellyMat = makeSmallAntMaterial('belly', '#101116', '#000000');
+  const antennaMat = makeSmallAntMaterial('antenna', meta.antennaColor, meta.antennaColor);
+  const eyeMat = makeSmallAntMaterial('eye', meta.eyeColor, meta.eyeColor);
+  const ringMat = makeSmallAntMaterial('ring', meta.ringColor, meta.ringColor);
+  ringMat.alpha = .82;
+  ringMat.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
+  const parts = [];
+
+  const shadow = makeSmallAntPart(BABYLON.MeshBuilder.CreateDisc(root.name + '_shadow', { radius:.36, tessellation:24 }, scene), root, 'shadow');
   shadow.position.set(0,.012,0);
+  shadow.scaling.set(1,.45,1);
   shadow.rotation.x = Math.PI / 2;
-  shadow.material = shadowMat;
   shadow.isPickable = false;
-  shadow.metadata = { smallAntPart:'shadow' };
-  const antPlane = BABYLON.MeshBuilder.CreatePlane(root.name + '_animatedSprite', { width:.94, height:.94 }, scene);
-  antPlane.parent = root;
-  antPlane.position.set(0,.34,-.08);
-  antPlane.rotation.x = .52;
-  antPlane.material = material;
-  antPlane.isPickable = true;
-  antPlane.checkCollisions = false;
-  antPlane._editRoot = root;
-  antPlane.metadata = { smallAntPart:'sprite', baseY:antPlane.position.y, baseRotationX:antPlane.rotation.x };
-  root.metadata.smallAntTexture = texture;
-  root.metadata.smallAntMaterial = material;
-  root.metadata.smallAntParts = [antPlane, shadow];
-  updateSmallAntTexture(root, false);
+  const shadowMat = makeSmallAntMaterial('shadow', '#000000', '#000000');
+  shadowMat.alpha = .24;
+  shadowMat.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
+  shadow.material = shadowMat;
+  parts.push(shadow);
+
+  const abdomen = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_abdomen', { diameter:.44, segments:10 }, scene), root, 'body');
+  abdomen.scaling.set(1,.58,1.08); abdomen.position.set(0,.28,-.15); abdomen.material = bodyMat; parts.push(abdomen);
+  const thorax = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_thorax', { diameter:.34, segments:10 }, scene), root, 'body');
+  thorax.scaling.set(.92,.58,.9); thorax.position.set(0,.29,.08); thorax.material = bellyMat; parts.push(thorax);
+  const head = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_head', { diameter:.3, segments:10 }, scene), root, 'body');
+  head.scaling.set(.92,.72,.9); head.position.set(0,.3,.32); head.material = bodyMat; parts.push(head);
+  [-.08,.1].forEach((z, index) => {
+    const band = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ring_' + index, { diameter:.42, thickness:.03, tessellation:18 }, scene), root, 'ring');
+    band.position.set(0,.31,z); band.scaling.set(.92,.55,1); band.rotation.x = Math.PI / 2; band.material = ringMat; parts.push(band);
+  });
+  [-.07,.07].forEach(x => {
+    const eye = makeSmallAntPart(BABYLON.MeshBuilder.CreateSphere(root.name + '_eye_' + x, { diameter:.075, segments:8 }, scene), root, 'eye');
+    eye.position.set(x,.36,.46); eye.material = eyeMat; parts.push(eye);
+    const antenna = makeSmallAntPart(BABYLON.MeshBuilder.CreateCylinder(root.name + '_antenna_' + x, { height:.34, diameter:.024, tessellation:6 }, scene), root, 'antenna');
+    antenna.position.set(x * 1.55,.54,.48); antenna.rotation.x = .82; antenna.rotation.z = -Math.sign(x || 1) * .45; antenna.material = antennaMat; parts.push(antenna);
+  });
+  [-1,1].forEach(side => {
+    [-.16,.04,.24].forEach((z, index) => {
+      const leg = makeSmallAntPart(BABYLON.MeshBuilder.CreateCylinder(root.name + '_leg_' + side + '_' + index, { height:.34, diameter:.026, tessellation:5 }, scene), root, 'leg');
+      leg.position.set(side * .22,.18,z);
+      leg.rotation.z = side * 1.2;
+      leg.rotation.x = [-.34,.04,.3][index];
+      leg.material = bodyMat;
+      leg.metadata.smallAntLegSide = side;
+      leg.metadata.smallAntLegIndex = index;
+      leg.metadata.baseRotationX = leg.rotation.x;
+      leg.metadata.baseRotationZ = leg.rotation.z;
+      parts.push(leg);
+    });
+  });
+  root.metadata.smallAntParts = parts;
   if (!SmallVillageAntManager.roots.includes(root)) SmallVillageAntManager.roots.push(root);
 }
 
@@ -8788,8 +8720,17 @@ function refreshSmallVillageAntVisual(root) {
 function applySmallAntVisualColors(root) {
   if (!root || root.metadata?.type !== 'small_village_ant') return;
   const meta = root.metadata || {};
-  meta.smallAntTextureKey = '';
-  updateSmallAntTexture(root, false);
+  const materials = {
+    antenna: makeSmallAntMaterial('antenna', meta.antennaColor || '#ff8a24', meta.antennaColor || '#ff8a24'),
+    eye: makeSmallAntMaterial('eye', meta.eyeColor || '#fff4b8', meta.eyeColor || '#fff4b8'),
+    ring: makeSmallAntMaterial('ring', meta.ringColor || '#5ecfca', meta.ringColor || '#5ecfca')
+  };
+  materials.ring.alpha = .82;
+  materials.ring.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
+  root.getChildMeshes?.(false).forEach(mesh => {
+    const role = mesh.metadata?.smallAntPart;
+    if (role && materials[role]) mesh.material = materials[role];
+  });
   root.metadata._lastAppliedColors = {
     antennaColor: meta.antennaColor,
     eyeColor: meta.eyeColor,
@@ -9601,18 +9542,25 @@ function moveSmallVillageAntToward(root, target, dt) {
 }
 
 function updateSmallAntLegMotion(root, moving, now) {
-  updateSmallAntTexture(root, moving);
-  const sprite = root.metadata?.smallAntParts?.find(part => part?.metadata?.smallAntPart === 'sprite')
-    || root.getChildMeshes?.(false).find(mesh => mesh?.metadata?.smallAntPart === 'sprite');
-  if (sprite) {
-    const baseY = Number.isFinite(sprite.metadata?.baseY) ? sprite.metadata.baseY : .34;
-    const baseRotationX = Number.isFinite(sprite.metadata?.baseRotationX) ? sprite.metadata.baseRotationX : .52;
-    const cycle = Number(root.metadata?.walkCycle) || 0;
-    const tinyHop = moving ? Math.max(0, Math.sin(cycle * 2)) * .025 : 0;
-    sprite.position.y = baseY + tinyHop;
-    sprite.rotation.x = baseRotationX + (moving ? Math.sin(cycle * 2) * .018 : 0);
-  }
-  if (moving) root.rotation.z = 0;
+  const cycle = Number(root.metadata?.walkCycle) || 0;
+  const hop = moving ? Math.max(0, Math.sin(cycle * 2)) * .018 : 0;
+  root.getChildMeshes?.(false).forEach(mesh => {
+    const role = mesh.metadata?.smallAntPart;
+    if (role === 'body' || role === 'ring' || role === 'antenna' || role === 'eye') {
+      if (!Number.isFinite(mesh.metadata.basePositionY)) mesh.metadata.basePositionY = mesh.position.y;
+      mesh.position.y = mesh.metadata.basePositionY + hop;
+    }
+    if (role !== 'leg') return;
+    const index = Number(mesh.metadata.smallAntLegIndex) || 0;
+    const side = Number(mesh.metadata.smallAntLegSide) || 1;
+    const tripod = (index % 2 === 0 ? 0 : Math.PI) + (side > 0 ? 0 : Math.PI);
+    const swing = moving ? Math.sin(cycle * 2 + tripod) : 0;
+    const baseX = Number.isFinite(mesh.metadata.baseRotationX) ? mesh.metadata.baseRotationX : mesh.rotation.x;
+    const baseZ = Number.isFinite(mesh.metadata.baseRotationZ) ? mesh.metadata.baseRotationZ : mesh.rotation.z;
+    mesh.rotation.x = baseX + swing * .18;
+    mesh.rotation.z = baseZ + swing * side * .08;
+  });
+  if (moving) root.rotation.z = Math.sin(cycle * 2) * .004;
   else root.rotation.z *= .88;
 }
 
