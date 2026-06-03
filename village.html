@@ -10568,6 +10568,266 @@ function applySmallAntSettings() {
   updateSmallAntFromControls({ resetHome:true, previewWalk:true, save:true, toast:true, history:true });
 }
 
+function smallAntDebugNumber(value, digits = 4) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Number(number.toFixed(digits)) : null;
+}
+
+function smallAntDebugVector(value) {
+  if (!value) return null;
+  return {
+    x: smallAntDebugNumber(value.x),
+    y: smallAntDebugNumber(value.y),
+    z: smallAntDebugNumber(value.z)
+  };
+}
+
+function smallAntDebugBounds(bounds) {
+  if (!bounds) return null;
+  return {
+    min: smallAntDebugVector(bounds.min),
+    max: smallAntDebugVector(bounds.max),
+    center: smallAntDebugVector(bounds.center),
+    size: smallAntDebugVector(bounds.size),
+    maxSize: smallAntDebugNumber(Math.max(bounds.size?.x || 0, bounds.size?.y || 0, bounds.size?.z || 0))
+  };
+}
+
+function getSmallAntDebugRoot(target = null) {
+  if (target?.metadata?.type === 'small_village_ant') return target;
+  if (target?._editRoot?.metadata?.type === 'small_village_ant') return target._editRoot;
+  if (typeof target === 'number') return SmallVillageAntManager.roots[target] || null;
+  if (typeof target === 'string' && target.trim()) {
+    const name = target.trim();
+    return SmallVillageAntManager.roots.find(root => root?.name === name) ||
+      scene.transformNodes.find(node => node?.name === name && node.metadata?.type === 'small_village_ant') ||
+      null;
+  }
+  return getSelectedSmallVillageAnt() || SmallVillageAntManager.roots.find(root => root && !root.isDisposed?.()) || null;
+}
+
+function smallAntDebugTransform(node) {
+  if (!node) return null;
+  let absolute = null;
+  try { absolute = node.getAbsolutePosition?.(); } catch(e) {}
+  return {
+    name: node.name || node.id || 'unnamed',
+    className: node.getClassName?.() || node.constructor?.name || 'node',
+    enabled: typeof node.isEnabled === 'function' ? node.isEnabled() : null,
+    parent: node.parent?.name || null,
+    position: smallAntDebugVector(node.position),
+    rotation: smallAntDebugVector(node.rotation),
+    scaling: smallAntDebugVector(node.scaling),
+    absolutePosition: smallAntDebugVector(absolute)
+  };
+}
+
+function smallAntDebugMesh(mesh) {
+  if (!mesh) return null;
+  try { mesh.computeWorldMatrix?.(true); } catch(e) {}
+  try { mesh.refreshBoundingInfo?.(true); } catch(e) {}
+  const material = mesh.material || null;
+  const bounds = mesh.getBoundingInfo?.().boundingBox || null;
+  return {
+    name: mesh.name || mesh.id || 'unnamed',
+    parent: mesh.parent?.name || null,
+    className: mesh.getClassName?.() || mesh.constructor?.name || 'mesh',
+    enabled: mesh.isEnabled?.() ?? null,
+    isVisible: mesh.isVisible !== false,
+    visibility: smallAntDebugNumber(mesh.visibility ?? 1),
+    pickable: mesh.isPickable === true,
+    vertices: typeof mesh.getTotalVertices === 'function' ? mesh.getTotalVertices() : null,
+    hasGeometry: hasSmallAntRenderableGeometry(mesh),
+    role: mesh.metadata?.smallAntPart || null,
+    imported: mesh.metadata?.smallAntImportedMesh === true,
+    modelMesh: mesh.metadata?.smallAntModelMesh === true,
+    fallbackBody: mesh.metadata?.smallAntFallbackBody === true,
+    material: material ? {
+      name: material.name || null,
+      className: material.getClassName?.() || material.constructor?.name || 'material',
+      alpha: smallAntDebugNumber(material.alpha ?? 1),
+      backFaceCulling: material.backFaceCulling === true,
+      transparencyMode: material.transparencyMode ?? null
+    } : null,
+    position: smallAntDebugVector(mesh.position),
+    absolutePosition: smallAntDebugVector(mesh.getAbsolutePosition?.()),
+    bounds: bounds ? {
+      min: smallAntDebugVector(bounds.minimumWorld),
+      max: smallAntDebugVector(bounds.maximumWorld),
+      center: smallAntDebugVector(bounds.centerWorld),
+      extendSize: smallAntDebugVector(bounds.extendSizeWorld)
+    } : null
+  };
+}
+
+function debugSmallAnt(target = null, options = {}) {
+  const root = getSmallAntDebugRoot(target);
+  const meta = root?.metadata || {};
+  const meshes = root?.getChildMeshes?.(false) || [];
+  const bounds = root ? getSmallAntVisualBounds(root) : null;
+  const report = {
+    controller: 'clean-mini-npc',
+    runtimeEnabled: SMALL_VILLAGE_ANT_RUNTIME_ENABLED === true,
+    rootCount: SmallVillageAntManager.roots.filter(existing => existing && !existing.isDisposed?.()).length,
+    npcVisible: NPCManager.visible === true,
+    npcPaused: NPCManager.paused === true,
+    activeInterior: !!ActiveInterior,
+    selectedObject: selectedObject?.name || selectedObject?._editRoot?.name || null,
+    assetUrl: SMALL_VILLAGE_ANT_MODEL_URL,
+    draco: {
+      compression: !!window.BABYLON?.DracoCompression,
+      compressionConfig: window.BABYLON?.DracoCompression?.Configuration || null,
+      decoder: !!window.BABYLON?.DracoDecoder,
+      decoderConfig: window.BABYLON?.DracoDecoder?.DefaultConfiguration || null
+    },
+    root: smallAntDebugTransform(root),
+    visualRoot: smallAntDebugTransform(meta.antVisualRoot || meta.smallAntVisualRoot),
+    modelRoot: smallAntDebugTransform(meta.smallAntModelRoot),
+    visualBounds: smallAntDebugBounds(bounds),
+    metadata: root ? {
+      modelUrl: meta.modelUrl || SMALL_VILLAGE_ANT_MODEL_URL,
+      modelScale: smallAntDebugNumber(meta.modelScale),
+      smallAntModelLoading: meta.smallAntModelLoading === true,
+      smallAntModelLoaded: meta.smallAntModelLoaded === true,
+      smallAntModelFailed: meta.smallAntModelFailed === true,
+      fallbackBodyCreated: meta.smallAntFallbackBodyCreated === true,
+      sharedImportOffset: meta.smallAntSharedImportOffset || null,
+      modelCenterOffset: meta.smallAntModelCenterOffset || null,
+      autoFit: meta.smallAntAutoFit || null,
+      activeAnimation: meta.activeAnimation || null,
+      activeSmallAntAnimation: meta.activeSmallAntAnimation?.name || null,
+      walkPlaying: meta.smallAntWalkPlaying === true,
+      target: meta.target ? smallAntDebugVector(meta.target) : null,
+      spawn: meta.spawn ? smallAntDebugVector(meta.spawn) : null,
+      waitUntil: smallAntDebugNumber(meta.waitUntil),
+      antWalkSpeed: smallAntDebugNumber(meta.antWalkSpeed),
+      antAnimationSpeedRatio: smallAntDebugNumber(meta.antAnimationSpeedRatio),
+      colorCycle: meta.colorCycle === true,
+      haloColor: meta.haloColor || null
+    } : null,
+    animationGroups: Array.isArray(meta.smallAntAnimationGroups)
+      ? meta.smallAntAnimationGroups.map(group => ({
+        name: group.name,
+        isPlaying: group.isPlaying === true,
+        speedRatio: smallAntDebugNumber(group.speedRatio),
+        targetedAnimations: group.targetedAnimations?.length || 0,
+        from: smallAntDebugNumber(group.from),
+        to: smallAntDebugNumber(group.to)
+      }))
+      : [],
+    importedRoots: Array.isArray(meta.smallAntImportedRoots)
+      ? meta.smallAntImportedRoots.map(smallAntDebugTransform)
+      : [],
+    meshCounts: {
+      total: meshes.length,
+      renderable: meshes.filter(hasSmallAntRenderableGeometry).length,
+      imported: meshes.filter(mesh => mesh.metadata?.smallAntImportedMesh === true).length,
+      modelMeshes: meshes.filter(mesh => mesh.metadata?.smallAntModelMesh === true).length,
+      fallback: meshes.filter(mesh => mesh.metadata?.smallAntFallbackBody === true).length,
+      halos: meshes.filter(mesh => mesh.metadata?.smallAntPart === 'accentHalo').length,
+      shadows: meshes.filter(mesh => mesh.metadata?.smallAntPart === 'shadow').length
+    },
+    meshes: meshes.map(smallAntDebugMesh)
+  };
+  console.info('Small Ant debug report', report);
+  if (options.table !== false && report.meshes.length && console.table) {
+    console.table(report.meshes.map(mesh => ({
+      name: mesh.name,
+      parent: mesh.parent,
+      role: mesh.role,
+      imported: mesh.imported,
+      modelMesh: mesh.modelMesh,
+      fallback: mesh.fallbackBody,
+      enabled: mesh.enabled,
+      visible: mesh.isVisible,
+      vertices: mesh.vertices,
+      material: mesh.material?.className || null,
+      absX: mesh.absolutePosition?.x,
+      absY: mesh.absolutePosition?.y,
+      absZ: mesh.absolutePosition?.z
+    })));
+  }
+  return report;
+}
+
+async function testSmallAntAssetFetch(url = SMALL_VILLAGE_ANT_MODEL_URL) {
+  const started = performance.now();
+  const response = await fetch(url, { cache:'no-store' });
+  const buffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(buffer.slice(0, 16));
+  const magic = Array.from(bytes.slice(0, 4)).map(code => String.fromCharCode(code)).join('');
+  const report = {
+    url,
+    ok: response.ok,
+    status: response.status,
+    statusText: response.statusText,
+    redirected: response.redirected,
+    contentType: response.headers.get('content-type'),
+    bytes: buffer.byteLength,
+    magic,
+    firstBytes: Array.from(bytes).map(byte => byte.toString(16).padStart(2, '0')).join(' '),
+    elapsedMs: smallAntDebugNumber(performance.now() - started, 1)
+  };
+  console.info('Small Ant asset fetch report', report);
+  return report;
+}
+
+async function reloadSmallAntModel(target = null) {
+  const root = getSmallAntDebugRoot(target);
+  if (!root) {
+    console.warn('No Small Village Ant root found. Try spawnDebugSmallAnt() first.');
+    return null;
+  }
+  refreshSmallVillageAntVisual(root);
+  await new Promise(resolve => setTimeout(resolve, 1600));
+  return debugSmallAnt(root);
+}
+
+function forceShowSmallAntModel(target = null, scale = null) {
+  let root = getSmallAntDebugRoot(target);
+  let requestedScale = scale;
+  if (typeof target === 'number' && !SmallVillageAntManager.roots[target]) {
+    requestedScale = target;
+    root = getSmallAntDebugRoot();
+  }
+  if (!root) {
+    console.warn('No Small Village Ant root found. Try spawnDebugSmallAnt() first.');
+    return null;
+  }
+  const meta = root.metadata || {};
+  root.setEnabled?.(true);
+  (meta.antVisualRoot || meta.smallAntVisualRoot)?.setEnabled?.(true);
+  meta.smallAntModelRoot?.setEnabled?.(true);
+  if (Number.isFinite(requestedScale) && meta.smallAntModelRoot) {
+    meta.smallAntModelRoot.scaling.setAll(Math.max(SMALL_VILLAGE_ANT_MIN_MODEL_SCALE, Math.min(SMALL_VILLAGE_ANT_MAX_MODEL_SCALE, requestedScale)));
+    meta.modelScale = meta.smallAntModelRoot.scaling.x;
+    centerSmallAntModelOnRoot(root);
+  }
+  root.getChildMeshes?.(false).forEach(mesh => {
+    mesh.setEnabled?.(true);
+    mesh.isVisible = true;
+    mesh.visibility = 1;
+    mesh.alwaysSelectAsActiveMesh = true;
+    if (mesh.material) {
+      mesh.material.alpha = 1;
+      mesh.material.backFaceCulling = false;
+      mesh.material.transparencyMode = BABYLON.Material.MATERIAL_OPAQUE;
+    }
+  });
+  updateSmallAntAccentPlacement(root, true);
+  return debugSmallAnt(root);
+}
+
+function spawnDebugSmallAnt() {
+  if (!SMALL_VILLAGE_ANT_RUNTIME_ENABLED) setSmallAntRuntimeEnabled(true);
+  const root = respawnSmallAntNearPlayer({ forceEnable:true, toast:false, select:true });
+  if (!root) {
+    console.warn('Small Ant debug spawn failed.');
+    return null;
+  }
+  return debugSmallAnt(root);
+}
+
 // ── HELPERS ──────────────────────────────────
 // Material cache — reuse identical materials instead of creating new ones
 const _matCache={}, _pbrCache={};
@@ -23906,6 +24166,18 @@ window.setSmallAntRuntimeEnabled = setSmallAntRuntimeEnabled;
 window.respawnSmallAntNearPlayer = respawnSmallAntNearPlayer;
 window.applySmallAntSettings = applySmallAntSettings;
 window.previewSmallAntSettingsFromControls = previewSmallAntSettingsFromControls;
+window.debugSmallAnt = debugSmallAnt;
+window.testSmallAntAssetFetch = testSmallAntAssetFetch;
+window.reloadSmallAntModel = reloadSmallAntModel;
+window.forceShowSmallAntModel = forceShowSmallAntModel;
+window.spawnDebugSmallAnt = spawnDebugSmallAnt;
+window.SmallVillageAntDebug = {
+  debug: debugSmallAnt,
+  fetch: testSmallAntAssetFetch,
+  reload: reloadSmallAntModel,
+  forceShow: forceShowSmallAntModel,
+  spawn: spawnDebugSmallAnt
+};
 window.advanceNPCDialogue = advanceNPCDialogue;
 window.closeNPCDialogue = closeNPCDialogue;
 window.saveWorldLayout = saveWorldLayout;
