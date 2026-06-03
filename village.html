@@ -505,7 +505,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ronin_altar')"><span class="ap-icon">⛩</span><span class="ap-name">Ronin Altar</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Ronin Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_dead_tree')"><span class="ap-icon">♜</span><span class="ap-name">Dead Tree</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_mist')"><span class="ap-icon">〰</span><span class="ap-name">Ronin Mist</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_weapon_rack')"><span class="ap-icon">⚔</span><span class="ap-name">Weapon Rack</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_katana_sigil')"><span class="ap-icon">☾</span><span class="ap-name">Katana Sigil</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_brazier')"><span class="ap-icon">🔥</span><span class="ap-name">Crimson Brazier</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_broken_cart')"><span class="ap-icon">▰</span><span class="ap-name">Broken Cart</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_watch_post')"><span class="ap-icon">▴</span><span class="ap-name">Watch Post</span></div></div>
     <div class="ap-section">Village Life</div>
     <div class="admin-section-body" data-admin-section-body="village-life">
-      <div class="ap-grid"><div class="ap-card" onclick="respawnSmallAntNearPlayer()"><span class="ap-icon">🐜</span><span class="ap-name">Small Village Ant</span></div></div>
+      <div class="ap-grid"><div class="ap-card" onclick="placeSmallAntFromAdmin()"><span class="ap-icon">🐜</span><span class="ap-name">Small Village Ant</span></div></div>
       <div id="smallAntEditorPanel" style="padding:0 8px 8px">
         <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin:9px 0 6px;text-transform:uppercase">Small Village Ant</div>
         <div id="smallAntEditorHint" class="admin-note">Clean mini-NPC controller. Movement is isolated from normal NPCs.</div>
@@ -522,8 +522,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
           <label style="font-size:8px;color:#8aa;letter-spacing:1px">Wander Radius <input id="smallAntWanderRadius" type="number" min="0" max="30" step="1" value="5" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#e8c56a;padding:5px 7px"></label>
           <label style="font-size:8px;color:#8aa;letter-spacing:1px">Walk Speed <input id="smallAntWalkSpeed" type="number" min="0.05" max="2" step="0.05" value="0.28" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#e8c56a;padding:5px 7px"></label>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
+        <div style="display:grid;grid-template-columns:1fr;gap:5px;margin-bottom:6px">
           <label style="font-size:8px;color:#8aa;letter-spacing:1px">Animation Speed <input id="smallAntAnimationSpeed" type="number" min="0.1" max="2" step="0.05" value="0.75" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#e8c56a;padding:5px 7px"></label>
+          <label style="font-size:8px;color:#8aa;letter-spacing:1px">Animation <select id="smallAntAnimationSelect" onchange="previewSmallAntAnimationFromControls()" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#e8c56a;padding:5px 7px"><option value="auto">Auto Wander</option></select></label>
         </div>
         <button class="ctrl-btn full" onclick="applySmallAntSettings()" style="width:100%;background:#5ecfca;color:#000">Apply Small Ant</button>
       </div>
@@ -3598,7 +3599,6 @@ function setSelectedEditableObject(node) {
   if (node._editRoot?.metadata?.type === 'small_village_ant') node = node._editRoot;
   if (selectedObject && selectedObject !== node) releaseObjectAfterEditing(selectedObject);
   selectedObject = node;
-  if (selectedObject?.metadata?.type === 'small_village_ant') adminGizmoMode = 'move';
   prepareObjectForEditing(selectedObject);
   if (terrainSculptBrushActive && selectedObject?.metadata?.type !== 'terrain_stamp') {
     setTerrainSculptBrushActive(false);
@@ -5364,10 +5364,12 @@ if (smallAntEditorPanel) {
       document.getElementById('smallAntWanderRadius').value = Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5;
       document.getElementById('smallAntWalkSpeed').value = Number.isFinite(meta.antWalkSpeed) ? meta.antWalkSpeed : SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED;
       document.getElementById('smallAntAnimationSpeed').value = Number.isFinite(meta.antAnimationSpeedRatio) ? meta.antAnimationSpeedRatio : SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED;
+      setSmallAntAnimationSelectOptions(document.getElementById('smallAntAnimationSelect'), meta);
     }
   } else {
     const cycleInput = document.getElementById('smallAntColorCycle');
     if (cycleInput) cycleInput.checked = SmallVillageAntManager.colorCycle === true;
+    setSmallAntAnimationSelectOptions(document.getElementById('smallAntAnimationSelect'), null);
   }
 }
 if (selectedObject?.metadata?.type === 'interaction_zone') {
@@ -8880,7 +8882,8 @@ function normalizeSmallAntImportedMesh(mesh, root) {
   mesh.visibility = 1;
   mesh.isPickable = hasGeometry;
   mesh.checkCollisions = false;
-  mesh.alwaysSelectAsActiveMesh = hasGeometry;
+  mesh.alwaysSelectAsActiveMesh = false;
+  mesh.receiveShadows = false;
   mesh._editRoot = root;
   mesh.metadata = {
     ...(mesh.metadata || {}),
@@ -9005,6 +9008,7 @@ function recoverSmallAntPartialModel(root, reason = 'partial import') {
   boostSmallAntModelVisibility(root);
   updateSmallAntAnimationState(root, false);
   updateSmallAntAccentPlacement(root, true);
+  if (selectedObject === root || selectedObject?._editRoot === root) updateSelectedBadge();
   if (!meta._smallAntPartialRecoverLogged) {
     console.warn('Small Village Ant GLB recovered from partial load state:', reason, {
       renderableMeshes: renderableMeshes.length,
@@ -9343,6 +9347,7 @@ function buildSmallVillageAnt(root) {
   meta.antAnimationSpeedRatio = Number.isFinite(meta.antAnimationSpeedRatio)
     ? meta.antAnimationSpeedRatio
     : SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED;
+  meta.selectedAnimationName = getSmallAntSelectedAnimationName(meta);
   meta.colorCycle = meta.colorCycle === true;
   meta.idleSeed = Number.isFinite(meta.idleSeed) ? meta.idleSeed : Math.random() * Math.PI * 2;
   const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
@@ -9403,6 +9408,68 @@ function refreshSmallVillageAntVisual(root) {
   buildSmallVillageAnt(root);
 }
 
+function getSmallAntAnimationNames(meta) {
+  const groups = Array.isArray(meta?.smallAntAnimationGroups) ? meta.smallAntAnimationGroups : [];
+  const names = [];
+  groups.forEach(group => {
+    const name = String(group?.name || '').trim();
+    if (name && !names.includes(name)) names.push(name);
+  });
+  return names;
+}
+
+function normalizeSmallAntAnimationName(name) {
+  return String(name || '').toLowerCase().replace(/[_-]+/g, ' ').trim();
+}
+
+function getSmallAntSelectedAnimationName(meta) {
+  const value = String(meta?.selectedAnimationName || '').trim();
+  return value && value !== 'auto' ? value : null;
+}
+
+function isSmallAntLocomotionAnimationName(name) {
+  const normalized = normalizeSmallAntAnimationName(name);
+  return /\b(walk|run|crawl|move|carry walk)\b/.test(normalized);
+}
+
+function getSmallAntAnimationGroupByName(meta, name) {
+  const groups = Array.isArray(meta?.smallAntAnimationGroups) ? meta.smallAntAnimationGroups : [];
+  const wanted = normalizeSmallAntAnimationName(name);
+  if (!wanted) return null;
+  return groups.find(group => normalizeSmallAntAnimationName(group?.name) === wanted) ||
+    groups.find(group => normalizeSmallAntAnimationName(group?.name).includes(wanted)) ||
+    null;
+}
+
+function setSmallAntAnimationSelectOptions(select, meta) {
+  if (!select) return;
+  const names = getSmallAntAnimationNames(meta);
+  const selected = getSmallAntSelectedAnimationName(meta) || 'auto';
+  const signature = [selected, ...names].join('|');
+  if (select.dataset.animationSignature !== signature) {
+    select.innerHTML = '';
+    const auto = document.createElement('option');
+    auto.value = 'auto';
+    auto.textContent = 'Auto Wander';
+    select.appendChild(auto);
+    names.forEach(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = isSmallAntLocomotionAnimationName(name) ? `${name} (moves)` : name;
+      select.appendChild(option);
+    });
+    if (!names.length) {
+      const waiting = document.createElement('option');
+      waiting.value = '';
+      waiting.textContent = meta?.smallAntModelLoading ? 'Loading animations...' : 'No GLB animations found';
+      waiting.disabled = true;
+      select.appendChild(waiting);
+    }
+    select.dataset.animationSignature = signature;
+  }
+  select.value = [...select.options].some(option => option.value === selected) ? selected : 'auto';
+}
+
 function getSmallAntAnimationGroup(meta, state = 'walk') {
   const groups = Array.isArray(meta.smallAntAnimationGroups) ? meta.smallAntAnimationGroups : [];
   if (!groups.length) return null;
@@ -9431,12 +9498,31 @@ function getSmallAntAnimationGroup(meta, state = 'walk') {
   return locomotion[0]?.group || (groups.length === 1 ? groups[0] : null);
 }
 
-function updateSmallAntAnimationState(root, moving) {
+function updateSmallAntAnimationState(root, moving, forcedAnimationName = null) {
   const meta = root?.metadata || {};
   const groups = Array.isArray(meta.smallAntAnimationGroups) ? meta.smallAntAnimationGroups : [];
   if (!groups.length) {
     meta.smallAntWalkPlaying = false;
     return false;
+  }
+  const selectedAnimationName = String(forcedAnimationName || getSmallAntSelectedAnimationName(meta) || '').trim();
+  if (selectedAnimationName) {
+    const selectedGroup = getSmallAntAnimationGroupByName(meta, selectedAnimationName);
+    if (selectedGroup) {
+      const speed = Math.max(.1, Math.min(2, meta.antAnimationSpeedRatio || SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED));
+      const label = `selected:${selectedGroup.name}`;
+      if (meta.activeAnimation !== label || meta.activeSmallAntAnimation !== selectedGroup) {
+        groups.forEach(animationGroup => animationGroup.stop());
+        selectedGroup.speedRatio = speed;
+        selectedGroup.start(true);
+      } else {
+        selectedGroup.speedRatio = speed;
+      }
+      meta.activeAnimation = label;
+      meta.activeSmallAntAnimation = selectedGroup;
+      meta.smallAntWalkPlaying = moving && isSmallAntLocomotionAnimationName(selectedGroup.name);
+      return meta.smallAntWalkPlaying;
+    }
   }
   const wanted = moving ? 'walk' : 'idle';
   const walkGroup = getSmallAntAnimationGroup(meta, 'walk');
@@ -9549,6 +9635,7 @@ async function tryLoadSmallVillageAntModel(root) {
     meta.smallAntModelFailed = false;
     meta.smallAntAccentPlaced = false;
     updateSmallAntAccentPlacement(root, true);
+    if (selectedObject === root || selectedObject?._editRoot === root) updateSelectedBadge();
   } catch (error) {
     if (modelRoot && !modelRoot.isDisposed?.()) {
       try { modelRoot.dispose(false, true); } catch(e) {}
@@ -9624,7 +9711,11 @@ function readSmallAntControlsIntoMetadata(root, options = {}) {
     colorCycle: isSmallAntColorCycleControlOn(),
     wanderRadius: Math.max(0, Math.min(30, Number(document.getElementById('smallAntWanderRadius')?.value) || 5)),
     antWalkSpeed: Math.max(.05, Math.min(2, Number(document.getElementById('smallAntWalkSpeed')?.value) || SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED)),
-    antAnimationSpeedRatio: Math.max(.1, Math.min(2, Number(document.getElementById('smallAntAnimationSpeed')?.value) || SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED))
+    antAnimationSpeedRatio: Math.max(.1, Math.min(2, Number(document.getElementById('smallAntAnimationSpeed')?.value) || SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED)),
+    selectedAnimationName: (() => {
+      const value = document.getElementById('smallAntAnimationSelect')?.value || 'auto';
+      return value && value !== 'auto' ? value : null;
+    })()
   };
   next.moveSpeed = next.antWalkSpeed;
   const changed = Object.keys(next).some(key => meta[key] !== next[key]);
@@ -9893,6 +9984,48 @@ function duplicateSelectedNPC() {
   showToast('Duplicated NPC');
 }
 
+function duplicateSelectedSmallAnt() {
+  const source = getSelectedSmallVillageAnt();
+  if (!source) {
+    showToast('Select a small village ant first');
+    return;
+  }
+  if (!SMALL_VILLAGE_ANT_RUNTIME_ENABLED) {
+    SMALL_VILLAGE_ANT_RUNTIME_ENABLED = true;
+    localStorage.setItem(SMALL_VILLAGE_ANT_ENABLED_KEY, '1');
+  }
+  const meta = source.metadata || {};
+  const pos = source.position.clone();
+  pos.x += 1.4;
+  pos.z += .9;
+  const groundY = getVillageGroundHeightAt(pos.x, pos.z);
+  if (Number.isFinite(groundY)) pos.y = groundY;
+  const clone = spawnAsset('small_village_ant', pos, {
+    isClone: true,
+    displayName: meta.displayName || 'Little Village Ant',
+    customDialogue: meta.customDialogue || '',
+    haloColor: meta.haloColor || '#e8c56a',
+    colorCycle: meta.colorCycle === true,
+    haloVerticalOffset: Number.isFinite(meta.haloVerticalOffset) ? meta.haloVerticalOffset : null,
+    behavior: 'cleanMiniNpc',
+    movementController: 'clean-mini-npc',
+    wanderRadius: Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5,
+    antWalkSpeed: Number.isFinite(meta.antWalkSpeed) ? meta.antWalkSpeed : SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED,
+    antAnimationSpeedRatio: Number.isFinite(meta.antAnimationSpeedRatio) ? meta.antAnimationSpeedRatio : SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED,
+    selectedAnimationName: meta.selectedAnimationName || null,
+    modelScale: Number.isFinite(meta.modelScale) ? meta.modelScale : null
+  });
+  if (!clone) return;
+  clone.rotation = source.rotation.clone();
+  clone.scaling = source.scaling.clone();
+  updateSmallAntPlacementOrigin(clone);
+  registerEditableRoot(clone.name, clone);
+  adminGizmoMode = 'move';
+  setSelectedEditableObject(clone);
+  triggerAutoSave();
+  showToast('Duplicated Small Ant');
+}
+
 function updateNPCPlacementOrigin(root, previousPosition = null) {
   if (!root || root.metadata?.type !== 'npc') return;
   const meta = root.metadata;
@@ -10099,17 +10232,32 @@ function updateSmallVillageAntPopulation(dt) {
     root.setEnabled(NPCManager.visible);
     if (!NPCManager.visible) return;
     const beingDragged = window._dragSelectedObject === root;
-    if (NPCManager.paused || meta.dialogueOpen || beingDragged) {
-      updateSmallAntAnimationState(root, false);
+    const selectedForEditing = selectedObject === root || selectedObject?._editRoot === root;
+    const adminPreviewing = adminMode && Number.isFinite(meta.adminPreviewUntil) && meta.adminPreviewUntil > now && !beingDragged;
+    const pauseForAdminEdit = adminMode && selectedForEditing && !adminPreviewing;
+    const selectedAnimationName = getSmallAntSelectedAnimationName(meta);
+    const forcedLocomotion = selectedAnimationName && isSmallAntLocomotionAnimationName(selectedAnimationName);
+    const canMoveForAnimation = !selectedAnimationName || forcedLocomotion;
+    if (NPCManager.paused || meta.dialogueOpen || beingDragged || pauseForAdminEdit) {
+      updateSmallAntAnimationState(root, false, selectedAnimationName);
       counterSmallAntVisualRootMotion(root);
       updateSmallAntAccentPlacement(root, true);
       updateSmallAntAccentPulse(root, now);
       return;
     }
-    if (!meta.target && now >= (meta.waitUntil || 0)) chooseCleanSmallAntWanderTarget(root);
+    const distSq = charMesh
+      ? ((root.position.x - charMesh.position.x) ** 2 + (root.position.z - charMesh.position.z) ** 2)
+      : 0;
+    if (!meta.dialogueOpen && root !== selectedObject && !adminPreviewing && distSq > 140 * 140) {
+      if (now - (meta._lastFarSmallAntUpdateAt || 0) < 1600) return;
+      meta._lastFarSmallAntUpdateAt = now;
+      updateSmallAntAnimationState(root, false, selectedAnimationName);
+      return;
+    }
+    if (canMoveForAnimation && !meta.target && (forcedLocomotion || now >= (meta.waitUntil || 0))) chooseCleanSmallAntWanderTarget(root);
     const before = root.position.clone();
-    const wantsMove = !!meta.target;
-    const walkPlaying = updateSmallAntAnimationState(root, wantsMove);
+    const wantsMove = canMoveForAnimation && !!meta.target;
+    const walkPlaying = updateSmallAntAnimationState(root, wantsMove, selectedAnimationName);
     let moving = false;
     if (wantsMove && !walkPlaying) {
       meta.lastProgressAt = now;
@@ -10140,7 +10288,7 @@ function updateSmallVillageAntPopulation(dt) {
       meta.waitUntil = now + 120;
       moving = false;
     }
-    if (!moving) updateSmallAntAnimationState(root, false);
+    if (!moving) updateSmallAntAnimationState(root, false, selectedAnimationName);
     counterSmallAntVisualRootMotion(root);
     updateSmallAntAccentPlacement(root, true);
     updateSmallAntAccentPulse(root, now);
@@ -10585,6 +10733,23 @@ function getSmallAntSpawnNearPlayer() {
   return pos;
 }
 
+function readSmallAntSelectedAnimationControl() {
+  const value = document.getElementById('smallAntAnimationSelect')?.value || 'auto';
+  return value && value !== 'auto' ? value : null;
+}
+
+function placeSmallAntFromAdmin() {
+  if (!adminMode) {
+    showToast('Enter Admin Mode first');
+    return;
+  }
+  if (!SMALL_VILLAGE_ANT_RUNTIME_ENABLED) {
+    SMALL_VILLAGE_ANT_RUNTIME_ENABLED = true;
+    localStorage.setItem(SMALL_VILLAGE_ANT_ENABLED_KEY, '1');
+  }
+  beginAdminPlacement({ kind:'asset', key:'small_village_ant' });
+}
+
 function respawnSmallAntNearPlayer(options = {}) {
   if (!SMALL_VILLAGE_ANT_RUNTIME_ENABLED) {
     if (options.forceEnable === false) {
@@ -10610,7 +10775,8 @@ function respawnSmallAntNearPlayer(options = {}) {
     movementController: 'clean-mini-npc',
     wanderRadius: Math.max(0, Math.min(30, Number(document.getElementById('smallAntWanderRadius')?.value) || 5)),
     antWalkSpeed: Math.max(.05, Math.min(2, Number(document.getElementById('smallAntWalkSpeed')?.value) || SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED)),
-    antAnimationSpeedRatio: Math.max(.1, Math.min(2, Number(document.getElementById('smallAntAnimationSpeed')?.value) || SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED))
+    antAnimationSpeedRatio: Math.max(.1, Math.min(2, Number(document.getElementById('smallAntAnimationSpeed')?.value) || SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED)),
+    selectedAnimationName: readSmallAntSelectedAnimationControl()
   });
   if (!root) return null;
   if (root.metadata) root.metadata.moveSpeed = root.metadata.antWalkSpeed;
@@ -10689,10 +10855,12 @@ function updateSmallAntFromControls(options = {}) {
     return;
   }
   if (options.history) recordEditorHistory('edit small ant');
+  const previousAnimationName = ant.metadata?.selectedAnimationName || null;
   readSmallAntControlsIntoMetadata(ant, { resetHome:options.resetHome !== false, forceColors:true });
   ant.metadata.target = null;
   ant.metadata.waitUntil = performance.now();
-  if (options.previewWalk) ant.metadata.adminPreviewUntil = performance.now() + 12000;
+  if (previousAnimationName !== (ant.metadata.selectedAnimationName || null)) ant.metadata.activeAnimation = null;
+  if (options.previewWalk || options.previewAnimation) ant.metadata.adminPreviewUntil = performance.now() + 12000;
   applySmallAntVisualColors(ant);
   if (options.refreshPanel !== false) updateSelectedBadge();
   if (options.save) triggerAutoSave();
@@ -10701,6 +10869,10 @@ function updateSmallAntFromControls(options = {}) {
 
 function previewSmallAntSettingsFromControls() {
   updateSmallAntFromControls({ resetHome:false, refreshPanel:false, save:false, toast:false, history:false });
+}
+
+function previewSmallAntAnimationFromControls() {
+  updateSmallAntFromControls({ resetHome:false, refreshPanel:false, save:false, toast:false, history:false, previewAnimation:true });
 }
 
 function applySmallAntSettings() {
@@ -10841,6 +11013,7 @@ function debugSmallAnt(target = null, options = {}) {
       waitUntil: smallAntDebugNumber(meta.waitUntil),
       antWalkSpeed: smallAntDebugNumber(meta.antWalkSpeed),
       antAnimationSpeedRatio: smallAntDebugNumber(meta.antAnimationSpeedRatio),
+      selectedAnimationName: meta.selectedAnimationName || null,
       colorCycle: meta.colorCycle === true,
       haloColor: meta.haloColor || null
     } : null,
@@ -15431,6 +15604,7 @@ function collectWorldLayoutData() {
     moveSpeed: Number.isFinite(node.metadata.moveSpeed) ? node.metadata.moveSpeed : null,
     antWalkSpeed: Number.isFinite(node.metadata.antWalkSpeed) ? node.metadata.antWalkSpeed : null,
     antAnimationSpeedRatio: Number.isFinite(node.metadata.antAnimationSpeedRatio) ? node.metadata.antAnimationSpeedRatio : null,
+    selectedAnimationName: node.metadata.selectedAnimationName || null,
     wanderRadius: Number.isFinite(node.metadata.wanderRadius) ? node.metadata.wanderRadius : null,
     animationMap: node.metadata.animationMap || null,
     animationSpeed: node.metadata.animationSpeed || null,
@@ -15854,7 +16028,8 @@ function loadWorldLayout(){
                   antWalkSpeed: Number.isFinite(item.antWalkSpeed)
                     ? item.antWalkSpeed
                     : (Number.isFinite(item.moveSpeed) ? Math.min(item.moveSpeed, SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED) : SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED),
-                  antAnimationSpeedRatio: Number.isFinite(item.antAnimationSpeedRatio) ? item.antAnimationSpeedRatio : SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED
+                  antAnimationSpeedRatio: Number.isFinite(item.antAnimationSpeedRatio) ? item.antAnimationSpeedRatio : SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED,
+                  selectedAnimationName: item.selectedAnimationName || null
                 }
             : (item.type === 'hanging_lantern' || item.type === 'hangingLantern')
               ? {
@@ -16060,6 +16235,10 @@ function duplicateSelectedFence(){
 
   if (selectedObject.metadata?.type === 'npc') {
     duplicateSelectedNPC();
+    return;
+  }
+  if (selectedObject.metadata?.type === 'small_village_ant') {
+    duplicateSelectedSmallAnt();
     return;
   }
 
@@ -18755,7 +18934,6 @@ function attachSelectedGizmo() {
   if (!selectedObject || !gizmoManager) return;
   if (selectedObject._editRoot?.metadata?.type === 'npc') selectedObject = selectedObject._editRoot;
   if (selectedObject._editRoot?.metadata?.type === 'small_village_ant') selectedObject = selectedObject._editRoot;
-  if (selectedObject?.metadata?.type === 'small_village_ant') adminGizmoMode = 'move';
   const node = ensureSelectedNodeEditableForGizmo(selectedObject);
   if (!node) return;
 
@@ -18850,6 +19028,7 @@ function rotateSelectedBy(angle) {
   prepareObjectForEditing(selectedObject);
   selectedObject.rotation.y += angle;
   if (selectedObject.metadata?.type === 'npc') updateNPCAdminRotation(selectedObject);
+  if (selectedObject.metadata?.type === 'small_village_ant') updateSmallAntPlacementOrigin(selectedObject, null);
   refreshEditedObject(selectedObject);
   if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
   if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
@@ -23199,6 +23378,7 @@ function applyLayoutItemToExistingNode(node, item) {
     moveSpeed: Number.isFinite(item.moveSpeed) ? item.moveSpeed : null,
     antWalkSpeed: Number.isFinite(item.antWalkSpeed) ? item.antWalkSpeed : null,
     antAnimationSpeedRatio: Number.isFinite(item.antAnimationSpeedRatio) ? item.antAnimationSpeedRatio : null,
+    selectedAnimationName: item.selectedAnimationName || null,
     wanderRadius: Number.isFinite(item.wanderRadius) ? item.wanderRadius : null,
     animationMap: item.animationMap || null,
     animationSpeed: item.animationSpeed || null,
@@ -23736,6 +23916,7 @@ function scaleSelected(factor) {
   selectedObject.scaling.y *= factor;
   selectedObject.scaling.z *= factor;
   refreshEditedObject(selectedObject);
+  if (selectedObject.metadata?.type === 'small_village_ant') updateSmallAntPlacementOrigin(selectedObject, null);
   if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
   if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
   if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
@@ -23937,7 +24118,8 @@ function placeAssetAtPoint(key, pickedPoint) {
             movementController: 'clean-mini-npc',
             wanderRadius: 5,
             antWalkSpeed: SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED,
-            antAnimationSpeedRatio: SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED
+            antAnimationSpeedRatio: SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED,
+            selectedAnimationName: readSmallAntSelectedAnimationControl()
           }
       : key === 'hanging_lantern'
         ? { isClone: true, lanternColor: '#ffdd88', chainHeight: 1.15 }
@@ -24307,11 +24489,14 @@ window.toggleNPCVisibility = toggleNPCVisibility;
 window.toggleNPCPause = toggleNPCPause;
 window.spawnNPCFromPanel = spawnNPCFromPanel;
 window.duplicateSelectedNPC = duplicateSelectedNPC;
+window.duplicateSelectedSmallAnt = duplicateSelectedSmallAnt;
 window.applySelectedNPCChanges = applySelectedNPCChanges;
+window.placeSmallAntFromAdmin = placeSmallAntFromAdmin;
 window.setSmallAntRuntimeEnabled = setSmallAntRuntimeEnabled;
 window.respawnSmallAntNearPlayer = respawnSmallAntNearPlayer;
 window.applySmallAntSettings = applySmallAntSettings;
 window.previewSmallAntSettingsFromControls = previewSmallAntSettingsFromControls;
+window.previewSmallAntAnimationFromControls = previewSmallAntAnimationFromControls;
 window.debugSmallAnt = debugSmallAnt;
 window.testSmallAntAssetFetch = testSmallAntAssetFetch;
 window.reloadSmallAntModel = reloadSmallAntModel;
