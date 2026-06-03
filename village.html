@@ -8968,6 +8968,41 @@ function getSmallAntImportedRootNodes(modelRoot) {
   return roots;
 }
 
+function findSmallAntAnimationGroupsForRoot(root) {
+  if (!root || root.isDisposed?.()) return [];
+  const meta = root.metadata || {};
+  const modelRoot = meta.smallAntModelRoot || findSmallAntModelRoot(root);
+  if (!modelRoot) return [];
+  return scene.animationGroups.filter(group =>
+    group &&
+    !group.isDisposed?.() &&
+    Array.isArray(group.targetedAnimations) &&
+    group.targetedAnimations.some(targeted => {
+      const target = targeted?.target;
+      return target === modelRoot || isSmallAntNodeDescendantOf(target, modelRoot);
+    })
+  );
+}
+
+function refreshSmallAntAnimationGroups(root) {
+  if (!root || root.isDisposed?.() || root.metadata?.type !== 'small_village_ant') return [];
+  const meta = root.metadata || {};
+  const existing = Array.isArray(meta.smallAntAnimationGroups)
+    ? meta.smallAntAnimationGroups.filter(group => group && !group.isDisposed?.())
+    : [];
+  const found = findSmallAntAnimationGroupsForRoot(root);
+  const merged = [];
+  [...existing, ...found].forEach(group => {
+    if (group && !merged.includes(group)) merged.push(group);
+  });
+  meta.smallAntAnimationGroups = merged;
+  meta.smallAntKnownAnimationNames = merged.length
+    ? merged.map(group => group?.name).filter(Boolean)
+    : (Array.isArray(meta.smallAntKnownAnimationNames) ? meta.smallAntKnownAnimationNames : SMALL_VILLAGE_ANT_KNOWN_ANIMATIONS.slice());
+  meta.smallAntAnimationDisabled = merged.length === 0;
+  return merged;
+}
+
 function recoverSmallAntPartialModel(root, reason = 'partial import') {
   if (!root || root.isDisposed?.() || root.metadata?.type !== 'small_village_ant') return false;
   const meta = root.metadata || {};
@@ -8996,9 +9031,7 @@ function recoverSmallAntPartialModel(root, reason = 'partial import') {
     rotation: node.rotation?.clone?.() || BABYLON.Vector3.Zero(),
     rotationQuaternion: node.rotationQuaternion?.clone?.() || null
   }));
-  meta.smallAntAnimationGroups = Array.isArray(meta.smallAntAnimationGroups) ? meta.smallAntAnimationGroups : [];
-  meta.smallAntKnownAnimationNames = getSmallAntAnimationNames(meta);
-  meta.smallAntAnimationDisabled = meta.smallAntAnimationGroups.length === 0;
+  refreshSmallAntAnimationGroups(root);
   meta.smallAntLoadToken = (Number.isFinite(meta.smallAntLoadToken) ? meta.smallAntLoadToken : 0) + 1;
   meta.smallAntModelLoading = false;
   meta.smallAntModelLoaded = true;
@@ -9012,8 +9045,9 @@ function recoverSmallAntPartialModel(root, reason = 'partial import') {
   updateSmallAntAccentPlacement(root, true);
   if (selectedObject === root || selectedObject?._editRoot === root) updateSelectedBadge();
   if (!meta._smallAntPartialRecoverLogged) {
-    console.warn('Small Village Ant GLB recovered from partial load state:', reason, {
+    console.info('Small Village Ant GLB recovered from partial load state:', reason, {
       renderableMeshes: renderableMeshes.length,
+      animationGroups: meta.smallAntAnimationGroups.length,
       modelScale: Number((meta.modelScale || 0).toFixed(4)),
       bounds: smallAntDebugBounds?.(getSmallAntVisualBounds(root)) || null
     });
@@ -9517,7 +9551,7 @@ function getSmallAntAnimationGroup(meta, state = 'walk') {
 
 function updateSmallAntAnimationState(root, moving, forcedAnimationName = null) {
   const meta = root?.metadata || {};
-  const groups = Array.isArray(meta.smallAntAnimationGroups) ? meta.smallAntAnimationGroups : [];
+  const groups = refreshSmallAntAnimationGroups(root);
   if (!groups.length) {
     meta.smallAntWalkPlaying = false;
     return false;
@@ -9619,6 +9653,10 @@ async function tryLoadSmallVillageAntModel(root) {
       disposeSmallAntImportedResult(result, modelRoot);
       return;
     }
+    meta.smallAntModelLoading = false;
+    meta.smallAntModelLoaded = true;
+    meta.smallAntModelFailed = false;
+    refreshSmallAntAnimationGroups(root);
     normalizeSmallAntSharedImportOffset(root, importedNodes);
     (result.meshes || []).forEach(mesh => normalizeSmallAntImportedMesh(mesh, root));
     (meta.smallAntParts || []).forEach(part => {
@@ -9649,8 +9687,6 @@ async function tryLoadSmallVillageAntModel(root) {
       meta._smallAntAnimationNamesLogged = true;
     }
     updateSmallAntAnimationState(root, false);
-    meta.smallAntModelLoaded = true;
-    meta.smallAntModelFailed = false;
     meta.smallAntAccentPlaced = false;
     updateSmallAntAccentPlacement(root, true);
     if (selectedObject === root || selectedObject?._editRoot === root) updateSelectedBadge();
@@ -10203,6 +10239,12 @@ function counterSmallAntVisualRootMotion(root) {
     modelRoot.position.copyFrom(rest);
     modelRoot.rotation.set(0, 0, 0);
   }
+  if (meta.smallAntModelLoaded && modelRoot) {
+    visualRoot.rotation.set(0, 0, 0);
+    visualRoot.position.set(0, 0, 0);
+    meta.smallAntVisualAnchorCenter = null;
+    return;
+  }
   if (Array.isArray(meta.smallAntImportedRootRest)) {
     meta.smallAntImportedRootRest.forEach(entry => {
       if (!entry?.node || entry.node.isDisposed?.()) return;
@@ -10212,11 +10254,6 @@ function counterSmallAntVisualRootMotion(root) {
     });
   }
   visualRoot.rotation.set(0, 0, 0);
-  if (meta.smallAntModelLoaded && modelRoot) {
-    visualRoot.position.set(0, 0, 0);
-    meta.smallAntVisualAnchorCenter = null;
-    return;
-  }
   const bounds = getSmallAntVisualBounds(root);
   if (!bounds) return;
   if (!meta.smallAntVisualAnchorCenter) {
@@ -10883,8 +10920,11 @@ function updateSmallAntFromControls(options = {}) {
   readSmallAntControlsIntoMetadata(ant, { resetHome:options.resetHome !== false, forceColors:true });
   ant.metadata.target = null;
   ant.metadata.waitUntil = performance.now();
+  const selectedAnimationName = getSmallAntSelectedAnimationName(ant.metadata);
   if (previousAnimationName !== (ant.metadata.selectedAnimationName || null)) ant.metadata.activeAnimation = null;
   if (options.previewWalk || options.previewAnimation) ant.metadata.adminPreviewUntil = performance.now() + 12000;
+  if (selectedAnimationName && isSmallAntLocomotionAnimationName(selectedAnimationName)) chooseCleanSmallAntWanderTarget(ant);
+  updateSmallAntAnimationState(ant, !!ant.metadata.target, selectedAnimationName);
   applySmallAntVisualColors(ant);
   if (options.refreshPanel !== false) updateSelectedBadge();
   if (options.save) triggerAutoSave();
