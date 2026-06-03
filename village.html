@@ -8901,6 +8901,40 @@ function normalizeSmallAntImportedMesh(mesh, root) {
     if ('useAlphaFromAlbedoTexture' in material) material.useAlphaFromAlbedoTexture = false;
     if (window._gpuMode === 'webgpu') webgpuCapMaterial4(material);
   }
+  try { mesh.refreshBoundingInfo?.(true); } catch(e) {}
+}
+
+function normalizeSmallAntSharedImportOffset(root, importedNodes) {
+  if (!root || !Array.isArray(importedNodes) || !importedNodes.length) return null;
+  const groups = new Map();
+  importedNodes.forEach(node => {
+    const position = node?.position;
+    if (!position || !Number.isFinite(position.x) || !Number.isFinite(position.y) || !Number.isFinite(position.z)) return;
+    if (Math.hypot(position.x, position.y, position.z) < .1) return;
+    const key = [position.x, position.y, position.z].map(value => value.toFixed(3)).join('|');
+    if (!groups.has(key)) groups.set(key, { position:position.clone(), nodes:[] });
+    groups.get(key).nodes.push(node);
+  });
+  const shared = [...groups.values()]
+    .filter(group => group.nodes.length >= 2)
+    .sort((a, b) => b.nodes.length - a.nodes.length)[0];
+  if (!shared) return null;
+  shared.nodes.forEach(node => {
+    node.position.subtractInPlace(shared.position);
+    node.computeWorldMatrix?.(true);
+  });
+  const meta = root.metadata || {};
+  meta.smallAntSharedImportOffset = {
+    x:shared.position.x,
+    y:shared.position.y,
+    z:shared.position.z,
+    nodes:shared.nodes.map(node => node.name || node.id || 'unnamed')
+  };
+  if (!meta._smallAntSharedOffsetLogged) {
+    console.info('small ant shared GLB root offset normalized', meta.smallAntSharedImportOffset);
+    meta._smallAntSharedOffsetLogged = true;
+  }
+  return shared.position;
 }
 
 function makeSmallAntPart(mesh, root, role) {
@@ -8931,6 +8965,7 @@ function getSmallAntVisualBounds(root) {
   meshes.forEach(mesh => {
     if (mesh.metadata?.smallAntModelMesh && !hasSmallAntRenderableGeometry(mesh)) return;
     mesh.computeWorldMatrix(true);
+    try { mesh.refreshBoundingInfo?.(true); } catch(e) {}
     const box = mesh.getBoundingInfo?.().boundingBox;
     if (!box) return;
     box.vectorsWorld.forEach(point => {
@@ -9346,6 +9381,7 @@ async function tryLoadSmallVillageAntModel(root) {
     if (!renderableMeshes.length) {
       throw new Error('Imported Small Village Ant GLB has no renderable mesh geometry');
     }
+    normalizeSmallAntSharedImportOffset(root, importedNodes);
     (result.meshes || []).forEach(mesh => normalizeSmallAntImportedMesh(mesh, root));
     (meta.smallAntParts || []).forEach(part => {
       const role = part?.metadata?.smallAntPart;
@@ -9893,6 +9929,11 @@ function counterSmallAntVisualRootMotion(root) {
     });
   }
   visualRoot.rotation.set(0, 0, 0);
+  if (meta.smallAntModelLoaded && modelRoot) {
+    visualRoot.position.set(0, 0, 0);
+    meta.smallAntVisualAnchorCenter = null;
+    return;
+  }
   const bounds = getSmallAntVisualBounds(root);
   if (!bounds) return;
   if (!meta.smallAntVisualAnchorCenter) {
