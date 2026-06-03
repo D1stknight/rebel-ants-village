@@ -1431,6 +1431,22 @@ const WORLD_LAYOUT_STORAGE_KEY = `rebelAntsWorldLayout:${CURRENT_VILLAGE_ID}`;
 const PLAYER_ONBOARDING_SEEN_KEY = 'rebelAntsHubOnboardingSeen:v1';
 window.REBEL_ANTS_VILLAGES = VILLAGE_REGISTRY;
 window.CURRENT_REBEL_ANTS_VILLAGE = CURRENT_VILLAGE;
+if (window.BABYLON?.DracoCompression) {
+  BABYLON.DracoCompression.Configuration = {
+    decoder: {
+      wasmUrl: 'https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js',
+      wasmBinaryUrl: 'https://cdn.babylonjs.com/draco_decoder_gltf.wasm',
+      fallbackUrl: 'https://cdn.babylonjs.com/draco_decoder_gltf.js'
+    }
+  };
+}
+if (window.BABYLON?.DracoDecoder) {
+  BABYLON.DracoDecoder.DefaultConfiguration = {
+    wasmUrl: 'https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js',
+    wasmBinaryUrl: 'https://cdn.babylonjs.com/draco_decoder_gltf.wasm',
+    fallbackUrl: 'https://cdn.babylonjs.com/draco_decoder_gltf.js'
+  };
+}
 // Inline admin buttons call window functions. Bind these wrappers early so
 // footer cache/save and core gizmo controls do not depend on the final export
 // block running after all async world setup.
@@ -8813,6 +8829,7 @@ const SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED = 1;
 const SMALL_VILLAGE_ANT_VISUAL_DRIFT_EPSILON = .025;
 const SMALL_VILLAGE_ANT_VISUAL_DRIFT_CORRECTION_MAX = .18;
 const SMALL_VILLAGE_ANT_TARGET_VISUAL_SIZE = .82;
+const SMALL_VILLAGE_ANT_MIN_VISIBLE_SIZE = .14;
 const SMALL_VILLAGE_ANT_MIN_MODEL_SCALE = .005;
 const SMALL_VILLAGE_ANT_MAX_MODEL_SCALE = 8000;
 let SMALL_VILLAGE_ANT_RUNTIME_ENABLED = localStorage.getItem(SMALL_VILLAGE_ANT_ENABLED_KEY) === '1';
@@ -8847,16 +8864,29 @@ function makeSmallAntMaterial(key, color, emissive = '#000000') {
   return material;
 }
 
+function hasSmallAntRenderableGeometry(mesh) {
+  if (!mesh || mesh.isDisposed?.()) return false;
+  if (typeof mesh.getTotalVertices === 'function') return mesh.getTotalVertices() > 0;
+  return !!mesh.geometry;
+}
+
 function normalizeSmallAntImportedMesh(mesh, root) {
   if (!mesh) return;
+  const hasGeometry = hasSmallAntRenderableGeometry(mesh);
   mesh.setEnabled(true);
-  mesh.isVisible = true;
+  mesh.isVisible = hasGeometry;
   mesh.visibility = 1;
-  mesh.isPickable = true;
+  mesh.isPickable = hasGeometry;
   mesh.checkCollisions = false;
-  mesh.alwaysSelectAsActiveMesh = true;
+  mesh.alwaysSelectAsActiveMesh = hasGeometry;
   mesh._editRoot = root;
-  mesh.metadata = { ...(mesh.metadata || {}), smallAntModelMesh:true };
+  mesh.metadata = {
+    ...(mesh.metadata || {}),
+    smallAntImportedMesh:true,
+    smallAntModelMesh:hasGeometry,
+    smallAntHelperMesh:!hasGeometry
+  };
+  if (!hasGeometry) return;
   if (!mesh.material) {
     mesh.material = makeSmallAntMaterial('modelFallback', '#2b170f', '#120806');
   }
@@ -8888,7 +8918,8 @@ function getSmallAntVisualBounds(root) {
     if (!mesh || mesh.isDisposed?.() || !mesh.isEnabled?.() || mesh.isVisible === false) return false;
     const role = mesh.metadata?.smallAntPart;
     if (role === 'shadow' || role === 'accentRing' || role === 'accentHalo') return false;
-    return mesh.metadata?.smallAntModelMesh || role === 'body' || role === 'antenna' || role === 'eye' || role === 'leg';
+    if (mesh.metadata?.smallAntModelMesh) return hasSmallAntRenderableGeometry(mesh);
+    return role === 'body' || role === 'antenna' || role === 'eye' || role === 'leg';
   });
   if (!meshes.length) return null;
   root.computeWorldMatrix(true);
@@ -8896,6 +8927,7 @@ function getSmallAntVisualBounds(root) {
   const min = new BABYLON.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
   const max = new BABYLON.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
   meshes.forEach(mesh => {
+    if (mesh.metadata?.smallAntModelMesh && !hasSmallAntRenderableGeometry(mesh)) return;
     mesh.computeWorldMatrix(true);
     const box = mesh.getBoundingInfo?.().boundingBox;
     if (!box) return;
@@ -9013,6 +9045,75 @@ function centerSmallAntModelOnRoot(root) {
     meta._smallAntCenterLogged = true;
   }
   return true;
+}
+
+function makeSmallAntFallbackPart(root, mesh, role) {
+  if (!mesh || !root) return mesh;
+  const visualRoot = root.metadata?.antVisualRoot || root.metadata?.smallAntVisualRoot || root;
+  mesh.parent = visualRoot;
+  mesh.isPickable = true;
+  mesh.checkCollisions = false;
+  mesh._editRoot = root;
+  mesh.metadata = {
+    ...(mesh.metadata || {}),
+    smallAntPart:role,
+    smallAntFallbackBody:true
+  };
+  return mesh;
+}
+
+function createSmallAntFallbackBody(root, reason = 'model unavailable') {
+  if (!root || root.metadata?.type !== 'small_village_ant') return;
+  const meta = root.metadata || {};
+  if (meta.smallAntFallbackBodyCreated) return;
+  const bodyMat = makeSmallAntMaterial('fallbackBody', '#24130d', '#080403');
+  const eyeMat = makeSmallAntMaterial('fallbackEye', '#f4dd8a', '#f4dd8a');
+  const pieces = [];
+  const add = (mesh, role) => {
+    makeSmallAntFallbackPart(root, mesh, role);
+    pieces.push(mesh);
+    return mesh;
+  };
+  const abdomen = add(BABYLON.MeshBuilder.CreateSphere(`${root.name}_fallback_abdomen`, { diameter:.46, segments:10 }, scene), 'body');
+  abdomen.scaling.set(1.25,.58,1.45);
+  abdomen.position.set(0,.2,-.18);
+  abdomen.material = bodyMat;
+  const thorax = add(BABYLON.MeshBuilder.CreateSphere(`${root.name}_fallback_thorax`, { diameter:.36, segments:10 }, scene), 'body');
+  thorax.scaling.set(1,.62,1.08);
+  thorax.position.set(0,.24,.2);
+  thorax.material = bodyMat;
+  const head = add(BABYLON.MeshBuilder.CreateSphere(`${root.name}_fallback_head`, { diameter:.3, segments:10 }, scene), 'body');
+  head.scaling.set(1,.76,1);
+  head.position.set(0,.28,.5);
+  head.material = bodyMat;
+  [-.08,.08].forEach(x => {
+    const eye = add(BABYLON.MeshBuilder.CreateSphere(`${root.name}_fallback_eye_${x}`, { diameter:.035, segments:6 }, scene), 'eye');
+    eye.position.set(x,.34,.65);
+    eye.material = eyeMat;
+    const antenna = add(BABYLON.MeshBuilder.CreateCylinder(`${root.name}_fallback_antenna_${x}`, { height:.28, diameter:.018, tessellation:5 }, scene), 'antenna');
+    antenna.position.set(x * 1.9,.47,.58);
+    antenna.rotation.x = .78;
+    antenna.rotation.z = -Math.sign(x) * .34;
+    antenna.material = bodyMat;
+  });
+  [-.24,.24].forEach(side => {
+    [-.18,.12,.38].forEach((z, index) => {
+      const leg = add(BABYLON.MeshBuilder.CreateCylinder(`${root.name}_fallback_leg_${side}_${index}`, { height:.48, diameter:.025, tessellation:5 }, scene), 'leg');
+      leg.position.set(side,.17,z);
+      leg.rotation.z = side > 0 ? .96 : -.96;
+      leg.rotation.x = index === 1 ? .15 : -.12;
+      leg.material = bodyMat;
+    });
+  });
+  meta.smallAntParts = [...(meta.smallAntParts || []), ...pieces];
+  meta.smallAntFallbackBodyCreated = true;
+  meta.smallAntModelFailed = true;
+  meta.smallAntAccentPlaced = false;
+  if (!meta._smallAntFallbackLogged) {
+    console.warn('Small Village Ant GLB body unavailable; showing fallback body:', reason);
+    meta._smallAntFallbackLogged = true;
+  }
+  updateSmallAntAccentPlacement(root, true);
 }
 
 function disposeSmallVillageAntRoot(root) {
@@ -9191,6 +9292,7 @@ async function tryLoadSmallVillageAntModel(root) {
     const exists = await fetch(modelUrl, { method:'HEAD' }).then(response => response.ok).catch(() => false);
     if (!exists) {
       meta.smallAntModelFailed = true;
+      createSmallAntFallbackBody(root, `missing asset at ${modelUrl}`);
       return;
     }
     const result = await BABYLON.SceneLoader.ImportMeshAsync('', '', modelUrl, scene);
@@ -9210,6 +9312,10 @@ async function tryLoadSmallVillageAntModel(root) {
       if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = modelRoot;
     });
     const importedRootNodes = importedNodes.filter(node => node.parent === modelRoot);
+    const renderableMeshes = (result.meshes || []).filter(hasSmallAntRenderableGeometry);
+    if (!renderableMeshes.length) {
+      throw new Error('Imported Small Village Ant GLB has no renderable mesh geometry');
+    }
     (result.meshes || []).forEach(mesh => normalizeSmallAntImportedMesh(mesh, root));
     (meta.smallAntParts || []).forEach(part => {
       const role = part?.metadata?.smallAntPart;
@@ -9237,8 +9343,17 @@ async function tryLoadSmallVillageAntModel(root) {
     meta.antAnimationSpeedRatio = Number.isFinite(meta.antAnimationSpeedRatio) ? meta.antAnimationSpeedRatio : SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED;
     fitSmallAntModelToVisibleSize(root);
     centerSmallAntModelOnRoot(root);
+    const finalBounds = getSmallAntVisualBounds(root);
+    const finalSize = finalBounds ? Math.max(finalBounds.size.x, finalBounds.size.y, finalBounds.size.z) : 0;
+    if (!finalBounds || finalSize < SMALL_VILLAGE_ANT_MIN_VISIBLE_SIZE) {
+      throw new Error(`Imported Small Village Ant GLB stayed too small after fit (${Number(finalSize || 0).toFixed(4)})`);
+    }
     if (!meta._smallAntAnimationNamesLogged) {
-      console.info('small ant animation groups:', animationGroups.map(group => group.name));
+      console.info('small ant animation groups:', animationGroups.map(group => group.name), {
+        renderableMeshes: renderableMeshes.length,
+        modelScale: Number((meta.modelScale || 0).toFixed(4)),
+        finalSize: Number(finalSize.toFixed(4))
+      });
       meta._smallAntAnimationNamesLogged = true;
     }
     updateSmallAntAnimationState(root, false);
@@ -9248,6 +9363,7 @@ async function tryLoadSmallVillageAntModel(root) {
     updateSmallAntAccentPlacement(root, true);
   } catch (error) {
     meta.smallAntModelFailed = true;
+    createSmallAntFallbackBody(root, error?.message || error);
     console.warn('Small Village Ant GLB failed to load; using procedural fallback:', error);
   } finally {
     meta.smallAntModelLoading = false;
