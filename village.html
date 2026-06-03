@@ -8814,7 +8814,7 @@ const SMALL_VILLAGE_ANT_VISUAL_DRIFT_EPSILON = .025;
 const SMALL_VILLAGE_ANT_VISUAL_DRIFT_CORRECTION_MAX = .18;
 const SMALL_VILLAGE_ANT_TARGET_VISUAL_SIZE = .82;
 const SMALL_VILLAGE_ANT_MIN_MODEL_SCALE = .005;
-const SMALL_VILLAGE_ANT_MAX_MODEL_SCALE = 180;
+const SMALL_VILLAGE_ANT_MAX_MODEL_SCALE = 8000;
 let SMALL_VILLAGE_ANT_RUNTIME_ENABLED = localStorage.getItem(SMALL_VILLAGE_ANT_ENABLED_KEY) === '1';
 const SmallVillageAntManager = {
   roots: [],
@@ -8845,6 +8845,30 @@ function makeSmallAntMaterial(key, color, emissive = '#000000') {
   material.emissiveColor = BABYLON.Color3.FromHexString(emissive).scale(.28);
   material.specularColor = new BABYLON.Color3(.18,.16,.12);
   return material;
+}
+
+function normalizeSmallAntImportedMesh(mesh, root) {
+  if (!mesh) return;
+  mesh.setEnabled(true);
+  mesh.isVisible = true;
+  mesh.visibility = 1;
+  mesh.isPickable = true;
+  mesh.checkCollisions = false;
+  mesh.alwaysSelectAsActiveMesh = true;
+  mesh._editRoot = root;
+  mesh.metadata = { ...(mesh.metadata || {}), smallAntModelMesh:true };
+  if (!mesh.material) {
+    mesh.material = makeSmallAntMaterial('modelFallback', '#2b170f', '#120806');
+  }
+  const material = mesh.material;
+  if (material) {
+    material.alpha = 1;
+    material.backFaceCulling = false;
+    material.transparencyMode = BABYLON.Material.MATERIAL_OPAQUE;
+    material.maxSimultaneousLights = 4;
+    if ('useAlphaFromAlbedoTexture' in material) material.useAlphaFromAlbedoTexture = false;
+    if (window._gpuMode === 'webgpu') webgpuCapMaterial4(material);
+  }
 }
 
 function makeSmallAntPart(mesh, root, role) {
@@ -9186,17 +9210,7 @@ async function tryLoadSmallVillageAntModel(root) {
       if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = modelRoot;
     });
     const importedRootNodes = importedNodes.filter(node => node.parent === modelRoot);
-    (result.meshes || []).forEach(mesh => {
-      mesh.setEnabled(true);
-      mesh.isPickable = true;
-      mesh.checkCollisions = false;
-      mesh._editRoot = root;
-      mesh.metadata = { ...(mesh.metadata || {}), smallAntModelMesh:true };
-      if (mesh.material) {
-        mesh.material.maxSimultaneousLights = 4;
-        if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mesh.material);
-      }
-    });
+    (result.meshes || []).forEach(mesh => normalizeSmallAntImportedMesh(mesh, root));
     (meta.smallAntParts || []).forEach(part => {
       const role = part?.metadata?.smallAntPart;
       if (role === 'shadow' || role === 'accentHalo') return;
