@@ -8895,7 +8895,7 @@ function updateSmallAntAccentPlacement(root, force = false) {
     if (ring) {
       ring.position.set(0,.34,0);
       ring.rotation.set(0, 0, 0);
-      ring.scaling.setAll(1.25);
+      ring.scaling.setAll(1.65);
     }
     if (halo) {
       halo.position.set(0,.9,0);
@@ -8909,7 +8909,7 @@ function updateSmallAntAccentPlacement(root, force = false) {
   const haloOffset = Number.isFinite(meta.haloVerticalOffset) ? meta.haloVerticalOffset : Math.max(.12, height * .12);
   if (ring) {
     ring.position.set(bounds.center.x, bounds.min.y + height * .48 + ringOffset, bounds.center.z);
-    const diameter = Math.max(.55, width * 1.55);
+    const diameter = Math.max(.85, width * 2.25);
     ring.scaling.setAll(diameter / .86);
     ring.rotation.set(0, 0, 0);
   }
@@ -8997,7 +8997,7 @@ function buildSmallVillageAnt(root) {
   shadowMat.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
   shadow.material = shadowMat;
 
-  const ring = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ringMesh', { diameter:.58, thickness:.026, tessellation:42 }, scene), root, 'accentRing');
+  const ring = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ringMesh', { diameter:.72, thickness:.032, tessellation:42 }, scene), root, 'accentRing');
   ring.rotation.set(0, 0, 0);
   ring.isPickable = false;
   const halo = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_haloMesh', { diameter:.28, thickness:.02, tessellation:34 }, scene), root, 'accentHalo');
@@ -9656,8 +9656,8 @@ function updateSmallVillageAntPopulation(dt) {
     if (!meta.target && now >= (meta.waitUntil || 0)) chooseCleanSmallAntWanderTarget(root);
     const before = root.position.clone();
     const wantsMove = !!meta.target;
-    const walkPlaying = updateSmallAntAnimationState(root, wantsMove);
-    let moving = wantsMove && walkPlaying ? moveCleanSmallAntToward(root, meta.target, dt, now) : false;
+    updateSmallAntAnimationState(root, wantsMove);
+    let moving = wantsMove ? moveCleanSmallAntToward(root, meta.target, dt, now) : false;
     const frameMove = root.position.subtract(before).length();
     if (frameMove > SmallVillageAntManager.maxFrameMove + .02) {
       const direction = root.position.subtract(before).normalize();
@@ -18097,6 +18097,7 @@ function attachAdminGizmoLifecycleObservers() {
       if (selectedObject.metadata?.type === 'interior_video_screen') saveInteriorVideoScreenConfig(selectedObject);
       rebuildVillageCollisionBlockers();
       renderSelectedWalkSurfaceGuide();
+      window._dragSelectedObject = null;
       if (adminMode) orbit.attachControl(canvas, true);
       triggerAutoSave();
       // Keep the active mode alive after a completed scale/move/rotate drag.
