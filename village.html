@@ -8895,7 +8895,7 @@ function updateSmallAntAccentPlacement(root, force = false) {
     if (ring) {
       ring.position.set(0,.34,0);
       ring.rotation.set(0, 0, 0);
-      ring.scaling.setAll(1.65);
+      ring.scaling.setAll(1.95);
     }
     if (halo) {
       halo.position.set(0,.9,0);
@@ -8909,7 +8909,7 @@ function updateSmallAntAccentPlacement(root, force = false) {
   const haloOffset = Number.isFinite(meta.haloVerticalOffset) ? meta.haloVerticalOffset : Math.max(.12, height * .12);
   if (ring) {
     ring.position.set(bounds.center.x, bounds.min.y + height * .48 + ringOffset, bounds.center.z);
-    const diameter = Math.max(.85, width * 2.25);
+    const diameter = Math.max(1.1, width * 2.75);
     ring.scaling.setAll(diameter / .86);
     ring.rotation.set(0, 0, 0);
   }
@@ -8997,7 +8997,7 @@ function buildSmallVillageAnt(root) {
   shadowMat.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
   shadow.material = shadowMat;
 
-  const ring = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ringMesh', { diameter:.72, thickness:.032, tessellation:42 }, scene), root, 'accentRing');
+  const ring = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ringMesh', { diameter:.82, thickness:.036, tessellation:42 }, scene), root, 'accentRing');
   ring.rotation.set(0, 0, 0);
   ring.isPickable = false;
   const halo = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_haloMesh', { diameter:.28, thickness:.02, tessellation:34 }, scene), root, 'accentHalo');
@@ -9656,7 +9656,12 @@ function updateSmallVillageAntPopulation(dt) {
     if (!meta.target && now >= (meta.waitUntil || 0)) chooseCleanSmallAntWanderTarget(root);
     const before = root.position.clone();
     const wantsMove = !!meta.target;
-    updateSmallAntAnimationState(root, wantsMove);
+    const walkPlaying = updateSmallAntAnimationState(root, wantsMove);
+    if (wantsMove && !walkPlaying) {
+      meta.lastProgressAt = now;
+      meta.lastPosition = root.position.clone();
+      return;
+    }
     let moving = wantsMove ? moveCleanSmallAntToward(root, meta.target, dt, now) : false;
     const frameMove = root.position.subtract(before).length();
     if (frameMove > SmallVillageAntManager.maxFrameMove + .02) {
