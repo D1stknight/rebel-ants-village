@@ -8811,7 +8811,7 @@ function getNPCMaterial(key, color, emissive = '#000000') {
 }
 
 const SMALL_VILLAGE_ANT_ENABLED_KEY = 'rebelAntsSmallAntRuntimeEnabled:v2';
-const SMALL_VILLAGE_ANT_COLOR_CYCLE_KEY = 'rebelAntsSmallAntColorCycle:v1';
+const SMALL_VILLAGE_ANT_COLOR_CYCLE_KEY = 'rebelAntsSmallAntColorCycle:v2';
 const SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED = .28;
 const SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED = .75;
 let SMALL_VILLAGE_ANT_RUNTIME_ENABLED = localStorage.getItem(SMALL_VILLAGE_ANT_ENABLED_KEY) === '1';
@@ -8894,29 +8894,30 @@ function updateSmallAntAccentPlacement(root, force = false) {
   if (!bounds) {
     if (ring) {
       ring.position.set(0,.34,0);
-      ring.rotation.set(0, 0, 0);
+      ring.rotation.set(Math.PI / 2, 0, 0);
+      ring.scaling.setAll(1.25);
     }
     if (halo) {
       halo.position.set(0,.9,0);
-      halo.rotation.set(Math.PI / 2, 0, 0);
+      halo.rotation.set(0, 0, 0);
     }
     return;
   }
   const width = Math.max(bounds.size.x, bounds.size.z, .45);
   const height = Math.max(bounds.size.y, .35);
   const ringOffset = Number.isFinite(meta.ringVerticalOffset) ? meta.ringVerticalOffset : 0;
-  const haloOffset = Number.isFinite(meta.haloVerticalOffset) ? meta.haloVerticalOffset : Math.max(.08, height * .08);
+  const haloOffset = Number.isFinite(meta.haloVerticalOffset) ? meta.haloVerticalOffset : Math.max(.12, height * .12);
   if (ring) {
     ring.position.set(bounds.center.x, bounds.min.y + height * .48 + ringOffset, bounds.center.z);
-    const diameter = Math.max(.28, width * .92);
+    const diameter = Math.max(.55, width * 1.55);
     ring.scaling.setAll(diameter / .86);
-    ring.rotation.set(0, 0, 0);
+    ring.rotation.set(Math.PI / 2, 0, 0);
   }
   if (halo) {
     halo.position.set(bounds.center.x, bounds.max.y + haloOffset, bounds.center.z);
     const diameter = Math.max(.18, Math.min(width * .36, height * .46));
     halo.scaling.setAll(diameter / .34);
-    halo.rotation.set(Math.PI / 2, 0, 0);
+    halo.rotation.set(0, 0, 0);
   }
   meta.smallAntAccentPlaced = true;
 }
@@ -8997,10 +8998,10 @@ function buildSmallVillageAnt(root) {
   shadow.material = shadowMat;
 
   const ring = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ringMesh', { diameter:.58, thickness:.026, tessellation:42 }, scene), root, 'accentRing');
-  ring.rotation.set(0, 0, 0);
+  ring.rotation.set(Math.PI / 2, 0, 0);
   ring.isPickable = false;
   const halo = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_haloMesh', { diameter:.28, thickness:.02, tessellation:34 }, scene), root, 'accentHalo');
-  halo.rotation.set(Math.PI / 2, 0, 0);
+  halo.rotation.set(0, 0, 0);
   halo.isPickable = false;
   meta.shadowMesh = shadow;
   meta.ringMesh = ring;
@@ -9596,9 +9597,10 @@ function moveCleanSmallAntToward(root, target, dt, now = performance.now()) {
     console.warn('Small Village Ant movement clamped to prevent jump', { intendedStep, max:SmallVillageAntManager.maxFrameMove });
     meta._lastJumpClampWarnAt = now;
   }
-  const forward = new BABYLON.Vector3(Math.sin(root.rotation.y), 0, Math.cos(root.rotation.y));
-  root.position.x += forward.x * step;
-  root.position.z += forward.z * step;
+  const dirX = dx / distance;
+  const dirZ = dz / distance;
+  root.position.x += dirX * step;
+  root.position.z += dirZ * step;
   const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
   if (Number.isFinite(groundY)) root.position.y = groundY;
   const moved = meta.lastPosition ? root.position.subtract(meta.lastPosition).length() : step;
@@ -9607,7 +9609,7 @@ function moveCleanSmallAntToward(root, target, dt, now = performance.now()) {
     meta.lastPosition = root.position.clone();
   }
   if (now - (meta._lastMoveDebugAt || 0) > 3500) {
-    console.info('small ant moving:', true, 'speed:', Number(speed.toFixed(3)), 'distanceToTarget:', Number(distance.toFixed(3)));
+    console.info('small ant moving:', true, 'speed:', Number(speed.toFixed(3)), 'distanceToTarget:', Number(distance.toFixed(3)), 'movedFrame:', Number(moved.toFixed(4)));
     meta._lastMoveDebugAt = now;
   }
   return true;
@@ -9646,8 +9648,8 @@ function updateSmallVillageAntPopulation(dt) {
     counterSmallAntVisualRootMotion(root);
     updateSmallAntAccentPlacement(root);
     updateSmallAntAccentPulse(root, now);
-    const beingEdited = adminMode && getSelectedSmallVillageAnt() === root;
-    if (NPCManager.paused || meta.dialogueOpen || beingEdited) {
+    const beingDragged = window._dragSelectedObject === root;
+    if (NPCManager.paused || meta.dialogueOpen || beingDragged) {
       updateSmallAntAnimationState(root, false);
       return;
     }
@@ -18086,6 +18088,7 @@ function attachAdminGizmoLifecycleObservers() {
         updateNPCPlacementOrigin(selectedObject, null);
         updateNPCAdminRotation(selectedObject);
       }
+      if (selectedObject.metadata?.type === 'small_village_ant') updateSmallAntPlacementOrigin(selectedObject, null);
       if (selectedObject.metadata?.type === 'interior_display') saveInteriorDisplayConfig(selectedObject);
       if (selectedObject.metadata?.type === 'interior_exit') saveInteriorExitConfig(selectedObject);
       if (selectedObject.metadata?.type === 'interior_fake_light') saveInteriorAssetConfig(selectedObject);
