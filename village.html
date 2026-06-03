@@ -8812,6 +8812,9 @@ const SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED = .28;
 const SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED = 1;
 const SMALL_VILLAGE_ANT_VISUAL_DRIFT_EPSILON = .025;
 const SMALL_VILLAGE_ANT_VISUAL_DRIFT_CORRECTION_MAX = .18;
+const SMALL_VILLAGE_ANT_TARGET_VISUAL_SIZE = .82;
+const SMALL_VILLAGE_ANT_MIN_MODEL_SCALE = .005;
+const SMALL_VILLAGE_ANT_MAX_MODEL_SCALE = 180;
 let SMALL_VILLAGE_ANT_RUNTIME_ENABLED = localStorage.getItem(SMALL_VILLAGE_ANT_ENABLED_KEY) === '1';
 const SmallVillageAntManager = {
   roots: [],
@@ -8908,6 +8911,46 @@ function updateSmallAntAccentPlacement(root, force = false) {
     halo.rotation.set(0, 0, 0);
   }
   meta.smallAntAccentPlaced = true;
+}
+
+function fitSmallAntModelToVisibleSize(root) {
+  if (!root || root.metadata?.type !== 'small_village_ant') return false;
+  const meta = root.metadata || {};
+  const modelRoot = meta.smallAntModelRoot;
+  if (!modelRoot || modelRoot.isDisposed?.()) return false;
+  root.computeWorldMatrix(true);
+  modelRoot.computeWorldMatrix(true);
+  const bounds = getSmallAntVisualBounds(root);
+  if (!bounds) return false;
+  const planarSize = Math.max(bounds.size.x, bounds.size.z);
+  const modelSize = Math.max(planarSize, bounds.size.y * 1.35);
+  if (!Number.isFinite(modelSize) || modelSize <= 0.00001) return false;
+  const targetSize = Math.max(.35, Math.min(1.8, meta.smallAntTargetVisualSize || SMALL_VILLAGE_ANT_TARGET_VISUAL_SIZE));
+  const fitRatio = targetSize / modelSize;
+  if (!Number.isFinite(fitRatio) || Math.abs(fitRatio - 1) < .08) return false;
+  const currentScale = Number.isFinite(modelRoot.scaling?.x) ? modelRoot.scaling.x : SMALL_VILLAGE_ANT_MODEL_SCALE;
+  const fittedScale = Math.max(
+    SMALL_VILLAGE_ANT_MIN_MODEL_SCALE,
+    Math.min(SMALL_VILLAGE_ANT_MAX_MODEL_SCALE, currentScale * fitRatio)
+  );
+  modelRoot.scaling.setAll(fittedScale);
+  meta.modelScale = fittedScale;
+  meta.smallAntAutoFit = {
+    targetSize,
+    measuredSize: modelSize,
+    scale: fittedScale
+  };
+  meta.smallAntVisualAnchorCenter = null;
+  meta.smallAntAccentPlaced = false;
+  if (!meta._smallAntAutoFitLogged) {
+    console.info('small ant model auto-fit', {
+      measuredSize: Number(modelSize.toFixed(4)),
+      targetSize: Number(targetSize.toFixed(4)),
+      scale: Number(fittedScale.toFixed(4))
+    });
+    meta._smallAntAutoFitLogged = true;
+  }
+  return true;
 }
 
 function disposeSmallVillageAntRoot(root) {
@@ -9140,6 +9183,7 @@ async function tryLoadSmallVillageAntModel(root) {
     meta.smallAntAnimationGroups = animationGroups;
     meta.smallAntAnimationDisabled = false;
     meta.antAnimationSpeedRatio = Number.isFinite(meta.antAnimationSpeedRatio) ? meta.antAnimationSpeedRatio : SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED;
+    fitSmallAntModelToVisibleSize(root);
     if (!meta._smallAntAnimationNamesLogged) {
       console.info('small ant animation groups:', animationGroups.map(group => group.name));
       meta._smallAntAnimationNamesLogged = true;
