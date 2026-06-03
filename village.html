@@ -10321,10 +10321,6 @@ function moveCleanSmallAntToward(root, target, dt, now = performance.now()) {
     meta.lastProgressAt = now;
     meta.lastPosition = root.position.clone();
   }
-  if (now - (meta._lastMoveDebugAt || 0) > 3500) {
-    console.info('small ant moving:', true, 'speed:', Number(speed.toFixed(3)), 'animationSpeed:', Number(animationSpeed.toFixed(3)), 'distanceToTarget:', Number(distance.toFixed(3)), 'movedFrame:', Number(moved.toFixed(4)));
-    meta._lastMoveDebugAt = now;
-  }
   return true;
 }
 
