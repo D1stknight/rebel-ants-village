@@ -8809,7 +8809,9 @@ function getNPCMaterial(key, color, emissive = '#000000') {
 const SMALL_VILLAGE_ANT_ENABLED_KEY = 'rebelAntsSmallAntRuntimeEnabled:v2';
 const SMALL_VILLAGE_ANT_COLOR_CYCLE_KEY = 'rebelAntsSmallAntColorCycle:v2';
 const SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED = .28;
-const SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED = .75;
+const SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED = 1;
+const SMALL_VILLAGE_ANT_VISUAL_DRIFT_EPSILON = .025;
+const SMALL_VILLAGE_ANT_VISUAL_DRIFT_CORRECTION_MAX = .18;
 let SMALL_VILLAGE_ANT_RUNTIME_ENABLED = localStorage.getItem(SMALL_VILLAGE_ANT_ENABLED_KEY) === '1';
 const SmallVillageAntManager = {
   roots: [],
@@ -8883,7 +8885,6 @@ function getSmallAntVisualBounds(root) {
 function updateSmallAntAccentPlacement(root, force = false) {
   if (!root || root.metadata?.type !== 'small_village_ant') return;
   const meta = root.metadata || {};
-  if (!force && meta.smallAntAccentPlaced) return;
   if (meta.ringMesh) {
     try { meta.ringMesh.dispose?.(false, true); } catch(e) {}
     meta.ringMesh = null;
@@ -9015,10 +9016,28 @@ function getSmallAntAnimationGroup(meta, state = 'walk') {
   const groups = Array.isArray(meta.smallAntAnimationGroups) ? meta.smallAntAnimationGroups : [];
   if (!groups.length) return null;
   const wanted = String(state || '').toLowerCase();
-  const walkMatch = groups.find(group => /walk|run|move|crawl|anim/i.test(group.name || ''));
-  const idleMatch = groups.find(group => /idle|stand|rest/i.test(group.name || ''));
-  if (wanted === 'idle') return idleMatch || walkMatch || groups[0];
-  return walkMatch || groups[0];
+  const normalized = group => String(group?.name || '').toLowerCase().replace(/[_-]+/g, ' ').trim();
+  const exactName = name => groups.find(group => normalized(group) === name);
+  if (wanted === 'idle') {
+    return exactName('idle') ||
+      groups.find(group => /\b(idle|stand|rest)\b/i.test(group.name || '')) ||
+      null;
+  }
+  const locomotion = groups
+    .map(group => {
+      const name = normalized(group);
+      let score = 0;
+      if (name === 'walk') score = 120;
+      else if (/^walk\b/.test(name)) score = 110;
+      else if (/\bwalk\b/.test(name)) score = 100;
+      else if (/\b(run|crawl|move)\b/.test(name)) score = 72;
+      else if (/\banim(ation)?\b/.test(name)) score = 20;
+      if (/\b(idle|stand|rest|death|damage|eat|bite|sting|push)\b/.test(name)) score -= 140;
+      return { group, score };
+    })
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+  return locomotion[0]?.group || (groups.length === 1 ? groups[0] : null);
 }
 
 function updateSmallAntAnimationState(root, moving) {
@@ -9030,11 +9049,11 @@ function updateSmallAntAnimationState(root, moving) {
   }
   const wanted = moving ? 'walk' : 'idle';
   const walkGroup = getSmallAntAnimationGroup(meta, 'walk');
-  const idleGroup = groups.find(group => /idle|stand|rest/i.test(group.name || '')) || null;
+  const idleGroup = getSmallAntAnimationGroup(meta, 'idle');
   const group = moving ? walkGroup : (idleGroup || walkGroup);
   const walkSpeed = Math.max(.1, Math.min(2, meta.antAnimationSpeedRatio || SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED));
-  const idleSpeed = idleGroup ? Math.max(.02, Math.min(.1, walkSpeed * .08)) : 0;
-  if (!moving && !idleGroup && group === walkGroup) {
+  const idleSpeed = idleGroup ? Math.max(.25, Math.min(1.25, meta.antIdleAnimationSpeedRatio || walkSpeed * .85)) : 0;
+  if ((moving && !walkGroup) || (!moving && !idleGroup)) {
     groups.forEach(animationGroup => animationGroup.stop());
     meta.activeAnimation = 'idle';
     meta.activeSmallAntAnimation = null;
@@ -9085,6 +9104,7 @@ async function tryLoadSmallVillageAntModel(root) {
     importedNodes.forEach(node => {
       if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = modelRoot;
     });
+    const importedRootNodes = importedNodes.filter(node => node.parent === modelRoot);
     (result.meshes || []).forEach(mesh => {
       mesh.setEnabled(true);
       mesh.isPickable = true;
@@ -9109,6 +9129,14 @@ async function tryLoadSmallVillageAntModel(root) {
     meta.smallAntVisualRoot = visualRoot || modelRoot;
     meta.antVisualRoot = visualRoot || modelRoot;
     meta.modelRestPosition = modelRoot.position.clone();
+    meta.smallAntImportedRoots = importedRootNodes;
+    meta.smallAntImportedRootRest = importedRootNodes.map(node => ({
+      node,
+      position: node.position?.clone?.() || BABYLON.Vector3.Zero(),
+      rotation: node.rotation?.clone?.() || BABYLON.Vector3.Zero(),
+      rotationQuaternion: node.rotationQuaternion?.clone?.() || null
+    }));
+    meta.smallAntVisualAnchorCenter = null;
     meta.smallAntAnimationGroups = animationGroups;
     meta.smallAntAnimationDisabled = false;
     meta.antAnimationSpeedRatio = Number.isFinite(meta.antAnimationSpeedRatio) ? meta.antAnimationSpeedRatio : SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED;
@@ -9564,9 +9592,9 @@ function moveCleanSmallAntToward(root, target, dt, now = performance.now()) {
   const distance = Math.sqrt(dx * dx + dz * dz);
   meta.turningInPlace = false;
   if (distance < .12) return false;
-  turnCleanSmallAntToward(root, Math.atan2(dx, dz), dt);
+  const yawRemaining = turnCleanSmallAntToward(root, Math.atan2(dx, dz), dt);
   const speed = Math.max(.05, Math.min(2, meta.antWalkSpeed || meta.moveSpeed || SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED));
-  const intendedStep = speed * Math.min(dt, .1);
+  const intendedStep = speed * Math.max(0, Math.min(dt, .1));
   let step = Math.min(distance, intendedStep, SmallVillageAntManager.maxFrameMove);
   if (intendedStep > SmallVillageAntManager.maxFrameMove && now - (meta._lastJumpClampWarnAt || 0) > 2000) {
     console.warn('Small Village Ant movement clamped to prevent jump', { intendedStep, max:SmallVillageAntManager.maxFrameMove });
@@ -9574,8 +9602,13 @@ function moveCleanSmallAntToward(root, target, dt, now = performance.now()) {
   }
   const dirX = dx / distance;
   const dirZ = dz / distance;
-  root.position.x += dirX * step;
-  root.position.z += dirZ * step;
+  const forwardX = Math.sin(root.rotation.y);
+  const forwardZ = Math.cos(root.rotation.y);
+  const alignment = Math.max(.18, Math.min(1, forwardX * dirX + forwardZ * dirZ));
+  const turnScale = Math.max(.2, 1 - Math.min(1, yawRemaining / (Math.PI * .5)));
+  step *= alignment * turnScale;
+  root.position.x += forwardX * step;
+  root.position.z += forwardZ * step;
   const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
   if (Number.isFinite(groundY)) root.position.y = groundY;
   const moved = meta.lastPosition ? root.position.subtract(meta.lastPosition).length() : step;
@@ -9594,20 +9627,45 @@ function turnCleanSmallAntToward(root, targetYaw, dt) {
   let delta = targetYaw - root.rotation.y;
   while (delta > Math.PI) delta -= Math.PI * 2;
   while (delta < -Math.PI) delta += Math.PI * 2;
-  root.rotation.y += delta * Math.min(1, dt * 5.5);
+  const turnAmount = delta * Math.min(1, dt * 8.5);
+  root.rotation.y += turnAmount;
   root.rotation.x = 0;
   root.rotation.z = 0;
-  return Math.abs(delta);
+  return Math.abs(delta - turnAmount);
 }
 
 function counterSmallAntVisualRootMotion(root) {
   const meta = root?.metadata || {};
   const visualRoot = meta.antVisualRoot || meta.smallAntVisualRoot;
   const modelRoot = meta.smallAntModelRoot;
-  if (!visualRoot || !modelRoot) return;
-  const rest = meta.modelRestPosition || BABYLON.Vector3.Zero();
-  visualRoot.position.set(rest.x - modelRoot.position.x, rest.y - modelRoot.position.y, rest.z - modelRoot.position.z);
+  if (!visualRoot) return;
+  if (modelRoot) {
+    const rest = meta.modelRestPosition || BABYLON.Vector3.Zero();
+    modelRoot.position.copyFrom(rest);
+    modelRoot.rotation.set(0, 0, 0);
+  }
+  if (Array.isArray(meta.smallAntImportedRootRest)) {
+    meta.smallAntImportedRootRest.forEach(entry => {
+      if (!entry?.node || entry.node.isDisposed?.()) return;
+      if (entry.position && entry.node.position) entry.node.position.copyFrom(entry.position);
+      if (entry.rotationQuaternion && entry.node.rotationQuaternion) entry.node.rotationQuaternion.copyFrom(entry.rotationQuaternion);
+      if (entry.rotation && entry.node.rotation) entry.node.rotation.copyFrom(entry.rotation);
+    });
+  }
   visualRoot.rotation.set(0, 0, 0);
+  const bounds = getSmallAntVisualBounds(root);
+  if (!bounds) return;
+  if (!meta.smallAntVisualAnchorCenter) {
+    meta.smallAntVisualAnchorCenter = { x: bounds.center.x, z: bounds.center.z };
+    return;
+  }
+  const driftX = bounds.center.x - meta.smallAntVisualAnchorCenter.x;
+  const driftZ = bounds.center.z - meta.smallAntVisualAnchorCenter.z;
+  if (Math.abs(driftX) <= SMALL_VILLAGE_ANT_VISUAL_DRIFT_EPSILON && Math.abs(driftZ) <= SMALL_VILLAGE_ANT_VISUAL_DRIFT_EPSILON) return;
+  const clamp = value => Math.max(-SMALL_VILLAGE_ANT_VISUAL_DRIFT_CORRECTION_MAX, Math.min(SMALL_VILLAGE_ANT_VISUAL_DRIFT_CORRECTION_MAX, value));
+  visualRoot.position.x -= clamp(driftX);
+  visualRoot.position.z -= clamp(driftZ);
+  meta.smallAntAccentPlaced = false;
 }
 
 function updateSmallVillageAntPopulation(dt) {
@@ -9620,24 +9678,25 @@ function updateSmallVillageAntPopulation(dt) {
     const meta = root.metadata || {};
     root.setEnabled(NPCManager.visible);
     if (!NPCManager.visible) return;
-    counterSmallAntVisualRootMotion(root);
-    updateSmallAntAccentPlacement(root);
-    updateSmallAntAccentPulse(root, now);
     const beingDragged = window._dragSelectedObject === root;
     if (NPCManager.paused || meta.dialogueOpen || beingDragged) {
       updateSmallAntAnimationState(root, false);
+      counterSmallAntVisualRootMotion(root);
+      updateSmallAntAccentPlacement(root, true);
+      updateSmallAntAccentPulse(root, now);
       return;
     }
     if (!meta.target && now >= (meta.waitUntil || 0)) chooseCleanSmallAntWanderTarget(root);
     const before = root.position.clone();
     const wantsMove = !!meta.target;
     const walkPlaying = updateSmallAntAnimationState(root, wantsMove);
+    let moving = false;
     if (wantsMove && !walkPlaying) {
       meta.lastProgressAt = now;
       meta.lastPosition = root.position.clone();
-      return;
+    } else {
+      moving = wantsMove ? moveCleanSmallAntToward(root, meta.target, dt, now) : false;
     }
-    let moving = wantsMove ? moveCleanSmallAntToward(root, meta.target, dt, now) : false;
     const frameMove = root.position.subtract(before).length();
     if (frameMove > SmallVillageAntManager.maxFrameMove + .02) {
       const direction = root.position.subtract(before).normalize();
@@ -9662,6 +9721,9 @@ function updateSmallVillageAntPopulation(dt) {
       moving = false;
     }
     if (!moving) updateSmallAntAnimationState(root, false);
+    counterSmallAntVisualRootMotion(root);
+    updateSmallAntAccentPlacement(root, true);
+    updateSmallAntAccentPulse(root, now);
   });
 }
 
