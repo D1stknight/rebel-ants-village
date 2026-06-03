@@ -8894,7 +8894,7 @@ function updateSmallAntAccentPlacement(root, force = false) {
   if (!bounds) {
     if (ring) {
       ring.position.set(0,.34,0);
-      ring.rotation.set(Math.PI / 2, 0, 0);
+      ring.rotation.set(0, 0, 0);
       ring.scaling.setAll(1.25);
     }
     if (halo) {
@@ -8911,7 +8911,7 @@ function updateSmallAntAccentPlacement(root, force = false) {
     ring.position.set(bounds.center.x, bounds.min.y + height * .48 + ringOffset, bounds.center.z);
     const diameter = Math.max(.55, width * 1.55);
     ring.scaling.setAll(diameter / .86);
-    ring.rotation.set(Math.PI / 2, 0, 0);
+    ring.rotation.set(0, 0, 0);
   }
   if (halo) {
     halo.position.set(bounds.center.x, bounds.max.y + haloOffset, bounds.center.z);
@@ -8998,7 +8998,7 @@ function buildSmallVillageAnt(root) {
   shadow.material = shadowMat;
 
   const ring = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ringMesh', { diameter:.58, thickness:.026, tessellation:42 }, scene), root, 'accentRing');
-  ring.rotation.set(Math.PI / 2, 0, 0);
+  ring.rotation.set(0, 0, 0);
   ring.isPickable = false;
   const halo = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_haloMesh', { diameter:.28, thickness:.02, tessellation:34 }, scene), root, 'accentHalo');
   halo.rotation.set(0, 0, 0);
