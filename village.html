@@ -8866,8 +8866,10 @@ function makeSmallAntMaterial(key, color, emissive = '#000000') {
 
 function hasSmallAntRenderableGeometry(mesh) {
   if (!mesh || mesh.isDisposed?.()) return false;
-  if (typeof mesh.getTotalVertices === 'function') return mesh.getTotalVertices() > 0;
-  return !!mesh.geometry;
+  if (typeof mesh.getTotalVertices === 'function' && mesh.getTotalVertices() > 0) return true;
+  if (mesh.geometry) return true;
+  if (typeof mesh.getVerticesDataKinds === 'function' && mesh.getVerticesDataKinds().includes(BABYLON.VertexBuffer.PositionKind)) return true;
+  return false;
 }
 
 function normalizeSmallAntImportedMesh(mesh, root) {
@@ -9007,6 +9009,40 @@ function fitSmallAntModelToVisibleSize(root) {
     meta._smallAntAutoFitLogged = true;
   }
   return true;
+}
+
+function boostSmallAntModelVisibility(root) {
+  if (!root || root.metadata?.type !== 'small_village_ant') return null;
+  const meta = root.metadata || {};
+  const modelRoot = meta.smallAntModelRoot;
+  if (!modelRoot || modelRoot.isDisposed?.()) return null;
+  let bounds = getSmallAntVisualBounds(root);
+  let finalSize = bounds ? Math.max(bounds.size.x, bounds.size.y, bounds.size.z) : 0;
+  if (!bounds || finalSize >= SMALL_VILLAGE_ANT_MIN_VISIBLE_SIZE) {
+    return { bounds, finalSize };
+  }
+  const currentScale = Number.isFinite(modelRoot.scaling?.x) ? modelRoot.scaling.x : SMALL_VILLAGE_ANT_MODEL_SCALE;
+  const targetSize = Math.max(.35, Math.min(1.8, meta.smallAntTargetVisualSize || SMALL_VILLAGE_ANT_TARGET_VISUAL_SIZE));
+  const boostedScale = Math.max(
+    SMALL_VILLAGE_ANT_MIN_MODEL_SCALE,
+    Math.min(SMALL_VILLAGE_ANT_MAX_MODEL_SCALE, currentScale * (targetSize / Math.max(finalSize, .00001)))
+  );
+  if (boostedScale > currentScale * 1.02) {
+    modelRoot.scaling.setAll(boostedScale);
+    meta.modelScale = boostedScale;
+    meta.smallAntVisualAnchorCenter = null;
+    centerSmallAntModelOnRoot(root);
+    bounds = getSmallAntVisualBounds(root);
+    finalSize = bounds ? Math.max(bounds.size.x, bounds.size.y, bounds.size.z) : 0;
+  }
+  if (finalSize < SMALL_VILLAGE_ANT_MIN_VISIBLE_SIZE && !meta._smallAntTinyWarningLogged) {
+    console.warn('Small Village Ant GLB imported but still reports tiny bounds; keeping uploaded model visible instead of fallback.', {
+      finalSize:Number((finalSize || 0).toFixed(4)),
+      modelScale:Number((meta.modelScale || 0).toFixed(4))
+    });
+    meta._smallAntTinyWarningLogged = true;
+  }
+  return { bounds, finalSize };
 }
 
 function centerSmallAntModelOnRoot(root) {
@@ -9289,12 +9325,6 @@ async function tryLoadSmallVillageAntModel(root) {
   meta.smallAntModelLoading = true;
   try {
     const modelUrl = meta.modelUrl || SMALL_VILLAGE_ANT_MODEL_URL;
-    const exists = await fetch(modelUrl, { method:'HEAD' }).then(response => response.ok).catch(() => false);
-    if (!exists) {
-      meta.smallAntModelFailed = true;
-      createSmallAntFallbackBody(root, `missing asset at ${modelUrl}`);
-      return;
-    }
     const result = await BABYLON.SceneLoader.ImportMeshAsync('', '', modelUrl, scene);
     if (!root || root.isDisposed?.()) return;
     const visualRoot = meta.antVisualRoot || meta.smallAntVisualRoot;
@@ -9343,11 +9373,8 @@ async function tryLoadSmallVillageAntModel(root) {
     meta.antAnimationSpeedRatio = Number.isFinite(meta.antAnimationSpeedRatio) ? meta.antAnimationSpeedRatio : SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED;
     fitSmallAntModelToVisibleSize(root);
     centerSmallAntModelOnRoot(root);
-    const finalBounds = getSmallAntVisualBounds(root);
-    const finalSize = finalBounds ? Math.max(finalBounds.size.x, finalBounds.size.y, finalBounds.size.z) : 0;
-    if (!finalBounds || finalSize < SMALL_VILLAGE_ANT_MIN_VISIBLE_SIZE) {
-      throw new Error(`Imported Small Village Ant GLB stayed too small after fit (${Number(finalSize || 0).toFixed(4)})`);
-    }
+    const visibility = boostSmallAntModelVisibility(root);
+    const finalSize = visibility?.finalSize || 0;
     if (!meta._smallAntAnimationNamesLogged) {
       console.info('small ant animation groups:', animationGroups.map(group => group.name), {
         renderableMeshes: renderableMeshes.length,
