@@ -516,10 +516,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
         <button class="ctrl-btn full" onclick="respawnSmallAntNearPlayer()" style="width:100%;margin-bottom:6px">Respawn Small Ant Near Player</button>
         <input id="smallAntNameInput" placeholder="Name" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #5ecfca;color:#e8c56a;padding:5px 7px;font-family:'Cinzel Decorative',serif;font-size:11px;margin-bottom:5px">
         <textarea id="smallAntDialogueInput" placeholder="What this little ant says" rows="3" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:6px;resize:vertical"></textarea>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
-          <label style="font-size:8px;color:#8aa;letter-spacing:1px">Ring <input id="smallAntRingColor" type="color" value="#5ecfca" oninput="previewSmallAntSettingsFromControls()" style="width:100%;height:30px;border:none;background:none"></label>
-          <label style="font-size:8px;color:#8aa;letter-spacing:1px">Halo <input id="smallAntHaloColor" type="color" value="#e8c56a" oninput="previewSmallAntSettingsFromControls()" style="width:100%;height:30px;border:none;background:none"></label>
-        </div>
+        <label style="display:block;font-size:8px;color:#8aa;letter-spacing:1px;margin-bottom:6px">Halo <input id="smallAntHaloColor" type="color" value="#e8c56a" oninput="previewSmallAntSettingsFromControls()" style="width:100%;height:30px;border:none;background:none"></label>
         <label style="display:flex;align-items:center;gap:7px;font-size:8px;color:#8aa;letter-spacing:1px;margin-bottom:6px"><input id="smallAntColorCycle" type="checkbox" onchange="previewSmallAntSettingsFromControls()"> Color Cycle On</label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
           <label style="font-size:8px;color:#8aa;letter-spacing:1px">Wander Radius <input id="smallAntWanderRadius" type="number" min="0" max="30" step="1" value="5" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#e8c56a;padding:5px 7px"></label>
@@ -5338,15 +5335,14 @@ if (smallAntEditorPanel) {
   const hint = document.getElementById('smallAntEditorHint');
   if (hint) hint.textContent = ant
     ? 'Editing selected Small Village Ant. Controller: clean mini-NPC root with isolated GLB animation.'
-    : 'Select or respawn a Small Village Ant to edit its colors, cycle, radius, and speed.';
+    : 'Select or respawn a Small Village Ant to edit its halo, cycle, radius, and speed.';
   if (ant) {
     const meta = ant.metadata || {};
     const editingSmallAntField = smallAntEditorPanel.contains(document.activeElement);
     if (!editingSmallAntField) {
       document.getElementById('smallAntNameInput').value = meta.displayName || 'Little Village Ant';
       document.getElementById('smallAntDialogueInput').value = meta.customDialogue || '';
-      document.getElementById('smallAntRingColor').value = meta.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca';
-      document.getElementById('smallAntHaloColor').value = meta.haloColor || meta.ringColor || '#e8c56a';
+      document.getElementById('smallAntHaloColor').value = meta.haloColor || '#e8c56a';
       const cycleInput = document.getElementById('smallAntColorCycle');
       if (cycleInput) cycleInput.checked = meta.colorCycle === true && SmallVillageAntManager.colorCycle === true;
       document.getElementById('smallAntWanderRadius').value = Number.isFinite(meta.wanderRadius) ? meta.wanderRadius : 5;
@@ -8863,7 +8859,7 @@ function getSmallAntVisualBounds(root) {
     if (!mesh || mesh.isDisposed?.() || !mesh.isEnabled?.() || mesh.isVisible === false) return false;
     const role = mesh.metadata?.smallAntPart;
     if (role === 'shadow' || role === 'accentRing' || role === 'accentHalo') return false;
-    return mesh.metadata?.smallAntModelMesh || role === 'body' || role === 'ring' || role === 'antenna' || role === 'eye' || role === 'leg';
+    return mesh.metadata?.smallAntModelMesh || role === 'body' || role === 'antenna' || role === 'eye' || role === 'leg';
   });
   if (!meshes.length) return null;
   root.computeWorldMatrix(true);
@@ -8888,15 +8884,13 @@ function updateSmallAntAccentPlacement(root, force = false) {
   if (!root || root.metadata?.type !== 'small_village_ant') return;
   const meta = root.metadata || {};
   if (!force && meta.smallAntAccentPlaced) return;
-  const ring = meta.ringMesh;
+  if (meta.ringMesh) {
+    try { meta.ringMesh.dispose?.(false, true); } catch(e) {}
+    meta.ringMesh = null;
+  }
   const halo = meta.haloMesh;
   const bounds = getSmallAntVisualBounds(root);
   if (!bounds) {
-    if (ring) {
-      ring.position.set(0,.34,0);
-      ring.rotation.set(0, 0, 0);
-      ring.scaling.setAll(1.95);
-    }
     if (halo) {
       halo.position.set(0,.9,0);
       halo.rotation.set(0, 0, 0);
@@ -8905,14 +8899,7 @@ function updateSmallAntAccentPlacement(root, force = false) {
   }
   const width = Math.max(bounds.size.x, bounds.size.z, .45);
   const height = Math.max(bounds.size.y, .35);
-  const ringOffset = Number.isFinite(meta.ringVerticalOffset) ? meta.ringVerticalOffset : 0;
   const haloOffset = Number.isFinite(meta.haloVerticalOffset) ? meta.haloVerticalOffset : Math.max(.12, height * .12);
-  if (ring) {
-    ring.position.set(bounds.center.x, bounds.min.y + height * .48 + ringOffset, bounds.center.z);
-    const diameter = Math.max(1.1, width * 2.75);
-    ring.scaling.setAll(diameter / .86);
-    ring.rotation.set(0, 0, 0);
-  }
   if (halo) {
     halo.position.set(bounds.center.x, bounds.max.y + haloOffset, bounds.center.z);
     const diameter = Math.max(.18, Math.min(width * .36, height * .46));
@@ -8952,9 +8939,7 @@ function buildSmallVillageAnt(root) {
   meta.villageId = meta.villageId || CURRENT_VILLAGE_ID;
   meta.role = meta.role || 'small ant';
   meta.customDialogue = meta.customDialogue || 'Tiny steps still carry the colony forward.';
-  meta.ringColor = meta.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca';
-  meta.haloColor = meta.haloColor || meta.ringColor || '#e8c56a';
-  meta.ringVerticalOffset = Number.isFinite(meta.ringVerticalOffset) ? meta.ringVerticalOffset : 0;
+  meta.haloColor = meta.haloColor || '#e8c56a';
   meta.haloVerticalOffset = Number.isFinite(meta.haloVerticalOffset) ? meta.haloVerticalOffset : null;
   meta.behavior = 'cleanMiniNpc';
   meta.movementController = 'clean-mini-npc';
@@ -8997,16 +8982,13 @@ function buildSmallVillageAnt(root) {
   shadowMat.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
   shadow.material = shadowMat;
 
-  const ring = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_ringMesh', { diameter:.82, thickness:.036, tessellation:42 }, scene), root, 'accentRing');
-  ring.rotation.set(0, 0, 0);
-  ring.isPickable = false;
   const halo = makeSmallAntPart(BABYLON.MeshBuilder.CreateTorus(root.name + '_haloMesh', { diameter:.28, thickness:.02, tessellation:34 }, scene), root, 'accentHalo');
   halo.rotation.set(0, 0, 0);
   halo.isPickable = false;
   meta.shadowMesh = shadow;
-  meta.ringMesh = ring;
+  meta.ringMesh = null;
   meta.haloMesh = halo;
-  meta.smallAntParts = [shadow, ring, halo];
+  meta.smallAntParts = [shadow, halo];
   applySmallAntVisualColors(root);
   registerSmallAntNpcController(root);
   tryLoadSmallVillageAntModel(root);
@@ -9116,7 +9098,7 @@ async function tryLoadSmallVillageAntModel(root) {
     });
     (meta.smallAntParts || []).forEach(part => {
       const role = part?.metadata?.smallAntPart;
-      if (role === 'shadow' || role === 'accentRing' || role === 'accentHalo') return;
+      if (role === 'shadow' || role === 'accentHalo') return;
       part?.setEnabled?.(false);
       part.isVisible = false;
     });
@@ -9150,18 +9132,16 @@ async function tryLoadSmallVillageAntModel(root) {
 function applySmallAntVisualColors(root) {
   if (!root || root.metadata?.type !== 'small_village_ant') return;
   const meta = root.metadata || {};
-  meta.ringColor = meta.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca';
-  meta.haloColor = meta.haloColor || meta.ringColor || '#e8c56a';
-  const ringMaterial = makeSmallAntMaterial('accentRing', meta.ringColor, meta.ringColor);
-  ringMaterial.alpha = .72;
-  ringMaterial.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
+  meta.haloColor = meta.haloColor || '#e8c56a';
+  if (meta.ringMesh) {
+    try { meta.ringMesh.dispose?.(false, true); } catch(e) {}
+    meta.ringMesh = null;
+  }
   const haloMaterial = makeSmallAntMaterial('accentHalo', meta.haloColor, meta.haloColor);
   haloMaterial.alpha = .88;
   haloMaterial.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
-  if (meta.ringMesh) meta.ringMesh.material = ringMaterial;
   if (meta.haloMesh) meta.haloMesh.material = haloMaterial;
   root.metadata._lastAppliedColors = {
-    ringColor: meta.ringColor,
     haloColor: meta.haloColor
   };
   meta.smallAntAccentPlaced = false;
@@ -9179,26 +9159,22 @@ function updateSmallAntAccentPulse(root, now = performance.now()) {
   if (!root || root.metadata?.type !== 'small_village_ant') return;
   const meta = root.metadata || {};
   if (meta.colorCycle === false || SmallVillageAntManager.colorCycle === false) {
-    if (meta._lastStaticPulseColors?.ringColor !== meta.ringColor || meta._lastStaticPulseColors?.haloColor !== meta.haloColor) {
+    if (meta._lastStaticPulseColors?.haloColor !== meta.haloColor) {
       applySmallAntVisualColors(root);
-      meta._lastStaticPulseColors = { ringColor:meta.ringColor, haloColor:meta.haloColor };
+      meta._lastStaticPulseColors = { haloColor:meta.haloColor };
     }
     return;
   }
   const phase = now * .0024 + (meta.idleSeed || 0);
-  const ringColor = getSmallAntPulseColor(meta.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca', phase, '#e8c56a');
   const haloColor = getSmallAntPulseColor(meta.haloColor || '#e8c56a', phase + 1.7, CURRENT_VILLAGE.themeColor || '#5ecfca');
   root.getChildMeshes?.(false).forEach(mesh => {
     const role = mesh.metadata?.smallAntPart;
-    if (role !== 'ring' && role !== 'accentRing' && role !== 'accentHalo') return;
+    if (role !== 'accentHalo') return;
     const material = mesh.material;
     if (!material) return;
-    const color = role === 'accentHalo' ? haloColor : ringColor;
-    material.diffuseColor = color;
-    material.emissiveColor = color.scale(role === 'accentHalo' ? .72 : .46);
-    material.alpha = role === 'accentHalo'
-      ? .78 + Math.sin(phase + 1.2) * .12
-      : .62 + Math.sin(phase) * .14;
+    material.diffuseColor = haloColor;
+    material.emissiveColor = haloColor.scale(.72);
+    material.alpha = .78 + Math.sin(phase + 1.2) * .12;
   });
 }
 
@@ -9208,7 +9184,6 @@ function readSmallAntControlsIntoMetadata(root, options = {}) {
   const next = {
     displayName: document.getElementById('smallAntNameInput')?.value?.trim() || meta.displayName || 'Little Village Ant',
     customDialogue: document.getElementById('smallAntDialogueInput')?.value?.trim() || '',
-    ringColor: document.getElementById('smallAntRingColor')?.value || CURRENT_VILLAGE.themeColor || '#5ecfca',
     haloColor: document.getElementById('smallAntHaloColor')?.value || meta.haloColor || '#e8c56a',
     colorCycle: isSmallAntColorCycleControlOn(),
     wanderRadius: Math.max(0, Math.min(30, Number(document.getElementById('smallAntWanderRadius')?.value) || 5)),
@@ -10146,10 +10121,8 @@ function respawnSmallAntNearPlayer(options = {}) {
     isClone: true,
     displayName: document.getElementById('smallAntNameInput')?.value?.trim() || 'Little Village Ant',
     customDialogue: document.getElementById('smallAntDialogueInput')?.value?.trim() || 'Tiny steps still carry the colony forward.',
-    ringColor: document.getElementById('smallAntRingColor')?.value || CURRENT_VILLAGE.themeColor || '#5ecfca',
     haloColor: document.getElementById('smallAntHaloColor')?.value || '#e8c56a',
     colorCycle,
-    ringVerticalOffset: 0,
     haloVerticalOffset: null,
     behavior: 'cleanMiniNpc',
     movementController: 'clean-mini-npc',
@@ -14702,10 +14675,8 @@ function collectWorldLayoutData() {
     dialogueId: node.metadata.dialogueId || null,
     customDialogue: node.metadata.customDialogue || null,
     questId: node.metadata.questId || null,
-    ringColor: node.metadata.ringColor || null,
     haloColor: node.metadata.haloColor || null,
     colorCycle: node.metadata.colorCycle === true,
-    ringVerticalOffset: Number.isFinite(node.metadata.ringVerticalOffset) ? node.metadata.ringVerticalOffset : null,
     haloVerticalOffset: Number.isFinite(node.metadata.haloVerticalOffset) ? node.metadata.haloVerticalOffset : null,
     baseRotationY: Number.isFinite(node.metadata.baseRotationY) ? node.metadata.baseRotationY : null,
     moveSpeed: Number.isFinite(node.metadata.moveSpeed) ? node.metadata.moveSpeed : null,
@@ -15125,10 +15096,8 @@ function loadWorldLayout(){
                   isClone: true,
                   displayName: item.displayName || 'Little Village Ant',
                   customDialogue: item.customDialogue || '',
-                  ringColor: item.ringColor || CURRENT_VILLAGE.themeColor || '#5ecfca',
                   haloColor: item.haloColor || item.ringColor || '#e8c56a',
                   colorCycle: item.colorCycle === true,
-                  ringVerticalOffset: Number.isFinite(item.ringVerticalOffset) ? item.ringVerticalOffset : 0,
                   haloVerticalOffset: Number.isFinite(item.haloVerticalOffset) ? item.haloVerticalOffset : null,
                   behavior: 'cleanMiniNpc',
                   movementController: 'clean-mini-npc',
@@ -22474,10 +22443,8 @@ function applyLayoutItemToExistingNode(node, item) {
     dialogueId: item.dialogueId || null,
     customDialogue: item.customDialogue || null,
     questId: item.questId || null,
-    ringColor: item.ringColor || null,
     haloColor: item.haloColor || null,
     colorCycle: item.colorCycle === true,
-    ringVerticalOffset: Number.isFinite(item.ringVerticalOffset) ? item.ringVerticalOffset : null,
     haloVerticalOffset: Number.isFinite(item.haloVerticalOffset) ? item.haloVerticalOffset : null,
     baseRotationY: Number.isFinite(item.baseRotationY) ? item.baseRotationY : null,
     moveSpeed: Number.isFinite(item.moveSpeed) ? item.moveSpeed : null,
@@ -23214,10 +23181,8 @@ function placeAssetAtPoint(key, pickedPoint) {
             isClone: true,
             displayName: 'Little Village Ant',
             customDialogue: 'Tiny steps still carry the colony forward.',
-            ringColor: CURRENT_VILLAGE.themeColor || '#5ecfca',
             haloColor: '#e8c56a',
             colorCycle: SmallVillageAntManager.colorCycle === true,
-            ringVerticalOffset: 0,
             haloVerticalOffset: null,
             behavior: 'cleanMiniNpc',
             movementController: 'clean-mini-npc',
