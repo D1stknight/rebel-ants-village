@@ -8904,6 +8904,118 @@ function normalizeSmallAntImportedMesh(mesh, root) {
   try { mesh.refreshBoundingInfo?.(true); } catch(e) {}
 }
 
+function disposeSmallAntImportedResult(result, modelRoot = null) {
+  const nodes = [
+    ...(result?.meshes || []),
+    ...(result?.transformNodes || [])
+  ];
+  const seen = new Set();
+  nodes.forEach(node => {
+    if (!node || seen.has(node)) return;
+    seen.add(node);
+    try { node.dispose?.(false, true); } catch(e) {}
+  });
+  if (modelRoot && !modelRoot.isDisposed?.()) {
+    try { modelRoot.dispose(false, true); } catch(e) {}
+  }
+  (result?.animationGroups || []).forEach(group => {
+    try { group.stop?.(); } catch(e) {}
+    try { group.dispose?.(); } catch(e) {}
+  });
+}
+
+function isSmallAntNodeDescendantOf(node, ancestor) {
+  let parent = node?.parent || null;
+  while (parent) {
+    if (parent === ancestor) return true;
+    parent = parent.parent || null;
+  }
+  return false;
+}
+
+function findSmallAntModelRoot(root) {
+  if (!root || root.isDisposed?.()) return null;
+  const meta = root.metadata || {};
+  if (meta.smallAntModelRoot && !meta.smallAntModelRoot.isDisposed?.()) return meta.smallAntModelRoot;
+  const visualRoot = meta.antVisualRoot || meta.smallAntVisualRoot || root;
+  const direct = visualRoot.getChildren?.().find(child =>
+    child &&
+    !child.isDisposed?.() &&
+    child.name === root.name + '_modelRoot'
+  );
+  if (direct) return direct;
+  return scene.transformNodes.find(node =>
+    node &&
+    !node.isDisposed?.() &&
+    node.name === root.name + '_modelRoot' &&
+    (node.parent === visualRoot || isSmallAntNodeDescendantOf(node, visualRoot))
+  ) || null;
+}
+
+function getSmallAntImportedRootNodes(modelRoot) {
+  if (!modelRoot || modelRoot.isDisposed?.()) return [];
+  const roots = [];
+  scene.transformNodes.forEach(node => {
+    if (node && !node.isDisposed?.() && node.parent === modelRoot) roots.push(node);
+  });
+  scene.meshes.forEach(mesh => {
+    if (mesh && !mesh.isDisposed?.() && mesh.parent === modelRoot) roots.push(mesh);
+  });
+  return roots;
+}
+
+function recoverSmallAntPartialModel(root, reason = 'partial import') {
+  if (!root || root.isDisposed?.() || root.metadata?.type !== 'small_village_ant') return false;
+  const meta = root.metadata || {};
+  const modelRoot = findSmallAntModelRoot(root);
+  if (!modelRoot) return false;
+  const visualRoot = meta.antVisualRoot || meta.smallAntVisualRoot || root;
+  modelRoot.parent = visualRoot;
+  modelRoot.setEnabled?.(true);
+  const importedMeshes = modelRoot.getChildMeshes?.(false) || [];
+  const renderableMeshes = importedMeshes.filter(hasSmallAntRenderableGeometry);
+  if (!renderableMeshes.length) return false;
+  importedMeshes.forEach(mesh => normalizeSmallAntImportedMesh(mesh, root));
+  const importedRootNodes = getSmallAntImportedRootNodes(modelRoot);
+  meta.modelUrl = meta.modelUrl || SMALL_VILLAGE_ANT_MODEL_URL;
+  meta.modelScale = Number.isFinite(meta.modelScale)
+    ? meta.modelScale
+    : (Number.isFinite(modelRoot.scaling?.x) ? modelRoot.scaling.x : SMALL_VILLAGE_ANT_MODEL_SCALE);
+  meta.smallAntModelRoot = modelRoot;
+  meta.smallAntVisualRoot = visualRoot;
+  meta.antVisualRoot = visualRoot;
+  meta.modelRestPosition = modelRoot.position?.clone?.() || BABYLON.Vector3.Zero();
+  meta.smallAntImportedRoots = importedRootNodes;
+  meta.smallAntImportedRootRest = importedRootNodes.map(node => ({
+    node,
+    position: node.position?.clone?.() || BABYLON.Vector3.Zero(),
+    rotation: node.rotation?.clone?.() || BABYLON.Vector3.Zero(),
+    rotationQuaternion: node.rotationQuaternion?.clone?.() || null
+  }));
+  meta.smallAntAnimationGroups = Array.isArray(meta.smallAntAnimationGroups) ? meta.smallAntAnimationGroups : [];
+  meta.smallAntAnimationDisabled = meta.smallAntAnimationGroups.length === 0;
+  meta.smallAntLoadToken = (Number.isFinite(meta.smallAntLoadToken) ? meta.smallAntLoadToken : 0) + 1;
+  meta.smallAntModelLoading = false;
+  meta.smallAntModelLoaded = true;
+  meta.smallAntModelFailed = false;
+  meta.smallAntVisualAnchorCenter = null;
+  meta.smallAntAccentPlaced = false;
+  fitSmallAntModelToVisibleSize(root);
+  centerSmallAntModelOnRoot(root);
+  boostSmallAntModelVisibility(root);
+  updateSmallAntAnimationState(root, false);
+  updateSmallAntAccentPlacement(root, true);
+  if (!meta._smallAntPartialRecoverLogged) {
+    console.warn('Small Village Ant GLB recovered from partial load state:', reason, {
+      renderableMeshes: renderableMeshes.length,
+      modelScale: Number((meta.modelScale || 0).toFixed(4)),
+      bounds: smallAntDebugBounds?.(getSmallAntVisualBounds(root)) || null
+    });
+    meta._smallAntPartialRecoverLogged = true;
+  }
+  return true;
+}
+
 function normalizeSmallAntSharedImportOffset(root, importedNodes) {
   if (!root || !Array.isArray(importedNodes) || !importedNodes.length) return null;
   const groups = new Map();
@@ -9212,6 +9324,8 @@ function buildSmallVillageAnt(root) {
   meta.smallAntModelLoaded = false;
   meta.smallAntModelLoading = false;
   meta.smallAntModelFailed = false;
+  meta.smallAntLoadToken = (Number.isFinite(meta.smallAntLoadToken) ? meta.smallAntLoadToken : 0) + 1;
+  meta.smallAntLoadStartedAt = 0;
   meta.type = 'small_village_ant';
   meta.displayName = meta.displayName || 'Little Village Ant';
   meta.villageId = meta.villageId || CURRENT_VILLAGE_ID;
@@ -9358,16 +9472,32 @@ async function tryLoadSmallVillageAntModel(root) {
   const meta = root.metadata || {};
   if (meta.smallAntModelLoading || meta.smallAntModelLoaded || meta.smallAntModelFailed) return;
   meta.smallAntModelLoading = true;
+  meta.smallAntLoadStartedAt = performance.now();
+  const loadToken = Number.isFinite(meta.smallAntLoadToken) ? meta.smallAntLoadToken : (meta.smallAntLoadToken = 1);
+  let result = null;
+  let modelRoot = null;
   try {
     const modelUrl = meta.modelUrl || SMALL_VILLAGE_ANT_MODEL_URL;
-    const result = await BABYLON.SceneLoader.ImportMeshAsync('', '', modelUrl, scene);
-    if (!root || root.isDisposed?.()) return;
+    result = await BABYLON.SceneLoader.ImportMeshAsync('', '', modelUrl, scene);
+    if (!root || root.isDisposed?.() || meta.smallAntLoadToken !== loadToken) {
+      disposeSmallAntImportedResult(result);
+      return;
+    }
     const visualRoot = meta.antVisualRoot || meta.smallAntVisualRoot;
-    const modelRoot = new BABYLON.TransformNode(root.name + '_modelRoot', scene);
+    modelRoot = new BABYLON.TransformNode(root.name + '_modelRoot', scene);
     modelRoot.parent = visualRoot || root;
     modelRoot.position.set(0, 0, 0);
     modelRoot.rotation.set(0, 0, 0);
     modelRoot.scaling.setAll(Number.isFinite(meta.modelScale) ? meta.modelScale : SMALL_VILLAGE_ANT_MODEL_SCALE);
+    const animationGroups = result.animationGroups || [];
+    meta.modelUrl = modelUrl;
+    meta.modelScale = Number.isFinite(meta.modelScale) ? meta.modelScale : modelRoot.scaling.x;
+    meta.smallAntModelRoot = modelRoot;
+    meta.smallAntVisualRoot = visualRoot || modelRoot;
+    meta.antVisualRoot = visualRoot || modelRoot;
+    meta.modelRestPosition = modelRoot.position.clone();
+    meta.smallAntAnimationGroups = animationGroups;
+    meta.smallAntAnimationDisabled = false;
     const importedNodes = [
       ...(result.transformNodes || []),
       ...(result.meshes || [])
@@ -9381,6 +9511,10 @@ async function tryLoadSmallVillageAntModel(root) {
     if (!renderableMeshes.length) {
       throw new Error('Imported Small Village Ant GLB has no renderable mesh geometry');
     }
+    if (meta.smallAntLoadToken !== loadToken) {
+      disposeSmallAntImportedResult(result, modelRoot);
+      return;
+    }
     normalizeSmallAntSharedImportOffset(root, importedNodes);
     (result.meshes || []).forEach(mesh => normalizeSmallAntImportedMesh(mesh, root));
     (meta.smallAntParts || []).forEach(part => {
@@ -9389,13 +9523,6 @@ async function tryLoadSmallVillageAntModel(root) {
       part?.setEnabled?.(false);
       part.isVisible = false;
     });
-    const animationGroups = result.animationGroups || [];
-    meta.modelUrl = modelUrl;
-    meta.modelScale = Number.isFinite(meta.modelScale) ? meta.modelScale : SMALL_VILLAGE_ANT_MODEL_SCALE;
-    meta.smallAntModelRoot = modelRoot;
-    meta.smallAntVisualRoot = visualRoot || modelRoot;
-    meta.antVisualRoot = visualRoot || modelRoot;
-    meta.modelRestPosition = modelRoot.position.clone();
     meta.smallAntImportedRoots = importedRootNodes;
     meta.smallAntImportedRootRest = importedRootNodes.map(node => ({
       node,
@@ -9404,8 +9531,6 @@ async function tryLoadSmallVillageAntModel(root) {
       rotationQuaternion: node.rotationQuaternion?.clone?.() || null
     }));
     meta.smallAntVisualAnchorCenter = null;
-    meta.smallAntAnimationGroups = animationGroups;
-    meta.smallAntAnimationDisabled = false;
     meta.antAnimationSpeedRatio = Number.isFinite(meta.antAnimationSpeedRatio) ? meta.antAnimationSpeedRatio : SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED;
     fitSmallAntModelToVisibleSize(root);
     centerSmallAntModelOnRoot(root);
@@ -9425,11 +9550,18 @@ async function tryLoadSmallVillageAntModel(root) {
     meta.smallAntAccentPlaced = false;
     updateSmallAntAccentPlacement(root, true);
   } catch (error) {
+    if (modelRoot && !modelRoot.isDisposed?.()) {
+      try { modelRoot.dispose(false, true); } catch(e) {}
+    }
+    meta.smallAntModelRoot = null;
+    meta.smallAntImportedRoots = [];
+    meta.smallAntImportedRootRest = [];
+    meta.smallAntAnimationGroups = [];
     meta.smallAntModelFailed = true;
     createSmallAntFallbackBody(root, error?.message || error);
     console.warn('Small Village Ant GLB failed to load; using procedural fallback:', error);
   } finally {
-    meta.smallAntModelLoading = false;
+    if (meta.smallAntLoadToken === loadToken) meta.smallAntModelLoading = false;
   }
 }
 
@@ -9957,6 +10089,13 @@ function updateSmallVillageAntPopulation(dt) {
   SmallVillageAntManager.roots.forEach(root => {
     if (!root || root.isDisposed?.() || root.metadata?.type !== 'small_village_ant') return;
     const meta = root.metadata || {};
+    if (
+      meta.smallAntModelLoading &&
+      !meta.smallAntModelLoaded &&
+      now - (meta.smallAntLoadStartedAt || now) > 2500
+    ) {
+      recoverSmallAntPartialModel(root, 'loading timeout');
+    }
     root.setEnabled(NPCManager.visible);
     if (!NPCManager.visible) return;
     const beingDragged = window._dragSelectedObject === root;
@@ -10795,6 +10934,9 @@ function forceShowSmallAntModel(target = null, scale = null) {
     return null;
   }
   const meta = root.metadata || {};
+  if (!meta.smallAntModelRoot || meta.smallAntModelLoading) {
+    recoverSmallAntPartialModel(root, 'console forceShow');
+  }
   root.setEnabled?.(true);
   (meta.antVisualRoot || meta.smallAntVisualRoot)?.setEnabled?.(true);
   meta.smallAntModelRoot?.setEnabled?.(true);
@@ -10802,6 +10944,10 @@ function forceShowSmallAntModel(target = null, scale = null) {
     meta.smallAntModelRoot.scaling.setAll(Math.max(SMALL_VILLAGE_ANT_MIN_MODEL_SCALE, Math.min(SMALL_VILLAGE_ANT_MAX_MODEL_SCALE, requestedScale)));
     meta.modelScale = meta.smallAntModelRoot.scaling.x;
     centerSmallAntModelOnRoot(root);
+  } else if (meta.smallAntModelRoot) {
+    fitSmallAntModelToVisibleSize(root);
+    centerSmallAntModelOnRoot(root);
+    boostSmallAntModelVisibility(root);
   }
   root.getChildMeshes?.(false).forEach(mesh => {
     mesh.setEnabled?.(true);
