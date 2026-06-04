@@ -758,9 +758,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     </details>
   </div>
   <div class="ap-section">Quest Editor</div>
-  <div class="admin-section-body" data-admin-section-body="quest-editor">
-    <button class="quest-help" type="button" title="Quest Editor How To: 1. Give the quest a simple ID like quest_hidden_chest. 2. Add a clear title and short story description. 3. Pick the objective type: talk to NPC, visit village, read sign, open chest, or reach zone. 4. Write exactly what the player should do. 5. Enter the target ID if you know it. 6. Add a prerequisite only if this quest must wait for another quest. 7. Choose locked, active, or completed. 8. Click Save Local Quest.">How To</button>
-    <div class="admin-note">Creates local quest drafts for this village. Existing Hub tutorial quests stay safe.</div>
+	  <div class="admin-section-body" data-admin-section-body="quest-editor">
+	    <button class="quest-help" type="button" title="Quest Editor How To: 1. Give the quest a simple ID like quest_hidden_chest. 2. Add a clear title and short story description. 3. Pick the objective type: talk to NPC, visit village, read sign, open chest, or reach zone. 4. Write exactly what the player should do. 5. Enter the target ID if you know it. 6. Add a prerequisite only if this quest must wait for another quest. 7. Choose locked, active, or completed. 8. Click Save Local Quest.">How To</button>
+	    <div class="admin-note">Creates local quest drafts for this village. Existing Hub tutorial quests stay safe.</div>
     <label class="admin-field">Quest ID <input id="questDraftId" placeholder="quest_the_warning"></label>
     <label class="admin-field">Title <input id="questDraftTitle" placeholder="The First Warning"></label>
     <label class="admin-field">Description <textarea id="questDraftDescription" rows="2" placeholder="Story context"></textarea></label>
@@ -784,10 +784,48 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
         <option value="completed">completed</option>
       </select>
     </label>
-    <button class="ctrl-btn full" onclick="saveQuestDraft()">Save Local Quest</button>
-    <button class="ctrl-btn danger full" onclick="resetHubTutorialQuest()">Reset Hub Tutorial Quest</button>
-  </div>
-  <div class="ap-section">Interaction Zones</div>
+	    <button class="ctrl-btn full" onclick="saveQuestDraft()">Save Local Quest</button>
+	    <button class="ctrl-btn danger full" onclick="resetHubTutorialQuest()">Reset Hub Tutorial Quest</button>
+	  </div>
+	  <div class="ap-section">Quest Targets / Markers</div>
+	  <div class="admin-section-body" data-admin-section-body="quest-targets">
+	    <button class="quest-help" type="button" title="Quest Target Markers How To: 1. Enter a stable Target ID such as questTarget_forest_path. 2. Add a short Label players will see. 3. Optionally set Quest ID and Objective Type. 4. Pick the Target Type. 5. Click Add Quest Target Marker, then click the ground. 6. Move, rotate, or scale with the gizmo. 7. Apply Settings and save the layout.">How To</button>
+	    <div class="admin-note">Movable guidance targets for active quests. In player mode only the current active quest marker is shown.</div>
+	    <label class="admin-field">Target ID <input id="questTargetIdInput" placeholder="questTarget_forest_path"></label>
+	    <label class="admin-field">Label <input id="questTargetLabelInput" placeholder="Forest Path"></label>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <label class="admin-field">Quest ID <input id="questTargetQuestIdInput" placeholder="optional"></label>
+	      <label class="admin-field">Objective Type <input id="questTargetObjectiveTypeInput" placeholder="visitArea"></label>
+	    </div>
+	    <label class="admin-field">Target Type
+	      <select id="questTargetTypeInput" class="admin-select">
+	        <option value="Area">Area</option>
+	        <option value="NPC">NPC</option>
+	        <option value="Door">Door</option>
+	        <option value="Interior">Interior</option>
+	        <option value="Portal">Portal</option>
+	        <option value="Sign">Sign</option>
+	        <option value="Chest">Chest</option>
+	        <option value="Collectible">Collectible</option>
+	        <option value="NFT Frame">NFT Frame</option>
+	        <option value="Link/Hotspot">Link/Hotspot</option>
+	      </select>
+	    </label>
+	    <label class="admin-field">Object / NPC / Interior ID <input id="questTargetObjectIdInput" placeholder="optional target object id"></label>
+	    <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end">
+	      <label class="admin-field">Radius <input id="questTargetRadiusInput" type="number" min="0.5" max="80" step="0.5" value="8"></label>
+	      <label class="admin-field" style="display:flex;gap:6px;align-items:center;justify-content:center;min-height:30px">Enabled <input id="questTargetEnabledInput" type="checkbox" checked></label>
+	    </div>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <button class="ctrl-btn" onclick="placeQuestTargetMarker()">Add Quest Target Marker</button>
+	      <button class="ctrl-btn" onclick="applySelectedQuestTargetSettings()">Apply Settings</button>
+	      <button class="ctrl-btn" onclick="duplicateSelectedQuestTargetMarker()">Duplicate Selected Marker</button>
+	      <button class="ctrl-btn" onclick="toggleQuestTargetMarkerVisibility()" id="questTargetVisibilityBtn">Hide Markers</button>
+	      <button class="ctrl-btn" onclick="setGizmoMode('scale')">Resize / Set Radius</button>
+	      <button class="ctrl-btn danger" onclick="deleteSelectedQuestTargetMarker()">Delete Selected Marker</button>
+	    </div>
+	  </div>
+	  <div class="ap-section">Interaction Zones</div>
   <div class="admin-section-body" data-admin-section-body="interaction-zones">
     <button class="quest-help" type="button" title="Interaction Zones How To: 1. Pick what the zone is for: story, audio, weather, quest, store, or dojo. 2. Add a Quest Objective ID only if a quest should look for this zone. 3. Click Add Zone. 4. Move it where the player should stand. 5. Use Resize Zone or the scale gizmo to set the area. 6. Click Apply Zone Settings after changing type or quest ID on a selected zone. 7. Save the village so the zone persists.">How To</button>
     <div class="admin-note">Interaction zones are invisible trigger areas. Use them to mark story spots, quest targets, audio/weather areas, store/dojo entrances, or future cutscene triggers.</div>
@@ -1535,22 +1573,29 @@ const NPC_DIALOGUES = {
   ]
 };
 const QUEST_DEFINITIONS = {
-  'hub-first-step': {
-    questId:'hub-first-step',
-    title:'The First Step',
-    steps:[
-      { id:'talk', objective:'Talk to the Hub Guide marked with the glowing quest marker.' },
-      { id:'complete', objective:'Completed: You learned how to talk to NPCs.' }
-    ]
-  },
-  'hub-walk-village': {
-    questId:'hub-walk-village',
-    title:'Walk The Village',
-    steps:[
-      { id:'reach-forest-path', objective:'Reach the forest path area.' },
-      { id:'complete', objective:'Completed: You stepped beyond the center of the Hub.' }
-    ]
-  },
+	  'hub-first-step': {
+	    questId:'hub-first-step',
+	    title:'The First Step',
+	    targetMarkerId:'questTarget_hub_guide',
+	    targetNpcId:'hub-ashigaru-villager-01',
+	    targetType:'NPC',
+	    targetLabel:'Hub Guide',
+	    steps:[
+	      { id:'talk', objective:'Talk to the Hub Guide marked with the glowing quest marker.', targetMarkerId:'questTarget_hub_guide', targetNpcId:'hub-ashigaru-villager-01', targetType:'NPC', targetLabel:'Hub Guide' },
+	      { id:'complete', objective:'Completed: You learned how to talk to NPCs.' }
+	    ]
+	  },
+	  'hub-walk-village': {
+	    questId:'hub-walk-village',
+	    title:'Walk The Village',
+	    targetMarkerId:'questTarget_forest_path',
+	    targetType:'Area',
+	    targetLabel:'Forest Path',
+	    steps:[
+	      { id:'reach-forest-path', objective:'Reach the forest path area.', targetMarkerId:'questTarget_forest_path', objectiveType:'visitArea', targetType:'Area', targetLabel:'Forest Path' },
+	      { id:'complete', objective:'Completed: You stepped beyond the center of the Hub.' }
+	    ]
+	  },
   'hub-signs': {
     questId:'hub-signs',
     title:'Signs of the Colony',
@@ -1583,19 +1628,24 @@ const QUEST_DEFINITIONS = {
       { id:'complete', objective:'Completed: You learned that rewards can be hidden.' }
     ]
   },
-  'hub-hidden-dojo': {
-    questId:'hub-hidden-dojo',
-    title:'The Hidden Dojo',
-    steps:[
-      { id:'discover-dojo', objective:'Discover any forest dojo or training doorway.' },
-      { id:'complete', objective:'Completed: You found a hidden training path.' }
-    ]
-  },
-  'hub-enter-dojo': {
-    questId:'hub-enter-dojo',
-    title:'Enter the Dojo',
-    steps:[
-      { id:'enter-interior', objective:'Enter any interior dojo room.' },
+	  'hub-hidden-dojo': {
+	    questId:'hub-hidden-dojo',
+	    title:'The Hidden Dojo',
+	    targetMarkerId:'questTarget_hidden_forest_dojo',
+	    targetType:'Area',
+	    targetLabel:'Hidden Dojo',
+	    steps:[
+	      { id:'discover-dojo', objective:'Discover any forest dojo or training doorway.', targetMarkerId:'questTarget_hidden_forest_dojo', objectiveType:'discoverDojo', targetType:'Area', targetLabel:'Hidden Dojo' },
+	      { id:'complete', objective:'Completed: You found a hidden training path.' }
+	    ]
+	  },
+	  'hub-enter-dojo': {
+	    questId:'hub-enter-dojo',
+	    title:'Enter the Dojo',
+	    targetType:'Interior',
+	    targetLabel:'Dojo',
+	    steps:[
+	      { id:'enter-interior', objective:'Enter any interior dojo room.', objectiveType:'enterInterior', targetType:'Interior', targetLabel:'Dojo' },
       { id:'complete', objective:'Completed: You learned how interior doors work.' }
     ]
   },
@@ -1647,19 +1697,23 @@ const QUEST_DEFINITIONS = {
       { id:'complete', objective:'Completed: You heard the arcade calling from inside the world.' }
     ]
   },
-  'hub-library-door': {
-    questId:'hub-library-door',
-    title:'The Library Door',
-    steps:[
-      { id:'visit-library', objective:'Visit the library or book interior.' },
+	  'hub-library-door': {
+	    questId:'hub-library-door',
+	    title:'The Library Door',
+	    targetType:'Interior',
+	    targetLabel:'Library',
+	    steps:[
+	      { id:'visit-library', objective:'Visit the library or book interior.', objectiveType:'enterInterior', targetType:'Interior', targetLabel:'Library' },
       { id:'complete', objective:'Completed: You found where stories will live.' }
     ]
   },
-  'hub-forge-awaits': {
-    questId:'hub-forge-awaits',
-    title:'The Forge Awaits',
-    steps:[
-      { id:'visit-forge', objective:'Visit the forge interior.' },
+	  'hub-forge-awaits': {
+	    questId:'hub-forge-awaits',
+	    title:'The Forge Awaits',
+	    targetType:'Interior',
+	    targetLabel:'Forge',
+	    steps:[
+	      { id:'visit-forge', objective:'Visit the forge interior.', objectiveType:'enterInterior', targetType:'Interior', targetLabel:'Forge' },
       { id:'complete', objective:'Completed: You found the character forge path.' }
     ]
   },
@@ -1687,11 +1741,15 @@ const QUEST_DEFINITIONS = {
       { id:'complete', objective:'Completed: You completed the village travel loop.' }
     ]
   },
-  'hub-tutorial-complete': {
-    questId:'hub-tutorial-complete',
-    title:'The Colony Remembers',
-    steps:[
-      { id:'return-guide', objective:'Return to the Hub Guide.' },
+	  'hub-tutorial-complete': {
+	    questId:'hub-tutorial-complete',
+	    title:'The Colony Remembers',
+	    targetMarkerId:'questTarget_hub_guide',
+	    targetNpcId:'hub-ashigaru-villager-01',
+	    targetType:'NPC',
+	    targetLabel:'Hub Guide',
+	    steps:[
+	      { id:'return-guide', objective:'Return to the Hub Guide.', targetMarkerId:'questTarget_hub_guide', targetNpcId:'hub-ashigaru-villager-01', targetType:'NPC', targetLabel:'Hub Guide' },
       { id:'complete', objective:'Completed: The Hub Journey is complete.' }
     ]
   }
@@ -1810,15 +1868,28 @@ function registerBook1QuestDefinitions() {
       primaryNpc: quest.primaryNpc,
       description: quest.description,
       objectives: quest.objectives,
-      rewards: quest.rewards,
-      journalEntry: quest.journalEntry,
-      prerequisites: quest.prerequisites,
-      type: quest.type,
-      steps: quest.objectives.map(objective => typeof objective === 'string'
-        ? { id:makeSafeQuestStepId(objective), objective }
-        : { id:objective.id || makeSafeQuestStepId(objective.objective), objective:objective.objective || String(objective) }
-      ).concat({ id:'complete', objective:`Completed: ${quest.title}` })
-    };
+	      rewards: quest.rewards,
+	      journalEntry: quest.journalEntry,
+	      prerequisites: quest.prerequisites,
+	      targetMarkerId: quest.targetMarkerId || null,
+	      targetNpcId: quest.targetNpcId || null,
+	      targetVillageId: quest.targetVillageId || null,
+	      targetInteriorId: quest.targetInteriorId || null,
+	      targetObjectId: quest.targetObjectId || null,
+	      type: quest.type,
+	      steps: quest.objectives.map(objective => typeof objective === 'string'
+	        ? { id:makeSafeQuestStepId(objective), objective }
+	        : {
+	            id:objective.id || makeSafeQuestStepId(objective.objective),
+	            objective:objective.objective || String(objective),
+	            targetMarkerId:objective.targetMarkerId || null,
+	            targetNpcId:objective.targetNpcId || null,
+	            targetVillageId:objective.targetVillageId || null,
+	            targetInteriorId:objective.targetInteriorId || null,
+	            targetObjectId:objective.targetObjectId || null
+	          }
+	      ).concat({ id:'complete', objective:`Completed: ${quest.title}` })
+	    };
   });
 }
 
@@ -3553,6 +3624,7 @@ const PERF_DYNAMIC_TYPES = new Set([
   'ronin_mist',
   'interaction_zone',
   'interior_entrance',
+  'quest_target_marker',
   'interior_runtime'
 ]);
 
@@ -3953,14 +4025,16 @@ function beginAdminPlacement(request) {
   const label = request.kind === 'asset'
     ? `Place ${request.key}`
     : request.kind === 'npc'
-      ? 'Place NPC'
-      : request.kind === 'terrain_stamp'
-        ? `Place ${String(request.stampType || 'terrain').replace(/_/g, ' ')}`
-        : request.kind === 'collectible'
-          ? `Place ${COLLECTIBLE_TYPES[request.collectibleType]?.label || 'Collectible'}`
-          : request.kind === 'interior_entrance'
-            ? 'Place Door'
-            : `Place ${getCollisionProxyLabel(request.proxyKind)}`;
+	      ? 'Place NPC'
+	      : request.kind === 'terrain_stamp'
+	        ? `Place ${String(request.stampType || 'terrain').replace(/_/g, ' ')}`
+	        : request.kind === 'collectible'
+	          ? `Place ${COLLECTIBLE_TYPES[request.collectibleType]?.label || 'Collectible'}`
+	          : request.kind === 'interior_entrance'
+	            ? 'Place Door'
+	            : request.kind === 'quest_target_marker'
+	              ? 'Place Quest Target Marker'
+	              : `Place ${getCollisionProxyLabel(request.proxyKind)}`;
   canvas.style.cursor = 'crosshair';
   showToast(`${label}: click the ground where it should go`);
 }
@@ -3989,11 +4063,14 @@ function updateAdminPlacementMarker() {
     marker.scaling.set(Math.max(1, (stamp.width || 10) / 8), 1, Math.max(1, (stamp.length || 10) / 8));
   } else if (pendingAdminPlacement.kind === 'npc') {
     marker.scaling.set(.75, 1, .75);
-  } else if (pendingAdminPlacement.kind === 'collectible') {
-    marker.scaling.set(.7, 1, .7);
-  } else {
-    marker.scaling.set(1.25, 1, 1.25);
-  }
+	  } else if (pendingAdminPlacement.kind === 'collectible') {
+	    marker.scaling.set(.7, 1, .7);
+	  } else if (pendingAdminPlacement.kind === 'quest_target_marker') {
+	    const radius = Math.max(.5, Number(pendingAdminPlacement.settings?.radius) || 8);
+	    marker.scaling.set(Math.max(1, radius / 3.2), 1, Math.max(1, radius / 3.2));
+	  } else {
+	    marker.scaling.set(1.25, 1, 1.25);
+	  }
 }
 
 function placeCollisionProxyPieceAtPoint(kind, point, owner = null) {
@@ -4048,17 +4125,22 @@ function placePendingAdminPlacementAtPoint(point) {
     return true;
   }
 
-  if (request.kind === 'interior_entrance') {
-    const entrance = createInteriorEntrance(point.clone(), request.settings || {});
-    adminGizmoMode = 'move';
-    setSelectedEditableObject(entrance);
-    triggerAutoSave();
-    showToast('Door placed. Move gizmo ready.');
-    return true;
-  }
+	  if (request.kind === 'interior_entrance') {
+	    const entrance = createInteriorEntrance(point.clone(), request.settings || {});
+	    adminGizmoMode = 'move';
+	    setSelectedEditableObject(entrance);
+	    triggerAutoSave();
+	    showToast('Door placed. Move gizmo ready.');
+	    return true;
+	  }
 
-  return false;
-}
+	  if (request.kind === 'quest_target_marker') {
+	    placeQuestTargetMarkerAtPoint(point.clone(), request.settings || {});
+	    return true;
+	  }
+
+	  return false;
+	}
 
 function deleteAttachedCollisionProxyPieces() {
   if (!selectedObject) {
@@ -5474,6 +5556,9 @@ if (selectedObject?.metadata?.type === 'interaction_zone') {
   if (zoneTypeInput) zoneTypeInput.value = selectedObject.metadata.interactionZoneType || 'story';
   if (zoneQuestInput) zoneQuestInput.value = selectedObject.metadata.questObjectiveId || '';
 }
+if (selectedObject?.metadata?.type === 'quest_target_marker') {
+  writeQuestTargetMarkerSettingsToControls(selectedObject);
+}
 if (selectedObject?.metadata?.type === 'interior_entrance') {
   const defaults = getInteriorEntranceDefaults(selectedObject.metadata.interiorType);
   const nameInput = document.getElementById('interiorEntranceName');
@@ -6279,7 +6364,11 @@ function collectProgressionCollectible(root) {
     root.metadata._collectiblePickupStartedAt = performance.now();
     root.isPickable = false;
     root.getChildMeshes?.(false).forEach(mesh => { mesh.isPickable = false; });
-    advanceHubTutorialObjective('collectCollectible', { inForest:isInHubForestPathArea(root.position) });
+    advanceHubTutorialObjective('collectCollectible', {
+      collectibleId: root.metadata.collectibleId || root.name,
+      collectibleType: root.metadata.collectibleType || '',
+      targetObjectId: root.metadata.collectibleId || root.name
+    });
     showToast('Collected: ' + (root.metadata.collectibleLabel || 'Collectible'));
   }
 }
@@ -6830,7 +6919,6 @@ function openVillageGateMenu() {
   overlay.classList.add('on');
   overlay.setAttribute('aria-hidden','false');
   playInteractionAudio('portalOpen');
-  advanceHubTutorialObjective('usePortal', { gate:'village_gate', villageId:CURRENT_VILLAGE_ID });
   if (QuestState.questId === 'village-gate' && QuestState.step === 'open-gate') {
     setTutorialQuestStep('village-gate', 'travel-ronin');
   }
@@ -8724,8 +8812,8 @@ function reconcileTutorialQuestOnLoad() {
 }
 
 function shouldHubNPCAdvanceTutorial(npc) {
-  if (!npc?.metadata || npc.metadata.villageId !== 'hub' || npc.metadata.factionId !== 'ashigaru') return false;
-  return ['hub-first-step', 'hub-tutorial-complete'].includes(QuestState.questId);
+  if (!npc?.metadata || npc.metadata.villageId !== 'hub') return false;
+  return npc.metadata.npcId === 'hub-ashigaru-villager-01';
 }
 
 function getHubTutorialProgress(questId = QuestState.questId) {
@@ -8747,6 +8835,10 @@ function getContextSearchText(context = {}) {
     context.displayId,
     context.hotspotId,
     context.screenId,
+    context.targetMarkerId,
+    context.targetNpcId,
+    context.targetObjectId,
+    context.targetVillageId,
     context.url,
     context.actionType,
     context.sourceActionType
@@ -8760,14 +8852,22 @@ function contextIncludesAny(context, keywords) {
 
 function advanceHubTutorialObjective(actionType, context = {}) {
   const expected = {
-    'hub-first-step': { step:'talk', action:'talkToNpc' },
-    'hub-walk-village': { step:'reach-forest-path', action:'visitArea', match:ctx => ctx.inForest === true },
+    'hub-first-step': { step:'talk', action:'talkToNpc', match:ctx => ctx.targetNpcId === 'hub-ashigaru-villager-01' },
+    'hub-walk-village': { step:'reach-forest-path', action:'visitArea', match:ctx => ctx.targetMarkerId === 'questTarget_forest_path' },
     'hub-signs': { step:'read-sign', action:'interactSign' },
     'hub-first-collectible': { step:'collect-one', action:'collectCollectible' },
-    'hub-trees-remember': { step:'collect-forest-memory', action:'collectCollectible', match:ctx => ctx.inForest === true },
+    'hub-trees-remember': { step:'collect-forest-memory', action:'collectCollectible' },
     'hub-hidden-chest': { step:'open-chest', action:'openChest' },
-    'hub-hidden-dojo': { step:'discover-dojo', action:'discoverDojo' },
-    'hub-enter-dojo': { step:'enter-interior', action:'enterInterior' },
+    'hub-hidden-dojo': {
+      step:'discover-dojo',
+      action:'discoverDojo',
+      match:ctx => ctx.targetMarkerId === 'questTarget_hidden_forest_dojo' || (
+        ctx.actionType === 'enterInterior' &&
+        Boolean(getQuestTargetById('questTarget_hidden_forest_dojo')) &&
+        contextIncludesAny(ctx, ['dojo', 'training'])
+      )
+    },
+    'hub-enter-dojo': { step:'enter-interior', action:'enterInterior', match:ctx => contextIncludesAny(ctx, ['dojo', 'training']) },
     'hub-light-changes': { step:'observe-time', action:'observeTime' },
     'hub-sky-watches': { step:'experience-weather', action:'experienceWeather' },
     'hub-inspect-walls': { step:'inspect-frame', action:'inspectInteriorNFTFrame' },
@@ -8779,7 +8879,7 @@ function advanceHubTutorialObjective(actionType, context = {}) {
     'hub-open-journal': { step:'open-journal', action:'openJournal' },
     'hub-through-gate': { step:'use-portal', action:'usePortal' },
     'hub-world-larger': { step:'visit-village-return', action:'visitVillage', match:ctx => ctx.returnedToHub === true },
-    'hub-tutorial-complete': { step:'return-guide', action:'returnToNpc' }
+    'hub-tutorial-complete': { step:'return-guide', action:'returnToNpc', match:ctx => ctx.targetNpcId === 'hub-ashigaru-villager-01' }
   }[QuestState.questId];
   if (!expected || QuestState.step !== expected.step || actionType !== expected.action) return false;
   if (expected.match && !expected.match(context)) return false;
@@ -8815,7 +8915,14 @@ function updateQuestTracker() {
   const progressText = QuestState.questId === 'hub-wall-echoes' && progress?.count
     ? ` (${Math.min(progress.count, 3)}/3)`
     : '';
-  objective.textContent = `${quest?.title || 'Quest'}: ${getQuestObjectiveDisplayText(QuestState.questId, QuestState.step)}${progressText}`;
+  const guidance = getQuestTargetGuidance();
+  let objectiveText = getQuestObjectiveDisplayText(QuestState.questId, QuestState.step);
+  if (guidance?.missing) {
+    objectiveText = 'Quest target not placed yet.';
+  } else if (guidance?.marker && guidance.label) {
+    objectiveText = `Follow the glowing marker to ${guidance.label}.`;
+  }
+  objective.textContent = `${quest?.title || 'Quest'}: ${objectiveText}${progressText}`;
   tracker.classList.add('on');
 }
 
@@ -8856,12 +8963,26 @@ function updateTutorialQuestWorldProgress() {
   if (!charMesh) return;
   if (QuestState.questId === 'hub-walk-village' && QuestState.step === 'reach-forest-path') {
     if (ActiveInterior) return;
-    advanceHubTutorialObjective('visitArea', { area:'forest-path', inForest:isInHubForestPathArea(charMesh.position) });
+    const marker = getQuestTargetById('questTarget_forest_path');
+    if (marker && isPlayerInsideQuestTargetMarker(marker)) {
+      advanceHubTutorialObjective('visitArea', {
+        area:'forest-path',
+        targetMarkerId:'questTarget_forest_path',
+        targetType:'Area'
+      });
+    }
     return;
   }
-  if (QuestState.questId === 'hub-hidden-dojo' && QuestState.step === 'discover-dojo' && isNearDojoTutorialArea()) {
+  if (QuestState.questId === 'hub-hidden-dojo' && QuestState.step === 'discover-dojo') {
     if (ActiveInterior) return;
-    advanceHubTutorialObjective('discoverDojo', { area:'forest-dojo', isDojo:true });
+    const marker = getQuestTargetById('questTarget_hidden_forest_dojo');
+    if (marker && isPlayerInsideQuestTargetMarker(marker)) {
+      advanceHubTutorialObjective('discoverDojo', {
+        area:'forest-dojo',
+        targetMarkerId:'questTarget_hidden_forest_dojo',
+        targetType:'Area'
+      });
+    }
     return;
   }
   if (QuestState.questId === 'hub-light-changes' && QuestState.step === 'observe-time') {
@@ -8883,6 +9004,460 @@ function handleSignQuestEvent(signData) {
   const actionType = classifyEcosystemAction(signData);
   recordProgressionEvent('ecosystem', actionType, PROGRESSION_POINTS.sign);
   advanceHubTutorialObjective('interactSign');
+}
+
+const QUEST_TARGET_TYPES = ['NPC', 'Area', 'Door', 'Interior', 'Portal', 'Sign', 'Chest', 'Collectible', 'NFT Frame', 'Link/Hotspot'];
+const QuestTargetMarkerManager = {
+  visible: localStorage.getItem('rebelAntsQuestTargetMarkersVisible') !== '0',
+  activeMarkerId: null,
+  lastMissingHintAt: 0
+};
+
+function normalizeQuestTargetType(type) {
+  return QUEST_TARGET_TYPES.includes(type) ? type : 'Area';
+}
+
+function makeQuestTargetMarkerId(label = 'target') {
+  const safe = String(label || 'target').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'target';
+  return makeUniqueVillageNodeName('questTarget_' + safe);
+}
+
+function getQuestTargetRoots() {
+  return scene.transformNodes.filter(node =>
+    node &&
+    !node.isDisposed?.() &&
+    node.metadata?.type === 'quest_target_marker'
+  );
+}
+
+function getQuestTargetById(targetMarkerId) {
+  if (!targetMarkerId) return null;
+  const id = String(targetMarkerId);
+  return getQuestTargetRoots().find(node => node.metadata?.targetMarkerId === id || node.name === id) || null;
+}
+
+function getNPCById(npcId) {
+  if (!npcId) return null;
+  return (NPCManager?.roots || []).find(root =>
+    root &&
+    !root.isDisposed?.() &&
+    (root.metadata?.npcId === npcId || root.name === npcId)
+  ) || null;
+}
+
+function getQuestTargetMetadata(questId = QuestState.questId, stepId = QuestState.step) {
+  const quest = QUEST_DEFINITIONS[questId] || {};
+  const step = getQuestStep(questId, stepId) || {};
+  return {
+    questId,
+    stepId,
+    targetMarkerId: step.targetMarkerId || quest.targetMarkerId || null,
+    targetNpcId: step.targetNpcId || quest.targetNpcId || null,
+    targetVillageId: step.targetVillageId || quest.targetVillageId || null,
+    targetInteriorId: step.targetInteriorId || quest.targetInteriorId || null,
+    targetObjectId: step.targetObjectId || quest.targetObjectId || null,
+    targetType: normalizeQuestTargetType(step.targetType || quest.targetType || 'Area'),
+    objectiveType: step.objectiveType || quest.objectiveType || null,
+    targetLabel: step.targetLabel || quest.targetLabel || quest.primaryNpc || quest.title || 'Quest Target'
+  };
+}
+
+function getActiveQuestTargetMarker() {
+  if (QuestState.completed) return null;
+  const target = getQuestTargetMetadata();
+  if (target.targetMarkerId) {
+    const marker = getQuestTargetById(target.targetMarkerId);
+    if (marker) return marker;
+  }
+  return getQuestTargetRoots().find(marker => {
+    const meta = marker.metadata || {};
+    if (meta.enabled === false) return false;
+    if (meta.questId && meta.questId !== QuestState.questId) return false;
+    if (meta.objectiveType && target.objectiveType && meta.objectiveType !== target.objectiveType) return false;
+    return meta.questId === QuestState.questId;
+  }) || null;
+}
+
+function questRequiresPlacedTargetMarker(questId = QuestState.questId, stepId = QuestState.step) {
+  if (questId === 'hub-walk-village' && stepId === 'reach-forest-path') return true;
+  if (questId === 'hub-hidden-dojo' && stepId === 'discover-dojo') return true;
+  return false;
+}
+
+function getQuestTargetGuidance() {
+  if (QuestState.completed) return null;
+  const target = getQuestTargetMetadata();
+  const marker = getActiveQuestTargetMarker();
+  if (marker && marker.metadata?.enabled !== false) {
+    const markerMeta = marker.metadata || {};
+    const npc = markerMeta.targetType === 'NPC' && markerMeta.targetNpcId ? getNPCById(markerMeta.targetNpcId) : null;
+    return {
+      missing: false,
+      marker,
+      target,
+      label: npc?.metadata?.displayName || markerMeta.label || target.targetLabel || markerMeta.targetMarkerId || 'Quest Target'
+    };
+  }
+  if (target.targetNpcId) {
+    const npc = getNPCById(target.targetNpcId);
+    if (npc) {
+      return {
+        missing: false,
+        npc,
+        target,
+        label: npc.metadata?.displayName || target.targetLabel || 'Quest NPC'
+      };
+    }
+  }
+  if (questRequiresPlacedTargetMarker()) {
+    return { missing:true, target, label:target.targetLabel || 'Quest Target' };
+  }
+  return null;
+}
+
+function createQuestTargetLabelTexture(root) {
+  const meta = root.metadata || {};
+  const npc = meta.targetType === 'NPC' && meta.targetNpcId ? getNPCById(meta.targetNpcId) : null;
+  const labelText = npc?.metadata?.displayName || meta.label || meta.targetMarkerId || 'Quest Target';
+  const typeText = meta.targetType || 'Area';
+  const texture = root.metadata._labelTexture || new BABYLON.DynamicTexture('questTargetLabelTexture_' + root.name, { width:512, height:192 }, scene, true);
+  const ctx = texture.getContext();
+  ctx.clearRect(0, 0, 512, 192);
+  ctx.fillStyle = 'rgba(8, 14, 24, 0.78)';
+  ctx.strokeStyle = 'rgba(232, 197, 106, 0.95)';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.roundRect?.(24, 28, 464, 136, 18);
+  if (!ctx.roundRect) ctx.rect(24, 28, 464, 136);
+  ctx.fill();
+  ctx.stroke();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#e8c56a';
+  ctx.font = 'bold 42px Cinzel, serif';
+  ctx.fillText(String(labelText).slice(0, 26), 256, 88);
+  ctx.fillStyle = '#7ee7e0';
+  ctx.font = 'bold 24px Cinzel, serif';
+  ctx.fillText(String(typeText).toUpperCase().slice(0, 24), 256, 128);
+  texture.hasAlpha = true;
+  texture.update();
+  root.metadata._labelTexture = texture;
+  return texture;
+}
+
+function getQuestTargetColor(type) {
+  const colors = {
+    NPC: new BABYLON.Color3(.35, .92, .86),
+    Area: new BABYLON.Color3(.92, .72, .18),
+    Door: new BABYLON.Color3(.92, .42, .18),
+    Interior: new BABYLON.Color3(.72, .45, .95),
+    Portal: new BABYLON.Color3(.3, .58, 1),
+    Sign: new BABYLON.Color3(.72, .9, .32),
+    Chest: new BABYLON.Color3(1, .62, .2),
+    Collectible: new BABYLON.Color3(.9, .42, .9),
+    'NFT Frame': new BABYLON.Color3(.56, .78, 1),
+    'Link/Hotspot': new BABYLON.Color3(.95, .5, .32)
+  };
+  return colors[normalizeQuestTargetType(type)] || colors.Area;
+}
+
+function getQuestTargetRadius(root) {
+  const base = Number(root?.metadata?.radius);
+  return Math.max(.5, Number.isFinite(base) ? base : 8);
+}
+
+function getQuestTargetEffectiveRadius(root) {
+  const scale = root?.scaling || BABYLON.Vector3.One();
+  const scaleFactor = Math.max(Math.abs(scale.x || 1), Math.abs(scale.z || 1), .01);
+  return getQuestTargetRadius(root) * scaleFactor;
+}
+
+function applyQuestTargetMarkerVisual(root) {
+  if (!root || root.metadata?.type !== 'quest_target_marker') return;
+  const meta = root.metadata;
+  meta.targetType = normalizeQuestTargetType(meta.targetType);
+  meta.radius = getQuestTargetRadius(root);
+  const color = getQuestTargetColor(meta.targetType);
+  const matName = 'questTargetMarkerMat_' + root.name;
+  const mat = scene.getMaterialByName(matName) || new BABYLON.StandardMaterial(matName, scene);
+  mat.diffuseColor = color;
+  mat.emissiveColor = color.scale(.55);
+  mat.specularColor = BABYLON.Color3.Black();
+  mat.alpha = meta.enabled === false ? .16 : .36;
+  mat.backFaceCulling = false;
+
+  const glowName = 'questTargetMarkerGlowMat_' + root.name;
+  const glowMat = scene.getMaterialByName(glowName) || new BABYLON.StandardMaterial(glowName, scene);
+  glowMat.diffuseColor = color;
+  glowMat.emissiveColor = color.scale(1.1);
+  glowMat.specularColor = BABYLON.Color3.Black();
+  glowMat.alpha = meta.enabled === false ? .22 : .72;
+  glowMat.backFaceCulling = false;
+
+  const radius = meta.radius;
+  root.getChildMeshes?.(false).forEach(mesh => {
+    const part = mesh.metadata?.questTargetPart;
+    if (part === 'disc') {
+      mesh.scaling.set(radius, 1, radius);
+      mesh.material = mat;
+    } else if (part === 'ring') {
+      mesh.scaling.set(radius, radius, radius);
+      mesh.material = glowMat;
+    } else if (part === 'beacon') {
+      mesh.material = glowMat;
+    } else if (part === 'label') {
+      const labelMatName = 'questTargetLabelMat_' + root.name;
+      const labelMat = scene.getMaterialByName(labelMatName) || new BABYLON.StandardMaterial(labelMatName, scene);
+      labelMat.diffuseTexture = createQuestTargetLabelTexture(root);
+      labelMat.opacityTexture = labelMat.diffuseTexture;
+      labelMat.emissiveColor = BABYLON.Color3.White();
+      labelMat.disableLighting = true;
+      labelMat.backFaceCulling = false;
+      mesh.material = labelMat;
+    }
+  });
+}
+
+function createQuestTargetMarker(position, options = {}) {
+  const label = options.label || 'Quest Target';
+  const targetMarkerId = options.targetMarkerId || makeQuestTargetMarkerId(label);
+  const root = new BABYLON.TransformNode(options.name || makeUniqueVillageNodeName('questTargetMarkerRootClone_' + Date.now()), scene);
+  root.position = position.clone();
+  root.rotation = options.rotation
+    ? new BABYLON.Vector3(options.rotation.x || 0, options.rotation.y || 0, options.rotation.z || 0)
+    : new BABYLON.Vector3(0, 0, 0);
+  root.scaling = options.scaling
+    ? new BABYLON.Vector3(options.scaling.x || 1, options.scaling.y || 1, options.scaling.z || 1)
+    : new BABYLON.Vector3(1, 1, 1);
+  root.isPickable = true;
+  root.metadata = {
+    type:'quest_target_marker',
+    isClone:true,
+    noGroundSnap:true,
+    targetMarkerId,
+    label,
+    questId:options.questId || null,
+    objectiveType:options.objectiveType || null,
+    targetType:normalizeQuestTargetType(options.targetType || 'Area'),
+    radius:Math.max(.5, Number(options.radius) || 8),
+    enabled:options.enabled !== false,
+    targetNpcId:options.targetNpcId || null,
+    targetVillageId:options.targetVillageId || null,
+    targetInteriorId:options.targetInteriorId || null,
+    targetObjectId:options.targetObjectId || null
+  };
+
+  const disc = BABYLON.MeshBuilder.CreateCylinder('questTargetDisc_' + root.name, { diameter:2, height:.08, tessellation:64 }, scene);
+  disc.parent = root;
+  disc.position.y = .045;
+  disc.isPickable = true;
+  disc._editRoot = root;
+  disc.metadata = { questTargetPart:'disc' };
+
+  const ring = BABYLON.MeshBuilder.CreateTorus('questTargetRing_' + root.name, { diameter:2, thickness:.045, tessellation:64 }, scene);
+  ring.parent = root;
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = .12;
+  ring.isPickable = true;
+  ring._editRoot = root;
+  ring.metadata = { questTargetPart:'ring' };
+
+  const beacon = BABYLON.MeshBuilder.CreateSphere('questTargetBeacon_' + root.name, { diameter:.42, segments:16 }, scene);
+  beacon.parent = root;
+  beacon.position.y = 1.25;
+  beacon.isPickable = true;
+  beacon._editRoot = root;
+  beacon.metadata = { questTargetPart:'beacon' };
+
+  const labelPlane = BABYLON.MeshBuilder.CreatePlane('questTargetLabel_' + root.name, { width:3.2, height:1.1 }, scene);
+  labelPlane.parent = root;
+  labelPlane.position.y = 2.25;
+  labelPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+  labelPlane.isPickable = true;
+  labelPlane._editRoot = root;
+  labelPlane.metadata = { questTargetPart:'label' };
+
+  applyQuestTargetMarkerVisual(root);
+  registerEditableRoot(root.name, root);
+  updateQuestTargetMarkers(0);
+  return root;
+}
+
+function getQuestTargetWorldPosition(root) {
+  if (!root) return null;
+  const meta = root.metadata || {};
+  if (meta.targetType === 'NPC' && meta.targetNpcId && !adminMode) {
+    const npc = getNPCById(meta.targetNpcId);
+    if (npc) return npc.position;
+  }
+  return root.position;
+}
+
+function isPlayerInsideQuestTargetMarker(root) {
+  if (!charMesh || !root || root.metadata?.enabled === false || ActiveInterior) return false;
+  const pos = getQuestTargetWorldPosition(root);
+  if (!pos) return false;
+  const dx = pos.x - charMesh.position.x;
+  const dz = pos.z - charMesh.position.z;
+  const radius = getQuestTargetEffectiveRadius(root);
+  return dx * dx + dz * dz <= radius * radius;
+}
+
+function setQuestTargetMarkerVisible(root, visible, active = false) {
+  if (!root || root.isDisposed?.()) return;
+  root.setEnabled(visible);
+  if (!visible) return;
+  const pulse = active ? 1 + Math.sin(performance.now() * .004) * .08 : 1;
+  root.getChildMeshes?.(false).forEach(mesh => {
+    const part = mesh.metadata?.questTargetPart;
+    if (part === 'beacon') mesh.scaling.set(pulse, pulse, pulse);
+    if (mesh.material && typeof mesh.material.alpha === 'number') {
+      if (part === 'disc') mesh.material.alpha = active ? .28 : .2;
+      if (part === 'ring' || part === 'beacon') mesh.material.alpha = active ? .9 : .55;
+    }
+  });
+}
+
+function updateQuestTargetMarkers(dt = 0) {
+  const activeMarker = getActiveQuestTargetMarker();
+  QuestTargetMarkerManager.activeMarkerId = activeMarker?.metadata?.targetMarkerId || null;
+  getQuestTargetRoots().forEach(root => {
+    const meta = root.metadata || {};
+    if (meta.targetType === 'NPC' && meta.targetNpcId && !adminMode) {
+      const npc = getNPCById(meta.targetNpcId);
+      if (npc) {
+        root.position.copyFrom(npc.position);
+        const npcLabel = npc.metadata?.displayName || '';
+        if (npcLabel && meta._lastNpcLabelName !== npcLabel) {
+          meta._lastNpcLabelName = npcLabel;
+          applyQuestTargetMarkerVisual(root);
+        }
+      }
+    }
+    const active = root === activeMarker && meta.enabled !== false && !ActiveInterior;
+    const visible = adminMode ? QuestTargetMarkerManager.visible : active;
+    setQuestTargetMarkerVisible(root, visible, active);
+  });
+}
+
+function readQuestTargetMarkerSettingsFromControls() {
+  const targetType = normalizeQuestTargetType(document.getElementById('questTargetTypeInput')?.value || 'Area');
+  const objectId = document.getElementById('questTargetObjectIdInput')?.value?.trim() || '';
+  const label = document.getElementById('questTargetLabelInput')?.value?.trim() || 'Quest Target';
+  const settings = {
+    targetMarkerId: document.getElementById('questTargetIdInput')?.value?.trim() || makeQuestTargetMarkerId(label),
+    label,
+    questId: document.getElementById('questTargetQuestIdInput')?.value?.trim() || null,
+    objectiveType: document.getElementById('questTargetObjectiveTypeInput')?.value?.trim() || null,
+    targetType,
+    radius: Math.max(.5, Math.min(80, Number(document.getElementById('questTargetRadiusInput')?.value) || 8)),
+    enabled: document.getElementById('questTargetEnabledInput')?.checked !== false,
+    targetNpcId: null,
+    targetVillageId: null,
+    targetInteriorId: null,
+    targetObjectId: null
+  };
+  if (targetType === 'NPC') settings.targetNpcId = objectId || null;
+  else if (targetType === 'Interior' || targetType === 'Door') settings.targetInteriorId = objectId || null;
+  else if (targetType === 'Portal') settings.targetVillageId = objectId || null;
+  else settings.targetObjectId = objectId || null;
+  return settings;
+}
+
+function writeQuestTargetMarkerSettingsToControls(root) {
+  if (!root || root.metadata?.type !== 'quest_target_marker') return;
+  const meta = root.metadata || {};
+  const idInput = document.getElementById('questTargetIdInput');
+  const labelInput = document.getElementById('questTargetLabelInput');
+  const questInput = document.getElementById('questTargetQuestIdInput');
+  const objectiveInput = document.getElementById('questTargetObjectiveTypeInput');
+  const typeInput = document.getElementById('questTargetTypeInput');
+  const objectInput = document.getElementById('questTargetObjectIdInput');
+  const radiusInput = document.getElementById('questTargetRadiusInput');
+  const enabledInput = document.getElementById('questTargetEnabledInput');
+  if (idInput) idInput.value = meta.targetMarkerId || '';
+  if (labelInput) labelInput.value = meta.label || '';
+  if (questInput) questInput.value = meta.questId || '';
+  if (objectiveInput) objectiveInput.value = meta.objectiveType || '';
+  if (typeInput) typeInput.value = normalizeQuestTargetType(meta.targetType || 'Area');
+  if (objectInput) objectInput.value = meta.targetNpcId || meta.targetInteriorId || meta.targetVillageId || meta.targetObjectId || '';
+  if (radiusInput) radiusInput.value = String(getQuestTargetRadius(root));
+  if (enabledInput) enabledInput.checked = meta.enabled !== false;
+}
+
+function placeQuestTargetMarker() {
+  if (!adminMode) { showToast('Enter Admin Mode first'); return; }
+  beginAdminPlacement({ kind:'quest_target_marker', settings:readQuestTargetMarkerSettingsFromControls() });
+}
+
+function placeQuestTargetMarkerAtPoint(point, settings = {}) {
+  const marker = createQuestTargetMarker(point.clone(), settings);
+  adminGizmoMode = 'move';
+  setSelectedEditableObject(marker);
+  writeQuestTargetMarkerSettingsToControls(marker);
+  triggerAutoSave();
+  showToast('Quest target marker placed');
+  return marker;
+}
+
+function applySelectedQuestTargetSettings() {
+  if (selectedObject?.metadata?.type !== 'quest_target_marker') {
+    showToast('Select a quest target marker first');
+    return;
+  }
+  recordEditorHistory('edit quest target marker');
+  const settings = readQuestTargetMarkerSettingsFromControls();
+  Object.assign(selectedObject.metadata, settings);
+  applyQuestTargetMarkerVisual(selectedObject);
+  updateQuestTracker();
+  updateQuestTargetMarkers(0);
+  triggerAutoSave();
+  showToast('Quest target marker updated');
+}
+
+function deleteSelectedQuestTargetMarker() {
+  if (selectedObject?.metadata?.type !== 'quest_target_marker') {
+    showToast('Select a quest target marker first');
+    return;
+  }
+  recordEditorHistory('delete quest target marker');
+  selectedObject.dispose(false, true);
+  selectedObject = null;
+  updateSelectedBadge();
+  updateQuestTracker();
+  triggerAutoSave();
+}
+
+function toggleQuestTargetMarkerVisibility() {
+  QuestTargetMarkerManager.visible = !QuestTargetMarkerManager.visible;
+  localStorage.setItem('rebelAntsQuestTargetMarkersVisible', QuestTargetMarkerManager.visible ? '1' : '0');
+  updateQuestTargetMarkers(0);
+  const btn = document.getElementById('questTargetVisibilityBtn');
+  if (btn) btn.textContent = QuestTargetMarkerManager.visible ? 'Hide Markers' : 'Show Markers';
+}
+
+function duplicateSelectedQuestTargetMarker() {
+  if (selectedObject?.metadata?.type !== 'quest_target_marker') {
+    showToast('Select a quest target marker first');
+    return;
+  }
+  recordEditorHistory('duplicate quest target marker');
+  const meta = selectedObject.metadata || {};
+  const pos = selectedObject.position.clone();
+  pos.x += Math.max(2, getQuestTargetRadius(selectedObject) * .35);
+  pos.z += Math.max(2, getQuestTargetRadius(selectedObject) * .35);
+  const duplicate = createQuestTargetMarker(pos, {
+    ...meta,
+    name:null,
+    targetMarkerId: makeUniqueVillageNodeName((meta.targetMarkerId || 'questTarget_marker') + '_copy'),
+    label: (meta.label || 'Quest Target') + ' Copy',
+    rotation:selectedObject.rotation,
+    scaling:selectedObject.scaling
+  });
+  adminGizmoMode = 'move';
+  setSelectedEditableObject(duplicate);
+  writeQuestTargetMarkerSettingsToControls(duplicate);
+  triggerAutoSave();
+  showToast('Quest target marker duplicated');
 }
 
 const NPCManager = {
@@ -10102,6 +10677,10 @@ async function tryLoadNPCModel(root, npc) {
 }
 
 function isHubGuideQuestMarkerActive() {
+  try {
+    const placedHubMarker = getQuestTargetById('questTarget_hub_guide');
+    if (placedHubMarker && placedHubMarker.metadata?.enabled !== false) return false;
+  } catch(e) {}
   return CURRENT_VILLAGE_ID === 'hub' &&
     QuestState?.questId === 'hub-first-step' &&
     QuestState?.step === 'talk' &&
@@ -10823,12 +11402,19 @@ function getNearestNPCInRange(range = 4.8) {
 function handleNPCQuestEvent(npc, finishedDialogue = false) {
   if (!finishedDialogue || !npc?.metadata) return;
   const meta = npc.metadata;
+  const npcContext = {
+    targetNpcId: meta.npcId || npc.name,
+    npcName: meta.displayName || npc.name,
+    role: meta.role || '',
+    factionId: meta.factionId || '',
+    villageId: meta.villageId || CURRENT_VILLAGE_ID
+  };
   if (QuestState.questId === 'hub-first-step' && QuestState.step === 'talk' && shouldHubNPCAdvanceTutorial(npc)) {
-    advanceHubTutorialObjective('talkToNpc');
+    advanceHubTutorialObjective('talkToNpc', npcContext);
     return;
   }
   if (QuestState.questId === 'hub-tutorial-complete' && QuestState.step === 'return-guide' && shouldHubNPCAdvanceTutorial(npc)) {
-    advanceHubTutorialObjective('returnToNpc');
+    advanceHubTutorialObjective('returnToNpc', npcContext);
     return;
   }
   if (QuestState.questId === 'village-gate' && QuestState.step === 'talk' && shouldHubNPCAdvanceTutorial(npc)) {
@@ -15866,7 +16452,7 @@ window.addEventListener('pointerup', () => {
   if (adminMode && selectedObject && (wasDragging || npcRotationChanged)) {
     const draggedNode = window._dragSelectedObject;
     const beforePos = window._dragSelectedStartPos;
-  if (!['interior_display', 'interior_exit', 'interior_entrance', 'interior_fake_light', 'interior_nft_frame', 'interior_hotspot', 'interior_video_screen'].includes(selectedObject.metadata?.type)) softSnapSelectedObject();
+  if (!['interior_display', 'interior_exit', 'interior_entrance', 'interior_fake_light', 'interior_nft_frame', 'interior_hotspot', 'interior_video_screen', 'quest_target_marker'].includes(selectedObject.metadata?.type)) softSnapSelectedObject();
     if (
       draggedNode &&
       draggedNode === selectedObject &&
@@ -15885,6 +16471,10 @@ window.addEventListener('pointerup', () => {
     if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
     if (selectedObject.metadata?.type === 'interior_hotspot') saveInteriorHotspotConfig(selectedObject);
     if (selectedObject.metadata?.type === 'interior_video_screen') saveInteriorVideoScreenConfig(selectedObject);
+    if (selectedObject.metadata?.type === 'quest_target_marker') {
+      writeQuestTargetMarkerSettingsToControls(selectedObject);
+      updateQuestTargetMarkers(0);
+    }
     rebuildVillageCollisionBlockers();
     renderSelectedWalkSurfaceGuide();
     triggerAutoSave();
@@ -16046,6 +16636,14 @@ function collectWorldLayoutData() {
     terrainStampType: node.metadata.terrainStampType || null,
     terrainStampShape: node.metadata.terrainStampShape || null,
     interactionZoneType: node.metadata.interactionZoneType || null,
+    targetMarkerId: node.metadata.targetMarkerId || null,
+    label: node.metadata.label || null,
+    objectiveType: node.metadata.objectiveType || null,
+    targetType: node.metadata.targetType || null,
+    radius: Number.isFinite(node.metadata.radius) ? node.metadata.radius : null,
+    targetNpcId: node.metadata.targetNpcId || null,
+    targetVillageId: node.metadata.targetVillageId || null,
+    targetObjectId: node.metadata.targetObjectId || null,
     interiorName: node.metadata.interiorName || null,
     interiorType: node.metadata.interiorType || null,
     targetInteriorId: node.metadata.targetInteriorId || null,
@@ -16366,6 +16964,29 @@ function loadWorldLayout(){
       return;
     }
 
+    if (item.type === 'quest_target_marker') {
+      createQuestTargetMarker(
+        new BABYLON.Vector3(item.position.x, item.position.y, item.position.z),
+        {
+          name: item.name,
+          rotation: item.rotation,
+          scaling: item.scaling,
+          targetMarkerId: item.targetMarkerId || item.name || null,
+          label: item.label || item.targetMarkerId || 'Quest Target',
+          questId: item.questId || null,
+          objectiveType: item.objectiveType || null,
+          targetType: item.targetType || 'Area',
+          radius: Number.isFinite(item.radius) ? item.radius : 8,
+          enabled: item.enabled !== false,
+          targetNpcId: item.targetNpcId || null,
+          targetVillageId: item.targetVillageId || null,
+          targetInteriorId: item.targetInteriorId || null,
+          targetObjectId: item.targetObjectId || null
+        }
+      );
+      return;
+    }
+
     if (item.type === 'interaction_zone') {
       const zone = createInteractionZone(
         new BABYLON.Vector3(item.position.x, item.position.y, item.position.z),
@@ -16539,6 +17160,7 @@ if (m.material) {
   if (VillageStartupRuntime?.interactive) runVillagePerformancePass(true);
   else schedulePostInteractiveStartupTask(() => runVillagePerformancePass(true), 750);
   updateQuestTracker();
+  updateQuestTargetMarkers(0);
   _layoutDirty = false;
   updateLayoutCacheStatus();
 }
@@ -16563,6 +17185,10 @@ function deleteSelectedFence(){
   }
   if (selectedObject.metadata?.type === 'interior_video_screen') {
     deleteSelectedInteriorVideoScreen();
+    return;
+  }
+  if (selectedObject.metadata?.type === 'quest_target_marker') {
+    deleteSelectedQuestTargetMarker();
     return;
   }
   recordEditorHistory('delete selected');
@@ -16651,6 +17277,10 @@ function duplicateSelectedFence(){
   }
   if (selectedObject.metadata?.type === 'interior_video_screen') {
     duplicateSelectedInteriorVideoScreen();
+    return;
+  }
+  if (selectedObject.metadata?.type === 'quest_target_marker') {
+    duplicateSelectedQuestTargetMarker();
     return;
   }
   recordEditorHistory('duplicate selected');
@@ -18265,6 +18895,7 @@ engine.runRenderLoop(()=>{
   updateInteractionPrompt();
   tryAutoExitInteriorFromTouch();
   updateTutorialQuestWorldProgress();
+  updateQuestTargetMarkers(dt);
   tryAutoOpenVillageGateFromWalkthrough();
   updateCollectiblesSafe(dt);
   updateWeatherManager();
@@ -19083,6 +19714,7 @@ function getNodeAdminLayer(node) {
   if (type === 'terrain_stamp') return 'terrain';
   if (type === 'interaction_zone') return 'zones';
   if (type === 'interior_entrance') return 'zones';
+  if (type === 'quest_target_marker') return 'quests';
   if (type.includes('terrain')) return 'terrain';
   return 'buildings';
 }
@@ -19533,6 +20165,10 @@ function attachAdminGizmoLifecycleObservers() {
       if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
       if (selectedObject.metadata?.type === 'interior_hotspot') saveInteriorHotspotConfig(selectedObject);
       if (selectedObject.metadata?.type === 'interior_video_screen') saveInteriorVideoScreenConfig(selectedObject);
+      if (selectedObject.metadata?.type === 'quest_target_marker') {
+        writeQuestTargetMarkerSettingsToControls(selectedObject);
+        updateQuestTargetMarkers(0);
+      }
       rebuildVillageCollisionBlockers();
       renderSelectedWalkSurfaceGuide();
       window._dragSelectedObject = null;
@@ -23189,6 +23825,14 @@ function recordInteriorQuestHook(entrance, actionType = 'enterInterior') {
     localStorage.setItem(key, JSON.stringify(hooks.slice(-100)));
   } catch(e) {}
   window.dispatchEvent(new CustomEvent('rebelAntsInteriorEvent', { detail: payload }));
+  if (
+    actionType === 'enterInterior' &&
+    QuestState.questId === 'hub-hidden-dojo' &&
+    QuestState.step === 'discover-dojo' &&
+    contextIncludesAny(payload, ['dojo', 'training'])
+  ) {
+    advanceHubTutorialObjective('discoverDojo', payload);
+  }
   if (actionType === 'enterInterior') advanceHubTutorialObjective('enterInterior', payload);
   if (actionType === 'inspectInteriorNFTFrame') advanceHubTutorialObjective('inspectInteriorNFTFrame', payload);
   if (
@@ -25042,6 +25686,11 @@ window.respawnSmallAntNearPlayer = respawnSmallAntNearPlayer;
 window.applySmallAntSettings = applySmallAntSettings;
 window.previewSmallAntSettingsFromControls = previewSmallAntSettingsFromControls;
 window.previewSmallAntAnimationFromControls = previewSmallAntAnimationFromControls;
+window.placeQuestTargetMarker = placeQuestTargetMarker;
+window.applySelectedQuestTargetSettings = applySelectedQuestTargetSettings;
+window.deleteSelectedQuestTargetMarker = deleteSelectedQuestTargetMarker;
+window.toggleQuestTargetMarkerVisibility = toggleQuestTargetMarkerVisibility;
+window.duplicateSelectedQuestTargetMarker = duplicateSelectedQuestTargetMarker;
 window.debugSmallAnt = debugSmallAnt;
 window.testSmallAntAssetFetch = testSmallAntAssetFetch;
 window.reloadSmallAntModel = reloadSmallAntModel;
