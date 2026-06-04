@@ -1341,7 +1341,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div id="playerStartupPanel" role="dialog" aria-modal="true" aria-labelledby="playerStartupTitle">
     <div id="playerStartupKicker">Welcome</div>
     <h2 id="playerStartupTitle">Hub Village</h2>
-    <p>Hub Village is the living center of the Rebel Ants Universe. Talk to NPCs, follow Hub Journey quests, collect floating items, open chests, enter dojos and interiors, inspect NFT frames, use arcade/store/video links, open your Journal, travel through portals, and watch weather and time change the village.</p>
+    <p>Hub Village is the living center of the Rebel Ants Universe. Talk to NPCs, follow Hub Journey quests, collect floating items, open chests, enter dojos and interiors, inspect NFT frames, use arcade/store/video links, open your Journal, travel through portals, and watch weather and time change the village. For your first quest, look for the glowing marker above the Hub Guide.</p>
     <div id="playerStartupList">
       <div class="startup-control"><b>Move</b>WASD or arrows</div>
       <div class="startup-control"><b>Look</b>Mouse</div>
@@ -1406,7 +1406,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="assets/forge-core.js"></script>
 <script type="module">
 const canvas=document.getElementById('c');
-const setSt=t=>{document.getElementById('ldst').textContent=t;};
+const setSt=t=>{const el=document.getElementById('ldst'); if(el) el.textContent=t;};
 const VILLAGE_REGISTRY = {
   hub: { villageId:'hub', displayName:'Hub Village', route:'village.html?village=hub', themeColor:'#5ecfca', layoutPath:'assets/world-layout.json' },
   ronin: { villageId:'ronin', displayName:'Ronin Village', route:'village.html?village=ronin', themeColor:'#8f8f8f', layoutPath:'assets/world-layouts/ronin.json' },
@@ -1539,7 +1539,7 @@ const QUEST_DEFINITIONS = {
     questId:'hub-first-step',
     title:'The First Step',
     steps:[
-      { id:'talk', objective:'Talk to the Hub Guide NPC.' },
+      { id:'talk', objective:'Talk to the Hub Guide marked with the glowing quest marker.' },
       { id:'complete', objective:'Completed: You learned how to talk to NPCs.' }
     ]
   },
@@ -3003,27 +3003,122 @@ document.addEventListener('DOMContentLoaded', updateVillageChrome);
 let engine;
 window._gpuMode = 'webgl';
 
+const RENDERER_PREF_KEY = 'rebelAntsRendererPreference:v1';
+const RENDERER_SESSION_KEY = 'rebelAntsRendererPreference:session:v1';
+const WEBGPU_INIT_TIMEOUT_MS = 5200;
+
+function safeStorageGet(storage, key) {
+  try { return storage?.getItem?.(key) || null; } catch(e) { return null; }
+}
+
+function safeStorageSet(storage, key, value) {
+  try { storage?.setItem?.(key, value); } catch(e) {}
+}
+
+function safeStorageRemove(storage, key) {
+  try { storage?.removeItem?.(key); } catch(e) {}
+}
+
+function clearRendererPreference() {
+  safeStorageRemove(sessionStorage, RENDERER_SESSION_KEY);
+  safeStorageRemove(localStorage, RENDERER_PREF_KEY);
+}
+
+function rememberRendererPreference(mode, persistLocal = true) {
+  if (!['webgpu', 'webgl'].includes(mode)) return;
+  safeStorageSet(sessionStorage, RENDERER_SESSION_KEY, mode);
+  if (persistLocal) safeStorageSet(localStorage, RENDERER_PREF_KEY, mode);
+}
+
+function getRendererStartupPreference() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('retryWebGPU') === '1' || params.get('forceWebGPU') === '1') {
+    clearRendererPreference();
+    return 'webgpu';
+  }
+  if (params.get('engine') === 'webgl') return 'webgl';
+  const rememberedSession = safeStorageGet(sessionStorage, RENDERER_SESSION_KEY);
+  const rememberedLocal = safeStorageGet(localStorage, RENDERER_PREF_KEY);
+  if (rememberedSession === 'webgl' || rememberedLocal === 'webgl') return 'webgl';
+  if (params.get('engine') === 'webgpu') return 'webgpu';
+  if (rememberedSession === 'webgpu' || rememberedLocal === 'webgpu') return 'webgpu';
+  return 'webgl';
+}
+
+function makeWebGLFallbackEngine(reason = '') {
+  window._gpuMode = 'webgl';
+  window._gpuFallbackReason = reason;
+  setSt(reason || 'Renderer: loading WebGL mode...');
+  return new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+}
+
+function makeTimeoutError(message) {
+  const err = new Error(message);
+  err.code = 'WEBGPU_INIT_TIMEOUT';
+  return err;
+}
+
+async function createWebGPUEngineWithTimeout() {
+  const webgpuEngine = new BABYLON.WebGPUEngine(canvas, {
+    antialias: true,
+    adaptToDeviceRatio: true
+  });
+  let timeoutId = null;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(makeTimeoutError('WebGPU init timed out')), WEBGPU_INIT_TIMEOUT_MS);
+  });
+  try {
+    await Promise.race([webgpuEngine.initAsync(), timeoutPromise]);
+    clearTimeout(timeoutId);
+    return webgpuEngine;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    try { webgpuEngine.dispose(); } catch(e) {}
+    throw err;
+  }
+}
+
 async function createPreferredEngine() {
-  const useWebGPU = new URLSearchParams(window.location.search).get('engine') === 'webgpu';
+  setSt('Renderer: choosing graphics mode...');
+  const preferredRenderer = getRendererStartupPreference();
+  const useWebGPU = preferredRenderer === 'webgpu';
 
   if (useWebGPU && navigator.gpu && BABYLON.WebGPUEngine) {
     try {
-      setSt('Initializing WebGPU...');
-      const webgpuEngine = new BABYLON.WebGPUEngine(canvas, {
-        antialias: true,
-        adaptToDeviceRatio: true
-      });
-      await webgpuEngine.initAsync();
+      setSt('Renderer: initializing WebGPU...');
+      const webgpuEngine = await createWebGPUEngineWithTimeout();
       window._gpuMode = 'webgpu';
+      window._gpuFallbackReason = '';
+      rememberRendererPreference('webgpu', true);
+      setSt('Renderer: WebGPU ready.');
       return webgpuEngine;
     } catch (err) {
+      const timedOut = err?.code === 'WEBGPU_INIT_TIMEOUT';
+      const message = timedOut
+        ? 'WebGPU took too long to start, loading WebGL mode instead.'
+        : 'WebGPU could not start, loading WebGL mode instead.';
       console.warn('WebGPU failed. Falling back to WebGL.', err);
+      rememberRendererPreference('webgl', true);
+      setSt(message);
+      return makeWebGLFallbackEngine(message);
     }
   }
 
-  window._gpuMode = 'webgl';
-  return new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:true,stencil:true,adaptToDeviceRatio:true});
+  if (useWebGPU) {
+    rememberRendererPreference('webgl', true);
+    setSt('WebGPU is not available here, loading WebGL mode instead.');
+  }
+  return makeWebGLFallbackEngine('Renderer: loading WebGL mode...');
 }
+
+window.retryWebGPU = function retryWebGPU() {
+  clearRendererPreference();
+  const url = new URL(window.location.href);
+  url.searchParams.set('engine', 'webgpu');
+  url.searchParams.set('retryWebGPU', '1');
+  window.location.href = url.toString();
+};
+window.clearRendererPreference = clearRendererPreference;
 
 engine = await createPreferredEngine();
 
@@ -8429,6 +8524,7 @@ function getQuestObjectiveDisplayText(questId = QuestState.questId, stepId = Que
   const npc = quest.primaryNpc || '';
   const village = quest.village || '';
   const lower = String(raw).toLowerCase();
+  if (questId === 'hub-first-step' && stepId === 'talk') return 'Talk to the Hub Guide marked with the glowing quest marker.';
   if (npc && lower.includes('speak')) return `Speak to ${npc}${village ? ' in ' + village : ''}.`;
   if (npc && lower.includes('talk')) return `Talk to ${npc}${village ? ' in ' + village : ''}.`;
   if (npc && lower.includes('find')) return `Find ${npc}${village ? ' near ' + village : ''}.`;
@@ -8703,6 +8799,7 @@ function advanceHubTutorialObjective(actionType, context = {}) {
 }
 
 function updateQuestTracker() {
+  updateHubGuideQuestMarkers();
   const tracker = document.getElementById('questTracker');
   const title = document.getElementById('questTrackerTitle');
   const objective = document.getElementById('questTrackerObjective');
@@ -9998,9 +10095,145 @@ async function tryLoadNPCModel(root, npc) {
     root.metadata.animationGroups = result.animationGroups || [];
     root.metadata.modelRoot = modelRoot;
     root.metadata.modelLoaded = true;
+    updateHubGuideQuestMarker(root);
   } catch (_) {
     root.metadata.modelFailed = true;
   }
+}
+
+function isHubGuideQuestMarkerActive() {
+  return CURRENT_VILLAGE_ID === 'hub' &&
+    QuestState?.questId === 'hub-first-step' &&
+    QuestState?.step === 'talk' &&
+    QuestState?.completed !== true;
+}
+
+function isHubGuideNPCRoot(root) {
+  return root?.metadata?.npcId === 'hub-ashigaru-villager-01' || root?.metadata?.displayName === 'Hub Guide';
+}
+
+function disposeHubGuideQuestMarker(root) {
+  if (!root?.metadata) return;
+  const observer = root.metadata.questMarkerObserver;
+  if (observer) {
+    try { scene.onBeforeRenderObservable.remove(observer); } catch(e) {}
+  }
+  root.metadata.questMarkerObserver = null;
+  root.metadata.questMarkerRoot?.dispose?.(false, true);
+  root.metadata.questMarkerRoot = null;
+}
+
+function getNPCMarkerHeight(root) {
+  let maxY = root.position.y + 3.2;
+  root.getChildMeshes?.(false).forEach(mesh => {
+    if (!mesh || mesh.isDisposed?.() || mesh.metadata?.npcQuestMarker) return;
+    try {
+      mesh.computeWorldMatrix(true);
+      const bb = mesh.getBoundingInfo?.().boundingBox;
+      if (bb && Number.isFinite(bb.maximumWorld.y)) maxY = Math.max(maxY, bb.maximumWorld.y);
+    } catch(e) {}
+  });
+  return Math.max(2.7, maxY - root.position.y + .65);
+}
+
+function createQuestMarkerLabelTexture(name) {
+  const texture = new BABYLON.DynamicTexture(name, { width:512, height:192 }, scene, true);
+  const ctx = texture.getContext();
+  ctx.clearRect(0, 0, 512, 192);
+  ctx.fillStyle = 'rgba(8, 14, 24, 0.78)';
+  ctx.strokeStyle = 'rgba(232, 197, 106, 0.92)';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.roundRect?.(24, 28, 464, 136, 20);
+  if (!ctx.roundRect) ctx.rect(24, 28, 464, 136);
+  ctx.fill();
+  ctx.stroke();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#e8c56a';
+  ctx.font = 'bold 46px Cinzel, serif';
+  ctx.fillText('Hub Guide', 256, 88);
+  ctx.fillStyle = '#7ee7e0';
+  ctx.font = 'bold 28px Cinzel, serif';
+  ctx.fillText('QUEST', 256, 128);
+  texture.hasAlpha = true;
+  texture.update();
+  return texture;
+}
+
+function ensureHubGuideQuestMarker(root) {
+  if (!root?.metadata || root.metadata.questMarkerRoot?.isDisposed?.() === false) return root.metadata.questMarkerRoot;
+  const markerRoot = new BABYLON.TransformNode(`${root.name}_firstQuestMarker`, scene);
+  markerRoot.parent = root;
+  markerRoot.metadata = { type:'npc_quest_marker', npcQuestMarker:true };
+  markerRoot.position.set(0, getNPCMarkerHeight(root), 0);
+
+  const markerMat = new BABYLON.StandardMaterial(`${root.name}_firstQuestMarkerMat`, scene);
+  markerMat.diffuseColor = new BABYLON.Color3(.95, .78, .22);
+  markerMat.emissiveColor = new BABYLON.Color3(1.2, .86, .22);
+  markerMat.specularColor = BABYLON.Color3.Black();
+
+  const orb = BABYLON.MeshBuilder.CreateSphere(`${root.name}_firstQuestOrb`, { diameter:.34, segments:16 }, scene);
+  orb.parent = markerRoot;
+  orb.material = markerMat;
+  orb.isPickable = false;
+  orb.metadata = { npcQuestMarker:true };
+
+  const ring = BABYLON.MeshBuilder.CreateTorus(`${root.name}_firstQuestRing`, { diameter:.86, thickness:.045, tessellation:48 }, scene);
+  ring.parent = markerRoot;
+  ring.position.y = -.08;
+  ring.material = markerMat;
+  ring.isPickable = false;
+  ring.metadata = { npcQuestMarker:true };
+
+  const labelMat = new BABYLON.StandardMaterial(`${root.name}_firstQuestLabelMat`, scene);
+  labelMat.diffuseTexture = createQuestMarkerLabelTexture(`${root.name}_firstQuestLabelTexture`);
+  labelMat.opacityTexture = labelMat.diffuseTexture;
+  labelMat.emissiveColor = BABYLON.Color3.White();
+  labelMat.disableLighting = true;
+  labelMat.backFaceCulling = false;
+
+  const label = BABYLON.MeshBuilder.CreatePlane(`${root.name}_firstQuestLabel`, { width:2.6, height:.95 }, scene);
+  label.parent = markerRoot;
+  label.position.y = .7;
+  label.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+  label.material = labelMat;
+  label.isPickable = false;
+  label.metadata = { npcQuestMarker:true };
+
+  const seed = Math.random() * Math.PI * 2;
+  root.metadata.questMarkerObserver = scene.onBeforeRenderObservable.add(() => {
+    if (!root || root.isDisposed?.() || !markerRoot || markerRoot.isDisposed?.()) {
+      try { scene.onBeforeRenderObservable.remove(root?.metadata?.questMarkerObserver); } catch(e) {}
+      return;
+    }
+    const t = performance.now() * .003 + seed;
+    markerRoot.position.y = getNPCMarkerHeight(root) + Math.sin(t) * .08;
+    const pulse = 1 + Math.sin(t * 1.3) * .08;
+    orb.scaling.set(pulse, pulse, pulse);
+    ring.scaling.set(1 + Math.sin(t * 1.1) * .06, 1 + Math.sin(t * 1.1) * .06, 1 + Math.sin(t * 1.1) * .06);
+  });
+
+  root.metadata.questMarkerRoot = markerRoot;
+  return markerRoot;
+}
+
+function updateHubGuideQuestMarker(root) {
+  if (!isHubGuideNPCRoot(root)) return;
+  if (!isHubGuideQuestMarkerActive()) {
+    disposeHubGuideQuestMarker(root);
+    return;
+  }
+  const marker = ensureHubGuideQuestMarker(root);
+  if (marker) {
+    marker.setEnabled(true);
+    marker.position.y = getNPCMarkerHeight(root);
+  }
+}
+
+function updateHubGuideQuestMarkers() {
+  let roots = [];
+  try { roots = NPCManager?.roots || []; } catch(e) { return; }
+  roots.forEach(updateHubGuideQuestMarker);
 }
 
 function createNPCFromDefinition(npc, savedState = null) {
@@ -10043,6 +10276,7 @@ function createNPCFromDefinition(npc, savedState = null) {
   tryLoadNPCModel(root, npc);
   root.setEnabled(NPCManager.visible);
   NPCManager.roots.push(root);
+  updateHubGuideQuestMarker(root);
   registerEditableRoot(root.name, root);
   return root;
 }
@@ -11394,7 +11628,7 @@ function ensureEditableRootUniqueName(node) {
 }
 
 // ── GROUND / TERRAIN ─────────────────────────
-setSt("Building terrain...");
+setSt("Village: building terrain...");
 // Large grass base
 const ground=BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:120},scene);
 const grassMat=new BABYLON.StandardMaterial("grassMat",scene);
@@ -11472,7 +11706,7 @@ const pm=pathMat;
 });
 
 // ── REALISTIC MOUNTAINS ──────────────────────
-setSt("Sculpting mountains...");
+setSt("Village: sculpting mountains...");
 // Use multiple overlapping cones with noise-like variation for organic look
 function mountain(x,z,r,h,col){
   const g=new BABYLON.TransformNode("mtg",scene);
@@ -11596,7 +11830,7 @@ const rvr=BABYLON.MeshBuilder.CreateGround("rv",{width:22,height:320},scene);
   rvr.position=new BABYLON.Vector3(112,.14,0);
 
 // ── 4 TYPES OF TREES ─────────────────────────
-setSt("Planting forest...");
+setSt("Village: planting forest...");
 
 // Trees/plants placed via admin panel
 
@@ -14128,8 +14362,8 @@ if (activeCharacter.activeGlbUrl) {
 hydrateSelectedRebelPanel(activeCharacter);
 setSt(
   activeCharacter.activeGlbUrl
-    ? "Forge character detected. Loading " + activeCharacter.displayName + "..."
-    : "Loading " + activeCharacter.displayName + "..."
+    ? "Character: loading Forge " + activeCharacter.displayName + "..."
+    : "Character: loading " + activeCharacter.displayName + "..."
 );
 let charMesh=null, charAnims={}, isMoving=false;
 
@@ -15372,7 +15606,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
   courtyardLight.intensity = 1.2;
   courtyardLight.range = 28;
   window.followLight.intensity = 2.8; window.followLight.range = 22;
-   setSt("Character ready!");
+   setSt("Character: ready.");
 
      if (activeCharacter.activeGlbUrl) {
     createForgeVillagePreviewToggle();
@@ -15396,7 +15630,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
       const _ta=ag.targetedAnimations;for(let _j=_ta.length-1;_j>=0;_j--){if(_ta[_j].animation.targetProperty==='position'&&_ta[_j].target&&_ta[_j].target.name==='mixamorig_Hips')_ta.splice(_j,1);} ag.stop(); animGroups[i]=ag;
     }).catch(e=>console.error("Anim failed:",f,e));
   });
-}).catch(err=>{console.error("Character failed:",err);setSt("Failed");});
+}).catch(err=>{console.error("Character failed:",err);setSt("Character: failed to load.");});
 
 
 // ── INTERACTIONS ─────────────────────────────
@@ -16302,7 +16536,8 @@ if (m.material) {
   if (!hasSavedNPCs) initNPCPopulation();
   applyAdminLayerState();
   applyFakeLightState(true);
-  runVillagePerformancePass(true);
+  if (VillageStartupRuntime?.interactive) runVillagePerformancePass(true);
+  else schedulePostInteractiveStartupTask(() => runVillagePerformancePass(true), 750);
   updateQuestTracker();
   _layoutDirty = false;
   updateLayoutCacheStatus();
@@ -17926,8 +18161,10 @@ function resolveInteriorPlayerCollision(currentPosition, proposedPosition) {
 
 
 // ── CHERRY BLOSSOM PETALS ─────────────────────
-(()=>{
-  if (CURRENT_VILLAGE_ID !== 'hub') return;
+let _villagePetalEffectsStarted = false;
+function startVillagePetalEffects(){
+  if (_villagePetalEffectsStarted || CURRENT_VILLAGE_ID !== 'hub') return;
+  _villagePetalEffectsStarted = true;
   function makePetalSystem(name, count, emitY, boxSize, rate){
     const ps = new BABYLON.ParticleSystem(name, count, scene);
     ps.particleTexture = new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png',scene);
@@ -17952,7 +18189,7 @@ function resolveInteriorPlayerCollision(currentPosition, proposedPosition) {
   }
   makePetalSystem('petals1', 200, 20, 55, 14);
   makePetalSystem('petals2', 120, 35, 90, 8);
-})();
+}
 
 // ── RENDER LOOP ──────────────────────────────
 initNPCPopulation();
@@ -18049,6 +18286,13 @@ engine.runRenderLoop(()=>{
 
 // ── GLB ASSET SOURCES (hidden at 9999 — admin panel clones them) ──
 const _assetSources = {};
+const VillageStartupRuntime = {
+  interactive: false,
+  progressiveAssetQueueStarted: false,
+  requiredAssetKeys: [],
+  forgeCollectionsStarted: false
+};
+
 function loadAssetSource(key) {
   if (_assetSources[key]) return;
   if (ASSETS[key] && ASSETS[key].procedural) { _assetSources[key] = { metadata: { loaded: true }, procedural: true }; return; }
@@ -18064,7 +18308,77 @@ function loadAssetSource(key) {
   if (key === "lantern_1") { lanternRootRef = root; }
   registerEditableRoot(key, root);
 }
-Object.keys(ASSETS).forEach(key => loadAssetSource(key));
+
+function schedulePostInteractiveStartupTask(fn, delay = 0) {
+  setTimeout(() => {
+    try { fn(); } catch(e) { console.warn('Post-startup task failed:', e); }
+  }, delay);
+}
+
+function getCachedWorldLayoutDataForStartup() {
+  const raw = safeStorageGet(localStorage, WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? safeStorageGet(localStorage, 'rebelAntsWorldLayout') : null);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function getStartupRequiredAssetKeys() {
+  const keys = new Set();
+  getCachedWorldLayoutDataForStartup().forEach(item => {
+    const type = item?.type;
+    if (!type || !ASSETS[type] || ASSETS[type].procedural) return;
+    keys.add(type);
+  });
+  return [...keys];
+}
+
+function isAssetSourceReady(key) {
+  if (ASSETS[key]?.procedural) return true;
+  return !!(_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded === true);
+}
+
+function waitForAssetSourceReady(key, callback, timeoutMs = 9000) {
+  if (!ASSETS[key]) return false;
+  loadAssetSource(key);
+  const startedAt = Date.now();
+  const check = () => {
+    if (isAssetSourceReady(key)) {
+      callback();
+      return;
+    }
+    if (Date.now() - startedAt >= timeoutMs) {
+      console.warn('Asset source did not finish loading in time:', key);
+      showToast(`Asset still loading: ${key}`);
+      return;
+    }
+    setTimeout(check, 250);
+  };
+  check();
+  return true;
+}
+
+function scheduleProgressiveAssetSourceLoad(excludedKeys = new Set()) {
+  if (VillageStartupRuntime.progressiveAssetQueueStarted) return;
+  VillageStartupRuntime.progressiveAssetQueueStarted = true;
+  const queue = Object.keys(ASSETS).filter(key =>
+    !ASSETS[key]?.procedural &&
+    !excludedKeys.has(key) &&
+    !isAssetSourceReady(key)
+  );
+  const loadNext = () => {
+    const key = queue.shift();
+    if (!key) return;
+    loadAssetSource(key);
+    setTimeout(loadNext, 450);
+  };
+  setTimeout(loadNext, 1200);
+}
+
+Object.keys(ASSETS).filter(key => ASSETS[key]?.procedural).forEach(key => loadAssetSource(key));
 
 
 
@@ -18079,6 +18393,7 @@ function shouldKeepLocalLayoutCacheOverRemote() {
 }
 
 async function initWorldLayout() {
+  setSt('Village: loading saved layout...');
   try {
     const resp = await fetch(`/api/world-layout?village=${encodeURIComponent(CURRENT_VILLAGE_ID)}`);
     if (resp.ok) {
@@ -18094,11 +18409,23 @@ async function initWorldLayout() {
         }
       }
     }
+    setSt('Village: layout cache ready.');
   } catch(e) {
     console.warn("Could not load layout from GitHub", e);
+    setSt('Village: using cached layout.');
   }
 
-  // Still used by the existing Forge collections bootstrap below.
+  try {
+    const fallbackRaw = safeStorageGet(localStorage, "rebelAntsForgeCollections");
+    window._forgeCollectionsConfig = fallbackRaw ? JSON.parse(fallbackRaw) : (window._forgeCollectionsConfig || null);
+  } catch(parseErr) {
+    window._forgeCollectionsConfig = window._forgeCollectionsConfig || null;
+  }
+}
+
+async function loadForgeCollectionsConfig() {
+  if (VillageStartupRuntime.forgeCollectionsStarted) return;
+  VillageStartupRuntime.forgeCollectionsStarted = true;
   if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
 
   try {
@@ -18123,14 +18450,23 @@ async function initWorldLayout() {
     console.warn("Could not load forge collections from GitHub", e);
 
     try {
-      const fallbackRaw = localStorage.getItem("rebelAntsForgeCollections");
+      const fallbackRaw = safeStorageGet(localStorage, "rebelAntsForgeCollections");
       window._forgeCollectionsConfig = fallbackRaw ? JSON.parse(fallbackRaw) : null;
     } catch(parseErr) {
       window._forgeCollectionsConfig = null;
     }
   }
+}
 
-  // Dismiss loading screen
+function markVillageStartupInteractive() {
+  if (VillageStartupRuntime.interactive) return;
+  VillageStartupRuntime.interactive = true;
+  window._villageStartupInteractive = true;
+  setSt('Finalizing: village ready.');
+  const excluded = new Set(VillageStartupRuntime.requiredAssetKeys || []);
+  scheduleProgressiveAssetSourceLoad(excluded);
+  schedulePostInteractiveStartupTask(loadForgeCollectionsConfig, 650);
+  schedulePostInteractiveStartupTask(startVillagePetalEffects, 1200);
   const ld = document.getElementById('ld');
   if (ld) { ld.style.opacity='0'; setTimeout(()=>{ ld.style.display='none'; }, 900); }
 }
@@ -18139,24 +18475,34 @@ function waitForWorldAndLoadLayout() {
   if (!waitForWorldAndLoadLayout._start) waitForWorldAndLoadLayout._start = Date.now();
   if (!waitForWorldAndLoadLayout._uploadedRestored) {
     waitForWorldAndLoadLayout._uploadedRestored = true;
-    restoreUploadedAssets();
+    restoreUploadedAssets({ loadSources:false });
+  }
+  if (!waitForWorldAndLoadLayout._requiredKeys) {
+    waitForWorldAndLoadLayout._requiredKeys = getStartupRequiredAssetKeys();
+    VillageStartupRuntime.requiredAssetKeys = waitForWorldAndLoadLayout._requiredKeys;
+    waitForWorldAndLoadLayout._requiredKeys.forEach(loadAssetSource);
   }
   const elapsed = Date.now() - waitForWorldAndLoadLayout._start;
-  const allReady = Object.keys(ASSETS).every(k => {
-    if (ASSETS[k].procedural) return true; // procedural assets are always ready
-    return _assetSources[k] && _assetSources[k].metadata && _assetSources[k].metadata.loaded;
-  });
-  // Wait up to 15 seconds — then load anyway with whatever is ready
-  if (!allReady && elapsed < 15000) { setTimeout(waitForWorldAndLoadLayout, 300); return; }
+  const requiredKeys = waitForWorldAndLoadLayout._requiredKeys || [];
+  const readyCount = requiredKeys.filter(isAssetSourceReady).length;
+  const allReady = readyCount >= requiredKeys.length;
+  if (!allReady && elapsed < 9000) {
+    setSt(`Village: loading assets ${readyCount}/${requiredKeys.length}...`);
+    setTimeout(waitForWorldAndLoadLayout, 300);
+    return;
+  }
   if (!allReady) {
-    const notReady = Object.keys(ASSETS).filter(k => !(_assetSources[k] && _assetSources[k].metadata && _assetSources[k].metadata.loaded === true));
+    const notReady = requiredKeys.filter(k => !isAssetSourceReady(k));
     console.warn('waitForWorldAndLoadLayout: timed out waiting for:', notReady, '— loading layout anyway');
   }
+  setSt('NPCs: preparing Hub Guide...');
   scene.materials.forEach(mat => { if (mat.maxSimultaneousLights !== undefined) mat.maxSimultaneousLights = 4; });
   loadWorldLayout();
   restoreUploadedAssets();
+  setSt('Quest systems: restoring journey...');
   applyZoneSignTextures();
-
+  setSt('Finalizing: making village interactive...');
+  markVillageStartupInteractive();
 }
 
 // ── ZONE SIGN TEXTURES ───────────────────────────────────────
@@ -19058,7 +19404,8 @@ window.filterAdminPanel = filterAdminPanel;
 // ── RESTORE UPLOADED ASSETS FROM LOCALSTORAGE ──────────
 // Any GLB uploaded via admin panel gets re-added to the panel on refresh
 // using its permanent /assets/buildings/ URL (available after Vercel redeploys)
-function restoreUploadedAssets() {
+function restoreUploadedAssets(options = {}) {
+  const loadSources = options.loadSources === true;
   const uploaded = getUploadedAssets();
   if (!uploaded.length) { updateUploadedAssetsVisibility(); return; }
   uploaded.forEach(({ key, file }) => {
@@ -19067,10 +19414,13 @@ function restoreUploadedAssets() {
       ASSETS[key] = { path: '/assets/buildings/' + file, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _uploaded: true };
     }
     // Load source mesh
-    if (!_assetSources[key]) loadAssetSource(key);
+    if (loadSources && !_assetSources[key]) loadAssetSource(key);
     // Add card to panel if not already there
     const card = createUploadedAssetCard(key);
     if (card) {
+      card.style.opacity = '1';
+      card.onclick = () => spawnAssetFromPanel(key);
+      if (!loadSources) return;
       // Enable card once loaded
       const waitForLoad = setInterval(() => {
         if (!ASSETS[key]) {
@@ -24326,7 +24676,12 @@ function placeAssetAtPoint(key, pickedPoint) {
     triggerAutoSave();
     return;
   }
-  if (!_assetSources[key]) { console.warn('Asset not loaded:', key); return; }
+  if (!_assetSources[key] || !isAssetSourceReady(key)) {
+    const deferredPoint = pickedPoint.clone();
+    showToast(`Loading ${key}... placing shortly`);
+    waitForAssetSourceReady(key, () => placeAssetAtPoint(key, deferredPoint));
+    return;
+  }
   const source = _assetSources[key];
   // Lantern uses its own spawn system — must return before clone is created
   if (key === 'lantern_1') { spawnLanternFull(spawnPos); return; }
