@@ -787,6 +787,110 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 	    <button class="ctrl-btn full" onclick="saveQuestDraft()">Save Local Quest</button>
 	    <button class="ctrl-btn danger full" onclick="resetHubTutorialQuest()">Reset Hub Tutorial Quest</button>
 	  </div>
+	  <div class="ap-section">Quest Builder V1</div>
+	  <div class="admin-section-body" data-admin-section-body="quest-builder">
+	    <button class="quest-help" type="button" title="Quest Builder How To: Search or select a quest, edit metadata, choose a target marker/object, connect a badge reward, then Apply/Save. Use Create/Update Marker For Quest to place guidance without hardcoding coordinates. Test Start and Test Complete are local admin tools.">How To</button>
+	    <div class="admin-note">Builds local quest configs that can point to movable Quest Target Markers, badges, and Journal entries.</div>
+	    <input id="questBuilderSearch" placeholder="Search quests..." oninput="refreshQuestBuilderOptions()" style="width:100%;margin-bottom:6px">
+	    <label class="admin-field">Select Quest
+	      <select id="questBuilderSelect" class="admin-select" onchange="loadQuestBuilderSelection()"></select>
+	    </label>
+	    <div id="questBuilderStatus" class="admin-note">Select a quest to edit.</div>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <button class="ctrl-btn" onclick="createNewQuestFromBuilder()">Create New Quest</button>
+	      <button class="ctrl-btn" onclick="duplicateQuestBuilderSelection()">Duplicate Quest</button>
+	      <button class="ctrl-btn" onclick="archiveQuestBuilderSelection()">Archive / Disable</button>
+	      <button class="ctrl-btn danger" onclick="deleteQuestBuilderSelection()">Delete Custom</button>
+	    </div>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+	      <label class="admin-field">Quest ID <input id="questBuilderQuestId" placeholder="quest-101"></label>
+	      <label class="admin-field">Type
+	        <select id="questBuilderType" class="admin-select">
+	          <option value="Hub">Hub</option>
+	          <option value="Book 1 Main">Book 1 Main</option>
+	          <option value="Side">Side</option>
+	          <option value="Custom">Custom</option>
+	        </select>
+	      </label>
+	    </div>
+	    <label class="admin-field">Name <input id="questBuilderTitle" placeholder="Quest title"></label>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <label class="admin-field">Chapter <input id="questBuilderChapter" placeholder="Book 1 / Chapter 1"></label>
+	      <label class="admin-field">Village <input id="questBuilderVillage" placeholder="Hub Village"></label>
+	    </div>
+	    <label class="admin-field">Primary NPC <input id="questBuilderPrimaryNpc" placeholder="Hub Guide"></label>
+	    <label class="admin-field">Description <textarea id="questBuilderDescription" rows="2" placeholder="Story context"></textarea></label>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <label class="admin-field">Objective Type
+	        <select id="questBuilderObjectiveType" class="admin-select">
+	          <option value="talkToNpc">talkToNpc</option>
+	          <option value="visitArea">visitArea</option>
+	          <option value="interactSign">interactSign</option>
+	          <option value="openChest">openChest</option>
+	          <option value="collectCollectible">collectCollectible</option>
+	          <option value="enterInterior">enterInterior</option>
+	          <option value="discoverDojo">discoverDojo</option>
+	          <option value="inspectInteriorNFTFrame">inspectInteriorNFTFrame</option>
+	          <option value="interactInteriorLink">interactInteriorLink</option>
+	          <option value="openJournal">openJournal</option>
+	          <option value="usePortal">usePortal</option>
+	          <option value="visitVillage">visitVillage</option>
+	          <option value="observeTime">observeTime</option>
+	          <option value="experienceWeather">experienceWeather</option>
+	          <option value="custom">custom</option>
+	        </select>
+	      </label>
+	      <label class="admin-field">Target Type
+	        <select id="questBuilderTargetType" class="admin-select">
+	          <option value="Area">Area</option>
+	          <option value="NPC">NPC</option>
+	          <option value="Door">Door</option>
+	          <option value="Interior">Interior</option>
+	          <option value="Portal">Portal</option>
+	          <option value="Sign">Sign</option>
+	          <option value="Chest">Chest</option>
+	          <option value="Collectible">Collectible</option>
+	          <option value="NFT Frame">NFT Frame</option>
+	          <option value="Link/Hotspot">Link/Hotspot</option>
+	        </select>
+	      </label>
+	    </div>
+	    <label class="admin-field">Objective Text <textarea id="questBuilderObjectiveText" rows="2" placeholder="Follow the glowing marker to the forest path."></textarea></label>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <label class="admin-field">Target Marker ID <input id="questBuilderTargetMarkerId" placeholder="questTarget_forest_path"></label>
+	      <label class="admin-field">Object / NPC / Interior ID <input id="questBuilderObjectId" placeholder="optional target id"></label>
+	    </div>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <label class="admin-field">Radius <input id="questBuilderRadius" type="number" min="0.5" max="80" step="0.5" value="8"></label>
+	      <label class="admin-field">Enabled
+	        <select id="questBuilderEnabled" class="admin-select">
+	          <option value="true">Enabled</option>
+	          <option value="false">Disabled</option>
+	        </select>
+	      </label>
+	    </div>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <label class="admin-field">Next Quest <input id="questBuilderNextQuest" placeholder="optional quest id"></label>
+	      <label class="admin-field">Prerequisite <input id="questBuilderPrereq" placeholder="optional quest id"></label>
+	    </div>
+	    <label class="admin-field">Journal Entry ID <input id="questBuilderJournalEntryId" placeholder="journal_quest_101"></label>
+	    <label class="admin-field">Journal Text <textarea id="questBuilderJournalText" rows="2" placeholder="Journal note unlocked when complete"></textarea></label>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <label class="admin-field">Badge Reward
+	        <select id="questBuilderBadgeRewardId" class="admin-select"></select>
+	      </label>
+	      <label class="admin-field">Badge Progress Amount <input id="questBuilderBadgeProgressAmount" type="number" min="0" step="1" value="0"></label>
+	    </div>
+	    <label class="admin-field">Progression Reward Amount <input id="questBuilderProgressRewardAmount" type="number" min="0" step="1" value="40"></label>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <button class="ctrl-btn" onclick="saveQuestBuilderQuest()">Apply / Save Quest</button>
+	      <button class="ctrl-btn" onclick="createOrUpdateMarkerForQuest()">Create / Update Marker For Quest</button>
+	      <button class="ctrl-btn" onclick="testStartQuestFromBuilder()">Test Start Quest</button>
+	      <button class="ctrl-btn" onclick="testCompleteQuestFromBuilder()">Test Complete Quest</button>
+	      <button class="ctrl-btn danger" onclick="resetQuestBuilderProgress()">Reset Quest Progress</button>
+	      <button class="ctrl-btn" onclick="refreshQuestBuilderOptions()">Refresh List</button>
+	    </div>
+	  </div>
 	  <div class="ap-section">Quest Targets / Markers</div>
 	  <div class="admin-section-body" data-admin-section-body="quest-targets">
 	    <button class="quest-help" type="button" title="Quest Target Markers How To: 1. Enter a stable Target ID such as questTarget_forest_path. 2. Add a short Label players will see. 3. Optionally set Quest ID and Objective Type. 4. Pick the Target Type. 5. Click Add Quest Target Marker, then click the ground. 6. Move, rotate, or scale with the gizmo. 7. Apply Settings and save the layout.">How To</button>
@@ -1940,6 +2044,137 @@ function getBook1StoryJournalEntries() {
 
 registerBook1QuestDefinitions();
 
+const QUEST_BUILDER_CONFIG_KEY = 'rebelAntsQuestBuilderConfig:v1';
+const QUEST_BUILDER_TARGET_TYPES = ['NPC', 'Area', 'Door', 'Interior', 'Portal', 'Sign', 'Chest', 'Collectible', 'NFT Frame', 'Link/Hotspot'];
+
+function loadQuestBuilderConfig() {
+  try { return JSON.parse(localStorage.getItem(QUEST_BUILDER_CONFIG_KEY) || '{}') || {}; }
+  catch (_) { return {}; }
+}
+
+let QuestBuilderConfig = loadQuestBuilderConfig();
+
+function saveQuestBuilderConfigState() {
+  localStorage.setItem(QUEST_BUILDER_CONFIG_KEY, JSON.stringify(QuestBuilderConfig || {}));
+}
+
+function makeQuestBuilderQuestId(value = 'quest-101') {
+  const safe = String(value || 'quest-101')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return safe || 'quest-101';
+}
+
+function parseQuestBuilderPrerequisites(value) {
+  if (Array.isArray(value)) return value.map(item => String(item || '').trim()).filter(Boolean);
+  return String(value || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeQuestBuilderTargetType(type) {
+  return QUEST_BUILDER_TARGET_TYPES.includes(type) ? type : 'Area';
+}
+
+function getQuestBuilderTargetFields(raw = {}) {
+  const targetType = normalizeQuestBuilderTargetType(raw.targetType || 'Area');
+  const objectId = raw.objectId || raw.targetId || raw.targetObjectId || raw.targetNpcId || raw.targetInteriorId || raw.targetVillageId || '';
+  return {
+    targetNpcId: targetType === 'NPC' ? objectId || null : raw.targetNpcId || null,
+    targetVillageId: targetType === 'Portal' ? objectId || null : raw.targetVillageId || null,
+    targetInteriorId: (targetType === 'Interior' || targetType === 'Door') ? objectId || null : raw.targetInteriorId || null,
+    targetObjectId: !['NPC', 'Portal', 'Interior', 'Door'].includes(targetType) ? objectId || null : raw.targetObjectId || null
+  };
+}
+
+function normalizeQuestBuilderQuest(raw = {}) {
+  const questId = makeQuestBuilderQuestId(raw.questId || raw.id || raw.title || 'quest-101');
+  const title = String(raw.title || raw.name || 'Untitled Quest').trim() || 'Untitled Quest';
+  const objectiveType = String(raw.objectiveType || raw.actionType || 'visitArea').trim() || 'visitArea';
+  const targetType = normalizeQuestBuilderTargetType(raw.targetType || (objectiveType === 'talkToNpc' ? 'NPC' : 'Area'));
+  const objectiveText = String(raw.objectiveText || raw.objective || raw.objectives?.[0]?.objective || raw.objectives?.[0] || 'Complete the quest objective.').trim();
+  const targetMarkerId = String(raw.targetMarkerId || '').trim() || null;
+  const radius = Math.max(.5, Math.min(80, Number(raw.radius) || 8));
+  const targetFields = getQuestBuilderTargetFields({ ...raw, targetType });
+  const prerequisites = parseQuestBuilderPrerequisites(raw.prerequisites || raw.prerequisiteQuestId || raw.prereq);
+  const stepId = raw.stepId || makeSafeQuestStepId(objectiveType || objectiveText);
+  const journalEntryId = String(raw.journalEntryId || '').trim();
+  const journalText = String(raw.journalText || raw.journalEntry || '').trim();
+  const progressionRewardAmount = Number(raw.progressionRewardAmount);
+  const badgeProgressAmount = Number(raw.badgeProgressAmount);
+  return {
+    questId,
+    title,
+    type: raw.type || 'Custom',
+    chapter: raw.chapter || '',
+    village: raw.village || raw.villageId || CURRENT_VILLAGE_ID || '',
+    primaryNpc: raw.primaryNpc || '',
+    description: raw.description || '',
+    objectiveType,
+    objectiveText,
+    objectives: [objectiveText],
+    targetMarkerId,
+    targetType,
+    radius,
+    ...targetFields,
+    nextQuestId: String(raw.nextQuestId || raw.nextQuest || '').trim() || null,
+    prerequisiteQuestId: prerequisites[0] || null,
+    prerequisites,
+    journalEntryId: journalEntryId || null,
+    journalTitle: raw.journalTitle || title,
+    journalText,
+    journalEntry: journalText || raw.journalEntry || '',
+    badgeRewardId: String(raw.badgeRewardId || '').trim() || null,
+    badgeProgressAmount: Number.isFinite(badgeProgressAmount) ? Math.max(0, badgeProgressAmount) : 0,
+    progressionRewardAmount: Number.isFinite(progressionRewardAmount) ? Math.max(0, progressionRewardAmount) : 40,
+    enabled: raw.enabled !== false && raw.enabled !== 'false',
+    archived: raw.archived === true,
+    custom: raw.custom !== false,
+    customFromQuestBuilder: raw.customFromQuestBuilder === false ? false : true,
+    updatedAt: raw.updatedAt || new Date().toISOString(),
+    steps: [
+      {
+        id: stepId,
+        objective: objectiveText,
+        objectiveType,
+        targetMarkerId,
+        targetType,
+        radius,
+        ...targetFields
+      },
+      { id:'complete', objective:`Completed: ${title}` }
+    ]
+  };
+}
+
+function applyQuestBuilderDefinitions() {
+  Object.keys(QUEST_DEFINITIONS).forEach(questId => {
+    if (QUEST_DEFINITIONS[questId]?.customFromQuestBuilder && !QuestBuilderConfig[questId]) delete QUEST_DEFINITIONS[questId];
+  });
+  Object.values(QuestBuilderConfig || {}).forEach(raw => {
+    const quest = normalizeQuestBuilderQuest(raw);
+    if (!quest.questId) return;
+    const existing = QUEST_DEFINITIONS[quest.questId] || null;
+    if ((quest.archived || quest.enabled === false) && (!existing || existing.customFromQuestBuilder)) {
+      delete QUEST_DEFINITIONS[quest.questId];
+      return;
+    }
+    if (existing && !existing.customFromQuestBuilder && (quest.archived || quest.enabled === false)) return;
+    const isBuiltInQuest = existing && existing.customFromQuestBuilder !== true;
+    QUEST_DEFINITIONS[quest.questId] = {
+      ...(existing || {}),
+      ...quest,
+      customFromQuestBuilder:isBuiltInQuest ? false : true,
+      steps:isBuiltInQuest ? (existing.steps || quest.steps) : quest.steps
+    };
+  });
+}
+
+applyQuestBuilderDefinitions();
+
 const PROGRESSION_KEY = 'rebelAntsProgression:v1';
 const BADGE_CONFIG_KEY = 'rebelAntsBadgeConfig:v1';
 const PROGRESSION_BADGE_CATEGORIES = {
@@ -2104,6 +2339,8 @@ function getDefaultProgressionState() {
     collectiblesFound: [],
     secretsFound: [],
     ecosystemActions: {},
+    journalEntriesUnlocked: [],
+    customJournalEntries: {},
     updatedAt: null
   };
 }
@@ -2206,6 +2443,8 @@ function processProgressionAudioQueue() {
 }
 
 function saveProgressionState() {
+  if (!Array.isArray(ProgressionState.journalEntriesUnlocked)) ProgressionState.journalEntriesUnlocked = [];
+  if (!ProgressionState.customJournalEntries || typeof ProgressionState.customJournalEntries !== 'object') ProgressionState.customJournalEntries = {};
   ProgressionState.updatedAt = new Date().toISOString();
   localStorage.setItem(PROGRESSION_KEY, JSON.stringify(ProgressionState));
   updateProgressionHud();
@@ -2504,10 +2743,14 @@ function renderProgressionJournal() {
     return;
   }
   if (activeJournalTab === 'story') {
+    const customEntries = Object.values(ProgressionState.customJournalEntries || {})
+      .filter(entry => entry && (!entry.id || (ProgressionState.journalEntriesUnlocked || []).includes(entry.id)))
+      .map(entry => [entry.title || 'Quest Journal', true, entry.text || entry.journalText || 'Journal entry unlocked.']);
     const entries = [
       ['The Hub Journey', ProgressionState.completedQuests.includes('hub-tutorial-complete'), 'You learned the living systems of the Hub: paths, memories, doors, frames, weather, gates, and the first shape of the larger colony.'],
       ['Book 1: Narrative Backbone', ProgressionState.completedQuests.includes('hub-tutorial-complete'), 'After the Hub Journey, Book 1 opens into 50 main quests and 30 side quests across the faction villages.'],
-      ...getBook1StoryJournalEntries()
+      ...getBook1StoryJournalEntries(),
+      ...customEntries
     ];
     grid.innerHTML = entries.map(([title, unlocked, text]) => `<div class="journal-row ${unlocked ? '' : 'locked'}"><b>${unlocked ? title : 'Unknown Entry'}</b><br>${unlocked ? text : 'Locked story memory.'}</div>`).join('');
     return;
@@ -2678,6 +2921,7 @@ function refreshBadgeBuilderOptions() {
   loadBadgeBuilderSelection();
   renderArchivedBadgeList();
   renderBadgeBuilderList();
+  if (typeof refreshQuestBuilderBadgeOptions === 'function') refreshQuestBuilderBadgeOptions();
 }
 
 function loadBadgeBuilderSelection() {
@@ -6495,7 +6739,10 @@ function openTreasureChest(chest) {
   // Reward payout intentionally stubbed for future $REBEL/economy API integration.
   playInteractionAudio('chestOpen');
   recordProgressionEvent('chest', chest.metadata.chestId || chest.name, PROGRESSION_POINTS.chest);
-  advanceHubTutorialObjective('openChest');
+  advanceHubTutorialObjective('openChest', {
+    chestId:chest.metadata.chestId || chest.name,
+    targetObjectId:chest.metadata.chestId || chest.name
+  });
   triggerAutoSave();
   showToast('Chest opened — reward system coming soon');
   return true;
@@ -8606,6 +8853,8 @@ function saveQuestState() {
   if (!QuestState.objectiveProgress || typeof QuestState.objectiveProgress !== 'object') QuestState.objectiveProgress = {};
   localStorage.setItem(QUEST_STATE_KEY, JSON.stringify(QuestState));
   updateQuestTracker();
+  if (typeof updateQuestTargetMarkers === 'function') updateQuestTargetMarkers(0);
+  if (typeof updateQuestBuilderStatus === 'function') updateQuestBuilderStatus();
 }
 
 function getQuestStep(questId, stepId) {
@@ -8639,7 +8888,9 @@ function getQuestObjectiveDisplayText(questId = QuestState.questId, stepId = Que
 function getQuestRewardSummary(questId) {
   const quest = QUEST_DEFINITIONS[questId] || {};
   if (Array.isArray(quest.rewards) && quest.rewards.length) return quest.rewards.join(' / ');
-  return `+${PROGRESSION_POINTS.quest} progress`;
+  const reward = Number.isFinite(Number(quest.progressionRewardAmount)) ? Number(quest.progressionRewardAmount) : PROGRESSION_POINTS.quest;
+  const badge = quest.badgeRewardId ? getBadgeDefinitionById(quest.badgeRewardId) : null;
+  return badge ? `+${reward} progress / Badge: ${badge.name}` : `+${reward} progress`;
 }
 
 function getQuestBadgeUnlocks(beforeBadges = []) {
@@ -8656,6 +8907,45 @@ function getQuestBadgeProgressText(beforeInfo, afterInfo, unlockedBadges = []) {
   return '';
 }
 
+function getQuestConfiguredBadge(quest) {
+  return quest?.badgeRewardId ? getBadgeDefinitionById(quest.badgeRewardId) : null;
+}
+
+function unlockQuestJournalEntry(quest) {
+  if (!quest) return false;
+  const journalId = quest.journalEntryId || '';
+  const journalText = quest.journalText || quest.journalEntry || '';
+  if (!journalId && !journalText) return false;
+  if (!Array.isArray(ProgressionState.journalEntriesUnlocked)) ProgressionState.journalEntriesUnlocked = [];
+  if (!ProgressionState.customJournalEntries || typeof ProgressionState.customJournalEntries !== 'object') ProgressionState.customJournalEntries = {};
+  const id = journalId || `journal_${quest.questId}`;
+  if (!ProgressionState.journalEntriesUnlocked.includes(id)) ProgressionState.journalEntriesUnlocked.push(id);
+  ProgressionState.customJournalEntries[id] = {
+    id,
+    questId:quest.questId,
+    title:quest.journalTitle || quest.title || 'Quest Journal',
+    text:journalText || quest.description || 'Journal entry unlocked.'
+  };
+  saveProgressionState();
+  return true;
+}
+
+function applyQuestConfiguredRewards(quest) {
+  if (!quest) return;
+  const badge = getQuestConfiguredBadge(quest);
+  const badgeProgress = Number(quest.badgeProgressAmount);
+  if (Number.isFinite(badgeProgress) && badgeProgress > 0) addProgressionXP(badgeProgress);
+  if (badge) {
+    const threshold = Number(badge.requirementValue);
+    const shouldAwardProgressBadge = isProgressBadgeType(badge.requirementType) && Number.isFinite(threshold)
+      ? (Number(ProgressionState.xp) || 0) >= threshold
+      : true;
+    if (shouldAwardProgressBadge) awardBadge(badge.name);
+  }
+  unlockQuestJournalEntry(quest);
+  saveProgressionState();
+}
+
 function showQuestCompleteCelebration(questId, nextQuestId = null, beforeInfo = null, beforeBadges = []) {
   const quest = QUEST_DEFINITIONS[questId] || {};
   const afterInfo = getExplorerBadgeInfo();
@@ -8664,7 +8954,7 @@ function showQuestCompleteCelebration(questId, nextQuestId = null, beforeInfo = 
   const chips = [
     { label:getQuestRewardSummary(questId), tone:'gold' }
   ];
-  if (quest.journalEntry) chips.push({ label:'Journal Updated' });
+  if (quest.journalEntry || quest.journalEntryId || quest.journalText) chips.push({ label:'Journal Updated' });
   if (badgeText) chips.push({ label:'Badge Progress', tone:unlockedBadges.length ? 'gold' : '' });
   queueQuestCelebration({
     kicker:'Quest Complete',
@@ -8672,7 +8962,7 @@ function showQuestCompleteCelebration(questId, nextQuestId = null, beforeInfo = 
     body:[
       quest.description ? escapeHTML(quest.description) : '',
       badgeText ? `<b>Badge:</b> ${escapeHTML(badgeText)}` : '',
-      quest.journalEntry ? `<b>Journal:</b> ${escapeHTML(quest.journalEntry)}` : ''
+      (quest.journalText || quest.journalEntry) ? `<b>Journal:</b> ${escapeHTML(quest.journalText || quest.journalEntry)}` : ''
     ].filter(Boolean).join('<br>'),
     chips
   });
@@ -8721,7 +9011,9 @@ function canCompleteTutorialQuest(questId, options = {}) {
     if (!step || QuestState.completed === true) return false;
   }
   if (options.requiredStep && QuestState.step !== options.requiredStep) return false;
+  if (options.adminTest === true) return true;
   if (options.actionType) {
+    const quest = QUEST_DEFINITIONS[questId] || {};
     const expectedByQuest = {
       'hub-first-step':'talkToNpc',
       'hub-walk-village':'visitArea',
@@ -8746,8 +9038,9 @@ function canCompleteTutorialQuest(questId, options = {}) {
       'village-gate':'usePortal',
       'first-warning':'talkToNpc'
     };
-    const expectedAction = expectedByQuest[questId];
-    if (expectedAction && expectedAction !== options.actionType) return false;
+    const expectedAction = expectedByQuest[questId] || getConfiguredQuestAction(quest, QuestState.step);
+    if (expectedAction && !questActionMatches(expectedAction, options.actionType)) return false;
+    if (!expectedByQuest[questId] && !doesQuestContextMatchTarget(quest, options.context || {}, options.actionType)) return false;
   }
   if (options.targetId) {
     const target = String(options.targetId).toLowerCase();
@@ -8769,12 +9062,18 @@ function completeTutorialQuest(questId, options = {}) {
   }
   const completed = new Set(Array.isArray(QuestState.completedQuestIds) ? QuestState.completedQuestIds : []);
   completed.add(questId);
-  const questBadge = questId === 'hub-tutorial-complete' ? 'Hub Initiate' : null;
+  const quest = QUEST_DEFINITIONS[questId] || {};
+  const configuredBadge = getQuestConfiguredBadge(quest);
+  const questBadge = configuredBadge?.name || (questId === 'hub-tutorial-complete' ? 'Hub Initiate' : null);
+  const progressionReward = Number.isFinite(Number(quest.progressionRewardAmount)) ? Number(quest.progressionRewardAmount) : PROGRESSION_POINTS.quest;
   const beforeInfo = getExplorerBadgeInfo();
   const beforeBadges = [...(ProgressionState.badges || [])];
-  recordProgressionEvent('quest', questId, PROGRESSION_POINTS.quest, questBadge);
+  const recorded = recordProgressionEvent('quest', questId, progressionReward, questBadge);
+  if (recorded) applyQuestConfiguredRewards(quest);
   const questOrderIndex = QUEST_ORDER.indexOf(questId);
-  let nextQuestId = questOrderIndex >= 0 ? (QUEST_ORDER[questOrderIndex + 1] || null) : null;
+  let nextQuestId = quest.nextQuestId && QUEST_DEFINITIONS[quest.nextQuestId]
+    ? quest.nextQuestId
+    : (questOrderIndex >= 0 ? (QUEST_ORDER[questOrderIndex + 1] || null) : null);
   if (!nextQuestId && questId === 'hub-tutorial-complete') nextQuestId = 'first-warning';
   if (nextQuestId) {
     QuestState = { ...QuestState, questId: nextQuestId, step:getFirstQuestStepId(nextQuestId), completed:false, completedQuestIds:[...completed] };
@@ -8862,6 +9161,119 @@ function contextIncludesAny(context, keywords) {
   return keywords.some(keyword => text.includes(keyword));
 }
 
+function normalizeQuestObjectiveAction(actionType = '') {
+  const action = String(actionType || '').trim();
+  const map = {
+    reachZone:'visitArea',
+    area:'visitArea',
+    visitMarker:'visitArea',
+    enterArea:'visitArea',
+    talk:'talkToNpc',
+    npc:'talkToNpc',
+    sign:'interactSign',
+    chest:'openChest',
+    collectible:'collectCollectible',
+    interior:'enterInterior',
+    door:'enterInterior',
+    frame:'inspectInteriorNFTFrame',
+    nftFrame:'inspectInteriorNFTFrame',
+    link:'interactInteriorLink',
+    hotspot:'interactInteriorLink',
+    video:'interactInteriorLink',
+    portal:'usePortal',
+    journal:'openJournal',
+    weather:'experienceWeather',
+    time:'observeTime'
+  };
+  return map[action] || action;
+}
+
+function questActionMatches(expectedAction, actualAction) {
+  return normalizeQuestObjectiveAction(expectedAction) === normalizeQuestObjectiveAction(actualAction);
+}
+
+function getConfiguredQuestAction(quest, stepId = QuestState.step) {
+  if (!quest) return null;
+  const step = getQuestStep(quest.questId, stepId) || {};
+  const explicit = step.objectiveType || quest.objectiveType || '';
+  if (explicit) return normalizeQuestObjectiveAction(explicit);
+  const targetType = step.targetType || quest.targetType || '';
+  const byTargetType = {
+    NPC:'talkToNpc',
+    Area:'visitArea',
+    Door:'enterInterior',
+    Interior:'enterInterior',
+    Portal:'usePortal',
+    Sign:'interactSign',
+    Chest:'openChest',
+    Collectible:'collectCollectible',
+    'NFT Frame':'inspectInteriorNFTFrame',
+    'Link/Hotspot':'interactInteriorLink'
+  };
+  return byTargetType[targetType] || null;
+}
+
+function getQuestTargetObjectIdFromContext(context = {}) {
+  return String(
+    context.targetObjectId ||
+    context.objectId ||
+    context.id ||
+    context.signId ||
+    context.chestId ||
+    context.collectibleId ||
+    context.frameId ||
+    context.displayId ||
+    context.hotspotId ||
+    context.screenId ||
+    context.name ||
+    ''
+  );
+}
+
+function doesQuestContextMatchTarget(quest, context = {}, actionType = '') {
+  if (!quest) return false;
+  const step = getQuestStep(quest.questId, QuestState.step) || {};
+  const targetMarkerId = step.targetMarkerId || quest.targetMarkerId || null;
+  const targetNpcId = step.targetNpcId || quest.targetNpcId || null;
+  const targetVillageId = step.targetVillageId || quest.targetVillageId || null;
+  const targetInteriorId = step.targetInteriorId || quest.targetInteriorId || null;
+  const targetObjectId = step.targetObjectId || quest.targetObjectId || null;
+  const action = normalizeQuestObjectiveAction(actionType || getConfiguredQuestAction(quest));
+  if (['visitArea', 'discoverDojo'].includes(action)) {
+    if (!targetMarkerId) return false;
+    if (context.targetMarkerId !== targetMarkerId) return false;
+    const marker = getQuestTargetById(targetMarkerId);
+    return !!marker && marker.metadata?.enabled !== false && isPlayerInsideQuestTargetMarker(marker);
+  }
+  if (targetMarkerId && context.targetMarkerId && context.targetMarkerId !== targetMarkerId) return false;
+  if (targetNpcId) {
+    const npcId = String(context.targetNpcId || context.npcId || '').toLowerCase();
+    if (npcId && npcId === String(targetNpcId).toLowerCase()) return true;
+    return getContextSearchText(context).includes(String(targetNpcId).toLowerCase());
+  }
+  if (quest.primaryNpc && action === 'talkToNpc') {
+    const npcText = `${context.npcName || ''} ${context.targetNpcId || ''}`.toLowerCase();
+    return npcText.includes(String(quest.primaryNpc).toLowerCase());
+  }
+  if (targetVillageId) return String(context.targetVillageId || context.villageId || '').toLowerCase() === String(targetVillageId).toLowerCase();
+  if (targetInteriorId) return getContextSearchText(context).includes(String(targetInteriorId).toLowerCase());
+  if (targetObjectId) {
+    const objectId = getQuestTargetObjectIdFromContext(context).toLowerCase();
+    return objectId === String(targetObjectId).toLowerCase() || getContextSearchText(context).includes(String(targetObjectId).toLowerCase());
+  }
+  return true;
+}
+
+function advanceConfiguredQuestObjective(actionType, context = {}) {
+  const quest = QUEST_DEFINITIONS[QuestState.questId];
+  if (!quest || QuestState.completed === true) return false;
+  const expectedAction = getConfiguredQuestAction(quest, QuestState.step);
+  if (!expectedAction || !questActionMatches(expectedAction, actionType)) return false;
+  if (!doesQuestContextMatchTarget(quest, context, actionType)) return false;
+  completeTutorialQuest(QuestState.questId, { actionType, context });
+  return true;
+}
+
 function advanceHubTutorialObjective(actionType, context = {}) {
   const expected = {
     'hub-first-step': { step:'talk', action:'talkToNpc', match:ctx => ctx.targetNpcId === 'hub-ashigaru-villager-01' },
@@ -8893,7 +9305,8 @@ function advanceHubTutorialObjective(actionType, context = {}) {
     'hub-world-larger': { step:'visit-village-return', action:'visitVillage', match:ctx => ctx.returnedToHub === true },
     'hub-tutorial-complete': { step:'return-guide', action:'returnToNpc', match:ctx => ctx.targetNpcId === 'hub-ashigaru-villager-01' }
   }[QuestState.questId];
-  if (!expected || QuestState.step !== expected.step || actionType !== expected.action) return false;
+  if (!expected) return advanceConfiguredQuestObjective(actionType, context);
+  if (QuestState.step !== expected.step || actionType !== expected.action) return false;
   if (expected.match && !expected.match(context)) return false;
   if (expected.count) {
     const progress = getHubTutorialProgress(QuestState.questId);
@@ -8906,7 +9319,7 @@ function advanceHubTutorialObjective(actionType, context = {}) {
       return false;
     }
   }
-  completeTutorialQuest(QuestState.questId);
+  completeTutorialQuest(QuestState.questId, { actionType, context });
   return true;
 }
 
@@ -8997,6 +9410,19 @@ function updateTutorialQuestWorldProgress() {
     }
     return;
   }
+  if (!ActiveInterior) {
+    const target = getQuestTargetMetadata();
+    const marker = getActiveQuestTargetMarker();
+    const action = normalizeQuestObjectiveAction(target.objectiveType || (target.targetType === 'Area' ? 'visitArea' : ''));
+    if (marker && ['visitArea', 'discoverDojo'].includes(action) && isPlayerInsideQuestTargetMarker(marker)) {
+      advanceHubTutorialObjective(action, {
+        area:marker.metadata?.label || target.targetLabel || marker.metadata?.targetMarkerId,
+        targetMarkerId:marker.metadata?.targetMarkerId,
+        targetType:marker.metadata?.targetType || target.targetType
+      });
+      return;
+    }
+  }
   if (QuestState.questId === 'hub-light-changes' && QuestState.step === 'observe-time') {
     const progress = getHubTutorialProgress('hub-light-changes');
     const elapsed = performance.now() - (progress.startedAt || performance.now());
@@ -9008,6 +9434,20 @@ function updateTutorialQuestWorldProgress() {
     const elapsed = performance.now() - (progress.startedAt || performance.now());
     const weatherMode = WeatherManager?.mode || 'clear';
     if (weatherMode !== 'clear' || elapsed > 4200) advanceHubTutorialObjective('experienceWeather', { weatherMode });
+    return;
+  }
+  const configuredAction = getConfiguredQuestAction(QUEST_DEFINITIONS[QuestState.questId]);
+  if (configuredAction === 'observeTime') {
+    const progress = getHubTutorialProgress(QuestState.questId);
+    const elapsed = performance.now() - (progress.startedAt || performance.now());
+    if (elapsed > 4200) advanceHubTutorialObjective('observeTime', { clockLabel:document.getElementById('td')?.textContent || '' });
+    return;
+  }
+  if (configuredAction === 'experienceWeather') {
+    const progress = getHubTutorialProgress(QuestState.questId);
+    const elapsed = performance.now() - (progress.startedAt || performance.now());
+    const weatherMode = WeatherManager?.mode || 'clear';
+    if (weatherMode !== 'clear' || elapsed > 4200) advanceHubTutorialObjective('experienceWeather', { weatherMode });
   }
 }
 
@@ -9015,7 +9455,14 @@ function handleSignQuestEvent(signData) {
   if (!signData || !String(signData.id || '').startsWith('sign_')) return;
   const actionType = classifyEcosystemAction(signData);
   recordProgressionEvent('ecosystem', actionType, PROGRESSION_POINTS.sign);
-  advanceHubTutorialObjective('interactSign');
+  advanceHubTutorialObjective('interactSign', {
+    signId:signData.id || signData.name || '',
+    targetObjectId:signData.id || signData.name || '',
+    title:signData.title || '',
+    label:signData.label || signData.sub || '',
+    url:signData.href || signData.url || '',
+    sourceActionType:actionType
+  });
 }
 
 const QUEST_TARGET_TYPES = ['NPC', 'Area', 'Door', 'Interior', 'Portal', 'Sign', 'Chest', 'Collectible', 'NFT Frame', 'Link/Hotspot'];
@@ -9079,7 +9526,8 @@ function getActiveQuestTargetMarker() {
   const target = getQuestTargetMetadata();
   if (target.targetMarkerId) {
     const marker = getQuestTargetById(target.targetMarkerId);
-    if (marker) return marker;
+    if (marker && marker.metadata?.enabled !== false) return marker;
+    return null;
   }
   return getQuestTargetRoots().find(marker => {
     const meta = marker.metadata || {};
@@ -9093,6 +9541,9 @@ function getActiveQuestTargetMarker() {
 function questRequiresPlacedTargetMarker(questId = QuestState.questId, stepId = QuestState.step) {
   if (questId === 'hub-walk-village' && stepId === 'reach-forest-path') return true;
   if (questId === 'hub-hidden-dojo' && stepId === 'discover-dojo') return true;
+  const target = getQuestTargetMetadata(questId, stepId);
+  const action = normalizeQuestObjectiveAction(target.objectiveType || '');
+  if (target.targetMarkerId && ['visitArea', 'discoverDojo'].includes(action)) return true;
   return false;
 }
 
@@ -9121,7 +9572,7 @@ function getQuestTargetGuidance() {
       };
     }
   }
-  if (questRequiresPlacedTargetMarker()) {
+  if (target.targetMarkerId || questRequiresPlacedTargetMarker()) {
     return { missing:true, target, label:target.targetLabel || 'Quest Target' };
   }
   return null;
@@ -9577,6 +10028,393 @@ function duplicateSelectedQuestTargetMarker() {
   writeQuestTargetMarkerSettingsToControls(duplicate);
   triggerAutoSave();
   showToast('Quest target marker duplicated');
+}
+
+function inferQuestBuilderType(quest = {}) {
+  if (quest.type) return quest.type;
+  const id = String(quest.questId || '').toLowerCase();
+  if (id.startsWith('hub-')) return 'Hub';
+  if (id.startsWith('book1-main') || id === 'first-warning') return 'Book 1 Main';
+  if (id.startsWith('book1-side')) return 'Side';
+  return 'Custom';
+}
+
+function getQuestBuilderObjectId(quest = {}) {
+  return quest.objectId || quest.targetId || quest.targetNpcId || quest.targetInteriorId || quest.targetVillageId || quest.targetObjectId || '';
+}
+
+function getQuestBuilderCatalog(options = {}) {
+  const includeArchived = !!options.includeArchived;
+  const byId = {};
+  const hiddenIds = new Set(Object.values(QuestBuilderConfig || {})
+    .map(raw => normalizeQuestBuilderQuest(raw))
+    .filter(quest => quest.archived || quest.enabled === false)
+    .map(quest => quest.questId));
+  Object.values(QUEST_DEFINITIONS).forEach(quest => {
+    if (!quest?.questId) return;
+    if (!includeArchived && hiddenIds.has(quest.questId)) return;
+    byId[quest.questId] = {
+      ...quest,
+      type: inferQuestBuilderType(quest),
+      custom: quest.customFromQuestBuilder === true
+    };
+  });
+  Object.values(QuestBuilderConfig || {}).forEach(raw => {
+    const quest = normalizeQuestBuilderQuest(raw);
+    if (!includeArchived && (quest.archived || quest.enabled === false)) return;
+    byId[quest.questId] = { ...(byId[quest.questId] || {}), ...quest };
+  });
+  return Object.values(byId).sort((a, b) => String(a.questId).localeCompare(String(b.questId)));
+}
+
+function getQuestBuilderSelectedQuest(options = {}) {
+  const id = document.getElementById('questBuilderSelect')?.value || '';
+  return getQuestBuilderCatalog({ includeArchived:true }).find(quest => quest.questId === id) || QUEST_DEFINITIONS[id] || null;
+}
+
+function refreshQuestBuilderBadgeOptions() {
+  const select = document.getElementById('questBuilderBadgeRewardId');
+  if (!select) return;
+  const current = select.value;
+  const options = ['<option value="">No badge reward</option>']
+    .concat(getBadgeDefinitions({ includeArchived:true }).map(badge => `<option value="${escapeHTML(badge.badgeId)}">${escapeHTML(badge.name)}</option>`));
+  select.innerHTML = options.join('');
+  if (current) select.value = current;
+}
+
+function refreshQuestBuilderOptions() {
+  const select = document.getElementById('questBuilderSelect');
+  if (!select) return;
+  const current = select.value;
+  const query = String(document.getElementById('questBuilderSearch')?.value || '').trim().toLowerCase();
+  const quests = getQuestBuilderCatalog()
+    .filter(quest => {
+      if (!query) return true;
+      return `${quest.questId || ''} ${quest.title || ''} ${quest.type || ''} ${quest.village || ''}`.toLowerCase().includes(query);
+    });
+  select.innerHTML = quests.map(quest => `<option value="${escapeHTML(quest.questId)}">${escapeHTML(quest.questId)} - ${escapeHTML(quest.title || 'Untitled')}</option>`).join('');
+  if (current && quests.some(quest => quest.questId === current)) select.value = current;
+  if (!select.value && select.options.length) select.value = select.options[0].value;
+  refreshQuestBuilderBadgeOptions();
+  loadQuestBuilderSelection(false);
+}
+
+function setQuestBuilderField(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.value = value ?? '';
+}
+
+function loadQuestBuilderSelection(updateStatus = true) {
+  const quest = getQuestBuilderSelectedQuest({ includeArchived:true });
+  if (!quest) {
+    updateQuestBuilderStatus('Select or create a quest.');
+    return;
+  }
+  const normalized = normalizeQuestBuilderQuest({ ...quest, custom: quest.customFromQuestBuilder || quest.custom });
+  setQuestBuilderField('questBuilderQuestId', normalized.questId);
+  setQuestBuilderField('questBuilderType', inferQuestBuilderType(normalized));
+  setQuestBuilderField('questBuilderTitle', normalized.title);
+  setQuestBuilderField('questBuilderChapter', normalized.chapter || '');
+  setQuestBuilderField('questBuilderVillage', normalized.village || '');
+  setQuestBuilderField('questBuilderPrimaryNpc', normalized.primaryNpc || '');
+  setQuestBuilderField('questBuilderDescription', normalized.description || '');
+  setQuestBuilderField('questBuilderObjectiveType', normalized.objectiveType || 'visitArea');
+  setQuestBuilderField('questBuilderTargetType', normalizeQuestTargetType(normalized.targetType || 'Area'));
+  setQuestBuilderField('questBuilderObjectiveText', normalized.objectiveText || getQuestObjectiveDisplayText(normalized.questId, getFirstQuestStepId(normalized.questId)));
+  setQuestBuilderField('questBuilderTargetMarkerId', normalized.targetMarkerId || '');
+  setQuestBuilderField('questBuilderObjectId', getQuestBuilderObjectId(normalized));
+  setQuestBuilderField('questBuilderRadius', normalized.radius || 8);
+  setQuestBuilderField('questBuilderEnabled', normalized.enabled === false ? 'false' : 'true');
+  setQuestBuilderField('questBuilderNextQuest', normalized.nextQuestId || '');
+  setQuestBuilderField('questBuilderPrereq', (normalized.prerequisites || []).join(', '));
+  setQuestBuilderField('questBuilderJournalEntryId', normalized.journalEntryId || '');
+  setQuestBuilderField('questBuilderJournalText', normalized.journalText || normalized.journalEntry || '');
+  setQuestBuilderField('questBuilderBadgeRewardId', normalized.badgeRewardId || '');
+  setQuestBuilderField('questBuilderBadgeProgressAmount', normalized.badgeProgressAmount || 0);
+  setQuestBuilderField('questBuilderProgressRewardAmount', Number.isFinite(Number(normalized.progressionRewardAmount)) ? normalized.progressionRewardAmount : PROGRESSION_POINTS.quest);
+  if (updateStatus) updateQuestBuilderStatus();
+}
+
+function readQuestBuilderForm() {
+  const questId = makeQuestBuilderQuestId(document.getElementById('questBuilderQuestId')?.value || 'quest-101');
+  const targetType = normalizeQuestTargetType(document.getElementById('questBuilderTargetType')?.value || 'Area');
+  const objectId = document.getElementById('questBuilderObjectId')?.value?.trim() || '';
+  const targetFields = getQuestBuilderTargetFields({ targetType, objectId });
+  return normalizeQuestBuilderQuest({
+    questId,
+    title:document.getElementById('questBuilderTitle')?.value?.trim() || 'Untitled Quest',
+    type:document.getElementById('questBuilderType')?.value || 'Custom',
+    chapter:document.getElementById('questBuilderChapter')?.value?.trim() || '',
+    village:document.getElementById('questBuilderVillage')?.value?.trim() || CURRENT_VILLAGE_ID,
+    primaryNpc:document.getElementById('questBuilderPrimaryNpc')?.value?.trim() || '',
+    description:document.getElementById('questBuilderDescription')?.value?.trim() || '',
+    objectiveType:document.getElementById('questBuilderObjectiveType')?.value || 'visitArea',
+    objectiveText:document.getElementById('questBuilderObjectiveText')?.value?.trim() || 'Complete the quest objective.',
+    targetMarkerId:document.getElementById('questBuilderTargetMarkerId')?.value?.trim() || '',
+    targetType,
+    objectId,
+    radius:Number(document.getElementById('questBuilderRadius')?.value) || 8,
+    enabled:document.getElementById('questBuilderEnabled')?.value !== 'false',
+    nextQuestId:document.getElementById('questBuilderNextQuest')?.value?.trim() || '',
+    prerequisites:parseQuestBuilderPrerequisites(document.getElementById('questBuilderPrereq')?.value || ''),
+    journalEntryId:document.getElementById('questBuilderJournalEntryId')?.value?.trim() || '',
+    journalText:document.getElementById('questBuilderJournalText')?.value?.trim() || '',
+    badgeRewardId:document.getElementById('questBuilderBadgeRewardId')?.value || '',
+    badgeProgressAmount:Number(document.getElementById('questBuilderBadgeProgressAmount')?.value) || 0,
+    progressionRewardAmount:Number(document.getElementById('questBuilderProgressRewardAmount')?.value) || PROGRESSION_POINTS.quest,
+    ...targetFields,
+    updatedAt:new Date().toISOString()
+  });
+}
+
+function getUniqueQuestBuilderId(base = 'quest-101') {
+  const existing = new Set([
+    ...Object.keys(QUEST_DEFINITIONS),
+    ...Object.keys(QuestBuilderConfig || {})
+  ]);
+  const root = makeQuestBuilderQuestId(base);
+  if (!existing.has(root)) return root;
+  let index = 2;
+  while (existing.has(`${root}-${index}`)) index += 1;
+  return `${root}-${index}`;
+}
+
+function saveQuestBuilderQuest() {
+  const oldId = document.getElementById('questBuilderSelect')?.value || '';
+  const quest = readQuestBuilderForm();
+  if (oldId && oldId !== quest.questId && QuestBuilderConfig[oldId]?.custom) delete QuestBuilderConfig[oldId];
+  const existing = QUEST_DEFINITIONS[quest.questId];
+  QuestBuilderConfig[quest.questId] = {
+    ...quest,
+    custom: !existing || existing.customFromQuestBuilder === true,
+    customFromQuestBuilder: !existing || existing.customFromQuestBuilder === true,
+    updatedAt:new Date().toISOString()
+  };
+  saveQuestBuilderConfigState();
+  applyQuestBuilderDefinitions();
+  refreshQuestBuilderOptions();
+  const select = document.getElementById('questBuilderSelect');
+  if (select) select.value = quest.questId;
+  loadQuestBuilderSelection();
+  updateQuestTracker();
+  updateQuestTargetMarkers(0);
+  triggerAutoSave();
+  showToast('Quest saved locally');
+  return quest;
+}
+
+function createNewQuestFromBuilder() {
+  const questId = getUniqueQuestBuilderId('quest-101');
+  QuestBuilderConfig[questId] = normalizeQuestBuilderQuest({
+    questId,
+    title:'Quest #101',
+    type:'Custom',
+    village:CURRENT_VILLAGE_ID,
+    objectiveType:'visitArea',
+    objectiveText:'Follow the glowing marker to the quest target.',
+    targetMarkerId:`questTarget_${questId.replace(/-/g, '_')}`,
+    targetType:'Area',
+    radius:8,
+    progressionRewardAmount:PROGRESSION_POINTS.quest,
+    custom:true
+  });
+  saveQuestBuilderConfigState();
+  applyQuestBuilderDefinitions();
+  refreshQuestBuilderOptions();
+  const select = document.getElementById('questBuilderSelect');
+  if (select) select.value = questId;
+  loadQuestBuilderSelection();
+  showToast('New quest created');
+}
+
+function duplicateQuestBuilderSelection() {
+  const source = getQuestBuilderSelectedQuest({ includeArchived:true });
+  if (!source) return;
+  const questId = getUniqueQuestBuilderId(`${source.questId || 'quest'}-copy`);
+  QuestBuilderConfig[questId] = normalizeQuestBuilderQuest({
+    ...source,
+    questId,
+    title:`${source.title || 'Quest'} Copy`,
+    targetMarkerId:`questTarget_${questId.replace(/-/g, '_')}`,
+    custom:true,
+    archived:false,
+    enabled:true
+  });
+  saveQuestBuilderConfigState();
+  applyQuestBuilderDefinitions();
+  refreshQuestBuilderOptions();
+  const select = document.getElementById('questBuilderSelect');
+  if (select) select.value = questId;
+  loadQuestBuilderSelection();
+  showToast('Quest duplicated');
+}
+
+function archiveQuestBuilderSelection() {
+  const quest = readQuestBuilderForm();
+  const ok = window.confirm(`Archive or disable "${quest.title}" in local Quest Builder config? Built-in source quests remain in code.`);
+  if (!ok) return;
+  const existing = QUEST_DEFINITIONS[quest.questId];
+  const isCustom = !existing || existing.customFromQuestBuilder === true;
+  QuestBuilderConfig[quest.questId] = { ...quest, archived:true, enabled:false, custom:isCustom, customFromQuestBuilder:isCustom };
+  saveQuestBuilderConfigState();
+  applyQuestBuilderDefinitions();
+  refreshQuestBuilderOptions();
+  updateQuestTracker();
+  showToast('Quest archived locally');
+}
+
+function deleteQuestBuilderSelection() {
+  const quest = getQuestBuilderSelectedQuest({ includeArchived:true });
+  if (!quest) return;
+  const isCustom = QuestBuilderConfig[quest.questId]?.custom || QUEST_DEFINITIONS[quest.questId]?.customFromQuestBuilder;
+  if (!isCustom) {
+    showToast('Built-in quests can be archived locally, not deleted from code.');
+    return;
+  }
+  const ok = window.confirm(`Delete local custom quest "${quest.title}"?`);
+  if (!ok) return;
+  delete QuestBuilderConfig[quest.questId];
+  if (QUEST_DEFINITIONS[quest.questId]?.customFromQuestBuilder) delete QUEST_DEFINITIONS[quest.questId];
+  saveQuestBuilderConfigState();
+  applyQuestBuilderDefinitions();
+  if (QuestState.questId === quest.questId) {
+    QuestState = getDefaultQuestState();
+    saveQuestState();
+  }
+  refreshQuestBuilderOptions();
+  updateQuestTracker();
+  showToast('Custom quest deleted locally');
+}
+
+function getQuestBuilderMarkerSpawnPosition() {
+  const base = charMesh?.position?.clone?.() || selectedObject?.position?.clone?.() || BABYLON.Vector3.Zero();
+  const pos = base.clone();
+  pos.x += 2.4;
+  pos.z += 2.4;
+  const groundY = getVillageGroundHeightAt(pos.x, pos.z);
+  if (Number.isFinite(groundY)) pos.y = groundY;
+  return pos;
+}
+
+function getMarkerSettingsForQuest(quest) {
+  const targetType = normalizeQuestTargetType(quest.targetType || 'Area');
+  const defaultColor = getQuestTargetDefaultColorHex(targetType);
+  return {
+    targetMarkerId:quest.targetMarkerId || `questTarget_${quest.questId.replace(/-/g, '_')}`,
+    label:quest.targetLabel || quest.title || 'Quest Target',
+    questId:quest.questId,
+    objectiveType:quest.objectiveType || 'visitArea',
+    targetType,
+    radius:Math.max(.5, Math.min(80, Number(quest.radius) || 8)),
+    enabled:quest.enabled !== false,
+    ringColor:quest.ringColor || defaultColor,
+    glowColor:quest.glowColor || defaultColor,
+    labelBoxColor:quest.labelBoxColor || defaultColor,
+    labelTextColor:quest.labelTextColor || defaultColor,
+    pulseEnabled:quest.pulseEnabled !== false,
+    targetNpcId:quest.targetNpcId || null,
+    targetVillageId:quest.targetVillageId || null,
+    targetInteriorId:quest.targetInteriorId || null,
+    targetObjectId:quest.targetObjectId || null
+  };
+}
+
+function createOrUpdateMarkerForQuest() {
+  const quest = saveQuestBuilderQuest();
+  if (!quest) return;
+  if (!quest.targetMarkerId) quest.targetMarkerId = `questTarget_${quest.questId.replace(/-/g, '_')}`;
+  const settings = getMarkerSettingsForQuest(quest);
+  let marker = getQuestTargetById(settings.targetMarkerId);
+  if (!marker) {
+    marker = createQuestTargetMarker(getQuestBuilderMarkerSpawnPosition(), settings);
+    showToast('Quest marker created near player');
+  } else {
+    recordEditorHistory('update quest marker from quest builder');
+    Object.assign(marker.metadata, settings);
+    applyQuestTargetMarkerVisual(marker);
+    showToast('Quest marker updated');
+  }
+  adminGizmoMode = 'move';
+  setSelectedEditableObject(marker);
+  writeQuestTargetMarkerSettingsToControls(marker);
+  const targetInput = document.getElementById('questBuilderTargetMarkerId');
+  if (targetInput) targetInput.value = settings.targetMarkerId;
+  QuestBuilderConfig[quest.questId] = { ...(QuestBuilderConfig[quest.questId] || quest), targetMarkerId:settings.targetMarkerId };
+  saveQuestBuilderConfigState();
+  applyQuestBuilderDefinitions();
+  updateQuestTracker();
+  updateQuestTargetMarkers(0);
+  triggerAutoSave();
+  if (typeof cacheLayoutLocally === 'function') cacheLayoutLocally();
+}
+
+function testStartQuestFromBuilder() {
+  const quest = saveQuestBuilderQuest();
+  if (!quest || !QUEST_DEFINITIONS[quest.questId]) return;
+  QuestState = {
+    ...QuestState,
+    questId:quest.questId,
+    step:getFirstQuestStepId(quest.questId),
+    completed:false,
+    completedQuestIds:Array.isArray(QuestState.completedQuestIds) ? QuestState.completedQuestIds : []
+  };
+  saveQuestState();
+  updateQuestTargetMarkers(0);
+  showToast('Test quest started: ' + quest.title);
+}
+
+function testCompleteQuestFromBuilder() {
+  const quest = saveQuestBuilderQuest();
+  if (!quest) return;
+  if (QuestState.questId !== quest.questId) {
+    QuestState = {
+      ...QuestState,
+      questId:quest.questId,
+      step:getFirstQuestStepId(quest.questId),
+      completed:false,
+      completedQuestIds:Array.isArray(QuestState.completedQuestIds) ? QuestState.completedQuestIds : []
+    };
+    saveQuestState();
+  }
+  completeTutorialQuest(quest.questId, { actionType:getConfiguredQuestAction(quest), context:{ adminTest:true }, allowBackground:false, adminTest:true });
+}
+
+function resetQuestBuilderProgress() {
+  const quest = getQuestBuilderSelectedQuest({ includeArchived:true });
+  if (!quest) return;
+  ProgressionState.completedQuests = (ProgressionState.completedQuests || []).filter(id => id !== quest.questId);
+  QuestState.completedQuestIds = (QuestState.completedQuestIds || []).filter(id => id !== quest.questId);
+  if (QuestState.questId === quest.questId) {
+    QuestState.completed = false;
+    QuestState.step = getFirstQuestStepId(quest.questId);
+  }
+  saveProgressionState();
+  saveQuestState();
+  showToast('Quest progress reset locally');
+}
+
+function updateQuestBuilderStatus(message = '') {
+  const host = document.getElementById('questBuilderStatus');
+  if (!host) return;
+  if (message) {
+    host.textContent = message;
+    return;
+  }
+  const quest = getQuestBuilderSelectedQuest({ includeArchived:true });
+  if (!quest) {
+    host.textContent = 'Select a quest to edit.';
+    return;
+  }
+  const markerId = document.getElementById('questBuilderTargetMarkerId')?.value?.trim() || quest.targetMarkerId || '';
+  const marker = markerId ? getQuestTargetById(markerId) : null;
+  const badgeId = document.getElementById('questBuilderBadgeRewardId')?.value || quest.badgeRewardId || '';
+  const badge = badgeId ? getBadgeDefinitionById(badgeId, { includeArchived:true }) : null;
+  const pieces = [
+    markerId ? (marker ? `Marker Found: ${markerId}` : `Marker Missing: ${markerId}`) : 'Marker Optional',
+    badgeId ? (badge ? `Badge Found: ${badge.name}` : `Badge Missing: ${badgeId}`) : 'No Badge Reward',
+    QuestState.questId === quest.questId ? 'Active Quest' : 'Not Active'
+  ];
+  host.textContent = pieces.join(' | ');
 }
 
 const NPCManager = {
@@ -11563,7 +12401,10 @@ function handleNPCQuestEvent(npc, finishedDialogue = false) {
   }
   if (QuestState.questId === 'wooden-signs' && QuestState.step === 'talk' && shouldHubNPCAdvanceTutorial(npc)) {
     setTutorialQuestStep('wooden-signs', 'read-sign', 'Quest started: The Wooden Signs');
+    return;
   }
+  if (advanceHubTutorialObjective('talkToNpc', npcContext)) return;
+  advanceHubTutorialObjective('returnToNpc', npcContext);
 }
 
 function getTutorialDialogueLines(npc) {
@@ -16778,6 +17619,16 @@ function collectWorldLayoutData() {
     editorLocked: node.metadata.editorLocked === true
   });
   });
+  if (QuestBuilderConfig && Object.keys(QuestBuilderConfig).length) {
+    data.push({
+      type: 'quest_builder_config',
+      name: 'questBuilderConfig',
+      position: { x:0, y:0, z:0 },
+      rotation: { x:0, y:0, z:0 },
+      scaling: { x:1, y:1, z:1 },
+      quests: QuestBuilderConfig
+    });
+  }
   const interiorRoomConfigs = getInteriorRoomConfigs();
   if (Object.keys(interiorRoomConfigs).length) {
     data.push({
@@ -17046,6 +17897,18 @@ function loadWorldLayout(){
         g.position.y = item.position.y;
         g.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
       }
+      return;
+    }
+
+    if (item.type === 'quest_builder_config') {
+      QuestBuilderConfig = {
+        ...(QuestBuilderConfig || {}),
+        ...(item.quests && typeof item.quests === 'object' ? item.quests : {})
+      };
+      saveQuestBuilderConfigState();
+      applyQuestBuilderDefinitions();
+      refreshQuestBuilderOptions();
+      updateQuestTracker();
       return;
     }
 
@@ -18961,6 +19824,7 @@ awardEarnedExplorerBadges(true);
 if (ProgressionState.badges.length !== progressionBadgeSyncCount) saveProgressionState();
 else updateProgressionHud();
 refreshBadgeBuilderOptions();
+refreshQuestBuilderOptions();
 let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
