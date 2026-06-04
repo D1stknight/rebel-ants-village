@@ -817,6 +817,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 	      <label class="admin-field" style="display:flex;gap:6px;align-items:center;justify-content:center;min-height:30px">Enabled <input id="questTargetEnabledInput" type="checkbox" checked></label>
 	    </div>
 	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <label class="admin-field">Ring Color <input id="questTargetRingColorInput" type="color" value="#e8c56a" oninput="previewQuestTargetMarkerSettings()"></label>
+	      <label class="admin-field">Glow Color <input id="questTargetGlowColorInput" type="color" value="#e8c56a" oninput="previewQuestTargetMarkerSettings()"></label>
+	    </div>
+	    <label class="admin-field" style="display:flex;gap:8px;align-items:center;justify-content:center;min-height:30px">
+	      <span id="questTargetPulseLabel">Pulse On</span>
+	      <input id="questTargetPulseInput" type="checkbox" checked onchange="previewQuestTargetMarkerSettings()">
+	    </label>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
 	      <button class="ctrl-btn" onclick="placeQuestTargetMarker()">Add Quest Target Marker</button>
 	      <button class="ctrl-btn" onclick="applySelectedQuestTargetSettings()">Apply Settings</button>
 	      <button class="ctrl-btn" onclick="duplicateSelectedQuestTargetMarker()">Duplicate Selected Marker</button>
@@ -9160,9 +9168,41 @@ function getQuestTargetColor(type) {
   return colors[normalizeQuestTargetType(type)] || colors.Area;
 }
 
+function getQuestTargetDefaultColorHex(type) {
+  const colors = {
+    NPC: '#59ebe0',
+    Area: '#e8c56a',
+    Door: '#eb6b2e',
+    Interior: '#b873f2',
+    Portal: '#4d94ff',
+    Sign: '#b8e652',
+    Chest: '#ff9e33',
+    Collectible: '#e66be6',
+    'NFT Frame': '#8fc7ff',
+    'Link/Hotspot': '#f28052'
+  };
+  return colors[normalizeQuestTargetType(type)] || colors.Area;
+}
+
+function normalizeQuestTargetColorHex(value, fallback = '#e8c56a') {
+  const text = String(value || '').trim();
+  return /^#[0-9a-f]{6}$/i.test(text) ? text.toLowerCase() : fallback;
+}
+
+function questTargetColor3FromHex(value, fallbackType = 'Area') {
+  const hex = normalizeQuestTargetColorHex(value, getQuestTargetDefaultColorHex(fallbackType));
+  try { return BABYLON.Color3.FromHexString(hex); }
+  catch(e) { return getQuestTargetColor(fallbackType); }
+}
+
 function getQuestTargetRadius(root) {
   const base = Number(root?.metadata?.radius);
   return Math.max(.5, Number.isFinite(base) ? base : 8);
+}
+
+function getQuestTargetLabelHeight(root) {
+  const radius = getQuestTargetRadius(root);
+  return Math.min(16, Math.max(3.8, radius * .68 + 2.2));
 }
 
 function getQuestTargetEffectiveRadius(root) {
@@ -9176,19 +9216,32 @@ function applyQuestTargetMarkerVisual(root) {
   const meta = root.metadata;
   meta.targetType = normalizeQuestTargetType(meta.targetType);
   meta.radius = getQuestTargetRadius(root);
-  const color = getQuestTargetColor(meta.targetType);
+  const defaultColorHex = getQuestTargetDefaultColorHex(meta.targetType);
+  meta.ringColor = normalizeQuestTargetColorHex(meta.ringColor, defaultColorHex);
+  meta.glowColor = normalizeQuestTargetColorHex(meta.glowColor, meta.ringColor);
+  meta.pulseEnabled = meta.pulseEnabled !== false;
+  const ringColor = questTargetColor3FromHex(meta.ringColor, meta.targetType);
+  const glowColor = questTargetColor3FromHex(meta.glowColor, meta.targetType);
   const matName = 'questTargetMarkerMat_' + root.name;
   const mat = scene.getMaterialByName(matName) || new BABYLON.StandardMaterial(matName, scene);
-  mat.diffuseColor = color;
-  mat.emissiveColor = color.scale(.55);
+  mat.diffuseColor = glowColor;
+  mat.emissiveColor = glowColor.scale(.55);
   mat.specularColor = BABYLON.Color3.Black();
   mat.alpha = meta.enabled === false ? .16 : .36;
   mat.backFaceCulling = false;
 
+  const ringName = 'questTargetMarkerRingMat_' + root.name;
+  const ringMat = scene.getMaterialByName(ringName) || new BABYLON.StandardMaterial(ringName, scene);
+  ringMat.diffuseColor = ringColor;
+  ringMat.emissiveColor = ringColor.scale(1.1);
+  ringMat.specularColor = BABYLON.Color3.Black();
+  ringMat.alpha = meta.enabled === false ? .22 : .78;
+  ringMat.backFaceCulling = false;
+
   const glowName = 'questTargetMarkerGlowMat_' + root.name;
   const glowMat = scene.getMaterialByName(glowName) || new BABYLON.StandardMaterial(glowName, scene);
-  glowMat.diffuseColor = color;
-  glowMat.emissiveColor = color.scale(1.1);
+  glowMat.diffuseColor = glowColor;
+  glowMat.emissiveColor = glowColor.scale(1.1);
   glowMat.specularColor = BABYLON.Color3.Black();
   glowMat.alpha = meta.enabled === false ? .22 : .72;
   glowMat.backFaceCulling = false;
@@ -9201,10 +9254,11 @@ function applyQuestTargetMarkerVisual(root) {
       mesh.material = mat;
     } else if (part === 'ring') {
       mesh.scaling.set(radius, radius, radius);
-      mesh.material = glowMat;
+      mesh.material = ringMat;
     } else if (part === 'beacon') {
       mesh.material = glowMat;
     } else if (part === 'label') {
+      mesh.position.y = getQuestTargetLabelHeight(root);
       const labelMatName = 'questTargetLabelMat_' + root.name;
       const labelMat = scene.getMaterialByName(labelMatName) || new BABYLON.StandardMaterial(labelMatName, scene);
       labelMat.diffuseTexture = createQuestTargetLabelTexture(root);
@@ -9229,6 +9283,8 @@ function createQuestTargetMarker(position, options = {}) {
     ? new BABYLON.Vector3(options.scaling.x || 1, options.scaling.y || 1, options.scaling.z || 1)
     : new BABYLON.Vector3(1, 1, 1);
   root.isPickable = true;
+  const targetType = normalizeQuestTargetType(options.targetType || 'Area');
+  const defaultColorHex = getQuestTargetDefaultColorHex(targetType);
   root.metadata = {
     type:'quest_target_marker',
     isClone:true,
@@ -9237,9 +9293,12 @@ function createQuestTargetMarker(position, options = {}) {
     label,
     questId:options.questId || null,
     objectiveType:options.objectiveType || null,
-    targetType:normalizeQuestTargetType(options.targetType || 'Area'),
+    targetType,
     radius:Math.max(.5, Number(options.radius) || 8),
     enabled:options.enabled !== false,
+    ringColor:normalizeQuestTargetColorHex(options.ringColor, defaultColorHex),
+    glowColor:normalizeQuestTargetColorHex(options.glowColor, normalizeQuestTargetColorHex(options.ringColor, defaultColorHex)),
+    pulseEnabled:options.pulseEnabled !== false,
     targetNpcId:options.targetNpcId || null,
     targetVillageId:options.targetVillageId || null,
     targetInteriorId:options.targetInteriorId || null,
@@ -9270,7 +9329,7 @@ function createQuestTargetMarker(position, options = {}) {
 
   const labelPlane = BABYLON.MeshBuilder.CreatePlane('questTargetLabel_' + root.name, { width:3.2, height:1.1 }, scene);
   labelPlane.parent = root;
-  labelPlane.position.y = 2.25;
+  labelPlane.position.y = getQuestTargetLabelHeight(root);
   labelPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
   labelPlane.isPickable = true;
   labelPlane._editRoot = root;
@@ -9306,13 +9365,22 @@ function setQuestTargetMarkerVisible(root, visible, active = false) {
   if (!root || root.isDisposed?.()) return;
   root.setEnabled(visible);
   if (!visible) return;
-  const pulse = active ? 1 + Math.sin(performance.now() * .004) * .08 : 1;
+  const meta = root.metadata || {};
+  const playerAtTarget = active && isPlayerInsideQuestTargetMarker(root);
+  const shouldPulse = active && meta.pulseEnabled !== false && !playerAtTarget;
+  const wave = Math.sin(performance.now() * .004);
+  const pulse = shouldPulse ? 1 + wave * .08 : 1;
+  const alphaPulse = shouldPulse ? .86 + wave * .14 : 1;
+  const radius = getQuestTargetRadius(root);
   root.getChildMeshes?.(false).forEach(mesh => {
     const part = mesh.metadata?.questTargetPart;
+    if (part === 'ring') mesh.scaling.set(radius * pulse, radius * pulse, radius * pulse);
     if (part === 'beacon') mesh.scaling.set(pulse, pulse, pulse);
+    if (part === 'label') mesh.position.y = getQuestTargetLabelHeight(root);
     if (mesh.material && typeof mesh.material.alpha === 'number') {
-      if (part === 'disc') mesh.material.alpha = active ? .28 : .2;
-      if (part === 'ring' || part === 'beacon') mesh.material.alpha = active ? .9 : .55;
+      if (part === 'disc') mesh.material.alpha = active ? .28 * alphaPulse : .2;
+      if (part === 'ring') mesh.material.alpha = active ? .88 * alphaPulse : .55;
+      if (part === 'beacon') mesh.material.alpha = active ? .82 * alphaPulse : .52;
     }
   });
 }
@@ -9343,6 +9411,8 @@ function readQuestTargetMarkerSettingsFromControls() {
   const targetType = normalizeQuestTargetType(document.getElementById('questTargetTypeInput')?.value || 'Area');
   const objectId = document.getElementById('questTargetObjectIdInput')?.value?.trim() || '';
   const label = document.getElementById('questTargetLabelInput')?.value?.trim() || 'Quest Target';
+  const defaultColorHex = getQuestTargetDefaultColorHex(targetType);
+  const ringColor = normalizeQuestTargetColorHex(document.getElementById('questTargetRingColorInput')?.value, defaultColorHex);
   const settings = {
     targetMarkerId: document.getElementById('questTargetIdInput')?.value?.trim() || makeQuestTargetMarkerId(label),
     label,
@@ -9351,6 +9421,9 @@ function readQuestTargetMarkerSettingsFromControls() {
     targetType,
     radius: Math.max(.5, Math.min(80, Number(document.getElementById('questTargetRadiusInput')?.value) || 8)),
     enabled: document.getElementById('questTargetEnabledInput')?.checked !== false,
+    ringColor,
+    glowColor: normalizeQuestTargetColorHex(document.getElementById('questTargetGlowColorInput')?.value, ringColor),
+    pulseEnabled: document.getElementById('questTargetPulseInput')?.checked !== false,
     targetNpcId: null,
     targetVillageId: null,
     targetInteriorId: null,
@@ -9374,14 +9447,41 @@ function writeQuestTargetMarkerSettingsToControls(root) {
   const objectInput = document.getElementById('questTargetObjectIdInput');
   const radiusInput = document.getElementById('questTargetRadiusInput');
   const enabledInput = document.getElementById('questTargetEnabledInput');
+  const ringInput = document.getElementById('questTargetRingColorInput');
+  const glowInput = document.getElementById('questTargetGlowColorInput');
+  const pulseInput = document.getElementById('questTargetPulseInput');
+  const targetType = normalizeQuestTargetType(meta.targetType || 'Area');
+  const defaultColorHex = getQuestTargetDefaultColorHex(targetType);
+  const ringColor = normalizeQuestTargetColorHex(meta.ringColor, defaultColorHex);
+  const glowColor = normalizeQuestTargetColorHex(meta.glowColor, ringColor);
   if (idInput) idInput.value = meta.targetMarkerId || '';
   if (labelInput) labelInput.value = meta.label || '';
   if (questInput) questInput.value = meta.questId || '';
   if (objectiveInput) objectiveInput.value = meta.objectiveType || '';
-  if (typeInput) typeInput.value = normalizeQuestTargetType(meta.targetType || 'Area');
+  if (typeInput) typeInput.value = targetType;
   if (objectInput) objectInput.value = meta.targetNpcId || meta.targetInteriorId || meta.targetVillageId || meta.targetObjectId || '';
   if (radiusInput) radiusInput.value = String(getQuestTargetRadius(root));
   if (enabledInput) enabledInput.checked = meta.enabled !== false;
+  if (ringInput) ringInput.value = ringColor;
+  if (glowInput) glowInput.value = glowColor;
+  if (pulseInput) pulseInput.checked = meta.pulseEnabled !== false;
+  updateQuestTargetPulseLabel();
+}
+
+function updateQuestTargetPulseLabel() {
+  const label = document.getElementById('questTargetPulseLabel');
+  const input = document.getElementById('questTargetPulseInput');
+  if (label && input) label.textContent = input.checked ? 'Pulse On' : 'Pulse Off';
+}
+
+function previewQuestTargetMarkerSettings() {
+  updateQuestTargetPulseLabel();
+  if (selectedObject?.metadata?.type !== 'quest_target_marker') return;
+  const settings = readQuestTargetMarkerSettingsFromControls();
+  Object.assign(selectedObject.metadata, settings);
+  applyQuestTargetMarkerVisual(selectedObject);
+  updateQuestTargetMarkers(0);
+  triggerAutoSave();
 }
 
 function placeQuestTargetMarker() {
@@ -16641,6 +16741,9 @@ function collectWorldLayoutData() {
     objectiveType: node.metadata.objectiveType || null,
     targetType: node.metadata.targetType || null,
     radius: Number.isFinite(node.metadata.radius) ? node.metadata.radius : null,
+    ringColor: node.metadata.ringColor || null,
+    glowColor: node.metadata.glowColor || null,
+    pulseEnabled: node.metadata.type === 'quest_target_marker' ? node.metadata.pulseEnabled !== false : null,
     targetNpcId: node.metadata.targetNpcId || null,
     targetVillageId: node.metadata.targetVillageId || null,
     targetObjectId: node.metadata.targetObjectId || null,
@@ -16978,6 +17081,9 @@ function loadWorldLayout(){
           targetType: item.targetType || 'Area',
           radius: Number.isFinite(item.radius) ? item.radius : 8,
           enabled: item.enabled !== false,
+          ringColor: item.ringColor || null,
+          glowColor: item.glowColor || null,
+          pulseEnabled: item.pulseEnabled !== false,
           targetNpcId: item.targetNpcId || null,
           targetVillageId: item.targetVillageId || null,
           targetInteriorId: item.targetInteriorId || null,
@@ -25691,6 +25797,8 @@ window.applySelectedQuestTargetSettings = applySelectedQuestTargetSettings;
 window.deleteSelectedQuestTargetMarker = deleteSelectedQuestTargetMarker;
 window.toggleQuestTargetMarkerVisibility = toggleQuestTargetMarkerVisibility;
 window.duplicateSelectedQuestTargetMarker = duplicateSelectedQuestTargetMarker;
+window.updateQuestTargetPulseLabel = updateQuestTargetPulseLabel;
+window.previewQuestTargetMarkerSettings = previewQuestTargetMarkerSettings;
 window.debugSmallAnt = debugSmallAnt;
 window.testSmallAntAssetFetch = testSmallAntAssetFetch;
 window.reloadSmallAntModel = reloadSmallAntModel;
@@ -25715,6 +25823,7 @@ window.loadWorldLayout = loadWorldLayout;
 // Show the GPU badge automatically only in WebGPU test mode.
 refreshInteriorAdminOptions();
 refreshInteriorNftCollectionSelect();
+updateQuestTargetPulseLabel();
 updateLayoutCacheStatus();
 updateGPUBadge();
 if (window._gpuMode === 'webgpu') {
