@@ -676,6 +676,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <button class="manual-piece-btn" id="toggleManualPiecesBtn" onclick="toggleManualBarrierVisibility()" title="Hide or show manual pieces"><span class="mi">◉</span><span>Hide Pieces</span><span class="ms">View</span></button>
     <button class="manual-piece-btn danger" onclick="deleteAttachedCollisionProxyPieces()" title="Delete attached pieces from selected object"><span class="mi">×</span><span>Del Attached</span><span class="ms">Delete</span></button>
     <button class="manual-piece-btn danger" onclick="deleteCollisionProxyPiecesForSameType()" title="Delete barriers for matching object type"><span class="mi">×</span><span>Del Same</span><span class="ms">Delete</span></button>
+    <button class="manual-piece-btn" onclick="optimizeCollisionProxies()" title="Keep collision working while removing render/pick overhead in player mode"><span class="mi">◇</span><span>Optimize Proxies</span><span class="ms">Perf</span></button>
     <button class="manual-piece-btn save" onclick="saveManualBarriersNow()" title="Save manual barriers"><span class="mi">✓</span><span>Save</span><span class="ms">Step 3</span></button>
   </div>
   <div id="manualBarrierSaveStatus" style="font-size:10px;line-height:1.35;color:#77e6df;margin-top:8px;min-height:16px"></div>
@@ -4024,9 +4025,10 @@ function optimizeSelectedStaticGlb() {
   const root = selectedObject?._editRoot || selectedObject;
   if (!root) { showToast('Select a static GLB/building first'); return; }
   if (PERF_DYNAMIC_TYPES.has(getPerfNodeType(root))) { showToast('Selected object is dynamic; skipped'); return; }
+  const childCount = root.getChildMeshes?.(false).length || 0;
   const result = optimizeStaticRenderRoot(root, { force:true });
   applyDecorativeShadowBudget(true);
-  showToast(`Static GLB optimized: ${result.meshes || 0} child meshes frozen`);
+  showToast(`Static GLB optimized: ${result.meshes || 0} child meshes frozen${childCount >= 45 ? ' (high child mesh count)' : ''}`);
 }
 
 function refreshStaticFreezing(force = false) {
@@ -4265,6 +4267,39 @@ function addCollisionProxyPiece(kind) {
     proxyKind: ['blocker', 'walk', 'ramp'].includes(kind) ? kind : 'blocker',
     owner: getSelectedProxyOwner()
   });
+}
+
+function optimizeCollisionProxies() {
+  const proxies = getManualCollisionProxyRoots();
+  let optimized = 0;
+  proxies.forEach(proxy => {
+    if (!proxy || proxy.isDisposed?.()) return;
+    if (proxy.metadata?.terrainToolPatch === true) return;
+    proxy.receiveShadows = false;
+    proxy.checkCollisions = false;
+    proxy.alwaysSelectAsActiveMesh = false;
+    proxy.doNotSyncBoundingInfo = true;
+    proxy.metadata = {
+      ...(proxy.metadata || {}),
+      _perfCollisionOptimized:true,
+      _perfNeverMerge:true
+    };
+    if (!isEditorVisualMode()) {
+      proxy.isPickable = false;
+      proxy.isVisible = false;
+      proxy.visibility = 0;
+    }
+    if (proxy.material) {
+      proxy.material.maxSimultaneousLights = 0;
+      try { proxy.material.freeze?.(); } catch(e) {}
+    }
+    optimized += 1;
+  });
+  rebuildVillageCollisionBlockers();
+  applyWalkModeHelperVisibility(true);
+  updatePerformanceDebugPanel();
+  showToast(`Optimized ${optimized} collision proxies`);
+  return optimized;
 }
 
 function getAdminPlacementGroundPick() {
@@ -6329,6 +6364,23 @@ function getCollectibleRoots() {
     if (!root || root.isDisposed?.()) CollectibleRuntime.roots.delete(root);
   });
   return [...CollectibleRuntime.roots];
+}
+
+function dedupeCollectibleRuntime(reason = 'runtime') {
+  const seen = new Set();
+  let removed = 0;
+  getCollectibleRoots().forEach(root => {
+    const key = root.metadata?.collectibleId ? `id:${root.metadata.collectibleId}` : `name:${root.name}`;
+    if (!key || !seen.has(key)) {
+      if (key) seen.add(key);
+      return;
+    }
+    CollectibleRuntime.roots.delete(root);
+    try { root.dispose(false, true); } catch(e) {}
+    removed += 1;
+  });
+  if (removed) console.warn('Collectible duplicate runtime cleanup:', { reason, removed });
+  return removed;
 }
 
 function getCollectibleMaterial(name, colorHex, emissiveHex = colorHex, alpha = .95) {
@@ -11102,10 +11154,17 @@ let SMALL_VILLAGE_ANT_RUNTIME_ENABLED = localStorage.getItem(SMALL_VILLAGE_ANT_E
 const SmallVillageAntManager = {
   roots: [],
   colorCycle: localStorage.getItem(SMALL_VILLAGE_ANT_COLOR_CYCLE_KEY) === '1',
-  maxFrameMove: .16
+  maxFrameMove: .16,
+  modelTemplateCache: new Map(),
+  stats: { total:0, activeAnimated:0, throttled:0, culled:0, loadedModels:0 }
 };
 const SMALL_VILLAGE_ANT_MODEL_URL = '/assets/village-life/small-ant/small-village-ant.glb';
 const SMALL_VILLAGE_ANT_MODEL_SCALE = .35;
+
+function makeSmallAntInstanceId(rootOrName = null) {
+  const baseName = typeof rootOrName === 'string' ? rootOrName : rootOrName?.name;
+  return `smallAnt_${String(baseName || Date.now()).replace(/[^a-z0-9_-]+/gi, '_')}_${Math.floor(Math.random() * 100000)}`;
+}
 
 function showSmallAntDisabledNotice() {
   showToast('Small Ant is disabled. Enable it in Village Life.');
@@ -11715,6 +11774,9 @@ function disposeSmallVillageAntRoot(root) {
   if (!root) return;
   if (Array.isArray(root.metadata?.smallAntAnimationGroups)) {
     root.metadata.smallAntAnimationGroups.forEach(group => group.stop?.());
+    root.metadata.smallAntAnimationGroups.forEach(group => {
+      try { group.dispose?.(); } catch(e) {}
+    });
   }
   SmallVillageAntManager.roots = SmallVillageAntManager.roots.filter(existing => existing !== root);
   if (selectedObject === root || selectedObject?._editRoot === root) selectedObject = null;
@@ -11739,6 +11801,7 @@ function buildSmallVillageAnt(root) {
   meta.smallAntLoadToken = (Number.isFinite(meta.smallAntLoadToken) ? meta.smallAntLoadToken : 0) + 1;
   meta.smallAntLoadStartedAt = 0;
   meta.type = 'small_village_ant';
+  meta.smallAntInstanceId = meta.smallAntInstanceId || makeSmallAntInstanceId(root);
   meta.displayName = meta.displayName || 'Little Village Ant';
   meta.villageId = meta.villageId || CURRENT_VILLAGE_ID;
   meta.role = meta.role || 'small ant';
@@ -11806,6 +11869,7 @@ function buildSmallVillageAnt(root) {
 
 function registerSmallAntNpcController(root) {
   if (!root || root.metadata?.type !== 'small_village_ant') return;
+  root.metadata.smallAntInstanceId = root.metadata.smallAntInstanceId || makeSmallAntInstanceId(root);
   if (!SmallVillageAntManager.roots.includes(root)) SmallVillageAntManager.roots.push(root);
   root.metadata.movementController = 'clean-mini-npc';
   root.metadata._perfNeverFreeze = true;
@@ -11816,6 +11880,40 @@ function registerSmallAntNpcController(root) {
     console.info('small ant controller: clean-mini-npc', root.name);
     root.metadata._movementControllerLogged = true;
   }
+}
+
+function getSmallAntRuntimeDedupeKey(root) {
+  if (!root || root.isDisposed?.() || root.metadata?.type !== 'small_village_ant') return null;
+  return root.metadata.smallAntInstanceId
+    ? `id:${root.metadata.smallAntInstanceId}`
+    : `name:${root.name}`;
+}
+
+function dedupeSmallVillageAntRuntime(reason = 'runtime') {
+  const seen = new Map();
+  const seenNames = new Map();
+  let removed = 0;
+  SmallVillageAntManager.roots.slice().forEach(root => {
+    if (!root || root.isDisposed?.() || root.metadata?.type !== 'small_village_ant') return;
+    const key = getSmallAntRuntimeDedupeKey(root);
+    const nameKey = root.name ? `name:${root.name}` : null;
+    const previous = (key && seen.get(key)) || (nameKey && seenNames.get(nameKey));
+    if (!previous || previous.isDisposed?.()) {
+      if (key) seen.set(key, root);
+      if (nameKey) seenNames.set(nameKey, root);
+      return;
+    }
+    const keep = selectedObject === root || selectedObject?._editRoot === root ? root : previous;
+    const dispose = keep === root ? previous : root;
+    if (key) seen.set(key, keep);
+    if (nameKey) seenNames.set(nameKey, keep);
+    disposeSmallVillageAntRoot(dispose);
+    removed += 1;
+  });
+  const uniqueRoots = new Set([...seen.values(), ...seenNames.values()]);
+  SmallVillageAntManager.roots = [...uniqueRoots].filter(root => root && !root.isDisposed?.());
+  if (removed) console.warn('Small Village Ant duplicate runtime cleanup:', { reason, removed });
+  return removed;
 }
 
 function refreshSmallVillageAntVisual(root) {
@@ -11975,6 +12073,72 @@ function updateSmallAntAnimationState(root, moving, forcedAnimationName = null) 
   return meta.smallAntWalkPlaying;
 }
 
+async function getCachedSmallAntModelTemplate(modelUrl = SMALL_VILLAGE_ANT_MODEL_URL) {
+  const url = modelUrl || SMALL_VILLAGE_ANT_MODEL_URL;
+  if (SmallVillageAntManager.modelTemplateCache.has(url)) {
+    return SmallVillageAntManager.modelTemplateCache.get(url);
+  }
+  const promise = BABYLON.SceneLoader.ImportMeshAsync('', '', url, scene).then(result => {
+    const templateRoot = new BABYLON.TransformNode(`smallAntTemplate_${SmallVillageAntManager.modelTemplateCache.size}`, scene);
+    templateRoot.position.set(9999, -999, 9999);
+    templateRoot.metadata = { type:'small_village_ant_template', _perfNeverFreeze:true };
+    const importedNodes = [
+      ...(result.transformNodes || []),
+      ...(result.meshes || [])
+    ];
+    const importedNodeSet = new Set(importedNodes);
+    importedNodes.forEach(node => {
+      if (!node) return;
+      if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = templateRoot;
+      node.metadata = { ...(node.metadata || {}), smallAntTemplateNode:true, _perfNeverFreeze:true };
+      node.isPickable = false;
+      node.checkCollisions = false;
+    });
+    (result.meshes || []).forEach(mesh => {
+      if (!mesh) return;
+      mesh.receiveShadows = false;
+      mesh.alwaysSelectAsActiveMesh = false;
+      if (mesh.material) {
+        mesh.material.maxSimultaneousLights = Math.min(mesh.material.maxSimultaneousLights || 4, 4);
+        if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mesh.material);
+      }
+    });
+    (result.animationGroups || []).forEach(group => {
+      try { group.stop?.(); } catch(e) {}
+    });
+    templateRoot.setEnabled(false);
+    return {
+      url,
+      root: templateRoot,
+      animationGroups: result.animationGroups || []
+    };
+  }).catch(error => {
+    SmallVillageAntManager.modelTemplateCache.delete(url);
+    throw error;
+  });
+  SmallVillageAntManager.modelTemplateCache.set(url, promise);
+  return promise;
+}
+
+function cloneSmallAntTemplateAnimationGroups(template, modelRoot, root) {
+  const sourceNodes = [template.root, ...(template.root.getDescendants?.(false) || [])];
+  const cloneNodes = [modelRoot, ...(modelRoot.getDescendants?.(false) || [])];
+  const targetMap = new Map();
+  sourceNodes.forEach((sourceNode, index) => {
+    if (sourceNode && cloneNodes[index]) targetMap.set(sourceNode, cloneNodes[index]);
+  });
+  return (template.animationGroups || []).map(group => {
+    try {
+      const cloned = group.clone(`${root.name}_${group.name || 'animation'}`, target => targetMap.get(target) || null);
+      if (cloned && group.name) cloned.name = group.name;
+      return cloned;
+    } catch(e) {
+      console.warn('Small Ant animation clone skipped:', group?.name || 'unnamed', e);
+      return null;
+    }
+  }).filter(Boolean);
+}
+
 async function tryLoadSmallVillageAntModel(root) {
   if (!root || root.isDisposed?.() || root.metadata?.type !== 'small_village_ant') return;
   const meta = root.metadata || {};
@@ -11982,22 +12146,26 @@ async function tryLoadSmallVillageAntModel(root) {
   meta.smallAntModelLoading = true;
   meta.smallAntLoadStartedAt = performance.now();
   const loadToken = Number.isFinite(meta.smallAntLoadToken) ? meta.smallAntLoadToken : (meta.smallAntLoadToken = 1);
-  let result = null;
   let modelRoot = null;
   try {
     const modelUrl = meta.modelUrl || SMALL_VILLAGE_ANT_MODEL_URL;
-    result = await BABYLON.SceneLoader.ImportMeshAsync('', '', modelUrl, scene);
+    const template = await getCachedSmallAntModelTemplate(modelUrl);
     if (!root || root.isDisposed?.() || meta.smallAntLoadToken !== loadToken) {
-      disposeSmallAntImportedResult(result);
       return;
     }
     const visualRoot = meta.antVisualRoot || meta.smallAntVisualRoot;
-    modelRoot = new BABYLON.TransformNode(root.name + '_modelRoot', scene);
-    modelRoot.parent = visualRoot || root;
+    modelRoot = template.root.clone(root.name + '_modelRoot', visualRoot || root, false);
+    if (!modelRoot) throw new Error('Small Village Ant template clone failed');
     modelRoot.position.set(0, 0, 0);
     modelRoot.rotation.set(0, Number.isFinite(meta.smallAntModelYawOffset) ? meta.smallAntModelYawOffset : SMALL_VILLAGE_ANT_DEFAULT_MODEL_YAW_OFFSET, 0);
     modelRoot.scaling.setAll(Number.isFinite(meta.modelScale) ? meta.modelScale : SMALL_VILLAGE_ANT_MODEL_SCALE);
-    const animationGroups = result.animationGroups || [];
+    modelRoot.setEnabled(true);
+    const importedNodes = modelRoot.getDescendants?.(false) || [];
+    importedNodes.forEach(node => {
+      node.setEnabled?.(true);
+      node.metadata = { ...(node.metadata || {}), smallAntTemplateClone:true };
+    });
+    const animationGroups = cloneSmallAntTemplateAnimationGroups(template, modelRoot, root);
     meta.modelUrl = modelUrl;
     meta.modelScale = Number.isFinite(meta.modelScale) ? meta.modelScale : modelRoot.scaling.x;
     meta.smallAntModelRoot = modelRoot;
@@ -12007,21 +12175,16 @@ async function tryLoadSmallVillageAntModel(root) {
     meta.smallAntAnimationGroups = animationGroups;
     meta.smallAntKnownAnimationNames = animationGroups.map(group => group?.name).filter(Boolean);
     meta.smallAntAnimationDisabled = false;
-    const importedNodes = [
-      ...(result.transformNodes || []),
-      ...(result.meshes || [])
-    ];
-    const importedNodeSet = new Set(importedNodes);
-    importedNodes.forEach(node => {
-      if (!node.parent || !importedNodeSet.has(node.parent)) node.parent = modelRoot;
-    });
     const importedRootNodes = importedNodes.filter(node => node.parent === modelRoot);
-    const renderableMeshes = (result.meshes || []).filter(hasSmallAntRenderableGeometry);
+    const renderableMeshes = modelRoot.getChildMeshes(false).filter(hasSmallAntRenderableGeometry);
     if (!renderableMeshes.length) {
       throw new Error('Imported Small Village Ant GLB has no renderable mesh geometry');
     }
     if (meta.smallAntLoadToken !== loadToken) {
-      disposeSmallAntImportedResult(result, modelRoot);
+      try { modelRoot.dispose(false, true); } catch(e) {}
+      animationGroups.forEach(group => {
+        try { group.dispose?.(); } catch(e) {}
+      });
       return;
     }
     meta.smallAntModelLoading = false;
@@ -12029,7 +12192,7 @@ async function tryLoadSmallVillageAntModel(root) {
     meta.smallAntModelFailed = false;
     refreshSmallAntAnimationGroups(root);
     normalizeSmallAntSharedImportOffset(root, importedNodes);
-    (result.meshes || []).forEach(mesh => normalizeSmallAntImportedMesh(mesh, root));
+    modelRoot.getChildMeshes(false).forEach(mesh => normalizeSmallAntImportedMesh(mesh, root));
     (meta.smallAntParts || []).forEach(part => {
       const role = part?.metadata?.smallAntPart;
       if (role === 'shadow' || role === 'accentHalo') return;
@@ -12779,8 +12942,19 @@ function counterSmallAntVisualRootMotion(root) {
 
 function updateSmallVillageAntPopulation(dt) {
   SmallVillageAntManager.roots = SmallVillageAntManager.roots.filter(root => root && !root.isDisposed?.());
+  const stats = {
+    total: SmallVillageAntManager.roots.length,
+    activeAnimated: 0,
+    throttled: 0,
+    culled: 0,
+    loadedModels: SmallVillageAntManager.roots.filter(root => root?.metadata?.smallAntModelLoaded === true).length
+  };
+  SmallVillageAntManager.stats = stats;
   if (!SMALL_VILLAGE_ANT_RUNTIME_ENABLED || !SmallVillageAntManager.roots.length) return;
-  if (ActiveInterior) return;
+  if (ActiveInterior) {
+    stats.throttled = stats.total;
+    return;
+  }
   const now = performance.now();
   SmallVillageAntManager.roots.forEach(root => {
     if (!root || root.isDisposed?.() || root.metadata?.type !== 'small_village_ant') return;
@@ -12796,7 +12970,10 @@ function updateSmallVillageAntPopulation(dt) {
       recoverSmallAntPartialModel(root, 'loading timeout');
     }
     root.setEnabled(NPCManager.visible);
-    if (!NPCManager.visible) return;
+    if (!NPCManager.visible) {
+      stats.culled += 1;
+      return;
+    }
     if (meta.smallAntModelLoading && !meta.smallAntModelLoaded) {
       updateSmallAntAnimationState(root, false);
       updateSmallAntAccentPlacement(root, true);
@@ -12815,15 +12992,18 @@ function updateSmallVillageAntPopulation(dt) {
       counterSmallAntVisualRootMotion(root);
       updateSmallAntAccentPlacement(root, true);
       updateSmallAntAccentPulse(root, now);
+      if (meta.activeSmallAntAnimation?.isPlaying) stats.activeAnimated += 1;
       return;
     }
     const distSq = charMesh
       ? ((root.position.x - charMesh.position.x) ** 2 + (root.position.z - charMesh.position.z) ** 2)
       : 0;
     if (!meta.dialogueOpen && root !== selectedObject && !adminPreviewing && distSq > 140 * 140) {
+      stats.throttled += 1;
       if (now - (meta._lastFarSmallAntUpdateAt || 0) < 1600) return;
       meta._lastFarSmallAntUpdateAt = now;
       updateSmallAntAnimationState(root, false, selectedAnimationName);
+      if (meta.activeSmallAntAnimation?.isPlaying) stats.activeAnimated += 1;
       return;
     }
     if (canMoveForAnimation && !meta.target && (forcedLocomotion || now >= (meta.waitUntil || 0))) chooseCleanSmallAntWanderTarget(root);
@@ -12869,6 +13049,7 @@ function updateSmallVillageAntPopulation(dt) {
     counterSmallAntVisualRootMotion(root);
     updateSmallAntAccentPlacement(root, true);
     updateSmallAntAccentPulse(root, now);
+    if (meta.activeSmallAntAnimation?.isPlaying) stats.activeAnimated += 1;
   });
 }
 
@@ -18158,10 +18339,82 @@ let _layoutDirty = false;
 let _lastLocalCacheAt = Number(localStorage.getItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID) || 0);
 let _lastHardSaveAt = Number(localStorage.getItem('rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID) || 0);
 
+function getSmallAntLayoutDedupeKey(item) {
+  if (!item || item.type !== 'small_village_ant') return null;
+  if (item.smallAntInstanceId) return `id:${item.smallAntInstanceId}`;
+  if (item.name) return `name:${item.name}`;
+  const pos = item.position || {};
+  return `pos:${Number(pos.x || 0).toFixed(2)}:${Number(pos.z || 0).toFixed(2)}:${item.displayName || ''}`;
+}
+
+function getCollectibleLayoutDedupeKey(item) {
+  if (!item || item.type !== 'collectible') return null;
+  if (item.collectibleId) return `id:${item.collectibleId}`;
+  if (item.name) return `name:${item.name}`;
+  const pos = item.position || {};
+  return `pos:${Number(pos.x || 0).toFixed(2)}:${Number(pos.z || 0).toFixed(2)}:${item.collectibleType || ''}`;
+}
+
+function sanitizeWorldLayoutData(data, source = 'layout') {
+  if (!Array.isArray(data)) return { data:[], removedSmallAnts:0, removedCollectibles:0 };
+  const seenSmallAnts = new Set();
+  const seenSmallAntNames = new Set();
+  const seenCollectibles = new Set();
+  const seenCollectibleNames = new Set();
+  let removedSmallAnts = 0;
+  let removedCollectibles = 0;
+  const sanitized = data.filter(item => {
+    if (!item || typeof item !== 'object') return false;
+    if (item.type === 'small_village_ant') {
+      const key = getSmallAntLayoutDedupeKey(item);
+      const nameKey = item.name ? `name:${item.name}` : null;
+      if ((key && seenSmallAnts.has(key)) || (nameKey && seenSmallAntNames.has(nameKey))) {
+        removedSmallAnts += 1;
+        return false;
+      }
+      if (key) seenSmallAnts.add(key);
+      if (nameKey) seenSmallAntNames.add(nameKey);
+    }
+    if (item.type === 'collectible') {
+      const key = getCollectibleLayoutDedupeKey(item);
+      const nameKey = item.name ? `name:${item.name}` : null;
+      if ((key && seenCollectibles.has(key)) || (nameKey && seenCollectibleNames.has(nameKey))) {
+        removedCollectibles += 1;
+        return false;
+      }
+      if (key) seenCollectibles.add(key);
+      if (nameKey) seenCollectibleNames.add(nameKey);
+    }
+    return true;
+  });
+  if (removedSmallAnts || removedCollectibles) {
+    console.warn('World layout dedupe removed duplicate runtime entries:', {
+      source,
+      removedSmallAnts,
+      removedCollectibles
+    });
+  }
+  return { data:sanitized, removedSmallAnts, removedCollectibles };
+}
+
+function persistSanitizedWorldLayoutCache(data, reason = 'dedupe') {
+  try {
+    const json = JSON.stringify(data, null, 2);
+    localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, json);
+    if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem('rebelAntsWorldLayout', json);
+    _lastLocalCacheAt = Date.now();
+    localStorage.setItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID, String(_lastLocalCacheAt));
+    console.info('Sanitized world layout cache updated:', reason);
+  } catch(e) {
+    console.warn('Could not persist sanitized world layout cache:', e);
+  }
+}
+
 function collectWorldLayoutData() {
   // Only save actually placed objects — skip source roots at 9999 and untyped nodes
   const saveableTransformNodes = scene.transformNodes.filter(n =>
     n.metadata && n.metadata.isClone &&
+    n.metadata.type !== 'small_village_ant' &&
     n.metadata.interiorRuntime !== true &&
     !n.metadata.isPickProxy &&
     n.metadata._collectibleTest !== true &&
@@ -18191,7 +18444,17 @@ function collectWorldLayoutData() {
     Math.abs(n.position.x) < 500 &&
     Math.abs(n.position.z) < 500
   );
-  const allNodes = [...saveableTransformNodes, ...saveableProxyMeshes, ...saveableNPCNodes, ...saveableSmallAntNodes];
+  const allNodes = [];
+  const seenNodes = new Set();
+  const addNode = node => {
+    if (!node || seenNodes.has(node)) return;
+    seenNodes.add(node);
+    allNodes.push(node);
+  };
+  saveableTransformNodes.forEach(addNode);
+  saveableProxyMeshes.forEach(addNode);
+  saveableNPCNodes.forEach(addNode);
+  saveableSmallAntNodes.forEach(addNode);
 
   const data = allNodes.map(node => {
     const savePosition = (node.metadata.type === 'npc' || node.metadata.type === 'small_village_ant') && node.metadata.spawn
@@ -18234,6 +18497,7 @@ function collectWorldLayoutData() {
     dialogueId: node.metadata.dialogueId || null,
     customDialogue: node.metadata.customDialogue || null,
     questId: node.metadata.questId || null,
+    smallAntInstanceId: node.metadata.smallAntInstanceId || null,
     haloColor: node.metadata.haloColor || null,
     colorCycle: node.metadata.colorCycle === true,
     haloVerticalOffset: Number.isFinite(node.metadata.haloVerticalOffset) ? node.metadata.haloVerticalOffset : null,
@@ -18309,7 +18573,7 @@ function collectWorldLayoutData() {
       configs: interiorRoomConfigs
     });
   }
-  return data;
+  return sanitizeWorldLayoutData(data, 'save').data;
 }
 
 function saveWorldLayout(saveToGitHub = true){
@@ -18508,12 +18772,17 @@ function loadWorldLayout(){
     try { data = JSON.parse(raw); } catch(e) { data = []; }
   }
   if (!Array.isArray(data)) data = [];
+  const sanitizedLayout = sanitizeWorldLayoutData(data, 'load');
+  data = sanitizedLayout.data;
+  if (sanitizedLayout.removedSmallAnts || sanitizedLayout.removedCollectibles) {
+    persistSanitizedWorldLayoutCache(data, 'load duplicate cleanup');
+  }
   const hasSavedNPCs = data.some(item => item?.type === 'npc' && item?.villageId === CURRENT_VILLAGE_ID);
 
   // Dispose existing clones before restoring
   NPCManager.roots.forEach(root => root?.dispose(false, true));
   NPCManager.roots = [];
-  SmallVillageAntManager.roots.forEach(root => root?.dispose(false, true));
+  SmallVillageAntManager.roots.slice().forEach(root => disposeSmallVillageAntRoot(root));
   SmallVillageAntManager.roots = [];
   scene.transformNodes.filter(n =>
     n.metadata?.isClone === true ||
@@ -18721,6 +18990,7 @@ function loadWorldLayout(){
             : item.type === 'small_village_ant'
               ? {
                   isClone: true,
+                  smallAntInstanceId: item.smallAntInstanceId || null,
                   displayName: item.displayName || 'Little Village Ant',
                   customDialogue: item.customDialogue || '',
                   haloColor: item.haloColor || item.ringColor || '#e8c56a',
@@ -18734,7 +19004,8 @@ function loadWorldLayout(){
                     : (Number.isFinite(item.moveSpeed) ? Math.min(item.moveSpeed, SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED) : SMALL_VILLAGE_ANT_DEFAULT_WALK_SPEED),
                   antAnimationSpeedRatio: Number.isFinite(item.antAnimationSpeedRatio) ? item.antAnimationSpeedRatio : SMALL_VILLAGE_ANT_DEFAULT_ANIMATION_SPEED,
                   smallAntModelYawOffset: Number.isFinite(item.smallAntModelYawOffset) ? item.smallAntModelYawOffset : SMALL_VILLAGE_ANT_DEFAULT_MODEL_YAW_OFFSET,
-                  selectedAnimationName: item.selectedAnimationName || null
+                  selectedAnimationName: item.selectedAnimationName || null,
+                  modelScale: Number.isFinite(item.modelScale) ? item.modelScale : null
                 }
             : (item.type === 'hanging_lantern' || item.type === 'hangingLantern')
               ? {
@@ -18816,6 +19087,8 @@ if (m.material) {
     gizmoManager.scaleGizmoEnabled = false;
   }
   console.log("World layout loaded", data.length, "objects");
+  dedupeSmallVillageAntRuntime('load');
+  dedupeCollectibleRuntime('load');
   ensureDefaultVillageGate();
   if (!hasSavedNPCs) initNPCPopulation();
   applyAdminLayerState();
@@ -21511,8 +21784,13 @@ function getPerformanceExplanation(key, metric) {
     fps: 'Low FPS means the scene is rendering slower than ideal. Possible causes: too many visible meshes, expensive materials, shadows, active animation loops, weather FX, or helper meshes.',
     drawCalls: 'Draw calls are GPU render submissions per frame. High draw calls often come from many separate meshes, materials, transparent effects, shadows, or unmerged helper objects.',
     visibleMeshes: 'Visible meshes are objects currently enabled and visible to the renderer. Too many visible meshes can increase culling, material, and draw overhead.',
-    glbRoots: 'GLB roots are imported model groups in the scene. Many GLBs can mean more child meshes, materials, textures, and animation work.',
-    manualHelpers: 'Manual collision and walk helpers are editor/gameplay support pieces. Too many can make movement checks and editor visibility heavier.',
+    renderableMeshes: 'Renderable meshes are enabled, visible meshes with geometry. This is closer to real render pressure than total scene mesh count.',
+    glbRoots: 'GLB/model roots are loaded model groups in the scene. A child mesh count means meshes inside one root/object, not copies of that object.',
+    activeMaterials: 'Active materials are materials used by currently renderable meshes. High values often mean clones are not sharing materials.',
+    manualHelpers: 'Manual collision and walk helpers are editor/gameplay support pieces. In player mode they should be invisible, non-pickable, and use cached blockers.',
+    smallAnts: 'Small ants are saved mini-NPC actors. They should load once from layout, share the cached GLB template, and throttle animation when far away.',
+    throttledSmallAnts: 'Throttled small ants are far away, hidden by interior state, or otherwise idling to avoid animation/update cost.',
+    collectibleDuplicates: 'Duplicate collectible roots usually mean stale local layout entries or repeated collectible IDs. The loader removes exact duplicate IDs/names before spawning.',
     audioSources: 'Active audio sources are currently playing browser audio elements. Too many simultaneous sounds can add browser overhead and muddy the soundscape.'
   };
   return `${metric.label}: ${metric.value}\n\n${explanations[key] || 'This metric is informational. We can use it to decide what to optimize later.'}`;
@@ -21573,8 +21851,12 @@ function isPlacedGlbRoot(node) {
   return !!(node?.metadata?.modelUrl || node?.metadata?.uploadedAsset || node?.metadata?.assetUrl);
 }
 
-function getPlacedGlbRoots() {
-  return scene.transformNodes.filter(node => isPlacedGlbRoot(node) && !node.isDisposed?.());
+function getPlacedGlbRoots(options = {}) {
+  return scene.transformNodes.filter(node =>
+    isPlacedGlbRoot(node) &&
+    !node.isDisposed?.() &&
+    (options.activeOnly !== true || node.isEnabled?.() !== false)
+  );
 }
 
 function getUploadedGlbRootCount() {
@@ -21674,6 +21956,26 @@ function getDuplicateRootWarnings(limit = 5) {
     seen.set(name, (seen.get(name) || 0) + 1);
   });
   return [...seen.entries()].filter(([, count]) => count > 1).slice(0, limit);
+}
+
+function getCollectibleDiagnostics() {
+  const roots = getCollectibleRoots();
+  const seen = new Set();
+  let duplicates = 0;
+  let loadedModels = 0;
+  roots.forEach(root => {
+    if (!root || root.isDisposed?.()) return;
+    if (root.metadata?._collectibleModelRoot && !root.metadata._collectibleModelRoot.isDisposed?.()) loadedModels += 1;
+    const key = root.metadata?.collectibleId ? `id:${root.metadata.collectibleId}` : `name:${root.name}`;
+    if (seen.has(key)) duplicates += 1;
+    else seen.add(key);
+  });
+  return {
+    total: roots.length,
+    enabled: roots.filter(root => root?.isEnabled?.() !== false).length,
+    loadedModels,
+    duplicates
+  };
 }
 
 function isRenderableMesh(mesh) {
@@ -21776,6 +22078,8 @@ function getPerformanceMetrics() {
   const shadowCasters = shadows?.getShadowMap?.()?.renderList?.length || 0;
   const animatedNpcCount = NPCManager.roots.filter(root => root?.metadata?.activeAnimation && root.metadata.activeAnimation !== 'idle').length;
   const fakeLightFactor = getFakeLightStateFactor();
+  const smallAntStats = SmallVillageAntManager.stats || { total:0, activeAnimated:0, throttled:0, culled:0, loadedModels:0 };
+  const collectibleDiagnostics = getCollectibleDiagnostics();
   return {
     fps: { label:'FPS', value:fps || '--', status:getFpsStatus(fps) },
     modeNote: { label: adminMode ? 'Admin Mode FPS' : 'Walk Mode FPS', value: adminMode ? 'editor overhead active' : 'runtime view', status:adminMode ? 'warn' : 'good', detail:adminMode ? 'Editor gizmos, picking, and helper UI are active' : 'Editor helpers are reduced/hidden' },
@@ -21801,7 +22105,10 @@ function getPerformanceMetrics() {
     uploadedGlbs: { label:'Uploaded GLBs', value:getUploadedGlbRootCount(), status:'neutral', detail:`${getUploadedAssets().length} in library` },
     npcs: { label:'NPCs', value:NPCManager.roots.length, status:'neutral' },
     animatedNpcs: { label:'Animated NPCs', value:animatedNpcCount, status:'neutral' },
-    collectibles: { label:'Collectibles', value:getCollectibleRoots().length, status:'neutral' },
+    smallAnts: { label:'Small Ants', value:smallAntStats.total, status:getPerfStatus(smallAntStats.total, { green:4, yellow:12 }), detail:`${smallAntStats.activeAnimated || 0} active animated` },
+    throttledSmallAnts: { label:'Throttled Small Ants', value:smallAntStats.throttled || 0, status:'neutral', detail:`${smallAntStats.culled || 0} culled, ${smallAntStats.loadedModels || 0} models loaded` },
+    collectibles: { label:'Collectibles', value:collectibleDiagnostics.total, status:'neutral', detail:`${collectibleDiagnostics.enabled} enabled, ${collectibleDiagnostics.loadedModels} GLB models` },
+    collectibleDuplicates: { label:'Collectible Duplicates', value:collectibleDiagnostics.duplicates, status:collectibleDiagnostics.duplicates ? 'warn' : 'good', detail:'same id/name in scene' },
     activeInterior: { label:'Active Interior', value:ActiveInterior ? getInteriorTypeLabel(ActiveInterior.interiorType) : 'none', status:ActiveInterior ? 'good' : 'neutral' },
     interiorIsolation: { label:'Interior Isolation', value:InteriorIsolationRuntime.active ? 'active' : 'inactive', status:InteriorIsolationRuntime.active ? 'good' : 'neutral', detail:InteriorIsolationRuntime.active ? `${InteriorIsolationRuntime.nodeStates.length} outside roots hidden` : 'outside village visible' },
     interiorId: { label:'Interior ID', value:ActiveInterior?.targetInteriorId || 'none', status:'neutral' },
@@ -21836,7 +22143,7 @@ function showPerformanceMetricHelp(key) {
 function updatePerformanceDetailsPanel() {
   const host = document.getElementById('performanceDetailsGrid');
   if (!host) return;
-  const topGlbs = getPlacedGlbRoots()
+  const topGlbs = getPlacedGlbRoots({ activeOnly:true })
     .map(root => ({ name: root.name || root.metadata?.type || 'glb root', count: root.getChildMeshes?.(false).length || 0 }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
@@ -21850,6 +22157,12 @@ function updatePerformanceDetailsPanel() {
   const renderableMeshes = getRenderableMeshes();
   const activeMaterialStats = getActiveMaterialAndTextureStats(renderableMeshes);
   const categoryCounts = getVisibleRootCategoryCounts();
+  const smallAntStats = SmallVillageAntManager.stats || { total:0, activeAnimated:0, throttled:0, culled:0, loadedModels:0 };
+  const collectibleDiagnostics = getCollectibleDiagnostics();
+  const describeRootCount = item => {
+    const warning = item.count >= 45 ? ' high child count' : '';
+    return `${escapeHTML(item.name)} (${item.count} child meshes${warning})`;
+  };
   const categoryText = Object.entries(categoryCounts)
     .filter(([, count]) => count > 0)
     .map(([name, count]) => `${escapeHTML(name)}: ${count}`)
@@ -21858,12 +22171,14 @@ function updatePerformanceDetailsPanel() {
     <div><b>Renderer:</b> ${escapeHTML(window._gpuMode || 'webgl')} - ${(window._gpuMode || 'webgl') === 'webgpu' ? 'Testing in WebGPU.' : 'Testing in WebGL. WebGPU may perform differently.'}</div>
     <div><b>Renderable meshes:</b> ${renderableMeshes.length}; <b>active materials/textures:</b> ${activeMaterialStats.materials}/${activeMaterialStats.textures}</div>
     <div><b>Visible roots by category:</b> ${categoryText}</div>
-    <div><b>Top GLB roots by child meshes:</b> ${topGlbs.length ? topGlbs.map(item => `${escapeHTML(item.name)} (${item.count})`).join(', ') : 'None'}</div>
-    <div><b>Top parent/root groups by child mesh count:</b> ${topRoots.length ? topRoots.map(item => `${escapeHTML(item.name)} (${item.count} child meshes)`).join(', ') : 'None'}</div>
-    <div><b>Duplicate root name warnings:</b> ${duplicateRootWarnings.length ? duplicateRootWarnings.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
-    <div><b>Top materials by mesh usage:</b> ${topMaterials.length ? topMaterials.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
-    <div><b>Material audit offenders:</b> ${auditedMaterials.length ? auditedMaterials.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
+    <div><b>Top GLB/model roots by child meshes:</b> ${topGlbs.length ? topGlbs.map(describeRootCount).join(', ') : 'None'} <small>These are meshes inside one loaded root, not object copies.</small></div>
+    <div><b>Top parent/root groups by child mesh count:</b> ${topRoots.length ? topRoots.map(describeRootCount).join(', ') : 'None'}</div>
+    <div><b>Duplicate root/name warnings:</b> ${duplicateRootWarnings.length ? duplicateRootWarnings.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'} <small>Repeated root names can indicate duplicate saved objects.</small></div>
+    <div><b>Top materials by mesh usage:</b> ${topMaterials.length ? topMaterials.map(([name, count]) => `${escapeHTML(name)} (${count} meshes)`).join(', ') : 'None'}</div>
+    <div><b>Material audit offenders:</b> ${auditedMaterials.length ? auditedMaterials.map(([name, count]) => `${escapeHTML(name)} (${count} meshes)`).join(', ') : 'None'} <small>Shared material usage is normal; many unique equivalents are the optimization target.</small></div>
     <div><b>Visible helper/admin meshes:</b> ${helperVisible}</div>
+    <div><b>Small ants:</b> ${smallAntStats.total || 0} total, ${smallAntStats.activeAnimated || 0} active animated, ${smallAntStats.throttled || 0} throttled, ${smallAntStats.culled || 0} culled</div>
+    <div><b>Collectibles:</b> ${collectibleDiagnostics.total} roots, ${collectibleDiagnostics.enabled} enabled, ${collectibleDiagnostics.loadedModels} loaded GLB models, ${collectibleDiagnostics.duplicates} duplicate id/name warnings</div>
     <div><b>Fake lights:</b> ${getFakeLightRootCount(false)} total, ${getFakeLightRootCount(true)} active, ${VillagePerformanceRuntime.fakeLightStats?.static || 0} static, ${VillagePerformanceRuntime.fakeLightStats?.culled || 0} culled, ${getInteriorAssetCount()} interior assets</div>
     <div><b>Static roots frozen:</b> ${getFrozenStaticRootCount()}</div>
     <div><b>Optimized static roots:</b> ${VillagePerformanceRuntime.optimizedStaticRoots.size}; last pass ${VillagePerformanceRuntime.optimizerStats.meshes || 0} meshes, ${VillagePerformanceRuntime.optimizerStats.materials || 0} materials</div>
@@ -26635,6 +26950,7 @@ function applyLayoutItemToExistingNode(node, item) {
     dialogueId: item.dialogueId || null,
     customDialogue: item.customDialogue || null,
     questId: item.questId || null,
+    smallAntInstanceId: item.smallAntInstanceId || node.metadata?.smallAntInstanceId || null,
     haloColor: item.haloColor || null,
     colorCycle: item.colorCycle === true,
     haloVerticalOffset: Number.isFinite(item.haloVerticalOffset) ? item.haloVerticalOffset : null,
@@ -26677,6 +26993,7 @@ function applyLayoutItemToExistingNode(node, item) {
   if (item.type === 'interior_entrance') styleInteriorEntranceVisual(node);
   if (item.type === 'small_village_ant') {
     node.metadata._perfNeverFreeze = true;
+    node.metadata.smallAntInstanceId = node.metadata.smallAntInstanceId || makeSmallAntInstanceId(node);
     const groundY = getVillageGroundHeightAt(node.position.x, node.position.z);
     if (Number.isFinite(groundY)) node.position.y = groundY;
     node.metadata.spawn = { x:node.position.x, y:node.position.y, z:node.position.z };
@@ -27739,6 +28056,7 @@ window.applySelectedWalkSurfaceSettings = applySelectedWalkSurfaceSettings;
 window.applyWalkSurfaceSettingsToSameType = applyWalkSurfaceSettingsToSameType;
 window.refreshSelectedWalkSurfaceGuide = refreshSelectedWalkSurfaceGuide;
 window.addCollisionProxyPiece = addCollisionProxyPiece;
+window.optimizeCollisionProxies = optimizeCollisionProxies;
 window.attachNearbyManualPiecesToSelectedObject = attachNearbyManualPiecesToSelectedObject;
 window.deleteAttachedCollisionProxyPieces = deleteAttachedCollisionProxyPieces;
 window.deleteCollisionProxyPiecesForSameType = deleteCollisionProxyPiecesForSameType;
