@@ -20282,7 +20282,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -41.169543237503326,
+      "y": -56.38378312375739,
       "z": 0
     },
     "scaling": {
@@ -20383,7 +20383,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -80.85585223435578,
+      "y": -81.0959172151115,
       "z": 0
     },
     "scaling": {
@@ -21090,7 +21090,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -8.826462771712738,
+      "y": 1.6119834148280776,
       "z": 0
     },
     "scaling": {
@@ -21191,7 +21191,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -126.04954628670569,
+      "y": -129.22763280664645,
       "z": 0
     },
     "scaling": {
@@ -21292,7 +21292,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -0.9029448309274267,
+      "y": -18.070005169690916,
       "z": 0
     },
     "scaling": {
@@ -21393,7 +21393,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -78.38886822852058,
+      "y": -68.80731458792792,
       "z": 0
     },
     "scaling": {
@@ -21494,7 +21494,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -8.90313379653047,
+      "y": -5.31680839591067,
       "z": 0
     },
     "scaling": {
@@ -21595,7 +21595,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -104.88605978797693,
+      "y": -107.3580713986458,
       "z": 0
     },
     "scaling": {
@@ -21644,6 +21644,208 @@
     "smallAntModelYawOffset": 2.3679521268147816,
     "selectedAnimationName": "Walk",
     "wanderRadius": 5,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "collectible",
+    "name": "collectibleRootClone_flame_shard_1780669769229",
+    "position": {
+      "x": 161.3385522440759,
+      "y": -1.3110515558617433,
+      "z": -169.19195468219408
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": "hub-flame_shard-1780669769229-9170",
+    "collectibleType": "flame_shard",
+    "collectibleLabel": "Flame Shard",
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "hub",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": "/assets/collectibles/flame-shard.glb",
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "collectible",
+    "name": "collectibleRootClone_1780669777052_209",
+    "position": {
+      "x": 0.896053671836853,
+      "y": 1.2487225532531738,
+      "z": -26.744287490844727
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": "hub-flame_shard-1780669769229-9170",
+    "collectibleType": "flame_shard",
+    "collectibleLabel": "Flame Shard",
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "hub",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": "/assets/collectibles/flame-shard.glb",
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
     "animationMap": null,
     "animationSpeed": null,
     "patrolPoints": null,
@@ -36543,7 +36745,7 @@
     },
     "rotation": {
       "x": -1.2410712543590996e-8,
-      "y": 9.354534014654385,
+      "y": 9.121345872815036,
       "z": -0.007416827412819644
     },
     "scaling": {
@@ -36873,7 +37075,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": 17.167319749709556,
+      "y": 19.94423929950572,
       "z": -0.01293787617811027
     },
     "scaling": {
@@ -37093,7 +37295,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": 6.300640113044616,
+      "y": 5.752210636685037,
       "z": 0.022500914977622112
     },
     "scaling": {
@@ -37203,7 +37405,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -41.169543237503326,
+      "y": -56.38378312375739,
       "z": 0
     },
     "scaling": {
@@ -37304,7 +37506,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -80.85585223435578,
+      "y": -81.0959172151115,
       "z": 0
     },
     "scaling": {
@@ -37405,7 +37607,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -8.826462771712738,
+      "y": 1.6119834148280776,
       "z": 0
     },
     "scaling": {
@@ -37506,7 +37708,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -126.04954628670569,
+      "y": -129.22763280664645,
       "z": 0
     },
     "scaling": {
@@ -37607,7 +37809,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -0.9029448309274267,
+      "y": -18.070005169690916,
       "z": 0
     },
     "scaling": {
@@ -37708,7 +37910,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -78.38886822852058,
+      "y": -68.80731458792792,
       "z": 0
     },
     "scaling": {
@@ -37809,7 +38011,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -8.90313379653047,
+      "y": -5.31680839591067,
       "z": 0
     },
     "scaling": {
@@ -37910,7 +38112,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -104.88605978797693,
+      "y": -107.3580713986458,
       "z": 0
     },
     "scaling": {
@@ -38023,9 +38225,9 @@
       "rebel_arcade": {
         "lighting": {
           "color": "#ffd88a",
-          "brightness": 1
+          "brightness": 1.1
         },
-        "updatedAt": "2026-05-31T23:42:52.581Z",
+        "updatedAt": "2026-06-05T14:58:22.987Z",
         "exit": {
           "position": {
             "x": 0,
@@ -38068,7 +38270,96 @@
             }
           }
         ],
-        "assets": [],
+        "assets": [
+          {
+            "assetId": "light_1780671235715_728",
+            "assetType": "wall_lantern",
+            "color": "#e6cf98",
+            "brightness": 0.8,
+            "enabled": true,
+            "position": {
+              "x": -10.709222793579102,
+              "y": 7.204497814178467,
+              "z": -36.2139892578125
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0.07367882056241479,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.4414061785783487,
+              "y": 2.44140625,
+              "z": 2.4414061785783487
+            }
+          },
+          {
+            "assetId": "light_1780671134575_927",
+            "assetType": "wall_lantern",
+            "color": "#e6d19e",
+            "brightness": 0.7,
+            "enabled": true,
+            "position": {
+              "x": 13.853165626525879,
+              "y": 7.204497814178467,
+              "z": -36.53083801269531
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0.07367882056241479,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.4414061785783487,
+              "y": 2.44140625,
+              "z": 2.4414061785783487
+            }
+          },
+          {
+            "assetId": "light_1780671343841_309",
+            "assetType": "fire_bowl",
+            "color": "#e6d19e",
+            "brightness": 0.8,
+            "enabled": true,
+            "position": {
+              "x": 6.849483489990234,
+              "y": 3.9847335815429688,
+              "z": -26.698829650878906
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.127999346371087,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.562499993131317,
+              "y": 1.5625,
+              "z": 1.562499993131317
+            }
+          },
+          {
+            "assetId": "light_1780671480653_986",
+            "assetType": "fire_bowl",
+            "color": "#e6d19e",
+            "brightness": 0.8,
+            "enabled": true,
+            "position": {
+              "x": -6.846902370452881,
+              "y": 3.9847335815429688,
+              "z": -26.771100997924805
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.127999346371087,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.562499993131317,
+              "y": 1.5625,
+              "z": 1.562499993131317
+            }
+          }
+        ],
         "playerFloorOffset": 0.39999999999999997,
         "nftCollections": [
           {
@@ -38514,6 +38805,249 @@
               "y": 5.9103264808654785,
               "z": 2.441406011581421
             }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "frameId": "nft_frame_1780667890893_499",
+            "frameName": "Rebel Frame",
+            "collectionId": "rebel_ants_battle_for_the_colony",
+            "frameSlot": 4,
+            "tokenId": "",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 23.236785888671875,
+              "y": 8.066740989685059,
+              "z": 25.964059829711914
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948963,
+              "z": 0
+            },
+            "scaling": {
+              "x": 5.050423622131348,
+              "y": 5.927160263061523,
+              "z": 2.44140625
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "frameId": "nft_frame_1780668049352_619",
+            "frameName": "Rebel Frame",
+            "collectionId": "rebel_ants_battle_for_the_colony",
+            "frameSlot": 5,
+            "tokenId": "",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 23.084430694580078,
+              "y": 8.127708435058594,
+              "z": 15.445000648498535
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948963,
+              "z": 0
+            },
+            "scaling": {
+              "x": 5.127638816833496,
+              "y": 5.950927734375,
+              "z": 3.051758050918579
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "frameId": "nft_frame_1780668408159_708",
+            "frameName": "Rebel Frame",
+            "collectionId": "rebel_ants_battle_for_the_colony",
+            "frameSlot": 6,
+            "tokenId": "",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 23.104848861694336,
+              "y": 8.110429763793945,
+              "z": -26.837255477905273
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948963,
+              "z": 0
+            },
+            "scaling": {
+              "x": 5.1933512687683105,
+              "y": 5.950927734375,
+              "z": 3.051757574081421
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "frameId": "nft_frame_1780668811779_480",
+            "frameName": "Rebel Frame",
+            "collectionId": "rebel_ants_battle_for_the_colony",
+            "frameSlot": 7,
+            "tokenId": "",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -23.184415817260742,
+              "y": 8.167792320251465,
+              "z": -26.803115844726562
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948963,
+              "z": 0
+            },
+            "scaling": {
+              "x": 5.183376789093018,
+              "y": 5.781453609466553,
+              "z": 1.5625003576278687
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "frameId": "nft_frame_1780669186248_722",
+            "frameName": "Rebel Frame",
+            "collectionId": "rebel_ants_battle_for_the_colony",
+            "frameSlot": 8,
+            "tokenId": "",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -23.031484603881836,
+              "y": 8.128192901611328,
+              "z": -16.24709129333496
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948963,
+              "z": 0
+            },
+            "scaling": {
+              "x": 5.057950496673584,
+              "y": 5.93560791015625,
+              "z": 3.051757574081421
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "frameId": "nft_frame_1780669291901_133",
+            "frameName": "Rebel Frame",
+            "collectionId": "rebel_ants_battle_for_the_colony",
+            "frameSlot": 9,
+            "tokenId": "",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -23.050188064575195,
+              "y": 8.158048629760742,
+              "z": -5.686588287353516
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948963,
+              "z": 0
+            },
+            "scaling": {
+              "x": 5.102970600128174,
+              "y": 5.7908244132995605,
+              "z": 3.0517578125
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "frameId": "nft_frame_1780669393656_118",
+            "frameName": "Rebel Frame",
+            "collectionId": "rebel_ants_battle_for_the_colony",
+            "frameSlot": 10,
+            "tokenId": "",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -22.86166000366211,
+              "y": 8.114306449890137,
+              "z": 4.9070634841918945
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948963,
+              "z": 0
+            },
+            "scaling": {
+              "x": 5.090340614318848,
+              "y": 5.763854503631592,
+              "z": 3.0517578125
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "frameId": "nft_frame_1780669468736_706",
+            "frameName": "Rebel Frame",
+            "collectionId": "rebel_ants_battle_for_the_colony",
+            "frameSlot": 11,
+            "tokenId": "",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -23.01271629333496,
+              "y": 8.317449569702148,
+              "z": 15.48984432220459
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948963,
+              "z": 0
+            },
+            "scaling": {
+              "x": 5.156043529510498,
+              "y": 6.0751519203186035,
+              "z": 3.0517578125
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "frameId": "nft_frame_1780669537088_146",
+            "frameName": "Rebel Frame",
+            "collectionId": "rebel_ants_battle_for_the_colony",
+            "frameSlot": 12,
+            "tokenId": "",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -23.063230514526367,
+              "y": 8.160234451293945,
+              "z": 26.022815704345703
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948963,
+              "z": 0
+            },
+            "scaling": {
+              "x": 5.103573799133301,
+              "y": 5.785963535308838,
+              "z": 3.0517578125
+            }
           }
         ],
         "hotspots": [
@@ -38526,9 +39060,9 @@
             "description": "Rebel Ants Arcade Faction Wars",
             "enabled": true,
             "position": {
-              "x": 18.190780639648438,
+              "x": 18.2867488861084,
               "y": 4.751458644866943,
-              "z": -0.35215723514556885
+              "z": 27.35794448852539
             },
             "rotation": {
               "x": 0,
@@ -38539,6 +39073,222 @@
               "x": 1.1747871571271038,
               "y": 1.895176649093628,
               "z": 1.0000000598829202
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "hotspotId": "hotspot_1780669915479_508",
+            "linkName": "Faction Wars",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/faction-wars",
+            "description": "Rebel Ants Arcade Faction Wars",
+            "enabled": true,
+            "position": {
+              "x": -18.304977416992188,
+              "y": 4.751458644866943,
+              "z": 18.091997146606445
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5693640081735996,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.1747871767219045,
+              "y": 1.895176649093628,
+              "z": 1.000000310530583
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "hotspotId": "hotspot_1780669852663_753",
+            "linkName": "Faction Wars",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/faction-wars",
+            "description": "Rebel Ants Arcade Faction Wars",
+            "enabled": true,
+            "position": {
+              "x": -18.313920974731445,
+              "y": 4.751458644866943,
+              "z": -18.878032684326172
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5693519808069296,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.174787197074335,
+              "y": 1.895176649093628,
+              "z": 1.0000003278550815
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "hotspotId": "hotspot_1780668509767_30",
+            "linkName": "Faction Wars",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/faction-wars",
+            "description": "Rebel Ants Arcade Faction Wars",
+            "enabled": true,
+            "position": {
+              "x": 18.38257598876953,
+              "y": 4.751458644866943,
+              "z": -9.597753524780273
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5722496001528323,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.1747872122473864,
+              "y": 1.895176649093628,
+              "z": 1.0000003407707037
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "hotspotId": "hotspot_1780668260636_423",
+            "linkName": "The Raid",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/the-raid",
+            "description": "ASSEMBLE YOUR SQUAD · MARCH INTO ENEMY TERRITORY · WIN LOOT OR DIE TRYING",
+            "enabled": true,
+            "position": {
+              "x": 18.412694931030273,
+              "y": 4.719317436218262,
+              "z": 18.108675003051758
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5764221731650456,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.1837767539036852,
+              "y": 1.900263786315918,
+              "z": 0.9999999703636421
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "hotspotId": "hotspot_1780670043519_488",
+            "linkName": "The Raid",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/the-raid",
+            "description": "ASSEMBLE YOUR SQUAD · MARCH INTO ENEMY TERRITORY · WIN LOOT OR DIE TRYING",
+            "enabled": true,
+            "position": {
+              "x": 18.378660202026367,
+              "y": 4.719317436218262,
+              "z": -18.799970626831055
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5764221731650456,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.1837767539036852,
+              "y": 1.900263786315918,
+              "z": 0.9999999703636421
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "hotspotId": "hotspot_1780670083088_567",
+            "linkName": "The Raid",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/the-raid",
+            "description": "ASSEMBLE YOUR SQUAD · MARCH INTO ENEMY TERRITORY · WIN LOOT OR DIE TRYING",
+            "enabled": true,
+            "position": {
+              "x": -18.38131332397461,
+              "y": 4.719317436218262,
+              "z": -9.570414543151855
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5651704505564181,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.1837767537072053,
+              "y": 1.900263786315918,
+              "z": 0.9999999701959792
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "hotspotId": "hotspot_1780670153102_473",
+            "linkName": "The Raid Copy",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/the-raid",
+            "description": "ASSEMBLE YOUR SQUAD · MARCH INTO ENEMY TERRITORY · WIN LOOT OR DIE TRYING",
+            "enabled": true,
+            "position": {
+              "x": -18.353382110595703,
+              "y": 4.719317436218262,
+              "z": 27.31348419189453
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5651660013593918,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.183776783515807,
+              "y": 1.900263786315918,
+              "z": 0.9999999953789276
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "hotspotId": "hotspot_1780670252320_359",
+            "linkName": "Ant Tunnel",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/tunnel",
+            "description": "UNDERGROUND TUNNELS · CRUMBS · CRYSTALS · DANGER",
+            "enabled": true,
+            "position": {
+              "x": 18.40774917602539,
+              "y": 4.72694730758667,
+              "z": 8.86373233795166
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.561644243997436,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.1416733366306617,
+              "y": 1.9258511066436768,
+              "z": 1.000000037351599
+            }
+          },
+          {
+            "interiorId": "rebel_arcade",
+            "hotspotId": "hotspot_1780670503619_289",
+            "linkName": "Ant Tunnel",
+            "actionType": "showInfo",
+            "url": "https://play.rebelants.io/tunnel",
+            "description": "UNDERGROUND TUNNELS · CRUMBS · CRYSTALS · DANGER",
+            "enabled": true,
+            "position": {
+              "x": 18.259777069091797,
+              "y": 4.72694730758667,
+              "z": -28.13372039794922
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5616419193716915,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.1416733611556311,
+              "y": 1.9258511066436768,
+              "z": 1.000000058833324
             }
           }
         ],
@@ -38559,19 +39309,19 @@
             "loop": true,
             "enabled": true,
             "position": {
-              "x": 0.12454622238874435,
-              "y": 6.77880859375,
-              "z": -33.3939323425293
+              "x": 0.34172874689102173,
+              "y": 6.778833866119385,
+              "z": -34.82844543457031
             },
             "rotation": {
-              "x": 0.000015946725920594746,
-              "y": -0.13242335099497182,
-              "z": 0.0026681994393187376
+              "x": 0.00001594672430510405,
+              "y": -0.012496269206783093,
+              "z": -3.13892445290755
             },
             "scaling": {
-              "x": -6.692820989355436,
-              "y": 5.532758857787529,
-              "z": 2.441406226532306
+              "x": 6.692822384582409,
+              "y": -5.532758857808196,
+              "z": 2.4414054186687646
             }
           }
         ]
