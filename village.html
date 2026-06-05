@@ -8236,7 +8236,7 @@ function updateInteriorAudioStatus(message = '', force = false) {
   el.textContent = `Interior audio: ${activeId} | ${path || 'no MP3'} | ${playing ? 'playing' : 'stopped'}${error ? ' | error: ' + error : ''}${message ? ' | ' + message : ''}`;
 }
 
-function ensureInteriorAudioTrack(path = getActiveInteriorAudioPath()) {
+function ensureInteriorAudioTrack(path = getActiveInteriorAudioPath(), options = {}) {
   const safePath = normalizeInteriorAudioPath(path);
   if (!safePath) {
     updateInteriorAudioStatus('no path');
@@ -8244,9 +8244,12 @@ function ensureInteriorAudioTrack(path = getActiveInteriorAudioPath()) {
   }
   const id = getInteriorAudioId(safePath);
   let audio = WeatherManager.audioTracks[id];
-  if (!audio || audio._srcPath !== safePath) {
+  const shouldRecreate = options.forceReload === true || audio?._unavailable === true || audio?._loadError;
+  if (!audio || audio._srcPath !== safePath || shouldRecreate) {
     if (audio) {
-      try { audio.pause(); } catch(e) {}
+      try { audio.pause(); audio.removeAttribute('src'); audio.load?.(); } catch(e) {}
+      if (WeatherManager.interiorAudioTrack === audio) WeatherManager.interiorAudioTrack = null;
+      delete WeatherManager.audioTracks[id];
     }
     audio = new Audio(safePath);
     audio.loop = true;
@@ -8271,6 +8274,7 @@ function ensureInteriorAudioTrack(path = getActiveInteriorAudioPath()) {
   WeatherManager.interiorAudioId = id;
   WeatherManager.interiorAudioPath = safePath;
   WeatherManager.interiorAudioLoadError = audio._loadError || '';
+  if (options.forceReload) updateInteriorAudioStatus('retrying load', true);
   return audio;
 }
 
@@ -23811,7 +23815,8 @@ function testPlayInteriorAudioFromAdmin() {
   WeatherManager.interiorAudioAdminPaused = false;
   WeatherManager.interiorAudioTestPath = path;
   WeatherManager.interiorAudioHintShown = false;
-  ensureInteriorAudioTrack(path);
+  WeatherManager.interiorAudioLoadError = '';
+  ensureInteriorAudioTrack(path, { forceReload:true });
   unlockVillageMusic();
   updateWeatherAudio();
   const audible = WeatherManager.masterAudioEnabled && WeatherManager.musicEnabled && WeatherManager.masterVolume > 0 && WeatherManager.musicVolume > 0 && WeatherManager.ambienceVolume > 0;
