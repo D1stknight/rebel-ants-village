@@ -4095,7 +4095,7 @@ function applyWalkModeHelperVisibility(force = false) {
     const isManualHelper = type === 'collision_proxy' && !isTerrainHelper;
     const isZoneHelper = type === 'interaction_zone' || type === 'interior_entrance' || mesh.name?.startsWith('interactionZone_') || mesh.name?.startsWith('interiorEntrance_');
     const isPlacementHelper = mesh.metadata?.isAdminPlacementMarker || mesh.name?.includes('BrushPreview') || mesh.name?.startsWith('patrolRoute');
-    const isInteriorHelper = mesh.metadata?.isInteriorVideoHelper === true || mesh.metadata?.isInteriorNftFrameHelper === true || mesh.metadata?.isInteriorExitHelper === true;
+    const isInteriorHelper = mesh.metadata?.isInteriorVideoHelper === true || (mesh.metadata?.isInteriorNftFrameHelper === true && mesh.metadata?.isInteriorNftFrameBorder !== true) || mesh.metadata?.isInteriorExitHelper === true;
     const isQuestMarkerHelper = mesh.metadata?.questTargetPart && !isActivePlayerQuestMarkerMesh(mesh);
     if (!isManualHelper && !isTerrainHelper && !isZoneHelper && !isPlacementHelper && !isInteriorHelper && !isQuestMarkerHelper) return;
     const visible = isManualHelper
@@ -4322,9 +4322,13 @@ function isActiveInteriorSurfaceMesh(mesh) {
   const selectingInteriorRoot = selectedObject === ActiveInterior.root || selectedObject?.metadata?.type === 'interior_runtime';
   if (!selectingInteriorRoot && (mesh._editRoot === selectedObject || mesh === selectedObject)) return false;
   const root = mesh._editRoot || mesh.parent || null;
-  if (root?.metadata?.type && root.metadata.type !== 'interior_runtime') return false;
-  if (mesh.metadata?.isInteriorHotspotPanel || mesh.metadata?.isInteriorVideoPanel || mesh.metadata?.isInteriorNftArt) return false;
-  return mesh.metadata?.interiorRuntime === true || mesh.parent === ActiveInterior.root;
+  const rootType = root?.metadata?.type || '';
+  if (mesh.metadata?.isInteriorHotspotPanel || mesh.metadata?.isInteriorVideoPanel || mesh.metadata?.isInteriorNftArt || mesh.metadata?.collectibleVisual) return false;
+  if (rootType && !['interior_runtime', 'interior_glb_model', 'interior_exit'].includes(rootType)) return false;
+  return mesh.metadata?.interiorGlbModel === true ||
+    mesh.parent === ActiveInterior.root ||
+    root === ActiveInterior.root ||
+    isInteriorRuntimeNode(mesh);
 }
 
 function getAdminInteriorSurfacePick() {
@@ -6356,7 +6360,16 @@ const CollectibleRuntime = {
   lastCheckIndex: 0,
   lastDebugAt: 0,
   lastErrorAt: 0,
-  stats: { total:0, active:0, visible:0, hidden:0, cachedModels:0 }
+  stats: {
+    total:0,
+    active:0,
+    visible:0,
+    hidden:0,
+    cachedModels:0,
+    village:{ total:0, active:0, visible:0 },
+    activeInterior:{ total:0, active:0, visible:0 },
+    inactiveInterior:{ total:0, hidden:0 }
+  }
 };
 
 function getCollectibleRoots() {
@@ -6364,6 +6377,16 @@ function getCollectibleRoots() {
     if (!root || root.isDisposed?.()) CollectibleRuntime.roots.delete(root);
   });
   return [...CollectibleRuntime.roots];
+}
+
+function getCollectibleContext(root) {
+  if (!root?.metadata?.interiorRuntime) return 'village';
+  const activeKey = ActiveInterior ? getActiveInteriorConfigKey() : '';
+  const rootInteriorId = root.metadata?.interiorId || '';
+  const matchesActiveInterior = !!ActiveInterior?.root &&
+    isInteriorRuntimeNode(root) &&
+    (!rootInteriorId || !activeKey || rootInteriorId === activeKey);
+  return matchesActiveInterior ? 'activeInterior' : 'inactiveInterior';
 }
 
 function dedupeCollectibleRuntime(reason = 'runtime') {
@@ -6556,6 +6579,7 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     villageId: CURRENT_VILLAGE_ID,
     interiorRuntime: !!options.interiorId,
     interiorId: options.interiorId || null,
+    enabled: options.enabled !== false,
     _collectibleLoadingModel: !!cfg.modelUrl,
     _collectibleFarHidden: false,
     _collectibleTest: options.testOnly === true
@@ -6654,7 +6678,6 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
   root.metadata._collectibleVisuals = visuals;
   root.metadata._collectibleFallbackVisuals = visuals;
   addCollectibleAura(root, cfg);
-  if (cfg.modelUrl) setCollectibleVisualsVisible(root, false, true);
 
   root.isPickable = true;
   root.setEnabled(options.enabled !== false && !isCollectibleCollected(id));
@@ -6733,7 +6756,11 @@ function updateCollectiblePerfDebug(stats = CollectibleRuntime.stats) {
   CollectibleRuntime.lastDebugAt = performance.now();
   const el = document.getElementById('collectiblePerfDebug');
   if (!el) return;
-  el.textContent = `Collectibles: ${stats.total} total | ${stats.active} active | ${stats.visible} visible | ${stats.hidden} far hidden | ${stats.cachedModels} cached models`;
+  const village = stats.village || { total:0, active:0, visible:0 };
+  const interior = stats.activeInterior || { total:0, active:0, visible:0 };
+  const inactive = stats.inactiveInterior || { total:0, hidden:0 };
+  const warning = inactive.total ? ` | ${inactive.total} inactive/interior-mismatch hidden` : '';
+  el.textContent = `Collectibles: village ${village.total}/${village.active}/${village.visible} total/active/visible | active interior ${interior.total}/${interior.active}/${interior.visible} | ${stats.cachedModels} cached models${warning}`;
 }
 
 function updateCollectiblePickupAnimation(root) {
@@ -6795,7 +6822,25 @@ function updateCollectibles(dt) {
   let active = 0;
   let visible = 0;
   let hidden = 0;
+  const contextStats = {
+    village:{ total:0, active:0, visible:0 },
+    activeInterior:{ total:0, active:0, visible:0 },
+    inactiveInterior:{ total:0, hidden:0 }
+  };
   roots.forEach(root => {
+    const context = getCollectibleContext(root);
+    if (contextStats[context]) contextStats[context].total += 1;
+    if (context === 'village' && ActiveInterior) {
+      hidden += 1;
+      return;
+    }
+    if (context === 'inactiveInterior') {
+      root.setEnabled(false);
+      root.metadata._collectibleFarHidden = true;
+      hidden += 1;
+      contextStats.inactiveInterior.hidden += 1;
+      return;
+    }
     if (root.metadata._collectiblePickupStartedAt) {
       updateCollectiblePickupAnimation(root);
       return;
@@ -6804,7 +6849,13 @@ function updateCollectibles(dt) {
       root.setEnabled(false);
       return;
     }
+    if (root.metadata.enabled === false) {
+      root.setEnabled(false);
+      return;
+    }
+    if (root.isEnabled?.() === false) root.setEnabled(true);
     active += 1;
+    if (contextStats[context]) contextStats[context].active += 1;
     let distSq = 0;
     if (charMesh) {
       const pos = root.getAbsolutePosition?.() || root.position;
@@ -6826,6 +6877,7 @@ function updateCollectibles(dt) {
       setCollectibleVisualsVisible(root, true, true);
     }
     visible += 1;
+    if (contextStats[context]) contextStats[context].visible += 1;
     const updateTier = charMesh && distSq > COLLECTIBLE_FAR_UPDATE_DIST_SQ
       ? 'paused'
       : charMesh && distSq > COLLECTIBLE_NEAR_UPDATE_DIST_SQ
@@ -6839,7 +6891,8 @@ function updateCollectibles(dt) {
     active,
     visible,
     hidden,
-    cachedModels: CollectibleRuntime.modelCache.size
+    cachedModels: CollectibleRuntime.modelCache.size,
+    ...contextStats
   };
   updateCollectiblePerfDebug();
 }
@@ -22072,7 +22125,7 @@ function getHelperVisibleCount() {
       mesh.metadata?.terrainToolPatch === true ||
       mesh.metadata?.isAdminPlacementMarker === true ||
       mesh.metadata?.isInteriorVideoHelper === true ||
-      mesh.metadata?.isInteriorNftFrameHelper === true ||
+      (mesh.metadata?.isInteriorNftFrameHelper === true && mesh.metadata?.isInteriorNftFrameBorder !== true) ||
       mesh.metadata?.questTargetPart
     )
   ).length;
@@ -22156,18 +22209,41 @@ function getCollectibleDiagnostics() {
   const seen = new Set();
   let duplicates = 0;
   let loadedModels = 0;
+  const village = { total:0, active:0, visible:0 };
+  const activeInterior = { total:0, active:0, visible:0 };
+  const inactiveInterior = { total:0, hidden:0 };
   roots.forEach(root => {
     if (!root || root.isDisposed?.()) return;
     if (root.metadata?._collectibleModelRoot && !root.metadata._collectibleModelRoot.isDisposed?.()) loadedModels += 1;
     const key = root.metadata?.collectibleId ? `id:${root.metadata.collectibleId}` : `name:${root.name}`;
     if (seen.has(key)) duplicates += 1;
     else seen.add(key);
+    const context = getCollectibleContext(root);
+    const bucket = context === 'activeInterior' ? activeInterior : context === 'inactiveInterior' ? inactiveInterior : village;
+    bucket.total += 1;
+    if (context === 'inactiveInterior') {
+      if (root.isEnabled?.() === false || root.metadata?._collectibleFarHidden === true) bucket.hidden += 1;
+      return;
+    }
+    if (root.metadata?.enabled !== false && root.isEnabled?.() !== false) bucket.active += 1;
+    const visible = root.isEnabled?.() !== false &&
+      root.getChildMeshes?.(false).some(mesh =>
+        mesh.metadata?.collectibleVisual &&
+        mesh.isEnabled?.() !== false &&
+        mesh.isVisible !== false &&
+        (mesh.visibility ?? 1) > 0.001
+      );
+    if (visible) bucket.visible += 1;
   });
   return {
     total: roots.length,
     enabled: roots.filter(root => root?.isEnabled?.() !== false).length,
     loadedModels,
-    duplicates
+    duplicates,
+    village,
+    activeInterior,
+    inactiveInterior,
+    contextWarnings: inactiveInterior.total
   };
 }
 
@@ -22300,7 +22376,7 @@ function getPerformanceMetrics() {
     animatedNpcs: { label:'Animated NPCs', value:animatedNpcCount, status:'neutral' },
     smallAnts: { label:'Small Ants', value:smallAntStats.total, status:getPerfStatus(smallAntStats.total, { green:4, yellow:12 }), detail:`${smallAntStats.activeAnimated || 0} active animated` },
     throttledSmallAnts: { label:'Throttled Small Ants', value:smallAntStats.throttled || 0, status:'neutral', detail:`${smallAntStats.culled || 0} culled, ${smallAntStats.loadedModels || 0} models loaded` },
-    collectibles: { label:'Collectibles', value:collectibleDiagnostics.total, status:'neutral', detail:`${collectibleDiagnostics.enabled} enabled, ${collectibleDiagnostics.loadedModels} GLB models` },
+    collectibles: { label:'Collectibles', value:collectibleDiagnostics.total, status:collectibleDiagnostics.contextWarnings ? 'warn' : 'neutral', detail:`village ${collectibleDiagnostics.village.total}/${collectibleDiagnostics.village.active}/${collectibleDiagnostics.village.visible}; active interior ${collectibleDiagnostics.activeInterior.total}/${collectibleDiagnostics.activeInterior.active}/${collectibleDiagnostics.activeInterior.visible}; ${collectibleDiagnostics.loadedModels} GLB models` },
     collectibleDuplicates: { label:'Collectible Duplicates', value:collectibleDiagnostics.duplicates, status:collectibleDiagnostics.duplicates ? 'warn' : 'good', detail:'same id/name in scene' },
     activeInterior: { label:'Active Interior', value:ActiveInterior ? getInteriorTypeLabel(ActiveInterior.interiorType) : 'none', status:ActiveInterior ? 'good' : 'neutral' },
     interiorIsolation: { label:'Interior Isolation', value:InteriorIsolationRuntime.active ? 'active' : 'inactive', status:InteriorIsolationRuntime.active ? 'good' : 'neutral', detail:InteriorIsolationRuntime.active ? `${InteriorIsolationRuntime.nodeStates.length} outside roots hidden` : 'outside village visible' },
@@ -22375,7 +22451,7 @@ function updatePerformanceDetailsPanel() {
     <div><b>Visible helper/admin meshes:</b> ${helperVisible}</div>
     <div><b>Small ants:</b> ${smallAntStats.total || 0} total, ${smallAntStats.activeAnimated || 0} active animated, ${smallAntStats.throttled || 0} throttled, ${smallAntStats.culled || 0} culled</div>
     <div><b>Small ant animation:</b> ${antAnimationStatus}</div>
-    <div><b>Collectibles:</b> ${collectibleDiagnostics.total} roots, ${collectibleDiagnostics.enabled} enabled, ${collectibleDiagnostics.loadedModels} loaded GLB models, ${collectibleDiagnostics.duplicates} duplicate id/name warnings</div>
+    <div><b>Collectibles:</b> village ${collectibleDiagnostics.village.total}/${collectibleDiagnostics.village.active}/${collectibleDiagnostics.village.visible}, active interior ${collectibleDiagnostics.activeInterior.total}/${collectibleDiagnostics.activeInterior.active}/${collectibleDiagnostics.activeInterior.visible}, ${collectibleDiagnostics.loadedModels} loaded GLB models, ${collectibleDiagnostics.duplicates} duplicate id/name warnings${collectibleDiagnostics.contextWarnings ? ', ' + collectibleDiagnostics.contextWarnings + ' inactive/context-mismatch hidden' : ''}</div>
     <div><b>Fake lights:</b> ${getFakeLightRootCount(false)} total, ${getFakeLightRootCount(true)} active, ${VillagePerformanceRuntime.fakeLightStats?.static || 0} static, ${VillagePerformanceRuntime.fakeLightStats?.culled || 0} culled, ${getInteriorAssetCount()} interior assets</div>
     <div><b>Static roots frozen:</b> ${getFrozenStaticRootCount()}</div>
     <div><b>Optimized static roots:</b> ${VillagePerformanceRuntime.optimizedStaticRoots.size}; last pass ${VillagePerformanceRuntime.optimizerStats.meshes || 0} meshes, ${VillagePerformanceRuntime.optimizerStats.materials || 0} materials</div>
@@ -25385,10 +25461,16 @@ function applyInteriorNftFrameVisual(frame) {
     art.setEnabled(frame.metadata.enabled !== false);
     art.isPickable = true;
   }
-  const helperVisible = _interiorNftFrameHelpersVisible;
   frame.getChildMeshes?.(false).forEach(mesh => {
+    if (mesh.metadata?.isInteriorNftFrameBorder) {
+      mesh.setEnabled(frame.metadata.enabled !== false);
+      mesh.isVisible = frame.metadata.enabled !== false;
+      mesh.visibility = frame.metadata.enabled !== false ? 1 : 0;
+      mesh.isPickable = true;
+      return;
+    }
     if (mesh.metadata?.isInteriorNftFrameHelper) {
-      mesh.setEnabled(frame.metadata.enabled !== false && helperVisible);
+      mesh.setEnabled(frame.metadata.enabled !== false && _interiorNftFrameHelpersVisible);
       mesh.isPickable = true;
     }
   });
@@ -25434,7 +25516,7 @@ function createInteriorNftFrameSlot(parent, config = {}) {
     mesh.parent = root;
     mesh.position = position;
     mesh.material = borderMat;
-    mesh.metadata = { interiorRuntime:true, isInteriorNftFrameHelper:true };
+    mesh.metadata = { interiorRuntime:true, isInteriorNftFrameBorder:true };
     mesh.isPickable = true;
     mesh._editRoot = root;
     return mesh;
@@ -25837,7 +25919,7 @@ async function renderInteriorGlbModel(parent, modelUrl) {
   clone.scaling = new BABYLON.Vector3(1, 1, 1);
   normalizeInteriorGlbModel(clone);
   clone.getChildMeshes?.(false).forEach(mesh => {
-    mesh.isPickable = false;
+    mesh.isPickable = true;
     mesh.receiveShadows = false;
     if (mesh.material) sharpenInteriorMaterialTextures(mesh.material);
     mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true, interiorGlbModel:true };
