@@ -993,6 +993,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div id="customInteriorModelStatus" class="admin-note">GLB: no file selected</div>
     <label class="admin-field">Upload MP3 <input id="customInteriorMusic" placeholder="/assets/interiors/custom/museum.mp3" readonly></label>
     <div id="customInteriorMusicStatus" class="admin-note">MP3: no file selected</div>
+    <div id="interiorAudioDebugStatus" class="admin-note">Interior audio: none</div>
     <label class="admin-field">Description <textarea id="customInteriorDescription" rows="2" placeholder="Purpose of this room"></textarea></label>
     <div class="admin-note">Interior lighting is editable per room: dim it, brighten it, or shift the color without adding heavy real lights.</div>
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
@@ -1007,6 +1008,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="document.getElementById('interiorMusicUploadInput').click()">Upload Music MP3</button>
       <button class="ctrl-btn" onclick="saveCustomInteriorFromAdmin()">Save Interior</button>
       <button class="ctrl-btn" onclick="saveInteriorLightingFromAdmin()">Save Lighting</button>
+      <button class="ctrl-btn" onclick="testPlayInteriorAudioFromAdmin()">Test Play Interior Audio</button>
+      <button class="ctrl-btn" onclick="stopInteriorAudioFromAdmin()">Stop Interior Audio</button>
+      <button class="ctrl-btn danger" onclick="clearInteriorAudioFromAdmin()">Clear Interior Audio</button>
       <button class="ctrl-btn" onclick="adjustActiveInteriorPlayerFloorOffset(0.05)">Raise Player Floor</button>
       <button class="ctrl-btn" onclick="adjustActiveInteriorPlayerFloorOffset(-0.05)">Lower Player Floor</button>
       <button class="ctrl-btn" onclick="resetActiveInteriorPlayerFloorOffset()">Reset Player Floor Offset</button>
@@ -8051,6 +8055,15 @@ const WeatherManager = {
   audioTracks: {},
   musicTrack: null,
   musicTrackVillageId: null,
+  interiorAudioTrack: null,
+  interiorAudioId: null,
+  interiorAudioPath: '',
+  interiorAudioTestPath: '',
+  interiorAudioAdminPaused: false,
+  interiorAudioHintShown: false,
+  interiorAudioLoadError: '',
+  interiorAudioStatusUpdatedAt: 0,
+  interiorAudioUnlockRetryArmed: false,
   oneShotTracks: {},
   audioCooldowns: {},
   nextEnvironmentalAudioAt: performance.now() + 18000,
@@ -8086,7 +8099,7 @@ function markAudioPlayFailure(audio, error) {
 }
 
 function recoverAutoplayBlockedAudio() {
-  [...Object.values(WeatherManager.audioTracks || {}), WeatherManager.musicTrack].forEach(audio => {
+  [...new Set([...Object.values(WeatherManager.audioTracks || {}), WeatherManager.musicTrack, WeatherManager.interiorAudioTrack])].forEach(audio => {
     if (!audio || !audio._blockedByAutoplay) return;
     audio._blockedByAutoplay = false;
     audio._unavailable = false;
@@ -8182,6 +8195,139 @@ function getWeatherAudioTrack(id, path) {
   return WeatherManager.audioTracks[id];
 }
 
+function normalizeInteriorAudioPath(path) {
+  const value = String(path || '').trim();
+  if (!value || !/\.mp3(\?|#|$)/i.test(value)) return '';
+  return value;
+}
+
+function getInteriorDefinitionAudioPath(definition = {}) {
+  return normalizeInteriorAudioPath(definition.musicPath || definition.ambiencePath || definition.audioPath || '');
+}
+
+function getActiveInteriorAudioPath() {
+  if (WeatherManager.interiorAudioTestPath) return normalizeInteriorAudioPath(WeatherManager.interiorAudioTestPath);
+  if (!ActiveInterior || WeatherManager.interiorAudioAdminPaused) return '';
+  return getInteriorDefinitionAudioPath(ActiveInterior) || getInteriorDefinitionAudioPath(getInteriorDefinition(ActiveInterior.interiorType));
+}
+
+function getInteriorAudioId(path = getActiveInteriorAudioPath()) {
+  const interiorKey = ActiveInterior?.targetInteriorId || ActiveInterior?.interiorType || 'admin-test';
+  return 'interior-audio-' + String(interiorKey + '-' + path).replace(/[^a-z0-9_-]+/gi, '_').slice(0, 96);
+}
+
+function getInteriorAudioTargetVolume() {
+  if (!WeatherManager.masterAudioEnabled || !WeatherManager.musicEnabled) return 0;
+  const blendedInteriorVolume = Math.sqrt(Math.max(0, WeatherManager.musicVolume) * Math.max(0, WeatherManager.ambienceVolume));
+  return WeatherManager.masterVolume * blendedInteriorVolume * .85;
+}
+
+function updateInteriorAudioStatus(message = '', force = false) {
+  const el = document.getElementById('interiorAudioDebugStatus');
+  if (!el) return;
+  const now = performance.now();
+  if (!force && !message && now - WeatherManager.interiorAudioStatusUpdatedAt < 750) return;
+  WeatherManager.interiorAudioStatusUpdatedAt = now;
+  const audio = WeatherManager.interiorAudioTrack;
+  const path = getActiveInteriorAudioPath() || WeatherManager.interiorAudioPath || document.getElementById('customInteriorMusic')?.value?.trim() || '';
+  const activeId = ActiveInterior?.targetInteriorId || ActiveInterior?.interiorType || 'none';
+  const playing = !!(audio && !audio.paused && !audio.ended && !audio._unavailable);
+  const error = WeatherManager.interiorAudioLoadError || audio?._loadError || '';
+  el.textContent = `Interior audio: ${activeId} | ${path || 'no MP3'} | ${playing ? 'playing' : 'stopped'}${error ? ' | error: ' + error : ''}${message ? ' | ' + message : ''}`;
+}
+
+function ensureInteriorAudioTrack(path = getActiveInteriorAudioPath()) {
+  const safePath = normalizeInteriorAudioPath(path);
+  if (!safePath) {
+    updateInteriorAudioStatus('no path');
+    return null;
+  }
+  const id = getInteriorAudioId(safePath);
+  let audio = WeatherManager.audioTracks[id];
+  if (!audio || audio._srcPath !== safePath) {
+    if (audio) {
+      try { audio.pause(); } catch(e) {}
+    }
+    audio = new Audio(safePath);
+    audio.loop = true;
+    audio.preload = 'none';
+    audio.volume = 0;
+    audio._targetVolume = 0;
+    audio._srcPath = safePath;
+    audio._unavailable = false;
+    audio._loadError = '';
+    audio.onerror = () => {
+      audio._unavailable = true;
+      audio._unavailableAt = performance.now();
+      audio._targetVolume = 0;
+      audio._loadError = 'load failed';
+      WeatherManager.interiorAudioLoadError = 'load failed: ' + safePath;
+      if (adminMode) console.warn('Interior audio failed to load:', { path:safePath, activeInterior:ActiveInterior?.targetInteriorId || ActiveInterior?.interiorType || null });
+      updateInteriorAudioStatus();
+    };
+    WeatherManager.audioTracks[id] = audio;
+  }
+  WeatherManager.interiorAudioTrack = audio;
+  WeatherManager.interiorAudioId = id;
+  WeatherManager.interiorAudioPath = safePath;
+  WeatherManager.interiorAudioLoadError = audio._loadError || '';
+  return audio;
+}
+
+function getInteriorAmbienceTargets() {
+  const targets = {};
+  const path = getActiveInteriorAudioPath();
+  if (!path) {
+    updateInteriorAudioStatus();
+    return targets;
+  }
+  const audio = ensureInteriorAudioTrack(path);
+  if (!audio || audio._unavailable) {
+    updateInteriorAudioStatus(audio?._loadError || 'unavailable');
+    return targets;
+  }
+  targets[WeatherManager.interiorAudioId] = getInteriorAudioTargetVolume();
+  updateInteriorAudioStatus();
+  return targets;
+}
+
+function stopInteriorAudio(immediate = false) {
+  WeatherManager.interiorAudioTestPath = '';
+  const audio = WeatherManager.interiorAudioTrack;
+  if (audio) {
+    audio._targetVolume = 0;
+    if (immediate) {
+      try { audio.pause(); audio.currentTime = 0; } catch(e) {}
+      audio.volume = 0;
+    }
+  }
+  updateInteriorAudioStatus(immediate ? 'stopped' : 'fading');
+}
+
+function retryInteriorAudioAfterGesture() {
+  WeatherManager.interiorAudioUnlockRetryArmed = false;
+  WeatherManager.browserAudioUnlocked = true;
+  recoverAutoplayBlockedAudio();
+  updateWeatherAudio();
+  updateVillageMusic();
+  updateInteriorAudioStatus('unlock retry', true);
+}
+
+function armInteriorAudioUnlockRetry() {
+  if (WeatherManager.interiorAudioUnlockRetryArmed) return;
+  WeatherManager.interiorAudioUnlockRetryArmed = true;
+  window.addEventListener('pointerdown', retryInteriorAudioAfterGesture, { once:true, passive:true });
+  window.addEventListener('touchstart', retryInteriorAudioAfterGesture, { once:true, passive:true });
+  window.addEventListener('keydown', retryInteriorAudioAfterGesture, { once:true });
+}
+
+function promptInteriorAudioUnlock() {
+  if (WeatherManager.interiorAudioHintShown) return;
+  WeatherManager.interiorAudioHintShown = true;
+  armInteriorAudioUnlockRetry();
+  showToast('Click once to enable dojo audio.', 4200);
+}
+
 function getWeatherAudioTargets() {
   const targets = {};
   if (ActiveInterior) return targets;
@@ -8213,14 +8359,27 @@ function getVillageAmbienceTargets() {
 }
 
 function updateWeatherAudio() {
-  const targets = { ...getVillageAmbienceTargets(), ...getWeatherAudioTargets() };
+  const targets = { ...getVillageAmbienceTargets(), ...getWeatherAudioTargets(), ...getInteriorAmbienceTargets() };
   Object.entries(WeatherManager.audioTracks).forEach(([id, audio]) => {
     if (!audio || audio._unavailable) return;
     audio._targetVolume = targets[id] || 0;
     audio.volume += (audio._targetVolume - audio.volume) * .045;
     if (audio._targetVolume > .01 && audio.paused) {
-      if (!WeatherManager.browserAudioUnlocked) return;
-      audio.play().catch(error => { markAudioPlayFailure(audio, error); });
+      if (!WeatherManager.browserAudioUnlocked) {
+        if (id === WeatherManager.interiorAudioId) promptInteriorAudioUnlock();
+        return;
+      }
+      audio.play().catch(error => {
+        markAudioPlayFailure(audio, error);
+        if (id === WeatherManager.interiorAudioId) {
+          if (isBrowserAutoplayBlock(error)) promptInteriorAudioUnlock();
+          else {
+            WeatherManager.interiorAudioLoadError = error?.message || 'play failed';
+            if (adminMode) console.warn('Interior audio play failed:', { path:WeatherManager.interiorAudioPath, error });
+          }
+          updateInteriorAudioStatus();
+        }
+      });
     } else if (audio._targetVolume <= .01 && audio.volume < .015 && !audio.paused) {
       audio.pause();
     }
@@ -8562,9 +8721,13 @@ function toggleFootstepAudio() {
 function toggleMusicAudio() {
   WeatherManager.musicEnabled = !WeatherManager.musicEnabled;
   if (WeatherManager.musicEnabled) unlockVillageMusic();
-  if (!WeatherManager.musicEnabled && WeatherManager.musicTrack) WeatherManager.musicTrack._targetVolume = 0;
+  if (!WeatherManager.musicEnabled) {
+    if (WeatherManager.musicTrack) WeatherManager.musicTrack._targetVolume = 0;
+    if (WeatherManager.interiorAudioTrack) WeatherManager.interiorAudioTrack._targetVolume = 0;
+  }
   persistAudioSettings();
   updateAudioControls();
+  updateWeatherAudio();
   showToast(WeatherManager.musicEnabled ? 'Music enabled' : 'Music muted');
 }
 
@@ -8580,11 +8743,14 @@ function setMasterVolume(value) {
 function setAmbienceVolume(value) {
   WeatherManager.ambienceVolume = clampAudioVolume(value);
   persistAudioSettings();
+  updateWeatherAudio();
 }
 
 function setMusicVolume(value) {
   WeatherManager.musicVolume = clampAudioVolume(value);
   persistAudioSettings();
+  updateWeatherAudio();
+  updateVillageMusic();
 }
 
 function setWeatherVolume(value) {
@@ -23254,6 +23420,7 @@ function getInteriorDefinition(type) {
   if (INTERIOR_TYPES[type]) return { id:type, builtIn:true, ...INTERIOR_TYPES[type] };
   const custom = getCustomInteriorDefinition(type);
   if (custom) {
+    const musicPath = getInteriorDefinitionAudioPath(custom);
     return {
       id: custom.id,
       builtIn: false,
@@ -23263,7 +23430,9 @@ function getInteriorDefinition(type) {
       prompt: custom.promptText || 'Press O to Enter',
       description: custom.description || '',
       modelUrl: custom.modelUrl || '',
-      musicPath: custom.musicPath || '',
+      musicPath,
+      ambiencePath: musicPath,
+      audioPath: musicPath,
       accent: new BABYLON.Color3(.48,.78,.72)
     };
   }
@@ -23278,6 +23447,8 @@ function getInteriorDefinition(type) {
       description: 'Custom Rebel interior room.',
       modelUrl: '',
       musicPath: '',
+      ambiencePath: '',
+      audioPath: '',
       accent: new BABYLON.Color3(.48,.78,.72)
     };
   }
@@ -23351,12 +23522,14 @@ function loadSelectedCustomInteriorIntoAdmin() {
   set('customInteriorStyle', def.style || 'custom_glb');
   set('customInteriorPrompt', def.promptText || '');
   set('customInteriorModel', def.modelUrl || '');
-  set('customInteriorMusic', def.musicPath || '');
+  const musicPath = getInteriorDefinitionAudioPath(def);
+  set('customInteriorMusic', musicPath);
   set('customInteriorDescription', def.description || '');
   const modelStatus = document.getElementById('customInteriorModelStatus');
   const musicStatus = document.getElementById('customInteriorMusicStatus');
   if (modelStatus) modelStatus.textContent = def.modelUrl ? 'GLB: ' + def.modelUrl : 'GLB: no file selected';
-  if (musicStatus) musicStatus.textContent = def.musicPath ? 'MP3: ' + def.musicPath : 'MP3: no file selected';
+  if (musicStatus) musicStatus.textContent = musicPath ? 'MP3: ' + musicPath : 'MP3: no file selected';
+  updateInteriorAudioStatus('loaded custom interior audio', true);
   hydrateInteriorLightingAdmin(def.id);
   const typeSelect = document.getElementById('interiorTypeSelect');
   if (typeSelect) typeSelect.value = def.id;
@@ -23375,6 +23548,7 @@ function saveCustomInteriorFromAdmin() {
   if (!name) { showToast('Interior name required'); return; }
   if (!document.getElementById('customInteriorModel')?.value?.trim()) { showToast('Upload an interior GLB first'); return; }
   const definitions = getCustomInteriorDefinitions().filter(item => item.id !== id);
+  const musicPath = normalizeInteriorAudioPath(document.getElementById('customInteriorMusic')?.value?.trim() || '');
   const def = {
     id,
     name,
@@ -23382,7 +23556,9 @@ function saveCustomInteriorFromAdmin() {
     style: document.getElementById('customInteriorStyle')?.value || 'custom_glb',
     promptText: document.getElementById('customInteriorPrompt')?.value?.trim() || getInteriorEntrancePromptText(id),
     modelUrl: document.getElementById('customInteriorModel')?.value?.trim() || '',
-    musicPath: document.getElementById('customInteriorMusic')?.value?.trim() || '',
+    musicPath,
+    ambiencePath: musicPath,
+    audioPath: musicPath,
     description: document.getElementById('customInteriorDescription')?.value?.trim() || '',
     updatedAt: new Date().toISOString()
   };
@@ -23400,7 +23576,9 @@ function saveCustomInteriorFromAdmin() {
   if (promptInput) promptInput.value = getInteriorEntrancePromptText(id);
   syncDoorTargetInteriorId({ force:true });
   saveInteriorLightingConfigForKey(id);
+  syncInteriorDefinitionToEntrances(id, getInteriorDefinition(id));
   updateInteriorFloorOffsetReadout();
+  updateInteriorAudioStatus('saved', true);
   showToast('Custom interior saved: ' + def.name);
 }
 
@@ -23488,6 +23666,8 @@ async function removeCustomInteriorUpload(kind) {
           id,
           modelUrl: isMusic ? item.modelUrl : '',
           musicPath: isMusic ? '' : item.musicPath,
+          ambiencePath: isMusic ? '' : item.ambiencePath,
+          audioPath: isMusic ? '' : item.audioPath,
           updatedAt: new Date().toISOString()
         };
       });
@@ -23496,6 +23676,12 @@ async function removeCustomInteriorUpload(kind) {
       const customSelect = document.getElementById('customInteriorSelect');
       if (customSelect) customSelect.value = id;
     }
+  }
+  if (isMusic) {
+    updateActiveInteriorAudioPathForAdmin(id, '');
+    if (id) syncInteriorDefinitionToEntrances(id, getInteriorDefinition(id));
+    stopInteriorAudio(true);
+    updateInteriorAudioStatus('removed', true);
   }
   if (!deleteFile) {
     showToast((isMusic ? 'MP3' : 'GLB') + ' removed from interior');
@@ -23507,6 +23693,166 @@ async function removeCustomInteriorUpload(kind) {
   } catch(error) {
     showToast('Removed from interior. GitHub delete failed: ' + (error.message || 'try again'), 9000);
   }
+}
+
+function getSelectedCustomInteriorAdminId() {
+  return (
+    document.getElementById('customInteriorId')?.value?.trim() ||
+    document.getElementById('customInteriorSelect')?.value ||
+    document.getElementById('interiorTypeSelect')?.value ||
+    ''
+  );
+}
+
+function setInteriorMusicInputPath(path = '') {
+  const safePath = normalizeInteriorAudioPath(path);
+  const input = document.getElementById('customInteriorMusic');
+  const status = document.getElementById('customInteriorMusicStatus');
+  if (input) input.value = safePath;
+  if (status) status.textContent = safePath ? 'MP3: ' + safePath : 'MP3: no file selected';
+  updateInteriorAudioStatus(safePath ? 'path ready' : 'path cleared', true);
+  return safePath;
+}
+
+function updateActiveInteriorAudioPathForAdmin(id, path) {
+  if (!ActiveInterior) return;
+  const matchesActiveInterior =
+    !id ||
+    ActiveInterior.interiorType === id ||
+    ActiveInterior.targetInteriorId === id ||
+    getInteriorEntranceDefaults(id).targetInteriorId === ActiveInterior.targetInteriorId;
+  if (!matchesActiveInterior) return;
+  ActiveInterior.musicPath = path;
+  ActiveInterior.ambiencePath = path;
+  ActiveInterior.audioPath = path;
+}
+
+function persistCustomInteriorAudioPathFromAdmin(path) {
+  const id = getSelectedCustomInteriorAdminId();
+  if (!id || INTERIOR_TYPES[id]) return false;
+  let changed = false;
+  let raw = [];
+  try {
+    raw = JSON.parse(localStorage.getItem(CUSTOM_INTERIORS_KEY) || '[]');
+  } catch(e) {
+    raw = [];
+  }
+  if (!Array.isArray(raw)) raw = [];
+  const next = raw.map(item => {
+    const itemId = INTERIOR_TYPES[item.id] ? 'custom_' + item.id : item.id;
+    if (itemId !== id && item.id !== id) return item;
+    changed = true;
+    return {
+      ...item,
+      id: itemId || id,
+      musicPath: path,
+      ambiencePath: path,
+      audioPath: path,
+      updatedAt: new Date().toISOString()
+    };
+  });
+  if (!changed) return false;
+  localStorage.setItem(CUSTOM_INTERIORS_KEY, JSON.stringify(next));
+  refreshInteriorAdminOptions();
+  const customSelect = document.getElementById('customInteriorSelect');
+  const typeSelect = document.getElementById('interiorTypeSelect');
+  if (customSelect) customSelect.value = id;
+  if (typeSelect) typeSelect.value = id;
+  updateActiveInteriorAudioPathForAdmin(id, path);
+  syncInteriorDefinitionToEntrances(id, getInteriorDefinition(id));
+  return true;
+}
+
+function getInteriorAudioPathFromAdmin() {
+  return normalizeInteriorAudioPath(
+    document.getElementById('customInteriorMusic')?.value?.trim() ||
+    getInteriorDefinitionAudioPath(getCustomInteriorDefinition(getSelectedCustomInteriorAdminId()) || {}) ||
+    getInteriorDefinitionAudioPath(ActiveInterior || {}) ||
+    ''
+  );
+}
+
+function syncInteriorDefinitionToEntrances(id, definition = null) {
+  if (!id || !scene?.transformNodes) return false;
+  const def = definition || getInteriorDefinition(id);
+  const audioPath = getInteriorDefinitionAudioPath(def);
+  const syncedDef = {
+    ...def,
+    musicPath: audioPath,
+    ambiencePath: audioPath,
+    audioPath
+  };
+  const defaultTargetId = getInteriorEntranceDefaults(id).targetInteriorId;
+  let changed = false;
+  scene.transformNodes.forEach(node => {
+    if (node?.metadata?.type !== 'interior_entrance') return;
+    const matches =
+      node.metadata.interiorType === id ||
+      node.metadata.targetInteriorId === id ||
+      node.metadata.targetInteriorId === defaultTargetId;
+    if (!matches) return;
+    node.metadata.interiorDefinition = {
+      ...(node.metadata.interiorDefinition || {}),
+      ...syncedDef
+    };
+    changed = true;
+  });
+  if (changed) triggerAutoSave();
+  return changed;
+}
+
+function testPlayInteriorAudioFromAdmin() {
+  const path = getInteriorAudioPathFromAdmin();
+  if (!path) {
+    showToast('No interior MP3 saved for this room yet');
+    updateInteriorAudioStatus('no path', true);
+    return;
+  }
+  WeatherManager.interiorAudioAdminPaused = false;
+  WeatherManager.interiorAudioTestPath = path;
+  WeatherManager.interiorAudioHintShown = false;
+  ensureInteriorAudioTrack(path);
+  unlockVillageMusic();
+  updateWeatherAudio();
+  const audible = WeatherManager.masterAudioEnabled && WeatherManager.musicEnabled && WeatherManager.masterVolume > 0 && WeatherManager.musicVolume > 0 && WeatherManager.ambienceVolume > 0;
+  updateInteriorAudioStatus('test', true);
+  showToast(audible ? 'Testing interior audio' : 'Interior audio ready, but audio is muted or volume is 0');
+}
+
+function stopInteriorAudioFromAdmin() {
+  WeatherManager.interiorAudioAdminPaused = true;
+  stopInteriorAudio(true);
+  updateWeatherAudio();
+  showToast('Interior audio stopped');
+}
+
+function clearInteriorAudioFromAdmin() {
+  const id = getSelectedCustomInteriorAdminId();
+  const path = setInteriorMusicInputPath('');
+  persistCustomInteriorAudioPathFromAdmin(path);
+  updateActiveInteriorAudioPathForAdmin(id, path);
+  WeatherManager.interiorAudioAdminPaused = true;
+  stopInteriorAudio(true);
+  showToast('Interior audio cleared');
+}
+
+function getInteriorAudioDebug() {
+  const audio = WeatherManager.interiorAudioTrack;
+  const debug = {
+    activeInteriorId: ActiveInterior?.targetInteriorId || ActiveInterior?.interiorType || null,
+    activeInteriorName: ActiveInterior ? getInteriorTypeLabel(ActiveInterior.interiorType) : '',
+    savedAmbiencePath: getActiveInteriorAudioPath() || WeatherManager.interiorAudioPath || getInteriorAudioPathFromAdmin(),
+    playing: !!(audio && !audio.paused && !audio.ended && !audio._unavailable),
+    loadError: WeatherManager.interiorAudioLoadError || audio?._loadError || '',
+    masterAudioEnabled: WeatherManager.masterAudioEnabled,
+    musicEnabled: WeatherManager.musicEnabled,
+    masterVolume: WeatherManager.masterVolume,
+    musicVolume: WeatherManager.musicVolume,
+    ambienceVolume: WeatherManager.ambienceVolume
+  };
+  if (adminMode) console.debug('Interior audio debug', debug);
+  updateInteriorAudioStatus('debug', true);
+  return debug;
 }
 
 function getInteriorUploadStatus(file, type) {
@@ -23726,9 +24072,18 @@ async function handleInteriorMusicUpload(event) {
   showToast('Uploading interior music...', 30000);
   try {
     const path = await uploadInteriorFileToGitHub(file, 'music');
-    document.getElementById('customInteriorMusic').value = path;
+    setInteriorMusicInputPath(path);
     renderInteriorUploadStatus('customInteriorMusicStatus', file, 'mp3', path);
-    showToast('Interior music uploaded');
+    saveCustomInteriorFromAdmin();
+    persistCustomInteriorAudioPathFromAdmin(path);
+    WeatherManager.interiorAudioAdminPaused = false;
+    WeatherManager.interiorAudioLoadError = '';
+    if (ActiveInterior) {
+      ensureInteriorAudioTrack(path);
+      updateWeatherAudio();
+    }
+    updateInteriorAudioStatus('uploaded', true);
+    showToast('Interior music uploaded and saved');
   } catch(error) {
     showToast('Interior music upload failed: ' + (error.message || 'try again'), 9000);
   }
@@ -26448,6 +26803,9 @@ function enterInterior(entrance, options = {}) {
     try {
       const returnPosition = getInteriorReturnPosition(entrance);
       root = buildInteriorRoom(entrance);
+      const currentDef = getInteriorDefinition(type);
+      const savedDef = entrance.metadata.interiorDefinition || {};
+      const interiorAudioPath = getInteriorDefinitionAudioPath(currentDef) || getInteriorDefinitionAudioPath(savedDef);
       ActiveInterior = {
         root,
         entranceName: entrance.name,
@@ -26461,9 +26819,16 @@ function enterInterior(entrance, options = {}) {
         bounds: root.metadata?.bounds || null,
         modelUrl: root.metadata?.modelUrl || '',
         loadedGlbRoot: null,
-        musicPath: getInteriorDefinition(type).musicPath || entrance.metadata.interiorDefinition?.musicPath || '',
+        musicPath: interiorAudioPath,
+        ambiencePath: interiorAudioPath,
+        audioPath: interiorAudioPath,
         previousVillageId: CURRENT_VILLAGE_ID
       };
+      WeatherManager.interiorAudioTestPath = '';
+      WeatherManager.interiorAudioAdminPaused = false;
+      WeatherManager.interiorAudioHintShown = false;
+      WeatherManager.interiorAudioLoadError = '';
+      if (interiorAudioPath) ensureInteriorAudioTrack(interiorAudioPath);
       setVillageRuntimeEnabled(false);
       hydrateInteriorLightingAdmin(ActiveInterior.targetInteriorId || type);
       applyInteriorLightingConfig(ActiveInterior.targetInteriorId || type);
@@ -26484,12 +26849,17 @@ function enterInterior(entrance, options = {}) {
       walkMode = true;
       setInteriorTitle(getInteriorTypeLabel(type), entrance.metadata.targetInteriorId || 'Interior');
       recordInteriorQuestHook(entrance, 'enterInterior');
+      updateWeatherAudio();
+      updateVillageMusic();
+      updateInteriorAudioStatus('entered', true);
+      if (adminMode) getInteriorAudioDebug();
       updateQuestTracker();
       setVillageTravelFade(false);
       if (typeof options.onReady === 'function') options.onReady(ActiveInterior);
       setTimeout(() => setInteriorTitle('', ''), 2600);
     } catch(error) {
       console.error('Interior enter failed', error);
+      stopInteriorAudio(true);
       disposeInteriorRuntime(root);
       ActiveInterior = null;
       setVillageRuntimeEnabled(true);
@@ -26569,6 +26939,7 @@ function returnToVillageFromInterior() {
     const returnPosition = ActiveInterior.returnPosition?.clone?.() || new BABYLON.Vector3(0, 0, 0);
     const returnRotationY = ActiveInterior.returnRotationY || 0;
     ActiveInterior = null;
+    stopInteriorAudio(false);
     setVillageRuntimeEnabled(true);
     if (charMesh) {
       charMesh.position.copyFrom(returnPosition);
@@ -26578,6 +26949,9 @@ function returnToVillageFromInterior() {
       if (Number.isFinite(terrainY)) groundPlayableVisualToTerrain(terrainY);
     }
     setInteriorTitle('', '');
+    updateWeatherAudio();
+    updateVillageMusic();
+    updateInteriorAudioStatus('returned to village', true);
     setVillageTravelFade(false);
     showToast('Returned to village');
   }, 220);
@@ -26917,6 +27291,10 @@ Object.assign(window, {
   archiveSelectedCustomInterior,
   handleInteriorGlbUpload,
   handleInteriorMusicUpload,
+  testPlayInteriorAudioFromAdmin,
+  stopInteriorAudioFromAdmin,
+  clearInteriorAudioFromAdmin,
+  getInteriorAudioDebug,
   handleInteriorVideoUpload,
   handleInteriorVideoPosterUpload,
   adjustActiveInteriorPlayerFloorOffset,
@@ -28230,6 +28608,10 @@ window.archiveSelectedCustomInterior = archiveSelectedCustomInterior;
 window.removeCustomInteriorUpload = removeCustomInteriorUpload;
 window.handleInteriorGlbUpload = handleInteriorGlbUpload;
 window.handleInteriorMusicUpload = handleInteriorMusicUpload;
+window.testPlayInteriorAudioFromAdmin = testPlayInteriorAudioFromAdmin;
+window.stopInteriorAudioFromAdmin = stopInteriorAudioFromAdmin;
+window.clearInteriorAudioFromAdmin = clearInteriorAudioFromAdmin;
+window.getInteriorAudioDebug = getInteriorAudioDebug;
 window.handleInteriorVideoUpload = handleInteriorVideoUpload;
 window.handleInteriorVideoPosterUpload = handleInteriorVideoPosterUpload;
 window.addInteriorDisplayFromAdmin = addInteriorDisplayFromAdmin;
