@@ -793,7 +793,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 	    <div class="admin-note">Builds local quest configs that can point to movable Quest Target Markers, badges, and Journal entries.</div>
 	    <input id="questBuilderSearch" placeholder="Search quests..." oninput="refreshQuestBuilderOptions()" style="width:100%;margin-bottom:6px">
 	    <label class="admin-field">Select Quest
-	      <select id="questBuilderSelect" class="admin-select" onchange="loadQuestBuilderSelection()"></select>
+	      <select id="questBuilderSelect" class="admin-select" onchange="handleQuestBuilderSelectChange(event)"></select>
 	    </label>
 	    <div id="questBuilderStatus" class="admin-note">Select a quest to edit.</div>
 	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
@@ -806,6 +806,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 	      <label class="admin-field">Quest ID <input id="questBuilderQuestId" placeholder="quest-101"></label>
 	      <label class="admin-field">Type
 	        <select id="questBuilderType" class="admin-select">
+	          <option value=""></option>
 	          <option value="Hub">Hub</option>
 	          <option value="Book 1 Main">Book 1 Main</option>
 	          <option value="Side">Side</option>
@@ -823,6 +824,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
 	      <label class="admin-field">Objective Type
 	        <select id="questBuilderObjectiveType" class="admin-select">
+	          <option value=""></option>
 	          <option value="talkToNpc">talkToNpc</option>
 	          <option value="visitArea">visitArea</option>
 	          <option value="interactSign">interactSign</option>
@@ -842,6 +844,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 	      </label>
 	      <label class="admin-field">Target Type
 	        <select id="questBuilderTargetType" class="admin-select">
+	          <option value=""></option>
 	          <option value="Area">Area</option>
 	          <option value="NPC">NPC</option>
 	          <option value="Door">Door</option>
@@ -864,6 +867,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 	      <label class="admin-field">Radius <input id="questBuilderRadius" type="number" min="0.5" max="80" step="0.5" value="8"></label>
 	      <label class="admin-field">Enabled
 	        <select id="questBuilderEnabled" class="admin-select">
+	          <option value=""></option>
 	          <option value="true">Enabled</option>
 	          <option value="false">Disabled</option>
 	        </select>
@@ -10043,6 +10047,8 @@ function getQuestBuilderObjectId(quest = {}) {
   return quest.objectId || quest.targetId || quest.targetNpcId || quest.targetInteriorId || quest.targetVillageId || quest.targetObjectId || '';
 }
 
+let QuestBuilderDraftQuestId = null;
+
 function getQuestBuilderCatalog(options = {}) {
   const includeArchived = !!options.includeArchived;
   const byId = {};
@@ -10067,9 +10073,22 @@ function getQuestBuilderCatalog(options = {}) {
   return Object.values(byId).sort((a, b) => String(a.questId).localeCompare(String(b.questId)));
 }
 
+function getQuestBuilderQuestById(questId, options = {}) {
+  if (!questId) return null;
+  const includeArchived = !!options.includeArchived;
+  const existing = QUEST_DEFINITIONS[questId] || null;
+  const localConfig = QuestBuilderConfig?.[questId] || null;
+  if (localConfig) {
+    const archived = localConfig.archived === true || localConfig.enabled === false || localConfig.enabled === 'false';
+    if (!includeArchived && archived) return null;
+    return { ...(existing || {}), ...localConfig, questId };
+  }
+  return existing;
+}
+
 function getQuestBuilderSelectedQuest(options = {}) {
   const id = document.getElementById('questBuilderSelect')?.value || '';
-  return getQuestBuilderCatalog({ includeArchived:true }).find(quest => quest.questId === id) || QUEST_DEFINITIONS[id] || null;
+  return getQuestBuilderQuestById(id, { includeArchived:true });
 }
 
 function refreshQuestBuilderBadgeOptions() {
@@ -10079,13 +10098,17 @@ function refreshQuestBuilderBadgeOptions() {
   const options = ['<option value="">No badge reward</option>']
     .concat(getBadgeDefinitions({ includeArchived:true }).map(badge => `<option value="${escapeHTML(badge.badgeId)}">${escapeHTML(badge.name)}</option>`));
   select.innerHTML = options.join('');
-  if (current) select.value = current;
+  if (current && ![...select.options].some(option => option.value === current)) {
+    select.insertAdjacentHTML('beforeend', `<option value="${escapeHTML(current)}">Missing badge: ${escapeHTML(current)}</option>`);
+  }
+  select.value = current || '';
 }
 
-function refreshQuestBuilderOptions() {
+function refreshQuestBuilderOptions(options = {}) {
   const select = document.getElementById('questBuilderSelect');
   if (!select) return;
-  const current = select.value;
+  wireQuestBuilderControls();
+  const current = options.selectedId || select.value;
   const query = String(document.getElementById('questBuilderSearch')?.value || '').trim().toLowerCase();
   const quests = getQuestBuilderCatalog()
     .filter(quest => {
@@ -10096,43 +10119,121 @@ function refreshQuestBuilderOptions() {
   if (current && quests.some(quest => quest.questId === current)) select.value = current;
   if (!select.value && select.options.length) select.value = select.options[0].value;
   refreshQuestBuilderBadgeOptions();
-  loadQuestBuilderSelection(false);
+  if (options.loadSelection !== false) loadQuestBuilderSelection(select.value, false);
 }
 
 function setQuestBuilderField(id, value) {
   const el = document.getElementById(id);
-  if (el) el.value = value ?? '';
+  if (!el) return;
+  const nextValue = value ?? '';
+  if (el.tagName === 'SELECT' && nextValue && ![...el.options].some(option => option.value === String(nextValue))) {
+    el.insertAdjacentHTML('beforeend', `<option value="${escapeHTML(nextValue)}">${escapeHTML(nextValue)}</option>`);
+  }
+  el.value = nextValue;
 }
 
-function loadQuestBuilderSelection(updateStatus = true) {
-  const quest = getQuestBuilderSelectedQuest({ includeArchived:true });
+function getFirstQuestBuilderStep(quest = {}) {
+  return (quest.steps || []).find(step => step && step.id !== 'complete') || {};
+}
+
+function getQuestBuilderObjectiveText(quest = {}, step = getFirstQuestBuilderStep(quest)) {
+  if (step.objective) return step.objective;
+  if (quest.objectiveText) return quest.objectiveText;
+  if (quest.objective) return quest.objective;
+  if (Array.isArray(quest.objectives) && quest.objectives.length) {
+    const first = quest.objectives[0];
+    return typeof first === 'string' ? first : (first?.objective || '');
+  }
+  return '';
+}
+
+function getQuestBuilderPrereqText(quest = {}) {
+  if (Array.isArray(quest.prerequisites)) return quest.prerequisites.join(', ');
+  return quest.prerequisiteQuestId || quest.prereq || '';
+}
+
+function getQuestBuilderEnabledValue(quest = {}) {
+  if (!Object.prototype.hasOwnProperty.call(quest, 'enabled')) return '';
+  return quest.enabled === false || quest.enabled === 'false' ? 'false' : 'true';
+}
+
+function getQuestBuilderFormModel(quest = {}) {
+  const step = getFirstQuestBuilderStep(quest);
+  const targetType = step.targetType || quest.targetType || '';
+  const objectiveType = step.objectiveType || quest.objectiveType || '';
+  return {
+    questId:quest.questId || quest.id || '',
+    type:quest.type || inferQuestBuilderType(quest) || '',
+    title:quest.title || quest.name || '',
+    chapter:quest.chapter || '',
+    village:quest.village || quest.villageId || '',
+    primaryNpc:quest.primaryNpc || '',
+    description:quest.description || '',
+    objectiveType,
+    targetType,
+    objectiveText:getQuestBuilderObjectiveText(quest, step),
+    targetMarkerId:step.targetMarkerId || quest.targetMarkerId || '',
+    objectId:getQuestBuilderObjectId({ ...quest, ...step }),
+    radius:Object.prototype.hasOwnProperty.call(step, 'radius') ? step.radius : (Object.prototype.hasOwnProperty.call(quest, 'radius') ? quest.radius : ''),
+    enabled:getQuestBuilderEnabledValue(quest),
+    nextQuestId:quest.nextQuestId || quest.nextQuest || '',
+    prerequisites:getQuestBuilderPrereqText(quest),
+    journalEntryId:quest.journalEntryId || '',
+    journalText:quest.journalText || quest.journalEntry || '',
+    badgeRewardId:quest.badgeRewardId || '',
+    badgeProgressAmount:Object.prototype.hasOwnProperty.call(quest, 'badgeProgressAmount') ? quest.badgeProgressAmount : '',
+    progressionRewardAmount:Object.prototype.hasOwnProperty.call(quest, 'progressionRewardAmount') ? quest.progressionRewardAmount : ''
+  };
+}
+
+function loadQuestBuilderSelection(questIdOrEvent = null, updateStatus = true) {
+  const requestedId = typeof questIdOrEvent === 'string'
+    ? questIdOrEvent
+    : (questIdOrEvent?.target?.value || document.getElementById('questBuilderSelect')?.value || '');
+  const select = document.getElementById('questBuilderSelect');
+  if (select && requestedId && select.value !== requestedId) select.value = requestedId;
+  const quest = getQuestBuilderQuestById(requestedId || select?.value, { includeArchived:true });
   if (!quest) {
     updateQuestBuilderStatus('Select or create a quest.');
     return;
   }
-  const normalized = normalizeQuestBuilderQuest({ ...quest, custom: quest.customFromQuestBuilder || quest.custom });
-  setQuestBuilderField('questBuilderQuestId', normalized.questId);
-  setQuestBuilderField('questBuilderType', inferQuestBuilderType(normalized));
-  setQuestBuilderField('questBuilderTitle', normalized.title);
-  setQuestBuilderField('questBuilderChapter', normalized.chapter || '');
-  setQuestBuilderField('questBuilderVillage', normalized.village || '');
-  setQuestBuilderField('questBuilderPrimaryNpc', normalized.primaryNpc || '');
-  setQuestBuilderField('questBuilderDescription', normalized.description || '');
-  setQuestBuilderField('questBuilderObjectiveType', normalized.objectiveType || 'visitArea');
-  setQuestBuilderField('questBuilderTargetType', normalizeQuestTargetType(normalized.targetType || 'Area'));
-  setQuestBuilderField('questBuilderObjectiveText', normalized.objectiveText || getQuestObjectiveDisplayText(normalized.questId, getFirstQuestStepId(normalized.questId)));
-  setQuestBuilderField('questBuilderTargetMarkerId', normalized.targetMarkerId || '');
-  setQuestBuilderField('questBuilderObjectId', getQuestBuilderObjectId(normalized));
-  setQuestBuilderField('questBuilderRadius', normalized.radius || 8);
-  setQuestBuilderField('questBuilderEnabled', normalized.enabled === false ? 'false' : 'true');
-  setQuestBuilderField('questBuilderNextQuest', normalized.nextQuestId || '');
-  setQuestBuilderField('questBuilderPrereq', (normalized.prerequisites || []).join(', '));
-  setQuestBuilderField('questBuilderJournalEntryId', normalized.journalEntryId || '');
-  setQuestBuilderField('questBuilderJournalText', normalized.journalText || normalized.journalEntry || '');
-  setQuestBuilderField('questBuilderBadgeRewardId', normalized.badgeRewardId || '');
-  setQuestBuilderField('questBuilderBadgeProgressAmount', normalized.badgeProgressAmount || 0);
-  setQuestBuilderField('questBuilderProgressRewardAmount', Number.isFinite(Number(normalized.progressionRewardAmount)) ? normalized.progressionRewardAmount : PROGRESSION_POINTS.quest);
+  QuestBuilderDraftQuestId = null;
+  const form = getQuestBuilderFormModel(quest);
+  setQuestBuilderField('questBuilderQuestId', form.questId);
+  setQuestBuilderField('questBuilderType', form.type);
+  setQuestBuilderField('questBuilderTitle', form.title);
+  setQuestBuilderField('questBuilderChapter', form.chapter);
+  setQuestBuilderField('questBuilderVillage', form.village);
+  setQuestBuilderField('questBuilderPrimaryNpc', form.primaryNpc);
+  setQuestBuilderField('questBuilderDescription', form.description);
+  setQuestBuilderField('questBuilderObjectiveType', form.objectiveType);
+  setQuestBuilderField('questBuilderTargetType', form.targetType);
+  setQuestBuilderField('questBuilderObjectiveText', form.objectiveText);
+  setQuestBuilderField('questBuilderTargetMarkerId', form.targetMarkerId);
+  setQuestBuilderField('questBuilderObjectId', form.objectId);
+  setQuestBuilderField('questBuilderRadius', form.radius);
+  setQuestBuilderField('questBuilderEnabled', form.enabled);
+  setQuestBuilderField('questBuilderNextQuest', form.nextQuestId);
+  setQuestBuilderField('questBuilderPrereq', form.prerequisites);
+  setQuestBuilderField('questBuilderJournalEntryId', form.journalEntryId);
+  setQuestBuilderField('questBuilderJournalText', form.journalText);
+  setQuestBuilderField('questBuilderBadgeRewardId', form.badgeRewardId);
+  setQuestBuilderField('questBuilderBadgeProgressAmount', form.badgeProgressAmount);
+  setQuestBuilderField('questBuilderProgressRewardAmount', form.progressionRewardAmount);
   if (updateStatus) updateQuestBuilderStatus();
+}
+
+function handleQuestBuilderSelectChange(event) {
+  loadQuestBuilderSelection(event?.target?.value || '', true);
+}
+
+function wireQuestBuilderControls() {
+  const select = document.getElementById('questBuilderSelect');
+  if (select && select.dataset.questBuilderWired !== '1') {
+    select.addEventListener('change', handleQuestBuilderSelectChange);
+    select.addEventListener('input', handleQuestBuilderSelectChange);
+    select.dataset.questBuilderWired = '1';
+  }
 }
 
 function readQuestBuilderForm() {
@@ -10182,7 +10283,7 @@ function getUniqueQuestBuilderId(base = 'quest-101') {
 function saveQuestBuilderQuest() {
   const oldId = document.getElementById('questBuilderSelect')?.value || '';
   const quest = readQuestBuilderForm();
-  if (oldId && oldId !== quest.questId && QuestBuilderConfig[oldId]?.custom) delete QuestBuilderConfig[oldId];
+  if (!QuestBuilderDraftQuestId && oldId && oldId !== quest.questId && QuestBuilderConfig[oldId]?.custom) delete QuestBuilderConfig[oldId];
   const existing = QUEST_DEFINITIONS[quest.questId];
   QuestBuilderConfig[quest.questId] = {
     ...quest,
@@ -10190,9 +10291,10 @@ function saveQuestBuilderQuest() {
     customFromQuestBuilder: !existing || existing.customFromQuestBuilder === true,
     updatedAt:new Date().toISOString()
   };
+  QuestBuilderDraftQuestId = null;
   saveQuestBuilderConfigState();
   applyQuestBuilderDefinitions();
-  refreshQuestBuilderOptions();
+  refreshQuestBuilderOptions({ selectedId:quest.questId, loadSelection:false });
   const select = document.getElementById('questBuilderSelect');
   if (select) select.value = quest.questId;
   loadQuestBuilderSelection();
@@ -10203,50 +10305,66 @@ function saveQuestBuilderQuest() {
   return quest;
 }
 
+function populateQuestBuilderDraft(form, statusText = 'Quest draft ready. Click Apply / Save Quest.') {
+  QuestBuilderDraftQuestId = form.questId || null;
+  setQuestBuilderField('questBuilderQuestId', form.questId || '');
+  setQuestBuilderField('questBuilderType', form.type || 'Custom');
+  setQuestBuilderField('questBuilderTitle', form.title || '');
+  setQuestBuilderField('questBuilderChapter', form.chapter || '');
+  setQuestBuilderField('questBuilderVillage', form.village || '');
+  setQuestBuilderField('questBuilderPrimaryNpc', form.primaryNpc || '');
+  setQuestBuilderField('questBuilderDescription', form.description || '');
+  setQuestBuilderField('questBuilderObjectiveType', form.objectiveType || '');
+  setQuestBuilderField('questBuilderTargetType', form.targetType || '');
+  setQuestBuilderField('questBuilderObjectiveText', form.objectiveText || '');
+  setQuestBuilderField('questBuilderTargetMarkerId', form.targetMarkerId || '');
+  setQuestBuilderField('questBuilderObjectId', form.objectId || '');
+  setQuestBuilderField('questBuilderRadius', form.radius ?? '');
+  setQuestBuilderField('questBuilderEnabled', form.enabled ?? 'true');
+  setQuestBuilderField('questBuilderNextQuest', form.nextQuestId || '');
+  setQuestBuilderField('questBuilderPrereq', form.prerequisites || '');
+  setQuestBuilderField('questBuilderJournalEntryId', form.journalEntryId || '');
+  setQuestBuilderField('questBuilderJournalText', form.journalText || '');
+  setQuestBuilderField('questBuilderBadgeRewardId', form.badgeRewardId || '');
+  setQuestBuilderField('questBuilderBadgeProgressAmount', form.badgeProgressAmount ?? '');
+  setQuestBuilderField('questBuilderProgressRewardAmount', form.progressionRewardAmount ?? '');
+  updateQuestBuilderStatus(statusText);
+}
+
 function createNewQuestFromBuilder() {
   const questId = getUniqueQuestBuilderId('quest-101');
-  QuestBuilderConfig[questId] = normalizeQuestBuilderQuest({
+  populateQuestBuilderDraft({
     questId,
-    title:'Quest #101',
+    title:'',
     type:'Custom',
-    village:CURRENT_VILLAGE_ID,
-    objectiveType:'visitArea',
-    objectiveText:'Follow the glowing marker to the quest target.',
-    targetMarkerId:`questTarget_${questId.replace(/-/g, '_')}`,
-    targetType:'Area',
-    radius:8,
-    progressionRewardAmount:PROGRESSION_POINTS.quest,
-    custom:true
-  });
-  saveQuestBuilderConfigState();
-  applyQuestBuilderDefinitions();
-  refreshQuestBuilderOptions();
-  const select = document.getElementById('questBuilderSelect');
-  if (select) select.value = questId;
-  loadQuestBuilderSelection();
-  showToast('New quest created');
+    village:'',
+    objectiveType:'',
+    objectiveText:'',
+    targetMarkerId:'',
+    targetType:'',
+    objectId:'',
+    radius:'',
+    enabled:'true',
+    badgeProgressAmount:'',
+    progressionRewardAmount:''
+  }, 'New custom quest draft. Click Apply / Save Quest.');
+  showToast('New quest draft ready');
 }
 
 function duplicateQuestBuilderSelection() {
   const source = getQuestBuilderSelectedQuest({ includeArchived:true });
   if (!source) return;
   const questId = getUniqueQuestBuilderId(`${source.questId || 'quest'}-copy`);
-  QuestBuilderConfig[questId] = normalizeQuestBuilderQuest({
-    ...source,
+  const form = getQuestBuilderFormModel(source);
+  populateQuestBuilderDraft({
+    ...form,
     questId,
-    title:`${source.title || 'Quest'} Copy`,
+    title:`${form.title || source.title || 'Quest'} Copy`,
     targetMarkerId:`questTarget_${questId.replace(/-/g, '_')}`,
-    custom:true,
-    archived:false,
-    enabled:true
-  });
-  saveQuestBuilderConfigState();
-  applyQuestBuilderDefinitions();
-  refreshQuestBuilderOptions();
-  const select = document.getElementById('questBuilderSelect');
-  if (select) select.value = questId;
-  loadQuestBuilderSelection();
-  showToast('Quest duplicated');
+    type:'Custom',
+    enabled:'true'
+  }, 'Duplicate quest draft ready. Click Apply / Save Quest.');
+  showToast('Quest copied into a new draft');
 }
 
 function archiveQuestBuilderSelection() {
@@ -26686,6 +26804,18 @@ window.toggleQuestTargetMarkerVisibility = toggleQuestTargetMarkerVisibility;
 window.duplicateSelectedQuestTargetMarker = duplicateSelectedQuestTargetMarker;
 window.updateQuestTargetPulseLabel = updateQuestTargetPulseLabel;
 window.previewQuestTargetMarkerSettings = previewQuestTargetMarkerSettings;
+window.refreshQuestBuilderOptions = refreshQuestBuilderOptions;
+window.loadQuestBuilderSelection = loadQuestBuilderSelection;
+window.handleQuestBuilderSelectChange = handleQuestBuilderSelectChange;
+window.createNewQuestFromBuilder = createNewQuestFromBuilder;
+window.duplicateQuestBuilderSelection = duplicateQuestBuilderSelection;
+window.archiveQuestBuilderSelection = archiveQuestBuilderSelection;
+window.deleteQuestBuilderSelection = deleteQuestBuilderSelection;
+window.saveQuestBuilderQuest = saveQuestBuilderQuest;
+window.createOrUpdateMarkerForQuest = createOrUpdateMarkerForQuest;
+window.testStartQuestFromBuilder = testStartQuestFromBuilder;
+window.testCompleteQuestFromBuilder = testCompleteQuestFromBuilder;
+window.resetQuestBuilderProgress = resetQuestBuilderProgress;
 window.debugSmallAnt = debugSmallAnt;
 window.testSmallAntAssetFetch = testSmallAntAssetFetch;
 window.reloadSmallAntModel = reloadSmallAntModel;
