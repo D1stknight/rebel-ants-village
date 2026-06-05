@@ -749,6 +749,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   </div>
   <div class="ap-section">Performance</div>
   <div class="admin-section-body" data-admin-section-body="performance">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+      <button class="ctrl-btn" onclick="runVillagePerformanceOptimizerNow()">Run Optimizer Pass</button>
+      <button class="ctrl-btn" onclick="optimizeSelectedStaticGlb()">Optimize Selected Static GLB</button>
+    </div>
     <div class="perf-grid" id="performanceDebugGrid">
       <span class="perf-metric">Loading metrics...</span>
     </div>
@@ -3851,9 +3855,14 @@ const VillagePerformanceRuntime = {
   lastHelperPassAt: 0,
   lastShadowPassAt: 0,
   lastMaterialAuditAt: 0,
+  lastOptimizerPassAt: 0,
   materialOffenders: [],
+  optimizedStaticRoots: new Set(),
+  optimizerStats: { roots:0, meshes:0, materials:0, shadowTrimmed:0, pickablesDisabled:0 },
+  fakeLightStats: { total:0, active:0, static:0, culled:0 },
   staticPassIntervalMs: 4500,
-  helperPassIntervalMs: 900
+  helperPassIntervalMs: 900,
+  optimizerPassIntervalMs: 6000
 };
 
 const PERF_DYNAMIC_TYPES = new Set([
@@ -3865,7 +3874,9 @@ const PERF_DYNAMIC_TYPES = new Set([
   'ambient_glow',
   'toro_lantern',
   'hanging_lantern',
+  'hangingLantern',
   'lantern_1',
+  'ronin_brazier',
   'ronin_mist',
   'interaction_zone',
   'interior_entrance',
@@ -3928,8 +3939,94 @@ function unfreezeStaticRoot(root) {
     if (!node || node.isDisposed?.()) return;
     if (typeof node.unfreezeWorldMatrix === 'function' && node._worldMatrixFrozen) node.unfreezeWorldMatrix();
     if (node.metadata?._perfFrozen) node.metadata._perfFrozen = false;
+    if (node.metadata?._perfStaticOptimized) node.metadata._perfStaticOptimized = false;
   });
   VillagePerformanceRuntime.frozenRoots.delete(root);
+  VillagePerformanceRuntime.optimizedStaticRoots.delete(root);
+}
+
+function isStaticRenderOptimizationCandidate(root) {
+  if (!root || root.isDisposed?.() || root === selectedObject) return false;
+  const type = getPerfNodeType(root);
+  if (!type) return false;
+  if (PERF_DYNAMIC_TYPES.has(type)) return false;
+  if (root.metadata?._perfNeverFreeze === true || root.metadata?._editorActiveTransform === true) return false;
+  if (root.metadata?.interiorRuntime === true || root.metadata?.isPickProxy === true) return false;
+  if (Array.isArray(root.metadata?._fakeLightMaterials) || Array.isArray(root.metadata?._toroGlowMats) || root.metadata?._chestGlow) return false;
+  return isPerformanceStaticRoot(root) || type === 'visual_backdrop' || type === 'torii';
+}
+
+function optimizeStaticRenderRoot(root, options = {}) {
+  if (!isStaticRenderOptimizationCandidate(root) && options.force !== true) return { roots:0, meshes:0, materials:0, shadowTrimmed:0, pickablesDisabled:0 };
+  let meshes = 0;
+  let materials = 0;
+  let shadowTrimmed = 0;
+  let pickablesDisabled = 0;
+  const seenMaterials = new Set();
+  forEachRootRenderNode(root, mesh => {
+    if (!mesh || mesh.isDisposed?.()) return;
+    if (mesh.metadata?.isPickProxy === true) return;
+    if (typeof mesh.getTotalVertices !== 'function' || mesh.getTotalVertices() <= 0) return;
+    meshes += 1;
+    mesh.receiveShadows = false;
+    mesh.doNotSyncBoundingInfo = true;
+    if (mesh.isPickable && !isEditorVisualMode()) {
+      mesh.isPickable = false;
+      pickablesDisabled += 1;
+    }
+    if (mesh.material) {
+      if (!seenMaterials.has(mesh.material)) {
+        seenMaterials.add(mesh.material);
+        materials += 1;
+        mesh.material.maxSimultaneousLights = Math.min(mesh.material.maxSimultaneousLights || 4, 2);
+        try { mesh.material.freeze?.(); } catch(e) {}
+      }
+    }
+    if (shadows?.getShadowMap?.()?.renderList?.includes(mesh)) shadowTrimmed += 1;
+    try {
+      mesh.computeWorldMatrix?.(true);
+      mesh.freezeWorldMatrix?.();
+      mesh.metadata = { ...(mesh.metadata || {}), _perfStaticOptimized:true };
+    } catch(e) {}
+  });
+  root.metadata = { ...(root.metadata || {}), _perfStaticOptimized:true };
+  VillagePerformanceRuntime.optimizedStaticRoots.add(root);
+  return { roots:1, meshes, materials, shadowTrimmed, pickablesDisabled };
+}
+
+function runScalablePerformanceOptimizer(force = false) {
+  const now = performance.now();
+  if (!force && now - VillagePerformanceRuntime.lastOptimizerPassAt < VillagePerformanceRuntime.optimizerPassIntervalMs) return;
+  VillagePerformanceRuntime.lastOptimizerPassAt = now;
+  const stats = { roots:0, meshes:0, materials:0, shadowTrimmed:0, pickablesDisabled:0 };
+  [...scene.transformNodes, ...scene.meshes].forEach(root => {
+    if (!root || root.parent || root.isDisposed?.()) return;
+    if (!force && VillagePerformanceRuntime.optimizedStaticRoots.has(root)) return;
+    const result = optimizeStaticRenderRoot(root);
+    stats.roots += result.roots;
+    stats.meshes += result.meshes;
+    stats.materials += result.materials;
+    stats.shadowTrimmed += result.shadowTrimmed;
+    stats.pickablesDisabled += result.pickablesDisabled;
+  });
+  VillagePerformanceRuntime.optimizerStats = stats;
+  applyDecorativeShadowBudget(true);
+}
+
+function runVillagePerformanceOptimizerNow() {
+  runScalablePerformanceOptimizer(true);
+  updatePerformanceDebugPanel();
+  const stats = VillagePerformanceRuntime.optimizerStats || {};
+  showToast(`Optimizer pass: ${stats.roots || 0} roots, ${stats.meshes || 0} meshes`);
+}
+
+function optimizeSelectedStaticGlb() {
+  const root = selectedObject?._editRoot || selectedObject;
+  if (!root) { showToast('Select a static GLB/building first'); return; }
+  if (PERF_DYNAMIC_TYPES.has(getPerfNodeType(root))) { showToast('Selected object is dynamic; skipped'); return; }
+  const result = optimizeStaticRenderRoot(root, { force:true });
+  applyDecorativeShadowBudget(true);
+  showToast(`Static GLB optimized: ${result.meshes || 0} child meshes frozen`);
 }
 
 function refreshStaticFreezing(force = false) {
@@ -4029,6 +4126,7 @@ function runVillagePerformancePass(force = false) {
   applyWalkModeHelperVisibility(force);
   applyDecorativeShadowBudget(force);
   refreshStaticFreezing(force);
+  runScalablePerformanceOptimizer(force);
 }
 
 function getCollisionProxyLabel(kind) {
@@ -5515,8 +5613,15 @@ function buildToro(root, glowColor) {
   });
 
   root.metadata._toroFlickerObserver = scene.onBeforeRenderObservable.add(() => {
-    const t = performance.now() * 0.001;
-    const fakeFactor = getFakeLightStateFactor();
+    const now = performance.now();
+    const pos = root.getAbsolutePosition?.() || root.position;
+    const dx = charMesh && pos ? pos.x - charMesh.position.x : 0;
+    const dz = charMesh && pos ? pos.z - charMesh.position.z : 0;
+    const farFromPlayer = !isEditorVisualMode() && charMesh && (dx * dx + dz * dz > 150 * 150);
+    if (farFromPlayer && now - (root.metadata._lastToroFarGlowUpdateAt || 0) < 1600) return;
+    root.metadata._lastToroFarGlowUpdateAt = now;
+    const t = now * 0.001;
+    const fakeFactor = farFromPlayer ? 0.06 : getFakeLightStateFactor();
 
     root.metadata._toroGlowMeshes.forEach((mesh, i) => {
       if (!mesh || mesh.isDisposed()) return;
@@ -6850,8 +6955,11 @@ function tryOpenNearbyTreasureChest() {
   return openTreasureChest(chest);
 }
 
+const RoninMaterialCache = new Map();
 function makeRoninMaterial(name, diffuse, emissive = null, alpha = null) {
-  const material = new BABYLON.StandardMaterial(name + '_' + Math.random(), scene);
+  const cacheKey = [name, materialColorKey(diffuse), materialColorKey(emissive), alpha ?? ''].join('|');
+  if (RoninMaterialCache.has(cacheKey)) return RoninMaterialCache.get(cacheKey);
+  const material = new BABYLON.StandardMaterial(name + '_' + RoninMaterialCache.size, scene);
   material.diffuseColor = diffuse;
   material.specularColor = new BABYLON.Color3(.08,.06,.06);
   if (emissive) material.emissiveColor = emissive;
@@ -6860,6 +6968,7 @@ function makeRoninMaterial(name, diffuse, emissive = null, alpha = null) {
     material.backFaceCulling = false;
     material.alphaMode = BABYLON.Engine.ALPHA_COMBINE;
   }
+  RoninMaterialCache.set(cacheKey, material);
   return material;
 }
 
@@ -13638,28 +13747,43 @@ function spawnDebugSmallAnt() {
 // ── HELPERS ──────────────────────────────────
 // Material cache — reuse identical materials instead of creating new ones
 const _matCache={}, _pbrCache={};
+function materialColorKey(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return value.toLowerCase();
+  if (typeof value.toHexString === 'function') return value.toHexString().toLowerCase();
+  return [value.r, value.g, value.b, value.a].map(v => Number.isFinite(Number(v)) ? Number(v).toFixed(4) : '').join(',');
+}
+function materialOptionsKey(o = {}) {
+  return [
+    'e:' + materialColorKey(o.e),
+    'a:' + (o.a ?? ''),
+    'm:' + (o.m ?? ''),
+    'r:' + (o.r ?? ''),
+    'ei:' + (o.ei ?? '')
+  ].join('|');
+}
 function mat(c,o={}){
-  const col=typeof c==='string'?c:c.toHexString();
-  const key=col+JSON.stringify(o);
-  if(!o.e&&!o.a&&_matCache[key]) return _matCache[key];
+  const col=materialColorKey(c);
+  const key=col+'|'+materialOptionsKey(o);
+  if(_matCache[key]) return _matCache[key];
   const m=new BABYLON.StandardMaterial("m_"+col,scene);
   m.diffuseColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;
   m.specularColor=new BABYLON.Color3(.03,.03,.03);
   if(o.e)m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;
   if(o.a)m.alpha=o.a;
-  if(!o.e&&!o.a)_matCache[key]=m;
+  _matCache[key]=m;
   return m;
 }
 function pbr(c,o={}){
-  const col=typeof c==='string'?c:c.toHexString();
-  const key=col+JSON.stringify(o);
-  if(!o.e&&!o.a&&_pbrCache[key]) return _pbrCache[key];
+  const col=materialColorKey(c);
+  const key=col+'|'+materialOptionsKey(o);
+  if(_pbrCache[key]) return _pbrCache[key];
   const m=new BABYLON.PBRMaterial("p_"+col,scene);
   m.albedoColor=typeof c==='string'?BABYLON.Color3.FromHexString(c):c;
   m.metallic=o.m||0;m.roughness=o.r||.85;
   if(o.e){m.emissiveColor=typeof o.e==='string'?BABYLON.Color3.FromHexString(o.e):o.e;m.emissiveIntensity=o.ei||1;}
   if(o.a)m.alpha=o.a;
-  if(!o.e&&!o.a)_pbrCache[key]=m;
+  _pbrCache[key]=m;
   return m;
 }
 function box(w,h,d,mat,pos,ry=0){const b=BABYLON.MeshBuilder.CreateBox("b"+Math.random(),{width:w,height:h,depth:d},scene);b.material=mat;if(pos)b.position=new BABYLON.Vector3(pos[0],pos[1],pos[2]);if(ry)b.rotation.y=ry;b.receiveShadows=true;return b;}
@@ -13873,6 +13997,7 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
   haze.material=hazeMat;
   markBackdrop(haze);
 
+  const forestSilhouettes = [];
   for(let i=0;i<56;i++){
     const a=(i/56)*Math.PI*2;
     const radius=410+((i*37)%28);
@@ -13884,6 +14009,18 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
     tree.rotation.y=-a;
     tree.material=forestMat;
     markBackdrop(tree);
+    forestSilhouettes.push(tree);
+  }
+  const forestMerged = BABYLON.Mesh.MergeMeshes(forestSilhouettes, true, true, undefined, false, true);
+  if (forestMerged) {
+    forestMerged.name = 'distantForestSilhouetteMerged';
+    forestMerged.parent = root;
+    forestMerged.material = forestMat;
+    forestMerged.isPickable = false;
+    forestMerged.checkCollisions = false;
+    forestMerged.receiveShadows = false;
+    forestMerged.metadata = { type:"visual_backdrop", visualOnly:true, mergedFrom:'distantForestSilhouettes', mergedCount:56 };
+    forestMerged.freezeWorldMatrix();
   }
   skirtMat.freeze();
   ridgeMat.freeze();
@@ -19274,6 +19411,7 @@ window.addEventListener('resize',()=>engine.resize());
   const starMat = new BABYLON.StandardMaterial('starMat', scene);
   starMat.emissiveColor = new BABYLON.Color3(1,1,1);
   starMat.disableLighting = true;
+  const stars = [];
   for(let i=0;i<180;i++){
     const star = BABYLON.MeshBuilder.CreateSphere('s'+i,{diameter:0.5+Math.random()*0.8},scene);
     const theta = Math.random()*Math.PI*2;
@@ -19282,6 +19420,18 @@ window.addEventListener('resize',()=>engine.resize());
     star.position.set(r*Math.sin(phi)*Math.cos(theta), r*Math.cos(phi)*0.6+60, r*Math.sin(phi)*Math.sin(theta));
     star.material = starMat;
     star.isPickable = false;
+    star.receiveShadows = false;
+    stars.push(star);
+  }
+  const starfield = BABYLON.Mesh.MergeMeshes(stars, true, true, undefined, false, true);
+  if (starfield) {
+    starfield.name = 'starfieldMerged';
+    starfield.material = starMat;
+    starfield.isPickable = false;
+    starfield.receiveShadows = false;
+    starfield.metadata = { type:'visual_backdrop', visualOnly:true, mergedFrom:'starfield', mergedCount:180 };
+    starfield.freezeWorldMatrix();
+    starMat.freeze?.();
   }
   // Moon — glowing sphere
   const moonMat = new BABYLON.StandardMaterial('moonMat',scene);
@@ -20060,12 +20210,13 @@ function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PA
       return villageObbContainsPoint(blocker, x, z, padding);
     }
 
-    return x >= blocker.minX - padding &&
+      return x >= blocker.minX - padding &&
       x <= blocker.maxX + padding &&
       z >= blocker.minZ - padding &&
       z <= blocker.maxZ + padding;
   });
 
+  if (walkMode && !isEditorVisualMode()) return cachedBlockerHit;
   return cachedBlockerHit || liveManualCollisionProxyBlocksPoint(x, z, padding);
 }
 
@@ -20076,6 +20227,7 @@ function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MAN
     return villagePointBlocked(endX, endZ, padding);
   });
 
+  if (walkMode && !isEditorVisualMode()) return cachedBlockerHit;
   return cachedBlockerHit || liveManualCollisionProxyBlocksSegment(startX, startZ, endX, endZ, padding);
 }
 
@@ -21456,7 +21608,12 @@ function isFakeLightRootActiveForPerformance(root) {
   if (root.isEnabled?.() === false || root.metadata?.enabled === false) return false;
   if (root.metadata?._interiorIsolated === true) return false;
   if (root.metadata?.interiorRuntime === true && (!ActiveInterior?.root || !isInteriorRuntimeNode(root))) return false;
-  return true;
+  if (isEditorVisualMode() || ActiveInterior || !charMesh) return true;
+  const pos = root.getAbsolutePosition?.() || root.position;
+  if (!pos) return true;
+  const dx = pos.x - charMesh.position.x;
+  const dz = pos.z - charMesh.position.z;
+  return dx * dx + dz * dz <= 145 * 145;
 }
 
 function getFakeLightRootCount(activeOnly = false) {
@@ -21519,11 +21676,98 @@ function getDuplicateRootWarnings(limit = 5) {
   return [...seen.entries()].filter(([, count]) => count > 1).slice(0, limit);
 }
 
+function isRenderableMesh(mesh) {
+  return !!(mesh && !mesh.isDisposed?.() && mesh.isEnabled?.() !== false && mesh.isVisible !== false && (mesh.visibility ?? 1) > 0.001 && mesh.getTotalVertices?.() > 0);
+}
+
+function getRenderableMeshes() {
+  return scene.meshes.filter(isRenderableMesh);
+}
+
+function getActiveMaterialAndTextureStats(renderableMeshes = getRenderableMeshes()) {
+  const materials = new Set();
+  const textures = new Set();
+  renderableMeshes.forEach(mesh => {
+    const mat = mesh.material;
+    if (!mat) return;
+    materials.add(mat);
+    const collectTexture = tex => {
+      if (tex && !tex.isDisposed?.()) textures.add(tex);
+    };
+    collectTexture(mat.diffuseTexture);
+    collectTexture(mat.emissiveTexture);
+    collectTexture(mat.opacityTexture);
+    collectTexture(mat.albedoTexture);
+    collectTexture(mat.bumpTexture);
+    collectTexture(mat.ambientTexture);
+    if (typeof mat.getActiveTextures === 'function') {
+      mat.getActiveTextures().forEach(collectTexture);
+    }
+  });
+  return { materials:materials.size, textures:textures.size };
+}
+
+function getSkeletonAnimationStats() {
+  const skeletons = (scene.skeletons || []).filter(skeleton => !skeleton._isDisposed).length;
+  const animationGroups = (scene.animationGroups || []).filter(group => group && !group.isDisposed?.()).length;
+  const playingGroups = (scene.animationGroups || []).filter(group => group?.isPlaying).length;
+  return { skeletons, animationGroups, playingGroups };
+}
+
+function getParticleSystemStats() {
+  const systems = scene.particleSystems || [];
+  const active = systems.filter(ps => {
+    try { return typeof ps.isStarted === 'function' ? ps.isStarted() : ps.started === true; }
+    catch(e) { return false; }
+  }).length;
+  return { total:systems.length, active };
+}
+
+function getRootCategory(root) {
+  const type = getPerfNodeType(root);
+  const name = root?.name || '';
+  if (type === 'npc' || type === 'small_village_ant' || name.includes('player')) return 'NPCs/characters';
+  if (type === 'collectible') return 'collectibles';
+  if (type === 'quest_target_marker') return 'quest markers';
+  if (type === 'collision_proxy' || type === 'terrain_stamp') return 'collision helpers/proxies';
+  if (type === 'interior_runtime' || root?.metadata?.interiorRuntime === true) return 'interiors';
+  if (type === 'interior_fake_light' || Array.isArray(root?.metadata?._fakeLightMaterials) || Array.isArray(root?.metadata?._toroGlowMats)) return 'fake lights';
+  if (type?.includes('dojo') || type?.includes('shrine') || type === 'building' || name.toLowerCase().includes('dojo')) return 'dojos/buildings';
+  if (type === 'visual_backdrop' || type?.includes('tree') || type?.includes('nature') || name.toLowerCase().includes('tree') || name.toLowerCase().includes('backdrop') || name === 'mtg') return 'trees/nature';
+  return 'other';
+}
+
+function getVisibleRootCategoryCounts() {
+  const counts = {
+    'dojos/buildings':0,
+    'trees/nature':0,
+    collectibles:0,
+    'quest markers':0,
+    'fake lights':0,
+    'collision helpers/proxies':0,
+    interiors:0,
+    'NPCs/characters':0,
+    other:0
+  };
+  [...scene.transformNodes, ...scene.meshes].forEach(root => {
+    if (!root || root.parent || root.isDisposed?.() || root.isEnabled?.() === false || root.isVisible === false) return;
+    const meshes = root.getChildMeshes?.(false) || (root.getTotalVertices?.() > 0 ? [root] : []);
+    if (!meshes.some(isRenderableMesh)) return;
+    const category = getRootCategory(root);
+    counts[category] = (counts[category] || 0) + 1;
+  });
+  return counts;
+}
+
 function getPerformanceMetrics() {
   updateMaterialOffenderAudit();
   const fps = Math.round(engine.getFps ? engine.getFps() : 0);
   const totalMeshes = scene.meshes.length;
   const visibleMeshes = scene.meshes.filter(mesh => mesh && mesh.isEnabled?.() !== false && mesh.isVisible !== false && (mesh.visibility ?? 1) > 0.001).length;
+  const renderableMeshes = getRenderableMeshes();
+  const activeMaterialStats = getActiveMaterialAndTextureStats(renderableMeshes);
+  const skeletonStats = getSkeletonAnimationStats();
+  const particleStats = getParticleSystemStats();
   const activeMeshes = scene.getActiveMeshes ? scene.getActiveMeshes().length : scene._activeMeshes?.length;
   const draw = getReliableDrawCallMetric();
   const glbRoots = getPlacedGlbRoots().length;
@@ -21538,10 +21782,16 @@ function getPerformanceMetrics() {
     gpu: { label:'GPU Mode', value:renderer, status:'neutral', detail:renderer === 'webgpu' ? 'Testing in WebGPU' : 'Testing in WebGL. WebGPU may perform differently.' },
     totalMeshes: { label:'Total Meshes', value:totalMeshes, status:'neutral' },
     visibleMeshes: { label:'Visible Meshes', value:visibleMeshes, status:getPerfStatus(visibleMeshes, { green:1000, yellow:2500 }) },
+    renderableMeshes: { label:'Renderable Meshes', value:renderableMeshes.length, status:getPerfStatus(renderableMeshes.length, { green:800, yellow:1800 }) },
     activeMeshes: { label:'Active Meshes', value:Number.isFinite(activeMeshes) ? activeMeshes : 'n/a', status:'neutral' },
     drawCalls: { label:'Draw Calls', value:draw.value, status:draw.reliable ? getPerfStatus(draw.numericValue, { green:250, yellow:600 }) : 'neutral', detail:draw.detail },
     materials: { label:'Materials', value:scene.materials.length, status:'neutral' },
     textures: { label:'Textures', value:scene.textures.length, status:'neutral' },
+    activeMaterials: { label:'Active Materials', value:activeMaterialStats.materials, status:getPerfStatus(activeMaterialStats.materials, { green:120, yellow:260 }) },
+    activeTextures: { label:'Active Textures', value:activeMaterialStats.textures, status:getPerfStatus(activeMaterialStats.textures, { green:80, yellow:180 }) },
+    skeletons: { label:'Skeletons', value:skeletonStats.skeletons, status:getPerfStatus(skeletonStats.skeletons, { green:8, yellow:18 }) },
+    animations: { label:'Animations', value:`${skeletonStats.playingGroups}/${skeletonStats.animationGroups}`, status:getPerfStatus(skeletonStats.playingGroups, { green:4, yellow:10 }), detail:'playing/loaded groups' },
+    particles: { label:'Particles', value:`${particleStats.active}/${particleStats.total}`, status:getPerfStatus(particleStats.active, { green:3, yellow:7 }), detail:'active/total systems' },
     lights: { label:'Lights', value:scene.lights.length, status:'neutral' },
     fakeLightState: { label:'Fake Light State', value:fakeLightFactor.toFixed(2), status:FakeLightDirectorTestMode === 'auto' ? 'neutral' : 'warn', detail:FakeLightDirectorTestMode === 'auto' ? 'auto time/weather' : 'test override: ' + FakeLightDirectorTestMode },
     shadowCasters: { label:'Shadow Casters', value:shadowCasters, status:'neutral' },
@@ -21566,6 +21816,8 @@ function getPerformanceMetrics() {
     interiorAssets: { label:'Interior Assets', value:getInteriorAssetCount(), status:getPerfStatus(getInteriorAssetCount(), { green:24, yellow:60 }) },
     fakeLights: { label:'Fake Lights', value:getFakeLightRootCount(false), status:getPerfStatus(getFakeLightRootCount(false), { green:40, yellow:100 }) },
     activeFakeLights: { label:'Active Fake Lights', value:getFakeLightRootCount(true), status:getPerfStatus(getFakeLightRootCount(true), { green:30, yellow:80 }) },
+    staticFakeLights: { label:'Static Fake Lights', value:VillagePerformanceRuntime.fakeLightStats?.static || 0, status:'neutral', detail:`${VillagePerformanceRuntime.fakeLightStats?.culled || 0} culled` },
+    optimizedRoots: { label:'Optimized Roots', value:VillagePerformanceRuntime.optimizedStaticRoots.size, status:'good', detail:`${VillagePerformanceRuntime.optimizerStats.meshes || 0} meshes last pass` },
     interiorGlbCache: { label:'Interior GLB Cache', value:[...InteriorGlbCache.values()].filter(Boolean).length, status:getPerfStatus([...InteriorGlbCache.values()].filter(Boolean).length, { green:10, yellow:24 }) },
     terrain: { label:'Terrain Stamps', value:getTerrainPatchNodes().length, status:'neutral' },
     manualHelpers: { label:'Collision / Walk Helpers', value:manualHelpers, status:getPerfStatus(manualHelpers, { green:150, yellow:400 }) },
@@ -21595,16 +21847,26 @@ function updatePerformanceDetailsPanel() {
   const helperVisible = getHelperVisibleCount();
   const animatedObjects = NPCManager.roots.filter(root => root?.metadata?.activeAnimation).length +
     CollectibleRuntime.stats.visible;
+  const renderableMeshes = getRenderableMeshes();
+  const activeMaterialStats = getActiveMaterialAndTextureStats(renderableMeshes);
+  const categoryCounts = getVisibleRootCategoryCounts();
+  const categoryText = Object.entries(categoryCounts)
+    .filter(([, count]) => count > 0)
+    .map(([name, count]) => `${escapeHTML(name)}: ${count}`)
+    .join(', ') || 'None';
   host.innerHTML = `
     <div><b>Renderer:</b> ${escapeHTML(window._gpuMode || 'webgl')} - ${(window._gpuMode || 'webgl') === 'webgpu' ? 'Testing in WebGPU.' : 'Testing in WebGL. WebGPU may perform differently.'}</div>
+    <div><b>Renderable meshes:</b> ${renderableMeshes.length}; <b>active materials/textures:</b> ${activeMaterialStats.materials}/${activeMaterialStats.textures}</div>
+    <div><b>Visible roots by category:</b> ${categoryText}</div>
     <div><b>Top GLB roots by child meshes:</b> ${topGlbs.length ? topGlbs.map(item => `${escapeHTML(item.name)} (${item.count})`).join(', ') : 'None'}</div>
     <div><b>Top parent/root groups by child mesh count:</b> ${topRoots.length ? topRoots.map(item => `${escapeHTML(item.name)} (${item.count} child meshes)`).join(', ') : 'None'}</div>
     <div><b>Duplicate root name warnings:</b> ${duplicateRootWarnings.length ? duplicateRootWarnings.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
     <div><b>Top materials by mesh usage:</b> ${topMaterials.length ? topMaterials.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
     <div><b>Material audit offenders:</b> ${auditedMaterials.length ? auditedMaterials.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
     <div><b>Visible helper/admin meshes:</b> ${helperVisible}</div>
-    <div><b>Fake lights:</b> ${getFakeLightRootCount(false)} total, ${getFakeLightRootCount(true)} active, ${getInteriorAssetCount()} interior assets</div>
+    <div><b>Fake lights:</b> ${getFakeLightRootCount(false)} total, ${getFakeLightRootCount(true)} active, ${VillagePerformanceRuntime.fakeLightStats?.static || 0} static, ${VillagePerformanceRuntime.fakeLightStats?.culled || 0} culled, ${getInteriorAssetCount()} interior assets</div>
     <div><b>Static roots frozen:</b> ${getFrozenStaticRootCount()}</div>
+    <div><b>Optimized static roots:</b> ${VillagePerformanceRuntime.optimizedStaticRoots.size}; last pass ${VillagePerformanceRuntime.optimizerStats.meshes || 0} meshes, ${VillagePerformanceRuntime.optimizerStats.materials || 0} materials</div>
     <div><b>Helper meshes hidden/reduced:</b> ${VillagePerformanceRuntime.hiddenHelperMeshes}</div>
     <div><b>Animated objects tracked:</b> ${animatedObjects}</div>`;
 }
@@ -23494,18 +23756,37 @@ function applyFakeLightState(force = false) {
   updateFakeLightTestReadout(factor);
   applyActiveInteriorLightingState(factor);
   if (!scene?.transformNodes) return;
+  const stats = { total:0, active:0, static:0, culled:0 };
   scene.transformNodes.forEach(root => {
     const entries = root?.metadata?._fakeLightMaterials;
     if (!Array.isArray(entries)) return;
+    stats.total += 1;
     if (root.metadata?.interiorRuntime === true && (!ActiveInterior?.root || !isInteriorRuntimeNode(root))) return;
+    const pos = root.getAbsolutePosition?.() || root.position;
+    const dx = charMesh && pos ? pos.x - charMesh.position.x : 0;
+    const dz = charMesh && pos ? pos.z - charMesh.position.z : 0;
+    const distSq = dx * dx + dz * dz;
+    const nearPlayer = !charMesh || distSq <= 145 * 145;
+    const veryFar = charMesh && distSq > 260 * 260;
+    const active = isEditorVisualMode() || ActiveInterior || nearPlayer;
+    if (active) stats.active += 1;
+    else if (veryFar) stats.culled += 1;
+    else stats.static += 1;
     entries.forEach(entry => {
       const mat = entry.material;
       if (!mat || mat.isDisposed?.()) return;
-      const applied = Math.max(entry.minFactor ?? .18, factor);
+      const applied = active
+        ? Math.max(entry.minFactor ?? .18, factor)
+        : veryFar
+          ? Math.max(entry.minFactor ?? .04, .045)
+          : Math.max(entry.minFactor ?? .08, Math.min(factor, .14));
       if (entry.baseEmissive) mat.emissiveColor = entry.baseEmissive.scale(applied);
       if (Number.isFinite(entry.baseAlpha)) mat.alpha = Math.min(1, entry.baseAlpha * (.58 + applied * .42));
     });
   });
+  const toroTotal = scene.transformNodes.filter(node => Array.isArray(node?.metadata?._toroGlowMats) && !node.isDisposed?.()).length;
+  stats.total += toroTotal;
+  VillagePerformanceRuntime.fakeLightStats = stats;
 }
 
 function getInteriorRoomConfigs() {
@@ -26520,6 +26801,7 @@ function createLayoutNodeForHistory(item) {
   if (node) {
     applyLayoutItemToExistingNode(node, item);
     registerEditableRoot(node.name, node);
+    optimizeStaticRenderRoot(node);
   }
   return node;
 }
@@ -27146,6 +27428,7 @@ function placeAssetAtPoint(key, pickedPoint) {
       shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
     }
   });
+  optimizeStaticRenderRoot(clone);
   // lantern handled above
   // Select with gizmo — lantern handles inside setTimeout
   if (key !== 'lantern_1') {
@@ -27406,6 +27689,8 @@ window.testSelectedBadgePopup = testSelectedBadgePopup;
 window.toggleAdminLayer = toggleAdminLayer;
 window.selectAdminLayer = selectAdminLayer;
 window.showPerformanceMetricHelp = showPerformanceMetricHelp;
+window.runVillagePerformanceOptimizerNow = runVillagePerformanceOptimizerNow;
+window.optimizeSelectedStaticGlb = optimizeSelectedStaticGlb;
 window.undoEditorAction = undoEditorAction;
 window.redoEditorAction = redoEditorAction;
 window.addSelectedToMultiSelect = addSelectedToMultiSelect;
