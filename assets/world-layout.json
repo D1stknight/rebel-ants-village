@@ -1429,7 +1429,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1780681587656_20",
+    "name": "toriiRootClone_1780687018853_20",
     "position": {
       "x": 0,
       "y": 0.5600000582635118,
@@ -1531,7 +1531,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1780681587657_21",
+    "name": "toriiRootClone_1780687018854_21",
     "position": {
       "x": -0.2919794023036957,
       "y": 0.5799998529253401,
@@ -1633,7 +1633,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1780681587657_22",
+    "name": "toriiRootClone_1780687018854_22",
     "position": {
       "x": -151.2589111328125,
       "y": 0.5000001192092043,
@@ -1735,7 +1735,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1780681587658_23",
+    "name": "toriiRootClone_1780687018854_23",
     "position": {
       "x": 149.70745849609375,
       "y": 0.5000000596046448,
@@ -1837,7 +1837,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1780681587658_24",
+    "name": "toriiRootClone_1780687018855_24",
     "position": {
       "x": 2.514643038204834e-15,
       "y": 0.5000000596046448,
@@ -36190,12 +36190,12 @@
     },
     "rotation": {
       "x": -1.2410712543590996e-8,
-      "y": 9.114540180262445,
-      "z": 0.02055920839802358
+      "y": 2.8381404027191515,
+      "z": -0.021796429411437952
     },
     "scaling": {
       "x": 0.9999999905196907,
-      "y": 0.982700388936382,
+      "y": 1.0394087891313968,
       "z": 1.0000000043218122
     },
     "signConfig": null,
@@ -36306,7 +36306,7 @@
     },
     "scaling": {
       "x": 1.0000000022528326,
-      "y": 1.0244741345360053,
+      "y": 0.977708554298743,
       "z": 1.0000000022528326
     },
     "signConfig": null,
@@ -36417,7 +36417,7 @@
     },
     "scaling": {
       "x": 1,
-      "y": 0.9964221096919914,
+      "y": 1.0062258618966418,
       "z": 1
     },
     "signConfig": null,
@@ -36523,12 +36523,12 @@
     },
     "rotation": {
       "x": 0,
-      "y": 26.02769314762989,
-      "z": -0.0020191945075535354
+      "y": 31.20104047751723,
+      "z": -0.01693457826798203
     },
     "scaling": {
       "x": 1,
-      "y": 1.027465668243064,
+      "y": 0.9734077359481266,
       "z": 1
     },
     "signConfig": null,
@@ -36639,7 +36639,7 @@
     },
     "scaling": {
       "x": 1,
-      "y": 1.0246044292828902,
+      "y": 1.0223221992035363,
       "z": 1
     },
     "signConfig": null,
@@ -36745,12 +36745,12 @@
     },
     "rotation": {
       "x": 0,
-      "y": 3.594954977108586,
-      "z": -0.006384436573153936
+      "y": 5.9719098274321585,
+      "z": -0.012530038932681904
     },
     "scaling": {
       "x": 1,
-      "y": 0.9573414028895335,
+      "y": 1.0042499296018812,
       "z": 1
     },
     "signConfig": null,
@@ -36856,7 +36856,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -53.96005556249254,
+      "y": -72.3637865469605,
       "z": 0
     },
     "scaling": {
@@ -36903,7 +36903,7 @@
     "moveSpeed": 0.28,
     "antWalkSpeed": 0.28,
     "antAnimationSpeedRatio": 1,
-    "smallAntModelYawOffset": 2.3679624853674257,
+    "smallAntModelYawOffset": 2.3679160009078783,
     "selectedAnimationName": "Walk",
     "wanderRadius": 5,
     "animationMap": null,
@@ -36972,12 +36972,12 @@
           "color": "#ffd88a",
           "brightness": 1.1
         },
-        "updatedAt": "2026-06-05T18:22:22.716Z",
+        "updatedAt": "2026-06-05T19:18:30.573Z",
         "exit": {
           "position": {
             "x": 0,
             "y": 0,
-            "z": 33.92714309692383
+            "z": 36.18985366821289
           },
           "rotation": {
             "x": 0,
@@ -36985,9 +36985,9 @@
             "z": 0
           },
           "scaling": {
-            "x": 1,
-            "y": 1,
-            "z": 1
+            "x": 1.953125,
+            "y": 1.953125,
+            "z": 1.953125
           }
         },
         "displays": [
@@ -36999,9 +36999,9 @@
             "description": "Rebel Arcade Dojo\nA neon-lit dojo where ancient tradition meets modern gaming. Explore arcade challenges, compete against rivals, discover legendary collectibles, and earn your place among the greatest warriors of the colony. 🐜🎮",
             "enabled": true,
             "position": {
-              "x": 0.17266513407230377,
+              "x": -0.09806279093027115,
               "y": 1.0445318222045898,
-              "z": -24.425487518310547
+              "z": -24.424423217773438
             },
             "rotation": {
               "x": 0,
@@ -38236,6 +38236,29 @@
               "x": 6.692822384582409,
               "y": -5.532758857808196,
               "z": 2.4414054186687646
+            }
+          }
+        ],
+        "collectibles": [
+          {
+            "interiorId": "rebel_arcade",
+            "collectibleId": "rebel_arcade-flame_shard-1780684700058-6714",
+            "collectibleType": "flame_shard",
+            "enabled": true,
+            "position": {
+              "x": -0.19802197813987732,
+              "y": 1.08052396774292,
+              "z": -11.287355422973633
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 1,
+              "z": 1
             }
           }
         ]
