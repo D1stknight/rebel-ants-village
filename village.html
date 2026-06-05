@@ -3951,6 +3951,25 @@ function shouldDisableDecorativeShadow(node) {
   return false;
 }
 
+function isEditorVisualMode() {
+  return adminMode && !walkMode;
+}
+
+function setHelperMeshRenderState(mesh, visible, options = {}) {
+  if (!mesh || mesh.isDisposed?.()) return;
+  const keepEnabled = options.keepEnabled !== false;
+  if (keepEnabled) mesh.setEnabled?.(true);
+  else mesh.setEnabled?.(visible);
+  mesh.isVisible = visible;
+  mesh.visibility = visible ? (Number.isFinite(options.visibleAlpha) ? options.visibleAlpha : 1) : 0;
+  mesh.isPickable = visible;
+}
+
+function isActivePlayerQuestMarkerMesh(mesh) {
+  const root = mesh?.metadata?.type === 'quest_target_marker' ? mesh : (mesh?._editRoot || mesh?.parent || null);
+  return !!(root && root.metadata?.type === 'quest_target_marker' && QuestTargetMarkerManager?.activeMarkerId && root.metadata?.targetMarkerId === QuestTargetMarkerManager.activeMarkerId && !isEditorVisualMode() && !ActiveInterior);
+}
+
 function applyDecorativeShadowBudget(force = false) {
   const now = performance.now();
   if (!force && now - VillagePerformanceRuntime.lastShadowPassAt < VillagePerformanceRuntime.staticPassIntervalMs) return;
@@ -3968,28 +3987,39 @@ function applyWalkModeHelperVisibility(force = false) {
   if (!force && now - VillagePerformanceRuntime.lastHelperPassAt < VillagePerformanceRuntime.helperPassIntervalMs) return;
   VillagePerformanceRuntime.lastHelperPassAt = now;
   let hidden = 0;
-  const showManual = adminMode && manualBarrierVisualsVisible;
+  const editorVisuals = isEditorVisualMode();
+  const showManual = editorVisuals && manualBarrierVisualsVisible;
   scene.meshes.forEach(mesh => {
     if (!mesh || mesh.isDisposed?.()) return;
     const type = mesh.metadata?.type;
-    const isManualHelper = type === 'collision_proxy';
+    const isTerrainHelper = type === 'terrain_stamp' || (type === 'collision_proxy' && mesh.metadata?.terrainToolPatch === true);
+    const isManualHelper = type === 'collision_proxy' && !isTerrainHelper;
     const isZoneHelper = type === 'interaction_zone' || type === 'interior_entrance' || mesh.name?.startsWith('interactionZone_') || mesh.name?.startsWith('interiorEntrance_');
     const isPlacementHelper = mesh.metadata?.isAdminPlacementMarker || mesh.name?.includes('BrushPreview') || mesh.name?.startsWith('patrolRoute');
-    if (!isManualHelper && !isZoneHelper && !isPlacementHelper) return;
-    const visible = isManualHelper ? showManual : adminMode;
-    mesh.visibility = visible ? (isManualHelper ? (mesh.metadata?.proxyPieceKind === 'blocker' ? .45 : .38) : 1) : 0;
-    mesh.isPickable = visible;
+    const isInteriorHelper = mesh.metadata?.isInteriorVideoHelper === true || mesh.metadata?.isInteriorNftFrameHelper === true || mesh.metadata?.isInteriorExitHelper === true;
+    const isQuestMarkerHelper = mesh.metadata?.questTargetPart && !isActivePlayerQuestMarkerMesh(mesh);
+    if (!isManualHelper && !isTerrainHelper && !isZoneHelper && !isPlacementHelper && !isInteriorHelper && !isQuestMarkerHelper) return;
+    const visible = isManualHelper
+      ? showManual && _allWalkHelpersVisible !== false && (mesh.metadata?.proxyWalkSurfaceEnabled === true ? _manualWalkSurfacesVisible !== false : true)
+      : isTerrainHelper
+        ? editorVisuals && _terrainPatchesVisible !== false && _allWalkHelpersVisible !== false
+        : editorVisuals;
+    const alpha = isManualHelper
+      ? (mesh.metadata?.proxyPieceKind === 'blocker' ? .45 : .38)
+      : 1;
+    setHelperMeshRenderState(mesh, visible, { keepEnabled:isManualHelper, visibleAlpha:alpha });
     if (!visible) hidden += 1;
   });
   scene.transformNodes.forEach(node => {
     if (!node || node.isDisposed?.()) return;
     const isZone = node.metadata?.type === 'interaction_zone' || node.metadata?.type === 'interior_entrance';
     const isPlacement = node.metadata?.isAdminPlacementMarker;
-    if (!isZone && !isPlacement) return;
+    const isInactiveQuestMarker = node.metadata?.type === 'quest_target_marker' && !isActivePlayerQuestMarkerMesh(node);
+    if (!isZone && !isPlacement && !isInactiveQuestMarker) return;
     node.getChildMeshes?.(false).forEach(mesh => {
-      mesh.visibility = adminMode ? 1 : 0;
-      mesh.isPickable = adminMode;
-      if (!adminMode) hidden += 1;
+      const visible = editorVisuals && (node.metadata?.type !== 'interior_entrance' || _interiorEntrancesVisible !== false);
+      setHelperMeshRenderState(mesh, visible, { keepEnabled:false });
+      if (!visible) hidden += 1;
     });
   });
   VillagePerformanceRuntime.hiddenHelperMeshes = hidden;
@@ -4930,7 +4960,7 @@ function applyAttachedCollisionPiecesToSameType() {
 
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
-  setCollisionProxyVisualsVisible(adminMode);
+  setCollisionProxyVisualsVisible(adminMode && !walkMode);
   triggerAutoSave();
   console.table(appliedTargets);
   const status = document.getElementById('manualBarrierSaveStatus');
@@ -4976,20 +5006,25 @@ function updateManualBarrierVisibilityButton() {
 }
 
 function setCollisionProxyVisualsVisible(visible) {
-  const shouldShow = visible && manualBarrierVisualsVisible;
+  const shouldShow = visible && isEditorVisualMode() && manualBarrierVisualsVisible;
   scene.transformNodes.forEach(node => {
     if (!node || node.metadata?.type !== 'collision_proxy') return;
     node.getChildMeshes?.(false).forEach(mesh => {
-      mesh.setEnabled(true);
-      mesh.visibility = shouldShow ? 1 : 0;
-      mesh.isPickable = shouldShow;
+      const visible = shouldShow &&
+        node.metadata?.terrainToolPatch !== true &&
+        _allWalkHelpersVisible !== false &&
+        (node.metadata?.proxyWalkSurfaceEnabled === true ? _manualWalkSurfacesVisible !== false : true);
+      setHelperMeshRenderState(mesh, visible, { keepEnabled:true });
     });
   });
   scene.meshes.forEach(mesh => {
     if (!mesh || mesh.metadata?.type !== 'collision_proxy') return;
-    mesh.setEnabled(true);
-    mesh.visibility = shouldShow ? 1 : 0;
-    mesh.isPickable = shouldShow;
+    const visible = shouldShow &&
+      mesh.metadata?.terrainToolPatch !== true &&
+      _allWalkHelpersVisible !== false &&
+      (mesh.metadata?.proxyWalkSurfaceEnabled === true ? _manualWalkSurfacesVisible !== false : true);
+    const alpha = mesh.metadata?.proxyPieceKind === 'blocker' ? .45 : .38;
+    setHelperMeshRenderState(mesh, visible, { keepEnabled:true, visibleAlpha:alpha });
   });
   updateManualBarrierVisibilityButton();
 }
@@ -4997,7 +5032,7 @@ function setCollisionProxyVisualsVisible(visible) {
 function toggleManualBarrierVisibility() {
   manualBarrierVisualsVisible = !manualBarrierVisualsVisible;
   localStorage.setItem('rebelAntsManualBarrierVisualsVisible', manualBarrierVisualsVisible ? 'true' : 'false');
-  setCollisionProxyVisualsVisible(adminMode);
+  setCollisionProxyVisualsVisible(adminMode && !walkMode);
   if (!manualBarrierVisualsVisible && selectedObject?.metadata?.type === 'collision_proxy') {
     selectedObject = null;
     updateSelectedBadge();
@@ -9670,7 +9705,7 @@ function handleSignQuestEvent(signData) {
 }
 
 const QUEST_TARGET_TYPES = ['NPC', 'Area', 'Door', 'Interior', 'Portal', 'Sign', 'Chest', 'Collectible', 'NFT Frame', 'Link/Hotspot'];
-const QuestTargetMarkerManager = {
+var QuestTargetMarkerManager = {
   visible: localStorage.getItem('rebelAntsQuestTargetMarkersVisible') !== '0',
   activeMarkerId: null,
   lastMissingHintAt: 0
@@ -10011,7 +10046,7 @@ function createQuestTargetMarker(position, options = {}) {
 function getQuestTargetWorldPosition(root) {
   if (!root) return null;
   const meta = root.metadata || {};
-  if (meta.targetType === 'NPC' && meta.targetNpcId && !adminMode) {
+  if (meta.targetType === 'NPC' && meta.targetNpcId && !isEditorVisualMode()) {
     const npc = getNPCById(meta.targetNpcId);
     if (npc) return npc.position;
   }
@@ -10034,12 +10069,12 @@ function setQuestTargetMarkerVisible(root, visible, active = false) {
   if (!visible) return;
   const meta = root.metadata || {};
   const playerAtTarget = active && isPlayerInsideQuestTargetMarker(root);
-  const shouldPulse = meta.pulseEnabled !== false && !playerAtTarget && (active || adminMode);
+  const shouldPulse = meta.pulseEnabled !== false && !playerAtTarget && (active || isEditorVisualMode());
   const wave = (Math.sin(performance.now() * .005) + 1) * .5;
   const pulse = shouldPulse ? 1 + wave * .16 : 1;
   const alphaPulse = shouldPulse ? .62 + wave * .38 : 1;
   const radius = getQuestTargetRadius(root);
-  const highlighted = active || adminMode;
+  const highlighted = active || isEditorVisualMode();
   root.getChildMeshes?.(false).forEach(mesh => {
     const part = mesh.metadata?.questTargetPart;
     if (part === 'ring') mesh.scaling.set(radius * pulse, radius * pulse, radius * pulse);
@@ -10058,7 +10093,7 @@ function updateQuestTargetMarkers(dt = 0) {
   QuestTargetMarkerManager.activeMarkerId = activeMarker?.metadata?.targetMarkerId || null;
   getQuestTargetRoots().forEach(root => {
     const meta = root.metadata || {};
-    if (meta.targetType === 'NPC' && meta.targetNpcId && !adminMode) {
+    if (meta.targetType === 'NPC' && meta.targetNpcId && !isEditorVisualMode()) {
       const npc = getNPCById(meta.targetNpcId);
       if (npc) {
         root.position.copyFrom(npc.position);
@@ -10070,7 +10105,7 @@ function updateQuestTargetMarkers(dt = 0) {
       }
     }
     const active = root === activeMarker && meta.enabled !== false && !ActiveInterior;
-    const visible = adminMode ? QuestTargetMarkerManager.visible : active;
+    const visible = isEditorVisualMode() ? QuestTargetMarkerManager.visible : active;
     setQuestTargetMarkerVisible(root, visible, active);
   });
 }
@@ -18636,7 +18671,7 @@ if (m.material) {
 
   selectedObject = null;
   updateSelectedBadge();
-  setCollisionProxyVisualsVisible(adminMode);
+  setCollisionProxyVisualsVisible(adminMode && !walkMode);
   if (gizmoManager) {
     gizmoManager.attachToNode(null);
     gizmoManager.positionGizmoEnabled = false;
@@ -19035,7 +19070,7 @@ document.addEventListener('keydown', async e => {
         orbit.panningSensibility = 50; // fast panning with right-click drag
       }
       toggleAssetPanel(true);
-      setCollisionProxyVisualsVisible(true);
+      setCollisionProxyVisualsVisible(adminMode && !walkMode);
       runVillagePerformancePass(true);
     } else {
       toggleAssetPanel(false);
@@ -21403,8 +21438,25 @@ function getHelperVisibleCount() {
     !mesh.isDisposed?.() &&
     mesh.isEnabled?.() !== false &&
     mesh.isVisible !== false &&
-    (mesh.metadata?.type === 'collision_proxy' || mesh.metadata?.type === 'terrain_stamp' || mesh.metadata?.terrainToolPatch === true)
+    (mesh.visibility ?? 1) > 0.001 &&
+    (
+      mesh.metadata?.type === 'collision_proxy' ||
+      mesh.metadata?.type === 'terrain_stamp' ||
+      mesh.metadata?.terrainToolPatch === true ||
+      mesh.metadata?.isAdminPlacementMarker === true ||
+      mesh.metadata?.isInteriorVideoHelper === true ||
+      mesh.metadata?.isInteriorNftFrameHelper === true ||
+      mesh.metadata?.questTargetPart
+    )
   ).length;
+}
+
+function isFakeLightRootActiveForPerformance(root) {
+  if (!root || root.isDisposed?.()) return false;
+  if (root.isEnabled?.() === false || root.metadata?.enabled === false) return false;
+  if (root.metadata?._interiorIsolated === true) return false;
+  if (root.metadata?.interiorRuntime === true && (!ActiveInterior?.root || !isInteriorRuntimeNode(root))) return false;
+  return true;
 }
 
 function getFakeLightRootCount(activeOnly = false) {
@@ -21412,7 +21464,7 @@ function getFakeLightRootCount(activeOnly = false) {
     const countable = node?.metadata?.type === 'interior_fake_light' || Array.isArray(node?.metadata?._fakeLightMaterials) || Array.isArray(node?.metadata?._toroGlowMats);
     if (!countable || node.isDisposed?.()) return false;
     if (!activeOnly) return true;
-    return node.isEnabled?.() !== false && node.metadata?.enabled !== false;
+    return isFakeLightRootActiveForPerformance(node);
   }).length;
 }
 
@@ -21456,11 +21508,22 @@ function getRootMeshCountSummary(limit = 5) {
   }).filter(item => item.count > 0).sort((a, b) => b.count - a.count).slice(0, limit);
 }
 
+function getDuplicateRootWarnings(limit = 5) {
+  const seen = new Map();
+  [...scene.transformNodes, ...scene.meshes].forEach(node => {
+    if (!node || node.parent || node.isDisposed?.()) return;
+    const name = node.name || '';
+    if (!name) return;
+    seen.set(name, (seen.get(name) || 0) + 1);
+  });
+  return [...seen.entries()].filter(([, count]) => count > 1).slice(0, limit);
+}
+
 function getPerformanceMetrics() {
   updateMaterialOffenderAudit();
   const fps = Math.round(engine.getFps ? engine.getFps() : 0);
   const totalMeshes = scene.meshes.length;
-  const visibleMeshes = scene.meshes.filter(mesh => mesh && mesh.isEnabled?.() !== false && mesh.isVisible !== false).length;
+  const visibleMeshes = scene.meshes.filter(mesh => mesh && mesh.isEnabled?.() !== false && mesh.isVisible !== false && (mesh.visibility ?? 1) > 0.001).length;
   const activeMeshes = scene.getActiveMeshes ? scene.getActiveMeshes().length : scene._activeMeshes?.length;
   const draw = getReliableDrawCallMetric();
   const glbRoots = getPlacedGlbRoots().length;
@@ -21528,13 +21591,15 @@ function updatePerformanceDetailsPanel() {
   const topRoots = getRootMeshCountSummary(5);
   const topMaterials = getMaterialUsageSummary(5);
   const auditedMaterials = VillagePerformanceRuntime.materialOffenders || [];
+  const duplicateRootWarnings = getDuplicateRootWarnings(5);
   const helperVisible = getHelperVisibleCount();
   const animatedObjects = NPCManager.roots.filter(root => root?.metadata?.activeAnimation).length +
     CollectibleRuntime.stats.visible;
   host.innerHTML = `
     <div><b>Renderer:</b> ${escapeHTML(window._gpuMode || 'webgl')} - ${(window._gpuMode || 'webgl') === 'webgpu' ? 'Testing in WebGPU.' : 'Testing in WebGL. WebGPU may perform differently.'}</div>
     <div><b>Top GLB roots by child meshes:</b> ${topGlbs.length ? topGlbs.map(item => `${escapeHTML(item.name)} (${item.count})`).join(', ') : 'None'}</div>
-    <div><b>Top parent/root groups by mesh count:</b> ${topRoots.length ? topRoots.map(item => `${escapeHTML(item.name)} (${item.count})`).join(', ') : 'None'}</div>
+    <div><b>Top parent/root groups by child mesh count:</b> ${topRoots.length ? topRoots.map(item => `${escapeHTML(item.name)} (${item.count} child meshes)`).join(', ') : 'None'}</div>
+    <div><b>Duplicate root name warnings:</b> ${duplicateRootWarnings.length ? duplicateRootWarnings.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
     <div><b>Top materials by mesh usage:</b> ${topMaterials.length ? topMaterials.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
     <div><b>Material audit offenders:</b> ${auditedMaterials.length ? auditedMaterials.map(([name, count]) => `${escapeHTML(name)} (${count})`).join(', ') : 'None'}</div>
     <div><b>Visible helper/admin meshes:</b> ${helperVisible}</div>
@@ -23213,7 +23278,7 @@ function setVillageRuntimeEnabled(enabled) {
     setCollisionProxyVisualsVisible(false);
   } else {
     restoreInteriorIsolation();
-    setCollisionProxyVisualsVisible(adminMode);
+    setCollisionProxyVisualsVisible(adminMode && !walkMode);
     rebuildVillageCollisionBlockers();
   }
 }
@@ -23308,9 +23373,13 @@ var FakeLightDirectorTestMode = localStorage.getItem('rebelAntsFakeLightTestMode
 var InteriorFakeLightFullPreview = localStorage.getItem('rebelAntsInteriorFakeLightFullPreview') === '1';
 const FAKE_LIGHT_TEST_FACTORS = { day:.04, sunset:.62, night:1, storm:1.25 };
 
+function isInteriorFakeLightPreviewActive() {
+  return InteriorFakeLightFullPreview && isEditorVisualMode() && !!ActiveInterior;
+}
+
 function getFakeLightStateFactor() {
-  const ensureInteriorEditVisible = factor => adminMode && ActiveInterior
-    ? Math.max(InteriorFakeLightFullPreview ? 1.25 : .78, factor)
+  const ensureInteriorEditVisible = factor => isEditorVisualMode() && ActiveInterior
+    ? Math.max(isInteriorFakeLightPreviewActive() ? 1.25 : .78, factor)
     : factor;
   if (FakeLightDirectorTestMode && FakeLightDirectorTestMode !== 'auto') {
     return ensureInteriorEditVisible(FAKE_LIGHT_TEST_FACTORS[FakeLightDirectorTestMode] || .18);
@@ -23343,7 +23412,7 @@ function updateFakeLightTestReadout(factor = getFakeLightStateFactor()) {
   if (previewBtn) previewBtn.textContent = InteriorFakeLightFullPreview ? 'Preview Full: On' : 'Preview Full Brightness';
   const readout = document.getElementById('fakeLightStateReadout');
   if (readout) {
-    const mode = InteriorFakeLightFullPreview && adminMode && ActiveInterior
+    const mode = isInteriorFakeLightPreviewActive()
       ? 'Interior Preview Full'
       : (FakeLightDirectorTestMode === 'auto' ? 'Auto Time + Weather' : FakeLightDirectorTestMode);
     readout.textContent = 'Fake Light State: ' + mode + ' · ' + factor.toFixed(2);
@@ -23428,6 +23497,7 @@ function applyFakeLightState(force = false) {
   scene.transformNodes.forEach(root => {
     const entries = root?.metadata?._fakeLightMaterials;
     if (!Array.isArray(entries)) return;
+    if (root.metadata?.interiorRuntime === true && (!ActiveInterior?.root || !isInteriorRuntimeNode(root))) return;
     entries.forEach(entry => {
       const mat = entry.material;
       if (!mat || mat.isDisposed?.()) return;
@@ -26089,11 +26159,11 @@ function styleTerrainPatchVisual(proxy, stampType = 'flat_patch') {
   }
 }
 
-let _terrainPatchesVisible = true;
-let _manualWalkSurfacesVisible = true;
-let _allWalkHelpersVisible = true;
-let _interactionZonesVisible = true;
-let _patrolRoutesVisible = false;
+var _terrainPatchesVisible = true;
+var _manualWalkSurfacesVisible = true;
+var _allWalkHelpersVisible = true;
+var _interactionZonesVisible = true;
+var _patrolRoutesVisible = false;
 const _editorHistory = { undo: [], redo: [], limit: 25, muted: false };
 let _multiSelectedNodes = [];
 
@@ -26114,9 +26184,14 @@ function getManualWalkSurfaceNodes() {
 
 function setNodeEditorVisible(node, visible) {
   if (!node) return;
-  node.visibility = visible ? (node.metadata?.proxyPieceKind === 'blocker' ? .45 : .38) : 0;
+  const shouldShow = visible && isEditorVisualMode();
+  node.isVisible = shouldShow;
+  node.visibility = shouldShow ? (node.metadata?.proxyPieceKind === 'blocker' ? .45 : .38) : 0;
+  node.isPickable = shouldShow;
   node.getChildren?.().forEach(child => {
-    if ('visibility' in child) child.visibility = visible ? 1 : 0;
+    if ('isVisible' in child) child.isVisible = shouldShow;
+    if ('visibility' in child) child.visibility = shouldShow ? 1 : 0;
+    if ('isPickable' in child) child.isPickable = shouldShow;
   });
 }
 
@@ -26473,7 +26548,7 @@ function restoreEditorSnapshotIncremental(entry) {
   gizmoManager?.attachToNode?.(null);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
-  setCollisionProxyVisualsVisible(adminMode);
+  setCollisionProxyVisualsVisible(adminMode && !walkMode);
   applyAdminLayerState();
   updateQuestTracker();
   return true;
