@@ -1995,6 +1995,7 @@ function registerBook1QuestDefinitions() {
 	      targetNpcId: quest.targetNpcId || null,
 	      targetVillageId: quest.targetVillageId || null,
 	      targetInteriorId: quest.targetInteriorId || null,
+	      targetDoorId: quest.targetDoorId || null,
 	      targetObjectId: quest.targetObjectId || null,
 	      type: quest.type,
 	      steps: quest.objectives.map(objective => typeof objective === 'string'
@@ -2006,6 +2007,7 @@ function registerBook1QuestDefinitions() {
 	            targetNpcId:objective.targetNpcId || null,
 	            targetVillageId:objective.targetVillageId || null,
 	            targetInteriorId:objective.targetInteriorId || null,
+	            targetDoorId:objective.targetDoorId || null,
 	            targetObjectId:objective.targetObjectId || null
 	          }
 	      ).concat({ id:'complete', objective:`Completed: ${quest.title}` })
@@ -2085,11 +2087,12 @@ function normalizeQuestBuilderTargetType(type) {
 
 function getQuestBuilderTargetFields(raw = {}) {
   const targetType = normalizeQuestBuilderTargetType(raw.targetType || 'Area');
-  const objectId = raw.objectId || raw.targetId || raw.targetObjectId || raw.targetNpcId || raw.targetInteriorId || raw.targetVillageId || '';
+  const objectId = raw.objectId || raw.targetId || raw.targetObjectId || raw.targetDoorId || raw.targetNpcId || raw.targetInteriorId || raw.targetVillageId || '';
   return {
     targetNpcId: targetType === 'NPC' ? objectId || null : raw.targetNpcId || null,
     targetVillageId: targetType === 'Portal' ? objectId || null : raw.targetVillageId || null,
-    targetInteriorId: (targetType === 'Interior' || targetType === 'Door') ? objectId || null : raw.targetInteriorId || null,
+    targetInteriorId: targetType === 'Interior' ? objectId || null : raw.targetInteriorId || null,
+    targetDoorId: targetType === 'Door' ? objectId || null : raw.targetDoorId || null,
     targetObjectId: !['NPC', 'Portal', 'Interior', 'Door'].includes(targetType) ? objectId || null : raw.targetObjectId || null
   };
 }
@@ -9141,6 +9144,12 @@ function getContextSearchText(context = {}) {
   return [
     context.interiorType,
     context.targetInteriorId,
+    context.interiorId,
+    context.targetDoorId,
+    context.doorId,
+    context.entranceId,
+    context.entranceName,
+    context.questObjectiveId,
     context.interiorName,
     context.title,
     context.label,
@@ -9178,7 +9187,12 @@ function normalizeQuestObjectiveAction(actionType = '') {
     chest:'openChest',
     collectible:'collectCollectible',
     interior:'enterInterior',
+    enterRoom:'enterInterior',
+    visitInterior:'enterInterior',
+    interiorEntry:'enterInterior',
+    enterDojo:'enterInterior',
     door:'enterInterior',
+    enterDoor:'enterInterior',
     frame:'inspectInteriorNFTFrame',
     nftFrame:'inspectInteriorNFTFrame',
     link:'interactInteriorLink',
@@ -9194,6 +9208,115 @@ function normalizeQuestObjectiveAction(actionType = '') {
 
 function questActionMatches(expectedAction, actualAction) {
   return normalizeQuestObjectiveAction(expectedAction) === normalizeQuestObjectiveAction(actualAction);
+}
+
+function normalizeQuestMatchText(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function contextMatchesTargetValue(context = {}, targetValue = '', keys = []) {
+  const needle = normalizeQuestMatchText(targetValue);
+  if (!needle) return false;
+  const values = keys
+    .map(key => context[key])
+    .filter(value => value !== undefined && value !== null)
+    .map(normalizeQuestMatchText)
+    .filter(Boolean);
+  if (values.some(value => value === needle)) return true;
+  return getContextSearchText(context).includes(needle);
+}
+
+function getInteriorEntryContextPosition(context = {}) {
+  const pos = context.entrancePosition || context.position || null;
+  if (!pos) return null;
+  const x = Number(pos.x);
+  const z = Number(pos.z);
+  if (!Number.isFinite(x) || !Number.isFinite(z)) return null;
+  return { x, z };
+}
+
+function isInteriorEntryInsideQuestMarker(context = {}, targetMarkerId = '') {
+  if (!targetMarkerId) return false;
+  if (String(context.targetMarkerId || '') === String(targetMarkerId)) return true;
+  const marker = getQuestTargetById(targetMarkerId);
+  if (!marker || marker.metadata?.enabled === false) return false;
+  const pos = getInteriorEntryContextPosition(context);
+  if (!pos) return false;
+  const markerPos = getQuestTargetWorldPosition(marker) || marker.position;
+  if (!markerPos) return false;
+  const dx = markerPos.x - pos.x;
+  const dz = markerPos.z - pos.z;
+  const radius = getQuestTargetEffectiveRadius(marker);
+  return dx * dx + dz * dz <= radius * radius;
+}
+
+function getInteriorEntryQuestMatchDetails(quest, context = {}, actionType = 'enterInterior') {
+  if (!quest) return { checked:false, matched:false, reason:'missing quest', checks:[] };
+  const stepId = context.activeQuestStep || QuestState.step;
+  const step = getQuestStep(quest.questId, stepId) || {};
+  const objectiveAction = normalizeQuestObjectiveAction(actionType || getConfiguredQuestAction(quest));
+  const expectedAction = normalizeQuestObjectiveAction(getConfiguredQuestAction(quest, stepId));
+  if (objectiveAction !== 'enterInterior' || expectedAction !== 'enterInterior') {
+    return { checked:false, matched:false, reason:'not interior entry', objectiveAction, expectedAction, checks:[] };
+  }
+  const targetType = normalizeQuestTargetType(step.targetType || quest.targetType || context.targetType || 'Interior');
+  const targetMarkerId = step.targetMarkerId || quest.targetMarkerId || null;
+  const marker = targetMarkerId ? getQuestTargetById(targetMarkerId) : null;
+  const markerMeta = marker?.metadata || {};
+  const targetInteriorId = step.targetInteriorId || quest.targetInteriorId || markerMeta.targetInteriorId || null;
+  const targetDoorId = step.targetDoorId || quest.targetDoorId || markerMeta.targetDoorId || null;
+  const targetObjectId = step.targetObjectId || quest.targetObjectId || markerMeta.targetObjectId || null;
+  const checks = [];
+  if (targetInteriorId) {
+    checks.push({
+      field:'targetInteriorId',
+      expected:targetInteriorId,
+      matched:contextMatchesTargetValue(context, targetInteriorId, ['targetInteriorId', 'interiorId', 'questObjectiveId'])
+    });
+  }
+  if (targetObjectId) {
+    checks.push({
+      field:'targetObjectId',
+      expected:targetObjectId,
+      matched:contextMatchesTargetValue(context, targetObjectId, ['targetObjectId', 'objectId', 'targetDoorId', 'doorId', 'entranceId', 'entranceName', 'questObjectiveId', 'targetInteriorId'])
+    });
+  }
+  if (targetDoorId) {
+    checks.push({
+      field:'targetDoorId',
+      expected:targetDoorId,
+      matched:contextMatchesTargetValue(context, targetDoorId, ['targetDoorId', 'doorId', 'entranceId', 'entranceName', 'targetObjectId', 'objectId', 'questObjectiveId'])
+    });
+  }
+  if (targetMarkerId) {
+    checks.push({
+      field:'targetMarkerId',
+      expected:targetMarkerId,
+      matched:isInteriorEntryInsideQuestMarker(context, targetMarkerId)
+    });
+  }
+  const matchedSpecificTarget = checks.some(check => check.matched);
+  if (checks.length) {
+    return {
+      checked:true,
+      matched:matchedSpecificTarget,
+      reason:matchedSpecificTarget ? 'matched configured interior target' : 'configured interior target did not match entry',
+      objectiveAction,
+      expectedAction,
+      targetType,
+      checks
+    };
+  }
+  const allowAnyInterior = targetType === 'Interior' || targetType === 'Door';
+  return {
+    checked:true,
+    matched:allowAnyInterior,
+    reason:allowAnyInterior ? 'interior objective without specific target' : 'target type is not interior or door',
+    objectiveAction,
+    expectedAction,
+    targetType,
+    checks
+  };
 }
 
 function getConfiguredQuestAction(quest, stepId = QuestState.step) {
@@ -9221,6 +9344,10 @@ function getQuestTargetObjectIdFromContext(context = {}) {
   return String(
     context.targetObjectId ||
     context.objectId ||
+    context.targetDoorId ||
+    context.doorId ||
+    context.entranceId ||
+    context.questObjectiveId ||
     context.id ||
     context.signId ||
     context.chestId ||
@@ -9241,8 +9368,10 @@ function doesQuestContextMatchTarget(quest, context = {}, actionType = '') {
   const targetNpcId = step.targetNpcId || quest.targetNpcId || null;
   const targetVillageId = step.targetVillageId || quest.targetVillageId || null;
   const targetInteriorId = step.targetInteriorId || quest.targetInteriorId || null;
+  const targetDoorId = step.targetDoorId || quest.targetDoorId || null;
   const targetObjectId = step.targetObjectId || quest.targetObjectId || null;
   const action = normalizeQuestObjectiveAction(actionType || getConfiguredQuestAction(quest));
+  if (action === 'enterInterior') return getInteriorEntryQuestMatchDetails(quest, context, action).matched;
   if (['visitArea', 'discoverDojo'].includes(action)) {
     if (!targetMarkerId) return false;
     if (context.targetMarkerId !== targetMarkerId) return false;
@@ -9261,6 +9390,7 @@ function doesQuestContextMatchTarget(quest, context = {}, actionType = '') {
   }
   if (targetVillageId) return String(context.targetVillageId || context.villageId || '').toLowerCase() === String(targetVillageId).toLowerCase();
   if (targetInteriorId) return getContextSearchText(context).includes(String(targetInteriorId).toLowerCase());
+  if (targetDoorId) return contextMatchesTargetValue(context, targetDoorId, ['targetDoorId', 'doorId', 'entranceId', 'entranceName', 'targetObjectId', 'objectId', 'questObjectiveId']);
   if (targetObjectId) {
     const objectId = getQuestTargetObjectIdFromContext(context).toLowerCase();
     return objectId === String(targetObjectId).toLowerCase() || getContextSearchText(context).includes(String(targetObjectId).toLowerCase());
@@ -9295,7 +9425,7 @@ function advanceHubTutorialObjective(actionType, context = {}) {
         contextIncludesAny(ctx, ['dojo', 'training'])
       )
     },
-    'hub-enter-dojo': { step:'enter-interior', action:'enterInterior', match:ctx => contextIncludesAny(ctx, ['dojo', 'training']) },
+    'hub-enter-dojo': { step:'enter-interior', action:'enterInterior', match:ctx => getInteriorEntryQuestMatchDetails(QUEST_DEFINITIONS['hub-enter-dojo'], ctx, 'enterInterior').matched },
     'hub-light-changes': { step:'observe-time', action:'observeTime' },
     'hub-sky-watches': { step:'experience-weather', action:'experienceWeather' },
     'hub-inspect-walls': { step:'inspect-frame', action:'inspectInteriorNFTFrame' },
@@ -9518,6 +9648,7 @@ function getQuestTargetMetadata(questId = QuestState.questId, stepId = QuestStat
     targetNpcId: step.targetNpcId || quest.targetNpcId || null,
     targetVillageId: step.targetVillageId || quest.targetVillageId || null,
     targetInteriorId: step.targetInteriorId || quest.targetInteriorId || null,
+    targetDoorId: step.targetDoorId || quest.targetDoorId || null,
     targetObjectId: step.targetObjectId || quest.targetObjectId || null,
     targetType: normalizeQuestTargetType(step.targetType || quest.targetType || 'Area'),
     objectiveType: step.objectiveType || quest.objectiveType || null,
@@ -9766,6 +9897,7 @@ function createQuestTargetMarker(position, options = {}) {
     pulseEnabled:options.pulseEnabled !== false,
     targetNpcId:options.targetNpcId || null,
     targetVillageId:options.targetVillageId || null,
+    targetDoorId:options.targetDoorId || null,
     targetInteriorId:options.targetInteriorId || null,
     targetObjectId:options.targetObjectId || null
   };
@@ -9894,11 +10026,13 @@ function readQuestTargetMarkerSettingsFromControls() {
     pulseEnabled: document.getElementById('questTargetPulseInput')?.checked !== false,
     targetNpcId: null,
     targetVillageId: null,
+    targetDoorId: null,
     targetInteriorId: null,
     targetObjectId: null
   };
   if (targetType === 'NPC') settings.targetNpcId = objectId || null;
-  else if (targetType === 'Interior' || targetType === 'Door') settings.targetInteriorId = objectId || null;
+  else if (targetType === 'Interior') settings.targetInteriorId = objectId || null;
+  else if (targetType === 'Door') settings.targetDoorId = objectId || null;
   else if (targetType === 'Portal') settings.targetVillageId = objectId || null;
   else settings.targetObjectId = objectId || null;
   return settings;
@@ -9931,7 +10065,7 @@ function writeQuestTargetMarkerSettingsToControls(root) {
   if (questInput) questInput.value = meta.questId || '';
   if (objectiveInput) objectiveInput.value = meta.objectiveType || '';
   if (typeInput) typeInput.value = targetType;
-  if (objectInput) objectInput.value = meta.targetNpcId || meta.targetInteriorId || meta.targetVillageId || meta.targetObjectId || '';
+  if (objectInput) objectInput.value = meta.targetNpcId || meta.targetDoorId || meta.targetInteriorId || meta.targetVillageId || meta.targetObjectId || '';
   if (radiusInput) radiusInput.value = String(getQuestTargetRadius(root));
   if (enabledInput) enabledInput.checked = meta.enabled !== false;
   if (ringInput) ringInput.value = ringColor;
@@ -9969,7 +10103,7 @@ function writeQuestTargetMarkerPrefillToControls(settings = {}, options = {}) {
   if (questInput) questInput.value = settings.questId || '';
   if (objectiveInput) objectiveInput.value = settings.objectiveType || '';
   if (typeInput) typeInput.value = targetType;
-  if (objectInput) objectInput.value = settings.targetNpcId || settings.targetInteriorId || settings.targetVillageId || settings.targetObjectId || settings.objectId || '';
+  if (objectInput) objectInput.value = settings.targetNpcId || settings.targetDoorId || settings.targetInteriorId || settings.targetVillageId || settings.targetObjectId || settings.objectId || '';
   if (radiusInput) radiusInput.value = String(radius);
   if (enabledInput) enabledInput.checked = settings.enabled !== false;
   if (!visualControlsFrozen) {
@@ -10084,7 +10218,7 @@ function inferQuestBuilderType(quest = {}) {
 }
 
 function getQuestBuilderObjectId(quest = {}) {
-  return quest.objectId || quest.targetId || quest.targetNpcId || quest.targetInteriorId || quest.targetVillageId || quest.targetObjectId || '';
+  return quest.objectId || quest.targetId || quest.targetNpcId || quest.targetDoorId || quest.targetInteriorId || quest.targetVillageId || quest.targetObjectId || '';
 }
 
 let QuestBuilderDraftQuestId = null;
@@ -10580,6 +10714,7 @@ function getMarkerSettingsForQuest(quest) {
     pulseEnabled:quest.pulseEnabled !== false,
     targetNpcId:quest.targetNpcId || null,
     targetVillageId:quest.targetVillageId || null,
+    targetDoorId:quest.targetDoorId || null,
     targetInteriorId:quest.targetInteriorId || null,
     targetObjectId:quest.targetObjectId || null
   };
@@ -17891,6 +18026,7 @@ function collectWorldLayoutData() {
     pulseEnabled: node.metadata.type === 'quest_target_marker' ? node.metadata.pulseEnabled !== false : null,
     targetNpcId: node.metadata.targetNpcId || null,
     targetVillageId: node.metadata.targetVillageId || null,
+    targetDoorId: node.metadata.targetDoorId || null,
     targetObjectId: node.metadata.targetObjectId || null,
     interiorName: node.metadata.interiorName || null,
     interiorType: node.metadata.interiorType || null,
@@ -18255,6 +18391,7 @@ function loadWorldLayout(){
           pulseEnabled: item.pulseEnabled !== false,
           targetNpcId: item.targetNpcId || null,
           targetVillageId: item.targetVillageId || null,
+          targetDoorId: item.targetDoorId || null,
           targetInteriorId: item.targetInteriorId || null,
           targetObjectId: item.targetObjectId || null
         }
@@ -18285,6 +18422,7 @@ function loadWorldLayout(){
           interiorName: item.interiorName || null,
           interiorType: item.interiorType || 'training_dojo',
           targetInteriorId: item.targetInteriorId || item.questObjectiveId || null,
+          targetDoorId: item.targetDoorId || item.name || null,
           promptText: item.promptText || null,
           interiorDefinition: item.interiorDefinition || null,
           enabled: item.enabled !== false,
@@ -22582,6 +22720,7 @@ function createInteriorEntrance(position, options = {}) {
     interiorName: options.interiorName || defaults.name,
     interiorType: normalizeInteriorType(options.interiorType || defaults.interiorType),
     targetInteriorId: options.targetInteriorId || defaults.targetInteriorId,
+    targetDoorId: options.targetDoorId || options.doorId || root.name,
     promptText: options.promptText || defaults.promptText,
     interiorDefinition: options.interiorDefinition || getInteriorDefinition(normalizeInteriorType(options.interiorType || defaults.interiorType)),
     enabled: options.enabled !== false,
@@ -22648,6 +22787,7 @@ function applySelectedInteriorEntranceSettings() {
   selectedObject.metadata.interiorName = settings.interiorName;
   selectedObject.metadata.interiorType = settings.interiorType;
   selectedObject.metadata.targetInteriorId = settings.targetInteriorId;
+  selectedObject.metadata.targetDoorId = selectedObject.metadata.targetDoorId || selectedObject.name;
   selectedObject.metadata.promptText = settings.promptText;
   selectedObject.metadata.interiorDefinition = getInteriorDefinition(settings.interiorType);
   selectedObject.metadata.enabled = settings.enabled;
@@ -25074,16 +25214,47 @@ function buildInteriorRoom(entrance) {
   return root;
 }
 
+function logInteriorQuestEntryCheck(payload = {}, matched = false, matchedAction = '') {
+  const quest = QUEST_DEFINITIONS[payload.activeQuestId] || null;
+  const details = getInteriorEntryQuestMatchDetails(quest, payload, 'enterInterior');
+  console.debug('Interior quest check', {
+    activeQuestId:payload.activeQuestId || '',
+    activeQuestStep:payload.activeQuestStep || '',
+    objectiveType:payload.activeObjectiveType || details.expectedAction || '',
+    enteredInteriorId:payload.targetInteriorId || '',
+    doorId:payload.doorId || '',
+    targetMarkerId:payload.targetMarkerId || getQuestTargetMetadata(payload.activeQuestId, payload.activeQuestStep)?.targetMarkerId || '',
+    matched:matched === true || details.matched === true,
+    matchedAction:matchedAction || '',
+    reason:details.reason || '',
+    checks:details.checks || []
+  });
+}
+
 function recordInteriorQuestHook(entrance, actionType = 'enterInterior') {
   const meta = entrance?.metadata || {};
+  const activeQuestId = QuestState.questId;
+  const activeQuestStep = QuestState.step;
+  const activeQuest = QUEST_DEFINITIONS[activeQuestId] || null;
+  const activeObjectiveType = getConfiguredQuestAction(activeQuest, activeQuestStep) || '';
+  const doorId = meta.targetDoorId || entrance?.name || '';
+  const targetObjectId = meta.targetObjectId || doorId || meta.questObjectiveId || meta.targetInteriorId || '';
   const payload = {
     actionType,
     interiorType: normalizeInteriorType(meta.interiorType),
+    targetType: 'Interior',
     targetInteriorId: meta.targetInteriorId || '',
+    interiorId: meta.targetInteriorId || '',
+    targetDoorId: doorId,
+    doorId,
+    entranceId: entrance?.name || '',
     entranceName: meta.interiorName || entrance?.name || '',
     interiorName: meta.interiorName || meta.label || meta.title || meta.targetInteriorId || '',
     label: meta.label || meta.interiorName || '',
     title: meta.title || meta.label || meta.interiorName || '',
+    targetObjectId,
+    objectId: targetObjectId,
+    questObjectiveId: meta.questObjectiveId || '',
     url: meta.url || '',
     frameId: meta.frameId || '',
     displayId: meta.displayId || '',
@@ -25092,8 +25263,16 @@ function recordInteriorQuestHook(entrance, actionType = 'enterInterior') {
     collection: meta.collection || '',
     sourceActionType: meta.actionType || '',
     villageId: CURRENT_VILLAGE_ID,
+    entrancePosition: entrance?.position ? { x:entrance.position.x, y:entrance.position.y, z:entrance.position.z } : null,
+    activeQuestId,
+    activeQuestStep,
+    activeObjectiveType,
     at: new Date().toISOString()
   };
+  const activeTarget = getQuestTargetMetadata(activeQuestId, activeQuestStep);
+  if (activeTarget?.targetMarkerId && isInteriorEntryInsideQuestMarker(payload, activeTarget.targetMarkerId)) {
+    payload.targetMarkerId = activeTarget.targetMarkerId;
+  }
   try {
     const key = 'rebelAntsInteriorQuestHooks:v1';
     const hooks = JSON.parse(localStorage.getItem(key) || '[]');
@@ -25101,21 +25280,28 @@ function recordInteriorQuestHook(entrance, actionType = 'enterInterior') {
     localStorage.setItem(key, JSON.stringify(hooks.slice(-100)));
   } catch(e) {}
   window.dispatchEvent(new CustomEvent('rebelAntsInteriorEvent', { detail: payload }));
+  let questMatched = false;
+  let matchedAction = '';
   if (
     actionType === 'enterInterior' &&
-    QuestState.questId === 'hub-hidden-dojo' &&
-    QuestState.step === 'discover-dojo' &&
+    activeQuestId === 'hub-hidden-dojo' &&
+    activeQuestStep === 'discover-dojo' &&
+    Boolean(getQuestTargetById('questTarget_hidden_forest_dojo')) &&
     contextIncludesAny(payload, ['dojo', 'training'])
   ) {
-    advanceHubTutorialObjective('discoverDojo', payload);
+    matchedAction = 'discoverDojo';
+    questMatched = advanceHubTutorialObjective('discoverDojo', payload);
+  } else if (actionType === 'enterInterior') {
+    matchedAction = 'enterInterior';
+    questMatched = advanceHubTutorialObjective('enterInterior', payload);
   }
-  if (actionType === 'enterInterior') advanceHubTutorialObjective('enterInterior', payload);
-  if (actionType === 'inspectInteriorNFTFrame') advanceHubTutorialObjective('inspectInteriorNFTFrame', payload);
+  if (actionType === 'inspectInteriorNFTFrame') questMatched = advanceHubTutorialObjective('inspectInteriorNFTFrame', payload);
   if (
     actionType === 'interactInteriorHotspot' ||
     actionType === 'interactInteriorDisplay' ||
     actionType === 'interactInteriorVideoScreen'
-  ) advanceHubTutorialObjective('interactInteriorLink', payload);
+  ) questMatched = advanceHubTutorialObjective('interactInteriorLink', payload);
+  if (actionType === 'enterInterior') logInteriorQuestEntryCheck(payload, questMatched, matchedAction);
   return payload;
 }
 
