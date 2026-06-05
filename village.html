@@ -1063,44 +1063,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
       <button class="ctrl-btn" onclick="applySelectedInteriorFakeLightSettings()">Apply Light Settings</button>
+      <button class="ctrl-btn" id="interiorFakeLightPreviewBtn" onclick="toggleInteriorFakeLightPreview()">Preview Full Brightness</button>
       <button class="ctrl-btn" onclick="duplicateSelectedInteriorAsset()">Duplicate Asset</button>
       <button class="ctrl-btn danger" onclick="deleteSelectedInteriorAsset()">Delete Asset</button>
     </div>
   </div>
-  <div class="ap-section">Displays</div>
-  <div class="admin-section-body" data-admin-section-body="displays">
-    <div class="admin-note">Displays are interior links: arcade cabinets, YouTube screens, books, products, and future quest hooks.</div>
-    <label class="admin-field">Display Label <input id="interiorDisplayLabel" placeholder="Featured Rebel NFT"></label>
-    <label class="admin-field">Action Type
-      <select id="interiorDisplayAction" class="admin-select">
-        <option value="showInfo">showInfo</option>
-        <option value="openUrl">openUrl</option>
-        <option value="futureQuest">futureQuest</option>
-        <option value="futureNFT">futureNFT</option>
-        <option value="futureVideo">futureVideo</option>
-        <option value="futureStoreItem">futureStoreItem</option>
-        <option value="futureArcadeGame">futureArcadeGame</option>
-      </select>
-    </label>
-    <label class="admin-field">URL <input id="interiorDisplayUrl" placeholder="https://rebels.example"></label>
-    <label class="admin-field">Description <textarea id="interiorDisplayDescription" rows="2" placeholder="Shown for info/future actions"></textarea></label>
-    <label class="admin-field"><span><input id="interiorDisplayEnabled" type="checkbox" checked style="width:auto;margin-right:6px">Display Enabled</span></label>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <button class="ctrl-btn" onclick="addInteriorDisplayFromAdmin()">Add Interior Display</button>
-      <button class="ctrl-btn" onclick="applySelectedInteriorDisplaySettings()">Apply Display</button>
-      <button class="ctrl-btn danger" onclick="deleteSelectedInteriorDisplay()">Delete Display</button>
-      <button class="ctrl-btn" id="interiorDisplayVisibilityBtn" onclick="toggleInteriorDisplayVisibility()">Hide Displays</button>
-    </div>
-  </div>
   <div class="ap-section">Interior Hotspots / Interior Links</div>
   <div class="admin-section-body" data-admin-section-body="interior-hotspots">
-    <div class="admin-note">Place lightweight link hotspots inside the active room. They save per interior and do not snap to the ground.</div>
+    <div class="admin-note">Place lightweight link hotspots inside the active room. Use flat placement to hang links on clicked walls or surfaces.</div>
     <label class="admin-field">Link Name <input id="interiorHotspotName" placeholder="Open Arcade"></label>
     <label class="admin-field">Action Type
       <select id="interiorHotspotAction" class="admin-select">
         <option value="openUrl">Open URL</option>
         <option value="showInfo">Show Info</option>
         <option value="futureQuest">Future Quest</option>
+        <option value="futureNFT">Future NFT</option>
+        <option value="futureVideo">Future Video</option>
+        <option value="futureStoreItem">Future Store Item</option>
+        <option value="futureArcadeGame">Future Arcade Game</option>
       </select>
     </label>
     <label class="admin-field">URL <input id="interiorHotspotUrl" placeholder="https://..."></label>
@@ -1108,6 +1088,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <label class="admin-field"><span><input id="interiorHotspotEnabled" type="checkbox" checked style="width:auto;margin-right:6px">Hotspot Enabled</span></label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <button class="ctrl-btn" onclick="addInteriorHotspotFromAdmin()">Add Link Hotspot</button>
+      <button class="ctrl-btn" onclick="placeInteriorHotspotFlatOnSurface()">Place Link Flat On Surface</button>
       <button class="ctrl-btn" onclick="duplicateSelectedInteriorHotspot()">Duplicate Selected Link</button>
       <button class="ctrl-btn" onclick="applySelectedInteriorHotspotSettings()">Apply Link Settings</button>
       <button class="ctrl-btn danger" onclick="deleteSelectedInteriorHotspot()">Delete Selected Link</button>
@@ -1141,6 +1122,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="document.getElementById('interiorVideoUploadInput').click()">Upload MP4</button>
       <button class="ctrl-btn" onclick="document.getElementById('interiorVideoPosterUploadInput').click()">Upload Poster</button>
       <button class="ctrl-btn" onclick="addInteriorVideoScreenFromAdmin()">Add Video Screen</button>
+      <button class="ctrl-btn" onclick="placeInteriorVideoScreenFlatOnSurface()">Place Video Flat On Surface</button>
       <button class="ctrl-btn" onclick="duplicateSelectedInteriorVideoScreen()">Duplicate Selected Screen</button>
       <button class="ctrl-btn" onclick="applySelectedInteriorVideoScreenSettings()">Apply Screen Settings</button>
       <button class="ctrl-btn" onclick="alignSelectedInteriorVideoScreenToWall()">Hang Flat On Wall</button>
@@ -4161,6 +4143,7 @@ function getAdminPlacementGroundPick() {
   return scene.pick(scene.pointerX, scene.pointerY, mesh => {
     if (!mesh || mesh.isDisposed?.()) return false;
     if (mesh.metadata?.isAdminPlacementMarker) return false;
+    if (isActiveInteriorSurfaceMesh(mesh)) return true;
     return mesh === ground ||
       mesh === court ||
       mesh === plaza ||
@@ -4168,6 +4151,29 @@ function getAdminPlacementGroundPick() {
       mesh.name === 'rv' ||
       mesh.name?.startsWith('pa');
   });
+}
+
+function isActiveInteriorSurfaceMesh(mesh) {
+  if (!ActiveInterior?.root || !mesh || mesh.isDisposed?.()) return false;
+  if (mesh.metadata?.isAdminPlacementMarker) return false;
+  const selectingInteriorRoot = selectedObject === ActiveInterior.root || selectedObject?.metadata?.type === 'interior_runtime';
+  if (!selectingInteriorRoot && (mesh._editRoot === selectedObject || mesh === selectedObject)) return false;
+  const root = mesh._editRoot || mesh.parent || null;
+  if (root?.metadata?.type && root.metadata.type !== 'interior_runtime') return false;
+  if (mesh.metadata?.isInteriorHotspotPanel || mesh.metadata?.isInteriorVideoPanel || mesh.metadata?.isInteriorNftArt) return false;
+  return mesh.metadata?.interiorRuntime === true || mesh.parent === ActiveInterior.root;
+}
+
+function getAdminInteriorSurfacePick() {
+  if (!ActiveInterior?.root) return null;
+  return scene.pick(scene.pointerX, scene.pointerY, mesh => isActiveInteriorSurfaceMesh(mesh));
+}
+
+function getAdminPlacementPick(request = pendingAdminPlacement) {
+  if (request?.kind === 'interior_hotspot_surface' || request?.kind === 'interior_video_surface') {
+    return getAdminInteriorSurfacePick();
+  }
+  return getAdminPlacementGroundPick();
 }
 
 function getOrCreateAdminPlacementMarker() {
@@ -4293,18 +4299,22 @@ function beginAdminPlacement(request) {
 	        ? `Place ${String(request.stampType || 'terrain').replace(/_/g, ' ')}`
 	        : request.kind === 'collectible'
 	          ? `Place ${COLLECTIBLE_TYPES[request.collectibleType]?.label || 'Collectible'}`
+	          : request.kind === 'interior_hotspot_surface'
+	            ? 'Place Link On Surface'
+	            : request.kind === 'interior_video_surface'
+	              ? 'Place Video On Surface'
 	          : request.kind === 'interior_entrance'
 	            ? 'Place Door'
 	            : request.kind === 'quest_target_marker'
 	              ? 'Place Quest Target Marker'
 	              : `Place ${getCollisionProxyLabel(request.proxyKind)}`;
   canvas.style.cursor = 'crosshair';
-  showToast(`${label}: click the ground where it should go`);
+  showToast(`${label}: click the ${ActiveInterior ? 'floor or wall surface' : 'ground'} where it should go`);
 }
 
 function updateAdminPlacementMarker() {
   if (!pendingAdminPlacement || !adminMode) return;
-  const pick = getAdminPlacementGroundPick();
+  const pick = getAdminPlacementPick(pendingAdminPlacement);
   const marker = getOrCreateAdminPlacementMarker();
   if (!pick || !pick.hit || !pick.pickedPoint) {
     marker.setEnabled(false);
@@ -4328,6 +4338,10 @@ function updateAdminPlacementMarker() {
     marker.scaling.set(.75, 1, .75);
 	  } else if (pendingAdminPlacement.kind === 'collectible') {
 	    marker.scaling.set(.7, 1, .7);
+	  } else if (pendingAdminPlacement.kind === 'interior_hotspot_surface') {
+	    marker.scaling.set(.85, 1, .85);
+	  } else if (pendingAdminPlacement.kind === 'interior_video_surface') {
+	    marker.scaling.set(1.35, 1, 1.35);
 	  } else if (pendingAdminPlacement.kind === 'quest_target_marker') {
 	    const radius = Math.max(.5, Number(pendingAdminPlacement.settings?.radius) || 8);
 	    marker.scaling.set(Math.max(1, radius / 3.2), 1, Math.max(1, radius / 3.2));
@@ -4357,7 +4371,7 @@ function placeCollisionProxyPieceAtPoint(kind, point, owner = null) {
   return proxy;
 }
 
-function placePendingAdminPlacementAtPoint(point) {
+function placePendingAdminPlacementAtPoint(point, pick = null) {
   if (!pendingAdminPlacement || !point) return false;
   const request = pendingAdminPlacement;
   clearAdminPlacement();
@@ -4385,6 +4399,16 @@ function placePendingAdminPlacementAtPoint(point) {
 
   if (request.kind === 'collectible') {
     createCollectibleAtPoint(request.collectibleType, point);
+    return true;
+  }
+
+  if (request.kind === 'interior_hotspot_surface') {
+    createInteriorHotspotFlatAtPick(pick, request.settings || readInteriorHotspotAdminSettings());
+    return true;
+  }
+
+  if (request.kind === 'interior_video_surface') {
+    createInteriorVideoScreenFlatAtPick(pick, request.settings || readInteriorVideoScreenAdminSettings());
     return true;
   }
 
@@ -6324,8 +6348,10 @@ async function tryLoadCollectibleModel(root, cfg) {
 
 function createCollectible(type = 'flame_shard', position, options = {}) {
   const cfg = COLLECTIBLE_TYPES[type] || COLLECTIBLE_TYPES.flame_shard;
-  const id = options.collectibleId || `${CURRENT_VILLAGE_ID}-${type}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const collectibleScope = options.interiorId || CURRENT_VILLAGE_ID;
+  const id = options.collectibleId || `${collectibleScope}-${type}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
   const root = new BABYLON.TransformNode(options.name || makeUniqueVillageNodeName('collectibleRootClone_' + type + '_' + Date.now()), scene);
+  if (options.parent) root.parent = options.parent;
   root.position = position.clone();
   root.rotation = options.rotation ? new BABYLON.Vector3(options.rotation.x || 0, options.rotation.y || 0, options.rotation.z || 0) : BABYLON.Vector3.Zero();
   root.scaling = options.scaling ? new BABYLON.Vector3(options.scaling.x || 1, options.scaling.y || 1, options.scaling.z || 1) : BABYLON.Vector3.One();
@@ -6336,6 +6362,8 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     collectibleType: type,
     collectibleLabel: cfg.label,
     villageId: CURRENT_VILLAGE_ID,
+    interiorRuntime: !!options.interiorId,
+    interiorId: options.interiorId || null,
     _collectibleLoadingModel: !!cfg.modelUrl,
     _collectibleFarHidden: false,
     _collectibleTest: options.testOnly === true
@@ -6437,7 +6465,7 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
   if (cfg.modelUrl) setCollectibleVisualsVisible(root, false, true);
 
   root.isPickable = true;
-  root.setEnabled(!isCollectibleCollected(id));
+  root.setEnabled(options.enabled !== false && !isCollectibleCollected(id));
   registerEditableRoot(root.name, root);
   CollectibleRuntime.roots.add(root);
   tryLoadCollectibleModel(root, cfg);
@@ -6451,11 +6479,34 @@ function placeCollectibleFromAdmin() {
 }
 
 function createCollectibleAtPoint(type, point) {
-  const root = createCollectible(type, new BABYLON.Vector3(point.x, point.y + .08, point.z));
+  const position = new BABYLON.Vector3(point.x, point.y + .08, point.z);
+  const interiorId = ActiveInterior ? getActiveInteriorConfigKey() : '';
+  const localPosition = ActiveInterior?.root ? getActiveInteriorLocalPoint(position) : position;
+  const root = createCollectible(type, localPosition, ActiveInterior?.root
+    ? { parent:ActiveInterior.root, interiorId }
+    : {});
   setSelectedEditableObject(root);
+  if (ActiveInterior?.root) saveInteriorCollectibleConfig(root);
   triggerAutoSave();
   showToast('Collectible placed: ' + (COLLECTIBLE_TYPES[type]?.label || 'Collectible'));
   return root;
+}
+
+function duplicateSelectedInteriorCollectible() {
+  if (selectedObject?.metadata?.type !== 'collectible' || selectedObject.metadata?.interiorRuntime !== true || !ActiveInterior?.root) return false;
+  const cfg = serializeInteriorCollectible(selectedObject);
+  delete cfg.collectibleId;
+  cfg.position.x += 1;
+  const copy = createCollectible(cfg.collectibleType || 'flame_shard', new BABYLON.Vector3(cfg.position.x, cfg.position.y, cfg.position.z), {
+    parent:ActiveInterior.root,
+    interiorId:getActiveInteriorConfigKey(),
+    rotation:cfg.rotation,
+    scaling:cfg.scaling
+  });
+  saveInteriorCollectibleConfig(copy);
+  setSelectedEditableObject(copy);
+  showToast('Interior collectible duplicated');
+  return true;
 }
 
 function spawnTestCollectibles() {
@@ -6537,8 +6588,9 @@ function updateCollectibleCollectionChecks(roots) {
     const root = roots[index];
     if (!root || root.isDisposed?.() || !root.isEnabled?.() || root.metadata?._collectiblePickupStartedAt) continue;
     if (root.metadata?._collectibleFarHidden) continue;
-    const dx = root.position.x - charMesh.position.x;
-    const dz = root.position.z - charMesh.position.z;
+    const pos = root.getAbsolutePosition?.() || root.position;
+    const dx = pos.x - charMesh.position.x;
+    const dz = pos.z - charMesh.position.z;
     if (dx * dx + dz * dz <= COLLECTIBLE_COLLECTION_DIST_SQ) collectProgressionCollectible(root);
   }
   CollectibleRuntime.lastCheckIndex = (CollectibleRuntime.lastCheckIndex + checks) % roots.length;
@@ -6563,8 +6615,9 @@ function updateCollectibles(dt) {
     active += 1;
     let distSq = 0;
     if (charMesh) {
-      const dx = root.position.x - charMesh.position.x;
-      const dz = root.position.z - charMesh.position.z;
+      const pos = root.getAbsolutePosition?.() || root.position;
+      const dx = pos.x - charMesh.position.x;
+      const dz = pos.z - charMesh.position.z;
       distSq = dx * dx + dz * dz;
     }
     const shouldCull = !adminMode && charMesh && distSq > COLLECTIBLE_HIDE_DIST_SQ;
@@ -9481,6 +9534,9 @@ function updateQuestTracker() {
   } else if (guidance?.marker && guidance.label) {
     objectiveText = `Follow the glowing marker to ${guidance.label}.`;
   }
+  const configuredAction = getConfiguredQuestAction(quest, QuestState.step);
+  if (configuredAction === 'observeTime') objectiveText = 'Press O to observe the village light and time.';
+  if (configuredAction === 'experienceWeather') objectiveText = 'Press O to observe the sky and current weather.';
   objective.textContent = `${quest?.title || 'Quest'}: ${objectiveText}${progressText}`;
   tracker.classList.add('on');
 }
@@ -9558,31 +9614,45 @@ function updateTutorialQuestWorldProgress() {
     }
   }
   if (QuestState.questId === 'hub-light-changes' && QuestState.step === 'observe-time') {
-    const progress = getHubTutorialProgress('hub-light-changes');
-    const elapsed = performance.now() - (progress.startedAt || performance.now());
-    if (elapsed > 4200) advanceHubTutorialObjective('observeTime', { clockLabel:document.getElementById('td')?.textContent || '' });
+    getHubTutorialProgress('hub-light-changes');
     return;
   }
   if (QuestState.questId === 'hub-sky-watches' && QuestState.step === 'experience-weather') {
-    const progress = getHubTutorialProgress('hub-sky-watches');
-    const elapsed = performance.now() - (progress.startedAt || performance.now());
-    const weatherMode = WeatherManager?.mode || 'clear';
-    if (weatherMode !== 'clear' || elapsed > 4200) advanceHubTutorialObjective('experienceWeather', { weatherMode });
+    getHubTutorialProgress('hub-sky-watches');
     return;
   }
   const configuredAction = getConfiguredQuestAction(QUEST_DEFINITIONS[QuestState.questId]);
   if (configuredAction === 'observeTime') {
-    const progress = getHubTutorialProgress(QuestState.questId);
-    const elapsed = performance.now() - (progress.startedAt || performance.now());
-    if (elapsed > 4200) advanceHubTutorialObjective('observeTime', { clockLabel:document.getElementById('td')?.textContent || '' });
+    getHubTutorialProgress(QuestState.questId);
     return;
   }
   if (configuredAction === 'experienceWeather') {
-    const progress = getHubTutorialProgress(QuestState.questId);
-    const elapsed = performance.now() - (progress.startedAt || performance.now());
-    const weatherMode = WeatherManager?.mode || 'clear';
-    if (weatherMode !== 'clear' || elapsed > 4200) advanceHubTutorialObjective('experienceWeather', { weatherMode });
+    getHubTutorialProgress(QuestState.questId);
   }
+}
+
+function tryObserveTimeWeatherQuest() {
+  if (!walkMode || adminMode || ActiveInterior || QuestState.completed === true) return false;
+  const quest = QUEST_DEFINITIONS[QuestState.questId];
+  const action = getConfiguredQuestAction(quest);
+  if (action !== 'observeTime' && action !== 'experienceWeather') return false;
+  const progress = getHubTutorialProgress(QuestState.questId);
+  const elapsed = performance.now() - (progress.startedAt || performance.now());
+  if (elapsed < 1200) {
+    showToast('Take a moment to observe the village first');
+    return true;
+  }
+  if (action === 'observeTime') {
+    return advanceHubTutorialObjective('observeTime', {
+      clockLabel:document.getElementById('td')?.textContent || '',
+      observedByPlayer:true
+    });
+  }
+  const weatherMode = WeatherManager?.mode || 'clear';
+  return advanceHubTutorialObjective('experienceWeather', {
+    weatherMode,
+    observedByPlayer:true
+  });
 }
 
 function handleSignQuestEvent(signData) {
@@ -17644,12 +17714,15 @@ scene.onPointerObservable.add((evt) => {
   if (evt.type !== BABYLON.PointerEventTypes.POINTERPICK) return;
 
   if (pendingAdminPlacement) {
-    const placementPick = getAdminPlacementGroundPick();
+    const placementPick = getAdminPlacementPick(pendingAdminPlacement);
     if (placementPick && placementPick.hit && placementPick.pickedPoint) {
-      placePendingAdminPlacementAtPoint(placementPick.pickedPoint);
+      placePendingAdminPlacementAtPoint(placementPick.pickedPoint, placementPick);
       return;
     }
-    showToast('Click a ground or floor surface to place');
+    const surfaceMessage = pendingAdminPlacement?.kind === 'interior_hotspot_surface' || pendingAdminPlacement?.kind === 'interior_video_surface'
+      ? 'Click an interior wall or surface to place'
+      : 'Click a ground or floor surface to place';
+    showToast(surfaceMessage);
     return;
   }
 
@@ -17830,7 +17903,10 @@ window.addEventListener('pointerup', () => {
   if (adminMode && selectedObject && (wasDragging || npcRotationChanged)) {
     const draggedNode = window._dragSelectedObject;
     const beforePos = window._dragSelectedStartPos;
-  if (!['interior_display', 'interior_exit', 'interior_entrance', 'interior_fake_light', 'interior_nft_frame', 'interior_hotspot', 'interior_video_screen', 'quest_target_marker'].includes(selectedObject.metadata?.type)) softSnapSelectedObject();
+  const selectedType = selectedObject.metadata?.type;
+  const skipGroundSnap = ['interior_display', 'interior_exit', 'interior_entrance', 'interior_fake_light', 'interior_nft_frame', 'interior_hotspot', 'interior_video_screen', 'quest_target_marker'].includes(selectedType)
+    || (selectedType === 'collectible' && selectedObject.metadata?.interiorRuntime === true);
+  if (!skipGroundSnap) softSnapSelectedObject();
     if (
       draggedNode &&
       draggedNode === selectedObject &&
@@ -17849,6 +17925,7 @@ window.addEventListener('pointerup', () => {
     if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
     if (selectedObject.metadata?.type === 'interior_hotspot') saveInteriorHotspotConfig(selectedObject);
     if (selectedObject.metadata?.type === 'interior_video_screen') saveInteriorVideoScreenConfig(selectedObject);
+    if (selectedObject.metadata?.type === 'collectible' && selectedObject.metadata?.interiorRuntime === true) saveInteriorCollectibleConfig(selectedObject);
     if (selectedObject.metadata?.type === 'quest_target_marker') {
       writeQuestTargetMarkerSettingsToControls(selectedObject);
       updateQuestTargetMarkers(0);
@@ -17913,6 +17990,7 @@ function collectWorldLayoutData() {
   // Only save actually placed objects — skip source roots at 9999 and untyped nodes
   const saveableTransformNodes = scene.transformNodes.filter(n =>
     n.metadata && n.metadata.isClone &&
+    n.metadata.interiorRuntime !== true &&
     !n.metadata.isPickProxy &&
     n.metadata._collectibleTest !== true &&
     n.name && !n.name.includes('.') &&
@@ -18600,6 +18678,16 @@ function deleteSelectedFence(){
     deleteSelectedInteriorVideoScreen();
     return;
   }
+  if (selectedObject.metadata?.type === 'collectible' && selectedObject.metadata?.interiorRuntime === true) {
+    deleteInteriorCollectibleConfig(selectedObject.metadata.collectibleId);
+    CollectibleRuntime.roots.delete(selectedObject);
+    selectedObject.dispose(false, true);
+    selectedObject = null;
+    updateSelectedBadge();
+    detachAdminGizmo();
+    showToast('Interior collectible deleted');
+    return;
+  }
   if (selectedObject.metadata?.type === 'quest_target_marker') {
     deleteSelectedQuestTargetMarker();
     return;
@@ -18690,6 +18778,10 @@ function duplicateSelectedFence(){
   }
   if (selectedObject.metadata?.type === 'interior_video_screen') {
     duplicateSelectedInteriorVideoScreen();
+    return;
+  }
+  if (selectedObject.metadata?.type === 'collectible' && selectedObject.metadata?.interiorRuntime === true) {
+    duplicateSelectedInteriorCollectible();
     return;
   }
   if (selectedObject.metadata?.type === 'quest_target_marker') {
@@ -18853,6 +18945,25 @@ function openPanel(b){
 }
 
 // ── WALK MODE ────────────────────────────────
+function configureInteriorEditCamera() {
+  if (!ActiveInterior) return false;
+  const bounds = typeof getActiveInteriorBounds === 'function' ? getActiveInteriorBounds() : null;
+  const target = charMesh?.position?.clone?.() || new BABYLON.Vector3(0, ActiveInterior.floorY || INTERIOR_FLOOR_Y, 0);
+  target.y = (ActiveInterior.floorY || INTERIOR_FLOOR_Y) + 2.2;
+  orbit.setTarget(target);
+  orbit.alpha = (charMesh?.rotation?.y || 0) + Math.PI;
+  orbit.beta = Math.PI / 2.7;
+  orbit.radius = Math.min(22, Math.max(7, Math.min(bounds?.halfX || 10, bounds?.halfZ || 10) * 1.25));
+  orbit.lowerRadiusLimit = 3;
+  orbit.upperRadiusLimit = 42;
+  orbit.upperBetaLimit = Math.PI / 1.9;
+  orbit.panningSensibility = 70;
+  scene.activeCamera = orbit;
+  orbit.attachControl(canvas, true);
+  walk.detachControl();
+  return true;
+}
+
 function toggleWalk() {
   walkMode = !walkMode;
   const wb = document.getElementById('wb'), xh = document.getElementById('xhair');
@@ -18870,7 +18981,9 @@ function toggleWalk() {
     wb.textContent = 'EXIT WALK'; wb.classList.add('on'); xh.classList.remove('on');
     runVillagePerformancePass(true);
   } else {
-    scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
+    if (!configureInteriorEditCamera()) {
+      scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
+    }
     wb.textContent = '⚔️  ENTER VILLAGE'; wb.classList.remove('on'); xh.classList.remove('on');
     runVillagePerformancePass(true);
   }
@@ -18914,11 +19027,13 @@ document.addEventListener('keydown', async e => {
     if (adminMode) {
       // Keep orbit camera active in admin — unlock for free editing
       walk.detachControl();
-      orbit.attachControl(canvas, true);
-      orbit.upperBetaLimit = Math.PI; // allow top-down view
-      orbit.lowerRadiusLimit = 5;
-      orbit.upperRadiusLimit = 600;
-      orbit.panningSensibility = 50; // fast panning with right-click drag
+      if (!configureInteriorEditCamera()) {
+        orbit.attachControl(canvas, true);
+        orbit.upperBetaLimit = Math.PI; // allow top-down view
+        orbit.lowerRadiusLimit = 5;
+        orbit.upperRadiusLimit = 600;
+        orbit.panningSensibility = 50; // fast panning with right-click drag
+      }
       toggleAssetPanel(true);
       setCollisionProxyVisualsVisible(true);
       runVillagePerformancePass(true);
@@ -19002,7 +19117,7 @@ document.addEventListener('keydown', async e => {
     enterInterior(selectedObject);
     return;
   }
-  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryTalkToNearbySmallAnt() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
+  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryObserveTimeWeatherQuest() || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryTalkToNearbySmallAnt() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
     e.preventDefault();
     return;
   }
@@ -23190,11 +23305,15 @@ function registerFakeLightMaterial(root, material, options = {}) {
 }
 
 var FakeLightDirectorTestMode = localStorage.getItem('rebelAntsFakeLightTestMode') || 'auto';
+var InteriorFakeLightFullPreview = localStorage.getItem('rebelAntsInteriorFakeLightFullPreview') === '1';
 const FAKE_LIGHT_TEST_FACTORS = { day:.04, sunset:.62, night:1, storm:1.25 };
 
 function getFakeLightStateFactor() {
+  const ensureInteriorEditVisible = factor => adminMode && ActiveInterior
+    ? Math.max(InteriorFakeLightFullPreview ? 1.25 : .78, factor)
+    : factor;
   if (FakeLightDirectorTestMode && FakeLightDirectorTestMode !== 'auto') {
-    return FAKE_LIGHT_TEST_FACTORS[FakeLightDirectorTestMode] || .18;
+    return ensureInteriorEditVisible(FAKE_LIGHT_TEST_FACTORS[FakeLightDirectorTestMode] || .18);
   }
   const now = new Date();
   const h = now.getHours() + now.getMinutes() / 60;
@@ -23214,14 +23333,21 @@ function getFakeLightStateFactor() {
     'heavy-rain': .42,
     storm: .7
   }[weatherMode] || 0;
-  return Math.max(.04, Math.min(1.25, timeFactor + weatherDarkness));
+  return ensureInteriorEditVisible(Math.max(.04, Math.min(1.25, timeFactor + weatherDarkness)));
 }
 
 function updateFakeLightTestReadout(factor = getFakeLightStateFactor()) {
   const select = document.getElementById('fakeLightTestMode');
   if (select && select.value !== FakeLightDirectorTestMode) select.value = FakeLightDirectorTestMode;
+  const previewBtn = document.getElementById('interiorFakeLightPreviewBtn');
+  if (previewBtn) previewBtn.textContent = InteriorFakeLightFullPreview ? 'Preview Full: On' : 'Preview Full Brightness';
   const readout = document.getElementById('fakeLightStateReadout');
-  if (readout) readout.textContent = 'Fake Light State: ' + (FakeLightDirectorTestMode === 'auto' ? 'Auto Time + Weather' : FakeLightDirectorTestMode) + ' · ' + factor.toFixed(2);
+  if (readout) {
+    const mode = InteriorFakeLightFullPreview && adminMode && ActiveInterior
+      ? 'Interior Preview Full'
+      : (FakeLightDirectorTestMode === 'auto' ? 'Auto Time + Weather' : FakeLightDirectorTestMode);
+    readout.textContent = 'Fake Light State: ' + mode + ' · ' + factor.toFixed(2);
+  }
 }
 
 function setFakeLightTestMode(mode = 'auto') {
@@ -23229,6 +23355,13 @@ function setFakeLightTestMode(mode = 'auto') {
   localStorage.setItem('rebelAntsFakeLightTestMode', FakeLightDirectorTestMode);
   applyFakeLightState(true);
   showToast('Fake light test: ' + (FakeLightDirectorTestMode === 'auto' ? 'Auto' : FakeLightDirectorTestMode));
+}
+
+function toggleInteriorFakeLightPreview() {
+  InteriorFakeLightFullPreview = !InteriorFakeLightFullPreview;
+  localStorage.setItem('rebelAntsInteriorFakeLightFullPreview', InteriorFakeLightFullPreview ? '1' : '0');
+  applyFakeLightState(true);
+  showToast('Interior fake light preview: ' + (InteriorFakeLightFullPreview ? 'full brightness' : 'auto'));
 }
 
 var _lastFakeLightStateUpdateAt = 0;
@@ -23498,6 +23631,11 @@ function getInteriorSavedVideoScreenConfigs(interiorId) {
   return Array.isArray(configs[interiorId]?.videoScreens) ? configs[interiorId].videoScreens : [];
 }
 
+function getInteriorSavedCollectibleConfigs(interiorId) {
+  const configs = getInteriorRoomConfigs();
+  return Array.isArray(configs[interiorId]?.collectibles) ? configs[interiorId].collectibles : [];
+}
+
 function saveInteriorDisplayConfig(display) {
   if (!ActiveInterior || !display?.metadata?.displayId) return;
   const key = getActiveInteriorConfigKey();
@@ -23595,6 +23733,39 @@ function deleteInteriorVideoScreenConfig(screenId) {
   const configs = getInteriorRoomConfigs();
   const current = configs[key] || {};
   current.videoScreens = (Array.isArray(current.videoScreens) ? current.videoScreens : []).filter(item => item.screenId !== screenId);
+  configs[key] = { ...current, updatedAt:new Date().toISOString() };
+  setInteriorRoomConfigs(configs);
+}
+
+function serializeInteriorCollectible(collectible) {
+  const meta = collectible.metadata || {};
+  return {
+    interiorId: meta.interiorId || getActiveInteriorConfigKey(),
+    collectibleId: meta.collectibleId,
+    collectibleType: meta.collectibleType || 'flame_shard',
+    enabled: collectible.isEnabled?.() !== false,
+    ...serializeNodeTransform(collectible)
+  };
+}
+
+function saveInteriorCollectibleConfig(collectible) {
+  if (!ActiveInterior || !collectible?.metadata?.collectibleId) return;
+  const key = getActiveInteriorConfigKey();
+  if (!key) return;
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  const collectibles = (Array.isArray(current.collectibles) ? current.collectibles : []).filter(item => item.collectibleId !== collectible.metadata.collectibleId);
+  collectibles.push(serializeInteriorCollectible(collectible));
+  configs[key] = { ...current, collectibles, updatedAt:new Date().toISOString() };
+  setInteriorRoomConfigs(configs);
+}
+
+function deleteInteriorCollectibleConfig(collectibleId) {
+  const key = getActiveInteriorConfigKey();
+  if (!key || !collectibleId) return;
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  current.collectibles = (Array.isArray(current.collectibles) ? current.collectibles : []).filter(item => item.collectibleId !== collectibleId);
   configs[key] = { ...current, updatedAt:new Date().toISOString() };
   setInteriorRoomConfigs(configs);
 }
@@ -25202,6 +25373,23 @@ function buildInteriorRoom(entrance) {
   getInteriorSavedAssetConfigs(targetInteriorId).forEach(assetConfig => createInteriorFakeLightAsset(root, assetConfig));
   getInteriorSavedHotspotConfigs(targetInteriorId).forEach(hotspotConfig => createInteriorHotspot(root, { ...hotspotConfig, interiorId:targetInteriorId }));
   getInteriorSavedVideoScreenConfigs(targetInteriorId).forEach(screenConfig => createInteriorVideoScreen(root, { ...screenConfig, interiorId:targetInteriorId }));
+  getInteriorSavedCollectibleConfigs(targetInteriorId).forEach(collectibleConfig => createCollectible(
+    collectibleConfig.collectibleType || 'flame_shard',
+    new BABYLON.Vector3(
+      collectibleConfig.position?.x || 0,
+      collectibleConfig.position?.y || INTERIOR_FLOOR_Y + 1.1,
+      collectibleConfig.position?.z || 0
+    ),
+    {
+      parent:root,
+      interiorId:targetInteriorId,
+      name:collectibleConfig.name || null,
+      rotation:collectibleConfig.rotation,
+      scaling:collectibleConfig.scaling,
+      enabled:collectibleConfig.enabled !== false,
+      collectibleId:collectibleConfig.collectibleId || null
+    }
+  ));
   if (!_interiorDisplaysVisible) getInteriorDisplayRoots().forEach(display => display.setEnabled(false));
   getInteriorNftFrameRoots().forEach(applyInteriorNftFrameVisual);
   getInteriorHotspotRoots().forEach(applyInteriorHotspotVisual);
@@ -25475,6 +25663,37 @@ function testEnterSelectedInterior() {
   return enterInterior(selectedObject);
 }
 
+function getActiveInteriorLocalPoint(worldPoint) {
+  if (!ActiveInterior?.root || !worldPoint) return worldPoint?.clone?.() || BABYLON.Vector3.Zero();
+  const matrix = ActiveInterior.root.getWorldMatrix?.();
+  if (!matrix) return worldPoint.clone();
+  return BABYLON.Vector3.TransformCoordinates(worldPoint, matrix.clone().invert());
+}
+
+function getInteriorSurfacePlacementTransform(pick, offset = .08) {
+  if (!pick?.pickedPoint) return null;
+  let normal = null;
+  try { normal = pick.getNormal?.(true); } catch(e) { normal = null; }
+  if (!normal) {
+    try { normal = pick.getNormal?.(); } catch(e) { normal = null; }
+  }
+  if (!normal || normal.lengthSquared?.() < 0.0001) normal = new BABYLON.Vector3(0, 0, 1);
+  normal = normal.normalize();
+  const worldPoint = pick.pickedPoint.add(normal.scale(offset));
+  const localPoint = getActiveInteriorLocalPoint(worldPoint);
+  const mostlyHorizontal = Math.abs(normal.y) > .68;
+  const rotation = mostlyHorizontal
+    ? new BABYLON.Vector3(Math.PI / 2, charMesh?.rotation?.y || 0, 0)
+    : new BABYLON.Vector3(0, Math.atan2(normal.x, normal.z), 0);
+  return { position:localPoint, rotation, normal };
+}
+
+function beginInteriorSurfacePlacement(kind, settings = {}) {
+  if (!adminMode) { showToast('Enter Admin Mode first'); return; }
+  if (!ActiveInterior?.root) { showToast('Enter an interior first'); return; }
+  beginAdminPlacement({ kind, settings });
+}
+
 function readInteriorDisplayAdminSettings() {
   return {
     label: document.getElementById('interiorDisplayLabel')?.value?.trim() || 'Interior Display',
@@ -25564,6 +25783,27 @@ function addInteriorHotspotFromAdmin() {
   showToast('Interior link hotspot added');
 }
 
+function createInteriorHotspotFlatAtPick(pick, settings = readInteriorHotspotAdminSettings()) {
+  if (!ActiveInterior?.root) { showToast('Enter an interior first'); return null; }
+  const transform = getInteriorSurfacePlacementTransform(pick, .075);
+  if (!transform) { showToast('Click an interior wall or surface first'); return null; }
+  const hotspot = createInteriorHotspot(ActiveInterior.root, {
+    ...settings,
+    position:{ x:transform.position.x, y:transform.position.y, z:transform.position.z },
+    rotation:{ x:transform.rotation.x, y:transform.rotation.y, z:transform.rotation.z }
+  });
+  saveInteriorHotspotConfig(hotspot);
+  adminGizmoMode = 'move';
+  setSelectedEditableObject(hotspot);
+  triggerAutoSave();
+  showToast('Interior link placed flat on surface');
+  return hotspot;
+}
+
+function placeInteriorHotspotFlatOnSurface() {
+  beginInteriorSurfacePlacement('interior_hotspot_surface', readInteriorHotspotAdminSettings());
+}
+
 function applySelectedInteriorHotspotSettings() {
   if (selectedObject?.metadata?.type !== 'interior_hotspot') { showToast('Select a link hotspot first'); return; }
   const settings = readInteriorHotspotAdminSettings();
@@ -25627,6 +25867,28 @@ function addInteriorVideoScreenFromAdmin() {
   adminGizmoMode = 'move';
   setSelectedEditableObject(screen);
   showToast('Interior video screen added');
+}
+
+function createInteriorVideoScreenFlatAtPick(pick, settings = readInteriorVideoScreenAdminSettings()) {
+  if (!ActiveInterior?.root) { showToast('Enter an interior first'); return null; }
+  const transform = getInteriorSurfacePlacementTransform(pick, .085);
+  if (!transform) { showToast('Click an interior wall or surface first'); return null; }
+  const screen = createInteriorVideoScreen(ActiveInterior.root, {
+    ...settings,
+    position:{ x:transform.position.x, y:transform.position.y, z:transform.position.z },
+    rotation:{ x:transform.rotation.x, y:transform.rotation.y, z:transform.rotation.z }
+  });
+  saveInteriorVideoScreenConfig(screen);
+  refreshInteriorVideoPlayback();
+  adminGizmoMode = 'move';
+  setSelectedEditableObject(screen);
+  triggerAutoSave();
+  showToast('Video screen placed flat on surface');
+  return screen;
+}
+
+function placeInteriorVideoScreenFlatOnSurface() {
+  beginInteriorSurfacePlacement('interior_video_surface', readInteriorVideoScreenAdminSettings());
 }
 
 function applySelectedInteriorVideoScreenSettings() {
@@ -25719,15 +25981,18 @@ Object.assign(window, {
   deleteSelectedInteriorDisplay,
   toggleInteriorDisplayVisibility,
   addInteriorFakeLightAsset,
+  toggleInteriorFakeLightPreview,
   applySelectedInteriorFakeLightSettings,
   duplicateSelectedInteriorAsset,
   deleteSelectedInteriorAsset,
   addInteriorHotspotFromAdmin,
+  placeInteriorHotspotFlatOnSurface,
   applySelectedInteriorHotspotSettings,
   duplicateSelectedInteriorHotspot,
   deleteSelectedInteriorHotspot,
   toggleInteriorHotspotHelpers,
   addInteriorVideoScreenFromAdmin,
+  placeInteriorVideoScreenFlatOnSurface,
   applySelectedInteriorVideoScreenSettings,
   duplicateSelectedInteriorVideoScreen,
   deleteSelectedInteriorVideoScreen,
@@ -27018,11 +27283,13 @@ window.applySelectedInteriorDisplaySettings = applySelectedInteriorDisplaySettin
 window.deleteSelectedInteriorDisplay = deleteSelectedInteriorDisplay;
 window.toggleInteriorDisplayVisibility = toggleInteriorDisplayVisibility;
 window.addInteriorHotspotFromAdmin = addInteriorHotspotFromAdmin;
+window.placeInteriorHotspotFlatOnSurface = placeInteriorHotspotFlatOnSurface;
 window.applySelectedInteriorHotspotSettings = applySelectedInteriorHotspotSettings;
 window.duplicateSelectedInteriorHotspot = duplicateSelectedInteriorHotspot;
 window.deleteSelectedInteriorHotspot = deleteSelectedInteriorHotspot;
 window.toggleInteriorHotspotHelpers = toggleInteriorHotspotHelpers;
 window.addInteriorVideoScreenFromAdmin = addInteriorVideoScreenFromAdmin;
+window.placeInteriorVideoScreenFlatOnSurface = placeInteriorVideoScreenFlatOnSurface;
 window.applySelectedInteriorVideoScreenSettings = applySelectedInteriorVideoScreenSettings;
 window.duplicateSelectedInteriorVideoScreen = duplicateSelectedInteriorVideoScreen;
 window.deleteSelectedInteriorVideoScreen = deleteSelectedInteriorVideoScreen;
@@ -27094,6 +27361,7 @@ window.applyLanternGlowSettings = applyLanternGlowSettings;
 window.applyAmbientGlowSettings = applyAmbientGlowSettings;
 window.saveInteriorLightingFromAdmin = saveInteriorLightingFromAdmin;
 window.setFakeLightTestMode = setFakeLightTestMode;
+window.toggleInteriorFakeLightPreview = toggleInteriorFakeLightPreview;
 window.addInteriorFakeLightAsset = addInteriorFakeLightAsset;
 window.applySelectedInteriorFakeLightSettings = applySelectedInteriorFakeLightSettings;
 window.duplicateSelectedInteriorAsset = duplicateSelectedInteriorAsset;
