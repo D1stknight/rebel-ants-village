@@ -102,6 +102,7 @@ async function readWorldLayout(token, filePath, options = {}) {
     if (response.status === 404 && options.emptyOnMissing) {
       return { sha: null, layout: [] };
     }
+
     const detail = await getGitHubErrorMessage(response);
     throw new Error(
       'Could not read current world layout from GitHub. Status: ' +
@@ -111,12 +112,42 @@ async function readWorldLayout(token, filePath, options = {}) {
   }
 
   const file = await response.json();
-  const json = Buffer.from(String(file.content || '').replace(/\n/g, ''), 'base64').toString('utf8');
+  const json = Buffer.from(String(file.content || '').replace(/\n/g, ''), 'base64').toString('utf8').trim();
 
-  return {
-    sha: file.sha,
-    layout: JSON.parse(json)
-  };
+  if (!json) {
+    console.warn('World layout file is empty. Treating as blank layout:', filePath);
+    return {
+      sha: file.sha,
+      layout: []
+    };
+  }
+
+  try {
+    const layout = JSON.parse(json);
+
+    if (!Array.isArray(layout)) {
+      console.warn('World layout file is not an array. Treating as blank layout:', filePath);
+      return {
+        sha: file.sha,
+        layout: []
+      };
+    }
+
+    return {
+      sha: file.sha,
+      layout
+    };
+  } catch (err) {
+    console.warn('World layout file contains invalid JSON. Treating as blank layout:', {
+      filePath,
+      error: err?.message || err
+    });
+
+    return {
+      sha: file.sha,
+      layout: []
+    };
+  }
 }
 
 async function writeWorldLayout(token, layout, filePath) {
