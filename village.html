@@ -9942,6 +9942,46 @@ function writeQuestTargetMarkerSettingsToControls(root) {
   updateQuestTargetPulseLabel();
 }
 
+function writeQuestTargetMarkerPrefillToControls(settings = {}, options = {}) {
+  const targetType = normalizeQuestTargetType(settings.targetType || 'Area');
+  const defaultColorHex = getQuestTargetDefaultColorHex(targetType);
+  const ringColor = normalizeQuestTargetColorHex(settings.ringColor, defaultColorHex);
+  const glowColor = normalizeQuestTargetColorHex(settings.glowColor, ringColor);
+  const labelBoxColor = normalizeQuestTargetColorHex(settings.labelBoxColor, ringColor);
+  const labelTextColor = normalizeQuestTargetColorHex(settings.labelTextColor, ringColor);
+  const visualControlsFrozen = options.preserveVisualControls === true;
+  const idInput = document.getElementById('questTargetIdInput');
+  const labelInput = document.getElementById('questTargetLabelInput');
+  const questInput = document.getElementById('questTargetQuestIdInput');
+  const objectiveInput = document.getElementById('questTargetObjectiveTypeInput');
+  const typeInput = document.getElementById('questTargetTypeInput');
+  const objectInput = document.getElementById('questTargetObjectIdInput');
+  const radiusInput = document.getElementById('questTargetRadiusInput');
+  const enabledInput = document.getElementById('questTargetEnabledInput');
+  const ringInput = document.getElementById('questTargetRingColorInput');
+  const glowInput = document.getElementById('questTargetGlowColorInput');
+  const labelBoxInput = document.getElementById('questTargetLabelBoxColorInput');
+  const labelTextInput = document.getElementById('questTargetLabelTextColorInput');
+  const pulseInput = document.getElementById('questTargetPulseInput');
+  const radius = Math.max(.5, Math.min(80, Number(settings.radius) || 8));
+  if (idInput) idInput.value = settings.targetMarkerId || '';
+  if (labelInput) labelInput.value = settings.label || '';
+  if (questInput) questInput.value = settings.questId || '';
+  if (objectiveInput) objectiveInput.value = settings.objectiveType || '';
+  if (typeInput) typeInput.value = targetType;
+  if (objectInput) objectInput.value = settings.targetNpcId || settings.targetInteriorId || settings.targetVillageId || settings.targetObjectId || settings.objectId || '';
+  if (radiusInput) radiusInput.value = String(radius);
+  if (enabledInput) enabledInput.checked = settings.enabled !== false;
+  if (!visualControlsFrozen) {
+    if (ringInput) ringInput.value = ringColor;
+    if (glowInput) glowInput.value = glowColor;
+    if (labelBoxInput) labelBoxInput.value = labelBoxColor;
+    if (labelTextInput) labelTextInput.value = labelTextColor;
+    if (pulseInput) pulseInput.checked = settings.pulseEnabled !== false;
+  }
+  updateQuestTargetPulseLabel();
+}
+
 function updateQuestTargetPulseLabel() {
   const label = document.getElementById('questTargetPulseLabel');
   const input = document.getElementById('questTargetPulseInput');
@@ -10048,6 +10088,17 @@ function getQuestBuilderObjectId(quest = {}) {
 }
 
 let QuestBuilderDraftQuestId = null;
+const QUEST_BUILDER_MARKER_SYNC_FIELDS = [
+  'questBuilderQuestId',
+  'questBuilderTitle',
+  'questBuilderObjectiveType',
+  'questBuilderTargetType',
+  'questBuilderObjectiveText',
+  'questBuilderTargetMarkerId',
+  'questBuilderObjectId',
+  'questBuilderRadius',
+  'questBuilderEnabled'
+];
 
 function getQuestBuilderCatalog(options = {}) {
   const includeArchived = !!options.includeArchived;
@@ -10186,6 +10237,83 @@ function getQuestBuilderFormModel(quest = {}) {
   };
 }
 
+function makeQuestBuilderTargetMarkerId(questId = '') {
+  const raw = String(questId || '').trim();
+  if (!raw) return '';
+  return `questTarget_${makeQuestBuilderQuestId(raw).replace(/-/g, '_')}`;
+}
+
+function getQuestBuilderMarkerIntentFromFields() {
+  const rawQuestId = document.getElementById('questBuilderQuestId')?.value?.trim() || '';
+  const questId = rawQuestId ? makeQuestBuilderQuestId(rawQuestId) : '';
+  const targetMarkerId = document.getElementById('questBuilderTargetMarkerId')?.value?.trim() || makeQuestBuilderTargetMarkerId(questId);
+  const title = document.getElementById('questBuilderTitle')?.value?.trim() || '';
+  const objectiveText = document.getElementById('questBuilderObjectiveText')?.value?.trim() || '';
+  const objectiveType = document.getElementById('questBuilderObjectiveType')?.value || '';
+  const rawTargetType = document.getElementById('questBuilderTargetType')?.value || '';
+  const targetType = normalizeQuestTargetType(rawTargetType || (objectiveType === 'talkToNpc' ? 'NPC' : 'Area'));
+  const objectId = document.getElementById('questBuilderObjectId')?.value?.trim() || '';
+  const radiusValue = Number(document.getElementById('questBuilderRadius')?.value);
+  const enabledValue = document.getElementById('questBuilderEnabled')?.value;
+  const targetFields = getQuestBuilderTargetFields({ targetType, objectId });
+  const defaultColor = getQuestTargetDefaultColorHex(targetType);
+  return {
+    targetMarkerId,
+    label:title || objectiveText || targetMarkerId || 'Quest Target',
+    questId:questId || null,
+    objectiveType:objectiveType || null,
+    targetType,
+    radius:Number.isFinite(radiusValue) && radiusValue > 0 ? Math.max(.5, Math.min(80, radiusValue)) : 8,
+    enabled:enabledValue ? enabledValue !== 'false' : true,
+    ringColor:defaultColor,
+    glowColor:defaultColor,
+    labelBoxColor:defaultColor,
+    labelTextColor:defaultColor,
+    pulseEnabled:true,
+    objectId,
+    ...targetFields
+  };
+}
+
+function clearSelectedQuestTargetMarkerForPrefill(targetMarkerId = '') {
+  if (selectedObject?.metadata?.type !== 'quest_target_marker') return;
+  if (selectedObject.metadata?.targetMarkerId === targetMarkerId) return;
+  releaseObjectAfterEditing(selectedObject);
+  selectedObject = null;
+  detachAdminGizmo();
+  updateSelectedBadge();
+}
+
+function syncQuestBuilderMarkerFormFromCurrentFields(options = {}) {
+  const settings = getQuestBuilderMarkerIntentFromFields();
+  const marker = settings.targetMarkerId ? getQuestTargetById(settings.targetMarkerId) : null;
+  const preferExistingSaved = options.preferExistingSaved !== false;
+  const selectExisting = options.selectExisting === true;
+  if (!settings.questId && !settings.targetMarkerId) {
+    updateQuestBuilderStatus();
+    return { found:false, marker:null, settings };
+  }
+  if (marker && preferExistingSaved) {
+    if (selectExisting && adminMode) {
+      adminGizmoMode = 'move';
+      setSelectedEditableObject(marker);
+    }
+    writeQuestTargetMarkerSettingsToControls(marker);
+    updateQuestBuilderStatus();
+    return { found:true, marker, settings };
+  }
+  if (marker && selectExisting && adminMode) {
+    adminGizmoMode = 'move';
+    setSelectedEditableObject(marker);
+  }
+  if (!marker) clearSelectedQuestTargetMarkerForPrefill(settings.targetMarkerId);
+  writeQuestTargetMarkerPrefillToControls(settings, {
+    preserveVisualControls: options.preserveVisualControls === true
+  });
+  updateQuestBuilderStatus();
+  return { found:!!marker, marker, settings };
+}
+
 function loadQuestBuilderSelection(questIdOrEvent = null, updateStatus = true) {
   const requestedId = typeof questIdOrEvent === 'string'
     ? questIdOrEvent
@@ -10220,6 +10348,10 @@ function loadQuestBuilderSelection(questIdOrEvent = null, updateStatus = true) {
   setQuestBuilderField('questBuilderBadgeRewardId', form.badgeRewardId);
   setQuestBuilderField('questBuilderBadgeProgressAmount', form.badgeProgressAmount);
   setQuestBuilderField('questBuilderProgressRewardAmount', form.progressionRewardAmount);
+  syncQuestBuilderMarkerFormFromCurrentFields({
+    preferExistingSaved:true,
+    selectExisting:true
+  });
   if (updateStatus) updateQuestBuilderStatus();
 }
 
@@ -10234,6 +10366,18 @@ function wireQuestBuilderControls() {
     select.addEventListener('input', handleQuestBuilderSelectChange);
     select.dataset.questBuilderWired = '1';
   }
+  QUEST_BUILDER_MARKER_SYNC_FIELDS.forEach(id => {
+    const field = document.getElementById(id);
+    if (!field || field.dataset.questMarkerSyncWired === '1') return;
+    const sync = () => syncQuestBuilderMarkerFormFromCurrentFields({
+      preferExistingSaved:false,
+      selectExisting:false,
+      preserveVisualControls:true
+    });
+    field.addEventListener('input', sync);
+    field.addEventListener('change', sync);
+    field.dataset.questMarkerSyncWired = '1';
+  });
 }
 
 function readQuestBuilderForm() {
@@ -10328,6 +10472,10 @@ function populateQuestBuilderDraft(form, statusText = 'Quest draft ready. Click 
   setQuestBuilderField('questBuilderBadgeRewardId', form.badgeRewardId || '');
   setQuestBuilderField('questBuilderBadgeProgressAmount', form.badgeProgressAmount ?? '');
   setQuestBuilderField('questBuilderProgressRewardAmount', form.progressionRewardAmount ?? '');
+  syncQuestBuilderMarkerFormFromCurrentFields({
+    preferExistingSaved:false,
+    selectExisting:false
+  });
   updateQuestBuilderStatus(statusText);
 }
 
@@ -10438,10 +10586,25 @@ function getMarkerSettingsForQuest(quest) {
 }
 
 function createOrUpdateMarkerForQuest() {
+  const markerSync = syncQuestBuilderMarkerFormFromCurrentFields({
+    preferExistingSaved:false,
+    selectExisting:false,
+    preserveVisualControls:true
+  });
+  const targetInput = document.getElementById('questBuilderTargetMarkerId');
+  if (targetInput && !targetInput.value.trim() && markerSync?.settings?.targetMarkerId) {
+    targetInput.value = markerSync.settings.targetMarkerId;
+  }
+  const markerSettingsFromControls = readQuestTargetMarkerSettingsFromControls();
   const quest = saveQuestBuilderQuest();
   if (!quest) return;
-  if (!quest.targetMarkerId) quest.targetMarkerId = `questTarget_${quest.questId.replace(/-/g, '_')}`;
-  const settings = getMarkerSettingsForQuest(quest);
+  if (!quest.targetMarkerId) quest.targetMarkerId = markerSync?.settings?.targetMarkerId || makeQuestBuilderTargetMarkerId(quest.questId);
+  const settings = {
+    ...getMarkerSettingsForQuest(quest),
+    ...markerSettingsFromControls,
+    questId:quest.questId,
+    targetMarkerId:markerSettingsFromControls.targetMarkerId || quest.targetMarkerId || makeQuestBuilderTargetMarkerId(quest.questId)
+  };
   let marker = getQuestTargetById(settings.targetMarkerId);
   if (!marker) {
     marker = createQuestTargetMarker(getQuestBuilderMarkerSpawnPosition(), settings);
@@ -10455,7 +10618,6 @@ function createOrUpdateMarkerForQuest() {
   adminGizmoMode = 'move';
   setSelectedEditableObject(marker);
   writeQuestTargetMarkerSettingsToControls(marker);
-  const targetInput = document.getElementById('questBuilderTargetMarkerId');
   if (targetInput) targetInput.value = settings.targetMarkerId;
   QuestBuilderConfig[quest.questId] = { ...(QuestBuilderConfig[quest.questId] || quest), targetMarkerId:settings.targetMarkerId };
   saveQuestBuilderConfigState();
@@ -10523,7 +10685,10 @@ function updateQuestBuilderStatus(message = '') {
     host.textContent = 'Select a quest to edit.';
     return;
   }
-  const markerId = document.getElementById('questBuilderTargetMarkerId')?.value?.trim() || quest.targetMarkerId || '';
+  const markerId = document.getElementById('questBuilderTargetMarkerId')?.value?.trim()
+    || quest.targetMarkerId
+    || document.getElementById('questTargetIdInput')?.value?.trim()
+    || '';
   const marker = markerId ? getQuestTargetById(markerId) : null;
   const badgeId = document.getElementById('questBuilderBadgeRewardId')?.value || quest.badgeRewardId || '';
   const badge = badgeId ? getBadgeDefinitionById(badgeId, { includeArchived:true }) : null;
@@ -26807,6 +26972,7 @@ window.previewQuestTargetMarkerSettings = previewQuestTargetMarkerSettings;
 window.refreshQuestBuilderOptions = refreshQuestBuilderOptions;
 window.loadQuestBuilderSelection = loadQuestBuilderSelection;
 window.handleQuestBuilderSelectChange = handleQuestBuilderSelectChange;
+window.syncQuestBuilderMarkerFormFromCurrentFields = syncQuestBuilderMarkerFormFromCurrentFields;
 window.createNewQuestFromBuilder = createNewQuestFromBuilder;
 window.duplicateQuestBuilderSelection = duplicateQuestBuilderSelection;
 window.archiveQuestBuilderSelection = archiveQuestBuilderSelection;
