@@ -3977,7 +3977,7 @@ function optimizeStaticRenderRoot(root, options = {}) {
     meshes += 1;
     mesh.receiveShadows = false;
     mesh.doNotSyncBoundingInfo = true;
-    if (mesh.isPickable && !isEditorVisualMode()) {
+    if (mesh.isPickable && !adminMode) {
       mesh.isPickable = false;
       pickablesDisabled += 1;
     }
@@ -4226,6 +4226,64 @@ function releaseObjectAfterEditing(node) {
   if (selectedObject === node) selectedObject = null;
   freezeStaticRoot(node);
   selectedObject = activeSelection;
+}
+
+function isAssetSourceRoot(node) {
+  if (!node || !node.position) return false;
+  return Math.abs(node.position.x) > 900 || Math.abs(node.position.z) > 900 || Object.values(_assetSources || {}).includes(node);
+}
+
+function isAdminLayerLockedForNode(node) {
+  if (!node) return false;
+  const state = getAdminLayerState();
+  const layer = getNodeAdminLayer(node);
+  return state?.[layer]?.locked === true;
+}
+
+function isAdminLayerHiddenForNode(node) {
+  if (!node) return false;
+  const state = getAdminLayerState();
+  const layer = getNodeAdminLayer(node);
+  return state?.[layer]?.hidden === true;
+}
+
+function isEditableRootSelectableInAdmin(root) {
+  if (!root || root.isDisposed?.()) return false;
+  if (isAssetSourceRoot(root)) return false;
+  if (root.metadata?.editorLocked === true) return false;
+  if (root.metadata?.isAdminPlacementMarker === true || root.metadata?.isPickProxy === true) return false;
+  if (isAdminLayerHiddenForNode(root)) return false;
+  if (isAdminLayerLockedForNode(root)) return false;
+  return true;
+}
+
+function setEditableRootPickability(root, pickable) {
+  if (!root || root.isDisposed?.()) return;
+  root.isPickable = pickable;
+  root.getChildMeshes?.(false).forEach(mesh => {
+    if (!mesh || mesh.isDisposed?.()) return;
+    if (mesh.metadata?.isAdminPlacementMarker === true || mesh.metadata?.isPickProxy === true) return;
+    mesh.isPickable = pickable && mesh.metadata?.editorLocked !== true;
+    if (pickable && !mesh._editRoot) mesh._editRoot = root;
+  });
+}
+
+function refreshAdminEditablePickability(force = false) {
+  if (!adminMode && force !== true) return;
+  const roots = new Set([
+    ...getEditableRoots(),
+    ...scene.transformNodes.filter(node =>
+      node &&
+      !node.parent &&
+      node.metadata?.isClone === true &&
+      node.metadata?.type &&
+      !node.isDisposed?.()
+    )
+  ]);
+  roots.forEach(root => {
+    if (!root || root.isDisposed?.()) return;
+    setEditableRootPickability(root, isEditableRootSelectableInAdmin(root));
+  });
 }
 
 function syncLiveSelectedTransform() {
@@ -20123,6 +20181,7 @@ document.addEventListener('keydown', async e => {
       toggleAssetPanel(true);
       setCollisionProxyVisualsVisible(adminMode && !walkMode);
       runVillagePerformancePass(true);
+      refreshAdminEditablePickability(true);
     } else {
       toggleAssetPanel(false);
       clearAdminPlacement();
@@ -22415,22 +22474,28 @@ function getNodeAdminLayer(node) {
   const type = node?.metadata?.type || '';
   if (type === 'npc' || type === 'small_village_ant') return 'npcs';
   if (type === 'wooden_sign') return 'signs';
-  if (type === 'ambient_glow' || type === 'toro_lantern' || type === 'hanging_lantern' || type === 'lantern_1') return 'lighting';
+  if (type === 'ambient_glow' || type === 'toro_lantern' || type === 'hanging_lantern' || type === 'lantern_1' || type === 'interior_fake_light') return 'lighting';
   if (type === 'collision_proxy') return node.metadata?.proxyPieceKind === 'blocker' ? 'collision' : 'walk';
   if (type === 'terrain_stamp') return 'terrain';
   if (type === 'interaction_zone') return 'zones';
   if (type === 'interior_entrance') return 'zones';
+  if (type === 'interior_uploaded_glb' || node?.metadata?.isInteriorObject === true) return 'buildings';
   if (type === 'quest_target_marker') return 'quests';
   if (type.includes('terrain')) return 'terrain';
   return 'buildings';
 }
 
 function getAdminLayerNodes(layer) {
-  return [...scene.transformNodes, ...scene.meshes].filter(node =>
+  const roots = new Set([
+    ...scene.transformNodes,
+    ...scene.meshes,
+    ...getEditableRoots()
+  ]);
+  return [...roots].filter(node =>
     node &&
     !node.isDisposed?.() &&
-    !node.parent &&
-    node.metadata?.isClone === true &&
+    !isAssetSourceRoot(node) &&
+    (node.metadata?.isClone === true || node.metadata?.isInteriorObject === true || node.metadata?.type === 'interior_uploaded_glb') &&
     getNodeAdminLayer(node) === layer
   );
 }
@@ -22441,10 +22506,10 @@ function applyAdminLayerState() {
     const cfg = state[layer] || {};
     getAdminLayerNodes(layer).forEach(node => {
       if (typeof node.setEnabled === 'function') node.setEnabled(cfg.hidden !== true);
-      node.isPickable = cfg.locked !== true;
-      node.getChildMeshes?.(false).forEach(mesh => { mesh.isPickable = cfg.locked !== true; });
+      setEditableRootPickability(node, cfg.locked !== true && node.metadata?.editorLocked !== true && cfg.hidden !== true);
     });
   });
+  refreshAdminEditablePickability();
   renderAdminLayerControls();
 }
 
