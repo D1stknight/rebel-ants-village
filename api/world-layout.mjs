@@ -122,13 +122,59 @@ async function readWorldLayout(token, filePath, options = {}) {
   }
 
   const file = await response.json();
-  const json = Buffer
-    .from(String(file.content || '').replace(/\n/g, ''), 'base64')
-    .toString('utf8')
-    .trim();
+
+  let json = '';
+
+  if (file.content && file.encoding === 'base64') {
+    json = Buffer
+      .from(String(file.content || '').replace(/\n/g, ''), 'base64')
+      .toString('utf8')
+      .trim();
+  }
+
+  // GitHub /contents can return empty content for larger files.
+  // If that happens, fetch the blob directly using the file SHA.
+  if (!json && file.sha) {
+    const blobResponse = await fetch(
+      `https://api.github.com/repos/${REPO}/git/blobs/${file.sha}`,
+      {
+        cache: 'no-store',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache'
+        }
+      }
+    );
+
+    if (!blobResponse.ok) {
+      const detail = await getGitHubErrorMessage(blobResponse);
+      throw new Error(
+        'Could not read world layout blob from GitHub. Status: ' +
+        blobResponse.status +
+        (detail ? '. ' + detail : '')
+      );
+    }
+
+    const blob = await blobResponse.json();
+
+    if (blob.content && blob.encoding === 'base64') {
+      json = Buffer
+        .from(String(blob.content || '').replace(/\n/g, ''), 'base64')
+        .toString('utf8')
+        .trim();
+    }
+  }
 
   if (!json) {
-    console.warn('World layout file is empty. Treating as blank layout:', filePath);
+    console.warn('World layout file is empty or unreadable. Treating as blank layout:', {
+      filePath,
+      fileSha: file.sha,
+      encoding: file.encoding,
+      size: file.size
+    });
+
     return {
       sha: file.sha,
       layout: []
