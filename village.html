@@ -5305,7 +5305,10 @@ function createFakeAmbientGlow(parent, options = {}) {
     interiorRuntime: options.interiorRuntime === true || parent?.metadata?.interiorRuntime === true
   };
   if (options.billboard === true) mesh.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
-  if (options.registerRoot) registerFakeLightMaterial(options.registerRoot, material, { minFactor:options.minFactor ?? .04 });
+  if (options.registerRoot) registerFakeLightMaterial(options.registerRoot, material, {
+    minFactor:options.minFactor ?? .04,
+    interiorFakeLight:options.interiorFakeLight === true
+  });
   return { mesh, material, texture:material.opacityTexture };
 }
 
@@ -24822,7 +24825,8 @@ function registerFakeLightMaterial(root, material, options = {}) {
     material,
     baseEmissive: material.emissiveColor?.clone?.() || new BABYLON.Color3(1, .75, .35),
     baseAlpha: Number.isFinite(material.alpha) ? material.alpha : 1,
-    minFactor: Number.isFinite(options.minFactor) ? options.minFactor : .18
+    minFactor: Number.isFinite(options.minFactor) ? options.minFactor : .18,
+    interiorFakeLight: options.interiorFakeLight === true || root.metadata?.type === 'interior_fake_light'
   });
 }
 
@@ -24897,7 +24901,8 @@ function addInteriorFakeLightGlow(root, name, options = {}) {
     interiorRuntime:true,
     metadata:{ isInteriorFakeLightVisual:true, interiorFakeLightRole:options.role || name },
     registerRoot:root,
-    minFactor:options.minFactor ?? .04
+    minFactor:options.minFactor ?? .62,
+    interiorFakeLight:true
   });
   root.metadata._interiorFakeLightGlowMeshes = root.metadata._interiorFakeLightGlowMeshes || [];
   root.metadata._interiorFakeLightGlowMeshes.push(glow.mesh);
@@ -24945,7 +24950,7 @@ function rebuildInteriorFakeLightVisual(root) {
   const frameMat = makeInteriorMaterial('interiorFakeLightFrameMat_' + assetId, new BABYLON.Color3(.16,.1,.045), .08);
   const darkMat = makeInteriorMaterial('interiorFakeLightDarkMat_' + assetId, new BABYLON.Color3(.08,.055,.035), .04);
   const coreMat = makeInteriorGlowMaterial('interiorFakeLightMat_' + assetId + '_core', color, brightness * 1.18, .88);
-  registerFakeLightMaterial(root, coreMat, { minFactor:.05 });
+  registerFakeLightMaterial(root, coreMat, { minFactor:.68, interiorFakeLight:true });
 
   if (assetType === 'wall_lantern') {
     addInteriorFakeLightBox(root, 'wallLanternBack_' + assetId, { width:.62, height:1.22, depth:.12 }, new BABYLON.Vector3(0, .2, -.08), frameMat);
@@ -25164,11 +25169,16 @@ function applyFakeLightState(force = false) {
     entries.forEach(entry => {
       const mat = entry.material;
       if (!mat || mat.isDisposed?.()) return;
+      const isInteriorGlow = entry.interiorFakeLight === true || root.metadata?.type === 'interior_fake_light';
+      const activeInteriorMin = isInteriorGlow && ActiveInterior && isInteriorRuntimeNode(root)
+        ? (isEditorVisualMode() ? .78 : .68)
+        : 0;
+      const minFactor = Math.max(entry.minFactor ?? (isInteriorGlow ? .62 : .18), activeInteriorMin);
       const applied = active
-        ? Math.max(entry.minFactor ?? .18, factor)
+        ? Math.max(minFactor, factor)
         : veryFar
-          ? Math.max(entry.minFactor ?? .04, .045)
-          : Math.max(entry.minFactor ?? .08, Math.min(factor, .14));
+          ? Math.max(isInteriorGlow ? .18 : (entry.minFactor ?? .04), .045)
+          : Math.max(isInteriorGlow ? .32 : (entry.minFactor ?? .08), Math.min(factor, .14));
       if (entry.baseEmissive) mat.emissiveColor = entry.baseEmissive.scale(applied);
       if (Number.isFinite(entry.baseAlpha)) mat.alpha = Math.min(1, entry.baseAlpha * (.58 + applied * .42));
     });
