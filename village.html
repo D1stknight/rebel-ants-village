@@ -5184,117 +5184,156 @@ function toggleManualBarrierVisibility() {
   showToast(manualBarrierVisualsVisible ? 'Manual pieces visible' : 'Manual pieces hidden');
 }
 
+const FAKE_AMBIENT_GLOW_TEXTURE_CACHE = {};
+
+function normalizeFakeAmbientGlowShape(shape) {
+  return ['circle', 'square', 'rectangle'].includes(shape) ? shape : 'circle';
+}
+
+function makeFakeAmbientGlowTexture(name, shape) {
+  const glowShape = normalizeFakeAmbientGlowShape(shape);
+  const tex = new BABYLON.DynamicTexture(name, { width: 512, height: 512 }, scene, true);
+  const ctx = tex.getContext();
+  const size = 512;
+  const c = size * 0.5;
+
+  ctx.clearRect(0, 0, size, size);
+
+  if (glowShape === 'square' || glowShape === 'rectangle') {
+    const image = ctx.createImageData(size, size);
+
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const nx = Math.abs((x - c) / c);
+        const ny = Math.abs((y - c) / c);
+        const d = Math.max(nx, ny);
+
+        let alpha;
+        if (d <= 0.18) alpha = 1.0;
+        else if (d <= 0.48) alpha = 1.0 - ((d - 0.18) / 0.30) * 0.18;
+        else if (d <= 0.76) alpha = 0.82 - ((d - 0.48) / 0.28) * 0.58;
+        else if (d <= 1.0) alpha = 0.24 - ((d - 0.76) / 0.24) * 0.24;
+        else alpha = 0;
+
+        const i = (y * size + x) * 4;
+        image.data[i] = 255;
+        image.data[i + 1] = 255;
+        image.data[i + 2] = 255;
+        image.data[i + 3] = Math.max(0, Math.min(255, Math.round(alpha * 255)));
+      }
+    }
+
+    ctx.putImageData(image, 0, 0);
+  } else {
+    const gradient = ctx.createRadialGradient(c, c, 0, c, c, c);
+    gradient.addColorStop(0.00, 'rgba(255,255,255,1.00)');
+    gradient.addColorStop(0.20, 'rgba(255,255,255,0.94)');
+    gradient.addColorStop(0.48, 'rgba(255,255,255,0.50)');
+    gradient.addColorStop(0.74, 'rgba(255,255,255,0.14)');
+    gradient.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+  }
+
+  tex.hasAlpha = true;
+  tex.metadata = { ...(tex.metadata || {}), sharedFakeAmbientGlowTexture:true, glowShape };
+  tex.update();
+  return tex;
+}
+
+function getFakeAmbientGlowTexture(shape) {
+  const glowShape = normalizeFakeAmbientGlowShape(shape);
+  const cached = FAKE_AMBIENT_GLOW_TEXTURE_CACHE[glowShape];
+  if (cached && !cached.isDisposed?.()) return cached;
+  const texture = makeFakeAmbientGlowTexture('fakeAmbientGlowTex_' + glowShape, glowShape);
+  FAKE_AMBIENT_GLOW_TEXTURE_CACHE[glowShape] = texture;
+  return texture;
+}
+
+function makeFakeAmbientGlowMaterial(name, colorHex = '#ffdd88', brightness = 1, alpha = .78, options = {}) {
+  let glow = new BABYLON.Color3(1, .86, .48);
+  try { glow = BABYLON.Color3.FromHexString(colorHex); } catch(e) {}
+  const warm = options.strength || { r:1.8, g:1.35, b:.72 };
+  const mat = new BABYLON.StandardMaterial(name, scene);
+  mat.metadata = { ...(mat.metadata || {}), interiorGeneratedMaterial:true, fakeAmbientGlowMaterial:true };
+  mat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+  mat.emissiveColor = new BABYLON.Color3(
+    glow.r * warm.r * brightness,
+    glow.g * warm.g * brightness,
+    glow.b * warm.b * brightness
+  );
+  mat.opacityTexture = options.texture || getFakeAmbientGlowTexture(options.shape || 'circle');
+  mat.alpha = alpha;
+  mat.disableLighting = true;
+  mat.backFaceCulling = false;
+  mat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+  mat.maxSimultaneousLights = 0;
+  return mat;
+}
+
+function createFakeAmbientGlow(parent, options = {}) {
+  const shape = normalizeFakeAmbientGlowShape(options.shape || 'circle');
+  const name = options.name || 'fakeAmbientGlow';
+  const width = Number(options.width) || (shape === 'rectangle' ? 3.6 : 2.4);
+  const height = Number(options.height) || Number(options.depth) || width;
+  const radius = Number(options.radius) || width * .5;
+  const mesh = (shape === 'square' || shape === 'rectangle')
+    ? BABYLON.MeshBuilder.CreatePlane(name, { width, height }, scene)
+    : BABYLON.MeshBuilder.CreateDisc(name, { radius, tessellation: options.tessellation || 48 }, scene);
+  const material = makeFakeAmbientGlowMaterial(
+    name + 'Mat_' + Math.random(),
+    options.color || '#ffdd88',
+    Number(options.brightness) || 1,
+    Number.isFinite(options.alpha) ? options.alpha : .78,
+    { shape, strength:options.strength }
+  );
+
+  mesh.parent = parent || null;
+  mesh.position = options.position?.clone?.() || options.position || BABYLON.Vector3.Zero();
+  mesh.rotation = options.rotation?.clone?.() || options.rotation || new BABYLON.Vector3(0, 0, 0);
+  mesh.scaling = options.scaling?.clone?.() || options.scaling || new BABYLON.Vector3(1, 1, 1);
+  mesh.material = material;
+  mesh.isPickable = options.pickable === true;
+  mesh.receiveShadows = false;
+  mesh._editRoot = options.editRoot || parent || null;
+  mesh.metadata = {
+    ...(mesh.metadata || {}),
+    ...(options.metadata || {}),
+    childGlow:true,
+    fakeAmbientGlow:true,
+    interiorRuntime: options.interiorRuntime === true || parent?.metadata?.interiorRuntime === true
+  };
+  if (options.billboard === true) mesh.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+  if (options.registerRoot) registerFakeLightMaterial(options.registerRoot, material, { minFactor:options.minFactor ?? .04 });
+  return { mesh, material, texture:material.opacityTexture };
+}
+
 function buildAmbientGlow(root, glowColor, glowBrightness, glowShape, glowWidth, glowDepth) {
   glowColor = glowColor || '#ffdd88';
   glowBrightness = glowBrightness || 1;
-  glowShape = glowShape || 'circle';
+  glowShape = normalizeFakeAmbientGlowShape(glowShape || 'circle');
 
   const defaultWidth = glowShape === 'rectangle' ? 12 : 9;
   const defaultDepth = glowShape === 'rectangle' ? 6 : 9;
   glowWidth = Number(glowWidth) || defaultWidth;
   glowDepth = Number(glowDepth) || defaultDepth;
 
-  const glow = BABYLON.Color3.FromHexString(glowColor);
-
-  const attach = (mesh) => {
-    mesh.parent = root;
-    mesh.isPickable = true;
-    mesh._editRoot = root;
-    return mesh;
-  };
-
-  function makeAmbientGlowTexture(name, shape) {
-    const tex = new BABYLON.DynamicTexture(name, { width: 512, height: 512 }, scene, true);
-    const ctx = tex.getContext();
-    const size = 512;
-    const c = size * 0.5;
-
-    ctx.clearRect(0, 0, size, size);
-
-    if (shape === 'square' || shape === 'rectangle') {
-      const image = ctx.createImageData(size, size);
-
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          const nx = Math.abs((x - c) / c);
-          const ny = Math.abs((y - c) / c);
-
-          // Square distance field:
-          // uses the farther axis instead of radial distance,
-          // so the fade follows a square/rectangle shape instead of a circle.
-          const d = Math.max(nx, ny);
-
-          let alpha;
-          if (d <= 0.18) {
-            alpha = 1.0;
-          } else if (d <= 0.48) {
-            alpha = 1.0 - ((d - 0.18) / 0.30) * 0.18;
-          } else if (d <= 0.76) {
-            alpha = 0.82 - ((d - 0.48) / 0.28) * 0.58;
-          } else if (d <= 1.0) {
-            alpha = 0.24 - ((d - 0.76) / 0.24) * 0.24;
-          } else {
-            alpha = 0;
-          }
-
-          const i = (y * size + x) * 4;
-          image.data[i] = 255;
-          image.data[i + 1] = 255;
-          image.data[i + 2] = 255;
-          image.data[i + 3] = Math.max(0, Math.min(255, Math.round(alpha * 255)));
-        }
-      }
-
-      ctx.putImageData(image, 0, 0);
-    } else {
-      const gradient = ctx.createRadialGradient(c, c, 0, c, c, c);
-      gradient.addColorStop(0.00, 'rgba(255,255,255,1.00)');
-      gradient.addColorStop(0.20, 'rgba(255,255,255,0.94)');
-      gradient.addColorStop(0.48, 'rgba(255,255,255,0.50)');
-      gradient.addColorStop(0.74, 'rgba(255,255,255,0.14)');
-      gradient.addColorStop(1.00, 'rgba(255,255,255,0.00)');
-
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, size, size);
-    }
-
-    tex.hasAlpha = true;
-    tex.update();
-    return tex;
-  }
-
-  const glowTexture = makeAmbientGlowTexture('ambientGlowTex_' + Math.random(), glowShape);
-
-  const glowMesh =
-    glowShape === 'square' || glowShape === 'rectangle'
-      ? attach(BABYLON.MeshBuilder.CreatePlane(
-          glowShape === 'rectangle' ? 'ambientGlowRectangle' : 'ambientGlowSquare',
-          { width: glowWidth, height: glowDepth },
-          scene
-        ))
-      : attach(BABYLON.MeshBuilder.CreateDisc(
-          'ambientGlowDisc',
-          { radius: 4.5, tessellation: 64 },
-          scene
-        ));
-
-  const mat = new BABYLON.StandardMaterial('ambientGlowMat_' + Math.random(), scene);
-  mat.diffuseColor = new BABYLON.Color3(0, 0, 0);
-  mat.emissiveColor = new BABYLON.Color3(
-    glow.r * 1.8 * glowBrightness,
-    glow.g * 1.35 * glowBrightness,
-    glow.b * 0.72 * glowBrightness
-  );
-  mat.opacityTexture = glowTexture;
-  mat.alpha = 0.78;
-  mat.disableLighting = true;
-  mat.backFaceCulling = false;
-  mat.alphaMode = BABYLON.Engine.ALPHA_ADD;
-  mat.maxSimultaneousLights = 0;
-
-  glowMesh.material = mat;
-  glowMesh.position.y = 0.03;
-  glowMesh.rotation.x = Math.PI / 2;
+  const glow = createFakeAmbientGlow(root, {
+    name: glowShape === 'rectangle' ? 'ambientGlowRectangle' : glowShape === 'square' ? 'ambientGlowSquare' : 'ambientGlowDisc',
+    shape: glowShape,
+    width: glowWidth,
+    height: glowDepth,
+    radius: 4.5,
+    color: glowColor,
+    brightness: glowBrightness,
+    alpha: .78,
+    position: new BABYLON.Vector3(0, .03, 0),
+    rotation: new BABYLON.Vector3(Math.PI / 2, 0, 0),
+    pickable: true,
+    registerRoot: root,
+    minFactor: .04
+  });
 
   root.metadata = root.metadata || {};
   root.metadata.glowColor = glowColor;
@@ -5302,12 +5341,7 @@ function buildAmbientGlow(root, glowColor, glowBrightness, glowShape, glowWidth,
   root.metadata.glowShape = glowShape;
   root.metadata.glowWidth = glowWidth;
   root.metadata.glowDepth = glowDepth;
-  root.metadata._ambientGlow = {
-    mesh: glowMesh,
-    material: mat,
-    texture: glowTexture
-  };
-  registerFakeLightMaterial(root, mat, { minFactor:.04 });
+  root.metadata._ambientGlow = glow;
 }
 // ── TŌRŌ LANTERN BUILDER ─────────────────────────────────────
 // Traditional Japanese stone lantern (tōrō) built from primitives
@@ -21832,7 +21866,7 @@ function applyAmbientGlowSettings() {
     if (oldGlow) {
       if (oldGlow.mesh) oldGlow.mesh.dispose(false, false);
       if (oldGlow.material) oldGlow.material.dispose(false, false);
-      if (oldGlow.texture) oldGlow.texture.dispose();
+      if (oldGlow.texture && oldGlow.texture.metadata?.sharedFakeAmbientGlowTexture !== true) oldGlow.texture.dispose();
     }
 
     buildAmbientGlow(selectedObject, colorHex, brightness, shape, width, depth);
@@ -24760,11 +24794,13 @@ function makeInteriorGlowMaterial(name, colorHex = '#ffdd88', brightness = 1, al
   try { color = BABYLON.Color3.FromHexString(colorHex); } catch(e) {}
   const mat = new BABYLON.StandardMaterial(name, scene);
   mat.metadata = { ...(mat.metadata || {}), interiorGeneratedMaterial:true };
-  mat.diffuseColor = color.scale(.35);
-  mat.emissiveColor = color.scale(brightness);
+  mat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+  mat.emissiveColor = new BABYLON.Color3(color.r * 1.85 * brightness, color.g * 1.34 * brightness, color.b * .72 * brightness);
   mat.alpha = alpha;
   mat.backFaceCulling = false;
   mat.disableLighting = true;
+  mat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+  mat.maxSimultaneousLights = 0;
   if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mat);
   return mat;
 }
@@ -24788,6 +24824,200 @@ function registerFakeLightMaterial(root, material, options = {}) {
     baseAlpha: Number.isFinite(material.alpha) ? material.alpha : 1,
     minFactor: Number.isFinite(options.minFactor) ? options.minFactor : .18
   });
+}
+
+function stopInteriorFakeLightPulse(root) {
+  const observer = root?.metadata?._interiorFakeLightPulseObserver;
+  if (observer) {
+    try { scene.onBeforeRenderObservable.remove(observer); } catch(e) {}
+  }
+  if (root?.metadata) root.metadata._interiorFakeLightPulseObserver = null;
+}
+
+function clearInteriorFakeLightVisual(root) {
+  if (!root) return;
+  stopInteriorFakeLightPulse(root);
+  root.metadata = { ...(root.metadata || {}), _fakeLightMaterials:[], _interiorFakeLightGlowMeshes:[] };
+  root.getChildMeshes?.(false).forEach(mesh => {
+    const mat = mesh.material;
+    if (mat?.metadata?.interiorGeneratedMaterial === true) {
+      try { mat.dispose?.(false, false); } catch(e) {}
+    }
+    try { mesh.dispose(false, false); } catch(e) {}
+  });
+}
+
+function markInteriorFakeLightMesh(root, mesh, options = {}) {
+  if (!mesh) return mesh;
+  mesh.metadata = {
+    ...(mesh.metadata || {}),
+    interiorRuntime:true,
+    isInteriorFakeLightVisual:true,
+    childGlow: options.childGlow === true
+  };
+  mesh._editRoot = root;
+  mesh.isPickable = options.pickable === true;
+  mesh.receiveShadows = false;
+  return mesh;
+}
+
+function addInteriorFakeLightBox(root, name, size, position, material, options = {}) {
+  const mesh = BABYLON.MeshBuilder.CreateBox(name, size, scene);
+  mesh.parent = root;
+  mesh.position = position;
+  mesh.material = material;
+  return markInteriorFakeLightMesh(root, mesh, { pickable:options.pickable !== false });
+}
+
+function addInteriorFakeLightCylinder(root, name, options, position, material, meshOptions = {}) {
+  const mesh = BABYLON.MeshBuilder.CreateCylinder(name, options, scene);
+  mesh.parent = root;
+  mesh.position = position;
+  mesh.material = material;
+  if (meshOptions.rotation) mesh.rotation = meshOptions.rotation;
+  return markInteriorFakeLightMesh(root, mesh, { pickable:meshOptions.pickable !== false });
+}
+
+function addInteriorFakeLightGlow(root, name, options = {}) {
+  const glow = createFakeAmbientGlow(root, {
+    name,
+    shape:options.shape || 'circle',
+    width:options.width,
+    height:options.height,
+    radius:options.radius,
+    color:options.color || root.metadata?.glowColor || '#ffdd88',
+    brightness:options.brightness ?? root.metadata?.glowBrightness ?? 1,
+    alpha:options.alpha,
+    strength:options.strength,
+    position:options.position || BABYLON.Vector3.Zero(),
+    rotation:options.rotation || new BABYLON.Vector3(0, 0, 0),
+    scaling:options.scaling,
+    billboard:options.billboard === true,
+    editRoot:root,
+    interiorRuntime:true,
+    metadata:{ isInteriorFakeLightVisual:true, interiorFakeLightRole:options.role || name },
+    registerRoot:root,
+    minFactor:options.minFactor ?? .04
+  });
+  root.metadata._interiorFakeLightGlowMeshes = root.metadata._interiorFakeLightGlowMeshes || [];
+  root.metadata._interiorFakeLightGlowMeshes.push(glow.mesh);
+  return glow;
+}
+
+function startInteriorFakeLightPulse(root) {
+  if (!root || root.metadata?._interiorFakeLightPulseObserver) return;
+  const glowMeshes = (root.metadata?._interiorFakeLightGlowMeshes || []).filter(mesh => mesh && !mesh.isDisposed?.());
+  if (!glowMeshes.length) return;
+  const seed = Math.random() * Math.PI * 2;
+  glowMeshes.forEach((mesh, index) => {
+    mesh.metadata = { ...(mesh.metadata || {}) };
+    mesh.metadata._interiorPulseBaseScale = mesh.scaling?.clone?.() || new BABYLON.Vector3(1, 1, 1);
+    mesh.metadata._interiorPulseSeed = seed + index * .71;
+  });
+  root.metadata._interiorFakeLightPulseObserver = scene.onBeforeRenderObservable.add(() => {
+    if (!root || root.isDisposed?.()) {
+      stopInteriorFakeLightPulse(root);
+      return;
+    }
+    const t = performance.now() * .006;
+    glowMeshes.forEach(mesh => {
+      if (!mesh || mesh.isDisposed?.()) return;
+      const base = mesh.metadata?._interiorPulseBaseScale || new BABYLON.Vector3(1, 1, 1);
+      const pulse = 1 + Math.sin(t + (mesh.metadata?._interiorPulseSeed || 0)) * .045 + Math.sin(t * 1.9) * .018;
+      mesh.scaling.set(base.x * pulse, base.y * pulse, base.z);
+      mesh.markAsDirty?.('worldMatrix');
+    });
+  });
+}
+
+function rebuildInteriorFakeLightVisual(root) {
+  if (!root?.metadata) return;
+  const assetType = root.metadata.assetType || 'glow_panel';
+  const assetId = root.metadata.assetId || ('light_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
+  const color = root.metadata.glowColor || '#ffdd88';
+  const brightness = clampInteriorLightingBrightness(root.metadata.glowBrightness ?? 1);
+  root.metadata.assetId = assetId;
+  root.metadata.assetType = assetType;
+  root.metadata.glowColor = color;
+  root.metadata.glowBrightness = brightness;
+  clearInteriorFakeLightVisual(root);
+
+  const frameMat = makeInteriorMaterial('interiorFakeLightFrameMat_' + assetId, new BABYLON.Color3(.16,.1,.045), .08);
+  const darkMat = makeInteriorMaterial('interiorFakeLightDarkMat_' + assetId, new BABYLON.Color3(.08,.055,.035), .04);
+  const coreMat = makeInteriorGlowMaterial('interiorFakeLightMat_' + assetId + '_core', color, brightness * 1.18, .88);
+  registerFakeLightMaterial(root, coreMat, { minFactor:.05 });
+
+  if (assetType === 'wall_lantern') {
+    addInteriorFakeLightBox(root, 'wallLanternBack_' + assetId, { width:.62, height:1.22, depth:.12 }, new BABYLON.Vector3(0, .2, -.08), frameMat);
+    addInteriorFakeLightBox(root, 'wallLanternCore_' + assetId, { width:.26, height:.68, depth:.075 }, new BABYLON.Vector3(0, .2, -.16), coreMat);
+    addInteriorFakeLightGlow(root, 'wallLanternWallWash_' + assetId, {
+      shape:'rectangle', width:1.9, height:2.35, position:new BABYLON.Vector3(0, .2, -.21),
+      color, brightness:brightness * 1.25, alpha:.72, strength:{ r:2.15, g:1.48, b:.68 }, role:'wallWash'
+    });
+    addInteriorFakeLightGlow(root, 'wallLanternCoreGlow_' + assetId, {
+      shape:'circle', radius:.62, position:new BABYLON.Vector3(0, .2, -.235),
+      color, brightness:brightness * 1.4, alpha:.86, strength:{ r:2.4, g:1.7, b:.8 }, role:'core'
+    });
+  } else if (assetType === 'floor_lantern') {
+    addInteriorFakeLightCylinder(root, 'floorLanternBase_' + assetId, { diameterTop:.82, diameterBottom:.95, height:.14, tessellation:18 }, new BABYLON.Vector3(0, -.55, 0), frameMat);
+    addInteriorFakeLightCylinder(root, 'floorLanternCore_' + assetId, { diameterTop:.38, diameterBottom:.48, height:1.05, tessellation:18 }, new BABYLON.Vector3(0, .04, 0), coreMat);
+    addInteriorFakeLightGlow(root, 'floorLanternHalo_' + assetId, {
+      shape:'circle', radius:2.35, position:new BABYLON.Vector3(0, -.48, 0), rotation:new BABYLON.Vector3(Math.PI / 2, 0, 0),
+      color, brightness:brightness * 1.05, alpha:.56, strength:{ r:1.75, g:1.2, b:.5 }, role:'floorHalo'
+    });
+    addInteriorFakeLightGlow(root, 'floorLanternCoreGlow_' + assetId, {
+      shape:'circle', radius:.72, position:new BABYLON.Vector3(0, .08, 0), billboard:true,
+      color, brightness:brightness * 1.35, alpha:.82, strength:{ r:2.2, g:1.5, b:.64 }, role:'core'
+    });
+  } else if (assetType === 'fire_bowl') {
+    addInteriorFakeLightCylinder(root, 'fakeFireBowl_' + assetId, { diameterTop:1.28, diameterBottom:.88, height:.42, tessellation:24 }, new BABYLON.Vector3(0, -.32, 0), darkMat);
+    addInteriorFakeLightCylinder(root, 'fakeFireBowlRim_' + assetId, { diameterTop:1.42, diameterBottom:1.42, height:.08, tessellation:24 }, new BABYLON.Vector3(0, -.08, 0), frameMat);
+    addInteriorFakeLightGlow(root, 'fireBowlFloorGlow_' + assetId, {
+      shape:'circle', radius:3.05, position:new BABYLON.Vector3(0, -.52, 0), rotation:new BABYLON.Vector3(Math.PI / 2, 0, 0),
+      color, brightness:brightness * 1.1, alpha:.58, strength:{ r:2.2, g:.95, b:.28 }, role:'floorGlow'
+    });
+    addInteriorFakeLightGlow(root, 'fireBowlFlameGlow_' + assetId, {
+      shape:'circle', radius:.95, position:new BABYLON.Vector3(0, .18, 0), billboard:true,
+      color, brightness:brightness * 1.55, alpha:.9, strength:{ r:2.8, g:1.25, b:.34 }, role:'flame'
+    });
+    addInteriorFakeLightGlow(root, 'fireBowlCoreGlow_' + assetId, {
+      shape:'circle', radius:.48, position:new BABYLON.Vector3(0, .18, 0), billboard:true,
+      color, brightness:brightness * 1.75, alpha:.96, strength:{ r:3.1, g:1.7, b:.55 }, role:'flameCore'
+    });
+    startInteriorFakeLightPulse(root);
+  } else if (assetType === 'ceiling_glow') {
+    addInteriorFakeLightCylinder(root, 'ceilingGlowRim_' + assetId, { diameterTop:1.15, diameterBottom:1.15, height:.12, tessellation:32 }, new BABYLON.Vector3(0, .06, 0), frameMat);
+    addInteriorFakeLightGlow(root, 'ceilingGlowDisc_' + assetId, {
+      shape:'circle', radius:3.25, position:new BABYLON.Vector3(0, -.03, 0), rotation:new BABYLON.Vector3(Math.PI / 2, 0, 0),
+      color, brightness:brightness * 1.1, alpha:.62, strength:{ r:1.85, g:1.32, b:.62 }, role:'overheadDisc'
+    });
+    addInteriorFakeLightGlow(root, 'ceilingGlowWash_' + assetId, {
+      shape:'circle', radius:2.05, position:new BABYLON.Vector3(0, -.22, 0), rotation:new BABYLON.Vector3(Math.PI / 2, 0, 0),
+      color, brightness:brightness * 1.25, alpha:.5, strength:{ r:2.05, g:1.48, b:.7 }, role:'downWash'
+    });
+  } else if (assetType === 'display_glow') {
+    addInteriorFakeLightBox(root, 'displayGlowFrame_' + assetId, { width:2.95, height:.08, depth:.05 }, new BABYLON.Vector3(0, 1.48, -.035), frameMat);
+    addInteriorFakeLightBox(root, 'displayGlowFrameBottom_' + assetId, { width:2.95, height:.08, depth:.05 }, new BABYLON.Vector3(0, -1.48, -.035), frameMat);
+    addInteriorFakeLightGlow(root, 'displayGlowWash_' + assetId, {
+      shape:'rectangle', width:3.15, height:3.25, position:new BABYLON.Vector3(0, 0, -.065),
+      color, brightness:brightness * 1.1, alpha:.68, strength:{ r:1.8, g:1.26, b:.62 }, role:'displayWash'
+    });
+    addInteriorFakeLightGlow(root, 'displayGlowCore_' + assetId, {
+      shape:'rectangle', width:2.25, height:2.1, position:new BABYLON.Vector3(0, 0, -.085),
+      color, brightness:brightness * 1.22, alpha:.76, strength:{ r:2.0, g:1.42, b:.68 }, role:'displayCore'
+    });
+  } else {
+    addInteriorFakeLightBox(root, 'glowPanelFrame_' + assetId, { width:4.65, height:.09, depth:.055 }, new BABYLON.Vector3(0, 1.24, -.035), frameMat);
+    addInteriorFakeLightBox(root, 'glowPanelFrameBottom_' + assetId, { width:4.65, height:.09, depth:.055 }, new BABYLON.Vector3(0, -1.24, -.035), frameMat);
+    addInteriorFakeLightGlow(root, 'glowPanelWash_' + assetId, {
+      shape:'rectangle', width:4.9, height:2.9, position:new BABYLON.Vector3(0, 0, -.06),
+      color, brightness:brightness * 1.08, alpha:.72, strength:{ r:1.9, g:1.34, b:.64 }, role:'panelWash'
+    });
+    addInteriorFakeLightGlow(root, 'glowPanelCore_' + assetId, {
+      shape:'rectangle', width:3.1, height:1.65, position:new BABYLON.Vector3(0, 0, -.085),
+      color, brightness:brightness * 1.25, alpha:.82, strength:{ r:2.18, g:1.52, b:.72 }, role:'panelCore'
+    });
+  }
 }
 
 var FakeLightDirectorTestMode = localStorage.getItem('rebelAntsFakeLightTestMode') || 'auto';
@@ -26370,39 +26600,8 @@ function createInteriorFakeLightAsset(parent, config = {}) {
   root.scaling = config.scaling ? new BABYLON.Vector3(config.scaling.x || 1, config.scaling.y || 1, config.scaling.z || 1) : new BABYLON.Vector3(1, 1, 1);
   root.metadata = { type:'interior_fake_light', interiorRuntime:true, assetId, assetType, glowColor:color, glowBrightness:brightness, enabled:config.enabled !== false };
   root.isPickable = true;
-
-  const mat = makeInteriorGlowMaterial('interiorFakeLightMat_' + assetId, color, brightness, assetType === 'glow_panel' || assetType === 'display_glow' ? .62 : .82);
-  const frameMat = makeInteriorMaterial('interiorFakeLightFrameMat_' + assetId, new BABYLON.Color3(.16,.1,.045), .08);
-  const meshes = [];
-  const addBox = (name, size, position, material = frameMat) => meshes.push(addInteriorBox(root, name, size, position, material));
-  const addPanel = (name, width, height, position, rotation, material = mat) => meshes.push(addInteriorPanel(root, name, width, height, position, rotation, material));
-
-  if (assetType === 'wall_lantern') {
-    addBox('wallLanternBack_' + assetId, { width:.55, height:1.15, depth:.12 }, new BABYLON.Vector3(0, .2, -.08));
-    addPanel('wallLanternGlow_' + assetId, .9, 1.35, new BABYLON.Vector3(0, .2, -.16), new BABYLON.Vector3(0, 0, 0));
-  } else if (assetType === 'floor_lantern') {
-    addBox('floorLanternBase_' + assetId, { width:.75, height:.12, depth:.75 }, new BABYLON.Vector3(0, -.55, 0));
-    addBox('floorLanternCore_' + assetId, { width:.45, height:1.1, depth:.45 }, new BABYLON.Vector3(0, .05, 0), mat);
-  } else if (assetType === 'fire_bowl') {
-    const bowl = BABYLON.MeshBuilder.CreateCylinder('fakeFireBowl_' + assetId, { diameterTop:1.25, diameterBottom:.9, height:.42, tessellation:18 }, scene);
-    bowl.parent = root; bowl.position.y = -.32; bowl.material = frameMat; bowl.isPickable = false; meshes.push(bowl);
-    const flame = BABYLON.MeshBuilder.CreateCylinder('fakeFireGlow_' + assetId, { diameterTop:.15, diameterBottom:.85, height:1.05, tessellation:18 }, scene);
-    flame.parent = root; flame.position.y = .28; flame.material = mat; flame.isPickable = false; meshes.push(flame);
-  } else if (assetType === 'ceiling_glow') {
-    addPanel('ceilingGlow_' + assetId, 4.8, 4.8, new BABYLON.Vector3(0, 0, 0), new BABYLON.Vector3(Math.PI / 2, 0, 0));
-  } else if (assetType === 'display_glow') {
-    addPanel('displayGlow_' + assetId, 2.6, 2.9, new BABYLON.Vector3(0, 0, 0), new BABYLON.Vector3(0, 0, 0));
-  } else {
-    addPanel('glowPanel_' + assetId, 4.2, 2.4, new BABYLON.Vector3(0, 0, 0), new BABYLON.Vector3(0, 0, 0));
-  }
-
-  meshes.forEach(mesh => {
-    mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true };
-    mesh._editRoot = root;
-    mesh.isPickable = true;
-  });
+  rebuildInteriorFakeLightVisual(root);
   registerEditableRoot(root.name, root);
-  registerFakeLightMaterial(root, mat, { minFactor:.04 });
   applyFakeLightState(true);
   return root;
 }
@@ -26424,15 +26623,7 @@ function applySelectedInteriorFakeLightSettings() {
   const brightness = clampInteriorLightingBrightness(document.getElementById('interiorAssetBrightness')?.value);
   selectedObject.metadata.glowColor = color;
   selectedObject.metadata.glowBrightness = brightness;
-  selectedObject.metadata._fakeLightMaterials = [];
-  selectedObject.getChildMeshes?.(false).forEach(mesh => {
-    if (mesh.material && mesh.material.name?.startsWith('interiorFakeLightMat_')) {
-      mesh.material.dispose?.();
-      const mat = makeInteriorGlowMaterial('interiorFakeLightMat_' + selectedObject.metadata.assetId, color, brightness, .75);
-      mesh.material = mat;
-      registerFakeLightMaterial(selectedObject, mat, { minFactor:.04 });
-    }
-  });
+  rebuildInteriorFakeLightVisual(selectedObject);
   applyFakeLightState(true);
   saveInteriorAssetConfig(selectedObject);
   showToast('Fake light settings saved');
@@ -26452,6 +26643,7 @@ function duplicateSelectedInteriorAsset() {
 function deleteSelectedInteriorAsset() {
   if (selectedObject?.metadata?.type !== 'interior_fake_light') { showToast('Select an interior fake light first'); return; }
   deleteInteriorAssetConfig(selectedObject.metadata.assetId);
+  stopInteriorFakeLightPulse(selectedObject);
   selectedObject.dispose(false, true);
   selectedObject = null;
   updateSelectedBadge();
@@ -27335,8 +27527,10 @@ function disposeInteriorRuntime(interior) {
   if (root) {
     root.getChildTransformNodes?.(false).forEach(node => {
       if (node.metadata?.type === 'interior_video_screen') disposeInteriorVideoForScreen(node);
+      if (node.metadata?.type === 'interior_fake_light') stopInteriorFakeLightPulse(node);
     });
     if (root.metadata?.type === 'interior_video_screen') disposeInteriorVideoForScreen(root);
+    if (root.metadata?.type === 'interior_fake_light') stopInteriorFakeLightPulse(root);
     const lights = root.metadata?.interiorLights || (root.metadata?.interiorLight ? [root.metadata.interiorLight] : []);
     lights.forEach(light => {
       try { light?.dispose?.(); } catch(e) {}
