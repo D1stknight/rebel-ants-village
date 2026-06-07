@@ -19002,6 +19002,15 @@ function saveWorldLayout(saveToGitHub = true){
   }
 
   const data = collectWorldLayoutData();
+  if (saveToGitHub && CURRENT_VILLAGE_ID === "hub" && (!Array.isArray(data) || data.length < 50)) {
+    const objectCount = Array.isArray(data) ? data.length : 0;
+    console.warn('Blocked suspicious Hub hard save', {
+      villageId: CURRENT_VILLAGE_ID,
+      dataLength: data?.length
+    });
+    showToast('⚠ Save blocked — Hub layout only has ' + objectCount + ' objects.');
+    return Promise.resolve(false);
+  }
 
   const json = JSON.stringify(data, null, 2);
 
