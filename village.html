@@ -18681,7 +18681,7 @@ window.addEventListener('pointerup', () => {
     const beforePos = window._dragSelectedStartPos;
   const selectedType = selectedObject.metadata?.type;
   const skipGroundSnap = shouldSkipGroundSnapForNode(selectedObject)
-    || ['interior_display', 'interior_exit', 'interior_entrance', 'interior_fake_light', 'interior_nft_frame', 'interior_hotspot', 'interior_video_screen', 'quest_target_marker'].includes(selectedType)
+    || ['interior_display', 'interior_exit', 'interior_entrance', 'interior_fake_light', 'interior_nft_frame', 'interior_hotspot', 'interior_video_screen', 'interior_uploaded_glb', 'quest_target_marker'].includes(selectedType)
     || (selectedType === 'collectible' && selectedObject.metadata?.interiorRuntime === true);
   if (!skipGroundSnap) softSnapSelectedObject();
     if (
@@ -18703,6 +18703,7 @@ window.addEventListener('pointerup', () => {
     if (selectedObject.metadata?.type === 'interior_hotspot') saveInteriorHotspotConfig(selectedObject);
     if (selectedObject.metadata?.type === 'interior_video_screen') saveInteriorVideoScreenConfig(selectedObject);
     if (selectedObject.metadata?.type === 'collectible' && selectedObject.metadata?.interiorRuntime === true) saveInteriorCollectibleConfig(selectedObject);
+    if (selectedObject.metadata?.type === 'interior_uploaded_glb') saveInteriorUploadedGlbConfig(selectedObject);
     if (selectedObject.metadata?.type === 'quest_target_marker') {
       writeQuestTargetMarkerSettingsToControls(selectedObject);
       updateQuestTargetMarkers(0);
@@ -19558,6 +19559,10 @@ function deleteSelectedFence(){
     deleteSelectedInteriorVideoScreen();
     return;
   }
+  if (selectedObject.metadata?.type === 'interior_uploaded_glb') {
+    deleteSelectedInteriorUploadedGlb();
+    return;
+  }
   if (selectedObject.metadata?.type === 'collectible' && selectedObject.metadata?.interiorRuntime === true) {
     deleteInteriorCollectibleConfig(selectedObject.metadata.collectibleId);
     CollectibleRuntime.roots.delete(selectedObject);
@@ -19658,6 +19663,10 @@ function duplicateSelectedFence(){
   }
   if (selectedObject.metadata?.type === 'interior_video_screen') {
     duplicateSelectedInteriorVideoScreen();
+    return;
+  }
+  if (selectedObject.metadata?.type === 'interior_uploaded_glb') {
+    duplicateSelectedInteriorUploadedGlb();
     return;
   }
   if (selectedObject.metadata?.type === 'collectible' && selectedObject.metadata?.interiorRuntime === true) {
@@ -22876,6 +22885,7 @@ function attachAdminGizmoLifecycleObservers() {
       if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
       if (selectedObject.metadata?.type === 'interior_hotspot') saveInteriorHotspotConfig(selectedObject);
       if (selectedObject.metadata?.type === 'interior_video_screen') saveInteriorVideoScreenConfig(selectedObject);
+      if (selectedObject.metadata?.type === 'interior_uploaded_glb') saveInteriorUploadedGlbConfig(selectedObject);
       if (selectedObject.metadata?.type === 'quest_target_marker') {
         writeQuestTargetMarkerSettingsToControls(selectedObject);
         updateQuestTargetMarkers(0);
@@ -22902,6 +22912,7 @@ function flipSelected() {
   if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
   if (selectedObject.metadata?.type === 'interior_hotspot') saveInteriorHotspotConfig(selectedObject);
   if (selectedObject.metadata?.type === 'interior_video_screen') saveInteriorVideoScreenConfig(selectedObject);
+  if (selectedObject.metadata?.type === 'interior_uploaded_glb') saveInteriorUploadedGlbConfig(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -22919,6 +22930,7 @@ function rotateSelectedBy(angle) {
   if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
   if (selectedObject.metadata?.type === 'interior_hotspot') saveInteriorHotspotConfig(selectedObject);
   if (selectedObject.metadata?.type === 'interior_video_screen') saveInteriorVideoScreenConfig(selectedObject);
+  if (selectedObject.metadata?.type === 'interior_uploaded_glb') saveInteriorUploadedGlbConfig(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -25359,6 +25371,11 @@ function getInteriorSavedAssetConfigs(interiorId) {
   return Array.isArray(configs[interiorId]?.assets) ? configs[interiorId].assets : [];
 }
 
+function getInteriorSavedUploadedGlbConfigs(interiorId) {
+  const configs = getInteriorRoomConfigs();
+  return Array.isArray(configs[interiorId]?.uploadedGlbs) ? configs[interiorId].uploadedGlbs : [];
+}
+
 function getInteriorSavedExitConfig(interiorId) {
   const configs = getInteriorRoomConfigs();
   return interiorId && configs[interiorId]?.exit ? configs[interiorId].exit : null;
@@ -25405,6 +25422,205 @@ function deleteInteriorAssetConfig(assetId) {
   current.assets = (Array.isArray(current.assets) ? current.assets : []).filter(item => item.assetId !== assetId);
   configs[key] = { ...current, updatedAt:new Date().toISOString() };
   setInteriorRoomConfigs(configs);
+}
+
+function getManualUploadedAssetFileName(assetKey) {
+  return getUploadedAssets().find(item => item.key === assetKey)?.file || '';
+}
+
+function normalizeInteriorUploadedGlbPath(path) {
+  const clean = String(path || '').trim();
+  if (!clean) return '';
+  const normalized = clean.startsWith('/') ? clean : '/' + clean;
+  if (!normalized.startsWith('/assets/buildings/')) return '';
+  if (normalized.includes('..') || normalized.includes('\\')) return '';
+  return normalized;
+}
+
+function getInteriorUploadedGlbAssetPath(assetKey, config = {}) {
+  const configured = normalizeInteriorUploadedGlbPath(config.assetPath || config.path || '');
+  if (configured) return configured;
+  const realPath = normalizeInteriorUploadedGlbPath(ASSETS[assetKey]?._realPath || ASSETS[assetKey]?.path || '');
+  if (realPath) return realPath;
+  const file = config.assetFile || getManualUploadedAssetFileName(assetKey);
+  return file ? normalizeInteriorUploadedGlbPath('/assets/buildings/' + file) : '';
+}
+
+function ensureInteriorUploadedGlbAssetRegistry(config = {}) {
+  const rawKey = String(config.assetKey || config.key || '').trim();
+  const fallbackPath = normalizeInteriorUploadedGlbPath(config.assetPath || config.path || '');
+  const fallbackFile = String(config.assetFile || fallbackPath.split('/').pop() || '').trim();
+  const assetKey = rawKey || fallbackFile.replace(/\.glb$/i, '');
+  if (!assetKey) return '';
+
+  const assetPath = getInteriorUploadedGlbAssetPath(assetKey, { ...config, assetFile:fallbackFile });
+  if (!assetPath) return '';
+
+  if (!ASSETS[assetKey]) {
+    ASSETS[assetKey] = {
+      path: assetPath,
+      scale: 1.0,
+      rotation: new BABYLON.Vector3(0, Math.PI, 0),
+      _realPath: assetPath,
+      _uploaded: true,
+      noGroundSnap: true
+    };
+  } else {
+    ASSETS[assetKey]._uploaded = true;
+    ASSETS[assetKey].noGroundSnap = true;
+    if (!ASSETS[assetKey]._realPath && assetPath) ASSETS[assetKey]._realPath = assetPath;
+  }
+  return assetKey;
+}
+
+function serializeInteriorUploadedGlb(root) {
+  const meta = root.metadata || {};
+  const assetKey = meta.assetKey || '';
+  const assetPath = getInteriorUploadedGlbAssetPath(assetKey, meta);
+  return {
+    propId: meta.propId,
+    interiorId: meta.interiorId || getActiveInteriorConfigKey(),
+    assetKey,
+    assetFile: meta.assetFile || assetPath.split('/').pop() || '',
+    assetPath,
+    enabled: root.isEnabled?.() !== false && meta.enabled !== false,
+    disableGroundSnap: true,
+    uploadedAutoFitApplied: meta.uploadedAutoFitApplied === true,
+    ...serializeNodeTransform(root)
+  };
+}
+
+function saveInteriorUploadedGlbConfig(root) {
+  if (!ActiveInterior || root?.metadata?.type !== 'interior_uploaded_glb' || !root.metadata.propId) return;
+  const key = getActiveInteriorConfigKey();
+  if (!key) return;
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  const uploadedGlbs = (Array.isArray(current.uploadedGlbs) ? current.uploadedGlbs : []).filter(item => item.propId !== root.metadata.propId);
+  uploadedGlbs.push(serializeInteriorUploadedGlb(root));
+  configs[key] = { ...current, uploadedGlbs, updatedAt:new Date().toISOString() };
+  setInteriorRoomConfigs(configs);
+}
+
+function deleteInteriorUploadedGlbConfig(propId) {
+  const key = getActiveInteriorConfigKey();
+  if (!key || !propId) return;
+  const configs = getInteriorRoomConfigs();
+  const current = configs[key] || {};
+  current.uploadedGlbs = (Array.isArray(current.uploadedGlbs) ? current.uploadedGlbs : []).filter(item => item.propId !== propId);
+  configs[key] = { ...current, updatedAt:new Date().toISOString() };
+  setInteriorRoomConfigs(configs);
+}
+
+function createInteriorUploadedGlbAsset(parent, config = {}) {
+  if (!parent || parent.isDisposed?.()) return null;
+  const assetKey = ensureInteriorUploadedGlbAssetRegistry(config);
+  if (!assetKey) {
+    console.warn('Interior uploaded GLB missing asset key/path:', config);
+    return null;
+  }
+
+  const propId = config.propId || ('uploaded_glb_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
+  const existing = scene.getTransformNodeByName('interiorUploadedGlbRoot_' + propId);
+  if (existing && existing.parent === parent && !existing.isDisposed?.()) existing.dispose(false, true);
+
+  if (!_assetSources[assetKey] || !isAssetSourceReady(assetKey)) {
+    loadAssetSource(assetKey);
+    waitForAssetSourceReady(assetKey, () => {
+      if (!parent.isDisposed?.() && ActiveInterior?.root === parent) createInteriorUploadedGlbAsset(parent, config);
+    });
+    return null;
+  }
+
+  const source = _assetSources[assetKey];
+  const root = source.clone('interiorUploadedGlbRoot_' + propId);
+  if (!root) return null;
+
+  root.parent = parent;
+  root.position = config.position
+    ? new BABYLON.Vector3(config.position.x || 0, config.position.y || 0, config.position.z || 0)
+    : new BABYLON.Vector3(0, 1.2, 0);
+  root.rotation = config.rotation
+    ? new BABYLON.Vector3(config.rotation.x || 0, config.rotation.y || 0, config.rotation.z || 0)
+    : (source.rotation?.clone?.() || new BABYLON.Vector3(0, 0, 0));
+  root.scaling = config.scaling
+    ? new BABYLON.Vector3(config.scaling.x || 1, config.scaling.y || 1, config.scaling.z || 1)
+    : source.scaling.clone();
+
+  const assetPath = getInteriorUploadedGlbAssetPath(assetKey, config);
+  root.metadata = {
+    type:'interior_uploaded_glb',
+    interiorRuntime:true,
+    propId,
+    interiorId:config.interiorId || parent.metadata?.targetInteriorId || getActiveInteriorConfigKey(),
+    assetKey,
+    assetFile:config.assetFile || assetPath.split('/').pop() || getManualUploadedAssetFileName(assetKey),
+    assetPath,
+    enabled:config.enabled !== false,
+    disableGroundSnap:true,
+    uploadedAutoFitApplied:config.uploadedAutoFitApplied === true || ASSETS[assetKey]?._autoFitApplied === true
+  };
+  root.isPickable = true;
+  root.setEnabled(config.enabled !== false);
+  root.getChildMeshes?.(false).forEach(mesh => {
+    mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true };
+    mesh.isPickable = true;
+    mesh._editRoot = root;
+    mesh.receiveShadows = false;
+    if (mesh.material) {
+      mesh.material.maxSimultaneousLights = 4;
+      if (window._gpuMode === 'webgpu') webgpuCapMaterial4(mesh.material);
+    }
+  });
+
+  if (root.metadata.uploadedAutoFitApplied !== true) fitManualUploadedAssetRoot(root, assetKey);
+  registerEditableRoot(root.name, root);
+  return root;
+}
+
+function createInteriorUploadedGlbAssetAtPoint(assetKey, point) {
+  if (!ActiveInterior?.root) return null;
+  const assetPath = getInteriorUploadedGlbAssetPath(assetKey);
+  const localPosition = getActiveInteriorLocalPoint(point);
+  const root = createInteriorUploadedGlbAsset(ActiveInterior.root, {
+    assetKey,
+    assetFile:assetPath.split('/').pop() || getManualUploadedAssetFileName(assetKey),
+    assetPath,
+    interiorId:getActiveInteriorConfigKey(),
+    position:{ x:localPosition.x, y:localPosition.y, z:localPosition.z }
+  });
+  if (!root) return null;
+  setSelectedEditableObject(root);
+  saveInteriorUploadedGlbConfig(root);
+  triggerAutoSave();
+  showToast('Interior GLB placed: ' + assetKey);
+  return root;
+}
+
+function duplicateSelectedInteriorUploadedGlb() {
+  if (selectedObject?.metadata?.type !== 'interior_uploaded_glb' || !ActiveInterior?.root) return false;
+  const cfg = serializeInteriorUploadedGlb(selectedObject);
+  delete cfg.propId;
+  cfg.position.x += 0.65;
+  const copy = createInteriorUploadedGlbAsset(ActiveInterior.root, cfg);
+  if (!copy) return false;
+  saveInteriorUploadedGlbConfig(copy);
+  setSelectedEditableObject(copy);
+  triggerAutoSave();
+  showToast('Interior GLB duplicated');
+  return true;
+}
+
+function deleteSelectedInteriorUploadedGlb() {
+  if (selectedObject?.metadata?.type !== 'interior_uploaded_glb') return false;
+  deleteInteriorUploadedGlbConfig(selectedObject.metadata.propId);
+  selectedObject.dispose(false, true);
+  selectedObject = null;
+  updateSelectedBadge();
+  detachAdminGizmo();
+  triggerAutoSave();
+  showToast('Interior GLB deleted');
+  return true;
 }
 
 function serializeInteriorDisplay(display) {
@@ -26877,6 +27093,7 @@ function buildInteriorRoom(entrance) {
   getInteriorSavedAssetConfigs(targetInteriorId).forEach(assetConfig => createInteriorFakeLightAsset(root, assetConfig));
   getInteriorSavedHotspotConfigs(targetInteriorId).forEach(hotspotConfig => createInteriorHotspot(root, { ...hotspotConfig, interiorId:targetInteriorId }));
   getInteriorSavedVideoScreenConfigs(targetInteriorId).forEach(screenConfig => createInteriorVideoScreen(root, { ...screenConfig, interiorId:targetInteriorId }));
+  getInteriorSavedUploadedGlbConfigs(targetInteriorId).forEach(glbConfig => createInteriorUploadedGlbAsset(root, { ...glbConfig, interiorId:targetInteriorId }));
   getInteriorSavedCollectibleConfigs(targetInteriorId).forEach(collectibleConfig => createCollectible(
     collectibleConfig.collectibleType || 'flame_shard',
     new BABYLON.Vector3(
@@ -28375,6 +28592,7 @@ function scaleSelected(factor) {
   if (selectedObject.metadata?.type === 'interior_nft_frame') saveInteriorNftFrameConfig(selectedObject);
   if (selectedObject.metadata?.type === 'interior_hotspot') saveInteriorHotspotConfig(selectedObject);
   if (selectedObject.metadata?.type === 'interior_video_screen') saveInteriorVideoScreenConfig(selectedObject);
+  if (selectedObject.metadata?.type === 'interior_uploaded_glb') saveInteriorUploadedGlbConfig(selectedObject);
   rebuildVillageCollisionBlockers();
   renderSelectedWalkSurfaceGuide();
   triggerAutoSave();
@@ -28594,6 +28812,10 @@ function placeAssetAtPoint(key, pickedPoint) {
     const deferredPoint = pickedPoint.clone();
     showToast(`Loading ${key}... placing shortly`);
     waitForAssetSourceReady(key, () => placeAssetAtPoint(key, deferredPoint));
+    return;
+  }
+  if (ActiveInterior?.root && isManualUploadedAssetKey(key)) {
+    createInteriorUploadedGlbAssetAtPoint(key, spawnPos);
     return;
   }
   const source = _assetSources[key];
