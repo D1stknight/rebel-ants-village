@@ -3694,7 +3694,7 @@ function spawnAsset(type, position, extraMeta) {
   root.scaling = new BABYLON.Vector3(config.scale, config.scale, config.scale);
   if (config.rotation) root.rotation = config.rotation.clone();
   root.isPickable = true;
-  root.metadata = { type, loaded: false, ...(extraMeta||{}) };
+  root.metadata = { type, loaded: false, disableGroundSnap: config.noGroundSnap === true || config._uploaded === true, ...(extraMeta||{}) };
 
    if (config.procedural) {
     // Build procedural asset immediately
@@ -3737,6 +3737,7 @@ function spawnAsset(type, position, extraMeta) {
   if (window._gpuMode === 'webgpu') webgpuCapMaterial4(m.material);
 }
       });
+      if (config._uploaded === true) fitManualUploadedAssetRoot(root, type);
       root.metadata.loaded = true;
       console.log("Spawned:", type);
     });
@@ -7754,6 +7755,10 @@ function softSnapSelectedObject(){
   if (objType === 'interior_entrance') return;
   if (objType === 'terrain_stamp') return;
   prepareObjectForEditing(selectedObject);
+  if (shouldSkipGroundSnapForNode(selectedObject)) {
+    refreshEditedObject(selectedObject);
+    return;
+  }
 
   // Rotation snap only — no X/Z grid snapping
   if (selectedObject.rotation && objType !== 'collision_proxy') {
@@ -7770,6 +7775,7 @@ function softSnapSelectedObject(){
 function snapSelectedObjectToGround(){
   if (!selectedObject) return;
   const objType = selectedObject.metadata && selectedObject.metadata.type;
+  if (shouldSkipGroundSnapForNode(selectedObject)) return;
 
   // Skip types that should never ground-snap
   if (objType === 'hangingLantern') return;
@@ -18674,7 +18680,8 @@ window.addEventListener('pointerup', () => {
     const draggedNode = window._dragSelectedObject;
     const beforePos = window._dragSelectedStartPos;
   const selectedType = selectedObject.metadata?.type;
-  const skipGroundSnap = ['interior_display', 'interior_exit', 'interior_entrance', 'interior_fake_light', 'interior_nft_frame', 'interior_hotspot', 'interior_video_screen', 'quest_target_marker'].includes(selectedType)
+  const skipGroundSnap = shouldSkipGroundSnapForNode(selectedObject)
+    || ['interior_display', 'interior_exit', 'interior_entrance', 'interior_fake_light', 'interior_nft_frame', 'interior_hotspot', 'interior_video_screen', 'quest_target_marker'].includes(selectedType)
     || (selectedType === 'collectible' && selectedObject.metadata?.interiorRuntime === true);
   if (!skipGroundSnap) softSnapSelectedObject();
     if (
@@ -18880,6 +18887,8 @@ function collectWorldLayoutData() {
     return ({
     type: node.metadata.type,
     name: node.name,
+    disableGroundSnap: node.metadata.disableGroundSnap === true,
+    uploadedAutoFitApplied: node.metadata.uploadedAutoFitApplied === true,
     position: { x: savePosition.x, y: savePosition.y, z: savePosition.z },
     rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
     scaling: { x: node.scaling.x, y: node.scaling.y, z: node.scaling.z },
@@ -19784,7 +19793,7 @@ function duplicateSelectedFence(){
   });
 
   selectedObject = cloneRoot;
-  snapSelectedObjectToGround();
+  if (!shouldSkipGroundSnapForNode(cloneRoot)) snapSelectedObjectToGround();
   registerEditableRoot(cloneRoot.name, cloneRoot);
 
   updateSelectedBadge();
@@ -21863,6 +21872,86 @@ function isAssetLibraryHidden(key) {
   return getHiddenLibraryAssets().includes(key);
 }
 
+function isManualUploadedAssetKey(key) {
+  const asset = key ? ASSETS[key] : null;
+  return !!(
+    asset &&
+    (
+      asset._uploaded === true ||
+      String(asset.path || asset._realPath || '').includes('/assets/buildings/')
+    )
+  );
+}
+
+function shouldSkipGroundSnapForNode(node) {
+  const type = node?.metadata?.type || '';
+  return !!(node?.metadata?.disableGroundSnap === true || isManualUploadedAssetKey(type));
+}
+
+function getManualUploadedRootVisibleSize(root) {
+  if (!root || root.isDisposed?.()) return null;
+  const meshes = root.getChildMeshes?.(false).filter(mesh =>
+    mesh &&
+    !mesh.isDisposed?.() &&
+    mesh.getTotalVertices?.() > 0 &&
+    mesh.getBoundingInfo
+  ) || [];
+  if (!meshes.length) return null;
+
+  let minX = Infinity, minY = Infinity, minZ = Infinity;
+  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  root.computeWorldMatrix?.(true);
+  meshes.forEach(mesh => {
+    mesh.computeWorldMatrix?.(true);
+    const box = mesh.getBoundingInfo().boundingBox;
+    minX = Math.min(minX, box.minimumWorld.x);
+    minY = Math.min(minY, box.minimumWorld.y);
+    minZ = Math.min(minZ, box.minimumWorld.z);
+    maxX = Math.max(maxX, box.maximumWorld.x);
+    maxY = Math.max(maxY, box.maximumWorld.y);
+    maxZ = Math.max(maxZ, box.maximumWorld.z);
+  });
+  if (![minX, minY, minZ, maxX, maxY, maxZ].every(Number.isFinite)) return null;
+  return {
+    x: Math.max(0.0001, maxX - minX),
+    y: Math.max(0.0001, maxY - minY),
+    z: Math.max(0.0001, maxZ - minZ),
+    max: Math.max(maxX - minX, maxY - minY, maxZ - minZ)
+  };
+}
+
+function fitManualUploadedAssetRoot(root, assetKey, options = {}) {
+  if (!root || !isManualUploadedAssetKey(assetKey)) return false;
+  root.metadata = {
+    ...(root.metadata || {}),
+    disableGroundSnap: true
+  };
+
+  const alreadyHandled = root.metadata.uploadedAutoFitApplied === true || options.alreadyHandled === true;
+  if (alreadyHandled && options.force !== true) return false;
+
+  refreshEditedObject(root);
+  const size = getManualUploadedRootVisibleSize(root);
+  if (!size || !Number.isFinite(size.max) || size.max <= 0) return false;
+
+  const minVisibleSize = Number.isFinite(options.minVisibleSize) ? options.minVisibleSize : 0.45;
+  const targetVisibleSize = Number.isFinite(options.targetVisibleSize) ? options.targetVisibleSize : 1.35;
+  if (size.max < minVisibleSize) {
+    const scaleFactor = BABYLON.Scalar.Clamp(targetVisibleSize / size.max, 1, 750);
+    root.scaling.scaleInPlace(scaleFactor);
+    root.metadata.uploadedAutoFitScaleFactor = scaleFactor;
+    refreshEditedObject(root);
+  }
+
+  root.metadata.uploadedAutoFitApplied = true;
+  if (ASSETS[assetKey]) {
+    ASSETS[assetKey]._uploaded = true;
+    ASSETS[assetKey].noGroundSnap = true;
+    ASSETS[assetKey]._autoFitApplied = true;
+  }
+  return true;
+}
+
 function updateUploadedAssetsVisibility() {
   const section = document.getElementById('uploadedAssetsSection');
   const grid = document.getElementById('uploadedAssetGrid');
@@ -22663,8 +22752,10 @@ function restoreUploadedAssets(options = {}) {
   uploaded.forEach(({ key, file }) => {
     // Add to ASSETS registry with permanent URL
     if (!ASSETS[key]) {
-      ASSETS[key] = { path: '/assets/buildings/' + file, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _uploaded: true };
+      ASSETS[key] = { path: '/assets/buildings/' + file, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _uploaded: true, noGroundSnap: true };
     }
+    ASSETS[key]._uploaded = true;
+    ASSETS[key].noGroundSnap = true;
     // Load source mesh
     if (loadSources && !_assetSources[key]) loadAssetSource(key);
     // Add card to panel if not already there
@@ -27695,6 +27786,8 @@ function applyLayoutItemToExistingNode(node, item) {
     ...(node.metadata || {}),
     type: item.type,
     isClone: true,
+    disableGroundSnap: item.disableGroundSnap === true || isManualUploadedAssetKey(item.type),
+    uploadedAutoFitApplied: item.uploadedAutoFitApplied === true,
     signConfig: item.signConfig || null,
     toroColor: item.toroColor || null,
     lanternColor: item.lanternColor || null,
@@ -27763,6 +27856,9 @@ function applyLayoutItemToExistingNode(node, item) {
     questObjectiveId: item.questObjectiveId || null,
     editorLocked: item.editorLocked === true
   };
+  if (isManualUploadedAssetKey(item.type) && item.uploadedAutoFitApplied !== true) {
+    fitManualUploadedAssetRoot(node, item.type);
+  }
   if (item.type === 'interior_entrance') styleInteriorEntranceVisual(node);
   if (item.type === 'small_village_ant') {
     node.metadata._perfNeverFreeze = true;
@@ -27875,7 +27971,7 @@ function createLayoutNodeForHistory(item) {
     node = _assetSources[item.type].clone(item.name || makeCloneName(item.type));
     if (node) {
       node.name = item.name || node.name;
-      node.metadata = { type: item.type, isClone: true };
+      node.metadata = { type: item.type, isClone: true, disableGroundSnap: isManualUploadedAssetKey(item.type) };
       node.getChildMeshes?.().forEach(mesh => {
         mesh.isPickable = true;
         mesh._editRoot = node;
@@ -28503,10 +28599,16 @@ function placeAssetAtPoint(key, pickedPoint) {
   const source = _assetSources[key];
   // Lantern uses its own spawn system — must return before clone is created
   if (key === 'lantern_1') { spawnLanternFull(spawnPos); return; }
-    const clone = source.clone(makeCloneName(key));
+  const clone = source.clone(makeCloneName(key));
   if (!clone) return;
-  clone.metadata = { type: key, isClone: true };
-  clone.position = new BABYLON.Vector3(spawnPos.x, 0, spawnPos.z);
+  const isManualUpload = isManualUploadedAssetKey(key);
+  clone.metadata = {
+    type: key,
+    isClone: true,
+    disableGroundSnap: isManualUpload,
+    uploadedAutoFitApplied: isManualUpload && ASSETS[key]?._autoFitApplied === true
+  };
+  clone.position = new BABYLON.Vector3(spawnPos.x, isManualUpload ? spawnPos.y : 0, spawnPos.z);
   clone.rotation = new BABYLON.Vector3(
     source.rotation ? source.rotation.x : 0,
     Math.random() * Math.PI * 2,
@@ -28518,13 +28620,14 @@ function placeAssetAtPoint(key, pickedPoint) {
       shadows.addShadowCaster(m); m.receiveShadows = true; m.isPickable = true;
     }
   });
+  if (isManualUpload && clone.metadata.uploadedAutoFitApplied !== true) fitManualUploadedAssetRoot(clone, key);
   optimizeStaticRenderRoot(clone);
   // lantern handled above
   // Select with gizmo — lantern handles inside setTimeout
   if (key !== 'lantern_1') {
     adminGizmoMode = 'move';
     selectedObject = clone;
-    snapSelectedObjectToGround();
+    if (!isManualUpload) snapSelectedObjectToGround();
     applySavedCollisionTemplateIfAvailable(clone);
     setSelectedEditableObject(clone);
   }
@@ -28655,7 +28758,7 @@ document.getElementById('glbUploadInput').addEventListener('change', async funct
 
       // Register in ASSETS using blob URL for immediate use
       // Also store the real path so world-layout save/load uses the permanent URL
-      ASSETS[key] = { path: blobUrl, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _realPath: permanentPath, _uploaded: true };
+      ASSETS[key] = { path: blobUrl, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _realPath: permanentPath, _uploaded: true, noGroundSnap: true };
       loadAssetSource(key);
 
       const card = createUploadedAssetCard(key, '⏳');
