@@ -2306,6 +2306,7 @@ const CUSTOM_INTERIOR_FLOOR_Y = INTERIOR_FLOOR_Y + 0.24;
 const INTERIOR_PLAYER_COLLISION_RADIUS = 0.85;
 const CUSTOM_INTERIORS_KEY = 'rebelAntsCustomInteriors:v1';
 const INTERIOR_ROOM_CONFIG_KEY = 'rebelAntsInteriorRoomConfigs:v1';
+const ACTIVE_INTERIOR_SESSION_KEY = 'rebelAntsActiveInteriorSession:v1';
 let _interiorEntrancesVisible = true;
 let _interiorDisplaysVisible = true;
 let _interiorNftFrameHelpersVisible = true;
@@ -21548,6 +21549,7 @@ function waitForWorldAndLoadLayout() {
   applyZoneSignTextures();
   setSt('Finalizing: making village interactive...');
   markVillageStartupInteractive();
+  schedulePostInteractiveStartupTask(restoreActiveInteriorSessionAfterStartup, 250);
 }
 
 // ── ZONE SIGN TEXTURES ───────────────────────────────────────
@@ -23490,6 +23492,108 @@ function getInteriorEntranceDefaults(type = 'training_dojo') {
     promptText: getInteriorEntrancePromptText(safeType),
     enabled: true
   };
+}
+
+function getInteriorSessionIdFromEntrance(entrance) {
+  const meta = entrance?.metadata || {};
+  return String(meta.targetInteriorId || meta.questObjectiveId || meta.interiorType || entrance?.name || '').trim();
+}
+
+function setInteriorSessionUrlParam(interiorId = '') {
+  if (!window.history?.replaceState) return;
+  try {
+    const url = new URL(window.location.href);
+    if (interiorId) url.searchParams.set('interior', interiorId);
+    else url.searchParams.delete('interior');
+    window.history.replaceState(window.history.state || {}, '', url.pathname + url.search + url.hash);
+  } catch(error) {
+    console.warn('Could not update interior URL session param', error);
+  }
+}
+
+function getInteriorIdFromUrlParam() {
+  try {
+    return String(new URL(window.location.href).searchParams.get('interior') || '').trim();
+  } catch(e) {
+    return '';
+  }
+}
+
+function saveActiveInteriorSession(entrance) {
+  const interiorId = getInteriorSessionIdFromEntrance(entrance);
+  if (!interiorId) return;
+  const payload = {
+    interiorId,
+    enteredAt: Date.now(),
+    interiorType: normalizeInteriorType(entrance?.metadata?.interiorType),
+    entranceName: entrance?.name || ''
+  };
+  try {
+    localStorage.setItem(ACTIVE_INTERIOR_SESSION_KEY, JSON.stringify(payload));
+  } catch(error) {
+    console.warn('Could not save interior session', error);
+  }
+  setInteriorSessionUrlParam(interiorId);
+  console.log('Interior session saved', payload);
+}
+
+function clearActiveInteriorSession(reason = 'cleared') {
+  try {
+    localStorage.removeItem(ACTIVE_INTERIOR_SESSION_KEY);
+  } catch(error) {
+    console.warn('Could not clear interior session', error);
+  }
+  setInteriorSessionUrlParam('');
+  console.log('Interior session cleared', { reason });
+}
+
+function readInteriorSessionCandidate() {
+  const urlInteriorId = getInteriorIdFromUrlParam();
+  if (urlInteriorId) {
+    return { interiorId:urlInteriorId, source:'url' };
+  }
+  try {
+    const parsed = JSON.parse(localStorage.getItem(ACTIVE_INTERIOR_SESSION_KEY) || 'null');
+    if (parsed?.interiorId) {
+      return { ...parsed, interiorId:String(parsed.interiorId).trim(), source:'localStorage' };
+    }
+  } catch(error) {
+    console.warn('Invalid interior session payload; clearing', error);
+    clearActiveInteriorSession('invalid session payload');
+  }
+  return null;
+}
+
+function getInteriorEntranceBySessionId(interiorId) {
+  const id = String(interiorId || '').trim();
+  if (!id || !scene?.transformNodes) return null;
+  const entrances = scene.transformNodes.filter(node => node?.metadata?.type === 'interior_entrance' && node.metadata.enabled !== false);
+  return entrances.find(node => node.metadata?.targetInteriorId === id) ||
+    entrances.find(node => node.metadata?.questObjectiveId === id) ||
+    entrances.find(node => node.metadata?.interiorType === id) ||
+    entrances.find(node => node.metadata?.interiorDefinition?.id === id) ||
+    entrances.find(node => node.name === id) ||
+    null;
+}
+
+function restoreActiveInteriorSessionAfterStartup() {
+  if (restoreActiveInteriorSessionAfterStartup._ran) return;
+  restoreActiveInteriorSessionAfterStartup._ran = true;
+  if (ActiveInterior) return;
+  const session = readInteriorSessionCandidate();
+  if (!session?.interiorId) return;
+  const entrance = getInteriorEntranceBySessionId(session.interiorId);
+  if (!entrance) {
+    console.warn('Interior session restore skipped; invalid interior', session);
+    clearActiveInteriorSession('invalid interior');
+    return;
+  }
+  console.log('Interior session restored after refresh', session);
+  const entered = enterInterior(entrance, { restoreSession:true });
+  if (!entered) {
+    console.warn('Interior session restore skipped; enter failed', session);
+    clearActiveInteriorSession('enter failed');
+  }
 }
 
 function syncDoorTargetInteriorId(options = {}) {
@@ -26838,6 +26942,7 @@ function enterInterior(entrance, options = {}) {
         audioPath: interiorAudioPath,
         previousVillageId: CURRENT_VILLAGE_ID
       };
+      saveActiveInteriorSession(entrance);
       WeatherManager.interiorAudioTestPath = '';
       WeatherManager.interiorAudioAdminPaused = false;
       WeatherManager.interiorAudioHintShown = false;
@@ -26873,6 +26978,7 @@ function enterInterior(entrance, options = {}) {
       setTimeout(() => setInteriorTitle('', ''), 2600);
     } catch(error) {
       console.error('Interior enter failed', error);
+      if (options.restoreSession) clearActiveInteriorSession('restore failed');
       stopInteriorAudio(true);
       disposeInteriorRuntime(root);
       ActiveInterior = null;
@@ -26946,6 +27052,7 @@ function returnToVillageFromInterior() {
   }
   if (ActiveInterior.exiting === true) return false;
   ActiveInterior.exiting = true;
+  clearActiveInteriorSession('exit interior');
   playInteractionAudio('portalOpen');
   setVillageTravelFade(true);
   setTimeout(() => {
