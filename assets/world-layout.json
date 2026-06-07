@@ -1429,7 +1429,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1780857999853_20",
+    "name": "toriiRootClone_1780859223310_20",
     "position": {
       "x": 0,
       "y": 0.5600000582635118,
@@ -1531,7 +1531,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1780857999853_21",
+    "name": "toriiRootClone_1780859223311_21",
     "position": {
       "x": -0.2919794023036957,
       "y": 0.5799998529253401,
@@ -1633,7 +1633,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1780857999854_22",
+    "name": "toriiRootClone_1780859223311_22",
     "position": {
       "x": -151.2589111328125,
       "y": 0.5000001192092043,
@@ -1735,7 +1735,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1780857999854_23",
+    "name": "toriiRootClone_1780859223311_23",
     "position": {
       "x": 149.70745849609375,
       "y": 0.5000000596046448,
@@ -1837,7 +1837,7 @@
   },
   {
     "type": "torii",
-    "name": "toriiRootClone_1780857999854_24",
+    "name": "toriiRootClone_1780859223312_24",
     "position": {
       "x": 2.514643038204834e-15,
       "y": 0.5000000596046448,
@@ -17556,7 +17556,7 @@
     "name": "wooden_signRootClone_1780008817805_178",
     "position": {
       "x": 68.09320068359375,
-      "y": 0.062309704431953605,
+      "y": 0.06230970599486341,
       "z": -73.40499114990234
     },
     "rotation": {
@@ -17572,7 +17572,7 @@
     "signConfig": {
       "label": "BUILDER",
       "sub": "Custom Overlay Builder",
-      "desc": "Step into the Overlay Forge.\nTransform your Rebel Ant into something uniquely yours.\nAdd effects, layers, and identity to your NFT built by you, owned by you.\nThis isn’t just art… it’s your signature in the colony.",
+      "desc": "Step into the Overlay builder.\nTransform your Rebel Ant into something uniquely yours.\nAdd effects, layers, and identity to your NFT built by you, owned by you.\nThis isn’t just art… it’s your signature in the colony.",
       "icon": "🛠️",
       "color": "#63d9d3",
       "clickable": true,
@@ -21102,7 +21102,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": 2.6983219999790244,
+      "y": 11.307208000021003,
       "z": 0
     },
     "scaling": {
@@ -39904,12 +39904,12 @@
     },
     "rotation": {
       "x": -1.2410712543590996e-8,
-      "y": 5.4238742253823515,
-      "z": 0.014116080377448792
+      "y": 9.106940365144265,
+      "z": 0.00819605049403265
     },
     "scaling": {
       "x": 0.9999999905196907,
-      "y": 1.0317424960118882,
+      "y": 1.0309703934277619,
       "z": 1.0000000043218122
     },
     "signConfig": null,
@@ -40020,7 +40020,7 @@
     },
     "scaling": {
       "x": 1.0000000022528326,
-      "y": 1.0210005809388882,
+      "y": 0.9867222216876891,
       "z": 1.0000000022528326
     },
     "signConfig": null,
@@ -40131,7 +40131,7 @@
     },
     "scaling": {
       "x": 1,
-      "y": 0.9752430482312014,
+      "y": 0.9751210750690927,
       "z": 1
     },
     "signConfig": null,
@@ -40237,12 +40237,12 @@
     },
     "rotation": {
       "x": 0,
-      "y": 25.132741269439045,
-      "z": -0.0249785627854945
+      "y": 24.769520450344515,
+      "z": 0.011426272868840475
     },
     "scaling": {
       "x": 1,
-      "y": 0.9552862090714144,
+      "y": 1.0082541735632555,
       "z": 1
     },
     "signConfig": null,
@@ -40353,7 +40353,7 @@
     },
     "scaling": {
       "x": 1,
-      "y": 1.0232633453384123,
+      "y": 1.0091090261680373,
       "z": 1
     },
     "signConfig": null,
@@ -40459,12 +40459,12 @@
     },
     "rotation": {
       "x": 0,
-      "y": 4.317012315546775,
-      "z": 0.02436787493183184
+      "y": -2.569483276153845,
+      "z": -0.01903081971969374
     },
     "scaling": {
       "x": 1,
-      "y": 1.0413004256571516,
+      "y": 0.9567594126030579,
       "z": 1
     },
     "signConfig": null,
@@ -40570,7 +40570,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": -38.08795008615209,
+      "y": -23.457423932197067,
       "z": 0
     },
     "scaling": {
@@ -40617,7 +40617,7 @@
     "moveSpeed": 0.28,
     "antWalkSpeed": 0.28,
     "antAnimationSpeedRatio": 1,
-    "smallAntModelYawOffset": 2.3679213187654358,
+    "smallAntModelYawOffset": 2.3679329815446586,
     "selectedAnimationName": "Walk",
     "wanderRadius": 5,
     "animationMap": null,
