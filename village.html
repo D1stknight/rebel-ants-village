@@ -6625,6 +6625,7 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     collectibleLabel: cfg.label,
     villageId: CURRENT_VILLAGE_ID,
     interiorRuntime: !!options.interiorId,
+    isInteriorObject: !!options.interiorId,
     interiorId: options.interiorId || null,
     enabled: options.enabled !== false,
     _collectibleLoadingModel: !!cfg.modelUrl,
@@ -6728,6 +6729,7 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
 
   root.isPickable = true;
   root.setEnabled(options.enabled !== false && !isCollectibleCollected(id));
+  if (options.interiorId) markInteriorObjectTree(root, options.interiorId);
   registerEditableRoot(root.name, root);
   CollectibleRuntime.roots.add(root);
   tryLoadCollectibleModel(root, cfg);
@@ -18412,6 +18414,16 @@ function registerEditableRoot(key, root) {
   editableRootRefs[key] = root;
 }
 
+function unregisterEditableRoot(keyOrRoot) {
+  if (!keyOrRoot) return;
+  const key = typeof keyOrRoot === 'string' ? keyOrRoot : keyOrRoot.name;
+  if (key && editableRootRefs[key]) delete editableRootRefs[key];
+  if (typeof keyOrRoot === 'string') return;
+  Object.keys(editableRootRefs).forEach(refKey => {
+    if (editableRootRefs[refKey] === keyOrRoot) delete editableRootRefs[refKey];
+  });
+}
+
 let animState = -1, animGroups = [];
 function switchAnim(idx, loop) {
   if (animState === idx) return;
@@ -18805,6 +18817,137 @@ let _layoutDirty = false;
 let _lastLocalCacheAt = Number(localStorage.getItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID) || 0);
 let _lastHardSaveAt = Number(localStorage.getItem('rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID) || 0);
 
+function getInteriorUploadedAssetKeysFromConfigs(configs = {}) {
+  const keys = new Set();
+  Object.values(configs || {}).forEach(config => {
+    (Array.isArray(config?.uploadedGlbs) ? config.uploadedGlbs : []).forEach(item => {
+      const key = String(item?.assetKey || '').trim();
+      if (key) keys.add(key);
+      const file = String(item?.assetFile || item?.assetPath?.split?.('/').pop?.() || '').replace(/\.glb$/i, '').trim();
+      if (file) keys.add(file);
+    });
+  });
+  return keys;
+}
+
+function getInteriorUploadedAssetKeysFromLayoutData(data = []) {
+  const configs = {};
+  (Array.isArray(data) ? data : []).forEach(item => {
+    if (item?.type === 'interior_room_configs' && item.configs && typeof item.configs === 'object') {
+      Object.assign(configs, item.configs);
+    }
+  });
+  return getInteriorUploadedAssetKeysFromConfigs({
+    ...getInteriorRoomConfigs(),
+    ...configs
+  });
+}
+
+function isBookLikeInteriorAssetKey(key = '') {
+  return /book|library/i.test(String(key || ''));
+}
+
+function isWorldLayoutInteriorOnlyNode(node) {
+  const meta = node?.metadata || {};
+  return !!(
+    meta.interiorRuntime === true ||
+    meta.isInteriorObject === true ||
+    meta.isLeakedInteriorObject === true ||
+    meta.type === 'interior_uploaded_glb' ||
+    isInteriorRuntimeNode(node)
+  );
+}
+
+function isLeakedInteriorUploadedLayoutItem(item, interiorUploadKeys = new Set()) {
+  if (!item?.type || item.type === 'interior_uploaded_glb') return false;
+  if (item.interiorRuntime === true || item.isInteriorObject === true || item.interiorId) return true;
+  if (!isManualUploadedAssetKey(item.type) || item.worldUploadedGlb === true) return false;
+  return interiorUploadKeys.has(item.type) || isBookLikeInteriorAssetKey(item.type) || isBookLikeInteriorAssetKey(item.name);
+}
+
+function markInteriorObjectTree(root, interiorId = '', options = {}) {
+  if (!root || root.isDisposed?.()) return root;
+  const id = interiorId || getActiveInteriorConfigKey() || ActiveInterior?.targetInteriorId || ActiveInterior?.interiorType || '';
+  root.metadata = {
+    ...(root.metadata || {}),
+    isInteriorObject:true,
+    interiorRuntime:true,
+    interiorId:id
+  };
+  if (options.neverFreeze === true) root.metadata._perfNeverFreeze = true;
+  root.getChildMeshes?.(false).forEach(mesh => {
+    mesh.metadata = {
+      ...(mesh.metadata || {}),
+      isInteriorObject:true,
+      interiorRuntime:true,
+      interiorId:id
+    };
+    mesh._editRoot = options.editRoot || root;
+  });
+  root.getChildTransformNodes?.(false).forEach(node => {
+    node.metadata = {
+      ...(node.metadata || {}),
+      isInteriorObject:true,
+      interiorRuntime:true,
+      interiorId:id
+    };
+  });
+  return root;
+}
+
+function isLeakedInteriorUploadedRoot(node, interiorUploadKeys = getInteriorUploadedAssetKeysFromConfigs(getInteriorRoomConfigs())) {
+  if (!node || node.isDisposed?.() || node.parent) return false;
+  const meta = node.metadata || {};
+  const type = meta.type || '';
+  if (type === 'interior_runtime') return false;
+  if (meta.isInteriorObject === true || meta.interiorRuntime === true || type === 'interior_uploaded_glb') return true;
+  if (meta.isClone !== true || !isManualUploadedAssetKey(type) || meta.worldUploadedGlb === true) return false;
+  return interiorUploadKeys.has(type) || isBookLikeInteriorAssetKey(type) || isBookLikeInteriorAssetKey(node.name);
+}
+
+function cleanupLeakedInteriorObjects(reason = 'cleanup') {
+  if (!scene) return 0;
+  const interiorUploadKeys = getInteriorUploadedAssetKeysFromConfigs(getInteriorRoomConfigs());
+  const roots = [
+    ...scene.transformNodes.filter(node => isLeakedInteriorUploadedRoot(node, interiorUploadKeys)),
+    ...scene.meshes.filter(mesh => isLeakedInteriorUploadedRoot(mesh, interiorUploadKeys))
+  ];
+  let recovered = 0;
+  roots.forEach(root => {
+    if (!root || root.isDisposed?.()) return;
+    root.metadata = {
+      ...(root.metadata || {}),
+      isLeakedInteriorObject:true,
+      isInteriorObject:true,
+      editorLocked:false
+    };
+    root.setEnabled?.(true);
+    root.isVisible = true;
+    root.isPickable = true;
+    root.getChildMeshes?.(false).forEach(mesh => {
+      if (!mesh || mesh.isDisposed?.()) return;
+      mesh.metadata = {
+        ...(mesh.metadata || {}),
+        isLeakedInteriorObject:true,
+        isInteriorObject:true,
+        editorLocked:false
+      };
+      mesh.setEnabled?.(true);
+      mesh.isVisible = true;
+      mesh.visibility = Math.max(Number(mesh.visibility ?? 1), 1);
+      mesh.isPickable = true;
+      mesh._editRoot = root;
+    });
+    registerEditableRoot(root.name, root);
+    recovered += 1;
+  });
+  if (recovered) {
+    console.warn('Recovered leaked interior object roots for admin deletion:', { reason, recovered });
+    triggerAutoSave?.();
+  }
+  return recovered;
+}
+
 function getSmallAntLayoutDedupeKey(item) {
   if (!item || item.type !== 'small_village_ant') return null;
   if (item.smallAntInstanceId) return `id:${item.smallAntInstanceId}`;
@@ -18822,15 +18965,21 @@ function getCollectibleLayoutDedupeKey(item) {
 }
 
 function sanitizeWorldLayoutData(data, source = 'layout') {
-  if (!Array.isArray(data)) return { data:[], removedSmallAnts:0, removedCollectibles:0 };
+  if (!Array.isArray(data)) return { data:[], removedSmallAnts:0, removedCollectibles:0, removedInteriorLeaks:0 };
   const seenSmallAnts = new Set();
   const seenSmallAntNames = new Set();
   const seenCollectibles = new Set();
   const seenCollectibleNames = new Set();
+  const interiorUploadKeys = getInteriorUploadedAssetKeysFromLayoutData(data);
   let removedSmallAnts = 0;
   let removedCollectibles = 0;
+  let removedInteriorLeaks = 0;
   const sanitized = data.filter(item => {
     if (!item || typeof item !== 'object') return false;
+    if (source !== 'load' && isLeakedInteriorUploadedLayoutItem(item, interiorUploadKeys)) {
+      removedInteriorLeaks += 1;
+      return false;
+    }
     if (item.type === 'small_village_ant') {
       const key = getSmallAntLayoutDedupeKey(item);
       const nameKey = item.name ? `name:${item.name}` : null;
@@ -18853,14 +19002,15 @@ function sanitizeWorldLayoutData(data, source = 'layout') {
     }
     return true;
   });
-  if (removedSmallAnts || removedCollectibles) {
+  if (removedSmallAnts || removedCollectibles || removedInteriorLeaks) {
     console.warn('World layout dedupe removed duplicate runtime entries:', {
       source,
       removedSmallAnts,
-      removedCollectibles
+      removedCollectibles,
+      removedInteriorLeaks
     });
   }
-  return { data:sanitized, removedSmallAnts, removedCollectibles };
+  return { data:sanitized, removedSmallAnts, removedCollectibles, removedInteriorLeaks };
 }
 
 function persistSanitizedWorldLayoutCache(data, reason = 'dedupe') {
@@ -18881,7 +19031,7 @@ function collectWorldLayoutData() {
   const saveableTransformNodes = scene.transformNodes.filter(n =>
     n.metadata && n.metadata.isClone &&
     n.metadata.type !== 'small_village_ant' &&
-    n.metadata.interiorRuntime !== true &&
+    !isWorldLayoutInteriorOnlyNode(n) &&
     !n.metadata.isPickProxy &&
     n.metadata._collectibleTest !== true &&
     n.name && !n.name.includes('.') &&
@@ -18891,6 +19041,7 @@ function collectWorldLayoutData() {
     n.metadata &&
     n.metadata.isClone &&
     (n.metadata.type === 'collision_proxy' || n.metadata.type === 'terrain_stamp') &&
+    !isWorldLayoutInteriorOnlyNode(n) &&
     !n.parent &&
     n.name &&
     Math.abs(n.position.x) < 500 &&
@@ -18930,6 +19081,7 @@ function collectWorldLayoutData() {
     type: node.metadata.type,
     name: node.name,
     disableGroundSnap: node.metadata.disableGroundSnap === true,
+    worldUploadedGlb: node.metadata.worldUploadedGlb === true,
     uploadedAutoFitApplied: node.metadata.uploadedAutoFitApplied === true,
     position: { x: savePosition.x, y: savePosition.y, z: savePosition.z },
     rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
@@ -19251,8 +19403,8 @@ function loadWorldLayout(){
   if (!Array.isArray(data)) data = [];
   const sanitizedLayout = sanitizeWorldLayoutData(data, 'load');
   data = sanitizedLayout.data;
-  if (sanitizedLayout.removedSmallAnts || sanitizedLayout.removedCollectibles) {
-    persistSanitizedWorldLayoutCache(data, 'load duplicate cleanup');
+  if (sanitizedLayout.removedSmallAnts || sanitizedLayout.removedCollectibles || sanitizedLayout.removedInteriorLeaks) {
+    persistSanitizedWorldLayoutCache(data, 'load duplicate/interior leak cleanup');
   }
   const hasSavedNPCs = data.some(item => item?.type === 'npc' && item?.villageId === CURRENT_VILLAGE_ID);
 
@@ -19522,6 +19674,9 @@ function loadWorldLayout(){
     clone.metadata = {
       type: item.type,
       isClone: true,
+      disableGroundSnap: item.disableGroundSnap === true || isManualUploadedAssetKey(item.type),
+      worldUploadedGlb: item.worldUploadedGlb === true,
+      uploadedAutoFitApplied: item.uploadedAutoFitApplied === true,
       signConfig: item.signConfig || null,
       toroColor: item.toroColor || null,
       lanternColor: item.lanternColor || null,
@@ -19564,6 +19719,7 @@ if (m.material) {
     gizmoManager.scaleGizmoEnabled = false;
   }
   console.log("World layout loaded", data.length, "objects");
+  cleanupLeakedInteriorObjects('world layout load');
   dedupeSmallVillageAntRuntime('load');
   dedupeCollectibleRuntime('load');
   ensureDefaultVillageGate();
@@ -25821,6 +25977,7 @@ function createInteriorUploadedGlbAsset(parent, config = {}) {
   root.metadata = {
     type:'interior_uploaded_glb',
     interiorRuntime:true,
+    isInteriorObject:true,
     propId,
     interiorId:config.interiorId || parent.metadata?.targetInteriorId || getActiveInteriorConfigKey(),
     assetKey,
@@ -25833,7 +25990,7 @@ function createInteriorUploadedGlbAsset(parent, config = {}) {
   root.isPickable = true;
   root.setEnabled(config.enabled !== false);
   root.getChildMeshes?.(false).forEach(mesh => {
-    mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true };
+    mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true, isInteriorObject:true, interiorId:root.metadata.interiorId };
     mesh.isPickable = true;
     mesh._editRoot = root;
     mesh.receiveShadows = false;
@@ -25843,6 +26000,7 @@ function createInteriorUploadedGlbAsset(parent, config = {}) {
     }
   });
 
+  markInteriorObjectTree(root, root.metadata.interiorId);
   if (root.metadata.uploadedAutoFitApplied !== true) fitManualUploadedAssetRoot(root, assetKey);
   registerEditableRoot(root.name, root);
   return root;
@@ -25852,18 +26010,36 @@ function createInteriorUploadedGlbAssetAtPoint(assetKey, point) {
   if (!ActiveInterior?.root) return null;
   const assetPath = getInteriorUploadedGlbAssetPath(assetKey);
   const localPosition = getActiveInteriorLocalPoint(point);
-  const root = createInteriorUploadedGlbAsset(ActiveInterior.root, {
+  const parent = ActiveInterior.root;
+  const config = {
+    propId:'uploaded_glb_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
     assetKey,
     assetFile:assetPath.split('/').pop() || getManualUploadedAssetFileName(assetKey),
     assetPath,
     interiorId:getActiveInteriorConfigKey(),
     position:{ x:localPosition.x, y:localPosition.y, z:localPosition.z }
-  });
+  };
+  const finishPlacement = () => {
+    if (!ActiveInterior?.root || ActiveInterior.root !== parent || parent.isDisposed?.()) {
+      console.warn('Skipped deferred interior GLB placement because the room changed:', { assetKey, interiorId:config.interiorId });
+      return null;
+    }
+    const root = createInteriorUploadedGlbAsset(parent, config);
+    if (!root) return null;
+    setSelectedEditableObject(root);
+    saveInteriorUploadedGlbConfig(root);
+    triggerAutoSave();
+    showToast('Interior GLB placed: ' + assetKey);
+    return root;
+  };
+  if (!_assetSources[assetKey] || !isAssetSourceReady(assetKey)) {
+    showToast('Loading ' + assetKey + ' for this interior...');
+    loadAssetSource(assetKey);
+    waitForAssetSourceReady(assetKey, finishPlacement);
+    return null;
+  }
+  const root = finishPlacement();
   if (!root) return null;
-  setSelectedEditableObject(root);
-  saveInteriorUploadedGlbConfig(root);
-  triggerAutoSave();
-  showToast('Interior GLB placed: ' + assetKey);
   return root;
 }
 
@@ -26638,9 +26814,10 @@ function createInteriorFakeLightAsset(parent, config = {}) {
   root.position = config.position ? new BABYLON.Vector3(config.position.x || 0, config.position.y || 1, config.position.z || 0) : getInteriorForwardSpawn(4);
   root.rotation = config.rotation ? new BABYLON.Vector3(config.rotation.x || 0, config.rotation.y || 0, config.rotation.z || 0) : new BABYLON.Vector3(0, charMesh?.rotation?.y || 0, 0);
   root.scaling = config.scaling ? new BABYLON.Vector3(config.scaling.x || 1, config.scaling.y || 1, config.scaling.z || 1) : new BABYLON.Vector3(1, 1, 1);
-  root.metadata = { type:'interior_fake_light', interiorRuntime:true, assetId, assetType, glowColor:color, glowBrightness:brightness, enabled:config.enabled !== false, _perfNeverFreeze:true };
+  root.metadata = { type:'interior_fake_light', interiorRuntime:true, isInteriorObject:true, interiorId:config.interiorId || parent.metadata?.targetInteriorId || getActiveInteriorConfigKey(), assetId, assetType, glowColor:color, glowBrightness:brightness, enabled:config.enabled !== false, _perfNeverFreeze:true };
   root.isPickable = true;
   rebuildInteriorFakeLightVisual(root);
+  markInteriorObjectTree(root, root.metadata.interiorId, { neverFreeze:true });
   registerEditableRoot(root.name, root);
   applyFakeLightState(true);
   return root;
@@ -27580,6 +27757,7 @@ function disposeInteriorRuntime(interior) {
     try { root.dispose?.(false, false); } catch(e) {}
   }
   cleanupInteriorRuntimeLights();
+  cleanupLeakedInteriorObjects('dispose interior runtime');
 }
 
 function returnToVillageFromInterior() {
@@ -27599,6 +27777,7 @@ function returnToVillageFromInterior() {
     ActiveInterior = null;
     stopInteriorAudio(false);
     setVillageRuntimeEnabled(true);
+    cleanupLeakedInteriorObjects('exit interior');
     if (charMesh) {
       charMesh.position.copyFrom(returnPosition);
       charMesh.rotation.y = returnRotationY;
@@ -28192,6 +28371,7 @@ function getCurrentLayoutNodeMap() {
   const nodes = [
     ...scene.transformNodes.filter(n =>
       n.metadata?.isClone === true &&
+      !isWorldLayoutInteriorOnlyNode(n) &&
       !n.metadata?.isPickProxy &&
       n.name &&
       !n.name.includes('.') &&
@@ -28201,6 +28381,7 @@ function getCurrentLayoutNodeMap() {
     ...scene.meshes.filter(n =>
       n.metadata?.isClone === true &&
       (n.metadata.type === 'collision_proxy' || n.metadata.type === 'terrain_stamp') &&
+      !isWorldLayoutInteriorOnlyNode(n) &&
       !n.parent &&
       n.name &&
       Math.abs(n.position.x) < 500 &&
@@ -28238,6 +28419,7 @@ function applyLayoutItemToExistingNode(node, item) {
     type: item.type,
     isClone: true,
     disableGroundSnap: item.disableGroundSnap === true || isManualUploadedAssetKey(item.type),
+    worldUploadedGlb: item.worldUploadedGlb === true,
     uploadedAutoFitApplied: item.uploadedAutoFitApplied === true,
     signConfig: item.signConfig || null,
     toroColor: item.toroColor || null,
@@ -28422,7 +28604,7 @@ function createLayoutNodeForHistory(item) {
     node = _assetSources[item.type].clone(item.name || makeCloneName(item.type));
     if (node) {
       node.name = item.name || node.name;
-      node.metadata = { type: item.type, isClone: true, disableGroundSnap: isManualUploadedAssetKey(item.type) };
+      node.metadata = { type: item.type, isClone: true, disableGroundSnap: isManualUploadedAssetKey(item.type), worldUploadedGlb:item.worldUploadedGlb === true };
       node.getChildMeshes?.().forEach(mesh => {
         mesh.isPickable = true;
         mesh._editRoot = node;
@@ -29003,6 +29185,14 @@ clone.metadata._proxyMoveObserver = proxyMoveObserver;
 
 function placeAssetAtPoint(key, pickedPoint) {
   const spawnPos = pickedPoint.clone();
+  if (ActiveInterior?.root && isManualUploadedAssetKey(key)) {
+    createInteriorUploadedGlbAssetAtPoint(key, spawnPos);
+    return;
+  }
+  if (ActiveInterior?.root) {
+    showToast('Use My Assets GLBs or Interior Assets inside rooms');
+    return;
+  }
   // Handle procedural assets — no GLB source needed
   if (ASSETS[key] && ASSETS[key].procedural) {
     const pos = new BABYLON.Vector3(spawnPos.x, spawnPos.y, spawnPos.z);
@@ -29044,12 +29234,16 @@ function placeAssetAtPoint(key, pickedPoint) {
   }
   if (!_assetSources[key] || !isAssetSourceReady(key)) {
     const deferredPoint = pickedPoint.clone();
+    const deferredInteriorRoot = ActiveInterior?.root || null;
+    const deferredInteriorId = deferredInteriorRoot ? getActiveInteriorConfigKey() : '';
     showToast(`Loading ${key}... placing shortly`);
-    waitForAssetSourceReady(key, () => placeAssetAtPoint(key, deferredPoint));
-    return;
-  }
-  if (ActiveInterior?.root && isManualUploadedAssetKey(key)) {
-    createInteriorUploadedGlbAssetAtPoint(key, spawnPos);
+    waitForAssetSourceReady(key, () => {
+      if (deferredInteriorRoot && ActiveInterior?.root !== deferredInteriorRoot) {
+        console.warn('Skipped deferred asset placement because the active interior changed:', { key, interiorId:deferredInteriorId });
+        return;
+      }
+      placeAssetAtPoint(key, deferredPoint);
+    });
     return;
   }
   const source = _assetSources[key];
@@ -29062,6 +29256,7 @@ function placeAssetAtPoint(key, pickedPoint) {
     type: key,
     isClone: true,
     disableGroundSnap: isManualUpload,
+    worldUploadedGlb: isManualUpload,
     uploadedAutoFitApplied: isManualUpload && ASSETS[key]?._autoFitApplied === true
   };
   clone.position = new BABYLON.Vector3(spawnPos.x, isManualUpload ? spawnPos.y : 0, spawnPos.z);
