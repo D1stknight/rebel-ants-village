@@ -21472,18 +21472,13 @@ async function initWorldLayout() {
 async function loadForgeCollectionsConfig() {
   if (VillageStartupRuntime.forgeCollectionsStarted) return;
   VillageStartupRuntime.forgeCollectionsStarted = true;
-  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
 
   try {
-    const resp = await fetch("https://api.github.com/repos/D1stknight/rebel-ants-village/contents/assets/forge-collections.json?ref=dev", {
-      headers: { "Authorization": "token " + window._ghToken }
-    });
+    const resp = await fetch("https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/assets/forge-collections.json", { cache: 'no-store' });
 
     if (resp.ok) {
-      const d = await resp.json();
-      const bytes = Uint8Array.from(atob(d.content.replace(/\n/g,'')), c => c.charCodeAt(0));
-      const jsonText = new TextDecoder('utf-8').decode(bytes);
-      const forgeCollectionsConfig = JSON.parse(jsonText);
+      const forgeCollectionsConfig = await resp.json();
+      const jsonText = JSON.stringify(forgeCollectionsConfig);
 
       window._forgeCollectionsConfig = forgeCollectionsConfig;
       localStorage.setItem("rebelAntsForgeCollections", jsonText);
@@ -28562,105 +28557,132 @@ function uploadGLB() {
 
 document.getElementById('glbUploadInput').addEventListener('change', async function(e) {
   const file = e.target.files[0];
-  if (!file || !file.name.endsWith('.glb')) return;
-  if (!window._ghToken) window._ghToken = ['ghp_kivXKqnOmY9vRi9tVQ','cuxwTX4stGTB0eci0i'].join('');
-  const key = file.name.replace('.glb','');
+  if (!file || !/\.glb$/i.test(file.name || '')) return;
   const reader = new FileReader();
   reader.onload = async function(ev) {
-    let b64 = ev.target.result.split(',')[1];
-    const originalSize = file.size;
-
-    // ── AUTO-COMPRESS via serverless function ──────────────
-    showToast('⏳ Compressing ' + file.name + ' (' + (originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB') + ')...', 30000);
-    let compressedSize = originalSize;
-    let compressionMsg = '';
     try {
-      const compResp = await fetch('/api/compress-glb', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: b64 })
-      });
-      if (compResp.ok) {
-        const compData = await compResp.json();
-        if (compData.warning) {
-          const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
-          compressionMsg = '⚠️ Could not auto-compress (' + origFmt + '). Pre-compress free at gltf.report';
-          b64 = compData.data;
-          compressedSize = originalSize;
-        } else {
-          b64 = compData.data;
-          compressedSize = compData.outputSize;
-          const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
-          const compFmt = compressedSize >= 1048576 ? (compressedSize/1048576).toFixed(1)+' MB' : Math.round(compressedSize/1024)+' KB';
-          if (compData.savedPercent > 2) {
-            compressionMsg = '✨ Compressed: ' + origFmt + ' → ' + compFmt + ' (' + compData.savedPercent + '% smaller)';
+      let b64 = ev.target.result.split(',')[1];
+      const originalSize = file.size;
+
+      // ── AUTO-COMPRESS via serverless function ──────────────
+      showToast('⏳ Compressing ' + file.name + ' (' + (originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB') + ')...', 30000);
+      let compressedSize = originalSize;
+      let compressionMsg = '';
+      try {
+        const compResp = await fetch('/api/compress-glb', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: b64 })
+        });
+        if (compResp.ok) {
+          const compData = await compResp.json();
+          if (compData.warning) {
+            const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
+            compressionMsg = '⚠️ Could not auto-compress (' + origFmt + '). Pre-compress free at gltf.report';
+            b64 = compData.data;
+            compressedSize = originalSize;
           } else {
-            compressionMsg = '✓ Already optimized (' + origFmt + ') — no compression needed';
+            b64 = compData.data;
+            compressedSize = compData.outputSize;
+            const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
+            const compFmt = compressedSize >= 1048576 ? (compressedSize/1048576).toFixed(1)+' MB' : Math.round(compressedSize/1024)+' KB';
+            if (compData.savedPercent > 2) {
+              compressionMsg = '✨ Compressed: ' + origFmt + ' → ' + compFmt + ' (' + compData.savedPercent + '% smaller)';
+            } else {
+              compressionMsg = '✓ Already optimized (' + origFmt + ') — no compression needed';
+            }
           }
         }
+      } catch(compErr) {
+        console.warn('Compression skipped:', compErr.message);
+        const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
+        compressionMsg = '⚠️ Auto-compress unavailable (' + origFmt + '). Pre-compress free at gltf.report';
       }
-    } catch(compErr) {
-      console.warn('Compression skipped:', compErr.message);
-      const origFmt = originalSize >= 1048576 ? (originalSize/1048576).toFixed(1)+' MB' : Math.round(originalSize/1024)+' KB';
-      compressionMsg = '⚠️ Auto-compress unavailable (' + origFmt + '). Pre-compress free at gltf.report';
-    }
 
-    // ── UPLOAD TO GITHUB ───────────────────────────────────
-    showToast('☁️ Uploading ' + file.name + ' to GitHub...', 30000);
-    const path = 'assets/buildings/' + file.name;
-    let sha;
-    try {
-      const check = await fetch('https://api.github.com/repos/D1stknight/rebel-ants-village/contents/' + path + '?ref=dev', { headers: { Authorization: 'token ' + window._ghToken } });
-      if (check.ok) { const cd = await check.json(); sha = cd.sha; }
-    } catch(e) {}
-    const body = { message: 'upload: ' + file.name, content: b64, branch: 'dev' };
-    if (sha) body.sha = sha;
-    const put = await fetch('https://api.github.com/repos/D1stknight/rebel-ants-village/contents/' + path, {
-      method: 'PUT', headers: { Authorization: 'token ' + window._ghToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    if (!put.ok) { showToast('❌ Upload failed — try again', 8000); return; }
+      // ── UPLOAD TO GITHUB THROUGH SERVER API ─────────────────
+      showToast('☁️ Uploading ' + file.name + ' to GitHub...', 30000);
+      const uploadResp = await fetch('/api/upload-glb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: file.name, data: b64 })
+      });
 
-    // ── SAVE TO localStorage so asset survives page refresh ──
-    const _uploadedAssets = getUploadedAssets();
-    if (!_uploadedAssets.find(a => a.key === key)) {
-      _uploadedAssets.push({ key, file: file.name });
+      const uploadRaw = await uploadResp.text().catch(() => '');
+      let uploadResult = {};
+      try {
+        uploadResult = uploadRaw ? JSON.parse(uploadRaw) : {};
+      } catch(parseErr) {
+        uploadResult = {
+          ok: false,
+          error: uploadRaw || uploadResp.statusText || 'Upload failed',
+          status: uploadResp.status
+        };
+      }
+
+      if (!uploadResp.ok || !uploadResult.ok) {
+        const realError = uploadResult.error || uploadResult.detail || ('Status ' + uploadResp.status);
+        console.error('Upload GLB failed:', {
+          status: uploadResp.status,
+          response: uploadResult
+        });
+        showToast('❌ Upload failed — ' + realError, 10000);
+        return;
+      }
+
+      const permanentPath = uploadResult.path || ('/assets/buildings/' + file.name);
+      const storedFileName = permanentPath.split('/').pop() || file.name;
+      const key = storedFileName.replace(/\.glb$/i, '');
+
+      // ── SAVE TO localStorage so asset survives page refresh ──
+      const _uploadedAssets = getUploadedAssets();
+      const existingUpload = _uploadedAssets.find(a => a.key === key);
+      if (existingUpload) {
+        existingUpload.file = storedFileName;
+      } else {
+        _uploadedAssets.push({ key, file: storedFileName });
+      }
       setUploadedAssets(_uploadedAssets);
+      setHiddenLibraryAssets(getHiddenLibraryAssets().filter(hiddenKey => hiddenKey !== key));
+
+      // ── LOAD INTO SCENE IMMEDIATELY via blob URL ───────────
+      // Convert compressed b64 back to binary blob so Babylon loads it NOW
+      // without waiting for Vercel to redeploy
+      const binStr = atob(b64);
+      const binArr = new Uint8Array(binStr.length);
+      for (let i = 0; i < binStr.length; i++) binArr[i] = binStr.charCodeAt(i);
+      const blob = new Blob([binArr], { type: 'model/gltf-binary' });
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Register in ASSETS using blob URL for immediate use
+      // Also store the real path so world-layout save/load uses the permanent URL
+      ASSETS[key] = { path: blobUrl, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _realPath: permanentPath, _uploaded: true };
+      loadAssetSource(key);
+
+      const card = createUploadedAssetCard(key, '⏳');
+      if (card) {
+        card.style.opacity = '0.5';
+        const waitForLoad = setInterval(() => {
+          if (!ASSETS[key]) {
+            clearInterval(waitForLoad);
+            return;
+          }
+          if (_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded) {
+            clearInterval(waitForLoad);
+            card.style.opacity = '1';
+            const icon = card.querySelector('.ap-icon');
+            if (icon) icon.textContent = '📦';
+            card.onclick = () => spawnAssetFromPanel(key);
+            showToast(compressionMsg || ('✓ ' + storedFileName + ' ready to place'), 10000);
+          }
+        }, 300);
+      }
+    } catch(uploadErr) {
+      console.error('Upload GLB failed:', uploadErr);
+      showToast('❌ Upload failed — ' + (uploadErr.message || 'unexpected error'), 10000);
     }
-    setHiddenLibraryAssets(getHiddenLibraryAssets().filter(hiddenKey => hiddenKey !== key));
-
-    // ── LOAD INTO SCENE IMMEDIATELY via blob URL ───────────
-    // Convert compressed b64 back to binary blob so Babylon loads it NOW
-    // without waiting for Vercel to redeploy
-    const binStr = atob(b64);
-    const binArr = new Uint8Array(binStr.length);
-    for (let i = 0; i < binStr.length; i++) binArr[i] = binStr.charCodeAt(i);
-    const blob = new Blob([binArr], { type: 'model/gltf-binary' });
-    const blobUrl = URL.createObjectURL(blob);
-
-    // Register in ASSETS using blob URL for immediate use
-    // Also store the real path so world-layout save/load uses the permanent URL
-    ASSETS[key] = { path: blobUrl, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _realPath: '/assets/buildings/' + file.name, _uploaded: true };
-    loadAssetSource(key);
-
-    const card = createUploadedAssetCard(key, '⏳');
-    if (card) {
-      card.style.opacity = '0.5';
-      const waitForLoad = setInterval(() => {
-        if (!ASSETS[key]) {
-          clearInterval(waitForLoad);
-          return;
-        }
-        if (_assetSources[key] && _assetSources[key].metadata && _assetSources[key].metadata.loaded) {
-          clearInterval(waitForLoad);
-          card.style.opacity = '1';
-          const icon = card.querySelector('.ap-icon');
-          if (icon) icon.textContent = '📦';
-          card.onclick = () => spawnAssetFromPanel(key);
-          showToast(compressionMsg || ('✓ ' + file.name + ' ready to place'), 10000);
-        }
-      }, 300);
-    }
+  };
+  reader.onerror = function() {
+    showToast('❌ Upload failed — could not read file', 8000);
   };
   reader.readAsDataURL(file);
   e.target.value = '';
