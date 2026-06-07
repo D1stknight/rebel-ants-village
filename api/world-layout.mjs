@@ -88,15 +88,25 @@ async function getGitHubErrorMessage(response) {
 }
 
 async function readWorldLayout(token, filePath, options = {}) {
-  const response = await fetch(
-    `https://api.github.com/repos/${REPO}/contents/${filePath}?ref=${BRANCH}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github+json'
-      }
+  const ref = options.ref || BRANCH;
+  const url = new URL(`https://api.github.com/repos/${REPO}/contents/${filePath}`);
+
+  url.searchParams.set('ref', ref);
+
+  // Prevent stale GitHub/Vercel/serverless reads.
+  if (options.noCache !== false) {
+    url.searchParams.set('_', String(Date.now()));
+  }
+
+  const response = await fetch(url.toString(), {
+    cache: 'no-store',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache'
     }
-  );
+  });
 
   if (!response.ok) {
     if (response.status === 404 && options.emptyOnMissing) {
@@ -112,7 +122,10 @@ async function readWorldLayout(token, filePath, options = {}) {
   }
 
   const file = await response.json();
-  const json = Buffer.from(String(file.content || '').replace(/\n/g, ''), 'base64').toString('utf8').trim();
+  const json = Buffer
+    .from(String(file.content || '').replace(/\n/g, ''), 'base64')
+    .toString('utf8')
+    .trim();
 
   if (!json) {
     console.warn('World layout file is empty. Treating as blank layout:', filePath);
@@ -154,7 +167,7 @@ async function writeWorldLayout(token, layout, filePath) {
   let sha;
 
   try {
-    const current = await readWorldLayout(token, filePath);
+    const current = await readWorldLayout(token, filePath, { noCache: true });
     sha = current.sha;
   } catch (err) {
     if (!String(err?.message || '').includes('Status: 404')) {
@@ -162,9 +175,11 @@ async function writeWorldLayout(token, layout, filePath) {
     }
   }
 
+  const expectedCount = Array.isArray(layout) ? layout.length : 0;
   const content = Buffer.from(JSON.stringify(layout, null, 2) + '\n', 'utf8').toString('base64');
+
   const body = {
-    message: 'save: world layout',
+    message: `save: world layout (${expectedCount} objects)`,
     content,
     branch: BRANCH
   };
@@ -175,27 +190,33 @@ async function writeWorldLayout(token, layout, filePath) {
     `https://api.github.com/repos/${REPO}/contents/${filePath}`,
     {
       method: 'PUT',
+      cache: 'no-store',
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github+json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache'
       },
       body: JSON.stringify(body)
     }
   );
 
   if (response.status === 409) {
-    const current = await readWorldLayout(token, filePath);
+    const current = await readWorldLayout(token, filePath, { noCache: true });
     body.sha = current.sha;
 
     response = await fetch(
       `https://api.github.com/repos/${REPO}/contents/${filePath}`,
       {
         method: 'PUT',
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/vnd.github+json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache'
         },
         body: JSON.stringify(body)
       }
@@ -210,9 +231,46 @@ async function writeWorldLayout(token, layout, filePath) {
       (detail ? '. ' + detail : '')
     );
   }
+
+  const savedResponse = await response.json().catch(() => null);
+  const commitSha = savedResponse?.commit?.sha || null;
+  const contentSha = savedResponse?.content?.sha || null;
+
+  if (commitSha) {
+    const verified = await readWorldLayout(token, filePath, {
+      ref: commitSha,
+      noCache: true
+    });
+
+    const verifiedCount = Array.isArray(verified.layout) ? verified.layout.length : 0;
+
+    if (verifiedCount !== expectedCount) {
+      throw new Error(
+        `GitHub verification failed after save. Expected ${expectedCount} objects, but verified ${verifiedCount}.`
+      );
+    }
+
+    return {
+      savedCount: expectedCount,
+      verifiedCount,
+      githubCommitSha: commitSha,
+      githubContentSha: contentSha
+    };
+  }
+
+  return {
+    savedCount: expectedCount,
+    verifiedCount: null,
+    githubCommitSha: null,
+    githubContentSha: contentSha
+  };
 }
 
 export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   if (!['GET', 'POST'].includes(req.method)) {
     res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
@@ -239,13 +297,30 @@ export default async function handler(req, res) {
 
     const { layout } = req.body || {};
 
-    if (!Array.isArray(layout)) {
-      return res.status(400).json({ ok: false, error: 'Missing world layout array' });
-    }
+if (!Array.isArray(layout)) {
+  return res.status(400).json({ ok: false, error: 'Missing world layout array' });
+}
 
-    await writeWorldLayout(token, layout, filePath);
+if (villageId === 'hub' && layout.length < 10) {
+  return res.status(400).json({
+    ok: false,
+    error: `Refusing to save Hub Village with only ${layout.length} objects. This would likely overwrite the real village.`,
+    villageId,
+    filePath,
+    receivedCount: layout.length
+  });
+}
 
-    return res.status(200).json({ ok: true, saved: true, villageId, filePath });
+const saveResult = await writeWorldLayout(token, layout, filePath);
+
+return res.status(200).json({
+  ok: true,
+  saved: true,
+  villageId,
+  filePath,
+  receivedCount: layout.length,
+  ...saveResult
+});
   } catch (err) {
     console.error('world-layout error:', err);
     const token = getGitHubToken();
