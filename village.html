@@ -5304,6 +5304,10 @@ function createFakeAmbientGlow(parent, options = {}) {
     fakeAmbientGlow:true,
     interiorRuntime: options.interiorRuntime === true || parent?.metadata?.interiorRuntime === true
   };
+  if (mesh.metadata.interiorRuntime === true || options.interiorFakeLight === true) {
+    mesh.alwaysSelectAsActiveMesh = true;
+    mesh.doNotSyncBoundingInfo = true;
+  }
   if (options.billboard === true) mesh.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
   if (options.registerRoot) registerFakeLightMaterial(options.registerRoot, material, {
     minFactor:options.minFactor ?? .04,
@@ -24819,6 +24823,7 @@ function registerFakeLightMaterial(root, material, options = {}) {
       existing.baseAlpha = Number.isFinite(material.alpha) ? material.alpha : existing.baseAlpha;
     }
     existing.minFactor = Number.isFinite(options.minFactor) ? options.minFactor : existing.minFactor;
+    existing.interiorFakeLight = existing.interiorFakeLight === true || options.interiorFakeLight === true || root.metadata?.type === 'interior_fake_light';
     return;
   }
   root.metadata._fakeLightMaterials.push({
@@ -24836,6 +24841,28 @@ function stopInteriorFakeLightPulse(root) {
     try { scene.onBeforeRenderObservable.remove(observer); } catch(e) {}
   }
   if (root?.metadata) root.metadata._interiorFakeLightPulseObserver = null;
+}
+
+function keepActiveInteriorFakeLightVisible(root) {
+  if (!root || root.isDisposed?.() || root.metadata?.type !== 'interior_fake_light' || root.metadata?.enabled === false) return false;
+  if (!ActiveInterior?.root || !isInteriorRuntimeNode(root)) return false;
+  root.setEnabled?.(true);
+  root.isVisible = true;
+  root.getChildMeshes?.(false).forEach(mesh => {
+    if (!mesh || mesh.isDisposed?.()) return;
+    const isGlowVisual =
+      mesh.metadata?.isInteriorFakeLightVisual === true ||
+      mesh.metadata?.fakeAmbientGlow === true ||
+      mesh.metadata?.childGlow === true;
+    if (!isGlowVisual) return;
+    mesh.setEnabled?.(true);
+    mesh.isVisible = true;
+    mesh.visibility = 1;
+    mesh.alwaysSelectAsActiveMesh = true;
+    mesh.doNotSyncBoundingInfo = true;
+    mesh.isPickable = mesh._editRoot === root && mesh.metadata?.childGlow !== true;
+  });
+  return true;
 }
 
 function clearInteriorFakeLightVisual(root) {
@@ -24862,6 +24889,8 @@ function markInteriorFakeLightMesh(root, mesh, options = {}) {
   mesh._editRoot = root;
   mesh.isPickable = options.pickable === true;
   mesh.receiveShadows = false;
+  mesh.alwaysSelectAsActiveMesh = true;
+  mesh.doNotSyncBoundingInfo = true;
   return mesh;
 }
 
@@ -25170,6 +25199,7 @@ function applyFakeLightState(force = false) {
       const mat = entry.material;
       if (!mat || mat.isDisposed?.()) return;
       const isInteriorGlow = entry.interiorFakeLight === true || root.metadata?.type === 'interior_fake_light';
+      if (isInteriorGlow) keepActiveInteriorFakeLightVisible(root);
       const activeInteriorMin = isInteriorGlow && ActiveInterior && isInteriorRuntimeNode(root)
         ? (isEditorVisualMode() ? .78 : .68)
         : 0;
@@ -26608,7 +26638,7 @@ function createInteriorFakeLightAsset(parent, config = {}) {
   root.position = config.position ? new BABYLON.Vector3(config.position.x || 0, config.position.y || 1, config.position.z || 0) : getInteriorForwardSpawn(4);
   root.rotation = config.rotation ? new BABYLON.Vector3(config.rotation.x || 0, config.rotation.y || 0, config.rotation.z || 0) : new BABYLON.Vector3(0, charMesh?.rotation?.y || 0, 0);
   root.scaling = config.scaling ? new BABYLON.Vector3(config.scaling.x || 1, config.scaling.y || 1, config.scaling.z || 1) : new BABYLON.Vector3(1, 1, 1);
-  root.metadata = { type:'interior_fake_light', interiorRuntime:true, assetId, assetType, glowColor:color, glowBrightness:brightness, enabled:config.enabled !== false };
+  root.metadata = { type:'interior_fake_light', interiorRuntime:true, assetId, assetType, glowColor:color, glowBrightness:brightness, enabled:config.enabled !== false, _perfNeverFreeze:true };
   root.isPickable = true;
   rebuildInteriorFakeLightVisual(root);
   registerEditableRoot(root.name, root);
