@@ -762,37 +762,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <div class="perf-detail-list" id="performanceDetailsGrid">Diagnostics update every few seconds.</div>
     </details>
   </div>
-  <div class="ap-section">Quest Editor</div>
-	  <div class="admin-section-body" data-admin-section-body="quest-editor">
-	    <button class="quest-help" type="button" title="Quest Editor How To: 1. Give the quest a simple ID like quest_hidden_chest. 2. Add a clear title and short story description. 3. Pick the objective type: talk to NPC, visit village, read sign, open chest, or reach zone. 4. Write exactly what the player should do. 5. Enter the target ID if you know it. 6. Add a prerequisite only if this quest must wait for another quest. 7. Choose locked, active, or completed. 8. Click Save Local Quest.">How To</button>
-	    <div class="admin-note">Creates local quest drafts for this village. Existing Hub tutorial quests stay safe.</div>
-    <label class="admin-field">Quest ID <input id="questDraftId" placeholder="quest_the_warning"></label>
-    <label class="admin-field">Title <input id="questDraftTitle" placeholder="The First Warning"></label>
-    <label class="admin-field">Description <textarea id="questDraftDescription" rows="2" placeholder="Story context"></textarea></label>
-    <label class="admin-field">Objective Type
-      <select id="questDraftObjectiveType" class="admin-select">
-        <option value="talkToNpc">talkToNpc</option>
-        <option value="visitVillage">visitVillage</option>
-        <option value="interactSign">interactSign</option>
-        <option value="openChest">openChest</option>
-        <option value="reachZone">reachZone</option>
-        <option value="enterInterior">enterInterior</option>
-      </select>
-    </label>
-    <label class="admin-field">Objective Text <textarea id="questDraftObjective" rows="2" placeholder="Speak with the Ronin watcher"></textarea></label>
-    <label class="admin-field">Target ID <input id="questDraftTargetId" placeholder="npc/sign/chest/zone/village id"></label>
-    <label class="admin-field">Prerequisite Quest <input id="questDraftPrereq" placeholder="optional previous quest id"></label>
-    <label class="admin-field">State
-      <select id="questDraftState" class="admin-select">
-        <option value="locked">locked</option>
-        <option value="active">active</option>
-        <option value="completed">completed</option>
-      </select>
-    </label>
-	    <button class="ctrl-btn full" onclick="saveQuestDraft()">Save Local Quest</button>
-	    <button class="ctrl-btn danger full" onclick="resetHubTutorialQuest()">Reset Hub Tutorial Quest</button>
-	  </div>
-	  <div class="ap-section">Quest Builder V1</div>
+  <div class="ap-section">Quest Builder V1</div>
 	  <div class="admin-section-body" data-admin-section-body="quest-builder">
 	    <button class="quest-help" type="button" title="Quest Builder How To: Search or select a quest, edit metadata, choose a target marker/object, connect a badge reward, then Apply/Save. Use Create/Update Marker For Quest to place guidance without hardcoding coordinates. Test Start and Test Complete are local admin tools.">How To</button>
 	    <div class="admin-note">Builds local quest configs that can point to movable Quest Target Markers, badges, and Journal entries.</div>
@@ -1397,6 +1367,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <button class="ctrl-btn" onclick="restorePreviousLocalBackup()">Restore Backup</button>
       <button class="ctrl-btn" onclick="exportCurrentVillageLayout()">Export JSON</button>
       <button class="ctrl-btn" onclick="document.getElementById('layoutImportInput').click()">Import JSON</button>
+      <button class="ctrl-btn danger full" style="grid-column:1/-1" onclick="resetHubTutorialQuest()">Reset Hub Tutorial Chain</button>
       <button class="ctrl-btn danger full" style="grid-column:1/-1" onclick="resetLocalProgression()">Reset Local Progression</button>
     </div>
     <input type="file" id="layoutImportInput" accept="application/json,.json" style="display:none" onchange="importVillageLayoutJSON(event)">
@@ -28225,26 +28196,6 @@ Object.assign(window, {
   alignSelectedInteriorVideoScreenToWall
 });
 
-function saveQuestDraft() {
-  const draft = {
-    id: document.getElementById('questDraftId')?.value?.trim() || ('quest_' + Date.now()),
-    title: document.getElementById('questDraftTitle')?.value?.trim() || 'Untitled Quest',
-    description: document.getElementById('questDraftDescription')?.value?.trim() || '',
-    objectiveType: document.getElementById('questDraftObjectiveType')?.value || 'talkToNpc',
-    objective: document.getElementById('questDraftObjective')?.value?.trim() || '',
-    targetId: document.getElementById('questDraftTargetId')?.value?.trim() || '',
-    prerequisiteQuestId: document.getElementById('questDraftPrereq')?.value?.trim() || '',
-    state: document.getElementById('questDraftState')?.value || 'locked',
-    villageId: CURRENT_VILLAGE_ID,
-    updatedAt: new Date().toISOString()
-  };
-  const key = 'rebelAntsQuestDrafts';
-  const drafts = JSON.parse(localStorage.getItem(key) || '[]').filter(item => item.id !== draft.id);
-  drafts.push(draft);
-  localStorage.setItem(key, JSON.stringify(drafts));
-  showToast('Quest saved locally');
-}
-
 function getTerrainSurfaceMaterial(surface = 'dirt', alpha = .34) {
   const key = `terrainSurfaceMat_${surface}_${String(alpha).replace('.', '_')}`;
   if (scene.getMaterialByName(key)) return scene.getMaterialByName(key);
@@ -29593,7 +29544,6 @@ window.duplicateSelectedInteriorVideoScreen = duplicateSelectedInteriorVideoScre
 window.deleteSelectedInteriorVideoScreen = deleteSelectedInteriorVideoScreen;
 window.toggleInteriorVideoScreenHelpers = toggleInteriorVideoScreenHelpers;
 window.alignSelectedInteriorVideoScreenToWall = alignSelectedInteriorVideoScreenToWall;
-window.saveQuestDraft = saveQuestDraft;
 window.resetHubTutorialQuest = resetHubTutorialQuest;
 window.placeCollectibleFromAdmin = placeCollectibleFromAdmin;
 window.spawnTestCollectibles = spawnTestCollectibles;
