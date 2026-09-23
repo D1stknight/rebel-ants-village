@@ -135,7 +135,7 @@ ${variantIntentRules ? `${variantIntentRules}\n\n` : ''}NON-NEGOTIABLE IDENTITY 
 
 Face and upper-body preservation checklist:
 - Same head shape as Image 1.
-- Same antennae placement and antenna style as Image 1.
+- Same antennae as Image 1: same count, placement, style and FULL LENGTH relative to the head. Never shorten, stub, drop or hide an antenna under headwear.
 - Same eyes / eye covering / visor / patch shape as Image 1.
 - Same mouth and teeth shape as Image 1.
 - Same facial expression as Image 1.
@@ -171,7 +171,7 @@ Important requirements:
 - Use a clean neutral front-facing or slightly heroic pose that makes the body easy to understand for later 3D conversion.
 - The final image should be a polished full-body character concept suitable as the next step before 3D generation.
 - Keep the visual tone consistent with Rebel Ants: stylized warrior ant, Japanese-inspired, heroic, sharp, detailed, high-quality concept art. The colony decides the costume type.
-- Prefer a simple clean backdrop or subtle neutral studio-style background so the character remains the focus.
+- Background: plain, flat, light-grey studio backdrop. Do NOT reuse the NFT's background colour, scenery or pattern. No scenery, no props on the floor.
 
 Character identity details:
 - Name: ${generationInput.name || 'Rebel Ant'}

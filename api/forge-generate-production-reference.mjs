@@ -57,7 +57,7 @@ Goal:
 - This is a clean image reference that will later help generate or build a game-ready 3D Rebel Ant character.
 
 Identity lock:
-- Preserve the selected concept's head, face, eyes, eye covering, mouth, teeth, facial expression, antennae, headwear, and upper-body identity.
+- Preserve the selected concept's head, face, eyes, eye covering, mouth, teeth, facial expression, antennae (full length, never shortened), headwear, and upper-body identity.
 - Do not redesign the face.
 - Do not reinterpret the eyes.
 - Do not change the mouth or teeth.
@@ -71,7 +71,7 @@ Production reference rules:
 - Keep hands or claws visible and readable.
 - Keep legs and feet visible from hip to foot.
 - Keep the full body visible from head to feet.
-- Use a simple neutral studio background.
+- Use a plain, flat, light-grey studio background. Never the NFT's background colour or scenery.
 - Reduce cinematic lighting, heavy shadows, motion, smoke, dramatic perspective, and background clutter.
 - Keep the silhouette clean and readable.
 - Keep outfit layers, sash, wraps, armor accents, robe structure, shin guards, and boots clear.
