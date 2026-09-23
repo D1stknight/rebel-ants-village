@@ -15178,6 +15178,21 @@ const CHARACTER_REGISTRY = {
     ]
   },
 
+  // Forge Rigger v1.2 bundles: ONE GLB per Rebel (metres, 65-bone Rebel Standard rig) with all 5 clips
+  // as named animation groups (idle, walk, run, jump, flip_kick) retargeted from the master ant.
+  forged_rig_469: {
+    bundleId: 'forged_rig_469', formType: 'forged', formLabel: 'Forged 3D Form (Sohei #469)', hasGeneratedModel: true,
+    basePath: '/assets/character/forged/', singleGlb: 'rebel469_forge_rig_v2_lite.glb', scale: 1.9, animations: []
+  },
+  forged_rig_1555: {
+    bundleId: 'forged_rig_1555', formType: 'forged', formLabel: 'Forged 3D Form (Wokou #1555)', hasGeneratedModel: true,
+    basePath: '/assets/character/forged/', singleGlb: 'rebel1555_forge_rig_v1_lite.glb', scale: 1.9, animations: []
+  },
+  forged_rig_4998: {
+    bundleId: 'forged_rig_4998', formType: 'forged', formLabel: 'Forged 3D Form (Shogun #4998)', hasGeneratedModel: true,
+    basePath: '/assets/character/forged/', singleGlb: 'rebel4998_forge_rig_v1_lite.glb', scale: 1.9, animations: []
+  },
+
   // Temporary forged-path test bundle.
   // Uses the same starter GLBs for now, but proves the future NFT-specific bundle logic works.
   forged_test_ant: {
@@ -15200,10 +15215,23 @@ const CHARACTER_REGISTRY = {
 // V1 test: Rebel #469 temporarily resolves to a forged bundle so we can prove the future path works.
 // Later, the NFT → 3D Forge pipeline can save real token-specific bundle choices here.
 const REBEL_CHARACTER_RECORDS = {
-  "469": {
-    bundleId: "forged_test_ant"
-  }
+  "469": { bundleId: "forged_rig_469" },
+  "1555": { bundleId: "forged_rig_1555" },
+  "4998": { bundleId: "forged_rig_4998" }
 };
+// Play-test override: village.html?rig=469 | 1555 | 4998 | master (remembered in localStorage 'forgeRigOverride')
+function getForgeRigOverrideBundleId() {
+  let v = null;
+  try {
+    const q = new URLSearchParams(window.location.search).get('rig');
+    if (q) localStorage.setItem('forgeRigOverride', q);
+    v = q || localStorage.getItem('forgeRigOverride');
+  } catch (e) {}
+  if (!v) return null;
+  if (v === 'off' || v === 'none') { try { localStorage.removeItem('forgeRigOverride'); } catch (e) {} return null; }
+  if (v === 'master') return 'starter_ant';
+  return CHARACTER_REGISTRY['forged_rig_' + v] ? 'forged_rig_' + v : null;
+}
 function getRebelCharacterRecord(rebel) {
   if (!rebel || !rebel.tokenId) return null;
   return REBEL_CHARACTER_RECORDS[String(rebel.tokenId)] || null;
@@ -15211,15 +15239,16 @@ function getRebelCharacterRecord(rebel) {
 
 function resolveCharacterConfig(rebel) {
   const characterRecord = getRebelCharacterRecord(rebel);
-  const requestedBundleId = characterRecord && characterRecord.bundleId
+  const requestedBundleId = getForgeRigOverrideBundleId() || (characterRecord && characterRecord.bundleId
     ? characterRecord.bundleId
-    : 'starter_ant';
+    : 'starter_ant');
 
   const bundle = CHARACTER_REGISTRY[requestedBundleId] || CHARACTER_REGISTRY.starter_ant;
-  const activeForgeCharacter = rebel?.activeForgeCharacter || null;
+  // A Forge Rigger bundle replaces the older Forge preview/visual-test GLB path entirely.
+  const activeForgeCharacter = bundle.singleGlb ? null : (rebel?.activeForgeCharacter || null);
   const characterBundle = activeForgeCharacter?.characterBundle || null;
   const armatureAnimations = characterBundle?.armatureAnimations || {};
-  const activeGlbUrl = rebel?.activeGlbUrl || activeForgeCharacter?.activeGlbUrl || characterBundle?.activeGlbUrl || null;
+  const activeGlbUrl = bundle.singleGlb ? null : (rebel?.activeGlbUrl || activeForgeCharacter?.activeGlbUrl || characterBundle?.activeGlbUrl || null);
   const activeForgeBuildId = activeForgeCharacter?.activeForgeBuildId || characterBundle?.sourceBuildId || null;
   const characterSource = activeGlbUrl ? 'forge_glb' : 'starter_bundle';
 
@@ -15238,6 +15267,8 @@ function resolveCharacterConfig(rebel) {
     hasGeneratedModel: bundle.hasGeneratedModel,
     basePath: bundle.basePath,
     idleFile: bundle.idleFile,
+    singleGlb: bundle.singleGlb || null,
+    playerScale: bundle.scale || null,
     animations: bundle.animations,
     activeForgeCharacter,
     characterBundle,
@@ -18461,21 +18492,35 @@ function switchAnim(idx, loop) {
   if (prev && prev.isPlaying) prev.stop();
   animState = idx; next.play(loop !== false);
 }
-BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacter.idleFile, scene)
+const _forgeSingleGlb = activeCharacter.singleGlb || null;   // Forge Rigger bundle: one GLB, metres, all clips inside
+BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGlb || activeCharacter.idleFile, scene)
 .then(r => {
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
   playerRoot.position = new BABYLON.Vector3(0, 0.25, 20);
   playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
-  playerRoot.scaling = new BABYLON.Vector3(0.018, 0.018, 0.018);
+  const _ps = _forgeSingleGlb ? (activeCharacter.playerScale || 1.9) : 0.018;
+  playerRoot.scaling = new BABYLON.Vector3(_ps, _ps, _ps);
   r.meshes.forEach(m => {
    if (m !== playerRoot) {
   m.parent = playerRoot;
-  m.position.y -= 8;
+  if (!_forgeSingleGlb) m.position.y -= 8;
 }
     if (m.rotationQuaternion) m.rotationQuaternion = null;
     shadows.addShadowCaster(m); m.receiveShadows = true;
     if (m.material) {
       const mat = m.material;
+      // Forge rig: when the glTF load completes, the Babylon loader raises maxSimultaneousLights to scene.lights.length (16 here).
+      // With the skinned PBR material that exceeds the vertex uniform-block limit (14) -> the shader fails and the player is invisible.
+      // Clamp it on this material instance (every later write goes through the real setter, capped at 4 like the rest of the village).
+      if (_forgeSingleGlb && mat.maxSimultaneousLights !== undefined && !mat._forgeLightCap) {
+        let _proto = Object.getPrototypeOf(mat), _desc = null;
+        while (_proto && !(_desc = Object.getOwnPropertyDescriptor(_proto, 'maxSimultaneousLights'))) _proto = Object.getPrototypeOf(_proto);
+        if (_desc && _desc.set) {
+          Object.defineProperty(mat, 'maxSimultaneousLights', { configurable: true,
+            get() { return _desc.get.call(this); }, set(v) { _desc.set.call(this, Math.min(v, 4)); } });
+        }
+        mat.maxSimultaneousLights = 4; mat._forgeLightCap = true; mat.backFaceCulling = false;
+      }
       if (mat.getClassName && mat.getClassName() === 'PBRMaterial') {
         mat.emissiveColor = new BABYLON.Color3(0,0,0); mat.emissiveIntensity = 0;
         if (!mat.albedoTexture) {
@@ -18486,10 +18531,29 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, activeCharacte
       }
     }
   });
-  r.transformNodes.forEach(tn => { if(tn!==playerRoot)tn.parent=playerRoot; if(tn.rotationQuaternion)tn.rotationQuaternion=null; });
+  r.transformNodes.forEach(tn => {
+    if (_forgeSingleGlb) {
+      // Forge rig: only re-parent top-level nodes and keep each bone's rest quaternion. Clearing it zeroes the rest pose
+      // of any bone a clip doesn't key (the exporter drops constant channels), which twists the idle pose.
+      if (!tn.parent) tn.parent = playerRoot;
+      return;
+    }
+    if(tn!==playerRoot)tn.parent=playerRoot; if(tn.rotationQuaternion)tn.rotationQuaternion=null; });
   charMesh = playerRoot;
   charMesh._footOffset = undefined;
-  if (r.animationGroups.length > 0) { animGroups[0]=r.animationGroups[0]; const _ta0=animGroups[0].targetedAnimations;for(let _j=_ta0.length-1;_j>=0;_j--){if(_ta0[_j].animation.targetProperty==='position'&&_ta0[_j].target&&_ta0[_j].target.name==='mixamorig_Hips')_ta0.splice(_j,1);} animState=0; animGroups[0].play(true); }
+  if (_forgeSingleGlb) {
+    // idle=0 walk=1 run=2 flip_kick=3 jump=4 (same slots as the starter bundle); hips position stripped like the master
+    const _slot = { idle: 0, walk: 1, run: 2, flip_kick: 3, jump: 4 };
+    r.animationGroups.forEach(g => {
+      g.stop();
+      const _ta = g.targetedAnimations;
+      for (let _j = _ta.length - 1; _j >= 0; _j--) { if (_ta[_j].animation.targetProperty === 'position' && _ta[_j].target && _ta[_j].target.name === 'mixamorig_Hips') _ta.splice(_j, 1); }
+      if (_slot[g.name] !== undefined) animGroups[_slot[g.name]] = g;
+    });
+    window.forgeRigBundleInfo = { bundleId: activeCharacter.bundleId, file: _forgeSingleGlb, scale: _ps, groups: r.animationGroups.map(g => g.name) };
+    console.log('Forge Rigger bundle loaded as playable:', window.forgeRigBundleInfo);
+    if (animGroups[0]) { animState = 0; animGroups[0].play(true); }
+  } else if (r.animationGroups.length > 0) { animGroups[0]=r.animationGroups[0]; const _ta0=animGroups[0].targetedAnimations;for(let _j=_ta0.length-1;_j>=0;_j--){if(_ta0[_j].animation.targetProperty==='position'&&_ta0[_j].target&&_ta0[_j].target.name==='mixamorig_Hips')_ta0.splice(_j,1);} animState=0; animGroups[0].play(true); }
   window.followLight = new BABYLON.PointLight("followLight", new BABYLON.Vector3(9999,-999,9999), scene);
   window.followLight.diffuse = new BABYLON.Color3(1,.82,.5);
   window.followLight.intensity = 0;
