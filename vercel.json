@@ -2,6 +2,12 @@
   "functions": {
     "api/compress-glb.mjs": {
       "maxDuration": 60
+    },
+    "api/forge-generate-fullbody-preview.mjs": {
+      "maxDuration": 300
+    },
+    "api/forge-generate-production-reference.mjs": {
+      "maxDuration": 300
     }
   }
 }

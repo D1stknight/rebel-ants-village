@@ -83,7 +83,8 @@ function buildMeshyRequest({ imageUrl, requestedOptions }) {
     enable_pbr: options.enable_pbr !== false,
     should_remesh: options.should_remesh !== false,
     topology: options.topology || 'quad',
-    target_polycount: Number(options.target_polycount || 30000),
+    // 30k flattened armor relief into the normal map; ~90k keeps silhouette detail while staying village-friendly
+    target_polycount: Number(options.target_polycount || process.env.FORGE_MESHY_POLYCOUNT || 90000),
     pose_mode: options.pose_mode || 'a-pose',
     target_formats: Array.isArray(options.target_formats) && options.target_formats.length
       ? options.target_formats

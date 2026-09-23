@@ -1,44 +1,14 @@
-const RESPONSES_MODEL = 'gpt-5.5';
+import { forgeImageEdit, fetchImageAsDataUrl, FORGE_REFERENCE_URLS, FORGE_IMAGE_MODEL_CHAIN } from './_forge-image.mjs';
+
 const DEFAULT_SIZE = '1024x1536';
 const FORGE_ECONOMY_VERSION = 'v0_testing_free';
 const FORGE_ECONOMY_MODE = 'testing_free';
 const FUTURE_REBEL_POINTS_CURRENCY = 'REBEL_POINTS';
-async function fetchSourceImageAsDataUrl(imageUrl) {
-  const response = await fetch(imageUrl, {
-    headers: {
-      Accept: 'image/png,image/jpeg,image/webp,image/gif'
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error('Could not fetch source image. Status: ' + response.status);
-  }
-
-  const contentType = response.headers.get('content-type') || '';
-
-  if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(contentType)) {
-    throw new Error('Unsupported source image type: ' + (contentType || 'unknown'));
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
-  const base64 = Buffer.from(arrayBuffer).toString('base64');
-
-  return `data:${contentType};base64,${base64}`;
-}
-
-async function fetchBodyReferenceDataUrls() {
-  const bodyReferenceUrls = [
-    'https://raw.githubusercontent.com/D1stknight/rebel-ants-village/dev/assets/forge-references/body/orange-shinobi-layered.png'
-  ];
-
-  const results = [];
-
-  for (const bodyReferenceUrl of bodyReferenceUrls) {
-    const dataUrl = await fetchSourceImageAsDataUrl(bodyReferenceUrl);
-    results.push(dataUrl);
-  }
-
-  return results;
+// Body reference = outfit / lower-body design guide. Default is the armored set (matches the main playable character).
+function pickBodyReferenceKey(generationInput) {
+  const requested = generationInput?.bodyReference;
+  if (requested && FORGE_REFERENCE_URLS.body[requested]) return requested;
+  return 'armored';
 }
 
 function buildForgeEconomyPlan(generationInput) {
@@ -115,7 +85,7 @@ Variant intent: CLEAN STATIC 3D SOURCE MODEL.
 - Do not crop the body.
 - Keep the full body visible from head to feet.
 - Use cleaner, more realistic playable-character proportions, closer to the main Rebel playable character.
-- Keep clothing simple enough for future rigging.
+- Keep clothing riggable (no capes or loose cloth hanging over joints), but keep the full armor and costume detail.
 - Avoid cloth crossing over hands, feet, knees, elbows, or shoulders.
 - Keep the background simple and neutral.
 - Prioritize clean riggable geometry, readable limbs, clean shoulders, clean elbows, clean knees, clean hands, and clean feet over cinematic style.
@@ -143,11 +113,12 @@ function buildFullBodyPreviewPrompt(generationInput) {
   return `
 You will receive multiple reference images.
 
-Reference priority:
+Reference images (in order):
 - Image 1 is the PRIMARY identity reference. It is the actual Rebel Ant NFT and must control the character identity.
-- Any images after Image 1 are BODY-ONLY style references. Use them only to guide the missing lower body, outfit continuation, wraps, shin guards, footwear, sash structure, silhouette, and ninja-warrior body design.
-- Do not copy the face, eyes, mouth, head, antennae, headwear, or upper-body identity from the body reference images.
-- If there is any conflict between the references, Image 1 always wins.
+- Image 2 is a BODY-ONLY outfit reference. Use it only to guide the missing lower body and outfit build: layered armor plates, sash, wraps, arm guards, shin guards, footwear, silhouette and level of costume detail.
+- Image 3 is a PROPORTIONS-ONLY reference: a grey clay render of the main playable Rebel character. Match its body proportions (head size relative to body, torso length, leg length, shoulder width, hand and foot size). Do not copy its face, mask, outfit, colors or props.
+- Do not copy the face, eyes, mouth, head, antennae, headwear, or upper-body identity from Image 2 or Image 3.
+- If there is any conflict about identity, Image 1 always wins. If there is any conflict about body proportions, Image 3 wins.
 
 Create a clean full-body Rebel Ant character reference image based on Image 1.
 The source NFT may be chest-up only, so you must extend the character downward into a full-body result.
@@ -157,10 +128,10 @@ ${variantIntentRules ? `${variantIntentRules}\n\n` : ''}NON-NEGOTIABLE IDENTITY 
 - Do not improve, beautify, humanize, mature, simplify, or reinterpret the face.
 - Do not make the mouth calmer, angrier, larger, smaller, straighter, or more detailed than the source.
 - Do not change the eye shapes, eye colors, eyepatch/eye covering, grid pattern, visor shape, or visible facial proportions.
-- Do not change the head silhouette or antenna placement.
+- Do not change the head silhouette or antenna placement. You MAY scale the whole head uniformly so the full body matches Image 3 proportions — change its size, never its design.
 - Do not change the visible upper-body colors or garment layout.
 - Treat Image 1 like a locked character sheet for the upper half.
-- Think of the task as: keep the original top half, then invent only the missing lower half.
+- Think of the task as: keep the original head and upper outfit design, then build a full hero-proportioned body under it.
 
 Face and upper-body preservation checklist:
 - Same head shape as Image 1.
@@ -173,12 +144,25 @@ Face and upper-body preservation checklist:
 - Same stylized cartoon ant linework as Image 1.
 - Same level of cartoon stylization as Image 1. Do not push the face toward realism.
 
+Proportions (match Image 3):
+- The head (without antennae) is about one quarter of the character's height. Do not keep the oversized chest-up NFT head scale.
+- Legs are long: from crotch to floor is about 40-45% of the height (without antennae).
+- Shoulders are no wider than about 1.1 head widths each side of the neck; slim, athletic torso.
+- Hands and boots are readable and proportionate, not oversized.
+
+Materials and rendering (this image will be turned into a 3D model):
+- Render all cloth, robes, wraps, headwear and bandanas as MATTE fabric. No glossy, chrome, metallic or wet highlights on cloth, even when it is gold or yellow.
+- Only real armor plates or blades may look like metal, and even then keep highlights soft.
+- Soft, even studio lighting. No dramatic rim light, no strong cast shadows, no painted specular highlights.
+- Rich but not neon colors, with painted shading and clean dark line-work like Rebel Ants art.
+
 Allowed creative area:
 - Creative invention should happen mainly below the chest.
 - Complete the torso, waist, legs, boots, wraps, lower robe, belt/sash, shin guards, and lower-body silhouette.
 - You may slightly extend the existing upper outfit downward, but do not redesign the upper identity.
 
 Body-reference rules:
+- Match the costume detail level of Image 2: layered armor pieces, straps, plated tassets, arm guards, shin guards. Avoid a plain gi or plain robe.
 - Use the body reference images only to improve the lower-body structure and ninja-warrior styling.
 - Borrow body language from those references: waist sash structure, robe continuation, layered shinobi / samurai lower-body design, wrapped lower legs, shin guards, footwear, and stronger warrior silhouette.
 - Do not borrow their face, head, colors, expression, eyes, mouth, antennae, or upper-body identity.
@@ -256,67 +240,20 @@ export default async function handler(req, res) {
     }
 
         const prompt = buildFullBodyPreviewPrompt(generationInput);
-    const sourceImageDataUrl = await fetchSourceImageAsDataUrl(generationInput.sourceImage);
-    const bodyReferenceDataUrls = await fetchBodyReferenceDataUrls();
+    const bodyReferenceKey = pickBodyReferenceKey(generationInput);
+    const [sourceImageDataUrl, bodyReferenceDataUrl, proportionsReferenceDataUrl] = await Promise.all([
+      fetchImageAsDataUrl(generationInput.sourceImage),
+      fetchImageAsDataUrl(FORGE_REFERENCE_URLS.body[bodyReferenceKey]),
+      fetchImageAsDataUrl(FORGE_REFERENCE_URLS.proportions)
+    ]);
     const economyPlan = buildForgeEconomyPlan(generationInput);
 
-    const openaiResponse = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: RESPONSES_MODEL,
-        input: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'input_text',
-                text: prompt
-              },
-              {
-                type: 'input_image',
-                image_url: sourceImageDataUrl
-              },
-              ...bodyReferenceDataUrls.map(imageUrl => ({
-                type: 'input_image',
-                image_url: imageUrl
-              }))
-            ]
-          }
-        ],
-        tools: [
-          {
-            type: 'image_generation',
-            action: 'edit',
-            size: DEFAULT_SIZE
-          }
-        ]
-      })
+    const { imageBase64, imageModel, attempts } = await forgeImageEdit({
+      apiKey,
+      prompt,
+      images: [sourceImageDataUrl, bodyReferenceDataUrl, proportionsReferenceDataUrl],
+      size: DEFAULT_SIZE
     });
-
-    const openaiData = await openaiResponse.json();
-
-    if (!openaiResponse.ok) {
-      console.error('OpenAI fullbody preview error:', openaiData);
-
-      throw new Error(
-        openaiData?.error?.message ||
-        ('OpenAI response request failed. Status: ' + openaiResponse.status)
-      );
-    }
-
-    const imageGenerationCall = (openaiData.output || []).find(
-      item => item.type === 'image_generation_call' && item.result
-    );
-
-    const imageBase64 = imageGenerationCall?.result || null;
-
-    if (!imageBase64) {
-      throw new Error('OpenAI did not return image data');
-    }
 
        const previewPlan = {
       previewVersion: 'v1',
@@ -335,6 +272,9 @@ export default async function handler(req, res) {
       weaponFamily: generationInput.weaponProfile?.family || null,
       economyPlan,
       size: DEFAULT_SIZE,
+      imageModel,
+      imageModelAttempts: attempts,
+      bodyReference: bodyReferenceKey,
       nextStep: 'fullbody_preview_generated'
     };
 

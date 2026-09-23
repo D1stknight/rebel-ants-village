@@ -1,4 +1,5 @@
-const RESPONSES_MODEL = 'gpt-5.5';
+import { forgeImageEdit, fetchImageAsDataUrl, FORGE_REFERENCE_URLS } from './_forge-image.mjs';
+
 const DEFAULT_SIZE = '1024x1536';
 
 async function fetchImageUrlAsDataUrl(imageUrl) {
@@ -44,9 +45,10 @@ function buildProductionReferencePrompt({ generationInput, selectedConcept }) {
   const bodyType = selectedConcept?.bodyType || generationInput?.bodyType || 'universal_ant_v1';
 
   return `
-You will receive one reference image.
+You will receive two reference images.
 
 Image 1 is the selected full-body Rebel Ant concept chosen by the user.
+Image 2 is a PROPORTIONS-ONLY reference: a grey clay render of the main playable Rebel character. Use it only for body proportions. Do not copy its face, mask, outfit, colors or props.
 Create a cleaner 3D production reference from that selected concept.
 
 Goal:
@@ -73,7 +75,18 @@ Production reference rules:
 - Reduce cinematic lighting, heavy shadows, motion, smoke, dramatic perspective, and background clutter.
 - Keep the silhouette clean and readable.
 - Keep outfit layers, sash, wraps, armor accents, robe structure, shin guards, and boots clear.
-- Keep the art high quality, but make the pose and design cleaner for later 3D conversion.
+- Keep the art high quality. Clean up the pose only — do NOT simplify the outfit. Keep every armor plate, strap, wrap, guard and trim from Image 1.
+
+Proportions (match Image 2):
+- Head (without antennae) about one quarter of the height; you may scale the head uniformly, never change its design.
+- Legs from crotch to floor about 40-45% of the height; slim athletic torso; shoulders not wider than Image 2.
+- Hands and boots proportionate and clearly readable.
+
+Materials and lighting (this image goes straight into image-to-3D):
+- All cloth, robes, wraps, headwear and bandanas are MATTE fabric. No glossy, chrome, metallic or wet-looking highlights on cloth, even gold or yellow cloth.
+- Only real armor plates or blades may read as metal, with soft highlights.
+- Flat, even, shadowless studio lighting. No rim light, no cast shadows, no painted specular highlights, no ambient occlusion baked into the colors beyond gentle shading.
+- Rich but not neon colors, clean dark line-work, same art style as Image 1.
 
 Weapon rules:
 - Do not attach weapons to the body.
@@ -153,59 +166,14 @@ export default async function handler(req, res) {
 
     const prompt = buildProductionReferencePrompt({ generationInput, selectedConcept });
 
-    const openaiResponse = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: RESPONSES_MODEL,
-        input: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'input_text',
-                text: prompt
-              },
-              {
-                type: 'input_image',
-                image_url: selectedConceptImage
-              }
-            ]
-          }
-        ],
-        tools: [
-          {
-            type: 'image_generation',
-            action: 'edit',
-            size: DEFAULT_SIZE
-          }
-        ]
-      })
+    const proportionsReferenceDataUrl = await fetchImageAsDataUrl(FORGE_REFERENCE_URLS.proportions);
+
+    const { imageBase64, imageModel, attempts } = await forgeImageEdit({
+      apiKey,
+      prompt,
+      images: [selectedConceptImage, proportionsReferenceDataUrl],
+      size: DEFAULT_SIZE
     });
-
-    const openaiData = await openaiResponse.json();
-
-    if (!openaiResponse.ok) {
-      console.error('OpenAI production reference error:', openaiData);
-
-      throw new Error(
-        openaiData?.error?.message ||
-        ('OpenAI response request failed. Status: ' + openaiResponse.status)
-      );
-    }
-
-    const imageGenerationCall = (openaiData.output || []).find(
-      item => item.type === 'image_generation_call' && item.result
-    );
-
-    const imageBase64 = imageGenerationCall?.result || null;
-
-    if (!imageBase64) {
-      throw new Error('OpenAI did not return production reference image data');
-    }
 
     const productionPlan = {
       productionReferenceVersion: 'v1',
@@ -220,6 +188,8 @@ export default async function handler(req, res) {
       weaponHandling: 'no_weapon_attached_generate_separately_later',
       sourceImageType: selectedConceptImageUrl ? 'blob_url' : 'data_url',
       size: DEFAULT_SIZE,
+      imageModel,
+      imageModelAttempts: attempts,
       nextStep: 'save_production_reference'
     };
 
