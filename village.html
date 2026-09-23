@@ -15182,15 +15182,15 @@ const CHARACTER_REGISTRY = {
   // as named animation groups (idle, walk, run, jump, flip_kick) retargeted from the master ant.
   forged_rig_469: {
     bundleId: 'forged_rig_469', formType: 'forged', formLabel: 'Forged 3D Form (Sohei #469)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel469_forge_rig_v2_lite.glb', scale: 2.1, animations: []
+    basePath: '/assets/character/forged/', singleGlb: 'rebel469_forge_rig_v2_lite.glb', scale: 1.9, animations: []
   },
   forged_rig_1555: {
     bundleId: 'forged_rig_1555', formType: 'forged', formLabel: 'Forged 3D Form (Wokou #1555)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel1555_forge_rig_v1_lite.glb', scale: 2.1, animations: []
+    basePath: '/assets/character/forged/', singleGlb: 'rebel1555_forge_rig_v1_lite.glb', scale: 1.9, animations: []
   },
   forged_rig_4998: {
     bundleId: 'forged_rig_4998', formType: 'forged', formLabel: 'Forged 3D Form (Shogun #4998)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel4998_forge_rig_v1_lite.glb', scale: 2.1, animations: []
+    basePath: '/assets/character/forged/', singleGlb: 'rebel4998_forge_rig_v1_lite.glb', scale: 1.9, animations: []
   },
 
   // Temporary forged-path test bundle.
@@ -18499,7 +18499,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGl
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
   playerRoot.position = new BABYLON.Vector3(0, 0.25, 20);
   playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
-  const _ps = _forgeSingleGlb ? (activeCharacter.playerScale || 2.1) : 0.018;
+  const _ps = _forgeSingleGlb ? (parseFloat(new URLSearchParams(window.location.search).get('rigScale')) || activeCharacter.playerScale || 1.9) : 0.018;
   playerRoot.scaling = new BABYLON.Vector3(_ps, _ps, _ps);
   r.meshes.forEach(m => {
    if (m !== playerRoot) {
