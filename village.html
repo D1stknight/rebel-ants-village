@@ -15720,7 +15720,8 @@ function groundPlayableVisualToTerrain(terrainY) {
   const bounds = getVisiblePlayableBounds(rootForBounds) || getVisiblePlayableBounds(charMesh);
   if (!bounds) return;
 
-  const starterGroundOffset = !window.activeCharacter?.activeGlbUrl
+  // The -1.65 courtyard offset compensates the starter ant's bounding box; Forge Rigger bundles have true bounds.
+  const starterGroundOffset = !window.activeCharacter?.activeGlbUrl && !window.activeCharacter?.singleGlb
     ? getStarterPlayerGroundOffsetAt(charMesh.position.x, charMesh.position.z)
     : 0;
   const targetFootY = terrainY + VILLAGE_PLAYER_GROUND_CLEARANCE + starterGroundOffset;
