@@ -1,14 +1,15 @@
-import { forgeImageEdit, fetchImageAsDataUrl, FORGE_REFERENCE_URLS, FORGE_IMAGE_MODEL_CHAIN } from './_forge-image.mjs';
+import { forgeImageEdit, fetchImageAsDataUrl, FORGE_REFERENCE_URLS } from './_forge-image.mjs';
+import { buildOutfitDesignBlock } from './_forge-outfits.mjs';
 
 const DEFAULT_SIZE = '1024x1536';
 const FORGE_ECONOMY_VERSION = 'v0_testing_free';
 const FORGE_ECONOMY_MODE = 'testing_free';
 const FUTURE_REBEL_POINTS_CURRENCY = 'REBEL_POINTS';
-// Body reference = outfit / lower-body design guide. Default is the armored set (matches the main playable character).
+// Optional outfit image reference. OFF by default: a fixed outfit image makes every Rebel wear the same costume.
+// Outfit now comes from the colony brief + NFT palette + token-seeded variation (see _forge-outfits.mjs).
 function pickBodyReferenceKey(generationInput) {
   const requested = generationInput?.bodyReference;
-  if (requested && FORGE_REFERENCE_URLS.body[requested]) return requested;
-  return 'armored';
+  return requested && FORGE_REFERENCE_URLS.body[requested] ? requested : null;
 }
 
 function buildForgeEconomyPlan(generationInput) {
@@ -94,7 +95,8 @@ Variant intent: CLEAN STATIC 3D SOURCE MODEL.
   return '';
 }
 
-function buildFullBodyPreviewPrompt(generationInput) {
+function buildFullBodyPreviewPrompt(generationInput, { hasBodyRef = false, outfitBlock = '' } = {}) {
+  const PROP = hasBodyRef ? 'Image 3' : 'Image 2';
   const colony = generationInput.colony || 'Rebel Ant';
   const colonyStyle = generationInput.colonyProfile?.baseStyle || 'warrior';
   const weaponName = generationInput.traitSlots?.weapon || 'none';
@@ -114,11 +116,9 @@ function buildFullBodyPreviewPrompt(generationInput) {
 You will receive multiple reference images.
 
 Reference images (in order):
-- Image 1 is the PRIMARY identity reference. It is the actual Rebel Ant NFT and must control the character identity.
-- Image 2 is a BODY-ONLY outfit reference. Use it only to guide the missing lower body and outfit build: layered armor plates, sash, wraps, arm guards, shin guards, footwear, silhouette and level of costume detail.
-- Image 3 is a PROPORTIONS-ONLY reference: a grey clay render of the main playable Rebel character. Match its body proportions (head size relative to body, torso length, leg length, shoulder width, hand and foot size). Do not copy its face, mask, outfit, colors or props.
-- Do not copy the face, eyes, mouth, head, antennae, headwear, or upper-body identity from Image 2 or Image 3.
-- If there is any conflict about identity, Image 1 always wins. If there is any conflict about body proportions, Image 3 wins.
+- Image 1 is the PRIMARY identity reference. It is the actual Rebel Ant NFT and must control the character identity AND the outfit palette.
+${hasBodyRef ? '- Image 2 is an optional costume-detail reference. Borrow only its level of detail and construction, never its design, colours or silhouette.\n' : ''}- ${PROP} is a PROPORTIONS-ONLY reference: a grey clay render of the main playable Rebel character. Match its body proportions (head size relative to body, torso length, leg length, shoulder width, hand and foot size). Do not copy its face, mask, outfit, armour, colours or props.
+- If there is any conflict about identity or colours, Image 1 always wins. If there is any conflict about body proportions, ${PROP} wins.
 
 Create a clean full-body Rebel Ant character reference image based on Image 1.
 The source NFT may be chest-up only, so you must extend the character downward into a full-body result.
@@ -128,7 +128,7 @@ ${variantIntentRules ? `${variantIntentRules}\n\n` : ''}NON-NEGOTIABLE IDENTITY 
 - Do not improve, beautify, humanize, mature, simplify, or reinterpret the face.
 - Do not make the mouth calmer, angrier, larger, smaller, straighter, or more detailed than the source.
 - Do not change the eye shapes, eye colors, eyepatch/eye covering, grid pattern, visor shape, or visible facial proportions.
-- Do not change the head silhouette or antenna placement. You MAY scale the whole head uniformly so the full body matches Image 3 proportions — change its size, never its design.
+- Do not change the head silhouette or antenna placement. You MAY scale the whole head uniformly so the full body matches ${PROP} proportions — change its size, never its design.
 - Do not change the visible upper-body colors or garment layout.
 - Treat Image 1 like a locked character sheet for the upper half.
 - Think of the task as: keep the original head and upper outfit design, then build a full hero-proportioned body under it.
@@ -144,7 +144,7 @@ Face and upper-body preservation checklist:
 - Same stylized cartoon ant linework as Image 1.
 - Same level of cartoon stylization as Image 1. Do not push the face toward realism.
 
-Proportions (match Image 3):
+Proportions (match ${PROP}):
 - The head (without antennae) is about one quarter of the character's height. Do not keep the oversized chest-up NFT head scale.
 - Legs are long: from crotch to floor is about 40-45% of the height (without antennae).
 - Shoulders are no wider than about 1.1 head widths each side of the neck; slim, athletic torso.
@@ -161,11 +161,7 @@ Allowed creative area:
 - Complete the torso, waist, legs, boots, wraps, lower robe, belt/sash, shin guards, and lower-body silhouette.
 - You may slightly extend the existing upper outfit downward, but do not redesign the upper identity.
 
-Body-reference rules:
-- Match the costume detail level of Image 2: layered armor pieces, straps, plated tassets, arm guards, shin guards. Avoid a plain gi or plain robe.
-- Use the body reference images only to improve the lower-body structure and ninja-warrior styling.
-- Borrow body language from those references: waist sash structure, robe continuation, layered shinobi / samurai lower-body design, wrapped lower legs, shin guards, footwear, and stronger warrior silhouette.
-- Do not borrow their face, head, colors, expression, eyes, mouth, antennae, or upper-body identity.
+${outfitBlock}
 
 Important requirements:
 - Output must be a full-body character from head to feet.
@@ -174,8 +170,7 @@ Important requirements:
 - Show a strong, game-ready character silhouette.
 - Use a clean neutral front-facing or slightly heroic pose that makes the body easy to understand for later 3D conversion.
 - The final image should be a polished full-body character concept suitable as the next step before 3D generation.
-- Keep the visual tone consistent with Rebel Ants: stylized warrior ant, Japanese-inspired, ninja-warrior, heroic, sharp, detailed, high-quality concept art.
-- The completed lower body should feel more like a stealthy ninja warrior / Japanese fighter than a plain robe character.
+- Keep the visual tone consistent with Rebel Ants: stylized warrior ant, Japanese-inspired, heroic, sharp, detailed, high-quality concept art. The colony decides the costume type.
 - Prefer a simple clean backdrop or subtle neutral studio-style background so the character remains the focus.
 
 Character identity details:
@@ -199,7 +194,7 @@ Character identity details:
 Generation rules:
 - If the source image is chest-up, continue the visible upper-body design downward into a believable full-body design.
 - Preserve the upper body styling and colors, then complete the torso, waist, legs, feet, and outfit continuation.
-- Use the body reference images to improve the lower-body structure and ninja-warrior styling.
+- Follow the OUTFIT DESIGN section for everything below the chest.
 - Keep the weapon visible only if it already feels naturally connected to the source identity.
 - Do not let a weapon cover the face, eyes, mouth, torso details, or body silhouette.
 - Maintain the character’s outfit logic and faction identity.
@@ -239,19 +234,20 @@ export default async function handler(req, res) {
       });
     }
 
-        const prompt = buildFullBodyPreviewPrompt(generationInput);
     const bodyReferenceKey = pickBodyReferenceKey(generationInput);
-    const [sourceImageDataUrl, bodyReferenceDataUrl, proportionsReferenceDataUrl] = await Promise.all([
+    const outfit = buildOutfitDesignBlock(generationInput);
+    const prompt = buildFullBodyPreviewPrompt(generationInput, { hasBodyRef: !!bodyReferenceKey, outfitBlock: outfit.text });
+    const [sourceImageDataUrl, proportionsReferenceDataUrl, bodyReferenceDataUrl] = await Promise.all([
       fetchImageAsDataUrl(generationInput.sourceImage),
-      fetchImageAsDataUrl(FORGE_REFERENCE_URLS.body[bodyReferenceKey]),
-      fetchImageAsDataUrl(FORGE_REFERENCE_URLS.proportions)
+      fetchImageAsDataUrl(FORGE_REFERENCE_URLS.proportions),
+      bodyReferenceKey ? fetchImageAsDataUrl(FORGE_REFERENCE_URLS.body[bodyReferenceKey]) : Promise.resolve(null)
     ]);
     const economyPlan = buildForgeEconomyPlan(generationInput);
 
     const { imageBase64, imageModel, attempts } = await forgeImageEdit({
       apiKey,
       prompt,
-      images: [sourceImageDataUrl, bodyReferenceDataUrl, proportionsReferenceDataUrl],
+      images: bodyReferenceDataUrl ? [sourceImageDataUrl, bodyReferenceDataUrl, proportionsReferenceDataUrl] : [sourceImageDataUrl, proportionsReferenceDataUrl],
       size: DEFAULT_SIZE
     });
 
@@ -275,6 +271,8 @@ export default async function handler(req, res) {
       imageModel,
       imageModelAttempts: attempts,
       bodyReference: bodyReferenceKey,
+      outfitColony: outfit.colony,
+      outfitVariation: outfit.variation,
       nextStep: 'fullbody_preview_generated'
     };
 
