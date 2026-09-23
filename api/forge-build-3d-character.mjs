@@ -92,7 +92,8 @@ function build3dRequestPayload(payload) {
     sourceImage: {
       imageStorage: productionReference.imageStorage || selectedConcept.imageStorage || 'vercel_blob',
       imageUrl,
-      imageBlobPath
+      imageBlobPath,
+      backImageUrl: productionReference.backImageUrl || selectedConcept.backImageUrl || null
     },
     targetOutput: 'game_ready_3d_character_glb_later',
     productionRules: {

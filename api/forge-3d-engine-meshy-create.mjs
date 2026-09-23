@@ -1,4 +1,6 @@
 const MESHY_CREATE_URL = 'https://api.meshy.ai/openapi/v1/image-to-3d';
+// Front + back views -> Meshy multi-image-to-3d (no guessed back of the head)
+const MESHY_MULTI_CREATE_URL = 'https://api.meshy.ai/openapi/v1/multi-image-to-3d';
 const MESHY_ENGINE_VERSION = 'meshy_v1_create';
 
 function getRedisConfig() {
@@ -64,20 +66,28 @@ function readMeshyCreatePayload(payload) {
     throw new Error('Missing production reference imageUrl');
   }
 
+  const backImageUrl =
+    body.backImageUrl ||
+    productionReference.backImageUrl ||
+    buildRequest.sourceImage?.backImageUrl ||
+    null;
+
   return {
     buildId,
     imageUrl,
+    backImageUrl,
     productionReference,
     generationInput,
     requestedOptions: body.options || {}
   };
 }
 
-function buildMeshyRequest({ imageUrl, requestedOptions }) {
+function buildMeshyRequest({ imageUrl, backImageUrl, requestedOptions }) {
   const options = requestedOptions || {};
+  const views = backImageUrl ? { image_urls: [imageUrl, backImageUrl] } : { image_url: imageUrl };
 
   return {
-    image_url: imageUrl,
+    ...views,
     ai_model: options.ai_model || 'meshy-6',
     should_texture: options.should_texture !== false,
     enable_pbr: options.enable_pbr !== false,
@@ -92,7 +102,7 @@ function buildMeshyRequest({ imageUrl, requestedOptions }) {
   };
 }
 
-async function updateBuildWithMeshyTask({ buildId, meshyTaskId, meshyRequest, meshyResponse }) {
+async function updateBuildWithMeshyTask({ buildId, meshyTaskId, meshyRequest, meshyResponse, meshyEndpoint = 'image-to-3d' }) {
   if (!isRedisConfigured()) {
     return {
       saved: false,
@@ -132,6 +142,7 @@ async function updateBuildWithMeshyTask({ buildId, meshyTaskId, meshyRequest, me
       provider: 'meshy',
       engineVersion: MESHY_ENGINE_VERSION,
       taskId: meshyTaskId,
+      endpoint: meshyEndpoint,
       status: 'submitted',
       request: meshyRequest,
       response: meshyResponse
@@ -170,7 +181,8 @@ export default async function handler(req, res) {
     const createPayload = readMeshyCreatePayload(req.body || {});
     const meshyRequest = buildMeshyRequest(createPayload);
 
-    const meshyResponse = await fetch(MESHY_CREATE_URL, {
+    const meshyEndpoint = meshyRequest.image_urls ? 'multi-image-to-3d' : 'image-to-3d';
+    const meshyResponse = await fetch(meshyRequest.image_urls ? MESHY_MULTI_CREATE_URL : MESHY_CREATE_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -196,7 +208,8 @@ export default async function handler(req, res) {
       buildId: createPayload.buildId,
       meshyTaskId,
       meshyRequest,
-      meshyResponse: meshyData
+      meshyResponse: meshyData,
+      meshyEndpoint
     });
 
     return res.status(200).json({

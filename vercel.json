@@ -8,6 +8,9 @@
     },
     "api/forge-generate-production-reference.mjs": {
       "maxDuration": 300
+    },
+    "api/forge-generate-back-reference.mjs": {
+      "maxDuration": 300
     }
   }
 }

@@ -176,7 +176,11 @@ export default async function handler(req, res) {
       });
     }
 
-    const meshyResponse = await fetch(`${MESHY_TASK_URL_BASE}/${encodeURIComponent(meshyTaskId)}`, {
+    // multi-image builds live under a different Meshy endpoint
+    const taskBase = buildRecord?.engine?.endpoint === 'multi-image-to-3d'
+      ? 'https://api.meshy.ai/openapi/v1/multi-image-to-3d'
+      : MESHY_TASK_URL_BASE;
+    const meshyResponse = await fetch(`${taskBase}/${encodeURIComponent(meshyTaskId)}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${apiKey}`,

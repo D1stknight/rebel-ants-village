@@ -18543,12 +18543,12 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGl
   charMesh = playerRoot;
   charMesh._footOffset = undefined;
   if (_forgeSingleGlb) {
-    // idle=0 walk=1 run=2 flip_kick=3 jump=4 (same slots as the starter bundle); hips position stripped like the master
+    // idle=0 walk=1 run=2 flip_kick=3 jump=4 (same slots as the starter bundle).
+    // The Forge Rigger already removes horizontal travel, so the hips position track is KEPT: it carries the vertical
+    // motion (crouch, take-off, landing, walk bob). Stripping it, as the starter bundle does, glued jumps to the floor.
     const _slot = { idle: 0, walk: 1, run: 2, flip_kick: 3, jump: 4 };
     r.animationGroups.forEach(g => {
       g.stop();
-      const _ta = g.targetedAnimations;
-      for (let _j = _ta.length - 1; _j >= 0; _j--) { if (_ta[_j].animation.targetProperty === 'position' && _ta[_j].target && _ta[_j].target.name === 'mixamorig_Hips') _ta.splice(_j, 1); }
       if (_slot[g.name] !== undefined) animGroups[_slot[g.name]] = g;
     });
     window.forgeRigBundleInfo = { bundleId: activeCharacter.bundleId, file: _forgeSingleGlb, scale: _ps, groups: r.animationGroups.map(g => g.name) };

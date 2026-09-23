@@ -739,6 +739,34 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
 
     try {
+      // Back view for Meshy multi-image-to-3d (stops Meshy guessing faces/visors onto the back of the head)
+      if (!concept.backImageUrl && window.FORGE_BACK_VIEW !== false) {
+        try {
+          if (typeof window.setForgeStatusHtml === 'function') {
+            window.setForgeStatusHtml('<span class="forge-loading-pulse">Drawing the back view for the 3D build...</span>', '');
+          }
+          const backResponse = await fetch('/api/forge-generate-back-reference', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ generationInput: window.forgeGenerationInput, productionImageUrl: concept.imageUrl })
+          });
+          const backData = await backResponse.json();
+          if (!backResponse.ok || !backData.ok) throw new Error(backData.detail || backData.error || 'Back view failed');
+          if (typeof uploadForgeConceptImageToServer === 'function') {
+            const backId = `${concept.id || concept.conceptId}_back`;
+            const uploaded = await uploadForgeConceptImageToServer({
+              id: backId, conceptId: backId,
+              rebelId: concept.rebelId, tokenId: concept.tokenId, collectionKey: concept.collectionKey,
+              imageDataUrl: backData.backImage.dataUrl
+            });
+            if (uploaded && uploaded.imageUrl) concept.backImageUrl = uploaded.imageUrl;
+          }
+          window.lastForgeBackReferenceResponse = { backPlan: backData.backPlan, backImageUrl: concept.backImageUrl || null };
+        } catch (backErr) {
+          console.warn('Forge back view skipped (single-image Meshy build):', backErr);
+        }
+      }
+
       const response = await fetch('/api/forge-build-3d-character', {
         method: 'POST',
         headers: {
