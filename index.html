@@ -421,59 +421,43 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 #admin-login-status.success{
   color:#7cffb2;
 }
-.ant-card-marquee {
+/* Card label: token number always visible (bottom-left), status pill (top-right). No scrolling text. */
+.ant-card-num {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 14px;
-  background: rgba(0,0,0,0.78);
-  color: #c8922a;
-  font-size: 8px;
-  line-height: 14px;
-  letter-spacing: 0.8px;
+  left: 4px;
+  bottom: 4px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.72);
+  color: #e8d3a2;
+  font: 600 9px/15px 'Cinzel', serif;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+}
+.ant-card-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font: 700 7px/14px 'Cinzel', serif;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  pointer-events:none;
+  pointer-events: none;
 }
-
-.ant-card:hover .ant-card-marquee,
-.ant-card.selected .ant-card-marquee {
-  opacity: 1;
+.ant-card-badge.ready {
+  background: #5ecfca;
+  color: #07201f;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 8px rgba(94,207,202,0.55);
 }
-
-.ant-card.forge-playable-card.selected .ant-card-marquee {
-  opacity: 0;
+.ant-card-badge.forged {
+  background: rgba(200,146,42,0.92);
+  color: #1c1305;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35);
 }
-
-.ant-card.forge-playable-card:hover .ant-card-marquee {
-  opacity: 1;
-}
-
-.ant-card-marquee.forge-ready {
-  color: #5ecfca;
-}
-
-.ant-card-marquee span {
-  display: inline-block;
-  min-width: max-content;
-  padding-left: 6px;
-  padding-right: 24px;
-  animation: antCardTextScroll 5.5s ease-in-out infinite alternate;
-}
-
-@keyframes antCardTextScroll {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(-55%);
-  }
-}
+.ant-card.is-ready { border-color: rgba(94,207,202,0.55); }
+.ant-card.is-ready.selected { border-color: #5ecfca; box-shadow: 0 0 22px rgba(94,207,202,0.5); }
 </style>
 </head>
 <body>
@@ -997,6 +981,21 @@ async function selectAnt(id) {
   );
 }
 
+// Card status: "ready" = a rigged, playable 3D character (Forge Rigger); "forged" = a Forge 3D model exists but isn't rigged yet.
+// 469 / 1555 / 4998 have hand-rigged village characters (village.html REBEL_CHARACTER_RECORDS).
+const VILLAGE_RIGGED_TOKENS = new Set(['469', '1555', '4998']);
+function getRebelForgeStatus(rebel, hasForgeCharacter) {
+  const afc = rebel.activeForgeCharacter || {};
+  if (afc.forgeRigGlbUrl || afc.characterBundle?.forgeRigGlbUrl || VILLAGE_RIGGED_TOKENS.has(String(rebel.tokenId || ''))) return 'ready';
+  if (hasForgeCharacter || rebel.playableType === 'forge_build') return 'forged';
+  return '';
+}
+function getRebelCardNumber(rebel) {
+  if (rebel.tokenId) return String(rebel.tokenId);
+  const m = /#\s*(\d+)/.exec(rebel.name || '');
+  return m ? m[1] : '';
+}
+
 function buildCard(rebel) {
   const charRow = document.getElementById('char-row');
   const card = document.createElement('div');
@@ -1005,16 +1004,14 @@ function buildCard(rebel) {
   card.onclick = () => selectAnt(rebel.id);
 
   const hasForgeCharacter = Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
-  const labelText = rebel.playableType === 'forge_build'
-    ? 'Saved Forge Playable ✓'
-    : hasForgeCharacter
-      ? '3D Forge Character Ready ✓'
-      : rebel.name;
+  const status = getRebelForgeStatus(rebel, hasForgeCharacter);
+  const tokenNumber = getRebelCardNumber(rebel);
+  card.title = [rebel.name, status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? '3D character forged' : ''].filter(Boolean).join(' · ');
+  if (status) card.classList.add('is-' + status);
 
   const cardLabel = `
-    <div class="ant-card-marquee ${hasForgeCharacter ? 'forge-ready' : ''}">
-      <span>${labelText}</span>
-    </div>
+    ${tokenNumber ? `<div class="ant-card-num">#${tokenNumber}</div>` : ''}
+    ${status ? `<div class="ant-card-badge ${status}">${status === 'ready' ? 'Ready' : 'Forged'}</div>` : ''}
   `;
 
   const imageHtml = rebel.image
