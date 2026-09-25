@@ -1,0 +1,104 @@
+[
+ {
+  "name": "front_kick",
+  "file": "cmu/135_04.bvh",
+  "t0": 2.35,
+  "t1": 3.95
+ },
+ {
+  "name": "cartwheel",
+  "file": "cmu/49_06.bvh",
+  "t0": 0.9,
+  "t1": 3.4
+ },
+ {
+  "name": "jump",
+  "file": "mixamo/jump.npz",
+  "airborne": true
+ },
+ {
+  "name": "jump_run",
+  "file": "mixamo/jump_run.npz",
+  "airborne": true
+ },
+ {
+  "name": "backflip",
+  "file": "mixamo/backflip.npz",
+  "airborne": true
+ },
+ {
+  "name": "front_flip",
+  "file": "mixamo/front_flip.npz",
+  "airborne": true
+ },
+ {
+  "name": "hurricane_kick",
+  "file": "mixamo/hurricane_kick.npz",
+  "airborne": true
+ },
+ {
+  "name": "roundhouse_kick",
+  "file": "mixamo/roundhouse_kick.npz",
+  "airborne": true
+ },
+ {
+  "name": "side_kick",
+  "file": "mixamo/side_kick.npz",
+  "airborne": true
+ },
+ {
+  "name": "spin_flip_kick",
+  "file": "mixamo/spin_flip_kick.npz",
+  "airborne": true
+ },
+ {
+  "name": "crescent_kick",
+  "file": "mixamo/crescent_kick.npz",
+  "airborne": true
+ },
+ {
+  "name": "punch_combo",
+  "file": "mixamo/punch_combo.npz",
+  "airborne": true
+ },
+ {
+  "name": "elbow_punch",
+  "file": "mixamo/elbow_punch.npz",
+  "airborne": true
+ },
+ {
+  "name": "cross_punch",
+  "file": "mixamo/cross_punch.npz",
+  "airborne": true
+ },
+ {
+  "name": "jab",
+  "file": "mixamo/jab.npz",
+  "airborne": true
+ },
+ {
+  "name": "hook_punch",
+  "file": "mixamo/hook_punch.npz",
+  "airborne": true
+ },
+ {
+  "name": "fight_idle",
+  "file": "mixamo/fight_idle.npz",
+  "airborne": true
+ },
+ {
+  "name": "hit_reaction",
+  "file": "mixamo/hit_reaction.npz",
+  "airborne": true
+ },
+ {
+  "name": "knockdown",
+  "file": "mixamo/knockdown.npz",
+  "airborne": true
+ },
+ {
+  "name": "get_up",
+  "file": "mixamo/get_up.npz",
+  "airborne": true
+ }
+]

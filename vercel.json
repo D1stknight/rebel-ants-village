@@ -14,6 +14,15 @@
     },
     "api/forge-fix-reference.mjs": {
       "maxDuration": 300
+    },
+    "api/forge-rig-worker.mjs": {
+      "maxDuration": 120
+    },
+    "api/forge-rig-start.mjs": {
+      "maxDuration": 120
+    },
+    "api/forge-rig-status.mjs": {
+      "maxDuration": 120
     }
   }
 }

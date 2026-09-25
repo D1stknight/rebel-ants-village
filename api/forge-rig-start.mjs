@@ -1,0 +1,60 @@
+// Start the automated Forge Rigger for a stored Meshy build: POST {buildId, force?}
+// One rig per build (idempotent). Re-rigging an already rigged build (force) is admin-only.
+import { isAdminRequest } from './_admin-auth.mjs';
+import { Sandbox, creds, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, loadBuild, updateRigging, sourceGlbUrl, sanitize, body } from './_forge-rig.mjs';
+
+const DAILY_LIMIT = parseInt(process.env.FORGE_RIG_DAILY_LIMIT || '200', 10);
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  const { buildId, force } = body(req);
+  if (!buildId) return res.status(400).json({ ok: false, error: 'Missing buildId' });
+  try {
+    const rec = await loadBuild(buildId);
+    const src = sourceGlbUrl(rec);
+    if (!src) return res.status(409).json({ ok: false, error: 'Build has no stored GLB yet (run forge-3d-store-glb first)' });
+    const cur = rec.forgeRig || {};
+    const admin = isAdminRequest(req);
+    if (cur.status === 'running' && !(force && admin)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyRunning: true });
+    if (cur.status === 'succeeded' && !(force && admin)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyDone: true });
+    if (force && !admin) return res.status(401).json({ ok: false, error: 'Re-rigging requires admin' });
+
+    const day = new Date().toISOString().slice(0, 10);
+    const [cnt] = await redis([['INCR', `forge:rig:count:${day}`], ['EXPIRE', `forge:rig:count:${day}`, 172800]]);
+    if (!admin && Number(cnt?.result || 0) > DAILY_LIMIT) return res.status(429).json({ ok: false, error: 'Daily rig limit reached, try again tomorrow' });
+
+    const worker = await getJson(WORKER_KEY);
+    if (!worker?.snapshotId) return res.status(503).json({ ok: false, error: 'Rig worker is not built yet' });
+
+    const name = `rebel${sanitize(rec.tokenId || rec.rebelId, 'x')}`;
+    const sandbox = await Sandbox.create({
+      source: { type: 'snapshot', snapshotId: worker.snapshotId },
+      resources: { vcpus: 2 },
+      timeout: JOB_TIMEOUT_MS,
+      tags: { purpose: 'forge-rig-job', build: String(buildId).slice(0, 200) },
+      ...creds()
+    });
+    const cmd = await sandbox.runCommand({
+      cmd: 'bash',
+      args: ['-c', `mkdir -p ${JOB_DIR} && bash ${FW}/job.sh "$SRC_URL" "$RIG_NAME" ${JOB_DIR}`],
+      env: { SRC_URL: src, RIG_NAME: name },
+      sudo: true,
+      detached: true
+    });
+    const next = await updateRigging(buildId, {
+      engine: 'forge-rigger',
+      status: 'running',
+      progress: 'starting',
+      sandboxName: sandbox.name,
+      cmdId: cmd.cmdId,
+      workerCommit: worker.commit || null,
+      sourceGlbUrl: src,
+      startedAt: new Date().toISOString(),
+      finishedAt: null,
+      error: null
+    });
+    return res.status(200).json({ ok: true, forgeRig: next.forgeRig });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+}

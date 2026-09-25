@@ -3847,6 +3847,81 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }, 8000);
   }
 
+  // ---- Forge Rigger (automated): stored Meshy GLB -> playable village Rebel (24 moves, cloth) ----
+  const FORGE_RIG_STEP_LABELS = {
+    starting: 'Starting', download: 'Downloading model', normalize: 'Preparing mesh', landmarks: 'Finding joints',
+    skeleton: 'Building skeleton', weights: 'Skinning', bind: 'Binding', hands: 'Hands', cloth: 'Cloth springs',
+    animate: 'Base moves', moves: 'Martial-arts moves', cleanup: 'Clean-up', export: 'Exporting', qa: 'Quality check', done: 'Done'
+  };
+  const forgeRigPollers = {};
+
+  function escapeForgeRigText(t) {
+    return String(t || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function renderForgeRigAction(build, rebelGlbUrl) {
+    const fr = build.forgeRig || null;
+    const id = build.buildId;
+    const hasSource = Boolean(rebelGlbUrl || build.output?.rebelGlbUrl);
+    if (!fr) {
+      return hasSource
+        ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.startForgeRigForBuild('${id}')">Make Playable (Forge Rigger)</button>`
+        : '';
+    }
+    if (fr.status === 'running') {
+      if (!forgeRigPollers[id]) setTimeout(() => window.pollForgeRigForBuild(id), 4000);
+      return `<span class="forge-3d-build-badge info" id="forge-rig-state-${id}">Rigging: ${escapeForgeRigText(FORGE_RIG_STEP_LABELS[fr.progress] || fr.progress || 'Starting')}…</span>`;
+    }
+    if (fr.status === 'succeeded') {
+      const url = fr.forgeRigGlbUrl || build.output?.forgeRigGlbUrl;
+      const review = fr.verdict === 'review';
+      const badge = review
+        ? `<span class="forge-3d-build-badge" title="${escapeForgeRigText((fr.qa?.reasons || []).join('; '))}">Rig ✓ (check moves)</span>`
+        : '<span class="forge-3d-build-badge ready">Rig ✓</span>';
+      return `${badge}<a class="forge-3d-build-refresh-btn forge-3d-step-action" href="/village.html?rigUrl=${encodeURIComponent(url)}" target="_blank" rel="noopener">Play in Village</a>`;
+    }
+    return `<span class="forge-3d-build-badge" title="${escapeForgeRigText(fr.error || '')}">Rig failed${fr.failedStep ? ' (' + escapeForgeRigText(FORGE_RIG_STEP_LABELS[fr.failedStep] || fr.failedStep) + ')' : ''}</span>`
+      + (hasSource ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.startForgeRigForBuild('${id}')">Retry Rig</button>` : '');
+  }
+
+  async function startForgeRigForBuild(buildId, force) {
+    try {
+      const r = await fetch('/api/forge-rig-start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ buildId, force: Boolean(force) }) });
+      const data = await r.json();
+      if (!r.ok || !data.ok) throw new Error(data.error || `Rig start failed (${r.status})`);
+      await renderForge3dBuildStatusPanel();
+      window.pollForgeRigForBuild(buildId);
+      return data;
+    } catch (e) {
+      alertForgeRig(e.message || String(e));
+      return null;
+    }
+  }
+
+  async function pollForgeRigForBuild(buildId) {
+    if (forgeRigPollers[buildId]) return;
+    forgeRigPollers[buildId] = true;
+    try {
+      for (let i = 0; i < 240; i++) {
+        const r = await fetch(`/api/forge-rig-status?buildId=${encodeURIComponent(buildId)}`);
+        const data = await r.json().catch(() => ({}));
+        const fr = data.forgeRig || {};
+        const el = document.getElementById(`forge-rig-state-${buildId}`);
+        if (el && fr.status === 'running') el.textContent = `Rigging: ${FORGE_RIG_STEP_LABELS[fr.progress] || fr.progress || 'Starting'}… ${data.percent != null ? data.percent + '%' : ''}`;
+        if (fr.status && fr.status !== 'running') break;
+        await new Promise((res) => setTimeout(res, 5000));
+      }
+    } finally {
+      forgeRigPollers[buildId] = false;
+      renderForge3dBuildStatusPanel();
+    }
+  }
+
+  function alertForgeRig(msg) {
+    console.warn('Forge Rigger:', msg);
+    try { window.alert('Forge Rigger: ' + msg); } catch (e) {}
+  }
+
    async function renderForge3dBuildStatusPanel() {
     ensure3dBuildStatusStyles();
 
@@ -4039,6 +4114,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           `<button class="forge-3d-build-refresh-btn forge-3d-step-action forge-3d-danger-action" type="button" onclick="window.deleteForge3dBuild('${build.buildId}')">Delete Build</button>`;
 
         const activeCharacterGlbUrl = riggedGlbUrl || activeGlbUrl;
+        const forgeRigHtml = renderForgeRigAction(build, rebelGlbUrl);
         const isSavedForLanding = forgeBuildIsSavedForLanding(build);
         const previewBuildHtml = activeCharacterGlbUrl
           ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.previewForge3dBuild('${build.buildId}')">Preview This Build</button>`
@@ -4249,6 +4325,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
               ${stepHtml}
             </div>
             <div class="forge-3d-build-actions">
+              ${forgeRigHtml}
               ${previewBuildHtml}
               ${generateMeshyIdleHtml}
               ${storeMeshyIdleHtml}
@@ -4303,6 +4380,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   window.storeForgeRunningGlbInRebelBlob = storeForgeRunningGlbInRebelBlob;
   window.deleteForge3dBuild = deleteForge3dBuild;
   window.setForgeBuildAsActiveCharacter = setForgeBuildAsActiveCharacter;
+  window.startForgeRigForBuild = startForgeRigForBuild;
+  window.pollForgeRigForBuild = pollForgeRigForBuild;
   window.resyncForgePlayableBuild = resyncForgePlayableBuild;
   window.startMeshyRigTestForBuild = startMeshyRigTestForBuild;
   window.generateMeshyIdleAnimationTestForBuild = generateMeshyIdleAnimationTestForBuild;

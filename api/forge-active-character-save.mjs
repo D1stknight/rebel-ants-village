@@ -61,6 +61,8 @@ function sanitizeActiveCharacterPayload(payload) {
   const collectionKey = body.collectionKey || build.collectionKey || 'battle_for_colony';
 
   const output = build.output || {};
+  // Automated Forge Rigger result (one GLB, all clips + cloth bones); the village prefers it when present.
+  const forgeRigGlbUrl = output.forgeRigGlbUrl || build.forgeRig?.forgeRigGlbUrl || null;
   const storedAnimations = output.storedAnimations || build.rigging?.storedAnimations || {};
   const storedArmatureAnimations =
     output.storedArmatureAnimations ||
@@ -218,6 +220,7 @@ function sanitizeActiveCharacterPayload(payload) {
     activeGlbUrl,
     staticGlbUrl,
     riggedGlbUrl,
+    forgeRigGlbUrl,
     glbBlobPath,
     storedAnimations,
     animations: {
@@ -313,6 +316,7 @@ function sanitizeActiveCharacterPayload(payload) {
     activeGlbUrl,
     staticGlbUrl,
     riggedGlbUrl,
+    forgeRigGlbUrl,
     idleGlbUrl,
     walkingGlbUrl,
     runningGlbUrl,
@@ -369,7 +373,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    const activeCharacter = sanitizeActiveCharacterPayload(req.body || {});
+    const payload = { ...(req.body || {}) };
+    // Pull the stored build record so a rig finished after the page loaded is still picked up.
+    const buildIdForRig = payload.buildId || payload.build?.buildId || payload.buildRecord?.buildId;
+    if (buildIdForRig && isRedisConfigured()) {
+      try {
+        const [rec] = await redisPipeline([['GET', `forge:3d-build:v1:${buildIdForRig}`]]);
+        const stored = rec?.result ? JSON.parse(rec.result) : null;
+        if (stored?.output?.forgeRigGlbUrl) {
+          const build = payload.build || payload.buildRecord || {};
+          payload.build = { ...stored, ...build, output: { ...(stored.output || {}), ...(build.output || {}), forgeRigGlbUrl: stored.output.forgeRigGlbUrl }, forgeRig: stored.forgeRig };
+        }
+      } catch (e) { /* the payload alone still works */ }
+    }
+    const activeCharacter = sanitizeActiveCharacterPayload(payload);
     const storageResult = await saveActiveCharacter(activeCharacter);
 
     return res.status(200).json({

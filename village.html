@@ -15246,13 +15246,29 @@ function getRebelCharacterRecord(rebel) {
   return REBEL_CHARACTER_RECORDS[String(rebel.tokenId)] || null;
 }
 
+// Automated Forge Rigger output: one GLB (all clips + cloth bones) stored in Blob.
+// Order: ?rig= registry override > ?rigUrl= preview > the Rebel's own forged rig > per-token registry record > starter.
+function getForgeRigUrlBundle(rebel) {
+  let url = null;
+  try { url = new URLSearchParams(window.location.search).get('rigUrl'); } catch (e) {}
+  const afc = rebel?.activeForgeCharacter || null;
+  url = url || afc?.forgeRigGlbUrl || afc?.characterBundle?.forgeRigGlbUrl || null;
+  if (!url || !/^https:\/\/[a-z0-9.-]+\.(public\.blob\.vercel-storage\.com|vercel-storage\.com)\//i.test(url)) return null;
+  return {
+    bundleId: 'forged_rig_auto', formType: 'forged', formLabel: 'Forged 3D Form', hasGeneratedModel: true,
+    basePath: '', singleGlb: url, scale: 1.9, animations: []
+  };
+}
+
 function resolveCharacterConfig(rebel) {
   const characterRecord = getRebelCharacterRecord(rebel);
-  const requestedBundleId = getForgeRigOverrideBundleId() || (characterRecord && characterRecord.bundleId
+  const overrideId = getForgeRigOverrideBundleId();
+  const autoBundle = overrideId ? null : getForgeRigUrlBundle(rebel);
+  const requestedBundleId = overrideId || (characterRecord && characterRecord.bundleId
     ? characterRecord.bundleId
     : 'starter_ant');
 
-  const bundle = CHARACTER_REGISTRY[requestedBundleId] || CHARACTER_REGISTRY.starter_ant;
+  const bundle = autoBundle || CHARACTER_REGISTRY[requestedBundleId] || CHARACTER_REGISTRY.starter_ant;
   // A Forge Rigger bundle replaces the older Forge preview/visual-test GLB path entirely.
   const activeForgeCharacter = bundle.singleGlb ? null : (rebel?.activeForgeCharacter || null);
   const characterBundle = activeForgeCharacter?.characterBundle || null;
