@@ -11,6 +11,9 @@
     },
     "api/forge-generate-back-reference.mjs": {
       "maxDuration": 300
+    },
+    "api/forge-fix-reference.mjs": {
+      "maxDuration": 300
     }
   }
 }
