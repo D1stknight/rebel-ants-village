@@ -15182,15 +15182,15 @@ const CHARACTER_REGISTRY = {
   // as named animation groups (idle, walk, run, jump, flip_kick) retargeted from the master ant.
   forged_rig_469: {
     bundleId: 'forged_rig_469', formType: 'forged', formLabel: 'Forged 3D Form (Sohei #469)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel469_forge_rig_v6_lite.glb', scale: 1.9, animations: []
+    basePath: '/assets/character/forged/', singleGlb: 'rebel469_forge_rig_v7_lite.glb', scale: 1.9, animations: []
   },
   forged_rig_1555: {
     bundleId: 'forged_rig_1555', formType: 'forged', formLabel: 'Forged 3D Form (Wokou #1555)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel1555_forge_rig_v5_lite.glb', scale: 1.9, animations: []
+    basePath: '/assets/character/forged/', singleGlb: 'rebel1555_forge_rig_v6_lite.glb', scale: 1.9, animations: []
   },
   forged_rig_4998: {
     bundleId: 'forged_rig_4998', formType: 'forged', formLabel: 'Forged 3D Form (Shogun #4998)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel4998_forge_rig_v5_lite.glb', scale: 1.9, animations: []
+    basePath: '/assets/character/forged/', singleGlb: 'rebel4998_forge_rig_v6_lite.glb', scale: 1.9, animations: []
   },
   // TRELLIS.2 test builds (free open-source image-to-3D instead of Meshy): ?rig=1555t / ?rig=4998t
   forged_rig_1555t: {
@@ -18494,6 +18494,107 @@ function unregisterEditableRoot(keyOrRoot) {
   });
 }
 
+// Forge cloth springs (v1): secondary motion for robe / armour-skirt chains baked by the Forge Rigger (cloth_skirt_<panel>_<seg>).
+// Clips never key these bones (their tracks are stripped at load), so this solver owns them: verlet tails with stiffness
+// toward the rest pose, drag, gravity, and sphere colliders on the legs so kicks push the cloth out instead of stretching it.
+// Cost: ~24 bones, a few dozen vector ops each, per frame, for the local player only.
+function createForgeClothSprings(scene, root, opts) {
+  opts = Object.assign({ stiffness: 2.2, drag: 0.18, gravity: 2.0, hitRadius: 0.02, legRadius: 0.085, hipRadius: 0.13 }, opts || {});
+  const V3 = BABYLON.Vector3, Q = BABYLON.Quaternion;
+  const nodes = root.getDescendants(false).filter(n => n.getClassName && n.getClassName() === 'TransformNode');
+  const byName = {}; nodes.forEach(n => { byName[n.name] = n; });
+  const chains = {};
+  nodes.forEach(n => {
+    const m = /^cloth_skirt_(\d+)_(\d+|end)$/.exec(n.name); if (!m) return;
+    (chains[m[1]] = chains[m[1]] || {})[m[2]] = n;
+  });
+  const segs = [];
+  Object.keys(chains).forEach(k => {
+    const c = chains[k]; const ids = Object.keys(c).filter(x => x !== 'end').map(Number).sort((a, b) => a - b);
+    ids.forEach((i, j) => {
+      const node = c[i], child = (j + 1 < ids.length) ? c[ids[j + 1]] : c.end; if (!node || !child) return;
+      if (!node.rotationQuaternion) node.rotationQuaternion = Q.FromEulerVector(node.rotation);
+      const off = child.position.clone(); const len = off.length(); if (len < 1e-6) return;
+      segs.push({ node, child, restRot: node.rotationQuaternion.clone(), axis: off.scale(1 / len), len, tail: null, prev: null, first: j === 0 });
+    });
+  });
+  if (!segs.length) return null;
+  // leg colliders: sample points along thigh and shin
+  const P = 'mixamorig_';
+  const legPairs = [['LeftUpLeg', 'LeftLeg'], ['LeftLeg', 'LeftFoot'], ['RightUpLeg', 'RightLeg'], ['RightLeg', 'RightFoot']]
+    .map(([a, b]) => [byName[P + a], byName[P + b]]).filter(p => p[0] && p[1]);
+  const hips = byName[P + 'Hips'];
+  const tmpM = new BABYLON.Matrix(), tmpQ = new Q(), tmpS = new V3(), tmpT = new V3();
+  let enabled = true, last = performance.now(), order = 0;
+  function worldScale() { root.computeWorldMatrix(true); root.getWorldMatrix().decompose(tmpS); return tmpS.x; }
+  function step() {
+    if (!enabled) return;
+    const now = performance.now(); const dt = opts.fixedDt || Math.min(0.05, Math.max(0.001, (now - last) / 1000)); last = now;
+    const s = worldScale();
+    const cols = [];
+    legPairs.forEach(([a, b]) => {
+      const pa = a.getAbsolutePosition().clone(), pb = b.getAbsolutePosition().clone();
+      for (let t = 0; t <= 1.0001; t += 0.25) cols.push({ c: V3.Lerp(pa, pb, t), r: opts.legRadius * s });
+    });
+    if (hips) cols.push({ c: hips.getAbsolutePosition().clone(), r: opts.hipRadius * s });
+    segs.forEach(g => {
+      g.node.rotationQuaternion.copyFrom(g.restRot);
+      g.node.computeWorldMatrix(true);
+      const head = g.node.getAbsolutePosition().clone();
+      const wm = g.node.getWorldMatrix();
+      const restTail = V3.TransformCoordinates(g.axis.scale(g.len), wm);
+      const L = g.len * s;
+      if (!g.tail) { g.tail = restTail.clone(); g.prev = restTail.clone(); }
+      const vel = g.tail.subtract(g.prev).scale(1 - opts.drag);
+      const toRest = restTail.subtract(g.tail).scale(Math.min(1, opts.stiffness * dt * 4));
+      const grav = new V3(0, -opts.gravity * dt * dt * s, 0);
+      let next = g.tail.add(vel).add(toRest).add(grav);
+      // keep length
+      let d = next.subtract(head); let dl = d.length(); if (dl < 1e-6) { d = restTail.subtract(head); dl = d.length(); }
+      next = head.add(d.scale(L / dl));
+      // colliders (push tail out of leg / hip spheres)
+      for (const col of cols) {
+        const v = next.subtract(col.c); const r = col.r + opts.hitRadius * s; const vl = v.length();
+        if (vl < r && vl > 1e-6) { next = col.c.add(v.scale(r / vl)); d = next.subtract(head); next = head.add(d.scale(L / d.length())); }
+      }
+      g.prev = g.tail; g.tail = next;
+      // rotate the bone so its child points at the simulated tail. Work in the PARENT's local space
+      // (the glTF root is mirrored, so world-space quaternion algebra does not apply).
+      const parent = g.node.parent; parent.computeWorldMatrix(true);
+      parent.getWorldMatrix().invertToRef(tmpM);
+      const hL = V3.TransformCoordinates(head, tmpM), tL = V3.TransformCoordinates(next, tmpM);
+      const dNew = tL.subtract(hL).normalize();
+      const dRest = g.axis.applyRotationQuaternion(g.restRot).normalize();
+      const ax = V3.Cross(dRest, dNew); const sn = ax.length(); const cs = V3.Dot(dRest, dNew);
+      if (sn > 1e-6) {
+        const dq = Q.RotationAxis(ax.scale(1 / sn), Math.atan2(sn, cs));
+        let cand = order === 2 ? g.restRot.multiply(dq) : dq.multiply(g.restRot);
+        if (order === 0 && sn > 0.02) {
+          const e1 = 1 - V3.Dot(g.axis.applyRotationQuaternion(dq.multiply(g.restRot)).normalize(), dNew);
+          const e2 = 1 - V3.Dot(g.axis.applyRotationQuaternion(g.restRot.multiply(dq)).normalize(), dNew);
+          order = e1 <= e2 ? 1 : 2; window._forgeClothOrder = { order, e1, e2 };
+          cand = order === 2 ? g.restRot.multiply(dq) : dq.multiply(g.restRot);
+        }
+        g.node.rotationQuaternion.copyFrom(cand);
+      }
+      g.node.computeWorldMatrix(true);
+    });
+  }
+  const obs = scene.onAfterAnimationsObservable.add(step);
+  return {
+    segs: segs.length,
+    set enabled(v) { enabled = !!v; if (!enabled) segs.forEach(g => { g.node.rotationQuaternion.copyFrom(g.restRot); g.tail = null; }); },
+    get enabled() { return enabled; },
+    opts,
+    debugError() { let e = 0, n = 0; segs.forEach(g => { if (!g.tail) return; g.child.computeWorldMatrix(true); const h = g.node.getAbsolutePosition(); const d1 = g.child.getAbsolutePosition().subtract(h).normalize(); const d2 = g.tail.subtract(h).normalize(); e += 1 - BABYLON.Vector3.Dot(d1, d2); n++; }); return n ? e / n : 0; },
+    dispose() { scene.onAfterAnimationsObservable.remove(obs); }
+  };
+}
+// Strip clip tracks that target cloth bones (the solver owns them).
+function stripForgeClothTracks(groups) {
+  groups.forEach(g => { const ta = g.targetedAnimations; for (let j = ta.length - 1; j >= 0; j--) { if (ta[j].target && /^cloth_/.test(ta[j].target.name || '')) ta.splice(j, 1); } });
+}
+
 let animState = -1, animGroups = [];
 // One-shot move on a Forge Rigger bundle; returns to idle when the clip ends. Returns false if the clip isn't in this GLB.
 function playForgeRigAction(slot, thenSlot, force) {
@@ -18591,7 +18692,11 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGl
       g.enableBlending = true; g.blendingSpeed = 0.12;       // smooth hand-offs between moves
       if (_slot[g.name] !== undefined) animGroups[_slot[g.name]] = g;
     });
-    window.forgeRigBundleInfo = { bundleId: activeCharacter.bundleId, file: _forgeSingleGlb, scale: _ps, groups: r.animationGroups.map(g => g.name) };
+    // Forge Rigger v1.4: cloth spring bones (robes / armour skirts). The solver owns them, so their clip tracks go. ?cloth=0 turns it off.
+    stripForgeClothTracks(r.animationGroups);
+    try { if (window._forgeCloth) window._forgeCloth.dispose(); } catch (e) {}
+    window._forgeCloth = new URLSearchParams(window.location.search).get('cloth') === '0' ? null : createForgeClothSprings(scene, playerRoot);
+    window.forgeRigBundleInfo = { bundleId: activeCharacter.bundleId, file: _forgeSingleGlb, scale: _ps, groups: r.animationGroups.map(g => g.name), clothBones: window._forgeCloth ? window._forgeCloth.segs : 0 };
     console.log('Forge Rigger bundle loaded as playable:', window.forgeRigBundleInfo);
     if (animGroups[0]) { animState = 0; animGroups[0].play(true); }
   } else if (r.animationGroups.length > 0) { animGroups[0]=r.animationGroups[0]; const _ta0=animGroups[0].targetedAnimations;for(let _j=_ta0.length-1;_j>=0;_j--){if(_ta0[_j].animation.targetProperty==='position'&&_ta0[_j].target&&_ta0[_j].target.name==='mixamorig_Hips')_ta0.splice(_j,1);} animState=0; animGroups[0].play(true); }
@@ -21613,6 +21718,50 @@ if (ProgressionState.badges.length !== progressionBadgeSyncCount) saveProgressio
 else updateProgressionHud();
 refreshBadgeBuilderOptions();
 refreshQuestBuilderOptions();
+// ── LOOK + ADAPTIVE RESOLUTION ──────────────
+// Cinematic grade in the material shaders (ACES tone mapping, contrast, soft warm vignette): no extra render pass (~0.4 ms).
+// ?look=off disables it; ?look=high also adds a quarter-res bloom that switches itself off if frames get slow.
+// Adaptive resolution: Retina screens render at 2x; when FPS stays low we drop to 1.5x then 1x, and climb back when it recovers.
+// ?res=native pins the device resolution.
+(function setupVillageLook() {
+  const qs = new URLSearchParams(window.location.search);
+  const look = qs.get('look') || 'on';
+  if (look !== 'off') {
+    const ip = scene.imageProcessingConfiguration;
+    ip.toneMappingEnabled = true; ip.toneMappingType = BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;
+    ip.exposure = 1.2; ip.contrast = 1.15;
+    ip.vignetteEnabled = true; ip.vignetteWeight = 1.1; ip.vignetteStretch = 0.45;
+    ip.vignetteColor = new BABYLON.Color4(0.06, 0.04, 0.03, 0); ip.vignetteBlendMode = BABYLON.ImageProcessingConfiguration.VIGNETTEMODE_MULTIPLY;
+  }
+  window._villageLook = { look, bloom: null, resLevel: null };
+  function addBloom() {
+    if (window._villageLook.bloom || !scene.activeCamera) return;
+    try {
+      const p = new BABYLON.DefaultRenderingPipeline('villageBloom', false, scene, [scene.activeCamera]);
+      p.imageProcessingEnabled = false; p.fxaaEnabled = false;
+      p.bloomEnabled = true; p.bloomScale = 0.25; p.bloomThreshold = 0.85; p.bloomWeight = 0.3; p.bloomKernel = 48;
+      window._villageLook.bloom = p;
+    } catch (e) { console.warn('bloom unavailable', e); }
+  }
+  if (look === 'high') setTimeout(addBloom, 3000);
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const levels = [1 / dpr]; if (dpr >= 1.75) levels.push(1 / 1.5); if (dpr > 1.01) levels.push(1);
+  let li = 0, low = 0, high = 0;
+  const pinned = qs.get('res') === 'native';
+  setInterval(() => {
+    if (document.visibilityState !== 'visible') { low = high = 0; return; }
+    const fps = engine.getFps();
+    if (fps < 42) { low++; high = 0; } else if (fps > 57) { high++; low = 0; } else { low = high = 0; }
+    if (low >= 2) {
+      low = 0;
+      if (window._villageLook.bloom) { window._villageLook.bloom.dispose(); window._villageLook.bloom = null; console.log('Look: bloom off (slow frames)'); return; }
+      if (!pinned && li < levels.length - 1) { li++; engine.setHardwareScalingLevel(levels[li]); console.log('Adaptive resolution: scaling', levels[li].toFixed(2), 'at', fps.toFixed(0), 'fps'); }
+    } else if (high >= 4 && li > 0 && !pinned) {
+      high = 0; li--; engine.setHardwareScalingLevel(levels[li]); console.log('Adaptive resolution: scaling', levels[li].toFixed(2));
+    }
+    window._villageLook.resLevel = levels[li];
+  }, 1500);
+})();
 let t=0;
 engine.runRenderLoop(()=>{
   const dt=engine.getDeltaTime()/1000;
