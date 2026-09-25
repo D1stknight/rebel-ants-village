@@ -21728,8 +21728,14 @@ refreshQuestBuilderOptions();
   const look = qs.get('look') || 'on';
   if (look !== 'off') {
     const ip = scene.imageProcessingConfiguration;
-    ip.toneMappingEnabled = true; ip.toneMappingType = BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;
-    ip.exposure = 1.2; ip.contrast = 1.15;
+    // v2: Khronos PBR Neutral keeps the village's colours (ACES made it dark and muddy), plus a warm-highlight / cool-shadow grade
+    const I = BABYLON.ImageProcessingConfiguration;
+    ip.toneMappingEnabled = true; ip.toneMappingType = I.TONEMAPPING_KHR_PBR_NEUTRAL !== undefined ? I.TONEMAPPING_KHR_PBR_NEUTRAL : I.TONEMAPPING_STANDARD;
+    ip.exposure = 1.05; ip.contrast = 1.12;
+    const cc = new BABYLON.ColorCurves();
+    cc.globalSaturation = 12; cc.highlightsHue = 40; cc.highlightsDensity = 15; cc.highlightsSaturation = 20;
+    cc.shadowsHue = 220; cc.shadowsDensity = 12; cc.shadowsSaturation = 10;
+    ip.colorCurvesEnabled = true; ip.colorCurves = cc;
     ip.vignetteEnabled = true; ip.vignetteWeight = 1.1; ip.vignetteStretch = 0.45;
     ip.vignetteColor = new BABYLON.Color4(0.06, 0.04, 0.03, 0); ip.vignetteBlendMode = BABYLON.ImageProcessingConfiguration.VIGNETTEMODE_MULTIPLY;
   }
