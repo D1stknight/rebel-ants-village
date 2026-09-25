@@ -3851,7 +3851,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   const FORGE_RIG_STEP_LABELS = {
     starting: 'Starting', download: 'Downloading model', normalize: 'Preparing mesh', landmarks: 'Finding joints',
     skeleton: 'Building skeleton', weights: 'Skinning', bind: 'Binding', hands: 'Hands', cloth: 'Cloth springs',
-    animate: 'Base moves', moves: 'Martial-arts moves', cleanup: 'Clean-up', export: 'Exporting', qa: 'Quality check', done: 'Done'
+    animate: 'Base moves', moves: 'Martial-arts moves', cleanup: 'Clean-up', export: 'Exporting', qa: 'Quality check', thumb: 'Portrait', done: 'Done'
   };
   const forgeRigPollers = {};
 
@@ -3878,7 +3878,9 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
       const badge = review
         ? `<span class="forge-3d-build-badge" title="${escapeForgeRigText((fr.qa?.reasons || []).join('; '))}">Rig ✓ (check moves)</span>`
         : '<span class="forge-3d-build-badge ready">Rig ✓</span>';
-      return `${badge}<a class="forge-3d-build-refresh-btn forge-3d-step-action" href="/village.html?rigUrl=${encodeURIComponent(url)}" target="_blank" rel="noopener">Play in Village</a>`;
+      const thumb = fr.thumbUrl || build.output?.forgeRigThumbUrl;
+      const thumbHtml = thumb ? `<img src="${escapeForgeRigText(thumb)}" alt="Rigged character" style="width:44px;height:44px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px;border:1px solid rgba(94,207,202,.5)">` : '';
+      return `${thumbHtml}${badge}<a class="forge-3d-build-refresh-btn forge-3d-step-action" href="/village.html?rigUrl=${encodeURIComponent(url)}" target="_blank" rel="noopener">Play in Village</a>`;
     }
     return `<span class="forge-3d-build-badge" title="${escapeForgeRigText(fr.error || '')}">Rig failed${fr.failedStep ? ' (' + escapeForgeRigText(FORGE_RIG_STEP_LABELS[fr.failedStep] || fr.failedStep) + ')' : ''}</span>`
       + (hasSource ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.startForgeRigForBuild('${id}')">Retry Rig</button>` : '');

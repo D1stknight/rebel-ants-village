@@ -63,6 +63,7 @@ function sanitizeActiveCharacterPayload(payload) {
   const output = build.output || {};
   // Automated Forge Rigger result (one GLB, all clips + cloth bones); the village prefers it when present.
   const forgeRigGlbUrl = output.forgeRigGlbUrl || build.forgeRig?.forgeRigGlbUrl || null;
+  const forgeRigThumbUrl = output.forgeRigThumbUrl || build.forgeRig?.thumbUrl || null;
   const storedAnimations = output.storedAnimations || build.rigging?.storedAnimations || {};
   const storedArmatureAnimations =
     output.storedArmatureAnimations ||
@@ -221,6 +222,7 @@ function sanitizeActiveCharacterPayload(payload) {
     staticGlbUrl,
     riggedGlbUrl,
     forgeRigGlbUrl,
+    forgeRigThumbUrl,
     glbBlobPath,
     storedAnimations,
     animations: {
@@ -317,6 +319,7 @@ function sanitizeActiveCharacterPayload(payload) {
     staticGlbUrl,
     riggedGlbUrl,
     forgeRigGlbUrl,
+    forgeRigThumbUrl,
     idleGlbUrl,
     walkingGlbUrl,
     runningGlbUrl,
@@ -382,7 +385,7 @@ export default async function handler(req, res) {
         const stored = rec?.result ? JSON.parse(rec.result) : null;
         if (stored?.output?.forgeRigGlbUrl) {
           const build = payload.build || payload.buildRecord || {};
-          payload.build = { ...stored, ...build, output: { ...(stored.output || {}), ...(build.output || {}), forgeRigGlbUrl: stored.output.forgeRigGlbUrl }, forgeRig: stored.forgeRig };
+          payload.build = { ...stored, ...build, output: { ...(stored.output || {}), ...(build.output || {}), forgeRigGlbUrl: stored.output.forgeRigGlbUrl, forgeRigThumbUrl: stored.output.forgeRigThumbUrl || null }, forgeRig: stored.forgeRig };
         }
       } catch (e) { /* the payload alone still works */ }
     }

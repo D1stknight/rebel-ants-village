@@ -32,11 +32,12 @@ step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/footfix.py" -- "$O/anim6_fix.blend" "$O/anim6_ff.blend"
 step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=1536 FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
 step qa;         run "$FW/qa_job.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb" "$JOB/qa.json" "$JOB/log"
+step thumb;      "$PY" "$FW/thumb.py" -- "$JOB/rig.glb" "$JOB/thumb.jpg" 384 >> "$JOB/log" 2>&1 || echo "thumb failed (non-fatal)" >> "$JOB/log"
 SECS=$(( $(date +%s) - T0 ))
 "$PY" - "$JOB" "$SECS" <<'PY'
 import json, os, sys
 job, secs = sys.argv[1], int(sys.argv[2])
 qa = json.load(open(os.path.join(job, 'qa.json')))
-json.dump({'ok': True, 'seconds': secs, 'bytes': os.path.getsize(os.path.join(job, 'rig.glb')), 'qa': qa}, open(os.path.join(job, 'result.json'), 'w'))
+json.dump({'ok': True, 'seconds': secs, 'bytes': os.path.getsize(os.path.join(job, 'rig.glb')), 'thumb': os.path.exists(os.path.join(job, 'thumb.jpg')), 'qa': qa}, open(os.path.join(job, 'result.json'), 'w'))
 PY
 echo done > "$JOB/progress"

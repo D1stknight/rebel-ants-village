@@ -457,6 +457,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
   box-shadow: 0 0 0 1px rgba(0,0,0,0.35);
 }
 .ant-card.is-ready { border-color: rgba(94,207,202,0.55); }
+.ant-card.has-forge-thumb img { object-fit: cover; }
 .ant-card.is-ready.selected { border-color: #5ecfca; box-shadow: 0 0 22px rgba(94,207,202,0.5); }
 </style>
 </head>
@@ -983,12 +984,34 @@ async function selectAnt(id) {
 
 // Card status: "ready" = a rigged, playable 3D character (Forge Rigger); "forged" = a Forge 3D model exists but isn't rigged yet.
 // 469 / 1555 / 4998 have hand-rigged village characters (village.html REBEL_CHARACTER_RECORDS).
-const VILLAGE_RIGGED_TOKENS = new Set(['469', '1555', '4998']);
+// thumb = portrait render of the rigged 3D character (shown instead of the NFT art once a Rebel is Ready).
+const VILLAGE_RIGGED = {
+  '469': { thumb: '' },
+  '1555': { thumb: '' },
+  '4998': { thumb: '' }
+};
 function getRebelForgeStatus(rebel, hasForgeCharacter) {
   const afc = rebel.activeForgeCharacter || {};
-  if (afc.forgeRigGlbUrl || afc.characterBundle?.forgeRigGlbUrl || VILLAGE_RIGGED_TOKENS.has(String(rebel.tokenId || ''))) return 'ready';
+  if (hasForgeCharacter === undefined) hasForgeCharacter = Boolean(afc.activeGlbUrl || rebel.activeGlbUrl);
+  if (afc.forgeRigGlbUrl || afc.characterBundle?.forgeRigGlbUrl || VILLAGE_RIGGED[String(rebel.tokenId || '')]) return 'ready';
   if (hasForgeCharacter || rebel.playableType === 'forge_build') return 'forged';
   return '';
+}
+function getRebelForgeThumb(rebel) {
+  const afc = rebel.activeForgeCharacter || {};
+  return afc.forgeRigThumbUrl || afc.characterBundle?.forgeRigThumbUrl || VILLAGE_RIGGED[String(rebel.tokenId || '')]?.thumb || '';
+}
+function sortRebelsByForgeStatus(list) {
+  const rank = { ready: 0, forged: 1, '': 2 };
+  return list.map((r, i) => [r, i]).sort((a, b) => (rank[getRebelForgeStatus(a[0])] - rank[getRebelForgeStatus(b[0])]) || (a[1] - b[1])).map((x) => x[0]);
+}
+function dedupeForgePlayablesByToken(list) {
+  const seen = new Set();
+  return list.filter((r) => {
+    const key = String(r.tokenId || r.id);
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
 }
 function getRebelCardNumber(rebel) {
   if (rebel.tokenId) return String(rebel.tokenId);
@@ -1014,8 +1037,11 @@ function buildCard(rebel) {
     ${status ? `<div class="ant-card-badge ${status}">${status === 'ready' ? 'Ready' : 'Forged'}</div>` : ''}
   `;
 
-  const imageHtml = rebel.image
-    ? `<div class="ant-card-placeholder" style="display:none;">🐜</div><img crossorigin="anonymous" src="${rebel.image}" onload="matchAntCardBackground(this)" onerror="this.onerror=null; this.style.display='none'; this.previousElementSibling.style.display='grid';"/>`
+  const forgeThumb = status === 'ready' ? getRebelForgeThumb(rebel) : '';
+  if (forgeThumb) card.classList.add('has-forge-thumb');
+  const cardImage = forgeThumb || rebel.image;
+  const imageHtml = cardImage
+    ? `<div class="ant-card-placeholder" style="display:none;">🐜</div><img crossorigin="anonymous" src="${cardImage}" onload="matchAntCardBackground(this)" onerror="this.onerror=null; this.style.display='none'; this.previousElementSibling.style.display='grid';"/>`
     : '<div class="ant-card-placeholder">🐜</div>';
 
   card.innerHTML = `${imageHtml}
@@ -1036,7 +1062,7 @@ async function showDefaultCard() {
 
   const defaultRebel = await attachActiveForgeCharacter(starterRebel);
   const savedForgePlayables = await loadSavedForgePlayableCards();
-  ownedRebels = [defaultRebel, ...savedForgePlayables];
+  ownedRebels = [defaultRebel, ...sortRebelsByForgeStatus(dedupeForgePlayablesByToken(savedForgePlayables))];
 
   let storedSelectedId = '';
 
@@ -1103,14 +1129,18 @@ async function loadNFTs(walletAddress) {
     );
     const savedForgePlayables = await loadSavedForgePlayableCards();
     const walletIds = new Set(walletRebels.map((rebel) => rebel.id));
-    ownedRebels = [
+    const walletTokens = new Set(walletRebels.map((rebel) => String(rebel.tokenId || '')));
+    // Forged Rebels first (Ready, then Forged), then the rest in wallet order. Saved Forge playables for a
+    // token that is already in the wallet are duplicates of that card, so they are dropped.
+    ownedRebels = sortRebelsByForgeStatus([
       ...walletRebels,
-      ...savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id))
-    ];
+      ...dedupeForgePlayablesByToken(savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id) && !walletTokens.has(String(rebel.tokenId || ''))))
+    ]);
 
     const forgedReadyRebel = ownedRebels.find((rebel) => {
-      return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
+      return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl) || getRebelForgeStatus(rebel) === 'ready';
     });
+    const readyCount = ownedRebels.filter((rebel) => getRebelForgeStatus(rebel) === 'ready').length;
 
     selectedAnt = forgedReadyRebel ? forgedReadyRebel.id : ownedRebels[0].id;
 
@@ -1124,7 +1154,7 @@ async function loadNFTs(walletAddress) {
       ' Rebel' +
       (ownedRebels.length > 1 ? 's' : '') +
       ' found' +
-      (forgedReadyRebel ? ' — 3D Forge Character Ready' : '')
+      (readyCount ? ` — ${readyCount} ready to play` : '')
     );
 
     document.getElementById('btn-enter').disabled = false;

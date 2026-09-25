@@ -2,6 +2,7 @@
 //   POST {action:'pack-put', path:'mixamo/jab.npz', dataBase64}  upload one mocap source file to Blob
 //   POST {action:'setup'}                                        start building the worker from the deployed commit
 //   POST {action:'status'} / GET                                 progress; snapshots the sandbox when setup finished
+//   POST {action:'thumb', glbUrl, name}                          render a portrait JPEG of a rigged GLB into Blob
 import { put } from '@vercel/blob';
 import { isAdminRequest } from './_admin-auth.mjs';
 import { Sandbox, creds, REPO, WORKER_KEY, PACK_KEY, FW, getJson, setJson, readText, body } from './_forge-rig.mjs';
@@ -16,6 +17,7 @@ export default async function handler(req, res) {
     if (b.action === 'pack-put') return res.status(200).json(await packPut(b));
     if (b.action === 'setup') return res.status(200).json(await startSetup(b));
     if (b.action === 'status') return res.status(200).json(await status());
+    if (b.action === 'thumb') return res.status(200).json(await renderThumb(b));
     return res.status(400).json({ ok: false, error: 'Unknown action' });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err?.message || String(err) });
@@ -87,4 +89,30 @@ async function status() {
     }
   }
   return { ok: true, worker, packFiles: Object.keys(pack).length };
+}
+
+async function renderThumb({ glbUrl, name }) {
+  if (!/^https:\/\//.test(glbUrl || '')) throw new Error('Missing glbUrl');
+  const worker = (await getJson(WORKER_KEY)) || {};
+  if (!worker.snapshotId) throw new Error('Rig worker is not built yet');
+  const sandbox = await Sandbox.create({ source: { type: 'snapshot', snapshotId: worker.snapshotId }, persistent: false, resources: { vcpus: 2 }, timeout: 5 * 60 * 1000, tags: { purpose: 'forge-rig-thumb' }, ...creds() });
+  try {
+    await sandbox.runCommand({
+      cmd: 'bash',
+      args: ['-c', `(curl -fsSL "$GLB" -o /tmp/in.glb && ${FW}/venv/bin/python ${FW}/thumb.py -- /tmp/in.glb /tmp/thumb.jpg 384) > /tmp/thumb.log 2>&1; echo $? > /tmp/thumb.done`],
+      env: { GLB: glbUrl },
+      sudo: true,
+      detached: true
+    });
+    // Poll a marker file (a detached command's exit status can lag behind the process).
+    let done = null;
+    for (let i = 0; i < 45 && !done; i++) { await new Promise((r) => setTimeout(r, 2000)); done = await readText(sandbox, '/tmp/thumb.done'); }
+    const jpg = done && done.trim() === '0' ? await sandbox.readFileToBuffer({ path: '/tmp/thumb.jpg' }) : null;
+    if (!jpg || !jpg.length) throw new Error('Thumbnail render failed: ' + ((await readText(sandbox, '/tmp/thumb.log')) || 'timed out').slice(-400));
+    const safe = String(name || 'rig').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').slice(0, 60);
+    const blob = await put(`forge/rig-thumbs/${safe}.jpg`, jpg, { access: 'public', addRandomSuffix: true, contentType: 'image/jpeg' });
+    return { ok: true, url: blob.url, bytes: jpg.length };
+  } finally {
+    try { await sandbox.stop(); } catch (e) {}
+  }
 }

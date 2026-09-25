@@ -1,5 +1,5 @@
 {
- "version": "1.5b",
+ "version": "1.6",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
@@ -32,6 +32,7 @@
   "rigger/skirtfix.py",
   "rigger/views.py",
   "rigger/weights2.py",
-  "setup.sh"
+  "setup.sh",
+  "thumb.py"
  ]
 }

@@ -15162,6 +15162,13 @@ async function refreshActiveForgeCharacterForVillage() {
   return refreshedCharacter;
 }
 
+// Portrait renders of the rigged Forge characters (lobby cards + the village info hub). Filled by the Forge Rigger.
+const FORGE_RIG_THUMBS = {
+  '469': '',
+  '1555': '',
+  '4998': ''
+};
+
 const CHARACTER_REGISTRY = {
   starter_ant: {
     bundleId: 'starter_ant',
@@ -15182,15 +15189,15 @@ const CHARACTER_REGISTRY = {
   // as named animation groups (idle, walk, run, jump, flip_kick) retargeted from the master ant.
   forged_rig_469: {
     bundleId: 'forged_rig_469', formType: 'forged', formLabel: 'Forged 3D Form (Sohei #469)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel469_forge_rig_v9_lite.glb', scale: 1.9, animations: []
+    basePath: '/assets/character/forged/', singleGlb: 'rebel469_forge_rig_v9_lite.glb', scale: 1.9, thumb: FORGE_RIG_THUMBS['469'], animations: []
   },
   forged_rig_1555: {
     bundleId: 'forged_rig_1555', formType: 'forged', formLabel: 'Forged 3D Form (Wokou #1555)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel1555_forge_rig_v9_lite.glb', scale: 1.9, animations: []
+    basePath: '/assets/character/forged/', singleGlb: 'rebel1555_forge_rig_v9_lite.glb', scale: 1.9, thumb: FORGE_RIG_THUMBS['1555'], animations: []
   },
   forged_rig_4998: {
     bundleId: 'forged_rig_4998', formType: 'forged', formLabel: 'Forged 3D Form (Shogun #4998)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel4998_forge_rig_v10_lite.glb', scale: 1.9, animations: []
+    basePath: '/assets/character/forged/', singleGlb: 'rebel4998_forge_rig_v10_lite.glb', scale: 1.9, thumb: FORGE_RIG_THUMBS['4998'], animations: []
   },
   // TRELLIS.2 test builds (free open-source image-to-3D instead of Meshy): ?rig=1555t / ?rig=4998t
   forged_rig_1555t: {
@@ -15256,7 +15263,8 @@ function getForgeRigUrlBundle(rebel) {
   if (!url || !/^https:\/\/[a-z0-9.-]+\.(public\.blob\.vercel-storage\.com|vercel-storage\.com)\//i.test(url)) return null;
   return {
     bundleId: 'forged_rig_auto', formType: 'forged', formLabel: 'Forged 3D Form', hasGeneratedModel: true,
-    basePath: '', singleGlb: url, scale: 1.9, animations: []
+    basePath: '', singleGlb: url, scale: 1.9, animations: [],
+    thumb: afc?.forgeRigThumbUrl || afc?.characterBundle?.forgeRigThumbUrl || null
   };
 }
 
@@ -15281,7 +15289,7 @@ function resolveCharacterConfig(rebel) {
     rebel,
     characterId: rebel.id || 'ant_1',
     displayName: rebel.name || 'Rebel #001',
-    previewImage: rebel.image || 'assets/lobby/ant_1.JPG',
+    previewImage: bundle.thumb || rebel.image || 'assets/lobby/ant_1.JPG',
     tokenId: rebel.tokenId || null,
     collectionKey: rebel.collectionKey || 'battle_for_colony',
     rebelId: rebel.rebelId || rebel.id || null,

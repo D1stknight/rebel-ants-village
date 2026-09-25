@@ -4,7 +4,7 @@
 import { put } from '@vercel/blob';
 import { Sandbox, creds, JOB_DIR, JOB_TIMEOUT_MS, redis, loadBuild, updateRigging, readText, sanitize, body } from './_forge-rig.mjs';
 
-const STEPS = ['starting', 'download', 'normalize', 'landmarks', 'skeleton', 'weights', 'bind', 'hands', 'cloth', 'animate', 'moves', 'cleanup', 'export', 'qa', 'done'];
+const STEPS = ['starting', 'download', 'normalize', 'landmarks', 'skeleton', 'weights', 'bind', 'hands', 'cloth', 'animate', 'moves', 'cleanup', 'export', 'qa', 'thumb', 'done'];
 
 export default async function handler(req, res) {
   const buildId = req.query?.buildId || body(req).buildId;
@@ -56,11 +56,19 @@ export default async function handler(req, res) {
     if (!glb || !glb.length) throw new Error('Rig finished but rig.glb is missing');
     const path = `forge/3d-builds/${sanitize(rec.collectionKey, 'battle-for-colony')}/${sanitize(rec.tokenId || rec.rebelId, 'unknown-token')}/${sanitize(buildId, 'build')}_forge_rig.glb`;
     const blob = await put(path, glb, { access: 'public', addRandomSuffix: true, contentType: 'model/gltf-binary' });
+    // Portrait render of the rigged character (lobby card + village hub). Optional.
+    let thumbUrl = null;
+    if (result.thumb) {
+      try {
+        const jpg = await sandbox.readFileToBuffer({ path: `${JOB_DIR}/thumb.jpg` });
+        if (jpg && jpg.length) thumbUrl = (await put(path.replace(/\.glb$/, '_thumb.jpg'), jpg, { access: 'public', addRandomSuffix: true, contentType: 'image/jpeg' })).url;
+      } catch (e) { /* keep the rig even if the thumbnail fails */ }
+    }
     try { await sandbox.stop(); } catch (e) {}
     const next = await updateRigging(buildId, {
-      status: 'succeeded', progress: 'done', forgeRigGlbUrl: blob.url, bytes: glb.length, seconds: result.seconds,
+      status: 'succeeded', progress: 'done', forgeRigGlbUrl: blob.url, thumbUrl, bytes: glb.length, seconds: result.seconds,
       qa: result.qa || null, verdict: result.qa?.verdict || null, finishedAt: new Date().toISOString()
-    }, { forgeRigGlbUrl: blob.url });
+    }, { forgeRigGlbUrl: blob.url, ...(thumbUrl ? { forgeRigThumbUrl: thumbUrl } : {}) });
     return res.status(200).json({ ok: true, forgeRig: next.forgeRig, forgeRigGlbUrl: blob.url, percent: 100 });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err?.message || String(err) });
