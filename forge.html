@@ -388,7 +388,7 @@ body{
   <button class="action-btn" id="generate-btn" type="button" onclick="generatePreviewStub()">Generate Full-Body Preview</button>
 
   <button
-    class="action-btn"
+    class="action-btn forge-admin-only"
     id="inspect-static-btn"
     type="button"
     onclick="inspectStaticSourceGlb()"
@@ -885,14 +885,14 @@ async function renderForgeConceptGallery(options = {}) {
     const id = concept.id || concept.conceptId;
     const isSelected = id === selectedConceptId;
     const label = isSelected ? 'Selected' : `Version ${index + 1}`;
-    const safeId = String(id).replace(/'/g, "\\'");
+    const safeId = String(id).replace(/[^A-Za-z0-9_.:-]/g, '');
     const storageLabel = concept.imageStorage === 'vercel_blob' ? 'Server Saved' : 'Local Saved';
 
     return `
       <div class="forge-concept-card ${isSelected ? 'selected' : ''}" data-concept-id="${safeId}">
         <div class="forge-concept-thumb" data-concept-image="${safeId}">Loading...</div>
         <div class="forge-concept-card-title">${label}</div>
-        <div class="forge-concept-card-meta">${concept.colony || 'Unknown Colony'} · ${storageLabel}</div>
+        <div class="forge-concept-card-meta">${String(concept.colony || 'Unknown Colony').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))} · ${storageLabel}</div>
 
         <div class="forge-concept-card-actions">
           <button class="forge-mini-btn" type="button" onclick="selectForgeConcept('${safeId}')">Select</button>
@@ -1081,8 +1081,9 @@ async function saveForgeConceptMetadataToServer(concept) {
   const metadata = stripForgeConceptImageData({
     ...concept,
     conceptId: concept.conceptId || concept.id,
-    forgeMode: forgeGenerationInput?.forgeMode || window.currentForgeMode || 'full_body_concept',
-    variantIntent: forgeGenerationInput?.variantIntent || window.currentForgeVariantIntent || 'default',
+    // Keep the concept's own type: a saved production reference must stay a production reference on the server.
+    forgeMode: concept.forgeMode || concept.conceptType || forgeGenerationInput?.forgeMode || window.currentForgeMode || 'full_body_concept',
+    variantIntent: concept.variantIntent || forgeGenerationInput?.variantIntent || window.currentForgeVariantIntent || 'default',
     selected: true,
     imageStorage: 'browser_indexeddb_now_server_later',
     economyPlan: window.lastFullBodyForgePreviewResponse?.economyPlan || window.lastFullBodyForgePreviewResponse?.previewPlan?.economyPlan || null
@@ -1249,8 +1250,9 @@ async function saveForgeConceptMetadataToServer(concept) {
   const metadata = stripForgeConceptImageData({
     ...concept,
     conceptId: concept.conceptId || concept.id,
-    forgeMode: forgeGenerationInput?.forgeMode || window.currentForgeMode || 'full_body_concept',
-    variantIntent: forgeGenerationInput?.variantIntent || window.currentForgeVariantIntent || 'default',
+    // Keep the concept's own type: a saved production reference must stay a production reference on the server.
+    forgeMode: concept.forgeMode || concept.conceptType || forgeGenerationInput?.forgeMode || window.currentForgeMode || 'full_body_concept',
+    variantIntent: concept.variantIntent || forgeGenerationInput?.variantIntent || window.currentForgeVariantIntent || 'default',
     selected: true,
     imageStorage: concept.imageStorage || 'browser_indexeddb_now_server_later',
     imageUrl: concept.imageUrl || null,

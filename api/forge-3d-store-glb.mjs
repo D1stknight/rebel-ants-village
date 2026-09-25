@@ -1,3 +1,5 @@
+import { enforceRateLimit, isAllowedAssetUrl } from './_guard.mjs';
+import { isAdminRequest } from './_admin-auth.mjs';
 import { put } from '@vercel/blob';
 
 const MAX_GLB_BYTES = 80 * 1024 * 1024;
@@ -151,6 +153,7 @@ export default async function handler(req, res) {
       });
     }
 
+    if (!(await enforceRateLimit(req, res, 'store-glb', 30, 3600, 'store requests'))) return;
     const { buildId, glbUrl } = req.body || {};
 
     if (!buildId) {
@@ -158,7 +161,11 @@ export default async function handler(req, res) {
     }
 
     const { recordKey, buildRecord } = await loadBuildRecord(buildId);
-    const sourceGlbUrl = getSourceGlbUrl(buildRecord, glbUrl);
+    // Phase 0: only admins may point the store at an arbitrary GLB; players store the build's own Meshy result.
+    const sourceGlbUrl = getSourceGlbUrl(buildRecord, isAdminRequest(req) ? glbUrl : null);
+    if (sourceGlbUrl && !isAllowedAssetUrl(sourceGlbUrl)) {
+      return res.status(400).json({ ok: false, error: 'GLB source is not an allowed host' });
+    }
 
     if (!sourceGlbUrl) {
       return res.status(400).json({ ok: false, error: 'Missing source GLB URL' });

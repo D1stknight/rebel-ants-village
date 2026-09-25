@@ -107,7 +107,12 @@ export default async function handler(req, res) {
     const results = await redisPipeline(commands);
     const selectedCharacter = parseActiveCharacter(results?.[0]?.result || null);
     const tokenSpecificCharacter = parseActiveCharacter(results?.[1]?.result || null);
-    const activeCharacter = tokenSpecificCharacter || selectedCharacter || null;
+    // Phase 0: when a specific Rebel is asked for, never answer with a different Rebel's "selected" character
+    // (that made #4998's Forge preview show an old #469 build).
+    const selectedMatches = !(tokenId || rebelId) || (selectedCharacter && (
+      (tokenId && String(selectedCharacter.tokenId || '') === String(tokenId)) ||
+      (rebelId && String(selectedCharacter.rebelId || '') === String(rebelId))));
+    const activeCharacter = tokenSpecificCharacter || (selectedMatches ? selectedCharacter : null) || null;
 
     return res.status(200).json({
       ok: true,
@@ -117,7 +122,7 @@ export default async function handler(req, res) {
         storage: 'redis',
         selectedKey,
         tokenSpecificKey,
-        source: tokenSpecificCharacter ? 'token_specific' : selectedCharacter ? 'wallet_selected' : 'none'
+        source: tokenSpecificCharacter ? 'token_specific' : activeCharacter ? 'wallet_selected' : 'none'
       }
     });
   } catch (err) {

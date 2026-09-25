@@ -1,3 +1,5 @@
+import { enforceRateLimit, isAllowedAssetUrl } from './_guard.mjs';
+import { isAdminRequest } from './_admin-auth.mjs';
 const MESHY_CREATE_URL = 'https://api.meshy.ai/openapi/v1/image-to-3d';
 // Front + back views -> Meshy multi-image-to-3d (no guessed back of the head)
 const MESHY_MULTI_CREATE_URL = 'https://api.meshy.ai/openapi/v1/multi-image-to-3d';
@@ -180,6 +182,22 @@ export default async function handler(req, res) {
     }
 
     const createPayload = readMeshyCreatePayload(req.body || {});
+
+    // Phase 0 cost guard: players can only start Meshy for an existing build that has no task yet,
+    // with our reference images and the default model settings. Admins keep full control.
+    const admin = isAdminRequest(req);
+    if (!admin) {
+      if (!(await enforceRateLimit(req, res, 'meshy-create', 6, 86400, '3D generations today'))) return;
+      if (!isAllowedAssetUrl(createPayload.imageUrl) || (createPayload.backImageUrl && !isAllowedAssetUrl(createPayload.backImageUrl))) {
+        return res.status(400).json({ ok: false, error: 'Reference images must come from the Forge' });
+      }
+      const existing = createPayload.buildId ? (await redisPipeline([['GET', getBuildRecordKey(createPayload.buildId)]]))?.[0]?.result : null;
+      if (!existing) return res.status(404).json({ ok: false, error: 'Build not found' });
+      let rec = {}; try { rec = JSON.parse(existing); } catch (e) {}
+      if (rec?.engine?.taskId) return res.status(409).json({ ok: false, error: 'This build already has a 3D generation running or done' });
+      const po = createPayload.requestedOptions || {};
+      createPayload.requestedOptions = po.pose_mode === 'none' ? { pose_mode: 'none' } : {};
+    }
     const meshyRequest = buildMeshyRequest(createPayload);
 
     const meshyEndpoint = meshyRequest.image_urls ? 'multi-image-to-3d' : 'image-to-3d';

@@ -1,3 +1,4 @@
+import { isAdminRequest } from './_admin-auth.mjs';
 const MESHY_TASK_URL_BASE = 'https://api.meshy.ai/openapi/v1/image-to-3d';
 
 function getRedisConfig() {
@@ -167,7 +168,8 @@ export default async function handler(req, res) {
 
     const statusPayload = readStatusPayload(req.body || {});
     const { recordKey, buildRecord } = await loadBuildRecord(statusPayload.buildId);
-    const meshyTaskId = statusPayload.meshyTaskId || buildRecord.engine?.taskId || null;
+    // Phase 0: players can only poll the task that belongs to this build.
+    const meshyTaskId = (isAdminRequest(req) ? statusPayload.meshyTaskId : null) || buildRecord.engine?.taskId || null;
 
     if (!meshyTaskId) {
       return res.status(400).json({

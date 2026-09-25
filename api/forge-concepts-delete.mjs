@@ -1,3 +1,4 @@
+import { enforceRateLimit } from './_guard.mjs';
 function getRedisConfig() {
   return {
     url: process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || '',
@@ -74,6 +75,8 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST, DELETE');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
+
+  if (!(await enforceRateLimit(req, res, 'concept-delete', 60, 3600, 'deletes'))) return;
 
   try {
     const deleteRequest = readDeletePayload(req.body || {});

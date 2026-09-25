@@ -1,3 +1,4 @@
+import { requireAdmin } from './_guard.mjs';
 import { NodeIO } from '@gltf-transform/core';
 import { textureCompress } from '@gltf-transform/functions';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
@@ -13,6 +14,8 @@ export const config = {
 };
 
 export default async function handler(req, res) {
+  // Phase 0: legacy / dev / destructive tool, admin only.
+  if (!requireAdmin(req, res)) return;
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

@@ -26,7 +26,19 @@ export const FORGE_REFERENCE_URLS = {
   proportions: `${REPO_RAW}/assets/forge-references/proportions-master-clay.png`
 };
 
+// Phase 0 SSRF guard: public https hosts only (no localhost / IP literals / internal names).
+function assertPublicImageUrl(imageUrl) {
+  let u;
+  try { u = new URL(imageUrl); } catch (e) { throw new Error('Invalid image URL'); }
+  const h = u.hostname.toLowerCase();
+  if (u.protocol !== 'https:' || !h.includes('.') || h === 'localhost' || h.endsWith('.local') || h.endsWith('.internal') ||
+      /^[0-9.]+$/.test(h) || h.includes(':') || h.startsWith('[')) {
+    throw new Error('Image URL must be a public https address');
+  }
+}
+
 export async function fetchImageAsDataUrl(imageUrl) {
+  assertPublicImageUrl(imageUrl);
   const response = await fetch(imageUrl, {
     headers: { Accept: 'image/png,image/jpeg,image/webp,image/gif' }
   });

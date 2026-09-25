@@ -796,16 +796,10 @@ async function loadSelectedRebelMetadata(rebel) {
   if (!rebel || !rebel.tokenId) return rebel;
 
   try {
-    const CONTRACT = '0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221';
-    const API_KEY = '9c35627b295643e4aeb495a43d102928';
-    const url = `https://api.opensea.io/api/v2/metadata/ethereum/${CONTRACT}/${rebel.tokenId}`;
+    // OpenSea is called through /api/opensea-proxy so the API key stays on the server.
+    const url = `/api/opensea-proxy?kind=metadata&tokenId=${encodeURIComponent(rebel.tokenId)}`;
 
-    const r = await fetch(url, {
-      headers: {
-        accept: 'application/json',
-        'x-api-key': API_KEY
-      }
-    });
+    const r = await fetch(url, { headers: { accept: 'application/json' } });
 
     if (!r.ok) throw new Error('metadata status ' + r.status);
 
@@ -1087,15 +1081,13 @@ async function loadNFTs(walletAddress) {
 
   try {
     // Query by collection slug + wallet — gets ALL owned ants, paginated
-    const COLLECTION = 'rebel-ants-battle-for-the-colony';
-    const API_KEY = '9c35627b295643e4aeb495a43d102928';
     let allRebels = [];
     let next = null;
     let pages = 0;
 
     do {
-      const url = `https://api.opensea.io/api/v2/chain/ethereum/account/${walletAddress}/nfts?collection=${COLLECTION}&limit=50${next ? '&next=' + next : ''}`;
-      const r = await fetch(url, { headers: { 'accept': 'application/json', 'x-api-key': API_KEY } });
+      const url = `/api/opensea-proxy?kind=wallet&address=${encodeURIComponent(walletAddress)}${next ? '&next=' + encodeURIComponent(next) : ''}`;
+      const r = await fetch(url, { headers: { 'accept': 'application/json' } });
 
       if (!r.ok) throw new Error('status ' + r.status);
 

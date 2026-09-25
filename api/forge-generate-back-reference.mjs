@@ -1,3 +1,4 @@
+import { enforceRateLimit } from './_guard.mjs';
 import { forgeImageEdit, fetchImageAsDataUrl } from './_forge-image.mjs';
 import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
 
@@ -39,6 +40,9 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
+
+  // Phase 0 cost guard: OpenAI image generations per visitor per day (admins unlimited).
+  if (!(await enforceRateLimit(req, res, 'img-back', 15, 86400, 'image generations today'))) return;
 
   try {
     const apiKey = process.env.OPENAI_API_KEY;

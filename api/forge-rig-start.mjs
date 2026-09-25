@@ -1,6 +1,7 @@
 // Start the automated Forge Rigger for a stored Meshy build: POST {buildId, force?}
 // One rig per build (idempotent). Re-rigging an already rigged build (force) is admin-only.
 import { isAdminRequest } from './_admin-auth.mjs';
+import { enforceRateLimit } from './_guard.mjs';
 import { Sandbox, creds, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, loadBuild, updateRigging, sourceGlbUrl, sanitize, body } from './_forge-rig.mjs';
 
 const DAILY_LIMIT = parseInt(process.env.FORGE_RIG_DAILY_LIMIT || '200', 10);
@@ -19,9 +20,13 @@ export default async function handler(req, res) {
     if (cur.status === 'succeeded' && !(force && admin)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyDone: true });
     if (force && !admin) return res.status(401).json({ ok: false, error: 'Re-rigging requires admin' });
 
-    const day = new Date().toISOString().slice(0, 10);
-    const [cnt] = await redis([['INCR', `forge:rig:count:${day}`], ['EXPIRE', `forge:rig:count:${day}`, 172800]]);
-    if (!admin && Number(cnt?.result || 0) > DAILY_LIMIT) return res.status(429).json({ ok: false, error: 'Daily rig limit reached, try again tomorrow' });
+    // Phase 0: per-visitor limit first (so one visitor can't burn the global cap), then the global daily cap. Admins skip both.
+    if (!admin) {
+      if (!(await enforceRateLimit(req, res, 'rig-start', 6, 86400, 'rig jobs today'))) return;
+      const day = new Date().toISOString().slice(0, 10);
+      const [cnt] = await redis([['INCR', `forge:rig:count:${day}`], ['EXPIRE', `forge:rig:count:${day}`, 172800]]);
+      if (Number(cnt?.result || 0) > DAILY_LIMIT) return res.status(429).json({ ok: false, error: 'Daily rig limit reached, try again tomorrow' });
+    }
 
     const worker = await getJson(WORKER_KEY);
     if (!worker?.snapshotId) return res.status(503).json({ ok: false, error: 'Rig worker is not built yet' });
