@@ -15182,15 +15182,15 @@ const CHARACTER_REGISTRY = {
   // as named animation groups (idle, walk, run, jump, flip_kick) retargeted from the master ant.
   forged_rig_469: {
     bundleId: 'forged_rig_469', formType: 'forged', formLabel: 'Forged 3D Form (Sohei #469)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel469_forge_rig_v8_lite.glb', scale: 1.9, animations: []
+    basePath: '/assets/character/forged/', singleGlb: 'rebel469_forge_rig_v9_lite.glb', scale: 1.9, animations: []
   },
   forged_rig_1555: {
     bundleId: 'forged_rig_1555', formType: 'forged', formLabel: 'Forged 3D Form (Wokou #1555)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel1555_forge_rig_v8_lite.glb', scale: 1.9, animations: []
+    basePath: '/assets/character/forged/', singleGlb: 'rebel1555_forge_rig_v9_lite.glb', scale: 1.9, animations: []
   },
   forged_rig_4998: {
     bundleId: 'forged_rig_4998', formType: 'forged', formLabel: 'Forged 3D Form (Shogun #4998)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel4998_forge_rig_v8_lite.glb', scale: 1.9, animations: []
+    basePath: '/assets/character/forged/', singleGlb: 'rebel4998_forge_rig_v9_lite.glb', scale: 1.9, animations: []
   },
   // TRELLIS.2 test builds (free open-source image-to-3D instead of Meshy): ?rig=1555t / ?rig=4998t
   forged_rig_1555t: {
@@ -18494,12 +18494,12 @@ function unregisterEditableRoot(keyOrRoot) {
   });
 }
 
-// Forge cloth springs (v1): secondary motion for robe / armour-skirt chains baked by the Forge Rigger (cloth_skirt_<panel>_<seg>).
+// Forge cloth springs (v2): secondary motion for robe / armour-skirt chains baked by the Forge Rigger (cloth_skirt_<panel>_<seg>).
 // Clips never key these bones (their tracks are stripped at load), so this solver owns them: verlet tails with stiffness
 // toward the rest pose, drag, gravity, and sphere colliders on the legs so kicks push the cloth out instead of stretching it.
 // Cost: ~24 bones, a few dozen vector ops each, per frame, for the local player only.
 function createForgeClothSprings(scene, root, opts) {
-  opts = Object.assign({ stiffness: 2.2, drag: 0.18, gravity: 2.0, hitRadius: 0.02, legRadius: 0.085, hipRadius: 0.13 }, opts || {});
+  opts = Object.assign({ stiffness: 2.2, drag: 0.18, gravity: 2.0, hitRadius: 0.02, legRadius: 0.085, hipRadius: 0.13, legFollow: 0.6 }, opts || {});
   const V3 = BABYLON.Vector3, Q = BABYLON.Quaternion;
   const nodes = root.getDescendants(false).filter(n => n.getClassName && n.getClassName() === 'TransformNode');
   const byName = {}; nodes.forEach(n => { byName[n.name] = n; });
@@ -18525,6 +18525,27 @@ function createForgeClothSprings(scene, root, opts) {
     .map(([a, b]) => [byName[P + a], byName[P + b]]).filter(p => p[0] && p[1]);
   const hips = byName[P + 'Hips'];
   const tmpM = new BABYLON.Matrix(), tmpQ = new Q(), tmpS = new V3(), tmpT = new V3();
+  // v2: each chain's rest target follows the nearest thigh (like game skirt bones), so a high kick lifts the panel in
+  // front of that leg instead of stretching the cloth between the leg and the hips.
+  const thighs = ['Left', 'Right'].map(sd => ({ a: byName[P + sd + 'UpLeg'], b: byName[P + sd + 'Leg'] })).filter(t => t.a && t.b);
+  function hipsLocalDir(t) {
+    hips.computeWorldMatrix(true); hips.getWorldMatrix().invertToRef(tmpM);
+    return V3.TransformCoordinates(t.b.getAbsolutePosition(), tmpM).subtract(V3.TransformCoordinates(t.a.getAbsolutePosition(), tmpM)).normalize();
+  }
+  if (hips && thighs.length === 2) {
+    thighs.forEach(t => { t.a.computeWorldMatrix(true); t.b.computeWorldMatrix(true); t.rest = hipsLocalDir(t); });
+    segs.forEach(g => {
+      if (!g.first) return;
+      g.node.computeWorldMatrix(true); const p = g.node.getAbsolutePosition();
+      const dL = V3.Distance(p, thighs[0].a.getAbsolutePosition()), dR = V3.Distance(p, thighs[1].a.getAbsolutePosition());
+      const wL = dR / Math.max(1e-6, dL + dR);                   // closer to the left thigh -> follows it more
+      g.legW = [Math.min(1, Math.max(0, (wL - 0.5) * 1.6 + 0.5)), 0]; g.legW[1] = 1 - g.legW[0];
+    });
+  }
+  function swingOf(t) {
+    const cur = hipsLocalDir(t); const ax = V3.Cross(t.rest, cur); const sn = ax.length();
+    return sn < 1e-6 ? Q.Identity() : Q.RotationAxis(ax.scale(1 / sn), Math.atan2(sn, V3.Dot(t.rest, cur)));
+  }
   let enabled = true, last = performance.now(), order = 0;
   function worldScale() { root.computeWorldMatrix(true); root.getWorldMatrix().decompose(tmpS); return tmpS.x; }
   function step() {
@@ -18537,8 +18558,13 @@ function createForgeClothSprings(scene, root, opts) {
       for (let t = 0; t <= 1.0001; t += 0.25) cols.push({ c: V3.Lerp(pa, pb, t), r: opts.legRadius * s });
     });
     if (hips) cols.push({ c: hips.getAbsolutePosition().clone(), r: opts.hipRadius * s });
+    const sw = (thighs.length === 2 && thighs[0].rest && opts.legFollow > 0) ? thighs.map(swingOf) : null;
     segs.forEach(g => {
-      g.node.rotationQuaternion.copyFrom(g.restRot);
+      if (sw && g.legW) {
+        const qa = Q.Slerp(Q.Identity(), sw[0], g.legW[0] * opts.legFollow), qb = Q.Slerp(Q.Identity(), sw[1], g.legW[1] * opts.legFollow);
+        g.base = qa.multiply(qb).multiply(g.restRot);
+      } else g.base = g.restRot;
+      g.node.rotationQuaternion.copyFrom(g.base);
       g.node.computeWorldMatrix(true);
       const head = g.node.getAbsolutePosition().clone();
       const wm = g.node.getWorldMatrix();
@@ -18564,16 +18590,16 @@ function createForgeClothSprings(scene, root, opts) {
       parent.getWorldMatrix().invertToRef(tmpM);
       const hL = V3.TransformCoordinates(head, tmpM), tL = V3.TransformCoordinates(next, tmpM);
       const dNew = tL.subtract(hL).normalize();
-      const dRest = g.axis.applyRotationQuaternion(g.restRot).normalize();
+      const dRest = g.axis.applyRotationQuaternion(g.base).normalize();
       const ax = V3.Cross(dRest, dNew); const sn = ax.length(); const cs = V3.Dot(dRest, dNew);
       if (sn > 1e-6) {
         const dq = Q.RotationAxis(ax.scale(1 / sn), Math.atan2(sn, cs));
-        let cand = order === 2 ? g.restRot.multiply(dq) : dq.multiply(g.restRot);
+        let cand = order === 2 ? g.base.multiply(dq) : dq.multiply(g.base);
         if (order === 0 && sn > 0.02) {
-          const e1 = 1 - V3.Dot(g.axis.applyRotationQuaternion(dq.multiply(g.restRot)).normalize(), dNew);
-          const e2 = 1 - V3.Dot(g.axis.applyRotationQuaternion(g.restRot.multiply(dq)).normalize(), dNew);
+          const e1 = 1 - V3.Dot(g.axis.applyRotationQuaternion(dq.multiply(g.base)).normalize(), dNew);
+          const e2 = 1 - V3.Dot(g.axis.applyRotationQuaternion(g.base.multiply(dq)).normalize(), dNew);
           order = e1 <= e2 ? 1 : 2; window._forgeClothOrder = { order, e1, e2 };
-          cand = order === 2 ? g.restRot.multiply(dq) : dq.multiply(g.restRot);
+          cand = order === 2 ? g.base.multiply(dq) : dq.multiply(g.base);
         }
         g.node.rotationQuaternion.copyFrom(cand);
       }
@@ -18594,7 +18620,6 @@ function createForgeClothSprings(scene, root, opts) {
 function stripForgeClothTracks(groups) {
   groups.forEach(g => { const ta = g.targetedAnimations; for (let j = ta.length - 1; j >= 0; j--) { if (ta[j].target && /^cloth_/.test(ta[j].target.name || '')) ta.splice(j, 1); } });
 }
-
 let animState = -1, animGroups = [];
 // One-shot move on a Forge Rigger bundle; returns to idle when the clip ends. Returns false if the clip isn't in this GLB.
 function playForgeRigAction(slot, thenSlot, force) {
