@@ -95,7 +95,8 @@ function buildMeshyRequest({ imageUrl, backImageUrl, requestedOptions }) {
     topology: options.topology || 'quad',
     // 30k flattened armor relief into the normal map; ~90k keeps silhouette detail while staying village-friendly
     target_polycount: Number(options.target_polycount || process.env.FORGE_MESHY_POLYCOUNT || 90000),
-    pose_mode: options.pose_mode || 'a-pose',
+    // 'none' keeps the reference image's own pose (Meshy's forced A-pose spread #4998's bulky arms far from the body)
+    ...(options.pose_mode === 'none' ? {} : { pose_mode: options.pose_mode || 'a-pose' }),
     target_formats: Array.isArray(options.target_formats) && options.target_formats.length
       ? options.target_formats
       : ['glb']
