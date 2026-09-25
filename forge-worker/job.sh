@@ -7,6 +7,8 @@ FW="$(cd "$(dirname "$0")" && pwd)"
 SRC_URL="$1"; NAME="${2:-rebel}"; JOB="${3:-/vercel/sandbox/job}"
 PY="${FORGE_PY:-$FW/venv/bin/python}"
 export FORGE_OUT="$JOB/out" FORGE_CLIPS="$FW/clips" FORGE_PACK="$FW/pack" FORGE_PROXY_MINCOMP="${FORGE_PROXY_MINCOMP:-0.02}"
+# v1.6: keep bridge/tear faces (fixarm reweights them) so robes have no see-through cracks
+export FORGE_KEEP_TEAR="${FORGE_KEEP_TEAR:-1}" FORGE_KEEP_BRIDGE="${FORGE_KEEP_BRIDGE:-1}"
 R="$FW/rigger"; O="$FORGE_OUT"
 mkdir -p "$O"; : > "$JOB/log"
 T0=$(date +%s)
@@ -29,7 +31,8 @@ step cloth;      run "$R/clothbones.py" -- "$O/weighted_hf.blend" "$O/weighted_c
 step animate;    run "$R/retarget.py" -- "$O/weighted_cb.blend" "$O/anim6.blend"
 step moves;      run "$FW/anim/retarget_bvh.py" -- "$O/anim6.blend" "$O/anim6_ma.blend" "$FW/anim/clips.json"
 step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
-                 run "$R/footfix.py" -- "$O/anim6_fix.blend" "$O/anim6_ff.blend"
+                 run "$R/footfix.py" -- "$O/anim6_fix.blend" "$O/anim6_ff0.blend"
+                 run "$R/padfix.py" -- "$O/anim6_ff0.blend" "$O/anim6_ff.blend"
 step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=1536 FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
 step qa;         run "$FW/qa_job.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb" "$JOB/qa.json" "$JOB/log"
 step thumb;      "$PY" "$FW/thumb.py" -- "$JOB/rig.glb" "$JOB/thumb.jpg" 384 >> "$JOB/log" 2>&1 || echo "thumb failed (non-fatal)" >> "$JOB/log"

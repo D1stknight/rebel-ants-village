@@ -27,6 +27,7 @@ dom=[chain_of(names[i]) for i in MW.argmax(1)]
 from collections import Counter
 Fv0=[p.vertices[:] for p in mesh.data.polygons]
 kill=set(fi for fi,f in enumerate(Fv0) if any(bad(dom[f[i]],dom[f[(i+1)%len(f)]]) for i in range(len(f))))
+if _os.environ.get('FORGE_KEEP_BRIDGE'): kill=set()
 print('bridge faces',len(kill), Counter(tuple(sorted(set(dom[v] for v in Fv0[fi]))) for fi in kill).most_common(6))
 am=mesh.modifiers.new('Armature','ARMATURE'); am.object=arm; mesh.parent=arm
 # TEAR: fused cloth seams (sleeve glued to torso). Pose arms up/forward, delete arm<->core faces that stretch > 4x
@@ -53,6 +54,7 @@ dom=[chain_of(names[i]) for i in MW.argmax(1)]
 armc=lambda c: c.endswith('Arm') or c.endswith('Hand')
 ARMW=MW[:,[i for i,n in enumerate(names) if armc(chain_of(n))]].sum(1)
 tear=[fi for fi,f in enumerate(Fv) if worst[fi]>5 and max(ARMW[v] for v in f)>0.2]
+if _os.environ.get('FORGE_KEEP_TEAR'): tear=[]   # v1.6: keep the faces (fixarm reweights them) instead of cutting holes
 print('tear faces',len(tear))
 kill|=set(tear)
 bm=bmesh.new(); bm.from_mesh(mesh.data); bm.faces.ensure_lookup_table()

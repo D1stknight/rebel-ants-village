@@ -15235,16 +15235,16 @@ const REBEL_CHARACTER_RECORDS = {
   "1555": { bundleId: "forged_rig_1555" },
   "4998": { bundleId: "forged_rig_4998" }
 };
-// Play-test override: village.html?rig=469 | 1555 | 4998 | master (remembered in localStorage 'forgeRigOverride')
+// Play-test override: village.html?rig=469 | 1555 | 4998 | master (this page load only)
 function getForgeRigOverrideBundleId() {
+  // URL-only test override. It used to be remembered in localStorage, which made every Rebel (even #001) load
+  // the last tested rig; the old stored value is cleared here.
   let v = null;
   try {
-    const q = new URLSearchParams(window.location.search).get('rig');
-    if (q) localStorage.setItem('forgeRigOverride', q);
-    v = q || localStorage.getItem('forgeRigOverride');
+    localStorage.removeItem('forgeRigOverride');
+    v = new URLSearchParams(window.location.search).get('rig');
   } catch (e) {}
-  if (!v) return null;
-  if (v === 'off' || v === 'none') { try { localStorage.removeItem('forgeRigOverride'); } catch (e) {} return null; }
+  if (!v || v === 'off' || v === 'none') return null;
   if (v === 'master') return 'starter_ant';
   return CHARACTER_REGISTRY['forged_rig_' + v] ? 'forged_rig_' + v : null;
 }

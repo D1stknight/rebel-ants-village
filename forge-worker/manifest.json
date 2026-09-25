@@ -1,5 +1,5 @@
 {
- "version": "1.6",
+ "version": "1.6b",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
@@ -24,6 +24,7 @@
   "rigger/master.py",
   "rigger/mkw.py",
   "rigger/normalize.py",
+  "rigger/padfix.py",
   "rigger/posetest.py",
   "rigger/qa.py",
   "rigger/render.py",
