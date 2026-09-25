@@ -38,7 +38,7 @@ async function startSetup({ commit }) {
   if (Object.keys(pack).length < MIN_PACK_FILES) throw new Error(`Mocap pack incomplete (${Object.keys(pack).length}/${MIN_PACK_FILES} files)`);
   const sha = commit || process.env.VERCEL_GIT_COMMIT_SHA || 'dev';
   const raw = `https://raw.githubusercontent.com/${REPO}/${sha}`;
-  const sandbox = await Sandbox.create({ image: 'vercel/sandbox/ubuntu', resources: { vcpus: 2 }, timeout: 40 * 60 * 1000, tags: { purpose: 'forge-rig-worker-setup' }, ...creds() });
+  const sandbox = await Sandbox.create({ image: 'vercel/sandbox/ubuntu', persistent: false, resources: { vcpus: 2 }, timeout: 40 * 60 * 1000, tags: { purpose: 'forge-rig-worker-setup' }, ...creds() });
   const setupRes = await fetch(`${raw}/forge-worker/setup.sh`);
   if (!setupRes.ok) throw new Error(`Could not fetch setup.sh for ${sha} (${setupRes.status})`);
   await sandbox.writeFiles([
@@ -71,9 +71,11 @@ async function status() {
     const cmd = await sandbox.getCommand(s.cmdId);
     const log = (await readText(sandbox, SETUP_LOG)) || '';
     s.logTail = log.split('\n').slice(-12).join('\n');
-    if (cmd.exitCode === null || cmd.exitCode === undefined) {
+    // READY is the last thing setup.sh writes; the command's exit status can lag behind (child processes), so READY wins.
+    const ready = Boolean(await readText(sandbox, `${FW}/READY`));
+    if (!ready && (cmd.exitCode === null || cmd.exitCode === undefined)) {
       await setJson(WORKER_KEY, worker);
-    } else if (cmd.exitCode === 0 && (await readText(sandbox, `${FW}/READY`))) {
+    } else if (ready) {
       const snap = await sandbox.snapshot({ expiration: 0 });
       Object.assign(worker, { snapshotId: snap.snapshotId || snap.id, commit: s.commit, builtAt: new Date().toISOString() });
       s.status = 'done'; s.finishedAt = worker.builtAt;

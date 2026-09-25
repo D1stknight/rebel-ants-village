@@ -29,6 +29,7 @@ export default async function handler(req, res) {
     const name = `rebel${sanitize(rec.tokenId || rec.rebelId, 'x')}`;
     const sandbox = await Sandbox.create({
       source: { type: 'snapshot', snapshotId: worker.snapshotId },
+      persistent: false,
       resources: { vcpus: 2 },
       timeout: JOB_TIMEOUT_MS,
       tags: { purpose: 'forge-rig-job', build: String(buildId).slice(0, 200) },

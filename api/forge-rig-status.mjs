@@ -23,7 +23,10 @@ export default async function handler(req, res) {
     const progress = ((await readText(sandbox, `${JOB_DIR}/progress`)) || fr.progress || 'starting').trim();
     const pct = Math.round(100 * Math.max(0, STEPS.indexOf(progress)) / (STEPS.length - 1));
 
-    if (cmd.exitCode === null || cmd.exitCode === undefined) {
+    // result.json is written last (success or failure); the command's exit status can lag behind it.
+    const resultText = await readText(sandbox, `${JOB_DIR}/result.json`);
+    const finished = Boolean(resultText) || !(cmd.exitCode === null || cmd.exitCode === undefined);
+    if (!finished) {
       const late = Date.now() - Date.parse(fr.startedAt) > JOB_TIMEOUT_MS + 60000;
       if (late) {
         try { await sandbox.stop(); } catch (e) {}
@@ -38,8 +41,8 @@ export default async function handler(req, res) {
     const [lock] = await redis([['SET', `forge:rig:finalize:${buildId}`, '1', 'NX', 'EX', 120]]);
     if (lock?.result !== 'OK') return res.status(200).json({ ok: true, forgeRig: { ...fr, progress: 'saving' }, percent: 99 });
 
-    const result = JSON.parse((await readText(sandbox, `${JOB_DIR}/result.json`)) || '{}');
-    if (cmd.exitCode !== 0 || !result.ok) {
+    const result = JSON.parse(resultText || (await readText(sandbox, `${JOB_DIR}/result.json`)) || '{}');
+    if (!result.ok) {
       const log = (await readText(sandbox, `${JOB_DIR}/log`)) || '';
       try { await sandbox.stop(); } catch (e) {}
       const next = await updateRigging(buildId, {
