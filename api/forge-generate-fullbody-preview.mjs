@@ -1,5 +1,6 @@
 import { forgeImageEdit, fetchImageAsDataUrl, FORGE_REFERENCE_URLS } from './_forge-image.mjs';
 import { buildOutfitDesignBlock } from './_forge-outfits.mjs';
+import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
 
 const DEFAULT_SIZE = '1024x1536';
 const FORGE_ECONOMY_VERSION = 'v0_testing_free';
@@ -149,6 +150,8 @@ Proportions (match ${PROP}):
 - Legs are long: from crotch to floor is about 40-45% of the height (without antennae).
 - Shoulders are no wider than about 1.1 head widths each side of the neck; slim, athletic torso.
 - Hands and boots are readable and proportionate, not oversized.
+
+${buildRigFriendlyRules(generationInput, { view: 'front' })}
 
 Materials and rendering (this image will be turned into a 3D model):
 - Render all cloth, robes, wraps, headwear and bandanas as MATTE fabric. No glossy, chrome, metallic or wet highlights on cloth, even when it is gold or yellow.

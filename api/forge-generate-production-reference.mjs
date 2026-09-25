@@ -1,4 +1,5 @@
 import { forgeImageEdit, fetchImageAsDataUrl, FORGE_REFERENCE_URLS } from './_forge-image.mjs';
+import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
 
 const DEFAULT_SIZE = '1024x1536';
 
@@ -81,6 +82,8 @@ Proportions (match Image 2):
 - Head (without antennae) about one quarter of the height; you may scale the head uniformly, never change its design.
 - Legs from crotch to floor about 40-45% of the height; slim athletic torso; shoulders not wider than Image 2.
 - Hands and boots proportionate and clearly readable.
+
+${buildRigFriendlyRules(generationInput, { view: 'front' })}
 
 Materials and lighting (this image goes straight into image-to-3D):
 - All cloth, robes, wraps, headwear and bandanas are MATTE fabric. No glossy, chrome, metallic or wet-looking highlights on cloth, even gold or yellow cloth.

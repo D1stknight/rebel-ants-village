@@ -53,7 +53,7 @@ const VARIATION_AXES = {
     'one asymmetric accent piece on the LEFT shoulder',
     'one asymmetric accent piece on the RIGHT shoulder',
     'a scroll case at the hip',
-    'wrist wraps with trailing ends',
+    'tight wrist wraps with flat tucked ends',
     'a small emblem plate on the chest'
   ],
   pattern: [

@@ -1,4 +1,5 @@
 import { forgeImageEdit, fetchImageAsDataUrl } from './_forge-image.mjs';
+import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
 
 // Back view of a Forge production reference, for Meshy multi-image-to-3D.
 // A single front image makes Meshy guess the back, which puts faces, eye patches and visors on the back of the head.
@@ -26,6 +27,8 @@ The back of the body:
 - Continue the outfit logically: the back of the robe, vest or armour, the knot of the sash or belt, back plates, and the backs of the sleeves, legs and footwear.
 - Keep anything worn on the back (quiver, scabbard strap, cape) only if Image 1 clearly implies it. No weapons in the hands.
 - Colony: ${colony}.
+
+${buildRigFriendlyRules(generationInput, { view: 'back' })}
 
 Output: one single full-body back view. Not a collage, not a turnaround sheet, no text, no extra characters, no cropped limbs.
 `.trim();
