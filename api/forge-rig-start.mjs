@@ -1,6 +1,7 @@
 // Start the automated Forge Rigger for a stored Meshy build: POST {buildId, force?}
 // Admin-only extras: sourceUrl (rig a different static GLB for this build, e.g. a TRELLIS.2 source in the repo) and
-// skirtfix (TRELLIS mode: open-cloth cleanup, hand/skirt webbing cut, bridge faces cut).
+// skirtfix (TRELLIS mode: open-cloth cleanup, hand/skirt webbing cut, bridge faces cut) and headUp (degrees to raise
+// the chin, for models whose mask sits low and reads as looking down).
 // One rig per build (idempotent). Re-rigging an already rigged build (force) is admin-only.
 import { isAdminRequest } from './_admin-auth.mjs';
 import { enforceRateLimit } from './_guard.mjs';
@@ -11,12 +12,13 @@ const DAILY_LIMIT = parseInt(process.env.FORGE_RIG_DAILY_LIMIT || '200', 10);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
-  const { buildId, force, sourceUrl, skirtfix } = body(req);
+  const { buildId, force, sourceUrl, skirtfix, headUp } = body(req);
   if (!buildId) return res.status(400).json({ ok: false, error: 'Missing buildId' });
   try {
     const rec = await loadBuild(buildId);
     const admin = isAdminRequest(req);
-    if ((sourceUrl || skirtfix) && !admin) return res.status(401).json({ ok: false, error: 'sourceUrl / skirtfix require admin' });
+    if ((sourceUrl || skirtfix || headUp) && !admin) return res.status(401).json({ ok: false, error: 'sourceUrl / skirtfix / headUp require admin' });
+    const up = Number(headUp || 0); if (!Number.isFinite(up) || up < -20 || up > 25) return res.status(400).json({ ok: false, error: 'headUp must be -20..25 degrees' });
     if (sourceUrl && !SOURCE_OK.test(String(sourceUrl))) return res.status(400).json({ ok: false, error: 'sourceUrl must be a GLB in this repo or our Blob store' });
     const src = sourceUrl || sourceGlbUrl(rec);
     if (!src) return res.status(409).json({ ok: false, error: 'Build has no stored GLB yet (run forge-3d-store-glb first)' });
@@ -48,7 +50,7 @@ export default async function handler(req, res) {
     const cmd = await sandbox.runCommand({
       cmd: 'bash',
       args: ['-c', `mkdir -p ${JOB_DIR} && bash ${FW}/job.sh "$SRC_URL" "$RIG_NAME" ${JOB_DIR}`],
-      env: { SRC_URL: src, RIG_NAME: name, ...(skirtfix ? { FORGE_SKIRTFIX: '1', FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}) },
+      env: { SRC_URL: src, RIG_NAME: name, ...(skirtfix ? { FORGE_SKIRTFIX: '1', FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(up ? { FORGE_HEAD_UP: String(up) } : {}) },
       sudo: true,
       detached: true
     });
@@ -60,6 +62,7 @@ export default async function handler(req, res) {
       cmdId: cmd.cmdId,
       workerCommit: worker.commit || null,
       sourceGlbUrl: src,
+      options: { skirtfix: !!skirtfix, headUp: up || 0 },
       startedAt: new Date().toISOString(),
       finishedAt: null,
       error: null

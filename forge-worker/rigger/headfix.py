@@ -14,6 +14,7 @@ KEEP = float(os.environ.get('FORGE_HEAD_KEEP', '0.1'))
 NECK_FOLLOW = float(os.environ.get('FORGE_NECK_FOLLOW', '0.8'))
 NECK_KEEP = float(os.environ.get('FORGE_NECK_KEEP', '0.3'))
 CLAMP = math.radians(float(os.environ.get('FORGE_HEAD_CLAMP', '12')))
+UPBIAS = math.radians(float(os.environ.get('FORGE_HEAD_UP', '0')))   # per-model: raise the chin (generators often seat the mask low)
 LIFT = float(os.environ.get('FORGE_NECK_LIFT', '0.022'))    # fraction of body height the head is raised off the collar
 SKIP = set(os.environ.get('FORGE_HEAD_SKIP', 'cartwheel,backflip,front_flip,flip_kick,spin_flip_kick,knockdown,get_up').split(','))
 bpy.ops.wm.open_mainfile(filepath=src)
@@ -72,6 +73,7 @@ def level(bone, follow, keep, clamp, frames_out):
         c = lean(Aw @ pc.matrix, F)                  # chest lean from world vertical (rest chest bones often tip back)
         h = lean(Mw, F) - RLEAN[bone]
         t = max(-clamp, min(clamp, follow * c + keep * (h - c)))
+        if bone == 'Head': t -= UPBIAS
         before.append(math.degrees(h)); after.append(math.degrees(t))
         Rn = Quaternion(Y @ X, t) @ Y @ Rrest          # yaw kept, roll dropped, lean t about the yawed side axis
         Mn = Rn.to_matrix().to_4x4(); Mn.translation = Mw.translation
