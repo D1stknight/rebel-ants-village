@@ -123,7 +123,6 @@ p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
 .comb{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:14px}
 .hex{aspect-ratio:1/1.1;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:rgba(239,230,210,.06);display:grid;place-items:center;font-size:13px;color:rgba(239,230,210,.25);transition:all .35s}
 .hex.on{background:linear-gradient(180deg,rgba(255,181,71,.9),rgba(255,106,31,.75));color:#2a1204;text-shadow:0 1px 0 rgba(255,255,255,.3)}
-.hex:nth-child(8n+5),.hex:nth-child(8n+6),.hex:nth-child(8n+7),.hex:nth-child(8n+8){transform:translateX(50%)}
 
 /* ---------- center overlays ---------- */
 #center{position:fixed;z-index:10;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;width:min(520px,44vw)}
@@ -157,7 +156,7 @@ p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
 #reveal{position:fixed;z-index:12;left:50%;top:92px;transform:translateX(-50%);text-align:center;pointer-events:none;opacity:0}
 #reveal .nm{font-family:Cinzel,serif;font-weight:900;font-size:clamp(28px,4vw,54px);letter-spacing:.14em;background:linear-gradient(180deg,var(--whitehot),var(--molten));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 40px rgba(255,106,31,.25)}
 #reveal .mei{font-size:clamp(18px,2vw,26px);color:var(--washi);letter-spacing:.4em;margin-top:4px}
-#hanko{position:fixed;z-index:13;left:calc(50% + min(22vw,300px));top:110px;width:78px;height:78px;border:4px solid var(--shu);border-radius:8px;color:var(--shu);background:rgba(200,50,30,.06);display:grid;place-items:center;font-size:26px;line-height:1;text-align:center;transform:scale(3) rotate(-12deg);opacity:0;pointer-events:none;box-shadow:0 0 30px rgba(200,50,30,.25)}
+#hanko{position:fixed;z-index:13;left:calc(50% - min(22vw,290px) - 90px);top:104px;width:78px;height:78px;border:4px solid var(--shu);border-radius:8px;color:var(--shu);background:rgba(200,50,30,.06);display:grid;place-items:center;font-size:26px;line-height:1;text-align:center;transform:scale(3) rotate(-12deg);opacity:0;pointer-events:none;box-shadow:0 0 30px rgba(200,50,30,.25)}
 #awakenBtn{position:fixed;z-index:14;left:50%;bottom:9vh;transform:translateX(-50%);display:none;width:138px;height:138px;border-radius:50%;pointer-events:auto}
 #awakenBtn svg{position:absolute;inset:0}
 #awakenBtn .lbl{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
@@ -179,7 +178,8 @@ p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
 .ctl:hover{color:var(--washi);border-color:rgba(239,230,210,.35)}
 .ctl.on{color:var(--jade);border-color:rgba(63,209,168,.5)}
 .ctl.kata{color:#1a0d05;border:0;background:linear-gradient(180deg,var(--molten),var(--ember));font-family:Cinzel,serif;letter-spacing:.12em}
-.moves{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.moves{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:rgba(239,230,210,.18) transparent}
+.moves::-webkit-scrollbar{height:5px}.moves::-webkit-scrollbar-track{background:transparent}.moves::-webkit-scrollbar-thumb{background:rgba(239,230,210,.18);border-radius:5px}
 .mv{scroll-snap-align:start;flex:0 0 auto;width:112px;border-radius:12px;border:1px solid rgba(239,230,210,.08);background:rgba(239,230,210,.03);padding:10px 10px 9px;text-align:left;position:relative;overflow:hidden;transition:all .25s var(--ease)}
 .mv:hover{border-color:rgba(239,230,210,.3);transform:translateY(-2px)}
 .mv .mk{font-size:24px;line-height:1;color:var(--washi)}
@@ -194,7 +194,7 @@ p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
 .mv.on .mh{color:#1a0d05;border-color:rgba(26,13,5,.3)}
 .mv.on svg.ring .bgc{stroke:rgba(26,13,5,.2)}
 .mv.on svg.ring .fgc{stroke:#1a0d05}
-.nowplaying{position:fixed;z-index:12;left:50%;bottom:190px;transform:translateX(-50%);text-align:center;pointer-events:none;opacity:0;transition:opacity .4s}
+.nowplaying{position:fixed;z-index:12;left:50%;bottom:205px;transform:translateX(-50%);text-align:center;pointer-events:none;opacity:0;transition:opacity .4s}
 .nowplaying b{font-size:44px;color:var(--whitehot);text-shadow:0 0 30px rgba(255,106,31,.6);display:block;line-height:1}
 .nowplaying span{font-family:Cinzel,serif;font-size:12px;letter-spacing:.32em;color:var(--washi-dim)}
 
@@ -311,11 +311,11 @@ const el = (h) => { const t = document.createElement('template'); t.innerHTML = 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const STEPS = [
-  { id: 'summon', k: '召', name: 'SUMMON', cam: { a: -1.25, b: 1.32, r: 5.6, y: 1.05 } },
-  { id: 'ink', k: '墨', name: 'INK', cam: { a: -1.6, b: 1.3, r: 6.4, y: 1.1 } },
-  { id: 'form', k: '図', name: 'BLUEPRINT', cam: { a: -1.9, b: 1.25, r: 7.0, y: 1.1 } },
-  { id: 'forge', k: '鍛', name: 'FORGE', cam: { a: -1.57, b: 1.36, r: 4.9, y: 1.1 } },
-  { id: 'awaken', k: '覚', name: 'AWAKEN', cam: { a: -1.57, b: 1.38, r: 4.4, y: 1.0 } }
+  { id: 'summon', k: '召', name: 'SUMMON', cam: { a: 1.9, b: 1.32, r: 5.6, y: 1.05 } },
+  { id: 'ink', k: '墨', name: 'INK', cam: { a: 1.6, b: 1.3, r: 6.4, y: 1.1 } },
+  { id: 'form', k: '図', name: 'BLUEPRINT', cam: { a: 1.3, b: 1.25, r: 7.0, y: 1.1 } },
+  { id: 'forge', k: '鍛', name: 'FORGE', cam: { a: 1.57, b: 1.36, r: 4.9, y: 1.1 } },
+  { id: 'awaken', k: '覚', name: 'AWAKEN', cam: { a: 1.57, b: 1.4, r: 4.6, y: 1.05 } }
 ];
 
 // 24 moves in 4 kamon groups (clip names = Forge Rigger output)
@@ -376,7 +376,7 @@ const scene = new BABYLON.Scene(engine);
 // opaque sumi background (additive glow needs an opaque target); CSS atmosphere is screen-blended on top
 scene.clearColor = new BABYLON.Color4(0.043, 0.039, 0.047, 1);
 scene.skipPointerMovePicking = true;
-const cam = new BABYLON.ArcRotateCamera('cam', -1.25, 1.32, 5.6, new BABYLON.Vector3(0, 1.05, 0), scene);
+const cam = new BABYLON.ArcRotateCamera('cam', 1.9, 1.32, 5.6, new BABYLON.Vector3(0, 1.05, 0), scene);
 cam.fov = 0.75; cam.minZ = 0.05; cam.lowerRadiusLimit = 2.2; cam.upperRadiusLimit = 9; cam.lowerBetaLimit = 0.5; cam.upperBetaLimit = 1.62;
 cam.wheelDeltaPercentage = 0.01; cam.panningSensibility = 0; cam.attachControl(canvas, true);
 cam.inputs.removeByType('ArcRotateCameraKeyboardMoveInput');
@@ -410,8 +410,8 @@ const texSoft = spriteTex('soft', 'rgba(255,255,255,.9)', 'rgba(255,255,255,.25)
   c.lineCap = 'round';
   for (let i = 0; i < 340; i++) {
     const a0 = -0.4 + i / 340 * (Math.PI * 1.86); const w = 26 * Math.sin(Math.PI * i / 340) + 3;
-    c.strokeStyle = `rgba(255,${150 + (i % 40)},${70},${0.05 + 0.5 * Math.sin(Math.PI * i / 340)})`;
-    c.lineWidth = w; c.beginPath(); c.arc(512, 512, 372 + Math.sin(i * 0.3) * 3, a0, a0 + 0.03); c.stroke();
+    c.strokeStyle = `rgba(255,${150 + (i % 40)},${70},${0.03 + 0.22 * Math.sin(Math.PI * i / 340)})`;
+    c.lineWidth = w * 0.6; c.beginPath(); c.arc(512, 512, 372 + Math.sin(i * 0.3) * 3, a0, a0 + 0.03); c.stroke();
   }
   t.hasAlpha = true; t.update();
   const m = new BABYLON.StandardMaterial('ensoM', scene); m.diffuseTexture = t; m.opacityTexture = t; m.emissiveColor = new BABYLON.Color3(1, 1, 1); m.disableLighting = true; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.backFaceCulling = false;
@@ -480,12 +480,12 @@ void main(){
   if (kind > 1.95 && kind < 2.95 && fract(kind*10.0+0.01) > 0.65) c = mix(jade, shu, 0.35);
   float band = exp(-pow((yN - uProgress)*38.0, 2.0)) * step(0.001, uProgress) * step(uProgress, 0.999);
   c = mix(c, mix(white, c, 0.35), locked * step(uProgress, 0.9999) * 0.55);
-  c += white * band * 1.6;
+  c += white * band * 0.35;
   c = mix(c, mix(ember, molten, seed.z), m*0.7);
   float a = uAlpha * built * (kind > 2.95 ? 0.35 : 1.0) * (1.0 - uScatter*0.9);
   a *= (0.55 + 0.45*(1.0 - chaos*0.6));
-  vColor = c; vA = a;
-  float sz = (kind > 2.95 ? 1.0 : 1.8) + seed.y*1.6 + band*3.0;
+  vColor = c; vA = a * (kind < 1.5 ? 0.55 : (kind < 2.95 ? 0.42 : 0.3));
+  float sz = (kind < 1.5 ? 2.6 : (kind > 2.95 ? 1.0 : 1.4)) + seed.y*1.2 + band*0.8;
   sz *= mix(1.0, 0.7, m);
   gl_PointSize = uPixel * sz / gl_Position.w;
 }`;
@@ -538,7 +538,7 @@ sparks.color1 = new BABYLON.Color4(1, 0.95, 0.8, 1); sparks.color2 = new BABYLON
 sparks.minSize = 0.012; sparks.maxSize = 0.04; sparks.minLifeTime = 0.35; sparks.maxLifeTime = 1.1;
 sparks.minEmitPower = 2.2; sparks.maxEmitPower = 5.5; sparks.gravity = new BABYLON.Vector3(0, -7, 0); sparks.emitRate = 0; sparks.updateSpeed = 0.012;
 sparks.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD; sparks.isLocal = false;
-sparks.addSizeGradient(0, 1); sparks.addSizeGradient(1, 0.2);
+sparks.addSizeGradient(0, 0.045); sparks.addSizeGradient(1, 0.008);
 sparks.start();
 function burst(y = 1, n = 260) { sparks.emitter = new BABYLON.Vector3((Math.random() - 0.5) * 0.3, y, (Math.random() - 0.5) * 0.3); sparks.manualEmitCount = n; }
 
