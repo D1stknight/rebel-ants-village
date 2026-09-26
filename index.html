@@ -796,8 +796,8 @@ async function loadSelectedRebelMetadata(rebel) {
   if (!rebel || !rebel.tokenId) return rebel;
 
   try {
-    // OpenSea is called through /api/opensea-proxy so the API key stays on the server.
-    const url = `/api/opensea-proxy?kind=metadata&tokenId=${encodeURIComponent(rebel.tokenId)}`;
+    // Alchemy first, OpenSea fallback, cached on our server (/api/nft-token works for every configured collection).
+    const url = `/api/nft-token?c=${encodeURIComponent(rebel.collectionKey || 'battle_for_colony')}&t=${encodeURIComponent(rebel.tokenId)}`;
 
     const r = await fetch(url, { headers: { accept: 'application/json' } });
 
@@ -1080,24 +1080,11 @@ async function loadNFTs(walletAddress) {
   setStatus('Loading your Rebels...');
 
   try {
-    // Query by collection slug + wallet — gets ALL owned ants, paginated
-    let allRebels = [];
-    let next = null;
-    let pages = 0;
-
-    do {
-      const url = `/api/opensea-proxy?kind=wallet&address=${encodeURIComponent(walletAddress)}${next ? '&next=' + encodeURIComponent(next) : ''}`;
-      const r = await fetch(url, { headers: { 'accept': 'application/json' } });
-
-      if (!r.ok) throw new Error('status ' + r.status);
-
-      const data = await r.json();
-      allRebels = allRebels.concat(data.nfts || []);
-      next = data.next || null;
-      pages++;
-
-      setStatus('Loading... ' + allRebels.length + ' found');
-    } while (next && pages < 10); // max 500 ants
+    // One call for every configured collection (Alchemy first, OpenSea fallback). Images come from our lazy cache.
+    const r = await fetch(`/api/nft-wallet?address=${encodeURIComponent(walletAddress)}`, { headers: { accept: 'application/json' } });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.ok) throw new Error(data.error || ('status ' + r.status));
+    const allRebels = data.tokens || [];
 
     if (allRebels.length === 0) {
       setStatus('No Rebels found — showing default');
@@ -1105,14 +1092,22 @@ async function loadNFTs(walletAddress) {
       return;
     }
 
-    const mappedRebels = allRebels.map(n => ({
-      id: 'rebel_' + n.identifier,
-      rebelId: 'rebel_' + n.identifier,
-      name: n.name || ('Rebel #' + n.identifier),
-      image: n.image_url || 'assets/lobby/ant_1.JPG',
-      tokenId: n.identifier,
-      collectionKey: 'battle_for_colony'
-    }));
+    const mappedRebels = allRebels.map((n) => {
+      const key = n.collectionKey || 'battle_for_colony';
+      const id = (key === 'battle_for_colony' ? 'rebel_' : key + '_') + n.tokenId;
+      const traits = normalizeRebelTraits(n.traits);
+      const hasTraits = Object.keys(traits).length > 0;
+      return {
+        id,
+        rebelId: id,
+        name: n.name || ('Rebel #' + n.tokenId),
+        image: n.thumb || n.image || 'assets/lobby/ant_1.JPG',
+        imageFull: n.image || n.thumb || '',
+        tokenId: n.tokenId,
+        collectionKey: key,
+        ...(hasTraits ? { traits, gangName: traits['Gang Names'] || null } : {})
+      };
+    });
 
     setStatus('Checking Forge characters...');
 

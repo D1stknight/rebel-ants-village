@@ -1,6 +1,7 @@
 import { isAdminRequest } from './_admin-auth.mjs';
 import { forgeImageEdit, fetchImageAsDataUrl } from './_forge-image.mjs';
 import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
+import { getToken } from './_nft.mjs';
 
 // Targeted touch-up of an existing Forge production (front) or back reference.
 // Keeps the character, outfit, pose and framing identical and only applies the corrections:
@@ -24,14 +25,10 @@ Output: one single full-body ${view === 'back' ? 'back' : 'front'} view. Not a c
 `.trim();
 }
 
-const ANTS2_CONTRACT = '0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221';
 async function lookupNftImageUrl(tokenId) {
-  const apiKey = process.env.OPENSEA_API_KEY;
-  const r = await fetch(`https://api.opensea.io/api/v2/chain/ethereum/contract/${ANTS2_CONTRACT}/nfts/${encodeURIComponent(String(tokenId))}`,
-    { headers: { accept: 'application/json', ...(apiKey ? { 'x-api-key': apiKey } : {}) } });
-  if (!r.ok) throw new Error('OpenSea NFT lookup failed. Status: ' + r.status);
-  const d = await r.json(); const n = d.nft || d;
-  return n.image_url || n.display_image_url || n.metadata?.image || null;
+  // Alchemy first (OpenSea fallback) via the shared NFT layer.
+  const t = await getToken('battle_for_colony', String(tokenId));
+  return (t.sourceImages || [])[0] || null;
 }
 
 export default async function handler(req, res) {

@@ -76,6 +76,7 @@ export function isAllowedAssetUrl(value, { blobOnly = false } = {}) {
 export function isAllowedModelRef(value) {
   if (typeof value !== 'string') return false;
   if (/^\/?assets\/[A-Za-z0-9_./-]+\.(glb|gltf|png|jpe?g|webp)$/i.test(value) && !value.includes('..')) return true;
+  if (/^\/api\/nft-image\?c=[a-z0-9_]{1,60}&t=[0-9]{1,78}&s=(thumb|full)$/.test(value)) return true;
   return isAllowedAssetUrl(value);
 }
 
