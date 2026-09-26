@@ -36,6 +36,7 @@
   "rigger/views.py",
   "rigger/weights2.py",
   "setup.sh",
-  "thumb.py"
+  "thumb.py",
+  "rigger/layerfix.py"
  ]
 }

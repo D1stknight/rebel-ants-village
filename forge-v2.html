@@ -25,12 +25,14 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .cz{font-family:Cinzel,serif;letter-spacing:.08em}
 
 /* ---------- atmosphere ---------- */
-#bg{position:fixed;inset:0;z-index:3;pointer-events:none;mix-blend-mode:screen;background:
+/* v3.1: the atmosphere is drawn inside Babylon as a background layer (behind the Rebel). As a screen-blended CSS layer
+   above the canvas it washed a blue haze over the character and made him look see-through. */
+#bg{display:none;position:fixed;inset:0;z-index:3;pointer-events:none;mix-blend-mode:screen;background:
   radial-gradient(120% 80% at 50% 110%, rgba(56,182,255,.16), transparent 55%),
   radial-gradient(70% 55% at 50% 55%, rgba(61,123,255,.09), transparent 70%),
   radial-gradient(40% 40% at 15% 10%, rgba(56,182,255,.06), transparent 70%),
   linear-gradient(180deg,#0a0d10 0%, #0B0A0C 60%, #081014 100%)}
-#grain{position:fixed;inset:-50%;z-index:4;pointer-events:none;opacity:.07;
+#grain{position:fixed;inset:-50%;z-index:4;pointer-events:none;opacity:.035;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .85 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   animation:grain 1.2s steps(6) infinite}
 @keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-3%)}60%{transform:translate(-2%,-1%)}80%{transform:translate(3%,3%)}100%{transform:translate(0,0)}}
@@ -388,6 +390,17 @@ const scene = new BABYLON.Scene(engine);
 // opaque sumi background (additive glow needs an opaque target); CSS atmosphere is screen-blended on top
 scene.clearColor = new BABYLON.Color4(0.043, 0.039, 0.047, 1);
 scene.skipPointerMovePicking = true;
+(function atmosphere() {
+  const W = 1024, Hh = 1024, t = new BABYLON.DynamicTexture('atmo', { width: W, height: Hh }, scene, false), c = t.getContext();
+  const lin = c.createLinearGradient(0, 0, 0, Hh); lin.addColorStop(0, '#0a0d10'); lin.addColorStop(0.6, '#0B0A0C'); lin.addColorStop(1, '#081014');
+  c.fillStyle = lin; c.fillRect(0, 0, W, Hh);
+  const blob = (x, y, rx, ry, col) => { c.save(); c.translate(x, y); c.scale(1, ry / rx); const g = c.createRadialGradient(0, 0, 0, 0, 0, rx); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(-rx, -rx, rx * 2, rx * 2); c.restore(); };
+  c.globalCompositeOperation = 'lighter';
+  blob(W * 0.5, Hh * 1.1, W * 0.66, Hh * 0.44, 'rgba(56,182,255,.16)');
+  blob(W * 0.5, Hh * 0.55, W * 0.38, Hh * 0.3, 'rgba(61,123,255,.09)');
+  blob(W * 0.15, Hh * 0.1, W * 0.28, Hh * 0.28, 'rgba(56,182,255,.06)');
+  t.update(); const L = new BABYLON.Layer('atmo', null, scene, true); L.texture = t;
+})();
 const cam = new BABYLON.ArcRotateCamera('cam', 1.9, 1.32, 5.6, new BABYLON.Vector3(0, 1.05, 0), scene);
 cam.fov = 0.75; cam.minZ = 0.05; cam.lowerRadiusLimit = 2.2; cam.upperRadiusLimit = 9; cam.lowerBetaLimit = 0.5; cam.upperBetaLimit = 1.62;
 cam.wheelDeltaPercentage = 0.01; cam.panningSensibility = 0; cam.attachControl(canvas, true);
@@ -986,11 +999,12 @@ function awaken() {
     .add(() => { play('fight_idle', true); rebel.meshes.forEach((m) => gsap.to(m, { visibility: 1, duration: 1.2, ease: 'power2.in' })); }, '-=0.5')
     .add(() => { flash(0.9, 1.4); shake(12); Snd.bell(); burst(1.0, 500); petals.manualEmitCount = 260; steam.manualEmitCount = 80; }, '+=0.6')
     .to(U, { uScatter: 1, duration: 1.8, ease: 'power2.out' }, '<')
+    .to(U, { uAlpha: 0, duration: 0.8 }, '-=0.6')
     .add(() => showAwakened(false), '-=1.2');
 }
 function showAwakened(instant) {
   $('#panel').classList.remove('hidden');
-  rebel.meshes.forEach((m) => { m.visibility = 1; }); U.uMorph = 1; U.uScatter = 1;
+  rebel.meshes.forEach((m) => { m.visibility = 1; }); U.uMorph = 1; U.uScatter = 1; if (instant) U.uAlpha = 0;
   if (!rebel.cur) play('fight_idle', true);
   const gang = traitVal('Gang Names');
   $('#rvName').textContent = shortName(); $('#rvMei').textContent = `${gang || 'Rebel'} · Battle for the Colony`;
