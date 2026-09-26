@@ -1,5 +1,5 @@
 {
- "version": "1.8",
+ "version": "1.9",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
@@ -37,6 +37,7 @@
   "rigger/weights2.py",
   "setup.sh",
   "thumb.py",
-  "rigger/layerfix.py"
+  "rigger/layerfix.py",
+  "rigger/attachhead.py"
  ]
 }

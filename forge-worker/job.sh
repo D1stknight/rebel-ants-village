@@ -2,7 +2,7 @@
 # Forge Rigger job: static Meshy GLB -> 65-bone mixamorig_ rig + cloth springs + 24 clips -> village GLB.
 # usage: job.sh <source_glb_url> [name] [job_dir]
 # Writes <job_dir>/progress (current step), <job_dir>/log, <job_dir>/rig.glb and <job_dir>/result.json.
-set -eo pipefail
+set -eEo pipefail   # -E: the ERR trap also fires inside run() so a failed step is reported
 FW="$(cd "$(dirname "$0")" && pwd)"
 SRC_URL="$1"; NAME="${2:-rebel}"; JOB="${3:-/vercel/sandbox/job}"
 PY="${FORGE_PY:-$FW/venv/bin/python}"
