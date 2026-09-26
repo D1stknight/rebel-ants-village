@@ -23,6 +23,9 @@
     },
     "api/forge-rig-status.mjs": {
       "maxDuration": 120
+    },
+    "api/forge-part-reference.mjs": {
+      "maxDuration": 300
     }
   }
 }
