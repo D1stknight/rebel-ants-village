@@ -23,17 +23,17 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .cz{font-family:Cinzel,serif;letter-spacing:.08em}
 
 /* ---------- atmosphere ---------- */
-#bg{position:fixed;inset:0;z-index:0;background:
+#bg{position:fixed;inset:0;z-index:3;pointer-events:none;mix-blend-mode:screen;background:
   radial-gradient(120% 80% at 50% 110%, rgba(255,106,31,.16), transparent 55%),
   radial-gradient(60% 50% at 50% 55%, rgba(63,209,168,.05), transparent 70%),
   linear-gradient(180deg,#0e0c10 0%, #0B0A0C 60%, #120c0a 100%)}
-#grain{position:fixed;inset:-50%;z-index:1;pointer-events:none;opacity:.07;
+#grain{position:fixed;inset:-50%;z-index:4;pointer-events:none;opacity:.07;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .85 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   animation:grain 1.2s steps(6) infinite}
 @keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-3%)}60%{transform:translate(-2%,-1%)}80%{transform:translate(3%,3%)}100%{transform:translate(0,0)}}
-#vignette{position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(120% 100% at 50% 50%,transparent 55%,rgba(0,0,0,.75) 100%)}
-#bigKanji{position:fixed;z-index:1;right:4vw;top:50%;transform:translateY(-50%);font-size:min(62vh,52vw);line-height:1;color:rgba(239,230,210,.035);pointer-events:none;user-select:none;transition:opacity .8s}
-#stage{position:fixed;inset:0;z-index:2;width:100%;height:100%;outline:none;touch-action:none}
+#vignette{position:fixed;inset:0;z-index:4;pointer-events:none;background:radial-gradient(120% 100% at 50% 50%,transparent 55%,rgba(0,0,0,.75) 100%)}
+#bigKanji{position:fixed;z-index:3;mix-blend-mode:screen;right:4vw;top:50%;transform:translateY(-50%);font-size:min(62vh,52vw);line-height:1;color:rgba(239,230,210,.035);pointer-events:none;user-select:none;transition:opacity .8s}
+#stage{position:fixed;inset:0;z-index:1;width:100%;height:100%;outline:none;touch-action:none}
 
 /* ---------- top bar ---------- */
 header{position:fixed;z-index:20;top:0;left:0;right:0;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;
@@ -234,9 +234,9 @@ p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
 </style>
 </head>
 <body>
+<canvas id="stage"></canvas>
 <div id="bg"></div>
 <div id="bigKanji" class="brush">召</div>
-<canvas id="stage"></canvas>
 <div id="grain"></div>
 <div id="vignette"></div>
 <div id="flash"></div>
@@ -370,10 +370,11 @@ function shake(px = 6) { if (REDUCED) return; gsap.fromTo('#stage', { x: -px }, 
    3D: Babylon scene — ember DNA helix (points shader) → body
    ========================================================= */
 const canvas = $('#stage');
-const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: false, stencil: false, antialias: true, alpha: true, premultipliedAlpha: false }, true);
+const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: false, stencil: false, antialias: true, alpha: false }, true);
 engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, MOBILE ? 1.5 : 2));
 const scene = new BABYLON.Scene(engine);
-scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+// opaque sumi background (additive glow needs an opaque target); CSS atmosphere is screen-blended on top
+scene.clearColor = new BABYLON.Color4(0.043, 0.039, 0.047, 1);
 scene.skipPointerMovePicking = true;
 const cam = new BABYLON.ArcRotateCamera('cam', -1.25, 1.32, 5.6, new BABYLON.Vector3(0, 1.05, 0), scene);
 cam.fov = 0.75; cam.minZ = 0.05; cam.lowerRadiusLimit = 2.2; cam.upperRadiusLimit = 9; cam.lowerBetaLimit = 0.5; cam.upperBetaLimit = 1.62;
@@ -508,7 +509,7 @@ const dnaMat = new BABYLON.ShaderMaterial('dnaM', scene, { vertex: 'dna', fragme
   uniforms: ['worldViewProjection', 'uTime', 'uMorph', 'uBuild', 'uProgress', 'uScatter', 'uPixel', 'uHeight', 'uAlpha', 'uSpin', 'uChaos'],
   needAlphaBlending: true
 });
-dnaMat.pointsCloud = true; dnaMat.backFaceCulling = false; dnaMat.disableDepthWrite = true; dnaMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+dnaMat.pointsCloud = true; dnaMat.backFaceCulling = false; dnaMat.disableDepthWrite = true; dnaMat.alphaMode = BABYLON.Engine.ALPHA_ONEONE; // shader outputs premultiplied colour
 dna.material = dnaMat;
 const U = { uMorph: 0, uBuild: 0, uProgress: 0, uScatter: 0, uAlpha: 1, uSpin: 0.32, uChaos: 1 };
 let tAcc = 0;
@@ -516,7 +517,7 @@ scene.onBeforeRenderObservable.add(() => {
   tAcc += engine.getDeltaTime() / 1000;
   dnaMat.setFloat('uTime', tAcc); dnaMat.setFloat('uHeight', HELIX_H);
   dnaMat.setFloat('uPixel', engine.getRenderHeight() * (MOBILE ? 0.0045 : 0.0036));
-  for (const k in U) dnaMat.setFloat(k, U[k]);
+  for (const k in U) if (k[0] !== '_') dnaMat.setFloat(k, U[k]);
 });
 
 /* ---- particles ---- */
@@ -952,7 +953,7 @@ function renderAwaken() {
   center.innerHTML = '';
   if (state.awakened) { showAwakened(true); return; }
   $('#panel').classList.add('hidden');
-  gsap.to(U, { uAlpha: 1, uChaos: 0, uProgress: 1, duration: 1 });
+  gsap.to(U, { uAlpha: 1, uChaos: 0, uProgress: 1, uBuild: 1.05, uMorph: 0, uScatter: 0, duration: 1 });
   const btn = $('#awakenBtn'); btn.style.display = 'block'; gsap.fromTo(btn, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.7, ease: 'back.out(2)' });
   const ring = $('#awRing'); let tw = null; const HOLD = 1.6;
   const start = (e) => { e.preventDefault(); if (!rebel.ready) { toast('The body is still cooling…'); return; } Snd.whoosh(); tw = gsap.to(ring, { attr: { 'stroke-dashoffset': 0 }, duration: HOLD, ease: 'none', onUpdate: () => { U.uChaos = tw.progress() * 0.8; shake(tw.progress() * 3); }, onComplete: awaken }); };
@@ -1079,7 +1080,7 @@ function updateTokPill() { const g = traitVal('Gang Names'); $('#tokPill').inner
   go(0);
   // deep links for review: ?step=forge etc.
   const want = STEPS.findIndex((s) => s.id === Q.get('step'));
-  if (want > 0) { state.summoned = true; U.uBuild = 1.05; state.maxStep = want; if (want > 3) { state.forged = true; U.uProgress = 1; U.uChaos = 0; } setTimeout(() => go(want), 900); }
+  if (want > 0) { gsap.killTweensOf(U); state.summoned = true; U.uBuild = 1.05; state.maxStep = want; if (want > 3) { state.forged = true; U.uProgress = 1; U.uChaos = 0; } setTimeout(() => go(want), 900); }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) engine.resize(); });
 })();
 })();
