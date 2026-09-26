@@ -8,7 +8,7 @@ SRC_URL="$1"; NAME="${2:-rebel}"; JOB="${3:-/vercel/sandbox/job}"
 PY="${FORGE_PY:-$FW/venv/bin/python}"
 export FORGE_OUT="$JOB/out" FORGE_CLIPS="$FW/clips" FORGE_PACK="$FW/pack" FORGE_PROXY_MINCOMP="${FORGE_PROXY_MINCOMP:-0.02}"
 # v1.6: keep bridge/tear faces (fixarm reweights them) so robes have no see-through cracks
-export FORGE_KEEP_TEAR="${FORGE_KEEP_TEAR:-1}" FORGE_KEEP_BRIDGE="${FORGE_KEEP_BRIDGE:-1}"
+export FORGE_KEEP_TEAR="${FORGE_KEEP_TEAR-1}" FORGE_KEEP_BRIDGE="${FORGE_KEEP_BRIDGE-1}"   # set to empty to cut them (TRELLIS)
 R="$FW/rigger"; O="$FORGE_OUT"
 mkdir -p "$O"; : > "$JOB/log"
 T0=$(date +%s)

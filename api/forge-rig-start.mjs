@@ -1,6 +1,6 @@
 // Start the automated Forge Rigger for a stored Meshy build: POST {buildId, force?}
 // Admin-only extras: sourceUrl (rig a different static GLB for this build, e.g. a TRELLIS.2 source in the repo) and
-// skirtfix (TRELLIS open-cloth cleanup).
+// skirtfix (TRELLIS mode: open-cloth cleanup, hand/skirt webbing cut, bridge faces cut).
 // One rig per build (idempotent). Re-rigging an already rigged build (force) is admin-only.
 import { isAdminRequest } from './_admin-auth.mjs';
 import { enforceRateLimit } from './_guard.mjs';
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
     const cmd = await sandbox.runCommand({
       cmd: 'bash',
       args: ['-c', `mkdir -p ${JOB_DIR} && bash ${FW}/job.sh "$SRC_URL" "$RIG_NAME" ${JOB_DIR}`],
-      env: { SRC_URL: src, RIG_NAME: name, ...(skirtfix ? { FORGE_SKIRTFIX: '1' } : {}) },
+      env: { SRC_URL: src, RIG_NAME: name, ...(skirtfix ? { FORGE_SKIRTFIX: '1', FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}) },
       sudo: true,
       detached: true
     });

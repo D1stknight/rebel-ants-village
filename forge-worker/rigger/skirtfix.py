@@ -20,11 +20,37 @@ zc = min(H('LeftUpLeg')[2], H('RightUpLeg')[2]); zank = max(H('LeftFoot')[2], H(
 d = np.full(nv, 9.0)
 for s in ('Left', 'Right'):
     d = np.minimum(d, seg_d(V, H(s + 'UpLeg'), H(s + 'Leg'))); d = np.minimum(d, seg_d(V, H(s + 'Leg'), H(s + 'Foot')))
+# 0) v1.8 arm leak: TRELLIS fuses the hanging hands with the armour skirt, so bone heat gives skirt plates hand/arm
+# weight and they tear up into big sheets on every punch. Below the wrist a vert is either the fist (mostly arm weight,
+# near the hand bone: pure arm chain) or body (no arm weight), and the faces joining the two are cut.
+RH = float(__import__('os').environ.get('FORGE_HAND_RADIUS', '0.12'))
+leak = 0; split = 0; handv = np.zeros(nv, bool); bodyv = np.zeros(nv, bool)
+for s_ in ('Left', 'Right'):
+    grp = [gi[n] for n in gi if n.startswith(P + s_ + 'Hand') or n in (P + s_ + 'ForeArm', P + s_ + 'Arm')]
+    hh = H(s_ + 'Hand'); ht = np.array(B[P + s_ + 'Hand'].tail_local); ht = ht + (ht - hh) * 1.2
+    zone = V[:, 2] < hh[2] + 0.03
+    a = W[:, grp].sum(1); near = seg_d(V, hh, ht) <= RH
+    hand = zone & near & (a >= 0.5)                     # the fist itself: pure arm chain
+    body = zone & ~hand & (a > 1e-4)                    # skirt that picked up some arm weight: none at all
+    keep = np.zeros(W.shape[1], bool); keep[grp] = True
+    W[np.ix_(hand, ~keep)] = 0; W[np.ix_(body, grp)] = 0
+    leak += int(body.sum()); split += int(hand.sum())
+    handv |= hand; bodyv |= zone
+bodyv &= ~handv
+rest = W.sum(1); empty = rest < 1e-6
+W[empty, gi[P + 'Hips']] = 1; W /= np.maximum(W.sum(1, keepdims=True), 1e-6)
+# cut the webbing faces that join hand verts to skirt verts
+import bmesh
+bm = bmesh.new(); bm.from_mesh(me.data)
+cut = [f for f in bm.faces if any(handv[v.index] for v in f.verts) and any(bodyv[v.index] for v in f.verts)]
+bmesh.ops.delete(bm, geom=cut, context='FACES_ONLY'); bm.to_mesh(me.data); bm.free()
+print('skirtfix hand verts', split, 'arm weight removed from', leak, 'webbing faces cut', len(cut))
 skirt = (V[:, 2] < zc + 0.06) & (V[:, 2] > zank + 0.04) & (d > R)
 alpha = np.clip((d - R) / BW, 0, 1) * AMAX
 # fade in near the waist so the belt line stays continuous
 alpha *= np.clip((zc + 0.06 - V[:, 2]) / 0.08, 0, 1)
 alpha[~skirt] = 0
+alpha[handv] = 0                                   # v1.8: the hands hang at skirt height; never blend them to Hips
 hips = np.zeros(ng, np.float32); hips[gi[P + 'Hips']] = 1
 W2 = W * (1 - alpha[:, None]) + alpha[:, None] * hips
 print('skirtfix skirt verts', int(skirt.sum()), 'mean alpha', round(float(alpha[skirt].mean()) if skirt.any() else 0, 3))
