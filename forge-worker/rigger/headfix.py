@@ -25,6 +25,19 @@ Aw = arm.matrix_world
 # it) by LIFT x height and move each vertex up by its head-subtree weight, so the Neck/Head blend zone becomes a short
 # visible neck. Rest-pose edit, so every clip keeps its rotations.
 me = [o for o in bpy.data.objects if o.type == 'MESH'][0]
+# rigid head parts: sources prepared with a rebuilt head (newhead.py) name those materials HEAD_* (skin, mask plate,
+# antennae). They must move exactly with the Head bone, whatever bone heat gave them (small separate shells).
+hm = {i for i, m in enumerate(me.data.materials) if m and m.name.startswith('HEAD_')}
+if hm:
+    hg = me.vertex_groups.get(P + 'Head')
+    rv = set()
+    for poly in me.data.polygons:
+        if poly.material_index in hm: rv.update(poly.vertices)
+    rv = sorted(rv)
+    for gg in me.vertex_groups: gg.remove(rv)
+    hg.add(rv, 1.0, 'REPLACE')
+    print('headfix rigid head verts', len(rv))
+    if 'FORGE_NECK_LIFT' not in os.environ: LIFT = 0.0      # rebuilt heads already sit right on the neck
 if LIFT > 0:
     zs = [(me.matrix_world @ v.co).z for v in me.data.vertices]; Hh = max(zs) - min(zs)
     dw = Vector((0, 0, LIFT * Hh))

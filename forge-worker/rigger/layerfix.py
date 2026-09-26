@@ -21,20 +21,34 @@ def fail(msg):
     print('layerfix skipped:', msg); bpy.ops.wm.save_as_mainfile(filepath=dst); sys.exit(0)
 
 
-# base colour image
-img = None
-for m in md.materials:
-    if m and m.node_tree:
-        for n in m.node_tree.nodes:
-            if n.type == 'TEX_IMAGE' and any(l.to_socket.name == 'Base Color' for l in n.outputs[0].links): img = n.image
-if img is None or not md.uv_layers: fail('no base colour texture')
-w_, h_ = img.size
-px = np.empty(w_ * h_ * 4, np.float32); img.pixels.foreach_get(px); px = px.reshape(h_, w_, 4)
-uv = np.empty(len(md.loops) * 2, np.float32); md.uv_layers.active.data.foreach_get('uv', uv); uv = uv.reshape(-1, 2)
+# per-vertex base colour, sampled from each face's own material (v5 sources carry extra head / mask / antenna
+# materials; some have a texture, some a flat colour)
 lv = np.empty(len(md.loops), np.int64); md.loops.foreach_get('vertex_index', lv)
-xi = np.clip((uv[:, 0] % 1) * w_, 0, w_ - 1).astype(int); yi = np.clip((uv[:, 1] % 1) * h_, 0, h_ - 1).astype(int)
+uv = np.zeros(len(md.loops) * 2, np.float32)
+if md.uv_layers: md.uv_layers.active.data.foreach_get('uv', uv)
+uv = uv.reshape(-1, 2)
+pmat = np.empty(len(md.polygons), np.int64); md.polygons.foreach_get('material_index', pmat)
+ploop = np.empty(len(md.polygons), np.int64); md.polygons.foreach_get('loop_start', ploop)
+ptot = np.empty(len(md.polygons), np.int64); md.polygons.foreach_get('loop_total', ptot)
+lmat = np.repeat(pmat, ptot)
+lcol = np.zeros((len(md.loops), 3), np.float32)
+found = False
+for mi, m in enumerate(md.materials):
+    sel = lmat == mi
+    if not sel.any() or not m or not m.node_tree: continue
+    bsdf = next((n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+    if bsdf is None: continue
+    inp = bsdf.inputs['Base Color']
+    if inp.is_linked and inp.links[0].from_node.type == 'TEX_IMAGE' and inp.links[0].from_node.image:
+        im = inp.links[0].from_node.image; w_, h_ = im.size
+        px = np.empty(w_ * h_ * 4, np.float32); im.pixels.foreach_get(px); px = px.reshape(h_, w_, 4)
+        xi = np.clip((uv[sel, 0] % 1) * w_, 0, w_ - 1).astype(int); yi = np.clip((uv[sel, 1] % 1) * h_, 0, h_ - 1).astype(int)
+        lcol[sel] = px[yi, xi, :3]; found = True
+    else:
+        lcol[sel] = np.array(inp.default_value[:3], np.float32)
+if not found: fail('no base colour texture')
 col = np.zeros((nv, 3)); cnt = np.zeros(nv)
-np.add.at(col, lv, px[yi, xi, :3]); np.add.at(cnt, lv, 1); col /= np.maximum(cnt, 1)[:, None]
+np.add.at(col, lv, lcol); np.add.at(cnt, lv, 1); col /= np.maximum(cnt, 1)[:, None]
 r, g, b = col.T
 cloth = (g > 0.18) & (g > r * 1.35) & (g > b * 1.35)          # the green shirt / kimono
 
