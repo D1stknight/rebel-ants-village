@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rebel Forge · 鍛冶場</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Shippori+Mincho+B1:wght@500;700&family=Yuji+Syuku&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sumi:#0B0A0C; --ink:#17131A; --ash:#3A3238; --washi:#EFE6D2; --washi-dim:#b9ae99;
+  --ember:#FF6A1F; --molten:#FFB547; --whitehot:#FFF3D6; --shu:#C8321E; --sakura:#F4A7B9;
+  --jade:#3FD1A8; --steel:#8FA3B8;
+  --panel:rgba(18,15,20,.72); --line:rgba(239,230,210,.12);
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--sumi);color:var(--washi);font-family:Inter,system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.jp{font-family:"Shippori Mincho B1",serif}
+.brush{font-family:"Yuji Syuku",serif}
+.cz{font-family:Cinzel,serif;letter-spacing:.08em}
+
+/* ---------- atmosphere ---------- */
+#bg{position:fixed;inset:0;z-index:0;background:
+  radial-gradient(120% 80% at 50% 110%, rgba(255,106,31,.16), transparent 55%),
+  radial-gradient(60% 50% at 50% 55%, rgba(63,209,168,.05), transparent 70%),
+  linear-gradient(180deg,#0e0c10 0%, #0B0A0C 60%, #120c0a 100%)}
+#grain{position:fixed;inset:-50%;z-index:1;pointer-events:none;opacity:.07;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .85 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain 1.2s steps(6) infinite}
+@keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-3%)}60%{transform:translate(-2%,-1%)}80%{transform:translate(3%,3%)}100%{transform:translate(0,0)}}
+#vignette{position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(120% 100% at 50% 50%,transparent 55%,rgba(0,0,0,.75) 100%)}
+#bigKanji{position:fixed;z-index:1;right:4vw;top:50%;transform:translateY(-50%);font-size:min(62vh,52vw);line-height:1;color:rgba(239,230,210,.035);pointer-events:none;user-select:none;transition:opacity .8s}
+#stage{position:fixed;inset:0;z-index:2;width:100%;height:100%;outline:none;touch-action:none}
+
+/* ---------- top bar ---------- */
+header{position:fixed;z-index:20;top:0;left:0;right:0;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;
+  background:linear-gradient(180deg,rgba(11,10,12,.9),transparent)}
+.logo{display:flex;align-items:baseline;gap:12px}
+.logo b{font-family:Cinzel,serif;font-weight:900;font-size:20px;letter-spacing:.22em;background:linear-gradient(90deg,var(--molten),var(--ember));-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo span{font-size:15px;color:var(--washi-dim)}
+.hright{display:flex;gap:10px;align-items:center}
+.pill{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px;color:var(--washi-dim);display:flex;gap:8px;align-items:center;background:rgba(23,19,26,.6)}
+.pill strong{color:var(--washi);font-weight:600}
+.pill.mock{border-color:rgba(200,50,30,.5);color:#ffb3a4}
+.iconbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;background:rgba(23,19,26,.6);transition:border-color .2s}
+.iconbtn:hover{border-color:var(--ember)}
+
+/* ---------- pheromone stepper ---------- */
+#trail{position:fixed;z-index:15;left:22px;top:92px;bottom:40px;width:120px}
+#trail svg{position:absolute;inset:0;overflow:visible}
+.node{position:absolute;left:0;display:flex;align-items:center;gap:12px;transform:translateY(-50%);text-align:left}
+.node .k{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:22px;border:1px solid var(--line);background:rgba(11,10,12,.85);color:var(--washi-dim);transition:all .5s var(--ease);position:relative}
+.node .k::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid transparent;transition:all .5s}
+.node .t{font-family:Cinzel,serif;font-size:11px;letter-spacing:.2em;color:var(--washi-dim);opacity:.6;transition:all .4s}
+.node.done .k{color:var(--jade);border-color:rgba(63,209,168,.45)}
+.node.active .k{color:var(--whitehot);border-color:var(--ember);background:radial-gradient(circle at 50% 60%,rgba(255,106,31,.45),rgba(11,10,12,.9) 70%);box-shadow:0 0 24px rgba(255,106,31,.45)}
+.node.active .k::after{border-color:rgba(255,106,31,.35);animation:ping 2.2s infinite}
+.node.active .t{color:var(--washi);opacity:1}
+@keyframes ping{0%{transform:scale(.9);opacity:1}100%{transform:scale(1.45);opacity:0}}
+#ant{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;filter:drop-shadow(0 0 6px rgba(63,209,168,.6))}
+
+/* ---------- panel ---------- */
+#panel{position:fixed;z-index:15;right:28px;top:88px;bottom:28px;width:min(400px,34vw);display:flex;flex-direction:column;pointer-events:none}
+.card{pointer-events:auto;background:var(--panel);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid var(--line);border-radius:18px;padding:26px 26px 22px;position:relative;overflow:hidden;max-height:100%;overflow-y:auto;scrollbar-width:thin}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--ember),transparent);opacity:.7}
+.eyebrow{font-family:Cinzel,serif;font-size:11px;letter-spacing:.32em;color:var(--ember);display:flex;gap:10px;align-items:center}
+.eyebrow .jp{letter-spacing:.1em;color:var(--washi-dim)}
+h1{font-family:Cinzel,serif;font-weight:700;font-size:30px;line-height:1.1;margin:10px 0 10px;letter-spacing:.04em}
+h1 .brush{display:block;font-size:15px;color:var(--washi-dim);letter-spacing:.2em;margin-top:6px;font-weight:400}
+p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
+.sep{height:1px;background:var(--line);margin:18px 0}
+.traits{display:grid;grid-template-columns:1fr;gap:6px}
+.trait{display:flex;justify-content:space-between;gap:12px;padding:9px 12px;border-radius:10px;background:rgba(239,230,210,.04);border:1px solid rgba(239,230,210,.06);font-size:13px;transition:all .4s}
+.trait .tt{color:var(--washi-dim);font-size:11px;letter-spacing:.14em;text-transform:uppercase;display:flex;gap:8px;align-items:center}
+.trait .tt i{width:6px;height:6px;border-radius:50%;background:var(--jade);box-shadow:0 0 8px var(--jade);font-style:normal}
+.trait .tv{font-weight:600;text-align:right}
+.trait.sent{opacity:.35}
+.trait.locked{border-color:rgba(63,209,168,.35);background:rgba(63,209,168,.06);opacity:1}
+.cta{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}
+.btn{position:relative;border-radius:12px;padding:14px 20px;font-family:Cinzel,serif;font-weight:700;letter-spacing:.14em;font-size:13px;border:1px solid var(--line);background:rgba(239,230,210,.04);transition:all .25s var(--ease);overflow:hidden}
+.btn:hover{border-color:rgba(239,230,210,.35);transform:translateY(-1px)}
+.btn.fire{border:0;color:#1a0d05;background:linear-gradient(180deg,var(--molten),var(--ember));box-shadow:0 8px 30px -8px rgba(255,106,31,.7),inset 0 1px 0 rgba(255,255,255,.4)}
+.btn.fire:hover{box-shadow:0 10px 40px -6px rgba(255,106,31,.9),inset 0 1px 0 rgba(255,255,255,.5)}
+.btn.shu{border:0;background:linear-gradient(180deg,#e0472f,var(--shu));color:var(--whitehot);box-shadow:0 8px 30px -10px rgba(200,50,30,.8)}
+.btn[disabled]{opacity:.35;pointer-events:none}
+.btn.wide{flex:1}
+.hold{position:relative}
+.hold .fill{position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,243,214,.55),rgba(255,243,214,.2));transform-origin:left;transform:scaleX(0)}
+.hold span{position:relative}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12px;color:#d6ccb8;transition:all .2s}
+.chip.on{border-color:var(--jade);color:var(--jade);background:rgba(63,209,168,.08)}
+.checks{display:grid;gap:8px;margin-top:6px}
+.check{display:flex;gap:10px;align-items:center;font-size:13px;color:#d6ccb8}
+.check b{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:rgba(63,209,168,.14);color:var(--jade);font-size:11px}
+.note{font-size:12px;color:var(--washi-dim);line-height:1.5;margin-top:12px}
+.picker{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:12px}
+.picker button{aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid var(--line);position:relative;transition:all .25s}
+.picker button img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.7) brightness(.8);transition:all .25s}
+.picker button:hover img,.picker button.on img{filter:none}
+.picker button.on{border-color:var(--ember);box-shadow:0 0 0 1px var(--ember),0 0 18px rgba(255,106,31,.4)}
+.picker button small{position:absolute;left:4px;bottom:3px;font-size:9px;font-weight:600;text-shadow:0 1px 3px #000}
+
+/* forge stage list */
+.stages{display:grid;gap:8px;margin-top:6px}
+.stg{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid rgba(239,230,210,.06);background:rgba(239,230,210,.03);transition:all .5s}
+.stg .sk{font-size:20px;text-align:center;color:var(--washi-dim)}
+.stg .sn{font-size:13px;font-weight:600}
+.stg .sd{font-size:11px;color:var(--washi-dim);margin-top:2px}
+.stg .ss{font-size:11px;color:var(--washi-dim);font-family:Cinzel,serif;letter-spacing:.1em}
+.stg.run{border-color:rgba(255,106,31,.5);background:linear-gradient(90deg,rgba(255,106,31,.14),rgba(255,106,31,.02))}
+.stg.run .sk{color:var(--molten);text-shadow:0 0 14px var(--ember)}
+.stg.run .ss{color:var(--molten)}
+.stg.ok .sk{color:var(--jade)}
+.stg.ok .ss{color:var(--jade)}
+.pct{font-family:Cinzel,serif;font-weight:900;font-size:64px;line-height:1;background:linear-gradient(180deg,var(--whitehot),var(--molten) 60%,var(--ember));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:.02em}
+.pct small{font-size:24px}
+.bar{height:3px;border-radius:3px;background:rgba(239,230,210,.08);overflow:hidden;margin:12px 0 4px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ember),var(--molten),var(--whitehot));box-shadow:0 0 12px var(--ember)}
+.comb{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:14px}
+.hex{aspect-ratio:1/1.1;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:rgba(239,230,210,.06);display:grid;place-items:center;font-size:13px;color:rgba(239,230,210,.25);transition:all .35s}
+.hex.on{background:linear-gradient(180deg,rgba(255,181,71,.9),rgba(255,106,31,.75));color:#2a1204;text-shadow:0 1px 0 rgba(255,255,255,.3)}
+.hex:nth-child(8n+5),.hex:nth-child(8n+6),.hex:nth-child(8n+7),.hex:nth-child(8n+8){transform:translateX(50%)}
+
+/* ---------- center overlays ---------- */
+#center{position:fixed;z-index:10;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;width:min(520px,44vw)}
+.nftcard{width:100%;max-width:380px;margin:0 auto;border-radius:18px;overflow:hidden;position:relative;border:1px solid rgba(239,230,210,.18);box-shadow:0 40px 80px -30px rgba(0,0,0,.9),0 0 60px -10px rgba(255,106,31,.35);background:#111}
+.nftcard img{width:100%;display:block;aspect-ratio:1;object-fit:cover}
+.nftcard .cap{position:absolute;left:0;right:0;bottom:0;padding:40px 18px 14px;background:linear-gradient(0deg,rgba(11,10,12,.95),transparent);display:flex;justify-content:space-between;align-items:flex-end}
+.nftcard .cap b{font-family:Cinzel,serif;font-size:22px;letter-spacing:.06em}
+.nftcard .cap span{font-size:12px;color:var(--washi-dim)}
+.inkframe{width:100%;aspect-ratio:2/3;max-height:74vh;margin:0 auto;position:relative}
+.inkframe svg{width:100%;height:100%;display:block;filter:drop-shadow(0 30px 50px rgba(0,0,0,.7))}
+.scroll{position:relative;width:min(720px,52vw);margin:0 auto}
+.scroll .rod{height:16px;border-radius:8px;background:linear-gradient(180deg,#5a3a22,#2a180c 60%,#1a0e06);box-shadow:0 6px 14px rgba(0,0,0,.6);position:relative;z-index:2;margin:0 -18px}
+.scroll .rod::before,.scroll .rod::after{content:"";position:absolute;top:-3px;width:26px;height:22px;border-radius:6px;background:linear-gradient(180deg,#c8a15a,#6b4a1c)}
+.scroll .rod::before{left:-8px}.scroll .rod::after{right:-8px}
+.paper{position:relative;background:#e9dfc8;background-image:radial-gradient(circle at 20% 10%,rgba(0,0,0,.04),transparent 40%),radial-gradient(circle at 80% 90%,rgba(0,0,0,.06),transparent 40%);padding:22px 26px 18px;color:#2a2018;overflow:hidden;clip-path:inset(0 0 100% 0)}
+.paper::after{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(40,30,20,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(40,30,20,.06) 1px,transparent 1px);background-size:24px 24px}
+.bp-head{display:flex;justify-content:space-between;align-items:baseline;font-family:Cinzel,serif;font-size:12px;letter-spacing:.24em;color:#5b4632;position:relative;z-index:1}
+.bp-head .brush{font-size:22px;letter-spacing:.1em;color:#2a2018}
+.bp-views{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px;position:relative;z-index:1}
+.bp-view{position:relative;aspect-ratio:2/3}
+.bp-view img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.bp-view img.line{filter:grayscale(1) contrast(2.2) brightness(1.15);mix-blend-mode:multiply;opacity:.9}
+.bp-view img.col{opacity:0;mix-blend-mode:multiply}
+.bp-view label{position:absolute;left:0;bottom:-2px;font-family:Cinzel,serif;font-size:10px;letter-spacing:.3em;color:#6b5540}
+.bp-svg{position:absolute;inset:0;z-index:2;pointer-events:none}
+.bp-svg path,.bp-svg line{stroke:#9c2a18;stroke-width:1.2;fill:none;opacity:.8}
+.bp-svg text{fill:#9c2a18;font-family:Cinzel,serif;font-size:9px;letter-spacing:.15em}
+.seal{position:absolute;right:22px;bottom:18px;z-index:3;width:54px;height:54px;border:3px solid var(--shu);border-radius:6px;color:var(--shu);display:grid;place-items:center;font-size:18px;line-height:1.05;text-align:center;transform:rotate(-6deg) scale(0);opacity:.9;mix-blend-mode:multiply}
+
+/* reveal */
+#reveal{position:fixed;z-index:12;left:50%;top:92px;transform:translateX(-50%);text-align:center;pointer-events:none;opacity:0}
+#reveal .nm{font-family:Cinzel,serif;font-weight:900;font-size:clamp(28px,4vw,54px);letter-spacing:.14em;background:linear-gradient(180deg,var(--whitehot),var(--molten));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 40px rgba(255,106,31,.25)}
+#reveal .mei{font-size:clamp(18px,2vw,26px);color:var(--washi);letter-spacing:.4em;margin-top:4px}
+#hanko{position:fixed;z-index:13;left:calc(50% + min(22vw,300px));top:110px;width:78px;height:78px;border:4px solid var(--shu);border-radius:8px;color:var(--shu);background:rgba(200,50,30,.06);display:grid;place-items:center;font-size:26px;line-height:1;text-align:center;transform:scale(3) rotate(-12deg);opacity:0;pointer-events:none;box-shadow:0 0 30px rgba(200,50,30,.25)}
+#awakenBtn{position:fixed;z-index:14;left:50%;bottom:9vh;transform:translateX(-50%);display:none;width:138px;height:138px;border-radius:50%;pointer-events:auto}
+#awakenBtn svg{position:absolute;inset:0}
+#awakenBtn .lbl{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+#awakenBtn .lbl b{font-size:34px;color:var(--whitehot);display:block;line-height:1}
+#awakenBtn .lbl small{font-family:Cinzel,serif;font-size:10px;letter-spacing:.24em;color:var(--washi-dim);display:block;margin-top:6px}
+
+/* move dock */
+#dock{position:fixed;z-index:16;left:50%;bottom:20px;transform:translate(-50%,140%);width:min(980px,calc(100vw - 40px));background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:18px;padding:12px 14px 12px;transition:transform .9s var(--ease)}
+#dock.show{transform:translate(-50%,0)}
+.dtop{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.groups{display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none}
+.grp{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:999px;border:1px solid transparent;font-size:12px;color:var(--washi-dim);white-space:nowrap;transition:all .25s}
+.grp .mon{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:13px}
+.grp.on{border-color:rgba(255,106,31,.5);color:var(--washi);background:rgba(255,106,31,.08)}
+.grp.on .mon{border-color:var(--ember);color:var(--molten)}
+.grp em{font-style:normal;font-size:10px;opacity:.6}
+.ctrls{display:flex;gap:6px;align-items:center}
+.ctl{height:32px;min-width:32px;padding:0 10px;border-radius:9px;border:1px solid var(--line);font-size:11px;font-weight:600;color:var(--washi-dim);display:grid;place-items:center;transition:all .2s}
+.ctl:hover{color:var(--washi);border-color:rgba(239,230,210,.35)}
+.ctl.on{color:var(--jade);border-color:rgba(63,209,168,.5)}
+.ctl.kata{color:#1a0d05;border:0;background:linear-gradient(180deg,var(--molten),var(--ember));font-family:Cinzel,serif;letter-spacing:.12em}
+.moves{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.mv{scroll-snap-align:start;flex:0 0 auto;width:112px;border-radius:12px;border:1px solid rgba(239,230,210,.08);background:rgba(239,230,210,.03);padding:10px 10px 9px;text-align:left;position:relative;overflow:hidden;transition:all .25s var(--ease)}
+.mv:hover{border-color:rgba(239,230,210,.3);transform:translateY(-2px)}
+.mv .mk{font-size:24px;line-height:1;color:var(--washi)}
+.mv .mn{font-size:11px;font-weight:600;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mv .mh{position:absolute;right:8px;top:8px;font-size:9px;color:var(--washi-dim);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.mv svg.ring{position:absolute;right:6px;bottom:6px;width:22px;height:22px;transform:rotate(-90deg)}
+.mv svg.ring circle{fill:none;stroke-width:2.5}
+.mv svg.ring .bgc{stroke:rgba(239,230,210,.08)}
+.mv svg.ring .fgc{stroke:var(--whitehot);stroke-dasharray:56.5;stroke-dashoffset:56.5}
+.mv.on{border-color:transparent;background:linear-gradient(160deg,var(--molten),var(--ember) 70%);color:#1a0d05;box-shadow:0 10px 30px -10px rgba(255,106,31,.8)}
+.mv.on .mk,.mv.on .mn{color:#1a0d05}
+.mv.on .mh{color:#1a0d05;border-color:rgba(26,13,5,.3)}
+.mv.on svg.ring .bgc{stroke:rgba(26,13,5,.2)}
+.mv.on svg.ring .fgc{stroke:#1a0d05}
+.nowplaying{position:fixed;z-index:12;left:50%;bottom:190px;transform:translateX(-50%);text-align:center;pointer-events:none;opacity:0;transition:opacity .4s}
+.nowplaying b{font-size:44px;color:var(--whitehot);text-shadow:0 0 30px rgba(255,106,31,.6);display:block;line-height:1}
+.nowplaying span{font-family:Cinzel,serif;font-size:12px;letter-spacing:.32em;color:var(--washi-dim)}
+
+#loader{position:fixed;z-index:50;inset:0;display:grid;place-items:center;background:var(--sumi);transition:opacity 1s}
+#loader .l{text-align:center}
+#loader .l b{font-size:64px;display:block;color:var(--ember);text-shadow:0 0 30px rgba(255,106,31,.6);animation:breathe 1.6s ease-in-out infinite}
+#loader .l span{font-family:Cinzel,serif;letter-spacing:.3em;font-size:11px;color:var(--washi-dim)}
+@keyframes breathe{50%{opacity:.5;transform:scale(.96)}}
+#toast{position:fixed;z-index:60;left:50%;top:84px;transform:translate(-50%,-20px);opacity:0;padding:10px 16px;border-radius:12px;background:rgba(23,19,26,.95);border:1px solid var(--line);font-size:13px;transition:all .4s var(--ease);pointer-events:none}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#flash{position:fixed;inset:0;z-index:30;pointer-events:none;background:radial-gradient(circle at 50% 55%,rgba(255,243,214,.9),rgba(255,181,71,.4) 30%,transparent 70%);opacity:0}
+.flyer{position:fixed;z-index:40;pointer-events:none;padding:6px 10px;border-radius:999px;background:rgba(63,209,168,.18);border:1px solid var(--jade);color:var(--jade);font-size:12px;font-weight:600;box-shadow:0 0 20px rgba(63,209,168,.5);white-space:nowrap}
+.hidden{display:none!important}
+
+@media (max-width:900px){
+  header{padding:0 14px;height:56px}
+  .logo span{display:none}
+  #trail{left:0;right:0;top:58px;bottom:auto;height:64px;width:auto}
+  #trail svg,#ant{display:none}
+  .nodes{display:flex;justify-content:center;gap:10px;height:100%;align-items:center}
+  .node{position:static;transform:none}
+  .node .k{width:40px;height:40px;font-size:18px}
+  .node .t{display:none}
+  #panel{left:10px;right:10px;top:auto;bottom:10px;width:auto;max-height:46vh}
+  .card{padding:18px}
+  h1{font-size:22px}
+  #center{top:38%;width:78vw}
+  .scroll{width:88vw}
+  #bigKanji{display:none}
+  #dock{bottom:10px;width:calc(100vw - 20px)}
+  .mv{width:92px}
+  #hanko{left:auto;right:16px;top:130px;width:58px;height:58px;font-size:20px}
+  #awakenBtn{bottom:50vh}
+  .nowplaying{bottom:170px}
+}
+@media (prefers-reduced-motion:reduce){#grain{animation:none}}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="bigKanji" class="brush">召</div>
+<canvas id="stage"></canvas>
+<div id="grain"></div>
+<div id="vignette"></div>
+<div id="flash"></div>
+
+<header>
+  <div class="logo"><b>REBEL FORGE</b><span class="jp">鍛冶場 · the smith's hall</span></div>
+  <div class="hright">
+    <div class="pill mock">MOCKUP · v2 preview</div>
+    <div class="pill" id="tokPill">Rebel <strong>#—</strong></div>
+    <button class="iconbtn" id="sndBtn" title="Sound">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path id="sndX" d="m23 9-6 6m0-6 6 6"/></svg>
+    </button>
+  </div>
+</header>
+
+<nav id="trail" aria-label="Forge steps">
+  <svg id="trailSvg"></svg>
+  <svg id="ant" viewBox="0 0 32 32"><g fill="#3FD1A8"><ellipse cx="16" cy="7" rx="3.2" ry="3"/><ellipse cx="16" cy="14" rx="2.6" ry="3.4"/><ellipse cx="16" cy="23" rx="4.2" ry="5.6"/></g><g stroke="#3FD1A8" stroke-width="1.3" fill="none" stroke-linecap="round"><path d="M14 5 11 1M18 5l3-4"/><path d="M13.5 12 8 9M18.5 12 24 9M13.5 14.5 7 15M18.5 14.5 25 15M13.5 17 8 21M18.5 17l5.5 4"/></g></svg>
+  <div class="nodes" id="nodes"></div>
+</nav>
+
+<div id="center"></div>
+
+<aside id="panel"><div class="card" id="card"></div></aside>
+
+<div id="reveal"><div class="nm" id="rvName">REBEL #4998</div><div class="mei brush" id="rvMei">叛 蟻 · 将 軍</div></div>
+<div id="hanko" class="brush">叛<br>蟻</div>
+
+<button id="awakenBtn" aria-label="Hold to awaken">
+  <svg viewBox="0 0 138 138"><circle cx="69" cy="69" r="62" fill="rgba(11,10,12,.75)" stroke="rgba(239,230,210,.15)" stroke-width="1.5"/><circle id="awRing" cx="69" cy="69" r="62" fill="none" stroke="#FFB547" stroke-width="3" stroke-linecap="round" stroke-dasharray="389.6" stroke-dashoffset="389.6" transform="rotate(-90 69 69)"/></svg>
+  <div class="lbl"><div><b class="brush">覚醒</b><small>HOLD TO AWAKEN</small></div></div>
+</button>
+
+<div class="nowplaying" id="nowPlaying"><b class="brush" id="npK">構</b><span id="npN">FIGHT STANCE</span></div>
+
+<section id="dock" aria-label="Moves">
+  <div class="dtop">
+    <div class="groups" id="groups"></div>
+    <div class="ctrls">
+      <button class="ctl" id="cPrev" title="Previous (←)">‹</button>
+      <button class="ctl" id="cPlay" title="Pause (Space)">❚❚</button>
+      <button class="ctl" id="cNext" title="Next (→)">›</button>
+      <button class="ctl" id="cLoop" title="Loop (L)">LOOP</button>
+      <button class="ctl" id="cSpeed" title="Speed (S)">1×</button>
+      <button class="ctl kata" id="cKata" title="Perform all Kata (K)">KATA</button>
+    </div>
+  </div>
+  <div class="moves" id="moves"></div>
+</section>
+
+<div id="loader"><div class="l"><b class="brush">鍛</b><span>STOKING THE FORGE</span></div></div>
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script>
+(() => {
+'use strict';
+/* =========================================================
+   Rebel Forge v2 — clickable mockup
+   Real data: NFT + traits (/api/nft-token), concept + back ref + rigged GLB (/api/forge-builds-list).
+   Forging itself is simulated (≈30 s) so the whole flow can be reviewed.
+   ========================================================= */
+const Q = new URLSearchParams(location.search);
+const DEMO_TOKEN = '4998';
+const PICKS = ['4998', '469', '1555', '262', '893', '910'];
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const MOBILE = matchMedia('(max-width: 900px)').matches;
+const $ = (s, r = document) => r.querySelector(s);
+const el = (h) => { const t = document.createElement('template'); t.innerHTML = h.trim(); return t.content.firstElementChild; };
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const STEPS = [
+  { id: 'summon', k: '召', name: 'SUMMON', cam: { a: -1.25, b: 1.32, r: 5.6, y: 1.05 } },
+  { id: 'ink', k: '墨', name: 'INK', cam: { a: -1.6, b: 1.3, r: 6.4, y: 1.1 } },
+  { id: 'form', k: '図', name: 'BLUEPRINT', cam: { a: -1.9, b: 1.25, r: 7.0, y: 1.1 } },
+  { id: 'forge', k: '鍛', name: 'FORGE', cam: { a: -1.57, b: 1.36, r: 4.9, y: 1.1 } },
+  { id: 'awaken', k: '覚', name: 'AWAKEN', cam: { a: -1.57, b: 1.38, r: 4.4, y: 1.0 } }
+];
+
+// 24 moves in 4 kamon groups (clip names = Forge Rigger output)
+const GROUPS = [
+  { k: '構', n: 'Stance', moves: [['fight_idle', '構', 'Fight Stance'], ['idle', '静', 'Calm']] },
+  { k: '歩', n: 'Movement', moves: [['walk', '歩', 'Walk'], ['run', '走', 'Run'], ['jump', '跳', 'Jump'], ['jump_run', '翔', 'Running Leap'], ['front_flip', '転', 'Front Flip'], ['backflip', '翻', 'Backflip'], ['cartwheel', '輪', 'Cartwheel']] },
+  { k: '撃', n: 'Strikes', moves: [['jab', '刺', 'Jab'], ['cross_punch', '直', 'Cross'], ['hook_punch', '鉤', 'Hook'], ['elbow_punch', '肘', 'Elbow'], ['punch_combo', '連', 'Combo'], ['front_kick', '蹴', 'Front Kick'], ['side_kick', '横', 'Side Kick'], ['roundhouse_kick', '回', 'Roundhouse'], ['crescent_kick', '月', 'Crescent Kick'], ['hurricane_kick', '嵐', 'Hurricane Kick'], ['flip_kick', '宙', 'Flip Kick'], ['spin_flip_kick', '旋', 'Spinning Flip']] },
+  { k: '受', n: 'Reactions', moves: [['hit_reaction', '受', 'Take a Hit'], ['knockdown', '倒', 'Knockdown'], ['get_up', '起', 'Rise']] }
+];
+const ALL_MOVES = GROUPS.flatMap((g, gi) => g.moves.map((m) => ({ clip: m[0], k: m[1], n: m[2], g: gi })));
+
+const FORGE_STAGES = [
+  { k: '鍛錬', n: 'Sculpt', d: 'Carving the body from your blueprint', w: 0.34 },
+  { k: '彩', n: 'Paint', d: 'Laying lacquer, cloth and steel', w: 0.18 },
+  { k: '骨', n: 'Skeleton', d: '65 bones set in the body', w: 0.16 },
+  { k: '型', n: 'Kata', d: 'Teaching 24 moves', w: 0.24 },
+  { k: '銘', n: 'Portrait', d: 'Signing the blade', w: 0.08 }
+];
+const FORGE_SECONDS = REDUCED ? 8 : 30;
+
+const state = {
+  step: 0, maxStep: 0, token: Q.get('token') || DEMO_TOKEN, meta: null, assets: null,
+  summoned: false, forging: false, forged: false, awakened: false, sound: false
+};
+
+/* ---------------- sound (synthesized, muted until the player turns it on) ---------------- */
+const Snd = (() => {
+  let ctx = null, master = null;
+  const on = () => state.sound;
+  function init() { if (ctx) return; ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = 0.5; master.connect(ctx.destination); }
+  function env(g, t, a, d, peak) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
+  function osc(type, f, t, a, d, peak, f2) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + a + d); env(g, t, a, d, peak); o.connect(g).connect(master); o.start(t); o.stop(t + a + d + 0.05); }
+  function noise(t, d, peak, fType, fFreq, q = 1) { const len = Math.ceil(ctx.sampleRate * d), b = ctx.createBuffer(1, len, ctx.sampleRate), c = b.getChannelData(0); for (let i = 0; i < len; i++) c[i] = Math.random() * 2 - 1; const s = ctx.createBufferSource(); s.buffer = b; const f = ctx.createBiquadFilter(); f.type = fType; f.frequency.value = fFreq; f.Q.value = q; const g = ctx.createGain(); env(g, t, 0.005, d, peak); s.connect(f).connect(g).connect(master); s.start(t); }
+  return {
+    init,
+    taiko() { if (!on()) return; init(); const t = ctx.currentTime; osc('sine', 110, t, 0.005, 0.5, 0.9, 42); noise(t, 0.12, 0.25, 'lowpass', 400); },
+    anvil() { if (!on()) return; init(); const t = ctx.currentTime; [[820, .35], [1340, .22], [2110, .16], [3390, .1], [4800, .06]].forEach(([f, p]) => osc('sine', f, t, 0.002, 1.4 * (1 - f / 7000), p)); noise(t, 0.05, 0.5, 'highpass', 2500); },
+    hiss() { if (!on()) return; init(); const t = ctx.currentTime; noise(t, 1.8, 0.35, 'bandpass', 3200, 0.6); },
+    bell() { if (!on()) return; init(); const t = ctx.currentTime; [[220, .3], [607, .14], [1188, .08], [1958, .05]].forEach(([f, p]) => osc('sine', f, t, 0.01, 4.2, p)); },
+    pluck(f = 660) { if (!on()) return; init(); const t = ctx.currentTime; osc('triangle', f, t, 0.003, 0.35, 0.25); osc('sine', f * 2, t, 0.003, 0.18, 0.08); },
+    whoosh() { if (!on()) return; init(); const t = ctx.currentTime; noise(t, 0.6, 0.18, 'bandpass', 900, 0.8); },
+    shaku() { if (!on()) return; init(); const t = ctx.currentTime; const o = ctx.createOscillator(), g = ctx.createGain(), v = ctx.createOscillator(), vg = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(392, t); o.frequency.linearRampToValueAtTime(440, t + 0.5); v.frequency.value = 5; vg.gain.value = 6; v.connect(vg).connect(o.frequency); env(g, t, 0.25, 1.6, 0.18); o.connect(g).connect(master); o.start(t); v.start(t); o.stop(t + 2); v.stop(t + 2); noise(t, 1.2, 0.03, 'bandpass', 1800, 2); }
+  };
+})();
+$('#sndBtn').onclick = () => { state.sound = !state.sound; $('#sndX').style.display = state.sound ? 'none' : ''; if (state.sound) { Snd.init(); Snd.pluck(880); } toast(state.sound ? 'Sound on' : 'Sound off'); };
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2400); }
+function flash(p = 0.8, d = 0.9) { gsap.fromTo('#flash', { opacity: p }, { opacity: 0, duration: d, ease: 'power2.out' }); }
+function shake(px = 6) { if (REDUCED) return; gsap.fromTo('#stage', { x: -px }, { x: 0, duration: 0.5, ease: 'elastic.out(1,0.3)' }); }
+
+/* =========================================================
+   3D: Babylon scene — ember DNA helix (points shader) → body
+   ========================================================= */
+const canvas = $('#stage');
+const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: false, stencil: false, antialias: true, alpha: true, premultipliedAlpha: false }, true);
+engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, MOBILE ? 1.5 : 2));
+const scene = new BABYLON.Scene(engine);
+scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+scene.skipPointerMovePicking = true;
+const cam = new BABYLON.ArcRotateCamera('cam', -1.25, 1.32, 5.6, new BABYLON.Vector3(0, 1.05, 0), scene);
+cam.fov = 0.75; cam.minZ = 0.05; cam.lowerRadiusLimit = 2.2; cam.upperRadiusLimit = 9; cam.lowerBetaLimit = 0.5; cam.upperBetaLimit = 1.62;
+cam.wheelDeltaPercentage = 0.01; cam.panningSensibility = 0; cam.attachControl(canvas, true);
+cam.inputs.removeByType('ArcRotateCameraKeyboardMoveInput');
+
+const hemi = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0, 1, 0), scene); hemi.intensity = 0.55; hemi.groundColor = new BABYLON.Color3(0.25, 0.12, 0.06);
+const key = new BABYLON.DirectionalLight('k', new BABYLON.Vector3(-0.6, -1, 0.8), scene); key.intensity = 2.2; key.diffuse = new BABYLON.Color3(1, 0.86, 0.72);
+const rim = new BABYLON.DirectionalLight('r', new BABYLON.Vector3(0.7, -0.35, -1), scene); rim.intensity = 2.4; rim.diffuse = new BABYLON.Color3(0.45, 0.9, 1.0);
+const forgeGlow = new BABYLON.PointLight('fg', new BABYLON.Vector3(0, 0.25, 0.4), scene); forgeGlow.intensity = 0; forgeGlow.diffuse = new BABYLON.Color3(1, 0.45, 0.15); forgeGlow.range = 5;
+try { scene.environmentTexture = BABYLON.CubeTexture.CreateFromPrefilteredData('https://assets.babylonjs.com/environments/environmentSpecular.env', scene); scene.environmentIntensity = 0.55; } catch (e) {}
+scene.imageProcessingConfiguration.toneMappingEnabled = true;
+scene.imageProcessingConfiguration.toneMappingType = BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;
+scene.imageProcessingConfiguration.exposure = 1.15;
+scene.imageProcessingConfiguration.contrast = 1.15;
+
+// soft sprite texture for particles
+function spriteTex(name, inner, outer) {
+  const t = new BABYLON.DynamicTexture(name, { width: 64, height: 64 }, scene, false);
+  const c = t.getContext(); const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, inner); g.addColorStop(0.35, outer); g.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = g; c.fillRect(0, 0, 64, 64); t.hasAlpha = true; t.update(); return t;
+}
+const texSpark = spriteTex('spark', 'rgba(255,250,235,1)', 'rgba(255,140,50,.55)');
+const texSoft = spriteTex('soft', 'rgba(255,255,255,.9)', 'rgba(255,255,255,.25)');
+
+// Ensō ground ring (brushed circle, additive)
+(function groundEnso() {
+  const t = new BABYLON.DynamicTexture('enso', { width: 1024, height: 1024 }, scene, false);
+  const c = t.getContext(); c.clearRect(0, 0, 1024, 1024);
+  const g = c.createRadialGradient(512, 512, 40, 512, 512, 500); g.addColorStop(0, 'rgba(255,120,40,.35)'); g.addColorStop(.5, 'rgba(255,90,30,.08)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = g; c.fillRect(0, 0, 1024, 1024);
+  c.lineCap = 'round';
+  for (let i = 0; i < 340; i++) {
+    const a0 = -0.4 + i / 340 * (Math.PI * 1.86); const w = 26 * Math.sin(Math.PI * i / 340) + 3;
+    c.strokeStyle = `rgba(255,${150 + (i % 40)},${70},${0.05 + 0.5 * Math.sin(Math.PI * i / 340)})`;
+    c.lineWidth = w; c.beginPath(); c.arc(512, 512, 372 + Math.sin(i * 0.3) * 3, a0, a0 + 0.03); c.stroke();
+  }
+  t.hasAlpha = true; t.update();
+  const m = new BABYLON.StandardMaterial('ensoM', scene); m.diffuseTexture = t; m.opacityTexture = t; m.emissiveColor = new BABYLON.Color3(1, 1, 1); m.disableLighting = true; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.backFaceCulling = false;
+  const p = BABYLON.MeshBuilder.CreateGround('enso', { width: 3.4, height: 3.4 }, scene); p.material = m; p.position.y = 0.005; p.isPickable = false;
+  scene.onBeforeRenderObservable.add(() => { p.rotation.y += 0.0012; });
+  window.__enso = p;
+})();
+
+/* ---- helix points ---- */
+const HELIX_H = 2.3, HELIX_R = 0.46, TURNS = 4.6;
+const N = MOBILE ? 9000 : 22000;
+const RUNGS = 46;
+function buildHelix() {
+  const pos = new Float32Array(N * 3), seed = new Float32Array(N * 4), body = new Float32Array(N * 3), idx = new Uint32Array(N);
+  for (let i = 0; i < N; i++) {
+    idx[i] = i; const r = Math.random();
+    let x, y, z, kind;
+    if (r < 0.62) { // strands
+      const s = Math.random() < 0.5 ? 0 : 1; const t = Math.random();
+      const ang = t * TURNS * Math.PI * 2 + s * Math.PI; const jit = (Math.random() - 0.5) * 0.05; const rr = HELIX_R + (Math.random() - 0.5) * 0.06;
+      x = Math.cos(ang) * rr + jit; z = Math.sin(ang) * rr + jit; y = t * HELIX_H + (Math.random() - 0.5) * 0.03; kind = s;
+    } else if (r < 0.93) { // rungs
+      const ri = Math.floor(Math.random() * RUNGS); const t = (ri + 0.5) / RUNGS; const ang = t * TURNS * Math.PI * 2; const u = Math.random() * 2 - 1;
+      x = Math.cos(ang) * HELIX_R * u; z = Math.sin(ang) * HELIX_R * u; y = t * HELIX_H + (Math.random() - 0.5) * 0.012; kind = 2 + (ri % 8) / 10; // 2.x → trait lane
+    } else { // halo dust
+      const t = Math.random(); const ang = Math.random() * Math.PI * 2; const rr = HELIX_R * (1.4 + Math.random() * 1.6);
+      x = Math.cos(ang) * rr; z = Math.sin(ang) * rr; y = t * HELIX_H * 1.1 - 0.05; kind = 3;
+    }
+    pos.set([x, y, z], i * 3); body.set([x, y, z], i * 3);
+    seed.set([Math.random(), Math.random(), Math.random(), kind], i * 4);
+  }
+  return { pos, seed, body, idx };
+}
+BABYLON.Effect.ShadersStore.dnaVertexShader = `
+precision highp float;
+attribute vec3 position; attribute vec3 body; attribute vec4 seed;
+uniform mat4 worldViewProjection;
+uniform float uTime, uMorph, uBuild, uProgress, uScatter, uPixel, uHeight, uAlpha, uSpin, uChaos;
+varying vec3 vColor; varying float vA;
+vec3 rotY(vec3 p, float a){ float c=cos(a), s=sin(a); return vec3(p.x*c - p.z*s, p.y, p.x*s + p.z*c); }
+void main(){
+  float kind = seed.w;
+  float yN = clamp(position.y / uHeight, 0.0, 1.0);
+  float delay = fract(seed.x*7.13 + seed.y*3.71);
+  // helix state
+  vec3 hp = rotY(position, uTime*uSpin + (kind>2.95 ? seed.z*6.28 : 0.0));
+  float locked = 1.0 - smoothstep(uProgress - 0.004, uProgress + 0.004, yN);
+  float chaos = (1.0 - locked) * uChaos;
+  hp += chaos * 0.07 * vec3(sin(uTime*2.1 + seed.x*40.0), sin(uTime*1.6 + seed.y*37.0), cos(uTime*2.4 + seed.z*43.0));
+  // build (summon): unbuilt points drift outward & fade
+  float built = 1.0 - smoothstep(uBuild - 0.035, uBuild + 0.005, yN);
+  vec3 drift = normalize(vec3(seed.x-0.5, 0.15, seed.z-0.5) + 0.0001) * (0.9 + seed.y*1.4);
+  hp += (1.0 - built) * (drift + vec3(0.0, -0.25, 0.0));
+  // morph to body, staggered bottom-up with a vortex
+  float m = clamp(uMorph*1.6 - delay*0.35 - yN*0.25, 0.0, 1.0); m = m*m*(3.0 - 2.0*m);
+  vec3 bp = body + 0.006*vec3(sin(uTime*3.0+seed.x*50.0), cos(uTime*2.7+seed.y*50.0), sin(uTime*3.3+seed.z*50.0));
+  vec3 p = mix(hp, bp, m);
+  p = rotY(p, (1.0 - m) * m * 5.0 * (seed.y - 0.3));
+  // scatter (reveal): blow outward and up
+  vec3 dir = normalize(p - vec3(0.0, 1.0, 0.0) + vec3(seed.x-0.5, 0.2, seed.z-0.5)*0.5);
+  p += dir * uScatter * (0.6 + seed.x*2.2) + vec3(0.0, uScatter*uScatter*(0.6+seed.y), 0.0);
+  gl_Position = worldViewProjection * vec4(p, 1.0);
+  // colour
+  vec3 ember = vec3(1.0, 0.42, 0.12), molten = vec3(1.0, 0.71, 0.28), white = vec3(1.0, 0.95, 0.84), jade = vec3(0.25, 0.82, 0.66), shu = vec3(0.95, 0.35, 0.22);
+  vec3 c = kind < 0.5 ? ember : (kind < 1.5 ? molten : (kind < 2.95 ? jade : vec3(1.0, 0.6, 0.3)));
+  if (kind > 1.95 && kind < 2.95 && fract(kind*10.0+0.01) > 0.65) c = mix(jade, shu, 0.35);
+  float band = exp(-pow((yN - uProgress)*38.0, 2.0)) * step(0.001, uProgress) * step(uProgress, 0.999);
+  c = mix(c, mix(white, c, 0.35), locked * step(uProgress, 0.9999) * 0.55);
+  c += white * band * 1.6;
+  c = mix(c, mix(ember, molten, seed.z), m*0.7);
+  float a = uAlpha * built * (kind > 2.95 ? 0.35 : 1.0) * (1.0 - uScatter*0.9);
+  a *= (0.55 + 0.45*(1.0 - chaos*0.6));
+  vColor = c; vA = a;
+  float sz = (kind > 2.95 ? 1.0 : 1.8) + seed.y*1.6 + band*3.0;
+  sz *= mix(1.0, 0.7, m);
+  gl_PointSize = uPixel * sz / gl_Position.w;
+}`;
+BABYLON.Effect.ShadersStore.dnaFragmentShader = `
+precision highp float;
+varying vec3 vColor; varying float vA;
+void main(){
+  vec2 d = gl_PointCoord - 0.5; float r = length(d);
+  float a = smoothstep(0.5, 0.0, r); a = a*a;
+  if (a*vA < 0.004) discard;
+  gl_FragColor = vec4(vColor * a * vA, a * vA);
+}`;
+const H = buildHelix();
+const dna = new BABYLON.Mesh('dna', scene);
+const vd = new BABYLON.VertexData(); vd.positions = H.pos; vd.indices = H.idx; vd.applyToMesh(dna, false);
+dna.setVerticesData('seed', H.seed, false, 4);
+dna.setVerticesData('body', H.body, true, 3);
+dna.alwaysSelectAsActiveMesh = true; dna.isPickable = false;
+const dnaMat = new BABYLON.ShaderMaterial('dnaM', scene, { vertex: 'dna', fragment: 'dna' }, {
+  attributes: ['position', 'body', 'seed'],
+  uniforms: ['worldViewProjection', 'uTime', 'uMorph', 'uBuild', 'uProgress', 'uScatter', 'uPixel', 'uHeight', 'uAlpha', 'uSpin', 'uChaos'],
+  needAlphaBlending: true
+});
+dnaMat.pointsCloud = true; dnaMat.backFaceCulling = false; dnaMat.disableDepthWrite = true; dnaMat.alphaMode = BABYLON.Engine.ALPHA_ADD;
+dna.material = dnaMat;
+const U = { uMorph: 0, uBuild: 0, uProgress: 0, uScatter: 0, uAlpha: 1, uSpin: 0.32, uChaos: 1 };
+let tAcc = 0;
+scene.onBeforeRenderObservable.add(() => {
+  tAcc += engine.getDeltaTime() / 1000;
+  dnaMat.setFloat('uTime', tAcc); dnaMat.setFloat('uHeight', HELIX_H);
+  dnaMat.setFloat('uPixel', engine.getRenderHeight() * (MOBILE ? 0.0045 : 0.0036));
+  for (const k in U) dnaMat.setFloat(k, U[k]);
+});
+
+/* ---- particles ---- */
+const embers = new BABYLON.ParticleSystem('embers', MOBILE ? 250 : 600, scene);
+embers.particleTexture = texSpark; embers.emitter = new BABYLON.Vector3(0, -0.2, 0);
+embers.minEmitBox = new BABYLON.Vector3(-3, 0, -2); embers.maxEmitBox = new BABYLON.Vector3(3, 0, 2);
+embers.color1 = new BABYLON.Color4(1, 0.6, 0.2, 0.9); embers.color2 = new BABYLON.Color4(1, 0.35, 0.1, 0.7); embers.colorDead = new BABYLON.Color4(0.3, 0.05, 0, 0);
+embers.minSize = 0.012; embers.maxSize = 0.035; embers.minLifeTime = 3; embers.maxLifeTime = 7; embers.emitRate = MOBILE ? 30 : 70;
+embers.direction1 = new BABYLON.Vector3(-0.15, 1, -0.1); embers.direction2 = new BABYLON.Vector3(0.15, 1, 0.1); embers.minEmitPower = 0.15; embers.maxEmitPower = 0.45;
+embers.gravity = new BABYLON.Vector3(0, 0.03, 0); embers.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD; embers.noiseStrength = new BABYLON.Vector3(0.4, 0.1, 0.4);
+try { const nt = new BABYLON.NoiseProceduralTexture('n', 128, scene); nt.animationSpeedFactor = 3; nt.brightness = 0.5; nt.octaves = 3; embers.noiseTexture = nt; } catch (e) {}
+embers.start();
+
+const sparks = new BABYLON.ParticleSystem('sparks', 900, scene);
+sparks.particleTexture = texSpark; sparks.emitter = new BABYLON.Vector3(0, 1, 0);
+sparks.createSphereEmitter(0.08);
+sparks.color1 = new BABYLON.Color4(1, 0.95, 0.8, 1); sparks.color2 = new BABYLON.Color4(1, 0.6, 0.2, 1); sparks.colorDead = new BABYLON.Color4(0.6, 0.1, 0, 0);
+sparks.minSize = 0.012; sparks.maxSize = 0.04; sparks.minLifeTime = 0.35; sparks.maxLifeTime = 1.1;
+sparks.minEmitPower = 2.2; sparks.maxEmitPower = 5.5; sparks.gravity = new BABYLON.Vector3(0, -7, 0); sparks.emitRate = 0; sparks.updateSpeed = 0.012;
+sparks.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD; sparks.isLocal = false;
+sparks.addSizeGradient(0, 1); sparks.addSizeGradient(1, 0.2);
+sparks.start();
+function burst(y = 1, n = 260) { sparks.emitter = new BABYLON.Vector3((Math.random() - 0.5) * 0.3, y, (Math.random() - 0.5) * 0.3); sparks.manualEmitCount = n; }
+
+const steam = new BABYLON.ParticleSystem('steam', 500, scene);
+steam.particleTexture = texSoft; steam.emitter = new BABYLON.Vector3(0, 0.1, 0);
+steam.minEmitBox = new BABYLON.Vector3(-0.8, 0, -0.5); steam.maxEmitBox = new BABYLON.Vector3(0.8, 0.2, 0.5);
+steam.color1 = new BABYLON.Color4(1, 0.95, 0.9, 0.18); steam.color2 = new BABYLON.Color4(0.8, 0.85, 0.9, 0.12); steam.colorDead = new BABYLON.Color4(0.6, 0.6, 0.6, 0);
+steam.minSize = 0.4; steam.maxSize = 1.3; steam.minLifeTime = 1.5; steam.maxLifeTime = 3.2; steam.emitRate = 0;
+steam.direction1 = new BABYLON.Vector3(-0.3, 1, -0.2); steam.direction2 = new BABYLON.Vector3(0.3, 1.4, 0.2); steam.minEmitPower = 0.6; steam.maxEmitPower = 1.4;
+steam.addSizeGradient(0, 0.4); steam.addSizeGradient(1, 1.6); steam.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
+steam.start();
+
+const petals = new BABYLON.ParticleSystem('petals', 400, scene);
+petals.particleTexture = texSoft; petals.emitter = new BABYLON.Vector3(0, 1.1, 0); petals.createSphereEmitter(0.4);
+petals.color1 = new BABYLON.Color4(0.96, 0.65, 0.73, 0.9); petals.color2 = new BABYLON.Color4(1, 0.7, 0.3, 0.9); petals.colorDead = new BABYLON.Color4(1, 0.4, 0.3, 0);
+petals.minSize = 0.02; petals.maxSize = 0.06; petals.minLifeTime = 1.5; petals.maxLifeTime = 3.5; petals.emitRate = 0;
+petals.minEmitPower = 1.5; petals.maxEmitPower = 3.5; petals.gravity = new BABYLON.Vector3(0, -1.2, 0); petals.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+petals.minAngularSpeed = -4; petals.maxAngularSpeed = 4; petals.start();
+
+/* ---- the Rebel (rigged GLB) ---- */
+const rebel = { root: null, meshes: [], groups: {}, cur: null, ready: false, speed: 1, loop: false, paused: false, kata: false };
+async function loadRebel(url) {
+  const res = await BABYLON.SceneLoader.ImportMeshAsync('', '', url, scene, null, '.glb');
+  const root = res.meshes[0];
+  res.animationGroups.forEach((g) => g.stop());
+  // normalise: 1.9 m tall, feet on the ground, centred
+  root.computeWorldMatrix(true);
+  const { min, max } = root.getHierarchyBoundingVectors(true);
+  const h = max.y - min.y || 1; const s = 1.9 / h;
+  root.scaling.scaleInPlace(s);
+  root.computeWorldMatrix(true);
+  const b2 = root.getHierarchyBoundingVectors(true);
+  root.position.x -= (b2.min.x + b2.max.x) / 2; root.position.z -= (b2.min.z + b2.max.z) / 2; root.position.y -= b2.min.y;
+  rebel.root = root; rebel.meshes = res.meshes.filter((m) => m.getTotalVertices() > 0);
+  rebel.meshes.forEach((m) => { m.visibility = 0; m.isPickable = false; });
+  res.animationGroups.forEach((g) => {
+    g.targetedAnimations.forEach((ta) => { ta.animation.enableBlending = true; ta.animation.blendingSpeed = 0.075; });
+    g.onAnimationGroupEndObservable.add(() => onClipEnd(g.name));
+    rebel.groups[g.name] = g;
+  });
+  // sample body surface for the helix → body morph (bind pose)
+  const pts = []; root.computeWorldMatrix(true);
+  rebel.meshes.forEach((m) => {
+    m.computeWorldMatrix(true); const wm = m.getWorldMatrix(); const p = m.getVerticesData(BABYLON.VertexBuffer.PositionKind); if (!p) return;
+    for (let i = 0; i < p.length; i += 3) pts.push(BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(p[i], p[i + 1], p[i + 2]), wm));
+  });
+  if (pts.length) {
+    const body = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) { const v = pts[(Math.random() * pts.length) | 0]; body[i * 3] = v.x; body[i * 3 + 1] = v.y; body[i * 3 + 2] = v.z; }
+    dna.updateVerticesData('body', body);
+  }
+  rebel.ready = true;
+  return rebel;
+}
+
+/* camera tween */
+function camTo(c, d = 1.6) {
+  gsap.to(cam, { alpha: c.a, beta: c.b, radius: c.r, duration: d, ease: 'power3.inOut' });
+  gsap.to(cam.target, { y: c.y, duration: d, ease: 'power3.inOut' });
+}
+
+engine.runRenderLoop(() => { if (!document.hidden) scene.render(); });
+addEventListener('resize', () => engine.resize());
+
+/* =========================================================
+   Stepper (pheromone trail)
+   ========================================================= */
+const nodesEl = $('#nodes');
+STEPS.forEach((s, i) => {
+  const n = el(`<button class="node" data-i="${i}"><span class="k brush">${s.k}</span><span class="t">${s.name}</span></button>`);
+  n.onclick = () => { if (i <= state.maxStep) go(i); else toast('Finish the current step first'); };
+  nodesEl.appendChild(n);
+});
+let trailPath = null;
+function layoutTrail() {
+  if (MOBILE) return;
+  const box = $('#trail').getBoundingClientRect(); const h = box.height; const svg = $('#trailSvg');
+  const ys = STEPS.map((_, i) => 40 + i * ((h - 80) / (STEPS.length - 1)));
+  [...nodesEl.children].forEach((n, i) => { n.style.top = ys[i] + 'px'; });
+  let d = `M24 ${ys[0]}`;
+  for (let i = 1; i < ys.length; i++) { const y0 = ys[i - 1], y1 = ys[i], m = (y0 + y1) / 2; d += ` C ${i % 2 ? 44 : 4} ${m - 20}, ${i % 2 ? 4 : 44} ${m + 20}, 24 ${y1}`; }
+  svg.setAttribute('viewBox', `0 0 120 ${h}`);
+  svg.innerHTML = `<path d="${d}" fill="none" stroke="rgba(63,209,168,.25)" stroke-width="2" stroke-linecap="round" stroke-dasharray="0.5 9"/>
+    <path id="trailDone" d="${d}" fill="none" stroke="#3FD1A8" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.5 9" opacity=".95"/>`;
+  trailPath = svg.querySelector('#trailDone'); trailPath._ys = ys;
+  const L = trailPath.getTotalLength(); trailPath.style.clipPath = ''; trailPath._L = L;
+  placeAnt(state.step, true);
+}
+let antT = { v: 0 };
+function lenAtStep(i) {
+  const ys = trailPath._ys; let lo = 0, hi = trailPath._L;
+  for (let k = 0; k < 24; k++) { const mid = (lo + hi) / 2; if (trailPath.getPointAtLength(mid).y < ys[i]) lo = mid; else hi = mid; }
+  return hi;
+}
+function placeAnt(i, instant) {
+  if (!trailPath) return;
+  const target = lenAtStep(i);
+  const upd = () => {
+    const L = antT.v; const p = trailPath.getPointAtLength(L); const q = trailPath.getPointAtLength(Math.min(trailPath._L, L + 1));
+    const a = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI + 90;
+    const ant = $('#ant'); ant.style.left = p.x + 'px'; ant.style.top = p.y + 'px'; ant.style.transform = `rotate(${a}deg)`;
+    const H = trailPath.ownerSVGElement.getBoundingClientRect().height;
+    trailPath.style.clipPath = `inset(0 0 ${Math.max(0, H - p.y)}px 0)`;
+  };
+  if (instant) { antT.v = target; upd(); return; }
+  gsap.to(antT, { v: target, duration: 1.4, ease: 'power2.inOut', onUpdate: upd });
+}
+addEventListener('resize', layoutTrail);
+
+function markNodes() {
+  [...nodesEl.children].forEach((n, i) => { n.classList.toggle('active', i === state.step); n.classList.toggle('done', i < state.maxStep && i !== state.step); });
+}
+
+/* =========================================================
+   Data
+   ========================================================= */
+async function loadToken(t) {
+  const out = { tokenId: t, name: `Rebel #${t}`, traits: [], img: `/api/nft-image?c=battle_for_colony&t=${t}&s=full`, thumb: `/api/nft-image?c=battle_for_colony&t=${t}&s=thumb` };
+  try { const j = await (await fetch(`/api/nft-token?c=battle_for_colony&t=${encodeURIComponent(t)}`)).json(); if (j.ok) { out.name = j.name || out.name; out.traits = j.traits || []; } } catch (e) {}
+  return out;
+}
+async function loadAssets(t) {
+  const pick = async (tok) => {
+    try {
+      const j = await (await fetch(`/api/forge-builds-list?collectionKey=battle_for_colony&tokenId=${encodeURIComponent(tok)}`)).json();
+      const bs = j.builds || []; const rig = bs.find((b) => b.output?.forgeRigGlbUrl); const src = rig || bs.find((b) => b.sourceImage?.imageUrl);
+      if (!rig || !src?.sourceImage?.imageUrl) return null;
+      return { token: tok, glb: rig.output.forgeRigGlbUrl, thumb: rig.output.forgeRigThumbUrl || '', front: src.sourceImage.imageUrl, back: src.sourceImage.backImageUrl || src.sourceImage.imageUrl, colony: src.colony || '' };
+    } catch (e) { return null; }
+  };
+  return (await pick(t)) || { ...(await pick(DEMO_TOKEN)), demo: true };
+}
+const gangKanji = { Shogun: '将軍', Ronin: '浪人', Ninja: '忍者', Samurai: '侍', Monk: '僧', Oni: '鬼', Geisha: '芸者', Yakuza: '極道' };
+function traitVal(name) { const t = (state.meta?.traits || []).find((x) => x.trait_type === name); return t ? t.value : null; }
+function shortName() { return `REBEL #${state.token}`; }
+
+/* =========================================================
+   Steps
+   ========================================================= */
+const card = $('#card'), center = $('#center');
+function setKanji(k) { const b = $('#bigKanji'); gsap.to(b, { opacity: 0, duration: 0.3, onComplete: () => { b.textContent = k; gsap.to(b, { opacity: 1, duration: 0.8 }); } }); }
+function renderCard(html) {
+  gsap.to(card, { opacity: 0, x: 20, duration: 0.25, onComplete: () => {
+    card.innerHTML = html; card.scrollTop = 0;
+    gsap.fromTo(card, { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.6, ease: 'power3.out' });
+    gsap.from(card.querySelectorAll('.eyebrow, h1, p.lead, .sep, .traits > *, .chips, .cta, .checks > *, .stages > *, .picker, .note'), { opacity: 0, y: 12, duration: 0.6, stagger: 0.04, ease: 'power3.out', delay: 0.1 });
+  } });
+}
+function go(i) {
+  if (state.forging && i !== 3) { toast('The forge is working — watch or leave, it keeps going'); return; }
+  const prev = state.step; state.step = i; state.maxStep = Math.max(state.maxStep, i);
+  markNodes(); placeAnt(i); setKanji(STEPS[i].k); camTo(STEPS[i].cam); Snd.taiko();
+  $('#panel').classList.toggle('hidden', false);
+  [renderSummon, renderInk, renderForm, renderForge, renderAwaken][i](prev);
+}
+
+/* ---- 1. SUMMON 召 ---- */
+function renderSummon() {
+  hideAwaken(); gsap.to(U, { uMorph: 0, uScatter: 0, uAlpha: 1, uProgress: 0, uChaos: 1, duration: 1 });
+  if (!state.summoned) gsap.to(U, { uBuild: 0, duration: 0.6 });
+  const m = state.meta || { traits: [] };
+  const rows = m.traits.map((t, i) => `<div class="trait${state.summoned ? ' locked' : ''}" data-i="${i}"><span class="tt"><i></i>${esc(t.trait_type)}</span><span class="tv">${esc(t.value)}</span></div>`).join('');
+  renderCard(`
+    <div class="eyebrow">STEP 1 / 5 <span class="jp">召 · 召喚</span></div>
+    <h1>Summon your Rebel<span class="brush">血 の 記 憶</span></h1>
+    <p class="lead">Every trait on your Rebel is a strand of its blood-memory. Summon it and the forge reads your Rebel's DNA.</p>
+    <div class="picker">${PICKS.map((p) => `<button data-t="${p}" class="${p === state.token ? 'on' : ''}" title="Rebel #${p}"><img src="/api/nft-image?c=battle_for_colony&t=${p}&s=thumb" alt="" loading="lazy"><small>#${p}</small></button>`).join('')}</div>
+    <div class="sep"></div>
+    <div class="traits" id="traitList">${rows || '<div class="note">Reading traits…</div>'}</div>
+    <div class="cta">
+      ${state.summoned ? `<button class="btn fire wide" id="nextBtn">PAINT THE CONCEPT →</button>` : `<button class="btn fire wide" id="summonBtn">召 SUMMON</button>`}
+    </div>
+    <div class="note">${m.traits.length} traits → ${m.traits.length} DNA lanes. Traits decide colony colours, armour weight and the moves your Rebel favours.</div>
+  `);
+  center.innerHTML = `<div class="nftcard" id="nftCard"><img src="${state.meta?.img || ''}" alt=""><div class="cap"><div><b>#${esc(state.token)}</b><br><span>${esc(traitVal('Gang Names') || 'Rebel Ants')}</span></div><span class="jp">${esc(gangKanji[traitVal('Gang Names')] || '叛蟻')}</span></div></div>`;
+  const nc = $('#nftCard');
+  if (state.summoned) { gsap.set(nc, { opacity: 0 }); }
+  else inkSmokeIn(nc);
+  setTimeout(() => {
+    card.querySelectorAll('.picker button').forEach((b) => b.onclick = () => selectToken(b.dataset.t));
+    const sb = $('#summonBtn'); if (sb) sb.onclick = summon;
+    const nb = $('#nextBtn'); if (nb) nb.onclick = () => go(1);
+  }, 300);
+}
+function inkSmokeIn(node) {
+  if (REDUCED) return;
+  const id = 'smoke' + Math.random().toString(36).slice(2, 7);
+  const svg = el(`<svg width="0" height="0" style="position:absolute"><filter id="${id}" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="3" seed="4" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="160" xChannelSelector="R" yChannelSelector="G"/></filter></svg>`);
+  document.body.appendChild(svg);
+  const disp = svg.querySelector('feDisplacementMap'), turb = svg.querySelector('feTurbulence');
+  node.style.filter = `url(#${id})`;
+  const o = { s: 160, f: 0.012 };
+  gsap.fromTo(node, { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 1.8, ease: 'power2.out' });
+  gsap.to(o, { s: 0, f: 0.004, duration: 2.2, ease: 'power3.out', onUpdate: () => { disp.setAttribute('scale', o.s); turb.setAttribute('baseFrequency', `${o.f} ${o.f * 1.6}`); }, onComplete: () => { node.style.filter = ''; svg.remove(); } });
+  Snd.shaku();
+}
+async function selectToken(t) {
+  if (t === state.token) return;
+  state.token = t; state.summoned = false; state.maxStep = 0;
+  $('#tokPill').innerHTML = `Rebel <strong>#${esc(t)}</strong>`;
+  state.meta = await loadToken(t); updateTokPill(); renderSummon();
+  loadAssets(t).then((a) => { if (a.demo) toast(`Mockup: #${t} has no forged model yet — later steps show #4998`); state.assets = a; });
+}
+async function summon() {
+  if (state.summoned) return; const btn = $('#summonBtn'); btn.disabled = true;
+  const nc = $('#nftCard');
+  Snd.whoosh();
+  gsap.to(nc, { scale: 0.42, x: MOBILE ? -80 : -260, y: MOBILE ? -120 : -90, opacity: 0.9, rotate: -4, duration: 1.1, ease: 'power3.inOut' });
+  gsap.to(nc, { opacity: 0, duration: 0.8, delay: 1.2 + (state.meta.traits.length * 0.28) });
+  const rows = [...card.querySelectorAll('.trait')];
+  const n = Math.max(rows.length, 1);
+  // helix target on screen: centre of canvas
+  const tx = innerWidth / 2, ty = innerHeight * 0.55;
+  for (let i = 0; i < rows.length; i++) {
+    await new Promise((r) => setTimeout(r, i === 0 ? 700 : 280));
+    const row = rows[i]; const rb = row.getBoundingClientRect();
+    const f = el(`<div class="flyer">${esc(row.querySelector('.tv').textContent)}</div>`); document.body.appendChild(f);
+    gsap.set(f, { left: rb.left + 10, top: rb.top + 6 }); row.classList.add('sent');
+    const yLane = ty + 160 - (i / n) * 320;
+    gsap.to(f, { left: tx - 30 + (Math.random() - 0.5) * 60, top: yLane, scale: 0.6, duration: 0.8, ease: 'power2.in', onComplete: () => {
+      gsap.to(f, { opacity: 0, scale: 0.1, duration: 0.25, onComplete: () => f.remove() });
+      row.classList.remove('sent'); row.classList.add('locked');
+      gsap.to(U, { uBuild: (i + 1) / n, duration: 0.7, ease: 'power2.out' });
+      Snd.pluck(440 * Math.pow(2, (i % 7) / 12 * 2));
+      burst(0.2 + ((i + 1) / n) * HELIX_H, 60);
+    } });
+  }
+  await new Promise((r) => setTimeout(r, 1000));
+  state.summoned = true; flash(0.35, 0.8); Snd.bell();
+  gsap.to(U, { uBuild: 1.05, duration: 0.5 });
+  const cta = card.querySelector('.cta'); cta.innerHTML = `<button class="btn fire wide" id="nextBtn">PAINT THE CONCEPT →</button>`;
+  gsap.from(cta, { opacity: 0, y: 10, duration: 0.5 });
+  $('#nextBtn').onclick = () => go(1);
+  toast(`DNA sequenced · ${rows.length} traits`);
+}
+
+/* ---- 2. INK 墨 ---- */
+function renderInk() {
+  hideAwaken(); gsap.to(U, { uAlpha: 0.22, uBuild: 1.05, uMorph: 0, uChaos: 1, duration: 1.2 });
+  const a = state.assets || {};
+  renderCard(`
+    <div class="eyebrow">STEP 2 / 5 <span class="jp">墨 · 下絵</span></div>
+    <h1>The concept is inked<span class="brush">筆 が 走 る</span></h1>
+    <p class="lead">The forge's brush paints your Rebel as a full warrior, drawn from its traits and colony.${a.demo ? ' <em>(mockup shows #4998)</em>' : ''}</p>
+    <div class="sep"></div>
+    <div class="eyebrow" style="color:var(--washi-dim)">QUICK TWEAKS</div>
+    <div class="chips">${['Heavier armour', 'Brighter colours', 'Battle-worn', 'Cleaner silhouette', 'More cloth', 'Colony crest'].map((c) => `<button class="chip">${c}</button>`).join('')}</div>
+    <div class="cta">
+      <button class="btn" id="againBtn">↻ PAINT AGAIN</button>
+      <button class="btn fire wide" id="acceptBtn">ACCEPT →</button>
+    </div>
+    <div class="note">Mockup: "Paint again" replays the ink. In the real Forge it paints a new version and keeps your old ones.</div>
+  `);
+  center.innerHTML = inkFrameSVG(a.front);
+  inkBleed();
+  setTimeout(() => {
+    card.querySelectorAll('.chip').forEach((c) => c.onclick = () => { c.classList.toggle('on'); Snd.pluck(990); });
+    $('#againBtn').onclick = () => { center.innerHTML = inkFrameSVG(a.front); inkBleed(); };
+    $('#acceptBtn').onclick = () => go(2);
+  }, 300);
+}
+function inkFrameSVG(src) {
+  return `<div class="inkframe"><svg viewBox="0 0 400 600" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <filter id="bleed" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="4" seed="9"/><feDisplacementMap in="SourceGraphic" scale="46" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation="1.2"/></filter>
+      <mask id="inkMask" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="600"><rect width="400" height="600" fill="black"/><g filter="url(#bleed)" fill="white"><circle class="blot" cx="200" cy="250" r="0"/><circle class="blot" cx="130" cy="420" r="0"/><circle class="blot" cx="280" cy="140" r="0"/><circle class="blot" cx="250" cy="480" r="0"/></g></mask>
+      <radialGradient id="paperG" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#efe6d2"/><stop offset="1" stop-color="#cfc2a6"/></radialGradient>
+    </defs>
+    <rect x="6" y="6" width="388" height="588" rx="6" fill="url(#paperG)"/>
+    <g mask="url(#inkMask)"><image href="${esc(src || '')}" x="10" y="10" width="380" height="580" preserveAspectRatio="xMidYMid meet"/></g>
+    <rect x="6" y="6" width="388" height="588" rx="6" fill="none" stroke="rgba(40,25,15,.35)" stroke-width="1.5"/>
+    <text x="30" y="560" font-family="Yuji Syuku" font-size="30" fill="#1b1410" class="sig" opacity="0">${esc(gangKanji[traitVal('Gang Names')] || '叛蟻')}</text>
+    <g class="stampG" opacity="0" transform="translate(344 552) rotate(-8)"><rect x="-22" y="-22" width="44" height="44" rx="4" fill="none" stroke="#C8321E" stroke-width="3"/><text x="0" y="7" text-anchor="middle" font-family="Yuji Syuku" font-size="20" fill="#C8321E">墨</text></g>
+  </svg></div>`;
+}
+function inkBleed() {
+  const blots = center.querySelectorAll('.blot');
+  gsap.fromTo(center.querySelector('.inkframe'), { opacity: 0, y: 30, rotate: -1.5 }, { opacity: 1, y: 0, rotate: 0, duration: 1, ease: 'power3.out' });
+  blots.forEach((b, i) => gsap.to(b, { attr: { r: 520 }, duration: REDUCED ? 0.4 : 2.6, delay: 0.3 + i * 0.35, ease: 'power2.inOut' }));
+  gsap.to(center.querySelector('.sig'), { opacity: 1, duration: 1, delay: 2.4 });
+  gsap.fromTo(center.querySelector('.stampG'), { opacity: 0, scale: 2 }, { opacity: 0.9, scale: 1, duration: 0.35, delay: 2.9, ease: 'back.out(2)', transformOrigin: '344px 552px', onStart: () => Snd.taiko() });
+  Snd.whoosh();
+}
+
+/* ---- 3. BLUEPRINT 図 ---- */
+function renderForm() {
+  hideAwaken(); gsap.to(U, { uAlpha: 0.14, duration: 1 });
+  const a = state.assets || {};
+  renderCard(`
+    <div class="eyebrow">STEP 3 / 5 <span class="jp">図 · 設計図</span></div>
+    <h1>The blueprint<span class="brush">前 と 後 ろ</span></h1>
+    <p class="lead">Front and back, drawn for the smith. This is what the forge builds your Rebel's body from.</p>
+    <div class="sep"></div>
+    <div class="checks">
+      ${['A-pose, arms clear of the body', 'Hands relaxed, ready for weapons', 'Front and back match', 'Head clean for antennae and masks'].map((c) => `<div class="check"><b>✓</b>${c}</div>`).join('')}
+    </div>
+    <div class="cta"><button class="btn fire wide hold" id="holdForge"><i class="fill"></i><span>HOLD · TAKE IT TO THE FORGE</span></button></div>
+    <div class="note">Hold to confirm. Forging takes about 6 minutes (30 seconds in this mockup) and keeps going even if you leave.</div>
+  `);
+  center.innerHTML = `<div class="scroll" id="scroll">
+    <div class="rod"></div>
+    <div class="paper" id="paper">
+      <div class="bp-head"><span>BLUEPRINT · 設計図</span><span class="brush">${esc(shortName())}</span><span>${esc(traitVal('Gang Names') || '')}</span></div>
+      <div class="bp-views">
+        <div class="bp-view"><img class="line" src="${esc(a.front || '')}" alt=""><img class="col" src="${esc(a.front || '')}" alt=""><label>FRONT · 前</label></div>
+        <div class="bp-view"><img class="line" src="${esc(a.back || '')}" alt=""><img class="col" src="${esc(a.back || '')}" alt=""><label>BACK · 後</label></div>
+      </div>
+      <svg class="bp-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <line x1="3" y1="12" x2="3" y2="94"/><line x1="1.8" y1="12" x2="4.2" y2="12"/><line x1="1.8" y1="94" x2="4.2" y2="94"/>
+        <path d="M50 10 V96" stroke-dasharray="1 1.5"/>
+        <path d="M8 60 H92" stroke-dasharray="1 1.5"/>
+      </svg>
+      <div class="seal brush">鍛<br>可</div>
+    </div>
+    <div class="rod"></div>
+  </div>`;
+  const paper = $('#paper');
+  gsap.fromTo('#scroll', { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.6 });
+  gsap.to(paper, { clipPath: 'inset(0 0 0% 0)', duration: REDUCED ? 0.3 : 1.6, ease: 'power2.inOut', delay: 0.2 });
+  const lines = paper.querySelectorAll('.bp-svg line, .bp-svg path');
+  lines.forEach((l) => { const L = 200; l.style.strokeDasharray = l.getAttribute('stroke-dasharray') || `${L}`; });
+  gsap.from(lines, { opacity: 0, duration: 0.6, stagger: 0.15, delay: 1.5 });
+  gsap.to(paper.querySelectorAll('img.col'), { opacity: 1, duration: 1.4, delay: 2.1, ease: 'power2.inOut' });
+  gsap.to(paper.querySelectorAll('img.line'), { opacity: 0.25, duration: 1.4, delay: 2.1 });
+  Snd.whoosh();
+  setTimeout(() => holdButton($('#holdForge'), 1300, () => {
+    gsap.to(paper.querySelector('.seal'), { scale: 1, duration: 0.3, ease: 'back.out(3)' }); Snd.taiko(); flash(0.3, 0.6);
+    setTimeout(() => go(3), 700);
+  }), 300);
+}
+function holdButton(btn, ms, done) {
+  if (!btn) return; const fill = btn.querySelector('.fill'); let tw = null;
+  const start = (e) => { e.preventDefault(); tw = gsap.to(fill, { scaleX: 1, duration: ms / 1000, ease: 'none', onComplete: () => { btn.disabled = true; done(); } }); };
+  const stop = () => { if (tw && tw.progress() < 1) { tw.kill(); gsap.to(fill, { scaleX: 0, duration: 0.3 }); } };
+  btn.addEventListener('pointerdown', start); btn.addEventListener('pointerup', stop); btn.addEventListener('pointerleave', stop);
+  btn.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) start(e); });
+  btn.addEventListener('keyup', stop);
+}
+
+/* ---- 4. FORGE 鍛 ---- */
+function renderForge() {
+  hideAwaken(); center.innerHTML = '';
+  gsap.to(U, { uAlpha: 1, uBuild: 1.05, uMorph: 0, uScatter: 0, duration: 1.2 });
+  gsap.to(forgeGlow, { intensity: 3, duration: 2 });
+  renderCard(`
+    <div class="eyebrow">STEP 4 / 5 <span class="jp">鍛 · 鍛造</span></div>
+    <h1>Forging<span class="brush">槌 の 音</span></h1>
+    <div class="pct" id="pct">0<small>%</small></div>
+    <div class="bar"><i id="barI"></i></div>
+    <div class="note" id="eta">Heating the steel…</div>
+    <div class="sep"></div>
+    <div class="stages">${FORGE_STAGES.map((s, i) => `<div class="stg" data-i="${i}"><span class="sk brush">${s.k}</span><div><div class="sn">${s.n}</div><div class="sd">${s.d}</div></div><span class="ss">WAIT</span></div>`).join('')}</div>
+    <div class="comb hidden" id="comb">${ALL_MOVES.map((m) => `<div class="hex brush" title="${esc(m.n)}">${m.k}</div>`).join('')}</div>
+    <div class="cta"><button class="btn" id="leaveBtn">LEAVE · KEEP FORGING</button><button class="btn" id="skipBtn">SKIP ›</button></div>
+    <div class="note">You can close this page. The forge keeps working and your Rebel will be waiting in the Armory.</div>
+  `);
+  setTimeout(() => {
+    $('#leaveBtn').onclick = () => toast('In the real Forge you can leave now — we\'ll notify you when it\'s done');
+    $('#skipBtn').onclick = () => { if (forgeTl) forgeTl.progress(1); };
+    if (state.forged) { setForgeUI(1); FORGE_STAGES.forEach((_, i) => stageState(i, 'ok')); $('#comb').classList.remove('hidden'); card.querySelectorAll('.hex').forEach((h) => h.classList.add('on')); forgeDoneUI(); }
+    else if (!state.forging) startForge();
+  }, 400);
+}
+let forgeTl = null;
+function stageState(i, s) { const r = card.querySelector(`.stg[data-i="${i}"]`); if (!r) return; r.classList.toggle('run', s === 'run'); r.classList.toggle('ok', s === 'ok'); r.querySelector('.ss').textContent = s === 'run' ? 'FORGING' : s === 'ok' ? 'DONE' : 'WAIT'; }
+function setForgeUI(p) {
+  const pct = $('#pct'), bar = $('#barI'); if (pct) pct.innerHTML = `${Math.floor(p * 100)}<small>%</small>`; if (bar) bar.style.width = (p * 100) + '%';
+  document.title = p < 1 ? `${Math.floor(p * 100)}% · Forging #${state.token}` : `Forged · Rebel #${state.token}`;
+  const eta = $('#eta'); if (eta && p < 1) eta.textContent = `About ${Math.max(1, Math.ceil((1 - p) * 6))} min left (mockup: ${Math.ceil((1 - p) * FORGE_SECONDS)} s)`;
+}
+function startForge() {
+  state.forging = true; const prog = { p: 0 };
+  U.uProgress = 0; U.uChaos = 1;
+  let acc = 0; const bounds = FORGE_STAGES.map((s) => { const a = acc; acc += s.w; return [a, acc]; });
+  let stageIdx = -1; let hexOn = 0;
+  let nextStrike = 0;
+  forgeTl = gsap.to(prog, { p: 1, duration: FORGE_SECONDS, ease: 'none', onUpdate: () => {
+    const p = prog.p; U.uProgress = p; setForgeUI(p);
+    const si = bounds.findIndex(([a, b]) => p >= a && p < b);
+    if (si !== stageIdx && si >= 0) {
+      if (stageIdx >= 0) { stageState(stageIdx, 'ok'); strike(true); }
+      stageIdx = si; stageState(si, 'run');
+      if (si === 3) { const c = $('#comb'); if (c) { c.classList.remove('hidden'); gsap.from(c, { opacity: 0, y: 10, duration: 0.5 }); } }
+    }
+    if (stageIdx === 3) { const [a, b] = bounds[3]; const want = Math.floor(((p - a) / (b - a)) * 24); const hexes = card.querySelectorAll('.hex'); while (hexOn < want && hexOn < 24) { hexes[hexOn]?.classList.add('on'); hexOn++; Snd.pluck(520 + hexOn * 22); } }
+    if (p > nextStrike) { nextStrike = p + 0.04 + Math.random() * 0.05; strike(false); }
+  }, onComplete: () => {
+    FORGE_STAGES.forEach((_, i) => stageState(i, 'ok')); card.querySelectorAll('.hex').forEach((h) => h.classList.add('on'));
+    state.forging = false; state.forged = true; quench(); forgeDoneUI();
+  } });
+}
+function strike(big) {
+  const y = 0.1 + U.uProgress * HELIX_H;
+  burst(y, big ? 420 : 140); Snd.anvil();
+  gsap.fromTo(forgeGlow, { intensity: big ? 9 : 5.5 }, { intensity: 3, duration: 0.6 });
+  if (big) { shake(8); flash(0.45, 0.7); } else shake(2);
+}
+function quench() {
+  steam.manualEmitCount = 260; Snd.hiss(); flash(0.6, 1.2); shake(10);
+  gsap.to(U, { uChaos: 0, duration: 1.5 });
+  gsap.to(forgeGlow, { intensity: 1.2, duration: 3 });
+}
+function forgeDoneUI() {
+  const eta = $('#eta'); if (eta) eta.textContent = 'Quenched. Your Rebel is ready to awaken.';
+  const cta = card.querySelector('.cta'); if (!cta) return;
+  cta.innerHTML = `<button class="btn fire wide" id="toAwaken">覚醒 · AWAKEN →</button>`; gsap.from(cta, { opacity: 0, y: 8, duration: 0.5 });
+  $('#toAwaken').onclick = () => go(4);
+}
+
+/* ---- 5. AWAKEN 覚醒 ---- */
+function renderAwaken() {
+  center.innerHTML = '';
+  if (state.awakened) { showAwakened(true); return; }
+  $('#panel').classList.add('hidden');
+  gsap.to(U, { uAlpha: 1, uChaos: 0, uProgress: 1, duration: 1 });
+  const btn = $('#awakenBtn'); btn.style.display = 'block'; gsap.fromTo(btn, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.7, ease: 'back.out(2)' });
+  const ring = $('#awRing'); let tw = null; const HOLD = 1.6;
+  const start = (e) => { e.preventDefault(); if (!rebel.ready) { toast('The body is still cooling…'); return; } Snd.whoosh(); tw = gsap.to(ring, { attr: { 'stroke-dashoffset': 0 }, duration: HOLD, ease: 'none', onUpdate: () => { U.uChaos = tw.progress() * 0.8; shake(tw.progress() * 3); }, onComplete: awaken }); };
+  const stop = () => { if (tw && tw.progress() < 1) { tw.kill(); gsap.to(ring, { attr: { 'stroke-dashoffset': 389.6 }, duration: 0.3 }); U.uChaos = 0; } };
+  btn.onpointerdown = start; btn.onpointerup = stop; btn.onpointerleave = stop;
+  btn.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) start(e); }; btn.onkeyup = stop;
+}
+function hideAwaken() { $('#awakenBtn').style.display = 'none'; $('#dock').classList.remove('show'); gsap.to(['#reveal', '#hanko'], { opacity: 0, duration: 0.3 }); $('#nowPlaying').style.opacity = 0; rebel.meshes.forEach((m) => { gsap.to(m, { visibility: 0, duration: 0.4 }); }); }
+function awaken() {
+  state.awakened = true; const btn = $('#awakenBtn');
+  gsap.to(btn, { opacity: 0, scale: 1.3, duration: 0.4, onComplete: () => { btn.style.display = 'none'; gsap.set('#awRing', { attr: { 'stroke-dashoffset': 389.6 } }); } });
+  U.uChaos = 0; Snd.taiko();
+  const tl = gsap.timeline();
+  tl.to(U, { uMorph: 1, duration: REDUCED ? 0.6 : 2.4, ease: 'power2.inOut' })
+    .add(() => { play('fight_idle', true); rebel.meshes.forEach((m) => gsap.to(m, { visibility: 1, duration: 1.2, ease: 'power2.in' })); }, '-=0.5')
+    .add(() => { flash(0.9, 1.4); shake(12); Snd.bell(); burst(1.0, 500); petals.manualEmitCount = 260; steam.manualEmitCount = 80; }, '+=0.6')
+    .to(U, { uScatter: 1, duration: 1.8, ease: 'power2.out' }, '<')
+    .add(() => showAwakened(false), '-=1.2');
+}
+function showAwakened(instant) {
+  $('#panel').classList.remove('hidden');
+  rebel.meshes.forEach((m) => { m.visibility = 1; }); U.uMorph = 1; U.uScatter = 1;
+  if (!rebel.cur) play('fight_idle', true);
+  const gang = traitVal('Gang Names');
+  $('#rvName').textContent = shortName(); $('#rvMei').textContent = `叛 蟻 · ${(gangKanji[gang] || '戦 士').split('').join(' ')}`;
+  gsap.fromTo('#reveal', { opacity: 0, y: -12, letterSpacing: '0.5em' }, { opacity: 1, y: 0, duration: instant ? 0.3 : 1.4, ease: 'power3.out' });
+  gsap.fromTo('#hanko', { opacity: 0, scale: 3, rotate: -30 }, { opacity: 1, scale: 1, rotate: -12, duration: instant ? 0.2 : 0.35, delay: instant ? 0 : 0.9, ease: 'back.out(2.5)', onStart: () => !instant && Snd.taiko() });
+  const a = state.assets || {};
+  renderCard(`
+    <div class="eyebrow">STEP 5 / 5 <span class="jp">覚醒</span></div>
+    <h1>${esc(shortName())}<span class="brush">目 覚 め た</span></h1>
+    <p class="lead">Your Rebel is awake. Drag to turn it, and pick any of its <b>24 moves</b> below.${a.demo ? ' <em>(mockup model: #4998)</em>' : ''}</p>
+    <div class="sep"></div>
+    <div class="traits">${(state.meta?.traits || []).slice(0, 6).map((t) => `<div class="trait locked"><span class="tt"><i></i>${esc(t.trait_type)}</span><span class="tv">${esc(t.value)}</span></div>`).join('')}</div>
+    <div class="cta"><button class="btn shu wide" id="makeMine">MAKE THIS MY REBEL</button><button class="btn" id="enterV">ENTER VILLAGE →</button></div>
+    <div class="note">Keys: ← → moves · Space pause · L loop · S speed · K perform all kata</div>
+  `);
+  setTimeout(() => {
+    $('#makeMine').onclick = () => { toast('Mockup: this would set it as your active character'); Snd.taiko(); };
+    $('#enterV').onclick = () => { location.href = '/village.html'; };
+  }, 300);
+  buildDock(); $('#dock').classList.add('show');
+  cam.useAutoRotationBehavior = true; cam.autoRotationBehavior.idleRotationSpeed = 0.18; cam.autoRotationBehavior.idleRotationWaitTime = 4000;
+}
+
+/* =========================================================
+   Move viewer
+   ========================================================= */
+let curGroup = 0, curMove = ALL_MOVES.findIndex((m) => m.clip === 'fight_idle');
+function buildDock() {
+  const gEl = $('#groups');
+  gEl.innerHTML = GROUPS.map((g, i) => `<button class="grp${i === curGroup ? ' on' : ''}" data-g="${i}"><span class="mon brush">${g.k}</span>${g.n} <em>${g.moves.length}</em></button>`).join('');
+  gEl.querySelectorAll('.grp').forEach((b) => b.onclick = () => { curGroup = +b.dataset.g; buildDock(); Snd.pluck(600); });
+  const mEl = $('#moves');
+  const list = ALL_MOVES.map((m, i) => ({ ...m, i })).filter((m) => m.g === curGroup);
+  mEl.innerHTML = list.map((m) => `<button class="mv${m.i === curMove ? ' on' : ''}" data-i="${m.i}" title="${esc(m.n)}"><span class="mh">${m.i + 1}</span><div class="mk brush">${m.k}</div><div class="mn">${esc(m.n)}</div><svg class="ring" viewBox="0 0 22 22"><circle class="bgc" cx="11" cy="11" r="9"/><circle class="fgc" cx="11" cy="11" r="9"/></svg></button>`).join('');
+  mEl.querySelectorAll('.mv').forEach((b) => b.onclick = () => { stopKata(); selectMove(+b.dataset.i); });
+  gsap.from(mEl.children, { opacity: 0, y: 10, duration: 0.4, stagger: 0.025 });
+}
+function selectMove(i, fromKata) {
+  curMove = (i + ALL_MOVES.length) % ALL_MOVES.length; const m = ALL_MOVES[curMove];
+  if (m.g !== curGroup) { curGroup = m.g; buildDock(); }
+  $('#moves').querySelectorAll('.mv').forEach((b) => b.classList.toggle('on', +b.dataset.i === curMove));
+  const on = $('#moves').querySelector('.mv.on'); on?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  const looping = rebel.loop || m.g === 0 || ['walk', 'run'].includes(m.clip);
+  play(m.clip, looping);
+  $('#npK').textContent = m.k; $('#npN').textContent = m.n.toUpperCase();
+  const np = $('#nowPlaying'); np.style.opacity = 1; gsap.fromTo(np, { scale: 1.3 }, { scale: 1, duration: 0.4, ease: 'back.out(2)' });
+  clearTimeout(np._h); np._h = setTimeout(() => { np.style.opacity = 0; }, 1600);
+  Snd.pluck(700 + (curMove % 8) * 40);
+  if (!fromKata && ['hurricane_kick', 'spin_flip_kick', 'roundhouse_kick', 'backflip', 'flip_kick'].includes(m.clip)) setTimeout(() => burst(0.6, 90), 500);
+}
+function play(name, loop) {
+  const g = rebel.groups[name]; if (!g) return;
+  if (rebel.cur && rebel.cur !== g) rebel.cur.stop();
+  rebel.cur = g; rebel.paused = false; $('#cPlay').textContent = '❚❚';
+  g.start(loop, rebel.speed, g.from, g.to, false);
+}
+function onClipEnd(name) {
+  if (!rebel.cur || rebel.cur.name !== name) return;
+  if (rebel.kata) { kataNext(); return; }
+  if (!rebel.loop && name !== 'fight_idle' && name !== 'idle') { rebel.cur = null; play('fight_idle', true); curMove = ALL_MOVES.findIndex((m) => m.clip === 'fight_idle'); $('#moves').querySelectorAll('.mv').forEach((b) => b.classList.toggle('on', +b.dataset.i === curMove)); }
+}
+scene.onBeforeRenderObservable.add(() => {
+  const g = rebel.cur; if (!g || !$('#dock').classList.contains('show')) return;
+  const an = g.animatables[0]; if (!an) return;
+  const p = Math.max(0, Math.min(1, (an.masterFrame - g.from) / ((g.to - g.from) || 1)));
+  const fg = $('#moves .mv.on .fgc'); if (fg) fg.style.strokeDashoffset = 56.5 * (1 - p);
+});
+let kataList = [], kataIdx = 0;
+function startKata() {
+  kataList = ALL_MOVES.map((m, i) => i).filter((i) => !['idle', 'fight_idle'].includes(ALL_MOVES[i].clip));
+  kataIdx = 0; rebel.kata = true; $('#cKata').textContent = 'STOP'; toast('Performing all kata'); Snd.bell(); selectMove(kataList[0], true);
+}
+function kataNext() { kataIdx++; if (kataIdx >= kataList.length) { stopKata(); selectMove(ALL_MOVES.findIndex((m) => m.clip === 'fight_idle')); flash(0.3, 0.8); return; } selectMove(kataList[kataIdx], true); }
+function stopKata() { if (!rebel.kata) return; rebel.kata = false; $('#cKata').textContent = 'KATA'; }
+$('#cPrev').onclick = () => { stopKata(); selectMove(curMove - 1); };
+$('#cNext').onclick = () => { stopKata(); selectMove(curMove + 1); };
+$('#cPlay').onclick = () => { const g = rebel.cur; if (!g) return; if (rebel.paused) { g.play(); rebel.paused = false; $('#cPlay').textContent = '❚❚'; } else { g.pause(); rebel.paused = true; $('#cPlay').textContent = '▶'; } };
+$('#cLoop').onclick = () => { rebel.loop = !rebel.loop; $('#cLoop').classList.toggle('on', rebel.loop); if (rebel.cur) rebel.cur.loopAnimation = rebel.loop || /idle/.test(rebel.cur.name); };
+$('#cSpeed').onclick = () => { const s = [1, 0.5, 0.25, 1.5]; rebel.speed = s[(s.indexOf(rebel.speed) + 1) % s.length]; $('#cSpeed').textContent = rebel.speed + '×'; if (rebel.cur) rebel.cur.speedRatio = rebel.speed; };
+$('#cKata').onclick = () => { if (rebel.kata) stopKata(); else startKata(); };
+addEventListener('keydown', (e) => {
+  if (!$('#dock').classList.contains('show') || e.target.closest('input,textarea')) return;
+  if (e.key === 'ArrowRight') { stopKata(); selectMove(curMove + 1); }
+  else if (e.key === 'ArrowLeft') { stopKata(); selectMove(curMove - 1); }
+  else if (e.key === ' ') { e.preventDefault(); $('#cPlay').click(); }
+  else if (e.key.toLowerCase() === 'l') $('#cLoop').click();
+  else if (e.key.toLowerCase() === 's') $('#cSpeed').click();
+  else if (e.key.toLowerCase() === 'k') $('#cKata').click();
+});
+
+function updateTokPill() { const g = traitVal('Gang Names'); $('#tokPill').innerHTML = `Rebel <strong>#${esc(state.token)}</strong>${g ? ' · ' + esc(g) : ''}`; }
+
+/* =========================================================
+   Boot
+   ========================================================= */
+(async function boot() {
+  const [meta, assets] = await Promise.all([loadToken(state.token), loadAssets(state.token)]);
+  state.meta = meta; state.assets = assets; updateTokPill();
+  if (assets?.glb) loadRebel(assets.glb).catch((e) => { console.warn(e); toast('Could not load the 3D model'); });
+  layoutTrail(); markNodes();
+  gsap.to('#loader', { opacity: 0, duration: 1, delay: 0.4, onComplete: () => $('#loader').remove() });
+  go(0);
+  // deep links for review: ?step=forge etc.
+  const want = STEPS.findIndex((s) => s.id === Q.get('step'));
+  if (want > 0) { state.summoned = true; U.uBuild = 1.05; state.maxStep = want; if (want > 3) { state.forged = true; U.uProgress = 1; U.uChaos = 0; } setTimeout(() => go(want), 900); }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) engine.resize(); });
+})();
+})();
+</script>
+</body>
+</html>
