@@ -8,6 +8,16 @@ for m in list(mesh.modifiers): mesh.modifiers.remove(m)
 mesh.vertex_groups.clear()
 proxy=mesh.copy(); proxy.data=mesh.data.copy(); proxy.name='proxy'; bpy.context.scene.collection.objects.link(proxy)
 bm=bmesh.new(); bm.from_mesh(proxy.data); bmesh.ops.remove_doubles(bm,verts=bm.verts,dist=1e-5); bm.to_mesh(proxy.data); bm.free()
+# v1.9 part-built characters: solve bone heat on the body only (armour plates float around it and make heat fail);
+# the armour takes the weights of the body under it when weights copy back by position
+_skip=_os.environ.get('FORGE_PROXY_SKIP_MAT','ARMOR_')
+if _skip:
+    _mi=[i for i,m in enumerate(proxy.data.materials) if m and any(m.name.startswith(s) for s in _skip.split(','))]
+    if _mi:
+        bm=bmesh.new(); bm.from_mesh(proxy.data)
+        bmesh.ops.delete(bm,geom=[f for f in bm.faces if f.material_index in _mi],context='FACES')
+        bmesh.ops.delete(bm,geom=[v for v in bm.verts if not v.link_faces],context='VERTS'); bm.to_mesh(proxy.data); bm.free()
+        print('proxy without',_skip,'verts',len(proxy.data.vertices))
 _dec=float(_os.environ.get('FORGE_PROXY_DECIMATE','0') or 0)
 if _dec>0:   # dense generator meshes (TRELLIS ~260k verts): bone heat fails; solve on a collapsed proxy, weights copy back by position
     bpy.context.view_layer.objects.active=proxy; md=proxy.modifiers.new('dec','DECIMATE'); md.ratio=_dec

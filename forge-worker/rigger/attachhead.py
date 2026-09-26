@@ -2,7 +2,7 @@
 # The body's own head / mask / antennae are removed above the collar; the new head is scaled to the old skull width,
 # its skull top put at the old skull top, and joined. Faces above the chin get material HEAD_Gen (rigid on Head in
 # headfix), the neck stub below gets NECK_Gen (bends with the Neck bone).
-# usage (worker: job.sh with FORGE_HEAD_URL): python3.13 attachhead.py -- body.glb head.glb out.glb
+# usage: python3.13 attachhead.py -- body.glb head.glb out.glb
 # env: SKULL_W (0.256) SKULL_TOP (1.83, from the feet) SKULL_CY (-0.045) NECK_CUT (1.545) HEAD_YAW (deg) HEAD_DZ
 import bpy, bmesh, sys, os, math, numpy as np
 from mathutils import Matrix, Vector
@@ -20,6 +20,11 @@ CX, CY = 0.0, E('SKULL_CY', -0.045)
 # ---- remove the old head, mask, antennae: everything above the neck cut near the axis, and anything above the collar top
 cut = Z(E('NECK_CUT', 1.545))
 kill = ((V[:, 2] > cut) & (np.hypot(V[:, 0] - CX, V[:, 1] - CY) < E('NECK_KILL_R', 0.11))) | (V[:, 2] > Z(E('COLLAR_TOP', 1.60)))
+# part-built characters: armour pieces (ARMOR_* materials) are never cut, only the body's own head
+armv = np.zeros(len(V), bool); ami = {i for i, m in enumerate(me.materials) if m and m.name.startswith('ARMOR_')}
+for p in me.polygons:
+    if p.material_index in ami: armv[list(p.vertices)] = True
+kill &= ~armv
 bm = bmesh.new(); bm.from_mesh(me); bm.verts.ensure_lookup_table()
 bmesh.ops.delete(bm, geom=[bm.verts[i] for i in np.nonzero(kill)[0]], context='VERTS'); bm.to_mesh(me); bm.free()
 print('body verts removed', int(kill.sum()))

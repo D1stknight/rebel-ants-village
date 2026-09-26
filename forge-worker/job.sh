@@ -18,6 +18,14 @@ fail(){ echo "failed" > "$JOB/progress"; printf '{"ok":false,"step":"%s","second
 trap 'fail "$(cat "$JOB/progress" 2>/dev/null)"' ERR
 
 step download;   curl -fsSL --retry 3 "$SRC_URL" -o "$JOB/src.glb"
+# v1.9: part-built characters. SRC is the body alone; a separately generated armour set (FORGE_ARMOR_URL, pieces fitted
+# with per-piece 2D anchors from FORGE_ANCHORS_URL) is put on before the head
+if [ -n "${FORGE_ARMOR_URL:-}" ]; then
+step armor;      curl -fsSL --retry 3 "$FORGE_ARMOR_URL" -o "$JOB/armor.glb"
+                 curl -fsSL --retry 3 "$FORGE_ANCHORS_URL" -o "$JOB/anchors.json"
+                 run "$R/armorfit.py" -- "$JOB/src.glb" "$JOB/armor.glb" "$JOB/anchors.json" "$JOB/src_armor.glb"
+                 mv "$JOB/src_armor.glb" "$JOB/src.glb"
+fi
 # v1.9: optional separately generated head (image-to-3D of the head crop) replaces the body's head before rigging
 if [ -n "${FORGE_HEAD_URL:-}" ]; then
 step head;       curl -fsSL --retry 3 "$FORGE_HEAD_URL" -o "$JOB/head.glb"
@@ -32,6 +40,7 @@ step weights;    run "$R/weights2.py"
                  run "$R/mkw.py"
 step bind;       run "$R/applyw.py" -- "$O/rigged.blend" "$O/proxyW_g.npz" "$O/weighted.blend"
                  run "$R/fixarm.py" -- "$O/weighted.blend" "$O/weighted.blend"
+                 run "$R/armorfix.py" -- "$O/weighted.blend" "$O/weighted.blend"   # v1.9 part-built armour rides its bone
 step hands;      run "$R/handfix.py" -- "$O/weighted.blend" "$O/weighted_hf.blend"
 # TRELLIS sources: open cloth sheets + floating shells (tassels, rope ends) move rigidly (v1.8, opt-in)
 if [ "${FORGE_SKIRTFIX:-0}" = "1" ]; then run "$R/skirtfix.py" -- "$O/weighted_hf.blend" "$O/weighted_hf.blend"; fi
@@ -44,6 +53,7 @@ step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/smoothfix.py" -- "$O/anim6_ff1.blend" "$O/anim6_ff2.blend"
                  run "$R/layerfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff2.blend"
                  run "$R/headfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff.blend"
+                 run "$R/armorfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # re-assert after the cloth cleanups
 step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=1536 FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
 step qa;         run "$FW/qa_job.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb" "$JOB/qa.json" "$JOB/log"
 step thumb;      "$PY" "$FW/thumb.py" -- "$JOB/rig.glb" "$JOB/thumb.jpg" 384 >> "$JOB/log" 2>&1 || echo "thumb failed (non-fatal)" >> "$JOB/log"

@@ -38,6 +38,8 @@
   "setup.sh",
   "thumb.py",
   "rigger/layerfix.py",
-  "rigger/attachhead.py"
+  "rigger/attachhead.py",
+  "rigger/armorfit.py",
+  "rigger/armorfix.py"
  ]
 }

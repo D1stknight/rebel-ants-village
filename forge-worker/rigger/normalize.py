@@ -22,5 +22,16 @@ M=mu.Matrix.Diagonal((s,s,s,1))@mu.Matrix.Translation(-mu.Vector(c))
 m.data.transform(M); m.data.update(); m.name='Body'
 V=np.array([v.co[:] for v in m.data.vertices]); F=np.array([p.vertices[:] for p in m.data.polygons if len(p.vertices)==3])
 print('verts',len(V),'tris',len(F),'bbox',V.min(0),V.max(0))
-np.savez(out+'.npz',V=V,F=F)
+# v1.9 part-built characters: landmarks come from the body alone (pauldrons / arm guards in the silhouette moved a hand
+# to chest height); the npz keeps only non-armour triangles, reindexed
+import os as _os
+_skip=[s for s in _os.environ.get('FORGE_PROXY_SKIP_MAT','ARMOR_').split(',') if s]
+_mi={i for i,mt in enumerate(m.data.materials) if mt and any(mt.name.startswith(s) for s in _skip)}
+if _mi:
+    keepF=np.array([p.vertices[:] for p in m.data.polygons if len(p.vertices)==3 and p.material_index not in _mi])
+    used=np.unique(keepF); remap=-np.ones(len(V),int); remap[used]=np.arange(len(used))
+    print('landmarks from body only: tris',len(keepF),'of',len(F))
+    np.savez(out+'.npz',V=V[used],F=remap[keepF])
+else:
+    np.savez(out+'.npz',V=V,F=F)
 bpy.ops.wm.save_as_mainfile(filepath=out+'.blend')
