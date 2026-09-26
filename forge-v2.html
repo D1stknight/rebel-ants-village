@@ -181,6 +181,8 @@ p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
 .moves{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:rgba(239,230,210,.18) transparent}
 .moves::-webkit-scrollbar{height:5px}.moves::-webkit-scrollbar-track{background:transparent}.moves::-webkit-scrollbar-thumb{background:rgba(239,230,210,.18);border-radius:5px}
 .mv{scroll-snap-align:start;flex:0 0 auto;width:112px;border-radius:12px;border:1px solid rgba(239,230,210,.08);background:rgba(239,230,210,.03);padding:10px 10px 9px;text-align:left;position:relative;overflow:hidden;transition:all .25s var(--ease)}
+.mv{animation:mvIn .45s var(--ease) both}
+@keyframes mvIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .mv:hover{border-color:rgba(239,230,210,.3);transform:translateY(-2px)}
 .mv .mk{font-size:24px;line-height:1;color:var(--washi)}
 .mv .mn{font-size:11px;font-weight:600;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1011,14 +1013,15 @@ function buildDock() {
   const list = ALL_MOVES.map((m, i) => ({ ...m, i })).filter((m) => m.g === curGroup);
   mEl.innerHTML = list.map((m) => `<button class="mv${m.i === curMove ? ' on' : ''}" data-i="${m.i}" title="${esc(m.n)}"><span class="mh">${m.i + 1}</span><div class="mk brush">${m.k}</div><div class="mn">${esc(m.n)}</div><svg class="ring" viewBox="0 0 22 22"><circle class="bgc" cx="11" cy="11" r="9"/><circle class="fgc" cx="11" cy="11" r="9"/></svg></button>`).join('');
   mEl.querySelectorAll('.mv').forEach((b) => b.onclick = () => { stopKata(); selectMove(+b.dataset.i); });
-  gsap.from(mEl.children, { opacity: 0, y: 10, duration: 0.4, stagger: 0.025 });
+  [...mEl.children].forEach((c, k) => { c.style.animationDelay = (k * 0.03) + 's'; });
 }
 function selectMove(i, fromKata) {
   curMove = (i + ALL_MOVES.length) % ALL_MOVES.length; const m = ALL_MOVES[curMove];
   if (m.g !== curGroup) { curGroup = m.g; buildDock(); }
   $('#moves').querySelectorAll('.mv').forEach((b) => b.classList.toggle('on', +b.dataset.i === curMove));
   const on = $('#moves').querySelector('.mv.on'); on?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  const looping = rebel.loop || m.g === 0 || ['walk', 'run'].includes(m.clip);
+  // in the kata showreel every move plays once; otherwise stances and walk/run loop
+  const looping = !fromKata && (rebel.loop || m.g === 0 || ['walk', 'run'].includes(m.clip));
   play(m.clip, looping);
   $('#npK').textContent = m.k; $('#npN').textContent = m.n.toUpperCase();
   const np = $('#nowPlaying'); np.style.opacity = 1; gsap.fromTo(np, { scale: 1.3 }, { scale: 1, duration: 0.4, ease: 'back.out(2)' });
