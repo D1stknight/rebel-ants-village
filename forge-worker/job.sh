@@ -18,6 +18,12 @@ fail(){ echo "failed" > "$JOB/progress"; printf '{"ok":false,"step":"%s","second
 trap 'fail "$(cat "$JOB/progress" 2>/dev/null)"' ERR
 
 step download;   curl -fsSL --retry 3 "$SRC_URL" -o "$JOB/src.glb"
+# v1.9: optional separately generated head (image-to-3D of the head crop) replaces the body's head before rigging
+if [ -n "${FORGE_HEAD_URL:-}" ]; then
+step head;       curl -fsSL --retry 3 "$FORGE_HEAD_URL" -o "$JOB/head.glb"
+                 run "$R/attachhead.py" -- "$JOB/src.glb" "$JOB/head.glb" "$JOB/src_head.glb"
+                 mv "$JOB/src_head.glb" "$JOB/src.glb"
+fi
 step normalize;  run "$R/normalize.py" -- "$JOB/src.glb" "$O/norm"
 step landmarks;  run "$R/detect.py"
 step skeleton;   run "$R/buildrig.py"
