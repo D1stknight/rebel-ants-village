@@ -41,11 +41,14 @@ from scipy.sparse import csr_matrix
 H = V[:, 2].max() - V[:, 2].min()
 RADIUS = float(os.environ.get('FORGE_SMOOTH_RADIUS', '0.022')) * H
 tree = cKDTree(V)
-nb = tree.query_ball_point(V[idx], RADIUS)
-rows, cols, vals = [], [], []
-for r, lst in enumerate(nb):
-    d = np.linalg.norm(V[lst] - V[idx[r]], axis=1); w = np.exp(-(d / (0.5 * RADIUS)) ** 2)
-    rows += [r] * len(lst); cols += lst; vals += list(w / w.sum())
+# v1.8: k nearest (capped at RADIUS) instead of every vert in the ball: dense TRELLIS meshes (200k+ verts) put
+# hundreds of verts in each ball and the old Python lists needed ~4.5 GB, which stalled the 2-vCPU rig sandbox.
+KN = int(os.environ.get('FORGE_SMOOTH_K', '48'))
+d, nbr = tree.query(V[idx], k=KN, distance_upper_bound=RADIUS)
+ok = np.isfinite(d)
+w = np.where(ok, np.exp(-(np.where(ok, d, 0) / (0.5 * RADIUS)) ** 2), 0.0)
+w /= w.sum(1, keepdims=True)
+rows = np.repeat(np.arange(len(idx)), KN)[ok.ravel()]; cols = nbr.ravel()[ok.ravel()]; vals = w.ravel()[ok.ravel()]
 K = csr_matrix((vals, (rows, cols)), shape=(len(idx), nv))
 tot = W.sum(1, keepdims=True)
 Ws = W.copy()
