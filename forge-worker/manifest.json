@@ -1,5 +1,5 @@
 {
- "version": "1.6b",
+ "version": "1.7",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
@@ -20,6 +20,7 @@
   "rigger/gate.py",
   "rigger/glbio.py",
   "rigger/handfix.py",
+  "rigger/headfix.py",
   "rigger/landmarks.py",
   "rigger/master.py",
   "rigger/mkw.py",
@@ -31,6 +32,7 @@
   "rigger/retarget.py",
   "rigger/sil.py",
   "rigger/skirtfix.py",
+  "rigger/smoothfix.py",
   "rigger/views.py",
   "rigger/weights2.py",
   "setup.sh",
