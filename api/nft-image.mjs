@@ -48,7 +48,7 @@ export default async function handler(req, res) {
   const c = String(req.query?.c || 'battle_for_colony');
   const t = String(req.query?.t || '');
   const s = SIZES[req.query?.s] ? String(req.query.s) : 'full';
-  const col = getCollection(c);
+  const col = await getCollection(c);
   if (!col || !isTokenId(t)) return res.status(400).json({ ok: false, error: 'Invalid collection or token' });
 
   const indexKey = `nft:img:v1:${col.key}:${t}:${s}`;

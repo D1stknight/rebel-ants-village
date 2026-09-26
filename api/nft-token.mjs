@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   if (!(await enforceRateLimit(req, res, 'nft-token', 600, 3600, 'token lookups'))) return;
   const c = String(req.query?.c || req.query?.collection || 'battle_for_colony');
   const t = String(req.query?.t || req.query?.tokenId || '');
-  if (!getCollection(c)) return res.status(400).json({ ok: false, error: 'Unknown collection' });
+  if (!(await getCollection(c))) return res.status(400).json({ ok: false, error: 'Unknown collection' });
   if (!isTokenId(t)) return res.status(400).json({ ok: false, error: 'Invalid tokenId' });
   try {
     const { sourceImages, ...token } = await getToken(c, t);

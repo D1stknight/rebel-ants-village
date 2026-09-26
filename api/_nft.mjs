@@ -1,6 +1,6 @@
 // NFT data layer: Alchemy first, OpenSea as fallback, results cached in Redis.
 // Works for every collection in _collections.mjs. Images are cached lazily (only tokens players actually use).
-import { COLLECTIONS, ALCHEMY_NETWORK, getCollection, collectionByContract } from './_collections.mjs';
+import { ALCHEMY_NETWORK, OPENSEA_CHAIN, loadCollections, getCollection } from './_collections.mjs';
 
 const WALLET_TTL = 120;            // seconds
 const META_TTL = 7 * 24 * 3600;    // token metadata is effectively immutable
@@ -78,8 +78,9 @@ function shape(col, tokenId, { name, description, traits, sourceImages }, source
   };
 }
 
-function fromAlchemy(n) {
-  const col = collectionByContract(n.__chain, n.contract?.address);
+function fromAlchemy(n, cols) {
+  const addr = String(n.contract?.address || '').toLowerCase();
+  const col = cols.find((c) => c.chain === n.__chain && c.contract.toLowerCase() === addr);
   if (!col) return null;
   const meta = n.raw?.metadata || {};
   return shape(col, n.tokenId, {
@@ -116,7 +117,7 @@ async function alchemyWallet(address, cols) {
         if (!r.ok) throw new Error('Alchemy wallet ' + r.status);
         const j = await r.json();
         for (const n of j.ownedNfts || []) {
-          const t = fromAlchemy({ ...n, __chain: chain });
+          const t = fromAlchemy({ ...n, __chain: chain }, chunk);
           if (t) out.push(t);
         }
         pageKey = j.pageKey || '';
@@ -136,7 +137,7 @@ async function openseaWallet(address, cols) {
     let next = '';
     let pages = 0;
     do {
-      const chain = col.chain === 'ethereum' ? 'ethereum' : col.chain;
+      const chain = OPENSEA_CHAIN[col.chain] || col.chain;
       const url = `https://api.opensea.io/api/v2/chain/${chain}/account/${address}/nfts?collection=${col.openseaSlug}&limit=50${next ? '&next=' + encodeURIComponent(next) : ''}`;
       const r = await fetch(url, { headers: { accept: 'application/json', 'x-api-key': apiKey } });
       if (!r.ok) throw new Error('OpenSea wallet ' + r.status);
@@ -153,7 +154,9 @@ async function openseaWallet(address, cols) {
 
 // All NFTs from our collections held by a wallet. { tokens, source, cached }
 export async function getWalletTokens(address, collectionKeys = null) {
-  const cols = collectionKeys?.length ? COLLECTIONS.filter((c) => collectionKeys.includes(c.key)) : COLLECTIONS;
+  const all = await loadCollections();
+  const cols = collectionKeys?.length ? all.filter((c) => collectionKeys.includes(c.key)) : all;
+  if (!cols.length) return { tokens: [], source: 'none', cached: false };
   const addr = address.toLowerCase();
   const cacheKey = `nft:wallet:v1:${addr}:${cols.map((c) => c.key).sort().join(',')}`;
   const hit = await cacheGet(cacheKey);
@@ -181,7 +184,7 @@ async function alchemyToken(col, tokenId) {
   const p = new URLSearchParams({ contractAddress: col.contract, tokenId: String(tokenId), refreshCache: 'false' });
   const r = await fetch(`${base}/getNFTMetadata?${p}`, { headers: { accept: 'application/json' } });
   if (!r.ok) throw new Error('Alchemy token ' + r.status);
-  const t = fromAlchemy({ ...(await r.json()), __chain: col.chain });
+  const t = fromAlchemy({ ...(await r.json()), __chain: col.chain }, [col]);
   if (!t) throw new Error('Alchemy token not in collection');
   return t;
 }
@@ -189,7 +192,7 @@ async function alchemyToken(col, tokenId) {
 async function openseaToken(col, tokenId) {
   const apiKey = process.env.OPENSEA_API_KEY;
   if (!apiKey) throw new Error('OpenSea not configured');
-  const r = await fetch(`https://api.opensea.io/api/v2/metadata/${col.chain}/${col.contract}/${tokenId}`, {
+  const r = await fetch(`https://api.opensea.io/api/v2/metadata/${OPENSEA_CHAIN[col.chain] || col.chain}/${col.contract}/${tokenId}`, {
     headers: { accept: 'application/json', 'x-api-key': apiKey }
   });
   if (!r.ok) throw new Error('OpenSea token ' + r.status);
@@ -199,7 +202,7 @@ async function openseaToken(col, tokenId) {
 
 // One token's metadata + traits. Cached for a week.
 export async function getToken(collectionKey, tokenId) {
-  const col = getCollection(collectionKey);
+  const col = await getCollection(collectionKey);
   if (!col) throw new Error('Unknown collection');
   const cacheKey = `nft:meta:v1:${col.key}:${tokenId}`;
   const hit = await cacheGet(cacheKey);

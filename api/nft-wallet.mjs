@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   const address = String(req.query?.address || '');
   if (!isAddress(address)) return res.status(400).json({ ok: false, error: 'Invalid wallet address' });
   const keys = String(req.query?.collections || '').split(',').map((s) => s.trim()).filter(Boolean);
-  if (keys.some((k) => !getCollection(k))) return res.status(400).json({ ok: false, error: 'Unknown collection' });
+  if ((await Promise.all(keys.map((k) => getCollection(k)))).some((c) => !c)) return res.status(400).json({ ok: false, error: 'Unknown collection' });
   try {
     const { tokens, source, cached } = await getWalletTokens(address, keys);
     res.setHeader('Cache-Control', 'private, max-age=30');
