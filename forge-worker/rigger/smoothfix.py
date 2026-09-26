@@ -10,7 +10,8 @@ ALPHA = float(os.environ.get('FORGE_SMOOTH_ALPHA', '0.5'))
 bpy.ops.wm.open_mainfile(filepath=src)
 arm = bpy.data.objects['Armature']; me = [o for o in bpy.data.objects if o.type == 'MESH'][0]; P = 'mixamorig_'
 Mw = me.matrix_world; Aw = arm.matrix_world
-names = [P + n for n in ('Spine1', 'Spine2', 'Neck', 'LeftShoulder', 'RightShoulder', 'LeftArm', 'RightArm')]
+# v1.8: Neck is left alone so the head keeps a clean neck joint
+names = [P + n for n in ('Spine1', 'Spine2', 'LeftShoulder', 'RightShoulder', 'LeftArm', 'RightArm')]
 groups = [me.vertex_groups.get(n) for n in names]
 if not all(groups): print('smoothfix: missing groups, skipped'); bpy.ops.wm.save_as_mainfile(filepath=dst); sys.exit(0)
 gi = {g.index: k for k, g in enumerate(groups)}
@@ -27,7 +28,7 @@ bh = lambda n: np.array((Aw @ bone(n).head_local)[:])
 bt = lambda n: np.array((Aw @ bone(n).tail_local)[:])
 neck_z = bh('Neck')[2]; spine1_z = bh('Spine1')[2]
 # band: from Spine1 up to the neck base; laterally out to 35% down the upper arm
-region = (V[:, 2] > spine1_z) & (V[:, 2] < neck_z + 0.03) & (W.sum(1) > 0.02)
+region = (V[:, 2] > spine1_z) & (V[:, 2] < neck_z) & (W.sum(1) > 0.02)
 for side in ('Left', 'Right'):
     h, t = bh(side + 'Arm'), bt(side + 'Arm'); L2 = np.sum((t - h) ** 2)
     s = ((V - h) @ (t - h)) / L2

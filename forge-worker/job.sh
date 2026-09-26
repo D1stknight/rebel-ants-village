@@ -27,6 +27,8 @@ step weights;    run "$R/weights2.py"
 step bind;       run "$R/applyw.py" -- "$O/rigged.blend" "$O/proxyW_g.npz" "$O/weighted.blend"
                  run "$R/fixarm.py" -- "$O/weighted.blend" "$O/weighted.blend"
 step hands;      run "$R/handfix.py" -- "$O/weighted.blend" "$O/weighted_hf.blend"
+# TRELLIS sources: open cloth sheets + floating shells (tassels, rope ends) move rigidly (v1.8, opt-in)
+if [ "${FORGE_SKIRTFIX:-0}" = "1" ]; then run "$R/skirtfix.py" -- "$O/weighted_hf.blend" "$O/weighted_hf.blend"; fi
 step cloth;      run "$R/clothbones.py" -- "$O/weighted_hf.blend" "$O/weighted_cb.blend"
 step animate;    run "$R/retarget.py" -- "$O/weighted_cb.blend" "$O/anim6.blend"
 step moves;      run "$FW/anim/retarget_bvh.py" -- "$O/anim6.blend" "$O/anim6_ma.blend" "$FW/anim/clips.json"

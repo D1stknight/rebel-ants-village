@@ -1,21 +1,26 @@
 // Start the automated Forge Rigger for a stored Meshy build: POST {buildId, force?}
+// Admin-only extras: sourceUrl (rig a different static GLB for this build, e.g. a TRELLIS.2 source in the repo) and
+// skirtfix (TRELLIS open-cloth cleanup).
 // One rig per build (idempotent). Re-rigging an already rigged build (force) is admin-only.
 import { isAdminRequest } from './_admin-auth.mjs';
 import { enforceRateLimit } from './_guard.mjs';
 import { Sandbox, creds, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, loadBuild, updateRigging, sourceGlbUrl, sanitize, body } from './_forge-rig.mjs';
 
+const SOURCE_OK = /^https:\/\/(raw\.githubusercontent\.com\/D1stknight\/rebel-ants-village\/[\w.-]+\/assets\/forge\/sources\/[\w.-]+\.glb|[a-z0-9]+\.public\.blob\.vercel-storage\.com\/[\w./-]+\.glb)$/;
 const DAILY_LIMIT = parseInt(process.env.FORGE_RIG_DAILY_LIMIT || '200', 10);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
-  const { buildId, force } = body(req);
+  const { buildId, force, sourceUrl, skirtfix } = body(req);
   if (!buildId) return res.status(400).json({ ok: false, error: 'Missing buildId' });
   try {
     const rec = await loadBuild(buildId);
-    const src = sourceGlbUrl(rec);
+    const admin = isAdminRequest(req);
+    if ((sourceUrl || skirtfix) && !admin) return res.status(401).json({ ok: false, error: 'sourceUrl / skirtfix require admin' });
+    if (sourceUrl && !SOURCE_OK.test(String(sourceUrl))) return res.status(400).json({ ok: false, error: 'sourceUrl must be a GLB in this repo or our Blob store' });
+    const src = sourceUrl || sourceGlbUrl(rec);
     if (!src) return res.status(409).json({ ok: false, error: 'Build has no stored GLB yet (run forge-3d-store-glb first)' });
     const cur = rec.forgeRig || {};
-    const admin = isAdminRequest(req);
     if (cur.status === 'running' && !(force && admin)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyRunning: true });
     if (cur.status === 'succeeded' && !(force && admin)) return res.status(200).json({ ok: true, forgeRig: cur, alreadyDone: true });
     if (force && !admin) return res.status(401).json({ ok: false, error: 'Re-rigging requires admin' });
@@ -43,7 +48,7 @@ export default async function handler(req, res) {
     const cmd = await sandbox.runCommand({
       cmd: 'bash',
       args: ['-c', `mkdir -p ${JOB_DIR} && bash ${FW}/job.sh "$SRC_URL" "$RIG_NAME" ${JOB_DIR}`],
-      env: { SRC_URL: src, RIG_NAME: name },
+      env: { SRC_URL: src, RIG_NAME: name, ...(skirtfix ? { FORGE_SKIRTFIX: '1' } : {}) },
       sudo: true,
       detached: true
     });
