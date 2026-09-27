@@ -16,6 +16,36 @@ bm = bmesh.new(); bm.from_mesh(me.data)
 # the generator mesh is split along UV seams; weld those (loop UVs are kept) so the openings we make are closed loops
 nv0 = len(bm.verts); bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=1e-6); print('seamfix welded', nv0 - len(bm.verts))
 dl = bm.verts.layers.deform.active
+# v1.9e stray fingertips: the sculpt can leave fingertips as tiny separate pieces a few mm from the fist. Bone heat
+# weights them on their own (#893: to the thigh), so they stayed floating at the hips while the fists moved. Every
+# small loose piece now rides rigidly with the nearest vertex of the rest of the body.
+from scipy.spatial import cKDTree
+bm.verts.ensure_lookup_table()
+pid = [-1] * len(bm.verts); parts = []
+for v0 in bm.verts:
+    if pid[v0.index] >= 0: continue
+    st = [v0]; pid[v0.index] = len(parts); comp = []
+    while st:
+        v = st.pop(); comp.append(v)
+        for e in v.link_edges:
+            o2 = e.other_vert(v)
+            if pid[o2.index] < 0: pid[o2.index] = len(parts); st.append(o2)
+    parts.append(comp)
+small_n = max(60, int(0.004 * len(bm.verts)))
+if dl is not None and len(parts) > 1:
+    big = [v for c in parts if len(c) > small_n for v in c]
+    if big:
+        tree = cKDTree(np.array([v.co[:] for v in big])); moved = 0
+        for c in parts:
+            if len(c) > small_n: continue
+            dd, ii = tree.query(np.array([v.co[:] for v in c]))
+            src = big[int(ii[int(np.argmin(dd))])]
+            w = dict(src[dl].items())
+            for v in c:
+                v[dl].clear()
+                for k, x in w.items(): v[dl][k] = x
+            moved += 1
+        print('seamfix small loose pieces bound to the nearest body vertex', moved)
 H, Lg = {}, {}
 for v in bm.verts:
     d = v[dl] if dl is not None else {}; t = sum(d.values()) or 1e-9
@@ -70,7 +100,7 @@ if cut:
     print('seamfix openings closed with faces', filled)
     loose = [e for e in ring if e.is_valid and not e.link_faces]
     if loose: bmesh.ops.delete(bm, geom=loose, context='EDGES')
-    bm.to_mesh(me.data); me.data.update()
+bm.to_mesh(me.data); me.data.update()
 bm.free()
 print('seamfix hand/leg joining faces cut', len(cut))
 bpy.ops.wm.save_as_mainfile(filepath=dst)

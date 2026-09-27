@@ -38,8 +38,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 @keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-3%)}60%{transform:translate(-2%,-1%)}80%{transform:translate(3%,3%)}100%{transform:translate(0,0)}}
 #vignette{position:fixed;inset:0;z-index:4;pointer-events:none;background:radial-gradient(120% 100% at 50% 50%,transparent 55%,rgba(0,0,0,.75) 100%)}
 #bigKanji{position:fixed;z-index:5;left:190px;top:96px;bottom:215px;width:120px;display:flex;align-items:center;justify-content:center;pointer-events:none;user-select:none}
-#bigKanji .w{position:relative;font-family:Shojumaru,serif;writing-mode:vertical-rl;text-orientation:upright;letter-spacing:-.06em;line-height:1;font-size:60px;background:linear-gradient(180deg,#F2F8FF 0%,#9FE6FF 25%,#4FB8FF 50%,#3D7BFF 75%,#8A6BFF 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 10px rgba(79,184,255,.55)) drop-shadow(0 0 28px rgba(61,123,255,.35));opacity:.9}
-#bigKanji .o{position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;border-radius:50%;border:2px solid rgba(120,190,255,.35);box-shadow:0 0 30px rgba(61,123,255,.35),inset 0 0 30px rgba(79,184,255,.2);background:radial-gradient(circle,rgba(61,123,255,.14),transparent 70%)}
+#bigKanji .w{position:relative;font-family:Shojumaru,serif;writing-mode:vertical-rl;text-orientation:upright;letter-spacing:-.06em;line-height:1;font-size:60px;background:linear-gradient(180deg,#FFFFFF 0%,#CFEFFF 22%,#7FCBFF 48%,#4F8DFF 74%,#6F7BFF 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.9)) drop-shadow(0 0 2px rgba(79,184,255,.55));opacity:1}   /* v5: crisp, no soft glow */
+#bigKanji .o{position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;border-radius:50%;border:2px solid rgba(120,190,255,.35);box-shadow:0 0 12px rgba(61,123,255,.25);background:none;opacity:.7}
 #stage{position:fixed;inset:0;z-index:1;width:100%;height:100%;outline:none;touch-action:none}
 
 /* ---------- top bar ---------- */
@@ -139,6 +139,13 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--azure),var(--glow),var(--ice));box-shadow:0 0 12px var(--glow)}
 .comb{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:14px}
 .hex{aspect-ratio:1/1.1;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:rgba(239,230,210,.06);display:grid;place-items:center;font-family:Cinzel,serif;font-weight:700;font-size:8.5px;letter-spacing:.04em;text-transform:uppercase;color:rgba(239,230,210,.3);transition:all .35s;text-align:center;line-height:1}
+.dl,.kept{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dl span,.kept span{width:100%;font-family:Cinzel,serif;font-size:10.5px;letter-spacing:.24em;color:var(--washi-dim)}
+.dl .chip{cursor:pointer}.dl .chip:hover{border-color:var(--glow);color:var(--ice)}
+.kthumbs{display:flex;gap:8px;flex-wrap:wrap}
+.kthumb{width:54px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#d9d4c8}
+.kthumb img{width:100%;height:100%;object-fit:contain;display:block}
+.kthumb:hover{border-color:var(--glow);box-shadow:0 0 12px rgba(79,184,255,.4)}
 .note.live{margin-top:6px;color:#cfe6ff;font-size:13px}
 .note.live b{color:var(--ice);font-weight:600}
 .errline{color:#ffb3a4}
@@ -160,8 +167,8 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .hex.on{background:linear-gradient(180deg,rgba(143,208,255,.95),rgba(61,110,240,.9));color:#fff;box-shadow:0 0 12px rgba(79,184,255,.6)}
 
 /* ---------- center overlays ---------- */
-#center{position:fixed;z-index:10;left:calc(50% - 70px);top:50%;transform:translate(-50%,-50%);pointer-events:none;width:min(520px,calc(100vw - 780px))}
-.nftcard{width:100%;max-width:380px;margin:0 auto;border-radius:18px;overflow:hidden;position:relative;border:1px solid rgba(239,230,210,.18);box-shadow:0 40px 80px -30px rgba(0,0,0,.9),0 0 60px -10px rgba(255,106,31,.35);background:#111}
+#center{position:fixed;z-index:10;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;width:min(520px,calc(100vw - 780px))}
+.nftcard{width:100%;max-width:380px;margin:0 auto;border-radius:18px;overflow:hidden;position:relative;border:1px solid rgba(239,230,210,.18);box-shadow:0 40px 80px -30px rgba(0,0,0,.9),0 0 60px -8px rgba(61,123,255,.55),0 0 0 1px rgba(79,184,255,.25);background:#111}
 .nftcard img{width:100%;display:block;aspect-ratio:1;object-fit:cover}
 .nftcard .cap{position:absolute;left:0;right:0;bottom:0;padding:40px 18px 14px;background:linear-gradient(0deg,rgba(11,10,12,.95),transparent);display:flex;justify-content:space-between;align-items:flex-end}
 .nftcard .cap b{font-family:Cinzel,serif;font-size:22px;letter-spacing:.06em}
@@ -277,7 +284,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 <div id="flash"></div>
 
 <header>
-  <div class="logo"><b>REBEL FORGE</b><span>The Smith's Hall</span></div>
+  <div class="logo"><b>REBEL FORGE</b></div>
   <div class="hright">
     <div class="pill hidden" id="forgePill"></div>
     <div class="pill" id="tokPill">Rebel <strong>#—</strong></div>
@@ -1013,6 +1020,7 @@ function acceptConcept() {
 }
 function paintAgain() {
   clearInterval(approveTimer); if (!S) return;
+  if (S.prodUrl) S.history = [...(S.history || []), { conceptUrl: S.conceptUrl, prodUrl: S.prodUrl }].slice(-6);   // keep every painting
   S.phase = 'concept'; S.t.concept = { a: Date.now() }; delete S.t.prod; delete S.t.approve;
   S.conceptUrl = null; S.prodUrl = null; S.approved = false; S._f = 0; saveS();
   renderInk(); runPipeline();
@@ -1020,6 +1028,21 @@ function paintAgain() {
 function pickVersion(id) {
   if (!S || S.phase !== 'pick') return; clearPreview();
   S.picked = id; saveS(); Snd.taiko(); flash(0.3, 0.6); advance(); runPipeline();
+}
+
+// swap the current painting with a kept one (before it is accepted)
+function usePainting(k) {
+  if (!S || S.phase !== 'approve' || !S.history?.[k]) return;
+  const old = S.history[k]; S.history[k] = { conceptUrl: S.conceptUrl, prodUrl: S.prodUrl };
+  S.conceptUrl = old.conceptUrl; S.prodUrl = old.prodUrl; saveS(); startApproveTimer(); Snd.pluck(880);
+}
+async function downloadUrl(url, name) {
+  try {
+    const b = await (await fetch(url)).blob();
+    const ext = (b.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${name}.${ext}`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 8000);
+  } catch (e) { window.open(url, '_blank', 'noopener'); }
 }
 
 /* ---- progress model: drives the ant, the %, the ETA ---- */
@@ -1084,12 +1107,7 @@ let trailPath = null;
 function layoutTrail() {
   if (MOBILE) return;
   const box = $('#trail').getBoundingClientRect(); const h = box.height; const svg = $('#trailSvg');
-  const top = 40, first = 78, minGap = 74;
-  const secs = [1, 2, 3].map((sg) => PHASES.filter((p) => p.seg === sg).reduce((a, p) => a + expect(p.id), 0));
-  const tot = secs.reduce((a, b) => a + b, 0) || 1; const avail = Math.max(minGap * 3, h - 80 - first);
-  const gaps = secs.map((s) => Math.max(minGap, avail * s / tot));
-  const over = gaps.reduce((a, b) => a + b, 0) - avail; if (over > 0) { const k = gaps.indexOf(Math.max(...gaps)); gaps[k] = Math.max(minGap, gaps[k] - over); }
-  const ys = [top, top + first]; gaps.forEach((g) => ys.push(ys[ys.length - 1] + g));
+  const ys = STEPS.map((_, i) => 40 + i * ((h - 80) / (STEPS.length - 1)));   // steps evenly spaced; the ant carries the time
   [...nodesEl.children].forEach((n, i) => { n.style.top = ys[i] + 'px'; });
   let d = `M24 ${ys[0]}`;
   for (let i = 1; i < ys.length; i++) { const y0 = ys[i - 1], y1 = ys[i], m = (y0 + y1) / 2; d += ` C ${i % 2 ? 44 : 4} ${m - 20}, ${i % 2 ? 4 : 44} ${m + 20}, 24 ${y1}`; }
@@ -1346,6 +1364,8 @@ function renderInk(prev, quiet) {
     ${waiting ? `<div class="cta"><button class="btn" id="againBtn">↻ PAINT AGAIN</button><button class="btn fire wide" id="acceptBtn">ACCEPT →</button></div>
       <div class="note">Continues on its own in <b id="autoN">${approveLeft}</b> s. Paint again uses one of today's paintings.</div>` : ''}
     ${past ? `<div class="cta"><button class="btn fire wide" id="nextBtn">${liveStep() >= 3 ? 'TO THE FORGE →' : 'THE BLUEPRINT →'}</button></div>` : ''}
+    ${S?.prodUrl || S?.conceptUrl ? `<div class="dl"><span>KEEP THE ART</span>${S.prodUrl ? `<button class="chip" id="dlProd">⤓ Clean drawing</button>` : ''}${S.conceptUrl ? `<button class="chip" id="dlConcept">⤓ Painted concept</button>` : ''}</div>` : ''}
+    ${S?.history?.length ? `<div class="kept"><span>${waiting ? 'YOUR PAINTINGS · TAP ONE TO USE IT' : 'EARLIER PAINTINGS'}</span><div class="kthumbs">${S.history.map((h, k) => `<button class="kthumb" data-k="${k}" title="${waiting ? 'Use this painting' : 'Download'}"><img src="${esc(h.prodUrl)}" alt=""></button>`).join('')}</div></div>` : ''}
     ${!waiting && !past && !S?.err ? `<div class="note">Keep this page open while the brush paints (about ${fmtMin(expect('concept') + expect('prod'))}). Once the sculpting starts you can leave.</div>` : ''}
   `, quiet);
   const frame = center.querySelector('.inkframe');
@@ -1355,6 +1375,10 @@ function renderInk(prev, quiet) {
   const ab = $('#againBtn'); if (ab) ab.onclick = paintAgain;
   const ac = $('#acceptBtn'); if (ac) ac.onclick = acceptConcept;
   const nb = $('#nextBtn'); if (nb) nb.onclick = () => go(Math.min(3, liveStep()));
+  const tag = `rebel-${state.token}`;
+  const dp = $('#dlProd'); if (dp) dp.onclick = () => downloadUrl(S.prodUrl, `${tag}-drawing`);
+  const dc = $('#dlConcept'); if (dc) dc.onclick = () => downloadUrl(S.conceptUrl, `${tag}-concept`);
+  card.querySelectorAll('.kthumb').forEach((b) => b.onclick = () => { const k = +b.dataset.k; if (S.phase === 'approve') usePainting(k); else downloadUrl(S.history[k].prodUrl, `${tag}-drawing-${k + 1}`); });
 }
 function inkFrameSVG(src) {
   return `<div class="inkframe" data-src="${esc(src || '')}"><svg viewBox="0 0 400 600" preserveAspectRatio="xMidYMid meet">
@@ -1400,6 +1424,7 @@ function renderForm(prev, quiet) {
       ${['Clean, simple design that sculpts well', 'Arms clear of the body', 'Front, back and sides match', 'Head clean for antennae and masks'].map((c) => `<div class="check"><b>✓</b>${c}</div>`).join('')}
     </div>
     ${past ? `<div class="cta"><button class="btn fire wide" id="nextBtn">TO THE FORGE →</button></div>` : ''}
+    ${views.some((v) => v[1]) ? `<div class="dl"><span>KEEP THE ART</span><button class="chip" id="dlViews">⤓ All ${views.filter((v) => v[1]).length} views</button></div>` : ''}
     <div class="note">${skipped ? 'A view could not be drawn, so the smith builds from the views it has.' : past ? 'Sealed and sent to the forge.' : 'Keep this page open while the views are drawn. The forge starts on its own when they are ready.'}</div>
   `, quiet);
   const sig = views.map((v) => v[1] || '').join('|');
@@ -1430,6 +1455,7 @@ function renderForm(prev, quiet) {
   if (S) { const s = $('#liveStatus'); if (s) s.innerHTML = liveStatusHTML(forgeProgress()); }
   bindErr();
   const nb = $('#nextBtn'); if (nb) nb.onclick = () => go(3);
+  const dv = $('#dlViews'); if (dv) dv.onclick = async () => { for (const [n, u] of views) if (u) { await downloadUrl(u, `rebel-${state.token}-${n.toLowerCase()}`); await sleep(400); } };
 }
 function holdButton(btn, ms, done) {
   if (!btn) return; const fill = btn.querySelector('.fill'); let tw = null;
