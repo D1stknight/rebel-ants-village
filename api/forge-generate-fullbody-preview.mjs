@@ -2,6 +2,7 @@ import { enforceRateLimit } from './_guard.mjs';
 import { forgeImageEdit, fetchImageAsDataUrl, FORGE_REFERENCE_URLS } from './_forge-image.mjs';
 import { buildOutfitDesignBlock } from './_forge-outfits.mjs';
 import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
+import { getToken, isTokenId, redis as nftRedis, ipfsToHttps } from './_nft.mjs';
 
 const DEFAULT_SIZE = '1024x1536';
 const FORGE_ECONOMY_VERSION = 'v0_testing_free';
@@ -9,6 +10,25 @@ const FORGE_ECONOMY_MODE = 'testing_free';
 const FUTURE_REBEL_POINTS_CURRENCY = 'REBEL_POINTS';
 // Optional outfit image reference. OFF by default: a fixed outfit image makes every Rebel wear the same costume.
 // Outfit now comes from the colony brief + NFT palette + token-seeded variation (see _forge-outfits.mjs).
+// Forge v2 sends the NFT art as our own route (/api/nft-image?c=..&t=..). Resolve it server-side to the Blob copy that route
+// cached (or the token's source image), so we never fetch our own (possibly password-protected) deployment.
+async function resolveForgeSourceImage(src) {
+  const s = String(src || '');
+  const m = /^(?:https?:\/\/[^/]+)?\/api\/nft-image\?(.*)$/.exec(s);
+  if (!m) return s;
+  const q = new URLSearchParams(m[1]);
+  const c = String(q.get('c') || 'battle_for_colony').replace(/[^a-z0-9_]/gi, '');
+  const t = String(q.get('t') || '');
+  if (!isTokenId(t)) throw new Error('Invalid NFT image token');
+  for (const size of ['full', 'thumb']) {
+    try { const [hit] = await nftRedis([['GET', `nft:img:v1:${c}:${t}:${size}`]]); if (hit?.result) return hit.result; } catch (e) {}
+  }
+  const tok = await getToken(c, t);
+  const first = (tok.sourceImages || []).map(ipfsToHttps).find(Boolean);
+  if (!first) throw new Error('No source image for this NFT');
+  return first;
+}
+
 function pickBodyReferenceKey(generationInput) {
   const requested = generationInput?.bodyReference;
   return requested && FORGE_REFERENCE_URLS.body[requested] ? requested : null;
@@ -245,7 +265,7 @@ export default async function handler(req, res) {
     const outfit = buildOutfitDesignBlock(generationInput);
     const prompt = buildFullBodyPreviewPrompt(generationInput, { hasBodyRef: !!bodyReferenceKey, outfitBlock: outfit.text });
     const [sourceImageDataUrl, proportionsReferenceDataUrl, bodyReferenceDataUrl] = await Promise.all([
-      fetchImageAsDataUrl(generationInput.sourceImage),
+      resolveForgeSourceImage(generationInput.sourceImage).then(fetchImageAsDataUrl),
       fetchImageAsDataUrl(FORGE_REFERENCE_URLS.proportions),
       bodyReferenceKey ? fetchImageAsDataUrl(FORGE_REFERENCE_URLS.body[bodyReferenceKey]) : Promise.resolve(null)
     ]);

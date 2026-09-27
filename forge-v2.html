@@ -74,6 +74,9 @@ header{position:fixed;z-index:20;top:0;left:0;right:0;height:64px;display:flex;a
 .node.active .t{color:var(--washi);opacity:1}
 @keyframes ping{0%{transform:scale(.9);opacity:1}100%{transform:scale(1.45);opacity:0}}
 #ant{position:absolute;z-index:2;width:22px;height:22px;margin:-13px 0 0 -13px;filter:drop-shadow(0 0 6px rgba(79,184,255,.6))}
+#antEta{position:absolute;z-index:3;transform:translateY(-50%);font-family:Cinzel,serif;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--ice);background:rgba(11,14,24,.85);border:1px solid rgba(79,184,255,.45);border-radius:999px;padding:2px 8px;white-space:nowrap;pointer-events:none;box-shadow:0 0 10px rgba(79,184,255,.3)}
+#antEta.wait{color:#ffd9a0;border-color:rgba(255,181,71,.55)}
+.node.live .k{border-color:rgba(79,184,255,.7);color:var(--ice);box-shadow:0 0 16px rgba(79,184,255,.3)}
 
 /* ---------- panel ---------- */
 #panel{position:fixed;z-index:15;right:28px;top:88px;bottom:28px;width:min(400px,34vw);display:flex;flex-direction:column;pointer-events:none}
@@ -136,6 +139,24 @@ p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--azure),var(--glow),var(--ice));box-shadow:0 0 12px var(--glow)}
 .comb{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:14px}
 .hex{aspect-ratio:1/1.1;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:rgba(239,230,210,.06);display:grid;place-items:center;font-family:Cinzel,serif;font-weight:700;font-size:8.5px;letter-spacing:.04em;text-transform:uppercase;color:rgba(239,230,210,.3);transition:all .35s;text-align:center;line-height:1}
+.note.live{margin-top:6px;color:#cfe6ff;font-size:13px}
+.note.live b{color:var(--ice);font-weight:600}
+.errline{color:#ffb3a4}
+.errbox{margin-top:12px;padding:12px 14px;border-radius:12px;border:1px solid rgba(200,50,30,.5);background:rgba(200,50,30,.08);display:grid;gap:8px;font-size:13px}
+.errbox b{font-family:Cinzel,serif;letter-spacing:.1em;color:#ffb3a4;font-size:12px}
+.errbox span{color:#e6d6c8;line-height:1.5}
+.vers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.ver{position:relative;aspect-ratio:3/4;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:rgba(239,230,210,.03);display:grid;place-items:center;transition:all .25s var(--ease)}
+.ver img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ver .vp{font-family:Cinzel,serif;font-weight:900;font-size:22px;color:var(--ice)}
+.ver .vp small{font-size:11px}
+.ver .vl{position:absolute;left:0;right:0;bottom:0;padding:16px 6px 6px;font-family:Cinzel,serif;font-size:10px;letter-spacing:.14em;background:linear-gradient(0deg,rgba(6,10,22,.92),transparent);text-align:center}
+.ver.bad{opacity:.4}
+.ver[disabled]{cursor:default}
+.ver.can:hover{border-color:rgba(239,230,210,.4);transform:translateY(-2px)}
+.ver.prev,.ver.on{border-color:var(--glow);box-shadow:0 0 0 1px var(--glow),0 0 18px rgba(79,184,255,.45)}
+.bp-views.four{grid-template-columns:repeat(4,1fr);gap:10px}
+.bp-wait{position:absolute;inset:0;display:grid;place-items:center;font-family:"Yuji Syuku",serif;font-size:44px;color:#2a2018;opacity:.15}
 .hex.on{background:linear-gradient(180deg,rgba(143,208,255,.95),rgba(61,110,240,.9));color:#fff;box-shadow:0 0 12px rgba(79,184,255,.6)}
 
 /* ---------- center overlays ---------- */
@@ -258,7 +279,7 @@ p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
 <header>
   <div class="logo"><b>REBEL FORGE</b><span>The Smith's Hall</span></div>
   <div class="hright">
-    <div class="pill mock">MOCKUP · v2 preview</div>
+    <div class="pill hidden" id="forgePill"></div>
     <div class="pill" id="tokPill">Rebel <strong>#—</strong></div>
     <button class="iconbtn" id="sndBtn" title="Sound">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path id="sndX" d="m23 9-6 6m0-6 6 6"/></svg>
@@ -268,6 +289,7 @@ p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
 
 <nav id="trail" aria-label="Forge steps">
   <svg id="trailSvg"></svg>
+  <div id="antEta" class="hidden"></div>
   <svg id="ant" viewBox="0 0 32 32"><g fill="#4FB8FF"><ellipse cx="16" cy="7" rx="3.2" ry="3"/><ellipse cx="16" cy="14" rx="2.6" ry="3.4"/><ellipse cx="16" cy="23" rx="4.2" ry="5.6"/></g><g stroke="#4FB8FF" stroke-width="1.3" fill="none" stroke-linecap="round"><path d="M14 5 11 1M18 5l3-4"/><path d="M13.5 12 8 9M18.5 12 24 9M13.5 14.5 7 15M18.5 14.5 25 15M13.5 17 8 21M18.5 17l5.5 4"/></g></svg>
   <div class="nodes" id="nodes"></div>
 </nav>
@@ -303,6 +325,7 @@ p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
 <div id="loader"><div class="l"><b>REBEL FORGE</b><span>STOKING THE FORGE</span></div></div>
 <div id="toast"></div>
 
+<script src="assets/forge-core.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
@@ -310,13 +333,12 @@ p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
 (() => {
 'use strict';
 /* =========================================================
-   Rebel Forge v2 — clickable mockup
-   Real data: NFT + traits (/api/nft-token), concept + back ref + rigged GLB (/api/forge-builds-list).
-   Forging itself is simulated (≈30 s) so the whole flow can be reviewed.
+   Rebel Forge v2 — the real Forge (v5): your NFT → painted concept → 4-view blueprint → 3 Meshy sculpts →
+   you pick one → Forge Rigger (65 bones, 24 moves) → awaken. The ant on the trail crawls with the real forging time.
    ========================================================= */
 const Q = new URLSearchParams(location.search);
-const DEMO_TOKEN = '4998';
 const PICKS = ['4998', '469', '1555', '262', '893', '910'];
+const PICKER = Q.has('pick');   // review only: a token picker on the Summon step
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const MOBILE = matchMedia('(max-width: 900px)').matches;
 const $ = (s, r = document) => r.querySelector(s);
@@ -341,17 +363,9 @@ const GROUPS = [
 const ALL_MOVES = GROUPS.flatMap((g, gi) => g.moves.map((m) => ({ clip: m[0], k: m[1], n: m[2], g: gi })));
 const SHORT = { fight_idle: 'Guard', idle: 'Calm', walk: 'Walk', run: 'Run', jump: 'Jump', jump_run: 'Leap', front_flip: 'Flip', backflip: 'Back', cartwheel: 'Wheel', jab: 'Jab', cross_punch: 'Cross', hook_punch: 'Hook', elbow_punch: 'Elbow', punch_combo: 'Combo', front_kick: 'Kick', side_kick: 'Side', roundhouse_kick: 'Round', crescent_kick: 'Moon', hurricane_kick: 'Storm', flip_kick: 'Flip K', spin_flip_kick: 'Spin', hit_reaction: 'Hit', knockdown: 'Down', get_up: 'Rise' };
 
-const FORGE_STAGES = [
-  { k: '鍛錬', n: 'Sculpt', d: 'Carving the body from your blueprint', w: 0.34 },
-  { k: '彩', n: 'Paint', d: 'Laying lacquer, cloth and steel', w: 0.18 },
-  { k: '骨', n: 'Skeleton', d: '65 bones set in the body', w: 0.16 },
-  { k: '型', n: 'Kata', d: 'Teaching 24 moves', w: 0.24 },
-  { k: '銘', n: 'Portrait', d: 'Signing the blade', w: 0.08 }
-];
-const FORGE_SECONDS = REDUCED ? 8 : 30;
 
 const state = {
-  step: 0, maxStep: 0, token: Q.get('token') || DEMO_TOKEN, meta: null, assets: null,
+  step: 0, maxStep: 0, token: null, meta: null, assets: null,
   summoned: false, forging: false, forged: false, awakened: false, sound: false
 };
 
@@ -770,19 +784,310 @@ engine.runRenderLoop(() => { if (!document.hidden) scene.render(); });
 addEventListener('resize', () => engine.resize());
 
 /* =========================================================
-   Stepper (pheromone trail)
+   The real Forge pipeline (v5)
+   NFT → concept → clean reference → back + both sides → 3 Meshy sculpts → player picks → Forge Rigger → awaken.
+   A session per Rebel lives in localStorage, so a reload resumes where it was. Meshy and the Rigger keep working
+   server-side if the player leaves; the image steps (first ~5 min) need this page open.
+   ========================================================= */
+const COL = 'battle_for_colony';
+const VARIANTS = Math.max(1, Math.min(3, parseInt(Q.get('variants') || '3', 10) || 3));
+// Expected seconds per phase (defaults; refined in this browser by real runs). seg = trail segment (1 Ink, 2 Blueprint, 3 Forge).
+const PHASES = [
+  { id: 'concept', seg: 1, s: 80, label: 'Painting the concept' },
+  { id: 'prod', seg: 1, s: 80, label: 'Inking the clean reference' },
+  { id: 'approve', seg: 1, s: 0, wait: true, label: 'Waiting for your approval' },
+  { id: 'back', seg: 2, s: 70, label: 'Drawing the back' },
+  { id: 'sides', seg: 2, s: 85, label: 'Drawing both sides' },
+  { id: 'meshy', seg: 3, s: 540, label: 'Sculpting 3 versions' },
+  { id: 'store', seg: 3, s: 20, label: 'Cooling the steel' },
+  { id: 'pick', seg: 3, s: 0, wait: true, label: 'Choose your version' },
+  { id: 'rig', seg: 3, s: 240, label: 'Bones and 24 moves' },
+  { id: 'done', seg: 4, s: 0, label: 'Forged' }
+];
+const PH = Object.fromEntries(PHASES.map((p, i) => [p.id, { ...p, i }]));
+const EST_KEY = 'forgeV2:est:v1';
+let EST = {}; try { EST = JSON.parse(localStorage.getItem(EST_KEY) || '{}') || {}; } catch (e) { EST = {}; }
+function expect(id) { const p = PH[id]; return p.wait ? 0 : Math.round(EST[id] || p.s); }
+function learn(id, secs) {
+  const p = PH[id]; if (!p || p.wait || !(secs > 3)) return;
+  const old = EST[id] || p.s; EST[id] = Math.round(Math.min(p.s * 3, Math.max(p.s * 0.4, old * 0.5 + secs * 0.5)));
+  try { localStorage.setItem(EST_KEY, JSON.stringify(EST)); } catch (e) {}
+}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const fmtMin = (s) => s < 60 ? 'under a minute' : `${Math.round(s / 60)} min`;
+
+/* ---- session ---- */
+let S = null;
+const SKEY = (t) => `forgeV2:session:${COL}:${t}`;
+function saveS() { if (!S) return; try { localStorage.setItem(SKEY(S.token), JSON.stringify(S)); } catch (e) {} }
+function loadS(t) { try { const s = JSON.parse(localStorage.getItem(SKEY(t)) || 'null'); return s && s.v === 1 && s.token === t ? s : null; } catch (e) { return null; } }
+function newSession() {
+  S = { v: 1, token: state.token, id: `fv2_${state.token}_${Date.now()}`, phase: 'concept', t: { concept: { a: Date.now() } }, builds: [], startedAt: Date.now() };
+  saveS(); return S;
+}
+function liveStep() { if (!S) return 0; const p = PH[S.phase]; return p.seg >= 4 ? 4 : p.seg; }
+function active() { return !!(S && !S.done); }
+
+/* ---- server calls ---- */
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? { cache: 'no-store' } : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  let j = null; try { j = await r.json(); } catch (e) { j = { ok: false, error: `Server error (${r.status})` }; }
+  if (!r.ok || j.ok === false) { const e = new Error(j.error || j.detail || `Request failed (${r.status})`); e.status = r.status; throw e; }
+  return j;
+}
+function selectedRebel() { try { const r = JSON.parse(localStorage.getItem('selectedRebel') || 'null'); return r && String(r.tokenId || '') === String(state.token) ? r : null; } catch (e) { return null; } }
+function rebelId() { return selectedRebel()?.rebelId || `rebel_${state.token}`; }
+let GI_CACHE = null;
+function GI() {
+  if (GI_CACHE && GI_CACHE.tokenId === String(state.token)) return GI_CACHE;
+  const traits = {}; (state.meta?.traits || []).forEach((t) => { traits[t.trait_type] = t.value; });
+  const sel = selectedRebel() || {};
+  const rebel = {
+    id: rebelId(), tokenId: String(state.token), collectionKey: COL, name: `Rebel #${state.token}`,
+    image: `/api/nft-image?c=${COL}&t=${encodeURIComponent(state.token)}&s=full`,   // resolved to our Blob copy server-side
+    traits: Object.keys(traits).length ? traits : (sel.traits || {}), gangName: traits['Gang Names'] || sel.gangName || null
+  };
+  const bp = window.buildCharacterBlueprint(rebel, { formType: 'starter', formLabel: 'Starter 3D Form', hasGeneratedModel: false, bundleId: 'starter_ant' });
+  GI_CACHE = window.buildForgeGenerationInput(bp);
+  return GI_CACHE;
+}
+function refConcept(kind, imageUrl, extra) {
+  const g = GI();
+  return { id: `${S.id}_${kind}`, conceptId: `${S.id}_${kind}`, tokenId: String(state.token), rebelId: g.rebelId, collectionKey: COL, colony: g.colony || null, bodyType: g.bodyType || null, imageUrl, imageStorage: 'vercel_blob', createdAt: new Date().toISOString(), ...(extra || {}) };
+}
+async function shrinkDataUrl(dataUrl) {
+  const bytes = Math.ceil((dataUrl.length - dataUrl.indexOf(',') - 1) * 3 / 4);
+  if (bytes <= 2.75 * 1024 * 1024) return dataUrl;
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl; });
+  const c = document.createElement('canvas'), x = c.getContext('2d');
+  for (const [px, type, q] of [[1536, 'image/webp', 0.9], [1280, 'image/webp', 0.85], [1024, 'image/jpeg', 0.85]]) {
+    const s = Math.min(1, px / Math.max(img.naturalWidth, img.naturalHeight)); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+    x.clearRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+    const out = c.toDataURL(type, q); if (out.length * 0.75 <= 2.75 * 1024 * 1024) return out;
+  }
+  throw new Error('Image too large to store');
+}
+async function upload(kind, dataUrl) {
+  if (!dataUrl) throw new Error('The brush returned no image');
+  const j = await api('/api/forge-concepts-upload-image', { conceptId: `${S.id}_${kind}`, rebelId: GI().rebelId, tokenId: String(state.token), collectionKey: COL, imageDataUrl: await shrinkDataUrl(dataUrl) });
+  if (!j.imageUrl) throw new Error('Upload returned no image URL');
+  return j.imageUrl;
+}
+async function twice(fn) { try { return await fn(); } catch (e) { if (e.status === 429 || e.status === 400) throw e; await sleep(2500); return fn(); } }
+
+/* ---- phases ---- */
+const RUN = {
+  async concept() {
+    const d = await twice(() => api('/api/forge-generate-fullbody-preview', { generationInput: GI() }));
+    S.conceptUrl = await upload('concept', d.previewImage?.dataUrl);
+  },
+  async prod() {
+    const c = refConcept('concept', S.conceptUrl);
+    const d = await twice(() => api('/api/forge-generate-production-reference', { generationInput: GI(), selectedConcept: c, concept: c, selectedConceptImageUrl: S.conceptUrl }));
+    S.prodUrl = await upload('prod', d.productionImage?.dataUrl);
+  },
+  async back() {
+    try {
+      const d = await twice(() => api('/api/forge-generate-back-reference', { generationInput: GI(), productionImageUrl: S.prodUrl }));
+      S.backUrl = await upload('prod_back', d.backImage?.dataUrl);
+    } catch (e) { if (e.status === 429) throw e; console.warn('back view skipped', e); S.backUrl = null; }
+  },
+  async sides() {
+    try {
+      S.sideUrls = await Promise.all(['left', 'right'].map(async (side) => {
+        const d = await twice(() => api('/api/forge-generate-side-reference', { generationInput: GI(), productionImageUrl: S.prodUrl, backImageUrl: S.backUrl || null, side }));
+        return upload(`prod_${side}`, d.sideImage?.dataUrl);
+      }));
+    } catch (e) { if (e.status === 429) throw e; console.warn('side views skipped', e); S.sideUrls = []; }
+  },
+  async meshy() {
+    const ref = refConcept('prod', S.prodUrl, { backImageUrl: S.backUrl || null, forgeMode: 'production_reference', conceptType: 'production_reference' });
+    const startOne = async (b) => {
+      try {
+        await api('/api/forge-3d-engine-meshy-create', { buildId: b.id, generationInput: GI(), productionReference: ref, selectedConcept: ref, sideImageUrls: S.sideUrls || [], options: { pose_mode: 'none' } });
+        b.started = true;
+      } catch (e) { if (e.status === 409) b.started = true; else { b.failed = e.message; b.status = e.status; } }
+      saveS(); forgeTick();
+    };
+    for (const b of S.builds) if (!b.started && !b.failed) await startOne(b);
+    while (S.builds.length < (S.variants || VARIANTS)) {
+      let j;
+      try { j = await api('/api/forge-build-3d-character', { generationInput: GI(), selectedConcept: ref, productionReference: ref }); }
+      catch (e) { if (S.builds.some((b) => b.started)) { S.variants = S.builds.length; break; } throw e; }
+      const b = { id: j.buildRequest?.buildId, p: 0 }; if (!b.id) throw new Error('The forge returned no build id');
+      S.builds.push(b); saveS();
+      await startOne(b);
+      if (b.failed && b.status === 429) { S.variants = S.builds.length; if (!S.builds.some((x) => x.started)) { const e = new Error(b.failed); e.status = 429; throw e; } break; }
+      await sleep(250);
+    }
+    for (;;) {
+      const live = S.builds.filter((b) => b.started && !b.glb && !b.failed);
+      if (!live.length) break;
+      await Promise.all(live.map(async (b) => {
+        try {
+          const d = await api('/api/forge-3d-engine-meshy-status', { buildId: b.id });
+          const r = d.meshyResponse || {};
+          b.p = Math.max(b.p || 0, Number(r.progress || 0)); b.thumb = r.thumbnail_url || b.thumb || null; b.errs = 0;
+          if (d.glbUrl) { b.glb = d.glbUrl; b.p = 100; }
+          if (['FAILED', 'CANCELED', 'EXPIRED'].includes(String(d.meshyStatus || '').toUpperCase())) b.failed = r.task_error?.message || 'This sculpt failed';
+        } catch (e) { b.errs = (b.errs || 0) + 1; if (b.errs > 10) b.failed = e.message; }
+      }));
+      saveS(); forgeTick();
+      if (S.builds.some((b) => b.started && !b.glb && !b.failed)) await sleep(8000);
+    }
+    if (!S.builds.some((b) => b.glb)) throw new Error(S.builds.find((b) => b.failed)?.failed || 'The sculpt failed');
+  },
+  async store() {
+    await Promise.all(S.builds.filter((b) => b.glb && !b.stored).map(async (b) => {
+      try { const d = await twice(() => api('/api/forge-3d-store-glb', { buildId: b.id })); b.stored = d.rebelGlbUrl || true; }
+      catch (e) { b.storeErr = e.message; }
+    }));
+    const ok = S.builds.filter((b) => b.stored);
+    if (!ok.length) throw new Error(S.builds.find((b) => b.storeErr)?.storeErr || 'Could not store the sculpt');
+    if (ok.length === 1) S.picked = ok[0].id;
+  },
+  async rig() {
+    const id = S.picked;
+    if (!S.rigStarted) { S.rigPct = 0; S.rigStep = 'starting'; await api('/api/forge-rig-start', { buildId: id }); S.rigStarted = true; saveS(); }
+    for (;;) {
+      const d = await api(`/api/forge-rig-status?buildId=${encodeURIComponent(id)}`);
+      const fr = d.forgeRig || {};
+      if (d.percent != null) S.rigPct = Math.max(S.rigPct || 0, d.percent);
+      if (fr.progress) S.rigStep = fr.progress;
+      if (fr.status === 'succeeded' || (!fr.status && d.forgeRigGlbUrl)) { S.rigUrl = fr.forgeRigGlbUrl || d.forgeRigGlbUrl; S.thumbUrl = fr.thumbUrl || null; S.rigPct = 100; break; }
+      if (fr.status === 'failed') { S.rigStarted = false; throw new Error(fr.error || 'Rigging failed'); }
+      saveS(); forgeTick(); await sleep(6000);
+    }
+  }
+};
+function advance() {
+  const now = Date.now(); const cur = S.phase;
+  if (S.t[cur]) { S.t[cur].b = now; learn(cur, (now - S.t[cur].a) / 1000); }
+  const next = PHASES[PH[cur].i + 1].id;
+  S.phase = next; S.t[next] = { a: now }; S._f = 0;
+  if (next === 'done') { S.done = true; S.doneAt = now; }
+  saveS(); onPhase(cur, next);
+}
+let running = false;
+async function runPipeline() {
+  if (running || !active()) return;
+  running = true; state.forging = true; S.err = null; startTicker(); refreshStep();
+  try {
+    while (active()) {
+      const ph = S.phase;
+      if (ph === 'approve' && !S.approved) { startApproveTimer(); break; }
+      if (ph === 'pick' && !S.picked) break;
+      if (RUN[ph]) await RUN[ph]();
+      advance();
+    }
+  } catch (e) {
+    console.warn('Forge step failed:', S?.phase, e);
+    if (S) { S.err = e.message || String(e); S.errStatus = e.status || null; saveS(); }
+    Snd.taiko(); toast(S?.err || 'The forge stumbled');
+  } finally {
+    running = false; state.forging = active(); refreshStep(); forgeTick();
+  }
+}
+function retry() { if (!S) return; S.err = null; if (S.t[S.phase]) S.t[S.phase].a = Date.now(); S._f = 0; saveS(); runPipeline(); }
+function onPhase(prev, next) {
+  const from = PH[prev].seg, to = PH[next].seg;
+  if (next === 'done') { finishForge(); return; }
+  if (to !== from && state.step === Math.min(4, from)) go(Math.min(4, to));   // follow the forge when watching the live step
+  else refreshStep();
+}
+
+/* ---- approval (auto-continues after 30 s so the forge never stalls) ---- */
+let approveTimer = null, approveLeft = 0;
+function startApproveTimer() {
+  clearInterval(approveTimer); approveLeft = 30; refreshStep();
+  approveTimer = setInterval(() => {
+    approveLeft--; const n = $('#autoN'); if (n) n.textContent = approveLeft;
+    if (approveLeft <= 0) { clearInterval(approveTimer); acceptConcept(); }
+  }, 1000);
+}
+function acceptConcept() {
+  clearInterval(approveTimer); if (!S || S.phase !== 'approve') return;
+  S.approved = true; saveS(); Snd.taiko(); advance(); runPipeline();
+}
+function paintAgain() {
+  clearInterval(approveTimer); if (!S) return;
+  S.phase = 'concept'; S.t.concept = { a: Date.now() }; delete S.t.prod; delete S.t.approve;
+  S.conceptUrl = null; S.prodUrl = null; S.approved = false; S._f = 0; saveS();
+  renderInk(); runPipeline();
+}
+function pickVersion(id) {
+  if (!S || S.phase !== 'pick') return; clearPreview();
+  S.picked = id; saveS(); Snd.taiko(); flash(0.3, 0.6); advance(); runPipeline();
+}
+
+/* ---- progress model: drives the ant, the %, the ETA ---- */
+function timeFrac(t, e) { if (e <= 0) return 1; const x = t / e; return x < 0.85 ? x : 0.85 + 0.13 * (1 - Math.exp(-(x - 0.85) / 0.6)); }
+function realFrac(id) {
+  if (id === 'meshy') { const bs = S.builds.filter((b) => !b.failed); return bs.length ? bs.reduce((a, b) => a + (b.p || 0), 0) / bs.length / 100 : 0; }
+  if (id === 'rig') return (S.rigPct || 0) / 100;
+  return null;
+}
+function forgeProgress() {
+  const now = Date.now(); const cur = PH[S.phase];
+  const el = Math.max(0, (now - (S.t[cur.id]?.a || now)) / 1000); const e = expect(cur.id);
+  let f = cur.wait || cur.id === 'done' ? 1 : timeFrac(el, e);
+  const real = realFrac(cur.id);
+  if (real != null) f = 0.7 * real + 0.3 * f;
+  if (S.err) f = S._f || 0;
+  f = Math.min(cur.id === 'done' ? 1 : 0.995, Math.max(S._fp === cur.id ? (S._f || 0) : 0, f)); S._f = f; S._fp = cur.id;
+  let stepF = 4;
+  if (cur.seg < 4) {
+    const inSeg = PHASES.filter((p) => p.seg === cur.seg); const tot = inSeg.reduce((a, p) => a + expect(p.id), 0) || 1;
+    let before = 0; for (const p of inSeg) { if (p.id === cur.id) break; before += expect(p.id); }
+    stepF = cur.seg + Math.min(0.97, (before + f * e) / tot);
+  }
+  let remCur = cur.wait ? 0 : Math.max(5, e * (1 - f));
+  if (real != null && real > 0.08 && el > 30) remCur = 0.5 * remCur + 0.5 * Math.max(5, el * (1 - real) / real);
+  let rem = cur.id === 'done' ? 0 : remCur; PHASES.slice(cur.i + 1).forEach((p) => { rem += expect(p.id); });
+  const total = PHASES.reduce((a, p) => a + expect(p.id), 0) || 1;
+  let doneSecs = 0; PHASES.slice(0, cur.i).forEach((p) => { doneSecs += expect(p.id); });
+  const overall = cur.id === 'done' ? 1 : Math.min(0.99, (doneSecs + f * e) / total);
+  return { cur, f, stepF, rem, overall, elapsed: (now - S.startedAt) / 1000 };
+}
+let ticker = null;
+function startTicker() { if (ticker) return; ticker = setInterval(forgeTick, 1000); forgeTick(); }
+function forgeTick() {
+  if (!S) { $('#forgePill').classList.add('hidden'); return; }
+  const P = forgeProgress();
+  antNow(false, P);
+  const pill = $('#forgePill'); pill.classList.remove('hidden');
+  pill.innerHTML = S.done ? `<strong>Forged</strong> · ready to awaken` : S.err ? `<strong>Paused</strong> · ${esc(PH[S.phase].label)}` : PH[S.phase].wait ? `<strong>Your turn</strong> · ${esc(PH[S.phase].label)}` : `<strong>${Math.floor(P.overall * 100)}%</strong> · about ${fmtMin(P.rem)} left`;
+  document.title = S.done ? `Forged · Rebel #${state.token}` : `${Math.floor(P.overall * 100)}% · Forging #${state.token}`;
+  if (state.step === 3) setForgeUI(P);
+  if (state.step === 1 || state.step === 2) { const s = $('#liveStatus'); if (s) s.innerHTML = liveStatusHTML(P); }
+  if (S.done && ticker) { clearInterval(ticker); ticker = null; }
+}
+function liveStatusHTML(P) {
+  if (S.err) return `<span class="errline">${esc(S.err)}</span>`;
+  const cur = PH[S.phase];
+  if (cur.wait) return `${esc(cur.label)}`;
+  return `<b>${esc(cur.label)}…</b> about ${fmtMin(P.rem)} left in total`;
+}
+
+/* =========================================================
+   Stepper (pheromone trail) — node spacing follows the real forging time; the ant crawls with it
    ========================================================= */
 const nodesEl = $('#nodes');
 STEPS.forEach((s, i) => {
   const n = el(`<button class="node" data-i="${i}"><span class="k num">${i + 1}</span><span class="t">${s.name}</span></button>`);
-  n.onclick = () => { if (i <= state.maxStep) go(i); else toast('Finish the current step first'); };
+  n.onclick = () => { if (i <= state.maxStep) go(i); else toast(active() ? 'The forge has not reached this step yet' : 'Finish the current step first'); };
   nodesEl.appendChild(n);
 });
 let trailPath = null;
 function layoutTrail() {
   if (MOBILE) return;
   const box = $('#trail').getBoundingClientRect(); const h = box.height; const svg = $('#trailSvg');
-  const ys = STEPS.map((_, i) => 40 + i * ((h - 80) / (STEPS.length - 1)));
+  const top = 40, first = 78, minGap = 74;
+  const secs = [1, 2, 3].map((sg) => PHASES.filter((p) => p.seg === sg).reduce((a, p) => a + expect(p.id), 0));
+  const tot = secs.reduce((a, b) => a + b, 0) || 1; const avail = Math.max(minGap * 3, h - 80 - first);
+  const gaps = secs.map((s) => Math.max(minGap, avail * s / tot));
+  const over = gaps.reduce((a, b) => a + b, 0) - avail; if (over > 0) { const k = gaps.indexOf(Math.max(...gaps)); gaps[k] = Math.max(minGap, gaps[k] - over); }
+  const ys = [top, top + first]; gaps.forEach((g) => ys.push(ys[ys.length - 1] + g));
   [...nodesEl.children].forEach((n, i) => { n.style.top = ys[i] + 'px'; });
   let d = `M24 ${ys[0]}`;
   for (let i = 1; i < ys.length; i++) { const y0 = ys[i - 1], y1 = ys[i], m = (y0 + y1) / 2; d += ` C ${i % 2 ? 44 : 4} ${m - 20}, ${i % 2 ? 4 : 44} ${m + 20}, 24 ${y1}`; }
@@ -790,53 +1095,95 @@ function layoutTrail() {
   svg.innerHTML = `<path d="${d}" fill="none" stroke="rgba(79,184,255,.25)" stroke-width="2" stroke-linecap="round" stroke-dasharray="0.5 9"/>
     <path id="trailDone" d="${d}" fill="none" stroke="#4FB8FF" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.5 9" opacity=".95"/>`;
   trailPath = svg.querySelector('#trailDone'); trailPath._ys = ys;
-  const L = trailPath.getTotalLength(); trailPath.style.clipPath = ''; trailPath._L = L;
-  placeAnt(state.step, true);
+  trailPath._L = trailPath.getTotalLength(); trailPath.style.clipPath = '';
+  antNow(true);
 }
-let antT = { v: 0 };
-function lenAtStep(i) {
-  const ys = trailPath._ys; let lo = 0, hi = trailPath._L;
-  for (let k = 0; k < 24; k++) { const mid = (lo + hi) / 2; if (trailPath.getPointAtLength(mid).y < ys[i]) lo = mid; else hi = mid; }
+const antT = { v: 0 };
+function lenAtY(y) {
+  let lo = 0, hi = trailPath._L;
+  for (let k = 0; k < 24; k++) { const mid = (lo + hi) / 2; if (trailPath.getPointAtLength(mid).y < y) lo = mid; else hi = mid; }
   return hi;
 }
-function placeAnt(i, instant) {
-  if (!trailPath) return;
-  // the ant rests on the trail just below its step (just above it on the last step), not hidden under the node
-  const target = i < STEPS.length - 1 ? Math.min(trailPath._L, lenAtStep(i) + 34) : Math.max(0, lenAtStep(i) - 34);
-  const upd = () => {
-    const L = antT.v; const p = trailPath.getPointAtLength(L); const q = trailPath.getPointAtLength(Math.min(trailPath._L, L + 1));
-    const a = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI + 90;
-    const ant = $('#ant'); ant.style.left = p.x + 'px'; ant.style.top = p.y + 'px'; ant.style.transform = `rotate(${a}deg)`;
-    const H = trailPath.ownerSVGElement.getBoundingClientRect().height;
-    trailPath.style.clipPath = `inset(0 0 ${Math.max(0, H - p.y)}px 0)`;
-  };
-  if (instant) { antT.v = target; upd(); return; }
-  gsap.to(antT, { v: target, duration: 1.4, ease: 'power2.inOut', onUpdate: upd });
+function antUpd() {
+  const L = antT.v; const p = trailPath.getPointAtLength(L); const q = trailPath.getPointAtLength(Math.min(trailPath._L, L + 1));
+  const a = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI + 90;
+  const ant = $('#ant'); ant.style.left = p.x + 'px'; ant.style.top = p.y + 'px'; ant.style.transform = `rotate(${a}deg)`;
+  const tag = $('#antEta'); tag.style.left = (p.x + 16) + 'px'; tag.style.top = p.y + 'px';
+  const H = trailPath.ownerSVGElement.getBoundingClientRect().height;
+  trailPath.style.clipPath = `inset(0 0 ${Math.max(0, H - p.y)}px 0)`;
 }
+function antNow(instant, P) {
+  if (!trailPath) return;
+  const ys = trailPath._ys; let target; const tag = $('#antEta');
+  if (S && (active() || S.done) && state.maxStep >= 1) {
+    P = P || forgeProgress();
+    const i = Math.min(ys.length - 2, Math.floor(P.stepF)); const y = ys[i] + (ys[i + 1] - ys[i]) * (P.stepF - i);
+    target = P.stepF >= 4 ? Math.max(0, lenAtY(ys[4]) - 30) : lenAtY(y);
+    tag.textContent = S.done ? 'done' : S.err ? 'paused' : PH[S.phase].wait ? 'your turn' : (P.rem < 60 ? '<1 min' : `${Math.round(P.rem / 60)} min`);
+    tag.classList.toggle('wait', !!(S.err || PH[S.phase].wait)); tag.classList.remove('hidden');
+  } else {
+    const i = state.step; target = i < STEPS.length - 1 ? Math.min(trailPath._L, lenAtY(ys[i]) + 34) : Math.max(0, lenAtY(ys[i]) - 34);
+    tag.classList.add('hidden');
+  }
+  if (instant) { gsap.killTweensOf(antT); antT.v = target; antUpd(); return; }
+  if (Math.abs(target - antT.v) < 0.2) return;
+  gsap.to(antT, { v: target, duration: Math.abs(target - antT.v) > 40 ? 1.4 : 0.95, ease: Math.abs(target - antT.v) > 40 ? 'power2.inOut' : 'none', onUpdate: antUpd, overwrite: true });
+}
+function placeAnt() { antNow(false); }
 addEventListener('resize', layoutTrail);
 
 function markNodes() {
-  [...nodesEl.children].forEach((n, i) => { n.classList.toggle('active', i === state.step); n.classList.toggle('done', i < state.maxStep && i !== state.step); });
+  const live = active() ? liveStep() : -1;
+  [...nodesEl.children].forEach((n, i) => { n.classList.toggle('active', i === state.step); n.classList.toggle('done', i < state.maxStep && i !== state.step && i !== live); n.classList.toggle('live', i === live && i !== state.step); });
 }
 
 /* =========================================================
    Data
    ========================================================= */
 async function loadToken(t) {
-  const out = { tokenId: t, name: `Rebel #${t}`, traits: [], img: `/api/nft-image?c=battle_for_colony&t=${t}&s=full`, thumb: `/api/nft-image?c=battle_for_colony&t=${t}&s=thumb` };
-  try { const j = await (await fetch(`/api/nft-token?c=battle_for_colony&t=${encodeURIComponent(t)}`)).json(); if (j.ok) { out.name = j.name || out.name; out.traits = j.traits || []; } } catch (e) {}
+  const out = { tokenId: t, name: `Rebel #${t}`, traits: [], img: `/api/nft-image?c=${COL}&t=${t}&s=full`, thumb: `/api/nft-image?c=${COL}&t=${t}&s=thumb` };
+  try { const j = await (await fetch(`/api/nft-token?c=${COL}&t=${encodeURIComponent(t)}`)).json(); if (j.ok) { out.name = j.name || out.name; out.traits = j.traits || []; } } catch (e) {}
   return out;
 }
+// The Rebel's existing forged rig (if any): the active character first, else the newest rigged build.
 async function loadAssets(t) {
-  const pick = async (tok) => {
-    try {
-      const j = await (await fetch(`/api/forge-builds-list?collectionKey=battle_for_colony&tokenId=${encodeURIComponent(tok)}`)).json();
-      const bs = j.builds || []; const rig = bs.find((b) => b.output?.forgeRigGlbUrl); const src = rig || bs.find((b) => b.sourceImage?.imageUrl);
-      if (!rig || !src?.sourceImage?.imageUrl) return null;
-      return { token: tok, glb: rig.output.forgeRigGlbUrl, thumb: rig.output.forgeRigThumbUrl || '', front: src.sourceImage.imageUrl, back: src.sourceImage.backImageUrl || src.sourceImage.imageUrl, colony: src.colony || '' };
-    } catch (e) { return null; }
+  const out = { token: t, glb: null, thumb: null, buildId: null, builds: [] };
+  try {
+    const [bl, ac] = await Promise.all([
+      api(`/api/forge-builds-list?collectionKey=${COL}&tokenId=${encodeURIComponent(t)}`).catch(() => ({ builds: [] })),
+      api(`/api/forge-active-character-get?collectionKey=${COL}&tokenId=${encodeURIComponent(t)}`).catch(() => null)
+    ]);
+    const bs = bl.builds || []; out.builds = bs;
+    const act = ac?.hasActiveCharacter ? ac.activeCharacter : null;
+    const actBuild = act && bs.find((b) => b.buildId === act.activeForgeBuildId && b.output?.forgeRigGlbUrl);
+    const rig = actBuild || bs.find((b) => b.output?.forgeRigGlbUrl);
+    if (rig) { out.glb = rig.output.forgeRigGlbUrl; out.thumb = rig.output.forgeRigThumbUrl || null; out.buildId = rig.buildId; out.front = rig.sourceImage?.imageUrl || null; out.back = rig.sourceImage?.backImageUrl || null; }
+  } catch (e) {}
+  return out;
+}
+// No local session (other device, cleared storage): pick up a Meshy/rig run from the last 3 hours on the server.
+function recoverSession(assets) {
+  const cutoff = Date.now() - 3 * 3600e3;
+  const recent = (assets.builds || []).filter((b) => b.engine?.taskId && Date.parse(b.createdAt || 0) > cutoff && /^fv2_/.test(b.sourceConceptId || ''));
+  if (!recent.length) return null;
+  const sid = recent[0].sourceConceptId.replace(/_prod$/, '');
+  const group = recent.filter((b) => b.sourceConceptId === recent[0].sourceConceptId).reverse();
+  const rigged = group.find((b) => b.forgeRig?.status === 'succeeded' && b.output?.forgeRigGlbUrl);
+  if (rigged) return null;   // finished runs are shown as the Rebel's forged model instead
+  const running = group.find((b) => b.forgeRig?.status === 'running' || b.forgeRig?.status === 'failed');
+  const t0 = Date.parse(group[0].createdAt) || Date.now();
+  const s = {
+    v: 1, token: state.token, id: sid, recovered: true, startedAt: t0 - 6 * 60e3,
+    prodUrl: group[0].sourceImage?.imageUrl || null, backUrl: group[0].sourceImage?.backImageUrl || null, sideUrls: [],
+    builds: group.map((b) => ({ id: b.buildId, started: true, p: b.output?.glbUrl ? 100 : 0, glb: b.output?.glbUrl || null, stored: b.output?.rebelGlbUrl || null, thumb: b.engine?.response?.thumbnail_url || null })),
+    t: {}, approved: true, variants: group.length
   };
-  return (await pick(t)) || { ...(await pick(DEMO_TOKEN)), demo: true };
+  if (running) { s.picked = running.buildId; s.rigStarted = running.forgeRig.status === 'running'; s.phase = 'rig'; }
+  else if (s.builds.every((b) => b.stored)) s.phase = 'pick';
+  else if (s.builds.every((b) => b.glb)) s.phase = 'store';
+  else s.phase = 'meshy';
+  s.t[s.phase] = { a: s.phase === 'meshy' ? t0 : Date.now() };
+  return s;
 }
 const gangKanji = { Shogun: '将軍', Ronin: '浪人', Ninja: '忍者', Samurai: '侍', Monk: '僧', Oni: '鬼', Geisha: '芸者', Yakuza: '極道' };
 function traitVal(name) { const t = (state.meta?.traits || []).find((x) => x.trait_type === name); return t ? t.value : null; }
@@ -848,49 +1195,79 @@ function shortName() { return `REBEL #${state.token}`; }
 const card = $('#card'), center = $('#center');
 card.addEventListener('pointermove', (e) => { const r = card.getBoundingClientRect(); card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%'); card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%'); });
 function fitWord() { const b = $('#bigKanji'), w = b.querySelector('.w'); const avail = b.clientHeight - 10; const n = w.textContent.length || 1; w.style.fontSize = Math.max(30, Math.min(66, avail / (n * 0.95))) + 'px'; }
-function setKanji(k) { const b = $('#bigKanji'), w = b.querySelector('.w'); gsap.to(b, { opacity: 0, duration: 0.3, onComplete: () => { w.textContent = k; fitWord(); gsap.fromTo(b, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.8 }); gsap.fromTo(b.querySelector('.o'), { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.1, ease: 'power3.out' }); } }); }
+function setKanji(k) { const b = $('#bigKanji'), w = b.querySelector('.w'); if (w.textContent === k) return; gsap.to(b, { opacity: 0, duration: 0.3, onComplete: () => { w.textContent = k; fitWord(); gsap.fromTo(b, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.8 }); gsap.fromTo(b.querySelector('.o'), { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.1, ease: 'power3.out' }); } }); }
 addEventListener('resize', fitWord);
-function renderCard(html) {
+function renderCard(html, quiet) {
   // content swaps in synchronously (so buttons can be bound right away), then animates in
-  card.innerHTML = html; card.scrollTop = 0;
+  card.innerHTML = html; if (quiet) return; card.scrollTop = 0;
   gsap.fromTo(card, { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.6, ease: 'power3.out' });
-  gsap.from(card.querySelectorAll('.eyebrow, h1, p.lead, .sep, .traits > *, .chips, .cta, .checks > *, .stages > *, .picker, .note'), { opacity: 0, y: 12, duration: 0.6, stagger: 0.04, ease: 'power3.out', delay: 0.1, clearProps: 'opacity,transform' });
+  gsap.from(card.querySelectorAll('.eyebrow, h1, p.lead, .sep, .traits > *, .chips, .cta, .checks > *, .stages > *, .picker, .note, .vers'), { opacity: 0, y: 12, duration: 0.6, stagger: 0.04, ease: 'power3.out', delay: 0.1, clearProps: 'opacity,transform' });
 }
 function go(i) {
-  if (state.forging && i !== 3) { toast('The forge is working — watch or leave, it keeps going'); return; }
+  if (i > state.maxStep && !(active() && i <= liveStep())) { toast('The forge has not reached this step yet'); return; }
   const prev = state.step; state.step = i; state.maxStep = Math.max(state.maxStep, i);
-  markNodes(); placeAnt(i); setKanji(STEPS[i].name); camTo(STEPS[i].cam); Snd.taiko();
+  markNodes(); antNow(false); setKanji(STEPS[i].name); camTo(STEPS[i].cam); Snd.taiko();
   $('#panel').classList.toggle('hidden', false);
+  if (i !== 3) clearPreview();
   [renderSummon, renderInk, renderForm, renderForge, renderAwaken][i](prev);
 }
+// re-render the current step in place when the pipeline moves (no card fly-in)
+let refreshQ = 0;
+function refreshStep() {
+  if (active()) state.maxStep = Math.max(state.maxStep, liveStep());
+  markNodes();
+  cancelAnimationFrame(refreshQ);
+  refreshQ = requestAnimationFrame(() => {
+    if (state.step === 0) renderSummon(0, true);
+    else if (state.step === 1) renderInk(1, true);
+    else if (state.step === 2) renderForm(2, true);
+    else if (state.step === 3) renderForge(3, true);
+  });
+}
+function errBox() {
+  if (!S?.err) return '';
+  const limit = S.errStatus === 429;
+  return `<div class="errbox"><b>${limit ? 'Daily forge limit reached' : 'The forge stumbled'}</b><span>${esc(S.err)}</span>${limit ? '' : `<button class="btn" id="retryBtn">↻ TRY AGAIN</button>`}</div>`;
+}
+function bindErr() { const r = $('#retryBtn'); if (r) r.onclick = retry; }
 
 /* ---- 1. SUMMON 召 ---- */
-function renderSummon() {
-  hideAwaken(); gsap.to(U, { uMorph: 0, uScatter: 0, uAlpha: 1, uProgress: 0, uChaos: 1, duration: 1 });
-  if (!state.summoned) gsap.to(U, { uBuild: 0, duration: 0.6 });
+function renderSummon(prev, quiet) {
+  if (!quiet) { hideAwaken(); gsap.to(U, { uMorph: 0, uScatter: 0, uAlpha: 1, uProgress: 0, uChaos: 1, duration: 1 }); if (!state.summoned) gsap.to(U, { uBuild: 0, duration: 0.6 }); }
+  if (!state.token) {
+    renderCard(`<div class="eyebrow">STEP 1 / 5</div><h1>Choose your Rebel<span class="tag">In the lobby</span></h1>
+      <p class="lead">Pick the Rebel you want to forge in the lobby, then come back through the Forge door.</p>
+      <div class="cta"><button class="btn fire wide" id="lobbyBtn">← BACK TO THE LOBBY</button></div>`, quiet);
+    $('#lobbyBtn').onclick = () => { location.href = '/'; }; return;
+  }
   const m = state.meta || { traits: [] };
   const rows = m.traits.map((t, i) => `<div class="trait${state.summoned ? ' locked' : ''}" data-i="${i}"><span class="tt"><i></i>${esc(t.trait_type)}</span><span class="tv">${esc(t.value)}</span></div>`).join('');
+  const total = PHASES.reduce((a, p) => a + expect(p.id), 0);
+  const forged = state.assets?.glb;
+  let cta;
+  if (active()) cta = `<button class="btn fire wide" id="watchBtn">WATCH THE FORGE →</button>`;
+  else if (!state.summoned) cta = `<button class="btn fire wide" id="summonBtn">SUMMON YOUR REBEL</button>`;
+  else cta = `<button class="btn fire wide" id="beginBtn">${forged ? 'FORGE A NEW VERSION' : 'BEGIN THE FORGE'} · ABOUT ${Math.round(total / 60)} MIN</button>`;
+  if (forged && !active()) cta += `<button class="btn shu wide" id="awakenOld">AWAKEN MY FORGED REBEL</button>`;
   renderCard(`
     <div class="eyebrow">STEP 1 / 5</div>
     <h1>Summon your Rebel<span class="tag">Read its blood-memory</span></h1>
     <p class="lead">Every trait on your Rebel is a strand of its blood-memory. Summon it and the forge reads your Rebel's DNA.</p>
-    <div class="picker">${PICKS.map((p) => `<button data-t="${p}" class="${p === state.token ? 'on' : ''}" title="Rebel #${p}"><img src="/api/nft-image?c=battle_for_colony&t=${p}&s=thumb" alt="" loading="lazy"><small>#${p}</small></button>`).join('')}</div>
+    ${PICKER ? `<div class="picker">${PICKS.map((p) => `<button data-t="${p}" class="${p === state.token ? 'on' : ''}" title="Rebel #${p}"><img src="/api/nft-image?c=${COL}&t=${p}&s=thumb" alt="" loading="lazy"><small>#${p}</small></button>`).join('')}</div>` : ''}
     <div class="sep"></div>
     <div class="traits" id="traitList">${rows || '<div class="note">Reading traits…</div>'}</div>
-    <div class="cta">
-      ${state.summoned ? `<button class="btn fire wide" id="nextBtn">PAINT THE CONCEPT →</button>` : `<button class="btn fire wide" id="summonBtn">SUMMON YOUR REBEL</button>`}
-    </div>
-    <div class="note">${m.traits.length} traits → ${m.traits.length} DNA lanes. Traits decide colony colours, armour weight and the moves your Rebel favours.</div>
-  `);
-  center.innerHTML = `<div class="nftcard" id="nftCard"><img src="${state.meta?.img || ''}" alt=""><div class="cap"><div><b>#${esc(state.token)}</b><br><span>${esc(traitVal('Gang Names') || 'Rebel Ants')}</span></div><span>Battle for the Colony</span></div></div>`;
-  const nc = $('#nftCard');
-  if (state.summoned) { gsap.set(nc, { opacity: 0 }); }
-  else inkSmokeIn(nc);
-  setTimeout(() => {
-    card.querySelectorAll('.picker button').forEach((b) => b.onclick = () => selectToken(b.dataset.t));
-    const sb = $('#summonBtn'); if (sb) sb.onclick = summon;
-    const nb = $('#nextBtn'); if (nb) nb.onclick = () => go(1);
-  }, 300);
+    <div class="cta">${cta}</div>
+    <div class="note">${active() ? `Forging now · about ${fmtMin(forgeProgress().rem)} left.` : `The forge paints your Rebel, draws all four sides, sculpts three versions for you to choose from, then gives it a skeleton and 24 moves. About ${Math.round(total / 60)} minutes. Two forges per day.`}</div>
+  `, quiet);
+  if (!quiet) {
+    center.innerHTML = `<div class="nftcard" id="nftCard"><img src="${state.meta?.img || ''}" alt=""><div class="cap"><div><b>#${esc(state.token)}</b><br><span>${esc(traitVal('Gang Names') || 'Rebel Ants')}</span></div><span>Battle for the Colony</span></div></div>`;
+    const nc = $('#nftCard'); if (state.summoned) gsap.set(nc, { opacity: 0 }); else inkSmokeIn(nc);
+  }
+  card.querySelectorAll('.picker button').forEach((b) => b.onclick = () => selectToken(b.dataset.t));
+  const sb = $('#summonBtn'); if (sb) sb.onclick = summon;
+  const bb = $('#beginBtn'); if (bb) bb.onclick = beginForge;
+  const wb = $('#watchBtn'); if (wb) wb.onclick = () => go(liveStep());
+  const ao = $('#awakenOld'); if (ao) ao.onclick = awakenExisting;
 }
 function inkSmokeIn(node) {
   if (REDUCED) return;
@@ -905,11 +1282,12 @@ function inkSmokeIn(node) {
   Snd.shaku();
 }
 async function selectToken(t) {
-  if (t === state.token) return;
-  state.token = t; state.summoned = false; state.maxStep = 0;
-  $('#tokPill').innerHTML = `Rebel <strong>#${esc(t)}</strong>`;
+  if (t === state.token || active()) { if (active()) toast('Finish or wait for the current forge first'); return; }
+  state.token = t; state.summoned = false; state.maxStep = 0; GI_CACHE = null; S = loadS(t);
   state.meta = await loadToken(t); updateTokPill(); renderSummon();
-  loadAssets(t).then((a) => { if (a.demo) toast(`Mockup: #${t} has no forged model yet — later steps show #4998`); state.assets = a; });
+  state.assets = await loadAssets(t);
+  if (!S) S = recoverSession(state.assets);
+  refreshStep(); if (active()) runPipeline();
 }
 async function summon() {
   if (state.summoned) return; const btn = $('#summonBtn'); btn.disabled = true;
@@ -919,7 +1297,6 @@ async function summon() {
   gsap.to(nc, { opacity: 0, duration: 0.8, delay: 1.2 + (state.meta.traits.length * 0.28) });
   const rows = [...card.querySelectorAll('.trait')];
   const n = Math.max(rows.length, 1);
-  // helix target on screen: centre of canvas
   const tx = innerWidth / 2, ty = innerHeight * 0.55;
   for (let i = 0; i < rows.length; i++) {
     await new Promise((r) => setTimeout(r, i === 0 ? 700 : 280));
@@ -938,46 +1315,52 @@ async function summon() {
   await new Promise((r) => setTimeout(r, 1000));
   state.summoned = true; flash(0.35, 0.8); Snd.bell();
   gsap.to(U, { uBuild: 1.05, duration: 0.5 });
-  const cta = card.querySelector('.cta'); cta.innerHTML = `<button class="btn fire wide" id="nextBtn">PAINT THE CONCEPT →</button>`;
-  gsap.from(cta, { opacity: 0, y: 10, duration: 0.5 });
-  $('#nextBtn').onclick = () => go(1);
+  renderSummon(0, true); gsap.from(card.querySelector('.cta'), { opacity: 0, y: 10, duration: 0.5 });
   toast(`DNA sequenced · ${rows.length} traits`);
+}
+function beginForge() {
+  if (active()) return;
+  if (!window.buildCharacterBlueprint) { toast('Forge tools are still loading, try again in a moment'); return; }
+  newSession(); state.maxStep = 1; flash(0.4, 0.8); Snd.bell();
+  go(1); runPipeline();
 }
 
 /* ---- 2. INK 墨 ---- */
-function renderInk() {
-  hideAwaken(); gsap.to(U, { uAlpha: 0.22, uBuild: 1.05, uMorph: 0, uChaos: 1, duration: 1.2 });
-  const a = state.assets || {};
+function renderInk(prev, quiet) {
+  if (!quiet) { hideAwaken(); gsap.to(U, { uAlpha: 0.22, uBuild: 1.05, uMorph: 0, uChaos: 1, duration: 1.2 }); }
+  const ph = S?.phase; const img = S?.prodUrl || S?.conceptUrl || '';
+  const waiting = ph === 'approve' && !S.err;
+  const past = S && PH[ph].i > PH.approve.i;
+  const title = waiting ? 'The concept is inked' : past ? 'The concept is inked' : S?.conceptUrl ? 'Cleaning the lines' : 'The brush is painting';
   renderCard(`
     <div class="eyebrow">STEP 2 / 5</div>
-    <h1>The concept is inked<span class="tag">The brush runs</span></h1>
-    <p class="lead">The forge's brush paints your Rebel as a full warrior, drawn from its traits and colony.${a.demo ? ' <em>(mockup shows #4998)</em>' : ''}</p>
+    <h1>${title}<span class="tag">${past ? 'Accepted' : waiting ? 'Your call' : 'The brush runs'}</span></h1>
+    <p class="lead">The forge's brush paints your Rebel as a full warrior from its traits and colony, then inks a clean, simple version the smith can build from.</p>
+    <div class="note live" id="liveStatus"></div>
+    ${errBox()}
     <div class="sep"></div>
-    <div class="eyebrow" style="color:var(--washi-dim)">QUICK TWEAKS</div>
-    <div class="chips">${['Heavier armour', 'Brighter colours', 'Battle-worn', 'Cleaner silhouette', 'More cloth', 'Colony crest'].map((c) => `<button class="chip">${c}</button>`).join('')}</div>
-    <div class="cta">
-      <button class="btn" id="againBtn">↻ PAINT AGAIN</button>
-      <button class="btn fire wide" id="acceptBtn">ACCEPT →</button>
-    </div>
-    <div class="note">Mockup: "Paint again" replays the ink. In the real Forge it paints a new version and keeps your old ones.</div>
-  `);
-  center.innerHTML = inkFrameSVG(a.front);
-  inkBleed();
-  setTimeout(() => {
-    card.querySelectorAll('.chip').forEach((c) => c.onclick = () => { c.classList.toggle('on'); Snd.pluck(990); });
-    $('#againBtn').onclick = () => { center.innerHTML = inkFrameSVG(a.front); inkBleed(); };
-    $('#acceptBtn').onclick = () => go(2);
-  }, 300);
+    ${waiting ? `<div class="cta"><button class="btn" id="againBtn">↻ PAINT AGAIN</button><button class="btn fire wide" id="acceptBtn">ACCEPT →</button></div>
+      <div class="note">Continues on its own in <b id="autoN">${approveLeft}</b> s. Paint again uses one of today's paintings.</div>` : ''}
+    ${past ? `<div class="cta"><button class="btn fire wide" id="nextBtn">${liveStep() >= 3 ? 'TO THE FORGE →' : 'THE BLUEPRINT →'}</button></div>` : ''}
+    ${!waiting && !past && !S?.err ? `<div class="note">Keep this page open while the brush paints (about ${fmtMin(expect('concept') + expect('prod'))}). Once the sculpting starts you can leave.</div>` : ''}
+  `, quiet);
+  const frame = center.querySelector('.inkframe');
+  if (!quiet || !frame || frame.dataset.src !== img) { center.innerHTML = inkFrameSVG(img); if (img) inkBleed(); else inkWait(); }
+  if (S) { const s = $('#liveStatus'); if (s) s.innerHTML = liveStatusHTML(forgeProgress()); }
+  bindErr();
+  const ab = $('#againBtn'); if (ab) ab.onclick = paintAgain;
+  const ac = $('#acceptBtn'); if (ac) ac.onclick = acceptConcept;
+  const nb = $('#nextBtn'); if (nb) nb.onclick = () => go(Math.min(3, liveStep()));
 }
 function inkFrameSVG(src) {
-  return `<div class="inkframe"><svg viewBox="0 0 400 600" preserveAspectRatio="xMidYMid meet">
+  return `<div class="inkframe" data-src="${esc(src || '')}"><svg viewBox="0 0 400 600" preserveAspectRatio="xMidYMid meet">
     <defs>
       <filter id="bleed" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="4" seed="9"/><feDisplacementMap in="SourceGraphic" scale="46" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation="1.2"/></filter>
       <mask id="inkMask" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="600"><rect width="400" height="600" fill="black"/><g filter="url(#bleed)" fill="white"><circle class="blot" cx="200" cy="250" r="0"/><circle class="blot" cx="130" cy="420" r="0"/><circle class="blot" cx="280" cy="140" r="0"/><circle class="blot" cx="250" cy="480" r="0"/></g></mask>
       <radialGradient id="paperG" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#efe6d2"/><stop offset="1" stop-color="#cfc2a6"/></radialGradient>
     </defs>
     <rect x="6" y="6" width="388" height="588" rx="6" fill="url(#paperG)"/>
-    <g mask="url(#inkMask)"><image href="${esc(src || '')}" x="10" y="10" width="380" height="580" preserveAspectRatio="xMidYMid meet"/></g>
+    ${src ? `<g mask="url(#inkMask)"><image href="${esc(src)}" x="10" y="10" width="380" height="580" preserveAspectRatio="xMidYMid meet"/></g>` : `<text class="inkwait" x="200" y="330" text-anchor="middle" font-family="Yuji Syuku, serif" font-size="150" fill="#1b1410" opacity=".14">描</text>`}
     <rect x="6" y="6" width="388" height="588" rx="6" fill="none" stroke="rgba(40,25,15,.35)" stroke-width="1.5"/>
     <text x="30" y="560" font-family="Cinzel" font-weight="900" letter-spacing="3" font-size="22" fill="#1b1410" class="sig" opacity="0">${esc(String(traitVal('Gang Names') || 'Rebel').toUpperCase())}</text>
     <g class="stampG" opacity="0" transform="translate(344 552) rotate(-8)"><rect x="-22" y="-22" width="44" height="44" rx="4" fill="none" stroke="#C8321E" stroke-width="3"/><text x="0" y="4" text-anchor="middle" font-family="Cinzel" font-weight="900" font-size="10" letter-spacing="1" fill="#C8321E">INKED</text></g>
@@ -991,52 +1374,58 @@ function inkBleed() {
   gsap.fromTo(center.querySelector('.stampG'), { opacity: 0, scale: 2 }, { opacity: 0.9, scale: 1, duration: 0.35, delay: 2.9, ease: 'back.out(2)', transformOrigin: '344px 552px', onStart: () => Snd.taiko() });
   Snd.whoosh();
 }
+function inkWait() {
+  gsap.fromTo(center.querySelector('.inkframe'), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1, ease: 'power3.out' });
+  const w = center.querySelector('.inkwait'); if (w && !REDUCED) gsap.to(w, { opacity: 0.32, duration: 1.6, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+}
 
 /* ---- 3. BLUEPRINT 図 ---- */
-function renderForm() {
-  hideAwaken(); gsap.to(U, { uAlpha: 0.14, duration: 1 });
-  const a = state.assets || {};
+function renderForm(prev, quiet) {
+  if (!quiet) { hideAwaken(); gsap.to(U, { uAlpha: 0.14, duration: 1 }); }
+  const a = S || {}; const past = S && PH[S.phase].i > PH.sides.i;
+  const views = [['FRONT', a.prodUrl], ['BACK', a.backUrl], ['LEFT', a.sideUrls?.[0]], ['RIGHT', a.sideUrls?.[1]]];
+  const skipped = past && (!a.backUrl || !(a.sideUrls || []).length);
   renderCard(`
     <div class="eyebrow">STEP 3 / 5</div>
-    <h1>The blueprint<span class="tag">Front and back</span></h1>
-    <p class="lead">Front and back, drawn for the smith. This is what the forge builds your Rebel's body from.</p>
+    <h1>The blueprint<span class="tag">All four sides</span></h1>
+    <p class="lead">Front, back and both sides, drawn for the smith. With all four views the 3D body has no guessed surfaces.</p>
+    <div class="note live" id="liveStatus"></div>
+    ${errBox()}
     <div class="sep"></div>
     <div class="checks">
-      ${['A-pose, arms clear of the body', 'Hands relaxed, ready for weapons', 'Front and back match', 'Head clean for antennae and masks'].map((c) => `<div class="check"><b>✓</b>${c}</div>`).join('')}
+      ${['Clean, simple design that sculpts well', 'Arms clear of the body', 'Front, back and sides match', 'Head clean for antennae and masks'].map((c) => `<div class="check"><b>✓</b>${c}</div>`).join('')}
     </div>
-    <div class="cta"><button class="btn fire wide hold" id="holdForge"><i class="fill"></i><span>HOLD · TAKE IT TO THE FORGE</span></button></div>
-    <div class="note">Hold to confirm. Forging takes about 6 minutes (30 seconds in this mockup) and keeps going even if you leave.</div>
-  `);
-  center.innerHTML = `<div class="scroll" id="scroll">
-    <div class="rod"></div>
-    <div class="paper" id="paper">
-      <div class="bp-head"><span>BLUEPRINT</span><span>${esc(shortName())}</span><span>${esc(traitVal('Gang Names') || '')}</span></div>
-      <div class="bp-views">
-        <div class="bp-view"><img class="line" src="${esc(a.front || '')}" alt=""><img class="col" src="${esc(a.front || '')}" alt=""><label>FRONT</label></div>
-        <div class="bp-view"><img class="line" src="${esc(a.back || '')}" alt=""><img class="col" src="${esc(a.back || '')}" alt=""><label>BACK</label></div>
+    ${past ? `<div class="cta"><button class="btn fire wide" id="nextBtn">TO THE FORGE →</button></div>` : ''}
+    <div class="note">${skipped ? 'A view could not be drawn, so the smith builds from the views it has.' : past ? 'Sealed and sent to the forge.' : 'Keep this page open while the views are drawn. The forge starts on its own when they are ready.'}</div>
+  `, quiet);
+  const sig = views.map((v) => v[1] || '').join('|');
+  const sc = $('#scroll');
+  if (!quiet || !sc || sc.dataset.sig !== sig) {
+    const fresh = !sc;
+    center.innerHTML = `<div class="scroll" id="scroll" data-sig="${esc(sig)}">
+      <div class="rod"></div>
+      <div class="paper" id="paper">
+        <div class="bp-head"><span>BLUEPRINT</span><span>${esc(shortName())}</span><span>${esc(traitVal('Gang Names') || '')}</span></div>
+        <div class="bp-views four">${views.map(([n, u]) => `<div class="bp-view">${u ? `<img class="line" src="${esc(u)}" alt=""><img class="col" src="${esc(u)}" alt="">` : '<div class="bp-wait">図</div>'}<label>${n}</label></div>`).join('')}</div>
+        <svg class="bp-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <line x1="2" y1="12" x2="2" y2="94"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="1" y1="94" x2="3" y2="94"/>
+          <path d="M8 60 H92" stroke-dasharray="1 1.5"/>
+        </svg>
+        <div class="seal">FORGE<br>READY</div>
       </div>
-      <svg class="bp-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <line x1="3" y1="12" x2="3" y2="94"/><line x1="1.8" y1="12" x2="4.2" y2="12"/><line x1="1.8" y1="94" x2="4.2" y2="94"/>
-        <path d="M50 10 V96" stroke-dasharray="1 1.5"/>
-        <path d="M8 60 H92" stroke-dasharray="1 1.5"/>
-      </svg>
-      <div class="seal">FORGE<br>READY</div>
-    </div>
-    <div class="rod"></div>
-  </div>`;
-  const paper = $('#paper');
-  gsap.fromTo('#scroll', { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.6 });
-  gsap.to(paper, { clipPath: 'inset(0 0 0% 0)', duration: REDUCED ? 0.3 : 1.6, ease: 'power2.inOut', delay: 0.2 });
-  const lines = paper.querySelectorAll('.bp-svg line, .bp-svg path');
-  lines.forEach((l) => { const L = 200; l.style.strokeDasharray = l.getAttribute('stroke-dasharray') || `${L}`; });
-  gsap.from(lines, { opacity: 0, duration: 0.6, stagger: 0.15, delay: 1.5 });
-  gsap.to(paper.querySelectorAll('img.col'), { opacity: 1, duration: 1.4, delay: 2.1, ease: 'power2.inOut' });
-  gsap.to(paper.querySelectorAll('img.line'), { opacity: 0.25, duration: 1.4, delay: 2.1 });
-  Snd.whoosh();
-  setTimeout(() => holdButton($('#holdForge'), 1300, () => {
-    gsap.to(paper.querySelector('.seal'), { scale: 1, duration: 0.3, ease: 'back.out(3)' }); Snd.taiko(); flash(0.3, 0.6);
-    setTimeout(() => go(3), 700);
-  }), 300);
+      <div class="rod"></div>
+    </div>`;
+    const paper = $('#paper');
+    if (fresh || !quiet) { gsap.fromTo('#scroll', { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.6 }); gsap.fromTo(paper, { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: REDUCED ? 0.3 : 1.6, ease: 'power2.inOut', delay: 0.2 }); Snd.whoosh(); }
+    else gsap.set(paper, { clipPath: 'inset(0 0 0% 0)' });
+    gsap.to(paper.querySelectorAll('img.col'), { opacity: 1, duration: 1.4, delay: fresh ? 2.1 : 0.2, ease: 'power2.inOut' });
+    gsap.to(paper.querySelectorAll('img.line'), { opacity: 0.25, duration: 1.4, delay: fresh ? 2.1 : 0.2 });
+    paper.querySelectorAll('.bp-wait').forEach((w) => { if (!REDUCED) gsap.to(w, { opacity: 0.35, duration: 1.4, yoyo: true, repeat: -1, ease: 'sine.inOut' }); });
+    if (past) gsap.to(paper.querySelector('.seal'), { scale: 1, duration: 0.3, delay: 0.4, ease: 'back.out(3)' });
+  }
+  if (S) { const s = $('#liveStatus'); if (s) s.innerHTML = liveStatusHTML(forgeProgress()); }
+  bindErr();
+  const nb = $('#nextBtn'); if (nb) nb.onclick = () => go(3);
 }
 function holdButton(btn, ms, done) {
   if (!btn) return; const fill = btn.querySelector('.fill'); let tw = null;
@@ -1048,56 +1437,80 @@ function holdButton(btn, ms, done) {
 }
 
 /* ---- 4. FORGE 鍛 ---- */
-function renderForge() {
-  hideAwaken(); center.innerHTML = '';
-  gsap.to(U, { uAlpha: 1, uBuild: 1.05, uMorph: 0, uScatter: 0, duration: 1.2 });
-  gsap.to(forgeGlow, { intensity: 3, duration: 2 });
+const FORGE_STAGES = [
+  { k: '鍛', n: 'Sculpt', d: 'Three versions carved from your four views' },
+  { k: '選', n: 'Choose', d: 'You pick the one you like best' },
+  { k: '骨', n: 'Skeleton', d: '65 bones set in the body' },
+  { k: '型', n: 'Kata', d: 'Teaching 24 moves' },
+  { k: '銘', n: 'Portrait', d: 'Signing the blade' }
+];
+const RIG_KATA = ['cloth', 'animate', 'moves'], RIG_PORTRAIT = ['cleanup', 'export', 'qa', 'thumb', 'done', 'saving'];
+function stageStates() {
+  const i = S ? PH[S.phase].i : -1; const rs = S?.rigStep || 'starting';
+  const rigStage = RIG_PORTRAIT.includes(rs) ? 4 : RIG_KATA.includes(rs) ? 3 : 2;
+  return FORGE_STAGES.map((_, k) => {
+    if (!S || i < PH.meshy.i) return 'wait';
+    if (S.done) return 'ok';
+    if (k === 0) return i <= PH.store.i ? 'run' : 'ok';
+    if (k === 1) return S.phase === 'pick' ? 'run' : i > PH.pick.i ? 'ok' : 'wait';
+    if (S.phase !== 'rig') return 'wait';
+    return k < rigStage ? 'ok' : k === rigStage ? 'run' : 'wait';
+  });
+}
+function versionsHTML() {
+  if (!S || !S.builds.length) return '';
+  const pick = S.phase === 'pick';
+  return `<div class="vers">${S.builds.map((b, k) => {
+    const cls = ['ver', b.failed ? 'bad' : '', b.glb ? 'ready' : '', S.picked === b.id ? 'on' : '', pick && b.stored ? 'can' : '', previewId === b.id ? 'prev' : ''].join(' ');
+    const inner = b.failed ? `<div class="vp">✕</div>` : b.thumb ? `<img src="${esc(b.thumb)}" alt="">` : `<div class="vp">${Math.round(b.p || 0)}<small>%</small></div>`;
+    return `<button class="${cls}" data-id="${esc(b.id)}" ${pick && b.stored ? '' : 'disabled'}>${inner}<span class="vl">V${k + 1}${b.glb && !b.failed ? '' : b.failed ? ' · failed' : ` · ${Math.round(b.p || 0)}%`}</span></button>`;
+  }).join('')}</div>`;
+}
+function renderForge(prev, quiet) {
+  if (!quiet) {
+    hideAwaken(); center.innerHTML = '';
+    gsap.to(U, { uAlpha: previewId ? 0.12 : 1, uBuild: 1.05, uMorph: 0, uScatter: 0, duration: 1.2 });
+    gsap.to(forgeGlow, { intensity: 3, duration: 2 });
+  }
+  const st = stageStates(); const pick = S?.phase === 'pick';
+  const rigging = S?.phase === 'rig' || S?.done;
   renderCard(`
     <div class="eyebrow">STEP 4 / 5</div>
-    <h1>Forging<span class="tag">The hammer sings</span></h1>
+    <h1>${pick ? 'Choose your Rebel' : S?.done ? 'Forged' : 'Forging'}<span class="tag">${pick ? 'Three versions, one warrior' : 'The hammer sings'}</span></h1>
     <div class="pct" id="pct">0<small>%</small></div>
     <div class="bar"><i id="barI"></i></div>
     <div class="note" id="eta">Heating the steel…</div>
+    ${errBox()}
+    ${versionsHTML()}
+    ${pick ? `<div class="cta"><button class="btn fire wide" id="pickBtn" ${previewId ? '' : 'disabled'}>${previewId ? `FORGE V${S.builds.findIndex((b) => b.id === previewId) + 1} →` : 'TAP A VERSION TO SEE IT'}</button></div>` : ''}
     <div class="sep"></div>
-    <div class="stages">${FORGE_STAGES.map((s, i) => `<div class="stg" data-i="${i}"><span class="sk">${String(i + 1).padStart(2, '0')}</span><div><div class="sn">${s.n}</div><div class="sd">${s.d}</div></div><span class="ss">WAIT</span></div>`).join('')}</div>
-    <div class="comb hidden" id="comb">${ALL_MOVES.map((m) => `<div class="hex" title="${esc(m.n)}">${esc(SHORT[m.clip] || m.n)}</div>`).join('')}</div>
-    <div class="cta"><button class="btn" id="leaveBtn">LEAVE · KEEP FORGING</button><button class="btn" id="skipBtn">SKIP ›</button></div>
-    <div class="note">You can close this page. The forge keeps working and your Rebel will be waiting in the Armory.</div>
-  `);
-  setTimeout(() => {
-    $('#leaveBtn').onclick = () => toast('In the real Forge you can leave now — we\'ll notify you when it\'s done');
-    $('#skipBtn').onclick = () => { if (forgeTl) forgeTl.progress(1); };
-    if (state.forged) { setForgeUI(1); FORGE_STAGES.forEach((_, i) => stageState(i, 'ok')); $('#comb').classList.remove('hidden'); card.querySelectorAll('.hex').forEach((h) => h.classList.add('on')); forgeDoneUI(); }
-    else if (!state.forging) startForge();
-  }, 400);
+    <div class="stages">${FORGE_STAGES.map((s, i) => `<div class="stg ${st[i] === 'run' ? 'run' : st[i] === 'ok' ? 'ok' : ''}" data-i="${i}"><span class="sk">${String(i + 1).padStart(2, '0')}</span><div><div class="sn">${s.n}</div><div class="sd">${s.d}</div></div><span class="ss">${st[i] === 'run' ? (i === 1 ? 'YOUR TURN' : 'FORGING') : st[i] === 'ok' ? 'DONE' : 'WAIT'}</span></div>`).join('')}</div>
+    <div class="comb ${rigging ? '' : 'hidden'}" id="comb">${ALL_MOVES.map((m) => `<div class="hex" title="${esc(m.n)}">${esc(SHORT[m.clip] || m.n)}</div>`).join('')}</div>
+    ${S?.done ? `<div class="cta"><button class="btn fire wide" id="toAwaken">AWAKEN →</button></div>` : `<div class="note">${active() && PH[S.phase].i >= PH.meshy.i ? 'You can close this page: the sculpting and rigging keep going, and your Rebel will be here when you come back.' : 'The forge starts once the blueprint is ready.'}</div>`}
+  `, quiet);
+  bindErr();
+  card.querySelectorAll('.ver.can').forEach((b) => b.onclick = () => previewVersion(b.dataset.id));
+  const pb = $('#pickBtn'); if (pb) pb.onclick = () => pickVersion(previewId);
+  const ta = $('#toAwaken'); if (ta) ta.onclick = () => go(4);
+  if (S) setForgeUI(forgeProgress()); else setForgeUI(null);
 }
-let forgeTl = null;
-function stageState(i, s) { const r = card.querySelector(`.stg[data-i="${i}"]`); if (!r) return; r.classList.toggle('run', s === 'run'); r.classList.toggle('ok', s === 'ok'); r.querySelector('.ss').textContent = s === 'run' ? 'FORGING' : s === 'ok' ? 'DONE' : 'WAIT'; }
-function setForgeUI(p) {
-  const pct = $('#pct'), bar = $('#barI'); if (pct) pct.innerHTML = `${Math.floor(p * 100)}<small>%</small>`; if (bar) bar.style.width = (p * 100) + '%';
-  document.title = p < 1 ? `${Math.floor(p * 100)}% · Forging #${state.token}` : `Forged · Rebel #${state.token}`;
-  const eta = $('#eta'); if (eta && p < 1) eta.textContent = `About ${Math.max(1, Math.ceil((1 - p) * 6))} min left (mockup: ${Math.ceil((1 - p) * FORGE_SECONDS)} s)`;
-}
-function startForge() {
-  state.forging = true; const prog = { p: 0 };
-  U.uProgress = 0; U.uChaos = 1;
-  let acc = 0; const bounds = FORGE_STAGES.map((s) => { const a = acc; acc += s.w; return [a, acc]; });
-  let stageIdx = -1; let hexOn = 0;
-  let nextStrike = 0;
-  forgeTl = gsap.to(prog, { p: 1, duration: FORGE_SECONDS, ease: 'none', onUpdate: () => {
-    const p = prog.p; U.uProgress = p; setForgeUI(p);
-    const si = bounds.findIndex(([a, b]) => p >= a && p < b);
-    if (si !== stageIdx && si >= 0) {
-      if (stageIdx >= 0) { stageState(stageIdx, 'ok'); strike(true); }
-      stageIdx = si; stageState(si, 'run');
-      if (si === 3) { const c = $('#comb'); if (c) { c.classList.remove('hidden'); gsap.from(c, { opacity: 0, y: 10, duration: 0.5 }); } }
-    }
-    if (stageIdx === 3) { const [a, b] = bounds[3]; const want = Math.floor(((p - a) / (b - a)) * 24); const hexes = card.querySelectorAll('.hex'); while (hexOn < want && hexOn < 24) { hexes[hexOn]?.classList.add('on'); hexOn++; Snd.pluck(520 + hexOn * 22); } }
-    if (p > nextStrike) { nextStrike = p + 0.04 + Math.random() * 0.05; strike(false); }
-  }, onComplete: () => {
-    FORGE_STAGES.forEach((_, i) => stageState(i, 'ok')); card.querySelectorAll('.hex').forEach((h) => h.classList.add('on'));
-    state.forging = false; state.forged = true; quench(); forgeDoneUI();
-  } });
+let lastStrike = 0, hexOn = 0;
+function setForgeUI(P) {
+  const pct = $('#pct'), bar = $('#barI'), eta = $('#eta');
+  if (!P) { if (pct) pct.innerHTML = `0<small>%</small>`; return; }
+  const p = P.overall;
+  if (pct) pct.innerHTML = `${Math.floor(p * 100)}<small>%</small>`; if (bar) bar.style.width = (p * 100) + '%';
+  if (eta) eta.innerHTML = S.done ? 'Quenched. Your Rebel is ready to awaken.' : S.err ? 'Paused.' : S.phase === 'pick' ? 'All versions are ready. Tap one to see it, then forge it.' : `<b>${esc(PH[S.phase].label)}…</b> about ${fmtMin(P.rem)} left · started ${Math.max(1, Math.round(P.elapsed / 60))} min ago`;
+  U.uProgress = Math.min(1, p);
+  // the versions + stages update in place
+  const vers = card.querySelector('.vers'); if (vers && S.phase === 'meshy') vers.outerHTML = versionsHTML();
+  const st = stageStates(); card.querySelectorAll('.stg').forEach((r, i) => { r.classList.toggle('run', st[i] === 'run'); r.classList.toggle('ok', st[i] === 'ok'); r.querySelector('.ss').textContent = st[i] === 'run' ? (i === 1 ? 'YOUR TURN' : 'FORGING') : st[i] === 'ok' ? 'DONE' : 'WAIT'; });
+  if (S.phase === 'rig' || S.done) {
+    const c = $('#comb'); if (c && c.classList.contains('hidden')) { c.classList.remove('hidden'); gsap.from(c, { opacity: 0, y: 10, duration: 0.5 }); }
+    const rs = S.rigStep; const want = S.done ? 24 : rs === 'animate' ? 8 : rs === 'moves' ? 18 : RIG_PORTRAIT.includes(rs) ? 24 : 0;
+    const hexes = card.querySelectorAll('.hex'); hexes.forEach((h, k) => { if (k < want && !h.classList.contains('on')) { h.classList.add('on'); if (k >= hexOn) Snd.pluck(520 + k * 22); } }); hexOn = want;
+  }
+  if (active() && !PH[S.phase].wait && !S.err && Date.now() - lastStrike > 3500 + Math.random() * 4000 && state.step === 3 && !previewId) { lastStrike = Date.now(); strike(false); }
 }
 function strike(big) {
   const y = 0.1 + U.uProgress * HELIX_H;
@@ -1110,11 +1523,46 @@ function quench() {
   gsap.to(U, { uChaos: 0, duration: 1.5 });
   gsap.to(forgeGlow, { intensity: 1.2, duration: 3 });
 }
-function forgeDoneUI() {
-  const eta = $('#eta'); if (eta) eta.textContent = 'Quenched. Your Rebel is ready to awaken.';
-  const cta = card.querySelector('.cta'); if (!cta) return;
-  cta.innerHTML = `<button class="btn fire wide" id="toAwaken">AWAKEN →</button>`; gsap.from(cta, { opacity: 0, y: 8, duration: 0.5 });
-  $('#toAwaken').onclick = () => go(4);
+// preview a sculpt (static GLB) in the hall while choosing
+let previewId = null, previewObj = null;
+async function previewVersion(id) {
+  const b = S.builds.find((x) => x.id === id); if (!b) return;
+  previewId = id; refreshStep(); Snd.pluck(880);
+  const url = typeof b.stored === 'string' ? b.stored : b.glb;
+  try {
+    const res = await BABYLON.SceneLoader.ImportMeshAsync('', '', url, scene, null, '.glb');
+    if (previewId !== id) { res.meshes.forEach((m) => m.dispose()); return; }
+    clearPreview(true);
+    const root = res.meshes[0]; root.computeWorldMatrix(true);
+    const { min, max } = root.getHierarchyBoundingVectors(true); root.scaling.scaleInPlace(1.9 / ((max.y - min.y) || 1)); root.computeWorldMatrix(true);
+    const b2 = root.getHierarchyBoundingVectors(true); root.position.x -= (b2.min.x + b2.max.x) / 2; root.position.z -= (b2.min.z + b2.max.z) / 2; root.position.y -= b2.min.y;
+    res.meshes.forEach((m) => { m.isPickable = false; });
+    previewObj = res; gsap.to(U, { uAlpha: 0.1, duration: 0.8 }); camTo(STEPS[4].cam, 1.4);
+  } catch (e) { console.warn('preview', e); toast('Could not load this version'); }
+}
+function clearPreview(keepId) {
+  if (previewObj) { previewObj.meshes.forEach((m) => m.dispose()); previewObj.animationGroups.forEach((g) => g.dispose()); previewObj = null; }
+  if (!keepId) previewId = null;
+}
+async function finishForge() {
+  state.forging = false; state.forged = true; state.maxStep = 4; clearPreview();
+  quench(); Snd.bell(); toast('Your Rebel is forged');
+  state.assets = { ...(state.assets || {}), glb: S.rigUrl, thumb: S.thumbUrl, buildId: S.picked };
+  rebel.ready = false; loadRebelOnce(S.rigUrl);
+  if (state.step === 3) refreshStep();
+  antNow(false);
+}
+let loadedUrl = null;
+function loadRebelOnce(url) {
+  if (!url || loadedUrl === url) return Promise.resolve(rebel);
+  if (rebel.root) { rebel.root.getChildMeshes(false).forEach((m) => m.dispose()); rebel.root.dispose(); Object.values(rebel.groups).forEach((g) => g.dispose()); rebel.cloth?.dispose?.(); rebel.groups = {}; rebel.cur = null; rebel.root = null; rebel.meshes = []; }
+  loadedUrl = url; rebel.ready = false;
+  return loadRebel(url).catch((e) => { console.warn(e); loadedUrl = null; toast('Could not load the 3D model'); });
+}
+function awakenExisting() {
+  if (!state.assets?.glb) return;
+  state.summoned = true; state.forged = true; state.maxStep = 4; U.uProgress = 1; U.uChaos = 0; U.uBuild = 1.05;
+  loadRebelOnce(state.assets.glb); go(4);
 }
 
 /* ---- 5. AWAKEN 覚醒 ---- */
@@ -1150,23 +1598,34 @@ function showAwakened(instant) {
   const gang = traitVal('Gang Names');
   $('#rvName').textContent = shortName(); $('#rvMei').textContent = `${gang || 'Rebel'} · Battle for the Colony`;
   gsap.fromTo('#reveal', { opacity: 0, y: -12, letterSpacing: '0.5em' }, { opacity: 1, y: 0, duration: instant ? 0.3 : 1.4, ease: 'power3.out' });
-  const a = state.assets || {};
   renderCard(`
     <div class="eyebrow">STEP 5 / 5</div>
     <h1>${esc(shortName())}<span class="tag">Awakened</span></h1>
-    <p class="lead">Your Rebel is awake. Drag to turn it, and pick any of its <b>24 moves</b> below.${a.demo ? ' <em>(mockup model: #4998)</em>' : ''}</p>
+    <p class="lead">Your Rebel is awake. Drag to turn it, and pick any of its <b>24 moves</b> below.</p>
     <div class="sep"></div>
     <div class="traits">${(state.meta?.traits || []).slice(0, 6).map((t) => `<div class="trait locked"><span class="tt"><i></i>${esc(t.trait_type)}</span><span class="tv">${esc(t.value)}</span></div>`).join('')}</div>
     <div class="cta"><button class="btn shu wide" id="makeMine">MAKE THIS MY REBEL</button><button class="btn" id="enterV">ENTER VILLAGE →</button></div>
     <div class="note">Keys: ← → moves · Space pause · L loop · S speed · K perform all kata</div>
   `);
-  setTimeout(() => {
-    $('#makeMine').onclick = () => { toast('Mockup: this would set it as your active character'); Snd.taiko(); };
-    $('#enterV').onclick = () => { location.href = '/village.html'; };
-  }, 300);
+  $('#makeMine').onclick = makeMine;
+  $('#enterV').onclick = () => { location.href = `/village.html`; };
   buildDock(); $('#dock').classList.add('show');
   camTo(STEPS[4].cam, instant ? 0.8 : 2.2);   // v4 HD: frame the awakened Rebel close (he fills the view)
   cam.useAutoRotationBehavior = true; cam.autoRotationBehavior.idleRotationSpeed = 0.18; cam.autoRotationBehavior.idleRotationWaitTime = 4000;
+}
+async function makeMine() {
+  const btn = $('#makeMine'); const buildId = state.assets?.buildId; const url = state.assets?.glb;
+  if (!buildId || !url) { toast('Nothing forged to set yet'); return; }
+  btn.disabled = true; btn.textContent = 'SETTING…';
+  try {
+    const d = await api('/api/forge-active-character-save', { buildId, tokenId: String(state.token), rebelId: GI().rebelId, collectionKey: COL, activeGlbUrl: url, activeCharacterModelType: 'rigged_forge_glb', build: { buildId, tokenId: String(state.token), rebelId: GI().rebelId, collectionKey: COL } });
+    const ac = d.activeCharacter;
+    try {   // the lobby reads selectedRebel; point it at the new character
+      const sel = JSON.parse(localStorage.getItem('selectedRebel') || 'null');
+      if (sel && String(sel.tokenId) === String(state.token) && ac) localStorage.setItem('selectedRebel', JSON.stringify({ ...sel, playableType: 'forge_build', buildId, activeForgeCharacter: ac, activeGlbUrl: ac.activeGlbUrl || url, characterSource: 'forge_glb', updatedAt: new Date().toISOString() }));
+    } catch (e) {}
+    btn.textContent = 'YOUR REBEL ✓'; Snd.bell(); flash(0.3, 0.8); toast('Set as your Rebel in the lobby and the village');
+  } catch (e) { btn.disabled = false; btn.textContent = 'MAKE THIS MY REBEL'; toast(e.message || 'Could not set it'); }
 }
 
 /* =========================================================
@@ -1243,16 +1702,26 @@ function updateTokPill() { const g = traitVal('Gang Names'); $('#tokPill').inner
    Boot
    ========================================================= */
 (async function boot() {
-  const [meta, assets] = await Promise.all([loadToken(state.token), loadAssets(state.token)]);
-  state.meta = meta; state.assets = assets; updateTokPill();
-  if (assets?.glb) loadRebel(assets.glb).catch((e) => { console.warn(e); toast('Could not load the 3D model'); });
+  let sel = null; try { sel = JSON.parse(localStorage.getItem('selectedRebel') || 'null'); } catch (e) {}
+  state.token = Q.get('token') || ((!sel?.collectionKey || sel.collectionKey === COL) && sel?.tokenId ? String(sel.tokenId) : null) || (PICKER ? PICKS[0] : null);
   layoutTrail(); markNodes();
+  if (state.token) {
+    S = loadS(state.token);
+    const [meta, assets] = await Promise.all([loadToken(state.token), loadAssets(state.token)]);
+    state.meta = meta; state.assets = assets; updateTokPill();
+    if (!S) S = recoverSession(assets);
+    if (S?.done && S.rigUrl) state.assets = { ...assets, glb: S.rigUrl, thumb: S.thumbUrl || assets.thumb, buildId: S.picked };
+    if (state.assets.glb) loadRebelOnce(state.assets.glb);
+  }
   gsap.to('#loader', { opacity: 0, duration: 1, delay: 0.4, onComplete: () => $('#loader').remove() });
-  go(0);
-  // deep links for review: ?step=forge etc.
-  const want = STEPS.findIndex((s) => s.id === Q.get('step'));
-  if (want > 0) { gsap.killTweensOf(U); state.summoned = true; U.uBuild = 1.05; state.maxStep = want; if (want > 3) { state.forged = true; U.uProgress = 1; U.uChaos = 0; } setTimeout(() => go(want), 900); }
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) engine.resize(); });
+  if (active()) {
+    gsap.killTweensOf(U); state.summoned = true; U.uBuild = 1.05; state.maxStep = liveStep();
+    layoutTrail(); go(liveStep()); runPipeline();
+  } else {
+    go(0);
+    if (Q.get('step') === 'awaken' && state.assets?.glb) setTimeout(awakenExisting, 900);   // review deep link
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { engine.resize(); if (S) forgeTick(); } });
 })();
 })();
 </script>

@@ -27754,7 +27754,7 @@ function buildInteriorProps(root, type, mats, options = {}) {
     addInteriorBox(root, 'forgeStation', { width:4.4, height:1.2, depth:2.4 }, new BABYLON.Vector3(0, 1, -4), mats.wood);
     addInteriorBox(root, 'forgeAnvil', { width:1.6, height:.8, depth:1 }, new BABYLON.Vector3(0, 1.8, -4), accent);
     addInteriorPanel(root, 'forgePortalPanel', 3.8, 3.8, new BABYLON.Vector3(6.5, 3, -9.9), new BABYLON.Vector3(0, 0, 0), accent);
-    createInteriorDisplay(root, { displayId:'forge_page_link', label:'Open Forge', actionType:'openUrl', url:'/forge.html', description:'Future selected Rebel forge station.', position:{x:0,y:2.25,z:-4.2} }, mats);
+    createInteriorDisplay(root, { displayId:'forge_page_link', label:'Open Forge', actionType:'openUrl', url:'/forge-v2.html', description:'Forge your selected Rebel into a playable 3D warrior.', position:{x:0,y:2.25,z:-4.2} }, mats);
   } else {
     if (!INTERIOR_TYPES[type] && def.modelUrl) {
       const savedDisplays = getInteriorSavedDisplayConfigs(options.targetInteriorId || type);

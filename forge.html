@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+// Retired for players: the Forge is forge-v2.html. This page stays as the admin workshop (rigger tools, re-rigs).
+(function () {
+  document.documentElement.style.visibility = 'hidden';
+  var go = function () { location.replace('/forge-v2.html' + location.search); };
+  fetch('/api/admin-session', { credentials: 'include' }).then(function (r) { return r.json(); })
+    .then(function (j) { if (j && j.authenticated) document.documentElement.style.visibility = ''; else go(); }).catch(go);
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rebel Ants — Forge</title>
