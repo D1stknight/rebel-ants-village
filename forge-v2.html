@@ -790,6 +790,9 @@ addEventListener('resize', () => engine.resize());
    ========================================================= */
 const COL = 'battle_for_colony';
 const VARIANTS = Math.max(1, Math.min(3, parseInt(Q.get('variants') || '3', 10) || 3));
+// v5: Meshy's A-pose by default. Keeping the drawing's own pose (?pose=none, used for #4998's bulky armour) leaves the
+// arms hanging against the hips, and the sculpt fuses the fists into the thighs (#893: gloves stayed at the hips).
+const POSE_NONE = Q.get('pose') === 'none';
 // Expected seconds per phase (defaults; refined in this browser by real runs). seg = trail segment (1 Ink, 2 Blueprint, 3 Forge).
 const PHASES = [
   { id: 'concept', seg: 1, s: 50, label: 'Painting the concept' },
@@ -903,7 +906,7 @@ const RUN = {
     const ref = refConcept('prod', S.prodUrl, { backImageUrl: S.backUrl || null, forgeMode: 'production_reference', conceptType: 'production_reference' });
     const startOne = async (b) => {
       try {
-        await api('/api/forge-3d-engine-meshy-create', { buildId: b.id, generationInput: GI(), productionReference: ref, selectedConcept: ref, sideImageUrls: S.sideUrls || [], options: { pose_mode: 'none' } });
+        await api('/api/forge-3d-engine-meshy-create', { buildId: b.id, generationInput: GI(), productionReference: ref, selectedConcept: ref, sideImageUrls: S.sideUrls || [], ...(POSE_NONE ? { options: { pose_mode: 'none' } } : {}) });
         b.started = true;
       } catch (e) { if (e.status === 409) b.started = true; else { b.failed = e.message; b.status = e.status; } }
       saveS(); forgeTick();
