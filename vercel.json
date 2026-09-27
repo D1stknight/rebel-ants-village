@@ -1,5 +1,20 @@
 {
   "functions": {
+    "api/forge-3d-store-glb.mjs": {
+      "maxDuration": 120
+    },
+    "api/forge-concepts-upload-image.mjs": {
+      "maxDuration": 60
+    },
+    "api/forge-3d-engine-meshy-create.mjs": {
+      "maxDuration": 60
+    },
+    "api/forge-3d-engine-meshy-status.mjs": {
+      "maxDuration": 60
+    },
+    "api/forge-active-character-save.mjs": {
+      "maxDuration": 60
+    },
     "api/compress-glb.mjs": {
       "maxDuration": 60
     },

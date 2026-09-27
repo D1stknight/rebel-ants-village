@@ -175,7 +175,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .nftcard .cap span{font-size:12px;color:var(--washi-dim)}
 .inkframe{width:100%;aspect-ratio:2/3;max-height:74vh;margin:0 auto;position:relative}
 .inkframe svg{width:100%;height:100%;display:block;filter:drop-shadow(0 30px 50px rgba(0,0,0,.7))}
-.scroll{position:relative;width:min(640px,calc(100vw - 780px));margin:0 auto}
+.scroll{position:relative;width:min(640px,calc(100vw - 780px));left:50%;margin-left:calc(min(640px,calc(100vw - 780px)) / -2)}   /* centred even when wider than #center */
 .scroll .rod{height:16px;border-radius:8px;background:linear-gradient(180deg,#5a3a22,#2a180c 60%,#1a0e06);box-shadow:0 6px 14px rgba(0,0,0,.6);position:relative;z-index:2;margin:0 -18px}
 .scroll .rod::before,.scroll .rod::after{content:"";position:absolute;top:-3px;width:26px;height:22px;border-radius:6px;background:linear-gradient(180deg,#c8a15a,#6b4a1c)}
 .scroll .rod::before{left:-8px}.scroll .rod::after{right:-8px}
@@ -207,6 +207,19 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 /* move dock */
 #dock{position:fixed;z-index:16;left:50%;bottom:20px;transform:translate(-50%,140%);width:min(980px,calc(100vw - 40px));background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.012) 50%,rgba(90,150,255,.035)),rgba(6,10,22,.25);backdrop-filter:blur(2.5px) saturate(1.35);-webkit-backdrop-filter:blur(2.5px) saturate(1.35);border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 30px 70px -24px rgba(0,0,0,.75);border-radius:22px;padding:12px 14px 12px;transition:transform .9s var(--ease)}
 #dock.show{transform:translate(-50%,0)}
+#chooser{position:fixed;z-index:17;left:50%;bottom:22px;transform:translate(-50%,160%);display:grid;justify-items:center;gap:8px;padding:14px 18px 16px;border-radius:22px;background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.01) 50%),rgba(5,8,18,.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(79,184,255,.45);box-shadow:0 0 40px -6px rgba(61,123,255,.55),inset 0 1px 0 rgba(255,255,255,.3);transition:transform .8s var(--ease)}
+#chooser.show{transform:translate(-50%,0)}
+.chT{font-family:Cinzel,serif;font-weight:900;font-size:17px;letter-spacing:.2em;color:#fff;text-shadow:0 0 16px rgba(79,184,255,.7)}
+.chS{font-size:12.5px;color:var(--washi-dim)}
+.chV{display:flex;gap:10px;margin:4px 0}
+.chv{position:relative;width:86px;height:112px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#0b1020;transition:all .25s var(--ease)}
+.chv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.chv span{position:absolute;left:0;right:0;bottom:0;padding:12px 0 5px;font-family:Cinzel,serif;font-weight:700;font-size:12px;letter-spacing:.14em;background:linear-gradient(0deg,rgba(6,10,22,.95),transparent)}
+.chv:hover{transform:translateY(-3px);border-color:rgba(239,230,210,.45)}
+.chv.on{border-color:var(--glow);box-shadow:0 0 0 2px var(--glow),0 0 22px rgba(79,184,255,.6);transform:translateY(-4px)}
+.chv.fresh:not(.on){animation:chpulse 1.6s ease-in-out infinite}
+@keyframes chpulse{50%{box-shadow:0 0 0 2px rgba(79,184,255,.55),0 0 18px rgba(79,184,255,.45)}}
+#chGo{min-width:220px}
 .dtop{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .groups{display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none}
 .grp{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:999px;border:1px solid transparent;font-size:13px;font-weight:600;color:var(--washi-dim);white-space:nowrap;transition:all .25s}
@@ -314,6 +327,13 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 
 <div class="nowplaying" id="nowPlaying"><b id="npN">FIGHT STANCE</b></div>
 
+<section id="chooser" aria-label="Choose your version">
+  <div class="chT">YOUR 3 VERSIONS ARE READY</div>
+  <div class="chS">Tap each one to see it in the hall, then forge your favourite</div>
+  <div class="chV" id="chV"></div>
+  <button class="btn fire" id="chGo" disabled>TAP A VERSION</button>
+</section>
+
 <section id="dock" aria-label="Moves">
   <div class="dtop">
     <div class="groups" id="groups"></div>
@@ -333,6 +353,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 <div id="toast"></div>
 
 <script src="assets/forge-core.js"></script>
+<script src="assets/forge-sfx.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
@@ -376,26 +397,82 @@ const state = {
   summoned: false, forging: false, forged: false, awakened: false, sound: false
 };
 
-/* ---------------- sound (synthesized, muted until the player turns it on) ---------------- */
+/* ---------------- sound: the Forge sound set (assets/forge-sfx.js renders every sound in the browser) ----------------
+   On by default (browsers start audio on the first tap/click); the speaker button mutes and is remembered. */
 const Snd = (() => {
-  let ctx = null, master = null;
+  const PRELOAD = ['ui_click', 'ui_hover', 'step', 'summon_appear', 'trait_fly', 'summon_done', 'stamp', 'brush1', 'brush2', 'brush3', 'ink_reveal', 'error'];
+  let ctx = null, master = null, sfxGain = null; const buf = {}, pend = {}, loops = {};
   const on = () => state.sound;
-  function init() { if (ctx) return; ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = 0.5; master.connect(ctx.destination); }
-  function env(g, t, a, d, peak) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
-  function osc(type, f, t, a, d, peak, f2) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + a + d); env(g, t, a, d, peak); o.connect(g).connect(master); o.start(t); o.stop(t + a + d + 0.05); }
-  function noise(t, d, peak, fType, fFreq, q = 1) { const len = Math.ceil(ctx.sampleRate * d), b = ctx.createBuffer(1, len, ctx.sampleRate), c = b.getChannelData(0); for (let i = 0; i < len; i++) c[i] = Math.random() * 2 - 1; const s = ctx.createBufferSource(); s.buffer = b; const f = ctx.createBiquadFilter(); f.type = fType; f.frequency.value = fFreq; f.Q.value = q; const g = ctx.createGain(); env(g, t, 0.005, d, peak); s.connect(f).connect(g).connect(master); s.start(t); }
+  function init() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    master = ctx.createGain(); master.gain.value = 0.85; master.connect(ctx.destination);
+    sfxGain = ctx.createGain(); sfxGain.connect(master);
+    PRELOAD.forEach(load);
+  }
+  function load(name) {
+    if (!ctx) return Promise.resolve(null);
+    if (buf[name]) return Promise.resolve(buf[name]);
+    if (!pend[name]) pend[name] = (window.ForgeSfx ? window.ForgeSfx.render(name) : Promise.resolve(null)).then((b) => (buf[name] = b)).catch(() => null);
+    return pend[name];
+  }
+  function play(name, o = {}) {
+    if (!on()) return; init(); if (!ctx) return;
+    const go = (b) => {
+      if (!b || !on()) return;
+      const src = ctx.createBufferSource(); src.buffer = b; src.playbackRate.value = o.rate || 1;
+      const g = ctx.createGain(); g.gain.value = o.vol == null ? 1 : o.vol; src.connect(g);
+      let out = g; if (o.pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = o.pan; g.connect(p); out = p; }
+      out.connect(sfxGain); src.start(ctx.currentTime + (o.delay || 0));
+    };
+    if (buf[name]) go(buf[name]); else load(name).then(go);
+  }
+  const pick = (...names) => names[(Math.random() * names.length) | 0];
+  function loop(name, vol = 0.5, fadeIn = 2) {
+    if (!on()) return; init(); if (!ctx || loops[name]) return;
+    const L = loops[name] = { g: ctx.createGain(), src: null, stopped: false };
+    L.g.gain.value = 0.0001; L.g.connect(master);
+    load(name).then((b) => {
+      if (!b || L.stopped) return;
+      L.src = ctx.createBufferSource(); L.src.buffer = b; L.src.loop = true; L.src.connect(L.g); L.src.start();
+      L.g.gain.setTargetAtTime(vol, ctx.currentTime, fadeIn / 3);
+    });
+  }
+  function stop(name, fadeOut = 1.5) {
+    const L = loops[name]; if (!L) return; L.stopped = true; delete loops[name];
+    if (!ctx) return; L.g.gain.setTargetAtTime(0.0001, ctx.currentTime, fadeOut / 3);
+    setTimeout(() => { try { L.src && L.src.stop(); } catch (e) {} L.g.disconnect(); }, fadeOut * 1000 + 200);
+  }
+  function mute(m) { if (!m) return; Object.keys(loops).forEach((k) => stop(k, 0.3)); }
+  // render the next step's sounds ahead of time, one at a time, so nothing stalls when it is needed
+  let warmQ = [];
+  function warm(names) { names.forEach((n) => { if (!buf[n] && !warmQ.includes(n)) warmQ.push(n); }); if (warmQ.length === names.length) warmNext(); }
+  function warmNext() { const n = warmQ[0]; if (!n || !ctx) { warmQ = []; return; } load(n).then(() => { warmQ.shift(); setTimeout(warmNext, 120); }); }
   return {
-    init,
-    taiko() { if (!on()) return; init(); const t = ctx.currentTime; osc('sine', 110, t, 0.005, 0.5, 0.9, 42); noise(t, 0.12, 0.25, 'lowpass', 400); },
-    anvil() { if (!on()) return; init(); const t = ctx.currentTime; [[820, .35], [1340, .22], [2110, .16], [3390, .1], [4800, .06]].forEach(([f, p]) => osc('sine', f, t, 0.002, 1.4 * (1 - f / 7000), p)); noise(t, 0.05, 0.5, 'highpass', 2500); },
-    hiss() { if (!on()) return; init(); const t = ctx.currentTime; noise(t, 1.8, 0.35, 'bandpass', 3200, 0.6); },
-    bell() { if (!on()) return; init(); const t = ctx.currentTime; [[220, .3], [607, .14], [1188, .08], [1958, .05]].forEach(([f, p]) => osc('sine', f, t, 0.01, 4.2, p)); },
-    pluck(f = 660) { if (!on()) return; init(); const t = ctx.currentTime; osc('triangle', f, t, 0.003, 0.35, 0.25); osc('sine', f * 2, t, 0.003, 0.18, 0.08); },
-    whoosh() { if (!on()) return; init(); const t = ctx.currentTime; noise(t, 0.6, 0.18, 'bandpass', 900, 0.8); },
-    shaku() { if (!on()) return; init(); const t = ctx.currentTime; const o = ctx.createOscillator(), g = ctx.createGain(), v = ctx.createOscillator(), vg = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(392, t); o.frequency.linearRampToValueAtTime(440, t + 0.5); v.frequency.value = 5; vg.gain.value = 6; v.connect(vg).connect(o.frequency); env(g, t, 0.25, 1.6, 0.18); o.connect(g).connect(master); o.start(t); v.start(t); o.stop(t + 2); v.stop(t + 2); noise(t, 1.2, 0.03, 'bandpass', 1800, 2); }
+    init, play, loop, stop, mute, pick, load, warm,
+    // named cues (older call sites)
+    taiko() { play('step', { vol: 0.8 }); },
+    anvil() { play(pick('anvil1', 'anvil2', 'anvil3'), { vol: 0.75, rate: 0.96 + Math.random() * 0.08 }); play('sparks', { vol: 0.45, delay: 0.02 }); },
+    hiss() { play('quench'); },
+    bell() { play('summon_done'); },
+    pluck(k = 0) { play('pluck' + (1 + (Math.abs(k | 0) % 6)), { vol: 0.8 }); },
+    whoosh() { play('swish_heavy', { vol: 0.6 }); },
+    shaku() { play('summon_appear'); }
   };
 })();
-$('#sndBtn').onclick = () => { state.sound = !state.sound; $('#sndX').style.display = state.sound ? 'none' : ''; if (state.sound) { Snd.init(); Snd.pluck(880); } toast(state.sound ? 'Sound on' : 'Sound off'); };
+try { state.sound = localStorage.getItem('forgeV2:sound') !== '0'; } catch (e) { state.sound = true; }
+function syncSndIcon() { $('#sndX').style.display = state.sound ? 'none' : ''; $('#sndBtn').title = state.sound ? 'Sound on (click to mute)' : 'Sound off'; }
+syncSndIcon();
+$('#sndBtn').onclick = () => {
+  state.sound = !state.sound; syncSndIcon(); try { localStorage.setItem('forgeV2:sound', state.sound ? '1' : '0'); } catch (e) {}
+  if (state.sound) { Snd.init(); Snd.play('ui_click'); if (state.step === 3 && active()) Snd.loop('forge_loop', 0.45); } else Snd.mute(true);
+};
+// the first tap anywhere unlocks audio (browser rule); buttons click, and whisper on hover
+addEventListener('pointerdown', () => Snd.init(), { capture: true });
+addEventListener('keydown', () => Snd.init(), { capture: true });
+let lastHover = 0;
+document.addEventListener('pointerover', (e) => { const b = e.target.closest && e.target.closest('button'); if (!b || b.disabled || b.contains(e.relatedTarget)) return; const n = performance.now(); if (n - lastHover < 70) return; lastHover = n; Snd.play('ui_hover', { vol: 0.5 }); });
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('button'); if (b && !b.disabled && !b.classList.contains('hold') && b.id !== 'awakenBtn') Snd.play('ui_click', { vol: 0.7 }); }, true);
 
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2400); }
 function flash(p = 0.8, d = 0.9) { gsap.fromTo('#flash', { opacity: p }, { opacity: 0, duration: d, ease: 'power2.out' }); }
@@ -878,11 +955,21 @@ async function shrinkDataUrl(dataUrl) {
 }
 async function upload(kind, dataUrl) {
   if (!dataUrl) throw new Error('The brush returned no image');
-  const j = await api('/api/forge-concepts-upload-image', { conceptId: `${S.id}_${kind}`, rebelId: GI().rebelId, tokenId: String(state.token), collectionKey: COL, imageDataUrl: await shrinkDataUrl(dataUrl) });
+  const small = await shrinkDataUrl(dataUrl);
+  const j = await twice(() => api('/api/forge-concepts-upload-image', { conceptId: `${S.id}_${kind}`, rebelId: GI().rebelId, tokenId: String(state.token), collectionKey: COL, imageDataUrl: small }));
   if (!j.imageUrl) throw new Error('Upload returned no image URL');
   return j.imageUrl;
 }
-async function twice(fn) { try { return await fn(); } catch (e) { if (e.status === 429 || e.status === 400) throw e; await sleep(2500); return fn(); } }
+async function twice(fn) {
+  const waits = [3000, 9000, 20000];
+  for (let k = 0; ; k++) {
+    try { return await fn(); } catch (e) {
+      const transient = !e.status || e.status >= 500 || e.status === 408;
+      if (!transient || k >= waits.length) throw e;
+      console.warn('Forge: retrying after', e.status || e.message); await sleep(waits[k]);
+    }
+  }
+}
 
 /* ---- phases ---- */
 const RUN = {
@@ -913,7 +1000,7 @@ const RUN = {
     const ref = refConcept('prod', S.prodUrl, { backImageUrl: S.backUrl || null, forgeMode: 'production_reference', conceptType: 'production_reference' });
     const startOne = async (b) => {
       try {
-        await api('/api/forge-3d-engine-meshy-create', { buildId: b.id, generationInput: GI(), productionReference: ref, selectedConcept: ref, sideImageUrls: S.sideUrls || [], ...(POSE_NONE ? { options: { pose_mode: 'none' } } : {}) });
+        await twice(() => api('/api/forge-3d-engine-meshy-create', { buildId: b.id, generationInput: GI(), productionReference: ref, selectedConcept: ref, sideImageUrls: S.sideUrls || [], ...(POSE_NONE ? { options: { pose_mode: 'none' } } : {}) }));
         b.started = true;
       } catch (e) { if (e.status === 409) b.started = true; else { b.failed = e.message; b.status = e.status; } }
       saveS(); forgeTick();
@@ -921,7 +1008,7 @@ const RUN = {
     for (const b of S.builds) if (!b.started && !b.failed) await startOne(b);
     while (S.builds.length < (S.variants || VARIANTS)) {
       let j;
-      try { j = await api('/api/forge-build-3d-character', { generationInput: GI(), selectedConcept: ref, productionReference: ref }); }
+      try { j = await twice(() => api('/api/forge-build-3d-character', { generationInput: GI(), selectedConcept: ref, productionReference: ref })); }
       catch (e) { if (S.builds.some((b) => b.started)) { S.variants = S.builds.length; break; } throw e; }
       const b = { id: j.buildRequest?.buildId, p: 0 }; if (!b.id) throw new Error('The forge returned no build id');
       S.builds.push(b); saveS();
@@ -957,9 +1044,9 @@ const RUN = {
   },
   async rig() {
     const id = S.picked;
-    if (!S.rigStarted) { S.rigPct = 0; S.rigStep = 'starting'; await api('/api/forge-rig-start', { buildId: id }); S.rigStarted = true; saveS(); }
+    if (!S.rigStarted) { S.rigPct = 0; S.rigStep = 'starting'; await twice(() => api('/api/forge-rig-start', { buildId: id })); S.rigStarted = true; saveS(); }
     for (;;) {
-      const d = await api(`/api/forge-rig-status?buildId=${encodeURIComponent(id)}`);
+      const d = await twice(() => api(`/api/forge-rig-status?buildId=${encodeURIComponent(id)}`));
       const fr = d.forgeRig || {};
       if (d.percent != null) S.rigPct = Math.max(S.rigPct || 0, d.percent);
       if (fr.progress) S.rigStep = fr.progress;
@@ -992,7 +1079,7 @@ async function runPipeline() {
   } catch (e) {
     console.warn('Forge step failed:', S?.phase, e);
     if (S) { S.err = e.message || String(e); S.errStatus = e.status || null; saveS(); }
-    Snd.taiko(); toast(S?.err || 'The forge stumbled');
+    Snd.play('error'); toast(S?.err || 'The forge stumbled');
   } finally {
     running = false; state.forging = active(); refreshStep(); forgeTick();
   }
@@ -1001,8 +1088,35 @@ function retry() { if (!S) return; S.err = null; if (S.t[S.phase]) S.t[S.phase].
 function onPhase(prev, next) {
   const from = PH[prev].seg, to = PH[next].seg;
   if (next === 'done') { finishForge(); return; }
+  if (next === 'meshy') Snd.play('forge_start');
+  if (PH[prev].i <= PH.prod.i && next === 'approve') Snd.play('ink_reveal', { vol: 0.5 });
+  if (next === 'pick') { enterPick(); return; }
+  if (prev === 'sides' && state.step === 2) {
+    // let the player see all four views (and the seal) before the hall moves on to the forge
+    refreshStep(); setTimeout(() => { if (state.step === 2) go(3); }, 6500); return;
+  }
   if (to !== from && state.step === Math.min(4, from)) go(Math.min(4, to));   // follow the forge when watching the live step
   else refreshStep();
+}
+function enterPick() {
+  if (state.step !== 3) go(3); else refreshStep();
+  Snd.play('versions_ready'); flash(0.35, 1.0);
+  toast('Your 3 versions are ready. Choose one below.');
+  const first = S.builds.find((b) => b.stored);
+  if (first && !previewId) setTimeout(() => { if (S?.phase === 'pick' && !previewId) previewVersion(first.id); }, 900);
+  renderChooser();
+}
+/* the chooser bar: big, centred, impossible to miss */
+function renderChooser() {
+  const el = $('#chooser'); if (!el) return;
+  const show = S && S.phase === 'pick' && state.step === 3;
+  el.classList.toggle('show', !!show); if (!show) return;
+  const vs = S.builds.map((b, k) => ({ b, k })).filter((x) => x.b.stored);
+  $('#chV').innerHTML = vs.map(({ b, k }) => `<button class="chv${previewId === b.id ? ' on' : ''}${b.seen ? '' : ' fresh'}" data-id="${esc(b.id)}">${b.thumb ? `<img src="${esc(b.thumb)}" alt="">` : ''}<span>V${k + 1}</span></button>`).join('');
+  $('#chV').querySelectorAll('.chv').forEach((x) => x.onclick = () => { const b = S.builds.find((y) => y.id === x.dataset.id); if (b) { b.seen = true; saveS(); } previewVersion(x.dataset.id); });
+  const go_ = $('#chGo'); go_.disabled = !previewId;
+  go_.textContent = previewId ? `FORGE V${S.builds.findIndex((b) => b.id === previewId) + 1} →` : 'TAP A VERSION';
+  go_.onclick = () => { if (previewId) pickVersion(previewId); };
 }
 
 /* ---- approval (auto-continues after 30 s so the forge never stalls) ---- */
@@ -1016,7 +1130,7 @@ function startApproveTimer() {
 }
 function acceptConcept() {
   clearInterval(approveTimer); if (!S || S.phase !== 'approve') return;
-  S.approved = true; saveS(); Snd.taiko(); advance(); runPipeline();
+  S.approved = true; saveS(); Snd.play('stamp'); advance(); runPipeline();
 }
 function paintAgain() {
   clearInterval(approveTimer); if (!S) return;
@@ -1027,14 +1141,14 @@ function paintAgain() {
 }
 function pickVersion(id) {
   if (!S || S.phase !== 'pick') return; clearPreview();
-  S.picked = id; saveS(); Snd.taiko(); flash(0.3, 0.6); advance(); runPipeline();
+  S.picked = id; saveS(); Snd.play('stamp'); Snd.play('forge_start', { delay: 0.15 }); flash(0.3, 0.6); advance(); runPipeline(); renderChooser();
 }
 
 // swap the current painting with a kept one (before it is accepted)
 function usePainting(k) {
   if (!S || S.phase !== 'approve' || !S.history?.[k]) return;
   const old = S.history[k]; S.history[k] = { conceptUrl: S.conceptUrl, prodUrl: S.prodUrl };
-  S.conceptUrl = old.conceptUrl; S.prodUrl = old.prodUrl; saveS(); startApproveTimer(); Snd.pluck(880);
+  S.conceptUrl = old.conceptUrl; S.prodUrl = old.prodUrl; saveS(); startApproveTimer(); Snd.play('brush2');
 }
 async function downloadUrl(url, name) {
   try {
@@ -1084,6 +1198,7 @@ function forgeTick() {
   pill.innerHTML = S.done ? `<strong>Forged</strong> · ready to awaken` : S.err ? `<strong>Paused</strong> · ${esc(PH[S.phase].label)}` : PH[S.phase].wait ? `<strong>Your turn</strong> · ${esc(PH[S.phase].label)}` : `<strong>${Math.floor(P.overall * 100)}%</strong> · about ${fmtMin(P.rem)} left`;
   document.title = S.done ? `Forged · Rebel #${state.token}` : `${Math.floor(P.overall * 100)}% · Forging #${state.token}`;
   if (state.step === 3) setForgeUI(P);
+  if (state.step === 1 && ['concept', 'prod'].includes(S.phase) && !S.err && Math.random() < 0.45) Snd.play(Snd.pick('brush1', 'brush2', 'brush3'), { vol: 0.35 + Math.random() * 0.25, pan: (Math.random() - 0.5) * 0.8, rate: 0.9 + Math.random() * 0.2 });
   if (state.step === 1 || state.step === 2) { const s = $('#liveStatus'); if (s) s.innerHTML = liveStatusHTML(P); }
   if (S.done && ticker) { clearInterval(ticker); ticker = null; }
 }
@@ -1228,9 +1343,14 @@ function renderCard(html, quiet) {
 function go(i) {
   if (i > state.maxStep && !(active() && i <= liveStep())) { toast('The forge has not reached this step yet'); return; }
   const prev = state.step; state.step = i; state.maxStep = Math.max(state.maxStep, i);
-  markNodes(); antNow(false); setKanji(STEPS[i].name); camTo(STEPS[i].cam); Snd.taiko();
+  markNodes(); antNow(false); setKanji(STEPS[i].name); camTo(STEPS[i].cam); Snd.play('step', { vol: 0.8 });
+  if (i === 3 && (active() || state.forging)) Snd.loop('forge_loop', 0.45); else Snd.stop('forge_loop');
+  Snd.warm([[], ['scroll_unroll', 'view_appear', 'seal', 'forge_start'], ['forge_loop', 'forge_start', 'anvil1', 'anvil2', 'anvil3', 'sparks', 'bellows'],
+    ['forge_loop', 'anvil1', 'anvil2', 'anvil3', 'sparks', 'impact_heavy', 'bellows', 'stage_done', 'versions_ready', 'select', 'pluck1', 'pluck2', 'pluck3', 'pluck4', 'pluck5', 'pluck6', 'quench', 'forged', 'charge'],
+    ['charge', 'awaken', 'swish_light', 'swish_heavy', 'swish_spin', 'impact', 'impact_heavy', 'land', 'step_soft', 'stage_done', 'seal']][i] || []);
   $('#panel').classList.toggle('hidden', false);
   if (i !== 3) clearPreview();
+  setTimeout(renderChooser, 0);
   [renderSummon, renderInk, renderForm, renderForge, renderAwaken][i](prev);
 }
 // re-render the current step in place when the pipeline moves (no card fly-in)
@@ -1330,12 +1450,12 @@ async function summon() {
       gsap.to(f, { opacity: 0, scale: 0.1, duration: 0.25, onComplete: () => f.remove() });
       row.classList.remove('sent'); row.classList.add('locked');
       gsap.to(U, { uBuild: (i + 1) / n, duration: 0.7, ease: 'power2.out' });
-      Snd.pluck(440 * Math.pow(2, (i % 7) / 12 * 2));
+      Snd.play('trait_fly', { vol: 0.75, rate: Math.pow(2, ((i % 6) * 2) / 12), pan: (Math.random() - 0.5) * 0.6 });
       burst(0.2 + ((i + 1) / n) * HELIX_H, 60);
     } });
   }
   await new Promise((r) => setTimeout(r, 1000));
-  state.summoned = true; flash(0.35, 0.8); Snd.bell();
+  state.summoned = true; flash(0.35, 0.8); Snd.play('summon_done');
   gsap.to(U, { uBuild: 1.05, duration: 0.5 });
   renderSummon(0, true); gsap.from(card.querySelector('.cta'), { opacity: 0, y: 10, duration: 0.5 });
   toast(`DNA sequenced · ${rows.length} traits`);
@@ -1343,7 +1463,7 @@ async function summon() {
 function beginForge() {
   if (active()) return;
   if (!window.buildCharacterBlueprint) { toast('Forge tools are still loading, try again in a moment'); return; }
-  newSession(); state.maxStep = 1; flash(0.4, 0.8); Snd.bell();
+  newSession(); state.maxStep = 1; flash(0.4, 0.8); Snd.play('stamp'); Snd.play('brush1', { delay: 0.5 });
   go(1); runPipeline();
 }
 
@@ -1399,8 +1519,8 @@ function inkBleed() {
   gsap.fromTo(center.querySelector('.inkframe'), { opacity: 0, y: 30, rotate: -1.5 }, { opacity: 1, y: 0, rotate: 0, duration: 1, ease: 'power3.out' });
   blots.forEach((b, i) => gsap.to(b, { attr: { r: 520 }, duration: REDUCED ? 0.4 : 2.6, delay: 0.3 + i * 0.35, ease: 'power2.inOut' }));
   gsap.to(center.querySelector('.sig'), { opacity: 1, duration: 1, delay: 2.4 });
-  gsap.fromTo(center.querySelector('.stampG'), { opacity: 0, scale: 2 }, { opacity: 0.9, scale: 1, duration: 0.35, delay: 2.9, ease: 'back.out(2)', transformOrigin: '344px 552px', onStart: () => Snd.taiko() });
-  Snd.whoosh();
+  gsap.fromTo(center.querySelector('.stampG'), { opacity: 0, scale: 2 }, { opacity: 0.9, scale: 1, duration: 0.35, delay: 2.9, ease: 'back.out(2)', transformOrigin: '344px 552px', onStart: () => Snd.play('stamp') });
+  Snd.play('ink_reveal');
 }
 function inkWait() {
   gsap.fromTo(center.querySelector('.inkframe'), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1, ease: 'power3.out' });
@@ -1445,12 +1565,12 @@ function renderForm(prev, quiet) {
       <div class="rod"></div>
     </div>`;
     const paper = $('#paper');
-    if (fresh || !quiet) { gsap.fromTo('#scroll', { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.6 }); gsap.fromTo(paper, { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: REDUCED ? 0.3 : 1.6, ease: 'power2.inOut', delay: 0.2 }); Snd.whoosh(); }
-    else gsap.set(paper, { clipPath: 'inset(0 0 0% 0)' });
+    if (fresh || !quiet) { gsap.fromTo('#scroll', { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.6 }); gsap.fromTo(paper, { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: REDUCED ? 0.3 : 1.6, ease: 'power2.inOut', delay: 0.2 }); Snd.play('scroll_unroll'); }
+    else { gsap.set(paper, { clipPath: 'inset(0 0 0% 0)' }); Snd.play('view_appear'); }
     gsap.to(paper.querySelectorAll('img.col'), { opacity: 1, duration: 1.4, delay: fresh ? 2.1 : 0.2, ease: 'power2.inOut' });
     gsap.to(paper.querySelectorAll('img.line'), { opacity: 0.25, duration: 1.4, delay: fresh ? 2.1 : 0.2 });
     paper.querySelectorAll('.bp-wait').forEach((w) => { if (!REDUCED) gsap.to(w, { opacity: 0.35, duration: 1.4, yoyo: true, repeat: -1, ease: 'sine.inOut' }); });
-    if (past) gsap.to(paper.querySelector('.seal'), { scale: 1, duration: 0.3, delay: 0.4, ease: 'back.out(3)' });
+    if (past) gsap.to(paper.querySelector('.seal'), { scale: 1, duration: 0.3, delay: 0.4, ease: 'back.out(3)', onStart: () => Snd.play('seal') });
   }
   if (S) { const s = $('#liveStatus'); if (s) s.innerHTML = liveStatusHTML(forgeProgress()); }
   bindErr();
@@ -1539,18 +1659,18 @@ function setForgeUI(P) {
   if (S.phase === 'rig' || S.done) {
     const c = $('#comb'); if (c && c.classList.contains('hidden')) { c.classList.remove('hidden'); gsap.from(c, { opacity: 0, y: 10, duration: 0.5 }); }
     const rs = S.rigStep; const want = S.done ? 24 : rs === 'animate' ? 8 : rs === 'moves' ? 18 : RIG_PORTRAIT.includes(rs) ? 24 : 0;
-    const hexes = card.querySelectorAll('.hex'); hexes.forEach((h, k) => { if (k < want && !h.classList.contains('on')) { h.classList.add('on'); if (k >= hexOn) Snd.pluck(520 + k * 22); } }); hexOn = want;
+    const hexes = card.querySelectorAll('.hex'); hexes.forEach((h, k) => { if (k < want && !h.classList.contains('on')) { h.classList.add('on'); if (k >= hexOn) Snd.pluck(k); } }); hexOn = want;
   }
   if (active() && !PH[S.phase].wait && !S.err && Date.now() - lastStrike > 3500 + Math.random() * 4000 && state.step === 3 && !previewId) { lastStrike = Date.now(); strike(false); }
 }
 function strike(big) {
   const y = 0.1 + U.uProgress * HELIX_H;
-  burst(y, big ? 420 : 140); Snd.anvil();
+  burst(y, big ? 420 : 140); Snd.anvil(); if (big) Snd.play('impact_heavy', { vol: 0.6 }); else if (Math.random() < 0.3) Snd.play('bellows', { vol: 0.5, delay: 0.4 });
   gsap.fromTo(forgeGlow, { intensity: big ? 9 : 5.5 }, { intensity: 3, duration: 0.6 });
   if (big) { shake(8); flash(0.45, 0.7); } else shake(2);
 }
 function quench() {
-  steam.manualEmitCount = 260; Snd.hiss(); flash(0.6, 1.2); shake(10);
+  steam.manualEmitCount = 260; Snd.hiss(); Snd.stop('forge_loop', 3); flash(0.6, 1.2); shake(10);
   gsap.to(U, { uChaos: 0, duration: 1.5 });
   gsap.to(forgeGlow, { intensity: 1.2, duration: 3 });
 }
@@ -1558,7 +1678,7 @@ function quench() {
 let previewId = null, previewObj = null;
 async function previewVersion(id) {
   const b = S.builds.find((x) => x.id === id); if (!b) return;
-  previewId = id; refreshStep(); Snd.pluck(880);
+  previewId = id; refreshStep(); renderChooser(); Snd.play('select');
   const url = typeof b.stored === 'string' ? b.stored : b.glb;
   try {
     const res = await BABYLON.SceneLoader.ImportMeshAsync('', '', url, scene, null, '.glb');
@@ -1578,7 +1698,7 @@ function clearPreview(keepId) {
 }
 async function finishForge() {
   state.forging = false; state.forged = true; state.maxStep = 4; clearPreview();
-  quench(); Snd.bell(); toast('Your Rebel is forged');
+  quench(); Snd.play('forged', { delay: 1.2 }); toast('Your Rebel is forged');
   state.assets = { ...(state.assets || {}), glb: S.rigUrl, thumb: S.thumbUrl, buildId: S.picked };
   rebel.ready = false; loadRebelOnce(S.rigUrl);
   if (state.step === 3) refreshStep();
@@ -1605,7 +1725,7 @@ function renderAwaken() {
   gsap.to(U, { uAlpha: 1, uChaos: 0, uProgress: 1, uBuild: 1.05, uMorph: 0, uScatter: 0, duration: 1 });
   const btn = $('#awakenBtn'); btn.style.display = 'block'; gsap.fromTo(btn, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.7, ease: 'back.out(2)' });
   const ring = $('#awRing'); let tw = null; const HOLD = 1.6;
-  const start = (e) => { e.preventDefault(); if (!rebel.ready) { toast('The body is still cooling…'); return; } Snd.whoosh(); tw = gsap.to(ring, { attr: { 'stroke-dashoffset': 0 }, duration: HOLD, ease: 'none', onUpdate: () => { U.uChaos = tw.progress() * 0.8; shake(tw.progress() * 3); }, onComplete: awaken }); };
+  const start = (e) => { e.preventDefault(); if (!rebel.ready) { toast('The body is still cooling…'); return; } Snd.play('charge'); tw = gsap.to(ring, { attr: { 'stroke-dashoffset': 0 }, duration: HOLD, ease: 'none', onUpdate: () => { U.uChaos = tw.progress() * 0.8; shake(tw.progress() * 3); }, onComplete: awaken }); };
   const stop = () => { if (tw && tw.progress() < 1) { tw.kill(); gsap.to(ring, { attr: { 'stroke-dashoffset': 389.6 }, duration: 0.3 }); U.uChaos = 0; } };
   btn.onpointerdown = start; btn.onpointerup = stop; btn.onpointerleave = stop;
   btn.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) start(e); }; btn.onkeyup = stop;
@@ -1614,11 +1734,11 @@ function hideAwaken() { $('#awakenBtn').style.display = 'none'; $('#dock').class
 function awaken() {
   state.awakened = true; const btn = $('#awakenBtn');
   gsap.to(btn, { opacity: 0, scale: 1.3, duration: 0.4, onComplete: () => { btn.style.display = 'none'; gsap.set('#awRing', { attr: { 'stroke-dashoffset': 389.6 } }); } });
-  U.uChaos = 0; Snd.taiko();
+  U.uChaos = 0;
   const tl = gsap.timeline();
   tl.to(U, { uMorph: 1, duration: REDUCED ? 0.6 : 2.4, ease: 'power2.inOut' })
     .add(() => { play('fight_idle', true); rebel.meshes.forEach((m) => gsap.to(m, { visibility: 1, duration: 1.2, ease: 'power2.in' })); }, '-=0.5')
-    .add(() => { flash(0.9, 1.4); shake(12); Snd.bell(); burst(1.0, 500); petals.manualEmitCount = 260; steam.manualEmitCount = 80; }, '+=0.6')
+    .add(() => { flash(0.9, 1.4); shake(12); Snd.play('awaken'); burst(1.0, 500); petals.manualEmitCount = 260; steam.manualEmitCount = 80; }, '+=0.6')
     .to(U, { uScatter: 1, duration: 1.8, ease: 'power2.out' }, '<')
     .to(U, { uAlpha: 0, duration: 0.8 }, '-=0.6')
     .add(() => showAwakened(false), '-=1.2');
@@ -1656,7 +1776,7 @@ async function makeMine() {
       const sel = JSON.parse(localStorage.getItem('selectedRebel') || 'null');
       if (sel && String(sel.tokenId) === String(state.token) && ac) localStorage.setItem('selectedRebel', JSON.stringify({ ...sel, playableType: 'forge_build', buildId, activeForgeCharacter: ac, activeGlbUrl: ac.activeGlbUrl || url, characterSource: 'forge_glb', updatedAt: new Date().toISOString() }));
     } catch (e) {}
-    btn.textContent = 'YOUR REBEL ✓'; Snd.bell(); flash(0.3, 0.8); toast('Set as your Rebel in the lobby and the village');
+    btn.textContent = 'YOUR REBEL ✓'; Snd.play('seal'); flash(0.3, 0.8); toast('Set as your Rebel in the lobby and the village');
   } catch (e) { btn.disabled = false; btn.textContent = 'MAKE THIS MY REBEL'; toast(e.message || 'Could not set it'); }
 }
 
@@ -1667,7 +1787,7 @@ let curGroup = 0, curMove = ALL_MOVES.findIndex((m) => m.clip === 'fight_idle');
 function buildDock() {
   const gEl = $('#groups');
   gEl.innerHTML = GROUPS.map((g, i) => `<button class="grp${i === curGroup ? ' on' : ''}" data-g="${i}"><span class="mon">${i + 1}</span>${g.n} <em>${g.moves.length}</em></button>`).join('');
-  gEl.querySelectorAll('.grp').forEach((b) => b.onclick = () => { curGroup = +b.dataset.g; buildDock(); Snd.pluck(600); });
+  gEl.querySelectorAll('.grp').forEach((b) => b.onclick = () => { curGroup = +b.dataset.g; buildDock(); });
   const mEl = $('#moves');
   const list = ALL_MOVES.map((m, i) => ({ ...m, i })).filter((m) => m.g === curGroup);
   mEl.innerHTML = list.map((m) => `<button class="mv${m.i === curMove ? ' on' : ''}" data-i="${m.i}" title="${esc(m.n)}"><span class="mh">${m.i + 1}</span><div class="mn">${esc(m.n)}</div><svg class="ring" viewBox="0 0 22 22"><circle class="bgc" cx="11" cy="11" r="9"/><circle class="fgc" cx="11" cy="11" r="9"/></svg></button>`).join('');
@@ -1685,8 +1805,27 @@ function selectMove(i, fromKata) {
   $('#npN').textContent = m.n.toUpperCase();
   const np = $('#nowPlaying'); np.style.opacity = 1; gsap.fromTo(np, { scale: 1.3 }, { scale: 1, duration: 0.4, ease: 'back.out(2)' });
   clearTimeout(np._h); np._h = setTimeout(() => { np.style.opacity = 0; }, 1600);
-  Snd.pluck(700 + (curMove % 8) * 40);
+  moveSfx(m.clip);
   if (!fromKata && ['hurricane_kick', 'spin_flip_kick', 'roundhouse_kick', 'backflip', 'flip_kick'].includes(m.clip)) setTimeout(() => burst(0.6, 90), 500);
+}
+// sounds that land with the move: [cue, fraction of the clip]
+const MOVE_SFX = {
+  jab: [['swish_light', .22], ['impact', .38]], cross_punch: [['swish_light', .28], ['impact', .45]], hook_punch: [['swish_heavy', .3], ['impact', .5]],
+  elbow_punch: [['swish_light', .3], ['impact', .45]], punch_combo: [['swish_light', .14], ['impact', .24], ['swish_light', .42], ['impact', .52], ['swish_heavy', .68], ['impact_heavy', .8]],
+  front_kick: [['swish_heavy', .28], ['impact', .45]], side_kick: [['swish_heavy', .3], ['impact', .48]], roundhouse_kick: [['swish_spin', .22], ['impact_heavy', .52]],
+  crescent_kick: [['swish_heavy', .32], ['impact', .55]], hurricane_kick: [['swish_spin', .2], ['swish_spin', .45], ['land', .88]], flip_kick: [['swish_heavy', .28], ['impact', .5], ['land', .86]],
+  spin_flip_kick: [['swish_spin', .28], ['impact', .55], ['land', .88]], jump: [['swish_light', .2], ['land', .78]], jump_run: [['swish_heavy', .3], ['land', .8]],
+  front_flip: [['swish_spin', .3], ['land', .85]], backflip: [['swish_spin', .3], ['land', .86]], cartwheel: [['swish_heavy', .25], ['land', .5], ['land', .86]],
+  hit_reaction: [['impact_heavy', .08]], knockdown: [['impact_heavy', .08], ['land', .55]], get_up: [['swish_light', .4], ['step_soft', .8]],
+  walk: [['step_soft', .1], ['step_soft', .6]], run: [['step_soft', .1], ['step_soft', .55]], fight_idle: [['swish_light', .05]], idle: []
+};
+let moveTimers = [];
+function moveSfx(clip) {
+  moveTimers.forEach(clearTimeout); moveTimers = [];
+  const g = rebel.groups[clip]; const cues = MOVE_SFX[clip]; if (!g || !cues) return;
+  const fps = g.targetedAnimations[0]?.animation?.framePerSecond || 60;
+  const secs = Math.max(0.3, (g.to - g.from) / fps / (rebel.speed || 1));
+  cues.forEach(([cue, f]) => moveTimers.push(setTimeout(() => Snd.play(cue, { vol: cue === 'step_soft' ? 0.6 : 0.85, rate: 0.95 + Math.random() * 0.1 }), f * secs * 1000)));
 }
 function play(name, loop) {
   const g = rebel.groups[name]; if (!g) return;
@@ -1708,7 +1847,7 @@ scene.onBeforeRenderObservable.add(() => {
 let kataList = [], kataIdx = 0;
 function startKata() {
   kataList = ALL_MOVES.map((m, i) => i).filter((i) => !['idle', 'fight_idle'].includes(ALL_MOVES[i].clip));
-  kataIdx = 0; rebel.kata = true; $('#cKata').textContent = 'STOP'; toast('Performing all kata'); Snd.bell(); selectMove(kataList[0], true);
+  kataIdx = 0; rebel.kata = true; $('#cKata').textContent = 'STOP'; toast('Performing all kata'); Snd.play('stage_done'); selectMove(kataList[0], true);
 }
 function kataNext() { kataIdx++; if (kataIdx >= kataList.length) { stopKata(); selectMove(ALL_MOVES.findIndex((m) => m.clip === 'fight_idle')); flash(0.3, 0.8); return; } selectMove(kataList[kataIdx], true); }
 function stopKata() { if (!rebel.kata) return; rebel.kata = false; $('#cKata').textContent = 'KATA'; }

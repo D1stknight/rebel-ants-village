@@ -46,6 +46,25 @@ if dl is not None and len(parts) > 1:
                 for k, x in w.items(): v[dl][k] = x
             moved += 1
         print('seamfix small loose pieces bound to the nearest body vertex', moved)
+# v1.9f fingertips fused to the thigh (#262): the finger ends past the Hand bone's tail touched the thigh and got 100%
+# UpLeg weight, so after the cut they stayed at the hips. Every vertex on the hand's own axis (within the length the hand
+# mesh reaches, and a finger's radius of the axis) belongs to the hand, whatever bone heat said.
+arm = bpy.data.objects.get('Armature')
+if arm is not None and dl is not None:
+    Mw = np.array(me.matrix_world); co = np.array([v.co[:] for v in bm.verts]) @ Mw[:3, :3].T + Mw[:3, 3]
+    RAD = float(os.environ.get('FORGE_FINGER_R', '0.045')); taken = 0
+    for side in ('Left', 'Right'):
+        hb = arm.data.bones.get(P + side + 'Hand'); fb = arm.data.bones.get(P + side + 'ForeArm'); hg = me.vertex_groups.get(P + side + 'Hand')
+        if not (hb and fb and hg): continue
+        h = np.array((arm.matrix_world @ hb.head_local)[:]); e = np.array((arm.matrix_world @ fb.head_local)[:])
+        d = (h - e) / max(1e-9, np.linalg.norm(h - e)); rel = co - h; tt = rel @ d; rr = np.linalg.norm(rel - np.outer(tt, d), axis=1)
+        hand_now = np.array([v[dl].get(hg.index, 0.0) > 0.5 for v in bm.verts])
+        if not hand_now.any(): continue
+        reach = np.percentile(tt[hand_now & (tt > 0)], 99) + 0.03
+        grab = (tt > 0.0) & (tt < reach) & (rr < RAD) & ~hand_now
+        for i in np.nonzero(grab)[0]:
+            v = bm.verts[int(i)]; v[dl].clear(); v[dl][hg.index] = 1.0; taken += 1
+    print('seamfix fingertip verts given back to the hand', taken)
 H, Lg = {}, {}
 for v in bm.verts:
     d = v[dl] if dl is not None else {}; t = sum(d.values()) or 1e-9
