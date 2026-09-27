@@ -697,7 +697,7 @@ petals.minAngularSpeed = -4; petals.maxAngularSpeed = 4; petals.start();
 // toward the rest pose, drag, gravity, and sphere colliders on the legs so kicks push the cloth out instead of stretching it.
 // Cost: ~24 bones, a few dozen vector ops each, per frame, for the local player only.
 function createForgeClothSprings(scene, root, opts) {
-  opts = Object.assign({ stiffness: 2.2, drag: 0.18, gravity: 2.0, hitRadius: 0.02, legRadius: 0.085, hipRadius: 0.13, legFollow: 0.6 }, opts || {});
+  opts = Object.assign({ stiffness: 2.2, drag: 0.18, gravity: 2.0, hitRadius: 0.02, legRadius: 0.085, hipRadius: 0.13, legFollow: 0.6, maxSwing: 1.0 }, opts || {});
   const V3 = BABYLON.Vector3, Q = BABYLON.Quaternion;
   const nodes = root.getDescendants(false).filter(n => n.getClassName && n.getClassName() === 'TransformNode');
   const byName = {}; nodes.forEach(n => { byName[n.name] = n; });
@@ -776,6 +776,16 @@ function createForgeClothSprings(scene, root, opts) {
       // keep length
       let d = next.subtract(head); let dl = d.length(); if (dl < 1e-6) { d = restTail.subtract(head); dl = d.length(); }
       next = head.add(d.scale(L / dl));
+      // v3 swing limit: a panel never swings more than ~57 deg from where the body wants it. Upside down (cartwheel,
+      // flips) gravity otherwise folded the skirt over itself and showed the inside of the robe.
+      if (opts.maxSwing > 0) {
+        const b0 = restTail.subtract(head).normalize(), dn = next.subtract(head).normalize();
+        if (V3.Dot(b0, dn) < Math.cos(opts.maxSwing)) {
+          const axc = V3.Cross(b0, dn); const snc = axc.length();
+          if (snc > 1e-6) next = head.add(b0.applyRotationQuaternion(Q.RotationAxis(axc.scale(1 / snc), opts.maxSwing)).scale(L));
+          else next = restTail.clone();
+        }
+      }
       // colliders (push tail out of leg / hip spheres)
       for (const col of cols) {
         const v = next.subtract(col.c); const r = col.r + opts.hitRadius * s; const vl = v.length();
