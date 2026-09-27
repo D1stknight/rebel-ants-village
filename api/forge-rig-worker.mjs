@@ -99,7 +99,7 @@ async function renderThumb({ glbUrl, name }) {
   try {
     await sandbox.runCommand({
       cmd: 'bash',
-      args: ['-c', `(curl -fsSL "$GLB" -o /tmp/in.glb && ${FW}/venv/bin/python ${FW}/thumb.py -- /tmp/in.glb /tmp/thumb.jpg 384) > /tmp/thumb.log 2>&1; echo $? > /tmp/thumb.done`],
+      args: ['-c', `(curl -fsSL "$GLB" -o /tmp/in.glb && ${FW}/venv/bin/python ${FW}/thumb.py -- /tmp/in.glb /tmp/thumb.jpg 640) > /tmp/thumb.log 2>&1; echo $? > /tmp/thumb.done`],
       env: { GLB: glbUrl },
       sudo: true,
       detached: true
