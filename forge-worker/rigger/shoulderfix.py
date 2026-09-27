@@ -6,7 +6,7 @@
 #  - the chest next to the armpit keeps only a fading bit of Arm weight;
 #  - then the shoulder weights are smoothed over the surface so there is no hard step.
 # usage: python3.13 shoulderfix.py -- in.blend out.blend
-import bpy, bmesh, sys, numpy as np
+import bpy, bmesh, sys, os, numpy as np
 a = sys.argv[sys.argv.index('--') + 1:]; src, dst = a
 bpy.ops.wm.open_mainfile(filepath=src)
 arm = bpy.data.objects['Armature']; me = [o for o in bpy.data.objects if o.type == 'MESH'][0]; P = 'mixamorig_'
@@ -81,10 +81,61 @@ for _ in range(6):
     Wn = 0.5 * W[:, cols] + 0.5 * avg
     s = Wn.sum(1) + 1e-12; Wn *= (tot_c / s)[:, None]             # keep the share the other bones (cloth, forearm) have
     W[np.ix_(region, cols)] = Wn[region]
+# 4) v2.4 the collar belongs to the chest: near the neck the shoulder (clavicle) weight hands over to Spine2, fading in
+# toward the shoulder joint. Shoulder weight on the collar dragged the two sides of the V-neck apart whenever the
+# shoulders swung (walk, run: #262 "the neck looks so wide").
+Nk = np.array((Aw @ arm.data.bones[P + 'Neck'].head_local)[:])
+for side in ('Left', 'Right'):
+    ish = gi(side + 'Shoulder'); A = np.array((Aw @ arm.data.bones[P + side + 'Arm'].head_local)[:])
+    span = abs(A[0] - Nk[0]) + 1e-6
+    dx = np.abs(co[:, 0] - Nk[0])
+    near = (co[:, 2] > A[2] - 0.6 * span) & (dx < span) & (W[:, ish] > 0)
+    f = smoothstep((dx - 0.35 * span) / (0.45 * span))
+    for i in np.nonzero(near)[0]:
+        old = W[i, ish]; new = old * f[i]; W[i, ish] = new; W[i, S2] += old - new
+    region |= near
+    print(f'shoulderfix {side}: collar verts handed to Spine2 {int(near.sum())}')
 for g in vg:
     if g.index >= W.shape[1]: continue
     col = W[:, g.index]; on = np.nonzero((col > 1e-4) & region)[0]; off = np.nonzero((col <= 1e-4) & region)[0]
     if len(off): g.remove(off.tolist())
     for i in on: g.add([int(i)], float(col[i]), 'REPLACE')
 print('shoulderfix smoothed verts', int(region.sum()))
+
+# 5) v2.4 calmer collarbones. Mocap collarbones swing a lot (walk ~38 deg, run ~27 deg): on a big-headed Rebel that drops
+# and rolls the shoulder under the robe and bunches the collar up around the neck. Keep CLAV_K of each collarbone
+# rotation and hand the rest to the upper arm, so the arm still points exactly where the clip puts it.
+import mathutils as mu
+CLAV_K = float(os.environ.get('FORGE_CLAV_K', '0.4'))
+def _bags(act):
+    for Ly in act.layers:
+        for st in Ly.strips:
+            for cb in st.channelbags: yield cb
+CLAV_SKIP = set(os.environ.get('FORGE_CLAV_SKIP', 'cartwheel,knockdown,get_up').split(','))   # hands plant on the ground
+n_fix = 0
+for act in bpy.data.actions:
+    if act.name in CLAV_SKIP: continue
+    for cb in _bags(act):
+        for side in ('Left', 'Right'):
+            sh, ar = P + side + 'Shoulder', P + side + 'Arm'
+            fs = [cb.fcurves.find(f'pose.bones["{sh}"].rotation_quaternion', index=i) for i in range(4)]
+            fa = [cb.fcurves.find(f'pose.bones["{ar}"].rotation_quaternion', index=i) for i in range(4)]
+            if not all(fs) or not all(fa) or len(fs[0].keyframe_points) != len(fa[0].keyframe_points): continue
+            nk = len(fs[0].keyframe_points)
+            S = np.zeros((4, nk * 2)); A = np.zeros((4, nk * 2))
+            for i in range(4): fs[i].keyframe_points.foreach_get('co', S[i]); fa[i].keyframe_points.foreach_get('co', A[i])
+            if not np.allclose(S[0][0::2], A[0][0::2]): continue
+            bs, ba = arm.data.bones[sh], arm.data.bones[ar]
+            R = (bs.matrix_local.inverted() @ ba.matrix_local).to_quaternion()      # arm rest relative to the collarbone
+            Ri = R.inverted(); I = mu.Quaternion()
+            for k in range(nk):
+                qs = mu.Quaternion([S[i][2 * k + 1] for i in range(4)]).normalized()
+                qa = mu.Quaternion([A[i][2 * k + 1] for i in range(4)]).normalized()
+                qs2 = I.slerp(qs, CLAV_K)
+                qa2 = Ri @ (qs2.inverted() @ qs) @ R @ qa
+                for i in range(4): S[i][2 * k + 1] = qs2[i]; A[i][2 * k + 1] = qa2[i]
+            for i in range(4):
+                fs[i].keyframe_points.foreach_set('co', S[i]); fa[i].keyframe_points.foreach_set('co', A[i]); fs[i].update(); fa[i].update()
+            n_fix += 1
+print('shoulderfix collarbones calmed (clip sides)', n_fix, 'k', CLAV_K)
 bpy.ops.wm.save_as_mainfile(filepath=dst)
