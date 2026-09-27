@@ -1,5 +1,5 @@
 {
- "version": "1.9g",
+ "version": "2.0",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
@@ -9,6 +9,10 @@
   "qa_job.py",
   "rigger/animstrip.py",
   "rigger/applyw.py",
+  "rigger/armorfit.py",
+  "rigger/armorfix.py",
+  "rigger/armpitfix.py",
+  "rigger/attachhead.py",
   "rigger/buildrig.py",
   "rigger/chains.py",
   "rigger/clothbones.py",
@@ -19,9 +23,12 @@
   "rigger/footfix.py",
   "rigger/gate.py",
   "rigger/glbio.py",
+  "rigger/glove.py",
   "rigger/handfix.py",
+  "rigger/handswap.py",
   "rigger/headfix.py",
   "rigger/landmarks.py",
+  "rigger/layerfix.py",
   "rigger/master.py",
   "rigger/mkw.py",
   "rigger/normalize.py",
@@ -30,18 +37,14 @@
   "rigger/qa.py",
   "rigger/render.py",
   "rigger/retarget.py",
+  "rigger/seamfix.py",
+  "rigger/shoulderfix.py",
   "rigger/sil.py",
   "rigger/skirtfix.py",
   "rigger/smoothfix.py",
   "rigger/views.py",
   "rigger/weights2.py",
   "setup.sh",
-  "thumb.py",
-  "rigger/layerfix.py",
-  "rigger/attachhead.py",
-  "rigger/armorfit.py",
-  "rigger/armorfix.py",
-  "rigger/armpitfix.py",
-  "rigger/seamfix.py"
+  "thumb.py"
  ]
 }
