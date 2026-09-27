@@ -58,6 +58,7 @@ step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/seamfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9d cut fingertips fused to the thigh
                  run "$R/handswap.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 standard 5-finger hands + hand poses
                  run "$R/shoulderfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 sleeves ride the arm
+                 run "$R/antennafix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.1 jointed antennae with follow-through
 step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=2048 FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
 step qa;         run "$FW/qa_job.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb" "$JOB/qa.json" "$JOB/log"
 step thumb;      "$PY" "$FW/thumb.py" -- "$JOB/rig.glb" "$JOB/thumb.jpg" 640 >> "$JOB/log" 2>&1 || echo "thumb failed (non-fatal)" >> "$JOB/log"

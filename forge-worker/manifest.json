@@ -1,5 +1,5 @@
 {
- "version": "2.0",
+ "version": "2.1",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
@@ -8,6 +8,7 @@
   "job.sh",
   "qa_job.py",
   "rigger/animstrip.py",
+  "rigger/antennafix.py",
   "rigger/applyw.py",
   "rigger/armorfit.py",
   "rigger/armorfix.py",
