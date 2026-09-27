@@ -80,13 +80,16 @@ function readMeshyCreatePayload(payload) {
     backImageUrl,
     productionReference,
     generationInput,
+    sideImageUrls: Array.isArray(body.sideImageUrls) ? body.sideImageUrls.filter((u) => typeof u === 'string').slice(0, 2) : [],
     requestedOptions: body.options || {}
   };
 }
 
-function buildMeshyRequest({ imageUrl, backImageUrl, requestedOptions }) {
+function buildMeshyRequest({ imageUrl, backImageUrl, sideImageUrls, requestedOptions }) {
   const options = requestedOptions || {};
-  const views = backImageUrl ? { image_urls: [imageUrl, backImageUrl] } : { image_url: imageUrl };
+  // front + back (+ up to two side views, admin): more views, fewer guessed surfaces (mask on the back of the head etc.)
+  const multi = [imageUrl, backImageUrl, ...(sideImageUrls || [])].filter(Boolean).slice(0, 4);
+  const views = multi.length > 1 ? { image_urls: multi } : { image_url: imageUrl };
 
   return {
     ...views,
@@ -197,6 +200,7 @@ export default async function handler(req, res) {
       if (rec?.engine?.taskId) return res.status(409).json({ ok: false, error: 'This build already has a 3D generation running or done' });
       const po = createPayload.requestedOptions || {};
       createPayload.requestedOptions = po.pose_mode === 'none' ? { pose_mode: 'none' } : {};
+      createPayload.sideImageUrls = [];   // side views: admin only for now
     }
     const meshyRequest = buildMeshyRequest(createPayload);
 
