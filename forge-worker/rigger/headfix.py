@@ -38,6 +38,24 @@ if hm:
     hg.add(rv, 1.0, 'REPLACE')
     print('headfix rigid head verts', len(rv))
     if 'FORGE_NECK_LIFT' not in os.environ: LIFT = 0.0      # rebuilt heads already sit right on the neck
+# v2.2 adaptive lift: only open the gap between the collar and the head up to a small natural neck. A fixed 2.2 % lift
+# stretched a thin sliver of neck into view on Rebels whose chin already sat just above the collar (#262 "giraffe").
+if LIFT > 0 and 'FORGE_NECK_LIFT' not in os.environ:
+    Mw_ = np.array(me.matrix_world); co_ = np.array([v.co[:] for v in me.data.vertices]) @ Mw_[:3, :3].T + Mw_[:3, 3]
+    gn = [g.name for g in me.vertex_groups]; Wg = np.zeros((len(co_), len(gn)))
+    for v in me.data.vertices:
+        for g in v.groups: Wg[v.index, g.group] = g.weight
+    tot_ = Wg.sum(1) + 1e-9
+    def share(ns): return Wg[:, [gn.index(P + n) for n in ns if P + n in gn]].sum(1) / tot_
+    headw = share(['Head']); torsow = share(['Spine2', 'Spine1', 'LeftShoulder', 'RightShoulder'])
+    Nk = np.array((Aw @ arm.data.bones[P + 'Neck'].head_local)[:]); Hh0 = co_[:, 2].max() - co_[:, 2].min()
+    front = (np.linalg.norm(co_[:, :2] - Nk[:2], axis=1) < 0.05 * Hh0) & (co_[:, 1] < Nk[1])
+    ct, hb = co_[front & (torsow > 0.5), 2], co_[front & (headw > 0.5), 2]
+    if len(ct) > 5 and len(hb) > 5:
+        gap = float(np.percentile(hb, 1) - np.percentile(ct, 99))
+        want = float(os.environ.get('FORGE_NECK_GAP', '0.008')) * Hh0
+        LIFT = max(0.0, min(LIFT * Hh0, want - gap)) / Hh0
+        print(f'headfix neck gap {gap:.4f} m, target {want:.4f} m -> lift {LIFT * Hh0:.4f} m')
 if LIFT > 0:
     zs = [(me.matrix_world @ v.co).z for v in me.data.vertices]; Hh = max(zs) - min(zs)
     dw = Vector((0, 0, LIFT * Hh))
