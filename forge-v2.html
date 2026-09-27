@@ -1881,7 +1881,12 @@ function updateTokPill() { const g = traitVal('Gang Names'); $('#tokPill').inner
     const [meta, assets] = await Promise.all([loadToken(state.token), loadAssets(state.token)]);
     state.meta = meta; state.assets = assets; updateTokPill();
     if (!S) S = recoverSession(assets);
-    if (S?.done && S.rigUrl) state.assets = { ...assets, glb: S.rigUrl, thumb: S.thumbUrl || assets.thumb, buildId: S.picked };
+    if (S?.done && S.rigUrl) {
+      // a re-rig (rigger fix) replaces the build's rig on the server: the server's current file wins over the one remembered here
+      const cur = (assets.builds || []).find((b) => b.buildId === S.picked && b.output?.forgeRigGlbUrl);
+      if (cur && cur.output.forgeRigGlbUrl !== S.rigUrl) { S.rigUrl = cur.output.forgeRigGlbUrl; S.thumbUrl = cur.output.forgeRigThumbUrl || S.thumbUrl; saveS(); }
+      state.assets = { ...assets, glb: S.rigUrl, thumb: S.thumbUrl || assets.thumb, buildId: S.picked };
+    }
     if (state.assets.glb) loadRebelOnce(state.assets.glb);
   }
   gsap.to('#loader', { opacity: 0, duration: 1, delay: 0.4, onComplete: () => $('#loader').remove() });
