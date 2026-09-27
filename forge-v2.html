@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Shippori+Mincho+B1:wght@500;700&family=Yuji+Syuku&family=Shojumaru&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --sumi:#0B0A0C; --ink:#17131A; --ash:#3A3238; --washi:#EFE6D2; --washi-dim:#b9ae99;
+  --sumi:#06070A; --ink:#17131A; --ash:#3A3238; --washi:#F4EEE2; --washi-dim:#c9c0ae;
   --ember:#FF6A1F; --molten:#FFB547; --whitehot:#FFF3D6; --shu:#C8321E; --sakura:#F4A7B9;
   --jade:#5CC8FF; --steel:#8FA3B8;
   --glow:#4FB8FF; --azure:#3D7BFF; --ice:#E2F0FF; --deep:#1A3E9E; --teal:#34E0D0; --indigo:#7A6BFF;
@@ -80,14 +80,14 @@ header{position:fixed;z-index:20;top:0;left:0;right:0;height:64px;display:flex;a
 
 /* ---------- panel ---------- */
 #panel{position:fixed;z-index:15;right:28px;top:88px;bottom:28px;width:min(400px,34vw);display:flex;flex-direction:column;pointer-events:none}
-.card{pointer-events:auto;--mx:30%;--my:0%;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.012) 40%,rgba(90,150,255,.035)),rgba(6,10,22,.22);backdrop-filter:blur(2.5px) saturate(1.35) contrast(1.05);-webkit-backdrop-filter:blur(2.5px) saturate(1.35) contrast(1.05);border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.30),inset 0 -1px 0 rgba(255,255,255,.06),inset 1px 0 0 rgba(255,255,255,.07),inset 0 0 30px rgba(90,150,255,.06),0 30px 70px -24px rgba(0,0,0,.75);border-radius:22px;padding:26px 26px 22px;position:relative;overflow:hidden;max-height:100%;overflow-y:auto;scrollbar-width:thin}
+.card{pointer-events:auto;--mx:30%;--my:0%;background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.01) 40%,rgba(90,150,255,.03)),rgba(5,8,18,.72);backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px) saturate(1.2);border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.30),inset 0 -1px 0 rgba(255,255,255,.06),inset 1px 0 0 rgba(255,255,255,.07),inset 0 0 30px rgba(90,150,255,.06),0 30px 70px -24px rgba(0,0,0,.75);border-radius:22px;padding:26px 26px 22px;position:relative;overflow:hidden;max-height:100%;overflow-y:auto;scrollbar-width:thin}
 .card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(380px circle at var(--mx) var(--my),rgba(255,255,255,.065),rgba(140,190,255,.02) 35%,transparent 60%);mix-blend-mode:screen;transition:background .15s}
 .card::after{content:"";position:absolute;left:18px;right:18px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(210,230,255,.55),transparent);pointer-events:none}
 .eyebrow{font-family:Cinzel,serif;font-size:11px;letter-spacing:.32em;color:var(--glow);display:flex;gap:10px;align-items:center}
 .eyebrow .jp{letter-spacing:.1em;color:var(--washi-dim)}
 h1{font-family:Cinzel,serif;font-weight:700;font-size:30px;line-height:1.1;margin:10px 0 10px;letter-spacing:.04em}
 h1 .tag{display:block;font-family:Cinzel,serif;font-size:12px;color:var(--washi-dim);letter-spacing:.28em;margin-top:8px;font-weight:500;text-transform:uppercase}
-p.lead{color:#cfc5b2;font-size:14px;line-height:1.6}
+p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .sep{height:1px;background:var(--line);margin:18px 0}
 .traits{display:grid;grid-template-columns:1fr;gap:6px}
 .trait{display:flex;justify-content:space-between;gap:12px;padding:9px 12px;border-radius:10px;background:rgba(239,230,210,.04);border:1px solid rgba(239,230,210,.06);font-size:13px;transition:all .4s}
@@ -402,17 +402,15 @@ const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: false, 
 engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, MOBILE ? 1.5 : 2));
 const scene = new BABYLON.Scene(engine);
 // opaque sumi background (additive glow needs an opaque target); CSS atmosphere is screen-blended on top
-scene.clearColor = new BABYLON.Color4(0.043, 0.039, 0.047, 1);
+scene.clearColor = new BABYLON.Color4(0.022, 0.026, 0.036, 1);
 scene.skipPointerMovePicking = true;
 (function atmosphere() {
   const W = 1024, Hh = 1024, t = new BABYLON.DynamicTexture('atmo', { width: W, height: Hh }, scene, false), c = t.getContext();
-  const lin = c.createLinearGradient(0, 0, 0, Hh); lin.addColorStop(0, '#0a0d10'); lin.addColorStop(0.6, '#0B0A0C'); lin.addColorStop(1, '#081014');
+  const lin = c.createLinearGradient(0, 0, 0, Hh); lin.addColorStop(0, '#05070b'); lin.addColorStop(0.6, '#06070a'); lin.addColorStop(1, '#050a12');
   c.fillStyle = lin; c.fillRect(0, 0, W, Hh);
   const blob = (x, y, rx, ry, col) => { c.save(); c.translate(x, y); c.scale(1, ry / rx); const g = c.createRadialGradient(0, 0, 0, 0, 0, rx); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(-rx, -rx, rx * 2, rx * 2); c.restore(); };
   c.globalCompositeOperation = 'lighter';
-  blob(W * 0.5, Hh * 1.1, W * 0.66, Hh * 0.44, 'rgba(56,182,255,.16)');
-  blob(W * 0.5, Hh * 0.55, W * 0.38, Hh * 0.3, 'rgba(61,123,255,.09)');
-  blob(W * 0.15, Hh * 0.1, W * 0.28, Hh * 0.28, 'rgba(56,182,255,.06)');
+  blob(W * 0.5, Hh * 1.1, W * 0.6, Hh * 0.36, 'rgba(40,120,255,.10)');   // v5: subtler (read as fog)
   t.update(); const L = new BABYLON.Layer('atmo', null, scene, true); L.texture = t;
 })();
 const cam = new BABYLON.ArcRotateCamera('cam', 1.9, 1.32, 5.6, new BABYLON.Vector3(0, 1.05, 0), scene);
@@ -435,7 +433,7 @@ try {
   hd.samples = MOBILE ? 2 : 4;
   hd.fxaaEnabled = false;
   hd.sharpenEnabled = !MOBILE; hd.sharpen.edgeAmount = 0.32; hd.sharpen.colorAmount = 1;
-  hd.bloomEnabled = true; hd.bloomThreshold = 0.82; hd.bloomWeight = 0.18; hd.bloomKernel = 48; hd.bloomScale = 0.5;
+  hd.bloomEnabled = true; hd.bloomThreshold = 0.9; hd.bloomWeight = 0.1; hd.bloomKernel = 32; hd.bloomScale = 0.5;
   hd.imageProcessingEnabled = true;
   hd.imageProcessing.vignetteEnabled = true; hd.imageProcessing.vignetteWeight = 1.2; hd.imageProcessing.vignetteColor = new BABYLON.Color4(0, 0, 0, 0); hd.imageProcessing.vignetteStretch = 0.4;
   window.__hd = hd;
@@ -455,7 +453,7 @@ const texSoft = spriteTex('soft', 'rgba(255,255,255,.9)', 'rgba(255,255,255,.25)
 (function groundEnso() {
   const t = new BABYLON.DynamicTexture('enso', { width: 1024, height: 1024 }, scene, false);
   const c = t.getContext(); c.clearRect(0, 0, 1024, 1024);
-  const g = c.createRadialGradient(512, 512, 40, 512, 512, 500); g.addColorStop(0, 'rgba(50,140,255,.26)'); g.addColorStop(.5, 'rgba(70,90,255,.07)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  const g = c.createRadialGradient(512, 512, 40, 512, 512, 500); g.addColorStop(0, 'rgba(50,140,255,.14)'); g.addColorStop(.5, 'rgba(70,90,255,.04)'); g.addColorStop(1, 'rgba(0,0,0,0)');
   c.fillStyle = g; c.fillRect(0, 0, 1024, 1024);
   c.lineCap = 'round';
   for (let i = 0; i < 340; i++) {
@@ -525,16 +523,17 @@ void main(){
   p += dir * uScatter * (0.6 + seed.x*2.2) + vec3(0.0, uScatter*uScatter*(0.6+seed.y), 0.0);
   gl_Position = worldViewProjection * vec4(p, 1.0);
   // colour
-  vec3 ember = vec3(1.0, 0.42, 0.12), molten = vec3(1.0, 0.71, 0.28), white = vec3(1.0, 0.95, 0.84), jade = vec3(0.25, 0.82, 0.66), shu = vec3(0.95, 0.35, 0.22);
-  vec3 c = kind < 0.5 ? ember : (kind < 1.5 ? molten : (kind < 2.95 ? jade : vec3(1.0, 0.6, 0.3)));
+  // v5: the Forge palette (deep blue, azure, ice white) instead of ember orange
+  vec3 ember = vec3(0.10, 0.30, 1.0), molten = vec3(0.42, 0.72, 1.0), white = vec3(0.93, 0.97, 1.0), jade = vec3(0.78, 0.90, 1.0), shu = vec3(0.32, 0.36, 1.0);
+  vec3 c = kind < 0.5 ? ember : (kind < 1.5 ? molten : (kind < 2.95 ? jade : vec3(0.30, 0.50, 1.0)));
   if (kind > 1.95 && kind < 2.95 && fract(kind*10.0+0.01) > 0.65) c = mix(jade, shu, 0.35);
   float band = exp(-pow((yN - uProgress)*38.0, 2.0)) * step(0.001, uProgress) * step(uProgress, 0.999);
   c = mix(c, mix(white, c, 0.35), locked * step(uProgress, 0.9999) * 0.55);
   c += white * band * 0.35;
   c = mix(c, mix(ember, molten, seed.z), m*0.7);
-  float a = uAlpha * built * (kind > 2.95 ? 0.35 : 1.0) * (1.0 - uScatter*0.9);
+  float a = uAlpha * built * (kind > 2.95 ? 0.12 : 1.0) * (1.0 - uScatter*0.9);
   a *= (0.55 + 0.45*(1.0 - chaos*0.6));
-  vColor = c; vA = a * (kind < 1.5 ? 0.55 : (kind < 2.95 ? 0.42 : 0.3));
+  vColor = c; vA = a * (kind < 1.5 ? 0.62 : (kind < 2.95 ? 0.45 : 0.2));
   float sz = (kind < 1.5 ? 2.6 : (kind > 2.95 ? 1.0 : 1.4)) + seed.y*1.2 + band*0.8;
   sz *= mix(1.0, 0.7, m);
   gl_PointSize = uPixel * sz / gl_Position.w;
@@ -595,7 +594,7 @@ function burst(y = 1, n = 260) { sparks.emitter = new BABYLON.Vector3((Math.rand
 const steam = new BABYLON.ParticleSystem('steam', 500, scene);
 steam.particleTexture = texSoft; steam.emitter = new BABYLON.Vector3(0, 0.1, 0);
 steam.minEmitBox = new BABYLON.Vector3(-0.8, 0, -0.5); steam.maxEmitBox = new BABYLON.Vector3(0.8, 0.2, 0.5);
-steam.color1 = new BABYLON.Color4(1, 0.95, 0.9, 0.18); steam.color2 = new BABYLON.Color4(0.8, 0.85, 0.9, 0.12); steam.colorDead = new BABYLON.Color4(0.6, 0.6, 0.6, 0);
+steam.color1 = new BABYLON.Color4(0.8, 0.9, 1, 0.08); steam.color2 = new BABYLON.Color4(0.6, 0.75, 1, 0.05); steam.colorDead = new BABYLON.Color4(0.6, 0.6, 0.6, 0);
 steam.minSize = 0.4; steam.maxSize = 1.3; steam.minLifeTime = 1.5; steam.maxLifeTime = 3.2; steam.emitRate = 0;
 steam.direction1 = new BABYLON.Vector3(-0.3, 1, -0.2); steam.direction2 = new BABYLON.Vector3(0.3, 1.4, 0.2); steam.minEmitPower = 0.6; steam.maxEmitPower = 1.4;
 steam.addSizeGradient(0, 0.4); steam.addSizeGradient(1, 1.6); steam.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
@@ -793,19 +792,19 @@ const COL = 'battle_for_colony';
 const VARIANTS = Math.max(1, Math.min(3, parseInt(Q.get('variants') || '3', 10) || 3));
 // Expected seconds per phase (defaults; refined in this browser by real runs). seg = trail segment (1 Ink, 2 Blueprint, 3 Forge).
 const PHASES = [
-  { id: 'concept', seg: 1, s: 80, label: 'Painting the concept' },
-  { id: 'prod', seg: 1, s: 80, label: 'Inking the clean reference' },
+  { id: 'concept', seg: 1, s: 50, label: 'Painting the concept' },
+  { id: 'prod', seg: 1, s: 55, label: 'Inking the clean reference' },
   { id: 'approve', seg: 1, s: 0, wait: true, label: 'Waiting for your approval' },
-  { id: 'back', seg: 2, s: 70, label: 'Drawing the back' },
-  { id: 'sides', seg: 2, s: 85, label: 'Drawing both sides' },
-  { id: 'meshy', seg: 3, s: 540, label: 'Sculpting 3 versions' },
-  { id: 'store', seg: 3, s: 20, label: 'Cooling the steel' },
+  { id: 'back', seg: 2, s: 50, label: 'Drawing the back' },
+  { id: 'sides', seg: 2, s: 55, label: 'Drawing both sides' },
+  { id: 'meshy', seg: 3, s: 420, label: 'Sculpting 3 versions' },
+  { id: 'store', seg: 3, s: 10, label: 'Cooling the steel' },
   { id: 'pick', seg: 3, s: 0, wait: true, label: 'Choose your version' },
-  { id: 'rig', seg: 3, s: 240, label: 'Bones and 24 moves' },
+  { id: 'rig', seg: 3, s: 180, label: 'Bones and 24 moves' },
   { id: 'done', seg: 4, s: 0, label: 'Forged' }
 ];
 const PH = Object.fromEntries(PHASES.map((p, i) => [p.id, { ...p, i }]));
-const EST_KEY = 'forgeV2:est:v1';
+const EST_KEY = 'forgeV2:est:v2';
 let EST = {}; try { EST = JSON.parse(localStorage.getItem(EST_KEY) || '{}') || {}; } catch (e) { EST = {}; }
 function expect(id) { const p = PH[id]; return p.wait ? 0 : Math.round(EST[id] || p.s); }
 function learn(id, secs) {
@@ -1544,8 +1543,9 @@ async function previewVersion(id) {
   } catch (e) { console.warn('preview', e); toast('Could not load this version'); }
 }
 function clearPreview(keepId) {
+  const had = !!previewObj || !!previewId;
   if (previewObj) { previewObj.meshes.forEach((m) => m.dispose()); previewObj.animationGroups.forEach((g) => g.dispose()); previewObj = null; }
-  if (!keepId) previewId = null;
+  if (!keepId) { previewId = null; if (had && state.step === 3) { gsap.to(U, { uAlpha: 1, duration: 0.8 }); camTo(STEPS[3].cam, 1.2); } }   // back to the forge helix
 }
 async function finishForge() {
   state.forging = false; state.forged = true; state.maxStep = 4; clearPreview();

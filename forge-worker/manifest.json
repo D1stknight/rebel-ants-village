@@ -1,5 +1,5 @@
 {
- "version": "1.9c",
+ "version": "1.9d",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
@@ -41,6 +41,7 @@
   "rigger/attachhead.py",
   "rigger/armorfit.py",
   "rigger/armorfix.py",
-  "rigger/armpitfix.py"
+  "rigger/armpitfix.py",
+  "rigger/seamfix.py"
  ]
 }

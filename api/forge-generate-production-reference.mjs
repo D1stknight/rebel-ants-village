@@ -1,6 +1,7 @@
 import { enforceRateLimit } from './_guard.mjs';
 import { forgeImageEdit, fetchImageAsDataUrl, FORGE_REFERENCE_URLS } from './_forge-image.mjs';
 import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
+import { resolveForgeSourceImage } from './_forge-source-image.mjs';
 
 const DEFAULT_SIZE = '1024x1536';
 
@@ -39,7 +40,7 @@ function parseInputImage({ selectedConceptImageDataUrl }) {
   return null;
 }
 
-function buildProductionReferencePrompt({ generationInput, selectedConcept }) {
+function buildProductionReferencePrompt({ generationInput, selectedConcept, hasNft = false }) {
   const tokenId = selectedConcept?.tokenId || generationInput?.tokenId || 'unknown';
   const rebelId = selectedConcept?.rebelId || generationInput?.rebelId || 'unknown';
   const collectionKey = selectedConcept?.collectionKey || generationInput?.collectionKey || 'battle_for_colony';
@@ -47,11 +48,12 @@ function buildProductionReferencePrompt({ generationInput, selectedConcept }) {
   const bodyType = selectedConcept?.bodyType || generationInput?.bodyType || 'universal_ant_v1';
 
   return `
-You will receive two reference images.
+You will receive ${hasNft ? 'three' : 'two'} reference images.
 
 Image 1 is the selected full-body Rebel Ant concept chosen by the user.
 Image 2 is a PROPORTIONS-ONLY reference: a grey clay render of the main playable Rebel character. Use it only for body proportions. Do not copy its face, mask, outfit, colors or props.
-Create a cleaner 3D production reference from that selected concept.
+${hasNft ? `Image 3 is the player's original NFT. THE HEAD MUST MATCH IMAGE 3: same face, head shape, eyes / eye covering, mouth or mouth mask, antennae and the same colours. If the concept's head differs from Image 3 (a different colour, a changed face, or an added hat, roof or headpiece that the NFT ant does not wear), follow Image 3. Scenery behind the ant in Image 3 (buildings, roofs, dojos, trees, sky) is never part of the character.
+` : ''}Create a cleaner 3D production reference from that selected concept.
 
 Goal:
 - Convert the selected concept into a cleaner front-facing production reference for a future 3D character pipeline.
@@ -171,14 +173,17 @@ export default async function handler(req, res) {
       });
     }
 
-    const prompt = buildProductionReferencePrompt({ generationInput, selectedConcept });
+    // v5: the NFT itself rides along so the head stays the player's Rebel (optional: never blocks the reference)
+    let nftDataUrl = null;
+    try { if (generationInput.sourceImage) nftDataUrl = await fetchImageAsDataUrl(await resolveForgeSourceImage(generationInput.sourceImage)); } catch (e) { console.warn('production ref: NFT image skipped', e?.message); }
+    const prompt = buildProductionReferencePrompt({ generationInput, selectedConcept, hasNft: !!nftDataUrl });
 
     const proportionsReferenceDataUrl = await fetchImageAsDataUrl(FORGE_REFERENCE_URLS.proportions);
 
     const { imageBase64, imageModel, attempts } = await forgeImageEdit({
       apiKey,
       prompt,
-      images: [selectedConceptImage, proportionsReferenceDataUrl],
+      images: nftDataUrl ? [selectedConceptImage, proportionsReferenceDataUrl, nftDataUrl] : [selectedConceptImage, proportionsReferenceDataUrl],
       size: DEFAULT_SIZE
     });
 

@@ -15,6 +15,10 @@ export function buildRigFriendlyRules(generationInput = {}, { view = 'front' } =
     '- No loose rope ends, tassels, ribbon tails, spikes or knots sticking out from the elbows, wrists, knees or ankles. Tie-offs are short and lie flat against the limb.',
     '- Keep a small gap between the hands and the robe/thighs; the hands must not touch the body or clothing.',
     '- HANDS: both hands are closed in relaxed fists (fingers curled into the palm, thumb resting over the index finger), in simple snug gloves if the outfit has gloves. No open palms, no spread or claw-like fingers.',
+    // v5 (9/27): #893's first Forge run turned the dojo roof from the NFT's background into a hat. The head is the NFT.
+    'HEAD = THE NFT (the owner must recognise their Rebel instantly):',
+    "- The head is copied exactly from the NFT: same face, same head shape, same eyes / eye covering, same mouth or mouth mask, same antennae, and the SAME COLOURS on all of them. Never recolour, redesign or add detail to the head.",
+    "- The only things on the head are what the ant itself wears in the NFT (its hat, helmet, bandana or mask traits). Buildings, roofs, pagodas, dojos, temples, gates, trees, clouds, suns, moons and anything else behind the ant are BACKGROUND SCENERY: never turn them into a hat, helmet, crown or headpiece. If the NFT ant wears no hat, the character wears no hat.",
     "- HEAD BASE: wherever headwear, masks, goggles or bandanas do not cover it, the ant's head and antennae are its plain BASE skin colour (the skin colour seen on the NFT's neck and face, usually a smooth warm tan). Mask or headwear colours, patterns, cracks and holes must NOT spread onto the bare parts of the head or the antennae.",
     // v5 (9/27): #4998 only came out clean in 3D once its design was simplified this way; #469/#1555 already were.
     'Clean 3D generation (an AI generator turns this drawing into ONE solid model; layers that float, overlap or hang away from the body come out broken, with holes and see-through gaps):',
