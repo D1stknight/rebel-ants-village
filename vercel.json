@@ -26,6 +26,9 @@
     },
     "api/forge-part-reference.mjs": {
       "maxDuration": 300
+    },
+    "api/forge-generate-side-reference.mjs": {
+      "maxDuration": 300
     }
   }
 }

@@ -200,7 +200,7 @@ export default async function handler(req, res) {
       if (rec?.engine?.taskId) return res.status(409).json({ ok: false, error: 'This build already has a 3D generation running or done' });
       const po = createPayload.requestedOptions || {};
       createPayload.requestedOptions = po.pose_mode === 'none' ? { pose_mode: 'none' } : {};
-      createPayload.sideImageUrls = [];   // side views: admin only for now
+      createPayload.sideImageUrls = (createPayload.sideImageUrls || []).filter((u) => isAllowedAssetUrl(u)).slice(0, 2);   // side views must be Forge assets too
     }
     const meshyRequest = buildMeshyRequest(createPayload);
 

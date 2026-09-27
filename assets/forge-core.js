@@ -767,65 +767,102 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         }
       }
 
-      const response = await fetch('/api/forge-build-3d-character', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          generationInput: window.forgeGenerationInput,
-          selectedConcept: concept,
-          productionReference: concept
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.ok) {
-        throw new Error(data.error || data.detail || '3D build request failed');
+      // v5: left + right profiles for 4-view Meshy (front, back, both sides). With front + back only Meshy still
+      // guessed the sides (e.g. #4998's mask wrapped around the head); all four views fixed it. ?FORGE_SIDE_VIEWS=false off.
+      if (!(concept.sideImageUrls && concept.sideImageUrls.length === 2) && window.FORGE_SIDE_VIEWS !== false) {
+        try {
+          if (typeof window.setForgeStatusHtml === 'function') {
+            window.setForgeStatusHtml('<span class="forge-loading-pulse">Drawing the side views for the 3D build...</span>', '');
+          }
+          const sides = await Promise.all(['left', 'right'].map(async (side) => {
+            const r = await fetch('/api/forge-generate-side-reference', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ generationInput: window.forgeGenerationInput, productionImageUrl: concept.imageUrl, backImageUrl: concept.backImageUrl || null, side })
+            });
+            const d = await r.json();
+            if (!r.ok || !d.ok) throw new Error(d.detail || d.error || 'Side view failed');
+            if (typeof uploadForgeConceptImageToServer !== 'function') return null;
+            const sideId = `${concept.id || concept.conceptId}_${side}`;
+            const up = await uploadForgeConceptImageToServer({
+              id: sideId, conceptId: sideId,
+              rebelId: concept.rebelId, tokenId: concept.tokenId, collectionKey: concept.collectionKey,
+              imageDataUrl: d.sideImage.dataUrl
+            });
+            return up && up.imageUrl ? up.imageUrl : null;
+          }));
+          if (sides.every(Boolean)) concept.sideImageUrls = sides;
+          window.lastForgeSideReferenceResponse = { sideImageUrls: concept.sideImageUrls || null };
+        } catch (sideErr) {
+          console.warn('Forge side views skipped (front + back Meshy build):', sideErr);
+        }
       }
 
-      window.lastForge3dBuildResponse = data;
+      // v5: several Meshy generations from the same four views; the player picks the best one to rig.
+      const variantCount = Math.max(1, Math.min(3, parseInt(window.FORGE_MESHY_VARIANTS, 10) || 3));
+      for (let variant = 1; variant <= variantCount; variant++) {
+        if (activeButton && variantCount > 1) activeButton.textContent = `Starting 3D version ${variant}/${variantCount}...`;
+        const response = await fetch('/api/forge-build-3d-character', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            generationInput: window.forgeGenerationInput,
+            selectedConcept: concept,
+            productionReference: concept
+          })
+        });
 
-      const buildRequest = data.buildRequest || null;
-      const buildId = buildRequest?.buildId || null;
+        const data = await response.json();
 
-      if (activeButton) {
-        activeButton.textContent = 'Starting Meshy...';
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || data.detail || '3D build request failed');
+        }
+
+        window.lastForge3dBuildResponse = data;
+
+        const buildRequest = data.buildRequest || null;
+        const buildId = buildRequest?.buildId || null;
+
+        if (activeButton) {
+          activeButton.textContent = 'Starting Meshy...';
+        }
+
+        if (typeof window.setForgeStatusHtml === 'function') {
+          window.setForgeStatusHtml('<span class="forge-loading-pulse">3D build queued. Starting Meshy generation...</span>', '');
+        }
+
+        const meshyResponse = await fetch('/api/forge-3d-engine-meshy-create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            buildId,
+            buildRequest,
+            generationInput: window.forgeGenerationInput,
+            productionReference: concept,
+            selectedConcept: concept,
+            sideImageUrls: concept.sideImageUrls || []
+          })
+        });
+
+        const meshyData = await meshyResponse.json();
+
+        if (!meshyResponse.ok || !meshyData.ok) {
+          throw new Error(meshyData.error || meshyData.detail || 'Meshy task start failed');
+        }
+
+        window.lastForgeMeshyCreateResponse = meshyData;
       }
-
-      if (typeof window.setForgeStatusHtml === 'function') {
-        window.setForgeStatusHtml('<span class="forge-loading-pulse">3D build queued. Starting Meshy generation...</span>', '');
-      }
-
-      const meshyResponse = await fetch('/api/forge-3d-engine-meshy-create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          buildId,
-          buildRequest,
-          generationInput: window.forgeGenerationInput,
-          productionReference: concept,
-          selectedConcept: concept
-        })
-      });
-
-      const meshyData = await meshyResponse.json();
-
-      if (!meshyResponse.ok || !meshyData.ok) {
-        throw new Error(meshyData.error || meshyData.detail || 'Meshy task start failed');
-      }
-
-      window.lastForgeMeshyCreateResponse = meshyData;
 
       if (activeButton) {
         activeButton.textContent = 'Meshy Started ✓';
       }
 
       if (typeof window.setForgeStatus === 'function') {
-        window.setForgeStatus('3D build queued and Meshy generation started. The status panel will track the model build.', 'success');
+        window.setForgeStatus(variantCount > 1 ? `${variantCount} 3D versions started from the front, back and side views. When they finish, pick the best one in the status panel and rig it.` : '3D build queued and Meshy generation started. The status panel will track the model build.', 'success');
       }
 
       if (typeof window.renderForge3dBuildStatusPanel === 'function') {
