@@ -14,6 +14,8 @@ KEEP = float(os.environ.get('FORGE_HEAD_KEEP', '0.1'))
 NECK_FOLLOW = float(os.environ.get('FORGE_NECK_FOLLOW', '0.8'))
 NECK_KEEP = float(os.environ.get('FORGE_NECK_KEEP', '0.3'))
 CLAMP = math.radians(float(os.environ.get('FORGE_HEAD_CLAMP', '12')))
+RELMAX_H = math.radians(float(os.environ.get('FORGE_HEAD_RELMAX', '8')))    # head: max chin-up against the chest line
+RELMAX_N = math.radians(float(os.environ.get('FORGE_NECK_RELMAX', '3')))    # neck: max lean-back against the chest line
 UPBIAS = math.radians(float(os.environ.get('FORGE_HEAD_UP', '0')))   # per-model: raise the chin (generators often seat the mask low)
 LIFT = float(os.environ.get('FORGE_NECK_LIFT', '0.022'))    # fraction of body height the head is raised off the collar
 SKIP = set(os.environ.get('FORGE_HEAD_SKIP', 'cartwheel,backflip,front_flip,flip_kick,spin_flip_kick,knockdown,get_up').split(','))
@@ -53,7 +55,7 @@ if LIFT > 0 and 'FORGE_NECK_LIFT' not in os.environ:
     ct, hb = co_[front & (torsow > 0.5), 2], co_[front & (headw > 0.5), 2]
     if len(ct) > 5 and len(hb) > 5:
         gap = float(np.percentile(hb, 1) - np.percentile(ct, 99))
-        want = float(os.environ.get('FORGE_NECK_GAP', '0.008')) * Hh0
+        want = float(os.environ.get('FORGE_NECK_GAP', '0.0')) * Hh0      # lift only a chin that sinks into the collar
         LIFT = max(0.0, min(LIFT * Hh0, want - gap)) / Hh0
         print(f'headfix neck gap {gap:.4f} m, target {want:.4f} m -> lift {LIFT * Hh0:.4f} m')
 if LIFT > 0:
@@ -105,6 +107,9 @@ def level(bone, follow, keep, clamp, frames_out):
         h = lean(Mw, F) - RLEAN[bone]
         t = max(-clamp, min(clamp, follow * c + keep * (h - c)))
         if bone == 'Head': t -= UPBIAS
+        # v2.2b: never tip back more than RELMAX against the chest line. Levelling the head while the chest leans forward
+        # (walk, run, guard) lifted the chin away from the collar and showed a long thin neck in every move (#262).
+        t = max(t, (c - RLEAN['Spine2']) - (RELMAX_H if bone == 'Head' else RELMAX_N))   # both relative to the rest pose
         before.append(math.degrees(h)); after.append(math.degrees(t))
         Rn = Quaternion(Y @ X, t) @ Y @ Rrest          # yaw kept, roll dropped, lean t about the yawed side axis
         Mn = Rn.to_matrix().to_4x4(); Mn.translation = Mw.translation
