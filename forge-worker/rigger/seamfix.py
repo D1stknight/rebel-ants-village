@@ -119,6 +119,45 @@ if cut:
     print('seamfix openings closed with faces', filled)
     loose = [e for e in ring if e.is_valid and not e.link_faces]
     if loose: bmesh.ops.delete(bm, geom=loose, context='EDGES')
+# v1.9g pieces the cut sets loose (#262 on the worker: fingertips beyond the hand's reach, fused only to the thigh, came
+# away as islands still weighted to UpLeg and floated at the hips). After the cut every small island rides with the
+# nearest vertex of the body, and a hand / forearm vertex within 1.5 cm wins over anything else.
+if cut and dl is not None:
+    bm.verts.ensure_lookup_table()
+    pid2 = [-1] * len(bm.verts); parts2 = []
+    for v0 in bm.verts:
+        if pid2[v0.index] >= 0: continue
+        st = [v0]; pid2[v0.index] = len(parts2); comp = []
+        while st:
+            v = st.pop(); comp.append(v)
+            for e in v.link_edges:
+                o2 = e.other_vert(v)
+                if pid2[o2.index] < 0: pid2[o2.index] = len(parts2); st.append(o2)
+        parts2.append(comp)
+    small2 = max(60, int(0.004 * len(bm.verts)))
+    big2 = [v for c in parts2 if len(c) > small2 for v in c]
+    if big2 and len(parts2) > 1:
+        def armdom(v):
+            d = dict(v[dl].items()); t = sum(d.values()) or 1e-9
+            return sum(w for k, w in d.items() if k < len(isarm) and isarm[k]) / t
+        bco = np.array([v.co[:] for v in big2]); tall = cKDTree(bco)
+        hand_big = [v for v in big2 if armdom(v) > 0.5]
+        th = cKDTree(np.array([v.co[:] for v in hand_big])) if hand_big else None
+        rebound = 0
+        for c in parts2:
+            if len(c) > small2: continue
+            pc = np.array([v.co[:] for v in c]); src = None
+            if th is not None:
+                dh, ih = th.query(pc)
+                if dh.min() < 0.015: src = hand_big[int(ih[int(np.argmin(dh))])]
+            if src is None:
+                da, ia = tall.query(pc); src = big2[int(ia[int(np.argmin(da))])]
+            w = dict(src[dl].items())
+            for v in c:
+                v[dl].clear()
+                for k, x in w.items(): v[dl][k] = x
+            rebound += 1
+        print('seamfix pieces loose after the cut bound to the nearest body vertex', rebound)
 bm.to_mesh(me.data); me.data.update()
 bm.free()
 print('seamfix hand/leg joining faces cut', len(cut))
