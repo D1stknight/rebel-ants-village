@@ -1108,7 +1108,9 @@ function antUpd() {
   const L = antT.v; const p = trailPath.getPointAtLength(L); const q = trailPath.getPointAtLength(Math.min(trailPath._L, L + 1));
   const a = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI + 90;
   const ant = $('#ant'); ant.style.left = p.x + 'px'; ant.style.top = p.y + 'px'; ant.style.transform = `rotate(${a}deg)`;
-  const tag = $('#antEta'); tag.style.left = (p.x + 16) + 'px'; tag.style.top = p.y + 'px';
+  // the time tag sits beside the ant; near a step node it drops below the node so it never covers the step name
+  const near = (trailPath._ys || []).some((y) => Math.abs(y - p.y) < 26);
+  const tag = $('#antEta'); tag.style.left = (p.x + 16) + 'px'; tag.style.top = (near ? p.y + 30 : p.y) + 'px';
   const H = trailPath.ownerSVGElement.getBoundingClientRect().height;
   trailPath.style.clipPath = `inset(0 0 ${Math.max(0, H - p.y)}px 0)`;
 }
@@ -1503,7 +1505,8 @@ function setForgeUI(P) {
   if (eta) eta.innerHTML = S.done ? 'Quenched. Your Rebel is ready to awaken.' : S.err ? 'Paused.' : S.phase === 'pick' ? 'All versions are ready. Tap one to see it, then forge it.' : `<b>${esc(PH[S.phase].label)}…</b> about ${fmtMin(P.rem)} left · started ${Math.max(1, Math.round(P.elapsed / 60))} min ago`;
   U.uProgress = Math.min(1, p);
   // the versions + stages update in place
-  const vers = card.querySelector('.vers'); if (vers && S.phase === 'meshy') vers.outerHTML = versionsHTML();
+  const vers = card.querySelector('.vers');
+  if (S.phase === 'meshy' && S.builds.length) { if (vers) vers.outerHTML = versionsHTML(); else { const e = $('#eta'); if (e) e.insertAdjacentHTML('afterend', versionsHTML()); } }
   const st = stageStates(); card.querySelectorAll('.stg').forEach((r, i) => { r.classList.toggle('run', st[i] === 'run'); r.classList.toggle('ok', st[i] === 'ok'); r.querySelector('.ss').textContent = st[i] === 'run' ? (i === 1 ? 'YOUR TURN' : 'FORGING') : st[i] === 'ok' ? 'DONE' : 'WAIT'; });
   if (S.phase === 'rig' || S.done) {
     const c = $('#comb'); if (c && c.classList.contains('hidden')) { c.classList.remove('hidden'); gsap.from(c, { opacity: 0, y: 10, duration: 0.5 }); }
