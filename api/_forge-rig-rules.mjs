@@ -9,21 +9,32 @@ function pretty(v) {
 // v6 (9/27) head-gear glossary from the NFT's own traits. The image model read #1555's eye patch + mouth bandana as one
 // big pale mask over the whole face, and #469's skull cap + flap as blond hair. Ant anatomy and every gear trait are
 // spelled out so the drawing keeps the real eyes, bare face and headwear.
+// What each Heads trait looks like (checked on the collection, 9/27; Miguel: some Rebels have hair, some came back
+// from war with metal on the head and face). Heads not listed are a plain ant head in the base skin colour.
+const HEAD_TYPES = {
+  'Antler-Arthur-Head': 'a tuft of real HAIR on top of the head between the antennae (red / orange / brown as in the NFT). Keep it as hair, same colour and shape.',
+  'Cranium-Casey-Head': 'a tuft of real HAIR on top of the head between the antennae (red / orange / brown as in the NFT). Keep it as hair, same colour and shape.',
+  'Feelers-Finn-Head': 'a battle-worn head: the top of the head is a dark METAL plate (war damage), and part of the face below the eyes is metal too where it is not covered. Hard, slightly shiny riveted metal as in the NFT, not cloth, not a helmet, not a mask.',
+  'Thorax-Theo-Head': 'MECHANICAL antennae: jointed metal rods with small round joints (as in the NFT), not organic stalks.'
+};
+
 export function headGearLines(ts = {}, view = 'front') {
   const has = (k) => ts[k] && String(ts[k]).toLowerCase() !== 'none';
   const P = (k) => pretty(ts[k]);
   const out = ['HEAD ANATOMY AND GEAR (read the NFT this way):',
-    "- Rebel Ants have NO hair. Anything on top of or around the head that could look like hair in the NFT is HEADWEAR (a cap, wrap or bandana) in its own colours, drawn as cloth with folds and a tied knot, never as hair."];
+    "- Copy exactly what is on and around the head in the NFT, keeping each material: real hair stays hair (only some Rebels have it), battle-worn metal plating stays hard metal, and caps, wraps and bandanas stay cloth with folds and a tied knot."];
+  const headType = HEAD_TYPES[String(ts.head || '').trim()];
+  if (headType) out.push(`- HEAD ("${P('head')}"): ${headType}`);
   const eyes = String(ts.eyes || '');
   if (/patch/i.test(eyes)) {
-    out.push(`- EYES ("${P('eyes')}"): the ant has two big compound eyes (large ovals filled with a fine grid of tiny squares). ONE of them is covered by an EYE PATCH (a flat patch with a strap, as in the NFT); the OTHER is a normal big compound eye with its grid of small squares, fully visible. Everything else on the upper face is the ant's bare base skin, not a mask.`);
+    out.push(`- EYES ("${P('eyes')}"): the ant has two big compound eyes (large ovals filled with a fine grid of tiny squares). ONE of them is covered by an EYE PATCH (a flat patch with a strap, as in the NFT); the OTHER is a normal big compound eye with its grid of small squares, fully visible. The rest of the upper face is exactly as in the NFT (bare skin, or metal on a battle-worn head), never a mask.`);
   } else if (eyes) {
     out.push(`- EYES ("${P('eyes')}"): two big compound eyes, large ovals filled with a fine grid of tiny squares, in the NFT's colours. They are the ant's real eyes (not goggles or a visor) and stay visible unless a ninja mask or full face mask in the NFT covers them.`);
   }
-  if (has('bandana')) out.push(`- BANDANA ("${P('bandana')}"): a cloth bandana tied over the MOUTH and lower face ONLY, from just under the eyes down over the chin, knotted at the back of the head. The eyes and the upper face stay uncovered (bare ant skin and eyes). It is NOT a full-face mask and never covers the eyes or the forehead.`);
+  if (has('bandana')) out.push(`- BANDANA ("${P('bandana')}"): a cloth bandana tied over the MOUTH and lower face ONLY, from just under the eyes down over the chin, knotted at the back of the head. The eyes and the upper face stay uncovered, exactly as in the NFT. It is NOT a full-face mask and never covers the eyes or the forehead.`);
   if (has('mouthMask')) out.push(`- MOUTH MASK ("${P('mouthMask')}"): a small mask over the mouth only; the eyes, cheeks above it and forehead stay bare.`);
   if (has('ninjaMask')) out.push(`- NINJA MASK ("${P('ninjaMask')}"): a cloth ninja wrap around the head and lower face, exactly as in the NFT, with the eyes showing through the opening.`);
-  if (has('skullCap')) out.push(`- SKULL CAP ("${P('skullCap')}"): a fitted cloth cap / head wrap covering the top and back of the head, in the NFT's colours and pattern. It is cloth headwear, NOT hair.`);
+  if (has('skullCap')) out.push(`- SKULL CAP ("${P('skullCap')}"): a fitted cloth cap / head wrap covering the top and back of the head, in the NFT's colours and pattern. It is cloth headwear, not hair.`);
   if (has('skullyFlap')) out.push(`- SKULLY FLAP ("${P('skullyFlap')}"): the tied knot and short cloth flap at the back of the skull cap / head wrap (it keeps the wrap from falling). Keep it short and lying close to the back of the head; it is part of the cap, not hair.`);
   if (has('foreheadBandana')) out.push(`- FOREHEAD BANDANNA ("${P('foreheadBandana')}"): a cloth band tied around the forehead ABOVE the eyes; the eyes and face stay visible.`);
   if (has('bandanaTail')) out.push(`- BANDANA TAILS ("${P('bandanaTail')}"): the knotted tails of the headband at the back of the head, short and lying close to the head.`);
