@@ -12,12 +12,15 @@ function buildSidePrompt(generationInput = {}, side = 'left', hasBack = false) {
   // v7 (9/28): "the character's LEFT/RIGHT side" alone was ambiguous: the image model drew both profiles facing the
   // left edge (#1555, #469), so Meshy got two left views. Name the facing direction on the canvas as well.
   const FACE = side === 'right' ? 'RIGHT' : 'LEFT';
-  const BODY = side === 'right' ? "right arm, right shoulder and right leg are nearest to us; the left arm is hidden behind the body" : "left arm, left shoulder and left leg are nearest to us; the right arm is hidden behind the body";
+  // v7b: one-sided details came out mirrored (#1555's patch, #469's red eye): the model read "the character's left" as the
+  // viewer's left. Say which HALF OF IMAGE 1 is nearest to us instead.
+  const HALF = side === 'right' ? 'LEFT' : 'RIGHT';
+  const OTHER = side === 'right' ? 'RIGHT' : 'LEFT';
   return `
 Image 1 is the FRONT view of a stylised Rebel Ant game character in a neutral A-pose.${hasBack ? ' Image 2 is the same character seen from BEHIND.' : ''}
 Draw the SAME character turned 90 degrees so we see the character's ${S} side in exact profile: an orthographic side view for a 3D modelling turnaround.
-FACING DIRECTION (critical): the character faces the ${FACE} EDGE of the image. The face, chest and toes point to the ${FACE.toLowerCase()} side of the canvas; the back of the head and the heels point the other way. The character's ${BODY}.
-Anything that is only on one side of the character (eye patch, single shoulder plate, sash end, pouch) must be on the correct side: exactly as it would be seen from the character's ${S.toLowerCase()} in Image 1.
+FACING DIRECTION (critical): the character faces the ${FACE} EDGE of the image. The face, chest and toes point to the ${FACE.toLowerCase()} side of the canvas; the back of the head and the heels point the other way.
+WHICH SIDE IS NEAREST (critical): the half of the character that appears on the ${HALF} half of Image 1 is the half nearest to us in this view. Everything that is on the ${HALF} half of Image 1 (for example the eye, eye patch, shoulder plate, arm guard or pouch on the ${HALF} of Image 1) is visible and in front; everything on the ${OTHER} half of Image 1 is hidden behind the head and body. Check the eyes: the eye shown here must be the one on the ${HALF} of Image 1, with the same look (patch or compound eye).
 
 Match Image 1 exactly:
 - Same A-pose seen from the side (the ${S.toLowerCase()} arm hangs slightly away from the body), same height, same scale, same feet position on the canvas, head-to-feet in frame.
