@@ -42,6 +42,7 @@ core = np.setdiff1d(hv, np.concatenate(seeds) if seeds else [])
 cc0 = co[core].mean(0); _, _, Vt = np.linalg.svd(co[core] - cc0, full_matrices=False)
 rad = np.percentile(np.abs((co[core] - cc0) @ Vt.T), 97, axis=0)
 dn = np.linalg.norm(((co - cc0) @ Vt.T) / rad, axis=1)
+hz = float(np.percentile(np.abs(co[core][:, 2] - cc0[2]), 97))
 outside = (dn > 1.03) & (hw > 0.3)
 stalks = []
 for s in seeds:
@@ -59,8 +60,10 @@ for s in seeds:
         g = np.array([dist.get(int(i), np.nan) for i in cc]); ok = ~np.isnan(g); cc, g = cc[ok], g[ok]
         G = float(g.max()); bctr = co[base].mean(0)
         width = float(np.median(np.linalg.norm(co[cc[g < 0.25 * G]] - co[cc[g < 0.25 * G]].mean(0), axis=1))) + 1e-6
-        up = (bctr - cc0) @ Vt[0] * np.sign(Vt[0][2] or 1)                   # base on the upper half of the head
-        if G < 3.0 * width or up < -0.2 * rad[0]:
+        # base on the upper half of the head, measured on world Z (v2.5: a tall head wrap turned the head's main axis
+        # sideways and the test threw away #469's long antenna)
+        up = bctr[2] - cc0[2]
+        if G < 3.0 * width or up < -0.2 * hz:
             print(f'antennafix: skipped a piece ({len(cc)} verts, length {G:.3f}, width {width:.3f})'); continue
         # joints: centroids of thin bands at 0, 1/3, 2/3 and the tip
         J = []

@@ -87,6 +87,13 @@ def lean(M, F):
 
 
 RLEAN = {n: lean(m, FWD) for n, m in REST.items()}
+# v2.5 the chest-line rest lean for the chin-up floor: the Spine2 bone alone can tip far back when the generator's torso
+# places the spine joints in a zigzag (#469 re-forge: Spine2 -28 deg), which pushed the head down onto the chest in
+# every move. Use the Hips -> Neck line instead (about upright on every Rebel).
+_h0 = Aw @ arm.data.bones[P + 'Hips'].head_local; _n0 = Aw @ arm.data.bones[P + 'Neck'].head_local
+CHEST0 = math.atan2((_n0 - _h0).dot(FWD), (_n0 - _h0).z)
+print('headfix rest lean Spine2 %.1f, chest line %.1f' % (math.degrees(RLEAN['Spine2']), math.degrees(CHEST0)))
+if abs(RLEAN['Spine2'] - CHEST0) < math.radians(10): CHEST0 = RLEAN['Spine2']     # normal spines keep the v2.3 behaviour
 
 
 def level(bone, follow, keep, clamp, frames_out):
@@ -109,7 +116,7 @@ def level(bone, follow, keep, clamp, frames_out):
         if bone == 'Head': t -= UPBIAS
         # v2.2b: never tip back more than RELMAX against the chest line. Levelling the head while the chest leans forward
         # (walk, run, guard) lifted the chin away from the collar and showed a long thin neck in every move (#262).
-        t = max(t, (c - RLEAN['Spine2']) - (RELMAX_H if bone == 'Head' else RELMAX_N))   # both relative to the rest pose
+        t = max(t, (c - CHEST0) - (RELMAX_H if bone == 'Head' else RELMAX_N))   # both relative to the rest pose
         before.append(math.degrees(h)); after.append(math.degrees(t))
         Rn = Quaternion(Y @ X, t) @ Y @ Rrest          # yaw kept, roll dropped, lean t about the yawed side axis
         Mn = Rn.to_matrix().to_4x4(); Mn.translation = Mw.translation
