@@ -90,11 +90,39 @@ function pretty(v) {
   return v ? String(v).replace(/-/g, ' ').replace(/\s+\d+$/, '').trim() : null;
 }
 
+// Suits that are NOT a kimono (checked on the collection 9/27: 10-11 Rebels wear each ranger suit / the astronaut suit,
+// ~50 the military suit). For these the NFT's suit is the outfit: no colony robe, no samurai variation.
+export const SPECIAL_SUITS = {
+  'Blue-Ranger': 'a fitted full-body HERO SUIT in glossy royal blue (a sentai-style ranger suit, not a real Power Ranger): smooth fitted suit, sculpted armoured chest plate and rounded shoulder pads in the same blue with thin dark outline trim, a black diamond / chevron emblem in the centre of the chest, matching fitted gloves and boots, a simple belt. No kimono, no robe, no sash, no hakama.',
+  'Red-Ranger': 'a fitted full-body HERO SUIT in glossy red-orange (a sentai-style ranger suit, not a real Power Ranger): smooth fitted suit, sculpted armoured chest plate and rounded shoulder pads in the same red with thin dark outline trim, a black diamond / chevron emblem in the centre of the chest, matching fitted gloves and boots, a simple belt. No kimono, no robe, no sash, no hakama.',
+  'Astronaut': 'a white / cream SPACE SUIT: padded suit with ribbed accordion rings on the arms, legs and neck ring, a chest control panel with small lights, fitted space gloves and chunky-but-compact space boots, as in the NFT. No kimono, no robe, no sash.',
+  'Military-Suit': 'a green MILITARY DRESS UNIFORM as in the NFT: tailored jacket with collar, shirt and tie, buttons and pockets, matching trousers and fitted black boots, a plain belt. No kimono, no robe, no sash, no armour.'
+};
+
+export function specialSuit(generationInput) {
+  return SPECIAL_SUITS[String(generationInput?.traitSlots?.outfit || '').trim()] || null;
+}
+
 export function buildOutfitDesignBlock(generationInput) {
   const colony = generationInput?.colony || generationInput?.traitSlots?.colony || null;
   const brief = (colony && COLONY_OUTFIT_BRIEFS[colony]) || DEFAULT_BRIEF;
   const outfitTrait = pretty(generationInput?.traitSlots?.outfit);
   const v = pickOutfitVariation(generationInput || {});
+  const suit = specialSuit(generationInput);
+  if (suit) {
+    return {
+      colony,
+      variation: null,
+      special: generationInput.traitSlots.outfit,
+      text: `
+OUTFIT DESIGN (this is what makes this Rebel unique, so follow it closely):
+- This Rebel wears a special suit ("${outfitTrait}") and NOT a kimono: ${suit}
+- Continue the NFT's suit downward exactly (same colours, panels, trim and materials) into a full-body suit.
+- Ignore any other mention of robes, sashes, hakama, wraps or samurai armour in these instructions: they do not apply to this suit.
+- Keep it clean and fitted to the body so it rigs well; the suit's hard parts (chest plate, shoulder pads, panels) may be smooth and slightly glossy.
+`.trim()
+    };
+  }
 
   return {
     colony,

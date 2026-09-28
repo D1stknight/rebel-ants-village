@@ -11,22 +11,41 @@ function pretty(v) {
 // spelled out so the drawing keeps the real eyes, bare face and headwear.
 // What each Heads trait looks like (checked on the collection, 9/27; Miguel: some Rebels have hair, some came back
 // from war with metal on the head and face). Heads not listed are a plain ant head in the base skin colour.
+const HOOD = 'a cloth HOOD (the hooded ninja look, only 4 Rebels have it): a snug hood in the NFT\'s colour with its contrasting trim, pulled over the whole head and framing the face, the antennae coming out through the top of the hood. Inside the hood opening the face sits in deep shadow (very dark), with only what the NFT shows visible: the eyes / eye patch, mouth wrap or bare face exactly as in the NFT. The hood is part of the upper garment and lies close to the head, no big loose folds.';
+
 const HEAD_TYPES = {
   'Antler-Arthur-Head': 'a tuft of real HAIR on top of the head between the antennae (red / orange / brown as in the NFT). Keep it as hair, same colour and shape.',
   'Cranium-Casey-Head': 'a tuft of real HAIR on top of the head between the antennae (red / orange / brown as in the NFT). Keep it as hair, same colour and shape.',
   'Feelers-Finn-Head': 'a battle-worn head: the top of the head is a dark METAL plate (war damage), and part of the face below the eyes is metal too where it is not covered. Hard, slightly shiny riveted metal as in the NFT, not cloth, not a helmet, not a mask.',
-  'Thorax-Theo-Head': 'MECHANICAL antennae: jointed metal rods with small round joints (as in the NFT), not organic stalks.'
+  'Thorax-Theo-Head': 'MECHANICAL antennae: jointed metal rods with small round joints (as in the NFT), not organic stalks.',
+  // the 4 hooded Rebels (one of each)
+  'Blue-Kimono-Head-1': HOOD,
+  'Blue-Kimono-Head-2': HOOD,
+  'Red-Kimono-Head-1': HOOD,
+  'Red-Kimono-Head-2': HOOD
+};
+
+// Head Accessories as they look in the collection.
+const HEAD_ACCESSORIES = {
+  'Space-Helmet': 'a round astronaut SPACE HELMET: a cream / white helmet shell with side lights, and a large dark tinted, glossy visor over the face (draw the visor as dark smoked glass with a soft reflection, opaque enough that it reads as one solid glass surface). The antennae come out through the top of the helmet. It sits on the suit\'s neck ring.',
+  'Roman-Helmet': 'a black ROMAN legionary helmet with cheek guards and a short upright crest on top, as in the NFT; the eyes and face below the brim stay as in the NFT.',
+  'Army-Hat': 'a green ARMY peaked cap with the emblem on the front, as in the NFT; the eyes and face below stay as in the NFT.',
+  'Army-Helmet': 'a green ARMY combat helmet with its strap, as in the NFT; the eyes and face below stay as in the NFT.',
+  'Rebel-Tape': 'a strip of tape across the MOUTH with the writing on it, as in the NFT; the rest of the face stays as in the NFT.'
 };
 
 export function headGearLines(ts = {}, view = 'front') {
   const has = (k) => ts[k] && String(ts[k]).toLowerCase() !== 'none';
   const P = (k) => pretty(ts[k]);
   const out = ['HEAD ANATOMY AND GEAR (read the NFT this way):',
-    "- Copy exactly what is on and around the head in the NFT, keeping each material: real hair stays hair (only some Rebels have it), battle-worn metal plating stays hard metal, and caps, wraps and bandanas stay cloth with folds and a tied knot."];
+    "- Copy exactly what is on and around the head in the NFT, keeping each material: real hair stays hair (only some Rebels have it), battle-worn metal plating stays hard metal, helmets stay hard shells, and caps, hoods, wraps and bandanas stay cloth with folds and a tied knot."];
   const headType = HEAD_TYPES[String(ts.head || '').trim()];
   if (headType) out.push(`- HEAD ("${P('head')}"): ${headType}`);
   const eyes = String(ts.eyes || '');
-  if (/patch/i.test(eyes)) {
+  const covered = has('rangerHelmet') || String(ts.headAccessory || '') === 'Space-Helmet';
+  if (covered) {
+    // the eyes are behind the helmet visor
+  } else if (/patch/i.test(eyes)) {
     out.push(`- EYES ("${P('eyes')}"): the ant has two big compound eyes (large ovals filled with a fine grid of tiny squares). ONE of them is covered by an EYE PATCH (a flat patch with a strap, as in the NFT); the OTHER is a normal big compound eye with its grid of small squares, fully visible. The rest of the upper face is exactly as in the NFT (bare skin, or metal on a battle-worn head), never a mask.`);
   } else if (eyes) {
     out.push(`- EYES ("${P('eyes')}"): two big compound eyes, large ovals filled with a fine grid of tiny squares, in the NFT's colours. They are the ant's real eyes (not goggles or a visor) and stay visible unless a ninja mask or full face mask in the NFT covers them.`);
@@ -38,8 +57,10 @@ export function headGearLines(ts = {}, view = 'front') {
   if (has('skullyFlap')) out.push(`- SKULLY FLAP ("${P('skullyFlap')}"): the tied knot and short cloth flap at the back of the skull cap / head wrap (it keeps the wrap from falling). Keep it short and lying close to the back of the head; it is part of the cap, not hair.`);
   if (has('foreheadBandana')) out.push(`- FOREHEAD BANDANNA ("${P('foreheadBandana')}"): a cloth band tied around the forehead ABOVE the eyes; the eyes and face stay visible.`);
   if (has('bandanaTail')) out.push(`- BANDANA TAILS ("${P('bandanaTail')}"): the knotted tails of the headband at the back of the head, short and lying close to the head.`);
-  if (has('rangerHelmet')) out.push(`- RANGER HELMET ("${P('rangerHelmet')}"): the helmet exactly as in the NFT, sitting on the head; the face and eyes below it stay as in the NFT.`);
-  if (has('headAccessory')) out.push(`- HEAD ACCESSORY ("${P('headAccessory')}"): worn on the head exactly as in the NFT, small and close to the head.`);
+  if (has('rangerHelmet')) out.push(`- RANGER HELMET ("${P('rangerHelmet')}"): a full HERO HELMET that covers the WHOLE head (only 2 Rebels have it; sentai style, not a real Power Ranger): a smooth, glossy hard shell in the suit colour with the sculpted lines of the NFT, and a big black visor shaped exactly as in the NFT (with its white fang shapes). No face, skin or eyes are visible; the visor is the face. The antennae come out through the top of the helmet. The helmet fits the head closely, like the NFT.`);
+  const acc = HEAD_ACCESSORIES[String(ts.headAccessory || '').trim()];
+  if (acc) out.push(`- HEAD ACCESSORY ("${P('headAccessory')}"): ${acc}`);
+  else if (has('headAccessory')) out.push(`- HEAD ACCESSORY ("${P('headAccessory')}"): worn on the head exactly as in the NFT, small and close to the head.`);
   if (view === 'back') out.push('- From behind: show the back of the head gear only (cap, knot, flap, straps and bandana knots); eyes and face are not visible.');
   return out;
 }
