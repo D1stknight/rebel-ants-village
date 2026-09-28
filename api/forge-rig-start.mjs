@@ -6,21 +6,36 @@
 // characters: a separately generated armour set fitted onto the body) and cutBridges (cut hand-to-robe bridge faces).
 // One rig per build (idempotent). Re-rigging an already rigged build (force) is admin-only.
 import { isAdminRequest } from './_admin-auth.mjs';
+import { getToken } from './_nft.mjs';
 import { enforceRateLimit } from './_guard.mjs';
 import { Sandbox, creds, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, loadBuild, updateRigging, sourceGlbUrl, sanitize, body } from './_forge-rig.mjs';
 
 const SOURCE_OK = /^https:\/\/(raw\.githubusercontent\.com\/D1stknight\/rebel-ants-village\/[\w.-]+\/assets\/forge\/sources\/[\w.-]+\.glb|[a-z0-9]+\.public\.blob\.vercel-storage\.com\/[\w./-]+\.glb)$/;
 const ANCHORS_OK = /^https:\/\/raw\.githubusercontent\.com\/D1stknight\/rebel-ants-village\/[\w.-]+\/assets\/forge\/sources\/[\w.-]+\.json$/;
+// v2.9 head size: only plain and hair heads are checked against #262. A helmet, hood, space helmet or mask (full face
+// or ninja wrap) means the head is never touched. Unknown traits -> not checked.
+async function headAutoFor(rec) {
+  try {
+    if (!rec?.tokenId) return false;
+    const tok = await getToken(rec.collectionKey || 'battle_for_colony', String(rec.tokenId));
+    if (!tok?.traits?.length) return false;
+    const tr = Object.fromEntries(tok.traits.map((x) => [x.trait_type, String(x.value || '')]));
+    const has = (k) => tr[k] && !/^none$/i.test(tr[k]);
+    const gear = has('Ranger Helmets') || has('Full Face Masks') || has('Ninja Masks') || /Kimono-Head/i.test(tr['Heads'] || '') || /Helmet|Hat/i.test(tr['Head Accessories'] || '');
+    return !gear;
+  } catch (e) { return false; }
+}
 const DAILY_LIMIT = parseInt(process.env.FORGE_RIG_DAILY_LIMIT || '200', 10);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
-  const { buildId, force, sourceUrl, skirtfix, headUp, headUrl, armorUrl, anchorsUrl, cutBridges } = body(req);
+  const { buildId, force, sourceUrl, skirtfix, headUp, headUrl, armorUrl, anchorsUrl, cutBridges, headScale } = body(req);
   if (!buildId) return res.status(400).json({ ok: false, error: 'Missing buildId' });
   try {
     const rec = await loadBuild(buildId);
     const admin = isAdminRequest(req);
-    if ((sourceUrl || skirtfix || headUp || headUrl || armorUrl || anchorsUrl || cutBridges) && !admin) return res.status(401).json({ ok: false, error: 'sourceUrl / skirtfix / headUp / headUrl / armorUrl / anchorsUrl / cutBridges require admin' });
+    if ((sourceUrl || skirtfix || headUp || headUrl || armorUrl || anchorsUrl || cutBridges || headScale) && !admin) return res.status(401).json({ ok: false, error: 'sourceUrl / skirtfix / headUp / headUrl / armorUrl / anchorsUrl / cutBridges / headScale require admin' });
+    const hs = headScale == null || headScale === '' ? null : Number(headScale); if (hs !== null && (!Number.isFinite(hs) || hs < 0.8 || hs > 1.1)) return res.status(400).json({ ok: false, error: 'headScale must be 0.8..1.1' });
     const up = Number(headUp || 0); if (!Number.isFinite(up) || up < -20 || up > 25) return res.status(400).json({ ok: false, error: 'headUp must be -20..25 degrees' });
     if (sourceUrl && !SOURCE_OK.test(String(sourceUrl))) return res.status(400).json({ ok: false, error: 'sourceUrl must be a GLB in this repo or our Blob store' });
     if (headUrl && !SOURCE_OK.test(String(headUrl))) return res.status(400).json({ ok: false, error: 'headUrl must be a GLB in this repo or our Blob store' });
@@ -45,6 +60,7 @@ export default async function handler(req, res) {
     if (!worker?.snapshotId) return res.status(503).json({ ok: false, error: 'Rig worker is not built yet' });
 
     const name = `rebel${sanitize(rec.tokenId || rec.rebelId, 'x')}`;
+    const headAuto = hs === null ? await headAutoFor(rec) : false;
     const sandbox = await Sandbox.create({
       source: { type: 'snapshot', snapshotId: worker.snapshotId },
       persistent: false,
@@ -56,7 +72,7 @@ export default async function handler(req, res) {
     const cmd = await sandbox.runCommand({
       cmd: 'bash',
       args: ['-c', `mkdir -p ${JOB_DIR} && bash ${FW}/job.sh "$SRC_URL" "$RIG_NAME" ${JOB_DIR}`],
-      env: { SRC_URL: src, RIG_NAME: name, ...(skirtfix ? { FORGE_SKIRTFIX: '1', FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(up ? { FORGE_HEAD_UP: String(up) } : {}), ...(headUrl ? { FORGE_HEAD_URL: String(headUrl) } : {}), ...(armorUrl ? { FORGE_ARMOR_URL: String(armorUrl), FORGE_ANCHORS_URL: String(anchorsUrl) } : {}), ...(cutBridges && !skirtfix ? { FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}) },
+      env: { SRC_URL: src, RIG_NAME: name, ...(skirtfix ? { FORGE_SKIRTFIX: '1', FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(up ? { FORGE_HEAD_UP: String(up) } : {}), ...(headUrl ? { FORGE_HEAD_URL: String(headUrl) } : {}), ...(armorUrl ? { FORGE_ARMOR_URL: String(armorUrl), FORGE_ANCHORS_URL: String(anchorsUrl) } : {}), ...(cutBridges && !skirtfix ? { FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(hs !== null ? { FORGE_HEAD_SCALE: String(hs) } : {}), ...(headAuto ? { FORGE_HEAD_AUTO: '1' } : {}) },
       sudo: true,
       detached: true
     });
@@ -68,7 +84,7 @@ export default async function handler(req, res) {
       cmdId: cmd.cmdId,
       workerCommit: worker.commit || null,
       sourceGlbUrl: src,
-      options: { skirtfix: !!skirtfix, headUp: up || 0, headUrl: headUrl || null, armorUrl: armorUrl || null, anchorsUrl: anchorsUrl || null, cutBridges: !!cutBridges },
+      options: { skirtfix: !!skirtfix, headUp: up || 0, headUrl: headUrl || null, armorUrl: armorUrl || null, anchorsUrl: anchorsUrl || null, cutBridges: !!cutBridges, headScale: hs, headAuto },
       startedAt: new Date().toISOString(),
       finishedAt: null,
       error: null

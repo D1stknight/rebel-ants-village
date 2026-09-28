@@ -41,6 +41,7 @@ step weights;    run "$R/weights2.py"
 step bind;       run "$R/applyw.py" -- "$O/rigged.blend" "$O/proxyW_g.npz" "$O/weighted.blend"
                  run "$R/fixarm.py" -- "$O/weighted.blend" "$O/weighted.blend"
                  run "$R/armorfix.py" -- "$O/weighted.blend" "$O/weighted.blend"   # v1.9 part-built armour rides its bone
+                 run "$R/headsize.py" -- "$O/weighted.blend" "$O/weighted.blend"   # v2.9 heads at #262's size
 step hands;      run "$R/handfix.py" -- "$O/weighted.blend" "$O/weighted_hf.blend"
 # TRELLIS sources: open cloth sheets + floating shells (tassels, rope ends) move rigidly (v1.8, opt-in)
 if [ "${FORGE_SKIRTFIX:-0}" = "1" ]; then run "$R/skirtfix.py" -- "$O/weighted_hf.blend" "$O/weighted_hf.blend"; fi
