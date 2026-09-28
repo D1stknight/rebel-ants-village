@@ -57,6 +57,13 @@ for side in ('Left', 'Right'):
     # wrist girth: the glove cuff should fill the sleeve opening, not float inside it
     ring = (np.abs(tt) < 0.015) & (armw > 0.5)
     girth = float(np.percentile(rr[ring], 92)) if ring.sum() > 10 else 0.16 * L
+    # v2.6 a wrist ring that picked up the body (arms hanging against the torso) made giant disc cuffs: keep the girth
+    # within what a forearm can be for this hand
+    girth_raw = girth; girth = float(np.clip(girth, 0.14 * L, 0.32 * L))
+    # v2.6 where the sleeve / bracer really ends (along the forearm, from the wrist joint): the cuff only widens to the
+    # sleeve's girth behind this point, so no wide ring of glove shows past the end of an arm guard (#1555)
+    shell = (armw > 0.5) & ~(((handw > 0.5) & (tt > -0.004)) | ((armw > 0.5) & (tt > 0.012) & (rr < 0.9 * L))) & (rr > 0.5 * girth) & (tt > -0.08) & (tt < 0.03)
+    bend = float(np.percentile(tt[shell], 98)) if shell.sum() > 10 else 0.0
     col = np.array([0.05, 0.05, 0.06])
     if IMG is not None and uvl is not None:
         idx = set(np.nonzero(own)[0].tolist()); samp = []
@@ -66,14 +73,43 @@ for side in ('Left', 'Right'):
                     u, v = uvl.data[li].uv; hh, ww = IMG.shape[:2]
                     samp.append(IMG[int(np.clip(v, 0, 0.9999) * hh), int(np.clip(u, 0, 0.9999) * ww)])
         if samp: col = np.median(np.array(samp), 0)
+    # v2.6 the cuff takes the colour of the sleeve / arm guard it tucks into, the hand keeps the glove (or skin) colour.
+    # A skin-coloured cuff as wide as an arm guard read as a fat wrist ring on bare-handed Rebels (#1555).
+    ccol = col
+    if IMG is not None and uvl is not None:
+        ridx = set(np.nonzero(shell & (tt > -0.03))[0].tolist()); samp = []
+        for p in me.polygons:
+            for li in p.loop_indices:
+                if me.loops[li].vertex_index in ridx:
+                    u, v = uvl.data[li].uv; hh, ww = IMG.shape[:2]
+                    samp.append(IMG[int(np.clip(v, 0, 0.9999) * hh), int(np.clip(u, 0, 0.9999) * ww)])
+        if len(samp) > 10: ccol = np.median(np.array(samp), 0)
     cut |= rm
-    plan[side] = dict(W=W, x=x, y=y, z=z, L=L, girth=girth, col=col, mirror=(side == 'Left'))
-    print(f'handswap {side}: hand length {L:.3f} (reach {reach:.3f}, forearm {fore:.3f}) wrist girth {girth:.3f} '
-          f'verts removed {int(rm.sum())} glove colour {np.round(col, 3).tolist()}')
+    plan[side] = dict(W=W, x=x, y=y, z=z, L=L, girth=girth, bend=bend, col=col, ccol=ccol, mirror=(side == 'Left'))
+    print(f'handswap {side}: hand length {L:.3f} (reach {reach:.3f}, forearm {fore:.3f}) wrist girth {girth:.3f} (raw {girth_raw:.3f}) '
+          f'sleeve end {bend:+.3f} verts removed {int(rm.sum())} glove colour {np.round(col, 3).tolist()}')
 
 # ---- remove the generated hands ----
 bm = bmesh.new(); bm.from_mesh(me); bm.verts.ensure_lookup_table()
 bmesh.ops.delete(bm, geom=[bm.verts[i] for i in np.nonzero(cut)[0]], context='VERTS')
+# v2.6 close the openings the cut leaves at the end of the sleeve / arm guard: from outside, an open end showed the
+# dark inside of the shell around a bare wrist (#1555). The caps take the rim's material and texture.
+uvL = bm.loops.layers.uv.active
+edges = []
+for e in bm.edges:
+    if not e.is_boundary: continue
+    c = np.array((Bw @ e.verts[0].co)[:])
+    if any(np.linalg.norm(c - pl['W']) < 0.9 * pl['L'] for pl in plan.values()): edges.append(e)
+n0 = len(bm.faces)
+res = bmesh.ops.holes_fill(bm, edges=edges, sides=64) if edges else {'faces': []}
+for f in res['faces']:
+    nb = [l.link_loop_radial_next.face for l in f.loops if l.link_loop_radial_next.face is not f]
+    if nb: f.material_index = max(set(x.material_index for x in nb), key=[x.material_index for x in nb].count); f.smooth = True
+    if uvL is not None:
+        for l in f.loops:
+            other = [ol for ol in l.vert.link_loops if ol.face is not f]
+            if other: l[uvL].uv = other[0][uvL].uv
+print('handswap sleeve-end caps', len(res['faces']), 'from boundary edges', len(edges))
 bm.to_mesh(me); bm.free(); me.update()
 
 # ---- one glove per side ----
@@ -87,6 +123,12 @@ lin = srgb2lin(col)
 bsdf.inputs['Base Color'].default_value = (*lin.tolist(), 1.0); bsdf.inputs['Roughness'].default_value = 0.62
 bsdf.inputs['Metallic'].default_value = 0.0
 me.materials.append(mat); gmi = len(me.materials) - 1
+cmat = bpy.data.materials.new('GloveCuff'); cmat.use_nodes = True
+cb_ = cmat.node_tree.nodes['Principled BSDF']
+ccol = np.mean([plan[s]['ccol'] for s in plan], 0)
+cb_.inputs['Base Color'].default_value = (*srgb2lin(ccol).tolist(), 1.0); cb_.inputs['Roughness'].default_value = 0.7
+me.materials.append(cmat); cmi = len(me.materials) - 1
+print('handswap cuff colour', np.round(ccol, 3).tolist())
 
 bpy.context.view_layer.objects.active = arm; bpy.ops.object.mode_set(mode='EDIT')
 eb = arm.data.edit_bones; Ai = Aw.inverted()
@@ -124,7 +166,7 @@ for side, pl in plan.items():
         nvv = bm.verts.new(Bi @ mu.Vector(pl['world'](p).tolist())); vmap[v.index] = nvv
     bm.verts.index_update()
     for f in gb.faces:
-        try: nf = bm.faces.new([vmap[v.index] for v in f.verts]); nf.material_index = gmi; nf.smooth = True
+        try: nf = bm.faces.new([vmap[v.index] for v in f.verts]); nf.material_index = cmi if np.mean([G[v.index, 0] for v in f.verts]) < -0.012 else gmi; nf.smooth = True
         except ValueError: pass
     gb.free()
     gid = {}

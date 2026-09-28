@@ -926,7 +926,13 @@ function active() { return !!(S && !S.done); }
 
 /* ---- server calls ---- */
 async function api(path, body) {
-  const r = await fetch(path, body === undefined ? { cache: 'no-store' } : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  // v7: never wait forever on one request (a hung connection stalled a forge); a timeout counts as a retryable 408
+  const ctl = new AbortController(); const ms = /status|list|get|token/.test(path) ? 60000 : 330000;
+  const tm = setTimeout(() => ctl.abort(), ms);
+  let r;
+  try { r = await fetch(path, body === undefined ? { cache: 'no-store', signal: ctl.signal } : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctl.signal }); }
+  catch (e) { clearTimeout(tm); const er = new Error(e.name === 'AbortError' ? 'The forge took too long to answer' : 'Network error'); er.status = 408; throw er; }
+  clearTimeout(tm);
   let j = null; try { j = await r.json(); } catch (e) { j = { ok: false, error: `Server error (${r.status})` }; }
   if (!r.ok || j.ok === false) { const e = new Error(j.error || j.detail || `Request failed (${r.status})`); e.status = r.status; throw e; }
   return j;
@@ -1055,16 +1061,35 @@ const RUN = {
     if (ok.length === 1) S.picked = ok[0].id;
   },
   async rig() {
-    const id = S.picked;
-    if (!S.rigStarted) { S.rigPct = 0; S.rigStep = 'starting'; await twice(() => api('/api/forge-rig-start', { buildId: id })); S.rigStarted = true; saveS(); }
+    // v7: the rigger's QA can say "fail" (torn skin in calm moves, pieces flying out, broken hands). Then the smith
+    // rigs the player's next version instead, so nobody gets a broken Rebel. If every version fails, the last one is kept.
     for (;;) {
-      const d = await twice(() => api(`/api/forge-rig-status?buildId=${encodeURIComponent(id)}`));
-      const fr = d.forgeRig || {};
-      if (d.percent != null) S.rigPct = Math.max(S.rigPct || 0, d.percent);
-      if (fr.progress) S.rigStep = fr.progress;
-      if (fr.status === 'succeeded' || (!fr.status && d.forgeRigGlbUrl)) { S.rigUrl = fr.forgeRigGlbUrl || d.forgeRigGlbUrl; S.thumbUrl = fr.thumbUrl || null; S.rigPct = 100; break; }
-      if (fr.status === 'failed') { S.rigStarted = false; throw new Error(fr.error || 'Rigging failed'); }
-      saveS(); forgeTick(); await sleep(6000);
+      const id = S.picked;
+      if (!S.rigStarted) { S.rigPct = 0; S.rigStep = 'starting'; await twice(() => api('/api/forge-rig-start', { buildId: id })); S.rigStarted = true; saveS(); }
+      let fr = {}, d = {};
+      for (;;) {
+        d = await twice(() => api(`/api/forge-rig-status?buildId=${encodeURIComponent(id)}`));
+        fr = d.forgeRig || {};
+        if (d.percent != null) S.rigPct = Math.max(S.rigPct || 0, d.percent);
+        if (fr.progress) S.rigStep = fr.progress;
+        if (fr.status === 'succeeded' || (!fr.status && d.forgeRigGlbUrl)) break;
+        if (fr.status === 'failed') { S.rigStarted = false; S.rigTried = [...new Set([...(S.rigTried || []), id])]; break; }
+        saveS(); forgeTick(); await sleep(6000);
+      }
+      const bad = fr.status === 'failed' || fr.qa?.verdict === 'fail';
+      if (bad) {
+        S.rigTried = [...new Set([...(S.rigTried || []), id])];
+        const next = S.builds.find((b) => b.stored && !S.rigTried.includes(b.id));
+        console.warn('rig check failed for', id, fr.error || fr.qa?.reasons);
+        if (next) {
+          const n = S.builds.indexOf(next) + 1;
+          toast(`That version did not pass the smith's checks. Forging V${n} instead.`);
+          S.picked = next.id; S.rigStarted = false; S.rigPct = 0; saveS(); continue;
+        }
+        if (fr.status === 'failed') throw new Error(fr.error || 'Rigging failed');
+      }
+      S.rigUrl = fr.forgeRigGlbUrl || d.forgeRigGlbUrl; S.thumbUrl = fr.thumbUrl || null; S.rigPct = 100;
+      return;
     }
   }
 };

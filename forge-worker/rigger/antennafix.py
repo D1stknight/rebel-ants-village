@@ -60,6 +60,10 @@ for s in seeds:
         g = np.array([dist.get(int(i), np.nan) for i in cc]); ok = ~np.isnan(g); cc, g = cc[ok], g[ok]
         G = float(g.max()); bctr = co[base].mean(0)
         width = float(np.median(np.linalg.norm(co[cc[g < 0.25 * G]] - co[cc[g < 0.25 * G]].mean(0), axis=1))) + 1e-6
+        # v2.6 measure the stalk's thickness half way up as well: where the base melts into a head wrap (#469 V2) the base
+        # looks wide and the antenna was skipped
+        mid = (g > 0.4 * G) & (g < 0.6 * G)
+        if mid.sum() > 8: width = min(width, float(np.median(np.linalg.norm(co[cc[mid]] - co[cc[mid]].mean(0), axis=1))) + 1e-6)
         # base on the upper half of the head, measured on world Z (v2.5: a tall head wrap turned the head's main axis
         # sideways and the test threw away #469's long antenna)
         up = bctr[2] - cc0[2]

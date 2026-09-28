@@ -1,4 +1,4 @@
-# Forge Rigger job QA: skin-stretch test on key clips + GLB sanity. Writes a JSON verdict ("pass" or "review").
+# Forge Rigger job QA: skin-stretch test on key clips + GLB sanity. Writes a JSON verdict ("pass", "review" or "fail").
 # usage: python qa_job.py -- final.blend rig.glb qa.json job.log
 import bpy, sys, json, struct, re, numpy as np
 a = sys.argv[sys.argv.index('--') + 1:]; blend, glb, out, logf = a[0], a[1], a[2], a[3]
@@ -41,6 +41,17 @@ for c, s in stretch.items():
     if s['p999'] > 8: reasons.append(f'{c}: heavy stretch (p99.9 {s["p999"]}x)')
     if s['edges2x'] > 12000: reasons.append(f'{c}: {s["edges2x"]} edges stretched >2x')
 if (rig['bridgeFaces'] or 0) > 3000: reasons.append('many bridge faces (hands/arms touching body)')
-res = {'verdict': 'review' if reasons else 'pass', 'reasons': reasons, 'stretch': stretch, 'glb': glbinfo, 'rig': rig}
+# v2.6 gross failures -> "fail": the Forge then rigs the player's next version instead of handing this one over.
+# (calm clips must not tear; the rest pose must not have pieces flying out; hands must match the forearm)
+fails = []
+for c, lim in (('idle', 6.0), ('walk', 8.0), ('run', 10.0), ('roundhouse_kick', 20.0)):
+    if c in stretch and stretch[c]['p999'] > lim: fails.append(f'{c}: torn ({stretch[c]["p999"]}x)')
+Mw = np.array(me.matrix_world); VW = V0 @ Mw[:3, :3].T
+H = float(np.ptp(VW[:, 2])) or 1.0; Wd = float(np.percentile(VW[:, 0], 99.9) - np.percentile(VW[:, 0], 0.1)); Dp = float(np.percentile(VW[:, 1], 99.9) - np.percentile(VW[:, 1], 0.1))
+if Wd > 1.2 * H or Dp > 0.7 * H: fails.append(f'rest pose too wide ({Wd / H:.2f} x {Dp / H:.2f} of height)')
+for m_ in re.finditer(r'hand length ([\d.]+) .*?wrist girth [\d.]+ \(raw ([\d.]+)\)', log):
+    if float(m_.group(2)) > 0.6 * float(m_.group(1)): fails.append('hands: the wrist ring picked up the body'); break
+reasons = fails + reasons
+res = {'verdict': 'fail' if fails else ('review' if reasons else 'pass'), 'reasons': reasons, 'stretch': stretch, 'glb': glbinfo, 'rig': rig, 'rest': {'width': round(Wd / H, 3), 'depth': round(Dp / H, 3)}}
 json.dump(res, open(out, 'w'), indent=1)
 print('qa', res['verdict'], reasons)
