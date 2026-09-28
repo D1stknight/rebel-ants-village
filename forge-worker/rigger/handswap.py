@@ -105,6 +105,25 @@ for side in ('Left', 'Right'):
 # ---- remove the generated hands ----
 bm = bmesh.new(); bm.from_mesh(me); bm.verts.ensure_lookup_table()
 bmesh.ops.delete(bm, geom=[bm.verts[i] for i in np.nonzero(cut)[0]], context='VERTS')
+# v2.8 remove the crumbs of the old hand the cut leaves behind (fingertip shards floating next to the new glove, #4 V2):
+# small loose pieces out past the wrist
+bm.verts.ensure_lookup_table(); seen = set(); crumbs = []
+for v0 in bm.verts:
+    if v0.index in seen: continue
+    comp = [v0]; stack = [v0]; seen.add(v0.index)
+    while stack and len(comp) < 400:
+        a_ = stack.pop()
+        for e in a_.link_edges:
+            b_ = e.other_vert(a_)
+            if b_.index not in seen: seen.add(b_.index); comp.append(b_); stack.append(b_)
+    if len(comp) >= 400 or stack: continue
+    c = np.mean([np.array((Bw @ v.co)[:]) for v in comp], 0)
+    for pl in plan.values():
+        rel_ = c - pl['W']; t_ = rel_ @ pl['x']
+        if -0.01 < t_ < 1.6 * pl['L'] and np.linalg.norm(rel_ - t_ * pl['x']) < 0.8 * pl['L']:
+            crumbs += comp; break
+if crumbs: bmesh.ops.delete(bm, geom=list(set(crumbs)), context='VERTS')
+print('handswap hand crumbs removed', len(set(crumbs)))
 # v2.6 close the openings the cut leaves at the end of the sleeve / arm guard: from outside, an open end showed the
 # dark inside of the shell around a bare wrist (#1555). The caps take the rim's material and texture.
 uvL = bm.loops.layers.uv.active
