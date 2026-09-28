@@ -6,6 +6,33 @@ function pretty(v) {
   return v ? String(v).replace(/-/g, ' ').replace(/\s+\d+$/, '').trim() : null;
 }
 
+// v6 (9/27) head-gear glossary from the NFT's own traits. The image model read #1555's eye patch + mouth bandana as one
+// big pale mask over the whole face, and #469's skull cap + flap as blond hair. Ant anatomy and every gear trait are
+// spelled out so the drawing keeps the real eyes, bare face and headwear.
+export function headGearLines(ts = {}, view = 'front') {
+  const has = (k) => ts[k] && String(ts[k]).toLowerCase() !== 'none';
+  const P = (k) => pretty(ts[k]);
+  const out = ['HEAD ANATOMY AND GEAR (read the NFT this way):',
+    "- Rebel Ants have NO hair. Anything on top of or around the head that could look like hair in the NFT is HEADWEAR (a cap, wrap or bandana) in its own colours, drawn as cloth with folds and a tied knot, never as hair."];
+  const eyes = String(ts.eyes || '');
+  if (/patch/i.test(eyes)) {
+    out.push(`- EYES ("${P('eyes')}"): the ant has two big compound eyes (large ovals filled with a fine grid of tiny squares). ONE of them is covered by an EYE PATCH (a flat patch with a strap, as in the NFT); the OTHER is a normal big compound eye with its grid of small squares, fully visible. Everything else on the upper face is the ant's bare base skin, not a mask.`);
+  } else if (eyes) {
+    out.push(`- EYES ("${P('eyes')}"): two big compound eyes, large ovals filled with a fine grid of tiny squares, in the NFT's colours. They are the ant's real eyes (not goggles or a visor) and stay visible unless a ninja mask or full face mask in the NFT covers them.`);
+  }
+  if (has('bandana')) out.push(`- BANDANA ("${P('bandana')}"): a cloth bandana tied over the MOUTH and lower face ONLY, from just under the eyes down over the chin, knotted at the back of the head. The eyes and the upper face stay uncovered (bare ant skin and eyes). It is NOT a full-face mask and never covers the eyes or the forehead.`);
+  if (has('mouthMask')) out.push(`- MOUTH MASK ("${P('mouthMask')}"): a small mask over the mouth only; the eyes, cheeks above it and forehead stay bare.`);
+  if (has('ninjaMask')) out.push(`- NINJA MASK ("${P('ninjaMask')}"): a cloth ninja wrap around the head and lower face, exactly as in the NFT, with the eyes showing through the opening.`);
+  if (has('skullCap')) out.push(`- SKULL CAP ("${P('skullCap')}"): a fitted cloth cap / head wrap covering the top and back of the head, in the NFT's colours and pattern. It is cloth headwear, NOT hair.`);
+  if (has('skullyFlap')) out.push(`- SKULLY FLAP ("${P('skullyFlap')}"): the tied knot and short cloth flap at the back of the skull cap / head wrap (it keeps the wrap from falling). Keep it short and lying close to the back of the head; it is part of the cap, not hair.`);
+  if (has('foreheadBandana')) out.push(`- FOREHEAD BANDANNA ("${P('foreheadBandana')}"): a cloth band tied around the forehead ABOVE the eyes; the eyes and face stay visible.`);
+  if (has('bandanaTail')) out.push(`- BANDANA TAILS ("${P('bandanaTail')}"): the knotted tails of the headband at the back of the head, short and lying close to the head.`);
+  if (has('rangerHelmet')) out.push(`- RANGER HELMET ("${P('rangerHelmet')}"): the helmet exactly as in the NFT, sitting on the head; the face and eyes below it stay as in the NFT.`);
+  if (has('headAccessory')) out.push(`- HEAD ACCESSORY ("${P('headAccessory')}"): worn on the head exactly as in the NFT, small and close to the head.`);
+  if (view === 'back') out.push('- From behind: show the back of the head gear only (cap, knot, flap, straps and bandana knots); eyes and face are not visible.');
+  return out;
+}
+
 export function buildRigFriendlyRules(generationInput = {}, { view = 'front' } = {}) {
   const mask = pretty(generationInput?.traitSlots?.fullFaceMask);
   const lines = [
@@ -27,6 +54,7 @@ export function buildRigFriendlyRules(generationInput = {}, { view = 'front' } =
     '- Ornaments are FLAT: dragons, crests, horns and other decorations become low-relief embossed emblems on the plates, never sculpted pieces sticking out.',
     '- A clean, solid, readable silhouette. The warrior look comes from colour, trim, emblems and a strong stance, not from bulk.'
   ];
+  lines.push(...headGearLines(generationInput?.traitSlots || {}, view));
   if (mask) {
     if (view === 'side') {
       lines.push(`- The "${mask}" is a FACE MASK on the front of the face only. In profile it is a smooth rounded shell following the curve of the round head, flush with it, with no protruding chin or jaw; behind it the head is the ant's plain base skin colour with only the thin strap.`);
