@@ -5,6 +5,15 @@ bpy.ops.wm.open_mainfile(filepath=OUT+'/norm.blend')
 mesh=[o for o in bpy.data.objects if o.type=='MESH'][0]
 J={k:mu.Vector(v) for k,v in json.load(open(OUT+'/joints.json')).items()}
 P='mixamorig_'
+# v2.7 straight spine: the generator's torso sometimes puts the spine joints in a zigzag (#469 V2: Spine2 5.7 cm in front
+# of the Hips->Neck line). The mocap straightens the bones in every move, which tipped the whole upper back forward:
+# a hunch ("Quasimodo"). Put Spine / Spine1 / Spine2 back on the Hips -> Neck line when they wander off it.
+_h,_n=J['Hips'],J['Neck']; _zig=0.0; _ideal={}
+for _k in ('Spine','Spine1','Spine2'):
+    _t=(J[_k].z-_h.z)/max(1e-6,_n.z-_h.z); _ideal[_k]=_h.y+(_n.y-_h.y)*_t; _zig=max(_zig,abs(J[_k].y-_ideal[_k]))
+if _zig>float(_os.environ.get('FORGE_SPINE_ZIG','0.045')):
+    for _k,_y in _ideal.items(): J[_k].y=_y
+print('buildrig spine zigzag %.3f m%s' % (_zig, ' -> straightened' if _zig>float(_os.environ.get('FORGE_SPINE_ZIG','0.045')) else ''))
 arm_d=bpy.data.armatures.new('Rebel'); arm=bpy.data.objects.new('Armature',arm_d); bpy.context.scene.collection.objects.link(arm)
 bpy.context.view_layer.objects.active=arm; bpy.ops.object.mode_set(mode='EDIT'); eb=arm_d.edit_bones
 def bone(name,head,tail,parent=None):

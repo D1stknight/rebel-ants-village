@@ -84,8 +84,21 @@ for side in ('Left', 'Right'):
                     u, v = uvl.data[li].uv; hh, ww = IMG.shape[:2]
                     samp.append(IMG[int(np.clip(v, 0, 0.9999) * hh), int(np.clip(u, 0, 0.9999) * ww)])
         if len(samp) > 10: ccol = np.median(np.array(samp), 0)
+    # v2.7 the cuff follows the real cross-section of the sleeve / arm guard (per angle around the forearm), just inside
+    # it, so the band that shows past the guard is exactly as wide as the guard (#1555: a round cuff stood proud)
+    NB = 24; prof = np.full(NB, np.nan)
+    pm = (armw > 0.5) & ~rm & (tt > -0.035) & (tt < 0.005) & (rr < 1.8 * girth) & (rr > 0.3 * girth)
+    if pm.sum() > 40:
+        th = np.arctan2(rel[pm] @ z, rel[pm] @ y); bi = ((th + np.pi) / (2 * np.pi) * NB).astype(int) % NB
+        for b_ in range(NB):
+            sel = rr[pm][bi == b_]
+            if len(sel) >= 3: prof[b_] = np.percentile(sel, 70)
+    if np.isnan(prof).all(): prof[:] = girth
+    ok_ = ~np.isnan(prof); idx_ = np.arange(NB)
+    prof = np.interp(idx_, np.concatenate([idx_[ok_] - NB, idx_[ok_], idx_[ok_] + NB]), np.tile(prof[ok_], 3))
+    prof = np.clip((np.roll(prof, 1) + 2 * prof + np.roll(prof, -1)) / 4, 0.12 * L, 0.34 * L)
     cut |= rm
-    plan[side] = dict(W=W, x=x, y=y, z=z, L=L, girth=girth, bend=bend, col=col, ccol=ccol, mirror=(side == 'Left'))
+    plan[side] = dict(W=W, x=x, y=y, z=z, L=L, girth=girth, bend=bend, col=col, ccol=ccol, prof=prof, mirror=(side == 'Left'))
     print(f'handswap {side}: hand length {L:.3f} (reach {reach:.3f}, forearm {fore:.3f}) wrist girth {girth:.3f} (raw {girth_raw:.3f}) '
           f'sleeve end {bend:+.3f} verts removed {int(rm.sum())} glove colour {np.round(col, 3).tolist()}')
 
@@ -162,7 +175,10 @@ for side, pl in plan.items():
         if p[0] < 0:   # the cuff: round, and as wide as the Rebel's own wrist, so no gap shows when the wrist bends
             rad = np.linalg.norm(p[1:]) * s_
             k = float(np.clip(-p[0] / 0.07, 0, 1))
-            if rad > 1e-6: p[1:] *= (1 - k) + k * (tgt / rad)
+            a1 = -p[1] if pl['mirror'] else p[1]
+            b_ = int((np.arctan2(p[2], a1) + np.pi) / (2 * np.pi) * len(pl['prof'])) % len(pl['prof'])
+            tg = 0.97 * pl['prof'][b_]
+            if rad > 1e-6: p[1:] *= (1 - k) + k * (tg / rad)
         nvv = bm.verts.new(Bi @ mu.Vector(pl['world'](p).tolist())); vmap[v.index] = nvv
     bm.verts.index_update()
     for f in gb.faces:
