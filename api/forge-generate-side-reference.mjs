@@ -1,5 +1,5 @@
 import { enforceRateLimit } from './_guard.mjs';
-import { forgeImageEdit, fetchImageAsDataUrl } from './_forge-image.mjs';
+import { forgeImageEdit, fetchImageAsDataUrl, forgeVisionAsk } from './_forge-image.mjs';
 import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
 
 // Side views of a Forge production reference, for 4-view Meshy multi-image-to-3D (front, back, left, right).
@@ -9,9 +9,15 @@ import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
 function buildSidePrompt(generationInput = {}, side = 'left', hasBack = false) {
   const colony = generationInput.colony || 'Rebel Ant';
   const S = side === 'right' ? 'RIGHT' : 'LEFT';
+  // v7 (9/28): "the character's LEFT/RIGHT side" alone was ambiguous: the image model drew both profiles facing the
+  // left edge (#1555, #469), so Meshy got two left views. Name the facing direction on the canvas as well.
+  const FACE = side === 'right' ? 'RIGHT' : 'LEFT';
+  const BODY = side === 'right' ? "right arm, right shoulder and right leg are nearest to us; the left arm is hidden behind the body" : "left arm, left shoulder and left leg are nearest to us; the right arm is hidden behind the body";
   return `
 Image 1 is the FRONT view of a stylised Rebel Ant game character in a neutral A-pose.${hasBack ? ' Image 2 is the same character seen from BEHIND.' : ''}
 Draw the SAME character turned 90 degrees so we see the character's ${S} side in exact profile: an orthographic side view for a 3D modelling turnaround.
+FACING DIRECTION (critical): the character faces the ${FACE} EDGE of the image. The face, chest and toes point to the ${FACE.toLowerCase()} side of the canvas; the back of the head and the heels point the other way. The character's ${BODY}.
+Anything that is only on one side of the character (eye patch, single shoulder plate, sash end, pouch) must be on the correct side: exactly as it would be seen from the character's ${S.toLowerCase()} in Image 1.
 
 Match Image 1 exactly:
 - Same A-pose seen from the side (the ${S.toLowerCase()} arm hangs slightly away from the body), same height, same scale, same feet position on the canvas, head-to-feet in frame.
@@ -38,9 +44,23 @@ export default async function handler(req, res) {
     const images = [await fetchImageAsDataUrl(productionImageUrl)];
     if (typeof backImageUrl === 'string' && /^https:\/\//.test(backImageUrl)) images.push(await fetchImageAsDataUrl(backImageUrl));
     const prompt = buildSidePrompt(generationInput || {}, side, images.length > 1);
-    const { imageBase64, imageModel, attempts } = await forgeImageEdit({ apiKey, prompt, images, size: '1024x1536' });
+    // Check the facing direction and redraw once if it is wrong. A wrong profile is worse than none for the 3D step,
+    // so after two misses the view is returned with wrongSide:true and the Forge leaves it out.
+    let out = null, facing = null, tries = 0;
+    for (; tries < 2; tries++) {
+      out = await forgeImageEdit({ apiKey, prompt, images, size: '1024x1536' });
+      try {
+        const a = await forgeVisionAsk({ apiKey, images: [`data:image/png;base64,${out.imageBase64}`],
+          prompt: 'This is a side (profile) view of a cartoon character. Which edge of the image does the character face (where the face, chest and toes point)? Answer with exactly one word: LEFT or RIGHT.' });
+        facing = /right/i.test(a) && !/left/i.test(a) ? 'right' : /left/i.test(a) && !/right/i.test(a) ? 'left' : null;
+      } catch (e) { console.warn('side facing check failed', e.message); facing = null; }
+      if (facing === null || facing === side) break;
+      console.warn(`side ${side}: drawn facing ${facing}, redrawing`);
+    }
+    const wrongSide = facing !== null && facing !== side;
+    const { imageBase64, imageModel, attempts } = out;
     return res.status(200).json({
-      ok: true, mode: 'side_reference', side, imageModel, imageModelAttempts: attempts,
+      ok: true, mode: 'side_reference', side, facing, wrongSide, tries: tries + (wrongSide ? 0 : 1), imageModel, imageModelAttempts: attempts,
       sideImage: { mimeType: 'image/png', base64: imageBase64, dataUrl: `data:image/png;base64,${imageBase64}` }
     });
   } catch (err) {

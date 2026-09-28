@@ -1000,8 +1000,10 @@ const RUN = {
   },
   async sides() {
     try {
+      // v7: a profile drawn facing the wrong way is left out (null); Meshy gets only the views that are right
       S.sideUrls = await Promise.all(['left', 'right'].map(async (side) => {
         const d = await twice(() => api('/api/forge-generate-side-reference', { generationInput: GI(), productionImageUrl: S.prodUrl, backImageUrl: S.backUrl || null, side }));
+        if (d.wrongSide) { console.warn('side view', side, 'came out facing', d.facing, '- left out'); return null; }
         return upload(`prod_${side}`, d.sideImage?.dataUrl);
       }));
     } catch (e) { if (e.status === 429) throw e; console.warn('side views skipped', e); S.sideUrls = []; }
@@ -1010,7 +1012,7 @@ const RUN = {
     const ref = refConcept('prod', S.prodUrl, { backImageUrl: S.backUrl || null, forgeMode: 'production_reference', conceptType: 'production_reference' });
     const startOne = async (b) => {
       try {
-        await twice(() => api('/api/forge-3d-engine-meshy-create', { buildId: b.id, generationInput: GI(), productionReference: ref, selectedConcept: ref, sideImageUrls: S.sideUrls || [], ...(POSE_NONE ? { options: { pose_mode: 'none' } } : {}) }));
+        await twice(() => api('/api/forge-3d-engine-meshy-create', { buildId: b.id, generationInput: GI(), productionReference: ref, selectedConcept: ref, sideImageUrls: (S.sideUrls || []).filter(Boolean), ...(POSE_NONE ? { options: { pose_mode: 'none' } } : {}) }));
         b.started = true;
       } catch (e) { if (e.status === 409) b.started = true; else { b.failed = e.message; b.status = e.status; } }
       saveS(); forgeTick();

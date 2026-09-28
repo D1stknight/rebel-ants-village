@@ -51,7 +51,7 @@ function buildProductionReferencePrompt({ generationInput, selectedConcept, hasN
 You will receive ${hasNft ? 'three' : 'two'} reference images.
 
 Image 1 is the selected full-body Rebel Ant concept chosen by the user.
-Image 2 is a PROPORTIONS-ONLY reference: a grey clay render of the main playable Rebel character. Use it only for body proportions. Do not copy its face, mask, outfit, colors or props.
+Image 2 is a PROPORTIONS-ONLY reference: grey clay FRONT and SIDE views of the standard Rebel body (one character from two angles). Use it only for body proportions and posture: slim build, narrow shoulders, wrists at hip level, head about one quarter of the height, standing tall and upright with the head directly above the shoulders (see its side view). Do not copy its face, mask, outfit, colors or props. Draw only one front view.
 ${hasNft ? `Image 3 is the player's original NFT. THE HEAD MUST MATCH IMAGE 3: same face, head shape, eyes / eye covering, mouth or mouth mask, antennae and the same colours. If the concept's head differs from Image 3 (a different colour, a changed face, or an added hat, roof or headpiece that the NFT ant does not wear), follow Image 3. Scenery behind the ant in Image 3 (buildings, roofs, dojos, trees, sky) is never part of the character.
 ` : ''}Create a cleaner 3D production reference from that selected concept.
 

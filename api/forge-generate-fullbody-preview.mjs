@@ -120,7 +120,7 @@ You will receive multiple reference images.
 
 Reference images (in order):
 - Image 1 is the PRIMARY identity reference. It is the actual Rebel Ant NFT and must control the character identity AND the outfit palette.
-${hasBodyRef ? '- Image 2 is an optional costume-detail reference. Borrow only its level of detail and construction, never its design, colours or silhouette.\n' : ''}- ${PROP} is a PROPORTIONS-ONLY reference: a grey clay render of the main playable Rebel character. Match its body proportions (head size relative to body, torso length, leg length, shoulder width, hand and foot size). Do not copy its face, mask, outfit, armour, colours or props.
+${hasBodyRef ? '- Image 2 is an optional costume-detail reference. Borrow only its level of detail and construction, never its design, colours or silhouette.\n' : ''}- ${PROP} is a PROPORTIONS-ONLY reference: grey clay FRONT and SIDE views of the standard Rebel body (one character seen from two angles; you draw only ONE front view). Match its body proportions (head size relative to body, torso length, leg length, shoulder width, arm length, hand and foot size) and, from the side view, its upright posture. Do not copy its face, mask, outfit, armour, colours or props.
 - If there is any conflict about identity or colours, Image 1 always wins. If there is any conflict about body proportions, ${PROP} wins.
 
 Create a clean full-body Rebel Ant character reference image based on Image 1.
@@ -152,6 +152,9 @@ Proportions (match ${PROP}):
 - Legs are long: from crotch to floor is about 40-45% of the height (without antennae).
 - Shoulders are no wider than about 1.1 head widths each side of the neck; slim, athletic torso.
 - Hands and boots are readable and proportionate, not oversized.
+- Slim build like the reference: narrow shoulders, slim arms and a slim chest. No bulky muscles; armour sits tight on the slim body.
+- Arms are not long: with the arms down, the wrists are at about hip level and the hands end at the top of the thighs.
+- Posture like the reference's side view: standing tall with a straight back, the head directly above the shoulders. No hunch, no head pushed forward, no rounded shoulders.
 
 ${buildRigFriendlyRules(generationInput, { view: 'front' })}
 

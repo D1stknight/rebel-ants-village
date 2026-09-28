@@ -22,8 +22,8 @@ export const FORGE_REFERENCE_URLS = {
     tactical: `${REPO_RAW}/assets/forge-references/body/pale-pink-tactical-kimono.png`,
     robe: `${REPO_RAW}/assets/forge-references/body/red-kimono-clean.png`
   },
-  // Grey clay render of the main playable character: PROPORTIONS ONLY
-  proportions: `${REPO_RAW}/assets/forge-references/proportions-master-clay.png`
+  // Grey clay FRONT + SIDE of #262, the standard Rebel body (9/28, Miguel: #262 is the best character): PROPORTIONS ONLY
+  proportions: `${REPO_RAW}/assets/forge-references/proportions-262-clay.jpg`
 };
 
 // Phase 0 SSRF guard: public https hosts only (no localhost / IP literals / internal names).
@@ -123,4 +123,20 @@ export async function forgeImageEdit({ apiKey, prompt, images, size = '1024x1536
   }
 
   throw new Error('All image model attempts failed: ' + tried.join(' | '));
+}
+
+// A short text answer about images (no image generation), e.g. "which way does this profile face?".
+export async function forgeVisionAsk({ apiKey, prompt, images }) {
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: FORGE_RESPONSES_MODEL,
+      input: [{ role: 'user', content: [{ type: 'input_text', text: prompt }, ...images.map(imageUrl => ({ type: 'input_image', image_url: imageUrl }))] }]
+    })
+  });
+  let data = null; try { data = await response.json(); } catch (e) { data = null; }
+  if (!response.ok) throw new Error('vision check failed: ' + (data?.error?.message || response.status));
+  const text = data?.output_text || (data?.output || []).flatMap(o => o.content || []).map(c => c.text || '').join(' ');
+  return String(text || '').trim();
 }
