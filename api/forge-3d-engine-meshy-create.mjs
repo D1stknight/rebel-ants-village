@@ -237,6 +237,8 @@ export default async function handler(req, res) {
       meshyResponse: meshyData,
       meshyEndpoint
     });
+    // Phase 2: the server finisher (api/forge-sweep) watches this build so it finishes even if the player leaves
+    try { await redisPipeline([['SADD', 'forge:pending:v1', String(createPayload.buildId)]]); } catch (e) {}
 
     return res.status(200).json({
       ok: true,

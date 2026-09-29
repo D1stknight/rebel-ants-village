@@ -92,6 +92,7 @@ export default async function handler(req, res) {
       finishedAt: null,
       error: null
     });
+    try { await redis([['SADD', 'forge:pending:v1', String(buildId)]]); } catch (e) {}   // Phase 2: the finisher collects the result
     return res.status(200).json({ ok: true, forgeRig: next.forgeRig });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err?.message || String(err) });

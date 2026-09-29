@@ -12,7 +12,10 @@ import { getCollection, ALCHEMY_NETWORK } from './_collections.mjs';
 
 export const WALLET_COOKIE = 'ra_wallet';
 const SESSION_TTL = 60 * 60 * 24 * 7;              // 7 days
-export const FORGE_LIMIT = Math.max(1, parseInt(process.env.FORGE_TOKEN_LIMIT || '3', 10));
+export const FORGE_LIMIT = Math.max(1, parseInt(process.env.FORGE_TOKEN_LIMIT || '3', 10));           // per Rebel, per owner
+// a sale gives the new owner fresh forges; these caps stop wallet-to-wallet transfers from farming them
+export const TOKEN_LIFETIME = Math.max(FORGE_LIMIT, parseInt(process.env.FORGE_TOKEN_LIFETIME || '12', 10));  // per Rebel, all owners
+export const WALLET_DAILY = Math.max(1, parseInt(process.env.FORGE_WALLET_DAILY || '6', 10));              // forge starts per wallet per day
 export const WINDOW_TTL = 60 * 60 * 24;            // an open forge lasts a day
 // per open forge: how many of each paid step may run (a forge = 1 concept + repaints, 3 sculpts, rig + fallbacks)
 export const STEP_MAX = { concept: 8, production: 8, back: 8, side: 16, upload: 60, build: 5, meshy: 5, store: 12, rig: 6 };
@@ -93,6 +96,14 @@ export async function newNonce() {
   return n;
 }
 
+// owner, cached 2 minutes (the paid steps re-check it, so a Rebel sold mid-forge stops forging for the seller)
+export async function ownerOfCached(collectionKey, tokenId) {
+  const k = `forge:owner:v1:${collectionKey}:${tokenId}`;
+  try { const [c] = await redis([['GET', k]]); if (c?.result) return c.result; } catch (e) {}
+  const o = await ownerOf(collectionKey, tokenId);
+  if (o) { try { await redis([['SET', k, o, 'EX', 120]]); } catch (e) {} }
+  return o;
+}
 // live owner of an ERC-721 token (lowercase) or null
 export async function ownerOf(collectionKey, tokenId) {
   const col = await getCollection(collectionKey || 'battle_for_colony');
@@ -106,25 +117,32 @@ export async function ownerOf(collectionKey, tokenId) {
 }
 
 // ---- forge allowance ----
-const qKey = (c, t) => `forge:quota:v1:${c}:${t}`;
+// used = forges this owner started on this Rebel (a new owner starts at 0); life = all owners together
+const qKey = (c, t, w) => `forge:quota:v2:${c}:${t}:${w}`;
+const lKey = (c, t) => `forge:quota-life:v1:${c}:${t}`;
+const dKey = (w) => `forge:wallet-day:v1:${w}:${new Date().toISOString().slice(0, 10)}`;
 const oKey = (c, t) => `forge:open:v1:${c}:${t}`;
 const uKey = (c, t) => `forge:open-uses:v1:${c}:${t}`;
-export async function forgeStatus(collectionKey, tokenId) {
-  const [q, o] = await redis([['GET', qKey(collectionKey, tokenId)], ['GET', oKey(collectionKey, tokenId)]]);
-  const used = Number(q?.result || 0);
+export async function forgeStatus(collectionKey, tokenId, owner) {
+  const [q, l, o] = await redis([['GET', owner ? qKey(collectionKey, tokenId, owner) : 'forge:none'], ['GET', lKey(collectionKey, tokenId)], ['GET', oKey(collectionKey, tokenId)]]);
+  const used = Number(q?.result || 0), life = Number(l?.result || 0);
   let open = null; try { open = o?.result ? JSON.parse(o.result) : null; } catch (e) {}
-  return { used, limit: FORGE_LIMIT, left: Math.max(0, FORGE_LIMIT - used), open };
+  const left = Math.max(0, Math.min(FORGE_LIMIT - used, TOKEN_LIFETIME - life));
+  return { used, limit: FORGE_LIMIT, left, lifetimeUsed: life, lifetimeLimit: TOKEN_LIFETIME, open };
 }
 export async function openForge(collectionKey, tokenId, wallet) {
-  const st = await forgeStatus(collectionKey, tokenId);
-  if (st.used >= FORGE_LIMIT) return { ok: false, ...st };
+  const st = await forgeStatus(collectionKey, tokenId, wallet);
+  if (st.left <= 0) return { ok: false, reason: st.used >= FORGE_LIMIT ? 'owner' : 'lifetime', ...st };
+  const [d] = await redis([['INCR', dKey(wallet)], ['EXPIRE', dKey(wallet), 172800]]);
+  if (Number(d?.result || 0) > WALLET_DAILY) return { ok: false, reason: 'daily', ...st };
   const open = { wallet, startedAt: new Date().toISOString(), n: st.used + 1 };
-  const [inc] = await redis([['INCR', qKey(collectionKey, tokenId)], ['SET', oKey(collectionKey, tokenId), JSON.stringify(open), 'EX', WINDOW_TTL], ['DEL', uKey(collectionKey, tokenId)]]);
+  const [inc] = await redis([['INCR', qKey(collectionKey, tokenId, wallet)], ['INCR', lKey(collectionKey, tokenId)], ['SET', oKey(collectionKey, tokenId), JSON.stringify(open), 'EX', WINDOW_TTL], ['DEL', uKey(collectionKey, tokenId)]]);
   const used = Number(inc?.result || st.used + 1);
-  return { ok: true, used, limit: FORGE_LIMIT, left: Math.max(0, FORGE_LIMIT - used), open };
+  return { ok: true, used, limit: FORGE_LIMIT, left: Math.max(0, Math.min(FORGE_LIMIT - used, TOKEN_LIFETIME - st.lifetimeUsed - 1)), open };
 }
-export async function resetForges(collectionKey, tokenId) {
-  await redis([['DEL', qKey(collectionKey, tokenId)], ['DEL', oKey(collectionKey, tokenId)], ['DEL', uKey(collectionKey, tokenId)]]);
+// admin: the current owner gets all forges back (the Rebel's lifetime count too)
+export async function resetForges(collectionKey, tokenId, owner) {
+  await redis([...(owner ? [['DEL', qKey(collectionKey, tokenId, owner)]] : []), ['DEL', lKey(collectionKey, tokenId)], ['DEL', oKey(collectionKey, tokenId)], ['DEL', uKey(collectionKey, tokenId)]]);
 }
 
 // Gate for a paid Forge step. Admins pass. Everyone else needs: signed-in wallet + an open forge for this Rebel started by
@@ -141,6 +159,8 @@ export async function requireForgeStep(req, res, { collectionKey, tokenId, step 
     let open = null; try { open = o?.result ? JSON.parse(o.result) : null; } catch (e) {}
     if (!open) return deny(403, 'Start a forge for this Rebel first', 'no_open_forge');
     if (open.wallet !== wallet) return deny(403, 'This forge was started by another wallet', 'not_your_forge');
+    const owner = await ownerOfCached(c, t);
+    if (owner && owner !== wallet) return deny(403, 'This Rebel is now held by another wallet', 'not_owner');
     const [n] = await redis([['HINCRBY', uKey(c, t), step, 1], ['EXPIRE', uKey(c, t), WINDOW_TTL]]);
     if (Number(n?.result || 0) > (STEP_MAX[step] || 5)) return deny(429, 'This forge has used all of its tries for this step', 'step_limit');
     return true;

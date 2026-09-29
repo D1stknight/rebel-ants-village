@@ -16,13 +16,14 @@ export default async function handler(req, res) {
   const wallet = walletOf(req);
   try {
     if (req.method === 'GET') {
-      const [owner, st] = await Promise.all([ownerOf(col, tokenId), forgeStatus(col, tokenId)]);
+      const owner = await ownerOf(col, tokenId);
+      const st = await forgeStatus(col, tokenId, owner);
       return res.status(200).json({ ok: true, wallet, owner, isOwner: !!(wallet && owner && wallet === owner), admin, ...st, open: st.open ? { mine: !!wallet && st.open.wallet === wallet, startedAt: st.open.startedAt, n: st.open.n } : null });
     }
     if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
     if (body.action === 'reset') {
       if (!admin) return res.status(401).json({ ok: false, error: 'Admin only' });
-      await resetForges(col, tokenId);
+      await resetForges(col, tokenId, await ownerOf(col, tokenId));
       return res.status(200).json({ ok: true, used: 0, limit: FORGE_LIMIT, left: FORGE_LIMIT });
     }
     if (!(await enforceRateLimit(req, res, 'forge-start', 10, 86400, 'forge starts today'))) return;
@@ -32,7 +33,12 @@ export default async function handler(req, res) {
     if (!owner) return res.status(502).json({ ok: false, error: 'Could not read the owner of this Rebel, try again', code: 'owner_unknown' });
     if (owner !== wallet) return res.status(403).json({ ok: false, error: 'Only the wallet that holds this Rebel can forge it', code: 'not_owner' });
     const r = await openForge(col, tokenId, wallet);
-    if (!r.ok) return res.status(429).json({ ok: false, error: `This Rebel has used all ${r.limit} of its forges`, code: 'no_forges_left', used: r.used, limit: r.limit, left: 0 });
+    if (!r.ok) {
+      const error = r.reason === 'daily' ? 'This wallet has started enough forges for today. Come back tomorrow.'
+        : r.reason === 'lifetime' ? 'This Rebel has been forged the most times it can be.'
+        : `You have used all ${r.limit} of your forges for this Rebel`;
+      return res.status(429).json({ ok: false, error, code: r.reason === 'daily' ? 'wallet_daily' : 'no_forges_left', used: r.used, limit: r.limit, left: r.left });
+    }
     return res.status(200).json({ ok: true, used: r.used, limit: r.limit, left: r.left });
   } catch (e) {
     return res.status(500).json({ ok: false, error: e.message || 'Forge start failed' });

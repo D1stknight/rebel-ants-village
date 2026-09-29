@@ -162,6 +162,10 @@ export default async function handler(req, res) {
     }
 
     const { recordKey, buildRecord } = await loadBuildRecord(buildId);
+    // Phase 2: already stored (the server finisher may have done it while the player was away): hand back that file
+    if (buildRecord.output?.rebelGlbUrl && !(isAdminRequest(req) && glbUrl)) {
+      return res.status(200).json({ ok: true, stored: true, alreadyStored: true, buildId, glbUrl: buildRecord.output.rebelGlbUrl, rebelGlbUrl: buildRecord.output.rebelGlbUrl });
+    }
     // Phase 2: only inside a forge the Rebel's owner started (admins pass)
     if (!(await requireForgeStep(req, res, { collectionKey: buildRecord.collectionKey, tokenId: buildRecord.tokenId, step: 'store' }))) return;
     // Phase 0: only admins may point the store at an arbitrary GLB; players store the build's own Meshy result.

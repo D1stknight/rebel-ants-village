@@ -959,7 +959,7 @@ const canForge = () => !!(state.own && (state.own.admin || state.own.isOwner));
 function allowanceNote() {
   const o = state.own || {};
   if (o.admin) return 'Admin: your forges do not use the Rebel\'s allowance.';
-  if (o.isOwner) return o.left > 0 ? `${o.left} of ${o.limit} forges left for this Rebel.` : `This Rebel has used all ${o.limit} of its forges.`;
+  if (o.isOwner) return o.left > 0 ? `${o.left} of ${o.limit} forges left for you on this Rebel. It keeps forging if you close the page.` : `You have used all ${o.limit} of your forges for this Rebel.`;
   if (o.wallet) return 'Only the wallet that holds this Rebel can forge it. You can still awaken and watch its forged form.';
   return 'Forging needs the wallet that holds this Rebel.';
 }

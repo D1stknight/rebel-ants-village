@@ -44,6 +44,15 @@
     },
     "api/forge-generate-side-reference.mjs": {
       "maxDuration": 300
+    },
+    "api/forge-sweep.mjs": {
+      "maxDuration": 300
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/forge-sweep",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }
