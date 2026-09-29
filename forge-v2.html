@@ -443,13 +443,26 @@ const Snd = (() => {
     if (!ctx) return; L.g.gain.setTargetAtTime(0.0001, ctx.currentTime, fadeOut / 3);
     setTimeout(() => { try { L.src && L.src.stop(); } catch (e) {} L.g.disconnect(); }, fadeOut * 1000 + 200);
   }
-  function mute(m) { if (!m) return; Object.keys(loops).forEach((k) => stop(k, 0.3)); }
+  function mute(m) { if (!m) return; Object.keys(loops).forEach((k) => stop(k, 0.3)); if (mus) { const M = mus; mus = null; M.g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.1); setTimeout(() => { try { M.src.stop(); } catch (e) {} M.g.disconnect(); }, 500); } }
+  // background music: "Glorious" by Aylex (freetouse.com), looped quietly under the Forge sounds
+  const MUSIC_URL = '/assets/audio/music/forge-theme.mp3', MUSIC_VOL = 0.28;
+  let mus = null, musBuf = null, musPend = null;
+  function music() {
+    if (!on()) return; init(); if (!ctx || mus) return;
+    const M = mus = { g: ctx.createGain(), src: null }; M.g.gain.value = 0.0001; M.g.connect(master);
+    if (!musPend) musPend = fetch(MUSIC_URL).then((r) => r.arrayBuffer()).then((a) => new Promise((ok, no) => ctx.decodeAudioData(a, ok, no))).then((b) => (musBuf = b)).catch(() => null);
+    musPend.then((b) => {
+      if (!b || mus !== M || !on()) return;
+      M.src = ctx.createBufferSource(); M.src.buffer = b; M.src.loop = true; M.src.connect(M.g); M.src.start();
+      M.g.gain.setTargetAtTime(MUSIC_VOL, ctx.currentTime, 1.2);
+    });
+  }
   // render the next step's sounds ahead of time, one at a time, so nothing stalls when it is needed
   let warmQ = [];
   function warm(names) { names.forEach((n) => { if (!buf[n] && !warmQ.includes(n)) warmQ.push(n); }); if (warmQ.length === names.length) warmNext(); }
   function warmNext() { const n = warmQ[0]; if (!n || !ctx) { warmQ = []; return; } load(n).then(() => { warmQ.shift(); setTimeout(warmNext, 120); }); }
   return {
-    init, play, loop, stop, mute, pick, load, warm,
+    init, play, loop, stop, mute, pick, load, warm, music,
     // named cues (older call sites)
     taiko() { play('step', { vol: 0.8 }); },
     anvil() { play(pick('anvil1', 'anvil2', 'anvil3'), { vol: 0.75, rate: 0.96 + Math.random() * 0.08 }); play('sparks', { vol: 0.45, delay: 0.02 }); },
@@ -461,15 +474,15 @@ const Snd = (() => {
   };
 })();
 try { state.sound = localStorage.getItem('forgeV2:sound') !== '0'; } catch (e) { state.sound = true; }
-function syncSndIcon() { $('#sndX').style.display = state.sound ? 'none' : ''; $('#sndBtn').title = state.sound ? 'Sound on (click to mute)' : 'Sound off'; }
+function syncSndIcon() { $('#sndX').style.display = state.sound ? 'none' : ''; $('#sndBtn').title = (state.sound ? 'Sound on (click to mute)' : 'Sound off') + ' · Music: Aylex - Glorious (freetouse.com)'; }
 syncSndIcon();
 $('#sndBtn').onclick = () => {
   state.sound = !state.sound; syncSndIcon(); try { localStorage.setItem('forgeV2:sound', state.sound ? '1' : '0'); } catch (e) {}
-  if (state.sound) { Snd.init(); Snd.play('ui_click'); if (state.step === 3 && active()) Snd.loop('forge_loop', 0.45); } else Snd.mute(true);
+  if (state.sound) { Snd.init(); Snd.play('ui_click'); Snd.music(); if (state.step === 3 && active()) Snd.loop('forge_loop', 0.45); } else Snd.mute(true);
 };
-// the first tap anywhere unlocks audio (browser rule); buttons click, and whisper on hover
-addEventListener('pointerdown', () => Snd.init(), { capture: true });
-addEventListener('keydown', () => Snd.init(), { capture: true });
+// the first tap anywhere unlocks audio (browser rule) and starts the music; buttons click, and whisper on hover
+addEventListener('pointerdown', () => { Snd.init(); Snd.music(); }, { capture: true });
+addEventListener('keydown', () => { Snd.init(); Snd.music(); }, { capture: true });
 let lastHover = 0;
 document.addEventListener('pointerover', (e) => { const b = e.target.closest && e.target.closest('button'); if (!b || b.disabled || b.contains(e.relatedTarget)) return; const n = performance.now(); if (n - lastHover < 70) return; lastHover = n; Snd.play('ui_hover', { vol: 0.5 }); });
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('button'); if (b && !b.disabled && !b.classList.contains('hold') && b.id !== 'awakenBtn') Snd.play('ui_click', { vol: 0.7 }); }, true);
@@ -1797,7 +1810,8 @@ function showAwakened(instant) {
     <div class="note">Keys: ← → moves · Space pause · L loop · S speed · K perform all kata</div>
   `);
   $('#makeMine').onclick = makeMine;
-  $('#enterV').onclick = () => { location.href = `/village.html`; };
+  // Enter Village: this Rebel becomes the player's (same as Make this my Rebel) and the village opens with it
+  $('#enterV').onclick = async () => { const b = $('#enterV'); b.disabled = true; b.textContent = 'ENTERING…'; if (!state.mine) await makeMine(); location.href = `/village.html`; };
   buildDock(); $('#dock').classList.add('show');
   camTo(STEPS[4].cam, instant ? 0.8 : 2.2);   // v4 HD: frame the awakened Rebel close (he fills the view)
   cam.useAutoRotationBehavior = true; cam.autoRotationBehavior.idleRotationSpeed = 0.18; cam.autoRotationBehavior.idleRotationWaitTime = 4000;
@@ -1809,10 +1823,17 @@ async function makeMine() {
   try {
     const d = await api('/api/forge-active-character-save', { buildId, tokenId: String(state.token), rebelId: GI().rebelId, collectionKey: COL, activeGlbUrl: url, activeCharacterModelType: 'rigged_forge_glb', build: { buildId, tokenId: String(state.token), rebelId: GI().rebelId, collectionKey: COL } });
     const ac = d.activeCharacter;
-    try {   // the lobby reads selectedRebel; point it at the new character
-      const sel = JSON.parse(localStorage.getItem('selectedRebel') || 'null');
-      if (sel && String(sel.tokenId) === String(state.token) && ac) localStorage.setItem('selectedRebel', JSON.stringify({ ...sel, playableType: 'forge_build', buildId, activeForgeCharacter: ac, activeGlbUrl: ac.activeGlbUrl || url, characterSource: 'forge_glb', updatedAt: new Date().toISOString() }));
+    try {   // the lobby and the village read selectedRebel: this Rebel is now the one they open with
+      const sel = selectedRebel() || {};
+      const t = String(state.token), g = GI(), tm = {}; (state.meta?.traits || []).forEach((x) => { tm[x.trait_type] = x.value; });
+      if (ac) localStorage.setItem('selectedRebel', JSON.stringify({
+        ...sel, id: sel.id || `rebel_${t}`, rebelId: sel.rebelId || g.rebelId || `rebel_${t}`, tokenId: t, collectionKey: COL,
+        name: sel.name || state.meta?.name || `Rebel #${t}`, image: sel.image || `/api/nft-image?c=${COL}&t=${t}&s=thumb`,
+        traits: Object.keys(tm).length ? tm : (sel.traits || {}), gangName: tm['Gang Names'] || sel.gangName || null,
+        playableType: undefined, buildId, activeForgeCharacter: ac, activeGlbUrl: ac.activeGlbUrl || url, characterSource: 'forge_glb', updatedAt: new Date().toISOString()
+      }));
     } catch (e) {}
+    state.mine = true;
     btn.textContent = 'YOUR REBEL ✓'; Snd.play('seal'); flash(0.3, 0.8); toast('Set as your Rebel in the lobby and the village');
   } catch (e) { btn.disabled = false; btn.textContent = 'MAKE THIS MY REBEL'; toast(e.message || 'Could not set it'); }
 }

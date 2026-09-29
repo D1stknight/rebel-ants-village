@@ -977,12 +977,18 @@ async function selectAnt(id) {
 }
 
 // Card status: "ready" = a rigged, playable 3D character (Forge Rigger); "forged" = a Forge 3D model exists but isn't rigged yet.
-// 469 / 1555 / 4998 have hand-rigged village characters (village.html REBEL_CHARACTER_RECORDS).
+// Rebels with a finished Forge character (rigger 2.10 picks, Sept 29). The server active character (set with
+// "Make this my Rebel") is the source of truth; this list is the fallback and the guest-mode showcase.
 // thumb = portrait render of the rigged 3D character (shown instead of the NFT art once a Rebel is Ready).
 const VILLAGE_RIGGED = {
-  '469': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/rig-thumbs/rebel469-hd-PHiGcKptJV9AE3QTHrzDyxTkk8CPHP.jpg' },
-  '1555': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/rig-thumbs/rebel1555-hd-6cNaT5l9dlI0Ih4uDRN5RGMcyahwNd.jpg' },
-  '4998': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4998/build_1790367227459_forge_rig_thumb-5ZVTAUM0fk7HeYL32ko6BS4bHCUbSN.jpg' }
+  '469': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/469/build_1790555749730_forge_rig_thumb-ftUpQeITAQYMi9x0GCPTjApOXkwHlv.jpg' },
+  '1555': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/1555/build_1790555715921_forge_rig_thumb-8lI4YsoMg6r76F86AMnQj4pVTkg18v.jpg' },
+  '4998': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4998/build_1790562761454_forge_rig_thumb-xL4q8HNOCU1sTT8MuM5acbngeAS7Gi.jpg' },
+  '1738': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/1738/build_1790562740739_forge_rig_thumb-U7v8IqoXmmv1MqWETXcha7qKp2XzWP.jpg' },
+  '3421': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/3421/build_1790563500246_forge_rig_thumb-3TGxeYqs0qzCPyyDj68H1Q1MyE8Zhx.jpg' },
+  '609': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/609/build_1790562737903_forge_rig_thumb-A2y0hjC2OnDvVDOsPHhibxlbPkrc2s.jpg' },
+  '4722': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4722/build_1790563381766_forge_rig_thumb-9DtgRRioXuNbKiuyVNvizgbXR5nQkf.jpg' },
+  '4': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4/build_1790563425986_forge_rig_thumb-pIHzHp8JxvvTnxe2lV28UNpuAlaHeF.jpg' }
 };
 function getRebelForgeStatus(rebel, hasForgeCharacter) {
   const afc = rebel.activeForgeCharacter || {};
@@ -1055,18 +1061,26 @@ async function showDefaultCard() {
   };
 
   const defaultRebel = await attachActiveForgeCharacter(starterRebel);
-  const savedForgePlayables = await loadSavedForgePlayableCards();
-  ownedRebels = [defaultRebel, ...sortRebelsByForgeStatus(dedupeForgePlayablesByToken(savedForgePlayables))];
+  // Guest mode: every Rebel with a finished Forge character gets its own card, loaded fresh from the server, so a
+  // new "Make this my Rebel" shows here right away. Older local copies of the same Rebel are dropped.
+  const showcase = await Promise.all(Object.keys(VILLAGE_RIGGED).map((t) => attachActiveForgeCharacter({
+    id: 'rebel_' + t, rebelId: 'rebel_' + t, tokenId: t, name: 'Rebel #' + t, collectionKey: 'battle_for_colony',
+    image: `/api/nft-image?c=battle_for_colony&t=${t}&s=thumb`, imageFull: `/api/nft-image?c=battle_for_colony&t=${t}&s=full`
+  })));
+  const showTokens = new Set(showcase.map((r) => String(r.tokenId)));
+  const savedForgePlayables = (await loadSavedForgePlayableCards()).filter((r) => !showTokens.has(String(r.tokenId || '')));
+  ownedRebels = [defaultRebel, ...sortRebelsByForgeStatus([...showcase, ...dedupeForgePlayablesByToken(savedForgePlayables)])];
 
-  let storedSelectedId = '';
+  let storedSelected = {};
 
   try {
-    storedSelectedId = JSON.parse(localStorage.getItem('selectedRebel') || '{}')?.id || '';
+    storedSelected = JSON.parse(localStorage.getItem('selectedRebel') || '{}') || {};
   } catch(e) {}
 
-  selectedAnt = ownedRebels.some((rebel) => rebel.id === storedSelectedId)
-    ? storedSelectedId
-    : 'ant_1';
+  // the last Rebel picked here or set in the Forge (matched by card id, then by token)
+  const storedCard = ownedRebels.find((rebel) => rebel.id === storedSelected.id) ||
+    (storedSelected.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSelected.tokenId)) : null);
+  selectedAnt = storedCard ? storedCard.id : 'ant_1';
 
   charRow.innerHTML = '';
   ownedRebels.forEach(buildCard);
@@ -1129,7 +1143,11 @@ async function loadNFTs(walletAddress) {
     });
     const readyCount = ownedRebels.filter((rebel) => getRebelForgeStatus(rebel) === 'ready').length;
 
-    selectedAnt = forgedReadyRebel ? forgedReadyRebel.id : ownedRebels[0].id;
+    // the Rebel last picked here or set in the Forge ("Make this my Rebel") comes first, if this wallet holds it
+    let storedSel = {};
+    try { storedSel = JSON.parse(localStorage.getItem('selectedRebel') || '{}') || {}; } catch(e) {}
+    const storedCard = storedSel.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSel.tokenId)) : null;
+    selectedAnt = storedCard ? storedCard.id : forgedReadyRebel ? forgedReadyRebel.id : ownedRebels[0].id;
 
     charRow.innerHTML = '';
     ownedRebels.forEach(r => buildCard(r));

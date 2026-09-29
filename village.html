@@ -15082,12 +15082,15 @@ async function refreshActiveForgeCharacterForVillage() {
     activeForgeCharacter?.characterBundle?.sourceBuildId ||
     '';
 
+  // Sept 29: "Make this my Rebel" in the Forge is the source of truth. An older saved build of the SAME token (a stale
+  // lobby card) no longer overrides the character the player set; only a Rebel with no server record keeps its own.
   if (
     selectedRebel?.playableType === 'forge_build' &&
     selectedRebel.activeForgeCharacter?.activeGlbUrl &&
     selectedBuildId &&
     activeBuildId &&
-    String(selectedBuildId) !== String(activeBuildId)
+    String(selectedBuildId) !== String(activeBuildId) &&
+    !forgeCharacterMatchesVillageRebel(activeForgeCharacter, selectedRebel)
   ) {
     const selectedCharacter = resolveCharacterConfig(selectedRebel);
     window.activeRebel = selectedRebel;
@@ -15164,9 +15167,14 @@ async function refreshActiveForgeCharacterForVillage() {
 
 // Portrait renders of the rigged Forge characters (lobby cards + the village info hub). Filled by the Forge Rigger.
 const FORGE_RIG_THUMBS = {
-  '469': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/rig-thumbs/rebel469-hd-PHiGcKptJV9AE3QTHrzDyxTkk8CPHP.jpg',
-  '1555': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/rig-thumbs/rebel1555-hd-6cNaT5l9dlI0Ih4uDRN5RGMcyahwNd.jpg',
-  '4998': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4998/build_1790367227459_forge_rig_thumb-5ZVTAUM0fk7HeYL32ko6BS4bHCUbSN.jpg'
+  '469': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/469/build_1790555749730_forge_rig_thumb-ftUpQeITAQYMi9x0GCPTjApOXkwHlv.jpg',
+  '1555': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/1555/build_1790555715921_forge_rig_thumb-8lI4YsoMg6r76F86AMnQj4pVTkg18v.jpg',
+  '4998': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4998/build_1790562761454_forge_rig_thumb-xL4q8HNOCU1sTT8MuM5acbngeAS7Gi.jpg',
+  '1738': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/1738/build_1790562740739_forge_rig_thumb-U7v8IqoXmmv1MqWETXcha7qKp2XzWP.jpg',
+  '3421': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/3421/build_1790563500246_forge_rig_thumb-3TGxeYqs0qzCPyyDj68H1Q1MyE8Zhx.jpg',
+  '609': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/609/build_1790562737903_forge_rig_thumb-A2y0hjC2OnDvVDOsPHhibxlbPkrc2s.jpg',
+  '4722': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4722/build_1790563381766_forge_rig_thumb-9DtgRRioXuNbKiuyVNvizgbXR5nQkf.jpg',
+  '4': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4/build_1790563425986_forge_rig_thumb-pIHzHp8JxvvTnxe2lV28UNpuAlaHeF.jpg'
 };
 
 const CHARACTER_REGISTRY = {
@@ -15187,18 +15195,46 @@ const CHARACTER_REGISTRY = {
 
   // Forge Rigger v1.2 bundles: ONE GLB per Rebel (metres, 65-bone Rebel Standard rig) with all 5 clips
   // as named animation groups (idle, walk, run, jump, flip_kick) retargeted from the master ant.
+  // Sept 29: the Forge v2 picks (rigger 2.10), same GLBs as the server active characters.
   forged_rig_469: {
     bundleId: 'forged_rig_469', formType: 'forged', formLabel: 'Forged 3D Form (Sohei #469)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel469_forge_rig_v9_lite.glb', scale: 1.9, thumb: FORGE_RIG_THUMBS['469'], animations: []
+    basePath: '', singleGlb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/469/build_1790555749730_forge_rig-lb5rR5g0JYHfn5bYieoltpova0yDXM.glb',   // build_1790555749730
+    scale: 1.9, thumb: FORGE_RIG_THUMBS['469'], animations: []
   },
   forged_rig_1555: {
     bundleId: 'forged_rig_1555', formType: 'forged', formLabel: 'Forged 3D Form (Wokou #1555)', hasGeneratedModel: true,
-    basePath: '/assets/character/forged/', singleGlb: 'rebel1555_forge_rig_v9_lite.glb', scale: 1.9, thumb: FORGE_RIG_THUMBS['1555'], animations: []
+    basePath: '', singleGlb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/1555/build_1790555715921_forge_rig-Kvmue5TEQzeg1qT5Nt2ab7Urhf8lnE.glb',   // build_1790555715921
+    scale: 1.9, thumb: FORGE_RIG_THUMBS['1555'], animations: []
   },
   forged_rig_4998: {
     bundleId: 'forged_rig_4998', formType: 'forged', formLabel: 'Forged 3D Form (Shogun #4998)', hasGeneratedModel: true,
-    basePath: '', singleGlb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4998/build_1790367227459_forge_rig-6hz0s1EpcHScox6qhgpnQgv6IEvuPC.glb',   // v19 HD: 2048 textures (v19 ZdeeCEfw… at 1536); simplified Shogun design C, 4-view Meshy (q1), rigger 1.9c
+    basePath: '', singleGlb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4998/build_1790562761454_forge_rig-fVqKlSNusyPiXT75w6tuswMmv8UaIB.glb',   // build_1790562761454
     scale: 1.9, thumb: FORGE_RIG_THUMBS['4998'], animations: []
+  },
+  forged_rig_1738: {
+    bundleId: 'forged_rig_1738', formType: 'forged', formLabel: 'Forged 3D Form (#1738)', hasGeneratedModel: true,
+    basePath: '', singleGlb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/1738/build_1790562740739_forge_rig-PD8L2rRjsZ2PbQAzH2JxLtl0lqzWMA.glb',   // build_1790562740739
+    scale: 1.9, thumb: FORGE_RIG_THUMBS['1738'], animations: []
+  },
+  forged_rig_3421: {
+    bundleId: 'forged_rig_3421', formType: 'forged', formLabel: 'Forged 3D Form (#3421)', hasGeneratedModel: true,
+    basePath: '', singleGlb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/3421/build_1790563500246_forge_rig-6Ezz8q9TgfvGli1B8f369dHp6mqeUq.glb',   // build_1790563500246
+    scale: 1.9, thumb: FORGE_RIG_THUMBS['3421'], animations: []
+  },
+  forged_rig_609: {
+    bundleId: 'forged_rig_609', formType: 'forged', formLabel: 'Forged 3D Form (#609)', hasGeneratedModel: true,
+    basePath: '', singleGlb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/609/build_1790562737903_forge_rig-cHua9qVaEFUlXdkD8t5H4BRE9ublNo.glb',   // build_1790562737903
+    scale: 1.9, thumb: FORGE_RIG_THUMBS['609'], animations: []
+  },
+  forged_rig_4722: {
+    bundleId: 'forged_rig_4722', formType: 'forged', formLabel: 'Forged 3D Form (#4722)', hasGeneratedModel: true,
+    basePath: '', singleGlb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4722/build_1790563381766_forge_rig-76ztpx4n8O6irLyV1FqYotO0dTf3JC.glb',   // build_1790563381766
+    scale: 1.9, thumb: FORGE_RIG_THUMBS['4722'], animations: []
+  },
+  forged_rig_4: {
+    bundleId: 'forged_rig_4', formType: 'forged', formLabel: 'Forged 3D Form (Ronin #4)', hasGeneratedModel: true,
+    basePath: '', singleGlb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4/build_1790563425986_forge_rig-aygNG1nBL9FEQi4jzM6qEbE3GzEmE1.glb',   // build_1790563425986
+    scale: 1.9, thumb: FORGE_RIG_THUMBS['4'], animations: []
   },
   // TRELLIS.2 test builds (free open-source image-to-3D instead of Meshy): ?rig=1555t / ?rig=4998t
   forged_rig_1555t: {
@@ -15234,9 +15270,14 @@ const CHARACTER_REGISTRY = {
 const REBEL_CHARACTER_RECORDS = {
   "469": { bundleId: "forged_rig_469" },
   "1555": { bundleId: "forged_rig_1555" },
-  "4998": { bundleId: "forged_rig_4998" }
+  "4998": { bundleId: "forged_rig_4998" },
+  "1738": { bundleId: "forged_rig_1738" },
+  "3421": { bundleId: "forged_rig_3421" },
+  "609": { bundleId: "forged_rig_609" },
+  "4722": { bundleId: "forged_rig_4722" },
+  "4": { bundleId: "forged_rig_4" }
 };
-// Play-test override: village.html?rig=469 | 1555 | 4998 | master (this page load only)
+// Play-test override: village.html?rig=469 | 1555 | 4998 | 1738 | 3421 | 609 | 4722 | 4 | master (this page load only)
 function getForgeRigOverrideBundleId() {
   // URL-only test override. It used to be remembered in localStorage, which made every Rebel (even #001) load
   // the last tested rig; the old stored value is cleared here.
