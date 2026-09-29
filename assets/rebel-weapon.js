@@ -629,8 +629,8 @@
       // hooked: a drawing clip, the hand behind the string, near the bow's plane and within an arrow's length of the rest
       const aDir = restPt.subtract(nock0).normalize(), nPl = V3.Cross(cu, aDir).normalize();
       const canHook = backOff < 0.02 * H && Math.abs(V3.Dot(pinch.subtract(restPt), nPl)) < 0.14 * H && V3.Distance(pinch, restPt) < AL * 1.02;
-      if (!hooked && canHook && ((name === 'bow_aim' || name === 'bow_aim_idle' || name === 'bow_shoot') || (name === 'bow_nock' && frac > 0.7))) hooked = true;
-      if (!hooked && name === 'bow_shoot' && frac < 0.08) hooked = true;          // a loose starts at full draw
+      if (!hooked && !fired && canHook && ((name === 'bow_aim' || name === 'bow_aim_idle' || name === 'bow_shoot') || (name === 'bow_nock' && frac > 0.7))) hooked = true;
+      if (!hooked && !fired && name === 'bow_shoot' && frac < 0.08) hooked = true;          // a loose starts at full draw
       if (hooked && (V3.Distance(pinch, restPt) > AL * 1.05 || backOff > 0.05 * H)) hooked = false;
       if (name === 'bow_nock' && frac > 0.3 && state === 'none') state = 'hand';
       if (hooked && state !== 'flying') state = 'nocked';
@@ -651,7 +651,7 @@
         inHand.setEnabled(true); place(inHand, pinch, V3.Lerp(out.scale(-1), toBow, k).normalize());   // out of the quiver, then onto the bow
       } else inHand.setEnabled(false);
     });
-    return { dispose() { scene.onAfterAnimationsObservable.remove(obs); rods.forEach((r) => r.dispose()); inHand.dispose(); proto.dispose(); flying.forEach((f) => f.n.dispose()); }, flying };
+    return { dispose() { scene.onAfterAnimationsObservable.remove(obs); rods.forEach((r) => r.dispose()); inHand.dispose(); proto.dispose(); flying.forEach((f) => f.n.dispose()); }, flying, get state() { return state; } };
   }
 
   window.RebelWeapon = { attach, resolve, fromTrait, catalog, MOVESET, MOVE_NAMES, kindOf, movesFor, loadMoves, hold, holdAll, showHeld, twoHand, archer, _fist: fistCenter };
