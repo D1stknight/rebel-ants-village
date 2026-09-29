@@ -142,7 +142,7 @@ export default async function handler(req, res) {
       const imageUrl = String(b.imageUrl || rec.refUrl || '');
       if (!/^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//.test(imageUrl)) return res.status(400).json({ ok: false, error: 'imageUrl must be our Blob' });
       const r = await fetch(MESHY, { method: 'POST', headers: { Authorization: `Bearer ${process.env.MESHY_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_url: imageUrl, ai_model: 'meshy-6', should_texture: true, enable_pbr: false, should_remesh: true, topology: 'triangle', target_polycount: Number(b.polycount || 24000), target_formats: ['glb'] }) });
+        body: JSON.stringify({ image_url: imageUrl, ai_model: 'meshy-6', should_texture: true, enable_pbr: false, should_remesh: true, topology: 'triangle', target_polycount: Number(b.polycount || 24000), symmetry_mode: ['off', 'auto', 'on'].includes(b.symmetry) ? b.symmetry : 'auto', target_formats: ['glb'] }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.result) return res.status(502).json({ ok: false, error: j.message || `Meshy ${r.status}` });
       rec = { ...rec, taskId: j.result, meshImageUrl: imageUrl, meshStatus: 'PENDING', meshStartedAt: new Date().toISOString() };
