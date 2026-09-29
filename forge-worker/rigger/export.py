@@ -22,6 +22,12 @@ for n in mat.node_tree.nodes:
         size=TEX_BASE if is_base else TEX_OTHER
         if n.image.size[0]>size: n.image.scale(size,size)
         print(n.image.name,links,tuple(n.image.size))
+# v2.11: weapon moves ship in their own GLB (exp_moves.py); the village rig keeps its 24 clips
+_wc=os.environ.get('FORGE_WEAPON_CLIPS')
+if _wc and os.path.exists(_wc) and arm.animation_data:
+    import json as _j; _names={c['name'] for c in _j.load(open(_wc))}
+    for _t in list(arm.animation_data.nla_tracks):
+        if _t.name in _names: arm.animation_data.nla_tracks.remove(_t)
 for o in bpy.data.objects: o.select_set(o in (arm,mesh))
 bpy.ops.export_scene.gltf(filepath=out,export_format='GLB',use_selection=True,export_animations=True,
     export_animation_mode='NLA_TRACKS',export_force_sampling=True,export_frame_step=1,export_skins=True,

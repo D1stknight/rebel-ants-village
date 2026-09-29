@@ -261,10 +261,19 @@ POSE = {   # degrees about the finger's own X axis (negative closes toward the p
     'fist':    {'Index': (-88, -95, -50), 'Middle': (-90, -95, -50), 'Ring': (-90, -95, -50), 'Pinky': (-90, -95, -50), 'Thumb': (None, -25, -30)},
     'relaxed': {'Index': (-14, -22, -14), 'Middle': (-18, -26, -16), 'Ring': (-22, -30, -18), 'Pinky': (-26, -34, -20), 'Thumb': (None, -10, -10)},
     'open':    {'Index': (-4, -6, -4), 'Middle': (-4, -6, -4), 'Ring': (-4, -6, -4), 'Pinky': (-4, -6, -4), 'Thumb': (None, -4, -4)},
+    # v2.11 weapon moves: a hand closed round a hilt / bow grip (a fist with room for the handle)
+    'grip':    {'Index': (-62, -78, -40), 'Middle': (-68, -80, -42), 'Ring': (-72, -82, -42), 'Pinky': (-76, -84, -42), 'Thumb': (None, -20, -24)},
 }
 # the thumb's base swings across the curled fingers (solved so the tip rests on the index/middle middle joints);
 # right-hand XYZ euler degrees, the left hand mirrors Y and Z
-THUMB1 = {'fist': (-8, -8, -37), 'relaxed': (-3, -2, -10), 'open': (0, 0, 0)}
+THUMB1 = {'fist': (-8, -8, -37), 'relaxed': (-3, -2, -10), 'open': (0, 0, 0), 'grip': (-6, -6, -30)}
+
+
+def hand_pose(clip, side):
+    # weapon moves (v2.11): swords are held in both hands; the bow in the left hand (the right draws the string)
+    if clip.startswith('sword_') or clip.startswith('twin_'): return 'grip'
+    if clip.startswith('bow_'): return 'grip' if side == 'Left' or clip in ('bow_draw', 'bow_sheathe') else 'relaxed'
+    return 'fist' if clip in FIST else 'open' if clip in OPEN else 'relaxed'
 
 
 def quat(pose, side, f, i):
@@ -283,7 +292,6 @@ def bags(act):
 
 n_act = 0
 for act in bpy.data.actions:
-    pose = 'fist' if act.name in FIST else 'open' if act.name in OPEN else 'relaxed'
     f0, f1 = act.frame_range
     for cb in bags(act):
         for fc in list(cb.fcurves):
@@ -293,7 +301,7 @@ for act in bpy.data.actions:
                 for i in range(1, 4):
                     bn = P + side + 'Hand' + f + str(i)
                     if bn not in arm.pose.bones: continue
-                    q = quat(pose, side, f, i)
+                    q = quat(hand_pose(act.name, side), side, f, i)
                     for ci in range(4):
                         fc = cb.fcurves.new(f'pose.bones["{bn}"].rotation_quaternion', index=ci, group_name=bn)
                         fc.keyframe_points.add(2); fc.keyframe_points.foreach_set('co', [f0, q[ci], f1, q[ci]])

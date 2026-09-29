@@ -4,7 +4,7 @@
 import { put } from '@vercel/blob';
 import { Sandbox, creds, JOB_DIR, JOB_TIMEOUT_MS, redis, loadBuild, updateRigging, readText, sanitize, body } from './_forge-rig.mjs';
 
-const STEPS = ['starting', 'download', 'armor', 'head', 'normalize', 'landmarks', 'skeleton', 'weights', 'bind', 'hands', 'cloth', 'animate', 'moves', 'cleanup', 'export', 'qa', 'thumb', 'done'];
+const STEPS = ['starting', 'download', 'armor', 'head', 'normalize', 'landmarks', 'skeleton', 'weights', 'bind', 'hands', 'cloth', 'animate', 'moves', 'weapons', 'cleanup', 'export', 'movespack', 'qa', 'thumb', 'done'];
 
 export default async function handler(req, res) {
   const buildId = req.query?.buildId || body(req).buildId;
@@ -64,9 +64,20 @@ export default async function handler(req, res) {
         if (jpg && jpg.length) thumbUrl = (await put(path.replace(/\.glb$/, '_thumb.jpg'), jpg, { access: 'public', addRandomSuffix: true, contentType: 'image/jpeg' })).url;
       } catch (e) { /* keep the rig even if the thumbnail fails */ }
     }
+    // v2.11 weapon moves pack (skeleton + weapon clips), played on this rig in the Forge and the village
+    let movesUrl = null;
+    if (result.moves) {
+      try {
+        const mv = await sandbox.readFileToBuffer({ path: `${JOB_DIR}/moves.glb` });
+        if (mv && mv.length) {
+          movesUrl = (await put(path.replace(/_forge_rig\.glb$/, '_forge_moves.glb'), mv, { access: 'public', addRandomSuffix: true, contentType: 'model/gltf-binary' })).url;
+          await redis([['SET', `forge:moves:v1:${blob.url}`, movesUrl]]);
+        }
+      } catch (e) { /* the rig works without weapon moves */ }
+    }
     try { await sandbox.stop(); } catch (e) {}
     const next = await updateRigging(buildId, {
-      status: 'succeeded', progress: 'done', forgeRigGlbUrl: blob.url, thumbUrl, bytes: glb.length, seconds: result.seconds,
+      status: 'succeeded', movesGlbUrl: movesUrl, progress: 'done', forgeRigGlbUrl: blob.url, thumbUrl, bytes: glb.length, seconds: result.seconds,
       qa: result.qa || null, verdict: result.qa?.verdict || null, finishedAt: new Date().toISOString()
     }, { forgeRigGlbUrl: blob.url, ...(thumbUrl ? { forgeRigThumbUrl: thumbUrl } : {}) });
     return res.status(200).json({ ok: true, forgeRig: next.forgeRig, forgeRigGlbUrl: blob.url, percent: 100 });

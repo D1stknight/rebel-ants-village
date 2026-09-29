@@ -143,5 +143,116 @@
     const w = (await catalog()).find((x) => x.id === pick.weaponId);
     return w ? { weapon: w, hilt: pick.hilt || 'R', chosen: !!choice } : null;
   }
-  window.RebelWeapon = { attach, resolve, fromTrait, catalog };
+  // ---------------------------------------------------------------------------------------------------------------
+  // Weapon moves (Sept 29): draw from the back, fight with it, put it away. The clips come in a per-Rebel moves pack
+  // (skeleton + weapon clips, made by the Forge Rigger with the rig) and play on the Rebel's own bones.
+  const MOVESET = {
+    sword: { draw: 'sword_draw', drawL: 'sword_draw_l', sheathe: 'sword_sheathe', sheatheL: 'sword_sheathe_l', idle: 'sword_idle', walk: 'sword_walk', run: 'sword_run', hit: 'sword_hit', block: 'sword_block',
+      attacks: ['sword_combo', 'sword_power_slash', 'sword_down_slash', 'sword_spin_attack', 'sword_jump_attack', 'sword_kick', 'sword_combo2'], grab: 0.38, stow: 0.4, hideBack: true, length: 0.5 },
+    twin: { draw: 'sword_draw', drawL: 'sword_draw_l', sheathe: 'sword_sheathe', sheatheL: 'sword_sheathe_l', idle: 'sword_idle', walk: 'sword_walk', run: 'sword_run', hit: 'sword_hit', block: 'sword_block',
+      attacks: ['twin_combo', 'sword_combo', 'sword_power_slash', 'sword_down_slash', 'sword_spin_attack', 'sword_kick'], grab: 0.38, stow: 0.4, hideBack: true, length: 0.34 },
+    bow: { draw: 'bow_draw', sheathe: 'bow_sheathe', idle: 'bow_idle', walk: 'bow_walk', run: 'bow_run', hit: 'bow_hit', aimIdle: 'bow_aim_idle',
+      attacks: ['bow_nock', 'bow_aim', 'bow_shoot', 'bow_kick'], grab: 0.3, stow: 0.42, hideBack: false, length: 0.62 }
+  };
+  const kindOf = (weaponId) => (weaponId === 'dawns_light_arrows' ? 'bow' : weaponId === 'celestial_fang' ? 'twin' : 'sword');
+  const MOVE_NAMES = { sword_draw: 'Draw', sword_draw_l: 'Draw', sword_sheathe: 'Sheathe', sword_sheathe_l: 'Sheathe', sword_idle: 'Sword Stance', sword_walk: 'Sword Walk', sword_run: 'Sword Run',
+    sword_combo: 'Combo Slash', sword_power_slash: 'Power Slash', sword_down_slash: 'Downward Slash', sword_spin_attack: 'Spin Attack', sword_jump_attack: 'Leap Strike', sword_kick: 'Spin Kick',
+    sword_combo2: 'Two-Hand Combo', sword_hit: 'Take a Hit', sword_block: 'Guard', twin_combo: 'Twin Blade Combo',
+    bow_draw: 'Ready Bow', bow_sheathe: 'Stow Bow', bow_idle: 'Bow Stance', bow_walk: 'Bow Walk', bow_run: 'Bow Run', bow_nock: 'Nock Arrow', bow_aim: 'Power Draw', bow_shoot: 'Loose',
+    bow_aim_idle: 'Aim', bow_kick: 'Bow Kick', bow_hit: 'Take a Hit' };
+
+  // moves pack made with this rig (null if the rig predates weapon moves)
+  const movesCache = {};
+  function movesFor(rigUrl) {
+    if (!rigUrl) return Promise.resolve(null);
+    return movesCache[rigUrl] || (movesCache[rigUrl] = fetch('/api/forge-weapon?action=moves&rig=' + encodeURIComponent(rigUrl)).then((r) => r.json()).then((j) => j.moves || null).catch(() => null));
+  }
+  // load the pack and re-target its clips onto this Rebel's bones (by name). Returns { name: AnimationGroup }.
+  async function loadMoves({ scene, root, url, prefix = '' }) {
+    const nodes = {}; [root, ...root.getDescendants(false)].forEach((n) => { if (n.name && !(n.name in nodes)) nodes[n.name] = n; });
+    const c = await B().SceneLoader.LoadAssetContainerAsync('', url, scene, null, '.glb');
+    const out = {};
+    for (const g of c.animationGroups) {
+      const ng = new (B().AnimationGroup)(prefix + g.name, scene);
+      for (const ta of g.targetedAnimations) {
+        if (!ta.target || /^cloth_/.test(ta.target.name || '')) continue;       // the cloth solver owns those bones
+        const t = nodes[ta.target.name]; if (t) ng.addTargetedAnimation(ta.animation, t);
+      }
+      ng.normalize(g.from, g.to); out[g.name] = ng;
+    }
+    c.animationGroups.forEach((g) => g.dispose()); c.dispose();
+    return out;
+  }
+
+  // a drawn prop (bare blade / bow) closed in one hand. Placed from the hand's own bones, so it fits every Rebel.
+  async function hold({ scene, meshes, url, hand = 'right', kind = 'sword', H = 1.8, onMaterial, grip }) {
+    const V3 = B().Vector3;
+    const sm = meshes.find((m) => m.skeleton); if (!sm) return null;
+    const skel = sm.skeleton; const bone = (n) => node(skel.bones, n);
+    const S_ = hand === 'left' ? 'Left' : 'Right';
+    const hb = bone(S_ + 'Hand'), ib = bone(S_ + 'HandIndex1'), pb = bone(S_ + 'HandPinky1'), mb = bone(S_ + 'HandMiddle1'), tb = bone(S_ + 'HandThumb1');
+    if (!hb || !ib || !pb || !mb) return null;
+    skel.prepare(true);
+    const boneWorld = (b) => b.getFinalMatrix().multiply(sm.getWorldMatrix());
+    const bp = (b) => V3.TransformCoordinates(V3.Zero(), boneWorld(b));
+    const Ph = bp(hb), Pi = bp(ib), Pp = bp(pb), Pm = bp(mb);
+    const A = Pi.subtract(Pp).normalize();                                  // across the knuckles, toward the index finger
+    let F = Pm.subtract(Ph); F.subtractInPlace(A.scale(V3.Dot(F, A))); const hl = F.length(); F.normalize();   // along the hand
+    let Np = V3.Cross(F, A).normalize();                                     // palm normal (sign from the thumb)
+    if (tb) { const t = bp(tb).subtract(Ph); if (V3.Dot(t, Np) < 0) Np = Np.scale(-1); }
+    const g = { along: 0.78, palm: 0.42, slide: 0, ...(grip || {}) };
+    const G = Ph.add(F.scale(g.along * hl)).add(Np.scale(g.palm * hl)).add(A.scale(g.slide * hl));   // the middle of the closed fist
+
+    const res = await B().SceneLoader.ImportMeshAsync(null, '', url, scene);
+    const wroot = res.meshes[0]; const wmeshes = res.meshes.filter((m) => m.getTotalVertices && m.getTotalVertices() > 0);
+    wroot.computeWorldMatrix(true);
+    const wv = worldVerts(wmeshes, 20000);
+    const lo = ['x', 'y', 'z'].map((k) => pct(wv.map((v) => v[k]), 0.005)), hi = ['x', 'y', 'z'].map((k) => pct(wv.map((v) => v[k]), 0.995));
+    const c = new V3((lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2);
+    const ext = [0, 1, 2].map((i) => hi[i] - lo[i]); const ai = ext.indexOf(Math.max(...ext)); const len = ext[ai];
+    const E = [new V3(1, 0, 0), new V3(0, 1, 0), new V3(0, 0, 1)]; const axis = E[ai];
+    const ts = wv.map((v) => V3.Dot(v.subtract(c), axis) / len + 0.5);
+    const rr = wv.map((v) => { const d = v.subtract(c); return d.subtract(axis.scale(V3.Dot(d, axis))).length(); });
+    const rTop = pct(rr, 0.97), wideT = pct(ts.filter((t, i) => rr[i] >= rTop), 0.5);
+    const hiltSign = (grip && grip.hiltEnd === 'min') ? -1 : (grip && grip.hiltEnd === 'max') ? 1 : (wideT < 0.5 ? -1 : 1);   // the guard is the widest slice
+    const others = [0, 1, 2].filter((i) => i !== ai);
+    const thinI = ext[others[0]] <= ext[others[1]] ? others[0] : others[1]; const wideI = others.find((i) => i !== thinI);
+    const scale = ((grip && grip.length) || MOVESET[kind].length) * H / len;
+    // where along the prop the fist closes: a sword on its handle (just behind the guard), a bow in its middle
+    const gripT = kind === 'bow' ? 0 : ((grip && grip.at) || 0.28);        // 0 = middle, 0.5 = the hilt end
+    const Pgrip = c.add(axis.scale(hiltSign * gripT * len));
+    // target frame: the prop's long axis runs through the fist across the knuckles; the blade leaves on the index side
+    const D = kind === 'bow' ? A : A.scale(-1);                              // world direction of the prop's hilt end
+    let Wt = F, wSign = 1;                                                   // a blade's edge runs along the hand
+    if (kind === 'bow') {
+      // the string faces the archer: the limb tips (the ends) sit on the string side of the bow's depth
+      const sp2 = bone('Spine2'); if (sp2) { Wt = bp(sp2).subtract(G); Wt.subtractInPlace(A.scale(V3.Dot(Wt, A))); Wt.normalize(); }
+      const wa = E[wideI]; const wc = (sel) => { const v = wv.filter((_, i) => sel(Math.abs(ts[i] - 0.5))).map((p) => V3.Dot(p.subtract(c), wa)); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0; };
+      wSign = wc((d) => d > 0.42) >= wc((d) => d < 0.06) ? 1 : -1;
+    }
+    let T = V3.Cross(D, Wt).normalize();
+    const L = E[ai].scale(hiltSign), Wd = E[wideI].scale(wSign), Th = E[thinI];
+    const Mw = B().Matrix.FromValues(L.x, L.y, L.z, 0, Wd.x, Wd.y, Wd.z, 0, Th.x, Th.y, Th.z, 0, 0, 0, 0, 1);
+    let Mt = B().Matrix.FromValues(D.x, D.y, D.z, 0, Wt.x, Wt.y, Wt.z, 0, T.x, T.y, T.z, 0, 0, 0, 0, 1);
+    let R = Mw.transpose().multiply(Mt);
+    if (R.determinant() < 0) { T = T.scale(-1); Mt = B().Matrix.FromValues(D.x, D.y, D.z, 0, Wt.x, Wt.y, Wt.z, 0, T.x, T.y, T.z, 0, 0, 0, 0, 1); R = Mw.transpose().multiply(Mt); }
+    const pivot = new (B().TransformNode)('rebelHeld_' + hand, scene);
+    pivot.setPreTransformMatrix(B().Matrix.Translation(G.x, G.y, G.z).multiply(B().Matrix.Invert(boneWorld(hb))));
+    pivot.attachToBone(hb, sm); pivot.scalingDeterminant = 1;
+    const inner = new (B().TransformNode)('rebelHeldInner', scene); inner.parent = pivot; wroot.parent = inner;
+    const innerLocal = B().Matrix.Translation(-Pgrip.x, -Pgrip.y, -Pgrip.z).multiply(R).multiply(B().Matrix.Scaling(scale, scale, scale));
+    inner.rotationQuaternion = new (B().Quaternion)(); innerLocal.decompose(inner.scaling, inner.rotationQuaternion, inner.position);
+    wmeshes.forEach((m) => { m.isPickable = false; m.alwaysSelectAsActiveMesh = true; if (m.material && onMaterial) onMaterial(m.material, m); });
+    return { pivot, meshes: wmeshes, setEnabled(on) { pivot.setEnabled(on); }, dispose() { wmeshes.forEach((m) => m.dispose()); wroot.dispose(); inner.dispose(); pivot.dispose(); } };
+  }
+  // all the props a weapon puts in the hands when drawn: { right?: handle, left?: handle }, hidden until shown
+  async function holdAll({ scene, meshes, weapon, H, onMaterial }) {
+    const kind = kindOf(weapon.id), out = {};
+    for (const [hand, p] of Object.entries(weapon.held || {})) {
+      try { const h = await hold({ scene, meshes, url: p.glbUrl, hand, kind, H, onMaterial, grip: p.grip }); if (h) { h.setEnabled(false); out[hand] = h; } } catch (e) { console.warn('held prop', e); }
+    }
+    return out;
+  }
+
+  window.RebelWeapon = { attach, resolve, fromTrait, catalog, MOVESET, MOVE_NAMES, kindOf, movesFor, loadMoves, hold, holdAll };
 })();

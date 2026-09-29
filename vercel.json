@@ -48,6 +48,9 @@
     "api/forge-sweep.mjs": {
       "maxDuration": 300
     },
+    "api/forge-rig-moves.mjs": {
+      "maxDuration": 120
+    },
     "api/forge-weapon.mjs": {
       "maxDuration": 300
     }

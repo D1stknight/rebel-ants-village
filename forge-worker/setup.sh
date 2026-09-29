@@ -38,7 +38,7 @@ echo "== self test"
 "$FW/venv/bin/python" -c "import bpy, scipy, numpy, PIL; print('bpy', bpy.app.version_string)"
 "$FW/venv/bin/python" - <<'PY'
 import json, os
-need = sorted(set(c['file'] for c in json.load(open('anim/clips.json'))))
+need = sorted(set(c['file'] for c in json.load(open('anim/clips.json')) + json.load(open('anim/clips_weapons.json'))))
 miss = [f for f in need if not os.path.exists(os.path.join('pack', f))]
 assert not miss, f'missing mocap files: {miss}'
 print('clips ok', len(need))

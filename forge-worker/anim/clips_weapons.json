@@ -1,0 +1,170 @@
+[
+ {
+  "name": "sword_draw",
+  "file": "mixamo/wp_sword_draw.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_draw_l",
+  "file": "mixamo/wp_sword_draw_l.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_sheathe",
+  "file": "mixamo/wp_sword_sheathe.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_sheathe_l",
+  "file": "mixamo/wp_sword_sheathe_l.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_idle",
+  "file": "mixamo/wp_sword_idle.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_walk",
+  "file": "mixamo/wp_sword_walk.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_run",
+  "file": "mixamo/wp_sword_run.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_combo",
+  "file": "mixamo/wp_sword_combo.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_power_slash",
+  "file": "mixamo/wp_sword_power_slash.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_down_slash",
+  "file": "mixamo/wp_sword_down_slash.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_spin_attack",
+  "file": "mixamo/wp_sword_spin_attack.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_jump_attack",
+  "file": "mixamo/wp_sword_jump_attack.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_kick",
+  "file": "mixamo/wp_sword_kick.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_hit",
+  "file": "mixamo/wp_sword_hit.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_block",
+  "file": "mixamo/wp_sword_block.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "sword_combo2",
+  "file": "mixamo/wp_sword_combo2.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "twin_combo",
+  "file": "mixamo/wp_twin_combo.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "bow_draw",
+  "file": "mixamo/wp_bow_draw.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "bow_sheathe",
+  "file": "mixamo/wp_bow_sheathe.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "bow_idle",
+  "file": "mixamo/wp_bow_idle.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "bow_walk",
+  "file": "mixamo/wp_bow_walk.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "bow_run",
+  "file": "mixamo/wp_bow_run.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "bow_nock",
+  "file": "mixamo/wp_bow_nock.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "bow_aim",
+  "file": "mixamo/wp_bow_aim.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "bow_shoot",
+  "file": "mixamo/wp_bow_shoot.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "bow_aim_idle",
+  "file": "mixamo/wp_bow_aim_idle.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "bow_kick",
+  "file": "mixamo/wp_bow_kick.npz",
+  "airborne": true,
+  "pack": "weapons"
+ },
+ {
+  "name": "bow_hit",
+  "file": "mixamo/wp_bow_hit.npz",
+  "airborne": true,
+  "pack": "weapons"
+ }
+]

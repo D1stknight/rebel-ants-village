@@ -120,6 +120,14 @@ export default async function handler(req, res) {
       res.setHeader('Cache-Control', 'public, max-age=60');
       return res.status(200).json({ ok: true, weapons: list });
     }
+    // the weapon moves pack made with a rig (skeleton + weapon clips); null = this rig has none yet
+    if (req.method === 'GET' && action === 'moves') {
+      const rig = String(req.query?.rig || '');
+      if (!/^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//.test(rig)) return res.status(400).json({ ok: false, error: 'rig must be our Blob' });
+      const [r] = await redis([['GET', `forge:moves:v1:${rig}`]]);
+      res.setHeader('Cache-Control', 'public, max-age=60');
+      return res.status(200).json({ ok: true, moves: r?.result || null });
+    }
     if (req.method === 'GET' && action === 'choice') {
       const t = String(req.query?.tokenId || ''), c = String(req.query?.collectionKey || 'battle_for_colony');
       if (!/^\d{1,78}$/.test(t)) return res.status(400).json({ ok: false, error: 'Missing tokenId' });
@@ -147,6 +155,13 @@ export default async function handler(req, res) {
 
     // ---- admin: weapon studio ----
     if (!admin) return res.status(401).json({ ok: false, error: 'Admin only' });
+    if (req.method === 'POST' && action === 'set-moves') {   // link a moves pack to an existing rig
+      const rig = String(b.rig || ''), mv = String(b.moves || '');
+      const ok = (u) => /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//.test(u);
+      if (!ok(rig) || (mv && !ok(mv))) return res.status(400).json({ ok: false, error: 'rig / moves must be our Blob' });
+      await redis([mv ? ['SET', `forge:moves:v1:${rig}`, mv] : ['DEL', `forge:moves:v1:${rig}`]]);
+      return res.status(200).json({ ok: true, rig, moves: mv || null });
+    }
     if (req.method === 'GET' && action === 'studio') {
       const ids = Object.keys(WEAPONS);
       const rs = await redis(ids.map((id) => ['GET', K(id)]));
