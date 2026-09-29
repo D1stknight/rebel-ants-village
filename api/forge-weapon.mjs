@@ -31,6 +31,24 @@ export const WEAPONS = {
   stormbringer_blade: { name: 'Stormbringer Blade', trait: 'Stormbringer-Blade', hilt: 'L', look: 'a katana in a dark red scabbard with a grey wrapped hilt' },
   whisper_of_dawn: { name: 'Whisper of Dawn', trait: 'Whisper-of-Dawn', hilt: 'L', look: 'a katana in a blue scabbard with a dark wrapped hilt' }
 };
+// Drawn props (Sept 29, weapon moves): what the Rebel holds when the weapon is out. Made in the same studio, from the
+// weapon's own reference image. Katanas: the bare blade in the right hand (the scabbard model hides meanwhile);
+// Celestial Fang: one short sword in each hand; Dawn's Light Arrows: a bow in the left hand.
+const DRAWN = (what) => `the SAME weapon as in the image, now DRAWN and held ready: ${what}. Bare, clean blade edge; same hilt, wrap, guard and colours as the image. No scabbard.`;
+export const PROPS = {
+  eclipse_edge_drawn: { name: 'Eclipse Edge (drawn)', base: 'eclipse_edge', look: DRAWN('the katana out of its black scabbard') },
+  soulrender_drawn: { name: 'Soulrender (drawn)', base: 'soulrender', look: DRAWN('the sword out of its red-brown scabbard') },
+  stormbringer_blade_drawn: { name: 'Stormbringer Blade (drawn)', base: 'stormbringer_blade', look: DRAWN('the katana out of its dark red scabbard') },
+  whisper_of_dawn_drawn: { name: 'Whisper of Dawn (drawn)', base: 'whisper_of_dawn', look: DRAWN('the katana out of its blue scabbard') },
+  celestial_fang_drawn: { name: 'Celestial Fang (one drawn blade)', base: 'celestial_fang', look: DRAWN('ONLY ONE of the twin short swords, out of its scabbard (a single short straight sword)') },
+  dawns_light_bow: { name: "Dawn's Light Bow", base: 'dawns_light_arrows', look: 'a strung longbow that belongs with this quiver: same wood, colours, wraps and fittings, a recurve samurai-style bow, bowstring drawn thin and straight, no arrows' }
+};
+// which prop goes in which hand when drawn
+export const HELD = {
+  eclipse_edge: { right: 'eclipse_edge_drawn' }, soulrender: { right: 'soulrender_drawn' }, stormbringer_blade: { right: 'stormbringer_blade_drawn' },
+  whisper_of_dawn: { right: 'whisper_of_dawn_drawn' }, celestial_fang: { right: 'celestial_fang_drawn', left: 'celestial_fang_drawn' }, dawns_light_arrows: { left: 'dawns_light_bow' }
+};
+const ALL = { ...WEAPONS, ...PROPS };
 // NFT trait value -> { weaponId, side of the hilt (the character's own left / right shoulder) }
 export function weaponForTrait(value) {
   const v = String(value || '');
@@ -72,6 +90,17 @@ No character, no hands, no ants, no text, no second copy.
 ${notes ? '\n' + notes : ''}`.trim();
 }
 
+function propPrompt(w, notes) {
+  return `
+The image is a clean product reference of a Rebel Ants weapon. Draw ${w.look}.
+Draw ONLY that one object, alone, as a clean product reference for a 3D modelling pipeline:
+- the whole object, full length, nothing cut off, in the same colours, materials and hand-drawn bold-outline cartoon style as the image
+- laid out horizontally across the image, seen straight from the side, centred, filling about 80 % of the width
+- plain light-grey background, soft even lighting, no shadows on the background
+No character, no hands, no text, no second copy.
+${notes ? '\n' + notes : ''}`.trim();
+}
+
 function body(req) { if (typeof req.body === 'string') { try { return JSON.parse(req.body); } catch (e) { return {}; } } return req.body || {}; }
 
 export default async function handler(req, res) {
@@ -82,9 +111,12 @@ export default async function handler(req, res) {
   try {
     // ---- public ----
     if (req.method === 'GET' && action === 'catalog') {
-      const ids = Object.keys(WEAPONS);
-      const rs = await redis(ids.map((id) => ['GET', K(id)]));
-      const list = ids.map((id, i) => { let r = null; try { r = rs[i]?.result ? JSON.parse(rs[i].result) : null; } catch (e) {} return r && r.approved && r.glbUrl ? { id, name: WEAPONS[id].name, trait: WEAPONS[id].trait, hilt: WEAPONS[id].hilt, glbUrl: r.glbUrl, thumbUrl: r.refUrl || null, mount: r.mount || DEFAULT_MOUNT } : null; }).filter(Boolean);
+      const ids = Object.keys(WEAPONS), pids = Object.keys(PROPS);
+      const rs = await redis(ids.concat(pids).map((id) => ['GET', K(id)]));
+      const recs = {}; ids.concat(pids).forEach((id, i) => { try { recs[id] = rs[i]?.result ? JSON.parse(rs[i].result) : null; } catch (e) { recs[id] = null; } });
+      const ok = (id) => (recs[id] && recs[id].approved && recs[id].glbUrl ? recs[id] : null);
+      const heldOf = (id) => { const h = {}; for (const [hand, pid] of Object.entries(HELD[id] || {})) { const r = ok(pid); if (r) h[hand] = { id: pid, glbUrl: r.glbUrl, grip: r.grip || null }; } return Object.keys(h).length ? h : null; };
+      const list = ids.map((id) => { const r = ok(id); return r ? { id, name: WEAPONS[id].name, trait: WEAPONS[id].trait, hilt: WEAPONS[id].hilt, glbUrl: r.glbUrl, thumbUrl: r.refUrl || null, mount: r.mount || DEFAULT_MOUNT, held: heldOf(id) } : null; }).filter(Boolean);
       res.setHeader('Cache-Control', 'public, max-age=60');
       return res.status(200).json({ ok: true, weapons: list });
     }
@@ -121,18 +153,21 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, weapons: ids.map((id, i) => { let r = null; try { r = rs[i]?.result ? JSON.parse(rs[i].result) : null; } catch (e) {} return { id, ...WEAPONS[id], rec: r }; }) });
     }
     const id = String(b.weaponId || '');
-    if (!WEAPONS[id]) return res.status(400).json({ ok: false, error: 'Unknown weaponId' });
-    const w = WEAPONS[id];
+    if (!ALL[id]) return res.status(400).json({ ok: false, error: 'Unknown weaponId' });
+    const w = ALL[id];
     let rec = (await getRec(id)) || { id, name: w.name, mount: DEFAULT_MOUNT, approved: false, history: [] };
 
     if (action === 'ref') {
       const apiKey = process.env.OPENAI_API_KEY;
       const toks = (Array.isArray(b.tokenIds) ? b.tokenIds : []).map(String).filter((x) => /^\d{1,5}$/.test(x)).slice(0, 3);
-      if (!toks.length) return res.status(400).json({ ok: false, error: 'tokenIds (1-3 Rebels with this weapon) needed' });
-      const urls = (await Promise.all(toks.map(nftImageUrl))).filter(Boolean);
+      // a drawn prop starts from its weapon's own approved reference image
+      const baseRef = w.base ? (await getRec(w.base))?.refUrl : null;
+      if (w.base && !baseRef) return res.status(400).json({ ok: false, error: 'Make the base weapon first' });
+      if (!w.base && !toks.length) return res.status(400).json({ ok: false, error: 'tokenIds (1-3 Rebels with this weapon) needed' });
+      const urls = w.base ? [baseRef] : (await Promise.all(toks.map(nftImageUrl))).filter(Boolean);
       if (!urls.length) return res.status(502).json({ ok: false, error: 'Could not load the NFT images' });
       const images = await Promise.all(urls.map(fetchImageAsDataUrl));
-      const { imageBase64, imageModel } = await forgeImageEdit({ apiKey, prompt: refPrompt(w, String(b.notes || '')), images, size: '1536x1024' });
+      const { imageBase64, imageModel } = await forgeImageEdit({ apiKey, prompt: w.base ? propPrompt(w, String(b.notes || '')) : refPrompt(w, String(b.notes || '')), images, size: '1536x1024' });
       const blob = await put(`forge/weapons/${id}_ref_${Date.now()}.png`, Buffer.from(imageBase64, 'base64'), { access: 'public', contentType: 'image/png', addRandomSuffix: true });
       rec = { ...rec, refUrl: blob.url, refModel: imageModel, refFrom: toks, history: [...(rec.history || []), { refUrl: blob.url, at: new Date().toISOString() }].slice(-12) };
       await setRec(id, rec);
@@ -178,7 +213,7 @@ export default async function handler(req, res) {
     }
     if (action === 'set') {
       const p = b.patch || {};
-      for (const k of ['glbUrl', 'approved', 'mount', 'notes']) if (k in p) rec[k] = p[k];
+      for (const k of ['glbUrl', 'approved', 'mount', 'notes', 'grip']) if (k in p) rec[k] = p[k];
       if (rec.glbUrl && !/^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//.test(rec.glbUrl)) return res.status(400).json({ ok: false, error: 'glbUrl must be our Blob' });
       await setRec(id, rec);
       return res.status(200).json({ ok: true, rec });
