@@ -15167,6 +15167,7 @@ async function refreshActiveForgeCharacterForVillage() {
 
 // Portrait renders of the rigged Forge characters (lobby cards + the village info hub). Filled by the Forge Rigger.
 const FORGE_RIG_THUMBS = {
+  '262': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/262/build_1790507312520_forge_rig_thumb-sSIiQnTTHldL3jphQMvGOLxShUXYZ6.jpg',
   '469': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/469/build_1790555749730_forge_rig_thumb-ftUpQeITAQYMi9x0GCPTjApOXkwHlv.jpg',
   '1555': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/1555/build_1790555715921_forge_rig_thumb-8lI4YsoMg6r76F86AMnQj4pVTkg18v.jpg',
   '4998': 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4998/build_1790562761454_forge_rig_thumb-xL4q8HNOCU1sTT8MuM5acbngeAS7Gi.jpg',
@@ -15196,6 +15197,11 @@ const CHARACTER_REGISTRY = {
   // Forge Rigger v1.2 bundles: ONE GLB per Rebel (metres, 65-bone Rebel Standard rig) with all 5 clips
   // as named animation groups (idle, walk, run, jump, flip_kick) retargeted from the master ant.
   // Sept 29: the Forge v2 picks (rigger 2.10), same GLBs as the server active characters.
+  forged_rig_262: {   // the standard Rebel: the Sept 27 rig (worker 7beb002), kept exactly as approved
+    bundleId: 'forged_rig_262', formType: 'forged', formLabel: 'Forged 3D Form (#262)', hasGeneratedModel: true,
+    basePath: '', singleGlb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/262/build_1790507312520_forge_rig-x0rJTyUB98EfFy0wBXE9AXIZQtPpaV.glb',   // build_1790507312520
+    scale: 1.9, thumb: FORGE_RIG_THUMBS['262'], animations: []
+  },
   forged_rig_469: {
     bundleId: 'forged_rig_469', formType: 'forged', formLabel: 'Forged 3D Form (Sohei #469)', hasGeneratedModel: true,
     basePath: '', singleGlb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/469/build_1790555749730_forge_rig-lb5rR5g0JYHfn5bYieoltpova0yDXM.glb',   // build_1790555749730
@@ -15268,6 +15274,7 @@ const CHARACTER_REGISTRY = {
 // V1 test: Rebel #469 temporarily resolves to a forged bundle so we can prove the future path works.
 // Later, the NFT → 3D Forge pipeline can save real token-specific bundle choices here.
 const REBEL_CHARACTER_RECORDS = {
+  "262": { bundleId: "forged_rig_262" },
   "469": { bundleId: "forged_rig_469" },
   "1555": { bundleId: "forged_rig_1555" },
   "4998": { bundleId: "forged_rig_4998" },
@@ -15277,7 +15284,7 @@ const REBEL_CHARACTER_RECORDS = {
   "4722": { bundleId: "forged_rig_4722" },
   "4": { bundleId: "forged_rig_4" }
 };
-// Play-test override: village.html?rig=469 | 1555 | 4998 | 1738 | 3421 | 609 | 4722 | 4 | master (this page load only)
+// Play-test override: village.html?rig=262 | 469 | 1555 | 4998 | 1738 | 3421 | 609 | 4722 | 4 | master (this page load only)
 function getForgeRigOverrideBundleId() {
   // URL-only test override. It used to be remembered in localStorage, which made every Rebel (even #001) load
   // the last tested rig; the old stored value is cleared here.
