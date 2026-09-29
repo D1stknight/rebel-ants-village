@@ -18772,7 +18772,7 @@ async function armVillageWeapon(r, body, pick, back) {
   const set = RebelWeapon.MOVESET[RebelWeapon.kindOf(pick.weapon.id)];
   const slot = {}; let i = WEAPON_SLOT0;
   for (const [name, g] of Object.entries(groups)) { g.enableBlending = true; g.blendingSpeed = 0.12; animGroups[i] = g; slot[name] = i++; }
-  const held = await RebelWeapon.holdAll({ scene, meshes: body, weapon: pick.weapon, H: back.info.H, onMaterial: capWeaponMaterial, alt: pick.hilt === 'L' });
+  const held = await RebelWeapon.holdAll({ scene, meshes: body, weapon: pick.weapon, H: back.info.H, onMaterial: capWeaponMaterial, alt: pick.hilt === 'L', groups });
   const hL = pick.hilt === 'L';
   window._villageWeapon = { set, slot, held, back, state: 'back', draw: slot[hL && set.drawL ? set.drawL : set.draw], stow: slot[hL && set.sheatheL ? set.sheatheL : set.sheathe], orig: null, cycle: -1 };
   const hint = document.getElementById('ctrl'); if (hint && !/Draw weapon/.test(hint.innerHTML)) hint.innerHTML += '<br><kbd>Q</kbd> Draw weapon';
@@ -18786,15 +18786,23 @@ function toggleVillageWeapon() {
   const W = window._villageWeapon; if (!W || W.state === 'drawing' || W.state === 'stowing') return false;
   if (W.state === 'back') {
     if (window._forgeFightStance) toggleForgeFightStance();
+    stopLocomotion();
     W.orig = [animGroups[0], animGroups[1], animGroups[2]];
     animGroups[0] = animGroups[W.slot[W.set.idle]] || animGroups[0]; animGroups[1] = animGroups[W.slot[W.set.walk]] || animGroups[1]; animGroups[2] = animGroups[W.slot[W.set.run]] || animGroups[2];
     W.state = 'drawing'; W.clip = W.draw; animState = -1;
     return playForgeRigAction(W.draw, null, true);
   }
   W.state = 'stowing'; W.clip = W.stow; if (W.held && W.held.alt) villageWeaponShow('alt');
+  stopLocomotion();   // the weapon stance must stop, or it keeps blending in after the weapon is put away
   if (W.orig) { [animGroups[0], animGroups[1], animGroups[2]] = W.orig; W.orig = null; }
   animState = -1;
   return playForgeRigAction(W.stow, null, true);
+}
+function stopLocomotion() {
+  const W = window._villageWeapon;
+  const gs = [animGroups[0], animGroups[1], animGroups[2], animGroups[animState]];
+  if (W) [W.set.idle, W.set.walk, W.set.run, W.set.aimIdle].forEach((c) => { if (c && W.slot[c] != null) gs.push(animGroups[W.slot[c]]); });
+  gs.forEach((g) => { if (g && g.isPlaying) g.stop(); });
 }
 function villageWeaponAttack(which) {
   const W = window._villageWeapon; if (!W || W.state !== 'hand') return false;

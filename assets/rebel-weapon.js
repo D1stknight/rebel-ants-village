@@ -185,7 +185,44 @@
   }
 
   // a drawn prop (bare blade / bow) closed in one hand. Placed from the hand's own bones, so it fits every Rebel.
-  async function hold({ scene, meshes, url, hand = 'right', kind = 'sword', H = 1.8, onMaterial, grip }) {
+  // Two-handed swords: the handle axis in the right hand's own frame, learnt from the Rebel's sword clips (the line
+  // from the right fist to the left fist, averaged over every frame where both hands are on the hilt). The mocap was
+  // made for another body, so a fixed guess put the handle beside the other fist.
+  function fistCenter(bp, bone, S_) {
+    const V3 = B().Vector3;
+    const hb = bone(S_ + 'Hand'), ib = bone(S_ + 'HandIndex1'), pb = bone(S_ + 'HandPinky1'), mb = bone(S_ + 'HandMiddle1'), tb = bone(S_ + 'HandThumb1');
+    if (!hb || !ib || !pb || !mb) return null;
+    const Ph = bp(hb), A = bp(ib).subtract(bp(pb)).normalize();
+    let F = bp(mb).subtract(Ph); F.subtractInPlace(A.scale(V3.Dot(F, A))); const hl = F.length(); F.normalize();
+    let Np = V3.Cross(F, A).normalize(); if (tb) { const q = bp(tb).subtract(Ph); if (V3.Dot(q, Np) < 0) Np = Np.scale(-1); }
+    return { G: Ph.add(F.scale(0.78 * hl)).add(Np.scale(0.42 * hl)), A, F, Np, hl, hb };
+  }
+  function handleAxis({ meshes, groups = [], H = 1.8 }) {
+    const V3 = B().Vector3, M = B().Matrix;
+    const sm = meshes.find((m) => m.skeleton); if (!sm || !groups.length) return null;
+    const skel = sm.skeleton; const bone = (n) => node(skel.bones, n);
+    const boneWorld = (b) => b.getFinalMatrix().multiply(sm.getWorldMatrix());
+    const bp = (b) => V3.TransformCoordinates(V3.Zero(), boneWorld(b));
+    let top = sm; while (top.parent) top = top.parent;
+    const all = [top, ...top.getDescendants(false)];
+    const sum = V3.Zero(); let n = 0;
+    for (const g of groups) {
+      if (!g) continue;
+      g.play(false);
+      for (let i = 0; i <= 24; i++) {
+        g.goToFrame(g.from + (g.to - g.from) * i / 24);
+        all.forEach((x) => x.computeWorldMatrix && x.computeWorldMatrix(true)); skel.prepare(true);
+        const R = fistCenter(bp, bone, 'Right'), L = fistCenter(bp, bone, 'Left'); if (!R || !L) continue;
+        const v = L.G.subtract(R.G); const d = v.length();
+        if (d < 0.02 * H || d > 0.14 * H) continue;                       // both hands on the hilt
+        const inv = M.Invert(boneWorld(R.hb)); const loc = V3.TransformNormal(v, inv).normalize();
+        sum.addInPlace(loc); n++;
+      }
+      g.stop();
+    }
+    return n >= 6 ? { local: sum.normalize(), frames: n } : null;
+  }
+  async function hold({ scene, meshes, url, hand = 'right', kind = 'sword', H = 1.8, onMaterial, grip, axis: handAxis }) {
     const V3 = B().Vector3;
     const sm = meshes.find((m) => m.skeleton); if (!sm) return null;
     const skel = sm.skeleton; const bone = (n) => node(skel.bones, n);
@@ -222,8 +259,9 @@
     const gripT = kind === 'bow' ? 0 : ((grip && grip.at) || 0.28);        // 0 = middle, 0.5 = the hilt end
     const Pgrip = c.add(axis.scale(hiltSign * gripT * len));
     // target frame: the prop's long axis runs through the fist across the knuckles; the blade leaves on the index side
-    const D = kind === 'bow' ? A : A.scale(-1);                              // world direction of the prop's hilt end
-    let Wt = F, wSign = 1;                                                   // a blade's edge runs along the hand
+    let D = kind === 'bow' ? A : A.scale(-1);                                // world direction of the prop's hilt end
+    if (handAxis && kind === 'sword' && hand === 'right') D = V3.TransformNormal(handAxis.local, boneWorld(hb)).normalize();   // learnt: toward the other fist
+    let Wt = F.subtract(D.scale(V3.Dot(F, D))).normalize(), wSign = 1;      // a blade's edge runs along the hand
     if (kind === 'bow') {
       // the string faces the archer: the limb tips (the ends) sit on the string side of the bow's depth
       const sp2 = bone('Spine2'); if (sp2) { Wt = bp(sp2).subtract(G); Wt.subtractInPlace(A.scale(V3.Dot(Wt, A))); Wt.normalize(); }
@@ -248,13 +286,21 @@
   // all the props a weapon puts in the hands when drawn: { right?: handle, left?: handle }, hidden until shown
   // alt: a sword worn with its hilt over the LEFT shoulder is drawn by the left hand (mirrored clip), so a second copy
   // sits in the left fist for the draw / sheathe and hands over to the right hand once both hands are on the hilt.
-  async function holdAll({ scene, meshes, weapon, H, onMaterial, alt = false }) {
+  async function holdAll({ scene, meshes, weapon, H, onMaterial, alt = false, groups }) {
     const kind = kindOf(weapon.id), out = {};
+    // learn the two-handed handle line from the sword clips (stance, walk, slashes), with everything else paused
+    let handAxis = null;
+    if (kind === 'sword' && groups) {
+      const playing = Object.values(groups).concat(scene.animationGroups).filter((g, i, a) => g && g.isPlaying && a.indexOf(g) === i);
+      playing.forEach((g) => g.pause());
+      try { handAxis = handleAxis({ meshes, H, groups: ['sword_idle', 'sword_walk', 'sword_combo', 'sword_power_slash', 'sword_down_slash', 'sword_combo2'].map((k) => groups[k]).filter(Boolean) }); } catch (e) { console.warn('handle axis', e); }
+      playing.forEach((g) => g.play(g.loopAnimation));
+    }
     const list = Object.entries(weapon.held || {});
     if (alt && kind === 'sword' && weapon.held?.right) list.push(['alt', weapon.held.right]);
     for (const [key, p] of list) {
       const hand = key === 'alt' ? 'left' : key;
-      try { const h = await hold({ scene, meshes, url: p.glbUrl, hand, kind, H, onMaterial, grip: p.grip }); if (h) { h.setEnabled(false); out[key] = h; } } catch (e) { console.warn('held prop', e); }
+      try { const h = await hold({ scene, meshes, url: p.glbUrl, hand, kind, H, onMaterial, grip: p.grip, axis: handAxis }); if (h) { h.setEnabled(false); h.axis = handAxis; out[key] = h; } } catch (e) { console.warn('held prop', e); }
     }
     return out;
   }
