@@ -60,6 +60,38 @@ for side in ('Left', 'Right'):
     # v2.6 a wrist ring that picked up the body (arms hanging against the torso) made giant disc cuffs: keep the girth
     # within what a forearm can be for this hand
     girth_raw = girth; girth = float(np.clip(girth, 0.14 * L, 0.32 * L))
+    # v2.10 the wrist itself, not a loose sleeve hanging around it (#4 V2 left arm): per angle around the forearm only
+    # the innermost layer is the wrist (a wide sleeve shows up as a second layer past a gap); a circle through it gives
+    # the wrist's real centre and size. When a loose sleeve hangs around the wrist, the glove is centred on the real
+    # wrist and the cuff follows the wrist. Otherwise nothing changes (same numbers as v2.9).
+    NB = 24; off = np.zeros(2); fixw = False
+    pw = (armw > 0.5) & ~rm & (tt > -0.035) & (tt < 0.005) & (rr < 0.6 * L)
+    if pw.sum() > 40:
+        u_ = rel[pw] @ y; v_ = rel[pw] @ z; r_ = rr[pw]; b0 = ((np.arctan2(v_, u_) + np.pi) / (2 * np.pi) * NB).astype(int) % NB
+        keep = np.zeros(len(r_), bool); gapbins = 0
+        for b_ in range(NB):
+            ii = np.nonzero(b0 == b_)[0]
+            if not len(ii): continue
+            rs = np.sort(r_[ii]); j = np.nonzero(np.diff(rs) > 0.1 * L)[0]
+            lim = rs[j[0]] if len(j) else rs[-1]; gapbins += int(len(j) > 0)
+            keep[ii[r_[ii] <= lim + 1e-9]] = True
+        if keep.sum() > 30:
+            A_ = np.c_[2 * u_[keep], 2 * v_[keep], np.ones(keep.sum())]
+            c_ = np.linalg.lstsq(A_, u_[keep] ** 2 + v_[keep] ** 2, rcond=None)[0]
+            R_ = float(np.sqrt(max(1e-9, c_[2] + c_[0] ** 2 + c_[1] ** 2))); o_ = np.array(c_[:2])
+            print(f'handswap {side} wrist probe: sleeve bins {gapbins} off {np.linalg.norm(o_) / L:.3f}L radius {R_ / L:.3f}L')
+            # only a loose sleeve around a bare / wrapped wrist (#4: 4-8 sleeve bins, wrist 0.09 L off the bone). Suits and
+            # gauntlets (#1738, #4722: wrist ring 0.22 L off) and every Rebel without a sleeve layer keep the v2.9 cuff.
+            if 0.08 * L < R_ < 0.3 * L and gapbins >= 3 and np.linalg.norm(o_) < 0.15 * L:
+                fixw = True; off = o_
+                uu = u_[keep] - off[0]; vv = v_[keep] - off[1]; r2 = np.hypot(uu, vv)
+                girth = float(np.clip(np.percentile(r2, 92), 0.14 * L, 0.32 * L))
+                b2 = ((np.arctan2(vv, uu) + np.pi) / (2 * np.pi) * NB).astype(int) % NB
+                prof_w = np.full(NB, np.nan)
+                for b_ in range(NB):
+                    s_w = r2[b2 == b_]
+                    if len(s_w) >= 3: prof_w[b_] = np.percentile(s_w, 70)
+                print(f'handswap {side}: wrist layer (sleeve bins {gapbins}, off centre {np.linalg.norm(off):.3f}, radius {R_:.3f}) -> girth {girth:.3f}')
     # v2.6 where the sleeve / bracer really ends (along the forearm, from the wrist joint): the cuff only widens to the
     # sleeve's girth behind this point, so no wide ring of glove shows past the end of an arm guard (#1555)
     shell = (armw > 0.5) & ~(((handw > 0.5) & (tt > -0.004)) | ((armw > 0.5) & (tt > 0.012) & (rr < 0.9 * L))) & (rr > 0.5 * girth) & (tt > -0.08) & (tt < 0.03)
@@ -86,19 +118,21 @@ for side in ('Left', 'Right'):
         if len(samp) > 10: ccol = np.median(np.array(samp), 0)
     # v2.7 the cuff follows the real cross-section of the sleeve / arm guard (per angle around the forearm), just inside
     # it, so the band that shows past the guard is exactly as wide as the guard (#1555: a round cuff stood proud)
-    NB = 24; prof = np.full(NB, np.nan)
+    prof = np.full(NB, np.nan)
     pm = (armw > 0.5) & ~rm & (tt > -0.035) & (tt < 0.005) & (rr < 1.8 * girth) & (rr > 0.3 * girth)
     if pm.sum() > 40:
         th = np.arctan2(rel[pm] @ z, rel[pm] @ y); bi = ((th + np.pi) / (2 * np.pi) * NB).astype(int) % NB
         for b_ in range(NB):
             sel = rr[pm][bi == b_]
             if len(sel) >= 3: prof[b_] = np.percentile(sel, 70)
+    if fixw: prof = prof_w
     if np.isnan(prof).all(): prof[:] = girth
     ok_ = ~np.isnan(prof); idx_ = np.arange(NB)
     prof = np.interp(idx_, np.concatenate([idx_[ok_] - NB, idx_[ok_], idx_[ok_] + NB]), np.tile(prof[ok_], 3))
     prof = np.clip((np.roll(prof, 1) + 2 * prof + np.roll(prof, -1)) / 4, 0.12 * L, 0.34 * L)
+    print(f'handswap {side} cuff shape {prof.max() / np.median(prof):.2f}')   # v2.10 QA: a flared cuff reads as a lump at the wrist
     cut |= rm
-    plan[side] = dict(W=W, x=x, y=y, z=z, L=L, girth=girth, bend=bend, col=col, ccol=ccol, prof=prof, mirror=(side == 'Left'))
+    plan[side] = dict(W=W + off[0] * y + off[1] * z, x=x, y=y, z=z, L=L, girth=girth, bend=bend, col=col, ccol=ccol, prof=prof, mirror=(side == 'Left'))
     print(f'handswap {side}: hand length {L:.3f} (reach {reach:.3f}, forearm {fore:.3f}) wrist girth {girth:.3f} (raw {girth_raw:.3f}) '
           f'sleeve end {bend:+.3f} verts removed {int(rm.sum())} glove colour {np.round(col, 3).tolist()}')
 
