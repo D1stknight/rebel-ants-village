@@ -290,14 +290,14 @@
     const slice = (a, b) => wv.filter((_, i) => { const x = kind === 'bow' ? Math.abs(ts[i] - 0.5) : u(ts[i]); return x >= a && x <= b; });
 
     // the handle in the model: its axis h (toward the hilt end / up the bow) and the point the fist closes on
-    let h, Pgrip, info = {}, thin = 1;
+    let h, Pgrip, info = {}, thin = 1; const uM = H / 1.8;   // metres -> this scene's units (the village player is scaled)
     if (kind === 'bow') {
       const g = pca(slice(0, 0.07)); h = g.d; if (V3.Dot(h, axis) * hiltSign < 0) h = h.scale(-1);
       Pgrip = g.m;
       const gs = slice(0, 0.05); const rad = gs.map((p) => { const d = p.subtract(g.m); return d.subtract(h.scale(V3.Dot(d, h))).length(); });
       info = { handleR: +(pct(rad, 0.8) * scale).toFixed(4) };
       // a Meshy bow comes out chunky: slim it across its length so the grip fits a closed fist (about 4 cm across)
-      thin = Math.min(1, 0.02 / Math.max(1e-4, info.handleR)); info.handleR = +(info.handleR * thin).toFixed(4); info.thin = +thin.toFixed(2);
+      thin = Math.min(1, 0.02 * uM / Math.max(1e-6, info.handleR)); info.handleR = +(info.handleR * thin).toFixed(4); info.thin = +thin.toFixed(2);
     } else {
       const uG = u(wideT);                                                   // the guard
       const hp = slice(uG + 0.03, 0.985);                                    // handle, guard excluded
@@ -306,8 +306,8 @@
       const sG = V3.Dot(gc.subtract(g.m), h);                                // guard position on the handle line
       const sEnd = pct(hp.map((p) => V3.Dot(p.subtract(g.m), h)), 0.99);
       // right hand just behind the guard (half a fist + a little gap); a single-hand blade in the middle of its handle
-      const fistHalf = (0.5 * fc.span * 1.25 + 0.006) / scale;
-      const sGrip = kind === 'twin' ? (sG + sEnd) / 2 : Math.min(sG + fistHalf + 0.004 / scale, (sG + sEnd) / 2 + 0.25 * (sEnd - sG));
+      const fistHalf = (0.5 * fc.span * 1.25 + 0.006 * uM) / scale;
+      const sGrip = kind === 'twin' ? (sG + sEnd) / 2 : Math.min(sG + fistHalf + 0.004 * uM / scale, (sG + sEnd) / 2 + 0.25 * (sEnd - sG));
       Pgrip = g.m.add(h.scale(sGrip));
       const rad = hp.map((p) => { const d = p.subtract(g.m); return d.subtract(h.scale(V3.Dot(d, h))).length(); });
       info = { handleLen: +((sEnd - sG) * scale).toFixed(3), gripFromGuard: +((sGrip - sG) * scale).toFixed(3), handleR: +(pct(rad, 0.8) * scale).toFixed(4) };
@@ -375,7 +375,7 @@
     // the handle in the hand's own (drawn) frame, for the two-hand grip at run time
     const invH = B().Matrix.Invert(boneWorld(hb));
     const grip2 = kind === 'sword' ? { G: V3.TransformCoordinates(G, invH), D: V3.TransformNormal(D, invH).normalize(), a: V3.TransformNormal(A, invH).normalize(),
-      sMin: fc.span * 1.25 + 0.012, sMax: Math.max(fc.span * 1.3, (info.handleLen || 0.2) - (info.gripFromGuard || 0.05) - 0.5 * fc.span * 1.1) } : null;
+      sMin: fc.span * 1.25 + 0.012 * uM, sMax: Math.max(fc.span * 1.3, (info.handleLen || 0.2) - (info.gripFromGuard || 0.05) - 0.5 * fc.span * 1.1) } : null;
     const BW0 = boneWorld(hb).clone();
     // move the prop onto a new hole centre given in the hand's own frame (after the fingers are opened to fit it)
     const refit = (Glocal) => {
@@ -418,7 +418,7 @@
         pose();
         const hands = kind === 'bow' ? [['Left', out.left]] : kind === 'twin' ? [['Right', out.right], ['Left', out.left]] : [['Right', out.right], ['Left', out.right]];
         Object.defineProperty(out, '_open', { value: {}, writable: true, enumerable: false });
-        for (const [S_, h] of hands) { if (h && h.info && h.info.handleR) out._open[S_] = fingerFit(sm, S_, h.info.handleR + 0.0015); }
+        for (const [S_, h] of hands) { if (h && h.info && h.info.handleR) out._open[S_] = fingerFit(sm, S_, h.info.handleR + 0.0015 * H / 1.8); }
         // the hole centre moves as the fingers open: re-seat each prop on it
         for (const h of Object.values(out)) {
           if (!h || !h.refit || !(h.hand in out._open)) continue;
