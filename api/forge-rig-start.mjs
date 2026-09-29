@@ -7,6 +7,7 @@
 // One rig per build (idempotent). Re-rigging an already rigged build (force) is admin-only.
 import { isAdminRequest } from './_admin-auth.mjs';
 import { getToken } from './_nft.mjs';
+import { requireForgeStep } from './_wallet.mjs';
 import { enforceRateLimit } from './_guard.mjs';
 import { Sandbox, creds, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, loadBuild, updateRigging, sourceGlbUrl, sanitize, body } from './_forge-rig.mjs';
 
@@ -50,6 +51,8 @@ export default async function handler(req, res) {
 
     // Phase 0: per-visitor limit first (so one visitor can't burn the global cap), then the global daily cap. Admins skip both.
     if (!admin) {
+      // Phase 2: only inside a forge the Rebel's owner started
+      if (!(await requireForgeStep(req, res, { collectionKey: rec.collectionKey, tokenId: rec.tokenId, step: 'rig' }))) return;
       if (!(await enforceRateLimit(req, res, 'rig-start', 6, 86400, 'rig jobs today'))) return;
       const day = new Date().toISOString().slice(0, 10);
       const [cnt] = await redis([['INCR', `forge:rig:count:${day}`], ['EXPIRE', `forge:rig:count:${day}`, 172800]]);

@@ -1,3 +1,4 @@
+import { requireForgeStep } from './_wallet.mjs';
 import { enforceRateLimit } from './_guard.mjs';
 import { forgeImageEdit, fetchImageAsDataUrl, FORGE_REFERENCE_URLS } from './_forge-image.mjs';
 import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
@@ -128,6 +129,8 @@ export default async function handler(req, res) {
 
   // Phase 0 cost guard: OpenAI image generations per visitor per day (admins unlimited).
   if (!(await enforceRateLimit(req, res, 'img-production', 15, 86400, 'image generations today'))) return;
+  // Phase 2: paid steps only run inside a forge the Rebel's owner started (admins pass)
+  { const gi = (req.body || {}).generationInput || {}; if (!(await requireForgeStep(req, res, { collectionKey: gi.collectionKey, tokenId: gi.tokenId, step: 'production' }))) return; }
 
   try {
     const apiKey = process.env.OPENAI_API_KEY;

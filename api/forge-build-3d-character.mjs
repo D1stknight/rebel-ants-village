@@ -1,3 +1,4 @@
+import { requireForgeStep } from './_wallet.mjs';
 import { enforceRateLimit, isAllowedAssetUrl, isCleanId, sanitizeDeep } from './_guard.mjs';
 const BUILD_VERSION = 'v0_queue_only';
 const BUILD_STATUS = 'queued_for_future_3d_generation';
@@ -164,6 +165,9 @@ export default async function handler(req, res) {
   }
 
   if (!(await enforceRateLimit(req, res, 'build-create', 20, 86400, '3D builds today'))) return;
+  // Phase 2: paid steps only run inside a forge the Rebel's owner started (admins pass)
+  { const b = req.body || {}, g = b.generationInput || {}, p = b.productionReference || {}, s = b.selectedConcept || {};
+    if (!(await requireForgeStep(req, res, { collectionKey: p.collectionKey || s.collectionKey || g.collectionKey, tokenId: p.tokenId || s.tokenId || g.tokenId, step: 'build' }))) return; }
 
   try {
     const buildRequest = build3dRequestPayload(req.body || {});

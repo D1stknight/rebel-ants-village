@@ -354,6 +354,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 
 <script src="assets/forge-core.js"></script>
 <script src="assets/forge-sfx.js"></script>
+<script src="assets/wallet-auth.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
@@ -950,6 +951,29 @@ async function api(path, body) {
   if (!r.ok || j.ok === false) { const e = new Error(j.error || j.detail || `Request failed (${r.status})`); e.status = r.status; throw e; }
   return j;
 }
+// Phase 2: who may forge this Rebel. { wallet, owner, isOwner, admin, used, limit, left, open }
+async function loadOwn(t = state.token) {
+  try { return await api(`/api/forge-start?tokenId=${encodeURIComponent(t)}&collectionKey=${COL}`); } catch (e) { return { error: e.message }; }
+}
+const canForge = () => !!(state.own && (state.own.admin || state.own.isOwner));
+function allowanceNote() {
+  const o = state.own || {};
+  if (o.admin) return 'Admin: your forges do not use the Rebel\'s allowance.';
+  if (o.isOwner) return o.left > 0 ? `${o.left} of ${o.limit} forges left for this Rebel.` : `This Rebel has used all ${o.limit} of its forges.`;
+  if (o.wallet) return 'Only the wallet that holds this Rebel can forge it. You can still awaken and watch its forged form.';
+  return 'Forging needs the wallet that holds this Rebel.';
+}
+async function signInForge() {
+  const b = $('#signBtn');
+  if (!window.ethereum) { toast('Connect your wallet in the lobby, then come back through the Forge door'); setTimeout(() => { location.href = '/'; }, 1400); return; }
+  if (b) { b.disabled = true; b.textContent = 'CHECK YOUR WALLET…'; }
+  try {
+    await window.RebelWallet.connectAndSignIn();
+    state.own = await loadOwn();
+    toast(state.own.isOwner ? 'Signed in · this Rebel is yours' : 'Signed in · this Rebel is held by another wallet');
+  } catch (e) { toast(e.message || 'Sign-in failed'); }
+  renderSummon(0, true);
+}
 function selectedRebel() { try { const r = JSON.parse(localStorage.getItem('selectedRebel') || 'null'); return r && String(r.tokenId || '') === String(state.token) ? r : null; } catch (e) { return null; } }
 function rebelId() { return selectedRebel()?.rebelId || `rebel_${state.token}`; }
 let GI_CACHE = null;
@@ -1439,6 +1463,8 @@ function renderSummon(prev, quiet) {
   let cta;
   if (active()) cta = `<button class="btn fire wide" id="watchBtn">WATCH THE FORGE →</button>`;
   else if (!state.summoned) cta = `<button class="btn fire wide" id="summonBtn">SUMMON YOUR REBEL</button>`;
+  else if (!canForge()) cta = state.own?.wallet ? '' : `<button class="btn fire wide" id="signBtn">${window.ethereum ? 'SIGN IN WITH YOUR WALLET TO FORGE' : 'CONNECT YOUR WALLET IN THE LOBBY'}</button>`;
+  else if (!state.own.admin && state.own.left <= 0) cta = '';
   else cta = `<button class="btn fire wide" id="beginBtn">${forged ? 'FORGE A NEW VERSION' : 'BEGIN THE FORGE'} · ABOUT ${Math.round(total / 60)} MIN</button>`;
   if (forged && !active()) cta += `<button class="btn shu wide" id="awakenOld">AWAKEN MY FORGED REBEL</button>`;
   renderCard(`
@@ -1449,7 +1475,7 @@ function renderSummon(prev, quiet) {
     <div class="sep"></div>
     <div class="traits" id="traitList">${rows || '<div class="note">Reading traits…</div>'}</div>
     <div class="cta">${cta}</div>
-    <div class="note">${active() ? `Forging now · about ${fmtMin(forgeProgress().rem)} left.` : `The forge paints your Rebel, draws all four sides, sculpts three versions for you to choose from, then gives it a skeleton and 24 moves. About ${Math.round(total / 60)} minutes. Two forges per day.`}</div>
+    <div class="note">${active() ? `Forging now · about ${fmtMin(forgeProgress().rem)} left.` : `The forge paints your Rebel, draws all four sides, sculpts three versions for you to choose from, then gives it a skeleton and 24 moves. About ${Math.round(total / 60)} minutes. ${allowanceNote()}`}</div>
   `, quiet);
   if (!quiet) {
     center.innerHTML = `<div class="nftcard" id="nftCard"><img src="${state.meta?.img || ''}" alt=""><div class="cap"><div><b>#${esc(state.token)}</b><br><span>${esc(traitVal('Gang Names') || 'Rebel Ants')}</span></div><span>Battle for the Colony</span></div></div>`;
@@ -1458,6 +1484,7 @@ function renderSummon(prev, quiet) {
   card.querySelectorAll('.picker button').forEach((b) => b.onclick = () => selectToken(b.dataset.t));
   const sb = $('#summonBtn'); if (sb) sb.onclick = summon;
   const bb = $('#beginBtn'); if (bb) bb.onclick = beginForge;
+  const si = $('#signBtn'); if (si) si.onclick = signInForge;
   const wb = $('#watchBtn'); if (wb) wb.onclick = () => go(liveStep());
   const ao = $('#awakenOld'); if (ao) ao.onclick = awakenExisting;
 }
@@ -1510,9 +1537,19 @@ async function summon() {
   renderSummon(0, true); gsap.from(card.querySelector('.cta'), { opacity: 0, y: 10, duration: 0.5 });
   toast(`DNA sequenced · ${rows.length} traits`);
 }
-function beginForge() {
-  if (active()) return;
+let opening = false;
+async function beginForge() {
+  if (active() || opening) return;
   if (!window.buildCharacterBlueprint) { toast('Forge tools are still loading, try again in a moment'); return; }
+  // Phase 2: the server checks the wallet holds this Rebel and uses one of its forges
+  opening = true; const bb = $('#beginBtn'); if (bb) { bb.disabled = true; bb.textContent = 'OPENING THE FORGE…'; }
+  try {
+    const d = await api('/api/forge-start', { tokenId: String(state.token), collectionKey: COL });
+    if (state.own && !d.admin) Object.assign(state.own, { used: d.used, left: d.left });
+  } catch (e) {
+    opening = false; toast(e.message || 'The forge could not open'); state.own = await loadOwn(); renderSummon(0, true); return;
+  }
+  opening = false;
   newSession(); state.maxStep = 1; flash(0.4, 0.8); Snd.play('stamp'); Snd.play('brush1', { delay: 0.5 });
   go(1); runPipeline();
 }
@@ -1806,12 +1843,14 @@ function showAwakened(instant) {
     <p class="lead">Your Rebel is awake. Drag to turn it, and pick any of its <b>24 moves</b> below.</p>
     <div class="sep"></div>
     <div class="traits">${(state.meta?.traits || []).slice(0, 6).map((t) => `<div class="trait locked"><span class="tt"><i></i>${esc(t.trait_type)}</span><span class="tv">${esc(t.value)}</span></div>`).join('')}</div>
-    <div class="cta"><button class="btn shu wide" id="makeMine">MAKE THIS MY REBEL</button><button class="btn" id="enterV">ENTER VILLAGE →</button></div>
+    <div class="cta">${canForge() ? '<button class="btn shu wide" id="makeMine">MAKE THIS MY REBEL</button>' : ''}<button class="btn${canForge() ? '' : ' fire wide'}" id="enterV">ENTER VILLAGE →</button></div>
+    ${canForge() ? '' : '<div class="note">Only the wallet that holds this Rebel can make it its character. You can walk the village with it.</div>'}
     <div class="note">Keys: ← → moves · Space pause · L loop · S speed · K perform all kata</div>
   `);
-  $('#makeMine').onclick = makeMine;
-  // Enter Village: this Rebel becomes the player's (same as Make this my Rebel) and the village opens with it
-  $('#enterV').onclick = async () => { const b = $('#enterV'); b.disabled = true; b.textContent = 'ENTERING…'; if (!state.mine) await makeMine(); location.href = `/village.html`; };
+  if ($('#makeMine')) $('#makeMine').onclick = makeMine;
+  // Enter Village: for the holder this Rebel becomes their character (same as Make this my Rebel); anyone else walks
+  // in with it for this visit. Either way the village opens with this Rebel.
+  $('#enterV').onclick = async () => { const b = $('#enterV'); b.disabled = true; b.textContent = 'ENTERING…'; if (canForge()) { if (!state.mine) await makeMine(); } else rememberSelected(null); location.href = `/village.html`; };
   buildDock(); $('#dock').classList.add('show');
   camTo(STEPS[4].cam, instant ? 0.8 : 2.2);   // v4 HD: frame the awakened Rebel close (he fills the view)
   cam.useAutoRotationBehavior = true; cam.autoRotationBehavior.idleRotationSpeed = 0.18; cam.autoRotationBehavior.idleRotationWaitTime = 4000;
@@ -1823,19 +1862,24 @@ async function makeMine() {
   try {
     const d = await api('/api/forge-active-character-save', { buildId, tokenId: String(state.token), rebelId: GI().rebelId, collectionKey: COL, activeGlbUrl: url, activeCharacterModelType: 'rigged_forge_glb', build: { buildId, tokenId: String(state.token), rebelId: GI().rebelId, collectionKey: COL } });
     const ac = d.activeCharacter;
-    try {   // the lobby and the village read selectedRebel: this Rebel is now the one they open with
-      const sel = selectedRebel() || {};
-      const t = String(state.token), g = GI(), tm = {}; (state.meta?.traits || []).forEach((x) => { tm[x.trait_type] = x.value; });
-      if (ac) localStorage.setItem('selectedRebel', JSON.stringify({
-        ...sel, id: sel.id || `rebel_${t}`, rebelId: sel.rebelId || g.rebelId || `rebel_${t}`, tokenId: t, collectionKey: COL,
-        name: sel.name || `Rebel #${t}`, image: sel.image || `/api/nft-image?c=${COL}&t=${t}&s=thumb`,
-        traits: Object.keys(tm).length ? tm : (sel.traits || {}), gangName: tm['Gang Names'] || sel.gangName || null,
-        playableType: undefined, buildId, activeForgeCharacter: ac, activeGlbUrl: ac.activeGlbUrl || url, characterSource: 'forge_glb', updatedAt: new Date().toISOString()
-      }));
-    } catch (e) {}
+    if (ac) rememberSelected(ac, buildId, url);
     state.mine = true;
     btn.textContent = 'YOUR REBEL ✓'; Snd.play('seal'); flash(0.3, 0.8); toast('Set as your Rebel in the lobby and the village');
   } catch (e) { btn.disabled = false; btn.textContent = 'MAKE THIS MY REBEL'; toast(e.message || 'Could not set it'); }
+}
+// the lobby and the village read selectedRebel: this Rebel is the one they open with (ac = its server character)
+function rememberSelected(ac, buildId, url) {
+    try {
+      const sel = selectedRebel() || {};
+      const t = String(state.token), g = GI(), tm = {}; (state.meta?.traits || []).forEach((x) => { tm[x.trait_type] = x.value; });
+      localStorage.setItem('selectedRebel', JSON.stringify({
+        ...sel, id: sel.id || `rebel_${t}`, rebelId: sel.rebelId || g.rebelId || `rebel_${t}`, tokenId: t, collectionKey: COL,
+        name: sel.name || `Rebel #${t}`, image: sel.image || `/api/nft-image?c=${COL}&t=${t}&s=thumb`,
+        traits: Object.keys(tm).length ? tm : (sel.traits || {}), gangName: tm['Gang Names'] || sel.gangName || null,
+        playableType: undefined, buildId: ac ? buildId : undefined, activeForgeCharacter: ac || undefined, activeGlbUrl: ac ? (ac.activeGlbUrl || url) : undefined,
+        characterSource: ac ? 'forge_glb' : undefined, updatedAt: new Date().toISOString()
+      }));
+    } catch (e) {}
 }
 
 /* =========================================================
@@ -1936,8 +1980,8 @@ function updateTokPill() { const g = traitVal('Gang Names'); $('#tokPill').inner
   layoutTrail(); markNodes();
   if (state.token) {
     S = loadS(state.token);
-    const [meta, assets] = await Promise.all([loadToken(state.token), loadAssets(state.token)]);
-    state.meta = meta; state.assets = assets; updateTokPill();
+    const [meta, assets, own] = await Promise.all([loadToken(state.token), loadAssets(state.token), loadOwn(state.token)]);
+    state.meta = meta; state.assets = assets; state.own = own; updateTokPill();
     if (!S) S = recoverSession(assets);
     if (S?.done && S.rigUrl) {
       // a re-rig (rigger fix) replaces the build's rig on the server: the server's current file wins over the one remembered here

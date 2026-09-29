@@ -1,3 +1,4 @@
+import { requireForgeStep } from './_wallet.mjs';
 import { enforceRateLimit, isCleanId } from './_guard.mjs';
 import { put } from '@vercel/blob';
 
@@ -66,6 +67,8 @@ export default async function handler(req, res) {
   }
 
   if (!(await enforceRateLimit(req, res, 'concept-upload', 60, 3600, 'uploads'))) return;
+  // Phase 2: paid steps only run inside a forge the Rebel's owner started (admins pass)
+  { const b = req.body || {}; if (!(await requireForgeStep(req, res, { collectionKey: b.collectionKey, tokenId: b.tokenId, step: 'upload' }))) return; }
 
   try {
     if (!process.env.BLOB_READ_WRITE_TOKEN) {

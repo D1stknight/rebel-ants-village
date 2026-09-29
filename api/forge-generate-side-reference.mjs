@@ -1,3 +1,4 @@
+import { requireForgeStep } from './_wallet.mjs';
 import { enforceRateLimit } from './_guard.mjs';
 import { forgeImageEdit, fetchImageAsDataUrl, forgeVisionAsk } from './_forge-image.mjs';
 import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
@@ -38,6 +39,8 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).json({ ok: false, error: 'Method not allowed' }); }
   // Phase 0 cost guard (admins unlimited): two side views per 3D build.
   if (!(await enforceRateLimit(req, res, 'img-side', 30, 86400, 'image generations today'))) return;
+  // Phase 2: paid steps only run inside a forge the Rebel's owner started (admins pass)
+  { const gi = (req.body || {}).generationInput || {}; if (!(await requireForgeStep(req, res, { collectionKey: gi.collectionKey, tokenId: gi.tokenId, step: 'side' }))) return; }
   try {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) return res.status(500).json({ ok: false, error: 'Missing OPENAI_API_KEY' });

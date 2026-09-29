@@ -1,3 +1,4 @@
+import { requireForgeStep } from './_wallet.mjs';
 import { enforceRateLimit, isAllowedAssetUrl } from './_guard.mjs';
 import { isAdminRequest } from './_admin-auth.mjs';
 import { put } from '@vercel/blob';
@@ -161,6 +162,8 @@ export default async function handler(req, res) {
     }
 
     const { recordKey, buildRecord } = await loadBuildRecord(buildId);
+    // Phase 2: only inside a forge the Rebel's owner started (admins pass)
+    if (!(await requireForgeStep(req, res, { collectionKey: buildRecord.collectionKey, tokenId: buildRecord.tokenId, step: 'store' }))) return;
     // Phase 0: only admins may point the store at an arbitrary GLB; players store the build's own Meshy result.
     const sourceGlbUrl = getSourceGlbUrl(buildRecord, isAdminRequest(req) ? glbUrl : null);
     if (sourceGlbUrl && !isAllowedAssetUrl(sourceGlbUrl)) {

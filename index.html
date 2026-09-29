@@ -559,6 +559,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 
 <!-- Video background — no Babylon needed for lobby -->
 
+<script src="assets/wallet-auth.js"></script>
 <script>
 // ── NFT CONFIG ──
 const NFT_CONTRACT = '0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221';
@@ -1172,10 +1173,15 @@ async function loadNFTs(walletAddress) {
 }
 
 // Init default card on load
-document.addEventListener('DOMContentLoaded', () => showDefaultCard());
+// Phase 2: a wallet signed in earlier (7-day session) is restored without asking again
+document.addEventListener('DOMContentLoaded', async () => {
+  const addr = window.RebelWallet ? await window.RebelWallet.session() : null;
+  if (addr) restoreSignedInWallet(addr); else showDefaultCard();
+});
 
 // ── WALLET ──
 let walletConnected = false;
+let signingFor = '';   // the account a sign-in is running for (wallets can fire accountsChanged right after connecting)
 let activeWalletProvider = null;
 let activeWalletType = null;
 let walletConnectProvider = null;
@@ -1298,7 +1304,23 @@ function closeWalletModalFromBackdrop(event) {
   if (event.target && event.target.id === 'wallet-modal-backdrop') closeWalletModal();
 }
 
+function restoreSignedInWallet(address) {
+  const btn = document.getElementById('btn-wallet');
+  walletConnected = true;
+  activeWalletProvider = null;
+  activeWalletType = 'session';
+  if (btn) {
+    btn.textContent = address.slice(0,6) + '...' + address.slice(-4);
+    btn.classList.add('connected');
+    btn.title = 'Signed in. Click to sign out';
+  }
+  setStatus('Welcome back. Loading your Rebels...');
+  loadNFTs(address);
+}
+
 function resetWalletUi() {
+  if (window.RebelWallet) window.RebelWallet.signOut();
+  signingFor = '';
   const btn = document.getElementById('btn-wallet');
   walletConnected = false;
   activeWalletProvider = null;
@@ -1351,8 +1373,21 @@ function handleWalletConnected(provider, account, type) {
     btn.title = type === 'walletconnect' ? 'Click to disconnect WalletConnect' : 'Click to disconnect';
   }
   closeWalletModal();
-  setStatus('Wallet connected. Loading Rebels...');
-  loadNFTs(account);
+  // Phase 2: sign in once (free message, no transaction) so the Forge knows this wallet holds its Rebels
+  const acct = String(account).toLowerCase();
+  if (signingFor === acct) return;
+  signingFor = acct;
+  (async () => {
+    let signed = window.RebelWallet ? await window.RebelWallet.session() : null;
+    if (signed !== acct && window.RebelWallet) {
+      setStatus('Sign the message in your wallet to prove it is yours (free, no transaction)...');
+      try { signed = await window.RebelWallet.signIn(provider, account); }
+      catch (e) { signed = null; console.info('Sign-in skipped:', e.message); }
+    }
+    if (btn) btn.title = (signed === acct ? 'Signed in' : 'Not signed in: you can look around, but forging needs a signature') + ' · click to disconnect';
+    setStatus(signed === acct ? 'Signed in. Loading Rebels...' : 'Wallet connected (not signed in). Loading Rebels...');
+    loadNFTs(account);
+  })();
 }
 
 async function disconnectWallet() {
