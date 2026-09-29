@@ -1524,6 +1524,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script src="assets/forge-core.js"></script>
+<script src="assets/forge-sfx.js"></script>
 <script src="assets/rebel-weapon.js"></script>
 <script type="module">
 const canvas=document.getElementById('c');
@@ -18778,10 +18779,15 @@ async function armVillageWeapon(r, body, pick, back) {
   // hands on the weapon: fingers closed on the handle, both fists on a great sword's hilt (runs after each frame's clips)
   const grip = RebelWeapon.twoHand({ scene, meshes: body, held, H: back.info.H });
   // Dawn's Light: a live bowstring and real arrows that fly and stick
-  const curClip = () => { const g = animGroups[animState]; if (!g) return null; const an = g.animatables && g.animatables[0]; return { name: g.name, frac: an ? (an.masterFrame - g.from) / ((g.to - g.from) || 1) : 0 }; };
-  const archer = RebelWeapon.kindOf(pick.weapon.id) === 'bow' ? RebelWeapon.archer({ scene, meshes: body, held, back, H: back.info.H, clip: curClip, ignore: (m) => m.isDescendantOf && m.isDescendantOf(charMesh) }) : null;
+  const curClip = () => { const g = animGroups[animState]; if (!g) return null; const an = g.animatables && g.animatables[0]; const fps = (g.targetedAnimations[0] && g.targetedAnimations[0].animation.framePerSecond) || 30;
+    return { name: g.name, frac: an ? (an.masterFrame - g.from) / ((g.to - g.from) || 1) : 0, dur: (g.to - g.from) / fps / (g.speedRatio || 1) }; };
+  // weapon sounds follow the village's interaction volume (and its mute)
+  const sfx = RebelWeapon.sfx({ scene, clip: curClip, kind: RebelWeapon.kindOf(pick.weapon.id), volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) });
+  const near = (d) => Math.min(1, 3 / (1 + d));
+  const archer = RebelWeapon.kindOf(pick.weapon.id) === 'bow' ? RebelWeapon.archer({ scene, meshes: body, held, back, H: back.info.H, clip: curClip, ignore: (m) => m.isDescendantOf && m.isDescendantOf(charMesh),
+    onNock: () => sfx.play('arrow_nock'), onRelease: () => { sfx.play('bow_release'); sfx.play('arrow_fly', { vol: 0.8 }); }, onHit: (p, d) => sfx.play('arrow_hit', { vol: near(d) }) }) : null;
   if (slot.bow_aim != null) animGroups[slot.bow_aim].speedRatio = 1.8;   // the power draw is a long charge: quicker in play
-  window._villageWeapon = { set, slot, held, back, grip, archer, state: 'back', draw: slot[hL && set.drawL ? set.drawL : set.draw], stow: slot[hL && set.sheatheL ? set.sheatheL : set.sheathe], orig: null, cycle: -1 };
+  window._villageWeapon = { set, slot, held, back, grip, archer, sfx, state: 'back', draw: slot[hL && set.drawL ? set.drawL : set.draw], stow: slot[hL && set.sheatheL ? set.sheatheL : set.sheathe], orig: null, cycle: -1 };
   const hint = document.getElementById('ctrl'); if (hint && !/Draw weapon/.test(hint.innerHTML)) hint.innerHTML += '<br><kbd>Q</kbd> Draw weapon';
   console.log('Weapon moves ready:', Object.keys(groups).length, 'clips');
 }

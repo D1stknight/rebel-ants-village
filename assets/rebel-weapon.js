@@ -571,7 +571,7 @@
   // Real arrows (Dawn's Light): a live bowstring (the model's own string is cut out) that the drawing hand pulls back,
   // an arrow taken from the quiver on Nock, laid on the string while drawing, and loosed on Loose: it flies with
   // gravity and sticks where it hits. clip() -> { name, frac } of the clip playing now.
-  function archer({ scene, meshes, held, back, H = 1.8, clip, ignore = () => false, onRelease }) {
+  function archer({ scene, meshes, held, back, H = 1.8, clip, ignore = () => false, onRelease, onNock, onHit }) {
     const V3 = B().Vector3, M = B().Matrix, Q = B().Quaternion;
     const bow = held && held.left; if (!bow || !bow.bowPts) return null;
     const sm = meshes.find((m) => m.skeleton); if (!sm) return null;
@@ -609,7 +609,11 @@
         const p0 = f.n.position.clone(); f.v.y -= 5.4 * H * dt; const p1 = p0.add(f.v.scale(dt)); const dir = f.v.normalizeToNew();
         const tip0 = p0.add(dir.scale(AL)), step = p1.subtract(p0);
         const hit = scene.pickWithRay(new (B().Ray)(tip0, step.normalizeToNew(), step.length()), (m) => m.isPickable && m.isEnabled() && m.isVisible && !/^rebelArrow|^rebelBow/.test(m.name) && !ignore(m));
-        if (hit && hit.hit) { f.n.position.copyFrom(hit.pickedPoint.subtract(dir.scale(AL * 0.88))); f.n.rotationQuaternion = quatY(dir); f.stuck = true; f.t = 0; continue; }
+        if (hit && hit.hit) {
+          f.n.position.copyFrom(hit.pickedPoint.subtract(dir.scale(AL * 0.88))); f.n.rotationQuaternion = quatY(dir); f.stuck = true; f.t = 0;
+          const cam = scene.activeCamera; if (onHit) onHit(hit.pickedPoint.clone(), cam ? V3.Distance(hit.pickedPoint, cam.globalPosition) / H : 0);
+          continue;
+        }
         f.n.position.copyFrom(p1); f.n.rotationQuaternion = quatY(dir);
         if (f.t > 3) { f.n.dispose(); flying.splice(i, 1); }
       }
@@ -633,14 +637,14 @@
       if (!hooked && !fired && name === 'bow_shoot' && frac < 0.08) hooked = true;          // a loose starts at full draw
       if (hooked && (V3.Distance(pinch, restPt) > AL * 1.05 || backOff > 0.05 * H)) hooked = false;
       if (name === 'bow_nock' && frac > 0.3 && state === 'none') state = 'hand';
-      if (hooked && state !== 'flying') state = 'nocked';
+      if (hooked && state !== 'nocked') { state = 'nocked'; if (onNock) onNock(); }
       // loose
       if (name === 'bow_shoot' && frac >= 0.08 && !fired && state === 'nocked') {
         fired = true; hooked = false; state = 'none';
         const dir = restPt.subtract(pinch).normalize(); const n = proto.instantiateHierarchy(null, { doNotInstantiate: true }, (s, cl) => { cl.name = 'rebelArrowFly'; });
         n.setEnabled(true); place(n, pinch, dir); flying.push({ n, v: dir.scale(25 * H), t: 0, stuck: false });
         if (flying.length > 10) { const o = flying.shift(); o.n.dispose(); }
-        if (onRelease) onRelease();
+        if (onRelease) onRelease(pinch.clone());
       }
       const nock = hooked ? pinch : nock0;
       rods.forEach((r) => r.setEnabled(true)); setRod(rods[0], tA, nock); setRod(rods[1], nock, tB);
@@ -654,5 +658,63 @@
     return { dispose() { scene.onAfterAnimationsObservable.remove(obs); rods.forEach((r) => r.dispose()); inHand.dispose(); proto.dispose(); flying.forEach((f) => f.n.dispose()); }, flying, get state() { return state; } };
   }
 
-  window.RebelWeapon = { attach, resolve, fromTrait, catalog, MOVESET, MOVE_NAMES, kindOf, movesFor, loadMoves, hold, holdAll, showHeld, twoHand, archer, _fist: fistCenter };
+
+  /* ---------- sounds: each clip's cues at the moment the blade / bow / foot moves (fractions measured on the clips) ----------
+     [sound, fraction, volume, pan]. The sound's own attack (SFX_LEAD, seconds) is taken off so its peak lands on the moment. */
+  const WEAPON_SFX = {
+    sword_draw: [['blade_draw', .42], ['blade_swing', .68, .7]], sword_draw_l: [['blade_draw', .42], ['blade_swing', .68, .7]],
+    sword_sheathe: [['blade_swing', .18, .5], ['blade_sheathe', .4]], sword_sheathe_l: [['blade_swing', .18, .5], ['blade_sheathe', .4]],
+    sword_combo: [['blade_swing', .2], ['blade_swing', .48], ['blade_swing_heavy', .72]],
+    sword_power_slash: [['blade_swing', .18, .6], ['blade_swing_heavy', .42], ['blade_swing', .79, .7]],
+    sword_down_slash: [['blade_swing_heavy', .43], ['blade_swing', .57, .5]],
+    sword_spin_attack: [['blade_spin', .33], ['blade_swing_heavy', .56]],
+    sword_jump_attack: [['swish_light', .12, .6], ['blade_swing', .23, .7], ['blade_swing_heavy', .48], ['land', .5, .8]],
+    sword_kick: [['swish_spin', .38], ['impact', .54, .7]],
+    sword_combo2: [['blade_swing', .19], ['blade_swing', .4], ['blade_swing_heavy', .69]],
+    sword_hit: [['impact_heavy', .07, .8]], sword_block: [['blade_clang', .12, .6]],
+    twin_combo: [['blade_swing', .08, .7, -.2], ['blade_swing', .2, .8, -.2], ['blade_swing', .31, .8, .2], ['blade_swing_heavy', .49], ['blade_swing', .49, .5, -.25], ['blade_swing_heavy', .73], ['blade_swing', .72, .5, .25]],
+    bow_draw: [['bow_ready', .3]], bow_sheathe: [['bow_stow', .42]], bow_nock: [['arrow_draw', .32]], bow_aim: [['bow_creak', 0]],
+    bow_kick: [['swish_heavy', .36], ['impact', .59, .7]], bow_hit: [['impact_heavy', .06, .8]]
+  };
+  const SFX_LEAD = { blade_draw: 0.32, blade_sheathe: 0.29, blade_swing: 0.13, blade_swing_heavy: 0.21, blade_spin: 0.14, swish_light: 0.14, swish_heavy: 0.25, swish_spin: 0.15, bow_ready: 0.22, bow_stow: 0.2, arrow_draw: 0.08 };
+  const SFX_KIND = { sword: ['blade_draw', 'blade_sheathe', 'blade_swing', 'blade_swing_heavy', 'blade_spin', 'blade_clang', 'swish_light', 'swish_spin', 'impact', 'impact_heavy', 'land'],
+    bow: ['bow_ready', 'bow_stow', 'arrow_draw', 'arrow_nock', 'bow_creak', 'bow_release', 'arrow_fly', 'arrow_hit', 'swish_heavy', 'impact', 'impact_heavy'] };
+  SFX_KIND.twin = SFX_KIND.sword;
+  // a small Web Audio player for pages without one (the village); volume() is read on every sound
+  let actx = null;
+  function webPlayer(volume) {
+    const unlock = () => { try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) { /* no audio */ } };
+    ['pointerdown', 'keydown', 'touchstart'].forEach((e) => window.addEventListener(e, unlock, { passive: true }));
+    return (name, o = {}) => {
+      const v = (volume ? volume() : 1) * (o.vol == null ? 1 : o.vol);
+      if (!(v > 0.001) || !actx || !window.ForgeSfx) return;
+      window.ForgeSfx.render(name).then((b) => {
+        if (!b) return;
+        const src = actx.createBufferSource(); src.buffer = b; src.playbackRate.value = o.rate || 1;
+        const g = actx.createGain(); g.gain.value = Math.min(1.5, v); src.connect(g); let out = g;
+        if (o.pan && actx.createStereoPanner) { const pn = actx.createStereoPanner(); pn.pan.value = o.pan; g.connect(pn); out = pn; }
+        out.connect(actx.destination); src.start(actx.currentTime + (o.delay || 0));
+      });
+    };
+  }
+  // clip() -> { name, frac, dur (seconds at the current speed) }. play(name, { vol, pan, rate }) or volume() for the built-in player.
+  function sfx({ scene, clip, kind = 'sword', play, volume }) {
+    const say = play || webPlayer(volume);
+    if (window.ForgeSfx) (SFX_KIND[kind] || []).forEach((n) => window.ForgeSfx.render(n));   // render ahead: the first swing is on time
+    let last = null, lf = 0;
+    const obs = scene.onBeforeRenderObservable.add(() => {
+      const c = clip && clip(); const name = c && c.name;
+      if (!name) { last = null; return; }
+      const f = c.frac || 0;
+      if (name !== last) { last = name; lf = -1; } else if (f < lf - 0.2) { if (f <= 0) return; lf = -1; }   // a new clip, a replay or a loop (a finished clip reads 0: not a replay)
+      const cues = WEAPON_SFX[name];
+      if (cues && f > lf) {
+        const dur = c.dur || 1;
+        cues.forEach(([n, at, vol = 1, pan = 0]) => { const t = Math.max(0, at - (SFX_LEAD[n] || 0) / dur); if (t > lf && t <= f) say(n, { vol, pan, rate: 0.96 + 0.08 * Math.random() }); });
+      }
+      lf = f;
+    });
+    return { play: say, dispose() { scene.onBeforeRenderObservable.remove(obs); } };
+  }
+  window.RebelWeapon = { attach, resolve, fromTrait, catalog, MOVESET, MOVE_NAMES, kindOf, movesFor, loadMoves, hold, holdAll, showHeld, twoHand, archer, sfx, WEAPON_SFX, _fist: fistCenter };
 })();

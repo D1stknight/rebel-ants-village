@@ -129,6 +129,27 @@
     return arch(mix(scale(bp(lo, 500, 900), 1.2), bp(lo, 1000, 1400), scale(lp(lo, 400), 0.6)), 0.8);
   }
   const ramp = (d, f) => mul(Z(N(d)).fill(1), f);
+  /* weapons: steel is a free bar (modes 1 : 2.76 : 5.40 : 8.93), wood is a short damped membrane */
+  function steelRing(f, d = 1.2, bright = 1) { return fade(partials(d * 2, [[1, 1, d * 0.55], [2.76, .6, d * 0.35], [5.4, .4 * bright, d * 0.2], [8.93, .22 * bright, d * 0.12], [1.004, .5, d * 0.5]], f), 0.3); }
+  function scrape(d, f0, f1, grit = 1) {   // steel sliding on steel / leather: a narrow glide plus grains
+    const body = mul(sweepBp(noise(d), f0, f1, 3.2), (t) => 0.75 + 0.25 * Math.sin(TAU * (45 + 30 * t / d) * t));
+    return mix(body, scale(crackle(d, 140 * grit, 9000), 0.35 * grit));
+  }
+  function bladeWhoosh(d, f0, f1, q = 1.6, ring = 0.25) {   // air + the thin whistle of an edge
+    const edge = arch(sweepBp(noise(d), f0 * 2.2, f1 * 1.3, 9), 3);
+    return mix(whoosh(d, f0, f1, q), scale(edge, ring));
+  }
+  function fade(x, tail = 0.25) { const n = x.length, k = Math.max(1, Math.round(n * tail)); for (let i = n - k; i < n; i++) x[i] *= 0.5 + 0.5 * Math.cos(Math.PI * (i - (n - k)) / k); return x; }
+  function thud(f, d, hit = 0.6) { return fade(taiko(f, d, hit), 0.4); }                      // a taiko cut short, no click at the cut
+  function knock(f = 260, d = 0.12, a = 1) {   // wood on wood: damped modes, no pitch glide
+    return scale(fade(mix(partials(d, [[1, 1, d * 0.22], [1.58, .5, d * 0.15], [2.43, .3, d * 0.09]], f), scale(expDec(bp(noise(0.02), 900, 5000), 0.003), 0.9)), 0.3), a);
+  }
+  function creak(d, r0 = 18, r1 = 70, f = 700) {   // stick-slip: friction pulses that speed up as the limbs load
+    const n = N(d), o = Z(n); let ph = 0;
+    for (let i = 0; i < n; i++) { const t = i / SR; ph += (r0 + (r1 - r0) * (t / d) ** 1.4) / SR; if (ph >= 1) { ph -= 1; o[i] = 1 + 0.4 * gauss(); } }
+    const tone = biquad(biquad(o, 'bp', f, 6), 'bp', f * 1.9, 3);
+    return fade(mul(mix(scale(tone, 1.4), scale(bp(o, 1500, 5000), 0.1)), (t) => Math.min(1, t / 0.08) * (0.35 + 0.65 * t / d)), 0.12);
+  }
 
   /* ---------- rooms: generated impulse responses ---------- */
   function impulse(ctx, dur, bright, pre = 0.012, early = 0.25) {
@@ -188,7 +209,22 @@
     impact: () => [mix(scale(taiko(95, 0.35), 0.9), scale(expDec(lp(noise(0.06), 1500), 0.01), 0.8), scale(expDec(hp(noise(0.02), 3000), 0.003), 0.3)), 'room', 0.15, 0, -3],
     impact_heavy: () => [mix(scale(taiko(60, 0.8), 1.1), expDec(lp(noise(0.12), 900), 0.02), at(scale(crackle(0.3, 40), 0.2), 0.01)), 'hall', 0.22, 0, -2],
     land: () => [mix(scale(taiko(75, 0.4), 0.8), scale(expDec(lp(noise(0.08), 600), 0.015), 0.6), at(scale(paper(0.15, 40), 0.1), 0.02)), 'room', 0.15, 0, -4],
-    step_soft: () => [mix(expDec(lp(noise(0.05), 700), 0.01), scale(taiko(130, 0.12), 0.3)), 'room', 0.12, 0, -12]
+    step_soft: () => [mix(expDec(lp(noise(0.05), 700), 0.01), scale(taiko(130, 0.12), 0.3)), 'room', 0.12, 0, -12],
+    /* weapons (cued by RebelWeapon.sfx at the moment of each swing / draw / loose) */
+    blade_draw: () => [mix(mul(scrape(0.34, 1600, 6200), (t) => (t / 0.34) ** 1.3), at(scale(steelRing(1240, 0.9), 0.55), 0.32), at(scale(bladeWhoosh(0.3, 900, 3600), 0.35), 0.3)), 'room', 0.14, 0, -4],
+    blade_sheathe: () => [mix(mul(scrape(0.3, 5600, 1500), (t) => 0.4 + 0.6 * t / 0.3), at(knock(210, 0.14), 0.29), at(scale(steelRing(980, 0.4, 0.5), 0.18), 0.29)), 'room', 0.14, 0, -5],
+    blade_swing: () => [bladeWhoosh(0.26, 750, 4000, 1.8), 'room', 0.1, 0, -6],
+    blade_swing_heavy: () => [mix(bladeWhoosh(0.42, 320, 3000, 1.3, 0.3), scale(arch(lp(noise(0.42), 260), 2), 0.45)), 'room', 0.12, 0, -4],
+    blade_spin: () => [mix(...[0, 1, 2].map((k) => at(scale(bladeWhoosh(0.28, 600, 3400, 1.5), 0.7 + 0.15 * k), 0.13 * k))), 'room', 0.12, 0, -4],
+    blade_clang: () => [mix(scale(steelRing(1480, 0.7), 0.7), scale(steelRing(1553, 0.55), 0.45), scale(expDec(hp(noise(0.02), 2500), 0.004), 1.2), scale(thud(180, 0.2), 0.35)), 'room', 0.2, 0, -3],
+    bow_ready: () => [mix(scale(lp(paper(0.35, 45), 3800), 0.7), scale(arch(lp(brown(0.35), 200)), 0.5), at(knock(330, 0.1, 0.5), 0.22), at(scale(pluck(96, 0.35), 0.18), 0.23)), 'room', 0.12, 0, -8],
+    bow_stow: () => [mix(scale(lp(paper(0.3, 45), 3500), 0.7), scale(arch(lp(brown(0.3), 200)), 0.5), at(knock(280, 0.12, 0.7), 0.2)), 'room', 0.12, 0, -8],
+    arrow_draw: () => { const clicks = [0, 0.03, 0.055, 0.09, 0.12].map((t, k) => at(knock(1700 + 900 * rnd(), 0.035, 0.5 - 0.07 * k), t)); return [mix(...clicks, at(scale(arch(sweepBp(noise(0.28), 2200, 4800, 2.5), 1.5), 0.5), 0.1)), 'room', 0.1, 0, -10]; },
+    arrow_nock: () => [mix(scale(expDec(bp(noise(0.02), 1800, 7000), 0.003), 1), knock(2100, 0.04, 0.5), at(scale(pluck(98, 0.15), 0.08), 0.005)), 'room', 0.1, 0, -12],
+    bow_creak: () => [creak(0.9), 'room', 0.1, 0, -12],
+    bow_release: () => [mix(mul(pluck(98, 0.5), (t) => Math.exp(-t / 0.22)), scale(mul(pluck(196.5, 0.3), (t) => Math.exp(-t / 0.08)), 0.5), scale(expDec(hp(noise(0.012), 1800), 0.003), 1.1), scale(thud(72, 0.3, 0.4), 0.55)), 'room', 0.12, 0, -3],
+    arrow_fly: () => { const d = 0.75; const fl = mul(lp(noise(d), 900), (t) => 0.6 + 0.4 * Math.sin(TAU * 38 * t)); return [mul(mix(sweepBp(noise(d), 3400, 1300, 6), scale(fl, 0.5)), (t) => Math.min(1, t / 0.02) * Math.exp(-t / 0.28) * Math.min(1, (d - t) / 0.2)), 'room', 0.08, 0, -8]; },
+    arrow_hit: () => [mix(scale(thud(150, 0.25, 0.8), 0.9), scale(expDec(lp(noise(0.03), 1700), 0.007), 0.9), at(scale(mul(partials(0.4, [[1, 1, 0.14], [2.3, .3, 0.06]], 165), (t) => 0.55 + 0.45 * Math.cos(TAU * 22 * t)), 0.35), 0.004), at(scale(fade(crackle(0.12, 60, 3500)), 0.3), 0.005)), 'room', 0.12, 0, -4]
   };
   function brushStroke(d) {
     const env = lp(noise(d), 40); let m = 0; env.forEach((v) => { m = Math.max(m, Math.abs(v)); });
