@@ -674,11 +674,11 @@
     sword_hit: [['impact_heavy', .07, .8]], sword_block: [['blade_clang', .12, .6]],
     twin_combo: [['blade_swing', .08, .7, -.2], ['blade_swing', .2, .8, -.2], ['blade_swing', .31, .8, .2], ['blade_swing_heavy', .49], ['blade_swing', .49, .5, -.25], ['blade_swing_heavy', .73], ['blade_swing', .72, .5, .25]],
     bow_draw: [['bow_ready', .3]], bow_sheathe: [['bow_stow', .42]], bow_nock: [['arrow_draw', .32]], bow_aim: [['bow_creak', 0]],
-    bow_kick: [['swish_heavy', .36], ['impact', .59, .7]], bow_hit: [['impact_heavy', .06, .8]]
+    bow_kick: [['kick_swish', .36, .8]], bow_hit: [['impact_heavy', .06, .8]]
   };
-  const SFX_LEAD = { blade_draw: 0.32, blade_sheathe: 0.29, blade_swing: 0.13, blade_swing_heavy: 0.21, blade_spin: 0.14, swish_light: 0.14, swish_heavy: 0.25, swish_spin: 0.15, bow_ready: 0.22, bow_stow: 0.2, arrow_draw: 0.08 };
+  const SFX_LEAD = { kick_swish: 0.15, blade_draw: 0.32, blade_sheathe: 0.29, blade_swing: 0.13, blade_swing_heavy: 0.21, blade_spin: 0.14, swish_light: 0.14, swish_heavy: 0.25, swish_spin: 0.15, bow_ready: 0.22, bow_stow: 0.2, arrow_draw: 0.08 };
   const SFX_KIND = { sword: ['blade_draw', 'blade_sheathe', 'blade_swing', 'blade_swing_heavy', 'blade_spin', 'blade_clang', 'swish_light', 'swish_spin', 'impact', 'impact_heavy', 'land'],
-    bow: ['bow_ready', 'bow_stow', 'arrow_draw', 'arrow_nock', 'bow_creak', 'bow_release', 'arrow_fly', 'arrow_hit', 'swish_heavy', 'impact', 'impact_heavy'] };
+    bow: ['bow_ready', 'bow_stow', 'arrow_draw', 'arrow_nock', 'bow_creak', 'bow_release', 'arrow_fly', 'arrow_hit', 'kick_swish', 'impact_heavy'] };
   SFX_KIND.twin = SFX_KIND.sword;
   // a small Web Audio player for pages without one (the village); volume() is read on every sound
   let actx = null;

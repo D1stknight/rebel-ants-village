@@ -214,6 +214,7 @@
     blade_draw: () => [mix(mul(scrape(0.34, 1600, 6200), (t) => (t / 0.34) ** 1.3), at(scale(steelRing(1240, 0.9), 0.55), 0.32), at(scale(bladeWhoosh(0.3, 900, 3600), 0.35), 0.3)), 'room', 0.14, 0, -4],
     blade_sheathe: () => [mix(mul(scrape(0.3, 5600, 1500), (t) => 0.4 + 0.6 * t / 0.3), at(knock(210, 0.14), 0.29), at(scale(steelRing(980, 0.4, 0.5), 0.18), 0.29)), 'room', 0.14, 0, -5],
     blade_swing: () => [bladeWhoosh(0.26, 750, 4000, 1.8), 'room', 0.1, 0, -6],
+    kick_swish: () => [mix(whoosh(0.3, 450, 2400, 1.3), scale(arch(lp(paper(0.3, 50), 3000), 2), 0.35)), 'room', 0.08, 0, -8],
     blade_swing_heavy: () => [mix(bladeWhoosh(0.42, 320, 3000, 1.3, 0.3), scale(arch(lp(noise(0.42), 260), 2), 0.45)), 'room', 0.12, 0, -4],
     blade_spin: () => [mix(...[0, 1, 2].map((k) => at(scale(bladeWhoosh(0.28, 600, 3400, 1.5), 0.7 + 0.15 * k), 0.13 * k))), 'room', 0.12, 0, -4],
     blade_clang: () => [mix(scale(steelRing(1480, 0.7), 0.7), scale(steelRing(1553, 0.55), 0.45), scale(expDec(hp(noise(0.02), 2500), 0.004), 1.2), scale(thud(180, 0.2), 0.35)), 'room', 0.2, 0, -3],
