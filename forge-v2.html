@@ -1828,7 +1828,7 @@ async function makeMine() {
       const t = String(state.token), g = GI(), tm = {}; (state.meta?.traits || []).forEach((x) => { tm[x.trait_type] = x.value; });
       if (ac) localStorage.setItem('selectedRebel', JSON.stringify({
         ...sel, id: sel.id || `rebel_${t}`, rebelId: sel.rebelId || g.rebelId || `rebel_${t}`, tokenId: t, collectionKey: COL,
-        name: sel.name || state.meta?.name || `Rebel #${t}`, image: sel.image || `/api/nft-image?c=${COL}&t=${t}&s=thumb`,
+        name: sel.name || `Rebel #${t}`, image: sel.image || `/api/nft-image?c=${COL}&t=${t}&s=thumb`,
         traits: Object.keys(tm).length ? tm : (sel.traits || {}), gangName: tm['Gang Names'] || sel.gangName || null,
         playableType: undefined, buildId, activeForgeCharacter: ac, activeGlbUrl: ac.activeGlbUrl || url, characterSource: 'forge_glb', updatedAt: new Date().toISOString()
       }));
