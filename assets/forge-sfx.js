@@ -130,6 +130,9 @@
   }
   const ramp = (d, f) => mul(Z(N(d)).fill(1), f);
   /* weapons: steel is a free bar (modes 1 : 2.76 : 5.40 : 8.93), wood is a short damped membrane */
+  /* soft Forge UI (Sept 30, Miguel: no drums, bells or crackle in the Forge steps) */
+  function swell(d, f = 150) { return arch(lp(brown(d), f), 1.5); }                                  // a low breath of air
+  function softTap(f = 150, d = 0.12) { return mix(fade(expDec(lp(noise(d), 700), 0.012), 0.4), scale(fade(partials(d, [[1, 1, d * 0.25]], f), 0.4), 0.5)); }   // felt on wood
   function steelRing(f, d = 1.2, bright = 1) { return fade(partials(d * 2, [[1, 1, d * 0.55], [2.76, .6, d * 0.35], [5.4, .4 * bright, d * 0.2], [8.93, .22 * bright, d * 0.12], [1.004, .5, d * 0.5]], f), 0.3); }
   function scrape(d, f0, f1, grit = 1) {   // steel sliding on steel / leather: a narrow glide plus grains
     const body = mul(sweepBp(noise(d), f0, f1, 3.2), (t) => 0.75 + 0.25 * Math.sin(TAU * (45 + 30 * t / d) * t));
@@ -169,40 +172,40 @@
     ui_click: () => [mix(scale(taiko(420, 0.18), 0.6), expDec(bp(noise(0.02), 1800, 5000), 0.004)), 'room', 0.15, 0, -6],
     toast: () => [mix(scale(bell(1320, 1.4, .6), 0.5), at(scale(bell(1760, 1.2, .5), 0.35), 0.09)), 'hall', 0.3, 0, -9],
     error: () => [mix(scale(taiko(90, 0.8), 0.8), at(scale(taiko(80, 0.8), 0.6), 0.16)), 'room', 0.25, 0, -5],
-    step: () => [taiko(58, 1.8), 'hall', 0.35, 0, -2],
+    step: () => [mix(scale(swell(0.9, 180), 0.8), scale(whoosh(0.9, 200, 900, 0.7), 0.5)), 'hall', 0.25, 0, -9],
     summon_appear: () => [mix(scale(whoosh(2.2, 120, 1400, 0.8), 0.8), scale(arch(lp(brown(2.2), 180)), 0.6), at(scale(shimmer(1.6, 30, 1800, 5000), 0.25), 0.7)), 'temple', 0.35, 0, -3],
-    trait_fly: () => [mix(scale(whoosh(0.55, 700, 4200, 1.3), 0.7), at(scale(bell(1568, 1.2, 0.8), 0.45), 0.42)), 'hall', 0.3, 0, -5],
-    summon_done: () => [mix(taiko(52, 2.2), at(scale(gong(110, 5.5), 0.9), 0.02), at(scale(shimmer(2.5, 70), 0.18), 0.1)), 'temple', 0.35, 0, -1],
+    trait_fly: () => [mix(scale(whoosh(0.55, 700, 3600, 1.3), 0.7), at(scale(shimmer(0.5, 5, 2500, 5000), 0.1), 0.35)), 'hall', 0.2, 0, -9],
+    summon_done: () => [mix(scale(swell(2.6, 140), 0.9), at(scale(padChord([110, 164.8, 220, 277.2], 3.0, 1400), 0.6), 0.05), at(scale(shimmer(2.5, 50), 0.12), 0.2)), 'temple', 0.3, 0, -4],
     brush1: () => brushStroke(0.5), brush2: () => brushStroke(0.75), brush3: () => brushStroke(1.0),
     ink_reveal: () => [mix(scale(whoosh(2.6, 150, 1100, 0.7), 0.7), scale(arch(lp(brown(2.8), 140)), 0.5), at(scale(padChord([146.8, 220, 293.7], 2.4, 1400), 0.5), 0.3)), 'temple', 0.3, 0, -3],
-    stamp: () => [mix(scale(taiko(110, 0.35), 0.9), expDec(lp(noise(0.05), 900), 0.01), at(scale(paper(0.2, 60), 0.3), 0.01)), 'room', 0.2, 0, -3],
-    scroll_unroll: () => { const roll = mul(lp(brown(1.8), 220), (t) => (0.6 + 0.4 * Math.sin(TAU * 7 * t)) * Math.abs(Math.sin(Math.PI * t / 1.8)) ** 0.6); return [mix(scale(roll, 0.9), scale(paper(1.8, 70), 0.55), at(scale(taiko(160, 0.3), 0.4), 1.65)), 'room', 0.2, 0, -4]; },
-    view_appear: () => [mix(scale(paper(0.35, 90), 0.6), scale(whoosh(0.4, 900, 3000), 0.3), at(scale(bell(1175, 1.4, .7), 0.4), 0.12)), 'hall', 0.28, 0, -6],
-    seal: () => [mix(taiko(75, 1.0), at(scale(bell(587, 2.2, .9), 0.5), 0.05), at(scale(shimmer(1.4, 30), 0.15), 0.1)), 'hall', 0.35, 0, -2],
-    forge_loop: () => { const d = 10; const roar = mix(mul(lp(brown(d), 160, 4), (t) => 0.8 + 0.2 * Math.sin(TAU * 0.21 * t)), scale(mul(lp(pink(d), 900), (t) => 0.7 + 0.3 * Math.sin(TAU * 0.37 * t + 1)), 0.12)); return [loopable(mix(roar, scale(crackle(d, 26), 0.9), scale(lp(noise(d), 60), 0.3))), null, 0, 0, -9]; },
-    forge_start: () => [mix(scale(taiko(48, 2.4), 1.1), scale(whoosh(1.8, 90, 900, 0.7), 0.8), scale(arch(lp(brown(2.4), 120)), 0.8), at(scale(crackle(1.5, 60), 0.5), 0.2)), 'hall', 0.35, 0, -1],
-    anvil1: () => [mix(anvil(1150), at(scale(crackle(0.5, 80, 6000), 0.25), 0.01)), 'hall', 0.32, -0.15, -2],
-    anvil2: () => [mix(anvil(980), at(scale(crackle(0.5, 80, 6000), 0.25), 0.01)), 'hall', 0.32, 0.1, -2],
-    anvil3: () => [mix(anvil(1320), at(scale(crackle(0.5, 80, 6000), 0.25), 0.01)), 'hall', 0.32, 0.2, -2],
+    stamp: () => [mix(softTap(160, 0.12), at(scale(paper(0.18, 60), 0.35), 0.005)), 'room', 0.15, 0, -9],
+    scroll_unroll: () => { const roll = mul(lp(brown(1.8), 220), (t) => (0.6 + 0.4 * Math.sin(TAU * 7 * t)) * Math.abs(Math.sin(Math.PI * t / 1.8)) ** 0.6); return [mix(scale(roll, 0.9), scale(paper(1.8, 70), 0.55), at(scale(softTap(150, 0.12), 0.5), 1.65)), 'room', 0.2, 0, -6]; },
+    view_appear: () => [mix(scale(paper(0.35, 90), 0.6), scale(whoosh(0.5, 700, 2600), 0.35)), 'hall', 0.22, 0, -10],
+    seal: () => [mix(softTap(120, 0.16), at(scale(padChord([220, 277.2, 329.6], 1.6, 1200), 0.35), 0.03)), 'hall', 0.3, 0, -8],
+    forge_loop: () => { const d = 10; const roar = mix(mul(lp(brown(d), 160, 4), (t) => 0.8 + 0.2 * Math.sin(TAU * 0.21 * t)), scale(mul(lp(pink(d), 900), (t) => 0.7 + 0.3 * Math.sin(TAU * 0.37 * t + 1)), 0.12)); return [loopable(mix(roar, scale(lp(noise(d), 60), 0.3))), null, 0, 0, -12]; },
+    forge_start: () => [mix(scale(whoosh(2.0, 90, 700, 0.7), 0.8), scale(swell(2.4, 120), 1.0)), 'hall', 0.3, 0, -5],
+    anvil1: () => [mix(softTap(170, 0.14), at(scale(lp(paper(0.15, 40), 2500), 0.2), 0.01)), 'room', 0.15, -0.15, -12],
+    anvil2: () => [mix(softTap(150, 0.14), at(scale(lp(paper(0.15, 40), 2500), 0.2), 0.01)), 'room', 0.15, 0.1, -12],
+    anvil3: () => [mix(softTap(190, 0.14), at(scale(lp(paper(0.15, 40), 2500), 0.2), 0.01)), 'room', 0.15, 0.2, -12],
     bellows: () => [mix(scale(arch(lp(noise(0.9), 500), 2), 0.8), arch(lp(brown(0.9), 90))), 'room', 0.2, 0, -6],
-    sparks: () => [mix(scale(crackle(0.9, 120, 8000), 0.8), scale(expDec(hp(noise(0.9), 5000), 0.15), 0.25)), 'hall', 0.25, 0, -6],
-    stage_done: () => [mix(scale(bell(784, 2.0, .8), 0.6), at(scale(bell(1175, 2.0, .8), 0.5), 0.11), scale(taiko(90, 0.5), 0.4)), 'hall', 0.35, 0, -4],
+    sparks: () => [scale(arch(hp(noise(0.6), 3500), 2), 0.4), 'hall', 0.2, 0, -16],
+    stage_done: () => [scale(padChord([261.6, 329.6, 392], 1.4, 1500), 0.8), 'hall', 0.3, 0, -9],
     pluck1: () => [pluck(392, 1.8), 'hall', 0.3, -0.3, -5], pluck2: () => [pluck(440, 1.8), 'hall', 0.3, -0.18, -5], pluck3: () => [pluck(523.3, 1.8), 'hall', 0.3, -0.06, -5],
     pluck4: () => [pluck(587.3, 1.8), 'hall', 0.3, 0.06, -5], pluck5: () => [pluck(659.3, 1.8), 'hall', 0.3, 0.18, -5], pluck6: () => [pluck(784, 1.8), 'hall', 0.3, 0.3, -5],
     quench: () => {
       const d = 3.2; const hiss = mul(hp(noise(d), 2500), (t) => Math.exp(-t * 1.1) * (1 - Math.exp(-t * 60))); const bub = Z(N(d));
       for (let j = 0; j < 90; j++) { const L = N(0.03), s = Math.floor(rnd() * N(2.4)), f = 400 + rnd() * 900; let ph = 0; for (let i = 0; i < L; i++) { ph += TAU * (f + f * 0.8 * i / L) / SR; bub[s + i] += Math.sin(ph) * Math.sin(Math.PI * i / L) ** 2 * 0.25 * Math.exp(-s / SR); } }
-      return [mix(scale(hiss, 0.8), bub, scale(taiko(70, 0.8), 0.6), scale(mul(lp(brown(d), 200), (t) => Math.exp(-t * 1.4)), 0.6)), 'hall', 0.35, 0, -2];
+      return [mix(scale(hiss, 0.8), bub, scale(mul(lp(brown(d), 200), (t) => Math.exp(-t * 1.4)), 0.6)), 'hall', 0.3, 0, -6];
     },
-    versions_ready: () => [mix(scale(gong(147, 5.0), 0.8), at(scale(bell(1175, 2.5), 0.4), 0.25), at(scale(bell(1568, 2.5), 0.35), 0.45), at(scale(bell(1976, 2.5), 0.3), 0.65), at(scale(shimmer(2.5, 80), 0.2), 0.2)), 'temple', 0.35, 0, -1],
-    select: () => [mix(scale(taiko(200, 0.3), 0.6), at(scale(bell(1397, 1.2, .8), 0.35), 0.02), scale(whoosh(0.3, 1200, 3500), 0.25)), 'hall', 0.25, 0, -5],
-    forged: () => [mix(gong(82, 7.0), at(scale(padChord([130.8, 196, 261.6, 329.6], 5.0, 1600), 0.6), 0.3), at(scale(shimmer(4, 120), 0.2), 0.5)), 'temple', 0.35, 0, -1],
+    versions_ready: () => [mix(scale(swell(3, 160), 0.7), at(scale(padChord([146.8, 220, 293.7, 370], 3.2, 1700), 0.8), 0.05), at(scale(shimmer(2.5, 40), 0.1), 0.3)), 'temple', 0.3, 0, -4],
+    select: () => [mix(scale(paper(0.12, 60), 0.5), scale(whoosh(0.25, 1200, 3200), 0.4)), 'room', 0.15, 0, -12],
+    forged: () => [mix(scale(swell(4, 110), 1.0), at(scale(padChord([130.8, 196, 261.6, 329.6], 5.0, 1600), 0.7), 0.2), at(scale(shimmer(4, 60), 0.12), 0.5)), 'temple', 0.3, 0, -3],
     charge: () => {
       const d = 1.8, n = N(d), o = Z(n); let p1 = 0, p2 = 0;
       for (let i = 0; i < n; i++) { const t = i / SR, f = 110 * 2 ** (t / d * 2.2); p1 += TAU * f / SR; p2 += TAU * f * 1.5 / SR; o[i] = 0.4 * Math.sin(p1) + 0.25 * Math.sin(p2); }
       return [mul(mix(o, scale(sweepBp(noise(d), 300, 6000, 1.5), 0.6)), (t) => (t / d) ** 1.6), 'hall', 0.3, 0, -3];
     },
-    awaken: () => [mix(scale(taiko(44, 3.0), 1.2), scale(mul(lp(brown(3), 100), (t) => Math.exp(-t * 1.2)), 1.2), at(scale(gong(92, 6.5), 0.9), 0.05), at(scale(padChord([146.8, 220, 293.7, 370], 5.5, 2200), 0.7), 0.25), at(scale(shimmer(4.5, 160, 2500, 9000), 0.25), 0.15)), 'temple', 0.4, 0, -0.5],
+    awaken: () => [mix(scale(swell(4, 90), 1.3), scale(whoosh(3, 60, 600, 0.6), 0.6), at(scale(padChord([146.8, 220, 293.7, 370], 5.5, 2200), 0.8), 0.25), at(scale(shimmer(4.5, 100, 2500, 9000), 0.18), 0.15)), 'temple', 0.35, 0, -2],
     swish_light: () => [whoosh(0.28, 900, 4200, 1.6), 'room', 0.12, 0, -6],
     swish_heavy: () => [mix(whoosh(0.5, 250, 2600, 1.1), scale(arch(lp(noise(0.5), 300), 2), 0.4)), 'room', 0.15, 0, -4],
     swish_spin: () => [mix(...[0, 1, 2, 3].map((k) => at(scale(whoosh(0.3, 500, 3200, 1.3), 0.6 + 0.2 * k), 0.14 * k))), 'room', 0.15, 0, -4],

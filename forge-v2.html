@@ -138,8 +138,8 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .pct small{font-size:24px}
 .bar{height:3px;border-radius:3px;background:rgba(239,230,210,.08);overflow:hidden;margin:12px 0 4px}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--azure),var(--glow),var(--ice));box-shadow:0 0 12px var(--glow)}
-.comb{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:14px}
-.hex{aspect-ratio:1/1.1;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:rgba(239,230,210,.06);display:grid;place-items:center;font-family:Cinzel,serif;font-weight:700;font-size:8.5px;letter-spacing:.04em;text-transform:uppercase;color:rgba(239,230,210,.3);transition:all .35s;text-align:center;line-height:1}
+.comb{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:4px;margin-top:14px}
+.hex{aspect-ratio:1/1.1;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:rgba(239,230,210,.06);display:grid;place-items:center;font-family:Cinzel,serif;font-weight:700;font-size:8.5px;letter-spacing:.04em;text-transform:uppercase;color:rgba(239,230,210,.3);transition:all .35s;text-align:center;line-height:1;min-width:0;overflow:hidden;overflow-wrap:break-word;padding:0 2px}
 .dl,.kept{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .dl span,.kept span{width:100%;font-family:Cinzel,serif;font-size:10.5px;letter-spacing:.24em;color:var(--washi-dim)}
 .dl .chip{cursor:pointer}.dl .chip:hover{border-color:var(--glow);color:var(--ice)}
@@ -392,7 +392,11 @@ const GROUPS = [
   { k: '受', n: 'Reactions', moves: [['hit_reaction', '受', 'Take a Hit'], ['knockdown', '倒', 'Knockdown'], ['get_up', '起', 'Rise']] }
 ];
 const ALL_MOVES = GROUPS.flatMap((g, gi) => g.moves.map((m) => ({ clip: m[0], k: m[1], n: m[2], g: gi })));
-const SHORT = { fight_idle: 'Guard', idle: 'Calm', walk: 'Walk', run: 'Run', jump: 'Jump', jump_run: 'Leap', front_flip: 'Flip', backflip: 'Back', cartwheel: 'Wheel', jab: 'Jab', cross_punch: 'Cross', hook_punch: 'Hook', elbow_punch: 'Elbow', punch_combo: 'Combo', front_kick: 'Kick', side_kick: 'Side', roundhouse_kick: 'Round', crescent_kick: 'Moon', hurricane_kick: 'Storm', flip_kick: 'Flip K', spin_flip_kick: 'Spin', hit_reaction: 'Hit', knockdown: 'Down', get_up: 'Rise' };
+const SHORT = { fight_idle: 'Guard', idle: 'Calm', walk: 'Walk', run: 'Run', jump: 'Jump', jump_run: 'Leap', front_flip: 'Flip', backflip: 'Back', cartwheel: 'Wheel', jab: 'Jab', cross_punch: 'Cross', hook_punch: 'Hook', elbow_punch: 'Elbow', punch_combo: 'Combo', front_kick: 'Kick', side_kick: 'Side', roundhouse_kick: 'Round', crescent_kick: 'Moon', hurricane_kick: 'Storm', flip_kick: 'Flip K', spin_flip_kick: 'Spin', hit_reaction: 'Hit', knockdown: 'Down', get_up: 'Rise',
+  sword_draw: 'Draw', sword_draw_l: 'Draw', sword_sheathe: 'Sheathe', sword_sheathe_l: 'Sheathe', sword_idle: 'Stance', sword_walk: 'Stride', sword_run: 'Dash',
+  sword_combo: 'Slash', sword_power_slash: 'Power', sword_down_slash: 'Cleave', sword_spin_attack: 'Whirl', sword_jump_attack: 'Strike', sword_kick: 'Spin K', sword_combo2: 'Two-H',
+  sword_hit: 'Hit', sword_block: 'Block', twin_combo: 'Twin', bow_draw: 'Ready', bow_sheathe: 'Stow', bow_idle: 'Stance', bow_walk: 'Stride', bow_run: 'Dash',
+  bow_nock: 'Nock', bow_aim: 'Draw', bow_shoot: 'Loose', bow_aim_idle: 'Aim', bow_kick: 'Kick', bow_hit: 'Hit' };
 
 
 const state = {
@@ -410,7 +414,7 @@ const Snd = (() => {
     if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
     try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
     master = ctx.createGain(); master.gain.value = 0.85; master.connect(ctx.destination);
-    sfxGain = ctx.createGain(); sfxGain.connect(master);
+    sfxGain = ctx.createGain(); sfxGain.gain.value = 0.6; sfxGain.connect(master);   // the sounds sit under the music
     PRELOAD.forEach(load);
   }
   function load(name) {
@@ -448,7 +452,7 @@ const Snd = (() => {
   }
   function mute(m) { if (!m) return; Object.keys(loops).forEach((k) => stop(k, 0.3)); if (mus) { const M = mus; mus = null; M.g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.1); setTimeout(() => { try { M.src.stop(); } catch (e) {} M.g.disconnect(); }, 500); } }
   // background music: "Glorious" by Aylex (freetouse.com), looped quietly under the Forge sounds
-  const MUSIC_URL = '/assets/audio/music/forge-theme.mp3', MUSIC_VOL = 0.28;
+  const MUSIC_URL = '/assets/audio/music/forge-theme.mp3', MUSIC_VOL = 0.5;
   let mus = null, musBuf = null, musPend = null;
   function music() {
     if (!on()) return; init(); if (!ctx || mus) return;
@@ -468,7 +472,7 @@ const Snd = (() => {
     init, play, loop, stop, mute, pick, load, warm, music,
     // named cues (older call sites)
     taiko() { play('step', { vol: 0.8 }); },
-    anvil() { play(pick('anvil1', 'anvil2', 'anvil3'), { vol: 0.75, rate: 0.96 + Math.random() * 0.08 }); play('sparks', { vol: 0.45, delay: 0.02 }); },
+    anvil() { play(pick('anvil1', 'anvil2', 'anvil3'), { vol: 0.7, rate: 0.96 + Math.random() * 0.08 }); },
     hiss() { play('quench'); },
     bell() { play('summon_done'); },
     pluck(k = 0) { play('pluck' + (1 + (Math.abs(k | 0) % 6)), { vol: 0.8 }); },
@@ -481,7 +485,7 @@ function syncSndIcon() { $('#sndX').style.display = state.sound ? 'none' : ''; $
 syncSndIcon();
 $('#sndBtn').onclick = () => {
   state.sound = !state.sound; syncSndIcon(); try { localStorage.setItem('forgeV2:sound', state.sound ? '1' : '0'); } catch (e) {}
-  if (state.sound) { Snd.init(); Snd.play('ui_click'); Snd.music(); if (state.step === 3 && active()) Snd.loop('forge_loop', 0.45); } else Snd.mute(true);
+  if (state.sound) { Snd.init(); Snd.play('ui_click'); Snd.music(); if (state.step === 3 && active()) Snd.loop('forge_loop', 0.3); } else Snd.mute(true);
 };
 // the first tap anywhere unlocks audio (browser rule) and starts the music; buttons click, and whisper on hover
 addEventListener('pointerdown', () => { Snd.init(); Snd.music(); }, { capture: true });
@@ -1045,6 +1049,7 @@ const PHASES = [
   { id: 'approve', seg: 1, s: 0, wait: true, label: 'Waiting for your approval' },
   { id: 'back', seg: 2, s: 50, label: 'Drawing the back' },
   { id: 'sides', seg: 2, s: 55, label: 'Drawing both sides' },
+  { id: 'views', seg: 2, s: 0, wait: true, label: 'Check the four views' },
   { id: 'meshy', seg: 3, s: 420, label: 'Sculpting 3 versions' },
   { id: 'store', seg: 3, s: 10, label: 'Cooling the steel' },
   { id: 'pick', seg: 3, s: 0, wait: true, label: 'Choose your version' },
@@ -1284,6 +1289,7 @@ async function runPipeline() {
       const ph = S.phase;
       if (ph === 'approve' && !S.approved) { startApproveTimer(); break; }
       if (ph === 'pick' && !S.picked) break;
+      if (ph === 'views' && !S.viewsOk) break;                      // the player moves on from the blueprint
       if (RUN[ph]) await RUN[ph]();
       advance();
     }
@@ -1302,9 +1308,9 @@ function onPhase(prev, next) {
   if (next === 'meshy') Snd.play('forge_start');
   if (PH[prev].i <= PH.prod.i && next === 'approve') Snd.play('ink_reveal', { vol: 0.5 });
   if (next === 'pick') { enterPick(); return; }
-  if (prev === 'sides' && state.step === 2) {
-    // let the player see all four views (and the seal) before the hall moves on to the forge
-    refreshStep(); setTimeout(() => { if (state.step === 2) go(3); }, 6500); return;
+  if (next === 'views') {   // the four views wait for the player (no auto move to the forge)
+    if (state.step !== 2) toast('Your four views are ready. Check them on the Blueprint.');
+    refreshStep(); return;
   }
   if (to !== from && state.step === Math.min(4, from)) go(Math.min(4, to));   // follow the forge when watching the live step
   else refreshStep();
@@ -1342,6 +1348,16 @@ function startApproveTimer() {
 function acceptConcept() {
   clearInterval(approveTimer); if (!S || S.phase !== 'approve') return;
   S.approved = true; saveS(); Snd.play('stamp'); advance(); runPipeline();
+}
+function acceptViews() {
+  if (!S || S.phase !== 'views') return;
+  S.viewsOk = true; saveS(); Snd.play('seal'); advance(); runPipeline(); go(3);
+}
+function redrawViews() {
+  if (!S || S.phase !== 'views') return;
+  S.history = S.history || []; S.backUrl = null; S.sideUrls = null; S.viewsOk = false;
+  S.phase = 'back'; S.t.back = { a: Date.now() }; delete S.t.sides; delete S.t.views; S._f = 0; saveS();
+  renderForm(); runPipeline();
 }
 function paintAgain() {
   clearInterval(approveTimer); if (!S) return;
@@ -1389,7 +1405,7 @@ function forgeProgress() {
   if (cur.seg < 4) {
     const inSeg = PHASES.filter((p) => p.seg === cur.seg); const tot = inSeg.reduce((a, p) => a + expect(p.id), 0) || 1;
     let before = 0; for (const p of inSeg) { if (p.id === cur.id) break; before += expect(p.id); }
-    stepF = cur.seg + Math.min(0.97, (before + f * e) / tot);
+    stepF = cur.seg + 0.8 * Math.min(1, (before + f * e) / tot);   // stops short of the next step until this one is done
   }
   let remCur = cur.wait ? 0 : Math.max(5, e * (1 - f));
   if (real != null && real > 0.08 && el > 30) remCur = 0.5 * remCur + 0.5 * Math.max(5, el * (1 - real) / real);
@@ -1555,7 +1571,7 @@ function go(i) {
   if (i > state.maxStep && !(active() && i <= liveStep())) { toast('The forge has not reached this step yet'); return; }
   const prev = state.step; state.step = i; state.maxStep = Math.max(state.maxStep, i);
   markNodes(); antNow(false); setKanji(STEPS[i].name); camTo(STEPS[i].cam); Snd.play('step', { vol: 0.8 });
-  if (i === 3 && (active() || state.forging)) Snd.loop('forge_loop', 0.45); else Snd.stop('forge_loop');
+  if (i === 3 && (active() || state.forging)) Snd.loop('forge_loop', 0.3); else Snd.stop('forge_loop');
   Snd.warm([[], ['scroll_unroll', 'view_appear', 'seal', 'forge_start'], ['forge_loop', 'forge_start', 'anvil1', 'anvil2', 'anvil3', 'sparks', 'bellows'],
     ['forge_loop', 'anvil1', 'anvil2', 'anvil3', 'sparks', 'impact_heavy', 'bellows', 'stage_done', 'versions_ready', 'select', 'pluck1', 'pluck2', 'pluck3', 'pluck4', 'pluck5', 'pluck6', 'quench', 'forged', 'charge'],
     ['charge', 'awaken', 'swish_light', 'swish_heavy', 'swish_spin', 'impact', 'impact_heavy', 'land', 'step_soft', 'stage_done', 'seal']][i] || []);
@@ -1732,10 +1748,11 @@ function inkFrameSVG(src) {
       <radialGradient id="paperG" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#efe6d2"/><stop offset="1" stop-color="#cfc2a6"/></radialGradient>
     </defs>
     <rect x="6" y="6" width="388" height="588" rx="6" fill="url(#paperG)"/>
-    ${src ? `<g mask="url(#inkMask)"><image href="${esc(src)}" x="10" y="10" width="380" height="580" preserveAspectRatio="xMidYMid meet"/></g>` : `<text class="inkwait" x="200" y="330" text-anchor="middle" font-family="Yuji Syuku, serif" font-size="150" fill="#1b1410" opacity=".14">描</text>`}
+    ${src ? `<g mask="url(#inkMask)"><image href="${esc(src)}" x="10" y="10" width="380" height="522" preserveAspectRatio="xMidYMid meet"/></g>` : `<text class="inkwait" x="200" y="330" text-anchor="middle" font-family="Yuji Syuku, serif" font-size="150" fill="#1b1410" opacity=".14">描</text>`}
     <rect x="6" y="6" width="388" height="588" rx="6" fill="none" stroke="rgba(40,25,15,.35)" stroke-width="1.5"/>
-    <text x="30" y="560" font-family="Cinzel" font-weight="900" letter-spacing="3" font-size="22" fill="#1b1410" class="sig" opacity="0">${esc(String(traitVal('Gang Names') || 'Rebel').toUpperCase())}</text>
-    <g class="stampG" opacity="0" transform="translate(344 552) rotate(-8)"><rect x="-22" y="-22" width="44" height="44" rx="4" fill="none" stroke="#C8321E" stroke-width="3"/><text x="0" y="4" text-anchor="middle" font-family="Cinzel" font-weight="900" font-size="10" letter-spacing="1" fill="#C8321E">INKED</text></g>
+    ${(() => { const nm = String(traitVal('Gang Names') || 'Rebel').toUpperCase(); const fs = Math.max(12, Math.min(22, Math.floor((262 / Math.max(1, nm.length) - 2) / 0.72)));
+      return `<text x="28" y="570" font-family="Cinzel" font-weight="900" letter-spacing="${fs > 14 ? 3 : 1.5}" font-size="${fs}" fill="#1b1410" class="sig" opacity="0"${nm.length * (fs * 0.78 + (fs > 14 ? 3 : 1.5)) > 262 ? ' textLength="262" lengthAdjust="spacingAndGlyphs"' : ''}>${esc(nm)}</text>`; })()}
+    <g class="stampG" opacity="0" transform="translate(348 560) rotate(-8)"><rect x="-22" y="-22" width="44" height="44" rx="4" fill="none" stroke="#C8321E" stroke-width="3"/><text x="0" y="4" text-anchor="middle" font-family="Cinzel" font-weight="900" font-size="10" letter-spacing="1" fill="#C8321E">INKED</text></g>
   </svg></div>`;
 }
 function inkBleed() {
@@ -1743,7 +1760,7 @@ function inkBleed() {
   gsap.fromTo(center.querySelector('.inkframe'), { opacity: 0, y: 30, rotate: -1.5 }, { opacity: 1, y: 0, rotate: 0, duration: 1, ease: 'power3.out' });
   blots.forEach((b, i) => gsap.to(b, { attr: { r: 520 }, duration: REDUCED ? 0.4 : 2.6, delay: 0.3 + i * 0.35, ease: 'power2.inOut' }));
   gsap.to(center.querySelector('.sig'), { opacity: 1, duration: 1, delay: 2.4 });
-  gsap.fromTo(center.querySelector('.stampG'), { opacity: 0, scale: 2 }, { opacity: 0.9, scale: 1, duration: 0.35, delay: 2.9, ease: 'back.out(2)', transformOrigin: '344px 552px', onStart: () => Snd.play('stamp') });
+  gsap.fromTo(center.querySelector('.stampG'), { opacity: 0, scale: 2 }, { opacity: 0.9, scale: 1, duration: 0.35, delay: 2.9, ease: 'back.out(2)', transformOrigin: '348px 560px', onStart: () => Snd.play('stamp') });
   Snd.play('ink_reveal');
 }
 function inkWait() {
@@ -1754,9 +1771,9 @@ function inkWait() {
 /* ---- 3. BLUEPRINT 図 ---- */
 function renderForm(prev, quiet) {
   if (!quiet) { hideAwaken(); gsap.to(U, { uAlpha: 0.14, duration: 1 }); }
-  const a = S || {}; const past = S && PH[S.phase].i > PH.sides.i;
+  const a = S || {}; const past = S && PH[S.phase].i > PH.views.i; const check = S && S.phase === 'views';
   const views = [['FRONT', a.prodUrl], ['BACK', a.backUrl], ['LEFT', a.sideUrls?.[0]], ['RIGHT', a.sideUrls?.[1]]];
-  const skipped = past && (!a.backUrl || !(a.sideUrls || []).length);
+  const skipped = (past || check) && (!a.backUrl || !(a.sideUrls || []).filter(Boolean).length);
   renderCard(`
     <div class="eyebrow">STEP 3 / 5</div>
     <h1>The blueprint<span class="tag">All four sides</span></h1>
@@ -1767,9 +1784,10 @@ function renderForm(prev, quiet) {
     <div class="checks">
       ${['Clean, simple design that sculpts well', 'Arms clear of the body', 'Front, back and sides match', 'Head clean for antennae and masks'].map((c) => `<div class="check"><b>✓</b>${c}</div>`).join('')}
     </div>
+    ${check ? `<div class="cta"><button class="btn fire wide" id="viewsOk">LOOKS RIGHT · SCULPT IT →</button><button class="btn" id="viewsAgain">DRAW THE VIEWS AGAIN</button></div>` : ''}
     ${past ? `<div class="cta"><button class="btn fire wide" id="nextBtn">TO THE FORGE →</button></div>` : ''}
     ${views.some((v) => v[1]) ? `<div class="dl"><span>KEEP THE ART</span><button class="chip" id="dlViews">⤓ All ${views.filter((v) => v[1]).length} views</button></div>` : ''}
-    <div class="note">${skipped ? 'A view could not be drawn, so the smith builds from the views it has.' : past ? 'Sealed and sent to the forge.' : 'Keep this page open while the views are drawn. The forge starts on its own when they are ready.'}</div>
+    <div class="note">${check ? 'Check that front, back and both sides match your Rebel. Nothing is sculpted until you say so.' : skipped ? 'A view could not be drawn, so the smith builds from the views it has.' : past ? 'Sealed and sent to the forge.' : 'Keep this page open while the views are drawn. When they are ready you check them before the forge starts.'}</div>
   `, quiet);
   const sig = views.map((v) => v[1] || '').join('|');
   const sc = $('#scroll');
@@ -1794,11 +1812,13 @@ function renderForm(prev, quiet) {
     gsap.to(paper.querySelectorAll('img.col'), { opacity: 1, duration: 1.4, delay: fresh ? 2.1 : 0.2, ease: 'power2.inOut' });
     gsap.to(paper.querySelectorAll('img.line'), { opacity: 0.25, duration: 1.4, delay: fresh ? 2.1 : 0.2 });
     paper.querySelectorAll('.bp-wait').forEach((w) => { if (!REDUCED) gsap.to(w, { opacity: 0.35, duration: 1.4, yoyo: true, repeat: -1, ease: 'sine.inOut' }); });
-    if (past) gsap.to(paper.querySelector('.seal'), { scale: 1, duration: 0.3, delay: 0.4, ease: 'back.out(3)', onStart: () => Snd.play('seal') });
+    if (past || check) gsap.to(paper.querySelector('.seal'), { scale: 1, duration: 0.3, delay: 0.4, ease: 'back.out(3)', onStart: () => Snd.play('seal') });
   }
   if (S) { const s = $('#liveStatus'); if (s) s.innerHTML = liveStatusHTML(forgeProgress()); }
   bindErr();
   const nb = $('#nextBtn'); if (nb) nb.onclick = () => go(3);
+  const vo = $('#viewsOk'); if (vo) vo.onclick = acceptViews;
+  const va = $('#viewsAgain'); if (va) va.onclick = redrawViews;
   const dv = $('#dlViews'); if (dv) dv.onclick = async () => { for (const [n, u] of views) if (u) { await downloadUrl(u, `rebel-${state.token}-${n.toLowerCase()}`); await sleep(400); } };
 }
 function holdButton(btn, ms, done) {
@@ -1889,7 +1909,7 @@ function setForgeUI(P) {
 }
 function strike(big) {
   const y = 0.1 + U.uProgress * HELIX_H;
-  burst(y, big ? 420 : 140); Snd.anvil(); if (big) Snd.play('impact_heavy', { vol: 0.6 }); else if (Math.random() < 0.3) Snd.play('bellows', { vol: 0.5, delay: 0.4 });
+  burst(y, big ? 420 : 140); Snd.anvil(); if (big) Snd.play('bellows', { vol: 0.5 }); else if (Math.random() < 0.3) Snd.play('bellows', { vol: 0.5, delay: 0.4 });
   gsap.fromTo(forgeGlow, { intensity: big ? 9 : 5.5 }, { intensity: 3, duration: 0.6 });
   if (big) { shake(8); flash(0.45, 0.7); } else shake(2);
 }
