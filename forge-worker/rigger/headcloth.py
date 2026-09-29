@@ -70,10 +70,123 @@ class Glb:
             fo.write(struct.pack('<II', len(self.bin), 0x004E4942)); fo.write(self.bin)
 
 
+
+CREASE = 40              # degrees: the flap's folded edges stop the cover region
+def cover(g):
+    """Meshy often bakes the flap's upper half INTO the surface under it (one fused skin, painted with whatever was
+    behind: #469's compound eye). The flap then looks tucked under the eye. Find that fused part (grow up from the
+    moving flap to the knot, stopped by the fold creases) and repaint it in the flap's own cloth colour; skin showing
+    beside it is kept. Returns a report, or None when there is nothing to do."""
+    import io
+    from PIL import Image
+    j = g.j
+    if (j.get('asset', {}).get('extras') or {}).get('headclothCover'): return None
+    nodes = j['nodes']; par = {c: i for i, n in enumerate(nodes) for c in n.get('children', [])}
+    G = {}
+    def glob(i):
+        if i not in G: G[i] = (glob(par[i]) if i in par else np.eye(4)) @ local(nodes[i])
+        return G[i]
+    name = {n.get('name'): i for i, n in enumerate(nodes)}
+    skin = j['skins'][0]; joints = skin['joints']; jidx = {nd: k for k, nd in enumerate(joints)}
+    head = name.get('mixamorig_Head'); hips = name.get('mixamorig_Hips'); top = name.get('mixamorig_HeadTop_End')
+    k = (np.linalg.norm(glob(top)[:3, 3] - glob(hips)[:3, 3]) / 0.52 / 1.8) if (top is not None and hips is not None) else 1.0
+    chains = sorted({int(n['name'].split('_')[2]) for n in nodes if n.get('name', '').startswith('cloth_flap_')})
+    prims = [p for m in j['meshes'] for p in m['primitives'] if 'JOINTS_0' in p['attributes']]
+    V = np.concatenate([g.view(p['attributes']['POSITION'])[0].astype(float) for p in prims])
+    UVs = [g.view(p['attributes']['TEXCOORD_0'])[0].astype(float) if 'TEXCOORD_0' in p['attributes'] else np.zeros((g.view(p['attributes']['POSITION'])[0].shape[0], 2)) for p in prims]
+    UV = np.concatenate(UVs)
+    Jn = np.concatenate([g.view(p['attributes']['JOINTS_0'])[0].astype(int) for p in prims]); Wt = np.concatenate([g.view(p['attributes']['WEIGHTS_0'])[0].astype(float) for p in prims])
+    tris, base = [], 0
+    for pi, p in enumerate(prims):
+        n = UVs[pi].shape[0]; tris.append((pi, g.view(p['indices'])[0].reshape(-1, 3).astype(np.int64) + base)); base += n
+    Tall = np.concatenate([t for _, t in tris])
+    hw = (Wt * (Jn == jidx[head])).sum(1) + ((Wt * (Jn == jidx[top])).sum(1) if top in jidx else 0)
+    key = np.round(V / 1e-5).astype(np.int64); _, wid = np.unique(key, axis=0, return_inverse=True); wid = wid.ravel()
+    nW = int(wid.max()) + 1; P = np.zeros((nW, 3)); P[wid] = V; headW = np.zeros(nW); np.maximum.at(headW, wid, hw)
+    TW = wid[Tall]; FN = np.cross(P[TW[:, 1]] - P[TW[:, 0]], P[TW[:, 2]] - P[TW[:, 0]]); FN /= np.linalg.norm(FN, axis=1, keepdims=True) + 1e-12
+    ef = {}
+    for f, (a_, b_, c_) in enumerate(TW):
+        for u, v in ((a_, b_), (b_, c_), (c_, a_)): ef.setdefault((min(u, v), max(u, v)), []).append(f)
+    adj = {}
+    for (u, v), fs in ef.items():
+        ang = np.degrees(np.arccos(np.clip(FN[fs[0]] @ FN[fs[1]], -1, 1))) if len(fs) == 2 else 180
+        adj.setdefault(u, []).append((v, ang)); adj.setdefault(v, []).append((u, ang))
+    M = np.zeros(nW); seeds = np.zeros(nW, bool); tot = 0
+    for ci in chains:
+        r0 = glob(name[f'cloth_flap_{ci}_0'])[:3, 3]; r1 = glob(name[f'cloth_flap_{ci}_1'])[:3, 3]; ax = (r1 - r0) / np.linalg.norm(r1 - r0)
+        cj = [jidx[name[f'cloth_flap_{ci}_{s_}']] for s_ in range(SEGS) if name.get(f'cloth_flap_{ci}_{s_}') in jidx]
+        cw = sum((Wt * (Jn == q)).sum(1) for q in cj); seed = set(np.unique(wid[cw > 0.3]).tolist())
+        have = set(seed); fr = list(seed)
+        while fr:
+            nx = []
+            for u in fr:
+                for v, ang in adj.get(u, []):
+                    if v in have or ang > CREASE or headW[v] < 0.3: continue
+                    upd = -((P[v] - r0) @ ax)
+                    if upd < -0.01 * k or upd > 0.06 * k or np.linalg.norm(P[v] - r0) > 0.07 * k: continue
+                    have.add(v); nx.append(v)
+            fr = nx
+        grown = have - seed
+        if not grown or len(grown) > 4 * max(1, len(seed)): continue      # nothing fused, or it leaked: leave the texture alone
+        for v in grown: M[v] = 1
+        seeds[list(seed)] = True; tot += len(grown)
+    if not tot: return None
+    Mv = M[wid]; seedv = seeds[wid]
+    changed = 0; imgs = {}
+    for pi, T in tris:
+        mat = j['materials'][prims[pi].get('material', 0)] if 'materials' in j else {}
+        bct = (mat.get('pbrMetallicRoughness') or {}).get('baseColorTexture')
+        if not bct: continue
+        sel = T[(Mv[T].max(1) > 0.5)]
+        if not len(sel): continue
+        ii = j['textures'][bct['index']]['source']
+        if ii not in imgs:
+            bv = j['bufferViews'][j['images'][ii]['bufferView']]
+            im = Image.open(io.BytesIO(bytes(g.bin[bv.get('byteOffset', 0): bv.get('byteOffset', 0) + bv['byteLength']]))).convert('RGB')
+            imgs[ii] = np.asarray(im).astype(float).copy()
+        A = imgs[ii]; Hh, Ww = A.shape[:2]
+        def samp(uv): return A[np.clip((uv[:, 1] % 1) * Hh, 0, Hh - 1).astype(int), np.clip((uv[:, 0] % 1) * Ww, 0, Ww - 1).astype(int)]
+        cv = np.where(seedv)[0]; cloth = np.median(samp(UV[cv]), 0)
+        near = (hw > 0.3) & ~seedv & (Mv < 0.5) & (np.linalg.norm(V - V[cv].mean(0), axis=1) < 0.1 * k)
+        cs = samp(UV[near]); far = np.linalg.norm(cs - cloth, axis=1) > 80
+        skinc = np.median(cs[far], 0) if far.sum() > 20 else None
+        rng = np.random.default_rng(1)
+        for tri in sel:
+            m = Mv[tri]; uv = UV[tri] * [Ww, Hh]
+            x0, y0 = np.floor(uv.min(0)).astype(int) - 1; x1, y1 = np.ceil(uv.max(0)).astype(int) + 1
+            if x1 - x0 > 200 or y1 - y0 > 200: continue
+            xs, ys = np.meshgrid(np.arange(x0, x1 + 1), np.arange(y0, y1 + 1)); Q = np.stack([xs.ravel() + 0.5, ys.ravel() + 0.5], 1)
+            a_, b_, c_ = uv; v0, v1 = b_ - a_, c_ - a_; den = v0[0] * v1[1] - v1[0] * v0[1]
+            if abs(den) < 1e-9: continue
+            w1 = ((Q[:, 0] - a_[0]) * v1[1] - v1[0] * (Q[:, 1] - a_[1])) / den; w2 = (v0[0] * (Q[:, 1] - a_[1]) - (Q[:, 0] - a_[0]) * v0[1]) / den; w0 = 1 - w1 - w2
+            e = 1.5 / max(1.0, np.sqrt(abs(den)))                     # ~1.5 px past the edge so UV seams don't show
+            ins = (w0 > -e) & (w1 > -e) & (w2 > -e)
+            for (px, py), q0, q1, q2 in zip(Q[ins].astype(int), w0[ins], w1[ins], w2[ins]):
+                if not (0 <= px < Ww and 0 <= py < Hh): continue
+                kk = float(np.clip(q0 * m[0] + q1 * m[1] + q2 * m[2], 0, 1))
+                if kk <= 0: continue
+                col = A[py, px]
+                if np.linalg.norm(col - cloth) < 70: continue            # already cloth
+                if skinc is not None and col.sum() > 200 and np.linalg.norm(col / col.sum() - skinc / skinc.sum()) < 0.045: continue   # skin beside it
+                new = np.clip(cloth * 0.95 * (1 + 0.025 * rng.standard_normal()), 0, 255)
+                A[py, px] = col * (1 - kk) + new * kk; changed += 1
+    for ii, A in imgs.items():
+        im = j['images'][ii]; b = io.BytesIO(); png = im.get('mimeType') == 'image/png'
+        Image.fromarray(A.astype(np.uint8)).save(b, 'PNG' if png else 'JPEG', **({} if png else {'quality': 92}))
+        data = np.frombuffer(b.getvalue(), np.uint8)
+        while len(g.bin) % 4: g.bin.append(0)
+        off = len(g.bin); g.bin += data.tobytes()
+        j['bufferViews'].append({'buffer': 0, 'byteOffset': off, 'byteLength': len(data)}); im['bufferView'] = len(j['bufferViews']) - 1
+    j.setdefault('asset', {}).setdefault('extras', {})['headclothCover'] = True
+    return {'verts': int(tot), 'pixels': int(changed)}
+
 def main(src, dst, report=None, dry=False):
     g = Glb(src); j = g.j; nodes = j['nodes']
     if any(n.get('name', '').startswith('cloth_flap_') for n in nodes):
-        print('headcloth: already has flap chains'); rep = {'chains': 0, 'skipped': 'already'}
+        rep = {'chains': 0, 'skipped': 'already'}
+        cov = cover(g) if not dry else None
+        if cov: rep['cover'] = cov; rep['changed'] = True
+        print('headcloth: already has flap chains', json.dumps(rep))
         if not dry: g.save(dst)
         return rep
     par = {c: i for i, n in enumerate(nodes) for c in n.get('children', [])}
@@ -180,6 +293,7 @@ def main(src, dst, report=None, dry=False):
     rep = {'chains': len(chains), 'H': float(Hgt), 'thin': int(thin.sum()), 'flaps': [{'verts': ch['n'], 'len_m': round(ch['len'] / k, 3)} for ch in chains]}
     print('headcloth:', json.dumps(rep))
     if dry or not chains:
+        rep['changed'] = False
         if not dry: g.save(dst)
         return rep
     # new nodes + joints
@@ -226,6 +340,9 @@ def main(src, dst, report=None, dry=False):
         n = g.view(p['attributes']['POSITION'])[0].shape[0]
         g.write(p['attributes']['JOINTS_0'], Jall[o:o + n].astype(np.uint8))
         g.write(p['attributes']['WEIGHTS_0'], Wall[o:o + n].astype(np.float32)); o += n
+    cov = cover(g)
+    if cov: rep['cover'] = cov
+    rep['changed'] = True
     g.save(dst)
     return rep
 

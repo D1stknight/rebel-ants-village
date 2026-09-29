@@ -1,5 +1,6 @@
 // Head-cloth upgrade for a LIVE rig (admin, rigger 2.12): runs forge-worker/rigger/headcloth.py on the rig GLB in the
-// worker sandbox (skully-wrap flaps / bandana tails get spring chains; nothing else in the file changes), stores the
+// worker sandbox (skully-wrap flaps / bandana tails get spring chains, and a flap half fused into the surface under it
+// is repainted as cloth), stores the
 // result as a new Blob file and links it: forge:rig-latest:v1:<old> -> new (village + Forge follow it), the weapon
 // moves pack is linked to the new URL too, and the build record (if given) points at it.
 //   POST {rigUrl, buildId?}  -> start
@@ -45,9 +46,9 @@ export default async function handler(req, res) {
     const log = (await readText(sandbox, `${JOB_DIR}/log`)) || '';
     let report = null; try { report = JSON.parse((await readText(sandbox, `${JOB_DIR}/report.json`)) || 'null'); } catch (e) {}
     if (exit !== '0' || !report) { try { await sandbox.stop(); } catch (e) {} return res.status(200).json({ ok: true, job: await setJob(rigUrl, { ...job, status: 'failed', error: 'headcloth failed', logTail: log.split('\n').slice(-20).join('\n') }) }); }
-    if (!report.chains) { try { await sandbox.stop(); } catch (e) {} return res.status(200).json({ ok: true, job: await setJob(rigUrl, { ...job, status: 'none', report }) }); }
+    if (!(report.changed ?? report.chains)) { try { await sandbox.stop(); } catch (e) {} return res.status(200).json({ ok: true, job: await setJob(rigUrl, { ...job, status: 'none', report }) }); }
     const glb = await sandbox.readFileToBuffer({ path: `${JOB_DIR}/out.glb` });
-    const path = new URL(rigUrl).pathname.slice(1).replace(/(-[A-Za-z0-9]+)?\.glb$/, '') + '_cloth.glb';
+    const path = new URL(rigUrl).pathname.slice(1).replace(/(-[A-Za-z0-9]+)?\.glb$/, '').replace(/(_cloth\d*)+$/, '') + '_cloth.glb';
     const url = (await put(path, glb, { access: 'public', addRandomSuffix: true, contentType: 'model/gltf-binary' })).url;
     const [mv] = await redis([['GET', `forge:moves:v1:${rigUrl}`]]);
     await redis([['SET', `forge:rig-latest:v1:${rigUrl}`, url], ...(mv?.result ? [['SET', `forge:moves:v1:${url}`, mv.result]] : [])]);
