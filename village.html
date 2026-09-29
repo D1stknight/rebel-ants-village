@@ -18711,11 +18711,12 @@ function playForgeRigAction(slot, thenSlot, force) {
   if (!g || !walkMode) return false;
   if (!force && animState >= 3 && animGroups[animState] && animGroups[animState].isPlaying) return true;   // let the current move finish
   switchAnim(slot, false);
-  const ms = Math.max(300, ((g.to - g.from) / 60) * 1000 - 80);
+  const ms = Math.max(300, ((g.to - g.from) / 60) * 1000 / (g.speedRatio || 1) - 80);
   clearTimeout(window._forgeRigActionTimer);
   window._forgeRigActionTimer = setTimeout(() => {
     if (animState !== slot) return;
-    if (thenSlot != null && animGroups[thenSlot]) { playForgeRigAction(thenSlot, null, true); return; }   // chained move (knockdown -> get up)
+    if (Array.isArray(thenSlot) && thenSlot.length && animGroups[thenSlot[0]]) { playForgeRigAction(thenSlot[0], thenSlot.length > 1 ? thenSlot.slice(1) : null, true); return; }   // a move sequence (nock -> draw -> loose)
+    if (thenSlot != null && !Array.isArray(thenSlot) && animGroups[thenSlot]) { playForgeRigAction(thenSlot, null, true); return; }   // chained move (knockdown -> get up)
     switchAnim(runKey && animGroups[2] ? 2 : 0, true);
   }, ms);
   return true;
@@ -18774,7 +18775,13 @@ async function armVillageWeapon(r, body, pick, back) {
   for (const [name, g] of Object.entries(groups)) { g.enableBlending = true; g.blendingSpeed = 0.12; animGroups[i] = g; slot[name] = i++; }
   const held = await RebelWeapon.holdAll({ scene, meshes: body, weapon: pick.weapon, H: back.info.H, onMaterial: capWeaponMaterial, alt: pick.hilt === 'L', groups });
   const hL = pick.hilt === 'L';
-  window._villageWeapon = { set, slot, held, back, state: 'back', draw: slot[hL && set.drawL ? set.drawL : set.draw], stow: slot[hL && set.sheatheL ? set.sheatheL : set.sheathe], orig: null, cycle: -1 };
+  // hands on the weapon: fingers closed on the handle, both fists on a great sword's hilt (runs after each frame's clips)
+  const grip = RebelWeapon.twoHand({ scene, meshes: body, held, H: back.info.H });
+  // Dawn's Light: a live bowstring and real arrows that fly and stick
+  const curClip = () => { const g = animGroups[animState]; if (!g) return null; const an = g.animatables && g.animatables[0]; return { name: g.name, frac: an ? (an.masterFrame - g.from) / ((g.to - g.from) || 1) : 0 }; };
+  const archer = RebelWeapon.kindOf(pick.weapon.id) === 'bow' ? RebelWeapon.archer({ scene, meshes: body, held, back, H: back.info.H, clip: curClip, ignore: (m) => m.isDescendantOf && m.isDescendantOf(charMesh) }) : null;
+  if (slot.bow_aim != null) animGroups[slot.bow_aim].speedRatio = 1.8;   // the power draw is a long charge: quicker in play
+  window._villageWeapon = { set, slot, held, back, grip, archer, state: 'back', draw: slot[hL && set.drawL ? set.drawL : set.draw], stow: slot[hL && set.sheatheL ? set.sheatheL : set.sheathe], orig: null, cycle: -1 };
   const hint = document.getElementById('ctrl'); if (hint && !/Draw weapon/.test(hint.innerHTML)) hint.innerHTML += '<br><kbd>Q</kbd> Draw weapon';
   console.log('Weapon moves ready:', Object.keys(groups).length, 'clips');
 }
@@ -18806,6 +18813,10 @@ function stopLocomotion() {
 }
 function villageWeaponAttack(which) {
   const W = window._villageWeapon; if (!W || W.state !== 'hand') return false;
+  if (W.archer) {   // bow: F nocks, draws and looses a real arrow; G kicks
+    if (which === 'f') return playForgeRigAction(W.slot.bow_nock, [W.slot.bow_aim, W.slot.bow_shoot].filter((s) => s != null));
+    return W.slot.bow_kick != null ? playForgeRigAction(W.slot.bow_kick) : false;
+  }
   const list = W.set.attacks.map((c) => W.slot[c]).filter((s) => animGroups[s]);
   const half = which === 'g' ? list.slice(Math.ceil(list.length / 2)) : list.slice(0, Math.ceil(list.length / 2));
   const use = half.length ? half : list; if (!use.length) return false;

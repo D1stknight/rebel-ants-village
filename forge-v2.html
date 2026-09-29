@@ -930,11 +930,16 @@ async function armWeapon(w, my) {
     const held = await RebelWeapon.holdAll({ scene, meshes: body, weapon: w, H: wpn.cur.info.H, alt: wpn.pick?.hilt === 'L', groups: rebel.groups });
     if (my !== wpn.gen) { Object.values(held).forEach((x) => x.dispose()); return; }
     wpn.held = held; wpn.kind = RebelWeapon.kindOf(w.id); wpn.set = RebelWeapon.MOVESET[wpn.kind]; wpn.state = 'back';
+    // hands closed on the weapon (+ both fists on a great sword), and for the bow a live string and real arrows
+    wpn.grip = RebelWeapon.twoHand({ scene, meshes: body, held, H: wpn.cur.info.H });
+    const curClip = () => { const g = rebel.cur; if (!g) return null; const an = g.animatables[0]; return { name: g.name, frac: an ? (an.masterFrame - g.from) / ((g.to - g.from) || 1) : 0 }; };
+    wpn.archer = wpn.kind === 'bow' ? RebelWeapon.archer({ scene, meshes: body, held, back: wpn.cur, H: wpn.cur.info.H, clip: curClip, onRelease: () => Snd.play('swish_heavy') }) : null;
     Object.values(held).forEach((x) => x.meshes.forEach((m) => { m.visibility = 1; rebel.meshes.push(m); }));
     weaponGroup();
   } catch (e) { console.warn('weapon moves', e); }
 }
 function unarm() {
+  wpn.grip?.dispose?.(); wpn.archer?.dispose?.(); wpn.grip = null; wpn.archer = null;
   Object.values(wpn.held || {}).forEach((x) => x.dispose()); wpn.held = null; wpn.state = null; wpn.set = null; wpn.pending = null;
   rebel.meshes = rebel.meshes.filter((m) => !m.isDisposed());
   if (GROUPS.length > WEAPON_GROUP) { GROUPS.length = WEAPON_GROUP; rebuildMoves(); }
