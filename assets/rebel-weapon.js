@@ -197,7 +197,10 @@
     let Np = V3.Cross(F, A).normalize(); if (tb) { const q = bp(tb).subtract(Ph); if (V3.Dot(q, Np) < 0) Np = Np.scale(-1); }
     return { G: Ph.add(F.scale(0.78 * hl)).add(Np.scale(0.42 * hl)), A, F, Np, hl, hb };
   }
-  function handleAxis({ meshes, groups = [], H = 1.8 }) {
+  // side: the hand whose frame the line is stored in; pair: [min, max] fist distance (fractions of H) to count a frame.
+  // Swords: right hand, fists 2-14 % of H apart (both on the hilt). Bow: left hand, fists > 25 % apart (string drawn):
+  // the line is the arrow, so the bow stands across it with the string toward the drawing hand.
+  function handleAxis({ meshes, groups = [], H = 1.8, side = 'Right', pair = [0.02, 0.14] }) {
     const V3 = B().Vector3, M = B().Matrix;
     const sm = meshes.find((m) => m.skeleton); if (!sm || !groups.length) return null;
     const skel = sm.skeleton; const bone = (n) => node(skel.bones, n);
@@ -213,9 +216,9 @@
         g.goToFrame(g.from + (g.to - g.from) * i / 24);
         all.forEach((x) => x.computeWorldMatrix && x.computeWorldMatrix(true)); skel.prepare(true);
         const R = fistCenter(bp, bone, 'Right'), L = fistCenter(bp, bone, 'Left'); if (!R || !L) continue;
-        const v = L.G.subtract(R.G); const d = v.length();
-        if (d < 0.02 * H || d > 0.14 * H) continue;                       // both hands on the hilt
-        const inv = M.Invert(boneWorld(R.hb)); const loc = V3.TransformNormal(v, inv).normalize();
+        const v = side === 'Right' ? L.G.subtract(R.G) : R.G.subtract(L.G); const d = v.length();
+        if (d < pair[0] * H || d > pair[1] * H) continue;
+        const inv = M.Invert(boneWorld((side === 'Right' ? R : L).hb)); const loc = V3.TransformNormal(v, inv).normalize();
         sum.addInPlace(loc); n++;
       }
       g.stop();
@@ -261,10 +264,13 @@
     // target frame: the prop's long axis runs through the fist across the knuckles; the blade leaves on the index side
     let D = kind === 'bow' ? A : A.scale(-1);                                // world direction of the prop's hilt end
     if (handAxis && kind === 'sword' && hand === 'right') D = V3.TransformNormal(handAxis.local, boneWorld(hb)).normalize();   // learnt: toward the other fist
+    let arrow = null;
+    if (handAxis && kind === 'bow' && hand === 'left') { arrow = V3.TransformNormal(handAxis.local, boneWorld(hb)).normalize(); D = A.subtract(arrow.scale(V3.Dot(A, arrow))).normalize(); }
     let Wt = F.subtract(D.scale(V3.Dot(F, D))).normalize(), wSign = 1;      // a blade's edge runs along the hand
     if (kind === 'bow') {
       // the string faces the archer: the limb tips (the ends) sit on the string side of the bow's depth
-      const sp2 = bone('Spine2'); if (sp2) { Wt = bp(sp2).subtract(G); Wt.subtractInPlace(A.scale(V3.Dot(Wt, A))); Wt.normalize(); }
+      if (arrow) Wt = arrow.clone();                                        // learnt: the string faces the drawing hand
+      else { const sp2 = bone('Spine2'); if (sp2) { Wt = bp(sp2).subtract(G); Wt.subtractInPlace(D.scale(V3.Dot(Wt, D))); Wt.normalize(); } }
       const wa = E[wideI]; const wc = (sel) => { const v = wv.filter((_, i) => sel(Math.abs(ts[i] - 0.5))).map((p) => V3.Dot(p.subtract(c), wa)); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0; };
       wSign = wc((d) => d > 0.42) >= wc((d) => d < 0.06) ? 1 : -1;
     }
@@ -290,11 +296,16 @@
     const kind = kindOf(weapon.id), out = {};
     // learn the two-handed handle line from the sword clips (stance, walk, slashes), with everything else paused
     let handAxis = null;
-    if (kind === 'sword' && groups) {
+    if ((kind === 'sword' || kind === 'bow') && groups) {
       const playing = Object.values(groups).concat(scene.animationGroups).filter((g, i, a) => g && g.isPlaying && a.indexOf(g) === i);
       playing.forEach((g) => g.pause());
-      try { handAxis = handleAxis({ meshes, H, groups: ['sword_idle', 'sword_walk', 'sword_combo', 'sword_power_slash', 'sword_down_slash', 'sword_combo2'].map((k) => groups[k]).filter(Boolean) }); } catch (e) { console.warn('handle axis', e); }
+      try {
+        handAxis = kind === 'bow'
+          ? handleAxis({ meshes, H, side: 'Left', pair: [0.25, 0.8], groups: ['bow_aim_idle', 'bow_aim', 'bow_shoot'].map((k) => groups[k]).filter(Boolean) })
+          : handleAxis({ meshes, H, groups: ['sword_idle', 'sword_walk', 'sword_combo', 'sword_power_slash', 'sword_down_slash', 'sword_combo2'].map((k) => groups[k]).filter(Boolean) });
+      } catch (e) { console.warn('handle axis', e); }
       playing.forEach((g) => g.play(g.loopAnimation));
+      console.log('RebelWeapon grip learnt from clips:', kind, handAxis ? handAxis.frames + ' frames' : 'no (default grip)');
     }
     const list = Object.entries(weapon.held || {});
     if (alt && kind === 'sword' && weapon.held?.right) list.push(['alt', weapon.held.right]);
