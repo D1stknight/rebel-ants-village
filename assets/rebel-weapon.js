@@ -246,13 +246,23 @@
     return { pivot, meshes: wmeshes, setEnabled(on) { pivot.setEnabled(on); }, dispose() { wmeshes.forEach((m) => m.dispose()); wroot.dispose(); inner.dispose(); pivot.dispose(); } };
   }
   // all the props a weapon puts in the hands when drawn: { right?: handle, left?: handle }, hidden until shown
-  async function holdAll({ scene, meshes, weapon, H, onMaterial }) {
+  // alt: a sword worn with its hilt over the LEFT shoulder is drawn by the left hand (mirrored clip), so a second copy
+  // sits in the left fist for the draw / sheathe and hands over to the right hand once both hands are on the hilt.
+  async function holdAll({ scene, meshes, weapon, H, onMaterial, alt = false }) {
     const kind = kindOf(weapon.id), out = {};
-    for (const [hand, p] of Object.entries(weapon.held || {})) {
-      try { const h = await hold({ scene, meshes, url: p.glbUrl, hand, kind, H, onMaterial, grip: p.grip }); if (h) { h.setEnabled(false); out[hand] = h; } } catch (e) { console.warn('held prop', e); }
+    const list = Object.entries(weapon.held || {});
+    if (alt && kind === 'sword' && weapon.held?.right) list.push(['alt', weapon.held.right]);
+    for (const [key, p] of list) {
+      const hand = key === 'alt' ? 'left' : key;
+      try { const h = await hold({ scene, meshes, url: p.glbUrl, hand, kind, H, onMaterial, grip: p.grip }); if (h) { h.setEnabled(false); out[key] = h; } } catch (e) { console.warn('held prop', e); }
     }
     return out;
   }
+  // which props show: 'none' (on the back), 'main' (drawn), 'alt' (the left-hand copy while drawing / sheathing left)
+  function showHeld(held, back, set, mode) {
+    Object.entries(held || {}).forEach(([k, h]) => h.setEnabled(mode === 'alt' ? (k === 'alt' || !held.alt) : mode === 'main' ? k !== 'alt' : false));
+    if (back && set && set.hideBack) back.pivot.setEnabled(mode === 'none');
+  }
 
-  window.RebelWeapon = { attach, resolve, fromTrait, catalog, MOVESET, MOVE_NAMES, kindOf, movesFor, loadMoves, hold, holdAll };
+  window.RebelWeapon = { attach, resolve, fromTrait, catalog, MOVESET, MOVE_NAMES, kindOf, movesFor, loadMoves, hold, holdAll, showHeld };
 })();
