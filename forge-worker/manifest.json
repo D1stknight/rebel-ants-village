@@ -1,8 +1,9 @@
 {
- "version": "2.10",
+ "version": "2.11",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
+  "anim/clips_weapons.json",
   "anim/npzsrc.py",
   "anim/retarget_bvh.py",
   "job.sh",
@@ -19,6 +20,7 @@
   "rigger/clothbones.py",
   "rigger/detect.py",
   "rigger/dumpbones.py",
+  "rigger/exp_moves.py",
   "rigger/export.py",
   "rigger/fixarm.py",
   "rigger/footfix.py",

@@ -894,6 +894,8 @@ async function initialWeapon() {
 }
 async function wearWeapon(pick) {
   const my = ++wpn.gen;
+  if (rebel.cur && isWeaponClip(rebel.cur.name)) { rebel.cur.stop(); rebel.cur = null; play('fight_idle', true); }
+  unarm();
   if (wpn.cur) { wpn.cur.dispose(); wpn.cur = null; }
   rebel.meshes = rebel.meshes.filter((m) => !m.isDisposed());
   wpn.pick = pick && pick.weaponId !== 'none' ? pick : { weaponId: 'none', hilt: pick?.hilt || 'R' };
@@ -906,7 +908,67 @@ async function wearWeapon(pick) {
   if (my !== wpn.gen || !rebel.root) { h.dispose(); return; }
   const vis = rebel.meshes[0] ? rebel.meshes[0].visibility : 1;
   wpn.cur = h; h.meshes.forEach((m) => { m.visibility = vis; rebel.meshes.push(m); });
+  await armWeapon(w, my);
 }
+/* ---- weapon moves (Sept 29): draw it, fight with it, put it away. Moves pack per rig + props held in the fist ---- */
+const WEAPON_GROUP = 4;
+async function armWeapon(w, my) {
+  try {
+    const url = await RebelWeapon.movesFor(loadedUrl);
+    if (!url || my !== wpn.gen || !rebel.root) return;
+    if (!wpn.movesUrl || wpn.movesUrl !== url) {
+      Object.keys(rebel.groups).filter((k) => RebelWeapon.MOVE_NAMES[k]).forEach((k) => { rebel.groups[k].dispose(); delete rebel.groups[k]; });
+      const groups = await RebelWeapon.loadMoves({ scene, root: rebel.root, url });
+      if (my !== wpn.gen || !rebel.root) { Object.values(groups).forEach((g) => g.dispose()); return; }
+      for (const [name, g] of Object.entries(groups)) {
+        g.targetedAnimations.forEach((ta) => { ta.animation.enableBlending = true; ta.animation.blendingSpeed = 0.075; });
+        g.onAnimationGroupEndObservable.add(() => onClipEnd(name)); rebel.groups[name] = g;
+      }
+      wpn.movesUrl = url;
+    }
+    const body = rebel.meshes.filter((m) => !wpn.cur || !wpn.cur.meshes.includes(m));
+    const held = await RebelWeapon.holdAll({ scene, meshes: body, weapon: w, H: wpn.cur.info.H });
+    if (my !== wpn.gen) { Object.values(held).forEach((x) => x.dispose()); return; }
+    wpn.held = held; wpn.kind = RebelWeapon.kindOf(w.id); wpn.set = RebelWeapon.MOVESET[wpn.kind]; wpn.state = 'back';
+    Object.values(held).forEach((x) => x.meshes.forEach((m) => { m.visibility = 1; rebel.meshes.push(m); }));
+    weaponGroup();
+  } catch (e) { console.warn('weapon moves', e); }
+}
+function unarm() {
+  Object.values(wpn.held || {}).forEach((x) => x.dispose()); wpn.held = null; wpn.state = null; wpn.set = null; wpn.pending = null;
+  rebel.meshes = rebel.meshes.filter((m) => !m.isDisposed());
+  if (GROUPS.length > WEAPON_GROUP) { GROUPS.length = WEAPON_GROUP; rebuildMoves(); }
+}
+function rebuildMoves() {
+  ALL_MOVES.length = 0; GROUPS.forEach((g, gi) => g.moves.forEach((m) => ALL_MOVES.push({ clip: m[0], k: m[1], n: m[2], g: gi })));
+  if (curGroup >= GROUPS.length) curGroup = 0;
+  if ($('#dock').classList.contains('show')) buildDock();
+}
+function weaponGroup() {
+  const s = wpn.set; if (!s) return;
+  const N = RebelWeapon.MOVE_NAMES, K = { sword: '刀', twin: '双', bow: '弓' }[wpn.kind];
+  const list = [[s.drawL && wpn.pick?.hilt === 'L' ? s.drawL : s.draw, '抜', N[s.draw]], [s.idle, '構', N[s.idle]], [s.walk, '歩', N[s.walk]], [s.run, '走', N[s.run]]]
+    .concat(s.attacks.map((c) => [c, K, N[c] || c])).concat([[s.hit, '受', N[s.hit]]]).concat(s.block ? [[s.block, '守', N[s.block]]] : []).concat(s.aimIdle ? [[s.aimIdle, '狙', N[s.aimIdle]]] : [])
+    .concat([[s.sheatheL && wpn.pick?.hilt === 'L' ? s.sheatheL : s.sheathe, '納', N[s.sheathe]]]);
+  GROUPS[WEAPON_GROUP] = { k: K, n: 'Weapon', moves: list.filter((m) => rebel.groups[m[0]]) };
+  rebuildMoves();
+}
+const isDrawClip = (n) => /_(draw|draw_l)$/.test(n) || n === 'bow_draw';
+const isStowClip = (n) => /_(sheathe|sheathe_l)$/.test(n) || n === 'bow_sheathe';
+const isWeaponClip = (n) => !!(wpn.set && RebelWeapon.MOVE_NAMES[n]);
+function showInHand(on) {
+  Object.values(wpn.held || {}).forEach((x) => x.setEnabled(on));
+  if (wpn.cur && wpn.set?.hideBack) wpn.cur.pivot.setEnabled(!on);
+}
+// clip fraction: swap the weapon between back and hand at the moment the hand reaches the shoulder
+scene.onBeforeRenderObservable.add(() => {
+  if (!wpn.set || !rebel.cur) return;
+  const g = rebel.cur, n = g.name; if (!isDrawClip(n) && !isStowClip(n)) return;
+  const an = g.animatables[0]; if (!an) return;
+  const p = (an.masterFrame - g.from) / ((g.to - g.from) || 1);
+  if (isDrawClip(n) && p >= wpn.set.grab && wpn.state !== 'hand') { wpn.state = 'hand'; showInHand(true); Snd.play('swish_heavy'); }
+  if (isStowClip(n) && p >= wpn.set.stow && wpn.state !== 'back') { wpn.state = 'back'; showInHand(false); Snd.play('impact'); }
+});
 async function renderWeaponChips() {
   const el = $('#wpnChips'); if (!el || !window.RebelWeapon) return;
   const list = await RebelWeapon.catalog();
@@ -1843,6 +1905,7 @@ async function finishForge() {
 let loadedUrl = null;
 function loadRebelOnce(url) {
   if (!url || loadedUrl === url) return Promise.resolve(rebel);
+  unarm(); wpn.movesUrl = null;
   if (wpn.cur) { wpn.cur.dispose(); wpn.cur = null; } wpn.gen++;
   if (rebel.root) { rebel.root.getChildMeshes(false).forEach((m) => m.dispose()); rebel.root.dispose(); Object.values(rebel.groups).forEach((g) => g.dispose()); rebel.cloth?.dispose?.(); rebel.groups = {}; rebel.cur = null; rebel.root = null; rebel.meshes = []; }
   loadedUrl = url; rebel.ready = false;
@@ -1954,7 +2017,7 @@ function selectMove(i, fromKata) {
   $('#moves').querySelectorAll('.mv').forEach((b) => b.classList.toggle('on', +b.dataset.i === curMove));
   const on = $('#moves').querySelector('.mv.on'); on?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   // in the kata showreel every move plays once; otherwise stances and walk/run loop
-  const looping = !fromKata && (rebel.loop || m.g === 0 || ['walk', 'run'].includes(m.clip));
+  const looping = !fromKata && (rebel.loop || m.g === 0 || ['walk', 'run'].includes(m.clip) || /_(idle|walk|run)$/.test(m.clip));
   play(m.clip, looping);
   $('#npN').textContent = m.n.toUpperCase();
   const np = $('#nowPlaying'); np.style.opacity = 1; gsap.fromTo(np, { scale: 1.3 }, { scale: 1, duration: 0.4, ease: 'back.out(2)' });
@@ -1982,6 +2045,11 @@ function moveSfx(clip) {
   cues.forEach(([cue, f]) => moveTimers.push(setTimeout(() => Snd.play(cue, { vol: cue === 'step_soft' ? 0.6 : 0.85, rate: 0.95 + Math.random() * 0.1 }), f * secs * 1000)));
 }
 function play(name, loop) {
+  if (wpn.set && !isDrawClip(name) && !isStowClip(name)) {
+    const s = wpn.set, hL = wpn.pick?.hilt === 'L';
+    if (isWeaponClip(name) && wpn.state === 'back') { wpn.pending = [name, loop]; return play(hL && s.drawL ? s.drawL : s.draw, false); }
+    if (!isWeaponClip(name) && wpn.state === 'hand') { wpn.pending = [name, loop]; return play(hL && s.sheatheL ? s.sheatheL : s.sheathe, false); }
+  }
   const g = rebel.groups[name]; if (!g) return;
   if (rebel.cur && rebel.cur !== g) rebel.cur.stop();
   rebel.cur = g; rebel.paused = false; $('#cPlay').textContent = '❚❚';
@@ -1989,6 +2057,14 @@ function play(name, loop) {
 }
 function onClipEnd(name) {
   if (!rebel.cur || rebel.cur.name !== name) return;
+  if (wpn.set && (isDrawClip(name) || isStowClip(name))) {
+    wpn.state = isDrawClip(name) ? 'hand' : 'back'; showInHand(wpn.state === 'hand');
+    const nx = wpn.pending; wpn.pending = null; rebel.cur = null;
+    if (nx) { play(nx[0], nx[1]); return; }
+    if (rebel.kata) { kataNext(); return; }
+    play(wpn.state === 'hand' ? wpn.set.idle : 'fight_idle', true); return;
+  }
+  if (wpn.set && wpn.state === 'hand' && isWeaponClip(name) && !rebel.kata && !rebel.loop && name !== wpn.set.idle) { rebel.cur = null; play(wpn.set.idle, true); return; }
   if (rebel.kata) { kataNext(); return; }
   if (!rebel.loop && name !== 'fight_idle' && name !== 'idle') { rebel.cur = null; play('fight_idle', true); curMove = ALL_MOVES.findIndex((m) => m.clip === 'fight_idle'); $('#moves').querySelectorAll('.mv').forEach((b) => b.classList.toggle('on', +b.dataset.i === curMove)); }
 }

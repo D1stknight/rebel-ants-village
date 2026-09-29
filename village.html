@@ -18746,19 +18746,73 @@ async function attachVillageWeapon(r) {
     const tr = reb.traits || {}; const tv = Array.isArray(tr) ? (tr.find((x) => x.trait_type === 'Weapons') || {}).value : tr['Weapons'];
     const pick = await RebelWeapon.resolve(tok, tv);
     if (!pick) return;
-    const h = await RebelWeapon.attach({ scene, root: r.meshes[0], meshes: r.meshes.filter((m) => m.getTotalVertices && m.getTotalVertices() > 0), animationGroups: animGroups.filter(Boolean), weapon: pick.weapon, hilt: pick.hilt,
-      onMaterial: (mat, m) => {
-        let _proto = Object.getPrototypeOf(mat), _desc = null;
-        while (_proto && !(_desc = Object.getOwnPropertyDescriptor(_proto, 'maxSimultaneousLights'))) _proto = Object.getPrototypeOf(_proto);
-        if (_desc && _desc.set) Object.defineProperty(mat, 'maxSimultaneousLights', { configurable: true, get() { return _desc.get.call(this); }, set(v) { _desc.set.call(this, Math.min(v, 4)); } });
-        mat.maxSimultaneousLights = 4;
-        if (mat.emissiveColor) mat.emissiveColor = new BABYLON.Color3(0, 0, 0);
-        shadows.addShadowCaster(m); m.receiveShadows = true;
-      } });
+    const body = r.meshes.filter((m) => m.getTotalVertices && m.getTotalVertices() > 0);
+    const h = await RebelWeapon.attach({ scene, root: r.meshes[0], meshes: body, animationGroups: animGroups.filter(Boolean), weapon: pick.weapon, hilt: pick.hilt, onMaterial: capWeaponMaterial });
     window._rebelWeapon = h;
     if (h) console.log('Rebel weapon on the back:', pick.weapon.id, pick.hilt, h.info);
+    if (h) await armVillageWeapon(r, body, pick, h);
   } catch (e) { console.warn('Rebel weapon', e); }
 }
+function capWeaponMaterial(mat, m) {
+  let _proto = Object.getPrototypeOf(mat), _desc = null;
+  while (_proto && !(_desc = Object.getOwnPropertyDescriptor(_proto, 'maxSimultaneousLights'))) _proto = Object.getPrototypeOf(_proto);
+  if (_desc && _desc.set) Object.defineProperty(mat, 'maxSimultaneousLights', { configurable: true, get() { return _desc.get.call(this); }, set(v) { _desc.set.call(this, Math.min(v, 4)); } });
+  mat.maxSimultaneousLights = 4;
+  if (mat.emissiveColor) mat.emissiveColor = new BABYLON.Color3(0, 0, 0);
+  shadows.addShadowCaster(m); m.receiveShadows = true;
+}
+// Weapon moves (Sept 29): Q draws / puts away the weapon; while it is out, walk / run / idle use the weapon's own
+// clips and F / G cycle its attacks. Clips come from the rig's moves pack; the props close in the Rebel's fist.
+const WEAPON_SLOT0 = 30;
+async function armVillageWeapon(r, body, pick, back) {
+  const rigUrl = (activeCharacter.basePath || '') + (_forgeSingleGlb || '');
+  const url = await RebelWeapon.movesFor(rigUrl);
+  if (!url) return;
+  const groups = await RebelWeapon.loadMoves({ scene, root: r.meshes[0], url });
+  const set = RebelWeapon.MOVESET[RebelWeapon.kindOf(pick.weapon.id)];
+  const slot = {}; let i = WEAPON_SLOT0;
+  for (const [name, g] of Object.entries(groups)) { g.enableBlending = true; g.blendingSpeed = 0.12; animGroups[i] = g; slot[name] = i++; }
+  const held = await RebelWeapon.holdAll({ scene, meshes: body, weapon: pick.weapon, H: back.info.H, onMaterial: capWeaponMaterial });
+  const hL = pick.hilt === 'L';
+  window._villageWeapon = { set, slot, held, back, state: 'back', draw: slot[hL && set.drawL ? set.drawL : set.draw], stow: slot[hL && set.sheatheL ? set.sheatheL : set.sheathe], orig: null, cycle: -1 };
+  const hint = document.getElementById('ctrl'); if (hint && !/Draw weapon/.test(hint.innerHTML)) hint.innerHTML += '<br><kbd>Q</kbd> Draw weapon';
+  console.log('Weapon moves ready:', Object.keys(groups).length, 'clips');
+}
+function villageWeaponShow(on) {
+  const W = window._villageWeapon; if (!W) return;
+  Object.values(W.held || {}).forEach((x) => x.setEnabled(on));
+  if (W.set.hideBack && W.back) W.back.pivot.setEnabled(!on);
+}
+function toggleVillageWeapon() {
+  const W = window._villageWeapon; if (!W || W.state === 'drawing' || W.state === 'stowing') return false;
+  if (W.state === 'back') {
+    if (window._forgeFightStance) toggleForgeFightStance();
+    W.orig = [animGroups[0], animGroups[1], animGroups[2]];
+    animGroups[0] = animGroups[W.slot[W.set.idle]] || animGroups[0]; animGroups[1] = animGroups[W.slot[W.set.walk]] || animGroups[1]; animGroups[2] = animGroups[W.slot[W.set.run]] || animGroups[2];
+    W.state = 'drawing'; W.clip = W.draw; animState = -1;
+    return playForgeRigAction(W.draw, null, true);
+  }
+  W.state = 'stowing'; W.clip = W.stow;
+  if (W.orig) { [animGroups[0], animGroups[1], animGroups[2]] = W.orig; W.orig = null; }
+  animState = -1;
+  return playForgeRigAction(W.stow, null, true);
+}
+function villageWeaponAttack(which) {
+  const W = window._villageWeapon; if (!W || W.state !== 'hand') return false;
+  const list = W.set.attacks.map((c) => W.slot[c]).filter((s) => animGroups[s]);
+  const half = which === 'g' ? list.slice(Math.ceil(list.length / 2)) : list.slice(0, Math.ceil(list.length / 2));
+  const use = half.length ? half : list; if (!use.length) return false;
+  W.cycle = (W.cycle + 1) % use.length;
+  return playForgeRigAction(use[W.cycle]);
+}
+scene.onBeforeRenderObservable.add(() => {
+  const W = window._villageWeapon; if (!W || (W.state !== 'drawing' && W.state !== 'stowing')) return;
+  const g = animGroups[W.clip]; if (!g) return;
+  const an = g.animatables && g.animatables[0];
+  const p = an ? (an.masterFrame - g.from) / ((g.to - g.from) || 1) : 1;
+  if (W.state === 'drawing' && (p >= W.set.grab || !g.isPlaying)) { W.state = 'hand'; villageWeaponShow(true); }
+  if (W.state === 'stowing' && (p >= W.set.stow || !g.isPlaying)) { W.state = 'back'; villageWeaponShow(false); }
+});
 const _forgeSingleGlb = activeCharacter.singleGlb || null;   // Forge Rigger bundle: one GLB, metres, all clips inside
 BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGlb || activeCharacter.idleFile, scene)
 .then(r => {
@@ -20595,9 +20649,11 @@ document.addEventListener('keydown', async e => {
   if (key === 'd' || e.key === 'ArrowRight') turnRight = true;
   if (!walkMode) return;
   if (key === 'r' && !adminMode) { runKey=true; switchAnim(2, true); }
+  if (key === 'q' && !adminMode && window._villageWeapon) { toggleVillageWeapon(); return; }
     if (key === 'f' && !adminMode) {
     // Forge Rigger bundles: F cycles real karate kicks (CMU mocap): front kick -> roundhouse -> side kick
     if (window.forgeRigBundleInfo) {
+      if (villageWeaponAttack('f')) return;
       const kicks = [5, 6, 7, 13, 15, 14].filter(i => animGroups[i]);
       if (kicks.length && playForgeRigAction(kicks[(window._forgeKickCycle = ((window._forgeKickCycle ?? -1) + 1) % kicks.length)])) return;
     }
@@ -20606,13 +20662,14 @@ document.addEventListener('keydown', async e => {
     setTimeout(()=>{ if(animState===3) switchAnim(0,true); }, 1200);
   }
   if (key === 'g' && !adminMode && window.forgeRigBundleInfo) {   // punches: jab -> cross -> hook -> elbow -> combo
+    if (villageWeaponAttack('g')) return;
     const punches = [16, 17, 18, 19, 8].filter(i => animGroups[i]);
     if (punches.length) playForgeRigAction(punches[(window._forgePunchCycle = ((window._forgePunchCycle ?? -1) + 1) % punches.length)]);
   }
   if (key === 'c' && !adminMode && window.forgeRigBundleInfo) { playForgeRigAction(9); }    // cartwheel
   if (key === 'b' && !adminMode && window.forgeRigBundleInfo) { playForgeRigAction(11); }   // backflip
   if (key === 'v' && !adminMode && window.forgeRigBundleInfo) { playForgeRigAction(12); }   // front flip
-  if (key === 't' && !adminMode && window.forgeRigBundleInfo) { toggleForgeFightStance(); } // fight stance on/off
+  if (key === 't' && !adminMode && window.forgeRigBundleInfo && !(window._villageWeapon && window._villageWeapon.state !== 'back')) { toggleForgeFightStance(); } // fight stance on/off
   if (key === 'h' && !adminMode && window.forgeRigBundleInfo) { playForgeRigAction(21); }   // hit reaction
   if (key === 'k' && !adminMode && window.forgeRigBundleInfo) { playForgeRigAction(22, 23); } // knocked down, then get up
    if (e.key === ' ') {
