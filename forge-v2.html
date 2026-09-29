@@ -110,6 +110,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12px;color:#d6ccb8;transition:all .2s}
 .chip.on{border-color:var(--jade);color:var(--jade);background:rgba(79,184,255,.08)}
+.wchips .chip{cursor:pointer;background:none;font-family:inherit}.wchips .chip:hover{border-color:var(--glow);color:var(--ice)}
 .checks{display:grid;gap:8px;margin-top:6px}
 .check{display:flex;gap:10px;align-items:center;font-size:13px;color:#d6ccb8}
 .check b{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:rgba(79,184,255,.14);color:var(--jade);font-size:11px}
@@ -358,6 +359,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script src="assets/rebel-weapon.js"></script>
 <script>
 (() => {
 'use strict';
@@ -878,7 +880,54 @@ async function loadRebel(url) {
     dna.updateVerticesData('body', body);
   }
   rebel.ready = true;
+  initialWeapon();
   return rebel;
+}
+/* ---- the Rebel's weapon, worn on its back (assets/rebel-weapon.js): the holder's pick, else its NFT trait ---- */
+const wpn = { cur: null, pick: null, gen: 0 };
+function traitWeapon() { return window.RebelWeapon ? RebelWeapon.fromTrait(traitVal('Weapons')) : null; }
+async function initialWeapon() {
+  let choice = null;
+  try { choice = (await api(`/api/forge-weapon?action=choice&collectionKey=${COL}&tokenId=${encodeURIComponent(state.token)}`)).choice; } catch (e) {}
+  await wearWeapon(choice || traitWeapon());
+  if ($('#wpnChips')) renderWeaponChips();
+}
+async function wearWeapon(pick) {
+  const my = ++wpn.gen;
+  if (wpn.cur) { wpn.cur.dispose(); wpn.cur = null; }
+  rebel.meshes = rebel.meshes.filter((m) => !m.isDisposed());
+  wpn.pick = pick && pick.weaponId !== 'none' ? pick : { weaponId: 'none', hilt: pick?.hilt || 'R' };
+  if (!window.RebelWeapon || !rebel.root || wpn.pick.weaponId === 'none') return;
+  const w = (await RebelWeapon.catalog()).find((x) => x.id === wpn.pick.weaponId);
+  if (!w || my !== wpn.gen || !rebel.root) return;
+  let h = null;
+  try { h = await RebelWeapon.attach({ scene, root: rebel.root, meshes: rebel.meshes, animationGroups: Object.values(rebel.groups), weapon: w, hilt: wpn.pick.hilt }); } catch (e) { console.warn('weapon', e); }
+  if (!h) return;
+  if (my !== wpn.gen || !rebel.root) { h.dispose(); return; }
+  const vis = rebel.meshes[0] ? rebel.meshes[0].visibility : 1;
+  wpn.cur = h; h.meshes.forEach((m) => { m.visibility = vis; rebel.meshes.push(m); });
+}
+async function renderWeaponChips() {
+  const el = $('#wpnChips'); if (!el || !window.RebelWeapon) return;
+  const list = await RebelWeapon.catalog();
+  if (!list.length) { el.closest('.wbox')?.remove(); return; }
+  const p = wpn.pick || { weaponId: 'none', hilt: 'R' };
+  const nft = traitWeapon();
+  el.innerHTML = list.map((w) => `<button class="chip${p.weaponId === w.id ? ' on' : ''}" data-w="${w.id}">${esc(w.name)}${nft && nft.weaponId === w.id ? ' ★' : ''}</button>`).join('')
+    + `<button class="chip${p.weaponId === 'none' ? ' on' : ''}" data-w="none">None</button>`
+    + (p.weaponId !== 'none' ? `<button class="chip" data-side="1">${p.hilt === 'L' ? '◀ Left shoulder' : 'Right shoulder ▶'}</button>` : '');
+  el.querySelectorAll('.chip').forEach((b) => b.onclick = async () => {
+    const cur = wpn.pick || { weaponId: 'none', hilt: 'R' };
+    let next;
+    if (b.dataset.side) next = { weaponId: cur.weaponId, hilt: cur.hilt === 'L' ? 'R' : 'L' };
+    else { const id = b.dataset.w; const w = list.find((x) => x.id === id); next = { weaponId: id, hilt: nft && nft.weaponId === id ? nft.hilt : (w?.hilt || cur.hilt || 'R') }; }
+    Snd.play('swish_light');
+    const done = wearWeapon(next); renderWeaponChips(); await done;
+    if (canForge()) {
+      try { await api('/api/forge-weapon', { action: 'choose', collectionKey: COL, tokenId: String(state.token), weaponId: next.weaponId, hilt: next.hilt }); toast(next.weaponId === 'none' ? 'Weapon put away · saved' : 'Weapon saved · it rides into the village'); }
+      catch (e) { toast(e.message || 'Could not save the weapon'); }
+    } else toast('Preview · the wallet that holds this Rebel picks its weapon');
+  });
 }
 
 /* camera tween */
@@ -1794,6 +1843,7 @@ async function finishForge() {
 let loadedUrl = null;
 function loadRebelOnce(url) {
   if (!url || loadedUrl === url) return Promise.resolve(rebel);
+  if (wpn.cur) { wpn.cur.dispose(); wpn.cur = null; } wpn.gen++;
   if (rebel.root) { rebel.root.getChildMeshes(false).forEach((m) => m.dispose()); rebel.root.dispose(); Object.values(rebel.groups).forEach((g) => g.dispose()); rebel.cloth?.dispose?.(); rebel.groups = {}; rebel.cur = null; rebel.root = null; rebel.meshes = []; }
   loadedUrl = url; rebel.ready = false;
   return loadRebel(url).catch((e) => { console.warn(e); loadedUrl = null; toast('Could not load the 3D model'); });
@@ -1843,11 +1893,13 @@ function showAwakened(instant) {
     <p class="lead">Your Rebel is awake. Drag to turn it, and pick any of its <b>24 moves</b> below.</p>
     <div class="sep"></div>
     <div class="traits">${(state.meta?.traits || []).slice(0, 6).map((t) => `<div class="trait locked"><span class="tt"><i></i>${esc(t.trait_type)}</span><span class="tv">${esc(t.value)}</span></div>`).join('')}</div>
+    <div class="wbox"><div class="sep"></div><div class="eyebrow">WEAPON · WORN ON THE BACK${canForge() ? '' : ' · PREVIEW'}</div><div class="chips wchips" id="wpnChips"></div></div>
     <div class="cta">${canForge() ? '<button class="btn shu wide" id="makeMine">MAKE THIS MY REBEL</button>' : ''}<button class="btn${canForge() ? '' : ' fire wide'}" id="enterV">ENTER VILLAGE →</button></div>
     ${canForge() ? '' : '<div class="note">Only the wallet that holds this Rebel can make it its character. You can walk the village with it.</div>'}
     <div class="note">Keys: ← → moves · Space pause · L loop · S speed · K perform all kata</div>
   `);
   if ($('#makeMine')) $('#makeMine').onclick = makeMine;
+  renderWeaponChips();
   // Enter Village: for the holder this Rebel becomes their character (same as Make this my Rebel); anyone else walks
   // in with it for this visit. Either way the village opens with this Rebel.
   $('#enterV').onclick = async () => { const b = $('#enterV'); b.disabled = true; b.textContent = 'ENTERING…'; if (canForge()) { if (!state.mine) await makeMine(); } else rememberSelected(null); location.href = `/village.html`; };

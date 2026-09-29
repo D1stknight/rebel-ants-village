@@ -1524,6 +1524,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script src="assets/forge-core.js"></script>
+<script src="assets/rebel-weapon.js"></script>
 <script type="module">
 const canvas=document.getElementById('c');
 const setSt=t=>{const el=document.getElementById('ldst'); if(el) el.textContent=t;};
@@ -18736,6 +18737,28 @@ function switchAnim(idx, loop) {
   if (prev && prev.isPlaying) prev.stop();
   animState = idx; next.play(loop !== false);
 }
+// Weapons (Sept 29): a forged Rebel wears its weapon on its back (the holder's pick, else its NFT "Weapons" trait).
+// #001 (the master) is left exactly as it is.
+async function attachVillageWeapon(r) {
+  try {
+    const reb = window.activeRebel || {}; const tok = String(reb.tokenId || '');
+    if (!window.RebelWeapon || !tok || tok === '1' || tok === '001') return;
+    const tr = reb.traits || {}; const tv = Array.isArray(tr) ? (tr.find((x) => x.trait_type === 'Weapons') || {}).value : tr['Weapons'];
+    const pick = await RebelWeapon.resolve(tok, tv);
+    if (!pick) return;
+    const h = await RebelWeapon.attach({ scene, root: r.meshes[0], meshes: r.meshes.filter((m) => m.getTotalVertices && m.getTotalVertices() > 0), animationGroups: animGroups.filter(Boolean), weapon: pick.weapon, hilt: pick.hilt,
+      onMaterial: (mat, m) => {
+        let _proto = Object.getPrototypeOf(mat), _desc = null;
+        while (_proto && !(_desc = Object.getOwnPropertyDescriptor(_proto, 'maxSimultaneousLights'))) _proto = Object.getPrototypeOf(_proto);
+        if (_desc && _desc.set) Object.defineProperty(mat, 'maxSimultaneousLights', { configurable: true, get() { return _desc.get.call(this); }, set(v) { _desc.set.call(this, Math.min(v, 4)); } });
+        mat.maxSimultaneousLights = 4;
+        if (mat.emissiveColor) mat.emissiveColor = new BABYLON.Color3(0, 0, 0);
+        shadows.addShadowCaster(m); m.receiveShadows = true;
+      } });
+    window._rebelWeapon = h;
+    if (h) console.log('Rebel weapon on the back:', pick.weapon.id, pick.hilt, h.info);
+  } catch (e) { console.warn('Rebel weapon', e); }
+}
 const _forgeSingleGlb = activeCharacter.singleGlb || null;   // Forge Rigger bundle: one GLB, metres, all clips inside
 BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGlb || activeCharacter.idleFile, scene)
 .then(r => {
@@ -18807,6 +18830,7 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGl
     window.forgeRigBundleInfo = { bundleId: activeCharacter.bundleId, file: _forgeSingleGlb, scale: _ps, groups: r.animationGroups.map(g => g.name), clothBones: window._forgeCloth ? window._forgeCloth.segs : 0 };
     console.log('Forge Rigger bundle loaded as playable:', window.forgeRigBundleInfo);
     if (animGroups[0]) { animState = 0; animGroups[0].play(true); }
+    attachVillageWeapon(r);
   } else if (r.animationGroups.length > 0) { animGroups[0]=r.animationGroups[0]; const _ta0=animGroups[0].targetedAnimations;for(let _j=_ta0.length-1;_j>=0;_j--){if(_ta0[_j].animation.targetProperty==='position'&&_ta0[_j].target&&_ta0[_j].target.name==='mixamorig_Hips')_ta0.splice(_j,1);} animState=0; animGroups[0].play(true); }
   window.followLight = new BABYLON.PointLight("followLight", new BABYLON.Vector3(9999,-999,9999), scene);
   window.followLight.diffuse = new BABYLON.Color3(1,.82,.5);
