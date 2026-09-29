@@ -10,9 +10,14 @@
 //   POST {action:'ref', weaponId, tokenIds[], notes?}  -> reference image of the weapon alone (from NFT art)
 //   POST {action:'mesh', weaponId, imageUrl}           -> Meshy image-to-3D
 //   POST {action:'status', weaponId}                   -> poll Meshy; stores the GLB in our Blob when done
+//   POST {action:'optimize', weaponId}                 -> 512 px WebP textures, pruned: the file players load (glbUrl)
 //   POST {action:'set', weaponId, patch}               -> edit the record (mount, approved, glbUrl...)
 //   GET  ?action=studio                                -> every record, approved or not
 import { put } from '@vercel/blob';
+import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { textureCompress, prune, dedup } from '@gltf-transform/functions';
+import sharp from 'sharp';
 import { isAdminRequest } from './_admin-auth.mjs';
 import { enforceRateLimit } from './_guard.mjs';
 import { forgeImageEdit, fetchImageAsDataUrl } from './_forge-image.mjs';
@@ -157,6 +162,19 @@ export default async function handler(req, res) {
       }
       await setRec(id, rec);
       return res.status(200).json({ ok: true, rec });
+    }
+    if (action === 'optimize') {
+      const src = String(b.glbUrl || rec.rawGlbUrl || '');
+      if (!/^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//.test(src)) return res.status(400).json({ ok: false, error: 'No stored GLB to optimize' });
+      const input = new Uint8Array(await (await fetch(src)).arrayBuffer());
+      const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+      const doc = await io.readBinary(input);
+      await doc.transform(dedup(), prune(), textureCompress({ encoder: sharp, targetFormat: 'webp', resize: [Number(b.texture || 512), Number(b.texture || 512)], quality: 82 }));
+      const outBytes = Buffer.from(await io.writeBinary(doc));
+      const blob = await put(`forge/weapons/${id}_opt.glb`, outBytes, { access: 'public', contentType: 'model/gltf-binary', addRandomSuffix: true });
+      rec = { ...rec, glbUrl: blob.url, glbBytes: outBytes.length, optimizedFrom: src };
+      await setRec(id, rec);
+      return res.status(200).json({ ok: true, rec, bytes: { in: input.length, out: outBytes.length } });
     }
     if (action === 'set') {
       const p = b.patch || {};
