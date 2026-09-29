@@ -18575,13 +18575,15 @@ function unregisterEditableRoot(keyOrRoot) {
 // Cost: ~24 bones, a few dozen vector ops each, per frame, for the local player only.
 function createForgeClothSprings(scene, root, opts) {
   opts = Object.assign({ stiffness: 2.2, drag: 0.18, gravity: 2.0, hitRadius: 0.02, legRadius: 0.085, hipRadius: 0.13, legFollow: 0.6, maxSwing: 1.0 }, opts || {});
+  // v4 (rigger 2.12): head cloth — skully-wrap knot flaps and bandana tails (cloth_flap_<k>_<s>, under Head)
+  const flapOpts = Object.assign({ stiffness: 2.4, drag: 0.12, gravity: 2.4, maxSwing: 0.75 }, opts.flap || {});
   const V3 = BABYLON.Vector3, Q = BABYLON.Quaternion;
   const nodes = root.getDescendants(false).filter(n => n.getClassName && n.getClassName() === 'TransformNode');
   const byName = {}; nodes.forEach(n => { byName[n.name] = n; });
   const chains = {};
   nodes.forEach(n => {
-    const m = /^cloth_skirt_(\d+)_(\d+|end)$/.exec(n.name); if (!m) return;
-    (chains[m[1]] = chains[m[1]] || {})[m[2]] = n;
+    const m = /^cloth_(skirt|flap)_(\d+)_(\d+|end)$/.exec(n.name); if (!m) return;
+    const key = m[1] + '_' + m[2]; (chains[key] = chains[key] || {})[m[3]] = n;
   });
   const segs = [];
   Object.keys(chains).forEach(k => {
@@ -18590,7 +18592,8 @@ function createForgeClothSprings(scene, root, opts) {
       const node = c[i], child = (j + 1 < ids.length) ? c[ids[j + 1]] : c.end; if (!node || !child) return;
       if (!node.rotationQuaternion) node.rotationQuaternion = Q.FromEulerVector(node.rotation);
       const off = child.position.clone(); const len = off.length(); if (len < 1e-6) return;
-      segs.push({ node, child, restRot: node.rotationQuaternion.clone(), axis: off.scale(1 / len), len, tail: null, prev: null, first: j === 0 });
+      const flap = k.startsWith('flap_');
+      segs.push({ node, child, restRot: node.rotationQuaternion.clone(), axis: off.scale(1 / len), len, tail: null, prev: null, first: j === 0, flap, o: flap ? flapOpts : opts });
     });
   });
   if (!segs.length) return null;
@@ -18610,13 +18613,22 @@ function createForgeClothSprings(scene, root, opts) {
   if (hips && thighs.length === 2) {
     thighs.forEach(t => { t.a.computeWorldMatrix(true); t.b.computeWorldMatrix(true); t.rest = hipsLocalDir(t); });
     segs.forEach(g => {
-      if (!g.first) return;
+      if (!g.first || g.flap) return;
       g.node.computeWorldMatrix(true); const p = g.node.getAbsolutePosition();
       const dL = V3.Distance(p, thighs[0].a.getAbsolutePosition()), dR = V3.Distance(p, thighs[1].a.getAbsolutePosition());
       const wL = dR / Math.max(1e-6, dL + dR);                   // closer to the left thigh -> follows it more
       g.legW = [Math.min(1, Math.max(0, (wL - 0.5) * 1.6 + 0.5)), 0]; g.legW[1] = 1 - g.legW[0];
     });
   }
+  // head cloth colliders: skull, neck, chest and shoulders. Radii come from where the cloth hangs at start, so they never
+  // push it at rest (the skull distance is pose-free: the flap rides the head)
+  const bodyCols = ['Head', 'Neck', 'Spine2', 'LeftArm', 'RightArm'].map(n => byName[P + n]).filter(Boolean);
+  segs.forEach(g => {
+    if (!g.flap) return;
+    g.node.computeWorldMatrix(true); g.child.computeWorldMatrix(true);
+    const s0 = worldScale(); const pts = [g.node.getAbsolutePosition().clone(), g.child.getAbsolutePosition().clone()];
+    g.cols = bodyCols.map(n => { n.computeWorldMatrix(true); const c = n.getAbsolutePosition(); return { n, r: 0.92 * Math.min(...pts.map(p => V3.Distance(p, c))) / s0 }; }).filter(c => c.r > 0.01);
+  });
   function swingOf(t) {
     const cur = hipsLocalDir(t); const ax = V3.Cross(t.rest, cur); const sn = ax.length();
     return sn < 1e-6 ? Q.Identity() : Q.RotationAxis(ax.scale(1 / sn), Math.atan2(sn, V3.Dot(t.rest, cur)));
@@ -18635,6 +18647,7 @@ function createForgeClothSprings(scene, root, opts) {
     if (hips) cols.push({ c: hips.getAbsolutePosition().clone(), r: opts.hipRadius * s });
     const sw = (thighs.length === 2 && thighs[0].rest && opts.legFollow > 0) ? thighs.map(swingOf) : null;
     segs.forEach(g => {
+      const o = g.o;
       if (sw && g.legW) {
         const qa = Q.Slerp(Q.Identity(), sw[0], g.legW[0] * opts.legFollow), qb = Q.Slerp(Q.Identity(), sw[1], g.legW[1] * opts.legFollow);
         g.base = qa.multiply(qb).multiply(g.restRot);
@@ -18646,25 +18659,25 @@ function createForgeClothSprings(scene, root, opts) {
       const restTail = V3.TransformCoordinates(g.axis.scale(g.len), wm);
       const L = g.len * s;
       if (!g.tail) { g.tail = restTail.clone(); g.prev = restTail.clone(); }
-      const vel = g.tail.subtract(g.prev).scale(1 - opts.drag);
-      const toRest = restTail.subtract(g.tail).scale(Math.min(1, opts.stiffness * dt * 4));
-      const grav = new V3(0, -opts.gravity * dt * dt * s, 0);
+      const vel = g.tail.subtract(g.prev).scale(1 - o.drag);
+      const toRest = restTail.subtract(g.tail).scale(Math.min(1, o.stiffness * dt * 4));
+      const grav = new V3(0, -o.gravity * dt * dt * s, 0);
       let next = g.tail.add(vel).add(toRest).add(grav);
       // keep length
       let d = next.subtract(head); let dl = d.length(); if (dl < 1e-6) { d = restTail.subtract(head); dl = d.length(); }
       next = head.add(d.scale(L / dl));
       // v3 swing limit: a panel never swings more than ~57 deg from where the body wants it. Upside down (cartwheel,
       // flips) gravity otherwise folded the skirt over itself and showed the inside of the robe.
-      if (opts.maxSwing > 0) {
+      if (o.maxSwing > 0) {
         const b0 = restTail.subtract(head).normalize(), dn = next.subtract(head).normalize();
-        if (V3.Dot(b0, dn) < Math.cos(opts.maxSwing)) {
+        if (V3.Dot(b0, dn) < Math.cos(o.maxSwing)) {
           const axc = V3.Cross(b0, dn); const snc = axc.length();
-          if (snc > 1e-6) next = head.add(b0.applyRotationQuaternion(Q.RotationAxis(axc.scale(1 / snc), opts.maxSwing)).scale(L));
+          if (snc > 1e-6) next = head.add(b0.applyRotationQuaternion(Q.RotationAxis(axc.scale(1 / snc), o.maxSwing)).scale(L));
           else next = restTail.clone();
         }
       }
       // colliders (push tail out of leg / hip spheres)
-      for (const col of cols) {
+      for (const col of (g.cols ? g.cols.map(c => ({ c: c.n.getAbsolutePosition(), r: c.r * s - opts.hitRadius * s })) : cols)) {
         const v = next.subtract(col.c); const r = col.r + opts.hitRadius * s; const vl = v.length();
         if (vl < r && vl > 1e-6) { next = col.c.add(v.scale(r / vl)); d = next.subtract(head); next = head.add(d.scale(L / d.length())); }
       }
@@ -18839,7 +18852,12 @@ scene.onBeforeRenderObservable.add(() => {
   if (W.state === 'drawing' && (p >= W.set.grab || !g.isPlaying)) { W.state = 'hand'; W.handoff = !!(W.held && W.held.alt); villageWeaponShow(W.handoff ? 'alt' : 'main'); }
   if (W.state === 'stowing' && (p >= W.set.stow || !g.isPlaying)) { W.state = 'back'; villageWeaponShow('none'); }
 });
-const _forgeSingleGlb = activeCharacter.singleGlb || null;   // Forge Rigger bundle: one GLB, metres, all clips inside
+// a live rig may have been upgraded since it was saved (rigger 2.12 head cloth): ask for its latest file (1.5 s max)
+async function latestForgeRigUrl(url) {
+  if (!url || !/^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//.test(url)) return url;
+  try { const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 1500); const j = await (await fetch('/api/forge-rig-latest?url=' + encodeURIComponent(url), { signal: ac.signal })).json(); clearTimeout(t); return j && j.url || url; } catch (e) { return url; }
+}
+const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(activeCharacter.singleGlb) : null;   // Forge Rigger bundle: one GLB, metres, all clips inside
 BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGlb || activeCharacter.idleFile, scene)
 .then(r => {
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);

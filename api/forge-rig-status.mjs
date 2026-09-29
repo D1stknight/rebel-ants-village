@@ -4,7 +4,7 @@
 import { put } from '@vercel/blob';
 import { Sandbox, creds, JOB_DIR, JOB_TIMEOUT_MS, redis, loadBuild, updateRigging, readText, sanitize, body } from './_forge-rig.mjs';
 
-const STEPS = ['starting', 'download', 'armor', 'head', 'normalize', 'landmarks', 'skeleton', 'weights', 'bind', 'hands', 'cloth', 'animate', 'moves', 'weapons', 'cleanup', 'export', 'movespack', 'qa', 'thumb', 'done'];
+const STEPS = ['starting', 'download', 'armor', 'head', 'normalize', 'landmarks', 'skeleton', 'weights', 'bind', 'hands', 'cloth', 'animate', 'moves', 'weapons', 'cleanup', 'export', 'headcloth', 'movespack', 'qa', 'thumb', 'done'];
 
 export default async function handler(req, res) {
   const buildId = req.query?.buildId || body(req).buildId;

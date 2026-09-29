@@ -1,5 +1,5 @@
 {
- "version": "2.11",
+ "version": "2.12",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
@@ -29,6 +29,7 @@
   "rigger/glove.py",
   "rigger/handfix.py",
   "rigger/handswap.py",
+  "rigger/headcloth.py",
   "rigger/headfix.py",
   "rigger/headsize.py",
   "rigger/landmarks.py",
