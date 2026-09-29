@@ -1,4 +1,4 @@
-import { walletOf, ownerOf } from './_wallet.mjs';
+import { walletOf, holderOf } from './_wallet.mjs';
 import { enforceRateLimit, isAllowedModelRef, isCleanId, sanitizeDeep } from './_guard.mjs';
 import { isAdminRequest } from './_admin-auth.mjs';
 const ACTIVE_CHARACTER_VERSION = 'v1';
@@ -409,8 +409,8 @@ export default async function handler(req, res) {
       // Phase 2: only the wallet that holds this Rebel can set its character
       const wallet = walletOf(req);
       if (!wallet) return res.status(401).json({ ok: false, error: 'Sign in with your wallet to make this your Rebel', code: 'wallet_required' });
-      const owner = await ownerOf(rec0.collectionKey || payload.collectionKey || 'battle_for_colony', String(rec0.tokenId || tok));
-      if (!owner || owner !== wallet) return res.status(403).json({ ok: false, error: 'Only the wallet that holds this Rebel can set its character', code: 'not_owner' });
+      const h = await holderOf(rec0.collectionKey || payload.collectionKey || 'battle_for_colony', String(rec0.tokenId || tok), wallet, { fresh: true });
+      if (!h.holder) return res.status(403).json({ ok: false, error: 'Only the wallet that holds this Rebel (or its delegate.xyz delegate) can set its character', code: 'not_owner' });
     }
     if (buildIdForRig && isRedisConfigured()) {
       try {

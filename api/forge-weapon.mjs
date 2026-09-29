@@ -21,7 +21,7 @@ import sharp from 'sharp';
 import { isAdminRequest } from './_admin-auth.mjs';
 import { enforceRateLimit } from './_guard.mjs';
 import { forgeImageEdit, fetchImageAsDataUrl } from './_forge-image.mjs';
-import { redis, walletOf, ownerOf } from './_wallet.mjs';
+import { redis, walletOf, holderOf } from './_wallet.mjs';
 
 export const WEAPONS = {
   celestial_fang: { name: 'Celestial Fang', trait: 'Celestial-Fang', hilt: 'R', look: 'a PAIR of short swords (twin ninjato) in dark scabbards, hilts wrapped in green cord, carried crossed together' },
@@ -145,8 +145,8 @@ export default async function handler(req, res) {
       if (!admin) {
         const wallet = walletOf(req);
         if (!wallet) return res.status(401).json({ ok: false, error: 'Sign in with your wallet to choose a weapon', code: 'wallet_required' });
-        const owner = await ownerOf(c, t);
-        if (!owner || owner !== wallet) return res.status(403).json({ ok: false, error: 'Only the wallet that holds this Rebel can choose its weapon', code: 'not_owner' });
+        const h = await holderOf(c, t, wallet, { fresh: true });
+        if (!h.holder) return res.status(403).json({ ok: false, error: 'Only the wallet that holds this Rebel (or its delegate.xyz delegate) can choose its weapon', code: 'not_owner' });
       }
       const choice = { weaponId, hilt, at: new Date().toISOString() };
       await redis([['SET', CK(c, t), JSON.stringify(choice)]]);

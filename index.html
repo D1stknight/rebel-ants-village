@@ -1097,7 +1097,7 @@ async function loadNFTs(walletAddress) {
 
   try {
     // One call for every configured collection (Alchemy first, OpenSea fallback). Images come from our lazy cache.
-    const r = await fetch(`/api/nft-wallet?address=${encodeURIComponent(walletAddress)}`, { headers: { accept: 'application/json' } });
+    const r = await fetch(`/api/nft-wallet?address=${encodeURIComponent(walletAddress)}&delegates=1`, { headers: { accept: 'application/json' } });   // + Rebels in delegate.xyz vaults
     const data = await r.json().catch(() => ({}));
     if (!r.ok || !data.ok) throw new Error(data.error || ('status ' + r.status));
     const allRebels = data.tokens || [];

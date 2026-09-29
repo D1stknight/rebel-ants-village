@@ -5,7 +5,7 @@
 // - Forge allowance: each Rebel gets FORGE_TOKEN_LIMIT forges (default 3). Starting a forge opens a 24 h forge
 //   window for that Rebel and that wallet; the paid Forge steps (images, 3D, rig) only run inside an open window.
 import crypto from 'crypto';
-import { createPublicClient, http, getAddress, recoverMessageAddress } from 'viem';
+import { createPublicClient, http, getAddress, recoverMessageAddress, encodeFunctionData, decodeFunctionResult } from 'viem';
 import { mainnet } from 'viem/chains';
 import { readCookie, isAdminRequest } from './_admin-auth.mjs';
 import { getCollection, ALCHEMY_NETWORK } from './_collections.mjs';
@@ -116,6 +116,66 @@ export async function ownerOf(collectionKey, tokenId) {
   return ('0x' + out.slice(26)).toLowerCase();
 }
 
+// ---- delegate.xyz (vault wallets) ----
+// A holder can keep the Rebel in a cold vault and sign in with a hot wallet the vault delegated to on delegate.xyz
+// (whole wallet, this collection, or this one token). The hot wallet then counts as the holder: it forges, sets the
+// character and picks the weapon. Forge allowance stays with the vault (the owner), so delegates can't farm forges.
+const DELEGATE_V2 = '0x00000000000000447e69651d841bD8D104Bed493';
+const DELEGATE_V1 = '0x00000000000076A84feF008CDAbe6409d2FE638B';
+const DELEGATION_T = [{ name: 'type_', type: 'uint8' }, { name: 'to', type: 'address' }, { name: 'from', type: 'address' }, { name: 'rights', type: 'bytes32' }, { name: 'contract_', type: 'address' }, { name: 'tokenId', type: 'uint256' }, { name: 'amount', type: 'uint256' }];
+const DELEGATE_ABI = [
+  { type: 'function', name: 'checkDelegateForERC721', stateMutability: 'view', inputs: [{ name: 'to', type: 'address' }, { name: 'from', type: 'address' }, { name: 'contract_', type: 'address' }, { name: 'tokenId', type: 'uint256' }, { name: 'rights', type: 'bytes32' }], outputs: [{ type: 'bool' }] },
+  { type: 'function', name: 'getIncomingDelegations', stateMutability: 'view', inputs: [{ name: 'to', type: 'address' }], outputs: [{ type: 'tuple[]', components: DELEGATION_T }] },
+  { type: 'function', name: 'checkDelegateForToken', stateMutability: 'view', inputs: [{ name: 'delegate', type: 'address' }, { name: 'vault', type: 'address' }, { name: 'contract_', type: 'address' }, { name: 'tokenId', type: 'uint256' }], outputs: [{ type: 'bool' }] }
+];
+const ZERO32 = '0x' + '0'.repeat(64);
+async function ethCall(chain, to, data) {
+  const r = await fetch(alchemyUrl(chain), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to, data }, 'latest'] }) });
+  const j = await r.json().catch(() => ({}));
+  if (!j || j.error || typeof j.result !== 'string') throw new Error('eth_call failed');
+  return j.result;
+}
+async function readDelegate(chain, to, functionName, args) {
+  const out = await ethCall(chain, to, encodeFunctionData({ abi: DELEGATE_ABI, functionName, args }));
+  if (out === '0x') return null;                                 // no registry on this chain
+  return decodeFunctionResult({ abi: DELEGATE_ABI, functionName, data: out });
+}
+// is `hot` a delegate of `vault` for this Rebel? (v2 registry, then v1). Cached 5 minutes.
+export async function isDelegate(collectionKey, tokenId, vault, hot) {
+  if (!isAddr(vault) || !isAddr(hot) || vault.toLowerCase() === hot.toLowerCase()) return false;
+  const col = await getCollection(collectionKey || 'battle_for_colony');
+  if (!col || !/^\d{1,78}$/.test(String(tokenId || ''))) return false;
+  const k = `forge:delegate:v1:${col.key || collectionKey}:${tokenId}:${vault.toLowerCase()}:${hot.toLowerCase()}`;
+  try { const [c] = await redis([['GET', k]]); if (c?.result === '1' || c?.result === '0') return c.result === '1'; } catch (e) {}
+  let ok = false;
+  try { ok = !!(await readDelegate(col.chain, DELEGATE_V2, 'checkDelegateForERC721', [getAddress(hot), getAddress(vault), getAddress(col.contract), BigInt(tokenId), ZERO32])); } catch (e) {}
+  if (!ok) { try { ok = !!(await readDelegate(col.chain, DELEGATE_V1, 'checkDelegateForToken', [getAddress(hot), getAddress(vault), getAddress(col.contract), BigInt(tokenId)])); } catch (e) {} }
+  try { await redis([['SET', k, ok ? '1' : '0', 'EX', 300]]); } catch (e) {}
+  return ok;
+}
+// the holder check every holder-only action uses: { owner, holder, via: 'owner' | 'delegate' | null }
+export async function holderOf(collectionKey, tokenId, wallet, { fresh = false } = {}) {
+  const owner = fresh ? await ownerOf(collectionKey, tokenId) : await ownerOfCached(collectionKey, tokenId);
+  if (!owner || !wallet) return { owner, holder: false, via: null };
+  if (owner === wallet) return { owner, holder: true, via: 'owner' };
+  const d = await isDelegate(collectionKey, tokenId, owner, wallet);
+  return { owner, holder: d, via: d ? 'delegate' : null };
+}
+// vaults that delegated to this wallet on delegate.xyz v2: [{ vault, scope: 'all' | 'contract' | 'token', contract, tokenId }]
+export async function incomingDelegations(wallet, chain = 'ethereum') {
+  if (!isAddr(wallet)) return [];
+  const k = `forge:delegate-in:v1:${chain}:${wallet.toLowerCase()}`;
+  try { const [c] = await redis([['GET', k]]); if (c?.result) return JSON.parse(c.result); } catch (e) {}
+  let list = [];
+  try {
+    const ds = (await readDelegate(chain, DELEGATE_V2, 'getIncomingDelegations', [getAddress(wallet)])) || [];
+    list = ds.filter((d) => d.rights === ZERO32 && [1, 2, 3].includes(Number(d.type_)))
+      .map((d) => ({ vault: d.from.toLowerCase(), scope: ['', 'all', 'contract', 'token'][Number(d.type_)], contract: d.contract_.toLowerCase(), tokenId: Number(d.type_) === 3 ? d.tokenId.toString() : null }));
+  } catch (e) { list = []; }
+  try { await redis([['SET', k, JSON.stringify(list), 'EX', 300]]); } catch (e) {}
+  return list;
+}
+
 // ---- forge allowance ----
 // used = forges this owner started on this Rebel (a new owner starts at 0); life = all owners together
 const qKey = (c, t, w) => `forge:quota:v2:${c}:${t}:${w}`;
@@ -130,13 +190,13 @@ export async function forgeStatus(collectionKey, tokenId, owner) {
   const left = Math.max(0, Math.min(FORGE_LIMIT - used, TOKEN_LIFETIME - life));
   return { used, limit: FORGE_LIMIT, left, lifetimeUsed: life, lifetimeLimit: TOKEN_LIFETIME, open };
 }
-export async function openForge(collectionKey, tokenId, wallet) {
-  const st = await forgeStatus(collectionKey, tokenId, wallet);
+export async function openForge(collectionKey, tokenId, wallet, quotaWallet = wallet) {
+  const st = await forgeStatus(collectionKey, tokenId, quotaWallet);
   if (st.left <= 0) return { ok: false, reason: st.used >= FORGE_LIMIT ? 'owner' : 'lifetime', ...st };
-  const [d] = await redis([['INCR', dKey(wallet)], ['EXPIRE', dKey(wallet), 172800]]);
+  const [d] = await redis([['INCR', dKey(quotaWallet)], ['EXPIRE', dKey(quotaWallet), 172800]]);
   if (Number(d?.result || 0) > WALLET_DAILY) return { ok: false, reason: 'daily', ...st };
   const open = { wallet, startedAt: new Date().toISOString(), n: st.used + 1 };
-  const [inc] = await redis([['INCR', qKey(collectionKey, tokenId, wallet)], ['INCR', lKey(collectionKey, tokenId)], ['SET', oKey(collectionKey, tokenId), JSON.stringify(open), 'EX', WINDOW_TTL], ['DEL', uKey(collectionKey, tokenId)]]);
+  const [inc] = await redis([['INCR', qKey(collectionKey, tokenId, quotaWallet)], ['INCR', lKey(collectionKey, tokenId)], ['SET', oKey(collectionKey, tokenId), JSON.stringify(open), 'EX', WINDOW_TTL], ['DEL', uKey(collectionKey, tokenId)]]);
   const used = Number(inc?.result || st.used + 1);
   return { ok: true, used, limit: FORGE_LIMIT, left: Math.max(0, Math.min(FORGE_LIMIT - used, TOKEN_LIFETIME - st.lifetimeUsed - 1)), open };
 }
@@ -160,7 +220,7 @@ export async function requireForgeStep(req, res, { collectionKey, tokenId, step 
     if (!open) return deny(403, 'Start a forge for this Rebel first', 'no_open_forge');
     if (open.wallet !== wallet) return deny(403, 'This forge was started by another wallet', 'not_your_forge');
     const owner = await ownerOfCached(c, t);
-    if (owner && owner !== wallet) return deny(403, 'This Rebel is now held by another wallet', 'not_owner');
+    if (owner && owner !== wallet && !(await isDelegate(c, t, owner, wallet))) return deny(403, 'This Rebel is now held by another wallet', 'not_owner');
     const [n] = await redis([['HINCRBY', uKey(c, t), step, 1], ['EXPIRE', uKey(c, t), WINDOW_TTL]]);
     if (Number(n?.result || 0) > (STEP_MAX[step] || 5)) return deny(429, 'This forge has used all of its tries for this step', 'step_limit');
     return true;
