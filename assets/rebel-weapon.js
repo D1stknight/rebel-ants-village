@@ -12,9 +12,9 @@
 (function () {
   const B = () => window.BABYLON;
   // length / up / out: fractions of the Rebel's height; angle: degrees from the spine toward the hilt shoulder.
-  // Tuned on #4 against the NFT art: the hilt rises beside the head over one shoulder.
-  const MOUNT = { length: 0.52, angle: 24, out: 0.012, up: 0.07, hiltEnd: 'auto' };
-  const KIND = { dawns_light_arrows: { length: 0.4, angle: 20, up: 0.09 }, celestial_fang: { length: 0.46, up: 0.08 } };
+  // Tuned on #4 / #4998 / #1738: the hilt peeks over one shoulder at ear height, the blade crosses the back to the other hip.
+  const MOUNT = { length: 0.5, angle: 28, out: 0.012, up: 0, hiltEnd: 'auto' };
+  const KIND = { dawns_light_arrows: { length: 0.4, angle: 22, up: 0.01 }, celestial_fang: { length: 0.44 } };
 
   function node(nodes, suffix) {
     return nodes.find((n) => n.name && (n.name === 'mixamorig:' + suffix || n.name === 'mixamorig_' + suffix || n.name.endsWith(':' + suffix) || n.name.endsWith('_' + suffix) || n.name === suffix)) || null;
@@ -41,25 +41,31 @@
     playing.forEach((g) => g.pause());
     const skeletons = [...new Set(meshes.map((m) => m.skeleton).filter(Boolean))];
     skeletons.forEach((s) => s.returnToRest());
-    // only this Rebel's own bones (the village has other rigged characters)
-    const base = root || meshes[0];
-    const nodes = base ? [base, ...base.getDescendants(false)] : scene.transformNodes.concat(scene.meshes);
-    const tn = (n) => node(nodes, n);
-    const hips = tn('Hips'), neck = tn('Neck'), sp = tn(parentBone) || tn('Spine1'), ls = tn('LeftShoulder') || tn('LeftArm'), rs = tn('RightShoulder') || tn('RightArm');
-    const foot = tn('LeftFoot'), toe = tn('LeftToeBase');
+    // Everything is measured where the body is DRAWN: skin bone x skinned mesh. (The village re-parents the skinned mesh
+    // straight to its playerRoot, so the bone nodes' own world matrices sit mirrored front-to-back from the drawn body.)
+    const sm = meshes.find((m) => m.skeleton);
+    const skel = sm && sm.skeleton;
+    const bone = (n) => (skel ? node(skel.bones, n) : null);
+    const hips = bone('Hips'), neck = bone('Neck'), sp = bone(parentBone) || bone('Spine1'), ls = bone('LeftShoulder') || bone('LeftArm'), rs = bone('RightShoulder') || bone('RightArm');
+    const foot = bone('LeftFoot'), toe = bone('LeftToeBase');
     if (!hips || !neck || !sp || !ls || !rs) { playing.forEach((g) => g.play(g.loopAnimation)); return null; }
-    [hips, neck, sp, ls, rs, foot, toe].forEach((n) => n && n.computeWorldMatrix(true));
-    const P = sp.getAbsolutePosition();
-    const up = neck.getAbsolutePosition().subtract(hips.getAbsolutePosition()).normalize();
-    const right = rs.getAbsolutePosition().subtract(ls.getAbsolutePosition()); right.subtractInPlace(up.scale(V3.Dot(right, up))); right.normalize();
+    // fresh matrices top-down (a Rebel re-parented this frame still has stale cached ones)
+    let top = root || sm; while (top.parent) top = top.parent;
+    [top, ...top.getDescendants(false)].forEach((n) => n.computeWorldMatrix && n.computeWorldMatrix(true));
+    skel.prepare(true);
+    const boneWorld = (b) => b.getFinalMatrix().multiply(sm.getWorldMatrix());
+    const bp = (b) => V3.TransformCoordinates(V3.Zero(), boneWorld(b));
+    const P = bp(sp);
+    const up = bp(neck).subtract(bp(hips)).normalize();
+    const right = bp(rs).subtract(bp(ls)); right.subtractInPlace(up.scale(V3.Dot(right, up))); right.normalize();
     let fwd = V3.Cross(right, up).normalize();                      // left-handed Babylon: right x up = forward
-    if (foot && toe) { const f = toe.getAbsolutePosition().subtract(foot.getAbsolutePosition()); if (V3.Dot(f, fwd) < 0) fwd = fwd.scale(-1); }
+    if (foot && toe) { const f = bp(toe).subtract(bp(foot)); if (V3.Dot(f, fwd) < 0) fwd = fwd.scale(-1); }
     const back = fwd.scale(-1);
     const verts = worldVerts(meshes.filter((m) => m.getTotalVertices && m.getTotalVertices() > 500));
     const ys = verts.map((v) => V3.Dot(v, up));
     const H = pct(ys, 0.999) - pct(ys, 0.001);
     // the back surface behind Spine2 (a slice of the torso, not the arms)
-    const halfW = V3.Distance(ls.getAbsolutePosition(), rs.getAbsolutePosition()) * 0.45;
+    const halfW = V3.Distance(bp(ls), bp(rs)) * 0.45;
     const depth = pct(verts.filter((v) => { const d = v.subtract(P); return Math.abs(V3.Dot(d, up)) < 0.08 * H && Math.abs(V3.Dot(d, right)) < halfW; }).map((v) => V3.Dot(v.subtract(P), back)), 0.97) || 0.08 * H;
 
     // 2. the weapon, normalised: long axis, hilt end, flat face
@@ -68,8 +74,10 @@
     const wmeshes = res.meshes.filter((m) => m.getTotalVertices && m.getTotalVertices() > 0);
     wroot.computeWorldMatrix(true);
     const wv = worldVerts(wmeshes, 20000);
-    const c = wv.reduce((a, v) => a.addInPlace(v), V3.Zero()).scale(1 / Math.max(1, wv.length));
-    const ext = ['x', 'y', 'z'].map((k) => pct(wv.map((v) => v[k]), 0.995) - pct(wv.map((v) => v[k]), 0.005));
+    // the middle of its extent (not the vertex mean: detailed hilts are dense and pulled the blade down the back)
+    const lo = ['x', 'y', 'z'].map((k) => pct(wv.map((v) => v[k]), 0.005)), hi = ['x', 'y', 'z'].map((k) => pct(wv.map((v) => v[k]), 0.995));
+    const c = new V3((lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2);
+    const ext = [0, 1, 2].map((i) => hi[i] - lo[i]);
     const ai = ext.indexOf(Math.max(...ext));                        // the long axis
     const axis = [new V3(1, 0, 0), new V3(0, 1, 0), new V3(0, 0, 1)][ai];
     const len = ext[ai];
@@ -99,7 +107,11 @@
     let Mt = B().Matrix.FromValues(D.x, D.y, D.z, 0, S.x, S.y, S.z, 0, N.x, N.y, N.z, 0, 0, 0, 0, 1);         // rows = target axes
     let R = Mw.transpose().multiply(Mt);   // row vectors: v * R maps the weapon axes onto the target axes
     if (R.determinant() < 0) { S = S.scale(-1); Mt = B().Matrix.FromValues(D.x, D.y, D.z, 0, S.x, S.y, S.z, 0, N.x, N.y, N.z, 0, 0, 0, 0, 1); R = Mw.transpose().multiply(Mt); }
+    // the pivot rides the drawn spine bone (attachToBone: world = local x bone x skinned mesh). Its local is a plain
+    // matrix, since a mirrored rig can't be split into position / rotation / scale.
     const pivot = new (B().TransformNode)('rebelWeapon_' + weapon.id, scene);
+    pivot.setPreTransformMatrix(B().Matrix.Translation(center.x, center.y, center.z).multiply(B().Matrix.Invert(boneWorld(sp))));
+    pivot.attachToBone(sp, sm); pivot.scalingDeterminant = 1;
     const inner = new (B().TransformNode)('rebelWeaponInner', scene);
     inner.parent = pivot;
     // the file's root keeps its own import transform (handedness); inner centres, turns and sizes it
@@ -107,10 +119,7 @@
     const innerLocal = B().Matrix.Translation(-c.x, -c.y, -c.z).multiply(R).multiply(B().Matrix.Scaling(scale, scale, scale));
     inner.rotationQuaternion = new (B().Quaternion)();
     innerLocal.decompose(inner.scaling, inner.rotationQuaternion, inner.position);
-    pivot.position.copyFrom(center);
-    pivot.computeWorldMatrix(true);
-    // 4. ride the spine
-    pivot.setParent(sp);
+    // 4. it rides the spine (pivot is parented to it)
     wmeshes.forEach((m) => { m.isPickable = false; m.alwaysSelectAsActiveMesh = true; if (m.material && onMaterial) onMaterial(m.material, m); });
     // 5. back to moving
     playing.forEach((g) => g.play(g.loopAnimation));
