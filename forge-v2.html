@@ -54,6 +54,7 @@ header{position:fixed;z-index:20;top:0;left:0;right:0;height:64px;display:flex;a
 .pill.mock{border-color:rgba(200,50,30,.5);color:#ffb3a4}
 .iconbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;background:rgba(23,19,26,.6);transition:border-color .2s}
 .iconbtn:hover{border-color:var(--glow)}
+.exitbtn{cursor:pointer;font-family:inherit;letter-spacing:.06em;transition:border-color .2s,color .2s}.exitbtn:hover{border-color:var(--glow);color:var(--washi)}
 
 /* ---------- pheromone stepper ---------- */
 #trail{position:fixed;z-index:15;left:22px;top:92px;bottom:40px;width:120px}
@@ -268,6 +269,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 
 @media (max-width:900px){
   header{padding:0 14px;height:56px}
+  .hright{gap:6px}
   .logo span{display:none}
   #trail{left:0;right:0;top:58px;bottom:auto;height:64px;width:auto}
   #trail svg,#ant{display:none}
@@ -286,6 +288,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
   #awakenBtn{bottom:50vh}
   .nowplaying{bottom:170px}
 }
+@media (max-width:480px){#tokPill{display:none}}
 @media (prefers-reduced-motion:reduce){#grain{animation:none}}
 </style>
 </head>
@@ -300,6 +303,7 @@ p.lead{color:#e4ddcf;font-size:14px;line-height:1.6}
 <header>
   <div class="logo"><b>REBEL FORGE</b></div>
   <div class="hright">
+    <button class="pill exitbtn" id="lobbyExit" title="Back to the lobby">← Lobby</button>
     <div class="pill hidden" id="forgePill"></div>
     <div class="pill" id="tokPill">Rebel <strong>#—</strong></div>
     <button class="iconbtn" id="sndBtn" title="Sound">
@@ -483,6 +487,13 @@ const Snd = (() => {
 try { state.sound = localStorage.getItem('forgeV2:sound') !== '0'; } catch (e) { state.sound = true; }
 function syncSndIcon() { $('#sndX').style.display = state.sound ? 'none' : ''; $('#sndBtn').title = (state.sound ? 'Sound on (click to mute)' : 'Sound off') + ' · Music: Aylex - Glorious (freetouse.com)'; }
 syncSndIcon();
+// back to the main lobby. While the drawings are being made the page must stay open, so ask for a second tap first.
+let exitArmed = 0;
+$('#lobbyExit').onclick = () => {
+  const drawing = S && active() && ['concept', 'prod', 'back', 'sides'].includes(S.phase) && !S.err;
+  if (drawing && Date.now() - exitArmed > 4000) { exitArmed = Date.now(); toast('Your drawings are still being made and need this page open. Tap Lobby again to leave anyway.'); return; }
+  location.href = '/';
+};
 $('#sndBtn').onclick = () => {
   state.sound = !state.sound; syncSndIcon(); try { localStorage.setItem('forgeV2:sound', state.sound ? '1' : '0'); } catch (e) {}
   if (state.sound) { Snd.init(); Snd.play('ui_click'); Snd.music(); if (state.step === 3 && active()) Snd.loop('forge_loop', 0.3); } else Snd.mute(true);
