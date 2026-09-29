@@ -47,6 +47,9 @@
     },
     "api/forge-sweep.mjs": {
       "maxDuration": 300
+    },
+    "api/forge-weapon.mjs": {
+      "maxDuration": 300
     }
   },
   "crons": [
