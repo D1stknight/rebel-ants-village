@@ -1,4 +1,9 @@
-const RESPONSES_MODEL = 'gpt-5.5';
+import { requireForgeStep } from './_wallet.mjs';
+import { enforceRateLimit } from './_guard.mjs';
+import { forgeImageEdit, fetchImageAsDataUrl, FORGE_REFERENCE_URLS } from './_forge-image.mjs';
+import { buildRigFriendlyRules } from './_forge-rig-rules.mjs';
+import { resolveForgeSourceImage } from './_forge-source-image.mjs';
+
 const DEFAULT_SIZE = '1024x1536';
 
 async function fetchImageUrlAsDataUrl(imageUrl) {
@@ -36,7 +41,7 @@ function parseInputImage({ selectedConceptImageDataUrl }) {
   return null;
 }
 
-function buildProductionReferencePrompt({ generationInput, selectedConcept }) {
+function buildProductionReferencePrompt({ generationInput, selectedConcept, hasNft = false }) {
   const tokenId = selectedConcept?.tokenId || generationInput?.tokenId || 'unknown';
   const rebelId = selectedConcept?.rebelId || generationInput?.rebelId || 'unknown';
   const collectionKey = selectedConcept?.collectionKey || generationInput?.collectionKey || 'battle_for_colony';
@@ -44,10 +49,12 @@ function buildProductionReferencePrompt({ generationInput, selectedConcept }) {
   const bodyType = selectedConcept?.bodyType || generationInput?.bodyType || 'universal_ant_v1';
 
   return `
-You will receive one reference image.
+You will receive ${hasNft ? 'three' : 'two'} reference images.
 
 Image 1 is the selected full-body Rebel Ant concept chosen by the user.
-Create a cleaner 3D production reference from that selected concept.
+Image 2 is a PROPORTIONS-ONLY reference: grey clay FRONT and SIDE views of the standard Rebel body (one character from two angles). Use it only for body proportions and posture: slim build, narrow shoulders, wrists at hip level, head about one quarter of the height, standing tall and upright with the head directly above the shoulders (see its side view). Do not copy its face, mask, outfit, colors or props. Draw only one front view.
+${hasNft ? `Image 3 is the player's original NFT. THE HEAD MUST MATCH IMAGE 3: same face, head shape, eyes / eye covering, mouth or mouth mask, antennae and the same colours. If the concept's head differs from Image 3 (a different colour, a changed face, or an added hat, roof or headpiece that the NFT ant does not wear), follow Image 3. Scenery behind the ant in Image 3 (buildings, roofs, dojos, trees, sky) is never part of the character.
+` : ''}Create a cleaner 3D production reference from that selected concept.
 
 Goal:
 - Convert the selected concept into a cleaner front-facing production reference for a future 3D character pipeline.
@@ -55,7 +62,7 @@ Goal:
 - This is a clean image reference that will later help generate or build a game-ready 3D Rebel Ant character.
 
 Identity lock:
-- Preserve the selected concept's head, face, eyes, eye covering, mouth, teeth, facial expression, antennae, headwear, and upper-body identity.
+- Preserve the selected concept's head, face, eyes, eye covering, mouth, teeth, facial expression, antennae (full length, never shortened), headwear, and upper-body identity.
 - Do not redesign the face.
 - Do not reinterpret the eyes.
 - Do not change the mouth or teeth.
@@ -69,11 +76,24 @@ Production reference rules:
 - Keep hands or claws visible and readable.
 - Keep legs and feet visible from hip to foot.
 - Keep the full body visible from head to feet.
-- Use a simple neutral studio background.
+- Use a plain, flat, light-grey studio background. Never the NFT's background colour or scenery.
 - Reduce cinematic lighting, heavy shadows, motion, smoke, dramatic perspective, and background clutter.
 - Keep the silhouette clean and readable.
 - Keep outfit layers, sash, wraps, armor accents, robe structure, shin guards, and boots clear.
-- Keep the art high quality, but make the pose and design cleaner for later 3D conversion.
+- Keep the art high quality. Clean up the pose only — do NOT simplify the outfit. Keep every armor plate, strap, wrap, guard and trim from Image 1.
+
+Proportions (match Image 2):
+- Head (without antennae) about one quarter of the height; you may scale the head uniformly, never change its design.
+- Legs from crotch to floor about 40-45% of the height; slim athletic torso; shoulders not wider than Image 2.
+- Hands and boots proportionate and clearly readable.
+
+${buildRigFriendlyRules(generationInput, { view: 'front' })}
+
+Materials and lighting (this image goes straight into image-to-3D):
+- All cloth, robes, wraps, headwear and bandanas are MATTE fabric. No glossy, chrome, metallic or wet-looking highlights on cloth, even gold or yellow cloth.
+- Only real armor plates or blades may read as metal, with soft highlights.
+- Flat, even, shadowless studio lighting. No rim light, no cast shadows, no painted specular highlights, no ambient occlusion baked into the colors beyond gentle shading.
+- Rich but not neon colors, clean dark line-work, same art style as Image 1.
 
 Weapon rules:
 - Do not attach weapons to the body.
@@ -106,6 +126,11 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
+
+  // Phase 0 cost guard: OpenAI image generations per visitor per day (admins unlimited).
+  if (!(await enforceRateLimit(req, res, 'img-production', 15, 86400, 'image generations today'))) return;
+  // Phase 2: paid steps only run inside a forge the Rebel's owner started (admins pass)
+  { const gi = (req.body || {}).generationInput || {}; if (!(await requireForgeStep(req, res, { collectionKey: gi.collectionKey, tokenId: gi.tokenId, step: 'production' }))) return; }
 
   try {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -151,61 +176,19 @@ export default async function handler(req, res) {
       });
     }
 
-    const prompt = buildProductionReferencePrompt({ generationInput, selectedConcept });
+    // v5: the NFT itself rides along so the head stays the player's Rebel (optional: never blocks the reference)
+    let nftDataUrl = null;
+    try { if (generationInput.sourceImage) nftDataUrl = await fetchImageAsDataUrl(await resolveForgeSourceImage(generationInput.sourceImage)); } catch (e) { console.warn('production ref: NFT image skipped', e?.message); }
+    const prompt = buildProductionReferencePrompt({ generationInput, selectedConcept, hasNft: !!nftDataUrl });
 
-    const openaiResponse = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: RESPONSES_MODEL,
-        input: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'input_text',
-                text: prompt
-              },
-              {
-                type: 'input_image',
-                image_url: selectedConceptImage
-              }
-            ]
-          }
-        ],
-        tools: [
-          {
-            type: 'image_generation',
-            action: 'edit',
-            size: DEFAULT_SIZE
-          }
-        ]
-      })
+    const proportionsReferenceDataUrl = await fetchImageAsDataUrl(FORGE_REFERENCE_URLS.proportions);
+
+    const { imageBase64, imageModel, attempts } = await forgeImageEdit({
+      apiKey,
+      prompt,
+      images: nftDataUrl ? [selectedConceptImage, proportionsReferenceDataUrl, nftDataUrl] : [selectedConceptImage, proportionsReferenceDataUrl],
+      size: DEFAULT_SIZE
     });
-
-    const openaiData = await openaiResponse.json();
-
-    if (!openaiResponse.ok) {
-      console.error('OpenAI production reference error:', openaiData);
-
-      throw new Error(
-        openaiData?.error?.message ||
-        ('OpenAI response request failed. Status: ' + openaiResponse.status)
-      );
-    }
-
-    const imageGenerationCall = (openaiData.output || []).find(
-      item => item.type === 'image_generation_call' && item.result
-    );
-
-    const imageBase64 = imageGenerationCall?.result || null;
-
-    if (!imageBase64) {
-      throw new Error('OpenAI did not return production reference image data');
-    }
 
     const productionPlan = {
       productionReferenceVersion: 'v1',
@@ -220,6 +203,8 @@ export default async function handler(req, res) {
       weaponHandling: 'no_weapon_attached_generate_separately_later',
       sourceImageType: selectedConceptImageUrl ? 'blob_url' : 'data_url',
       size: DEFAULT_SIZE,
+      imageModel,
+      imageModelAttempts: attempts,
       nextStep: 'save_production_reference'
     };
 

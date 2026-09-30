@@ -1,7 +1,67 @@
 {
   "functions": {
+    "api/forge-3d-store-glb.mjs": {
+      "maxDuration": 120
+    },
+    "api/forge-concepts-upload-image.mjs": {
+      "maxDuration": 60
+    },
+    "api/forge-3d-engine-meshy-create.mjs": {
+      "maxDuration": 60
+    },
+    "api/forge-3d-engine-meshy-status.mjs": {
+      "maxDuration": 60
+    },
+    "api/forge-active-character-save.mjs": {
+      "maxDuration": 60
+    },
     "api/compress-glb.mjs": {
       "maxDuration": 60
+    },
+    "api/forge-generate-fullbody-preview.mjs": {
+      "maxDuration": 300
+    },
+    "api/forge-generate-production-reference.mjs": {
+      "maxDuration": 300
+    },
+    "api/forge-generate-back-reference.mjs": {
+      "maxDuration": 300
+    },
+    "api/forge-fix-reference.mjs": {
+      "maxDuration": 300
+    },
+    "api/forge-rig-worker.mjs": {
+      "maxDuration": 120
+    },
+    "api/forge-rig-start.mjs": {
+      "maxDuration": 120
+    },
+    "api/forge-rig-status.mjs": {
+      "maxDuration": 120
+    },
+    "api/forge-part-reference.mjs": {
+      "maxDuration": 300
+    },
+    "api/forge-generate-side-reference.mjs": {
+      "maxDuration": 300
+    },
+    "api/forge-sweep.mjs": {
+      "maxDuration": 300
+    },
+    "api/forge-rig-moves.mjs": {
+      "maxDuration": 120
+    },
+    "api/forge-rig-headcloth.mjs": {
+      "maxDuration": 120
+    },
+    "api/forge-weapon.mjs": {
+      "maxDuration": 300
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/forge-sweep",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }

@@ -1,3 +1,4 @@
+import { requireAdmin } from './_guard.mjs';
 import { put } from '@vercel/blob';
 
 const MAX_GLB_BYTES = 120 * 1024 * 1024;
@@ -170,6 +171,8 @@ async function updateBuildRecordWithStoredAnimation({
 }
 
 export default async function handler(req, res) {
+  // Phase 0: legacy / dev / destructive tool, admin only.
+  if (!requireAdmin(req, res)) return;
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });

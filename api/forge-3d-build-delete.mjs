@@ -1,3 +1,4 @@
+import { requireAdmin } from './_guard.mjs';
 import { del } from '@vercel/blob';
 
 const ACTIVE_CHARACTER_VERSION = 'v1';
@@ -176,6 +177,8 @@ async function loadActiveCharacters(deleteRequest, buildRecord) {
 }
 
 export default async function handler(req, res) {
+  // Phase 0: legacy / dev / destructive tool, admin only.
+  if (!requireAdmin(req, res)) return;
   if (req.method !== 'POST' && req.method !== 'DELETE') {
     res.setHeader('Allow', 'POST, DELETE');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });

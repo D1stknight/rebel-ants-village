@@ -1,3 +1,4 @@
+import { requireAdmin } from './_guard.mjs';
 const MESHY_RIGGING_URL_BASE = 'https://api.meshy.ai/openapi/v1/rigging';
 
 function getRedisConfig() {
@@ -130,6 +131,8 @@ async function updateBuildRecordWithRigStatus({ recordKey, buildRecord, rigTaskI
 }
 
 export default async function handler(req, res) {
+  // Phase 0: legacy / dev / destructive tool, admin only.
+  if (!requireAdmin(req, res)) return;
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });

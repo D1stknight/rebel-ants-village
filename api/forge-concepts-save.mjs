@@ -1,3 +1,4 @@
+import { enforceRateLimit, isAllowedAssetUrl, isCleanId, sanitizeDeep } from './_guard.mjs';
 const MAX_METADATA_BYTES = 64 * 1024;
 
 function getRedisConfig() {
@@ -69,6 +70,18 @@ function sanitizeConceptPayload(payload) {
   }
 
   const conceptId = String(concept.conceptId || concept.id);
+  // Phase 0: ids must be plain, URLs must be our Blob store, text is made HTML-inert (stored XSS fix).
+  if (!isCleanId(conceptId)) throw new Error('Invalid conceptId');
+  for (const k of ['rebelId', 'tokenId', 'collectionKey']) {
+    if (concept[k] != null && concept[k] !== '' && !isCleanId(String(concept[k]), 80)) throw new Error(`Invalid ${k}`);
+  }
+  for (const k of ['imageUrl', 'backImageUrl']) {
+    if (concept[k] && !isAllowedAssetUrl(concept[k])) throw new Error(`Invalid ${k}`);
+  }
+  for (const k of ['imageBlobPath', 'backImageBlobPath']) {
+    if (concept[k] && !/^forge\/concepts\/[A-Za-z0-9_./-]+$/.test(concept[k])) throw new Error(`Invalid ${k}`);
+  }
+  if (concept.sourceConceptId && !isCleanId(String(concept.sourceConceptId))) throw new Error('Invalid sourceConceptId');
   const now = new Date().toISOString();
   const imageStorage = concept.imageStorage || 'browser_indexeddb_now_server_later';
   const hasBlobImage = imageStorage === 'vercel_blob' && Boolean(concept.imageUrl);
@@ -81,15 +94,18 @@ function sanitizeConceptPayload(payload) {
     rebelId: concept.rebelId || null,
     tokenId: concept.tokenId || null,
     collectionKey: concept.collectionKey || 'battle_for_colony',
-    colony: concept.colony || null,
-    bodyType: concept.bodyType || null,
-    forgeMode: concept.forgeMode || payload?.forgeMode || 'full_body_concept',
-    variantIntent: concept.variantIntent || payload?.variantIntent || 'default',
+    colony: sanitizeDeep(concept.colony || null),
+    bodyType: sanitizeDeep(concept.bodyType || null),
+    forgeMode: sanitizeDeep(concept.forgeMode || payload?.forgeMode || 'full_body_concept'),
+    variantIntent: sanitizeDeep(concept.variantIntent || payload?.variantIntent || 'default'),
     selected: concept.selected === true,
-    imageStorage,
+    imageStorage: sanitizeDeep(imageStorage),
     imageUrl: concept.imageUrl || null,
     imageBlobPath: concept.imageBlobPath || null,
-    economyPlan: concept.economyPlan || payload?.economyPlan || null,
+    backImageUrl: concept.backImageUrl || null,
+    backImageBlobPath: concept.backImageBlobPath || null,
+    sourceConceptId: concept.sourceConceptId || null,
+    economyPlan: sanitizeDeep(concept.economyPlan || payload?.economyPlan || null),
     storageVersion: 'v1',
     serverStorageReady: true,
     note: hasBlobImage
@@ -120,6 +136,7 @@ async function saveConceptMetadata(concept) {
   const value = JSON.stringify(concept);
 
   await redisCommand(['SET', recordKey, value]);
+  await redisCommand(['LREM', listKey, 0, concept.conceptId]);   // no duplicate entries on re-save
   await redisCommand(['LPUSH', listKey, concept.conceptId]);
   await redisCommand(['LTRIM', listKey, 0, 49]);
 
@@ -136,6 +153,8 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
+
+  if (!(await enforceRateLimit(req, res, 'concept-save', 120, 3600, 'saves'))) return;
 
   try {
     const concept = sanitizeConceptPayload(req.body || {});

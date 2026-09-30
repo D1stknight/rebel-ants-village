@@ -739,65 +739,130 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
 
     try {
-      const response = await fetch('/api/forge-build-3d-character', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          generationInput: window.forgeGenerationInput,
-          selectedConcept: concept,
-          productionReference: concept
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.ok) {
-        throw new Error(data.error || data.detail || '3D build request failed');
+      // Back view for Meshy multi-image-to-3d (stops Meshy guessing faces/visors onto the back of the head)
+      if (!concept.backImageUrl && window.FORGE_BACK_VIEW !== false) {
+        try {
+          if (typeof window.setForgeStatusHtml === 'function') {
+            window.setForgeStatusHtml('<span class="forge-loading-pulse">Drawing the back view for the 3D build...</span>', '');
+          }
+          const backResponse = await fetch('/api/forge-generate-back-reference', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ generationInput: window.forgeGenerationInput, productionImageUrl: concept.imageUrl })
+          });
+          const backData = await backResponse.json();
+          if (!backResponse.ok || !backData.ok) throw new Error(backData.detail || backData.error || 'Back view failed');
+          if (typeof uploadForgeConceptImageToServer === 'function') {
+            const backId = `${concept.id || concept.conceptId}_back`;
+            const uploaded = await uploadForgeConceptImageToServer({
+              id: backId, conceptId: backId,
+              rebelId: concept.rebelId, tokenId: concept.tokenId, collectionKey: concept.collectionKey,
+              imageDataUrl: backData.backImage.dataUrl
+            });
+            if (uploaded && uploaded.imageUrl) concept.backImageUrl = uploaded.imageUrl;
+          }
+          window.lastForgeBackReferenceResponse = { backPlan: backData.backPlan, backImageUrl: concept.backImageUrl || null };
+        } catch (backErr) {
+          console.warn('Forge back view skipped (single-image Meshy build):', backErr);
+        }
       }
 
-      window.lastForge3dBuildResponse = data;
-
-      const buildRequest = data.buildRequest || null;
-      const buildId = buildRequest?.buildId || null;
-
-      if (activeButton) {
-        activeButton.textContent = 'Starting Meshy...';
+      // v5: left + right profiles for 4-view Meshy (front, back, both sides). With front + back only Meshy still
+      // guessed the sides (e.g. #4998's mask wrapped around the head); all four views fixed it. ?FORGE_SIDE_VIEWS=false off.
+      if (!(concept.sideImageUrls && concept.sideImageUrls.length === 2) && window.FORGE_SIDE_VIEWS !== false) {
+        try {
+          if (typeof window.setForgeStatusHtml === 'function') {
+            window.setForgeStatusHtml('<span class="forge-loading-pulse">Drawing the side views for the 3D build...</span>', '');
+          }
+          const sides = await Promise.all(['left', 'right'].map(async (side) => {
+            const r = await fetch('/api/forge-generate-side-reference', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ generationInput: window.forgeGenerationInput, productionImageUrl: concept.imageUrl, backImageUrl: concept.backImageUrl || null, side })
+            });
+            const d = await r.json();
+            if (!r.ok || !d.ok) throw new Error(d.detail || d.error || 'Side view failed');
+            if (typeof uploadForgeConceptImageToServer !== 'function') return null;
+            const sideId = `${concept.id || concept.conceptId}_${side}`;
+            const up = await uploadForgeConceptImageToServer({
+              id: sideId, conceptId: sideId,
+              rebelId: concept.rebelId, tokenId: concept.tokenId, collectionKey: concept.collectionKey,
+              imageDataUrl: d.sideImage.dataUrl
+            });
+            return up && up.imageUrl ? up.imageUrl : null;
+          }));
+          if (sides.every(Boolean)) concept.sideImageUrls = sides;
+          window.lastForgeSideReferenceResponse = { sideImageUrls: concept.sideImageUrls || null };
+        } catch (sideErr) {
+          console.warn('Forge side views skipped (front + back Meshy build):', sideErr);
+        }
       }
 
-      if (typeof window.setForgeStatusHtml === 'function') {
-        window.setForgeStatusHtml('<span class="forge-loading-pulse">3D build queued. Starting Meshy generation...</span>', '');
+      // v5: several Meshy generations from the same four views; the player picks the best one to rig.
+      const variantCount = Math.max(1, Math.min(3, parseInt(window.FORGE_MESHY_VARIANTS, 10) || 3));
+      for (let variant = 1; variant <= variantCount; variant++) {
+        if (activeButton && variantCount > 1) activeButton.textContent = `Starting 3D version ${variant}/${variantCount}...`;
+        const response = await fetch('/api/forge-build-3d-character', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            generationInput: window.forgeGenerationInput,
+            selectedConcept: concept,
+            productionReference: concept
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || data.detail || '3D build request failed');
+        }
+
+        window.lastForge3dBuildResponse = data;
+
+        const buildRequest = data.buildRequest || null;
+        const buildId = buildRequest?.buildId || null;
+
+        if (activeButton) {
+          activeButton.textContent = 'Starting Meshy...';
+        }
+
+        if (typeof window.setForgeStatusHtml === 'function') {
+          window.setForgeStatusHtml('<span class="forge-loading-pulse">3D build queued. Starting Meshy generation...</span>', '');
+        }
+
+        const meshyResponse = await fetch('/api/forge-3d-engine-meshy-create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            buildId,
+            buildRequest,
+            generationInput: window.forgeGenerationInput,
+            productionReference: concept,
+            selectedConcept: concept,
+            sideImageUrls: concept.sideImageUrls || []
+          })
+        });
+
+        const meshyData = await meshyResponse.json();
+
+        if (!meshyResponse.ok || !meshyData.ok) {
+          throw new Error(meshyData.error || meshyData.detail || 'Meshy task start failed');
+        }
+
+        window.lastForgeMeshyCreateResponse = meshyData;
       }
-
-      const meshyResponse = await fetch('/api/forge-3d-engine-meshy-create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          buildId,
-          buildRequest,
-          generationInput: window.forgeGenerationInput,
-          productionReference: concept,
-          selectedConcept: concept
-        })
-      });
-
-      const meshyData = await meshyResponse.json();
-
-      if (!meshyResponse.ok || !meshyData.ok) {
-        throw new Error(meshyData.error || meshyData.detail || 'Meshy task start failed');
-      }
-
-      window.lastForgeMeshyCreateResponse = meshyData;
 
       if (activeButton) {
         activeButton.textContent = 'Meshy Started ✓';
       }
 
       if (typeof window.setForgeStatus === 'function') {
-        window.setForgeStatus('3D build queued and Meshy generation started. The status panel will track the model build.', 'success');
+        window.setForgeStatus(variantCount > 1 ? `${variantCount} 3D versions started from the front, back and side views. When they finish, pick the best one in the status panel and rig it.` : '3D build queued and Meshy generation started. The status panel will track the model build.', 'success');
       }
 
       if (typeof window.renderForge3dBuildStatusPanel === 'function') {
@@ -2473,7 +2538,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         window.setForgeStatus('GLB stored in Rebel Forge Blob. This model is now saved under Rebel-controlled storage.', 'success');
       }
 
-      await renderForge3dBuildStatusPanel();
+      await (window.renderForge3dBuildStatusPanel || renderForge3dBuildStatusPanel)();
 
       setTimeout(() => {
         if (activeButton) {
@@ -2570,7 +2635,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         window.setForgeStatus('Rigged GLB stored in Rebel Forge Blob. Set it as active again before entering the Village.', 'success');
       }
 
-      await renderForge3dBuildStatusPanel();
+      await (window.renderForge3dBuildStatusPanel || renderForge3dBuildStatusPanel)();
 
       setTimeout(() => {
         if (activeButton) {
@@ -2668,7 +2733,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         window.setForgeStatus('Walking animation stored in Rebel Forge Blob. Next we can test it inside the Village.', 'success');
       }
 
-      await renderForge3dBuildStatusPanel();
+      await (window.renderForge3dBuildStatusPanel || renderForge3dBuildStatusPanel)();
     } catch(e) {
       console.warn('Could not store Forge walking animation:', e);
 
@@ -2759,7 +2824,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         window.setForgeStatus('Running animation stored in Rebel Forge Blob. Next we can test it inside the Village.', 'success');
       }
 
-      await renderForge3dBuildStatusPanel();
+      await (window.renderForge3dBuildStatusPanel || renderForge3dBuildStatusPanel)();
     } catch(e) {
       console.warn('Could not store Forge running animation:', e);
 
@@ -2836,7 +2901,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         window.setForgeStatus(`Forge build deleted.${keptActiveFiles}`, 'success');
       }
 
-      await renderForge3dBuildStatusPanel();
+      await (window.renderForge3dBuildStatusPanel || renderForge3dBuildStatusPanel)();
     } catch(e) {
       console.warn('Could not delete Forge 3D build:', e);
 
@@ -2978,7 +3043,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         );
       }
 
-      await renderForge3dBuildStatusPanel();
+      await (window.renderForge3dBuildStatusPanel || renderForge3dBuildStatusPanel)();
     } catch(e) {
       console.warn('Could not set Forge build as active character:', e);
 
@@ -3059,7 +3124,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
         window.setForgeStatus('Landing playable character resynced with this build.', 'success');
       }
 
-      await renderForge3dBuildStatusPanel();
+      await (window.renderForge3dBuildStatusPanel || renderForge3dBuildStatusPanel)();
     } catch(e) {
       console.warn('Could not resync Forge playable build:', e);
 
@@ -3819,6 +3884,95 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }, 8000);
   }
 
+  // ---- Forge Rigger (automated): stored Meshy GLB -> playable village Rebel (24 moves, cloth) ----
+  const FORGE_RIG_STEP_LABELS = {
+    starting: 'Starting', download: 'Downloading model', normalize: 'Preparing mesh', landmarks: 'Finding joints',
+    skeleton: 'Building skeleton', weights: 'Skinning', bind: 'Binding', hands: 'Hands', cloth: 'Cloth springs',
+    animate: 'Base moves', moves: 'Martial-arts moves', cleanup: 'Clean-up', export: 'Exporting', qa: 'Quality check', thumb: 'Portrait', done: 'Done'
+  };
+  const forgeRigPollers = {};
+
+  // Phase 0: legacy Meshy rigging/animation, dev lab and destructive tools are admin-only (their APIs now require admin too).
+  function forgeAdminOnly(html) {
+    return html ? `<span class="forge-admin-only">${html}</span>` : '';
+  }
+
+  function escapeForgeRigText(t) {
+    return String(t || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function renderForgeRigAction(build, rebelGlbUrl) {
+    const fr = build.forgeRig || null;
+    const id = build.buildId;
+    const hasSource = Boolean(rebelGlbUrl || build.output?.rebelGlbUrl || build.output?.glbUrl || build.engine?.glbUrl);
+    if (!fr) {
+      return hasSource
+        ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.startForgeRigForBuild('${id}')">Make Playable (Forge Rigger)</button>`
+        : '';
+    }
+    if (fr.status === 'running') {
+      if (!forgeRigPollers[id]) setTimeout(() => window.pollForgeRigForBuild(id), 4000);
+      return `<span class="forge-3d-build-badge info" id="forge-rig-state-${id}">Rigging: ${escapeForgeRigText(FORGE_RIG_STEP_LABELS[fr.progress] || fr.progress || 'Starting')}…</span>`;
+    }
+    if (fr.status === 'succeeded') {
+      const url = fr.forgeRigGlbUrl || build.output?.forgeRigGlbUrl;
+      const review = fr.verdict === 'review';
+      const badge = review
+        ? `<span class="forge-3d-build-badge" title="${escapeForgeRigText((fr.qa?.reasons || []).join('; '))}">Rig ✓ (check moves)</span>`
+        : '<span class="forge-3d-build-badge ready">Rig ✓</span>';
+      const thumb = fr.thumbUrl || build.output?.forgeRigThumbUrl;
+      const thumbHtml = thumb ? `<img src="${escapeForgeRigText(thumb)}" alt="Rigged character" style="width:44px;height:44px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px;border:1px solid rgba(94,207,202,.5)">` : '';
+      return `${thumbHtml}${badge}<a class="forge-3d-build-refresh-btn forge-3d-step-action" href="/village.html?rigUrl=${encodeURIComponent(url)}" target="_blank" rel="noopener">Play in Village</a>`;
+    }
+    return `<span class="forge-3d-build-badge" title="${escapeForgeRigText(fr.error || '')}">Rig failed${fr.failedStep ? ' (' + escapeForgeRigText(FORGE_RIG_STEP_LABELS[fr.failedStep] || fr.failedStep) + ')' : ''}</span>`
+      + (hasSource ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.startForgeRigForBuild('${id}')">Retry Rig</button>` : '');
+  }
+
+  async function startForgeRigForBuild(buildId, force) {
+    try {
+      // Store the Meshy GLB in Rebel Blob first if that step was not done yet (players no longer see the legacy Store button).
+      const b = (window.lastForge3dBuildListResponse?.builds || []).find((x) => x.buildId === buildId);
+      if (b && !b.output?.rebelGlbUrl && (b.output?.glbUrl || b.engine?.glbUrl)) {
+        const sr = await fetch('/api/forge-3d-store-glb', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ buildId }) });
+        const sd = await sr.json().catch(() => ({}));
+        if (!sr.ok || !sd.ok) throw new Error(sd.error || sd.detail || 'Could not store the 3D model');
+      }
+      const r = await fetch('/api/forge-rig-start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ buildId, force: Boolean(force) }) });
+      const data = await r.json();
+      if (!r.ok || !data.ok) throw new Error(data.error || `Rig start failed (${r.status})`);
+      await (window.renderForge3dBuildStatusPanel || renderForge3dBuildStatusPanel)();
+      window.pollForgeRigForBuild(buildId);
+      return data;
+    } catch (e) {
+      alertForgeRig(e.message || String(e));
+      return null;
+    }
+  }
+
+  async function pollForgeRigForBuild(buildId) {
+    if (forgeRigPollers[buildId]) return;
+    forgeRigPollers[buildId] = true;
+    try {
+      for (let i = 0; i < 240; i++) {
+        const r = await fetch(`/api/forge-rig-status?buildId=${encodeURIComponent(buildId)}`);
+        const data = await r.json().catch(() => ({}));
+        const fr = data.forgeRig || {};
+        const el = document.getElementById(`forge-rig-state-${buildId}`);
+        if (el && fr.status === 'running') el.textContent = `Rigging: ${FORGE_RIG_STEP_LABELS[fr.progress] || fr.progress || 'Starting'}… ${data.percent != null ? data.percent + '%' : ''}`;
+        if (fr.status && fr.status !== 'running') break;
+        await new Promise((res) => setTimeout(res, 5000));
+      }
+    } finally {
+      forgeRigPollers[buildId] = false;
+      (window.renderForge3dBuildStatusPanel || renderForge3dBuildStatusPanel)();
+    }
+  }
+
+  function alertForgeRig(msg) {
+    console.warn('Forge Rigger:', msg);
+    try { window.alert('Forge Rigger: ' + msg); } catch (e) {}
+  }
+
    async function renderForge3dBuildStatusPanel() {
     ensure3dBuildStatusStyles();
 
@@ -4011,6 +4165,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           `<button class="forge-3d-build-refresh-btn forge-3d-step-action forge-3d-danger-action" type="button" onclick="window.deleteForge3dBuild('${build.buildId}')">Delete Build</button>`;
 
         const activeCharacterGlbUrl = riggedGlbUrl || activeGlbUrl;
+        const forgeRigHtml = renderForgeRigAction(build, rebelGlbUrl);
         const isSavedForLanding = forgeBuildIsSavedForLanding(build);
         const previewBuildHtml = activeCharacterGlbUrl
           ? `<button class="forge-3d-build-refresh-btn forge-3d-step-action" type="button" onclick="window.previewForge3dBuild('${build.buildId}')">Preview This Build</button>`
@@ -4197,7 +4352,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
                 </div>
               </div>
             </div>
-            <details class="forge-3d-dev-details">
+            <details class="forge-3d-dev-details forge-admin-only">
               <summary>Advanced / Dev Details</summary>
               <div class="forge-3d-dev-details-content">
                 Meshy Rig Task: ${rigTaskId || 'None'}<br>
@@ -4216,18 +4371,19 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
                 ${nativeActionAdvancedLinksHtml || ''}
               </div>
             </details>
-            <div class="forge-3d-build-section forge-3d-steps-section">
-              <div class="forge-3d-build-section-title">Build Steps</div>
+            <div class="forge-3d-build-section forge-3d-steps-section forge-admin-only">
+              <div class="forge-3d-build-section-title">Build Steps (legacy Meshy flow)</div>
               ${stepHtml}
             </div>
             <div class="forge-3d-build-actions">
+              ${forgeRigHtml}
               ${previewBuildHtml}
-              ${generateMeshyIdleHtml}
-              ${storeMeshyIdleHtml}
-              ${nativeActionButtonsHtml}
+              ${forgeAdminOnly(generateMeshyIdleHtml)}
+              ${forgeAdminOnly(storeMeshyIdleHtml)}
+              ${forgeAdminOnly(nativeActionButtonsHtml)}
               ${activeCharacterActionHtml}
-              ${resyncLandingCharacterHtml}
-              ${deleteBuildHtml}
+              ${forgeAdminOnly(resyncLandingCharacterHtml)}
+              ${forgeAdminOnly(deleteBuildHtml)}
             </div>
           </div>
         `;
@@ -4275,6 +4431,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   window.storeForgeRunningGlbInRebelBlob = storeForgeRunningGlbInRebelBlob;
   window.deleteForge3dBuild = deleteForge3dBuild;
   window.setForgeBuildAsActiveCharacter = setForgeBuildAsActiveCharacter;
+  window.startForgeRigForBuild = startForgeRigForBuild;
+  window.pollForgeRigForBuild = pollForgeRigForBuild;
   window.resyncForgePlayableBuild = resyncForgePlayableBuild;
   window.startMeshyRigTestForBuild = startMeshyRigTestForBuild;
   window.generateMeshyIdleAnimationTestForBuild = generateMeshyIdleAnimationTestForBuild;
@@ -4594,42 +4752,39 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   }
 
   async function resolveForge3dPreviewSource() {
+    // Phase 0: always show the selected Rebel's own model, newest first, preferring the Forge Rigger result.
+    // (It used to show whichever character was last set active, even another Rebel's, and fell back to a #469 test model.)
     const selectedRebel = getSelectedRebelForForgePreview();
-    const selectedActiveGlbUrl =
-      selectedRebel?.activeGlbUrl ||
-      getActiveCharacterGlbUrl(selectedRebel?.activeForgeCharacter);
+    const tokenId = String(selectedRebel?.tokenId || '');
+    const collectionKey = selectedRebel?.collectionKey || 'battle_for_colony';
+    let builds = window.lastForge3dBuildListResponse?.builds || null;
+    if (!builds && tokenId) {
+      try {
+        const r = await fetch(`/api/forge-builds-list?collectionKey=${encodeURIComponent(collectionKey)}&tokenId=${encodeURIComponent(tokenId)}`);
+        builds = (await r.json()).builds || [];
+      } catch (e) { builds = []; }
+    }
+    builds = (builds || []).filter((b) => !tokenId || String(b?.tokenId || '') === tokenId);
 
-    if (selectedActiveGlbUrl) {
-      return {
-        glbUrl: selectedActiveGlbUrl,
-        reason: 'selected_rebel_active_glb'
-      };
+    const rigged = builds.find((b) => b?.output?.forgeRigGlbUrl || b?.forgeRig?.forgeRigGlbUrl);
+    if (rigged) {
+      return { glbUrl: rigged.output?.forgeRigGlbUrl || rigged.forgeRig.forgeRigGlbUrl, reason: 'forge_rig', buildId: rigged.buildId };
     }
 
     const apiActiveCharacter = await loadActiveForgeCharacterForPreview(selectedRebel);
-    const apiActiveGlbUrl = getActiveCharacterGlbUrl(apiActiveCharacter);
-
+    const activeMatches = apiActiveCharacter && (!tokenId || String(apiActiveCharacter.tokenId || '') === tokenId);
+    const apiActiveGlbUrl = activeMatches ? (apiActiveCharacter.forgeRigGlbUrl || getActiveCharacterGlbUrl(apiActiveCharacter)) : '';
     if (apiActiveGlbUrl) {
-      return {
-        glbUrl: apiActiveGlbUrl,
-        reason: 'active_forge_character_api'
-      };
+      return { glbUrl: apiActiveGlbUrl, reason: 'active_forge_character_api' };
     }
 
-    const latestGlbBuild = getLatestGlbBuild();
-    const latestBuildGlbUrl = getLatestBuildGlbUrl(latestGlbBuild);
-
+    const latest = builds.find((b) => b?.output?.rebelGlbUrl || b?.output?.glbUrl || b?.engine?.glbUrl);
+    const latestBuildGlbUrl = getLatestBuildGlbUrl(latest);
     if (latestBuildGlbUrl) {
-      return {
-        glbUrl: latestBuildGlbUrl,
-        reason: 'latest_forge_build'
-      };
+      return { glbUrl: latestBuildGlbUrl, reason: 'latest_forge_build', buildId: latest.buildId };
     }
 
-    return {
-      glbUrl: 'assets/forge/sources/rebel_469_static_source_a_pose_v1.glb',
-      reason: 'fallback_static_test_source'
-    };
+    return { glbUrl: '', reason: 'none' };
   }
 
     function getLatestGlbBuild() {
@@ -5044,7 +5199,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     if (!glbUrl) {
       clearForge3dPreview();
       content.className = 'forge-3d-preview-empty';
-      content.innerHTML = 'No GLB is ready yet. Start a 3D Build, then refresh the build status until the GLB is ready.';
+      content.innerHTML = 'No 3D model for this Rebel yet. Create a production reference, start a 3D build, then Make Playable.';
       return;
     }
 
@@ -5059,16 +5214,16 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.setForgeRigPlacementView('top')">Top</button>
         </div>
 
-        <div class="forge-3d-stage-tools forge-3d-stage-tools-bottom">
+        <div class="forge-3d-stage-tools forge-3d-stage-tools-bottom forge-admin-only">
           <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.undoForgeRigPlacementMove()">Undo</button>
           <button class="forge-3d-preview-btn forge-3d-stage-btn" type="button" onclick="window.resetForgeRigPlacementLayout()">Reset</button>
         </div>
 
-        <div id="forge-rig-selected-marker" class="forge-3d-preview-note">Selected: none</div>
+        <div id="forge-rig-selected-marker" class="forge-3d-preview-note forge-admin-only">Selected: none</div>
       </div>
 
       <div class="forge-3d-preview-actions">
-        <div class="forge-3d-primary-actions">
+        <div class="forge-3d-primary-actions forge-admin-only">
           <button class="forge-3d-preview-btn forge-3d-primary-btn" type="button" onclick="window.applyForgeLookToPlayableRig()">Apply Look To Playable Rig</button>
         </div>
 
@@ -5080,7 +5235,7 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
           </div>
         </details>
 
-        <details class="forge-3d-tool-details forge-3d-dev-lab">
+        <details class="forge-3d-tool-details forge-3d-dev-lab forge-admin-only">
           <summary class="forge-3d-tool-summary">Advanced Dev Lab</summary>
           <div class="forge-3d-tool-grid">
             <button class="forge-3d-preview-btn" type="button" onclick="window.startForgeRigPlacementMode()">Start Rig Placement</button>
@@ -5170,6 +5325,8 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
     }
 
     const glbUrl =
+      build.output?.forgeRigGlbUrl ||
+      build.forgeRig?.forgeRigGlbUrl ||
       build.output?.riggedRebelGlbUrl ||
       build.output?.riggedGlbUrl ||
       build.rigging?.riggedRebelGlbUrl ||
@@ -6665,4 +6822,18 @@ window.buildForgeGenerationInput = buildForgeGenerationInput;
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(boot3dPreviewPanel, 500);
   });
+})();
+
+
+// Phase 0 admin gate (visual only; the APIs enforce admin on the server). Players never see dev / legacy tools.
+(function forgeAdminGate() {
+  try {
+    const css = document.createElement('style');
+    css.textContent = '.forge-admin-only{display:none !important} html.forge-admin .forge-admin-only{display:revert !important}';
+    document.head.appendChild(css);
+    fetch('/api/admin-session', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => { if (j && j.authenticated) document.documentElement.classList.add('forge-admin'); })
+      .catch(() => {});
+  } catch (e) {}
 })();

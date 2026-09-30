@@ -1,3 +1,4 @@
+import { requireAdmin } from './_guard.mjs';
 const MESHY_ANIMATION_URL = 'https://api.meshy.ai/openapi/v1/animations';
 
 function getRedisConfig() {
@@ -138,6 +139,8 @@ async function saveAnimationTaskToBuild({
 }
 
 export default async function handler(req, res) {
+  // Phase 0: legacy / dev / destructive tool, admin only.
+  if (!requireAdmin(req, res)) return;
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });

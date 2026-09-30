@@ -1,3 +1,5 @@
+import { requireForgeStep } from './_wallet.mjs';
+import { enforceRateLimit, isAllowedAssetUrl, isCleanId, sanitizeDeep } from './_guard.mjs';
 const BUILD_VERSION = 'v0_queue_only';
 const BUILD_STATUS = 'queued_for_future_3d_generation';
 
@@ -73,6 +75,15 @@ function build3dRequestPayload(payload) {
     throw new Error('Missing production reference imageUrl');
   }
 
+  // Phase 0: plain ids and Blob-only image URLs (these fields are rendered on the Forge page).
+  if (!isCleanId(String(sourceConceptId))) throw new Error('Invalid production reference concept ID');
+  for (const [k, v] of [['tokenId', tokenId], ['rebelId', rebelId], ['collectionKey', collectionKey]]) {
+    if (v != null && v !== '' && !isCleanId(String(v), 80)) throw new Error(`Invalid ${k}`);
+  }
+  const backUrl = productionReference.backImageUrl || selectedConcept.backImageUrl || null;
+  if (!isAllowedAssetUrl(imageUrl)) throw new Error('Invalid production reference imageUrl');
+  if (backUrl && !isAllowedAssetUrl(backUrl)) throw new Error('Invalid back imageUrl');
+
   const now = new Date().toISOString();
   const buildId = `build_${Date.now()}`;
 
@@ -83,16 +94,17 @@ function build3dRequestPayload(payload) {
     createdAt: now,
     updatedAt: now,
     sourceConceptId,
-    sourceConceptType: productionReference.conceptType || productionReference.forgeMode || 'production_reference',
+    sourceConceptType: sanitizeDeep(productionReference.conceptType || productionReference.forgeMode || 'production_reference'),
     rebelId,
     tokenId,
     collectionKey,
-    colony: productionReference.colony || selectedConcept.colony || generationInput.colony || null,
-    bodyType: productionReference.bodyType || selectedConcept.bodyType || generationInput.bodyType || 'universal_ant_v1',
+    colony: sanitizeDeep(productionReference.colony || selectedConcept.colony || generationInput.colony || null),
+    bodyType: sanitizeDeep(productionReference.bodyType || selectedConcept.bodyType || generationInput.bodyType || 'universal_ant_v1'),
     sourceImage: {
-      imageStorage: productionReference.imageStorage || selectedConcept.imageStorage || 'vercel_blob',
+      imageStorage: sanitizeDeep(productionReference.imageStorage || selectedConcept.imageStorage || 'vercel_blob'),
       imageUrl,
-      imageBlobPath
+      imageBlobPath,
+      backImageUrl: backUrl
     },
     targetOutput: 'game_ready_3d_character_glb_later',
     productionRules: {
@@ -151,6 +163,11 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
+
+  if (!(await enforceRateLimit(req, res, 'build-create', 20, 86400, '3D builds today'))) return;
+  // Phase 2: paid steps only run inside a forge the Rebel's owner started (admins pass)
+  { const b = req.body || {}, g = b.generationInput || {}, p = b.productionReference || {}, s = b.selectedConcept || {};
+    if (!(await requireForgeStep(req, res, { collectionKey: p.collectionKey || s.collectionKey || g.collectionKey, tokenId: p.tokenId || s.tokenId || g.tokenId, step: 'build' }))) return; }
 
   try {
     const buildRequest = build3dRequestPayload(req.body || {});

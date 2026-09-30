@@ -1,3 +1,4 @@
+import { blobPathOf, enforceRateLimit } from './_guard.mjs';
 import { del } from '@vercel/blob';
 
 function isSafeForgeBlobPath(pathname) {
@@ -22,6 +23,12 @@ function readDeleteImagePayload(reqBody) {
     throw new Error('Invalid Forge Blob path');
   }
 
+  // Phase 0: a URL is only accepted if it points at our Blob store under forge/concepts/ (it used to delete any file).
+  if (imageUrl) {
+    const path = blobPathOf(imageUrl);
+    if (!path || !isSafeForgeBlobPath(path)) throw new Error('Invalid Forge image URL');
+  }
+
   return {
     imageBlobPath,
     imageUrl
@@ -33,6 +40,8 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST, DELETE');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
+
+  if (!(await enforceRateLimit(req, res, 'concept-img-del', 60, 3600, 'deletes'))) return;
 
   try {
     if (!process.env.BLOB_READ_WRITE_TOKEN) {

@@ -1,3 +1,4 @@
+import { requireAdmin } from './_guard.mjs';
 import { NodeIO } from '@gltf-transform/core';
 import { put } from '@vercel/blob';
 
@@ -178,6 +179,8 @@ async function updateBuildRecord({ recordKey, buildRecord, prototypeUrl, prototy
 }
 
 export default async function handler(req, res) {
+  // Phase 0: legacy / dev / destructive tool, admin only.
+  if (!requireAdmin(req, res)) return;
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Method not allowed' });

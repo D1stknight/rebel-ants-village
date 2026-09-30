@@ -421,59 +421,44 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 #admin-login-status.success{
   color:#7cffb2;
 }
-.ant-card-marquee {
+/* Card label: token number always visible (bottom-left), status pill (top-right). No scrolling text. */
+.ant-card-num {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 14px;
-  background: rgba(0,0,0,0.78);
-  color: #c8922a;
-  font-size: 8px;
-  line-height: 14px;
-  letter-spacing: 0.8px;
+  left: 4px;
+  bottom: 4px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.72);
+  color: #e8d3a2;
+  font: 600 9px/15px 'Cinzel', serif;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+}
+.ant-card-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font: 700 7px/14px 'Cinzel', serif;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  pointer-events:none;
+  pointer-events: none;
 }
-
-.ant-card:hover .ant-card-marquee,
-.ant-card.selected .ant-card-marquee {
-  opacity: 1;
+.ant-card-badge.ready {
+  background: #5ecfca;
+  color: #07201f;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 8px rgba(94,207,202,0.55);
 }
-
-.ant-card.forge-playable-card.selected .ant-card-marquee {
-  opacity: 0;
+.ant-card-badge.forged {
+  background: rgba(200,146,42,0.92);
+  color: #1c1305;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35);
 }
-
-.ant-card.forge-playable-card:hover .ant-card-marquee {
-  opacity: 1;
-}
-
-.ant-card-marquee.forge-ready {
-  color: #5ecfca;
-}
-
-.ant-card-marquee span {
-  display: inline-block;
-  min-width: max-content;
-  padding-left: 6px;
-  padding-right: 24px;
-  animation: antCardTextScroll 5.5s ease-in-out infinite alternate;
-}
-
-@keyframes antCardTextScroll {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(-55%);
-  }
-}
+.ant-card.is-ready { border-color: rgba(94,207,202,0.55); }
+.ant-card.has-forge-thumb img { object-fit: cover; }
+.ant-card.is-ready.selected { border-color: #5ecfca; box-shadow: 0 0 22px rgba(94,207,202,0.5); }
 </style>
 </head>
 <body>
@@ -574,6 +559,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ci
 
 <!-- Video background — no Babylon needed for lobby -->
 
+<script src="assets/wallet-auth.js"></script>
 <script>
 // ── NFT CONFIG ──
 const NFT_CONTRACT = '0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221';
@@ -811,16 +797,10 @@ async function loadSelectedRebelMetadata(rebel) {
   if (!rebel || !rebel.tokenId) return rebel;
 
   try {
-    const CONTRACT = '0x96C1469c1C76E3Bb0e37c23a830d0Eea6BCf9221';
-    const API_KEY = '9c35627b295643e4aeb495a43d102928';
-    const url = `https://api.opensea.io/api/v2/metadata/ethereum/${CONTRACT}/${rebel.tokenId}`;
+    // Alchemy first, OpenSea fallback, cached on our server (/api/nft-token works for every configured collection).
+    const url = `/api/nft-token?c=${encodeURIComponent(rebel.collectionKey || 'battle_for_colony')}&t=${encodeURIComponent(rebel.tokenId)}`;
 
-    const r = await fetch(url, {
-      headers: {
-        accept: 'application/json',
-        'x-api-key': API_KEY
-      }
-    });
+    const r = await fetch(url, { headers: { accept: 'application/json' } });
 
     if (!r.ok) throw new Error('metadata status ' + r.status);
 
@@ -997,6 +977,50 @@ async function selectAnt(id) {
   );
 }
 
+// Card status: "ready" = a rigged, playable 3D character (Forge Rigger); "forged" = a Forge 3D model exists but isn't rigged yet.
+// Rebels with a finished Forge character (rigger 2.10 picks, Sept 29). The server active character (set with
+// "Make this my Rebel") is the source of truth; this list is the fallback and the guest-mode showcase.
+// thumb = portrait render of the rigged 3D character (shown instead of the NFT art once a Rebel is Ready).
+const VILLAGE_RIGGED = {
+  '262': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/262/build_1790507312520_forge_rig_thumb-sSIiQnTTHldL3jphQMvGOLxShUXYZ6.jpg' },   // the standard Rebel (Sept 27 rig, kept as Miguel approved it)
+  '469': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/469/build_1790723292427_forge_rig_thumb-ehPSdYTO7YQLT0JyI1knt3Zy5vkUeW.jpg' },
+  '1555': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/1555/build_1790555715921_forge_rig_thumb-8lI4YsoMg6r76F86AMnQj4pVTkg18v.jpg' },
+  '4998': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4998/build_1790562761454_forge_rig_thumb-xL4q8HNOCU1sTT8MuM5acbngeAS7Gi.jpg' },
+  '1738': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/1738/build_1790562740739_forge_rig_thumb-U7v8IqoXmmv1MqWETXcha7qKp2XzWP.jpg' },
+  '3421': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/3421/build_1790563500246_forge_rig_thumb-3TGxeYqs0qzCPyyDj68H1Q1MyE8Zhx.jpg' },
+  '609': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/609/build_1790562737903_forge_rig_thumb-A2y0hjC2OnDvVDOsPHhibxlbPkrc2s.jpg' },
+  '4722': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4722/build_1790563381766_forge_rig_thumb-9DtgRRioXuNbKiuyVNvizgbXR5nQkf.jpg' },
+  '4': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4/build_1790563425986_forge_rig_thumb-pIHzHp8JxvvTnxe2lV28UNpuAlaHeF.jpg' }
+};
+function getRebelForgeStatus(rebel, hasForgeCharacter) {
+  const afc = rebel.activeForgeCharacter || {};
+  if (hasForgeCharacter === undefined) hasForgeCharacter = Boolean(afc.activeGlbUrl || rebel.activeGlbUrl);
+  if (afc.forgeRigGlbUrl || afc.characterBundle?.forgeRigGlbUrl || VILLAGE_RIGGED[String(rebel.tokenId || '')]) return 'ready';
+  if (hasForgeCharacter || rebel.playableType === 'forge_build') return 'forged';
+  return '';
+}
+function getRebelForgeThumb(rebel) {
+  const afc = rebel.activeForgeCharacter || {};
+  return afc.forgeRigThumbUrl || afc.characterBundle?.forgeRigThumbUrl || VILLAGE_RIGGED[String(rebel.tokenId || '')]?.thumb || '';
+}
+function sortRebelsByForgeStatus(list) {
+  const rank = { ready: 0, forged: 1, '': 2 };
+  return list.map((r, i) => [r, i]).sort((a, b) => (rank[getRebelForgeStatus(a[0])] - rank[getRebelForgeStatus(b[0])]) || (a[1] - b[1])).map((x) => x[0]);
+}
+function dedupeForgePlayablesByToken(list) {
+  const seen = new Set();
+  return list.filter((r) => {
+    const key = String(r.tokenId || r.id);
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+}
+function getRebelCardNumber(rebel) {
+  if (rebel.tokenId) return String(rebel.tokenId);
+  const m = /#\s*(\d+)/.exec(rebel.name || '');
+  return m ? m[1] : '';
+}
+
 function buildCard(rebel) {
   const charRow = document.getElementById('char-row');
   const card = document.createElement('div');
@@ -1005,20 +1029,21 @@ function buildCard(rebel) {
   card.onclick = () => selectAnt(rebel.id);
 
   const hasForgeCharacter = Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
-  const labelText = rebel.playableType === 'forge_build'
-    ? 'Saved Forge Playable ✓'
-    : hasForgeCharacter
-      ? '3D Forge Character Ready ✓'
-      : rebel.name;
+  const status = getRebelForgeStatus(rebel, hasForgeCharacter);
+  const tokenNumber = getRebelCardNumber(rebel);
+  card.title = [rebel.name, status === 'ready' ? 'Playable 3D character ready' : status === 'forged' ? '3D character forged' : ''].filter(Boolean).join(' · ');
+  if (status) card.classList.add('is-' + status);
 
   const cardLabel = `
-    <div class="ant-card-marquee ${hasForgeCharacter ? 'forge-ready' : ''}">
-      <span>${labelText}</span>
-    </div>
+    ${tokenNumber ? `<div class="ant-card-num">#${tokenNumber}</div>` : ''}
+    ${status ? `<div class="ant-card-badge ${status}">${status === 'ready' ? 'Ready' : 'Forged'}</div>` : ''}
   `;
 
-  const imageHtml = rebel.image
-    ? `<div class="ant-card-placeholder" style="display:none;">🐜</div><img crossorigin="anonymous" src="${rebel.image}" onload="matchAntCardBackground(this)" onerror="this.onerror=null; this.style.display='none'; this.previousElementSibling.style.display='grid';"/>`
+  const forgeThumb = status === 'ready' ? getRebelForgeThumb(rebel) : '';
+  if (forgeThumb) card.classList.add('has-forge-thumb');
+  const cardImage = forgeThumb || rebel.image;
+  const imageHtml = cardImage
+    ? `<div class="ant-card-placeholder" style="display:none;">🐜</div><img crossorigin="anonymous" src="${cardImage}" onload="matchAntCardBackground(this)" onerror="this.onerror=null; this.style.display='none'; this.previousElementSibling.style.display='grid';"/>`
     : '<div class="ant-card-placeholder">🐜</div>';
 
   card.innerHTML = `${imageHtml}
@@ -1038,18 +1063,26 @@ async function showDefaultCard() {
   };
 
   const defaultRebel = await attachActiveForgeCharacter(starterRebel);
-  const savedForgePlayables = await loadSavedForgePlayableCards();
-  ownedRebels = [defaultRebel, ...savedForgePlayables];
+  // Guest mode: every Rebel with a finished Forge character gets its own card, loaded fresh from the server, so a
+  // new "Make this my Rebel" shows here right away. Older local copies of the same Rebel are dropped.
+  const showcase = await Promise.all(Object.keys(VILLAGE_RIGGED).map((t) => attachActiveForgeCharacter({
+    id: 'rebel_' + t, rebelId: 'rebel_' + t, tokenId: t, name: 'Rebel #' + t, collectionKey: 'battle_for_colony',
+    image: `/api/nft-image?c=battle_for_colony&t=${t}&s=thumb`, imageFull: `/api/nft-image?c=battle_for_colony&t=${t}&s=full`
+  })));
+  const showTokens = new Set(showcase.map((r) => String(r.tokenId)));
+  const savedForgePlayables = (await loadSavedForgePlayableCards()).filter((r) => !showTokens.has(String(r.tokenId || '')));
+  ownedRebels = [defaultRebel, ...sortRebelsByForgeStatus([...showcase, ...dedupeForgePlayablesByToken(savedForgePlayables)])];
 
-  let storedSelectedId = '';
+  let storedSelected = {};
 
   try {
-    storedSelectedId = JSON.parse(localStorage.getItem('selectedRebel') || '{}')?.id || '';
+    storedSelected = JSON.parse(localStorage.getItem('selectedRebel') || '{}') || {};
   } catch(e) {}
 
-  selectedAnt = ownedRebels.some((rebel) => rebel.id === storedSelectedId)
-    ? storedSelectedId
-    : 'ant_1';
+  // the last Rebel picked here or set in the Forge (matched by card id, then by token)
+  const storedCard = ownedRebels.find((rebel) => rebel.id === storedSelected.id) ||
+    (storedSelected.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSelected.tokenId)) : null);
+  selectedAnt = storedCard ? storedCard.id : 'ant_1';
 
   charRow.innerHTML = '';
   ownedRebels.forEach(buildCard);
@@ -1063,26 +1096,11 @@ async function loadNFTs(walletAddress) {
   setStatus('Loading your Rebels...');
 
   try {
-    // Query by collection slug + wallet — gets ALL owned ants, paginated
-    const COLLECTION = 'rebel-ants-battle-for-the-colony';
-    const API_KEY = '9c35627b295643e4aeb495a43d102928';
-    let allRebels = [];
-    let next = null;
-    let pages = 0;
-
-    do {
-      const url = `https://api.opensea.io/api/v2/chain/ethereum/account/${walletAddress}/nfts?collection=${COLLECTION}&limit=50${next ? '&next=' + next : ''}`;
-      const r = await fetch(url, { headers: { 'accept': 'application/json', 'x-api-key': API_KEY } });
-
-      if (!r.ok) throw new Error('status ' + r.status);
-
-      const data = await r.json();
-      allRebels = allRebels.concat(data.nfts || []);
-      next = data.next || null;
-      pages++;
-
-      setStatus('Loading... ' + allRebels.length + ' found');
-    } while (next && pages < 10); // max 500 ants
+    // One call for every configured collection (Alchemy first, OpenSea fallback). Images come from our lazy cache.
+    const r = await fetch(`/api/nft-wallet?address=${encodeURIComponent(walletAddress)}&delegates=1`, { headers: { accept: 'application/json' } });   // + Rebels in delegate.xyz vaults
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.ok) throw new Error(data.error || ('status ' + r.status));
+    const allRebels = data.tokens || [];
 
     if (allRebels.length === 0) {
       setStatus('No Rebels found — showing default');
@@ -1090,14 +1108,22 @@ async function loadNFTs(walletAddress) {
       return;
     }
 
-    const mappedRebels = allRebels.map(n => ({
-      id: 'rebel_' + n.identifier,
-      rebelId: 'rebel_' + n.identifier,
-      name: n.name || ('Rebel #' + n.identifier),
-      image: n.image_url || 'assets/lobby/ant_1.JPG',
-      tokenId: n.identifier,
-      collectionKey: 'battle_for_colony'
-    }));
+    const mappedRebels = allRebels.map((n) => {
+      const key = n.collectionKey || 'battle_for_colony';
+      const id = (key === 'battle_for_colony' ? 'rebel_' : key + '_') + n.tokenId;
+      const traits = normalizeRebelTraits(n.traits);
+      const hasTraits = Object.keys(traits).length > 0;
+      return {
+        id,
+        rebelId: id,
+        name: n.name || ('Rebel #' + n.tokenId),
+        image: n.thumb || n.image || 'assets/lobby/ant_1.JPG',
+        imageFull: n.image || n.thumb || '',
+        tokenId: n.tokenId,
+        collectionKey: key,
+        ...(hasTraits ? { traits, gangName: traits['Gang Names'] || null } : {})
+      };
+    });
 
     setStatus('Checking Forge characters...');
 
@@ -1106,16 +1132,24 @@ async function loadNFTs(walletAddress) {
     );
     const savedForgePlayables = await loadSavedForgePlayableCards();
     const walletIds = new Set(walletRebels.map((rebel) => rebel.id));
-    ownedRebels = [
+    const walletTokens = new Set(walletRebels.map((rebel) => String(rebel.tokenId || '')));
+    // Forged Rebels first (Ready, then Forged), then the rest in wallet order. Saved Forge playables for a
+    // token that is already in the wallet are duplicates of that card, so they are dropped.
+    ownedRebels = sortRebelsByForgeStatus([
       ...walletRebels,
-      ...savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id))
-    ];
+      ...dedupeForgePlayablesByToken(savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id) && !walletTokens.has(String(rebel.tokenId || ''))))
+    ]);
 
     const forgedReadyRebel = ownedRebels.find((rebel) => {
-      return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl);
+      return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl) || getRebelForgeStatus(rebel) === 'ready';
     });
+    const readyCount = ownedRebels.filter((rebel) => getRebelForgeStatus(rebel) === 'ready').length;
 
-    selectedAnt = forgedReadyRebel ? forgedReadyRebel.id : ownedRebels[0].id;
+    // the Rebel last picked here or set in the Forge ("Make this my Rebel") comes first, if this wallet holds it
+    let storedSel = {};
+    try { storedSel = JSON.parse(localStorage.getItem('selectedRebel') || '{}') || {}; } catch(e) {}
+    const storedCard = storedSel.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSel.tokenId)) : null;
+    selectedAnt = storedCard ? storedCard.id : forgedReadyRebel ? forgedReadyRebel.id : ownedRebels[0].id;
 
     charRow.innerHTML = '';
     ownedRebels.forEach(r => buildCard(r));
@@ -1127,7 +1161,7 @@ async function loadNFTs(walletAddress) {
       ' Rebel' +
       (ownedRebels.length > 1 ? 's' : '') +
       ' found' +
-      (forgedReadyRebel ? ' — 3D Forge Character Ready' : '')
+      (readyCount ? ` — ${readyCount} ready to play` : '')
     );
 
     document.getElementById('btn-enter').disabled = false;
@@ -1139,10 +1173,15 @@ async function loadNFTs(walletAddress) {
 }
 
 // Init default card on load
-document.addEventListener('DOMContentLoaded', () => showDefaultCard());
+// Phase 2: a wallet signed in earlier (7-day session) is restored without asking again
+document.addEventListener('DOMContentLoaded', async () => {
+  const addr = window.RebelWallet ? await window.RebelWallet.session() : null;
+  if (addr) restoreSignedInWallet(addr); else showDefaultCard();
+});
 
 // ── WALLET ──
 let walletConnected = false;
+let signingFor = '';   // the account a sign-in is running for (wallets can fire accountsChanged right after connecting)
 let activeWalletProvider = null;
 let activeWalletType = null;
 let walletConnectProvider = null;
@@ -1265,7 +1304,23 @@ function closeWalletModalFromBackdrop(event) {
   if (event.target && event.target.id === 'wallet-modal-backdrop') closeWalletModal();
 }
 
+function restoreSignedInWallet(address) {
+  const btn = document.getElementById('btn-wallet');
+  walletConnected = true;
+  activeWalletProvider = null;
+  activeWalletType = 'session';
+  if (btn) {
+    btn.textContent = address.slice(0,6) + '...' + address.slice(-4);
+    btn.classList.add('connected');
+    btn.title = 'Signed in. Click to sign out';
+  }
+  setStatus('Welcome back. Loading your Rebels...');
+  loadNFTs(address);
+}
+
 function resetWalletUi() {
+  if (window.RebelWallet) window.RebelWallet.signOut();
+  signingFor = '';
   const btn = document.getElementById('btn-wallet');
   walletConnected = false;
   activeWalletProvider = null;
@@ -1318,8 +1373,21 @@ function handleWalletConnected(provider, account, type) {
     btn.title = type === 'walletconnect' ? 'Click to disconnect WalletConnect' : 'Click to disconnect';
   }
   closeWalletModal();
-  setStatus('Wallet connected. Loading Rebels...');
-  loadNFTs(account);
+  // Phase 2: sign in once (free message, no transaction) so the Forge knows this wallet holds its Rebels
+  const acct = String(account).toLowerCase();
+  if (signingFor === acct) return;
+  signingFor = acct;
+  (async () => {
+    let signed = window.RebelWallet ? await window.RebelWallet.session() : null;
+    if (signed !== acct && window.RebelWallet) {
+      setStatus('Sign the message in your wallet to prove it is yours (free, no transaction)...');
+      try { signed = await window.RebelWallet.signIn(provider, account); }
+      catch (e) { signed = null; console.info('Sign-in skipped:', e.message); }
+    }
+    if (btn) btn.title = (signed === acct ? 'Signed in' : 'Not signed in: you can look around, but forging needs a signature') + ' · click to disconnect';
+    setStatus(signed === acct ? 'Signed in. Loading Rebels...' : 'Wallet connected (not signed in). Loading Rebels...');
+    loadNFTs(account);
+  })();
 }
 
 async function disconnectWallet() {
@@ -1441,7 +1509,7 @@ function enterForge() {
   }
 
   setTimeout(() => {
-    window.location.href = 'forge.html';
+    window.location.href = 'forge-v2.html';   // the new Forge room (the old forge.html is admin-only now)
   }, 900);
 }
 

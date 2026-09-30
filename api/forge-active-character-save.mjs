@@ -1,3 +1,6 @@
+import { walletOf, holderOf } from './_wallet.mjs';
+import { enforceRateLimit, isAllowedModelRef, isCleanId, sanitizeDeep } from './_guard.mjs';
+import { isAdminRequest } from './_admin-auth.mjs';
 const ACTIVE_CHARACTER_VERSION = 'v1';
 
 function getRedisConfig() {
@@ -61,6 +64,9 @@ function sanitizeActiveCharacterPayload(payload) {
   const collectionKey = body.collectionKey || build.collectionKey || 'battle_for_colony';
 
   const output = build.output || {};
+  // Automated Forge Rigger result (one GLB, all clips + cloth bones); the village prefers it when present.
+  const forgeRigGlbUrl = output.forgeRigGlbUrl || build.forgeRig?.forgeRigGlbUrl || null;
+  const forgeRigThumbUrl = output.forgeRigThumbUrl || build.forgeRig?.thumbUrl || null;
   const storedAnimations = output.storedAnimations || build.rigging?.storedAnimations || {};
   const storedArmatureAnimations =
     output.storedArmatureAnimations ||
@@ -218,6 +224,8 @@ function sanitizeActiveCharacterPayload(payload) {
     activeGlbUrl,
     staticGlbUrl,
     riggedGlbUrl,
+    forgeRigGlbUrl,
+    forgeRigThumbUrl,
     glbBlobPath,
     storedAnimations,
     animations: {
@@ -313,6 +321,8 @@ function sanitizeActiveCharacterPayload(payload) {
     activeGlbUrl,
     staticGlbUrl,
     riggedGlbUrl,
+    forgeRigGlbUrl,
+    forgeRigThumbUrl,
     idleGlbUrl,
     walkingGlbUrl,
     runningGlbUrl,
@@ -334,6 +344,21 @@ function sanitizeActiveCharacterPayload(payload) {
     animationUrlReport,
     note: 'This record is the selected Forge character bundle for the landing page and future Village character handoff.'
   };
+}
+
+// Phase 0: every URL-like field must be a Forge/Blob/site asset (others are dropped); text is made HTML-inert.
+function scrubActiveCharacter(value, key = '') {
+  if (typeof value === 'string') {
+    if (/(url|thumbnail|image)$/i.test(key)) return isAllowedModelRef(value) ? value : null;
+    return sanitizeDeep(value);
+  }
+  if (Array.isArray(value)) return value.map((v) => scrubActiveCharacter(v, key));
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) out[k] = scrubActiveCharacter(v, k);
+    return out;
+  }
+  return value;
 }
 
 async function saveActiveCharacter(activeCharacter) {
@@ -369,7 +394,36 @@ export default async function handler(req, res) {
   }
 
   try {
-    const activeCharacter = sanitizeActiveCharacterPayload(req.body || {});
+    if (!(await enforceRateLimit(req, res, 'active-save', 60, 3600, 'saves'))) return;
+    const payload = { ...(req.body || {}) };
+    // Pull the stored build record so a rig finished after the page loaded is still picked up.
+    const buildIdForRig = payload.buildId || payload.build?.buildId || payload.buildRecord?.buildId;
+    // Phase 0: the character must come from a real Forge build of the same token (no arbitrary GLBs / other tokens).
+    if (!isCleanId(String(buildIdForRig || ''))) return res.status(400).json({ ok: false, error: 'Missing or invalid buildId' });
+    if (isRedisConfigured() && !isAdminRequest(req)) {
+      const [chk] = await redisPipeline([['GET', `forge:3d-build:v1:${buildIdForRig}`]]);
+      const rec0 = chk?.result ? JSON.parse(chk.result) : null;
+      if (!rec0) return res.status(404).json({ ok: false, error: 'Build not found' });
+      const tok = String(payload.tokenId || payload.build?.tokenId || payload.buildRecord?.tokenId || '');
+      if (tok && rec0.tokenId && String(rec0.tokenId) !== tok) return res.status(400).json({ ok: false, error: 'Build belongs to a different Rebel' });
+      // Phase 2: only the wallet that holds this Rebel can set its character
+      const wallet = walletOf(req);
+      if (!wallet) return res.status(401).json({ ok: false, error: 'Sign in with your wallet to make this your Rebel', code: 'wallet_required' });
+      const h = await holderOf(rec0.collectionKey || payload.collectionKey || 'battle_for_colony', String(rec0.tokenId || tok), wallet, { fresh: true });
+      if (!h.holder) return res.status(403).json({ ok: false, error: 'Only the wallet that holds this Rebel (or its delegate.xyz delegate) can set its character', code: 'not_owner' });
+    }
+    if (buildIdForRig && isRedisConfigured()) {
+      try {
+        const [rec] = await redisPipeline([['GET', `forge:3d-build:v1:${buildIdForRig}`]]);
+        const stored = rec?.result ? JSON.parse(rec.result) : null;
+        if (stored?.output?.forgeRigGlbUrl) {
+          const build = payload.build || payload.buildRecord || {};
+          payload.build = { ...stored, ...build, output: { ...(stored.output || {}), ...(build.output || {}), forgeRigGlbUrl: stored.output.forgeRigGlbUrl, forgeRigThumbUrl: stored.output.forgeRigThumbUrl || null }, forgeRig: stored.forgeRig };
+        }
+      } catch (e) { /* the payload alone still works */ }
+    }
+    const activeCharacter = scrubActiveCharacter(sanitizeActiveCharacterPayload(payload));
+    if (!activeCharacter.activeGlbUrl) return res.status(400).json({ ok: false, error: 'Active GLB must be a Forge asset' });
     const storageResult = await saveActiveCharacter(activeCharacter);
 
     return res.status(200).json({

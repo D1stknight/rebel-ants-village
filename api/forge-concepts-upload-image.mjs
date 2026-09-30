@@ -1,3 +1,5 @@
+import { requireForgeStep } from './_wallet.mjs';
+import { enforceRateLimit, isCleanId } from './_guard.mjs';
 import { put } from '@vercel/blob';
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -64,6 +66,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
+  if (!(await enforceRateLimit(req, res, 'concept-upload', 60, 3600, 'uploads'))) return;
+  // Phase 2: paid steps only run inside a forge the Rebel's owner started (admins pass)
+  { const b = req.body || {}; if (!(await requireForgeStep(req, res, { collectionKey: b.collectionKey, tokenId: b.tokenId, step: 'upload' }))) return; }
+
   try {
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
       return res.status(500).json({
@@ -83,8 +89,8 @@ export default async function handler(req, res) {
       compressed
     } = req.body || {};
 
-    if (!conceptId) {
-      return res.status(400).json({ ok: false, error: 'Missing conceptId' });
+    if (!conceptId || !isCleanId(String(conceptId)) || (tokenId && !isCleanId(String(tokenId), 80)) || (rebelId && !isCleanId(String(rebelId), 80))) {
+      return res.status(400).json({ ok: false, error: 'Missing or invalid conceptId / tokenId' });
     }
 
     if (!rebelId && !tokenId) {

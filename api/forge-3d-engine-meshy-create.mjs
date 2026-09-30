@@ -1,4 +1,9 @@
+import { requireForgeStep } from './_wallet.mjs';
+import { enforceRateLimit, isAllowedAssetUrl } from './_guard.mjs';
+import { isAdminRequest } from './_admin-auth.mjs';
 const MESHY_CREATE_URL = 'https://api.meshy.ai/openapi/v1/image-to-3d';
+// Front + back views -> Meshy multi-image-to-3d (no guessed back of the head)
+const MESHY_MULTI_CREATE_URL = 'https://api.meshy.ai/openapi/v1/multi-image-to-3d';
 const MESHY_ENGINE_VERSION = 'meshy_v1_create';
 
 function getRedisConfig() {
@@ -64,34 +69,47 @@ function readMeshyCreatePayload(payload) {
     throw new Error('Missing production reference imageUrl');
   }
 
+  const backImageUrl =
+    body.backImageUrl ||
+    productionReference.backImageUrl ||
+    buildRequest.sourceImage?.backImageUrl ||
+    null;
+
   return {
     buildId,
     imageUrl,
+    backImageUrl,
     productionReference,
     generationInput,
+    sideImageUrls: Array.isArray(body.sideImageUrls) ? body.sideImageUrls.filter((u) => typeof u === 'string').slice(0, 2) : [],
     requestedOptions: body.options || {}
   };
 }
 
-function buildMeshyRequest({ imageUrl, requestedOptions }) {
+function buildMeshyRequest({ imageUrl, backImageUrl, sideImageUrls, requestedOptions }) {
   const options = requestedOptions || {};
+  // front + back (+ up to two side views, admin): more views, fewer guessed surfaces (mask on the back of the head etc.)
+  const multi = [imageUrl, backImageUrl, ...(sideImageUrls || [])].filter(Boolean).slice(0, 4);
+  const views = multi.length > 1 ? { image_urls: multi } : { image_url: imageUrl };
 
   return {
-    image_url: imageUrl,
+    ...views,
     ai_model: options.ai_model || 'meshy-6',
     should_texture: options.should_texture !== false,
     enable_pbr: options.enable_pbr !== false,
     should_remesh: options.should_remesh !== false,
     topology: options.topology || 'quad',
-    target_polycount: Number(options.target_polycount || 30000),
-    pose_mode: options.pose_mode || 'a-pose',
+    // 30k flattened armor relief into the normal map; ~90k keeps silhouette detail while staying village-friendly
+    target_polycount: Number(options.target_polycount || process.env.FORGE_MESHY_POLYCOUNT || 90000),
+    // 'none' keeps the reference image's own pose (Meshy's forced A-pose spread #4998's bulky arms far from the body)
+    ...(options.pose_mode === 'none' ? {} : { pose_mode: options.pose_mode || 'a-pose' }),
     target_formats: Array.isArray(options.target_formats) && options.target_formats.length
       ? options.target_formats
       : ['glb']
   };
 }
 
-async function updateBuildWithMeshyTask({ buildId, meshyTaskId, meshyRequest, meshyResponse }) {
+async function updateBuildWithMeshyTask({ buildId, meshyTaskId, meshyRequest, meshyResponse, meshyEndpoint = 'image-to-3d' }) {
   if (!isRedisConfigured()) {
     return {
       saved: false,
@@ -131,6 +149,7 @@ async function updateBuildWithMeshyTask({ buildId, meshyTaskId, meshyRequest, me
       provider: 'meshy',
       engineVersion: MESHY_ENGINE_VERSION,
       taskId: meshyTaskId,
+      endpoint: meshyEndpoint,
       status: 'submitted',
       request: meshyRequest,
       response: meshyResponse
@@ -167,9 +186,29 @@ export default async function handler(req, res) {
     }
 
     const createPayload = readMeshyCreatePayload(req.body || {});
+
+    // Phase 0 cost guard: players can only start Meshy for an existing build that has no task yet,
+    // with our reference images and the default model settings. Admins keep full control.
+    const admin = isAdminRequest(req);
+    if (!admin) {
+      if (!(await enforceRateLimit(req, res, 'meshy-create', 6, 86400, '3D generations today'))) return;
+      if (!isAllowedAssetUrl(createPayload.imageUrl) || (createPayload.backImageUrl && !isAllowedAssetUrl(createPayload.backImageUrl))) {
+        return res.status(400).json({ ok: false, error: 'Reference images must come from the Forge' });
+      }
+      const existing = createPayload.buildId ? (await redisPipeline([['GET', getBuildRecordKey(createPayload.buildId)]]))?.[0]?.result : null;
+      if (!existing) return res.status(404).json({ ok: false, error: 'Build not found' });
+      let rec = {}; try { rec = JSON.parse(existing); } catch (e) {}
+      if (rec?.engine?.taskId) return res.status(409).json({ ok: false, error: 'This build already has a 3D generation running or done' });
+      // Phase 2: only inside a forge the Rebel's owner started
+      if (!(await requireForgeStep(req, res, { collectionKey: rec.collectionKey, tokenId: rec.tokenId, step: 'meshy' }))) return;
+      const po = createPayload.requestedOptions || {};
+      createPayload.requestedOptions = po.pose_mode === 'none' ? { pose_mode: 'none' } : {};
+      createPayload.sideImageUrls = (createPayload.sideImageUrls || []).filter((u) => isAllowedAssetUrl(u)).slice(0, 2);   // side views must be Forge assets too
+    }
     const meshyRequest = buildMeshyRequest(createPayload);
 
-    const meshyResponse = await fetch(MESHY_CREATE_URL, {
+    const meshyEndpoint = meshyRequest.image_urls ? 'multi-image-to-3d' : 'image-to-3d';
+    const meshyResponse = await fetch(meshyRequest.image_urls ? MESHY_MULTI_CREATE_URL : MESHY_CREATE_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -195,8 +234,11 @@ export default async function handler(req, res) {
       buildId: createPayload.buildId,
       meshyTaskId,
       meshyRequest,
-      meshyResponse: meshyData
+      meshyResponse: meshyData,
+      meshyEndpoint
     });
+    // Phase 2: the server finisher (api/forge-sweep) watches this build so it finishes even if the player leaves
+    try { await redisPipeline([['SADD', 'forge:pending:v1', String(createPayload.buildId)]]); } catch (e) {}
 
     return res.status(200).json({
       ok: true,
