@@ -20887,7 +20887,8 @@ window.addEventListener('resize',()=>engine.resize());
   starMat.disableLighting = true;
   const stars = [];
   for(let i=0;i<180;i++){
-    const star = BABYLON.MeshBuilder.CreateSphere('s'+i,{diameter:0.5+Math.random()*0.8},scene);
+    // 20-face star (was a full 32-segment sphere: 180 of them were ~830k triangles for dots a few pixels wide)
+    const star = BABYLON.MeshBuilder.CreateIcoSphere('s'+i,{radius:(0.5+Math.random()*0.8)/2, subdivisions:1},scene);
     const theta = Math.random()*Math.PI*2;
     const phi = Math.random()*Math.PI*0.5; // upper hemisphere only
     const r = 480;
