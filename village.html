@@ -7966,10 +7966,38 @@ const hemi=new BABYLON.HemisphericLight("h",new BABYLON.Vector3(0,1,0),scene);
 hemi.intensity=0.65; hemi.diffuse=new BABYLON.Color3(.52,.7,.98);
 hemi.groundColor=new BABYLON.Color3(.55,.58,.48); hemi.specular=new BABYLON.Color3(0,0,0);
 
-const shadows=new BABYLON.ShadowGenerator(512,sun);
+const shadows=new BABYLON.ShadowGenerator(2048,sun);
 shadows.useExponentialShadowMap=true; shadows.bias=0.005;
 shadows.darkness=0.85;
-shadows.getShadowMap().refreshRate = BABYLON.RenderTargetTexture.REFRESHRATE_RENDER_EVERYFIRSTFRAME;
+// Static shadows, drawn once and frozen (no per-frame cost). The old setting name (REFRESHRATE_RENDER_EVERYFIRSTFRAME)
+// doesn't exist in Babylon, so the map was drawn a single time before the village loaded and showed nothing.
+// Now the map is redrawn after the layout loads and after admin edits. Only still objects cast: characters, NPCs,
+// small ants and spinning collectibles are left out (a frozen shadow of a moving thing would stay behind), and so are
+// the hidden GLB sources parked at 9999 (they stretched the shadow area across the whole map).
+shadows.getShadowMap().refreshRate = BABYLON.RenderTargetTexture.REFRESHRATE_RENDER_ONCE;
+const DYNAMIC_SHADOW_TYPES = new Set(['npc', 'small_village_ant', 'collectible', 'collision_proxy', 'quest_target_marker', 'interaction_zone']);
+function isStaticShadowCaster(m) {
+  if (!m || m.isDisposed?.() || m.skeleton) return false; // hidden meshes stay listed (they just don't draw), e.g. outside roots while inside a room
+  let r = m; while (r.parent) r = r.parent;
+  if (r.name === 'playerRoot' || DYNAMIC_SHADOW_TYPES.has(r.metadata?.type) || DYNAMIC_SHADOW_TYPES.has(m.metadata?.type)) return false;
+  m.computeWorldMatrix(true);
+  const c = m.getBoundingInfo().boundingSphere.centerWorld;
+  return Math.abs(c.x) < 500 && Math.abs(c.z) < 500 && c.y > -100;
+}
+function refreshStaticShadows(reason = '') {
+  const map = shadows.getShadowMap();
+  const list = map.renderList || [];
+  const keep = list.filter(isStaticShadowCaster);
+  list.length = 0; keep.forEach(m => list.push(m));
+  map.resetRefreshCounter();
+  if (reason) console.log('Shadows redrawn:', reason, keep.length, 'casters');
+}
+let _shadowRefreshTimer = null;
+function scheduleShadowRefresh(reason = '', delay = 400) {
+  clearTimeout(_shadowRefreshTimer);
+  _shadowRefreshTimer = setTimeout(() => refreshStaticShadows(reason), delay);
+}
+window.refreshStaticShadows = refreshStaticShadows;
 
 // ── PROCEDURAL SKY ───────────────────────────
 const skybox=BABYLON.MeshBuilder.CreateBox("sky",{size:1400},scene);
@@ -19766,6 +19794,7 @@ return Promise.resolve(true);
 // ── MANUAL LOCAL CACHE CONTROL ───────────────────────────────
 let _autoSaveTimer = null;
 function triggerAutoSave() {
+  scheduleShadowRefresh('edit', 500);
   // Intentional: editing now marks the layout dirty only. The world is not
   // serialized after every tiny move/scale/rotate; use Cache Layout Locally or
   // Hard Save Layout from the footer when ready.
@@ -20227,19 +20256,15 @@ function loadWorldLayout(){
     clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
     clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
     const _noShadows = item.type && ASSETS[item.type] && ASSETS[item.type].noShadows;
+    // (was a loop nested inside itself: every mesh was registered once per sibling)
     clone.getChildMeshes().forEach(m => {
       if (!_noShadows) shadows.addShadowCaster(m);
       m.receiveShadows = !_noShadows; m.isPickable = true;
       m._editRoot = clone; // enables admin picker to find parent clone
-     clone.getChildMeshes().forEach(m => {
-  if (!_noShadows) shadows.addShadowCaster(m);
-  m.receiveShadows = !_noShadows; m.isPickable = true;
-  m._editRoot = clone; // enables admin picker to find parent clone
-if (m.material) {
-  m.material.maxSimultaneousLights = 4;
-  if (window._gpuMode === 'webgpu') webgpuCapMaterial4(m.material);
-}
-});
+      if (m.material) {
+        m.material.maxSimultaneousLights = 4;
+        if (window._gpuMode === 'webgpu') webgpuCapMaterial4(m.material);
+      }
     });
   });
 
@@ -20253,6 +20278,8 @@ if (m.material) {
     gizmoManager.scaleGizmoEnabled = false;
   }
   console.log("World layout loaded", data.length, "objects");
+  scheduleShadowRefresh('layout loaded', 600);
+  setTimeout(() => refreshStaticShadows('late assets'), 5000);
   cleanupLeakedInteriorObjects('world layout load');
   dedupeSmallVillageAntRuntime('load');
   dedupeCollectibleRuntime('load');
