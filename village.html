@@ -7979,7 +7979,10 @@ const DYNAMIC_SHADOW_TYPES = new Set(['npc', 'small_village_ant', 'collectible',
 function isStaticShadowCaster(m) {
   if (!m || m.isDisposed?.() || m.skeleton) return false; // hidden meshes stay listed (they just don't draw), e.g. outside roots while inside a room
   let r = m; while (r.parent) r = r.parent;
-  if (r.name === 'playerRoot' || DYNAMIC_SHADOW_TYPES.has(r.metadata?.type) || DYNAMIC_SHADOW_TYPES.has(m.metadata?.type)) return false;
+  // Only placed village objects (layout clones) and the ground. Anything else can move: the player's weapons hang
+  // off rig bones whose root is 'mixamorig_Hips', not playerRoot, and would leave a frozen blade shadow at spawn.
+  if (!(r.metadata?.isClone === true || m.name === 'gnd')) return false;
+  if (DYNAMIC_SHADOW_TYPES.has(r.metadata?.type) || DYNAMIC_SHADOW_TYPES.has(m.metadata?.type)) return false;
   m.computeWorldMatrix(true);
   const c = m.getBoundingInfo().boundingSphere.centerWorld;
   return Math.abs(c.x) < 500 && Math.abs(c.z) < 500 && c.y > -100;
