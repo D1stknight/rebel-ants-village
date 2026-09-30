@@ -4,6 +4,16 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Rebel Ants — The Hidden Village</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/brand/icon-192.png">
+<link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">
+<meta name="theme-color" content="#0a0a14">
+<meta property="og:site_name" content="Rebel Ants Universe">
+<meta property="og:title" content="Rebel Ants — The Hidden Village">
+<meta property="og:description" content="Forge your Rebel Ant in 3D and walk the Hidden Village.">
+<meta property="og:image" content="/assets/brand/og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600&family=Noto+Serif+JP:wght@300;400&display=swap" rel="stylesheet">
@@ -1484,7 +1494,7 @@ async function connectWalletConnect() {
         name: 'Rebel Ants',
         description: 'Rebel Ants Universe wallet connection',
         url: window.location.origin,
-        icons: [new URL('assets/lobby/logo.png', window.location.href).href]
+        icons: [new URL('/assets/brand/icon-512.png', window.location.href).href]
       }
     });
     attachWalletProviderEvents(walletConnectProvider, 'walletconnect');
