@@ -19964,6 +19964,24 @@ function registerUploadedAssetsFromLayout(data) {
   return added;
 }
 
+// ── INSTANCING FOR REPEATED PROPS ──────────
+// Trees, pines, rocks, fences, bamboo, cherry blossoms and the big dojo repeat many times. A clone copies every mesh
+// and costs one draw call per mesh per copy; an instance shares the source mesh and all copies draw together.
+// Only plain GLBs with no per-object material edits are instanced. ?instancing=off falls back to clones.
+const INSTANCED_ASSET_TYPES = new Set(['pine_1', 'tree_1', 'rock_1', 'fence_1', 'bamboo', 'cherry_blossom', 'dojo_9']);
+const INSTANCING_ENABLED = new URLSearchParams(window.location.search).get('instancing') !== 'off';
+function copyAssetSource(type, source, name) {
+  if (INSTANCING_ENABLED && INSTANCED_ASSET_TYPES.has(type) && typeof source?.instantiateHierarchy === 'function') {
+    try {
+      const copy = source.instantiateHierarchy(null, undefined, (src, node) => { node.metadata = src.metadata ? { ...src.metadata } : node.metadata; });
+      if (copy) { copy.name = name; return copy; }
+    } catch(e) {
+      console.warn('Instancing failed, cloning instead:', type, e);
+    }
+  }
+  return source.clone(name);
+}
+
 // Small-ant layout items skipped at load because the small-ant runtime is off in this browser.
 let _heldSmallAntLayoutItems = [];
 
@@ -20241,7 +20259,7 @@ function loadWorldLayout(){
       createMissingAssetPlaceholder(item);
       return;
     }
-    const clone = source.clone(makeCloneName(item.type));
+    const clone = copyAssetSource(item.type, source, makeCloneName(item.type));
     if (!clone) {
       createMissingAssetPlaceholder(item);
       return;
