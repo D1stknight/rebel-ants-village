@@ -22053,6 +22053,12 @@ refreshQuestBuilderOptions();
   const levels = [1 / dpr]; if (dpr >= 1.75) levels.push(1 / 1.5); if (dpr > 1.01) levels.push(1);
   let li = 0, low = 0, high = 0;
   const pinned = qs.get('res') === 'native';
+  // Each sharper level remembers how often it was too slow. It used to bounce forever:
+  // 2x drops to 1.5x at ~40 fps, 1.5x hits 60, climbs back to 2x after 6 s, drops again (FPS readout swinging 35-60).
+  // Now a level that was too slow is retried once after a longer calm spell (30 s); after a second failure it stays off.
+  const fails = levels.map(() => 0);
+  const lastDropAt = levels.map(() => 0);
+  const RETRY_AFTER_MS = 30000, MAX_FAILS = 2;
   setInterval(() => {
     if (document.visibilityState !== 'visible') { low = high = 0; return; }
     const fps = engine.getFps();
@@ -22060,11 +22066,20 @@ refreshQuestBuilderOptions();
     if (low >= 2) {
       low = 0;
       if (window._villageLook.bloom) { window._villageLook.bloom.dispose(); window._villageLook.bloom = null; console.log('Look: bloom off (slow frames)'); return; }
-      if (!pinned && li < levels.length - 1) { li++; engine.setHardwareScalingLevel(levels[li]); console.log('Adaptive resolution: scaling', levels[li].toFixed(2), 'at', fps.toFixed(0), 'fps'); }
+      if (!pinned && li < levels.length - 1) {
+        fails[li]++; lastDropAt[li] = performance.now();
+        li++; engine.setHardwareScalingLevel(levels[li]);
+        console.log('Adaptive resolution: scaling', levels[li].toFixed(2), 'at', fps.toFixed(0), 'fps');
+      }
     } else if (high >= 4 && li > 0 && !pinned) {
-      high = 0; li--; engine.setHardwareScalingLevel(levels[li]); console.log('Adaptive resolution: scaling', levels[li].toFixed(2));
+      const up = li - 1;
+      const canRetry = fails[up] < MAX_FAILS && performance.now() - lastDropAt[up] > RETRY_AFTER_MS;
+      if (canRetry) {
+        high = 0; li = up; engine.setHardwareScalingLevel(levels[li]); console.log('Adaptive resolution: scaling', levels[li].toFixed(2));
+      }
     }
     window._villageLook.resLevel = levels[li];
+    window._villageLook.resFails = fails.slice();
   }, 1500);
 })();
 let t=0;
