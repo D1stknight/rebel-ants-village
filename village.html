@@ -8021,8 +8021,27 @@ const skybox=BABYLON.MeshBuilder.CreateBox("sky",{size:1400},scene);
 const skyMat=new BABYLON.SkyMaterial("sm",scene);
 skyMat.backFaceCulling=false; skyMat.turbidity=5; skyMat.luminance=1.0;
 skyMat.rayleigh=2.5; skyMat.mieCoefficient=0.003; skyMat.mieDirectionalG=0.98;
-skyMat.useSunPosition=true; skyMat.sunPosition=sun.position;
+skyMat.useSunPosition=true; skyMat.sunPosition=sun.position.clone(); // own copy: the sky keeps its look while the shadow sun moves
 skybox.material=skyMat; skybox.infiniteDistance=true;
+
+// Moving sun (Sept 30): the shadow-casting sun follows the real clock, low in the east in the morning, highest at
+// noon, low in the west at sunset, so shadows swing through the day. Elevation stays between 20° and 60° (very low
+// suns stretch shadows across the whole map). At night it rests at the sunrise/sunset position. The frozen shadow map is
+// redrawn only when the sun has moved more than 1.5° (about every 6 minutes by day), never at night.
+let _sunPathLastDir = null;
+function updateSunPathForShadows(h) {
+  if (new URLSearchParams(window.location.search).get('sunpath') === 'off') return;
+  const dayT = Math.min(1, Math.max(0, (h - 6) / 12));
+  const elev = (20 + 40 * Math.sin(Math.PI * dayT)) * Math.PI / 180;
+  const az = Math.PI * dayT;
+  const toSun = new BABYLON.Vector3(Math.cos(elev) * Math.cos(az), Math.sin(elev), -Math.cos(elev) * Math.sin(az));
+  const dir = toSun.scale(-1).normalize();
+  if (_sunPathLastDir && Math.acos(Math.min(1, BABYLON.Vector3.Dot(dir, _sunPathLastDir))) < 1.5 * Math.PI / 180) return;
+  _sunPathLastDir = dir.clone();
+  sun.direction.copyFrom(dir);
+  sun.position.copyFrom(toSun.scale(400)); // shadow origin well outside the village, along the light
+  if (typeof refreshStaticShadows === 'function') refreshStaticShadows();
+}
 
 function updateSky(){
   if (_worklightOn) return; // don't override worklight
@@ -8030,6 +8049,7 @@ function updateSky(){
   const d=Math.max(0,Math.sin(((h/24)-.25)*Math.PI*2));
   skyMat.inclination=-Math.sin(((h/24)-.25)*Math.PI*2)*.5;
   sun.intensity=0.15+d*1.8; hemi.intensity=0.18+d*.45;
+  updateSunPathForShadows(h);
   if(h>=6&&h<9){sun.diffuse=new BABYLON.Color3(1,.62,.3);}
   else if(h>=9&&h<17){sun.diffuse=new BABYLON.Color3(1,.97,.88);}
   else if(h>=17&&h<20){sun.diffuse=new BABYLON.Color3(1,.48,.15);}
