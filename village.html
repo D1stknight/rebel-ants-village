@@ -19656,6 +19656,10 @@ function collectWorldLayoutData() {
     editorLocked: node.metadata.editorLocked === true
   });
   });
+  // Small ants that weren't spawned (runtime off in this browser) are kept as saved, so a save never drops them.
+  if (!SMALL_VILLAGE_ANT_RUNTIME_ENABLED && _heldSmallAntLayoutItems.length) {
+    data.push(..._heldSmallAntLayoutItems.map(item => ({ ...item })));
+  }
   if (QuestBuilderConfig && Object.keys(QuestBuilderConfig).length) {
     data.push({
       type: 'quest_builder_config',
@@ -19916,6 +19920,9 @@ function registerUploadedAssetsFromLayout(data) {
   return added;
 }
 
+// Small-ant layout items skipped at load because the small-ant runtime is off in this browser.
+let _heldSmallAntLayoutItems = [];
+
 function loadWorldLayout(){
   const raw = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem("rebelAntsWorldLayout") : null);
   let data = [];
@@ -19954,11 +19961,13 @@ function loadWorldLayout(){
   for (let i = fireLights.length-1; i>=0; i--) { if (fireLights[i].name && fireLights[i].name.startsWith('lanternPool')) fireLights.splice(i,1); }
 
   // Restore each saved object
+  _heldSmallAntLayoutItems = [];
   data.forEach(item => {
     if (!item.type || !item.position) return;
     if (Math.abs(item.position.x) >= 500 || Math.abs(item.position.z) >= 500) return; // skip stuck
     if (item.type === 'small_village_ant' && !SMALL_VILLAGE_ANT_RUNTIME_ENABLED) {
       console.info('Skipping disabled Small Village Ant layout item:', item.name || item.type);
+      _heldSmallAntLayoutItems.push(item);
       return;
     }
 
