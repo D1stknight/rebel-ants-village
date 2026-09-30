@@ -14758,16 +14758,10 @@ torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0
 // ── FIRE BOWLS ───────────────────────────────
 const fireLights=[];
 
-// Pre-create pool of 20 lantern lights BEFORE ground so shader compiles with all lights
+// Lantern light pool: retired. Lanterns glow with emissive fake lights (Fake Light Director), and nothing ever
+// took a light from this pool, but its 10 switched-off PointLights sat parked at 9999 and every material still
+// shaded them per pixel (16 lights per material instead of 6). Kept as an empty array for the reset code below.
 const _lanternLightPool = [];
-(function initLanternLightPool() {
-  for (let i = 0; i < 10; i++) {
-    const fl = new BABYLON.PointLight('lanternPool_' + i, new BABYLON.Vector3(9999, -999, 9999), scene);
-    fl.diffuse = new BABYLON.Color3(1, .42, .07);
-    fl.intensity = 0; fl.range = 12; fl._b = 2.0; fl._inUse = false;
-    _lanternLightPool.push(fl);
-  }
-})();
 const lanLights=[];
 let lIdx=0;
 
