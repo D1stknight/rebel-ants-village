@@ -19565,6 +19565,7 @@ function collectWorldLayoutData() {
     name: node.name,
     disableGroundSnap: node.metadata.disableGroundSnap === true,
     worldUploadedGlb: node.metadata.worldUploadedGlb === true,
+    assetFile: getLayoutAssetFileForType(node.metadata.type),
     uploadedAutoFitApplied: node.metadata.uploadedAutoFitApplied === true,
     position: { x: savePosition.x, y: savePosition.y, z: savePosition.z },
     rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
@@ -19878,6 +19879,43 @@ function createMissingAssetPlaceholder(item) {
   return root;
 }
 
+// ── UPLOADED GLBs TRAVEL WITH THE LAYOUT ──────────
+// An admin-uploaded GLB used to be registered only in the uploader's browser, so everyone else saw nothing
+// (or a missing-asset box) where it stood. The layout now records the uploaded file next to each item,
+// and every browser registers it from there.
+function getLayoutAssetFileForType(type) {
+  const asset = type ? ASSETS[type] : null;
+  if (!asset || asset._uploaded !== true || asset.procedural) return null;
+  const fromLibrary = getManualUploadedAssetFileName(type);
+  if (fromLibrary) return fromLibrary;
+  const path = String(asset._realPath || asset.path || '');
+  if (!path.startsWith('/assets/buildings/')) return null;
+  return path.split('/').pop() || null;
+}
+
+function isSafeUploadedAssetFile(file) {
+  return typeof file === 'string' && /^[A-Za-z0-9 _.()\-]+\.glb$/i.test(file) && !file.includes('..');
+}
+
+function registerUploadedAssetsFromLayout(data) {
+  if (!Array.isArray(data)) return [];
+  const added = [];
+  data.forEach(item => {
+    const type = item?.type;
+    if (!type || ASSETS[type]) return;
+    const file = item.assetFile || (item.worldUploadedGlb === true ? type + '.glb' : null);
+    if (!isSafeUploadedAssetFile(file)) return;
+    ASSETS[type] = { path: '/assets/buildings/' + file, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _uploaded: true, noGroundSnap: true };
+    added.push(type);
+    try {
+      const library = getUploadedAssets();
+      if (!library.some(a => a.key === type)) { library.push({ key: type, file }); setUploadedAssets(library); }
+    } catch(e) {}
+  });
+  if (added.length) console.log('Uploaded GLBs registered from the layout:', added);
+  return added;
+}
+
 function loadWorldLayout(){
   const raw = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem("rebelAntsWorldLayout") : null);
   let data = [];
@@ -19885,6 +19923,7 @@ function loadWorldLayout(){
     try { data = JSON.parse(raw); } catch(e) { data = []; }
   }
   if (!Array.isArray(data)) data = [];
+  registerUploadedAssetsFromLayout(data);
   const sanitizedLayout = sanitizeWorldLayoutData(data, 'load');
   data = sanitizedLayout.data;
   if (sanitizedLayout.removedSmallAnts || sanitizedLayout.removedCollectibles || sanitizedLayout.removedInteriorLeaks) {
@@ -22339,6 +22378,7 @@ function waitForWorldAndLoadLayout() {
     restoreUploadedAssets({ loadSources:false });
   }
   if (!waitForWorldAndLoadLayout._requiredKeys) {
+    registerUploadedAssetsFromLayout(getCachedWorldLayoutDataForStartup());
     waitForWorldAndLoadLayout._requiredKeys = getStartupRequiredAssetKeys();
     VillageStartupRuntime.requiredAssetKeys = waitForWorldAndLoadLayout._requiredKeys;
     waitForWorldAndLoadLayout._requiredKeys.forEach(loadAssetSource);
