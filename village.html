@@ -1555,6 +1555,14 @@ const FACTION_VILLAGES = ['ronin','samurai','bushi','warrior','shogun','buke','k
 const urlVillageId = new URLSearchParams(window.location.search).get('village') || 'hub';
 const CURRENT_VILLAGE_ID = VILLAGE_REGISTRY[urlVillageId] ? urlVillageId : 'hub';
 const CURRENT_VILLAGE = VILLAGE_REGISTRY[CURRENT_VILLAGE_ID];
+// Shadow preview: ?shadows=all lets buildings, trees and rocks cast and receive shadows, at a stronger shade, so the
+// look can be judged before changing the default. Lanterns, glows, mist, signs, gates and characters stay shadowless.
+const SHADOW_PREVIEW = new URLSearchParams(window.location.search).get('shadows') === 'all';
+const SHADOW_PREVIEW_SKIP = /lantern|glow|mist|sign|gate|ant|chest|banner/i;
+function assetSkipsShadows(type) {
+  if (!type || !ASSETS[type]?.noShadows) return false;
+  return !SHADOW_PREVIEW || SHADOW_PREVIEW_SKIP.test(type);
+}
 const WORLD_LAYOUT_STORAGE_KEY = `rebelAntsWorldLayout:${CURRENT_VILLAGE_ID}`;
 const PLAYER_ONBOARDING_SEEN_KEY = 'rebelAntsHubOnboardingSeen:v1';
 window.REBEL_ANTS_VILLAGES = VILLAGE_REGISTRY;
@@ -4037,7 +4045,7 @@ function refreshStaticFreezing(force = false) {
 function shouldDisableDecorativeShadow(node) {
   const type = getPerfNodeType(node);
   if (!type) return false;
-  if (ASSETS[type]?.noShadows) return true;
+  if (assetSkipsShadows(type)) return true;
   if (type.includes('lantern') || type.includes('glow') || type.includes('mist')) return true;
   if (type === 'collision_proxy' || type === 'terrain_stamp' || type === 'collectible') return true;
   return false;
@@ -7968,7 +7976,8 @@ hemi.groundColor=new BABYLON.Color3(.55,.58,.48); hemi.specular=new BABYLON.Colo
 
 const shadows=new BABYLON.ShadowGenerator(2048,sun);
 shadows.useExponentialShadowMap=true; shadows.bias=0.005;
-shadows.darkness=0.85;
+shadows.darkness=0.85; // 0 = black shadows, 1 = none: 0.85 is only a faint 15% shade
+if (SHADOW_PREVIEW) { shadows.darkness=0.45; shadows.useExponentialShadowMap=false; shadows.usePercentageCloserFiltering=true; shadows.filteringQuality=BABYLON.ShadowGenerator.QUALITY_MEDIUM; shadows.bias=0.0015; shadows.normalBias=0.02; console.log('Shadow preview on (?shadows=all)'); }
 // Static shadows, drawn once and frozen (no per-frame cost). The old setting name (REFRESHRATE_RENDER_EVERYFIRSTFRAME)
 // doesn't exist in Babylon, so the map was drawn a single time before the village loaded and showed nothing.
 // Now the map is redrawn after the layout loads and after admin edits. Only still objects cast: characters, NPCs,
@@ -20258,7 +20267,7 @@ function loadWorldLayout(){
     clone.position = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
     clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
     clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
-    const _noShadows = item.type && ASSETS[item.type] && ASSETS[item.type].noShadows;
+    const _noShadows = assetSkipsShadows(item.type);
     // (was a loop nested inside itself: every mesh was registered once per sibling)
     clone.getChildMeshes().forEach(m => {
       if (!_noShadows) shadows.addShadowCaster(m);
