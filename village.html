@@ -19742,6 +19742,7 @@ return Promise.resolve(true);
       _layoutDirty = false;
       _lastHardSaveAt = Date.now();
       localStorage.setItem('rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID, String(_lastHardSaveAt));
+      if (result.githubContentSha) safeStorageSet(localStorage, 'rebelAntsLayoutRemoteSha:' + CURRENT_VILLAGE_ID, result.githubContentSha);
       updateLayoutCacheStatus();
      showToast('✓ Saved to GitHub — ' + data.length + ' objects');
       return true;
@@ -22198,35 +22199,86 @@ Object.keys(ASSETS).filter(key => ASSETS[key]?.procedural).forEach(key => loadAs
 
 
 // ── LOADING SCREEN + WORLD INIT ──────────────────
-function shouldKeepLocalLayoutCacheOverRemote() {
-  const localJson = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem('rebelAntsWorldLayout') : null);
-  if (!localJson) return false;
-  const localAt = Number(localStorage.getItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID) || 0);
-  const hardAt = Number(localStorage.getItem('rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID) || 0);
-  return localAt > hardAt;
+const LAYOUT_REMOTE_SHA_KEY = 'rebelAntsLayoutRemoteSha:' + CURRENT_VILLAGE_ID;
+
+function getLocalLayoutCacheRaw() {
+  return safeStorageGet(localStorage, WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? safeStorageGet(localStorage, 'rebelAntsWorldLayout') : null);
+}
+
+// Local edits win over the saved layout only for a signed-in admin who cached edits after their last hard save.
+// Players always get the saved layout, so an old copy in their browser can never hide newer saves.
+async function shouldKeepLocalLayoutCacheOverRemote(remoteSha) {
+  if (!getLocalLayoutCacheRaw()) return false;
+  const localAt = Number(safeStorageGet(localStorage, 'rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID) || 0);
+  const hardAt = Number(safeStorageGet(localStorage, 'rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID) || 0);
+  if (!(localAt > hardAt)) return false;
+  if (!(await hasActiveAdminSession())) return false;
+  const baseSha = safeStorageGet(localStorage, LAYOUT_REMOTE_SHA_KEY);
+  if (remoteSha && baseSha && remoteSha !== baseSha) {
+    console.warn('World layout: saved layout changed since your local edits', { baseSha, remoteSha });
+    setTimeout(() => showToast('⚠ This village was saved from another browser since your local edits. Hard Save will replace that save.'), 4000);
+  }
+  return true;
+}
+
+function storeRemoteLayoutInCache(layout, sha) {
+  const layoutJson = JSON.stringify(layout);
+  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, layoutJson);
+  if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem("rebelAntsWorldLayout", layoutJson);
+  if (sha) safeStorageSet(localStorage, LAYOUT_REMOTE_SHA_KEY, sha);
+}
+
+// The layout shipped with the site. Used only when the layout service can't be reached and this browser has no copy yet.
+async function fetchStaticWorldLayout() {
+  const path = CURRENT_VILLAGE?.layoutPath;
+  if (!path) return null;
+  try {
+    const resp = await fetch('/' + path.replace(/^\/+/, ''), { cache: 'no-store' });
+    if (resp.status === 404) return [];
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return Array.isArray(data) ? data : null;
+  } catch(e) {
+    console.warn('Static world layout unavailable:', e);
+    return null;
+  }
 }
 
 async function initWorldLayout() {
   setSt('Village: loading saved layout...');
+  let remote = null;
   try {
     const resp = await fetch(`/api/world-layout?village=${encodeURIComponent(CURRENT_VILLAGE_ID)}`);
     if (resp.ok) {
       const d = await resp.json();
-      if (d.ok && Array.isArray(d.layout)) {
-        if (shouldKeepLocalLayoutCacheOverRemote()) {
-          console.log("Keeping newer local layout cache:", CURRENT_VILLAGE_ID);
-        } else {
-          const layoutJson = JSON.stringify(d.layout);
-          localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, layoutJson);
-          if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem("rebelAntsWorldLayout", layoutJson);
-          console.log("Layout restored from GitHub:", CURRENT_VILLAGE_ID, d.layout.length, "objects");
-        }
-      }
+      if (d.ok && Array.isArray(d.layout)) remote = { layout: d.layout, sha: d.sha || null };
     }
-    setSt('Village: layout cache ready.');
+    if (!remote) console.warn('World layout service did not return a layout. Status:', resp.status);
   } catch(e) {
     console.warn("Could not load layout from GitHub", e);
-    setSt('Village: using cached layout.');
+  }
+
+  try {
+    if (remote) {
+      if (await shouldKeepLocalLayoutCacheOverRemote(remote.sha)) {
+        console.log("Keeping newer local layout cache:", CURRENT_VILLAGE_ID);
+      } else {
+        storeRemoteLayoutInCache(remote.layout, remote.sha);
+        console.log("Layout restored from GitHub:", CURRENT_VILLAGE_ID, remote.layout.length, "objects");
+      }
+      setSt('Village: layout cache ready.');
+    } else if (getLocalLayoutCacheRaw()) {
+      setSt('Village: using cached layout.');
+    } else {
+      const fallback = await fetchStaticWorldLayout();
+      if (fallback) {
+        storeRemoteLayoutInCache(fallback, null);
+        console.log("Layout loaded from the site copy:", CURRENT_VILLAGE_ID, fallback.length, "objects");
+      }
+      setSt('Village: using built-in layout.');
+    }
+  } catch(e) {
+    console.warn("Could not prepare the layout cache", e);
   }
 
   try {
