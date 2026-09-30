@@ -5,9 +5,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": -1.6864758440264917e-15,
+      "x": 3.008712644717498e-16,
       "y": 0.10000000149011612,
-      "z": -28.2288761138916
+      "z": -44.45681381225586
     },
     "rotation": {
       "x": 0,
@@ -43904,6 +43904,83 @@
           }
         ],
         "updatedAt": "2026-05-31T17:41:59.369Z"
+      }
+    }
+  },
+  {
+    "type": "quest_builder_config",
+    "name": "questBuilderConfig",
+    "position": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "quests": {
+      "hub-forge-awaits": {
+        "questId": "hub-forge-awaits",
+        "title": "The Forge Awaits",
+        "type": "Hub",
+        "chapter": "",
+        "village": "hub",
+        "primaryNpc": "",
+        "description": "",
+        "objectiveType": "enterInterior",
+        "objectiveText": "Visit the forge interior.",
+        "objectives": [
+          "Visit the forge interior."
+        ],
+        "targetMarkerId": null,
+        "targetType": "Interior",
+        "radius": 8,
+        "targetNpcId": null,
+        "targetVillageId": null,
+        "targetInteriorId": null,
+        "targetDoorId": null,
+        "targetObjectId": null,
+        "nextQuestId": null,
+        "prerequisiteQuestId": null,
+        "prerequisites": [],
+        "journalEntryId": null,
+        "journalTitle": "The Forge Awaits",
+        "journalText": "",
+        "journalEntry": "",
+        "badgeRewardId": null,
+        "badgeProgressAmount": 0,
+        "progressionRewardAmount": 40,
+        "enabled": true,
+        "archived": false,
+        "custom": false,
+        "customFromQuestBuilder": false,
+        "updatedAt": "2026-06-08T00:00:44.236Z",
+        "steps": [
+          {
+            "id": "enterinterior",
+            "objective": "Visit the forge interior.",
+            "objectiveType": "enterInterior",
+            "targetMarkerId": null,
+            "targetType": "Interior",
+            "radius": 8,
+            "targetNpcId": null,
+            "targetVillageId": null,
+            "targetInteriorId": null,
+            "targetDoorId": null,
+            "targetObjectId": null
+          },
+          {
+            "id": "complete",
+            "objective": "Completed: The Forge Awaits"
+          }
+        ]
       }
     }
   }
