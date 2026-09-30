@@ -3546,6 +3546,15 @@ lantern_1: {
     rotation: new BABYLON.Vector3(0, Math.PI, 0),
     noShadows: true
   },
+  // uploaded in the admin panel (Sept); registered here so every browser loads it, not only the uploader's
+  // (other browsers showed red missing-asset boxes where the books stand)
+  book: {
+    path: '/assets/buildings/book.glb',
+    scale: 1.0,
+    rotation: new BABYLON.Vector3(0, Math.PI, 0),
+    _uploaded: true,
+    noGroundSnap: true
+  },
    toro_lantern: {
     procedural: true,
     scale: 1.0,
@@ -4073,7 +4082,7 @@ function applyWalkModeHelperVisibility(force = false) {
     const isTerrainHelper = type === 'terrain_stamp' || (type === 'collision_proxy' && mesh.metadata?.terrainToolPatch === true);
     const isManualHelper = type === 'collision_proxy' && !isTerrainHelper;
     const isZoneHelper = type === 'interaction_zone' || type === 'interior_entrance' || mesh.name?.startsWith('interactionZone_') || mesh.name?.startsWith('interiorEntrance_');
-    const isPlacementHelper = mesh.metadata?.isAdminPlacementMarker || mesh.name?.includes('BrushPreview') || mesh.name?.startsWith('patrolRoute');
+    const isPlacementHelper = mesh.metadata?.isAdminPlacementMarker || mesh.name?.includes('BrushPreview') || mesh.name?.startsWith('patrolRoute') || mesh.name?.startsWith('missingAsset');   // missing-asset boxes: editor only
     const isInteriorHelper = mesh.metadata?.isInteriorVideoHelper === true || (mesh.metadata?.isInteriorNftFrameHelper === true && mesh.metadata?.isInteriorNftFrameBorder !== true) || mesh.metadata?.isInteriorExitHelper === true;
     const isQuestMarkerHelper = mesh.metadata?.questTargetPart && !isActivePlayerQuestMarkerMesh(mesh);
     if (!isManualHelper && !isTerrainHelper && !isZoneHelper && !isPlacementHelper && !isInteriorHelper && !isQuestMarkerHelper) return;
