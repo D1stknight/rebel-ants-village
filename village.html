@@ -14931,6 +14931,14 @@ function addTrigger(cfg){
   t.position=new BABYLON.Vector3(cfg.x,15,cfg.z); t.isPickable=true; t.visibility=0;
   BUILDINGS.push({mesh:t,...cfg});
 }
+// Removes a click trigger (and its invisible box) by id. Sign edits used to stack a new box on every apply.
+function removeTrigger(id){
+  for(let i=BUILDINGS.length-1;i>=0;i--){
+    if(BUILDINGS[i].id!==id) continue;
+    try { BUILDINGS[i].mesh?.dispose(); } catch(e) {}
+    BUILDINGS.splice(i,1);
+  }
+}
 
 // Pagoda roof helper
 function pagodaRoof(x,y,z,w,d,col,ry=0,tiers=2){
@@ -22426,7 +22434,7 @@ function applyZoneSignTextures() {
   scene.meshes.filter(m => m.name && m.name.startsWith('zoneTextPlane_')).forEach(m => m.dispose());
   // Remove old triggers driven by signs
   _signTriggers = _signTriggers || [];
-  _signTriggers.forEach(id => removeTrigger && removeTrigger(id));
+  _signTriggers.forEach(id => removeTrigger(id));
   _signTriggers = [];
 
   const clones = scene.transformNodes.filter(n =>
@@ -22539,13 +22547,16 @@ function applySignEditor() {
   const cfg = { label, sub, desc, icon, color, clickable, buttons };
   selectedObject.metadata.signConfig = cfg;
   renderSignTexture(selectedObject, cfg);
-  if (typeof removeTrigger === 'function') removeTrigger('sign_'+selectedObject.name);
+  removeTrigger('sign_'+selectedObject.name);
+  _signTriggers = _signTriggers.filter(id => id !== 'sign_'+selectedObject.name);
   if (clickable) {
     addTrigger({ id:'sign_'+selectedObject.name, x:selectedObject.position.x, z:selectedObject.position.z,
       title:label, sub:sub, icon:icon||'🏯', color:color, desc:desc, actions:buttons });
+    _signTriggers.push('sign_'+selectedObject.name);
   }
-  saveWorldLayout();
-  showToast('✅ Sign saved: ' + label);
+  // Keep the edit locally; Hard Save publishes it (this used to commit to GitHub on every apply).
+  saveWorldLayout(false);
+  showToast('✅ Sign updated: ' + label + ' — Hard Save to publish');
 }
 
 function applyToroColor() {
@@ -22556,8 +22567,8 @@ function applyToroColor() {
   if (selectedObject.metadata._toroFlickerObserver) scene.onBeforeRenderObservable.remove(selectedObject.metadata._toroFlickerObserver);
   selectedObject.metadata._toroFlickerObserver = null;
   buildToro(selectedObject, color);
-  saveWorldLayout();
-  showToast('🏯 Lantern color updated');
+  saveWorldLayout(false);
+  showToast('🏯 Lantern color updated — Hard Save to publish');
 }
 
 function resolveLanternClone(node) {
