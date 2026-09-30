@@ -5407,6 +5407,33 @@ function buildAmbientGlow(root, glowColor, glowBrightness, glowShape, glowWidth,
 // ── TŌRŌ LANTERN BUILDER ─────────────────────────────────────
 // Traditional Japanese stone lantern (tōrō) built from primitives
 // All emissive — zero performance cost, unlimited placement
+// Shared across every tōrō: the stone/iron parts are instances of one hidden template per part (same look, one draw
+// call per part for all lanterns instead of one per lantern), and the flame / floor-glow textures are drawn once.
+// Glow and flame materials stay per lantern because each lantern flickers and can have its own colour.
+const ToroShared = { mats: null, templates: {}, flameTex: null, floorGlowTex: null };
+function getToroSharedMaterial(key, color) {
+  ToroShared.mats = ToroShared.mats || {};
+  if (!ToroShared.mats[key]) {
+    const m = new BABYLON.StandardMaterial('toroShared_' + key, scene);
+    m.diffuseColor = color;
+    m.maxSimultaneousLights = 4;
+    ToroShared.mats[key] = m;
+  }
+  return ToroShared.mats[key];
+}
+function getToroTemplate(key, make, material) {
+  const existing = ToroShared.templates[key];
+  if (existing && !existing.isDisposed()) return existing;
+  const t = make();
+  t.name = 'toroTemplate_' + key;
+  t.material = material;
+  t.position.set(0, -10000, 0); // parked out of view; instances render wherever they are
+  t.isPickable = false;
+  t.metadata = { isToroTemplate: true };
+  ToroShared.templates[key] = t;
+  return t;
+}
+
 function buildToro(root, glowColor) {
   glowColor = glowColor || '#ffdd88';
 
@@ -5414,27 +5441,9 @@ function buildToro(root, glowColor) {
   const stone = new BABYLON.Color3(0.25, 0.22, 0.19);
   const darkStone = new BABYLON.Color3(0.14, 0.12, 0.10);
   const iron = new BABYLON.Color3(0.10, 0.09, 0.08);
-
-  const stoneMat = () => {
-    const m = new BABYLON.StandardMaterial('firebowlStone_' + Math.random(), scene);
-    m.diffuseColor = stone;
-    m.maxSimultaneousLights = 4;
-    return m;
-  };
-
-  const darkStoneMat = () => {
-    const m = new BABYLON.StandardMaterial('firebowlDarkStone_' + Math.random(), scene);
-    m.diffuseColor = darkStone;
-    m.maxSimultaneousLights = 4;
-    return m;
-  };
-
-  const ironMat = () => {
-    const m = new BABYLON.StandardMaterial('firebowlIron_' + Math.random(), scene);
-    m.diffuseColor = iron;
-    m.maxSimultaneousLights = 4;
-    return m;
-  };
+  const stoneMat = getToroSharedMaterial('stone', stone);
+  const darkStoneMat = getToroSharedMaterial('darkStone', darkStone);
+  const ironMat = getToroSharedMaterial('iron', iron);
 
   const emberMat = () => {
     const m = new BABYLON.StandardMaterial('firebowlEmber_' + Math.random(), scene);
@@ -5451,61 +5460,56 @@ function buildToro(root, glowColor) {
     mesh._editRoot = root;
     return mesh;
   };
+  const part = (key, name, make, material) => attach(getToroTemplate(key, make, material).createInstance(name));
 
   // ── JAPANESE FIREBOWL BODY ─────────────────────────────
 
   // Broad octagonal stone footing
-  const base0 = attach(BABYLON.MeshBuilder.CreateCylinder(
+  const base0 = part('base0', 'fbBase0', () => BABYLON.MeshBuilder.CreateCylinder(
     'fbBase0',
     { diameterTop: 2.15, diameterBottom: 2.35, height: 0.22, tessellation: 8 },
     scene
-  ));
-  base0.material = stoneMat();
+  ), stoneMat);
   base0.position.y = 0.11;
 
   // Smaller raised step
-  const base1 = attach(BABYLON.MeshBuilder.CreateCylinder(
+  const base1 = part('base1', 'fbBase1', () => BABYLON.MeshBuilder.CreateCylinder(
     'fbBase1',
     { diameterTop: 1.55, diameterBottom: 1.75, height: 0.22, tessellation: 8 },
     scene
-  ));
-  base1.material = darkStoneMat();
+  ), darkStoneMat);
   base1.position.y = 0.33;
 
   // Short pedestal
-  const pedestal = attach(BABYLON.MeshBuilder.CreateCylinder(
+  const pedestal = part('pedestal', 'fbPedestal', () => BABYLON.MeshBuilder.CreateCylinder(
     'fbPedestal',
     { diameterTop: 0.72, diameterBottom: 0.92, height: 0.72, tessellation: 8 },
     scene
-  ));
-  pedestal.material = stoneMat();
+  ), stoneMat);
   pedestal.position.y = 0.80;
 
   // Collar under bowl
-  const collar = attach(BABYLON.MeshBuilder.CreateCylinder(
+  const collar = part('collar', 'fbCollar', () => BABYLON.MeshBuilder.CreateCylinder(
     'fbCollar',
     { diameterTop: 1.10, diameterBottom: 0.78, height: 0.22, tessellation: 8 },
     scene
-  ));
-  collar.material = darkStoneMat();
+  ), darkStoneMat);
   collar.position.y = 1.27;
 
   // Main bowl body
-  const bowl = attach(BABYLON.MeshBuilder.CreateCylinder(
+  const bowl = part('bowl', 'fbBowl', () => BABYLON.MeshBuilder.CreateCylinder(
     'fbBowl',
     { diameterTop: 2.15, diameterBottom: 1.28, height: 0.58, tessellation: 32 },
     scene
-  ));
-  bowl.material = ironMat();
+  ), ironMat);
   bowl.position.y = 1.62;
 
   // Thick bowl rim
-  const rim = attach(BABYLON.MeshBuilder.CreateTorus(
+  const rim = part('rim', 'fbRim', () => BABYLON.MeshBuilder.CreateTorus(
     'fbRim',
     { diameter: 2.06, thickness: 0.16, tessellation: 48 },
     scene
-  ));
-  rim.material = darkStoneMat();
+  ), darkStoneMat);
   rim.position.y = 1.92;
   rim.rotation.x = Math.PI / 2;
 
@@ -5550,7 +5554,7 @@ function buildToro(root, glowColor) {
     return tex;
   }
 
-  const flameTexture = makeFlameTexture('firebowlFlameTex_' + Math.random());
+  const flameTexture = ToroShared.flameTex || (ToroShared.flameTex = makeFlameTexture('firebowlFlameTex_shared'));
 
   function makeFlame(name, width, height, y, rotY, alpha) {
     const flame = attach(BABYLON.MeshBuilder.CreatePlane(
@@ -5609,7 +5613,7 @@ function buildToro(root, glowColor) {
     return tex;
   }
 
-  const floorGlowTexture = makeFloorGlowTexture('firebowlFloorGlowTex_' + Math.random());
+  const floorGlowTexture = ToroShared.floorGlowTex || (ToroShared.floorGlowTex = makeFloorGlowTexture('firebowlFloorGlowTex_shared'));
 
   function makeGlowDisc(name, radius, y, alpha, strength) {
     const disc = attach(BABYLON.MeshBuilder.CreateDisc(name, { radius, tessellation: 56 }, scene));
@@ -29260,7 +29264,9 @@ function disposeLayoutNodeForHistory(node) {
   if (node.metadata?.type === 'small_village_ant') {
     SmallVillageAntManager.roots = SmallVillageAntManager.roots.filter(root => root !== node);
   }
-  try { node.dispose(false, true); } catch(e) {}
+  // Keep materials: GLB copies share their source's materials (clones and instances alike) and tōrō parts share
+  // theirs, so disposing materials here broke every other copy after an undo. An admin-only undo can leak a few.
+  try { node.dispose(false, false); } catch(e) {}
 }
 
 function createLayoutNodeForHistory(item) {
