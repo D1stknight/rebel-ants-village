@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terrain Lab</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+html,body{margin:0;height:100%;background:#0c1514;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#e8efe9}
+#c{width:100%;height:100%;display:block;outline:none;touch-action:none}
+#ui{position:fixed;top:12px;left:12px;background:rgba(10,18,17,.82);border:1px solid rgba(232,197,106,.35);border-radius:8px;padding:12px 14px;width:280px;display:grid;gap:9px;font-size:13px}
+#ui h1{margin:0;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:#e8c56a}
+#ui .looks{display:grid;gap:6px}
+#ui button{background:rgba(94,207,202,.08);color:#d9f3f1;border:1px solid rgba(94,207,202,.35);border-radius:6px;padding:7px 9px;font:inherit;text-align:left;cursor:pointer}
+#ui button.on{background:rgba(94,207,202,.28);border-color:#5ecfca;color:#fff}
+#ui label{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
+#ui input[type=range]{width:100%}
+#stats{font:12px ui-monospace,Menlo,monospace;color:#9fdcd8;line-height:1.5}
+#help{color:#aab8b4;font-size:12px}
+#busy{position:fixed;inset:0;display:grid;place-items:center;background:rgba(5,10,10,.55);font-size:16px;letter-spacing:.1em;color:#e8c56a}
+</style>
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <h1>Terrain Lab</h1>
+  <div class="looks">
+    <button id="lookA">1 · Today's terrain</button>
+    <button id="lookB">2 · New terrain (eroded hills, mountains)</button>
+    <button id="lookC">3 · New terrain + grass, pines &amp; rocks</button>
+  </div>
+  <label>Time <input id="tod" type="range" min="6" max="19.5" step="0.25" value="15"><span id="todv">15:00</span></label>
+  <div id="stats">…</div>
+  <div id="help">WASD / arrows walk · Shift run · drag to look · scroll to zoom. Test page only: the village is not changed.</div>
+</div>
+<div id="busy">Building terrain…</div>
+<script>
+(async () => {
+const qs = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const engine = new BABYLON.Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true });
+const scene = new BABYLON.Scene(engine);
+scene.clearColor = new BABYLON.Color4(.62, .72, .82, 1);
+scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogDensity = 0.0016; scene.fogColor = new BABYLON.Color3(.66, .75, .84);
+// same look as the village
+const ip = scene.imageProcessingConfiguration, I = BABYLON.ImageProcessingConfiguration;
+ip.toneMappingEnabled = true; ip.toneMappingType = I.TONEMAPPING_KHR_PBR_NEUTRAL !== undefined ? I.TONEMAPPING_KHR_PBR_NEUTRAL : I.TONEMAPPING_STANDARD;
+ip.exposure = 1.05; ip.contrast = 1.12;
+const cc = new BABYLON.ColorCurves(); cc.globalSaturation = 12; cc.highlightsHue = 40; cc.highlightsDensity = 15; cc.highlightsSaturation = 20; cc.shadowsHue = 220; cc.shadowsDensity = 12; cc.shadowsSaturation = 10;
+ip.colorCurvesEnabled = true; ip.colorCurves = cc; ip.vignetteEnabled = true; ip.vignetteWeight = 1.1; ip.vignetteStretch = .45; ip.vignetteColor = new BABYLON.Color4(.06,.04,.03,0); ip.vignetteBlendMode = I.VIGNETTEMODE_MULTIPLY;
+
+const sun = new BABYLON.DirectionalLight('sun', new BABYLON.Vector3(-.6, -.6, .4), scene);
+const hemi = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0, 1, 0), scene);
+hemi.diffuse = new BABYLON.Color3(.52, .7, .98); hemi.groundColor = new BABYLON.Color3(.55, .58, .48); hemi.specular = BABYLON.Color3.Black();
+const sky = BABYLON.MeshBuilder.CreateBox('sky', { size: 6000 }, scene);
+const skyMat = new BABYLON.SkyMaterial('sm', scene); skyMat.backFaceCulling = false; skyMat.turbidity = 5; skyMat.luminance = 1; skyMat.rayleigh = 2.5; skyMat.mieCoefficient = .003; skyMat.mieDirectionalG = .98; skyMat.useSunPosition = true; skyMat.sunPosition = new BABYLON.Vector3(160, 260, -160);
+sky.material = skyMat; sky.infiniteDistance = true; sky.applyFog = false;
+
+function setTime(h) {
+  const d = Math.max(0, Math.sin(((h / 24) - .25) * Math.PI * 2));
+  sun.intensity = .15 + d * 1.8; hemi.intensity = .18 + d * .45;
+  sun.diffuse = h < 9 ? new BABYLON.Color3(1, .62, .3) : h < 17 ? new BABYLON.Color3(1, .97, .88) : new BABYLON.Color3(1, .48, .15);
+  const t = Math.min(1, Math.max(0, (h - 6) / 12)), el = (20 + 40 * Math.sin(Math.PI * t)) * Math.PI / 180, az = Math.PI * t;
+  const toSun = new BABYLON.Vector3(Math.cos(el) * Math.cos(az), Math.sin(el), -Math.cos(el) * Math.sin(az));
+  sun.direction.copyFrom(toSun.scale(-1));
+  document.getElementById('todv').textContent = `${Math.floor(h)}:${String(Math.round((h % 1) * 60)).padStart(2, '0')}`;
+}
+const tod = document.getElementById('tod'); tod.oninput = () => setTime(+tod.value); setTime(+tod.value);
+
+// ── noise (seeded Perlin) ──────────────────────────────
+const perm = new Uint8Array(512); { let s = 1337; const p = [...Array(256).keys()]; for (let i = 255; i > 0; i--) { s = (s * 16807) % 2147483647; const j = s % (i + 1); [p[i], p[j]] = [p[j], p[i]]; } for (let i = 0; i < 512; i++) perm[i] = p[i & 255]; }
+const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
+function grad(h, x, y) { const g = h & 7; const u = g < 4 ? x : y, v = g < 4 ? y : x; return ((g & 1) ? -u : u) + ((g & 2) ? -2 * v : 2 * v) * .5; }
+function perlin(x, y) { const X = Math.floor(x) & 255, Y = Math.floor(y) & 255; x -= Math.floor(x); y -= Math.floor(y); const u = fade(x), v = fade(y), a = perm[X] + Y, b = perm[X + 1] + Y;
+  return (1 - v) * ((1 - u) * grad(perm[a], x, y) + u * grad(perm[b], x - 1, y)) + v * ((1 - u) * grad(perm[a + 1], x, y - 1) + u * grad(perm[b + 1], x - 1, y - 1)); }
+function fbm(x, y, o = 5) { let s = 0, a = .5, f = 1; for (let i = 0; i < o; i++) { s += a * perlin(x * f, y * f); f *= 2.03; a *= .5; } return s; }
+function ridged(x, y, o = 5) { let s = 0, a = .5, f = 1, w = 1; for (let i = 0; i < o; i++) { let n = 1 - Math.abs(perlin(x * f + 17, y * f - 9)); n *= n * w; w = Math.min(1, n * 2); s += a * n; f *= 2.1; a *= .5; } return s; }
+const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+
+// Terrain shape (metres). The courtyard (r < 112) stays flat at 0 like the hub.
+function baseHeight(x, z) {
+  const r = Math.hypot(x, z);
+  const wx = x + 45 * fbm(x * .004 + 5.2, z * .004 + 1.3, 3), wz = z + 45 * fbm(x * .004 - 3.7, z * .004 + 8.1, 3);
+  const hills = (fbm(wx * .0075, wz * .0075) * 30 + ridged(wx * .011, wz * .011) * 16) + 5;
+  const ring = smooth(112, 178, r);
+  const mountain = smooth(225, 350, r) * (24 + ridged(wx * .0055 + 3, wz * .0055) * 60) + smooth(360, 1300, r) * (40 + ridged(x * .0022, z * .0022) * 260);
+  return Math.max(0, hills) * ring + mountain;
+}
+
+// ── New terrain: 513² heightmap + hydraulic erosion ─────
+const SIZE = 700, N = 513, CELL = SIZE / (N - 1);
+function buildHeightmap() {
+  const H = new Float32Array(N * N), flow = new Float32Array(N * N);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) H[j * N + i] = baseHeight(i * CELL - SIZE / 2, j * CELL - SIZE / 2);
+  // droplet erosion (water picks up soil on slopes and drops it in valleys)
+  const R = 2, brush = []; for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { const d = Math.hypot(dx, dy); if (d <= R) brush.push([dx, dy, 1 - d / (R + .5)]); }
+  const bsum = brush.reduce((s, b) => s + b[2], 0); brush.forEach(b => b[2] /= bsum);
+  let seed = 99; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const drops = +(qs.get('drops') || 70000);
+  const hAt = (x, y) => { const i = x | 0, j = y | 0, u = x - i, v = y - j, k = j * N + i; return { h: H[k] * (1 - u) * (1 - v) + H[k + 1] * u * (1 - v) + H[k + N] * (1 - u) * v + H[k + N + 1] * u * v, gx: (H[k + 1] - H[k]) * (1 - v) + (H[k + N + 1] - H[k + N]) * v, gy: (H[k + N] - H[k]) * (1 - u) + (H[k + N + 1] - H[k + 1]) * u }; };
+  for (let n = 0; n < drops; n++) {
+    let x = rnd() * (N - 3) + 1, y = rnd() * (N - 3) + 1, dx = 0, dy = 0, speed = 1, water = 1, sed = 0;
+    for (let step = 0; step < 40; step++) {
+      const i = x | 0, j = y | 0; if (i < 2 || j < 2 || i > N - 3 || j > N - 3) break;
+      const u = x - i, v = y - j, s = hAt(x, y);
+      dx = dx * .05 - s.gx * .95; dy = dy * .05 - s.gy * .95; const len = Math.hypot(dx, dy); if (len < 1e-6) break; dx /= len; dy /= len;
+      const nx = x + dx, ny = y + dy; if (nx < 2 || ny < 2 || nx > N - 3 || ny > N - 3) break;
+      const dh = hAt(nx, ny).h - s.h, cap = Math.max(-dh, .01) * speed * water * 4;
+      flow[j * N + i] += water;
+      if (sed > cap || dh > 0) { const dep = dh > 0 ? Math.min(dh, sed) : (sed - cap) * .3; sed -= dep; const k = j * N + i;
+        H[k] += dep * (1 - u) * (1 - v); H[k + 1] += dep * u * (1 - v); H[k + N] += dep * (1 - u) * v; H[k + N + 1] += dep * u * v;
+      } else { const er = Math.min((cap - sed) * .3, -dh); for (const [bx, by, w] of brush) { const k = (j + by) * N + i + bx; const take = Math.min(H[k], er * w); H[k] -= take; sed += take; } }
+      speed = Math.sqrt(Math.max(0, speed * speed + dh * -4)); water *= .99; x = nx; y = ny;
+    }
+  }
+  // keep the courtyard flat, smooth the ring, cut the four roads out of the courtyard gates
+  // roads follow a heavily smoothed copy of the land (gentle grades, no trenches)
+  const blur = (src, rad) => { const tmp = new Float32Array(N * N), out = new Float32Array(N * N);
+    for (let j = 0; j < N; j++) { let acc = 0, cnt = 0; for (let i = -rad; i < N + rad; i++) { if (i + rad < N) { acc += src[j * N + i + rad]; cnt++; } if (i - rad - 1 >= 0) { acc -= src[j * N + i - rad - 1]; cnt--; } if (i >= 0 && i < N) tmp[j * N + i] = acc / cnt; } }
+    for (let i = 0; i < N; i++) { let acc = 0, cnt = 0; for (let j = -rad; j < N + rad; j++) { if (j + rad < N) { acc += tmp[(j + rad) * N + i]; cnt++; } if (j - rad - 1 >= 0) { acc -= tmp[(j - rad - 1) * N + i]; cnt--; } if (j >= 0 && j < N) out[j * N + i] = acc / cnt; } }
+    return out; };
+  const soft = blur(blur(H, 9), 9);
+  const path = new Uint8Array(N * N);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const x = i * CELL - SIZE / 2, z = j * CELL - SIZE / 2, r = Math.hypot(x, z), k = j * N + i;
+    const road = Math.min(Math.abs(x), Math.abs(z));
+    if (r > 104) { const w = 1 - smooth(4, 16, road); if (w > 0) H[k] = H[k] * (1 - w) + soft[k] * w; path[k] = Math.round((1 - smooth(3, 6.5, road)) * 255); }
+    H[k] *= smooth(110, 126, r);
+  }
+  return { H, flow, path };
+}
+
+// mesh height exactly as drawn (CreateGround triangle layout), used to keep the Rebel on the ground
+function makeGridSampler(mesh, n, size) {
+  const p = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind), cell = size / n;
+  const tri = (a, b, c, x, z) => { const ax = p[a], az = p[a + 2], bx = p[b], bz = p[b + 2], cx = p[c], cz = p[c + 2]; const d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz); const l1 = ((bz - cz) * (x - cx) + (cx - bx) * (z - cz)) / d, l2 = ((cz - az) * (x - cx) + (ax - cx) * (z - cz)) / d, l3 = 1 - l1 - l2; return (l1 < -1e-6 || l2 < -1e-6 || l3 < -1e-6) ? null : l1 * p[a + 1] + l2 * p[b + 1] + l3 * p[c + 1]; };
+  return (x, z) => { const col = Math.min(n - 1, Math.max(0, Math.floor((x + size / 2) / cell))), row = Math.min(n - 1, Math.max(0, Math.floor((size / 2 - z) / cell))); const v = (c, r) => (c + r * (n + 1)) * 3;
+    const t1 = tri(v(col + 1, row + 1), v(col + 1, row), v(col, row), x, z); return t1 !== null ? t1 : (tri(v(col, row + 1), v(col + 1, row + 1), v(col, row), x, z) ?? 0); };
+}
+
+// courtyard (shared)
+const court = BABYLON.MeshBuilder.CreateGround('ct', { width: 220, height: 220 }, scene);
+const courtMat = new BABYLON.StandardMaterial('courtMat', scene); const courtTex = new BABYLON.Texture('assets/cracked_concrete.jpg', scene); courtTex.uScale = courtTex.vScale = 18; courtMat.diffuseTexture = courtTex; courtMat.specularColor = new BABYLON.Color3(.05, .05, .05);
+court.material = courtMat; court.position.y = .06;
+
+// ── Look A: today's terrain (same code as the village) ──
+const looks = {};
+function buildLookA() {
+  const g = BABYLON.MeshBuilder.CreateGround('gndA', { width: 700, height: 700, subdivisions: 120, updatable: true }, scene);
+  const m = new BABYLON.StandardMaterial('grassA', scene); const t = new BABYLON.Texture('assets/ground_diffuse.jpg', scene); t.uScale = t.vScale = 14; m.diffuseTexture = t; m.specularColor = new BABYLON.Color3(.18, .22, .12); m.specularPower = 8; g.material = m;
+  const hash = (x, z) => { const n = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return n - Math.floor(n); };
+  const sn = (x, z) => { const ix = Math.floor(x), iz = Math.floor(z), fx = x - ix, fz = z - iz, ux = fx * fx * (3 - 2 * fx), uz = fz * fz * (3 - 2 * fz); return hash(ix, iz) * (1 - ux) * (1 - uz) + hash(ix + 1, iz) * ux * (1 - uz) + hash(ix, iz + 1) * (1 - ux) * uz + hash(ix + 1, iz + 1) * ux * uz; };
+  const f = (x, z) => sn(x * .012, z * .012) * 4 + sn(x * .028, z * .028) * 2 + sn(x * .065, z * .065) * .8 + sn(x * .15, z * .15) * .3;
+  const pos = g.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+  for (let i = 0; i < pos.length; i += 3) { const d = Math.hypot(pos[i], pos[i + 2]); pos[i + 1] = (f(pos[i], pos[i + 2]) - 3.5) * Math.max(0, Math.min(1, (d - 100) / 55)); }
+  g.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos); g.createNormals(true);
+  return { meshes: [g], height: makeGridSampler(g, 120, 700) };
+}
+
+// ── Look B: eroded terrain, painted by slope / height / water ──
+function buildLookB() {
+  const t0 = performance.now();
+  const { H, flow, path } = buildHeightmap();
+  const n = 256, g = BABYLON.MeshBuilder.CreateGround('gndB', { width: SIZE, height: SIZE, subdivisions: n, updatable: true }, scene);
+  const pos = g.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+  for (let row = 0; row <= n; row++) for (let col = 0; col <= n; col++) { const i = col * 2, j = (n - row) * 2; pos[(col + row * (n + 1)) * 3 + 1] = H[j * N + i]; }
+  g.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos); g.createNormals(true);
+  // mask texture: R = where water runs (gullies), G = roads
+  let fmax = 0; for (let k = 0; k < flow.length; k++) fmax = Math.max(fmax, Math.log1p(flow[k]));
+  const mask = new Uint8Array(N * N * 4); for (let k = 0; k < N * N; k++) { mask[k * 4] = Math.round(255 * Math.min(1, Math.log1p(flow[k]) / (fmax * .7))); mask[k * 4 + 1] = path[k]; mask[k * 4 + 3] = 255; }
+  const maskTex = new BABYLON.RawTexture(mask, N, N, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, false, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
+  maskTex.wrapU = maskTex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+  const mat = makeTerrainMaterial('terrainB', maskTex);
+  g.material = mat;
+  // horizon: the same land continues into distant mountains (hidden under the main terrain inside the square)
+  const far = BABYLON.MeshBuilder.CreateGround('farB', { width: 3200, height: 3200, subdivisions: 160, updatable: true }, scene);
+  const fp = far.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+  for (let i = 0; i < fp.length; i += 3) { const x = fp[i], z = fp[i + 2]; fp[i + 1] = baseHeight(x, z) - ((Math.abs(x) < 352 && Math.abs(z) < 352) ? 6 : 0); }
+  far.updateVerticesData(BABYLON.VertexBuffer.PositionKind, fp); far.createNormals(true); far.material = mat; far.isPickable = false;
+  return { meshes: [g, far], height: makeGridSampler(g, n, SIZE), H, ms: Math.round(performance.now() - t0) };
+}
+
+function makeTerrainMaterial(name, maskTex) {
+  const m = new BABYLON.CustomMaterial(name, scene);
+  m.specularColor = new BABYLON.Color3(.03, .03, .03);
+  m.AddUniform('uGrassTex', 'sampler2D', new BABYLON.Texture('assets/ground_diffuse.jpg', scene));
+  m.AddUniform('uRockTex', 'sampler2D', new BABYLON.Texture('assets/stone_diffuse.jpg', scene));
+  m.AddUniform('uMaskTex', 'sampler2D', maskTex);
+  m.Fragment_Definitions(`
+    float th2(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+    float tvn(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(th2(i),th2(i+vec2(1.,0.)),f.x), mix(th2(i+vec2(0.,1.)),th2(i+vec2(1.,1.)),f.x), f.y); }
+    float tfbm(vec2 p){ float a=.5, s=0.; for(int i=0;i<4;i++){ s+=a*tvn(p); p*=2.03; a*=.5; } return s; }
+    vec3 terrainColor(vec3 pw, vec3 nw){
+      vec2 p = pw.xz;
+      float slope = 1.0 - clamp(nw.y, 0.0, 1.0);
+      vec4 mask = texture2D(uMaskTex, clamp(p/700.0 + 0.5, 0.0, 1.0));
+      float inside = step(abs(p.x), 350.0) * step(abs(p.y), 350.0);
+      float wet = mask.r * inside, road = mask.g * inside;
+      float macro = tfbm(p*0.018), micro = tfbm(p*0.4);
+      vec3 grass = mix(vec3(0.30,0.37,0.16), vec3(0.50,0.50,0.24), smoothstep(0.3,0.75,macro));
+      grass = mix(grass, vec3(0.20,0.30,0.14), wet*0.8);
+      float gl = dot(texture2D(uGrassTex, p*0.33).rgb, vec3(0.333)), gl2 = dot(texture2D(uGrassTex, p*0.047).rgb, vec3(0.333));
+      grass *= (0.6 + 0.8*mix(gl, gl2, 0.45)) * (0.9 + 0.2*micro);
+      vec3 dirt = vec3(0.46,0.36,0.24) * (0.8 + 0.4*micro);
+      vec3 bw = pow(abs(nw), vec3(4.0)); bw /= (bw.x + bw.y + bw.z);
+      vec3 rock = texture2D(uRockTex, pw.zy*0.05).rgb*bw.x + texture2D(uRockTex, pw.xz*0.05).rgb*bw.y + texture2D(uRockTex, pw.xy*0.05).rgb*bw.z;
+      rock *= vec3(0.92,0.9,0.86); rock = mix(rock, rock*vec3(0.72,0.78,0.7), wet);
+      vec3 col = mix(grass, dirt, clamp(road + smoothstep(0.17,0.3,slope)*0.55*(1.0-wet), 0.0, 1.0));
+      col = mix(col, rock, smoothstep(0.3, 0.46, slope + (micro-0.5)*0.14));
+      col = mix(col, col*vec3(1.12,1.04,0.78), smoothstep(30.0, 70.0, pw.y)*(1.0 - smoothstep(0.3,0.45,slope)));
+      col = mix(col, vec3(0.9,0.92,0.95), smoothstep(150.0, 230.0, pw.y + micro*20.0)*(1.0-smoothstep(0.45,0.6,slope)));
+      return col;
+    }
+  `);
+  m.Fragment_Custom_Diffuse(`diffuseColor = terrainColor(vPositionW, normalize(vNormalW));`);
+  return m;
+}
+
+// ── Look C: swaying grass (one draw call) + pines and rocks scattered by slope ──
+async function buildLookC(B) {
+  const meshes = [];
+  // grass clump: 3 tapered blades, base dark, tip light
+  const bp = [], bc = [], bi = [];
+  for (let b = 0; b < 3; b++) { const a = b * 2.1 + .3, ox = Math.cos(a) * .08, oz = Math.sin(a) * .08, w = .05, hgt = .55 + b * .12, lean = .18;
+    const dx = Math.cos(a + 1.57) * w, dz = Math.sin(a + 1.57) * w, base = bp.length / 3;
+    bp.push(ox - dx, 0, oz - dz, ox + dx, 0, oz + dz, ox + Math.cos(a) * lean, hgt, oz + Math.sin(a) * lean);
+    bc.push(.16, .26, .08, 1, .16, .26, .08, 1, .62, .68, .3, 1); bi.push(base, base + 1, base + 2); }
+  const blade = new BABYLON.Mesh('grass', scene); const vd = new BABYLON.VertexData(); vd.positions = bp; vd.colors = bc; vd.indices = bi; const nrm = []; BABYLON.VertexData.ComputeNormals(bp, bi, nrm); vd.normals = nrm.map((v, i) => i % 3 === 1 ? 1 : v * .2); vd.applyToMesh(blade);
+  const gm = new BABYLON.CustomMaterial('grassBlade', scene); gm.backFaceCulling = false; gm.specularColor = BABYLON.Color3.Black(); gm.AddUniform('uTime', 'float', 0);
+  gm.Vertex_After_WorldPosComputed(`worldPos.x += sin(uTime*1.7 + worldPos.x*0.13 + worldPos.z*0.07) * 0.16 * position.y; worldPos.z += cos(uTime*1.3 + worldPos.x*0.05 + worldPos.z*0.11) * 0.08 * position.y;`);
+  gm.onBindObservable.add(() => gm.getEffect()?.setFloat('uTime', performance.now() / 1000));
+  scene.onBeforeRenderObservable.add(() => { if (gm._newUniformInstances) gm._newUniformInstances['float-uTime'] = performance.now() / 1000; });
+  blade.material = gm; blade.useVertexColors = true; blade.hasVertexAlpha = false;
+  const count = +(qs.get('grass') || 90000), mats = new Float32Array(count * 16), m4 = new BABYLON.Matrix(), q = new BABYLON.Quaternion();
+  let placed = 0, tries = 0;
+  while (placed < count && tries < count * 6) { tries++;
+    const x = (Math.random() - .5) * 690, z = (Math.random() - .5) * 690, r = Math.hypot(x, z); if (r < 113 || Math.min(Math.abs(x), Math.abs(z)) < 5) continue;
+    if (fbm(x * .02, z * .02, 3) < -.12 + Math.random() * .1) continue;
+    const y = B.height(x, z), sl = Math.abs(B.height(x + 1, z) - y) + Math.abs(B.height(x, z + 1) - y); if (sl > .8) continue;
+    const s = .8 + Math.random() * .8; BABYLON.Quaternion.FromEulerAnglesToRef(0, Math.random() * 6.28, 0, q);
+    BABYLON.Matrix.ComposeToRef(new BABYLON.Vector3(s, s * (.8 + Math.random() * .6), s), q, new BABYLON.Vector3(x, y - .02, z), m4); m4.copyToArray(mats, placed * 16); placed++; }
+  blade.thinInstanceSetBuffer('matrix', mats.subarray(0, placed * 16), 16, true); blade.alwaysSelectAsActiveMesh = true; meshes.push(blade);
+  // scatter GLBs as thin instances
+  async function scatter(file, n, ok, scaleRange) {
+    const res = await BABYLON.SceneLoader.ImportMeshAsync('', '/assets/buildings/', file, scene);
+    const parts = res.meshes.filter(mm => mm.getTotalVertices() > 0);
+    parts.forEach(mm => { mm.setParent(null); mm.bakeCurrentTransformIntoVertices(); });
+    res.meshes.filter(mm => mm.getTotalVertices() === 0).forEach(mm => mm.dispose());
+    const buf = new Float32Array(n * 16); let k = 0, t = 0;
+    while (k < n && t < n * 40) { t++; const x = (Math.random() - .5) * 680, z = (Math.random() - .5) * 680; if (!ok(x, z)) continue;
+      const s = scaleRange[0] + Math.random() * (scaleRange[1] - scaleRange[0]); BABYLON.Quaternion.FromEulerAnglesToRef(0, Math.random() * 6.28, 0, q);
+      BABYLON.Matrix.ComposeToRef(new BABYLON.Vector3(s, s, s), q, new BABYLON.Vector3(x, B.height(x, z) - .15 * s, z), m4); m4.copyToArray(buf, k * 16); k++; }
+    parts.forEach(mm => { mm.thinInstanceSetBuffer('matrix', buf.subarray(0, k * 16), 16, true); mm.alwaysSelectAsActiveMesh = true; meshes.push(mm); });
+  }
+  const slopeAt = (x, z) => { const y = B.height(x, z); return Math.hypot(B.height(x + 2, z) - y, B.height(x, z + 2) - y) / 2; };
+  await scatter('pine_1.glb', +(qs.get('pines') || 420), (x, z) => { const r = Math.hypot(x, z); return r > 150 && Math.min(Math.abs(x), Math.abs(z)) > 9 && slopeAt(x, z) < .55 && fbm(x * .006 + 9, z * .006, 3) > -.02; }, [2.2, 4.2]);
+  await scatter('rock_1.glb', +(qs.get('rocks') || 260), (x, z) => { const r = Math.hypot(x, z), s = slopeAt(x, z); return r > 125 && Math.min(Math.abs(x), Math.abs(z)) > 7 && s > .22 && s < .9; }, [1, 3.2]);
+  return { meshes };
+}
+
+// ── the Rebel (#469 Forge rig), walking on the exact ground height ──
+const cam = new BABYLON.ArcRotateCamera('cam', -Math.PI / 2, 1.2, 10, new BABYLON.Vector3(0, 2, 120), scene);
+cam.attachControl(canvas, true); cam.lowerRadiusLimit = 3; cam.upperRadiusLimit = 60; cam.minZ = .3; cam.maxZ = 6000; cam.wheelDeltaPercentage = .01; cam.upperBetaLimit = 1.5;
+cam.keysUp = cam.keysDown = cam.keysLeft = cam.keysRight = [];
+const player = new BABYLON.TransformNode('player', scene); player.position.set(0, 0, 120); player.scaling.setAll(1.9);
+let anims = {}, curAnim = null;
+try {
+  const url = qs.get('rig') || 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/469/build_1790723292427_forge_rig-2t6IMn39NxMLqs84eW9EMlw0nF7l5r.glb';
+  const res = await BABYLON.SceneLoader.ImportMeshAsync('', '', url, scene);
+  res.meshes[0].parent = player; res.animationGroups.forEach(gp => { gp.stop(); anims[gp.name.toLowerCase()] = gp; });
+} catch (e) { console.warn('Rebel did not load, using a marker', e); const m = BABYLON.MeshBuilder.CreateCapsule('marker', { height: 1, radius: .25 }, scene); m.parent = player; m.position.y = .5; }
+const pick = re => Object.keys(anims).find(k => re.test(k));
+function play(name) { const k = name === 'run' ? pick(/run/) : name === 'walk' ? pick(/walk/) : pick(/idle/); if (!k || curAnim === anims[k]) return; curAnim?.stop(); curAnim = anims[k]; curAnim.play(true); }
+play('idle');
+const keys = {}; addEventListener('keydown', e => keys[e.code] = true); addEventListener('keyup', e => keys[e.code] = false);
+
+// ── look switching ──
+let active = null, heightFn = () => 0, buildMs = 0;
+const busy = document.getElementById('busy');
+async function setLook(id) {
+  busy.style.display = 'grid'; await new Promise(r => setTimeout(r, 30));
+  if (id === 'A' && !looks.A) looks.A = buildLookA();
+  if ((id === 'B' || id === 'C') && !looks.B) { looks.B = buildLookB(); buildMs = looks.B.ms; }
+  if (id === 'C' && !looks.C) looks.C = await buildLookC(looks.B);
+  for (const k of ['A', 'B', 'C']) looks[k]?.meshes.forEach(m => m.setEnabled(k === id || (id === 'C' && k === 'B')));
+  heightFn = (id === 'A' ? looks.A : looks.B).height; active = id;
+  scene.fogDensity = id === 'A' ? .0006 : .0016;
+  document.querySelectorAll('.looks button').forEach(b => b.classList.toggle('on', b.id === 'look' + id));
+  busy.style.display = 'none';
+}
+['A', 'B', 'C'].forEach(id => document.getElementById('look' + id).onclick = () => setLook(id));
+await setLook((qs.get('look') || 'B').toUpperCase());
+
+// ── loop ──
+const inst = new BABYLON.SceneInstrumentation(scene); inst.captureFrameTime = true;
+let statAt = 0;
+scene.onBeforeRenderObservable.add(() => {
+  const dt = Math.min(.05, engine.getDeltaTime() / 1000);
+  const f = keys.KeyW || keys.ArrowUp ? 1 : keys.KeyS || keys.ArrowDown ? -1 : 0, s = keys.KeyD || keys.ArrowRight ? 1 : keys.KeyA || keys.ArrowLeft ? -1 : 0;
+  if (f || s) {
+    const fwd = cam.getTarget().subtract(cam.position); fwd.y = 0; fwd.normalize(); const right = BABYLON.Vector3.Cross(BABYLON.Axis.Y, fwd);
+    const dir = fwd.scale(f).add(right.scale(s)).normalize(), run = keys.ShiftLeft || keys.ShiftRight, sp = (run ? 9 : 4.2) * dt;
+    player.position.addInPlace(dir.scale(sp)); player.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI; play(run ? 'run' : 'walk');
+  } else play('idle');
+  player.position.y = Math.max(heightFn(player.position.x, player.position.z), Math.hypot(player.position.x, player.position.z) < 110 ? .06 : -1e9);
+  cam.target.x += (player.position.x - cam.target.x) * .2; cam.target.z += (player.position.z - cam.target.z) * .2; cam.target.y += (player.position.y + 2 - cam.target.y) * .2;
+  const now = performance.now();
+  if (now - statAt > 500) { statAt = now;
+    document.getElementById('stats').innerHTML = `FPS ${engine.getFps().toFixed(0)} · ${inst.frameTimeCounter.lastSecAverage.toFixed(1)} ms<br>triangles drawn ${(scene.getActiveIndices() / 3 / 1000).toFixed(0)}k · meshes ${scene.getActiveMeshes().length}<br>${active !== 'A' && buildMs ? 'terrain built in ' + buildMs + ' ms' : ''}`; }
+});
+engine.runRenderLoop(() => scene.render());
+addEventListener('resize', () => engine.resize());
+window._lab = { scene, setLook, looks, player, cam };
+})();
+</script>
+</body>
+</html>
