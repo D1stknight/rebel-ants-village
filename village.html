@@ -20197,7 +20197,7 @@ function newTerrainLayoutFromSaved(data) {
       console.log('New terrain decor:', d.pinesPlaced, 'pines,', d.rocksPlaced, 'rocks,', d.meshes.length, 'meshes');
       scheduleShadowRefresh('terrain decor', 300);
     }).catch(e => console.warn('Terrain decor failed', e)), 50);
-    if (NT.water) startNewTerrainWaterSound(NT);
+    if (NT.water || NT.falls?.length) startNewTerrainWaterSound(NT); // streams, and the cliff waterfalls of the mountain villages
     if (NT.sea) startNewTerrainSurfSound(NT);
   }
   return out;

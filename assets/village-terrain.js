@@ -147,6 +147,54 @@ export const TERRAIN_RECIPES = {
       dirt: [['r', -19, 25, 19, 47]],
       grass: 14000, flowers: 0
     }
+  },
+  // Yamabushi: mountain mystics. The village stands on a cliff-top mesa above a deep ravine full of blue mist: a cobbled
+  // lower plaza behind the gate, stone stairs up a retaining wall (burrow arches) to the dojo terrace with its training
+  // yard, a rope bridge out to a rock pillar. Stone pillars rise out of the mist, waterfalls pour off the cliffs, and the
+  // highest peaks of all the villages ring the valley. From Miguel's three Yamabushi images.
+  yamabushi: {
+    seed: 8642, dropSeed: 31, drops: 70000, roads: false,
+    hills: 1.5, shape: { fbm: 30, ridge: 34, wall: 190,
+      spires: [{ from: 118, cell: 64, chance: .42, radius: [12, 22], height: [40, 95] },
+               { from: 380, cell: 150, chance: .5, radius: [40, 70], height: [100, 220] }] },
+    flatHalf: 100, hillStart: 100, hillFull: 220, wallStart: 235,
+    // the mesa: inside these shapes the ground stays up; outside it drops 52 m into the ravine (fading out by the peaks)
+    mesa: { drop: 52, cliff: 7, wobble: 3, fade: [175, 265],
+      pieces: [{ r: [-64, -62, 64, 88], round: 16 }, { r: [-13, -86, 13, -56], round: 6 }, { c: [100, 54, 13] }] },
+    falls: { count: 6, ring: [112, 300], minDrop: 24, spacing: 65, width: [5, 9] },
+    mist: { layers: [[-42, .7], [-33, .45], [-24, .22]], color: [.7, .8, .95], glow: .35 },
+    palette: {
+      grassA: [0.2, 0.33, 0.15], grassB: [0.36, 0.42, 0.2], wet: [0.14, 0.24, 0.13],
+      dirt: [0.52, 0.43, 0.3], rockTint: [0.9, 0.94, 0.98], highTint: [0.95, 1.0, 1.02], peak: [0.9, 0.93, 0.97]
+    },
+    grass: { count: 70000, base: [0.1, 0.2, 0.07], tip: [0.5, 0.6, 0.3] },
+    flowers: { count: 2600, stem: [0.1, 0.22, 0.08], petal: [0.62, 0.76, 1.0] },
+    pines: { file: 'pine_1.glb', count: 330, scale: [2.0, 3.8], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 380, scale: [1.2, 3.6], body: 0.75, settle: .9, sink: .1, tint: [.82, .95, .8], minSq: 70 }, // mossy boulders
+    extras: [ // pines along the rim of the mesa, off the paving
+      { file: 'pine_1.glb', count: 46, scale: [1.6, 2.8], body: .32, settle: .35, sink: .15, minSq: 0, maxSq: 115, maxSlope: .3, road: 0, village: true }
+    ],
+    fog: { density: .0016, day: [.66, .75, .86], night: [.04, .05, .1] },
+    light: { sun: 1.02, hemi: 1.0, tint: [.96, .98, 1.04] },
+    sky: { turbidity: 6, luminance: 1, rayleigh: 2.6, mieCoefficient: .005 },
+    court: { texture: 'stone', court: [1.45, 1.42, 1.38], plaza: [1.25, 1.22, 1.18], path: [1.15, 1.12, 1.08] },
+    village: {
+      rect: [-74, -92, 116, 98], res: 1, wall: 1.1,
+      terraces: [
+        { r: [-90, -60, 90, 110], h: 4 },     // lower plaza (gate, well, houses)
+        { r: [-90, 24, 120, 110], h: 10.5 }   // dojo terrace + the bridge pillar
+      ],
+      ramps: [
+        { r: [-5, -72, 5, -60], axis: 'z', from: 0, to: 4 },     // stairs up from the landing to the gate
+        { r: [-6, 10, 6, 24], axis: 'z', from: 4, to: 10.5 }    // great stairs up to the dojo terrace
+      ],
+      pave: [
+        ['r', -58, -58, 58, 22.5], ['r', -11, -84, 11, -60], ['r', -6, -73, 6, -59], ['r', -7, 9, 7, 25],
+        ['r', -58, 25.5, 58, 84], ['c', 100, 54, 10]
+      ],
+      dirt: [['r', -20, 30, 20, 52]],
+      grass: 7000, flowers: 700
+    }
   }
 };
 
@@ -249,6 +297,30 @@ export function makeCoastCap(recipe) {
   };
 }
 
+// Mesa (recipe.mesa): the ground stays up inside the pieces (rounded rects { r, round } and circles { c: [x, z, r] }) and
+// falls away in a cliff outside them, `drop` metres down into a ravine; the drop fades out again towards the peaks.
+// dist(x, z): metres outside the nearest piece (negative inside); cut(x, z): how far the ground is lowered there.
+export function makeMesa(recipe) {
+  const M = recipe.mesa; if (!M) return null;
+  const { fbm, ridged } = makeNoise(recipe.seed + 303);
+  const pieceD = (p, x, z) => {
+    if (p.c) return Math.hypot(x - p.c[0], z - p.c[1]) - p.c[2];
+    const rr = p.round || 0, [x0, z0, x1, z1] = p.r, dx = Math.max(x0 + rr - x, x - x1 + rr, 0), dz = Math.max(z0 + rr - z, z - z1 + rr, 0);
+    const out = Math.hypot(dx, dz) - rr;
+    return dx > 0 || dz > 0 ? out : Math.max(x0 - x, x - x1, z0 - z, z - z1);
+  };
+  const dist = (x, z) => { let d = Infinity; for (const p of M.pieces) d = Math.min(d, pieceD(p, x, z)); return d + (M.wobble || 0) * fbm(x * .035 + 7, z * .035 - 3, 3); };
+  const cut = (x, z) => {
+    let d = dist(x, z); if (d <= 0) return 0;
+    d += smooth(0, 4, d) * 7 * fbm(x * .045 + 11, z * .045 - 2, 3); if (d <= 0) return 0; // the face bulges and recedes below the lip
+    // the face: steep in places, slanting rock in others, broken by a few ledges (where pines can stand)
+    const w = M.cliff * (.5 + 3.4 * Math.max(0, fbm(x * .016 + 1, z * .016 - 6, 2) + .3)), p = smooth(0, w, d), q = p * 4, ledge = (Math.floor(q) + smooth(.55, 1, q - Math.floor(q))) / 4;
+    const face = (p + (ledge - p) * smooth(-.1, .3, fbm(x * .03 - 4, z * .03 + 2, 2))) * (1 - smooth(M.fade[0], M.fade[1], d));
+    return face * (M.drop - 7 * ridged(x * .05, z * .05, 3) * (1 - smooth(w, w + 30, d)));
+  };
+  return { dist, cut };
+}
+
 // Karst stone pillars (steep sides, rounded tops), one per jittered grid cell, fading in from `from` metres out.
 function spireHeight(sp, x, z, s, seed) {
   const fade = smooth(sp.from, sp.from + sp.cell, s); if (fade <= 0) return 0;
@@ -313,13 +385,15 @@ export function buildHeightmap(recipe) {
   const f0 = recipe.flatHalf;
   for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
     const x = i * CELL - SIZE / 2, z = j * CELL - SIZE / 2, s = Math.max(Math.abs(x), Math.abs(z)), k = j * N + i;
-    const road = Math.min(Math.abs(x), Math.abs(z));
+    const road = recipe.roads === false ? 1e9 : Math.min(Math.abs(x), Math.abs(z));
     if (s > f0 - 8) { const w = 1 - smooth(4, 16, road); if (w > 0) H[k] = H[k] * (1 - w) + soft[k] * w; path[k] = Math.round((1 - smooth(3, 6.5, road)) * 255); }
     H[k] *= smooth(f0, f0 + 16, s);
   }
   // courtyard village: terraces raised out of the flat courtyard, cobble wherever the spec paves
   const coast = makeCoastCap(recipe);
   if (coast) for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const k = j * N + i; H[k] = Math.min(H[k], coast(i * CELL - SIZE / 2, j * CELL - SIZE / 2)); }
+  const mesa = makeMesa(recipe);
+  if (mesa) for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const k = j * N + i; H[k] -= mesa.cut(i * CELL - SIZE / 2, j * CELL - SIZE / 2); }
   let pave = null; const Hb = new Float32Array(H); // ground before the village is built into it
   if (recipe.village) {
     const V = makeVillageShape(recipe.village); pave = new Uint8Array(N * N);
@@ -472,7 +546,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   writeMask();
   const maskTex = new BABYLON.RawTexture(mask, N, N, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, false, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
   maskTex.wrapU = maskTex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-  const material = makeTerrainMaterial(scene, maskTex, recipe.palette, recipe.village, recipe.sea);
+  const material = makeTerrainMaterial(scene, maskTex, recipe.palette, recipe.village, recipe.sea, !!recipe.mesa);
   ground.material = material;
 
   // horizon: the same land continues into far mountains (sunk under the main terrain inside the square)
@@ -491,6 +565,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   const waterMeshes = hm.water ? buildWater(scene, hm.water) : [];
   const seaY = recipe.sea ? (recipe.sea.y ?? -3) : null;
   const sea = recipe.sea ? buildSea(scene, recipe.sea, H0, seaY) : null;
+  const mesa = makeMesa(recipe), mist = recipe.mist ? buildMist(scene, recipe.mist) : null;
 
   // The village's own ground: a fine grid (0.8 m) so terrace walls and ramps come out crisp. Named 'pa…' so the
   // admin placement/snap rays (which look for the courtyard and 'pa' path meshes) land on it.
@@ -514,14 +589,18 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
     villageGround, villageShape: VS, sea, seaY,
     // the sea is not walkable (piers and boats add their own walk surfaces)
     seaBlocks(x, z) { return seaY !== null && T.heightAt(x, z) < seaY + .35; },
+    // nor is anything off the edge of a mesa (bridges add their own walk surfaces)
+    mesa, mist, falls: [], mesaBlocks(x, z) { return !!mesa && mesa.dist(x, z) > .6; },
     heightAt: (x, z) => (VS && VS.inside(x, z)) ? VS.h(x, z) : sampler(x, z),
     oldHeightAt: opts.oldHeightAt || null,
     pads: [], decor: null, decorBlockers: null, water: hm.water, waterMeshes,
     // 0..1 loudness of running water heard at (x, z): the fall carries ~120 m, the stream ~35 m
     waterSoundAt(x, z) {
-      const Wt = hm.water; if (!Wt) return 0;
+      let v = 0;
+      for (const f of T.falls) v = Math.max(v, .8 * Math.max(0, 1 - Math.hypot(x - f.x, z - f.z) / 170) ** 1.6); // cliff waterfalls carry far
+      const Wt = hm.water; if (!Wt) return v;
       const f = Wt.pts[Wt.iLip + 2] || Wt.pts[Wt.iLip];
-      let v = Math.max(0, 1 - Math.hypot(x - f.x, z - f.z) / 120) ** 1.6;
+      v = Math.max(v, Math.max(0, 1 - Math.hypot(x - f.x, z - f.z) / 120) ** 1.6);
       for (let i = 0; i < Wt.pts.length; i += 6) { const p = Wt.pts[i]; v = Math.max(v, .35 * Math.max(0, 1 - Math.hypot(x - p.x, z - p.z) / 35) ** 1.5); }
       return v;
     },
@@ -583,6 +662,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
     },
     decorBlocksPoint(x, z, padding = 0) {
       if (VS && VS.isWall(x, z)) return true;
+      if (T.mesaBlocks(x, z)) return true; // the cliff edge
       const g = T.decorBlockers; if (!g) return false;
       const cx = Math.floor((x + 400) / 20), cz = Math.floor((z + 400) / 20);
       for (let a = cx - 1; a <= cx + 1; a++) for (let b = cz - 1; b <= cz + 1; b++) {
@@ -592,10 +672,11 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
       return false;
     }
   };
+  if (recipe.falls) T.falls = buildFalls(scene, T, recipe.falls);
   return T;
 }
 
-function makeTerrainMaterial(scene, maskTex, P, V, SEA) {
+function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA) {
   const vr = V ? V.rect : [0, 0, 0, 0];
   const v3 = a => `vec3(${a.map(n => n.toFixed(3)).join(',')})`;
   const m = new BABYLON.CustomMaterial('terrainMat', scene);
@@ -632,7 +713,13 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA) {
       col = mix(col, cob, smoothstep(0.25, 0.75, pave) * (1.0 - smoothstep(0.3, 0.5, slope)));
       vec3 wallStone = (texture2D(uRockTex, pw.zy*0.22).rgb*bw.x + texture2D(uRockTex, pw.xz*0.22).rgb*bw.y + texture2D(uRockTex, pw.xy*0.22).rgb*bw.z);
       wallStone = mix(vec3(dot(wallStone, vec3(0.333))), wallStone, 0.3) * vec3(1.0,0.99,0.95);
-      rock = mix(rock, wallStone, vil);
+      ${MESA ? `// mesa cliffs: coarse granite with rain streaks running down, moss on the ledges
+      vec3 granite = texture2D(uRockTex, pw.zy*0.016).rgb*bw.x + texture2D(uRockTex, pw.xz*0.016).rgb*bw.y + texture2D(uRockTex, pw.xy*0.016).rgb*bw.z;
+      granite = mix(vec3(dot(granite, vec3(0.333))), granite, 0.4) * ${v3(P.rockTint)};
+      granite *= 0.72 + 0.5 * tfbm(vec2((pw.x + pw.z) * 0.22, pw.y * 0.012));
+      granite = mix(granite, ${v3(P.grassA)} * 0.8, smoothstep(0.45, 0.8, nw.y) * 0.7 + smoothstep(0.6, 0.9, tfbm(pw.xz*0.07 + pw.y*0.03)) * 0.35);
+      rock = mix(rock, granite, smoothstep(-0.5, -4.0, pw.y));` : ''}
+      rock = mix(rock, wallStone, vil${MESA ? ' * smoothstep(-4.0, -0.5, pw.y)' : ''});
       col = mix(col, rock, smoothstep(0.3, 0.46, slope + (micro-0.5)*0.14));
       col = mix(col, col*${v3(P.highTint || [1.12, 1.04, .78])}, smoothstep(30.0, 70.0, pw.y)*(1.0 - smoothstep(0.3,0.45,slope)));
       col = mix(col, ${v3(P.peak || [.9, .92, .95])}, smoothstep(150.0, 230.0, pw.y + micro*20.0)*(1.0-smoothstep(0.45,0.6,slope)));
@@ -663,7 +750,7 @@ async function buildDecor(scene, T, avoid) {
   avoid.forEach(o => addAvoid(o.x, o.z, o.r));
   T.pads.forEach(p => addAvoid(p.x, p.z, p.rIn + 4));
   const clear = (x, z, extra = 0) => { const list = av.get(Math.floor((x + 400) / 20) * 1000 + Math.floor((z + 400) / 20)); if (!list) return true; for (const o of list) { const rr = o.r + extra; if ((x - o.x) ** 2 + (z - o.z) ** 2 < rr * rr) return false; } return true; };
-  const sq = (x, z) => Math.max(Math.abs(x), Math.abs(z)), roadD = (x, z) => Math.min(Math.abs(x), Math.abs(z));
+  const sq = (x, z) => Math.max(Math.abs(x), Math.abs(z)), roadD = R.roads === false ? () => 1e9 : (x, z) => Math.min(Math.abs(x), Math.abs(z));
   const villagePave = T.villageShape ? T.villageShape.pave : () => 1;
   const dry = (x, z, m = .8) => T.seaY === null || T.seaY === undefined || h(x, z) > T.seaY + m; // above the sea
   const m4 = new BABYLON.Matrix(), q = new BABYLON.Quaternion(), S = new BABYLON.Vector3(), P = new BABYLON.Vector3();
@@ -841,6 +928,7 @@ async function buildDecor(scene, T, avoid) {
     await scatter(ex, (x, z) => {
       const q = sq(x, z); if (q < (ex.minSq ?? R.flatHalf + 20) || q > (ex.maxSq ?? 340) || roadD(x, z) < (ex.road ?? 8)) return false;
       if (T.waterEdgeDist(x, z) < (ex.water ?? 3) || slopeAt(x, z) > (ex.maxSlope ?? .55) || !dry(x, z, 2)) return false;
+      if (ex.village && (villagePave(x, z) > .05 || T.villageShape?.isWall(x, z) || T.mesaBlocks(x, z))) return false; // the village's unpaved rim
       return !ex.clump || fbm(x * ex.clump.freq + ex.clump.ox, z * ex.clump.freq, 3) > ex.clump.above;
     }, ex.body, ex.shadow === false ? null : T.castShadow);
     if (ex.cull) meshes.slice(before).forEach(m => { const t = +m.name.split('_').slice(-2)[0]; cullTiles.push({ m, x: -262.5 + Math.floor(t / 4) * 175, z: -262.5 + (t % 4) * 175, d: ex.cull }); });
@@ -938,6 +1026,104 @@ function buildWater(scene, Wt) {
   mist.direction1 = new BABYLON.Vector3(-.4, .5, -.4); mist.direction2 = new BABYLON.Vector3(.4, 1.1, .4); mist.minEmitPower = .4; mist.maxEmitPower = .9;
   mist.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD; mist.start();
   return meshes;
+}
+
+// ── Cliff waterfalls and valley mist (mesa villages) ──────────
+// Waterfalls are found where flat ground ends in a tall cliff facing the village (recipe.falls: how many, in which
+// ring, how tall at least, how far apart); each is a ribbon laid down the rock face from the lip, streaks pouring,
+// with spray-mist at the foot. Returns [{ x, z, top, bottom }] (the sound follows them).
+function buildFalls(scene, T, F) {
+  const h = T.heightAt, rnd = rng(T.recipe.seed * 13 + 5), cands = [], out = [];
+  const grad = (x, z) => [(h(x + 1.5, z) - h(x - 1.5, z)) / 3, (h(x, z + 1.5) - h(x, z - 1.5)) / 3];
+  for (let x = -336; x <= 336; x += 6) for (let z = -336; z <= 336; z += 6) {
+    const r = Math.hypot(x, z); if (r < F.ring[0] || r > F.ring[1]) continue;
+    const [gx, gz] = grad(x, z); if (Math.hypot(gx, gz) > .4) continue; // the lip: fairly flat ground on top
+    const ux = -x / r, uz = -z / r, y = h(x, z), y1 = h(x + ux * 10, z + uz * 10), y2 = h(x + ux * 40, z + uz * 40);
+    if (y < -15 || y - y1 < 8 || y - y2 < F.minDrop) continue; // a cliff right in front, towards the village
+    cands.push({ x, z, ux, uz, score: y - y2 + rnd() * 6 });
+  }
+  cands.sort((a, b) => b.score - a.score);
+  const tex = new BABYLON.DynamicTexture('fallStreakTex', { width: 64, height: 256 }, scene, true), c = tex.getContext(), img = c.createImageData(64, 256), r2 = rng(77);
+  const col = [...Array(64)].map(() => .45 + .55 * r2());
+  for (let y = 0; y < 256; y++) for (let x = 0; x < 64; x++) {
+    const k = (y * 64 + x) * 4, edge = Math.min(1, Math.min(x, 63 - x) / 9), a = col[x] * (.7 + .3 * Math.sin(y * .1 + x * 1.7)) * edge;
+    img.data[k] = 235; img.data[k + 1] = 244; img.data[k + 2] = 250; img.data[k + 3] = Math.round(255 * a);
+  }
+  c.putImageData(img, 0, 0); tex.update(); tex.hasAlpha = true; tex.wrapU = tex.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
+  const mat = new BABYLON.StandardMaterial('cliffFallMat', scene);
+  mat.diffuseTexture = tex; mat.useAlphaFromDiffuseTexture = true; mat.diffuseColor = new BABYLON.Color3(.85, .92, .97);
+  mat.emissiveColor = new BABYLON.Color3(.32, .38, .44); mat.specularColor = new BABYLON.Color3(.3, .3, .3); mat.backFaceCulling = false;
+  mat.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND; mat.disableDepthWrite = true;
+  const dot = softDotTex(scene);
+  for (const cd of cands) {
+    if (out.length >= F.count) break;
+    if (out.some(o => Math.hypot(o.lx - cd.x, o.lz - cd.z) < F.spacing)) continue;
+    // walk from the lip down the face (small steps, steered downhill), the ribbon 0.7 m off the rock
+    let px = cd.x, pz = cd.z, dx = cd.ux, dz = cd.uz, flat = 0;
+    const P = [], y0 = h(px, pz);
+    for (let n = 0; n < 400; n++) {
+      const [gx, gz] = grad(px, pz), gl = Math.hypot(gx, gz), y = h(px, pz);
+      if (gl > .05) { dx = dx * .7 - gx / gl * .3; dz = dz * .7 - gz / gl * .3; const l = Math.hypot(dx, dz); dx /= l; dz /= l; }
+      const nl = Math.hypot(gx, 1, gz); P.push([px - gx / nl * .7, y + .7 / nl, pz - gz / nl * .7]);
+      flat = gl < .3 && y0 - y > 10 ? flat + 1 : 0;
+      if (flat > 5 || y < -46) break;
+      const st = gl > 2 ? .35 : .9; px += dx * st; pz += dz * st;
+    }
+    if (P.length < 8 || y0 - P[P.length - 1][1] < F.minDrop * .8) continue;
+    const w = F.width[0] + rnd() * (F.width[1] - F.width[0]), pos = [], uv = [], idx = [];
+    let v = 0;
+    for (let i = 0; i < P.length; i++) {
+      const a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)], tx = b[0] - a[0], tz = b[2] - a[2], tl = Math.hypot(tx, tz) || 1;
+      const sx = -tz / tl * w / 2, sz = tx / tl * w / 2, spread = 1 + .5 * i / P.length;
+      if (i) v += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1], P[i][2] - P[i - 1][2]) / 14;
+      pos.push(P[i][0] - sx * spread, P[i][1], P[i][2] - sz * spread, P[i][0] + sx * spread, P[i][1], P[i][2] + sz * spread);
+      uv.push(0, v, w / 6, v);
+      if (i) { const k = i * 2; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); }
+    }
+    const m = new BABYLON.Mesh('cliffFall_' + out.length, scene), vd = new BABYLON.VertexData(), nrm = [];
+    BABYLON.VertexData.ComputeNormals(pos, idx, nrm); vd.positions = pos; vd.indices = idx; vd.normals = nrm; vd.uvs = uv; vd.applyToMesh(m);
+    m.material = mat; m.isPickable = false; m.alphaIndex = 12; m.metadata = { type: 'terrain_water', visualOnly: true }; m.freezeWorldMatrix();
+    const foot = P[P.length - 1], ps = new BABYLON.ParticleSystem('cliffFallMist_' + out.length, 30, scene);
+    ps.particleTexture = dot; ps.emitter = new BABYLON.Vector3(foot[0], foot[1] + 1, foot[2]);
+    ps.minEmitBox = new BABYLON.Vector3(-w / 2, 0, -w / 2); ps.maxEmitBox = new BABYLON.Vector3(w / 2, 2, w / 2);
+    ps.color1 = new BABYLON.Color4(.92, .96, 1, .22); ps.color2 = new BABYLON.Color4(.85, .9, .96, .14); ps.colorDead = new BABYLON.Color4(.9, .95, 1, 0);
+    ps.minSize = 6; ps.maxSize = 13; ps.minLifeTime = 3; ps.maxLifeTime = 5.5; ps.emitRate = 7;
+    ps.direction1 = new BABYLON.Vector3(-.5, .6, -.5); ps.direction2 = new BABYLON.Vector3(.5, 1.4, .5); ps.minEmitPower = .5; ps.maxEmitPower = 1.2;
+    ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD; ps.start();
+    const mid = P[Math.floor(P.length / 2)];
+    out.push({ x: mid[0], z: mid[2], lx: cd.x, lz: cd.z, top: y0, bottom: foot[1], mesh: m });
+  }
+  scene.onBeforeRenderObservable.add(() => { tex.vOffset -= Math.min(.05, scene.getEngine().getDeltaTime() / 1000) * 1.3; });
+  return out;
+}
+// Mist lying in the ravine (recipe.mist): a few huge soft cloud layers at fixed heights, drifting slowly. Lit by the
+// scene (dark at night) with a little glow of their own, so the valley keeps a faint blue shimmer after dark.
+function buildMist(scene, M) {
+  const S = 256, mk = (i) => {
+    const t = new BABYLON.DynamicTexture('valleyMistTex_' + i, { width: S, height: S }, scene, true), c = t.getContext(), img = c.createImageData(S, S);
+    const { perlin } = makeNoise(4242 + i * 17), per = (x, y, f) => { // tileable noise: blend of four shifted copies
+      const u = x / S, v = y / S, n = (a, b) => perlin(a * f, b * f);
+      return n(u, v) * (1 - u) * (1 - v) + n(u + 1, v) * u * (1 - v) + n(u, v + 1) * (1 - u) * v + n(u + 1, v + 1) * u * v;
+    };
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const n = per(x, y, 4) * .6 + per(x, y, 8) * .3 + per(x, y, 16) * .15, a = Math.min(1, Math.max(0, .55 + n * 1.6));
+      const k = (y * S + x) * 4; img.data[k] = img.data[k + 1] = img.data[k + 2] = 255; img.data[k + 3] = Math.round(255 * a);
+    }
+    c.putImageData(img, 0, 0); t.update(); t.hasAlpha = true; t.wrapU = t.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE; return t;
+  };
+  const layers = M.layers.map(([y, alpha], i) => {
+    const g = BABYLON.MeshBuilder.CreateGround('valleyMist_' + i, { width: 1500, height: 1500, subdivisions: 1 }, scene);
+    g.position.y = y; g.isPickable = false; g.metadata = { type: 'visual_backdrop', visualOnly: true };
+    const m = new BABYLON.StandardMaterial('valleyMistMat_' + i, scene), tx = mk(i);
+    tx.uScale = tx.vScale = 7 + i * 2.3; tx.uOffset = i * .37; tx.vOffset = i * .61;
+    m.diffuseTexture = tx; m.useAlphaFromDiffuseTexture = true; m.diffuseColor = new BABYLON.Color3(...M.color);
+    m.emissiveColor = new BABYLON.Color3(...M.color.map(v => v * (M.glow ?? .3))); m.specularColor = BABYLON.Color3.Black();
+    m.alpha = alpha; m.backFaceCulling = false; m.disableDepthWrite = true; m.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
+    g.material = m; g.alphaIndex = 5 + i; g.freezeWorldMatrix();
+    return { g, tx, sp: .0016 * (1 + i * .6) };
+  });
+  scene.onBeforeRenderObservable.add(() => { const dt = Math.min(.05, scene.getEngine().getDeltaTime() / 1000); for (const L of layers) { L.tx.uOffset += dt * L.sp; L.tx.vOffset += dt * L.sp * .4; } });
+  return layers;
 }
 
 // A gnarled dead tree (trunk and bare branches, one mesh), about 4.6 m tall at scale 1.
