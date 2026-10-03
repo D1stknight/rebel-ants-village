@@ -77,19 +77,48 @@
     red: { col: [.55, .06, .05] }, gold: { col: [.85, .62, .22], spec: [.9, .75, .4], power: 40 }, dark: { col: [.03, .02, .015] },
     interior: { col: [.1, .06, .03], em: [.45, .25, .1] }, lantern: { col: [.9, .25, .08], em: [.95, .3, .1] }, fire: { col: [1, .5, .1], em: [1, .45, .08] },
     cloth: { col: [.6, .09, .07] }, rope: { col: [.62, .5, .32] }, iron: { col: [.12, .12, .13], spec: [.5, .5, .55], power: 48 }, water: { col: [.05, .12, .14], spec: [.8, .8, .8], power: 90 },
-    banner_red: { tex: 'banner_red' }, banner_navy: { tex: 'banner_navy' }, banner_gold: { tex: 'banner_gold' }
+    banner_red: { tex: 'banner_red' }, banner_navy: { tex: 'banner_navy' }, banner_gold: { tex: 'banner_gold' },
+    glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
   };
   let TEX = null; const MATS = {};
+  function glowTex(scene) {
+    const S = 128, t = new BABYLON.DynamicTexture('samKit_glowTex', { width: S, height: S }, scene, true), c = t.getContext();
+    const g = c.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.35, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g; c.fillRect(0, 0, S, S); t.hasAlpha = true; t.update(); return t;
+  }
   function material(scene, name) {
     if (MATS[name] && !MATS[name].isDisposed?.()) return MATS[name];
     TEX = TEX || makeTextures(scene);
-    const d = MAT[name], m = new BABYLON.StandardMaterial('samKit_' + name, scene);
+    const d = MAT[name];
+    if (d.glow) {
+      const m = new BABYLON.StandardMaterial('samKit_' + name, scene), tx = glowTex(scene);
+      m.diffuseColor = BABYLON.Color3.Black(); m.specularColor = BABYLON.Color3.Black(); m.disableLighting = true;
+      m.emissiveColor = new BABYLON.Color3(...d.glow); m.emissiveTexture = tx; m.opacityTexture = tx;
+      m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.alpha = 0; m.backFaceCulling = false; m.zOffset = -2; m.disableDepthWrite = true;
+      m.metadata = { kitGlow: true };
+      MATS[name] = m; setLightFactor(); return m;
+    }
+    const m = new BABYLON.StandardMaterial('samKit_' + name, scene);
     if (d.tex) m.diffuseTexture = TEX[d.tex]; else m.diffuseColor = new BABYLON.Color3(...d.col);
     m.specularColor = new BABYLON.Color3(...(d.spec || [.04, .04, .04])); m.specularPower = d.power || 16;
     if (d.em) m.emissiveColor = new BABYLON.Color3(...d.em);
     m.backFaceCulling = false; m.twoSidedLighting = true; m.maxSimultaneousLights = 4;
-    m.freeze();
-    return (MATS[name] = m);
+    if (d.em) m.metadata = { kitBaseEmissive: m.emissiveColor.clone() }; // brightened at night: left unfrozen
+    else m.freeze();
+    MATS[name] = m; if (d.em) setLightFactor(); return m;
+  }
+  // Time of day + weather light factor from the village (.04 bright day ... 1 night, up to 1.25 in storms):
+  // lit windows, doorways and lanterns glow softly by day and fully at night; lantern ground pools only show at night.
+  let lightFactor = .04;
+  function setLightFactor(f) {
+    lightFactor = Number.isFinite(f) ? f : lightFactor;
+    const k = Math.min(1, Math.max(0, lightFactor)), em = .6 + .7 * k, pool = Math.min(1, Math.max(0, (lightFactor - .15) / .6));
+    for (const m of Object.values(MATS)) {
+      if (!m || m.isDisposed?.()) continue;
+      if (m.metadata?.kitBaseEmissive) m.emissiveColor = m.metadata.kitBaseEmissive.scale(em);
+      if (m.metadata?.kitGlow) m.alpha = .7 * pool;
+    }
   }
 
   // ── geometry builder (Blender coordinates: z up, fronts face -y) ────────
@@ -352,6 +381,7 @@
       for (const x of [-.25, .25]) for (const y of [-.25, .25]) M.block('stone', x, y, 1.41, .1, .1, .48);
       M.block('stone', 0, 0, 1.89, .7, .7, .1);
       M.cyl('stone', [0, 0, 1.99], .62, .38, 4, .05); M.sphere('stone', [0, 0, 2.42], .09, 1, 6, 4);
+      M.quad('glow', [[-2.6, -2.6, .07], [2.6, -2.6, .07], [2.6, 2.6, .07], [-2.6, 2.6, .07]]);
     }
   };
 
@@ -377,11 +407,11 @@
   function build(root, type, scene, shadows, skipShadows) {
     if (!B[type]) return false;
     for (const t of template(scene, type)) {
-      const inst = t.createInstance(`${root.name}_${t.name.split('_').pop()}`);
-      inst.parent = root; inst.isPickable = true; inst._editRoot = root; inst.checkCollisions = false;
-      if (shadows && !skipShadows) shadows.addShadowCaster(inst);
+      const inst = t.createInstance(`${root.name}_${t.name.split('_').pop()}`), isGlow = !!t.material?.metadata?.kitGlow;
+      inst.parent = root; inst.isPickable = !isGlow; inst._editRoot = root; inst.checkCollisions = false;
+      if (shadows && !skipShadows && !isGlow) shadows.addShadowCaster(inst);
     }
     return true;
   }
-  window.SamuraiKit = { build, types: Object.keys(B), _Kit: Kit, _B: B };
+  window.SamuraiKit = { build, setLightFactor, types: Object.keys(B), _Kit: Kit, _B: B };
 })();

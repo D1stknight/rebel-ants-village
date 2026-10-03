@@ -67,7 +67,7 @@ export const TERRAIN_RECIPES = {
     extras: [
       { file: 'bamboo.glb', count: 170, scale: [.8, 1.25], body: .35, settle: .3, sink: .1, cull: 260, maxSlope: .5,
         clump: { freq: .012, ox: 77, above: .12 } },
-      { file: 'cherry_blossom.glb', count: 14, scale: [.75, 1.05], body: .9, settle: .6, sink: .2, cull: 230, minSq: 125, maxSq: 230, maxSlope: .35, road: 12 }
+      { file: 'cherry_blossom.glb', count: 14, scale: [.75, 1.05], body: .9, trunkFromMesh: true, settle: .6, sink: .2, cull: 230, minSq: 125, maxSq: 230, maxSlope: .35, road: 12 }
     ],
     water: {
       path: [[-330, 318], [-316, 304], [-307.5, 295.5], [-290, 276], [-272, 252], [-252, 236], [-234, 214], [-214, 202], [-197, 184], [-180, 171], [-166, 158]],
@@ -698,18 +698,34 @@ async function buildDecor(scene, T, avoid) {
       const t = new BABYLON.Color3(...spec.tint);
       if (c.albedoColor) c.albedoColor = c.albedoColor.multiply(t); if (c.diffuseColor) c.diffuseColor = c.diffuseColor.multiply(t);
     });
+    // trunk circles found in the model (cherry trees: the trunk is well off the pivot), else one circle at the pivot
+    let trunk = null;
+    if (spec.trunkFromMesh) {
+      const P = []; parts.forEach(mm => { const p = mm.getVerticesData(BABYLON.VertexBuffer.PositionKind); if (p) for (let i = 0; i < p.length; i++) P.push(p[i]); });
+      let y0 = Infinity, y1 = -Infinity; for (let i = 1; i < P.length; i += 3) { y0 = Math.min(y0, P[i]); y1 = Math.max(y1, P[i]); }
+      trunk = [];
+      for (const [a, b, kk] of [[0, .05, .8], [.05, .14, 1.1]]) {
+        const xs = [], zs = []; for (let i = 0; i < P.length; i += 3) { const f = (P[i + 1] - y0) / (y1 - y0); if (f >= a && f < b) { xs.push(P[i]); zs.push(P[i + 2]); } }
+        if (!xs.length) continue;
+        const cx = xs.reduce((q, x) => q + x, 0) / xs.length, cz = zs.reduce((q, z) => q + z, 0) / zs.length;
+        const d = xs.map((x, i) => Math.hypot(x - cx, zs[i] - cz)).sort((p, q) => p - q);
+        trunk.push({ x: cx, z: cz, r: Math.max(.4, d[Math.floor(d.length * .5)] * kk) });
+      }
+    }
     const per = spec.count, bufs = [...Array(16)].map(() => new Float32Array(per * 16)), cnt = new Array(16).fill(0);
     let k = 0, t = 0;
     while (k < spec.count && t < spec.count * 40) {
       t++;
       const x = (rnd() - .5) * 680, z = (rnd() - .5) * 680; if (!ok(x, z) || !clear(x, z, 2)) continue;
-      const s = spec.scale[0] + rnd() * (spec.scale[1] - spec.scale[0]); BABYLON.Quaternion.FromEulerAnglesToRef(0, rnd() * 6.28, 0, q);
+      const s = spec.scale[0] + rnd() * (spec.scale[1] - spec.scale[0]), yaw = rnd() * 6.28; BABYLON.Quaternion.FromEulerAnglesToRef(0, yaw, 0, q);
       // sit on the lowest ground under the base so the downhill side never floats
       let low = h(x, z); const rr = (spec.settle || .3) * s;
       for (let a = 0; a < 8; a++) low = Math.min(low, h(x + Math.cos(a * .785) * rr, z + Math.sin(a * .785) * rr));
       S.set(s, s, s); P.set(x, low - (spec.sink ?? .15) * s, z);
       BABYLON.Matrix.ComposeToRef(S, q, P, m4); const tile = tileOf(x, z); m4.copyToArray(bufs[tile], cnt[tile] * 16); cnt[tile]++; k++;
-      addBlocker(x, z, blockR * s); addAvoid(x, z, blockR * s + 1);
+      if (trunk) { const c = Math.cos(yaw), sn = Math.sin(yaw); for (const tr of trunk) addBlocker(x + (tr.x * c + tr.z * sn) * s, z + (-tr.x * sn + tr.z * c) * s, tr.r * s); }
+      else addBlocker(x, z, blockR * s);
+      addAvoid(x, z, blockR * s + 1);
     }
     const before = meshes.length;
     fillTiles(parts, bufs, cnt, 'terrain_' + (spec.file ? spec.file.replace('.glb', '') : spec.name));
