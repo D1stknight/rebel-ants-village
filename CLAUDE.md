@@ -8,8 +8,9 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 - Vercel builds every push to dev (preview URL `rebel-ants-village-git-dev-miguel-concepcions-projects.vercel.app`); check the deploy after pushing.
 - More notes live in the claude.ai project "Rebel Ants Universe" (docs `claude/handoff.md`, `claude/village-terrains.md`); this file carries the essentials.
 
-## Where things stand (Oct 3, evening)
-- dev = 1afcc09, deploy READY. On dev: Samurai village (terraced ground + layout + kit), fixes (night lanterns, cherry trunk collision, Back key turns around), Wokou harbour village (coast + sea shader + harbour kit + layout).
+## Where things stand (Oct 3, night)
+- dev = cb0614a (+ this CLAUDE.md commit). On dev: Samurai village (terraced ground + layout + kit), fixes (night lanterns, cherry trunk collision, Back key turns around), Wokou harbour village (coast + sea shader + harbour kit + layout), Wokou sea surf sound.
+- This repo is now attached to Claude Code sessions: Claude commits and pushes to dev directly (plain git), then checks the Vercel deploy (Vercel MCP: project prj_CjuIvsLXKinzfIgUkmSkyWhKWqtc, team team_7tWG3HhBf0Ir5h0Hhz9ZAarq).
 - If the chat has NO repo attached: Claude builds + tests, delivers files to Miguel's Downloads/<name>/, Miguel uploads on github.com (dev branch), Claude then verifies dev matches (git fetch + diff) and checks the Vercel deploy. Do NOT push via the admin page / upload token in the browser (blocked by a safety check).
 - Production reads layouts from dev but lacks the Samurai + Wokou kit/terrain → those live villages show red placeholders until dev → main merge.
 
@@ -22,13 +23,12 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 - Launch single player; Zelda-like vision.
 
 ## Next up (one at a time)
-1. Miguel playtests Wokou (sea look + FPS, piers, shore blocking) and the fixes.
-2. Optional: sea surf sound for Wokou.
-3. Plan the dev → main merge (Samurai + Wokou on prod).
-4. Friend villages: Cute & Creepy (Halloween), Chumps (barn life, drinking + fishing; not in VILLAGE_REGISTRY yet), Saints (Los Angeles city life).
-5. Other faction terrains (table below).
-6. Bake terrains to files; pre-launch layout cache; pin Babylon version.
-7. Older: domain DNS (Kev), #893 reforge, production wallet tests.
+1. Miguel playtests Wokou (sea look + FPS, piers, shore blocking, surf sound level) and the fixes.
+2. Plan the dev → main merge (Samurai + Wokou on prod).
+3. Friend villages: Cute & Creepy (Halloween), Chumps (barn life, drinking + fishing; not in VILLAGE_REGISTRY yet), Saints (Los Angeles city life).
+4. Other faction terrains (table below).
+5. Bake terrains to files; pre-launch layout cache; pin Babylon version.
+6. Older: domain DNS (Kev), #893 reforge, production wallet tests.
 
 
 
@@ -41,6 +41,8 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 
 ## Testing
 - Headless Playwright + swiftshader against a local `python3 -m http.server`, mocking `/api/world-layout` and admin session; render screenshots and check layout round trips (save → load exact). The character GLB needs the Draco decoder from cdn.babylonjs.com (may be blocked in sandboxes) — use a stand-in box for movement tests.
+- If cdn.babylonjs.com is blocked but registry.npmjs.org works: `npm i babylonjs babylonjs-loaders babylonjs-materials draco3dgltf` in a scratch dir and `page.route` the CDN to those files by basename (Babylon 9 asks for `/v9.x/draco_decoder_gltf.wasm`; `draco3dgltf/draco_decoder_gltf_nodejs.js` works as the wrapper). Route vercel-storage GLBs to `assets/character/ant_idle_c.glb`.
+- Swiftshader frames starve timers (setInterval ~1/s): stop the render loop (`BABYLON.EngineStore.LastCreatedEngine.stopRenderLoop()`) before probing audio gains or timer-driven logic.
 - Verify other villages are unchanged after any terrain/kit change (hub, ronin, samurai).
 
 ## Faction terrain direction (from Miguel's FACTIONS PDF)
@@ -92,3 +94,9 @@ Friend villages (Queens, Cute & Creepy, Saints LA; Chumps not in registry yet): 
 - Layout wokou.json 185 objects (60 collision boxes); portal on the quay (0,-23). Reload round trip exact; Samurai unchanged (dojo 4.6 / library 2.8).
 - PROD CAVEAT: same as Samurai — prod lacks wok_* → hold wokou.json until dev→main merge or accept placeholders.
 - Not done yet: sea surf sound; the X post's "clearwater" repo wasn't reachable (link cut off) — our sea is our own shader.
+
+## Wokou sea surf sound (dev cb0614a, Oct 3)
+- `startNewTerrainSurfSound(NT)` in village.html (next to the waterfall sound; started when `NT.sea`): Web Audio, no file. 9 s stereo pink-noise loop → body (lowpass 320) + wash (highpass 160 → swept lowpass, panned per wave) + fizz (highpass 2600). Each wave: rise → break (t+2.2 s) → wash back; 7–12 s apart, random size/side; storm ×1.3, heavy rain ×1.15.
+- Loudness: `NT.surfSoundAt(x,z)` (village-terrain.js): shoreline distance field on a 4 m grid (chamfer, built lazily ~20 ms) → (1 − (d−6)/170)^1.2. Quay .99, dojo .29, hall .38, trade .44, 0 past ~175 m inland. Gain = level × 1.1 × master × ambience; 0 when Mute Ambience, indoors or tab hidden.
+- Measured (default sliders, quay): −29 LUFS, peak −13.7 dBFS (Samurai courtyard bed ≈ −29, Ronin wind ≈ −25 in-game). Hub/Ronin/Samurai: no surf (checked headless).
+- Known, not changed: the waterfall/stream sound ignores Mute Ambience and interiors (surf respects both).
