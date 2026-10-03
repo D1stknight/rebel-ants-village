@@ -59,6 +59,9 @@
     T.noren_yamabushi = bannerTex(scene, 'noren_yamabushi', '#25402d', '#d6a640', 'logo:yamabushi', false, true);
     T.noren_yam_books = bannerTex(scene, 'noren_yam_books', '#25402d', '#d6a640', 'books', false, true);
     T.noren_yam_dots = bannerTex(scene, 'noren_yam_dots', '#25402d', '#d6a640', 'dots', false, true);
+    T.noren_buke = bannerTex(scene, 'noren_buke', '#5e1a20', '#d8b35c', 'logo:buke', false, true);
+    T.banner_buke_scroll = bannerTex(scene, 'buke_scroll', '#5e1a20', '#d8b35c', 'scroll');
+    T.noren_buke_map = bannerTex(scene, 'noren_buke_map', '#c49b48', '#4a1a16', 'board', false, true);
     return T;
   }
   function bannerTex(scene, name, bg, fg, icon, sail, wide) {
@@ -106,7 +109,7 @@
   // Faction emblems on banners: cloth and emblem colours per faction (banner_<faction> materials)
   const FACTION_BANNERS = {
     samurai: ['#961816', '#ecd6aa'], wokou: ['#1c2a4c', '#d9a743'], yamabushi: ['#25402d', '#d6a640'], ronin: ['#0e0d10', '#9a161a'],
-    shogun: ['#2e2147', '#d8b04a'], bushi: ['#1b2a48', '#cfae5c'], buke: ['#4a5233', '#e0d2a4'], ashigaru: ['#24402a', '#d9c98e'],
+    shogun: ['#2e2147', '#d8b04a'], bushi: ['#1b2a48', '#cfae5c'], buke: ['#5e1a20', '#d8b35c'], ashigaru: ['#24402a', '#d9c98e'],
     kenshi: ['#1d4a4c', '#d7e3e0'], sohei: ['#b8611c', '#f4e6c4'], warrior: ['#6b2a1a', '#e2c08a']
   };
   const logoImgs = {};
@@ -127,6 +130,7 @@
     banner_wokou: { tex: 'banner_wokou' }, banner_scroll: { tex: 'banner_scroll' }, banner_board: { tex: 'banner_board' }, sail: { tex: 'sail' },
     banner_yam_books: { tex: 'banner_yam_books' }, banner_yam_dots: { tex: 'banner_yam_dots' },
     noren_yamabushi: { tex: 'noren_yamabushi' }, noren_yam_books: { tex: 'noren_yam_books' }, noren_yam_dots: { tex: 'noren_yam_dots' },
+    noren_buke: { tex: 'noren_buke' }, banner_buke_scroll: { tex: 'banner_buke_scroll' }, noren_buke_map: { tex: 'noren_buke_map' },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
@@ -572,6 +576,70 @@
       for (const s of [-1, 1]) M.tube('stone', [s * .75, -.14, .82], [s * .75, .14, .82], .5, .5, 10);
       M.cyl('stone', [1.9, .3, 0], .35, .32, 8); M.cyl('stone', [1.85, .3, .32], .28, .26, 8); M.block('stone', -1.9, .2, 0, .55, .45, .4);
     },
+    // ── Buke (noble defenders): dark wood, white plaster on grey stone, maroon + gold banners with the trident ──
+    buke_great_hall(M) { M.remap = { red: 'darkwood', banner_red: 'banner_buke' }; B.sam_great_dojo(M); M.remap = null; noren(M, 0, -15 / 2 + 2.05, 5.45, 5.6, 1.5, 'noren_buke'); },
+    // archive: a stone ground floor (big doorway, red curtains) under a timber and plaster upper floor with a scroll banner
+    buke_archive(M) {
+      const W = 12, D = 9;
+      M.block('stone', 0, 0, 0, W + 1, D + 1, .6); steps(M, 0, -(D + 1) / 2, .6, 4, 2);
+      M.remap = { plaster: 'stone', wood: 'stone' };
+      walls(M, 0, 0, .6, W, D, 3.8, { door: [3.4, 3.1] });
+      M.remap = null;
+      M.block('darkwood', 0, -D / 2 - .1, 4.4, W + .4, .5, .3); M.block('darkwood', 0, D / 2 + .1, 4.4, W + .4, .5, .3);
+      walls(M, 0, 0, 4.7, W - .4, D - .4, 3.4, { windows: [['front', -4, 5.6, 1.6, 1.4], ['front', 4, 5.6, 1.6, 1.4], ['left', -2, 5.6, 1.6, 1.4], ['left', 2, 5.6, 1.6, 1.4], ['right', -2, 5.6, 1.6, 1.4], ['right', 2, 5.6, 1.6, 1.4]] });
+      M.roof(0, 0, 8.1, W + 2.6, D + 2.6, 3.4, { lift: .8 });
+      banner(M, 0, -D / 2 + .2 - .2, 7.7, 3.4, 2.8, 'banner_buke_scroll');
+      noren(M, 0, -D / 2 - .2, 3.75, 3.6, 1, 'noren_buke');
+      for (const sd of [-1, 1]) { M.quad('cloth', [[sd * 1.75, -D / 2 - .22, .7], [sd * 2.25, -D / 2 - .22, .7], [sd * 2.25, -D / 2 - .22, 3.7], [sd * 1.75, -D / 2 - .22, 3.7]]); lantern(M, sd * 2.8, -D / 2 - .5, 3.6, .22); }
+      for (const [x, y] of [[-4.6, -D / 2 - 1.2], [4.4, -D / 2 - 1.3]]) { M.block('wood', x, y, 0, 1, .8, .8); M.block('wood', x + .2, y + .1, .8, .8, .6, .6); }
+    },
+    // strategy hall: the library's frame with a gold map banner over the door and trident banners
+    buke_strategy_hall(M) { M.remap = { banner_navy: 'banner_buke' }; B.sam_library(M); M.remap = null; noren(M, 0, -9 / 2 - .22, 5.3, 4.2, 1.3, 'noren_buke_map'); },
+    buke_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_buke'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_buke'); },
+    // gatehouse between two stone bastions with braziers and banners on top; open doors, a noren across the opening
+    buke_gate(M) {
+      const OW = 5.4, OH = 5;
+      for (const sd of [-1, 1]) {
+        const x = sd * (OW / 2 + 3.1);
+        M.block('stone', x, 0, 0, 6, 5.6, 5.6); M.block('stone', x, 0, 5.6, 6.3, 5.9, .3);
+        for (const [px, py] of [[-2.9, -2.8], [2.9, -2.8], [-2.9, 2.8], [2.9, 2.8], [0, -2.8]]) M.block('darkwood', x + px, py, 5.9, .2, .2, 1.1);
+        for (const z of [6.4, 6.9]) { M.box('darkwood', [x, -2.8, z], [6, .12, .12]); M.box('darkwood', [x - 2.9, 0, z], [.12, 5.6, .12]); M.box('darkwood', [x + 2.9, 0, z], [.12, 5.6, .12]); }
+        M.cyl('iron', [x - sd * 1.3, -1.3, 5.9], .25, .7, 6, .1); M.cyl('iron', [x - sd * 1.3, -1.3, 6.6], .7, .3, 10, .8);
+        M.quad('fire', [[x - sd * 1.3 - .5, -1.3, 6.8], [x - sd * 1.3 + .5, -1.3, 6.8], [x - sd * 1.3 + .25, -1.3, 7.7], [x - sd * 1.3 - .25, -1.3, 7.7]]);
+        M.quad('fire', [[x - sd * 1.3, -1.8, 6.8], [x - sd * 1.3, -.8, 6.8], [x - sd * 1.3, -1.05, 7.7], [x - sd * 1.3, -1.55, 7.7]]);
+        M.cyl('darkwood', [x + sd * 1.6, -2, 5.9], .09, 5, 8); M.rod('darkwood', [x + sd * 1.6, -2.05, 10.6], [x + sd * 1.6 - sd * 1.5, -2.05, 10.6], .05, 6);
+        M.quad('banner_buke', [[x + sd * 1.6 - (sd > 0 ? 1.45 : 0), -2.08, 6.6], [x + sd * 1.6 + (sd > 0 ? 0 : 1.45), -2.08, 6.6], [x + sd * 1.6 + (sd > 0 ? 0 : 1.45), -2.08, 10.55], [x + sd * 1.6 - (sd > 0 ? 1.45 : 0), -2.08, 10.55]]);
+        banner(M, x, -2.82, 4.8, 1.8, 3.6, 'banner_buke');
+      }
+      for (const sd of [-1, 1]) for (const y of [-1.2, 1.2]) M.cyl('darkwood', [sd * (OW / 2 + .2), y, 0], .3, OH + .8, 10);
+      for (const y of [-1.2, 1.2]) M.box('darkwood', [0, y, OH + .45], [OW + 1.4, .45, .5]);
+      M.block('darkwood', 0, 0, OH + .7, OW + 1.8, 3, .35);
+      M.roof(0, 0, OH + 1.05, OW + 4.4, 4.8, 1.9, { lift: .6 });
+      for (const sd of [-1, 1]) M.block('darkwood', sd * (OW / 2 - .15), -2.1, 0, .2, 2.2, OH - .3, sd * .9);
+      noren(M, 0, -1.48, OH + .2, OW - .3, 1.7, 'noren_buke');
+      for (const sd of [-1, 1]) lantern(M, sd * (OW / 2 + .2), -1.65, OH - .1, .22);
+    },
+    buke_banner_pole(M) { M.remap = { banner_red: 'banner_buke' }; B.sam_banner_pole(M); },
+    // stone footbridge over a canal, 8 m long (along y), deck top at the origin, low parapets
+    buke_footbridge(M) {
+      M.block('stone', 0, 0, -.6, 3, 8, .6);
+      for (const sd of [-1, 1]) { M.block('stone', sd * 1.35, 0, 0, .3, 8, .55); M.block('stone', 0, sd * 3.4, -2.4, 3.4, 1.2, 1.8); }
+      for (const sd of [-1, 1]) for (const y of [-3.6, 3.6]) { M.block('stone', sd * 1.35, y, 0, .42, .42, .9); M.cyl('stone', [sd * 1.35, y, .9], .18, .18, 4, .05); }
+      for (const sd of [-1, 1]) M.box('stone', [0, sd * 2.2, -.95], [3, 1.6, .7], 0, sd * .35); // haunches of the arch
+    },
+    // stone water outlet for a canal end: a small arch in the wall with water pouring out; back at y = 0, lip at z = 0
+    buke_canal_spout(M) {
+      M.block('stone', 0, -.4, -2.2, 3.2, .8, 3.6);
+      M.quad('dark', [[-.7, -.82, .2], [.7, -.82, .2], [.7, -.82, 1.1], [-.7, -.82, 1.1]]);
+      for (let i = 0; i <= 6; i++) { const a = Math.PI * i / 6; M.box('stone', [Math.cos(a) * .95, -.85, 1.1 + Math.sin(a) * .6], [.3, .3, .3]); }
+      M.quad('water', [[-.6, -.9, .2], [.6, -.9, .2], [.6, -1.5, -1.6], [-.6, -1.5, -1.6]]);
+    },
+    // wooden post lantern (fences, stairs); lights up at night like the stone ones
+    buke_post_lantern(M) {
+      M.block('darkwood', 0, 0, 0, .22, .22, 1.35); M.block('lantern', 0, 0, 1.35, .36, .36, .42); M.block('darkwood', 0, 0, 1.77, .5, .5, .08);
+      M.cyl('darkwood', [0, 0, 1.85], .3, .2, 4, .04);
+      M.quad('glow', [[-1.8, -1.8, .07], [1.8, -1.8, .07], [1.8, 1.8, .07], [-1.8, 1.8, .07]]);
+    },
     // stone toro lantern for paths and stairs: the light box glows (no real light, so any number is cheap)
     sam_stone_lantern(M) {
       M.cyl('stone', [0, 0, 0], .5, .22, 6, .42); M.cyl('stone', [0, 0, .22], .17, 1.05, 6, .14);
@@ -613,6 +681,6 @@
     return true;
   }
   // walkable decks in the type's own frame (Babylon x/z, deck top y above the origin)
-  const decks = { wok_pier: [{ x: 0, z: 0, halfX: 2.05, halfZ: 4.05, y: 0 }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }] };
+  const decks = { wok_pier: [{ x: 0, z: 0, halfX: 2.05, halfZ: 4.05, y: 0 }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }] };
   window.SamuraiKit = { build, setLightFactor, decks, types: Object.keys(B), _Kit: Kit, _B: B };
 })();
