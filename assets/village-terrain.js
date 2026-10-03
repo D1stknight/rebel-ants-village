@@ -195,6 +195,54 @@ export const TERRAIN_RECIPES = {
       dirt: [['r', -20, 30, 20, 52]],
       grass: 7000, flowers: 700
     }
+  },
+  // Buke: noble defenders of the inner colonies. A fortified village set into a rocky canyon: the only way in is up a
+  // gorge to a gatehouse between stone bastions and stake palisades; inside, terraces climb from the gate yard to a
+  // cobbled well plaza crossed by stone canals, the archive and the strategy hall, the training yard, and the great
+  // hall at the top, with tunnels into the cliffs all round. Moss, olive-khaki grass, grey rock. From Miguel's images.
+  buke: {
+    seed: 3579, dropSeed: 57, drops: 60000, roads: false,
+    hills: 1.1, shape: { fbm: 28, ridge: 26, wall: 110 },
+    flatHalf: 100, hillStart: 100, hillFull: 190, wallStart: 250,
+    // a basin: the ground rises 42 m in rock cliffs all round the village pieces (main basin + the gorge to the gate)
+    mesa: { drop: -42, cliff: 9, wobble: 2, bulge: 3, fade: [140, 230], rockAbove: 11.5,
+      pieces: [{ r: [-72, -80, 72, 96], round: 22 }, { r: [-15, -112, 15, -78], round: 6 }] },
+    palette: {
+      grassA: [0.3, 0.35, 0.16], grassB: [0.46, 0.45, 0.25], wet: [0.18, 0.26, 0.12],
+      dirt: [0.55, 0.45, 0.3], rockTint: [0.93, 0.91, 0.87], highTint: [1.0, 1.0, .92], peak: [0.82, 0.8, 0.77]
+    },
+    grass: { count: 60000, base: [0.14, 0.2, 0.07], tip: [0.6, 0.58, 0.3] },
+    pines: { file: 'pine_1.glb', count: 300, scale: [1.8, 3.4], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 360, scale: [1.2, 3.4], body: 0.75, settle: .9, sink: .1, tint: [.9, .98, .84], minSq: 80 }, // mossy
+    extras: [ // pines and shrubs on the unpaved edges of the terraces
+      { file: 'pine_1.glb', count: 40, scale: [1.2, 2.2], body: .3, settle: .35, sink: .15, minSq: 0, maxSq: 110, maxSlope: .3, road: 0, village: true }
+    ],
+    fog: { density: .0014, day: [.82, .8, .74], night: [.04, .05, .1] },
+    light: { sun: 1.06, hemi: .98, tint: [1.0, .95, .86] },
+    sky: { turbidity: 6, luminance: 1, rayleigh: 2.2, mieCoefficient: .005 },
+    court: { texture: 'stone', court: [1.45, 1.38, 1.28], plaza: [1.25, 1.18, 1.08], path: [1.15, 1.08, .98] },
+    village: {
+      rect: [-82, -114, 82, 104], res: 1, wall: 1.1,
+      terraces: [
+        { r: [-95, -40, 95, 130], h: 2.5 },  // well plaza with the canals
+        { r: [-95, 14, 95, 130], h: 6 },     // archive, strategy hall, training yard
+        { r: [-95, 54, 95, 130], h: 10 }     // great hall
+      ],
+      ramps: [
+        { r: [-6, -48, 6, -40], axis: 'z', from: 0, to: 2.5 },
+        { r: [-7, 4, 7, 14], axis: 'z', from: 2.5, to: 6 },
+        { r: [-53, 4, -46, 14], axis: 'z', from: 2.5, to: 6 }, { r: [46, 4, 53, 14], axis: 'z', from: 2.5, to: 6 },
+        { r: [-6, 44, 6, 54], axis: 'z', from: 6, to: 10 }
+      ],
+      digs: [{ r: [-48, -28, -10, -22], h: 0, edge: .5 }, { r: [10, -28, 48, -22], h: 0, edge: .5 }], // stone canals
+      pools: [{ r: [-47.7, -27.7, -10.3, -22.3], y: 1.7 }, { r: [10.3, -27.7, 47.7, -22.3], y: 1.7 }],
+      pave: [
+        ['r', -14, -112, 14, -78], ['r', -62, -78, 62, -40.5], ['r', -7, -49, 7, -39], ['r', -64, -39.5, 64, 13.5], ['r', -8, 3, 8, 15],
+        ['r', -54, 3, -45, 15], ['r', 45, 3, 54, 15], ['r', -64, 14.5, 64, 53.5], ['r', -7, 43, 7, 55], ['r', -62, 54.5, 62, 90]
+      ],
+      dirt: [['r', -18, 20, 18, 42]],
+      grass: 6000, flowers: 0
+    }
   }
 };
 
@@ -298,6 +346,7 @@ export function makeCoastCap(recipe) {
 }
 
 // Mesa (recipe.mesa): the ground stays up inside the pieces (rounded rects { r, round } and circles { c: [x, z, r] }) and
+// (a negative drop makes a basin instead: the ground rises in cliffs all round the pieces, a village in a canyon)
 // falls away in a cliff outside them, `drop` metres down into a ravine; the drop fades out again towards the peaks.
 // dist(x, z): metres outside the nearest piece (negative inside); cut(x, z): how far the ground is lowered there.
 export function makeMesa(recipe) {
@@ -312,7 +361,7 @@ export function makeMesa(recipe) {
   const dist = (x, z) => { let d = Infinity; for (const p of M.pieces) d = Math.min(d, pieceD(p, x, z)); return d + (M.wobble || 0) * fbm(x * .035 + 7, z * .035 - 3, 3); };
   const cut = (x, z) => {
     let d = dist(x, z); if (d <= 0) return 0;
-    d += smooth(0, 4, d) * 7 * fbm(x * .045 + 11, z * .045 - 2, 3); if (d <= 0) return 0; // the face bulges and recedes below the lip
+    d += smooth(0, 4, d) * (M.bulge ?? 7) * fbm(x * .045 + 11, z * .045 - 2, 3); if (d <= 0) return 0; // the face bulges and recedes below the lip
     // the face: steep in places, slanting rock in others, broken by a few ledges (where pines can stand)
     const w = M.cliff * (.5 + 3.4 * Math.max(0, fbm(x * .016 + 1, z * .016 - 6, 2) + .3)), p = smooth(0, w, d), q = p * 4, ledge = (Math.floor(q) + smooth(.55, 1, q - Math.floor(q))) / 4;
     const face = (p + (ledge - p) * smooth(-.1, .3, fbm(x * .03 - 4, z * .03 + 2, 2))) * (1 - smooth(M.fade[0], M.fade[1], d));
@@ -546,7 +595,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   writeMask();
   const maskTex = new BABYLON.RawTexture(mask, N, N, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, false, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
   maskTex.wrapU = maskTex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-  const material = makeTerrainMaterial(scene, maskTex, recipe.palette, recipe.village, recipe.sea, !!recipe.mesa);
+  const material = makeTerrainMaterial(scene, maskTex, recipe.palette, recipe.village, recipe.sea, recipe.mesa);
   ground.material = material;
 
   // horizon: the same land continues into far mountains (sunk under the main terrain inside the square)
@@ -563,6 +612,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   far.freezeWorldMatrix();
 
   const waterMeshes = hm.water ? buildWater(scene, hm.water) : [];
+  if (recipe.village?.pools) waterMeshes.push(...buildPools(scene, recipe.village.pools));
   const seaY = recipe.sea ? (recipe.sea.y ?? -3) : null;
   const sea = recipe.sea ? buildSea(scene, recipe.sea, H0, seaY) : null;
   const mesa = makeMesa(recipe), mist = recipe.mist ? buildMist(scene, recipe.mist) : null;
@@ -597,6 +647,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
     // 0..1 loudness of running water heard at (x, z): the fall carries ~120 m, the stream ~35 m
     waterSoundAt(x, z) {
       let v = 0;
+      for (const p of recipe.village?.pools || []) { const [x0, z0, x1, z1] = p.r, dx = Math.max(x0 - x, 0, x - x1), dz = Math.max(z0 - z, 0, z - z1); v = Math.max(v, .3 * Math.max(0, 1 - Math.hypot(dx, dz) / 28) ** 1.5); } // canals
       for (const f of T.falls) v = Math.max(v, .8 * Math.max(0, 1 - Math.hypot(x - f.x, z - f.z) / 170) ** 1.6); // cliff waterfalls carry far
       const Wt = hm.water; if (!Wt) return v;
       const f = Wt.pts[Wt.iLip + 2] || Wt.pts[Wt.iLip];
@@ -718,8 +769,9 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA) {
       granite = mix(vec3(dot(granite, vec3(0.333))), granite, 0.4) * ${v3(P.rockTint)};
       granite *= 0.72 + 0.5 * tfbm(vec2((pw.x + pw.z) * 0.22, pw.y * 0.012));
       granite = mix(granite, ${v3(P.grassA)} * 0.8, smoothstep(0.45, 0.8, nw.y) * 0.7 + smoothstep(0.6, 0.9, tfbm(pw.xz*0.07 + pw.y*0.03)) * 0.35);
-      rock = mix(rock, granite, smoothstep(-0.5, -4.0, pw.y));` : ''}
-      rock = mix(rock, wallStone, vil${MESA ? ' * smoothstep(-4.0, -0.5, pw.y)' : ''});
+      float natural = max(smoothstep(-0.5, -4.0, pw.y), smoothstep(${(MESA.rockAbove ?? 1e4).toFixed(1)}, ${((MESA.rockAbove ?? 1e4) + 2).toFixed(1)}, pw.y));
+      rock = mix(rock, granite, natural);` : ''}
+      rock = mix(rock, wallStone, vil${MESA ? ' * (1.0 - natural)' : ''});
       col = mix(col, rock, smoothstep(0.3, 0.46, slope + (micro-0.5)*0.14));
       col = mix(col, col*${v3(P.highTint || [1.12, 1.04, .78])}, smoothstep(30.0, 70.0, pw.y)*(1.0 - smoothstep(0.3,0.45,slope)));
       col = mix(col, ${v3(P.peak || [.9, .92, .95])}, smoothstep(150.0, 230.0, pw.y + micro*20.0)*(1.0-smoothstep(0.45,0.6,slope)));
@@ -1026,6 +1078,22 @@ function buildWater(scene, Wt) {
   mist.direction1 = new BABYLON.Vector3(-.4, .5, -.4); mist.direction2 = new BABYLON.Vector3(.4, 1.1, .4); mist.minEmitPower = .4; mist.maxEmitPower = .9;
   mist.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD; mist.start();
   return meshes;
+}
+
+// Still water in the village's canals and ponds (recipe.village.pools: [{ r: [x0, z0, x1, z1], y }]): flat rippling planes
+// over the dug beds (village.digs), like the stream's water.
+function buildPools(scene, pools) {
+  const m = new BABYLON.StandardMaterial('canalWaterMat', scene), nt = makeRippleNormalTex(scene);
+  m.diffuseColor = new BABYLON.Color3(.08, .2, .22); m.emissiveColor = new BABYLON.Color3(.01, .035, .04);
+  m.specularColor = new BABYLON.Color3(.85, .88, .85); m.specularPower = 90; m.alpha = .86; m.backFaceCulling = false;
+  m.bumpTexture = nt; nt.level = .55;
+  scene.onBeforeRenderObservable.add(() => { nt.vOffset -= Math.min(.05, scene.getEngine().getDeltaTime() / 1000) * .1; });
+  return pools.map((p, i) => {
+    const [x0, z0, x1, z1] = p.r, g = BABYLON.MeshBuilder.CreateGround('canalWater_' + i, { width: x1 - x0, height: z1 - z0 }, scene);
+    g.position.set((x0 + x1) / 2, p.y, (z0 + z1) / 2); g.material = m; g.isPickable = false; g.receiveShadows = true;
+    g.metadata = { type: 'terrain_water', visualOnly: true }; g.alphaIndex = 10; g.freezeWorldMatrix();
+    nt.uScale = 1; return g;
+  });
 }
 
 // ── Cliff waterfalls and valley mist (mesa villages) ──────────
