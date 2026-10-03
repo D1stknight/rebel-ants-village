@@ -1,7 +1,7 @@
 // Village terrain v1 (Oct 2026). The Terrain Lab's "look 3" for the real villages:
 // a 513² heightmap (seeded noise + water erosion), a painted ground material (grass / dirt / rock / roads by slope,
 // height and where water runs), far mountains, swaying grass and pines / rocks scattered by slope.
-// Each village gets a recipe; only the hub has one so far. Loaded by village.html only with ?terrain=new.
+// Each village gets a recipe; only the hub has one so far. Loaded by village.html (hub default; ?terrain=old turns it off).
 /* global BABYLON */
 
 export const TERRAIN_RECIPES = {
@@ -16,8 +16,8 @@ export const TERRAIN_RECIPES = {
       dirt: [0.46, 0.36, 0.24], rockTint: [0.92, 0.90, 0.86]
     },
     grass: { count: 90000, base: [0.16, 0.26, 0.08], tip: [0.62, 0.68, 0.30] },
-    pines: { file: 'pine_1.glb', count: 300, scale: [2.2, 4.2], trunk: 0.32 },
-    rocks: { file: 'rock_1.glb', count: 240, scale: [1.0, 3.2], body: 0.75 },
+    pines: { file: 'pine_1.glb', count: 300, scale: [2.2, 4.2], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 240, scale: [1.0, 3.2], body: 0.75, settle: .9, sink: .1 },
     // A stream that leaves the north-east mountain wall as a waterfall, drops into a plunge pool and winds down to a pond
     // outside the courtyard corner. Points are [x, z]; the route keeps 20 m clear of every placed object.
     water: {
@@ -427,7 +427,16 @@ async function buildDecor(scene, T, avoid) {
       S.set(s, s * (.8 + rnd() * .6), s); P.set(x, y - .02, z);
       BABYLON.Matrix.ComposeToRef(S, q, P, m4); m4.copyToArray(bufs[t], cnt[t] * 16); cnt[t]++; placed++;
     }
+    const before = meshes.length;
     fillTiles([blade], bufs, cnt, 'terrainGrass');
+    // grass tiles far from the camera are switched off (blades there are smaller than a pixel)
+    const grassTiles = meshes.slice(before).map(m => { const t = +m.name.split('_')[1]; return { m, x: -262.5 + Math.floor(t / 4) * 175, z: -262.5 + (t % 4) * 175 }; });
+    let lastCull = 0;
+    scene.onBeforeRenderObservable.add(() => {
+      const now = performance.now(); if (now - lastCull < 400) return; lastCull = now;
+      const c = scene.activeCamera?.globalPosition; if (!c) return;
+      for (const g of grassTiles) { const dx = Math.max(0, Math.abs(c.x - g.x) - 87.5), dz = Math.max(0, Math.abs(c.z - g.z) - 87.5), on = dx * dx + dz * dz < 150 * 150; if (g.m.isEnabled() !== on) g.m.setEnabled(on); }
+    });
   }
 
   async function scatter(spec, ok, blockR, cast) {
@@ -441,7 +450,10 @@ async function buildDecor(scene, T, avoid) {
       t++;
       const x = (rnd() - .5) * 680, z = (rnd() - .5) * 680; if (!ok(x, z) || !clear(x, z, 2)) continue;
       const s = spec.scale[0] + rnd() * (spec.scale[1] - spec.scale[0]); BABYLON.Quaternion.FromEulerAnglesToRef(0, rnd() * 6.28, 0, q);
-      S.set(s, s, s); P.set(x, h(x, z) - .15 * s, z);
+      // sit on the lowest ground under the base so the downhill side never floats
+      let low = h(x, z); const rr = (spec.settle || .3) * s;
+      for (let a = 0; a < 8; a++) low = Math.min(low, h(x + Math.cos(a * .785) * rr, z + Math.sin(a * .785) * rr));
+      S.set(s, s, s); P.set(x, low - (spec.sink ?? .15) * s, z);
       BABYLON.Matrix.ComposeToRef(S, q, P, m4); const tile = tileOf(x, z); m4.copyToArray(bufs[tile], cnt[tile] * 16); cnt[tile]++; k++;
       addBlocker(x, z, blockR * s); addAvoid(x, z, blockR * s + 1);
     }

@@ -1532,9 +1532,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="assets/forge-sfx.js"></script>
 <script src="assets/rebel-weapon.js"></script>
 <script type="module">
-// New terrain test (Oct 2026): ?terrain=new puts the Terrain Lab ground into the hub (eroded hills, painted ground,
-// far mountains, grass, pines, rocks). Placed objects keep their height above the ground. Saving is off in this mode.
-const NEW_TERRAIN_MODULE = new URLSearchParams(location.search).get('terrain') === 'new'
+// New terrain (Oct 2026, approved): the hub's ground is the Terrain Lab look (eroded hills, painted ground, far mountains,
+// river and waterfall, grass, pines, rocks). ?terrain=old shows the previous ground. Other villages keep the old ground
+// until they get their own recipe.
+const NEW_TERRAIN_MODULE = new URLSearchParams(location.search).get('terrain') !== 'old'
   ? await import('./assets/village-terrain.js').catch(e => { console.warn('New terrain did not load', e); return null; })
   : null;
 const canvas=document.getElementById('c');
@@ -14599,7 +14600,7 @@ const _newTerrain = (NEW_TERRAIN_MODULE && CURRENT_VILLAGE_ID === 'hub') ? (() =
   } catch (e) { console.warn('New terrain failed, using the old one', e); return null; }
 })() : null;
 window._newTerrain = _newTerrain;
-if (_newTerrain) console.log('New terrain on (test mode, saving off), built in', _newTerrain.buildMs, 'ms');
+if (_newTerrain) console.log('New terrain on, built in', _newTerrain.buildMs, 'ms');
 const ground=_newTerrain ? _newTerrain.ground : BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:120},scene);
 const grassMat=new BABYLON.StandardMaterial("grassMat",scene);
 const grassDiff=new BABYLON.Texture("assets/ground_diffuse.jpg",scene);
@@ -19774,10 +19775,6 @@ function collectWorldLayoutData() {
 }
 
 function saveWorldLayout(saveToGitHub = true){
-  if (window._newTerrain) {
-    showToast('New terrain test: saving is off. Open the village without ?terrain=new to save.');
-    return Promise.resolve(false);
-  }
   if (saveToGitHub && CURRENT_VILLAGE_ID !== 'hub') {
     const confirmed = window.confirm(`You are saving ${CURRENT_VILLAGE.displayName}. This will not overwrite Hub Village.`);
     if (!confirmed) {
@@ -20035,10 +20032,10 @@ function copyAssetSource(type, source, name) {
 // Small-ant layout items skipped at load because the small-ant runtime is off in this browser.
 let _heldSmallAntLayoutItems = [];
 
-// ── New terrain test: placed objects keep their height above the ground ──
-// Saved positions belong to the current terrain. With ?terrain=new each object is raised by (new ground − old ground)
-// at its spot when the layout loads, and lowered by the same amount whenever the layout is collected (undo, backups,
-// export), so the saved coordinates never change. Collision boxes move with their owner. Buildings outside the
+// ── New terrain: placed objects keep their height above the ground ──
+// The saved layout stays in the old terrain's heights, so the live site (still on the old ground) keeps reading it
+// correctly. Each object is raised by (new ground − old ground) at its spot when the layout loads, and lowered by the
+// same amount whenever the layout is collected (saves, undo, backups, export); the round trip is exact. Collision boxes move with their owner. Buildings outside the
 // courtyard get a flat yard in the new ground first.
 const NEW_TERRAIN_PAD_TYPES = /^(dojo_|shrine_|torii|village_gate|temple|house|tower|hut|altar)/;
 function newTerrainFlatGroundAt(x, z, isNew) {
@@ -20068,12 +20065,28 @@ function newTerrainGetsPad(item) {
   const { x, z } = item.position;
   return Math.max(Math.abs(x), Math.abs(z)) >= 108 && Math.abs(x) <= 345 && Math.abs(z) <= 345;
 }
+// Trees, pines, rocks and cherry trees settle onto the lowest ground under their base, so on the steeper new slopes
+// no side of the trunk or rock hangs in the air. Radius ~ trunk / rock size at the item's scale.
+const NEW_TERRAIN_SETTLE = { pine_1: .35, tree_1: .5, rock_1: .9, cherry_blossom: .5, bamboo: .3 };
+function newTerrainSettleDelta(item) {
+  const k = NEW_TERRAIN_SETTLE[item.type];
+  const { x, z } = item.position;
+  if (!k || Math.max(Math.abs(x), Math.abs(z)) < 112 || Math.abs(x) > 350 || Math.abs(z) > 350) return null;
+  const NT = window._newTerrain, r = k * Math.abs(item.scaling?.x || 1);
+  let low = Infinity;
+  for (let a = 0; a < 8; a++) { const y = NT.heightAt(x + Math.cos(a * .785) * r, z + Math.sin(a * .785) * r); if (Number.isFinite(y)) low = Math.min(low, y); }
+  const c = NT.heightAt(x, z); if (Number.isFinite(c)) low = Math.min(low, c);
+  if (!Number.isFinite(low)) return null;
+  return Math.max(low, newTerrainFlatGroundAt(x, z, true)) - Math.max(NT.oldHeightAt(x, z) ?? 0, newTerrainFlatGroundAt(x, z, false));
+}
 // Buildings were placed as if the ground were at 0, so they sit on their yard: raised by the yard height.
 function newTerrainItemDelta(item) {
   if (newTerrainGetsPad(item)) {
     const y = window._newTerrain.padHeightAt(item.position.x, item.position.z, newTerrainFootprintRadius(item));
     if (Number.isFinite(y)) return y;
   }
+  const settle = newTerrainSettleDelta(item);
+  if (settle !== null) return settle;
   return newTerrainDeltaAt(item.position.x, item.position.z);
 }
 function newTerrainShiftLayout(data, sign) {
