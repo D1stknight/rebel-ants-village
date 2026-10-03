@@ -1532,6 +1532,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="assets/forge-sfx.js"></script>
 <script src="assets/rebel-weapon.js"></script>
 <script type="module">
+// New terrain test (Oct 2026): ?terrain=new puts the Terrain Lab ground into the hub (eroded hills, painted ground,
+// far mountains, grass, pines, rocks). Placed objects keep their height above the ground. Saving is off in this mode.
+const NEW_TERRAIN_MODULE = new URLSearchParams(location.search).get('terrain') === 'new'
+  ? await import('./assets/village-terrain.js').catch(e => { console.warn('New terrain did not load', e); return null; })
+  : null;
 const canvas=document.getElementById('c');
 const setSt=t=>{const el=document.getElementById('ldst'); if(el) el.textContent=t;};
 const VILLAGE_REGISTRY = {
@@ -7995,7 +8000,7 @@ function isStaticShadowCaster(m) {
   let r = m; while (r.parent) r = r.parent;
   // Only placed village objects (layout clones) and the ground. Anything else can move: the player's weapons hang
   // off rig bones whose root is 'mixamorig_Hips', not playerRoot, and would leave a frozen blade shadow at spawn.
-  if (!(r.metadata?.isClone === true || m.name === 'gnd')) return false;
+  if (!(r.metadata?.isClone === true || m.name === 'gnd' || m.metadata?.terrainShadow === true)) return false;
   if (DYNAMIC_SHADOW_TYPES.has(r.metadata?.type) || DYNAMIC_SHADOW_TYPES.has(m.metadata?.type)) return false;
   m.computeWorldMatrix(true);
   const c = m.getBoundingInfo().boundingSphere.centerWorld;
@@ -9263,7 +9268,12 @@ function applyWeatherLighting() {
   if (flash) flash.style.opacity = lightningActive ? '0.78' : '0';
   const heat = document.getElementById('weatherHeatHaze');
   if (heat) heat.style.opacity = cfg.warm ? '.22' : '0';
-  if (cfg.fog === BABYLON.Scene.FOGMODE_NONE) {
+  if (cfg.fog === BABYLON.Scene.FOGMODE_NONE && window._newTerrain) {
+    // new terrain: a light haze even on clear days, so the far mountains fade into the sky
+    scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+    scene.fogDensity = 0.0016;
+    scene.fogColor = cfg.fogColor || WeatherManager.baseFogColor;
+  } else if (cfg.fog === BABYLON.Scene.FOGMODE_NONE) {
     scene.fogMode = BABYLON.Scene.FOGMODE_NONE;
   } else {
     scene.fogMode = cfg.fog;
@@ -14580,7 +14590,17 @@ function ensureEditableRootUniqueName(node) {
 // ── GROUND / TERRAIN ─────────────────────────
 setSt("Village: building terrain...");
 // Large grass base
-const ground=BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:120},scene);
+const _newTerrain = (NEW_TERRAIN_MODULE && CURRENT_VILLAGE_ID === 'hub') ? (() => {
+  try {
+    return NEW_TERRAIN_MODULE.createVillageTerrain(scene, NEW_TERRAIN_MODULE.TERRAIN_RECIPES.hub, {
+      oldHeightAt: NEW_TERRAIN_MODULE.makeOldHubSampler(),
+      counts: Object.fromEntries(['grass', 'pines', 'rocks'].map(k => [k, Number(new URLSearchParams(location.search).get(k) ?? NaN)]))
+    });
+  } catch (e) { console.warn('New terrain failed, using the old one', e); return null; }
+})() : null;
+window._newTerrain = _newTerrain;
+if (_newTerrain) console.log('New terrain on (test mode, saving off), built in', _newTerrain.buildMs, 'ms');
+const ground=_newTerrain ? _newTerrain.ground : BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:120},scene);
 const grassMat=new BABYLON.StandardMaterial("grassMat",scene);
 const grassDiff=new BABYLON.Texture("assets/ground_diffuse.jpg",scene);
 grassDiff.uScale=14;grassDiff.vScale=14;
@@ -14588,10 +14608,11 @@ grassMat.diffuseTexture=grassDiff;
 grassMat.specularColor=new BABYLON.Color3(0.18,0.22,0.12);
 grassMat.specularPower=8;
 
-ground.material=grassMat; ground.receiveShadows=true; shadows.addShadowCaster(ground);
+ground.material=_newTerrain ? _newTerrain.material : grassMat; ground.receiveShadows=true; shadows.addShadowCaster(ground);
+if (_newTerrain) _newTerrain.castShadow = m => { m.metadata = { ...(m.metadata || {}), terrainShadow: true }; shadows.addShadowCaster(m); };
         // Terrain displacement — organic forest floor with pseudo-random noise
         // Uses a seeded hash to break up the sine regularity into natural-looking terrain
-        (function applyTerrain() {
+        if (!_newTerrain) (function applyTerrain() {
             // Fast hash noise — breaks up sine patterns into organic shapes
             function hash(x, z) {
                 const n = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
@@ -14650,7 +14671,7 @@ pathDiff.uScale=6;pathDiff.vScale=6;
 pathMat.diffuseTexture=pathDiff;
 pathMat.specularColor=new BABYLON.Color3(0.06,0.06,0.06);
 const pm=pathMat;
-[[8,300,0,0],[300,8,0,0]].forEach(([w,h,x,z])=>{
+[[8,_newTerrain?220:300,0,0],[_newTerrain?220:300,8,0,0]].forEach(([w,h,x,z])=>{
   const p=BABYLON.MeshBuilder.CreateGround("pa",{width:w,height:h},scene);
   p.material=pm; p.position=new BABYLON.Vector3(x,.08,z); p.receiveShadows=true;
 });
@@ -14690,11 +14711,11 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
  [-380,0,82,158],[360,90,90,170],[-170,-170,52,88],[170,-170,50,84],
  [-170,170,54,90],[170,170,48,80],[-280,-280,68,125],[280,-280,65,118],
  [-280,280,70,128],[280,280,62,112]
-].forEach(([x,z,r,h])=>mountain(x,z,r,h,mColors[Math.floor(Math.random()*3)]));
+].forEach(([x,z,r,h])=>{ if (!_newTerrain) mountain(x,z,r,h,mColors[Math.floor(Math.random()*3)]); });
 
 // ── DISTANT VISUAL BACKDROP ─────────────────
 // Static, non-pickable scenery only: no collisions, no saved state, no gameplay hooks.
-(function createDistantBackdrop(){
+if (!_newTerrain) (function createDistantBackdrop(){
   const root=new BABYLON.TransformNode("distantBackdropRoot",scene);
   root.metadata={ type:"visual_backdrop", visualOnly:true };
   const skirtMat=new BABYLON.StandardMaterial("distantBackdropSkirtMat",scene);
@@ -19748,10 +19769,15 @@ function collectWorldLayoutData() {
       configs: interiorRoomConfigs
     });
   }
-  return sanitizeWorldLayoutData(data, 'save').data;
+  const _collected = sanitizeWorldLayoutData(data, 'save').data;
+  return window._newTerrain ? newTerrainLayoutToSaved(_collected) : _collected;
 }
 
 function saveWorldLayout(saveToGitHub = true){
+  if (window._newTerrain) {
+    showToast('New terrain test: saving is off. Open the village without ?terrain=new to save.');
+    return Promise.resolve(false);
+  }
   if (saveToGitHub && CURRENT_VILLAGE_ID !== 'hub') {
     const confirmed = window.confirm(`You are saving ${CURRENT_VILLAGE.displayName}. This will not overwrite Hub Village.`);
     if (!confirmed) {
@@ -20009,6 +20035,89 @@ function copyAssetSource(type, source, name) {
 // Small-ant layout items skipped at load because the small-ant runtime is off in this browser.
 let _heldSmallAntLayoutItems = [];
 
+// ── New terrain test: placed objects keep their height above the ground ──
+// Saved positions belong to the current terrain. With ?terrain=new each object is raised by (new ground − old ground)
+// at its spot when the layout loads, and lowered by the same amount whenever the layout is collected (undo, backups,
+// export), so the saved coordinates never change. Collision boxes move with their owner. Buildings outside the
+// courtyard get a flat yard in the new ground first.
+const NEW_TERRAIN_PAD_TYPES = /^(dojo_|shrine_|torii|village_gate|temple|house|tower|hut|altar)/;
+function newTerrainFlatGroundAt(x, z, isNew) {
+  let y = -Infinity;
+  const pathHalf = isNew ? 110 : 150;
+  if (Math.abs(x) <= 45 && Math.abs(z) <= 45) y = 0.1;
+  else if (Math.abs(x) <= 110 && Math.abs(z) <= 110) y = 0.06;
+  if ((Math.abs(x) <= 4 && Math.abs(z) <= pathHalf) || (Math.abs(z) <= 4 && Math.abs(x) <= pathHalf)) y = Math.max(y, 0.08);
+  return y;
+}
+function newTerrainDeltaAt(x, z) {
+  const NT = window._newTerrain;
+  if (!NT || !Number.isFinite(x) || !Number.isFinite(z) || Math.abs(x) > 350 || Math.abs(z) > 350) return 0;
+  const n = Math.max(NT.heightAt(x, z) ?? 0, newTerrainFlatGroundAt(x, z, true));
+  const o = Math.max(NT.oldHeightAt(x, z) ?? 0, newTerrainFlatGroundAt(x, z, false));
+  return n - o;
+}
+// Building footprints in metres at scale 1 (measured from the GLBs), so a yard never depends on load timing.
+const NEW_TERRAIN_FOOTPRINTS = { dojo_9: [33.0, 23.5], dojo_5: [12.09, 8.05], shrine_2: [3.19, 1.075] };
+function newTerrainFootprintRadius(item) {
+  const base = NEW_TERRAIN_FOOTPRINTS[item.type];
+  if (!base) return /^(torii|village_gate)/.test(item.type) ? 6 : 10;
+  return Math.min(40, 0.5 * Math.hypot(base[0] * Math.abs(item.scaling?.x || 1), base[1] * Math.abs(item.scaling?.z || 1)));
+}
+function newTerrainGetsPad(item) {
+  if (!item?.position || !NEW_TERRAIN_PAD_TYPES.test(item.type || '')) return false;
+  const { x, z } = item.position;
+  return Math.max(Math.abs(x), Math.abs(z)) >= 108 && Math.abs(x) <= 345 && Math.abs(z) <= 345;
+}
+// Buildings were placed as if the ground were at 0, so they sit on their yard: raised by the yard height.
+function newTerrainItemDelta(item) {
+  if (newTerrainGetsPad(item)) {
+    const y = window._newTerrain.padHeightAt(item.position.x, item.position.z, newTerrainFootprintRadius(item));
+    if (Number.isFinite(y)) return y;
+  }
+  return newTerrainDeltaAt(item.position.x, item.position.z);
+}
+function newTerrainShiftLayout(data, sign) {
+  const byName = new Map(data.filter(item => item?.name).map(item => [item.name, item]));
+  return data.map(item => {
+    if (!item?.position) return item;
+    const owner = item.type === 'collision_proxy' && item.proxyOwnerName ? byName.get(item.proxyOwnerName) : null;
+    const dy = newTerrainItemDelta(owner?.position ? owner : item);
+    if (!dy) return item;
+    return { ...item, position: { ...item.position, y: item.position.y + sign * dy } };
+  });
+}
+function newTerrainLayoutFromSaved(data) {
+  const NT = window._newTerrain;
+  const pads = [];
+  data.forEach(item => {
+    if (newTerrainGetsPad(item)) pads.push({ x: item.position.x, z: item.position.z, radius: newTerrainFootprintRadius(item), type: item.type });
+  });
+  NT.applyPads(pads);
+  const out = newTerrainShiftLayout(data, +1);
+  if (!NT._decorStarted) {
+    NT._decorStarted = true;
+    const avoid = [];
+    out.forEach(item => {
+      if (!item?.position) return;
+      const { x, z } = item.position;
+      if (Math.abs(x) > 350 || Math.abs(z) > 350) return;
+      let r = 3;
+      if (item.type === 'collision_proxy') r = 0.5 * Math.hypot(item.scaling?.x || 1, item.scaling?.z || 1) + 1;
+      else if (/pine|tree|cherry|bamboo/.test(item.type)) r = 6;
+      else if (/rock/.test(item.type)) r = 4;
+      avoid.push({ x, z, r });
+    });
+    setTimeout(() => NT.buildDecor(avoid).then(d => {
+      console.log('New terrain decor:', d.pinesPlaced, 'pines,', d.rocksPlaced, 'rocks,', d.meshes.length, 'meshes');
+      scheduleShadowRefresh('terrain decor', 300);
+    }).catch(e => console.warn('Terrain decor failed', e)), 50);
+  }
+  return out;
+}
+function newTerrainLayoutToSaved(data) {
+  return newTerrainShiftLayout(data, -1);
+}
+
 function loadWorldLayout(){
   const raw = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem("rebelAntsWorldLayout") : null);
   let data = [];
@@ -20022,6 +20131,7 @@ function loadWorldLayout(){
   if (sanitizedLayout.removedSmallAnts || sanitizedLayout.removedCollectibles || sanitizedLayout.removedInteriorLeaks) {
     persistSanitizedWorldLayoutCache(data, 'load duplicate/interior leak cleanup');
   }
+  if (window._newTerrain) data = newTerrainLayoutFromSaved(data);
   const hasSavedNPCs = data.some(item => item?.type === 'npc' && item?.villageId === CURRENT_VILLAGE_ID);
 
   // Dispose existing clones before restoring
@@ -21084,8 +21194,9 @@ function getRectBlendAt(x, z, halfX, halfZ, feather) {
 function getVillageFlatCourtyardOrPathBlend(x, z) {
   const feather = VILLAGE_STARTER_OFFSET_BLEND_DISTANCE;
   const courtyardBlend = getRectBlendAt(x, z, 110, 110, feather);
-  const verticalPathBlend = getRectBlendAt(x, z, 5, 150, feather);
-  const horizontalPathBlend = getRectBlendAt(x, z, 150, 5, feather);
+  const pathHalf = window._newTerrain ? 110 : 150;
+  const verticalPathBlend = getRectBlendAt(x, z, 5, pathHalf, feather);
+  const horizontalPathBlend = getRectBlendAt(x, z, pathHalf, 5, feather);
   return Math.max(courtyardBlend, verticalPathBlend, horizontalPathBlend);
 }
 
@@ -21121,10 +21232,14 @@ function getVillageBaseGroundHeightAt(x, z) {
 
   if (Math.abs(x) <= 45 && Math.abs(z) <= 45) height = Math.max(height, 0.1);
   if (Math.abs(x) <= 110 && Math.abs(z) <= 110) height = Math.max(height, 0.06);
-  if (Math.abs(x) <= 4 && Math.abs(z) <= 150) height = Math.max(height, 0.08);
-  if (Math.abs(x) <= 150 && Math.abs(z) <= 4) height = Math.max(height, 0.08);
+  const pathHalf = window._newTerrain ? 110 : 150;
+  if (Math.abs(x) <= 4 && Math.abs(z) <= pathHalf) height = Math.max(height, 0.08);
+  if (Math.abs(x) <= pathHalf && Math.abs(z) <= 4) height = Math.max(height, 0.08);
 
-  if (ground && typeof ground.getHeightAtCoordinates === 'function') {
+  if (window._newTerrain) {
+    const terrainHeight = window._newTerrain.heightAt(x, z);
+    if (Number.isFinite(terrainHeight)) height = Math.max(height, terrainHeight);
+  } else if (ground && typeof ground.getHeightAtCoordinates === 'function') {
     const groundHeight = ground.getHeightAtCoordinates(x, z);
     if (Number.isFinite(groundHeight)) height = Math.max(height, groundHeight);
   }
@@ -21275,6 +21390,7 @@ function triangleHeightXZ(p, ia, ib, ic, x, z) {
   return l1 * p[ia + 1] + l2 * p[ib + 1] + l3 * p[ic + 1];
 }
 function getVillageTerrainMeshHeightAt(x, z) {
+  if (window._newTerrain) return window._newTerrain.heightAt(x, z); // same triangle-exact read, 256-subdivision mesh
   const g = getVillageGroundGrid();
   if (!g) return undefined;
   const { pos, n, w, h, cell } = g;
@@ -21841,6 +21957,7 @@ function liveManualCollisionProxyBlocksSegment(startX, startZ, endX, endZ, paddi
 }
 
 function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
+  if (window._newTerrain?.decorBlocksPoint(x, z, padding)) return true; // scattered pines and rocks
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'circle') {
       const dx = x - blocker.x;
@@ -21864,6 +21981,7 @@ function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PA
 }
 
 function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
+  if (window._newTerrain?.decorBlocksPoint(endX, endZ, padding)) return true;
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'circle') return villagePointBlocked(endX, endZ, padding);
     if (blocker.kind === 'obb') return villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ, padding);
