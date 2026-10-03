@@ -17,7 +17,13 @@ export const TERRAIN_RECIPES = {
     },
     grass: { count: 90000, base: [0.16, 0.26, 0.08], tip: [0.62, 0.68, 0.30] },
     pines: { file: 'pine_1.glb', count: 300, scale: [2.2, 4.2], trunk: 0.32 },
-    rocks: { file: 'rock_1.glb', count: 240, scale: [1.0, 3.2], body: 0.75 }
+    rocks: { file: 'rock_1.glb', count: 240, scale: [1.0, 3.2], body: 0.75 },
+    // A stream that leaves the north-east mountain wall as a waterfall, drops into a plunge pool and winds down to a pond
+    // outside the courtyard corner. Points are [x, z]; the route keeps 20 m clear of every placed object.
+    water: {
+      path: [[326, 322], [312, 309], [304.2, 301.2], [286, 282], [270, 262], [257, 250], [240, 238], [224, 216], [207, 207], [192, 188], [178, 176], [163, 160]],
+      lip: 1, pool: 2, halfW: 3.4, depth: 1.1, poolR: 8, pondR: 15
+    }
   }
 };
 
@@ -97,7 +103,77 @@ export function buildHeightmap(recipe) {
     if (s > f0 - 8) { const w = 1 - smooth(4, 16, road); if (w > 0) H[k] = H[k] * (1 - w) + soft[k] * w; path[k] = Math.round((1 - smooth(3, 6.5, road)) * 255); }
     H[k] *= smooth(f0, f0 + 16, s);
   }
-  return { H, flow, path, baseHeight };
+  const water = recipe.water ? carveWater(H, recipe.water) : null;
+  return { H, flow, path, baseHeight, water };
+}
+
+// ── River + waterfall ─────────────────────────────────────
+// The stream follows a smooth curve through the control points. Water levels: a calm upper stream at the lip, a fall
+// straight down into the plunge pool, then a level that only ever goes down (never above the ground beside it) to the
+// pond. The ground is cut to a river bed with soft banks; around the pool the banks are steep (a small cliff bowl).
+const hBil = (H, x, z) => {
+  const fx = Math.min(N - 1.001, Math.max(0, (x + SIZE / 2) / CELL)), fz = Math.min(N - 1.001, Math.max(0, (z + SIZE / 2) / CELL));
+  const i = fx | 0, j = fz | 0, u = fx - i, v = fz - j, k = j * N + i;
+  return H[k] * (1 - u) * (1 - v) + H[k + 1] * u * (1 - v) + H[k + N] * (1 - u) * v + H[k + N + 1] * u * v;
+};
+function carveWater(H, W) {
+  const P = W.path, cr = (a, b, c, d, t) => .5 * (2 * b + (c - a) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (3 * b - a - 3 * c + d) * t * t * t);
+  const pts = [], ctrlAt = [];
+  for (let i = 0; i < P.length - 1; i++) {
+    const a = P[Math.max(0, i - 1)], b = P[i], c = P[i + 1], d = P[Math.min(P.length - 1, i + 2)];
+    const len = Math.hypot(c[0] - b[0], c[1] - b[1]), n = Math.max(2, Math.ceil(len));
+    ctrlAt[i] = pts.length;
+    for (let k = 0; k < n; k++) { const t = k / n; pts.push({ x: cr(a[0], b[0], c[0], d[0], t), z: cr(a[1], b[1], c[1], d[1], t) }); }
+  }
+  ctrlAt[P.length - 1] = pts.length; pts.push({ x: P[P.length - 1][0], z: P[P.length - 1][1] });
+  let acc = 0; pts.forEach((p, i) => { if (i) acc += Math.hypot(p.x - pts[i - 1].x, p.z - pts[i - 1].z); p.s = acc; });
+  pts.forEach((p, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], l = Math.hypot(b.x - a.x, b.z - a.z) || 1; p.dx = (b.x - a.x) / l; p.dz = (b.z - a.z) / l; });
+  const cross = p => { let m = Infinity; for (let o = -(W.halfW + 2); o <= W.halfW + 2; o += 1) m = Math.min(m, hBil(H, p.x - p.dz * o, p.z + p.dx * o)); return m; };
+  const iLip = ctrlAt[W.lip], iPool = ctrlAt[W.pool], last = pts.length - 1;
+  const pool = { x: pts[iPool].x, z: pts[iPool].z, r: W.poolR }, pond = { x: pts[last].x, z: pts[last].z, r: W.pondR };
+  let wTop = Infinity; for (let i = 0; i <= iLip; i++) wTop = Math.min(wTop, cross(pts[i]) - 1);
+  // the pool sits below all the ground its surface covers
+  let wPool = Infinity; for (let a = 0; a < 6.28; a += .3) for (let r = 0; r <= W.poolR * 1.3 + 1.4; r += 1.5) wPool = Math.min(wPool, hBil(H, pool.x + Math.cos(a) * r, pool.z + Math.sin(a) * r) - .4);
+  const fallLen = Math.max(3, Math.hypot(pts[iLip].x - pool.x, pts[iLip].z - pool.z) - W.poolR * 1.1);
+  for (let i = 0; i <= last; i++) {
+    const p = pts[i];
+    if (i <= iLip) { p.w = wTop; p.kind = 'stream'; }
+    else if (i < iPool && p.s - pts[iLip].s < fallLen) { p.w = wTop + (wPool - wTop) * (p.s - pts[iLip].s) / fallLen; p.kind = 'fall'; }
+    else if (i < iPool) { p.w = wPool; p.kind = 'fall'; p.inPool = true; }
+    else { p.w = i === iPool ? wPool : Math.min(pts[i - 1].w - .015, cross(p) - .7); p.kind = 'river'; }
+  }
+  pool.w = wPool; pond.w = pts[last].w;
+  const wet = new Float32Array(N * N), dist = new Float32Array(N * N).fill(255);
+  const cut = (k, target) => { if (target < H[k]) H[k] = target; };
+  const bank = (d, w, halfW, depth, slope) => w + .25 - (depth + .25) * (1 - smooth(halfW * .4, halfW + 1.2, d)) + Math.max(0, d - (halfW + 1.2)) * slope;
+  const visit = (cx, cz, R, fn) => {
+    const i0 = Math.max(0, Math.floor((cx - R + SIZE / 2) / CELL)), i1 = Math.min(N - 1, Math.ceil((cx + R + SIZE / 2) / CELL));
+    const j0 = Math.max(0, Math.floor((cz - R + SIZE / 2) / CELL)), j1 = Math.min(N - 1, Math.ceil((cz + R + SIZE / 2) / CELL));
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const d = Math.hypot(i * CELL - SIZE / 2 - cx, j * CELL - SIZE / 2 - cz); if (d <= R) fn(j * N + i, d); }
+  };
+  const mark = (k, d, edge) => { if (d < dist[k]) dist[k] = d; const wv = 1 - smooth(edge, edge + 5, d); if (wv > wet[k]) wet[k] = wv; };
+  const bankW = 12, lipP = pts[iLip];
+  // cells behind the lip line (within 40 m of it) belong to the upper stream; nothing below may cut them
+  const aboveLip = k => { const x = (k % N) * CELL - SIZE / 2 - lipP.x, z = ((k / N) | 0) * CELL - SIZE / 2 - lipP.z; return x * x + z * z < 1600 && x * lipP.dx + z * lipP.dz < .4; };
+  for (const p of pts) {
+    const steep = p.kind !== 'river' ? 2.2 : .6;
+    visit(p.x, p.z, W.halfW + 1.2 + bankW, (k, d) => {
+      if (p.kind !== 'stream' && aboveLip(k)) return; // only the upper stream shapes the ground behind the lip: a cliff
+      cut(k, bank(d, p.w, W.halfW, p.inPool ? 0 : p.kind === 'fall' ? 1.8 : W.depth, steep)); mark(k, d - W.halfW, 0);
+    });
+  }
+  // pool and pond: irregular shorelines (radius wobbles with the angle)
+  const shore = (c, k, seed, amp = 1) => { const i = k % N, j = (k / N) | 0, a = Math.atan2(j * CELL - SIZE / 2 - c.z, i * CELL - SIZE / 2 - c.x); return c.r * (1 + amp * (.22 * Math.sin(3 * a + seed) + .12 * Math.sin(5 * a + seed * 2.3) + .06 * Math.sin(9 * a + seed * .7))); };
+  // plunge pool: a near-vertical rock bowl
+  // steep only on the fall side; open and gentle downstream so the fall can be seen
+  const upX = (lipP.x - pool.x) / Math.hypot(lipP.x - pool.x, lipP.z - pool.z), upZ = (lipP.z - pool.z) / Math.hypot(lipP.x - pool.x, lipP.z - pool.z);
+  visit(pool.x, pool.z, pool.r * 1.3 + 1.5 + 22, (k, d) => {
+    if (aboveLip(k)) return;
+    const x = (k % N) * CELL - SIZE / 2 - pool.x, z = ((k / N) | 0) * CELL - SIZE / 2 - pool.z, c = d > .01 ? (x * upX + z * upZ) / d : 1;
+    const r = shore(pool, k, 1.3, .5); cut(k, bank(d, pool.w, r, W.depth + .5, .45 + 4.5 * smooth(-.1, .6, c))); mark(k, d - r, 0);
+  });
+  visit(pond.x, pond.z, pond.r * 1.45 + 1.5 + 16, (k, d) => { const r = shore(pond, k, 4.1); cut(k, bank(d, pond.w, r, W.depth + .6, .45)); mark(k, d - r, 0); });
+  return { pts, iLip, iPool, pool, pond, halfW: W.halfW, wet, dist };
 }
 
 // Height read from a CreateGround-style vertex grid, triangle by triangle (exactly what is drawn).
@@ -157,7 +233,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   // mask: R = where water runs, G = roads and building yards
   let fmax = 0; for (let k = 0; k < hm.flow.length; k++) fmax = Math.max(fmax, Math.log1p(hm.flow[k]));
   const mask = new Uint8Array(N * N * 4);
-  function writeMask() { for (let k = 0; k < N * N; k++) { mask[k * 4] = Math.round(255 * Math.min(1, Math.log1p(hm.flow[k]) / (fmax * .7))); mask[k * 4 + 1] = path[k]; mask[k * 4 + 3] = 255; } }
+  function writeMask() { for (let k = 0; k < N * N; k++) { mask[k * 4] = Math.round(255 * Math.min(1, Math.max(Math.log1p(hm.flow[k]) / (fmax * .7), hm.water ? hm.water.wet[k] : 0))); mask[k * 4 + 1] = path[k]; mask[k * 4 + 3] = 255; } }
   writeMask();
   const maskTex = new BABYLON.RawTexture(mask, N, N, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, false, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
   maskTex.wrapU = maskTex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
@@ -167,16 +243,38 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   // horizon: the same land continues into far mountains (sunk under the main terrain inside the square)
   const far = BABYLON.MeshBuilder.CreateGround('terrainFar', { width: 3200, height: 3200, subdivisions: 160, updatable: true }, scene);
   const fp = far.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-  for (let i = 0; i < fp.length; i += 3) { const x = fp[i], z = fp[i + 2]; fp[i + 1] = hm.baseHeight(x, z) - ((Math.abs(x) < 352 && Math.abs(z) < 352) ? 6 : 0); }
-  far.updateVerticesData(BABYLON.VertexBuffer.PositionKind, fp); far.createNormals(true);
+  for (let i = 0; i < fp.length; i += 3) { const x = fp[i], z = fp[i + 2]; fp[i + 1] = hm.baseHeight(x, z) - ((Math.abs(x) < 352 && Math.abs(z) < 352) ? 8 : 0); }
+  far.updateVerticesData(BABYLON.VertexBuffer.PositionKind, fp);
+  // keep only the ring outside the village square: inside, the far mesh (20 m cells) would poke up through river cuts
+  { const idx = far.getIndices(), keep = [], out = i => Math.max(Math.abs(fp[i * 3]), Math.abs(fp[i * 3 + 2])) >= 345;
+    for (let t = 0; t < idx.length; t += 3) if (out(idx[t]) || out(idx[t + 1]) || out(idx[t + 2])) keep.push(idx[t], idx[t + 1], idx[t + 2]);
+    far.setIndices(keep); }
+  far.createNormals(true);
   far.material = material; far.isPickable = false; far.metadata = { type: 'visual_backdrop', visualOnly: true };
   far.freezeWorldMatrix();
+
+  const waterMeshes = hm.water ? buildWater(scene, hm.water) : [];
 
   const T = {
     recipe, ground, far, material, maskTex, subdiv: SUBDIV, buildMs: Math.round(performance.now() - t0),
     heightAt: (x, z) => sampler(x, z),
     oldHeightAt: opts.oldHeightAt || null,
-    pads: [], decor: null, decorBlockers: null,
+    pads: [], decor: null, decorBlockers: null, water: hm.water, waterMeshes,
+    // 0..1 loudness of running water heard at (x, z): the fall carries ~120 m, the stream ~35 m
+    waterSoundAt(x, z) {
+      const Wt = hm.water; if (!Wt) return 0;
+      const f = Wt.pts[Wt.iLip + 2] || Wt.pts[Wt.iLip];
+      let v = Math.max(0, 1 - Math.hypot(x - f.x, z - f.z) / 120) ** 1.6;
+      for (let i = 0; i < Wt.pts.length; i += 6) { const p = Wt.pts[i]; v = Math.max(v, .35 * Math.max(0, 1 - Math.hypot(x - p.x, z - p.z) / 35) ** 1.5); }
+      return v;
+    },
+    // metres from the water's edge (negative = in the water), 255 when far away
+    waterEdgeDist(x, z) {
+      if (!hm.water) return 255;
+      const i = Math.round((x + SIZE / 2) / CELL), j = Math.round((z + SIZE / 2) / CELL);
+      if (i < 0 || j < 0 || i >= N || j >= N) return 255;
+      return hm.water.dist[j * N + i];
+    },
     // Height of the flat yard a building of this footprint gets at (x, z): the average untouched ground under it.
     padHeightAt(x, z, radius) {
       const rIn = radius + 2;
@@ -320,7 +418,7 @@ async function buildDecor(scene, T, avoid) {
     while (placed < count && tries < count * 6) {
       tries++;
       const x = (rnd() - .5) * 690, z = (rnd() - .5) * 690;
-      if (sq(x, z) < R.flatHalf + 2 || roadD(x, z) < 5) continue;
+      if (sq(x, z) < R.flatHalf + 2 || roadD(x, z) < 5 || T.waterEdgeDist(x, z) < 1.2) continue;
       if (fbm(x * .02, z * .02, 3) < -.12 + rnd() * .1) continue;
       if (!clear(x, z, -1)) continue;
       const y = h(x, z), sl = Math.abs(h(x + 1, z) - y) + Math.abs(h(x, z + 1) - y); if (sl > .8) continue;
@@ -352,8 +450,99 @@ async function buildDecor(scene, T, avoid) {
     if (cast) meshes.slice(before).forEach(m => cast(m));
     return k;
   }
-  const pinesPlaced = await scatter(R.pines, (x, z) => sq(x, z) > R.flatHalf + 38 && roadD(x, z) > 9 && slopeAt(x, z) < .55 && fbm(x * .006 + 9, z * .006, 3) > -.02, R.pines.trunk, T.castShadow);
-  const rocksPlaced = await scatter(R.rocks, (x, z) => { const s = slopeAt(x, z); return sq(x, z) > R.flatHalf + 13 && roadD(x, z) > 7 && s > .22 && s < .9; }, R.rocks.body, T.castShadow);
+  const pinesPlaced = await scatter(R.pines, (x, z) => sq(x, z) > R.flatHalf + 38 && roadD(x, z) > 9 && T.waterEdgeDist(x, z) > 4 && slopeAt(x, z) < .55 && fbm(x * .006 + 9, z * .006, 3) > -.02, R.pines.trunk, T.castShadow);
+  const rocksPlaced = await scatter(R.rocks, (x, z) => { const s = slopeAt(x, z); return sq(x, z) > R.flatHalf + 13 && roadD(x, z) > 7 && T.waterEdgeDist(x, z) > .5 && s > .22 && s < .9; }, R.rocks.body, T.castShadow);
   T.decorBlockers = blockers;
   return { meshes, pinesPlaced, rocksPlaced };
+}
+
+// ── Water surfaces ───────────────────────────────────────
+// Plain lit materials (no reflection passes, so almost free): a tiling ripple normal map scrolls along the stream,
+// fast and pale on the waterfall. Spray and mist at the foot of the fall are two small particle systems.
+function makeRippleNormalTex(scene) {
+  const S = 128, data = new Uint8Array(S * S * 4), TAU = Math.PI * 2;
+  const waves = [[3, 1, .9, .3], [1, 4, .7, 1.7], [5, -2, .45, 2.9], [-2, 7, .3, .8], [8, 3, .2, 4.1]];
+  const h = (x, y) => waves.reduce((acc, [a, b, amp, ph]) => acc + amp * Math.sin(TAU * (a * x + b * y) / S + ph), 0);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    let nx = -(h(x + 1, y) - h(x - 1, y)) * 1.6, ny = -(h(x, y + 1) - h(x, y - 1)) * 1.6, nz = 1; const l = Math.hypot(nx, ny, nz); nx /= l; ny /= l; nz /= l;
+    const k = (y * S + x) * 4; data[k] = (nx * .5 + .5) * 255; data[k + 1] = (ny * .5 + .5) * 255; data[k + 2] = (nz * .5 + .5) * 255; data[k + 3] = 255;
+  }
+  const t = new BABYLON.RawTexture(data, S, S, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, true, false, BABYLON.Texture.TRILINEAR_SAMPLINGMODE);
+  t.wrapU = t.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
+  return t;
+}
+function softDotTex(scene) {
+  const t = new BABYLON.DynamicTexture('waterSprayTex', { width: 64, height: 64 }, scene, false), c = t.getContext();
+  const g = c.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.5, 'rgba(255,255,255,.45)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  c.fillStyle = g; c.fillRect(0, 0, 64, 64); t.update(); t.hasAlpha = true; return t;
+}
+function buildWater(scene, Wt) {
+  const meshes = [], normalTex = makeRippleNormalTex(scene);
+  const mk = (name, diffuse, emissive, alpha, scale) => {
+    const m = new BABYLON.StandardMaterial(name, scene);
+    m.diffuseColor = new BABYLON.Color3(...diffuse); m.emissiveColor = new BABYLON.Color3(...emissive);
+    m.specularColor = new BABYLON.Color3(.85, .88, .85); m.specularPower = 90; m.alpha = alpha;
+    const b = normalTex.clone(); b.uScale = scale[0]; b.vScale = scale[1]; b.level = .55; m.bumpTexture = b;
+    m.backFaceCulling = false;
+    return m;
+  };
+  const waterMat = mk('waterMat', [.07, .19, .2], [.01, .03, .035], .86, [1, 1]);
+  const fallMat = mk('waterfallMat', [.5, .64, .7], [.13, .18, .21], .9, [1, 1]);
+  // ribbon between two sample indices; uv: u across (metres / 6), v along (metres / 6)
+  function ribbon(name, i0, i1, mat, widen = .8) {
+    const pos = [], uv = [], idx = [], P = Wt.pts, hw = Wt.halfW + widen;
+    let v = 0;
+    for (let i = i0; i <= i1; i++) {
+      const p = P[i]; if (i > i0) { const q = P[i - 1]; v += Math.hypot(p.x - q.x, p.z - q.z, p.w - q.w) / 6; }
+      pos.push(p.x - p.dz * hw, p.w, p.z + p.dx * hw, p.x + p.dz * hw, p.w, p.z - p.dx * hw);
+      uv.push(0, v, hw * 2 / 6, v);
+      if (i > i0) { const b = (i - i0) * 2; idx.push(b - 2, b - 1, b, b - 1, b + 1, b); }
+    }
+    const m = new BABYLON.Mesh(name, scene), vd = new BABYLON.VertexData(), nrm = [];
+    BABYLON.VertexData.ComputeNormals(pos, idx, nrm);
+    vd.positions = pos; vd.indices = idx; vd.normals = nrm; vd.uvs = uv; vd.applyToMesh(m);
+    m.material = mat; return m;
+  }
+  function disc(name, c, mat) {
+    const m = BABYLON.MeshBuilder.CreateDisc(name, { radius: c.r * (c === Wt.pool ? 1.2 : 1.45) + 1.4, tessellation: 48 }, scene); // the bank draws the shoreline
+    m.rotation.x = Math.PI / 2; m.position.set(c.x, c.w, c.z); m.material = mat;
+    return m;
+  }
+  const P = Wt.pts, last = P.length - 1;
+  meshes.push(ribbon('waterStream', 0, Wt.iLip, waterMat));
+  const iFallEnd = Math.min(Wt.iPool, P.findIndex((p, i) => i > Wt.iLip && p.inPool) + 1 || Wt.iPool);
+  Wt.iFallEnd = iFallEnd;
+  meshes.push(ribbon('waterFall', Wt.iLip, iFallEnd, fallMat, 1.0));
+  // the river ribbon starts at the pool's edge and ends inside the pond (less double-layered water)
+  const near = (p, c, f) => Math.hypot(p.x - c.x, p.z - c.z) < c.r * f;
+  let iRiver0 = Wt.iPool; while (iRiver0 < last && near(P[iRiver0], Wt.pool, .85)) iRiver0++;
+  let iRiver1 = last; while (iRiver1 > iRiver0 && near(P[iRiver1], Wt.pond, .35)) iRiver1--;
+  meshes.push(ribbon('waterRiver', Math.max(Wt.iPool, iRiver0 - 1), Math.min(last, iRiver1 + 1), waterMat));
+  meshes.push(disc('waterPool', Wt.pool, waterMat));
+  meshes.push(disc('waterPond', Wt.pond, waterMat));
+  meshes.forEach(m => { m.isPickable = false; m.receiveShadows = true; m.metadata = { type: 'terrain_water', visualOnly: true }; m.alphaIndex = 10; m.freezeWorldMatrix(); });
+  // flow: the stream ripples drift downstream, the fall pours
+  const wb = waterMat.bumpTexture, fb = fallMat.bumpTexture; fb.uScale = 3.5; fb.vScale = .45; fb.level = 1.6;
+  scene.onBeforeRenderObservable.add(() => {
+    const dt = Math.min(.05, scene.getEngine().getDeltaTime() / 1000);
+    wb.vOffset -= dt * .12; fb.vOffset -= dt * 1.4;
+  });
+  // spray + mist where the fall hits the pool
+  const tex = softDotTex(scene), hit = P[Math.max(Wt.iLip, iFallEnd - 1)];
+  const at = new BABYLON.Vector3(hit.x, Wt.pool.w + .2, hit.z);
+  const spray = new BABYLON.ParticleSystem('waterfallSpray', 160, scene);
+  spray.particleTexture = tex; spray.emitter = at.clone();
+  spray.minEmitBox = new BABYLON.Vector3(-2.5, 0, -2.5); spray.maxEmitBox = new BABYLON.Vector3(2.5, .3, 2.5);
+  spray.color1 = new BABYLON.Color4(.92, .96, 1, .55); spray.color2 = new BABYLON.Color4(.85, .92, .96, .35); spray.colorDead = new BABYLON.Color4(.9, .95, 1, 0);
+  spray.minSize = .5; spray.maxSize = 1.6; spray.minLifeTime = .7; spray.maxLifeTime = 1.5; spray.emitRate = 110;
+  spray.direction1 = new BABYLON.Vector3(-1.5, 3.5, -1.5); spray.direction2 = new BABYLON.Vector3(1.5, 6, 1.5); spray.gravity = new BABYLON.Vector3(0, -7, 0);
+  spray.minEmitPower = .8; spray.maxEmitPower = 1.6; spray.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD; spray.start();
+  const mist = new BABYLON.ParticleSystem('waterfallMist', 40, scene);
+  mist.particleTexture = tex; mist.emitter = at.clone();
+  mist.minEmitBox = new BABYLON.Vector3(-4, 0, -4); mist.maxEmitBox = new BABYLON.Vector3(4, 1, 4);
+  mist.color1 = new BABYLON.Color4(.9, .94, .97, .16); mist.color2 = new BABYLON.Color4(.85, .9, .95, .1); mist.colorDead = new BABYLON.Color4(.9, .94, .97, 0);
+  mist.minSize = 4; mist.maxSize = 8; mist.minLifeTime = 3; mist.maxLifeTime = 5; mist.emitRate = 9;
+  mist.direction1 = new BABYLON.Vector3(-.4, .5, -.4); mist.direction2 = new BABYLON.Vector3(.4, 1.1, .4); mist.minEmitPower = .4; mist.maxEmitPower = .9;
+  mist.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD; mist.start();
+  return meshes;
 }
