@@ -525,6 +525,16 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
       for (let i = 0; i < Wt.pts.length; i += 6) { const p = Wt.pts[i]; v = Math.max(v, .35 * Math.max(0, 1 - Math.hypot(x - p.x, z - p.z) / 35) ** 1.5); }
       return v;
     },
+    // 0..1 loudness of the surf heard at (x, z): full at the shoreline, fading out ~170 m away (0 without a sea)
+    surfSoundAt(x, z) {
+      if (seaY === null) return 0;
+      if (!T._shoreDist) T._shoreDist = shoreDistanceField(T.heightAt, seaY);
+      const S = T._shoreDist, u = (x + SIZE / 2) / S.cell, v = (z + SIZE / 2) / S.cell;
+      if (u < 0 || v < 0 || u > S.n - 1 || v > S.n - 1) return 0;
+      const i = Math.min(S.n - 2, Math.floor(u)), j = Math.min(S.n - 2, Math.floor(v)), fu = u - i, fv = v - j, D = S.d, n = S.n;
+      const d = (D[j * n + i] * (1 - fu) + D[j * n + i + 1] * fu) * (1 - fv) + (D[(j + 1) * n + i] * (1 - fu) + D[(j + 1) * n + i + 1] * fu) * fv;
+      return Math.max(0, 1 - Math.max(0, d - 6) / 170) ** 1.2;
+    },
     // metres from the water's edge (negative = in the water), 255 when far away
     waterEdgeDist(x, z) {
       if (!hm.water) return 255;
@@ -932,6 +942,28 @@ function buildWater(scene, Wt) {
 
 // A gnarled dead tree (trunk and bare branches, one mesh), about 4.6 m tall at scale 1.
 // ── Sea (coastal villages) ─────────────────────────────────
+// Metres to the nearest shoreline (sea cells next to land) on a 4 m grid over the map: two-pass chamfer distance.
+function shoreDistanceField(heightAt, seaY) {
+  const cell = 4, n = Math.floor(SIZE / cell) + 1, wet = new Uint8Array(n * n), d = new Float32Array(n * n).fill(1e9);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) wet[j * n + i] = heightAt(i * cell - SIZE / 2, j * cell - SIZE / 2) < seaY ? 1 : 0;
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const k = j * n + i; if (!wet[k]) continue;
+    if ((i > 0 && !wet[k - 1]) || (i < n - 1 && !wet[k + 1]) || (j > 0 && !wet[k - n]) || (j < n - 1 && !wet[k + n])) d[k] = 0;
+  }
+  const a = cell, b = cell * Math.SQRT2, relax = (k, k2, w) => { if (d[k2] + w < d[k]) d[k] = d[k2] + w; };
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const k = j * n + i;
+    if (i > 0) relax(k, k - 1, a);
+    if (j > 0) { relax(k, k - n, a); if (i > 0) relax(k, k - n - 1, b); if (i < n - 1) relax(k, k - n + 1, b); }
+  }
+  for (let j = n - 1; j >= 0; j--) for (let i = n - 1; i >= 0; i--) {
+    const k = j * n + i;
+    if (i < n - 1) relax(k, k + 1, a);
+    if (j < n - 1) { relax(k, k + n, a); if (i < n - 1) relax(k, k + n + 1, b); if (i > 0) relax(k, k + n - 1, b); }
+  }
+  return { cell, n, d };
+}
+
 // One big gently-waving surface at sea level. Colour and see-through come from the depth of the ground under each
 // point (a small depth texture): clear turquoise in the shallows (the sand shows through), deep blue further out,
 // a moving foam line where the water meets the shore, sky tint at grazing angles, sparkle from the ripple normals.

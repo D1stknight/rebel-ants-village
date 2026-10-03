@@ -20188,6 +20188,7 @@ function newTerrainLayoutFromSaved(data) {
       scheduleShadowRefresh('terrain decor', 300);
     }).catch(e => console.warn('Terrain decor failed', e)), 50);
     if (NT.water) startNewTerrainWaterSound(NT);
+    if (NT.sea) startNewTerrainSurfSound(NT);
   }
   return out;
 }
@@ -20214,6 +20215,64 @@ function startNewTerrainWaterSound(NT) {
     const level = NT.waterSoundAt(charMesh.position.x, charMesh.position.z);
     const vol = level * .5 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * (document.hidden ? 0 : 1);
     gain.gain.setTargetAtTime(vol, ctx.currentTime, .4);
+  }, 250);
+}
+// Sea surf (villages with a sea): waves rolling in, breaking and washing back, also made in the browser. Each wave
+// builds, crashes and drains (7-12 s apart, random size and side; bigger in storms); louder near the shoreline.
+// Follows the Master and Ambience sliders and Mute Ambience, silent indoors; starts on the first click or key press.
+function startNewTerrainSurfSound(NT) {
+  let ctx = null, out = null, W = null, nextWave = 0;
+  const start = () => {
+    if (ctx) return;
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const sr = ctx.sampleRate, len = sr * 9, fade = sr >> 3, buf = ctx.createBuffer(2, len, sr);
+      for (let c = 0; c < 2; c++) { // pink noise; the last 1/8 s is faded into the start so the loop has no seam
+        const d = buf.getChannelData(c), tail = new Float32Array(fade);
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        for (let i = 0; i < len + fade; i++) {
+          const w = Math.random() * 2 - 1;
+          b0 = .99886 * b0 + w * .0555179; b1 = .99332 * b1 + w * .0750759; b2 = .969 * b2 + w * .153852;
+          b3 = .8665 * b3 + w * .3104856; b4 = .55 * b4 + w * .5329522; b5 = -.7616 * b5 - w * .016898;
+          const p = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * .5362) * .11; b6 = w * .115926;
+          if (i < len) d[i] = p; else tail[i - len] = p;
+        }
+        for (let i = 0; i < fade; i++) { const t = i / fade; d[i] = d[i] * Math.sqrt(t) + tail[i] * Math.sqrt(1 - t); }
+      }
+      const noise = ctx.createBufferSource(); noise.buffer = buf; noise.loop = true;
+      const filter = (type, f, q) => { const n = ctx.createBiquadFilter(); n.type = type; n.frequency.value = f; if (q) n.Q.value = q; return n; };
+      const amp = v => { const g = ctx.createGain(); g.gain.value = v; return g; };
+      out = amp(0); out.connect(ctx.destination);
+      const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null, side = pan || out;
+      if (pan) pan.connect(out);
+      W = { body: amp(.45), washF: filter('lowpass', 500, .6), wash: amp(0), fizz: amp(0), pan };
+      noise.connect(filter('lowpass', 320, .5)).connect(W.body).connect(out); // the low roar of the sea, always there
+      noise.connect(filter('highpass', 160)).connect(W.washF).connect(W.wash).connect(side); // the break and the wash
+      noise.connect(filter('highpass', 2600)).connect(W.fizz).connect(side); // foam hissing as the water runs back
+      noise.start();
+      nextWave = ctx.currentTime + .5;
+    } catch (e) { console.warn('Surf sound unavailable', e); }
+  };
+  const wave = t => {
+    const storm = WeatherManager.mode === 'storm' ? 1.3 : WeatherManager.mode === 'heavy-rain' ? 1.15 : 1;
+    const s = (.55 + Math.random() * .45) * storm, to = (p, v, at, k) => p.setTargetAtTime(v, at, k);
+    to(W.wash.gain, .12 * s, t, .8); to(W.washF.frequency, 900, t, .9); // the wave rises
+    to(W.body.gain, .45 + .35 * s, t + 1.2, .7);
+    to(W.wash.gain, .9 * s, t + 2.2, .3); to(W.washF.frequency, 2200 + 1600 * s, t + 2.2, .35); // it breaks
+    to(W.fizz.gain, .35 * s, t + 2.6, .4);
+    to(W.wash.gain, .03, t + 2.8, 1.5); to(W.washF.frequency, 600, t + 2.8, 1.8); // and washes back
+    to(W.body.gain, .45, t + 3.5, 2.2); to(W.fizz.gain, 0, t + 3.6, 1.6);
+    if (W.pan) to(W.pan.pan, (Math.random() * 2 - 1) * .55, t, 1.5);
+    return t + (7 + Math.random() * 5) / Math.sqrt(storm);
+  };
+  addEventListener('pointerdown', start, { once: true }); addEventListener('keydown', start, { once: true });
+  setInterval(() => {
+    if (!W || !charMesh) return;
+    const now = ctx.currentTime;
+    while (nextWave < now + 1) nextWave = wave(Math.max(nextWave, now + .05));
+    const on = WeatherManager.masterAudioEnabled && !ActiveInterior && !document.hidden;
+    const level = on ? NT.surfSoundAt(charMesh.position.x, charMesh.position.z) : 0;
+    out.gain.setTargetAtTime(level * 1.1 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55), now, .5);
   }, 250);
 }
 function newTerrainLayoutToSaved(data) {
