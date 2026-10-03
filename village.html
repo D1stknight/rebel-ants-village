@@ -1532,9 +1532,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="assets/forge-sfx.js"></script>
 <script src="assets/rebel-weapon.js"></script>
 <script type="module">
-// New terrain (Oct 2026, approved): the hub's ground is the Terrain Lab look (eroded hills, painted ground, far mountains,
-// river and waterfall, grass, pines, rocks). ?terrain=old shows the previous ground. Other villages keep the old ground
-// until they get their own recipe.
+// New terrain (Oct 2026): villages with a terrain recipe (hub, ronin) get the Terrain Lab ground: eroded hills, painted
+// ground, far mountains, grass, trees, rocks (the hub also has its river and waterfall). ?terrain=old shows the previous
+// ground. Villages without a recipe keep the old ground.
 const NEW_TERRAIN_MODULE = new URLSearchParams(location.search).get('terrain') !== 'old'
   ? await import('./assets/village-terrain.js').catch(e => { console.warn('New terrain did not load', e); return null; })
   : null;
@@ -8055,6 +8055,7 @@ function updateSky(){
   const d=Math.max(0,Math.sin(((h/24)-.25)*Math.PI*2));
   skyMat.inclination=-Math.sin(((h/24)-.25)*Math.PI*2)*.5;
   sun.intensity=0.15+d*1.8; hemi.intensity=0.18+d*.45;
+  const _vl = window._newTerrain?.recipe.light; if (_vl) { sun.intensity *= _vl.sun ?? 1; hemi.intensity *= _vl.hemi ?? 1; } // dimmer villages
   updateSunPathForShadows(h);
   if(h>=6&&h<9){sun.diffuse=new BABYLON.Color3(1,.62,.3);}
   else if(h>=9&&h<17){sun.diffuse=new BABYLON.Color3(1,.97,.88);}
@@ -9270,10 +9271,13 @@ function applyWeatherLighting() {
   const heat = document.getElementById('weatherHeatHaze');
   if (heat) heat.style.opacity = cfg.warm ? '.22' : '0';
   if (cfg.fog === BABYLON.Scene.FOGMODE_NONE && window._newTerrain) {
-    // new terrain: a light haze even on clear days, so the far mountains fade into the sky
+    // new terrain: a light haze even on clear days, so the far mountains fade into the sky; some villages have their
+    // own mist (Ronin: thick and cold)
+    const vf = window._newTerrain.recipe.fog;
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
-    scene.fogDensity = 0.0016;
-    scene.fogColor = cfg.fogColor || WeatherManager.baseFogColor;
+    scene.fogDensity = vf?.density ?? 0.0016;
+    const night = (WeatherManager.baseFogColor?.r ?? 1) < .2;
+    scene.fogColor = vf ? new BABYLON.Color3(...(night ? vf.night : vf.day)) : (cfg.fogColor || WeatherManager.baseFogColor);
   } else if (cfg.fog === BABYLON.Scene.FOGMODE_NONE) {
     scene.fogMode = BABYLON.Scene.FOGMODE_NONE;
   } else {
@@ -14591,16 +14595,18 @@ function ensureEditableRootUniqueName(node) {
 // ── GROUND / TERRAIN ─────────────────────────
 setSt("Village: building terrain...");
 // Large grass base
-const _newTerrain = (NEW_TERRAIN_MODULE && CURRENT_VILLAGE_ID === 'hub') ? (() => {
+const _newTerrain = (NEW_TERRAIN_MODULE && NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CURRENT_VILLAGE_ID]) ? (() => {
   try {
-    return NEW_TERRAIN_MODULE.createVillageTerrain(scene, NEW_TERRAIN_MODULE.TERRAIN_RECIPES.hub, {
+    return NEW_TERRAIN_MODULE.createVillageTerrain(scene, NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CURRENT_VILLAGE_ID], {
       oldHeightAt: NEW_TERRAIN_MODULE.makeOldHubSampler(),
       counts: Object.fromEntries(['grass', 'pines', 'rocks'].map(k => [k, Number(new URLSearchParams(location.search).get(k) ?? NaN)]))
     });
   } catch (e) { console.warn('New terrain failed, using the old one', e); return null; }
 })() : null;
 window._newTerrain = _newTerrain;
-if (_newTerrain) console.log('New terrain on, built in', _newTerrain.buildMs, 'ms');
+if (_newTerrain) console.log('New terrain on (' + CURRENT_VILLAGE_ID + '), built in', _newTerrain.buildMs, 'ms');
+// the village's sky (heavier and hazier for some villages)
+if (_newTerrain?.recipe.sky) Object.assign(skyMat, _newTerrain.recipe.sky);
 const ground=_newTerrain ? _newTerrain.ground : BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:120},scene);
 const grassMat=new BABYLON.StandardMaterial("grassMat",scene);
 const grassDiff=new BABYLON.Texture("assets/ground_diffuse.jpg",scene);
@@ -14664,6 +14670,12 @@ stoneDiff.uScale=12;stoneDiff.vScale=12;
 stoneMat.diffuseTexture=stoneDiff;
 stoneMat.specularColor=new BABYLON.Color3(0.08,0.08,0.08);
 plaza.material=stoneMat; plaza.position.y=.1; plaza.receiveShadows=true;
+// a village can recolour its courtyard stone (Ronin: dark slate)
+if (_newTerrain?.recipe.court) {
+  const ct = _newTerrain.recipe.court;
+  if (ct.court) courtMat.diffuseColor = new BABYLON.Color3(...ct.court);
+  if (ct.plaza) stoneMat.diffuseColor = new BABYLON.Color3(...ct.plaza);
+}
 
 // Paths
 const pathMat=new BABYLON.StandardMaterial("pathMat",scene);
@@ -14671,6 +14683,7 @@ const pathDiff=new BABYLON.Texture("assets/stone_diffuse.jpg",scene);
 pathDiff.uScale=6;pathDiff.vScale=6;
 pathMat.diffuseTexture=pathDiff;
 pathMat.specularColor=new BABYLON.Color3(0.06,0.06,0.06);
+if (_newTerrain?.recipe.court?.path) pathMat.diffuseColor = new BABYLON.Color3(..._newTerrain.recipe.court.path);
 const pm=pathMat;
 [[8,_newTerrain?220:300,0,0],[_newTerrain?220:300,8,0,0]].forEach(([w,h,x,z])=>{
   const p=BABYLON.MeshBuilder.CreateGround("pa",{width:w,height:h},scene);

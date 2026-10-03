@@ -24,6 +24,27 @@ export const TERRAIN_RECIPES = {
       path: [[326, 322], [312, 309], [304.2, 301.2], [286, 282], [270, 262], [257, 250], [240, 238], [224, 216], [207, 207], [192, 188], [178, 176], [163, 160]],
       lip: 1, pool: 2, halfW: 3.4, depth: 1.1, poolR: 8, pondR: 15
     }
+  },
+  // Ronin: the unseen elite. A shut-in valley under tall jagged black cliffs, near-black pines, dead trees, ash-grey
+  // peaks, crimson spider lilies, heavy cold mist and a dim sun. Matte black and crimson, like their armour.
+  ronin: {
+    seed: 7331, dropSeed: 41, drops: 80000,
+    hills: .95, shape: { fbm: 24, ridge: 28, wall: 120 },
+    flatHalf: 112, hillStart: 112, hillFull: 170, wallStart: 250,
+    palette: {
+      grassA: [0.14, 0.17, 0.14], grassB: [0.2, 0.2, 0.17], wet: [0.08, 0.1, 0.09],
+      dirt: [0.24, 0.18, 0.16], rockTint: [0.33, 0.31, 0.36], highTint: [0.82, 0.82, 0.9], peak: [0.30, 0.30, 0.33]
+    },
+    grass: { count: 70000, base: [0.06, 0.08, 0.05], tip: [0.3, 0.3, 0.19] },
+    flowers: { count: 3600, stem: [0.03, 0.06, 0.03], petal: [0.85, 0.05, 0.06] },
+    pines: { file: 'pine_1.glb', count: 240, scale: [2.6, 4.8], trunk: 0.32, settle: .35, sink: .15, tint: [0.3, 0.34, 0.33] },
+    deadTrees: { count: 120, scale: [1.6, 3.2], trunk: 0.3, settle: .3, sink: .05 },
+    rocks: { file: 'rock_1.glb', count: 320, scale: [1.0, 3.6], body: 0.75, settle: .9, sink: .1, tint: [0.5, 0.5, 0.56] },
+    // village look: thick cold mist, dimmer light, a heavy sky, dark stone courtyard
+    fog: { density: .0034, day: [.34, .35, .40], night: [.03, .03, .05] },
+    light: { sun: .95, hemi: .95 },
+    sky: { turbidity: 14, luminance: .55, rayleigh: 1.1, mieCoefficient: .009 },
+    court: { court: [.42, .4, .43], plaza: [.36, .34, .38], path: [.4, .37, .4] }
   }
 };
 
@@ -54,9 +75,9 @@ export function makeBaseHeight(recipe) {
   return (x, z) => {
     const r = Math.hypot(x, z), s = Math.max(Math.abs(x), Math.abs(z));
     const wx = x + 45 * fbm(x * .004 + 5.2, z * .004 + 1.3, 3), wz = z + 45 * fbm(x * .004 - 3.7, z * .004 + 8.1, 3);
-    const hills = ((fbm(wx * .0075, wz * .0075) * 30 + ridged(wx * .011, wz * .011) * 16) + 5) * recipe.hills;
+    const sh = recipe.shape || {}, hills = ((fbm(wx * .0075, wz * .0075) * (sh.fbm ?? 30) + ridged(wx * .011, wz * .011) * (sh.ridge ?? 16)) + 5) * recipe.hills;
     const ring = smooth(recipe.hillStart, recipe.hillFull, s);
-    const wall = smooth(recipe.wallStart, 352, s) * (30 + ridged(wx * .0055 + 3, wz * .0055) * 70);
+    const wall = smooth(recipe.wallStart, 352, s) * (30 + ridged(wx * .0055 + 3, wz * .0055) * (sh.wall ?? 70));
     const far = smooth(360, 1300, r) * (40 + ridged(x * .0022, z * .0022) * 260);
     return Math.max(0, hills) * ring + wall + far;
   };
@@ -210,7 +231,7 @@ export function makeOldHubSampler() {
 // ── Babylon side ─────────────────────────────────────────
 export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   const t0 = performance.now();
-  const recipe = { ...baseRecipe, grass: { ...baseRecipe.grass }, pines: { ...baseRecipe.pines }, rocks: { ...baseRecipe.rocks } };
+  const recipe = { ...baseRecipe, grass: { ...baseRecipe.grass }, pines: { ...baseRecipe.pines }, rocks: { ...baseRecipe.rocks }, deadTrees: baseRecipe.deadTrees && { ...baseRecipe.deadTrees }, flowers: baseRecipe.flowers && { ...baseRecipe.flowers } };
   const c = opts.counts || {};
   if (Number.isFinite(c.grass)) recipe.grass.count = c.grass;
   if (Number.isFinite(c.pines)) recipe.pines.count = c.pines;
@@ -353,8 +374,8 @@ function makeTerrainMaterial(scene, maskTex, P) {
       rock *= ${v3(P.rockTint)}; rock = mix(rock, rock*vec3(0.72,0.78,0.7), wet);
       vec3 col = mix(grass, dirt, clamp(road + smoothstep(0.17,0.3,slope)*0.55*(1.0-wet), 0.0, 1.0));
       col = mix(col, rock, smoothstep(0.3, 0.46, slope + (micro-0.5)*0.14));
-      col = mix(col, col*vec3(1.12,1.04,0.78), smoothstep(30.0, 70.0, pw.y)*(1.0 - smoothstep(0.3,0.45,slope)));
-      col = mix(col, vec3(0.9,0.92,0.95), smoothstep(150.0, 230.0, pw.y + micro*20.0)*(1.0-smoothstep(0.45,0.6,slope)));
+      col = mix(col, col*${v3(P.highTint || [1.12, 1.04, .78])}, smoothstep(30.0, 70.0, pw.y)*(1.0 - smoothstep(0.3,0.45,slope)));
+      col = mix(col, ${v3(P.peak || [.9, .92, .95])}, smoothstep(150.0, 230.0, pw.y + micro*20.0)*(1.0-smoothstep(0.45,0.6,slope)));
       return col;
     }
   `);
@@ -384,9 +405,14 @@ async function buildDecor(scene, T, avoid) {
     for (let t = 0; t < 16; t++) {
       if (!counts[t]) continue;
       protoParts.forEach((proto, pi) => {
-        const m = proto.clone(`${name}_${t}_${pi}`);
+        // Each tile gets its OWN copy of the geometry. Babylon keeps a mesh's thin-instance matrices on its geometry,
+        // so tiles sharing one geometry all drew the last tile's matrices (with their own counts, reading past the end:
+        // the long stray triangles, and pines/rocks/flowers in the wrong places).
+        const m = new BABYLON.Mesh(`${name}_${t}_${pi}`, scene);
+        BABYLON.VertexData.ExtractFromMesh(proto).applyToMesh(m);
+        m.material = proto.material; m.useVertexColors = proto.useVertexColors; m.hasVertexAlpha = proto.hasVertexAlpha;
         m.isVisible = true; m.setEnabled(true);
-        m.thinInstanceSetBuffer('matrix', buffers[t].subarray(0, counts[t] * 16), 16, true);
+        m.thinInstanceSetBuffer('matrix', buffers[t].slice(0, counts[t] * 16), 16, true);
         m.thinInstanceRefreshBoundingInfo(false);
         m.isPickable = false; m.metadata = { type: 'terrain_decor', visualOnly: true };
         m.freezeWorldMatrix();
@@ -439,11 +465,50 @@ async function buildDecor(scene, T, avoid) {
     });
   }
 
+  // red spider lilies (or any small flower): a stalk and six thin petals, in clumps
+  function buildFlowers(F) {
+    const bp = [], bc = [], bi = [], tri = (a, b, c, col) => { const o = bp.length / 3; bp.push(...a, ...b, ...c); bc.push(...col, 1, ...col, 1, ...col, 1); bi.push(o, o + 1, o + 2); };
+    tri([-.02, 0, 0], [.02, 0, 0], [0, .55, 0], F.stem); tri([0, 0, -.02], [0, 0, .02], [0, .55, 0], F.stem);
+    for (let i = 0; i < 6; i++) { const a = i * 1.047, cx = Math.cos(a), cz = Math.sin(a); tri([0, .55, 0], [cx * .16 - cz * .03, .6, cz * .16 + cx * .03], [cx * .26, .68, cz * .26], F.petal); }
+    const flower = new BABYLON.Mesh('terrainFlower', scene), vd = new BABYLON.VertexData(), nrm = [];
+    BABYLON.VertexData.ComputeNormals(bp, bi, nrm); vd.positions = bp; vd.colors = bc; vd.indices = bi; vd.normals = nrm.map((v, i) => i % 3 === 1 ? 1 : v * .2); vd.applyToMesh(flower);
+    // own material: same wind as the grass, and the petals keep a faint glow of their own colour even in the dark
+    const fm = new BABYLON.CustomMaterial('terrainFlowerMat', scene); fm.backFaceCulling = false; fm.specularColor = BABYLON.Color3.Black(); fm.AddUniform('uTime', 'float', 0);
+    fm.Vertex_After_WorldPosComputed(`worldPos.x += sin(uTime*1.7 + worldPos.x*0.13 + worldPos.z*0.07) * 0.12 * position.y; worldPos.z += cos(uTime*1.3 + worldPos.x*0.05 + worldPos.z*0.11) * 0.06 * position.y;`);
+    fm.Fragment_Before_FragColor(`color.rgb = max(color.rgb, vColor.rgb * 0.55);`);
+    fm.onBindObservable.add(() => fm.getEffect()?.setFloat('uTime', performance.now() / 1000));
+    scene.onBeforeRenderObservable.add(() => { if (fm._newUniformInstances) fm._newUniformInstances['float-uTime'] = performance.now() / 1000; });
+    flower.material = fm; flower.useVertexColors = true; flower.hasVertexAlpha = false;
+    const per = Math.ceil(F.count / 16) * 4, bufs = [...Array(16)].map(() => new Float32Array(per * 16)), cnt = new Array(16).fill(0);
+    let placed = 0, tries = 0;
+    while (placed < F.count && tries < F.count * 30) {
+      tries++;
+      const x = (rnd() - .5) * 680, z = (rnd() - .5) * 680;
+      if (sq(x, z) < R.flatHalf + 4 || roadD(x, z) < 4 || T.waterEdgeDist(x, z) < 1) continue;
+      if (fbm(x * .03 + 40, z * .03, 3) < .18) continue; // clumps
+      if (!clear(x, z, 0) || slopeAt(x, z) > .5) continue;
+      const t = tileOf(x, z); if (cnt[t] >= per) continue;
+      const sc = .8 + rnd() * .6; BABYLON.Quaternion.FromEulerAnglesToRef(0, rnd() * 6.28, 0, q);
+      S.set(sc, sc * (.85 + rnd() * .4), sc); P.set(x, h(x, z) - .02, z);
+      BABYLON.Matrix.ComposeToRef(S, q, P, m4); m4.copyToArray(bufs[t], cnt[t] * 16); cnt[t]++; placed++;
+    }
+    fillTiles([flower], bufs, cnt, 'terrainFlower');
+  }
+
   async function scatter(spec, ok, blockR, cast) {
-    const res = await BABYLON.SceneLoader.ImportMeshAsync('', '/assets/buildings/', spec.file, scene);
-    const parts = res.meshes.filter(mm => mm.getTotalVertices() > 0);
-    parts.forEach(mm => { mm.setParent(null); mm.bakeCurrentTransformIntoVertices(); });
-    res.meshes.filter(mm => mm.getTotalVertices() === 0).forEach(mm => mm.dispose());
+    let parts;
+    if (spec.build) parts = [spec.build(scene)];
+    else {
+      const res = await BABYLON.SceneLoader.ImportMeshAsync('', '/assets/buildings/', spec.file, scene);
+      parts = res.meshes.filter(mm => mm.getTotalVertices() > 0);
+      parts.forEach(mm => { mm.setParent(null); mm.bakeCurrentTransformIntoVertices(); });
+      res.meshes.filter(mm => mm.getTotalVertices() === 0).forEach(mm => mm.dispose());
+    }
+    if (spec.tint) parts.forEach(mm => { // darker version of the shared model, for this village only
+      const m = mm.material; if (!m) return; const c = m.clone(m.name + '_tint'); mm.material = c;
+      const t = new BABYLON.Color3(...spec.tint);
+      if (c.albedoColor) c.albedoColor = c.albedoColor.multiply(t); if (c.diffuseColor) c.diffuseColor = c.diffuseColor.multiply(t);
+    });
     const per = spec.count, bufs = [...Array(16)].map(() => new Float32Array(per * 16)), cnt = new Array(16).fill(0);
     let k = 0, t = 0;
     while (k < spec.count && t < spec.count * 40) {
@@ -458,12 +523,14 @@ async function buildDecor(scene, T, avoid) {
       addBlocker(x, z, blockR * s); addAvoid(x, z, blockR * s + 1);
     }
     const before = meshes.length;
-    fillTiles(parts, bufs, cnt, 'terrain_' + spec.file.replace('.glb', ''));
+    fillTiles(parts, bufs, cnt, 'terrain_' + (spec.file ? spec.file.replace('.glb', '') : spec.name));
     if (cast) meshes.slice(before).forEach(m => cast(m));
     return k;
   }
   const pinesPlaced = await scatter(R.pines, (x, z) => sq(x, z) > R.flatHalf + 38 && roadD(x, z) > 9 && T.waterEdgeDist(x, z) > 4 && slopeAt(x, z) < .55 && fbm(x * .006 + 9, z * .006, 3) > -.02, R.pines.trunk, T.castShadow);
   const rocksPlaced = await scatter(R.rocks, (x, z) => { const s = slopeAt(x, z); return sq(x, z) > R.flatHalf + 13 && roadD(x, z) > 7 && T.waterEdgeDist(x, z) > .5 && s > .22 && s < .9; }, R.rocks.body, T.castShadow);
+  if (R.deadTrees) await scatter({ ...R.deadTrees, name: 'deadTree', build: makeDeadTreeProto }, (x, z) => sq(x, z) > R.flatHalf + 20 && roadD(x, z) > 8 && T.waterEdgeDist(x, z) > 3 && slopeAt(x, z) < .7, R.deadTrees.trunk, T.castShadow);
+  if (R.flowers) buildFlowers(R.flowers);
   T.decorBlockers = blockers;
   return { meshes, pinesPlaced, rocksPlaced };
 }
@@ -557,4 +624,18 @@ function buildWater(scene, Wt) {
   mist.direction1 = new BABYLON.Vector3(-.4, .5, -.4); mist.direction2 = new BABYLON.Vector3(.4, 1.1, .4); mist.minEmitPower = .4; mist.maxEmitPower = .9;
   mist.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD; mist.start();
   return meshes;
+}
+
+// A gnarled dead tree (trunk and bare branches, one mesh), about 4.6 m tall at scale 1.
+function makeDeadTreeProto(scene) {
+  const parts = [], cyl = (h, top, bot, x, y, z, rx, rz) => { const c = BABYLON.MeshBuilder.CreateCylinder('dt', { height: h, diameterTop: top, diameterBottom: bot, tessellation: 6 }, scene); c.position.set(x, y, z); c.rotation.x = rx; c.rotation.z = rz; parts.push(c); };
+  cyl(4.4, .26, .55, 0, 2.15, 0, 0, .08);
+  [[-.5, 2.9, .1, .25, .9, 1.4, .2], [.55, 3.2, -.1, -.2, -.85, 1.2, .18], [-.3, 3.75, -.05, -.15, .55, 1.0, .15], [.3, 3.95, .1, .2, -.5, .9, .13], [.4, 2.3, .15, .3, -1.1, .9, .15], [-.75, 3.55, .2, .4, 1.25, .7, .1], [.8, 3.75, -.2, -.35, -1.3, .6, .09]]
+    .forEach(([x, y, z, rx, rz, h, d]) => cyl(h, d * .4, d, x, y, z, rx, rz));
+  const m = BABYLON.Mesh.MergeMeshes(parts, true, true);
+  m.name = 'terrainDeadTree';
+  const mat = new BABYLON.StandardMaterial('terrainDeadTreeMat', scene);
+  mat.diffuseColor = new BABYLON.Color3(.075, .06, .05); mat.specularColor = new BABYLON.Color3(.02, .02, .02);
+  m.material = mat;
+  return m;
 }
