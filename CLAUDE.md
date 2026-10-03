@@ -8,11 +8,11 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 - Vercel builds every push to dev (preview URL `rebel-ants-village-git-dev-miguel-concepcions-projects.vercel.app`); check the deploy after pushing.
 - More notes live in the claude.ai project "Rebel Ants Universe" (docs `claude/handoff.md`, `claude/village-terrains.md`); this file carries the essentials.
 
-## Where things stand (Oct 3, night)
-- dev = cb0614a (+ this CLAUDE.md commit). On dev: Samurai village (terraced ground + layout + kit), fixes (night lanterns, cherry trunk collision, Back key turns around), Wokou harbour village (coast + sea shader + harbour kit + layout), Wokou sea surf sound.
+## Where things stand (Oct 3, late night)
+- dev = 3f55912 (+ this CLAUDE.md commit). On dev: Samurai village, fixes (night lanterns, cherry trunk collision, Back key), Wokou harbour village + surf sound, faction emblems on banners, Yamabushi village (terrain + kit + layout). Miguel: NOT to main yet, keep building villages.
 - This repo is now attached to Claude Code sessions: Claude commits and pushes to dev directly (plain git), then checks the Vercel deploy (Vercel MCP: project prj_CjuIvsLXKinzfIgUkmSkyWhKWqtc, team team_7tWG3HhBf0Ir5h0Hhz9ZAarq).
 - If the chat has NO repo attached: Claude builds + tests, delivers files to Miguel's Downloads/<name>/, Miguel uploads on github.com (dev branch), Claude then verifies dev matches (git fetch + diff) and checks the Vercel deploy. Do NOT push via the admin page / upload token in the browser (blocked by a safety check).
-- Production reads layouts from dev but lacks the Samurai + Wokou kit/terrain → those live villages show red placeholders until dev → main merge.
+- Production reads layouts from dev but lacks the Samurai + Wokou + Yamabushi kit/terrain → those live villages show red placeholders until dev → main merge.
 
 ## Standing rules (from Miguel)
 - 001 is the master and needs no fixing; don't change Forge characters/rigs that are "perfect".
@@ -23,9 +23,10 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 - Launch single player; Zelda-like vision.
 
 ## Next up (one at a time)
-1. Miguel playtests Wokou (sea look + FPS, piers, shore blocking, surf sound level) and the fixes.
-2. Plan the dev → main merge (Samurai + Wokou on prod).
-3. Friend villages: Cute & Creepy (Halloween), Chumps (barn life, drinking + fishing; not in VILLAGE_REGISTRY yet), Saints (Los Angeles city life).
+1. Miguel playtests Yamabushi (cliffs, mist, bridge, FPS) and Wokou (surf level).
+2. Next faction village, same recipe: terrain → kit → layout (Miguel sends 3 images per village). Banners: use banner_<faction> / noren with the emblem.
+3. Later: plan the dev → main merge (Samurai + Wokou + Yamabushi on prod).
+3b. Friend villages: Cute & Creepy (Halloween), Chumps (barn life, drinking + fishing; not in VILLAGE_REGISTRY yet), Saints (Los Angeles city life).
 4. Other faction terrains (table below).
 5. Bake terrains to files; pre-launch layout cache; pin Babylon version.
 6. Older: domain DNS (Kev), #893 reforge, production wallet tests.
@@ -100,3 +101,16 @@ Friend villages (Queens, Cute & Creepy, Saints LA; Chumps not in registry yet): 
 - Loudness: `NT.surfSoundAt(x,z)` (village-terrain.js): shoreline distance field on a 4 m grid (chamfer, built lazily ~20 ms) → (1 − (d−6)/170)^1.2. Quay .99, dojo .29, hall .38, trade .44, 0 past ~175 m inland. Gain = level × 1.1 × master × ambience; 0 when Mute Ambience, indoors or tab hidden.
 - Measured (default sliders, quay): −29 LUFS, peak −13.7 dBFS (Samurai courtyard bed ≈ −29, Ronin wind ≈ −25 in-game). Hub/Ronin/Samurai: no surf (checked headless).
 - Known, not changed: the waterfall/stream sound ignores Mute Ambience and interiors (surf respects both).
+
+## Faction emblems on banners (dev 3dd4f02, Oct 3)
+- Miguel's Factions_Symbols.zip → assets/brand/factions/<faction>.png: white masks (text cut off; medallion logos keep mark + outer ring; Bushi from the jpg).
+- Kit: bannerTex icon 'logo:<faction>' draws the mask tinted (async on image load). FACTION_BANNERS in samurai-kit.js = cloth/emblem colours per faction; material banner_<faction> is made on first use. banner_red = Samurai, banner_wokou + sail = Wokou. Wide variant (bannerTex(..., wide)) for noren curtains.
+- Ronin banners (village.html buildRoninBanner): emblem plane (getRoninEmblemMaterial) replaces the torus sigil.
+- Wokou lamps at night checked (yes: windows, doorways, hanging + stone lanterns with ground glow).
+
+## Yamabushi village (dev 023e12c terrain, 279bab9 kit, 3f55912 layout, Oct 3)
+- From Miguel's 3 Yamabushi images (cliff-top village, plaza + well + houses, retaining wall with burrow arches, stairs to the dojo terrace and training yard, two-storey library, thatched house, bridge to a pillar, waterfalls, green + gold banners).
+- Terrain recipe `yamabushi`: recipe.mesa (makeMesa: pieces = main mesa [-64,-62,64,88] r16, landing [-13,-86,13,-56], pillar c(100,54,13); 52 m cliff drop with varying slope/ledges/bulges, fades by the peaks; T.mesaBlocks = off the edge not walkable). Village levels: landing 0, plaza +4, dojo terrace +10.5 (also the pillar). recipe.falls (buildFalls: auto-picked cliff waterfalls, ribbons + spray; waterSoundAt follows them; water sound starts when NT.falls). recipe.mist (buildMist: 3 drifting layers at -42/-33/-24). roads:false. Granite shading for mesa cliffs (MESA flag in terrain shader). extras.village: rim pines off the paving.
+- Kit yam_*: great_dojo, library (2 floors), house, house_thatch, gate (noren), banner_pole, bridge (32 m, deck in SamuraiKit.decks; ASSETS absY → absolute height), burrow_arch, spirit_lantern (blue), shrine, bench, stone_weights. village.html: kit decks walkable in any village (onDeck no longer needs a sea).
+- Layout yamabushi.json 227 objects / 55 proxies, generated by a Node script that uses the real terrain module (saved y = live y − (max(new, flatNew) − max(old, flatOld))); round trip exact; walk tests: bridge crosses, fences/deck sides/cliffs block.
+- PROD CAVEAT: same as Samurai/Wokou (prod lacks yam_* + terrain).
