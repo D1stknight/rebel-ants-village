@@ -21980,6 +21980,52 @@ function renderSelectedWalkSurfaceGuide() {
     });
 }
 
+// Placed trees block the player at their trunk. The trunk is found in the model itself (the cherry tree's trunk sits
+// well off its pivot and leans), as circles in the model's yaw-free frame at scale 1, then placed per tree.
+const TREE_TRUNK_TYPES = new Set(['cherry_blossom']);
+const _treeLocalPoints = {}, _treeTrunkProfiles = {};
+// the model's vertices in its root's own (unrotated, unscaled) space, read once from the loaded source
+function getTreeLocalPoints(type) {
+  if (_treeLocalPoints[type]) return _treeLocalPoints[type];
+  const src = _assetSources[type];
+  if (!src || !isAssetSourceReady(type)) return null;
+  src.computeWorldMatrix(true);
+  const inv = src.getWorldMatrix().clone().invert(), pts = [], v = new BABYLON.Vector3();
+  src.getChildMeshes(false).forEach(m => {
+    const p = m.getVerticesData?.(BABYLON.VertexBuffer.PositionKind); if (!p) return;
+    m.computeWorldMatrix(true);
+    const W = m.getWorldMatrix().multiply(inv);
+    for (let i = 0; i < p.length; i += 3) { BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(p[i], p[i + 1], p[i + 2], W, v); pts.push(v.x, v.y, v.z); }
+  });
+  return pts.length ? (_treeLocalPoints[type] = new Float32Array(pts)) : null;
+}
+// trunk circles for one tilt of the model (its pitch + roll; yaw and scale are applied per tree)
+function getTreeTrunkProfile(type, rx = 0, rz = 0) {
+  const key = type + '|' + rx.toFixed(3) + '|' + rz.toFixed(3);
+  if (_treeTrunkProfiles[key]) return _treeTrunkProfiles[key];
+  const L = getTreeLocalPoints(type); if (!L) return null;
+  const R = BABYLON.Matrix.RotationYawPitchRoll(0, rx, rz), v = new BABYLON.Vector3(), P = new Float32Array(L.length);
+  let minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < L.length; i += 3) { BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(L[i], L[i + 1], L[i + 2], R, v); P[i] = v.x; P[i + 1] = v.y; P[i + 2] = v.z; minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y); }
+  const H = maxY - minY, circles = [];
+  for (const [a, b, k] of [[0, .05, .8], [.05, .14, 1.1]]) { // root flare (a bit inside it) + the trunk at body height
+    const xs = [], zs = [];
+    for (let i = 0; i < P.length; i += 3) { const f = (P[i + 1] - minY) / H; if (f >= a && f < b) { xs.push(P[i]); zs.push(P[i + 2]); } }
+    if (!xs.length) continue;
+    const cx = xs.reduce((s, x) => s + x, 0) / xs.length, cz = zs.reduce((s, z) => s + z, 0) / zs.length;
+    const d = xs.map((x, i) => Math.hypot(x - cx, zs[i] - cz)).sort((p, q) => p - q);
+    circles.push({ x: cx, z: cz, r: Math.max(.4, d[Math.floor(d.length * .5)] * k) });
+  }
+  return (_treeTrunkProfiles[key] = circles);
+}
+function addTreeTrunkBlockers(node, blockers) {
+  const r = node.rotation || BABYLON.Vector3.Zero();
+  const prof = getTreeTrunkProfile(node.metadata.type, r.x || 0, r.z || 0); if (!prof) return;
+  const yaw = r.y || 0, s = Math.abs(node.scaling?.x || 1), c = Math.cos(yaw), sn = Math.sin(yaw);
+  prof.forEach(t => blockers.push({ kind: 'circle', type: 'tree_trunk', name: node.name,
+    x: node.position.x + (t.x * c + t.z * sn) * s, z: node.position.z + (-t.x * sn + t.z * c) * s, radius: t.r * s }));
+}
+
 function rebuildVillageCollisionBlockers() {
   const blockers = [];
   const walkableSurfaces = [];
@@ -21992,6 +22038,8 @@ function rebuildVillageCollisionBlockers() {
     const type = getVillageBlockerTypeFromNode(node);
     if (type === 'collision_proxy') {
       addManualCollisionProxyToWorld(node, blockers, walkableSurfaces);
+    } else if (node.metadata?.isClone === true && TREE_TRUNK_TYPES.has(node.metadata.type)) {
+      addTreeTrunkBlockers(node, blockers);
     } else if (node.metadata?.type === 'terrain_stamp') {
       addTerrainStampToWorld(node, walkableSurfaces);
     }
@@ -22488,13 +22536,25 @@ engine.runRenderLoop(()=>{
     updateForgeActionPlayerMotion();
     const moveSpeed=4.2*dt,turnSpeed=2.4*dt;
     const tf=runKey?0.18:0.35;
+    // Back (S / down arrow) turns the character around to walk the other way instead of backing up.
+    const backOnly = moveBackward && !moveForward && !runKey;
+    if (backOnly && !charMesh._backHeld) charMesh._turnAroundTo = charMesh.rotation.y + Math.PI;
+    charMesh._backHeld = backOnly;
+    if (turnLeft || turnRight) charMesh._turnAroundTo = null;
+    let _turningAround = false;
+    if (charMesh._turnAroundTo != null) {
+      let d = charMesh._turnAroundTo - charMesh.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
+      const step = 9 * dt;
+      if (Math.abs(d) <= step) { charMesh.rotation.y += d; charMesh._turnAroundTo = null; }
+      else { charMesh.rotation.y += Math.sign(d) * step; _turningAround = Math.abs(d) > .5; }
+    }
     if(turnLeft)charMesh.rotation.y-=turnSpeed*tf;
     if(turnRight)charMesh.rotation.y+=turnSpeed*tf;
     charMesh.rotation.z+=(((turnLeft?1:turnRight?-1:0)*0.08)-charMesh.rotation.z)*0.12;
     const fwd=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
     if(!charMesh._vel)charMesh._vel=0;
     const actionMovementSuppressed = isForgeActionMovementSuppressed();
-    const tv=actionMovementSuppressed?0:(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
+    const tv=actionMovementSuppressed?0:(moveForward||runKey)?moveSpeed*(runKey?2:1):backOnly?(_turningAround?moveSpeed*0.2:moveSpeed):0;
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
     if(Math.abs(charMesh._vel)>0.0001){
       const _currentPos = charMesh.position.clone();
@@ -26389,6 +26449,7 @@ function applyFakeLightState(force = false) {
   _lastFakeLightStateUpdateAt = now;
   ensureFakeLightRegistrations(force);
   const factor = getFakeLightStateFactor();
+  window.SamuraiKit?.setLightFactor?.(factor); // samurai kit lanterns, windows and doorways glow brighter at night
   updateFakeLightTestReadout(factor);
   applyActiveInteriorLightingState(factor);
   if (!scene?.transformNodes) return;
