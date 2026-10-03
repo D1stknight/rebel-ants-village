@@ -54,19 +54,28 @@
     T.banner_scroll = bannerTex(scene, 'scroll', '#1f2f55', '#d9c79a', 'scroll');
     T.banner_board = bannerTex(scene, 'board', '#c79a4a', '#3b2a17', 'board');
     T.sail = bannerTex(scene, 'sail', '#e8dcbf', '#8a5a2c', 'logo:wokou', true);
+    T.banner_yam_books = bannerTex(scene, 'yam_books', '#25402d', '#d6a640', 'books');
+    T.banner_yam_dots = bannerTex(scene, 'yam_dots', '#25402d', '#d6a640', 'dots');
+    T.noren_yamabushi = bannerTex(scene, 'noren_yamabushi', '#25402d', '#d6a640', 'logo:yamabushi', false, true);
+    T.noren_yam_books = bannerTex(scene, 'noren_yam_books', '#25402d', '#d6a640', 'books', false, true);
+    T.noren_yam_dots = bannerTex(scene, 'noren_yam_dots', '#25402d', '#d6a640', 'dots', false, true);
     return T;
   }
-  function bannerTex(scene, name, bg, fg, icon, sail) {
-    const W = 256, H = 512, t = new BABYLON.DynamicTexture('samKit_banner_' + name, { width: W, height: H }, scene, true), c = t.getContext();
+  function bannerTex(scene, name, bg, fg, icon, sail, wide) {
+    const W = wide ? 512 : 256, H = wide ? 160 : 512, t = new BABYLON.DynamicTexture('samKit_banner_' + name, { width: W, height: H }, scene, true), c = t.getContext();
     c.fillStyle = bg; c.fillRect(0, 0, W, H);
     if (sail) { c.strokeStyle = 'rgba(90,60,30,.45)'; c.lineWidth = 5; for (let y = 40; y < H; y += 64) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); } }
     else { c.strokeStyle = '#c9a452'; c.lineWidth = 6; c.strokeRect(13, 13, W - 26, H - 26); }
     c.fillStyle = fg; c.strokeStyle = fg; c.lineCap = 'round';
+    // icons are drawn in the tall banner's frame (256 x 512, centred); a wide cloth shows them scaled into its middle
+    const k = wide ? H * .86 / 256 : 1, frame = () => c.setTransform(k, 0, 0, k, wide ? W / 2 - 128 * k : 0, wide ? H / 2 - 256 * k : 0);
+    if (wide) { frame(); } {
+    const W = 256, H = 512;
     if (icon.startsWith('logo:')) { // the faction's emblem (white mask in assets/brand/factions), tinted; drawn once it loads
       logoMask(icon.slice(5), img => {
         const L = sail ? 210 : 200, o = document.createElement('canvas'); o.width = o.height = L; const oc = o.getContext('2d');
         oc.drawImage(img, 0, 0, L, L); oc.globalCompositeOperation = 'source-in'; oc.fillStyle = fg; oc.fillRect(0, 0, L, L);
-        c.drawImage(o, (W - L) / 2, H * (sail ? .46 : .5) - L / 2); t.update();
+        frame(); c.drawImage(o, (W - L) / 2, H * (sail ? .46 : .5) - L / 2); c.setTransform(1, 0, 0, 1, 0, 0); t.update();
       });
     } else if (icon === 'ant') {
       const cx = W / 2, cy = H * .5, s = 200;
@@ -76,6 +85,8 @@
         for (const [y0, x1, y1, x2, y2] of [[-.05, .28, -.22, .42, -.32], [0, .32, .05, .46, .18], [.05, .28, .28, .38, .46]]) { c.beginPath(); c.moveTo(cx, cy + y0 * s); c.lineTo(cx + sd * x1 * s, cy + y1 * s); c.lineTo(cx + sd * x2 * s, cy + y2 * s); c.stroke(); }
         c.beginPath(); c.moveTo(cx + sd * .04 * s, cy - .38 * s); c.lineTo(cx + sd * .16 * s, cy - .58 * s); c.lineTo(cx + sd * .3 * s, cy - .62 * s); c.stroke();
       }
+    } else if (icon === 'dots') { // three circles in a triangle (tea house / inn)
+      c.lineWidth = 8; for (const [dx, dy] of [[0, -46], [-42, 28], [42, 28]]) { c.beginPath(); c.arc(W / 2 + dx, H / 2 + dy, 34, 0, 7); c.stroke(); c.beginPath(); c.arc(W / 2 + dx, H / 2 + dy, 12, 0, 7); c.fill(); }
     } else if (icon === 'books') {
       c.lineWidth = 6; for (const [yy, ww] of [[300, 150], [250, 170], [200, 140]]) { c.strokeRect(W / 2 - ww / 2, yy, ww, 40); c.beginPath(); c.moveTo(W / 2 - ww / 2 + 14, yy + 20); c.lineTo(W / 2 + ww / 2 - 14, yy + 20); c.stroke(); }
     } else if (icon === 'scroll') {
@@ -88,7 +99,8 @@
       for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(x0 + i * S0 / 4, y0); c.lineTo(x0 + i * S0 / 4, y0 + S0); c.moveTo(x0, y0 + i * S0 / 4); c.lineTo(x0 + S0, y0 + i * S0 / 4); c.stroke(); }
       for (const [a, b] of [[0, 0], [2, 1], [1, 3], [3, 2]]) c.fillRect(x0 + a * S0 / 4 + 8, y0 + b * S0 / 4 + 8, S0 / 4 - 16, S0 / 4 - 16);
     } else { c.fillRect(W / 2 - 12, 170, 24, 210); c.fillRect(W / 2 - 70, 150, 140, 55); }
-    t.update(); t.hasAlpha = false; return t;
+    }
+    c.setTransform(1, 0, 0, 1, 0, 0); t.update(); t.hasAlpha = false; return t;
   }
 
   // Faction emblems on banners: cloth and emblem colours per faction (banner_<faction> materials)
@@ -113,6 +125,9 @@
     cloth: { col: [.6, .09, .07] }, rope: { col: [.62, .5, .32] }, iron: { col: [.12, .12, .13], spec: [.5, .5, .55], power: 48 }, water: { col: [.05, .12, .14], spec: [.8, .8, .8], power: 90 },
     banner_red: { tex: 'banner_red' }, banner_navy: { tex: 'banner_navy' }, banner_gold: { tex: 'banner_gold' },
     banner_wokou: { tex: 'banner_wokou' }, banner_scroll: { tex: 'banner_scroll' }, banner_board: { tex: 'banner_board' }, sail: { tex: 'sail' },
+    banner_yam_books: { tex: 'banner_yam_books' }, banner_yam_dots: { tex: 'banner_yam_dots' },
+    noren_yamabushi: { tex: 'noren_yamabushi' }, noren_yam_books: { tex: 'noren_yam_books' }, noren_yam_dots: { tex: 'noren_yam_dots' },
+    spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
   };
@@ -251,6 +266,12 @@
     let pts = [[x - w / 2, yy, ztop - h], [x + w / 2, yy, ztop - h], [x + w / 2, yy, ztop], [x - w / 2, yy, ztop]];
     M.quad(mat, pts);
     M.rod('darkwood', [x - w / 2 - .15, yy + face * .05, ztop + .05], [x + w / 2 + .15, yy + face * .05, ztop + .05], .05, 6);
+  }
+  // noren: a short split curtain across the top of a doorway (the house's sign); front faces -y
+  function noren(M, x, y, ztop, w, h, mat) {
+    const n = 4, gap = .05, pw = (w - gap * (n - 1)) / n;
+    for (let i = 0; i < n; i++) { const x0 = x - w / 2 + i * (pw + gap); M.quad(mat, [[x0, y, ztop - h], [x0 + pw, y, ztop - h], [x0 + pw, y, ztop], [x0, y, ztop]], [[i / n, 0], [(i + 1) / n, 0], [(i + 1) / n, 1], [i / n, 1]]); }
+    M.rod('darkwood', [x - w / 2 - .1, y - .03, ztop + .03], [x + w / 2 + .1, y - .03, ztop + .03], .045, 6);
   }
   function recess(M, x, y, z0, w, h, depth, face = -1) {
     const yb = y - face * depth;
@@ -479,6 +500,78 @@
       for (const x of [-2, 0, 2]) { M.block('darkwood', x, 0, 0, .18, .18, 1.25); M.cyl('darkwood', [x, 0, 1.25], .1, .08, 6, .03); }
       for (const z of [.45, .95]) M.box('wood', [0, 0, z], [4.1, .1, .12]);
     },
+    // ── Yamabushi (mountain mystics): dark wood, white plaster, grey tile and thatch, green + gold banners ──
+    yam_great_dojo(M) { M.remap = { red: 'wood', banner_red: 'banner_yamabushi' }; B.sam_great_dojo(M); M.remap = null; noren(M, 0, -15 / 2 + 2.05, 5.45, 5.6, 1.5, 'noren_yamabushi'); },
+    // two storeys: shop room below, balcony with a railing and the reading room above
+    yam_library(M) {
+      const W = 13, D = 9;
+      M.block('stone', 0, 0, 0, W + 1.4, D + 1.4, .7); steps(M, 0, -(D + 1.4) / 2, .7, 4, 2);
+      walls(M, 0, 0, .7, W, D, 3.8, { door: [3.2, 3], windows: [['front', -4, 1.6, 2.6, 1.6], ['front', 4, 1.6, 2.6, 1.6], ['left', 0, 1.6, 3, 1.6], ['right', 0, 1.6, 3, 1.6]] });
+      noren(M, 0, -D / 2 - .2, 3.65, 3.6, 1.1, 'noren_yam_books');
+      M.roof(0, 0, 4.5, W + 2.6, D + 2.6, 1.2, { lift: .5, gable: false, ornaments: false });
+      // balcony on the front, upper floor set back
+      M.block('wood', 0, -D / 2 - .6, 4.5, W + .8, 1.8, .22);
+      for (let i = 0; i <= 8; i++) { const x = -W / 2 - .3 + i * (W + .6) / 8; M.block('darkwood', x, -D / 2 - 1.4, 4.72, .14, .14, 1.05); }
+      M.box('darkwood', [0, -D / 2 - 1.4, 5.75], [W + .7, .16, .12]); M.box('darkwood', [0, -D / 2 - 1.4, 5.2], [W + .7, .08, .08]);
+      walls(M, 0, .6, 4.72, W - 1, D - 1.6, 3.2, { windows: [['front', -3.6, 5.5, 2.4, 1.5], ['front', 0, 5.5, 2.4, 1.5], ['front', 3.6, 5.5, 2.4, 1.5], ['left', 0, 5.5, 2.4, 1.4], ['right', 0, 5.5, 2.4, 1.4]] });
+      M.roof(0, .6, 7.9, W + 2, D + 1.2, 3.2, { lift: .8 });
+      for (const s of [-1, 1]) lantern(M, s * 5.2, -D / 2 - 1.4, 4.4, .22);
+      banner(M, -W / 2 - .2, -D / 2 - .25, 3.6, 1.1, 2.4, 'banner_yamabushi');
+    },
+    yam_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_yamabushi'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_yamabushi'); },
+    yam_house_thatch(M) { B.sam_house(M); noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_yam_dots'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_yamabushi'); },
+    yam_gate(M) { M.remap = { red: 'darkwood', banner_red: 'banner_yamabushi' }; B.sam_gate(M); M.remap = null; noren(M, 0, -1.3, 5.1, 5, 1.7, 'noren_yamabushi'); },
+    yam_banner_pole(M) { M.remap = { banner_red: 'banner_yamabushi' }; B.sam_banner_pole(M); },
+    // plank bridge 32 m long (along y), deck top at the origin; ends rest on the cliffs, a rope rail on posts
+    yam_bridge(M) {
+      const L = 32, Wd = 3;
+      M.block('wood', 0, 0, -.25, Wd, L, .25);
+      for (let i = 0; i < 40; i++) M.box('darkwood', [0, -L / 2 + .4 + i * (L - .8) / 39, .005], [Wd, .05, .02]);
+      for (const x of [-Wd / 2 + .1, Wd / 2 - .1]) M.box('darkwood', [x, 0, -.45], [.22, L, .3]);
+      for (let i = 0; i <= 8; i++) {
+        const y = -L / 2 + .3 + i * (L - .6) / 8;
+        for (const s of [-1, 1]) { M.block('darkwood', s * (Wd / 2 + .05), y, -.4, .18, .18, 1.55); M.cyl('darkwood', [s * (Wd / 2 + .05), y, 1.15], .1, .08, 6, .03); }
+        M.box('darkwood', [0, y, -.55], [Wd + .5, .2, .2]);
+      }
+      for (const s of [-1, 1]) for (const z of [1.05, .55]) M.rod('rope', [s * (Wd / 2 + .05), -L / 2 + .3, z], [s * (Wd / 2 + .05), L / 2 - .3, z], .035, 4);
+      for (const e of [-1, 1]) for (const s of [-1, 1]) M.rod('darkwood', [s * (Wd / 2 - .1), e * (L / 2 - 1), -.5], [s * (Wd / 2 - .1), e * (L / 2 - 4.5), -4], .14, 6); // struts down to the cliff faces
+    },
+    // tunnel into a retaining wall: a stone arch with a dark passage and a warm light deep inside; back at y = 0
+    yam_burrow_arch(M) {
+      const r = 1.6, zc = 1.9, n = 12, d = 1;
+      for (let i = 0; i < n; i++) {
+        const a0 = Math.PI * i / n, a1 = Math.PI * (i + 1) / n, am = (a0 + a1) / 2;
+        M.box('stone', [Math.cos(am) * (r + .35), -d / 2, zc + Math.sin(am) * (r + .35)], [.75, d, .72 * Math.PI * (r + .35) / n * 1.05], 0, 0, -am);
+      }
+      for (const s of [-1, 1]) M.block('stone', s * (r + .35), -d / 2, 0, .75, d, zc);
+      M.block('stone', 0, -d / 2, 0, 2 * r + 1.6, d + .2, .25);
+      const pts = []; for (let i = 0; i <= n; i++) pts.push([Math.cos(Math.PI * i / n) * r, -.02, zc + Math.sin(Math.PI * i / n) * r]);
+      for (let i = 0; i < n; i++) M.poly('dark', [pts[i], pts[i + 1], [0, -.02, zc]]);
+      M.quad('dark', [[-r, -.02, .25], [r, -.02, .25], [r, -.02, zc], [-r, -.02, zc]]);
+      M.quad('fire', [[-.4, .4, .6], [.4, .4, .6], [.4, .4, 1.2], [-.4, .4, 1.2]]);
+      lantern(M, r + .9, -d - .1, 2.9, .2); M.box('darkwood', [r + .9, -d / 2 - .25, 2.95], [.1, d + .4, .1]);
+    },
+    // spirit lantern: a stone toro whose light burns icy blue (the Yamabushi's flame), blue pool of light at night
+    yam_spirit_lantern(M) { M.remap = { lantern: 'spirit', glow: 'glow_spirit' }; B.sam_stone_lantern(M); },
+    // small open shrine for the lookout pillar: four posts, a tiled roof, offering box and bell
+    yam_shrine(M) {
+      M.block('stone', 0, 0, 0, 4.4, 4.4, .4); steps(M, 0, -2.2, .4, 2, 1);
+      for (const x of [-1.7, 1.7]) for (const y of [-1.7, 1.7]) M.block('darkwood', x, y, .4, .26, .26, 3);
+      M.box('darkwood', [0, -1.7, 3.3], [4, .3, .3]); M.box('darkwood', [0, 1.7, 3.3], [4, .3, .3]);
+      M.roof(0, 0, 3.45, 5.4, 5.4, 1.7, { lift: .6 });
+      M.block('wood', 0, .6, .4, 1.6, 1, .9); M.block('darkwood', 0, .6, 1.3, 1.7, 1.1, .08);
+      M.rod('rope', [0, -1.7, 3.1], [0, -1.7, 2.1], .03, 4); M.sphere('gold', [0, -1.7, 1.95], .22, 1.1, 8, 5);
+      banner(M, 0, -1.85, 3.1, 2.2, .6, 'banner_yamabushi');
+    },
+    // low wooden bench (training yard)
+    yam_bench(M) { M.block('wood', 0, 0, .42, 2.6, .45, .12); for (const x of [-1.05, 1.05]) M.block('darkwood', x, 0, 0, .18, .4, .42); },
+    // stone training weights: a bar through two stone wheels on a rack
+    yam_stone_weights(M) {
+      for (const s of [-1, 1]) M.block('darkwood', s * 1.1, 0, 0, .14, .4, .9);
+      M.rod('darkwood', [-1.3, 0, .82], [1.3, 0, .82], .06, 6);
+      for (const s of [-1, 1]) M.tube('stone', [s * .75, -.14, .82], [s * .75, .14, .82], .5, .5, 10);
+      M.cyl('stone', [1.9, .3, 0], .35, .32, 8); M.cyl('stone', [1.85, .3, .32], .28, .26, 8); M.block('stone', -1.9, .2, 0, .55, .45, .4);
+    },
     // stone toro lantern for paths and stairs: the light box glows (no real light, so any number is cheap)
     sam_stone_lantern(M) {
       M.cyl('stone', [0, 0, 0], .5, .22, 6, .42); M.cyl('stone', [0, 0, .22], .17, 1.05, 6, .14);
@@ -520,6 +613,6 @@
     return true;
   }
   // walkable decks in the type's own frame (Babylon x/z, deck top y above the origin)
-  const decks = { wok_pier: [{ x: 0, z: 0, halfX: 2.05, halfZ: 4.05, y: 0 }] };
+  const decks = { wok_pier: [{ x: 0, z: 0, halfX: 2.05, halfZ: 4.05, y: 0 }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }] };
   window.SamuraiKit = { build, setLightFactor, decks, types: Object.keys(B), _Kit: Kit, _B: B };
 })();
