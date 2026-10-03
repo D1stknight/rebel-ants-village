@@ -45,6 +45,38 @@ export const TERRAIN_RECIPES = {
     light: { sun: .95, hemi: .95 },
     sky: { turbidity: 14, luminance: .55, rayleigh: 1.1, mieCoefficient: .009 },
     court: { court: [.42, .4, .43], plaza: [.36, .34, .38], path: [.4, .37, .4] }
+  },
+  // Samurai: the disciplined core of the colony, crimson and gold. Golden-hour light, terraced green hills with stone
+  // risers, bamboo groves, cherry trees and pink flower beds, pines, and tall karst stone pillars with a waterfall
+  // pouring from the north-west cliffs. Cobblestone courtyard.
+  samurai: {
+    seed: 2468, dropSeed: 17, drops: 60000,
+    hills: .9, shape: { fbm: 26, ridge: 18, wall: 80,
+      spires: [{ from: 285, cell: 46, chance: .75, radius: [9, 18], height: [45, 115] },
+               { from: 420, cell: 120, chance: .8, radius: [28, 55], height: [90, 260] }] },
+    flatHalf: 112, hillStart: 112, hillFull: 175, wallStart: 285,
+    terraces: { step: 3.2, sharp: .86, from: 118, to: 260 },
+    palette: {
+      grassA: [0.22, 0.32, 0.13], grassB: [0.40, 0.42, 0.19], wet: [0.15, 0.25, 0.11],
+      dirt: [0.50, 0.40, 0.28], rockTint: [0.86, 0.85, 0.82], highTint: [1.0, 1.0, .9], peak: [0.74, 0.73, 0.7]
+    },
+    grass: { count: 85000, base: [0.12, 0.22, 0.06], tip: [0.6, 0.62, 0.28] },
+    flowers: { count: 6500, stem: [0.12, 0.25, 0.08], petal: [0.98, 0.62, 0.74] },
+    pines: { file: 'pine_1.glb', count: 170, scale: [2.0, 3.8], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 200, scale: [1.0, 3.0], body: 0.75, settle: .9, sink: .1, tint: [1.15, 1.08, .95], minSq: 245 }, // none on the terraces
+    extras: [
+      { file: 'bamboo.glb', count: 170, scale: [.8, 1.25], body: .35, settle: .3, sink: .1, cull: 260, maxSlope: .5,
+        clump: { freq: .012, ox: 77, above: .12 } },
+      { file: 'cherry_blossom.glb', count: 14, scale: [.75, 1.05], body: .9, settle: .6, sink: .2, cull: 230, minSq: 125, maxSq: 230, maxSlope: .35, road: 12 }
+    ],
+    water: {
+      path: [[-330, 318], [-316, 304], [-307.5, 295.5], [-290, 276], [-272, 252], [-252, 236], [-234, 214], [-214, 202], [-197, 184], [-180, 171], [-166, 158]],
+      lip: 1, pool: 2, halfW: 3.6, depth: 1.1, poolR: 8, pondR: 15
+    },
+    fog: { density: .0019, day: [.84, .8, .72], night: [.05, .05, .1] },
+    light: { sun: 1.05, hemi: .95, tint: [1.0, .92, .8] },
+    sky: { turbidity: 7, luminance: 1, rayleigh: 2.2, mieCoefficient: .006 },
+    court: { texture: 'stone', court: [1.55, 1.45, 1.3], plaza: [1.3, 1.2, 1.08], path: [1.2, 1.1, .98] }
   }
 };
 
@@ -79,8 +111,27 @@ export function makeBaseHeight(recipe) {
     const ring = smooth(recipe.hillStart, recipe.hillFull, s);
     const wall = smooth(recipe.wallStart, 352, s) * (30 + ridged(wx * .0055 + 3, wz * .0055) * (sh.wall ?? 70));
     const far = smooth(360, 1300, r) * (40 + ridged(x * .0022, z * .0022) * 260);
-    return Math.max(0, hills) * ring + wall + far;
+    let base = Math.max(0, hills) * ring + wall + far;
+    if (sh.spires) for (const sp of sh.spires) base += spireHeight(sp, x, z, s, recipe.seed);
+    return base;
   };
+}
+
+// Karst stone pillars (steep sides, rounded tops), one per jittered grid cell, fading in from `from` metres out.
+function spireHeight(sp, x, z, s, seed) {
+  const fade = smooth(sp.from, sp.from + sp.cell, s); if (fade <= 0) return 0;
+  const hsh = (a, b, k) => { let h = (a * 374761393 + b * 668265263 + (seed + k) * 2246822519) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
+  const ci = Math.floor(x / sp.cell), cj = Math.floor(z / sp.cell); let best = 0;
+  for (let a = ci - 1; a <= ci + 1; a++) for (let b = cj - 1; b <= cj + 1; b++) {
+    if (hsh(a, b, 7) > sp.chance) continue;
+    const cx = (a + .2 + .6 * hsh(a, b, 1)) * sp.cell, cz = (b + .2 + .6 * hsh(a, b, 2)) * sp.cell;
+    const r = sp.radius[0] + (sp.radius[1] - sp.radius[0]) * hsh(a, b, 3), ht = sp.height[0] + (sp.height[1] - sp.height[0]) * hsh(a, b, 4);
+    const ang = Math.atan2(z - cz, x - cx), wob = 1 + .18 * Math.sin(3 * ang + 6 * hsh(a, b, 5)) + .1 * Math.sin(5 * ang + 6 * hsh(a, b, 6));
+    const d = Math.hypot(x - cx, z - cz) / (r * wob); if (d >= 1) continue;
+    const v = ht * (1 - smooth(.62, 1, d)) * (1 - .18 * d * d);
+    if (v > best) best = v;
+  }
+  return best * fade;
 }
 
 // Heightmap with droplet erosion; roads along the two axes follow a smoothed copy of the land; courtyard flat.
@@ -115,6 +166,16 @@ export function buildHeightmap(recipe) {
     for (let i = 0; i < N; i++) { let acc = 0, cnt = 0; for (let j = -rad; j < N + rad; j++) { if (j + rad < N) { acc += tmp[(j + rad) * N + i]; cnt++; } if (j - rad - 1 >= 0) { acc -= tmp[(j - rad - 1) * N + i]; cnt--; } if (j >= 0 && j < N) out[j * N + i] = acc / cnt; } }
     return out;
   };
+  // rice-paddy style terraces: the hills step up in flat shelves with short steep (stone-painted) risers
+  if (recipe.terraces) {
+    const T = recipe.terraces;
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const x = i * CELL - SIZE / 2, z = j * CELL - SIZE / 2, sq = Math.max(Math.abs(x), Math.abs(z)), k = j * N + i;
+      const w = smooth(T.from, T.from + 12, sq) * (1 - smooth(T.to - 25, T.to, sq)); if (w <= 0) continue;
+      const q = H[k] / T.step, fl = Math.floor(q), tq = (fl + smooth(T.sharp, 1, q - fl)) * T.step;
+      H[k] = H[k] * (1 - w) + tq * w;
+    }
+  }
   const soft = blur(blur(H, 9), 9);
   const path = new Uint8Array(N * N);
   const f0 = recipe.flatHalf;
@@ -388,7 +449,7 @@ function tileOf(x, z) { return Math.min(3, Math.max(0, Math.floor((x + 350) / 17
 
 async function buildDecor(scene, T, avoid) {
   const R = T.recipe, rnd = rng(R.seed * 7 + 3), { fbm } = makeNoise(R.seed + 11);
-  const meshes = [], blockers = new Map();
+  const meshes = [], blockers = new Map(), cullTiles = []; // cullTiles: map tiles switched off beyond a distance
   const addBlocker = (x, z, r) => { const key = Math.floor((x + 400) / 20) * 1000 + Math.floor((z + 400) / 20); if (!blockers.has(key)) blockers.set(key, []); blockers.get(key).push({ x, z, r }); };
   const h = T.heightAt;
   const slopeAt = (x, z) => { const y = h(x, z); return Math.hypot(h(x + 2, z) - y, h(x, z + 2) - y) / 2; };
@@ -456,12 +517,12 @@ async function buildDecor(scene, T, avoid) {
     const before = meshes.length;
     fillTiles([blade], bufs, cnt, 'terrainGrass');
     // grass tiles far from the camera are switched off (blades there are smaller than a pixel)
-    const grassTiles = meshes.slice(before).map(m => { const t = +m.name.split('_')[1]; return { m, x: -262.5 + Math.floor(t / 4) * 175, z: -262.5 + (t % 4) * 175 }; });
+    meshes.slice(before).forEach(m => { const t = +m.name.split('_')[1]; cullTiles.push({ m, x: -262.5 + Math.floor(t / 4) * 175, z: -262.5 + (t % 4) * 175, d: 150 }); });
     let lastCull = 0;
     scene.onBeforeRenderObservable.add(() => {
       const now = performance.now(); if (now - lastCull < 400) return; lastCull = now;
       const c = scene.activeCamera?.globalPosition; if (!c) return;
-      for (const g of grassTiles) { const dx = Math.max(0, Math.abs(c.x - g.x) - 87.5), dz = Math.max(0, Math.abs(c.z - g.z) - 87.5), on = dx * dx + dz * dz < 150 * 150; if (g.m.isEnabled() !== on) g.m.setEnabled(on); }
+      for (const g of cullTiles) { const dx = Math.max(0, Math.abs(c.x - g.x) - 87.5), dz = Math.max(0, Math.abs(c.z - g.z) - 87.5), on = dx * dx + dz * dz < g.d * g.d; if (g.m.isEnabled() !== on) g.m.setEnabled(on); }
     });
   }
 
@@ -528,9 +589,19 @@ async function buildDecor(scene, T, avoid) {
     return k;
   }
   const pinesPlaced = await scatter(R.pines, (x, z) => sq(x, z) > R.flatHalf + 38 && roadD(x, z) > 9 && T.waterEdgeDist(x, z) > 4 && slopeAt(x, z) < .55 && fbm(x * .006 + 9, z * .006, 3) > -.02, R.pines.trunk, T.castShadow);
-  const rocksPlaced = await scatter(R.rocks, (x, z) => { const s = slopeAt(x, z); return sq(x, z) > R.flatHalf + 13 && roadD(x, z) > 7 && T.waterEdgeDist(x, z) > .5 && s > .22 && s < .9; }, R.rocks.body, T.castShadow);
+  const rocksPlaced = await scatter(R.rocks, (x, z) => { const s = slopeAt(x, z); return sq(x, z) > (R.rocks.minSq ?? R.flatHalf + 13) && roadD(x, z) > 7 && T.waterEdgeDist(x, z) > .5 && s > .22 && s < .9; }, R.rocks.body, T.castShadow);
   if (R.deadTrees) await scatter({ ...R.deadTrees, name: 'deadTree', build: makeDeadTreeProto }, (x, z) => sq(x, z) > R.flatHalf + 20 && roadD(x, z) > 8 && T.waterEdgeDist(x, z) > 3 && slopeAt(x, z) < .7, R.deadTrees.trunk, T.castShadow);
   if (R.flowers) buildFlowers(R.flowers);
+  // extra scattered models (bamboo groves, cherry trees ...), optionally in clumps and switched off far away
+  for (const ex of R.extras || []) {
+    const before = meshes.length;
+    await scatter(ex, (x, z) => {
+      const q = sq(x, z); if (q < (ex.minSq ?? R.flatHalf + 20) || q > (ex.maxSq ?? 340) || roadD(x, z) < (ex.road ?? 8)) return false;
+      if (T.waterEdgeDist(x, z) < (ex.water ?? 3) || slopeAt(x, z) > (ex.maxSlope ?? .55)) return false;
+      return !ex.clump || fbm(x * ex.clump.freq + ex.clump.ox, z * ex.clump.freq, 3) > ex.clump.above;
+    }, ex.body, ex.shadow === false ? null : T.castShadow);
+    if (ex.cull) meshes.slice(before).forEach(m => { const t = +m.name.split('_').slice(-2)[0]; cullTiles.push({ m, x: -262.5 + Math.floor(t / 4) * 175, z: -262.5 + (t % 4) * 175, d: ex.cull }); });
+  }
   T.decorBlockers = blockers;
   return { meshes, pinesPlaced, rocksPlaced };
 }
