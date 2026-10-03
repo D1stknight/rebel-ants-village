@@ -47,13 +47,13 @@
     const bn = noise(S, 3, 4, 8); T.bark = pixelTex(scene, 'bark', S, (x, y, i) => mul([88, 64, 44], .65 + .25 * (Math.sin(x * S * .5 + bn[i] * 14) * .5 + .5) + .15 * bn[i]));
     const en = noise(S, 5, 4, 9); T.earth = pixelTex(scene, 'earth', S, (x, y, i) => mul([104, 76, 50], .7 + .4 * en[i]));
     T.shoji = pixelTex(scene, 'shoji', S, (x, y) => ((x * 4) % 1 < .06 || (y * 5) % 1 < .06) ? [70, 48, 30] : [240, 226, 190]);
-    T.banner_red = bannerTex(scene, 'red', '#961816', '#ecd6aa', 'ant');
+    T.banner_red = bannerTex(scene, 'red', '#961816', '#ecd6aa', 'logo:samurai');
     T.banner_navy = bannerTex(scene, 'navy', '#222c48', '#e6dec8', 'books');
     T.banner_gold = bannerTex(scene, 'gold', '#ba8026', '#faecc8', 'hammer');
-    T.banner_wokou = bannerTex(scene, 'wokou', '#1c2a4c', '#d9a743', 'ant');
+    T.banner_wokou = bannerTex(scene, 'wokou', '#1c2a4c', '#d9a743', 'logo:wokou');
     T.banner_scroll = bannerTex(scene, 'scroll', '#1f2f55', '#d9c79a', 'scroll');
     T.banner_board = bannerTex(scene, 'board', '#c79a4a', '#3b2a17', 'board');
-    T.sail = bannerTex(scene, 'sail', '#e8dcbf', '#8a5a2c', 'ant', true);
+    T.sail = bannerTex(scene, 'sail', '#e8dcbf', '#8a5a2c', 'logo:wokou', true);
     return T;
   }
   function bannerTex(scene, name, bg, fg, icon, sail) {
@@ -62,7 +62,13 @@
     if (sail) { c.strokeStyle = 'rgba(90,60,30,.45)'; c.lineWidth = 5; for (let y = 40; y < H; y += 64) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); } }
     else { c.strokeStyle = '#c9a452'; c.lineWidth = 6; c.strokeRect(13, 13, W - 26, H - 26); }
     c.fillStyle = fg; c.strokeStyle = fg; c.lineCap = 'round';
-    if (icon === 'ant') {
+    if (icon.startsWith('logo:')) { // the faction's emblem (white mask in assets/brand/factions), tinted; drawn once it loads
+      logoMask(icon.slice(5), img => {
+        const L = sail ? 210 : 200, o = document.createElement('canvas'); o.width = o.height = L; const oc = o.getContext('2d');
+        oc.drawImage(img, 0, 0, L, L); oc.globalCompositeOperation = 'source-in'; oc.fillStyle = fg; oc.fillRect(0, 0, L, L);
+        c.drawImage(o, (W - L) / 2, H * (sail ? .46 : .5) - L / 2); t.update();
+      });
+    } else if (icon === 'ant') {
       const cx = W / 2, cy = H * .5, s = 200;
       for (const [dy, rx, ry] of [[-.3, .11, .1], [0, .09, .13], [.36, .17, .24]]) { c.beginPath(); c.ellipse(cx, cy + dy * s, rx * s, ry * s, 0, 0, 7); c.fill(); }
       c.lineWidth = 7;
@@ -85,6 +91,19 @@
     t.update(); t.hasAlpha = false; return t;
   }
 
+  // Faction emblems on banners: cloth and emblem colours per faction (banner_<faction> materials)
+  const FACTION_BANNERS = {
+    samurai: ['#961816', '#ecd6aa'], wokou: ['#1c2a4c', '#d9a743'], yamabushi: ['#25402d', '#d6a640'], ronin: ['#0e0d10', '#9a161a'],
+    shogun: ['#2e2147', '#d8b04a'], bushi: ['#1b2a48', '#cfae5c'], buke: ['#4a5233', '#e0d2a4'], ashigaru: ['#24402a', '#d9c98e'],
+    kenshi: ['#1d4a4c', '#d7e3e0'], sohei: ['#b8611c', '#f4e6c4'], warrior: ['#6b2a1a', '#e2c08a']
+  };
+  const logoImgs = {};
+  function logoMask(id, cb) {
+    let L = logoImgs[id];
+    if (!L) { L = logoImgs[id] = { img: new Image(), ready: false, waiting: [] }; L.img.onload = () => { L.ready = true; L.waiting.splice(0).forEach(f => f(L.img)); }; L.img.src = 'assets/brand/factions/' + id + '.png'; }
+    if (L.ready) cb(L.img); else L.waiting.push(cb);
+  }
+
   // ── materials ───────────────────────────────────────────────────────────
   const MAT = {
     roof: { tex: 'roof' }, wood: { tex: 'wood' }, darkwood: { tex: 'darkwood' }, plaster: { tex: 'plaster' }, stone: { tex: 'stone' },
@@ -94,6 +113,7 @@
     cloth: { col: [.6, .09, .07] }, rope: { col: [.62, .5, .32] }, iron: { col: [.12, .12, .13], spec: [.5, .5, .55], power: 48 }, water: { col: [.05, .12, .14], spec: [.8, .8, .8], power: 90 },
     banner_red: { tex: 'banner_red' }, banner_navy: { tex: 'banner_navy' }, banner_gold: { tex: 'banner_gold' },
     banner_wokou: { tex: 'banner_wokou' }, banner_scroll: { tex: 'banner_scroll' }, banner_board: { tex: 'banner_board' }, sail: { tex: 'sail' },
+    ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
   };
   let TEX = null; const MATS = {};
@@ -107,6 +127,7 @@
     if (MATS[name] && !MATS[name].isDisposed?.()) return MATS[name];
     TEX = TEX || makeTextures(scene);
     const d = MAT[name];
+    if (d.faction && !TEX[d.tex]) TEX[d.tex] = bannerTex(scene, d.faction, ...FACTION_BANNERS[d.faction], 'logo:' + d.faction); // made on first use
     if (d.glow) {
       const m = new BABYLON.StandardMaterial('samKit_' + name, scene), tx = glowTex(scene);
       m.diffuseColor = BABYLON.Color3.Black(); m.specularColor = BABYLON.Color3.Black(); m.disableLighting = true;

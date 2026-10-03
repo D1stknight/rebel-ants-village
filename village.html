@@ -7256,8 +7256,18 @@ function buildRoninBanner(root) {
     strip.rotation.z = (i - 1) * .08;
     strip.material = black;
   });
-  const sigil = markRoninEditable(BABYLON.MeshBuilder.CreateTorus(`${root.name}_sigil`, { diameter:.48, thickness:.035, tessellation:32 }, scene), root, false);
-  sigil.position.set(.5,2.95,-.075); sigil.material = crimson;
+  // the Ronin emblem (red handprint in a ring) on the cloth
+  const sigil = markRoninEditable(BABYLON.MeshBuilder.CreatePlane(`${root.name}_sigil`, { size:.8, sideOrientation:BABYLON.Mesh.DOUBLESIDE }, scene), root, false);
+  sigil.position.set(.5,2.9,-.06); sigil.material = getRoninEmblemMaterial();
+}
+let _roninEmblemMat = null;
+function getRoninEmblemMaterial() {
+  if (_roninEmblemMat && !_roninEmblemMat.isDisposed?.()) return _roninEmblemMat;
+  const m = new BABYLON.StandardMaterial('roninBannerEmblem', scene), tex = new BABYLON.Texture('assets/brand/factions/ronin.png', scene);
+  tex.hasAlpha = true; m.diffuseTexture = tex; m.useAlphaFromDiffuseTexture = false;
+  m.diffuseColor = new BABYLON.Color3(.5,.03,.035); m.emissiveColor = new BABYLON.Color3(.11,.006,.01); m.specularColor = new BABYLON.Color3(.04,.02,.02);
+  m.backFaceCulling = false; m.zOffset = -1;
+  return (_roninEmblemMat = m);
 }
 
 function buildRoninDeadTree(root) {
