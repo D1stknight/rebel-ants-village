@@ -506,6 +506,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     </div>
     <div class="ap-section">Buildings</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
+    <div class="ap-section">Samurai Buildings</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('sam_great_dojo')"><span class="ap-icon">🏯</span><span class="ap-name">Great Dojo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_library')"><span class="ap-icon">📚</span><span class="ap-name">Library</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_forge')"><span class="ap-icon">🔥</span><span class="ap-name">Forge</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_market_stall')"><span class="ap-icon">🏮</span><span class="ap-name">Market Stall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_house')"><span class="ap-icon">🏠</span><span class="ap-name">House</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_gate')"><span class="ap-icon">⛩️</span><span class="ap-name">Gatehouse</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_palisade')"><span class="ap-icon">🪵</span><span class="ap-name">Palisade Wall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_watchtower')"><span class="ap-icon">🗼</span><span class="ap-name">Watchtower</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_well')"><span class="ap-icon">🪣</span><span class="ap-name">Well</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_burrow')"><span class="ap-icon">🕳️</span><span class="ap-name">Ant Burrow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_banner_pole')"><span class="ap-icon">🚩</span><span class="ap-name">Banner Pole</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_training_post')"><span class="ap-icon">🥋</span><span class="ap-name">Training Post</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_weapon_rack')"><span class="ap-icon">⚔️</span><span class="ap-name">Weapon Rack</span></div></div>
     <div class="ap-section">Ronin Village Assets</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ronin_altar')"><span class="ap-icon">⛩</span><span class="ap-name">Ronin Altar</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Ronin Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_dead_tree')"><span class="ap-icon">♜</span><span class="ap-name">Dead Tree</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_mist')"><span class="ap-icon">〰</span><span class="ap-name">Ronin Mist</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_weapon_rack')"><span class="ap-icon">⚔</span><span class="ap-name">Weapon Rack</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_katana_sigil')"><span class="ap-icon">☾</span><span class="ap-name">Katana Sigil</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_brazier')"><span class="ap-icon">🔥</span><span class="ap-name">Crimson Brazier</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_broken_cart')"><span class="ap-icon">▰</span><span class="ap-name">Broken Cart</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_watch_post')"><span class="ap-icon">▴</span><span class="ap-name">Watch Post</span></div></div>
     <div class="ap-section">Village Life</div>
@@ -1529,6 +1531,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script src="assets/forge-core.js"></script>
+<script src="assets/samurai-kit.js"></script>
 <script src="assets/forge-sfx.js"></script>
 <script src="assets/rebel-weapon.js"></script>
 <script type="module">
@@ -3482,6 +3485,22 @@ let _webgpuSmartCapFrame = 0;
 // ASSET REGISTRY (ALL GLBs LIVE HERE)
 // ═══════════════════════════════════════
 const ASSETS = {
+// Samurai building kit (Oct 2026): designed in Blender, built in the browser by assets/samurai-kit.js (no model
+// downloads; every placed copy is instances of one template). Doorways are lit recesses: add a Door (Doors section)
+// in front of one to link a room. Works in any village, with every admin tool (move, rotate, scale, delete, layers).
+sam_great_dojo: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_library: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_forge: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_market_stall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_house: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_gate: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_palisade: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_watchtower: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_well: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_burrow: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_banner_pole: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_training_post: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_weapon_rack: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
   dojo_5: {
     path: "/assets/buildings/dojo_5.glb",
     scale: 2.2,
@@ -3722,6 +3741,7 @@ function spawnAsset(type, position, extraMeta) {
     if (type === 'ronin_brazier') buildRoninBrazier(root);
     if (type === 'ronin_broken_cart') buildRoninBrokenCart(root);
     if (type === 'ronin_watch_post') buildRoninWatchPost(root);
+    if (config.kit === 'samurai') window.SamuraiKit?.build(root, type, scene, shadows, assetSkipsShadows(type));
     root.metadata.loaded = true;
     if (type === 'ambient_glow' || type === 'toro_lantern' || type === 'hanging_lantern' || type === 'hangingLantern' || type === 'ronin_brazier') {
       applyFakeLightState(true);
@@ -20052,7 +20072,7 @@ let _heldSmallAntLayoutItems = [];
 // correctly. Each object is raised by (new ground − old ground) at its spot when the layout loads, and lowered by the
 // same amount whenever the layout is collected (saves, undo, backups, export); the round trip is exact. Collision boxes move with their owner. Buildings outside the
 // courtyard get a flat yard in the new ground first.
-const NEW_TERRAIN_PAD_TYPES = /^(dojo_|shrine_|torii|village_gate|temple|house|tower|hut|altar)/;
+const NEW_TERRAIN_PAD_TYPES = /^(dojo_|shrine_|torii|village_gate|temple|house|tower|hut|altar|sam_(great_dojo|library|forge|market_stall|house|gate|palisade|watchtower|well|burrow))/;
 function newTerrainFlatGroundAt(x, z, isNew) {
   let y = -Infinity;
   const pathHalf = isNew ? 110 : 150;
@@ -20069,7 +20089,9 @@ function newTerrainDeltaAt(x, z) {
   return n - o;
 }
 // Building footprints in metres at scale 1 (measured from the GLBs), so a yard never depends on load timing.
-const NEW_TERRAIN_FOOTPRINTS = { dojo_9: [33.0, 23.5], dojo_5: [12.09, 8.05], shrine_2: [3.19, 1.075] };
+const NEW_TERRAIN_FOOTPRINTS = { dojo_9: [33.0, 23.5], dojo_5: [12.09, 8.05], shrine_2: [3.19, 1.075],
+  sam_great_dojo: [24, 20], sam_library: [14.4, 12.7], sam_forge: [11, 9], sam_market_stall: [6, 3.6], sam_house: [10, 9.6],
+  sam_gate: [14, 5], sam_palisade: [8, 1.3], sam_watchtower: [4.8, 4.8], sam_well: [3, 2.5], sam_burrow: [8.4, 7] };
 function newTerrainFootprintRadius(item) {
   const base = NEW_TERRAIN_FOOTPRINTS[item.type];
   if (!base) return /^(torii|village_gate)/.test(item.type) ? 6 : 10;
@@ -30268,7 +30290,9 @@ function placeAssetAtPoint(key, pickedPoint) {
     worldUploadedGlb: isManualUpload,
     uploadedAutoFitApplied: isManualUpload && ASSETS[key]?._autoFitApplied === true
   };
-  clone.position = new BABYLON.Vector3(spawnPos.x, isManualUpload ? spawnPos.y : 0, spawnPos.z);
+  // on the new terrain, objects placed out in the hills start on the ground (was y 0, i.e. inside the hill)
+  const placeY = isManualUpload ? spawnPos.y : (window._newTerrain ? Math.max(0, getVillageGroundHeightAt(spawnPos.x, spawnPos.z)) : 0);
+  clone.position = new BABYLON.Vector3(spawnPos.x, placeY, spawnPos.z);
   clone.rotation = new BABYLON.Vector3(
     source.rotation ? source.rotation.x : 0,
     Math.random() * Math.PI * 2,
