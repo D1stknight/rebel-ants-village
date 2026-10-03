@@ -343,6 +343,15 @@
       for (const s of [-1, 1]) M.block('darkwood', s * 1.2, 0, 0, .14, .5, 1.9);
       for (const z of [.5, 1.5]) M.box('darkwood', [0, 0, z], [2.6, .5, .1]);
       for (let i = 0; i < 6; i++) { const x = -1 + i * .4; M.rod('wood', [x, .05, .05], [x, -.05, 2.6], .035, 5); M.cyl('iron', [x, -.05, 2.55], .06, .35, 5, .005); }
+    },
+    // stone toro lantern for paths and stairs: the light box glows (no real light, so any number is cheap)
+    sam_stone_lantern(M) {
+      M.cyl('stone', [0, 0, 0], .5, .22, 6, .42); M.cyl('stone', [0, 0, .22], .17, 1.05, 6, .14);
+      M.block('stone', 0, 0, 1.27, .78, .78, .14);
+      M.block('lantern', 0, 0, 1.41, .46, .46, .48);
+      for (const x of [-.25, .25]) for (const y of [-.25, .25]) M.block('stone', x, y, 1.41, .1, .1, .48);
+      M.block('stone', 0, 0, 1.89, .7, .7, .1);
+      M.cyl('stone', [0, 0, 1.99], .62, .38, 4, .05); M.sphere('stone', [0, 0, 2.42], .09, 1, 6, 4);
     }
   };
 
