@@ -103,26 +103,74 @@ export const TERRAIN_RECIPES = {
       ],
       grass: 18000, flowers: 1800
     }
+  },
+  // Wokou: sea raiders' harbour. A bay to the south (the sea runs out to the horizon, rocky islets offshore), a
+  // stone quay with piers, the village rising on terraces up a rocky pine slope: training yard, dojo on top.
+  wokou: {
+    seed: 5150, dropSeed: 23, drops: 60000,
+    hills: .95, shape: { fbm: 28, ridge: 30, wall: 70 },
+    flatHalf: 86, hillStart: 86, hillFull: 150, wallStart: 290,
+    coast: { shore: -32, headland: -72, bayHalf: 56, headWidth: 70, wobble: 10, beach: .16, cliff: 1.4, depth: 26, shelf: .22, islets: true },
+    sea: { y: -3, deck: 0, waves: .18, shallow: [.2, .62, .58], mid: [.03, .3, .42], deep: [.01, .09, .19], sky: [.72, .84, .93] },
+    palette: {
+      grassA: [0.34, 0.37, 0.19], grassB: [0.52, 0.49, 0.29], wet: [0.2, 0.28, 0.14],
+      dirt: [0.64, 0.54, 0.38], sand: [0.84, 0.76, 0.57], rockTint: [1.08, 1.06, 1.03], highTint: [1.0, 1.0, .95], peak: [0.82, 0.82, 0.8]
+    },
+    grass: { count: 60000, base: [0.16, 0.22, 0.08], tip: [0.66, 0.62, 0.36] },
+    pines: { file: 'pine_1.glb', count: 260, scale: [1.8, 3.2], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 420, scale: [1.2, 3.8], body: 0.75, settle: .9, sink: .1, tint: [1.12, 1.1, 1.06], minSq: 90 },
+    fog: { density: .0015, day: [.8, .86, .92], night: [.04, .05, .1] },
+    light: { sun: 1.08, hemi: 1.0, tint: [1.0, .97, .9] },
+    sky: { turbidity: 5, luminance: 1, rayleigh: 2.4, mieCoefficient: .005 },
+    court: { texture: 'stone', court: [1.55, 1.45, 1.3], plaza: [1.3, 1.2, 1.08], path: [1.2, 1.1, .98] },
+    village: {
+      rect: [-78, -60, 78, 106], res: .8, wall: 1.1,
+      terraces: [
+        { r: [-52, -30, 52, 40], h: 0, abs: true }, // stone quay along the bay
+        { r: [-28, 58, 28, 104], h: 4.2, abs: true }, // dojo
+        { r: [-74, 34, -25, 104], h: 2.6, abs: true }, // hall
+        { r: [25, 30, 74, 92], h: 2.2, abs: true }  // trading house
+      ],
+      digs: [{ r: [-50, -66, 50, -29], h: -7.5, edge: .6 }], // deep water right up to the quay wall
+      ramps: [
+        { r: [-6, 48, 6, 58], axis: 'z', from: 0, to: 4.2 },
+        { r: [-48, 24, -40, 34], axis: 'z', from: 0, to: 2.6 },
+        { r: [17, 40, 25, 48], axis: 'x', from: 0, to: 2.2 }
+      ],
+      pave: [
+        ['r', -50, -30, 50, -19], [0, -30, 0, 23, 3.4], ['c', 0, 12, 13], [0, 49, 0, 58, 3.4], ['r', -7, 47, 7, 59],
+        [-21, 23, 21, 23, 1.6], [-21, 49, 21, 49, 1.6], [-21, 23, -21, 49, 1.6], [21, 23, 21, 49, 1.6],
+        [-8, 5, -37, 5, 2.0], [8, 5, 39, 5, 2.0], [-30, -19, -30, 5, 1.8], [30, -19, 30, 5, 1.8],
+        ['r', -26, 58.5, 26, 100], [-13, 16, -44, 20, 2.0], ['r', -49, 23, -39, 35], [-44, 34, -44, 74, 2.0], [-44, 52, -36, 52, 1.6],
+        [9, 18, 17, 44, 2.0], ['r', 16, 39, 26, 49], [26, 44, 37, 53, 1.8]
+      ],
+      dirt: [['r', -19, 25, 19, 47]],
+      grass: 14000, flowers: 0
+    }
   }
 };
 
 // The courtyard village of a recipe: terrace height, cobble paving and wall test, all from the spec above.
-export function makeVillageShape(V) {
+export function makeVillageShape(V, baseAt = () => 0) {
   const [X0, Z0, X1, Z1] = V.rect, wall = V.wall;
   const rectD = (r, x, z) => { const dx = Math.max(r[0] - x, x - r[2]), dz = Math.max(r[1] - z, z - r[3]); return dx > 0 || dz > 0 ? Math.hypot(Math.max(dx, 0), Math.max(dz, 0)) : Math.max(dx, dz); };
   const inside = (x, z) => x > X0 && x < X1 && z > Z0 && z < Z1;
-  const h = (x, z) => {
-    if (!inside(x, z)) return 0;
-    let y = 0;
-    for (const t of V.terraces) { const d = rectD(t.r, x, z); if (d < 0) y = Math.max(y, t.h * smooth(0, wall, -d)); }
+  // final height over a base ground b: terraces rise h above it ('abs' terraces: to height h, e.g. a quay over a
+  // beach), ramps climb from the base; the base stays wherever it is already higher
+  const apply = (x, z, b) => {
+    if (!inside(x, z)) return b;
+    let y = b;
+    for (const t of V.terraces) { const d = rectD(t.r, x, z); if (d < 0) { const w = smooth(0, wall, -d); y = Math.max(y, t.abs ? b + (t.h - b) * w : b + t.h * w); } }
+    for (const t of V.digs || []) { const d = rectD(t.r, x, z); if (d < 0) y = Math.min(y, b + (Math.min(b, t.h) - b) * smooth(0, t.edge ?? wall, -d)); } // dredged harbour
     for (const R of V.ramps) {
       const r = R.r, a = R.axis === 'x' ? 0 : 1, lo = r[a], hi = r[a + 2], u = a ? z : x, v = a ? x : z, vlo = r[1 - a], vhi = r[3 - a];
       if (u < lo || u > hi + wall || v < vlo - .3 || v > vhi + .3) continue;
       const t = Math.min(1, (u - lo) / (hi - lo)), side = smooth(0, .3, Math.min(v - vlo + .3, vhi + .3 - v));
-      y = Math.max(y, (R.from + (R.to - R.from) * t) * side);
+      y = Math.max(y, b + (R.from + (R.to - R.from) * t) * side);
     }
     return y;
   };
+  const h = (x, z) => apply(x, z, baseAt(x, z));
   const segD = (x, z, ax, az, bx, bz) => { const vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz || 1, t = Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / l2)); return Math.hypot(x - ax - t * vx, z - az - t * vz); };
   const pave = (x, z) => {
     let p = 0;
@@ -137,7 +185,12 @@ export function makeVillageShape(V) {
   };
   // steep stone faces (terrace walls, ramp sides) are not walkable
   const isWall = (x, z) => { if (!inside(x, z)) return false; const e = .35, y = h(x, z); return Math.max(Math.abs(h(x + e, z) - y), Math.abs(h(x - e, z) - y), Math.abs(h(x, z + e) - y), Math.abs(h(x, z - e) - y)) / e > 1.1; };
-  return { rect: V.rect, inside, h, pave, isWall };
+  const dirt = (x, z) => {
+    let p = 0;
+    for (const q of V.dirt || []) { const d = q[0] === 'c' ? Math.hypot(x - q[1], z - q[2]) - q[3] : q[0] === 'r' ? rectD(q.slice(1), x, z) : segD(x, z, q[0], q[1], q[2], q[3]) - q[4]; p = Math.max(p, 1 - smooth(-.4, .6, d)); }
+    return p;
+  };
+  return { rect: V.rect, inside, apply, h, pave, dirt, isWall };
 }
 
 // ── seeded noise ─────────────────────────────────────────
@@ -163,7 +216,7 @@ const rng = seed => { let s = seed; return () => (s = (s * 16807) % 2147483647) 
 export const SIZE = 700, N = 513, CELL = SIZE / (N - 1), SUBDIV = 256;
 
 export function makeBaseHeight(recipe) {
-  const { fbm, ridged } = makeNoise(recipe.seed);
+  const { fbm, ridged } = makeNoise(recipe.seed), cap = makeCoastCap(recipe);
   return (x, z) => {
     const r = Math.hypot(x, z), s = Math.max(Math.abs(x), Math.abs(z));
     const wx = x + 45 * fbm(x * .004 + 5.2, z * .004 + 1.3, 3), wz = z + 45 * fbm(x * .004 - 3.7, z * .004 + 8.1, 3);
@@ -173,7 +226,26 @@ export function makeBaseHeight(recipe) {
     const far = smooth(360, 1300, r) * (40 + ridged(x * .0022, z * .0022) * 260);
     let base = Math.max(0, hills) * ring + wall + far;
     if (sh.spires) for (const sp of sh.spires) base += spireHeight(sp, x, z, s, recipe.seed);
-    return base;
+    return cap ? Math.min(base, cap(x, z)) : base;
+  };
+}
+
+// Coast (recipe.coast + recipe.sea): south of a wavy shoreline the land is capped down into a sea bed. Near the shore
+// the cap rises gently (beach) in the bay and steeply (cliffs) on the headlands; out at sea a few rocky islets.
+export function makeCoastCap(recipe) {
+  const C = recipe.coast, seaY = recipe.sea?.y ?? -3; if (!C) return null;
+  const { fbm, ridged } = makeNoise(recipe.seed + 101);
+  return (x, z) => {
+    const ax = Math.abs(x);
+    const shore = C.shore + C.headland * smooth(C.bayHalf, C.bayHalf + C.headWidth, ax) + C.wobble * fbm(x * .012 + 3, 7.7, 3);
+    const d = shore - z; // > 0: out to sea
+    const slope = C.beach + (C.cliff - C.beach) * smooth(C.bayHalf - 10, C.bayHalf + 30, ax) * (.6 + .8 * fbm(x * .02, z * .02 + 5, 2));
+    let y = d <= 0 ? seaY + slope * -d : seaY - Math.min(C.depth, 1.2 + d * C.shelf);
+    if (C.islets && d > 110) { // rocky islets standing out of the sea, well out past the harbour
+      const r = ridged(x * .011 + 9, z * .011 - 4, 3), m = smooth(.74, .9, r + .2 * fbm(x * .04, z * .04, 2)) * smooth(110, 170, d);
+      y = Math.max(y, y + Math.sqrt(m) * (C.depth + 5 + 9 * r));
+    }
+    return y;
   };
 }
 
@@ -246,18 +318,21 @@ export function buildHeightmap(recipe) {
     H[k] *= smooth(f0, f0 + 16, s);
   }
   // courtyard village: terraces raised out of the flat courtyard, cobble wherever the spec paves
-  let pave = null;
+  const coast = makeCoastCap(recipe);
+  if (coast) for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const k = j * N + i; H[k] = Math.min(H[k], coast(i * CELL - SIZE / 2, j * CELL - SIZE / 2)); }
+  let pave = null; const Hb = new Float32Array(H); // ground before the village is built into it
   if (recipe.village) {
     const V = makeVillageShape(recipe.village); pave = new Uint8Array(N * N);
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
       const x = i * CELL - SIZE / 2, z = j * CELL - SIZE / 2, k = j * N + i;
       if (Math.max(Math.abs(x), Math.abs(z)) > f0 + 4) continue;
-      if (V.inside(x, z)) H[k] += V.h(x, z);
+      if (V.inside(x, z)) H[k] = V.apply(x, z, H[k]);
       pave[k] = Math.round(255 * V.pave(x, z));
+      const dt = V.dirt(x, z); if (dt > 0) path[k] = Math.max(path[k], Math.round(230 * dt));
     }
   }
   const water = recipe.water ? carveWater(H, recipe.water) : null;
-  return { H, flow, path, pave, baseHeight, water };
+  return { H, Hb, flow, path, pave, baseHeight, water };
 }
 
 // ── River + waterfall ─────────────────────────────────────
@@ -373,12 +448,16 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   const ground = BABYLON.MeshBuilder.CreateGround('gnd', { width: SIZE, height: SIZE, subdivisions: SUBDIV, updatable: true }, scene);
   let pos = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind);
   let sampler = null;
-  const VS = recipe.village ? makeVillageShape(recipe.village) : null;
+  const VS = recipe.village ? makeVillageShape(recipe.village, (x, z) => hBil(hm.Hb, x, z)) : null;
   function writeHeights() {
     pos = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind, true, true) || pos;
     for (let row = 0; row <= SUBDIV; row++) for (let col = 0; col <= SUBDIV; col++) pos[(col + row * (SUBDIV + 1)) * 3 + 1] = H[(SUBDIV - row) * 2 * N + col * 2];
     // under the village's own fine ground the big mesh is pushed down out of sight
-    if (VS) for (let k = 0; k < pos.length; k += 3) if (VS.inside(pos[k], pos[k + 2])) pos[k + 1] = -2;
+    // (kept below the lowest point of the fine ground around each vertex, so it never shows through a step or the sea bed)
+    if (VS) for (let k = 0; k < pos.length; k += 3) if (VS.inside(pos[k], pos[k + 2])) {
+      let lo = Infinity; for (const dx of [-2.8, 0, 2.8]) for (const dz of [-2.8, 0, 2.8]) lo = Math.min(lo, VS.h(pos[k] + dx, pos[k + 2] + dz));
+      pos[k + 1] = Math.min(-2, lo - 1.5);
+    }
     ground.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos);
     ground.createNormals(true);
     ground.refreshBoundingInfo();
@@ -393,7 +472,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   writeMask();
   const maskTex = new BABYLON.RawTexture(mask, N, N, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, false, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
   maskTex.wrapU = maskTex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-  const material = makeTerrainMaterial(scene, maskTex, recipe.palette, recipe.village);
+  const material = makeTerrainMaterial(scene, maskTex, recipe.palette, recipe.village, recipe.sea);
   ground.material = material;
 
   // horizon: the same land continues into far mountains (sunk under the main terrain inside the square)
@@ -410,6 +489,8 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   far.freezeWorldMatrix();
 
   const waterMeshes = hm.water ? buildWater(scene, hm.water) : [];
+  const seaY = recipe.sea ? (recipe.sea.y ?? -3) : null;
+  const sea = recipe.sea ? buildSea(scene, recipe.sea, H0, seaY) : null;
 
   // The village's own ground: a fine grid (0.8 m) so terrace walls and ramps come out crisp. Named 'pa…' so the
   // admin placement/snap rays (which look for the courtyard and 'pa' path meshes) land on it.
@@ -430,7 +511,9 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
 
   const T = {
     recipe, ground, far, material, maskTex, subdiv: SUBDIV, buildMs: Math.round(performance.now() - t0),
-    villageGround, villageShape: VS,
+    villageGround, villageShape: VS, sea, seaY,
+    // the sea is not walkable (piers and boats add their own walk surfaces)
+    seaBlocks(x, z) { return seaY !== null && T.heightAt(x, z) < seaY + .35; },
     heightAt: (x, z) => (VS && VS.inside(x, z)) ? VS.h(x, z) : sampler(x, z),
     oldHeightAt: opts.oldHeightAt || null,
     pads: [], decor: null, decorBlockers: null, water: hm.water, waterMeshes,
@@ -502,7 +585,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   return T;
 }
 
-function makeTerrainMaterial(scene, maskTex, P, V) {
+function makeTerrainMaterial(scene, maskTex, P, V, SEA) {
   const vr = V ? V.rect : [0, 0, 0, 0];
   const v3 = a => `vec3(${a.map(n => n.toFixed(3)).join(',')})`;
   const m = new BABYLON.CustomMaterial('terrainMat', scene);
@@ -543,6 +626,11 @@ function makeTerrainMaterial(scene, maskTex, P, V) {
       col = mix(col, rock, smoothstep(0.3, 0.46, slope + (micro-0.5)*0.14));
       col = mix(col, col*${v3(P.highTint || [1.12, 1.04, .78])}, smoothstep(30.0, 70.0, pw.y)*(1.0 - smoothstep(0.3,0.45,slope)));
       col = mix(col, ${v3(P.peak || [.9, .92, .95])}, smoothstep(150.0, 230.0, pw.y + micro*20.0)*(1.0-smoothstep(0.45,0.6,slope)));
+      ${SEA ? `// shore: sand on the beach and under the water, darker and greener as it gets deeper
+      float seaY = ${(SEA.y ?? -3).toFixed(2)};
+      vec3 sand = ${v3(P.sand || [.78, .7, .52])} * (0.85 + 0.3*micro);
+      col = mix(col, sand, smoothstep(seaY + 1.8, seaY + 0.5, pw.y + (micro-0.5)*0.8) * (1.0 - smoothstep(0.35, 0.6, slope)));
+      col *= mix(vec3(1.0), vec3(0.62, 0.78, 0.8), smoothstep(seaY, seaY - 8.0, pw.y));` : ''}
       return col;
     }
   `);
@@ -567,6 +655,7 @@ async function buildDecor(scene, T, avoid) {
   const clear = (x, z, extra = 0) => { const list = av.get(Math.floor((x + 400) / 20) * 1000 + Math.floor((z + 400) / 20)); if (!list) return true; for (const o of list) { const rr = o.r + extra; if ((x - o.x) ** 2 + (z - o.z) ** 2 < rr * rr) return false; } return true; };
   const sq = (x, z) => Math.max(Math.abs(x), Math.abs(z)), roadD = (x, z) => Math.min(Math.abs(x), Math.abs(z));
   const villagePave = T.villageShape ? T.villageShape.pave : () => 1;
+  const dry = (x, z, m = .8) => T.seaY === null || T.seaY === undefined || h(x, z) > T.seaY + m; // above the sea
   const m4 = new BABYLON.Matrix(), q = new BABYLON.Quaternion(), S = new BABYLON.Vector3(), P = new BABYLON.Vector3();
 
   function fillTiles(protoParts, buffers, counts, name) {
@@ -612,7 +701,7 @@ async function buildDecor(scene, T, avoid) {
     while (placed < count && tries < count * 6) {
       tries++;
       const x = (rnd() - .5) * 690, z = (rnd() - .5) * 690;
-      if (sq(x, z) < R.flatHalf + 2 || roadD(x, z) < 5 || T.waterEdgeDist(x, z) < 1.2) continue;
+      if (sq(x, z) < R.flatHalf + 2 || roadD(x, z) < 5 || T.waterEdgeDist(x, z) < 1.2 || !dry(x, z)) continue;
       if (fbm(x * .02, z * .02, 3) < -.12 + rnd() * .1) continue;
       if (!clear(x, z, -1)) continue;
       const y = h(x, z), sl = Math.abs(h(x + 1, z) - y) + Math.abs(h(x, z + 1) - y); if (sl > .8) continue;
@@ -625,7 +714,7 @@ async function buildDecor(scene, T, avoid) {
     const VS = T.villageShape, vg = VS ? (R.village.grass || 0) : 0;
     for (let n = 0, tr = 0; n < vg && tr < vg * 8; tr++) {
       const x = (rnd() - .5) * 2 * (R.flatHalf + 2), z = (rnd() - .5) * 2 * (R.flatHalf + 2);
-      if (villagePave(x, z) > .12 || VS.isWall(x, z) || !clear(x, z, -.5)) continue;
+      if (villagePave(x, z) > .12 || VS.isWall(x, z) || !clear(x, z, -.5) || !dry(x, z, 1.2)) continue;
       if (fbm(x * .05, z * .05, 3) < -.3 + rnd() * .1) continue;
       const t = tileOf(x, z); if (cnt[t] >= per) continue;
       const s = .75 + rnd() * .7; BABYLON.Quaternion.FromEulerAnglesToRef(0, rnd() * 6.28, 0, q);
@@ -663,7 +752,7 @@ async function buildDecor(scene, T, avoid) {
     while (placed < F.count && tries < F.count * 30) {
       tries++;
       const x = (rnd() - .5) * 680, z = (rnd() - .5) * 680;
-      if (sq(x, z) < R.flatHalf + 4 || roadD(x, z) < 4 || T.waterEdgeDist(x, z) < 1) continue;
+      if (sq(x, z) < R.flatHalf + 4 || roadD(x, z) < 4 || T.waterEdgeDist(x, z) < 1 || !dry(x, z, 1.5)) continue;
       if (fbm(x * .03 + 40, z * .03, 3) < .18) continue; // clumps
       if (!clear(x, z, 0) || slopeAt(x, z) > .5) continue;
       const t = tileOf(x, z); if (cnt[t] >= per) continue;
@@ -674,7 +763,7 @@ async function buildDecor(scene, T, avoid) {
     const VS = T.villageShape, vf = VS ? (R.village.flowers || 0) : 0;
     for (let n = 0, tr = 0; n < vf && tr < vf * 40; tr++) {
       const [X0, Z0, X1, Z1] = VS.rect, x = X0 + rnd() * (X1 - X0), z = Z0 + rnd() * (Z1 - Z0);
-      if (villagePave(x, z) > .05 || VS.isWall(x, z) || !clear(x, z, .3)) continue;
+      if (villagePave(x, z) > .05 || VS.isWall(x, z) || !clear(x, z, .3) || !dry(x, z, 1.5)) continue;
       if (fbm(x * .08 + 40, z * .08, 3) < .12) continue; // beds
       const t = tileOf(x, z); if (cnt[t] >= per) continue;
       const sc = .75 + rnd() * .55; BABYLON.Quaternion.FromEulerAnglesToRef(0, rnd() * 6.28, 0, q);
@@ -732,16 +821,16 @@ async function buildDecor(scene, T, avoid) {
     if (cast) meshes.slice(before).forEach(m => cast(m));
     return k;
   }
-  const pinesPlaced = await scatter(R.pines, (x, z) => sq(x, z) > R.flatHalf + 38 && roadD(x, z) > 9 && T.waterEdgeDist(x, z) > 4 && slopeAt(x, z) < .55 && fbm(x * .006 + 9, z * .006, 3) > -.02, R.pines.trunk, T.castShadow);
+  const pinesPlaced = await scatter(R.pines, (x, z) => dry(x, z, 2.5) && sq(x, z) > R.flatHalf + 38 && roadD(x, z) > 9 && T.waterEdgeDist(x, z) > 4 && slopeAt(x, z) < .55 && fbm(x * .006 + 9, z * .006, 3) > -.02, R.pines.trunk, T.castShadow);
   const rocksPlaced = await scatter(R.rocks, (x, z) => { const s = slopeAt(x, z); return sq(x, z) > (R.rocks.minSq ?? R.flatHalf + 13) && roadD(x, z) > 7 && T.waterEdgeDist(x, z) > .5 && s > .22 && s < .9; }, R.rocks.body, T.castShadow);
-  if (R.deadTrees) await scatter({ ...R.deadTrees, name: 'deadTree', build: makeDeadTreeProto }, (x, z) => sq(x, z) > R.flatHalf + 20 && roadD(x, z) > 8 && T.waterEdgeDist(x, z) > 3 && slopeAt(x, z) < .7, R.deadTrees.trunk, T.castShadow);
+  if (R.deadTrees) await scatter({ ...R.deadTrees, name: 'deadTree', build: makeDeadTreeProto }, (x, z) => dry(x, z, 2) && sq(x, z) > R.flatHalf + 20 && roadD(x, z) > 8 && T.waterEdgeDist(x, z) > 3 && slopeAt(x, z) < .7, R.deadTrees.trunk, T.castShadow);
   if (R.flowers) buildFlowers(R.flowers);
   // extra scattered models (bamboo groves, cherry trees ...), optionally in clumps and switched off far away
   for (const ex of R.extras || []) {
     const before = meshes.length;
     await scatter(ex, (x, z) => {
       const q = sq(x, z); if (q < (ex.minSq ?? R.flatHalf + 20) || q > (ex.maxSq ?? 340) || roadD(x, z) < (ex.road ?? 8)) return false;
-      if (T.waterEdgeDist(x, z) < (ex.water ?? 3) || slopeAt(x, z) > (ex.maxSlope ?? .55)) return false;
+      if (T.waterEdgeDist(x, z) < (ex.water ?? 3) || slopeAt(x, z) > (ex.maxSlope ?? .55) || !dry(x, z, 2)) return false;
       return !ex.clump || fbm(x * ex.clump.freq + ex.clump.ox, z * ex.clump.freq, 3) > ex.clump.above;
     }, ex.body, ex.shadow === false ? null : T.castShadow);
     if (ex.cull) meshes.slice(before).forEach(m => { const t = +m.name.split('_').slice(-2)[0]; cullTiles.push({ m, x: -262.5 + Math.floor(t / 4) * 175, z: -262.5 + (t % 4) * 175, d: ex.cull }); });
@@ -842,6 +931,62 @@ function buildWater(scene, Wt) {
 }
 
 // A gnarled dead tree (trunk and bare branches, one mesh), about 4.6 m tall at scale 1.
+// ── Sea (coastal villages) ─────────────────────────────────
+// One big gently-waving surface at sea level. Colour and see-through come from the depth of the ground under each
+// point (a small depth texture): clear turquoise in the shallows (the sand shows through), deep blue further out,
+// a moving foam line where the water meets the shore, sky tint at grazing angles, sparkle from the ripple normals.
+function buildSea(scene, S, H, seaY) {
+  const data = new Uint8Array(N * N * 4);
+  for (let k = 0; k < N * N; k++) { const d = seaY - H[k]; data[k * 4] = Math.round(255 * Math.min(1, Math.max(0, (d + 1) / 25))); data[k * 4 + 3] = 255; }
+  const depthTex = new BABYLON.RawTexture(data, N, N, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, false, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
+  depthTex.wrapU = depthTex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+  const sea = BABYLON.MeshBuilder.CreateGround('seaSurface', { width: 3200, height: 3200, subdivisions: 240 }, scene);
+  sea.position.y = seaY; sea.isPickable = false; sea.metadata = { type: 'visual_backdrop', visualOnly: true, sea: true };
+  const m = new BABYLON.CustomMaterial('seaMat', scene);
+  m.diffuseColor = new BABYLON.Color3(1, 1, 1); m.specularColor = new BABYLON.Color3(.8, .78, .72); m.specularPower = 320;
+  m.emissiveColor = new BABYLON.Color3(.0, .02, .03); m.alpha = .999; m.backFaceCulling = false;
+  m.AddUniform('uDepthTex', 'sampler2D', depthTex); m.AddUniform('uTime', 'float', 0);
+  const c3 = a => `vec3(${a.map(n => n.toFixed(3)).join(',')})`;
+  m.Vertex_Before_PositionUpdated(`positionUpdated.y += sin(position.x*0.07 + uTime*1.05)*${(S.waves ?? .2).toFixed(3)} + sin(position.z*0.095 - uTime*0.85)*${((S.waves ?? .2) * .7).toFixed(3)} + sin((position.x + position.z)*0.23 + uTime*1.9)*0.05;`);
+  // wave normals: a few travelling waves in different directions, summed (no texture, so no visible tiling)
+  m.Fragment_Before_Lights(`
+    vec2 wp = vPositionW.xz; float tt = uTime; vec2 g = vec2(0.0);
+    const int NW = 7; vec3 W[7];
+    W[0] = vec3(0.71, 0.70, 0.21); W[1] = vec3(-0.45, 0.89, 0.33); W[2] = vec3(0.95, -0.31, 0.52); W[3] = vec3(-0.83, -0.55, 0.81);
+    W[4] = vec3(0.2, 0.98, 1.3); W[5] = vec3(0.6, -0.8, 2.1); W[6] = vec3(-0.98, 0.17, 3.3);
+    for (int i = 0; i < NW; i++) { float k = W[i].z, ph = dot(W[i].xy, wp) * k + tt * sqrt(9.8 * k) * 0.55 + float(i) * 1.7; g += W[i].xy * cos(ph) * (0.13 / (1.0 + float(i) * 0.7)); }
+    float fade = 1.0 / (1.0 + length(vEyePosition.xyz - vPositionW) * 0.004);
+    normalW = normalize(vec3(-g.x * fade, 1.0, -g.y * fade));
+  `);
+  m.Fragment_Definitions(`
+    float seaDepth(vec2 p){ vec2 uv = p / 700.0 + 0.5; if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return 40.0; return texture2D(uDepthTex, uv).r * 25.0 - 1.0; }
+  `);
+  m.Fragment_Custom_Diffuse(`
+    float dSea = seaDepth(vPositionW.xz);
+    vec3 wc = mix(${c3(S.shallow || [.2, .66, .62])}, ${c3(S.mid || [.04, .38, .52])}, smoothstep(0.4, 5.0, dSea));
+    wc = mix(wc, ${c3(S.deep || [.02, .13, .27])}, smoothstep(5.0, 22.0, dSea));
+    diffuseColor = wc * 0.7;
+  `);
+  m.Fragment_Custom_Alpha(`alpha = mix(0.32, 0.95, smoothstep(0.2, 8.0, seaDepth(vPositionW.xz)));`);
+  m.Fragment_Before_FragColor(`
+    float dS = seaDepth(vPositionW.xz);
+    float fn = sin(vPositionW.x*0.7 + uTime*1.3) * sin(vPositionW.z*0.9 - uTime*1.1);
+    float foam = clamp((1.0 - smoothstep(0.0, 0.85, dS + fn*0.22)) * (0.6 + 0.4*sin(uTime*1.7 - dS*8.0)), 0.0, 1.0);
+    vec3 eyeV = normalize(vEyePosition.xyz - vPositionW);
+    float fres = pow(1.0 - clamp(eyeV.y, 0.0, 1.0), 5.0);
+    color.rgb = mix(color.rgb, ${c3(S.sky || [.7, .82, .9])}, fres * 0.5);
+    color.rgb = mix(color.rgb, vec3(0.95, 0.97, 0.96), foam * 0.85);
+    color.a = max(color.a, foam * 0.9);
+  `);
+  sea.material = m;
+  scene.onBeforeRenderObservable.add(() => {
+    const t = performance.now() / 1000;
+    if (m._newUniformInstances) m._newUniformInstances['float-uTime'] = t;
+  });
+  m.onBindObservable.add(() => m.getEffect()?.setFloat('uTime', performance.now() / 1000));
+  return { mesh: sea, material: m, depthTex };
+}
+
 function makeDeadTreeProto(scene) {
   const parts = [], cyl = (h, top, bot, x, y, z, rx, rz) => { const c = BABYLON.MeshBuilder.CreateCylinder('dt', { height: h, diameterTop: top, diameterBottom: bot, tessellation: 6 }, scene); c.position.set(x, y, z); c.rotation.x = rx; c.rotation.z = rz; parts.push(c); };
   cyl(4.4, .26, .55, 0, 2.15, 0, 0, .08);

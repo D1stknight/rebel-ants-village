@@ -50,11 +50,17 @@
     T.banner_red = bannerTex(scene, 'red', '#961816', '#ecd6aa', 'ant');
     T.banner_navy = bannerTex(scene, 'navy', '#222c48', '#e6dec8', 'books');
     T.banner_gold = bannerTex(scene, 'gold', '#ba8026', '#faecc8', 'hammer');
+    T.banner_wokou = bannerTex(scene, 'wokou', '#1c2a4c', '#d9a743', 'ant');
+    T.banner_scroll = bannerTex(scene, 'scroll', '#1f2f55', '#d9c79a', 'scroll');
+    T.banner_board = bannerTex(scene, 'board', '#c79a4a', '#3b2a17', 'board');
+    T.sail = bannerTex(scene, 'sail', '#e8dcbf', '#8a5a2c', 'ant', true);
     return T;
   }
-  function bannerTex(scene, name, bg, fg, icon) {
+  function bannerTex(scene, name, bg, fg, icon, sail) {
     const W = 256, H = 512, t = new BABYLON.DynamicTexture('samKit_banner_' + name, { width: W, height: H }, scene, true), c = t.getContext();
-    c.fillStyle = bg; c.fillRect(0, 0, W, H); c.strokeStyle = '#c9a452'; c.lineWidth = 6; c.strokeRect(13, 13, W - 26, H - 26);
+    c.fillStyle = bg; c.fillRect(0, 0, W, H);
+    if (sail) { c.strokeStyle = 'rgba(90,60,30,.45)'; c.lineWidth = 5; for (let y = 40; y < H; y += 64) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); } }
+    else { c.strokeStyle = '#c9a452'; c.lineWidth = 6; c.strokeRect(13, 13, W - 26, H - 26); }
     c.fillStyle = fg; c.strokeStyle = fg; c.lineCap = 'round';
     if (icon === 'ant') {
       const cx = W / 2, cy = H * .5, s = 200;
@@ -66,6 +72,15 @@
       }
     } else if (icon === 'books') {
       c.lineWidth = 6; for (const [yy, ww] of [[300, 150], [250, 170], [200, 140]]) { c.strokeRect(W / 2 - ww / 2, yy, ww, 40); c.beginPath(); c.moveTo(W / 2 - ww / 2 + 14, yy + 20); c.lineTo(W / 2 + ww / 2 - 14, yy + 20); c.stroke(); }
+    } else if (icon === 'scroll') {
+      c.lineWidth = 8; c.save(); c.translate(W / 2, H / 2); c.rotate(-.5);
+      c.strokeRect(-55, -120, 110, 240); c.beginPath(); c.arc(-55, -120, 16, 0, 7); c.arc(55, 120, 16, 0, 7); c.stroke();
+      for (let i = -80; i <= 80; i += 32) { c.beginPath(); c.moveTo(-35, i); c.lineTo(35, i); c.stroke(); }
+      c.restore();
+    } else if (icon === 'board') {
+      c.lineWidth = 6; const S0 = 150, x0 = W / 2 - S0 / 2, y0 = H / 2 - S0 / 2; c.strokeRect(x0, y0, S0, S0);
+      for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(x0 + i * S0 / 4, y0); c.lineTo(x0 + i * S0 / 4, y0 + S0); c.moveTo(x0, y0 + i * S0 / 4); c.lineTo(x0 + S0, y0 + i * S0 / 4); c.stroke(); }
+      for (const [a, b] of [[0, 0], [2, 1], [1, 3], [3, 2]]) c.fillRect(x0 + a * S0 / 4 + 8, y0 + b * S0 / 4 + 8, S0 / 4 - 16, S0 / 4 - 16);
     } else { c.fillRect(W / 2 - 12, 170, 24, 210); c.fillRect(W / 2 - 70, 150, 140, 55); }
     t.update(); t.hasAlpha = false; return t;
   }
@@ -78,6 +93,7 @@
     interior: { col: [.1, .06, .03], em: [.45, .25, .1] }, lantern: { col: [.9, .25, .08], em: [.95, .3, .1] }, fire: { col: [1, .5, .1], em: [1, .45, .08] },
     cloth: { col: [.6, .09, .07] }, rope: { col: [.62, .5, .32] }, iron: { col: [.12, .12, .13], spec: [.5, .5, .55], power: 48 }, water: { col: [.05, .12, .14], spec: [.8, .8, .8], power: 90 },
     banner_red: { tex: 'banner_red' }, banner_navy: { tex: 'banner_navy' }, banner_gold: { tex: 'banner_gold' },
+    banner_wokou: { tex: 'banner_wokou' }, banner_scroll: { tex: 'banner_scroll' }, banner_board: { tex: 'banner_board' }, sail: { tex: 'sail' },
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
   };
   let TEX = null; const MATS = {};
@@ -135,7 +151,7 @@
 
   class Kit {
     constructor() { this.parts = {}; }
-    part(m) { return this.parts[m] || (this.parts[m] = { p: [], n: [], uv: [], i: [] }); }
+    part(m) { m = (this.remap && this.remap[m]) || m; return this.parts[m] || (this.parts[m] = { p: [], n: [], uv: [], i: [] }); }
     poly(m, pts, uvs, nrm) {
       const P = this.part(m), base = P.p.length / 3;
       let nn = nrm;
@@ -373,6 +389,75 @@
       for (const z of [.5, 1.5]) M.box('darkwood', [0, 0, z], [2.6, .5, .1]);
       for (let i = 0; i < 6; i++) { const x = -1 + i * .4; M.rod('wood', [x, .05, .05], [x, -.05, 2.6], .035, 5); M.cyl('iron', [x, -.05, 2.55], .06, .35, 5, .005); }
     },
+    // ── Wokou (sea raiders' harbour): navy + gold ant banners, dark wood, tiled roofs; piers, ships, cargo ──
+    wok_great_dojo(M) { M.remap = { red: 'darkwood', banner_red: 'banner_wokou' }; B.sam_great_dojo(M); },
+    wok_hall(M) { M.remap = { banner_navy: 'banner_scroll' }; B.sam_library(M); },
+    wok_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_wokou'); },
+    wok_house_thatch(M) { B.sam_house(M); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_wokou'); },
+    wok_trade_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; banner(M, -.6, -3.25 - .2, 3.5, 3.4, 2.6, 'banner_board'); banner(M, -3.6, -3.25 - .18, 3.4, .9, 2.2, 'banner_wokou'); },
+    wok_watchtower(M) { M.remap = { banner_red: 'banner_wokou' }; B.sam_watchtower(M); M.remap = null; banner(M, 0, -2.1, 6.8, 1.7, 3.6, 'banner_wokou'); },
+    wok_banner_pole(M) { M.remap = { banner_red: 'banner_wokou' }; B.sam_banner_pole(M); },
+    // pier segment 4 x 8 m: deck top at the origin, posts down into the sea bed
+    wok_pier(M) {
+      M.block('wood', 0, 0, -.28, 4, 8, .28);
+      for (let i = 0; i < 8; i++) M.box('darkwood', [0, -3.75 + i * 1.07, .005], [4, .05, .02]);
+      for (const y of [-3.7, 0, 3.7]) { for (const x of [-1.85, 1.85]) M.cyl('bark', [x, y, -12], .17, 12.1, 6); M.box('darkwood', [0, y, -.45], [4.3, .24, .24]); }
+      for (const [x, y] of [[1.75, 3.6], [-1.75, 3.6]]) M.cyl('darkwood', [x, y, 0], .13, .45, 6);
+    },
+    // trading junk with an ant sail; waterline at the origin, bow towards -y
+    wok_boat(M) {
+      const L = 14, st = 12, hull = [], hullU = [], half = y => 2.2 * Math.pow(Math.max(0, 1 - Math.pow(Math.abs(y + .9) / (L / 2), 2.2)), .55);
+      for (let i = 0; i <= st; i++) {
+        const y = -L / 2 + L * i / st, w = half(y), sh = 1.25 + .5 * Math.pow(Math.abs(y) / (L / 2), 2) + (y < 0 ? .35 * Math.pow(-y / (L / 2), 2) : 0);
+        const ring = [[-w, y, sh], [-w * .98, y, .4], [-w * .7, y, -.6], [0, y, -1.3], [w * .7, y, -.6], [w * .98, y, .4], [w, y, sh]];
+        hull.push(ring); hullU.push(ring.map((p, k) => [k / 6 * 3, i / st * 7]));
+      }
+      M.grid('darkwood', hull, hullU);
+      for (let i = 0; i < st; i++) { const a = hull[i], b = hull[i + 1]; M.quad('wood', [[a[0][0] + .12, a[0][1], a[0][2] - .25], [a[6][0] - .12, a[6][1], a[6][2] - .25], [b[6][0] - .12, b[6][1], b[6][2] - .25], [b[0][0] + .12, b[0][1], b[0][2] - .25]]); }
+      for (const side of [0, 6]) for (let i = 0; i < st; i++) M.rod('wood', hull[i][side], hull[i + 1][side], .09, 5);
+      M.block('wood', 0, 4.6, 1.2, 3, 2.6, 1.6); M.roof(0, 4.6, 2.8, 3.8, 3.4, 1.1, { lift: .25, ornaments: false, gable: false });
+      M.cyl('darkwood', [0, -.6, 1], .16, 11.5, 8);
+      const sw = 6.2, z0 = 3, z1 = 10.8; M.quad('sail', [[-sw / 2, -.85, z0], [sw / 2, -.85, z0], [sw / 2 * .86, -.85, z1], [-sw / 2 * .86, -.85, z1]]);
+      for (let k = 0; k <= 5; k++) { const z = z0 + (z1 - z0) * k / 5, f = 1 - .14 * k / 5; M.rod('bark', [-sw / 2 * f - .1, -.9, z], [sw / 2 * f + .1, -.9, z], .05, 4); }
+      M.rod('rope', [0, -.6, 11.2], [0, -L / 2 + .3, 2.1], .025, 3); M.rod('rope', [0, -.6, 11.2], [0, L / 2 - .4, 2.6], .025, 3);
+      M.block('darkwood', 0, L / 2 - .1, -.8, .15, .9, 2.4);
+      M.cyl('lantern', [0, L / 2 - .7, 2.9], .18, .45, 6);
+    },
+    // boat shed: thatched roof on posts, a hull being built inside, a ladder and timber
+    wok_boathouse(M) {
+      const W = 9, D = 14, H = 4.2;
+      M.block('stone', 0, 0, 0, W + 1, D + 1, .3);
+      for (const x of [-W / 2, W / 2]) for (const y of [-D / 2, 0, D / 2]) M.block('wood', x, y, .3, .35, .35, H);
+      for (const x of [-W / 2, W / 2]) M.block('darkwood', x, 0, H + .3, .4, D + .6, .3);
+      const r = H + 2.6, e = .8, pts = s => [[s * (W / 2 + e), -D / 2 - e, H - .2], [s * (W / 2 + e), D / 2 + e, H - .2], [0, D / 2 + e, r], [0, -D / 2 - e, r]];
+      M.quad('thatch', pts(-1), [[0, 0], [D / 1.6, 0], [D / 1.6, 2.6], [0, 2.6]]); M.quad('thatch', pts(1), [[0, 0], [D / 1.6, 0], [D / 1.6, 2.6], [0, 2.6]]);
+      for (const y of [-D / 2, D / 2]) M.poly('wood', [[-W / 2, y, H + .3], [W / 2, y, H + .3], [0, y, r - .2]]);
+      M.box('darkwood', [0, 0, r + .05], [.35, D + 1.8, .35]);
+      M.rod('bark', [0, -5.5, .7], [0, 5.5, .7], .14, 6);
+      for (let i = 0; i < 9; i++) { const y = -4.6 + i * 1.15, w = 1.8 * Math.sqrt(Math.max(0, 1 - Math.pow(y / 5.6, 2))); M.rod('wood', [-w, y, 2.2], [-w * .6, y, .9], .07, 4); M.rod('wood', [-w * .6, y, .9], [0, y, .6], .07, 4); M.rod('wood', [0, y, .6], [w * .6, y, .9], .07, 4); M.rod('wood', [w * .6, y, .9], [w, y, 2.2], .07, 4); }
+      for (let i = 0; i < 3; i++) M.block('wood', -1.6 + i * .25, 0, .3 + i * .3, 2.6, .3, .3);
+      M.rod('wood', [3.3, -6.2, .3], [3.6, -5.4, 3.6], .06, 4); M.rod('wood', [3.9, -6.2, .3], [4.2, -5.4, 3.6], .06, 4);
+      for (let i = 0; i < 6; i++) M.box('wood', [3.75 + .05 * i, -6.1 + .12 * i, .7 + i * .5], [.7, .06, .06]);
+      for (let i = 0; i < 4; i++) M.block('wood', -3.4, 4.8, .3 + i * .28, .3, 3.2, .26);
+    },
+    // harbour crane: post, swinging arm out over the water (-y), rope and a net of cargo
+    wok_crane(M) {
+      M.block('stone', 0, 0, 0, 1.6, 1.6, .4); M.cyl('darkwood', [0, 0, .4], .22, 6, 8);
+      M.rod('darkwood', [0, .1, 5.6], [0, -4.6, 6.4], .14, 6); M.rod('wood', [0, 0, 3.2], [0, -2.6, 6.05], .1, 5);
+      M.rod('rope', [0, -4.5, 6.3], [0, -4.5, 2.4], .03, 4); M.sphere('rope', [0, -4.5, 1.9], .6, 1.1, 8, 5);
+      for (let i = 0; i < 3; i++) M.block('wood', -.25 + i * .2, -4.45, 1.5 + i * .25, .5, .5, .3);
+    },
+    // crates, barrels and a coil of rope, for quays and decks
+    wok_cargo(M) {
+      for (const [x, y, z, s] of [[0, 0, 0, 1.1], [1.2, .1, 0, 1], [.5, 0, 1.1, .95], [-1.1, .6, 0, .9]]) { M.block('wood', x, y, z, s, s, s); M.box('darkwood', [x, y - s / 2 - .01, z + s / 2], [s + .02, .03, s * .15]); M.box('darkwood', [x, y - s / 2 - .01, z + s / 2], [s * .15, .03, s + .02]); }
+      for (const [x, y] of [[2.4, -.3], [2.5, .7], [-2.1, -.5]]) { M.cyl('wood', [x, y, 0], .42, 1.15, 10, .42); for (const z of [.15, .95]) M.cyl('darkwood', [x, y, z], .44, .06, 10); }
+      M.cyl('rope', [-2.2, .9, 0], .5, .18, 10, .45);
+    },
+    // low rail fence, 4 m (training yards, quays)
+    wok_fence(M) {
+      for (const x of [-2, 0, 2]) { M.block('darkwood', x, 0, 0, .18, .18, 1.25); M.cyl('darkwood', [x, 0, 1.25], .1, .08, 6, .03); }
+      for (const z of [.45, .95]) M.box('wood', [0, 0, z], [4.1, .1, .12]);
+    },
     // stone toro lantern for paths and stairs: the light box glows (no real light, so any number is cheap)
     sam_stone_lantern(M) {
       M.cyl('stone', [0, 0, 0], .5, .22, 6, .42); M.cyl('stone', [0, 0, .22], .17, 1.05, 6, .14);
@@ -413,5 +498,7 @@
     }
     return true;
   }
-  window.SamuraiKit = { build, setLightFactor, types: Object.keys(B), _Kit: Kit, _B: B };
+  // walkable decks in the type's own frame (Babylon x/z, deck top y above the origin)
+  const decks = { wok_pier: [{ x: 0, z: 0, halfX: 2.05, halfZ: 4.05, y: 0 }] };
+  window.SamuraiKit = { build, setLightFactor, decks, types: Object.keys(B), _Kit: Kit, _B: B };
 })();
