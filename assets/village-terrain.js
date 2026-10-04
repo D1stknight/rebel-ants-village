@@ -456,6 +456,41 @@ export const TERRAIN_RECIPES = {
       ],
       grass: 9000, flowers: 400
     }
+  },
+  // Warrior: battle-tested frontline veterans. A square fort of sharpened stakes in open golden grassland with oak
+  // trees and rocks, a dry ditch all round, a gate tower over the cobbled road, corner watchtowers; inside on bare
+  // dirt: rows of tiled houses with gardens, a covered well, the fenced sand training yard (chalk lines), the great
+  // dojo on its stone base, the forge with its stone chimney, the thatched storehouse, a two-storey house and a hall.
+  // Green + gold banners, torches everywhere. From Miguel's four Warrior images.
+  warrior: {
+    seed: 6203, dropSeed: 41, drops: 50000, roads: false,
+    hills: .45, shape: { fbm: 30, ridge: 5, wall: 34 }, // rolling dry plains, soft wooded hills, mountains far off
+    flatHalf: 92, hillStart: 104, hillFull: 250, wallStart: 315, // (wallStart must stay under 352)
+    palette: {
+      grassA: [0.42, 0.38, 0.2], grassB: [0.55, 0.47, 0.27], wet: [0.3, 0.31, 0.16],
+      dirt: [0.58, 0.47, 0.33], yard: [0.47, 0.4, 0.3], rockTint: [1.0, .97, .92], highTint: [1.0, .96, .88], peak: [0.82, 0.8, 0.76]
+    },
+    grass: { count: 70000, base: [0.26, 0.23, 0.09], tip: [0.78, 0.66, 0.38] },
+    flowers: { count: 900, stem: [0.22, 0.24, 0.08], petal: [0.96, 0.84, 0.36] },
+    pines: { file: 'pine_1.glb', count: 40, scale: [1.6, 3.0], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 320, scale: [.8, 2.6], body: 0.75, settle: .9, sink: .1, tint: [1.3, 1.24, 1.14], minSq: 82 },
+    extras: [
+      { file: 'tree_1.glb', count: 320, scale: [.8, 1.4], body: .5, settle: .5, sink: .15, cull: 300, maxSlope: .45, minSq: 84, road: 0, clump: { freq: .011, ox: 23, above: -.1 } }
+    ],
+    fog: { density: .001, day: [.82, .85, .86], night: [.04, .05, .1] },
+    light: { sun: 1.14, hemi: .96, tint: [1.0, .94, .8] },
+    sky: { turbidity: 4, luminance: 1, rayleigh: 2.4, mieCoefficient: .004 },
+    court: { texture: 'stone', court: [1.4, 1.36, 1.28], plaza: [1.25, 1.2, 1.1], path: [1.15, 1.1, 1.0] },
+    village: {
+      rect: [-80, -100, 80, 84], res: .9, wall: .6,
+      terraces: [{ r: [-64, -64, 64, 68], h: .5, edge: 1.2 }],       // the fort's ground, a little above the plain
+      digs: [{ rr: [-73, -73, 73, 77, 7], depth: 2.6, edge: 3.4 }],   // the dry ditch outside the palisade
+      ramps: [{ r: [-5, -78, 5, -64], axis: 'z', from: 0, to: .5 }],  // the causeway over the ditch to the gate
+      pave: [['r', -6.5, -96, 6.5, -34], ['r', -15, -34, 15, -21.5], ['r', -4.5, 10, 4.5, 22.4], ['c', 17, -27.5, 3.4]], // road, the square before the yard, to the dojo stairs, the well
+      dirt: [['r', -64, -64, 64, 68]],
+      chalk: [[-7, -15.5, -7, 6.5, .22], [7, -15.5, 7, 6.5, .22]],
+      grass: 5000, flowers: 300
+    }
   }
 };
 
@@ -465,8 +500,10 @@ export function makeVillageShape(V, baseAt = () => 0) {
   const rectD = (r, x, z) => { const dx = Math.max(r[0] - x, x - r[2]), dz = Math.max(r[1] - z, z - r[3]); return dx > 0 || dz > 0 ? Math.hypot(Math.max(dx, 0), Math.max(dz, 0)) : Math.max(dx, dz); };
   const inside = (x, z) => x > X0 && x < X1 && z > Z0 && z < Z1;
   // signed distance to a terrace / dig (negative inside): r = rectangle, c = [x, z, radius] disc, ring = [x, z, r0, r1]
+  // rr = [x0, z0, x1, z1, w]: a square ring w wide just inside the rectangle (a ditch round a square fort)
   const shapeD = (t, x, z) => t.c ? Math.hypot(x - t.c[0], z - t.c[1]) - t.c[2]
-    : t.ring ? (rho => Math.max(t.ring[2] - rho, rho - t.ring[3]))(Math.hypot(x - t.ring[0], z - t.ring[1])) : rectD(t.r, x, z);
+    : t.ring ? (rho => Math.max(t.ring[2] - rho, rho - t.ring[3]))(Math.hypot(x - t.ring[0], z - t.ring[1]))
+    : t.rr ? Math.max(rectD(t.rr.slice(0, 4), x, z), -rectD([t.rr[0] + t.rr[4], t.rr[1] + t.rr[4], t.rr[2] - t.rr[4], t.rr[3] - t.rr[4]], x, z)) : rectD(t.r, x, z);
   // final height over a base ground b: terraces rise h above it ('abs' terraces: to height h, e.g. a quay over a
   // beach), ramps climb from the base; the base stays wherever it is already higher
   const apply = (x, z, b) => {
@@ -1006,6 +1043,7 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA) {
       ${(V?.rake || []).map(k => k.ring
         ? `{ float d = length(p - vec2(${k.ring[0].toFixed(1)}, ${k.ring[1].toFixed(1)})); yard *= 1.0 - 0.16 * step(d, ${k.ring[2].toFixed(1)}) * smoothstep(0.35, 1.0, sin(d * 12.566)); }`
         : `{ float inR = step(${k.r[0].toFixed(1)}, p.x) * step(p.x, ${k.r[2].toFixed(1)}) * step(${k.r[1].toFixed(1)}, p.y) * step(p.y, ${k.r[3].toFixed(1)}); yard *= 1.0 - 0.13 * inR * smoothstep(0.35, 1.0, sin(p.${k.axis === 'x' ? 'x' : 'y'} * 12.566)); }`).join('\n      ')}
+      ${(V?.chalk || []).map(k => `{ vec2 a = vec2(${k[0].toFixed(1)}, ${k[1].toFixed(1)}), b = vec2(${k[2].toFixed(1)}, ${k[3].toFixed(1)}), ab = b - a; float t = clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0); float d = length(p - a - ab * t); yard = mix(yard, vec3(0.8, 0.77, 0.68) * (0.9 + 0.15*micro), 0.85 * (1.0 - smoothstep(${(k[4] / 2).toFixed(2)}, ${(k[4] / 2 + .05).toFixed(2)}, d)) * (0.75 + 0.25*tvn(p*2.3))); }`).join('\n      ')}
       dirt = mix(dirt, yard, vil);
       vec3 col = mix(grass, dirt, clamp(road + smoothstep(0.17,0.3,slope)*0.55*(1.0-wet), 0.0, 1.0));
       // village cobble (warm, like the courtyard stone) and finer, lighter stone on the terrace walls
@@ -1060,6 +1098,7 @@ async function buildDecor(scene, T, avoid) {
   const villageWet = (x, z, m) => [...(R.village?.pools || []), ...(R.village?.digs || [])].some(p => {
     if (p.c) return Math.hypot(x - p.c[0], z - p.c[1]) < p.c[2] + m && (!p.ring || Math.hypot(x - p.c[0], z - p.c[1]) > p.ring[0] - m);
     if (p.ring) { const rho = Math.hypot(x - p.ring[0], z - p.ring[1]); return rho > p.ring[2] - m && rho < p.ring[3] + m; }
+    if (p.rr) { const r = p.rr, w = r[4]; return x > r[0] - m && x < r[2] + m && z > r[1] - m && z < r[3] + m && !(x > r[0] + w + m && x < r[2] - w - m && z > r[1] + w + m && z < r[3] - w - m); }
     const r = p.r; return x > r[0] - m && x < r[2] + m && z > r[1] - m && z < r[3] + m;
   });
   const dry = (x, z, m = .8) => T.seaY === null || T.seaY === undefined || h(x, z) > T.seaY + m; // above the sea
