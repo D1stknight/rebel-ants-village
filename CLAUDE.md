@@ -8,11 +8,11 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 - Vercel builds every push to dev (preview URL `rebel-ants-village-git-dev-miguel-concepcions-projects.vercel.app`); check the deploy after pushing.
 - More notes live in the claude.ai project "Rebel Ants Universe" (docs `claude/handoff.md`, `claude/village-terrains.md`); this file carries the essentials.
 
-## Where things stand (Oct 3, late night)
-- dev = 8e1e1a2 (+ this CLAUDE.md commit). On dev: Samurai village, fixes (night lanterns, cherry trunk collision, Back key), Wokou harbour village + surf sound, faction emblems on banners, Yamabushi, Buke, Kenshi, Sohei villages (terrain + kit + layout each), birds in every village. Miguel: NOT to main yet, keep building villages.
+## Where things stand (Oct 4)
+- On dev: Samurai village, fixes (night lanterns, cherry trunk collision, Back key), Wokou harbour village + surf sound, faction emblems on banners, Yamabushi, Buke, Kenshi, Sohei, Ashigaru villages (terrain + kit + layout each), birds in every village, walking light in every village, lighter cherry tree, layout cache survives full browser storage. Miguel: NOT to main yet, keep building villages.
 - This repo is now attached to Claude Code sessions: Claude commits and pushes to dev directly (plain git), then checks the Vercel deploy (Vercel MCP: project prj_CjuIvsLXKinzfIgUkmSkyWhKWqtc, team team_7tWG3HhBf0Ir5h0Hhz9ZAarq).
 - If the chat has NO repo attached: Claude builds + tests, delivers files to Miguel's Downloads/<name>/, Miguel uploads on github.com (dev branch), Claude then verifies dev matches (git fetch + diff) and checks the Vercel deploy. Do NOT push via the admin page / upload token in the browser (blocked by a safety check).
-- Production reads layouts from dev but lacks the Samurai + Wokou + Yamabushi + Buke + Kenshi + Sohei kit/terrain → those live villages show red placeholders until dev → main merge.
+- Production reads layouts from dev but lacks the Samurai + Wokou + Yamabushi + Buke + Kenshi + Sohei + Ashigaru kit/terrain → those live villages show red placeholders until dev → main merge.
 
 ## Standing rules (from Miguel)
 - 001 is the master and needs no fixing; don't change Forge characters/rigs that are "perfect".
@@ -145,3 +145,11 @@ Friend villages (Queens, Cute & Creepy, Saints LA; Chumps not in registry yet): 
 ## Layout cache vs browser storage (dev c95af98, Oct 4)
 - Bug: Sohei loaded empty for Miguel. All village layouts are cached in localStorage (~3.5 MB + Hub mirror + backups); past the ~5 MB quota, storeRemoteLayoutInCache threw QuotaExceededError → loadWorldLayout found nothing.
 - Fix: layout writes go through layoutStorageSet (evicts other villages' clean copies, backups, the old 'rebelAntsWorldLayout' Hub mirror; retries; else keeps it in memory with a toast). Reads use getLayoutCacheRaw (memory first). Headless repro: preset storage full → 186 objects (was 0).
+
+## Walking light, cherry tree, Ashigaru (dev 2583069..., Oct 4)
+- Walking light (followLight) never reached the new terrain: 'visual_backdrop' meshes (terrainFar, edge skirt) share terrainMat, so optimizeStaticRenderRoot froze it with 2 lights. Materials with metadata.perfKeepLive are skipped (terrainMat sets it). On new terrain the light scales with the fake-light factor (window._walkLightK: x0.18 by day -> full 2.8 at night); Hub unchanged.
+- cherry_blossom.glb rebuilt (gltf-transform + meshoptimizer, scripts in the session scratchpad gt/opt.mjs + rehier.mjs): 12 meshes -> 2, bark 30k -> 5.4k tris, blossom cards untouched; 45.2k -> 20.6k tris, 2.5 -> 1.4 MB. Node hierarchy (Sketchfab_model rotation -> group -> meshes) must stay, else placed trees lie on their side. Same-camera renders: pixel diff < .35/255.
+- Ashigaru terrain `ashigaru`: dry grassland, round mound (terrace c: [0,0,70], h 2.4, edge 3.6), V moat (dig ring [0,0,72,85], depth 3.6, edge 5.6) with a stream (pool c + ring), dirt plaza/paths. makeVillageShape now takes c (disc) / ring shapes and per-terrace edge; pools can be discs.
+- Kit ashi_*: great_dojo, archive, strategy_hall, house / house_tile / house_brown (roof_brown tex), gate (two towers), watchtower, banner_pole, palisade(+_banner) 8 m, bridge (20 m ramp deck y0 0 -> y1 2.4, absY; layout scales y/z to fit), workshop, barricade, stake_fence, target, log_pile. FACTION_BANNERS.ashigaru = crimson #8c1c1c + gold (art).
+- Layout ashigaru.json 399 items / 194 proxies (gen script pattern; palisade = 50 rotated segments at r 66, ry = -theta - pi/2; outer rail fence on the front arc; rocks on the moat banks). Round trip exact.
+- Headless walk tests: HIDEKIT=1 in run.mjs walktest hides layout meshes (~0.14 m/s walking at fixed 60 fps steps).
