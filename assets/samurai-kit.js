@@ -94,6 +94,10 @@
     T.ashi_door = bannerTex(scene, 'ashi_door', '#141012', '#d8b45a', 'logo:ashigaru');
     T.noren_warrior = bannerTex(scene, 'noren_warrior', '#34502e', '#dcb24e', 'logo:warrior', false, true);
     T.banner_war_wheel = bannerTex(scene, 'war_wheel', '#c9a043', '#3a2a18', 'wheel');
+    T.noren_shogun = bannerTex(scene, 'noren_shogun', '#5f1d45', '#d8b04a', 'logo:shogun', false, true);
+    T.banner_shogun_mon = bannerTex(scene, 'shogun_mon', '#c9a043', '#2a1d14', 'dots');
+    const sk = noise(S, 3, 5, 43); // the painted screen behind the dojo's dais: misty mountains on gold
+    T.shogun_screen = pixelTex(scene, 'shogun_screen', S, (x, y, i) => { if (Math.min(x, 1 - x, y, 1 - y) < .025) return [40, 26, 16]; if ((x * 4) % 1 < .012) return [120, 96, 50]; const m1 = .45 + .18 * Math.sin(x * 9 + 1) + .1 * sk[i], m2 = .3 + .12 * Math.sin(x * 14 + 3); return y < m2 ? [70, 84, 72] : y < m1 ? [116, 124, 106] : [214, 184, 112]; });
     const tt = noise(S, 2, 3, 41); // tatami: woven rush, a black cloth border
     T.tatami = pixelTex(scene, 'tatami', S, (x, y, i) => { const e = Math.min(x, 1 - x, y, 1 - y); if (e < .025) return [26, 24, 20]; const f = (.84 + .1 * Math.sin(y * S * 2.2) + .08 * tt[i]); return [184 * f, 168 * f, 104 * f]; });
     const mp = noise(S, 4, 4, 42); // the campaign map on the dojo's table: land, hills, a river
@@ -159,7 +163,7 @@
   // Faction emblems on banners: cloth and emblem colours per faction (banner_<faction> materials)
   const FACTION_BANNERS = {
     samurai: ['#961816', '#ecd6aa'], wokou: ['#1c2a4c', '#d9a743'], yamabushi: ['#25402d', '#d6a640'], ronin: ['#6a1a1d', '#e3cfa4'],
-    shogun: ['#2e2147', '#d8b04a'], bushi: ['#7d2b22', '#d9b35a'], buke: ['#5e1a20', '#d8b35c'], ashigaru: ['#8c1c1c', '#d8b45a'],
+    shogun: ['#5f1d45', '#d8b04a'], bushi: ['#7d2b22', '#d9b35a'], buke: ['#5e1a20', '#d8b35c'], ashigaru: ['#8c1c1c', '#d8b45a'],
     kenshi: ['#1f5753', '#d8b450'], sohei: ['#c38d2a', '#f8edd2'], warrior: ['#34502e', '#dcb24e']
   };
   const logoImgs = {};
@@ -190,6 +194,7 @@
     needles: { tex: 'needles' }, needles_dark: { tex: 'needles_dark' }, bark_old: { tex: 'bark_old' }, granite: { tex: 'granite' }, moss: { tex: 'moss' },
     noren_ashigaru: { tex: 'noren_ashigaru' }, noren_bushi: { tex: 'noren_bushi' }, banner_bushi_scroll: { tex: 'banner_bushi_scroll' }, banner_bushi_board: { tex: 'banner_bushi_board' }, noren_wokou: { tex: 'noren_wokou' }, banner_ashi_scroll: { tex: 'banner_ashi_scroll' }, banner_ashi_board: { tex: 'banner_ashi_board' }, ashi_door: { tex: 'ashi_door' },
     noren_warrior: { tex: 'noren_warrior' }, banner_war_wheel: { tex: 'banner_war_wheel' }, tatami: { tex: 'tatami' }, war_map: { tex: 'war_map' },
+    noren_shogun: { tex: 'noren_shogun' }, banner_shogun_mon: { tex: 'banner_shogun_mon' }, shogun_screen: { tex: 'shogun_screen' }, cushion: { col: [.36, .1, .26] }, cloth_purple: { col: [.38, .1, .28] },
     sack: { col: [.7, .62, .46] }, leaf: { col: [.26, .42, .14] }, leaves: { tex: 'leaves' },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
@@ -479,6 +484,20 @@
     for (const y of [-2.4, 2.4]) M.block('wood', 6.9, y, 0, .2, .2, 2.1);
     M.quad('thatch', [[5.2, -3.1, 2.9], [5.2, 3.1, 2.9], [7.4, 3.1, 2.1], [7.4, -3.1, 2.1]]); M.quad('thatch', [[7.4, -3.1, 2.1], [7.4, 3.1, 2.1], [5.2, 3.1, 2.9], [5.2, -3.1, 2.9]]);
     ashiLogs(M, 5.9, -.2, 0, 1.4, 3); M.block('wood', 5.8, 1.9, 0, .8, .8, .8);
+  }
+  // battered stone (castle bases): a w0 x d0 footprint narrowing to w1 x d1 at height h
+  function batter(M, m, cx, cy, z0, w0, d0, w1, d1, h) {
+    const b = (sx, sy) => [cx + sx * w0 / 2, cy + sy * d0 / 2, z0], t = (sx, sy) => [cx + sx * w1 / 2, cy + sy * d1 / 2, z0 + h];
+    M.poly(m, [b(-1, -1), b(1, -1), t(1, -1), t(-1, -1)]); M.poly(m, [b(1, 1), b(-1, 1), t(-1, 1), t(1, 1)]);
+    M.poly(m, [b(1, -1), b(1, 1), t(1, 1), t(1, -1)]); M.poly(m, [b(-1, 1), b(-1, -1), t(-1, -1), t(-1, 1)]);
+    M.poly(m, [t(-1, -1), t(1, -1), t(1, 1), t(-1, 1)]);
+  }
+  // a front gable (A-frame over a roof's middle, faced in dark timber with gold edges): front at yF, eave ze, ridge zr
+  function shogunGable(M, cx, yF, ze, zr, hw, yB) {
+    for (const sd of [-1, 1]) M.quad('roof', [[cx + sd * hw, yF, ze], [cx, yF, zr], [cx, yB, zr], [cx + sd * hw, yB, ze]], [[0, 0], [0, 2.2], [3, 2.2], [3, 0]]);
+    M.poly('darkwood', [[cx - hw + .4, yF + .25, ze + .12], [cx + hw - .4, yF + .25, ze + .12], [cx, yF + .25, zr - .25]]);
+    for (const sd of [-1, 1]) M.rod('gold', [cx + sd * (hw + .15), yF - .05, ze - .08], [cx, yF - .05, zr + .08], .1, 5);
+    M.box('darkwood', [cx, (yF + yB) / 2, zr + .1], [.36, yB - yF, .3]);
   }
   function warPalisade(M, withBanner) {
     const L = 8, n = 14;
@@ -1364,6 +1383,107 @@
     },
     war_bush(M) { for (const [x, y, r, k] of [[0, 0, .9, 1], [.7, .3, .65, 2], [-.6, .25, .6, 3]]) blob(M, 'leaves', [x, y, r * .6], r * 1.2, r * 1.1, r * .9, { amp: .3, freq: 2.4, seed: k * 23, segs: 9, rings: 5, flat: .5 }); },
     war_banner_pole(M) { M.remap2 = { banner_ronin: 'banner_warrior' }; B.ronin_banner_pole(M); M.remap2 = null; },
+    // ── Shogun (the commanders' hilltop castle): battered stone, white plaster, dark tile with gold trim, purple +
+    //    gold banners ──
+    // the keep (tenshu): a battered stone base, three plastered storeys under stepped tiled roofs with front gables
+    // and gold ornaments; ~30 m tall, base 26 x 22 m, front faces -y
+    shogun_keep(M) {
+      batter(M, 'stone', 0, 0, 0, 26, 22, 22, 18, 8);
+      M.block('darkwood', 0, -10.6, 0, 4, .5, 4.2); M.block('iron', 0, -10.9, 2, .1, .1, 2.2); for (const sd of [-1, 1]) M.block('darkwood', sd * 2.25, -10.7, 0, .5, .6, 4.6);
+      M.box('darkwood', [0, -10.75, 4.7], [5.2, .6, .5]);
+      const st = [[8, 20, 16, 5, 'front', 1], [13.6, 15, 12, 4.2, 'front', .8], [18.4, 10.5, 8.5, 3.6, 'front', .6]];
+      st.forEach(([z, w, d, h], k) => {
+        walls(M, 0, 0, z, w, d, h, { windows: [['front', -w / 4, z + h * .4, 2, 1.3], ['front', w / 4, z + h * .4, 2, 1.3], ['front', 0, z + h * .4, 2, 1.3], ['back', -w / 4, z + h * .4, 2, 1.3], ['back', w / 4, z + h * .4, 2, 1.3], ['left', 0, z + h * .4, 2, 1.3], ['right', 0, z + h * .4, 2, 1.3]], postStep: 2.6 });
+        M.box('gold', [0, -d / 2 - .22, z + h - .2], [w + .3, .06, .12]);
+        if (k < 2) {
+          M.roof(0, 0, z + h, w + 4, d + 4, 1.8, { lift: .7, gable: false, ornaments: false });
+          shogunGable(M, 0, -d / 2 - 2.2, z + h + .5, z + h + 3.4, w * .22, -d / 2 + 2);
+        }
+      });
+      M.roof(0, 0, 22, 15, 13, 4, { lift: 1 });
+      shogunGable(M, 0, -6.8, 22.6, 25.6, 3.2, -2.5);
+      for (const sd of [-1, 1]) { M.cyl('gold', [sd * 4.1, 0, 26.3], .3, 1.1, 6, .1); M.sphere('gold', [sd * 4.1, 0, 26.2], .35, 1, 6, 4); }
+      for (const sd of [-1, 1]) { banner(M, sd * 7, -9.9 - .1, 16.6, 1.6, 3.2, 'banner_shogun'); lantern(M, sd * 3.2, -11.1, 4.3, .3); }
+    },
+    // corner turret (yagura): a battered stone base, two white storeys under tiled roofs with gold ornaments
+    shogun_turret(M) {
+      batter(M, 'stone', 0, 0, 0, 9, 9, 7.4, 7.4, 5.5);
+      walls(M, 0, 0, 5.5, 6.4, 6.4, 3, { windows: [['front', 0, 6.6, 1.4, 1], ['left', 0, 6.6, 1.4, 1], ['right', 0, 6.6, 1.4, 1], ['back', 0, 6.6, 1.4, 1]], postStep: 3.2 });
+      M.roof(0, 0, 8.5, 9, 9, 1.2, { lift: .5, gable: false, ornaments: false });
+      walls(M, 0, 0, 9, 4.6, 4.6, 2.3, { windows: [['front', 0, 9.8, 1.2, .9], ['left', 0, 9.8, 1.2, .9], ['right', 0, 9.8, 1.2, .9]], postStep: 2.3 });
+      M.roof(0, 0, 11.3, 7, 7, 2.2, { lift: .6 });
+      banner(M, 0, -3.25, 8.3, 1.4, 2.6, 'banner_shogun');
+    },
+    // castle wall, 8 m: battered stone 4.5 m, a white plaster parapet with loopholes on the outside (-y), a tiled
+    // coping; the stone top is a walkway
+    shogun_wall(M) {
+      batter(M, 'stone', 0, 0, 0, 8, 3.4, 8, 2.4, 4.5);
+      M.block('plaster', 0, -.85, 4.5, 8, .6, 1.7);
+      for (const x of [-3, -1, 1, 3]) M.quad('dark', [[x - .2, -1.16, 5.4], [x + .2, -1.16, 5.4], [x + .2, -1.16, 5.8], [x - .2, -1.16, 5.8]]);
+      M.block('darkwood', 0, -.85, 6.2, 8.1, .66, .12);
+      M.roof(0, -.85, 6.32, 8.6, 1.5, .45, { lift: .05, gable: false, ornaments: false });
+    },
+    shogun_gate(M) { M.remap2 = { plaster_old: 'plaster', banner_ronin: 'banner_shogun', noren_ronin: 'noren_shogun' }; B.ronin_gate(M); M.remap2 = null; for (const sd of [-1, 1]) banner(M, sd * 1.9, -2.1, 5.6, 1.6, 3.8, 'banner_shogun'); M.box('gold', [0, -2.2, 6.4], [2.6, .08, .5]); },
+    // small roofed gate at the head of the central stairs
+    shogun_inner_gate(M) {
+      for (const sd of [-1, 1]) for (const y of [-.7, .7]) { M.block('darkwood', sd * 3.2, y, 0, .4, .4, 4.2); M.cyl('stone', [sd * 3.2, y, 0], .4, .3, 8); }
+      for (const y of [-.7, .7]) M.box('darkwood', [0, y, 4], [7.6, .36, .4]);
+      M.block('darkwood', 0, 0, 4.2, 7.8, 2, .3); M.roof(0, 0, 4.5, 9.6, 3.6, 1.6, { lift: .6 });
+      for (const sd of [-1, 1]) banner(M, sd * 3.2, -.95, 3.7, 1, 2.6, 'banner_shogun');
+      M.box('gold', [0, -.92, 4.05], [1.4, .06, .3]);
+    },
+    // great dojo: the Warrior hall in Shogun colours, a front gable with the gold crest, wide purple hangings, the
+    // painted screen behind the dais, cushions round the map table
+    shogun_great_dojo(M) {
+      M.remap2 = { banner_warrior: 'banner_shogun' }; B.war_great_dojo(M); M.remap2 = null;
+      const Z = 1.4, yF = -8;
+      for (const sd of [-1, 1]) banner(M, sd * 8.6, yF - .38, Z + 5.2, 5, 3.6, 'banner_shogun');
+      shogunGable(M, 0, yF - 5.4, Z + 8.4, Z + 11.6, 6.5, 0);
+      M.tube('gold', [0, yF - 5.3, Z + 9.6], [0, yF - 5.4, Z + 9.6], .7, .7, 14); M.tube('darkwood', [0, yF - 5.4, Z + 9.6], [0, yF - 5.45, Z + 9.6], .42, .42, 14);
+      M.box('gold', [0, yF - 4.9, Z + 5.55], [28.5, .06, .14]);
+      M.quad('shogun_screen', [[-2.6, 9.83, Z + .7], [2.6, 9.83, Z + .7], [2.6, 9.83, Z + 4], [-2.6, 9.83, Z + 4]].map(p => p), [[1, 0], [0, 0], [0, 1], [1, 1]]);
+      for (const [x, y] of [[-2.2, 5.6], [-.7, 5.4], [.7, 5.4], [2.2, 5.6], [-2.2, 8.2], [2.2, 8.2]]) M.block('cushion', x, y, 2, .7, .7, .14);
+    },
+    shogun_library(M) { M.remap2 = { plaster_old: 'plaster', banner_ronin_scroll: 'banner_shogun', banner_ronin: 'banner_shogun', noren_ronin: 'noren_shogun' }; B.ronin_library(M); M.remap2 = null; for (const sd of [-1, 1]) banner(M, sd * 2.8, -5 - .4, 4.6, 1.1, 2.4, 'banner_shogun'); },
+    shogun_strategy_hall(M) { M.remap2 = { plaster_old: 'plaster', banner_ronin_board: 'banner_shogun_mon', banner_ronin: 'banner_shogun', noren_ronin: 'noren_shogun' }; B.ronin_strategy_hall(M); M.remap2 = null; },
+    shogun_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_shogun'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_shogun'); },
+    shogun_house_large(M) { M.remap2 = { plaster_old: 'plaster', banner_ronin: 'banner_shogun', noren_ronin: 'noren_shogun' }; B.ronin_house_large(M); M.remap2 = null; },
+    shogun_storehouse(M) { M.remap2 = { banner_bushi: 'banner_shogun' }; B.bushi_storehouse(M); M.remap2 = null; },
+    // shrine: vermilion posts and gold trim on a stone base, two tiled roofs, purple curtains, a gilded altar
+    shogun_shrine(M) {
+      const W = 7, D = 6, Z = 1.2;
+      M.block('stone', 0, 0, 0, W + 2, D + 2, Z); steps(M, 0, -(D + 2) / 2, Z, 3.2, 3);
+      M.block('wood', 0, 0, Z, W + 1, D + 1, .12);
+      for (const x of [-W / 2, -W / 6, W / 6, W / 2]) for (const y of [-D / 2, D / 2]) { M.cyl('red', [x, y, Z], .2, 4, 8); M.cyl('gold', [x, y, Z + 3.85], .24, .15, 8); }
+      for (const y of [-D / 2, D / 2]) M.box('red', [0, y, Z + 4.05], [W + .4, .3, .3]); for (const x of [-W / 2, W / 2]) M.box('red', [x, 0, Z + 4.05], [.3, D + .4, .3]);
+      M.block('plaster', 0, D / 2, Z, W, .2, 3.8); M.block('plaster', -W / 2, 0, Z, .2, D, 3.8); M.block('plaster', W / 2, 0, Z, .2, D, 3.8);
+      M.block('darkwood', 0, D / 2 - 1, Z + .12, 3, 1.2, 1.1); M.block('gold', 0, D / 2 - 1, Z + 1.22, 1.4, .8, .9); M.cyl('gold', [0, D / 2 - 1, Z + 2.1], .3, .5, 8, .05);
+      for (const sd of [-1, 1]) M.quad('cloth_purple', [[sd * 3.4, -D / 2 - .05, Z + 3.9], [sd * 1.4, -D / 2 - .05, Z + 3.9], [sd * 2.8, -D / 2 - .1, Z + 1.4], [sd * 3.4, -D / 2 - .06, Z + .4]]);
+      M.roof(0, 0, Z + 4.2, W + 3, D + 3, 1.2, { lift: .6, gable: false, ornaments: false });
+      M.block('red', 0, 0, Z + 5.4, W - 1.6, D - 1.6, .7);
+      M.roof(0, 0, Z + 6.1, W + 1.4, D + 1.4, 2.4, { lift: .8 });
+      M.box('gold', [0, -D / 2 - .2, Z + 4.1], [W + .4, .06, .14]);
+      for (const sd of [-1, 1]) { banner(M, sd * (W / 2 + .9), -D / 2 - .9, 3.4, .9, 2.6, 'banner_shogun'); M.block('darkwood', sd * (W / 2 + .9), -D / 2 - .8, 0, .14, .14, 3.5); }
+      for (const sd of [-1, 1]) lantern(M, sd * 1.6, -D / 2 - .3, Z + 3.8, .22);
+    },
+    // arched garden bridge over the pond, 11 m: wooden deck on a curve, rails with gold caps (deck: two ramps)
+    shogun_bridge(M) {
+      const L = 11, Wd = 2.4, H = 1.3, zAt = y => H * Math.cos(y / (L / 2) * Math.PI / 2);
+      const n = 14;
+      for (let i = 0; i < n; i++) { const y0 = -L / 2 + i * L / n, y1 = y0 + L / n, z0 = zAt(y0), z1 = zAt(y1); M.box('wood', [0, (y0 + y1) / 2, (z0 + z1) / 2 - .12], [Wd, Math.hypot(L / n, z1 - z0) + .02, .24], 0, Math.atan2(z1 - z0, L / n)); }
+      for (const sd of [-1, 1]) {
+        for (let i = 0; i <= 6; i++) { const y = -L / 2 + .3 + i * (L - .6) / 6, z = zAt(y); M.block('darkwood', sd * (Wd / 2 - .08), y, z - .2, .16, .16, 1.15); M.sphere('gold', [sd * (Wd / 2 - .08), y, z + 1], .11, 1, 6, 3); }
+        for (let i = 0; i < 12; i++) { const y0 = -L / 2 + .3 + i * (L - .6) / 12, y1 = y0 + (L - .6) / 12; M.rod('darkwood', [sd * (Wd / 2 - .08), y0, zAt(y0) + .85], [sd * (Wd / 2 - .08), y1, zAt(y1) + .85], .05, 4); }
+        for (const y of [-2.6, 2.6]) M.block('stone', sd * (Wd / 2 - .3), y, -2.2, .5, .5, zAt(y) + 2.1);
+      }
+    },
+    // dark railing, 4 m, gold ball finials (terrace edges)
+    shogun_rail(M) {
+      for (const x of [-2, 0, 2]) { M.block('darkwood', x, 0, 0, .2, .2, 1.15); M.sphere('gold', [x, 0, 1.25], .13, 1, 6, 4); }
+      M.box('darkwood', [0, 0, 1], [4.1, .14, .14]); M.box('darkwood', [0, 0, .5], [4.1, .1, .1]);
+      for (let i = 0; i < 8; i++) M.block('darkwood', -1.75 + i * .5, 0, .5, .05, .05, .5);
+    },
+    shogun_banner_pole(M) { M.remap2 = { banner_ronin: 'banner_shogun' }; B.ronin_banner_pole(M); M.remap2 = null; },
     // vegetable garden: a raised bed of dark earth with rows of greens, a plank edge, bean stakes
     war_garden(M) {
       M.block('darkwood', 0, 0, 0, 6.2, 3.2, .3); M.block('earth', 0, 0, 0, 5.9, 2.9, .34);
@@ -1528,6 +1648,8 @@
     kit_stairs_cliff: [{ x: 0, z: -10.6 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'stone' }, { x: 0, z: 0, halfX: 1.45, halfZ: 1.05, y: 6, surface: 'stone' },
       { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }], ashi_bridge: [{ x: 0, z: 0, halfX: 1.55, halfZ: 10.3, y0: 0, y1: 2.4 }],
     war_great_dojo: [{ x: 0, z: (-12.4 + 10.5) / 2, halfX: 14.7, halfZ: (10.5 + 12.4) / 2, y: 1.5 }, { x: 0, z: -12.4 - .9, halfX: 3.9, halfZ: .9, y0: 0, y1: 1.4, steps: 4, surface: 'stone' }],
+    shogun_great_dojo: [{ x: 0, z: (-12.4 + 10.5) / 2, halfX: 14.7, halfZ: (10.5 + 12.4) / 2, y: 1.5 }, { x: 0, z: -12.4 - .9, halfX: 3.9, halfZ: .9, y0: 0, y1: 1.4, steps: 4, surface: 'stone' }],
+    shogun_bridge: [{ x: 0, z: -2.75, halfX: 1.05, halfZ: 2.75, y0: 0, y1: 1.3 }, { x: 0, z: 2.75, halfX: 1.05, halfZ: 2.75, y0: 1.3, y1: 0 }],
     ronin_great_dojo: [{ x: 0, z: 0, halfX: 15, halfZ: 12, y: 1.6 }, { x: 0, z: -13.13, halfX: 4.4, halfZ: 1.13, y0: 0, y1: 1.6, steps: 5, surface: 'stone' }] };
   window.SamuraiKit = { build, setLightFactor, decks, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();
