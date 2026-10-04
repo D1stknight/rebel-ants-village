@@ -69,6 +69,14 @@
     T.noren_sohei = bannerTex(scene, 'noren_sohei', '#c38d2a', '#f8edd2', 'logo:sohei', false, true);
     T.noren_sohei_books = bannerTex(scene, 'noren_sohei_books', '#c38d2a', '#f8edd2', 'books', false, true);
     T.noren_sohei_dots = bannerTex(scene, 'noren_sohei_dots', '#a8432a', '#f8edd2', 'dots', false, true);
+    const nd = noise(S, 16, 4, 21), nd2 = noise(S, 40, 2, 22), r9 = rng(23);
+    T.needles = pixelTex(scene, 'needles', S, (x, y, i) => { let f = .55 + .35 * nd[i] + .3 * nd2[i]; if (r9() < .07) f *= 1.35; return [44 * f, 74 * f, 46 * f]; });
+    T.needles_dark = pixelTex(scene, 'needles_dark', S, (x, y, i) => { const f = .45 + .35 * nd[i] + .25 * nd2[i]; return [28 * f, 50 * f, 34 * f]; });
+    const bk = noise(S, 3, 5, 24), bk2 = noise(S, 10, 3, 25);
+    const bk3 = noise(S, 24, 2, 28);
+    T.bark_old = pixelTex(scene, 'bark_old', S, (x, y, i) => { const g = Math.abs(Math.sin((x * 9 + bk[i] * .35) * Math.PI)), f = .42 + .38 * g ** .6 + .14 * bk2[i] + .12 * bk3[i]; return [92 * f + 12, 80 * f + 10, 70 * f + 8]; });
+    const gn = noise(S, 6, 5, 26); T.granite = pixelTex(scene, 'granite', S, (x, y, i) => { const f = .55 + .45 * gn[i]; return [96 * f, 98 * f, 104 * f]; });
+    const mn = noise(S, 8, 4, 27); T.moss = pixelTex(scene, 'moss', S, (x, y, i) => { const f = .5 + .5 * mn[i]; return [46 * f, 70 * f, 38 * f]; });
     T.noren_ashigaru = bannerTex(scene, 'noren_ashigaru', '#8c1c1c', '#d8b45a', 'logo:ashigaru', false, true);
     T.banner_ashi_scroll = bannerTex(scene, 'ashi_scroll', '#8c1c1c', '#d8b45a', 'scroll');
     T.banner_ashi_board = bannerTex(scene, 'ashi_board', '#8c1c1c', '#d8b45a', 'board');
@@ -146,6 +154,7 @@
     noren_sohei: { tex: 'noren_sohei' }, noren_sohei_books: { tex: 'noren_sohei_books' }, noren_sohei_dots: { tex: 'noren_sohei_dots' },
     bronze: { col: [.3, .36, .27], spec: [.6, .55, .4], power: 40 },
     roof_brown: { tex: 'roof_brown' }, straw: { col: [.78, .64, .36] },
+    needles: { tex: 'needles' }, needles_dark: { tex: 'needles_dark' }, bark_old: { tex: 'bark_old' }, granite: { tex: 'granite' }, moss: { tex: 'moss' },
     noren_ashigaru: { tex: 'noren_ashigaru' }, banner_ashi_scroll: { tex: 'banner_ashi_scroll' }, banner_ashi_board: { tex: 'banner_ashi_board' }, ashi_door: { tex: 'ashi_door' },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
@@ -325,6 +334,85 @@
       const [c, ax] = sides[side], fx = side === 'front' || side === 'left' ? -1 : 1, p = c + fx * (t / 2 + .03), uv = [[0, 0], [ww / 1.2, 0], [ww / 1.2, wh / 1.5], [0, wh / 1.5]];
       if (ax === 'x') { M.quad('shoji', [[cx + off - ww / 2, p, zw], [cx + off + ww / 2, p, zw], [cx + off + ww / 2, p, zw + wh], [cx + off - ww / 2, p, zw + wh]], uv); M.box('darkwood', [cx + off, p, zw - .05], [ww + .2, .12, .12]); M.box('darkwood', [cx + off, p, zw + wh + .05], [ww + .2, .12, .12]); }
       else { M.quad('shoji', [[p, cy + off + ww / 2, zw], [p, cy + off - ww / 2, zw], [p, cy + off - ww / 2, zw + wh], [p, cy + off + ww / 2, zw + wh]], uv); M.box('darkwood', [p, cy + off, zw - .05], [.12, ww + .2, .12]); M.box('darkwood', [p, cy + off, zw + wh + .05], [.12, ww + .2, .12]); }
+    }
+  }
+  // ── organic shapes (smooth shaded): value noise, a grid of shared vertices, curved tubes and lumpy blobs ──
+  function hash3(x, y, z) { let h = (x * 374761393 + y * 668265263 + z * 1274126177) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
+  function vnoise(x, y, z) {
+    const X = Math.floor(x), Y = Math.floor(y), Z = Math.floor(z), u = x - X, v = y - Y, w = z - Z, f = t => t * t * (3 - 2 * t), a = f(u), b = f(v), c = f(w);
+    const L = (i, j, k) => hash3(X + i, Y + j, Z + k), mix = (p, q, t) => p + (q - p) * t;
+    return mix(mix(mix(L(0, 0, 0), L(1, 0, 0), a), mix(L(0, 1, 0), L(1, 1, 0), a), b), mix(mix(L(0, 0, 1), L(1, 0, 1), a), mix(L(0, 1, 1), L(1, 1, 1), a), b), c) * 2 - 1;
+  }
+  // G[i][j] points (Blender coords), U[i][j] uvs; normals averaged over the grid (wrapJ: the last column repeats the first)
+  function smoothGrid(M, m, G, U, wrapJ, NG) {
+    const P = M.part(m), base = P.p.length / 3, R = G.length, C = G[0].length;
+    for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) {
+      const jm = wrapJ ? (j === 0 ? C - 2 : j - 1) : Math.max(0, j - 1), jp = wrapJ ? (j === C - 1 ? 1 : j + 1) : Math.min(C - 1, j + 1);
+      const im = Math.max(0, i - 1), ip = Math.min(R - 1, i + 1);
+      let n = cross(sub(G[i][jp], G[i][jm]), sub(G[ip][j], G[im][j]));
+      if (Math.hypot(...n) < 1e-9) { const k = i === 0 ? 1 : R - 2; n = cross(sub(G[k][jp], G[k][jm]), sub(G[i === 0 ? k + 1 : k - 1][j], G[k][j])); if (i === 0) n = n.map(v => -v); }
+      n = NG ? NG[i][j] : norm(n); const q = G[i][j];
+      P.p.push(q[0], q[2], q[1]); P.n.push(n[0], n[2], n[1]); P.uv.push(U[i][j][0], U[i][j][1]);
+    }
+    for (let i = 0; i < R - 1; i++) for (let j = 0; j < C - 1; j++) { const a = base + i * C + j, b = a + 1, c = a + C, d = c + 1; P.i.push(a, b, d, a, d, c); }
+  }
+  // Catmull-Rom through pts, n samples per span
+  function spline(pts, n) {
+    const out = [];
+    for (let k = 0; k < pts.length - 1; k++) {
+      const p0 = pts[Math.max(0, k - 1)], p1 = pts[k], p2 = pts[k + 1], p3 = pts[Math.min(pts.length - 1, k + 2)];
+      for (let s = 0; s < n; s++) { const t = s / n, t2 = t * t, t3 = t2 * t; out.push([0, 1, 2].map(a => .5 * (2 * p1[a] + (-p0[a] + p2[a]) * t + (2 * p0[a] - 5 * p1[a] + 4 * p2[a] - p3[a]) * t2 + (-p0[a] + 3 * p1[a] - 3 * p2[a] + p3[a]) * t3))); }
+    }
+    out.push(pts[pts.length - 1].slice()); return out;
+  }
+  const lerpArr = (A, t) => { const f = t * (A.length - 1), i = Math.min(A.length - 2, Math.floor(f)), u = f - i; return A[i] + (A[i + 1] - A[i]) * u; };
+  // a gnarled tube along a curve: radius profile R (sampled along), twisting ridges, noise; o.seed, o.ridge, o.k, o.twist
+  function curveTube(M, m, pts, R, o = {}) {
+    const C = o.segs || 16, path = spline(pts, o.n || 5), Np = path.length, G = [], U = [];
+    let N = null, len = 0;
+    for (let i = 0; i < Np; i++) {
+      const T = norm(sub(path[Math.min(Np - 1, i + 1)], path[Math.max(0, i - 1)]));
+      if (!N) { const a = Math.abs(T[2]) < .9 ? [0, 0, 1] : [1, 0, 0]; N = norm(cross(cross(T, a), T)); }
+      else { const d = N[0] * T[0] + N[1] * T[1] + N[2] * T[2]; N = norm([N[0] - T[0] * d, N[1] - T[1] * d, N[2] - T[2] * d]); }
+      const Bv = cross(T, N), t = i / (Np - 1), r = lerpArr(R, t);
+      if (i) len += Math.hypot(...sub(path[i], path[i - 1]));
+      const row = [], urow = [];
+      for (let j = 0; j <= C; j++) {
+        const th = (j % C) / C * Math.PI * 2, rid = (o.ridge ?? .12) * Math.sin((o.k ?? 6) * th + (o.twist ?? .3) * len) + (o.bump ?? .1) * vnoise(Math.cos(th) * 1.3 + (o.seed || 0), Math.sin(th) * 1.3, len * .6);
+        const rr = r * (1 + rid), c = path[i];
+        row.push([c[0] + rr * (Math.cos(th) * N[0] + Math.sin(th) * Bv[0]), c[1] + rr * (Math.cos(th) * N[1] + Math.sin(th) * Bv[1]), c[2] + rr * (Math.cos(th) * N[2] + Math.sin(th) * Bv[2])]);
+        urow.push([j / C * Math.max(1, Math.round(r * 3)), len / 1.6]);
+      }
+      G.push(row); U.push(urow);
+    }
+    smoothGrid(M, m, G, U, true);
+    if (o.cap !== false) { const c = path[Np - 1]; M.poly(m, G[Np - 1].slice(0, C).map(q => q).reverse().map(q => [q[0] * .3 + c[0] * .7, q[1] * .3 + c[1] * .7, q[2] * .3 + c[2] * .7])); }
+    return path;
+  }
+  // lumpy ellipsoid (rocks, foliage clumps, moss): radii rx, ry, rz; amp/freq of the lumps; flat: squash the underside
+  function blob(M, m, c, rx, ry, rz, o = {}) {
+    const S = o.segs || 14, Rn = o.rings || 8, G = [], U = [], NG = [], amp = o.amp ?? .18, fq = o.freq ?? 1.6, sd = o.seed || 0;
+    for (let i = 0; i <= Rn; i++) {
+      const th = Math.PI * i / Rn, row = [], urow = [], nrow = [];
+      for (let j = 0; j <= S; j++) {
+        const ph = 2 * Math.PI * (j % S) / S, d = [Math.sin(th) * Math.cos(ph), Math.sin(th) * Math.sin(ph), Math.cos(th)];
+        // lumps ease toward the pole's own value near the poles (else the first ring folds over the pole or rings it
+        // with a crater: dark spots on top)
+        const lump = q => 1 + amp * vnoise(q[0] * fq + sd, q[1] * fq + sd * .7, q[2] * fq - sd * 1.3) + amp * .5 * vnoise(q[0] * fq * 2.7 + sd, q[1] * fq * 2.7, q[2] * fq * 2.7 + 5);
+        const kp = lump([0, 0, d[2] >= 0 ? 1 : -1]), ea = Math.sin(th) ** 1.5;
+        let k = kp + (lump(d) - kp) * ea;
+        let z = d[2] * rz * k; if (o.flat && z < 0) z *= o.flat;
+        row.push([c[0] + d[0] * rx * k, c[1] + d[1] * ry * k, c[2] + z]); urow.push([j / S * (o.uvs || 3), i / Rn * (o.uvs || 3) * .6]);
+        nrow.push(norm([-d[0] / rx, -d[1] / ry, -d[2] / rz])); // the ellipsoid's own normal (also at the poles), in smoothGrid's sense
+      }
+      G.push(row); U.push(urow); NG.push(nrow);
+    }
+    // lumps tilt the normals: blend the grid normals in, except at the poles
+    const P0 = M.part(m).p.length; smoothGrid(M, m, G, U, true);
+    const Pn = M.part(m).n;
+    for (let i = 0, v = P0; i <= Rn; i++) for (let j = 0; j <= S; j++, v += 3) {
+      const g = [Pn[v], Pn[v + 2], Pn[v + 1]], e = NG[i][j], w = (i === 0 || i === Rn || !Number.isFinite(g[0]) || Math.hypot(...g) < .5) ? 0 : .6;
+      const nb = norm([e[0] * (1 - w) + g[0] * w, e[1] * (1 - w) + g[1] * w, e[2] * (1 - w) + g[2] * w]); Pn[v] = nb[0]; Pn[v + 1] = nb[2]; Pn[v + 2] = nb[1];
     }
   }
   // Ashigaru long hall: banner on the front wall to one side of the door (side -1 left, 1 right)
@@ -849,6 +937,57 @@
       M.tube('straw', [0, -.08, 1.25], [0, .12, 1.25], .62, .62, 16);
       for (const [r, m, k] of [[.46, 'red', 1], [.3, 'plaster', 2], [.14, 'red', 3]]) M.tube(m, [0, -.08 - .005 * k, 1.25], [0, -.085 - .005 * k, 1.25], r, r, 16);
     },
+    // ── Ronin (the forgotten clan) ──
+    // the giant bonsai of the plaza: a twisted old trunk with roots clasping a mossy rock mound, long branches ending
+    // in layered cloud pads of pine needles. ~14 m tall, crown ~26 m across; base at the origin (mound 2.3 m high)
+    ronin_bonsai(M) {
+      const H0 = 2.25, moundZ = r => 2.4 * Math.sqrt(Math.max(0, 1 - (r / 7) ** 2));
+      // rock mound, boulders round its foot, moss, low shrubs, a kerb of flat stones
+      blob(M, 'granite', [0, 0, -.3], 7, 6.8, 2.6, { amp: .1, freq: 1.4, seed: 3, segs: 28, rings: 10, flat: .2, uvs: 5 });
+      for (let k = 0; k < 15; k++) { const a = k / 15 * 6.28 + .3 * Math.sin(k * 3.1), r = 6.2 + .9 * Math.sin(k * 1.7), s = 1 + .6 * Math.abs(Math.sin(k * 2.3)); blob(M, 'granite', [Math.cos(a) * r, Math.sin(a) * r, s * .35], s * 1.25, s, s * .85, { amp: .22, seed: k * 7.1, segs: 12, rings: 7, flat: .3 }); }
+      for (let k = 0; k < 9; k++) { const a = k / 9 * 6.28 + 1.1, r = 3 + 1.6 * Math.abs(Math.sin(k * 1.9)); blob(M, 'moss', [Math.cos(a) * r, Math.sin(a) * r, moundZ(r) - .25], 1.6, 1.3, .45, { amp: .25, seed: 40 + k, segs: 10, rings: 6 }); }
+      for (let k = 0; k < 11; k++) { const a = k / 11 * 6.28 + .45, r = 7.3 + .5 * Math.sin(k * 2.9), s = .7 + .35 * Math.abs(Math.sin(k * 1.3)); blob(M, 'needles_dark', [Math.cos(a) * r, Math.sin(a) * r, s * .5], s * 1.2, s * 1.1, s * .8, { amp: .3, freq: 2.4, seed: 60 + k, segs: 10, rings: 6 }); }
+      for (let k = 0; k < 30; k++) { const a = k / 30 * 6.28, r = 8.6; M.box('stone', [Math.cos(a) * r, Math.sin(a) * r, .1], [1.6, .9, .25], a + Math.PI / 2); }
+      // trunk: flared base, leaning and twisting up to the crown
+      const trunk = [[0, 0, H0 - .6], [-.5, .2, H0 + 1.4], [.7, .5, H0 + 3.4], [1.9, -.1, H0 + 5], [1.3, -.6, H0 + 6.8], [-.3, -.3, H0 + 8.2], [-1.5, .4, H0 + 9.6], [-.9, .7, H0 + 10.9], [.1, .4, H0 + 11.8]];
+      const tp = curveTube(M, 'bark_old', trunk, [3.6, 2.7, 2.25, 1.95, 1.7, 1.45, 1.22, 1.0, .78, .56], { segs: 24, n: 6, ridge: .17, k: 7, twist: .42, bump: .12, seed: 1 });
+      const at = z => tp.reduce((b, p) => Math.abs(p[2] - z) < Math.abs(b[2] - z) ? p : b, tp[0]);
+      // roots over the mound
+      for (let k = 0; k < 9; k++) {
+        const a = k / 9 * 6.28 + .35, P = [];
+        for (const r of [1.2, 2.4, 3.6, 4.8, 5.9, 6.8]) P.push([Math.cos(a + .06 * r * Math.sin(k)) * r, Math.sin(a + .06 * r * Math.sin(k)) * r, Math.max(.05, moundZ(r) + .15) + (r < 2 ? H0 - moundZ(r) - .2 : 0)]);
+        curveTube(M, 'bark_old', P, [.95, .7, .52, .36, .24, .13], { segs: 10, n: 3, ridge: .1, k: 3, twist: .5, bump: .15, seed: 10 + k });
+      }
+      // branches -> cloud pads [start z on the trunk, points..., pad: [x, y, z, rx, ry, h]]
+      const branches = [
+        [H0 + 4.2, [[5, -2.2, H0 + 4.9], [9, -3.2, H0 + 4.6], [12.4, -2.6, H0 + 5.3]], [12.8, -2.6, H0 + 5.9, 4.6, 3.6, 1.9], [[7.4, -4.1, H0 + 5.4, 2.4, 2, 1.2]]],
+        [H0 + 5.3, [[-4, 1.6, H0 + 5.8], [-8, 2.1, H0 + 5.9], [-11.6, 1, H0 + 6.6]], [-12, 1, H0 + 7.2, 4.4, 3.5, 1.8], [[-6.8, 3.2, H0 + 6.6, 2.2, 1.9, 1.1]]],
+        [H0 + 7, [[3.8, 3, H0 + 7.8], [7.4, 5, H0 + 8.2]], [7.9, 5.3, H0 + 8.9, 3.7, 3, 1.6], []],
+        [H0 + 8, [[-3.9, -3.4, H0 + 8.8], [-7, -5.5, H0 + 9]], [-7.5, -5.9, H0 + 9.6, 3.5, 2.9, 1.5], []],
+        [H0 + 9, [[3.4, -4, H0 + 9.6], [5.6, -6.1, H0 + 10.1]], [6, -6.4, H0 + 10.7, 3.1, 2.6, 1.4], []],
+        [H0 + 10.2, [[-3.8, 3, H0 + 11], [-6, 4.6, H0 + 11.4]], [-6.4, 4.8, H0 + 12, 3.2, 2.7, 1.4], []],
+        [H0 + 6.2, [[2.8, 4.6, H0 + 6.4], [4, 8.2, H0 + 6.2]], [4.2, 8.8, H0 + 6.9, 3, 2.6, 1.3], []]
+      ];
+      const pads = [[.2, .5, H0 + 12.6, 4.2, 3.6, 2.2], [2.6, -1.6, H0 + 11.2, 2.8, 2.4, 1.5], [-2.8, 2.2, H0 + 9.6, 2.6, 2.2, 1.4], [3.2, 2.2, H0 + 10.4, 2.6, 2.3, 1.4], [-3.4, -2, H0 + 7.4, 2.4, 2.1, 1.3]];
+      branches.forEach(([z0, pts, pad, extra], bi) => {
+        const s = at(z0), wig = [s];
+        [s, ...pts].forEach((q, k, A) => { if (!k) return; const p0 = A[k - 1]; wig.push([(p0[0] + q[0]) / 2 + .7 * Math.sin(bi * 2.3 + k), (p0[1] + q[1]) / 2 + .7 * Math.cos(bi * 1.7 + k), (p0[2] + q[2]) / 2 + .5 * Math.sin(bi + k * 1.9)], q); });
+        curveTube(M, 'bark_old', wig, [1.05, .8, .6, .44, .3], { segs: 14, n: 3, ridge: .1, k: 4, twist: .6, bump: .12, seed: 20 + bi });
+        pads.push(pad, ...extra);
+        for (const e of extra) { const q = pts[Math.floor(pts.length / 2)]; curveTube(M, 'bark_old', [q, [(q[0] + e[0]) / 2, (q[1] + e[1]) / 2, q[2] + .2], [e[0], e[1], e[2] - .3]], [.24, .18, .12], { segs: 8, n: 3, ridge: .05, bump: .1, seed: 30 + bi }); }
+      });
+      // a cloud pad: a dark flattened base and lighter needle tufts over its top and rim
+      pads.forEach(([x, y, z, rx, ry, h], pi) => {
+        blob(M, 'needles_dark', [x, y, z], rx * .96, ry * .96, h * .72, { amp: .22, freq: 1.8, seed: 80 + pi * 3, segs: 18, rings: 9, flat: .6, uvs: 4 });
+        blob(M, 'needles_dark', [x + .3 * rx * Math.sin(pi), y + .3 * ry * Math.cos(pi), z - h * .55], rx * .78, ry * .74, h * .42, { amp: .26, freq: 2.1, seed: 120 + pi, segs: 16, rings: 7, uvs: 4 }); // the drooping layer under it
+        const n = Math.round(14 + rx * ry * 1.5);
+        for (let k = 0; k < n; k++) { // tufts packed over the top (sunflower spiral), the outer ones lower: a rounded cloud
+          const a = k * 2.39996 + pi, f = Math.sqrt((k + .5) / n), px = x + Math.cos(a) * rx * .9 * f, py = y + Math.sin(a) * ry * .9 * f;
+          const top = z + h * .55 * Math.sqrt(Math.max(0, 1 - f * f)) + .05, r = .62 + .42 * hash3(k, pi, 3);
+          blob(M, f > .78 ? 'needles_dark' : 'needles', [px, py, top], r * 1.2, r * 1.1, r * .7, { amp: .34, freq: 2.8, seed: pi * 13 + k, segs: 9, rings: 5, flat: .5 });
+        }
+      });
+    },
     // stone toro lantern for paths and stairs: the light box glows (no real light, so any number is cheap)
     sam_stone_lantern(M) {
       M.cyl('stone', [0, 0, 0], .5, .22, 6, .42); M.cyl('stone', [0, 0, .22], .17, 1.05, 6, .14);
@@ -954,5 +1093,5 @@
     kit_stairs_stone: stairs(3, 6.4, 4, 10, 'stone'), kit_stairs_wood: stairs(2.6, 6.4, 4, 12, 'wood'),
     kit_stairs_cliff: [{ x: 0, z: -10.6 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'stone' }, { x: 0, z: 0, halfX: 1.45, halfZ: 1.05, y: 6, surface: 'stone' },
       { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }], ashi_bridge: [{ x: 0, z: 0, halfX: 1.55, halfZ: 10.3, y0: 0, y1: 2.4 }] };
-  window.SamuraiKit = { build, setLightFactor, decks, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B };
+  window.SamuraiKit = { build, setLightFactor, decks, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();
