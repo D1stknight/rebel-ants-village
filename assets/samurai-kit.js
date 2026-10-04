@@ -4,7 +4,7 @@
 // Doorways are lit recesses; link a room by adding a Door (admin > Doors) in front of one.
 /* global BABYLON */
 (function () {
-  const TILE = { roof: [1.6, 1.4], wood: [1.6, 1.6], darkwood: [1.6, 1.6], plaster: [3, 3], stone: [2.4, 2.4], thatch: [2, 1.6], bark: [1.4, 1.6], earth: [4, 4], shoji: [1.2, 1.5] };
+  const TILE = { roof: [1.6, 1.4], roof_brown: [1.6, 1.4], wood: [1.6, 1.6], darkwood: [1.6, 1.6], plaster: [3, 3], stone: [2.4, 2.4], thatch: [2, 1.6], bark: [1.4, 1.6], earth: [4, 4], shoji: [1.2, 1.5] };
   const tileOf = m => TILE[m] || [1, 1];
 
   // ── textures (drawn once on small canvases) ─────────────────────────────
@@ -32,6 +32,7 @@
     const S = 256, T = {};
     let n = noise(S, 4, 4, 1);
     T.roof = pixelTex(scene, 'roof', S, (x, y, i) => { const col = (x * 8) % 1, row = (y * 6) % 1; let f = (.55 + .45 * Math.sin(col * Math.PI)) * (Math.min(1, row / .18) * .35 + .65) * (.85 + .3 * n[i]); if (col < .04 || col > .96) f *= .45; return mul([52, 58, 66], f); });
+    T.roof_brown = pixelTex(scene, 'roof_brown', S, (x, y, i) => { const col = (x * 8) % 1, row = (y * 6) % 1; let f = (.55 + .45 * Math.sin(col * Math.PI)) * (Math.min(1, row / .18) * .35 + .65) * (.85 + .3 * n[i]); if (col < .04 || col > .96) f *= .45; return mul([98, 52, 42], f); });
     const gr = noise(S, 3, 4, 2);
     T.wood = pixelTex(scene, 'wood', S, (x, y, i) => { const st = Math.sin(x * 200 + gr[i] * 6) * .5 + .5; let f = .75 + .18 * st + .12 * gr[i]; if ((x * 5) % 1 < .03) f *= .45; return mul([96, 62, 38], f); });
     T.darkwood = pixelTex(scene, 'darkwood', S, (x, y, i) => { const st = Math.sin(x * 200 + gr[i] * 6) * .5 + .5; let f = .75 + .18 * st + .12 * gr[i]; if ((x * 5) % 1 < .03) f *= .45; return mul([43, 26, 15], f); });
@@ -68,6 +69,10 @@
     T.noren_sohei = bannerTex(scene, 'noren_sohei', '#c38d2a', '#f8edd2', 'logo:sohei', false, true);
     T.noren_sohei_books = bannerTex(scene, 'noren_sohei_books', '#c38d2a', '#f8edd2', 'books', false, true);
     T.noren_sohei_dots = bannerTex(scene, 'noren_sohei_dots', '#a8432a', '#f8edd2', 'dots', false, true);
+    T.noren_ashigaru = bannerTex(scene, 'noren_ashigaru', '#8c1c1c', '#d8b45a', 'logo:ashigaru', false, true);
+    T.banner_ashi_scroll = bannerTex(scene, 'ashi_scroll', '#8c1c1c', '#d8b45a', 'scroll');
+    T.banner_ashi_board = bannerTex(scene, 'ashi_board', '#8c1c1c', '#d8b45a', 'board');
+    T.ashi_door = bannerTex(scene, 'ashi_door', '#141012', '#d8b45a', 'logo:ashigaru');
     return T;
   }
   function bannerTex(scene, name, bg, fg, icon, sail, wide) {
@@ -115,7 +120,7 @@
   // Faction emblems on banners: cloth and emblem colours per faction (banner_<faction> materials)
   const FACTION_BANNERS = {
     samurai: ['#961816', '#ecd6aa'], wokou: ['#1c2a4c', '#d9a743'], yamabushi: ['#25402d', '#d6a640'], ronin: ['#0e0d10', '#9a161a'],
-    shogun: ['#2e2147', '#d8b04a'], bushi: ['#1b2a48', '#cfae5c'], buke: ['#5e1a20', '#d8b35c'], ashigaru: ['#24402a', '#d9c98e'],
+    shogun: ['#2e2147', '#d8b04a'], bushi: ['#1b2a48', '#cfae5c'], buke: ['#5e1a20', '#d8b35c'], ashigaru: ['#8c1c1c', '#d8b45a'],
     kenshi: ['#1f5753', '#d8b450'], sohei: ['#c38d2a', '#f8edd2'], warrior: ['#6b2a1a', '#e2c08a']
   };
   const logoImgs = {};
@@ -140,6 +145,8 @@
     noren_kenshi: { tex: 'noren_kenshi' }, noren_kenshi_scroll: { tex: 'noren_kenshi_scroll' }, noren_kenshi_map: { tex: 'noren_kenshi_map' },
     noren_sohei: { tex: 'noren_sohei' }, noren_sohei_books: { tex: 'noren_sohei_books' }, noren_sohei_dots: { tex: 'noren_sohei_dots' },
     bronze: { col: [.3, .36, .27], spec: [.6, .55, .4], power: 40 },
+    roof_brown: { tex: 'roof_brown' }, straw: { col: [.78, .64, .36] },
+    noren_ashigaru: { tex: 'noren_ashigaru' }, banner_ashi_scroll: { tex: 'banner_ashi_scroll' }, banner_ashi_board: { tex: 'banner_ashi_board' }, ashi_door: { tex: 'ashi_door' },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
@@ -319,6 +326,30 @@
       if (ax === 'x') { M.quad('shoji', [[cx + off - ww / 2, p, zw], [cx + off + ww / 2, p, zw], [cx + off + ww / 2, p, zw + wh], [cx + off - ww / 2, p, zw + wh]], uv); M.box('darkwood', [cx + off, p, zw - .05], [ww + .2, .12, .12]); M.box('darkwood', [cx + off, p, zw + wh + .05], [ww + .2, .12, .12]); }
       else { M.quad('shoji', [[p, cy + off + ww / 2, zw], [p, cy + off - ww / 2, zw], [p, cy + off - ww / 2, zw + wh], [p, cy + off + ww / 2, zw + wh]], uv); M.box('darkwood', [p, cy + off, zw - .05], [.12, ww + .2, .12]); M.box('darkwood', [p, cy + off, zw + wh + .05], [.12, ww + .2, .12]); }
     }
+  }
+  // Ashigaru long hall: banner on the front wall to one side of the door (side -1 left, 1 right)
+  function ashiHall(M, mat, side) {
+    const W = 15, D = 9, Z = .8;
+    M.block('stone', 0, 0, 0, W + 1.2, D + 1.2, Z); steps(M, 0, -(D + 1.2) / 2, Z, 4, 2);
+    walls(M, 0, 0, Z, W, D, 4.2, { door: [3.2, 3.1], windows: [['front', -side * 4.8, Z + 1.3, 2.4, 1.5], ['left', -1.5, Z + 1.3, 2.6, 1.5], ['right', 1.5, Z + 1.3, 2.6, 1.5], ['back', 0, Z + 1.3, 3, 1.5]] });
+    banner(M, side * 4.6, -D / 2 - .18, Z + 4, 3.2, 3.6, mat);
+    noren(M, 0, -D / 2 - .2, Z + 3.05, 3.4, .9, 'noren_ashigaru');
+    M.roof(0, 0, Z + 4.6, W + 3, D + 3, 3.2, { lift: .7 });
+    for (const sd of [-1, 1]) lantern(M, sd * 2.2, -D / 2 - .6, Z + 3.3, .22);
+    for (const [x, y] of [[-side * 6.6, -D / 2 - 1.3], [-side * 5.6, -D / 2 - 1.4]]) M.block('wood', x, y, 0, .9, .8, .8);
+    M.cyl('wood', [-side * 7.4, -D / 2 - .9, 0], .35, .85, 10);
+  }
+  function ashiPalisade(M, withBanner) {
+    const L = 8, n = 15;
+    for (let i = 0; i < n; i++) { const x = -L / 2 + .27 + i * (L - .54) / (n - 1), h = 4.3 + .4 * Math.sin(i * 2.7) + .2 * Math.cos(i * 1.3); M.cyl('bark', [x, 0, -.4], .27, h + .4, 7); M.cyl('bark', [x, 0, h], .27, .8, 7, .02); }
+    for (const z of [1.4, 3.3]) M.box('darkwood', [0, .32, z], [L, .14, .24]);
+    for (const x of [-2.6, 2.6]) M.rod('wood', [x, .35, 3.1], [x, 2.6, -.2], .12, 6);
+    if (withBanner) banner(M, 0, -.3, 4, 1.6, 2.8, 'banner_ashigaru');
+  }
+  // a pile of logs along x (length L, n layers)
+  function ashiLogs(M, cx, cy, z0, L, n) {
+    for (let k = 0; k < n; k++) { const m = n - k + 1; for (let i = 0; i < m; i++) { const y = cy + (i - (m - 1) / 2) * .5; M.rod('bark', [cx - L / 2, y, z0 + .25 + k * .43], [cx + L / 2, y, z0 + .25 + k * .43], .24, 8); } }
+    for (const sd of [-1, 1]) for (const sy of [-1, 1]) M.block('darkwood', cx + sd * (L / 2 - .4), cy + sy * ((n + 1) * .25 + .1), z0, .14, .14, n * .45 + .2);
   }
   function steps(M, cx, yEdge, zTop, width, n, tread = .45) { for (let i = 0; i < n; i++) M.block('stone', cx, yEdge - (i + .5) * tread, 0, width, tread, zTop - i * zTop / n); }
 
@@ -719,6 +750,105 @@
     kit_stairs_stone(M) { buildStairs(M, 'kit_stairs_stone'); },
     kit_stairs_wood(M) { buildStairs(M, 'kit_stairs_wood'); },
     kit_stairs_cliff(M) { buildStairs(M, 'kit_stairs_cliff'); },
+    // ── Ashigaru (foot soldiers' round fort): white plaster and timber, dark tile and thatch, sharpened stakes,
+    //    crimson + gold banners with the sprout emblem ──
+    // great dojo on a stone plinth: open front between red curtains, a black hanging with the emblem in the doorway
+    ashi_great_dojo(M) {
+      const W = 24, D = 15, Z = 1.4;
+      M.block('stone', 0, 0, 0, W + 1.6, D + 1.6, Z); steps(M, 0, -(D + 1.6) / 2, Z, 8, 4); M.block('wood', 0, 0, Z, W + .8, D + .8, .12);
+      walls(M, 0, 0, Z + .12, W, D, 5.4, { door: [7, 4.4], windows: [['left', -3, Z + 2.2, 3, 1.6], ['left', 3, Z + 2.2, 3, 1.6], ['right', -3, Z + 2.2, 3, 1.6], ['right', 3, Z + 2.2, 3, 1.6], ['back', -7, Z + 2.2, 3, 1.6], ['back', 7, Z + 2.2, 3, 1.6]] });
+      M.quad('ashi_door', [[-2.2, -D / 2 + 1.2, Z + .3], [2.2, -D / 2 + 1.2, Z + .3], [2.2, -D / 2 + 1.2, Z + 4.4], [-2.2, -D / 2 + 1.2, Z + 4.4]]);
+      for (const sd of [-1, 1]) { // red curtains gathered to the sides of the opening
+        M.quad('cloth', [[sd * 3.5, -D / 2 - .2, Z + 4.45], [sd * 1.7, -D / 2 - .25, Z + 4.45], [sd * 2.9, -D / 2 - .3, Z + 1.6], [sd * 3.5, -D / 2 - .22, Z + .4]]);
+        M.quad('cloth', [[sd * 3.5, -D / 2 - .22, Z + .4], [sd * 2.9, -D / 2 - .3, Z + 1.6], [sd * 3.2, -D / 2 - .26, Z + .3], [sd * 3.5, -D / 2 - .2, Z + .3]]);
+      }
+      M.quad('cloth', [[-3.6, -D / 2 - .24, Z + 4.5], [3.6, -D / 2 - .24, Z + 4.5], [3.6, -D / 2 - .24, Z + 3.8], [-3.6, -D / 2 - .24, Z + 3.8]]);
+      for (const sd of [-1, 1]) for (const x of [6, 9.6]) banner(M, sd * x, -D / 2 - .18, Z + 4.9, 2, 3.6, 'banner_ashigaru');
+      M.roof(0, 0, Z + 5.5, W + 3.6, D + 3.6, 3.6, { lift: .8 });
+      for (const sd of [-1, 1]) lantern(M, sd * 4.4, -D / 2 - .6, Z + 4.6);
+      for (const sd of [-1, 1]) { M.block('wood', sd * 6.4, -D / 2 - 1.9, 0, 1, .8, .8); M.block('wood', sd * 6.6, -D / 2 - 1.8, .8, .8, .6, .6); M.cyl('wood', [sd * 7.6, -D / 2 - 1.5, 0], .35, .8, 10); }
+    },
+    // long hall (archive / strategy hall): plaster and timber on a stone base, a big banner beside the lit doorway
+    ashi_archive(M) { ashiHall(M, 'banner_ashi_scroll', -1); },
+    ashi_strategy_hall(M) { ashiHall(M, 'banner_ashi_board', 1); },
+    ashi_house(M) { B.sam_house(M); noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ashigaru'); },
+    ashi_house_tile(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ashigaru'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_ashigaru'); },
+    ashi_house_brown(M) { M.remap = { thatch: 'roof_brown' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ashigaru'); },
+    ashi_watchtower(M) { M.remap = { banner_red: 'banner_ashigaru' }; B.sam_watchtower(M); M.remap = null; banner(M, 0, -2.1, 7.6, 1.8, 3.4, 'banner_ashigaru'); },
+    ashi_banner_pole(M) { M.remap = { banner_red: 'banner_ashigaru' }; B.sam_banner_pole(M); },
+    // gate between two square towers (stone base, timber walls with a big banner, gallery, tiled roof); a roofed
+    // gateway with open doors between them
+    ashi_gate(M) {
+      const OW = 6, S = 4.6, H = 7.4;
+      for (const sd of [-1, 1]) {
+        const x = sd * (OW / 2 + S / 2 + .2);
+        M.block('stone', x, 0, 0, S + .5, S + .5, 1.6);
+        for (const px of [-1, 1]) for (const py of [-1, 1]) M.block('darkwood', x + px * (S / 2 - .15), py * (S / 2 - .15), 1.6, .3, .3, H - 1.6);
+        for (const [cx, cy, sx, sy] of [[x, -S / 2 + .15, S - .3, .2], [x, S / 2 - .15, S - .3, .2], [x - S / 2 + .15, 0, .2, S - .3], [x + S / 2 - .15, 0, .2, S - .3]]) { M.block('wood', cx, cy, 1.6, sx, sy, H - 2.8); M.block('darkwood', cx, cy, 1.6 + (H - 2.8) / 2, sx + .06, sy + .06, .18); }
+        M.block('wood', x, 0, H - 1.2, S + 1, S + 1, .25);
+        for (const [cx, cy, sx, sy] of [[x, -(S + 1) / 2, S + 1, .12], [x, (S + 1) / 2, S + 1, .12], [x - (S + 1) / 2, 0, .12, S + 1], [x + (S + 1) / 2, 0, .12, S + 1]]) { M.block('darkwood', cx, cy, H - .55, sx, sy, .12); M.block('darkwood', cx, cy, H - .95, sx, sy, .1); }
+        for (const px of [-1, 1]) for (const py of [-1, 1]) M.block('darkwood', x + px * (S + .8) / 2, py * (S + .8) / 2, H - 1, .16, .16, 2.2);
+        M.roof(x, 0, H + 1.1, S + 2.6, S + 2.6, 1.9, { lift: .5, ornaments: false });
+        banner(M, x, -S / 2 - .05, H - 1.5, 2.4, 3.6, 'banner_ashigaru');
+        lantern(M, x - sd * (S / 2 + .3), -S / 2 - .3, H - 1.3, .24);
+      }
+      for (const sd of [-1, 1]) for (const y of [-1.3, 1.3]) M.block('darkwood', sd * (OW / 2 + .1), y, 0, .4, .4, 5.4);
+      for (const y of [-1.3, 1.3]) M.box('darkwood', [0, y, 5.2], [OW + 1, .4, .4]);
+      M.block('wood', 0, 0, 5.4, OW + 1.2, 3.2, .3);
+      for (const sd of [-1, 1]) M.block('wood', sd * (OW / 2 - .15), 2.75, 0, .2, 2.7, 4.6); // doors swung open, back against the towers
+      M.roof(0, 0, 5.75, OW + 2.6, 4.6, 1.8, { lift: .6 });
+      noren(M, 0, -1.55, 5.15, OW - .4, 1.2, 'noren_ashigaru');
+    },
+    // 8 m of palisade: sharpened stakes, two rails and raking props on the inside (+y); outside faces -y
+    ashi_palisade(M) { ashiPalisade(M, false); },
+    ashi_palisade_banner(M) { ashiPalisade(M, true); },
+    // plank bridge over the moat, 20 m: rises 2.4 m from the outer bank (-y end, at the origin) to the gate
+    ashi_bridge(M) {
+      const L = 20, Wd = 3.4, H = 2.4, a = Math.atan2(H, L), Ls = Math.hypot(L, H), zAt = y => H * (y + L / 2) / L;
+      M.box('wood', [0, 0, H / 2 - .13], [Wd, Ls, .26], 0, a);
+      for (let i = 0; i < 46; i++) { const y = -L / 2 + .25 + i * (L - .5) / 45; M.box('darkwood', [0, y, zAt(y) + .005], [Wd, .05, .03], 0, a); }
+      for (const sd of [-1, 1]) M.box('darkwood', [sd * (Wd / 2 - .1), 0, H / 2 - .45], [.24, Ls, .32], 0, a);
+      for (let i = 0; i <= 8; i++) {
+        const y = -L / 2 + .3 + i * (L - .6) / 8, z = zAt(y);
+        for (const sd of [-1, 1]) { M.block('darkwood', sd * (Wd / 2 + .06), y, z - .4, .2, .2, 1.6); M.cyl('darkwood', [sd * (Wd / 2 + .06), y, z + 1.2], .1, .08, 6, .03); }
+        if (i > 1 && i < 8) for (const sd of [-1, 1]) M.block('darkwood', sd * (Wd / 2 - .3), y, -4.2, .3, .3, z + 4); // piles down into the ditch
+      }
+      for (const sd of [-1, 1]) for (const dz of [1.1, .6]) M.rod('wood', [sd * (Wd / 2 + .06), -L / 2 + .3, zAt(-L / 2 + .3) + dz], [sd * (Wd / 2 + .06), L / 2 - .3, zAt(L / 2 - .3) + dz], .06, 5);
+    },
+    // open workshop shed: thatched roof on posts, a workbench with tools, a log pile, a sawhorse
+    ashi_workshop(M) {
+      const W = 10, D = 7;
+      M.block('earth', 0, 0, 0, W + .6, D + .6, .12);
+      for (const x of [-W / 2 + .3, 0, W / 2 - .3]) for (const y of [-D / 2 + .3, D / 2 - .3]) M.block('wood', x, y, 0, .32, .32, y < 0 ? 3.6 : 3.3);
+      for (const y of [-D / 2 + .3, D / 2 - .3]) M.box('wood', [0, y, y < 0 ? 3.6 : 3.3], [W + .4, .3, .3]);
+      M.roof(0, 0, 3.6, W + 2.6, D + 2.6, 2.6, { lift: .3, mat: 'thatch', fascia: 'darkwood', ornaments: false, gable: false });
+      M.block('wood', 0, D / 2 - .3, 0, W - .6, .2, 2); // back wall boards
+      M.block('wood', -1.5, 1.6, 0, 4, 1.1, .9); M.block('darkwood', -1.5, 1.6, .9, 4.2, 1.2, .1);
+      for (let i = 0; i < 5; i++) M.rod('iron', [-3.2 + i * .45, D / 2 - .45, 1.1], [-3.2 + i * .45, D / 2 - .45, 1.8], .03, 4);
+      M.block('iron', -.6, 1.5, 1, .9, .35, .25); M.cyl('wood', [-2.6, 1.6, 1], .2, .35, 8);
+      ashiLogs(M, 2.6, .8, 0, 3.4, 3);
+      for (const sd of [-1, 1]) for (const x of [-1, 1]) M.rod('wood', [-3.2 + x * .7, -1.8 + sd * .45, 0], [-3.2 + x * .7, -1.8 - sd * .2, .9], .07, 5);
+      M.box('wood', [-3.2, -1.8, .85], [2.2, .25, .25]);
+      ashiLogs(M, W / 2 + 1.2, -1, 0, 3, 2);
+    },
+    ashi_log_pile(M) { ashiLogs(M, 0, 0, 0, 4, 3); },
+    // cheval de frise: a log with crossed sharpened stakes, 3.4 m
+    ashi_barricade(M) {
+      M.rod('bark', [-1.7, 0, .75], [1.7, 0, .75], .18, 8);
+      for (let i = 0; i < 4; i++) { const x = -1.35 + i * .9; for (const sd of [-1, 1]) { M.rod('wood', [x, -sd * .9, 0], [x, sd * .7, 1.5], .07, 5); M.cyl('wood', [x, sd * .7, 1.5], .07, 0, 5, .01); } }
+    },
+    // short fence of sharpened stakes, 3 m
+    ashi_stake_fence(M) {
+      for (let i = 0; i < 9; i++) { const x = -1.35 + i * .34, h = 1.4 + .15 * Math.sin(i * 2.1); M.cyl('wood', [x, 0, 0], .15, h, 6); M.cyl('wood', [x, 0, h], .15, .35, 6, .01); }
+      for (const z of [.45, 1.05]) M.box('darkwood', [0, .12, z], [3, .08, .12]);
+    },
+    // archery target: a straw roll on a stand
+    ashi_target(M) {
+      for (const sd of [-1, 1]) M.rod('wood', [sd * .7, .35, 0], [sd * .4, 0, 1.9], .06, 5);
+      M.rod('wood', [0, .7, 0], [0, .08, 1.7], .06, 5);
+      M.tube('straw', [0, -.08, 1.25], [0, .12, 1.25], .62, .62, 16);
+      for (const [r, m, k] of [[.46, 'red', 1], [.3, 'plaster', 2], [.14, 'red', 3]]) M.tube(m, [0, -.08 - .005 * k, 1.25], [0, -.085 - .005 * k, 1.25], r, r, 16);
+    },
     // stone toro lantern for paths and stairs: the light box glows (no real light, so any number is cheap)
     sam_stone_lantern(M) {
       M.cyl('stone', [0, 0, 0], .5, .22, 6, .42); M.cyl('stone', [0, 0, .22], .17, 1.05, 6, .14);
@@ -823,6 +953,6 @@
     wok_boat: [{ x: 0, z: 0, halfX: 1.7, halfZ: 3, y: 1.05 }], wok_gangplank: [{ x: 0, z: 0, halfX: .55, halfZ: 2.5, y0: 0, y1: -2 }],
     kit_stairs_stone: stairs(3, 6.4, 4, 10, 'stone'), kit_stairs_wood: stairs(2.6, 6.4, 4, 12, 'wood'),
     kit_stairs_cliff: [{ x: 0, z: -10.6 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'stone' }, { x: 0, z: 0, halfX: 1.45, halfZ: 1.05, y: 6, surface: 'stone' },
-      { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }] };
+      { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }], ashi_bridge: [{ x: 0, z: 0, halfX: 1.55, halfZ: 10.3, y0: 0, y1: 2.4 }] };
   window.SamuraiKit = { build, setLightFactor, decks, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B };
 })();
