@@ -3356,6 +3356,45 @@ function safeStorageRemove(storage, key) {
   try { storage?.removeItem?.(key); } catch(e) {}
 }
 
+// Village layouts are big (0.4-0.9 MB each) and a browser keeps only ~5 MB per site, so once enough villages were
+// cached the newest one no longer fit and loaded empty. Layout writes go through layoutStorageSet: when storage is
+// full it drops other villages' copies that hold no unsaved edits (they download again on every visit) and old
+// backups, then retries; if it still doesn't fit, this page keeps the current village's layout in memory.
+let _layoutMemoryCache = null;
+function freeLayoutStorage(includeOwnBackup) {
+  const keys = [];
+  try { for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i)); } catch(e) { return; }
+  keys.forEach(k => {
+    let m;
+    if ((m = /^rebelAntsWorldLayout:(.+)$/.exec(k || ''))) {
+      if (m[1] === CURRENT_VILLAGE_ID) return;
+      const localAt = Number(safeStorageGet(localStorage, 'rebelAntsLayoutLocalCacheAt:' + m[1]) || 0);
+      const hardAt = Number(safeStorageGet(localStorage, 'rebelAntsLayoutHardSaveAt:' + m[1]) || 0);
+      if (localAt > hardAt) return; // that village has local edits not hard-saved yet
+    } else if ((m = /^rebelAntsLayoutBackup:(.+)$/.exec(k || ''))) {
+      if (m[1] === CURRENT_VILLAGE_ID && !includeOwnBackup) return;
+    } else if (k !== 'rebelAntsWorldLayout') return; // old un-suffixed mirror of the Hub layout
+    safeStorageRemove(localStorage, k);
+  });
+}
+function layoutStorageSet(key, json) {
+  if (key === WORLD_LAYOUT_STORAGE_KEY) _layoutMemoryCache = json;
+  if (key === 'rebelAntsWorldLayout:hub') safeStorageRemove(localStorage, 'rebelAntsWorldLayout'); // stale mirror, 0.9 MB
+  for (let pass = 0; pass < 3; pass++) {
+    try { localStorage.setItem(key, json); return true; } catch(e) {}
+    if (pass < 2) freeLayoutStorage(pass === 1);
+  }
+  safeStorageRemove(localStorage, key); // never leave an older copy behind under this key
+  console.warn('Browser storage full: layout kept in memory only for this visit:', key);
+  if (key === WORLD_LAYOUT_STORAGE_KEY && typeof showToast === 'function') showToast('Browser storage is full: Hard Save to keep layout edits');
+  return false;
+}
+function getLayoutCacheRaw() {
+  if (_layoutMemoryCache != null) return _layoutMemoryCache;
+  const raw = safeStorageGet(localStorage, WORLD_LAYOUT_STORAGE_KEY);
+  return raw || (CURRENT_VILLAGE_ID === 'hub' ? safeStorageGet(localStorage, 'rebelAntsWorldLayout') : null);
+}
+
 function clearRendererPreference() {
   safeStorageRemove(sessionStorage, RENDERER_SESSION_KEY);
   safeStorageRemove(localStorage, RENDERER_PREF_KEY);
@@ -19721,8 +19760,7 @@ function sanitizeWorldLayoutData(data, source = 'layout') {
 function persistSanitizedWorldLayoutCache(data, reason = 'dedupe') {
   try {
     const json = JSON.stringify(data, null, 2);
-    localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, json);
-    if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem('rebelAntsWorldLayout', json);
+    layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, json);
     _lastLocalCacheAt = Date.now();
     localStorage.setItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID, String(_lastLocalCacheAt));
     console.info('Sanitized world layout cache updated:', reason);
@@ -19930,10 +19968,9 @@ function saveWorldLayout(saveToGitHub = true){
   const json = JSON.stringify(data, null, 2);
 
   // Always update local cache immediately.
-  const previousJson = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY);
-  if (previousJson) localStorage.setItem('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID, previousJson);
-  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, json);
-  if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem("rebelAntsWorldLayout", json);
+  const previousJson = getLayoutCacheRaw();
+  if (previousJson) layoutStorageSet('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID, previousJson);
+  layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, json);
   _lastLocalCacheAt = Date.now();
   localStorage.setItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID, String(_lastLocalCacheAt));
 
@@ -20021,7 +20058,7 @@ function hardSaveWorldLayout() {
 }
 
 function restoreLocalLayoutCache() {
-  const raw = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem('rebelAntsWorldLayout') : null);
+  const raw = getLayoutCacheRaw();
   if (!raw) {
     showToast('No local cache found');
     return;
@@ -20039,6 +20076,7 @@ function clearLocalLayoutCache() {
   const confirmed = window.confirm('Clear Local Cache for this village? This does not delete the hard-saved GitHub layout.');
   if (!confirmed) return;
   localStorage.removeItem(WORLD_LAYOUT_STORAGE_KEY);
+  _layoutMemoryCache = null;
   localStorage.removeItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID);
   if (CURRENT_VILLAGE_ID === 'hub') localStorage.removeItem('rebelAntsWorldLayout');
   _lastLocalCacheAt = 0;
@@ -20365,7 +20403,7 @@ function newTerrainLayoutToSaved(data) {
 }
 
 function loadWorldLayout(){
-  const raw = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem("rebelAntsWorldLayout") : null);
+  const raw = getLayoutCacheRaw();
   let data = [];
   if (raw) {
     try { data = JSON.parse(raw); } catch(e) { data = []; }
@@ -22832,7 +22870,7 @@ function schedulePostInteractiveStartupTask(fn, delay = 0) {
 }
 
 function getCachedWorldLayoutDataForStartup() {
-  const raw = safeStorageGet(localStorage, WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? safeStorageGet(localStorage, 'rebelAntsWorldLayout') : null);
+  const raw = getLayoutCacheRaw();
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
@@ -22903,7 +22941,7 @@ Object.keys(ASSETS).filter(key => ASSETS[key]?.procedural).forEach(key => loadAs
 const LAYOUT_REMOTE_SHA_KEY = 'rebelAntsLayoutRemoteSha:' + CURRENT_VILLAGE_ID;
 
 function getLocalLayoutCacheRaw() {
-  return safeStorageGet(localStorage, WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? safeStorageGet(localStorage, 'rebelAntsWorldLayout') : null);
+  return getLayoutCacheRaw();
 }
 
 // Local edits win over the saved layout only for a signed-in admin who cached edits after their last hard save.
@@ -22924,8 +22962,7 @@ async function shouldKeepLocalLayoutCacheOverRemote(remoteSha) {
 
 function storeRemoteLayoutInCache(layout, sha) {
   const layoutJson = JSON.stringify(layout);
-  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, layoutJson);
-  if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem("rebelAntsWorldLayout", layoutJson);
+  layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, layoutJson);
   if (sha) safeStorageSet(localStorage, LAYOUT_REMOTE_SHA_KEY, sha);
 }
 
@@ -29958,8 +29995,7 @@ function restoreEditorSnapshotIncremental(entry) {
 function restoreEditorSnapshot(entry) {
   if (!entry?.json) return;
   _editorHistory.muted = true;
-  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, entry.json);
-  if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem('rebelAntsWorldLayout', entry.json);
+  layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, entry.json);
   try {
     restoreEditorSnapshotIncremental(entry);
   } catch (error) {
@@ -30125,14 +30161,14 @@ function spawnSelectedPrefab() {
       }
     });
   });
-  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, JSON.stringify(current, null, 2));
+  layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, JSON.stringify(current, null, 2));
   loadWorldLayout();
   showToast('Prefab spawned: ' + prefab.name);
 }
 
 function createLocalLayoutBackup() {
   const json = JSON.stringify(collectWorldLayoutData(), null, 2);
-  localStorage.setItem('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID, json);
+  layoutStorageSet('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID, json);
   showToast('Local backup created');
 }
 
@@ -30140,7 +30176,7 @@ function restorePreviousLocalBackup() {
   const json = localStorage.getItem('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID);
   if (!json) { showToast('No local backup found'); return; }
   recordEditorHistory('restore backup');
-  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, json);
+  layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, json);
   loadWorldLayout();
   showToast('Backup restored locally');
 }
@@ -30165,7 +30201,7 @@ function importVillageLayoutJSON(event) {
       if (!Array.isArray(data)) throw new Error('Layout JSON must be an array');
       createLocalLayoutBackup();
       recordEditorHistory('import layout');
-      localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, JSON.stringify(data, null, 2));
+      layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, JSON.stringify(data, null, 2));
       loadWorldLayout();
       showToast('Imported layout locally');
     } catch(e) {
