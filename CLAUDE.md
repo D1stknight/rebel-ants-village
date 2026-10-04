@@ -9,7 +9,7 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 - More notes live in the claude.ai project "Rebel Ants Universe" (docs `claude/handoff.md`, `claude/village-terrains.md`); this file carries the essentials.
 
 ## Where things stand (Oct 4)
-- On dev: Samurai village, fixes (night lanterns, cherry trunk collision, Back key), Wokou harbour village + surf sound, faction emblems on banners, Yamabushi, Buke, Kenshi, Sohei, Ashigaru villages (terrain + kit + layout each), Ronin rebuilt (moonlit fortress + giant bonsai), birds in every village, walking light in every village, lighter cherry tree, layout cache survives full browser storage. Miguel: NOT to main yet, keep building villages.
+- On dev: Samurai village, fixes (night lanterns, cherry trunk collision, Back key), Wokou harbour village + surf sound, faction emblems on banners, Yamabushi, Buke, Kenshi, Sohei, Ashigaru, Bushi villages (terrain + kit + layout each), Ronin rebuilt (moonlit fortress + giant bonsai), birds in every village, walking light in every village, lighter cherry tree, layout cache survives full browser storage. Miguel: NOT to main yet, keep building villages.
 - This repo is now attached to Claude Code sessions: Claude commits and pushes to dev directly (plain git), then checks the Vercel deploy (Vercel MCP: project prj_CjuIvsLXKinzfIgUkmSkyWhKWqtc, team team_7tWG3HhBf0Ir5h0Hhz9ZAarq).
 - If the chat has NO repo attached: Claude builds + tests, delivers files to Miguel's Downloads/<name>/, Miguel uploads on github.com (dev branch), Claude then verifies dev matches (git fetch + diff) and checks the Vercel deploy. Do NOT push via the admin page / upload token in the browser (blocked by a safety check).
 - Oct 4: dev merged to main (PR #17, merge 005748b; production deploy READY) — all villages above are live. Production still reads layouts from dev, so a new village's kit/terrain must reach main before its layout shows properly there. Next: the 6 remaining villages on dev.
@@ -167,3 +167,9 @@ Friend villages (Queens, Cute & Creepy, Saints LA; Chumps not in registry yet): 
 - Stairs blocked (Sohei dojo terrace): makeVillageShape ramps hold their start height for a wall-width before lo (the lower terrace's edge falloff made a dip -> isWall). Garden extras (village: true) skip pools, digs and dirt/sand yards (villageWet + dirt).
 - Shops/trade houses: board banner moved off the door (left wall, 2.1 m) + faction noren (new noren_wokou); house banners off the front window (x -3.05).
 - Footprints: SandPrints in village.html (thin instances, 72 prints, per-print alpha, window._sandPrints.full/fade seconds) on villageShape.dirt > .5 or beach sand (sea villages).
+
+## Sand tone, Bushi (dev af11432..., Oct 4)
+- Yard sand: terrain shader uses palette.yard (default: palette.dirt x .6, desaturated 20%) inside the village rect with grain; village.rake: [{ ring: [x,z,r] } | { r: [..], axis: 'x'|'z' }] draws raked rings / lines (Sohei lines, Kenshi rings + lines, Bushi rings + lines). Pave rects must not cover a dirt yard (pave wins).
+- Bushi terrain `bushi`: dry tan grass, pale granite rocks, fortress platform 1.2, raised sand yard 2.0 with steps, dojo terrace 4.4 with great stairs; gate steps from 0.
+- Kit bushi_*: great_dojo (front A-gable + crest), library / strategy_hall / gate (Ronin builders via M.remap2, an outer remap layer), forge, storehouse, house(_thatch), wall (5 m), tower, banner_frame, banner_pole. FACTION_BANNERS.bushi = art crimson #7d2b22 + gold, crossed-swords emblem.
+- Layout bushi.json 336 / 144 proxies (gen script; halls x1.35, dojo x1.2, houses x1.2 to match the art's proportions); kenshi_well_pavilion reused for the well.
