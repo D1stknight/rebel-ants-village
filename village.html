@@ -20250,7 +20250,7 @@ function newTerrainLayoutFromSaved(data) {
       scheduleShadowRefresh('terrain decor', 300);
     }).catch(e => console.warn('Terrain decor failed', e)), 50);
     if (NT.water || NT.falls?.length || NT.recipe.village?.pools) startNewTerrainWaterSound(NT); // streams, cliff waterfalls, canals
-    if (NT.sea && NT.recipe.sea.surf !== false) startNewTerrainSurfSound(NT); // not on a still lake
+    if (NT.sea && NT.recipe.sea.surf !== false) startNewTerrainSurfSound(NT); // lakes: surf 'calm' (lapping)
   }
   return out;
 }
@@ -20284,6 +20284,7 @@ function startNewTerrainWaterSound(NT) {
 // Follows the Master and Ambience sliders and Mute Ambience, silent indoors; starts on the first click or key press.
 function startNewTerrainSurfSound(NT) {
   let ctx = null, out = null, W = null, nextWave = 0;
+  const calm = NT.recipe.sea?.surf === 'calm'; // a still lake: small quick laps at the shore instead of breaking waves
   const start = () => {
     if (ctx) return;
     try {
@@ -20315,7 +20316,17 @@ function startNewTerrainSurfSound(NT) {
       nextWave = ctx.currentTime + .5;
     } catch (e) { console.warn('Surf sound unavailable', e); }
   };
+  const lap = t => { // lake: a soft slap and a short wash, 2-4 s apart
+    const s = .5 + Math.random() * .5, to = (p, v, at, k) => p.setTargetAtTime(v, at, k);
+    to(W.wash.gain, .32 * s, t, .25); to(W.washF.frequency, 900 + 500 * s, t, .3);
+    to(W.wash.gain, .02, t + .7, .6); to(W.washF.frequency, 450, t + .7, .8);
+    to(W.fizz.gain, .08 * s, t + .4, .2); to(W.fizz.gain, 0, t + 1, .6);
+    to(W.body.gain, .2, t, 1.5);
+    if (W.pan) to(W.pan.pan, (Math.random() * 2 - 1) * .7, t, .8);
+    return t + 1.8 + Math.random() * 2.4;
+  };
   const wave = t => {
+    if (calm) return lap(t);
     const storm = WeatherManager.mode === 'storm' ? 1.3 : WeatherManager.mode === 'heavy-rain' ? 1.15 : 1;
     const s = (.55 + Math.random() * .45) * storm, to = (p, v, at, k) => p.setTargetAtTime(v, at, k);
     to(W.wash.gain, .12 * s, t, .8); to(W.washF.frequency, 900, t, .9); // the wave rises
@@ -20333,7 +20344,7 @@ function startNewTerrainSurfSound(NT) {
     const now = ctx.currentTime;
     while (nextWave < now + 1) nextWave = wave(Math.max(nextWave, now + .05));
     const on = WeatherManager.masterAudioEnabled && !ActiveInterior && !document.hidden;
-    const level = on ? NT.surfSoundAt(charMesh.position.x, charMesh.position.z) : 0;
+    const near = on ? NT.surfSoundAt(charMesh.position.x, charMesh.position.z) : 0, level = calm ? 1.6 * near ** 2.4 : near; // the lake is heard close to its shore
     out.gain.setTargetAtTime(level * 1.1 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55), now, .5);
   }, 250);
 }

@@ -253,7 +253,7 @@ export const TERRAIN_RECIPES = {
     hills: .5, shape: { fbm: 24, ridge: 12, wall: 70 },
     flatHalf: 80, hillStart: 100, hillFull: 210, wallStart: 300,
     coast: { north: true, shore: -168, headland: 0, bayHalf: 500, headWidth: 1, wobble: 24, beach: .08, cliff: .2, depth: 9, shelf: .12, islets: false },
-    sea: { y: -1.2, deck: 0, waves: .05, surf: false, shallow: [.2, .42, .44], mid: [.07, .28, .36], deep: [.03, .16, .26], sky: [.7, .8, .86] }, // the lake
+    sea: { y: -1.2, deck: 0, waves: .05, surf: 'calm', shallow: [.2, .42, .44], mid: [.07, .28, .36], deep: [.03, .16, .26], sky: [.7, .8, .86] }, // the lake
     palette: {
       grassA: [0.34, 0.39, 0.19], grassB: [0.5, 0.5, 0.28], wet: [0.22, 0.3, 0.14],
       dirt: [0.62, 0.53, 0.38], sand: [0.7, 0.66, 0.52], rockTint: [0.96, 0.96, 0.95], highTint: [1.0, 1.0, .94], peak: [0.84, 0.84, 0.82]
