@@ -1052,6 +1052,7 @@
       M.block('darkwood', 0, 0, 3.8, 8.1, 1.9, .18);
       M.roof(0, 0, 3.98, 8.6, 2.6, .55, { lift: .1, gable: false, ornaments: false });
     },
+    ronin_wall_banner(M) { B.ronin_wall(M); banner(M, 0, -.82, 3.55, 1.7, 2.9, 'banner_ronin'); },
     // stone lantern pillar: a square granite post with a lit lantern box and a little roof
     ronin_lantern_pillar(M) {
       M.block('stone', 0, 0, 0, .9, .9, .35); M.block('stone', 0, 0, .35, .62, .62, 1.5);
@@ -1090,6 +1091,13 @@
       M.quad('banner_ronin', [[-.8, -.06, 1.6], [.8, -.06, 1.6], [.8, -.06, 5.25], [-.8, -.06, 5.25]]);
       for (const sd of [-1, 1]) M.cyl('iron', [sd * .9, -.02, 5.3], .06, .14, 4, .02);
       M.cyl('gold', [0, 0, 5.6], .1, .3, 6, .02);
+    },
+    // a dark shrub (three needle clumps) and a mossy rock garden (beds along the walls)
+    ronin_shrub(M) { for (const [x, y, r, k] of [[0, 0, 1.1, 1], [.8, .4, .8, 2], [-.7, .3, .75, 3]]) blob(M, k === 1 ? 'needles_dark' : 'needles', [x, y, r * .7], r * 1.2, r * 1.1, r * .9, { amp: .3, freq: 2.4, seed: k * 11, segs: 10, rings: 6, flat: .5 }); },
+    ronin_rock_garden(M) {
+      for (const [x, y, s, k] of [[0, 0, 1.3, 1], [1.7, .6, .8, 2], [-1.5, .4, .9, 3], [.6, -1.2, .6, 4]]) blob(M, 'granite', [x, y, s * .35], s * 1.25, s, s * .85, { amp: .22, seed: k * 5.3, segs: 12, rings: 7, flat: .3 });
+      blob(M, 'moss', [.3, .2, 1.05], 1.1, .9, .3, { amp: .25, seed: 9, segs: 10, rings: 6 });
+      for (const [x, y, r, k] of [[-2.2, -.8, .7, 5], [2.6, -.6, .6, 6], [-.4, 1.6, .65, 7]]) blob(M, 'needles_dark', [x, y, r * .6], r * 1.2, r * 1.1, r * .85, { amp: .3, freq: 2.4, seed: k * 13, segs: 10, rings: 6, flat: .5 });
     },
     // stone brazier with a fire (paths, the gate court)
     ronin_brazier(M) {
@@ -1252,6 +1260,7 @@
     wok_boat: [{ x: 0, z: 0, halfX: 1.7, halfZ: 3, y: 1.05 }], wok_gangplank: [{ x: 0, z: 0, halfX: .55, halfZ: 2.5, y0: 0, y1: -2 }],
     kit_stairs_stone: stairs(3, 6.4, 4, 10, 'stone'), kit_stairs_wood: stairs(2.6, 6.4, 4, 12, 'wood'),
     kit_stairs_cliff: [{ x: 0, z: -10.6 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'stone' }, { x: 0, z: 0, halfX: 1.45, halfZ: 1.05, y: 6, surface: 'stone' },
-      { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }], ashi_bridge: [{ x: 0, z: 0, halfX: 1.55, halfZ: 10.3, y0: 0, y1: 2.4 }] };
+      { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }], ashi_bridge: [{ x: 0, z: 0, halfX: 1.55, halfZ: 10.3, y0: 0, y1: 2.4 }],
+    ronin_great_dojo: [{ x: 0, z: 0, halfX: 15, halfZ: 12, y: 1.6 }, { x: 0, z: -13.13, halfX: 4.4, halfZ: 1.13, y0: 0, y1: 1.6, steps: 5, surface: 'stone' }] };
   window.SamuraiKit = { build, setLightFactor, decks, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();
