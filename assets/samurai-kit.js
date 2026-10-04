@@ -716,11 +716,12 @@
     return true;
   }
   // walkable decks in the type's own frame (Babylon x/z, deck top y above the origin)
-  const stairs = (W, R, H, surface) => [{ x: 0, z: 0, halfX: W / 2 - .05, halfZ: R / 2, y0: .1, y1: H, surface }, { x: 0, z: R / 2 + .6, halfX: W / 2 - .05, halfZ: .75, y: H, surface }];
+  // stairs: walk surface on the treads (steps = how many), then the top landing
+  const stairs = (W, R, H, n, surface) => [{ x: 0, z: 0, halfX: W / 2 - .05, halfZ: R / 2, y0: 0, y1: H, steps: n, surface }, { x: 0, z: R / 2 + .6, halfX: W / 2 - .05, halfZ: .75, y: H, surface }];
   const decks = { wok_pier: [{ x: 0, z: 0, halfX: 2.05, halfZ: 4.5, y: 0 }], // a little past each end: steps on from the quay
     wok_boat: [{ x: 0, z: 0, halfX: 1.7, halfZ: 3, y: 1.05 }], wok_gangplank: [{ x: 0, z: 0, halfX: .55, halfZ: 2.5, y0: 0, y1: -2 }],
-    kit_stairs_stone: stairs(3, 6.4, 4, 'stone'), kit_stairs_wood: stairs(2.6, 6.4, 4, 'wood'),
-    kit_stairs_cliff: [{ x: 0, z: -10.6 + 4.8, halfX: 1.45, halfZ: 4.8, y0: .1, y1: 6, surface: 'stone' }, { x: 0, z: 0, halfX: 1.45, halfZ: 1.05, y: 6, surface: 'stone' },
-      { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6.1, y1: 12, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }] };
+    kit_stairs_stone: stairs(3, 6.4, 4, 10, 'stone'), kit_stairs_wood: stairs(2.6, 6.4, 4, 12, 'wood'),
+    kit_stairs_cliff: [{ x: 0, z: -10.6 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'stone' }, { x: 0, z: 0, halfX: 1.45, halfZ: 1.05, y: 6, surface: 'stone' },
+      { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }] };
   window.SamuraiKit = { build, setLightFactor, decks, types: Object.keys(B), _Kit: Kit, _B: B };
 })();

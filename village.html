@@ -21478,6 +21478,25 @@ function pointToVillageSurfaceLocal(surface, x, z) {
   };
 }
 
+// Height on a ramp at a point in its local frame. Stairs (surface.steps) are flat on every tread at the tread's top,
+// lifting over the last bit before each riser, so feet stand on the steps instead of sinking into a straight slope.
+function villageRampHeightAt(surface, local) {
+  const axis = surface.rampAxis || 'z';
+  const rampCoord = axis === 'x' ? local.x : local.z;
+  const rampHalf = axis === 'x' ? surface.halfX : surface.halfZ;
+  const sign = surface.rampSign || -1;
+  const rawT = sign < 0
+    ? (rampCoord + rampHalf) / (rampHalf * 2)
+    : (rampHalf - rampCoord) / (rampHalf * 2);
+  const t = Math.max(0, Math.min(1, rawT));
+  const n = surface.steps;
+  if (n > 0) {
+    const u = t * n, i = Math.min(n - 1, Math.floor(u)), f = u - i, lift = Math.max(0, Math.min(1, (f - .78) / .22));
+    return surface.startY + (surface.endY - surface.startY) * Math.min(1, (i + 1 + (i < n - 1 ? lift * lift * (3 - 2 * lift) : 0)) / n);
+  }
+  return surface.startY + (surface.endY - surface.startY) * t;
+}
+
 function getVillageWalkableSurfaceHeightAt(x, z) {
   let height = -Infinity;
 
@@ -21493,15 +21512,7 @@ function getVillageWalkableSurfaceHeightAt(x, z) {
     }
 
     if (surface.kind === 'ramp') {
-      const axis = surface.rampAxis || 'z';
-      const rampCoord = axis === 'x' ? local.x : local.z;
-      const rampHalf = axis === 'x' ? surface.halfX : surface.halfZ;
-      const sign = surface.rampSign || -1;
-      const rawT = sign < 0
-        ? (rampCoord + rampHalf) / (rampHalf * 2)
-        : (rampHalf - rampCoord) / (rampHalf * 2);
-      const t = Math.max(0, Math.min(1, rawT));
-      height = Math.max(height, surface.startY + (surface.endY - surface.startY) * t);
+      height = Math.max(height, villageRampHeightAt(surface, local));
       return;
     }
 
@@ -21525,17 +21536,7 @@ function getVillageWalkSurfaceInfoAt(x, z) {
       if (!Number.isFinite(height)) return;
       y = surface.centerY + height;
     }
-    if (surface.kind === 'ramp') {
-      const axis = surface.rampAxis || 'z';
-      const rampCoord = axis === 'x' ? local.x : local.z;
-      const rampHalf = axis === 'x' ? surface.halfX : surface.halfZ;
-      const sign = surface.rampSign || -1;
-      const rawT = sign < 0
-        ? (rampCoord + rampHalf) / (rampHalf * 2)
-        : (rampHalf - rampCoord) / (rampHalf * 2);
-      const t = Math.max(0, Math.min(1, rawT));
-      y = surface.startY + (surface.endY - surface.startY) * t;
-    }
+    if (surface.kind === 'ramp') y = villageRampHeightAt(surface, local);
     if (Number.isFinite(y) && y > bestHeight) {
       bestHeight = y;
       bestSurface = surface;
@@ -22163,7 +22164,7 @@ function addKitDeckSurfaces(node, surfaces) {
       centerX: node.position.x + (d.x * sx * c + d.z * sz * sn), centerZ: node.position.z + (-d.x * sx * sn + d.z * sz * c),
       axisX: { x: c, z: -sn }, axisZ: { x: sn, z: c }, yaw, halfX: d.halfX * sx, halfZ: d.halfZ * sz, y: node.position.y + (d.y ?? 0) * sy
     };
-    if (Number.isFinite(d.y1)) Object.assign(sf, { kind: 'ramp', rampAxis: 'z', rampSign: -1, startY: node.position.y + d.y0 * sy, endY: node.position.y + d.y1 * sy });
+    if (Number.isFinite(d.y1)) Object.assign(sf, { kind: 'ramp', rampAxis: 'z', rampSign: -1, steps: d.steps || 0, startY: node.position.y + d.y0 * sy, endY: node.position.y + d.y1 * sy });
     surfaces.push(sf);
   });
 }
