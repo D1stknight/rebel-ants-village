@@ -9,10 +9,10 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 - More notes live in the claude.ai project "Rebel Ants Universe" (docs `claude/handoff.md`, `claude/village-terrains.md`); this file carries the essentials.
 
 ## Where things stand (Oct 3, late night)
-- dev = a0dcaf9 (+ this CLAUDE.md commit). On dev: Samurai village, fixes (night lanterns, cherry trunk collision, Back key), Wokou harbour village + surf sound, faction emblems on banners, Yamabushi, Buke, Kenshi villages (terrain + kit + layout each). Miguel: NOT to main yet, keep building villages.
+- dev = 8e1e1a2 (+ this CLAUDE.md commit). On dev: Samurai village, fixes (night lanterns, cherry trunk collision, Back key), Wokou harbour village + surf sound, faction emblems on banners, Yamabushi, Buke, Kenshi, Sohei villages (terrain + kit + layout each), birds in every village. Miguel: NOT to main yet, keep building villages.
 - This repo is now attached to Claude Code sessions: Claude commits and pushes to dev directly (plain git), then checks the Vercel deploy (Vercel MCP: project prj_CjuIvsLXKinzfIgUkmSkyWhKWqtc, team team_7tWG3HhBf0Ir5h0Hhz9ZAarq).
 - If the chat has NO repo attached: Claude builds + tests, delivers files to Miguel's Downloads/<name>/, Miguel uploads on github.com (dev branch), Claude then verifies dev matches (git fetch + diff) and checks the Vercel deploy. Do NOT push via the admin page / upload token in the browser (blocked by a safety check).
-- Production reads layouts from dev but lacks the Samurai + Wokou + Yamabushi + Buke + Kenshi kit/terrain → those live villages show red placeholders until dev → main merge.
+- Production reads layouts from dev but lacks the Samurai + Wokou + Yamabushi + Buke + Kenshi + Sohei kit/terrain → those live villages show red placeholders until dev → main merge.
 
 ## Standing rules (from Miguel)
 - 001 is the master and needs no fixing; don't change Forge characters/rigs that are "perfect".
@@ -135,3 +135,9 @@ Friend villages (Queens, Cute & Creepy, Saints LA; Chumps not in registry yet): 
 - Miguel saves layouts with Hard Save (P) → commits on dev ("save: world layout"); pull before editing that village's json.
 - Kenshi terrain `kenshi`: compound terrace 3.2 m (wall .6, res .8), yard 4.8, dojo terrace 6; lake north via coast.north (+ sea.surf false), flatHalf 80, bamboo/cherry/pines extras. Kit kenshi_* (dojo, library, hall, house, gate, forge, banner_pole, well_pavilion, watchtower, wall_fence); FACTION_BANNERS.kenshi teal #1f5753 + gold #d8b450. Layout kenshi.json 193 / 37 proxies (gen script pattern; ground outside the rect = hBil(hm.H)).
 - Shared terrain fixes: wall mask in ground mask alpha → terrace walls fully stone; big terrain pushed only just under the village edge within one cell (dark groove gone) + skirt; no grass/flowers on dirt yards; village shape applied over the whole rect even past flatHalf+4 (Wokou dojo cobble past z 90 and Yamabushi pillar paving now painted).
+
+## Kenshi lake sound, birds, Sohei (dev 6adb534..8e1e1a2, Oct 4)
+- Lake sound: sea.surf 'calm' → startNewTerrainSurfSound lap() (soft slaps 2-4 s apart), level 1.6 × near^2.4; Kenshi shore −35 LUFS. sea.surf false = no surf sound.
+- Birds (buildBirds in village-terrain.js, all new-terrain villages): 3 flocks × 8, one thin-instanced mesh (V wings flapped by squashing the instance matrix), 1 draw call, 72 tris, ~0.03 ms/frame; hidden at night (fake light factor ≥ .6) and in storm/heavy rain (applyFakeLightState). recipe.birds { flocks, perFlock, color } or false.
+- Sohei terrain `sohei`: compound 3 m, middle 4.5 (library/hall/yard), back 6.5 (dojo, shop, pond, zen garden), bell platform 8.5; village.digs { depth } digs a pond into a terrace; autumn maples = cherry_blossom extras with tint [1.35,.62,.22]; hills .8. Kit sohei_* (great_dojo, library, hall, house, shop, gate, banner_pole, wall, bell_tower; material bronze); FACTION_BANNERS.sohei gold #c38d2a + cream. Layout sohei.json 186 / 38 proxies.
+- Performance notes for Miguel's next adds (chests, NPCs, challenges): kit pieces are instances (cheap); costs come from unique meshes, real lights, big GLBs (cherry_blossom 45k tris each) and shadows.
