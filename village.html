@@ -4133,6 +4133,7 @@ const VillagePerformanceRuntime = {
 
 const PERF_DYNAMIC_TYPES = new Set([
   'npc',
+  'cc_ghost', // floats (SamuraiKit.animate): a frozen world matrix only caught up on each optimizer pass, so ghosts jumped
   'small_village_ant',
   'collectible',
   'village_gate',
