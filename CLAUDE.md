@@ -9,7 +9,7 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 - More notes live in the claude.ai project "Rebel Ants Universe" (docs `claude/handoff.md`, `claude/village-terrains.md`); this file carries the essentials.
 
 ## Where things stand (Oct 3, late night)
-- dev = 2324845 (+ this CLAUDE.md commit). On dev: Samurai village, fixes (night lanterns, cherry trunk collision, Back key), Wokou harbour village + surf sound, faction emblems on banners, Yamabushi village, Buke village (terrain + kit + layout each). Miguel: NOT to main yet, keep building villages.
+- dev = 406a54d (+ this CLAUDE.md commit). On dev: Samurai village, fixes (night lanterns, cherry trunk collision, Back key), Wokou harbour village + surf sound, faction emblems on banners, Yamabushi village, Buke village (terrain + kit + layout each). Miguel: NOT to main yet, keep building villages.
 - This repo is now attached to Claude Code sessions: Claude commits and pushes to dev directly (plain git), then checks the Vercel deploy (Vercel MCP: project prj_CjuIvsLXKinzfIgUkmSkyWhKWqtc, team team_7tWG3HhBf0Ir5h0Hhz9ZAarq).
 - If the chat has NO repo attached: Claude builds + tests, delivers files to Miguel's Downloads/<name>/, Miguel uploads on github.com (dev branch), Claude then verifies dev matches (git fetch + diff) and checks the Vercel deploy. Do NOT push via the admin page / upload token in the browser (blocked by a safety check).
 - Production reads layouts from dev but lacks the Samurai + Wokou + Yamabushi + Buke kit/terrain → those live villages show red placeholders until dev → main merge.
@@ -120,3 +120,11 @@ Friend villages (Queens, Cute & Creepy, Saints LA; Chumps not in registry yet): 
 - Terrain `buke`: mesa with negative drop (-42) = basin with rising cliffs (pieces: main [-72,-80,72,96] r22 + gorge [-15,-112,15,-78]); mesa.rockAbove 11.5 (granite above, dressed stone below); levels gate yard 0, plaza 2.5, archive terrace 6, great hall 10; village.digs canals + village.pools water (buildPools), water sound near canals.
 - Kit buke_*: great_hall, archive, strategy_hall, house, gate (bastions, braziers), banner_pole, footbridge (deck, absY), canal_spout (absY), post_lantern. FACTION_BANNERS.buke = maroon #5e1a20 + gold #d8b35c (art colours; trident emblem).
 - Layout buke.json 210 / 50 proxies from the generator (scratch script pattern as Yamabushi; NPC live y = max(ground, flatNew) so the round trip is exact). Walk: footbridges cross, gate passable.
+
+## Stairs + boardable ships (dev 9f58abc, 406a54d, Oct 4)
+- Kit decks can be ramps: { x, z, halfX, halfZ, y0, y1 } (y0 at the deck's -z end) → walkable kind 'ramp' surfaces (type 'kit_deck', so walls/cliffs they cross don't block on them). addKitDeckSurfaces follows non-uniform scale (x width, y rise, z run).
+- Pieces (admin > Stairs, any village): kit_stairs_stone, kit_stairs_wood (4 m rise, 6.4 m run + top landing), kit_stairs_cliff (12 m, two flights + landing). Bottom faces -Z.
+- mesaBlocks: canyon basins (drop < 0, Buke) block only steep cliff faces (slope > 1.1), so ground above is walkable after climbing; ravines (Yamabushi) still block.
+- Wokou: wok_boat deck walkable (y 1.05 local, ±1.7 x ±3); wok_gangplank (pier 0 → -2, water:'deck'); pier decks halfZ 4.5. Layout: gangplanks to both ships, ship 2 moved to (-31,-56) broadside to its pier.
+- Headless walk tests need fixed 60 fps steps (engine.getDeltaTime = () => 16.7), short camera.maxZ and hidden decor, else one swiftshader frame jumps metres and skips step-down tolerances.
+- Miguel saw the Wokou piers blocked: on dev they are walkable (tested); the live site lacks the harbour kit until dev→main.
