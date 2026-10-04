@@ -84,6 +84,9 @@
     T.banner_ronin_scroll = bannerTex(scene, 'ronin_scroll', '#6a1a1d', '#e3cfa4', 'scroll');
     T.banner_ronin_board = bannerTex(scene, 'ronin_board', '#6a1a1d', '#e3cfa4', 'board');
     T.noren_wokou = bannerTex(scene, 'noren_wokou', '#1c2a4c', '#d9a743', 'logo:wokou', false, true);
+    T.noren_bushi = bannerTex(scene, 'noren_bushi', '#7d2b22', '#d9b35a', 'logo:bushi', false, true);
+    T.banner_bushi_scroll = bannerTex(scene, 'bushi_scroll', '#7d2b22', '#d9b35a', 'scroll');
+    T.banner_bushi_board = bannerTex(scene, 'bushi_board', '#7d2b22', '#d9b35a', 'board');
     T.noren_ashigaru = bannerTex(scene, 'noren_ashigaru', '#8c1c1c', '#d8b45a', 'logo:ashigaru', false, true);
     T.banner_ashi_scroll = bannerTex(scene, 'ashi_scroll', '#8c1c1c', '#d8b45a', 'scroll');
     T.banner_ashi_board = bannerTex(scene, 'ashi_board', '#8c1c1c', '#d8b45a', 'board');
@@ -145,7 +148,7 @@
   // Faction emblems on banners: cloth and emblem colours per faction (banner_<faction> materials)
   const FACTION_BANNERS = {
     samurai: ['#961816', '#ecd6aa'], wokou: ['#1c2a4c', '#d9a743'], yamabushi: ['#25402d', '#d6a640'], ronin: ['#6a1a1d', '#e3cfa4'],
-    shogun: ['#2e2147', '#d8b04a'], bushi: ['#1b2a48', '#cfae5c'], buke: ['#5e1a20', '#d8b35c'], ashigaru: ['#8c1c1c', '#d8b45a'],
+    shogun: ['#2e2147', '#d8b04a'], bushi: ['#7d2b22', '#d9b35a'], buke: ['#5e1a20', '#d8b35c'], ashigaru: ['#8c1c1c', '#d8b45a'],
     kenshi: ['#1f5753', '#d8b450'], sohei: ['#c38d2a', '#f8edd2'], warrior: ['#6b2a1a', '#e2c08a']
   };
   const logoImgs = {};
@@ -174,7 +177,7 @@
     plaster_old: { tex: 'plaster_old' }, slate: { tex: 'slate' }, ronin_floor: { tex: 'ronin_floor' }, noren_ronin: { tex: 'noren_ronin' },
     banner_ronin_scroll: { tex: 'banner_ronin_scroll' }, banner_ronin_board: { tex: 'banner_ronin_board' },
     needles: { tex: 'needles' }, needles_dark: { tex: 'needles_dark' }, bark_old: { tex: 'bark_old' }, granite: { tex: 'granite' }, moss: { tex: 'moss' },
-    noren_ashigaru: { tex: 'noren_ashigaru' }, noren_wokou: { tex: 'noren_wokou' }, banner_ashi_scroll: { tex: 'banner_ashi_scroll' }, banner_ashi_board: { tex: 'banner_ashi_board' }, ashi_door: { tex: 'ashi_door' },
+    noren_ashigaru: { tex: 'noren_ashigaru' }, noren_bushi: { tex: 'noren_bushi' }, banner_bushi_scroll: { tex: 'banner_bushi_scroll' }, banner_bushi_board: { tex: 'banner_bushi_board' }, noren_wokou: { tex: 'noren_wokou' }, banner_ashi_scroll: { tex: 'banner_ashi_scroll' }, banner_ashi_board: { tex: 'banner_ashi_board' }, ashi_door: { tex: 'ashi_door' },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
@@ -235,7 +238,7 @@
 
   class Kit {
     constructor() { this.parts = {}; }
-    part(m) { m = (this.remap && this.remap[m]) || m; return this.parts[m] || (this.parts[m] = { p: [], n: [], uv: [], i: [] }); }
+    part(m) { m = (this.remap && this.remap[m]) || m; m = (this.remap2 && this.remap2[m]) || m; return this.parts[m] || (this.parts[m] = { p: [], n: [], uv: [], i: [] }); }
     poly(m, pts, uvs, nrm) {
       const P = this.part(m), base = P.p.length / 3;
       let nn = nrm;
@@ -1106,6 +1109,91 @@
       M.quad('fire', [[-.4, 0, 1.4], [.4, 0, 1.4], [.15, 0, 2.3], [-.15, 0, 2.3]]); M.quad('fire', [[0, -.4, 1.4], [0, .4, 1.4], [0, .15, 2.2], [0, -.15, 2.2]]);
       M.quad('glow', [[-2.4, -2.4, .06], [2.4, -2.4, .06], [2.4, 2.4, .06], [-2.4, 2.4, .06]]);
     },
+    // ── Bushi (tactical officers): pale stone, white plaster, dark timber and tile; crimson + gold banners ──
+    // great dojo: a wide hall with a central front gable, the open middle bay hung with crimson curtains and a big
+    // banner, banners on the columns; on a stone plinth with stairs. 26 x 16 m, front faces -y
+    bushi_great_dojo(M) {
+      const W = 26, D = 16, Z = 1;
+      M.block('stone', 0, 0, 0, W + 2, D + 2, Z); steps(M, 0, -(D + 2) / 2, Z, 10, 3);
+      M.block('wood', 0, -D / 2 - .2, Z, W + 1.4, 1.8, .14); // veranda
+      walls(M, 0, 1.2, Z, W - 1, D - 2.4, 5.6, { door: [8.4, 4.8], windows: [['left', -2, Z + 2, 3.4, 1.8], ['left', 3, Z + 2, 3.4, 1.8], ['right', -2, Z + 2, 3.4, 1.8], ['right', 3, Z + 2, 3.4, 1.8], ['back', -7, Z + 2, 3.4, 1.8], ['back', 7, Z + 2, 3.4, 1.8]] });
+      for (let i = 0; i < 7; i++) { if (i === 3) continue; const x = -W / 2 + .6 + i * (W - 1.2) / 6; M.cyl('darkwood', [x, -D / 2 - .8, Z], .34, 5.6, 10); M.cyl('stone', [x, -D / 2 - .8, Z], .48, .35, 8); banner(M, x, -D / 2 - 1.18, Z + 4.6, .9, 2.8, 'banner_bushi'); } // the middle bay stays open
+      M.box('darkwood', [0, -D / 2 - .8, Z + 5.6], [W, .45, .5]);
+      for (const sd of [-1, 1]) { M.quad('cloth', [[sd * 4.3, -D / 2 - .05, Z + 4.8], [sd * 1.8, -D / 2 - .12, Z + 4.8], [sd * 3.6, -D / 2 - .2, Z + 1.8], [sd * 4.3, -D / 2 - .08, Z + .2]]); }
+      M.quad('cloth', [[-4.3, -D / 2 - .14, Z + 4.85], [4.3, -D / 2 - .14, Z + 4.85], [4.3, -D / 2 - .14, Z + 4.1], [-4.3, -D / 2 - .14, Z + 4.1]]);
+      banner(M, 0, -D / 2 + .9, Z + 4.6, 3.4, 4.2, 'banner_bushi');
+      M.roof(0, 0, Z + 5.9, W + 4.6, D + 5, 4, { lift: .9 });
+      { // the front gable: an A-frame roof over the middle bay, its triangle faced in dark timber with the gold crest
+        const yF = -D / 2 - 2.1, yB = 1.5, ze = Z + 7, zr = Z + 10.2, hw = 6;
+        for (const sd of [-1, 1]) M.quad('roof', [[sd * hw, yF, ze], [0, yF, zr], [0, yB, zr], [sd * hw, yB, ze]], [[0, 0], [0, 2.2], [3, 2.2], [3, 0]]);
+        M.poly('darkwood', [[-hw + .5, yF + .25, ze + .15], [hw - .5, yF + .25, ze + .15], [0, yF + .25, zr - .3]]);
+        for (const sd of [-1, 1]) M.rod('darkwood', [sd * (hw + .2), yF - .05, ze - .1], [0, yF - .05, zr + .1], .16, 6);
+        M.box('darkwood', [0, (yF + yB) / 2, zr + .12], [.4, yB - yF, .35]);
+        M.tube('gold', [0, yF + .18, Z + 8.2], [0, yF + .1, Z + 8.2], .6, .6, 14); M.tube('darkwood', [0, yF + .1, Z + 8.2], [0, yF + .06, Z + 8.2], .36, .36, 14);
+      }
+      for (const sd of [-1, 1]) { lantern(M, sd * 6.4, -D / 2 - 1.3, Z + 5.4, .26); M.block('wood', sd * 11.6, -D / 2 - 2.2, 0, 1, .8, .8); M.cyl('wood', [sd * 12.6, -D / 2 - 2, 0], .36, .9, 10); }
+    },
+    bushi_library(M) { M.remap2 = { plaster_old: 'plaster', banner_ronin_scroll: 'banner_bushi_scroll', banner_ronin: 'banner_bushi', noren_ronin: 'noren_bushi' }; B.ronin_library(M); M.remap2 = null; },
+    bushi_strategy_hall(M) { M.remap2 = { plaster_old: 'plaster', banner_ronin_board: 'banner_bushi_board', banner_ronin: 'banner_bushi', noren_ronin: 'noren_bushi' }; B.ronin_strategy_hall(M); M.remap2 = null; },
+    bushi_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_bushi'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_bushi'); },
+    bushi_house_thatch(M) { B.sam_house(M); noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_bushi'); },
+    // the gate: the Ronin bastion gate in Bushi colours, with a long banner hung in the opening
+    bushi_gate(M) { M.remap2 = { plaster_old: 'plaster', banner_ronin: 'banner_bushi', noren_ronin: 'noren_bushi' }; B.ronin_gate(M); M.remap2 = null; banner(M, 0, -1.2, 5.4, 3.6, 4.7, 'banner_bushi'); },
+    // fortress wall, 8 m: dressed stone 5 m high, a tiled coping, a parapet rail on the inside (+y)
+    bushi_wall(M) {
+      M.block('stone', 0, 0, 0, 8, 2.2, 5); M.block('stone', 0, 0, 5, 8.05, 2.35, .3);
+      M.block('plaster', 0, -.85, 5.3, 8, .4, .9); M.block('darkwood', 0, -.85, 6.2, 8.1, .5, .12);
+      M.roof(0, -.85, 6.32, 8.6, 1.4, .45, { lift: .05, gable: false, ornaments: false });
+      for (const x of [-4, -2, 0, 2, 4]) M.block('darkwood', x, .95, 5.3, .14, .14, 1.05);
+      M.box('darkwood', [0, .95, 6.25], [8.1, .12, .12]);
+    },
+    // corner / wall tower: a battered stone base, a lit timber cabin with a gallery, tiled roof, a long banner
+    bushi_tower(M) {
+      const S = 7.2, H = 7.5;
+      M.cyl('stone', [0, 0, 0], S * .72, H, 4, S * .64);
+      M.remap = { plaster: 'plaster' }; walls(M, 0, 0, H, 4.6, 4.6, 2.8, { windows: [['front', 0, H + .8, 2.4, 1.3], ['left', 0, H + .8, 2.2, 1.3], ['right', 0, H + .8, 2.2, 1.3], ['back', 0, H + .8, 2.2, 1.3]], postStep: 2.3 }); M.remap = null;
+      M.block('wood', 0, 0, H, 6.4, 6.4, .2);
+      for (const [x, y, sx, sy] of [[0, -3.15, 6.4, .12], [0, 3.15, 6.4, .12], [-3.15, 0, .12, 6.4], [3.15, 0, .12, 6.4]]) { M.block('darkwood', x, y, H + .95, sx, sy, .12); M.block('darkwood', x, y, H + .5, sx, sy, .1); }
+      M.roof(0, 0, H + 2.8, 7.4, 7.4, 2.2, { lift: .6 });
+      banner(M, 0, -S * .48 - .05, H - .6, 2, 4.2, 'banner_bushi');
+      lantern(M, 2.6, -3.2, H + 2.6, .24); lantern(M, -2.6, -3.2, H + 2.6, .24);
+    },
+    // forge: an open timber hall on a stone floor, tiled roof, a tall stone chimney, the hearth, anvils, armour stands
+    bushi_forge(M) {
+      const W = 12, D = 9;
+      M.block('stone', 0, 0, 0, W + .6, D + .6, .3);
+      for (const x of [-W / 2 + .3, -W / 6, W / 6, W / 2 - .3]) for (const y of [-D / 2 + .3, D / 2 - .3]) M.block('darkwood', x, y, .3, .4, .4, 4.2);
+      M.block('plaster', 0, D / 2 - .3, .3, W, .3, 4.2); M.block('plaster', -W / 2 + .3, 1, .3, .3, D / 2, 4.2);
+      for (const y of [-D / 2 + .3, D / 2 - .3]) M.block('darkwood', 0, y, 4.4, W + .3, .4, .35);
+      M.roof(0, 0, 4.7, W + 3, D + 3, 3, { lift: .6, ornaments: false });
+      M.block('stone', W / 2 - 1.6, D / 2 - 1.5, .3, 3, 2.6, 2.2); M.block('stone', W / 2 - 1.6, D / 2 - .9, 2.5, 1.8, 1.6, 9);
+      M.quad('fire', [[W / 2 - 2.6, D / 2 - 2.82, .8], [W / 2 - .6, D / 2 - 2.82, .8], [W / 2 - .6, D / 2 - 2.82, 1.8], [W / 2 - 2.6, D / 2 - 2.82, 1.8]]);
+      for (const x of [-1.2, 1.8]) { M.block('stone', x, -.8, .3, .7, .7, .5); M.block('iron', x, -.8, .8, 1.2, .45, .3); }
+      for (const [x, y] of [[-4.6, 2.6], [-3.4, 2.6], [-2.2, 2.6]]) { M.block('darkwood', x, y, .3, .5, .5, .2); M.cyl('darkwood', [x, y, .5], .06, 1.2, 4); M.block('iron', x, y, 1.3, .7, .4, .7); M.sphere('iron', [x, y, 2.25], .26, 1.1, 8, 5); M.box('iron', [x, y, 2.0], [.9, .2, .12]); }
+      M.cyl('water', [-.2, 2.2, .3], .5, .7, 10); M.cyl('darkwood', [-.2, 2.2, .3], .55, .08, 10);
+      for (let i = 0; i < 5; i++) M.rod('iron', [-W / 2 + .9 + i * .35, D / 2 - .5, .5], [-W / 2 + .9 + i * .35, D / 2 - .5, 2.6], .04, 4);
+      banner(M, -2, -D / 2 + .1, 4.3, 1.2, 2.4, 'banner_bushi');
+    },
+    // storehouse (kura): stone base, white plaster walls, heavy dark doors, tiled roof; crates and barrels outside
+    bushi_storehouse(M) {
+      const W = 12, D = 8;
+      M.block('stone', 0, 0, 0, W + .6, D + .6, 1); steps(M, 0, -(D + .6) / 2, 1, 3, 2);
+      walls(M, 0, 0, 1, W, D, 4.4, { windows: [['left', 0, 3.4, 1.2, 1], ['right', 0, 3.4, 1.2, 1]], postStep: 4 });
+      M.block('darkwood', 0, -D / 2 - .18, 1, 3.2, .12, 3.2); M.block('iron', 0, -D / 2 - .26, 2.4, .2, .06, .5);
+      M.block('darkwood', 0, -D / 2 - .2, 4.2, 4, .2, .3);
+      M.roof(0, 0, 5.4, W + 2.4, D + 2.4, 2.8, { lift: .5, ornaments: false });
+      for (const [x, y, z, sz] of [[-4.6, -D / 2 - 1.4, 0, 1.1], [-3.4, -D / 2 - 1.5, 0, 1], [-4, -D / 2 - 1.4, 1.1, .9], [4.4, -D / 2 - 1.5, 0, 1.1]]) M.block('wood', x, y, z, sz, sz, sz);
+      for (const [x, y] of [[5.6, -D / 2 - 1.2], [6.5, -D / 2 - .4], [-5.8, -D / 2 - .6]]) { M.cyl('wood', [x, y, 0], .42, 1.15, 10, .42); for (const z of [.15, .95]) M.cyl('darkwood', [x, y, z], .44, .06, 10); }
+      banner(M, 3.2, -D / 2 - .18, 4.6, 1.2, 2.6, 'banner_bushi');
+    },
+    // a banner on its own frame (two posts, top and bottom bars), as round the training yard
+    bushi_banner_frame(M) {
+      for (const sd of [-1, 1]) { M.block('darkwood', sd * .85, 0, 0, .16, .16, 3.6); M.cyl('iron', [sd * .85, 0, 3.6], .1, .12, 4, .02); }
+      M.box('darkwood', [0, 0, 3.4], [1.9, .12, .12]); M.box('darkwood', [0, 0, 1.15], [1.9, .1, .1]);
+      M.quad('banner_bushi', [[-.72, -.08, 1.2], [.72, -.08, 1.2], [.72, -.08, 3.35], [-.72, -.08, 3.35]]);
+      M.block('stone', 0, 0, 0, 2.2, .5, .2);
+    },
+    bushi_banner_pole(M) { M.remap = { banner_red: 'banner_bushi' }; B.sam_banner_pole(M); },
     // ── Ronin (the forgotten clan) ──
     // the giant bonsai of the plaza: a twisted old trunk with roots clasping a mossy rock mound, long branches ending
     // in layered cloud pads of pine needles. ~14 m tall, crown ~26 m across; base at the origin (mound 2.3 m high)
