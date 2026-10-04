@@ -243,6 +243,55 @@ export const TERRAIN_RECIPES = {
       dirt: [['r', -18, 20, 18, 42]],
       grass: 6000, flowers: 0
     }
+  },
+  // Kenshi: swordmasters, calm and precise. A walled compound on a stone platform in open golden grassland, a still lake
+  // to the north, bamboo groves and pines, cherry trees here and there: gate up stone stairs, a well pavilion on the
+  // cobbled plaza, houses, the library and the strategy hall, a raised training yard, the dojo terrace with the forge
+  // and a watchtower. Teal + gold banners, a cool teal haze. From Miguel's four Kenshi images.
+  kenshi: {
+    seed: 9137, dropSeed: 71, drops: 60000, roads: false,
+    hills: .5, shape: { fbm: 24, ridge: 12, wall: 70 },
+    flatHalf: 80, hillStart: 100, hillFull: 210, wallStart: 300,
+    coast: { north: true, shore: -168, headland: 0, bayHalf: 500, headWidth: 1, wobble: 24, beach: .08, cliff: .2, depth: 9, shelf: .12, islets: false },
+    sea: { y: -1.2, deck: 0, waves: .05, surf: false, shallow: [.2, .42, .44], mid: [.07, .28, .36], deep: [.03, .16, .26], sky: [.7, .8, .86] }, // the lake
+    palette: {
+      grassA: [0.34, 0.39, 0.19], grassB: [0.5, 0.5, 0.28], wet: [0.22, 0.3, 0.14],
+      dirt: [0.62, 0.53, 0.38], sand: [0.7, 0.66, 0.52], rockTint: [0.96, 0.96, 0.95], highTint: [1.0, 1.0, .94], peak: [0.84, 0.84, 0.82]
+    },
+    grass: { count: 80000, base: [0.2, 0.24, 0.08], tip: [0.72, 0.66, 0.36] },
+    flowers: { count: 2200, stem: [0.14, 0.24, 0.08], petal: [0.97, 0.76, 0.86] },
+    pines: { file: 'pine_1.glb', count: 320, scale: [2.0, 3.6], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 200, scale: [1.0, 2.8], body: 0.75, settle: .9, sink: .1, tint: [1.08, 1.06, 1.02], minSq: 110 },
+    extras: [
+      { file: 'bamboo.glb', count: 260, scale: [.8, 1.3], body: .35, settle: .3, sink: .1, cull: 260, maxSlope: .5, minSq: 104, road: 0, clump: { freq: .014, ox: 31, above: .1 } },
+      { file: 'cherry_blossom.glb', count: 10, scale: [.7, 1.0], body: .9, trunkFromMesh: true, settle: .6, sink: .2, cull: 230, minSq: 112, maxSq: 220, maxSlope: .35, road: 0 },
+      { file: 'pine_1.glb', count: 34, scale: [1.0, 1.8], body: .3, settle: .35, sink: .15, minSq: 0, maxSq: 92, maxSlope: .3, road: 0, village: true } // bonsai-sized pines in the gardens
+    ],
+    fog: { density: .0012, day: [.78, .85, .86], night: [.04, .05, .1] },
+    light: { sun: 1.06, hemi: .98, tint: [1.0, .95, .86] },
+    sky: { turbidity: 5, luminance: 1, rayleigh: 2.4, mieCoefficient: .005 },
+    court: { texture: 'stone', court: [1.45, 1.4, 1.32], plaza: [1.25, 1.2, 1.12], path: [1.15, 1.1, 1.02] },
+    village: {
+      rect: [-75, -80, 75, 95], res: .8, wall: .6, // crisp stone walls
+      terraces: [
+        { r: [-72, -66, 72, 92], h: 3.2 },   // the walled compound
+        { r: [-28, 12, 28, 46], h: 4.8 },    // training yard
+        { r: [-72, 54, 72, 92], h: 6 }       // dojo terrace (forge, watchtower)
+      ],
+      ramps: [
+        { r: [-6, -78, 6, -66], axis: 'z', from: 0, to: 3.2 },
+        { r: [-6, 4, 6, 12], axis: 'z', from: 3.2, to: 4.8 },
+        { r: [-6, 46, 6, 54], axis: 'z', from: 4.8, to: 6 },
+        { r: [-50, 47, -44, 54], axis: 'z', from: 3.2, to: 6 }, { r: [44, 47, 50, 54], axis: 'z', from: 3.2, to: 6 }
+      ],
+      pave: [
+        ['r', -7, -79, 7, -65], ['r', -30, -64, 30, 11.5], ['r', -66, -58, -34, -30], ['r', 34, -58, 66, -30], ['r', -66, -22, -34, 4], ['r', 34, -22, 66, 4],
+        ['r', -66, 14, -32, 46], ['r', 32, 14, 66, 46], ['r', -7, 3, 7, 13], ['r', -7, 45, 7, 55], ['r', -51, 46, -43, 55], ['r', 43, 46, 51, 55],
+        ['r', -30, 46, 30, 53.5], ['r', -66, 56, 66, 88], [-30, -26, -66, -26, 2], [30, -26, 66, -26, 2], [-30, 8, -49, 13, 2], [30, 8, 49, 13, 2]
+      ],
+      dirt: [['r', -26, 14, 26, 44]],
+      grass: 7000, flowers: 700
+    }
   }
 };
 
@@ -332,9 +381,9 @@ export function makeCoastCap(recipe) {
   const C = recipe.coast, seaY = recipe.sea?.y ?? -3; if (!C) return null;
   const { fbm, ridged } = makeNoise(recipe.seed + 101);
   return (x, z) => {
-    const ax = Math.abs(x);
+    const ax = Math.abs(x), zz = C.north ? -z : z; // north: the water lies to the north (a lake behind the village)
     const shore = C.shore + C.headland * smooth(C.bayHalf, C.bayHalf + C.headWidth, ax) + C.wobble * fbm(x * .012 + 3, 7.7, 3);
-    const d = shore - z; // > 0: out to sea
+    const d = shore - zz; // > 0: out to sea
     const slope = C.beach + (C.cliff - C.beach) * smooth(C.bayHalf - 10, C.bayHalf + 30, ax) * (.6 + .8 * fbm(x * .02, z * .02 + 5, 2));
     let y = d <= 0 ? seaY + slope * -d : seaY - Math.min(C.depth, 1.2 + d * C.shelf);
     if (C.islets && d > 110) { // rocky islets standing out of the sea, well out past the harbour
@@ -448,7 +497,7 @@ export function buildHeightmap(recipe) {
     const V = makeVillageShape(recipe.village); pave = new Uint8Array(N * N);
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
       const x = i * CELL - SIZE / 2, z = j * CELL - SIZE / 2, k = j * N + i;
-      if (Math.max(Math.abs(x), Math.abs(z)) > f0 + 4) continue;
+      if (Math.max(Math.abs(x), Math.abs(z)) > f0 + 4 && !V.inside(x, z)) continue; // (a village may reach past the flat square)
       if (V.inside(x, z)) H[k] = V.apply(x, z, H[k]);
       pave[k] = Math.round(255 * V.pave(x, z));
       const dt = V.dirt(x, z); if (dt > 0) path[k] = Math.max(path[k], Math.round(230 * dt));
@@ -577,10 +626,13 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
     for (let row = 0; row <= SUBDIV; row++) for (let col = 0; col <= SUBDIV; col++) pos[(col + row * (SUBDIV + 1)) * 3 + 1] = H[(SUBDIV - row) * 2 * N + col * 2];
     // under the village's own fine ground the big mesh is pushed down out of sight
     // (kept below the lowest point of the fine ground around each vertex, so it never shows through a step or the sea bed)
-    if (VS) for (let k = 0; k < pos.length; k += 3) if (VS.inside(pos[k], pos[k + 2])) {
-      let lo = Infinity; for (const dx of [-2.8, 0, 2.8]) for (const dz of [-2.8, 0, 2.8]) lo = Math.min(lo, VS.h(pos[k] + dx, pos[k + 2] + dz));
-      pos[k + 1] = Math.min(-2, lo - 1.5);
-    }
+    // (within one cell of the edge only just under it: a deep dip there showed as a dark groove along the village's edge)
+    if (VS) { const [X0, Z0, X1, Z1] = VS.rect, cell = SIZE / SUBDIV;
+      for (let k = 0; k < pos.length; k += 3) if (VS.inside(pos[k], pos[k + 2])) {
+        let lo = Infinity; for (const dx of [-2.8, 0, 2.8]) for (const dz of [-2.8, 0, 2.8]) lo = Math.min(lo, VS.h(pos[k] + dx, pos[k + 2] + dz));
+        const edge = Math.min(pos[k] - X0, X1 - pos[k], pos[k + 2] - Z0, Z1 - pos[k + 2]);
+        pos[k + 1] = edge < cell * 1.05 ? Math.min(pos[k + 1], lo) - .12 : Math.min(-2, lo - 1.5);
+      } }
     ground.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos);
     ground.createNormals(true);
     ground.refreshBoundingInfo();
@@ -588,10 +640,13 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   }
   writeHeights();
 
-  // mask: R = where water runs, G = roads and building yards
+  // mask: R = where water runs, G = roads and building yards, B = village cobble, A = 0 on the village's terrace walls
+  const wallA = new Uint8Array(N * N).fill(255);
+  if (VS) { const [X0, Z0, X1, Z1] = VS.rect;
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const x = i * CELL - SIZE / 2, z = j * CELL - SIZE / 2; if (x > X0 && x < X1 && z > Z0 && z < Z1 && VS.isWall(x, z)) wallA[j * N + i] = 0; } }
   let fmax = 0; for (let k = 0; k < hm.flow.length; k++) fmax = Math.max(fmax, Math.log1p(hm.flow[k]));
   const mask = new Uint8Array(N * N * 4);
-  function writeMask() { for (let k = 0; k < N * N; k++) { mask[k * 4] = Math.round(255 * Math.min(1, Math.max(Math.log1p(hm.flow[k]) / (fmax * .7), hm.water ? hm.water.wet[k] : 0))); mask[k * 4 + 1] = path[k]; mask[k * 4 + 2] = hm.pave ? hm.pave[k] : 0; mask[k * 4 + 3] = 255; } }
+  function writeMask() { for (let k = 0; k < N * N; k++) { mask[k * 4] = Math.round(255 * Math.min(1, Math.max(Math.log1p(hm.flow[k]) / (fmax * .7), hm.water ? hm.water.wet[k] : 0))); mask[k * 4 + 1] = path[k]; mask[k * 4 + 2] = hm.pave ? hm.pave[k] : 0; mask[k * 4 + 3] = wallA[k]; } }
   writeMask();
   const maskTex = new BABYLON.RawTexture(mask, N, N, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, false, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
   maskTex.wrapU = maskTex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
@@ -632,6 +687,16 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
     villageGround.material = material; villageGround.receiveShadows = true;
     villageGround.metadata = { type: 'village_ground', villageGround: true, terrainShadow: true };
     villageGround.freezeWorldMatrix();
+    // a skirt hanging 3 m down from the fine ground's edge hides the hairline gap to the big terrain around it
+    { const pos = [], idx = [], step = res, edge = [];
+      for (let x = X0; x < X1; x += step) edge.push([x, Z0]); for (let z = Z0; z < Z1; z += step) edge.push([X1, z]);
+      for (let x = X1; x > X0; x -= step) edge.push([x, Z1]); for (let z = Z1; z > Z0; z -= step) edge.push([X0, z]);
+      edge.forEach(([x, z], k) => { const y = VS.h(x, z); pos.push(x, y, z, x, y - 3, z); if (k) idx.push(2 * k - 2, 2 * k - 1, 2 * k, 2 * k - 1, 2 * k + 1, 2 * k); });
+      const n = edge.length; idx.push(2 * n - 2, 2 * n - 1, 0, 2 * n - 1, 1, 0);
+      for (let i = idx.length - 3; i >= 0; i -= 3) idx.push(idx[i], idx[i + 2], idx[i + 1]); // both faces
+      const sk = new BABYLON.Mesh('villageGroundSkirt', scene), vd = new BABYLON.VertexData(), nrm = [];
+      BABYLON.VertexData.ComputeNormals(pos, idx, nrm); vd.positions = pos; vd.indices = idx; vd.normals = nrm; vd.applyToMesh(sk);
+      sk.material = material; sk.isPickable = false; sk.metadata = { type: 'visual_backdrop', visualOnly: true }; sk.freezeWorldMatrix(); }
   }
 
   const T = {
@@ -777,7 +842,7 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA) {
       float natural = max(smoothstep(-0.5, -4.0, pw.y), smoothstep(${(MESA.rockAbove ?? 1e4).toFixed(1)}, ${((MESA.rockAbove ?? 1e4) + 2).toFixed(1)}, pw.y));
       rock = mix(rock, granite, natural);` : ''}
       rock = mix(rock, wallStone, vil${MESA ? ' * (1.0 - natural)' : ''});
-      col = mix(col, rock, smoothstep(0.3, 0.46, slope + (micro-0.5)*0.14));
+      col = mix(col, rock, max(smoothstep(0.3, 0.46, slope + (micro-0.5)*0.14), vil * smoothstep(0.75, 0.2, mask.a)${MESA ? ' * (1.0 - natural)' : ''})); // terrace walls: stone all the way up
       col = mix(col, col*${v3(P.highTint || [1.12, 1.04, .78])}, smoothstep(30.0, 70.0, pw.y)*(1.0 - smoothstep(0.3,0.45,slope)));
       col = mix(col, ${v3(P.peak || [.9, .92, .95])}, smoothstep(150.0, 230.0, pw.y + micro*20.0)*(1.0-smoothstep(0.45,0.6,slope)));
       ${SEA ? `// shore: sand on the beach and under the water, darker and greener as it gets deeper
@@ -868,7 +933,7 @@ async function buildDecor(scene, T, avoid) {
     const VS = T.villageShape, vg = VS ? (R.village.grass || 0) : 0;
     for (let n = 0, tr = 0; n < vg && tr < vg * 8; tr++) {
       const x = (rnd() - .5) * 2 * (R.flatHalf + 2), z = (rnd() - .5) * 2 * (R.flatHalf + 2);
-      if (villagePave(x, z) > .12 || VS.isWall(x, z) || !clear(x, z, -.5) || !dry(x, z, 1.2)) continue;
+      if (villagePave(x, z) > .12 || VS.dirt(x, z) > .1 || VS.isWall(x, z) || !clear(x, z, -.5) || !dry(x, z, 1.2)) continue; // not on cobble or dirt yards
       if (fbm(x * .05, z * .05, 3) < -.3 + rnd() * .1) continue;
       const t = tileOf(x, z); if (cnt[t] >= per) continue;
       const s = .75 + rnd() * .7; BABYLON.Quaternion.FromEulerAnglesToRef(0, rnd() * 6.28, 0, q);
@@ -917,7 +982,7 @@ async function buildDecor(scene, T, avoid) {
     const VS = T.villageShape, vf = VS ? (R.village.flowers || 0) : 0;
     for (let n = 0, tr = 0; n < vf && tr < vf * 40; tr++) {
       const [X0, Z0, X1, Z1] = VS.rect, x = X0 + rnd() * (X1 - X0), z = Z0 + rnd() * (Z1 - Z0);
-      if (villagePave(x, z) > .05 || VS.isWall(x, z) || !clear(x, z, .3) || !dry(x, z, 1.5)) continue;
+      if (villagePave(x, z) > .05 || VS.dirt(x, z) > .1 || VS.isWall(x, z) || !clear(x, z, .3) || !dry(x, z, 1.5)) continue;
       if (fbm(x * .08 + 40, z * .08, 3) < .12) continue; // beds
       const t = tileOf(x, z); if (cnt[t] >= per) continue;
       const sc = .75 + rnd() * .55; BABYLON.Quaternion.FromEulerAnglesToRef(0, rnd() * 6.28, 0, q);
