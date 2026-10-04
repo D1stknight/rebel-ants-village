@@ -12,7 +12,7 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 - On dev: Samurai village, fixes (night lanterns, cherry trunk collision, Back key), Wokou harbour village + surf sound, faction emblems on banners, Yamabushi, Buke, Kenshi, Sohei, Ashigaru villages (terrain + kit + layout each), Ronin rebuilt (moonlit fortress + giant bonsai), birds in every village, walking light in every village, lighter cherry tree, layout cache survives full browser storage. Miguel: NOT to main yet, keep building villages.
 - This repo is now attached to Claude Code sessions: Claude commits and pushes to dev directly (plain git), then checks the Vercel deploy (Vercel MCP: project prj_CjuIvsLXKinzfIgUkmSkyWhKWqtc, team team_7tWG3HhBf0Ir5h0Hhz9ZAarq).
 - If the chat has NO repo attached: Claude builds + tests, delivers files to Miguel's Downloads/<name>/, Miguel uploads on github.com (dev branch), Claude then verifies dev matches (git fetch + diff) and checks the Vercel deploy. Do NOT push via the admin page / upload token in the browser (blocked by a safety check).
-- Production reads layouts from dev but lacks the Samurai + Wokou + Yamabushi + Buke + Kenshi + Sohei + Ashigaru kit/terrain → those live villages show red placeholders until dev → main merge.
+- Oct 4: dev merged to main (PR #17, merge 005748b; production deploy READY) — all villages above are live. Production still reads layouts from dev, so a new village's kit/terrain must reach main before its layout shows properly there. Next: the 6 remaining villages on dev.
 
 ## Standing rules (from Miguel)
 - 001 is the master and needs no fixing; don't change Forge characters/rigs that are "perfect".
