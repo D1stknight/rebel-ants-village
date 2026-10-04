@@ -640,7 +640,12 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
     // the sea is not walkable (piers and boats add their own walk surfaces)
     seaBlocks(x, z) { return seaY !== null && T.heightAt(x, z) < seaY + .35; },
     // nor is anything off the edge of a mesa (bridges add their own walk surfaces)
-    mesa, mist, falls: [], mesaBlocks(x, z) { return !!mesa && mesa.dist(x, z) > .6; },
+    // (a canyon basin only blocks its steep cliff faces: climb out by stairs and the land above is walkable)
+    mesa, mist, falls: [], mesaBlocks(x, z) {
+      if (!mesa || mesa.dist(x, z) <= .6) return false;
+      if (recipe.mesa.drop > 0) return true;
+      const y = T.heightAt(x, z); return Math.max(Math.abs(T.heightAt(x + .5, z) - y), Math.abs(T.heightAt(x, z + .5) - y)) / .5 > 1.1;
+    },
     heightAt: (x, z) => (VS && VS.inside(x, z)) ? VS.h(x, z) : sampler(x, z),
     oldHeightAt: opts.oldHeightAt || null,
     pads: [], decor: null, decorBlockers: null, water: hm.water, waterMeshes,

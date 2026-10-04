@@ -640,6 +640,41 @@
       M.cyl('darkwood', [0, 0, 1.85], .3, .2, 4, .04);
       M.quad('glow', [[-1.8, -1.8, .07], [1.8, -1.8, .07], [1.8, 1.8, .07], [-1.8, 1.8, .07]]);
     },
+    // boarding plank from a pier (top end, deck level) down 2 m to a ship's deck; 5 m long along y
+    wok_gangplank(M) {
+      const a = Math.atan2(2, 5);
+      M.box('wood', [0, 0, -1.06], [1.1, Math.hypot(5, 2), .12], 0, -a);
+      for (let i = 0; i < 9; i++) { const t = (i + .5) / 9; M.box('darkwood', [0, -2.5 + 5 * t, -2 * t - .97], [1.1, .08, .06], 0, -a); }
+      for (const sd of [-1, 1]) { for (const t of [0, .5, 1]) M.block('darkwood', sd * .6, -2.5 + 5 * t, -2 * t - 1, .08, .08, 1); M.rod('rope', [sd * .6, -2.5, .95], [sd * .6, 2.5, -1.05], .025, 4); }
+    },
+    // stairs climbing 4 m towards +y (bottom at -y); a landing at the top to step off onto the higher ground
+    kit_stairs_stone(M) {
+      const W = 3, H = 4, R = 6.4, n = 10, t = R / n;
+      for (let i = 0; i < n; i++) M.block('stone', 0, -R / 2 + (i + .5) * t, 0, W, t + .02, (i + 1) * H / n);
+      M.block('stone', 0, R / 2 + .6, 0, W, 1.2, H);
+      for (const sd of [-1, 1]) { for (let i = 0; i < n; i++) M.block('stone', sd * (W / 2 + .2), -R / 2 + (i + .5) * t, 0, .4, t + .02, (i + 1) * H / n + .45); M.block('stone', sd * (W / 2 + .2), R / 2 + .6, 0, .4, 1.2, H + .45); }
+    },
+    // tall stone stairs for cliffs: two 6 m flights with a landing between, 12 m up in 22 m (bottom at -y)
+    kit_stairs_cliff(M) {
+      const W = 3, n = 15, F = 9.6, L = 2, R = 2 * F + L, t = F / n;
+      for (const [y0, z0] of [[-R / 2, 0], [-R / 2 + F + L, 6]]) {
+        for (let i = 0; i < n; i++) M.block('stone', 0, y0 + (i + .5) * t, 0, W, t + .02, z0 + (i + 1) * 6 / n);
+        for (const sd of [-1, 1]) for (let i = 0; i < n; i++) M.block('stone', sd * (W / 2 + .2), y0 + (i + .5) * t, 0, .4, t + .02, z0 + (i + 1) * 6 / n + .45);
+      }
+      M.block('stone', 0, -R / 2 + F + L / 2, 0, W, L, 6); M.block('stone', 0, R / 2 + .6, 0, W, 1.2, 12);
+      for (const sd of [-1, 1]) { M.block('stone', sd * (W / 2 + .2), -R / 2 + F + L / 2, 0, .4, L, 6.45); M.block('stone', sd * (W / 2 + .2), R / 2 + .6, 0, .4, 1.2, 12.45); }
+      for (const sd of [-1, 1]) M.cyl('lantern', [sd * (W / 2 + .2), -R / 2 + F + L / 2, 6.45], .16, .35, 6);
+    },
+    kit_stairs_wood(M) {
+      const W = 2.6, H = 4, R = 6.4, n = 12, a = Math.atan2(H, R);
+      for (let i = 0; i < n; i++) { const t = (i + 1) / n; M.box('wood', [0, -R / 2 + t * R - R / n / 2, t * H - .06], [W, R / n + .05, .1]); }
+      for (const sd of [-1, 1]) {
+        M.box('darkwood', [sd * W / 2, 0, H / 2 - .15], [.16, Math.hypot(R, H), .32], 0, a);
+        for (const t of [0, .33, .66, 1]) { const y = -R / 2 + t * R, z = t * H; M.block('darkwood', sd * (W / 2 + .1), y, 0, .16, .16, z + 1); }
+        M.rod('darkwood', [sd * (W / 2 + .1), -R / 2, 1], [sd * (W / 2 + .1), R / 2, H + 1], .05, 6);
+      }
+      M.block('wood', 0, R / 2 + .6, H - .12, W, 1.2, .12); for (const sd of [-1, 1]) M.block('darkwood', sd * (W / 2 - .1), R / 2 + 1.1, 0, .18, .18, H);
+    },
     // stone toro lantern for paths and stairs: the light box glows (no real light, so any number is cheap)
     sam_stone_lantern(M) {
       M.cyl('stone', [0, 0, 0], .5, .22, 6, .42); M.cyl('stone', [0, 0, .22], .17, 1.05, 6, .14);
@@ -681,6 +716,11 @@
     return true;
   }
   // walkable decks in the type's own frame (Babylon x/z, deck top y above the origin)
-  const decks = { wok_pier: [{ x: 0, z: 0, halfX: 2.05, halfZ: 4.05, y: 0 }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }] };
+  const stairs = (W, R, H, surface) => [{ x: 0, z: 0, halfX: W / 2 - .05, halfZ: R / 2, y0: .1, y1: H, surface }, { x: 0, z: R / 2 + .6, halfX: W / 2 - .05, halfZ: .75, y: H, surface }];
+  const decks = { wok_pier: [{ x: 0, z: 0, halfX: 2.05, halfZ: 4.5, y: 0 }], // a little past each end: steps on from the quay
+    wok_boat: [{ x: 0, z: 0, halfX: 1.7, halfZ: 3, y: 1.05 }], wok_gangplank: [{ x: 0, z: 0, halfX: .55, halfZ: 2.5, y0: 0, y1: -2 }],
+    kit_stairs_stone: stairs(3, 6.4, 4, 'stone'), kit_stairs_wood: stairs(2.6, 6.4, 4, 'wood'),
+    kit_stairs_cliff: [{ x: 0, z: -10.6 + 4.8, halfX: 1.45, halfZ: 4.8, y0: .1, y1: 6, surface: 'stone' }, { x: 0, z: 0, halfX: 1.45, halfZ: 1.05, y: 6, surface: 'stone' },
+      { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6.1, y1: 12, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }] };
   window.SamuraiKit = { build, setLightFactor, decks, types: Object.keys(B), _Kit: Kit, _B: B };
 })();
