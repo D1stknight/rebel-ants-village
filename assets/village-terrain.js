@@ -491,6 +491,57 @@ export const TERRAIN_RECIPES = {
       chalk: [[-7, -15.5, -7, 6.5, .22], [7, -15.5, 7, 6.5, .22]],
       grass: 5000, flowers: 300
     }
+  },
+  // Shogun: the commanders. A castle on a forested hilltop: battered stone walls with white plaster parapets and
+  // corner turrets, the gatehouse up stone stairs; the lower court with houses, a covered well, a garden pond with an
+  // arched bridge; a walled middle terrace (central and side stairs) with the raked-sand yard, the great dojo, the
+  // library and the strategy hall; the top terrace with the keep, a shrine and the storehouse. Purple + gold banners.
+  // From Miguel's four Shogun images.
+  shogun: {
+    seed: 8513, dropSeed: 37, drops: 60000, roads: false,
+    hills: 1.15, shape: { fbm: 34, ridge: 22, wall: 90 }, // forested mountains all round
+    flatHalf: 98, hillStart: 104, hillFull: 220, wallStart: 270,
+    mesa: { drop: 30, cliff: 5, wobble: 3, fade: [170, 260],
+      pieces: [{ r: [-72, -66, 72, 102], round: 20 }, { r: [-13, -104, 13, -60], round: 6 }] },
+    palette: {
+      grassA: [0.24, 0.32, 0.15], grassB: [0.36, 0.4, 0.2], wet: [0.17, 0.25, 0.12],
+      dirt: [0.6, 0.52, 0.4], yard: [0.56, 0.5, 0.4], rockTint: [0.92, 0.92, 0.9], highTint: [0.96, 0.97, .94], peak: [0.8, 0.8, 0.8]
+    },
+    grass: { count: 70000, base: [0.12, 0.18, 0.06], tip: [0.5, 0.56, 0.26] },
+    flowers: { count: 1400, stem: [0.12, 0.22, 0.08], petal: [0.86, 0.5, 0.78] },
+    pines: { file: 'pine_1.glb', count: 560, scale: [1.8, 3.6], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 300, scale: [1.2, 3.6], body: 0.75, settle: .9, sink: .1, tint: [1.15, 1.13, 1.1], minSq: 80 },
+    extras: [
+      { file: 'pine_1.glb', count: 46, scale: [.9, 1.6], body: .3, settle: .35, sink: .15, minSq: 0, maxSq: 96, maxSlope: .3, road: 0, village: true }, // garden pines
+      { file: 'cherry_blossom.glb', count: 7, scale: [.45, .65], body: .9, trunkFromMesh: true, settle: .6, sink: .2, cull: 230, minSq: 0, maxSq: 70, maxSlope: .3, road: 0, village: true, tint: [1.35, .42, .3] } // red maples in the gardens
+    ],
+    fog: { density: .0011, day: [.78, .84, .9], night: [.05, .05, .12] },
+    light: { sun: 1.1, hemi: .98, tint: [1.0, .96, .88] },
+    sky: { turbidity: 3.5, luminance: 1, rayleigh: 2.2, mieCoefficient: .004 },
+    court: { texture: 'stone', court: [1.45, 1.42, 1.36], plaza: [1.3, 1.26, 1.2], path: [1.2, 1.16, 1.1] },
+    village: {
+      rect: [-72, -104, 72, 100], res: .9, wall: .7,
+      terraces: [
+        { r: [-66, -60, 66, 98], h: 3 },      // the castle court (walls on its edge): houses, the well, the pond
+        { r: [-62, 4, 62, 60], h: 7.5 },      // middle terrace: yard, dojo, library, strategy hall
+        { r: [-58, 66, 58, 96], h: 12.5 }     // top terrace: the keep, the shrine, the storehouse
+      ],
+      ramps: [
+        { r: [-6, -72, 6, -60], axis: 'z', from: 0, to: 3 },       // stone stairs up to the gate
+        { r: [-6, -6, 6, 4.5], axis: 'z', from: 3, to: 7.5 },      // central stairs (inner gate)
+        { r: [-48, -6, -40, 4.5], axis: 'z', from: 3, to: 7.5 }, { r: [40, -6, 48, 4.5], axis: 'z', from: 3, to: 7.5 },
+        { r: [-46, 52, -38, 66.5], axis: 'z', from: 7.5, to: 12.5 }, { r: [38, 52, 46, 66.5], axis: 'z', from: 7.5, to: 12.5 }
+      ],
+      digs: [{ c: [-42, -32, 7.4], depth: 1.6, edge: 1.4 }],  // the garden pond
+      pools: [{ c: [-42, -32, 7], y: 2.5 }],
+      pave: [
+        ['r', -6.5, -104, 6.5, -6], ['c', 0, -32, 7.5], [-6, -32, -30, -32, 2], [6, -32, 52, -32, 2], [-6, -14, -44, -14, 2.2], [6, -14, 44, -14, 2.2], [-44, -14, -44, -6, 2.2], [44, -14, 44, -6, 2.2],
+        ['r', -62, 4, 62, 9.4], ['r', -62, 31.6, 62, 60], ['r', -62, 9, -22.6, 32], ['r', 22.6, 9, 62, 32], ['r', -58, 60, 58, 96]
+      ],
+      dirt: [['r', -22, 10, 22, 31]],
+      rake: [{ ring: [-16.5, 15.5, 4.5] }, { ring: [16.5, 15.5, 4.5] }, { r: [-22, 10, 22, 31], axis: 'x' }],
+      grass: 6000, flowers: 500
+    }
   }
 };
 
