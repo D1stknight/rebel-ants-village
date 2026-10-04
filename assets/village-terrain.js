@@ -997,8 +997,10 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
       edge.forEach(([x, z], k) => { const y = VS.h(x, z); pos.push(x, y, z, x, y - 3, z); if (k) idx.push(2 * k - 2, 2 * k - 1, 2 * k, 2 * k - 1, 2 * k + 1, 2 * k); });
       const n = edge.length; idx.push(2 * n - 2, 2 * n - 1, 0, 2 * n - 1, 1, 0);
       for (let i = idx.length - 3; i >= 0; i -= 3) idx.push(idx[i], idx[i + 2], idx[i + 1]); // both faces
-      const sk = new BABYLON.Mesh('villageGroundSkirt', scene), vd = new BABYLON.VertexData(), nrm = [];
-      BABYLON.VertexData.ComputeNormals(pos, idx, nrm); vd.positions = pos; vd.indices = idx; vd.normals = nrm; vd.applyToMesh(sk);
+      // normals point up, so the strip shades like the ground beside it (computed from both faces they cancelled out:
+      // a black hairline round every village)
+      const sk = new BABYLON.Mesh('villageGroundSkirt', scene), vd = new BABYLON.VertexData(), nrm = pos.map((_, i) => i % 3 === 1 ? 1 : 0);
+      vd.positions = pos; vd.indices = idx; vd.normals = nrm; vd.applyToMesh(sk);
       sk.material = material; sk.isPickable = false; sk.metadata = { type: 'visual_backdrop', visualOnly: true }; sk.freezeWorldMatrix(); }
   }
 
