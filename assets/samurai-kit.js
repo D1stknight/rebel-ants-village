@@ -4,7 +4,7 @@
 // Doorways are lit recesses; link a room by adding a Door (admin > Doors) in front of one.
 /* global BABYLON */
 (function () {
-  const TILE = { roof: [1.6, 1.4], roof_brown: [1.6, 1.4], wood: [1.6, 1.6], darkwood: [1.6, 1.6], plaster: [3, 3], stone: [2.4, 2.4], thatch: [2, 1.6], bark: [1.4, 1.6], earth: [4, 4], shoji: [1.2, 1.5] };
+  const TILE = { roof: [1.6, 1.4], roof_brown: [1.6, 1.4], plaster_old: [3, 3], slate: [2.4, 2.4], wood: [1.6, 1.6], darkwood: [1.6, 1.6], plaster: [3, 3], stone: [2.4, 2.4], thatch: [2, 1.6], bark: [1.4, 1.6], earth: [4, 4], shoji: [1.2, 1.5] };
   const tileOf = m => TILE[m] || [1, 1];
 
   // ── textures (drawn once on small canvases) ─────────────────────────────
@@ -77,6 +77,12 @@
     T.bark_old = pixelTex(scene, 'bark_old', S, (x, y, i) => { const g = Math.abs(Math.sin((x * 9 + bk[i] * .35) * Math.PI)), f = .42 + .38 * g ** .6 + .14 * bk2[i] + .12 * bk3[i]; return [92 * f + 12, 80 * f + 10, 70 * f + 8]; });
     const gn = noise(S, 6, 5, 26); T.granite = pixelTex(scene, 'granite', S, (x, y, i) => { const f = .55 + .45 * gn[i]; return [96 * f, 98 * f, 104 * f]; });
     const mn = noise(S, 8, 4, 27); T.moss = pixelTex(scene, 'moss', S, (x, y, i) => { const f = .5 + .5 * mn[i]; return [46 * f, 70 * f, 38 * f]; });
+    const po = noise(S, 5, 4, 31); T.plaster_old = pixelTex(scene, 'plaster_old', S, (x, y, i) => mul([176, 168, 152], .78 + .22 * po[i]));
+    const sl = noise(S, 7, 4, 32); T.slate = pixelTex(scene, 'slate', S, (x, y, i) => { const g = ((x * 4) % 1 < .03 || (y * 4) % 1 < .03) ? .55 : 1; return mul([62, 62, 68], g * (.8 + .3 * sl[i])); });
+    T.ronin_floor = floorTex(scene, 'ronin_floor', '#2c2c31', '#b9a57c', 'ronin');
+    T.noren_ronin = bannerTex(scene, 'noren_ronin', '#6a1a1d', '#e3cfa4', 'logo:ronin', false, true);
+    T.banner_ronin_scroll = bannerTex(scene, 'ronin_scroll', '#6a1a1d', '#e3cfa4', 'scroll');
+    T.banner_ronin_board = bannerTex(scene, 'ronin_board', '#6a1a1d', '#e3cfa4', 'board');
     T.noren_ashigaru = bannerTex(scene, 'noren_ashigaru', '#8c1c1c', '#d8b45a', 'logo:ashigaru', false, true);
     T.banner_ashi_scroll = bannerTex(scene, 'ashi_scroll', '#8c1c1c', '#d8b45a', 'scroll');
     T.banner_ashi_board = bannerTex(scene, 'ashi_board', '#8c1c1c', '#d8b45a', 'board');
@@ -125,9 +131,19 @@
     c.setTransform(1, 0, 0, 1, 0, 0); t.update(); t.hasAlpha = false; return t;
   }
 
+  // a square dark slate floor with the faction emblem inlaid in a ring (Ronin dojo)
+  function floorTex(scene, name, bg, fg, faction) {
+    const W = 512, t = new BABYLON.DynamicTexture('samKit_' + name, { width: W, height: W }, scene, true), c = t.getContext();
+    c.fillStyle = bg; c.fillRect(0, 0, W, W); c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = 3;
+    for (let i = 1; i < 8; i++) { c.beginPath(); c.moveTo(i * W / 8, 0); c.lineTo(i * W / 8, W); c.moveTo(0, i * W / 8); c.lineTo(W, i * W / 8); c.stroke(); }
+    c.strokeStyle = fg; c.lineWidth = 14; c.beginPath(); c.arc(W / 2, W / 2, W * .36, 0, 7); c.stroke();
+    t.update();
+    logoMask(faction, img => { const L = W * .5, o = document.createElement('canvas'); o.width = o.height = L; const oc = o.getContext('2d'); oc.drawImage(img, 0, 0, L, L); oc.globalCompositeOperation = 'source-in'; oc.fillStyle = fg; oc.fillRect(0, 0, L, L); c.drawImage(o, (W - L) / 2, (W - L) / 2); t.update(); });
+    return t;
+  }
   // Faction emblems on banners: cloth and emblem colours per faction (banner_<faction> materials)
   const FACTION_BANNERS = {
-    samurai: ['#961816', '#ecd6aa'], wokou: ['#1c2a4c', '#d9a743'], yamabushi: ['#25402d', '#d6a640'], ronin: ['#0e0d10', '#9a161a'],
+    samurai: ['#961816', '#ecd6aa'], wokou: ['#1c2a4c', '#d9a743'], yamabushi: ['#25402d', '#d6a640'], ronin: ['#6a1a1d', '#e3cfa4'],
     shogun: ['#2e2147', '#d8b04a'], bushi: ['#1b2a48', '#cfae5c'], buke: ['#5e1a20', '#d8b35c'], ashigaru: ['#8c1c1c', '#d8b45a'],
     kenshi: ['#1f5753', '#d8b450'], sohei: ['#c38d2a', '#f8edd2'], warrior: ['#6b2a1a', '#e2c08a']
   };
@@ -154,6 +170,8 @@
     noren_sohei: { tex: 'noren_sohei' }, noren_sohei_books: { tex: 'noren_sohei_books' }, noren_sohei_dots: { tex: 'noren_sohei_dots' },
     bronze: { col: [.3, .36, .27], spec: [.6, .55, .4], power: 40 },
     roof_brown: { tex: 'roof_brown' }, straw: { col: [.78, .64, .36] },
+    plaster_old: { tex: 'plaster_old' }, slate: { tex: 'slate' }, ronin_floor: { tex: 'ronin_floor' }, noren_ronin: { tex: 'noren_ronin' },
+    banner_ronin_scroll: { tex: 'banner_ronin_scroll' }, banner_ronin_board: { tex: 'banner_ronin_board' },
     needles: { tex: 'needles' }, needles_dark: { tex: 'needles_dark' }, bark_old: { tex: 'bark_old' }, granite: { tex: 'granite' }, moss: { tex: 'moss' },
     noren_ashigaru: { tex: 'noren_ashigaru' }, banner_ashi_scroll: { tex: 'banner_ashi_scroll' }, banner_ashi_board: { tex: 'banner_ashi_board' }, ashi_door: { tex: 'ashi_door' },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
@@ -936,6 +954,148 @@
       M.rod('wood', [0, .7, 0], [0, .08, 1.7], .06, 5);
       M.tube('straw', [0, -.08, 1.25], [0, .12, 1.25], .62, .62, 16);
       for (const [r, m, k] of [[.46, 'red', 1], [.3, 'plaster', 2], [.14, 'red', 3]]) M.tube(m, [0, -.08 - .005 * k, 1.25], [0, -.085 - .005 * k, 1.25], r, r, 16);
+    },
+    // ── Ronin (the forgotten clan): dark timber, aged plaster, charcoal tile, grey granite; crimson banners ──
+    // the dojo (Miguel's image 2): a U of halls round an open training floor with the emblem inlaid, a railing and
+    // central stairs at the front, weapon racks, heavy bags, an altar at the back. 30 x 24 m; front faces -y
+    ronin_great_dojo(M) {
+      M.remap = { plaster: 'plaster_old' };
+      const Z = 1.6, W = 30, D = 24;
+      M.block('stone', 0, 0, 0, W, D, Z); steps(M, 0, -D / 2, Z, 9, 5); // granite platform, stairs at the front
+      M.block('slate', 0, -1.6, Z, 18, 15, .08); M.quad('ronin_floor', [[-6.5, -8.5, Z + .1], [6.5, -8.5, Z + .1], [6.5, 4.5, Z + .1], [-6.5, 4.5, Z + .1]]);
+      // back hall and the two wings
+      walls(M, 0, 8.5, Z, W - .4, 6.6, 5.2, { door: [4, 3.6], windows: [['front', -9, Z + 1.6, 3.4, 1.8], ['front', 9, Z + 1.6, 3.4, 1.8], ['back', -8, Z + 1.6, 3, 1.6], ['back', 8, Z + 1.6, 3, 1.6]] });
+      for (const sd of [-1, 1]) walls(M, sd * 12, -3.4, Z, 5.8, 17, 4.6, { windows: [[sd < 0 ? 'right' : 'left', -3, Z + 1.4, 3, 1.6], [sd < 0 ? 'right' : 'left', 3.5, Z + 1.4, 3, 1.6], [sd < 0 ? 'left' : 'right', 0, Z + 1.4, 3, 1.6]] });
+      M.remap = null;
+      M.roof(0, 8.5, Z + 5.2, W + 2.6, 9.4, 3.2, { lift: .8 });
+      for (const sd of [-1, 1]) M.roof(sd * 12, -3.6, Z + 4.6, 8.6, 19.6, 2.6, { lift: .6, ornaments: false });
+      // the open floor: posts, a railing along the front with a gap for the stairs, the altar, racks, bags
+      for (const x of [-8.6, -4.3, 0, 4.3, 8.6]) M.block('darkwood', x, 5.1, Z, .4, .4, 5.2);
+      for (const sd of [-1, 1]) { for (const y of [-10.6, -6, -1.4, 3]) M.block('darkwood', sd * 8.85, y, Z, .36, .36, 4.6); M.box('darkwood', [sd * 8.85, -3.8, Z + 4.4], [.3, 15, .35]); }
+      for (const sd of [-1, 1]) { for (const x of [5, 8.5]) { M.block('darkwood', sd * x, -11.6, Z, .24, .24, 1.15); M.cyl('iron', [sd * x, -11.6, Z + 1.15], .16, .12, 4, .1); } M.box('darkwood', [sd * 6.75, -11.6, Z + .95], [3.6, .14, .14]); M.box('darkwood', [sd * 6.75, -11.6, Z + .45], [3.6, .1, .1]); }
+      M.block('darkwood', 0, 4.2, Z, 4.2, 1.4, .9); M.block('wood', 0, 4.2, Z + .9, 4.6, 1.6, .12); M.cyl('darkwood', [0, 4.2, Z + 1], .6, .45, 10); // altar with the drum
+      for (const sd of [-1, 1]) { lantern(M, sd * 2.6, 4.4, Z + 1.6, .2); M.block('stone', sd * 2.6, 4.4, Z, .4, .4, 1); }
+      for (const [x, y] of [[-7.8, -6], [-7.8, -1.5], [7.8, -6], [7.8, -1.5]]) { M.block('darkwood', x, y, Z, .5, 2.4, .12); for (let i = 0; i < 5; i++) M.rod('wood', [x, y - .9 + i * .45, Z + .1], [x - Math.sign(x) * .1, y - .9 + i * .45, Z + 2.4], .04, 4); }
+      for (const [x, y] of [[-6.4, -8.8], [6.4, -8.8], [-6.4, 2.2], [6.4, 2.2]]) { M.rod('rope', [x, y, Z + 4.4], [x, y, Z + 3.2], .03, 4); M.cyl('cloth', [x, y, Z + 1.1], .32, 2.1, 10); M.cyl('darkwood', [x, y, Z + 3.1], .34, .12, 10); }
+      banner(M, 0, 5.15 - .25, Z + 5, 2.8, 3.4, 'banner_ronin');
+      for (const sd of [-1, 1]) { banner(M, sd * (W / 2 + .02), -3.4, Z + 4.2, 2, 3.2, 'banner_ronin'); lantern(M, sd * 9.6, -12, Z + 4.2, .25); lantern(M, sd * 4.8, 5.2 - .5, Z + 4.6, .25); }
+    },
+    // the library: two storeys, a lit shop room with shelves below, a balcony with a railing, a scroll banner
+    ronin_library(M) {
+      const W = 16, D = 10;
+      M.block('stone', 0, 0, 0, W + 1.6, D + 1.6, .9); steps(M, 0, -(D + 1.6) / 2, .9, 5, 2);
+      M.remap = { plaster: 'plaster_old' };
+      walls(M, 0, 0, .9, W, D, 4, { door: [5, 3.2], windows: [['front', -5.4, 1.9, 2.8, 1.8], ['front', 5.4, 1.9, 2.8, 1.8], ['left', -2, 1.9, 3, 1.8], ['right', 2, 1.9, 3, 1.8]] });
+      for (let i = 0; i < 4; i++) M.block('wood', -1.8 + i * 1.2, -D / 2 + 1.6, .9, .9, .5, 2.6); // shelves seen through the door
+      M.block('wood', 0, -D / 2 - .8, 4.9, W + 1, 2, .25); // balcony
+      for (let i = 0; i <= 10; i++) M.block('darkwood', -W / 2 - .3 + i * (W + .6) / 10, -D / 2 - 1.7, 5.15, .14, .14, 1);
+      M.box('darkwood', [0, -D / 2 - 1.7, 6.15], [W + .8, .16, .16]); M.box('darkwood', [0, -D / 2 - 1.7, 5.6], [W + .8, .1, .1]);
+      for (const x of [-W / 2 - .2, -W / 4, W / 4, W / 2 + .2]) M.block('darkwood', x, -D / 2 - 1.7, .9, .26, .26, 4);
+      walls(M, 0, .6, 5.15, W - 1.6, D - 1.6, 3.4, { windows: [['front', -4.6, 5.9, 2.4, 1.6], ['front', 0, 5.9, 2.4, 1.6], ['front', 4.6, 5.9, 2.4, 1.6], ['left', 0, 5.9, 3, 1.6], ['right', 0, 5.9, 3, 1.6]], postStep: 2.8 });
+      M.remap = null;
+      M.roof(0, -.2, 4.9, W + 2.8, D + 3.4, 1, { lift: .5, gable: false, ornaments: false });
+      M.roof(0, .6, 8.55, W + 1.6, D + 1.8, 3.3, { lift: .8 });
+      banner(M, W / 2 - 3.2, -D / 2 - 1.85, 8.3, 3.2, 4.2, 'banner_ronin_scroll');
+      for (const sd of [-1, 1]) { lantern(M, sd * 3, -D / 2 - .4, 3.8, .24); lantern(M, sd * (W / 2 + .1), -D / 2 - 1.8, 8.2, .24); }
+    },
+    // strategy hall: wide single storey with a veranda and a big board banner
+    ronin_strategy_hall(M) {
+      const W = 18, D = 11;
+      M.block('stone', 0, 0, 0, W + 2.4, D + 2.4, .9); steps(M, 0, -(D + 2.4) / 2, .9, 5, 2);
+      M.remap = { plaster: 'plaster_old' };
+      walls(M, 0, .6, .9, W, D - 1.2, 4.6, { door: [3.6, 3.2], windows: [['front', -6.5, 2, 2.6, 1.8], ['left', 0, 2, 3, 1.8], ['right', 0, 2, 3, 1.8], ['back', 0, 2, 3, 1.8]] });
+      M.remap = null;
+      M.block('wood', 0, -D / 2 - .2, .9, W + 1.6, 1.8, .12);
+      for (let i = 0; i <= 6; i++) M.block('darkwood', -W / 2 - .6 + i * (W + 1.2) / 6, -D / 2 - .9, 1, .3, .3, 4.3);
+      for (const sd of [-1, 1]) { M.box('darkwood', [sd * (W / 4 + 1.8), -D / 2 - .9, 1.9], [W / 2 - 2.6, .12, .12]); for (let i = 0; i < 7; i++) M.block('darkwood', sd * (3 + i * 1.05), -D / 2 - .9, 1, .08, .08, .9); }
+      M.roof(0, 0, 5.4, W + 3.6, D + 3.6, 3.4, { lift: .8 });
+      banner(M, 4.4, -D / 2 + .25, 5.2, 5, 3.8, 'banner_ronin_board');
+      noren(M, 0, -D / 2 + .3, 4, 3.4, .9, 'noren_ronin');
+      for (const sd of [-1, 1]) lantern(M, sd * 2.6, -D / 2 - .9, 4.9, .24);
+      for (const [x, y] of [[-8.2, -D / 2 - 2], [8.6, -D / 2 - 1.8]]) { M.block('wood', x, y, 0, .9, .8, .8); M.block('wood', x + .3, y + .1, .8, .7, .6, .6); }
+    },
+    ronin_house(M) { M.remap = { thatch: 'roof', plaster: 'plaster_old' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ronin'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_ronin'); },
+    ronin_house_large(M) {
+      const W = 12, D = 8;
+      M.block('stone', 0, 0, 0, W + 1, D + 1, .7);
+      M.remap = { plaster: 'plaster_old' };
+      walls(M, 0, 0, .7, W, D, 3.8, { door: [2.4, 2.8], windows: [['front', -3.6, 1.7, 2.4, 1.6], ['front', 3.6, 1.7, 2.4, 1.6], ['left', 0, 1.7, 2.6, 1.6], ['right', 0, 1.7, 2.6, 1.6]] });
+      M.remap = null;
+      M.roof(0, 0, 4.5, W + 3, D + 3, 3, { lift: .6 });
+      noren(M, 0, -D / 2 - .2, 3.4, 2.6, .9, 'noren_ronin'); banner(M, -5.2, -D / 2 - .18, 4, 1.2, 2.6, 'banner_ronin');
+      lantern(M, 1.8, -D / 2 - .5, 3.9, .22); M.block('wood', 4.6, -D / 2 - 1.1, 0, 1, .9, .9); M.cyl('wood', [5.7, -D / 2 - .9, 0], .35, .85, 10);
+    },
+    // gate: a timber gatehouse with a tiled roof and open studded doors between two granite bastions, each with a
+    // small lit watch cabin on top and a long banner; braziers on stone posts in front
+    ronin_gate(M) {
+      const OW = 6.4, S = 6;
+      for (const sd of [-1, 1]) {
+        const x = sd * (OW / 2 + S / 2);
+        M.block('stone', x, 0, 0, S, 6.4, 6.6); M.block('stone', x, 0, 6.6, S + .4, 6.8, .35);
+        M.remap = { plaster: 'plaster_old' }; walls(M, x, 0, 6.95, 3.6, 3.6, 2.6, { windows: [['front', 0, 7.7, 2, 1.3], [sd < 0 ? 'left' : 'right', 0, 7.7, 1.8, 1.3]], postStep: 1.8 }); M.remap = null;
+        M.roof(x, 0, 9.55, 5.6, 5.6, 1.9, { lift: .5, ornaments: false });
+        banner(M, x, -3.22, 6.1, 2.6, 4.6, 'banner_ronin');
+        M.block('stone', sd * (OW / 2 + S + 1.4), -4.6, 0, .9, .9, 1.6); M.cyl('iron', [sd * (OW / 2 + S + 1.4), -4.6, 1.6], .4, .4, 8, .55); M.quad('fire', [[sd * (OW / 2 + S + 1.4) - .35, -4.6, 2], [sd * (OW / 2 + S + 1.4) + .35, -4.6, 2], [sd * (OW / 2 + S + 1.4) + .15, -4.6, 2.8], [sd * (OW / 2 + S + 1.4) - .15, -4.6, 2.8]]);
+        M.quad('glow', [[sd * (OW / 2 + S + 1.4) - 2.2, -6.8, .06], [sd * (OW / 2 + S + 1.4) + 2.2, -6.8, .06], [sd * (OW / 2 + S + 1.4) + 2.2, -2.4, .06], [sd * (OW / 2 + S + 1.4) - 2.2, -2.4, .06]]);
+      }
+      for (const sd of [-1, 1]) for (const y of [-1.6, 1.6]) M.block('darkwood', sd * (OW / 2 + .2), y, 0, .5, .5, 6.2);
+      for (const y of [-1.6, 1.6]) M.box('darkwood', [0, y, 6], [OW + 1.4, .45, .5]);
+      M.block('darkwood', 0, 0, 6.25, OW + 1.6, 3.8, .35);
+      M.roof(0, 0, 6.6, OW + 4, 5.6, 2.2, { lift: .7 });
+      for (const sd of [-1, 1]) { M.block('darkwood', sd * (OW / 2 - .15), 3, 0, .22, 3, 5.6); for (const z of [1.2, 2.6, 4]) for (const k of [-1, 0, 1]) M.cyl('iron', [sd * (OW / 2 - .28), 3 + k * .9, z], .06, .03, 4); }
+      noren(M, 0, -1.95, 5.75, OW - .6, 1.1, 'noren_ronin');
+      for (const sd of [-1, 1]) lantern(M, sd * (OW / 2 + .2), -2.05, 5.4, .26);
+    },
+    // granite wall, 8 m, with a dark tiled coping
+    ronin_wall(M) {
+      M.block('stone', 0, 0, 0, 8, 1.6, 3.8);
+      M.block('darkwood', 0, 0, 3.8, 8.1, 1.9, .18);
+      M.roof(0, 0, 3.98, 8.6, 2.6, .55, { lift: .1, gable: false, ornaments: false });
+    },
+    // stone lantern pillar: a square granite post with a lit lantern box and a little roof
+    ronin_lantern_pillar(M) {
+      M.block('stone', 0, 0, 0, .9, .9, .35); M.block('stone', 0, 0, .35, .62, .62, 1.5);
+      M.block('darkwood', 0, 0, 1.85, .7, .7, .08); M.block('lantern', 0, 0, 1.93, .52, .52, .55);
+      for (const [x, y] of [[-.28, -.28], [.28, -.28], [-.28, .28], [.28, .28]]) M.block('darkwood', x, y, 1.93, .07, .07, .55);
+      M.cyl('roof', [0, 0, 2.48], .62, .32, 4, .1);
+      M.quad('glow', [[-2.2, -2.2, .06], [2.2, -2.2, .06], [2.2, 2.2, .06], [-2.2, 2.2, .06]]);
+    },
+    // dark wood railing, 4 m, iron caps (terraces, stairs, the yard)
+    ronin_rail(M) {
+      for (const x of [-2, 0, 2]) { M.block('darkwood', x, 0, 0, .2, .2, 1.15); M.cyl('iron', [x, 0, 1.15], .14, .1, 4, .08); }
+      M.box('darkwood', [0, 0, 1], [4.1, .14, .14]); M.box('darkwood', [0, 0, .5], [4.1, .1, .1]);
+      for (let i = 0; i < 8; i++) M.block('darkwood', -1.75 + i * .5, 0, .5, .05, .05, .5);
+    },
+    // the well under a small tiled roof on four posts, lanterns hanging from the beams
+    ronin_well(M) {
+      M.cyl('stone', [0, 0, 0], 1.45, 1.05, 16); M.cyl('water', [0, 0, .3], 1.18, .7, 16); M.cyl('stone', [0, 0, 1.05], 1.55, .12, 16);
+      for (const [x, y] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) M.block('darkwood', x, y, 0, .22, .22, 3.1);
+      for (const y of [-1.5, 1.5]) M.box('darkwood', [0, y, 3], [3.4, .2, .2]);
+      M.box('wood', [0, 0, 2.7], [3.2, .18, .18]); M.cyl('rope', [0, 0, 1.5], .03, 1.15, 4); M.cyl('darkwood', [0, 0, 1.25], .22, .3, 8);
+      M.roof(0, 0, 3.15, 4.4, 4.4, 1.3, { lift: .35, ornaments: false });
+      for (const [x, y] of [[-1.5, -1.6], [1.5, -1.6]]) lantern(M, x, y, 2.8, .2);
+      M.cyl('wood', [1.9, .9, 0], .3, .45, 8, .26); M.block('wood', -2, .6, 0, .6, .6, .6);
+    },
+    // wooden training dummy (three arms, a leg) on a square base
+    ronin_dummy(M) {
+      M.block('stone', 0, 0, 0, .9, .9, .25); M.cyl('wood', [0, 0, .25], .24, 1.9, 10);
+      for (const z of [.7, 1.25, 1.75]) M.cyl('rope', [0, 0, z], .27, .14, 10);
+      for (const [z, a] of [[1.55, .45], [1.55, -.45], [1.15, 0]]) M.rod('darkwood', [0, 0, z], [Math.sin(a) * .62, -Math.cos(a) * .62, z + .04], .05, 5);
+      M.rod('darkwood', [0, 0, .55], [.1, -.55, .3], .06, 5);
+      M.cyl('darkwood', [0, 0, 2.15], .26, .1, 10);
+    },
+    ronin_banner_pole(M) {
+      M.cyl('darkwood', [0, 0, 0], .1, 5.6, 8); M.block('stone', 0, 0, 0, .7, .7, .4);
+      M.box('darkwood', [0, -.02, 5.3], [1.8, .1, .1]);
+      M.quad('banner_ronin', [[-.8, -.06, 1.6], [.8, -.06, 1.6], [.8, -.06, 5.25], [-.8, -.06, 5.25]]);
+      for (const sd of [-1, 1]) M.cyl('iron', [sd * .9, -.02, 5.3], .06, .14, 4, .02);
+      M.cyl('gold', [0, 0, 5.6], .1, .3, 6, .02);
+    },
+    // stone brazier with a fire (paths, the gate court)
+    ronin_brazier(M) {
+      M.block('stone', 0, 0, 0, .8, .8, 1.1); M.cyl('iron', [0, 0, 1.1], .45, .35, 8, .6);
+      M.quad('fire', [[-.4, 0, 1.4], [.4, 0, 1.4], [.15, 0, 2.3], [-.15, 0, 2.3]]); M.quad('fire', [[0, -.4, 1.4], [0, .4, 1.4], [0, .15, 2.2], [0, -.15, 2.2]]);
+      M.quad('glow', [[-2.4, -2.4, .06], [2.4, -2.4, .06], [2.4, 2.4, .06], [-2.4, 2.4, .06]]);
     },
     // ── Ronin (the forgotten clan) ──
     // the giant bonsai of the plaza: a twisted old trunk with roots clasping a mossy rock mound, long branches ending
