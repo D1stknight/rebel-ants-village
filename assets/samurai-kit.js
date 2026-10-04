@@ -779,7 +779,7 @@
   // a big banana along x (length L, radius r, centre sag s), brown ends; on: the ends tip up (resting on posts)
   function chzBanana(M, x, y, z, L, r, s, on) {
     const pts = []; for (let k = 0; k <= 6; k++) { const f = k / 6, u = f * 2 - 1; pts.push([x + u * L / 2, y, z - s * (1 - u * u) + (on ? .6 * u * u : 0)]); }
-    curveTube(M, 'banana_big', pts, [r * .25, r * .8, r, r, r, r * .8, r * .3], { segs: 10, n: 3, ridge: .12, k: 5, bump: .04, seed: 2 });
+    curveTube(M, 'banana_big', pts, [r * .18, r * .62, r * .92, r, r * .92, r * .62, r * .2], { segs: 10, n: 3, ridge: .12, k: 5, bump: .04, seed: 2 });
     for (const sd of [-1, 1]) M.cyl('darkwood', [x + sd * (L / 2 + .1), y, z + (on ? .6 : 0) - .15], r * .18, .5, 6, r * .1);
   }
   function chzFish(M, x, y, z) { M.rod('rope', [x, y, z], [x, y, z - .25], .01, 3); M.sphere('fish', [x, y, z - .6], .12, 3.2, 6, 4); M.poly('fish', [[x, y, z - 1.0], [x - .12, y, z - 1.22], [x + .12, y, z - 1.22]]); }
@@ -2064,7 +2064,7 @@
       for (const x of [-8, -3, 3, 8]) { M.block('window_glow', x, -D / 2 + .68, Z + H1 + 1.4, 1.6, .06, 1.2); M.box('plank_yellow', [x, -D / 2 + .62, Z + H1 + 2.05], [1.9, .08, .14]); M.box('plank_yellow', [x, -D / 2 + .62, Z + H1 + 1.35], [1.9, .08, .14]); }
       for (const [x, y] of [[-6, -1], [0, 1], [6, -1]]) chzTable(M, x, y - D / 2 + .2 - 1, Z + H1 + .3);
       // the giant banana sign hung on the balcony front
-      chzBanana(M, 0, yF - 2.5, Z + H1 + 1.6, 13, 1, .25);
+      chzBanana(M, 0, yF - 2.5, Z + H1 + 2.4, 13, .95, 1.5);
       for (const sd of [-1, 1]) M.rod('rope', [sd * 5, yF - 2.4, Z + H1 + 2.6], [sd * 5, yF - 2.4, Z + H1 + 1.9], .04, 4);
       // yellow awnings either side of the doors
       for (const sd of [-1, 1]) { const x0 = sd * 4.6, x1 = sd * 11; M.quad('awning', [[Math.min(x0, x1), yF - .1, Z + 3.8], [Math.max(x0, x1), yF - .1, Z + 3.8], [Math.max(x0, x1), yF - 3, Z + 3], [Math.min(x0, x1), yF - 3, Z + 3]]); for (const x of [x0, x1]) M.rod('wood', [x, yF - 3, Z], [x, yF - 3, Z + 3.05], .06, 4); }
@@ -2102,7 +2102,7 @@
     chz_banana_well(M) {
       M.cyl('stone', [0, 0, 0], 2.2, .9, 16); M.cyl('water', [0, 0, .2], 1.8, .65, 16); M.cyl('stone', [0, 0, .9], 2.35, .14, 16);
       for (const [x, z] of [[-3.6, 2.4], [3.4, 3.2]]) M.block('wood', x, .2, 0, .4, .4, z);
-      chzBanana(M, 0, .2, 3.4, 9, 1.15, -.55, true);
+      chzBanana(M, 0, .2, 4, 9.5, 1.1, 1.3, true);
       for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + .3; leafStrip(M, 'banana_leaf', f => [Math.cos(a) * (2.5 + 1.2 * f), Math.sin(a) * (2.5 + 1.2 * f), .2 + .9 * f * (1 - f) * 2], f => .3 * Math.sin(Math.PI * Math.min(1, .2 + f)), [Math.cos(a), Math.sin(a)], .1, 4); }
       for (const [x, y] of [[-2.8, -1.4], [2.9, -1], [2.4, 1.8]]) { M.cyl('wood', [x, y, 0], .42, 1.1, 10, .42); for (const z of [.15, .9]) M.cyl('iron', [x, y, z], .44, .05, 10); }
     },
