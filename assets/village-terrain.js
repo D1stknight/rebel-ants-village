@@ -388,10 +388,10 @@ export const TERRAIN_RECIPES = {
     hills: .95, shape: { fbm: 26, ridge: 26, wall: 120 },
     flatHalf: 84, hillStart: 92, hillFull: 200, wallStart: 260,
     palette: {
-      grassA: [0.3, 0.31, 0.17], grassB: [0.42, 0.4, 0.23], wet: [0.24, 0.27, 0.14],
-      dirt: [0.62, 0.5, 0.34], yard: [0.5, 0.41, 0.28], rockTint: [1.0, .97, .92], highTint: [1.0, .97, .88], peak: [0.84, 0.82, 0.78]
+      grassA: [0.36, 0.33, 0.2], grassB: [0.5, 0.43, 0.27], wet: [0.26, 0.27, 0.15],
+      dirt: [0.62, 0.5, 0.34], yard: [0.47, 0.42, 0.33], rockTint: [1.0, .97, .92], highTint: [1.0, .97, .88], peak: [0.84, 0.82, 0.78]
     },
-    grass: { count: 70000, base: [0.2, 0.22, 0.08], tip: [0.68, 0.62, 0.32] },
+    grass: { count: 60000, base: [0.22, 0.21, 0.09], tip: [0.72, 0.62, 0.36] },
     flowers: { count: 1200, stem: [0.18, 0.22, 0.08], petal: [0.95, 0.84, 0.4] },
     pines: { file: 'pine_1.glb', count: 420, scale: [1.4, 3.0], trunk: 0.32, settle: .35, sink: .15 },
     rocks: { file: 'rock_1.glb', count: 460, scale: [1.2, 4.4], body: 0.75, settle: .9, sink: .1, tint: [1.75, 1.68, 1.55], minSq: 74 }, // pale granite outcrops
@@ -1002,7 +1002,7 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA) {
       vec3 rock = texture2D(uRockTex, pw.zy*0.05).rgb*bw.x + texture2D(uRockTex, pw.xz*0.05).rgb*bw.y + texture2D(uRockTex, pw.xy*0.05).rgb*bw.z;
       rock *= ${v3(P.rockTint)}; rock = mix(rock, rock*vec3(0.72,0.78,0.7), wet);
       // village yards: a darker raked sand with fine grain (the palette dirt was near white in full sun)
-      vec3 yard = ${v3(P.yard || P.dirt.map(v => v * .6))} * (0.84 + 0.26*micro) * (0.9 + 0.2*tvn(p*3.1));
+      vec3 yard = ${v3(P.yard || (d => d.map(v => v * .6 * .8 + (d[0] + d[1] + d[2]) / 3 * .6 * .2))(P.dirt))} * (0.84 + 0.26*micro) * (0.9 + 0.2*tvn(p*3.1));
       ${(V?.rake || []).map(k => k.ring
         ? `{ float d = length(p - vec2(${k.ring[0].toFixed(1)}, ${k.ring[1].toFixed(1)})); yard *= 1.0 - 0.16 * step(d, ${k.ring[2].toFixed(1)}) * smoothstep(0.35, 1.0, sin(d * 12.566)); }`
         : `{ float inR = step(${k.r[0].toFixed(1)}, p.x) * step(p.x, ${k.r[2].toFixed(1)}) * step(${k.r[1].toFixed(1)}, p.y) * step(p.y, ${k.r[3].toFixed(1)}); yard *= 1.0 - 0.13 * inR * smoothstep(0.35, 1.0, sin(p.${k.axis === 'x' ? 'x' : 'y'} * 12.566)); }`).join('\n      ')}
