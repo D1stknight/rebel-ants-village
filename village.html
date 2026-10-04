@@ -8238,6 +8238,59 @@ function updateSunPathForShadows(h) {
   if (typeof refreshStaticShadows === 'function') refreshStaticShadows();
 }
 
+// ── Footprints in the sand ──────────────────────────────────
+// Walking on a village's sand / dirt yards (and beach sand) leaves left-right prints that fade out over ~30 s.
+// One thin-instanced mesh (one draw call), 72 prints recycled; fading via per-print instance colour alpha.
+const SandPrints = { mesh: null, n: 72, next: 0, born: new Float32Array(72).fill(-1e9), last: null, side: 1, lastFade: 0, full: 20, fade: 10 }; // seconds
+window._sandPrints = SandPrints;
+function sandPrintsMesh() {
+  if (SandPrints.mesh || !scene) return SandPrints.mesh;
+  const m = BABYLON.MeshBuilder.CreateGround('sandFootprints', { width: .3, height: .5 }, scene);
+  const S = 64, tex = new BABYLON.DynamicTexture('sandFootprintTex', { width: S, height: S * 2 }, scene, true), c = tex.getContext();
+  c.clearRect(0, 0, S, S * 2); c.fillStyle = '#fff';
+  c.beginPath(); c.ellipse(S * .5, S * .64, S * .4, S * .58, 0, 0, 7); c.fill();          // sole
+  c.beginPath(); c.ellipse(S * .5, S * 1.52, S * .32, S * .4, 0, 0, 7); c.fill();        // heel
+  tex.hasAlpha = true; tex.update();
+  const mat = new BABYLON.StandardMaterial('sandFootprintMat', scene);
+  mat.diffuseColor = new BABYLON.Color3(.16, .12, .08); mat.specularColor = BABYLON.Color3.Black(); mat.emissiveColor = new BABYLON.Color3(.05, .04, .03);
+  mat.opacityTexture = tex; mat.zOffset = -3; mat.backFaceCulling = false; mat.disableDepthWrite = true; mat.maxSimultaneousLights = 2;
+  m.material = mat; m.isPickable = false; m.hasVertexAlpha = true; m.alwaysSelectAsActiveMesh = true; m.metadata = { type: 'visual_backdrop', visualOnly: true, _perfNeverFreeze: true };
+  const mats = new Float32Array(SandPrints.n * 16), cols = new Float32Array(SandPrints.n * 4);
+  for (let i = 0; i < SandPrints.n; i++) BABYLON.Matrix.Translation(0, -9999, 0).copyToArray(mats, i * 16);
+  m.thinInstanceSetBuffer('matrix', mats, 16, false); m.thinInstanceSetBuffer('color', cols, 4, false);
+  SandPrints.mats = mats; SandPrints.cols = cols;
+  return (SandPrints.mesh = m);
+}
+function onSandAt(x, z) {
+  const NT = window._newTerrain; if (!NT) return false;
+  const VS = NT.villageShape; if (VS && VS.inside(x, z) && VS.dirt(x, z) > .5) return true;
+  const sy = NT.recipe?.sea?.y; if (Number.isFinite(sy) && NT.sea) { const h = NT.heightAt(x, z); return h > sy - .1 && h < sy + 1.6; }
+  return false;
+}
+function updateSandFootprints(groundY) {
+  if (!walkMode || !charMesh || ActiveInterior || !window._newTerrain || !Number.isFinite(groundY)) { SandPrints.last = null; return; }
+  const p = charMesh.position, now = performance.now();
+  if (!SandPrints.last) SandPrints.last = { x: p.x, z: p.z };
+  const dx = p.x - SandPrints.last.x, dz = p.z - SandPrints.last.z, d = Math.hypot(dx, dz);
+  if (d > 4) SandPrints.last = { x: p.x, z: p.z }; // teleport / portal
+  else if (d >= .62) {
+    SandPrints.last = { x: p.x, z: p.z };
+    if (Math.abs(p.y - groundY) < .6 && onSandAt(p.x, p.z) && !(typeof villageOnKitDeck === 'function' && villageOnKitDeck(p.x, p.z))) {
+      const m = sandPrintsMesh(), i = SandPrints.next; SandPrints.next = (i + 1) % SandPrints.n; SandPrints.side = -SandPrints.side;
+      const yaw = Math.atan2(dx, dz), ox = Math.cos(yaw) * .16 * SandPrints.side, oz = -Math.sin(yaw) * .16 * SandPrints.side;
+      BABYLON.Matrix.ComposeToRef(BABYLON.Vector3.One(), BABYLON.Quaternion.FromEulerAngles(0, yaw, 0), new BABYLON.Vector3(p.x + ox, groundY + .025, p.z + oz), BABYLON.TmpVectors.Matrix[0]);
+      BABYLON.TmpVectors.Matrix[0].copyToArray(SandPrints.mats, i * 16); SandPrints.born[i] = now;
+      m.thinInstanceBufferUpdated('matrix'); SandPrints.lastFade = 0;
+    }
+  }
+  // fade: full for 20 s, gone by 30 s (colour buffer refreshed 4x a second)
+  if (SandPrints.mesh && now - SandPrints.lastFade > 250) {
+    SandPrints.lastFade = now;
+    for (let i = 0; i < SandPrints.n; i++) { const age = (now - SandPrints.born[i]) / 1000, a = age < SandPrints.full ? .62 : Math.max(0, .62 * (1 - (age - SandPrints.full) / SandPrints.fade)); SandPrints.cols.set([1, 1, 1, a], i * 4); }
+    SandPrints.mesh.thinInstanceBufferUpdated('color');
+  }
+}
+
 // A village can keep its own hour (recipe.hour: Ronin is always moonlit); others follow the real clock.
 // The village's terrain recipe, available from the first frame (the terrain itself is built a little later; reading
 // it from window._newTerrain alone left Ronin in daylight until the next 30 s sky update).
@@ -22855,7 +22908,7 @@ engine.runRenderLoop(()=>{
       // Slope tilt removed — character stays upright
     }
     if(animState!==2&&animState<3){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
-    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
+    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1);updateSandFootprints(_terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
     if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
     _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
     const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
