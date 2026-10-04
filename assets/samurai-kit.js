@@ -65,6 +65,9 @@
     T.noren_kenshi = bannerTex(scene, 'noren_kenshi', '#1f5753', '#d8b450', 'logo:kenshi', false, true);
     T.noren_kenshi_scroll = bannerTex(scene, 'noren_kenshi_scroll', '#1f5753', '#d8b450', 'scroll', false, true);
     T.noren_kenshi_map = bannerTex(scene, 'noren_kenshi_map', '#c9a24a', '#1f4a46', 'board', false, true);
+    T.noren_sohei = bannerTex(scene, 'noren_sohei', '#c38d2a', '#f8edd2', 'logo:sohei', false, true);
+    T.noren_sohei_books = bannerTex(scene, 'noren_sohei_books', '#c38d2a', '#f8edd2', 'books', false, true);
+    T.noren_sohei_dots = bannerTex(scene, 'noren_sohei_dots', '#a8432a', '#f8edd2', 'dots', false, true);
     return T;
   }
   function bannerTex(scene, name, bg, fg, icon, sail, wide) {
@@ -113,7 +116,7 @@
   const FACTION_BANNERS = {
     samurai: ['#961816', '#ecd6aa'], wokou: ['#1c2a4c', '#d9a743'], yamabushi: ['#25402d', '#d6a640'], ronin: ['#0e0d10', '#9a161a'],
     shogun: ['#2e2147', '#d8b04a'], bushi: ['#1b2a48', '#cfae5c'], buke: ['#5e1a20', '#d8b35c'], ashigaru: ['#24402a', '#d9c98e'],
-    kenshi: ['#1f5753', '#d8b450'], sohei: ['#b8611c', '#f4e6c4'], warrior: ['#6b2a1a', '#e2c08a']
+    kenshi: ['#1f5753', '#d8b450'], sohei: ['#c38d2a', '#f8edd2'], warrior: ['#6b2a1a', '#e2c08a']
   };
   const logoImgs = {};
   function logoMask(id, cb) {
@@ -135,6 +138,8 @@
     noren_yamabushi: { tex: 'noren_yamabushi' }, noren_yam_books: { tex: 'noren_yam_books' }, noren_yam_dots: { tex: 'noren_yam_dots' },
     noren_buke: { tex: 'noren_buke' }, banner_buke_scroll: { tex: 'banner_buke_scroll' }, noren_buke_map: { tex: 'noren_buke_map' },
     noren_kenshi: { tex: 'noren_kenshi' }, noren_kenshi_scroll: { tex: 'noren_kenshi_scroll' }, noren_kenshi_map: { tex: 'noren_kenshi_map' },
+    noren_sohei: { tex: 'noren_sohei' }, noren_sohei_books: { tex: 'noren_sohei_books' }, noren_sohei_dots: { tex: 'noren_sohei_dots' },
+    bronze: { col: [.3, .36, .27], spec: [.6, .55, .4], power: 40 },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
@@ -683,6 +688,32 @@
       for (const x of [-4, 0, 4]) { M.block('stone', x, 0, 0, .7, .7, 1.6); M.block('stone', x, 0, 1.6, .85, .85, .14); }
       for (const z of [.35, 1.25]) for (const h of [-1, 1]) M.box('darkwood', [h * 2, 0, z], [3.3, .14, .12]);
       for (let i = 0; i < 14; i++) { const x = -3.3 + i * (6.6 / 13); if (Math.abs(x) < .4) continue; M.block('darkwood', x, 0, .35, .07, .07, .9); }
+    },
+    // ── Sohei (monastic warriors): dark wood, white plaster, grey tile, gold + cream banners with the cross-and-sun ──
+    sohei_great_dojo(M) { M.remap = { red: 'darkwood', banner_red: 'banner_sohei' }; B.sam_great_dojo(M); M.remap = null; noren(M, 0, -15 / 2 + 2.05, 5.45, 5.6, 1.5, 'noren_sohei'); },
+    sohei_library(M) { M.remap = { noren_yam_books: 'noren_sohei_books', banner_yamabushi: 'banner_sohei' }; B.yam_library(M); },
+    sohei_hall(M) { M.remap = { banner_navy: 'banner_sohei' }; B.sam_library(M); M.remap = null; noren(M, 0, -9 / 2 - .22, 4.0, 3.2, 1.2, 'noren_sohei_dots'); },
+    sohei_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_sohei'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_sohei'); },
+    sohei_shop(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; banner(M, -.6, -3.25 - .2, 3.5, 3.4, 2.6, 'banner_board'); banner(M, -3.6, -3.25 - .18, 3.4, .9, 2.2, 'banner_sohei'); },
+    sohei_gate(M) { M.remap = { red: 'darkwood', banner_red: 'banner_sohei' }; B.sam_gate(M); M.remap = null; noren(M, 0, -1.3, 5.1, 5, 1.7, 'noren_sohei'); },
+    sohei_banner_pole(M) { M.remap = { banner_red: 'banner_sohei' }; B.sam_banner_pole(M); },
+    // compound wall, 8 m: white plaster between dark posts on a low stone plinth, under a tiled coping
+    sohei_wall(M) {
+      M.block('stone', 0, 0, 0, 8, .9, .5); M.block('plaster', 0, 0, .5, 8, .55, 2.3);
+      for (const x of [-4, -2, 0, 2, 4]) M.block('darkwood', x, 0, .5, .2, .62, 2.3);
+      M.block('darkwood', 0, 0, 2.8, 8.1, .66, .16);
+      M.roof(0, 0, 2.95, 8.6, 1.5, .45, { lift: .05, gable: false, ornaments: false });
+    },
+    // bell tower: a stone base, four posts and a tiled roof over a big bronze bell with a log striker
+    sohei_bell_tower(M) {
+      M.block('stone', 0, 0, 0, 6, 6, 1.2); steps(M, 0, -3, 1.2, 2.4, 3);
+      for (const x of [-2.2, 2.2]) for (const y of [-2.2, 2.2]) M.block('darkwood', x, y, 1.2, .3, .3, 4.4);
+      for (const y of [-2.2, 2.2]) M.box('darkwood', [0, y, 5.5], [5, .3, .3]); for (const x of [-2.2, 2.2]) M.box('darkwood', [x, 0, 5.5], [.3, 5, .3]);
+      M.box('darkwood', [0, 0, 5.2], [4.8, .25, .25]);
+      M.roof(0, 0, 5.75, 7.4, 7.4, 2.4, { lift: .7 });
+      M.cyl('bronze', [0, 0, 2.1], .95, 2.4, 16, .78); M.cyl('bronze', [0, 0, 4.5], .62, .3, 12, .2); M.cyl('bronze', [0, 0, 2.05], 1.0, .12, 16);
+      M.rod('rope', [0, 0, 4.75], [0, 0, 5.15], .05, 4);
+      M.rod('bark', [-2.1, -1.6, 2.9], [-.9, -1.6, 2.9], .16, 7); for (const x of [-2, -1.1]) M.rod('rope', [x, -1.6, 2.95], [x, -1.6, 5.1], .02, 3);
     },
     // stairs (see STAIRS below): built at their placed size, so stretched stairs keep ~0.3 m steps
     kit_stairs_stone(M) { buildStairs(M, 'kit_stairs_stone'); },
