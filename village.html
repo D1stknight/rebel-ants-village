@@ -1587,9 +1587,10 @@ const VILLAGE_REGISTRY = {
   yamabushi: { villageId:'yamabushi', displayName:'Yamabushi Village', route:'village.html?village=yamabushi', themeColor:'#b06a3a', layoutPath:'assets/world-layouts/yamabushi.json' },
   queens: { villageId:'queens', displayName:'Queen’s Village', route:'village.html?village=queens', themeColor:'#d86adf', layoutPath:'assets/world-layouts/queens.json' },
   'cute-creepy': { villageId:'cute-creepy', displayName:'Cute & Creepy Village', route:'village.html?village=cute-creepy', themeColor:'#ff83c8', layoutPath:'assets/world-layouts/cute-creepy.json' },
-  'saints-la': { villageId:'saints-la', displayName:'Saints of LA Village', route:'village.html?village=saints-la', themeColor:'#8fd4ff', layoutPath:'assets/world-layouts/saints-la.json' }
+  'saints-la': { villageId:'saints-la', displayName:'Saints of LA Village', route:'village.html?village=saints-la', themeColor:'#8fd4ff', layoutPath:'assets/world-layouts/saints-la.json' },
+  chumpz: { villageId:'chumpz', displayName:'Chumpz Village', route:'village.html?village=chumpz', themeColor:'#f2c84b', layoutPath:'assets/world-layouts/chumpz.json' }
 };
-const FACTION_VILLAGES = ['ronin','samurai','bushi','warrior','shogun','buke','kenshi','wokou','ashigaru','sohei','yamabushi','queens','cute-creepy','saints-la'];
+const FACTION_VILLAGES = ['ronin','samurai','bushi','warrior','shogun','buke','kenshi','wokou','ashigaru','sohei','yamabushi','queens','cute-creepy','saints-la','chumpz'];
 const urlVillageId = new URLSearchParams(window.location.search).get('village') || 'hub';
 const CURRENT_VILLAGE_ID = VILLAGE_REGISTRY[urlVillageId] ? urlVillageId : 'hub';
 const CURRENT_VILLAGE = VILLAGE_REGISTRY[CURRENT_VILLAGE_ID];

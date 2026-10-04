@@ -20,7 +20,8 @@ const VILLAGE_IDS = new Set([
   'yamabushi',
   'queens',
   'cute-creepy',
-  'saints-la'
+  'saints-la',
+  'chumpz'
 ]);
 
 function getGitHubToken() {
