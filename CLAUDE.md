@@ -161,3 +161,9 @@ Friend villages (Queens, Cute & Creepy, Saints LA; Chumps not in registry yet): 
 - Kit: organic helpers in samurai-kit.js (vnoise, smoothGrid, spline, curveTube, blob; exposed as SamuraiKit._org for debugging). Blob normals: smoothGrid's grid normals point "inward" by its winding convention; explicit normals must use the same sense or they render black.
 - ronin_bonsai (~56k tris, plaza centrepiece), ronin_great_dojo (U of halls round the emblem floor; walkable platform deck + steps), ronin_library, ronin_strategy_hall, ronin_house(_large), ronin_gate, ronin_wall(_banner), ronin_lantern_pillar, ronin_rail, ronin_well, ronin_dummy, ronin_banner_pole, ronin_brazier, ronin_shrub, ronin_rock_garden. FACTION_BANNERS.ronin = art crimson #6a1a1d + cream; emblem = Ronin handprint logo (the art shows the ant).
 - Layout ronin.json 341 / 165 proxies (gen script pattern); keeps npcId ronin-guard-01 (Ronin Watcher, dialogue ronin-first-warning, quest first-warning) and ronin-wanderer-01. Old 74 pieces (ronin_banner/mist/dead trees/altars/glows, 2 chests, signs) removed.
+
+## Bug fixes before the first big main merge (dev f4f23ed..23859b3, Oct 4)
+- Ronin started in daylight for ~30 s: villageRecipe() reads the recipe from NEW_TERRAIN_MODULE (loaded at startup) for hour / light / moon; updateSky runs again once window._newTerrain exists.
+- Stairs blocked (Sohei dojo terrace): makeVillageShape ramps hold their start height for a wall-width before lo (the lower terrace's edge falloff made a dip -> isWall). Garden extras (village: true) skip pools, digs and dirt/sand yards (villageWet + dirt).
+- Shops/trade houses: board banner moved off the door (left wall, 2.1 m) + faction noren (new noren_wokou); house banners off the front window (x -3.05).
+- Footprints: SandPrints in village.html (thin instances, 72 prints, per-print alpha, window._sandPrints.full/fade seconds) on villageShape.dirt > .5 or beach sand (sea villages).
