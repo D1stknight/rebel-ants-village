@@ -8239,8 +8239,11 @@ function updateSunPathForShadows(h) {
 }
 
 // A village can keep its own hour (recipe.hour: Ronin is always moonlit); others follow the real clock.
+// The village's terrain recipe, available from the first frame (the terrain itself is built a little later; reading
+// it from window._newTerrain alone left Ronin in daylight until the next 30 s sky update).
+function villageRecipe() { return window._newTerrain?.recipe || NEW_TERRAIN_MODULE?.TERRAIN_RECIPES?.[CURRENT_VILLAGE_ID] || null; }
 function villageClockHour(now = new Date()) {
-  const fixed = window._newTerrain?.recipe?.hour;
+  const fixed = villageRecipe()?.hour;
   return Number.isFinite(fixed) ? fixed : now.getHours() + now.getMinutes() / 60;
 }
 function updateSky(){
@@ -8249,13 +8252,13 @@ function updateSky(){
   const d=Math.max(0,Math.sin(((h/24)-.25)*Math.PI*2));
   skyMat.inclination=-Math.sin(((h/24)-.25)*Math.PI*2)*.5;
   sun.intensity=0.15+d*1.8; hemi.intensity=0.18+d*.45;
-  const _vl = window._newTerrain?.recipe.light; if (_vl) { sun.intensity *= _vl.sun ?? 1; hemi.intensity *= _vl.hemi ?? 1; } // dimmer / brighter villages
+  const _vl = villageRecipe()?.light; if (_vl) { sun.intensity *= _vl.sun ?? 1; hemi.intensity *= _vl.hemi ?? 1; } // dimmer / brighter villages
   updateSunPathForShadows(h);
   if(h>=6&&h<9){sun.diffuse=new BABYLON.Color3(1,.62,.3);}
   else if(h>=9&&h<17){sun.diffuse=new BABYLON.Color3(1,.97,.88);}
   else if(h>=17&&h<20){sun.diffuse=new BABYLON.Color3(1,.48,.15);}
   else{sun.diffuse=new BABYLON.Color3(.18,.22,.48);sun.intensity=0.12;
-    const _moon = window._newTerrain?.recipe.moon; if (_moon) { sun.intensity = _moon.sun; hemi.intensity *= _moon.hemi; sun.diffuse = new BABYLON.Color3(..._moon.color); hemi.diffuse = new BABYLON.Color3(..._moon.color); } } // moonlit villages
+    const _moon = villageRecipe()?.moon; if (_moon) { sun.intensity = _moon.sun; hemi.intensity *= _moon.hemi; sun.diffuse = new BABYLON.Color3(..._moon.color); hemi.diffuse = new BABYLON.Color3(..._moon.color); } } // moonlit villages
   if (_vl?.tint && h>=6 && h<20) sun.diffuse = sun.diffuse.multiply(new BABYLON.Color3(..._vl.tint)); // e.g. Samurai's golden light
   const clearFogColor=h>=6&&h<20?new BABYLON.Color3(.58,.74,.9):new BABYLON.Color3(.04,.06,.16);
   scene.fogColor=clearFogColor;
@@ -14800,6 +14803,7 @@ const _newTerrain = (NEW_TERRAIN_MODULE && NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CU
   } catch (e) { console.warn('New terrain failed, using the old one', e); return null; }
 })() : null;
 window._newTerrain = _newTerrain;
+if (_newTerrain && typeof updateSky === 'function') try { updateSky(); } catch (e) {} // fog, light and hour of this village at once
 if (_newTerrain) console.log('New terrain on (' + CURRENT_VILLAGE_ID + '), built in', _newTerrain.buildMs, 'ms');
 // the village's sky (heavier and hazier for some villages)
 if (_newTerrain?.recipe.sky) Object.assign(skyMat, _newTerrain.recipe.sky);
