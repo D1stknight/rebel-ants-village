@@ -177,6 +177,22 @@
       c.fillStyle = '#101416'; c.fillRect(384 - 34, 0, 68, H); c.strokeStyle = '#d8e4e4'; c.lineWidth = 5; c.beginPath(); c.arc(384, H * .5, 16, .7, 5.6); c.stroke();
       collar(c, '#101416', '#2f7a72');
     });
+    // Chumpz: palm fronds (leaflets slanting off the midrib), banana leaves (fine parallel veins), ringed palm bark
+    const pl = noise(S, 6, 3, 61);
+    T.palm_leaf = pixelTex(scene, 'palm_leaf', S, (x, y, i) => { const g = (Math.abs(x - .5) * 3 + y * 9) % 1, f = (g < .14 ? .55 : .9 + .12 * pl[i]) * (Math.abs(x - .5) < .03 ? .7 : 1); return [58 * f, 112 * f, 34 * f]; });
+    T.banana_leaf = pixelTex(scene, 'banana_leaf', S, (x, y, i) => { const v = (y * 40 + Math.abs(x - .5) * 6) % 1, f = (v < .1 ? .82 : 1) * (.9 + .15 * pl[i]) * (Math.abs(x - .5) < .025 ? .8 : 1); return [92 * f, 150 * f, 46 * f]; });
+    T.palm_bark = pixelTex(scene, 'palm_bark', S, (x, y, i) => { const r = (y * 6) % 1, f = (r < .18 ? .55 : .85 + .12 * pl[i]); return [110 * f, 88 * f, 62 * f]; });
+    // weathered painted planks (paint chipped to the wood), patchwork corrugated tin, the giant banana, brick, bottles
+    const pk = noise(S, 10, 4, 62), pk2 = noise(S, 3, 3, 63);
+    const planks = (name, paint) => pixelTex(scene, name, S, (x, y, i) => { const col = (x * 6) % 1; if (col < .04) return [40, 28, 18]; const chip = pk[i] + .35 * pk2[i] > 1.02; const f = .82 + .18 * Math.sin(y * 40 + Math.floor(x * 6) * 3) * .3 + .1 * pk[i]; return chip ? mul([122, 88, 56], f) : mul(paint, f); });
+    T.plank_teal = planks('plank_teal', [74, 168, 160]); T.plank_yellow = planks('plank_yellow', [222, 182, 72]); T.plank_red = planks('plank_red', [176, 64, 52]);
+    const tins = [[70, 120, 170], [168, 64, 56], [78, 160, 150], [150, 92, 52], [140, 140, 136], [196, 150, 60]];
+    T.tin_roof = pixelTex(scene, 'tin_roof', S, (x, y, i) => { const b = tins[(Math.floor(x * 2) * 3 + Math.floor(y * 2) * 2 + Math.floor(x * 2) * Math.floor(y * 2)) % tins.length], r = .78 + .22 * Math.sin(x * S * .9); const rust = pk[i] > .78 ? .55 : 1; return mul(rust < 1 ? [130, 70, 40] : b, r * (.88 + .15 * pk2[i])); });
+    T.banana_big = pixelTex(scene, 'banana_big', S, (x, y, i) => { const st = (x * 5) % 1 < .05 ? .7 : 1, spot = pk[i] > .8 ? .45 : 1; return mul([238, 196, 66], st * spot * (.9 + .12 * pk2[i])); });
+    T.brick = pixelTex(scene, 'brick', S, (x, y, i) => { const row = Math.floor(y * 8), col = (x * 4 + (row % 2) * .5) % 1; if ((y * 8) % 1 < .1 || col < .05) return [180, 170, 150]; return mul([150, 80, 60], .8 + .3 * pk[i]); });
+    T.bottles = cv('bottles', 512, 256, (c, W, H) => { c.fillStyle = '#4a2e18'; c.fillRect(0, 0, W, H); const r = rng(64); for (let row = 0; row < 3; row++) { c.fillStyle = '#2a1a0c'; c.fillRect(0, row * H / 3 + H / 3 - 10, W, 10); for (let x = 6; x < W - 10; x += 14 + r() * 6) { c.fillStyle = ['#2f7a3a', '#7a4a1c', '#c9d8d0', '#3a6aa0', '#a82a2a'][Math.floor(r() * 5)]; const h = 40 + r() * 30, y0 = row * H / 3 + H / 3 - 10 - h; c.fillRect(x, y0 + h * .3, 10, h * .7); c.fillRect(x + 3, y0, 4, h * .32); } } });
+    T.sign_fishbook = bannerTex(scene, 'chz_fishbook', '#3d6a88', '#ece6d4', 'fishbook', false, true);
+    T.sign_chzdice = bannerTex(scene, 'chz_dice', '#a8282c', '#f6efe2', 'dice', false, true);
     const tt = noise(S, 2, 3, 41); // tatami: woven rush, a black cloth border
     T.tatami = pixelTex(scene, 'tatami', S, (x, y, i) => { const e = Math.min(x, 1 - x, y, 1 - y); if (e < .025) return [26, 24, 20]; const f = (.84 + .1 * Math.sin(y * S * 2.2) + .08 * tt[i]); return [184 * f, 168 * f, 104 * f]; });
     const mp = noise(S, 4, 4, 42); // the campaign map on the dojo's table: land, hills, a river
@@ -225,6 +241,10 @@
       for (let i = 0; i < 4; i++) for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(W / 2 + sd * 20, 235 + i * 20); c.lineTo(W / 2 + sd * 80, 230 + i * 20); c.stroke(); }
     } else if (icon === 'dice') {
       for (const [cx, cy, rot, n] of [[W / 2 - 50, H / 2 + 20, -.2, 5], [W / 2 + 55, H / 2 - 10, .25, 3]]) { c.save(); c.translate(cx, cy); c.rotate(rot); c.fillRect(-42, -42, 84, 84); c.fillStyle = '#3a2616'; for (const [px, py] of n === 5 ? [[-22, -22], [22, -22], [0, 0], [-22, 22], [22, 22]] : [[-22, -22], [0, 0], [22, 22]]) { c.beginPath(); c.arc(px, py, 9, 0, 7); c.fill(); } c.restore(); c.fillStyle = fg; }
+    } else if (icon === 'fishbook') { // the bait & book shop: a fish and an open book
+      c.fillStyle = '#c9d4dc'; c.beginPath(); c.ellipse(W / 2 - 62, H / 2, 58, 26, 0, 0, 7); c.fill(); c.beginPath(); c.moveTo(W / 2 - 118, H / 2); c.lineTo(W / 2 - 150, H / 2 - 26); c.lineTo(W / 2 - 150, H / 2 + 26); c.fill();
+      c.fillStyle = '#26323a'; c.beginPath(); c.arc(W / 2 - 22, H / 2 - 6, 5, 0, 7); c.fill(); c.strokeStyle = '#7f96a4'; c.lineWidth = 3; for (let k = 0; k < 3; k++) { c.beginPath(); c.arc(W / 2 - 60 - k * 14, H / 2, 14, -1, 1); c.stroke(); }
+      c.fillStyle = fg; c.strokeStyle = '#6a4a2a'; c.lineWidth = 4; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(W / 2 + 80, H / 2 - 40); c.quadraticCurveTo(W / 2 + 80 + sd * 30, H / 2 - 50, W / 2 + 80 + sd * 62, H / 2 - 40); c.lineTo(W / 2 + 80 + sd * 62, H / 2 + 34); c.quadraticCurveTo(W / 2 + 80 + sd * 30, H / 2 + 24, W / 2 + 80, H / 2 + 34); c.closePath(); c.fill(); c.stroke(); for (let k = 0; k < 4; k++) { c.beginPath(); c.moveTo(W / 2 + 80 + sd * 10, H / 2 - 24 + k * 14); c.lineTo(W / 2 + 80 + sd * 52, H / 2 - 24 + k * 14); c.stroke(); } }
     } else if (icon === 'wheel') { // six circles round a seventh, in a ring (the Warrior hall's gold banners)
       c.lineWidth = 9; c.beginPath(); c.arc(W / 2, H / 2, 92, 0, 7); c.stroke();
       c.beginPath(); c.arc(W / 2, H / 2, 24, 0, 7); c.fill();
@@ -293,6 +313,12 @@
     flower_pink: { col: [.95, .55, .66] }, flower_teal: { col: [.3, .75, .7], em: [.05, .2, .18] }, flower_orange: { col: [.95, .5, .12] }, ear_pink: { col: [.95, .62, .7] },
     cat_black: { col: [.07, .065, .07] }, cat_white: { col: [.95, .93, .9] }, collar_red: { col: [.7, .08, .1] }, gem_green: { col: [.2, .9, .4], em: [.1, .6, .25] },
     orb: { col: [.6, .85, 1], em: [.45, .75, 1] }, glow_blue: { glow: [.35, .6, 1] },
+    palm_leaf: { tex: 'palm_leaf' }, banana_leaf: { tex: 'banana_leaf' }, palm_bark: { tex: 'palm_bark' }, coconut: { col: [.36, .24, .12] }, banana: { col: [.95, .8, .22] }, banana_stem: { col: [.36, .5, .18] }, flower_purple: { col: [.45, .12, .3] },
+    plank_teal: { tex: 'plank_teal' }, plank_yellow: { tex: 'plank_yellow' }, plank_red: { tex: 'plank_red' }, tin_roof: { tex: 'tin_roof' }, banana_big: { tex: 'banana_big' }, brick: { tex: 'brick' },
+    bottles: { tex: 'bottles', em: [.25, .17, .08] }, sign_fishbook: { tex: 'sign_fishbook' }, sign_chzdice: { tex: 'sign_chzdice' }, awning: { col: [.95, .82, .36] }, curtain_red: { col: [.55, .08, .1] },
+    felt_green: { col: [.12, .45, .3] }, felt_blue: { col: [.14, .3, .6] }, felt_red: { col: [.6, .12, .12] }, darts: { col: [.12, .1, .08] }, fish: { col: [.66, .72, .78], spec: [.8, .8, .8], power: 60 },
+    net: { col: [.62, .56, .42] }, lily: { col: [.26, .55, .2] }, smoke: { col: [.7, .7, .7], em: [.25, .25, .25], alpha: .32 },
+    bottle_green: { col: [.15, .45, .2], spec: [.8, .8, .8], power: 80 }, bottle_brown: { col: [.42, .22, .08], spec: [.8, .8, .8], power: 80 }, bottle_clear: { col: [.75, .85, .82], spec: [.9, .9, .9], power: 90 },
     sack: { col: [.7, .62, .46] }, leaf: { col: [.26, .42, .14] }, leaves: { tex: 'leaves' },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
@@ -601,14 +627,14 @@
   // ── Cute & Creepy helpers ──
   // steep gable roof, ridge along x at z + h; gables filled with wall material; front (-y) overhang o
   function steepRoof(M, m, cx, cy, z, w, d, h, o, gableMat, front) {
-    const hw = w / 2 + o, hd = d / 2 + o, sl = Math.hypot(hd, h + o * h / (d / 2)), zE = z - o * h / (d / 2);
+    const hw = w / 2 + o, hd = d / 2 + o, k = m === 'tin_roof' ? .25 : 1, sl = Math.hypot(hd, h + o * h / (d / 2)) * k, zE = z - o * h / (d / 2);
     if (front) { // ridge along y (a porch gable facing -y)
       const ww = w / 2 + o, L = d + o;
-      for (const sd of [-1, 1]) M.quad(m, [[cx + sd * ww, cy - d / 2 - o, zE], [cx, cy - d / 2 - o, z + h], [cx, cy + d / 2, z + h], [cx + sd * ww, cy + d / 2, zE]], [[0, 0], [0, sl / 2], [L / 2, sl / 2], [L / 2, 0]]);
+      for (const sd of [-1, 1]) M.quad(m, [[cx + sd * ww, cy - d / 2 - o, zE], [cx, cy - d / 2 - o, z + h], [cx, cy + d / 2, z + h], [cx + sd * ww, cy + d / 2, zE]], [[0, 0], [0, sl / 2], [L * k / 2, sl / 2], [L * k / 2, 0]]);
       M.poly(gableMat, [[cx - w / 2, cy - d / 2, z], [cx + w / 2, cy - d / 2, z], [cx, cy - d / 2, z + h - .1]]);
       M.box('darkwood', [cx, cy - o / 2, z + h], [.3, d + o, .3]); return;
     }
-    for (const sd of [-1, 1]) M.quad(m, [[cx - hw, cy + sd * hd, zE], [cx + hw, cy + sd * hd, zE], [cx + hw, cy, z + h], [cx - hw, cy, z + h]], [[0, 0], [w / 2, 0], [w / 2, sl / 2], [0, sl / 2]]);
+    for (const sd of [-1, 1]) M.quad(m, [[cx - hw, cy + sd * hd, zE], [cx + hw, cy + sd * hd, zE], [cx + hw, cy, z + h], [cx - hw, cy, z + h]], [[0, 0], [w * k / 2, 0], [w * k / 2, sl / 2], [0, sl / 2]]);
     for (const sd of [-1, 1]) M.poly(gableMat, [[cx + sd * w / 2, cy - d / 2, z], [cx + sd * w / 2, cy + d / 2, z], [cx + sd * w / 2, cy, z + h - .1]]);
     M.box('darkwood', [cx, cy, z + h], [w + 2 * o, .3, .3]);
   }
@@ -722,6 +748,70 @@
     curveTube(M, fur, [[0, .45, .2], [.3, .62, .35], [.42, .55, .75], [.3, .45, .9]], [.09, .08, .07, .03], { segs: 8, n: 3, ridge: .02, bump: .02, seed: 9 });
   }
   function ccFlower(M, m, x, y, z, r) { for (let k = 0; k < 5; k++) { const a = k * 1.2566; M.sphere(m, [x + Math.cos(a) * r * .55, y - .01, z + Math.sin(a) * r * .55], r * .5, .6, 6, 3); } M.sphere('gold', [x, y - .04, z], r * .25, 1, 5, 3); }
+  // a leaf / frond as a strip along a spine (pt(f), f 0..1), half-width w(f), folded down from the midrib by fold;
+  // d = the leaf's horizontal direction (the sides spread perpendicular to it)
+  function leafStrip(M, m, pt, w, d, fold, n) {
+    const side = [-d[1], d[0], 0];
+    for (let i = 0; i < n; i++) {
+      const f0 = i / n, f1 = (i + 1) / n, a = pt(f0), b = pt(f1), w0 = w(f0), w1 = w(f1);
+      for (const sd of [-1, 1]) {
+        const E = (p, ww) => [p[0] + side[0] * sd * ww, p[1] + side[1] * sd * ww, p[2] - fold * ww];
+        M.poly(m, sd > 0 ? [a, b, E(b, w1), E(a, w0)] : [E(a, w0), E(b, w1), b, a], sd > 0 ? [[.5, f0], [.5, f1], [1, f1], [1, f0]] : [[0, f0], [0, f1], [.5, f1], [.5, f0]]);
+      }
+    }
+  }
+  // a boat hull along y (length L, half-beam B, gunwale height G above the keel at 0): lofted planked sides, a floor
+  function chzHull(M, L, B, G, side, floor) {
+    const n = 10, st = [...Array(n + 1)].map((_, k) => { const f = k / n, y = -L / 2 + L * f, w = B * Math.pow(Math.sin(Math.PI * Math.min(1, .04 + f * .96)), .7), sheer = G + .25 * Math.pow(2 * f - 1, 2); return { y, w, sheer }; });
+    for (let k = 0; k < n; k++) { const a = st[k], b = st[k + 1];
+      for (const sd of [-1, 1]) { const P = (s, t) => [sd * s.w * t, s.y, t === 1 ? s.sheer : t === .6 ? G * .35 : 0]; for (const [t0, t1] of [[0, .6], [.6, 1]]) M.poly(side, sd > 0 ? [P(a, t0), P(b, t0), P(b, t1), P(a, t1)] : [P(a, t1), P(b, t1), P(b, t0), P(a, t0)]); }
+      M.poly(floor, [[-a.w * .55, a.y, .25], [a.w * .55, a.y, .25], [b.w * .55, b.y, .25], [-b.w * .55, b.y, .25]]);
+      for (const sd of [-1, 1]) M.rod('darkwood', [sd * a.w, a.y, a.sheer], [sd * b.w, b.y, b.sheer], .05, 4);
+    }
+  }
+  function chzStool(M, x, y, z) { M.cyl('wood', [x, y, z + .7], .26, .08, 8); for (let k = 0; k < 3; k++) { const a = k * 2.094; M.rod('darkwood', [x + Math.cos(a) * .2, y + Math.sin(a) * .2, z], [x + Math.cos(a) * .08, y + Math.sin(a) * .08, z + .7], .03, 3); } }
+  function chzTable(M, x, y, z) {
+    M.cyl('wood', [x, y, z], .45, .8, 10, .45); M.cyl('darkwood', [x, y, z + .8], .7, .08, 12);
+    for (let k = 0; k < 3; k++) { const a = k * 2.094 + .4; chzStool(M, x + Math.cos(a) * 1.1, y + Math.sin(a) * 1.1, z); }
+    for (const [dx, dy, m] of [[.2, .1, 'bottle_green'], [-.25, .15, 'bottle_brown']]) { M.cyl(m, [x + dx, y + dy, z + .88], .05, .22, 6); M.cyl(m, [x + dx, y + dy, z + 1.1], .05, .09, 6, .02); }
+  }
+  function chzLantern(M, x, y, z) { M.block('iron', x, y, z, .34, .34, .06); M.block('window_glow', x, y, z - .45, .28, .28, .45); M.cyl('iron', [x, y, z + .06], .22, .16, 4, .03); M.block('iron', x, y, z - .5, .34, .34, .05); }
+  // a big banana along x (length L, radius r, centre sag s), brown ends; on: the ends tip up (resting on posts)
+  function chzBanana(M, x, y, z, L, r, s, on) {
+    const pts = []; for (let k = 0; k <= 6; k++) { const f = k / 6, u = f * 2 - 1; pts.push([x + u * L / 2, y, z - s * (1 - u * u) + (on ? .6 * u * u : 0)]); }
+    curveTube(M, 'banana_big', pts, [r * .25, r * .8, r, r, r, r * .8, r * .3], { segs: 10, n: 3, ridge: .12, k: 5, bump: .04, seed: 2 });
+    for (const sd of [-1, 1]) M.cyl('darkwood', [x + sd * (L / 2 + .1), y, z + (on ? .6 : 0) - .15], r * .18, .5, 6, r * .1);
+  }
+  function chzFish(M, x, y, z) { M.rod('rope', [x, y, z], [x, y, z - .25], .01, 3); M.sphere('fish', [x, y, z - .6], .12, 3.2, 6, 4); M.poly('fish', [[x, y, z - 1.0], [x - .12, y, z - 1.22], [x + .12, y, z - 1.22]]); }
+  function chzShop(M, plank, sign, kind) {
+    const W = 12, D = 8, Z = .5, H = 3.8, yF = -D / 2;
+    M.block('wood', 0, -1, 0, W + 1, D + 2, Z); steps(M, 0, yF - 2, Z, 4, 1, .45);
+    M.block(plank, 0, D / 2 - .15, Z, W, .3, H); M.block(plank, -W / 2 + .15, 0, Z, .3, D, H); M.block(plank, W / 2 - .15, 0, Z, .3, D, H);
+    for (const x of [-W / 2, -W / 6, W / 6, W / 2]) M.block('wood', x, yF, Z, .34, .34, H);
+    M.block(plank, 0, yF, Z + H - .9, W, .25, .9);
+    M.quad(sign, [[-4.2, yF - .16, Z + H - .85], [4.2, yF - .16, Z + H - .85], [4.2, yF - .16, Z + H + 1.1], [-4.2, yF - .16, Z + H + 1.1]]); M.box('darkwood', [0, yF - .04, Z + H + .1], [8.6, .1, 2.1]);
+    steepRoof(M, 'tin_roof', 0, 0, Z + H, W, D, 2.6, .7, plank);
+    if (kind === 'bait') {
+      M.quad('books', [[-W / 2 + .5, D / 2 - .32, Z + .5], [-1, D / 2 - .32, Z + .5], [-1, D / 2 - .32, Z + 2.9], [-W / 2 + .5, D / 2 - .32, Z + 2.9]]);
+      M.block('wood', 2.5, 1, Z, 4, 1, .9); M.quad('net', [[1, D / 2 - .33, Z + .8], [W / 2 - .5, D / 2 - .33, Z + .8], [W / 2 - .5, D / 2 - .33, Z + 3.2], [1, D / 2 - .33, Z + 3.2]]);
+      for (let i = 0; i < 8; i++) M.rod('wood', [-W / 2 - .2 + i * .18, yF - .6, 0], [-W / 2 + .1 + i * .2, yF - .3, 3.4], .025, 3);
+      M.block('wood', W / 2 + .6, yF - .6, 0, 1, .9, .8); M.sphere('net', [W / 2 + .4, yF - 1.6, .4], .55, .5, 8, 4);
+    } else {
+      for (const [x, y, m] of [[-3, -.5, 'felt_green'], [0, 1.4, 'felt_red'], [3, -.5, 'felt_green']]) { M.block('darkwood', x, y, Z, 2.2, 1.3, .8); M.block(m, x, y, Z + .8, 2, 1.1, .04); for (const sd of [-1, 1]) chzStool(M, x + sd * 1.5, y, Z); }
+      M.quad('teal_glow', [[-W / 2 + .5, D / 2 - .32, Z + 2.4], [W / 2 - .5, D / 2 - .32, Z + 2.4], [W / 2 - .5, D / 2 - .32, Z + 3.3], [-W / 2 + .5, D / 2 - .32, Z + 3.3]]);
+    }
+    for (const sd of [-1, 1]) chzLantern(M, sd * (W / 2 - .2), yF - .3, Z + H - .1);
+  }
+  function chzShack(M, plank, roof) {
+    const W = 6.4, D = 5, Z = .5, H = 3;
+    M.block('wood', 0, -.8, 0, W + .6, D + 1.8, Z); M.block(plank, 0, 0, Z, W, D, H);
+    for (const x of [-W / 2, W / 2]) for (const y of [-D / 2, D / 2]) M.block('wood', x, y, Z, .26, .26, H);
+    M.block('darkwood', -1.2, -D / 2 - .03, Z, 1.1, .08, 2.2); M.block('window_glow', 1.4, -D / 2 - .03, Z + 1.2, 1.2, .06, 1); M.box('wood', [1.4, -D / 2 - .07, Z + 1.7], [1.4, .05, .1]);
+    for (let i = 0; i <= 6; i++) M.block('wood', -W / 2 - .2 + i * (W + .4) / 6, -D / 2 - 1.6, Z, .1, .1, .9); M.box('wood', [0, -D / 2 - 1.6, Z + .9], [W + .5, .1, .1]);
+    steepRoof(M, roof, 0, -.6, Z + H, W, D + 1.2, 2.2, .6, plank);
+    for (const x of [-W / 2 - .2, W / 2 + .2]) M.block('wood', x, -D / 2 - 1.6, Z, .2, .2, H);
+    chzLantern(M, -.4, -D / 2 - .3, Z + 2.4);
+  }
   function warPalisade(M, withBanner) {
     const L = 8, n = 14;
     M.block('stone', 0, 0, 0, L, .9, .45);
@@ -1918,6 +2008,145 @@
       for (let k = 0; k < 6; k++) { const a = k * 1.05, b = a + .6; M.rod('orb', [Math.cos(a) * .2, Math.sin(a) * .2 * .5, Math.sin(a) * .2], [Math.cos(b) * .34, Math.sin(b) * .1, Math.sin(b * 1.3) * .3], .012, 3); }
       M.quad('glow_blue', [[-1.6, -1.6, -.7], [1.6, -1.6, -.7], [1.6, 1.6, -.7], [-1.6, 1.6, -.7]]);
     },
+    // ── Chumpz (the apes' tropical banana-bar village) ──
+    // coconut palm, ~9 m: a leaning ringed trunk, a crown of drooping fronds, coconuts
+    chz_palm(M) {
+      const T = [2, .3, 8.4];
+      curveTube(M, 'palm_bark', [[0, 0, -.2], [.25, .05, 3], [.9, .15, 6], [T[0], T[1], T[2]]], [.34, .27, .22, .18], { segs: 8, n: 4, ridge: .06, bump: .06, k: 3, seed: 5 });
+      for (let k = 0; k < 9; k++) {
+        const a = k / 9 * Math.PI * 2 + .3, d = [Math.cos(a), Math.sin(a)], L = 4.4 + .6 * Math.sin(k * 2.3), up = .5 + .3 * Math.cos(k * 1.7);
+        leafStrip(M, 'palm_leaf', f => [T[0] + d[0] * L * f, T[1] + d[1] * L * f, T[2] + up * 2 * f * (1 - f) * 2 - 1.6 * f * f * f], f => .75 * Math.sin(Math.PI * Math.min(1, f * 1.15)) * (1 - .3 * f), d, .35, 6);
+      }
+      for (const [x, y] of [[.25, .2], [-.2, .15], [.05, -.25], [-.1, -.05]]) M.sphere('coconut', [T[0] + x, T[1] + y, T[2] - .35], .2, 1, 7, 4);
+    },
+    // banana plant, ~3.5 m: a green stem, big drooping leaves, a hanging bunch with its purple flower
+    chz_banana(M) {
+      M.cyl('banana_stem', [0, 0, 0], .2, 2.2, 8, .14);
+      for (let k = 0; k < 7; k++) {
+        const a = k / 7 * Math.PI * 2 + .5, d = [Math.cos(a), Math.sin(a)], L = 2.1 + .4 * Math.sin(k * 1.9), z0 = 1.9 + .3 * (k % 3);
+        leafStrip(M, 'banana_leaf', f => [d[0] * L * f, d[1] * L * f, z0 + 1.1 * f * (1 - f) * 2 - .9 * f * f], f => .42 * Math.sin(Math.PI * Math.min(1, .15 + f * .95)), d, .12, 5);
+      }
+      M.rod('banana_stem', [.1, -.1, 2.1], [.45, -.4, 1.5], .04, 4);
+      for (let r = 0; r < 4; r++) for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, c = [.45 + Math.cos(a) * .14, -.4 + Math.sin(a) * .14, 1.62 - r * .14]; M.rod('banana', c, [c[0] + Math.cos(a) * .12, c[1] + Math.sin(a) * .12, c[2] + .14], .035, 4); }
+      M.sphere('flower_purple', [.47, -.42, 1.02], .1, 1.6, 6, 4);
+    },
+    // the banana bar (images 1, 3, 4): a two-storey shack on a deck, the open ground floor with the long bar, bottle
+    // shelves, kegs, the stage with its red curtain, pool tables, darts; a balcony with string lights and the giant
+    // banana sign, yellow awnings, a patchwork tin roof, the outside stair. 24 x 16 m, front faces -y; floor walkable
+    chz_bar(M) {
+      const W = 24, D = 14, Z = .7, H1 = 4.4, yF = -D / 2;
+      M.block('wood', 0, -1.6, 0, W + 2, D + 3.2, Z); steps(M, 0, yF - 3.2, Z, 8, 2, .45); // deck + porch, steps
+      for (let i = 0; i < 9; i++) M.box('darkwood', [-W / 2 - .5 + i * (W + 1) / 8, yF - 3.2, Z / 2], [.3, .3, Z]);
+      // ground floor: back and side walls, posts along the open front, doors swung open
+      M.block('plank_teal', 0, D / 2 - .15, Z, W, .3, H1); M.block('plank_teal', -W / 2 + .15, 0, Z, .3, D, H1); M.block('plank_teal', W / 2 - .15, 0, Z, .3, D, H1);
+      for (const x of [-W / 2, -W / 4, -2.6, 2.6, W / 4, W / 2]) M.block('wood', x, yF, Z, .4, .4, H1);
+      for (const sd of [-1, 1]) { M.block('plank_yellow', sd * 4.1, yF - 1.2, Z, .18, 2.6, 3.4); M.box('darkwood', [sd * 4.1, yF - 1.2, Z + 1.7], [.2, 2.7, .12], .6 * sd); }
+      // the bar: counter, shelves of bottles, kegs, stools
+      M.block('wood', 2, D / 2 - 2.4, Z, 12, 1, 1.15); M.block('darkwood', 2, D / 2 - 2.4, Z + 1.15, 12.4, 1.2, .1);
+      M.quad('bottles', [[-4, D / 2 - .32, Z + 1.3], [8, D / 2 - .32, Z + 1.3], [8, D / 2 - .32, Z + 3.6], [-4, D / 2 - .32, Z + 3.6]]);
+      for (const x of [-2, -.6, .8]) { M.cyl('wood', [x, D / 2 - 1.2, Z + 1.25], .45, .9, 10); for (const z of [.15, .75]) M.cyl('iron', [x, D / 2 - 1.2, Z + 1.25 + z], .47, .05, 10); }
+      for (let i = 0; i < 7; i++) chzStool(M, -3 + i * 1.7, D / 2 - 3.5, Z);
+      // the stage (left): raised, red curtain behind, a mic, string lights
+      M.block('wood', -W / 2 + 3.6, yF + 3, Z, 6.4, 5, .5); M.quad('curtain_red', [[-W / 2 + .5, yF + 5.4, Z + .5], [-W / 2 + 6.7, yF + 5.4, Z + .5], [-W / 2 + 6.7, yF + 5.4, Z + 3.9], [-W / 2 + .5, yF + 5.4, Z + 3.9]]);
+      M.cyl('iron', [-W / 2 + 3.6, yF + 2, Z + .5], .03, 1.5, 4); M.sphere('iron', [-W / 2 + 3.6, yF + 2, Z + 2.05], .08, 1, 6, 3);
+      // pool tables and darts (right), round tables
+      for (const [x, y, m] of [[7.5, -1.5, 'felt_green'], [7.5, 2, 'felt_blue']]) { M.block('darkwood', x, y, Z, 3, 1.6, .85); M.block(m, x, y, Z + .85, 2.7, 1.3, .05); for (const sx of [-1, 1]) for (const sy of [-1, 1]) M.block('darkwood', x + sx * 1.3, y + sy * .65, Z, .18, .18, .85); }
+      M.tube('darts', [W / 2 - .32, 3, Z + 2.2], [W / 2 - .34, 3, Z + 2.2], .45, .45, 16);
+      for (const [x, y] of [[-2.5, -3], [0, -1], [2.8, -3.2], [-4.5, -.5]]) chzTable(M, x, y, Z);
+      // upper floor, balcony with railing and string lights, upper walls with lit windows
+      M.block('wood', 0, -1, Z + H1, W + .6, D + 2.4, .3);
+      for (let i = 0; i <= 12; i++) { const x = -W / 2 + i * W / 12; M.block('wood', x, yF - 2, Z + H1 + .3, .14, .14, 1.1); }
+      M.box('wood', [0, yF - 2, Z + H1 + 1.4], [W + .2, .16, .16]); M.box('wood', [0, yF - 2, Z + H1 + .85], [W + .2, .1, .1]);
+      for (const x of [-W / 2, -W / 4, 0, W / 4, W / 2]) M.block('wood', x, yF - 2, Z, .36, .36, H1 + 1.6);
+      for (let i = 0; i < 24; i++) { const x = -W / 2 + .5 + i * (W - 1) / 23, z = Z + H1 + 2.6 - .35 * Math.sin((i % 6) / 5 * Math.PI); M.sphere('window_glow', [x, yF - 2.05, z], .08, 1, 5, 3); }
+      M.rod('rope', [-W / 2, yF - 2.05, Z + H1 + 2.6], [W / 2, yF - 2.05, Z + H1 + 2.6], .015, 3);
+      M.block('plank_teal', 0, 0, Z + H1 + .3, W - 1, D - 1.4, 3.6);
+      for (const x of [-8, -3, 3, 8]) { M.block('window_glow', x, -D / 2 + .68, Z + H1 + 1.4, 1.6, .06, 1.2); M.box('plank_yellow', [x, -D / 2 + .62, Z + H1 + 2.05], [1.9, .08, .14]); M.box('plank_yellow', [x, -D / 2 + .62, Z + H1 + 1.35], [1.9, .08, .14]); }
+      for (const [x, y] of [[-6, -1], [0, 1], [6, -1]]) chzTable(M, x, y - D / 2 + .2 - 1, Z + H1 + .3);
+      // the giant banana sign hung on the balcony front
+      chzBanana(M, 0, yF - 2.5, Z + H1 + 1.6, 13, 1, .25);
+      for (const sd of [-1, 1]) M.rod('rope', [sd * 5, yF - 2.4, Z + H1 + 2.6], [sd * 5, yF - 2.4, Z + H1 + 1.9], .04, 4);
+      // yellow awnings either side of the doors
+      for (const sd of [-1, 1]) { const x0 = sd * 4.6, x1 = sd * 11; M.quad('awning', [[Math.min(x0, x1), yF - .1, Z + 3.8], [Math.max(x0, x1), yF - .1, Z + 3.8], [Math.max(x0, x1), yF - 3, Z + 3], [Math.min(x0, x1), yF - 3, Z + 3]]); for (const x of [x0, x1]) M.rod('wood', [x, yF - 3, Z], [x, yF - 3, Z + 3.05], .06, 4); }
+      // roof: tin patchwork with thatch patches, a chimney; the outside stair (right)
+      steepRoof(M, 'tin_roof', 0, 0, Z + H1 + 3.9, W, D, 4.2, .9, 'plank_teal');
+      for (const [x, y] of [[-6, -3.2], [5, 2.6]]) M.box('thatch', [x, y * .9, Z + H1 + 3.9 + 4.2 * (1 - Math.abs(y) / (D / 2 + .9)) + .08], [5, 3, .2], 0, Math.atan2(4.2, D / 2 + .9) * -Math.sign(y));
+      M.block('brick', 7.5, 2.4, Z + H1 + 5, 1.2, 1.2, 4.2);
+      for (let i = 0; i < 14; i++) M.block('wood', W / 2 + 1.1, 4.2 - i * .62, (i + 1) * (Z + H1 + .3) / 14 - .15, 1.6, .62, .15);
+      M.rod('wood', [W / 2 + 1.9, 4.6, Z + H1 + 1.4], [W / 2 + 1.9, -4.4, .8], .07, 4);
+      for (const [x, y] of [[-W / 2 - .3, yF - 2.4], [W / 2 + .3, yF - 2.4], [-2.6, yF - .2], [2.6, yF - .2]]) chzLantern(M, x, y, Z + 3.3);
+      for (const [x, y] of [[-W / 2 - .2, yF - 4], [W / 2 - 3, yF - 4.2], [-6, yF - 4.4]]) M.cyl('wood', [x, y, 0], .45, 1.1, 10, .45);
+    },
+    // bait & book shop: turquoise planks, an open front onto shelves, rods and nets, the fish-and-book sign
+    chz_bait_shop(M) { chzShop(M, 'plank_teal', 'sign_fishbook', 'bait'); },
+    // the dice hall: yellow and red planks, felt card tables inside, the dice sign
+    chz_dice_hall(M) { chzShop(M, 'plank_yellow', 'sign_chzdice', 'dice'); },
+    // shacks: colourful planks, a tin roof, a porch, a lit window; the hut has a thatched roof
+    chz_shack(M) { chzShack(M, 'plank_teal', 'tin_roof'); },
+    chz_shack_red(M) { chzShack(M, 'plank_red', 'tin_roof'); },
+    chz_hut(M) { chzShack(M, 'plank_yellow', 'thatch'); },
+    // smokehouse: a brick oven with a tall chimney (smoke), an open shed hung with fish
+    chz_smokehouse(M) {
+      M.block('stone', 0, 0, 0, 7, 5, .2);
+      for (const x of [-3.2, 0, 3.2]) for (const y of [-2.2, 2.2]) M.block('wood', x, y, .2, .25, .25, 2.9);
+      steepRoof(M, 'tin_roof', 0, 0, 3.1, 7, 5, 1.6, .5, 'wood');
+      M.block('brick', 2.2, .9, .2, 2, 2, 1.6); M.block('brick', 2.6, 1.2, 1.8, 1, 1, 5); M.quad('fire', [[1.5, -.12, .5], [2.9, -.12, .5], [2.9, -.12, 1.2], [1.5, -.12, 1.2]]);
+      for (let k = 0; k < 5; k++) M.sphere('smoke', [2.6 + .2 * k, 1.2 + .1 * k, 7.2 + k * .9], .4 + .15 * k, 1, 6, 4);
+      for (let i = 0; i < 6; i++) chzFish(M, -2.6 + i * .6, -.3, 2.4);
+      M.box('wood', [-1.1, -.3, 2.55], [4, .1, .1]);
+      M.quad('glow', [[.2, -2.8, .25], [4.2, -2.8, .25], [4.2, 1, .25], [.2, 1, .25]]);
+    },
+    // fish drying rack: a frame hung with fish
+    chz_fish_rack(M) { for (const x of [-1.6, 1.6]) M.block('wood', x, 0, 0, .14, .14, 2.3); M.box('wood', [0, 0, 2.2], [3.5, .1, .1]); for (let i = 0; i < 6; i++) chzFish(M, -1.3 + i * .52, 0, 2.15); },
+    // the giant banana over the well: a stone well ringed with plants and barrels, the banana resting on two posts
+    chz_banana_well(M) {
+      M.cyl('stone', [0, 0, 0], 2.2, .9, 16); M.cyl('water', [0, 0, .2], 1.8, .65, 16); M.cyl('stone', [0, 0, .9], 2.35, .14, 16);
+      for (const [x, z] of [[-3.6, 2.4], [3.4, 3.2]]) M.block('wood', x, .2, 0, .4, .4, z);
+      chzBanana(M, 0, .2, 3.4, 9, 1.15, -.55, true);
+      for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + .3; leafStrip(M, 'banana_leaf', f => [Math.cos(a) * (2.5 + 1.2 * f), Math.sin(a) * (2.5 + 1.2 * f), .2 + .9 * f * (1 - f) * 2], f => .3 * Math.sin(Math.PI * Math.min(1, .2 + f)), [Math.cos(a), Math.sin(a)], .1, 4); }
+      for (const [x, y] of [[-2.8, -1.4], [2.9, -1], [2.4, 1.8]]) { M.cyl('wood', [x, y, 0], .42, 1.1, 10, .42); for (const z of [.15, .9]) M.cyl('iron', [x, y, z], .44, .05, 10); }
+    },
+    // boardwalk, 8 x 6: plank deck (top at the origin) on posts down into the water, rope posts on the water side (-y)
+    chz_dock(M) {
+      M.block('wood', 0, 0, -.3, 8, 6, .3);
+      for (let i = 0; i < 16; i++) M.box('darkwood', [-3.75 + i * .5, 0, .005], [.04, 6, .02]);
+      for (const x of [-3.8, 0, 3.8]) for (const y of [-2.8, 0, 2.8]) M.cyl('bark', [x, y, -4], .18, 4, 6);
+      for (const x of [-3.8, 0, 3.8]) { M.cyl('wood', [x, -2.9, 0], .16, 1.1, 8); M.cyl('rope', [x, -2.9, .7], .19, .2, 8); }
+      for (const sd of [-1, 1]) M.rod('rope', [0, -2.9, .9], [sd * 3.8, -2.9, .9], .03, 3);
+    },
+    // narrow pier, 3 x 10, out into the lagoon, rope rails both sides
+    chz_pier(M) {
+      M.block('wood', 0, 0, -.25, 3, 10, .25);
+      for (let i = 0; i < 20; i++) M.box('darkwood', [0, -4.75 + i * .5, .005], [3, .04, .02]);
+      for (const sd of [-1, 1]) for (const y of [-4.8, -1.6, 1.6, 4.8]) { M.cyl('bark', [sd * 1.35, y, -4], .17, 5.1, 6); M.cyl('rope', [sd * 1.35, y, .7], .2, .18, 8); }
+      for (const sd of [-1, 1]) M.rod('rope', [sd * 1.35, -4.8, .85], [sd * 1.35, 4.8, .85], .03, 3);
+    },
+    // rowboat with oars, a net and a barrel (floats on the water)
+    chz_rowboat(M) {
+      const L = 4.6;
+      chzHull(M, L, .95, .95, 'plank_teal', 'wood');
+      for (const y of [-.6, .7]) M.box('wood', [0, y, .8], [1.8, .3, .08]);
+      for (const sd of [-1, 1]) M.rod('wood', [sd * .9, -.2, .9], [sd * 1.8, .9, .6], .04, 4);
+      M.cyl('wood', [.3, 1.4, .4], .3, .6, 8); M.sphere('net', [-.3, -1.4, .55], .45, .4, 8, 4);
+    },
+    // fishing sailboat, ~9 m: a single mast with a furled sail, nets
+    chz_sailboat(M) {
+      const L = 9;
+      chzHull(M, L, 1.6, 1.45, 'plank_red', 'wood');
+      M.cyl('wood', [0, .6, .5], .14, 8, 8); M.rod('wood', [0, .6, 2.2], [0, 4, 2.2], .09, 6); M.rod('sack', [0, .7, 2.4], [0, 3.9, 2.4], .3, 8);
+      M.rod('rope', [0, .6, 8.3], [0, L / 2 - .2, 1.3], .02, 3); M.rod('rope', [0, .6, 8.3], [0, -L / 2 + .3, 1.3], .02, 3);
+      M.sphere('net', [-.6, -2.6, 1], .7, .4, 8, 4); M.cyl('wood', [.7, -3, .6], .35, .7, 8);
+    },
+    chz_barrels(M) { for (const [x, y, z] of [[0, 0, 0], [.95, .2, 0], [.4, .9, 0], [.45, .35, 1.12]]) { M.cyl('wood', [x, y, z], .44, 1.1, 10, .44); for (const dz of [.15, .9]) M.cyl('iron', [x, y, z + dz], .46, .05, 10); } },
+    chz_crates(M) {
+      for (const [x, y, z, s] of [[0, 0, 0, 1], [1.05, .1, 0, .9], [.5, 0, 1, .85]]) { M.block('wood', x, y, z, s, s, s); M.box('darkwood', [x, y - s / 2 - .01, z + s / 2], [s, .02, .08], .78); }
+      M.block('wood', -1.2, .2, 0, 1.1, .8, .5); for (let i = 0; i < 9; i++) M.rod('banana', [-1.6 + (i % 3) * .3, -.05 + Math.floor(i / 3) * .25, .55], [-1.45 + (i % 3) * .3, -.05 + Math.floor(i / 3) * .25, .7], .05, 4);
+    },
+    chz_bottles(M) { for (let i = 0; i < 9; i++) { const a = i * 2.39, r = .3 + .25 * (i % 4), x = Math.cos(a) * r, y = Math.sin(a) * r, m = ['bottle_green', 'bottle_brown', 'bottle_clear'][i % 3]; if (i % 3 === 2) M.rod(m, [x, y, .06], [x + .28, y + .1, .06], .055, 6); else { M.cyl(m, [x, y, 0], .055, .22, 6); M.cyl(m, [x, y, .22], .055, .1, 6, .02); } } },
+    chz_table(M) { chzTable(M, 0, 0, 0); },
+    chz_lantern_post(M) { M.cyl('wood', [0, 0, 0], .14, 2.5, 6); M.cyl('rope', [0, 0, 1.6], .17, .4, 8); M.rod('wood', [0, 0, 2.3], [.55, 0, 2.3], .05, 4); chzLantern(M, .55, 0, 2.25); M.quad('glow', [[-2, -2, .05], [2, -2, .05], [2, 2, .05], [-2, 2, .05]]); },
+    chz_net_line(M) { for (const x of [-2, 2]) M.cyl('wood', [x, 0, 0], .12, 2.2, 6); M.rod('rope', [-2, 0, 2], [2, 0, 2], .02, 3); for (let i = 0; i < 4; i++) M.quad('net', [[-2 + i, 0, .4 + .2 * Math.sin(i)], [-1 + i, 0, .5], [-1 + i, 0, 2], [-2 + i, 0, 2]]); },
+    chz_lilypads(M) { for (let i = 0; i < 9; i++) { const a = i * 2.4, r = .4 + .35 * (i % 4); M.cyl('lily', [Math.cos(a) * r * 1.6, Math.sin(a) * r * 1.6, 0], .32 + .1 * (i % 3), .03, 9); if (i % 4 === 0) M.sphere('flower_pink', [Math.cos(a) * r * 1.6, Math.sin(a) * r * 1.6, .08], .08, .8, 6, 3); } },
     cc_banner_pole(M) {
       M.cyl('iron', [0, 0, 0], .07, 5.6, 6); M.cyl('stone_dark', [0, 0, 0], .4, .4, 8, .32);
       M.box('iron', [0, -.02, 5.3], [1.8, .06, .06]); for (const sd of [-1, 1]) M.cyl('iron', [sd * .9, -.02, 5.3], .05, .2, 4, .005);
@@ -2068,6 +2297,12 @@
     });
     return (templates[type] = meshes);
   }
+  // fresh, unparented meshes of a type (one per material), for the terrain's thin-instanced scatter (palms, bananas)
+  function protoMeshes(scene, type) {
+    if (!B[type]) return [];
+    const M = new Kit(); B[type](M);
+    return Object.entries(M.parts).map(([mat, P]) => { const m = new BABYLON.Mesh(`samKitProto_${type}_${mat}`, scene), vd = new BABYLON.VertexData(); vd.positions = P.p; vd.normals = P.n; vd.uvs = P.uv; vd.indices = P.i; vd.applyToMesh(m); m.material = material(scene, mat); m.isPickable = false; return m; });
+  }
   // Fill a placed root (from spawnAsset) with instances of the type's template meshes.
   // floating pieces (ghosts): their instances bob and sway under the placed root, so saved positions never move
   const FLOAT = new Set(['cc_ghost']), floaters = [];
@@ -2129,7 +2364,10 @@
       { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }], ashi_bridge: [{ x: 0, z: 0, halfX: 1.55, halfZ: 10.3, y0: 0, y1: 2.4 }],
     war_great_dojo: [{ x: 0, z: (-12.4 + 10.5) / 2, halfX: 14.7, halfZ: (10.5 + 12.4) / 2, y: 1.5 }, { x: 0, z: -12.4 - .9, halfX: 3.9, halfZ: .9, y0: 0, y1: 1.4, steps: 4, surface: 'stone' }],
     shogun_great_dojo: [{ x: 0, z: (-12.4 + 10.5) / 2, halfX: 14.7, halfZ: (10.5 + 12.4) / 2, y: 1.5 }, { x: 0, z: -12.4 - .9, halfX: 3.9, halfZ: .9, y0: 0, y1: 1.4, steps: 4, surface: 'stone' }],
+    chz_bar: [{ x: 0, z: -1.6, halfX: 13, halfZ: 8.6, y: .7 }, { x: 0, z: -7 - 3.2 - .45, halfX: 4, halfZ: .45, y0: 0, y1: .7, steps: 2, surface: 'wood' }],
+    chz_bait_shop: [{ x: 0, z: -1, halfX: 6.5, halfZ: 5, y: .5 }], chz_dice_hall: [{ x: 0, z: -1, halfX: 6.5, halfZ: 5, y: .5 }],
+    chz_dock: [{ x: 0, z: 0, halfX: 4.05, halfZ: 3.05, y: 0 }], chz_pier: [{ x: 0, z: 0, halfX: 1.55, halfZ: 5.05, y: 0 }],
     shogun_bridge: [{ x: 0, z: -2.75, halfX: 1.05, halfZ: 2.75, y0: 0, y1: 1.3 }, { x: 0, z: 2.75, halfX: 1.05, halfZ: 2.75, y0: 1.3, y1: 0 }],
     ronin_great_dojo: [{ x: 0, z: 0, halfX: 15, halfZ: 12, y: 1.6 }, { x: 0, z: -13.13, halfX: 4.4, halfZ: 1.13, y0: 0, y1: 1.6, steps: 5, surface: 'stone' }] };
-  window.SamuraiKit = { build, setLightFactor, animate, decks, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B, _org: { blob, curveTube } };
+  window.SamuraiKit = { build, setLightFactor, animate, protoMeshes, decks, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();
