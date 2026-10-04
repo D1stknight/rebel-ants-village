@@ -26637,6 +26637,7 @@ function applyFakeLightState(force = false) {
   ensureFakeLightRegistrations(force);
   const factor = getFakeLightStateFactor();
   window.SamuraiKit?.setLightFactor?.(factor); // samurai kit lanterns, windows and doorways glow brighter at night
+  window._newTerrain?.birds?.setVisible(factor < .6 && !['storm', 'heavy-rain'].includes(WeatherManager.mode)); // birds roost at night and in storms
   updateFakeLightTestReadout(factor);
   applyActiveInteriorLightingState(factor);
   if (!scene?.transformNodes) return;

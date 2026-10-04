@@ -794,6 +794,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
     }
   };
   if (recipe.falls) T.falls = buildFalls(scene, T, recipe.falls);
+  if (recipe.birds !== false) T.birds = buildBirds(scene, T, recipe.birds || {});
   return T;
 }
 
@@ -1164,6 +1165,46 @@ function buildPools(scene, pools) {
     g.metadata = { type: 'terrain_water', visualOnly: true }; g.alphaIndex = 10; g.freezeWorldMatrix();
     nt.uScale = 1; return g;
   });
+}
+
+// ── Birds ────────────────────────────────────────────────
+// A few small flocks circling high over the village (recipe.birds: { flocks, perFlock, color } or false). One mesh of
+// thin instances (one draw call); each bird is a V of two wings, flapped by squashing its instance matrix in height, so
+// a frame costs ~25 matrix updates. setVisible(false) roosts them (night, storms).
+function buildBirds(scene, T, B) {
+  const flocks = B.flocks ?? 3, per = B.perFlock ?? 8, rnd = rng((T.recipe.seed || 1) * 31 + 7), col = B.color || [.08, .07, .07];
+  const m = new BABYLON.Mesh('villageBirds', scene), vd = new BABYLON.VertexData();
+  vd.positions = [0, 0, .32, 0, 0, -.34, -.95, .28, -.12, .95, .28, -.12, 0, 0, -.34, -.16, 0, -.62, .16, 0, -.62];
+  vd.indices = [0, 1, 2, 0, 3, 1, 4, 5, 6]; const nrm = []; BABYLON.VertexData.ComputeNormals(vd.positions, vd.indices, nrm); vd.normals = nrm; vd.applyToMesh(m);
+  const mat = new BABYLON.StandardMaterial('villageBirdsMat', scene);
+  mat.diffuseColor = new BABYLON.Color3(...col); mat.emissiveColor = new BABYLON.Color3(...col.map(v => v * .6)); mat.specularColor = BABYLON.Color3.Black();
+  mat.backFaceCulling = false; mat.freeze(); m.material = mat; m.isPickable = false; m.metadata = { type: 'visual_backdrop', visualOnly: true };
+  const F = [];
+  for (let f = 0; f < flocks; f++) {
+    const a0 = rnd() * 6.28, r = 50 + rnd() * 90, cx = Math.cos(a0) * (20 + rnd() * 60), cz = Math.sin(a0) * (20 + rnd() * 60);
+    const ground = Math.max(0, T.heightAt(cx, cz) ?? 0);
+    F.push({ cx, cz, r, y: ground + 38 + rnd() * 30, w: (.035 + rnd() * .03) * (rnd() < .5 ? -1 : 1), a: rnd() * 6.28,
+      birds: [...Array(per)].map((_, i) => ({ dx: (rnd() - .5) * 14, dy: (rnd() - .5) * 5, dz: -i * 2.4 - rnd() * 2, ph: rnd() * 6.28, rate: 7 + rnd() * 3, s: 1.3 + rnd() * .5, glide: rnd() * 20 })) });
+  }
+  const n = flocks * per, buf = new Float32Array(n * 16), M4 = new BABYLON.Matrix(), q = new BABYLON.Quaternion(), S = new BABYLON.Vector3(), P = new BABYLON.Vector3();
+  m.thinInstanceSetBuffer('matrix', buf, 16, false); m.alwaysSelectAsActiveMesh = true;
+  let visible = true, t0 = performance.now();
+  scene.onBeforeRenderObservable.add(() => {
+    if (!visible) return;
+    const t = (performance.now() - t0) / 1000; let k = 0;
+    for (const fl of F) {
+      const ang = fl.a + t * fl.w, fx = fl.cx + Math.cos(ang) * fl.r, fz = fl.cz + Math.sin(ang) * fl.r, heading = Math.atan2(-Math.sin(ang) * Math.sign(fl.w), Math.cos(ang) * Math.sign(fl.w));
+      const ch = Math.cos(heading), sh = Math.sin(heading);
+      for (const b of fl.birds) {
+        const cyc = (t + b.glide) % 9, flap = cyc < 6 ? Math.cos(t * b.rate + b.ph) : .55; // flap, then a short glide
+        P.set(fx + b.dx * ch + b.dz * sh, fl.y + b.dy + Math.sin(t * .7 + b.ph) * 1.2, fz - b.dx * sh + b.dz * ch);
+        BABYLON.Quaternion.FromEulerAnglesToRef(0, heading, Math.sin(ang * 2) * .15, q); S.set(b.s, b.s * flap, b.s);
+        BABYLON.Matrix.ComposeToRef(S, q, P, M4); M4.copyToArray(buf, 16 * k++);
+      }
+    }
+    m.thinInstanceBufferUpdated('matrix');
+  });
+  return { mesh: m, setVisible(v) { if (v === visible) return; visible = v; m.setEnabled(v); } };
 }
 
 // ── Cliff waterfalls and valley mist (mesa villages) ──────────
