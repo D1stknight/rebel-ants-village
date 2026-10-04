@@ -853,6 +853,7 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA) {
   const vr = V ? V.rect : [0, 0, 0, 0];
   const v3 = a => `vec3(${a.map(n => n.toFixed(3)).join(',')})`;
   const m = new BABYLON.CustomMaterial('terrainMat', scene);
+  m.metadata = { perfKeepLive: true }; // backdrop meshes share it; village.html's static optimizer must not freeze it to 2 lights
   m.specularColor = new BABYLON.Color3(.03, .03, .03);
   m.AddUniform('uGrassTex', 'sampler2D', new BABYLON.Texture('assets/ground_diffuse.jpg', scene));
   m.AddUniform('uRockTex', 'sampler2D', new BABYLON.Texture('assets/stone_diffuse.jpg', scene));

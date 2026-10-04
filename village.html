@@ -4124,7 +4124,7 @@ function optimizeStaticRenderRoot(root, options = {}) {
       mesh.isPickable = false;
       pickablesDisabled += 1;
     }
-    if (mesh.material) {
+    if (mesh.material && !mesh.material.metadata?.perfKeepLive) { // perfKeepLive: shared ground materials keep every light (walking light)
       if (!seenMaterials.has(mesh.material)) {
         seenMaterials.add(mesh.material);
         materials += 1;
