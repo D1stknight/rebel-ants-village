@@ -435,8 +435,10 @@ export function makeVillageShape(V, baseAt = () => 0) {
     for (const t of V.digs || []) { const d = shapeD(t, x, z); if (d >= 0) continue; if (t.depth != null) y -= t.depth * smooth(0, t.edge ?? wall, -d); else y = Math.min(y, b + (Math.min(b, t.h) - b) * smooth(0, t.edge ?? wall, -d)); } // dredged harbour; depth: a pond dug into a terrace
     for (const R of V.ramps) {
       const r = R.r, a = R.axis === 'x' ? 0 : 1, lo = r[a], hi = r[a + 2], u = a ? z : x, v = a ? x : z, vlo = r[1 - a], vhi = r[3 - a];
-      if (u < lo || u > hi + wall || v < vlo - .3 || v > vhi + .3) continue;
-      const t = Math.min(1, (u - lo) / (hi - lo)), side = smooth(0, .3, Math.min(v - vlo + .3, vhi + .3 - v));
+      // a wall-width before its start the ramp holds its start height: the terrace it leaves falls off over that width
+      // at its edge, and that dip read as a wall (blocked stairs up to the dojos)
+      if (u < lo - wall || u > hi + wall || v < vlo - .3 || v > vhi + .3) continue;
+      const t = Math.max(0, Math.min(1, (u - lo) / (hi - lo))), side = smooth(0, .3, Math.min(v - vlo + .3, vhi + .3 - v));
       y = Math.max(y, b + (R.from + (R.to - R.from) * t) * side);
     }
     return y;
@@ -1007,6 +1009,12 @@ async function buildDecor(scene, T, avoid) {
   const clear = (x, z, extra = 0) => { const list = av.get(Math.floor((x + 400) / 20) * 1000 + Math.floor((z + 400) / 20)); if (!list) return true; for (const o of list) { const rr = o.r + extra; if ((x - o.x) ** 2 + (z - o.z) ** 2 < rr * rr) return false; } return true; };
   const sq = (x, z) => Math.max(Math.abs(x), Math.abs(z)), roadD = R.roads === false ? () => 1e9 : (x, z) => Math.min(Math.abs(x), Math.abs(z));
   const villagePave = T.villageShape ? T.villageShape.pave : () => 1;
+  // inside (or within m of) a village pool, pond or dug bed
+  const villageWet = (x, z, m) => [...(R.village?.pools || []), ...(R.village?.digs || [])].some(p => {
+    if (p.c) return Math.hypot(x - p.c[0], z - p.c[1]) < p.c[2] + m && (!p.ring || Math.hypot(x - p.c[0], z - p.c[1]) > p.ring[0] - m);
+    if (p.ring) { const rho = Math.hypot(x - p.ring[0], z - p.ring[1]); return rho > p.ring[2] - m && rho < p.ring[3] + m; }
+    const r = p.r; return x > r[0] - m && x < r[2] + m && z > r[1] - m && z < r[3] + m;
+  });
   const dry = (x, z, m = .8) => T.seaY === null || T.seaY === undefined || h(x, z) > T.seaY + m; // above the sea
   const m4 = new BABYLON.Matrix(), q = new BABYLON.Quaternion(), S = new BABYLON.Vector3(), P = new BABYLON.Vector3();
 
@@ -1183,7 +1191,7 @@ async function buildDecor(scene, T, avoid) {
     await scatter(ex, (x, z) => {
       const q = sq(x, z); if (q < (ex.minSq ?? R.flatHalf + 20) || q > (ex.maxSq ?? 340) || roadD(x, z) < (ex.road ?? 8)) return false;
       if (T.waterEdgeDist(x, z) < (ex.water ?? 3) || slopeAt(x, z) > (ex.maxSlope ?? .55) || !dry(x, z, 2)) return false;
-      if (ex.village && (villagePave(x, z) > .05 || T.villageShape?.isWall(x, z) || T.mesaBlocks(x, z))) return false; // the village's unpaved rim
+      if (ex.village && (villagePave(x, z) > .05 || T.villageShape?.isWall(x, z) || T.mesaBlocks(x, z) || villageWet(x, z, 2) || (T.villageShape?.dirt(x, z) ?? 0) > .02)) return false; // the village's unpaved rim, never in its sand yards or water
       return !ex.clump || fbm(x * ex.clump.freq + ex.clump.ox, z * ex.clump.freq, 3) > ex.clump.above;
     }, ex.body, ex.shadow === false ? null : T.castShadow);
     if (ex.cull) meshes.slice(before).forEach(m => { const t = +m.name.split('_').slice(-2)[0]; cullTiles.push({ m, x: -262.5 + Math.floor(t / 4) * 175, z: -262.5 + (t % 4) * 175, d: ex.cull }); });
