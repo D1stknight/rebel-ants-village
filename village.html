@@ -1361,6 +1361,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('ashigaru_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Ashigaru Villager</span></div></div>
   <div style="font-size:9px;letter-spacing:2px;color:#b48cff;margin:6px 8px 4px;text-transform:uppercase">Mystic Moons</div>
   <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_mamoru')"><span class="ap-icon">🐈‍⬛</span><span class="ap-name">Mamoru</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_flower_moon')"><span class="ap-icon">🎎</span><span class="ap-name">Kokeshi Flower Moon</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_mochi')"><span class="ap-icon">🐱</span><span class="ap-name">Mochi</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_ostara')"><span class="ap-icon">🐰</span><span class="ap-name">Ostara</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_nariko')"><span class="ap-icon">⚡</span><span class="ap-name">Nariko</span></div></div>
+  <div style="font-size:9px;letter-spacing:2px;color:#f2c84b;margin:6px 8px 4px;text-transform:uppercase">Chumpz Apes</div>
+  <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_racer')"><span class="ap-icon">🏎️</span><span class="ap-name">Racer</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_chain')"><span class="ap-icon">⛓️</span><span class="ap-name">Big Chain</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_peel')"><span class="ap-icon">😎</span><span class="ap-name">Peely</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_peng')"><span class="ap-icon">🐧</span><span class="ap-name">Pengu</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_band')"><span class="ap-icon">🍌</span><span class="ap-name">Banana Band</span></div></div>
   <div style="padding:0 8px 6px;display:grid;grid-template-columns:1fr 1fr;gap:5px">
     <button class="ctrl-btn" id="npcVisibilityBtn" onclick="toggleNPCVisibility()">Hide NPCs</button>
     <button class="ctrl-btn" id="npcPauseBtn" onclick="toggleNPCPause()">Pause NPCs</button>
@@ -1383,7 +1385,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
       <option value="wander">wander</option>
       <option value="patrol">patrol</option>
     </select>
-    <select id="npcModelInput" class="admin-select" style="margin-bottom:5px" title="Model"><option value="ant">Model: Ant</option><option value="kit:cc_mamoru">Model: Mamoru</option><option value="kit:cc_flower_moon">Model: Kokeshi Flower Moon</option><option value="kit:cc_mochi">Model: Mochi</option><option value="kit:cc_ostara">Model: Ostara</option><option value="kit:cc_nariko">Model: Nariko</option></select>
+    <select id="npcModelInput" class="admin-select" style="margin-bottom:5px" title="Model"><option value="ant">Model: Ant</option><option value="kit:cc_mamoru">Model: Mamoru</option><option value="kit:cc_flower_moon">Model: Kokeshi Flower Moon</option><option value="kit:cc_mochi">Model: Mochi</option><option value="kit:cc_ostara">Model: Ostara</option><option value="kit:cc_nariko">Model: Nariko</option><option value="kit:chz_ape_racer">Model: Racer</option><option value="kit:chz_ape_chain">Model: Big Chain</option><option value="kit:chz_ape_peel">Model: Peely</option><option value="kit:chz_ape_peng">Model: Pengu</option><option value="kit:chz_ape_band">Model: Banana Band</option></select>
     <textarea id="npcDialogueInput" placeholder="Custom dialogue text" rows="4" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:5px;resize:vertical"></textarea>
     <input id="npcQuestIdInput" placeholder="Quest ID (optional)" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:6px">
     <button class="ctrl-btn full" onclick="applySelectedNPCChanges()" style="width:100%;background:#5ecfca;color:#000">Apply NPC Changes</button>
@@ -1701,6 +1703,12 @@ const NPC_LIBRARY = {
   mystic_moons_mochi: { npcIdPrefix: 'mm-mochi', factionId: 'cute-creepy', role: 'villager', displayName: 'Mochi', modelUrl: null, modelScale: 1, fallbackType: 'kit:cc_mochi', behavior: 'idle', wanderRadius: 5, moveSpeed: .6, customDialogue: 'Mochi waves her paw. Luck in, luck in!\nThe game hall never closes. Dice, cards, and the occasional cursed coin.\nWin or lose, you leave with a story.' },
   mystic_moons_ostara: { npcIdPrefix: 'mm-ostara', factionId: 'cute-creepy', role: 'villager', displayName: 'Ostara', modelUrl: null, modelScale: 1, fallbackType: 'kit:cc_ostara', behavior: 'idle', wanderRadius: 5, moveSpeed: .6, customDialogue: 'Ostara tilts her head. Her ears twitch at a sound you cannot hear.\nThe library keeps the lore of this hill: witches, ghosts, the moon that never sets.\nRead carefully. Some books read you back.' },
   mystic_moons_nariko: { npcIdPrefix: 'mm-nariko', factionId: 'cute-creepy', role: 'villager', displayName: 'Nariko', modelUrl: null, modelScale: 1, fallbackType: 'kit:cc_nariko', behavior: 'idle', wanderRadius: 5, moveSpeed: .6, customDialogue: 'Lightning crackles in the orb between her hands.\nThe graves here are restless when the storm comes. I keep them sleeping.\nStay close to the candles and the spirits will leave you be.' },
+  // the Chumpz apes: rigged kit characters (they walk when they move), placeable in any village
+  chumpz_racer: { npcIdPrefix: 'chumpz-racer', factionId: 'chumpz', role: 'villager', displayName: 'Racer', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_racer', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'The Racer revs an engine that is not there. CHUMPZ RACING, number seventy-seven!\nFastest ape on the island. Ask anyone. Ask the crabs.\nRace you to the end of the pier?' },
+  chumpz_chain: { npcIdPrefix: 'chumpz-chain', factionId: 'chumpz', role: 'villager', displayName: 'Big Chain', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_chain', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'Big Chain polishes a glass and grins under his bucket hat.\nWelcome to the Banana Bar! First round is on the house.\nThe band plays when the sun goes down. The chumpz dance until it comes back up.' },
+  chumpz_peel: { npcIdPrefix: 'chumpz-peel', factionId: 'chumpz', role: 'villager', displayName: 'Peely', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_peel', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'Peely lowers his shades. Roll the bones, friend.\nSnake eyes buys the next round. House rules: no peeling bananas at the table.\nI wear mine on my head. Keeps the luck in.' },
+  chumpz_peng: { npcIdPrefix: 'chumpz-peng', factionId: 'chumpz', role: 'villager', displayName: 'Pengu', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_peng', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'Pengu adjusts his goggles. Shh. The big one bites at noon.\nThe bait shop sells worms and books. Same shelf. Do not mix them up.\nCatch a fish, trade it at the bar. That is how we pay around here.' },
+  chumpz_band: { npcIdPrefix: 'chumpz-band', factionId: 'chumpz', role: 'villager', displayName: 'Banana Band', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_band', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'Banana Band taps the banana in his headband. Emergency snack.\nThe lagoon is warm, the bar is open, the hammocks are free.\nIf you see a ripe one on the big sign, tell me. It has been yellow for years.' },
 };
 const NPC_DIALOGUES = {
   'hub-first-warning': [
@@ -13535,7 +13543,7 @@ function createNPCFromDefinition(npc, savedState = null) {
   const root = new BABYLON.TransformNode(`npc_${npc.npcId}`, scene);
   const spawn = savedState?.position || npc.spawn || { x:0, y:0, z:0 };
   root.position.set(spawn.x || 0, spawn.y || 0, spawn.z || 0);
-  const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
+  const groundY = getNPCGroundHeightAt(root.position.x, root.position.z);
   if (Number.isFinite(groundY)) root.position.y = groundY;
   const savedRotation = savedState?.rotation || {};
   const baseRotationY = Number.isFinite(savedState?.baseRotationY) ? savedState.baseRotationY : (savedRotation.y || 0);
@@ -13818,7 +13826,7 @@ function moveNPCToward(root, target, dt) {
   const step = Math.min(distance, (root.metadata.moveSpeed || .8) * dt);
   root.position.x += (dx / distance) * step;
   root.position.z += (dz / distance) * step;
-  const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
+  const groundY = getNPCGroundHeightAt(root.position.x, root.position.z);
   if (Number.isFinite(groundY)) root.position.y = groundY;
   return true;
 }
@@ -13843,7 +13851,7 @@ function moveCleanSmallAntToward(root, target, dt, now = performance.now()) {
   const dirZ = dz / distance;
   root.position.x += dirX * step;
   root.position.z += dirZ * step;
-  const groundY = getVillageGroundHeightAt(root.position.x, root.position.z);
+  const groundY = getNPCGroundHeightAt(root.position.x, root.position.z);
   if (Number.isFinite(groundY)) root.position.y = groundY;
   const moved = meta.lastPosition ? root.position.subtract(meta.lastPosition).length() : step;
   if (moved > .01) {
@@ -14098,6 +14106,11 @@ function updateNPCPopulation(dt) {
       if (now - (meta._lastFarNpcUpdateAt || 0) < 550) return;
       meta._lastFarNpcUpdateAt = now;
       npcDt = Math.min(dt * 2.5, 0.12);
+    }
+    if (now - (meta._deckCheckAt || 0) > 1000) { // standing on a kit deck (pier, bar floor): keep the feet on it
+      meta._deckCheckAt = now;
+      refreshVillageCollisionBlockersIfNeeded(); // decks are known after a rebuild (otherwise only when the player moves)
+      if (villageOnKitDeck(root.position.x, root.position.z)) { const y = getNPCGroundHeightAt(root.position.x, root.position.z); if (Number.isFinite(y) && Math.abs(y - root.position.y) > .03) root.position.y = y; }
     }
     if (meta.dialogueOpen) {
       updateNPCAnimationState(root, false, now);
@@ -21871,6 +21884,12 @@ function getVillageWalkSurfaceInfoAt(x, z) {
   return bestSurface ? { surface: bestSurface, height: bestHeight, surfaceType: bestSurface.surfaceType || 'dirt' } : null;
 }
 
+function getNPCGroundHeightAt(x, z) {
+  const g = getVillageGroundHeightAt(x, z);
+  if (!villageOnKitDeck(x, z)) return g;
+  const d = getVillageWalkableSurfaceHeightAt(x, z);
+  return Number.isFinite(d) ? (Number.isFinite(g) ? Math.max(g, d) : d) : g;
+}
 function getVillageGroundHeightAt(x, z) {
   const baseHeight = getVillageBaseGroundHeightAt(x, z);
   const surfaceHeight = getVillageWalkableSurfaceHeightAt(x, z);
@@ -22520,6 +22539,11 @@ function rebuildVillageCollisionBlockers() {
   villageCollisionBlockers = blockers;
   villageWalkableSurfaces = walkableSurfaces;
   villageLastBlockerRebuild = performance.now();
+  try { NPCManager.roots.forEach(root => {
+    if (!root || root.isDisposed?.() || !villageOnKitDeck(root.position.x, root.position.z)) return;
+    const y = getNPCGroundHeightAt(root.position.x, root.position.z);
+    if (Number.isFinite(y)) { root.position.y = y; if (root.metadata?.spawn) root.metadata.spawn.y = y; }
+  }); } catch (e) {}
 }
 
 function refreshVillageCollisionBlockersIfNeeded() {
