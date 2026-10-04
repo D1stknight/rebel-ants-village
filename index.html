@@ -926,6 +926,11 @@ async function selectAnt(id) {
   if (!rebel) return;
 
     setStatus('Loading Rebel details...');
+  if (rebel.playerModel) { // a friend playable: nothing to look up in the Forge
+    try { localStorage.setItem('selectedRebel', JSON.stringify(rebel)); } catch(e) {}
+    setStatus(rebel.name + ' — ' + (rebel.formLabel || 'ready to play'));
+    return;
+  }
   const forgePlayableCharacter = rebel.playableType === 'forge_build'
     ? getForgePlayableActiveCharacter(rebel)
     : null;
@@ -1002,7 +1007,12 @@ const VILLAGE_RIGGED = {
   '4722': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4722/build_1790563381766_forge_rig_thumb-9DtgRRioXuNbKiuyVNvizgbXR5nQkf.jpg' },
   '4': { thumb: 'https://vg8yazzy1wnobiup.public.blob.vercel-storage.com/forge/3d-builds/battle_for_colony/4/build_1790563425986_forge_rig_thumb-pIHzHp8JxvvTnxe2lV28UNpuAlaHeF.jpg' }
 };
+// friend-collection playables (no NFT needed): rigged procedural characters built in the village (SamuraiKit)
+const FRIEND_PLAYABLES = [
+  { id: 'chumpz_racer', rebelId: 'chumpz_racer', name: 'Chumpz Racer', image: 'assets/lobby/chumpz_racer.jpg', collectionKey: 'chumpz', playerModel: 'kit:chz_ape_racer', formLabel: 'Chumpz Ape' }
+];
 function getRebelForgeStatus(rebel, hasForgeCharacter) {
+  if (rebel.playerModel) return 'ready';
   const afc = rebel.activeForgeCharacter || {};
   if (hasForgeCharacter === undefined) hasForgeCharacter = Boolean(afc.activeGlbUrl || rebel.activeGlbUrl);
   if (afc.forgeRigGlbUrl || afc.characterBundle?.forgeRigGlbUrl || VILLAGE_RIGGED[String(rebel.tokenId || '')]) return 'ready';
@@ -1081,7 +1091,7 @@ async function showDefaultCard() {
   })));
   const showTokens = new Set(showcase.map((r) => String(r.tokenId)));
   const savedForgePlayables = (await loadSavedForgePlayableCards()).filter((r) => !showTokens.has(String(r.tokenId || '')));
-  ownedRebels = [defaultRebel, ...sortRebelsByForgeStatus([...showcase, ...dedupeForgePlayablesByToken(savedForgePlayables)])];
+  ownedRebels = [defaultRebel, ...FRIEND_PLAYABLES.map((r) => ({ ...r })), ...sortRebelsByForgeStatus([...showcase, ...dedupeForgePlayablesByToken(savedForgePlayables)])];
 
   let storedSelected = {};
 
@@ -1150,16 +1160,20 @@ async function loadNFTs(walletAddress) {
       ...dedupeForgePlayablesByToken(savedForgePlayables.filter((rebel) => !walletIds.has(rebel.id) && !walletTokens.has(String(rebel.tokenId || ''))))
     ]);
 
+    // the friend playables sit after the wallet's ready Rebels; they are never picked by default
+    const firstNotReady = ownedRebels.findIndex((rebel) => getRebelForgeStatus(rebel) !== 'ready');
+    ownedRebels.splice(firstNotReady < 0 ? ownedRebels.length : firstNotReady, 0, ...FRIEND_PLAYABLES.map((r) => ({ ...r })));
     const forgedReadyRebel = ownedRebels.find((rebel) => {
+      if (rebel.playerModel) return false;
       return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl) || getRebelForgeStatus(rebel) === 'ready';
     });
-    const readyCount = ownedRebels.filter((rebel) => getRebelForgeStatus(rebel) === 'ready').length;
+    const readyCount = ownedRebels.filter((rebel) => !rebel.playerModel && getRebelForgeStatus(rebel) === 'ready').length;
 
     // the Rebel last picked here or set in the Forge ("Make this my Rebel") comes first, if this wallet holds it
     let storedSel = {};
     try { storedSel = JSON.parse(localStorage.getItem('selectedRebel') || '{}') || {}; } catch(e) {}
-    const storedCard = storedSel.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSel.tokenId)) : null;
-    selectedAnt = storedCard ? storedCard.id : forgedReadyRebel ? forgedReadyRebel.id : ownedRebels[0].id;
+    const storedCard = storedSel.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSel.tokenId)) : (storedSel.playerModel ? ownedRebels.find((rebel) => rebel.id === storedSel.id) : null);
+    selectedAnt = storedCard ? storedCard.id : forgedReadyRebel ? forgedReadyRebel.id : (ownedRebels.find((rebel) => !rebel.playerModel) || ownedRebels[0]).id;
 
     charRow.innerHTML = '';
     ownedRebels.forEach(r => buildCard(r));

@@ -15857,6 +15857,12 @@ function getForgeRigUrlBundle(rebel) {
 }
 
 function resolveCharacterConfig(rebel) {
+  // friend-collection playables (lobby cards with playerModel 'kit:<type>'): a rigged SamuraiKit character, no GLB
+  const kitModel = String(rebel?.playerModel || '').startsWith('kit:') ? rebel.playerModel.slice(4) : null;
+  if (kitModel) return { rebel, characterId: rebel.id, displayName: rebel.name || 'Chumpz', previewImage: rebel.image || 'assets/lobby/ant_1.JPG', tokenId: null,
+    collectionKey: rebel.collectionKey || 'chumpz', rebelId: rebel.id, characterRecord: null, bundleId: 'kit_' + kitModel, formType: 'procedural', formLabel: rebel.formLabel || 'Chumpz Ape',
+    hasGeneratedModel: false, basePath: null, idleFile: null, singleGlb: null, playerScale: 1, animations: [], procedural: true, kitModel,
+    activeForgeCharacter: null, characterBundle: null, activeForgeBuildId: null, activeGlbUrl: null };
   const characterRecord = getRebelCharacterRecord(rebel);
   const overrideId = getForgeRigOverrideBundleId();
   const autoBundle = overrideId ? null : getForgeRigUrlBundle(rebel);
@@ -16336,6 +16342,9 @@ function getActivePlayableVisualRootForGrounding() {
 function groundPlayableVisualToTerrain(terrainY) {
   if (!charMesh || !Number.isFinite(terrainY)) return;
 
+  if (window.activeCharacter?.procedural && window.kitPlayerModel) {
+    charMesh.position.y = terrainY + VILLAGE_PLAYER_GROUND_CLEARANCE; charMesh._terrainY = terrainY; charMesh._footOffset = undefined; return;
+  }
   const actionMoving = isForgeActionMovementSuppressed();
   const rootForBounds = actionMoving ? charMesh : getActivePlayableVisualRootForGrounding();
   const bounds = getVisiblePlayableBounds(rootForBounds) || getVisiblePlayableBounds(charMesh);
@@ -19395,12 +19404,14 @@ async function latestForgeRigUrl(url) {
   try { const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 1500); const j = await (await fetch('/api/forge-rig-latest?url=' + encodeURIComponent(url), { signal: ac.signal })).json(); clearTimeout(t); return j && j.url || url; } catch (e) { return url; }
 }
 const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(activeCharacter.singleGlb) : null;   // Forge Rigger bundle: one GLB, metres, all clips inside
-BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGlb || activeCharacter.idleFile, scene)
+(activeCharacter.procedural && window.SamuraiKit?.types?.includes(activeCharacter.kitModel)
+  ? Promise.resolve({ kit: true, meshes: [], transformNodes: [], animationGroups: [], skeletons: [] })
+  : BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath || '/assets/character/', _forgeSingleGlb || activeCharacter.idleFile || 'ant_idle_c.glb', scene))
 .then(r => {
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
   playerRoot.position = new BABYLON.Vector3(0, 0.25, 20);
   playerRoot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
-  const _ps = _forgeSingleGlb ? (parseFloat(new URLSearchParams(window.location.search).get('rigScale')) || activeCharacter.playerScale || 1.9) : 0.018;
+  const _ps = r.kit ? 1 : _forgeSingleGlb ? (parseFloat(new URLSearchParams(window.location.search).get('rigScale')) || activeCharacter.playerScale || 1.9) : 0.018;
   playerRoot.scaling = new BABYLON.Vector3(_ps, _ps, _ps);
   r.meshes.forEach(m => {
    if (m !== playerRoot) {
@@ -19443,7 +19454,20 @@ BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGl
     if(tn!==playerRoot)tn.parent=playerRoot; if(tn.rotationQuaternion)tn.rotationQuaternion=null; });
   charMesh = playerRoot;
   charMesh._footOffset = undefined;
-  if (_forgeSingleGlb) {
+  if (r.kit) {
+    // rigged kit character (Chumpz ape): built at its real size (~3.3 m, feet at y 0); it walks / runs by itself from how
+    // fast the root moves, so the animation slots are light stand-ins: F and Space play its kick and jump
+    const holder = new BABYLON.TransformNode('playerKitModel', scene);
+    holder.parent = playerRoot; holder.rotation.y = Math.PI; // kit fronts face -z, the player faces +z
+    window.SamuraiKit.build(holder, activeCharacter.kitModel, scene, shadows, false);
+    holder.getChildMeshes(false).forEach(m => { m.receiveShadows = true; delete m._editRoot; });
+    ['idle', 'walk', 'run', 'flip_kick', 'jump'].forEach((name, i) => {
+      animGroups[i] = { name, isPlaying: false, from: 0, to: 0, speedRatio: 1, stop() { this.isPlaying = false; },
+        play() { this.isPlaying = true; if (i === 3) window.SamuraiKit.actorAction(holder, 'kick', 1.1); if (i === 4) window.SamuraiKit.actorAction(holder, 'jump', .9); } };
+    });
+    window.kitPlayerModel = holder;
+    animState = 0; animGroups[0].play(true);
+  } else if (_forgeSingleGlb) {
     // idle=0 walk=1 run=2 flip_kick=3 jump=4 (same slots as the starter bundle).
     // The Forge Rigger already removes horizontal travel, so the hips position track is KEPT: it carries the vertical
     // motion (crouch, take-off, landing, walk bob). Stripping it, as the starter bundle does, glued jumps to the floor.
