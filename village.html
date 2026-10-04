@@ -518,6 +518,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div class="ap-section">Stairs (any village)</div>
     <div class="admin-note">Walkable: climb terrace walls, cliffs and banks. Bottom faces -Z; scale up for taller climbs (rise 4 m x scale).</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('kit_stairs_stone')"><span class="ap-icon">🪜</span><span class="ap-name">Stone Stairs (4 m)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kit_stairs_wood')"><span class="ap-icon">🪜</span><span class="ap-name">Wooden Stairs (4 m)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kit_stairs_cliff')"><span class="ap-icon">⛰️</span><span class="ap-name">Cliff Stairs (12 m)</span></div></div>
+    <div class="ap-section">Kenshi Compound</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_great_dojo')"><span class="ap-icon">🏯</span><span class="ap-name">Kenshi Dojo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_library')"><span class="ap-icon">📜</span><span class="ap-name">Library (2 floors)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_hall')"><span class="ap-icon">🗺️</span><span class="ap-name">Strategy Hall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_house')"><span class="ap-icon">🏠</span><span class="ap-name">House</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_gate')"><span class="ap-icon">⛩️</span><span class="ap-name">Gatehouse</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_forge')"><span class="ap-icon">🔥</span><span class="ap-name">Forge</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_banner_pole')"><span class="ap-icon">🚩</span><span class="ap-name">Teal Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_well_pavilion')"><span class="ap-icon">🪣</span><span class="ap-name">Well Pavilion</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_watchtower')"><span class="ap-icon">🗼</span><span class="ap-name">Watchtower</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_wall_fence')"><span class="ap-icon">🧱</span><span class="ap-name">Wall Fence (8 m)</span></div></div>
     <div class="ap-section">Ronin Village Assets</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ronin_altar')"><span class="ap-icon">⛩</span><span class="ap-name">Ronin Altar</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Ronin Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_dead_tree')"><span class="ap-icon">♜</span><span class="ap-name">Dead Tree</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_mist')"><span class="ap-icon">〰</span><span class="ap-name">Ronin Mist</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_weapon_rack')"><span class="ap-icon">⚔</span><span class="ap-name">Weapon Rack</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_katana_sigil')"><span class="ap-icon">☾</span><span class="ap-name">Katana Sigil</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_brazier')"><span class="ap-icon">🔥</span><span class="ap-name">Crimson Brazier</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_broken_cart')"><span class="ap-icon">▰</span><span class="ap-name">Broken Cart</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_watch_post')"><span class="ap-icon">▴</span><span class="ap-name">Watch Post</span></div></div>
     <div class="ap-section">Village Life</div>
@@ -3558,6 +3560,17 @@ buke_banner_pole: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 
 buke_footbridge: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0, absY: true, noGroundSnap: true },
 buke_canal_spout: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0, absY: true, noGroundSnap: true },
 buke_post_lantern: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+// Kenshi compound pieces (teal + gold banners with the blade emblem).
+kenshi_great_dojo: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_library: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_hall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_house: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_gate: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_forge: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_banner_pole: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_well_pavilion: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_watchtower: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_wall_fence: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
   dojo_5: {
     path: "/assets/buildings/dojo_5.glb",
     scale: 2.2,
@@ -20237,7 +20250,7 @@ function newTerrainLayoutFromSaved(data) {
       scheduleShadowRefresh('terrain decor', 300);
     }).catch(e => console.warn('Terrain decor failed', e)), 50);
     if (NT.water || NT.falls?.length || NT.recipe.village?.pools) startNewTerrainWaterSound(NT); // streams, cliff waterfalls, canals
-    if (NT.sea) startNewTerrainSurfSound(NT);
+    if (NT.sea && NT.recipe.sea.surf !== false) startNewTerrainSurfSound(NT); // not on a still lake
   }
   return out;
 }

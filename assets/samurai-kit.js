@@ -62,6 +62,9 @@
     T.noren_buke = bannerTex(scene, 'noren_buke', '#5e1a20', '#d8b35c', 'logo:buke', false, true);
     T.banner_buke_scroll = bannerTex(scene, 'buke_scroll', '#5e1a20', '#d8b35c', 'scroll');
     T.noren_buke_map = bannerTex(scene, 'noren_buke_map', '#c49b48', '#4a1a16', 'board', false, true);
+    T.noren_kenshi = bannerTex(scene, 'noren_kenshi', '#1f5753', '#d8b450', 'logo:kenshi', false, true);
+    T.noren_kenshi_scroll = bannerTex(scene, 'noren_kenshi_scroll', '#1f5753', '#d8b450', 'scroll', false, true);
+    T.noren_kenshi_map = bannerTex(scene, 'noren_kenshi_map', '#c9a24a', '#1f4a46', 'board', false, true);
     return T;
   }
   function bannerTex(scene, name, bg, fg, icon, sail, wide) {
@@ -110,7 +113,7 @@
   const FACTION_BANNERS = {
     samurai: ['#961816', '#ecd6aa'], wokou: ['#1c2a4c', '#d9a743'], yamabushi: ['#25402d', '#d6a640'], ronin: ['#0e0d10', '#9a161a'],
     shogun: ['#2e2147', '#d8b04a'], bushi: ['#1b2a48', '#cfae5c'], buke: ['#5e1a20', '#d8b35c'], ashigaru: ['#24402a', '#d9c98e'],
-    kenshi: ['#1d4a4c', '#d7e3e0'], sohei: ['#b8611c', '#f4e6c4'], warrior: ['#6b2a1a', '#e2c08a']
+    kenshi: ['#1f5753', '#d8b450'], sohei: ['#b8611c', '#f4e6c4'], warrior: ['#6b2a1a', '#e2c08a']
   };
   const logoImgs = {};
   function logoMask(id, cb) {
@@ -131,6 +134,7 @@
     banner_yam_books: { tex: 'banner_yam_books' }, banner_yam_dots: { tex: 'banner_yam_dots' },
     noren_yamabushi: { tex: 'noren_yamabushi' }, noren_yam_books: { tex: 'noren_yam_books' }, noren_yam_dots: { tex: 'noren_yam_dots' },
     noren_buke: { tex: 'noren_buke' }, banner_buke_scroll: { tex: 'banner_buke_scroll' }, noren_buke_map: { tex: 'noren_buke_map' },
+    noren_kenshi: { tex: 'noren_kenshi' }, noren_kenshi_scroll: { tex: 'noren_kenshi_scroll' }, noren_kenshi_map: { tex: 'noren_kenshi_map' },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
@@ -646,6 +650,39 @@
       M.box('wood', [0, 0, -1.06], [1.1, Math.hypot(5, 2), .12], 0, -a);
       for (let i = 0; i < 9; i++) { const t = (i + .5) / 9; M.box('darkwood', [0, -2.5 + 5 * t, -2 * t - .97], [1.1, .08, .06], 0, -a); }
       for (const sd of [-1, 1]) { for (const t of [0, .5, 1]) M.block('darkwood', sd * .6, -2.5 + 5 * t, -2 * t - 1, .08, .08, 1); M.rod('rope', [sd * .6, -2.5, .95], [sd * .6, 2.5, -1.05], .025, 4); }
+    },
+    // ── Kenshi (swordmasters): dark wood, white plaster, grey tile, teal + gold banners with the blade emblem ──
+    kenshi_great_dojo(M) { M.remap = { red: 'darkwood', banner_red: 'banner_kenshi' }; B.sam_great_dojo(M); M.remap = null; noren(M, 0, -15 / 2 + 2.05, 5.45, 5.6, 1.5, 'noren_kenshi'); },
+    kenshi_library(M) { M.remap = { noren_yam_books: 'noren_kenshi_scroll', banner_yamabushi: 'banner_kenshi' }; B.yam_library(M); },
+    kenshi_hall(M) { M.remap = { banner_navy: 'banner_kenshi' }; B.sam_library(M); M.remap = null; noren(M, 0, -9 / 2 - .22, 5.3, 4.2, 1.3, 'noren_kenshi_map'); },
+    kenshi_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_kenshi'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_kenshi'); },
+    kenshi_gate(M) { M.remap = { red: 'darkwood', banner_red: 'banner_kenshi' }; B.sam_gate(M); M.remap = null; noren(M, 0, -1.3, 5.1, 5, 1.7, 'noren_kenshi'); },
+    kenshi_forge(M) { M.remap = { thatch: 'roof', banner_gold: 'banner_kenshi' }; B.sam_forge(M); },
+    kenshi_banner_pole(M) { M.remap = { banner_red: 'banner_kenshi' }; B.sam_banner_pole(M); },
+    // well under a hexagonal tiled pavilion with a gold finial, on a stone base with buckets
+    kenshi_well_pavilion(M) {
+      M.cyl('stone', [0, 0, 0], 3.6, .35, 6); M.cyl('stone', [0, 0, .35], 1.25, .9, 14); M.cyl('water', [0, 0, .55], 1.02, .72, 14);
+      for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 + Math.PI / 6; M.block('darkwood', Math.cos(a) * 2.7, Math.sin(a) * 2.7, .35, .24, .24, 3.2); }
+      M.cyl('darkwood', [0, 0, 3.45], 3.1, .3, 6); M.cyl('roof', [0, 0, 3.75], 3.9, 2.1, 6, .2); M.cyl('darkwood', [0, 0, 3.6], 4, .18, 6);
+      M.sphere('gold', [0, 0, 6.05], .3, 1.2, 8, 5); M.cyl('gold', [0, 0, 5.8], .1, .3, 6);
+      M.box('wood', [0, 0, 2.6], [2.8, .16, .16]); M.cyl('rope', [0, 0, 1.4], .03, 1.2, 4); M.cyl('darkwood', [0, 0, 1.2], .22, .3, 8);
+      for (const [x, y] of [[1.9, -1.4], [-2.1, -1.1], [2.2, 1.2], [-1.6, 1.8]]) { M.cyl('wood', [x, y, .35], .3, .5, 8, .26); M.cyl('darkwood', [x, y, .78], .31, .05, 8); }
+    },
+    // watchtower: a tapered stone base with a door, the lookout room on top under a tiled roof
+    kenshi_watchtower(M) {
+      const S = 5.4, H = 7;
+      M.cyl('stone', [0, 0, 0], S * .72, H, 4, S * .62); M.quad('dark', [[-.6, -S * .48, .1], [.6, -S * .48, .1], [.6, -S * .46, 2.2], [-.6, -S * .46, 2.2]]);
+      M.block('wood', 0, 0, H, S + .6, S + .6, .3);
+      for (const x of [-S / 2, S / 2]) for (const y of [-S / 2, S / 2]) M.block('darkwood', x, y, H + .3, .22, .22, 2.6);
+      for (const [x, y, sx, sy] of [[0, -S / 2, S, .12], [0, S / 2, S, .12], [-S / 2, 0, .12, S], [S / 2, 0, .12, S]]) { M.block('darkwood', x, y, H + .9, sx, sy, .12); M.block('darkwood', x, y, H + 1.25, sx, sy, .12); }
+      M.roof(0, 0, H + 2.9, S + 2.4, S + 2.4, 1.9, { lift: .6 });
+      banner(M, 0, -S / 2 - .1, H + 2.6, 1.2, 1, 'banner_kenshi'); lantern(M, S / 2, -S / 2, H + 2.75, .22);
+    },
+    // wall-top fence, 8 m: stone pillars with a dark wood lattice between (for the compound walls)
+    kenshi_wall_fence(M) {
+      for (const x of [-4, 0, 4]) { M.block('stone', x, 0, 0, .7, .7, 1.6); M.block('stone', x, 0, 1.6, .85, .85, .14); }
+      for (const z of [.35, 1.25]) for (const h of [-1, 1]) M.box('darkwood', [h * 2, 0, z], [3.3, .14, .12]);
+      for (let i = 0; i < 14; i++) { const x = -3.3 + i * (6.6 / 13); if (Math.abs(x) < .4) continue; M.block('darkwood', x, 0, .35, .07, .07, .9); }
     },
     // stairs (see STAIRS below): built at their placed size, so stretched stairs keep ~0.3 m steps
     kit_stairs_stone(M) { buildStairs(M, 'kit_stairs_stone'); },
