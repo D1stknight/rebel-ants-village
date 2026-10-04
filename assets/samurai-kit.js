@@ -1,0 +1,1267 @@
+// Samurai building kit (Oct 2026). Designed in Blender (work/sam/models.py); this file builds the same low-poly
+// shapes in the browser, so no model files are downloaded. Each building type is built once into a hidden template
+// (one mesh per material) and every placed copy is a set of instances of it: cheap to draw, cheap to place.
+// Doorways are lit recesses; link a room by adding a Door (admin > Doors) in front of one.
+/* global BABYLON */
+(function () {
+  const TILE = { roof: [1.6, 1.4], roof_brown: [1.6, 1.4], plaster_old: [3, 3], slate: [2.4, 2.4], wood: [1.6, 1.6], darkwood: [1.6, 1.6], plaster: [3, 3], stone: [2.4, 2.4], thatch: [2, 1.6], bark: [1.4, 1.6], earth: [4, 4], shoji: [1.2, 1.5] };
+  const tileOf = m => TILE[m] || [1, 1];
+
+  // ── textures (drawn once on small canvases) ─────────────────────────────
+  function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+  function noise(S, scale, oct, seed) {
+    const r = rng(seed * 977 + 13), out = new Float32Array(S * S); let mx = 0;
+    for (let o = 0; o < oct; o++) {
+      const n = Math.max(2, Math.round(scale * 2 ** o)), g = new Float32Array(n * n); for (let i = 0; i < g.length; i++) g[i] = r();
+      const amp = 1 / 2 ** o;
+      for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+        const fx = x / S * n, fy = y / S * n, ix = Math.floor(fx), iy = Math.floor(fy), u = fx - ix, v = fy - iy, su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v);
+        const a = g[(iy % n) * n + ix % n], b = g[(iy % n) * n + (ix + 1) % n], c = g[((iy + 1) % n) * n + ix % n], d = g[((iy + 1) % n) * n + (ix + 1) % n];
+        out[y * S + x] += amp * ((a * (1 - su) + b * su) * (1 - sv) + (c * (1 - su) + d * su) * sv);
+      }
+    }
+    for (const v of out) mx = Math.max(mx, v); for (let i = 0; i < out.length; i++) out[i] /= mx; return out;
+  }
+  function pixelTex(scene, name, S, fn) {
+    const t = new BABYLON.DynamicTexture('samKit_' + name, { width: S, height: S }, scene, true), ctx = t.getContext(), img = ctx.createImageData(S, S);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const c = fn(x / S, y / S, y * S + x), k = (y * S + x) * 4; img.data[k] = c[0]; img.data[k + 1] = c[1]; img.data[k + 2] = c[2]; img.data[k + 3] = 255; }
+    ctx.putImageData(img, 0, 0); t.update(); t.wrapU = t.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE; return t;
+  }
+  const mul = (c, f) => [c[0] * f, c[1] * f, c[2] * f];
+  function makeTextures(scene) {
+    const S = 256, T = {};
+    let n = noise(S, 4, 4, 1);
+    T.roof = pixelTex(scene, 'roof', S, (x, y, i) => { const col = (x * 8) % 1, row = (y * 6) % 1; let f = (.55 + .45 * Math.sin(col * Math.PI)) * (Math.min(1, row / .18) * .35 + .65) * (.85 + .3 * n[i]); if (col < .04 || col > .96) f *= .45; return mul([52, 58, 66], f); });
+    T.roof_brown = pixelTex(scene, 'roof_brown', S, (x, y, i) => { const col = (x * 8) % 1, row = (y * 6) % 1; let f = (.55 + .45 * Math.sin(col * Math.PI)) * (Math.min(1, row / .18) * .35 + .65) * (.85 + .3 * n[i]); if (col < .04 || col > .96) f *= .45; return mul([98, 52, 42], f); });
+    const gr = noise(S, 3, 4, 2);
+    T.wood = pixelTex(scene, 'wood', S, (x, y, i) => { const st = Math.sin(x * 200 + gr[i] * 6) * .5 + .5; let f = .75 + .18 * st + .12 * gr[i]; if ((x * 5) % 1 < .03) f *= .45; return mul([96, 62, 38], f); });
+    T.darkwood = pixelTex(scene, 'darkwood', S, (x, y, i) => { const st = Math.sin(x * 200 + gr[i] * 6) * .5 + .5; let f = .75 + .18 * st + .12 * gr[i]; if ((x * 5) % 1 < .03) f *= .45; return mul([43, 26, 15], f); });
+    n = noise(S, 6, 4, 3); T.plaster = pixelTex(scene, 'plaster', S, (x, y, i) => mul([226, 214, 190], .9 + .1 * n[i]));
+    const sn = noise(S, 8, 4, 4), r = rng(5), rows = 5, blocks = [];
+    for (let ri = 0; ri < rows; ri++) { let xx = ri % 2 ? -(10 + r() * 50) : 0; while (xx < S) { const bw = 40 + r() * 50, c = 105 + r() * 45; blocks.push([xx, ri * S / rows, bw, c]); xx += bw; } }
+    T.stone = pixelTex(scene, 'stone', S, (x, y, i) => {
+      const px = x * S, py = y * S, ri = Math.floor(py / (S / rows)), ry = py - ri * S / rows; let c = 70;
+      for (const b of blocks) { if (Math.floor(b[1] / (S / rows)) !== ri) continue; for (const dx of [-S, 0, S]) { const bx = px - b[0] - dx; if (bx > 2 && bx < b[2] - 2 && ry > 2 && ry < S / rows - 2) c = b[3]; } }
+      return mul([c, c - 3, c - 9], .85 + .25 * sn[i]);
+    });
+    const tn = noise(S, 3, 4, 6); T.thatch = pixelTex(scene, 'thatch', S, (x, y, i) => { let f = .6 + .3 * (Math.sin(x * S * .9 + tn[i] * 20) * .5 + .5) + .2 * tn[i]; if ((y * 7) % 1 < .06) f *= .6; return mul([150, 118, 62], f); });
+    const bn = noise(S, 3, 4, 8); T.bark = pixelTex(scene, 'bark', S, (x, y, i) => mul([88, 64, 44], .65 + .25 * (Math.sin(x * S * .5 + bn[i] * 14) * .5 + .5) + .15 * bn[i]));
+    const en = noise(S, 5, 4, 9); T.earth = pixelTex(scene, 'earth', S, (x, y, i) => mul([104, 76, 50], .7 + .4 * en[i]));
+    T.shoji = pixelTex(scene, 'shoji', S, (x, y) => ((x * 4) % 1 < .06 || (y * 5) % 1 < .06) ? [70, 48, 30] : [240, 226, 190]);
+    T.banner_red = bannerTex(scene, 'red', '#961816', '#ecd6aa', 'logo:samurai');
+    T.banner_navy = bannerTex(scene, 'navy', '#222c48', '#e6dec8', 'books');
+    T.banner_gold = bannerTex(scene, 'gold', '#ba8026', '#faecc8', 'hammer');
+    T.banner_wokou = bannerTex(scene, 'wokou', '#1c2a4c', '#d9a743', 'logo:wokou');
+    T.banner_scroll = bannerTex(scene, 'scroll', '#1f2f55', '#d9c79a', 'scroll');
+    T.banner_board = bannerTex(scene, 'board', '#c79a4a', '#3b2a17', 'board');
+    T.sail = bannerTex(scene, 'sail', '#e8dcbf', '#8a5a2c', 'logo:wokou', true);
+    T.banner_yam_books = bannerTex(scene, 'yam_books', '#25402d', '#d6a640', 'books');
+    T.banner_yam_dots = bannerTex(scene, 'yam_dots', '#25402d', '#d6a640', 'dots');
+    T.noren_yamabushi = bannerTex(scene, 'noren_yamabushi', '#25402d', '#d6a640', 'logo:yamabushi', false, true);
+    T.noren_yam_books = bannerTex(scene, 'noren_yam_books', '#25402d', '#d6a640', 'books', false, true);
+    T.noren_yam_dots = bannerTex(scene, 'noren_yam_dots', '#25402d', '#d6a640', 'dots', false, true);
+    T.noren_buke = bannerTex(scene, 'noren_buke', '#5e1a20', '#d8b35c', 'logo:buke', false, true);
+    T.banner_buke_scroll = bannerTex(scene, 'buke_scroll', '#5e1a20', '#d8b35c', 'scroll');
+    T.noren_buke_map = bannerTex(scene, 'noren_buke_map', '#c49b48', '#4a1a16', 'board', false, true);
+    T.noren_kenshi = bannerTex(scene, 'noren_kenshi', '#1f5753', '#d8b450', 'logo:kenshi', false, true);
+    T.noren_kenshi_scroll = bannerTex(scene, 'noren_kenshi_scroll', '#1f5753', '#d8b450', 'scroll', false, true);
+    T.noren_kenshi_map = bannerTex(scene, 'noren_kenshi_map', '#c9a24a', '#1f4a46', 'board', false, true);
+    T.noren_sohei = bannerTex(scene, 'noren_sohei', '#c38d2a', '#f8edd2', 'logo:sohei', false, true);
+    T.noren_sohei_books = bannerTex(scene, 'noren_sohei_books', '#c38d2a', '#f8edd2', 'books', false, true);
+    T.noren_sohei_dots = bannerTex(scene, 'noren_sohei_dots', '#a8432a', '#f8edd2', 'dots', false, true);
+    const nd = noise(S, 16, 4, 21), nd2 = noise(S, 40, 2, 22), r9 = rng(23);
+    T.needles = pixelTex(scene, 'needles', S, (x, y, i) => { let f = .55 + .35 * nd[i] + .3 * nd2[i]; if (r9() < .07) f *= 1.35; return [44 * f, 74 * f, 46 * f]; });
+    T.needles_dark = pixelTex(scene, 'needles_dark', S, (x, y, i) => { const f = .45 + .35 * nd[i] + .25 * nd2[i]; return [28 * f, 50 * f, 34 * f]; });
+    const bk = noise(S, 3, 5, 24), bk2 = noise(S, 10, 3, 25);
+    const bk3 = noise(S, 24, 2, 28);
+    T.bark_old = pixelTex(scene, 'bark_old', S, (x, y, i) => { const g = Math.abs(Math.sin((x * 9 + bk[i] * .35) * Math.PI)), f = .42 + .38 * g ** .6 + .14 * bk2[i] + .12 * bk3[i]; return [92 * f + 12, 80 * f + 10, 70 * f + 8]; });
+    const gn = noise(S, 6, 5, 26); T.granite = pixelTex(scene, 'granite', S, (x, y, i) => { const f = .55 + .45 * gn[i]; return [96 * f, 98 * f, 104 * f]; });
+    const mn = noise(S, 8, 4, 27); T.moss = pixelTex(scene, 'moss', S, (x, y, i) => { const f = .5 + .5 * mn[i]; return [46 * f, 70 * f, 38 * f]; });
+    const po = noise(S, 5, 4, 31); T.plaster_old = pixelTex(scene, 'plaster_old', S, (x, y, i) => mul([176, 168, 152], .78 + .22 * po[i]));
+    const sl = noise(S, 7, 4, 32); T.slate = pixelTex(scene, 'slate', S, (x, y, i) => { const g = ((x * 4) % 1 < .03 || (y * 4) % 1 < .03) ? .55 : 1; return mul([62, 62, 68], g * (.8 + .3 * sl[i])); });
+    T.ronin_floor = floorTex(scene, 'ronin_floor', '#2c2c31', '#b9a57c', 'ronin');
+    T.noren_ronin = bannerTex(scene, 'noren_ronin', '#6a1a1d', '#e3cfa4', 'logo:ronin', false, true);
+    T.banner_ronin_scroll = bannerTex(scene, 'ronin_scroll', '#6a1a1d', '#e3cfa4', 'scroll');
+    T.banner_ronin_board = bannerTex(scene, 'ronin_board', '#6a1a1d', '#e3cfa4', 'board');
+    T.noren_wokou = bannerTex(scene, 'noren_wokou', '#1c2a4c', '#d9a743', 'logo:wokou', false, true);
+    T.noren_ashigaru = bannerTex(scene, 'noren_ashigaru', '#8c1c1c', '#d8b45a', 'logo:ashigaru', false, true);
+    T.banner_ashi_scroll = bannerTex(scene, 'ashi_scroll', '#8c1c1c', '#d8b45a', 'scroll');
+    T.banner_ashi_board = bannerTex(scene, 'ashi_board', '#8c1c1c', '#d8b45a', 'board');
+    T.ashi_door = bannerTex(scene, 'ashi_door', '#141012', '#d8b45a', 'logo:ashigaru');
+    return T;
+  }
+  function bannerTex(scene, name, bg, fg, icon, sail, wide) {
+    const W = wide ? 512 : 256, H = wide ? 160 : 512, t = new BABYLON.DynamicTexture('samKit_banner_' + name, { width: W, height: H }, scene, true), c = t.getContext();
+    c.fillStyle = bg; c.fillRect(0, 0, W, H);
+    if (sail) { c.strokeStyle = 'rgba(90,60,30,.45)'; c.lineWidth = 5; for (let y = 40; y < H; y += 64) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); } }
+    else { c.strokeStyle = '#c9a452'; c.lineWidth = 6; c.strokeRect(13, 13, W - 26, H - 26); }
+    c.fillStyle = fg; c.strokeStyle = fg; c.lineCap = 'round';
+    // icons are drawn in the tall banner's frame (256 x 512, centred); a wide cloth shows them scaled into its middle
+    const k = wide ? H * .86 / 256 : 1, frame = () => c.setTransform(k, 0, 0, k, wide ? W / 2 - 128 * k : 0, wide ? H / 2 - 256 * k : 0);
+    if (wide) { frame(); } {
+    const W = 256, H = 512;
+    if (icon.startsWith('logo:')) { // the faction's emblem (white mask in assets/brand/factions), tinted; drawn once it loads
+      logoMask(icon.slice(5), img => {
+        const L = sail ? 210 : 200, o = document.createElement('canvas'); o.width = o.height = L; const oc = o.getContext('2d');
+        oc.drawImage(img, 0, 0, L, L); oc.globalCompositeOperation = 'source-in'; oc.fillStyle = fg; oc.fillRect(0, 0, L, L);
+        frame(); c.drawImage(o, (W - L) / 2, H * (sail ? .46 : .5) - L / 2); c.setTransform(1, 0, 0, 1, 0, 0); t.update();
+      });
+    } else if (icon === 'ant') {
+      const cx = W / 2, cy = H * .5, s = 200;
+      for (const [dy, rx, ry] of [[-.3, .11, .1], [0, .09, .13], [.36, .17, .24]]) { c.beginPath(); c.ellipse(cx, cy + dy * s, rx * s, ry * s, 0, 0, 7); c.fill(); }
+      c.lineWidth = 7;
+      for (const sd of [-1, 1]) {
+        for (const [y0, x1, y1, x2, y2] of [[-.05, .28, -.22, .42, -.32], [0, .32, .05, .46, .18], [.05, .28, .28, .38, .46]]) { c.beginPath(); c.moveTo(cx, cy + y0 * s); c.lineTo(cx + sd * x1 * s, cy + y1 * s); c.lineTo(cx + sd * x2 * s, cy + y2 * s); c.stroke(); }
+        c.beginPath(); c.moveTo(cx + sd * .04 * s, cy - .38 * s); c.lineTo(cx + sd * .16 * s, cy - .58 * s); c.lineTo(cx + sd * .3 * s, cy - .62 * s); c.stroke();
+      }
+    } else if (icon === 'dots') { // three circles in a triangle (tea house / inn)
+      c.lineWidth = 8; for (const [dx, dy] of [[0, -46], [-42, 28], [42, 28]]) { c.beginPath(); c.arc(W / 2 + dx, H / 2 + dy, 34, 0, 7); c.stroke(); c.beginPath(); c.arc(W / 2 + dx, H / 2 + dy, 12, 0, 7); c.fill(); }
+    } else if (icon === 'books') {
+      c.lineWidth = 6; for (const [yy, ww] of [[300, 150], [250, 170], [200, 140]]) { c.strokeRect(W / 2 - ww / 2, yy, ww, 40); c.beginPath(); c.moveTo(W / 2 - ww / 2 + 14, yy + 20); c.lineTo(W / 2 + ww / 2 - 14, yy + 20); c.stroke(); }
+    } else if (icon === 'scroll') {
+      c.lineWidth = 8; c.save(); c.translate(W / 2, H / 2); c.rotate(-.5);
+      c.strokeRect(-55, -120, 110, 240); c.beginPath(); c.arc(-55, -120, 16, 0, 7); c.arc(55, 120, 16, 0, 7); c.stroke();
+      for (let i = -80; i <= 80; i += 32) { c.beginPath(); c.moveTo(-35, i); c.lineTo(35, i); c.stroke(); }
+      c.restore();
+    } else if (icon === 'board') {
+      c.lineWidth = 6; const S0 = 150, x0 = W / 2 - S0 / 2, y0 = H / 2 - S0 / 2; c.strokeRect(x0, y0, S0, S0);
+      for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(x0 + i * S0 / 4, y0); c.lineTo(x0 + i * S0 / 4, y0 + S0); c.moveTo(x0, y0 + i * S0 / 4); c.lineTo(x0 + S0, y0 + i * S0 / 4); c.stroke(); }
+      for (const [a, b] of [[0, 0], [2, 1], [1, 3], [3, 2]]) c.fillRect(x0 + a * S0 / 4 + 8, y0 + b * S0 / 4 + 8, S0 / 4 - 16, S0 / 4 - 16);
+    } else { c.fillRect(W / 2 - 12, 170, 24, 210); c.fillRect(W / 2 - 70, 150, 140, 55); }
+    }
+    c.setTransform(1, 0, 0, 1, 0, 0); t.update(); t.hasAlpha = false; return t;
+  }
+
+  // a square dark slate floor with the faction emblem inlaid in a ring (Ronin dojo)
+  function floorTex(scene, name, bg, fg, faction) {
+    const W = 512, t = new BABYLON.DynamicTexture('samKit_' + name, { width: W, height: W }, scene, true), c = t.getContext();
+    c.fillStyle = bg; c.fillRect(0, 0, W, W); c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = 3;
+    for (let i = 1; i < 8; i++) { c.beginPath(); c.moveTo(i * W / 8, 0); c.lineTo(i * W / 8, W); c.moveTo(0, i * W / 8); c.lineTo(W, i * W / 8); c.stroke(); }
+    c.strokeStyle = fg; c.lineWidth = 14; c.beginPath(); c.arc(W / 2, W / 2, W * .36, 0, 7); c.stroke();
+    t.update();
+    logoMask(faction, img => { const L = W * .5, o = document.createElement('canvas'); o.width = o.height = L; const oc = o.getContext('2d'); oc.drawImage(img, 0, 0, L, L); oc.globalCompositeOperation = 'source-in'; oc.fillStyle = fg; oc.fillRect(0, 0, L, L); c.drawImage(o, (W - L) / 2, (W - L) / 2); t.update(); });
+    return t;
+  }
+  // Faction emblems on banners: cloth and emblem colours per faction (banner_<faction> materials)
+  const FACTION_BANNERS = {
+    samurai: ['#961816', '#ecd6aa'], wokou: ['#1c2a4c', '#d9a743'], yamabushi: ['#25402d', '#d6a640'], ronin: ['#6a1a1d', '#e3cfa4'],
+    shogun: ['#2e2147', '#d8b04a'], bushi: ['#1b2a48', '#cfae5c'], buke: ['#5e1a20', '#d8b35c'], ashigaru: ['#8c1c1c', '#d8b45a'],
+    kenshi: ['#1f5753', '#d8b450'], sohei: ['#c38d2a', '#f8edd2'], warrior: ['#6b2a1a', '#e2c08a']
+  };
+  const logoImgs = {};
+  function logoMask(id, cb) {
+    let L = logoImgs[id];
+    if (!L) { L = logoImgs[id] = { img: new Image(), ready: false, waiting: [] }; L.img.onload = () => { L.ready = true; L.waiting.splice(0).forEach(f => f(L.img)); }; L.img.src = 'assets/brand/factions/' + id + '.png'; }
+    if (L.ready) cb(L.img); else L.waiting.push(cb);
+  }
+
+  // ── materials ───────────────────────────────────────────────────────────
+  const MAT = {
+    roof: { tex: 'roof' }, wood: { tex: 'wood' }, darkwood: { tex: 'darkwood' }, plaster: { tex: 'plaster' }, stone: { tex: 'stone' },
+    thatch: { tex: 'thatch' }, bark: { tex: 'bark' }, earth: { tex: 'earth' }, shoji: { tex: 'shoji', em: [.5, .38, .2] },
+    red: { col: [.55, .06, .05] }, gold: { col: [.85, .62, .22], spec: [.9, .75, .4], power: 40 }, dark: { col: [.03, .02, .015] },
+    interior: { col: [.1, .06, .03], em: [.45, .25, .1] }, lantern: { col: [.9, .25, .08], em: [.95, .3, .1] }, fire: { col: [1, .5, .1], em: [1, .45, .08] },
+    cloth: { col: [.6, .09, .07] }, rope: { col: [.62, .5, .32] }, iron: { col: [.12, .12, .13], spec: [.5, .5, .55], power: 48 }, water: { col: [.05, .12, .14], spec: [.8, .8, .8], power: 90 },
+    banner_red: { tex: 'banner_red' }, banner_navy: { tex: 'banner_navy' }, banner_gold: { tex: 'banner_gold' },
+    banner_wokou: { tex: 'banner_wokou' }, banner_scroll: { tex: 'banner_scroll' }, banner_board: { tex: 'banner_board' }, sail: { tex: 'sail' },
+    banner_yam_books: { tex: 'banner_yam_books' }, banner_yam_dots: { tex: 'banner_yam_dots' },
+    noren_yamabushi: { tex: 'noren_yamabushi' }, noren_yam_books: { tex: 'noren_yam_books' }, noren_yam_dots: { tex: 'noren_yam_dots' },
+    noren_buke: { tex: 'noren_buke' }, banner_buke_scroll: { tex: 'banner_buke_scroll' }, noren_buke_map: { tex: 'noren_buke_map' },
+    noren_kenshi: { tex: 'noren_kenshi' }, noren_kenshi_scroll: { tex: 'noren_kenshi_scroll' }, noren_kenshi_map: { tex: 'noren_kenshi_map' },
+    noren_sohei: { tex: 'noren_sohei' }, noren_sohei_books: { tex: 'noren_sohei_books' }, noren_sohei_dots: { tex: 'noren_sohei_dots' },
+    bronze: { col: [.3, .36, .27], spec: [.6, .55, .4], power: 40 },
+    roof_brown: { tex: 'roof_brown' }, straw: { col: [.78, .64, .36] },
+    plaster_old: { tex: 'plaster_old' }, slate: { tex: 'slate' }, ronin_floor: { tex: 'ronin_floor' }, noren_ronin: { tex: 'noren_ronin' },
+    banner_ronin_scroll: { tex: 'banner_ronin_scroll' }, banner_ronin_board: { tex: 'banner_ronin_board' },
+    needles: { tex: 'needles' }, needles_dark: { tex: 'needles_dark' }, bark_old: { tex: 'bark_old' }, granite: { tex: 'granite' }, moss: { tex: 'moss' },
+    noren_ashigaru: { tex: 'noren_ashigaru' }, noren_wokou: { tex: 'noren_wokou' }, banner_ashi_scroll: { tex: 'banner_ashi_scroll' }, banner_ashi_board: { tex: 'banner_ashi_board' }, ashi_door: { tex: 'ashi_door' },
+    spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
+    ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
+    glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
+  };
+  let TEX = null; const MATS = {};
+  function glowTex(scene) {
+    const S = 128, t = new BABYLON.DynamicTexture('samKit_glowTex', { width: S, height: S }, scene, true), c = t.getContext();
+    const g = c.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.35, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g; c.fillRect(0, 0, S, S); t.hasAlpha = true; t.update(); return t;
+  }
+  function material(scene, name) {
+    if (MATS[name] && !MATS[name].isDisposed?.()) return MATS[name];
+    TEX = TEX || makeTextures(scene);
+    const d = MAT[name];
+    if (d.faction && !TEX[d.tex]) TEX[d.tex] = bannerTex(scene, d.faction, ...FACTION_BANNERS[d.faction], 'logo:' + d.faction); // made on first use
+    if (d.glow) {
+      const m = new BABYLON.StandardMaterial('samKit_' + name, scene), tx = glowTex(scene);
+      m.diffuseColor = BABYLON.Color3.Black(); m.specularColor = BABYLON.Color3.Black(); m.disableLighting = true;
+      m.emissiveColor = new BABYLON.Color3(...d.glow); m.emissiveTexture = tx; m.opacityTexture = tx;
+      m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.alpha = 0; m.backFaceCulling = false; m.zOffset = -2; m.disableDepthWrite = true;
+      m.metadata = { kitGlow: true };
+      MATS[name] = m; setLightFactor(); return m;
+    }
+    const m = new BABYLON.StandardMaterial('samKit_' + name, scene);
+    if (d.tex) m.diffuseTexture = TEX[d.tex]; else m.diffuseColor = new BABYLON.Color3(...d.col);
+    m.specularColor = new BABYLON.Color3(...(d.spec || [.04, .04, .04])); m.specularPower = d.power || 16;
+    if (d.em) m.emissiveColor = new BABYLON.Color3(...d.em);
+    m.backFaceCulling = false; m.twoSidedLighting = true; m.maxSimultaneousLights = 4;
+    if (d.em) m.metadata = { kitBaseEmissive: m.emissiveColor.clone() }; // brightened at night: left unfrozen
+    else m.freeze();
+    MATS[name] = m; if (d.em) setLightFactor(); return m;
+  }
+  // Time of day + weather light factor from the village (.04 bright day ... 1 night, up to 1.25 in storms):
+  // lit windows, doorways and lanterns glow softly by day and fully at night; lantern ground pools only show at night.
+  let lightFactor = .04;
+  function setLightFactor(f) {
+    lightFactor = Number.isFinite(f) ? f : lightFactor;
+    const k = Math.min(1, Math.max(0, lightFactor)), em = .6 + .7 * k, pool = Math.min(1, Math.max(0, (lightFactor - .15) / .6));
+    for (const m of Object.values(MATS)) {
+      if (!m || m.isDisposed?.()) continue;
+      if (m.metadata?.kitBaseEmissive) m.emissiveColor = m.metadata.kitBaseEmissive.scale(em);
+      if (m.metadata?.kitGlow) m.alpha = .7 * pool;
+    }
+  }
+
+  // ── geometry builder (Blender coordinates: z up, fronts face -y) ────────
+  // Converted to Babylon on output: (x, y, z) -> (x, z, y).
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const norm = a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+  function rotZYX(rz, ry, rx) {
+    const cz = Math.cos(rz), sz = Math.sin(rz), cy = Math.cos(ry), sy = Math.sin(ry), cx = Math.cos(rx), sx = Math.sin(rx);
+    const Rz = [[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]], Ry = [[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]], Rx = [[1, 0, 0], [0, cx, -sx], [0, sx, cx]];
+    const m = (A, B) => A.map((r, i) => [0, 1, 2].map(j => r[0] * B[0][j] + r[1] * B[1][j] + r[2] * B[2][j]));
+    return m(m(Rz, Ry), Rx);
+  }
+  const app = (R, v) => [R[0][0] * v[0] + R[0][1] * v[1] + R[0][2] * v[2], R[1][0] * v[0] + R[1][1] * v[1] + R[1][2] * v[2], R[2][0] * v[0] + R[2][1] * v[1] + R[2][2] * v[2]];
+
+  class Kit {
+    constructor() { this.parts = {}; }
+    part(m) { m = (this.remap && this.remap[m]) || m; return this.parts[m] || (this.parts[m] = { p: [], n: [], uv: [], i: [] }); }
+    poly(m, pts, uvs, nrm) {
+      const P = this.part(m), base = P.p.length / 3;
+      let nn = nrm;
+      if (!nrm) { // Newell normal (robust for any planar polygon)
+        let a = [0, 0, 0]; for (let k = 0; k < pts.length; k++) { const c = pts[k], d = pts[(k + 1) % pts.length]; a[0] += (c[1] - d[1]) * (c[2] + d[2]); a[1] += (c[2] - d[2]) * (c[0] + d[0]); a[2] += (c[0] - d[0]) * (c[1] + d[1]); }
+        nn = norm(a);
+      }
+      const [tu, tv] = tileOf(m), ax = Math.abs(nn[0]) > Math.abs(nn[1]) ? (Math.abs(nn[0]) > Math.abs(nn[2]) ? 0 : 2) : (Math.abs(nn[1]) > Math.abs(nn[2]) ? 1 : 2);
+      pts.forEach((q, k) => {
+        P.p.push(q[0], q[2], q[1]); P.n.push(nn[0], nn[2], nn[1]);
+        if (uvs) P.uv.push(uvs[k][0], uvs[k][1]);
+        else if (ax === 2) P.uv.push(q[0] / tu, q[1] / tv); else if (ax === 0) P.uv.push(q[1] / tu, q[2] / tv); else P.uv.push(q[0] / tu, q[2] / tv);
+      });
+      for (let k = 1; k < pts.length - 1; k++) P.i.push(base, base + k, base + k + 1);
+    }
+    box(m, c, s, rz = 0, rx = 0, ry = 0) {
+      const R = rotZYX(rz, ry, rx), V = (x, y, z) => { const v = app(R, [x * s[0], y * s[1], z * s[2]]); return [v[0] + c[0], v[1] + c[1], v[2] + c[2]]; };
+      const F = [[[1, 0, 0], [[.5, -.5, -.5], [.5, .5, -.5], [.5, .5, .5], [.5, -.5, .5]]], [[-1, 0, 0], [[-.5, .5, -.5], [-.5, -.5, -.5], [-.5, -.5, .5], [-.5, .5, .5]]],
+        [[0, 1, 0], [[.5, .5, -.5], [-.5, .5, -.5], [-.5, .5, .5], [.5, .5, .5]]], [[0, -1, 0], [[-.5, -.5, -.5], [.5, -.5, -.5], [.5, -.5, .5], [-.5, -.5, .5]]],
+        [[0, 0, 1], [[-.5, -.5, .5], [.5, -.5, .5], [.5, .5, .5], [-.5, .5, .5]]], [[0, 0, -1], [[-.5, .5, -.5], [.5, .5, -.5], [.5, -.5, -.5], [-.5, -.5, -.5]]]];
+      for (const [n, q] of F) this.poly(m, q.map(p => V(...p)), null, norm(app(R, n)));
+    }
+    block(m, x, y, z0, sx, sy, sz, rz = 0) { this.box(m, [x, y, z0 + sz / 2], [sx, sy, sz], rz); }
+    ring(c, ax, r, segs) { // points of a circle around axis ax (unit) at centre c
+      const t = Math.abs(ax[2]) < .9 ? [0, 0, 1] : [1, 0, 0], u = norm(cross(ax, t)), v = cross(ax, u), out = [];
+      for (let k = 0; k < segs; k++) { const a = k / segs * Math.PI * 2; out.push([c[0] + r * (Math.cos(a) * u[0] + Math.sin(a) * v[0]), c[1] + r * (Math.cos(a) * u[1] + Math.sin(a) * v[1]), c[2] + r * (Math.cos(a) * u[2] + Math.sin(a) * v[2])]); }
+      return out;
+    }
+    tube(m, a, b, r1, r2, segs, cap = true) {
+      const ax = norm(sub(b, a)), A = this.ring(a, ax, r1, segs), B = this.ring(b, ax, r2, segs);
+      for (let k = 0; k < segs; k++) { const k2 = (k + 1) % segs; this.poly(m, [A[k], A[k2], B[k2], B[k]]); }
+      if (cap) { this.poly(m, A.slice().reverse()); if (r2 > .001) this.poly(m, B); }
+    }
+    cyl(m, p, r, h, segs = 8, r2 = null) { this.tube(m, [p[0], p[1], p[2]], [p[0], p[1], p[2] + h], r, r2 == null ? r : r2, segs); }
+    rod(m, a, b, r, segs = 6) { this.tube(m, a, b, r, r, segs); }
+    sphere(m, c, r, sz = 1, segs = 10, rings = 6) {
+      const P = (i, j) => { const th = Math.PI * i / rings, ph = 2 * Math.PI * j / segs; return [c[0] + r * Math.sin(th) * Math.cos(ph), c[1] + r * Math.sin(th) * Math.sin(ph), c[2] + r * sz * Math.cos(th)]; };
+      for (let i = 0; i < rings; i++) for (let j = 0; j < segs; j++) this.poly(m, [P(i, j), P(i + 1, j), P(i + 1, j + 1), P(i, j + 1)].filter((q, k, arr) => k === 0 || Math.hypot(...sub(q, arr[k - 1])) > 1e-6));
+    }
+    quad(m, pts, uvs = [[0, 0], [1, 0], [1, 1], [0, 1]]) { this.poly(m, pts, uvs); }
+    grid(m, P, U) { for (let i = 0; i < P.length - 1; i++) for (let j = 0; j < P[0].length - 1; j++) this.poly(m, [P[i][j], P[i][j + 1], P[i + 1][j + 1], P[i + 1][j]], [U[i][j], U[i][j + 1], U[i + 1][j + 1], U[i + 1][j]]); }
+    // Japanese hip roof: sagging slopes, upturned corners, ridge beam, small gables, gold end ornaments
+    roof(cx, cy, z, w, d, h, o = {}) {
+      const lift = o.lift ?? .6, mat = o.mat || 'roof', fascia = o.fascia || 'wood', n = 10, m = 5;
+      const hw0 = w / 2, hd0 = d / 2, L = Math.max(.2, (w - d) / 2 + d * .12), [tu, tv] = tileOf(mat), sl = Math.hypot(hd0, h);
+      const ring = t => [hw0 * (1 - t) + L * t, hd0 * (1 - t) + d * .02 * t, z + h * t ** 1.35];
+      for (const [[ax, ay], [ox, oy]] of [[[1, 0], [0, -1]], [[0, 1], [1, 0]], [[-1, 0], [0, 1]], [[0, -1], [-1, 0]]]) {
+        const P = [], U = [];
+        for (let i = 0; i <= m; i++) {
+          const t = i / m, [hw, hd, zz] = ring(t), span = ax ? hw : hd, depth = ax ? hd : hw, row = [], urow = [];
+          for (let j = 0; j <= n; j++) { const u = -1 + 2 * j / n; row.push([cx + ax * u * span + ox * depth, cy + ay * u * span + oy * depth, zz + lift * Math.abs(u) ** 3 * (1 - t) ** 1.5]); urow.push([u * span / tu, t * sl / tv]); }
+          P.push(row); U.push(urow);
+        }
+        this.grid(mat, P, U);
+        const [hw, hd, zz] = ring(0), span = ax ? hw : hd, depth = ax ? hd : hw;
+        for (let j = 0; j < n; j++) {
+          const u0 = -1 + 2 * j / n, u1 = -1 + 2 * (j + 1) / n;
+          const p0 = [cx + ax * u0 * span + ox * depth, cy + ay * u0 * span + oy * depth, zz + lift * Math.abs(u0) ** 3], p1 = [cx + ax * u1 * span + ox * depth, cy + ay * u1 * span + oy * depth, zz + lift * Math.abs(u1) ** 3];
+          this.quad(fascia, [[p0[0], p0[1], p0[2] - .35], [p1[0], p1[1], p1[2] - .35], p1, p0]);
+        }
+      }
+      const [hwT, hdT, zT] = ring(1);
+      this.box(o.ridge || 'darkwood', [cx, cy, zT + .25], [2 * hwT + .6, Math.max(.5, 2 * hdT + .4), .5]);
+      if (o.gable !== false) for (const s of [-1, 1]) { const gx = cx + s * (hwT + .05); this.poly('darkwood', [[gx, cy - d * .18, zT - h * .22], [gx, cy + d * .18, zT - h * .22], [gx, cy, zT + .45]]); }
+      if (o.ornaments !== false) for (const s of [-1, 1]) this.cyl('gold', [cx + s * (hwT + .2), cy, zT + .45], .22, .9, 6, .05);
+    }
+  }
+
+  // ── shared pieces ───────────────────────────────────────────────────────
+  function lantern(M, x, y, z, r = .3) {
+    M.cyl('lantern', [x, y, z - .6], r, .6, 8); M.cyl('darkwood', [x, y, z - .05], r * .75, .08, 8); M.cyl('darkwood', [x, y, z - .68], r * .75, .08, 8);
+    M.rod('rope', [x, y, z], [x, y, z + .6], .02, 4);
+  }
+  function banner(M, x, y, ztop, w, h, mat, face = -1) {
+    const yy = y + face * .02;
+    let pts = [[x - w / 2, yy, ztop - h], [x + w / 2, yy, ztop - h], [x + w / 2, yy, ztop], [x - w / 2, yy, ztop]];
+    M.quad(mat, pts);
+    M.rod('darkwood', [x - w / 2 - .15, yy + face * .05, ztop + .05], [x + w / 2 + .15, yy + face * .05, ztop + .05], .05, 6);
+  }
+  // noren: a short split curtain across the top of a doorway (the house's sign); front faces -y
+  function noren(M, x, y, ztop, w, h, mat) {
+    const n = 4, gap = .05, pw = (w - gap * (n - 1)) / n;
+    for (let i = 0; i < n; i++) { const x0 = x - w / 2 + i * (pw + gap); M.quad(mat, [[x0, y, ztop - h], [x0 + pw, y, ztop - h], [x0 + pw, y, ztop], [x0, y, ztop]], [[i / n, 0], [(i + 1) / n, 0], [(i + 1) / n, 1], [i / n, 1]]); }
+    M.rod('darkwood', [x - w / 2 - .1, y - .03, ztop + .03], [x + w / 2 + .1, y - .03, ztop + .03], .045, 6);
+  }
+  function recess(M, x, y, z0, w, h, depth, face = -1) {
+    const yb = y - face * depth;
+    M.quad('interior', [[x - w / 2, yb, z0], [x + w / 2, yb, z0], [x + w / 2, yb, z0 + h], [x - w / 2, yb, z0 + h]]);
+    M.quad('interior', [[x - w / 2, y, z0], [x - w / 2, yb, z0], [x - w / 2, yb, z0 + h], [x - w / 2, y, z0 + h]]);
+    M.quad('interior', [[x + w / 2, yb, z0], [x + w / 2, y, z0], [x + w / 2, y, z0 + h], [x + w / 2, yb, z0 + h]]);
+    M.quad('interior', [[x - w / 2, y, z0 + h], [x + w / 2, y, z0 + h], [x + w / 2, yb, z0 + h], [x - w / 2, yb, z0 + h]]);
+    M.quad('darkwood', [[x - w / 2, y, z0 + .01], [x + w / 2, y, z0 + .01], [x + w / 2, yb, z0 + .01], [x - w / 2, yb, z0 + .01]]);
+  }
+  function walls(M, cx, cy, z0, w, d, h, o = {}) {
+    const door = o.door, doorSide = o.doorSide || 'front', windows = o.windows || [], step = o.postStep || 3.2, wall = 'plaster', t = .3;
+    const sides = { front: [cy - d / 2, 'x'], back: [cy + d / 2, 'x'], left: [cx - w / 2, 'y'], right: [cx + w / 2, 'y'] };
+    for (const [name, [c, ax]] of Object.entries(sides)) {
+      const L = ax === 'x' ? w : d;
+      if (door && name === doorSide) {
+        const [dw, dh] = door, seg = (L - dw) / 2;
+        for (const s of [-1, 1]) { const off = s * (dw / 2 + seg / 2); if (ax === 'x') M.block(wall, cx + off, c, z0, seg, t, h); else M.block(wall, c, cy + off, z0, t, seg, h); }
+        if (ax === 'x') M.block(wall, cx, c, z0 + dh, dw, t, h - dh); else M.block(wall, c, cy, z0 + dh, t, dw, h - dh);
+        const fx = name === 'front' || name === 'left' ? -1 : 1;
+        if (ax === 'x') { recess(M, cx, c, z0, dw, dh, 1.6, fx); for (const s of [-1, 1]) M.block('darkwood', cx + s * (dw / 2 + .12), c + fx * .2, z0, .24, .2, dh + .2); M.block('darkwood', cx, c + fx * .2, z0 + dh, dw + .5, .2, .25); }
+      } else if (ax === 'x') M.block(wall, cx, c, z0, L, t, h); else M.block(wall, c, cy, z0, t, L, h);
+      const n = Math.max(1, Math.round(L / step));
+      for (let i = 0; i <= n; i++) {
+        const u = -L / 2 + L * i / n;
+        if (door && name === doorSide && Math.abs(u) < door[0] / 2 + .4) continue;
+        if (ax === 'x') M.block('wood', cx + u, c, z0, .38, t + .14, h); else M.block('wood', c, cy + u, z0, t + .14, .38, h);
+      }
+      for (const zz of [z0, z0 + h * .62, z0 + h - .25]) { if (ax === 'x') M.block('wood', cx, c, zz, L + .2, t + .1, .25); else M.block('wood', c, cy, zz, t + .1, L + .2, .25); }
+    }
+    for (const [side, off, zw, ww, wh] of windows) {
+      const [c, ax] = sides[side], fx = side === 'front' || side === 'left' ? -1 : 1, p = c + fx * (t / 2 + .03), uv = [[0, 0], [ww / 1.2, 0], [ww / 1.2, wh / 1.5], [0, wh / 1.5]];
+      if (ax === 'x') { M.quad('shoji', [[cx + off - ww / 2, p, zw], [cx + off + ww / 2, p, zw], [cx + off + ww / 2, p, zw + wh], [cx + off - ww / 2, p, zw + wh]], uv); M.box('darkwood', [cx + off, p, zw - .05], [ww + .2, .12, .12]); M.box('darkwood', [cx + off, p, zw + wh + .05], [ww + .2, .12, .12]); }
+      else { M.quad('shoji', [[p, cy + off + ww / 2, zw], [p, cy + off - ww / 2, zw], [p, cy + off - ww / 2, zw + wh], [p, cy + off + ww / 2, zw + wh]], uv); M.box('darkwood', [p, cy + off, zw - .05], [.12, ww + .2, .12]); M.box('darkwood', [p, cy + off, zw + wh + .05], [.12, ww + .2, .12]); }
+    }
+  }
+  // ── organic shapes (smooth shaded): value noise, a grid of shared vertices, curved tubes and lumpy blobs ──
+  function hash3(x, y, z) { let h = (x * 374761393 + y * 668265263 + z * 1274126177) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
+  function vnoise(x, y, z) {
+    const X = Math.floor(x), Y = Math.floor(y), Z = Math.floor(z), u = x - X, v = y - Y, w = z - Z, f = t => t * t * (3 - 2 * t), a = f(u), b = f(v), c = f(w);
+    const L = (i, j, k) => hash3(X + i, Y + j, Z + k), mix = (p, q, t) => p + (q - p) * t;
+    return mix(mix(mix(L(0, 0, 0), L(1, 0, 0), a), mix(L(0, 1, 0), L(1, 1, 0), a), b), mix(mix(L(0, 0, 1), L(1, 0, 1), a), mix(L(0, 1, 1), L(1, 1, 1), a), b), c) * 2 - 1;
+  }
+  // G[i][j] points (Blender coords), U[i][j] uvs; normals averaged over the grid (wrapJ: the last column repeats the first)
+  function smoothGrid(M, m, G, U, wrapJ, NG) {
+    const P = M.part(m), base = P.p.length / 3, R = G.length, C = G[0].length;
+    for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) {
+      const jm = wrapJ ? (j === 0 ? C - 2 : j - 1) : Math.max(0, j - 1), jp = wrapJ ? (j === C - 1 ? 1 : j + 1) : Math.min(C - 1, j + 1);
+      const im = Math.max(0, i - 1), ip = Math.min(R - 1, i + 1);
+      let n = cross(sub(G[i][jp], G[i][jm]), sub(G[ip][j], G[im][j]));
+      if (Math.hypot(...n) < 1e-9) { const k = i === 0 ? 1 : R - 2; n = cross(sub(G[k][jp], G[k][jm]), sub(G[i === 0 ? k + 1 : k - 1][j], G[k][j])); if (i === 0) n = n.map(v => -v); }
+      n = NG ? NG[i][j] : norm(n); const q = G[i][j];
+      P.p.push(q[0], q[2], q[1]); P.n.push(n[0], n[2], n[1]); P.uv.push(U[i][j][0], U[i][j][1]);
+    }
+    for (let i = 0; i < R - 1; i++) for (let j = 0; j < C - 1; j++) { const a = base + i * C + j, b = a + 1, c = a + C, d = c + 1; P.i.push(a, b, d, a, d, c); }
+  }
+  // Catmull-Rom through pts, n samples per span
+  function spline(pts, n) {
+    const out = [];
+    for (let k = 0; k < pts.length - 1; k++) {
+      const p0 = pts[Math.max(0, k - 1)], p1 = pts[k], p2 = pts[k + 1], p3 = pts[Math.min(pts.length - 1, k + 2)];
+      for (let s = 0; s < n; s++) { const t = s / n, t2 = t * t, t3 = t2 * t; out.push([0, 1, 2].map(a => .5 * (2 * p1[a] + (-p0[a] + p2[a]) * t + (2 * p0[a] - 5 * p1[a] + 4 * p2[a] - p3[a]) * t2 + (-p0[a] + 3 * p1[a] - 3 * p2[a] + p3[a]) * t3))); }
+    }
+    out.push(pts[pts.length - 1].slice()); return out;
+  }
+  const lerpArr = (A, t) => { const f = t * (A.length - 1), i = Math.min(A.length - 2, Math.floor(f)), u = f - i; return A[i] + (A[i + 1] - A[i]) * u; };
+  // a gnarled tube along a curve: radius profile R (sampled along), twisting ridges, noise; o.seed, o.ridge, o.k, o.twist
+  function curveTube(M, m, pts, R, o = {}) {
+    const C = o.segs || 16, path = spline(pts, o.n || 5), Np = path.length, G = [], U = [];
+    let N = null, len = 0;
+    for (let i = 0; i < Np; i++) {
+      const T = norm(sub(path[Math.min(Np - 1, i + 1)], path[Math.max(0, i - 1)]));
+      if (!N) { const a = Math.abs(T[2]) < .9 ? [0, 0, 1] : [1, 0, 0]; N = norm(cross(cross(T, a), T)); }
+      else { const d = N[0] * T[0] + N[1] * T[1] + N[2] * T[2]; N = norm([N[0] - T[0] * d, N[1] - T[1] * d, N[2] - T[2] * d]); }
+      const Bv = cross(T, N), t = i / (Np - 1), r = lerpArr(R, t);
+      if (i) len += Math.hypot(...sub(path[i], path[i - 1]));
+      const row = [], urow = [];
+      for (let j = 0; j <= C; j++) {
+        const th = (j % C) / C * Math.PI * 2, rid = (o.ridge ?? .12) * Math.sin((o.k ?? 6) * th + (o.twist ?? .3) * len) + (o.bump ?? .1) * vnoise(Math.cos(th) * 1.3 + (o.seed || 0), Math.sin(th) * 1.3, len * .6);
+        const rr = r * (1 + rid), c = path[i];
+        row.push([c[0] + rr * (Math.cos(th) * N[0] + Math.sin(th) * Bv[0]), c[1] + rr * (Math.cos(th) * N[1] + Math.sin(th) * Bv[1]), c[2] + rr * (Math.cos(th) * N[2] + Math.sin(th) * Bv[2])]);
+        urow.push([j / C * Math.max(1, Math.round(r * 3)), len / 1.6]);
+      }
+      G.push(row); U.push(urow);
+    }
+    smoothGrid(M, m, G, U, true);
+    if (o.cap !== false) { const c = path[Np - 1]; M.poly(m, G[Np - 1].slice(0, C).map(q => q).reverse().map(q => [q[0] * .3 + c[0] * .7, q[1] * .3 + c[1] * .7, q[2] * .3 + c[2] * .7])); }
+    return path;
+  }
+  // lumpy ellipsoid (rocks, foliage clumps, moss): radii rx, ry, rz; amp/freq of the lumps; flat: squash the underside
+  function blob(M, m, c, rx, ry, rz, o = {}) {
+    const S = o.segs || 14, Rn = o.rings || 8, G = [], U = [], NG = [], amp = o.amp ?? .18, fq = o.freq ?? 1.6, sd = o.seed || 0;
+    for (let i = 0; i <= Rn; i++) {
+      const th = Math.PI * i / Rn, row = [], urow = [], nrow = [];
+      for (let j = 0; j <= S; j++) {
+        const ph = 2 * Math.PI * (j % S) / S, d = [Math.sin(th) * Math.cos(ph), Math.sin(th) * Math.sin(ph), Math.cos(th)];
+        // lumps ease toward the pole's own value near the poles (else the first ring folds over the pole or rings it
+        // with a crater: dark spots on top)
+        const lump = q => 1 + amp * vnoise(q[0] * fq + sd, q[1] * fq + sd * .7, q[2] * fq - sd * 1.3) + amp * .5 * vnoise(q[0] * fq * 2.7 + sd, q[1] * fq * 2.7, q[2] * fq * 2.7 + 5);
+        const kp = lump([0, 0, d[2] >= 0 ? 1 : -1]), ea = Math.sin(th) ** 1.5;
+        let k = kp + (lump(d) - kp) * ea;
+        let z = d[2] * rz * k; if (o.flat && z < 0) z *= o.flat;
+        row.push([c[0] + d[0] * rx * k, c[1] + d[1] * ry * k, c[2] + z]); urow.push([j / S * (o.uvs || 3), i / Rn * (o.uvs || 3) * .6]);
+        nrow.push(norm([-d[0] / rx, -d[1] / ry, -d[2] / rz])); // the ellipsoid's own normal (also at the poles), in smoothGrid's sense
+      }
+      G.push(row); U.push(urow); NG.push(nrow);
+    }
+    // lumps tilt the normals: blend the grid normals in, except at the poles
+    const P0 = M.part(m).p.length; smoothGrid(M, m, G, U, true);
+    const Pn = M.part(m).n;
+    for (let i = 0, v = P0; i <= Rn; i++) for (let j = 0; j <= S; j++, v += 3) {
+      const g = [Pn[v], Pn[v + 2], Pn[v + 1]], e = NG[i][j], w = (i === 0 || i === Rn || !Number.isFinite(g[0]) || Math.hypot(...g) < .5) ? 0 : .6;
+      const nb = norm([e[0] * (1 - w) + g[0] * w, e[1] * (1 - w) + g[1] * w, e[2] * (1 - w) + g[2] * w]); Pn[v] = nb[0]; Pn[v + 1] = nb[2]; Pn[v + 2] = nb[1];
+    }
+  }
+  // Ashigaru long hall: banner on the front wall to one side of the door (side -1 left, 1 right)
+  function ashiHall(M, mat, side) {
+    const W = 15, D = 9, Z = .8;
+    M.block('stone', 0, 0, 0, W + 1.2, D + 1.2, Z); steps(M, 0, -(D + 1.2) / 2, Z, 4, 2);
+    walls(M, 0, 0, Z, W, D, 4.2, { door: [3.2, 3.1], windows: [['front', -side * 4.8, Z + 1.3, 2.4, 1.5], ['left', -1.5, Z + 1.3, 2.6, 1.5], ['right', 1.5, Z + 1.3, 2.6, 1.5], ['back', 0, Z + 1.3, 3, 1.5]] });
+    banner(M, side * 4.6, -D / 2 - .18, Z + 4, 3.2, 3.6, mat);
+    noren(M, 0, -D / 2 - .2, Z + 3.05, 3.4, .9, 'noren_ashigaru');
+    M.roof(0, 0, Z + 4.6, W + 3, D + 3, 3.2, { lift: .7 });
+    for (const sd of [-1, 1]) lantern(M, sd * 2.2, -D / 2 - .6, Z + 3.3, .22);
+    for (const [x, y] of [[-side * 6.6, -D / 2 - 1.3], [-side * 5.6, -D / 2 - 1.4]]) M.block('wood', x, y, 0, .9, .8, .8);
+    M.cyl('wood', [-side * 7.4, -D / 2 - .9, 0], .35, .85, 10);
+  }
+  function ashiPalisade(M, withBanner) {
+    const L = 8, n = 15;
+    for (let i = 0; i < n; i++) { const x = -L / 2 + .27 + i * (L - .54) / (n - 1), h = 4.3 + .4 * Math.sin(i * 2.7) + .2 * Math.cos(i * 1.3); M.cyl('bark', [x, 0, -.4], .27, h + .4, 7); M.cyl('bark', [x, 0, h], .27, .8, 7, .02); }
+    for (const z of [1.4, 3.3]) M.box('darkwood', [0, .32, z], [L, .14, .24]);
+    for (const x of [-2.6, 2.6]) M.rod('wood', [x, .35, 3.1], [x, 2.6, -.2], .12, 6);
+    if (withBanner) banner(M, 0, -.3, 4, 1.6, 2.8, 'banner_ashigaru');
+  }
+  // a pile of logs along x (length L, n layers)
+  function ashiLogs(M, cx, cy, z0, L, n) {
+    for (let k = 0; k < n; k++) { const m = n - k + 1; for (let i = 0; i < m; i++) { const y = cy + (i - (m - 1) / 2) * .5; M.rod('bark', [cx - L / 2, y, z0 + .25 + k * .43], [cx + L / 2, y, z0 + .25 + k * .43], .24, 8); } }
+    for (const sd of [-1, 1]) for (const sy of [-1, 1]) M.block('darkwood', cx + sd * (L / 2 - .4), cy + sy * ((n + 1) * .25 + .1), z0, .14, .14, n * .45 + .2);
+  }
+  function steps(M, cx, yEdge, zTop, width, n, tread = .45) { for (let i = 0; i < n; i++) M.block('stone', cx, yEdge - (i + .5) * tread, 0, width, tread, zTop - i * zTop / n); }
+
+  // ── buildings ───────────────────────────────────────────────────────────
+  const B = {
+    sam_great_dojo(M) {
+      const W = 22, D = 15;
+      M.block('stone', 0, 0, 0, W + 2, D + 2, 1.2); steps(M, 0, -(D + 2) / 2, 1.2, 8, 4); M.block('wood', 0, 0, 1.2, W + 1, D + 1, .15);
+      walls(M, 0, .6, 1.35, W - 4, D - 4, 5.6, { door: [6, 4.2], windows: [['left', -2, 3, 3.5, 2], ['left', 2.5, 3, 3.5, 2], ['right', -2, 3, 3.5, 2], ['right', 2.5, 3, 3.5, 2], ['back', -5, 3, 3.5, 2], ['back', 5, 3, 3.5, 2]] });
+      for (let i = 0; i < 6; i++) { const x = -W / 2 + .6 + i * (W - 1.2) / 5; M.cyl('red', [x, -D / 2 + .2, 1.35], .3, 5.7, 10); M.cyl('stone', [x, -D / 2 + .2, 1.35], .42, .3, 8); }
+      for (const s of [-1, 1]) M.cyl('red', [s * (W / 2 - .6), D / 2 - .2, 1.35], .3, 5.7, 10);
+      M.box('red', [0, -D / 2 + .2, 6.55], [W, .4, .4]);
+      M.roof(0, .3, 6.95, W + 4, D + 4, 2.4, { lift: .9, gable: false, ornaments: false });
+      walls(M, 0, .6, 8.3, 14, 7, 2.6, { windows: [['front', -4, 8.9, 3, 1.4], ['front', 0, 8.9, 3, 1.4], ['front', 4, 8.9, 3, 1.4]], postStep: 3.5 });
+      M.roof(0, .6, 10.85, 19, 12, 4.4, { lift: 1.3 });
+      for (const s of [-1, 1]) banner(M, s * 6.2, -D / 2 + 1.75, 6.6, 2.8, 4.9, 'banner_red');
+      for (const x of [-9, -4.5, 4.5, 9]) lantern(M, x, -D / 2 - .4, 6.75);
+      M.block('gold', 0, .6 - 3.5 - .2, 10.15, 2.6, .1, .5);
+    },
+    sam_library(M) {
+      const W = 13, D = 9;
+      M.block('stone', 0, 0, 0, W + 1.4, D + 1.4, .8); steps(M, 0, -(D + 1.4) / 2, .8, 4, 3);
+      walls(M, 0, 0, .8, W, D, 4.6, { door: [3, 3.2], windows: [['front', -4, 1.8, 2.4, 1.8], ['front', 4, 1.8, 2.4, 1.8], ['left', 0, 1.8, 3, 1.8], ['right', 0, 1.8, 3, 1.8]] });
+      M.roof(0, 0, 5.3, W + 3.4, D + 3.4, 3.6, { lift: .9 });
+      for (const s of [-1, 1]) banner(M, s * 2.4, -D / 2 - .18, 4.9, 1.3, 3, 'banner_navy');
+      for (const s of [-1, 1]) lantern(M, s * 5.6, -D / 2 - 1.2, 5.2);
+      M.block('wood', -5.2, -D / 2 - 1.6, 0, 1.1, .8, .7); M.block('wood', -4.9, -D / 2 - 1.5, .7, .8, .6, .5);
+      for (let i = 0; i < 3; i++) M.rod('plaster', [-6.1, -D / 2 - 1.3 + i * .25, .35], [-5.2, -D / 2 - 1.3 + i * .25, .35], .11, 6);
+    },
+    sam_forge(M) {
+      const W = 10, D = 8;
+      M.block('stone', 0, 0, 0, W, D, .3);
+      for (const x of [-W / 2 + .3, 0, W / 2 - .3]) for (const y of [-D / 2 + .3, D / 2 - .3]) M.block('wood', x, y, .3, .4, .4, 4.2);
+      M.block('wood', 0, D / 2 - .3, .3, W, .3, 4.2); M.block('wood', -W / 2 + .3, 1, .3, .3, D / 2, 4.2);
+      for (const y of [-D / 2 + .3, D / 2 - .3]) M.block('wood', 0, y, 4.3, W + .3, .4, .35);
+      M.roof(0, 0, 4.5, W + 3, D + 3, 3.4, { lift: .35, mat: 'thatch', fascia: 'darkwood', ornaments: false });
+      M.block('stone', W / 2 - 1.8, D / 2 - 1.6, .3, 2.6, 2.4, 2);
+      M.quad('fire', [[W / 2 - 2.6, D / 2 - 2.81, .7], [W / 2 - 1, D / 2 - 2.81, .7], [W / 2 - 1, D / 2 - 2.81, 1.6], [W / 2 - 2.6, D / 2 - 2.81, 1.6]]);
+      M.block('stone', W / 2 - 1.8, D / 2 - 1.2, 2.3, 1.4, 1.4, 7.4);
+      M.block('iron', -.5, -.6, .3, 1, .5, .45); M.block('iron', -.5, -.6, .75, 1.3, .45, .25);
+      M.cyl('water', [1.6, -1.8, .3], .5, .7, 10); M.cyl('darkwood', [1.6, -1.8, .3], .55, .08, 10);
+      for (let i = 0; i < 4; i++) M.rod('iron', [-W / 2 + .7 + i * .35, 1.5, .4], [-W / 2 + .7 + i * .35, 1.5, 2.4], .04, 4);
+      for (const s of [-1, 1]) banner(M, s * 2.5, -D / 2 + .1, 4.2, 1.1, 2.4, 'banner_gold');
+    },
+    sam_market_stall(M) {
+      const W = 5, D = 3;
+      for (const x of [-W / 2 + .15, W / 2 - .15]) for (const y of [-D / 2 + .15, D / 2 - .15]) M.block('wood', x, y, 0, .2, .2, y < 0 ? 2.9 : 2.4);
+      M.block('wood', 0, -D / 2 + .5, 0, W - .3, .9, 1); M.block('darkwood', 0, -D / 2 + .5, 1, W - .1, 1, .1);
+      M.quad('cloth', [[-W / 2 - .3, -D / 2 - .6, 2.75], [W / 2 + .3, -D / 2 - .6, 2.75], [W / 2 + .3, D / 2 + .2, 2.45], [-W / 2 - .3, D / 2 + .2, 2.45]]);
+      for (let i = 0; i < 6; i++) { const x0 = -W / 2 - .3 + i * (W + .6) / 6, s = (W + .6) / 6; M.poly('cloth', [[x0, -D / 2 - .6, 2.75], [x0 + s, -D / 2 - .6, 2.75], [x0 + s / 2, -D / 2 - .6, 2.4]]); }
+      for (const [x, c] of [[-1.6, 'earth'], [-.6, 'red'], [.5, 'gold'], [1.5, 'earth']]) M.cyl(c, [x, -D / 2 + .5, 1.1], .28, .35, 8, .2);
+      for (const [x, y] of [[-W / 2 - .7, .2], [W / 2 + .7, -.3]]) M.block('wood', x, y, 0, .8, .8, .7);
+      M.cyl('wood', [W / 2 + .7, .9, 0], .38, .9, 10); M.cyl('darkwood', [W / 2 + .7, .9, .88], .4, .06, 10);
+      M.block('wood', 0, D / 2 - .3, 0, W - .4, .6, 1.6); for (let i = 0; i < 4; i++) M.cyl('plaster', [-1.8 + i * 1.2, D / 2 - .3, 1.6], .2, .3, 8);
+      lantern(M, -W / 2 + .2, -D / 2 - .45, 2.65, .22); lantern(M, W / 2 - .2, -D / 2 - .45, 2.65, .22);
+    },
+    sam_house(M) {
+      const W = 9, D = 6.5;
+      M.block('stone', 0, 0, 0, W + .8, D + .8, .5);
+      walls(M, 0, 0, .5, W, D, 3.4, { door: [2.2, 2.6], windows: [['front', 2.8, 1.5, 1.8, 1.3], ['left', 0, 1.5, 2, 1.3], ['right', 0, 1.5, 2, 1.3]] });
+      M.roof(0, 0, 3.9, W + 3, D + 3, 3.3, { lift: .4, mat: 'thatch', fascia: 'darkwood', ornaments: false });
+      M.block('wood', 0, -D / 2 - .9, 0, W - 1, 1.4, .45); lantern(M, -1.7, -D / 2 - .6, 3.7, .22);
+    },
+    sam_gate(M) {
+      const OW = 5, OH = 5.2;
+      for (const s of [-1, 1]) { const x = s * (OW / 2 + 2.2); M.block('stone', x, 0, 0, 4.4, 3.6, 1.2); walls(M, x, 0, 1.2, 4, 3.2, 4.4, { postStep: 2 }); }
+      for (const s of [-1, 1]) { M.cyl('red', [s * (OW / 2 + .25), -1, 0], .35, OH + .6, 10); M.cyl('red', [s * (OW / 2 + .25), 1, 0], .35, OH + .6, 10); M.block('darkwood', s * (OW / 2 - .1), -1.6, 0, .25, 2.4, OH - .2, s * .9); }
+      M.box('red', [0, -1, OH + .3], [OW + 1.4, .45, .5]); M.box('red', [0, 1, OH + .3], [OW + 1.4, .45, .5]); M.block('darkwood', 0, 0, OH + .55, OW + 1.6, 2.6, .5);
+      M.roof(0, 0, 6.3, OW + 11, 6, 2.6, { lift: .8 });
+      for (const s of [-1, 1]) banner(M, s * (OW / 2 + 2.2), -1.65, 5.2, 1.5, 3.4, 'banner_red');
+      for (const s of [-1, 1]) lantern(M, s * (OW / 2 + .2), -1.8, OH + .1);
+      M.block('gold', 0, -1.26, OH + .2, 1.6, .08, .55);
+    },
+    sam_palisade(M) {
+      const L = 8, n = 14; M.block('stone', 0, 0, 0, L, 1.3, 1.1);
+      for (let i = 0; i < n; i++) { const x = -L / 2 + .29 + i * (L - .58) / (n - 1), h = 3.6 + .35 * Math.sin(i * 2.3); M.cyl('bark', [x, 0, 1], .28, h, 7); M.cyl('bark', [x, 0, 1 + h], .28, .7, 7, .02); }
+      for (const z of [2.2, 3.7]) M.box('darkwood', [0, -.3, z], [L, .14, .22]);
+    },
+    sam_watchtower(M) {
+      const H = 8.5, S = 3.6;
+      M.block('stone', 0, 0, 0, S + 1.2, S + 1.2, .6);
+      for (const x of [-S / 2, S / 2]) for (const y of [-S / 2, S / 2]) M.rod('wood', [x * 1.12, y * 1.12, .6], [x * .92, y * .92, H], .2, 6);
+      for (const z of [3, 6]) { const f = 1.12 - .2 * z / H; for (const [a, b] of [[[-1, -1], [1, -1]], [[1, -1], [1, 1]], [[1, 1], [-1, 1]], [[-1, 1], [-1, -1]]]) M.rod('wood', [a[0] * S / 2 * f, a[1] * S / 2 * f, z], [b[0] * S / 2 * f, b[1] * S / 2 * f, z], .1, 5); }
+      M.block('wood', 0, 0, H, S + .8, S + .8, .3);
+      for (const [x, y, sx, sy] of [[0, -(S + .8) / 2, S + .8, .15], [0, (S + .8) / 2, S + .8, .15], [-(S + .8) / 2, 0, .15, S + .8], [(S + .8) / 2, 0, .15, S + .8]]) { M.block('plaster', x, y, H + .3, sx, sy, 1); M.block('wood', x, y, H + 1.3, sx + .1, sy + .1, .15); }
+      for (const x of [-S / 2, S / 2]) for (const y of [-S / 2, S / 2]) M.block('wood', x * .92, y * .92, H + .3, .22, .22, 2.4);
+      M.roof(0, 0, H + 2.7, S + 2.6, S + 2.6, 1.8, { lift: .5 });
+      for (let i = 0; i < 10; i++) M.box('wood', [0, -S / 2 * 1.15 - .1, .8 + i * .8], [1, .08, .08]);
+      for (const s of [-1, 1]) M.rod('wood', [s * .5, -S / 2 * 1.15 - .1, .6], [s * .5, -S / 2 * .95, H], .06, 4);
+      banner(M, 0, -(S + .8) / 2 - .1, H + 1.25, 1.2, 1, 'banner_red'); lantern(M, S / 2, -S / 2, H + 2.55, .22);
+    },
+    sam_well(M) {
+      M.cyl('stone', [0, 0, 0], 1.25, 1, 14); M.cyl('water', [0, 0, .2], 1, .78, 14);
+      for (const s of [-1, 1]) M.block('wood', s * 1.2, 0, 0, .22, .22, 2.8);
+      M.box('wood', [0, 0, 2.55], [2.7, .2, .2]); M.cyl('rope', [0, 0, 1.4], .03, 1.1, 4); M.cyl('darkwood', [0, 0, 1.1], .22, .3, 8);
+      M.roof(0, 0, 2.75, 3.4, 2.2, 1, { lift: .3, ornaments: false });
+      M.block('wood', 1.6, .6, 0, .5, .5, .5); M.cyl('wood', [-1.6, .5, 0], .25, .4, 8);
+    },
+    sam_burrow(M) {
+      M.sphere('earth', [0, 1.4, 0], 4.2, .62, 16, 8);
+      const n = 12, r = 1.55, zc = 1.55, pts = []; for (let i = 0; i <= n; i++) pts.push([Math.cos(Math.PI * i / n) * r, -2.45, zc + Math.sin(Math.PI * i / n) * r]);
+      for (let i = 0; i < n; i++) { const a = pts[i], b = pts[i + 1]; M.poly('dark', [a, b, [0, a[1], zc]]); M.rod('wood', [a[0], a[1] - .05, a[2]], [b[0], b[1] - .05, b[2]], .16, 6); }
+      M.quad('dark', [[-r, -2.45, 0], [r, -2.45, 0], [r, -2.45, zc], [-r, -2.45, zc]]);
+      for (const s of [-1, 1]) M.block('wood', s * (r + .05), -2.5, 0, .3, .3, zc);
+      M.quad('fire', [[-.35, -1, .5], [.35, -1, .5], [.35, -1, 1], [-.35, -1, 1]]);
+      for (const s of [-1, 1]) { M.cyl('wood', [s * 2.3, -2.6, 0], .1, 2.1, 6); lantern(M, s * 2.3, -2.6, 2.05, .2); }
+      M.block('stone', 0, -3, 0, 3.6, 1, .12);
+    },
+    sam_banner_pole(M) {
+      M.cyl('darkwood', [0, 0, 0], .1, 6.8, 8); M.cyl('stone', [0, 0, 0], .45, .35, 8, .3);
+      M.rod('darkwood', [0, .05, 6.4], [1.5, .05, 6.4], .05, 6);
+      M.quad('banner_red', [[.1, -.02, 1.6], [1.45, -.02, 1.6], [1.45, -.02, 6.35], [.1, -.02, 6.35]]);
+      M.cyl('gold', [0, 0, 6.8], .12, .35, 6, .02);
+    },
+    sam_training_post(M) {
+      M.cyl('stone', [0, 0, 0], .55, .3, 8); M.cyl('wood', [0, 0, .3], .32, 2.3, 10);
+      for (const z of [1, 1.55, 2.1]) M.cyl('rope', [0, 0, z], .35, .28, 10);
+      for (const [z, a] of [[1.75, .5], [1.75, -.5], [1.2, 0]]) M.rod('wood', [0, 0, z], [Math.sin(a) * .8, -Math.cos(a) * .8, z - .1], .07, 6);
+      M.cyl('wood', [0, 0, 2.6], .34, .12, 10);
+    },
+    sam_weapon_rack(M) {
+      for (const s of [-1, 1]) M.block('darkwood', s * 1.2, 0, 0, .14, .5, 1.9);
+      for (const z of [.5, 1.5]) M.box('darkwood', [0, 0, z], [2.6, .5, .1]);
+      for (let i = 0; i < 6; i++) { const x = -1 + i * .4; M.rod('wood', [x, .05, .05], [x, -.05, 2.6], .035, 5); M.cyl('iron', [x, -.05, 2.55], .06, .35, 5, .005); }
+    },
+    // ── Wokou (sea raiders' harbour): navy + gold ant banners, dark wood, tiled roofs; piers, ships, cargo ──
+    wok_great_dojo(M) { M.remap = { red: 'darkwood', banner_red: 'banner_wokou' }; B.sam_great_dojo(M); },
+    wok_hall(M) { M.remap = { banner_navy: 'banner_scroll' }; B.sam_library(M); },
+    wok_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_wokou'); },
+    wok_house_thatch(M) { B.sam_house(M); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_wokou'); },
+    wok_trade_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; banner(M, -3.05, -3.25 - .2, 3.4, 2.1, 2.3, 'banner_board'); noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_wokou'); }, // board banner beside the door, not across it
+    wok_watchtower(M) { M.remap = { banner_red: 'banner_wokou' }; B.sam_watchtower(M); M.remap = null; banner(M, 0, -2.1, 6.8, 1.7, 3.6, 'banner_wokou'); },
+    wok_banner_pole(M) { M.remap = { banner_red: 'banner_wokou' }; B.sam_banner_pole(M); },
+    // pier segment 4 x 8 m: deck top at the origin, posts down into the sea bed
+    wok_pier(M) {
+      M.block('wood', 0, 0, -.28, 4, 8, .28);
+      for (let i = 0; i < 8; i++) M.box('darkwood', [0, -3.75 + i * 1.07, .005], [4, .05, .02]);
+      for (const y of [-3.7, 0, 3.7]) { for (const x of [-1.85, 1.85]) M.cyl('bark', [x, y, -12], .17, 12.1, 6); M.box('darkwood', [0, y, -.45], [4.3, .24, .24]); }
+      for (const [x, y] of [[1.75, 3.6], [-1.75, 3.6]]) M.cyl('darkwood', [x, y, 0], .13, .45, 6);
+    },
+    // trading junk with an ant sail; waterline at the origin, bow towards -y
+    wok_boat(M) {
+      const L = 14, st = 12, hull = [], hullU = [], half = y => 2.2 * Math.pow(Math.max(0, 1 - Math.pow(Math.abs(y + .9) / (L / 2), 2.2)), .55);
+      for (let i = 0; i <= st; i++) {
+        const y = -L / 2 + L * i / st, w = half(y), sh = 1.25 + .5 * Math.pow(Math.abs(y) / (L / 2), 2) + (y < 0 ? .35 * Math.pow(-y / (L / 2), 2) : 0);
+        const ring = [[-w, y, sh], [-w * .98, y, .4], [-w * .7, y, -.6], [0, y, -1.3], [w * .7, y, -.6], [w * .98, y, .4], [w, y, sh]];
+        hull.push(ring); hullU.push(ring.map((p, k) => [k / 6 * 3, i / st * 7]));
+      }
+      M.grid('darkwood', hull, hullU);
+      for (let i = 0; i < st; i++) { const a = hull[i], b = hull[i + 1]; M.quad('wood', [[a[0][0] + .12, a[0][1], a[0][2] - .25], [a[6][0] - .12, a[6][1], a[6][2] - .25], [b[6][0] - .12, b[6][1], b[6][2] - .25], [b[0][0] + .12, b[0][1], b[0][2] - .25]]); }
+      for (const side of [0, 6]) for (let i = 0; i < st; i++) M.rod('wood', hull[i][side], hull[i + 1][side], .09, 5);
+      M.block('wood', 0, 4.6, 1.2, 3, 2.6, 1.6); M.roof(0, 4.6, 2.8, 3.8, 3.4, 1.1, { lift: .25, ornaments: false, gable: false });
+      M.cyl('darkwood', [0, -.6, 1], .16, 11.5, 8);
+      const sw = 6.2, z0 = 3, z1 = 10.8; M.quad('sail', [[-sw / 2, -.85, z0], [sw / 2, -.85, z0], [sw / 2 * .86, -.85, z1], [-sw / 2 * .86, -.85, z1]]);
+      for (let k = 0; k <= 5; k++) { const z = z0 + (z1 - z0) * k / 5, f = 1 - .14 * k / 5; M.rod('bark', [-sw / 2 * f - .1, -.9, z], [sw / 2 * f + .1, -.9, z], .05, 4); }
+      M.rod('rope', [0, -.6, 11.2], [0, -L / 2 + .3, 2.1], .025, 3); M.rod('rope', [0, -.6, 11.2], [0, L / 2 - .4, 2.6], .025, 3);
+      M.block('darkwood', 0, L / 2 - .1, -.8, .15, .9, 2.4);
+      M.cyl('lantern', [0, L / 2 - .7, 2.9], .18, .45, 6);
+    },
+    // boat shed: thatched roof on posts, a hull being built inside, a ladder and timber
+    wok_boathouse(M) {
+      const W = 9, D = 14, H = 4.2;
+      M.block('stone', 0, 0, 0, W + 1, D + 1, .3);
+      for (const x of [-W / 2, W / 2]) for (const y of [-D / 2, 0, D / 2]) M.block('wood', x, y, .3, .35, .35, H);
+      for (const x of [-W / 2, W / 2]) M.block('darkwood', x, 0, H + .3, .4, D + .6, .3);
+      const r = H + 2.6, e = .8, pts = s => [[s * (W / 2 + e), -D / 2 - e, H - .2], [s * (W / 2 + e), D / 2 + e, H - .2], [0, D / 2 + e, r], [0, -D / 2 - e, r]];
+      M.quad('thatch', pts(-1), [[0, 0], [D / 1.6, 0], [D / 1.6, 2.6], [0, 2.6]]); M.quad('thatch', pts(1), [[0, 0], [D / 1.6, 0], [D / 1.6, 2.6], [0, 2.6]]);
+      for (const y of [-D / 2, D / 2]) M.poly('wood', [[-W / 2, y, H + .3], [W / 2, y, H + .3], [0, y, r - .2]]);
+      M.box('darkwood', [0, 0, r + .05], [.35, D + 1.8, .35]);
+      M.rod('bark', [0, -5.5, .7], [0, 5.5, .7], .14, 6);
+      for (let i = 0; i < 9; i++) { const y = -4.6 + i * 1.15, w = 1.8 * Math.sqrt(Math.max(0, 1 - Math.pow(y / 5.6, 2))); M.rod('wood', [-w, y, 2.2], [-w * .6, y, .9], .07, 4); M.rod('wood', [-w * .6, y, .9], [0, y, .6], .07, 4); M.rod('wood', [0, y, .6], [w * .6, y, .9], .07, 4); M.rod('wood', [w * .6, y, .9], [w, y, 2.2], .07, 4); }
+      for (let i = 0; i < 3; i++) M.block('wood', -1.6 + i * .25, 0, .3 + i * .3, 2.6, .3, .3);
+      M.rod('wood', [3.3, -6.2, .3], [3.6, -5.4, 3.6], .06, 4); M.rod('wood', [3.9, -6.2, .3], [4.2, -5.4, 3.6], .06, 4);
+      for (let i = 0; i < 6; i++) M.box('wood', [3.75 + .05 * i, -6.1 + .12 * i, .7 + i * .5], [.7, .06, .06]);
+      for (let i = 0; i < 4; i++) M.block('wood', -3.4, 4.8, .3 + i * .28, .3, 3.2, .26);
+    },
+    // harbour crane: post, swinging arm out over the water (-y), rope and a net of cargo
+    wok_crane(M) {
+      M.block('stone', 0, 0, 0, 1.6, 1.6, .4); M.cyl('darkwood', [0, 0, .4], .22, 6, 8);
+      M.rod('darkwood', [0, .1, 5.6], [0, -4.6, 6.4], .14, 6); M.rod('wood', [0, 0, 3.2], [0, -2.6, 6.05], .1, 5);
+      M.rod('rope', [0, -4.5, 6.3], [0, -4.5, 2.4], .03, 4); M.sphere('rope', [0, -4.5, 1.9], .6, 1.1, 8, 5);
+      for (let i = 0; i < 3; i++) M.block('wood', -.25 + i * .2, -4.45, 1.5 + i * .25, .5, .5, .3);
+    },
+    // crates, barrels and a coil of rope, for quays and decks
+    wok_cargo(M) {
+      for (const [x, y, z, s] of [[0, 0, 0, 1.1], [1.2, .1, 0, 1], [.5, 0, 1.1, .95], [-1.1, .6, 0, .9]]) { M.block('wood', x, y, z, s, s, s); M.box('darkwood', [x, y - s / 2 - .01, z + s / 2], [s + .02, .03, s * .15]); M.box('darkwood', [x, y - s / 2 - .01, z + s / 2], [s * .15, .03, s + .02]); }
+      for (const [x, y] of [[2.4, -.3], [2.5, .7], [-2.1, -.5]]) { M.cyl('wood', [x, y, 0], .42, 1.15, 10, .42); for (const z of [.15, .95]) M.cyl('darkwood', [x, y, z], .44, .06, 10); }
+      M.cyl('rope', [-2.2, .9, 0], .5, .18, 10, .45);
+    },
+    // low rail fence, 4 m (training yards, quays)
+    wok_fence(M) {
+      for (const x of [-2, 0, 2]) { M.block('darkwood', x, 0, 0, .18, .18, 1.25); M.cyl('darkwood', [x, 0, 1.25], .1, .08, 6, .03); }
+      for (const z of [.45, .95]) M.box('wood', [0, 0, z], [4.1, .1, .12]);
+    },
+    // ── Yamabushi (mountain mystics): dark wood, white plaster, grey tile and thatch, green + gold banners ──
+    yam_great_dojo(M) { M.remap = { red: 'wood', banner_red: 'banner_yamabushi' }; B.sam_great_dojo(M); M.remap = null; noren(M, 0, -15 / 2 + 2.05, 5.45, 5.6, 1.5, 'noren_yamabushi'); },
+    // two storeys: shop room below, balcony with a railing and the reading room above
+    yam_library(M) {
+      const W = 13, D = 9;
+      M.block('stone', 0, 0, 0, W + 1.4, D + 1.4, .7); steps(M, 0, -(D + 1.4) / 2, .7, 4, 2);
+      walls(M, 0, 0, .7, W, D, 3.8, { door: [3.2, 3], windows: [['front', -4, 1.6, 2.6, 1.6], ['front', 4, 1.6, 2.6, 1.6], ['left', 0, 1.6, 3, 1.6], ['right', 0, 1.6, 3, 1.6]] });
+      noren(M, 0, -D / 2 - .2, 3.65, 3.6, 1.1, 'noren_yam_books');
+      M.roof(0, 0, 4.5, W + 2.6, D + 2.6, 1.2, { lift: .5, gable: false, ornaments: false });
+      // balcony on the front, upper floor set back
+      M.block('wood', 0, -D / 2 - .6, 4.5, W + .8, 1.8, .22);
+      for (let i = 0; i <= 8; i++) { const x = -W / 2 - .3 + i * (W + .6) / 8; M.block('darkwood', x, -D / 2 - 1.4, 4.72, .14, .14, 1.05); }
+      M.box('darkwood', [0, -D / 2 - 1.4, 5.75], [W + .7, .16, .12]); M.box('darkwood', [0, -D / 2 - 1.4, 5.2], [W + .7, .08, .08]);
+      walls(M, 0, .6, 4.72, W - 1, D - 1.6, 3.2, { windows: [['front', -3.6, 5.5, 2.4, 1.5], ['front', 0, 5.5, 2.4, 1.5], ['front', 3.6, 5.5, 2.4, 1.5], ['left', 0, 5.5, 2.4, 1.4], ['right', 0, 5.5, 2.4, 1.4]] });
+      M.roof(0, .6, 7.9, W + 2, D + 1.2, 3.2, { lift: .8 });
+      for (const s of [-1, 1]) lantern(M, s * 5.2, -D / 2 - 1.4, 4.4, .22);
+      banner(M, -W / 2 - .2, -D / 2 - .25, 3.6, 1.1, 2.4, 'banner_yamabushi');
+    },
+    yam_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_yamabushi'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_yamabushi'); },
+    yam_house_thatch(M) { B.sam_house(M); noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_yam_dots'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_yamabushi'); },
+    yam_gate(M) { M.remap = { red: 'darkwood', banner_red: 'banner_yamabushi' }; B.sam_gate(M); M.remap = null; noren(M, 0, -1.3, 5.1, 5, 1.7, 'noren_yamabushi'); },
+    yam_banner_pole(M) { M.remap = { banner_red: 'banner_yamabushi' }; B.sam_banner_pole(M); },
+    // plank bridge 32 m long (along y), deck top at the origin; ends rest on the cliffs, a rope rail on posts
+    yam_bridge(M) {
+      const L = 32, Wd = 3;
+      M.block('wood', 0, 0, -.25, Wd, L, .25);
+      for (let i = 0; i < 40; i++) M.box('darkwood', [0, -L / 2 + .4 + i * (L - .8) / 39, .005], [Wd, .05, .02]);
+      for (const x of [-Wd / 2 + .1, Wd / 2 - .1]) M.box('darkwood', [x, 0, -.45], [.22, L, .3]);
+      for (let i = 0; i <= 8; i++) {
+        const y = -L / 2 + .3 + i * (L - .6) / 8;
+        for (const s of [-1, 1]) { M.block('darkwood', s * (Wd / 2 + .05), y, -.4, .18, .18, 1.55); M.cyl('darkwood', [s * (Wd / 2 + .05), y, 1.15], .1, .08, 6, .03); }
+        M.box('darkwood', [0, y, -.55], [Wd + .5, .2, .2]);
+      }
+      for (const s of [-1, 1]) for (const z of [1.05, .55]) M.rod('rope', [s * (Wd / 2 + .05), -L / 2 + .3, z], [s * (Wd / 2 + .05), L / 2 - .3, z], .035, 4);
+      for (const e of [-1, 1]) for (const s of [-1, 1]) M.rod('darkwood', [s * (Wd / 2 - .1), e * (L / 2 - 1), -.5], [s * (Wd / 2 - .1), e * (L / 2 - 4.5), -4], .14, 6); // struts down to the cliff faces
+    },
+    // tunnel into a retaining wall: a stone arch with a dark passage and a warm light deep inside; back at y = 0
+    yam_burrow_arch(M) {
+      const r = 1.6, zc = 1.9, n = 12, d = 1;
+      for (let i = 0; i < n; i++) {
+        const a0 = Math.PI * i / n, a1 = Math.PI * (i + 1) / n, am = (a0 + a1) / 2;
+        M.box('stone', [Math.cos(am) * (r + .35), -d / 2, zc + Math.sin(am) * (r + .35)], [.75, d, .72 * Math.PI * (r + .35) / n * 1.05], 0, 0, -am);
+      }
+      for (const s of [-1, 1]) M.block('stone', s * (r + .35), -d / 2, 0, .75, d, zc);
+      M.block('stone', 0, -d / 2, 0, 2 * r + 1.6, d + .2, .25);
+      const pts = []; for (let i = 0; i <= n; i++) pts.push([Math.cos(Math.PI * i / n) * r, -.02, zc + Math.sin(Math.PI * i / n) * r]);
+      for (let i = 0; i < n; i++) M.poly('dark', [pts[i], pts[i + 1], [0, -.02, zc]]);
+      M.quad('dark', [[-r, -.02, .25], [r, -.02, .25], [r, -.02, zc], [-r, -.02, zc]]);
+      M.quad('fire', [[-.4, .4, .6], [.4, .4, .6], [.4, .4, 1.2], [-.4, .4, 1.2]]);
+      lantern(M, r + .9, -d - .1, 2.9, .2); M.box('darkwood', [r + .9, -d / 2 - .25, 2.95], [.1, d + .4, .1]);
+    },
+    // spirit lantern: a stone toro whose light burns icy blue (the Yamabushi's flame), blue pool of light at night
+    yam_spirit_lantern(M) { M.remap = { lantern: 'spirit', glow: 'glow_spirit' }; B.sam_stone_lantern(M); },
+    // small open shrine for the lookout pillar: four posts, a tiled roof, offering box and bell
+    yam_shrine(M) {
+      M.block('stone', 0, 0, 0, 4.4, 4.4, .4); steps(M, 0, -2.2, .4, 2, 1);
+      for (const x of [-1.7, 1.7]) for (const y of [-1.7, 1.7]) M.block('darkwood', x, y, .4, .26, .26, 3);
+      M.box('darkwood', [0, -1.7, 3.3], [4, .3, .3]); M.box('darkwood', [0, 1.7, 3.3], [4, .3, .3]);
+      M.roof(0, 0, 3.45, 5.4, 5.4, 1.7, { lift: .6 });
+      M.block('wood', 0, .6, .4, 1.6, 1, .9); M.block('darkwood', 0, .6, 1.3, 1.7, 1.1, .08);
+      M.rod('rope', [0, -1.7, 3.1], [0, -1.7, 2.1], .03, 4); M.sphere('gold', [0, -1.7, 1.95], .22, 1.1, 8, 5);
+      banner(M, 0, -1.85, 3.1, 2.2, .6, 'banner_yamabushi');
+    },
+    // low wooden bench (training yard)
+    yam_bench(M) { M.block('wood', 0, 0, .42, 2.6, .45, .12); for (const x of [-1.05, 1.05]) M.block('darkwood', x, 0, 0, .18, .4, .42); },
+    // stone training weights: a bar through two stone wheels on a rack
+    yam_stone_weights(M) {
+      for (const s of [-1, 1]) M.block('darkwood', s * 1.1, 0, 0, .14, .4, .9);
+      M.rod('darkwood', [-1.3, 0, .82], [1.3, 0, .82], .06, 6);
+      for (const s of [-1, 1]) M.tube('stone', [s * .75, -.14, .82], [s * .75, .14, .82], .5, .5, 10);
+      M.cyl('stone', [1.9, .3, 0], .35, .32, 8); M.cyl('stone', [1.85, .3, .32], .28, .26, 8); M.block('stone', -1.9, .2, 0, .55, .45, .4);
+    },
+    // ── Buke (noble defenders): dark wood, white plaster on grey stone, maroon + gold banners with the trident ──
+    buke_great_hall(M) { M.remap = { red: 'darkwood', banner_red: 'banner_buke' }; B.sam_great_dojo(M); M.remap = null; noren(M, 0, -15 / 2 + 2.05, 5.45, 5.6, 1.5, 'noren_buke'); },
+    // archive: a stone ground floor (big doorway, red curtains) under a timber and plaster upper floor with a scroll banner
+    buke_archive(M) {
+      const W = 12, D = 9;
+      M.block('stone', 0, 0, 0, W + 1, D + 1, .6); steps(M, 0, -(D + 1) / 2, .6, 4, 2);
+      M.remap = { plaster: 'stone', wood: 'stone' };
+      walls(M, 0, 0, .6, W, D, 3.8, { door: [3.4, 3.1] });
+      M.remap = null;
+      M.block('darkwood', 0, -D / 2 - .1, 4.4, W + .4, .5, .3); M.block('darkwood', 0, D / 2 + .1, 4.4, W + .4, .5, .3);
+      walls(M, 0, 0, 4.7, W - .4, D - .4, 3.4, { windows: [['front', -4, 5.6, 1.6, 1.4], ['front', 4, 5.6, 1.6, 1.4], ['left', -2, 5.6, 1.6, 1.4], ['left', 2, 5.6, 1.6, 1.4], ['right', -2, 5.6, 1.6, 1.4], ['right', 2, 5.6, 1.6, 1.4]] });
+      M.roof(0, 0, 8.1, W + 2.6, D + 2.6, 3.4, { lift: .8 });
+      banner(M, 0, -D / 2 + .2 - .2, 7.7, 3.4, 2.8, 'banner_buke_scroll');
+      noren(M, 0, -D / 2 - .2, 3.75, 3.6, 1, 'noren_buke');
+      for (const sd of [-1, 1]) { M.quad('cloth', [[sd * 1.75, -D / 2 - .22, .7], [sd * 2.25, -D / 2 - .22, .7], [sd * 2.25, -D / 2 - .22, 3.7], [sd * 1.75, -D / 2 - .22, 3.7]]); lantern(M, sd * 2.8, -D / 2 - .5, 3.6, .22); }
+      for (const [x, y] of [[-4.6, -D / 2 - 1.2], [4.4, -D / 2 - 1.3]]) { M.block('wood', x, y, 0, 1, .8, .8); M.block('wood', x + .2, y + .1, .8, .8, .6, .6); }
+    },
+    // strategy hall: the library's frame with a gold map banner over the door and trident banners
+    buke_strategy_hall(M) { M.remap = { banner_navy: 'banner_buke' }; B.sam_library(M); M.remap = null; noren(M, 0, -9 / 2 - .22, 5.3, 4.2, 1.3, 'noren_buke_map'); },
+    buke_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_buke'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_buke'); },
+    // gatehouse between two stone bastions with braziers and banners on top; open doors, a noren across the opening
+    buke_gate(M) {
+      const OW = 5.4, OH = 5;
+      for (const sd of [-1, 1]) {
+        const x = sd * (OW / 2 + 3.1);
+        M.block('stone', x, 0, 0, 6, 5.6, 5.6); M.block('stone', x, 0, 5.6, 6.3, 5.9, .3);
+        for (const [px, py] of [[-2.9, -2.8], [2.9, -2.8], [-2.9, 2.8], [2.9, 2.8], [0, -2.8]]) M.block('darkwood', x + px, py, 5.9, .2, .2, 1.1);
+        for (const z of [6.4, 6.9]) { M.box('darkwood', [x, -2.8, z], [6, .12, .12]); M.box('darkwood', [x - 2.9, 0, z], [.12, 5.6, .12]); M.box('darkwood', [x + 2.9, 0, z], [.12, 5.6, .12]); }
+        M.cyl('iron', [x - sd * 1.3, -1.3, 5.9], .25, .7, 6, .1); M.cyl('iron', [x - sd * 1.3, -1.3, 6.6], .7, .3, 10, .8);
+        M.quad('fire', [[x - sd * 1.3 - .5, -1.3, 6.8], [x - sd * 1.3 + .5, -1.3, 6.8], [x - sd * 1.3 + .25, -1.3, 7.7], [x - sd * 1.3 - .25, -1.3, 7.7]]);
+        M.quad('fire', [[x - sd * 1.3, -1.8, 6.8], [x - sd * 1.3, -.8, 6.8], [x - sd * 1.3, -1.05, 7.7], [x - sd * 1.3, -1.55, 7.7]]);
+        M.cyl('darkwood', [x + sd * 1.6, -2, 5.9], .09, 5, 8); M.rod('darkwood', [x + sd * 1.6, -2.05, 10.6], [x + sd * 1.6 - sd * 1.5, -2.05, 10.6], .05, 6);
+        M.quad('banner_buke', [[x + sd * 1.6 - (sd > 0 ? 1.45 : 0), -2.08, 6.6], [x + sd * 1.6 + (sd > 0 ? 0 : 1.45), -2.08, 6.6], [x + sd * 1.6 + (sd > 0 ? 0 : 1.45), -2.08, 10.55], [x + sd * 1.6 - (sd > 0 ? 1.45 : 0), -2.08, 10.55]]);
+        banner(M, x, -2.82, 4.8, 1.8, 3.6, 'banner_buke');
+      }
+      for (const sd of [-1, 1]) for (const y of [-1.2, 1.2]) M.cyl('darkwood', [sd * (OW / 2 + .2), y, 0], .3, OH + .8, 10);
+      for (const y of [-1.2, 1.2]) M.box('darkwood', [0, y, OH + .45], [OW + 1.4, .45, .5]);
+      M.block('darkwood', 0, 0, OH + .7, OW + 1.8, 3, .35);
+      M.roof(0, 0, OH + 1.05, OW + 4.4, 4.8, 1.9, { lift: .6 });
+      for (const sd of [-1, 1]) M.block('darkwood', sd * (OW / 2 - .15), -2.1, 0, .2, 2.2, OH - .3, sd * .9);
+      noren(M, 0, -1.48, OH + .2, OW - .3, 1.7, 'noren_buke');
+      for (const sd of [-1, 1]) lantern(M, sd * (OW / 2 + .2), -1.65, OH - .1, .22);
+    },
+    buke_banner_pole(M) { M.remap = { banner_red: 'banner_buke' }; B.sam_banner_pole(M); },
+    // stone footbridge over a canal, 8 m long (along y), deck top at the origin, low parapets
+    buke_footbridge(M) {
+      M.block('stone', 0, 0, -.6, 3, 8, .6);
+      for (const sd of [-1, 1]) { M.block('stone', sd * 1.35, 0, 0, .3, 8, .55); M.block('stone', 0, sd * 3.4, -2.4, 3.4, 1.2, 1.8); }
+      for (const sd of [-1, 1]) for (const y of [-3.6, 3.6]) { M.block('stone', sd * 1.35, y, 0, .42, .42, .9); M.cyl('stone', [sd * 1.35, y, .9], .18, .18, 4, .05); }
+      for (const sd of [-1, 1]) M.box('stone', [0, sd * 2.2, -.95], [3, 1.6, .7], 0, sd * .35); // haunches of the arch
+    },
+    // stone water outlet for a canal end: a small arch in the wall with water pouring out; back at y = 0, lip at z = 0
+    buke_canal_spout(M) {
+      M.block('stone', 0, -.4, -2.2, 3.2, .8, 3.6);
+      M.quad('dark', [[-.7, -.82, .2], [.7, -.82, .2], [.7, -.82, 1.1], [-.7, -.82, 1.1]]);
+      for (let i = 0; i <= 6; i++) { const a = Math.PI * i / 6; M.box('stone', [Math.cos(a) * .95, -.85, 1.1 + Math.sin(a) * .6], [.3, .3, .3]); }
+      M.quad('water', [[-.6, -.9, .2], [.6, -.9, .2], [.6, -1.5, -1.6], [-.6, -1.5, -1.6]]);
+    },
+    // wooden post lantern (fences, stairs); lights up at night like the stone ones
+    buke_post_lantern(M) {
+      M.block('darkwood', 0, 0, 0, .22, .22, 1.35); M.block('lantern', 0, 0, 1.35, .36, .36, .42); M.block('darkwood', 0, 0, 1.77, .5, .5, .08);
+      M.cyl('darkwood', [0, 0, 1.85], .3, .2, 4, .04);
+      M.quad('glow', [[-1.8, -1.8, .07], [1.8, -1.8, .07], [1.8, 1.8, .07], [-1.8, 1.8, .07]]);
+    },
+    // boarding plank from a pier (top end, deck level) down 2 m to a ship's deck; 5 m long along y
+    wok_gangplank(M) {
+      const a = Math.atan2(2, 5);
+      M.box('wood', [0, 0, -1.06], [1.1, Math.hypot(5, 2), .12], 0, -a);
+      for (let i = 0; i < 9; i++) { const t = (i + .5) / 9; M.box('darkwood', [0, -2.5 + 5 * t, -2 * t - .97], [1.1, .08, .06], 0, -a); }
+      for (const sd of [-1, 1]) { for (const t of [0, .5, 1]) M.block('darkwood', sd * .6, -2.5 + 5 * t, -2 * t - 1, .08, .08, 1); M.rod('rope', [sd * .6, -2.5, .95], [sd * .6, 2.5, -1.05], .025, 4); }
+    },
+    // ── Kenshi (swordmasters): dark wood, white plaster, grey tile, teal + gold banners with the blade emblem ──
+    kenshi_great_dojo(M) { M.remap = { red: 'darkwood', banner_red: 'banner_kenshi' }; B.sam_great_dojo(M); M.remap = null; noren(M, 0, -15 / 2 + 2.05, 5.45, 5.6, 1.5, 'noren_kenshi'); },
+    kenshi_library(M) { M.remap = { noren_yam_books: 'noren_kenshi_scroll', banner_yamabushi: 'banner_kenshi' }; B.yam_library(M); },
+    kenshi_hall(M) { M.remap = { banner_navy: 'banner_kenshi' }; B.sam_library(M); M.remap = null; noren(M, 0, -9 / 2 - .22, 5.3, 4.2, 1.3, 'noren_kenshi_map'); },
+    kenshi_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_kenshi'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_kenshi'); },
+    kenshi_gate(M) { M.remap = { red: 'darkwood', banner_red: 'banner_kenshi' }; B.sam_gate(M); M.remap = null; noren(M, 0, -1.3, 5.1, 5, 1.7, 'noren_kenshi'); },
+    kenshi_forge(M) { M.remap = { thatch: 'roof', banner_gold: 'banner_kenshi' }; B.sam_forge(M); },
+    kenshi_banner_pole(M) { M.remap = { banner_red: 'banner_kenshi' }; B.sam_banner_pole(M); },
+    // well under a hexagonal tiled pavilion with a gold finial, on a stone base with buckets
+    kenshi_well_pavilion(M) {
+      M.cyl('stone', [0, 0, 0], 3.6, .35, 6); M.cyl('stone', [0, 0, .35], 1.25, .9, 14); M.cyl('water', [0, 0, .55], 1.02, .72, 14);
+      for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 + Math.PI / 6; M.block('darkwood', Math.cos(a) * 2.7, Math.sin(a) * 2.7, .35, .24, .24, 3.2); }
+      M.cyl('darkwood', [0, 0, 3.45], 3.1, .3, 6); M.cyl('roof', [0, 0, 3.75], 3.9, 2.1, 6, .2); M.cyl('darkwood', [0, 0, 3.6], 4, .18, 6);
+      M.sphere('gold', [0, 0, 6.05], .3, 1.2, 8, 5); M.cyl('gold', [0, 0, 5.8], .1, .3, 6);
+      M.box('wood', [0, 0, 2.6], [2.8, .16, .16]); M.cyl('rope', [0, 0, 1.4], .03, 1.2, 4); M.cyl('darkwood', [0, 0, 1.2], .22, .3, 8);
+      for (const [x, y] of [[1.9, -1.4], [-2.1, -1.1], [2.2, 1.2], [-1.6, 1.8]]) { M.cyl('wood', [x, y, .35], .3, .5, 8, .26); M.cyl('darkwood', [x, y, .78], .31, .05, 8); }
+    },
+    // watchtower: a tapered stone base with a door, the lookout room on top under a tiled roof
+    kenshi_watchtower(M) {
+      const S = 5.4, H = 7;
+      M.cyl('stone', [0, 0, 0], S * .72, H, 4, S * .62); M.quad('dark', [[-.6, -S * .48, .1], [.6, -S * .48, .1], [.6, -S * .46, 2.2], [-.6, -S * .46, 2.2]]);
+      M.block('wood', 0, 0, H, S + .6, S + .6, .3);
+      for (const x of [-S / 2, S / 2]) for (const y of [-S / 2, S / 2]) M.block('darkwood', x, y, H + .3, .22, .22, 2.6);
+      for (const [x, y, sx, sy] of [[0, -S / 2, S, .12], [0, S / 2, S, .12], [-S / 2, 0, .12, S], [S / 2, 0, .12, S]]) { M.block('darkwood', x, y, H + .9, sx, sy, .12); M.block('darkwood', x, y, H + 1.25, sx, sy, .12); }
+      M.roof(0, 0, H + 2.9, S + 2.4, S + 2.4, 1.9, { lift: .6 });
+      banner(M, 0, -S / 2 - .1, H + 2.6, 1.2, 1, 'banner_kenshi'); lantern(M, S / 2, -S / 2, H + 2.75, .22);
+    },
+    // wall-top fence, 8 m: stone pillars with a dark wood lattice between (for the compound walls)
+    kenshi_wall_fence(M) {
+      for (const x of [-4, 0, 4]) { M.block('stone', x, 0, 0, .7, .7, 1.6); M.block('stone', x, 0, 1.6, .85, .85, .14); }
+      for (const z of [.35, 1.25]) for (const h of [-1, 1]) M.box('darkwood', [h * 2, 0, z], [3.3, .14, .12]);
+      for (let i = 0; i < 14; i++) { const x = -3.3 + i * (6.6 / 13); if (Math.abs(x) < .4) continue; M.block('darkwood', x, 0, .35, .07, .07, .9); }
+    },
+    // ── Sohei (monastic warriors): dark wood, white plaster, grey tile, gold + cream banners with the cross-and-sun ──
+    sohei_great_dojo(M) { M.remap = { red: 'darkwood', banner_red: 'banner_sohei' }; B.sam_great_dojo(M); M.remap = null; noren(M, 0, -15 / 2 + 2.05, 5.45, 5.6, 1.5, 'noren_sohei'); },
+    sohei_library(M) { M.remap = { noren_yam_books: 'noren_sohei_books', banner_yamabushi: 'banner_sohei' }; B.yam_library(M); },
+    sohei_hall(M) { M.remap = { banner_navy: 'banner_sohei' }; B.sam_library(M); M.remap = null; noren(M, 0, -9 / 2 - .22, 4.0, 3.2, 1.2, 'noren_sohei_dots'); },
+    sohei_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_sohei'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_sohei'); },
+    sohei_shop(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; banner(M, -3.05, -3.25 - .2, 3.4, 2.1, 2.3, 'banner_board'); noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_sohei'); }, // board banner beside the door, not across it
+    sohei_gate(M) { M.remap = { red: 'darkwood', banner_red: 'banner_sohei' }; B.sam_gate(M); M.remap = null; noren(M, 0, -1.3, 5.1, 5, 1.7, 'noren_sohei'); },
+    sohei_banner_pole(M) { M.remap = { banner_red: 'banner_sohei' }; B.sam_banner_pole(M); },
+    // compound wall, 8 m: white plaster between dark posts on a low stone plinth, under a tiled coping
+    sohei_wall(M) {
+      M.block('stone', 0, 0, 0, 8, .9, .5); M.block('plaster', 0, 0, .5, 8, .55, 2.3);
+      for (const x of [-4, -2, 0, 2, 4]) M.block('darkwood', x, 0, .5, .2, .62, 2.3);
+      M.block('darkwood', 0, 0, 2.8, 8.1, .66, .16);
+      M.roof(0, 0, 2.95, 8.6, 1.5, .45, { lift: .05, gable: false, ornaments: false });
+    },
+    // bell tower: a stone base, four posts and a tiled roof over a big bronze bell with a log striker
+    sohei_bell_tower(M) {
+      M.block('stone', 0, 0, 0, 6, 6, 1.2); steps(M, 0, -3, 1.2, 2.4, 3);
+      for (const x of [-2.2, 2.2]) for (const y of [-2.2, 2.2]) M.block('darkwood', x, y, 1.2, .3, .3, 4.4);
+      for (const y of [-2.2, 2.2]) M.box('darkwood', [0, y, 5.5], [5, .3, .3]); for (const x of [-2.2, 2.2]) M.box('darkwood', [x, 0, 5.5], [.3, 5, .3]);
+      M.box('darkwood', [0, 0, 5.2], [4.8, .25, .25]);
+      M.roof(0, 0, 5.75, 7.4, 7.4, 2.4, { lift: .7 });
+      M.cyl('bronze', [0, 0, 2.1], .95, 2.4, 16, .78); M.cyl('bronze', [0, 0, 4.5], .62, .3, 12, .2); M.cyl('bronze', [0, 0, 2.05], 1.0, .12, 16);
+      M.rod('rope', [0, 0, 4.75], [0, 0, 5.15], .05, 4);
+      M.rod('bark', [-2.1, -1.6, 2.9], [-.9, -1.6, 2.9], .16, 7); for (const x of [-2, -1.1]) M.rod('rope', [x, -1.6, 2.95], [x, -1.6, 5.1], .02, 3);
+    },
+    // stairs (see STAIRS below): built at their placed size, so stretched stairs keep ~0.3 m steps
+    kit_stairs_stone(M) { buildStairs(M, 'kit_stairs_stone'); },
+    kit_stairs_wood(M) { buildStairs(M, 'kit_stairs_wood'); },
+    kit_stairs_cliff(M) { buildStairs(M, 'kit_stairs_cliff'); },
+    // ── Ashigaru (foot soldiers' round fort): white plaster and timber, dark tile and thatch, sharpened stakes,
+    //    crimson + gold banners with the sprout emblem ──
+    // great dojo on a stone plinth: open front between red curtains, a black hanging with the emblem in the doorway
+    ashi_great_dojo(M) {
+      const W = 24, D = 15, Z = 1.4;
+      M.block('stone', 0, 0, 0, W + 1.6, D + 1.6, Z); steps(M, 0, -(D + 1.6) / 2, Z, 8, 4); M.block('wood', 0, 0, Z, W + .8, D + .8, .12);
+      walls(M, 0, 0, Z + .12, W, D, 5.4, { door: [7, 4.4], windows: [['left', -3, Z + 2.2, 3, 1.6], ['left', 3, Z + 2.2, 3, 1.6], ['right', -3, Z + 2.2, 3, 1.6], ['right', 3, Z + 2.2, 3, 1.6], ['back', -7, Z + 2.2, 3, 1.6], ['back', 7, Z + 2.2, 3, 1.6]] });
+      M.quad('ashi_door', [[-2.2, -D / 2 + 1.2, Z + .3], [2.2, -D / 2 + 1.2, Z + .3], [2.2, -D / 2 + 1.2, Z + 4.4], [-2.2, -D / 2 + 1.2, Z + 4.4]]);
+      for (const sd of [-1, 1]) { // red curtains gathered to the sides of the opening
+        M.quad('cloth', [[sd * 3.5, -D / 2 - .2, Z + 4.45], [sd * 1.7, -D / 2 - .25, Z + 4.45], [sd * 2.9, -D / 2 - .3, Z + 1.6], [sd * 3.5, -D / 2 - .22, Z + .4]]);
+        M.quad('cloth', [[sd * 3.5, -D / 2 - .22, Z + .4], [sd * 2.9, -D / 2 - .3, Z + 1.6], [sd * 3.2, -D / 2 - .26, Z + .3], [sd * 3.5, -D / 2 - .2, Z + .3]]);
+      }
+      M.quad('cloth', [[-3.6, -D / 2 - .24, Z + 4.5], [3.6, -D / 2 - .24, Z + 4.5], [3.6, -D / 2 - .24, Z + 3.8], [-3.6, -D / 2 - .24, Z + 3.8]]);
+      for (const sd of [-1, 1]) for (const x of [6, 9.6]) banner(M, sd * x, -D / 2 - .18, Z + 4.9, 2, 3.6, 'banner_ashigaru');
+      M.roof(0, 0, Z + 5.5, W + 3.6, D + 3.6, 3.6, { lift: .8 });
+      for (const sd of [-1, 1]) lantern(M, sd * 4.4, -D / 2 - .6, Z + 4.6);
+      for (const sd of [-1, 1]) { M.block('wood', sd * 6.4, -D / 2 - 1.9, 0, 1, .8, .8); M.block('wood', sd * 6.6, -D / 2 - 1.8, .8, .8, .6, .6); M.cyl('wood', [sd * 7.6, -D / 2 - 1.5, 0], .35, .8, 10); }
+    },
+    // long hall (archive / strategy hall): plaster and timber on a stone base, a big banner beside the lit doorway
+    ashi_archive(M) { ashiHall(M, 'banner_ashi_scroll', -1); },
+    ashi_strategy_hall(M) { ashiHall(M, 'banner_ashi_board', 1); },
+    ashi_house(M) { B.sam_house(M); noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ashigaru'); },
+    ashi_house_tile(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ashigaru'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_ashigaru'); },
+    ashi_house_brown(M) { M.remap = { thatch: 'roof_brown' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ashigaru'); },
+    ashi_watchtower(M) { M.remap = { banner_red: 'banner_ashigaru' }; B.sam_watchtower(M); M.remap = null; banner(M, 0, -2.1, 7.6, 1.8, 3.4, 'banner_ashigaru'); },
+    ashi_banner_pole(M) { M.remap = { banner_red: 'banner_ashigaru' }; B.sam_banner_pole(M); },
+    // gate between two square towers (stone base, timber walls with a big banner, gallery, tiled roof); a roofed
+    // gateway with open doors between them
+    ashi_gate(M) {
+      const OW = 6, S = 4.6, H = 7.4;
+      for (const sd of [-1, 1]) {
+        const x = sd * (OW / 2 + S / 2 + .2);
+        M.block('stone', x, 0, 0, S + .5, S + .5, 1.6);
+        for (const px of [-1, 1]) for (const py of [-1, 1]) M.block('darkwood', x + px * (S / 2 - .15), py * (S / 2 - .15), 1.6, .3, .3, H - 1.6);
+        for (const [cx, cy, sx, sy] of [[x, -S / 2 + .15, S - .3, .2], [x, S / 2 - .15, S - .3, .2], [x - S / 2 + .15, 0, .2, S - .3], [x + S / 2 - .15, 0, .2, S - .3]]) { M.block('wood', cx, cy, 1.6, sx, sy, H - 2.8); M.block('darkwood', cx, cy, 1.6 + (H - 2.8) / 2, sx + .06, sy + .06, .18); }
+        M.block('wood', x, 0, H - 1.2, S + 1, S + 1, .25);
+        for (const [cx, cy, sx, sy] of [[x, -(S + 1) / 2, S + 1, .12], [x, (S + 1) / 2, S + 1, .12], [x - (S + 1) / 2, 0, .12, S + 1], [x + (S + 1) / 2, 0, .12, S + 1]]) { M.block('darkwood', cx, cy, H - .55, sx, sy, .12); M.block('darkwood', cx, cy, H - .95, sx, sy, .1); }
+        for (const px of [-1, 1]) for (const py of [-1, 1]) M.block('darkwood', x + px * (S + .8) / 2, py * (S + .8) / 2, H - 1, .16, .16, 2.2);
+        M.roof(x, 0, H + 1.1, S + 2.6, S + 2.6, 1.9, { lift: .5, ornaments: false });
+        banner(M, x, -S / 2 - .05, H - 1.5, 2.4, 3.6, 'banner_ashigaru');
+        lantern(M, x - sd * (S / 2 + .3), -S / 2 - .3, H - 1.3, .24);
+      }
+      for (const sd of [-1, 1]) for (const y of [-1.3, 1.3]) M.block('darkwood', sd * (OW / 2 + .1), y, 0, .4, .4, 5.4);
+      for (const y of [-1.3, 1.3]) M.box('darkwood', [0, y, 5.2], [OW + 1, .4, .4]);
+      M.block('wood', 0, 0, 5.4, OW + 1.2, 3.2, .3);
+      for (const sd of [-1, 1]) M.block('wood', sd * (OW / 2 - .15), 2.75, 0, .2, 2.7, 4.6); // doors swung open, back against the towers
+      M.roof(0, 0, 5.75, OW + 2.6, 4.6, 1.8, { lift: .6 });
+      noren(M, 0, -1.55, 5.15, OW - .4, 1.2, 'noren_ashigaru');
+    },
+    // 8 m of palisade: sharpened stakes, two rails and raking props on the inside (+y); outside faces -y
+    ashi_palisade(M) { ashiPalisade(M, false); },
+    ashi_palisade_banner(M) { ashiPalisade(M, true); },
+    // plank bridge over the moat, 20 m: rises 2.4 m from the outer bank (-y end, at the origin) to the gate
+    ashi_bridge(M) {
+      const L = 20, Wd = 3.4, H = 2.4, a = Math.atan2(H, L), Ls = Math.hypot(L, H), zAt = y => H * (y + L / 2) / L;
+      M.box('wood', [0, 0, H / 2 - .13], [Wd, Ls, .26], 0, a);
+      for (let i = 0; i < 46; i++) { const y = -L / 2 + .25 + i * (L - .5) / 45; M.box('darkwood', [0, y, zAt(y) + .005], [Wd, .05, .03], 0, a); }
+      for (const sd of [-1, 1]) M.box('darkwood', [sd * (Wd / 2 - .1), 0, H / 2 - .45], [.24, Ls, .32], 0, a);
+      for (let i = 0; i <= 8; i++) {
+        const y = -L / 2 + .3 + i * (L - .6) / 8, z = zAt(y);
+        for (const sd of [-1, 1]) { M.block('darkwood', sd * (Wd / 2 + .06), y, z - .4, .2, .2, 1.6); M.cyl('darkwood', [sd * (Wd / 2 + .06), y, z + 1.2], .1, .08, 6, .03); }
+        if (i > 1 && i < 8) for (const sd of [-1, 1]) M.block('darkwood', sd * (Wd / 2 - .3), y, -4.2, .3, .3, z + 4); // piles down into the ditch
+      }
+      for (const sd of [-1, 1]) for (const dz of [1.1, .6]) M.rod('wood', [sd * (Wd / 2 + .06), -L / 2 + .3, zAt(-L / 2 + .3) + dz], [sd * (Wd / 2 + .06), L / 2 - .3, zAt(L / 2 - .3) + dz], .06, 5);
+    },
+    // open workshop shed: thatched roof on posts, a workbench with tools, a log pile, a sawhorse
+    ashi_workshop(M) {
+      const W = 10, D = 7;
+      M.block('earth', 0, 0, 0, W + .6, D + .6, .12);
+      for (const x of [-W / 2 + .3, 0, W / 2 - .3]) for (const y of [-D / 2 + .3, D / 2 - .3]) M.block('wood', x, y, 0, .32, .32, y < 0 ? 3.6 : 3.3);
+      for (const y of [-D / 2 + .3, D / 2 - .3]) M.box('wood', [0, y, y < 0 ? 3.6 : 3.3], [W + .4, .3, .3]);
+      M.roof(0, 0, 3.6, W + 2.6, D + 2.6, 2.6, { lift: .3, mat: 'thatch', fascia: 'darkwood', ornaments: false, gable: false });
+      M.block('wood', 0, D / 2 - .3, 0, W - .6, .2, 2); // back wall boards
+      M.block('wood', -1.5, 1.6, 0, 4, 1.1, .9); M.block('darkwood', -1.5, 1.6, .9, 4.2, 1.2, .1);
+      for (let i = 0; i < 5; i++) M.rod('iron', [-3.2 + i * .45, D / 2 - .45, 1.1], [-3.2 + i * .45, D / 2 - .45, 1.8], .03, 4);
+      M.block('iron', -.6, 1.5, 1, .9, .35, .25); M.cyl('wood', [-2.6, 1.6, 1], .2, .35, 8);
+      ashiLogs(M, 2.6, .8, 0, 3.4, 3);
+      for (const sd of [-1, 1]) for (const x of [-1, 1]) M.rod('wood', [-3.2 + x * .7, -1.8 + sd * .45, 0], [-3.2 + x * .7, -1.8 - sd * .2, .9], .07, 5);
+      M.box('wood', [-3.2, -1.8, .85], [2.2, .25, .25]);
+      ashiLogs(M, W / 2 + 1.2, -1, 0, 3, 2);
+    },
+    ashi_log_pile(M) { ashiLogs(M, 0, 0, 0, 4, 3); },
+    // cheval de frise: a log with crossed sharpened stakes, 3.4 m
+    ashi_barricade(M) {
+      M.rod('bark', [-1.7, 0, .75], [1.7, 0, .75], .18, 8);
+      for (let i = 0; i < 4; i++) { const x = -1.35 + i * .9; for (const sd of [-1, 1]) { M.rod('wood', [x, -sd * .9, 0], [x, sd * .7, 1.5], .07, 5); M.cyl('wood', [x, sd * .7, 1.5], .07, 0, 5, .01); } }
+    },
+    // short fence of sharpened stakes, 3 m
+    ashi_stake_fence(M) {
+      for (let i = 0; i < 9; i++) { const x = -1.35 + i * .34, h = 1.4 + .15 * Math.sin(i * 2.1); M.cyl('wood', [x, 0, 0], .15, h, 6); M.cyl('wood', [x, 0, h], .15, .35, 6, .01); }
+      for (const z of [.45, 1.05]) M.box('darkwood', [0, .12, z], [3, .08, .12]);
+    },
+    // archery target: a straw roll on a stand
+    ashi_target(M) {
+      for (const sd of [-1, 1]) M.rod('wood', [sd * .7, .35, 0], [sd * .4, 0, 1.9], .06, 5);
+      M.rod('wood', [0, .7, 0], [0, .08, 1.7], .06, 5);
+      M.tube('straw', [0, -.08, 1.25], [0, .12, 1.25], .62, .62, 16);
+      for (const [r, m, k] of [[.46, 'red', 1], [.3, 'plaster', 2], [.14, 'red', 3]]) M.tube(m, [0, -.08 - .005 * k, 1.25], [0, -.085 - .005 * k, 1.25], r, r, 16);
+    },
+    // ── Ronin (the forgotten clan): dark timber, aged plaster, charcoal tile, grey granite; crimson banners ──
+    // the dojo (Miguel's image 2): a U of halls round an open training floor with the emblem inlaid, a railing and
+    // central stairs at the front, weapon racks, heavy bags, an altar at the back. 30 x 24 m; front faces -y
+    ronin_great_dojo(M) {
+      M.remap = { plaster: 'plaster_old' };
+      const Z = 1.6, W = 30, D = 24;
+      M.block('stone', 0, 0, 0, W, D, Z); steps(M, 0, -D / 2, Z, 9, 5); // granite platform, stairs at the front
+      M.block('slate', 0, -1.6, Z, 18, 15, .08); M.quad('ronin_floor', [[-6.5, -8.5, Z + .1], [6.5, -8.5, Z + .1], [6.5, 4.5, Z + .1], [-6.5, 4.5, Z + .1]]);
+      // back hall and the two wings
+      walls(M, 0, 8.5, Z, W - .4, 6.6, 5.2, { door: [4, 3.6], windows: [['front', -9, Z + 1.6, 3.4, 1.8], ['front', 9, Z + 1.6, 3.4, 1.8], ['back', -8, Z + 1.6, 3, 1.6], ['back', 8, Z + 1.6, 3, 1.6]] });
+      for (const sd of [-1, 1]) walls(M, sd * 12, -3.4, Z, 5.8, 17, 4.6, { windows: [[sd < 0 ? 'right' : 'left', -3, Z + 1.4, 3, 1.6], [sd < 0 ? 'right' : 'left', 3.5, Z + 1.4, 3, 1.6], [sd < 0 ? 'left' : 'right', 0, Z + 1.4, 3, 1.6]] });
+      M.remap = null;
+      M.roof(0, 8.5, Z + 5.2, W + 2.6, 9.4, 3.2, { lift: .8 });
+      for (const sd of [-1, 1]) M.roof(sd * 12, -3.6, Z + 4.6, 8.6, 19.6, 2.6, { lift: .6, ornaments: false });
+      // the open floor: posts, a railing along the front with a gap for the stairs, the altar, racks, bags
+      for (const x of [-8.6, -4.3, 0, 4.3, 8.6]) M.block('darkwood', x, 5.1, Z, .4, .4, 5.2);
+      for (const sd of [-1, 1]) { for (const y of [-10.6, -6, -1.4, 3]) M.block('darkwood', sd * 8.85, y, Z, .36, .36, 4.6); M.box('darkwood', [sd * 8.85, -3.8, Z + 4.4], [.3, 15, .35]); }
+      for (const sd of [-1, 1]) { for (const x of [5, 8.5]) { M.block('darkwood', sd * x, -11.6, Z, .24, .24, 1.15); M.cyl('iron', [sd * x, -11.6, Z + 1.15], .16, .12, 4, .1); } M.box('darkwood', [sd * 6.75, -11.6, Z + .95], [3.6, .14, .14]); M.box('darkwood', [sd * 6.75, -11.6, Z + .45], [3.6, .1, .1]); }
+      M.block('darkwood', 0, 4.2, Z, 4.2, 1.4, .9); M.block('wood', 0, 4.2, Z + .9, 4.6, 1.6, .12); M.cyl('darkwood', [0, 4.2, Z + 1], .6, .45, 10); // altar with the drum
+      for (const sd of [-1, 1]) { lantern(M, sd * 2.6, 4.4, Z + 1.6, .2); M.block('stone', sd * 2.6, 4.4, Z, .4, .4, 1); }
+      for (const [x, y] of [[-7.8, -6], [-7.8, -1.5], [7.8, -6], [7.8, -1.5]]) { M.block('darkwood', x, y, Z, .5, 2.4, .12); for (let i = 0; i < 5; i++) M.rod('wood', [x, y - .9 + i * .45, Z + .1], [x - Math.sign(x) * .1, y - .9 + i * .45, Z + 2.4], .04, 4); }
+      for (const [x, y] of [[-6.4, -8.8], [6.4, -8.8], [-6.4, 2.2], [6.4, 2.2]]) { M.rod('rope', [x, y, Z + 4.4], [x, y, Z + 3.2], .03, 4); M.cyl('cloth', [x, y, Z + 1.1], .32, 2.1, 10); M.cyl('darkwood', [x, y, Z + 3.1], .34, .12, 10); }
+      banner(M, 0, 5.15 - .25, Z + 5, 2.8, 3.4, 'banner_ronin');
+      for (const sd of [-1, 1]) { banner(M, sd * (W / 2 + .02), -3.4, Z + 4.2, 2, 3.2, 'banner_ronin'); lantern(M, sd * 9.6, -12, Z + 4.2, .25); lantern(M, sd * 4.8, 5.2 - .5, Z + 4.6, .25); }
+    },
+    // the library: two storeys, a lit shop room with shelves below, a balcony with a railing, a scroll banner
+    ronin_library(M) {
+      const W = 16, D = 10;
+      M.block('stone', 0, 0, 0, W + 1.6, D + 1.6, .9); steps(M, 0, -(D + 1.6) / 2, .9, 5, 2);
+      M.remap = { plaster: 'plaster_old' };
+      walls(M, 0, 0, .9, W, D, 4, { door: [5, 3.2], windows: [['front', -5.4, 1.9, 2.8, 1.8], ['front', 5.4, 1.9, 2.8, 1.8], ['left', -2, 1.9, 3, 1.8], ['right', 2, 1.9, 3, 1.8]] });
+      for (let i = 0; i < 4; i++) M.block('wood', -1.8 + i * 1.2, -D / 2 + 1.6, .9, .9, .5, 2.6); // shelves seen through the door
+      M.block('wood', 0, -D / 2 - .8, 4.9, W + 1, 2, .25); // balcony
+      for (let i = 0; i <= 10; i++) M.block('darkwood', -W / 2 - .3 + i * (W + .6) / 10, -D / 2 - 1.7, 5.15, .14, .14, 1);
+      M.box('darkwood', [0, -D / 2 - 1.7, 6.15], [W + .8, .16, .16]); M.box('darkwood', [0, -D / 2 - 1.7, 5.6], [W + .8, .1, .1]);
+      for (const x of [-W / 2 - .2, -W / 4, W / 4, W / 2 + .2]) M.block('darkwood', x, -D / 2 - 1.7, .9, .26, .26, 4);
+      walls(M, 0, .6, 5.15, W - 1.6, D - 1.6, 3.4, { windows: [['front', -4.6, 5.9, 2.4, 1.6], ['front', 0, 5.9, 2.4, 1.6], ['front', 4.6, 5.9, 2.4, 1.6], ['left', 0, 5.9, 3, 1.6], ['right', 0, 5.9, 3, 1.6]], postStep: 2.8 });
+      M.remap = null;
+      M.roof(0, -.2, 4.9, W + 2.8, D + 3.4, 1, { lift: .5, gable: false, ornaments: false });
+      M.roof(0, .6, 8.55, W + 1.6, D + 1.8, 3.3, { lift: .8 });
+      banner(M, W / 2 - 3.2, -D / 2 - 1.85, 8.3, 3.2, 4.2, 'banner_ronin_scroll');
+      for (const sd of [-1, 1]) { lantern(M, sd * 3, -D / 2 - .4, 3.8, .24); lantern(M, sd * (W / 2 + .1), -D / 2 - 1.8, 8.2, .24); }
+    },
+    // strategy hall: wide single storey with a veranda and a big board banner
+    ronin_strategy_hall(M) {
+      const W = 18, D = 11;
+      M.block('stone', 0, 0, 0, W + 2.4, D + 2.4, .9); steps(M, 0, -(D + 2.4) / 2, .9, 5, 2);
+      M.remap = { plaster: 'plaster_old' };
+      walls(M, 0, .6, .9, W, D - 1.2, 4.6, { door: [3.6, 3.2], windows: [['front', -6.5, 2, 2.6, 1.8], ['left', 0, 2, 3, 1.8], ['right', 0, 2, 3, 1.8], ['back', 0, 2, 3, 1.8]] });
+      M.remap = null;
+      M.block('wood', 0, -D / 2 - .2, .9, W + 1.6, 1.8, .12);
+      for (let i = 0; i <= 6; i++) M.block('darkwood', -W / 2 - .6 + i * (W + 1.2) / 6, -D / 2 - .9, 1, .3, .3, 4.3);
+      for (const sd of [-1, 1]) { M.box('darkwood', [sd * (W / 4 + 1.8), -D / 2 - .9, 1.9], [W / 2 - 2.6, .12, .12]); for (let i = 0; i < 7; i++) M.block('darkwood', sd * (3 + i * 1.05), -D / 2 - .9, 1, .08, .08, .9); }
+      M.roof(0, 0, 5.4, W + 3.6, D + 3.6, 3.4, { lift: .8 });
+      banner(M, 4.4, -D / 2 + .25, 5.2, 5, 3.8, 'banner_ronin_board');
+      noren(M, 0, -D / 2 + .3, 4, 3.4, .9, 'noren_ronin');
+      for (const sd of [-1, 1]) lantern(M, sd * 2.6, -D / 2 - .9, 4.9, .24);
+      for (const [x, y] of [[-8.2, -D / 2 - 2], [8.6, -D / 2 - 1.8]]) { M.block('wood', x, y, 0, .9, .8, .8); M.block('wood', x + .3, y + .1, .8, .7, .6, .6); }
+    },
+    ronin_house(M) { M.remap = { thatch: 'roof', plaster: 'plaster_old' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ronin'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_ronin'); },
+    ronin_house_large(M) {
+      const W = 12, D = 8;
+      M.block('stone', 0, 0, 0, W + 1, D + 1, .7);
+      M.remap = { plaster: 'plaster_old' };
+      walls(M, 0, 0, .7, W, D, 3.8, { door: [2.4, 2.8], windows: [['front', -3.6, 1.7, 2.4, 1.6], ['front', 3.6, 1.7, 2.4, 1.6], ['left', 0, 1.7, 2.6, 1.6], ['right', 0, 1.7, 2.6, 1.6]] });
+      M.remap = null;
+      M.roof(0, 0, 4.5, W + 3, D + 3, 3, { lift: .6 });
+      noren(M, 0, -D / 2 - .2, 3.4, 2.6, .9, 'noren_ronin'); banner(M, -5.2, -D / 2 - .18, 4, 1.2, 2.6, 'banner_ronin');
+      lantern(M, 1.8, -D / 2 - .5, 3.9, .22); M.block('wood', 4.6, -D / 2 - 1.1, 0, 1, .9, .9); M.cyl('wood', [5.7, -D / 2 - .9, 0], .35, .85, 10);
+    },
+    // gate: a timber gatehouse with a tiled roof and open studded doors between two granite bastions, each with a
+    // small lit watch cabin on top and a long banner; braziers on stone posts in front
+    ronin_gate(M) {
+      const OW = 6.4, S = 6;
+      for (const sd of [-1, 1]) {
+        const x = sd * (OW / 2 + S / 2);
+        M.block('stone', x, 0, 0, S, 6.4, 6.6); M.block('stone', x, 0, 6.6, S + .4, 6.8, .35);
+        M.remap = { plaster: 'plaster_old' }; walls(M, x, 0, 6.95, 3.6, 3.6, 2.6, { windows: [['front', 0, 7.7, 2, 1.3], [sd < 0 ? 'left' : 'right', 0, 7.7, 1.8, 1.3]], postStep: 1.8 }); M.remap = null;
+        M.roof(x, 0, 9.55, 5.6, 5.6, 1.9, { lift: .5, ornaments: false });
+        banner(M, x, -3.22, 6.1, 2.6, 4.6, 'banner_ronin');
+        M.block('stone', sd * (OW / 2 + S + 1.4), -4.6, 0, .9, .9, 1.6); M.cyl('iron', [sd * (OW / 2 + S + 1.4), -4.6, 1.6], .4, .4, 8, .55); M.quad('fire', [[sd * (OW / 2 + S + 1.4) - .35, -4.6, 2], [sd * (OW / 2 + S + 1.4) + .35, -4.6, 2], [sd * (OW / 2 + S + 1.4) + .15, -4.6, 2.8], [sd * (OW / 2 + S + 1.4) - .15, -4.6, 2.8]]);
+        M.quad('glow', [[sd * (OW / 2 + S + 1.4) - 2.2, -6.8, .06], [sd * (OW / 2 + S + 1.4) + 2.2, -6.8, .06], [sd * (OW / 2 + S + 1.4) + 2.2, -2.4, .06], [sd * (OW / 2 + S + 1.4) - 2.2, -2.4, .06]]);
+      }
+      for (const sd of [-1, 1]) for (const y of [-1.6, 1.6]) M.block('darkwood', sd * (OW / 2 + .2), y, 0, .5, .5, 6.2);
+      for (const y of [-1.6, 1.6]) M.box('darkwood', [0, y, 6], [OW + 1.4, .45, .5]);
+      M.block('darkwood', 0, 0, 6.25, OW + 1.6, 3.8, .35);
+      M.roof(0, 0, 6.6, OW + 4, 5.6, 2.2, { lift: .7 });
+      for (const sd of [-1, 1]) { M.block('darkwood', sd * (OW / 2 - .15), 3, 0, .22, 3, 5.6); for (const z of [1.2, 2.6, 4]) for (const k of [-1, 0, 1]) M.cyl('iron', [sd * (OW / 2 - .28), 3 + k * .9, z], .06, .03, 4); }
+      noren(M, 0, -1.95, 5.75, OW - .6, 1.1, 'noren_ronin');
+      for (const sd of [-1, 1]) lantern(M, sd * (OW / 2 + .2), -2.05, 5.4, .26);
+    },
+    // granite wall, 8 m, with a dark tiled coping
+    ronin_wall(M) {
+      M.block('stone', 0, 0, 0, 8, 1.6, 3.8);
+      M.block('darkwood', 0, 0, 3.8, 8.1, 1.9, .18);
+      M.roof(0, 0, 3.98, 8.6, 2.6, .55, { lift: .1, gable: false, ornaments: false });
+    },
+    ronin_wall_banner(M) { B.ronin_wall(M); banner(M, 0, -.82, 3.55, 1.7, 2.9, 'banner_ronin'); },
+    // stone lantern pillar: a square granite post with a lit lantern box and a little roof
+    ronin_lantern_pillar(M) {
+      M.block('stone', 0, 0, 0, .9, .9, .35); M.block('stone', 0, 0, .35, .62, .62, 1.5);
+      M.block('darkwood', 0, 0, 1.85, .7, .7, .08); M.block('lantern', 0, 0, 1.93, .52, .52, .55);
+      for (const [x, y] of [[-.28, -.28], [.28, -.28], [-.28, .28], [.28, .28]]) M.block('darkwood', x, y, 1.93, .07, .07, .55);
+      M.cyl('roof', [0, 0, 2.48], .62, .32, 4, .1);
+      M.quad('glow', [[-2.2, -2.2, .06], [2.2, -2.2, .06], [2.2, 2.2, .06], [-2.2, 2.2, .06]]);
+    },
+    // dark wood railing, 4 m, iron caps (terraces, stairs, the yard)
+    ronin_rail(M) {
+      for (const x of [-2, 0, 2]) { M.block('darkwood', x, 0, 0, .2, .2, 1.15); M.cyl('iron', [x, 0, 1.15], .14, .1, 4, .08); }
+      M.box('darkwood', [0, 0, 1], [4.1, .14, .14]); M.box('darkwood', [0, 0, .5], [4.1, .1, .1]);
+      for (let i = 0; i < 8; i++) M.block('darkwood', -1.75 + i * .5, 0, .5, .05, .05, .5);
+    },
+    // the well under a small tiled roof on four posts, lanterns hanging from the beams
+    ronin_well(M) {
+      M.cyl('stone', [0, 0, 0], 1.45, 1.05, 16); M.cyl('water', [0, 0, .3], 1.18, .7, 16); M.cyl('stone', [0, 0, 1.05], 1.55, .12, 16);
+      for (const [x, y] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) M.block('darkwood', x, y, 0, .22, .22, 3.1);
+      for (const y of [-1.5, 1.5]) M.box('darkwood', [0, y, 3], [3.4, .2, .2]);
+      M.box('wood', [0, 0, 2.7], [3.2, .18, .18]); M.cyl('rope', [0, 0, 1.5], .03, 1.15, 4); M.cyl('darkwood', [0, 0, 1.25], .22, .3, 8);
+      M.roof(0, 0, 3.15, 4.4, 4.4, 1.3, { lift: .35, ornaments: false });
+      for (const [x, y] of [[-1.5, -1.6], [1.5, -1.6]]) lantern(M, x, y, 2.8, .2);
+      M.cyl('wood', [1.9, .9, 0], .3, .45, 8, .26); M.block('wood', -2, .6, 0, .6, .6, .6);
+    },
+    // wooden training dummy (three arms, a leg) on a square base
+    ronin_dummy(M) {
+      M.block('stone', 0, 0, 0, .9, .9, .25); M.cyl('wood', [0, 0, .25], .24, 1.9, 10);
+      for (const z of [.7, 1.25, 1.75]) M.cyl('rope', [0, 0, z], .27, .14, 10);
+      for (const [z, a] of [[1.55, .45], [1.55, -.45], [1.15, 0]]) M.rod('darkwood', [0, 0, z], [Math.sin(a) * .62, -Math.cos(a) * .62, z + .04], .05, 5);
+      M.rod('darkwood', [0, 0, .55], [.1, -.55, .3], .06, 5);
+      M.cyl('darkwood', [0, 0, 2.15], .26, .1, 10);
+    },
+    ronin_banner_pole(M) {
+      M.cyl('darkwood', [0, 0, 0], .1, 5.6, 8); M.block('stone', 0, 0, 0, .7, .7, .4);
+      M.box('darkwood', [0, -.02, 5.3], [1.8, .1, .1]);
+      M.quad('banner_ronin', [[-.8, -.06, 1.6], [.8, -.06, 1.6], [.8, -.06, 5.25], [-.8, -.06, 5.25]]);
+      for (const sd of [-1, 1]) M.cyl('iron', [sd * .9, -.02, 5.3], .06, .14, 4, .02);
+      M.cyl('gold', [0, 0, 5.6], .1, .3, 6, .02);
+    },
+    // a dark shrub (three needle clumps) and a mossy rock garden (beds along the walls)
+    ronin_shrub(M) { for (const [x, y, r, k] of [[0, 0, 1.1, 1], [.8, .4, .8, 2], [-.7, .3, .75, 3]]) blob(M, k === 1 ? 'needles_dark' : 'needles', [x, y, r * .7], r * 1.2, r * 1.1, r * .9, { amp: .3, freq: 2.4, seed: k * 11, segs: 10, rings: 6, flat: .5 }); },
+    ronin_rock_garden(M) {
+      for (const [x, y, s, k] of [[0, 0, 1.3, 1], [1.7, .6, .8, 2], [-1.5, .4, .9, 3], [.6, -1.2, .6, 4]]) blob(M, 'granite', [x, y, s * .35], s * 1.25, s, s * .85, { amp: .22, seed: k * 5.3, segs: 12, rings: 7, flat: .3 });
+      blob(M, 'moss', [.3, .2, 1.05], 1.1, .9, .3, { amp: .25, seed: 9, segs: 10, rings: 6 });
+      for (const [x, y, r, k] of [[-2.2, -.8, .7, 5], [2.6, -.6, .6, 6], [-.4, 1.6, .65, 7]]) blob(M, 'needles_dark', [x, y, r * .6], r * 1.2, r * 1.1, r * .85, { amp: .3, freq: 2.4, seed: k * 13, segs: 10, rings: 6, flat: .5 });
+    },
+    // stone brazier with a fire (paths, the gate court)
+    ronin_brazier(M) {
+      M.block('stone', 0, 0, 0, .8, .8, 1.1); M.cyl('iron', [0, 0, 1.1], .45, .35, 8, .6);
+      M.quad('fire', [[-.4, 0, 1.4], [.4, 0, 1.4], [.15, 0, 2.3], [-.15, 0, 2.3]]); M.quad('fire', [[0, -.4, 1.4], [0, .4, 1.4], [0, .15, 2.2], [0, -.15, 2.2]]);
+      M.quad('glow', [[-2.4, -2.4, .06], [2.4, -2.4, .06], [2.4, 2.4, .06], [-2.4, 2.4, .06]]);
+    },
+    // ── Ronin (the forgotten clan) ──
+    // the giant bonsai of the plaza: a twisted old trunk with roots clasping a mossy rock mound, long branches ending
+    // in layered cloud pads of pine needles. ~14 m tall, crown ~26 m across; base at the origin (mound 2.3 m high)
+    ronin_bonsai(M) {
+      const H0 = 2.25, moundZ = r => 2.4 * Math.sqrt(Math.max(0, 1 - (r / 7) ** 2));
+      // rock mound, boulders round its foot, moss, low shrubs, a kerb of flat stones
+      blob(M, 'granite', [0, 0, -.3], 7, 6.8, 2.6, { amp: .1, freq: 1.4, seed: 3, segs: 28, rings: 10, flat: .2, uvs: 5 });
+      for (let k = 0; k < 15; k++) { const a = k / 15 * 6.28 + .3 * Math.sin(k * 3.1), r = 6.2 + .9 * Math.sin(k * 1.7), s = 1 + .6 * Math.abs(Math.sin(k * 2.3)); blob(M, 'granite', [Math.cos(a) * r, Math.sin(a) * r, s * .35], s * 1.25, s, s * .85, { amp: .22, seed: k * 7.1, segs: 12, rings: 7, flat: .3 }); }
+      for (let k = 0; k < 9; k++) { const a = k / 9 * 6.28 + 1.1, r = 3 + 1.6 * Math.abs(Math.sin(k * 1.9)); blob(M, 'moss', [Math.cos(a) * r, Math.sin(a) * r, moundZ(r) - .25], 1.6, 1.3, .45, { amp: .25, seed: 40 + k, segs: 10, rings: 6 }); }
+      for (let k = 0; k < 11; k++) { const a = k / 11 * 6.28 + .45, r = 7.3 + .5 * Math.sin(k * 2.9), s = .7 + .35 * Math.abs(Math.sin(k * 1.3)); blob(M, 'needles_dark', [Math.cos(a) * r, Math.sin(a) * r, s * .5], s * 1.2, s * 1.1, s * .8, { amp: .3, freq: 2.4, seed: 60 + k, segs: 10, rings: 6 }); }
+      for (let k = 0; k < 30; k++) { const a = k / 30 * 6.28, r = 8.6; M.box('stone', [Math.cos(a) * r, Math.sin(a) * r, .1], [1.6, .9, .25], a + Math.PI / 2); }
+      // trunk: flared base, leaning and twisting up to the crown
+      const trunk = [[0, 0, H0 - .6], [-.5, .2, H0 + 1.4], [.7, .5, H0 + 3.4], [1.9, -.1, H0 + 5], [1.3, -.6, H0 + 6.8], [-.3, -.3, H0 + 8.2], [-1.5, .4, H0 + 9.6], [-.9, .7, H0 + 10.9], [.1, .4, H0 + 11.8]];
+      const tp = curveTube(M, 'bark_old', trunk, [3.6, 2.7, 2.25, 1.95, 1.7, 1.45, 1.22, 1.0, .78, .56], { segs: 24, n: 6, ridge: .17, k: 7, twist: .42, bump: .12, seed: 1 });
+      const at = z => tp.reduce((b, p) => Math.abs(p[2] - z) < Math.abs(b[2] - z) ? p : b, tp[0]);
+      // roots over the mound
+      for (let k = 0; k < 9; k++) {
+        const a = k / 9 * 6.28 + .35, P = [];
+        for (const r of [1.2, 2.4, 3.6, 4.8, 5.9, 6.8]) P.push([Math.cos(a + .06 * r * Math.sin(k)) * r, Math.sin(a + .06 * r * Math.sin(k)) * r, Math.max(.05, moundZ(r) + .15) + (r < 2 ? H0 - moundZ(r) - .2 : 0)]);
+        curveTube(M, 'bark_old', P, [.95, .7, .52, .36, .24, .13], { segs: 10, n: 3, ridge: .1, k: 3, twist: .5, bump: .15, seed: 10 + k });
+      }
+      // branches -> cloud pads [start z on the trunk, points..., pad: [x, y, z, rx, ry, h]]
+      const branches = [
+        [H0 + 4.2, [[5, -2.2, H0 + 4.9], [9, -3.2, H0 + 4.6], [12.4, -2.6, H0 + 5.3]], [12.8, -2.6, H0 + 5.9, 4.6, 3.6, 1.9], [[7.4, -4.1, H0 + 5.4, 2.4, 2, 1.2]]],
+        [H0 + 5.3, [[-4, 1.6, H0 + 5.8], [-8, 2.1, H0 + 5.9], [-11.6, 1, H0 + 6.6]], [-12, 1, H0 + 7.2, 4.4, 3.5, 1.8], [[-6.8, 3.2, H0 + 6.6, 2.2, 1.9, 1.1]]],
+        [H0 + 7, [[3.8, 3, H0 + 7.8], [7.4, 5, H0 + 8.2]], [7.9, 5.3, H0 + 8.9, 3.7, 3, 1.6], []],
+        [H0 + 8, [[-3.9, -3.4, H0 + 8.8], [-7, -5.5, H0 + 9]], [-7.5, -5.9, H0 + 9.6, 3.5, 2.9, 1.5], []],
+        [H0 + 9, [[3.4, -4, H0 + 9.6], [5.6, -6.1, H0 + 10.1]], [6, -6.4, H0 + 10.7, 3.1, 2.6, 1.4], []],
+        [H0 + 10.2, [[-3.8, 3, H0 + 11], [-6, 4.6, H0 + 11.4]], [-6.4, 4.8, H0 + 12, 3.2, 2.7, 1.4], []],
+        [H0 + 6.2, [[2.8, 4.6, H0 + 6.4], [4, 8.2, H0 + 6.2]], [4.2, 8.8, H0 + 6.9, 3, 2.6, 1.3], []]
+      ];
+      const pads = [[.2, .5, H0 + 12.6, 4.2, 3.6, 2.2], [2.6, -1.6, H0 + 11.2, 2.8, 2.4, 1.5], [-2.8, 2.2, H0 + 9.6, 2.6, 2.2, 1.4], [3.2, 2.2, H0 + 10.4, 2.6, 2.3, 1.4], [-3.4, -2, H0 + 7.4, 2.4, 2.1, 1.3]];
+      branches.forEach(([z0, pts, pad, extra], bi) => {
+        const s = at(z0), wig = [s];
+        [s, ...pts].forEach((q, k, A) => { if (!k) return; const p0 = A[k - 1]; wig.push([(p0[0] + q[0]) / 2 + .7 * Math.sin(bi * 2.3 + k), (p0[1] + q[1]) / 2 + .7 * Math.cos(bi * 1.7 + k), (p0[2] + q[2]) / 2 + .5 * Math.sin(bi + k * 1.9)], q); });
+        curveTube(M, 'bark_old', wig, [1.05, .8, .6, .44, .3], { segs: 14, n: 3, ridge: .1, k: 4, twist: .6, bump: .12, seed: 20 + bi });
+        pads.push(pad, ...extra);
+        for (const e of extra) { const q = pts[Math.floor(pts.length / 2)]; curveTube(M, 'bark_old', [q, [(q[0] + e[0]) / 2, (q[1] + e[1]) / 2, q[2] + .2], [e[0], e[1], e[2] - .3]], [.24, .18, .12], { segs: 8, n: 3, ridge: .05, bump: .1, seed: 30 + bi }); }
+      });
+      // a cloud pad: a dark flattened base and lighter needle tufts over its top and rim
+      pads.forEach(([x, y, z, rx, ry, h], pi) => {
+        blob(M, 'needles_dark', [x, y, z], rx * .96, ry * .96, h * .72, { amp: .22, freq: 1.8, seed: 80 + pi * 3, segs: 18, rings: 9, flat: .6, uvs: 4 });
+        blob(M, 'needles_dark', [x + .3 * rx * Math.sin(pi), y + .3 * ry * Math.cos(pi), z - h * .55], rx * .78, ry * .74, h * .42, { amp: .26, freq: 2.1, seed: 120 + pi, segs: 16, rings: 7, uvs: 4 }); // the drooping layer under it
+        const n = Math.round(14 + rx * ry * 1.5);
+        for (let k = 0; k < n; k++) { // tufts packed over the top (sunflower spiral), the outer ones lower: a rounded cloud
+          const a = k * 2.39996 + pi, f = Math.sqrt((k + .5) / n), px = x + Math.cos(a) * rx * .9 * f, py = y + Math.sin(a) * ry * .9 * f;
+          const top = z + h * .55 * Math.sqrt(Math.max(0, 1 - f * f)) + .05, r = .62 + .42 * hash3(k, pi, 3);
+          blob(M, f > .78 ? 'needles_dark' : 'needles', [px, py, top], r * 1.2, r * 1.1, r * .7, { amp: .34, freq: 2.8, seed: pi * 13 + k, segs: 9, rings: 5, flat: .5 });
+        }
+      });
+    },
+    // stone toro lantern for paths and stairs: the light box glows (no real light, so any number is cheap)
+    sam_stone_lantern(M) {
+      M.cyl('stone', [0, 0, 0], .5, .22, 6, .42); M.cyl('stone', [0, 0, .22], .17, 1.05, 6, .14);
+      M.block('stone', 0, 0, 1.27, .78, .78, .14);
+      M.block('lantern', 0, 0, 1.41, .46, .46, .48);
+      for (const x of [-.25, .25]) for (const y of [-.25, .25]) M.block('stone', x, y, 1.41, .1, .1, .48);
+      M.block('stone', 0, 0, 1.89, .7, .7, .1);
+      M.cyl('stone', [0, 0, 1.99], .62, .38, 4, .05); M.sphere('stone', [0, 0, 2.42], .09, 1, 6, 4);
+      M.quad('glow', [[-2.6, -2.6, .07], [2.6, -2.6, .07], [2.6, 2.6, .07], [-2.6, 2.6, .07]]);
+    }
+  };
+
+  // ── stairs ──────────────────────────────────────────────────────────────
+  // At scale 1: stone and wooden stairs climb 4 m in 6.4 m towards +y with a landing at the top; cliff stairs climb 12 m
+  // in two flights with a landing between. Flights are [y from, y to, height from, height to]; landings [y from, y to, height].
+  // Each placed staircase is built at its own size (the root's scale is undone on its meshes), with as many steps as
+  // keep each one ~0.3 m high; the walk surface uses the same count (stairsSteps), so feet stand on the treads.
+  const STAIRS = {
+    kit_stairs_stone: { W: 3, flights: [[-3.2, 3.2, 0, 4]], landings: [[3.2, 4.4, 4]] },
+    kit_stairs_wood: { W: 2.6, wood: true, flights: [[-3.2, 3.2, 0, 4]], landings: [[3.2, 4.4, 4]] },
+    kit_stairs_cliff: { W: 3, lanterns: true, flights: [[-10.6, -1, 0, 6], [1, 10.6, 6, 12]], landings: [[-1, 1, 6], [10.6, 11.8, 12]] }
+  };
+  const STEP = .3;
+  function stairsSteps(type, sy = 1) { const S = STAIRS[type]; return S ? S.flights.map(f => Math.max(3, Math.round((f[3] - f[2]) * sy / STEP))) : null; }
+  function buildStairs(M, type) {
+    const S = STAIRS[type], [sx, sy, sz] = M.stairsScale || [1, 1, 1], W = S.W * sx, n = stairsSteps(type, sy);
+    S.flights.forEach(([a, b, h0, h1], k) => {
+      const y0 = a * sz, y1 = b * sz, z0 = h0 * sy, z1 = h1 * sy, N = n[k], t = (y1 - y0) / N, L = Math.hypot(y1 - y0, z1 - z0), ang = Math.atan2(z1 - z0, y1 - y0);
+      for (let i = 0; i < N; i++) {
+        const top = z0 + (i + 1) * (z1 - z0) / N, yc = y0 + (i + .5) * t;
+        if (S.wood) M.box('wood', [0, yc, top - .05], [W, t + .04, .1]);
+        else { M.block('stone', 0, yc, 0, W, t + .02, top); for (const sd of [-1, 1]) M.block('stone', sd * (W / 2 + .2), yc, 0, .4, t + .02, top + .45); }
+      }
+      if (S.wood) for (const sd of [-1, 1]) {
+        M.box('darkwood', [sd * W / 2, (y0 + y1) / 2, (z0 + z1) / 2 - .15], [.16, L, .32], 0, ang);
+        const posts = Math.max(2, Math.ceil(L / 2.5));
+        for (let q = 0; q <= posts; q++) { const f = q / posts; M.block('darkwood', sd * (W / 2 + .1), y0 + f * (y1 - y0), 0, .16, .16, z0 + f * (z1 - z0) + 1); }
+        M.rod('darkwood', [sd * (W / 2 + .1), y0, z0 + 1], [sd * (W / 2 + .1), y1, z1 + 1], .05, 6);
+      }
+    });
+    S.landings.forEach(([a, b, h]) => {
+      const y0 = a * sz, y1 = b * sz, z = h * sy;
+      if (S.wood) { M.block('wood', 0, (y0 + y1) / 2, z - .12, W, y1 - y0, .12); for (const sd of [-1, 1]) for (const y of [y0, y1]) M.block('darkwood', sd * (W / 2 - .1), y, 0, .18, .18, z); }
+      else { M.block('stone', 0, (y0 + y1) / 2, 0, W, y1 - y0, z); for (const sd of [-1, 1]) M.block('stone', sd * (W / 2 + .2), (y0 + y1) / 2, 0, .4, y1 - y0, z + .45); }
+      if (S.lanterns && h < S.landings[S.landings.length - 1][2]) for (const sd of [-1, 1]) M.cyl('lantern', [sd * (W / 2 + .2), (y0 + y1) / 2, z + .45], .16, .35, 6);
+    });
+  }
+  // a placed staircase's own meshes, at its size; rebuilt when it is rescaled (refreshStairs, from the walk-surface pass)
+  const stairsKey = r => [r.scaling.x, r.scaling.y, r.scaling.z].map(v => Math.abs(v || 1).toFixed(3)).join('|');
+  function buildStairsFor(root, type, scene, shadows, skipShadows) {
+    const sx = Math.abs(root.scaling.x || 1), sy = Math.abs(root.scaling.y || 1), sz = Math.abs(root.scaling.z || 1), M = new Kit();
+    M.stairsScale = [sx, sy, sz]; B[type](M);
+    for (const [mat, P] of Object.entries(M.parts)) {
+      const m = new BABYLON.Mesh(`${root.name}_${mat}`, scene), vd = new BABYLON.VertexData();
+      vd.positions = P.p; vd.normals = P.n; vd.uvs = P.uv; vd.indices = P.i; vd.applyToMesh(m);
+      m.material = material(scene, mat); m.parent = root; m.scaling.set(1 / sx, 1 / sy, 1 / sz);
+      m.isPickable = true; m._editRoot = root; m.checkCollisions = false; m.receiveShadows = true; m.metadata = { kitStairsMesh: true };
+      if (shadows && !skipShadows) shadows.addShadowCaster(m);
+    }
+    root._kitStairsKey = stairsKey(root); root._kitStairsShadows = shadows; root._kitStairsSkip = skipShadows;
+  }
+  function refreshStairs(root, scene) {
+    const type = root?.metadata?.type; if (!STAIRS[type] || root._kitStairsKey === stairsKey(root)) return false;
+    root.getChildMeshes(true).forEach(m => { if (m.metadata?.kitStairsMesh) m.dispose(); });
+    buildStairsFor(root, type, scene || root.getScene(), root._kitStairsShadows, root._kitStairsSkip);
+    return true;
+  }
+
+  // ── templates + placement ───────────────────────────────────────────────
+  const templates = {};
+  let parkRoot = null;
+  function template(scene, type) {
+    const t = templates[type];
+    if (t && t.every(m => !m.isDisposed())) return t;
+    const M = new Kit(); B[type](M);
+    parkRoot = parkRoot && !parkRoot.isDisposed() ? parkRoot : new BABYLON.TransformNode('samKitTemplates', scene);
+    parkRoot.position.set(0, -10000, 0);
+    const meshes = Object.entries(M.parts).map(([mat, P]) => {
+      const m = new BABYLON.Mesh(`samKit_${type}_${mat}`, scene), vd = new BABYLON.VertexData();
+      vd.positions = P.p; vd.normals = P.n; vd.uvs = P.uv; vd.indices = P.i; vd.applyToMesh(m);
+      m.material = material(scene, mat); m.parent = parkRoot; m.isPickable = false; m.receiveShadows = true; m.metadata = { isKitTemplate: true };
+      m.freezeNormals();
+      return m;
+    });
+    return (templates[type] = meshes);
+  }
+  // Fill a placed root (from spawnAsset) with instances of the type's template meshes.
+  function build(root, type, scene, shadows, skipShadows) {
+    if (!B[type]) return false;
+    if (STAIRS[type]) { buildStairsFor(root, type, scene, shadows, skipShadows); return true; }
+    for (const t of template(scene, type)) {
+      const inst = t.createInstance(`${root.name}_${t.name.split('_').pop()}`), isGlow = !!t.material?.metadata?.kitGlow;
+      inst.parent = root; inst.isPickable = !isGlow; inst._editRoot = root; inst.checkCollisions = false;
+      if (shadows && !skipShadows && !isGlow) shadows.addShadowCaster(inst);
+    }
+    return true;
+  }
+  // walkable decks in the type's own frame (Babylon x/z, deck top y above the origin)
+  // stairs: walk surface on the treads (steps = how many), then the top landing
+  const stairs = (W, R, H, n, surface) => [{ x: 0, z: 0, halfX: W / 2 - .05, halfZ: R / 2, y0: 0, y1: H, steps: n, surface }, { x: 0, z: R / 2 + .6, halfX: W / 2 - .05, halfZ: .75, y: H, surface }];
+  const decks = { wok_pier: [{ x: 0, z: 0, halfX: 2.05, halfZ: 4.5, y: 0 }], // a little past each end: steps on from the quay
+    wok_boat: [{ x: 0, z: 0, halfX: 1.7, halfZ: 3, y: 1.05 }], wok_gangplank: [{ x: 0, z: 0, halfX: .55, halfZ: 2.5, y0: 0, y1: -2 }],
+    kit_stairs_stone: stairs(3, 6.4, 4, 10, 'stone'), kit_stairs_wood: stairs(2.6, 6.4, 4, 12, 'wood'),
+    kit_stairs_cliff: [{ x: 0, z: -10.6 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'stone' }, { x: 0, z: 0, halfX: 1.45, halfZ: 1.05, y: 6, surface: 'stone' },
+      { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }], ashi_bridge: [{ x: 0, z: 0, halfX: 1.55, halfZ: 10.3, y0: 0, y1: 2.4 }],
+    ronin_great_dojo: [{ x: 0, z: 0, halfX: 15, halfZ: 12, y: 1.6 }, { x: 0, z: -13.13, halfX: 4.4, halfZ: 1.13, y0: 0, y1: 1.6, steps: 5, surface: 'stone' }] };
+  window.SamuraiKit = { build, setLightFactor, decks, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B, _org: { blob, curveTube } };
+})();

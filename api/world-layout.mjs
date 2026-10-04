@@ -337,8 +337,8 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      const { layout } = await readWorldLayout(token, filePath, { emptyOnMissing: villageId !== 'hub' });
-      return res.status(200).json({ ok: true, villageId, filePath, layout });
+      const { layout, sha } = await readWorldLayout(token, filePath, { emptyOnMissing: villageId !== 'hub' });
+      return res.status(200).json({ ok: true, villageId, filePath, sha: sha || null, layout });
     }
 
     const { layout } = req.body || {};
@@ -368,14 +368,15 @@ return res.status(200).json({
   ...saveResult
 });
   } catch (err) {
-    console.error('world-layout error:', err);
-    const token = getGitHubToken();
+    // Token and deploy details stay in the server log; they are never sent to the browser.
+    console.error('world-layout error:', err, {
+      githubDebug: getGitHubTokenDebug(getGitHubToken()),
+      vercelDebug: getVercelRuntimeDebug()
+    });
 
     return res.status(err?.statusCode || 500).json({
       ok: false,
-      error: err?.message || 'Could not sync world layout',
-      githubDebug: getGitHubTokenDebug(token),
-      vercelDebug: getVercelRuntimeDebug()
+      error: err?.message || 'Could not sync world layout'
     });
   }
 }

@@ -160,8 +160,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #xhair::after{width:2px;height:16px;top:3px;left:10px}
 #wb{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.92);border:1px solid rgba(232,197,106,.55);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:3px;padding:13px 32px;cursor:pointer;z-index:10;transition:all .25s;backdrop-filter:blur(12px)}
 #wb:hover{background:rgba(232,197,106,.18)}
-#wb.on{top:92px;bottom:auto;left:228px;width:92px;min-height:31px;transform:none;padding:7px 8px;background:rgba(5,10,28,.95);border-color:rgba(94,207,202,.62);color:#5ecfca;font-size:8px;letter-spacing:1.5px;z-index:14;box-shadow:0 0 18px rgba(94,207,202,.12)}
+#wb.on{top:82px;bottom:auto;left:340px;width:92px;min-height:31px;transform:none;padding:7px 8px;background:rgba(5,10,28,.95);border-color:rgba(94,207,202,.62);color:#5ecfca;font-size:8px;letter-spacing:1.5px;z-index:14;box-shadow:0 0 18px rgba(94,207,202,.12)}
 #wb.on:hover{background:rgba(94,207,202,.14);border-color:#5ecfca}
+@media (max-width:480px){#wb.on{left:auto;right:16px;top:auto;bottom:16px}}
 #tt{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);background:rgba(5,10,28,.95);border:1px solid rgba(232,197,106,.45);padding:13px 28px;text-align:center;pointer-events:none;opacity:0;transition:opacity .3s;z-index:20;backdrop-filter:blur(12px);white-space:nowrap}
 #tt h3{font-family:'Cinzel Decorative',serif;font-size:12px;color:#e8c56a;letter-spacing:2px;margin-bottom:3px}
 #tt p{font-size:10px;color:#5ecfca;letter-spacing:1px}
@@ -506,6 +507,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     </div>
     <div class="ap-section">Buildings</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('dojo_5')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_5</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_6')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_6</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_7')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_7</span></div><div class="ap-card" onclick="spawnAssetFromPanel('dojo_9')"><span class="ap-icon">🏯</span><span class="ap-name">dojo_9</span></div><div class="ap-card" onclick="spawnAssetFromPanel('shrine_2')"><span class="ap-icon">⛩️</span><span class="ap-name">shrine_2</span></div><div class="ap-card" onclick="spawnAssetFromPanel('village_gate')"><span class="ap-icon">🌀</span><span class="ap-name">Village Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('fence_1')"><span class="ap-icon">🪵</span><span class="ap-name">fence_1</span></div></div>
+    <div class="ap-section">Samurai Buildings</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('sam_great_dojo')"><span class="ap-icon">🏯</span><span class="ap-name">Great Dojo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_library')"><span class="ap-icon">📚</span><span class="ap-name">Library</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_forge')"><span class="ap-icon">🔥</span><span class="ap-name">Forge</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_market_stall')"><span class="ap-icon">🏮</span><span class="ap-name">Market Stall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_house')"><span class="ap-icon">🏠</span><span class="ap-name">House</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_gate')"><span class="ap-icon">⛩️</span><span class="ap-name">Gatehouse</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_palisade')"><span class="ap-icon">🪵</span><span class="ap-name">Palisade Wall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_watchtower')"><span class="ap-icon">🗼</span><span class="ap-name">Watchtower</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_well')"><span class="ap-icon">🪣</span><span class="ap-name">Well</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_burrow')"><span class="ap-icon">🕳️</span><span class="ap-name">Ant Burrow</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_banner_pole')"><span class="ap-icon">🚩</span><span class="ap-name">Banner Pole</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_training_post')"><span class="ap-icon">🥋</span><span class="ap-name">Training Post</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_weapon_rack')"><span class="ap-icon">⚔️</span><span class="ap-name">Weapon Rack</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sam_stone_lantern')"><span class="ap-icon">🏮</span><span class="ap-name">Stone Lantern</span></div></div>
+    <div class="ap-section">Wokou Harbour</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('wok_great_dojo')"><span class="ap-icon">🏯</span><span class="ap-name">Wokou Dojo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_hall')"><span class="ap-icon">📜</span><span class="ap-name">Hall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_trade_house')"><span class="ap-icon">⚖️</span><span class="ap-name">Trading House</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_house')"><span class="ap-icon">🏠</span><span class="ap-name">House (tile)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_house_thatch')"><span class="ap-icon">🛖</span><span class="ap-name">House (thatch)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_watchtower')"><span class="ap-icon">🗼</span><span class="ap-name">Watchtower</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_banner_pole')"><span class="ap-icon">🚩</span><span class="ap-name">Navy Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_pier')"><span class="ap-icon">🪵</span><span class="ap-name">Pier</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_boat')"><span class="ap-icon">⛵</span><span class="ap-name">Ship</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_boathouse')"><span class="ap-icon">🛠️</span><span class="ap-name">Boat Shed</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_crane')"><span class="ap-icon">🏗️</span><span class="ap-name">Harbour Crane</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_cargo')"><span class="ap-icon">📦</span><span class="ap-name">Cargo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_fence')"><span class="ap-icon">🚧</span><span class="ap-name">Low Fence</span></div><div class="ap-card" onclick="spawnAssetFromPanel('wok_gangplank')"><span class="ap-icon">🪵</span><span class="ap-name">Gangplank</span></div></div>
+    <div class="ap-section">Yamabushi Mountain</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('yam_great_dojo')"><span class="ap-icon">🏯</span><span class="ap-name">Mountain Dojo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('yam_library')"><span class="ap-icon">📚</span><span class="ap-name">Library (2 floors)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('yam_house')"><span class="ap-icon">🏠</span><span class="ap-name">House (tile)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('yam_house_thatch')"><span class="ap-icon">🛖</span><span class="ap-name">Tea House (thatch)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('yam_gate')"><span class="ap-icon">⛩️</span><span class="ap-name">Gatehouse</span></div><div class="ap-card" onclick="spawnAssetFromPanel('yam_banner_pole')"><span class="ap-icon">🚩</span><span class="ap-name">Green Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('yam_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">Cliff Bridge</span></div><div class="ap-card" onclick="spawnAssetFromPanel('yam_burrow_arch')"><span class="ap-icon">🕳️</span><span class="ap-name">Burrow Arch</span></div><div class="ap-card" onclick="spawnAssetFromPanel('yam_spirit_lantern')"><span class="ap-icon">🏮</span><span class="ap-name">Spirit Lantern</span></div><div class="ap-card" onclick="spawnAssetFromPanel('yam_shrine')"><span class="ap-icon">⛩</span><span class="ap-name">Lookout Shrine</span></div><div class="ap-card" onclick="spawnAssetFromPanel('yam_bench')"><span class="ap-icon">🪑</span><span class="ap-name">Bench</span></div><div class="ap-card" onclick="spawnAssetFromPanel('yam_stone_weights')"><span class="ap-icon">🪨</span><span class="ap-name">Stone Weights</span></div></div>
+    <div class="ap-section">Buke Fortress</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('buke_great_hall')"><span class="ap-icon">🏯</span><span class="ap-name">Great Hall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('buke_archive')"><span class="ap-icon">📜</span><span class="ap-name">Archive (stone base)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('buke_strategy_hall')"><span class="ap-icon">🗺️</span><span class="ap-name">Strategy Hall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('buke_house')"><span class="ap-icon">🏠</span><span class="ap-name">House</span></div><div class="ap-card" onclick="spawnAssetFromPanel('buke_gate')"><span class="ap-icon">🏰</span><span class="ap-name">Fortified Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('buke_banner_pole')"><span class="ap-icon">🚩</span><span class="ap-name">Maroon Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('buke_footbridge')"><span class="ap-icon">🌉</span><span class="ap-name">Stone Footbridge</span></div><div class="ap-card" onclick="spawnAssetFromPanel('buke_canal_spout')"><span class="ap-icon">💧</span><span class="ap-name">Canal Spout</span></div><div class="ap-card" onclick="spawnAssetFromPanel('buke_post_lantern')"><span class="ap-icon">🏮</span><span class="ap-name">Post Lantern</span></div></div>
+    <div class="ap-section">Stairs (any village)</div>
+    <div class="admin-note">Walkable: climb terrace walls, cliffs and banks. Bottom faces -Z; scale up for taller climbs (rise 4 m x scale).</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('kit_stairs_stone')"><span class="ap-icon">🪜</span><span class="ap-name">Stone Stairs (4 m)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kit_stairs_wood')"><span class="ap-icon">🪜</span><span class="ap-name">Wooden Stairs (4 m)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kit_stairs_cliff')"><span class="ap-icon">⛰️</span><span class="ap-name">Cliff Stairs (12 m)</span></div></div>
+    <div class="ap-section">Ronin Fortress</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ronin_bonsai')"><span class="ap-icon">🌳</span><span class="ap-name">Giant Bonsai</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_great_dojo')"><span class="ap-icon">🏯</span><span class="ap-name">Training Dojo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_library')"><span class="ap-icon">📚</span><span class="ap-name">Library (2 floors)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_strategy_hall')"><span class="ap-icon">🗺️</span><span class="ap-name">Strategy Hall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_house')"><span class="ap-icon">🏠</span><span class="ap-name">House</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_house_large')"><span class="ap-icon">🏠</span><span class="ap-name">House (large)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_gate')"><span class="ap-icon">⛩️</span><span class="ap-name">Fortress Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_wall')"><span class="ap-icon">🧱</span><span class="ap-name">Granite Wall (8 m)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_wall_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Wall + Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_lantern_pillar')"><span class="ap-icon">🏮</span><span class="ap-name">Lantern Pillar</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_rail')"><span class="ap-icon">🪵</span><span class="ap-name">Railing (4 m)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_well')"><span class="ap-icon">🪣</span><span class="ap-name">Covered Well</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_dummy')"><span class="ap-icon">🥋</span><span class="ap-name">Wooden Dummy</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_banner_pole')"><span class="ap-icon">🚩</span><span class="ap-name">Crimson Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_brazier')"><span class="ap-icon">🔥</span><span class="ap-name">Brazier</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_shrub')"><span class="ap-icon">🌿</span><span class="ap-name">Shrub</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_rock_garden')"><span class="ap-icon">🪨</span><span class="ap-name">Rock Garden</span></div></div>
+    <div class="ap-section">Ashigaru Fort</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ashi_great_dojo')"><span class="ap-icon">🏯</span><span class="ap-name">Fort Dojo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_archive')"><span class="ap-icon">📜</span><span class="ap-name">Archive</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_strategy_hall')"><span class="ap-icon">🗺️</span><span class="ap-name">Strategy Hall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_house')"><span class="ap-icon">🛖</span><span class="ap-name">House (thatch)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_house_tile')"><span class="ap-icon">🏠</span><span class="ap-name">House (tile)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_house_brown')"><span class="ap-icon">🏠</span><span class="ap-name">House (red tile)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_gate')"><span class="ap-icon">⛩️</span><span class="ap-name">Tower Gate</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_watchtower')"><span class="ap-icon">🗼</span><span class="ap-name">Watchtower</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_palisade')"><span class="ap-icon">🪵</span><span class="ap-name">Palisade (8 m)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_palisade_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Palisade + Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_bridge')"><span class="ap-icon">🌉</span><span class="ap-name">Moat Bridge (20 m)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_workshop')"><span class="ap-icon">🔨</span><span class="ap-name">Workshop Shed</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_banner_pole')"><span class="ap-icon">🚩</span><span class="ap-name">Crimson Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_barricade')"><span class="ap-icon">✖️</span><span class="ap-name">Barricade</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_stake_fence')"><span class="ap-icon">🪵</span><span class="ap-name">Stake Fence (3 m)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_target')"><span class="ap-icon">🎯</span><span class="ap-name">Archery Target</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ashi_log_pile')"><span class="ap-icon">🪵</span><span class="ap-name">Log Pile</span></div></div>
+    <div class="ap-section">Kenshi Compound</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_great_dojo')"><span class="ap-icon">🏯</span><span class="ap-name">Kenshi Dojo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_library')"><span class="ap-icon">📜</span><span class="ap-name">Library (2 floors)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_hall')"><span class="ap-icon">🗺️</span><span class="ap-name">Strategy Hall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_house')"><span class="ap-icon">🏠</span><span class="ap-name">House</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_gate')"><span class="ap-icon">⛩️</span><span class="ap-name">Gatehouse</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_forge')"><span class="ap-icon">🔥</span><span class="ap-name">Forge</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_banner_pole')"><span class="ap-icon">🚩</span><span class="ap-name">Teal Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_well_pavilion')"><span class="ap-icon">🪣</span><span class="ap-name">Well Pavilion</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_watchtower')"><span class="ap-icon">🗼</span><span class="ap-name">Watchtower</span></div><div class="ap-card" onclick="spawnAssetFromPanel('kenshi_wall_fence')"><span class="ap-icon">🧱</span><span class="ap-name">Wall Fence (8 m)</span></div></div>
+    <div class="ap-section">Sohei Temple</div>
+    <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('sohei_great_dojo')"><span class="ap-icon">🏯</span><span class="ap-name">Temple Dojo</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sohei_library')"><span class="ap-icon">📚</span><span class="ap-name">Library (2 floors)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sohei_hall')"><span class="ap-icon">🏛️</span><span class="ap-name">Hall</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sohei_house')"><span class="ap-icon">🏠</span><span class="ap-name">House</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sohei_shop')"><span class="ap-icon">🏪</span><span class="ap-name">Shop</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sohei_gate')"><span class="ap-icon">⛩️</span><span class="ap-name">Gatehouse</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sohei_banner_pole')"><span class="ap-icon">🚩</span><span class="ap-name">Gold Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sohei_wall')"><span class="ap-icon">🧱</span><span class="ap-name">Temple Wall (8 m)</span></div><div class="ap-card" onclick="spawnAssetFromPanel('sohei_bell_tower')"><span class="ap-icon">🔔</span><span class="ap-name">Bell Tower</span></div></div>
     <div class="ap-section">Ronin Village Assets</div>
     <div class="ap-grid"><div class="ap-card" onclick="spawnAssetFromPanel('ronin_altar')"><span class="ap-icon">⛩</span><span class="ap-name">Ronin Altar</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_banner')"><span class="ap-icon">🚩</span><span class="ap-name">Ronin Banner</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_dead_tree')"><span class="ap-icon">♜</span><span class="ap-name">Dead Tree</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_mist')"><span class="ap-icon">〰</span><span class="ap-name">Ronin Mist</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_weapon_rack')"><span class="ap-icon">⚔</span><span class="ap-name">Weapon Rack</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_katana_sigil')"><span class="ap-icon">☾</span><span class="ap-name">Katana Sigil</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_brazier')"><span class="ap-icon">🔥</span><span class="ap-name">Crimson Brazier</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_broken_cart')"><span class="ap-icon">▰</span><span class="ap-name">Broken Cart</span></div><div class="ap-card" onclick="spawnAssetFromPanel('ronin_watch_post')"><span class="ap-icon">▴</span><span class="ap-name">Watch Post</span></div></div>
     <div class="ap-section">Village Life</div>
@@ -1529,9 +1549,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script src="assets/forge-core.js"></script>
+<script src="assets/samurai-kit.js"></script>
 <script src="assets/forge-sfx.js"></script>
 <script src="assets/rebel-weapon.js"></script>
 <script type="module">
+// New terrain (Oct 2026): villages with a terrain recipe (hub, ronin, samurai) get the Terrain Lab ground: eroded hills, painted
+// ground, far mountains, grass, trees, rocks (the hub also has its river and waterfall). ?terrain=old shows the previous
+// ground. Villages without a recipe keep the old ground.
+const NEW_TERRAIN_MODULE = new URLSearchParams(location.search).get('terrain') !== 'old'
+  ? await import('./assets/village-terrain.js').catch(e => { console.warn('New terrain did not load', e); return null; })
+  : null;
 const canvas=document.getElementById('c');
 const setSt=t=>{const el=document.getElementById('ldst'); if(el) el.textContent=t;};
 const VILLAGE_REGISTRY = {
@@ -1555,6 +1582,15 @@ const FACTION_VILLAGES = ['ronin','samurai','bushi','warrior','shogun','buke','k
 const urlVillageId = new URLSearchParams(window.location.search).get('village') || 'hub';
 const CURRENT_VILLAGE_ID = VILLAGE_REGISTRY[urlVillageId] ? urlVillageId : 'hub';
 const CURRENT_VILLAGE = VILLAGE_REGISTRY[CURRENT_VILLAGE_ID];
+// Village shadows (default since Sept 30, chosen by Miguel after the ?shadows=all preview): buildings, trees and rocks
+// cast and receive frozen static shadows at a stronger shade. Lanterns, glows, mist, signs, gates and characters stay
+// shadowless. ?shadows=off brings back the old faint, mostly-off look.
+const SHADOW_PREVIEW = new URLSearchParams(window.location.search).get('shadows') !== 'off';
+const SHADOW_PREVIEW_SKIP = /lantern|glow|mist|sign|gate|ant|chest|banner/i;
+function assetSkipsShadows(type) {
+  if (!type || !ASSETS[type]?.noShadows) return false;
+  return !SHADOW_PREVIEW || SHADOW_PREVIEW_SKIP.test(type);
+}
 const WORLD_LAYOUT_STORAGE_KEY = `rebelAntsWorldLayout:${CURRENT_VILLAGE_ID}`;
 const PLAYER_ONBOARDING_SEEN_KEY = 'rebelAntsHubOnboardingSeen:v1';
 window.REBEL_ANTS_VILLAGES = VILLAGE_REGISTRY;
@@ -3301,7 +3337,8 @@ function updateVillageChrome() {
   if (returnBtn) returnBtn.classList.toggle('on', CURRENT_VILLAGE_ID !== 'hub');
 }
 window.returnToHubVillage = returnToHubVillage;
-document.addEventListener('DOMContentLoaded', updateVillageChrome);
+// this module runs after the page has parsed (DOMContentLoaded may already have fired): update now, else on the event
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateVillageChrome); else updateVillageChrome();
 // ── ENGINE ───────────────────────────────────
 // Optional WebGPU test mode: /village.html?engine=webgpu
 let engine;
@@ -3321,6 +3358,45 @@ function safeStorageSet(storage, key, value) {
 
 function safeStorageRemove(storage, key) {
   try { storage?.removeItem?.(key); } catch(e) {}
+}
+
+// Village layouts are big (0.4-0.9 MB each) and a browser keeps only ~5 MB per site, so once enough villages were
+// cached the newest one no longer fit and loaded empty. Layout writes go through layoutStorageSet: when storage is
+// full it drops other villages' copies that hold no unsaved edits (they download again on every visit) and old
+// backups, then retries; if it still doesn't fit, this page keeps the current village's layout in memory.
+let _layoutMemoryCache = null;
+function freeLayoutStorage(includeOwnBackup) {
+  const keys = [];
+  try { for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i)); } catch(e) { return; }
+  keys.forEach(k => {
+    let m;
+    if ((m = /^rebelAntsWorldLayout:(.+)$/.exec(k || ''))) {
+      if (m[1] === CURRENT_VILLAGE_ID) return;
+      const localAt = Number(safeStorageGet(localStorage, 'rebelAntsLayoutLocalCacheAt:' + m[1]) || 0);
+      const hardAt = Number(safeStorageGet(localStorage, 'rebelAntsLayoutHardSaveAt:' + m[1]) || 0);
+      if (localAt > hardAt) return; // that village has local edits not hard-saved yet
+    } else if ((m = /^rebelAntsLayoutBackup:(.+)$/.exec(k || ''))) {
+      if (m[1] === CURRENT_VILLAGE_ID && !includeOwnBackup) return;
+    } else if (k !== 'rebelAntsWorldLayout') return; // old un-suffixed mirror of the Hub layout
+    safeStorageRemove(localStorage, k);
+  });
+}
+function layoutStorageSet(key, json) {
+  if (key === WORLD_LAYOUT_STORAGE_KEY) _layoutMemoryCache = json;
+  if (key === 'rebelAntsWorldLayout:hub') safeStorageRemove(localStorage, 'rebelAntsWorldLayout'); // stale mirror, 0.9 MB
+  for (let pass = 0; pass < 3; pass++) {
+    try { localStorage.setItem(key, json); return true; } catch(e) {}
+    if (pass < 2) freeLayoutStorage(pass === 1);
+  }
+  safeStorageRemove(localStorage, key); // never leave an older copy behind under this key
+  console.warn('Browser storage full: layout kept in memory only for this visit:', key);
+  if (key === WORLD_LAYOUT_STORAGE_KEY && typeof showToast === 'function') showToast('Browser storage is full: Hard Save to keep layout edits');
+  return false;
+}
+function getLayoutCacheRaw() {
+  if (_layoutMemoryCache != null) return _layoutMemoryCache;
+  const raw = safeStorageGet(localStorage, WORLD_LAYOUT_STORAGE_KEY);
+  return raw || (CURRENT_VILLAGE_ID === 'hub' ? safeStorageGet(localStorage, 'rebelAntsWorldLayout') : null);
 }
 
 function clearRendererPreference() {
@@ -3467,6 +3543,123 @@ let _webgpuSmartCapFrame = 0;
 // ASSET REGISTRY (ALL GLBs LIVE HERE)
 // ═══════════════════════════════════════
 const ASSETS = {
+// Samurai building kit (Oct 2026): designed in Blender, built in the browser by assets/samurai-kit.js (no model
+// downloads; every placed copy is instances of one template). Doorways are lit recesses: add a Door (Doors section)
+// in front of one to link a room. Works in any village, with every admin tool (move, rotate, scale, delete, layers).
+sam_great_dojo: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_library: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_forge: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_market_stall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_house: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_gate: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_palisade: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_watchtower: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_well: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_burrow: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_banner_pole: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_training_post: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_weapon_rack: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sam_stone_lantern: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+// Wokou harbour pieces (same kit; navy + gold ant banners). Piers sit with their deck at quay level and ships on the
+// water, whatever the sea bed under them ('water'); neither snaps to the ground.
+wok_great_dojo: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+wok_hall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+wok_house: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+wok_house_thatch: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+wok_trade_house: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+wok_watchtower: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+wok_banner_pole: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+wok_pier: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0, water: 'deck', noGroundSnap: true },
+wok_boat: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0, water: 'float', noGroundSnap: true },
+wok_boathouse: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+wok_crane: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+wok_cargo: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+wok_fence: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+wok_gangplank: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0, water: 'deck', noGroundSnap: true },
+// Stairs for any village: walkable sloped decks (climb terrace walls, cliffs and banks; the walls they cross stop blocking
+// on them). 4 m rise at scale 1; scale them up for taller climbs.
+kit_stairs_stone: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kit_stairs_wood: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kit_stairs_cliff: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+// Yamabushi mountain pieces (same kit; green + gold banners, noren curtains with the emblem). The bridge keeps its
+// absolute height (deck level with the terraces at both ends, over the ravine) and does not snap to the ground.
+yam_great_dojo: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+yam_library: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+yam_house: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+yam_house_thatch: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+yam_gate: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+yam_banner_pole: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+yam_bridge: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0, absY: true, noGroundSnap: true },
+yam_burrow_arch: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+yam_spirit_lantern: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+yam_shrine: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+yam_bench: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+yam_stone_weights: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+// Buke fortress pieces (maroon + gold banners with the trident). Footbridges keep their absolute height (over a canal).
+buke_great_hall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+buke_archive: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+buke_strategy_hall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+buke_house: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+buke_gate: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+buke_banner_pole: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+buke_footbridge: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0, absY: true, noGroundSnap: true },
+buke_canal_spout: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0, absY: true, noGroundSnap: true },
+buke_post_lantern: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+// Kenshi compound pieces (teal + gold banners with the blade emblem).
+ronin_bonsai: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_great_dojo: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_library: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_strategy_hall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_house: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_house_large: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_gate: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_wall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_wall_banner: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_lantern_pillar: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_rail: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_well: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_dummy: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_banner_pole: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_brazier: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_shrub: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ronin_rock_garden: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_great_dojo: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_archive: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_strategy_hall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_house: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_house_tile: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_house_brown: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_gate: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_watchtower: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_palisade: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_palisade_banner: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_bridge: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0, absY: true, noGroundSnap: true },
+ashi_workshop: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_banner_pole: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_barricade: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_stake_fence: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_target: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+ashi_log_pile: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_great_dojo: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_library: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_hall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_house: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_gate: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_forge: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_banner_pole: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_well_pavilion: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_watchtower: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+kenshi_wall_fence: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+// Sohei temple pieces (gold + cream banners with the cross-and-sun).
+sohei_great_dojo: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sohei_library: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sohei_hall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sohei_house: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sohei_shop: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sohei_gate: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sohei_banner_pole: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sohei_wall: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
+sohei_bell_tower: { procedural: true, kit: 'samurai', scale: 1, groundOffset: 0 },
   dojo_5: {
     path: "/assets/buildings/dojo_5.glb",
     scale: 2.2,
@@ -3707,6 +3900,7 @@ function spawnAsset(type, position, extraMeta) {
     if (type === 'ronin_brazier') buildRoninBrazier(root);
     if (type === 'ronin_broken_cart') buildRoninBrokenCart(root);
     if (type === 'ronin_watch_post') buildRoninWatchPost(root);
+    if (config.kit === 'samurai') window.SamuraiKit?.build(root, type, scene, shadows, assetSkipsShadows(type));
     root.metadata.loaded = true;
     if (type === 'ambient_glow' || type === 'toro_lantern' || type === 'hanging_lantern' || type === 'hangingLantern' || type === 'ronin_brazier') {
       applyFakeLightState(true);
@@ -3968,7 +4162,7 @@ function optimizeStaticRenderRoot(root, options = {}) {
       mesh.isPickable = false;
       pickablesDisabled += 1;
     }
-    if (mesh.material) {
+    if (mesh.material && !mesh.material.metadata?.perfKeepLive) { // perfKeepLive: shared ground materials keep every light (walking light)
       if (!seenMaterials.has(mesh.material)) {
         seenMaterials.add(mesh.material);
         materials += 1;
@@ -4037,7 +4231,7 @@ function refreshStaticFreezing(force = false) {
 function shouldDisableDecorativeShadow(node) {
   const type = getPerfNodeType(node);
   if (!type) return false;
-  if (ASSETS[type]?.noShadows) return true;
+  if (assetSkipsShadows(type)) return true;
   if (type.includes('lantern') || type.includes('glow') || type.includes('mist')) return true;
   if (type === 'collision_proxy' || type === 'terrain_stamp' || type === 'collectible') return true;
   return false;
@@ -5398,6 +5592,33 @@ function buildAmbientGlow(root, glowColor, glowBrightness, glowShape, glowWidth,
 // ── TŌRŌ LANTERN BUILDER ─────────────────────────────────────
 // Traditional Japanese stone lantern (tōrō) built from primitives
 // All emissive — zero performance cost, unlimited placement
+// Shared across every tōrō: the stone/iron parts are instances of one hidden template per part (same look, one draw
+// call per part for all lanterns instead of one per lantern), and the flame / floor-glow textures are drawn once.
+// Glow and flame materials stay per lantern because each lantern flickers and can have its own colour.
+const ToroShared = { mats: null, templates: {}, flameTex: null, floorGlowTex: null };
+function getToroSharedMaterial(key, color) {
+  ToroShared.mats = ToroShared.mats || {};
+  if (!ToroShared.mats[key]) {
+    const m = new BABYLON.StandardMaterial('toroShared_' + key, scene);
+    m.diffuseColor = color;
+    m.maxSimultaneousLights = 4;
+    ToroShared.mats[key] = m;
+  }
+  return ToroShared.mats[key];
+}
+function getToroTemplate(key, make, material) {
+  const existing = ToroShared.templates[key];
+  if (existing && !existing.isDisposed()) return existing;
+  const t = make();
+  t.name = 'toroTemplate_' + key;
+  t.material = material;
+  t.position.set(0, -10000, 0); // parked out of view; instances render wherever they are
+  t.isPickable = false;
+  t.metadata = { isToroTemplate: true };
+  ToroShared.templates[key] = t;
+  return t;
+}
+
 function buildToro(root, glowColor) {
   glowColor = glowColor || '#ffdd88';
 
@@ -5405,27 +5626,9 @@ function buildToro(root, glowColor) {
   const stone = new BABYLON.Color3(0.25, 0.22, 0.19);
   const darkStone = new BABYLON.Color3(0.14, 0.12, 0.10);
   const iron = new BABYLON.Color3(0.10, 0.09, 0.08);
-
-  const stoneMat = () => {
-    const m = new BABYLON.StandardMaterial('firebowlStone_' + Math.random(), scene);
-    m.diffuseColor = stone;
-    m.maxSimultaneousLights = 4;
-    return m;
-  };
-
-  const darkStoneMat = () => {
-    const m = new BABYLON.StandardMaterial('firebowlDarkStone_' + Math.random(), scene);
-    m.diffuseColor = darkStone;
-    m.maxSimultaneousLights = 4;
-    return m;
-  };
-
-  const ironMat = () => {
-    const m = new BABYLON.StandardMaterial('firebowlIron_' + Math.random(), scene);
-    m.diffuseColor = iron;
-    m.maxSimultaneousLights = 4;
-    return m;
-  };
+  const stoneMat = getToroSharedMaterial('stone', stone);
+  const darkStoneMat = getToroSharedMaterial('darkStone', darkStone);
+  const ironMat = getToroSharedMaterial('iron', iron);
 
   const emberMat = () => {
     const m = new BABYLON.StandardMaterial('firebowlEmber_' + Math.random(), scene);
@@ -5442,61 +5645,56 @@ function buildToro(root, glowColor) {
     mesh._editRoot = root;
     return mesh;
   };
+  const part = (key, name, make, material) => attach(getToroTemplate(key, make, material).createInstance(name));
 
   // ── JAPANESE FIREBOWL BODY ─────────────────────────────
 
   // Broad octagonal stone footing
-  const base0 = attach(BABYLON.MeshBuilder.CreateCylinder(
+  const base0 = part('base0', 'fbBase0', () => BABYLON.MeshBuilder.CreateCylinder(
     'fbBase0',
     { diameterTop: 2.15, diameterBottom: 2.35, height: 0.22, tessellation: 8 },
     scene
-  ));
-  base0.material = stoneMat();
+  ), stoneMat);
   base0.position.y = 0.11;
 
   // Smaller raised step
-  const base1 = attach(BABYLON.MeshBuilder.CreateCylinder(
+  const base1 = part('base1', 'fbBase1', () => BABYLON.MeshBuilder.CreateCylinder(
     'fbBase1',
     { diameterTop: 1.55, diameterBottom: 1.75, height: 0.22, tessellation: 8 },
     scene
-  ));
-  base1.material = darkStoneMat();
+  ), darkStoneMat);
   base1.position.y = 0.33;
 
   // Short pedestal
-  const pedestal = attach(BABYLON.MeshBuilder.CreateCylinder(
+  const pedestal = part('pedestal', 'fbPedestal', () => BABYLON.MeshBuilder.CreateCylinder(
     'fbPedestal',
     { diameterTop: 0.72, diameterBottom: 0.92, height: 0.72, tessellation: 8 },
     scene
-  ));
-  pedestal.material = stoneMat();
+  ), stoneMat);
   pedestal.position.y = 0.80;
 
   // Collar under bowl
-  const collar = attach(BABYLON.MeshBuilder.CreateCylinder(
+  const collar = part('collar', 'fbCollar', () => BABYLON.MeshBuilder.CreateCylinder(
     'fbCollar',
     { diameterTop: 1.10, diameterBottom: 0.78, height: 0.22, tessellation: 8 },
     scene
-  ));
-  collar.material = darkStoneMat();
+  ), darkStoneMat);
   collar.position.y = 1.27;
 
   // Main bowl body
-  const bowl = attach(BABYLON.MeshBuilder.CreateCylinder(
+  const bowl = part('bowl', 'fbBowl', () => BABYLON.MeshBuilder.CreateCylinder(
     'fbBowl',
     { diameterTop: 2.15, diameterBottom: 1.28, height: 0.58, tessellation: 32 },
     scene
-  ));
-  bowl.material = ironMat();
+  ), ironMat);
   bowl.position.y = 1.62;
 
   // Thick bowl rim
-  const rim = attach(BABYLON.MeshBuilder.CreateTorus(
+  const rim = part('rim', 'fbRim', () => BABYLON.MeshBuilder.CreateTorus(
     'fbRim',
     { diameter: 2.06, thickness: 0.16, tessellation: 48 },
     scene
-  ));
-  rim.material = darkStoneMat();
+  ), darkStoneMat);
   rim.position.y = 1.92;
   rim.rotation.x = Math.PI / 2;
 
@@ -5541,7 +5739,7 @@ function buildToro(root, glowColor) {
     return tex;
   }
 
-  const flameTexture = makeFlameTexture('firebowlFlameTex_' + Math.random());
+  const flameTexture = ToroShared.flameTex || (ToroShared.flameTex = makeFlameTexture('firebowlFlameTex_shared'));
 
   function makeFlame(name, width, height, y, rotY, alpha) {
     const flame = attach(BABYLON.MeshBuilder.CreatePlane(
@@ -5600,7 +5798,7 @@ function buildToro(root, glowColor) {
     return tex;
   }
 
-  const floorGlowTexture = makeFloorGlowTexture('firebowlFloorGlowTex_' + Math.random());
+  const floorGlowTexture = ToroShared.floorGlowTex || (ToroShared.floorGlowTex = makeFloorGlowTexture('firebowlFloorGlowTex_shared'));
 
   function makeGlowDisc(name, radius, y, alpha, strength) {
     const disc = attach(BABYLON.MeshBuilder.CreateDisc(name, { radius, tessellation: 56 }, scene));
@@ -7199,8 +7397,18 @@ function buildRoninBanner(root) {
     strip.rotation.z = (i - 1) * .08;
     strip.material = black;
   });
-  const sigil = markRoninEditable(BABYLON.MeshBuilder.CreateTorus(`${root.name}_sigil`, { diameter:.48, thickness:.035, tessellation:32 }, scene), root, false);
-  sigil.position.set(.5,2.95,-.075); sigil.material = crimson;
+  // the Ronin emblem (red handprint in a ring) on the cloth
+  const sigil = markRoninEditable(BABYLON.MeshBuilder.CreatePlane(`${root.name}_sigil`, { size:.8, sideOrientation:BABYLON.Mesh.DOUBLESIDE }, scene), root, false);
+  sigil.position.set(.5,2.9,-.06); sigil.material = getRoninEmblemMaterial();
+}
+let _roninEmblemMat = null;
+function getRoninEmblemMaterial() {
+  if (_roninEmblemMat && !_roninEmblemMat.isDisposed?.()) return _roninEmblemMat;
+  const m = new BABYLON.StandardMaterial('roninBannerEmblem', scene), tex = new BABYLON.Texture('assets/brand/factions/ronin.png', scene);
+  tex.hasAlpha = true; m.diffuseTexture = tex; m.useAlphaFromDiffuseTexture = false;
+  m.diffuseColor = new BABYLON.Color3(.5,.03,.035); m.emissiveColor = new BABYLON.Color3(.11,.006,.01); m.specularColor = new BABYLON.Color3(.04,.02,.02);
+  m.backFaceCulling = false; m.zOffset = -1;
+  return (_roninEmblemMat = m);
 }
 
 function buildRoninDeadTree(root) {
@@ -7966,29 +8174,145 @@ const hemi=new BABYLON.HemisphericLight("h",new BABYLON.Vector3(0,1,0),scene);
 hemi.intensity=0.65; hemi.diffuse=new BABYLON.Color3(.52,.7,.98);
 hemi.groundColor=new BABYLON.Color3(.55,.58,.48); hemi.specular=new BABYLON.Color3(0,0,0);
 
-const shadows=new BABYLON.ShadowGenerator(512,sun);
+const shadows=new BABYLON.ShadowGenerator(2048,sun);
 shadows.useExponentialShadowMap=true; shadows.bias=0.005;
-shadows.darkness=0.85;
-shadows.getShadowMap().refreshRate = BABYLON.RenderTargetTexture.REFRESHRATE_RENDER_EVERYFIRSTFRAME;
+shadows.darkness=0.85; // 0 = black shadows, 1 = none: 0.85 is only a faint 15% shade
+if (SHADOW_PREVIEW) { shadows.darkness=0.45; shadows.useExponentialShadowMap=false; shadows.usePercentageCloserFiltering=true; shadows.filteringQuality=BABYLON.ShadowGenerator.QUALITY_MEDIUM; shadows.bias=0.0015; shadows.normalBias=0.02; console.log('Village shadows on (?shadows=off to disable)'); }
+// Static shadows, drawn once and frozen (no per-frame cost). The old setting name (REFRESHRATE_RENDER_EVERYFIRSTFRAME)
+// doesn't exist in Babylon, so the map was drawn a single time before the village loaded and showed nothing.
+// Now the map is redrawn after the layout loads and after admin edits. Only still objects cast: characters, NPCs,
+// small ants and spinning collectibles are left out (a frozen shadow of a moving thing would stay behind), and so are
+// the hidden GLB sources parked at 9999 (they stretched the shadow area across the whole map).
+shadows.getShadowMap().refreshRate = BABYLON.RenderTargetTexture.REFRESHRATE_RENDER_ONCE;
+const DYNAMIC_SHADOW_TYPES = new Set(['npc', 'small_village_ant', 'collectible', 'collision_proxy', 'quest_target_marker', 'interaction_zone']);
+function isStaticShadowCaster(m) {
+  if (!m || m.isDisposed?.() || m.skeleton) return false; // hidden meshes stay listed (they just don't draw), e.g. outside roots while inside a room
+  let r = m; while (r.parent) r = r.parent;
+  // Only placed village objects (layout clones) and the ground. Anything else can move: the player's weapons hang
+  // off rig bones whose root is 'mixamorig_Hips', not playerRoot, and would leave a frozen blade shadow at spawn.
+  if (!(r.metadata?.isClone === true || m.name === 'gnd' || m.metadata?.terrainShadow === true)) return false;
+  if (DYNAMIC_SHADOW_TYPES.has(r.metadata?.type) || DYNAMIC_SHADOW_TYPES.has(m.metadata?.type)) return false;
+  m.computeWorldMatrix(true);
+  const c = m.getBoundingInfo().boundingSphere.centerWorld;
+  return Math.abs(c.x) < 500 && Math.abs(c.z) < 500 && c.y > -100;
+}
+function refreshStaticShadows(reason = '') {
+  const map = shadows.getShadowMap();
+  const list = map.renderList || [];
+  const keep = list.filter(isStaticShadowCaster);
+  list.length = 0; keep.forEach(m => list.push(m));
+  map.resetRefreshCounter();
+  if (reason) console.log('Shadows redrawn:', reason, keep.length, 'casters');
+}
+let _shadowRefreshTimer = null;
+function scheduleShadowRefresh(reason = '', delay = 400) {
+  clearTimeout(_shadowRefreshTimer);
+  _shadowRefreshTimer = setTimeout(() => refreshStaticShadows(reason), delay);
+}
+window.refreshStaticShadows = refreshStaticShadows;
 
 // ── PROCEDURAL SKY ───────────────────────────
 const skybox=BABYLON.MeshBuilder.CreateBox("sky",{size:1400},scene);
 const skyMat=new BABYLON.SkyMaterial("sm",scene);
 skyMat.backFaceCulling=false; skyMat.turbidity=5; skyMat.luminance=1.0;
 skyMat.rayleigh=2.5; skyMat.mieCoefficient=0.003; skyMat.mieDirectionalG=0.98;
-skyMat.useSunPosition=true; skyMat.sunPosition=sun.position;
+skyMat.useSunPosition=true; skyMat.sunPosition=sun.position.clone(); // own copy: the sky keeps its look while the shadow sun moves
 skybox.material=skyMat; skybox.infiniteDistance=true;
 
+// Moving sun (Sept 30): the shadow-casting sun follows the real clock, low in the east in the morning, highest at
+// noon, low in the west at sunset, so shadows swing through the day. Elevation stays between 20° and 60° (very low
+// suns stretch shadows across the whole map). At night it rests at the sunrise/sunset position. The frozen shadow map is
+// redrawn only when the sun has moved more than 1.5° (about every 6 minutes by day), never at night.
+let _sunPathLastDir = null;
+function updateSunPathForShadows(h) {
+  if (new URLSearchParams(window.location.search).get('sunpath') === 'off') return;
+  const dayT = Math.min(1, Math.max(0, (h - 6) / 12));
+  const elev = (20 + 40 * Math.sin(Math.PI * dayT)) * Math.PI / 180;
+  const az = Math.PI * dayT;
+  const toSun = new BABYLON.Vector3(Math.cos(elev) * Math.cos(az), Math.sin(elev), -Math.cos(elev) * Math.sin(az));
+  const dir = toSun.scale(-1).normalize();
+  if (_sunPathLastDir && Math.acos(Math.min(1, BABYLON.Vector3.Dot(dir, _sunPathLastDir))) < 1.5 * Math.PI / 180) return;
+  _sunPathLastDir = dir.clone();
+  sun.direction.copyFrom(dir);
+  sun.position.copyFrom(toSun.scale(400)); // shadow origin well outside the village, along the light
+  if (typeof refreshStaticShadows === 'function') refreshStaticShadows();
+}
+
+// ── Footprints in the sand ──────────────────────────────────
+// Walking on a village's sand / dirt yards (and beach sand) leaves left-right prints that fade out over ~30 s.
+// One thin-instanced mesh (one draw call), 72 prints recycled; fading via per-print instance colour alpha.
+const SandPrints = { mesh: null, n: 72, next: 0, born: new Float32Array(72).fill(-1e9), last: null, side: 1, lastFade: 0, full: 20, fade: 10 }; // seconds
+window._sandPrints = SandPrints;
+function sandPrintsMesh() {
+  if (SandPrints.mesh || !scene) return SandPrints.mesh;
+  const m = BABYLON.MeshBuilder.CreateGround('sandFootprints', { width: .3, height: .5 }, scene);
+  const S = 64, tex = new BABYLON.DynamicTexture('sandFootprintTex', { width: S, height: S * 2 }, scene, true), c = tex.getContext();
+  c.clearRect(0, 0, S, S * 2); c.fillStyle = '#fff';
+  c.beginPath(); c.ellipse(S * .5, S * .64, S * .4, S * .58, 0, 0, 7); c.fill();          // sole
+  c.beginPath(); c.ellipse(S * .5, S * 1.52, S * .32, S * .4, 0, 0, 7); c.fill();        // heel
+  tex.hasAlpha = true; tex.update();
+  const mat = new BABYLON.StandardMaterial('sandFootprintMat', scene);
+  mat.diffuseColor = new BABYLON.Color3(.16, .12, .08); mat.specularColor = BABYLON.Color3.Black(); mat.emissiveColor = new BABYLON.Color3(.05, .04, .03);
+  mat.opacityTexture = tex; mat.zOffset = -3; mat.backFaceCulling = false; mat.disableDepthWrite = true; mat.maxSimultaneousLights = 2;
+  m.material = mat; m.isPickable = false; m.hasVertexAlpha = true; m.alwaysSelectAsActiveMesh = true; m.metadata = { type: 'visual_backdrop', visualOnly: true, _perfNeverFreeze: true };
+  const mats = new Float32Array(SandPrints.n * 16), cols = new Float32Array(SandPrints.n * 4);
+  for (let i = 0; i < SandPrints.n; i++) BABYLON.Matrix.Translation(0, -9999, 0).copyToArray(mats, i * 16);
+  m.thinInstanceSetBuffer('matrix', mats, 16, false); m.thinInstanceSetBuffer('color', cols, 4, false);
+  SandPrints.mats = mats; SandPrints.cols = cols;
+  return (SandPrints.mesh = m);
+}
+function onSandAt(x, z) {
+  const NT = window._newTerrain; if (!NT) return false;
+  const VS = NT.villageShape; if (VS && VS.inside(x, z) && VS.dirt(x, z) > .5) return true;
+  const sy = NT.recipe?.sea?.y; if (Number.isFinite(sy) && NT.sea) { const h = NT.heightAt(x, z); return h > sy - .1 && h < sy + 1.6; }
+  return false;
+}
+function updateSandFootprints(groundY) {
+  if (!walkMode || !charMesh || ActiveInterior || !window._newTerrain || !Number.isFinite(groundY)) { SandPrints.last = null; return; }
+  const p = charMesh.position, now = performance.now();
+  if (!SandPrints.last) SandPrints.last = { x: p.x, z: p.z };
+  const dx = p.x - SandPrints.last.x, dz = p.z - SandPrints.last.z, d = Math.hypot(dx, dz);
+  if (d > 4) SandPrints.last = { x: p.x, z: p.z }; // teleport / portal
+  else if (d >= .62) {
+    SandPrints.last = { x: p.x, z: p.z };
+    if (Math.abs(p.y - groundY) < .6 && onSandAt(p.x, p.z) && !(typeof villageOnKitDeck === 'function' && villageOnKitDeck(p.x, p.z))) {
+      const m = sandPrintsMesh(), i = SandPrints.next; SandPrints.next = (i + 1) % SandPrints.n; SandPrints.side = -SandPrints.side;
+      const yaw = Math.atan2(dx, dz), ox = Math.cos(yaw) * .16 * SandPrints.side, oz = -Math.sin(yaw) * .16 * SandPrints.side;
+      BABYLON.Matrix.ComposeToRef(BABYLON.Vector3.One(), BABYLON.Quaternion.FromEulerAngles(0, yaw, 0), new BABYLON.Vector3(p.x + ox, groundY + .025, p.z + oz), BABYLON.TmpVectors.Matrix[0]);
+      BABYLON.TmpVectors.Matrix[0].copyToArray(SandPrints.mats, i * 16); SandPrints.born[i] = now;
+      m.thinInstanceBufferUpdated('matrix'); SandPrints.lastFade = 0;
+    }
+  }
+  // fade: full for 20 s, gone by 30 s (colour buffer refreshed 4x a second)
+  if (SandPrints.mesh && now - SandPrints.lastFade > 250) {
+    SandPrints.lastFade = now;
+    for (let i = 0; i < SandPrints.n; i++) { const age = (now - SandPrints.born[i]) / 1000, a = age < SandPrints.full ? .62 : Math.max(0, .62 * (1 - (age - SandPrints.full) / SandPrints.fade)); SandPrints.cols.set([1, 1, 1, a], i * 4); }
+    SandPrints.mesh.thinInstanceBufferUpdated('color');
+  }
+}
+
+// A village can keep its own hour (recipe.hour: Ronin is always moonlit); others follow the real clock.
+// The village's terrain recipe, available from the first frame (the terrain itself is built a little later; reading
+// it from window._newTerrain alone left Ronin in daylight until the next 30 s sky update).
+function villageRecipe() { return window._newTerrain?.recipe || NEW_TERRAIN_MODULE?.TERRAIN_RECIPES?.[CURRENT_VILLAGE_ID] || null; }
+function villageClockHour(now = new Date()) {
+  const fixed = villageRecipe()?.hour;
+  return Number.isFinite(fixed) ? fixed : now.getHours() + now.getMinutes() / 60;
+}
 function updateSky(){
   if (_worklightOn) return; // don't override worklight
-  const now=new Date(), h=now.getHours()+now.getMinutes()/60;
+  const now=new Date(), h=villageClockHour(now);
   const d=Math.max(0,Math.sin(((h/24)-.25)*Math.PI*2));
   skyMat.inclination=-Math.sin(((h/24)-.25)*Math.PI*2)*.5;
   sun.intensity=0.15+d*1.8; hemi.intensity=0.18+d*.45;
+  const _vl = villageRecipe()?.light; if (_vl) { sun.intensity *= _vl.sun ?? 1; hemi.intensity *= _vl.hemi ?? 1; } // dimmer / brighter villages
+  updateSunPathForShadows(h);
   if(h>=6&&h<9){sun.diffuse=new BABYLON.Color3(1,.62,.3);}
   else if(h>=9&&h<17){sun.diffuse=new BABYLON.Color3(1,.97,.88);}
   else if(h>=17&&h<20){sun.diffuse=new BABYLON.Color3(1,.48,.15);}
-  else{sun.diffuse=new BABYLON.Color3(.18,.22,.48);sun.intensity=0.12;}
+  else{sun.diffuse=new BABYLON.Color3(.18,.22,.48);sun.intensity=0.12;
+    const _moon = villageRecipe()?.moon; if (_moon) { sun.intensity = _moon.sun; hemi.intensity *= _moon.hemi; sun.diffuse = new BABYLON.Color3(..._moon.color); hemi.diffuse = new BABYLON.Color3(..._moon.color); } } // moonlit villages
+  if (_vl?.tint && h>=6 && h<20) sun.diffuse = sun.diffuse.multiply(new BABYLON.Color3(..._vl.tint)); // e.g. Samurai's golden light
   const clearFogColor=h>=6&&h<20?new BABYLON.Color3(.58,.74,.9):new BABYLON.Color3(.04,.06,.16);
   scene.fogColor=clearFogColor;
   WeatherManager.baseSunIntensity = sun.intensity;
@@ -9198,7 +9522,15 @@ function applyWeatherLighting() {
   if (flash) flash.style.opacity = lightningActive ? '0.78' : '0';
   const heat = document.getElementById('weatherHeatHaze');
   if (heat) heat.style.opacity = cfg.warm ? '.22' : '0';
-  if (cfg.fog === BABYLON.Scene.FOGMODE_NONE) {
+  if (cfg.fog === BABYLON.Scene.FOGMODE_NONE && window._newTerrain) {
+    // new terrain: a light haze even on clear days, so the far mountains fade into the sky; some villages have their
+    // own mist (Ronin: thick and cold)
+    const vf = window._newTerrain.recipe.fog;
+    scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+    scene.fogDensity = vf?.density ?? 0.0016;
+    const night = (WeatherManager.baseFogColor?.r ?? 1) < .2;
+    scene.fogColor = vf ? new BABYLON.Color3(...(night ? vf.night : vf.day)) : (cfg.fogColor || WeatherManager.baseFogColor);
+  } else if (cfg.fog === BABYLON.Scene.FOGMODE_NONE) {
     scene.fogMode = BABYLON.Scene.FOGMODE_NONE;
   } else {
     scene.fogMode = cfg.fog;
@@ -14515,7 +14847,20 @@ function ensureEditableRootUniqueName(node) {
 // ── GROUND / TERRAIN ─────────────────────────
 setSt("Village: building terrain...");
 // Large grass base
-const ground=BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:120},scene);
+const _newTerrain = (NEW_TERRAIN_MODULE && NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CURRENT_VILLAGE_ID]) ? (() => {
+  try {
+    return NEW_TERRAIN_MODULE.createVillageTerrain(scene, NEW_TERRAIN_MODULE.TERRAIN_RECIPES[CURRENT_VILLAGE_ID], {
+      oldHeightAt: NEW_TERRAIN_MODULE.makeOldHubSampler(),
+      counts: Object.fromEntries(['grass', 'pines', 'rocks'].map(k => [k, Number(new URLSearchParams(location.search).get(k) ?? NaN)]))
+    });
+  } catch (e) { console.warn('New terrain failed, using the old one', e); return null; }
+})() : null;
+window._newTerrain = _newTerrain;
+if (_newTerrain && typeof updateSky === 'function') try { updateSky(); } catch (e) {} // fog, light and hour of this village at once
+if (_newTerrain) console.log('New terrain on (' + CURRENT_VILLAGE_ID + '), built in', _newTerrain.buildMs, 'ms');
+// the village's sky (heavier and hazier for some villages)
+if (_newTerrain?.recipe.sky) Object.assign(skyMat, _newTerrain.recipe.sky);
+const ground=_newTerrain ? _newTerrain.ground : BABYLON.MeshBuilder.CreateGround("gnd",{width:700,height:700,subdivisions:120},scene);
 const grassMat=new BABYLON.StandardMaterial("grassMat",scene);
 const grassDiff=new BABYLON.Texture("assets/ground_diffuse.jpg",scene);
 grassDiff.uScale=14;grassDiff.vScale=14;
@@ -14523,10 +14868,11 @@ grassMat.diffuseTexture=grassDiff;
 grassMat.specularColor=new BABYLON.Color3(0.18,0.22,0.12);
 grassMat.specularPower=8;
 
-ground.material=grassMat; ground.receiveShadows=true; shadows.addShadowCaster(ground);
+ground.material=_newTerrain ? _newTerrain.material : grassMat; ground.receiveShadows=true; shadows.addShadowCaster(ground);
+if (_newTerrain) _newTerrain.castShadow = m => { m.metadata = { ...(m.metadata || {}), terrainShadow: true }; shadows.addShadowCaster(m); };
         // Terrain displacement — organic forest floor with pseudo-random noise
         // Uses a seeded hash to break up the sine regularity into natural-looking terrain
-        (function applyTerrain() {
+        if (!_newTerrain) (function applyTerrain() {
             // Fast hash noise — breaks up sine patterns into organic shapes
             function hash(x, z) {
                 const n = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
@@ -14577,6 +14923,13 @@ stoneDiff.uScale=12;stoneDiff.vScale=12;
 stoneMat.diffuseTexture=stoneDiff;
 stoneMat.specularColor=new BABYLON.Color3(0.08,0.08,0.08);
 plaza.material=stoneMat; plaza.position.y=.1; plaza.receiveShadows=true;
+// a village can recolour its courtyard stone (Ronin: dark slate)
+if (_newTerrain?.recipe.court) {
+  const ct = _newTerrain.recipe.court;
+  if (ct.texture === 'stone') { const t = new BABYLON.Texture("assets/stone_diffuse.jpg", scene); t.uScale = t.vScale = 30; courtMat.diffuseTexture = t; } // cobblestone
+  if (ct.court) courtMat.diffuseColor = new BABYLON.Color3(...ct.court);
+  if (ct.plaza) stoneMat.diffuseColor = new BABYLON.Color3(...ct.plaza);
+}
 
 // Paths
 const pathMat=new BABYLON.StandardMaterial("pathMat",scene);
@@ -14584,11 +14937,18 @@ const pathDiff=new BABYLON.Texture("assets/stone_diffuse.jpg",scene);
 pathDiff.uScale=6;pathDiff.vScale=6;
 pathMat.diffuseTexture=pathDiff;
 pathMat.specularColor=new BABYLON.Color3(0.06,0.06,0.06);
+if (_newTerrain?.recipe.court?.path) pathMat.diffuseColor = new BABYLON.Color3(..._newTerrain.recipe.court.path);
 const pm=pathMat;
-[[8,300,0,0],[300,8,0,0]].forEach(([w,h,x,z])=>{
+[[8,_newTerrain?220:300,0,0],[_newTerrain?220:300,8,0,0]].forEach(([w,h,x,z])=>{
   const p=BABYLON.MeshBuilder.CreateGround("pa",{width:w,height:h},scene);
   p.material=pm; p.position=new BABYLON.Vector3(x,.08,z); p.receiveShadows=true;
+  if (_newTerrain?.villageGround) { p.setEnabled(false); p.isPickable=false; p.position.y=-50; }
 });
+// a village built into its own ground (Samurai): the flat courtyard, plaza and path strips are not used
+if (_newTerrain?.villageGround) {
+  [court, plaza].forEach(m => { m.setEnabled(false); m.isPickable = false; m.position.y = -50; });
+  shadows.addShadowCaster(_newTerrain.villageGround);
+}
 
 // ── REALISTIC MOUNTAINS ──────────────────────
 setSt("Village: sculpting mountains...");
@@ -14625,11 +14985,11 @@ const mColors=[new BABYLON.Color3(.2,.26,.18),new BABYLON.Color3(.22,.28,.2),new
  [-380,0,82,158],[360,90,90,170],[-170,-170,52,88],[170,-170,50,84],
  [-170,170,54,90],[170,170,48,80],[-280,-280,68,125],[280,-280,65,118],
  [-280,280,70,128],[280,280,62,112]
-].forEach(([x,z,r,h])=>mountain(x,z,r,h,mColors[Math.floor(Math.random()*3)]));
+].forEach(([x,z,r,h])=>{ if (!_newTerrain) mountain(x,z,r,h,mColors[Math.floor(Math.random()*3)]); });
 
 // ── DISTANT VISUAL BACKDROP ─────────────────
 // Static, non-pickable scenery only: no collisions, no saved state, no gameplay hooks.
-(function createDistantBackdrop(){
+if (!_newTerrain) (function createDistantBackdrop(){
   const root=new BABYLON.TransformNode("distantBackdropRoot",scene);
   root.metadata={ type:"visual_backdrop", visualOnly:true };
   const skirtMat=new BABYLON.StandardMaterial("distantBackdropSkirtMat",scene);
@@ -14758,16 +15118,10 @@ torii(0,98); torii(0,82); torii(-96,0,Math.PI/2); torii(96,0,Math.PI/2); torii(0
 // ── FIRE BOWLS ───────────────────────────────
 const fireLights=[];
 
-// Pre-create pool of 20 lantern lights BEFORE ground so shader compiles with all lights
+// Lantern light pool: retired. Lanterns glow with emissive fake lights (Fake Light Director), and nothing ever
+// took a light from this pool, but its 10 switched-off PointLights sat parked at 9999 and every material still
+// shaded them per pixel (16 lights per material instead of 6). Kept as an empty array for the reset code below.
 const _lanternLightPool = [];
-(function initLanternLightPool() {
-  for (let i = 0; i < 10; i++) {
-    const fl = new BABYLON.PointLight('lanternPool_' + i, new BABYLON.Vector3(9999, -999, 9999), scene);
-    fl.diffuse = new BABYLON.Color3(1, .42, .07);
-    fl.intensity = 0; fl.range = 12; fl._b = 2.0; fl._inUse = false;
-    _lanternLightPool.push(fl);
-  }
-})();
 const lanLights=[];
 let lIdx=0;
 
@@ -14930,6 +15284,14 @@ function addTrigger(cfg){
   const t=BABYLON.MeshBuilder.CreateBox("tr_"+cfg.id,{width:28,height:30,depth:28},scene);
   t.position=new BABYLON.Vector3(cfg.x,15,cfg.z); t.isPickable=true; t.visibility=0;
   BUILDINGS.push({mesh:t,...cfg});
+}
+// Removes a click trigger (and its invisible box) by id. Sign edits used to stack a new box on every apply.
+function removeTrigger(id){
+  for(let i=BUILDINGS.length-1;i>=0;i--){
+    if(BUILDINGS[i].id!==id) continue;
+    try { BUILDINGS[i].mesh?.dispose(); } catch(e) {}
+    BUILDINGS.splice(i,1);
+  }
 }
 
 // Pagoda roof helper
@@ -19499,8 +19861,7 @@ function sanitizeWorldLayoutData(data, source = 'layout') {
 function persistSanitizedWorldLayoutCache(data, reason = 'dedupe') {
   try {
     const json = JSON.stringify(data, null, 2);
-    localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, json);
-    if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem('rebelAntsWorldLayout', json);
+    layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, json);
     _lastLocalCacheAt = Date.now();
     localStorage.setItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID, String(_lastLocalCacheAt));
     console.info('Sanitized world layout cache updated:', reason);
@@ -19565,6 +19926,7 @@ function collectWorldLayoutData() {
     name: node.name,
     disableGroundSnap: node.metadata.disableGroundSnap === true,
     worldUploadedGlb: node.metadata.worldUploadedGlb === true,
+    assetFile: getLayoutAssetFileForType(node.metadata.type),
     uploadedAutoFitApplied: node.metadata.uploadedAutoFitApplied === true,
     position: { x: savePosition.x, y: savePosition.y, z: savePosition.z },
     rotation: { x: node.rotation.x, y: node.rotation.y, z: node.rotation.z },
@@ -19655,6 +20017,10 @@ function collectWorldLayoutData() {
     editorLocked: node.metadata.editorLocked === true
   });
   });
+  // Small ants that weren't spawned (runtime off in this browser) are kept as saved, so a save never drops them.
+  if (!SMALL_VILLAGE_ANT_RUNTIME_ENABLED && _heldSmallAntLayoutItems.length) {
+    data.push(..._heldSmallAntLayoutItems.map(item => ({ ...item })));
+  }
   if (QuestBuilderConfig && Object.keys(QuestBuilderConfig).length) {
     data.push({
       type: 'quest_builder_config',
@@ -19676,7 +20042,8 @@ function collectWorldLayoutData() {
       configs: interiorRoomConfigs
     });
   }
-  return sanitizeWorldLayoutData(data, 'save').data;
+  const _collected = sanitizeWorldLayoutData(data, 'save').data;
+  return window._newTerrain ? newTerrainLayoutToSaved(_collected) : _collected;
 }
 
 function saveWorldLayout(saveToGitHub = true){
@@ -19702,10 +20069,9 @@ function saveWorldLayout(saveToGitHub = true){
   const json = JSON.stringify(data, null, 2);
 
   // Always update local cache immediately.
-  const previousJson = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY);
-  if (previousJson) localStorage.setItem('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID, previousJson);
-  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, json);
-  if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem("rebelAntsWorldLayout", json);
+  const previousJson = getLayoutCacheRaw();
+  if (previousJson) layoutStorageSet('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID, previousJson);
+  layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, json);
   _lastLocalCacheAt = Date.now();
   localStorage.setItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID, String(_lastLocalCacheAt));
 
@@ -19742,6 +20108,7 @@ return Promise.resolve(true);
       _layoutDirty = false;
       _lastHardSaveAt = Date.now();
       localStorage.setItem('rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID, String(_lastHardSaveAt));
+      if (result.githubContentSha) safeStorageSet(localStorage, 'rebelAntsLayoutRemoteSha:' + CURRENT_VILLAGE_ID, result.githubContentSha);
       updateLayoutCacheStatus();
      showToast('✓ Saved to GitHub — ' + data.length + ' objects');
       return true;
@@ -19758,6 +20125,7 @@ return Promise.resolve(true);
 // ── MANUAL LOCAL CACHE CONTROL ───────────────────────────────
 let _autoSaveTimer = null;
 function triggerAutoSave() {
+  scheduleShadowRefresh('edit', 500);
   // Intentional: editing now marks the layout dirty only. The world is not
   // serialized after every tiny move/scale/rotate; use Cache Layout Locally or
   // Hard Save Layout from the footer when ready.
@@ -19791,7 +20159,7 @@ function hardSaveWorldLayout() {
 }
 
 function restoreLocalLayoutCache() {
-  const raw = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem('rebelAntsWorldLayout') : null);
+  const raw = getLayoutCacheRaw();
   if (!raw) {
     showToast('No local cache found');
     return;
@@ -19809,6 +20177,7 @@ function clearLocalLayoutCache() {
   const confirmed = window.confirm('Clear Local Cache for this village? This does not delete the hard-saved GitHub layout.');
   if (!confirmed) return;
   localStorage.removeItem(WORLD_LAYOUT_STORAGE_KEY);
+  _layoutMemoryCache = null;
   localStorage.removeItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID);
   if (CURRENT_VILLAGE_ID === 'hub') localStorage.removeItem('rebelAntsWorldLayout');
   _lastLocalCacheAt = 0;
@@ -19877,18 +20246,277 @@ function createMissingAssetPlaceholder(item) {
   return root;
 }
 
+// ── UPLOADED GLBs TRAVEL WITH THE LAYOUT ──────────
+// An admin-uploaded GLB used to be registered only in the uploader's browser, so everyone else saw nothing
+// (or a missing-asset box) where it stood. The layout now records the uploaded file next to each item,
+// and every browser registers it from there.
+function getLayoutAssetFileForType(type) {
+  const asset = type ? ASSETS[type] : null;
+  if (!asset || asset._uploaded !== true || asset.procedural) return null;
+  const fromLibrary = getManualUploadedAssetFileName(type);
+  if (fromLibrary) return fromLibrary;
+  const path = String(asset._realPath || asset.path || '');
+  if (!path.startsWith('/assets/buildings/')) return null;
+  return path.split('/').pop() || null;
+}
+
+function isSafeUploadedAssetFile(file) {
+  return typeof file === 'string' && /^[A-Za-z0-9 _.()\-]+\.glb$/i.test(file) && !file.includes('..');
+}
+
+function registerUploadedAssetsFromLayout(data) {
+  if (!Array.isArray(data)) return [];
+  const added = [];
+  data.forEach(item => {
+    const type = item?.type;
+    if (!type || ASSETS[type]) return;
+    const file = item.assetFile || (item.worldUploadedGlb === true ? type + '.glb' : null);
+    if (!isSafeUploadedAssetFile(file)) return;
+    ASSETS[type] = { path: '/assets/buildings/' + file, scale: 1.0, rotation: new BABYLON.Vector3(0, Math.PI, 0), _uploaded: true, noGroundSnap: true };
+    added.push(type);
+    try {
+      const library = getUploadedAssets();
+      if (!library.some(a => a.key === type)) { library.push({ key: type, file }); setUploadedAssets(library); }
+    } catch(e) {}
+  });
+  if (added.length) console.log('Uploaded GLBs registered from the layout:', added);
+  return added;
+}
+
+// ── INSTANCING FOR REPEATED PROPS ──────────
+// Trees, pines, rocks, fences, bamboo, cherry blossoms and the big dojo repeat many times. A clone copies every mesh
+// and costs one draw call per mesh per copy; an instance shares the source mesh and all copies draw together.
+// Only plain GLBs with no per-object material edits are instanced. ?instancing=off falls back to clones.
+const INSTANCED_ASSET_TYPES = new Set(['pine_1', 'tree_1', 'rock_1', 'fence_1', 'bamboo', 'cherry_blossom', 'dojo_9']);
+const INSTANCING_ENABLED = new URLSearchParams(window.location.search).get('instancing') !== 'off';
+function copyAssetSource(type, source, name) {
+  if (INSTANCING_ENABLED && INSTANCED_ASSET_TYPES.has(type) && typeof source?.instantiateHierarchy === 'function') {
+    try {
+      const copy = source.instantiateHierarchy(null, undefined, (src, node) => { node.metadata = src.metadata ? { ...src.metadata } : node.metadata; });
+      if (copy) { copy.name = name; return copy; }
+    } catch(e) {
+      console.warn('Instancing failed, cloning instead:', type, e);
+    }
+  }
+  return source.clone(name);
+}
+
+// Small-ant layout items skipped at load because the small-ant runtime is off in this browser.
+let _heldSmallAntLayoutItems = [];
+
+// ── New terrain: placed objects keep their height above the ground ──
+// The saved layout stays in the old terrain's heights, so the live site (still on the old ground) keeps reading it
+// correctly. Each object is raised by (new ground − old ground) at its spot when the layout loads, and lowered by the
+// same amount whenever the layout is collected (saves, undo, backups, export); the round trip is exact. Collision boxes move with their owner. Buildings outside the
+// courtyard get a flat yard in the new ground first.
+const NEW_TERRAIN_PAD_TYPES = /^(dojo_|shrine_|torii|village_gate|temple|house|tower|hut|altar|sam_(great_dojo|library|forge|market_stall|house|gate|palisade|watchtower|well|burrow))/;
+function newTerrainFlatGroundAt(x, z, isNew) {
+  let y = -Infinity;
+  const pathHalf = isNew ? 110 : 150;
+  if (Math.abs(x) <= 45 && Math.abs(z) <= 45) y = 0.1;
+  else if (Math.abs(x) <= 110 && Math.abs(z) <= 110) y = 0.06;
+  if ((Math.abs(x) <= 4 && Math.abs(z) <= pathHalf) || (Math.abs(z) <= 4 && Math.abs(x) <= pathHalf)) y = Math.max(y, 0.08);
+  return y;
+}
+function newTerrainDeltaAt(x, z) {
+  const NT = window._newTerrain;
+  if (!NT || !Number.isFinite(x) || !Number.isFinite(z) || Math.abs(x) > 350 || Math.abs(z) > 350) return 0;
+  const nh = NT.heightAt(x, z) ?? 0;
+  const n = NT.sea && nh < 0 ? nh : Math.max(nh, newTerrainFlatGroundAt(x, z, true));
+  const o = Math.max(NT.oldHeightAt(x, z) ?? 0, newTerrainFlatGroundAt(x, z, false));
+  return n - o;
+}
+// Building footprints in metres at scale 1 (measured from the GLBs), so a yard never depends on load timing.
+const NEW_TERRAIN_FOOTPRINTS = { dojo_9: [33.0, 23.5], dojo_5: [12.09, 8.05], shrine_2: [3.19, 1.075],
+  sam_great_dojo: [24, 20], sam_library: [14.4, 12.7], sam_forge: [11, 9], sam_market_stall: [6, 3.6], sam_house: [10, 9.6],
+  sam_gate: [14, 5], sam_palisade: [8, 1.3], sam_watchtower: [4.8, 4.8], sam_well: [3, 2.5], sam_burrow: [8.4, 7] };
+function newTerrainFootprintRadius(item) {
+  const base = NEW_TERRAIN_FOOTPRINTS[item.type];
+  if (!base) return /^(torii|village_gate)/.test(item.type) ? 6 : 10;
+  return Math.min(40, 0.5 * Math.hypot(base[0] * Math.abs(item.scaling?.x || 1), base[1] * Math.abs(item.scaling?.z || 1)));
+}
+function newTerrainGetsPad(item) {
+  if (!item?.position || !NEW_TERRAIN_PAD_TYPES.test(item.type || '')) return false;
+  const { x, z } = item.position;
+  return Math.max(Math.abs(x), Math.abs(z)) >= 108 && Math.abs(x) <= 345 && Math.abs(z) <= 345;
+}
+// Trees, pines, rocks and cherry trees settle onto the lowest ground under their base, so on the steeper new slopes
+// no side of the trunk or rock hangs in the air. Radius ~ trunk / rock size at the item's scale.
+const NEW_TERRAIN_SETTLE = { pine_1: .35, tree_1: .5, rock_1: .9, cherry_blossom: .5, bamboo: .3 };
+function newTerrainSettleDelta(item) {
+  const k = NEW_TERRAIN_SETTLE[item.type];
+  const { x, z } = item.position;
+  if (!k || Math.max(Math.abs(x), Math.abs(z)) < 112 || Math.abs(x) > 350 || Math.abs(z) > 350) return null;
+  const NT = window._newTerrain, r = k * Math.abs(item.scaling?.x || 1);
+  let low = Infinity;
+  for (let a = 0; a < 8; a++) { const y = NT.heightAt(x + Math.cos(a * .785) * r, z + Math.sin(a * .785) * r); if (Number.isFinite(y)) low = Math.min(low, y); }
+  const c = NT.heightAt(x, z); if (Number.isFinite(c)) low = Math.min(low, c);
+  if (!Number.isFinite(low)) return null;
+  return Math.max(low, newTerrainFlatGroundAt(x, z, true)) - Math.max(NT.oldHeightAt(x, z) ?? 0, newTerrainFlatGroundAt(x, z, false));
+}
+// Buildings were placed as if the ground were at 0, so they sit on their yard: raised by the yard height.
+function newTerrainItemDelta(item) {
+  if (ASSETS[item.type]?.water || ASSETS[item.type]?.absY) return 0; // piers / ships / bridges: absolute heights
+  if (newTerrainGetsPad(item)) {
+    const y = window._newTerrain.padHeightAt(item.position.x, item.position.z, newTerrainFootprintRadius(item));
+    if (Number.isFinite(y)) return y;
+  }
+  const settle = newTerrainSettleDelta(item);
+  if (settle !== null) return settle;
+  return newTerrainDeltaAt(item.position.x, item.position.z);
+}
+function newTerrainShiftLayout(data, sign) {
+  const byName = new Map(data.filter(item => item?.name).map(item => [item.name, item]));
+  return data.map(item => {
+    if (!item?.position) return item;
+    const owner = item.type === 'collision_proxy' && item.proxyOwnerName ? byName.get(item.proxyOwnerName) : null;
+    const dy = newTerrainItemDelta(owner?.position ? owner : item);
+    if (!dy) return item;
+    return { ...item, position: { ...item.position, y: item.position.y + sign * dy } };
+  });
+}
+function newTerrainLayoutFromSaved(data) {
+  const NT = window._newTerrain;
+  const pads = [];
+  data.forEach(item => {
+    if (newTerrainGetsPad(item)) pads.push({ x: item.position.x, z: item.position.z, radius: newTerrainFootprintRadius(item), type: item.type });
+  });
+  NT.applyPads(pads);
+  const out = newTerrainShiftLayout(data, +1);
+  if (!NT._decorStarted) {
+    NT._decorStarted = true;
+    const avoid = [];
+    out.forEach(item => {
+      if (!item?.position) return;
+      const { x, z } = item.position;
+      if (Math.abs(x) > 350 || Math.abs(z) > 350) return;
+      let r = 3;
+      if (item.type === 'collision_proxy') r = 0.5 * Math.hypot(item.scaling?.x || 1, item.scaling?.z || 1) + 1;
+      else if (/pine|tree|cherry|bamboo/.test(item.type)) r = 6;
+      else if (/rock/.test(item.type)) r = 4;
+      avoid.push({ x, z, r });
+    });
+    setTimeout(() => NT.buildDecor(avoid).then(d => {
+      console.log('New terrain decor:', d.pinesPlaced, 'pines,', d.rocksPlaced, 'rocks,', d.meshes.length, 'meshes');
+      scheduleShadowRefresh('terrain decor', 300);
+    }).catch(e => console.warn('Terrain decor failed', e)), 50);
+    if (NT.water || NT.falls?.length || NT.recipe.village?.pools) startNewTerrainWaterSound(NT); // streams, cliff waterfalls, canals
+    if (NT.sea && NT.recipe.sea.surf !== false) startNewTerrainSurfSound(NT); // lakes: surf 'calm' (lapping)
+  }
+  return out;
+}
+// Running water: soft filtered noise made in the browser (no sound file), louder near the waterfall and the stream.
+// Follows the Master and Ambience sliders; starts on the first click or key press (browsers block sound before that).
+function startNewTerrainWaterSound(NT) {
+  let ctx = null, gain = null;
+  const start = () => {
+    if (ctx) return;
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const len = ctx.sampleRate * 4, buf = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); let last = 0; for (let i = 0; i < len; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.2; } }
+      const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1100;
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 120;
+      gain = ctx.createGain(); gain.gain.value = 0;
+      src.connect(hp).connect(lp).connect(gain).connect(ctx.destination); src.start();
+    } catch (e) { console.warn('Water sound unavailable', e); }
+  };
+  addEventListener('pointerdown', start, { once: true }); addEventListener('keydown', start, { once: true });
+  setInterval(() => {
+    if (!gain || !charMesh) return;
+    const level = NT.waterSoundAt(charMesh.position.x, charMesh.position.z);
+    const vol = level * .5 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55) * (document.hidden ? 0 : 1);
+    gain.gain.setTargetAtTime(vol, ctx.currentTime, .4);
+  }, 250);
+}
+// Sea surf (villages with a sea): waves rolling in, breaking and washing back, also made in the browser. Each wave
+// builds, crashes and drains (7-12 s apart, random size and side; bigger in storms); louder near the shoreline.
+// Follows the Master and Ambience sliders and Mute Ambience, silent indoors; starts on the first click or key press.
+function startNewTerrainSurfSound(NT) {
+  let ctx = null, out = null, W = null, nextWave = 0;
+  const calm = NT.recipe.sea?.surf === 'calm'; // a still lake: small quick laps at the shore instead of breaking waves
+  const start = () => {
+    if (ctx) return;
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const sr = ctx.sampleRate, len = sr * 9, fade = sr >> 3, buf = ctx.createBuffer(2, len, sr);
+      for (let c = 0; c < 2; c++) { // pink noise; the last 1/8 s is faded into the start so the loop has no seam
+        const d = buf.getChannelData(c), tail = new Float32Array(fade);
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        for (let i = 0; i < len + fade; i++) {
+          const w = Math.random() * 2 - 1;
+          b0 = .99886 * b0 + w * .0555179; b1 = .99332 * b1 + w * .0750759; b2 = .969 * b2 + w * .153852;
+          b3 = .8665 * b3 + w * .3104856; b4 = .55 * b4 + w * .5329522; b5 = -.7616 * b5 - w * .016898;
+          const p = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * .5362) * .11; b6 = w * .115926;
+          if (i < len) d[i] = p; else tail[i - len] = p;
+        }
+        for (let i = 0; i < fade; i++) { const t = i / fade; d[i] = d[i] * Math.sqrt(t) + tail[i] * Math.sqrt(1 - t); }
+      }
+      const noise = ctx.createBufferSource(); noise.buffer = buf; noise.loop = true;
+      const filter = (type, f, q) => { const n = ctx.createBiquadFilter(); n.type = type; n.frequency.value = f; if (q) n.Q.value = q; return n; };
+      const amp = v => { const g = ctx.createGain(); g.gain.value = v; return g; };
+      out = amp(0); out.connect(ctx.destination);
+      const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null, side = pan || out;
+      if (pan) pan.connect(out);
+      W = { body: amp(.45), washF: filter('lowpass', 500, .6), wash: amp(0), fizz: amp(0), pan };
+      noise.connect(filter('lowpass', 320, .5)).connect(W.body).connect(out); // the low roar of the sea, always there
+      noise.connect(filter('highpass', 160)).connect(W.washF).connect(W.wash).connect(side); // the break and the wash
+      noise.connect(filter('highpass', 2600)).connect(W.fizz).connect(side); // foam hissing as the water runs back
+      noise.start();
+      nextWave = ctx.currentTime + .5;
+    } catch (e) { console.warn('Surf sound unavailable', e); }
+  };
+  const lap = t => { // lake: a soft slap and a short wash, 2-4 s apart
+    const s = .5 + Math.random() * .5, to = (p, v, at, k) => p.setTargetAtTime(v, at, k);
+    to(W.wash.gain, .32 * s, t, .25); to(W.washF.frequency, 900 + 500 * s, t, .3);
+    to(W.wash.gain, .02, t + .7, .6); to(W.washF.frequency, 450, t + .7, .8);
+    to(W.fizz.gain, .08 * s, t + .4, .2); to(W.fizz.gain, 0, t + 1, .6);
+    to(W.body.gain, .2, t, 1.5);
+    if (W.pan) to(W.pan.pan, (Math.random() * 2 - 1) * .7, t, .8);
+    return t + 1.8 + Math.random() * 2.4;
+  };
+  const wave = t => {
+    if (calm) return lap(t);
+    const storm = WeatherManager.mode === 'storm' ? 1.3 : WeatherManager.mode === 'heavy-rain' ? 1.15 : 1;
+    const s = (.55 + Math.random() * .45) * storm, to = (p, v, at, k) => p.setTargetAtTime(v, at, k);
+    to(W.wash.gain, .12 * s, t, .8); to(W.washF.frequency, 900, t, .9); // the wave rises
+    to(W.body.gain, .45 + .35 * s, t + 1.2, .7);
+    to(W.wash.gain, .9 * s, t + 2.2, .3); to(W.washF.frequency, 2200 + 1600 * s, t + 2.2, .35); // it breaks
+    to(W.fizz.gain, .35 * s, t + 2.6, .4);
+    to(W.wash.gain, .03, t + 2.8, 1.5); to(W.washF.frequency, 600, t + 2.8, 1.8); // and washes back
+    to(W.body.gain, .45, t + 3.5, 2.2); to(W.fizz.gain, 0, t + 3.6, 1.6);
+    if (W.pan) to(W.pan.pan, (Math.random() * 2 - 1) * .55, t, 1.5);
+    return t + (7 + Math.random() * 5) / Math.sqrt(storm);
+  };
+  addEventListener('pointerdown', start, { once: true }); addEventListener('keydown', start, { once: true });
+  setInterval(() => {
+    if (!W || !charMesh) return;
+    const now = ctx.currentTime;
+    while (nextWave < now + 1) nextWave = wave(Math.max(nextWave, now + .05));
+    const on = WeatherManager.masterAudioEnabled && !ActiveInterior && !document.hidden;
+    const near = on ? NT.surfSoundAt(charMesh.position.x, charMesh.position.z) : 0, level = calm ? 1.6 * near ** 2.4 : near; // the lake is heard close to its shore
+    out.gain.setTargetAtTime(level * 1.1 * (WeatherManager.masterVolume ?? .8) * (WeatherManager.ambienceVolume ?? .55), now, .5);
+  }, 250);
+}
+function newTerrainLayoutToSaved(data) {
+  return newTerrainShiftLayout(data, -1);
+}
+
 function loadWorldLayout(){
-  const raw = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem("rebelAntsWorldLayout") : null);
+  const raw = getLayoutCacheRaw();
   let data = [];
   if (raw) {
     try { data = JSON.parse(raw); } catch(e) { data = []; }
   }
   if (!Array.isArray(data)) data = [];
+  registerUploadedAssetsFromLayout(data);
   const sanitizedLayout = sanitizeWorldLayoutData(data, 'load');
   data = sanitizedLayout.data;
   if (sanitizedLayout.removedSmallAnts || sanitizedLayout.removedCollectibles || sanitizedLayout.removedInteriorLeaks) {
     persistSanitizedWorldLayoutCache(data, 'load duplicate/interior leak cleanup');
   }
+  if (window._newTerrain) data = newTerrainLayoutFromSaved(data);
   const hasSavedNPCs = data.some(item => item?.type === 'npc' && item?.villageId === CURRENT_VILLAGE_ID);
 
   // Dispose existing clones before restoring
@@ -19914,11 +20542,13 @@ function loadWorldLayout(){
   for (let i = fireLights.length-1; i>=0; i--) { if (fireLights[i].name && fireLights[i].name.startsWith('lanternPool')) fireLights.splice(i,1); }
 
   // Restore each saved object
+  _heldSmallAntLayoutItems = [];
   data.forEach(item => {
     if (!item.type || !item.position) return;
     if (Math.abs(item.position.x) >= 500 || Math.abs(item.position.z) >= 500) return; // skip stuck
     if (item.type === 'small_village_ant' && !SMALL_VILLAGE_ANT_RUNTIME_ENABLED) {
       console.info('Skipping disabled Small Village Ant layout item:', item.name || item.type);
+      _heldSmallAntLayoutItems.push(item);
       return;
     }
 
@@ -20148,7 +20778,7 @@ function loadWorldLayout(){
       createMissingAssetPlaceholder(item);
       return;
     }
-    const clone = source.clone(makeCloneName(item.type));
+    const clone = copyAssetSource(item.type, source, makeCloneName(item.type));
     if (!clone) {
       createMissingAssetPlaceholder(item);
       return;
@@ -20175,20 +20805,16 @@ function loadWorldLayout(){
     clone.position = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
     clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
     clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
-    const _noShadows = item.type && ASSETS[item.type] && ASSETS[item.type].noShadows;
+    const _noShadows = assetSkipsShadows(item.type);
+    // (was a loop nested inside itself: every mesh was registered once per sibling)
     clone.getChildMeshes().forEach(m => {
       if (!_noShadows) shadows.addShadowCaster(m);
       m.receiveShadows = !_noShadows; m.isPickable = true;
       m._editRoot = clone; // enables admin picker to find parent clone
-     clone.getChildMeshes().forEach(m => {
-  if (!_noShadows) shadows.addShadowCaster(m);
-  m.receiveShadows = !_noShadows; m.isPickable = true;
-  m._editRoot = clone; // enables admin picker to find parent clone
-if (m.material) {
-  m.material.maxSimultaneousLights = 4;
-  if (window._gpuMode === 'webgpu') webgpuCapMaterial4(m.material);
-}
-});
+      if (m.material) {
+        m.material.maxSimultaneousLights = 4;
+        if (window._gpuMode === 'webgpu') webgpuCapMaterial4(m.material);
+      }
     });
   });
 
@@ -20202,6 +20828,8 @@ if (m.material) {
     gizmoManager.scaleGizmoEnabled = false;
   }
   console.log("World layout loaded", data.length, "objects");
+  scheduleShadowRefresh('layout loaded', 600);
+  setTimeout(() => refreshStaticShadows('late assets'), 5000);
   cleanupLeakedInteriorObjects('world layout load');
   dedupeSmallVillageAntRuntime('load');
   dedupeCollectibleRuntime('load');
@@ -20830,7 +21458,8 @@ window.addEventListener('resize',()=>engine.resize());
   starMat.disableLighting = true;
   const stars = [];
   for(let i=0;i<180;i++){
-    const star = BABYLON.MeshBuilder.CreateSphere('s'+i,{diameter:0.5+Math.random()*0.8},scene);
+    // 20-face star (was a full 32-segment sphere: 180 of them were ~830k triangles for dots a few pixels wide)
+    const star = BABYLON.MeshBuilder.CreateIcoSphere('s'+i,{radius:(0.5+Math.random()*0.8)/2, subdivisions:1},scene);
     const theta = Math.random()*Math.PI*2;
     const phi = Math.random()*Math.PI*0.5; // upper hemisphere only
     const r = 480;
@@ -20950,8 +21579,9 @@ function getRectBlendAt(x, z, halfX, halfZ, feather) {
 function getVillageFlatCourtyardOrPathBlend(x, z) {
   const feather = VILLAGE_STARTER_OFFSET_BLEND_DISTANCE;
   const courtyardBlend = getRectBlendAt(x, z, 110, 110, feather);
-  const verticalPathBlend = getRectBlendAt(x, z, 5, 150, feather);
-  const horizontalPathBlend = getRectBlendAt(x, z, 150, 5, feather);
+  const pathHalf = window._newTerrain ? 110 : 150;
+  const verticalPathBlend = getRectBlendAt(x, z, 5, pathHalf, feather);
+  const horizontalPathBlend = getRectBlendAt(x, z, pathHalf, 5, feather);
   return Math.max(courtyardBlend, verticalPathBlend, horizontalPathBlend);
 }
 
@@ -20987,10 +21617,15 @@ function getVillageBaseGroundHeightAt(x, z) {
 
   if (Math.abs(x) <= 45 && Math.abs(z) <= 45) height = Math.max(height, 0.1);
   if (Math.abs(x) <= 110 && Math.abs(z) <= 110) height = Math.max(height, 0.06);
-  if (Math.abs(x) <= 4 && Math.abs(z) <= 150) height = Math.max(height, 0.08);
-  if (Math.abs(x) <= 150 && Math.abs(z) <= 4) height = Math.max(height, 0.08);
+  const pathHalf = window._newTerrain ? 110 : 150;
+  if (Math.abs(x) <= 4 && Math.abs(z) <= pathHalf) height = Math.max(height, 0.08);
+  if (Math.abs(x) <= pathHalf && Math.abs(z) <= 4) height = Math.max(height, 0.08);
 
-  if (ground && typeof ground.getHeightAtCoordinates === 'function') {
+  if (window._newTerrain) {
+    const terrainHeight = window._newTerrain.heightAt(x, z);
+    if (window._newTerrain.sea && Number.isFinite(terrainHeight) && terrainHeight < 0) return terrainHeight; // shore / sea bed
+    if (Number.isFinite(terrainHeight)) height = Math.max(height, terrainHeight);
+  } else if (ground && typeof ground.getHeightAtCoordinates === 'function') {
     const groundHeight = ground.getHeightAtCoordinates(x, z);
     if (Number.isFinite(groundHeight)) height = Math.max(height, groundHeight);
   }
@@ -21020,6 +21655,25 @@ function pointToVillageSurfaceLocal(surface, x, z) {
   };
 }
 
+// Height on a ramp at a point in its local frame. Stairs (surface.steps) are flat on every tread at the tread's top,
+// lifting over the last bit before each riser, so feet stand on the steps instead of sinking into a straight slope.
+function villageRampHeightAt(surface, local) {
+  const axis = surface.rampAxis || 'z';
+  const rampCoord = axis === 'x' ? local.x : local.z;
+  const rampHalf = axis === 'x' ? surface.halfX : surface.halfZ;
+  const sign = surface.rampSign || -1;
+  const rawT = sign < 0
+    ? (rampCoord + rampHalf) / (rampHalf * 2)
+    : (rampHalf - rampCoord) / (rampHalf * 2);
+  const t = Math.max(0, Math.min(1, rawT));
+  const n = surface.steps;
+  if (n > 0) {
+    const u = t * n, i = Math.min(n - 1, Math.floor(u)), f = u - i, lift = Math.max(0, Math.min(1, (f - .62) / .38)); // up a step as the feet reach it
+    return surface.startY + (surface.endY - surface.startY) * Math.min(1, (i + 1 + (i < n - 1 ? lift * lift * (3 - 2 * lift) : 0)) / n);
+  }
+  return surface.startY + (surface.endY - surface.startY) * t;
+}
+
 function getVillageWalkableSurfaceHeightAt(x, z) {
   let height = -Infinity;
 
@@ -21035,15 +21689,7 @@ function getVillageWalkableSurfaceHeightAt(x, z) {
     }
 
     if (surface.kind === 'ramp') {
-      const axis = surface.rampAxis || 'z';
-      const rampCoord = axis === 'x' ? local.x : local.z;
-      const rampHalf = axis === 'x' ? surface.halfX : surface.halfZ;
-      const sign = surface.rampSign || -1;
-      const rawT = sign < 0
-        ? (rampCoord + rampHalf) / (rampHalf * 2)
-        : (rampHalf - rampCoord) / (rampHalf * 2);
-      const t = Math.max(0, Math.min(1, rawT));
-      height = Math.max(height, surface.startY + (surface.endY - surface.startY) * t);
+      height = Math.max(height, villageRampHeightAt(surface, local));
       return;
     }
 
@@ -21067,17 +21713,7 @@ function getVillageWalkSurfaceInfoAt(x, z) {
       if (!Number.isFinite(height)) return;
       y = surface.centerY + height;
     }
-    if (surface.kind === 'ramp') {
-      const axis = surface.rampAxis || 'z';
-      const rampCoord = axis === 'x' ? local.x : local.z;
-      const rampHalf = axis === 'x' ? surface.halfX : surface.halfZ;
-      const sign = surface.rampSign || -1;
-      const rawT = sign < 0
-        ? (rampCoord + rampHalf) / (rampHalf * 2)
-        : (rampHalf - rampCoord) / (rampHalf * 2);
-      const t = Math.max(0, Math.min(1, rawT));
-      y = surface.startY + (surface.endY - surface.startY) * t;
-    }
+    if (surface.kind === 'ramp') y = villageRampHeightAt(surface, local);
     if (Number.isFinite(y) && y > bestHeight) {
       bestHeight = y;
       bestSurface = surface;
@@ -21094,9 +21730,91 @@ function getVillageGroundHeightAt(x, z) {
   return Number.isFinite(surfaceHeight) ? Math.max(baseHeight, surfaceHeight) : baseHeight;
 }
 
+// Ground meshes for the player's height checks. scene.pickWithRay walked all ~1,800 meshes through the filter for
+// every ray (about 10 rays a frame); the few ground meshes are listed here instead (refreshed every 2 s) and tested
+// directly, with the same filter and the same closest-hit rule, so the answer is identical.
+const _groundRay = new BABYLON.Ray(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, -1, 0), 620);
+let _groundPickMeshes = null, _groundPickMeshesAt = 0;
+function isVillageGroundPickMesh(mesh) {
+  if (!mesh || mesh.isDisposed?.()) return false;
+  if (mesh.metadata?.villageGround) return false; // its height comes from _newTerrain.heightAt (no ray needed)
+  return mesh === ground || mesh === court || mesh === plaza ||
+    mesh.name === 'pa' || mesh.name === 'rv' || mesh.name?.startsWith('pa');
+}
+function getVillageGroundPickMeshes() {
+  const now = performance.now();
+  if (!_groundPickMeshes || now - _groundPickMeshesAt > 2000 || _groundPickMeshes.some(m => m.isDisposed?.())) {
+    _groundPickMeshes = scene.meshes.filter(isVillageGroundPickMesh);
+    _groundPickMeshesAt = now;
+  }
+  return _groundPickMeshes;
+}
+// The big terrain mesh (~29k triangles) is where the rays spent their time. Its height is read straight from its own
+// triangles instead: find the grid cell, pick the triangle that contains the point, interpolate. Same surface, same
+// answer as the ray (checked to within 0.1 mm), about a thousand times faster. The small flat meshes (courtyard,
+// plaza, paths) are still ray-tested; the highest hit wins, exactly like the closest hit of a downward ray.
+let _groundGrid = null;
+function getVillageGroundGrid() {
+  if (_groundGrid && _groundGrid.mesh === ground) return _groundGrid;
+  _groundGrid = null;
+  if (!ground || ground.isDisposed?.()) return null;
+  const wm = ground.getWorldMatrix();
+  if (!wm.isIdentity()) return null; // moved/rotated ground: use rays
+  const pos = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+  const n = 120, w = 700, h = 700;
+  if (!pos || pos.length !== (n + 1) * (n + 1) * 3) return null;
+  _groundGrid = { mesh: ground, pos, n, w, h, cell: w / n };
+  return _groundGrid;
+}
+function triangleHeightXZ(p, ia, ib, ic, x, z) {
+  const ax = p[ia], az = p[ia + 2], bx = p[ib], bz = p[ib + 2], cx = p[ic], cz = p[ic + 2];
+  const d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz);
+  if (Math.abs(d) < 1e-12) return null;
+  const l1 = ((bz - cz) * (x - cx) + (cx - bx) * (z - cz)) / d;
+  const l2 = ((cz - az) * (x - cx) + (ax - cx) * (z - cz)) / d;
+  const l3 = 1 - l1 - l2;
+  const eps = -1e-6;
+  if (l1 < eps || l2 < eps || l3 < eps) return null;
+  return l1 * p[ia + 1] + l2 * p[ib + 1] + l3 * p[ic + 1];
+}
+function getVillageTerrainMeshHeightAt(x, z) {
+  if (window._newTerrain) return window._newTerrain.heightAt(x, z); // same triangle-exact read, 256-subdivision mesh
+  const g = getVillageGroundGrid();
+  if (!g) return undefined;
+  const { pos, n, w, h, cell } = g;
+  if (Math.abs(x) > w / 2 || Math.abs(z) > h / 2) return null;
+  const col = Math.min(n - 1, Math.max(0, Math.floor((x + w / 2) / cell)));
+  const row = Math.min(n - 1, Math.max(0, Math.floor((h / 2 - z) / cell)));
+  const v = (c, r) => (c + r * (n + 1)) * 3;
+  // CreateGround's two triangles per cell
+  const t1 = triangleHeightXZ(pos, v(col + 1, row + 1), v(col + 1, row), v(col, row), x, z);
+  if (t1 !== null) return t1;
+  const t2 = triangleHeightXZ(pos, v(col, row + 1), v(col + 1, row + 1), v(col, row), x, z);
+  return t2 !== null ? t2 : undefined;
+}
+function raycastVillageGroundOnly(x, z) {
+  _groundRay.origin.set(x, 260, z);
+  let bestY = null;
+  const meshes = getVillageGroundPickMeshes();
+  for (let i = 0; i < meshes.length; i++) {
+    const mesh = meshes[i];
+    if (mesh === ground) {
+      const y = getVillageTerrainMeshHeightAt(x, z);
+      if (y !== undefined) {
+        if (y !== null && (bestY === null || y > bestY)) bestY = y;
+        continue;
+      }
+    }
+    const info = _groundRay.intersectsMesh(mesh, false);
+    if (info?.hit && info.pickedPoint && (bestY === null || info.pickedPoint.y > bestY)) bestY = info.pickedPoint.y;
+  }
+  return bestY;
+}
+
 function getVillageRaycastGroundHeightAt(x, z, options = {}) {
   if (!scene) return null;
   const includeManualWalkSurfaces = options.includeManualWalkSurfaces !== false;
+  if (!includeManualWalkSurfaces) return raycastVillageGroundOnly(x, z);
   const ray = new BABYLON.Ray(
     new BABYLON.Vector3(x, 260, z),
     new BABYLON.Vector3(0, -1, 0),
@@ -21121,7 +21839,19 @@ function getVillageRaycastGroundHeightAt(x, z, options = {}) {
   return hit?.hit && hit.pickedPoint ? hit.pickedPoint.y : null;
 }
 
+// Standing still (or orbiting in admin) reused the same 10 rays every frame; the answer is kept for 0.5 s while the
+// player stays on the same spot.
+let _playerGroundCache = null;
 function getVillagePlayerGroundHeightAt(x, z) {
+  const now = performance.now();
+  const c = _playerGroundCache;
+  if (c && Math.abs(c.x - x) < 0.001 && Math.abs(c.z - z) < 0.001 && now - c.at < 500) return c.y;
+  const y = computeVillagePlayerGroundHeightAt(x, z);
+  _playerGroundCache = { x, z, y, at: now };
+  return y;
+}
+
+function computeVillagePlayerGroundHeightAt(x, z) {
   const radius = VILLAGE_PLAYER_GROUND_SAMPLE_RADIUS;
   const samples = [
     [0, 0],
@@ -21134,14 +21864,14 @@ function getVillagePlayerGroundHeightAt(x, z) {
     [radius * 0.65, -radius * 0.65],
     [-radius * 0.65, -radius * 0.65]
   ];
-  const heights = samples
-    .map(([dx, dz]) => getVillageRaycastGroundHeightAt(x + dx, z + dz, { includeManualWalkSurfaces: false }))
+  const sampled = samples.map(([dx, dz]) => getVillageRaycastGroundHeightAt(x + dx, z + dz, { includeManualWalkSurfaces: false }));
+  const heights = sampled
     .filter(Number.isFinite)
     .sort((a, b) => a - b);
 
   if (!heights.length) return getVillageGroundHeightAt(x, z);
 
-  const centerHeight = getVillageRaycastGroundHeightAt(x, z, { includeManualWalkSurfaces: false });
+  const centerHeight = sampled[0]; // the [0, 0] sample (was cast a second time)
   const medianHeight = heights[Math.floor(heights.length * 0.5)];
   const upperSupportHeight = heights[Math.min(heights.length - 1, Math.floor(heights.length * 0.66))];
   let supportHeight = Number.isFinite(upperSupportHeight) ? upperSupportHeight : medianHeight;
@@ -21554,6 +22284,70 @@ function renderSelectedWalkSurfaceGuide() {
     });
 }
 
+// Placed trees block the player at their trunk. The trunk is found in the model itself (the cherry tree's trunk sits
+// well off its pivot and leans), as circles in the model's yaw-free frame at scale 1, then placed per tree.
+const TREE_TRUNK_TYPES = new Set(['cherry_blossom']);
+const _treeLocalPoints = {}, _treeTrunkProfiles = {};
+// the model's vertices in its root's own (unrotated, unscaled) space, read once from the loaded source
+function getTreeLocalPoints(type) {
+  if (_treeLocalPoints[type]) return _treeLocalPoints[type];
+  const src = _assetSources[type];
+  if (!src || !isAssetSourceReady(type)) return null;
+  src.computeWorldMatrix(true);
+  const inv = src.getWorldMatrix().clone().invert(), pts = [], v = new BABYLON.Vector3();
+  src.getChildMeshes(false).forEach(m => {
+    const p = m.getVerticesData?.(BABYLON.VertexBuffer.PositionKind); if (!p) return;
+    m.computeWorldMatrix(true);
+    const W = m.getWorldMatrix().multiply(inv);
+    for (let i = 0; i < p.length; i += 3) { BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(p[i], p[i + 1], p[i + 2], W, v); pts.push(v.x, v.y, v.z); }
+  });
+  return pts.length ? (_treeLocalPoints[type] = new Float32Array(pts)) : null;
+}
+// trunk circles for one tilt of the model (its pitch + roll; yaw and scale are applied per tree)
+function getTreeTrunkProfile(type, rx = 0, rz = 0) {
+  const key = type + '|' + rx.toFixed(3) + '|' + rz.toFixed(3);
+  if (_treeTrunkProfiles[key]) return _treeTrunkProfiles[key];
+  const L = getTreeLocalPoints(type); if (!L) return null;
+  const R = BABYLON.Matrix.RotationYawPitchRoll(0, rx, rz), v = new BABYLON.Vector3(), P = new Float32Array(L.length);
+  let minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < L.length; i += 3) { BABYLON.Vector3.TransformCoordinatesFromFloatsToRef(L[i], L[i + 1], L[i + 2], R, v); P[i] = v.x; P[i + 1] = v.y; P[i + 2] = v.z; minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y); }
+  const H = maxY - minY, circles = [];
+  for (const [a, b, k] of [[0, .05, .8], [.05, .14, 1.1]]) { // root flare (a bit inside it) + the trunk at body height
+    const xs = [], zs = [];
+    for (let i = 0; i < P.length; i += 3) { const f = (P[i + 1] - minY) / H; if (f >= a && f < b) { xs.push(P[i]); zs.push(P[i + 2]); } }
+    if (!xs.length) continue;
+    const cx = xs.reduce((s, x) => s + x, 0) / xs.length, cz = zs.reduce((s, z) => s + z, 0) / zs.length;
+    const d = xs.map((x, i) => Math.hypot(x - cx, zs[i] - cz)).sort((p, q) => p - q);
+    circles.push({ x: cx, z: cz, r: Math.max(.4, d[Math.floor(d.length * .5)] * k) });
+  }
+  return (_treeTrunkProfiles[key] = circles);
+}
+function addTreeTrunkBlockers(node, blockers) {
+  const r = node.rotation || BABYLON.Vector3.Zero();
+  const prof = getTreeTrunkProfile(node.metadata.type, r.x || 0, r.z || 0); if (!prof) return;
+  const yaw = r.y || 0, s = Math.abs(node.scaling?.x || 1), c = Math.cos(yaw), sn = Math.sin(yaw);
+  prof.forEach(t => blockers.push({ kind: 'circle', type: 'tree_trunk', name: node.name,
+    x: node.position.x + (t.x * c + t.z * sn) * s, z: node.position.z + (-t.x * sn + t.z * c) * s, radius: t.r * s }));
+}
+
+// Kit piers (and any kit piece with a deck) are walkable at their deck height, also out over the water.
+// Stairs and gangplanks are sloped decks: y0 at the deck's -z end, y1 at its +z end (in the piece's own frame).
+function addKitDeckSurfaces(node, surfaces) {
+  const yaw = node.rotation?.y || 0, c = Math.cos(yaw), sn = Math.sin(yaw);
+  const sx = Math.abs(node.scaling?.x || 1), sy = Math.abs(node.scaling?.y || sx), sz = Math.abs(node.scaling?.z || sx); // stretched stairs climb higher / further
+  window.SamuraiKit.refreshStairs?.(node, scene); // rescaled stairs rebuild their steps at the new size
+  const stepCounts = window.SamuraiKit.stairsSteps?.(node.metadata.type, sy); let flight = 0;
+  window.SamuraiKit.decks[node.metadata.type].forEach(d => {
+    const sf = {
+      kind: 'flat', type: 'kit_deck', name: node.name, surfaceType: d.surface || 'wood',
+      centerX: node.position.x + (d.x * sx * c + d.z * sz * sn), centerZ: node.position.z + (-d.x * sx * sn + d.z * sz * c),
+      axisX: { x: c, z: -sn }, axisZ: { x: sn, z: c }, yaw, halfX: d.halfX * sx, halfZ: d.halfZ * sz, y: node.position.y + (d.y ?? 0) * sy
+    };
+    if (Number.isFinite(d.y1)) Object.assign(sf, { kind: 'ramp', rampAxis: 'z', rampSign: -1, steps: d.steps ? (stepCounts?.[flight++] ?? d.steps) : 0, startY: node.position.y + d.y0 * sy, endY: node.position.y + d.y1 * sy });
+    surfaces.push(sf);
+  });
+}
+
 function rebuildVillageCollisionBlockers() {
   const blockers = [];
   const walkableSurfaces = [];
@@ -21566,6 +22360,10 @@ function rebuildVillageCollisionBlockers() {
     const type = getVillageBlockerTypeFromNode(node);
     if (type === 'collision_proxy') {
       addManualCollisionProxyToWorld(node, blockers, walkableSurfaces);
+    } else if (node.metadata?.isClone === true && TREE_TRUNK_TYPES.has(node.metadata.type)) {
+      addTreeTrunkBlockers(node, blockers);
+    } else if (node.metadata?.isClone === true && window.SamuraiKit?.decks?.[node.metadata.type]) {
+      addKitDeckSurfaces(node, walkableSurfaces);
     } else if (node.metadata?.type === 'terrain_stamp') {
       addTerrainStampToWorld(node, walkableSurfaces);
     }
@@ -21614,7 +22412,20 @@ function liveManualCollisionProxyBlocksSegment(startX, startZ, endX, endZ, paddi
   });
 }
 
+function villageOnKitDeck(x, z) {
+  return villageWalkableSurfaces.some(sf => {
+    if (sf.type !== 'kit_deck') return false;
+    const l = pointToVillageSurfaceLocal(sf, x, z);
+    return Math.abs(l.x) <= sf.halfX && Math.abs(l.z) <= sf.halfZ;
+  });
+}
+function villageSeaBlocks(x, z) {
+  return !!window._newTerrain?.seaBlocks?.(x, z) && !Number.isFinite(getVillageWalkableSurfaceHeightAt(x, z));
+}
 function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
+  const onDeck = villageOnKitDeck(x, z); // piers run over the quay wall and the water, bridges over the ravine
+  if (!onDeck && window._newTerrain?.decorBlocksPoint(x, z, padding)) return true; // scattered pines and rocks
+  if (villageSeaBlocks(x, z)) return true; // no wading into the sea
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'circle') {
       const dx = x - blocker.x;
@@ -21638,6 +22449,9 @@ function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PA
 }
 
 function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
+  const onDeck = villageOnKitDeck(endX, endZ);
+  if (!onDeck && window._newTerrain?.decorBlocksPoint(endX, endZ, padding)) return true;
+  if (villageSeaBlocks(endX, endZ)) return true;
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'circle') return villagePointBlocked(endX, endZ, padding);
     if (blocker.kind === 'obb') return villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ, padding);
@@ -22001,6 +22815,12 @@ refreshQuestBuilderOptions();
   const levels = [1 / dpr]; if (dpr >= 1.75) levels.push(1 / 1.5); if (dpr > 1.01) levels.push(1);
   let li = 0, low = 0, high = 0;
   const pinned = qs.get('res') === 'native';
+  // Each sharper level remembers how often it was too slow. It used to bounce forever:
+  // 2x drops to 1.5x at ~40 fps, 1.5x hits 60, climbs back to 2x after 6 s, drops again (FPS readout swinging 35-60).
+  // Now a level that was too slow is retried once after a longer calm spell (30 s); after a second failure it stays off.
+  const fails = levels.map(() => 0);
+  const lastDropAt = levels.map(() => 0);
+  const RETRY_AFTER_MS = 30000, MAX_FAILS = 2;
   setInterval(() => {
     if (document.visibilityState !== 'visible') { low = high = 0; return; }
     const fps = engine.getFps();
@@ -22008,11 +22828,20 @@ refreshQuestBuilderOptions();
     if (low >= 2) {
       low = 0;
       if (window._villageLook.bloom) { window._villageLook.bloom.dispose(); window._villageLook.bloom = null; console.log('Look: bloom off (slow frames)'); return; }
-      if (!pinned && li < levels.length - 1) { li++; engine.setHardwareScalingLevel(levels[li]); console.log('Adaptive resolution: scaling', levels[li].toFixed(2), 'at', fps.toFixed(0), 'fps'); }
+      if (!pinned && li < levels.length - 1) {
+        fails[li]++; lastDropAt[li] = performance.now();
+        li++; engine.setHardwareScalingLevel(levels[li]);
+        console.log('Adaptive resolution: scaling', levels[li].toFixed(2), 'at', fps.toFixed(0), 'fps');
+      }
     } else if (high >= 4 && li > 0 && !pinned) {
-      high = 0; li--; engine.setHardwareScalingLevel(levels[li]); console.log('Adaptive resolution: scaling', levels[li].toFixed(2));
+      const up = li - 1;
+      const canRetry = fails[up] < MAX_FAILS && performance.now() - lastDropAt[up] > RETRY_AFTER_MS;
+      if (canRetry) {
+        high = 0; li = up; engine.setHardwareScalingLevel(levels[li]); console.log('Adaptive resolution: scaling', levels[li].toFixed(2));
+      }
     }
     window._villageLook.resLevel = levels[li];
+    window._villageLook.resFails = fails.slice();
   }, 1500);
 })();
 let t=0;
@@ -22045,13 +22874,25 @@ engine.runRenderLoop(()=>{
     updateForgeActionPlayerMotion();
     const moveSpeed=4.2*dt,turnSpeed=2.4*dt;
     const tf=runKey?0.18:0.35;
+    // Back (S / down arrow) turns the character around to walk the other way instead of backing up.
+    const backOnly = moveBackward && !moveForward && !runKey;
+    if (backOnly && !charMesh._backHeld) charMesh._turnAroundTo = charMesh.rotation.y + Math.PI;
+    charMesh._backHeld = backOnly;
+    if (turnLeft || turnRight) charMesh._turnAroundTo = null;
+    let _turningAround = false;
+    if (charMesh._turnAroundTo != null) {
+      let d = charMesh._turnAroundTo - charMesh.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
+      const step = 9 * dt;
+      if (Math.abs(d) <= step) { charMesh.rotation.y += d; charMesh._turnAroundTo = null; }
+      else { charMesh.rotation.y += Math.sign(d) * step; _turningAround = Math.abs(d) > .5; }
+    }
     if(turnLeft)charMesh.rotation.y-=turnSpeed*tf;
     if(turnRight)charMesh.rotation.y+=turnSpeed*tf;
     charMesh.rotation.z+=(((turnLeft?1:turnRight?-1:0)*0.08)-charMesh.rotation.z)*0.12;
     const fwd=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
     if(!charMesh._vel)charMesh._vel=0;
     const actionMovementSuppressed = isForgeActionMovementSuppressed();
-    const tv=actionMovementSuppressed?0:(moveForward||runKey)?moveSpeed*(runKey?2:1):moveBackward?-moveSpeed*0.6:0;
+    const tv=actionMovementSuppressed?0:(moveForward||runKey)?moveSpeed*(runKey?2:1):backOnly?(_turningAround?moveSpeed*0.2:moveSpeed):0;
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
     if(Math.abs(charMesh._vel)>0.0001){
       const _currentPos = charMesh.position.clone();
@@ -22067,7 +22908,7 @@ engine.runRenderLoop(()=>{
       // Slope tilt removed — character stays upright
     }
     if(animState!==2&&animState<3){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
-    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8;}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
+    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1);updateSandFootprints(_terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
     if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
     _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
     const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
@@ -22130,7 +22971,7 @@ function schedulePostInteractiveStartupTask(fn, delay = 0) {
 }
 
 function getCachedWorldLayoutDataForStartup() {
-  const raw = safeStorageGet(localStorage, WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? safeStorageGet(localStorage, 'rebelAntsWorldLayout') : null);
+  const raw = getLayoutCacheRaw();
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
@@ -22198,35 +23039,85 @@ Object.keys(ASSETS).filter(key => ASSETS[key]?.procedural).forEach(key => loadAs
 
 
 // ── LOADING SCREEN + WORLD INIT ──────────────────
-function shouldKeepLocalLayoutCacheOverRemote() {
-  const localJson = localStorage.getItem(WORLD_LAYOUT_STORAGE_KEY) || (CURRENT_VILLAGE_ID === 'hub' ? localStorage.getItem('rebelAntsWorldLayout') : null);
-  if (!localJson) return false;
-  const localAt = Number(localStorage.getItem('rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID) || 0);
-  const hardAt = Number(localStorage.getItem('rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID) || 0);
-  return localAt > hardAt;
+const LAYOUT_REMOTE_SHA_KEY = 'rebelAntsLayoutRemoteSha:' + CURRENT_VILLAGE_ID;
+
+function getLocalLayoutCacheRaw() {
+  return getLayoutCacheRaw();
+}
+
+// Local edits win over the saved layout only for a signed-in admin who cached edits after their last hard save.
+// Players always get the saved layout, so an old copy in their browser can never hide newer saves.
+async function shouldKeepLocalLayoutCacheOverRemote(remoteSha) {
+  if (!getLocalLayoutCacheRaw()) return false;
+  const localAt = Number(safeStorageGet(localStorage, 'rebelAntsLayoutLocalCacheAt:' + CURRENT_VILLAGE_ID) || 0);
+  const hardAt = Number(safeStorageGet(localStorage, 'rebelAntsLayoutHardSaveAt:' + CURRENT_VILLAGE_ID) || 0);
+  if (!(localAt > hardAt)) return false;
+  if (!(await hasActiveAdminSession())) return false;
+  const baseSha = safeStorageGet(localStorage, LAYOUT_REMOTE_SHA_KEY);
+  if (remoteSha && baseSha && remoteSha !== baseSha) {
+    console.warn('World layout: saved layout changed since your local edits', { baseSha, remoteSha });
+    setTimeout(() => showToast('⚠ This village was saved from another browser since your local edits. Hard Save will replace that save.'), 4000);
+  }
+  return true;
+}
+
+function storeRemoteLayoutInCache(layout, sha) {
+  const layoutJson = JSON.stringify(layout);
+  layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, layoutJson);
+  if (sha) safeStorageSet(localStorage, LAYOUT_REMOTE_SHA_KEY, sha);
+}
+
+// The layout shipped with the site. Used only when the layout service can't be reached and this browser has no copy yet.
+async function fetchStaticWorldLayout() {
+  const path = CURRENT_VILLAGE?.layoutPath;
+  if (!path) return null;
+  try {
+    const resp = await fetch('/' + path.replace(/^\/+/, ''), { cache: 'no-store' });
+    if (resp.status === 404) return [];
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return Array.isArray(data) ? data : null;
+  } catch(e) {
+    console.warn('Static world layout unavailable:', e);
+    return null;
+  }
 }
 
 async function initWorldLayout() {
   setSt('Village: loading saved layout...');
+  let remote = null;
   try {
     const resp = await fetch(`/api/world-layout?village=${encodeURIComponent(CURRENT_VILLAGE_ID)}`);
     if (resp.ok) {
       const d = await resp.json();
-      if (d.ok && Array.isArray(d.layout)) {
-        if (shouldKeepLocalLayoutCacheOverRemote()) {
-          console.log("Keeping newer local layout cache:", CURRENT_VILLAGE_ID);
-        } else {
-          const layoutJson = JSON.stringify(d.layout);
-          localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, layoutJson);
-          if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem("rebelAntsWorldLayout", layoutJson);
-          console.log("Layout restored from GitHub:", CURRENT_VILLAGE_ID, d.layout.length, "objects");
-        }
-      }
+      if (d.ok && Array.isArray(d.layout)) remote = { layout: d.layout, sha: d.sha || null };
     }
-    setSt('Village: layout cache ready.');
+    if (!remote) console.warn('World layout service did not return a layout. Status:', resp.status);
   } catch(e) {
     console.warn("Could not load layout from GitHub", e);
-    setSt('Village: using cached layout.');
+  }
+
+  try {
+    if (remote) {
+      if (await shouldKeepLocalLayoutCacheOverRemote(remote.sha)) {
+        console.log("Keeping newer local layout cache:", CURRENT_VILLAGE_ID);
+      } else {
+        storeRemoteLayoutInCache(remote.layout, remote.sha);
+        console.log("Layout restored from GitHub:", CURRENT_VILLAGE_ID, remote.layout.length, "objects");
+      }
+      setSt('Village: layout cache ready.');
+    } else if (getLocalLayoutCacheRaw()) {
+      setSt('Village: using cached layout.');
+    } else {
+      const fallback = await fetchStaticWorldLayout();
+      if (fallback) {
+        storeRemoteLayoutInCache(fallback, null);
+        console.log("Layout loaded from the site copy:", CURRENT_VILLAGE_ID, fallback.length, "objects");
+      }
+      setSt('Village: using built-in layout.');
+    }
+  } catch(e) {
+    console.warn("Could not prepare the layout cache", e);
   }
 
   try {
@@ -22287,6 +23178,7 @@ function waitForWorldAndLoadLayout() {
     restoreUploadedAssets({ loadSources:false });
   }
   if (!waitForWorldAndLoadLayout._requiredKeys) {
+    registerUploadedAssetsFromLayout(getCachedWorldLayoutDataForStartup());
     waitForWorldAndLoadLayout._requiredKeys = getStartupRequiredAssetKeys();
     VillageStartupRuntime.requiredAssetKeys = waitForWorldAndLoadLayout._requiredKeys;
     waitForWorldAndLoadLayout._requiredKeys.forEach(loadAssetSource);
@@ -22325,7 +23217,7 @@ function applyZoneSignTextures() {
   scene.meshes.filter(m => m.name && m.name.startsWith('zoneTextPlane_')).forEach(m => m.dispose());
   // Remove old triggers driven by signs
   _signTriggers = _signTriggers || [];
-  _signTriggers.forEach(id => removeTrigger && removeTrigger(id));
+  _signTriggers.forEach(id => removeTrigger(id));
   _signTriggers = [];
 
   const clones = scene.transformNodes.filter(n =>
@@ -22438,13 +23330,16 @@ function applySignEditor() {
   const cfg = { label, sub, desc, icon, color, clickable, buttons };
   selectedObject.metadata.signConfig = cfg;
   renderSignTexture(selectedObject, cfg);
-  if (typeof removeTrigger === 'function') removeTrigger('sign_'+selectedObject.name);
+  removeTrigger('sign_'+selectedObject.name);
+  _signTriggers = _signTriggers.filter(id => id !== 'sign_'+selectedObject.name);
   if (clickable) {
     addTrigger({ id:'sign_'+selectedObject.name, x:selectedObject.position.x, z:selectedObject.position.z,
       title:label, sub:sub, icon:icon||'🏯', color:color, desc:desc, actions:buttons });
+    _signTriggers.push('sign_'+selectedObject.name);
   }
-  saveWorldLayout();
-  showToast('✅ Sign saved: ' + label);
+  // Keep the edit locally; Hard Save publishes it (this used to commit to GitHub on every apply).
+  saveWorldLayout(false);
+  showToast('✅ Sign updated: ' + label + ' — Hard Save to publish');
 }
 
 function applyToroColor() {
@@ -22455,8 +23350,8 @@ function applyToroColor() {
   if (selectedObject.metadata._toroFlickerObserver) scene.onBeforeRenderObservable.remove(selectedObject.metadata._toroFlickerObserver);
   selectedObject.metadata._toroFlickerObserver = null;
   buildToro(selectedObject, color);
-  saveWorldLayout();
-  showToast('🏯 Lantern color updated');
+  saveWorldLayout(false);
+  showToast('🏯 Lantern color updated — Hard Save to publish');
 }
 
 function resolveLanternClone(node) {
@@ -25784,8 +26679,7 @@ function getFakeLightStateFactor() {
   if (FakeLightDirectorTestMode && FakeLightDirectorTestMode !== 'auto') {
     return ensureInteriorEditVisible(FAKE_LIGHT_TEST_FACTORS[FakeLightDirectorTestMode] || .18);
   }
-  const now = new Date();
-  const h = now.getHours() + now.getMinutes() / 60;
+  const h = villageClockHour();
   let timeFactor = .04;
   if (h >= 20 || h < 6) timeFactor = 1;
   else if (h >= 17 && h < 20) timeFactor = .32 + ((h - 17) / 3) * .68;
@@ -25891,6 +26785,10 @@ function applyFakeLightState(force = false) {
   _lastFakeLightStateUpdateAt = now;
   ensureFakeLightRegistrations(force);
   const factor = getFakeLightStateFactor();
+  window.SamuraiKit?.setLightFactor?.(factor); // samurai kit lanterns, windows and doorways glow brighter at night
+  window._newTerrain?.birds?.setVisible(factor < .6 && !['storm', 'heavy-rain'].includes(WeatherManager.mode)); // birds roost at night and in storms
+  // walking light: soft by day on the new terrain (its bright ground took it as a hard disc at noon), full at night
+  window._walkLightK = window._newTerrain ? .18 + .82 * Math.min(1, Math.max(0, (factor - .1) / .7)) : 1;
   updateFakeLightTestReadout(factor);
   applyActiveInteriorLightingState(factor);
   if (!scene?.transformNodes) return;
@@ -29080,7 +29978,9 @@ function disposeLayoutNodeForHistory(node) {
   if (node.metadata?.type === 'small_village_ant') {
     SmallVillageAntManager.roots = SmallVillageAntManager.roots.filter(root => root !== node);
   }
-  try { node.dispose(false, true); } catch(e) {}
+  // Keep materials: GLB copies share their source's materials (clones and instances alike) and tōrō parts share
+  // theirs, so disposing materials here broke every other copy after an undo. An admin-only undo can leak a few.
+  try { node.dispose(false, false); } catch(e) {}
 }
 
 function createLayoutNodeForHistory(item) {
@@ -29197,8 +30097,7 @@ function restoreEditorSnapshotIncremental(entry) {
 function restoreEditorSnapshot(entry) {
   if (!entry?.json) return;
   _editorHistory.muted = true;
-  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, entry.json);
-  if (CURRENT_VILLAGE_ID === 'hub') localStorage.setItem('rebelAntsWorldLayout', entry.json);
+  layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, entry.json);
   try {
     restoreEditorSnapshotIncremental(entry);
   } catch (error) {
@@ -29364,14 +30263,14 @@ function spawnSelectedPrefab() {
       }
     });
   });
-  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, JSON.stringify(current, null, 2));
+  layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, JSON.stringify(current, null, 2));
   loadWorldLayout();
   showToast('Prefab spawned: ' + prefab.name);
 }
 
 function createLocalLayoutBackup() {
   const json = JSON.stringify(collectWorldLayoutData(), null, 2);
-  localStorage.setItem('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID, json);
+  layoutStorageSet('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID, json);
   showToast('Local backup created');
 }
 
@@ -29379,7 +30278,7 @@ function restorePreviousLocalBackup() {
   const json = localStorage.getItem('rebelAntsLayoutBackup:' + CURRENT_VILLAGE_ID);
   if (!json) { showToast('No local backup found'); return; }
   recordEditorHistory('restore backup');
-  localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, json);
+  layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, json);
   loadWorldLayout();
   showToast('Backup restored locally');
 }
@@ -29404,7 +30303,7 @@ function importVillageLayoutJSON(event) {
       if (!Array.isArray(data)) throw new Error('Layout JSON must be an array');
       createLocalLayoutBackup();
       recordEditorHistory('import layout');
-      localStorage.setItem(WORLD_LAYOUT_STORAGE_KEY, JSON.stringify(data, null, 2));
+      layoutStorageSet(WORLD_LAYOUT_STORAGE_KEY, JSON.stringify(data, null, 2));
       loadWorldLayout();
       showToast('Imported layout locally');
     } catch(e) {
@@ -29722,6 +30621,13 @@ clone.metadata._proxyMoveObserver = proxyMoveObserver;
   return clone;
 }
 
+// Harbour pieces ('water' in ASSETS) ignore the sea bed: piers keep their deck at quay level, ships float.
+function applyWaterLevel(node) {
+  const cfg = ASSETS[node?.metadata?.type], NT = window._newTerrain;
+  if (!cfg?.water || !NT?.recipe?.sea) return;
+  node.position.y = cfg.water === 'deck' ? (NT.recipe.sea.deck ?? 0) : NT.seaY;
+}
+
 function placeAssetAtPoint(key, pickedPoint) {
   const spawnPos = pickedPoint.clone();
   if (ActiveInterior?.root && isManualUploadedAssetKey(key)) {
@@ -29766,6 +30672,7 @@ function placeAssetAtPoint(key, pickedPoint) {
     adminGizmoMode = 'move';
     selectedObject = clone;
     snapSelectedObjectToGround();
+    applyWaterLevel(clone);
     applySavedCollisionTemplateIfAvailable(clone);
     setSelectedEditableObject(clone);
     triggerAutoSave();
@@ -29798,7 +30705,9 @@ function placeAssetAtPoint(key, pickedPoint) {
     worldUploadedGlb: isManualUpload,
     uploadedAutoFitApplied: isManualUpload && ASSETS[key]?._autoFitApplied === true
   };
-  clone.position = new BABYLON.Vector3(spawnPos.x, isManualUpload ? spawnPos.y : 0, spawnPos.z);
+  // on the new terrain, objects placed out in the hills start on the ground (was y 0, i.e. inside the hill)
+  const placeY = isManualUpload ? spawnPos.y : (window._newTerrain ? Math.max(0, getVillageGroundHeightAt(spawnPos.x, spawnPos.z)) : 0);
+  clone.position = new BABYLON.Vector3(spawnPos.x, placeY, spawnPos.z);
   clone.rotation = new BABYLON.Vector3(
     source.rotation ? source.rotation.x : 0,
     Math.random() * Math.PI * 2,
@@ -29987,7 +30896,7 @@ canvas.addEventListener('dblclick', (e) => {
   if (!adminMode) return;
   // Don't fire if clicking on panel
   if (e.target !== canvas) return;
-  const pick = scene.pick(scene.pointerX, scene.pointerY, m => m === ground || m === court || m === plaza);
+  const pick = scene.pick(scene.pointerX, scene.pointerY, m => m === ground || m === court || m === plaza || m.metadata?.villageGround === true);
   if (!pick || !pick.hit || !pick.pickedPoint) return;
   // Smoothly move camera target to clicked point
   const target = pick.pickedPoint;
