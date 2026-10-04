@@ -193,6 +193,70 @@
     T.bottles = cv('bottles', 512, 256, (c, W, H) => { c.fillStyle = '#4a2e18'; c.fillRect(0, 0, W, H); const r = rng(64); for (let row = 0; row < 3; row++) { c.fillStyle = '#2a1a0c'; c.fillRect(0, row * H / 3 + H / 3 - 10, W, 10); for (let x = 6; x < W - 10; x += 14 + r() * 6) { c.fillStyle = ['#2f7a3a', '#7a4a1c', '#c9d8d0', '#3a6aa0', '#a82a2a'][Math.floor(r() * 5)]; const h = 40 + r() * 30, y0 = row * H / 3 + H / 3 - 10 - h; c.fillRect(x, y0 + h * .3, 10, h * .7); c.fillRect(x + 3, y0, 4, h * .32); } } });
     T.sign_fishbook = bannerTex(scene, 'chz_fishbook', '#3d6a88', '#ece6d4', 'fishbook', false, true);
     T.sign_chzdice = bannerTex(scene, 'chz_dice', '#a8282c', '#f6efe2', 'dice', false, true);
+    // ── Chumpz apes (Miguel's NFTs): fur (grey, tinted per ape), faces, muzzles, torsos (u once round, front at .75) ──
+    const furStrokes = (c, W, H, base, dk, lt, seed) => {
+      c.fillStyle = base; c.fillRect(0, 0, W, H); const r = rng(seed); c.lineCap = 'round';
+      for (let k = 0; k < W * H / 80; k++) { const x = r() * W, y = r() * H, L = 5 + r() * 9, a = Math.PI / 2 + (r() - .5) * .9; c.strokeStyle = r() < .5 ? dk : lt; c.globalAlpha = .25 + r() * .35; c.lineWidth = 1.2 + r() * 1.4; c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L); c.stroke(); }
+      c.globalAlpha = 1;
+    };
+    T.fur = cv('fur', 256, 256, (c, W) => furStrokes(c, W, W, '#d9d9d9', '#8c8c8c', '#ffffff', 73)); T.fur.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
+    for (const [id, o] of Object.entries(APE_LOOK)) {
+      T['face_' + id] = cv('face_' + id, 256, 256, (c, W) => {
+        furStrokes(c, W, W, o.fur, o.furD, o.furL, 81);
+        c.fillStyle = o.skin; c.beginPath(); c.ellipse(128, 168, 80, 92, 0, 0, 7); c.fill(); ell(c, 94, 120, 46, 38, o.skin); ell(c, 162, 120, 46, 38, o.skin); // heart-shaped bare face
+        c.strokeStyle = o.skinD; c.lineCap = 'round'; c.lineWidth = 2.5;
+        for (let k = 0; k < 3; k++) { c.beginPath(); c.moveTo(102, 96 + k * 7); c.quadraticCurveTo(128, 90 + k * 7, 154, 96 + k * 7); c.stroke(); } // forehead lines
+        for (const x of [96, 160]) {
+          ell(c, x, 142, 18, 11, o.eye); if (o.pupil) dot(c, x + (x < 128 ? 2 : -2), 142, 5.5, o.pupil);
+          c.strokeStyle = '#1a1210'; c.lineWidth = 3.5; c.beginPath(); c.ellipse(x, 142, 18, 11, 0, 0, 7); c.stroke();
+          c.lineWidth = 5; c.beginPath(); c.moveTo(x - 21, 136); c.quadraticCurveTo(x, 124, x + 21, 136); c.stroke(); // the heavy lid
+          c.strokeStyle = o.skinD; c.lineWidth = 2.5; c.beginPath(); c.moveTo(x - 15, 159); c.quadraticCurveTo(x, 166, x + 15, 159); c.stroke(); // bags
+          c.beginPath(); c.moveTo(x - 12, 168); c.quadraticCurveTo(x, 173, x + 12, 168); c.stroke();
+        }
+        c.lineWidth = 3; c.beginPath(); c.moveTo(121, 152); c.lineTo(117, 196); c.moveTo(135, 152); c.lineTo(139, 196); c.stroke(); // nose bridge
+      });
+      T['muzzle_' + id] = cv('muzzle_' + id, 256, 256, (c, W) => {
+        c.fillStyle = o.skin; c.fillRect(0, 0, W, W);
+        for (const sd of [-1, 1]) ell(c, 128 + sd * 22, 96, 13, 8, '#26160f', sd * .5); // nostrils
+        c.strokeStyle = o.skinD; c.lineCap = 'round'; c.lineWidth = 3; c.beginPath(); c.moveTo(128, 108); c.lineTo(128, 142); c.stroke();
+        if (o.grin) { // the racer's big toothy grin
+          c.fillStyle = '#f3eee2'; c.beginPath(); c.ellipse(128, 170, 66, 26, 0, 0, 7); c.fill(); c.strokeStyle = '#2a1a12'; c.lineWidth = 5; c.stroke();
+          c.lineWidth = 2.5; c.beginPath(); c.moveTo(64, 170); c.lineTo(192, 170); c.stroke(); for (let k = -4; k <= 4; k++) { c.beginPath(); c.moveTo(128 + k * 13, 146 + Math.abs(k) * 1.5); c.lineTo(128 + k * 13, 194 - Math.abs(k) * 1.5); c.stroke(); }
+        } else { c.strokeStyle = '#2a1a12'; c.lineWidth = 5; c.beginPath(); c.moveTo(70, 172); c.quadraticCurveTo(128, 162, 186, 172); c.stroke(); }
+        c.strokeStyle = o.skinD; c.lineWidth = 2.5; c.beginPath(); c.moveTo(104, 214); c.quadraticCurveTo(128, 224, 152, 214); c.stroke();
+      });
+      T['torso_' + id] = cv('torso_' + id, 512, 256, (c, W, H) => {
+        furStrokes(c, W, H, o.fur, o.furD, o.furL, 91);
+        const F = 384, B = 128; // front and back centres
+        if (o.top === 'overalls') {
+          c.fillStyle = o.cloth; c.fillRect(0, 168, W, H - 168); c.fillRect(F - 72, 56, 144, 120);
+          c.strokeStyle = o.cloth; c.lineWidth = 24; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(F + sd * 58, 70); c.lineTo(F + sd * 74, -4); c.stroke(); c.beginPath(); c.moveTo(B + sd * 74, -4); c.lineTo(B - sd * 20, 172); c.stroke(); }
+          c.strokeStyle = o.clothL; c.lineWidth = 2; c.setLineDash([6, 5]); c.strokeRect(F - 64, 64, 128, 104); c.strokeRect(F - 34, 92, 68, 50); c.beginPath(); c.moveTo(0, 180); c.lineTo(W, 180); c.stroke(); c.setLineDash([]);
+          c.strokeStyle = 'rgba(0,0,0,.18)'; c.lineWidth = 3; const r = rng(17); for (let k = 0; k < 60; k++) { const x = r() * W, y = 170 + r() * 86; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 6, y + 14); c.stroke(); }
+          for (const sd of [-1, 1]) { dot(c, F + sd * 56, 70, 8, '#d0a640'); dot(c, F + sd * 56, 70, 3, '#7a5a18'); }
+        } else if (o.top === 'tank') {
+          c.fillStyle = o.cloth; c.fillRect(0, 118, W, H - 118); c.fillRect(F - 74, 22, 148, 100); c.fillRect(B - 74, 22, 148, 100);
+          c.fillStyle = o.fur; c.beginPath(); c.ellipse(F, 22, 42, 30, 0, 0, 7); c.fill(); // the neckline
+          c.fillStyle = '#121110'; c.strokeStyle = '#121110'; c.lineCap = 'round'; // the gorilla print
+          dot(c, F, 104, 15); c.beginPath(); c.ellipse(F, 140, 36, 25, 0, 0, 7); c.fill(); c.lineWidth = 13;
+          for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(F + sd * 26, 126); c.lineTo(F + sd * 42, 176); c.stroke(); c.beginPath(); c.moveTo(F + sd * 14, 158); c.lineTo(F + sd * 16, 178); c.stroke(); }
+          c.fillStyle = o.pants; c.fillRect(0, 206, W, 50);
+        } else { // bare chest: lighter skin on the chest and belly, shorts
+          ell(c, F - 34, 104, 38, 27, o.chest); ell(c, F + 34, 104, 38, 27, o.chest); ell(c, F, 156, 36, 34, o.chest);
+          c.strokeStyle = o.skinD; c.lineWidth = 2; c.beginPath(); c.moveTo(F, 86); c.lineTo(F, 186); c.moveTo(F - 30, 152); c.lineTo(F + 30, 152); c.moveTo(F - 28, 170); c.lineTo(F + 28, 170); c.stroke();
+          for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(F + sd * 4, 128); c.quadraticCurveTo(F + sd * 40, 140, F + sd * 70, 118); c.stroke(); dot(c, F + sd * 34, 112, 3, o.skinD); }
+          c.fillStyle = o.pants; c.fillRect(0, 206, W, 50);
+        }
+      });
+    }
+    T.ape_bandana = cv('ape_bandana', 128, 128, (c, W) => { c.fillStyle = '#2a5cc8'; c.fillRect(0, 0, W, W); for (let y = 8; y < W; y += 24) for (let x = (y / 24 % 2) * 12 + 6; x < W; x += 24) { dot(c, x, y, 4, '#eef2fa'); c.strokeStyle = '#eef2fa'; c.lineWidth = 1.5; c.beginPath(); c.arc(x, y, 7, 0, 7); c.stroke(); } c.strokeStyle = '#eef2fa'; c.lineWidth = 3; c.strokeRect(2, 2, W - 4, W - 4); });
+    T.band_rb = cv('band_rb', 256, 64, (c, W, H) => { c.fillStyle = '#c4242a'; c.fillRect(0, 0, W, H); c.fillStyle = '#2346b0'; for (let x = 0; x < W; x += 40) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x + 18, 0); c.lineTo(x + 30, 22); c.lineTo(x + 12, 40); c.lineTo(x + 26, 64); c.lineTo(x + 6, 64); c.lineTo(x - 4, 38); c.lineTo(x + 8, 20); c.fill(); } });
+    T.cap_logo = cv('cap_logo', 256, 128, (c, W, H) => {
+      c.fillStyle = '#1f5fd6'; c.fillRect(0, 0, W, H); c.fillStyle = '#d8282c'; for (const x of [70, 104]) { c.beginPath(); c.moveTo(x, 8); c.lineTo(x + 30, 8); c.lineTo(x + 18, 34); c.lineTo(x - 12, 34); c.fill(); }
+      c.textAlign = 'center'; c.font = 'italic bold 52px Arial'; c.lineWidth = 7; c.strokeStyle = '#c82024'; c.strokeText('CHUMPZ', 128, 84); c.fillStyle = '#ffffff'; c.fillText('CHUMPZ', 128, 84);
+      c.font = 'italic bold 20px Arial'; c.fillText('RACING', 128, 112); c.strokeStyle = '#ffffff'; c.lineWidth = 4; c.strokeRect(3, 3, W - 6, H - 6);
+    });
+    T.patch_apechain = cv('patch_apechain', 256, 96, (c, W, H) => { c.fillStyle = '#2062d8'; c.fillRect(0, 0, W, H); c.textAlign = 'center'; c.fillStyle = '#ffffff'; c.font = 'bold 40px Arial'; c.fillText('APECHAIN', 128, 62); c.strokeStyle = '#ffffff'; c.lineWidth = 4; c.strokeRect(5, 5, W - 10, H - 10); });
     const tt = noise(S, 2, 3, 41); // tatami: woven rush, a black cloth border
     T.tatami = pixelTex(scene, 'tatami', S, (x, y, i) => { const e = Math.min(x, 1 - x, y, 1 - y); if (e < .025) return [26, 24, 20]; const f = (.84 + .1 * Math.sin(y * S * 2.2) + .08 * tt[i]); return [184 * f, 168 * f, 104 * f]; });
     const mp = noise(S, 4, 4, 42); // the campaign map on the dojo's table: land, hills, a river
@@ -281,6 +345,16 @@
     if (L.ready) cb(L.img); else L.waiting.push(cb);
   }
 
+  // the Chumpz apes (Miguel's NFTs): colours per ape; kit types chz_ape_<id>, rigged (see APE_J), rebel-sized (~3.3 m)
+  const APE_LOOK = {
+    racer: { fur: '#e2d5b6', furD: '#b4a482', furL: '#f6efdf', skin: '#d6b49c', skinD: '#9e7a64', eye: '#d42a1e', pupil: '#2a0605', grin: true, top: 'overalls', cloth: '#6b4220', clothL: '#a87a4c', hat: 'cap', bandana: true, pantsMat: 'ape_overall', shins: 'ape_overall' },
+    band: { fur: '#8e8a86', furD: '#5c5854', furL: '#b8b4ae', skin: '#a0948a', skinD: '#665a52', eye: '#e6cc2a', pupil: '#2a2208', top: 'tank', cloth: '#3a3836', pants: '#2e4569', hat: 'headband', earring: true, pantsMat: 'ape_denim' },
+    chain: { fur: '#c4b08c', furD: '#8e7a58', furL: '#ded0b2', skin: '#b8987e', skinD: '#80624a', eye: '#f2efe6', top: 'bare', chest: '#c8aa90', pants: '#76663f', hat: 'bucket', chain: true, bandana: true, earring: true, pantsMat: 'ape_khaki' },
+    peel: { fur: '#cfc4ac', furD: '#9c9078', furL: '#e8e0cf', skin: '#bea490', skinD: '#866c5a', eye: '#f0ece2', pupil: '#222222', top: 'overalls', cloth: '#6b4220', clothL: '#a87a4c', hat: 'peel', glasses: 'shades', bandana: true, earring: true, pantsMat: 'ape_overall', shins: 'ape_overall' },
+    peng: { fur: '#3b3835', furD: '#222222', furL: '#5a554f', skin: '#4f4945', skinD: '#28231f', eye: '#e8e4da', pupil: '#111111', top: 'overalls', cloth: '#6b4220', clothL: '#a87a4c', hat: 'penguin', glasses: 'goggles', bandana: true, pantsMat: 'ape_overall', shins: 'ape_overall' }
+  };
+  const hex3 = (h, k = 1) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255 * k);
+
   // ── materials ───────────────────────────────────────────────────────────
   const MAT = {
     roof: { tex: 'roof' }, wood: { tex: 'wood' }, darkwood: { tex: 'darkwood' }, plaster: { tex: 'plaster' }, stone: { tex: 'stone' },
@@ -320,6 +394,10 @@
     net: { col: [.62, .56, .42] }, lily: { col: [.26, .55, .2] }, smoke: { col: [.7, .7, .7], em: [.25, .25, .25], alpha: .32 },
     bottle_green: { col: [.15, .45, .2], spec: [.8, .8, .8], power: 80 }, bottle_brown: { col: [.42, .22, .08], spec: [.8, .8, .8], power: 80 }, bottle_clear: { col: [.75, .85, .82], spec: [.9, .9, .9], power: 90 },
     sack: { col: [.7, .62, .46] }, leaf: { col: [.26, .42, .14] }, leaves: { tex: 'leaves' },
+    ape_overall: { col: [.42, .25, .12] }, ape_denim: { col: [.18, .27, .42] }, ape_khaki: { col: [.46, .38, .25] }, ape_bandana: { tex: 'ape_bandana' }, band_rb: { tex: 'band_rb' },
+    cap_blue: { col: [.1, .33, .78] }, cap_logo: { tex: 'cap_logo' }, hat_white: { col: [.9, .89, .86] }, patch_apechain: { tex: 'patch_apechain' },
+    glass_dark: { col: [.03, .035, .04], spec: [.9, .9, .9], power: 90 }, peng_blue: { col: [.42, .6, .9] }, peng_white: { col: [.95, .95, .95] }, peng_beak: { col: [.95, .6, .12] },
+    ...Object.fromEntries(Object.entries(APE_LOOK).flatMap(([id, o]) => [['fur_' + id, { tex: 'fur', tint: hex3(o.fur, 1 / .85) }], ['skin_' + id, { col: hex3(o.skin) }], ['face_' + id, { tex: 'face_' + id }], ['muzzle_' + id, { tex: 'muzzle_' + id }], ['torso_' + id, { tex: 'torso_' + id }]])),
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
@@ -390,8 +468,9 @@
         nn = norm(a);
       }
       const [tu, tv] = tileOf(m), ax = Math.abs(nn[0]) > Math.abs(nn[1]) ? (Math.abs(nn[0]) > Math.abs(nn[2]) ? 0 : 2) : (Math.abs(nn[1]) > Math.abs(nn[2]) ? 1 : 2);
+      const o = this.o;
       pts.forEach((q, k) => {
-        P.p.push(q[0], q[2], q[1]); P.n.push(nn[0], nn[2], nn[1]);
+        if (o) P.p.push(q[0] - o[0], q[2] - o[2], q[1] - o[1]); else P.p.push(q[0], q[2], q[1]); P.n.push(nn[0], nn[2], nn[1]);
         if (uvs) P.uv.push(uvs[k][0], uvs[k][1]);
         else if (ax === 2) P.uv.push(q[0] / tu, q[1] / tv); else if (ax === 0) P.uv.push(q[1] / tu, q[2] / tv); else P.uv.push(q[0] / tu, q[2] / tv);
       });
@@ -516,8 +595,8 @@
       const im = Math.max(0, i - 1), ip = Math.min(R - 1, i + 1);
       let n = cross(sub(G[i][jp], G[i][jm]), sub(G[ip][j], G[im][j]));
       if (Math.hypot(...n) < 1e-9) { const k = i === 0 ? 1 : R - 2; n = cross(sub(G[k][jp], G[k][jm]), sub(G[i === 0 ? k + 1 : k - 1][j], G[k][j])); if (i === 0) n = n.map(v => -v); }
-      n = NG ? NG[i][j] : norm(n); const q = G[i][j];
-      P.p.push(q[0], q[2], q[1]); P.n.push(n[0], n[2], n[1]); P.uv.push(U[i][j][0], U[i][j][1]);
+      n = NG ? NG[i][j] : norm(n); const q = G[i][j], o = M.o || [0, 0, 0];
+      P.p.push(q[0] - o[0], q[2] - o[2], q[1] - o[1]); P.n.push(n[0], n[2], n[1]); P.uv.push(U[i][j][0], U[i][j][1]);
     }
     for (let i = 0; i < R - 1; i++) for (let j = 0; j < C - 1; j++) { const a = base + i * C + j, b = a + 1, c = a + C, d = c + 1; P.i.push(a, b, d, a, d, c); }
   }
@@ -821,6 +900,98 @@
     if (withBanner) { M.cyl('darkwood', [0, .55, 0], .1, 7.8, 8); M.box('darkwood', [0, .5, 7.5], [1.8, .1, .1]); M.quad('banner_warrior', [[-.8, .46, 4.9], [.8, .46, 4.9], [.8, .46, 7.45], [-.8, .46, 7.45]]); M.quad('banner_warrior', [[.8, .44, 4.9], [-.8, .44, 4.9], [-.8, .44, 7.45], [.8, .44, 7.45]], [[1, 0], [0, 0], [0, 1], [1, 1]]); M.cyl('gold', [0, .55, 7.8], .1, .3, 6, .02); }
   }
   function steps(M, cx, yEdge, zTop, width, n, tread = .45) { for (let i = 0; i < n; i++) M.block('stone', cx, yEdge - (i + .5) * tread, 0, width, tread, zTop - i * zTop / n); }
+
+  // ── Chumpz apes: low-poly, rigged. Each part's geometry is authored in the rest pose (Blender coords, front -y) and
+  //    built relative to its joint (Kit.o), so the joints can turn (walk / run / jump / kick, see animateApe) ──
+  const APE_J = { pelvis: [0, 0, 1.1], neck: [0, 0, 2.45], sh_l: [-.62, 0, 2.18], sh_r: [.62, 0, 2.18], el_l: [-.68, -.02, 1.56], el_r: [.68, -.02, 1.56], hip_l: [-.22, 0, 1.1], hip_r: [.22, 0, 1.1], kn_l: [-.22, 0, .55], kn_r: [.22, 0, .55] };
+  const APE_TREE = [['pelvis', null], ['neck', 'pelvis'], ['sh_l', 'pelvis'], ['sh_r', 'pelvis'], ['el_l', 'sh_l'], ['el_r', 'sh_r'], ['hip_l', null], ['hip_r', null], ['kn_l', 'hip_l'], ['kn_r', 'hip_r']];
+  const APE_TORSO = [[.4, 1.1], [.47, 1.25], [.5, 1.5], [.54, 1.8], [.6, 2.05], [.6, 2.2], [.5, 2.36], [.26, 2.48], [.14, 2.52]], APE_SY = .72, APE_HEAD = [0, -.04, 2.8], APE_HEAD_K = 1.2;
+  // lathe with an elliptical section (depth sy) round (0, cy)
+  function latheE(M, m, prof, segs = 20, sy = 1, cy = 0) {
+    const z0 = prof[0][1], H = prof[prof.length - 1][1] - z0, p = (r, z, a) => [r * Math.cos(a), cy + r * sy * Math.sin(a), z];
+    for (let i = 0; i < prof.length - 1; i++) for (let j = 0; j < segs; j++) {
+      const a0 = j / segs * Math.PI * 2, a1 = (j + 1) / segs * Math.PI * 2, [r0, za] = prof[i], [r1, zb] = prof[i + 1], v0 = (za - z0) / H, v1 = (zb - z0) / H;
+      M.poly(m, [p(r0, za, a0), p(r0, za, a1), p(r1, zb, a1), p(r1, zb, a0)], [[j / segs, v0], [(j + 1) / segs, v0], [(j + 1) / segs, v1], [j / segs, v1]]);
+    }
+  }
+  const apeTorsoR = z => { const P = APE_TORSO; if (z <= P[0][1]) return P[0][0]; for (let i = 1; i < P.length; i++) if (z <= P[i][1]) { const [r0, z0] = P[i - 1], [r1, z1] = P[i]; return r0 + (r1 - r0) * (z - z0) / (z1 - z0); } return P[P.length - 1][0]; };
+  const onTorso = (a, z, k = 1.05) => { const r = apeTorsoR(z) * k; return [r * Math.cos(a), r * APE_SY * Math.sin(a), z]; };
+  const FRONT = Math.PI * 1.5;
+  function apePart(M, o, id, j) {
+    const f = 'fur_' + id, sk = 'skin_' + id, sd = j.endsWith('_l') ? -1 : 1, [hx, hy, hz] = APE_HEAD, furO = { segs: 10, n: 3, ridge: .04, k: 7, bump: .06, seed: 11 };
+    if (j === 'pelvis') { // torso, seat, neck, bandana / gold chain
+      latheE(M, 'torso_' + id, APE_TORSO, 20, APE_SY);
+      latheE(M, o.pantsMat, [[.05, .92], [.3, .95], [.42, 1.02], [.42, 1.13]], 16, .76);
+      M.cyl(f, [0, .02, 2.38], .22, .28, 10);
+      if (o.bandana) {
+        latheE(M, 'ape_bandana', [[apeTorsoR(2.36) * 1.05, 2.36], [apeTorsoR(2.47) * 1.06, 2.47]], 16, APE_SY);
+        const P = [], U = []; for (let i = 0; i <= 4; i++) { const t = i / 4, z = 2.44 - .44 * t, w = .62 * (1 - t) + .02, row = [], urow = []; for (let s = 0; s <= 4; s++) { const e = s / 4 * 2 - 1; row.push(onTorso(FRONT + e * w, z, 1.06 + .03 * t)); urow.push([.5 + e * (1 - t) * .5, 1 - t]); } P.push(row); U.push(urow); }
+        M.grid('ape_bandana', P, U); M.sphere('ape_bandana', onTorso(FRONT + .25, 2.38, 1.12), .07, 1, 6, 4);
+      }
+      if (o.chain) {
+        const N = 34; for (let k = 0; k < N; k++) { const a = k / N * Math.PI * 2, z = 2.46 - .4 * Math.max(0, -Math.sin(a)) ** 2; M.sphere('gold', onTorso(a, z, 1.08), .034, 1, 6, 3); }
+        const c = onTorso(FRONT, 1.98, 1.1); M.tube('gold', c, [c[0], c[1] - .04, c[2]], .1, .1, 12); M.tube('dark', [c[0], c[1] - .041, c[2]], [c[0], c[1] - .042, c[2]], .05, .05, 8, false);
+      }
+    } else if (j === 'neck') { // head: fur skull with the face picture, brow ridge, muzzle, ears; hats and glasses
+      faceSphere(M, 'face_' + id, f, APE_HEAD, .42, 1.02, 18, 12);
+      blob(M, sk, [0, -.41, 2.86], .3, .07, .07, { amp: 0, segs: 12, rings: 6 });
+      faceSphere(M, 'muzzle_' + id, sk, [0, -.3, 2.6], .24, .78, 14, 8);
+      for (const s of [-1, 1]) { blob(M, sk, [s * .45, -.02, 2.8], .06, .13, .16, { amp: .05, segs: 10, rings: 6 }); blob(M, f, [s * .43, .02, 2.8], .05, .12, .14, { amp: 0, segs: 8, rings: 5 }); }
+      if (o.earring) for (const s of [-1, 1]) M.tube('gold', [s * .49, -.06, 2.62], [s * .49, -.03, 2.62], .035, .035, 8, false);
+      if (o.hat === 'cap') {
+        latheE(M, 'cap_blue', [[.45, 2.86], [.45, 2.98], [.4, 3.1], [.28, 3.2], [.1, 3.27], [0, 3.28]], 18, 1, hy);
+        M.quad('cap_logo', [[-.25, -.53, 2.87], [.25, -.53, 2.87], [.21, -.46, 3.13], [-.21, -.46, 3.13]]);
+        const n = 10; for (let i = 0; i < n; i++) { const B = [i / n, (i + 1) / n].map(u => { const th = u * Math.PI, x = .43 * Math.cos(th), yi = hy - Math.sqrt(Math.max(0, .45 * .45 - x * x)), yo = yi - .3 * Math.sin(th) ** .7 - .02, z = 2.87 - .05 * Math.sin(th); return [[x, yi, z], [x, yo, z - .03]]; }); M.poly('cap_blue', [B[0][0], B[1][0], B[1][1], B[0][1]]); }
+        M.sphere('cap_blue', [0, hy, 3.28], .045, 1, 6, 3);
+      } else if (o.hat === 'headband') {
+        latheE(M, 'band_rb', [[.44, 2.88], [.415, 3.0]], 18, 1, hy);
+        M.sphere('band_rb', [-.42, -.12, 2.95], .08, 1, 6, 4); for (const dz of [0, .1]) M.quad('band_rb', [[-.44, -.06, 2.95], [-.48, .1, 2.98 - dz], [-.5, .14, 2.82 - dz], [-.45, -.04, 2.9]]);
+        curveTube(M, 'banana', [[-.42, -.2, 3.34], [-.5, -.24, 3.08], [-.5, -.22, 2.82], [-.44, -.18, 2.62]], [.03, .07, .08, .065, .03], { segs: 8, n: 3, ridge: .1, k: 5, bump: .02, seed: 4 });
+        M.cyl('darkwood', [-.42, -.2, 3.33], .02, .06, 5);
+      } else if (o.hat === 'bucket') {
+        latheE(M, 'hat_white', [[.64, 2.85], [.6, 2.88], [.47, 2.97], [.46, 3.2], [.4, 3.3], [.2, 3.33], [0, 3.335]], 20, 1, hy);
+        M.quad('patch_apechain', [[-.2, -.525, 3.03], [.2, -.525, 3.03], [.2, -.51, 3.19], [-.2, -.51, 3.19]]);
+        M.rod('rope', [.44, -.2, 2.95], [.5, -.24, 2.66], .008, 3); M.quad('ape_bandana', [[.47, -.26, 2.66], [.53, -.22, 2.66], [.53, -.22, 2.48], [.47, -.26, 2.48]]);
+      } else if (o.hat === 'peel') {
+        M.cyl('darkwood', [0, hy, 3.2], .05, .12, 6, .03);
+        for (let k = 0; k < 4; k++) { const a = Math.PI / 4 + k * Math.PI / 2 + .2, d = [Math.cos(a), Math.sin(a)]; leafStrip(M, 'banana', u => [d[0] * (.05 + .44 * u), hy + d[1] * (.05 + .44 * u), 3.25 + .09 * Math.sin(Math.PI * u) - .3 * u * u], u => .17 * Math.sin(Math.PI * Math.min(1, .35 + u * .75)), d, .05, 6); }
+        M.cyl('banana', [0, hy, 3.18], .1, .14, 8, .07);
+      } else if (o.hat === 'penguin') {
+        latheE(M, 'peng_blue', [[.45, 2.88], [.445, 3.0], [.38, 3.13], [.24, 3.24], [0, 3.29]], 18, 1, hy);
+        blob(M, 'peng_white', [0, -.47, 3.04], .24, .06, .13, { amp: 0, segs: 12, rings: 6 });
+        for (const s of [-1, 1]) { M.sphere('dark', [s * .08, -.53, 3.08], .035, 1, 6, 3); blob(M, 'peng_blue', [s * .47, -.02, 2.68], .07, .2, .28, { amp: .04, segs: 10, rings: 6 }); M.rod('rope', [s * .47, -.06, 2.42], [s * .3, -.42, 1.96], .012, 3); }
+        M.tube('peng_beak', [0, -.52, 3.0], [0, -.64, 2.97], .05, .005, 6);
+      }
+      if (o.glasses === 'shades') {
+        for (const s of [-1, 1]) { M.box('glass_dark', [s * .13, -.48, 2.76], [.22, .03, .11]); M.rod('iron', [s * .24, -.47, 2.79], [s * .43, -.1, 2.8], .012, 3); }
+        M.box('iron', [0, -.48, 2.79], [.06, .02, .02]);
+      } else if (o.glasses === 'goggles') {
+        for (const s of [-1, 1]) { M.tube('iron', [s * .13, -.43, 2.76], [s * .13, -.5, 2.76], .1, .1, 12); M.tube('glass_dark', [s * .13, -.5, 2.76], [s * .13, -.505, 2.76], .085, .085, 12); }
+        latheE(M, 'iron', [[.445, 2.73], [.445, 2.79]], 18, 1, hy);
+      }
+    } else if (j.startsWith('sh')) { // upper arm (fur)
+      const x = .62 * sd; M.sphere(f, [x, 0, 2.18], .2, 1, 10, 6);
+      curveTube(M, f, [[x, 0, 2.18], [x + sd * .04, -.01, 1.88], [x + sd * .06, -.02, 1.56]], [.18, .16, .14], furO);
+    } else if (j.startsWith('el')) { // forearm (big, furry), hand
+      const x = .68 * sd; M.sphere(f, [x, -.02, 1.56], .14, 1, 8, 5);
+      curveTube(M, f, [[x, -.02, 1.56], [x, -.05, 1.25], [x - sd * .01, -.05, .98]], [.14, .17, .12], furO);
+      blob(M, sk, [x, -.07, .86], .1, .12, .13, { amp: .08, segs: 10, rings: 6 });
+      for (let k = 0; k < 4; k++) M.rod(sk, [x + (k - 1.5) * .045, -.12, .82], [x + (k - 1.5) * .05, -.1, .7], .028, 4);
+      M.rod(sk, [x - sd * .07, -.14, .9], [x - sd * .06, -.2, .82], .03, 4);
+    } else if (j.startsWith('hip')) { // thigh: pants (overalls) or shorts over fur
+      const x = .22 * sd, p = o.pantsMat;
+      if (o.shins) curveTube(M, p, [[x, 0, 1.12], [x, -.01, .84], [x, 0, .56]], [.23, .2, .17], { segs: 10, n: 3, ridge: .02, bump: .03, seed: 13 });
+      else { curveTube(M, p, [[x, 0, 1.12], [x, -.01, .95], [x, 0, .76]], [.24, .23, .22], { segs: 10, n: 3, ridge: .02, bump: .03, seed: 13 }); curveTube(M, f, [[x, 0, .8], [x, 0, .56]], [.18, .16], furO); }
+    } else { // shin, foot
+      const x = .22 * sd, lo = o.shins || f;
+      M.sphere(lo, [x, 0, .55], .17, 1, 8, 5);
+      curveTube(M, lo, [[x, 0, .55], [x, .01, .3], [x, 0, .12]], [.17, .15, .13], o.shins ? { segs: 10, n: 3, ridge: .02, bump: .03, seed: 14 } : furO);
+      if (o.shins) M.cyl(lo, [x, 0, .1], .16, .1, 10);
+      blob(M, sk, [x, -.08, .05], .14, .24, .07, { amp: .06, flat: .5, segs: 10, rings: 6 });
+      for (let k = 0; k < 4; k++) M.sphere(sk, [x + (k - 1.5) * .06, -.3, .05], .04, 1, 5, 3);
+      M.sphere(sk, [x - sd * .13, -.22, .05], .05, 1, 5, 3);
+    }
+  }
 
   // ── buildings ───────────────────────────────────────────────────────────
   const B = {
@@ -2297,6 +2468,12 @@
     });
     return (templates[type] = meshes);
   }
+  // the apes: one part type per joint (built under its pivot), the whole ape as one piece for previews
+  for (const [id, o] of Object.entries(APE_LOOK)) {
+    const type = 'chz_ape_' + id;
+    for (const [j] of APE_TREE) B[type + '__' + j] = M => { M.o = APE_J[j]; apePart(M, o, id, j); };
+    B[type] = M => { for (const [j] of APE_TREE) apePart(M, o, id, j); };
+  }
   // fresh, unparented meshes of a type (one per material), for the terrain's thin-instanced scatter (palms, bananas)
   function protoMeshes(scene, type) {
     if (!B[type]) return [];
@@ -2313,6 +2490,7 @@
   function animateActors(t) {
     for (let i = actors.length - 1; i >= 0; i--) {
       const a = actors[i]; if (a.body.isDisposed?.()) { actors.splice(i, 1); continue; }
+      if (a.kind === 'ape') { animateApe(a, t); continue; }
       if (a.kind === 'rock') { a.body.rotation.z = .07 * Math.sin(t * 1.5 + a.ph); a.body.rotation.x = .035 * Math.sin(t * 1.1 + a.ph * 2); }
       else { const b = Math.sin(t * 1.8 + a.ph); a.body.scaling.set(1 + .015 * b, 1 - .012 * b, 1 + .015 * b); }
       for (const s of a.subs) {
@@ -2322,6 +2500,54 @@
       }
     }
   }
+  // apes: the joints are pivots; the gait comes from how fast the placed root actually moves (NPC patrols, the
+  // player), so nothing outside has to drive it. actorAction(root, 'jump' | 'kick') plays a one-shot move.
+  const APE_L1 = .55, APE_L2 = .54;
+  function buildApe(root, type, scene, shadows, skipShadows) {
+    const body = new BABYLON.TransformNode(root.name + '_body', scene), N = {}; body.parent = root;
+    for (const [j, par] of APE_TREE) {
+      const n = N[j] = new BABYLON.TransformNode(root.name + '_' + j, scene), p = APE_J[j], q = par ? APE_J[par] : [0, 0, 0];
+      n.parent = par ? N[par] : body; n.position.set(p[0] - q[0], p[2] - q[2], p[1] - q[1]);
+      buildInto(n, type + '__' + j, scene, root, shadows, skipShadows);
+    }
+    N.neck.scaling.setAll(APE_HEAD_K); // the art's big heads
+    actors.push({ kind: 'ape', root, body, N, subs: [], ph: Math.random() * 6.28, g: 0, v: 0, tl: null, last: null, act: null });
+    ensureAnim(scene);
+  }
+  function animateApe(a, t) {
+    const dt = a.tl == null ? 0 : Math.min(.1, Math.max(0, t - a.tl)); a.tl = t;
+    const p = a.root.getAbsolutePosition(), sc = Math.abs(a.root.absoluteScaling?.y || 1) || 1;
+    const d = a.last ? Math.hypot(p.x - a.last.x, p.z - a.last.z) / sc : 0; a.last = { x: p.x, z: p.z };
+    const sp = dt > 0 && d < 2 ? d / dt : 0; // metres (in the ape's own size) per second; a teleport reads as standing
+    a.v += (Math.min(12, sp) - a.v) * Math.min(1, dt * 6);
+    const v = a.v < .05 ? 0 : a.v, A = Math.min(1, v / 2), R = Math.min(1, Math.max(0, (v - 4.5) / 3)), idle = 1 - A, N = a.N;
+    a.g += dt * v / (2.6 + .25 * v) * Math.PI * 2; // one stride (two steps) per 2.6 + .25 v metres
+    const g = a.g, s = Math.sin(g), br = Math.sin(t * 1.7 + a.ph);
+    const kn = q => -A * (.06 + (.8 + .6 * R) * Math.max(0, Math.cos(q)) ** 1.5);
+    let thL = (.42 + .25 * R) * A * s, thR = -thL, knL = kn(g), knR = kn(g + Math.PI);
+    const sw = (.32 + .3 * R) * A * s, sway = .05 * idle * Math.sin(t * 1.1 + a.ph);
+    let shL = -sw + sway, shR = sw + sway, elL = .3 + (.3 + .7 * R) * A + .1 * A * s, elR = .3 + (.3 + .7 * R) * A - .1 * A * s, splay = .12 + .08 * R;
+    let lean = -(.04 * A + .2 * R), twist = .1 * A * s, lift = 0;
+    if (a.act) {
+      if (a.act.t0 == null) a.act.t0 = t;
+      const u = (t - a.act.t0) / a.act.dur;
+      if (u >= 1 || u < 0) a.act = null;
+      else {
+        const w = Math.sin(Math.PI * u), L = (x, y, k = w) => x + (y - x) * k;
+        if (a.act.kind === 'jump') { thL = L(thL, .95); thR = L(thR, .75); knL = L(knL, -1.5); knR = L(knR, -1.3); shL = L(shL, 2.5); shR = L(shR, 2.4); elL = L(elL, .4); elR = L(elR, .4); lift = 1.3 * w; }
+        else { const ext = Math.min(1, Math.max(0, (u - .25) / .2)); thR = L(thR, 1.7); knR = L(knR, -1.6 + 1.55 * ext); thL = L(thL, -.12); knL = L(knL, -.25); lean = L(lean, .28); shL = L(shL, .9); shR = L(shR, -.6); splay += .3 * w; }
+      }
+    }
+    N.hip_l.rotation.x = thL; N.hip_r.rotation.x = thR; N.kn_l.rotation.x = knL; N.kn_r.rotation.x = knR;
+    N.sh_l.rotation.set(shL, 0, -splay); N.sh_r.rotation.set(shR, 0, splay); N.el_l.rotation.x = elL; N.el_r.rotation.x = elR;
+    N.pelvis.rotation.set(lean, twist, 0); N.pelvis.scaling.set(1 + .012 * br * idle, 1 + .008 * br * idle, 1 + .012 * br * idle);
+    N.neck.rotation.set(-lean * .6 + .04 * idle * Math.sin(t * .7 + a.ph), idle * .35 * Math.sin(t * .31 + a.ph) * (Math.sin(t * .13 + a.ph) > 0 ? 1 : .3), 0);
+    // keep the lower foot on the ground: drop the body by what the bent legs lose in reach
+    const reach = (th, k) => APE_L1 * Math.cos(th) + APE_L2 * Math.cos(th + k);
+    a.body.position.y = Math.max(reach(thL, knL), reach(thR, knR)) - APE_L1 - APE_L2 + lift;
+  }
+  function actorAction(root, kind, dur) { const a = actors.find(x => x.root === root); if (a) a.act = { kind, t0: null, dur: dur || (kind === 'jump' ? .9 : 1.1) }; return !!a; }
+  function ensureAnim(scene) { if (!scene._kitFloat) scene._kitFloat = scene.onBeforeRenderObservable.add(() => animate(performance.now() / 1000)); }
   function animate(t) {
     animateActors(t);
     for (let i = floaters.length - 1; i >= 0; i--) {
@@ -2334,6 +2560,7 @@
   }
   function build(root, type, scene, shadows, skipShadows) {
     if (!B[type]) return false;
+    if (APE_LOOK[type.slice(8)] && type.startsWith('chz_ape_')) { buildApe(root, type, scene, shadows, skipShadows); return true; }
     if (CHAR[type]) { // a body node to rock, subparts on pivots inside it
       const body = new BABYLON.TransformNode(root.name + '_body', scene); body.parent = root;
       const subs = (SUBPARTS[type] || []).map(([st, [x, y, z], kind]) => { const n = new BABYLON.TransformNode(root.name + '_' + st, scene); n.parent = body; n.position.set(x, z, y); buildInto(n, st, scene, root, shadows, skipShadows); return { node: n, kind }; });
@@ -2369,5 +2596,5 @@
     chz_dock: [{ x: 0, z: 0, halfX: 4.05, halfZ: 3.05, y: 0 }], chz_pier: [{ x: 0, z: 0, halfX: 1.55, halfZ: 5.05, y: 0 }],
     shogun_bridge: [{ x: 0, z: -2.75, halfX: 1.05, halfZ: 2.75, y0: 0, y1: 1.3 }, { x: 0, z: 2.75, halfX: 1.05, halfZ: 2.75, y0: 1.3, y1: 0 }],
     ronin_great_dojo: [{ x: 0, z: 0, halfX: 15, halfZ: 12, y: 1.6 }, { x: 0, z: -13.13, halfX: 4.4, halfZ: 1.13, y0: 0, y1: 1.6, steps: 5, surface: 'stone' }] };
-  window.SamuraiKit = { build, setLightFactor, animate, protoMeshes, decks, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B, _org: { blob, curveTube } };
+  window.SamuraiKit = { build, setLightFactor, animate, actorAction, protoMeshes, decks, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();
