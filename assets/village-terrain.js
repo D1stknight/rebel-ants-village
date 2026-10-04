@@ -343,6 +343,45 @@ export const TERRAIN_RECIPES = {
       dirt: [['r', -24, 2, 24, 28]],
       grass: 7000, flowers: 500
     }
+  },
+  // Ashigaru: the foot soldiers. A round fort on a low mound in dry grassland: a palisade of sharpened stakes, a moat
+  // with rocky banks, a gate between two towers over a plank bridge; inside a dirt plaza with a covered well, the dojo
+  // with its fenced training yard, the archive (scroll banner) and the strategy hall (board banner), watchtowers,
+  // houses and a workshop shed under shade trees. Crimson + gold banners. From Miguel's four Ashigaru images.
+  ashigaru: {
+    seed: 4417, dropSeed: 23, drops: 50000, roads: false,
+    hills: .55, shape: { fbm: 26, ridge: 9, wall: 60 }, // rolling dry plains, mountains far off
+    flatHalf: 96, hillStart: 104, hillFull: 230, wallStart: 300,
+    palette: {
+      grassA: [0.4, 0.4, 0.18], grassB: [0.54, 0.5, 0.26], wet: [0.3, 0.33, 0.15],
+      dirt: [0.64, 0.5, 0.33], rockTint: [0.98, 0.95, 0.9], highTint: [1.0, .97, .9], peak: [0.82, 0.8, 0.76]
+    },
+    grass: { count: 70000, base: [0.24, 0.24, 0.08], tip: [0.78, 0.68, 0.34] },
+    flowers: { count: 1200, stem: [0.2, 0.24, 0.08], petal: [0.96, 0.82, 0.3] },
+    pines: { file: 'pine_1.glb', count: 300, scale: [1.6, 3.2], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 220, scale: [.8, 2.6], body: 0.75, settle: .9, sink: .1, tint: [1.06, 1.02, .96], minSq: 100 },
+    extras: [
+      { file: 'tree_1.glb', count: 150, scale: [.8, 1.4], body: .5, settle: .5, sink: .15, cull: 280, maxSlope: .45, minSq: 100, road: 0, clump: { freq: .012, ox: 17, above: -.05 } }
+    ],
+    fog: { density: .0011, day: [.82, .84, .82], night: [.04, .05, .1] },
+    light: { sun: 1.12, hemi: .96, tint: [1.0, .94, .8] },
+    sky: { turbidity: 4, luminance: 1, rayleigh: 2.6, mieCoefficient: .004 },
+    court: { texture: 'stone', court: [1.4, 1.36, 1.28], plaza: [1.25, 1.2, 1.1], path: [1.15, 1.1, 1.0] },
+    village: {
+      rect: [-94, -114, 94, 94], res: .9, wall: .6,
+      terraces: [{ c: [0, 0, 70], h: 2.4, edge: 3.6 }],  // the fort's mound: a grassy bank, flat inside r 66
+      digs: [{ ring: [0, 0, 72, 85], depth: 3.6, edge: 5.6 }], // the moat: a V-shaped ditch, a stream at the bottom
+      pools: [{ c: [0, 0, 86], ring: [76.5, 80.5], y: -2.75 }],
+      ramps: [],
+      pave: [['c', 0, -6, 3.6]], // stones round the well
+      dirt: [
+        ['c', 0, -6, 24], [0, -66, 0, -24, 4.5], [0, 16, 0, 40, 5], ['r', -21, 15, 21, 36],       // plaza, gate road, dojo yard
+        [-18, -14, -33, 10, 3], [18, -14, 33, 10, 3], [-14, -22, -36, -44, 2.6], [14, -22, 36, -44, 2.6], // to the halls and houses
+        [-20, 4, -44, 34, 2.6], [20, 4, 44, 34, 2.6],
+        [0, -86, 0, -114, 3.2]                                                                       // the road out, past the bridge
+      ],
+      grass: 9000, flowers: 400
+    }
   }
 };
 
@@ -351,13 +390,16 @@ export function makeVillageShape(V, baseAt = () => 0) {
   const [X0, Z0, X1, Z1] = V.rect, wall = V.wall;
   const rectD = (r, x, z) => { const dx = Math.max(r[0] - x, x - r[2]), dz = Math.max(r[1] - z, z - r[3]); return dx > 0 || dz > 0 ? Math.hypot(Math.max(dx, 0), Math.max(dz, 0)) : Math.max(dx, dz); };
   const inside = (x, z) => x > X0 && x < X1 && z > Z0 && z < Z1;
+  // signed distance to a terrace / dig (negative inside): r = rectangle, c = [x, z, radius] disc, ring = [x, z, r0, r1]
+  const shapeD = (t, x, z) => t.c ? Math.hypot(x - t.c[0], z - t.c[1]) - t.c[2]
+    : t.ring ? (rho => Math.max(t.ring[2] - rho, rho - t.ring[3]))(Math.hypot(x - t.ring[0], z - t.ring[1])) : rectD(t.r, x, z);
   // final height over a base ground b: terraces rise h above it ('abs' terraces: to height h, e.g. a quay over a
   // beach), ramps climb from the base; the base stays wherever it is already higher
   const apply = (x, z, b) => {
     if (!inside(x, z)) return b;
     let y = b;
-    for (const t of V.terraces) { const d = rectD(t.r, x, z); if (d < 0) { const w = smooth(0, wall, -d); y = Math.max(y, t.abs ? b + (t.h - b) * w : b + t.h * w); } }
-    for (const t of V.digs || []) { const d = rectD(t.r, x, z); if (d >= 0) continue; if (t.depth != null) y -= t.depth * smooth(0, t.edge ?? wall, -d); else y = Math.min(y, b + (Math.min(b, t.h) - b) * smooth(0, t.edge ?? wall, -d)); } // dredged harbour; depth: a pond dug into a terrace
+    for (const t of V.terraces) { const d = shapeD(t, x, z); if (d < 0) { const w = smooth(0, t.edge ?? wall, -d); y = Math.max(y, t.abs ? b + (t.h - b) * w : b + t.h * w); } }
+    for (const t of V.digs || []) { const d = shapeD(t, x, z); if (d >= 0) continue; if (t.depth != null) y -= t.depth * smooth(0, t.edge ?? wall, -d); else y = Math.min(y, b + (Math.min(b, t.h) - b) * smooth(0, t.edge ?? wall, -d)); } // dredged harbour; depth: a pond dug into a terrace
     for (const R of V.ramps) {
       const r = R.r, a = R.axis === 'x' ? 0 : 1, lo = r[a], hi = r[a + 2], u = a ? z : x, v = a ? x : z, vlo = r[1 - a], vhi = r[3 - a];
       if (u < lo || u > hi + wall || v < vlo - .3 || v > vhi + .3) continue;
@@ -768,7 +810,12 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
     // 0..1 loudness of running water heard at (x, z): the fall carries ~120 m, the stream ~35 m
     waterSoundAt(x, z) {
       let v = 0;
-      for (const p of recipe.village?.pools || []) { const [x0, z0, x1, z1] = p.r, dx = Math.max(x0 - x, 0, x - x1), dz = Math.max(z0 - z, 0, z - z1); v = Math.max(v, .3 * Math.max(0, 1 - Math.hypot(dx, dz) / 28) ** 1.5); } // canals
+      for (const p of recipe.village?.pools || []) { // canals, ponds, a moat (ring: [r0, r1] of the water around c)
+        let d;
+        if (p.c) { const rho = Math.hypot(x - p.c[0], z - p.c[1]); d = p.ring ? Math.max(0, p.ring[0] - rho, rho - p.ring[1]) : Math.max(0, rho - p.c[2]); }
+        else { const [x0, z0, x1, z1] = p.r; d = Math.hypot(Math.max(x0 - x, 0, x - x1), Math.max(z0 - z, 0, z - z1)); }
+        v = Math.max(v, .3 * Math.max(0, 1 - d / 28) ** 1.5);
+      }
       for (const f of T.falls) v = Math.max(v, .8 * Math.max(0, 1 - Math.hypot(x - f.x, z - f.z) / 170) ** 1.6); // cliff waterfalls carry far
       const Wt = hm.water; if (!Wt) return v;
       const f = Wt.pts[Wt.iLip + 2] || Wt.pts[Wt.iLip];
@@ -1212,8 +1259,9 @@ function buildPools(scene, pools) {
   m.bumpTexture = nt; nt.level = .55;
   scene.onBeforeRenderObservable.add(() => { nt.vOffset -= Math.min(.05, scene.getEngine().getDeltaTime() / 1000) * .1; });
   return pools.map((p, i) => {
-    const [x0, z0, x1, z1] = p.r, g = BABYLON.MeshBuilder.CreateGround('canalWater_' + i, { width: x1 - x0, height: z1 - z0 }, scene);
-    g.position.set((x0 + x1) / 2, p.y, (z0 + z1) / 2); g.material = m; g.isPickable = false; g.receiveShadows = true;
+    let g; // a rectangle (r), or a disc (c: [x, z, radius]; a moat: the ground hides all but the ring)
+    if (p.c) { g = BABYLON.MeshBuilder.CreateDisc('canalWater_' + i, { radius: p.c[2], tessellation: 96 }, scene); g.rotation.x = Math.PI / 2; g.position.set(p.c[0], p.y, p.c[1]); }
+    else { const [x0, z0, x1, z1] = p.r; g = BABYLON.MeshBuilder.CreateGround('canalWater_' + i, { width: x1 - x0, height: z1 - z0 }, scene); g.position.set((x0 + x1) / 2, p.y, (z0 + z1) / 2); } g.material = m; g.isPickable = false; g.receiveShadows = true;
     g.metadata = { type: 'terrain_water', visualOnly: true }; g.alphaIndex = 10; g.freezeWorldMatrix();
     nt.uScale = 1; return g;
   });
