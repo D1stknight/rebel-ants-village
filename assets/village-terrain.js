@@ -557,7 +557,8 @@ export const TERRAIN_RECIPES = {
     flatHalf: 96, hillStart: 100, hillFull: 210, wallStart: 240,
     mesa: { drop: 34, cliff: 6, wobble: 4, fade: [170, 260],
       pieces: [{ r: [-70, -62, 70, 80], round: 26 }, { r: [-8, -98, 8, -58], round: 4 }] },
-    mist: { layers: [[-30, .62], [-23, .45], [-15, .32], [2.4, .1]], color: [.4, .34, .58], glow: .1 },
+    mist: { layers: [[-30, .62], [-23, .45], [-15, .32]], color: [.4, .34, .58], glow: .1 },
+    groundFog: { area: [-80, -95, 80, 85], y: [.6, 3.2], count: 420, size: [9, 20], color: [.5, .44, .68], alpha: .3 }, // fog banks drifting through the lanes
     palette: {
       grassA: [0.13, 0.12, 0.13], grassB: [0.21, 0.17, 0.2], wet: [0.1, 0.09, 0.11],
       dirt: [0.3, 0.25, 0.22], yard: [0.32, 0.26, 0.22], rockTint: [0.62, 0.58, 0.68], highTint: [0.72, 0.68, 0.8], peak: [0.6, 0.58, 0.66]
@@ -974,6 +975,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   const seaY = recipe.sea ? (recipe.sea.y ?? -3) : null;
   const sea = recipe.sea ? buildSea(scene, recipe.sea, H0, seaY) : null;
   const mesa = makeMesa(recipe), mist = recipe.mist ? buildMist(scene, recipe.mist) : null;
+  if (recipe.groundFog) buildGroundFog(scene, recipe.groundFog);
 
   // The village's own ground: a fine grid (0.8 m) so terrace walls and ramps come out crisp. Named 'pa…' so the
   // admin placement/snap rays (which look for the courtyard and 'pa' path meshes) land on it.
@@ -1601,6 +1603,31 @@ function buildFalls(scene, T, F) {
   scene.onBeforeRenderObservable.add(() => { tex.vOffset -= Math.min(.05, scene.getEngine().getDeltaTime() / 1000) * 1.3; });
   return out;
 }
+// Fog banks drifting along the ground (recipe.groundFog { area: [x0, z0, x1, z1], y: [lo, hi], count, size: [a, b],
+// color, alpha }): a particle system of big soft billboards that fade in, wander slowly and fade out.
+function buildGroundFog(scene, G) {
+  const S = 128, t = new BABYLON.DynamicTexture('groundFogTex', { width: S, height: S }, scene, true), c = t.getContext(), img = c.createImageData(S, S);
+  const { perlin } = makeNoise(777);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const u = x / S - .5, v = y / S - .5, r = Math.hypot(u, v) * 2, n = perlin(x / 22, y / 22) * .5 + perlin(x / 9, y / 9) * .25;
+    const a = Math.max(0, Math.min(1, (1 - r) * 1.3 + n)) * Math.max(0, 1 - r) ** .8, k = (y * S + x) * 4;
+    img.data[k] = img.data[k + 1] = img.data[k + 2] = 255; img.data[k + 3] = Math.round(255 * a);
+  }
+  c.putImageData(img, 0, 0); t.update(); t.hasAlpha = true;
+  const ps = new BABYLON.ParticleSystem('groundFog', G.count || 260, scene), [x0, z0, x1, z1] = G.area, [ylo, yhi] = G.y || [.4, 2.6];
+  ps.particleTexture = t; ps.emitter = new BABYLON.Vector3(0, 0, 0);
+  ps.minEmitBox = new BABYLON.Vector3(x0, ylo, z0); ps.maxEmitBox = new BABYLON.Vector3(x1, yhi, z1);
+  const col = G.color || [.5, .44, .66], a = G.alpha ?? .22;
+  ps.addColorGradient(0, new BABYLON.Color4(...col, 0)); ps.addColorGradient(.25, new BABYLON.Color4(...col, a));
+  ps.addColorGradient(.75, new BABYLON.Color4(...col, a)); ps.addColorGradient(1, new BABYLON.Color4(...col, 0));
+  ps.minSize = G.size?.[0] ?? 8; ps.maxSize = G.size?.[1] ?? 18; ps.minLifeTime = 26; ps.maxLifeTime = 44;
+  ps.emitRate = (G.count || 260) / 35; ps.direction1 = new BABYLON.Vector3(-.5, 0, -.3); ps.direction2 = new BABYLON.Vector3(.6, .04, .4);
+  ps.minEmitPower = .2; ps.maxEmitPower = .6; ps.minAngularSpeed = -.05; ps.maxAngularSpeed = .05; ps.minInitialRotation = 0; ps.maxInitialRotation = 6.28;
+  ps.gravity = BABYLON.Vector3.Zero(); ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD; ps.updateSpeed = .016;
+  ps.preWarmCycles = 160; ps.preWarmStepOffset = 14; // full of fog from the first frame
+  ps.start(); return ps;
+}
+
 // Mist lying in the ravine (recipe.mist): a few huge soft cloud layers at fixed heights, drifting slowly. Lit by the
 // scene (dark at night) with a little glow of their own, so the valley keeps a faint blue shimmer after dark.
 function buildMist(scene, M) {

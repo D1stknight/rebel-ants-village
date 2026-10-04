@@ -1901,7 +1901,10 @@
   function animate(t) {
     for (let i = floaters.length - 1; i >= 0; i--) {
       const f = floaters[i]; if (f.root.isDisposed?.()) { floaters.splice(i, 1); continue; }
-      for (const m of f.root.getChildMeshes(true)) { m.position.y = .45 + .35 * Math.sin(t * 1.1 + f.ph); m.rotation.y = .35 * Math.sin(t * .45 + f.ph); }
+      // each ghost drifts round its own loop (3-5 m), rising and sinking, turning to face where it goes, leaning in
+      const w = .22 + .06 * Math.sin(f.ph * 3), A = t * w + f.ph, R = 3 + 2 * Math.abs(Math.sin(f.ph * 1.7)), sx = Math.sign(Math.sin(f.ph * 5)) || 1;
+      const px = R * Math.cos(A), pz = R * .7 * Math.sin(A) * sx, vx = -Math.sin(A), vz = .7 * Math.cos(A) * sx;
+      for (const m of f.root.getChildMeshes(true)) { m.position.set(px, .7 + .6 * Math.sin(t * .9 + f.ph) + .2 * Math.sin(t * 2.3 + f.ph * 2), pz); m.rotation.set(.12 * Math.sin(t * 1.3 + f.ph), Math.atan2(-vx, -vz), .1 * Math.sin(t * 1.1 + f.ph)); }
     }
   }
   function build(root, type, scene, shadows, skipShadows) {
