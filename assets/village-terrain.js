@@ -589,6 +589,43 @@ export const TERRAIN_RECIPES = {
       dirt: [['r', -20, 12, 20, 32], [-40, 30.75, -61, 30.75, 1.6], [-51, 30.75, -51, 68, 1.6]],
       grass: 5000, flowers: 400
     }
+  },
+  // Chumpz (friend collection: the apes): a tropical banana-bar village on a sandy shore above a turquoise lagoon:
+  // boardwalk docks with piers, rowboats and sailboats, the two-storey banana bar with its stage, the bait & book
+  // shop, the dice hall, colourful tin-roofed shacks, a fish smokehouse, the giant banana over the well; palms and
+  // banana groves on jungle hills behind, islands out in the bay. From Miguel's four Chumpz images.
+  chumpz: {
+    seed: 7071, dropSeed: 17, drops: 50000, roads: false,
+    hills: 1.05, shape: { fbm: 30, ridge: 24, wall: 110 }, // jungle hills, rocky peaks behind
+    flatHalf: 84, hillStart: 90, hillFull: 200, wallStart: 280,
+    coast: { shore: -40, headland: -64, bayHalf: 88, headWidth: 80, wobble: 9, beach: .12, cliff: .9, depth: 14, shelf: .12, islets: true },
+    sea: { y: -1.6, deck: .8, waves: .1, surf: 'calm', shallow: [.16, .78, .74], mid: [.04, .55, .62], deep: [.02, .3, .48], sky: [.76, .88, .95] },
+    palette: {
+      grassA: [0.2, 0.36, 0.1], grassB: [0.34, 0.46, 0.16], wet: [0.14, 0.28, 0.1],
+      dirt: [0.74, 0.62, 0.44], yard: [0.68, 0.58, 0.42], sand: [0.86, 0.78, 0.58], rockTint: [0.96, 0.92, 0.86], highTint: [1.0, .98, .9], peak: [0.8, 0.78, 0.74]
+    },
+    grass: { count: 70000, base: [0.08, 0.2, 0.05], tip: [0.46, 0.66, 0.22] },
+    flowers: { count: 1800, stem: [0.1, 0.24, 0.06], petal: [0.96, 0.3, 0.42] }, // hibiscus
+    pines: { kit: 'chz_palm', count: 720, scale: [.9, 1.5], trunk: 0.35, settle: .3, sink: .1 },
+    rocks: { file: 'rock_1.glb', count: 260, scale: [1.0, 3.2], body: 0.75, settle: .9, sink: .1, tint: [1.05, 1.0, .92], minSq: 82 },
+    extras: [
+      { kit: 'chz_banana', count: 900, scale: [.9, 1.5], body: .4, settle: .3, sink: .05, cull: 220, maxSlope: .5, minSq: 86, road: 0, clump: { freq: .016, ox: 13, above: -.05 } },
+      { kit: 'chz_palm', count: 60, scale: [1.0, 1.4], body: .35, settle: .3, sink: .1, minSq: 0, maxSq: 84, maxSlope: .4, road: 0, water: 1, village: true }, // palms in the village and on the beach
+      { kit: 'chz_banana', count: 90, scale: [.7, 1.1], body: .4, settle: .3, sink: .05, minSq: 0, maxSq: 84, maxSlope: .4, road: 0, village: true }
+    ],
+    fog: { density: .0012, day: [.78, .88, .94], night: [.04, .06, .12] },
+    light: { sun: 1.16, hemi: 1.0, tint: [1.0, .95, .84] },
+    sky: { turbidity: 3, luminance: 1, rayleigh: 2.2, mieCoefficient: .004 },
+    court: { texture: 'stone', court: [1.45, 1.38, 1.26], plaza: [1.3, 1.24, 1.12], path: [1.2, 1.14, 1.04] },
+    village: {
+      rect: [-74, -48, 74, 76], res: .8, wall: .8,
+      terraces: [{ r: [-70, -38, 70, 72], h: .8, abs: true, edge: 1.2 }], // the sandy village ground above the shore
+      digs: [{ r: [-66, -54, 66, -38.5], h: -3.4, edge: 1.2 }],            // the lagoon right up to the boardwalk
+      ramps: [],
+      pave: [[0, -36, 0, -14, 3.2], ['c', 0, -2, 11], [0, 9, 0, 22, 3.6], [-9, -6, -34, -16, 2.2], [9, -6, 34, -16, 2.2], [-8, 4, -36, 18, 2], [8, 4, 36, 18, 2], [0, 22, -26, 46, 1.8], [0, 22, 26, 46, 1.8]],
+      dirt: [['c', 0, -2, 27], ['r', -70, -38, 70, -22], ['c', 0, 28, 20], [-20, -12, -50, 4, 7], [20, -12, 50, 4, 7], [-14, 34, -46, 48, 6], [14, 34, 46, 48, 6]],
+      grass: 4000, flowers: 600
+    }
   }
 };
 
@@ -1323,6 +1360,7 @@ async function buildDecor(scene, T, avoid) {
   async function scatter(spec, ok, blockR, cast) {
     let parts;
     if (spec.build) parts = [spec.build(scene)];
+    else if (spec.kit) parts = window.SamuraiKit?.protoMeshes?.(scene, spec.kit) || []; // a procedural kit plant (palms, bananas)
     else {
       const res = await BABYLON.SceneLoader.ImportMeshAsync('', '/assets/buildings/', spec.file, scene);
       parts = res.meshes.filter(mm => mm.getTotalVertices() > 0);
@@ -1364,7 +1402,7 @@ async function buildDecor(scene, T, avoid) {
       addAvoid(x, z, blockR * s + 1);
     }
     const before = meshes.length;
-    fillTiles(parts, bufs, cnt, 'terrain_' + (spec.file ? spec.file.replace('.glb', '') : spec.name));
+    fillTiles(parts, bufs, cnt, 'terrain_' + (spec.file ? spec.file.replace('.glb', '') : spec.kit || spec.name));
     if (cast) meshes.slice(before).forEach(m => cast(m));
     return k;
   }
