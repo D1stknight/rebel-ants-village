@@ -9,10 +9,10 @@ Read this first. It is the hand-off from the Cowork sessions (Sept–Oct 2026) s
 - More notes live in the claude.ai project "Rebel Ants Universe" (docs `claude/handoff.md`, `claude/village-terrains.md`); this file carries the essentials.
 
 ## Where things stand (Oct 3, late night)
-- dev = 406a54d (+ this CLAUDE.md commit). On dev: Samurai village, fixes (night lanterns, cherry trunk collision, Back key), Wokou harbour village + surf sound, faction emblems on banners, Yamabushi village, Buke village (terrain + kit + layout each). Miguel: NOT to main yet, keep building villages.
+- dev = a0dcaf9 (+ this CLAUDE.md commit). On dev: Samurai village, fixes (night lanterns, cherry trunk collision, Back key), Wokou harbour village + surf sound, faction emblems on banners, Yamabushi, Buke, Kenshi villages (terrain + kit + layout each). Miguel: NOT to main yet, keep building villages.
 - This repo is now attached to Claude Code sessions: Claude commits and pushes to dev directly (plain git), then checks the Vercel deploy (Vercel MCP: project prj_CjuIvsLXKinzfIgUkmSkyWhKWqtc, team team_7tWG3HhBf0Ir5h0Hhz9ZAarq).
 - If the chat has NO repo attached: Claude builds + tests, delivers files to Miguel's Downloads/<name>/, Miguel uploads on github.com (dev branch), Claude then verifies dev matches (git fetch + diff) and checks the Vercel deploy. Do NOT push via the admin page / upload token in the browser (blocked by a safety check).
-- Production reads layouts from dev but lacks the Samurai + Wokou + Yamabushi + Buke kit/terrain → those live villages show red placeholders until dev → main merge.
+- Production reads layouts from dev but lacks the Samurai + Wokou + Yamabushi + Buke + Kenshi kit/terrain → those live villages show red placeholders until dev → main merge.
 
 ## Standing rules (from Miguel)
 - 001 is the master and needs no fixing; don't change Forge characters/rigs that are "perfect".
@@ -128,3 +128,10 @@ Friend villages (Queens, Cute & Creepy, Saints LA; Chumps not in registry yet): 
 - Wokou: wok_boat deck walkable (y 1.05 local, ±1.7 x ±3); wok_gangplank (pier 0 → -2, water:'deck'); pier decks halfZ 4.5. Layout: gangplanks to both ships, ship 2 moved to (-31,-56) broadside to its pier.
 - Headless walk tests need fixed 60 fps steps (engine.getDeltaTime = () => 16.7), short camera.maxZ and hidden decor, else one swiftshader frame jumps metres and skips step-down tolerances.
 - Miguel saw the Wokou piers blocked: on dev they are walkable (tested); the live site lacks the harbour kit until dev→main.
+
+## Oct 4 fixes + Kenshi (dev 8f80ea3..a0dcaf9)
+- HUD: updateVillageChrome now runs at once (DOMContentLoaded had already fired) → panel/logo show the current village. Exit Walk button moved beside the rebel panel (left 340 px; bottom-right under 480 px).
+- Stairs: STAIRS spec in samurai-kit.js; each placed staircase builds its own meshes at its real size (root scale undone), ~0.3 m steps (stairsSteps), rebuilt on rescale (refreshStairs from addKitDeckSurfaces); walk surface stepped per tread (villageRampHeightAt), step-up from 62% of a tread. Miguel's Buke cliff stairs (x3.84/3.47/6.37, 41.6 m to the cliff top) climbs in 0.3 m steps; its first ~9 m are buried in the 6 m terrace (base height comes from its centre).
+- Miguel saves layouts with Hard Save (P) → commits on dev ("save: world layout"); pull before editing that village's json.
+- Kenshi terrain `kenshi`: compound terrace 3.2 m (wall .6, res .8), yard 4.8, dojo terrace 6; lake north via coast.north (+ sea.surf false), flatHalf 80, bamboo/cherry/pines extras. Kit kenshi_* (dojo, library, hall, house, gate, forge, banner_pole, well_pavilion, watchtower, wall_fence); FACTION_BANNERS.kenshi teal #1f5753 + gold #d8b450. Layout kenshi.json 193 / 37 proxies (gen script pattern; ground outside the rect = hBil(hm.H)).
+- Shared terrain fixes: wall mask in ground mask alpha → terrace walls fully stone; big terrain pushed only just under the village edge within one cell (dark groove gone) + skirt; no grass/flowers on dirt yards; village shape applied over the whole rect even past flatHalf+4 (Wokou dojo cobble past z 90 and Yamabushi pillar paving now painted).
