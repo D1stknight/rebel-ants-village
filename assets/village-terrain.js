@@ -27,24 +27,57 @@ export const TERRAIN_RECIPES = {
   },
   // Ronin: the unseen elite. A shut-in valley under tall jagged black cliffs, near-black pines, dead trees, ash-grey
   // peaks, crimson spider lilies, heavy cold mist and a dim sun. Matte black and crimson, like their armour.
+  // Ronin: the forgotten clan, elite and silent; the ones who save everything. A walled fortress on a mountain top at
+  // night: dark granite cliffs falling into blue mist, waterfalls from the crags, black pines; inside, grey cobbled
+  // terraces climb from the tower gate to the round plaza with the giant bonsai and the well, the training yard and the
+  // dojo at the top, the two-storey library (west) and the strategy hall (east). Lanterns everywhere, crimson banners.
+  // Always moonlit (hour). From Miguel's four Ronin images.
   ronin: {
-    seed: 7331, dropSeed: 41, drops: 80000,
-    hills: .95, shape: { fbm: 24, ridge: 28, wall: 120 },
-    flatHalf: 112, hillStart: 112, hillFull: 170, wallStart: 250,
+    seed: 7331, dropSeed: 41, drops: 70000, roads: false,
+    hour: 21.5, moon: { sun: 1.1, hemi: 5, color: [.52, .6, .92] }, // the village keeps its own night
+    hills: 1.55, shape: { fbm: 30, ridge: 36, wall: 200,
+      spires: [{ from: 116, cell: 60, chance: .48, radius: [11, 20], height: [38, 90] },
+               { from: 360, cell: 150, chance: .5, radius: [40, 70], height: [110, 230] }] },
+    flatHalf: 96, hillStart: 100, hillFull: 210, wallStart: 230,
+    mesa: { drop: 48, cliff: 6, wobble: 3, fade: [170, 260],
+      pieces: [{ r: [-80, -70, 80, 86], round: 22 }, { r: [-12, -100, 12, -64], round: 6 }] },
+    falls: { count: 7, ring: [108, 290], minDrop: 24, spacing: 60, width: [5, 9] },
+    mist: { layers: [[-40, .62], [-31, .38], [-22, .18]], color: [.34, .4, .6], glow: .08 },
     palette: {
-      grassA: [0.14, 0.17, 0.14], grassB: [0.2, 0.2, 0.17], wet: [0.08, 0.1, 0.09],
-      dirt: [0.24, 0.18, 0.16], rockTint: [0.33, 0.31, 0.36], highTint: [0.82, 0.82, 0.9], peak: [0.30, 0.30, 0.33]
+      grassA: [0.12, 0.17, 0.12], grassB: [0.2, 0.24, 0.16], wet: [0.08, 0.12, 0.09],
+      dirt: [0.34, 0.31, 0.28], rockTint: [0.74, 0.75, 0.8], highTint: [0.82, 0.84, 0.92], peak: [0.66, 0.68, 0.74]
     },
-    grass: { count: 70000, base: [0.06, 0.08, 0.05], tip: [0.3, 0.3, 0.19] },
-    flowers: { count: 3600, stem: [0.03, 0.06, 0.03], petal: [0.85, 0.05, 0.06] },
-    pines: { file: 'pine_1.glb', count: 240, scale: [2.6, 4.8], trunk: 0.32, settle: .35, sink: .15, tint: [0.3, 0.34, 0.33] },
-    deadTrees: { count: 120, scale: [1.6, 3.2], trunk: 0.3, settle: .3, sink: .05 },
-    rocks: { file: 'rock_1.glb', count: 320, scale: [1.0, 3.6], body: 0.75, settle: .9, sink: .1, tint: [0.5, 0.5, 0.56] },
-    // village look: thick cold mist, dimmer light, a heavy sky, dark stone courtyard
-    fog: { density: .0034, day: [.34, .35, .40], night: [.03, .03, .05] },
-    light: { sun: .95, hemi: .95 },
-    sky: { turbidity: 14, luminance: .55, rayleigh: 1.1, mieCoefficient: .009 },
-    court: { court: [.42, .4, .43], plaza: [.36, .34, .38], path: [.4, .37, .4] }
+    grass: { count: 60000, base: [0.05, 0.09, 0.05], tip: [0.24, 0.3, 0.18] },
+    flowers: { count: 900, stem: [0.04, 0.08, 0.04], petal: [0.8, 0.06, 0.07] }, // red spider lilies
+    pines: { file: 'pine_1.glb', count: 380, scale: [2.2, 4.2], trunk: 0.32, settle: .35, sink: .15, tint: [0.42, 0.5, 0.45] },
+    rocks: { file: 'rock_1.glb', count: 360, scale: [1.2, 3.8], body: 0.75, settle: .9, sink: .1, tint: [0.55, 0.56, 0.6], minSq: 70 },
+    extras: [ // black pines along the rim of the fortress, off the paving
+      { file: 'pine_1.glb', count: 40, scale: [1.5, 2.6], body: .32, settle: .35, sink: .15, minSq: 0, maxSq: 112, maxSlope: .3, road: 0, village: true, tint: [0.42, 0.5, 0.45] }
+    ],
+    fog: { density: .0019, day: [.3, .34, .44], night: [.1, .13, .22] },
+    light: { sun: 1, hemi: 1 },
+    sky: { turbidity: 10, luminance: .6, rayleigh: 1.4, mieCoefficient: .007 },
+    court: { texture: 'stone', court: [1.25, 1.25, 1.3], plaza: [1.15, 1.15, 1.2], path: [1.2, 1.2, 1.25] },
+    village: {
+      rect: [-84, -102, 84, 90], res: 1, wall: .9,
+      terraces: [
+        { r: [-78, -62, 78, 84], h: 2.6 },     // the fortress: gate court, plaza, houses
+        { r: [-74, -8, -34, 44], h: 4.6 },     // library terrace (west)
+        { r: [34, -8, 74, 44], h: 4.6 },       // strategy hall terrace (east)
+        { r: [-30, 20, 30, 48], h: 4.4 },      // training yard
+        { r: [-78, 48, 78, 84], h: 6.4 }       // dojo terrace and the back houses
+      ],
+      ramps: [
+        { r: [-5, -76, 5, -62], axis: 'z', from: 0, to: 2.6 },     // stone stairs up to the gate
+        { r: [-6, 12, 6, 20], axis: 'z', from: 2.6, to: 4.4 },     // plaza -> training yard
+        { r: [-6, 48, 6, 54], axis: 'z', from: 4.4, to: 6.4 },     // training yard -> dojo
+        { r: [-34, 12, -26, 20], axis: 'x', from: 4.6, to: 2.6 },  // plaza -> library terrace
+        { r: [26, 12, 34, 20], axis: 'x', from: 2.6, to: 4.6 },    // plaza -> strategy terrace
+        { r: [-60, 44, -52, 50], axis: 'z', from: 4.6, to: 6.4 }, { r: [52, 44, 60, 50], axis: 'z', from: 4.6, to: 6.4 }
+      ],
+      pave: [['r', -76, -60, 76, 82], ['r', -10, -96, 10, -60], ['r', -6, -77, 6, -61]],
+      grass: 2600, flowers: 300
+    }
   },
   // Samurai: the disciplined core of the colony, crimson and gold. Golden-hour light, terraced green hills with stone
   // risers, bamboo groves, cherry trees and pink flower beds, pines, and tall karst stone pillars with a waterfall

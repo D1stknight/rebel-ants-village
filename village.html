@@ -8219,9 +8219,14 @@ function updateSunPathForShadows(h) {
   if (typeof refreshStaticShadows === 'function') refreshStaticShadows();
 }
 
+// A village can keep its own hour (recipe.hour: Ronin is always moonlit); others follow the real clock.
+function villageClockHour(now = new Date()) {
+  const fixed = window._newTerrain?.recipe?.hour;
+  return Number.isFinite(fixed) ? fixed : now.getHours() + now.getMinutes() / 60;
+}
 function updateSky(){
   if (_worklightOn) return; // don't override worklight
-  const now=new Date(), h=now.getHours()+now.getMinutes()/60;
+  const now=new Date(), h=villageClockHour(now);
   const d=Math.max(0,Math.sin(((h/24)-.25)*Math.PI*2));
   skyMat.inclination=-Math.sin(((h/24)-.25)*Math.PI*2)*.5;
   sun.intensity=0.15+d*1.8; hemi.intensity=0.18+d*.45;
@@ -8230,7 +8235,8 @@ function updateSky(){
   if(h>=6&&h<9){sun.diffuse=new BABYLON.Color3(1,.62,.3);}
   else if(h>=9&&h<17){sun.diffuse=new BABYLON.Color3(1,.97,.88);}
   else if(h>=17&&h<20){sun.diffuse=new BABYLON.Color3(1,.48,.15);}
-  else{sun.diffuse=new BABYLON.Color3(.18,.22,.48);sun.intensity=0.12;}
+  else{sun.diffuse=new BABYLON.Color3(.18,.22,.48);sun.intensity=0.12;
+    const _moon = window._newTerrain?.recipe.moon; if (_moon) { sun.intensity = _moon.sun; hemi.intensity *= _moon.hemi; sun.diffuse = new BABYLON.Color3(..._moon.color); hemi.diffuse = new BABYLON.Color3(..._moon.color); } } // moonlit villages
   if (_vl?.tint && h>=6 && h<20) sun.diffuse = sun.diffuse.multiply(new BABYLON.Color3(..._vl.tint)); // e.g. Samurai's golden light
   const clearFogColor=h>=6&&h<20?new BABYLON.Color3(.58,.74,.9):new BABYLON.Color3(.04,.06,.16);
   scene.fogColor=clearFogColor;
@@ -26597,8 +26603,7 @@ function getFakeLightStateFactor() {
   if (FakeLightDirectorTestMode && FakeLightDirectorTestMode !== 'auto') {
     return ensureInteriorEditVisible(FAKE_LIGHT_TEST_FACTORS[FakeLightDirectorTestMode] || .18);
   }
-  const now = new Date();
-  const h = now.getHours() + now.getMinutes() / 60;
+  const h = villageClockHour();
   let timeFactor = .04;
   if (h >= 20 || h < 6) timeFactor = 1;
   else if (h >= 17 && h < 20) timeFactor = .32 + ((h - 17) / 3) * .68;
