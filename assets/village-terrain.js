@@ -40,7 +40,7 @@ export const TERRAIN_RECIPES = {
                { from: 360, cell: 150, chance: .5, radius: [40, 70], height: [110, 230] }] },
     flatHalf: 96, hillStart: 100, hillFull: 210, wallStart: 230,
     mesa: { drop: 48, cliff: 6, wobble: 3, fade: [170, 260],
-      pieces: [{ r: [-80, -70, 80, 86], round: 22 }, { r: [-12, -100, 12, -64], round: 6 }] },
+      pieces: [{ r: [-66, -56, 66, 74], round: 18 }, { r: [-11, -92, 11, -50], round: 6 }] },
     falls: { count: 7, ring: [108, 290], minDrop: 24, spacing: 60, width: [5, 9] },
     mist: { layers: [[-40, .62], [-31, .38], [-22, .18]], color: [.34, .4, .6], glow: .08 },
     palette: {
@@ -59,23 +59,23 @@ export const TERRAIN_RECIPES = {
     sky: { turbidity: 10, luminance: .6, rayleigh: 1.4, mieCoefficient: .007 },
     court: { texture: 'stone', court: [1.25, 1.25, 1.3], plaza: [1.15, 1.15, 1.2], path: [1.2, 1.2, 1.25] },
     village: {
-      rect: [-84, -102, 84, 90], res: 1, wall: .9,
+      rect: [-70, -96, 70, 78], res: .9, wall: .9,
       terraces: [
-        { r: [-78, -62, 78, 84], h: 2.6 },     // the fortress: gate court, plaza, houses
-        { r: [-74, -8, -34, 44], h: 4.6 },     // library terrace (west)
-        { r: [34, -8, 74, 44], h: 4.6 },       // strategy hall terrace (east)
-        { r: [-30, 20, 30, 48], h: 4.4 },      // training yard
-        { r: [-78, 48, 78, 84], h: 6.4 }       // dojo terrace and the back houses
+        { r: [-63, -52, 63, 71], h: 2.6 },     // the fortress: gate court, plaza, houses
+        { r: [-60, -10, -30, 32], h: 5.4 },    // library terrace (west)
+        { r: [30, -10, 60, 32], h: 5.4 },      // strategy hall terrace (east)
+        { r: [-24, 12, 24, 34], h: 5 },        // training yard
+        { r: [-63, 40, 63, 71], h: 8 }         // dojo terrace and the back houses
       ],
       ramps: [
-        { r: [-5, -76, 5, -62], axis: 'z', from: 0, to: 2.6 },     // stone stairs up to the gate
-        { r: [-6, 12, 6, 20], axis: 'z', from: 2.6, to: 4.4 },     // plaza -> training yard
-        { r: [-6, 48, 6, 54], axis: 'z', from: 4.4, to: 6.4 },     // training yard -> dojo
-        { r: [-34, 12, -26, 20], axis: 'x', from: 4.6, to: 2.6 },  // plaza -> library terrace
-        { r: [26, 12, 34, 20], axis: 'x', from: 2.6, to: 4.6 },    // plaza -> strategy terrace
-        { r: [-60, 44, -52, 50], axis: 'z', from: 4.6, to: 6.4 }, { r: [52, 44, 60, 50], axis: 'z', from: 4.6, to: 6.4 }
+        { r: [-5, -64, 5, -52], axis: 'z', from: 0, to: 2.6 },     // stone stairs up to the gate
+        { r: [-6, 5, 6, 12], axis: 'z', from: 2.6, to: 5 },        // plaza -> training yard
+        { r: [-6, 33, 6, 40], axis: 'z', from: 5, to: 8 },         // training yard -> dojo (starts inside the yard's edge)
+        { r: [-31, 0, -22, 8], axis: 'x', from: 5.4, to: 2.6 },    // plaza -> library terrace
+        { r: [22, 0, 31, 8], axis: 'x', from: 2.6, to: 5.4 },      // plaza -> strategy terrace
+        { r: [-52, 31, -45, 40], axis: 'z', from: 5.4, to: 8 }, { r: [45, 31, 52, 40], axis: 'z', from: 5.4, to: 8 }
       ],
-      pave: [['r', -76, -60, 76, 82], ['r', -10, -96, 10, -60], ['r', -6, -77, 6, -61]],
+      pave: [['r', -61, -50, 61, 69], ['r', -9, -90, 9, -50], ['r', -6, -65, 6, -51]],
       grass: 2600, flowers: 300
     }
   },
