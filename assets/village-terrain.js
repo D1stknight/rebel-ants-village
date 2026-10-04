@@ -542,6 +542,52 @@ export const TERRAIN_RECIPES = {
       rake: [{ ring: [-16.5, 15.5, 4.5] }, { ring: [16.5, 15.5, 4.5] }, { r: [-22, 10, 22, 31], axis: 'x' }],
       grass: 6000, flowers: 500
     }
+  },
+  // Cute & Creepy (friend collection): a haunted hilltop village under a purple moon, always night, fog pooling
+  // below the cliffs and drifting through the lanes: an iron gate with pumpkin pillars up wooden steps, cobbled
+  // winding lanes, a giant dead tree with hanging lanterns by the well, the witch's cottage with its cauldron, the
+  // library, the game hall, crooked cottages, a graveyard with a crypt (back left), the gothic manor with its scarecrow yard.
+  // From Miguel's four Cute & Creepy images.
+  'cute-creepy': {
+    seed: 6669, dropSeed: 13, drops: 60000, roads: false,
+    hour: 22.5, moon: { sun: .85, hemi: 3.4, color: [.56, .5, .82] }, // the village keeps its own night
+    moonDisc: { pos: [-150, 170, 430], size: 3.2, color: [.8, .68, .98], halo: [.42, .3, .62] }, // the big purple moon behind the manor
+    hills: 1.3, shape: { fbm: 30, ridge: 30, wall: 160,
+      spires: [{ from: 120, cell: 70, chance: .4, radius: [10, 18], height: [30, 70] }] },
+    flatHalf: 96, hillStart: 100, hillFull: 210, wallStart: 240,
+    mesa: { drop: 34, cliff: 6, wobble: 4, fade: [170, 260],
+      pieces: [{ r: [-70, -62, 70, 80], round: 26 }, { r: [-8, -98, 8, -58], round: 4 }] },
+    mist: { layers: [[-30, .62], [-23, .45], [-15, .32], [2.4, .1]], color: [.4, .34, .58], glow: .1 },
+    palette: {
+      grassA: [0.13, 0.12, 0.13], grassB: [0.21, 0.17, 0.2], wet: [0.1, 0.09, 0.11],
+      dirt: [0.3, 0.25, 0.22], yard: [0.32, 0.26, 0.22], rockTint: [0.62, 0.58, 0.68], highTint: [0.72, 0.68, 0.8], peak: [0.6, 0.58, 0.66]
+    },
+    grass: { count: 60000, base: [0.06, 0.05, 0.06], tip: [0.3, 0.24, 0.26] },
+    flowers: { count: 700, stem: [0.06, 0.07, 0.04], petal: [0.95, 0.42, 0.08] },
+    pines: { file: 'pine_1.glb', count: 360, scale: [2.0, 3.8], trunk: 0.32, settle: .35, sink: .15, tint: [0.32, 0.3, 0.42] },
+    rocks: { file: 'rock_1.glb', count: 340, scale: [1.2, 3.8], body: 0.75, settle: .9, sink: .1, tint: [0.5, 0.47, 0.56], minSq: 76 },
+    fog: { density: .0034, day: [.14, .11, .21], night: [.13, .1, .2] },
+    light: { sun: 1, hemi: 1 },
+    sky: { turbidity: 10, luminance: .6, rayleigh: 1.4, mieCoefficient: .007 },
+    court: { texture: 'stone', court: [1.05, .98, 1.1], plaza: [1.0, .94, 1.06], path: [1.05, .98, 1.1] },
+    village: {
+      rect: [-72, -98, 72, 82], res: .9, wall: .8,
+      terraces: [
+        { r: [-66, -58, 66, 76], h: 1.2 },     // the village court
+        { r: [-64, 26, -38, 72], h: 2.2 },     // the graveyard (back left)
+        { r: [-34, 40, 34, 74], h: 3.6 },      // the manor terrace
+        { r: [34, 30, 66, 74], h: 2.6 }        // the witch's corner (back right)
+      ],
+      ramps: [
+        { r: [-4, -70, 4, -58], axis: 'z', from: 0, to: 1.2 },      // wooden steps up to the gate
+        { r: [-38.5, 28, -31, 33.5], axis: 'x', from: 2.2, to: 1.2 },  // into the graveyard
+        { r: [-6, 33, 6, 40.5], axis: 'z', from: 1.2, to: 3.6 },     // up to the manor
+        { r: [26, 34, 34.5, 41], axis: 'x', from: 1.2, to: 2.6 }     // up to the witch's cottage
+      ],
+      pave: [['r', -6, -98, 6, -56], ['r', -64, -56, 64, 11.5], ['r', -64, 11.5, -20.5, 25.5], ['r', 20.5, 11.5, 64, 40], ['r', -20.5, 32.5, 20.5, 40], ['r', -37.5, 25.5, -20.5, 40], ['r', -34, 40, 34, 74], ['r', 34, 30, 64, 74], [-31, 30.75, -40, 30.75, 2.2]],
+      dirt: [['r', -20, 12, 20, 32], [-40, 30.75, -61, 30.75, 1.6], [-51, 30.75, -51, 68, 1.6]],
+      grass: 5000, flowers: 400
+    }
   }
 };
 
