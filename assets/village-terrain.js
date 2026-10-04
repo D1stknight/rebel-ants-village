@@ -379,6 +379,45 @@ export const TERRAIN_RECIPES = {
       grass: 7000, flowers: 500
     }
   },
+  // Bushi: tactical officers, the mind behind the blade. A square stone fortress on dry, rocky hill country: walls
+  // with tiled copings, corner and gate towers; inside, rows of houses either side of the gate road, the well pavilion,
+  // the raised raked-sand training yard in the middle, the dojo on its stone terrace at the back, the library and the
+  // forge (west), the strategy hall and the storehouse (east). Crimson + gold banners. From Miguel's four Bushi images.
+  bushi: {
+    seed: 5179, dropSeed: 27, drops: 60000, roads: false,
+    hills: .95, shape: { fbm: 26, ridge: 26, wall: 120 },
+    flatHalf: 84, hillStart: 92, hillFull: 200, wallStart: 260,
+    palette: {
+      grassA: [0.3, 0.31, 0.17], grassB: [0.42, 0.4, 0.23], wet: [0.24, 0.27, 0.14],
+      dirt: [0.62, 0.5, 0.34], yard: [0.5, 0.41, 0.28], rockTint: [1.0, .97, .92], highTint: [1.0, .97, .88], peak: [0.84, 0.82, 0.78]
+    },
+    grass: { count: 70000, base: [0.2, 0.22, 0.08], tip: [0.68, 0.62, 0.32] },
+    flowers: { count: 1200, stem: [0.18, 0.22, 0.08], petal: [0.95, 0.84, 0.4] },
+    pines: { file: 'pine_1.glb', count: 420, scale: [1.4, 3.0], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 460, scale: [1.2, 4.4], body: 0.75, settle: .9, sink: .1, tint: [1.75, 1.68, 1.55], minSq: 74 }, // pale granite outcrops
+    fog: { density: .0011, day: [.8, .84, .86], night: [.04, .05, .1] },
+    light: { sun: 1.12, hemi: .96, tint: [1.0, .95, .84] },
+    sky: { turbidity: 4, luminance: 1, rayleigh: 2.6, mieCoefficient: .004 },
+    court: { texture: 'stone', court: [1.5, 1.46, 1.38], plaza: [1.32, 1.28, 1.2], path: [1.2, 1.16, 1.08] },
+    village: {
+      rect: [-66, -94, 66, 74], res: .9, wall: .6,
+      terraces: [
+        { r: [-62, -64, 62, 70], h: 1.2 },     // the fortress platform (walls stand on its edge)
+        { r: [-17, -14, 17, 12], h: 2 },       // the raised sand training yard
+        { r: [-27, 26, 27, 50], h: 4.4 }       // the dojo terrace
+      ],
+      ramps: [
+        { r: [-5, -73, 5, -64], axis: 'z', from: 0, to: 1.2 },     // steps up to the gate
+        { r: [-5, -17, 5, -14], axis: 'z', from: 1.2, to: 2 },     // yard steps (front)
+        { r: [-5, 12, 5, 15], axis: 'z', from: 2, to: 1.2 },       // yard steps (back)
+        { r: [-6, 18, 6, 26], axis: 'z', from: 1.2, to: 4.4 }      // great stairs to the dojo
+      ],
+      pave: [['r', -60, -62, 60, -12.9], ['r', -60, 10.9, 60, 68], ['r', -60, -13, -15.9, 11], ['r', 15.9, -13, 60, 11], ['r', -5, -92, 5, -62]], // round the sand yard
+      dirt: [['r', -15.5, -12.5, 15.5, 10.5]],
+      rake: [{ ring: [0, -1, 9.5] }, { r: [-15.5, -12.5, 15.5, 10.5], axis: 'x' }],
+      grass: 2400, flowers: 200
+    }
+  },
   // Ashigaru: the foot soldiers. A round fort on a low mound in dry grassland: a palisade of sharpened stakes, a moat
   // with rocky banks, a gate between two towers over a plank bridge; inside a dirt plaza with a covered well, the dojo
   // with its fenced training yard, the archive (scroll banner) and the strategy hall (board banner), watchtowers,
