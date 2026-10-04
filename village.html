@@ -3328,7 +3328,8 @@ function updateVillageChrome() {
   if (returnBtn) returnBtn.classList.toggle('on', CURRENT_VILLAGE_ID !== 'hub');
 }
 window.returnToHubVillage = returnToHubVillage;
-document.addEventListener('DOMContentLoaded', updateVillageChrome);
+// this module runs after the page has parsed (DOMContentLoaded may already have fired): update now, else on the event
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateVillageChrome); else updateVillageChrome();
 // ── ENGINE ───────────────────────────────────
 // Optional WebGPU test mode: /village.html?engine=webgpu
 let engine;
