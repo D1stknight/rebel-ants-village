@@ -105,6 +105,78 @@
     T.sign_dice = bannerTex(scene, 'cc_dice', '#3a2616', '#f1e8d6', 'dice');
     const bs = rng(52); const spines = Array.from({ length: 64 }, () => [[110, 40, 40], [50, 70, 110], [70, 100, 60], [140, 110, 50], [90, 50, 110]][Math.floor(bs() * 5)].map(v => v * (.7 + .5 * bs())));
     T.books = pixelTex(scene, 'books', S, (x, y) => { const sh = (y * 5) % 1; if (sh > .86) return [60, 38, 22]; const k = Math.floor(x * 16) + 16 * Math.floor(y * 5), c = spines[k % 64]; return (x * 16) % 1 < .08 ? mul(c, .5) : sh < .12 * (1 + (k % 3)) ? [40, 26, 16] : c; });
+    // ── Cute & Creepy gang (Miguel's NFTs): faces, kimonos, cat coats, drawn on canvases ──
+    const cv = (name, W, H, draw) => { const t = new BABYLON.DynamicTexture('samKit_' + name, { width: W, height: H }, scene, true), c = t.getContext(); draw(c, W, H); t.update(); t.wrapU = BABYLON.Texture.WRAP_ADDRESSMODE; return t; };
+    const lash = (c, x, y, w, col, n = 4) => { c.strokeStyle = col; c.lineWidth = 6; c.lineCap = 'round'; c.beginPath(); c.arc(x, y - w * .35, w * .6, .25 * Math.PI, .75 * Math.PI); c.stroke(); c.lineWidth = 3.5; for (let k = 0; k < n; k++) { const a = (.3 + .4 * k / (n - 1)) * Math.PI, px = x + Math.cos(a) * w * .6, py = y - w * .35 + Math.sin(a) * w * .6; c.beginPath(); c.moveTo(px, py); c.lineTo(px + Math.cos(a) * 12, py + Math.sin(a) * 12); c.stroke(); } };
+    const dot = (c, x, y, r, col) => { c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); };
+    const ell = (c, x, y, rx, ry, col, a = 0) => { c.fillStyle = col; c.beginPath(); c.ellipse(x, y, rx, ry, a, 0, 7); c.fill(); };
+    const catEye = (c, x, y, iris) => { ell(c, x, y, 26, 22, '#f6f2e8'); ell(c, x, y, 19, 19, iris); ell(c, x, y, 5, 16, '#111'); dot(c, x - 6, y - 7, 4, '#fff'); c.strokeStyle = '#111'; c.lineWidth = 4; c.beginPath(); c.ellipse(x, y, 26, 22, 0, 0, 7); c.stroke(); };
+    // Kokeshi Flower Moon: white skin, closed eyes under red shadow, blood tears, small red lips, blush
+    T.face_fm = cv('face_fm', 256, 256, (c, W) => {
+      c.fillStyle = '#f4eee9'; c.fillRect(0, 0, W, W);
+      for (const x of [88, 168]) { ell(c, x, 140, 34, 16, 'rgba(210,30,40,.55)'); lash(c, x, 150, 34, '#1a1012'); c.strokeStyle = '#a8121c'; c.lineWidth = 4; c.beginPath(); c.moveTo(x - 8, 158); c.lineTo(x - 10, 190); c.stroke(); dot(c, x - 10, 192, 4, '#a8121c'); ell(c, x + (x < 128 ? -16 : 16), 182, 20, 11, 'rgba(240,120,130,.45)'); }
+      ell(c, 128, 206, 11, 6, '#c8202c'); ell(c, 123, 203, 5, 4, '#e0404c'); ell(c, 133, 203, 5, 4, '#e0404c');
+    });
+    // Nariko: pale blue skin, glowing blue shadow, closed eyes, blue lips, sparkles
+    T.face_nr = cv('face_nr', 256, 256, (c, W) => {
+      c.fillStyle = '#b9d2ee'; c.fillRect(0, 0, W, W);
+      for (const x of [88, 168]) { ell(c, x, 140, 38, 20, 'rgba(40,110,230,.75)'); ell(c, x, 140, 22, 10, 'rgba(150,220,255,.7)'); lash(c, x, 150, 34, '#0c1630'); for (let k = 0; k < 6; k++) dot(c, x - 30 + k * 12, 122 + (k % 2) * 6, 2, '#eaf6ff'); }
+      ell(c, 128, 206, 11, 6, '#2a4fa8'); ell(c, 128, 203, 6, 3, '#6f9fe8');
+    });
+    // Ostara: white skin, dark sockets with glowing teal eyes, black streaks, stitched mouth, a star on the forehead
+    T.face_os = cv('face_os', 256, 256, (c, W) => {
+      c.fillStyle = '#ebe9f0'; c.fillRect(0, 0, W, W);
+      for (const x of [88, 168]) { ell(c, x, 146, 30, 24, '#1a2226'); ell(c, x, 146, 14, 12, '#6ff2e0'); dot(c, x, 146, 6, '#d8fffa'); c.strokeStyle = '#1a2226'; c.lineWidth = 7; c.beginPath(); c.moveTo(x, 168); c.lineTo(x - 3, 214); c.stroke(); }
+      c.fillStyle = '#1a2226'; c.beginPath(); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, r = k % 2 ? 4 : 13; c.lineTo(128 + Math.cos(a) * r, 108 + Math.sin(a) * r); } c.fill();
+      dot(c, 122, 182, 3, '#1a2226'); dot(c, 134, 182, 3, '#1a2226');
+      c.strokeStyle = '#1a2226'; c.lineWidth = 3; c.beginPath(); c.moveTo(116, 204); c.lineTo(140, 204); c.stroke(); for (let k = 0; k < 4; k++) { c.beginPath(); c.moveTo(118 + k * 7, 198); c.lineTo(118 + k * 7, 210); c.stroke(); }
+    });
+    // Mamoru: a white skull mask on black fur, green slit eyes, orange dots, whiskers
+    T.face_mamoru = cv('face_mamoru', 256, 256, (c, W) => {
+      c.fillStyle = '#171415'; c.fillRect(0, 0, W, W);
+      ell(c, 128, 150, 92, 78, '#efe9de'); ell(c, 128, 212, 40, 22, '#efe9de');
+      for (const x of [86, 170]) { ell(c, x, 140, 34, 30, '#171415'); catEye(c, x, 140, '#3fbf6a'); for (let k = 0; k < 3; k++) dot(c, x + (x < 128 ? -38 : 38), 112 + k * 14, 4, '#f08a1c'); }
+      c.fillStyle = '#171415'; c.beginPath(); c.moveTo(118, 176); c.lineTo(138, 176); c.lineTo(128, 190); c.fill();
+      c.strokeStyle = '#171415'; c.lineWidth = 3; c.beginPath(); c.moveTo(104, 206); c.quadraticCurveTo(128, 222, 152, 206); c.stroke(); for (let k = 0; k < 5; k++) { c.beginPath(); c.moveTo(110 + k * 9, 204 + (k === 2 ? 4 : 2)); c.lineTo(110 + k * 9, 214); c.stroke(); }
+      c.strokeStyle = '#efe9de'; c.lineWidth = 2.5; for (const sd of [-1, 1]) for (let k = 0; k < 3; k++) { c.beginPath(); c.moveTo(128 + sd * 60, 192 + k * 8); c.lineTo(128 + sd * 124, 180 + k * 14); c.stroke(); }
+    });
+    // Mochi: white fur, red and black patches by the ears, green eyes, pink nose, a smile, red cheek marks
+    T.face_mochi = cv('face_mochi', 256, 256, (c, W) => {
+      c.fillStyle = '#f8f4ef'; c.fillRect(0, 0, W, W);
+      ell(c, 40, 40, 70, 60, '#d63a44'); ell(c, 222, 46, 60, 52, '#1c1a1c'); ell(c, 210, 40, 40, 30, '#d63a44');
+      for (const x of [86, 170]) catEye(c, x, 140, '#4cc06a');
+      for (const sd of [-1, 1]) { ell(c, 128 + sd * 66, 182, 18, 9, 'rgba(230,80,100,.55)'); for (let k = 0; k < 3; k++) { c.strokeStyle = '#7a7070'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(128 + sd * 50, 190 + k * 8); c.lineTo(128 + sd * 122, 178 + k * 14); c.stroke(); } }
+      ell(c, 128, 180, 10, 7, '#f08aa0'); c.strokeStyle = '#3a2a2a'; c.lineWidth = 3; c.beginPath(); c.moveTo(108, 194); c.quadraticCurveTo(118, 206, 128, 194); c.quadraticCurveTo(138, 206, 148, 194); c.stroke();
+    });
+    // cat coats (planar on the body's front): Mamoru's skeleton, Mochi's patches
+    T.coat_mamoru = cv('coat_mamoru', 256, 256, (c, W) => {
+      c.fillStyle = '#171415'; c.fillRect(0, 0, W, W); c.strokeStyle = '#efe9de'; c.lineCap = 'round';
+      c.lineWidth = 10; c.beginPath(); c.moveTo(128, 30); c.lineTo(128, 190); c.stroke();
+      c.lineWidth = 8; for (let k = 0; k < 4; k++) { const y = 60 + k * 26; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(128, y); c.quadraticCurveTo(128 + sd * 70, y - 8, 128 + sd * 74, y + 22); c.stroke(); } }
+      ell(c, 128, 200, 40, 22, '#efe9de'); ell(c, 128, 204, 18, 10, '#171415');
+    });
+    T.coat_mochi = cv('coat_mochi', 256, 256, (c, W) => { c.fillStyle = '#f8f4ef'; c.fillRect(0, 0, W, W); ell(c, 128, 150, 70, 80, '#fbe3ea'); ell(c, 34, 80, 40, 50, '#d63a44'); ell(c, 220, 190, 46, 40, '#1c1a1c'); ell(c, 228, 120, 26, 30, '#d63a44'); });
+    // kimonos (wrapped round the body: u 0..1 = once round; the front is at u .75)
+    const kimono = (name, base, draw) => cv(name, 512, 256, (c, W, H) => { c.fillStyle = base; c.fillRect(0, 0, W, H); draw(c, W, H); });
+    const collar = (c, col, edge) => { c.fillStyle = col; c.beginPath(); c.moveTo(384 - 46, 0); c.lineTo(384, 70); c.lineTo(384 + 46, 0); c.fill(); c.strokeStyle = edge; c.lineWidth = 8; c.beginPath(); c.moveTo(384 - 52, 0); c.lineTo(384, 78); c.lineTo(384 + 52, 0); c.stroke(); };
+    T.kimono_fm = kimono('kimono_fm', '#141113', (c, W, H) => {
+      const skull = (x, y, s) => { ell(c, x, y, 9 * s, 8 * s, '#f2ece4'); c.fillRect(x - 5 * s, y + 4 * s, 10 * s, 6 * s); dot(c, x - 3.5 * s, y, 2.4 * s, '#141113'); dot(c, x + 3.5 * s, y, 2.4 * s, '#141113'); };
+      for (let y = 18; y < H; y += 36) for (let x = (y / 36 % 2) * 22; x < W; x += 44) skull(x, y, 1.2);
+      c.fillStyle = '#a3141c'; c.fillRect(384 - 60, 0, 120, H); c.strokeStyle = '#e8b04a'; c.lineWidth = 2.5; for (let y = 10; y < H; y += 18) for (let x = 384 - 60; x < 384 + 60; x += 20) { c.beginPath(); c.arc(x, y, 9, Math.PI, 2 * Math.PI); c.stroke(); }
+      collar(c, '#f2ece4', '#a3141c');
+    });
+    T.kimono_nr = kimono('kimono_nr', '#0e1a3c', (c, W, H) => {
+      c.strokeStyle = '#a9c4e8'; c.lineWidth = 2.5; for (let y = 8; y < H * .45; y += 14) for (let x = (y / 14 % 2) * 9; x < W; x += 18) { c.beginPath(); c.arc(x, y, 9, Math.PI, 2 * Math.PI); c.stroke(); }
+      c.strokeStyle = '#4a6cb8'; c.lineWidth = 4; for (let k = 0; k < 14; k++) { const x = (k * 77) % W, y = H * .62 + (k % 3) * 26; c.beginPath(); c.arc(x, y, 12, .2, 3); c.arc(x + 18, y - 4, 10, 3.6, 6); c.stroke(); }
+      c.fillStyle = '#c9d6e8'; c.fillRect(384 - 30, H * .45, 60, H * .55); collar(c, '#c9d6e8', '#5a7cc8');
+    });
+    T.kimono_os = kimono('kimono_os', '#0f3a3a', (c, W, H) => {
+      const bun = (x, y) => { c.fillStyle = '#2f7a72'; ell(c, x, y, 12, 8, '#2f7a72'); ell(c, x + 10, y - 6, 6, 6, '#2f7a72'); ell(c, x + 8, y - 16, 2.5, 8, '#2f7a72', -.3); ell(c, x + 13, y - 15, 2.5, 8, '#2f7a72', .2); };
+      for (let y = 40; y < H; y += 46) for (let x = (y / 46 % 2) * 30; x < W; x += 60) bun(x, y);
+      for (let k = 0; k < 10; k++) { const x = (k * 113) % W, y = 20 + (k * 53) % H; c.strokeStyle = '#7fd8c8'; c.lineWidth = 3; c.beginPath(); c.arc(x, y, 8, .8, 5.4); c.stroke(); }
+      c.fillStyle = '#101416'; c.fillRect(384 - 34, 0, 68, H); c.strokeStyle = '#d8e4e4'; c.lineWidth = 5; c.beginPath(); c.arc(384, H * .5, 16, .7, 5.6); c.stroke();
+      collar(c, '#101416', '#2f7a72');
+    });
     const tt = noise(S, 2, 3, 41); // tatami: woven rush, a black cloth border
     T.tatami = pixelTex(scene, 'tatami', S, (x, y, i) => { const e = Math.min(x, 1 - x, y, 1 - y); if (e < .025) return [26, 24, 20]; const f = (.84 + .1 * Math.sin(y * S * 2.2) + .08 * tt[i]); return [184 * f, 168 * f, 104 * f]; });
     const mp = noise(S, 4, 4, 42); // the campaign map on the dojo's table: land, hills, a river
@@ -214,6 +286,13 @@
     roof_purple: { tex: 'roof_purple' }, plaster_cc: { tex: 'plaster_old', tint: [.66, .6, .62] }, stone_dark: { tex: 'stone', tint: [.6, .56, .66] }, banner_cc: { tex: 'banner_cc' }, sign_book: { tex: 'sign_book' }, sign_dice: { tex: 'sign_dice' }, books: { tex: 'books', em: [.32, .2, .1] },
     window_glow: { col: [.95, .62, .22], em: [.95, .55, .16] }, teal_glow: { col: [.2, .8, .7], em: [.12, .7, .6] }, brew: { col: [.3, 1, .45], em: [.25, .95, .4] }, glow_green: { glow: [.3, 1, .45] }, glow_warm: { glow: [.85, .36, .06] },
     pumpkin: { col: [.88, .42, .08], em: [.3, .1, 0] }, ghost: { col: [.75, .85, 1], em: [.55, .7, .95], alpha: .55 }, candle: { col: [.92, .88, .76] }, bone: { col: [.86, .82, .72] },
+    face_fm: { tex: 'face_fm' }, face_nr: { tex: 'face_nr', em: [.08, .14, .3] }, face_os: { tex: 'face_os', em: [.06, .1, .1] }, face_mamoru: { tex: 'face_mamoru' }, face_mochi: { tex: 'face_mochi' },
+    coat_mamoru: { tex: 'coat_mamoru' }, coat_mochi: { tex: 'coat_mochi' }, kimono_fm: { tex: 'kimono_fm' }, kimono_nr: { tex: 'kimono_nr' }, kimono_os: { tex: 'kimono_os' },
+    skin_w: { col: [.95, .92, .9] }, skin_blue: { col: [.72, .82, .93] }, hair_black: { col: [.06, .06, .07], spec: [.3, .3, .35], power: 30 }, hair_blue: { col: [.06, .12, .3], spec: [.3, .4, .6], power: 30 },
+    obi_red: { col: [.62, .07, .1] }, obi_silver: { col: [.78, .82, .88], spec: [.6, .6, .7], power: 40 }, obi_black: { col: [.06, .07, .08] }, horn: { col: [.88, .9, .95] }, ear_os: { col: [.1, .14, .18] },
+    flower_pink: { col: [.95, .55, .66] }, flower_teal: { col: [.3, .75, .7], em: [.05, .2, .18] }, flower_orange: { col: [.95, .5, .12] }, ear_pink: { col: [.95, .62, .7] },
+    cat_black: { col: [.07, .065, .07] }, cat_white: { col: [.95, .93, .9] }, collar_red: { col: [.7, .08, .1] }, gem_green: { col: [.2, .9, .4], em: [.1, .6, .25] },
+    orb: { col: [.6, .85, 1], em: [.45, .75, 1] }, glow_blue: { glow: [.35, .6, 1] },
     sack: { col: [.7, .62, .46] }, leaf: { col: [.26, .42, .14] }, leaves: { tex: 'leaves' },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
@@ -593,6 +672,56 @@
   }
   function ccCandles(M, x, y, n) { for (let i = 0; i < n; i++) { const a = i * 2.4, r = .12 + .1 * i, px = x + Math.cos(a) * r, py = y + Math.sin(a) * r, h = .18 + .12 * ((i * 7) % 3); M.cyl('candle', [px, py, 0], .05, h, 6); M.quad('fire', [[px - .04, py, h], [px + .04, py, h], [px, py, h + .14]]); } }
   function ccSign(M, x, y, z, mat, w = 1.8) { M.rod('iron', [x - w / 2 - .2, y + .7, z + .5], [x - w / 2 - .2, y, z + .5], .04, 4); M.box('darkwood', [x, y, z], [w + .2, .1, w * .7 + .2]); M.quad(mat, [[x - w / 2, y - .06, z - w * .35], [x + w / 2, y - .06, z - w * .35], [x + w / 2, y - .06, z + w * .35], [x - w / 2, y - .06, z + w * .35]]); for (const sd of [-1, 1]) M.rod('iron', [x + sd * w / 2, y, z + w * .35 + .1], [x + sd * w / 2, y, z + .5 + w * .35], .015, 3); }
+  // sphere with a picture on its front half: u from x, v from z (planar, as seen from the front); plain behind
+  function faceSphere(M, mat, backMat, c, r, sz = 1, segs = 18, rings = 12) {
+    const P = (i, j) => { const th = Math.PI * i / rings, ph = 2 * Math.PI * j / segs; return [c[0] + r * Math.sin(th) * Math.cos(ph), c[1] + r * Math.sin(th) * Math.sin(ph), c[2] + r * sz * Math.cos(th)]; };
+    const uv = p => [.5 + (p[0] - c[0]) / (2 * r), .5 + (p[2] - c[2]) / (2 * r * sz)];
+    for (let i = 0; i < rings; i++) for (let j = 0; j < segs; j++) {
+      const q = [P(i, j), P(i + 1, j), P(i + 1, j + 1), P(i, j + 1)], pts = [];
+      for (const p of q) if (!pts.length || Math.hypot(...sub(p, pts[pts.length - 1])) > 1e-6) pts.push(p);
+      if (pts.length > 3 && Math.hypot(...sub(pts[0], pts[pts.length - 1])) < 1e-6) pts.pop();
+      if (pts.length < 3) continue;
+      const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+      M.poly(cy < c[1] ? mat : backMat, pts, pts.map(uv));
+    }
+  }
+  // surface of revolution round the z axis: prof [[radius, z], ...] bottom to top; u once round (front at .75)
+  function lathe(M, m, prof, segs = 20) {
+    const z0 = prof[0][1], H = prof[prof.length - 1][1] - z0, p = (r, z, a) => [r * Math.cos(a), r * Math.sin(a), z];
+    for (let i = 0; i < prof.length - 1; i++) for (let j = 0; j < segs; j++) {
+      const a0 = j / segs * Math.PI * 2, a1 = (j + 1) / segs * Math.PI * 2, [r0, za] = prof[i], [r1, zb] = prof[i + 1], v0 = (za - z0) / H, v1 = (zb - z0) / H;
+      M.poly(m, [p(r0, za, a0), p(r0, za, a1), p(r1, zb, a1), p(r1, zb, a0)], [[j / segs, v0], [(j + 1) / segs, v0], [(j + 1) / segs, v1], [j / segs, v1]]);
+    }
+  }
+  // a bob of hair over a head at c: covers the back and top, leaves the face open below the fringe at cutZ, hangs
+  // straight at the sides down to bobZ
+  function hairBob(M, m, c, r, cutZ, bobZ) {
+    const segs = 20, rings = 12, R = r * 1.07;
+    const P = (i, j) => { const th = Math.PI * i / rings, ph = 2 * Math.PI * j / segs, rr = th > Math.PI / 2 ? R : R * Math.sin(th); return [c[0] + rr * Math.cos(ph), c[1] + rr * Math.sin(ph) * (th > Math.PI / 2 ? 1 : 1), Math.max(bobZ, c[2] + R * Math.cos(th))]; };
+    for (let i = 0; i < rings; i++) for (let j = 0; j < segs; j++) {
+      const q = [P(i, j), P(i + 1, j), P(i + 1, j + 1), P(i, j + 1)], cx = (q[0][0] + q[2][0]) / 2 - c[0], cy = (q[0][1] + q[2][1]) / 2 - c[1], cz = (q[0][2] + q[2][2]) / 2;
+      if (cz <= bobZ + .001 && q.every(p => p[2] <= bobZ + .001)) continue;
+      if (cy < -r * .2 && cz < cutZ && Math.abs(cx) < r * .72) continue; // the face
+      const pts = []; for (const p of q) if (!pts.length || Math.hypot(...sub(p, pts[pts.length - 1])) > 1e-6) pts.push(p);
+      if (pts.length > 3 && Math.hypot(...sub(pts[0], pts[pts.length - 1])) < 1e-6) pts.pop();
+      if (pts.length >= 3) M.poly(m, pts);
+    }
+    M.box(m, [c[0], c[1] - R * .82, cutZ + .02], [r * 1.5, .08, .06]); // the fringe's straight cut
+  }
+  function kokeshi(M, kimono, obi, face, skin, hair) {
+    M.cyl('darkwood', [0, 0, 0], .44, .05, 16);
+    lathe(M, kimono, [[.42, .05], [.5, .2], [.52, .45], [.47, .76], [.36, .98], [.24, 1.06]]);
+    lathe(M, obi, [[.525, .44], [.515, .62]]); M.box(obi, [0, -.52, .53], [.34, .05, .16]);
+    faceSphere(M, face, skin, [0, 0, 1.4], .4);
+    hairBob(M, hair, [0, 0, 1.4], .4, 1.53, 1.12);
+  }
+  function luckyCat(M, coat, fur, face, earIn) {
+    faceSphere(M, coat, fur, [0, 0, .55], .55, 1);
+    faceSphere(M, face, fur, [0, -.05, 1.3], .46, .86);
+    for (const sd of [-1, 1]) { M.cyl(fur, [sd * .27, 0, 1.56], .16, .36, 6, .01); M.cyl(earIn, [sd * .27, -.06, 1.6], .09, .24, 5, .01); M.sphere(fur, [sd * .24, -.38, .08], .16, .7, 8, 4); }
+    curveTube(M, fur, [[0, .45, .2], [.3, .62, .35], [.42, .55, .75], [.3, .45, .9]], [.09, .08, .07, .03], { segs: 8, n: 3, ridge: .02, bump: .02, seed: 9 });
+  }
+  function ccFlower(M, m, x, y, z, r) { for (let k = 0; k < 5; k++) { const a = k * 1.2566; M.sphere(m, [x + Math.cos(a) * r * .55, y - .01, z + Math.sin(a) * r * .55], r * .5, .6, 6, 3); } M.sphere('gold', [x, y - .04, z], r * .25, 1, 5, 3); }
   function warPalisade(M, withBanner) {
     const L = 8, n = 14;
     M.block('stone', 0, 0, 0, L, .9, .45);
@@ -1745,6 +1874,50 @@
     },
     cc_candles(M) { ccCandles(M, 0, 0, 5); M.quad('glow', [[-1.4, -1.4, .05], [1.4, -1.4, .05], [1.4, 1.4, .05], [-1.4, 1.4, .05]]); },
     cc_bench(M) { M.block('darkwood', 0, 0, .45, 2.4, .5, .1); for (const sd of [-1, 1]) M.block('darkwood', sd * 1, 0, 0, .12, .45, .45); M.block('darkwood', 0, .22, .55, 2.4, .08, .55); },
+    // ── the Cute & Creepy gang (Miguel's NFTs), low poly: three kokeshi dolls and two lucky cats; used as NPC
+    //    models (fallbackType 'kit:<type>') or placed as figures. Front faces -y; they rock / wave (see animate) ──
+    cc_flower_moon(M) { // Kokeshi Flower Moon: black kimono with skulls, red front panel, skull and flower crown, hairpins
+      kokeshi(M, 'kimono_fm', 'obi_red', 'face_fm', 'skin_w', 'hair_black');
+      M.sphere('bone', [0, .06, 1.86], .15, .95, 8, 5); for (const sd of [-1, 1]) M.quad('dark', [[sd * .055 - .03, -.085, 1.86], [sd * .055 + .03, -.085, 1.86], [sd * .055 + .03, -.085, 1.9], [sd * .055 - .03, -.085, 1.9]]);
+      for (const [x, y, z, r] of [[-.2, -.02, 1.8, .09], [.2, -.02, 1.8, .09], [-.1, -.1, 1.76, .07], [.12, -.1, 1.76, .07], [0, .18, 1.84, .08]]) ccFlower(M, 'flower_pink', x, y, z, r);
+      for (const sd of [-1, 1]) { M.rod('darkwood', [sd * .2, .12, 1.72], [sd * .52, .1, 1.98], .018, 4); M.sphere('red', [sd * .52, .1, 1.98], .04, 1, 5, 3); }
+      for (const [x, z, r] of [[.46, .55, .13], [.44, .32, .1], [-.47, .7, .1]]) ccFlower(M, 'flower_pink', x, -.15, z, r);
+    },
+    cc_nariko(M) { // Nariko: blue kokeshi with horns, holding a crackling lightning orb (subpart cc_orb)
+      kokeshi(M, 'kimono_nr', 'obi_silver', 'face_nr', 'skin_blue', 'hair_blue');
+      for (const sd of [-1, 1]) curveTube(M, 'horn', [[sd * .22, 0, 1.66], [sd * .42, -.02, 1.84], [sd * .4, 0, 2.08]], [.075, .045, .01], { segs: 8, n: 3, ridge: .05, bump: .03, seed: 3 });
+      for (const sd of [-1, 1]) M.sphere('skin_blue', [sd * .2, -.5, .72], .08, 1, 6, 4);
+    },
+    cc_ostara(M) { // Ostara: teal kokeshi with long bunny ears, a skull crown with teal flowers, glowing eyes
+      kokeshi(M, 'kimono_os', 'obi_black', 'face_os', 'skin_w', 'hair_black');
+      for (const sd of [-1, 1]) { M.sphere('ear_os', [sd * .17, .06, 2.08], .12, 2.9, 8, 6); M.sphere('flower_teal', [sd * .17, -.03, 2.1], .06, 3.6, 6, 4); }
+      M.sphere('bone', [0, .02, 1.84], .14, .95, 8, 5); for (const sd of [-1, 1]) M.quad('teal_glow', [[sd * .05 - .03, -.12, 1.84], [sd * .05 + .03, -.12, 1.84], [sd * .05 + .03, -.12, 1.88], [sd * .05 - .03, -.12, 1.88]]);
+      for (const [x, y, z, r] of [[-.2, -.04, 1.8, .08], [.2, -.04, 1.8, .08], [0, -.12, 1.94, .06]]) ccFlower(M, 'flower_teal', x, y, z, r);
+    },
+    cc_mamoru(M) { // Mamoru: black skeleton lucky cat, a skull with a candle on its head, a jack-o'-lantern under one paw
+      luckyCat(M, 'coat_mamoru', 'cat_black', 'face_mamoru', 'flower_orange');
+      M.sphere('bone', [0, -.02, 1.72], .2, .9, 8, 5); for (const sd of [-1, 1]) M.quad('dark', [[sd * .07 - .045, -.2, 1.71], [sd * .07 + .045, -.2, 1.71], [sd * .07 + .045, -.2, 1.77], [sd * .07 - .045, -.2, 1.77]]);
+      M.cyl('candle', [0, 0, 1.86], .07, .3, 8); for (const [a, h] of [[0, .12], [2, .18], [4, .1]]) M.cyl('candle', [Math.cos(a) * .07, Math.sin(a) * .07, 2.16 - h], .025, h, 4);
+      M.cyl('collar_red', [0, 0, .96], .43, .1, 14); M.sphere('gem_green', [0, -.45, .99], .09, 1, 8, 4); M.tube('gold', [0, -.44, .99], [0, -.46, .99], .12, .12, 10, false);
+      ccPumpkin(M, -.46, -.42, 0, .3, .2); M.rod('cat_black', [-.3, -.28, .72], [-.42, -.44, .58], .1, 6); M.sphere('cat_black', [-.43, -.46, .56], .12, 1, 6, 4);
+    },
+    cc_mochi(M) { // Mochi: white and red lucky cat with a skull on its head, a gold koban, cherry blossoms
+      luckyCat(M, 'coat_mochi', 'cat_white', 'face_mochi', 'ear_pink');
+      M.sphere('bone', [0, -.02, 1.72], .19, .9, 8, 5); for (const sd of [-1, 1]) M.quad('dark', [[sd * .07 - .045, -.19, 1.71], [sd * .07 + .045, -.19, 1.71], [sd * .07 + .045, -.19, 1.77], [sd * .07 - .045, -.19, 1.77]]);
+      M.cyl('collar_red', [0, 0, .96], .43, .1, 14); M.sphere('gold', [0, -.46, .9], .1, 1, 8, 4);
+      M.tube('gold', [-.4, -.52, .55], [-.4, -.46, .55], .26, .26, 14); M.tube('dark', [-.4, -.525, .55], [-.4, -.53, .55], .1, .1, 8, false);
+      M.rod('cat_white', [-.3, -.28, .74], [-.36, -.48, .7], .1, 6); M.sphere('cat_white', [-.36, -.5, .7], .12, 1, 6, 4);
+      for (const [x, y, z, r] of [[.5, -.3, .1, .13], [.62, 0, .25, .11], [-.62, .1, .2, .12], [.55, -.2, .45, .1]]) ccFlower(M, 'flower_pink', x, y, z, r);
+    },
+    // subparts (built under their own pivot so they move): the beckoning paws, Mamoru's flame, Nariko's orb
+    cc_paw_black(M) { M.rod('cat_black', [0, 0, 0], [.02, -.08, .4], .11, 7); M.sphere('cat_black', [.02, -.09, .46], .14, 1, 8, 5); for (const x of [-.05, 0, .05]) M.sphere('bone', [.02 + x, -.22, .5], .028, 1, 5, 3); M.sphere('bone', [.02, -.22, .42], .045, 1, 5, 3); },
+    cc_paw_white(M) { M.rod('cat_white', [0, 0, 0], [.02, -.08, .4], .11, 7); M.sphere('cat_white', [.02, -.09, .46], .14, 1, 8, 5); for (const x of [-.05, 0, .05]) M.sphere('ear_pink', [.02 + x, -.22, .5], .028, 1, 5, 3); M.sphere('ear_pink', [.02, -.22, .42], .045, 1, 5, 3); },
+    cc_candle_flame(M) { M.quad('fire', [[-.05, 0, 0], [.05, 0, 0], [0, 0, .16]]); M.quad('fire', [[0, -.05, 0], [0, .05, 0], [0, 0, .14]]); },
+    cc_orb(M) {
+      M.sphere('orb', [0, 0, 0], .2, 1, 12, 8);
+      for (let k = 0; k < 6; k++) { const a = k * 1.05, b = a + .6; M.rod('orb', [Math.cos(a) * .2, Math.sin(a) * .2 * .5, Math.sin(a) * .2], [Math.cos(b) * .34, Math.sin(b) * .1, Math.sin(b * 1.3) * .3], .012, 3); }
+      M.quad('glow_blue', [[-1.6, -1.6, -.7], [1.6, -1.6, -.7], [1.6, 1.6, -.7], [-1.6, 1.6, -.7]]);
+    },
     cc_banner_pole(M) {
       M.cyl('iron', [0, 0, 0], .07, 5.6, 6); M.cyl('stone_dark', [0, 0, 0], .4, .4, 8, .32);
       M.box('iron', [0, -.02, 5.3], [1.8, .06, .06]); for (const sd of [-1, 1]) M.cyl('iron', [sd * .9, -.02, 5.3], .05, .2, 4, .005);
@@ -1898,7 +2071,24 @@
   // Fill a placed root (from spawnAsset) with instances of the type's template meshes.
   // floating pieces (ghosts): their instances bob and sway under the placed root, so saved positions never move
   const FLOAT = new Set(['cc_ghost']), floaters = [];
+  // characters: the body rocks (kokeshi) or breathes (cats); subparts under their own pivots wave, flicker, pulse
+  const CHAR = { cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_mamoru: 'bob', cc_mochi: 'bob' };
+  const SUBPARTS = { cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']] };
+  const actors = [];
+  function animateActors(t) {
+    for (let i = actors.length - 1; i >= 0; i--) {
+      const a = actors[i]; if (a.body.isDisposed?.()) { actors.splice(i, 1); continue; }
+      if (a.kind === 'rock') { a.body.rotation.z = .07 * Math.sin(t * 1.5 + a.ph); a.body.rotation.x = .035 * Math.sin(t * 1.1 + a.ph * 2); }
+      else { const b = Math.sin(t * 1.8 + a.ph); a.body.scaling.set(1 + .015 * b, 1 - .012 * b, 1 + .015 * b); }
+      for (const s of a.subs) {
+        if (s.kind === 'wave') s.node.rotation.x = .25 - .55 * Math.max(0, Math.sin(t * 3 + a.ph));
+        else if (s.kind === 'flicker') { const f = 1 + .22 * Math.sin(t * 13 + a.ph) + .12 * Math.sin(t * 31); s.node.scaling.set(1 - .1 * (f - 1), f, 1 - .1 * (f - 1)); }
+        else { const p = 1 + .1 * Math.sin(t * 5 + a.ph) + .05 * Math.sin(t * 17); s.node.scaling.setAll(p); s.node.rotation.y = t * 1.3; }
+      }
+    }
+  }
   function animate(t) {
+    animateActors(t);
     for (let i = floaters.length - 1; i >= 0; i--) {
       const f = floaters[i]; if (f.root.isDisposed?.()) { floaters.splice(i, 1); continue; }
       // each ghost drifts round its own loop (3-5 m), rising and sinking, turning to face where it goes, leaning in
@@ -1909,14 +2099,25 @@
   }
   function build(root, type, scene, shadows, skipShadows) {
     if (!B[type]) return false;
+    if (CHAR[type]) { // a body node to rock, subparts on pivots inside it
+      const body = new BABYLON.TransformNode(root.name + '_body', scene); body.parent = root;
+      const subs = (SUBPARTS[type] || []).map(([st, [x, y, z], kind]) => { const n = new BABYLON.TransformNode(root.name + '_' + st, scene); n.parent = body; n.position.set(x, z, y); buildInto(n, st, scene, root, shadows, skipShadows); return { node: n, kind }; });
+      buildInto(body, type, scene, root, shadows, skipShadows);
+      actors.push({ body, subs, kind: CHAR[type], ph: Math.random() * 6.28 });
+      if (!scene._kitFloat) scene._kitFloat = scene.onBeforeRenderObservable.add(() => animate(performance.now() / 1000));
+      return true;
+    }
     if (FLOAT.has(type)) { floaters.push({ root, ph: (root.position.x * 1.7 + root.position.z) % 6.28 }); if (!scene._kitFloat) scene._kitFloat = scene.onBeforeRenderObservable.add(() => animate(performance.now() / 1000)); }
     if (STAIRS[type]) { buildStairsFor(root, type, scene, shadows, skipShadows); return true; }
+    buildInto(root, type, scene, root, shadows, skipShadows);
+    return true;
+  }
+  function buildInto(parent, type, scene, editRoot, shadows, skipShadows) {
     for (const t of template(scene, type)) {
-      const inst = t.createInstance(`${root.name}_${t.name.split('_').pop()}`), isGlow = !!t.material?.metadata?.kitGlow;
-      inst.parent = root; inst.isPickable = !isGlow; inst._editRoot = root; inst.checkCollisions = false;
+      const inst = t.createInstance(`${parent.name}_${t.name.split('_').pop()}`), isGlow = !!t.material?.metadata?.kitGlow;
+      inst.parent = parent; inst.isPickable = !isGlow; inst._editRoot = editRoot; inst.checkCollisions = false;
       if (shadows && !skipShadows && !isGlow) shadows.addShadowCaster(inst);
     }
-    return true;
   }
   // walkable decks in the type's own frame (Babylon x/z, deck top y above the origin)
   // stairs: walk surface on the treads (steps = how many), then the top landing
