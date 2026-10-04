@@ -21493,7 +21493,7 @@ function villageRampHeightAt(surface, local) {
   const t = Math.max(0, Math.min(1, rawT));
   const n = surface.steps;
   if (n > 0) {
-    const u = t * n, i = Math.min(n - 1, Math.floor(u)), f = u - i, lift = Math.max(0, Math.min(1, (f - .78) / .22));
+    const u = t * n, i = Math.min(n - 1, Math.floor(u)), f = u - i, lift = Math.max(0, Math.min(1, (f - .62) / .38)); // up a step as the feet reach it
     return surface.startY + (surface.endY - surface.startY) * Math.min(1, (i + 1 + (i < n - 1 ? lift * lift * (3 - 2 * lift) : 0)) / n);
   }
   return surface.startY + (surface.endY - surface.startY) * t;
@@ -22160,13 +22160,15 @@ function addTreeTrunkBlockers(node, blockers) {
 function addKitDeckSurfaces(node, surfaces) {
   const yaw = node.rotation?.y || 0, c = Math.cos(yaw), sn = Math.sin(yaw);
   const sx = Math.abs(node.scaling?.x || 1), sy = Math.abs(node.scaling?.y || sx), sz = Math.abs(node.scaling?.z || sx); // stretched stairs climb higher / further
+  window.SamuraiKit.refreshStairs?.(node, scene); // rescaled stairs rebuild their steps at the new size
+  const stepCounts = window.SamuraiKit.stairsSteps?.(node.metadata.type, sy); let flight = 0;
   window.SamuraiKit.decks[node.metadata.type].forEach(d => {
     const sf = {
       kind: 'flat', type: 'kit_deck', name: node.name, surfaceType: d.surface || 'wood',
       centerX: node.position.x + (d.x * sx * c + d.z * sz * sn), centerZ: node.position.z + (-d.x * sx * sn + d.z * sz * c),
       axisX: { x: c, z: -sn }, axisZ: { x: sn, z: c }, yaw, halfX: d.halfX * sx, halfZ: d.halfZ * sz, y: node.position.y + (d.y ?? 0) * sy
     };
-    if (Number.isFinite(d.y1)) Object.assign(sf, { kind: 'ramp', rampAxis: 'z', rampSign: -1, steps: d.steps || 0, startY: node.position.y + d.y0 * sy, endY: node.position.y + d.y1 * sy });
+    if (Number.isFinite(d.y1)) Object.assign(sf, { kind: 'ramp', rampAxis: 'z', rampSign: -1, steps: d.steps ? (stepCounts?.[flight++] ?? d.steps) : 0, startY: node.position.y + d.y0 * sy, endY: node.position.y + d.y1 * sy });
     surfaces.push(sf);
   });
 }

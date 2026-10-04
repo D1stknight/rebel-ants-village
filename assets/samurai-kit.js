@@ -647,34 +647,10 @@
       for (let i = 0; i < 9; i++) { const t = (i + .5) / 9; M.box('darkwood', [0, -2.5 + 5 * t, -2 * t - .97], [1.1, .08, .06], 0, -a); }
       for (const sd of [-1, 1]) { for (const t of [0, .5, 1]) M.block('darkwood', sd * .6, -2.5 + 5 * t, -2 * t - 1, .08, .08, 1); M.rod('rope', [sd * .6, -2.5, .95], [sd * .6, 2.5, -1.05], .025, 4); }
     },
-    // stairs climbing 4 m towards +y (bottom at -y); a landing at the top to step off onto the higher ground
-    kit_stairs_stone(M) {
-      const W = 3, H = 4, R = 6.4, n = 10, t = R / n;
-      for (let i = 0; i < n; i++) M.block('stone', 0, -R / 2 + (i + .5) * t, 0, W, t + .02, (i + 1) * H / n);
-      M.block('stone', 0, R / 2 + .6, 0, W, 1.2, H);
-      for (const sd of [-1, 1]) { for (let i = 0; i < n; i++) M.block('stone', sd * (W / 2 + .2), -R / 2 + (i + .5) * t, 0, .4, t + .02, (i + 1) * H / n + .45); M.block('stone', sd * (W / 2 + .2), R / 2 + .6, 0, .4, 1.2, H + .45); }
-    },
-    // tall stone stairs for cliffs: two 6 m flights with a landing between, 12 m up in 22 m (bottom at -y)
-    kit_stairs_cliff(M) {
-      const W = 3, n = 15, F = 9.6, L = 2, R = 2 * F + L, t = F / n;
-      for (const [y0, z0] of [[-R / 2, 0], [-R / 2 + F + L, 6]]) {
-        for (let i = 0; i < n; i++) M.block('stone', 0, y0 + (i + .5) * t, 0, W, t + .02, z0 + (i + 1) * 6 / n);
-        for (const sd of [-1, 1]) for (let i = 0; i < n; i++) M.block('stone', sd * (W / 2 + .2), y0 + (i + .5) * t, 0, .4, t + .02, z0 + (i + 1) * 6 / n + .45);
-      }
-      M.block('stone', 0, -R / 2 + F + L / 2, 0, W, L, 6); M.block('stone', 0, R / 2 + .6, 0, W, 1.2, 12);
-      for (const sd of [-1, 1]) { M.block('stone', sd * (W / 2 + .2), -R / 2 + F + L / 2, 0, .4, L, 6.45); M.block('stone', sd * (W / 2 + .2), R / 2 + .6, 0, .4, 1.2, 12.45); }
-      for (const sd of [-1, 1]) M.cyl('lantern', [sd * (W / 2 + .2), -R / 2 + F + L / 2, 6.45], .16, .35, 6);
-    },
-    kit_stairs_wood(M) {
-      const W = 2.6, H = 4, R = 6.4, n = 12, a = Math.atan2(H, R);
-      for (let i = 0; i < n; i++) { const t = (i + 1) / n; M.box('wood', [0, -R / 2 + t * R - R / n / 2, t * H - .06], [W, R / n + .05, .1]); }
-      for (const sd of [-1, 1]) {
-        M.box('darkwood', [sd * W / 2, 0, H / 2 - .15], [.16, Math.hypot(R, H), .32], 0, a);
-        for (const t of [0, .33, .66, 1]) { const y = -R / 2 + t * R, z = t * H; M.block('darkwood', sd * (W / 2 + .1), y, 0, .16, .16, z + 1); }
-        M.rod('darkwood', [sd * (W / 2 + .1), -R / 2, 1], [sd * (W / 2 + .1), R / 2, H + 1], .05, 6);
-      }
-      M.block('wood', 0, R / 2 + .6, H - .12, W, 1.2, .12); for (const sd of [-1, 1]) M.block('darkwood', sd * (W / 2 - .1), R / 2 + 1.1, 0, .18, .18, H);
-    },
+    // stairs (see STAIRS below): built at their placed size, so stretched stairs keep ~0.3 m steps
+    kit_stairs_stone(M) { buildStairs(M, 'kit_stairs_stone'); },
+    kit_stairs_wood(M) { buildStairs(M, 'kit_stairs_wood'); },
+    kit_stairs_cliff(M) { buildStairs(M, 'kit_stairs_cliff'); },
     // stone toro lantern for paths and stairs: the light box glows (no real light, so any number is cheap)
     sam_stone_lantern(M) {
       M.cyl('stone', [0, 0, 0], .5, .22, 6, .42); M.cyl('stone', [0, 0, .22], .17, 1.05, 6, .14);
@@ -686,6 +662,62 @@
       M.quad('glow', [[-2.6, -2.6, .07], [2.6, -2.6, .07], [2.6, 2.6, .07], [-2.6, 2.6, .07]]);
     }
   };
+
+  // ── stairs ──────────────────────────────────────────────────────────────
+  // At scale 1: stone and wooden stairs climb 4 m in 6.4 m towards +y with a landing at the top; cliff stairs climb 12 m
+  // in two flights with a landing between. Flights are [y from, y to, height from, height to]; landings [y from, y to, height].
+  // Each placed staircase is built at its own size (the root's scale is undone on its meshes), with as many steps as
+  // keep each one ~0.3 m high; the walk surface uses the same count (stairsSteps), so feet stand on the treads.
+  const STAIRS = {
+    kit_stairs_stone: { W: 3, flights: [[-3.2, 3.2, 0, 4]], landings: [[3.2, 4.4, 4]] },
+    kit_stairs_wood: { W: 2.6, wood: true, flights: [[-3.2, 3.2, 0, 4]], landings: [[3.2, 4.4, 4]] },
+    kit_stairs_cliff: { W: 3, lanterns: true, flights: [[-10.6, -1, 0, 6], [1, 10.6, 6, 12]], landings: [[-1, 1, 6], [10.6, 11.8, 12]] }
+  };
+  const STEP = .3;
+  function stairsSteps(type, sy = 1) { const S = STAIRS[type]; return S ? S.flights.map(f => Math.max(3, Math.round((f[3] - f[2]) * sy / STEP))) : null; }
+  function buildStairs(M, type) {
+    const S = STAIRS[type], [sx, sy, sz] = M.stairsScale || [1, 1, 1], W = S.W * sx, n = stairsSteps(type, sy);
+    S.flights.forEach(([a, b, h0, h1], k) => {
+      const y0 = a * sz, y1 = b * sz, z0 = h0 * sy, z1 = h1 * sy, N = n[k], t = (y1 - y0) / N, L = Math.hypot(y1 - y0, z1 - z0), ang = Math.atan2(z1 - z0, y1 - y0);
+      for (let i = 0; i < N; i++) {
+        const top = z0 + (i + 1) * (z1 - z0) / N, yc = y0 + (i + .5) * t;
+        if (S.wood) M.box('wood', [0, yc, top - .05], [W, t + .04, .1]);
+        else { M.block('stone', 0, yc, 0, W, t + .02, top); for (const sd of [-1, 1]) M.block('stone', sd * (W / 2 + .2), yc, 0, .4, t + .02, top + .45); }
+      }
+      if (S.wood) for (const sd of [-1, 1]) {
+        M.box('darkwood', [sd * W / 2, (y0 + y1) / 2, (z0 + z1) / 2 - .15], [.16, L, .32], 0, ang);
+        const posts = Math.max(2, Math.ceil(L / 2.5));
+        for (let q = 0; q <= posts; q++) { const f = q / posts; M.block('darkwood', sd * (W / 2 + .1), y0 + f * (y1 - y0), 0, .16, .16, z0 + f * (z1 - z0) + 1); }
+        M.rod('darkwood', [sd * (W / 2 + .1), y0, z0 + 1], [sd * (W / 2 + .1), y1, z1 + 1], .05, 6);
+      }
+    });
+    S.landings.forEach(([a, b, h]) => {
+      const y0 = a * sz, y1 = b * sz, z = h * sy;
+      if (S.wood) { M.block('wood', 0, (y0 + y1) / 2, z - .12, W, y1 - y0, .12); for (const sd of [-1, 1]) for (const y of [y0, y1]) M.block('darkwood', sd * (W / 2 - .1), y, 0, .18, .18, z); }
+      else { M.block('stone', 0, (y0 + y1) / 2, 0, W, y1 - y0, z); for (const sd of [-1, 1]) M.block('stone', sd * (W / 2 + .2), (y0 + y1) / 2, 0, .4, y1 - y0, z + .45); }
+      if (S.lanterns && h < S.landings[S.landings.length - 1][2]) for (const sd of [-1, 1]) M.cyl('lantern', [sd * (W / 2 + .2), (y0 + y1) / 2, z + .45], .16, .35, 6);
+    });
+  }
+  // a placed staircase's own meshes, at its size; rebuilt when it is rescaled (refreshStairs, from the walk-surface pass)
+  const stairsKey = r => [r.scaling.x, r.scaling.y, r.scaling.z].map(v => Math.abs(v || 1).toFixed(3)).join('|');
+  function buildStairsFor(root, type, scene, shadows, skipShadows) {
+    const sx = Math.abs(root.scaling.x || 1), sy = Math.abs(root.scaling.y || 1), sz = Math.abs(root.scaling.z || 1), M = new Kit();
+    M.stairsScale = [sx, sy, sz]; B[type](M);
+    for (const [mat, P] of Object.entries(M.parts)) {
+      const m = new BABYLON.Mesh(`${root.name}_${mat}`, scene), vd = new BABYLON.VertexData();
+      vd.positions = P.p; vd.normals = P.n; vd.uvs = P.uv; vd.indices = P.i; vd.applyToMesh(m);
+      m.material = material(scene, mat); m.parent = root; m.scaling.set(1 / sx, 1 / sy, 1 / sz);
+      m.isPickable = true; m._editRoot = root; m.checkCollisions = false; m.receiveShadows = true; m.metadata = { kitStairsMesh: true };
+      if (shadows && !skipShadows) shadows.addShadowCaster(m);
+    }
+    root._kitStairsKey = stairsKey(root); root._kitStairsShadows = shadows; root._kitStairsSkip = skipShadows;
+  }
+  function refreshStairs(root, scene) {
+    const type = root?.metadata?.type; if (!STAIRS[type] || root._kitStairsKey === stairsKey(root)) return false;
+    root.getChildMeshes(true).forEach(m => { if (m.metadata?.kitStairsMesh) m.dispose(); });
+    buildStairsFor(root, type, scene || root.getScene(), root._kitStairsShadows, root._kitStairsSkip);
+    return true;
+  }
 
   // ── templates + placement ───────────────────────────────────────────────
   const templates = {};
@@ -708,6 +740,7 @@
   // Fill a placed root (from spawnAsset) with instances of the type's template meshes.
   function build(root, type, scene, shadows, skipShadows) {
     if (!B[type]) return false;
+    if (STAIRS[type]) { buildStairsFor(root, type, scene, shadows, skipShadows); return true; }
     for (const t of template(scene, type)) {
       const inst = t.createInstance(`${root.name}_${t.name.split('_').pop()}`), isGlow = !!t.material?.metadata?.kitGlow;
       inst.parent = root; inst.isPickable = !isGlow; inst._editRoot = root; inst.checkCollisions = false;
@@ -723,5 +756,5 @@
     kit_stairs_stone: stairs(3, 6.4, 4, 10, 'stone'), kit_stairs_wood: stairs(2.6, 6.4, 4, 12, 'wood'),
     kit_stairs_cliff: [{ x: 0, z: -10.6 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'stone' }, { x: 0, z: 0, halfX: 1.45, halfZ: 1.05, y: 6, surface: 'stone' },
       { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }] };
-  window.SamuraiKit = { build, setLightFactor, decks, types: Object.keys(B), _Kit: Kit, _B: B };
+  window.SamuraiKit = { build, setLightFactor, decks, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B };
 })();
