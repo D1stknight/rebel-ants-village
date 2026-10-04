@@ -83,6 +83,7 @@
     T.noren_ronin = bannerTex(scene, 'noren_ronin', '#6a1a1d', '#e3cfa4', 'logo:ronin', false, true);
     T.banner_ronin_scroll = bannerTex(scene, 'ronin_scroll', '#6a1a1d', '#e3cfa4', 'scroll');
     T.banner_ronin_board = bannerTex(scene, 'ronin_board', '#6a1a1d', '#e3cfa4', 'board');
+    T.noren_wokou = bannerTex(scene, 'noren_wokou', '#1c2a4c', '#d9a743', 'logo:wokou', false, true);
     T.noren_ashigaru = bannerTex(scene, 'noren_ashigaru', '#8c1c1c', '#d8b45a', 'logo:ashigaru', false, true);
     T.banner_ashi_scroll = bannerTex(scene, 'ashi_scroll', '#8c1c1c', '#d8b45a', 'scroll');
     T.banner_ashi_board = bannerTex(scene, 'ashi_board', '#8c1c1c', '#d8b45a', 'board');
@@ -173,7 +174,7 @@
     plaster_old: { tex: 'plaster_old' }, slate: { tex: 'slate' }, ronin_floor: { tex: 'ronin_floor' }, noren_ronin: { tex: 'noren_ronin' },
     banner_ronin_scroll: { tex: 'banner_ronin_scroll' }, banner_ronin_board: { tex: 'banner_ronin_board' },
     needles: { tex: 'needles' }, needles_dark: { tex: 'needles_dark' }, bark_old: { tex: 'bark_old' }, granite: { tex: 'granite' }, moss: { tex: 'moss' },
-    noren_ashigaru: { tex: 'noren_ashigaru' }, banner_ashi_scroll: { tex: 'banner_ashi_scroll' }, banner_ashi_board: { tex: 'banner_ashi_board' }, ashi_door: { tex: 'ashi_door' },
+    noren_ashigaru: { tex: 'noren_ashigaru' }, noren_wokou: { tex: 'noren_wokou' }, banner_ashi_scroll: { tex: 'banner_ashi_scroll' }, banner_ashi_board: { tex: 'banner_ashi_board' }, ashi_door: { tex: 'ashi_door' },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
@@ -584,9 +585,9 @@
     // ── Wokou (sea raiders' harbour): navy + gold ant banners, dark wood, tiled roofs; piers, ships, cargo ──
     wok_great_dojo(M) { M.remap = { red: 'darkwood', banner_red: 'banner_wokou' }; B.sam_great_dojo(M); },
     wok_hall(M) { M.remap = { banner_navy: 'banner_scroll' }; B.sam_library(M); },
-    wok_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_wokou'); },
-    wok_house_thatch(M) { B.sam_house(M); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_wokou'); },
-    wok_trade_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; banner(M, -.6, -3.25 - .2, 3.5, 3.4, 2.6, 'banner_board'); banner(M, -3.6, -3.25 - .18, 3.4, .9, 2.2, 'banner_wokou'); },
+    wok_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_wokou'); },
+    wok_house_thatch(M) { B.sam_house(M); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_wokou'); },
+    wok_trade_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; banner(M, -3.05, -3.25 - .2, 3.4, 2.1, 2.3, 'banner_board'); noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_wokou'); }, // board banner beside the door, not across it
     wok_watchtower(M) { M.remap = { banner_red: 'banner_wokou' }; B.sam_watchtower(M); M.remap = null; banner(M, 0, -2.1, 6.8, 1.7, 3.6, 'banner_wokou'); },
     wok_banner_pole(M) { M.remap = { banner_red: 'banner_wokou' }; B.sam_banner_pole(M); },
     // pier segment 4 x 8 m: deck top at the origin, posts down into the sea bed
@@ -668,8 +669,8 @@
       for (const s of [-1, 1]) lantern(M, s * 5.2, -D / 2 - 1.4, 4.4, .22);
       banner(M, -W / 2 - .2, -D / 2 - .25, 3.6, 1.1, 2.4, 'banner_yamabushi');
     },
-    yam_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_yamabushi'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_yamabushi'); },
-    yam_house_thatch(M) { B.sam_house(M); noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_yam_dots'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_yamabushi'); },
+    yam_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_yamabushi'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_yamabushi'); },
+    yam_house_thatch(M) { B.sam_house(M); noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_yam_dots'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_yamabushi'); },
     yam_gate(M) { M.remap = { red: 'darkwood', banner_red: 'banner_yamabushi' }; B.sam_gate(M); M.remap = null; noren(M, 0, -1.3, 5.1, 5, 1.7, 'noren_yamabushi'); },
     yam_banner_pole(M) { M.remap = { banner_red: 'banner_yamabushi' }; B.sam_banner_pole(M); },
     // plank bridge 32 m long (along y), deck top at the origin; ends rest on the cliffs, a rope rail on posts
@@ -741,7 +742,7 @@
     },
     // strategy hall: the library's frame with a gold map banner over the door and trident banners
     buke_strategy_hall(M) { M.remap = { banner_navy: 'banner_buke' }; B.sam_library(M); M.remap = null; noren(M, 0, -9 / 2 - .22, 5.3, 4.2, 1.3, 'noren_buke_map'); },
-    buke_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_buke'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_buke'); },
+    buke_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_buke'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_buke'); },
     // gatehouse between two stone bastions with braziers and banners on top; open doors, a noren across the opening
     buke_gate(M) {
       const OW = 5.4, OH = 5;
@@ -797,7 +798,7 @@
     kenshi_great_dojo(M) { M.remap = { red: 'darkwood', banner_red: 'banner_kenshi' }; B.sam_great_dojo(M); M.remap = null; noren(M, 0, -15 / 2 + 2.05, 5.45, 5.6, 1.5, 'noren_kenshi'); },
     kenshi_library(M) { M.remap = { noren_yam_books: 'noren_kenshi_scroll', banner_yamabushi: 'banner_kenshi' }; B.yam_library(M); },
     kenshi_hall(M) { M.remap = { banner_navy: 'banner_kenshi' }; B.sam_library(M); M.remap = null; noren(M, 0, -9 / 2 - .22, 5.3, 4.2, 1.3, 'noren_kenshi_map'); },
-    kenshi_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_kenshi'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_kenshi'); },
+    kenshi_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_kenshi'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_kenshi'); },
     kenshi_gate(M) { M.remap = { red: 'darkwood', banner_red: 'banner_kenshi' }; B.sam_gate(M); M.remap = null; noren(M, 0, -1.3, 5.1, 5, 1.7, 'noren_kenshi'); },
     kenshi_forge(M) { M.remap = { thatch: 'roof', banner_gold: 'banner_kenshi' }; B.sam_forge(M); },
     kenshi_banner_pole(M) { M.remap = { banner_red: 'banner_kenshi' }; B.sam_banner_pole(M); },
@@ -830,8 +831,8 @@
     sohei_great_dojo(M) { M.remap = { red: 'darkwood', banner_red: 'banner_sohei' }; B.sam_great_dojo(M); M.remap = null; noren(M, 0, -15 / 2 + 2.05, 5.45, 5.6, 1.5, 'noren_sohei'); },
     sohei_library(M) { M.remap = { noren_yam_books: 'noren_sohei_books', banner_yamabushi: 'banner_sohei' }; B.yam_library(M); },
     sohei_hall(M) { M.remap = { banner_navy: 'banner_sohei' }; B.sam_library(M); M.remap = null; noren(M, 0, -9 / 2 - .22, 4.0, 3.2, 1.2, 'noren_sohei_dots'); },
-    sohei_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_sohei'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_sohei'); },
-    sohei_shop(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; banner(M, -.6, -3.25 - .2, 3.5, 3.4, 2.6, 'banner_board'); banner(M, -3.6, -3.25 - .18, 3.4, .9, 2.2, 'banner_sohei'); },
+    sohei_house(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_sohei'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_sohei'); },
+    sohei_shop(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; banner(M, -3.05, -3.25 - .2, 3.4, 2.1, 2.3, 'banner_board'); noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_sohei'); }, // board banner beside the door, not across it
     sohei_gate(M) { M.remap = { red: 'darkwood', banner_red: 'banner_sohei' }; B.sam_gate(M); M.remap = null; noren(M, 0, -1.3, 5.1, 5, 1.7, 'noren_sohei'); },
     sohei_banner_pole(M) { M.remap = { banner_red: 'banner_sohei' }; B.sam_banner_pole(M); },
     // compound wall, 8 m: white plaster between dark posts on a low stone plinth, under a tiled coping
@@ -878,7 +879,7 @@
     ashi_archive(M) { ashiHall(M, 'banner_ashi_scroll', -1); },
     ashi_strategy_hall(M) { ashiHall(M, 'banner_ashi_board', 1); },
     ashi_house(M) { B.sam_house(M); noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ashigaru'); },
-    ashi_house_tile(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ashigaru'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_ashigaru'); },
+    ashi_house_tile(M) { M.remap = { thatch: 'roof' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ashigaru'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_ashigaru'); },
     ashi_house_brown(M) { M.remap = { thatch: 'roof_brown' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ashigaru'); },
     ashi_watchtower(M) { M.remap = { banner_red: 'banner_ashigaru' }; B.sam_watchtower(M); M.remap = null; banner(M, 0, -2.1, 7.6, 1.8, 3.4, 'banner_ashigaru'); },
     ashi_banner_pole(M) { M.remap = { banner_red: 'banner_ashigaru' }; B.sam_banner_pole(M); },
@@ -1014,7 +1015,7 @@
       for (const sd of [-1, 1]) lantern(M, sd * 2.6, -D / 2 - .9, 4.9, .24);
       for (const [x, y] of [[-8.2, -D / 2 - 2], [8.6, -D / 2 - 1.8]]) { M.block('wood', x, y, 0, .9, .8, .8); M.block('wood', x + .3, y + .1, .8, .7, .6, .6); }
     },
-    ronin_house(M) { M.remap = { thatch: 'roof', plaster: 'plaster_old' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ronin'); banner(M, 2.8, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_ronin'); },
+    ronin_house(M) { M.remap = { thatch: 'roof', plaster: 'plaster_old' }; B.sam_house(M); M.remap = null; noren(M, 0, -3.25 - .2, 3.05, 2.4, .9, 'noren_ronin'); banner(M, -3.05, -3.25 - .18, 3.4, 1.1, 2.2, 'banner_ronin'); },
     ronin_house_large(M) {
       const W = 12, D = 8;
       M.block('stone', 0, 0, 0, W + 1, D + 1, .7);
