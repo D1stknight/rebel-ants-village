@@ -292,6 +292,57 @@ export const TERRAIN_RECIPES = {
       dirt: [['r', -26, 14, 26, 44]],
       grass: 7000, flowers: 700
     }
+  },
+  // Sohei: monastic warriors. A walled temple compound on forested hills in autumn: white plaster walls with tiled
+  // copings on a stone base, a gate up stone steps, a front court with four houses either side of a central garden,
+  // the library and the hall either side of the raked-sand training yard, the dojo on the back terrace, a bell tower
+  // on its own platform, a pond and a zen garden. Gold + cream banners, golden haze. From Miguel's four Sohei images.
+  sohei: {
+    seed: 6291, dropSeed: 19, drops: 60000, roads: false,
+    hills: .8, shape: { fbm: 22, ridge: 10, wall: 55 }, // rounded wooded hills
+    flatHalf: 88, hillStart: 96, hillFull: 190, wallStart: 280,
+    palette: {
+      grassA: [0.29, 0.37, 0.16], grassB: [0.45, 0.47, 0.23], wet: [0.18, 0.27, 0.12],
+      dirt: [0.8, 0.72, 0.55], rockTint: [0.95, 0.93, 0.9], highTint: [1.0, .98, .9], peak: [0.8, 0.79, 0.76]
+    },
+    grass: { count: 70000, base: [0.14, 0.22, 0.07], tip: [0.62, 0.6, 0.3] },
+    flowers: { count: 2600, stem: [0.14, 0.22, 0.07], petal: [0.96, 0.5, 0.16] },
+    pines: { file: 'pine_1.glb', count: 560, scale: [2.0, 3.6], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 200, scale: [1.0, 3.0], body: 0.75, settle: .9, sink: .1, tint: [1.02, 1.0, .96], minSq: 96 },
+    extras: [
+      { file: 'bamboo.glb', count: 240, scale: [.8, 1.3], body: .35, settle: .3, sink: .1, cull: 260, maxSlope: .5, minSq: 92, road: 0, clump: { freq: .014, ox: 53, above: .08 } },
+      { file: 'cherry_blossom.glb', count: 16, scale: [.65, .95], body: .9, trunkFromMesh: true, settle: .6, sink: .2, cull: 230, minSq: 96, maxSq: 200, maxSlope: .35, road: 0, tint: [1.35, .62, .22] }, // autumn maples
+      { file: 'pine_1.glb', count: 40, scale: [.9, 1.6], body: .3, settle: .35, sink: .15, minSq: 0, maxSq: 80, maxSlope: .3, road: 0, village: true } // garden pines
+    ],
+    fog: { density: .0014, day: [.86, .82, .7], night: [.04, .05, .1] },
+    light: { sun: 1.07, hemi: .98, tint: [1.0, .93, .8] },
+    sky: { turbidity: 6, luminance: 1, rayleigh: 2.2, mieCoefficient: .005 },
+    court: { texture: 'stone', court: [1.45, 1.4, 1.3], plaza: [1.25, 1.2, 1.1], path: [1.15, 1.1, 1.0] },
+    village: {
+      rect: [-70, -80, 70, 90], res: .8, wall: .6,
+      terraces: [
+        { r: [-66, -60, 66, 86], h: 3 },     // the compound (front court, houses, garden)
+        { r: [-66, -4, 66, 30], h: 4.5 },    // library, hall, training yard
+        { r: [-66, 36, 66, 86], h: 6.5 },    // dojo terrace, pond, zen garden, shop
+        { r: [-58, 58, -34, 80], h: 8.5 }    // bell tower platform
+      ],
+      ramps: [
+        { r: [-6, -74, 6, -60], axis: 'z', from: 0, to: 3 },
+        { r: [-6, -10, 6, -4], axis: 'z', from: 3, to: 4.5 }, { r: [-54, -10, -46, -4], axis: 'z', from: 3, to: 4.5 }, { r: [46, -10, 54, -4], axis: 'z', from: 3, to: 4.5 },
+        { r: [-6, 30, 6, 36], axis: 'z', from: 4.5, to: 6.5 }, { r: [-54, 30, -46, 36], axis: 'z', from: 4.5, to: 6.5 }, { r: [46, 30, 54, 36], axis: 'z', from: 4.5, to: 6.5 },
+        { r: [-34, 64, -28, 72], axis: 'x', from: 8.5, to: 6.5 } // down from the bell tower platform
+      ],
+      digs: [{ r: [-56, 38, -38, 52], depth: 1.4, edge: .5 }], // the pond
+      pools: [{ r: [-55.6, 38.4, -38.4, 51.6], y: 6 }],
+      pave: [
+        ['r', -7, -75, 7, -59], ['r', -14, -58, 14, -50], ['r', -62, -50, -14, -24], ['r', 14, -50, 62, -24], ['r', -14, -50, -6, -3], ['r', 6, -50, 14, -3],
+        ['r', -62, -24, -50, -3], ['r', 50, -24, 62, -3], ['r', -7, -11, 7, -3], ['r', -55, -11, -45, -3], ['r', 45, -11, 55, -3],
+        ['r', -62, -3, -27, 29.5], ['r', 27, -3, 62, 29.5], ['r', -27, -3, 27, 0], ['r', -7, 29, 7, 37], ['r', -55, 29, -45, 37], ['r', 45, 29, 55, 37],
+        ['r', -30, 36.5, 62, 64], ['r', -62, 53, -30, 57], ['r', -35, 63, -27, 73], ['r', -57, 58.5, -35, 79.5], ['r', -22, 64, 22, 84]
+      ],
+      dirt: [['r', -24, 2, 24, 28]],
+      grass: 7000, flowers: 500
+    }
   }
 };
 
@@ -306,7 +357,7 @@ export function makeVillageShape(V, baseAt = () => 0) {
     if (!inside(x, z)) return b;
     let y = b;
     for (const t of V.terraces) { const d = rectD(t.r, x, z); if (d < 0) { const w = smooth(0, wall, -d); y = Math.max(y, t.abs ? b + (t.h - b) * w : b + t.h * w); } }
-    for (const t of V.digs || []) { const d = rectD(t.r, x, z); if (d < 0) y = Math.min(y, b + (Math.min(b, t.h) - b) * smooth(0, t.edge ?? wall, -d)); } // dredged harbour
+    for (const t of V.digs || []) { const d = rectD(t.r, x, z); if (d >= 0) continue; if (t.depth != null) y -= t.depth * smooth(0, t.edge ?? wall, -d); else y = Math.min(y, b + (Math.min(b, t.h) - b) * smooth(0, t.edge ?? wall, -d)); } // dredged harbour; depth: a pond dug into a terrace
     for (const R of V.ramps) {
       const r = R.r, a = R.axis === 'x' ? 0 : 1, lo = r[a], hi = r[a + 2], u = a ? z : x, v = a ? x : z, vlo = r[1 - a], vhi = r[3 - a];
       if (u < lo || u > hi + wall || v < vlo - .3 || v > vhi + .3) continue;
