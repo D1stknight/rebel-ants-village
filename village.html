@@ -22826,7 +22826,7 @@ engine.runRenderLoop(()=>{
       // Slope tilt removed — character stays upright
     }
     if(animState!==2&&animState<3){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
-    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8;}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
+    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
     if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
     _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
     const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
@@ -26706,6 +26706,8 @@ function applyFakeLightState(force = false) {
   const factor = getFakeLightStateFactor();
   window.SamuraiKit?.setLightFactor?.(factor); // samurai kit lanterns, windows and doorways glow brighter at night
   window._newTerrain?.birds?.setVisible(factor < .6 && !['storm', 'heavy-rain'].includes(WeatherManager.mode)); // birds roost at night and in storms
+  // walking light: soft by day on the new terrain (its bright ground took it as a hard disc at noon), full at night
+  window._walkLightK = window._newTerrain ? .18 + .82 * Math.min(1, Math.max(0, (factor - .1) / .7)) : 1;
   updateFakeLightTestReadout(factor);
   applyActiveInteriorLightingState(factor);
   if (!scene?.transformNodes) return;
