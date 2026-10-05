@@ -1503,7 +1503,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div id="playerStartupPanel" role="dialog" aria-modal="true" aria-labelledby="playerStartupTitle">
     <div id="playerStartupKicker">Welcome</div>
     <h2 id="playerStartupTitle">Hub Village</h2>
-    <p>Hub Village is the living center of the Rebel Ants Universe. Talk to NPCs, follow Hub Journey quests, collect floating items, open chests, enter dojos and interiors, inspect NFT frames, use arcade/store/video links, open your Journal, travel through portals, and watch weather and time change the village. For your first quest, look for the glowing marker above the Hub Guide.</p>
+    <p>Hub Village is the living center of the Rebel Ants Universe. Talk to NPCs, follow Hub Journey quests, collect floating items, open chests, enter dojos and interiors, inspect NFT frames, use arcade/store/video links, open your Journal, travel through portals, and watch weather and time change the village. Somewhere in the Rebel Library waits a book called The Warning: every Rebel's story begins there. For your first quest, look for the glowing marker above the Hub Guide.</p>
     <div id="playerStartupList">
       <div class="startup-control"><b>Move</b>WASD or arrows</div>
       <div class="startup-control"><b>Look</b>Mouse</div>
@@ -1805,7 +1805,7 @@ const QUEST_DEFINITIONS = {
     questId:'hub-light-changes',
     title:'The Light Changes',
     steps:[
-      { id:'observe-time', objective:'Observe the Hub clock and changing light.' },
+      { id:'observe-time', objective:'Observe the Hub clock and changing light.', objectiveType:'observeTime' },
       { id:'complete', objective:'Completed: You noticed the village has its own time.' }
     ]
   },
@@ -1813,7 +1813,7 @@ const QUEST_DEFINITIONS = {
     questId:'hub-sky-watches',
     title:'The Sky Watches',
     steps:[
-      { id:'experience-weather', objective:'Experience the active sky and weather system.' },
+      { id:'experience-weather', objective:'Experience the active sky and weather system.', objectiveType:'experienceWeather' },
       { id:'complete', objective:'Completed: You learned that weather changes the world.' }
     ]
   },
@@ -1859,14 +1859,14 @@ const QUEST_DEFINITIONS = {
       { id:'complete', objective:'Completed: You found where stories will live.' }
     ]
   },
-	  'hub-forge-awaits': {
-	    questId:'hub-forge-awaits',
-	    title:'The Forge Awaits',
-	    targetType:'Interior',
-	    targetLabel:'Forge',
+	  'hub-read-warning': {
+	    questId:'hub-read-warning',
+	    title:'The Warning',
+	    targetType:'Link/Hotspot',
+	    targetLabel:'The Warning (Book 1)',
 	    steps:[
-	      { id:'visit-forge', objective:'Visit the forge interior.', objectiveType:'enterInterior', targetType:'Interior', targetLabel:'Forge' },
-      { id:'complete', objective:'Completed: You found the character forge path.' }
+	      { id:'read-book', objective:'In the Rebel Library, read the book: THE WARNING.', objectiveType:'interactInteriorLink', targetType:'Link/Hotspot', targetLabel:'The Warning' },
+      { id:'complete', objective:'Completed: You read the first pages of The Warning.' }
     ]
   },
   'hub-open-journal': {
@@ -9886,7 +9886,7 @@ const QUEST_ORDER = [
   'hub-arcade-doorway',
   'hub-arcade-calls',
   'hub-library-door',
-  'hub-forge-awaits',
+  'hub-read-warning',
   'hub-open-journal',
   'hub-through-gate',
   'hub-world-larger',
@@ -9904,6 +9904,7 @@ function getDefaultQuestState() {
 function loadQuestState() {
   try {
     const parsed = JSON.parse(localStorage.getItem(QUEST_STATE_KEY));
+    if (parsed && parsed.questId === 'hub-forge-awaits') { parsed.questId = 'hub-read-warning'; parsed.step = 'read-book'; parsed.completed = false; } // the forge step was replaced by the book
     if (!parsed || !QUEST_DEFINITIONS[parsed.questId]) return getDefaultQuestState();
     return {
       ...getDefaultQuestState(),
@@ -9949,7 +9950,9 @@ function getQuestObjectiveDisplayText(questId = QuestState.questId, stepId = Que
   if (questId === 'hub-through-gate') return 'Use the village portal, then prepare to return to the Hub Guide.';
   if (questId === 'hub-world-larger') return 'Visit another village, then return to the Hub Guide.';
   if (questId === 'hub-library-door') return 'Enter the Library or book room and look for the story path.';
-  if (questId === 'hub-forge-awaits') return 'Enter the Forge room and find the character forge path.';
+  if (questId === 'hub-read-warning') return 'In the Rebel Library, walk up to the book and press O to read THE WARNING.';
+  if (questId === 'hub-light-changes') return 'Step outside and press O to observe the clock and the light.';
+  if (questId === 'hub-sky-watches') return 'Outside, press O to take in the sky and the weather.';
   return String(raw);
 }
 
@@ -10098,7 +10101,7 @@ function canCompleteTutorialQuest(questId, options = {}) {
       'hub-arcade-doorway':'interactInteriorLink',
       'hub-arcade-calls':'interactInteriorLink',
       'hub-library-door':'enterInterior',
-      'hub-forge-awaits':'enterInterior',
+      'hub-read-warning':'interactInteriorLink',
       'hub-open-journal':'openJournal',
       'hub-through-gate':'usePortal',
       'hub-world-larger':'visitVillage',
@@ -10494,7 +10497,7 @@ function advanceHubTutorialObjective(actionType, context = {}) {
     'hub-arcade-doorway': { step:'use-interior-link', action:'interactInteriorLink' },
     'hub-arcade-calls': { step:'use-arcade-link', action:'interactInteriorLink', match:ctx => contextIncludesAny(ctx, ['arcade', 'game', 'cabinet']) },
     'hub-library-door': { step:'visit-library', action:'enterInterior', match:ctx => contextIncludesAny(ctx, ['library', 'book']) },
-    'hub-forge-awaits': { step:'visit-forge', action:'enterInterior', match:ctx => contextIncludesAny(ctx, ['forge']) },
+    'hub-read-warning': { step:'read-book', action:'interactInteriorLink', match:ctx => Boolean(ctx.hotspotId) && contextIncludesAny(ctx, ['warning', 'book']) },
     'hub-open-journal': { step:'open-journal', action:'openJournal' },
     'hub-through-gate': { step:'use-portal', action:'usePortal' },
     'hub-world-larger': { step:'visit-village-return', action:'visitVillage', match:ctx => ctx.returnedToHub === true },
@@ -14332,13 +14335,13 @@ function getTutorialDialogueLines(npc) {
     if (QuestState.questId === 'hub-library-door') {
       return [
         'Every colony needs a place where its stories can sleep until someone brave opens them.',
-        'Find the library or book room. That is where the old warnings will begin to make sense.'
+        'Find the Rebel Library. A book waits there, The Warning, and the old warnings will begin to make sense.'
       ];
     }
-    if (QuestState.questId === 'hub-forge-awaits') {
+    if (QuestState.questId === 'hub-read-warning') {
       return [
-        'A Rebel is not only found. A Rebel can be forged.',
-        'Visit the forge path and remember where your character can become something more deliberate.'
+        'There is a book in the library that the elders stopped reading aloud. They called it The Warning.',
+        'Find it on its stand and read it. Everything that comes after begins on those pages.'
       ];
     }
     if (QuestState.questId === 'hub-open-journal') {
@@ -21417,6 +21420,7 @@ document.addEventListener('keydown', async e => {
     showToast('Placement cancelled');
     return;
   }
+  if (key === 'escape' && closeInteriorVideoPlayer()) { e.preventDefault(); return; }
   if (key === 'escape' && closeInteriorInfoPanel()) {
     e.preventDefault();
     return;
@@ -28263,7 +28267,35 @@ function interactInteriorVideoScreen(screen) {
     showToast('Opening: ' + (meta.screenName || 'Video screen'));
     return true;
   }
-  openInteriorInfoPanel(meta.screenName || 'Video Screen', meta.videoUrl || meta.posterUrl || 'Video screen placeholder.', 'Video Screen');
+  if (meta.videoUrl) return openInteriorVideoPlayer(meta.screenName || 'Video Screen', meta.videoUrl); // play it full size, with sound
+  openInteriorInfoPanel(meta.screenName || 'Video Screen', meta.posterUrl || 'Video screen placeholder.', 'Video Screen');
+  return true;
+}
+
+// a room's video, played full size with sound and controls (Esc, Close or a click outside ends it)
+function openInteriorVideoPlayer(title, url) {
+  let el = document.getElementById('interiorVideoPlayer');
+  if (!el) {
+    el = document.createElement('div'); el.id = 'interiorVideoPlayer';
+    el.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(4,6,12,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px';
+    el.innerHTML = '<div class="ivp-title" style="color:#e9d6a0;font:600 20px Georgia,serif;letter-spacing:3px;text-transform:uppercase"></div>'
+      + '<video controls playsinline style="max-width:min(1100px,92vw);max-height:74vh;border:1px solid #6b5a33;background:#000;box-shadow:0 0 40px rgba(0,0,0,.6)"></video>'
+      + '<button type="button" style="background:rgba(20,24,34,.9);color:#e9d6a0;border:1px solid #6b5a33;padding:8px 26px;font:14px Georgia,serif;letter-spacing:2px;cursor:pointer">Close</button>';
+    el.querySelector('button').onclick = () => closeInteriorVideoPlayer();
+    el.addEventListener('click', e => { if (e.target === el) closeInteriorVideoPlayer(); });
+    document.body.appendChild(el);
+  }
+  el.querySelector('.ivp-title').textContent = title;
+  const v = el.querySelector('video');
+  if (v.getAttribute('src') !== url) v.src = url;
+  v.currentTime = 0; v.muted = false; v.play().catch(() => {});
+  el.style.display = 'flex';
+  return true;
+}
+function closeInteriorVideoPlayer() {
+  const el = document.getElementById('interiorVideoPlayer');
+  if (!el || el.style.display === 'none') return false;
+  el.querySelector('video').pause(); el.style.display = 'none';
   return true;
 }
 
