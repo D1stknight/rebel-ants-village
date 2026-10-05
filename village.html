@@ -465,6 +465,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 .badge-chip small{display:block;color:#5ecfca;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
 .badge-chip em{display:block;color:rgba(255,255,255,.68);font-size:10px;line-height:1.3;font-style:normal}
 .journal-list{display:grid;gap:7px}
+.journal-secret-name{color:#e8c56a}
 .journal-row{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);border-radius:6px;padding:10px;color:rgba(255,255,255,.74);font-size:12px;line-height:1.35}
 .journal-row.locked{opacity:.52}
 .journal-row b{color:#e8c56a;font-family:'Cinzel Decorative',serif;letter-spacing:1px}
@@ -3132,8 +3133,7 @@ function renderProgressionJournal() {
     return;
   }
   if (activeJournalTab === 'secrets') {
-    const known = ProgressionState.secretsFound.length;
-    grid.innerHTML = `<div class="journal-card full"><strong>Secrets</strong><span>${known} hidden discoveries found</span></div><div class="journal-row locked"><b>Unknown Secret</b><br>Something is still hidden beneath the village.</div>`;
+    grid.innerHTML = renderSecretsJournal();
     return;
   }
   const cards = [
@@ -3144,7 +3144,7 @@ function renderProgressionJournal() {
     ['Villages Visited', ProgressionState.villagesVisited.length],
     ['Chests Opened', ProgressionState.chestsOpened.length],
     ['Collectibles Found', totalCollectibles],
-    ['Secrets Found', ProgressionState.secretsFound.length],
+    ['Secrets Found', `${ProgressionState.secretsFound.length} / ${SECRET_TOTAL}`],
     ['Ecosystem Actions', ecosystemCount],
     ['Badges Earned', earnedActiveBadges.length ? earnedActiveBadges.length : 'None yet']
   ];
@@ -7868,6 +7868,51 @@ function tryOpenNearbyTreasureChest() {
 // Glint: 'quest' = sparkles only while an active quest step points at it, 'always', or 'none' (secrets: you
 // find them by looking). In the editor every spot shows as a small violet diamond.
 // ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// SECRETS — 100 hidden discoveries across the villages (Hub 10, each Rebel village 6, each friend village 8).
+// A quest spot with a secretId finds one; nothing marks them on the HUD. The journal counts them per village
+// and names only those found. Entries are added here as each village is built.
+// ═══════════════════════════════════════
+const SECRET_TOTAL = 100;
+const SECRET_PER_VILLAGE = { hub:10, 'cute-creepy':8, chumpz:8, 'saints-la':8 };
+const SECRET_DEFINITIONS = [
+  { secretId:'unseen-hand', villageId:'hub', name:'Unseen Hand', hint:'The cherry tree remembers a hand, but only by moonlight.' },
+  { secretId:'beneath-roots', villageId:'hub', name:'Beneath the Roots', hint:'In a storm, the square answers when you stand still.' },
+  { secretId:'hub-sunrise-gate', villageId:'hub', name:'Sunrise Gate', hint:'The east torii frames the first light.' },
+  { secretId:'hub-shrine-dawn', villageId:'hub', name:'Dawn Offering', hint:'Someone visits the forgotten shrine before anyone wakes.' },
+  { secretId:'hub-unlit-lantern', villageId:'hub', name:'The Lantern That Never Lit', hint:'One lantern by the west torii has never been lit.' },
+  { secretId:'hub-behind-the-vault', villageId:'hub', name:'Behind the Vault', hint:'Look at the Vault from the other side.' },
+  { secretId:'hub-first-seal', villageId:'hub', name:'The First Seal', hint:'Deep in the old tunnels, a door older than the colony.' },
+  { secretId:'hub-hidden-shelf', villageId:'hub', name:'Hidden Shelf', hint:'The library holds a book that is on no list.' },
+  { secretId:'hub-dark-cabinet', villageId:'hub', name:'Dark Cabinet', hint:'One arcade cabinet only wakes at midnight.' },
+  { secretId:'hub-root-burrow', villageId:'hub', name:'Root Burrow', hint:'Someone very small lives in the cherry roots.' },
+  { secretId:'ronin-red-hand', villageId:'ronin', name:'The Red Hand', hint:'The great bonsai hides a mark behind its trunk.' },
+  { secretId:'ronin-silence-trial', villageId:'ronin', name:'Silence Trial', hint:'At the eastern edge, the Ronin wait in silence. Can you?' },
+  { secretId:'ronin-old-door', villageId:'ronin', name:'The Old Door', hint:'Behind the great dojo, where the fortress ends.' },
+  { secretId:'ronin-fog-causeway', villageId:'ronin', name:'Causeway in the Fog', hint:'Cross the causeway when the weather turns.' },
+  { secretId:'ronin-broken-lantern', villageId:'ronin', name:'The Broken Lantern', hint:'One crimson lantern on the causeway has gone dark.' },
+  { secretId:'ronin-root-shadow', villageId:'ronin', name:'Root Shadow', hint:'Something tiny watches from the dead tree roots.' }
+];
+function getSecretTotalCount() { return SECRET_TOTAL; }
+function getSecretDefinition(secretId) { return SECRET_DEFINITIONS.find(d => d.secretId === secretId) || null; }
+function getSecretVillageTotal(villageId) {
+  if (SECRET_PER_VILLAGE[villageId]) return SECRET_PER_VILLAGE[villageId];
+  return VILLAGE_REGISTRY[villageId] ? 6 : 0;
+}
+
+function renderSecretsJournal() {
+  const found = new Set(ProgressionState.secretsFound || []);
+  const rows = Object.values(VILLAGE_REGISTRY).map(village => {
+    const id = village.villageId, total = getSecretVillageTotal(id);
+    if (!total) return '';
+    const defs = SECRET_DEFINITIONS.filter(d => d.villageId === id);
+    const mine = defs.filter(d => found.has(d.secretId));
+    const names = mine.map(d => `<span class="journal-secret-name">${escapeHTML(d.name)}</span>`).join(' · ');
+    return `<div class="journal-row ${mine.length ? '' : 'locked'}"><b>${escapeHTML(village.displayName)}</b> · ${mine.length} / ${total}<br>${names || 'Nothing found yet.'}</div>`;
+  }).join('');
+  return `<div class="journal-card full"><strong>Secrets</strong><span>${found.size} / ${SECRET_TOTAL} found</span></div>${rows}`;
+}
+
 const QUEST_SPOT_ACTIONS = { inspect:'Inspect', read:'Read', listen:'Listen', light:'Light', ring:'Ring', hold:'Hold still', reach:'' };
 const QUEST_SPOT_TIME_HINTS = { night:'Something stirs here after dark.', day:'Come back in daylight.', dawn:'Come back at dawn.', dusk:'Come back at dusk.' };
 const QuestSpotRuntime = { hold:null, nearest:null, lastHintAt:0, reached:new Set() };
@@ -8010,10 +8055,12 @@ function completeQuestSpot(root) {
 function recordQuestSpotSecret(cfg) {
   const isNew = recordProgressionEvent('secret', cfg.secretId, PROGRESSION_POINTS.secret);
   if (!isNew) return false;
-  const total = typeof getSecretTotalCount === 'function' ? getSecretTotalCount() : 100;
+  const total = getSecretTotalCount();
+  // a badge tied to this secret (requirementType 'secret', requirementValue = secretId)
+  try { getBadgeDefinitions().filter(b => b.requirementType === 'secret' && b.requirementValue === cfg.secretId).forEach(b => awardBadge(b.name)); } catch(e) {}
   queueQuestCelebration({
     kicker: 'Secret Found',
-    title: cfg.secretName || 'A hidden secret',
+    title: cfg.secretName || getSecretDefinition(cfg.secretId)?.name || 'A hidden secret',
     body: cfg.text ? escapeHTML(cfg.text) : '',
     chips: [{ label:`${ProgressionState.secretsFound.length} / ${total} secrets`, tone:'gold' }, { label:`+${PROGRESSION_POINTS.secret} XP` }],
     duration: 6500
