@@ -19408,7 +19408,7 @@ async function latestForgeRigUrl(url) {
 const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(activeCharacter.singleGlb) : null;   // Forge Rigger bundle: one GLB, metres, all clips inside
 (activeCharacter.procedural && window.SamuraiKit?.types?.includes(activeCharacter.kitModel)
   ? Promise.resolve({ kit: true, meshes: [], transformNodes: [], animationGroups: [], skeletons: [] })
-  : BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath || '/assets/character/', _forgeSingleGlb || activeCharacter.idleFile || 'ant_idle_c.glb', scene))
+  : BABYLON.SceneLoader.ImportMeshAsync("", activeCharacter.basePath, _forgeSingleGlb || activeCharacter.idleFile, scene))
 .then(r => {
   const playerRoot = new BABYLON.TransformNode("playerRoot", scene);
   playerRoot.position = new BABYLON.Vector3(0, 0.25, 20);
