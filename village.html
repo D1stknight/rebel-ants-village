@@ -957,6 +957,47 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 	      <button class="ctrl-btn danger" onclick="deleteSelectedQuestTargetMarker()">Delete Selected Marker</button>
 	    </div>
 	  </div>
+	  <div class="ap-section">Quest Spots</div>
+	  <div class="admin-section-body" data-admin-section-body="quest-spots">
+	    <button class="quest-help" type="button" title="Quest Spots How To: 1. Pick what the player does there (inspect, read, listen, light, ring, hold still, or just reach it). 2. Type the prompt word and the text the player sees. 3. Optional: only at night/dawn/dusk/day, only in some weather (storm, heavy-rain, light-rain, fog, snow), or only above a height. 4. For a secret, fill Secret ID + name: no glint, no marker. 5. Click Add Quest Spot, then the ground. 6. Quest steps point at the Spot ID (objective useQuestSpot). 7. Save the layout.">How To</button>
+	    <div class="admin-note">A spot the player presses O at (or just reaches). Quest steps and secrets use them. Violet diamonds show in the editor only.</div>
+	    <label class="admin-field">Spot ID <input id="questSpotIdInput" placeholder="hub-spot-cracks"></label>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <label class="admin-field">Action
+	        <select id="questSpotActionInput" class="admin-select">
+	          <option value="inspect">inspect</option><option value="read">read</option><option value="listen">listen</option>
+	          <option value="light">light</option><option value="ring">ring</option><option value="hold">hold still</option><option value="reach">reach (no key)</option>
+	        </select>
+	      </label>
+	      <label class="admin-field">Prompt word <input id="questSpotLabelInput" placeholder="Inspect the cracks"></label>
+	    </div>
+	    <label class="admin-field">Text shown <textarea id="questSpotTextInput" rows="3" placeholder="Fine red dust lines the cracks."></textarea></label>
+	    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+	      <label class="admin-field">Hold s <input id="questSpotHoldInput" type="number" min="1" max="120" step="1" value="5"></label>
+	      <label class="admin-field">Radius <input id="questSpotRadiusInput" type="number" min="0.8" max="30" step="0.2" value="2.6"></label>
+	      <label class="admin-field">Min height <input id="questSpotMinYInput" type="number" step="0.5" placeholder="any"></label>
+	    </div>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <label class="admin-field">Time
+	        <select id="questSpotTimeInput" class="admin-select"><option value="">any</option><option value="night">night</option><option value="dawn">dawn</option><option value="day">day</option><option value="dusk">dusk</option></select>
+	      </label>
+	      <label class="admin-field">Weather <input id="questSpotWeatherInput" placeholder="storm, heavy-rain"></label>
+	    </div>
+	    <label class="admin-field">Hint if not yet <input id="questSpotHintInput" placeholder="Something stirs here after dark."></label>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <label class="admin-field">Secret ID <input id="questSpotSecretIdInput" placeholder="secret-hub-unseen-hand"></label>
+	      <label class="admin-field">Secret name <input id="questSpotSecretNameInput" placeholder="Unseen Hand"></label>
+	    </div>
+	    <label class="admin-field">Glint
+	      <select id="questSpotGlintInput" class="admin-select"><option value="quest">while a quest points here</option><option value="always">always</option><option value="none">none (secrets)</option></select>
+	    </label>
+	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+	      <button class="ctrl-btn" onclick="placeQuestSpot()">Add Quest Spot</button>
+	      <button class="ctrl-btn" onclick="applySelectedQuestSpotSettings()">Apply Settings</button>
+	      <button class="ctrl-btn" onclick="duplicateSelectedQuestSpot()">Duplicate Spot</button>
+	      <button class="ctrl-btn danger" onclick="deleteSelectedFence()">Delete Spot</button>
+	    </div>
+	  </div>
 	  <div class="ap-section">Interaction Zones</div>
   <div class="admin-section-body" data-admin-section-body="interaction-zones">
     <button class="quest-help" type="button" title="Interaction Zones How To: 1. Pick what the zone is for: story, audio, weather, quest, store, or dojo. 2. Add a Quest Objective ID only if a quest should look for this zone. 3. Click Add Zone. 4. Move it where the player should stand. 5. Use Resize Zone or the scale gizmo to set the area. 6. Click Apply Zone Settings after changing type or quest ID on a selected zone. 7. Save the village so the zone persists.">How To</button>
@@ -4228,6 +4269,7 @@ const PERF_DYNAMIC_TYPES = new Set([
   'interaction_zone',
   'interior_entrance',
   'quest_target_marker',
+  'quest_spot',
   'interior_runtime'
 ]);
 
@@ -4493,6 +4535,7 @@ function setSelectedEditableObject(node) {
     setTerrainSculptBrushActive(false);
   }
   rememberCollisionProxyOwnerFromSelection(node);
+  if (node.metadata?.type === 'quest_spot') writeQuestSpotSettingsToControls(node);
   updateSelectedBadge();
   attachSelectedGizmo();
 }
@@ -4878,6 +4921,8 @@ function beginAdminPlacement(request) {
 	            ? 'Place Door'
 	            : request.kind === 'quest_target_marker'
 	              ? 'Place Quest Target Marker'
+	              : request.kind === 'quest_spot'
+	                ? 'Place Quest Spot'
 	              : `Place ${getCollisionProxyLabel(request.proxyKind)}`;
   canvas.style.cursor = 'crosshair';
   showToast(`${label}: click the ${ActiveInterior ? 'floor or wall surface' : 'ground'} where it should go`);
@@ -4994,6 +5039,11 @@ function placePendingAdminPlacementAtPoint(point, pick = null) {
 
 	  if (request.kind === 'quest_target_marker') {
 	    placeQuestTargetMarkerAtPoint(point.clone(), request.settings || {});
+	    return true;
+	  }
+
+	  if (request.kind === 'quest_spot') {
+	    placeQuestSpotAtPoint(point.clone(), request.settings || {});
 	    return true;
 	  }
 
@@ -7460,6 +7510,11 @@ function updateInteractionPrompt() {
     return;
   }
 
+  if (QuestSpotRuntime.nearest || QuestSpotRuntime.hold) {
+    setInteractionPrompt(getQuestSpotPromptText(QuestSpotRuntime.hold?.root || QuestSpotRuntime.nearest), true);
+    return;
+  }
+
   if (walkMode && !adminMode && getNearestSmallVillageAntInRange()) {
     setInteractionPrompt('Press O to Talk', true);
     return;
@@ -7511,6 +7566,268 @@ function tryOpenNearbyTreasureChest() {
   const chest = getNearestTreasureChestInRange();
   if (!chest) return false;
   return openTreasureChest(chest);
+}
+
+// ═══════════════════════════════════════
+// QUEST SPOTS — press O at a spot to inspect / read / listen / light / ring / hold still, or just reach it.
+// A quest step targets a spot with objectiveType 'useQuestSpot' and targetObjectId = spotId. A spot with a
+// secretId records that secret. Spot config lives in metadata.spotConfig (saved as one layout field).
+// Glint: 'quest' = sparkles only while an active quest step points at it, 'always', or 'none' (secrets: you
+// find them by looking). In the editor every spot shows as a small violet diamond.
+// ═══════════════════════════════════════
+const QUEST_SPOT_ACTIONS = { inspect:'Inspect', read:'Read', listen:'Listen', light:'Light', ring:'Ring', hold:'Hold still', reach:'' };
+const QUEST_SPOT_TIME_HINTS = { night:'Something stirs here after dark.', day:'Come back in daylight.', dawn:'Come back at dawn.', dusk:'Come back at dusk.' };
+const QuestSpotRuntime = { hold:null, nearest:null, lastHintAt:0, reached:new Set() };
+
+function normalizeQuestSpotConfig(cfg = {}) {
+  const action = QUEST_SPOT_ACTIONS[cfg.action] !== undefined ? cfg.action : 'inspect';
+  const req = cfg.requires || {};
+  return {
+    spotId: String(cfg.spotId || `${CURRENT_VILLAGE_ID}-spot-${Date.now()}-${Math.floor(Math.random() * 10000)}`),
+    action,
+    label: String(cfg.label || ''),
+    text: String(cfg.text || ''),
+    holdSeconds: Math.max(1, Number(cfg.holdSeconds) || 5),
+    radius: Math.max(.8, Number(cfg.radius) || (action === 'reach' ? 3.5 : 2.6)),
+    requires: {
+      time: QUEST_SPOT_TIME_HINTS[req.time] ? req.time : null,
+      weather: req.weather ? [].concat(req.weather).filter(Boolean) : null,
+      minY: Number.isFinite(Number(req.minY)) && req.minY !== null && req.minY !== '' ? Number(req.minY) : null,
+      hint: req.hint ? String(req.hint) : ''
+    },
+    secretId: cfg.secretId ? String(cfg.secretId) : null,
+    secretName: cfg.secretName ? String(cfg.secretName) : '',
+    glint: ['quest', 'always', 'none'].includes(cfg.glint) ? cfg.glint : (cfg.secretId ? 'none' : 'quest')
+  };
+}
+
+function createQuestSpot(position, options = {}) {
+  const cfg = normalizeQuestSpotConfig(options.spotConfig || options);
+  const root = new BABYLON.TransformNode(options.name || makeUniqueVillageNodeName('questSpotRoot_' + cfg.spotId.replace(/[^a-z0-9_-]/gi, '_')), scene);
+  root.position = position.clone();
+  if (options.rotation) root.rotation = new BABYLON.Vector3(options.rotation.x || 0, options.rotation.y || 0, options.rotation.z || 0);
+  root.metadata = { type:'quest_spot', isClone:true, noGroundSnap:true, disableGroundSnap:true, spotConfig:cfg, villageId:CURRENT_VILLAGE_ID };
+  const helperMat = QuestSpotRuntime.helperMat || (QuestSpotRuntime.helperMat = (() => {
+    const m = new BABYLON.StandardMaterial('questSpotHelperMat', scene);
+    m.diffuseColor = new BABYLON.Color3(.55, .32, .85); m.emissiveColor = new BABYLON.Color3(.42, .2, .7); m.specularColor = BABYLON.Color3.Black();
+    m.metadata = { perfKeepLive:true }; return m;
+  })());
+  const glintMat = QuestSpotRuntime.glintMat || (QuestSpotRuntime.glintMat = (() => {
+    const m = new BABYLON.StandardMaterial('questSpotGlintMat', scene);
+    m.diffuseColor = BABYLON.Color3.Black(); m.emissiveColor = new BABYLON.Color3(1, .86, .45); m.specularColor = BABYLON.Color3.Black();
+    m.alpha = .85; m.disableLighting = true; m.metadata = { perfKeepLive:true }; return m;
+  })());
+  const helper = BABYLON.MeshBuilder.CreatePolyhedron(`questSpotHelper_${root.name}`, { type:1, size:.32 }, scene);
+  helper.parent = root; helper.position.y = 1.1; helper.material = helperMat;
+  helper.metadata = { questSpotPart:'helper' }; helper._editRoot = root;
+  const glint = BABYLON.MeshBuilder.CreatePolyhedron(`questSpotGlint_${root.name}`, { type:0, size:.13 }, scene);
+  glint.parent = root; glint.position.y = .9; glint.material = glintMat; glint.isPickable = false;
+  glint.metadata = { questSpotPart:'glint' }; glint._editRoot = root;
+  root.metadata._spotHelper = helper; root.metadata._spotGlint = glint;
+  helper.setEnabled(false); glint.setEnabled(false);
+  registerEditableRoot(root.name, root);
+  return root;
+}
+
+function getQuestSpotRoots() {
+  return scene.transformNodes.filter(n => n.metadata?.type === 'quest_spot' && !n.isDisposed?.());
+}
+
+function getQuestSpotById(spotId) {
+  return getQuestSpotRoots().find(n => n.metadata.spotConfig?.spotId === spotId) || null;
+}
+
+// The quest step (main chain) currently pointing at this spot, if any.
+function isQuestSpotTargetedByActiveQuest(spotId) {
+  if (!spotId || QuestState.completed === true) return false;
+  const quest = QUEST_DEFINITIONS[QuestState.questId];
+  if (!quest) return false;
+  const step = (quest.steps || []).find(s => s.id === QuestState.step) || {};
+  const action = getConfiguredQuestAction(quest, step);
+  const target = step.targetObjectId || quest.targetObjectId;
+  return action === 'useQuestSpot' && target === spotId;
+}
+
+function questSpotRequirementMiss(cfg) {
+  const r = cfg.requires || {};
+  if (r.time) {
+    const h = villageClockHour();
+    const ok = { night:h >= 20 || h < 5, day:h >= 8 && h < 17, dawn:h >= 5 && h < 8, dusk:h >= 17 && h < 20 }[r.time];
+    if (!ok) return r.hint || QUEST_SPOT_TIME_HINTS[r.time];
+  }
+  if (r.weather?.length) {
+    let mode = 'clear';
+    try { mode = WeatherManager?.mode || 'clear'; } catch(e) {}
+    if (!r.weather.includes(mode)) return r.hint || 'The air is too calm here. Come back in other weather.';
+  }
+  if (Number.isFinite(r.minY) && charMesh && charMesh.position.y < r.minY) return r.hint || 'Higher.';
+  return null;
+}
+
+function getNearestQuestSpotInRange() {
+  if (!walkMode || adminMode || ActiveInterior || !charMesh) return null;
+  let best = null, bestD = Infinity;
+  for (const root of getQuestSpotRoots()) {
+    const cfg = root.metadata.spotConfig;
+    if (!cfg || cfg.action === 'reach') continue;
+    const dx = root.position.x - charMesh.position.x, dz = root.position.z - charMesh.position.z;
+    const dy = Math.abs(root.position.y - charMesh.position.y);
+    const d = dx * dx + dz * dz;
+    if (d <= cfg.radius * cfg.radius && dy < 4.5 && d < bestD) { best = root; bestD = d; }
+  }
+  return best;
+}
+
+function getQuestSpotPromptText(root) {
+  const cfg = root?.metadata?.spotConfig;
+  if (!cfg) return '';
+  if (QuestSpotRuntime.hold?.root === root) {
+    const left = Math.max(0, cfg.holdSeconds - (performance.now() - QuestSpotRuntime.hold.startedAt) / 1000);
+    return `Hold still… ${left.toFixed(1)} s`;
+  }
+  return `Press O to ${cfg.label || QUEST_SPOT_ACTIONS[cfg.action] || 'Inspect'}`;
+}
+
+function completeQuestSpot(root) {
+  const cfg = root.metadata.spotConfig;
+  QuestSpotRuntime.hold = null;
+  if (cfg.action === 'light' || cfg.action === 'ring') playInteractionAudio(cfg.action === 'ring' ? 'templeBell' : 'collectiblePickup');
+  let secretNew = false;
+  if (cfg.secretId) secretNew = recordQuestSpotSecret(cfg);
+  const advanced = advanceHubTutorialObjective('useQuestSpot', {
+    spotId: cfg.spotId, targetObjectId: cfg.spotId, spotAction: cfg.action, secretId: cfg.secretId || null
+  });
+  try { window.dispatchEvent(new CustomEvent('rebelAntsQuestSpot', { detail:{ spotId:cfg.spotId, action:cfg.action, villageId:CURRENT_VILLAGE_ID } })); } catch(e) {}
+  if (!secretNew && cfg.text) showToast(cfg.text, Math.min(12000, Math.max(4500, cfg.text.length * 65)));
+  else if (!secretNew && !advanced) showToast(cfg.action === 'listen' ? 'Only the wind.' : 'Nothing more to find here.');
+  return true;
+}
+
+function recordQuestSpotSecret(cfg) {
+  const isNew = recordProgressionEvent('secret', cfg.secretId, PROGRESSION_POINTS.secret);
+  if (!isNew) return false;
+  const total = typeof getSecretTotalCount === 'function' ? getSecretTotalCount() : 100;
+  queueQuestCelebration({
+    kicker: 'Secret Found',
+    title: cfg.secretName || 'A hidden secret',
+    body: cfg.text ? escapeHTML(cfg.text) : '',
+    chips: [{ label:`${ProgressionState.secretsFound.length} / ${total} secrets`, tone:'gold' }, { label:`+${PROGRESSION_POINTS.secret} XP` }],
+    duration: 6500
+  });
+  return true;
+}
+
+function tryUseNearbyQuestSpot() {
+  const root = getNearestQuestSpotInRange();
+  if (!root) return false;
+  const cfg = root.metadata.spotConfig;
+  const miss = questSpotRequirementMiss(cfg);
+  if (miss) { showToast(miss); return true; }
+  if (cfg.action === 'hold') {
+    QuestSpotRuntime.hold = { root, startedAt: performance.now(), x: charMesh.position.x, z: charMesh.position.z };
+    return true;
+  }
+  return completeQuestSpot(root);
+}
+
+function updateQuestSpots() {
+  const roots = getQuestSpotRoots();
+  if (!roots.length) { QuestSpotRuntime.nearest = null; return; }
+  const editor = isEditorVisualMode();
+  const t = performance.now() / 1000;
+  for (const root of roots) {
+    const cfg = root.metadata.spotConfig, helper = root.metadata._spotHelper, glint = root.metadata._spotGlint;
+    if (helper && helper.isEnabled() !== editor) { helper.setEnabled(editor); helper.isPickable = editor; }
+    const showGlint = !editor && walkMode && !ActiveInterior && (cfg.glint === 'always' || (cfg.glint === 'quest' && isQuestSpotTargetedByActiveQuest(cfg.spotId)));
+    if (glint) {
+      if (glint.isEnabled() !== showGlint) glint.setEnabled(showGlint);
+      if (showGlint) { glint.rotation.y = t * 1.6; glint.position.y = .9 + Math.sin(t * 2.4) * .12; glint.scaling.setAll(.85 + Math.sin(t * 5.2) * .25); }
+    }
+    if (helper && editor) helper.rotation.y = t * .8;
+    // 'reach' spots fire on arrival (once per visit).
+    if (cfg.action === 'reach' && walkMode && !adminMode && !ActiveInterior && charMesh) {
+      const dx = root.position.x - charMesh.position.x, dz = root.position.z - charMesh.position.z;
+      const inside = dx * dx + dz * dz <= cfg.radius * cfg.radius && Math.abs(root.position.y - charMesh.position.y) < 4.5;
+      if (inside && !QuestSpotRuntime.reached.has(root)) {
+        if (!questSpotRequirementMiss(cfg)) { QuestSpotRuntime.reached.add(root); completeQuestSpot(root); }
+      } else if (!inside) QuestSpotRuntime.reached.delete(root);
+    }
+  }
+  const hold = QuestSpotRuntime.hold;
+  if (hold) {
+    const moved = !charMesh || Math.hypot(charMesh.position.x - hold.x, charMesh.position.z - hold.z) > .6;
+    if (moved || hold.root.isDisposed?.() || !walkMode) { QuestSpotRuntime.hold = null; showToast('You moved. Try again and stay still.'); }
+    else if ((performance.now() - hold.startedAt) / 1000 >= hold.root.metadata.spotConfig.holdSeconds) completeQuestSpot(hold.root);
+  }
+  QuestSpotRuntime.nearest = getNearestQuestSpotInRange();
+}
+
+// ── Admin: Quest Spots section ──
+function readQuestSpotSettingsFromControls() {
+  const v = id => document.getElementById(id)?.value ?? '';
+  return {
+    spotId: v('questSpotIdInput').trim() || undefined,
+    action: v('questSpotActionInput') || 'inspect',
+    label: v('questSpotLabelInput').trim(),
+    text: v('questSpotTextInput'),
+    holdSeconds: Number(v('questSpotHoldInput')) || 5,
+    radius: Number(v('questSpotRadiusInput')) || undefined,
+    requires: {
+      time: v('questSpotTimeInput') || null,
+      weather: v('questSpotWeatherInput') ? v('questSpotWeatherInput').split(',').map(s => s.trim()).filter(Boolean) : null,
+      minY: v('questSpotMinYInput') === '' ? null : Number(v('questSpotMinYInput')),
+      hint: v('questSpotHintInput').trim()
+    },
+    secretId: v('questSpotSecretIdInput').trim() || null,
+    secretName: v('questSpotSecretNameInput').trim(),
+    glint: v('questSpotGlintInput') || undefined
+  };
+}
+
+function writeQuestSpotSettingsToControls(root) {
+  const cfg = root?.metadata?.spotConfig;
+  if (!cfg) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+  set('questSpotIdInput', cfg.spotId); set('questSpotActionInput', cfg.action); set('questSpotLabelInput', cfg.label);
+  set('questSpotTextInput', cfg.text); set('questSpotHoldInput', cfg.holdSeconds); set('questSpotRadiusInput', cfg.radius);
+  set('questSpotTimeInput', cfg.requires?.time || ''); set('questSpotWeatherInput', (cfg.requires?.weather || []).join(', '));
+  set('questSpotMinYInput', Number.isFinite(cfg.requires?.minY) ? cfg.requires.minY : ''); set('questSpotHintInput', cfg.requires?.hint || '');
+  set('questSpotSecretIdInput', cfg.secretId || ''); set('questSpotSecretNameInput', cfg.secretName || ''); set('questSpotGlintInput', cfg.glint);
+}
+
+function placeQuestSpot() {
+  if (!adminMode) { showToast('Enter Admin Mode first'); return; }
+  const settings = readQuestSpotSettingsFromControls();
+  delete settings.spotId; // each new spot gets its own id unless typed after placing
+  beginAdminPlacement({ kind:'quest_spot', settings });
+}
+
+function placeQuestSpotAtPoint(point, settings = {}) {
+  const root = createQuestSpot(point.clone(), { spotConfig:settings });
+  adminGizmoMode = 'move';
+  setSelectedEditableObject(root);
+  writeQuestSpotSettingsToControls(root);
+  triggerAutoSave();
+  showToast('Quest spot placed');
+  return root;
+}
+
+function applySelectedQuestSpotSettings() {
+  if (selectedObject?.metadata?.type !== 'quest_spot') { showToast('Select a quest spot first'); return; }
+  recordEditorHistory('edit quest spot');
+  selectedObject.metadata.spotConfig = normalizeQuestSpotConfig({ ...selectedObject.metadata.spotConfig, ...readQuestSpotSettingsFromControls() });
+  triggerAutoSave();
+  showToast('Quest spot updated');
+}
+
+function duplicateSelectedQuestSpot() {
+  if (selectedObject?.metadata?.type !== 'quest_spot') { showToast('Select a quest spot first'); return; }
+  recordEditorHistory('duplicate quest spot');
+  const cfg = { ...selectedObject.metadata.spotConfig, spotId:undefined };
+  const copy = createQuestSpot(selectedObject.position.add(new BABYLON.Vector3(2, 0, 0)), { spotConfig:cfg, rotation:selectedObject.rotation });
+  setSelectedEditableObject(copy);
+  writeQuestSpotSettingsToControls(copy);
+  triggerAutoSave();
 }
 
 const RoninMaterialCache = new Map();
@@ -10265,7 +10582,9 @@ function normalizeQuestObjectiveAction(actionType = '') {
     portal:'usePortal',
     journal:'openJournal',
     weather:'experienceWeather',
-    time:'observeTime'
+    time:'observeTime',
+    spot:'useQuestSpot',
+    questSpot:'useQuestSpot'
   };
   return map[action] || action;
 }
@@ -10399,7 +10718,8 @@ function getConfiguredQuestAction(quest, stepId = QuestState.step) {
     Chest:'openChest',
     Collectible:'collectCollectible',
     'NFT Frame':'inspectInteriorNFTFrame',
-    'Link/Hotspot':'interactInteriorLink'
+    'Link/Hotspot':'interactInteriorLink',
+    'Quest Spot':'useQuestSpot'
   };
   return byTargetType[targetType] || null;
 }
@@ -10680,7 +11000,7 @@ function handleSignQuestEvent(signData) {
   });
 }
 
-const QUEST_TARGET_TYPES = ['NPC', 'Area', 'Door', 'Interior', 'Portal', 'Sign', 'Chest', 'Collectible', 'NFT Frame', 'Link/Hotspot'];
+const QUEST_TARGET_TYPES = ['NPC', 'Area', 'Door', 'Interior', 'Portal', 'Sign', 'Chest', 'Collectible', 'NFT Frame', 'Link/Hotspot', 'Quest Spot'];
 var QuestTargetMarkerManager = {
   visible: localStorage.getItem('rebelAntsQuestTargetMarkersVisible') !== '0',
   activeMarkerId: null,
@@ -20231,6 +20551,7 @@ function collectWorldLayoutData() {
     interiorDefinition: node.metadata.interiorDefinition || null,
     enabled: node.metadata.enabled !== false,
     questObjectiveId: node.metadata.questObjectiveId || null,
+    spotConfig: node.metadata.type === 'quest_spot' ? node.metadata.spotConfig || null : null,
     editorLocked: node.metadata.editorLocked === true
   });
   });
@@ -20877,6 +21198,11 @@ function loadWorldLayout(){
       return;
     }
 
+    if (item.type === 'quest_spot') {
+      createQuestSpot(new BABYLON.Vector3(item.position.x, item.position.y, item.position.z), { name:item.name, rotation:item.rotation, spotConfig:item.spotConfig || {} });
+      return;
+    }
+
     if (item.type === 'interaction_zone') {
       const zone = createInteractionZone(
         new BABYLON.Vector3(item.position.x, item.position.y, item.position.z),
@@ -21200,6 +21526,10 @@ function duplicateSelectedFence(){
   }
   if (selectedObject.metadata?.type === 'quest_target_marker') {
     duplicateSelectedQuestTargetMarker();
+    return;
+  }
+  if (selectedObject.metadata?.type === 'quest_spot') {
+    duplicateSelectedQuestSpot();
     return;
   }
   recordEditorHistory('duplicate selected');
@@ -21533,7 +21863,7 @@ document.addEventListener('keydown', async e => {
     enterInterior(selectedObject);
     return;
   }
-  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryObserveTimeWeatherQuest() || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryTalkToNearbySmallAnt() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
+  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryObserveTimeWeatherQuest() || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryUseNearbyQuestSpot() || tryTalkToNearbySmallAnt() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
     e.preventDefault();
     return;
   }
@@ -23160,6 +23490,7 @@ engine.runRenderLoop(()=>{
   tryAutoExitInteriorFromTouch();
   updateTutorialQuestWorldProgress();
   updateQuestTargetMarkers(dt);
+  updateQuestSpots();
   tryAutoOpenVillageGateFromWalkthrough();
   updateCollectiblesSafe(dt);
   updateWeatherManager();
@@ -24109,7 +24440,7 @@ function getNodeAdminLayer(node) {
   if (type === 'interaction_zone') return 'zones';
   if (type === 'interior_entrance') return 'zones';
   if (type === 'interior_uploaded_glb' || node?.metadata?.isInteriorObject === true) return 'buildings';
-  if (type === 'quest_target_marker') return 'quests';
+  if (type === 'quest_target_marker' || type === 'quest_spot') return 'quests';
   if (type.includes('terrain')) return 'terrain';
   return 'buildings';
 }
@@ -24464,7 +24795,7 @@ function getRootCategory(root) {
   const name = root?.name || '';
   if (type === 'npc' || type === 'small_village_ant' || name.includes('player')) return 'NPCs/characters';
   if (type === 'collectible') return 'collectibles';
-  if (type === 'quest_target_marker') return 'quest markers';
+  if (type === 'quest_target_marker' || type === 'quest_spot') return 'quest markers';
   if (type === 'collision_proxy' || type === 'terrain_stamp') return 'collision helpers/proxies';
   if (type === 'interior_runtime' || root?.metadata?.interiorRuntime === true) return 'interiors';
   if (type === 'interior_fake_light' || Array.isArray(root?.metadata?._fakeLightMaterials) || Array.isArray(root?.metadata?._toroGlowMats)) return 'fake lights';
@@ -31369,6 +31700,10 @@ window.applySmallAntSettings = applySmallAntSettings;
 window.previewSmallAntSettingsFromControls = previewSmallAntSettingsFromControls;
 window.previewSmallAntAnimationFromControls = previewSmallAntAnimationFromControls;
 window.placeQuestTargetMarker = placeQuestTargetMarker;
+window.placeQuestSpot = placeQuestSpot;
+window.applySelectedQuestSpotSettings = applySelectedQuestSpotSettings;
+window.duplicateSelectedQuestSpot = duplicateSelectedQuestSpot;
+window.createQuestSpot = createQuestSpot;
 window.applySelectedQuestTargetSettings = applySelectedQuestTargetSettings;
 window.deleteSelectedQuestTargetMarker = deleteSelectedQuestTargetMarker;
 window.toggleQuestTargetMarkerVisibility = toggleQuestTargetMarkerVisibility;
