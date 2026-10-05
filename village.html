@@ -11748,10 +11748,23 @@ function getQuestTargetMetadata(questId = QuestState.questId, stepId = QuestStat
 // the NPC, the next unvisited spot, the collectible, or the village gate when the step is in another village.
 const AutoQuestGuide = { root:null, key:'', gate:null, at:0, target:null };
 function getAutoQuestGuideTarget() {
-  if (QuestState.completed || ActiveInterior) return null;
-  const quest = QUEST_DEFINITIONS[QuestState.questId];
+  if (ActiveInterior) return null;
+  const quest = !QuestState.completed && QUEST_DEFINITIONS[QuestState.questId];
   const step = quest && getQuestStep(quest.questId, QuestState.step);
-  if (!step?.wired || step.targetMarkerId) return null;
+  const main = step?.wired && !step.targetMarkerId ? getQuestStepGuideTarget(quest, step, getQuestStepProgress(quest.questId, step.id).ids) : null;
+  // the main story first; when its next target is in another village (or the story waits), an active side quest
+  // here gets the marker
+  if (main && !main.elsewhere) return main;
+  for (const [questId, st] of Object.entries(SideQuestState.active)) {
+    const sq = QUEST_DEFINITIONS[questId], sStep = sq && getQuestStep(questId, st.step);
+    if (!sStep?.wired || (sStep.villageId && sStep.villageId !== CURRENT_VILLAGE_ID)) continue;
+    const t = getQuestStepGuideTarget(sq, sStep, st.steps?.[sStep.id]?.ids || []);
+    if (t && !t.elsewhere) return t;
+  }
+  return main;
+}
+
+function getQuestStepGuideTarget(quest, step, doneIds = []) {
   const action = normalizeQuestObjectiveAction(step.objectiveType);
   const gate = () => {
     if (!AutoQuestGuide.gate || AutoQuestGuide.gate.isDisposed?.()) AutoQuestGuide.gate = scene.transformNodes.find(n => n.metadata?.type === 'village_gate' && n.metadata?.isClone) || null;
@@ -11759,7 +11772,7 @@ function getAutoQuestGuideTarget() {
   };
   if (step.villageId && step.villageId !== CURRENT_VILLAGE_ID) {
     const g = gate();
-    return g ? { node:g, label:`To ${VILLAGE_REGISTRY[step.villageId]?.displayName || step.villageId}` } : null;
+    return g ? { node:g, label:`To ${VILLAGE_REGISTRY[step.villageId]?.displayName || step.villageId}`, elsewhere:true } : null;
   }
   if (action === 'usePortal') { const g = gate(); return g ? { node:g, label:'Village Gate' } : null; }
   if (action === 'talkToNpc') {
@@ -11772,7 +11785,7 @@ function getAutoQuestGuideTarget() {
   };
   const want = String(step.targetObjectId || '').toLowerCase();
   if (action === 'useQuestSpot' && want) {
-    const done = new Set(getQuestStepProgress(quest.questId, step.id).ids.map(id => String(id).toLowerCase()));
+    const done = new Set(doneIds.map(id => String(id).toLowerCase()));
     const root = near(getQuestSpotRoots().filter(r => { const id = String(r.metadata.spotConfig?.spotId || '').toLowerCase(); return id.includes(want) && !done.has(id); }));
     return root ? { node:root, label:root.metadata.spotConfig.label || 'Look here' } : null;
   }
@@ -11813,9 +11826,9 @@ function getAutoQuestGuideMarker() {
 }
 
 function getActiveQuestTargetMarker() {
-  if (QuestState.completed) return null;
   const autoMarker = getAutoQuestGuideMarker();
   if (autoMarker) return autoMarker;
+  if (QuestState.completed) return null;
   const target = getQuestTargetMetadata();
   if (target.targetMarkerId) {
     const marker = getQuestTargetById(target.targetMarkerId);
