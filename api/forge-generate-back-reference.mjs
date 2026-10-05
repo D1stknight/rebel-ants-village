@@ -11,6 +11,7 @@ const DEFAULT_SIZE = '1024x1536';
 
 function buildBackViewPrompt(generationInput = {}) {
   const colony = generationInput.colony || 'Rebel Ant';
+  if (generationInput.species && generationInput.species !== 'ant') return buildSpeciesBackPrompt(generationInput);
   return `
 Image 1 is the FRONT view of a stylised Rebel Ant game character in a neutral A-pose.
 Draw the SAME character seen from DIRECTLY BEHIND (a 180-degree turn), for a 3D modelling turnaround.
@@ -29,6 +30,31 @@ The back of the body:
 - Continue the outfit logically: the back of the robe, vest or armour, the knot of the sash or belt, back plates, and the backs of the sleeves, legs and footwear.
 - Keep anything worn on the back (quiver, scabbard strap, cape) only if Image 1 clearly implies it. No weapons in the hands.
 - Colony: ${colony}.
+
+${buildRigFriendlyRules(generationInput, { view: 'back' })}
+
+Output: one single full-body back view. Not a collage, not a turnaround sheet, no text, no extra characters, no cropped limbs.
+`.trim();
+}
+
+// friend-collection characters (a Chumpz ape...): Image 1 is a finished, realistic 3D-rendered front view
+function buildSpeciesBackPrompt(generationInput = {}) {
+  const sp = generationInput.species;
+  return `
+Image 1 is the FRONT view of a realistic 3D-rendered ${sp} game character (${generationInput.name || 'a ' + sp}), standing in a neutral pose.
+Draw the SAME character seen from DIRECTLY BEHIND (a 180-degree turn), for a 3D modelling turnaround.
+
+Match Image 1 exactly:
+- Same pose, same arm angles, same height, same scale, same framing, head-to-feet in frame.
+- Same outfit, colours, materials and the same realistic 3D render style (real fur, fabric and leather), same plain light-grey background, same soft even lighting.
+- Mirror left and right correctly: the character's right side is now on the image's right.
+
+The back of the head (very important):
+- The face is ONLY on the front. From behind there are NO eyes, NO teeth, NO face: show the back of the skull covered in fur, the backs of both ears, and the back of any cap or hat with its adjustable strap and the opening above it.
+
+The back of the body:
+- Continue the outfit logically: the back of the shirt / fur, the bandana knot or its back, the straps of overalls crossing on the back, the back pockets, the backs of the legs and the heels of the boots.
+- No weapons, nothing in the hands.
 
 ${buildRigFriendlyRules(generationInput, { view: 'back' })}
 

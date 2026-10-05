@@ -17,8 +17,10 @@ function buildSidePrompt(generationInput = {}, side = 'left', hasBack = false) {
   // viewer's left. Say which HALF OF IMAGE 1 is nearest to us instead.
   const HALF = side === 'right' ? 'LEFT' : 'RIGHT';
   const OTHER = side === 'right' ? 'RIGHT' : 'LEFT';
+  const kind = generationInput.species && generationInput.species !== 'ant' ? `realistic 3D-rendered ${generationInput.species} game character (same render style: real fur, fabric and leather)` : 'stylised Rebel Ant game character';
+  const headSide = generationInput.species && generationInput.species !== 'ant' ? 'the profile of the head with its ear, muzzle and headwear' : 'the profile of the head and antennae';
   return `
-Image 1 is the FRONT view of a stylised Rebel Ant game character in a neutral A-pose.${hasBack ? ' Image 2 is the same character seen from BEHIND.' : ''}
+Image 1 is the FRONT view of a ${kind} in a neutral A-pose.${hasBack ? ' Image 2 is the same character seen from BEHIND.' : ''}
 Draw the SAME character turned 90 degrees so we see the character's ${S} side in exact profile: an orthographic side view for a 3D modelling turnaround.
 FACING DIRECTION (critical): the character faces the ${FACE} EDGE of the image. The face, chest and toes point to the ${FACE.toLowerCase()} side of the canvas; the back of the head and the heels point the other way.
 WHICH SIDE IS NEAREST (critical): the half of the character that appears on the ${HALF} half of Image 1 is the half nearest to us in this view. Everything that is on the ${HALF} half of Image 1 (for example the eye, eye patch, shoulder plate, arm guard or pouch on the ${HALF} of Image 1) is visible and in front; everything on the ${OTHER} half of Image 1 is hidden behind the head and body. Check the eyes: the eye shown here must be the one on the ${HALF} of Image 1, with the same look (patch or compound eye).
@@ -26,7 +28,7 @@ WHICH SIDE IS NEAREST (critical): the half of the character that appears on the 
 Match Image 1 exactly:
 - Same A-pose seen from the side (the ${S.toLowerCase()} arm hangs slightly away from the body), same height, same scale, same feet position on the canvas, head-to-feet in frame.
 - Same outfit, colours, materials, armour, emblems, art style and line-work, same plain light-grey background, same soft even lighting.
-- Only what is really on the side of this character: the profile of the head and antennae, the side of the chest plate, shoulder plate, sleeve, belt, hip plates, legs and footwear.
+- Only what is really on the side of this character: ${headSide}, the side of the chest plate, shoulder plate, sleeve, belt, hip plates, legs and footwear.
 - Colony: ${colony}.
 
 ${buildRigFriendlyRules(generationInput, { view: 'side' })}
