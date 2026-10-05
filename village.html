@@ -466,6 +466,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 .badge-chip em{display:block;color:rgba(255,255,255,.68);font-size:10px;line-height:1.3;font-style:normal}
 .journal-list{display:grid;gap:7px}
 .journal-secret-name{color:#e8c56a}
+#rebelPointsPop{position:fixed;left:50%;top:34%;transform:translate(-50%,0) scale(.8);opacity:0;pointer-events:none;z-index:60;display:grid;justify-items:center;gap:2px;text-shadow:0 2px 12px rgba(0,0,0,.7);transition:opacity .25s,transform .35s}
+#rebelPointsPop.on{opacity:1;transform:translate(-50%,-18px) scale(1)}
+#rebelPointsPop b{font-family:'Cinzel Decorative',serif;font-size:44px;color:#ffd166;letter-spacing:2px}
+#rebelPointsPop span{font-family:'Cinzel Decorative',serif;font-size:13px;color:#e8c56a;letter-spacing:3px;text-transform:uppercase}
+#rebelPointsPop em{font-style:normal;font-size:11px;color:rgba(255,255,255,.75);letter-spacing:1px}
 .journal-row{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);border-radius:6px;padding:10px;color:rgba(255,255,255,.74);font-size:12px;line-height:1.35}
 .journal-row.locked{opacity:.52}
 .journal-row b{color:#e8c56a;font-family:'Cinzel Decorative',serif;letter-spacing:1px}
@@ -1001,6 +1006,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 	      <button class="ctrl-btn" onclick="duplicateSelectedQuestSpot()">Duplicate Spot</button>
 	      <button class="ctrl-btn danger" onclick="deleteSelectedFence()">Delete Spot</button>
 	    </div>
+	  </div>
+	  <div class="ap-section">Chests</div>
+	  <div class="admin-section-body" data-admin-section-body="chests">
+	    <div class="admin-note">Place a Treasure Chest (Lighting & Props), select it, pick its tier, Apply. Each chest pays its Rebel points once per player, then stays open.</div>
+	    <label class="admin-field">Tier
+	      <select id="chestTierInput" class="admin-select">
+	        <option value="wood">Wood · 10</option><option value="iron">Iron · 25</option><option value="gold">Gold · 50</option>
+	        <option value="silver">Silver · 100</option><option value="treasure">Treasure · 500</option><option value="legend">Legend · 1000</option>
+	      </select>
+	    </label>
+	    <button class="ctrl-btn" onclick="applySelectedChestTier()">Apply Tier To Selected Chest</button>
 	  </div>
 	  <div class="ap-section">Interaction Zones</div>
   <div class="admin-section-body" data-admin-section-body="interaction-zones">
@@ -2708,6 +2724,8 @@ function getDefaultProgressionState() {
     chestsOpened: [],
     collectiblesFound: [],
     secretsFound: [],
+    rebelPoints: 0,
+    rebelPointsLog: [],
     ecosystemActions: {},
     journalEntriesUnlocked: [],
     customJournalEntries: {},
@@ -3143,6 +3161,7 @@ function renderProgressionJournal() {
     ['Completed Quests', ProgressionState.completedQuests.length],
     ['Villages Visited', ProgressionState.villagesVisited.length],
     ['Chests Opened', ProgressionState.chestsOpened.length],
+    ['Rebel Points', (Number(ProgressionState.rebelPoints) || 0).toLocaleString('en-US')],
     ['Collectibles Found', totalCollectibles],
     ['Secrets Found', `${ProgressionState.secretsFound.length} / ${SECRET_TOTAL}`],
     ['Ecosystem Actions', ecosystemCount],
@@ -4824,6 +4843,7 @@ function setSelectedEditableObject(node) {
   }
   rememberCollisionProxyOwnerFromSelection(node);
   if (node.metadata?.type === 'quest_spot') writeQuestSpotSettingsToControls(node);
+  if (node.metadata?.type === 'treasure_chest') { const el = document.getElementById('chestTierInput'); if (el) el.value = getChestTier(node.metadata); }
   updateSelectedBadge();
   attachSelectedGizmo();
 }
@@ -6933,9 +6953,26 @@ function setInteractionPrompt(text, visible) {
   prompt.classList.toggle('on', visible === true);
 }
 
+// Chest tiers: what a chest pays in Rebel points and how it looks. Each chest pays once per player
+// (ProgressionState.chestsOpened); a looted chest stays open and empty.
+const CHEST_TIERS = {
+  wood:     { points:10,   label:'Wooden Chest',   body:[.46,.21,.075], band:[.22,.22,.25], trim:[.9,.56,.14],  coins:6 },
+  iron:     { points:25,   label:'Iron Chest',     body:[.30,.16,.07],  band:[.48,.5,.54],  trim:[.62,.64,.68], coins:9 },
+  gold:     { points:50,   label:'Gold Chest',     body:[.42,.19,.07],  band:[.9,.62,.18],  trim:[1,.78,.3],    coins:12 },
+  silver:   { points:100,  label:'Silver Chest',   body:[.16,.2,.28],   band:[.78,.82,.88], trim:[.92,.95,1],   coins:16 },
+  treasure: { points:500,  label:'Treasure Chest', body:[.46,.06,.06],  band:[.95,.7,.22],  trim:[1,.82,.35],   coins:22, glow:.35 },
+  legend:   { points:1000, label:'Legend Chest',   body:[.05,.045,.06], band:[1,.76,.25],   trim:[1,.86,.4],    coins:30, glow:.6 }
+};
+function getChestTier(meta = {}) { return CHEST_TIERS[meta.chestTier] ? meta.chestTier : 'wood'; }
+function getChestPoints(meta = {}) {
+  return meta.rewardType === 'rebel_points' && Number(meta.rewardAmount) > 0 ? Number(meta.rewardAmount) : CHEST_TIERS[getChestTier(meta)].points;
+}
+function isChestLooted(chestId) { return !!chestId && (ProgressionState.chestsOpened || []).includes(chestId); }
+
 function getDefaultTreasureChestMetadata(source = {}) {
   return {
     chestId: source.chestId || `${CURRENT_VILLAGE_ID}-chest-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+    chestTier: CHEST_TIERS[source.chestTier] ? source.chestTier : 'wood',
     rewardType: source.rewardType || 'none',
     rewardAmount: Number.isFinite(source.rewardAmount) ? source.rewardAmount : 0,
     opened: source.opened === true,
@@ -7060,6 +7097,16 @@ function buildTreasureChest(root) {
   addCylinder('flowerMedallion', { diameter: 0.44, height: 0.08, tessellation: 32 }, { x: 0, y: 0.48, z: -0.9 }, goldMat, lidPivot, { x: Math.PI / 2 });
   addCylinder('sideRing', { diameter: 0.52, height: 0.07, tessellation: 28 }, { x: 1.72, y: 0.75, z: 0.18 }, goldMat, root, { z: Math.PI / 2 });
   addBox('sideRingPlate', { width: 0.1, height: 0.34, depth: 0.34 }, { x: 1.62, y: 0.75, z: 0.18 }, goldMat);
+
+  // the tier's colours (wood body, metal bands, gold trim)
+  const tier = CHEST_TIERS[getChestTier(root.metadata)];
+  const c3 = (a, k = 1) => new BABYLON.Color3(a[0] * k, a[1] * k, a[2] * k);
+  woodMat.diffuseColor = c3(tier.body); woodMat.emissiveColor = c3(tier.body, .12);
+  lidMat.diffuseColor = c3(tier.body, 1.15); lidMat.emissiveColor = c3(tier.body, .14);
+  metalMat.diffuseColor = c3(tier.band); metalMat.emissiveColor = c3(tier.band, tier.glow ? .22 : .12); metalMat.specularColor = c3(tier.band, .6);
+  goldMat.diffuseColor = c3(tier.trim); goldMat.emissiveColor = c3(tier.trim, tier.glow ? .45 : .2);
+  // a looted chest stays open (this player already took its coins)
+  root.metadata.opened = isChestLooted(root.metadata.chestId);
 
   const glow = BABYLON.MeshBuilder.CreateCylinder(`${root.name}_rewardGlow`, { diameter: 2.2, height: 0.06, tessellation: 32 }, scene);
   glow.parent = root;
@@ -7728,7 +7775,7 @@ function collectProgressionCollectible(root) {
 function updateTreasureChestPrompt() {
   const chest = walkMode && !adminMode ? getNearestTreasureChestInRange() : null;
   getTreasureChestRoots().forEach(candidate => {
-    if (candidate !== chest && candidate.metadata?.opened === true) {
+    if (candidate !== chest && candidate.metadata?.opened === true && !isChestLooted(candidate.metadata.chestId)) {
       closeTreasureChest(candidate);
     }
   });
@@ -7842,16 +7889,89 @@ function openTreasureChest(chest) {
 
   if (lidPivot) animateTreasureChestLid(chest, true);
 
-  // Reward payout intentionally stubbed for future $REBEL/economy API integration.
   playInteractionAudio('chestOpen');
-  recordProgressionEvent('chest', chest.metadata.chestId || chest.name, PROGRESSION_POINTS.chest);
+  const chestKey = chest.metadata.chestId || chest.name;
+  const firstTime = recordProgressionEvent('chest', chestKey, PROGRESSION_POINTS.chest);
   advanceHubTutorialObjective('openChest', {
-    chestId:chest.metadata.chestId || chest.name,
-    targetObjectId:chest.metadata.chestId || chest.name
+    chestId:chestKey,
+    targetObjectId:chestKey
   });
+  if (firstTime) {
+    // Rebel points: kept locally (rebelPointsLog) until the Rebel economy link sends them on.
+    const points = getChestPoints(chest.metadata), tier = getChestTier(chest.metadata);
+    ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + points;
+    if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
+    ProgressionState.rebelPointsLog.push({ chestId:chestKey, villageId:CURRENT_VILLAGE_ID, tier, points, at:Date.now(), synced:false });
+    saveProgressionState();
+    spawnRebelCoinBurst(chest, CHEST_TIERS[tier].coins, points);
+    try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ chestId:chestKey, points, total:ProgressionState.rebelPoints } })); } catch(e) {}
+  } else {
+    showToast('This chest is empty.');
+  }
   triggerAutoSave();
-  showToast('Chest opened — reward system coming soon');
   return true;
+}
+
+// Coins burst out of an opened chest, hang in the air for a moment, then fly to the player one by one.
+// One shared coin mesh (thin instances would also do; instances keep it simple), removed when done.
+function spawnRebelCoinBurst(chest, count, points) {
+  const origin = chest.getAbsolutePosition().add(new BABYLON.Vector3(0, 1.5, 0));
+  if (!spawnRebelCoinBurst.base || spawnRebelCoinBurst.base.isDisposed?.()) {
+    const mat = new BABYLON.StandardMaterial('rebelCoinMat', scene);
+    mat.diffuseColor = new BABYLON.Color3(1, .78, .25); mat.emissiveColor = new BABYLON.Color3(.75, .5, .1); mat.specularColor = new BABYLON.Color3(1, .9, .6);
+    mat.metadata = { perfKeepLive:true };
+    const base = BABYLON.MeshBuilder.CreateCylinder('rebelCoinBase', { diameter:.42, height:.07, tessellation:20 }, scene);
+    base.material = mat; base.isPickable = false; base.setEnabled(false); base.metadata = { _perfNeverFreeze:true };
+    spawnRebelCoinBurst.base = base;
+  }
+  const coins = [];
+  for (let i = 0; i < count; i++) {
+    const m = spawnRebelCoinBurst.base.createInstance('rebelCoin_' + i);
+    m.isPickable = false; m.position.copyFrom(origin); m.rotation.x = Math.PI / 2;
+    const a = Math.random() * Math.PI * 2, sp = 2.2 + Math.random() * 2.4;
+    coins.push({ m, v: new BABYLON.Vector3(Math.cos(a) * sp, 5.5 + Math.random() * 3.5, Math.sin(a) * sp), spin: 6 + Math.random() * 8, home: .55 + i * .045, done:false });
+  }
+  let t = 0, last = performance.now(), collected = 0;
+  const obs = scene.onBeforeRenderObservable.add(() => {
+    const now = performance.now(), dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
+    const target = charMesh ? charMesh.position.add(new BABYLON.Vector3(0, 1.6, 0)) : origin;
+    for (const c of coins) {
+      if (c.done) continue;
+      c.m.rotation.y += c.spin * dt;
+      if (t < c.home) { c.v.y -= 9.8 * dt; c.m.position.addInPlace(c.v.scale(dt)); if (c.m.position.y < origin.y - 1.2) { c.m.position.y = origin.y - 1.2; c.v.y = Math.abs(c.v.y) * .4; } continue; }
+      const d = target.subtract(c.m.position), dist = d.length();
+      if (dist < .5) { c.done = true; c.m.dispose(); collected++; if (collected % 3 === 1) playProgressionAudio('collectiblePickup'); continue; }
+      c.m.position.addInPlace(d.scale(Math.min(1, (6 + (t - c.home) * 18) * dt / dist)));
+    }
+    if (coins.every(c => c.done) || t > 6) {
+      coins.forEach(c => { if (!c.done) c.m.dispose(); });
+      scene.onBeforeRenderObservable.remove(obs);
+    }
+  });
+  showRebelPointsPop(points);
+}
+
+function showRebelPointsPop(points) {
+  let el = document.getElementById('rebelPointsPop');
+  if (!el) { el = document.createElement('div'); el.id = 'rebelPointsPop'; document.body.appendChild(el); }
+  el.innerHTML = `<b>+${points}</b><span>Rebel Points</span><em>Total ${(Number(ProgressionState.rebelPoints) || 0).toLocaleString('en-US')}</em>`;
+  el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  clearTimeout(showRebelPointsPop._t); showRebelPointsPop._t = setTimeout(() => el.classList.remove('on'), 2600);
+}
+
+// ── Admin: chest tier ──
+function applySelectedChestTier() {
+  if (selectedObject?.metadata?.type !== 'treasure_chest') { showToast('Select a treasure chest first'); return; }
+  const tier = document.getElementById('chestTierInput')?.value || 'wood';
+  recordEditorHistory('chest tier');
+  selectedObject.metadata.chestTier = CHEST_TIERS[tier] ? tier : 'wood';
+  const pos = selectedObject.position.clone(), rot = selectedObject.rotation.clone(), meta = { ...selectedObject.metadata };
+  const name = selectedObject.name;
+  selectedObject.dispose(false, true);
+  const root = spawnAsset('treasure_chest', pos, { isClone:true, ...getDefaultTreasureChestMetadata(meta) });
+  if (root) { root.name = name; root.rotation = rot; registerEditableRoot(root.name, root); setSelectedEditableObject(root); }
+  triggerAutoSave();
+  showToast(`${CHEST_TIERS[tier].label}: ${CHEST_TIERS[tier].points} Rebel points`);
 }
 
 function tryOpenNearbyTreasureChest() {
@@ -20981,12 +21101,13 @@ function collectWorldLayoutData() {
     glowWidth: node.metadata.glowWidth || null,
     glowDepth: node.metadata.glowDepth || null,
     chestId: node.metadata.chestId || null,
+    chestTier: node.metadata.type === 'treasure_chest' ? getChestTier(node.metadata) : null,
     collectibleId: node.metadata.collectibleId || null,
     collectibleType: node.metadata.collectibleType || null,
     collectibleLabel: node.metadata.collectibleLabel || null,
     rewardType: node.metadata.rewardType || null,
     rewardAmount: Number.isFinite(node.metadata.rewardAmount) ? node.metadata.rewardAmount : null,
-    opened: node.metadata.opened === true,
+    opened: node.metadata.type === 'treasure_chest' ? false : node.metadata.opened === true, // looted is per player, never in the layout
     cooldownSeconds: Number.isFinite(node.metadata.cooldownSeconds) ? node.metadata.cooldownSeconds : null,
     requiresWallet: node.metadata.requiresWallet === true,
     villageId: node.metadata.villageId || CURRENT_VILLAGE_ID,
@@ -22086,6 +22207,7 @@ function duplicateSelectedFence(){
     const cloneRoot = spawnAsset("treasure_chest", newPos, {
       isClone: true,
       ...getDefaultTreasureChestMetadata({
+        chestTier: sourceObject.metadata.chestTier,
         rewardType: sourceObject.metadata.rewardType,
         rewardAmount: sourceObject.metadata.rewardAmount,
         cooldownSeconds: sourceObject.metadata.cooldownSeconds,
@@ -30970,6 +31092,7 @@ function applyLayoutItemToExistingNode(node, item) {
     glowWidth: item.glowWidth || null,
     glowDepth: item.glowDepth || null,
     chestId: item.chestId || node.metadata?.chestId || null,
+    chestTier: item.chestTier || null,
     rewardType: item.rewardType || null,
     rewardAmount: Number.isFinite(item.rewardAmount) ? item.rewardAmount : null,
     opened: item.opened === true,
@@ -32203,6 +32326,7 @@ window.previewSmallAntSettingsFromControls = previewSmallAntSettingsFromControls
 window.previewSmallAntAnimationFromControls = previewSmallAntAnimationFromControls;
 window.placeQuestTargetMarker = placeQuestTargetMarker;
 window.placeQuestSpot = placeQuestSpot;
+window.applySelectedChestTier = applySelectedChestTier;
 window.applySelectedQuestSpotSettings = applySelectedQuestSpotSettings;
 window.duplicateSelectedQuestSpot = duplicateSelectedQuestSpot;
 window.createQuestSpot = createQuestSpot;
