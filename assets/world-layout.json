@@ -44397,9 +44397,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 40,
-      "y": 0.5,
-      "z": 60
+      "x": -3,
+      "y": 0.0676,
+      "z": -222
     },
     "rotation": {
       "x": 0,
@@ -44502,9 +44502,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": -50,
-      "y": 0.5,
-      "z": 20
+      "x": 3,
+      "y": 1.0045,
+      "z": 225
     },
     "rotation": {
       "x": 0,
@@ -44607,9 +44607,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 30,
-      "y": 0.5,
-      "z": -70
+      "x": -300,
+      "y": -0.4304,
+      "z": 0
     },
     "rotation": {
       "x": 0,
@@ -46068,9 +46068,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 40,
+      "x": -54,
       "y": 0.1,
-      "z": -30
+      "z": -15
     },
     "rotation": {
       "x": 0,
@@ -46173,9 +46173,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": -90,
+      "x": 96,
       "y": 0.1,
-      "z": 30
+      "z": 15
     },
     "rotation": {
       "x": 0,
@@ -46278,9 +46278,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 95,
-      "y": 0.1,
-      "z": 10
+      "x": 60,
+      "y": 1.4401,
+      "z": -291
     },
     "rotation": {
       "x": 0,
@@ -46383,9 +46383,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": -40,
-      "y": 0.1,
-      "z": -95
+      "x": -165,
+      "y": 1.2946,
+      "z": 165
     },
     "rotation": {
       "x": 0,
@@ -46488,9 +46488,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 60,
-      "y": 0.1,
-      "z": 110
+      "x": -231,
+      "y": -1.3435,
+      "z": -18
     },
     "rotation": {
       "x": 0,
@@ -46593,9 +46593,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": -150,
-      "y": -0.8992,
-      "z": -60
+      "x": 264,
+      "y": 0.565,
+      "z": 141
     },
     "rotation": {
       "x": 0,
@@ -46698,9 +46698,9 @@
     "disableGroundSnap": false,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": -30,
-      "y": -0.3893,
-      "z": 170
+      "x": -12,
+      "y": -1.4284,
+      "z": 297
     },
     "rotation": {
       "x": 0,

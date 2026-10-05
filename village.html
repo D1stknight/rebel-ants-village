@@ -23806,6 +23806,15 @@ function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PA
   return cachedBlockerHit || liveManualCollisionProxyBlocksPoint(x, z, padding);
 }
 
+// Read-only probe for tools (the aerial walk map used to spread chests and collectibles): is a point blocked,
+// is a short step blocked, and how high is the ground there.
+window._walkProbe = {
+  blocked: (x, z) => villagePointBlocked(x, z),
+  step: (x0, z0, x1, z1) => villageSegmentBlocked(x0, z0, x1, z1),
+  ground: (x, z) => getVillageGroundHeightAt(x, z),
+  refresh: () => refreshVillageCollisionBlockersIfNeeded()
+};
+
 function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   const onDeck = villageOnKitDeck(endX, endZ);
   if (!onDeck && window._newTerrain?.decorBlocksPoint(endX, endZ, padding)) return true;
