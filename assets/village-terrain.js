@@ -4,6 +4,48 @@
 // Each village gets a recipe; only the hub has one so far. Loaded by village.html (hub default; ?terrain=old turns it off).
 /* global BABYLON */
 
+// Saints of LA: the city round the Saints' block (placed by the terrain as thin instances): quarter-block lots on every
+// block of the grid, a downtown cluster behind on the left, towers and the sign on the hills, palms, street lights,
+// utility poles and parked cars along the curbs. Grid: streets every 132 m (x) / 144 m (z), 14 m wide, 4 m sidewalks.
+function saintsCity() {
+  const r = (() => { let q = 77; return () => (q = (q * 16807) % 2147483647) / 2147483647; })();
+  const SX = [-198, -66, 66, 198], SZ = [-196, -52, 92, 236], BX = [-132, 0, 132], BZ = [-124, 20, 164];
+  const lots = { sl_lot_a: [], sl_lot_b: [], sl_lot_c: [], sl_lot_d: [] }, towers = { sl_tower_a: [], sl_tower_b: [], sl_tower_c: [] };
+  for (const bx of BX) for (const bz of BZ) {
+    if (bx === 0 && bz === 20) continue; // the Saints' block
+    for (const qx of [-1, 1]) for (const qz of [-1, 1]) {
+      const x = bx + qx * 27.5, z = bz + qz * 30.5, yaw = qz < 0 ? 0 : Math.PI;
+      lots[['sl_lot_a', 'sl_lot_b', 'sl_lot_c', 'sl_lot_d'][Math.floor(r() * 4)]].push([x, z, yaw, 1]);
+    }
+  }
+  // downtown on the skyline, back left beyond the last street
+  for (const [x, z, k, sc] of [[-210, 292, 'sl_tower_b', 1], [-176, 310, 'sl_tower_a', 1.15], [-140, 296, 'sl_tower_c', 1], [-238, 318, 'sl_tower_c', .95], [-112, 318, 'sl_tower_a', .85], [-196, 334, 'sl_tower_a', 1.05], [-150, 336, 'sl_tower_b', 1.2], [-82, 300, 'sl_tower_c', .8], [-262, 296, 'sl_tower_a', .9]]) towers[k].push([x, z, r() * .3, sc]);
+  const nearStreet = (v, S, m) => S.some(s => Math.abs(v - s) < m);
+  const palms = [], tallPalms = [], lights = [], poles = [], cars = { sl_car_blue: [], sl_car_gold: [], sl_car_red: [], sl_car_black: [], sl_car_white: [], sl_car_purple: [] };
+  const carKinds = Object.keys(cars);
+  for (const sx of SX) for (const sd of [-1, 1]) for (let z = -232; z <= 232; z += 24) {
+    if (nearStreet(z, SZ, 15)) continue;
+    (Math.abs(sx) < 100 || r() < .6 ? tallPalms : palms).push([sx + sd * 9.4, z + (r() - .5) * 3, r() * 6.28, .85 + r() * .3]);
+    if ((z / 24 | 0) % 2 === 0) lights.push([sx + sd * 8.6, z + 12, sd < 0 ? -Math.PI / 2 : Math.PI / 2, 1]);
+    if (Math.abs(sx) < 140 && Math.abs(z) < 150 && r() < .55) cars[carKinds[Math.floor(r() * 6)]].push([sx + sd * 5.2, z + 6, sd < 0 ? Math.PI / 2 : -Math.PI / 2, 1]);
+  }
+  for (const sz of SZ) for (const sd of [-1, 1]) for (let x = -232; x <= 232; x += 24) {
+    if (nearStreet(x, SX, 15)) continue;
+    (Math.abs(sz - 20) < 100 || r() < .6 ? tallPalms : palms).push([x + (r() - .5) * 3, sz + sd * 9.4, r() * 6.28, .85 + r() * .3]);
+    if (sd < 0) poles.push([x + 12, sz - 9.8, 0, 1]); else if ((x / 24 | 0) % 2 === 0) lights.push([x + 12, sz + 8.6, Math.PI, 1]);
+    if (Math.abs(x) < 150 && Math.abs(sz - 20) < 160 && r() < .55) cars[carKinds[Math.floor(r() * 6)]].push([x + 6, sz + sd * 5.2, sd < 0 ? 0 : Math.PI, 1]);
+  }
+  const E = (kit, at, o = {}) => ({ kit, at, count: Math.max(1, at.length), minSq: 0, maxSq: 360, road: 0, ...o });
+  return [
+    ...Object.entries(lots).map(([k, at]) => E(k, at, { blockBox: [25, 28] })),
+    ...Object.entries(towers).map(([k, at]) => E(k, at, { sink: 3, blockBox: [16, 16] })),
+    E('sl_hills_sign', [[150, 322, 0, 1.6]], { sink: 1 }),
+    E('sl_palm_tall', tallPalms, { block: .5, cull: 300 }), E('chz_palm', palms, { block: .4, cull: 260 }),
+    E('sl_streetlight', lights, { block: .3, cull: 240 }), E('sl_util_pole', poles, { block: .35, cull: 240 }),
+    ...Object.entries(cars).map(([k, at]) => E(k, at, { blockBox: [3.9, 1.4], cull: 220 }))
+  ];
+}
+
 export const TERRAIN_RECIPES = {
   hub: {
     seed: 1337, dropSeed: 99, drops: 70000,
@@ -644,7 +686,7 @@ export const TERRAIN_RECIPES = {
     flowers: { count: 500, stem: [0.14, 0.26, 0.08], petal: [0.9, 0.28, 0.6] }, // bougainvillea
     pines: { file: 'pine_1.glb', count: 140, scale: [1.0, 1.8], trunk: 0.32, settle: .35, sink: .15 },
     rocks: { file: 'rock_1.glb', count: 120, scale: [1.0, 2.6], body: 0.75, settle: .9, sink: .1, tint: [1.2, 1.12, 1.0], minSq: 262 },
-    extras: [],
+    extras: saintsCity(),
     fog: { density: .0009, day: [.86, .84, .78], night: [.05, .06, .12] },
     light: { sun: 1.05, hemi: .92, tint: [1.0, .93, .8] },
     sky: { turbidity: 5, luminance: 1, rayleigh: 2.0, mieCoefficient: .005 },
@@ -1455,6 +1497,11 @@ async function buildDecor(scene, T, avoid) {
       BABYLON.Quaternion.FromEulerAnglesToRef(0, yaw, 0, q); S.set(s, s, s); P.set(x, y ?? h(x, z) - (spec.sink ?? 0) * s, z);
       BABYLON.Matrix.ComposeToRef(S, q, P, m4); m4.copyToArray(bufs[tile], cnt[tile] * 16); cnt[tile]++; k++;
       if (spec.block) addBlocker(x, z, spec.block * s);
+      if (spec.blockBox) { // [halfX, halfZ] in the piece's own frame: circles of the short half-size covering it
+        const [hx, hz] = spec.blockBox.map(v => v * s), r = Math.min(hx, hz), c = Math.cos(yaw), sn = Math.sin(yaw);
+        const nx = Math.max(1, Math.ceil(hx / r)), nz = Math.max(1, Math.ceil(hz / r));
+        for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) { const lx = -hx + r + (nx > 1 ? i * (2 * hx - 2 * r) / (nx - 1) : hx - r), lz = -hz + r + (nz > 1 ? j * (2 * hz - 2 * r) / (nz - 1) : hz - r); addBlocker(x + lx * c + lz * sn, z - lx * sn + lz * c, r * 1.15); }
+      }
     }
     while (!spec.at && k < spec.count && t < spec.count * 40) {
       t++;
