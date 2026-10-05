@@ -4,7 +4,8 @@
 // Doorways are lit recesses; link a room by adding a Door (admin > Doors) in front of one.
 /* global BABYLON */
 (function () {
-  const TILE = { roof: [1.6, 1.4], roof_brown: [1.6, 1.4], plaster_old: [3, 3], slate: [2.4, 2.4], wood: [1.6, 1.6], darkwood: [1.6, 1.6], plaster: [3, 3], stone: [2.4, 2.4], thatch: [2, 1.6], bark: [1.4, 1.6], earth: [4, 4], shoji: [1.2, 1.5] };
+  const TILE = { roof: [1.6, 1.4], roof_brown: [1.6, 1.4], plaster_old: [3, 3], slate: [2.4, 2.4], wood: [1.6, 1.6], darkwood: [1.6, 1.6], plaster: [3, 3], stone: [2.4, 2.4], thatch: [2, 1.6], bark: [1.4, 1.6], earth: [4, 4], shoji: [1.2, 1.5],
+    facade_apt: [6, 4.6], facade_stucco: [5, 4.6], facade_brick: [6, 4.6], facade_office: [6, 4.2], facade_glass: [4, 4], facade_shop: [8, 5.2], rollup: [3, 3], sl_brick: [2.4, 2.4], stucco: [3, 3], deco: [3, 3] };
   const tileOf = m => TILE[m] || [1, 1];
 
   // ── textures (drawn once on small canvases) ─────────────────────────────
@@ -257,6 +258,71 @@
       c.font = 'italic bold 20px Arial'; c.fillText('RACING', 128, 112); c.strokeStyle = '#ffffff'; c.lineWidth = 4; c.strokeRect(3, 3, W - 6, H - 6);
     });
     T.patch_apechain = cv('patch_apechain', 256, 96, (c, W, H) => { c.fillStyle = '#2062d8'; c.fillRect(0, 0, W, H); c.textAlign = 'center'; c.fillStyle = '#ffffff'; c.font = 'bold 40px Arial'; c.fillText('APECHAIN', 128, 62); c.strokeStyle = '#ffffff'; c.lineWidth = 4; c.strokeRect(5, 5, W - 10, H - 10); });
+    // ── Saints of LA: angel murals, the winged-halo emblem, signs, the court, facades for the city blocks ──
+    const wingFan = (c, x, y, s, dir, col, edge) => { // a spread wing, root at (x, y), sweeping up and out to dir (+1 right / -1 left)
+      c.fillStyle = col; c.strokeStyle = edge; c.lineWidth = 2;
+      for (let row = 2; row >= 0; row--) for (let k = 11; k >= 0; k--) {
+        const t = k / 11, rx = x + dir * s * .8 * t, ry = y - s * .5 * Math.sin(t * Math.PI * .55) + row * s * .07;
+        const L = s * (.18 + .42 * t) * (1 - row * .25), ang = Math.PI / 2 - dir * (.35 + 1.0 * t), cx = rx + Math.cos(ang) * L * .5, cy = ry + Math.sin(ang) * L * .5;
+        c.beginPath(); c.ellipse(cx, cy, L * .5, L * .11, ang, 0, 7); c.fill(); c.stroke();
+      }
+    };
+    const halo = (c, x, y, rx, ry, w, col) => { c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.stroke(); };
+    T.emblem_saints = cv('emblem_saints', 256, 256, (c, W) => { // gold wings rising from a shield under a halo, on navy
+      c.fillStyle = '#16244a'; c.fillRect(0, 0, W, W);
+      halo(c, 128, 58, 46, 14, 9, '#e0b44c');
+      wingFan(c, 118, 150, 120, -1, '#d9aa45', '#8a6420'); wingFan(c, 138, 150, 120, 1, '#d9aa45', '#8a6420');
+      c.fillStyle = '#e8bf58'; c.beginPath(); c.moveTo(128, 100); c.lineTo(150, 130); c.lineTo(128, 214); c.lineTo(106, 130); c.fill();
+    });
+    T.mural_angel = cv('mural_angel', 512, 512, (c, W) => { // a painted angel: blue sky, white wings, gold halo, sunflowers
+      const g = c.createLinearGradient(0, 0, 0, W); g.addColorStop(0, '#2c5ea8'); g.addColorStop(1, '#173a78'); c.fillStyle = g; c.fillRect(0, 0, W, W);
+      for (let k = 0; k < 40; k++) { c.fillStyle = `rgba(255,255,255,${.04 + .05 * (k % 3)})`; c.beginPath(); c.arc((k * 97) % W, (k * 53) % W, 10 + (k % 5) * 6, 0, 7); c.fill(); }
+      wingFan(c, 220, 250, 260, -1, '#f4f1ea', '#9aa4b8'); wingFan(c, 292, 250, 260, 1, '#f4f1ea', '#9aa4b8');
+      c.fillStyle = '#1e3d82'; c.beginPath(); c.moveTo(256, 230); c.lineTo(340, 512); c.lineTo(172, 512); c.fill(); // robe
+      c.fillStyle = '#c0894f'; c.beginPath(); c.ellipse(256, 200, 46, 58, 0, 0, 7); c.fill(); // face
+      c.fillStyle = '#2a1a12'; c.beginPath(); c.ellipse(256, 178, 58, 66, 0, Math.PI, 0); c.fill(); c.fillRect(198, 178, 18, 110); c.fillRect(296, 178, 18, 110); // hair
+      c.fillStyle = '#2a1a12'; for (const x of [238, 274]) { c.beginPath(); c.ellipse(x, 202, 7, 4, 0, 0, 7); c.fill(); }
+      c.strokeStyle = '#8a3a2a'; c.lineWidth = 4; c.beginPath(); c.moveTo(244, 234); c.quadraticCurveTo(256, 240, 268, 234); c.stroke();
+      halo(c, 256, 110, 70, 20, 12, '#f0c050'); halo(c, 256, 200, 110, 110, 6, 'rgba(240,192,80,.55)');
+      for (const [x, y, r] of [[60, 440, 40], [130, 470, 34], [450, 440, 42], [390, 480, 30], [470, 330, 26]]) { // sunflowers
+        c.fillStyle = '#f2b72a'; for (let k = 0; k < 12; k++) { const a = k * .5236; c.beginPath(); c.ellipse(x + Math.cos(a) * r * .7, y + Math.sin(a) * r * .7, r * .35, r * .14, a, 0, 7); c.fill(); }
+        c.fillStyle = '#5a3412'; c.beginPath(); c.arc(x, y, r * .38, 0, 7); c.fill();
+      }
+    });
+    T.mural_wings = cv('mural_wings', 512, 512, (c, W) => { c.fillStyle = '#1b2c5c'; c.fillRect(0, 0, W, W); halo(c, 256, 120, 90, 26, 14, '#e8b84c'); wingFan(c, 236, 300, 300, -1, '#dcac48', '#7a5418'); wingFan(c, 276, 300, 300, 1, '#dcac48', '#7a5418'); });
+    const saintSign = (name, draw) => cv(name, 256, 256, (c, W) => { c.fillStyle = '#16244a'; c.fillRect(0, 0, W, W); c.strokeStyle = '#d9aa45'; c.lineWidth = 8; c.strokeRect(10, 10, W - 20, W - 20); halo(c, 128, 62, 50, 14, 8, '#e8bf58'); c.strokeStyle = '#e8bf58'; c.fillStyle = '#e8bf58'; c.lineWidth = 9; c.lineJoin = 'round'; draw(c); });
+    T.sign_saints_book = saintSign('sign_saints_book', c => { c.beginPath(); c.moveTo(128, 120); c.quadraticCurveTo(84, 104, 44, 118); c.lineTo(44, 200); c.quadraticCurveTo(84, 188, 128, 204); c.quadraticCurveTo(172, 188, 212, 200); c.lineTo(212, 118); c.quadraticCurveTo(172, 104, 128, 120); c.lineTo(128, 204); c.stroke(); });
+    T.sign_saints_game = saintSign('sign_saints_game', c => {
+      c.beginPath(); c.moveTo(70, 120); c.lineTo(186, 120); c.quadraticCurveTo(222, 122, 226, 170); c.quadraticCurveTo(230, 214, 200, 210); c.quadraticCurveTo(184, 206, 172, 186); c.lineTo(84, 186); c.quadraticCurveTo(72, 206, 56, 210); c.quadraticCurveTo(26, 214, 30, 170); c.quadraticCurveTo(34, 122, 70, 120); c.fill();
+      c.fillStyle = '#16244a'; c.fillRect(64, 146, 34, 10); c.fillRect(76, 134, 10, 34); for (const [x, y] of [[176, 140], [196, 156], [156, 156], [176, 172]]) { c.beginPath(); c.arc(x, y, 7, 0, 7); c.fill(); }
+    });
+    T.court_tex = cv('court_tex', 512, 256, (c, W, H) => { // basketball court: blue court, orange keys and centre, white lines
+      c.fillStyle = '#5d6f9c'; c.fillRect(0, 0, W, H); c.fillStyle = '#2e4f9e'; c.fillRect(16, 16, W - 32, H - 32);
+      c.fillStyle = '#d0763a'; c.fillRect(16, 88, 92, 80); c.fillRect(W - 108, 88, 92, 80); c.beginPath(); c.arc(W / 2, H / 2, 30, 0, 7); c.fill();
+      c.strokeStyle = '#f2f2ee'; c.lineWidth = 4; c.strokeRect(16, 16, W - 32, H - 32); c.beginPath(); c.moveTo(W / 2, 16); c.lineTo(W / 2, H - 16); c.stroke();
+      c.beginPath(); c.arc(W / 2, H / 2, 30, 0, 7); c.stroke(); c.strokeRect(16, 88, 92, 80); c.strokeRect(W - 108, 88, 92, 80);
+      for (const [x, s] of [[16, 1], [W - 16, -1]]) { c.beginPath(); c.arc(x + s * 92, H / 2, 40, -Math.PI / 2, Math.PI / 2, s < 0); c.stroke(); c.beginPath(); c.moveTo(x, 30); c.lineTo(x + s * 60, 30); c.arc(x + s * 20, H / 2, 98, -Math.PI / 2 + .25, Math.PI / 2 - .25, s < 0); c.lineTo(x, H - 30); c.stroke(); }
+    });
+    T.garage_int = cv('garage_int', 512, 256, (c, W, H) => { // the shop's back wall: tool chests, shelves, a tyre stack, a neon sign
+      c.fillStyle = '#5c6066'; c.fillRect(0, 0, W, H); c.fillStyle = '#4a4e54'; c.fillRect(0, H * .72, W, H * .28);
+      for (const x of [30, 200, 380]) { c.fillStyle = '#b8262a'; c.fillRect(x, 120, 90, 64); c.fillStyle = '#7a1416'; for (let k = 0; k < 5; k++) c.fillRect(x + 6, 126 + k * 11, 78, 4); }
+      c.fillStyle = '#3a3a3e'; for (const y of [40, 80]) c.fillRect(130, y, 60, 6); c.fillStyle = '#d0a040'; for (let k = 0; k < 6; k++) c.fillRect(134 + k * 9, 62, 6, 18);
+      c.fillStyle = '#1a1a1c'; for (let k = 0; k < 4; k++) { c.beginPath(); c.ellipse(320, 178 - k * 18, 26, 9, 0, 0, 7); c.fill(); }
+      c.fillStyle = '#4fc0ff'; c.font = 'bold 30px Arial'; c.textAlign = 'center'; c.fillText('SAINTS AUTO', 256, 30);
+    });
+    T.arcade_int = cv('arcade_int', 512, 256, (c, W, H) => { c.fillStyle = '#120e22'; c.fillRect(0, 0, W, H); const cols = ['#ff3b8d', '#3be0ff', '#ffd43b', '#7cff5a', '#b25aff']; for (let k = 0; k < 7; k++) { const x = 20 + k * 70; c.fillStyle = '#222'; c.fillRect(x, 70, 50, 150); c.fillStyle = cols[k % 5]; c.fillRect(x + 6, 84, 38, 34); c.fillRect(x, 60, 50, 12); } c.fillStyle = 'rgba(180,90,255,.4)'; c.fillRect(0, 0, W, 24); });
+    T.door_glass = cv('door_glass', 256, 256, (c, W) => { c.fillStyle = '#2a2420'; c.fillRect(0, 0, W, W); const g = c.createLinearGradient(0, 0, 0, W); g.addColorStop(0, '#f0c27a'); g.addColorStop(1, '#a8743c'); c.fillStyle = g; for (const x of [18, 134]) c.fillRect(x, 20, 104, 228); c.fillStyle = 'rgba(60,40,24,.5)'; c.fillRect(40, 150, 60, 98); c.fillRect(160, 120, 40, 128); c.fillStyle = '#c9a050'; for (const x of [112, 140]) c.fillRect(x, 120, 6, 40); c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(18, 20, 30, 228); c.fillRect(134, 20, 30, 228); });
+    T.rollup = cv('rollup', 128, 128, (c, W) => { c.fillStyle = '#9aa0a6'; c.fillRect(0, 0, W, W); c.fillStyle = '#7d838a'; for (let y = 0; y < W; y += 8) c.fillRect(0, y, W, 3); }); T.rollup.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
+    // facades for the city blocks (one tile = one bay of one storey; TILE gives its size in metres)
+    const facade = (name, wall, glass, draw) => { const t = cv(name, 256, 256, (c, W) => { c.fillStyle = wall; c.fillRect(0, 0, W, W); draw(c, W, glass); }); t.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE; return t; };
+    const sash = (c, x, y, w, h, glass, frame) => { c.fillStyle = frame; c.fillRect(x - 5, y - 5, w + 10, h + 12); c.fillStyle = glass; c.fillRect(x, y, w, h); c.fillStyle = 'rgba(255,255,255,.12)'; c.fillRect(x, y, w * .4, h); c.fillStyle = frame; c.fillRect(x + w / 2 - 2, y, 4, h); };
+    T.facade_apt = facade('facade_apt', '#d8c4a2', '#3b4a5a', (c, W, g) => { for (const x of [36, 146]) sash(c, x, 70, 74, 110, g, '#f0e6d4'); });
+    T.facade_stucco = facade('facade_stucco', '#e6d7ba', '#33465c', (c, W, g) => { sash(c, 60, 64, 136, 104, g, '#f6efe2'); c.fillStyle = 'rgba(0,0,0,.06)'; c.fillRect(0, 236, W, 20); });
+    T.facade_brick = facade('facade_brick', '#9a4e36', '#2e3a48', (c, W, g) => { c.fillStyle = 'rgba(0,0,0,.15)'; for (let y = 0; y < W; y += 12) { c.fillRect(0, y, W, 2); for (let x = (y / 12 % 2) * 14; x < W; x += 28) c.fillRect(x, y, 2, 12); } for (const x of [40, 150]) { c.fillStyle = '#d8cbb4'; c.fillRect(x - 6, 52, 78, 8); sash(c, x, 62, 66, 120, g, '#5a2a1c'); } });
+    T.facade_office = facade('facade_office', '#b8b6b0', '#2c3e56', (c, W, g) => { c.fillStyle = g; c.fillRect(0, 70, W, 120); c.fillStyle = 'rgba(255,255,255,.15)'; c.fillRect(0, 70, W, 30); c.fillStyle = '#9a9890'; for (let x = 0; x < W; x += 64) c.fillRect(x, 70, 6, 120); });
+    T.facade_glass = facade('facade_glass', '#3c5878', '#5e86ad', (c, W) => { for (let y = 0; y < W; y += 64) for (let x = 0; x < W; x += 64) { c.fillStyle = (x * 7 + y * 3) % 5 ? '#4f7398' : '#7da2c4'; c.fillRect(x + 3, y + 3, 58, 58); } c.fillStyle = '#9fb4c8'; for (let x = 0; x < W; x += 64) c.fillRect(x, 0, 3, W); for (let y = 0; y < W; y += 64) c.fillRect(0, y, W, 3); });
+    T.facade_shop = facade('facade_shop', '#cdbb98', '#2f3f52', (c, W, g) => { c.fillStyle = g; c.fillRect(14, 50, 228, 150); c.fillStyle = 'rgba(255,220,150,.35)'; c.fillRect(14, 120, 228, 80); c.fillStyle = '#5a4a36'; for (const x of [14, 128, 236]) c.fillRect(x, 50, 6, 150); });
+    T.parking = cv('parking', 256, 256, (c, W) => { c.fillStyle = '#3a3a3c'; c.fillRect(0, 0, W, W); c.fillStyle = '#d8d8d0'; for (let x = 0; x < W; x += 32) { c.fillRect(x, 0, 4, 100); c.fillRect(x, 156, 4, 100); } });
     const tt = noise(S, 2, 3, 41); // tatami: woven rush, a black cloth border
     T.tatami = pixelTex(scene, 'tatami', S, (x, y, i) => { const e = Math.min(x, 1 - x, y, 1 - y); if (e < .025) return [26, 24, 20]; const f = (.84 + .1 * Math.sin(y * S * 2.2) + .08 * tt[i]); return [184 * f, 168 * f, 104 * f]; });
     const mp = noise(S, 4, 4, 42); // the campaign map on the dojo's table: land, hills, a river
@@ -398,6 +464,17 @@
     cap_blue: { col: [.1, .33, .78] }, cap_logo: { tex: 'cap_logo' }, hat_white: { col: [.9, .89, .86] }, patch_apechain: { tex: 'patch_apechain' },
     glass_dark: { col: [.03, .035, .04], spec: [.9, .9, .9], power: 90 }, peng_blue: { col: [.42, .6, .9] }, peng_white: { col: [.95, .95, .95] }, peng_beak: { col: [.95, .6, .12] },
     ...Object.fromEntries(Object.entries(APE_LOOK).flatMap(([id, o]) => [['fur_' + id, { tex: 'fur', tint: hex3(o.fur, 1 / .85) }], ['skin_' + id, { col: hex3(o.skin) }], ['face_' + id, { tex: 'face_' + id }], ['muzzle_' + id, { tex: 'muzzle_' + id }], ['torso_' + id, { tex: 'torso_' + id }]])),
+    deco: { tex: 'plaster', tint: [1.04, .98, .88] }, deco_trim: { col: [.86, .82, .72] }, navy: { col: [.07, .11, .25], spec: [.2, .2, .3], power: 30 },
+    emblem_saints: { tex: 'emblem_saints' }, mural_angel: { tex: 'mural_angel' }, mural_wings: { tex: 'mural_wings' }, sign_saints_book: { tex: 'sign_saints_book', em: [.12, .1, .06] }, sign_saints_game: { tex: 'sign_saints_game', em: [.12, .1, .06] },
+    court_tex: { tex: 'court_tex' }, door_glass: { tex: 'door_glass', em: [.55, .45, .3] }, garage_int: { tex: 'garage_int', em: [.28, .28, .28] }, arcade_int: { tex: 'arcade_int', em: [.7, .6, .8] }, rollup: { tex: 'rollup' },
+    facade_apt: { tex: 'facade_apt' }, facade_stucco: { tex: 'facade_stucco' }, facade_brick: { tex: 'facade_brick' }, facade_office: { tex: 'facade_office' }, facade_glass: { tex: 'facade_glass', spec: [.6, .6, .7], power: 60 }, facade_shop: { tex: 'facade_shop' }, parking: { tex: 'parking' },
+    sl_brick: { tex: 'brick' }, stucco: { tex: 'plaster', tint: [1.02, .9, .74] }, concrete: { col: [.6, .58, .55] }, concrete_dark: { col: [.36, .37, .39] }, dark_panel: { col: [.14, .14, .16] }, roof_flat: { col: [.42, .41, .4] },
+    win_dark: { col: [.06, .08, .12], spec: [.8, .8, .85], power: 64 }, win_lit: { col: [.9, .76, .48], em: [.5, .38, .18] },
+    tire: { col: [.04, .04, .045] }, chrome: { col: [.78, .78, .8], spec: [1, 1, 1], power: 90 }, glass_car: { col: [.07, .1, .14], spec: [.9, .9, .9], power: 80 }, tail: { col: [.7, .05, .05], em: [.35, .02, .02] }, headlamp: { col: [.95, .92, .8], em: [.4, .38, .3] },
+    paint_blue: { col: [.06, .17, .5], spec: [.9, .9, .95], power: 70 }, paint_gold: { col: [.66, .5, .18], spec: [.9, .85, .6], power: 70 }, paint_red: { col: [.5, .05, .06], spec: [.9, .9, .9], power: 70 },
+    paint_black: { col: [.035, .035, .04], spec: [.9, .9, .9], power: 70 }, paint_white: { col: [.82, .82, .8], spec: [.9, .9, .9], power: 70 }, paint_purple: { col: [.3, .1, .4], spec: [.9, .9, .9], power: 70 },
+    metal: { col: [.52, .53, .55], spec: [.5, .5, .5], power: 30 }, canopy: { col: [.92, .91, .87] }, orange: { col: [.95, .5, .1] }, lime: { col: [.42, .68, .2] }, red_fruit: { col: [.72, .1, .08] },
+    blue_lift: { col: [.14, .28, .68] }, hoop_orange: { col: [.9, .35, .08] }, backboard: { col: [.93, .93, .92] }, sign_letter: { col: [.94, .94, .92] }, awning_red: { col: [.62, .12, .1] }, awning_green: { col: [.14, .4, .26] },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
@@ -992,6 +1069,61 @@
       M.sphere(sk, [x - sd * .13, -.22, .05], .05, 1, 5, 3);
     }
   }
+
+  // ── Saints of LA (friend collection): a city block. Fronts face -y. Storeys ~4.6 m (the Rebels are ~3.4 m tall) ──
+  // windows on a wall facing -y (face -1) / +y (face 1): nx bays from x0 to x1, storeys from z0 every sh; a share lit at night
+  function slWin(M, face, yW, x0, x1, nx, z0, storeys, sh, w, h, lit = .3, seed = 1) {
+    for (let s = 0; s < storeys; s++) for (let i = 0; i < nx; i++) {
+      const x = x0 + (i + .5) * (x1 - x0) / nx, z = z0 + s * sh, on = ((i * 7 + s * 13 + seed * 5) % 10) / 10 < lit;
+      M.block(on ? 'win_lit' : 'win_dark', x, yW + face * .04, z, w, .1, h); M.block('deco_trim', x, yW + face * .1, z - .25, w + .4, .22, .25);
+    }
+  }
+  function slWinX(M, face, xW, y0, y1, ny, z0, storeys, sh, w, h, lit = .3, seed = 1) {
+    for (let s = 0; s < storeys; s++) for (let i = 0; i < ny; i++) {
+      const y = y0 + (i + .5) * (y1 - y0) / ny, z = z0 + s * sh, on = ((i * 5 + s * 11 + seed * 3) % 10) / 10 < lit;
+      M.block(on ? 'win_lit' : 'win_dark', xW + face * .04, y, z, .1, w, h); M.block('deco_trim', xW + face * .1, y, z - .25, .22, w + .4, .25);
+    }
+  }
+  const slAC = (M, pts, z) => { for (const [x, y] of pts) { M.block('metal', x, y, z, 2.4, 1.7, 1.3); M.cyl('iron', [x, y, z + 1.3], .55, .08, 8); } };
+  // a wall picture on a face: face 'front' (-y), 'left' (-x), 'right' (+x); u runs left to right as seen from outside
+  function slPic(M, m, face, a, b, z0, z1, d) {
+    if (face === 'front') M.quad(m, [[a, d, z0], [b, d, z0], [b, d, z1], [a, d, z1]]);
+    else if (face === 'right') M.quad(m, [[d, a, z0], [d, b, z0], [d, b, z1], [d, a, z1]]);
+    else M.quad(m, [[d, b, z0], [d, a, z0], [d, a, z1], [d, b, z1]]);
+  }
+  function slShrubs(M, x, y, z, n, s = 1) { for (let k = 0; k < n; k++) blob(M, 'leaves', [x + (k - (n - 1) / 2) * .9 * s, y + Math.sin(k * 2.1) * .2, z + .4 * s], .6 * s, .55 * s, .6 * s, { amp: .25, freq: 2, seed: k + 3, segs: 7, rings: 4 }); }
+  function slPlanter(M, x, y, z, L, flowers) {
+    M.block('concrete', x, y, z, L, 1.3, .9); M.block('earth', x, y, z + .9, L - .3, 1.0, .05);
+    slShrubs(M, x, y, z + .8, Math.max(2, Math.round(L / 1.1)), .9);
+    if (flowers) for (let k = 0; k < Math.round(L); k++) M.sphere('flower_pink', [x - L / 2 + .5 + k, y - .45, z + 1.25], .18, .8, 5, 3);
+  }
+  // a classic sedan along x (front -x), lowered (gold spokes) or stock; paint = material
+  function slCar(M, paint, low) {
+    const L = 7.6, Wd = 2.7, z0 = low ? .34 : .52, hw = Wd / 2;
+    M.block(paint, 0, 0, z0, L, Wd, .95); M.block(paint, .2, 0, z0 + .95, L - .6, Wd - .08, .14);
+    const cz = z0 + 1.09, top = cz + 1.0, P = (x, y, z) => [x, y, z];
+    const b0 = -1.2, b1 = 2.3, t0 = -.55, t1 = 1.75, wb = hw - .06, wt = hw - .32;
+    M.quad(paint, [P(t0, -wt, top), P(t1, -wt, top), P(t1, wt, top), P(t0, wt, top)]);
+    M.poly('glass_car', [P(b0, wb, cz), P(b0, -wb, cz), P(t0, -wt, top), P(t0, wt, top)]);           // windshield
+    M.poly('glass_car', [P(b1, -wb, cz), P(b1, wb, cz), P(t1, wt, top), P(t1, -wt, top)]);           // rear window
+    for (const s of [-1, 1]) M.poly('glass_car', s < 0 ? [P(b0, -wb, cz), P(b1, -wb, cz), P(t1, -wt, top), P(t0, -wt, top)] : [P(b1, wb, cz), P(b0, wb, cz), P(t0, wt, top), P(t1, wt, top)]);
+    for (const x of [-2.55, 2.55]) for (const s of [-1, 1]) {
+      M.tube('tire', [x, s * (hw - .42), .52], [x, s * (hw + .02), .52], .55, .55, 12);
+      M.tube(low ? 'gold' : 'chrome', [x, s * (hw + .02), .52], [x, s * (hw + .05), .52], .36, .36, 10);
+    }
+    for (const x of [-L / 2 - .08, L / 2 + .08]) M.block('chrome', x, 0, z0 + .12, .2, Wd + .1, .3);
+    for (const s of [-1, 1]) { M.block('headlamp', -L / 2 - .02, s * (hw - .45), z0 + .55, .06, .5, .3); M.block('tail', L / 2 + .02, s * (hw - .4), z0 + .5, .06, .45, .25); }
+    M.block('chrome', 0, -hw - .02, z0 + .6, L - 1, .04, .08); M.block('chrome', 0, hw + .02, z0 + .6, L - 1, .04, .08);
+  }
+  // city filler: one quarter of a block (50 x 56), buildings round a parking lot; face -y to the street
+  function slBuilding(M, fac, x, y, w, d, h, ac = 2) {
+    M.block(fac, x, y, 0, w, d, h); M.block('roof_flat', x, y, h, w + .4, d + .4, .5);
+    slAC(M, [...Array(ac)].map((_, k) => [x - w / 3 + k * w / (ac + 1) + 2, y + (k % 2 ? 2 : -2)]), h + .5);
+  }
+  // letters for the hillside sign (stroke boxes in a 6 x 9 cell)
+  const SL_FONT = { H: [[0, 0, 1.3, 9], [4.7, 0, 6, 9], [0, 3.85, 6, 5.15]], O: [[0, 0, 1.3, 9], [4.7, 0, 6, 9], [0, 0, 6, 1.3], [0, 7.7, 6, 9]], L: [[0, 0, 1.3, 9], [0, 0, 6, 1.3]],
+    Y: [[2.35, 0, 3.65, 4.8], ['d', 3, 4.6, .55, 9], ['d', 3, 4.6, 5.45, 9]], W: [['d', .5, 9, 1.7, 0], ['d', 1.7, 0, 3, 6.2], ['d', 3, 6.2, 4.3, 0], ['d', 4.3, 0, 5.5, 9]],
+    D: [[0, 0, 1.3, 9], [0, 0, 4.4, 1.3], [0, 7.7, 4.4, 9], [4.7, 1.6, 6, 7.4], ['d', 4.2, .65, 5.35, 1.9], ['d', 4.2, 8.35, 5.35, 7.1]] };
 
   // ── buildings ───────────────────────────────────────────────────────────
   const B = {
@@ -2468,6 +2600,167 @@
     });
     return (templates[type] = meshes);
   }
+  Object.assign(B, {
+    // the Saints HQ (images 1-4): art-deco, cream stone with navy pilasters, a stepped central tower standing proud of
+    // the front with the gold winged-halo emblem, the entrance under a navy canopy, three storeys, AC units on the roof
+    sl_hq(M) {
+      const W = 44, D = 22, H = 15, yF = -D / 2, ty = yF + 5;
+      M.block('concrete', 0, 0, 0, W + .6, D + .6, .8); M.block('deco', 0, 0, 0, W, D, H);
+      M.block('deco_trim', 0, 0, H, W + .8, D + .8, .6); M.block('deco', 0, 0, H + .6, W - 1, D - 1, .9);
+      M.block('deco', 0, ty, 0, 16, 12, 19); M.block('deco_trim', 0, ty, 19, 16.6, 12.6, .4); M.block('deco', 0, ty, 19.4, 12, 10, 2.6); M.block('deco', 0, ty, 22, 8, 8, 2.2); M.block('deco', 0, ty, 24.2, 4, 6, 1.8);
+      for (const sd of [-1, 1]) { M.block('navy', sd * 5.6, yF - 1.07, 5.6, 1.3, .16, 12.8); M.block('deco_trim', sd * 7.7, yF - 1.06, 0, .7, .2, 19); M.block('deco', sd * 4.6, ty - 4.6, 19.4, 1.2, 1.4, 4.2); }
+      M.quad('emblem_saints', [[-3.8, yF - 1.1, 9.4], [3.8, yF - 1.1, 9.4], [3.8, yF - 1.1, 17.2], [-3.8, yF - 1.1, 17.2]]);
+      for (const x of [-1.3, 1.3]) M.block('win_dark', x, yF - 1.06, 17.8, .9, .1, 3.6);
+      M.block('door_glass', 0, yF - 1.04, .8, 6.4, .1, 5.1); M.block('navy', 0, yF - 1.06, 5.9, 7.6, .2, 2.4);
+      M.quad('emblem_saints', [[-1, yF - 1.18, 6.2], [1, yF - 1.18, 6.2], [1, yF - 1.18, 7.9], [-1, yF - 1.18, 7.9]]);
+      M.block('navy', 0, yF - 2.7, 5.7, 9, 3.3, .45); M.block('gold', 0, yF - 4.36, 5.7, 9.2, .14, .5);
+      for (const sd of [-1, 1]) { M.block('iron', sd * 4.7, yF - 1.4, 3.7, .3, .5, 1); M.block('lantern', sd * 4.7, yF - 1.6, 3, .5, .5, .8); }
+      M.quad('glow', [[-6, yF - 7, .06], [6, yF - 7, .06], [6, yF - 1, .06], [-6, yF - 1, .06]]);
+      slWin(M, -1, yF, -21, -8.6, 3, 1.6, 3, 4.6, 2.3, 3, .3, 1); slWin(M, -1, yF, 8.6, 21, 3, 1.6, 3, 4.6, 2.3, 3, .3, 2);
+      for (const x of [-21.7, -12.9, 12.9, 21.7]) M.block('navy', x, yF - .08, 1.2, .9, .16, 13.4);
+      for (const sd of [-1, 1]) slWinX(M, sd, sd * W / 2, -8, 8, 4, 1.6, 3, 4.6, 2.2, 3, .3, sd + 4);
+      slWin(M, 1, D / 2, -20, 20, 8, 1.6, 3, 4.6, 2.2, 3, .2, 7);
+      slAC(M, [[-16, 4], [-10, 6], [12, 5], [17, 2], [3, 8]], H + 1.5);
+    },
+    // the arena (images 1, 4): a round hall, angel murals and gold wings all round, a ribbed low dome, the portal
+    sl_arena(M) {
+      const R = 17, H = 11, segs = 32;
+      lathe(M, 'concrete', [[R + .5, 0], [R + .5, .9], [R, .9], [R, H], [R + .7, H], [R + .7, H + .9]], segs);
+      lathe(M, 'concrete', [[R + .3, H + .9], [R - 2, H + 1.7], [R - 7, H + 3.3], [R - 12, H + 4.3], [3.4, H + 4.9], [3.4, H + 5.5], [0, H + 5.7]], segs);
+      for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; M.rod('concrete', [Math.cos(a) * (R + .2), Math.sin(a) * (R + .2), H + 1], [Math.cos(a) * 3.6, Math.sin(a) * 3.6, H + 5.1], .35, 5); }
+      const rr = (R + .1) / Math.cos(Math.PI / 18) + .08;
+      for (let k = 0; k < 12; k++) {
+        const a0 = (k * 30 + 5) / 180 * Math.PI, a1 = a0 + 20 / 180 * Math.PI, mid = (a0 + a1) / 2;
+        if (Math.abs(Math.sin(mid) + 1) < .2) continue; // the portal (front)
+        if (Math.abs(Math.cos(mid)) > .97) { M.quad('rollup', [[Math.cos(a0) * rr, Math.sin(a0) * rr, .9], [Math.cos(a1) * rr, Math.sin(a1) * rr, .9], [Math.cos(a1) * rr, Math.sin(a1) * rr, 5.4], [Math.cos(a0) * rr, Math.sin(a0) * rr, 5.4]]); continue; }
+        M.quad(k % 2 ? 'mural_wings' : 'mural_angel', [[Math.cos(a0) * rr, Math.sin(a0) * rr, 1.6], [Math.cos(a1) * rr, Math.sin(a1) * rr, 1.6], [Math.cos(a1) * rr, Math.sin(a1) * rr, 9.8], [Math.cos(a0) * rr, Math.sin(a0) * rr, 9.8]]);
+      }
+      M.block('concrete', 0, -R - .3, 0, 11, 3.4, 8); M.block('deco_trim', 0, -R - .3, 8, 11.6, 3.8, .4);
+      M.block('door_glass', 0, -R - 2.02, .6, 6.4, .1, 5); M.block('navy', 0, -R - 2.06, 5.8, 9, .14, 2);
+      M.quad('emblem_saints', [[-1, -R - 2.16, 5.9], [1, -R - 2.16, 5.9], [1, -R - 2.16, 7.7], [-1, -R - 2.16, 7.7]]);
+      M.quad('glow', [[-6, -R - 8, .06], [6, -R - 8, .06], [6, -R - 2, .06], [-6, -R - 2, .06]]);
+    },
+    // the library (images 1, 2): red brick, two storeys, arched upper windows, lit shop windows full of books, the
+    // book-under-a-halo sign, an angel mural on the left wall, ivy on the corner
+    sl_library(M) {
+      const W = 22, D = 16, H = 11, yF = -D / 2;
+      M.block('sl_brick', 0, 0, 0, W, D, H); M.block('deco_trim', 0, 0, H, W + .6, D + .6, .5); M.block('sl_brick', 0, 0, H + .5, W - .4, D - .4, .8);
+      M.block('deco_trim', 0, 0, 5.2, W + .3, D + .3, .3);
+      for (const x of [-6.6, 6.6]) { M.block('books', x, yF - .05, .8, 5.6, .1, 3.8); M.block('darkwood', x, yF - .1, .5, 6, .2, .3); M.block('darkwood', x, yF - .1, 4.6, 6, .2, .3); M.block('darkwood', x, yF - .12, .8, .2, .2, 3.8); }
+      M.block('door_glass', 0, yF - .05, 0, 3.4, .1, 4.4); M.block('darkwood', 0, yF - .12, 4.4, 4, .24, .4);
+      for (const x of [-8.4, -5, 5, 8.4]) { M.poly('win_dark', archPts(x, yF - .05, 6.2, 2.2, 3.8).reverse()); M.block('deco_trim', x, yF - .1, 5.95, 2.6, .2, .25); }
+      M.quad('sign_saints_book', [[-2.3, yF - .12, 6], [2.3, yF - .12, 6], [2.3, yF - .12, 10.4], [-2.3, yF - .12, 10.4]]);
+      slPic(M, 'mural_angel', 'left', -7, 7, .8, 10.4, -W / 2 - .06);
+      slWinX(M, 1, W / 2, -6, 6, 3, 6.2, 1, 4, 2, 3, .4, 2); slWin(M, 1, D / 2, -8, 8, 4, 6.2, 1, 4, 2, 3, .3, 3);
+      for (let k = 0; k < 9; k++) blob(M, 'leaves', [W / 2 + .2, yF + .2 + (k % 3) * .5, 1 + k * 1.1], .45, .45, .7, { amp: .3, freq: 2.2, seed: k, segs: 6, rings: 4 });
+      slAC(M, [[-5, 2], [4, -1]], H + 1.3);
+    },
+    // the game hall (images 1, 2): charcoal panels, a wall of glass upstairs, arcade cabinets glowing behind the
+    // ground-floor windows, the controller-under-a-halo sign, an angel mural on the right wall
+    sl_game_hall(M) {
+      const W = 26, D = 16, H = 11, yF = -D / 2;
+      M.block('dark_panel', 0, 0, 0, W, D, H); M.block('metal', 0, 0, H, W + .5, D + .5, .5);
+      for (const x of [-7.5, 7.5]) { M.block('arcade_int', x, yF - .05, .8, 7, .1, 3.8); M.block('metal', x, yF - .1, 4.6, 7.4, .2, .25); }
+      M.block('door_glass', 0, yF - .05, 0, 3.6, .1, 4.4);
+      for (let i = 0; i < 8; i++) { const x = -11.4 + i * 3.26; if (Math.abs(x) < 3) continue; M.block(i % 3 ? 'win_dark' : 'win_lit', x, yF - .05, 5.8, 2.9, .1, 4.4); M.block('metal', x + 1.55, yF - .1, 5.8, .14, .18, 4.4); }
+      M.quad('sign_saints_game', [[-2.6, yF - .12, 5.8], [2.6, yF - .12, 5.8], [2.6, yF - .12, 10.6], [-2.6, yF - .12, 10.6]]);
+      slPic(M, 'mural_angel', 'right', -7, 7, .8, 10.4, W / 2 + .06);
+      slWin(M, 1, D / 2, -10, 10, 5, 6, 1, 4, 2.4, 3, .3, 5); slWinX(M, -1, -W / 2, -6, 6, 3, 6, 1, 4, 2, 3, .3, 6);
+      slAC(M, [[-7, 3], [2, -2], [8, 4]], H + .5);
+    },
+    // the auto shop (images 1, 2): three open bays with lifts, tool chests along the back, a gold-wings mural between
+    // the bays, planters on the roof. Fronts face -y; the cars are placed separately (sl_car_*)
+    sl_garage(M) {
+      const W = 34, D = 16, H = 7, yF = -D / 2;
+      M.block('concrete_dark', 0, D / 2 - .3, 0, W, .6, H); for (const sd of [-1, 1]) M.block('concrete_dark', sd * (W / 2 - .3), 0, 0, .6, D, H);
+      M.block('concrete', 0, 0, H - .5, W + .4, D + .4, .6); M.block('concrete_dark', 0, 0, .02, W - 1, D - 1, .05);
+      for (const [a, b] of [[-17, -15.2], [-6.8, -4.2], [4.2, 6.8], [15.2, 17]]) M.block('concrete_dark', (a + b) / 2, yF + .3, 0, b - a, .6, H - .5);
+      M.block('navy', 0, yF + .3, 5.6, W, .66, .9);
+      M.quad('garage_int', [[-W / 2 + .7, D / 2 - .62, .1], [W / 2 - .7, D / 2 - .62, .1], [W / 2 - .7, D / 2 - .62, 5.6], [-W / 2 + .7, D / 2 - .62, 5.6]]);
+      for (const x of [-5.5, 5.5]) slPic(M, 'mural_wings', 'front', x - 1.2, x + 1.2, .6, 5.2, yF - .02);
+      for (const x of [-11, 11]) for (const sd of [-1, 1]) { M.block('blue_lift', x + sd * 3.4, -1, 0, .4, .4, 4.2); M.block('blue_lift', x + sd * 2.4, -1, 1.8, 2, .25, .2); }
+      for (let k = 0; k < 5; k++) M.block('window_glow', -14 + k * 7, 0, H - .52, 3, .3, .04);
+      for (const x of [-12, 0, 12]) slPlanter(M, x, 2, H + .1, 6, k => k);
+    },
+    // apartments (image 1): warm stucco, three storeys, balconies with iron rails and pots, the side stair
+    sl_apartments(M) {
+      const W = 30, D = 14, S = 4.6, H = S * 3, yF = -D / 2;
+      M.block('stucco', 0, 0, 0, W, D, H); M.block('deco_trim', 0, 0, H, W + .5, D + .5, .5);
+      for (let u = 0; u < 3; u++) { const x = -10 + u * 10; M.block('darkwood', x - 2, yF - .05, 0, 1.6, .1, 3.2); M.block('win_dark', x + 1.8, yF - .05, 1.2, 3, .1, 2); }
+      slWin(M, -1, yF, -15, 15, 6, S + 1.2, 2, S, 2.2, 2.4, .35, 4);
+      for (let s = 1; s < 3; s++) for (let u = 0; u < 3; u++) {
+        const x = -10 + u * 10, z = s * S;
+        M.block('concrete', x, yF - .9, z - .3, 7, 1.8, .3);
+        for (let i = 0; i <= 10; i++) M.rod('iron', [x - 3.4 + i * .68, yF - 1.75, z], [x - 3.4 + i * .68, yF - 1.75, z + 1.1], .03, 3);
+        M.block('iron', x, yF - 1.75, z + 1.1, 7, .08, .08);
+        slShrubs(M, x + 2.4, yF - 1.2, z, 2, .6);
+      }
+      for (let s = 0; s < 3; s++) { const z = s * S; M.box('concrete', [W / 2 + 1.1, (s % 2 ? 1 : -1) * 2.5, z + S / 2], [2, 6, .3], 0, (s % 2 ? -1 : 1) * Math.atan2(S, 6)); M.block('concrete', W / 2 + 1.1, (s % 2 ? -1 : 1) * 5.4, z + S - .3, 2, 2, .3); }
+      for (const sd of [-1, 1]) slWinX(M, sd, sd * W / 2, -5, 5, 2, 1.2, 3, S, 2, 2.4, .3, sd + 8);
+      slAC(M, [[-8, 2], [6, -1]], H + .5);
+    },
+    // the market tent (images 1, 2): a white canopy over tables of oranges, greens and tomatoes
+    sl_market(M) {
+      const s = 3.2, z = 3.6;
+      for (const [x, y] of [[-s, -s], [s, -s], [s, s], [-s, s]]) M.cyl('metal', [x, y, 0], .08, z, 6);
+      const T = [0, 0, z + 1.6], C = [[-s - .3, -s - .3, z], [s + .3, -s - .3, z], [s + .3, s + .3, z], [-s - .3, s + .3, z]];
+      for (let k = 0; k < 4; k++) M.poly('canopy', [C[k], C[(k + 1) % 4], T]);
+      for (const [x, y, w] of [[0, -1.6, 5], [0, 1.8, 5]]) {
+        M.block('wood', x, y, .85, w, 1.4, .1); for (const sx of [-1, 1]) M.block('wood', x + sx * (w / 2 - .2), y, 0, .15, 1.2, .85);
+        for (let i = 0; i < 4; i++) { const cx = x - w / 2 + .7 + i * 1.2; M.block('wood', cx, y, .95, 1, 1, .35); const m = ['orange', 'lime', 'red_fruit', 'orange'][i]; for (let k = 0; k < 6; k++) M.sphere(m, [cx - .3 + (k % 3) * .3, y - .25 + Math.floor(k / 3) * .5, 1.38], .16, 1, 6, 4); }
+      }
+      for (let k = 0; k < 3; k++) M.block('wood', 3.8, -2 + k * 1.2, 0, 1, 1, .5 + (k % 2) * .5);
+    },
+    // the basketball court (images 1, 2, 4): painted court on the plaza, a hoop at each end
+    sl_court(M) {
+      M.quad('court_tex', [[-15, -8, .04], [15, -8, .04], [15, 8, .04], [-15, 8, .04]]);
+      for (const sd of [-1, 1]) {
+        M.cyl('metal', [sd * 16, 0, 0], .16, 4.7, 8); M.rod('metal', [sd * 16, 0, 4.5], [sd * 14.7, 0, 4.5], .1, 6);
+        M.block('backboard', sd * 14.6, 0, 3.9, .1, 1.9, 1.2); M.tube('hoop_orange', [sd * 14.1, 0, 4.0], [sd * 14.1, 0, 4.05], .32, .32, 12, false);
+      }
+    },
+    // a tall Washingtonia palm (~20 m): thin ringed trunk, the brown skirt of dead fronds, a small fan crown
+    sl_palm_tall(M) {
+      const T = [1.1, .2, 20];
+      curveTube(M, 'palm_bark', [[0, 0, -.2], [.25, .05, 7], [.65, .12, 14], [T[0], T[1], T[2]]], [.42, .33, .28, .26], { segs: 7, n: 4, ridge: .05, bump: .05, k: 3, seed: 7 });
+      blob(M, 'bark', [T[0], T[1], T[2] - .9], .5, .5, 1.1, { amp: .25, freq: 2.4, seed: 4, segs: 8, rings: 5 });
+      for (let k = 0; k < 13; k++) {
+        const a = k / 13 * Math.PI * 2, d = [Math.cos(a), Math.sin(a)], L = 2.6 + .4 * Math.sin(k * 1.7), up = .6 + .4 * Math.cos(k * 2.3);
+        leafStrip(M, 'palm_leaf', f => [T[0] + d[0] * L * f, T[1] + d[1] * L * f, T[2] + up * 1.4 * f * (1 - f) * 2 - .8 * f * f * f], f => .55 * Math.sin(Math.PI * Math.min(1, f * 1.1 + .1)), d, .2, 4);
+      }
+    },
+    sl_car_blue(M) { slCar(M, 'paint_blue', true); }, sl_car_gold(M) { slCar(M, 'paint_gold', true); }, sl_car_red(M) { slCar(M, 'paint_red', false); },
+    sl_car_black(M) { slCar(M, 'paint_black', false); }, sl_car_white(M) { slCar(M, 'paint_white', false); }, sl_car_purple(M) { slCar(M, 'paint_purple', true); },
+    sl_streetlight(M) { M.cyl('metal', [0, 0, 0], .2, 8.4, 8, .12); M.rod('metal', [0, 0, 8.2], [0, -2.4, 8.5], .08, 5); M.block('metal', 0, -2.6, 8.15, .7, .9, .35); M.block('lantern', 0, -2.6, 8.05, .55, .7, .12); M.quad('glow', [[-3, -5.6, .06], [3, -5.6, .06], [3, .4, .06], [-3, .4, .06]]); },
+    sl_util_pole(M) { M.cyl('bark', [0, 0, -.3], .26, 11.6, 7, .2); M.block('darkwood', 0, 0, 10.2, 3.6, .2, .2); for (const x of [-1.5, 0, 1.5]) M.cyl('bone', [x, 0, 10.4], .07, .3, 5); M.cyl('metal', [.35, 0, 8], .3, 1.1, 8); },
+    sl_planter(M) { slPlanter(M, 0, 0, 0, 4, true); },
+    sl_bench(M) { M.block('concrete', 0, 0, 0, 3.2, .7, .5); M.block('wood', 0, 0, .5, 3.2, .7, .1); M.block('wood', 0, .32, .6, 3.2, .1, .6); },
+    // city filler round the block (placed by the terrain): quarter blocks of shops, brick walk-ups, apartments, offices
+    sl_lot_a(M) {
+      slBuilding(M, 'facade_stucco', -2, -18, 44, 14, 9.2, 3);
+      for (let k = 0; k < 5; k++) M.box(k % 2 ? 'awning_red' : 'awning_green', [-20 + k * 9, -25.6, 3.6], [7.4, 2, .2], 0, .3);
+      M.quad('parking', [[-24, -10, .05], [8, -10, .05], [8, 26, .05], [-24, 26, .05]]); slBuilding(M, 'facade_apt', 15, 12, 18, 26, 13.8, 2);
+    },
+    sl_lot_b(M) { slBuilding(M, 'facade_brick', -9, -6, 30, 40, 18.4, 3); slBuilding(M, 'facade_shop', 15, -19, 16, 14, 5.2, 1); M.quad('parking', [[8, -10, .05], [24, -10, .05], [24, 26, .05], [8, 26, .05]]); },
+    sl_lot_c(M) { slBuilding(M, 'facade_apt', 0, -10, 44, 18, 27.6, 4); slBuilding(M, 'facade_stucco', -12, 16, 20, 18, 9.2, 1); M.quad('parking', [[4, 6, .05], [24, 6, .05], [24, 26, .05], [4, 26, .05]]); },
+    sl_lot_d(M) { slBuilding(M, 'facade_office', -6, -4, 30, 34, 21, 3); M.quad('parking', [[12, -26, .05], [24, -26, .05], [24, 26, .05], [12, 26, .05]]); slBuilding(M, 'facade_shop', -6, -24.5, 30, 5, 5.2, 0); },
+    // downtown towers on the skyline
+    sl_tower_a(M) { slBuilding(M, 'facade_glass', 0, 0, 30, 30, 120, 0); M.block('facade_glass', 0, 0, 120.5, 22, 22, 14); M.block('metal', 0, 0, 134.5, 16, 16, 2); },
+    sl_tower_b(M) { slBuilding(M, 'facade_glass', 0, 0, 24, 24, 150, 0); M.cyl('metal', [0, 0, 150.5], .5, 22, 6, .1); },
+    sl_tower_c(M) { slBuilding(M, 'facade_office', 0, 0, 34, 26, 90, 2); M.block('facade_office', 0, 0, 90.5, 24, 18, 12); },
+    // the hillside sign: white letters on scaffold posts
+    sl_hills_sign(M) {
+      const word = 'HOLLYWOOD', adv = 7.4, x0 = -(word.length * adv - 1.4) / 2;
+      [...word].forEach((ch, i) => {
+        const ox = x0 + i * adv;
+        for (const st of SL_FONT[ch]) {
+          if (st[0] === 'd') { const [, ax, az, bx, bz] = st, dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz); M.box('sign_letter', [ox + (ax + bx) / 2, 0, (az + bz) / 2], [L + 1.1, .4, 1.3], 0, 0, -Math.atan2(dz, dx)); }
+          else M.block('sign_letter', ox + (st[0] + st[2]) / 2, 0, st[1], st[2] - st[0], .4, st[3] - st[1]);
+        }
+        for (const px of [1, 5]) M.rod('metal', [ox + px, .5, -4], [ox + px, .5, 8], .12, 4);
+      });
+    }
+  });
   // the apes: one part type per joint (built under its pivot), the whole ape as one piece for previews
   for (const [id, o] of Object.entries(APE_LOOK)) {
     const type = 'chz_ape_' + id;
