@@ -19438,7 +19438,8 @@ const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(acti
       }
       if (mat.getClassName && mat.getClassName() === 'PBRMaterial') {
         mat.emissiveColor = new BABYLON.Color3(0,0,0); mat.emissiveIntensity = 0;
-        if (!mat.albedoTexture) {
+        // friend-collection Forge rigs keep their own untextured colours (the Racer's hands); Rebels unchanged
+        if (!mat.albedoTexture && !(_forgeSingleGlb && (activeCharacter.collectionKey || 'battle_for_colony') !== 'battle_for_colony')) {
           const ci = r.meshes.indexOf(m);
           const cols = [new BABYLON.Color3(.08,.15,.38),new BABYLON.Color3(.22,.12,.08),new BABYLON.Color3(.55,.45,.12),new BABYLON.Color3(.06,.06,.08),new BABYLON.Color3(.28,.18,.06)];
           mat.albedoColor = cols[ci%cols.length]; mat.metallic=ci%3===0?.7:.1; mat.roughness=.6;
