@@ -626,6 +626,43 @@ export const TERRAIN_RECIPES = {
       dirt: [['c', 0, -2, 27], ['r', -70, -38, 70, -22], ['c', 0, 28, 20], [-20, -12, -50, 4, 7], [20, -12, 50, 4, 7], [-14, 34, -46, 48, 6], [14, 34, 46, 48, 6]],
       grass: 4000, flowers: 600
     }
+  },
+  // Saints of LA (friend collection): a city block in Los Angeles under the Hollywood hills, downtown towers behind.
+  // Streets all round (a grid painted by the terrain shader: asphalt, yellow centre lines, crosswalks, sidewalks with
+  // red curbs at the corners); the Saints' block rises in concrete terraces: street level in front (the garage with
+  // lowriders, the market tent, the apartments), steps up to the court plaza (basketball court, the library, the game
+  // hall), the grand stairs up to the HQ terrace (the art-deco HQ, the arena). From Miguel's four Saints images.
+  'saints-la': {
+    seed: 9311, dropSeed: 23, drops: 20000, roads: false,
+    hills: .55, shape: { fbm: 24, ridge: 14, wall: 12 }, // the soft dry hills round the basin
+    flatHalf: 252, hillStart: 258, hillFull: 348, wallStart: 296,
+    palette: {
+      grassA: [0.24, 0.27, 0.13], grassB: [0.33, 0.31, 0.17], wet: [0.2, 0.24, 0.12],
+      dirt: [0.62, 0.56, 0.46], yard: [0.6, 0.56, 0.5], rockTint: [0.52, 0.48, 0.4], highTint: [0.86, .84, .7], peak: [0.6, 0.58, 0.46]
+    },
+    grass: { count: 30000, base: [0.2, 0.24, 0.08], tip: [0.62, 0.6, 0.32] },
+    flowers: { count: 500, stem: [0.14, 0.26, 0.08], petal: [0.9, 0.28, 0.6] }, // bougainvillea
+    pines: { file: 'pine_1.glb', count: 140, scale: [1.0, 1.8], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 120, scale: [1.0, 2.6], body: 0.75, settle: .9, sink: .1, tint: [1.2, 1.12, 1.0], minSq: 262 },
+    extras: [],
+    fog: { density: .0009, day: [.86, .84, .78], night: [.05, .06, .12] },
+    light: { sun: 1.05, hemi: .92, tint: [1.0, .93, .8] },
+    sky: { turbidity: 5, luminance: 1, rayleigh: 2.0, mieCoefficient: .005 },
+    court: { texture: 'stone', court: [1.45, 1.42, 1.36], plaza: [1.3, 1.26, 1.2], path: [1.2, 1.16, 1.1] },
+    city: { gx: 132, gz: 144, cx: -66, cz: -52, w: 14, sw: 4, extent: 246 },
+    village: {
+      rect: [-59, -45, 59, 85], res: .8, wall: .7,
+      terraces: [
+        { r: [-55, -22, 55, 40], h: 2.0 },  // the court plaza: basketball court, the library, the game hall
+        { r: [-55, 40, 55, 81], h: 4.6 }    // the HQ terrace: the art-deco HQ and the arena
+      ],
+      ramps: [
+        { r: [-7, -31, 7, -21], axis: 'z', from: 0, to: 2.0 },  // steps up from the street
+        { r: [-7, 29, 7, 41], axis: 'z', from: 2.0, to: 4.6 }   // the grand stairs to the HQ
+      ],
+      pave: [['r', -59, -45, 59, 85]],
+      grass: 0, flowers: 0
+    }
   }
 };
 
@@ -991,7 +1028,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   writeMask();
   const maskTex = new BABYLON.RawTexture(mask, N, N, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, false, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
   maskTex.wrapU = maskTex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-  const material = makeTerrainMaterial(scene, maskTex, recipe.palette, recipe.village, recipe.sea, recipe.mesa);
+  const material = makeTerrainMaterial(scene, maskTex, recipe.palette, recipe.village, recipe.sea, recipe.mesa, recipe.city);
   ground.material = material;
 
   // horizon: the same land continues into far mountains (sunk under the main terrain inside the square)
@@ -1147,9 +1184,9 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   return T;
 }
 
-function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA) {
+function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA, CITY) {
   const vr = V ? V.rect : [0, 0, 0, 0];
-  const v3 = a => `vec3(${a.map(n => n.toFixed(3)).join(',')})`;
+  const v3 = a => `vec3(${a.map(n => n.toFixed(3)).join(',')})`, f = v => Number(v).toFixed(2);
   const m = new BABYLON.CustomMaterial('terrainMat', scene);
   m.metadata = { perfKeepLive: true }; // backdrop meshes share it; village.html's static optimizer must not freeze it to 2 lights
   m.specularColor = new BABYLON.Color3(.03, .03, .03);
@@ -1187,6 +1224,8 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA) {
       // village cobble (warm, like the courtyard stone) and finer, lighter stone on the terrace walls
       vec3 cob = texture2D(uRockTex, p*0.16).rgb;
       cob = mix(vec3(dot(cob, vec3(0.333))), cob, 0.55) * vec3(1.02,0.98,0.9) * (0.85 + 0.25*macro);
+      // city plazas: light concrete slabs
+      ${CITY ? 'cob = vec3(0.5, 0.485, 0.45) * (0.86 + 0.2*micro) * (1.0 - 0.2*max(step(0.95, fract(p.x/1.2)), step(0.95, fract(p.y/1.2))));' : ''}
       // ramps read as stone steps: a dark riser line every 0.38 m of height
       cob *= 1.0 - 0.45 * vil * smoothstep(0.12, 0.2, slope) * (1.0 - smoothstep(0.45, 0.6, slope)) * smoothstep(0.8, 0.95, fract(pw.y / 0.38));
       col = mix(col, cob, smoothstep(0.25, 0.75, pave) * (1.0 - smoothstep(0.3, 0.5, slope)));
@@ -1208,6 +1247,29 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA) {
       vec3 sand = ${v3(P.sand || [.78, .7, .52])} * (0.85 + 0.3*micro);
       col = mix(col, sand, smoothstep(seaY + 1.8, seaY + 0.5, pw.y + (micro-0.5)*0.8) * (1.0 - smoothstep(0.35, 0.6, slope)));
       col *= mix(vec3(1.0), vec3(0.62, 0.78, 0.8), smoothstep(seaY, seaY - 8.0, pw.y));` : ''}
+      ${CITY ? `// city (recipe.city): a grid of asphalt streets with yellow centre lines, lane dashes and crosswalks, concrete
+      // sidewalks round every block, the curb line painted red at the corners
+      {
+        float k = (1.0 - smoothstep(${f(CITY.extent)}, ${f(CITY.extent + 12)}, max(abs(p.x), abs(p.y)))) * (1.0 - smoothstep(0.08, 0.16, slope));
+        float gx = ${f(CITY.gx)}, gz = ${f(CITY.gz)}, W = ${f(CITY.w / 2)}, SW = ${f(CITY.sw)};
+        float dx = abs(mod(p.x - (${f(CITY.cx)}) + gx*0.5, gx) - gx*0.5), dz = abs(mod(p.y - (${f(CITY.cz)}) + gz*0.5, gz) - gz*0.5);
+        float onX = step(dx, W), onZ = step(dz, W), street = max(onX, onZ);
+        vec3 asph = vec3(0.13, 0.13, 0.14) * (0.8 + 0.35*micro) * (0.92 + 0.12*tvn(p*1.7));
+        float yl = (step(0.1, dx) - step(0.26, dx)) * onX * (1.0 - onZ) + (step(0.1, dz) - step(0.26, dz)) * onZ * (1.0 - onX);
+        asph = mix(asph, vec3(0.7, 0.54, 0.14), yl * 0.9);
+        float dash = (1.0 - step(0.1, abs(dx - W*0.5))) * step(0.5, fract(p.y / 6.0)) * onX * (1.0 - onZ) + (1.0 - step(0.1, abs(dz - W*0.5))) * step(0.5, fract(p.x / 6.0)) * onZ * (1.0 - onX);
+        asph = mix(asph, vec3(0.62), dash * 0.8);
+        float cwX = onX * step(W + 0.6, dz) * (1.0 - step(W + 3.6, dz)) * step(0.5, fract(p.x / 1.1)) * step(dx, W - 0.4);
+        float cwZ = onZ * step(W + 0.6, dx) * (1.0 - step(W + 3.6, dx)) * step(0.5, fract(p.y / 1.1)) * step(dz, W - 0.4);
+        asph = mix(asph, vec3(0.66), max(cwX, cwZ) * 0.9);
+        float side = (1.0 - street) * max(step(dx, W + SW), step(dz, W + SW));
+        float jt = max(step(0.95, fract(p.x / 1.5)), step(0.95, fract(p.y / 1.5)));
+        vec3 walk = vec3(0.47, 0.455, 0.43) * (0.88 + 0.18*micro) * (1.0 - 0.22*jt);
+        float curb = (1.0 - street) * max(step(dx, W + 0.35), step(dz, W + 0.35)), corner = step(dx, W + 9.0) * step(dz, W + 9.0);
+        walk = mix(walk, mix(vec3(0.38, 0.38, 0.37), vec3(0.55, 0.12, 0.1), corner), curb);
+        col = mix(col, asph, street * k);
+        col = mix(col, walk, side * k);
+      }` : ''}
       return col;
     }
   `);
@@ -1388,7 +1450,13 @@ async function buildDecor(scene, T, avoid) {
     }
     const per = spec.count, bufs = [...Array(16)].map(() => new Float32Array(per * 16)), cnt = new Array(16).fill(0);
     let k = 0, t = 0;
-    while (k < spec.count && t < spec.count * 40) {
+    if (spec.at) for (const [x, z, yaw = 0, s = 1, y] of spec.at) {
+      const tile = tileOf(x, z); if (cnt[tile] >= per) continue;
+      BABYLON.Quaternion.FromEulerAnglesToRef(0, yaw, 0, q); S.set(s, s, s); P.set(x, y ?? h(x, z) - (spec.sink ?? 0) * s, z);
+      BABYLON.Matrix.ComposeToRef(S, q, P, m4); m4.copyToArray(bufs[tile], cnt[tile] * 16); cnt[tile]++; k++;
+      if (spec.block) addBlocker(x, z, spec.block * s);
+    }
+    while (!spec.at && k < spec.count && t < spec.count * 40) {
       t++;
       const x = (rnd() - .5) * 680, z = (rnd() - .5) * 680; if (!ok(x, z) || !clear(x, z, 2)) continue;
       const s = spec.scale[0] + rnd() * (spec.scale[1] - spec.scale[0]), yaw = rnd() * 6.28; BABYLON.Quaternion.FromEulerAnglesToRef(0, yaw, 0, q);
