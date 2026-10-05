@@ -119,6 +119,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   color:#e8c56a;
   text-transform:uppercase;
 }
+#questTrackerSide{font-size:7.5px;color:rgba(232,197,106,.85);line-height:1.35;letter-spacing:.6px;overflow-wrap:anywhere;white-space:pre-line}
+#questTrackerSide:empty{display:none}
 #questTrackerObjective{
   font-size:8px;
   color:#5ecfca;
@@ -1588,6 +1590,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <div id="questTracker">
       <div id="questTrackerTitle">Active Quest</div>
       <div id="questTrackerObjective">Speak with the Ashigaru villager.</div>
+      <div id="questTrackerSide"></div>
     </div>
   </div>
 </div>
@@ -2025,6 +2028,49 @@ const BOOK1_WIRING = {
       { id:'review-journal', objective:'Open your journal and review the first warnings.', objectiveType:'openJournal' }
     ]
   },
+  side: {
+    1: { giver:'hub-archivist',
+      offer:['The wind scattered three old scrolls across the Hub paths last night.', 'They are older than the library itself. Will you find them for me?'],
+      steps:[
+        { id:'find-scrolls', objective:'Find three lost scrolls on the Hub paths.', objectiveType:'collectCollectible', targetObjectId:'hub-lost-scroll', count:3, villageId:'hub' },
+        { id:'return-archive', objective:'Return the scrolls to the Hub Archivist.', objectiveType:'talkToNpc', targetNpcId:'hub-archivist', villageId:'hub',
+          say:['All three. The ink is faded, but the words are there.', 'They speak of a door beneath the roots. The Hub loses nothing forever.'] }
+      ] },
+    2: { giver:'hub-forest-keeper',
+      offer:['The old trees keep memories, glowing in the roots by the far forest dojos.', 'Gather three for me before the tremors scatter them.'],
+      steps:[
+        { id:'collect-memories', objective:'Collect three forest memories near the far forest dojos.', objectiveType:'collectCollectible', targetObjectId:'hub-forest-memory', count:3, villageId:'hub' },
+        { id:'return-keeper', objective:'Bring the memories to the Forest Dojo Keeper.', objectiveType:'talkToNpc', targetNpcId:'hub-forest-keeper', villageId:'hub',
+          say:['Hold them up to the light. Each one is a moment the forest wanted to keep.', 'The forest keeps the softest parts of the warning.'] }
+      ] },
+    3: { giver:'hub-ashigaru-villager-1779752263951-142',
+      offer:['Weather changes how the lanterns burn. I want to know how.', 'Watch the sky from the weather stone west of the square, in two different kinds of weather.'],
+      steps:[
+        { id:'watch-weather', objective:'Watch the sky from the weather stone in two kinds of weather.', objectiveType:'useQuestSpot', targetObjectId:'hub-weather-stone', count:2, villageId:'hub' },
+        { id:'report-weather', objective:'Tell the Lantern Keeper what you saw.', objectiveType:'talkToNpc', targetNpcId:'hub-ashigaru-villager-1779752263951-142', villageId:'hub',
+          say:['So the flames dim in the rain and lean in the wind.', 'Weather is another storyteller in the village. Thank you.'] }
+      ] },
+    4: { giver:HUB_GUIDE_NPC,
+      offer:['Past the north torii there is a shrine the maps forgot.', 'Find it, and look closely at its mark.'],
+      steps:[
+        { id:'find-shrine', objective:'Find the forgotten shrine past the north torii.', objectiveType:'useQuestSpot', targetObjectId:'hub-forgotten-shrine', villageId:'hub' },
+        { id:'inspect-mark', objective:'Inspect the mark on the shrine.', objectiveType:'useQuestSpot', targetObjectId:'hub-shrine-mark', villageId:'hub' }
+      ] },
+    5: { giver:'ronin-sensei-01',
+      offer:['...', 'The Silent Ronin scratches a small sword mark into the dust, then points at three places in the fortress.'],
+      steps:[
+        { id:'follow-marks', objective:'Follow the three silent sword marks in the fortress.', objectiveType:'useQuestSpot', targetObjectId:'ronin-silent-mark', count:3, villageId:'ronin' },
+        { id:'tell-watcher', objective:'Tell the Ronin Watcher where the marks led.', objectiveType:'talkToNpc', targetNpcId:'ronin-guard-01', villageId:'ronin',
+          say:['The marks led you in a circle around the plaza? Then he trusts you.', 'Silence can be a language, if you stop expecting it to sound like speech.'] }
+      ] },
+    6: { giver:'ronin-wanderer-01',
+      offer:['There is a fire outside the gate where exiles sit at night.', 'Sit by it a while. Then come and hear my story.'],
+      steps:[
+        { id:'sit-by-fire', objective:'Sit by the fire outside the Ronin gate.', objectiveType:'useQuestSpot', targetObjectId:'ronin-campfire', villageId:'ronin' },
+        { id:'hear-story', objective:'Listen to the Ronin Wanderer\'s story.', objectiveType:'talkToNpc', targetNpcId:'ronin-wanderer-01', villageId:'ronin',
+          say:['I left the Ronin once. Swore I would never come back.', 'But the tunnels called every exile home, one by one. That is how I knew the warning was real.', 'The Ronin warm themselves with stories when fire is not enough.'] }
+      ] }
+  },
   badges: { 2:'story-dust-reader' }
 };
 
@@ -2170,7 +2216,8 @@ function getBook1Wiring(quest) {
   const num = Number(String(quest?.questId || '').match(/^book1-(main|side)-(\d+)$/)?.[2] || 0);
   if (!num) return null;
   const table = quest.type === 'side' ? BOOK1_WIRING.side : BOOK1_WIRING.main;
-  return table?.[num] || null;
+  const w = table?.[num] || null;
+  return Array.isArray(w) ? w : (w?.steps || null);
 }
 
 function makeSafeQuestStepId(value) {
@@ -2207,6 +2254,162 @@ function getBook1StoryJournalEntries() {
 }
 
 registerBook1QuestDefinitions();
+
+// ═══════════════════════════════════════
+// SIDE QUESTS — run beside the main story. A giver NPC offers one (BOOK1_WIRING.side[n].giver / offer); after
+// that conversation it is active. Its steps use the same objective types and matching as main quests, and
+// several can be active at once. State: localStorage rebelAntsSideQuests:v1 = { active:{ questId:{ step, steps:{ stepId:{ ids } } } }, done:[] }.
+// ═══════════════════════════════════════
+const SIDE_QUEST_KEY = 'rebelAntsSideQuests:v1';
+let SideQuestState = loadSideQuestState();
+
+function loadSideQuestState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SIDE_QUEST_KEY) || '{}') || {};
+    return { active: s.active && typeof s.active === 'object' ? s.active : {}, done: Array.isArray(s.done) ? s.done : [] };
+  } catch(e) { return { active:{}, done:[] }; }
+}
+
+function saveSideQuestState() {
+  try { localStorage.setItem(SIDE_QUEST_KEY, JSON.stringify(SideQuestState)); } catch(e) {}
+  try { updateQuestTracker(); } catch(e) {}
+}
+
+function getSideQuestWiring(questId) {
+  const n = Number(String(questId || '').match(/^book1-side-(\d+)$/)?.[1] || 0);
+  const w = n ? BOOK1_WIRING.side?.[n] : null;
+  return w && !Array.isArray(w) ? w : null;
+}
+
+function getSideQuestIds() {
+  return Object.keys(BOOK1_WIRING.side || {}).map(n => `book1-side-${String(n).padStart(2, '0')}`).filter(id => QUEST_DEFINITIONS[id]);
+}
+
+function isQuestIdCompleted(questId) {
+  return (ProgressionState.completedQuests || []).includes(questId) || (QuestState.completedQuestIds || []).includes(questId);
+}
+
+function isSideQuestAvailable(questId) {
+  const quest = QUEST_DEFINITIONS[questId];
+  if (!quest || SideQuestState.done.includes(questId) || SideQuestState.active[questId]) return false;
+  return (quest.prerequisites || []).every(isQuestIdCompleted);
+}
+
+function getSideQuestOfferForNpc(npc) {
+  const npcId = String(npc?.metadata?.npcId || '').toLowerCase();
+  if (!npcId) return null;
+  return getSideQuestIds().find(id => String(getSideQuestWiring(id)?.giver || '').toLowerCase() === npcId && isSideQuestAvailable(id)) || null;
+}
+
+// An active side quest whose current step is "talk to this NPC".
+function getSideQuestTalkStepForNpc(npc) {
+  const npcId = String(npc?.metadata?.npcId || '').toLowerCase();
+  if (!npcId) return null;
+  for (const [questId, st] of Object.entries(SideQuestState.active)) {
+    const step = getQuestStep(questId, st.step);
+    if (step && normalizeQuestObjectiveAction(step.objectiveType) === 'talkToNpc' && String(step.targetNpcId || '').toLowerCase() === npcId) return { questId, step };
+  }
+  return null;
+}
+
+function getSideQuestDialogueLines(npc) {
+  const talk = getSideQuestTalkStepForNpc(npc);
+  if (talk && Array.isArray(talk.step.say) && talk.step.say.length) return talk.step.say;
+  const offer = getSideQuestOfferForNpc(npc);
+  if (offer) {
+    const w = getSideQuestWiring(offer);
+    npc.metadata._pendingSideQuestOffer = offer;
+    return [...(w.offer || [QUEST_DEFINITIONS[offer].description]), `Side quest: ${QUEST_DEFINITIONS[offer].title}`];
+  }
+  return null;
+}
+
+function startSideQuest(questId) {
+  if (!isSideQuestAvailable(questId)) return false;
+  const first = (QUEST_DEFINITIONS[questId].steps || []).find(s => s.id !== 'complete');
+  if (!first) return false;
+  SideQuestState.active[questId] = { step:first.id, steps:{} };
+  saveSideQuestState();
+  playProgressionAudio('progressMilestone');
+  showToast(`Side quest started: ${QUEST_DEFINITIONS[questId].title}. ${first.objective}`, 6500);
+  return true;
+}
+
+function getSideQuestStepProgress(questId, stepId) {
+  const st = SideQuestState.active[questId];
+  if (!st.steps || typeof st.steps !== 'object') st.steps = {};
+  if (!st.steps[stepId]) st.steps[stepId] = { ids:[] };
+  return st.steps[stepId];
+}
+
+function advanceSideQuests(actionType, context = {}) {
+  let advanced = false;
+  for (const questId of Object.keys(SideQuestState.active)) {
+    const quest = QUEST_DEFINITIONS[questId], st = SideQuestState.active[questId];
+    if (!quest) { delete SideQuestState.active[questId]; continue; }
+    const step = getQuestStep(questId, st.step);
+    if (!step) continue;
+    const expected = getConfiguredQuestAction(quest, st.step);
+    if (!expected || !questActionMatches(expected, actionType)) continue;
+    if (!doesQuestContextMatchTarget(quest, context, actionType, st.step)) continue;
+    if (step.count > 1) {
+      const progress = getSideQuestStepProgress(questId, step.id);
+      const id = context.progressId || getQuestTargetObjectIdFromContext(context) || `${step.id}_${progress.ids.length + 1}`;
+      if (progress.ids.includes(id)) continue;
+      progress.ids.push(id);
+      advanced = true;
+      if (progress.ids.length < step.count) { showToast(`${quest.title}: ${progress.ids.length} / ${step.count}`); continue; }
+    }
+    advanced = true;
+    const steps = (quest.steps || []).filter(s => s.id !== 'complete');
+    const index = steps.findIndex(s => s.id === st.step);
+    if (index >= 0 && index < steps.length - 1) {
+      st.step = steps[index + 1].id;
+      playProgressionAudio('progressMilestone');
+      showToast(`${quest.title}: ${steps[index + 1].objective}`, 6000);
+    } else {
+      completeSideQuest(questId);
+    }
+  }
+  if (advanced) saveSideQuestState();
+  return advanced;
+}
+
+function completeSideQuest(questId) {
+  const quest = QUEST_DEFINITIONS[questId] || {};
+  delete SideQuestState.active[questId];
+  if (!SideQuestState.done.includes(questId)) SideQuestState.done.push(questId);
+  const reward = Number.isFinite(Number(quest.progressionRewardAmount)) ? Number(quest.progressionRewardAmount) : PROGRESSION_POINTS.quest;
+  const badge = getQuestConfiguredBadge(quest)?.name || null;
+  if (recordProgressionEvent('quest', questId, reward, badge)) unlockQuestJournalEntry(quest);
+  queueQuestCelebration({
+    kicker:'Side Quest Complete',
+    title:quest.title || 'Side Quest',
+    body:quest.journalEntry ? escapeHTML(quest.journalEntry) : '',
+    chips:[{ label:`+${reward} XP`, tone:'gold' }, ...(badge ? [{ label:`Badge: ${badge}` }] : [])],
+    duration:6500
+  });
+  saveSideQuestState();
+}
+
+function getActiveSideQuestTrackerLines(limit = 2) {
+  return Object.entries(SideQuestState.active).slice(0, limit).map(([questId, st]) => {
+    const quest = QUEST_DEFINITIONS[questId], step = getQuestStep(questId, st.step);
+    if (!quest || !step) return '';
+    const n = step.count > 1 ? ` (${Math.min((st.steps?.[step.id]?.ids || []).length, step.count)}/${step.count})` : '';
+    return `${quest.title}: ${step.objective}${n}`;
+  }).filter(Boolean);
+}
+
+function isQuestSpotTargetedBySideQuest(spotId) {
+  const id = String(spotId || '').toLowerCase();
+  return Object.entries(SideQuestState.active).some(([questId, st]) => {
+    const step = getQuestStep(questId, st.step);
+    if (!step || normalizeQuestObjectiveAction(step.objectiveType) !== 'useQuestSpot') return false;
+    const want = String(step.targetObjectId || '').toLowerCase();
+    return want && id.includes(want) && !(st.steps?.[step.id]?.ids || []).map(v => String(v).toLowerCase()).includes(id);
+  });
+}
 
 const QUEST_BUILDER_CONFIG_KEY = 'rebelAntsQuestBuilderConfig:v1';
 const QUEST_BUILDER_TARGET_TYPES = ['NPC', 'Area', 'Door', 'Interior', 'Portal', 'Sign', 'Chest', 'Collectible', 'NFT Frame', 'Link/Hotspot'];
@@ -7688,7 +7891,8 @@ function normalizeQuestSpotConfig(cfg = {}) {
     secretId: cfg.secretId ? String(cfg.secretId) : null,
     secretName: cfg.secretName ? String(cfg.secretName) : '',
     glint: ['quest', 'always', 'none'].includes(cfg.glint) ? cfg.glint : (cfg.secretId ? 'none' : 'quest'),
-    absY: cfg.absY === true
+    absY: cfg.absY === true,
+    countBy: cfg.countBy === 'weather' ? 'weather' : null
   };
 }
 
@@ -7791,8 +7995,11 @@ function completeQuestSpot(root) {
   if (cfg.action === 'light' || cfg.action === 'ring') playInteractionAudio(cfg.action === 'ring' ? 'templeBell' : 'collectiblePickup');
   let secretNew = false;
   if (cfg.secretId) secretNew = recordQuestSpotSecret(cfg);
+  let weather = 'clear';
+  try { weather = WeatherManager?.mode || 'clear'; } catch(e) {}
   const advanced = advanceHubTutorialObjective('useQuestSpot', {
-    spotId: cfg.spotId, targetObjectId: cfg.spotId, spotAction: cfg.action, secretId: cfg.secretId || null
+    spotId: cfg.spotId, targetObjectId: cfg.spotId, spotAction: cfg.action, secretId: cfg.secretId || null,
+    progressId: cfg.countBy === 'weather' ? `${cfg.spotId}:${weather}` : undefined
   });
   try { window.dispatchEvent(new CustomEvent('rebelAntsQuestSpot', { detail:{ spotId:cfg.spotId, action:cfg.action, villageId:CURRENT_VILLAGE_ID } })); } catch(e) {}
   if (!secretNew && cfg.text) showToast(cfg.text, Math.min(12000, Math.max(4500, cfg.text.length * 65)));
@@ -7842,7 +8049,7 @@ function updateQuestSpots() {
       if (Number.isFinite(g)) { root.position.y = g; root.metadata._spotGrounded = true; }
     }
     if (helper && helper.isEnabled() !== editor) { helper.setEnabled(editor); helper.isPickable = editor; }
-    const showGlint = !editor && walkMode && !ActiveInterior && (cfg.glint === 'always' || (cfg.glint === 'quest' && isQuestSpotTargetedByActiveQuest(cfg.spotId)));
+    const showGlint = !editor && walkMode && !ActiveInterior && (cfg.glint === 'always' || (cfg.glint === 'quest' && (isQuestSpotTargetedByActiveQuest(cfg.spotId) || isQuestSpotTargetedBySideQuest(cfg.spotId))));
     if (glint) {
       if (glint.isEnabled() !== showGlint) glint.setEnabled(showGlint);
       if (showGlint) { glint.rotation.y = t * 1.6; glint.position.y = .9 + Math.sin(t * 2.4) * .12; glint.scaling.setAll(.85 + Math.sin(t * 5.2) * .25); }
@@ -10855,16 +11062,16 @@ function getQuestTargetObjectIdFromContext(context = {}) {
   );
 }
 
-function doesQuestContextMatchTarget(quest, context = {}, actionType = '') {
+function doesQuestContextMatchTarget(quest, context = {}, actionType = '', stepId = QuestState.step) {
   if (!quest) return false;
-  const step = getQuestStep(quest.questId, QuestState.step) || {};
+  const step = getQuestStep(quest.questId, stepId) || {};
   const targetMarkerId = step.targetMarkerId || quest.targetMarkerId || null;
   const targetNpcId = step.targetNpcId || quest.targetNpcId || null;
   const targetVillageId = step.targetVillageId || quest.targetVillageId || null;
   const targetInteriorId = step.targetInteriorId || quest.targetInteriorId || null;
   const targetDoorId = step.targetDoorId || quest.targetDoorId || null;
   const targetObjectId = step.targetObjectId || quest.targetObjectId || null;
-  const action = normalizeQuestObjectiveAction(actionType || getConfiguredQuestAction(quest));
+  const action = normalizeQuestObjectiveAction(actionType || getConfiguredQuestAction(quest, stepId));
   if (action === 'enterInterior') return getInteriorEntryQuestMatchDetails(quest, context, action).matched;
   if (['visitArea', 'discoverDojo'].includes(action)) {
     if (!targetMarkerId) return false;
@@ -10902,7 +11109,7 @@ function advanceConfiguredQuestObjective(actionType, context = {}) {
   // Counted steps ("inspect three...") need that many different targets.
   if (step.count > 1) {
     const progress = getQuestStepProgress(quest.questId, step.id);
-    const id = getQuestTargetObjectIdFromContext(context) || `${step.id}_${progress.ids.length + 1}`;
+    const id = context.progressId || getQuestTargetObjectIdFromContext(context) || `${step.id}_${progress.ids.length + 1}`;
     if (progress.ids.includes(id)) return false;
     progress.ids.push(id);
     if (progress.ids.length < step.count) {
@@ -10931,7 +11138,13 @@ function getQuestStepProgress(questId, stepId) {
   return progress.steps[stepId];
 }
 
+// Every quest event goes to the side quests and to the main story.
 function advanceHubTutorialObjective(actionType, context = {}) {
+  const side = context._sideDone ? false : advanceSideQuests(actionType, context);
+  return advanceMainQuestObjective(actionType, context) || side;
+}
+
+function advanceMainQuestObjective(actionType, context = {}) {
   const expected = {
     'hub-first-step': { step:'talk', action:'talkToNpc', match:ctx => ctx.targetNpcId === 'hub-ashigaru-villager-01' },
     'hub-walk-village': { step:'reach-forest-path', action:'visitArea', match:ctx => ctx.targetMarkerId === 'questTarget_forest_path' },
@@ -11010,6 +11223,8 @@ function updateQuestTracker() {
   if (configuredAction === 'observeTime') objectiveText = 'Press O to observe the village light and time.';
   if (configuredAction === 'experienceWeather') objectiveText = 'Press O to observe the sky and current weather.';
   objective.textContent = `${quest?.title || 'Quest'}: ${objectiveText}${progressText}`;
+  const side = document.getElementById('questTrackerSide');
+  if (side) side.textContent = getActiveSideQuestTrackerLines().map(line => 'Side · ' + line).join('\n');
   tracker.classList.add('on');
 }
 
@@ -14733,8 +14948,12 @@ function handleNPCQuestEvent(npc, finishedDialogue = false) {
     npcName: meta.displayName || npc.name,
     role: meta.role || '',
     factionId: meta.factionId || '',
-    villageId: meta.villageId || CURRENT_VILLAGE_ID
+    villageId: meta.villageId || CURRENT_VILLAGE_ID,
+    _sideDone: true
   };
+  // side quests: an offer heard is accepted; a side talk step advances (once per conversation)
+  if (meta._pendingSideQuestOffer) { startSideQuest(meta._pendingSideQuestOffer); meta._pendingSideQuestOffer = null; }
+  else advanceSideQuests('talkToNpc', npcContext);
   if (QuestState.questId === 'hub-first-step' && QuestState.step === 'talk' && shouldHubNPCAdvanceTutorial(npc)) {
     advanceHubTutorialObjective('talkToNpc', npcContext);
     return;
@@ -14961,7 +15180,8 @@ function openNPCDialogue(npc) {
     .split(/\n+/)
     .map(line => line.trim())
     .filter(Boolean);
-  const tutorialLines = getQuestStepDialogueLines(npc) || getTutorialDialogueLines(npc);
+  npc.metadata._pendingSideQuestOffer = null;
+  const tutorialLines = getQuestStepDialogueLines(npc) || getSideQuestDialogueLines(npc) || getTutorialDialogueLines(npc);
   const lines = tutorialLines || (customLines.length ? customLines : (NPC_DIALOGUES[npc.metadata.dialogueId] || NPC_DIALOGUES.default));
   activeNPCDialogue = { npc, lines, index:0 };
   npc.metadata.dialogueOpen = true;
@@ -15013,7 +15233,7 @@ function closeNPCDialogue(finishedDialogue = false) {
 function getNearbyQuestTalkNpc() {
   if (!walkMode || adminMode || activeNPCDialogue) return null;
   const npc = getNearestNPCInRange();
-  return npc && getQuestStepDialogueLines(npc) ? npc : null;
+  return npc && (getQuestStepDialogueLines(npc) || getSideQuestTalkStepForNpc(npc)) ? npc : null;
 }
 
 function tryTalkToNearbyQuestNpc() {
