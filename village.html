@@ -977,6 +977,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 	      <label class="admin-field">Radius <input id="questSpotRadiusInput" type="number" min="0.8" max="30" step="0.2" value="2.6"></label>
 	      <label class="admin-field">Min height <input id="questSpotMinYInput" type="number" step="0.5" placeholder="any"></label>
 	    </div>
+	    <label class="admin-field" style="display:flex;gap:8px;align-items:center;min-height:26px">Keep its height (roof, ledge; else it sits on the ground) <input id="questSpotAbsYInput" type="checkbox"></label>
 	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
 	      <label class="admin-field">Time
 	        <select id="questSpotTimeInput" class="admin-select"><option value="">any</option><option value="night">night</option><option value="dawn">dawn</option><option value="day">day</option><option value="dusk">dusk</option></select>
@@ -1965,6 +1966,68 @@ function makeBook1SideQuest(index, title, village, primaryNpc, description, obje
   return { questId:`book1-side-${String(index).padStart(2, '0')}`, title, chapter:'Side Stories', village, primaryNpc, description, objectives, rewards, journalEntry, prerequisites:[prerequisite], type:'side' };
 }
 
+// Book One step wiring: what each step asks for, so the quest runner can match it. A step is
+// { id, objective, objectiveType, target (npc id / spot id prefix / collectible id / village), count, villageId
+//   (where the step happens: the guide marker points to the village gate elsewhere), say: [NPC lines while
+//   this talk step is active] }. A quest with wiring gets its steps from here; its next main quest follows
+// when that one is wired too.
+const HUB_GUIDE_NPC = 'hub-ashigaru-villager-01';
+const BOOK1_WIRING = {
+  main: {
+    2: [
+      { id:'inspect-dust', objective:'Inspect the red dust on the old roots near the fortress edge.', objectiveType:'useQuestSpot', targetObjectId:'ronin-red-dust', count:3, villageId:'ronin' },
+      { id:'take-sample', objective:'Collect a red dust sample.', objectiveType:'collectCollectible', targetObjectId:'ronin-dust-sample', villageId:'ronin' },
+      { id:'report', objective:'Bring the sample to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['Red dust... and it rose from the cracks, not the sky?', 'Then the roots are not just moving. Something below is pushing them.', 'Keep the sample. We will need it before this is over.'] }
+    ],
+    3: [
+      { id:'question-guard', objective:'Question the Ashigaru Gate Guard by the village gate.', objectiveType:'talkToNpc', targetNpcId:'hub-ashigaru-guard-1779751905279-414', villageId:'hub',
+        say:['A scout came through this gate at dawn. He did not stop. He did not speak.', 'He came up the old path south of the dojo, where the tunnel was sealed years ago.', 'Go and look. Tracks do not lie.'] },
+      { id:'search-path', objective:'Search the scout path south of the Hub.', objectiveType:'useQuestSpot', targetObjectId:'hub-scout-path', villageId:'hub' }
+    ],
+    4: [
+      { id:'visit-keeper', objective:'Find the Forest Dojo Keeper by the southwest forest dojo.', objectiveType:'talkToNpc', targetNpcId:'hub-forest-keeper', villageId:'hub',
+        say:['You felt it too? The floor of my dojo shook before the village bells even stirred.', 'The forest feels the tremors first. It always has.', 'Look at the training floor. Tell me I am imagining it.'] },
+      { id:'inspect-floor', objective:'Inspect the cracks on the training floor.', objectiveType:'useQuestSpot', targetObjectId:'hub-dojo-cracks', villageId:'hub' }
+    ],
+    5: [
+      { id:'read-signs', objective:'Read three wooden signs around the Hub.', objectiveType:'interactSign', count:3, villageId:'hub' },
+      { id:'return-guide', objective:'Tell the Hub Guide what the signs say.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['The signs point to places we never marked. Someone has been here before us.', 'Old paths are waking with the roots. Keep your eyes on the edges of the map.'] }
+    ],
+    6: [
+      { id:'meet-keeper', objective:'Talk to the Ashigaru Lantern Keeper near the east dojo.', objectiveType:'talkToNpc', targetNpcId:'hub-ashigaru-villager-1779752263951-142', villageId:'hub',
+        say:['The lanterns are lighting themselves early. Before the sun is even down.', 'Watch the stone lanterns by the north torii and tell me what you see.'] },
+      { id:'watch-lanterns', objective:'Watch the stone lanterns by the north torii.', objectiveType:'useQuestSpot', targetObjectId:'hub-lantern-watch', villageId:'hub' },
+      { id:'report-keeper', objective:'Report back to the Lantern Keeper.', objectiveType:'talkToNpc', targetNpcId:'hub-ashigaru-villager-1779752263951-142', villageId:'hub',
+        say:['The flames leaned toward the ground? Then they feel it too.', 'Lanterns do not lie. Something below is pulling at the light.'] }
+    ],
+    7: [
+      { id:'hear-ronin', objective:'Hear the Ronin Watcher\'s account.', objectiveType:'talkToNpc', targetNpcId:'ronin-guard-01', villageId:'ronin',
+        say:['Long ago the Ronin made a promise to keep the tunnels shut. A debt, paid in silence.', 'The marker of that debt still stands by the library. Read it, and you will know why we watch.'] },
+      { id:'find-marker', objective:'Find the old debt marker by the Ronin library.', objectiveType:'useQuestSpot', targetObjectId:'ronin-debt-marker', villageId:'ronin' },
+      { id:'return-watcher', objective:'Return to the Ronin Watcher.', objectiveType:'talkToNpc', targetNpcId:'ronin-guard-01', villageId:'ronin',
+        say:['Now you know. The debt is not paid until the tunnels stay shut.', 'Tell the Hub. They have forgotten more than we ever kept.'] }
+    ],
+    8: [
+      { id:'return-hub', objective:'Return to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['The Ronin told you about the debt? Then it is time you knew the rest.', 'Ancient tunnels run beneath this very square. The cherry tree grew over the old marker.', 'Go and see it for yourself.'] },
+      { id:'inspect-marker', objective:'Inspect the old ground marker beside the cherry tree in the square.', objectiveType:'useQuestSpot', targetObjectId:'hub-center-marker', villageId:'hub' }
+    ],
+    9: [
+      { id:'travel-ashigaru', objective:'Travel to the Ashigaru Village through the village gate.', objectiveType:'usePortal', targetVillageId:'ashigaru', villageId:'hub' },
+      { id:'deliver-warning', objective:'Deliver the sealed warning to the Ashigaru Runner.', objectiveType:'talkToNpc', targetNpcId:'ashigaru-trainee-01', villageId:'ashigaru',
+        say:['A sealed warning from the Hub? Quietly, then. We do not want panic in the fields.', 'Ashigaru runners will carry it to every gate by nightfall. No bells. No shouting.'] }
+    ],
+    10: [
+      { id:'council', objective:'Return to the Hub Guide for the first council.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['Dust on the roots. A scout with no shadow. Cracks in the dojo. Lanterns that lean.', 'The Ronin kept a debt, and the Ashigaru now carry the warning.', 'Write it all down. This is the first chapter of something bigger.'] },
+      { id:'review-journal', objective:'Open your journal and review the first warnings.', objectiveType:'openJournal' }
+    ]
+  },
+  badges: { 2:'story-dust-reader' }
+};
+
 const BOOK1_MAIN_QUESTS = [
   makeBook1MainQuest(1, 'The First Warning', 'The First Warning', 'Hub Village -> Ronin Village', 'Hub Guide / Ronin Watcher', 'The Hub Guide sends the first warning to the Ronin after tremors stir beneath the roots.', [{ id:'talk', objective:'Speak with the Hub Guide.' }, { id:'ronin', objective:'Find the Ronin Watcher and deliver the warning.' }], ['+75 progress','Story entry: The First Warning','Badge progress: Watcher'], 'The tunnels have started breathing again, and the Ronin heard the warning before the Hub understood it.', 'hub-tutorial-complete'),
   makeBook1MainQuest(2, 'Dust On The Roots', 'The First Warning', 'Ronin Village', 'Ronin Watcher', 'Red dust appears along old roots near the Ronin outskirts.', ['Inspect red dust traces near the Ronin edge.','Collect a sample for the Hub Guide.'], ['+60 progress','Journal: Red Dust Trace'], 'The red dust does not fall from above. It rises from cracks below.'),
@@ -2071,7 +2134,7 @@ function registerBook1QuestDefinitions() {
 	      targetDoorId: quest.targetDoorId || null,
 	      targetObjectId: quest.targetObjectId || null,
 	      type: quest.type,
-	      steps: quest.objectives.map(objective => typeof objective === 'string'
+	      steps: (getBook1Wiring(quest) || quest.objectives).map(objective => typeof objective === 'string'
 	        ? { id:makeSafeQuestStepId(objective), objective }
 	        : {
 	            id:objective.id || makeSafeQuestStepId(objective.objective),
@@ -2081,11 +2144,33 @@ function registerBook1QuestDefinitions() {
 	            targetVillageId:objective.targetVillageId || null,
 	            targetInteriorId:objective.targetInteriorId || null,
 	            targetDoorId:objective.targetDoorId || null,
-	            targetObjectId:objective.targetObjectId || null
+	            targetObjectId:objective.targetObjectId || null,
+	            objectiveType:objective.objectiveType || null,
+	            count:Number(objective.count) > 1 ? Number(objective.count) : null,
+	            villageId:objective.villageId || null,
+	            say:Array.isArray(objective.say) ? objective.say : null,
+	            wired:Boolean(objective.objectiveType)
 	          }
 	      ).concat({ id:'complete', objective:`Completed: ${quest.title}` })
 	    };
+	    const def = QUEST_DEFINITIONS[quest.questId];
+	    const progress = (quest.rewards || []).map(r => /^\+(\d+)\s+progress/i.exec(String(r))).find(Boolean);
+	    if (getBook1Wiring(quest) && progress) def.progressionRewardAmount = Number(progress[1]);
+	    const num = Number(String(quest.questId).match(/(\d+)$/)?.[1] || (quest.questId === 'first-warning' ? 1 : 0));
+	    if (quest.type === 'main' && BOOK1_WIRING.badges[num]) def.badgeRewardId = BOOK1_WIRING.badges[num];
   });
+  // Main quests chain while the next one is wired (an unwired quest could never finish).
+  BOOK1_MAIN_QUESTS.forEach((quest, i) => {
+    const next = BOOK1_MAIN_QUESTS[i + 1];
+    if (next && getBook1Wiring(next) && QUEST_DEFINITIONS[quest.questId]) QUEST_DEFINITIONS[quest.questId].nextQuestId = next.questId;
+  });
+}
+
+function getBook1Wiring(quest) {
+  const num = Number(String(quest?.questId || '').match(/^book1-(main|side)-(\d+)$/)?.[2] || 0);
+  if (!num) return null;
+  const table = quest.type === 'side' ? BOOK1_WIRING.side : BOOK1_WIRING.main;
+  return table?.[num] || null;
 }
 
 function makeSafeQuestStepId(value) {
@@ -7499,6 +7584,11 @@ function updateInteractionPrompt() {
     return;
   }
 
+  if (getNearbyQuestTalkNpc()) {
+    setInteractionPrompt('Press O to Talk', true);
+    return;
+  }
+
   const interiorEntrance = getNearestInteriorEntranceInRange();
   if (interiorEntrance) {
     setInteractionPrompt(getInteriorEntrancePromptText(interiorEntrance), true);
@@ -7597,7 +7687,8 @@ function normalizeQuestSpotConfig(cfg = {}) {
     },
     secretId: cfg.secretId ? String(cfg.secretId) : null,
     secretName: cfg.secretName ? String(cfg.secretName) : '',
-    glint: ['quest', 'always', 'none'].includes(cfg.glint) ? cfg.glint : (cfg.secretId ? 'none' : 'quest')
+    glint: ['quest', 'always', 'none'].includes(cfg.glint) ? cfg.glint : (cfg.secretId ? 'none' : 'quest'),
+    absY: cfg.absY === true
   };
 }
 
@@ -7626,11 +7717,17 @@ function createQuestSpot(position, options = {}) {
   root.metadata._spotHelper = helper; root.metadata._spotGlint = glint;
   helper.setEnabled(false); glint.setEnabled(false);
   registerEditableRoot(root.name, root);
+  QuestSpotRuntime.roots = null;
   return root;
 }
 
 function getQuestSpotRoots() {
-  return scene.transformNodes.filter(n => n.metadata?.type === 'quest_spot' && !n.isDisposed?.());
+  const now = performance.now();
+  if (!QuestSpotRuntime.roots || now - QuestSpotRuntime.rootsAt > 1000 || QuestSpotRuntime.roots.some(n => n.isDisposed?.())) {
+    QuestSpotRuntime.roots = scene.transformNodes.filter(n => n.metadata?.type === 'quest_spot' && !n.isDisposed?.());
+    QuestSpotRuntime.rootsAt = now;
+  }
+  return QuestSpotRuntime.roots;
 }
 
 function getQuestSpotById(spotId) {
@@ -7737,6 +7834,13 @@ function updateQuestSpots() {
   const t = performance.now() / 1000;
   for (const root of roots) {
     const cfg = root.metadata.spotConfig, helper = root.metadata._spotHelper, glint = root.metadata._spotGlint;
+    // Spots sit on the ground (or a kit floor) once the terrain is up, unless absY (roofs, ledges, high places).
+    if (!cfg.absY && !root.metadata._spotGrounded && !adminMode && window._newTerrain && t - (root.metadata._spotGroundTry || 0) > 1) {
+      root.metadata._spotGroundTry = t;
+      refreshVillageCollisionBlockersIfNeeded?.();
+      const g = getNPCGroundHeightAt(root.position.x, root.position.z);
+      if (Number.isFinite(g)) { root.position.y = g; root.metadata._spotGrounded = true; }
+    }
     if (helper && helper.isEnabled() !== editor) { helper.setEnabled(editor); helper.isPickable = editor; }
     const showGlint = !editor && walkMode && !ActiveInterior && (cfg.glint === 'always' || (cfg.glint === 'quest' && isQuestSpotTargetedByActiveQuest(cfg.spotId)));
     if (glint) {
@@ -7780,7 +7884,8 @@ function readQuestSpotSettingsFromControls() {
     },
     secretId: v('questSpotSecretIdInput').trim() || null,
     secretName: v('questSpotSecretNameInput').trim(),
-    glint: v('questSpotGlintInput') || undefined
+    glint: v('questSpotGlintInput') || undefined,
+    absY: document.getElementById('questSpotAbsYInput')?.checked === true
   };
 }
 
@@ -7793,6 +7898,7 @@ function writeQuestSpotSettingsToControls(root) {
   set('questSpotTimeInput', cfg.requires?.time || ''); set('questSpotWeatherInput', (cfg.requires?.weather || []).join(', '));
   set('questSpotMinYInput', Number.isFinite(cfg.requires?.minY) ? cfg.requires.minY : ''); set('questSpotHintInput', cfg.requires?.hint || '');
   set('questSpotSecretIdInput', cfg.secretId || ''); set('questSpotSecretNameInput', cfg.secretName || ''); set('questSpotGlintInput', cfg.glint);
+  const abs = document.getElementById('questSpotAbsYInput'); if (abs) abs.checked = cfg.absY === true;
 }
 
 function placeQuestSpot() {
@@ -10256,6 +10362,10 @@ function getQuestObjectiveDisplayText(questId = QuestState.questId, stepId = Que
   const quest = QUEST_DEFINITIONS[questId] || {};
   const step = getQuestStep(questId, stepId);
   const raw = step?.objective || quest.objectives?.[0]?.objective || quest.objectives?.[0] || 'Continue the journey.';
+  if (step?.wired) {
+    const counted = step.count > 1 ? ` (${Math.min(getQuestStepProgress(questId, step.id).ids.length, step.count)}/${step.count})` : '';
+    return String(raw) + counted;
+  }
   const npc = quest.primaryNpc || '';
   const village = quest.village || '';
   const lower = String(raw).toLowerCase();
@@ -10788,8 +10898,37 @@ function advanceConfiguredQuestObjective(actionType, context = {}) {
   const expectedAction = getConfiguredQuestAction(quest, QuestState.step);
   if (!expectedAction || !questActionMatches(expectedAction, actionType)) return false;
   if (!doesQuestContextMatchTarget(quest, context, actionType)) return false;
+  const step = getQuestStep(quest.questId, QuestState.step) || {};
+  // Counted steps ("inspect three...") need that many different targets.
+  if (step.count > 1) {
+    const progress = getQuestStepProgress(quest.questId, step.id);
+    const id = getQuestTargetObjectIdFromContext(context) || `${step.id}_${progress.ids.length + 1}`;
+    if (progress.ids.includes(id)) return false;
+    progress.ids.push(id);
+    if (progress.ids.length < step.count) {
+      saveQuestState();
+      showToast(`${quest.title}: ${progress.ids.length} / ${step.count}`);
+      return true;
+    }
+  }
+  // Multi-step quests move to their next step; the last step completes the quest.
+  const steps = (quest.steps || []).filter(s => s.id !== 'complete');
+  const index = steps.findIndex(s => s.id === QuestState.step);
+  if (index >= 0 && index < steps.length - 1) {
+    const next = steps[index + 1];
+    setTutorialQuestStep(quest.questId, next.id, `${quest.title}: ${next.objective}`);
+    playProgressionAudio('progressMilestone');
+    return true;
+  }
   completeTutorialQuest(QuestState.questId, { actionType, context });
   return true;
+}
+
+function getQuestStepProgress(questId, stepId) {
+  const progress = getHubTutorialProgress(questId);
+  if (!progress.steps || typeof progress.steps !== 'object') progress.steps = {};
+  if (!progress.steps[stepId]) progress.steps[stepId] = { ids:[] };
+  return progress.steps[stepId];
 }
 
 function advanceHubTutorialObjective(actionType, context = {}) {
@@ -10860,7 +10999,9 @@ function updateQuestTracker() {
     : '';
   const guidance = getQuestTargetGuidance();
   let objectiveText = getQuestObjectiveDisplayText(QuestState.questId, QuestState.step);
-  if (guidance?.missing) {
+  if (step?.wired) {
+    // the step's own words; the auto guide marker shows the way
+  } else if (guidance?.missing) {
     objectiveText = 'Quest target not placed yet.';
   } else if (guidance?.marker && guidance.label) {
     objectiveText = `Follow the glowing marker to ${guidance.label}.`;
@@ -11057,8 +11198,78 @@ function getQuestTargetMetadata(questId = QuestState.questId, stepId = QuestStat
   };
 }
 
+// Wired Book One steps need no placed marker: one runtime marker (never saved) follows the step's target,
+// the NPC, the next unvisited spot, the collectible, or the village gate when the step is in another village.
+const AutoQuestGuide = { root:null, key:'', gate:null, at:0, target:null };
+function getAutoQuestGuideTarget() {
+  if (QuestState.completed || ActiveInterior) return null;
+  const quest = QUEST_DEFINITIONS[QuestState.questId];
+  const step = quest && getQuestStep(quest.questId, QuestState.step);
+  if (!step?.wired || step.targetMarkerId) return null;
+  const action = normalizeQuestObjectiveAction(step.objectiveType);
+  const gate = () => {
+    if (!AutoQuestGuide.gate || AutoQuestGuide.gate.isDisposed?.()) AutoQuestGuide.gate = scene.transformNodes.find(n => n.metadata?.type === 'village_gate' && n.metadata?.isClone) || null;
+    return AutoQuestGuide.gate;
+  };
+  if (step.villageId && step.villageId !== CURRENT_VILLAGE_ID) {
+    const g = gate();
+    return g ? { node:g, label:`To ${VILLAGE_REGISTRY[step.villageId]?.displayName || step.villageId}` } : null;
+  }
+  if (action === 'usePortal') { const g = gate(); return g ? { node:g, label:'Village Gate' } : null; }
+  if (action === 'talkToNpc') {
+    const npc = step.targetNpcId ? getNPCById(step.targetNpcId) : null;
+    return npc ? { node:npc, label:npc.metadata?.displayName || 'Talk', npcId:step.targetNpcId } : null;
+  }
+  const near = list => {
+    if (!charMesh || !list.length) return list[0] || null;
+    return list.reduce((a, b) => (BABYLON.Vector3.DistanceSquared(a.position, charMesh.position) <= BABYLON.Vector3.DistanceSquared(b.position, charMesh.position) ? a : b));
+  };
+  const want = String(step.targetObjectId || '').toLowerCase();
+  if (action === 'useQuestSpot' && want) {
+    const done = new Set(getQuestStepProgress(quest.questId, step.id).ids.map(id => String(id).toLowerCase()));
+    const root = near(getQuestSpotRoots().filter(r => { const id = String(r.metadata.spotConfig?.spotId || '').toLowerCase(); return id.includes(want) && !done.has(id); }));
+    return root ? { node:root, label:root.metadata.spotConfig.label || 'Look here' } : null;
+  }
+  if (action === 'collectCollectible' && want) {
+    const root = near(scene.transformNodes.filter(n => n.metadata?.type === 'collectible' && n.metadata.enabled !== false && String(n.metadata.collectibleId || '').toLowerCase().includes(want) && !isCollectibleCollected?.(n.metadata.collectibleId)));
+    return root ? { node:root, label:root.metadata.collectibleLabel || 'Collect' } : null;
+  }
+  return null;
+}
+
+function getAutoQuestGuideMarker() {
+  const now = performance.now();
+  if (now - AutoQuestGuide.at > 250) { AutoQuestGuide.at = now; AutoQuestGuide.target = getAutoQuestGuideTarget(); }
+  const target = AutoQuestGuide.target;
+  if (!target || target.node.isDisposed?.()) return null;
+  if (!AutoQuestGuide.root || AutoQuestGuide.root.isDisposed?.()) {
+    if (AutoQuestGuide.creating) return null; // creating the marker refreshes the tracker, which asks again
+    AutoQuestGuide.creating = true;
+    try {
+    AutoQuestGuide.root = createQuestTargetMarker(target.node.position.clone(), { name:'questTargetAutoGuide', targetMarkerId:'questTarget_auto', label:target.label, targetType:'Area', radius:2.4, enabled:true });
+    AutoQuestGuide.root.metadata.isClone = false;
+    AutoQuestGuide.root.metadata.autoGuide = true;
+    unregisterEditableRoot(AutoQuestGuide.root);
+    AutoQuestGuide.key = '';
+    } finally { AutoQuestGuide.creating = false; }
+  }
+  const root = AutoQuestGuide.root, meta = root.metadata;
+  const key = `${target.label}|${target.npcId || ''}`;
+  if (AutoQuestGuide.key !== key) {
+    AutoQuestGuide.key = key;
+    meta.label = target.label;
+    meta.targetType = target.npcId ? 'NPC' : 'Area';
+    meta.targetNpcId = target.npcId || null;
+    applyQuestTargetMarkerVisual(root);
+  }
+  if (!target.npcId) root.position.copyFrom(target.node.getAbsolutePosition ? target.node.getAbsolutePosition() : target.node.position);
+  return root;
+}
+
 function getActiveQuestTargetMarker() {
   if (QuestState.completed) return null;
+  const autoMarker = getAutoQuestGuideMarker();
+  if (autoMarker) return autoMarker;
   const target = getQuestTargetMetadata();
   if (target.targetMarkerId) {
     const marker = getQuestTargetById(target.targetMarkerId);
@@ -14565,6 +14776,17 @@ function handleNPCQuestEvent(npc, finishedDialogue = false) {
   advanceHubTutorialObjective('returnToNpc', npcContext);
 }
 
+// While a wired quest step asks the player to talk to this NPC, the NPC says that step's lines.
+function getQuestStepDialogueLines(npc) {
+  if (QuestState.completed === true) return null;
+  const quest = QUEST_DEFINITIONS[QuestState.questId];
+  const step = quest && getQuestStep(quest.questId, QuestState.step);
+  if (!step?.wired || !Array.isArray(step.say) || !step.say.length) return null;
+  if (normalizeQuestObjectiveAction(step.objectiveType) !== 'talkToNpc') return null;
+  const npcId = String(npc?.metadata?.npcId || npc?.name || '').toLowerCase();
+  return npcId && npcId === String(step.targetNpcId || '').toLowerCase() ? step.say : null;
+}
+
 function getTutorialDialogueLines(npc) {
   const meta = npc?.metadata || {};
   if (meta.villageId === 'hub' && meta.factionId === 'ashigaru') {
@@ -14739,7 +14961,7 @@ function openNPCDialogue(npc) {
     .split(/\n+/)
     .map(line => line.trim())
     .filter(Boolean);
-  const tutorialLines = getTutorialDialogueLines(npc);
+  const tutorialLines = getQuestStepDialogueLines(npc) || getTutorialDialogueLines(npc);
   const lines = tutorialLines || (customLines.length ? customLines : (NPC_DIALOGUES[npc.metadata.dialogueId] || NPC_DIALOGUES.default));
   activeNPCDialogue = { npc, lines, index:0 };
   npc.metadata.dialogueOpen = true;
@@ -14784,6 +15006,19 @@ function closeNPCDialogue(finishedDialogue = false) {
   }
   handleNPCQuestEvent(npc, finishedDialogue === true);
   activeNPCDialogue = null;
+}
+
+// An NPC the current quest step wants you to talk to beats the village gate, doors and signs nearby
+// (the Hub gate guard stands right beside the gate).
+function getNearbyQuestTalkNpc() {
+  if (!walkMode || adminMode || activeNPCDialogue) return null;
+  const npc = getNearestNPCInRange();
+  return npc && getQuestStepDialogueLines(npc) ? npc : null;
+}
+
+function tryTalkToNearbyQuestNpc() {
+  const npc = getNearbyQuestTalkNpc();
+  return npc ? openNPCDialogue(npc) : false;
 }
 
 function tryTalkToNearbyNPC() {
@@ -21863,7 +22098,7 @@ document.addEventListener('keydown', async e => {
     enterInterior(selectedObject);
     return;
   }
-  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryObserveTimeWeatherQuest() || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryUseNearbyQuestSpot() || tryTalkToNearbySmallAnt() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
+  if (!adminMode && key === 'o' && ((ActiveInterior && getNearestInteriorNftFrameInRange() && inspectInteriorNftFrame(getNearestInteriorNftFrameInRange())) || (ActiveInterior && getNearestInteriorHotspotInRange() && interactInteriorHotspot(getNearestInteriorHotspotInRange())) || (ActiveInterior && getNearestInteriorVideoScreenInRange() && interactInteriorVideoScreen(getNearestInteriorVideoScreenInRange())) || (ActiveInterior && getNearestInteriorDisplayInRange() && interactInteriorDisplay(getNearestInteriorDisplayInRange())) || (ActiveInterior && getNearestInteriorExitInRange() && returnToVillageFromInterior()) || tryObserveTimeWeatherQuest() || tryTalkToNearbyQuestNpc() || tryEnterNearbyInterior() || tryOpenNearbyVillageGate() || tryUseNearbyQuestSpot() || tryTalkToNearbySmallAnt() || tryTalkToNearbyNPC() || tryOpenNearbySign() || tryOpenNearbyTreasureChest())) {
     e.preventDefault();
     return;
   }
