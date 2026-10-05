@@ -374,16 +374,21 @@ async function saveActiveCharacter(activeCharacter) {
   const selectedKey = getActiveCharacterByWalletKey(activeCharacter.walletAddress);
   const value = JSON.stringify(activeCharacter);
 
-  await redisPipeline([
+  // Only Rebels (battle_for_colony) become the wallet's 'selected' character; friend collections (Chumpz...) keep
+  // just their own record, read by their lobby card.
+  const isRebel = (activeCharacter.collectionKey || 'battle_for_colony') === 'battle_for_colony';
+  await redisPipeline(isRebel ? [
     ['SET', recordKey, value],
     ['SET', selectedKey, value]
+  ] : [
+    ['SET', recordKey, value]
   ]);
 
   return {
     saved: true,
     storage: 'redis',
     recordKey,
-    selectedKey
+    selectedKey: isRebel ? selectedKey : null
   };
 }
 

@@ -761,6 +761,8 @@ async function loadSelectedForgePlayableFromServer() {
     if (!response.ok || !data.ok || !data.hasActiveCharacter) {
       return null;
     }
+    // friend collections (the Chumpz Racer) have their own card; never a second, generic one
+    if ((data.activeCharacter?.collectionKey || 'battle_for_colony') !== 'battle_for_colony') return null;
 
     return buildForgePlayableCardFromActiveCharacter(data.activeCharacter, {
       id: `forge_playable_${data.activeCharacter?.activeForgeBuildId || 'selected'}`,
@@ -777,7 +779,7 @@ async function loadSavedForgePlayableCards() {
 
   loadLocalForgePlayableCharacters().forEach((saved) => {
     const card = buildForgePlayableCardFromActiveCharacter(getForgePlayableActiveCharacter(saved), saved);
-    if (card?.activeGlbUrl) playableById.set(card.id, card);
+    if (card?.activeGlbUrl && (card.collectionKey || 'battle_for_colony') === 'battle_for_colony') playableById.set(card.id, card);
   });
 
   const serverSelectedPlayable = await loadSelectedForgePlayableFromServer();

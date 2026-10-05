@@ -109,9 +109,12 @@ export default async function handler(req, res) {
     const tokenSpecificCharacter = parseActiveCharacter(results?.[1]?.result || null);
     // Phase 0: when a specific Rebel is asked for, never answer with a different Rebel's "selected" character
     // (that made #4998's Forge preview show an old #469 build).
-    const selectedMatches = !(tokenId || rebelId) || (selectedCharacter && (
+    // ...nor with another collection's character (a Chumpz forge made the wallet's 'selected' a Chumpz rig, and
+    // the lobby showed it as an extra, broken Rebel card).
+    const sameCollection = !selectedCharacter || (selectedCharacter.collectionKey || 'battle_for_colony') === (collectionKey || 'battle_for_colony');
+    const selectedMatches = sameCollection && (!(tokenId || rebelId) || (selectedCharacter && (
       (tokenId && String(selectedCharacter.tokenId || '') === String(tokenId)) ||
-      (rebelId && String(selectedCharacter.rebelId || '') === String(rebelId))));
+      (rebelId && String(selectedCharacter.rebelId || '') === String(rebelId)))));
     const activeCharacter = tokenSpecificCharacter || (selectedMatches ? selectedCharacter : null) || null;
 
     return res.status(200).json({
