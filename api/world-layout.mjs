@@ -18,7 +18,6 @@ const VILLAGE_IDS = new Set([
   'ashigaru',
   'sohei',
   'yamabushi',
-  'queens',
   'cute-creepy',
   'saints-la',
   'chumpz'
