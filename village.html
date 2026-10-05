@@ -2569,7 +2569,10 @@ const PROGRESSION_BADGE_CATEGORIES = {
   samurai: 'Samurai',
   arcade: 'Arcade',
   community: 'Community',
-  builder: 'Builder'
+  builder: 'Builder',
+  villages: 'Village Crest',
+  secrets: 'Secret',
+  collector: 'Treasure'
 };
 const BADGE_RARITIES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic'];
 const DEFAULT_BADGE_DEFINITIONS = [
@@ -2600,6 +2603,106 @@ const DEFAULT_BADGE_DEFINITIONS = [
   { badgeId:'builder-root-sculptor', name:'Root Sculptor', category:'builder', rarity:'Rare', imageUrl:'/assets/badges/builder-root-sculptor.png', requirementType:'builder', requirementValue:'future-terrain', requirementText:'Future terrain builder milestone', description:'You shaped land around the old roots.' },
   { badgeId:'secret-beneath-roots', name:'Beneath the Roots', category:'story', rarity:'Mythic', imageUrl:'/assets/badges/secret-beneath-roots.png', requirementType:'secret', requirementValue:'beneath-roots', requirementText:'Hidden discovery', description:'Something beneath the roots answered back.', hidden:true }
 ];
+// The other 46 of the 72 badges: a crest and an all-secrets badge per village, secret milestones, mini ant
+// spotters, chest and collector badges. All award themselves (checkAutoBadges).
+(() => {
+  const FACTION_ART = new Set(['ronin','samurai','shogun','bushi','buke','ashigaru','kenshi','yamabushi','sohei','wokou','warrior']);
+  const villages = ['hub','ronin','samurai','shogun','bushi','buke','ashigaru','kenshi','yamabushi','sohei','wokou','warrior','cute-creepy','chumpz','saints-la'];
+  const short = id => ({ hub:'Hub', 'cute-creepy':'Cute & Creepy', chumpz:'Chumpz', 'saints-la':'Saints of LA' }[id] || id[0].toUpperCase() + id.slice(1));
+  const add = b => DEFAULT_BADGE_DEFINITIONS.push({ imageUrl:'', ...b });
+  villages.forEach(v => add({ badgeId:`crest-${v}`, name:`${short(v)} Crest`, category:'villages', rarity:'Rare', emblem:FACTION_ART.has(v) ? v : null, requirementType:'villageQuests', requirementValue:v, requirementText:`Finish every quest in ${short(v)}`, description:`${short(v)} counts you as one of its own.` }));
+  villages.forEach(v => add({ badgeId:`secrets-${v}`, name:`${short(v)} Unveiled`, category:'secrets', rarity:'Epic', emblem:FACTION_ART.has(v) ? v : null, requirementType:'villageSecrets', requirementValue:v, requirementText:`Find every secret in ${short(v)}`, description:'Nothing in this village is hidden from you any more.' }));
+  [[10,'Curious','Common'],[25,'Seeker','Uncommon'],[50,'Pathbreaker','Rare'],[75,'Keeper of Secrets','Epic'],[100,'Nothing Stays Hidden','Mythic']].forEach(([n, name, rarity]) => add({ badgeId:`secrets-count-${n}`, name, category:'secrets', rarity, requirementType:'secretCount', requirementValue:n, requirementText:`Find ${n} secrets`, description:n === 100 ? 'Every secret in the universe. Every one.' : `${n} hidden discoveries.` }));
+  add({ badgeId:'mini-ants-5', name:'Tiny Friends', category:'secrets', rarity:'Rare', requirementType:'miniAnts', requirementValue:5, requirementText:'Find 5 hidden mini ants', description:'They are small, and they noticed you.' });
+  add({ badgeId:'mini-ants-15', name:'All the Little Ones', category:'secrets', rarity:'Legendary', requirementType:'miniAnts', requirementValue:15, requirementText:'Find all 15 hidden mini ants', description:'Every mini ant in every village.' });
+  add({ badgeId:'chest-first-coin', name:'First Coin', category:'collector', rarity:'Common', requirementType:'chestCount', requirementValue:1, requirementText:'Open your first chest', description:'The first Rebel points of many.' });
+  add({ badgeId:'chest-hunter', name:'Chest Hunter', category:'collector', rarity:'Rare', requirementType:'chestCount', requirementValue:25, requirementText:'Open 25 chests', description:'You know where chests like to hide.' });
+  add({ badgeId:'chest-master', name:'Hoard of the Colony', category:'collector', rarity:'Mythic', requirementType:'chestCount', requirementValue:100, requirementText:'Open all 100 chests', description:'Every chest in the universe, opened.' });
+  ['hub','ronin','shogun','yamabushi','wokou'].forEach(v => add({ badgeId:`legend-chest-${v}`, name:`Legend of ${short(v)}`, category:'collector', rarity:'Legendary', emblem:FACTION_ART.has(v) ? v : null, requirementType:'chestId', requirementValue:`${v}-chest-legend-1`, requirementText:`Open the legend chest in ${short(v)}`, description:'A thousand Rebel points, and a story to go with it.' }));
+  add({ badgeId:'collector-relic-keeper', name:'Relic Keeper', category:'collector', rarity:'Epic', requirementType:'collectibleCount', requirementValue:91, requirementText:'Collect every collectible', description:'The archive has nothing left to ask of you.' });
+})();
+
+// Quests that count toward a village crest: wired Book One quests set in that village.
+function getVillageQuestIds(villageId) {
+  const name = String(VILLAGE_REGISTRY[villageId]?.displayName || villageId).replace(/ Village$/, '').toLowerCase();
+  return [...BOOK1_MAIN_QUESTS, ...BOOK1_SIDE_QUESTS]
+    .filter(q => getBook1Wiring(q) && String(q.village || '').toLowerCase().split(/[^a-z&]+/).join(' ').includes(name.split(/[^a-z&]+/).join(' ')))
+    .map(q => q.questId);
+}
+
+function isAutoBadgeEarned(badge) {
+  const P = ProgressionState, v = badge.requirementValue;
+  switch (badge.requirementType) {
+    case 'quest': return (P.completedQuests || []).includes(v);
+    case 'secret': return (P.secretsFound || []).includes(v);
+    case 'village': return (P.villagesVisited || []).includes(v);
+    case 'villageQuests': { const ids = getVillageQuestIds(v); return ids.length > 0 && ids.every(id => (P.completedQuests || []).includes(id)); }
+    case 'villageSecrets': { const total = getSecretVillageTotal(v); const found = SECRET_DEFINITIONS.filter(d => d.villageId === v && (P.secretsFound || []).includes(d.secretId)).length; return total > 0 && found >= total; }
+    case 'secretCount': return (P.secretsFound || []).length >= Number(v);
+    case 'miniAnts': return SECRET_DEFINITIONS.filter(d => d.miniAnt && (P.secretsFound || []).includes(d.secretId)).length >= Number(v);
+    case 'chestCount': return (P.chestsOpened || []).length >= Number(v);
+    case 'chestId': return (P.chestsOpened || []).includes(v);
+    case 'collectibleCount': return (P.collectiblesFound || []).length >= Number(v);
+    default: return false;
+  }
+}
+
+let _autoBadgeCheck = false;
+function checkAutoBadges(silent = false) {
+  if (_autoBadgeCheck) return;
+  _autoBadgeCheck = true;
+  try {
+    let changed = false;
+    getBadgeDefinitions().forEach(badge => {
+      if ((ProgressionState.badges || []).includes(badge.name)) return;
+      if (isAutoBadgeEarned(badge)) { awardBadge(badge.name, silent); changed = true; }
+    });
+    if (changed) saveProgressionState();
+  } finally { _autoBadgeCheck = false; }
+}
+
+// Badge art: uploaded art (admin) when there is some, else a medallion drawn here: a ring in the rarity's
+// colour, a dark lacquer face and the faction emblem (village badges) or the category's mark.
+const BADGE_ART_RING = { Common:'#8fb8b2', Uncommon:'#79c27a', Rare:'#5e9fe6', Epic:'#ad7ae8', Legendary:'#e8c56a', Mythic:'#e8605a' };
+const BADGE_ART_MARK = { explorer:'✧', story:'❖', ronin:'✋', samurai:'⚔', arcade:'◆', community:'❂', builder:'⚒', villages:'⛩', secrets:'✶', collector:'◎' };
+const BadgeArt = { cache:new Map(), emblems:{} };
+function getBadgeArtDataUrl(badge) {
+  if (!badge) return '';
+  const key = badge.badgeId + (badge.emblem && BadgeArt.emblems[badge.emblem]?.complete ? ':e' : '');
+  if (BadgeArt.cache.has(key)) return BadgeArt.cache.get(key);
+  const S = 128, c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d'), ring = BADGE_ART_RING[badge.rarity] || BADGE_ART_RING.Common;
+  const face = g.createRadialGradient(S * .42, S * .36, 6, S / 2, S / 2, S / 2);
+  face.addColorStop(0, '#2a2f3a'); face.addColorStop(1, '#0b0d12');
+  g.beginPath(); g.arc(S / 2, S / 2, S / 2 - 3, 0, Math.PI * 2); g.fillStyle = ring; g.fill();
+  g.beginPath(); g.arc(S / 2, S / 2, S / 2 - 11, 0, Math.PI * 2); g.fillStyle = face; g.fill();
+  g.beginPath(); g.arc(S / 2, S / 2, S / 2 - 16, 0, Math.PI * 2); g.strokeStyle = ring; g.globalAlpha = .45; g.lineWidth = 1.5; g.stroke(); g.globalAlpha = 1;
+  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; g.beginPath(); g.arc(S / 2 + Math.cos(a) * (S / 2 - 7), S / 2 + Math.sin(a) * (S / 2 - 7), 1.6, 0, Math.PI * 2); g.fillStyle = '#0b0d12'; g.fill(); }
+  const img = badge.emblem && BadgeArt.emblems[badge.emblem];
+  if (img?.complete && img.naturalWidth) {
+    // the white emblem mask, tinted with the ring colour
+    const t = document.createElement('canvas'); t.width = t.height = 80; const tg = t.getContext('2d');
+    const k = Math.min(80 / img.naturalWidth, 80 / img.naturalHeight);
+    tg.drawImage(img, (80 - img.naturalWidth * k) / 2, (80 - img.naturalHeight * k) / 2, img.naturalWidth * k, img.naturalHeight * k);
+    tg.globalCompositeOperation = 'source-in'; tg.fillStyle = ring; tg.fillRect(0, 0, 80, 80);
+    g.drawImage(t, 24, 24);
+  } else {
+    g.fillStyle = ring; g.font = '52px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(BADGE_ART_MARK[badge.category] || '✦', S / 2, S / 2 + 3);
+  }
+  const url = c.toDataURL('image/png');
+  BadgeArt.cache.set(key, url);
+  return url;
+}
+function preloadBadgeEmblems() {
+  ['ronin','samurai','shogun','bushi','buke','ashigaru','kenshi','yamabushi','sohei','wokou','warrior'].forEach(f => {
+    const img = new Image();
+    img.onload = () => { if (document.getElementById('progressionOverlay')?.classList.contains('on')) try { renderProgressionJournal(); } catch(e) {} };
+    img.src = `/assets/brand/factions/${f}.png`;
+    BadgeArt.emblems[f] = img;
+  });
+}
+
 function loadBadgeConfig() {
   try { return JSON.parse(localStorage.getItem(BADGE_CONFIG_KEY) || '{}') || {}; }
   catch (_) { return {}; }
@@ -2638,7 +2741,9 @@ function getBadgeDefinitions(options = {}) {
   return [...mergedDefaults, ...customBadges].filter(badge => includeArchived || !badge.archived);
 }
 function getBadgeImageSource(badge) {
-  return badge.localImageDataUrl || badge.imageUrl || '';
+  if (!badge) return '';
+  const uploaded = badge.localImageDataUrl || BadgeConfig?.[badge.badgeId]?.imageUrl || (badge.custom ? badge.imageUrl : '');
+  return uploaded || getBadgeArtDataUrl(badge);
 }
 function getBadgeDefinitionByName(name, options = {}) {
   return getBadgeDefinitions(options).find(badge => badge.name === name) || null;
@@ -2918,7 +3023,7 @@ function processBadgeUnlockQueue() {
   if (categoryEl) categoryEl.textContent = `${meta.categoryLabel} / ${meta.rarity}`;
   if (descEl) descEl.textContent = meta.requirement ? `${meta.requirement}. ${meta.description}` : meta.description;
   if (iconEl) {
-    const image = meta.localImageDataUrl || meta.imageUrl;
+    const image = getBadgeImageSource(getBadgeDefinitionByName(name)) || meta.localImageDataUrl || meta.imageUrl;
     iconEl.innerHTML = image ? `<img src="${escapeHTML(image)}" alt="">` : '★';
   }
   badgePopupActive = true;
@@ -2980,6 +3085,7 @@ function recordProgressionEvent(kind, id, amount = 0, badge = null) {
   if (kind === 'quest') playProgressionAudio('questComplete', { queue:true });
   if (kind === 'secret') playProgressionAudio('secretFound', { queue:true });
   saveProgressionState();
+  checkAutoBadges();
   return true;
 }
 
@@ -8005,15 +8111,17 @@ const SECRET_DEFINITIONS = [
   { secretId:'hub-first-seal', villageId:'hub', name:'The First Seal', hint:'Deep in the old tunnels, a door older than the colony.' },
   { secretId:'hub-hidden-shelf', villageId:'hub', name:'Hidden Shelf', hint:'The library holds a book that is on no list.' },
   { secretId:'hub-dark-cabinet', villageId:'hub', name:'Dark Cabinet', hint:'One arcade cabinet only wakes at midnight.' },
-  { secretId:'hub-root-burrow', villageId:'hub', name:'Root Burrow', hint:'Someone very small lives in the cherry roots.' },
+  { secretId:'hub-root-burrow', villageId:'hub', name:'Root Burrow', miniAnt:true, hint:'Someone very small lives in the cherry roots.' },
   { secretId:'ronin-red-hand', villageId:'ronin', name:'The Red Hand', hint:'The great bonsai hides a mark behind its trunk.' },
   { secretId:'ronin-silence-trial', villageId:'ronin', name:'Silence Trial', hint:'At the eastern edge, the Ronin wait in silence. Can you?' },
   { secretId:'ronin-old-door', villageId:'ronin', name:'The Old Door', hint:'Behind the great dojo, where the fortress ends.' },
   { secretId:'ronin-fog-causeway', villageId:'ronin', name:'Causeway in the Fog', hint:'Cross the causeway when the weather turns.' },
   { secretId:'ronin-broken-lantern', villageId:'ronin', name:'The Broken Lantern', hint:'One crimson lantern on the causeway has gone dark.' },
-  { secretId:'ronin-root-shadow', villageId:'ronin', name:'Root Shadow', hint:'Something tiny watches from the dead tree roots.' }
+  { secretId:'ronin-root-shadow', villageId:'ronin', name:'Root Shadow', miniAnt:true, hint:'Something tiny watches from the dead tree roots.' }
 ];
 function getSecretTotalCount() { return SECRET_TOTAL; }
+// badges earned before these definitions existed are awarded quietly; emblems load for the badge art
+setTimeout(() => { try { preloadBadgeEmblems(); checkAutoBadges(true); } catch(e) { console.warn('auto badges', e); } }, 0);
 function getSecretDefinition(secretId) { return SECRET_DEFINITIONS.find(d => d.secretId === secretId) || null; }
 function getSecretVillageTotal(villageId) {
   if (SECRET_PER_VILLAGE[villageId]) return SECRET_PER_VILLAGE[villageId];
