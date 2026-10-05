@@ -22035,9 +22035,16 @@ function getVillageRaycastGroundHeightAt(x, z, options = {}) {
 
 // Standing still (or orbiting in admin) reused the same 10 rays every frame; the answer is kept for 0.5 s while the
 // player stays on the same spot.
-let _playerGroundCache = null;
+var _playerGroundCache = null;
+// spawn / teleport (first call, or a jump of more than 3 m): for 2 s a kit deck under the player counts even when it is
+// higher than a step (the Chumpz spawn landed inside the bar's floor), and the walk surfaces are rebuilt first
+// (they are otherwise only built once the player moves)
+var _playerGroundLastXZ = null, _playerDeckSnapUntil = 0; // var: rebuildVillageCollisionBlockers may run before this line
 function getVillagePlayerGroundHeightAt(x, z) {
   const now = performance.now();
+  if (!_playerGroundLastXZ || Math.hypot(_playerGroundLastXZ.x - x, _playerGroundLastXZ.z - z) > 3) _playerDeckSnapUntil = now + 2000;
+  _playerGroundLastXZ = { x, z };
+  if (now < _playerDeckSnapUntil) refreshVillageCollisionBlockersIfNeeded();
   const c = _playerGroundCache;
   if (c && Math.abs(c.x - x) < 0.001 && Math.abs(c.z - z) < 0.001 && now - c.at < 500) return c.y;
   const y = computeVillagePlayerGroundHeightAt(x, z);
@@ -22086,7 +22093,8 @@ function computeVillagePlayerGroundHeightAt(x, z) {
     Number.isFinite(previousGroundHeight) &&
     Math.abs(surfaceHeight - previousGroundHeight) <= VILLAGE_PLAYER_WALK_SURFACE_MAX_RISE;
 
-  if (surfaceIsReachableStep || surfaceIsCurrentPlatform) {
+  const surfaceIsSpawnDeck = Number.isFinite(surfaceHeight) && performance.now() < _playerDeckSnapUntil && surfaceHeight > supportHeight && villageOnKitDeck(x, z);
+  if (surfaceIsReachableStep || surfaceIsCurrentPlatform || surfaceIsSpawnDeck) {
     supportHeight = Math.max(supportHeight, surfaceHeight);
   }
 
@@ -22564,8 +22572,11 @@ function rebuildVillageCollisionBlockers() {
   });
 
   villageCollisionBlockers = blockers;
+  const _kitDecksBefore = villageWalkableSurfaces.filter(sf => sf.type === 'kit_deck').length;
   villageWalkableSurfaces = walkableSurfaces;
   villageLastBlockerRebuild = performance.now();
+  // new decks (the layout just loaded): let the player settle onto one it already stands in
+  if (walkableSurfaces.filter(sf => sf.type === 'kit_deck').length > _kitDecksBefore) { _playerDeckSnapUntil = performance.now() + 1500; _playerGroundCache = null; }
   try { NPCManager.roots.forEach(root => {
     if (!root || root.isDisposed?.() || !villageOnKitDeck(root.position.x, root.position.z)) return;
     const y = getNPCGroundHeightAt(root.position.x, root.position.z);
