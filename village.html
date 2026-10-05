@@ -986,6 +986,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 	      <label class="admin-field">Min height <input id="questSpotMinYInput" type="number" step="0.5" placeholder="any"></label>
 	    </div>
 	    <label class="admin-field" style="display:flex;gap:8px;align-items:center;min-height:26px">Keep its height (roof, ledge; else it sits on the ground) <input id="questSpotAbsYInput" type="checkbox"></label>
+	    <label class="admin-field" style="display:flex;gap:8px;align-items:center;min-height:26px">Hidden mini ant here (appears within 30 m, whispers a hint) <input id="questSpotMiniAntInput" type="checkbox"></label>
 	    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
 	      <label class="admin-field">Time
 	        <select id="questSpotTimeInput" class="admin-select"><option value="">any</option><option value="night">night</option><option value="dawn">dawn</option><option value="day">day</option><option value="dusk">dusk</option></select>
@@ -8117,7 +8118,7 @@ const SECRET_DEFINITIONS = [
   { secretId:'ronin-old-door', villageId:'ronin', name:'The Old Door', hint:'Behind the great dojo, where the fortress ends.' },
   { secretId:'ronin-fog-causeway', villageId:'ronin', name:'Causeway in the Fog', hint:'Cross the causeway when the weather turns.' },
   { secretId:'ronin-broken-lantern', villageId:'ronin', name:'The Broken Lantern', hint:'One crimson lantern on the causeway has gone dark.' },
-  { secretId:'ronin-root-shadow', villageId:'ronin', name:'Root Shadow', miniAnt:true, hint:'Something tiny watches from the dead tree roots.' }
+  { secretId:'ronin-root-shadow', villageId:'ronin', name:'Root Shadow', miniAnt:true, hint:'Something tiny watches from the rock garden by the back wall.' }
 ];
 function getSecretTotalCount() { return SECRET_TOTAL; }
 // badges earned before these definitions existed are awarded quietly; emblems load for the badge art
@@ -8165,7 +8166,9 @@ function normalizeQuestSpotConfig(cfg = {}) {
     secretName: cfg.secretName ? String(cfg.secretName) : '',
     glint: ['quest', 'always', 'none'].includes(cfg.glint) ? cfg.glint : (cfg.secretId ? 'none' : 'quest'),
     absY: cfg.absY === true,
-    countBy: cfg.countBy === 'weather' ? 'weather' : null
+    countBy: cfg.countBy === 'weather' ? 'weather' : null,
+    miniAnt: cfg.miniAnt === true,
+    miniAntYaw: Number(cfg.miniAntYaw) || 0
   };
 }
 
@@ -8262,8 +8265,47 @@ function getQuestSpotPromptText(root) {
   return `Press O to ${cfg.label || QUEST_SPOT_ACTIONS[cfg.action] || 'Inspect'}`;
 }
 
+// A hidden mini ant (spot with miniAnt): the small ant model appears only within 30 m (one shared model
+// file, one copy, its idle loop paused when you walk away), and once found it whispers a hint for a secret
+// in this village you have not found yet.
+function updateQuestSpotMiniAnt(root, cfg) {
+  const m = root.metadata;
+  if (!charMesh) return;
+  const d = Math.hypot(root.position.x - charMesh.position.x, root.position.z - charMesh.position.z);
+  const want = walkMode && !ActiveInterior && d < 30;
+  if (want && !m._miniAnt && !m._miniAntLoading) {
+    m._miniAntLoading = true;
+    getCachedSmallAntModelTemplate().then(template => {
+      if (root.isDisposed?.()) return;
+      const holder = new BABYLON.TransformNode(root.name + '_miniAnt', scene);
+      holder.parent = root; holder.rotation.y = cfg.miniAntYaw || 0;
+      holder.metadata = { _perfNeverFreeze:true };
+      const inst = instantiateSmallAntCachedModel(template, holder, holder, {});
+      const idle = inst.animationGroups.find(g => /^idle/i.test(g.name)) || inst.animationGroups[0] || null;
+      try { idle?.start(true); } catch(e) {}
+      m._miniAnt = { holder, inst, idle, on:true };
+    }).catch(e => console.warn('mini ant', e)).finally(() => { m._miniAntLoading = false; });
+  }
+  const ant = m._miniAnt;
+  if (ant) {
+    const on = walkMode && !ActiveInterior && d < 40;
+    if (ant.on !== on) {
+      ant.on = on;
+      ant.holder.setEnabled(on);
+      try { if (on) ant.idle?.play(true); else ant.idle?.pause(); } catch(e) {}
+    }
+  }
+}
+
+function getMiniAntWhisper() {
+  const found = new Set(ProgressionState.secretsFound || []);
+  const next = SECRET_DEFINITIONS.find(d => d.villageId === CURRENT_VILLAGE_ID && !d.miniAnt && !found.has(d.secretId));
+  return next ? `The tiny ant whispers: "${next.hint}"` : 'The tiny ant bows. There is nothing left here you have not found.';
+}
+
 function completeQuestSpot(root) {
-  const cfg = root.metadata.spotConfig;
+  const cfg0 = root.metadata.spotConfig;
+  const cfg = cfg0.miniAnt ? { ...cfg0, text:`${cfg0.text ? cfg0.text + ' ' : ''}${getMiniAntWhisper()}` } : cfg0;
   QuestSpotRuntime.hold = null;
   if (cfg.action === 'light' || cfg.action === 'ring') playInteractionAudio(cfg.action === 'ring' ? 'templeBell' : 'collectiblePickup');
   let secretNew = false;
@@ -8330,6 +8372,7 @@ function updateQuestSpots() {
       if (showGlint) { glint.rotation.y = t * 1.6; glint.position.y = .9 + Math.sin(t * 2.4) * .12; glint.scaling.setAll(.85 + Math.sin(t * 5.2) * .25); }
     }
     if (helper && editor) helper.rotation.y = t * .8;
+    if (cfg.miniAnt) updateQuestSpotMiniAnt(root, cfg);
     // 'reach' spots fire on arrival (once per visit).
     if (cfg.action === 'reach' && walkMode && !adminMode && !ActiveInterior && charMesh) {
       const dx = root.position.x - charMesh.position.x, dz = root.position.z - charMesh.position.z;
@@ -8367,7 +8410,8 @@ function readQuestSpotSettingsFromControls() {
     secretId: v('questSpotSecretIdInput').trim() || null,
     secretName: v('questSpotSecretNameInput').trim(),
     glint: v('questSpotGlintInput') || undefined,
-    absY: document.getElementById('questSpotAbsYInput')?.checked === true
+    absY: document.getElementById('questSpotAbsYInput')?.checked === true,
+    miniAnt: document.getElementById('questSpotMiniAntInput')?.checked === true
   };
 }
 
@@ -8381,6 +8425,7 @@ function writeQuestSpotSettingsToControls(root) {
   set('questSpotMinYInput', Number.isFinite(cfg.requires?.minY) ? cfg.requires.minY : ''); set('questSpotHintInput', cfg.requires?.hint || '');
   set('questSpotSecretIdInput', cfg.secretId || ''); set('questSpotSecretNameInput', cfg.secretName || ''); set('questSpotGlintInput', cfg.glint);
   const abs = document.getElementById('questSpotAbsYInput'); if (abs) abs.checked = cfg.absY === true;
+  const mini = document.getElementById('questSpotMiniAntInput'); if (mini) mini.checked = cfg.miniAnt === true;
 }
 
 function placeQuestSpot() {
