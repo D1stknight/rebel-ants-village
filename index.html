@@ -926,7 +926,7 @@ async function selectAnt(id) {
   if (!rebel) return;
 
     setStatus('Loading Rebel details...');
-  if (rebel.playerModel) { // a friend playable: nothing to look up in the Forge
+  if (rebel.playerModel) { // a friend playable: its Forge character (if any) was attached when the cards loaded
     try { localStorage.setItem('selectedRebel', JSON.stringify(rebel)); } catch(e) {}
     setStatus(rebel.name + ' — ' + (rebel.formLabel || 'ready to play'));
     return;
@@ -1009,8 +1009,12 @@ const VILLAGE_RIGGED = {
 };
 // friend-collection playables (no NFT needed): rigged procedural characters built in the village (SamuraiKit)
 const FRIEND_PLAYABLES = [
-  { id: 'chumpz_racer', rebelId: 'chumpz_racer', name: 'Chumpz Racer', image: 'assets/lobby/chumpz_racer.jpg', collectionKey: 'chumpz', playerModel: 'kit:chz_ape_racer', formLabel: 'Chumpz Ape' }
+  // tokenId: the Racer's Forge slot in the chumpz collection (forge-v2.html?col=chumpz&token=900001&ref=/assets/forge/
+  // sources/chumpz_racer_production_ref_v1.png&species=ape&name=Chumpz%20Racer, as admin). Once forged and made active,
+  // the card plays the Forge rig; until then the kit ape (playerModel)
+  { id: 'chumpz_racer', rebelId: 'chumpz_900001', tokenId: '900001', name: 'Chumpz Racer', image: 'assets/lobby/chumpz_racer.jpg', collectionKey: 'chumpz', playerModel: 'kit:chz_ape_racer', formLabel: 'Chumpz Ape' }
 ];
+const loadFriendPlayables = () => Promise.all(FRIEND_PLAYABLES.map((r) => attachActiveForgeCharacter({ ...r })));
 function getRebelForgeStatus(rebel, hasForgeCharacter) {
   if (rebel.playerModel) return 'ready';
   const afc = rebel.activeForgeCharacter || {};
@@ -1036,6 +1040,7 @@ function dedupeForgePlayablesByToken(list) {
   });
 }
 function getRebelCardNumber(rebel) {
+  if (rebel.playerModel) return '';
   if (rebel.tokenId) return String(rebel.tokenId);
   const m = /#\s*(\d+)/.exec(rebel.name || '');
   return m ? m[1] : '';
@@ -1091,7 +1096,8 @@ async function showDefaultCard() {
   })));
   const showTokens = new Set(showcase.map((r) => String(r.tokenId)));
   const savedForgePlayables = (await loadSavedForgePlayableCards()).filter((r) => !showTokens.has(String(r.tokenId || '')));
-  ownedRebels = [defaultRebel, ...FRIEND_PLAYABLES.map((r) => ({ ...r })), ...sortRebelsByForgeStatus([...showcase, ...dedupeForgePlayablesByToken(savedForgePlayables)])];
+  const friends = await loadFriendPlayables();
+  ownedRebels = [defaultRebel, ...friends, ...sortRebelsByForgeStatus([...showcase, ...dedupeForgePlayablesByToken(savedForgePlayables)])];
 
   let storedSelected = {};
 
@@ -1162,7 +1168,7 @@ async function loadNFTs(walletAddress) {
 
     // the friend playables sit after the wallet's ready Rebels; they are never picked by default
     const firstNotReady = ownedRebels.findIndex((rebel) => getRebelForgeStatus(rebel) !== 'ready');
-    ownedRebels.splice(firstNotReady < 0 ? ownedRebels.length : firstNotReady, 0, ...FRIEND_PLAYABLES.map((r) => ({ ...r })));
+    ownedRebels.splice(firstNotReady < 0 ? ownedRebels.length : firstNotReady, 0, ...(await loadFriendPlayables()));
     const forgedReadyRebel = ownedRebels.find((rebel) => {
       if (rebel.playerModel) return false;
       return Boolean(rebel.activeForgeCharacter?.activeGlbUrl || rebel.activeGlbUrl) || getRebelForgeStatus(rebel) === 'ready';

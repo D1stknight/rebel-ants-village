@@ -15859,7 +15859,8 @@ function getForgeRigUrlBundle(rebel) {
 function resolveCharacterConfig(rebel) {
   // friend-collection playables (lobby cards with playerModel 'kit:<type>'): a rigged SamuraiKit character, no GLB
   const kitModel = String(rebel?.playerModel || '').startsWith('kit:') ? rebel.playerModel.slice(4) : null;
-  if (kitModel) return { rebel, characterId: rebel.id, displayName: rebel.name || 'Chumpz', previewImage: rebel.image || 'assets/lobby/ant_1.JPG', tokenId: null,
+  const forgedRig = rebel?.activeForgeCharacter?.forgeRigGlbUrl || rebel?.activeForgeCharacter?.characterBundle?.forgeRigGlbUrl;
+  if (kitModel && !forgedRig) return { rebel, characterId: rebel.id, displayName: rebel.name || 'Chumpz', previewImage: rebel.image || 'assets/lobby/ant_1.JPG', tokenId: null,
     collectionKey: rebel.collectionKey || 'chumpz', rebelId: rebel.id, characterRecord: null, bundleId: 'kit_' + kitModel, formType: 'procedural', formLabel: rebel.formLabel || 'Chumpz Ape',
     hasGeneratedModel: false, basePath: null, idleFile: null, singleGlb: null, playerScale: 1, animations: [], procedural: true, kitModel,
     activeForgeCharacter: null, characterBundle: null, activeForgeBuildId: null, activeGlbUrl: null };
@@ -19304,6 +19305,7 @@ async function attachVillageWeapon(r) {
   try {
     const reb = window.activeRebel || {}; const tok = String(reb.tokenId || '');
     if (!window.RebelWeapon || !tok || tok === '1' || tok === '001') return;
+    if (reb.collectionKey && reb.collectionKey !== 'battle_for_colony') return; // friend collections: no Rebel weapons
     const tr = reb.traits || {}; const tv = Array.isArray(tr) ? (tr.find((x) => x.trait_type === 'Weapons') || {}).value : tr['Weapons'];
     const pick = await RebelWeapon.resolve(tok, tv);
     if (!pick) return;
