@@ -1,5 +1,5 @@
 // Mixamo -> Mixamo retarget (world-space rotation deltas from the rest pose) + hips height scaled to the target.
-// usage: [FEET=0] [ALIGN=1] [FINGERS=pose.json] [SKIP=regex] [STRAIGHTEN=regex] node tools/retarget-mixamo.mjs target.glb out.glb src1.glb:Name1 src2.glb:Name2 ...
+// usage: [FEET=0] [ALIGN=1] [FINGERS=pose.json] [SKIP=re] [STRAIGHTEN=re] [PLANT=1] [UPRIGHT=re] node tools/retarget-mixamo.mjs target.glb out.glb src1.glb:Name1 src2.glb:Name2 ...
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import draco3d from 'draco3dgltf';
@@ -30,6 +30,10 @@ const SKIP = process.env.SKIP ? new RegExp(process.env.SKIP) : null;
 // STRAIGHTEN=regex: for these bones the clip's average offset from the target rest is removed (keeps the motion,
 // drops a constant hunch / head-down / splayed stance that the source character has)
 const STRAIGHTEN = process.env.STRAIGHTEN ? new RegExp(process.env.STRAIGHTEN) : null;
+// UPRIGHT=regex of clip names: tilt the hips so the clip's average hips->head line is vertical (no lean forward / back)
+// PLANT=1: per frame, hips height set so the lowest foot / toe sits where it does in the rest pose (feet on the ground)
+const UPRIGHT = process.env.UPRIGHT ? new RegExp(process.env.UPRIGHT) : null;
+const PLANT = process.env.PLANT === '1';
 // world rotation from rest locals (only the mixamo chain; the roots above have no rotation)
 const restWorld = (nodes, getLocal) => { const W = new Map(); const w = n => { if (W.has(n)) return W.get(n); const p = n.getParentNode(); const r = q.mul(isBone(p) ? w(p) : [0, 0, 0, 1], getLocal(n)); W.set(n, r); return r; }; nodes.forEach(w); return W; };
 const dstRestW = restWorld([...dstBones.values()], n => n.getRotation());
@@ -84,6 +88,7 @@ for (const spec of srcs) {
   const kH = (dstHipsRest[1] - FEET) / sh0[1];
   const out = dst.createAnimation(name);
   const inAcc = dst.createAccessor().setType('SCALAR').setArray(new Float32Array(times)).setBuffer(buffer);
+  const tracks = new Map();
   for (const [b, dn] of dstBones) {
     if (FINGERS && isFinger(b)) continue;
     if (SKIP && SKIP.test(b)) continue;
@@ -107,6 +112,7 @@ for (const spec of srcs) {
       const M = q.norm(m), corr = q.mul(dn.getRotation(), q.inv(M));
       for (let i = 0; i < F; i++) vals.set(q.norm(q.mul(corr, Array.from(vals.slice(i * 4, i * 4 + 4)))), i * 4);
     }
+    tracks.set(dn, vals);
     const acc = dst.createAccessor().setType('VEC4').setArray(vals).setBuffer(buffer);
     const smp = dst.createAnimationSampler().setInput(inAcc).setOutput(acc).setInterpolation('LINEAR');
     out.addSampler(smp); out.addChannel(dst.createAnimationChannel().setTargetNode(dn).setTargetPath('rotation').setSampler(smp));
@@ -121,6 +127,28 @@ for (const spec of srcs) {
   // the sway around it stays
   const shN = sample(trCh.get('Hips'), F - 1, 3);
   for (let i = 0; i < F; i++) { const t = sample(trCh.get('Hips'), i, 3), u = F > 1 ? i / (F - 1) : 0; const dx = t[0] - (sh0[0] + (shN[0] - sh0[0]) * u), dz = t[2] - (sh0[2] + (shN[2] - sh0[2]) * u); hv.set([dstHipsRest[0] + dx * kH, FEET + t[1] * kH, dstHipsRest[2] + dz * kH], i * 3); }
+  // skeleton-space FK for frame i (null = rest pose): world positions of the bones
+  const fkPos = i => { const W = new Map(), P = new Map();
+    const go = n => { if (P.has(n)) return; const p = n.getParentNode(), tr = tracks.get(n), fr = FINGERS && FINGERS[n.getName()];
+      const lr = i === null ? n.getRotation() : tr ? Array.from(tr.slice(i * 4, i * 4 + 4)) : fr || n.getRotation();
+      const lt = n === dstHips ? (i === null ? dstHipsRest : Array.from(hv.slice(i * 3, i * 3 + 3))) : n.getTranslation();
+      if (isBone(p)) { go(p); const v = q.rot(W.get(p), lt), pp = P.get(p); P.set(n, [pp[0] + v[0], pp[1] + v[1], pp[2] + v[2]]); W.set(n, q.mul(W.get(p), lr)); }
+      else { P.set(n, [lt[0], lt[1], lt[2]]); W.set(n, lr); } };
+    for (const n of dstBones.values()) go(n); return P; };
+  const FOOT = ['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase', 'LeftToe_End', 'RightToe_End'].map(k => dstBones.get(k)).filter(Boolean);
+  if (UPRIGHT && UPRIGHT.test(name) && tracks.has(dstHips) && dstBones.get(process.env.UPBONE || 'Neck')) {
+    const head = dstBones.get(process.env.UPBONE || 'Neck'); const m = [0, 0, 0];
+    for (let i = 0; i < F; i++) { const P = fkPos(i), a = P.get(dstHips), h = P.get(head); const d = q.norm([h[0] - a[0], h[1] - a[1], h[2] - a[2]]); m[0] += d[0]; m[1] += d[1]; m[2] += d[2]; }
+    const R0 = fkPos(null), ra = R0.get(dstHips), rh = R0.get(head); const restLean = Math.acos(Math.min(1, q.norm([rh[0] - ra[0], rh[1] - ra[1], rh[2] - ra[2]])[1])) * 57.3;
+    const C = q.arc(q.norm(m), [0, 1, 0]), hr = tracks.get(dstHips);
+    for (let i = 0; i < F; i++) hr.set(q.norm(q.mul(C, Array.from(hr.slice(i * 4, i * 4 + 4)))), i * 4);
+    console.log('  upright: average lean was', (Math.acos(Math.min(1, q.norm(m)[1])) * 57.3).toFixed(1), 'deg (rest pose', restLean.toFixed(1) + ')');
+  }
+  if (PLANT && FOOT.length) {
+    const R0 = fkPos(null), ground = Math.min(...FOOT.map(n => R0.get(n)[1])); let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < F; i++) { const P = fkPos(i), d = ground - Math.min(...FOOT.map(n => P.get(n)[1])); hv[i * 3 + 1] += d; lo = Math.min(lo, d); hi = Math.max(hi, d); }
+    console.log('  plant: hips moved', lo.toFixed(3), '..', hi.toFixed(3));
+  }
   console.log('  hips drift removed', ((shN[0] - sh0[0]) * kH).toFixed(1), ((shN[2] - sh0[2]) * kH).toFixed(1), 'cm');
   const hs = dst.createAnimationSampler().setInput(inAcc).setOutput(dst.createAccessor().setType('VEC3').setArray(hv).setBuffer(buffer)).setInterpolation('LINEAR');
   out.addSampler(hs); out.addChannel(dst.createAnimationChannel().setTargetNode(dstHips).setTargetPath('translation').setSampler(hs));
