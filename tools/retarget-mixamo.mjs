@@ -1,5 +1,5 @@
 // Mixamo -> Mixamo retarget (world-space rotation deltas from the rest pose) + hips height scaled to the target.
-// usage: [FEET=-94 Kenshi-old / 0] [ALIGN=1 when the target rest differs (A-pose)] [FINGERS=pose.json] node tools/retarget-mixamo.mjs target.glb out.glb src1.glb:Name1 src2.glb:Name2 ...
+// usage: [FEET=0] [ALIGN=1] [FINGERS=pose.json] [SKIP=regex] [STRAIGHTEN=regex] node tools/retarget-mixamo.mjs target.glb out.glb src1.glb:Name1 src2.glb:Name2 ...
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import draco3d from 'draco3dgltf';
@@ -25,6 +25,11 @@ const FEET = Number(process.env.FEET ?? 0);
 // FINGERS=pose.json: fingers keep this fixed pose (the target's own relaxed hand) instead of following the source
 const FINGERS = process.env.FINGERS ? JSON.parse((await import('fs')).readFileSync(process.env.FINGERS, 'utf8')) : null;
 const isFinger = b => /Hand(Thumb|Index|Middle|Ring|Pinky)/.test(b);
+// SKIP=regex: bones left at their rest pose (e.g. SKIP='^(Left|Right)Hand$' keeps wrists straight in line with the forearm)
+const SKIP = process.env.SKIP ? new RegExp(process.env.SKIP) : null;
+// STRAIGHTEN=regex: for these bones the clip's average offset from the target rest is removed (keeps the motion,
+// drops a constant hunch / head-down / splayed stance that the source character has)
+const STRAIGHTEN = process.env.STRAIGHTEN ? new RegExp(process.env.STRAIGHTEN) : null;
 // world rotation from rest locals (only the mixamo chain; the roots above have no rotation)
 const restWorld = (nodes, getLocal) => { const W = new Map(); const w = n => { if (W.has(n)) return W.get(n); const p = n.getParentNode(); const r = q.mul(isBone(p) ? w(p) : [0, 0, 0, 1], getLocal(n)); W.set(n, r); return r; }; nodes.forEach(w); return W; };
 const dstRestW = restWorld([...dstBones.values()], n => n.getRotation());
@@ -58,7 +63,11 @@ for (const spec of srcs) {
   const anim = clip ? S.listAnimations().find(a => a.getName() === clip) : S.listAnimations()[0];
   const rotCh = new Map(), trCh = new Map();
   anim.listChannels().forEach(c => { const n = c.getTargetNode(); if (!joints.has(n)) return; const b = sb(n); if (c.getTargetPath() === 'rotation') rotCh.set(b, c.getSampler()); if (c.getTargetPath() === 'translation') trCh.set(b, c.getSampler()); });
-  const times = rotCh.get('Hips').getInput().getArray();
+  // sample times: an even 30 fps over the whole clip (compressed sources have sparse, uneven keys per track)
+  const tEnd = Math.max(...anim.listSamplers().map(sm => { const T = sm.getInput().getArray(); return T[T.length - 1]; }));
+  const tStart = Math.min(...anim.listSamplers().map(sm => sm.getInput().getArray()[0]));
+  const NF = Math.max(2, Math.round((tEnd - tStart) * 30) + 1);
+  const times = Float32Array.from({ length: NF }, (_, i) => tStart + (tEnd - tStart) * i / (NF - 1));
   // sample every track at the hips' key times (compressed sources have fewer keys on some bones): linear, quats normalised
   const F = times.length, sample = (s, i, n) => {
     const t = times[i], T = s.getInput().getArray(), o = s.getOutput().getArray(), K = T.length;
@@ -77,6 +86,7 @@ for (const spec of srcs) {
   const inAcc = dst.createAccessor().setType('SCALAR').setArray(new Float32Array(times)).setBuffer(buffer);
   for (const [b, dn] of dstBones) {
     if (FINGERS && isFinger(b)) continue;
+    if (SKIP && SKIP.test(b)) continue;
     const sn = srcBones.get(b); if (!sn || !rotCh.has(b)) continue;
     const vals = new Float32Array(F * 4);
     for (let i = 0; i < F; i++) {
@@ -90,6 +100,12 @@ for (const spec of srcs) {
       if (isBone(dp)) { const pb = dstName(dp), sp = srcBones.get(pb); pw = sp && !(FINGERS && isFinger(pb)) ? q.mul(q.mul(sw(sp), q.inv(srcRestW.get(sp))), q.mul(Cof(pb), dstRestW.get(dp))) : dstRestW.get(dp); }
       const local = q.norm(q.mul(q.inv(pw), dw));
       vals.set(local, i * 4);
+    }
+    if (STRAIGHTEN && STRAIGHTEN.test(b)) {
+      const m = [0, 0, 0, 0], r0 = Array.from(vals.slice(0, 4));
+      for (let i = 0; i < F; i++) { const v = Array.from(vals.slice(i * 4, i * 4 + 4)), sg = v[0]*r0[0] + v[1]*r0[1] + v[2]*r0[2] + v[3]*r0[3] < 0 ? -1 : 1; for (let k = 0; k < 4; k++) m[k] += sg * v[k]; }
+      const M = q.norm(m), corr = q.mul(dn.getRotation(), q.inv(M));
+      for (let i = 0; i < F; i++) vals.set(q.norm(q.mul(corr, Array.from(vals.slice(i * 4, i * 4 + 4)))), i * 4);
     }
     const acc = dst.createAccessor().setType('VEC4').setArray(vals).setBuffer(buffer);
     const smp = dst.createAnimationSampler().setInput(inAcc).setOutput(acc).setInterpolation('LINEAR');
