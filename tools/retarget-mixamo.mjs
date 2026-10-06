@@ -41,7 +41,17 @@ for (const spec of srcs) {
   const rotCh = new Map(), trCh = new Map();
   anim.listChannels().forEach(c => { const n = c.getTargetNode(); if (!joints.has(n)) return; const b = sb(n); if (c.getTargetPath() === 'rotation') rotCh.set(b, c.getSampler()); if (c.getTargetPath() === 'translation') trCh.set(b, c.getSampler()); });
   const times = rotCh.get('Hips').getInput().getArray();
-  const F = times.length, sample = (s, i, n) => { const o = s.getOutput().getArray(); return Array.from(o.slice(i * n, i * n + n)); };
+  // sample every track at the hips' key times (compressed sources have fewer keys on some bones): linear, quats normalised
+  const F = times.length, sample = (s, i, n) => {
+    const t = times[i], T = s.getInput().getArray(), o = s.getOutput().getArray(), K = T.length;
+    if (K === 1 || t <= T[0]) return Array.from(o.slice(0, n));
+    if (t >= T[K - 1]) return Array.from(o.slice((K - 1) * n, K * n));
+    let lo = 0, hi = K - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (T[m] <= t) lo = m; else hi = m; }
+    const u = (t - T[lo]) / (T[hi] - T[lo] || 1), a = o.slice(lo * n, lo * n + n), b = o.slice(hi * n, hi * n + n);
+    const sg = n === 4 && a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3] < 0 ? -1 : 1;
+    const r = Array.from(a, (v, j) => v + (sg * b[j] - v) * u);
+    return n === 4 ? q.norm(r) : r;
+  };
   // source hips height: first frame (standing) vs the target's standing hips above its feet
   const sh0 = sample(trCh.get('Hips'), 0, 3);
   const kH = (dstHipsRest[1] - FEET) / sh0[1];
