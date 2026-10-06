@@ -1,5 +1,5 @@
 // Mixamo -> Mixamo (or Meshy -> Mixamo names) retarget: world-space rotation deltas from the rest pose, hips height scaled, clips made in place.
-// Needs @gltf-transform/{core,extensions} + draco3dgltf (adjust the draco import path). Used for the Kenshi villager (Oct 6).
+// Needs @gltf-transform/{core,extensions} + draco3dgltf (adjust the draco import path). Kenshi villager clips (Oct 6); then resample(3e-3).
 // usage: node retarget.mjs target.glb out.glb src1.glb:Name1 src2.glb:Name2 ...
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
@@ -25,7 +25,8 @@ for (const spec of srcs) {
   const [path, name, clip] = spec.split(':');
   const src = await io.read(path), S = src.getRoot();
   const MESHY = { Spine02:'Spine', Spine01:'Spine1', Spine:'Spine2', neck:'Neck' };
-  const joints = new Set(S.listSkins()[0].listJoints());
+  // animation-only files (Mixamo 'without skin') have no skin: the skeleton is the mixamorig nodes
+  const joints = new Set(S.listSkins()[0]?.listJoints() || S.listNodes().filter(n => /^mixamorig/.test(n.getName())));
   const sb = n => { const raw = n.getName(); return /^mixamorig/.test(raw) ? bone(n) : (MESHY[raw] || raw); };
   const srcBones = new Map([...joints].map(n => [sb(n), n]));
   const isSrcBone = n => n && joints.has(n);
