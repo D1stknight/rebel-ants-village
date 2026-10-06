@@ -1,13 +1,15 @@
 // Mixamo -> Mixamo retarget (world-space rotation deltas from the rest pose) + hips height scaled to the target.
-// usage: [FEET=-94 for Kenshi; 0 = Meshy rigs] node tools/retarget-mixamo.mjs target.glb out.glb src1.glb:Name1 src2.glb:Name2 ...
+// usage: [FEET=-94 Kenshi-old / 0] [ALIGN=1 when the target rest differs (A-pose)] [FINGERS=pose.json] node tools/retarget-mixamo.mjs target.glb out.glb src1.glb:Name1 src2.glb:Name2 ...
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
-import draco3d from '../t/node_modules/draco3dgltf/draco3dgltf.js';
+import draco3d from 'draco3dgltf';
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'draco3d.decoder': await draco3d.createDecoderModule(), 'draco3d.encoder': await draco3d.createEncoderModule() });
 const q = {
   mul: (a, b) => [a[3]*b[0]+a[0]*b[3]+a[1]*b[2]-a[2]*b[1], a[3]*b[1]-a[0]*b[2]+a[1]*b[3]+a[2]*b[0], a[3]*b[2]+a[0]*b[1]-a[1]*b[0]+a[2]*b[3], a[3]*b[3]-a[0]*b[0]-a[1]*b[1]-a[2]*b[2]],
   inv: a => [-a[0], -a[1], -a[2], a[3]],
-  norm: a => { const l = Math.hypot(...a) || 1; return a.map(v => v / l); }
+  norm: a => { const l = Math.hypot(...a) || 1; return a.map(v => v / l); },
+  rot: (q_, v) => { const [x, y, z, w] = q_, tx = 2 * (y * v[2] - z * v[1]), ty = 2 * (z * v[0] - x * v[2]), tz = 2 * (x * v[1] - y * v[0]); return [v[0] + w * tx + y * tz - z * ty, v[1] + w * ty + z * tx - x * tz, v[2] + w * tz + x * ty - y * tx]; },
+  arc: (a, b) => { const d = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; if (d < -0.9999) return [1, 0, 0, 0]; const c = [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; const r = [c[0], c[1], c[2], 1 + d]; const l = Math.hypot(...r); return r.map(v => v / l); }
 };
 const [tgtPath, outPath, ...srcs] = process.argv.slice(2);
 const dst = await io.read(tgtPath), D = dst.getRoot();
@@ -20,10 +22,20 @@ const dstBones = new Map([...dstJoints].map(n => [dstName(n), n]));
 const isBone = n => n && dstJoints.has(n);
 // where the target's feet are in skeleton units (Kenshi -94: origin at the waist, lifted outside; Meshy 0)
 const FEET = Number(process.env.FEET ?? 0);
+// FINGERS=pose.json: fingers keep this fixed pose (the target's own relaxed hand) instead of following the source
+const FINGERS = process.env.FINGERS ? JSON.parse((await import('fs')).readFileSync(process.env.FINGERS, 'utf8')) : null;
+const isFinger = b => /Hand(Thumb|Index|Middle|Ring|Pinky)/.test(b);
 // world rotation from rest locals (only the mixamo chain; the roots above have no rotation)
 const restWorld = (nodes, getLocal) => { const W = new Map(); const w = n => { if (W.has(n)) return W.get(n); const p = n.getParentNode(); const r = q.mul(isBone(p) ? w(p) : [0, 0, 0, 1], getLocal(n)); W.set(n, r); return r; }; nodes.forEach(w); return W; };
 const dstRestW = restWorld([...dstBones.values()], n => n.getRotation());
 const dstHips = dstBones.get('Hips'), dstHipsRest = dstHips.getTranslation();
+// ALIGN=1: first pose the target into the source's rest pose (bone directions), then apply the source motion; needed when
+// the rests differ (A-pose models vs T-pose clips), else arms over-rotate
+const ALIGN = process.env.ALIGN === '1';
+const restPos = (nodes, isB, W) => { const P = new Map(); const pos = n => { if (P.has(n)) return P.get(n); const p = n.getParentNode(); let r; if (isB(p)) { const pp = pos(p), v = q.rot(W.get(p), n.getTranslation()); r = [pp[0] + v[0], pp[1] + v[1], pp[2] + v[2]]; } else r = [0, 0, 0]; P.set(n, r); return r; }; nodes.forEach(pos); return P; };
+const dstRestP = restPos([...dstBones.values()], isBone, dstRestW);
+// the joint a bone points at (for direction): its main child in the Mixamo chain
+const AIM = { Hips:'Spine', Spine:'Spine1', Spine1:'Spine2', Spine2:'Neck', Neck:'Head', LeftShoulder:'LeftArm', LeftArm:'LeftForeArm', LeftForeArm:'LeftHand', LeftHand:'LeftHandMiddle1', RightShoulder:'RightArm', RightArm:'RightForeArm', RightForeArm:'RightHand', RightHand:'RightHandMiddle1', LeftUpLeg:'LeftLeg', LeftLeg:'LeftFoot', LeftFoot:'LeftToeBase', RightUpLeg:'RightLeg', RightLeg:'RightFoot', RightFoot:'RightToeBase' };
 const buffer = D.listBuffers()[0];
 for (const spec of srcs) {
   // spec: file:NewName[:sourceClipName]; Meshy rigs (no mixamorig_ prefix) map onto Mixamo bone names
@@ -37,6 +49,12 @@ for (const spec of srcs) {
   const isSrcBone = n => n && joints.has(n);
   const restWorldS = (nodes) => { const W = new Map(); const w = n => { if (W.has(n)) return W.get(n); const p = n.getParentNode(); const r = q.mul(isSrcBone(p) ? w(p) : [0, 0, 0, 1], n.getRotation()); W.set(n, r); return r; }; nodes.forEach(w); return W; };
   const srcRestW = restWorldS([...srcBones.values()]);
+  const srcRestP = restPos([...srcBones.values()], isSrcBone, srcRestW);
+  // C[b]: world rotation taking the target bone's rest direction onto the source's (identity where either end is missing)
+  const C = new Map();
+  if (ALIGN) for (const [b, dn] of dstBones) { const a = AIM[b]; const sn = srcBones.get(b), sa = a && srcBones.get(a), da = a && dstBones.get(a); if (!sn || !sa || !da) continue;
+    const dv = q.norm(dstRestP.get(da).map((v, k) => v - dstRestP.get(dn)[k])), sv = q.norm(srcRestP.get(sa).map((v, k) => v - srcRestP.get(sn)[k])); C.set(b, q.arc(dv, sv)); }
+  const Cof = b => C.get(b) || [0, 0, 0, 1];
   const anim = clip ? S.listAnimations().find(a => a.getName() === clip) : S.listAnimations()[0];
   const rotCh = new Map(), trCh = new Map();
   anim.listChannels().forEach(c => { const n = c.getTargetNode(); if (!joints.has(n)) return; const b = sb(n); if (c.getTargetPath() === 'rotation') rotCh.set(b, c.getSampler()); if (c.getTargetPath() === 'translation') trCh.set(b, c.getSampler()); });
@@ -58,17 +76,18 @@ for (const spec of srcs) {
   const out = dst.createAnimation(name);
   const inAcc = dst.createAccessor().setType('SCALAR').setArray(new Float32Array(times)).setBuffer(buffer);
   for (const [b, dn] of dstBones) {
+    if (FINGERS && isFinger(b)) continue;
     const sn = srcBones.get(b); if (!sn || !rotCh.has(b)) continue;
     const vals = new Float32Array(F * 4);
     for (let i = 0; i < F; i++) {
       // source world rotation this frame
       const sw = (n) => { let r = [0, 0, 0, 1]; const chain = []; let p = n; while (isSrcBone(p)) { chain.unshift(p); p = p.getParentNode(); } for (const c of chain) { const cb = sb(c); r = q.mul(r, rotCh.has(cb) ? sample(rotCh.get(cb), i, 4) : c.getRotation()); } return r; };
       const delta = q.mul(sw(sn), q.inv(srcRestW.get(sn)));
-      const dw = q.mul(delta, dstRestW.get(dn));
+      const dw = q.mul(delta, q.mul(Cof(b), dstRestW.get(dn)));
       // parent's animated world rotation on the target = delta(parent) * rest(parent)
       const dp = dn.getParentNode();
       let pw = [0, 0, 0, 1];
-      if (isBone(dp)) { const sp = srcBones.get(bone(dp)); pw = sp ? q.mul(q.mul(sw(sp), q.inv(srcRestW.get(sp))), dstRestW.get(dp)) : dstRestW.get(dp); }
+      if (isBone(dp)) { const pb = dstName(dp), sp = srcBones.get(pb); pw = sp && !(FINGERS && isFinger(pb)) ? q.mul(q.mul(sw(sp), q.inv(srcRestW.get(sp))), q.mul(Cof(pb), dstRestW.get(dp))) : dstRestW.get(dp); }
       const local = q.norm(q.mul(q.inv(pw), dw));
       vals.set(local, i * 4);
     }
@@ -76,6 +95,10 @@ for (const spec of srcs) {
     const smp = dst.createAnimationSampler().setInput(inAcc).setOutput(acc).setInterpolation('LINEAR');
     out.addSampler(smp); out.addChannel(dst.createAnimationChannel().setTargetNode(dn).setTargetPath('rotation').setSampler(smp));
   }
+  if (FINGERS) for (const [b, dn] of dstBones) { const r = FINGERS[dn.getName()]; if (!isFinger(b) || !r) continue;
+    const ti = dst.createAccessor().setType('SCALAR').setArray(new Float32Array([times[0], times[F - 1]])).setBuffer(buffer);
+    const fs_ = dst.createAnimationSampler().setInput(ti).setOutput(dst.createAccessor().setType('VEC4').setArray(new Float32Array([...r, ...r])).setBuffer(buffer)).setInterpolation('LINEAR');
+    out.addSampler(fs_); out.addChannel(dst.createAnimationChannel().setTargetNode(dn).setTargetPath('rotation').setSampler(fs_)); }
   // hips translation: height scaled, horizontal motion kept relative to the first frame
   const hv = new Float32Array(F * 3);
   // in place: the straight-line drift from the first to the last frame is removed (the NPC code moves the root),
