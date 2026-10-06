@@ -234,3 +234,7 @@ Friend villages (Queens, Cute & Creepy, Saints LA; Chumps not in registry yet): 
 - Badges: 72 (46 generated after DEFAULT_BADGE_DEFINITIONS), checkAutoBadges on every progression event; medallion art drawn in the browser (faction emblem) unless admin uploaded art.
 - Mini ants: spot with miniAnt -> small-village-ant.glb copy only within 30 m; whispers the next unfound secret's hint.
 - Headless quest tests: dismiss #questCelebration (it pauses play), re-teleport to moving NPCs before O, wait for the exact prompt text; never run two browsers at once against python http.server; never `pkill -f` a pattern that matches your own shell.
+
+## NPC animations (dev 97292e2..27d79f4, Oct 6)
+- Miguel's Mixamo NPC pack (scratchpad mixamo/, FBX -> FBX2glTF) retargeted by tools/retarget-mixamo.mjs onto Kenshi (Mixamo rig, FEET=-94) and the 6 Meshy villagers (FEET=0; Spine02/01/Spine/neck = Mixamo Spine/Spine1/Spine2/Neck). Clips: Talking, Talking2, Waving, WaveShort, Bow, Pointing, PickUp, NodYes, ShakeNo, Clapping, Rallying, Yelling, LookAround, IdleLooking. Then resample(3e-3) + Draco (meshopt dropped the skin). Each GLB 0.7-0.9 MB.
+- playNPCGesture (village.html): talk opens -> WaveShort, finished -> Bow, or NodYes when the talk moved a quest on (NPC_GESTURE_CLIPS); NPCs without the clips skip it.
