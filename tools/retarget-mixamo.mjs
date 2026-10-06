@@ -1,6 +1,5 @@
-// Mixamo -> Mixamo (or Meshy -> Mixamo names) retarget: world-space rotation deltas from the rest pose, hips height scaled, clips made in place.
-// Needs @gltf-transform/{core,extensions} + draco3dgltf (adjust the draco import path). Kenshi villager clips (Oct 6); then resample(3e-3).
-// usage: node retarget.mjs target.glb out.glb src1.glb:Name1 src2.glb:Name2 ...
+// Mixamo -> Mixamo retarget (world-space rotation deltas from the rest pose) + hips height scaled to the target.
+// usage: [FEET=-94 for Kenshi; 0 = Meshy rigs] node tools/retarget-mixamo.mjs target.glb out.glb src1.glb:Name1 src2.glb:Name2 ...
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import draco3d from '../t/node_modules/draco3dgltf/draco3dgltf.js';
@@ -13,8 +12,14 @@ const q = {
 const [tgtPath, outPath, ...srcs] = process.argv.slice(2);
 const dst = await io.read(tgtPath), D = dst.getRoot();
 const bone = n => n.getName().replace(/^mixamorig[:_]?/, '');
-const dstBones = new Map(D.listNodes().filter(n => /^mixamorig/.test(n.getName())).map(n => [bone(n), n]));
-const isBone = n => n && /^mixamorig/.test(n.getName());
+// target skeleton: its skin joints, named the Mixamo way (Meshy rigs: Spine02/Spine01/Spine/neck -> Spine/Spine1/Spine2/Neck)
+const MESHY_T = { Spine02:'Spine', Spine01:'Spine1', Spine:'Spine2', neck:'Neck' };
+const dstJoints = new Set(D.listSkins()[0].listJoints());
+const dstName = n => /^mixamorig/.test(n.getName()) ? bone(n) : (MESHY_T[n.getName()] || n.getName());
+const dstBones = new Map([...dstJoints].map(n => [dstName(n), n]));
+const isBone = n => n && dstJoints.has(n);
+// where the target's feet are in skeleton units (Kenshi -94: origin at the waist, lifted outside; Meshy 0)
+const FEET = Number(process.env.FEET ?? 0);
 // world rotation from rest locals (only the mixamo chain; the roots above have no rotation)
 const restWorld = (nodes, getLocal) => { const W = new Map(); const w = n => { if (W.has(n)) return W.get(n); const p = n.getParentNode(); const r = q.mul(isBone(p) ? w(p) : [0, 0, 0, 1], getLocal(n)); W.set(n, r); return r; }; nodes.forEach(w); return W; };
 const dstRestW = restWorld([...dstBones.values()], n => n.getRotation());
@@ -39,7 +44,7 @@ for (const spec of srcs) {
   const F = times.length, sample = (s, i, n) => { const o = s.getOutput().getArray(); return Array.from(o.slice(i * n, i * n + n)); };
   // source hips height: first frame (standing) vs the target's standing hips above its feet
   const sh0 = sample(trCh.get('Hips'), 0, 3);
-  const kH = (dstHipsRest[1] + 94) / sh0[1]; // target feet sit 94 units below its skeleton origin (lifted by 0.94 m outside)
+  const kH = (dstHipsRest[1] - FEET) / sh0[1];
   const out = dst.createAnimation(name);
   const inAcc = dst.createAccessor().setType('SCALAR').setArray(new Float32Array(times)).setBuffer(buffer);
   for (const [b, dn] of dstBones) {
@@ -66,7 +71,7 @@ for (const spec of srcs) {
   // in place: the straight-line drift from the first to the last frame is removed (the NPC code moves the root),
   // the sway around it stays
   const shN = sample(trCh.get('Hips'), F - 1, 3);
-  for (let i = 0; i < F; i++) { const t = sample(trCh.get('Hips'), i, 3), u = F > 1 ? i / (F - 1) : 0; const dx = t[0] - (sh0[0] + (shN[0] - sh0[0]) * u), dz = t[2] - (sh0[2] + (shN[2] - sh0[2]) * u); hv.set([dstHipsRest[0] + dx * kH, -94 + t[1] * kH, dstHipsRest[2] + dz * kH], i * 3); }
+  for (let i = 0; i < F; i++) { const t = sample(trCh.get('Hips'), i, 3), u = F > 1 ? i / (F - 1) : 0; const dx = t[0] - (sh0[0] + (shN[0] - sh0[0]) * u), dz = t[2] - (sh0[2] + (shN[2] - sh0[2]) * u); hv.set([dstHipsRest[0] + dx * kH, FEET + t[1] * kH, dstHipsRest[2] + dz * kH], i * 3); }
   console.log('  hips drift removed', ((shN[0] - sh0[0]) * kH).toFixed(1), ((shN[2] - sh0[2]) * kH).toFixed(1), 'cm');
   const hs = dst.createAnimationSampler().setInput(inAcc).setOutput(dst.createAccessor().setType('VEC3').setArray(hv).setBuffer(buffer)).setInterpolation('LINEAR');
   out.addSampler(hs); out.addChannel(dst.createAnimationChannel().setTargetNode(dstHips).setTargetPath('translation').setSampler(hs));
