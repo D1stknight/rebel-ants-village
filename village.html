@@ -1759,7 +1759,9 @@ const NPC_LIBRARY = {
     animationMap: { idle:'Idle_11', walk:'Walking', run:'Running', talk:'Talk_with_Right_Hand_Open' },
     animationSpeed: { idle:1, walk:.82, talk:1 }
   },
-  // faction villagers (Meshy models, same rig and animations as the Ashigaru villager); any village
+  // faction villagers (Meshy models, same rig and animations as the Ashigaru villager); any village. Each GLB also carries
+  // Miguel's Mixamo NPC pack retargeted onto the Meshy rig (tools/retarget-mixamo.mjs): Talking, Talking2, Waving, WaveShort, Bow,
+  // Pointing, PickUp, NodYes, ShakeNo, Clapping, Rallying, Yelling, LookAround, IdleLooking
   ronin_villager: { npcIdPrefix: 'ronin-villager', factionId: 'ronin', role: 'villager', displayName: 'Ronin Villager', modelUrl: '/assets/npcs/ronin-villager.glb', modelScale: 1.97, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
     animationMap: { idle:'Idle_11', walk:'Walking', run:'Running', talk:'Talk_with_Right_Hand_Open' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
   samurai_villager: { npcIdPrefix: 'samurai-villager', factionId: 'samurai', role: 'villager', displayName: 'Samurai Villager', modelUrl: '/assets/npcs/samurai-villager.glb', modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
@@ -15176,9 +15178,30 @@ function findNPCAnimationGroup(meta, state) {
     groups[0];
 }
 
+// One-shot NPC gestures (Mixamo NPC pack clips, on every villager GLB that carries them): greet when a talk opens,
+// a bow when it finishes, a nod when the talk moved a quest on. NPCs without the clip just skip it.
+const NPC_GESTURE_CLIPS = { greet:'waveshort', bye:'bow', yes:'nodyes', cheer:'clapping' };
+function playNPCGesture(root, gesture) {
+  const meta = root?.metadata;
+  const clip = NPC_GESTURE_CLIPS[gesture];
+  if (!clip || !meta?.modelLoaded || !Array.isArray(meta.animationGroups)) return false;
+  const group = meta.animationGroups.find(g => g.name.toLowerCase().endsWith(clip) || g.name.toLowerCase() === clip);
+  if (!group) return false;
+  meta.animationGroups.forEach(g => g.stop());
+  group.speedRatio = 1;
+  group.start(false);
+  meta.gestureGroup = group;
+  meta.activeAnimation = 'gesture:' + gesture;
+  return true;
+}
+
 function updateNPCAnimationState(root, moving, now) {
   const meta = root.metadata || {};
   if (meta.modelLoaded && Array.isArray(meta.animationGroups) && meta.animationGroups.length) {
+    if (meta.gestureGroup) {
+      if (meta.gestureGroup.isPlaying && !(moving && !meta.turningInPlace)) return;
+      meta.gestureGroup = null;
+    }
     const wanted = meta.dialogueOpen ? 'talk' : (moving && !meta.turningInPlace ? 'walk' : 'idle');
     if (meta.activeAnimation !== wanted) {
       meta.animationGroups.forEach(group => group.stop());
@@ -15533,6 +15556,7 @@ function openNPCDialogue(npc) {
   const lines = tutorialLines || (customLines.length ? customLines : (NPC_DIALOGUES[npc.metadata.dialogueId] || NPC_DIALOGUES.default));
   activeNPCDialogue = { npc, lines, index:0 };
   npc.metadata.dialogueOpen = true;
+  playNPCGesture(npc, 'greet');
   renderNPCDialogue();
   overlay.classList.add('on');
   overlay.setAttribute('aria-hidden','false');
@@ -15572,7 +15596,10 @@ function closeNPCDialogue(finishedDialogue = false) {
     overlay.classList.remove('on');
     overlay.setAttribute('aria-hidden','true');
   }
+  const questSnap = () => { try { return localStorage.getItem(QUEST_STATE_KEY) + '|' + localStorage.getItem(SIDE_QUEST_KEY); } catch (_) { return ''; } };
+  const questBefore = questSnap();
   handleNPCQuestEvent(npc, finishedDialogue === true);
+  if (npc && finishedDialogue === true) playNPCGesture(npc, questBefore !== questSnap() ? 'yes' : 'bye');
   activeNPCDialogue = null;
 }
 
