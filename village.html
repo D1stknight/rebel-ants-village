@@ -1453,6 +1453,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
     <textarea id="npcDialogueInput" placeholder="Custom dialogue text" rows="4" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:5px;resize:vertical"></textarea>
     <input id="npcQuestIdInput" placeholder="Quest ID (optional)" style="width:100%;box-sizing:border-box;background:#1a1a2e;border:1px solid #333;color:#ccc;padding:5px 7px;font-size:11px;margin-bottom:6px">
     <button class="ctrl-btn full" onclick="applySelectedNPCChanges()" style="width:100%;background:#5ecfca;color:#000">Apply NPC Changes</button>
+    <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin:9px 0 6px;text-transform:uppercase">Test Animation</div>
+    <select id="npcAnimTestSelect" onfocus="refreshNPCAnimTest()" onmousedown="refreshNPCAnimTest()" class="admin-select" style="margin-bottom:5px" title="Clips in this NPC's model"><option value="">(no clips)</option></select>
+    <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#ccc;margin-bottom:5px"><input type="checkbox" id="npcAnimTestLoop"> Loop</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+      <button class="ctrl-btn" onclick="testSelectedNPCAnimation()">Play</button>
+      <button class="ctrl-btn" onclick="testSelectedNPCAnimation(true)">Stop</button>
+    </div>
     <div style="font-size:9px;letter-spacing:2px;color:#5ecfca;margin:9px 0 6px;text-transform:uppercase">Patrol Route</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
       <button class="ctrl-btn" onclick="addPatrolNodeForSelectedNPC()">Add Node</button>
@@ -6925,6 +6932,7 @@ if (npcEditorPanel) {
     document.getElementById('npcQuestIdInput').value = meta.questId || '';
     const modelSel = document.getElementById('npcModelInput');
     if (modelSel) modelSel.value = String(meta.fallbackType || '').startsWith('kit:') ? meta.fallbackType : 'ant';
+    refreshNPCAnimTestOptions(npc);
   }
 }
 const smallAntEditorPanel = document.getElementById('smallAntEditorPanel');
@@ -15200,6 +15208,44 @@ function playNPCGesture(root, gesture) {
   meta.activeAnimation = 'gesture:' + gesture;
   return true;
 }
+
+// Admin > NPCs > Test Animation: play any clip of the selected NPC's model (once or looped) to check it in place
+function refreshNPCAnimTestOptions(npc) {
+  const sel = document.getElementById('npcAnimTestSelect');
+  const meta = npc?.metadata;
+  if (!sel || !meta) return;
+  const names = meta.modelLoaded && Array.isArray(meta.animationGroups) ? meta.animationGroups.map(g => g.name) : [];
+  const key = (meta.npcId || '') + '|' + names.join(',');
+  if (sel.dataset.key === key) return;
+  sel.dataset.key = key;
+  sel.innerHTML = names.length ? names.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n.replace(/</g, '&lt;')}</option>`).join('') : '<option value="">(no clips: placeholder model)</option>';
+}
+
+function testSelectedNPCAnimation(stop = false) {
+  const npc = getSelectedNPC();
+  const meta = npc?.metadata;
+  if (!meta) { showToast('Select an NPC first'); return; }
+  if (stop) {
+    try { meta.gestureGroup?.stop(); } catch (e) {}
+    meta.gestureGroup = null;
+    meta.activeAnimation = null;
+    return;
+  }
+  refreshNPCAnimTestOptions(npc);
+  if (!meta.modelLoaded || !meta.animationGroups?.length) { showToast('This NPC has no animation clips'); return; }
+  const name = document.getElementById('npcAnimTestSelect')?.value;
+  const loop = !!document.getElementById('npcAnimTestLoop')?.checked;
+  const group = meta.animationGroups.find(g => g.name === name);
+  if (!group) return;
+  meta.animationGroups.forEach(g => g.stop());
+  group.speedRatio = 1;
+  group.start(loop);
+  meta.gestureGroup = group;
+  meta.activeAnimation = 'test:' + name;
+  showToast('Playing ' + name + (loop ? ' (loop)' : ''));
+}
+window.testSelectedNPCAnimation = testSelectedNPCAnimation;
+window.refreshNPCAnimTest = () => refreshNPCAnimTestOptions(getSelectedNPC());
 
 function updateNPCAnimationState(root, moving, now) {
   const meta = root.metadata || {};
