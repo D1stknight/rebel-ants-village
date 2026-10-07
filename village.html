@@ -14503,6 +14503,25 @@ function createPlaceholderAntNPC(root, npc) {
   root.metadata.placeholderPieces = pieces;
 }
 
+// Robe springs cost ~0.5 ms per NPC per frame: only the nearest few NPCs close to the camera run them, the rest keep
+// their robes at rest (unnoticeable at that distance).
+const NPC_CLOTH_MAX = 3, NPC_CLOTH_RADIUS = 20;
+let npcClothFrame = -1, npcClothSet = new Set();
+function npcClothActive(root) {
+  const fid = scene.getFrameId();
+  if (fid !== npcClothFrame) {
+    npcClothFrame = fid; npcClothSet = new Set();
+    const cam = scene.activeCamera;
+    if (cam && NPCManager.visible) {
+      const cp = cam.globalPosition;
+      [...NPCManager.roots].filter(r => r?.metadata?.cloth && !r.isDisposed?.() && r.isEnabled())
+        .map(r => [r, BABYLON.Vector3.DistanceSquared(cp, r.position)]).filter(([, d]) => d < NPC_CLOTH_RADIUS * NPC_CLOTH_RADIUS)
+        .sort((a, b) => a[1] - b[1]).slice(0, NPC_CLOTH_MAX).forEach(([r]) => npcClothSet.add(r));
+    }
+  }
+  return npcClothSet.has(root);
+}
+
 async function tryLoadNPCModel(root, npc) {
   if (!npc.modelUrl) return;
   try {
@@ -14532,6 +14551,17 @@ async function tryLoadNPCModel(root, npc) {
       root.metadata.placeholderPieces = [];
     }
     root.metadata.animationGroups = result.animationGroups || [];
+    // like the player: smooth hand-offs between clips, and live spring bones for robes / armour skirts (Forge rigs keep
+    // those bones still in every clip; without the springs a robe stayed rigid and the legs cut through it)
+    root.metadata.animationGroups.forEach(g => { g.enableBlending = true; g.blendingSpeed = 0.12; });
+    try {
+      const hipsNode = importedNodes.find(n => n.name === 'mixamorig_Hips');
+      if (hipsNode && importedNodes.some(n => /^cloth_skirt_/.test(n.name))) {
+        stripForgeClothTracks(root.metadata.animationGroups);
+        const cloth = createForgeClothSprings(scene, modelRoot, { scaleRef: hipsNode, active: () => npcClothActive(root) });
+        if (cloth) { root.metadata.cloth = cloth; root.onDisposeObservable.add(() => { try { cloth.dispose(); } catch (e) {} }); }
+      }
+    } catch (e) { console.warn('NPC cloth springs failed', e); }
     root.metadata.modelRoot = modelRoot;
     root.metadata.modelLoaded = true;
     updateHubGuideQuestMarker(root);
@@ -20412,10 +20442,16 @@ function createForgeClothSprings(scene, root, opts) {
     const cur = hipsLocalDir(t); const ax = V3.Cross(t.rest, cur); const sn = ax.length();
     return sn < 1e-6 ? Q.Identity() : Q.RotationAxis(ax.scale(1 / sn), Math.atan2(sn, V3.Dot(t.rest, cur)));
   }
-  let enabled = true, last = performance.now(), order = 0;
-  function worldScale() { root.computeWorldMatrix(true); root.getWorldMatrix().decompose(tmpS); return tmpS.x; }
+  let enabled = true, last = performance.now(), order = 0, idle = false;
+  // opts.scaleRef (NPCs): a node inside the rig whose world scale is the rig's (model scale x the file's own root scale)
+  function worldScale() { if (opts.scaleRef) { opts.scaleRef.computeWorldMatrix(true); const m = opts.scaleRef.getWorldMatrix().m; return Math.hypot(m[0], m[1], m[2]); } root.computeWorldMatrix(true); root.getWorldMatrix().decompose(tmpS); return tmpS.x; }
   function step() {
     if (!enabled) return;
+    if (opts.active && !opts.active()) {   // NPCs: off while hidden or far away; the robe settles back to rest
+      if (!idle) { idle = true; segs.forEach(g => { g.node.rotationQuaternion.copyFrom(g.restRot); g.tail = null; }); }
+      last = performance.now(); return;
+    }
+    idle = false;
     const now = performance.now(); const dt = opts.fixedDt || Math.min(0.05, Math.max(0.001, (now - last) / 1000)); last = now;
     const s = worldScale();
     const cols = [];
