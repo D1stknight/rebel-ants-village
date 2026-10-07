@@ -1423,6 +1423,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div class="ap-section">NPCs</div>
   <div class="admin-section-body" data-admin-section-body="npcs">
   <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('ashigaru_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Ashigaru Villager</span></div><div class="ap-card" onclick="spawnNPCFromPanel('ronin_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Ronin Villager</span></div><div class="ap-card" onclick="spawnNPCFromPanel('samurai_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Samurai Villager</span></div><div class="ap-card" onclick="spawnNPCFromPanel('shogun_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Shogun Villager</span></div><div class="ap-card" onclick="spawnNPCFromPanel('bushi_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Bushi Villager</span></div><div class="ap-card" onclick="spawnNPCFromPanel('warrior_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Warrior Villager</span></div><div class="ap-card" onclick="spawnNPCFromPanel('kenshi_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Kenshi Villager</span></div><div class="ap-card" onclick="spawnNPCFromPanel('buke_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Buke Villager</span></div><div class="ap-card" onclick="spawnNPCFromPanel('sohei_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Sohei Villager</span></div><div class="ap-card" onclick="spawnNPCFromPanel('wokou_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Wokou Villager</span></div><div class="ap-card" onclick="spawnNPCFromPanel('yamabushi_villager')"><span class="ap-icon">🐜</span><span class="ap-name">Add Yamabushi Villager</span></div></div>
+  <div id="forgedNPCHead" style="font-size:9px;letter-spacing:2px;color:#e8c56a;margin:6px 8px 4px;text-transform:uppercase">Forged NPCs <a href="npc-forge.html" target="_blank" style="color:#5ecfca;text-decoration:none;margin-left:6px">NPC Forge ↗</a></div>
+  <div class="ap-grid" id="forgedNPCGrid"></div>
   <div style="font-size:9px;letter-spacing:2px;color:#b48cff;margin:6px 8px 4px;text-transform:uppercase">Mystic Moons</div>
   <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_mamoru')"><span class="ap-icon">🐈‍⬛</span><span class="ap-name">Mamoru</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_flower_moon')"><span class="ap-icon">🎎</span><span class="ap-name">Kokeshi Flower Moon</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_mochi')"><span class="ap-icon">🐱</span><span class="ap-name">Mochi</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_ostara')"><span class="ap-icon">🐰</span><span class="ap-name">Ostara</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_nariko')"><span class="ap-icon">⚡</span><span class="ap-name">Nariko</span></div></div>
   <div style="font-size:9px;letter-spacing:2px;color:#f2c84b;margin:6px 8px 4px;text-transform:uppercase">Chumpz Apes</div>
@@ -1745,7 +1747,7 @@ const NPC_FACTION_COLORS = {
 };
 const NPC_DEFINITIONS = [
   { npcId:'hub-ashigaru-guard-01', villageId:'hub', factionId:'ashigaru', role:'guard', displayName:'Ashigaru Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'idle', spawn:{ x:-7, y:0, z:-28 } },
-  { npcId:'hub-ashigaru-villager-01', villageId:'hub', factionId:'ashigaru', role:'villager', displayName:'Hub Guide', modelUrl:'/assets/npcs/ashigaru-villager.glb', modelScale:1.75, fallbackType:'ant', behavior:'wander', spawn:{ x:18, y:0, z:12 }, wanderRadius:7, moveSpeed:1.18, dialogueId:'hub-first-warning', questId:'hub-tutorial', animationMap:{ idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed:{ idle:1, walk:.82, talk:1 } },
+  { npcId:'hub-ashigaru-villager-01', villageId:'hub', factionId:'ashigaru', role:'villager', displayName:'Hub Guide', modelUrl:null, libraryKey:'ashigaru_villager', modelScale:1.9, fallbackType:'ant', behavior:'wander', spawn:{ x:18, y:0, z:12 }, wanderRadius:7, moveSpeed:1.18, dialogueId:'hub-first-warning', questId:'hub-tutorial', animationMap:{ idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed:{ idle:1, walk:.82, talk:1 } },
   { npcId:'ronin-guard-01', villageId:'ronin', factionId:'ronin', role:'guard', displayName:'Ronin Watcher', modelUrl:null, fallbackType:'ant', behavior:'patrol', spawn:{ x:0, y:0, z:-34 }, patrolPoints:[{ x:-8, y:0, z:-34 }, { x:8, y:0, z:-34 }], dialogueId:'ronin-first-warning', questId:'first-warning' },
   { npcId:'ronin-wanderer-01', villageId:'ronin', factionId:'ronin', role:'villager', displayName:'Ronin Wanderer', modelUrl:null, fallbackType:'ant', behavior:'wander', spawn:{ x:-16, y:0, z:18 }, wanderRadius:8 },
   { npcId:'samurai-guard-01', villageId:'samurai', factionId:'samurai', role:'guard', displayName:'Samurai Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'patrol', spawn:{ x:0, y:0, z:-32 }, patrolPoints:[{ x:-6, y:0, z:-32 }, { x:6, y:0, z:-32 }] },
@@ -1757,8 +1759,8 @@ const NPC_LIBRARY = {
     factionId: 'ashigaru',
     role: 'villager',
     displayName: 'Hub Guide',
-    modelUrl: '/assets/npcs/ashigaru-villager.glb',
-    modelScale: 1.75,
+    modelUrl: null,
+    modelScale: 1.9,
     fallbackType: 'ant',
     behavior: 'wander',
     wanderRadius: 7,
@@ -1766,29 +1768,29 @@ const NPC_LIBRARY = {
     animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' },
     animationSpeed: { idle:1, walk:.82, talk:1 }
   },
-  // faction villagers, any village: built by the Forge Rigger (forge-worker, same pipeline as the Rebels; tools/npc-forge):
-  // 65-bone mixamorig_ rig, glove hands with a hand pose per clip, cloth + antenna springs. 17 clips: idle walk run talking
-  // talking2 waving wave_short bow pointing pick_up nod_yes shake_no clapping rallying yelling look_around idle_looking.
-  // Feet at y 0; each GLB keeps its old height, so modelScale (3.35 m / model height) and saved layouts stay valid.
-  ronin_villager: { npcIdPrefix: 'ronin-villager', factionId: 'ronin', role: 'villager', displayName: 'Ronin Villager', modelUrl: '/assets/npcs/ronin-villager.glb', modelScale: 1.97, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
+  // faction villagers, any village: placeholders until a villager forged in the NPC Forge (admin, npc-forge.html) is
+  // approved for the key; then every NPC with that key wears it (NPC_FORGED, /api/npc-library). Forged NPCs are Forge
+  // Rigger rigs like the Rebels (1.8 m, played at 1.9 like the player) with the NPC clips: idle walk run talking talking2
+  // waving wave_short bow pointing pick_up nod_yes shake_no clapping rallying yelling look_around idle_looking.
+  ronin_villager: { npcIdPrefix: 'ronin-villager', factionId: 'ronin', role: 'villager', displayName: 'Ronin Villager', modelUrl: null, modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
     animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
-  samurai_villager: { npcIdPrefix: 'samurai-villager', factionId: 'samurai', role: 'villager', displayName: 'Samurai Villager', modelUrl: '/assets/npcs/samurai-villager.glb', modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
+  samurai_villager: { npcIdPrefix: 'samurai-villager', factionId: 'samurai', role: 'villager', displayName: 'Samurai Villager', modelUrl: null, modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
     animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
-  shogun_villager: { npcIdPrefix: 'shogun-villager', factionId: 'shogun', role: 'villager', displayName: 'Shogun Villager', modelUrl: '/assets/npcs/shogun-villager.glb', modelScale: 1.97, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
+  shogun_villager: { npcIdPrefix: 'shogun-villager', factionId: 'shogun', role: 'villager', displayName: 'Shogun Villager', modelUrl: null, modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
     animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
-  bushi_villager: { npcIdPrefix: 'bushi-villager', factionId: 'bushi', role: 'villager', displayName: 'Bushi Villager', modelUrl: '/assets/npcs/bushi-villager.glb', modelScale: 1.74, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
+  bushi_villager: { npcIdPrefix: 'bushi-villager', factionId: 'bushi', role: 'villager', displayName: 'Bushi Villager', modelUrl: null, modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
     animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
-  warrior_villager: { npcIdPrefix: 'warrior-villager', factionId: 'warrior', role: 'villager', displayName: 'Warrior Villager', modelUrl: '/assets/npcs/warrior-villager.glb', modelScale: 1.97, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
+  warrior_villager: { npcIdPrefix: 'warrior-villager', factionId: 'warrior', role: 'villager', displayName: 'Warrior Villager', modelUrl: null, modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
     animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
-  kenshi_villager: { npcIdPrefix: 'kenshi-villager', factionId: 'kenshi', role: 'villager', displayName: 'Kenshi Villager', modelUrl: '/assets/npcs/kenshi-villager.glb', modelScale: 1.79, fallbackType: 'ant', behavior: 'idle', wanderRadius: 5, moveSpeed: 1.1,
+  kenshi_villager: { npcIdPrefix: 'kenshi-villager', factionId: 'kenshi', role: 'villager', displayName: 'Kenshi Villager', modelUrl: null, modelScale: 1.9, fallbackType: 'ant', behavior: 'idle', wanderRadius: 5, moveSpeed: 1.1,
     animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
-  buke_villager: { npcIdPrefix: 'buke-villager', factionId: 'buke', role: 'villager', displayName: 'Buke Villager', modelUrl: '/assets/npcs/buke-villager.glb', modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
+  buke_villager: { npcIdPrefix: 'buke-villager', factionId: 'buke', role: 'villager', displayName: 'Buke Villager', modelUrl: null, modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
     animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
-  sohei_villager: { npcIdPrefix: 'sohei-villager', factionId: 'sohei', role: 'villager', displayName: 'Sohei Villager', modelUrl: '/assets/npcs/sohei-villager.glb', modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
+  sohei_villager: { npcIdPrefix: 'sohei-villager', factionId: 'sohei', role: 'villager', displayName: 'Sohei Villager', modelUrl: null, modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
     animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
-  wokou_villager: { npcIdPrefix: 'wokou-villager', factionId: 'wokou', role: 'villager', displayName: 'Wokou Villager', modelUrl: '/assets/npcs/wokou-villager.glb', modelScale: 1.86, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
+  wokou_villager: { npcIdPrefix: 'wokou-villager', factionId: 'wokou', role: 'villager', displayName: 'Wokou Villager', modelUrl: null, modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
     animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
-  yamabushi_villager: { npcIdPrefix: 'yamabushi-villager', factionId: 'yamabushi', role: 'villager', displayName: 'Yamabushi Villager', modelUrl: '/assets/npcs/yamabushi-villager.glb', modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
+  yamabushi_villager: { npcIdPrefix: 'yamabushi-villager', factionId: 'yamabushi', role: 'villager', displayName: 'Yamabushi Villager', modelUrl: null, modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
     animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
   // the Mystic Moons (Cute & Creepy gang): procedural kit characters, placeable in any village
   mystic_moons_mamoru: { npcIdPrefix: 'mm-mamoru', factionId: 'cute-creepy', role: 'villager', displayName: 'Mamoru', modelUrl: null, modelScale: 1, fallbackType: 'kit:cc_mamoru', behavior: 'idle', wanderRadius: 5, moveSpeed: .6, customDialogue: 'Mamoru blinks his green eyes. The candle on his skull flickers.\nI keep the gate. Nothing walks in after midnight that I do not see.\nMind the pumpkins. Some of them are listening.' },
@@ -1803,6 +1805,40 @@ const NPC_LIBRARY = {
   chumpz_peng: { npcIdPrefix: 'chumpz-peng', factionId: 'chumpz', role: 'villager', displayName: 'Pengu', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_peng', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'Pengu adjusts his goggles. Shh. The big one bites at noon.\nThe bait shop sells worms and books. Same shelf. Do not mix them up.\nCatch a fish, trade it at the bar. That is how we pay around here.' },
   chumpz_band: { npcIdPrefix: 'chumpz-band', factionId: 'chumpz', role: 'villager', displayName: 'Banana Band', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_band', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'Banana Band taps the banana in his headband. Emergency snack.\nThe lagoon is warm, the bar is open, the hammocks are free.\nIf you see a ripe one on the big sign, tell me. It has been yellow for years.' },
 };
+// NPC Forge (admin, npc-forge.html): approved forged NPCs by library key (a built-in key like samurai_villager, or a new
+// one). Every NPC with that key wears the forged model; NPCs without one stay placeholders. Loaded once at startup;
+// NPCs that spawned before the list arrived are swapped in place.
+const NPC_FORGED = {};
+const NPC_FORGED_CLIPS = { idle:'idle', walk:'walk', run:'run', talk:'talking' };
+function npcLibraryKeyOf(npc) {
+  if (npc?.libraryKey) return npc.libraryKey;
+  const m = /\/assets\/npcs\/([a-z]+)-villager\.glb$/.exec(String(npc?.modelUrl || ''));   // placed before the NPC Forge
+  return m ? `${m[1]}_villager` : null;
+}
+function applyForgedNPC(npc) {
+  const key = npcLibraryKeyOf(npc);
+  if (String(npc?.fallbackType || '').startsWith('kit:')) return { ...npc, libraryKey: npc.libraryKey || null };
+  const f = key && NPC_FORGED[key];
+  if (f) return { ...npc, libraryKey: key, modelUrl: f.modelUrl, modelScale: f.modelScale || 1.9, animationMap: { ...NPC_FORGED_CLIPS }, animationSpeed: { idle:1, walk:.82, talk:1, ...(npc.animationSpeed || {}) } };
+  // the old villager files are gone: placeholder until a forged one is approved
+  if (/\/assets\/npcs\/[a-z]+-villager\.glb$/.test(String(npc?.modelUrl || ''))) return { ...npc, libraryKey: key, modelUrl: null };
+  return { ...npc, libraryKey: key || null };
+}
+const npcForgedReady = (async () => {
+  try {
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 5000);
+    const r = await fetch('/api/npc-library', { signal: ctl.signal, cache: 'no-store' }); clearTimeout(tm);
+    const d = await r.json(); if (!d?.ok) return;
+    for (const [k, e] of Object.entries(d.npcs || {})) {
+      if (!e?.modelUrl) continue;
+      NPC_FORGED[k] = e;
+      const base = NPC_LIBRARY[k] || { npcIdPrefix: k.replace(/_/g, '-'), behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18, fallbackType: 'ant' };
+      NPC_LIBRARY[k] = { ...base, factionId: base.factionId || e.factionId || 'npc', role: base.role || e.role || 'villager', displayName: e.displayName || base.displayName || k,
+        modelUrl: e.modelUrl, modelScale: e.modelScale || 1.9, animationMap: { ...NPC_FORGED_CLIPS }, animationSpeed: { idle:1, walk:.82, talk:1 }, forged: true };
+    }
+    if (typeof refreshForgedNPCs === 'function') refreshForgedNPCs();
+  } catch (e) { console.warn('NPC library unavailable:', e?.message || e); }
+})();
 const NPC_DIALOGUES = {
   'hub-first-warning': [
     'The tunnels have started breathing again. The old roots remember things we tried to forget.',
@@ -6932,7 +6968,7 @@ if (npcEditorPanel) {
     document.getElementById('npcDialogueInput').value = meta.customDialogue || '';
     document.getElementById('npcQuestIdInput').value = meta.questId || '';
     const modelSel = document.getElementById('npcModelInput');
-    if (modelSel) modelSel.value = String(meta.fallbackType || '').startsWith('kit:') ? meta.fallbackType : 'ant';
+    if (modelSel) modelSel.value = meta.libraryKey && NPC_FORGED[meta.libraryKey] && meta.modelUrl ? 'forged:' + meta.libraryKey : String(meta.fallbackType || '').startsWith('kit:') ? meta.fallbackType : 'ant';
     refreshNPCAnimTestOptions(npc);
   }
 }
@@ -14503,6 +14539,41 @@ function createPlaceholderAntNPC(root, npc) {
   root.metadata.placeholderPieces = pieces;
 }
 
+// Forged NPCs (NPC Forge): put a model on an NPC already in the scene, or take it off again.
+function clearNPCModel(root) {
+  const meta = root.metadata || {};
+  try { meta.cloth?.dispose(); } catch (e) {}
+  (meta.animationGroups || []).forEach(g => { try { g.stop(); g.dispose(); } catch (e) {} });
+  try { meta.modelRoot?.dispose(false, true); } catch (e) {}
+  Object.assign(meta, { cloth: null, animationGroups: [], gestureGroup: null, activeAnimation: null, modelRoot: null, modelLoaded: false, modelFailed: false });
+}
+function swapNPCModel(root, npc) {
+  const meta = root.metadata || {};
+  clearNPCModel(root);
+  Object.assign(meta, { modelUrl: npc.modelUrl || null, modelScale: npc.modelScale, animationMap: npc.animationMap || {}, animationSpeed: npc.animationSpeed || {}, libraryKey: npc.libraryKey || null });
+  if (!(meta.placeholderPieces || []).length) createPlaceholderAntNPC(root, { npcId: meta.npcId, factionId: meta.factionId, fallbackType: meta.fallbackType || 'ant', modelScale: meta.modelScale });
+  if (npc.modelUrl) tryLoadNPCModel(root, { ...npc, npcId: meta.npcId });
+}
+function refreshForgedNPCs() {
+  NPCManager.roots.forEach(root => {
+    const meta = root?.metadata; if (!meta || root.isDisposed?.()) return;
+    const npc = applyForgedNPC({ ...meta });
+    if (npc.modelUrl && npc.modelUrl !== meta.modelUrl) swapNPCModel(root, npc);
+  });
+  renderForgedNPCAdmin();
+}
+// Admin > NPCs: a card per forged NPC (place it like any library NPC) and a Model choice per forged NPC
+function renderForgedNPCAdmin() {
+  const keys = Object.keys(NPC_FORGED).sort();
+  const grid = document.getElementById('forgedNPCGrid'), head = document.getElementById('forgedNPCHead');
+  if (grid) grid.innerHTML = keys.map(k => { const e = NPC_FORGED[k]; const img = e.thumbUrl ? `<img src="${e.thumbUrl}" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:4px">` : '<span class="ap-icon">🐜</span>';
+    return `<div class="ap-card" onclick="spawnNPCFromPanel('${k}')" title="${k}">${img}<span class="ap-name">${String(e.displayName || k).replace(/[<>&"]/g, '')}</span></div>`; }).join('');
+  const sel = document.getElementById('npcModelInput');
+  if (sel) {
+    [...sel.querySelectorAll('option[data-forged]')].forEach(o => o.remove());
+    keys.forEach(k => { const o = document.createElement('option'); o.value = 'forged:' + k; o.dataset.forged = '1'; o.textContent = 'Model: ' + (NPC_FORGED[k].displayName || k) + ' (forged)'; sel.appendChild(o); });
+  }
+}
 // Robe springs cost ~0.5 ms per NPC per frame: only the nearest few NPCs close to the camera run them, the rest keep
 // their robes at rest (unnoticeable at that distance).
 const NPC_CLOTH_MAX = 3, NPC_CLOTH_RADIUS = 20;
@@ -14710,6 +14781,7 @@ function updateHubGuideQuestMarkers() {
 }
 
 function createNPCFromDefinition(npc, savedState = null) {
+  npc = applyForgedNPC(npc);
   const root = new BABYLON.TransformNode(`npc_${npc.npcId}`, scene);
   const spawn = savedState?.position || npc.spawn || { x:0, y:0, z:0 };
   root.position.set(spawn.x || 0, spawn.y || 0, spawn.z || 0);
@@ -14731,6 +14803,7 @@ function createNPCFromDefinition(npc, savedState = null) {
     questId: npc.questId || null,
     modelUrl: npc.modelUrl || null,
     modelScale: Number.isFinite(npc.modelScale) ? npc.modelScale : 1,
+    libraryKey: npc.libraryKey || null,
     fallbackType: npc.fallbackType || 'ant',
     spawn: { x: root.position.x, y: root.position.y, z: root.position.z },
     baseRotationY,
@@ -14771,6 +14844,7 @@ function restoreNPCFromLayoutItem(item) {
     role: item.role || base.role || 'villager',
     displayName: item.displayName || base.displayName || 'Villager',
     modelUrl: item.modelUrl || base.modelUrl || null,
+    libraryKey: item.libraryKey || base.libraryKey || null,
     fallbackType: item.fallbackType || base.fallbackType || 'ant',
     behavior: item.behavior || base.behavior || 'idle',
     dialogueId: item.dialogueId || base.dialogueId || 'default',
@@ -14799,6 +14873,7 @@ function createNPCFromLibrary(key, point = null, sourceMeta = null) {
   const spawnPoint = point || new BABYLON.Vector3(0, 0, 0);
   const npc = {
     ...template,
+    libraryKey: sourceMeta ? (sourceMeta.libraryKey || null) : key,
     npcId: makeNPCId(template.npcIdPrefix || template.factionId || 'npc'),
     villageId: CURRENT_VILLAGE_ID,
     spawn: { x: spawnPoint.x, y: spawnPoint.y, z: spawnPoint.z }
@@ -15864,11 +15939,18 @@ function applySelectedNPCChanges() {
   meta.customDialogue = customDialogue;
   meta.questId = questId;
   const model = document.getElementById('npcModelInput')?.value || 'ant';
-  if (model !== (String(meta.fallbackType || '').startsWith('kit:') ? meta.fallbackType : 'ant') && !meta.modelLoaded) { // swap the look
+  const curModel = meta.libraryKey && NPC_FORGED[meta.libraryKey] && meta.modelUrl ? 'forged:' + meta.libraryKey : (String(meta.fallbackType || '').startsWith('kit:') ? meta.fallbackType : 'ant');
+  if (model !== curModel) { // swap the look
     (meta.placeholderPieces || []).forEach(mesh => { try { mesh.dispose(false, true); } catch(e) {} });
     try { meta.kitModel?.dispose(false, true); } catch(e) {}
-    meta.kitModel = null; meta.fallbackType = model;
-    createPlaceholderAntNPC(npc, { npcId: meta.npcId, factionId: meta.factionId, fallbackType: model, modelScale: meta.modelScale });
+    meta.placeholderPieces = []; meta.kitModel = null;
+    if (model.startsWith('forged:')) {
+      meta.fallbackType = 'ant';
+      swapNPCModel(npc, applyForgedNPC({ ...meta, libraryKey: model.slice(7), modelUrl: null }));
+    } else {
+      clearNPCModel(npc); meta.modelUrl = null; meta.libraryKey = null; meta.fallbackType = model;
+      createPlaceholderAntNPC(npc, { npcId: meta.npcId, factionId: meta.factionId, fallbackType: model, modelScale: meta.modelScale });
+    }
     npc.setEnabled(NPCManager.visible);
   }
   meta.target = null;
@@ -21414,6 +21496,7 @@ function collectWorldLayoutData() {
     displayName: node.metadata.displayName || null,
     modelUrl: node.metadata.modelUrl || null,
     modelScale: Number.isFinite(node.metadata.modelScale) ? node.metadata.modelScale : null,
+    libraryKey: node.metadata.libraryKey || null,
     fallbackType: node.metadata.fallbackType || null,
     behavior: node.metadata.behavior || null,
     dialogueId: node.metadata.dialogueId || null,
