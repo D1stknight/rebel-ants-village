@@ -1745,7 +1745,7 @@ const NPC_FACTION_COLORS = {
 };
 const NPC_DEFINITIONS = [
   { npcId:'hub-ashigaru-guard-01', villageId:'hub', factionId:'ashigaru', role:'guard', displayName:'Ashigaru Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'idle', spawn:{ x:-7, y:0, z:-28 } },
-  { npcId:'hub-ashigaru-villager-01', villageId:'hub', factionId:'ashigaru', role:'villager', displayName:'Hub Guide', modelUrl:'/assets/npcs/ashigaru-villager.glb', modelScale:1.75, fallbackType:'ant', behavior:'wander', spawn:{ x:18, y:0, z:12 }, wanderRadius:7, moveSpeed:1.18, dialogueId:'hub-first-warning', questId:'hub-tutorial', animationMap:{ idle:'Idle', walk:'Walking', run:'Running', talk:'Talking' }, animationSpeed:{ idle:1, walk:.82, talk:1 } },
+  { npcId:'hub-ashigaru-villager-01', villageId:'hub', factionId:'ashigaru', role:'villager', displayName:'Hub Guide', modelUrl:'/assets/npcs/ashigaru-villager.glb', modelScale:1.75, fallbackType:'ant', behavior:'wander', spawn:{ x:18, y:0, z:12 }, wanderRadius:7, moveSpeed:1.18, dialogueId:'hub-first-warning', questId:'hub-tutorial', animationMap:{ idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed:{ idle:1, walk:.82, talk:1 } },
   { npcId:'ronin-guard-01', villageId:'ronin', factionId:'ronin', role:'guard', displayName:'Ronin Watcher', modelUrl:null, fallbackType:'ant', behavior:'patrol', spawn:{ x:0, y:0, z:-34 }, patrolPoints:[{ x:-8, y:0, z:-34 }, { x:8, y:0, z:-34 }], dialogueId:'ronin-first-warning', questId:'first-warning' },
   { npcId:'ronin-wanderer-01', villageId:'ronin', factionId:'ronin', role:'villager', displayName:'Ronin Wanderer', modelUrl:null, fallbackType:'ant', behavior:'wander', spawn:{ x:-16, y:0, z:18 }, wanderRadius:8 },
   { npcId:'samurai-guard-01', villageId:'samurai', factionId:'samurai', role:'guard', displayName:'Samurai Gate Guard', modelUrl:null, fallbackType:'ant', behavior:'patrol', spawn:{ x:0, y:0, z:-32 }, patrolPoints:[{ x:-6, y:0, z:-32 }, { x:6, y:0, z:-32 }] },
@@ -1763,32 +1763,33 @@ const NPC_LIBRARY = {
     behavior: 'wander',
     wanderRadius: 7,
     moveSpeed: 1.18,
-    animationMap: { idle:'Idle', walk:'Walking', run:'Running', talk:'Talking' },
+    animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' },
     animationSpeed: { idle:1, walk:.82, talk:1 }
   },
-  // faction villagers, any village: Forge rig (65-bone mixamorig_ skeleton with 5-finger glove hands + cloth/antenna bones),
-  // 17 clips: Idle Walking Running Talking Talking2 Waving WaveShort Bow Pointing PickUp NodYes ShakeNo Clapping Rallying
-  // Yelling LookAround IdleLooking. Feet at y 0; modelScale = 3.35 m / model height.
+  // faction villagers, any village: built by the Forge Rigger (forge-worker, same pipeline as the Rebels; tools/npc-forge):
+  // 65-bone mixamorig_ rig, glove hands with a hand pose per clip, cloth + antenna springs. 17 clips: idle walk run talking
+  // talking2 waving wave_short bow pointing pick_up nod_yes shake_no clapping rallying yelling look_around idle_looking.
+  // Feet at y 0; each GLB keeps its old height, so modelScale (3.35 m / model height) and saved layouts stay valid.
   ronin_villager: { npcIdPrefix: 'ronin-villager', factionId: 'ronin', role: 'villager', displayName: 'Ronin Villager', modelUrl: '/assets/npcs/ronin-villager.glb', modelScale: 1.97, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
-    animationMap: { idle:'Idle', walk:'Walking', run:'Running', talk:'Talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
+    animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
   samurai_villager: { npcIdPrefix: 'samurai-villager', factionId: 'samurai', role: 'villager', displayName: 'Samurai Villager', modelUrl: '/assets/npcs/samurai-villager.glb', modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
-    animationMap: { idle:'Idle', walk:'Walking', run:'Running', talk:'Talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
+    animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
   shogun_villager: { npcIdPrefix: 'shogun-villager', factionId: 'shogun', role: 'villager', displayName: 'Shogun Villager', modelUrl: '/assets/npcs/shogun-villager.glb', modelScale: 1.97, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
-    animationMap: { idle:'Idle', walk:'Walking', run:'Running', talk:'Talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
+    animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
   bushi_villager: { npcIdPrefix: 'bushi-villager', factionId: 'bushi', role: 'villager', displayName: 'Bushi Villager', modelUrl: '/assets/npcs/bushi-villager.glb', modelScale: 1.74, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
-    animationMap: { idle:'Idle', walk:'Walking', run:'Running', talk:'Talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
+    animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
   warrior_villager: { npcIdPrefix: 'warrior-villager', factionId: 'warrior', role: 'villager', displayName: 'Warrior Villager', modelUrl: '/assets/npcs/warrior-villager.glb', modelScale: 1.97, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
-    animationMap: { idle:'Idle', walk:'Walking', run:'Running', talk:'Talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
+    animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
   kenshi_villager: { npcIdPrefix: 'kenshi-villager', factionId: 'kenshi', role: 'villager', displayName: 'Kenshi Villager', modelUrl: '/assets/npcs/kenshi-villager.glb', modelScale: 1.79, fallbackType: 'ant', behavior: 'idle', wanderRadius: 5, moveSpeed: 1.1,
-    animationMap: { idle:'Idle', walk:'Walking', run:'Running', talk:'Talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
+    animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
   buke_villager: { npcIdPrefix: 'buke-villager', factionId: 'buke', role: 'villager', displayName: 'Buke Villager', modelUrl: '/assets/npcs/buke-villager.glb', modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
-    animationMap: { idle:'Idle', walk:'Walking', run:'Running', talk:'Talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
+    animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
   sohei_villager: { npcIdPrefix: 'sohei-villager', factionId: 'sohei', role: 'villager', displayName: 'Sohei Villager', modelUrl: '/assets/npcs/sohei-villager.glb', modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
-    animationMap: { idle:'Idle', walk:'Walking', run:'Running', talk:'Talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
+    animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
   wokou_villager: { npcIdPrefix: 'wokou-villager', factionId: 'wokou', role: 'villager', displayName: 'Wokou Villager', modelUrl: '/assets/npcs/wokou-villager.glb', modelScale: 1.86, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
-    animationMap: { idle:'Idle', walk:'Walking', run:'Running', talk:'Talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
+    animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
   yamabushi_villager: { npcIdPrefix: 'yamabushi-villager', factionId: 'yamabushi', role: 'villager', displayName: 'Yamabushi Villager', modelUrl: '/assets/npcs/yamabushi-villager.glb', modelScale: 1.9, fallbackType: 'ant', behavior: 'wander', wanderRadius: 7, moveSpeed: 1.18,
-    animationMap: { idle:'Idle', walk:'Walking', run:'Running', talk:'Talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
+    animationMap: { idle:'idle', walk:'walk', run:'run', talk:'talking' }, animationSpeed: { idle:1, walk:.82, talk:1 } },
   // the Mystic Moons (Cute & Creepy gang): procedural kit characters, placeable in any village
   mystic_moons_mamoru: { npcIdPrefix: 'mm-mamoru', factionId: 'cute-creepy', role: 'villager', displayName: 'Mamoru', modelUrl: null, modelScale: 1, fallbackType: 'kit:cc_mamoru', behavior: 'idle', wanderRadius: 5, moveSpeed: .6, customDialogue: 'Mamoru blinks his green eyes. The candle on his skull flickers.\nI keep the gate. Nothing walks in after midnight that I do not see.\nMind the pumpkins. Some of them are listening.' },
   mystic_moons_flower_moon: { npcIdPrefix: 'mm-flower-moon', factionId: 'cute-creepy', role: 'villager', displayName: 'Kokeshi Flower Moon', modelUrl: null, modelScale: 1, fallbackType: 'kit:cc_flower_moon', behavior: 'idle', wanderRadius: 5, moveSpeed: .6, customDialogue: 'Under the flower moon the old tree remembers every name.\nIts lanterns are the souls who stayed. They light the way for the ones who are lost.\nWould you like to hang one of your own someday?' },
@@ -15194,7 +15195,7 @@ function findNPCAnimationGroup(meta, state) {
 
 // One-shot NPC gestures (Mixamo NPC pack clips, on every villager GLB that carries them): greet when a talk opens,
 // a bow when it finishes, a nod when the talk moved a quest on. NPCs without the clip just skip it.
-const NPC_GESTURE_CLIPS = { greet:'waveshort', bye:'bow', yes:'nodyes', cheer:'clapping' };
+const NPC_GESTURE_CLIPS = { greet:'wave_short', bye:'bow', yes:'nod_yes', cheer:'clapping' };
 function playNPCGesture(root, gesture) {
   const meta = root?.metadata;
   const clip = NPC_GESTURE_CLIPS[gesture];
