@@ -1,0 +1,58 @@
+[
+ {
+  "name": "talking",
+  "file": "mixamo/talking.npz"
+ },
+ {
+  "name": "talking2",
+  "file": "mixamo/talking2.npz"
+ },
+ {
+  "name": "waving",
+  "file": "mixamo/waving.npz"
+ },
+ {
+  "name": "wave_short",
+  "file": "mixamo/wave_short.npz"
+ },
+ {
+  "name": "bow",
+  "file": "mixamo/bow.npz"
+ },
+ {
+  "name": "pointing",
+  "file": "mixamo/pointing.npz"
+ },
+ {
+  "name": "pick_up",
+  "file": "mixamo/pick_up.npz"
+ },
+ {
+  "name": "nod_yes",
+  "file": "mixamo/nod_yes.npz"
+ },
+ {
+  "name": "shake_no",
+  "file": "mixamo/shake_no.npz"
+ },
+ {
+  "name": "clapping",
+  "file": "mixamo/clapping.npz"
+ },
+ {
+  "name": "rallying",
+  "file": "mixamo/rallying.npz"
+ },
+ {
+  "name": "yelling",
+  "file": "mixamo/yelling.npz"
+ },
+ {
+  "name": "look_around",
+  "file": "mixamo/look_around.npz"
+ },
+ {
+  "name": "idle_looking",
+  "file": "mixamo/idle_looking.npz"
+ }
+]

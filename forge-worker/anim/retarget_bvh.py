@@ -72,8 +72,11 @@ for clip in CLIPS:
     A = {}
     for d, sname in MAP_.items():
         n = P + d
-        if d in ('Hips', 'Head') or d.endswith('ToeBase') or d.endswith('Foot') or d not in DST_CHILD or sname not in SC_: A[n] = Rot.identity(); continue
-        dt = Hrest[P + DST_CHILD[d]] - Hrest[n]; ds = restB[SC_[sname]] - restB[sname]
+        if d in ('Hips', 'Head') or (_o.environ.get('FORGE_NO_SPINE_ALIGN') and d in ('Spine', 'Spine1', 'Spine2', 'Neck')) or d.endswith('ToeBase') or d.endswith('Foot') or d not in DST_CHILD or sname not in SC_: A[n] = Rot.identity(); continue
+        dch, sch = DST_CHILD[d], SC_[sname]
+        if sch not in restB and sch.endswith('HandMiddle1'): dch, sch = dch.replace('Middle', 'Index'), sch.replace('Middle', 'Index')   # 41-bone Mixamo exports: thumb + index only
+        if sch not in restB: A[n] = Rot.identity(); print('no-align', d); continue
+        dt = Hrest[P + dch] - Hrest[n]; ds = restB[sch] - restB[sname]
         if np.linalg.norm(dt) < 1e-6 or np.linalg.norm(ds) < 1e-6: A[n] = Rot.identity(); print('no-align', d); continue
         dt /= np.linalg.norm(dt); ds /= np.linalg.norm(ds)
         ax = np.cross(dt, ds); sn = np.linalg.norm(ax); cs = float(np.dot(dt, ds))

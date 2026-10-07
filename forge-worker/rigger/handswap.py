@@ -185,6 +185,8 @@ G = np.array([v.co[:] for v in gme.vertices])
 mat = bpy.data.materials.new('Glove'); mat.use_nodes = True
 bsdf = mat.node_tree.nodes['Principled BSDF']
 col = np.mean([plan[s]['col'] for s in plan], 0)            # both hands the same colour
+import os as _hos
+if _hos.environ.get('FORGE_GLOVE_RGB'): col = np.array([float(v) for v in _hos.environ['FORGE_GLOVE_RGB'].split(',')])   # NPC override (sRGB 0-1)
 lin = srgb2lin(col)
 bsdf.inputs['Base Color'].default_value = (*lin.tolist(), 1.0); bsdf.inputs['Roughness'].default_value = 0.62
 bsdf.inputs['Metallic'].default_value = 0.0
@@ -192,6 +194,7 @@ me.materials.append(mat); gmi = len(me.materials) - 1
 cmat = bpy.data.materials.new('GloveCuff'); cmat.use_nodes = True
 cb_ = cmat.node_tree.nodes['Principled BSDF']
 ccol = np.mean([plan[s]['ccol'] for s in plan], 0)
+if _hos.environ.get('FORGE_CUFF_RGB'): ccol = np.array([float(v) for v in _hos.environ['FORGE_CUFF_RGB'].split(',')])
 cb_.inputs['Base Color'].default_value = (*srgb2lin(ccol).tolist(), 1.0); cb_.inputs['Roughness'].default_value = 0.7
 me.materials.append(cmat); cmi = len(me.materials) - 1
 print('handswap cuff colour', np.round(ccol, 3).tolist())
@@ -257,22 +260,29 @@ print('handswap gloves added, verts', len(me.vertices))
 FIST = {'jab', 'cross_punch', 'hook_punch', 'elbow_punch', 'punch_combo', 'front_kick', 'side_kick', 'roundhouse_kick',
         'crescent_kick', 'hurricane_kick', 'flip_kick', 'spin_flip_kick', 'fight_idle', 'hit_reaction', 'jump_run'}
 OPEN = {'cartwheel', 'get_up', 'knockdown', 'backflip', 'front_flip'}
+# NPC gestures (village villagers): open palms for waves / claps / calls, a talking hand for speech, the index out to point
+OPEN |= {'waving', 'wave_short', 'clapping', 'rallying', 'bow'}
+TALK = {'talking', 'talking2', 'yelling', 'shake_no', 'nod_yes', 'look_around', 'idle_looking'}
 POSE = {   # degrees about the finger's own X axis (negative closes toward the palm): [seg1, seg2, seg3]
     'fist':    {'Index': (-88, -95, -50), 'Middle': (-90, -95, -50), 'Ring': (-90, -95, -50), 'Pinky': (-90, -95, -50), 'Thumb': (None, -25, -30)},
     'relaxed': {'Index': (-14, -22, -14), 'Middle': (-18, -26, -16), 'Ring': (-22, -30, -18), 'Pinky': (-26, -34, -20), 'Thumb': (None, -10, -10)},
     'open':    {'Index': (-4, -6, -4), 'Middle': (-4, -6, -4), 'Ring': (-4, -6, -4), 'Pinky': (-4, -6, -4), 'Thumb': (None, -4, -4)},
+    'talk':    {'Index': (-8, -12, -8), 'Middle': (-11, -15, -9), 'Ring': (-14, -18, -11), 'Pinky': (-17, -21, -12), 'Thumb': (None, -6, -6)},
+    'point':   {'Index': (0, -2, -2), 'Middle': (-88, -95, -50), 'Ring': (-90, -95, -50), 'Pinky': (-90, -95, -50), 'Thumb': (None, -25, -30)},
     # v2.11 weapon moves: a hand closed round a hilt / bow grip (a fist with room for the handle)
     'grip':    {'Index': (-62, -78, -40), 'Middle': (-68, -80, -42), 'Ring': (-72, -82, -42), 'Pinky': (-76, -84, -42), 'Thumb': (None, -20, -24)},
 }
 # the thumb's base swings across the curled fingers (solved so the tip rests on the index/middle middle joints);
 # right-hand XYZ euler degrees, the left hand mirrors Y and Z
-THUMB1 = {'fist': (-8, -8, -37), 'relaxed': (-3, -2, -10), 'open': (0, 0, 0), 'grip': (-6, -6, -30)}
+THUMB1 = {'fist': (-8, -8, -37), 'relaxed': (-3, -2, -10), 'open': (0, 0, 0), 'grip': (-6, -6, -30), 'talk': (-2, -1, -6), 'point': (-8, -8, -37)}
 
 
 def hand_pose(clip, side):
     # weapon moves (v2.11): swords are held in both hands; the bow in the left hand (the right draws the string)
     if clip.startswith('sword_') or clip.startswith('twin_'): return 'grip'
     if clip.startswith('bow_'): return 'grip' if side == 'Left' or clip in ('bow_draw', 'bow_sheathe') else 'relaxed'
+    if clip == 'pointing': return 'point' if side == 'Right' else 'relaxed'
+    if clip in TALK: return 'talk'
     return 'fist' if clip in FIST else 'open' if clip in OPEN else 'relaxed'
 
 
