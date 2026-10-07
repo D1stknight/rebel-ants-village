@@ -16,7 +16,9 @@ const drop = (process.env.DROP || '').split(',').filter(Boolean); doc.getRoot().
     if (atRest) for (const [a, c] of list) { const s_ = c.getSampler(); c.dispose(); if (!s_.listParents().some(p => p.propertyType === 'AnimationChannel')) s_.dispose(); dropped++; }
   }
   console.log('static tracks dropped', dropped); }
-await doc.transform(resample({ tolerance: Number(tol || 3e-3) }), dedup(), prune({ keepLeaves: true }));
+// keyframe reduction: 2e-4 keeps the small motion (idle breathing, arm sway, gesture accents). 3e-3 flattened the idle
+// into a frozen pose (slow curves fall under the tolerance one key at a time); Rebels keep every key.
+await doc.transform(resample({ tolerance: Number(tol || 2e-4) }), dedup(), prune({ keepLeaves: true }));
 if (process.env.DMODE === 'fn') await doc.transform(draco({ method: 'edgebreaker' })); else doc.createExtension(KHRDracoMeshCompression).setRequired(true).setEncoderOptions({ method: KHRDracoMeshCompression.EncoderMethod.EDGEBREAKER, encodeSpeed: 5, decodeSpeed: 5 });
 if (process.env.HEIGHT) { // the rigger normalises to 1.8 m; scale the root so the model keeps its old village height (saved layouts keep their modelScale)
   const k = Number(process.env.HEIGHT) / 1.8; for (const n of doc.getRoot().listScenes()[0].listChildren()) { const s_ = n.getScale(); n.setScale([s_[0] * k, s_[1] * k, s_[2] * k]); const t_ = n.getTranslation(); n.setTranslation([t_[0] * k, t_[1] * k, t_[2] * k]); } }

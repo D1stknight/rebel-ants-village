@@ -11,6 +11,9 @@ for (const n of meshNodes) {
   else M = n.getWorldMatrix();
   const N3 = [M[0], M[1], M[2], M[4], M[5], M[6], M[8], M[9], M[10]];
   for (const p of n.getMesh().listPrimitives()) {
+    // gloves from an earlier Forge Rigger run (Glove / GloveCuff materials): the rigger fits new ones, and old ones left in
+    // the source got bound to the thigh or neck and stayed behind when the arms moved (Buke, Wokou, Yamabushi villagers)
+    if (/^Glove/.test(p.getMaterial()?.getName() || '')) { console.log('dropped old glove primitive', p.getMaterial().getName(), p.getAttribute('POSITION').getCount()); p.dispose(); continue; }
     const P = p.getAttribute('POSITION'), Nn = p.getAttribute('NORMAL'), v = [];
     for (let i = 0; i < P.getCount(); i++) { P.getElement(i, v); P.setElement(i, [M[0]*v[0]+M[4]*v[1]+M[8]*v[2]+M[12], M[1]*v[0]+M[5]*v[1]+M[9]*v[2]+M[13], M[2]*v[0]+M[6]*v[1]+M[10]*v[2]+M[14]]); }
     if (Nn) for (let i = 0; i < Nn.getCount(); i++) { Nn.getElement(i, v); const x = N3[0]*v[0]+N3[3]*v[1]+N3[6]*v[2], y = N3[1]*v[0]+N3[4]*v[1]+N3[7]*v[2], z = N3[2]*v[0]+N3[5]*v[1]+N3[8]*v[2], l = Math.hypot(x, y, z) || 1; Nn.setElement(i, [x/l, y/l, z/l]); }

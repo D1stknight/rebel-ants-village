@@ -1,8 +1,9 @@
 {
- "version": "2.12",
+ "version": "2.13",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
+  "anim/clips_npc.json",
   "anim/clips_weapons.json",
   "anim/npzsrc.py",
   "anim/retarget_bvh.py",
@@ -28,6 +29,7 @@
   "rigger/glbio.py",
   "rigger/glove.py",
   "rigger/handfix.py",
+  "rigger/handfloor.py",
   "rigger/handswap.py",
   "rigger/headcloth.py",
   "rigger/headfix.py",

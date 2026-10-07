@@ -10,6 +10,15 @@ export FORGE_OUT="$JOB/out" FORGE_CLIPS="$FW/clips" FORGE_PACK="$FW/pack" FORGE_
 # v1.6: keep bridge/tear faces (fixarm reweights them) so robes have no see-through cracks
 export FORGE_KEEP_TEAR="${FORGE_KEEP_TEAR-1}" FORGE_KEEP_BRIDGE="${FORGE_KEEP_BRIDGE-1}"   # set to empty to cut them (TRELLIS)
 R="$FW/rigger"; O="$FORGE_OUT"
+# v2.13 NPC villagers (FORGE_NPC=1, the admin NPC Forge): the NPC clip set (master idle / walk / run + Mixamo gestures,
+# anim/clips_npc.json) instead of the fight and weapon moves. Gestures keep their own head motion (headfix levels the
+# head for fight moves: it cut nods to a tenth and flipped the head in pick_up's deep bend); a long-armed villager
+# reaching down keeps its fingertips on the floor (handfloor); 1024 base textures (a village shows several NPCs).
+NPC="${FORGE_NPC:-}"; MOVES="$FW/anim/clips.json"
+if [ -n "$NPC" ]; then
+  MOVES="$FW/anim/clips_npc.json"
+  export FORGE_HEAD_SKIP="${FORGE_HEAD_SKIP-$(grep -o '"name": *"[^"]*"' "$MOVES" | sed 's/.*"\([^"]*\)"$/\1/' | paste -sd, -)}"
+fi
 mkdir -p "$O"; : > "$JOB/log"
 T0=$(date +%s)
 step(){ echo "$1" > "$JOB/progress"; echo "== $1 ($(( $(date +%s) - T0 ))s)" >> "$JOB/log"; }
@@ -47,11 +56,15 @@ step hands;      run "$R/handfix.py" -- "$O/weighted.blend" "$O/weighted_hf.blen
 if [ "${FORGE_SKIRTFIX:-0}" = "1" ]; then run "$R/skirtfix.py" -- "$O/weighted_hf.blend" "$O/weighted_hf.blend"; fi
 step cloth;      run "$R/clothbones.py" -- "$O/weighted_hf.blend" "$O/weighted_cb.blend"
 step animate;    run "$R/retarget.py" -- "$O/weighted_cb.blend" "$O/anim6.blend"
-step moves;      run "$FW/anim/retarget_bvh.py" -- "$O/anim6.blend" "$O/anim6_ma.blend" "$FW/anim/clips.json"
+step moves;      if [ -n "$NPC" ]; then for f in $(grep -o '"file": *"[^"]*"' "$MOVES" | sed 's/.*"\([^"]*\)"$/\1/'); do
+                   [ -f "$FORGE_PACK/$f" ] || { echo "NPC gesture pack missing: $f (upload it in the NPC Forge, then rebuild the worker)" >> "$JOB/log"; false; }; done; fi
+                 run "$FW/anim/retarget_bvh.py" -- "$O/anim6.blend" "$O/anim6_ma.blend" "$MOVES"
 # v2.11 weapon moves (sword / twin blades / bow, Mixamo): retargeted like the other moves, cleaned up with them, shipped
 # in their own moves.glb (the rig.glb keeps its 24 clips)
+if [ -z "$NPC" ]; then
 export FORGE_WEAPON_CLIPS="$FW/anim/clips_weapons.json"
 step weapons;    run "$FW/anim/retarget_bvh.py" -- "$O/anim6_ma.blend" "$O/anim6_ma.blend" "$FORGE_WEAPON_CLIPS"
+fi
 step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/footfix.py" -- "$O/anim6_fix.blend" "$O/anim6_ff0.blend"
                  run "$R/padfix.py" -- "$O/anim6_ff0.blend" "$O/anim6_ff1.blend"
@@ -64,10 +77,13 @@ step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/handswap.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 standard 5-finger hands + hand poses
                  run "$R/shoulderfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 sleeves ride the arm
                  run "$R/antennafix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.1 jointed antennae with follow-through
-step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=2048 FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
+if [ -n "$NPC" ]; then run "$R/handfloor.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi   # v2.13 NPC hands on the floor
+step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=$([ -n "$NPC" ] && echo 1024 || echo 2048) FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
 # v2.12 head cloth: skully-wrap flaps / bandana tails get spring chains (cloth_flap_*), on the finished GLB. Optional.
 step headcloth;  run "$R/headcloth.py" "$JOB/rig.glb" "$JOB/rig.glb" --report "$JOB/headcloth.json" || echo "headcloth failed (non-fatal)" >> "$JOB/log"
+if [ -z "$NPC" ]; then
 step movespack;  run "$R/exp_moves.py" -- "$O/anim6_ff.blend" "$FORGE_WEAPON_CLIPS" "$JOB/moves.glb"
+fi
 step qa;         run "$FW/qa_job.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb" "$JOB/qa.json" "$JOB/log"
 step thumb;      "$PY" "$FW/thumb.py" -- "$JOB/rig.glb" "$JOB/thumb.jpg" 640 >> "$JOB/log" 2>&1 || echo "thumb failed (non-fatal)" >> "$JOB/log"
 SECS=$(( $(date +%s) - T0 ))

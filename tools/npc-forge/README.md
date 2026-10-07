@@ -1,15 +1,12 @@
-# NPC villagers through the Forge Rigger
+# NPC gesture pack for the Forge Rigger
 
-Same pipeline as the Rebels (forge-worker), so NPCs get the master idle / walk / run, the cleanup passes (feet, head
-carriage, arms, shoulders, antennae) and a hand pose per clip. Needs Node with @gltf-transform/core, /extensions,
-/functions and draco3dgltf, plus the bpy venv described in forge-worker/README.md.
+NPCs are forged in the admin NPC Forge (npc-forge.html) like the Rebels; the rigger's NPC mode (forge-worker, FORGE_NPC=1)
+retargets these Mixamo gestures onto every NPC. The pack is made once from Miguel's Mixamo downloads and uploaded from the
+NPC Forge (Rig worker > Upload gesture files), then the worker is rebuilt. Mocap stays off GitHub.
 
-1. Gesture pack (once): each Mixamo FBX (Without Skin) -> GLB with FBX2glTF, then
-   `node mx2json.mjs Talking.glb talking.json && python json2npz.py talking.json forge-worker/pack/mixamo/talking.npz`
-   (names as in forge-worker/anim/clips_npc.json).
-2. Source: `node stripskin.mjs <npc rigged or static>.glb <npc>-static.glb`
-3. Rig + animate: `FORGE_GLOVE_RGB=r,g,b FORGE_CUFF_RGB=r,g,b forge-worker/npcjob.sh <npc>-static.glb <npc>_villager job/<npc>`
-4. Village file: `HEIGHT=<old model height> DROP=jump,flip_kick node slim2.mjs job/<npc>/rig.glb assets/npcs/<npc>-villager.glb 3e-3`
+Each Mixamo FBX (Without Skin) -> GLB with FBX2glTF, then
+`node mx2json.mjs Talking.glb talking.json && python json2npz.py talking.json talking.npz`
+(file names as in forge-worker/anim/clips_npc.json).
 
-Check in profile and front (only the NPCs on a flat floor) before shipping: upright idle / talk, feet on the floor,
-hands posed (index out on pointing, palms on clapping).
+stripskin.mjs (rigged GLB -> static bind-pose GLB) and slim2.mjs (rig GLB -> resampled, Draco village file) are kept for
+one-off conversions; slim2's keyframe tolerance is 2e-4 (3e-3 froze idles).
