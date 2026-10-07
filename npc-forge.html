@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NPC Forge</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d14;--panel:#121624;--line:#262c40;--gold:#e8c56a;--teal:#5ecfca;--txt:#d9dce6;--dim:#8a90a6;--red:#ff6b6b;--amber:#ffb84d;--green:#5fd38d}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:13px/1.45 Inter,system-ui,sans-serif}
+#gate{display:flex;align-items:center;justify-content:center;height:100%;color:var(--dim)}
+#app{display:none;height:100%;grid-template-columns:minmax(330px,420px) 1fr;grid-template-rows:auto 1fr}
+header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid var(--line);background:#0e1120}
+header h1{margin:0;font:700 18px Cinzel,serif;letter-spacing:3px;color:var(--gold)}
+header .sub{color:var(--dim);font-size:12px}
+header a{margin-left:auto;color:var(--teal);text-decoration:none;font-size:12px}
+#side{overflow:auto;border-right:1px solid var(--line);padding:12px}
+#main{display:grid;grid-template-rows:1fr auto;min-height:0}
+#view{position:relative;min-height:0}
+#cv{width:100%;height:100%;display:block;outline:none;background:#151a28}
+#viewMsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);pointer-events:none;text-align:center;padding:20px}
+#viewBar{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
+#viewBar>*{pointer-events:auto}
+#dock{border-top:1px solid var(--line);padding:10px 12px;display:grid;grid-template-columns:1fr minmax(260px,360px);gap:12px;max-height:46vh;overflow:auto}
+h2{font:700 12px Cinzel,serif;letter-spacing:2px;color:var(--gold);margin:14px 0 8px;text-transform:uppercase}
+h2:first-child{margin-top:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px}
+.card.sel{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.grow{flex:1}
+input,select{background:#0d1020;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 8px;font:inherit;min-width:0}
+input[type=file]{display:none}
+button{background:#1d2336;border:1px solid #33405e;color:var(--txt);border-radius:6px;padding:6px 10px;font:500 12px Inter,sans-serif;cursor:pointer}
+button:hover{border-color:var(--teal)}
+button.gold{background:#3a2f12;border-color:#8a7030;color:var(--gold)}
+button.teal{background:#10302f;border-color:#2c7a76;color:var(--teal)}
+button.red{background:#3a1616;border-color:#7a2c2c;color:#ff9a9a}
+button:disabled{opacity:.45;cursor:default}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.slot{aspect-ratio:3/4;border:1px dashed #3a4566;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;cursor:pointer;overflow:hidden;position:relative;background:#0d1020}
+.slot img{width:100%;height:100%;object-fit:contain}
+.slot b{position:absolute;left:4px;bottom:3px;font-size:10px;color:var(--gold);background:#000a;padding:0 4px;border-radius:3px}
+.slot.drag{border-color:var(--teal)}
+.bar{height:6px;background:#0d1020;border-radius:3px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--gold));width:0}
+.state{font-size:11px;color:var(--dim)}
+.err{color:var(--red);font-size:11px;white-space:pre-wrap}
+.verdict{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.v-pass{background:#123a24;color:var(--green)} .v-review{background:#3a2e12;color:var(--amber)} .v-fail{background:#3a1616;color:var(--red)}
+.clips{display:flex;flex-wrap:wrap;gap:5px}
+.clips button.on{border-color:var(--gold);color:var(--gold)}
+table{border-collapse:collapse;width:100%;font-size:11px}
+td,th{padding:3px 5px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--dim);font-weight:500}
+.bad{color:var(--red)} .warn{color:var(--amber)}
+.thumb{width:44px;height:44px;border-radius:6px;object-fit:cover;background:#0d1020}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#1d2336;border:1px solid var(--teal);padding:8px 14px;border-radius:8px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
+#toast.on{opacity:1}
+dialog{background:var(--panel);color:var(--txt);border:1px solid var(--teal);border-radius:10px;padding:16px;width:min(420px,92vw)}
+dialog::backdrop{background:#000a}
+dialog label{display:block;margin:8px 0 3px;color:var(--dim);font-size:11px}
+dialog input,dialog select{width:100%}
+small{color:var(--dim)}
+@media(max-width:860px){#app{grid-template-columns:1fr;grid-template-rows:auto auto 70vh}#side{border-right:0}#dock{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="gate">Checking admin access...</div>
+<div id="app">
+  <header><h1>NPC FORGE</h1><span class="sub">Your renders → Meshy → Forge Rigger (NPC clips) → test → approve</span><a href="admin.html">← Admin Hub</a></header>
+  <aside id="side">
+    <h2>NPCs</h2>
+    <div class="row" style="margin-bottom:8px"><button class="gold" onclick="addNPC()">+ New NPC</button><button class="teal" id="forgeAllBtn" onclick="forgeAll()">Forge all ready</button></div>
+    <div id="npcList"></div>
+    <h2>Approved (in the village)</h2>
+    <div id="approvedList" class="state">Loading...</div>
+    <h2>Rig worker</h2>
+    <div class="card" id="workerBox"><div class="state">Loading...</div></div>
+  </aside>
+  <section id="main">
+    <div id="view"><canvas id="cv"></canvas><div id="viewMsg">Pick a forged NPC to test its animations.</div>
+      <div id="viewBar"><button onclick="camView('front')">Front</button><button onclick="camView('side')">Side</button><button onclick="camView('back')">Back</button><button onclick="camView('three')">3/4</button><button onclick="camView('close')">Close-up</button>
+        <label style="margin-left:auto;background:#0009;padding:4px 8px;border-radius:6px">Speed <input id="speed" type="range" min="0.1" max="1.5" step="0.05" value="1" oninput="setSpeed(this.value)" style="width:90px;vertical-align:middle"></label>
+        <label style="background:#0009;padding:4px 8px;border-radius:6px"><input id="loopChk" type="checkbox" checked style="vertical-align:middle"> Loop</label></div>
+    </div>
+    <div id="dock">
+      <div><h2>Animations</h2><div class="clips" id="clips"><span class="state">No NPC loaded.</span></div>
+        <div class="row" style="margin-top:8px"><button onclick="stopClip()">Stop (rest pose)</button><span class="state" id="clipInfo"></span></div></div>
+      <div><h2>Checks</h2><div id="qaBox" class="state">The Forge Rigger checks every NPC for torn pieces, leftover parts, leaning or sitting, sinking into the floor and head snaps.</div>
+        <div class="row" style="margin-top:8px"><button class="gold" id="approveBtn" onclick="openApprove()" disabled>Approve → village</button></div></div>
+    </div>
+  </section>
+</div>
+<dialog id="approveDlg">
+  <h2 style="margin-top:0">Approve NPC</h2>
+  <div class="state">Every NPC in the village with this library key wears this model. Pick an existing villager key to replace its placeholder, or a new key for a new NPC.</div>
+  <label>Library key</label><select id="apKey"></select>
+  <label id="apNewKeyLab">New key (a-z, 0-9, _)</label><input id="apNewKey" placeholder="e.g. saints_greeter">
+  <label>Display name</label><input id="apName">
+  <label>Faction</label><input id="apFaction" placeholder="samurai">
+  <label>Role</label><select id="apRole"><option>villager</option><option>guard</option><option>guide</option><option>merchant</option><option>elder</option><option>quest</option></select>
+  <div class="row" style="margin-top:14px;justify-content:flex-end"><button onclick="approveDlg.close()">Cancel</button><button class="gold" onclick="doApprove()">Approve</button></div>
+</dialog>
+<div id="toast"></div>
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script>
+'use strict';
+const $ = (s) => document.querySelector(s);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const SKEY = 'npcForge:v1';
+const SLOTS = ['front', 'back', 'left', 'right'];
+const VILLAGERS = ['ashigaru', 'ronin', 'samurai', 'shogun', 'bushi', 'warrior', 'kenshi', 'buke', 'sohei', 'wokou', 'yamabushi'];
+const NPC_CLIPS = ['idle', 'walk', 'run', 'talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping', 'rallying', 'yelling', 'look_around', 'idle_looking'];
+const PHASES = { draft: 'Draft', uploading: 'Uploading renders', building: 'Starting build', sculpting: 'Meshy is sculpting', storing: 'Saving the sculpt', rigging: 'Forge Rigger', done: 'Forged', failed: 'Stopped' };
+let st = { npcs: [] }; let selId = null; let approved = {};
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
+function save() { try { localStorage.setItem(SKEY, JSON.stringify(st)); } catch (e) {} }
+function load() { try { const s = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (s && Array.isArray(s.npcs)) st = s; } catch (e) {} }
+const esc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const slug = (v) => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60);
+async function api(path, body, method) {
+  const r = await fetch(path, body ? { method: method || 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { cache: 'no-store' });
+  let j = null; try { j = await r.json(); } catch (e) {}
+  if (!r.ok || (j && j.ok === false)) { const e = new Error((j && (j.error || j.detail)) || `${path} failed (${r.status})`); e.status = r.status; throw e; }
+  return j || {};
+}
+async function twice(fn) { const waits = [3000, 9000, 20000]; for (let k = 0; ; k++) { try { return await fn(); } catch (e) { if ((e.status && e.status < 500 && e.status !== 408) || k >= waits.length) throw e; await sleep(waits[k]); } } }
+
+/* ---------- NPC records ---------- */
+function addNPC() {
+  const n = { id: 'n' + Date.now().toString(36), name: '', key: '', factionId: '', role: 'villager', refs: {}, phase: 'draft' };
+  st.npcs.unshift(n); save(); renderList(); select(n.id);
+}
+function npc(id) { return st.npcs.find((n) => n.id === id); }
+function setField(id, f, v) { const n = npc(id); if (!n) return; n[f] = v; if (f === 'name' && !n.keyTouched) n.key = guessKey(v); if (f === 'key') { n.key = slug(v); n.keyTouched = true; } save(); setTimeout(renderList, 0); }   // not inside the input's own change / blur
+function guessKey(name) { const s = slug(name); const f = VILLAGERS.find((v) => s.startsWith(v)); return f && /villager|^[a-z]+$/.test(s) ? `${f}_villager` : s; }
+function removeNPC(id) { if (!confirm('Remove this NPC from the forge list? (Approved NPCs stay in the village.)')) return; st.npcs = st.npcs.filter((n) => n.id !== id); save(); renderList(); if (selId === id) { selId = null; clearViewer(); } }
+function ready(n) { return n.name && n.key && SLOTS.every((s) => n.refs[s]); }
+function pick(id, slot) { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/webp'; inp.onchange = () => inp.files[0] && setImage(id, slot, inp.files[0]); inp.click(); }
+async function setImage(id, slot, file) {
+  const n = npc(id); if (!n) return;
+  const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+  n.refs[slot] = { local: await shrink(data) }; save(); renderList();
+}
+function dropTo(ev, id, slot) { ev.preventDefault(); ev.currentTarget.classList.remove('drag'); const f = ev.dataTransfer.files[0]; if (f) setImage(id, slot, f); }
+async function shrink(dataUrl) {   // keep uploads under the 8 MB Blob limit (the Rebel Forge does the same)
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl; });
+  const c = document.createElement('canvas'), x = c.getContext('2d');
+  for (const [px, type, q] of [[2048, 'image/png', 1], [1536, 'image/webp', 0.92], [1280, 'image/webp', 0.88], [1024, 'image/jpeg', 0.88]]) {
+    const s = Math.min(1, px / Math.max(img.naturalWidth, img.naturalHeight)); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+    x.clearRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+    const out = c.toDataURL(type, q); if (out.length * 0.75 <= 2.75 * 1024 * 1024) return out;
+  }
+  throw new Error('Image too large');
+}
+
+/* ---------- the pipeline (same steps as the Rebel Forge, NPC rig job) ---------- */
+const running = new Set();
+function ids(n) { return { tokenId: n.key, rebelId: `npc_${n.key}`, collectionKey: 'npc' }; }
+function refConcept(n) { const f = n.refs.front.url; return { id: `${n.id}_front`, conceptId: `${n.id}_front`, ...ids(n), imageUrl: f, backImageUrl: n.refs.back.url, imageStorage: 'vercel_blob', conceptType: 'production_reference', forgeMode: 'production_reference', createdAt: new Date().toISOString() }; }
+function gi(n) { return { ...ids(n), name: n.name, species: 'ant', referenceImage: true, npc: true }; }
+async function forgeOne(id, opts = {}) {
+  const n = npc(id); if (!n || running.has(id)) return; if (!ready(n)) { toast('Add a name, a key and all four renders first'); return; }
+  running.add(id); n.err = null;
+  try {
+    if (opts.resculpt) { n.buildId = null; n.meshy = null; n.stored = null; n.rig = null; }
+    if (opts.rerig) { n.rig = null; }
+    // 1. renders -> Blob
+    n.phase = 'uploading'; save(); renderList();
+    for (const s of SLOTS) {
+      const r = n.refs[s];
+      if (r.url) continue;
+      const j = await twice(() => api('/api/forge-concepts-upload-image', { conceptId: `${n.id}_${s}`, ...ids(n), imageDataUrl: r.local }));
+      if (!j.imageUrl) throw new Error('Upload returned no image URL');
+      n.refs[s] = { url: j.imageUrl }; save(); renderList();
+    }
+    // 2. build record + 3. Meshy (front + back + both sides)
+    if (!n.buildId) {
+      n.phase = 'building'; save(); renderList();
+      const c = refConcept(n);
+      const j = await twice(() => api('/api/forge-build-3d-character', { generationInput: gi(n), selectedConcept: c, productionReference: c }));
+      n.buildId = j.buildRequest?.buildId; if (!n.buildId) throw new Error('The forge returned no build id');
+      await twice(() => api('/api/forge-3d-engine-meshy-create', { buildId: n.buildId, generationInput: gi(n), productionReference: c, selectedConcept: c, sideImageUrls: [n.refs.left.url, n.refs.right.url] }));
+      n.meshy = { p: 0 }; save();
+    }
+    if (!n.meshy?.glb) {
+      n.phase = 'sculpting'; save(); renderList(); let errs = 0;
+      for (;;) {
+        let d; try { d = await api('/api/forge-3d-engine-meshy-status', { buildId: n.buildId }); errs = 0; } catch (e) { if (++errs > 10) throw e; await sleep(8000); continue; }
+        const r = d.meshyResponse || {}; n.meshy.p = Math.max(n.meshy.p || 0, Number(r.progress || 0)); if (r.thumbnail_url) n.meshy.thumb = r.thumbnail_url;
+        if (d.glbUrl) { n.meshy.glb = d.glbUrl; n.meshy.p = 100; break; }
+        if (['FAILED', 'CANCELED', 'EXPIRED'].includes(String(d.meshyStatus || '').toUpperCase())) throw new Error('Meshy: ' + (r.task_error?.message || 'the sculpt failed'));
+        save(); renderList(); await sleep(8000);
+      }
+      save();
+    }
+    // 4. store the sculpt in our Blob store
+    if (!n.stored) { n.phase = 'storing'; save(); renderList(); const d = await twice(() => api('/api/forge-3d-store-glb', { buildId: n.buildId })); n.stored = d.rebelGlbUrl || true; save(); }
+    // 5. Forge Rigger, NPC mode (NPC clips, NPC checks)
+    if (!n.rig?.url) {
+      n.phase = 'rigging'; n.rig = { p: 0, step: 'starting' }; save(); renderList();
+      await twice(() => api('/api/forge-rig-start', { buildId: n.buildId, npc: true, ...(opts.rerig ? { force: true } : {}) }));
+      for (;;) {
+        await sleep(6000);
+        let d; try { d = await api(`/api/forge-rig-status?buildId=${encodeURIComponent(n.buildId)}`); } catch (e) { continue; }
+        const fr = d.forgeRig || {}; if (d.percent != null) n.rig.p = Math.max(n.rig.p || 0, d.percent); if (fr.progress) n.rig.step = fr.progress;
+        if (fr.status === 'failed') throw new Error((fr.error || 'Rigging failed') + (fr.logTail ? '\n' + fr.logTail.split('\n').slice(-4).join('\n') : ''));
+        if (fr.status === 'succeeded') { n.rig = { url: fr.forgeRigGlbUrl, thumb: fr.thumbUrl || null, qa: fr.qa || null, p: 100 }; break; }
+        save(); renderList();
+      }
+    }
+    n.phase = 'done'; save(); renderList(); toast(`${n.name} is forged. Test the animations, then approve.`);
+    if (selId === id) showNPC(id);
+  } catch (e) {
+    n.phase = 'failed'; n.err = e.message || String(e); save(); renderList(); toast(`${n.name || 'NPC'}: ${n.err.split('\n')[0]}`);
+  } finally { running.delete(id); renderList(); }
+}
+async function forgeAll() {
+  const list = st.npcs.filter((n) => ready(n) && n.phase !== 'done' && !running.has(n.id));
+  if (!list.length) { toast('No NPC ready to forge (name, key and four renders)'); return; }
+  if (!confirm(`Forge ${list.length} NPC${list.length > 1 ? 's' : ''}? Each one is one Meshy generation plus a rig job.`)) return;
+  // Meshy runs in parallel; at most 3 rig sandboxes at a time
+  let i = 0; const next = async () => { while (i < list.length) { const n = list[i++]; await forgeOne(n.id); } };
+  await Promise.all([next(), next(), next()]);
+}
+
+/* ---------- list ---------- */
+function stateLine(n) {
+  if (n.phase === 'sculpting') return `${PHASES.sculpting} ${n.meshy?.p || 0}%`;
+  if (n.phase === 'rigging') return `${PHASES.rigging}: ${esc(n.rig?.step || 'starting')} ${n.rig?.p || 0}%`;
+  return PHASES[n.phase] || n.phase;
+}
+function pct(n) { return n.phase === 'done' ? 100 : n.phase === 'rigging' ? 60 + 0.4 * (n.rig?.p || 0) : n.phase === 'storing' ? 58 : n.phase === 'sculpting' ? 8 + 0.5 * (n.meshy?.p || 0) : n.phase === 'building' ? 6 : n.phase === 'uploading' ? 3 : 0; }
+function renderList() {
+  const el = $('#npcList');
+  if (!st.npcs.length) { el.innerHTML = '<div class="state">No NPCs yet. Add one, give it a name and drop your four renders (front, back, left, right).</div>'; return; }
+  el.innerHTML = st.npcs.map((n) => {
+    const busy = running.has(n.id); const qa = n.rig?.qa?.verdict;
+    const slots = SLOTS.map((s) => { const r = n.refs[s] || {}; const src = r.url || r.local; return `<div class="slot" onclick="pick('${n.id}','${s}')" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropTo(event,'${n.id}','${s}')">${src ? `<img src="${src}" alt="">` : '+'}<b>${s}</b></div>`; }).join('');
+    return `<div class="card ${n.id === selId ? 'sel' : ''}" onclick="if(!event.target.closest('input,select,button,.slot'))select('${n.id}')">
+      <div class="row">${n.rig?.thumb ? `<img class="thumb" src="${n.rig.thumb}" alt="">` : ''}<input class="grow" placeholder="Name (e.g. Samurai Villager)" value="${esc(n.name)}" onchange="setField('${n.id}','name',this.value)" ${busy ? 'disabled' : ''}>
+        ${qa ? `<span class="verdict v-${qa}">${qa}</span>` : ''}</div>
+      <div class="row" style="margin-top:6px"><input class="grow" placeholder="library key" value="${esc(n.key)}" onchange="setField('${n.id}','key',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Library key (samurai_villager replaces that villager's placeholder)"></div>
+      ${n.buildId ? '' : `<div class="slots">${slots}</div>`}
+      <div class="state">${stateLine(n)}</div><div class="bar"><i style="width:${pct(n)}%"></i></div>
+      ${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}
+      <div class="row" style="margin-top:8px">
+        ${n.phase === 'done' ? `<button class="teal" onclick="select('${n.id}')">Test</button><button onclick="forgeOne('${n.id}',{rerig:true})" title="Run the Forge Rigger again on the same sculpt">Re-rig</button>` : `<button class="gold" onclick="forgeOne('${n.id}')" ${busy || !ready(n) ? 'disabled' : ''}>${n.phase === 'failed' ? 'Retry' : 'Forge'}</button>`}
+        ${n.buildId && !busy ? `<button onclick="if(confirm('Sculpt this NPC again from the same renders? (a new Meshy generation)'))forgeOne('${n.id}',{resculpt:true})">Re-sculpt</button>` : ''}
+        ${!n.buildId && Object.keys(n.refs).length ? '' : ''}
+        <button class="red" style="margin-left:auto" onclick="removeNPC('${n.id}')" ${busy ? 'disabled' : ''}>Remove</button></div></div>`;
+  }).join('');
+}
+function select(id) { selId = id; renderList(); showNPC(id); }
+
+/* ---------- viewer: test every animation ---------- */
+const canvas = $('#cv'); const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true }); const scene = new BABYLON.Scene(engine);
+scene.clearColor = new BABYLON.Color4(0.08, 0.1, 0.15, 1);
+const cam = new BABYLON.ArcRotateCamera('cam', Math.PI / 2, 1.35, 5.2, new BABYLON.Vector3(0, 1.0, 0), scene); cam.attachControl(canvas, true); cam.lowerRadiusLimit = 1.2; cam.upperRadiusLimit = 14; cam.wheelPrecision = 60; cam.minZ = 0.05;
+const hemi = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0.2, 1, 0.3), scene); hemi.intensity = 1.05; hemi.groundColor = new BABYLON.Color3(0.32, 0.32, 0.38);
+const sun = new BABYLON.DirectionalLight('d', new BABYLON.Vector3(-0.4, -1, 0.7), scene); sun.intensity = 1.2;
+const ground = BABYLON.MeshBuilder.CreateDisc('g', { radius: 3, tessellation: 64 }, scene); ground.rotation.x = Math.PI / 2; const gm = new BABYLON.StandardMaterial('gm', scene); gm.diffuseColor = new BABYLON.Color3(0.22, 0.24, 0.3); gm.specularColor = BABYLON.Color3.Black(); ground.material = gm;
+for (let i = -6; i <= 6; i++) { const l1 = BABYLON.MeshBuilder.CreateLines('l', { points: [new BABYLON.Vector3(i * 0.5, 0.002, -3), new BABYLON.Vector3(i * 0.5, 0.002, 3)] }, scene); const l2 = BABYLON.MeshBuilder.CreateLines('l', { points: [new BABYLON.Vector3(-3, 0.002, i * 0.5), new BABYLON.Vector3(3, 0.002, i * 0.5)] }, scene); l1.color = l2.color = new BABYLON.Color3(0.3, 0.34, 0.45); }
+engine.runRenderLoop(() => scene.render()); addEventListener('resize', () => engine.resize());
+const view = { root: null, groups: {}, cur: null, cloth: null, url: null, H: 1.8 };
+function clearViewer() {
+  try { view.cloth?.dispose(); } catch (e) {}
+  Object.values(view.groups).forEach((g) => { try { g.stop(); g.dispose(); } catch (e) {} });
+  try { view.root?.dispose(false, true); } catch (e) {}
+  Object.assign(view, { root: null, groups: {}, cur: null, cloth: null, url: null });
+  $('#clips').innerHTML = '<span class="state">No NPC loaded.</span>'; $('#viewMsg').style.display = ''; $('#approveBtn').disabled = true; $('#clipInfo').textContent = '';
+}
+async function showNPC(id) {
+  const n = npc(id); renderQA(n);
+  $('#approveBtn').disabled = !(n && n.phase === 'done' && n.rig?.url);
+  if (!n || !n.rig?.url) { clearViewer(); $('#viewMsg').textContent = n ? 'Forge this NPC to test its animations.' : 'Pick a forged NPC to test its animations.'; renderQA(n); return; }
+  if (view.url === n.rig.url) return;
+  clearViewer(); $('#viewMsg').style.display = ''; $('#viewMsg').textContent = 'Loading...';
+  try {
+    const res = await BABYLON.SceneLoader.ImportMeshAsync('', '', n.rig.url, scene, null, '.glb');
+    const root = res.meshes[0]; root.scaling.scaleInPlace(1);   // native size (1.8 m), feet on the floor
+    res.animationGroups.forEach((g) => { g.stop(); g.enableBlending = true; g.blendingSpeed = 0.12; view.groups[g.name] = g; });
+    stripForgeClothTracks(res.animationGroups);
+    try { view.cloth = createForgeClothSprings(scene, root); } catch (e) { console.warn('cloth springs', e); }
+    Object.assign(view, { root, url: n.rig.url });
+    root.computeWorldMatrix(true); const b = root.getHierarchyBoundingVectors(true); view.H = b.max.y - b.min.y || 1.8;
+    $('#viewMsg').style.display = 'none'; renderClips(); playClip('idle'); camView('front', true);
+  } catch (e) { $('#viewMsg').textContent = 'Could not load the rig: ' + (e.message || e); }
+  $('#approveBtn').disabled = false;
+}
+function renderClips() {
+  const names = Object.keys(view.groups); const order = [...NPC_CLIPS.filter((c) => names.includes(c)), ...names.filter((c) => !NPC_CLIPS.includes(c))];
+  $('#clips').innerHTML = order.map((c) => `<button data-clip="${c}" onclick="playClip('${c}')">${c.replace(/_/g, ' ')}</button>`).join('');
+}
+function playClip(name) {
+  const g = view.groups[name]; if (!g) return;
+  Object.values(view.groups).forEach((x) => { if (x !== g) x.stop(); });
+  g.speedRatio = Number($('#speed').value || 1); g.start($('#loopChk').checked, g.speedRatio);
+  view.cur = name; document.querySelectorAll('#clips button').forEach((b) => b.classList.toggle('on', b.dataset.clip === name));
+  $('#clipInfo').textContent = `${name} · ${((g.to - g.from) / 30).toFixed(1)} s`;
+}
+function stopClip() { Object.values(view.groups).forEach((g) => g.stop()); view.cur = null; document.querySelectorAll('#clips button').forEach((b) => b.classList.remove('on')); const sk = scene.skeletons; sk.forEach((s) => s.returnToRest()); }
+function setSpeed(v) { const g = view.groups[view.cur]; if (g) g.speedRatio = Number(v); }
+function camView(v, now) {
+  // glTF models face +Z here: the front view looks from +Z
+  const H = view.H || 1.8; const t = { front: [Math.PI / 2, 1.38, H * 2.3, H * 0.52], side: [0, 1.38, H * 2.3, H * 0.52], back: [-Math.PI / 2, 1.38, H * 2.3, H * 0.52], three: [Math.PI / 3, 1.25, H * 2.1, H * 0.55], close: [Math.PI / 2, 1.4, H * 1.1, H * 0.78] }[v];
+  if (!t) return; cam.alpha = t[0]; cam.beta = t[1]; cam.radius = t[2]; cam.target.y = t[3];
+}
+function renderQA(n) {
+  const box = $('#qaBox'); const qa = n?.rig?.qa;
+  if (!qa) { box.innerHTML = n ? '<span class="state">Checks appear after rigging.</span>' : 'The Forge Rigger checks every NPC for torn pieces, leftover parts, leaning or sitting, sinking into the floor and head snaps.'; return; }
+  const rows = Object.entries(qa.npc || {}).filter(([k, v]) => v && typeof v === 'object').map(([k, v]) => {
+    const t = v.tear > 0.3 ? 'bad' : v.tear > 0.15 ? 'warn' : ''; const lim = { idle: 6, talking: 6, walk: 9 }[k]; const l = lim && Math.max(Math.abs(v.lean[0]), Math.abs(v.lean[1])) > lim ? 'warn' : ''; const f = v.floorCm < -3 ? 'warn' : ''; const h = v.headPop > 30 ? 'warn' : '';
+    return `<tr><td>${k}</td><td class="${t}">${v.tear}</td><td class="${l}">${v.lean[0]}..${v.lean[1]}</td><td class="${f}">${v.floorCm}</td><td class="${h}">${v.headPop}</td></tr>`; }).join('');
+  box.innerHTML = `<div class="row"><span class="verdict v-${qa.verdict}">${qa.verdict}</span><small>${qa.glb ? `${qa.glb.animations} clips · ${Math.round((qa.glb.tris || 0) / 1000)}k tris · ${((qa.glb.bytes || 0) / 1048576).toFixed(1)} MB` : ''}</small></div>
+    ${(qa.reasons || []).length ? `<ul style="margin:6px 0;padding-left:18px">${qa.reasons.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : '<div class="state" style="margin:6px 0">Nothing found.</div>'}
+    ${rows ? `<table><tr><th>clip</th><th>tear (×height)</th><th>lean °</th><th>floor cm</th><th>head °/frame</th></tr>${rows}</table>` : ''}`;
+}
+
+/* ---------- approve -> NPC library (the village) ---------- */
+function openApprove() {
+  const n = npc(selId); if (!n?.rig?.url) return;
+  const sel = $('#apKey'); const keys = [...VILLAGERS.map((v) => `${v}_villager`), ...Object.keys(approved).filter((k) => !k.endsWith('_villager'))];
+  sel.innerHTML = keys.map((k) => `<option value="${k}">${k}${approved[k] ? ' (replace approved)' : ''}</option>`).join('') + '<option value="__new">New key…</option>';
+  sel.value = keys.includes(n.key) ? n.key : '__new'; $('#apNewKey').value = keys.includes(n.key) ? '' : n.key;
+  const sync = () => { const nw = sel.value === '__new'; $('#apNewKey').style.display = $('#apNewKeyLab').style.display = nw ? '' : 'none'; }; sel.onchange = sync; sync();
+  $('#apName').value = n.name; $('#apFaction').value = n.factionId || (VILLAGERS.find((v) => n.key.startsWith(v)) || ''); $('#apRole').value = n.role || 'villager';
+  approveDlg.showModal();
+}
+async function doApprove() {
+  const n = npc(selId); if (!n) return;
+  const key = $('#apKey').value === '__new' ? slug($('#apNewKey').value) : $('#apKey').value;
+  if (!/^[a-z0-9_]{2,60}$/.test(key)) { toast('Key: 2-60 of a-z, 0-9, _'); return; }
+  const qa = n.rig?.qa ? { verdict: n.rig.qa.verdict, reasons: n.rig.qa.reasons || [] } : null;
+  if (qa?.verdict === 'fail' && !confirm('The checks failed for this NPC. Approve anyway?')) return;
+  try {
+    await api('/api/npc-library', { action: 'approve', key, entry: { displayName: $('#apName').value || n.name, factionId: slug($('#apFaction').value).replace(/_/g, '-') || null, role: $('#apRole').value, modelUrl: n.rig.url, thumbUrl: n.rig.thumb || null, modelScale: 1.9, buildId: n.buildId, qa } });
+    n.approvedKey = key; save(); approveDlg.close(); toast(`Approved as ${key}. Every NPC with that key now wears it.`); loadApproved(); renderList();
+  } catch (e) { toast('Approve failed: ' + e.message); }
+}
+async function loadApproved() {
+  try { const d = await api('/api/npc-library'); approved = d.npcs || {}; } catch (e) { $('#approvedList').textContent = 'Could not load: ' + e.message; return; }
+  const keys = Object.keys(approved).sort();
+  $('#approvedList').innerHTML = keys.length ? keys.map((k) => { const e = approved[k]; return `<div class="card row">${e.thumbUrl ? `<img class="thumb" src="${e.thumbUrl}" alt="">` : ''}<div class="grow"><b>${esc(e.displayName)}</b><br><small>${k} · ${esc(e.role || '')}${e.qa?.verdict ? ` · checks ${e.qa.verdict}` : ''}</small></div><button class="red" onclick="unapprove('${k}')">Remove</button></div>`; }).join('') : '<div class="state">None yet: the village shows placeholders.</div>';
+}
+async function unapprove(k) { if (!confirm(`Remove ${k} from the village? NPCs with that key go back to placeholders.`)) return; try { await api('/api/npc-library', { action: 'remove', key: k }); toast('Removed'); loadApproved(); } catch (e) { toast(e.message); } }
+
+/* ---------- rig worker: NPC gesture pack + rebuild ---------- */
+const NPC_PACK = ['talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping', 'rallying', 'yelling', 'look_around', 'idle_looking'].map((c) => `mixamo/${c}.npz`);
+let workerPoll = null;
+async function loadWorker() {
+  let d; try { d = await api('/api/forge-rig-worker'); } catch (e) { $('#workerBox').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  const w = d.worker || {}; const have = new Set(d.packPaths || []); const miss = NPC_PACK.filter((p) => !have.has(p)); const s = w.setup || {};
+  const building = s.status === 'running';
+  $('#workerBox').innerHTML = `<div class="state">Worker image: ${w.snapshotId ? `built ${w.builtAt ? new Date(w.builtAt).toLocaleString() : ''} from ${esc(String(w.commit || '').slice(0, 7))}` : 'not built'}${building ? ' · <b>rebuilding…</b>' : s.status === 'failed' ? ' · <span class="bad">last rebuild failed</span>' : ''}</div>
+    <div class="state" style="margin-top:4px">NPC gesture pack: ${NPC_PACK.length - miss.length} of ${NPC_PACK.length}${miss.length ? ` · missing ${miss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}</div>
+    <div class="row" style="margin-top:8px"><button onclick="uploadPack()">Upload gesture files (.npz)</button><button class="teal" onclick="rebuildWorker()" ${building ? 'disabled' : ''}>Rebuild worker</button></div>
+    <div class="state" style="margin-top:4px">Rebuild after uploading the pack or after a worker update (about 10 minutes). NPC jobs need all ${NPC_PACK.length} gesture files in the worker.</div>
+    ${s.logTail && building ? `<pre style="white-space:pre-wrap;font-size:10px;color:var(--dim);max-height:120px;overflow:auto">${esc(s.logTail)}</pre>` : ''}`;
+  clearTimeout(workerPoll); if (building) workerPoll = setTimeout(loadWorker, 15000);
+}
+function uploadPack() {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.multiple = true; inp.accept = '.npz';
+  inp.onchange = async () => {
+    let ok = 0;
+    for (const f of inp.files) {
+      const name = f.name.toLowerCase().replace(/\.npz$/, '');
+      if (!/^[a-z0-9_]+$/.test(name)) { toast(`Skipped ${f.name}`); continue; }
+      const b64 = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(f); });
+      try { await api('/api/forge-rig-worker', { action: 'pack-put', path: `mixamo/${name}.npz`, dataBase64: b64 }); ok++; toast(`Uploaded ${ok} / ${inp.files.length}`); } catch (e) { toast(`${f.name}: ${e.message}`); }
+    }
+    loadWorker();
+  };
+  inp.click();
+}
+async function rebuildWorker() {
+  if (!confirm('Rebuild the rig worker from the deployed code? Rebel forges keep working; jobs started during the rebuild use the old image.')) return;
+  try { await api('/api/forge-rig-worker', { action: 'setup' }); toast('Worker rebuild started'); } catch (e) { toast('Rebuild failed: ' + e.message); }
+  loadWorker();
+}
+
+/* ---------- start ---------- */
+(async function init() {
+  try { const d = await (await fetch('/api/admin-session', { cache: 'no-store' })).json(); if (!d.authenticated) { location.href = 'index.html'; return; } }
+  catch (e) { location.href = 'index.html'; return; }
+  $('#gate').style.display = 'none'; $('#app').style.display = 'grid'; engine.resize();
+  load(); renderList(); loadApproved(); loadWorker();
+  // resume NPCs that were forging when the page closed
+  st.npcs.filter((n) => ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase)).forEach((n) => forgeOne(n.id));
+  if (st.npcs[0]) select(st.npcs[0].id);
+})();
+
+/* ---------- robe / armour-skirt springs (same solver as the village) ---------- */
+function createForgeClothSprings(scene, root, opts) {
+  opts = Object.assign({ stiffness: 2.2, drag: 0.18, gravity: 2.0, hitRadius: 0.02, legRadius: 0.085, hipRadius: 0.13, legFollow: 0.6, maxSwing: 1.0 }, opts || {});
+  // v4 (rigger 2.12): head cloth — skully-wrap knot flaps and bandana tails (cloth_flap_<k>_<s>, under Head)
+  const flapOpts = Object.assign({ stiffness: 2.4, drag: 0.12, gravity: 2.4, maxSwing: 0.75 }, opts.flap || {});
+  const V3 = BABYLON.Vector3, Q = BABYLON.Quaternion;
+  const nodes = root.getDescendants(false).filter(n => n.getClassName && n.getClassName() === 'TransformNode');
+  const byName = {}; nodes.forEach(n => { byName[n.name] = n; });
+  const chains = {};
+  nodes.forEach(n => {
+    const m = /^cloth_(skirt|flap)_(\d+)_(\d+|end)$/.exec(n.name); if (!m) return;
+    const key = m[1] + '_' + m[2]; (chains[key] = chains[key] || {})[m[3]] = n;
+  });
+  const segs = [];
+  Object.keys(chains).forEach(k => {
+    const c = chains[k]; const ids = Object.keys(c).filter(x => x !== 'end').map(Number).sort((a, b) => a - b);
+    ids.forEach((i, j) => {
+      const node = c[i], child = (j + 1 < ids.length) ? c[ids[j + 1]] : c.end; if (!node || !child) return;
+      if (!node.rotationQuaternion) node.rotationQuaternion = Q.FromEulerVector(node.rotation);
+      const off = child.position.clone(); const len = off.length(); if (len < 1e-6) return;
+      const flap = k.startsWith('flap_');
+      segs.push({ node, child, restRot: node.rotationQuaternion.clone(), axis: off.scale(1 / len), len, tail: null, prev: null, first: j === 0, flap, o: flap ? flapOpts : opts });
+    });
+  });
+  if (!segs.length) return null;
+  // leg colliders: sample points along thigh and shin
+  const P = 'mixamorig_';
+  const legPairs = [['LeftUpLeg', 'LeftLeg'], ['LeftLeg', 'LeftFoot'], ['RightUpLeg', 'RightLeg'], ['RightLeg', 'RightFoot']]
+    .map(([a, b]) => [byName[P + a], byName[P + b]]).filter(p => p[0] && p[1]);
+  const hips = byName[P + 'Hips'];
+  const tmpM = new BABYLON.Matrix(), tmpQ = new Q(), tmpS = new V3(), tmpT = new V3();
+  // v2: each chain's rest target follows the nearest thigh (like game skirt bones), so a high kick lifts the panel in
+  // front of that leg instead of stretching the cloth between the leg and the hips.
+  const thighs = ['Left', 'Right'].map(sd => ({ a: byName[P + sd + 'UpLeg'], b: byName[P + sd + 'Leg'] })).filter(t => t.a && t.b);
+  function hipsLocalDir(t) {
+    hips.computeWorldMatrix(true); hips.getWorldMatrix().invertToRef(tmpM);
+    return V3.TransformCoordinates(t.b.getAbsolutePosition(), tmpM).subtract(V3.TransformCoordinates(t.a.getAbsolutePosition(), tmpM)).normalize();
+  }
+  if (hips && thighs.length === 2) {
+    thighs.forEach(t => { t.a.computeWorldMatrix(true); t.b.computeWorldMatrix(true); t.rest = hipsLocalDir(t); });
+    segs.forEach(g => {
+      if (!g.first || g.flap) return;
+      g.node.computeWorldMatrix(true); const p = g.node.getAbsolutePosition();
+      const dL = V3.Distance(p, thighs[0].a.getAbsolutePosition()), dR = V3.Distance(p, thighs[1].a.getAbsolutePosition());
+      const wL = dR / Math.max(1e-6, dL + dR);                   // closer to the left thigh -> follows it more
+      g.legW = [Math.min(1, Math.max(0, (wL - 0.5) * 1.6 + 0.5)), 0]; g.legW[1] = 1 - g.legW[0];
+    });
+  }
+  // head cloth colliders: skull, neck, chest and shoulders. Radii come from where the cloth hangs at start, so they never
+  // push it at rest (the skull distance is pose-free: the flap rides the head)
+  const bodyCols = ['Head', 'Neck', 'Spine2', 'LeftArm', 'RightArm'].map(n => byName[P + n]).filter(Boolean);
+  segs.forEach(g => {
+    if (!g.flap) return;
+    g.node.computeWorldMatrix(true); g.child.computeWorldMatrix(true);
+    const s0 = worldScale(); const pts = [g.node.getAbsolutePosition().clone(), g.child.getAbsolutePosition().clone()];
+    g.cols = bodyCols.map(n => { n.computeWorldMatrix(true); const c = n.getAbsolutePosition(); return { n, r: 0.92 * Math.min(...pts.map(p => V3.Distance(p, c))) / s0 }; }).filter(c => c.r > 0.01);
+  });
+  function swingOf(t) {
+    const cur = hipsLocalDir(t); const ax = V3.Cross(t.rest, cur); const sn = ax.length();
+    return sn < 1e-6 ? Q.Identity() : Q.RotationAxis(ax.scale(1 / sn), Math.atan2(sn, V3.Dot(t.rest, cur)));
+  }
+  let enabled = true, last = performance.now(), order = 0, idle = false;
+  // opts.scaleRef (NPCs): a node inside the rig whose world scale is the rig's (model scale x the file's own root scale)
+  function worldScale() { if (opts.scaleRef) { opts.scaleRef.computeWorldMatrix(true); const m = opts.scaleRef.getWorldMatrix().m; return Math.hypot(m[0], m[1], m[2]); } root.computeWorldMatrix(true); root.getWorldMatrix().decompose(tmpS); return tmpS.x; }
+  function step() {
+    if (!enabled) return;
+    if (opts.active && !opts.active()) {   // NPCs: off while hidden or far away; the robe settles back to rest
+      if (!idle) { idle = true; segs.forEach(g => { g.node.rotationQuaternion.copyFrom(g.restRot); g.tail = null; }); }
+      last = performance.now(); return;
+    }
+    idle = false;
+    const now = performance.now(); const dt = opts.fixedDt || Math.min(0.05, Math.max(0.001, (now - last) / 1000)); last = now;
+    const s = worldScale();
+    const cols = [];
+    legPairs.forEach(([a, b]) => {
+      const pa = a.getAbsolutePosition().clone(), pb = b.getAbsolutePosition().clone();
+      for (let t = 0; t <= 1.0001; t += 0.25) cols.push({ c: V3.Lerp(pa, pb, t), r: opts.legRadius * s });
+    });
+    if (hips) cols.push({ c: hips.getAbsolutePosition().clone(), r: opts.hipRadius * s });
+    const sw = (thighs.length === 2 && thighs[0].rest && opts.legFollow > 0) ? thighs.map(swingOf) : null;
+    segs.forEach(g => {
+      const o = g.o;
+      if (sw && g.legW) {
+        const qa = Q.Slerp(Q.Identity(), sw[0], g.legW[0] * opts.legFollow), qb = Q.Slerp(Q.Identity(), sw[1], g.legW[1] * opts.legFollow);
+        g.base = qa.multiply(qb).multiply(g.restRot);
+      } else g.base = g.restRot;
+      g.node.rotationQuaternion.copyFrom(g.base);
+      g.node.computeWorldMatrix(true);
+      const head = g.node.getAbsolutePosition().clone();
+      const wm = g.node.getWorldMatrix();
+      const restTail = V3.TransformCoordinates(g.axis.scale(g.len), wm);
+      const L = g.len * s;
+      if (!g.tail) { g.tail = restTail.clone(); g.prev = restTail.clone(); }
+      const vel = g.tail.subtract(g.prev).scale(1 - o.drag);
+      const toRest = restTail.subtract(g.tail).scale(Math.min(1, o.stiffness * dt * 4));
+      const grav = new V3(0, -o.gravity * dt * dt * s, 0);
+      let next = g.tail.add(vel).add(toRest).add(grav);
+      // keep length
+      let d = next.subtract(head); let dl = d.length(); if (dl < 1e-6) { d = restTail.subtract(head); dl = d.length(); }
+      next = head.add(d.scale(L / dl));
+      // v3 swing limit: a panel never swings more than ~57 deg from where the body wants it. Upside down (cartwheel,
+      // flips) gravity otherwise folded the skirt over itself and showed the inside of the robe.
+      if (o.maxSwing > 0) {
+        const b0 = restTail.subtract(head).normalize(), dn = next.subtract(head).normalize();
+        if (V3.Dot(b0, dn) < Math.cos(o.maxSwing)) {
+          const axc = V3.Cross(b0, dn); const snc = axc.length();
+          if (snc > 1e-6) next = head.add(b0.applyRotationQuaternion(Q.RotationAxis(axc.scale(1 / snc), o.maxSwing)).scale(L));
+          else next = restTail.clone();
+        }
+      }
+      // colliders (push tail out of leg / hip spheres)
+      for (const col of (g.cols ? g.cols.map(c => ({ c: c.n.getAbsolutePosition(), r: c.r * s - opts.hitRadius * s })) : cols)) {
+        const v = next.subtract(col.c); const r = col.r + opts.hitRadius * s; const vl = v.length();
+        if (vl < r && vl > 1e-6) { next = col.c.add(v.scale(r / vl)); d = next.subtract(head); next = head.add(d.scale(L / d.length())); }
+      }
+      g.prev = g.tail; g.tail = next;
+      // rotate the bone so its child points at the simulated tail. Work in the PARENT's local space
+      // (the glTF root is mirrored, so world-space quaternion algebra does not apply).
+      const parent = g.node.parent; parent.computeWorldMatrix(true);
+      parent.getWorldMatrix().invertToRef(tmpM);
+      const hL = V3.TransformCoordinates(head, tmpM), tL = V3.TransformCoordinates(next, tmpM);
+      const dNew = tL.subtract(hL).normalize();
+      const dRest = g.axis.applyRotationQuaternion(g.base).normalize();
+      const ax = V3.Cross(dRest, dNew); const sn = ax.length(); const cs = V3.Dot(dRest, dNew);
+      if (sn > 1e-6) {
+        const dq = Q.RotationAxis(ax.scale(1 / sn), Math.atan2(sn, cs));
+        let cand = order === 2 ? g.base.multiply(dq) : dq.multiply(g.base);
+        if (order === 0 && sn > 0.02) {
+          const e1 = 1 - V3.Dot(g.axis.applyRotationQuaternion(dq.multiply(g.base)).normalize(), dNew);
+          const e2 = 1 - V3.Dot(g.axis.applyRotationQuaternion(g.base.multiply(dq)).normalize(), dNew);
+          order = e1 <= e2 ? 1 : 2; window._forgeClothOrder = { order, e1, e2 };
+          cand = order === 2 ? g.base.multiply(dq) : dq.multiply(g.base);
+        }
+        g.node.rotationQuaternion.copyFrom(cand);
+      }
+      g.node.computeWorldMatrix(true);
+    });
+  }
+  const obs = scene.onAfterAnimationsObservable.add(step);
+  return {
+    segs: segs.length,
+    set enabled(v) { enabled = !!v; if (!enabled) segs.forEach(g => { g.node.rotationQuaternion.copyFrom(g.restRot); g.tail = null; }); },
+    get enabled() { return enabled; },
+    opts,
+    debugError() { let e = 0, n = 0; segs.forEach(g => { if (!g.tail) return; g.child.computeWorldMatrix(true); const h = g.node.getAbsolutePosition(); const d1 = g.child.getAbsolutePosition().subtract(h).normalize(); const d2 = g.tail.subtract(h).normalize(); e += 1 - BABYLON.Vector3.Dot(d1, d2); n++; }); return n ? e / n : 0; },
+    dispose() { scene.onAfterAnimationsObservable.remove(obs); }
+  };
+}
+// Strip clip tracks that target cloth bones (the solver owns them).
+function stripForgeClothTracks(groups) {
+  groups.forEach(g => { const ta = g.targetedAnimations; for (let j = ta.length - 1; j >= 0; j--) { if (ta[j].target && /^cloth_/.test(ta[j].target.name || '')) ta.splice(j, 1); } });
+}
+
+</script>
+</body>
+</html>
