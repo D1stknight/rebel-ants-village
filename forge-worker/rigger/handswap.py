@@ -306,6 +306,7 @@ def bags(act):
 # The pack's Mixamo sources carry the thumb and index only, so every finger follows the index: open -> relaxed -> fist,
 # matched on the index's total bend. In 'pointing' the hand that points gets the point pose while its index is out.
 CURL = [(14, 'open'), (50, 'relaxed'), (233, 'fist')]      # our poses' total index bend
+OPEN_RAISED = {'wave_short'}   # v2.16: the raised (waving) hand is open, whatever the actor's fingers did
 NPC_HANDS = {}
 if os.environ.get('FORGE_NPC'):
     import json
@@ -314,6 +315,7 @@ if os.environ.get('FORGE_NPC'):
         src_ = os.path.join(os.environ.get('FORGE_PACK', '.'), c['file'])
         if c.get('airborne') or not src_.endswith('.npz') or not os.path.exists(src_): continue
         z = np.load(src_); nm = [str(n) for n in z['names']]; Q = z['Q']; hands = {}
+        up_ = int(np.argmax(np.abs(z['rest'][nm.index('Head')] - z['rest'][nm.index('Hips')]))) if 'Head' in nm and 'Hips' in nm else 1
         for side in ('Left', 'Right'):
             ch = [side + 'Hand', side + 'HandIndex1', side + 'HandIndex2', side + 'HandIndex3']
             if not all(n in nm for n in ch): break
@@ -322,6 +324,8 @@ if os.environ.get('FORGE_NPC'):
             curl = np.convolve(np.pad(curl, 2, mode='edge'), np.ones(5) / 5, mode='valid')
             point = np.clip((22 - curl) / 10, 0, 1) if c['name'] == 'pointing' else np.zeros(len(curl))
             if np.ptp(curl) < 25 and not point.any(): curl = np.full(2, np.median(curl)); point = np.zeros(2)   # a steady hand: one pose (2 keys)
+            if c['name'] in OPEN_RAISED and side + 'Arm' in nm and np.mean(z['P'][:, nm.index(side + 'Hand'), up_]) > np.mean(z['P'][:, nm.index(side + 'Arm'), up_]) + 0.05:
+                curl = np.full(2, float(CURL[0][0])); point = np.zeros(2)
             hands[side] = (curl, point)
         else:
             NPC_HANDS[c['name']] = hands
