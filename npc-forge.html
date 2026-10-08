@@ -71,7 +71,7 @@ small{color:var(--dim)}
 <body>
 <div id="gate">Checking admin access...</div>
 <div id="app">
-  <header><h1>NPC FORGE</h1><span class="sub">Your renders → Meshy → Forge Rigger (NPC clips) → test → approve</span><span id="workerPill"></span><a href="admin.html">← Admin Hub</a></header>
+  <header><h1>NPC FORGE</h1><span class="sub">Your renders → Rebel Forge sculpt → Forge Rigger (NPC clips) → test → approve</span><span id="workerPill"></span><a href="admin.html">← Admin Hub</a></header>
   <aside id="side">
     <h2>NPCs</h2>
     <div class="row" style="margin-bottom:8px"><button class="gold" onclick="addNPC()">+ New NPC</button><button class="teal" id="forgeAllBtn" onclick="forgeAll()">Forge all ready</button></div>
@@ -116,7 +116,7 @@ const SKEY = 'npcForge:v1';
 const SLOTS = ['front', 'back', 'left', 'right'];
 const VILLAGERS = ['ashigaru', 'ronin', 'samurai', 'shogun', 'bushi', 'warrior', 'kenshi', 'buke', 'sohei', 'wokou', 'yamabushi'];
 const NPC_CLIPS = ['idle', 'walk', 'run', 'talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping', 'rallying', 'yelling', 'look_around', 'idle_looking'];
-const PHASES = { draft: 'Draft', uploading: 'Uploading renders', building: 'Starting build', sculpting: 'Meshy is sculpting', storing: 'Saving the sculpt', rigging: 'Forge Rigger', done: 'Forged', failed: 'Stopped' };
+const PHASES = { draft: 'Draft', uploading: 'Uploading renders', building: 'Starting build', sculpting: 'Rebel Forge is sculpting', storing: 'Saving the sculpt', rigging: 'Forge Rigger', done: 'Forged', failed: 'Stopped' };
 let st = { npcs: [] }; let selId = null; let approved = {};
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
 function save() { try { localStorage.setItem(SKEY, JSON.stringify(st)); } catch (e) {} }
@@ -195,7 +195,7 @@ async function forgeOne(id, opts = {}) {
         let d; try { d = await api('/api/forge-3d-engine-meshy-status', { buildId: n.buildId }); errs = 0; } catch (e) { if (++errs > 10) throw e; await sleep(8000); continue; }
         const r = d.meshyResponse || {}; n.meshy.p = Math.max(n.meshy.p || 0, Number(r.progress || 0)); if (r.thumbnail_url) n.meshy.thumb = r.thumbnail_url;
         if (d.glbUrl) { n.meshy.glb = d.glbUrl; n.meshy.p = 100; break; }
-        if (['FAILED', 'CANCELED', 'EXPIRED'].includes(String(d.meshyStatus || '').toUpperCase())) throw new Error('Meshy: ' + (r.task_error?.message || 'the sculpt failed'));
+        if (['FAILED', 'CANCELED', 'EXPIRED'].includes(String(d.meshyStatus || '').toUpperCase())) throw new Error('Rebel Forge: ' + (r.task_error?.message || 'the sculpt failed'));
         save(); renderList(); await sleep(8000);
       }
       save();
@@ -224,7 +224,7 @@ async function forgeOne(id, opts = {}) {
 async function forgeAll() {
   const list = st.npcs.filter((n) => ready(n) && n.phase !== 'done' && !running.has(n.id));
   if (!list.length) { toast('No NPC ready to forge (name, key and four renders)'); return; }
-  if (!confirm(`Forge ${list.length} NPC${list.length > 1 ? 's' : ''}? Each one is one Meshy generation plus a rig job.`)) return;
+  if (!confirm(`Forge ${list.length} NPC${list.length > 1 ? 's' : ''}? Each one is one Rebel Forge sculpt plus a rig job.`)) return;
   if (workerBuilding && !confirm('The rig worker is still rebuilding: these NPCs would be rigged by the old worker. Go ahead anyway?')) return;
   // Meshy runs in parallel; at most 3 rig sandboxes at a time
   let i = 0; const next = async () => { while (i < list.length) { const n = list[i++]; await forgeOne(n.id, { batch: true }); } };
@@ -253,7 +253,7 @@ function renderList() {
       ${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}
       <div class="row" style="margin-top:8px">
         ${n.phase === 'done' ? `<button class="teal" onclick="select('${n.id}')">Test</button><button onclick="forgeOne('${n.id}',{rerig:true})" title="Run the Forge Rigger again on the same sculpt">Re-rig</button>` : `<button class="gold" onclick="forgeOne('${n.id}')" ${busy || !ready(n) ? 'disabled' : ''}>${n.phase === 'failed' ? 'Retry' : 'Forge'}</button>`}
-        ${n.buildId && !busy ? `<button onclick="if(confirm('Sculpt this NPC again from the same renders? (a new Meshy generation)'))forgeOne('${n.id}',{resculpt:true})">Re-sculpt</button>` : ''}
+        ${n.buildId && !busy ? `<button onclick="if(confirm('Sculpt this NPC again from the same renders? (a new Rebel Forge sculpt)'))forgeOne('${n.id}',{resculpt:true})">Re-sculpt</button>` : ''}
         ${!n.buildId && Object.keys(n.refs).length ? '' : ''}
         <button class="red" style="margin-left:auto" onclick="removeNPC('${n.id}')" ${busy ? 'disabled' : ''}>Remove</button></div></div>`;
   }).join('');
