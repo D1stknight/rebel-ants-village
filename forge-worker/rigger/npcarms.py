@@ -6,8 +6,9 @@
 #  - POINT (pointing): the actor points with the elbow bent ~52 deg and the wrist ~25 deg, so on short arms the finger
 #    did not line up with the arm. While the index is out, the arm straightens along the shoulder -> fingertip line and
 #    the hand lines up with the forearm.
-#  - FACE (wave_short): the hand waved in front of the big head; its face-height path moves out beside the head, the
-#    whole path shifted together so the wave keeps its swing.
+#  - WAVE (wave_short): the waving arm stuck straight forward from the chest (the shoulder pinched under the armour and
+#    the hand waved in front of the big head). The raised arm swings round the shoulder (about the vertical) so the
+#    upper arm goes out to the side under the shoulder pad: the hand waves beside the head, the wave itself unchanged.
 #  - CLAP (clapping): the gloves stopped ~2 cm apart at every clap (the actor's hands, our wider body); at each clap
 #    both hands move half the gap toward each other (eased over the frames round it) so the gloves meet.
 # usage: python3.13 npcarms.py -- in.blend out.blend
@@ -15,10 +16,10 @@ import bpy, sys, os, math, numpy as np
 from mathutils import Matrix, Vector, Quaternion
 a = sys.argv[sys.argv.index('--') + 1:]; src, dst = a[0], a[1]
 FLICK = {'talking', 'talking2'}
-FACE = {'wave_short'}      # waving (both hands over the head) and rallying only pass the face on the way up
+WAVE = {'wave_short'}
 FLICK_MAX = math.radians(float(os.environ.get('FORGE_NPC_FLICK', '30')))
 POINT_BEND = math.radians(float(os.environ.get('FORGE_NPC_POINT_BEND', '14')))   # elbow bend kept while pointing
-FACE_GAP = float(os.environ.get('FORGE_NPC_FACE_GAP', '0.06'))                    # palm centre clearance beside the head (m)
+WAVE_OUT = math.radians(float(os.environ.get('FORGE_NPC_WAVE_OUT', '70')))       # waving upper arm: degrees out from straight ahead
 CLAP = {'clapping'}
 CLAP_GAP = float(os.environ.get('FORGE_NPC_CLAP_GAP', '0.003'))                   # glove-to-glove gap left at a clap (m)
 GESTURES = {'talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping',
@@ -32,13 +33,7 @@ Ai = arm.matrix_world.inverted().to_3x3()
 UP = (Ai @ Vector((0, 0, 1))).normalized(); FWD = (Ai @ Vector((0, -1, 0))).normalized(); LEFT = UP.cross(FWD).normalized()   # characters face -Y
 for pb in PB: pb.rotation_mode = 'QUATERNION'
 
-# the head's size (rest pose, armature space): vertices whose strongest bone is the head (antennae have their own bones)
 gid = {g.index: g.name for g in me.vertex_groups}; Mm = arm.matrix_world.inverted() @ me.matrix_world
-hv = [Mm @ v.co for v in me.data.vertices if v.groups and gid.get(max(v.groups, key=lambda g: g.weight).group, '') in (P + 'Head', P + 'HeadTop_End')]
-HV = np.array([tuple(v) for v in hv]); c_ = (np.percentile(HV, 3, axis=0) + np.percentile(HV, 97, axis=0)) / 2
-HEAD_C = Vector(tuple(c_)); HEAD_HALF = Vector(tuple(np.percentile(np.abs(HV - c_), 95, axis=0)))   # robust to a bandana tail
-HEAD_REST = B[P + 'Head'].matrix_local.copy()
-print('npcarms head centre', tuple(round(x, 3) for x in HEAD_C), 'half size', tuple(round(x, 3) for x in HEAD_HALF))
 # glove vertices per hand (handswap's Glove material; the cuffs never touch)
 gm = {i for i, m_ in enumerate(me.data.materials) if m_ and m_.name == 'Glove'}; GLOVE = {'Left': set(), 'Right': set()}
 for poly in me.data.polygons:
@@ -111,9 +106,9 @@ for act in bpy.data.actions:
     pw = point_weight(act, f0, f1) if name == 'pointing' else None
     if pw is not None: pw = np.convolve(np.pad(pw, 4, mode='edge'), np.ones(9) / 9, mode='valid')
     out = {s: {b: [] for b in ('Arm', 'ForeArm', 'Hand')} for s in ('Left', 'Right')}
-    stats = {'flick': 0.0, 'point': 0.0, 'face': 0.0}; changed = False
+    stats = {'flick': 0.0, 'point': 0.0}; changed = False
     flick_d = {s: np.zeros(nf) for s in ('Left', 'Right')}
-    face_w = {s: np.zeros(nf) for s in ('Left', 'Right')}; face_need = {s: np.zeros(nf) for s in ('Left', 'Right')}
+    wave_w = {s: np.zeros(nf) for s in ('Left', 'Right')}; wave_dir = {s: Vector() for s in ('Left', 'Right')}
     clap_gap, clap_u = np.full(nf, 9.0), [Vector() for _ in range(nf)]
     frames = []
     for k, f in enumerate(range(f0, f1 + 1)):
@@ -122,7 +117,7 @@ for act in bpy.data.actions:
         for s in ('Left', 'Right'):
             st[s] = {b: PB[P + s + b].matrix.copy() for b in ('Shoulder', 'Arm', 'ForeArm', 'Hand')}
             st[s]['tip'] = PB[P + s + 'HandIndex3'].tail.copy() if (P + s + 'HandIndex3') in PB else PB[P + s + 'Hand'].tail.copy()
-        st['head'] = PB[P + 'Head'].matrix.copy(); frames.append(st)
+        frames.append(st)
         if name in CLAP and len(GLOVE['Left']) and len(GLOVE['Right']):
             from scipy.spatial import cKDTree
             dg = bpy.context.evaluated_depsgraph_get(); ev = me.evaluated_get(dg); m_ = ev.to_mesh()
@@ -130,14 +125,10 @@ for act in bpy.data.actions:
             V = V.reshape(-1, 3) @ np.array(Mm)[:3, :3].T + np.array(Mm)[:3, 3]
             dd, ii = cKDTree(V[GLOVE['Right']]).query(V[GLOVE['Left']]); j = int(np.argmin(dd))
             clap_gap[k] = float(dd[j]); clap_u[k] = (Vector(V[GLOVE['Right'][ii[j]]]) - Vector(V[GLOVE['Left'][j]])).normalized()
-        hc = st['head'] @ HEAD_REST.inverted() @ HEAD_C
         for s in ('Left', 'Right'):
-            Mh = st[s]['Hand']; lb = (Mh.translation - st[s]['ForeArm'].translation).length
-            pal = Mh.translation + (Mh.to_3x3() @ Vector((0, 1, 0))).normalized() * (0.45 * lb); rel = pal - hc
-            lat = rel.dot(LEFT if s == 'Left' else -LEFT); fwd_ = rel.dot(FWD); upn = rel.dot(UP)
-            if name in FACE and -HEAD_HALF.y * 0.5 < fwd_ < HEAD_HALF.y + 0.30:
-                face_w[s][k] = smooth01(-abs(upn), -HEAD_HALF.z * 1.05, -HEAD_HALF.z * 0.6)
-                face_need[s][k] = max(0.0, HEAD_HALF.x + FACE_GAP - lat)
+            if name in WAVE:   # a raised hand (above the shoulder): its upper arm's heading counts toward the swing
+                S_ = st[s]['Arm'].translation; w_ = smooth01((st[s]['Hand'].translation - S_).dot(UP), -0.05, 0.08)
+                wave_w[s][k] = w_; wave_dir[s] += (st[s]['ForeArm'].translation - S_).normalized() * w_
         if name in FLICK:
             for s in ('Left', 'Right'):
                 S, E, W = st[s]['Arm'].translation, st[s]['ForeArm'].translation, st[s]['Hand'].translation
@@ -161,12 +152,15 @@ for act in bpy.data.actions:
                 dk = abs(k - m); dk = min(dk, n_ - dk) if loop else dk
                 if dk > 4: continue
                 w = math.exp(-(dk / 1.1) ** 2); clap_d['Left'][k] += half * w; clap_d['Right'][k] -= half * w
-    face_shift = {}
+    wave_yaw = {}
     for s in ('Left', 'Right'):     # ease the turn in and out (no pops)
         flick_d[s] = np.convolve(np.pad(flick_d[s], 2, mode='edge'), np.ones(5) / 5, mode='valid')
-        up_ = face_w[s] > 0.5
-        face_shift[s] = float(face_need[s][up_].max()) if up_.any() else 0.0
-        face_w[s] = np.convolve(np.pad(face_w[s], 2, mode='edge'), np.ones(5) / 5, mode='valid')
+        # one yaw for the clip: the raised upper arm's mean heading -> WAVE_OUT from straight ahead, toward its own side
+        wave_yaw[s] = 0.0; h = wave_dir[s] - UP * wave_dir[s].dot(UP)
+        if h.length > 1e-3:
+            out_ = LEFT if s == 'Left' else -LEFT; cur = math.atan2(h.dot(out_), h.dot(FWD))
+            wave_yaw[s] = (WAVE_OUT - cur) * (1.0 if s == 'Left' else -1.0)   # +yaw about UP turns toward LEFT
+        wave_w[s] = np.convolve(np.pad(wave_w[s], 2, mode='edge'), np.ones(5) / 5, mode='valid')
     for k, st in enumerate(frames):
         for s in ('Left', 'Right'):
             Ms = st[s]['Shoulder']; Ma, Mf, Mh = st[s]['Arm'], st[s]['ForeArm'], st[s]['Hand']
@@ -196,13 +190,13 @@ for act in bpy.data.actions:
                 Ma2 = aim(Ma, E - S, E2 - S); Mf2 = aim(Mf, W - E, W2 - E2); Mf2.translation = E2
                 Mh2 = Mh.copy(); Mh2.translation = W2
                 stats['clap'] = max(stats.get('clap', 0.0), clap_d[s][k].length * 100); Ma, Mf, Mh, E, W = Ma2, Mf2, Mh2, E2, W2; changed = True
-            # FACE: the hand's face-height path moves out beside the big head (one shift per clip, eased by height)
-            mv = face_shift[s] * face_w[s][k]
-            if mv > 1e-4:
-                W2 = W + (LEFT if s == 'Left' else -LEFT) * mv; E2, W2 = two_bone(S, E, W, W2, la, lb)
-                Ma2 = aim(Ma, E - S, E2 - S); Mf2 = aim(Mf, W - E, W2 - E2); Mf2.translation = E2
-                Mh2 = (Mf2.to_3x3() @ Mf.to_3x3().inverted() @ Mh.to_3x3()).to_4x4(); Mh2.translation = W2
-                stats['face'] = max(stats['face'], mv * 100); Ma, Mf, Mh = Ma2, Mf2, Mh2; changed = True
+            # WAVE: swing the raised arm round the shoulder (vertical axis) out to the side; forearm and hand ride along
+            ang = wave_yaw.get(s, 0.0) * wave_w[s][k]
+            if abs(ang) > 1e-4:
+                R = Quaternion(UP, ang).to_matrix()
+                Ma, Mf, Mh = about(Ma, S, R), about(Mf, S, R), about(Mh, S, R); E, W = Mf.translation.copy(), Mh.translation.copy()
+                Mh = about(Mh, W, Quaternion((W - E).normalized(), -ang).to_matrix())   # palm turned back to face forward
+                stats['wave'] = max(stats.get('wave', 0.0), math.degrees(abs(ang))); changed = True
             out[s]['Arm'].append(basis(P + s + 'Arm', Ma, Ms).to_quaternion())
             out[s]['ForeArm'].append(basis(P + s + 'ForeArm', Mf, Ma).to_quaternion())
             out[s]['Hand'].append(basis(P + s + 'Hand', Mh, Mf).to_quaternion())
@@ -217,5 +211,5 @@ for act in bpy.data.actions:
     report[name] = {k: round(v, 1) for k, v in stats.items() if v}
 arm.animation_data.action = None
 for t_ in tracks: t_.mute = False
-print('npcarms (max: flick turned back deg, point elbow straightened deg, face / clap hand moved cm)', report)
+print('npcarms (max: flick turned back deg, point elbow straightened deg, wave arm swung out deg, clap hand moved cm)', report)
 bpy.ops.wm.save_as_mainfile(filepath=dst)
