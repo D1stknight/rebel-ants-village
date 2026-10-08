@@ -3,7 +3,8 @@
 import bpy, sys, os, json, struct, re, math, numpy as np
 a = sys.argv[sys.argv.index('--') + 1:]; blend, glb, out, logf = a[0], a[1], a[2], a[3]
 NPC = bool(os.environ.get('FORGE_NPC'))   # v2.13 NPC villagers: their own clips and checks (tears, strays, lean, floor, head snaps)
-CLIPS = ['idle', 'walk', 'run', 'talking', 'waving', 'wave_short', 'pick_up', 'bow', 'rallying', 'pointing', 'clapping', 'look_around'] if NPC else ['idle', 'walk', 'run', 'punch_combo', 'roundhouse_kick', 'backflip']
+CLIPS = ['idle', 'walk', 'run', 'talking', 'waving', 'wave_short', 'pick_up', 'bow', 'rallying', 'pointing', 'clapping', 'look_around', 'jump'] if NPC else ['idle', 'walk', 'run', 'punch_combo', 'roundhouse_kick', 'backflip']
+ENDONLY = {'jump'} if NPC else set()   # the Rebels' own jump (deep landing crouch): only checked for landing on the floor
 bpy.ops.wm.open_mainfile(filepath=blend)
 arm = bpy.data.objects['Armature']; me = [o for o in bpy.data.objects if o.type == 'MESH'][0]
 for t in arm.animation_data.nla_tracks: t.mute = True
@@ -55,6 +56,10 @@ for c in CLIPS:
     w = np.array(worst)
     stretch[c] = {'p999': round(float(w[:, 0].max()), 2), 'edges2x': int(w[:, 1].max())}
     if NPC:
+        # v2.14 a clip must end standing on the floor (the master jump alone ended 47 cm up in the air)
+        sc.frame_set(f1); dg = bpy.context.evaluated_depsgraph_get(); ev = me.evaluated_get(dg); m = ev.to_mesh()
+        V = np.zeros(len(m.vertices) * 3); m.vertices.foreach_get('co', V); ev.to_mesh_clear()
+        nq['end'] = float((V.reshape(-1, 3) @ Mw[:3, :3].T + Mw[:3, 3])[:, 2].min()) - floor0
         # head snaps: largest one-frame turn of the head / neck (keys are per frame)
         cb = act.layers[0].strips[0].channelbag(act.slots[0]); pop = 0.0
         for b in ('mixamorig_Head', 'mixamorig_Neck'):
@@ -62,7 +67,7 @@ for c in CLIPS:
             if not all(fc): continue
             q = np.array([[f_.evaluate(fr) for f_ in fc] for fr in range(f0, f1 + 1)]); q /= np.linalg.norm(q, axis=1, keepdims=True)
             d = np.abs((q[1:] * q[:-1]).sum(1)); pop = max(pop, float(np.degrees(2 * np.arccos(np.clip(d, 0, 1))).max()) if len(d) else 0.0)
-        npc[c] = {'tear': round(nq['tear'], 3), 'lean': [round(nq['lean'][0], 1), round(nq['lean'][1], 1)], 'floorCm': round(nq['floor'] * 100, 1), 'headPop': round(pop, 1)}
+        npc[c] = {'tear': round(nq['tear'], 3), 'lean': [round(nq['lean'][0], 1), round(nq['lean'][1], 1)], 'floorCm': round(nq['floor'] * 100, 1), 'headPop': round(pop, 1), 'endCm': round(nq['end'] * 100, 1)}
 # GLB sanity
 b = open(glb, 'rb').read(); jl = struct.unpack('<I', b[12:16])[0]; g = json.loads(b[20:20 + jl])
 names = [x.get('name') for x in g.get('animations', [])]
@@ -78,6 +83,7 @@ reasons = []
 if glbinfo['bones'] < 65: reasons.append('missing bones')
 if glbinfo['animations'] < (17 if NPC else 20): reasons.append('missing clips')
 for c, s in stretch.items():
+    if c in ENDONLY: continue
     if s['p999'] > 8: reasons.append(f'{c}: heavy stretch (p99.9 {s["p999"]}x)')
     if s['edges2x'] > 12000: reasons.append(f'{c}: {s["edges2x"]} edges stretched >2x')
 if (rig['bridgeFaces'] or 0) > 3000: reasons.append('many bridge faces (hands/arms touching body)')
@@ -98,6 +104,8 @@ if NPC:
     for c in CLIPS:
         q = npc.get(c)
         if not q: continue
+        if q['endCm'] > 5: reasons.append(f"{c}: ends {q['endCm']} cm off the floor")
+        if c in ENDONLY: continue
         if q['tear'] > 0.30: fails.append(f"{c}: a piece tears {q['tear']:.2f} of the height long")
         elif q['tear'] > 0.15: reasons.append(f"{c}: stretched faces {q['tear']:.2f} of the height long")
         lim = {'idle': 6, 'talking': 6, 'walk': 9}.get(c)                    # the master walk leans ~6 deg on every Rebel

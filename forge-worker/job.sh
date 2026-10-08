@@ -14,10 +14,12 @@ R="$FW/rigger"; O="$FORGE_OUT"
 # anim/clips_npc.json) instead of the fight and weapon moves. Gestures keep their own head motion (headfix levels the
 # head for fight moves: it cut nods to a tenth and flipped the head in pick_up's deep bend); a long-armed villager
 # reaching down keeps its fingertips on the floor (handfloor); 1024 base textures (a village shows several NPCs).
+# v2.14: NPCs get the Rebels' full jump (take-off, flight, landing); the master jump alone ends in the air. Moves marked
+# "headfix" get the head levelling like a Rebel's.
 NPC="${FORGE_NPC:-}"; MOVES="$FW/anim/clips.json"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"
-  export FORGE_HEAD_SKIP="${FORGE_HEAD_SKIP-$(grep -o '"name": *"[^"]*"' "$MOVES" | sed 's/.*"\([^"]*\)"$/\1/' | paste -sd, -)}"
+  export FORGE_HEAD_SKIP="${FORGE_HEAD_SKIP-$("$PY" -c 'import json, sys; print(",".join(c["name"] for c in json.load(open(sys.argv[1])) if not c.get("headfix")))' "$MOVES")}"
 fi
 mkdir -p "$O"; : > "$JOB/log"
 T0=$(date +%s)

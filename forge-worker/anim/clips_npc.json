@@ -54,5 +54,11 @@
  {
   "name": "idle_looking",
   "file": "mixamo/idle_looking.npz"
+ },
+ {
+  "name": "jump",
+  "file": "mixamo/jump.npz",
+  "airborne": true,
+  "headfix": true
  }
 ]
