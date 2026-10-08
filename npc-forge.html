@@ -215,9 +215,11 @@ function gi(n) { return { ...ids(n), name: n.name, species: colOf(n).species, re
 async function forgeOne(id, opts = {}) {
   const n = npc(id); if (!n || running.has(id)) return; if (!ready(n)) { toast('Add a name, a key and all four renders first'); return; }
   if (workerBuilding && !opts.batch && !confirm('The rig worker is still rebuilding: this NPC would be rigged by the old worker. Go ahead anyway?')) return;
+  // a sculpt the Rebel Forge failed can't be polled back to life: Retry starts a fresh sculpt from the same renders
+  const sculptFailed = n.phase === 'failed' && n.buildId && !n.meshy?.glb && /^Rebel Forge: /.test(n.err || '');
   running.add(id); n.err = null;
   try {
-    if (opts.resculpt) { n.buildId = null; n.meshy = null; n.stored = null; n.rig = null; }
+    if (opts.resculpt || sculptFailed) { n.buildId = null; n.meshy = null; n.stored = null; n.rig = null; }
     if (opts.rerig) { n.rig = null; }
     // 1. renders -> Blob
     n.phase = 'uploading'; save(); renderList();
@@ -243,7 +245,10 @@ async function forgeOne(id, opts = {}) {
         let d; try { d = await api('/api/forge-3d-engine-meshy-status', { buildId: n.buildId }); errs = 0; } catch (e) { if (++errs > 10) throw e; await sleep(8000); continue; }
         const r = d.meshyResponse || {}; n.meshy.p = Math.max(n.meshy.p || 0, Number(r.progress || 0)); if (r.thumbnail_url) n.meshy.thumb = r.thumbnail_url;
         if (d.glbUrl) { n.meshy.glb = d.glbUrl; n.meshy.p = 100; break; }
-        if (['FAILED', 'CANCELED', 'EXPIRED'].includes(String(d.meshyStatus || '').toUpperCase())) throw new Error('Rebel Forge: ' + (r.task_error?.message || 'the sculpt failed'));
+        if (['FAILED', 'CANCELED', 'EXPIRED'].includes(String(d.meshyStatus || '').toUpperCase())) {
+          const te = r.task_error || {};
+          throw new Error(`Rebel Forge: ${te.message || 'the sculpt failed'}${te.type ? ` (${te.type}${te.code ? ', ' + te.code : ''})` : ''}\nRetry starts a fresh sculpt from the same renders.`);
+        }
         save(); renderList(); await sleep(8000);
       }
       save();
