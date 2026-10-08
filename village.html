@@ -1817,9 +1817,13 @@ function npcLibraryKeyOf(npc) {
 }
 function applyForgedNPC(npc) {
   const key = npcLibraryKeyOf(npc);
+  // an NPC's own id is a key too (friend villages have no villager keys: chumpz-bartender -> chumpz_bartender), and it
+  // wins over the shared villager key; a forged model also replaces a kit character (the Chumpz apes, the C&C gang)
+  const own = npc?.npcId ? String(npc.npcId).toLowerCase().replace(/[^a-z0-9]+/g, '_') : null;
+  const k = own && NPC_FORGED[own] ? own : key && NPC_FORGED[key] ? key : null;
+  const f = k && NPC_FORGED[k];
+  if (f) return { ...npc, libraryKey: k, modelUrl: f.modelUrl, modelScale: f.modelScale || 1.9, animationMap: { ...NPC_FORGED_CLIPS }, animationSpeed: { idle:1, walk:.82, talk:1, ...(npc.animationSpeed || {}) } };
   if (String(npc?.fallbackType || '').startsWith('kit:')) return { ...npc, libraryKey: npc.libraryKey || null };
-  const f = key && NPC_FORGED[key];
-  if (f) return { ...npc, libraryKey: key, modelUrl: f.modelUrl, modelScale: f.modelScale || 1.9, animationMap: { ...NPC_FORGED_CLIPS }, animationSpeed: { idle:1, walk:.82, talk:1, ...(npc.animationSpeed || {}) } };
   // the old villager files are gone: placeholder until a forged one is approved
   if (/\/assets\/npcs\/[a-z]+-villager\.glb$/.test(String(npc?.modelUrl || ''))) return { ...npc, libraryKey: key, modelUrl: null };
   return { ...npc, libraryKey: key || null };
@@ -14620,6 +14624,8 @@ async function tryLoadNPCModel(root, npc) {
         try { mesh.dispose(false, true); } catch(e) {}
       });
       root.metadata.placeholderPieces = [];
+      try { root.metadata.kitModel?.dispose(false, true); } catch(e) {}   // a kit character's pivots (its animator drops it)
+      root.metadata.kitModel = null;
     }
     root.metadata.animationGroups = result.animationGroups || [];
     // like the player: smooth hand-offs between clips, and live spring bones for robes / armour skirts (Forge rigs keep

@@ -98,7 +98,7 @@ small{color:var(--dim)}
 </div>
 <dialog id="approveDlg">
   <h2 style="margin-top:0">Approve NPC</h2>
-  <div class="state">Every NPC in the village with this library key wears this model. Pick an existing villager key to replace its placeholder, or a new key for a new NPC.</div>
+  <div class="state">Every NPC in the village with this key wears this model: a villager key (all villagers of that faction) or one NPC's own key (Chumpz, Saints). Pick one to replace its placeholder or kit look, or a new key for a new NPC.</div>
   <label>Library key</label><select id="apKey"></select>
   <label id="apNewKeyLab">New key (a-z, 0-9, _)</label><input id="apNewKey" placeholder="e.g. saints_greeter">
   <label>Display name</label><input id="apName">
@@ -116,6 +116,15 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const SKEY = 'npcForge:v1';
 const SLOTS = ['front', 'back', 'left', 'right'];
 const VILLAGERS = ['ashigaru', 'ronin', 'samurai', 'shogun', 'bushi', 'warrior', 'kenshi', 'buke', 'sohei', 'wokou', 'yamabushi'];
+// Collections the NPC Forge makes NPCs for (all humanoid, same Forge Rigger). Rebel villagers share a key per faction;
+// friend-village NPCs are approved one by one under their own id (the village matches chumpz-bartender to
+// chumpz_bartender). New NPCs for a collection get its prefix (chumpz_..., saints_...).
+const COLLECTIONS = {
+  rebel: { label: 'Rebel Ants', species: 'ant', village: '', npcs: Object.fromEntries(VILLAGERS.map((v) => [`${v}_villager`, `${v[0].toUpperCase()}${v.slice(1)} Villager`])) },
+  chumpz: { label: 'Chumpz', species: 'ape', village: 'chumpz', prefix: 'chumpz_', npcs: { chumpz_bartender: 'Big Chain', chumpz_fisher: 'Pengu', chumpz_dealer: 'Peely', chumpz_villager: 'Banana Band' } },
+  saints: { label: 'Saints', species: 'human', village: 'saints-la', prefix: 'saints_', npcs: { saints_greeter: 'Saints Greeter', saints_mechanic: 'Shop Mechanic', saints_hooper: 'Court Regular' } }
+};
+const colOf = (n) => COLLECTIONS[n?.collection] || COLLECTIONS.rebel;
 const NPC_CLIPS = ['idle', 'walk', 'run', 'talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping', 'rallying', 'yelling', 'look_around', 'idle_looking'];
 const PHASES = { draft: 'Draft', uploading: 'Uploading renders', building: 'Starting build', sculpting: 'Rebel Forge is sculpting', storing: 'Saving the sculpt', rigging: 'Forge Rigger', done: 'Forged', failed: 'Stopped' };
 let st = { npcs: [] }; let selId = null; let approved = {};
@@ -164,8 +173,13 @@ function addNPC() {
   st.npcs.unshift(n); save(); renderList(); select(n.id);
 }
 function npc(id) { return st.npcs.find((n) => n.id === id); }
-function setField(id, f, v) { const n = npc(id); if (!n) return; n[f] = v; if (f === 'name' && !n.keyTouched) n.key = guessKey(v); if (f === 'key') { n.key = slug(v); n.keyTouched = true; } save(); setTimeout(renderList, 0); }   // not inside the input's own change / blur
-function guessKey(name) { const s = slug(name); const f = VILLAGERS.find((v) => s.startsWith(v)); return f && /villager|^[a-z]+$/.test(s) ? `${f}_villager` : s; }
+function setField(id, f, v) { const n = npc(id); if (!n) return; n[f] = v; if ((f === 'name' || f === 'collection') && !n.keyTouched) n.key = guessKey(n.name, n.collection); if (f === 'key') { n.key = slug(v); n.keyTouched = true; } save(); setTimeout(renderList, 0); }   // not inside the input's own change / blur
+function guessKey(name, col) {
+  const s = slug(name); const c = COLLECTIONS[col] || COLLECTIONS.rebel; if (!s) return '';
+  if (!c.prefix) { const f = VILLAGERS.find((v) => s.startsWith(v)); return f && /villager|^[a-z]+$/.test(s) ? `${f}_villager` : s; }
+  const hit = Object.keys(c.npcs).find((k) => slug(c.npcs[k]) === s);   // a known NPC of that village by its name
+  return hit || (s.startsWith(c.prefix) ? s : c.prefix + s);
+}
 function removeNPC(id) { if (!confirm('Remove this NPC from the forge list? (Approved NPCs stay in the village.)')) return; st.npcs = st.npcs.filter((n) => n.id !== id); delete synced[id]; api('/api/npc-forge-records', { action: 'remove', id }).catch(() => {}); save(); renderList(); if (selId === id) { selId = null; clearViewer(); } }
 function ready(n) { return n.name && n.key && SLOTS.every((s) => n.refs[s]); }
 function pick(id, slot) { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/webp'; inp.onchange = () => inp.files[0] && setImage(id, slot, inp.files[0]); inp.click(); }
@@ -197,7 +211,7 @@ async function shrink(dataUrl) {   // keep uploads under the 8 MB Blob limit (th
 const running = new Set();
 function ids(n) { return { tokenId: n.key, rebelId: `npc_${n.key}`, collectionKey: 'npc' }; }
 function refConcept(n) { const f = n.refs.front.url; return { id: `${n.id}_front`, conceptId: `${n.id}_front`, ...ids(n), imageUrl: f, backImageUrl: n.refs.back.url, imageStorage: 'vercel_blob', conceptType: 'production_reference', forgeMode: 'production_reference', createdAt: new Date().toISOString() }; }
-function gi(n) { return { ...ids(n), name: n.name, species: 'ant', referenceImage: true, npc: true }; }
+function gi(n) { return { ...ids(n), name: n.name, species: colOf(n).species, referenceImage: true, npc: true }; }
 async function forgeOne(id, opts = {}) {
   const n = npc(id); if (!n || running.has(id)) return; if (!ready(n)) { toast('Add a name, a key and all four renders first'); return; }
   if (workerBuilding && !opts.batch && !confirm('The rig worker is still rebuilding: this NPC would be rigged by the old worker. Go ahead anyway?')) return;
@@ -281,7 +295,7 @@ function renderList() {
     return `<div class="card ${n.id === selId ? 'sel' : ''}" onclick="if(!event.target.closest('input,select,button,.slot'))select('${n.id}')">
       <div class="row">${n.rig?.thumb ? `<img class="thumb" src="${n.rig.thumb}" alt="">` : ''}<input class="grow" placeholder="Name (e.g. Samurai Villager)" value="${esc(n.name)}" onchange="setField('${n.id}','name',this.value)" ${busy ? 'disabled' : ''}>
         ${qa ? `<span class="verdict v-${qa}">${qa}</span>` : ''}</div>
-      <div class="row" style="margin-top:6px"><input class="grow" placeholder="library key" value="${esc(n.key)}" onchange="setField('${n.id}','key',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Library key (samurai_villager replaces that villager's placeholder)"></div>
+      <div class="row" style="margin-top:6px"><select onchange="setField('${n.id}','collection',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Collection">${Object.entries(COLLECTIONS).map(([k, c]) => `<option value="${k}" ${k === (n.collection || 'rebel') ? 'selected' : ''}>${c.label}</option>`).join('')}</select><input class="grow" placeholder="library key" value="${esc(n.key)}" onchange="setField('${n.id}','key',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Library key (samurai_villager replaces that villager's placeholder; chumpz_bartender replaces Big Chain)"></div>
       ${n.buildId ? '' : `<div class="slots">${slots}</div>`}
       <div class="state">${stateLine(n)}</div><div class="bar"><i style="width:${pct(n)}%"></i></div>
       ${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}
@@ -364,11 +378,13 @@ function renderQA(n) {
 /* ---------- approve -> NPC library (the village) ---------- */
 function openApprove() {
   const n = npc(selId); if (!n?.rig?.url) return;
-  const sel = $('#apKey'); const keys = [...VILLAGERS.map((v) => `${v}_villager`), ...Object.keys(approved).filter((k) => !k.endsWith('_villager'))];
-  sel.innerHTML = keys.map((k) => `<option value="${k}">${k}${approved[k] ? ' (replace approved)' : ''}</option>`).join('') + '<option value="__new">New key…</option>';
+  const c = colOf(n); const pres = Object.values(COLLECTIONS).map((x) => x.prefix).filter(Boolean);
+  const mine = (k) => (c.prefix ? k.startsWith(c.prefix) : !pres.some((p) => k.startsWith(p)));   // approved keys of this collection
+  const sel = $('#apKey'); const keys = [...Object.keys(c.npcs), ...Object.keys(approved).filter((k) => !(k in c.npcs) && mine(k))];
+  sel.innerHTML = keys.map((k) => `<option value="${k}">${k}${c.npcs[k] && c.prefix ? ' · ' + esc(c.npcs[k]) : ''}${approved[k] ? ' (replace approved)' : ''}</option>`).join('') + '<option value="__new">New key…</option>';
   sel.value = keys.includes(n.key) ? n.key : '__new'; $('#apNewKey').value = keys.includes(n.key) ? '' : n.key;
   const sync = () => { const nw = sel.value === '__new'; $('#apNewKey').style.display = $('#apNewKeyLab').style.display = nw ? '' : 'none'; }; sel.onchange = sync; sync();
-  $('#apName').value = n.name; $('#apFaction').value = n.factionId || (VILLAGERS.find((v) => n.key.startsWith(v)) || ''); $('#apRole').value = n.role || 'villager';
+  $('#apName').value = n.name || c.npcs[n.key] || ''; $('#apFaction').value = n.factionId || c.village || (VILLAGERS.find((v) => n.key.startsWith(v)) || ''); $('#apRole').value = n.role || 'villager';
   approveDlg.showModal();
 }
 async function doApprove() {
