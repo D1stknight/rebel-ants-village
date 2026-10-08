@@ -44,6 +44,7 @@ button:disabled{opacity:.45;cursor:default}
 .slot{aspect-ratio:3/4;border:1px dashed #3a4566;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;cursor:pointer;overflow:hidden;position:relative;background:#0d1020}
 .slot img{width:100%;height:100%;object-fit:contain}
 .slot b{position:absolute;left:4px;bottom:3px;font-size:10px;color:var(--gold);background:#000a;padding:0 4px;border-radius:3px}
+.slot i.up{position:absolute;right:4px;top:3px;font-size:10px;font-style:normal;color:var(--amber);background:#000a;padding:0 4px;border-radius:3px}
 .slot.drag{border-color:var(--teal)}
 .bar{height:6px;background:#0d1020;border-radius:3px;overflow:hidden;margin-top:6px}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--gold));width:0}
@@ -119,8 +120,34 @@ const NPC_CLIPS = ['idle', 'walk', 'run', 'talking', 'talking2', 'waving', 'wave
 const PHASES = { draft: 'Draft', uploading: 'Uploading renders', building: 'Starting build', sculpting: 'Rebel Forge is sculpting', storing: 'Saving the sculpt', rigging: 'Forge Rigger', done: 'Forged', failed: 'Stopped' };
 let st = { npcs: [] }; let selId = null; let approved = {};
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
-function save() { try { localStorage.setItem(SKEY, JSON.stringify(st)); } catch (e) {} }
+// The list lives on the server (the same on any computer, survives a cleared browser) and is mirrored in this browser
+// for a fast start. Renders upload as soon as they are dropped, so neither copy holds image data (four renders alone
+// overflow the browser's storage).
+const synced = {}; let syncTimer = null;   // record id -> the record as the server has it
+const plain = (n) => { const o = { ...n, refs: {} }; for (const s of SLOTS) if (n.refs?.[s]?.url) o.refs[s] = { url: n.refs[s].url }; return o; };
+const bodyOf = (n) => JSON.stringify({ ...plain(n), updatedAt: 0 });
+function save() {
+  try { localStorage.setItem(SKEY, JSON.stringify({ npcs: st.npcs.map(plain) })); } catch (e) {}
+  clearTimeout(syncTimer); syncTimer = setTimeout(syncUp, 1500);
+}
 function load() { try { const s = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (s && Array.isArray(s.npcs)) st = s; } catch (e) {} }
+async function syncUp() {
+  const dirty = st.npcs.filter((n) => synced[n.id] !== bodyOf(n)); if (!dirty.length) return;
+  dirty.forEach((n) => { n.updatedAt = Date.now(); });
+  try { await api('/api/npc-forge-records', { action: 'save', records: dirty.map(plain) }); dirty.forEach((n) => { synced[n.id] = bodyOf(n); }); }
+  catch (e) { clearTimeout(syncTimer); syncTimer = setTimeout(syncUp, 15000); }   // offline or a server hiccup: try again later
+}
+async function syncDown() {
+  let d; try { d = await api('/api/npc-forge-records'); } catch (e) { return; }
+  const byId = new Map(st.npcs.map((n) => [n.id, n]));
+  for (const r of d.records || []) {
+    const l = byId.get(r.id); synced[r.id] = bodyOf(r);
+    if (!l) { st.npcs.push(r); continue; }
+    if ((r.updatedAt || 0) > (l.updatedAt || 0) && !running.has(l.id)) { const mine = l.refs || {}; Object.assign(l, r); for (const s_ of SLOTS) if (!l.refs[s_] && mine[s_]) l.refs[s_] = mine[s_]; }
+  }
+  st.npcs.sort((a, b) => (b.updatedAt || Date.now()) - (a.updatedAt || Date.now()));
+  save(); renderList();
+}
 const esc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const slug = (v) => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60);
 async function api(path, body, method) {
@@ -139,13 +166,20 @@ function addNPC() {
 function npc(id) { return st.npcs.find((n) => n.id === id); }
 function setField(id, f, v) { const n = npc(id); if (!n) return; n[f] = v; if (f === 'name' && !n.keyTouched) n.key = guessKey(v); if (f === 'key') { n.key = slug(v); n.keyTouched = true; } save(); setTimeout(renderList, 0); }   // not inside the input's own change / blur
 function guessKey(name) { const s = slug(name); const f = VILLAGERS.find((v) => s.startsWith(v)); return f && /villager|^[a-z]+$/.test(s) ? `${f}_villager` : s; }
-function removeNPC(id) { if (!confirm('Remove this NPC from the forge list? (Approved NPCs stay in the village.)')) return; st.npcs = st.npcs.filter((n) => n.id !== id); save(); renderList(); if (selId === id) { selId = null; clearViewer(); } }
+function removeNPC(id) { if (!confirm('Remove this NPC from the forge list? (Approved NPCs stay in the village.)')) return; st.npcs = st.npcs.filter((n) => n.id !== id); delete synced[id]; api('/api/npc-forge-records', { action: 'remove', id }).catch(() => {}); save(); renderList(); if (selId === id) { selId = null; clearViewer(); } }
 function ready(n) { return n.name && n.key && SLOTS.every((s) => n.refs[s]); }
 function pick(id, slot) { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/webp'; inp.onchange = () => inp.files[0] && setImage(id, slot, inp.files[0]); inp.click(); }
 async function setImage(id, slot, file) {
   const n = npc(id); if (!n) return;
   const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
-  n.refs[slot] = { local: await shrink(data) }; save(); renderList();
+  const local = await shrink(data); n.refs[slot] = { local, uploading: true }; renderList();
+  try {   // upload now (a draft without a key yet uploads under draft_<id>)
+    const k = n.key || `draft_${n.id}`;
+    const j = await twice(() => api('/api/forge-concepts-upload-image', { conceptId: `${n.id}_${slot}`, ...ids(n), tokenId: k, rebelId: `npc_${k}`, imageDataUrl: local }));
+    if (!j.imageUrl) throw new Error('no image URL');
+    if (n.refs[slot]?.local === local) n.refs[slot] = { url: j.imageUrl };   // unless another picture replaced it meanwhile
+  } catch (e) { if (n.refs[slot]?.local === local) n.refs[slot].uploading = false; toast(`Upload failed (${e.message}); it is tried again when you forge`); }
+  save(); renderList();
 }
 function dropTo(ev, id, slot) { ev.preventDefault(); ev.currentTarget.classList.remove('drag'); const f = ev.dataTransfer.files[0]; if (f) setImage(id, slot, f); }
 async function shrink(dataUrl) {   // keep uploads under the 8 MB Blob limit (the Rebel Forge does the same)
@@ -243,7 +277,7 @@ function renderList() {
   if (!st.npcs.length) { el.innerHTML = '<div class="state">No NPCs yet. Add one, give it a name and drop your four renders (front, back, left, right).</div>'; return; }
   el.innerHTML = st.npcs.map((n) => {
     const busy = running.has(n.id); const qa = n.rig?.qa?.verdict;
-    const slots = SLOTS.map((s) => { const r = n.refs[s] || {}; const src = r.url || r.local; return `<div class="slot" onclick="pick('${n.id}','${s}')" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropTo(event,'${n.id}','${s}')">${src ? `<img src="${src}" alt="">` : '+'}<b>${s}</b></div>`; }).join('');
+    const slots = SLOTS.map((s) => { const r = n.refs[s] || {}; const src = r.url || r.local; const up = r.uploading ? '<i class="up">uploading…</i>' : ''; return `<div class="slot" onclick="pick('${n.id}','${s}')" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropTo(event,'${n.id}','${s}')">${src ? `<img src="${src}" alt="">` : '+'}<b>${s}</b>${up}</div>`; }).join('');
     return `<div class="card ${n.id === selId ? 'sel' : ''}" onclick="if(!event.target.closest('input,select,button,.slot'))select('${n.id}')">
       <div class="row">${n.rig?.thumb ? `<img class="thumb" src="${n.rig.thumb}" alt="">` : ''}<input class="grow" placeholder="Name (e.g. Samurai Villager)" value="${esc(n.name)}" onchange="setField('${n.id}','name',this.value)" ${busy ? 'disabled' : ''}>
         ${qa ? `<span class="verdict v-${qa}">${qa}</span>` : ''}</div>
@@ -252,7 +286,7 @@ function renderList() {
       <div class="state">${stateLine(n)}</div><div class="bar"><i style="width:${pct(n)}%"></i></div>
       ${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}
       <div class="row" style="margin-top:8px">
-        ${n.phase === 'done' ? `<button class="teal" onclick="select('${n.id}')">Test</button><button onclick="forgeOne('${n.id}',{rerig:true})" title="Run the Forge Rigger again on the same sculpt">Re-rig</button>` : `<button class="gold" onclick="forgeOne('${n.id}')" ${busy || !ready(n) ? 'disabled' : ''}>${n.phase === 'failed' ? 'Retry' : 'Forge'}</button>`}
+        ${n.phase === 'done' ? `<button class="teal" onclick="select('${n.id}')">Test</button><button onclick="forgeOne('${n.id}',{rerig:true})" title="Run the Forge Rigger again on the same sculpt">Re-rig</button>` : `<button class="gold" onclick="forgeOne('${n.id}')" ${busy || !ready(n) ? 'disabled' : ''}>${n.phase === 'failed' ? 'Retry' : ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase) && !busy ? 'Continue' : 'Forge'}</button>`}
         ${n.buildId && !busy ? `<button onclick="if(confirm('Sculpt this NPC again from the same renders? (a new Rebel Forge sculpt)'))forgeOne('${n.id}',{resculpt:true})">Re-sculpt</button>` : ''}
         ${!n.buildId && Object.keys(n.refs).length ? '' : ''}
         <button class="red" style="margin-left:auto" onclick="removeNPC('${n.id}')" ${busy ? 'disabled' : ''}>Remove</button></div></div>`;
@@ -419,9 +453,10 @@ async function rebuildWorker() {
   catch (e) { location.href = 'index.html'; return; }
   $('#gate').style.display = 'none'; $('#app').style.display = 'grid'; engine.resize();
   load(); renderList(); loadApproved(); loadWorker();
-  // resume NPCs that were forging when the page closed
+  // resume NPCs that were forging here when the page closed (ones forged on another computer show Continue)
   st.npcs.filter((n) => ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase)).forEach((n) => forgeOne(n.id, { batch: true }));
   if (st.npcs[0]) select(st.npcs[0].id);
+  await syncDown(); if (!selId && st.npcs[0]) select(st.npcs[0].id);
 })();
 
 /* ---------- robe / armour-skirt springs (same solver as the village) ---------- */
