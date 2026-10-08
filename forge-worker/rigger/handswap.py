@@ -3,6 +3,8 @@
 # They are cut off at the wrist and replaced by the standard 5-finger glove (glove.py), sized to the Rebel's own hand,
 # tinted with the colour of the Rebel's own glove, with real finger bones and weights. Every clip then gets a hand pose:
 # fists for strikes, kicks and the guard, open hands for cartwheels and getting up, relaxed hands for the rest.
+# v2.14 NPC gestures: the hand shape follows the mocap actor's fingers frame by frame (rallying: fist, open, fist;
+# pointing: the index goes out while the arm points; clapping: flat hands).
 # usage: python3.13 handswap.py -- in.blend out.blend
 import bpy, bmesh, sys, os, math, numpy as np, mathutils as mu
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -300,23 +302,82 @@ def bags(act):
             for cb in st.channelbags: yield cb
 
 
-n_act = 0
+# NPC gestures: per frame, how far the actor's index finger is curled (degrees over its three joints, 0 = straight).
+# The pack's Mixamo sources carry the thumb and index only, so every finger follows the index: open -> relaxed -> fist,
+# matched on the index's total bend. In 'pointing' the hand that points gets the point pose while its index is out.
+CURL = [(14, 'open'), (50, 'relaxed'), (233, 'fist')]      # our poses' total index bend
+NPC_HANDS = {}
+if os.environ.get('FORGE_NPC'):
+    import json
+    from scipy.spatial.transform import Rotation as Rot
+    for c in json.load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'anim', 'clips_npc.json'))):
+        src_ = os.path.join(os.environ.get('FORGE_PACK', '.'), c['file'])
+        if c.get('airborne') or not src_.endswith('.npz') or not os.path.exists(src_): continue
+        z = np.load(src_); nm = [str(n) for n in z['names']]; Q = z['Q']; hands = {}
+        for side in ('Left', 'Right'):
+            ch = [side + 'Hand', side + 'HandIndex1', side + 'HandIndex2', side + 'HandIndex3']
+            if not all(n in nm for n in ch): break
+            R = [Rot.from_quat(Q[:, nm.index(n)]) for n in ch]
+            curl = sum(np.degrees((R[k].inv() * R[k + 1]).magnitude()) for k in range(3))
+            curl = np.convolve(np.pad(curl, 2, mode='edge'), np.ones(5) / 5, mode='valid')
+            point = np.clip((22 - curl) / 10, 0, 1) if c['name'] == 'pointing' else np.zeros(len(curl))
+            if np.ptp(curl) < 25 and not point.any(): curl = np.full(2, np.median(curl)); point = np.zeros(2)   # a steady hand: one pose (2 keys)
+            hands[side] = (curl, point)
+        else:
+            NPC_HANDS[c['name']] = hands
+
+
+def blend(curl, point):
+    # pose weights for an index bend (piecewise between the CURL anchors), then the point pose on top
+    w = {}
+    if curl <= CURL[0][0]: w[CURL[0][1]] = 1.0
+    elif curl >= CURL[-1][0]: w[CURL[-1][1]] = 1.0
+    else:
+        for (c0, p0), (c1, p1) in zip(CURL, CURL[1:]):
+            if c0 <= curl <= c1: t = (curl - c0) / (c1 - c0); w[p0] = 1 - t; w[p1] = t; break
+    w = {k: round(v * (1 - point) * 64) / 64 for k, v in w.items()}
+    if point > 0: w['point'] = 1 - sum(w.values())
+    return w
+
+
+def quat_mix(w, side, f, i):
+    if f == 'Thumb' and i == 1:
+        e = sum(np.array(THUMB1[p_]) * v for p_, v in w.items())
+        if side == 'Left': e[1], e[2] = -e[1], -e[2]
+        return mu.Euler(tuple(math.radians(x) for x in e), 'XYZ').to_quaternion()
+    return mu.Quaternion((1, 0, 0), math.radians(sum(POSE[p_][f][i - 1] * v for p_, v in w.items())))
+
+
+n_act = n_live = 0
 for act in bpy.data.actions:
     f0, f1 = act.frame_range
+    live = NPC_HANDS.get(act.name)
     for cb in bags(act):
         for fc in list(cb.fcurves):
             if any(('Hand' + f) in fc.data_path for f in FING): cb.fcurves.remove(fc)
         for side in ('Left', 'Right'):
+            if live and side in live:
+                curl, point = live[side]; nf = int(f1 - f0) + 1
+                if len(curl) == 2: ws = {0: blend(float(curl[0]), 0.0)}; ws[nf - 1] = ws[0]; keep = [0, nf - 1]
+                else:
+                    ws = [blend(float(curl[min(k, len(curl) - 1)]), float(point[min(k, len(point) - 1)])) for k in range(nf)]
+                    keep = [k for k in range(nf) if k in (0, nf - 1) or ws[k] != ws[k - 1] or ws[k] != ws[k + 1]]
             for f in FING:
                 for i in range(1, 4):
                     bn = P + side + 'Hand' + f + str(i)
                     if bn not in arm.pose.bones: continue
+                    fcs = [cb.fcurves.new(f'pose.bones["{bn}"].rotation_quaternion', index=ci, group_name=bn) for ci in range(4)]
+                    if live and side in live:
+                        qs = [quat_mix(ws[k], side, f, i) for k in keep]
+                        for ci in range(4):
+                            fcs[ci].keyframe_points.add(len(keep)); fcs[ci].keyframe_points.foreach_set('co', np.c_[np.array(keep, float) + f0, [q[ci] for q in qs]].ravel())
+                            for kp in fcs[ci].keyframe_points: kp.interpolation = 'LINEAR'
+                        continue
                     q = quat(hand_pose(act.name, side), side, f, i)
                     for ci in range(4):
-                        fc = cb.fcurves.new(f'pose.bones["{bn}"].rotation_quaternion', index=ci, group_name=bn)
-                        fc.keyframe_points.add(2); fc.keyframe_points.foreach_set('co', [f0, q[ci], f1, q[ci]])
-        n_act += 1
+                        fcs[ci].keyframe_points.add(2); fcs[ci].keyframe_points.foreach_set('co', [f0, q[ci], f1, q[ci]])
+        n_act += 1; n_live += bool(live)
 for pb in arm.pose.bones:
     if any(('Hand' + f) in pb.name for f in FING): pb.rotation_mode = 'QUATERNION'
-print('handswap hand poses written to clips', n_act)
+print('handswap hand poses written to clips', n_act, '| following the mocap fingers', n_live)
 bpy.ops.wm.save_as_mainfile(filepath=dst)
