@@ -15,6 +15,9 @@ header{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:10px 16
 header h1{margin:0;font:700 18px Cinzel,serif;letter-spacing:3px;color:var(--gold)}
 header .sub{color:var(--dim);font-size:12px}
 header a{margin-left:auto;color:var(--teal);text-decoration:none;font-size:12px}
+#workerPill{display:none;align-items:center;gap:8px;margin-left:auto;font-size:12px;color:var(--amber);background:#2a2412;border:1px solid #6b5520;padding:4px 10px;border-radius:12px}
+#workerPill .bar{width:120px;margin:0}
+#workerPill+a{margin-left:12px}
 #side{overflow:auto;border-right:1px solid var(--line);padding:12px}
 #main{display:grid;grid-template-rows:1fr auto;min-height:0}
 #view{position:relative;min-height:0}
@@ -68,7 +71,7 @@ small{color:var(--dim)}
 <body>
 <div id="gate">Checking admin access...</div>
 <div id="app">
-  <header><h1>NPC FORGE</h1><span class="sub">Your renders → Meshy → Forge Rigger (NPC clips) → test → approve</span><a href="admin.html">← Admin Hub</a></header>
+  <header><h1>NPC FORGE</h1><span class="sub">Your renders → Meshy → Forge Rigger (NPC clips) → test → approve</span><span id="workerPill"></span><a href="admin.html">← Admin Hub</a></header>
   <aside id="side">
     <h2>NPCs</h2>
     <div class="row" style="margin-bottom:8px"><button class="gold" onclick="addNPC()">+ New NPC</button><button class="teal" id="forgeAllBtn" onclick="forgeAll()">Forge all ready</button></div>
@@ -163,6 +166,7 @@ function refConcept(n) { const f = n.refs.front.url; return { id: `${n.id}_front
 function gi(n) { return { ...ids(n), name: n.name, species: 'ant', referenceImage: true, npc: true }; }
 async function forgeOne(id, opts = {}) {
   const n = npc(id); if (!n || running.has(id)) return; if (!ready(n)) { toast('Add a name, a key and all four renders first'); return; }
+  if (workerBuilding && !opts.batch && !confirm('The rig worker is still rebuilding: this NPC would be rigged by the old worker. Go ahead anyway?')) return;
   running.add(id); n.err = null;
   try {
     if (opts.resculpt) { n.buildId = null; n.meshy = null; n.stored = null; n.rig = null; }
@@ -221,8 +225,9 @@ async function forgeAll() {
   const list = st.npcs.filter((n) => ready(n) && n.phase !== 'done' && !running.has(n.id));
   if (!list.length) { toast('No NPC ready to forge (name, key and four renders)'); return; }
   if (!confirm(`Forge ${list.length} NPC${list.length > 1 ? 's' : ''}? Each one is one Meshy generation plus a rig job.`)) return;
+  if (workerBuilding && !confirm('The rig worker is still rebuilding: these NPCs would be rigged by the old worker. Go ahead anyway?')) return;
   // Meshy runs in parallel; at most 3 rig sandboxes at a time
-  let i = 0; const next = async () => { while (i < list.length) { const n = list[i++]; await forgeOne(n.id); } };
+  let i = 0; const next = async () => { while (i < list.length) { const n = list[i++]; await forgeOne(n.id, { batch: true }); } };
   await Promise.all([next(), next(), next()]);
 }
 
@@ -352,17 +357,41 @@ async function unapprove(k) { if (!confirm(`Remove ${k} from the village? NPCs w
 
 /* ---------- rig worker: NPC gesture pack + rebuild ---------- */
 const NPC_PACK = ['talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping', 'rallying', 'yelling', 'look_around', 'idle_looking'].map((c) => `mixamo/${c}.npz`);
-let workerPoll = null;
+let workerPoll = null, workerSetup = null, workerBuilding = false;
+// setup.sh prints these step markers; the last one in the log tail is the current step (progress floor, %)
+const SETUP_STEPS = [['== system libs', 'Installing system libraries', 3], ['== python 3.13 + bpy', 'Installing Blender (the longest step)', 8], ['== worker code', 'Loading the rigger code', 80], ['== mocap pack', 'Loading the animation pack', 86], ['== self test', 'Testing the worker', 94]];
+const SETUP_SECONDS = 600;   // a rebuild takes about 10 minutes
+function setupProgress(s) {
+  const log = s.logTail || ''; let label = 'Starting the build machine', floor = 1, next = SETUP_STEPS[0][2];
+  SETUP_STEPS.forEach(([m, l, p], i) => { if (log.includes(m)) { label = l; floor = p; next = (SETUP_STEPS[i + 1] || [0, 0, 99])[2]; } });
+  const secs = Math.max(0, (Date.now() - Date.parse(s.startedAt || new Date().toISOString())) / 1000);
+  return { label, secs, pct: Math.round(Math.max(floor, Math.min(next - 1, (100 * secs) / SETUP_SECONDS))) };
+}
+const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+function paintSetup() {
+  // ticks every second while a rebuild runs (between status polls)
+  const pill = $('#workerPill');
+  if (!workerBuilding || !workerSetup) { pill.style.display = 'none'; return; }
+  const p = setupProgress(workerSetup);
+  pill.style.display = 'flex'; pill.innerHTML = `Rig worker rebuilding ${p.pct}% <span class="bar"><i style="width:${p.pct}%"></i></span>`;
+  const box = $('#workerProgress');
+  if (box) box.innerHTML = `<div class="state"><b style="color:var(--amber)">Rebuilding the rig worker</b> · ${esc(p.label)} · ${mmss(p.secs)} (about ${SETUP_SECONDS / 60} min)</div><div class="bar"><i style="width:${p.pct}%"></i></div><div class="state" style="margin-top:4px">Forges and re-rigs started now still use the old worker. Keep this page open (or come back later): it finishes the rebuild when it checks in.</div>`;
+}
+setInterval(paintSetup, 1000);
 async function loadWorker() {
   let d; try { d = await api('/api/forge-rig-worker'); } catch (e) { $('#workerBox').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
   const w = d.worker || {}; const have = new Set(d.packPaths || []); const miss = NPC_PACK.filter((p) => !have.has(p)); const s = w.setup || {};
-  const building = s.status === 'running';
-  $('#workerBox').innerHTML = `<div class="state">Worker image: ${w.snapshotId ? `built ${w.builtAt ? new Date(w.builtAt).toLocaleString() : ''} from ${esc(String(w.commit || '').slice(0, 7))}` : 'not built'}${building ? ' · <b>rebuilding…</b>' : s.status === 'failed' ? ' · <span class="bad">last rebuild failed</span>' : ''}</div>
+  const was = workerBuilding; const building = s.status === 'running';
+  workerBuilding = building; workerSetup = s;
+  if (was && !building) toast(s.status === 'done' ? 'Rig worker rebuilt. New forges and re-rigs use it now.' : 'The rig worker rebuild failed (see the log in the Rig worker box).');
+  $('#workerBox').innerHTML = `<div class="state">Worker image: ${w.snapshotId ? `built ${w.builtAt ? new Date(w.builtAt).toLocaleString() : ''} from ${esc(String(w.commit || '').slice(0, 7))}` : 'not built'}${s.status === 'failed' && !building ? ' · <span class="bad">last rebuild failed</span>' : ''}</div>
+    ${building ? '<div id="workerProgress" style="margin-top:6px"></div>' : ''}
     <div class="state" style="margin-top:4px">NPC gesture pack: ${NPC_PACK.length - miss.length} of ${NPC_PACK.length}${miss.length ? ` · missing ${miss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}</div>
-    <div class="row" style="margin-top:8px"><button onclick="uploadPack()">Upload gesture files (.npz)</button><button class="teal" onclick="rebuildWorker()" ${building ? 'disabled' : ''}>Rebuild worker</button></div>
+    <div class="row" style="margin-top:8px"><button onclick="uploadPack()">Upload gesture files (.npz)</button><button class="teal" onclick="rebuildWorker()" ${building ? 'disabled' : ''}>${building ? 'Rebuilding…' : 'Rebuild worker'}</button></div>
     <div class="state" style="margin-top:4px">Rebuild after uploading the pack or after a worker update (about 10 minutes). NPC jobs need all ${NPC_PACK.length} gesture files in the worker.</div>
-    ${s.logTail && building ? `<pre style="white-space:pre-wrap;font-size:10px;color:var(--dim);max-height:120px;overflow:auto">${esc(s.logTail)}</pre>` : ''}`;
-  clearTimeout(workerPoll); if (building) workerPoll = setTimeout(loadWorker, 15000);
+    ${s.logTail && (building || s.status === 'failed') ? `<pre style="white-space:pre-wrap;font-size:10px;color:${building ? 'var(--dim)' : 'var(--red)'};max-height:120px;overflow:auto">${esc(s.logTail)}</pre>` : ''}`;
+  paintSetup();
+  clearTimeout(workerPoll); if (building) workerPoll = setTimeout(loadWorker, 10000);
 }
 function uploadPack() {
   const inp = document.createElement('input'); inp.type = 'file'; inp.multiple = true; inp.accept = '.npz';
@@ -380,7 +409,7 @@ function uploadPack() {
 }
 async function rebuildWorker() {
   if (!confirm('Rebuild the rig worker from the deployed code? Rebel forges keep working; jobs started during the rebuild use the old image.')) return;
-  try { await api('/api/forge-rig-worker', { action: 'setup' }); toast('Worker rebuild started'); } catch (e) { toast('Rebuild failed: ' + e.message); }
+  try { await api('/api/forge-rig-worker', { action: 'setup' }); toast('Worker rebuild started (about 10 minutes)'); } catch (e) { toast('Rebuild failed: ' + e.message); }
   loadWorker();
 }
 
@@ -391,7 +420,7 @@ async function rebuildWorker() {
   $('#gate').style.display = 'none'; $('#app').style.display = 'grid'; engine.resize();
   load(); renderList(); loadApproved(); loadWorker();
   // resume NPCs that were forging when the page closed
-  st.npcs.filter((n) => ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase)).forEach((n) => forgeOne(n.id));
+  st.npcs.filter((n) => ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase)).forEach((n) => forgeOne(n.id, { batch: true }));
   if (st.npcs[0]) select(st.npcs[0].id);
 })();
 
