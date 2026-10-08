@@ -9,8 +9,9 @@
 #  - WAVE (wave_short): the waving arm stuck straight forward from the chest (the shoulder pinched under the armour and
 #    the hand waved in front of the big head). The raised arm swings round the shoulder (about the vertical) so the
 #    upper arm goes out to the side under the shoulder pad: the hand waves beside the head, the wave itself unchanged.
-#  - CLAP (clapping): the gloves stopped ~2 cm apart at every clap (the actor's hands, our wider body); at each clap
-#    both hands move half the gap toward each other (eased over the frames round it) so the gloves meet.
+#  - CLAP (clapping): the hands met in a V (each palm ~24 deg off the other, fingers splayed) and stopped ~2 cm apart.
+#    Round each clap the hands first turn so the palms are flat to each other with the fingers together, then both move
+#    half the remaining gap toward each other (eased over the frames round it) so the gloves meet.
 # usage: python3.13 npcarms.py -- in.blend out.blend
 import bpy, sys, os, math, numpy as np
 from mathutils import Matrix, Vector, Quaternion
@@ -86,6 +87,49 @@ def write(cb, bone, vals, f0):
         fc.update()
 
 
+def palm(s):
+    # palm centre, finger direction and palm normal (pointing out of the palm) of one hand in the current pose
+    W, M1, I1, K1 = (PB[P + s + b].head.copy() for b in ('Hand', 'HandMiddle1', 'HandIndex1', 'HandPinky1'))
+    n = (I1 - W).cross(K1 - W).normalized()
+    return (W + M1) / 2, (M1 - W).normalized(), (n if s == 'Right' else -n)
+
+
+def frame3(x, y):
+    x = x.normalized(); y = (y - x * y.dot(x)).normalized(); return Matrix((x, y, x.cross(y))).transposed()
+
+
+def clap_turn(act, f0, f1):
+    # turn both hands round their wrists so the palms face each other flat at each clap (fingers lined up)
+    nf = f1 - f0 + 1; dist, hands = np.zeros(nf), []
+    for k, f in enumerate(range(f0, f1 + 1)):
+        sc.frame_set(f); h = {s: palm(s) for s in ('Left', 'Right')}; hands.append((h, {s: (PB[P + s + 'Hand'].matrix.copy(), PB[P + s + 'ForeArm'].matrix.copy()) for s in h}))
+        dist[k] = (h['Right'][0] - h['Left'][0]).length
+    loop = abs(dist[0] - dist[-1]) < 0.003; n_ = nf - 1 if loop else nf
+    claps = [m for m in range(n_) if dist[m] <= dist[(m - 1) % n_] and dist[m] <= dist[(m + 1) % n_] and dist[m] < np.median(dist)]
+    w = np.zeros(nf)
+    for m in claps:
+        for k in range(nf):
+            dk = abs(k - m); dk = min(dk, n_ - dk) if loop else dk
+            w[k] = max(w[k], math.exp(-(dk / 1.6) ** 2))
+    q_out = {s: [] for s in ('Left', 'Right')}; turned = 0.0
+    for k, (h, mats) in enumerate(hands):
+        u = (h['Right'][0] - h['Left'][0]).normalized()
+        F = h['Left'][1] + h['Right'][1]; F = (F - u * F.dot(u)).normalized()
+        for s, tgt_n in (('Left', u), ('Right', -u)):
+            Mh, Mf = mats[s]; c, fd, pn = h[s]
+            R = (frame3(F, tgt_n) @ frame3(fd, pn).transposed()).to_quaternion()
+            q = Quaternion().slerp(R, float(w[k])); W = Mh.translation.copy()
+            turned = max(turned, math.degrees(q.angle))
+            q_out[s].append(basis(P + s + 'Hand', about(Mh, W, q.to_matrix()), Mf).to_quaternion())
+    cb = channelbag(act)
+    for s, qs in q_out.items():
+        qa = np.array([[x.w, x.x, x.y, x.z] for x in qs])
+        for i in range(1, len(qa)):
+            if np.dot(qa[i], qa[i - 1]) < 0: qa[i] = -qa[i]
+        write(cb, P + s + 'Hand', qa, f0)
+    return claps, turned
+
+
 def point_weight(act, f0, f1):
     # the point pose from handswap: the right index is out while its first joint is straight
     cb = channelbag(act); fc = [cb.fcurves.find(f'pose.bones["{P}RightHandIndex1"].rotation_quaternion', index=i) for i in range(4)]
@@ -104,6 +148,8 @@ for act in bpy.data.actions:
     arm.animation_data.action = act; arm.animation_data.action_slot = act.slots[0]
     f0, f1 = int(act.frame_range[0]), int(act.frame_range[1]); nf = f1 - f0 + 1
     pw = point_weight(act, f0, f1) if name == 'pointing' else None
+    claps = None
+    if name in CLAP: claps, turned = clap_turn(act, f0, f1); report[name + '_turn'] = {'claps': len(claps), 'palmsTurnedDeg': round(turned, 1)}
     if pw is not None: pw = np.convolve(np.pad(pw, 4, mode='edge'), np.ones(9) / 9, mode='valid')
     out = {s: {b: [] for b in ('Arm', 'ForeArm', 'Hand')} for s in ('Left', 'Right')}
     stats = {'flick': 0.0, 'point': 0.0}; changed = False
@@ -144,9 +190,9 @@ for act in bpy.data.actions:
     clap_d = {s: [Vector() for _ in range(nf)] for s in ('Left', 'Right')}
     if name in CLAP and nf > 4:
         loop = abs(clap_gap[0] - clap_gap[-1]) < 0.003; n_ = nf - 1 if loop else nf     # first frame == last frame: a loop
-        for m in range(n_):
-            g = clap_gap[m]; a_, b_ = clap_gap[(m - 1) % n_] if loop or m > 0 else 9.0, clap_gap[(m + 1) % n_] if loop or m < n_ - 1 else 9.0
-            if not (g <= a_ and g <= b_ and CLAP_GAP < g < 0.06): continue
+        for m in (claps or []):     # the claps the hands were turned for (closing other dips would clap twice)
+            g = clap_gap[m]
+            if not CLAP_GAP < g < 0.08: continue
             half = clap_u[m] * ((g - CLAP_GAP) / 2)
             for k in range(nf):
                 dk = abs(k - m); dk = min(dk, n_ - dk) if loop else dk
