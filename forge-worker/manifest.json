@@ -39,6 +39,7 @@
   "rigger/master.py",
   "rigger/mkw.py",
   "rigger/normalize.py",
+  "rigger/npcarms.py",
   "rigger/npcstance.py",
   "rigger/padfix.py",
   "rigger/posetest.py",
