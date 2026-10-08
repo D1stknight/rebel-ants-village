@@ -256,3 +256,10 @@ Friend villages (Queens, Cute & Creepy, Saints LA; Chumps not in registry yet): 
 - Several flagged moves were the Mixamo actor's own (knees bent 20-37 deg, elbow flick, bent-arm point, claps 2 cm short): check the source npz before blaming the retarget.
 - Local worker test: copy forge-worker over the scratch mirror (venv with bpy 5.2, clips, pack), FORGE_NPC=1 job.sh file://<sculpt.glb> <name> <dir>. The Rebel pack is not local; a stand-in jump.npz can be made from a Rebel rig's jump clip.
 - After a worker change Miguel presses Rebuild worker, then Re-rig on each forged NPC (same sculpt, no Meshy credits).
+
+## NPC Forge round 2 (dev 4a398b6..7ab12fc, Oct 8)
+- Rebuild worker shows a progress bar (setup.sh step markers + elapsed vs ~10 min) in the Rig worker box and a header pill; forging while it rebuilds asks first. The rebuild only finishes (snapshot) when a page polls /api/forge-rig-worker.
+- Visible "Meshy" text says "Rebel Forge" (NPC Forge, Admin Hub card, sculpt API messages); code names and MESHY_API_KEY unchanged.
+- npcarms.py: wave_short swings the raised arm round the shoulder about the vertical so the upper arm points 70 deg out to the side (was forward from the chest = pinched shoulder), palm turned back to face forward; clapping turns both hands round the wrists so the palms are flat together with the fingers lined up, then closes the gap only at those clap frames (closing every dip clapped twice).
+- NPC Forge list on the server: api/npc-forge-records.mjs (admin, Redis npc:forge:v1); renders upload when dropped (drafts without a key use draft_<id>); the page syncs both ways (newest wins). NPCs forged on another computer show Continue.
+- Collections: Rebel Ants / Chumpz / Saints per NPC. Friend NPCs are approved under their own id (village: npcId chumpz-bartender = key chumpz_bartender; an own-id key wins over the villager key), and an approved forged model replaces a kit character (kit holder disposed when the GLB loads). Chumpz keys: chumpz_bartender / fisher / dealer / villager; Saints: saints_greeter / mechanic / hooper.
