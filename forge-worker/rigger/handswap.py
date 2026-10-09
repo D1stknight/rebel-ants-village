@@ -207,6 +207,21 @@ for f in res['faces']:
             if other: l[uvL].uv = other[0][uvL].uv
 print('handswap sleeve-end caps', len(res['faces']), 'from boundary edges', len(edges))
 bm.to_mesh(me); bm.free(); me.update()
+# v2.21 NPCs: what is left of the arm at the wrist (sleeve / arm guard end) rides the forearm only. Its leftover hand
+# weights twisted it with the hand (~100 deg in talking): the rim pinched in and the cuff showed outside it.
+if NPCM:
+    moved = 0
+    for side in ('Left', 'Right'):
+        hg_ = {g.index for g in body.vertex_groups if g.name == P + side + 'Hand' or g.name.startswith(P + side + 'Hand') and g.name[len(P + side + 'Hand'):][:1].isupper()}
+        fg_ = body.vertex_groups.get(P + side + 'ForeArm') or body.vertex_groups.new(name=P + side + 'ForeArm')
+        add = {}
+        for v in me.vertices:
+            w = sum(g.weight for g in v.groups if g.group in hg_)
+            if w > 0: add[v.index] = w
+        for gi in hg_: body.vertex_groups[gi].remove(list(add))
+        for vi, w in add.items(): fg_.add([vi], w, 'ADD')
+        moved += len(add)
+    print('handswap NPC: sleeve verts off the hand onto the forearm', moved)
 
 # ---- one glove per side ----
 gme, J = glove.build()
@@ -246,6 +261,17 @@ for side, pl in plan.items():
             hd = world(pts[i - 1]); tl = world(pts[i]) if i < 4 else world(pts[3]) + (world(pts[3]) - world(pts[2])) * 0.35
             b.head = Ai @ mu.Vector(hd.tolist()); b.tail = Ai @ mu.Vector(tl.tolist())
             b.align_roll(Ai.to_3x3() @ mu.Vector(pl['z'].tolist()))
+    # v2.21 NPCs: the hand turns about the middle of its own glove, not the generated wrist joint (up to 4 cm off it on
+    # the Shogun: the glove and cuff swung round the joint when the hand twisted, ~100 deg in talking), and a cuff bone at
+    # the same point under the forearm carries the cuff: it follows only the hand's twist (cufftwist.py), never its bend
+    if NPCM:
+        hb_ = eb[P + side + 'Hand']; hb_.use_connect = False
+        sh_ = Ai @ mu.Vector(pl['W'].tolist()) - hb_.head; hb_.head += sh_; hb_.tail += sh_
+        cb_ = eb.get(P + side + 'ForeArmCuff') or eb.new(P + side + 'ForeArmCuff')   # along the sleeve (the glove's x), not the hand bone (9-13 deg off it)
+        cb_.head = hb_.head.copy(); cb_.tail = hb_.head + (Ai.to_3x3() @ mu.Vector(pl['x'].tolist())).normalized() * (0.5 * hb_.length)
+        cb_.align_roll(Ai.to_3x3() @ mu.Vector(pl['z'].tolist()))
+        cb_.parent = eb[P + side + 'ForeArm']; cb_.use_connect = False; cb_.use_deform = True
+        print(f'handswap {side}: hand pivot moved {sh_.length * 100:.1f} cm to the glove, cuff bone added')
 bpy.ops.object.mode_set(mode='OBJECT')
 
 bm = bmesh.new(); bm.from_mesh(me)
@@ -277,11 +303,25 @@ for side, pl in plan.items():
         n = P + side + ('Hand' if k == 'Hand' else 'Hand' + k)
         g = body.vertex_groups.get(n) or body.vertex_groups.new(name=n); gid[k] = g.index
     fore = (body.vertex_groups.get(P + side + 'ForeArm') or body.vertex_groups.new(name=P + side + 'ForeArm')).index
+    cuffg = (body.vertex_groups.get(P + side + 'ForeArmCuff') or body.vertex_groups.new(name=P + side + 'ForeArmCuff')).index if NPCM else None
     for i, v in vmap.items():
         for k, w in GW.items():
             if w[i] > 0.01: v[dl][gid[k]] = float(w[i])
         gx = G[i, 0]
-        if gx < 0:                      # the cuff blends into the forearm so it stays in the sleeve when the wrist bends
+        if NPCM:
+            # v2.21 the cuff rides its bone alone (no hand, no thumb share: it moved up to 10 cm against the sleeve in
+            # talking); the glove's wrist blends from it into the hand over the first ~1.5 cm
+            tc = float(np.clip((gx + 0.01) / 0.07, 0, 1)); c = 1 - tc * tc * (3 - 2 * tc)
+            if c > 0:
+                d_ = v[dl]
+                if gx < 0:
+                    fs = 0.0
+                    for k in GW:
+                        if k != 'Hand' and gid[k] in d_: fs += d_[gid[k]]; del d_[gid[k]]
+                    d_[gid['Hand']] = d_.get(gid['Hand'], 0.0) + fs
+                for g_ in list(d_.keys()): d_[g_] = d_[g_] * (1 - c)
+                d_[cuffg] = c
+        elif gx < 0:                    # the cuff blends into the forearm so it stays in the sleeve when the wrist bends
             t = float(np.clip(-gx / 0.14, 0, 0.85)); hw = v[dl].get(gid['Hand'], 0.0)
             if hw > 0: v[dl][gid['Hand']] = hw * (1 - t); v[dl][fore] = hw * t
 bm.to_mesh(me); bm.free(); me.update()
@@ -413,4 +453,7 @@ for act in bpy.data.actions:
 for pb in arm.pose.bones:
     if any(('Hand' + f) in pb.name for f in FING): pb.rotation_mode = 'QUATERNION'
 print('handswap hand poses written to clips', n_act, '| following the mocap fingers', n_live)
+if NPCM:
+    import cufftwist   # v2.21 the cuff bones' twist keys (baked again after the NPC arm steps)
+    print('handswap cuff twist keys', cufftwist.bake(arm))
 bpy.ops.wm.save_as_mainfile(filepath=dst)

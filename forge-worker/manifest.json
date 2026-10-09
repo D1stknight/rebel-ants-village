@@ -1,5 +1,5 @@
 {
- "version": "2.20",
+ "version": "2.21",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
@@ -19,6 +19,7 @@
   "rigger/buildrig.py",
   "rigger/chains.py",
   "rigger/clothbones.py",
+  "rigger/cufftwist.py",
   "rigger/detect.py",
   "rigger/dumpbones.py",
   "rigger/exp_moves.py",
