@@ -6,7 +6,7 @@
 # v2.14 NPC gestures: the hand shape follows the mocap actor's fingers frame by frame (rallying: fist, open, fist;
 # pointing: the index goes out while the arm points; clapping: flat hands).
 # usage: python3.13 handswap.py -- in.blend out.blend
-import bpy, bmesh, sys, os, math, numpy as np, mathutils as mu
+import bpy, bmesh, sys, os, math, json, numpy as np, mathutils as mu
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import glove
 
@@ -39,6 +39,25 @@ uvl = me.uv_layers.active
 
 def srgb2lin(c): return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
 
+# v2.18 NPC hands (FORGE_NPC, the admin NPC Forge): both gloves one size, from the two generated hands together and
+# kept within what the approved villagers have (11.2-12.4 % of the body height); a lone big or small blob hand made one
+# glove 40 % bigger than the other (Shogun). Rebels keep their own per-hand sizes.
+NPCM = bool(os.environ.get('FORGE_NPC'))
+HGT = float(co[:, 2].max() - co[:, 2].min())
+# the NPC Forge hands panel: per side {along, thumb, back} (fractions of the hand length) and size (x)
+try: FIT = json.loads(os.environ.get('FORGE_HAND_FIT') or '{}') or {}
+except Exception: FIT = {}
+L_NPC = None
+if NPCM:
+    reaches = []
+    for side in ('Left', 'Right'):
+        hb = arm.data.bones[P + side + 'Hand']; fb = arm.data.bones[P + side + 'ForeArm']
+        W = np.array((Aw @ hb.head_local)[:]); E = np.array((Aw @ fb.head_local)[:]); x = (W - E) / np.linalg.norm(W - E)
+        tt = (co - W) @ x; handw = Wt[:, names.index(P + side + 'Hand')] / Wsum; own = (handw > 0.5) & (tt > 0.0)
+        reaches.append(np.percentile(tt[own], 98) if own.sum() > 20 else 0.75 * np.linalg.norm(W - E))
+    L_NPC = float(np.clip(np.mean(reaches), 0.112 * HGT, 0.124 * HGT))
+    print(f'handswap NPC: one glove length {L_NPC:.3f} for both hands (reach {np.round(reaches, 3).tolist()}, height {HGT:.3f})')
+
 plan, cut = {}, np.zeros(nv, bool)
 for side in ('Left', 'Right'):
     hb = arm.data.bones[P + side + 'Hand']; fb = arm.data.bones[P + side + 'ForeArm']
@@ -54,7 +73,7 @@ for side in ('Left', 'Right'):
     own = (handw > 0.5) & (tt > 0.0)
     reach = np.percentile(tt[own], 98) if own.sum() > 20 else 0.75 * np.linalg.norm(W - E)
     fore = np.linalg.norm(W - E)
-    L = float(np.clip(reach, 0.55 * fore, 1.05 * fore))
+    L = float(np.clip(reach, 0.55 * fore, 1.05 * fore)) if L_NPC is None else L_NPC
     rm = ((handw > 0.5) & (tt > -0.004)) | ((armw > 0.5) & (tt > 0.012) & (rr < 0.9 * L))
     # wrist girth: the glove cuff should fill the sleeve opening, not float inside it
     ring = (np.abs(tt) < 0.015) & (armw > 0.5)
@@ -84,7 +103,9 @@ for side in ('Left', 'Right'):
             print(f'handswap {side} wrist probe: sleeve bins {gapbins} off {np.linalg.norm(o_) / L:.3f}L radius {R_ / L:.3f}L')
             # only a loose sleeve around a bare / wrapped wrist (#4: 4-8 sleeve bins, wrist 0.09 L off the bone). Suits and
             # gauntlets (#1738, #4722: wrist ring 0.22 L off) and every Rebel without a sleeve layer keep the v2.9 cuff.
-            if 0.08 * L < R_ < 0.3 * L and gapbins >= 3 and np.linalg.norm(o_) < 0.15 * L:
+            # v2.18 NPCs: the glove goes to the middle of the wrist / arm guard opening whenever the wrist joint sits off
+            # its centre (Shogun: 0.16 L and 0.24 L off, the hand hung out of the bottom of the cuff)
+            if (0.08 * L < R_ < 0.3 * L and gapbins >= 3 and np.linalg.norm(o_) < 0.15 * L) or (NPCM and 0.08 * L < R_ < 0.35 * L and 0.05 * L < np.linalg.norm(o_) < 0.35 * L):
                 fixw = True; off = o_
                 uu = u_[keep] - off[0]; vv = v_[keep] - off[1]; r2 = np.hypot(uu, vv)
                 girth = float(np.clip(np.percentile(r2, 92), 0.14 * L, 0.32 * L))
@@ -134,7 +155,12 @@ for side in ('Left', 'Right'):
     prof = np.clip((np.roll(prof, 1) + 2 * prof + np.roll(prof, -1)) / 4, 0.12 * L, 0.34 * L)
     print(f'handswap {side} cuff shape {prof.max() / np.median(prof):.2f}')   # v2.10 QA: a flared cuff reads as a lump at the wrist
     cut |= rm
-    plan[side] = dict(W=W + off[0] * y + off[1] * z, x=x, y=y, z=z, L=L, girth=girth, bend=bend, col=col, ccol=ccol, prof=prof, mirror=(side == 'Left'))
+    f_ = FIT.get(side) or {}
+    fit = np.clip([float(f_.get(k, 0) or 0) for k in ('along', 'thumb', 'back')], -0.6, 0.6) * L
+    size = float(np.clip(float(f_.get('size', 1) or 1), 0.6, 1.5))
+    thumb_ax = -y if side == 'Left' else y     # the left glove is mirrored: its thumb is on -y
+    if f_: print(f'handswap {side} hand fit: along {fit[0]:+.3f} thumb {fit[1]:+.3f} back {fit[2]:+.3f} size x{size:.2f}')
+    plan[side] = dict(W=W + off[0] * y + off[1] * z + fit[0] * x + fit[1] * thumb_ax + fit[2] * z, x=x, y=y, z=z, L=L * size, girth=girth, bend=bend, col=col, ccol=ccol, prof=prof, mirror=(side == 'Left'))
     print(f'handswap {side}: hand length {L:.3f} (reach {reach:.3f}, forearm {fore:.3f}) wrist girth {girth:.3f} (raw {girth_raw:.3f}) '
           f'sleeve end {bend:+.3f} verts removed {int(rm.sum())} glove colour {np.round(col, 3).tolist()}')
 
