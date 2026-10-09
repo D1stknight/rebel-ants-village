@@ -2228,6 +2228,49 @@ const BOOK1_WIRING = {
         { id:'sit-by-fire', objective:'Sit by the fire outside the Ronin gate.', objectiveType:'useQuestSpot', targetObjectId:'ronin-campfire', villageId:'ronin' },
         { id:'hear-story', objective:'Listen to the Ronin Wanderer\'s story.', objectiveType:'talkToNpc', targetNpcId:'ronin-wanderer-01', villageId:'ronin',
           say:['I left the Ronin once. Swore I would never come back.', 'But the tunnels called every exile home, one by one. That is how I knew the warning was real.', 'The Ronin warm themselves with stories when fire is not enough.'] }
+      ] },
+    15: { giver:'buke-scholar-01',
+      offer:['The canals sit right over the pressure lines. If anything cracks first, it will be a footbridge.', 'Check both footbridges and the west canal spout for me.'],
+      steps:[
+        { id:'check-points', objective:'Check the two footbridges and the west canal spout.', objectiveType:'useQuestSpot', targetObjectId:'buke-bridge-point', count:3, villageId:'buke' },
+        { id:'report-engineer', objective:'Tell the Buke Engineer what you found.', objectiveType:'talkToNpc', targetNpcId:'buke-scholar-01', villageId:'buke',
+          say:['A hairline crack under the east bridge, and the spout is weeping. Not failing. Complaining.', 'A bridge complains before it fails. We listen.'] }
+      ] },
+    16: { giver:'buke-villager-01',
+      offer:['My blueprint case washed out of the archive in the last rain. Those drawings are the only copy of the tunnel lines.', 'Find it, and dry the drawings by a lantern before the ink runs.'],
+      steps:[
+        { id:'find-case', objective:'Find the Buke blueprint case.', objectiveType:'collectCollectible', targetObjectId:'buke-blueprint-case', villageId:'buke' },
+        { id:'dry-drawings', objective:'Dry the drawings by the lantern at the strategy hall.', objectiveType:'useQuestSpot', targetObjectId:'buke-blueprint-lantern', villageId:'buke' },
+        { id:'return-draftsman', objective:'Bring the drawings back to the Buke Draftsman.', objectiveType:'talkToNpc', targetNpcId:'buke-villager-01', villageId:'buke',
+          say:['The lines held. Barely.', 'Rain tried to erase what the Buke had already measured. It did not win.'] }
+      ] },
+    23: { giver:'sohei-bellkeeper-01',
+      offer:['The old bell masters wrote down every tone. The wind scattered their notes across the compound.', 'Bring the three notes back before the rain ruins them.'],
+      steps:[
+        { id:'find-notes', objective:'Find three bell notes around the Sohei compound.', objectiveType:'collectCollectible', targetObjectId:'sohei-bell-note', count:3, villageId:'sohei' },
+        { id:'return-notes', objective:'Bring the bell notes to the Sohei Bell Keeper.', objectiveType:'talkToNpc', targetNpcId:'sohei-bellkeeper-01', villageId:'sohei',
+          say:['Low, lower, lowest. Each bell rings deeper where the tunnel under it runs deeper.', 'The bells made a map without drawing one.'] }
+      ] },
+    24: { giver:'sohei-monk-01',
+      offer:['When the ground shakes, hands shake too. A prayer thread steadies them.', 'Tie this thread at three lanterns: by the dojo stairs, by the pond and in the zen garden.'],
+      steps:[
+        { id:'tie-thread', objective:'Tie the prayer thread at three lanterns: the dojo stairs, the pond and the zen garden.', objectiveType:'useQuestSpot', targetObjectId:'sohei-prayer-lantern', count:3, villageId:'sohei' },
+        { id:'return-acolyte', objective:'Return to the Sohei Acolyte.', objectiveType:'talkToNpc', targetNpcId:'sohei-monk-01', villageId:'sohei',
+          say:['The thread did not stop the tremor. But look at your hands: steady.', 'That is all a prayer is for.'] }
+      ] },
+    25: { giver:'yamabushi-monk-01',
+      offer:['Some stones on this mountain breathe. Cold air, from far below.', 'Find three of them and tell me which way they breathe.'],
+      steps:[
+        { id:'find-stones', objective:'Find three breathing stones on the mountain top.', objectiveType:'useQuestSpot', targetObjectId:'yam-breathing-stone', count:3, villageId:'yamabushi' },
+        { id:'tell-seer', objective:'Tell the Yamabushi Seer which way the stones breathe.', objectiveType:'talkToNpc', targetNpcId:'yamabushi-monk-01', villageId:'yamabushi',
+          say:['All three breathe toward the valley. The mountain is breathing out what the tunnels breathe in.', 'The stones remember a mountain underground.'] }
+      ] },
+    26: { giver:'yamabushi-villager-01',
+      offer:['Scouts come back from the cliff paths shaking. Root tea calms them.', 'Three root herbs grow up here, in places only the brave go. Bring them to me.'],
+      steps:[
+        { id:'gather-herbs', objective:'Gather three root herbs at the edges of the mountain top.', objectiveType:'collectCollectible', targetObjectId:'yam-root-herb', count:3, villageId:'yamabushi' },
+        { id:'return-herbalist', objective:'Bring the root herbs to the Yamabushi Herbalist.', objectiveType:'talkToNpc', targetNpcId:'yamabushi-villager-01', villageId:'yamabushi',
+          say:['Good. Steep them slowly.', 'The tea does not cure fear. It gives fear a smaller chair.'] }
       ] }
   },
   badges: { 2:'story-dust-reader' }
@@ -2302,7 +2345,7 @@ const BOOK1_SIDE_QUESTS = [
   makeBook1SideQuest(13, 'Shogun Seal Ribbons', 'Shogun Village', 'Shogun Herald', 'Recover ribbons used to seal official warnings.', ['Find three seal ribbons.'], ['+40 progress','Shogun lore entry'], 'Authority travels farther when tied with the right ribbon.'),
   makeBook1SideQuest(14, 'The Quiet Court', 'Shogun Village', 'Court Scribe', 'The court records a silence after every tremor.', ['Read two court notes.','Speak with the scribe.'], ['+45 progress','Journal: Quiet Court'], 'Silence can be evidence when everyone hears it at once.'),
   makeBook1SideQuest(15, 'Buke Bridge Stress', 'Buke Village', 'Buke Engineer', 'Check bridges for underground pressure damage.', ['Inspect three bridge points.'], ['+50 progress','Builder progress'], 'A bridge complains before it fails.'),
-  makeBook1SideQuest(16, 'Blueprints In Rain', 'Buke Village', 'Buke Engineer', 'Recover wet blueprints before tunnel markings fade.', ['Find the blueprint case.','Dry it near a lantern.'], ['+45 progress','Journal: Wet Blueprint'], 'Rain tried to erase what the Buke had already measured.'),
+  makeBook1SideQuest(16, 'Blueprints In Rain', 'Buke Village', 'Buke Draftsman', 'Recover wet blueprints before tunnel markings fade.', ['Find the blueprint case.','Dry it near a lantern.'], ['+45 progress','Journal: Wet Blueprint'], 'Rain tried to erase what the Buke had already measured.'),
   makeBook1SideQuest(17, 'Kenshi Edge Trial', 'Kenshi Village', 'Kenshi Duelist', 'A Kenshi trial tests focus amid tremors.', ['Visit the trial marker.','Hold position through the tremor.'], ['+50 progress','Kenshi trust progress'], 'The edge is not on the blade. It is in the breath before movement.'),
   makeBook1SideQuest(18, 'Duelist Witness', 'Kenshi Village', 'Kenshi Duelist', 'A duelist saw an old tunnel symbol on broken stone.', ['Find the broken stone.','Sketch the symbol.'], ['+45 progress','Journal: Broken Stone Symbol'], 'The symbol looked carved, then grown, then carved again.'),
   makeBook1SideQuest(19, 'Wokou Ledger', 'Wokou Village', 'Wokou Broker', 'A Wokou ledger lists relics that should not exist.', ['Inspect the ledger.','Mark three suspicious relics.'], ['+50 progress','Wokou lore entry'], 'The ledger was honest enough to be dangerous.'),
@@ -2312,7 +2355,7 @@ const BOOK1_SIDE_QUESTS = [
   makeBook1SideQuest(23, 'Sohei Bell Notes', 'Sohei Village', 'Sohei Bell Keeper', 'Recover notes on bell tones tied to tunnel depth.', ['Find three bell notes.'], ['+50 progress','Sohei lore entry'], 'The bells made a map without drawing one.'),
   makeBook1SideQuest(24, 'Prayer Thread', 'Sohei Village', 'Sohei Acolyte', 'Carry a prayer thread between quiet markers.', ['Visit three prayer markers.'], ['+45 progress','Journal: Prayer Thread'], 'The thread did not stop the tremor, but it steadied the hands that felt it.'),
   makeBook1SideQuest(25, 'Yamabushi Stone Breath', 'Yamabushi Village', 'Yamabushi Seer', 'Find stones that breathe cold tunnel air.', ['Inspect three breathing stones.'], ['+50 progress','Yamabushi lore entry'], 'The stones breathed like they were remembering a mountain underground.'),
-  makeBook1SideQuest(26, 'Mountain Root Tea', 'Yamabushi Village', 'Yamabushi Seer', 'Gather herbs used to calm tremor-sick scouts.', ['Collect three root herbs.'], ['+40 progress','Collectible unlock: Root Herbs'], 'The tea did not cure fear. It gave fear a smaller chair.'),
+  makeBook1SideQuest(26, 'Mountain Root Tea', 'Yamabushi Village', 'Yamabushi Herbalist', 'Gather herbs used to calm tremor-sick scouts.', ['Collect three root herbs.'], ['+40 progress','Collectible unlock: Root Herbs'], 'The tea did not cure fear. It gave fear a smaller chair.'),
   makeBook1SideQuest(27, 'Friend Village Welcome', 'Friend Villages', 'Traveling Guide', 'Visit a friend village signpost and record its welcome.', ['Visit any friend village marker.'], ['+45 progress','Community progress'], 'The Universe grows wider when friends build beside it.'),
   makeBook1SideQuest(28, 'Friend Village Gift', 'Friend Villages', 'Traveling Guide', 'Find a small gift left by a friend village.', ['Find one friend village gift marker.'], ['+45 progress','Journal: Friend Gift'], 'A gift from another village can make the colony feel less alone.'),
   makeBook1SideQuest(29, 'Hidden Tunnels', 'Hub / Any Village', 'Hub Guide', 'Find optional tunnel signs hidden away from main roads.', ['Discover two hidden tunnel signs.'], ['+60 progress','Secret progress'], 'The hidden tunnels do not ask to be found. That is why finding them matters.'),
