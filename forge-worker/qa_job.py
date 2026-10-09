@@ -68,6 +68,51 @@ for c in CLIPS:
             q = np.array([[f_.evaluate(fr) for f_ in fc] for fr in range(f0, f1 + 1)]); q /= np.linalg.norm(q, axis=1, keepdims=True)
             d = np.abs((q[1:] * q[:-1]).sum(1)); pop = max(pop, float(np.degrees(2 * np.arccos(np.clip(d, 0, 1))).max()) if len(d) else 0.0)
         npc[c] = {'tear': round(nq['tear'], 3), 'lean': [round(nq['lean'][0], 1), round(nq['lean'][1], 1)], 'floorCm': round(nq['floor'] * 100, 1), 'headPop': round(pop, 1), 'endCm': round(nq['end'] * 100, 1)}
+if NPC:
+    # v2.17 arms fused to the body: when the renders show the arms against the sides, the sculpt joins the inner arm to
+    # the chest (the Bushi) and every arm move pulls a web out of the chest. Tested on the exported GLB (what the village
+    # shows; on the full mesh the web spreads over several thin rows): both upper arms raised 100 deg in the plane of
+    # the arm and the vertical; faces joining the arm / forearm to the lower torso that then span more than 10 % of the
+    # height are the web. Clean villagers 0-12 cm2 (armpit), fused 270-400 cm2.
+    from mathutils import Vector, Quaternion
+    try:
+        before = set(bpy.data.objects); bpy.ops.import_scene.gltf(filepath=glb); new_ = [o for o in bpy.data.objects if o not in before]
+        garm = next(o for o in new_ if o.type == 'ARMATURE')
+        gme = max((o for o in new_ if o.type == 'MESH' and o.data.materials and o.vertex_groups), key=lambda o: len(o.data.vertices))
+        if garm.animation_data:
+            for t in garm.animation_data.nla_tracks: t.mute = True
+            garm.animation_data.action = None
+        for pb in garm.pose.bones: pb.matrix_basis.identity()
+        bpy.context.view_layer.update()
+        gn_ = {g.index: g.name for g in gme.vertex_groups}
+        gdom = [gn_.get(max(v.groups, key=lambda g: g.weight).group, '') if v.groups else '' for v in gme.data.vertices]
+        ARMV = np.array([bool(re.match(r'mixamorig_(Left|Right)(Arm|ForeArm)$', d)) for d in gdom])
+        LOWV = np.array([bool(re.match(r'mixamorig_(Hips|Spine|Spine1)$', d)) for d in gdom])
+        def gworld():
+            dg = bpy.context.evaluated_depsgraph_get(); ev = gme.evaluated_get(dg); m = ev.to_mesh()
+            V = np.zeros(len(m.vertices) * 3); m.vertices.foreach_get('co', V); ev.to_mesh_clear()
+            Mg = np.array(gme.matrix_world); return V.reshape(-1, 3) @ Mg[:3, :3].T + Mg[:3, 3]
+        GH = float(np.ptp(gworld()[:, 2])) or 1.0
+        up = (garm.matrix_world.inverted().to_3x3() @ Vector((0, 0, 1))).normalized()
+        for sd in ('Left', 'Right'):
+            pb = garm.pose.bones.get(f'mixamorig_{sd}Arm')
+            if not pb: continue
+            M = pb.matrix.copy(); y = (M.to_3x3() @ Vector((0, 1, 0))).normalized(); ax = y.cross(up).normalized()
+            R = Quaternion(ax, math.radians(100)).to_matrix()
+            if (R @ y).dot(up) < y.dot(up): R = Quaternion(ax, -math.radians(100)).to_matrix()
+            M2 = (R @ M.to_3x3()).to_4x4(); M2.translation = M.translation; pb.matrix = M2; bpy.context.view_layer.update()
+        VR = gworld(); web = 0.0; webn = 0; longest = 0.0
+        for poly in gme.data.polygons:
+            f = list(poly.vertices)
+            if not (ARMV[f].any() and LOWV[f].any()): continue
+            p_ = VR[f]; span = max(float(np.linalg.norm(p_[k] - p_[(k + 1) % len(f)])) for k in range(len(f)))
+            longest = max(longest, span)
+            if span > 0.10 * GH:
+                web += sum(float(np.linalg.norm(np.cross(p_[k] - p_[0], p_[k + 1] - p_[0]))) for k in range(1, len(f) - 1)) / 2; webn += 1
+        k2 = (1.8 / GH) ** 2                                         # the sculpts are normalised to ~1.8 m
+        npc['armsFused'] = {'webCm2': round(web * 1e4 * k2, 1), 'faces': webn, 'longestCm': round(longest * 100 * 1.8 / GH, 1)}
+    except Exception as e_:
+        npc['armsFused'] = {'error': str(e_)[:200]}
 # GLB sanity
 b = open(glb, 'rb').read(); jl = struct.unpack('<I', b[12:16])[0]; g = json.loads(b[20:20 + jl])
 names = [x.get('name') for x in g.get('animations', [])]
@@ -101,6 +146,9 @@ if NPC:
     # villagers stand, talk and gesture: pieces torn free, leftover glove parts, a sitting / leaning body, sinking into
     # the floor or a head that snaps are what a player notices (each one was seen on the old villagers)
     if npc.get('strays'): fails.append(f"{npc['strays']} glove vertices are not driven by the hand (pieces stay behind)")
+    af = npc.get('armsFused', {}).get('webCm2', 0) or 0
+    if af > 120: fails.append(f"arms fused to the body: {af:.0f} cm² of web pulls out of the chest when the arms lift (re-sculpt from renders with a gap between the arms and the body)")
+    elif af > 50: reasons.append(f"arms partly fused to the body: {af:.0f} cm² of web under the arms when they lift")
     for c in CLIPS:
         q = npc.get(c)
         if not q: continue
