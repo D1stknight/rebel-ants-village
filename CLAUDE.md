@@ -281,3 +281,9 @@ Friend villages (Queens, Cute & Creepy, Saints LA; Chumps not in registry yet): 
 - Layouts: buke.json 4 NPCs -> libraryKey buke_villager; ashigaru.json 5 NPCs -> ashigaru_villager (Hub's 8 already had it). Miguel: reload those villages before a Hard Save, or an older page state drops the keys.
 - Headless village shots of forged NPCs: swiftshader runs ~0.2 fps, so the 0.12-per-frame clip blend leaves NPCs near the rest pose; restart the playing group with enableBlending false before the shot (t/villnpc.mjs pattern).
 
+## Fused-arms check (worker 2.17, Oct 9)
+- Bushi (both sculpts build_1791504896725 / build_1791507294993, same renders): the renders had the arms against the chest armour, so the inner arms are fused to the chest; arm moves pull bat-wing webs (waving / rallying) and a patch under the arm in talking. Fix = re-sculpt from renders with a gap between arms and body.
+- qa_job.py NPC: imports the exported GLB (on the full blend the web spreads over thin rows and scores ~8 cm2), raises both Arm bones 100 deg, sums the area of faces joining Arm/ForeArm-dominant to Hips/Spine/Spine1-dominant vertices that then span > 10% of the height -> npc.armsFused {webCm2, faces, longestCm}; fail > 120 cm2, review > 50. Ashigaru 11.5, Buke 0, Bushi 273 / 394.
+- npc-forge.html: checks panel line 'Arms raised: N cm2', clip table skips non-clip entries, approve warning quotes the first failure.
+- All faction villages pre-linked (layout libraryKey <faction>_villager): each switches to its forged model on approval. Wokou village has no NPCs placed. Chumpz / Saints NPCs match their own-id keys, no linking needed.
+
