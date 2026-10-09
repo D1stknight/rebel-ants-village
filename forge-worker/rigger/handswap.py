@@ -44,7 +44,7 @@ def srgb2lin(c): return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) 
 # glove 40 % bigger than the other (Shogun). Rebels keep their own per-hand sizes.
 NPCM = bool(os.environ.get('FORGE_NPC'))
 HGT = float(co[:, 2].max() - co[:, 2].min())
-# the NPC Forge hands panel: per side {along, thumb, back} (fractions of the hand length) and size (x)
+# the NPC Forge hands panel: per side {along, thumb, back} (fractions of the hand length), size (x), v2.20 cuffSize and cuffLen (x)
 try: FIT = json.loads(os.environ.get('FORGE_HAND_FIT') or '{}') or {}
 except Exception: FIT = {}
 L_NPC = None
@@ -158,9 +158,11 @@ for side in ('Left', 'Right'):
     f_ = FIT.get(side) or {}
     fit = np.clip([float(f_.get(k, 0) or 0) for k in ('along', 'thumb', 'back')], -0.6, 0.6) * L
     size = float(np.clip(float(f_.get('size', 1) or 1), 0.6, 1.5))
+    # v2.20 the cuff's own width (where it sits in the sleeve) and length (from the wrist back into the sleeve)
+    cuffw = float(np.clip(float(f_.get('cuffSize', 1) or 1), 0.5, 1.5)); cuffl = float(np.clip(float(f_.get('cuffLen', 1) or 1), 0.4, 1.6))
     thumb_ax = -y if side == 'Left' else y     # the left glove is mirrored: its thumb is on -y
-    if f_: print(f'handswap {side} hand fit: along {fit[0]:+.3f} thumb {fit[1]:+.3f} back {fit[2]:+.3f} size x{size:.2f}')
-    plan[side] = dict(W=W + off[0] * y + off[1] * z + fit[0] * x + fit[1] * thumb_ax + fit[2] * z, x=x, y=y, z=z, L=L * size, girth=girth, bend=bend, col=col, ccol=ccol, prof=prof, mirror=(side == 'Left'))
+    if f_: print(f'handswap {side} hand fit: along {fit[0]:+.3f} thumb {fit[1]:+.3f} back {fit[2]:+.3f} size x{size:.2f} cuff x{cuffw:.2f} cuff length x{cuffl:.2f}')
+    plan[side] = dict(W=W + off[0] * y + off[1] * z + fit[0] * x + fit[1] * thumb_ax + fit[2] * z, x=x, y=y, z=z, L=L * size, girth=girth, bend=bend, col=col, ccol=ccol, prof=prof, mirror=(side == 'Left'), cuffw=cuffw, cuffl=cuffl)
     print(f'handswap {side}: hand length {L:.3f} (reach {reach:.3f}, forearm {fore:.3f}) wrist girth {girth:.3f} (raw {girth_raw:.3f}) '
           f'sleeve end {bend:+.3f} verts removed {int(rm.sum())} glove colour {np.round(col, 3).tolist()}')
 
@@ -261,8 +263,9 @@ for side, pl in plan.items():
             k = float(np.clip(-p[0] / 0.07, 0, 1))
             a1 = -p[1] if pl['mirror'] else p[1]
             b_ = int((np.arctan2(p[2], a1) + np.pi) / (2 * np.pi) * len(pl['prof'])) % len(pl['prof'])
-            tg = 0.97 * pl['prof'][b_]
+            tg = 0.97 * pl['prof'][b_] * pl['cuffw']
             if rad > 1e-6: p[1:] *= (1 - k) + k * (tg / rad)
+            p[0] *= pl['cuffl']
         nvv = bm.verts.new(Bi @ mu.Vector(pl['world'](p).tolist())); vmap[v.index] = nvv
     bm.verts.index_update()
     for f in gb.faces:

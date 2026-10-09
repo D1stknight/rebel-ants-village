@@ -27,14 +27,15 @@ async function headAutoFor(rec) {
   } catch (e) { return false; }
 }
 const DAILY_LIMIT = parseInt(process.env.FORGE_RIG_DAILY_LIMIT || '200', 10);
-// v2.18 NPC Forge hands panel: per hand offsets (fractions of the hand length) and size, glove / cuff colours (#rrggbb)
+// v2.18 NPC Forge hands panel: per hand offsets (fractions of the hand length) and size, glove / cuff colours (#rrggbb);
+// v2.20 per hand cuff width and length (factors)
 function cleanHandFit(h) {
   if (!h || typeof h !== 'object') return null;
   const side = (s) => {
     const o = h[s]; if (!o || typeof o !== 'object') return null;
     const n = (k, lo, hi, d) => { const v = Number(o[k]); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
-    const r = { along: n('along', -0.6, 0.6, 0), thumb: n('thumb', -0.6, 0.6, 0), back: n('back', -0.6, 0.6, 0), size: n('size', 0.6, 1.5, 1) };
-    return r.along || r.thumb || r.back || r.size !== 1 ? r : null;
+    const r = { along: n('along', -0.6, 0.6, 0), thumb: n('thumb', -0.6, 0.6, 0), back: n('back', -0.6, 0.6, 0), size: n('size', 0.6, 1.5, 1), cuffSize: n('cuffSize', 0.5, 1.5, 1), cuffLen: n('cuffLen', 0.4, 1.6, 1) };
+    return r.along || r.thumb || r.back || r.size !== 1 || r.cuffSize !== 1 || r.cuffLen !== 1 ? r : null;
   };
   const hex = (v) => (/^#[0-9a-f]{6}$/i.test(String(v || '')) ? String(v).toLowerCase() : null);
   const out = { Left: side('Left'), Right: side('Right'), glove: hex(h.glove), cuff: hex(h.cuff) };

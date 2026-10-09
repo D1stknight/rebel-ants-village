@@ -24,11 +24,11 @@ async function redis(commands) {
 const text = (v, max) => String(v == null ? '' : v).replace(/[<>]/g, '').slice(0, max);
 const url = (v) => (typeof v === 'string' && URL_OK.test(v) ? v : null);
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
-// the hands panel (rigger 2.18): per hand offsets (fractions of the hand length) and size, glove / cuff colours
+// the hands panel (rigger 2.18): per hand offsets (fractions of the hand length) and size, glove / cuff colours; 2.20 cuff width / length
 const fit = (o) => {
   if (!o || typeof o !== 'object') return null;
   const n = (k, lo, hi, d) => { const v = Number(o[k]); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
-  return { along: n('along', -0.6, 0.6, 0), thumb: n('thumb', -0.6, 0.6, 0), back: n('back', -0.6, 0.6, 0), size: n('size', 0.6, 1.5, 1) };
+  return { along: n('along', -0.6, 0.6, 0), thumb: n('thumb', -0.6, 0.6, 0), back: n('back', -0.6, 0.6, 0), size: n('size', 0.6, 1.5, 1), cuffSize: n('cuffSize', 0.5, 1.5, 1), cuffLen: n('cuffLen', 0.4, 1.6, 1) };
 };
 const hex = (v) => (/^#[0-9a-f]{6}$/i.test(String(v || '')) ? String(v).toLowerCase() : null);
 const handFit = (h) => (h && typeof h === 'object' ? { Left: fit(h.Left), Right: fit(h.Right), glove: hex(h.glove), cuff: hex(h.cuff) } : null);

@@ -77,7 +77,7 @@ step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/armpitfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9c no shards under the arms
                  run "$R/armorfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # re-assert after the cloth cleanups
                  run "$R/seamfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9d cut fingertips fused to the thigh
-                 run "$R/handswap.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 standard 5-finger hands + hand poses; v2.18 NPCs: centred, one size, FORGE_HAND_FIT
+                 run "$R/handswap.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 standard 5-finger hands + hand poses; v2.18 NPCs: centred, one size, FORGE_HAND_FIT (v2.20 + cuff size / length)
                  run "$R/shoulderfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 sleeves ride the arm
                  run "$R/antennafix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.1 jointed antennae with follow-through
 if [ -n "$NPC" ]; then run "$R/npcarms.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.16 NPC arms: no elbow flick, pointing line, wave rebuilt on the villager's own arm (flat shoulder pad, palm forward), claps meet
