@@ -19,6 +19,11 @@ RELMAX_N = math.radians(float(os.environ.get('FORGE_NECK_RELMAX', '3')))    # ne
 UPBIAS = math.radians(float(os.environ.get('FORGE_HEAD_UP', '0')))   # per-model: raise the chin (generators often seat the mask low)
 LIFT = float(os.environ.get('FORGE_NECK_LIFT', '0.022'))    # fraction of body height the head is raised off the collar
 SKIP = set(os.environ.get('FORGE_HEAD_SKIP', 'cartwheel,backflip,front_flip,flip_kick,spin_flip_kick,knockdown,get_up').split(','))
+# v2.19 NPCs: the head's yaw is the twist of its turn about world up. The facing vector's heading flips 180 deg once the
+# bone pitches past vertical against its rest: a Shogun neck reached 92 deg in the jump's landing crouch, so the neck
+# and head turned round for three frames (the "360" of the head). Same yaw as before while the bone is upright-ish
+# (idle / walk / run within 0.5-4 deg). Rebels keep the facing yaw.
+NPCM = bool(os.environ.get('FORGE_NPC'))
 bpy.ops.wm.open_mainfile(filepath=src)
 arm = bpy.data.objects['Armature']; P = 'mixamorig_'; sc = bpy.context.scene
 Aw = arm.matrix_world
@@ -108,7 +113,8 @@ def level(bone, follow, keep, clamp, frames_out):
         sc.frame_set(fi)
         Mw = Aw @ pb.matrix
         D = Mw.to_quaternion() @ Rrest.inverted()
-        f = D @ FWD; yaw = math.atan2(f.y, f.x) - math.atan2(FWD.y, FWD.x)
+        if NPCM: yaw = 2 * math.atan2(D.z, D.w)    # v2.19 NPCs: the twist about world up (see NPCM)
+        else: f = D @ FWD; yaw = math.atan2(f.y, f.x) - math.atan2(FWD.y, FWD.x)
         Y = Quaternion(Z, yaw); F = Y @ FWD
         c = lean(Aw @ pc.matrix, F)                  # chest lean from world vertical (rest chest bones often tip back)
         h = lean(Mw, F) - RLEAN[bone]

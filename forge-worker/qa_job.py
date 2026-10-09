@@ -4,7 +4,7 @@ import bpy, sys, os, json, struct, re, math, numpy as np
 a = sys.argv[sys.argv.index('--') + 1:]; blend, glb, out, logf = a[0], a[1], a[2], a[3]
 NPC = bool(os.environ.get('FORGE_NPC'))   # v2.13 NPC villagers: their own clips and checks (tears, strays, lean, floor, head snaps)
 CLIPS = ['idle', 'walk', 'run', 'talking', 'waving', 'wave_short', 'pick_up', 'bow', 'rallying', 'pointing', 'clapping', 'look_around', 'jump'] if NPC else ['idle', 'walk', 'run', 'punch_combo', 'roundhouse_kick', 'backflip']
-ENDONLY = {'jump'} if NPC else set()   # the Rebels' own jump (deep landing crouch): only checked for landing on the floor
+ENDONLY = {'jump'} if NPC else set()   # the Rebels' own jump (deep landing crouch): only checked for landing on the floor and head snaps
 bpy.ops.wm.open_mainfile(filepath=blend)
 arm = bpy.data.objects['Armature']; me = [o for o in bpy.data.objects if o.type == 'MESH'][0]
 for t in arm.animation_data.nla_tracks: t.mute = True
@@ -153,13 +153,13 @@ if NPC:
         q = npc.get(c)
         if not q: continue
         if q['endCm'] > 5: reasons.append(f"{c}: ends {q['endCm']} cm off the floor")
+        if q['headPop'] > 30: reasons.append(f"{c}: head snaps {q['headPop']} deg in one frame")   # v2.19 the jump too (head turned round)
         if c in ENDONLY: continue
         if q['tear'] > 0.30: fails.append(f"{c}: a piece tears {q['tear']:.2f} of the height long")
         elif q['tear'] > 0.15: reasons.append(f"{c}: stretched faces {q['tear']:.2f} of the height long")
         lim = {'idle': 6, 'talking': 6, 'walk': 9}.get(c)                    # the master walk leans ~6 deg on every Rebel
         if lim and max(abs(q['lean'][0]), abs(q['lean'][1])) > lim: reasons.append(f"{c}: body leans {q['lean']} deg from its rest pose")
         if q['floorCm'] < -3: reasons.append(f"{c}: sinks {-q['floorCm']} cm into the floor")
-        if q['headPop'] > 30: reasons.append(f"{c}: head snaps {q['headPop']} deg in one frame")
 reasons = fails + reasons
 res = {'verdict': 'fail' if fails else ('review' if reasons else 'pass'), 'reasons': reasons, 'stretch': stretch, 'glb': glbinfo, 'rig': rig, 'rest': {'width': round(Wd / H, 3), 'depth': round(Dp / H, 3)}, **({'npc': npc} if NPC else {})}
 json.dump(res, open(out, 'w'), indent=1)
