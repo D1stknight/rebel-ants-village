@@ -105,6 +105,10 @@ small{color:var(--dim)}
             <label>Size <input type="range" id="hfSize" min="70" max="140" step="1" value="100" oninput="handInput()"><b id="hfSizeV">100%</b></label>
           </div>
           <div class="row hands" style="margin-top:6px">
+            <label>Cuff size <input type="range" id="hfCuffS" min="50" max="150" step="1" value="100" oninput="handInput()"><b id="hfCuffSV">100%</b></label>
+            <label>Cuff length <input type="range" id="hfCuffL" min="40" max="160" step="1" value="100" oninput="handInput()"><b id="hfCuffLV">100%</b></label>
+          </div>
+          <div class="row hands" style="margin-top:6px">
             <label>Glove <input type="color" id="hfGlove" oninput="handColour('glove')"></label><label><input type="checkbox" id="hfGloveAuto" onchange="handColour('glove')"> from the sculpt</label>
             <label>Cuff <input type="color" id="hfCuff" oninput="handColour('cuff')"></label><label><input type="checkbox" id="hfCuffAuto" onchange="handColour('cuff')"> from the sculpt</label>
             <button onclick="resetHands()">Reset</button><button class="gold" id="applyHandsBtn" onclick="applyHands()">Apply hands</button>
@@ -403,13 +407,14 @@ function renderQA(n) {
 }
 
 /* ---------- hands: move, size and colour the gloves, preview, re-rig with them ---------- */
-// n.handFit = { Left: {along, thumb, back, size}, Right: {...}, glove: '#rrggbb' | null, cuff: ... }; offsets are fractions of
-// the hand length (one slider step = 0.025), size a factor. The rigger builds the gloves with them (FORGE_HAND_FIT,
-// rigger 2.18); the preview shows the difference from what this rig was built with (n.rig.handFit).
+// n.handFit = { Left: {along, thumb, back, size, cuffSize, cuffLen}, Right: {...}, glove: '#rrggbb' | null, cuff: ... };
+// offsets are fractions of the hand length (one slider step = 0.025), the rest factors. The rigger builds the gloves with
+// them (FORGE_HAND_FIT, rigger 2.18; cuff size / length 2.20); the preview shows the difference from what this rig was
+// built with (n.rig.handFit).
 // The gloves get their own copy of the skeleton whose Hand bones carry the preview's move / resize, so the finger joints
 // move with the glove as in the re-rigged NPC. Moving only the glove's skin left the fingers bending at their old joints:
 // as they curled in an animation the fingers looked longer and the hands bigger.
-const HF_STEP = 0.025, HF0 = { along: 0, thumb: 0, back: 0, size: 1 };
+const HF_STEP = 0.025, HF0 = { along: 0, thumb: 0, back: 0, size: 1, cuffSize: 1, cuffLen: 1 };
 let handSide = 'both';
 function prepareHands(meshes) {
   const gm = meshes.filter((m) => /^Glove/.test(m.material?.name || '') && m.getTotalVertices() > 0);
@@ -469,7 +474,7 @@ function renderHands() {
   if (!on) return;
   const h = handFitNow(n); const f = fitOf(h, handSide === 'both' ? 'Right' : handSide);
   [['hfAlong', f.along], ['hfThumb', f.thumb], ['hfBack', f.back]].forEach(([id, v]) => { $('#' + id).value = Math.round(v / HF_STEP); $('#' + id + 'V').textContent = (v > 0 ? '+' : '') + Math.round(v / HF_STEP); });
-  $('#hfSize').value = Math.round(f.size * 100); $('#hfSizeV').textContent = Math.round(f.size * 100) + '%';
+  [['hfSize', f.size], ['hfCuffS', f.cuffSize], ['hfCuffL', f.cuffLen]].forEach(([id, v]) => { $('#' + id).value = Math.round(v * 100); $('#' + id + 'V').textContent = Math.round(v * 100) + '%'; });
   document.querySelectorAll('#handSide button').forEach((b) => b.classList.toggle('on', b.dataset.hs === handSide));
   for (const k of ['glove', 'cuff']) {
     const auto = !h[k], id = k === 'glove' ? 'hfGlove' : 'hfCuff'; $('#' + id + 'Auto').checked = auto;
@@ -481,10 +486,10 @@ function renderHands() {
 function pickHandSide(s) { handSide = s; renderHands(); }
 function handInput() {
   const n = npc(selId); if (!n) return; const h = handFitNow(n);
-  const v = { along: +$('#hfAlong').value * HF_STEP, thumb: +$('#hfThumb').value * HF_STEP, back: +$('#hfBack').value * HF_STEP, size: +$('#hfSize').value / 100 };
+  const v = { along: +$('#hfAlong').value * HF_STEP, thumb: +$('#hfThumb').value * HF_STEP, back: +$('#hfBack').value * HF_STEP, size: +$('#hfSize').value / 100, cuffSize: +$('#hfCuffS').value / 100, cuffLen: +$('#hfCuffL').value / 100 };
   (handSide === 'both' ? ['Left', 'Right'] : [handSide]).forEach((s) => { h[s] = { ...v }; });
   [['hfAlong', v.along], ['hfThumb', v.thumb], ['hfBack', v.back]].forEach(([id, x]) => { $('#' + id + 'V').textContent = (x > 0 ? '+' : '') + Math.round(x / HF_STEP); });
-  $('#hfSizeV').textContent = Math.round(v.size * 100) + '%';
+  [['hfSize', v.size], ['hfCuffS', v.cuffSize], ['hfCuffL', v.cuffLen]].forEach(([id, x]) => { $('#' + id + 'V').textContent = Math.round(x * 100) + '%'; });
   save(); previewHands();
 }
 function handColour(k) {
@@ -499,18 +504,19 @@ function previewHands() {
     const d = f.x.scale((now.along - was.along) * Ld).add(f.thumb.scale((now.thumb - was.thumb) * Ld)).add(f.z.scale((now.back - was.back) * Ld));
     const u = f.G.scale(1 - k).add(d);   // bind space: T(p) = k p + u, resized about the glove's origin, then moved
     f.T = { k, u: V3.TransformCoordinates(f.G, f.inv).scale(1 - k).add(V3.TransformNormal(d, f.inv)) };   // the same in the hand bone's space
-    return { f, k, d, u, sL: f.L / 0.95 };
+    return { f, k, d, u, sL: f.L / 0.95, cs: now.cuffSize / (was.cuffSize || 1), cl: now.cuffLen / (was.cuffLen || 1), cl0: was.cuffLen || 1 };
   });
   for (const { m, P0, side, wh, cuff } of H.parts) {
     const P = new Float32Array(P0.length);
     for (let i = 0; i < side.length; i++) {
       const t = tf[side[i]], f = t.f, G = f.G, x = f.x, j = 3 * i, w = wh[i], X = P0[j], Y = P0[j + 1], Z = P0[j + 2];
       // where the re-rigged NPC has this point at rest: the glove moved and resized (T); the cuff moved, its length
-      // following the glove's size, its width the wrist's deeper in the sleeve (the rigger fits the cuff to the sleeve)
+      // following the glove's size x the cuff length, its width the glove's near the hand and the sleeve's x the cuff
+      // size deeper in (the rigger fits the cuff to the sleeve)
       let tx = t.k * X + t.u.x, ty = t.k * Y + t.u.y, tz = t.k * Z + t.u.z;
       if (cuff) {
         const rx = X - G.x, ry = Y - G.y, rz = Z - G.z, a = rx * x.x + ry * x.y + rz * x.z;   // along the arm (<= 0 in the cuff)
-        const kk = Math.min(1, Math.max(0, -a / (0.07 * t.sL))), kr = (1 - kk) * t.k + kk, ax = a * t.k;
+        const kk = Math.min(1, Math.max(0, -a / (0.07 * t.sL * t.cl0))), kr = (1 - kk) * t.k + kk * t.cs, ax = a * t.k * t.cl;
         tx = G.x + t.d.x + x.x * ax + (rx - x.x * a) * kr; ty = G.y + t.d.y + x.y * ax + (ry - x.y * a) * kr; tz = G.z + t.d.z + x.z * ax + (rz - x.z * a) * kr;
       }
       // the glove's Hand bone already moves its share w of the point by T: solve w T(P) + (1 - w) P = target
