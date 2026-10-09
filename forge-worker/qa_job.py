@@ -38,6 +38,35 @@ if NPC:
         v = me.data.vertices[i]; tot = sum(g.weight for g in v.groups) or 1.0
         if sum(g.weight for g in v.groups if g.group in hand) / tot < 0.5: strays += 1
     npc['strays'] = strays
+    # v2.21 the cuff must stay in the sleeve: cuff vertices in their forearm's frame as (along the cuff's axis, distance
+    # from it), so a round cuff spinning with the hand's twist doesn't count (it moved up to 10 cm in talking before)
+    from mathutils import Vector as _V
+    cmi_ = {i for i, m in enumerate(me.data.materials) if m and m.name == 'GloveCuff'}; CUFF = {}; cvs = {'Left': set(), 'Right': set()}
+    for poly in me.data.polygons:
+        if poly.material_index in cmi_:
+            for vi in poly.vertices: cvs['Left' if 'Left' in dom[vi] else 'Right'].add(vi)
+    for s_, idx in cvs.items():
+        pf_, hb_ = arm.pose.bones.get(f'mixamorig_{s_}ForeArm'), arm.data.bones.get(f'mixamorig_{s_}Hand')
+        if len(idx) < 20 or pf_ is None or hb_ is None: continue
+        idx = np.array(sorted(idx)); Fi = np.linalg.inv(np.array(arm.matrix_world @ pf_.bone.matrix_local)); P0_ = VW0[idx] @ Fi[:3, :3].T + Fi[:3, 3]
+        cbn_ = arm.data.bones.get(f'mixamorig_{s_}ForeArmCuff')   # the cuff's own axis (its bone, else elbow -> wrist)
+        axw = (cbn_.matrix_local.to_3x3() @ _V((0, 1, 0))) if cbn_ else (hb_.head_local - pf_.bone.head_local)
+        ax = Fi[:3, :3] @ np.array((arm.matrix_world.to_3x3() @ axw)[:]); ax /= np.linalg.norm(ax)
+        def cyl(Pf, c0=P0_.mean(0), ax=ax): d = Pf - c0; a_ = d @ ax; return a_, np.linalg.norm(d - np.outer(a_, ax), axis=1)
+        CUFF[s_] = (idx, pf_, cyl, cyl(P0_))
+
+
+def head_pop(act):
+    # largest one-frame turn of the head / neck (keys are per frame)
+    f0_, f1_ = [int(x) for x in act.frame_range]; cb = act.layers[0].strips[0].channelbag(act.slots[0]); pop = 0.0
+    for b in ('mixamorig_Head', 'mixamorig_Neck'):
+        fc = [cb.fcurves.find(f'pose.bones["{b}"].rotation_quaternion', index=i) for i in range(4)]
+        if not all(fc): continue
+        q = np.array([[f_.evaluate(fr) for f_ in fc] for fr in range(f0_, f1_ + 1)]); q /= np.linalg.norm(q, axis=1, keepdims=True)
+        d = np.abs((q[1:] * q[:-1]).sum(1)); pop = max(pop, float(np.degrees(2 * np.arccos(np.clip(d, 0, 1))).max()) if len(d) else 0.0)
+    return pop
+
+
 for c in CLIPS:
     act = bpy.data.actions.get(c)
     if not act: continue
@@ -53,6 +82,9 @@ for c in CLIPS:
             torn = L1[(r > 2.5)]; nq['tear'] = max(nq['tear'], float(torn.max()) / Hn if torn.size else 0.0)
             ln = lean(VW) - lean0; nq['lean'] = [min(nq['lean'][0], ln), max(nq['lean'][1], ln)]
             nq['floor'] = min(nq['floor'], float(VW[:, 2].min()) - floor0)
+            for s_, (idx, pf_, cyl, (a0, r0)) in CUFF.items():
+                Fi = np.linalg.inv(np.array(arm.matrix_world @ pf_.matrix)); a1, r1 = cyl(VW[idx] @ Fi[:3, :3].T + Fi[:3, 3])
+                nq['cuff'] = max(nq.get('cuff', 0.0), float(np.max(np.maximum(np.abs(a1 - a0), np.abs(r1 - r0)))))
     w = np.array(worst)
     stretch[c] = {'p999': round(float(w[:, 0].max()), 2), 'edges2x': int(w[:, 1].max())}
     if NPC:
@@ -60,14 +92,11 @@ for c in CLIPS:
         sc.frame_set(f1); dg = bpy.context.evaluated_depsgraph_get(); ev = me.evaluated_get(dg); m = ev.to_mesh()
         V = np.zeros(len(m.vertices) * 3); m.vertices.foreach_get('co', V); ev.to_mesh_clear()
         nq['end'] = float((V.reshape(-1, 3) @ Mw[:3, :3].T + Mw[:3, 3])[:, 2].min()) - floor0
-        # head snaps: largest one-frame turn of the head / neck (keys are per frame)
-        cb = act.layers[0].strips[0].channelbag(act.slots[0]); pop = 0.0
-        for b in ('mixamorig_Head', 'mixamorig_Neck'):
-            fc = [cb.fcurves.find(f'pose.bones["{b}"].rotation_quaternion', index=i) for i in range(4)]
-            if not all(fc): continue
-            q = np.array([[f_.evaluate(fr) for f_ in fc] for fr in range(f0, f1 + 1)]); q /= np.linalg.norm(q, axis=1, keepdims=True)
-            d = np.abs((q[1:] * q[:-1]).sum(1)); pop = max(pop, float(np.degrees(2 * np.arccos(np.clip(d, 0, 1))).max()) if len(d) else 0.0)
-        npc[c] = {'tear': round(nq['tear'], 3), 'lean': [round(nq['lean'][0], 1), round(nq['lean'][1], 1)], 'floorCm': round(nq['floor'] * 100, 1), 'headPop': round(pop, 1), 'endCm': round(nq['end'] * 100, 1)}
+        pop = head_pop(act)
+        npc[c] = {'tear': round(nq['tear'], 3), 'lean': [round(nq['lean'][0], 1), round(nq['lean'][1], 1)], 'floorCm': round(nq['floor'] * 100, 1), 'headPop': round(pop, 1), 'endCm': round(nq['end'] * 100, 1), **({'cuffCm': round(nq.get('cuff', 0.0) * 100, 1)} if CUFF else {})}
+if NPC:
+    # v2.21 head snaps in every other clip too (flip_kick turned the head round on rigs before 2.19)
+    npc['headSnaps'] = {a_.name: round(p_, 1) for a_ in bpy.data.actions if a_.name not in CLIPS and a_.layers for p_ in [head_pop(a_)] if p_ > 30}
 if NPC:
     # v2.17 arms fused to the body: when the renders show the arms against the sides, the sculpt joins the inner arm to
     # the chest (the Bushi) and every arm move pulls a web out of the chest. Tested on the exported GLB (what the village
@@ -149,11 +178,13 @@ if NPC:
     af = npc.get('armsFused', {}).get('webCm2', 0) or 0
     if af > 120: fails.append(f"arms fused to the body: {af:.0f} cm² of web pulls out of the chest when the arms lift (re-sculpt from renders with a gap between the arms and the body)")
     elif af > 50: reasons.append(f"arms partly fused to the body: {af:.0f} cm² of web under the arms when they lift")
+    for c, v in (npc.get('headSnaps') or {}).items(): reasons.append(f"{c}: head snaps {v} deg in one frame")
     for c in CLIPS:
         q = npc.get(c)
         if not q: continue
         if q['endCm'] > 5: reasons.append(f"{c}: ends {q['endCm']} cm off the floor")
         if q['headPop'] > 30: reasons.append(f"{c}: head snaps {q['headPop']} deg in one frame")   # v2.19 the jump too (head turned round)
+        if q.get('cuffCm', 0) > 1.5: reasons.append(f"{c}: the cuff moves {q['cuffCm']} cm in the sleeve")
         if c in ENDONLY: continue
         if q['tear'] > 0.30: fails.append(f"{c}: a piece tears {q['tear']:.2f} of the height long")
         elif q['tear'] > 0.15: reasons.append(f"{c}: stretched faces {q['tear']:.2f} of the height long")
