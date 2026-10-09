@@ -371,12 +371,13 @@ function camView(v, now) {
 }
 function renderQA(n) {
   const box = $('#qaBox'); const qa = n?.rig?.qa;
-  if (!qa) { box.innerHTML = n ? '<span class="state">Checks appear after rigging.</span>' : 'The Forge Rigger checks every NPC for torn pieces, leftover parts, leaning or sitting, sinking into the floor and head snaps.'; return; }
-  const rows = Object.entries(qa.npc || {}).filter(([k, v]) => v && typeof v === 'object').map(([k, v]) => {
+  if (!qa) { box.innerHTML = n ? '<span class="state">Checks appear after rigging.</span>' : 'The Forge Rigger checks every NPC for arms fused to the body, torn pieces, leftover parts, leaning or sitting, sinking into the floor and head snaps.'; return; }
+  const rows = Object.entries(qa.npc || {}).filter(([k, v]) => v && typeof v === 'object' && Array.isArray(v.lean)).map(([k, v]) => {
     const t = v.tear > 0.3 ? 'bad' : v.tear > 0.15 ? 'warn' : ''; const lim = { idle: 6, talking: 6, walk: 9 }[k]; const l = lim && Math.max(Math.abs(v.lean[0]), Math.abs(v.lean[1])) > lim ? 'warn' : ''; const f = v.floorCm < -3 ? 'warn' : ''; const h = v.headPop > 30 ? 'warn' : '';
     return `<tr><td>${k}</td><td class="${t}">${v.tear}</td><td class="${l}">${v.lean[0]}..${v.lean[1]}</td><td class="${f}">${v.floorCm}</td><td class="${h}">${v.headPop}</td></tr>`; }).join('');
   box.innerHTML = `<div class="row"><span class="verdict v-${qa.verdict}">${qa.verdict}</span><small>${qa.glb ? `${qa.glb.animations} clips · ${Math.round((qa.glb.tris || 0) / 1000)}k tris · ${((qa.glb.bytes || 0) / 1048576).toFixed(1)} MB` : ''}</small></div>
     ${(qa.reasons || []).length ? `<ul style="margin:6px 0;padding-left:18px">${qa.reasons.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : '<div class="state" style="margin:6px 0">Nothing found.</div>'}
+    ${Number.isFinite(qa.npc?.armsFused?.webCm2) ? `<div class="state" style="margin:4px 0">Arms raised: <b class="${qa.npc.armsFused.webCm2 > 120 ? 'bad' : qa.npc.armsFused.webCm2 > 50 ? 'warn' : ''}">${qa.npc.armsFused.webCm2} cm²</b> of web under the arms (clean under 50, fused over 120)</div>` : ''}
     ${rows ? `<table><tr><th>clip</th><th>tear (×height)</th><th>lean °</th><th>floor cm</th><th>head °/frame</th></tr>${rows}</table>` : ''}`;
 }
 
@@ -397,7 +398,7 @@ async function doApprove() {
   const key = $('#apKey').value === '__new' ? slug($('#apNewKey').value) : $('#apKey').value;
   if (!/^[a-z0-9_]{2,60}$/.test(key)) { toast('Key: 2-60 of a-z, 0-9, _'); return; }
   const qa = n.rig?.qa ? { verdict: n.rig.qa.verdict, reasons: n.rig.qa.reasons || [] } : null;
-  if (qa?.verdict === 'fail' && !confirm('The checks failed for this NPC. Approve anyway?')) return;
+  if (qa?.verdict === 'fail' && !confirm(`The checks failed for this NPC:\n\n${qa.reasons[0] || ''}\n\nApprove anyway?`)) return;
   try {
     await api('/api/npc-library', { action: 'approve', key, entry: { displayName: $('#apName').value || n.name, factionId: slug($('#apFaction').value).replace(/_/g, '-') || null, role: $('#apRole').value, modelUrl: n.rig.url, thumbUrl: n.rig.thumb || null, modelScale: 1.9, buildId: n.buildId, qa } });
     n.approvedKey = key; save(); approveDlg.close(); toast(`Approved as ${key}. Every NPC with that key now wears it.`); loadApproved(); renderList();
