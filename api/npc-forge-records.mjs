@@ -1,5 +1,6 @@
 // NPC Forge records (admin): every NPC in the NPC Forge list (name, key, collection, renders, build, rig, checks), kept
-// on the server so the list is the same on any computer and survives a cleared browser.
+// on the server so the list is the same on any computer and survives a cleared browser. rig.at / rig.worker = when and
+// by which worker image it was rigged; hands = { at, doneAt } of the last Apply hands.
 //   GET                                   -> { ok, records: [record, ...] }   newest first
 //   POST {action:'save', records:[...]}   -> store / replace records (by id)
 //   POST {action:'remove', id}            -> drop one record (its build, rig and any approved NPC stay)
@@ -24,6 +25,7 @@ async function redis(commands) {
 const text = (v, max) => String(v == null ? '' : v).replace(/[<>]/g, '').slice(0, max);
 const url = (v) => (typeof v === 'string' && URL_OK.test(v) ? v : null);
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+const iso = (v) => (typeof v === 'string' && v.length <= 40 && /^\d{4}-\d\d-\d\dT[\d:.]+Z$/.test(v) ? v : null);   // kept as sent (the page compares bodies)
 // the hands panel (rigger 2.18): per hand offsets (fractions of the hand length) and size, glove / cuff colours; 2.20 cuff width / length
 const fit = (o) => {
   if (!o || typeof o !== 'object') return null;
@@ -43,8 +45,9 @@ function clean(r) {
     refs, phase: PHASES.has(r.phase) ? r.phase : 'draft', err: r.err ? text(r.err, 600) : null,
     buildId: /^[\w.:-]{1,120}$/.test(String(r.buildId || '')) ? r.buildId : null, stored: !!r.stored, approvedKey: SLUG.test(String(r.approvedKey || '')) ? r.approvedKey || null : null,
     meshy: r.meshy && typeof r.meshy === 'object' ? { p: num(r.meshy.p), glb: url(r.meshy.glb), thumb: url(r.meshy.thumb) } : null,
-    rig: r.rig && typeof r.rig === 'object' ? { url: url(r.rig.url), thumb: url(r.rig.thumb), p: num(r.rig.p), step: text(r.rig.step, 40), qa: r.rig.qa && typeof r.rig.qa === 'object' ? r.rig.qa : null, ...(r.rig.handFit ? { handFit: handFit(r.rig.handFit) } : {}) } : null,
+    rig: r.rig && typeof r.rig === 'object' ? { url: url(r.rig.url), thumb: url(r.rig.thumb), p: num(r.rig.p), step: text(r.rig.step, 40), qa: r.rig.qa && typeof r.rig.qa === 'object' ? r.rig.qa : null, ...(r.rig.handFit ? { handFit: handFit(r.rig.handFit) } : {}), ...(iso(r.rig.at) ? { at: r.rig.at } : {}), ...(/^[\w.-]{1,64}$/.test(String(r.rig.worker || '')) ? { worker: String(r.rig.worker) } : {}) } : null,
     ...(r.handFit ? { handFit: handFit(r.handFit) } : {}),
+    ...(r.hands && iso(r.hands.at) ? { hands: { at: r.hands.at, ...(iso(r.hands.doneAt) ? { doneAt: r.hands.doneAt } : {}) } } : {}),
     updatedAt: num(r.updatedAt) || Date.now()
   };
   const json = JSON.stringify(out);

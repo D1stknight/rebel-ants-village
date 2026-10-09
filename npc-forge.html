@@ -40,6 +40,7 @@ button.gold{background:#3a2f12;border-color:#8a7030;color:var(--gold)}
 button.teal{background:#10302f;border-color:#2c7a76;color:var(--teal)}
 button.red{background:#3a1616;border-color:#7a2c2c;color:#ff9a9a}
 button:disabled{opacity:.45;cursor:default}
+button.done,button.done:disabled{background:#123a24;border-color:#2c7a4f;color:var(--green);opacity:1}
 .slots{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
 .slot{aspect-ratio:3/4;border:1px dashed #3a4566;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;cursor:pointer;overflow:hidden;position:relative;background:#0d1020}
 .slot img{width:100%;height:100%;object-fit:contain}
@@ -58,7 +59,8 @@ button:disabled{opacity:.45;cursor:default}
 table{border-collapse:collapse;width:100%;font-size:11px}
 td,th{padding:3px 5px;border-bottom:1px solid var(--line);text-align:left}
 th{color:var(--dim);font-weight:500}
-.bad{color:var(--red)} .warn{color:var(--amber)}
+.bad{color:var(--red)} .warn{color:var(--amber)} .ok{color:var(--green)}
+.info{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.55}.info:empty{display:none}.info b{color:var(--txt);font-weight:600}
 .thumb{width:44px;height:44px;border-radius:6px;object-fit:cover;background:#0d1020}
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#1d2336;border:1px solid var(--teal);padding:8px 14px;border-radius:8px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
 #toast.on{opacity:1}
@@ -93,7 +95,7 @@ small{color:var(--dim)}
       <div><h2>Animations</h2><div class="clips" id="clips"><span class="state">No NPC loaded.</span></div>
         <div class="row" style="margin-top:8px"><button onclick="stopClip()">Stop (rest pose)</button><span class="state" id="clipInfo"></span></div></div>
       <div><h2>Checks</h2><div id="qaBox" class="state">The Forge Rigger checks every NPC for torn pieces, leftover parts, leaning or sitting, sinking into the floor, head snaps (every clip) and cuffs moving in the sleeve.</div>
-        <div class="row" style="margin-top:8px"><button class="gold" id="approveBtn" onclick="openApprove()" disabled>Approve → village</button></div></div>
+        <div class="row" style="margin-top:8px"><button class="gold" id="approveBtn" onclick="openApprove()" disabled>Approve → village</button><span class="info grow" id="approveInfo" style="margin-top:0"></span></div></div>
       <div id="handsBox" style="grid-column:1/-1"><h2>Hands</h2>
         <div class="state" id="handsMsg">Pick a forged NPC to fit its hands.</div>
         <div id="handsCtl" style="display:none">
@@ -111,7 +113,7 @@ small{color:var(--dim)}
           <div class="row hands" style="margin-top:6px">
             <label>Glove <input type="color" id="hfGlove" oninput="handColour('glove')"></label><label><input type="checkbox" id="hfGloveAuto" onchange="handColour('glove')"> from the sculpt</label>
             <label>Cuff <input type="color" id="hfCuff" oninput="handColour('cuff')"></label><label><input type="checkbox" id="hfCuffAuto" onchange="handColour('cuff')"> from the sculpt</label>
-            <button onclick="resetHands()">Reset</button><button class="gold" id="applyHandsBtn" onclick="applyHands()">Apply hands</button>
+            <button onclick="resetHands()">Reset</button><button class="gold" id="applyHandsBtn" onclick="applyHands()">Apply hands</button><span class="info" id="handsState" style="margin-top:0"></span>
           </div>
           <div class="state" style="margin-top:4px">The preview moves the gloves you see now; Apply hands re-rigs this NPC with them (about 5 minutes, no sculpt credits). One step is about half a centimetre.</div>
         </div>
@@ -150,8 +152,17 @@ const COLLECTIONS = {
 const colOf = (n) => COLLECTIONS[n?.collection] || COLLECTIONS.rebel;
 const NPC_CLIPS = ['idle', 'walk', 'run', 'talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping', 'rallying', 'yelling', 'look_around', 'idle_looking'];
 const PHASES = { draft: 'Draft', uploading: 'Uploading renders', building: 'Starting build', sculpting: 'Rebel Forge is sculpting', storing: 'Saving the sculpt', rigging: 'Forge Rigger', done: 'Forged', failed: 'Stopped' };
-let st = { npcs: [] }; let selId = null; let approved = {};
-function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
+let st = { npcs: [] }; let selId = null; let approved = {}, approvedLoaded = false;
+function toast(m, ms) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), ms || 2600); }
+// dates as "Oct 9, 2:32 PM" (this browser's clock and language)
+function when(t) { const d = new Date(t || NaN); return isNaN(d) ? '' : d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+// jobs that finish while this tab is in the background show in its title until you come back
+const away = { done: 0, stopped: 0 };
+function noteFinished(ok) {
+  if (!document.hidden) return; away[ok ? 'done' : 'stopped']++;
+  document.title = `${[away.done && `✓ ${away.done} done`, away.stopped && `✗ ${away.stopped} stopped`].filter(Boolean).join(' · ')} · NPC Forge`;
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { away.done = away.stopped = 0; document.title = 'NPC Forge'; } });
 // The list lives on the server (the same on any computer, survives a cleared browser) and is mirrored in this browser
 // for a fast start. Renders upload as soon as they are dropped, so neither copy holds image data (four renders alone
 // overflow the browser's storage).
@@ -241,8 +252,9 @@ async function forgeOne(id, opts = {}) {
   // a sculpt the Rebel Forge failed can't be polled back to life: Retry starts a fresh sculpt from the same renders
   const sculptFailed = n.phase === 'failed' && n.buildId && !n.meshy?.glb && /^Rebel Forge: /.test(n.err || '');
   running.add(id); n.err = null;
+  if (opts.hands) n.hands = { at: new Date().toISOString() };   // Apply hands: when it was pressed (doneAt when its rig is ready)
   try {
-    if (opts.resculpt || sculptFailed) { n.buildId = null; n.meshy = null; n.stored = null; n.rig = null; n.handFit = null; }   // a new sculpt starts from the automatic hands
+    if (opts.resculpt || sculptFailed) { n.buildId = null; n.meshy = null; n.stored = null; n.rig = null; n.handFit = null; n.hands = null; }   // a new sculpt starts from the automatic hands
     if (opts.rerig) { n.rig = null; }
     // 1. renders -> Blob
     n.phase = 'uploading'; save(); renderList();
@@ -287,14 +299,20 @@ async function forgeOne(id, opts = {}) {
         let d; try { d = await api(`/api/forge-rig-status?buildId=${encodeURIComponent(n.buildId)}`); } catch (e) { continue; }
         const fr = d.forgeRig || {}; if (d.percent != null) n.rig.p = Math.max(n.rig.p || 0, d.percent); if (fr.progress) n.rig.step = fr.progress;
         if (fr.status === 'failed') throw new Error((fr.error || 'Rigging failed') + (fr.logTail ? '\n' + fr.logTail.split('\n').slice(-4).join('\n') : ''));
-        if (fr.status === 'succeeded') { n.rig = { url: fr.forgeRigGlbUrl, thumb: fr.thumbUrl || null, qa: fr.qa || null, p: 100, handFit: fr.options?.handFit || null }; break; }
+        if (fr.status === 'succeeded') {
+          // when it was rigged and by which worker image (a worker rebuilt since then = re-rig for its fixes)
+          n.rig = { url: fr.forgeRigGlbUrl, thumb: fr.thumbUrl || null, qa: fr.qa || null, p: 100, handFit: fr.options?.handFit || null, at: fr.finishedAt || new Date().toISOString(), ...(fr.workerCommit ? { worker: fr.workerCommit } : {}) };
+          if (n.hands?.at && !n.hands.doneAt) n.hands.doneAt = n.rig.at;   // this rig carries the hands an Apply hands asked for
+          break;
+        }
         save(); renderList();
       }
     }
-    n.phase = 'done'; save(); renderList(); toast(`${n.name} is forged. Test the animations, then approve.`);
+    n.phase = 'done'; save(); renderList(); noteFinished(true); const inVillage = !!villageOf(n);
+    toast(opts.hands ? `${n.name}: hands applied ✓ ${when(n.rig.at)}. Test the animations, then ${inVillage ? 'approve again' : 'approve'}.` : `${n.name} is ${opts.rerig ? 're-rigged' : 'forged'} ✓ ${when(n.rig?.at)}. Test the animations, then ${inVillage ? 'approve again' : 'approve'}.`, 7000);
     if (selId === id) showNPC(id);
   } catch (e) {
-    n.phase = 'failed'; n.err = e.message || String(e); save(); renderList(); toast(`${n.name || 'NPC'}: ${n.err.split('\n')[0]}`);
+    n.phase = 'failed'; n.err = e.message || String(e); save(); renderList(); noteFinished(false); toast(`${n.name || 'NPC'}: ${n.err.split('\n')[0]}`, 7000);
   } finally { running.delete(id); renderList(); }
 }
 async function forgeAll() {
@@ -316,7 +334,7 @@ function stateLine(n) {
 function pct(n) { return n.phase === 'done' ? 100 : n.phase === 'rigging' ? 60 + 0.4 * (n.rig?.p || 0) : n.phase === 'storing' ? 58 : n.phase === 'sculpting' ? 8 + 0.5 * (n.meshy?.p || 0) : n.phase === 'building' ? 6 : n.phase === 'uploading' ? 3 : 0; }
 function renderList() {
   const el = $('#npcList');
-  if (!st.npcs.length) { el.innerHTML = '<div class="state">No NPCs yet. Add one, give it a name and drop your four renders (front, back, left, right).</div>'; return; }
+  if (!st.npcs.length) { el.innerHTML = '<div class="state">No NPCs yet. Add one, give it a name and drop your four renders (front, back, left, right).</div>'; renderApproved(); return; }
   el.innerHTML = st.npcs.map((n) => {
     const busy = running.has(n.id); const qa = n.rig?.qa?.verdict;
     const slots = SLOTS.map((s) => { const r = n.refs[s] || {}; const src = r.url || r.local; const up = r.uploading ? '<i class="up">uploading…</i>' : ''; return `<div class="slot" onclick="pick('${n.id}','${s}')" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropTo(event,'${n.id}','${s}')">${src ? `<img src="${src}" alt="">` : '+'}<b>${s}</b>${up}</div>`; }).join('');
@@ -326,15 +344,90 @@ function renderList() {
       <div class="row" style="margin-top:6px"><select onchange="setField('${n.id}','collection',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Collection">${Object.entries(COLLECTIONS).map(([k, c]) => `<option value="${k}" ${k === (n.collection || 'rebel') ? 'selected' : ''}>${c.label}</option>`).join('')}</select><input class="grow" placeholder="library key" value="${esc(n.key)}" onchange="setField('${n.id}','key',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Library key (samurai_villager replaces that villager's placeholder; chumpz_bartender replaces Big Chain)"></div>
       ${n.buildId ? '' : `<div class="slots">${slots}</div>`}
       <div class="state">${stateLine(n)}</div><div class="bar"><i style="width:${pct(n)}%"></i></div>
+      <div class="info" id="info_${n.id}">${statusLines(n).join('<br>')}</div>
       ${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}
       <div class="row" style="margin-top:8px">
-        ${n.phase === 'done' ? `<button class="teal" onclick="select('${n.id}')">Test</button><button onclick="forgeOne('${n.id}',{rerig:true})" title="Run the Forge Rigger again on the same sculpt">Re-rig</button>` : `<button class="gold" onclick="forgeOne('${n.id}')" ${busy || !ready(n) ? 'disabled' : ''}>${n.phase === 'failed' ? 'Retry' : ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase) && !busy ? 'Continue' : 'Forge'}</button>`}
+        ${n.phase === 'done' ? `<button class="teal" onclick="select('${n.id}')">Test</button><button onclick="reRig('${n.id}')" title="Run the Forge Rigger again on the same sculpt">Re-rig</button>` : `<button class="gold" onclick="forgeOne('${n.id}')" ${busy || !ready(n) ? 'disabled' : ''}>${n.phase === 'failed' ? 'Retry' : ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase) && !busy ? 'Continue' : 'Forge'}</button>`}
         ${n.buildId && !busy ? `<button onclick="if(confirm('Sculpt this NPC again from the same renders? (a new Rebel Forge sculpt)'))forgeOne('${n.id}',{resculpt:true})">Re-sculpt</button>` : ''}
         ${!n.buildId && Object.keys(n.refs).length ? '' : ''}
         <button class="red" style="margin-left:auto" onclick="removeNPC('${n.id}')" ${busy ? 'disabled' : ''}>Remove</button></div></div>`;
   }).join('');
+  paintStatus(); renderApproved();
 }
 function select(id) { selId = id; renderList(); showNPC(id); }
+
+/* ---------- what is done already: rig time + worker, hands applied, in the village since ---------- */
+let workerCommit = null;   // the commit the rig worker image was built from (a rig by another commit = an older worker)
+const sameNum = (a, b) => Math.abs((Number(a) || 0) - (Number(b) || 0)) < 1e-6;
+function handsSame(a, b) {   // the same gloves (no fit = the rigger's automatic hands)
+  return ['Left', 'Right'].every((s) => { const x = fitOf(a, s), y = fitOf(b, s); return Object.keys(HF0).every((k) => sameNum(x[k], y[k])); })
+    && (a?.glove || null) === (b?.glove || null) && (a?.cuff || null) === (b?.cuff || null);
+}
+const autoHands = (h) => handsSame(h, null);
+function villageOf(n) {   // the NPC library entry that shows this NPC (this rig, or an older one under its key)
+  if (!n) return null;
+  if (n.rig?.url) for (const [k, e] of Object.entries(approved)) if (e.modelUrl === n.rig.url) return { k, e, current: true };
+  const k = n.approvedKey, e = k && approved[k]; if (!e) return null;
+  return { k, e, current: false, other: st.npcs.find((m) => m !== n && m.rig?.url && m.rig.url === e.modelUrl) || null };
+}
+function villageLine(n) {
+  const v = villageOf(n); if (!v) return '';
+  if (v.current) return `<span class="ok">In the village since <b>${when(v.e.approvedAt)}</b> ✓</span> · ${esc(v.k)}`;
+  if (v.other) return `${esc(v.k)} in the village is ${esc(v.other.name || 'another NPC')} (approved ${when(v.e.approvedAt)})`;
+  return n.rig?.url ? `<span class="warn">The village has an older rig (approved ${when(v.e.approvedAt)}): approve again</span>` : `In the village: the previous rig (approved ${when(v.e.approvedAt)})`;
+}
+function statusLines(n) {
+  const L = [], busy = running.has(n.id);
+  if (n.rig?.url && n.rig.at) L.push(`Rigged <b>${when(n.rig.at)}</b>${n.rig.worker && workerCommit ? (n.rig.worker === workerCommit ? ' · <span class="ok">current worker ✓</span>' : ' · <span class="warn">older worker: re-rig</span>') : ''}`);
+  if (busy && n.hands?.at && !n.hands.doneAt) L.push(`<span class="warn">Applying hands · started ${when(n.hands.at)}</span>`);
+  else if (n.rig?.url) {
+    if (!handsSame(n.handFit, n.rig.handFit)) L.push('<span class="warn">Hands changed: not applied yet</span>');
+    else if (n.hands?.doneAt || !autoHands(n.rig.handFit)) L.push(`<span class="ok">${autoHands(n.rig.handFit) ? 'Automatic hands' : 'Hands'} applied <b>${when(n.hands?.doneAt || n.rig.at)}</b> ✓</span>`);
+  } else if (n.phase === 'failed' && n.hands?.at && !n.hands.doneAt) L.push(`<span class="bad">Apply hands (${when(n.hands.at)}) stopped: Retry</span>`);
+  const v = villageLine(n); if (v) L.push(v);
+  return L;
+}
+function paintStatus() {   // the selected NPC's Approve and Apply hands buttons say what is done already
+  const n = npc(selId), v = n && villageOf(n), ab = $('#approveBtn');
+  ab.textContent = v?.current ? 'Approved ✓' : 'Approve → village'; ab.classList.toggle('done', !!v?.current);
+  if (n && running.has(n.id)) ab.disabled = true;   // (showNPC enables it again with the new rig)
+  $('#approveInfo').innerHTML = !n?.rig?.url ? '' : villageLine(n) || 'Not in the village yet';
+  const hb = $('#applyHandsBtn'), hs = $('#handsState'); if (!n) { hs.innerHTML = ''; return; }
+  const card = document.getElementById('info_' + n.id); if (card) card.innerHTML = statusLines(n).join('<br>');   // (slider moves don't redraw the list)
+  const built = n.rig?.url ? n.rig.handFit : view.fit;   // during a re-rig: what the model in the viewer was built with
+  hb.classList.remove('done');
+  if (running.has(n.id)) {
+    hb.disabled = true; hb.textContent = 'Re-rigging…';
+    hs.innerHTML = `<span class="warn">${n.hands?.at && !n.hands.doneAt ? `Applying these hands · started ${when(n.hands.at)}` : 'Re-rigging'} (about 5 minutes)</span>`;
+  } else if (!handsSame(n.handFit, built)) {
+    hb.disabled = false; hb.textContent = 'Apply hands'; hs.innerHTML = '<span class="warn">Changed: not applied yet</span>';
+  } else if (n.hands?.doneAt || !autoHands(built)) {
+    hb.disabled = true; hb.textContent = 'Applied ✓'; hb.classList.add('done'); hs.innerHTML = `<span class="ok">This rig has these hands · applied <b>${when(n.hands?.doneAt || n.rig?.at)}</b></span>`;
+  } else {
+    hb.disabled = true; hb.textContent = 'Apply hands'; hs.innerHTML = 'Automatic hands: move a slider or pick a colour to change them';
+  }
+}
+function reRig(id) {   // asks first when the rig is already from the current worker, with these hands
+  const n = npc(id); if (!n || running.has(id)) return;
+  if (n.rig?.worker && n.rig.worker === workerCommit && handsSame(n.handFit, n.rig.handFit)
+    && !confirm(`${n.name || 'This NPC'} was already rigged by the current worker (${when(n.rig.at)}) with these hands. Re-rig it again anyway? (about 5 minutes)`)) return;
+  forgeOne(id, { rerig: true });
+}
+// rigs made before the forge kept their time and worker: read them from the build's rig record (when it is this rig)
+const filled = new Set();
+async function fillRigInfo() {
+  for (const n of st.npcs) {
+    const url = n.rig?.url; if (!n.buildId || !url || n.rig.at || filled.has(n.id) || running.has(n.id)) continue;
+    filled.add(n.id);
+    try {
+      const d = await api(`/api/forge-rig-status?buildId=${encodeURIComponent(n.buildId)}`), fr = d.forgeRig || {};
+      if (fr.status !== 'succeeded' || fr.forgeRigGlbUrl !== url || n.rig?.url !== url || !fr.finishedAt) continue;
+      n.rig.at = fr.finishedAt; if (fr.workerCommit) n.rig.worker = fr.workerCommit;
+      if (n.rig.handFit === undefined) n.rig.handFit = fr.options?.handFit || null;
+      save(); renderList();
+    } catch (e) {}
+  }
+}
 
 /* ---------- viewer: test every animation ---------- */
 const canvas = $('#cv'); const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true }); const scene = new BABYLON.Scene(engine);
@@ -348,13 +441,13 @@ engine.runRenderLoop(() => scene.render()); addEventListener('resize', () => eng
 // the canvas box also changes when the dock fills (clip buttons, checks table): keep the drawing buffer at the box's
 // size, else the NPC is drawn for a taller box and shown squashed
 new ResizeObserver(() => engine.resize()).observe(canvas);
-const view = { root: null, groups: {}, cur: null, cloth: null, url: null, H: 1.8 };
+const view = { root: null, groups: {}, cur: null, cloth: null, url: null, fit: null, H: 1.8 };   // fit: the hands the loaded rig was built with
 function clearViewer() {
   try { view.cloth?.dispose(); } catch (e) {}
   try { view.hands?.dispose?.(); } catch (e) {}
   Object.values(view.groups).forEach((g) => { try { g.stop(); g.dispose(); } catch (e) {} });
   try { view.root?.dispose(false, true); } catch (e) {}
-  Object.assign(view, { root: null, groups: {}, cur: null, cloth: null, url: null, hands: null });
+  Object.assign(view, { root: null, groups: {}, cur: null, cloth: null, url: null, fit: null, hands: null });
   $('#clips').innerHTML = '<span class="state">No NPC loaded.</span>'; $('#viewMsg').style.display = ''; $('#approveBtn').disabled = true; $('#clipInfo').textContent = '';
 }
 async function showNPC(id) {
@@ -369,7 +462,7 @@ async function showNPC(id) {
     res.animationGroups.forEach((g) => { g.stop(); g.enableBlending = true; g.blendingSpeed = 0.12; view.groups[g.name] = g; });
     stripForgeClothTracks(res.animationGroups);
     try { view.cloth = createForgeClothSprings(scene, root); } catch (e) { console.warn('cloth springs', e); }
-    Object.assign(view, { root, url: n.rig.url });
+    Object.assign(view, { root, url: n.rig.url, fit: n.rig.handFit || null });
     try { view.hands = prepareHands(res.meshes); } catch (e) { console.warn('hands preview', e); view.hands = null; }
     root.computeWorldMatrix(true); const b = root.getHierarchyBoundingVectors(true); view.H = b.max.y - b.min.y || 1.8;
     $('#viewMsg').style.display = 'none'; renderClips(); playClip('idle'); camView('front', true); renderHands();
@@ -496,8 +589,7 @@ function renderHands() {
     const auto = !h[k], id = k === 'glove' ? 'hfGlove' : 'hfCuff'; $('#' + id + 'Auto').checked = auto;
     $('#' + id).value = h[k] || (view.hands.mats[k] ? view.hands.mats[k].c0.toGammaSpace().toHexString().toLowerCase() : '#5a3e2b');
   }
-  $('#applyHandsBtn').disabled = running.has(n.id);
-  previewHands();
+  paintStatus(); previewHands();
 }
 function pickHandSide(s) { handSide = s; renderHands(); }
 function handInput() {
@@ -506,15 +598,15 @@ function handInput() {
   (handSide === 'both' ? ['Left', 'Right'] : [handSide]).forEach((s) => { h[s] = { ...v }; });
   [['hfAlong', v.along], ['hfThumb', v.thumb], ['hfBack', v.back]].forEach(([id, x]) => { $('#' + id + 'V').textContent = (x > 0 ? '+' : '') + Math.round(x / HF_STEP); });
   [['hfSize', v.size], ['hfCuffS', v.cuffSize], ['hfCuffL', v.cuffLen]].forEach(([id, x]) => { $('#' + id + 'V').textContent = Math.round(x * 100) + '%'; });
-  save(); previewHands();
+  save(); previewHands(); paintStatus();
 }
 function handColour(k) {
   const n = npc(selId); if (!n) return; const h = handFitNow(n); const id = k === 'glove' ? 'hfGlove' : 'hfCuff';
-  h[k] = $('#' + id + 'Auto').checked ? null : $('#' + id).value.toLowerCase(); save(); previewHands();
+  h[k] = $('#' + id + 'Auto').checked ? null : $('#' + id).value.toLowerCase(); save(); previewHands(); paintStatus();
 }
 function previewHands() {
   const n = npc(selId), H = view.hands; if (!n || !H) return;
-  const V3 = BABYLON.Vector3, h = handFitNow(n), built = n.rig?.handFit || null;
+  const V3 = BABYLON.Vector3, h = handFitNow(n), built = (n.rig?.url && n.rig.url === view.url ? n.rig.handFit : view.fit) || null;
   const tf = ['Left', 'Right'].map((s) => {
     const f = H.frames[s], now = fitOf(h, s), was = fitOf(built, s), Ld = f.L / (was.size || 1), k = now.size / (was.size || 1);
     const d = f.x.scale((now.along - was.along) * Ld).add(f.thumb.scale((now.thumb - was.thumb) * Ld)).add(f.z.scale((now.back - was.back) * Ld));
@@ -553,8 +645,9 @@ function resetHands() {
 }
 function applyHands() {
   const n = npc(selId); if (!n?.buildId || running.has(n.id)) return;
+  if (n.rig?.url && handsSame(n.handFit, n.rig.handFit)) { toast(`This rig already has these hands (applied ${when(n.hands?.doneAt || n.rig.at)})`); return; }
   if (!confirm('Re-rig this NPC with these hands? It takes about 5 minutes and uses no sculpt credits. Approve it again afterwards if it is already in the village.')) return;
-  forgeOne(n.id, { rerig: true });
+  forgeOne(n.id, { rerig: true, hands: true });
 }
 
 /* ---------- approve -> NPC library (the village) ---------- */
@@ -575,15 +668,26 @@ async function doApprove() {
   if (!/^[a-z0-9_]{2,60}$/.test(key)) { toast('Key: 2-60 of a-z, 0-9, _'); return; }
   const qa = n.rig?.qa ? { verdict: n.rig.qa.verdict, reasons: n.rig.qa.reasons || [] } : null;
   if (qa?.verdict === 'fail' && !confirm(`The checks failed for this NPC:\n\n${qa.reasons[0] || ''}\n\nApprove anyway?`)) return;
+  const cur = approved[key];
+  if (cur && cur.modelUrl === n.rig.url && !confirm(`This rig is already in the village as ${key} (approved ${when(cur.approvedAt)}). Approve it again?`)) return;
   try {
-    await api('/api/npc-library', { action: 'approve', key, entry: { displayName: $('#apName').value || n.name, factionId: slug($('#apFaction').value).replace(/_/g, '-') || null, role: $('#apRole').value, modelUrl: n.rig.url, thumbUrl: n.rig.thumb || null, modelScale: 1.9, buildId: n.buildId, qa } });
-    n.approvedKey = key; save(); approveDlg.close(); toast(`Approved as ${key}. Every NPC with that key now wears it.`); loadApproved(); renderList();
+    const j = await api('/api/npc-library', { action: 'approve', key, entry: { displayName: $('#apName').value || n.name, factionId: slug($('#apFaction').value).replace(/_/g, '-') || null, role: $('#apRole').value, modelUrl: n.rig.url, thumbUrl: n.rig.thumb || null, modelScale: 1.9, buildId: n.buildId, qa } });
+    if (j.npc) approved[key] = j.npc;
+    n.approvedKey = key; save(); approveDlg.close(); toast(`Approved as ${key} ✓ ${when(approved[key]?.approvedAt)}. Every NPC with that key now wears it.`, 6000); loadApproved(); renderList();
   } catch (e) { toast('Approve failed: ' + e.message); }
 }
 async function loadApproved() {
-  try { const d = await api('/api/npc-library'); approved = d.npcs || {}; } catch (e) { $('#approvedList').textContent = 'Could not load: ' + e.message; return; }
+  try { const d = await api('/api/npc-library'); approved = d.npcs || {}; approvedLoaded = true; } catch (e) { $('#approvedList').textContent = 'Could not load: ' + e.message; return; }
+  renderList();
+}
+function renderApproved() {   // (with the list: a re-rig there shows here as a newer rig waiting)
+  if (!approvedLoaded) return;
   const keys = Object.keys(approved).sort();
-  $('#approvedList').innerHTML = keys.length ? keys.map((k) => { const e = approved[k]; return `<div class="card row">${e.thumbUrl ? `<img class="thumb" src="${e.thumbUrl}" alt="">` : ''}<div class="grow"><b>${esc(e.displayName)}</b><br><small>${k} · ${esc(e.role || '')}${e.qa?.verdict ? ` · checks ${e.qa.verdict}` : ''}</small></div><button class="red" onclick="unapprove('${k}')">Remove</button></div>`; }).join('') : '<div class="state">None yet: the village shows placeholders.</div>';
+  $('#approvedList').innerHTML = keys.length ? keys.map((k) => {
+    const e = approved[k], rec = st.npcs.find((n) => n.rig?.url === e.modelUrl) || st.npcs.find((n) => n.approvedKey === k);
+    const newer = rec && rec.rig?.url && rec.rig.url !== e.modelUrl;   // re-rigged since: approve again to send it
+    return `<div class="card row">${e.thumbUrl ? `<img class="thumb" src="${e.thumbUrl}" alt="">` : ''}<div class="grow"><b>${esc(e.displayName)}</b><br><small>${k} · ${esc(e.role || '')}${e.qa?.verdict ? ` · checks ${e.qa.verdict}` : ''}</small><div class="info" style="margin-top:2px">Approved <b>${when(e.approvedAt)}</b>${newer ? ` · <span class="warn">newer rig${rec.rig.at ? ' ' + when(rec.rig.at) : ''}: approve again</span>` : ''}</div></div><button class="red" onclick="unapprove('${k}')">Remove</button></div>`;
+  }).join('') : '<div class="state">None yet: the village shows placeholders.</div>';
 }
 async function unapprove(k) { if (!confirm(`Remove ${k} from the village? NPCs with that key go back to placeholders.`)) return; try { await api('/api/npc-library', { action: 'remove', key: k }); toast('Removed'); loadApproved(); } catch (e) { toast(e.message); } }
 
@@ -615,6 +719,7 @@ async function loadWorker() {
   const w = d.worker || {}; const have = new Set(d.packPaths || []); const miss = NPC_PACK.filter((p) => !have.has(p)); const s = w.setup || {};
   const was = workerBuilding; const building = s.status === 'running';
   workerBuilding = building; workerSetup = s;
+  const wc = w.snapshotId ? w.commit || null : null; if (wc !== workerCommit) { workerCommit = wc; renderList(); }
   if (was && !building) toast(s.status === 'done' ? 'Rig worker rebuilt. New forges and re-rigs use it now.' : 'The rig worker rebuild failed (see the log in the Rig worker box).');
   $('#workerBox').innerHTML = `<div class="state">Worker image: ${w.snapshotId ? `built ${w.builtAt ? new Date(w.builtAt).toLocaleString() : ''} from ${esc(String(w.commit || '').slice(0, 7))}` : 'not built'}${s.status === 'failed' && !building ? ' · <span class="bad">last rebuild failed</span>' : ''}</div>
     ${building ? '<div id="workerProgress" style="margin-top:6px"></div>' : ''}
@@ -655,6 +760,7 @@ async function rebuildWorker() {
   st.npcs.filter((n) => ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase)).forEach((n) => forgeOne(n.id, { batch: true }));
   if (st.npcs[0]) select(st.npcs[0].id);
   await syncDown(); if (!selId && st.npcs[0]) select(st.npcs[0].id);
+  fillRigInfo();
 })();
 
 /* ---------- robe / armour-skirt springs (same solver as the village) ---------- */
