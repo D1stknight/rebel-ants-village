@@ -24,6 +24,14 @@ async function redis(commands) {
 const text = (v, max) => String(v == null ? '' : v).replace(/[<>]/g, '').slice(0, max);
 const url = (v) => (typeof v === 'string' && URL_OK.test(v) ? v : null);
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+// the hands panel (rigger 2.18): per hand offsets (fractions of the hand length) and size, glove / cuff colours
+const fit = (o) => {
+  if (!o || typeof o !== 'object') return null;
+  const n = (k, lo, hi, d) => { const v = Number(o[k]); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+  return { along: n('along', -0.6, 0.6, 0), thumb: n('thumb', -0.6, 0.6, 0), back: n('back', -0.6, 0.6, 0), size: n('size', 0.6, 1.5, 1) };
+};
+const hex = (v) => (/^#[0-9a-f]{6}$/i.test(String(v || '')) ? String(v).toLowerCase() : null);
+const handFit = (h) => (h && typeof h === 'object' ? { Left: fit(h.Left), Right: fit(h.Right), glove: hex(h.glove), cuff: hex(h.cuff) } : null);
 
 function clean(r) {
   if (!r || typeof r !== 'object' || !ID.test(String(r.id || ''))) throw new Error('Bad record id');
@@ -35,7 +43,8 @@ function clean(r) {
     refs, phase: PHASES.has(r.phase) ? r.phase : 'draft', err: r.err ? text(r.err, 600) : null,
     buildId: /^[\w.:-]{1,120}$/.test(String(r.buildId || '')) ? r.buildId : null, stored: !!r.stored, approvedKey: SLUG.test(String(r.approvedKey || '')) ? r.approvedKey || null : null,
     meshy: r.meshy && typeof r.meshy === 'object' ? { p: num(r.meshy.p), glb: url(r.meshy.glb), thumb: url(r.meshy.thumb) } : null,
-    rig: r.rig && typeof r.rig === 'object' ? { url: url(r.rig.url), thumb: url(r.rig.thumb), p: num(r.rig.p), step: text(r.rig.step, 40), qa: r.rig.qa && typeof r.rig.qa === 'object' ? r.rig.qa : null } : null,
+    rig: r.rig && typeof r.rig === 'object' ? { url: url(r.rig.url), thumb: url(r.rig.thumb), p: num(r.rig.p), step: text(r.rig.step, 40), qa: r.rig.qa && typeof r.rig.qa === 'object' ? r.rig.qa : null, ...(r.rig.handFit ? { handFit: handFit(r.rig.handFit) } : {}) } : null,
+    ...(r.handFit ? { handFit: handFit(r.handFit) } : {}),
     updatedAt: num(r.updatedAt) || Date.now()
   };
   const json = JSON.stringify(out);

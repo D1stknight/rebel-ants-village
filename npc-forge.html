@@ -54,6 +54,7 @@ button:disabled{opacity:.45;cursor:default}
 .v-pass{background:#123a24;color:var(--green)} .v-review{background:#3a2e12;color:var(--amber)} .v-fail{background:#3a1616;color:var(--red)}
 .clips{display:flex;flex-wrap:wrap;gap:5px}
 .clips button.on{border-color:var(--gold);color:var(--gold)}
+.hands{flex-wrap:wrap;gap:6px 14px;align-items:center}.hands label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim)}.hands input[type=range]{width:110px}.hands b{min-width:34px;color:var(--txt);font-weight:600}.seg{display:inline-flex;gap:0}.seg button{border-radius:0}.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}.seg button.on{border-color:var(--gold);color:var(--gold)}
 table{border-collapse:collapse;width:100%;font-size:11px}
 td,th{padding:3px 5px;border-bottom:1px solid var(--line);text-align:left}
 th{color:var(--dim);font-weight:500}
@@ -93,6 +94,24 @@ small{color:var(--dim)}
         <div class="row" style="margin-top:8px"><button onclick="stopClip()">Stop (rest pose)</button><span class="state" id="clipInfo"></span></div></div>
       <div><h2>Checks</h2><div id="qaBox" class="state">The Forge Rigger checks every NPC for torn pieces, leftover parts, leaning or sitting, sinking into the floor and head snaps.</div>
         <div class="row" style="margin-top:8px"><button class="gold" id="approveBtn" onclick="openApprove()" disabled>Approve → village</button></div></div>
+      <div id="handsBox" style="grid-column:1/-1"><h2>Hands</h2>
+        <div class="state" id="handsMsg">Pick a forged NPC to fit its hands.</div>
+        <div id="handsCtl" style="display:none">
+          <div class="row hands" style="margin-top:6px">
+            <span class="seg" id="handSide"><button data-hs="both" class="on" onclick="pickHandSide('both')">Both hands</button><button data-hs="Left" onclick="pickHandSide('Left')">Left</button><button data-hs="Right" onclick="pickHandSide('Right')">Right</button></span>
+            <label>Out of / into the sleeve <input type="range" id="hfAlong" min="-12" max="12" step="1" value="0" oninput="handInput()"><b id="hfAlongV">0</b></label>
+            <label>Forward / back <input type="range" id="hfThumb" min="-12" max="12" step="1" value="0" oninput="handInput()"><b id="hfThumbV">0</b></label>
+            <label>Away from / toward the body <input type="range" id="hfBack" min="-12" max="12" step="1" value="0" oninput="handInput()"><b id="hfBackV">0</b></label>
+            <label>Size <input type="range" id="hfSize" min="70" max="140" step="1" value="100" oninput="handInput()"><b id="hfSizeV">100%</b></label>
+          </div>
+          <div class="row hands" style="margin-top:6px">
+            <label>Glove <input type="color" id="hfGlove" oninput="handColour('glove')"></label><label><input type="checkbox" id="hfGloveAuto" onchange="handColour('glove')"> from the sculpt</label>
+            <label>Cuff <input type="color" id="hfCuff" oninput="handColour('cuff')"></label><label><input type="checkbox" id="hfCuffAuto" onchange="handColour('cuff')"> from the sculpt</label>
+            <button onclick="resetHands()">Reset</button><button class="gold" id="applyHandsBtn" onclick="applyHands()">Apply hands</button>
+          </div>
+          <div class="state" style="margin-top:4px">The preview moves the gloves you see now; Apply hands re-rigs this NPC with them (about 5 minutes, no sculpt credits). One step is about half a centimetre.</div>
+        </div>
+      </div>
     </div>
   </section>
 </div>
@@ -219,7 +238,7 @@ async function forgeOne(id, opts = {}) {
   const sculptFailed = n.phase === 'failed' && n.buildId && !n.meshy?.glb && /^Rebel Forge: /.test(n.err || '');
   running.add(id); n.err = null;
   try {
-    if (opts.resculpt || sculptFailed) { n.buildId = null; n.meshy = null; n.stored = null; n.rig = null; }
+    if (opts.resculpt || sculptFailed) { n.buildId = null; n.meshy = null; n.stored = null; n.rig = null; n.handFit = null; }   // a new sculpt starts from the automatic hands
     if (opts.rerig) { n.rig = null; }
     // 1. renders -> Blob
     n.phase = 'uploading'; save(); renderList();
@@ -258,13 +277,13 @@ async function forgeOne(id, opts = {}) {
     // 5. Forge Rigger, NPC mode (NPC clips, NPC checks)
     if (!n.rig?.url) {
       n.phase = 'rigging'; n.rig = { p: 0, step: 'starting' }; save(); renderList();
-      await twice(() => api('/api/forge-rig-start', { buildId: n.buildId, npc: true, ...(opts.rerig ? { force: true } : {}) }));
+      await twice(() => api('/api/forge-rig-start', { buildId: n.buildId, npc: true, ...(opts.rerig ? { force: true } : {}), ...(n.handFit ? { handFit: n.handFit } : {}) }));
       for (;;) {
         await sleep(6000);
         let d; try { d = await api(`/api/forge-rig-status?buildId=${encodeURIComponent(n.buildId)}`); } catch (e) { continue; }
         const fr = d.forgeRig || {}; if (d.percent != null) n.rig.p = Math.max(n.rig.p || 0, d.percent); if (fr.progress) n.rig.step = fr.progress;
         if (fr.status === 'failed') throw new Error((fr.error || 'Rigging failed') + (fr.logTail ? '\n' + fr.logTail.split('\n').slice(-4).join('\n') : ''));
-        if (fr.status === 'succeeded') { n.rig = { url: fr.forgeRigGlbUrl, thumb: fr.thumbUrl || null, qa: fr.qa || null, p: 100 }; break; }
+        if (fr.status === 'succeeded') { n.rig = { url: fr.forgeRigGlbUrl, thumb: fr.thumbUrl || null, qa: fr.qa || null, p: 100, handFit: fr.options?.handFit || null }; break; }
         save(); renderList();
       }
     }
@@ -330,13 +349,13 @@ function clearViewer() {
   try { view.cloth?.dispose(); } catch (e) {}
   Object.values(view.groups).forEach((g) => { try { g.stop(); g.dispose(); } catch (e) {} });
   try { view.root?.dispose(false, true); } catch (e) {}
-  Object.assign(view, { root: null, groups: {}, cur: null, cloth: null, url: null });
+  Object.assign(view, { root: null, groups: {}, cur: null, cloth: null, url: null, hands: null });
   $('#clips').innerHTML = '<span class="state">No NPC loaded.</span>'; $('#viewMsg').style.display = ''; $('#approveBtn').disabled = true; $('#clipInfo').textContent = '';
 }
 async function showNPC(id) {
   const n = npc(id); renderQA(n);
   $('#approveBtn').disabled = !(n && n.phase === 'done' && n.rig?.url);
-  if (!n || !n.rig?.url) { clearViewer(); $('#viewMsg').textContent = n ? 'Forge this NPC to test its animations.' : 'Pick a forged NPC to test its animations.'; renderQA(n); return; }
+  if (!n || !n.rig?.url) { clearViewer(); $('#viewMsg').textContent = n ? 'Forge this NPC to test its animations.' : 'Pick a forged NPC to test its animations.'; renderQA(n); renderHands(); return; }
   if (view.url === n.rig.url) return;
   clearViewer(); $('#viewMsg').style.display = ''; $('#viewMsg').textContent = 'Loading...';
   try {
@@ -346,8 +365,9 @@ async function showNPC(id) {
     stripForgeClothTracks(res.animationGroups);
     try { view.cloth = createForgeClothSprings(scene, root); } catch (e) { console.warn('cloth springs', e); }
     Object.assign(view, { root, url: n.rig.url });
+    try { view.hands = prepareHands(res.meshes); } catch (e) { console.warn('hands preview', e); view.hands = null; }
     root.computeWorldMatrix(true); const b = root.getHierarchyBoundingVectors(true); view.H = b.max.y - b.min.y || 1.8;
-    $('#viewMsg').style.display = 'none'; renderClips(); playClip('idle'); camView('front', true);
+    $('#viewMsg').style.display = 'none'; renderClips(); playClip('idle'); camView('front', true); renderHands();
   } catch (e) { $('#viewMsg').textContent = 'Could not load the rig: ' + (e.message || e); }
   $('#approveBtn').disabled = false;
 }
@@ -379,6 +399,98 @@ function renderQA(n) {
     ${(qa.reasons || []).length ? `<ul style="margin:6px 0;padding-left:18px">${qa.reasons.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : '<div class="state" style="margin:6px 0">Nothing found.</div>'}
     ${Number.isFinite(qa.npc?.armsFused?.webCm2) ? `<div class="state" style="margin:4px 0">Arms raised: <b class="${qa.npc.armsFused.webCm2 > 120 ? 'bad' : qa.npc.armsFused.webCm2 > 50 ? 'warn' : ''}">${qa.npc.armsFused.webCm2} cm²</b> of web under the arms (clean under 50, fused over 120)</div>` : ''}
     ${rows ? `<table><tr><th>clip</th><th>tear (×height)</th><th>lean °</th><th>floor cm</th><th>head °/frame</th></tr>${rows}</table>` : ''}`;
+}
+
+/* ---------- hands: move, size and colour the gloves, preview, re-rig with them ---------- */
+// n.handFit = { Left: {along, thumb, back, size}, Right: {...}, glove: '#rrggbb' | null, cuff: ... }; offsets are fractions of
+// the hand length (one slider step = 0.025), size a factor. The rigger builds the gloves with them (FORGE_HAND_FIT,
+// rigger 2.18); the preview moves the loaded gloves by the difference from what this rig was built with (n.rig.handFit).
+const HF_STEP = 0.025, HF0 = { along: 0, thumb: 0, back: 0, size: 1 };
+let handSide = 'both';
+function prepareHands(meshes) {
+  const gm = meshes.filter((m) => /^Glove/.test(m.material?.name || '') && m.getTotalVertices() > 0);
+  const sk = meshes.find((m) => m.skeleton)?.skeleton; if (!gm.length || !sk) return null;
+  const bind = (nm) => { const b = sk.bones.find((x) => x.name === 'mixamorig_' + nm); if (!b) return null; const M = b.getAbsoluteInverseBindMatrix().clone(); M.invert(); return M.getTranslation(); };
+  const hips = bind('Hips') || BABYLON.Vector3.Zero(), frames = {};
+  for (const side of ['Left', 'Right']) {
+    const W = bind(side + 'Hand'), E = bind(side + 'ForeArm'); if (!W || !E) return null;
+    const x = W.subtract(E).normalize(); const out = new BABYLON.Vector3(Math.sign(W.x - hips.x) || (side === 'Left' ? 1 : -1), 0, 0);
+    const z = out.subtract(x.scale(BABYLON.Vector3.Dot(out, x))).normalize(); const y = BABYLON.Vector3.Cross(z, x);
+    frames[side] = { W, x, z, thumb: side === 'Left' ? y.scale(-1) : y, c: BABYLON.Vector3.Zero(), n: 0, L: 0 };
+  }
+  const parts = gm.map((m) => {
+    const P0 = Float32Array.from(m.getVerticesData(BABYLON.VertexBuffer.PositionKind)); const side = new Uint8Array(P0.length / 3);
+    for (let i = 0; i < side.length; i++) {
+      const v = new BABYLON.Vector3(P0[3 * i], P0[3 * i + 1], P0[3 * i + 2]);
+      const s = BABYLON.Vector3.DistanceSquared(v, frames.Left.W) < BABYLON.Vector3.DistanceSquared(v, frames.Right.W) ? 'Left' : 'Right'; side[i] = s === 'Left' ? 0 : 1;
+      const f = frames[s]; const t = BABYLON.Vector3.Dot(v.subtract(f.W), f.x); f.L = Math.max(f.L, t);
+      if (/Cuff/.test(m.material.name)) { f.c.addInPlace(v); f.n++; }
+    }
+    return { m, P0, side };
+  });
+  for (const f of Object.values(frames)) { if (f.n) f.c.scaleInPlace(1 / f.n); else f.c.copyFrom(f.W); }
+  const mats = {}; gm.forEach((m) => { const k = /Cuff/.test(m.material.name) ? 'cuff' : 'glove'; if (!mats[k]) mats[k] = { mat: m.material, c0: (m.material.albedoColor || m.material.diffuseColor || BABYLON.Color3.White()).clone() }; });
+  return { parts, frames, mats };
+}
+const fitOf = (h, side) => ({ ...HF0, ...((h && h[side]) || {}) });
+function handFitNow(n) { return n.handFit || (n.handFit = { Left: { ...HF0 }, Right: { ...HF0 }, glove: null, cuff: null }); }
+function renderHands() {
+  const n = npc(selId), on = !!(n && view.hands && n.rig?.url);
+  $('#handsCtl').style.display = on ? '' : 'none';
+  $('#handsMsg').textContent = !n ? 'Pick a forged NPC to fit its hands.' : !n.rig?.url ? 'Forge this NPC first.' : !view.hands ? 'This rig has no Forge gloves to fit.' : 'Move, resize or recolour the gloves and check them on any animation.';
+  if (!on) return;
+  const h = handFitNow(n); const f = fitOf(h, handSide === 'both' ? 'Right' : handSide);
+  [['hfAlong', f.along], ['hfThumb', f.thumb], ['hfBack', f.back]].forEach(([id, v]) => { $('#' + id).value = Math.round(v / HF_STEP); $('#' + id + 'V').textContent = (v > 0 ? '+' : '') + Math.round(v / HF_STEP); });
+  $('#hfSize').value = Math.round(f.size * 100); $('#hfSizeV').textContent = Math.round(f.size * 100) + '%';
+  document.querySelectorAll('#handSide button').forEach((b) => b.classList.toggle('on', b.dataset.hs === handSide));
+  for (const k of ['glove', 'cuff']) {
+    const auto = !h[k], id = k === 'glove' ? 'hfGlove' : 'hfCuff'; $('#' + id + 'Auto').checked = auto;
+    $('#' + id).value = h[k] || (view.hands.mats[k] ? view.hands.mats[k].c0.toGammaSpace().toHexString().toLowerCase() : '#5a3e2b');
+  }
+  $('#applyHandsBtn').disabled = running.has(n.id);
+  previewHands();
+}
+function pickHandSide(s) { handSide = s; renderHands(); }
+function handInput() {
+  const n = npc(selId); if (!n) return; const h = handFitNow(n);
+  const v = { along: +$('#hfAlong').value * HF_STEP, thumb: +$('#hfThumb').value * HF_STEP, back: +$('#hfBack').value * HF_STEP, size: +$('#hfSize').value / 100 };
+  (handSide === 'both' ? ['Left', 'Right'] : [handSide]).forEach((s) => { h[s] = { ...v }; });
+  [['hfAlong', v.along], ['hfThumb', v.thumb], ['hfBack', v.back]].forEach(([id, x]) => { $('#' + id + 'V').textContent = (x > 0 ? '+' : '') + Math.round(x / HF_STEP); });
+  $('#hfSizeV').textContent = Math.round(v.size * 100) + '%';
+  save(); previewHands();
+}
+function handColour(k) {
+  const n = npc(selId); if (!n) return; const h = handFitNow(n); const id = k === 'glove' ? 'hfGlove' : 'hfCuff';
+  h[k] = $('#' + id + 'Auto').checked ? null : $('#' + id).value.toLowerCase(); save(); previewHands();
+}
+function previewHands() {
+  const n = npc(selId), H = view.hands; if (!n || !H) return;
+  const h = handFitNow(n), built = n.rig?.handFit || null;
+  for (const { m, P0, side } of H.parts) {
+    const P = new Float32Array(P0.length);
+    const tf = ['Left', 'Right'].map((s) => {
+      const f = H.frames[s], now = fitOf(h, s), was = fitOf(built, s), Ld = f.L / (was.size || 1), k = now.size / (was.size || 1);
+      const d = f.x.scale((now.along - was.along) * Ld).add(f.thumb.scale((now.thumb - was.thumb) * Ld)).add(f.z.scale((now.back - was.back) * Ld));
+      return { c: f.c, k, d };
+    });
+    for (let i = 0; i < side.length; i++) {
+      const t = tf[side[i]], j = 3 * i;
+      P[j] = t.c.x + t.k * (P0[j] - t.c.x) + t.d.x; P[j + 1] = t.c.y + t.k * (P0[j + 1] - t.c.y) + t.d.y; P[j + 2] = t.c.z + t.k * (P0[j + 2] - t.c.z) + t.d.z;
+    }
+    m.setVerticesData(BABYLON.VertexBuffer.PositionKind, P, true); m.refreshBoundingInfo(true);
+  }
+  for (const k of ['glove', 'cuff']) {
+    const e = H.mats[k]; if (!e) continue; const c = h[k] ? BABYLON.Color3.FromHexString(h[k]).toLinearSpace() : e.c0;
+    if (e.mat.albedoColor) e.mat.albedoColor = c.clone(); else if (e.mat.diffuseColor) e.mat.diffuseColor = c.clone();
+  }
+}
+function resetHands() {
+  const n = npc(selId); if (!n) return; n.handFit = { Left: { ...HF0 }, Right: { ...HF0 }, glove: null, cuff: null }; save(); renderHands();
+}
+function applyHands() {
+  const n = npc(selId); if (!n?.buildId || running.has(n.id)) return;
+  if (!confirm('Re-rig this NPC with these hands? It takes about 5 minutes and uses no sculpt credits. Approve it again afterwards if it is already in the village.')) return;
+  forgeOne(n.id, { rerig: true });
 }
 
 /* ---------- approve -> NPC library (the village) ---------- */
