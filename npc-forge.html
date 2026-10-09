@@ -92,7 +92,7 @@ small{color:var(--dim)}
     <div id="dock">
       <div><h2>Animations</h2><div class="clips" id="clips"><span class="state">No NPC loaded.</span></div>
         <div class="row" style="margin-top:8px"><button onclick="stopClip()">Stop (rest pose)</button><span class="state" id="clipInfo"></span></div></div>
-      <div><h2>Checks</h2><div id="qaBox" class="state">The Forge Rigger checks every NPC for torn pieces, leftover parts, leaning or sitting, sinking into the floor and head snaps.</div>
+      <div><h2>Checks</h2><div id="qaBox" class="state">The Forge Rigger checks every NPC for torn pieces, leftover parts, leaning or sitting, sinking into the floor, head snaps (every clip) and cuffs moving in the sleeve.</div>
         <div class="row" style="margin-top:8px"><button class="gold" id="approveBtn" onclick="openApprove()" disabled>Approve → village</button></div></div>
       <div id="handsBox" style="grid-column:1/-1"><h2>Hands</h2>
         <div class="state" id="handsMsg">Pick a forged NPC to fit its hands.</div>
@@ -396,14 +396,14 @@ function camView(v, now) {
 }
 function renderQA(n) {
   const box = $('#qaBox'); const qa = n?.rig?.qa;
-  if (!qa) { box.innerHTML = n ? '<span class="state">Checks appear after rigging.</span>' : 'The Forge Rigger checks every NPC for arms fused to the body, torn pieces, leftover parts, leaning or sitting, sinking into the floor and head snaps.'; return; }
+  if (!qa) { box.innerHTML = n ? '<span class="state">Checks appear after rigging.</span>' : 'The Forge Rigger checks every NPC for arms fused to the body, torn pieces, leftover parts, leaning or sitting, sinking into the floor, head snaps (every clip) and cuffs moving in the sleeve.'; return; }
   const rows = Object.entries(qa.npc || {}).filter(([k, v]) => v && typeof v === 'object' && Array.isArray(v.lean)).map(([k, v]) => {
-    const t = v.tear > 0.3 ? 'bad' : v.tear > 0.15 ? 'warn' : ''; const lim = { idle: 6, talking: 6, walk: 9 }[k]; const l = lim && Math.max(Math.abs(v.lean[0]), Math.abs(v.lean[1])) > lim ? 'warn' : ''; const f = v.floorCm < -3 ? 'warn' : ''; const h = v.headPop > 30 ? 'warn' : '';
-    return `<tr><td>${k}</td><td class="${t}">${v.tear}</td><td class="${l}">${v.lean[0]}..${v.lean[1]}</td><td class="${f}">${v.floorCm}</td><td class="${h}">${v.headPop}</td></tr>`; }).join('');
+    const t = v.tear > 0.3 ? 'bad' : v.tear > 0.15 ? 'warn' : ''; const lim = { idle: 6, talking: 6, walk: 9 }[k]; const l = lim && Math.max(Math.abs(v.lean[0]), Math.abs(v.lean[1])) > lim ? 'warn' : ''; const f = v.floorCm < -3 ? 'warn' : ''; const h = v.headPop > 30 ? 'warn' : ''; const c = v.cuffCm > 1.5 ? 'warn' : '';
+    return `<tr><td>${k}</td><td class="${t}">${v.tear}</td><td class="${l}">${v.lean[0]}..${v.lean[1]}</td><td class="${f}">${v.floorCm}</td><td class="${h}">${v.headPop}</td><td class="${c}">${v.cuffCm ?? '–'}</td></tr>`; }).join('');
   box.innerHTML = `<div class="row"><span class="verdict v-${qa.verdict}">${qa.verdict}</span><small>${qa.glb ? `${qa.glb.animations} clips · ${Math.round((qa.glb.tris || 0) / 1000)}k tris · ${((qa.glb.bytes || 0) / 1048576).toFixed(1)} MB` : ''}</small></div>
     ${(qa.reasons || []).length ? `<ul style="margin:6px 0;padding-left:18px">${qa.reasons.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : '<div class="state" style="margin:6px 0">Nothing found.</div>'}
     ${Number.isFinite(qa.npc?.armsFused?.webCm2) ? `<div class="state" style="margin:4px 0">Arms raised: <b class="${qa.npc.armsFused.webCm2 > 120 ? 'bad' : qa.npc.armsFused.webCm2 > 50 ? 'warn' : ''}">${qa.npc.armsFused.webCm2} cm²</b> of web under the arms (clean under 50, fused over 120)</div>` : ''}
-    ${rows ? `<table><tr><th>clip</th><th>tear (×height)</th><th>lean °</th><th>floor cm</th><th>head °/frame</th></tr>${rows}</table>` : ''}`;
+    ${rows ? `<table><tr><th>clip</th><th>tear (×height)</th><th>lean °</th><th>floor cm</th><th>head °/frame</th><th>cuff cm</th></tr>${rows}</table>` : ''}`;
 }
 
 /* ---------- hands: move, size and colour the gloves, preview, re-rig with them ---------- */
@@ -413,7 +413,8 @@ function renderQA(n) {
 // built with (n.rig.handFit).
 // The gloves get their own copy of the skeleton whose Hand bones carry the preview's move / resize, so the finger joints
 // move with the glove as in the re-rigged NPC. Moving only the glove's skin left the fingers bending at their old joints:
-// as they curled in an animation the fingers looked longer and the hands bigger.
+// as they curled in an animation the fingers looked longer and the hands bigger. Rigger 2.21 turns the hand about the
+// glove's middle and gives the cuff its own bone (the hand's twist only): a move goes to that pivot (and the cuff bone).
 const HF_STEP = 0.025, HF0 = { along: 0, thumb: 0, back: 0, size: 1, cuffSize: 1, cuffLen: 1 };
 let handSide = 'both';
 function prepareHands(meshes) {
@@ -424,42 +425,57 @@ function prepareHands(meshes) {
   const hipsB = bone('Hips'), hips = hipsB ? bindOf(hipsB) : V3.Zero(), frames = {};
   for (const side of ['Left', 'Right']) {
     const hb = bone(side + 'Hand'), fb = bone(side + 'ForeArm'); if (!hb || !fb || !hb.getTransformNode()) return null;
+    const cb = bone(side + 'ForeArmCuff');   // rigger 2.21: the cuff's own bone (the hand's twist only)
     const W = bindOf(hb), E = bindOf(fb);
-    const x = W.subtract(E).normalize(); const out = new V3(Math.sign(W.x - hips.x) || (side === 'Left' ? 1 : -1), 0, 0);
+    let x = W.subtract(E).normalize();
+    if (cb && cb.getTransformNode()) {   // 2.21: the hand's pivot moved off the elbow line; the cuff bone carries the rigger's sleeve axis
+      const M = cb.getAbsoluteInverseBindMatrix().clone(); M.invert(); const ax = V3.TransformNormal(new V3(0, 1, 0), M).normalize();
+      if (ax.length() > 0.5) x = V3.Dot(ax, x) < 0 ? ax.scale(-1) : ax;
+    }
+    const out = new V3(Math.sign(W.x - hips.x) || (side === 'Left' ? 1 : -1), 0, 0);
     const z = out.subtract(x.scale(V3.Dot(out, x))).normalize(); const y = V3.Cross(z, x);
-    frames[side] = { hb, W, x, z, thumb: side === 'Left' ? y.scale(-1) : y, c: V3.Zero(), n: 0, L: 0, front: -Infinity, T: { k: 1, u: V3.Zero() } };
+    frames[side] = { hb, fb, cb: cb && cb.getTransformNode() ? cb : null, W, x, z, thumb: side === 'Left' ? y.scale(-1) : y, c: V3.Zero(), n: 0, L: 0, front: -Infinity, T: { k: 1, u: V3.Zero(), dp: V3.Zero() } };
   }
-  // the bones under each Hand (the hand and its fingers): a vertex's weight on them follows the preview's Hand transform
-  const idxOf = (b) => (typeof b.getIndex === 'function' ? b.getIndex() : sk.bones.indexOf(b)), under = new Map();
+  // the bones under each Hand (the hand and its fingers): a vertex's weight on them follows the preview's Hand transform;
+  // a weight on the cuff bone moves with the hand's pivot only
+  const idxOf = (b) => (typeof b.getIndex === 'function' ? b.getIndex() : sk.bones.indexOf(b)), under = new Map(), cuffOf = new Map();
   for (const b of sk.bones) for (let p = b; p; p = p.getParent()) { if (p === frames.Left.hb) { under.set(idxOf(b), 0); break; } if (p === frames.Right.hb) { under.set(idxOf(b), 1); break; } }
+  ['Left', 'Right'].forEach((s, i) => { if (frames[s].cb) cuffOf.set(idxOf(frames[s].cb), i); });
   const parts = gm.map((m) => {
     const P0 = Float32Array.from(m.getVerticesData(BABYLON.VertexBuffer.PositionKind)), nv = P0.length / 3, cuff = /Cuff/.test(m.material.name);
     const VB = BABYLON.VertexBuffer, sets = [[m.getVerticesData(VB.MatricesIndicesKind), m.getVerticesData(VB.MatricesWeightsKind)], [m.getVerticesData(VB.MatricesIndicesExtraKind), m.getVerticesData(VB.MatricesWeightsExtraKind)]];
-    const side = new Uint8Array(nv), wh = new Float32Array(nv);
+    const side = new Uint8Array(nv), wh = new Float32Array(nv), wc = new Float32Array(nv);
     for (let i = 0; i < nv; i++) {
-      const sw = [0, 0];
-      for (const [I, Wt] of sets) { if (!I || !Wt) continue; for (let k = 0; k < 4; k++) { const s = under.get(I[4 * i + k]); if (s !== undefined) sw[s] += Wt[4 * i + k]; } }
-      const v = new V3(P0[3 * i], P0[3 * i + 1], P0[3 * i + 2]);
-      const s = sw[0] || sw[1] ? (sw[0] >= sw[1] ? 0 : 1) : (V3.DistanceSquared(v, frames.Left.W) < V3.DistanceSquared(v, frames.Right.W) ? 0 : 1);
-      side[i] = s; wh[i] = sw[s];
+      const sw = [0, 0], cw = [0, 0];
+      for (const [I, Wt] of sets) { if (!I || !Wt) continue; for (let k = 0; k < 4; k++) { const j = I[4 * i + k], s = under.get(j); if (s !== undefined) sw[s] += Wt[4 * i + k]; else { const c = cuffOf.get(j); if (c !== undefined) cw[c] += Wt[4 * i + k]; } } }
+      const v = new V3(P0[3 * i], P0[3 * i + 1], P0[3 * i + 2]), a0 = sw[0] + cw[0], a1 = sw[1] + cw[1];
+      const s = a0 || a1 ? (a0 >= a1 ? 0 : 1) : (V3.DistanceSquared(v, frames.Left.W) < V3.DistanceSquared(v, frames.Right.W) ? 0 : 1);
+      side[i] = s; wh[i] = sw[s]; wc[i] = cw[s];
       const f = frames[s ? 'Right' : 'Left'];
       if (cuff) { f.c.addInPlace(v); f.n++; } else f.L = Math.max(f.L, V3.Dot(v.subtract(f.W), f.x));
     }
-    return { m, P0, side, wh, cuff };
+    return { m, P0, side, wh, wc, cuff };
   });
   for (const f of Object.values(frames)) { if (f.n) f.c.scaleInPlace(1 / f.n); else f.c.copyFrom(f.W); }
   // the glove's own origin, which the rigger scales the glove about: the front of the cuff, on its axis
   for (const { P0, side, cuff } of parts) if (cuff) for (let i = 0; i < side.length; i++) { const f = frames[side[i] ? 'Right' : 'Left']; f.front = Math.max(f.front, (P0[3 * i] - f.c.x) * f.x.x + (P0[3 * i + 1] - f.c.y) * f.x.y + (P0[3 * i + 2] - f.c.z) * f.x.z); }
-  for (const f of Object.values(frames)) f.G = Number.isFinite(f.front) ? f.c.add(f.x.scale(f.front)) : f.W.clone();
+  // (rigger 2.21 puts the hand's pivot there exactly: rigs with a cuff bone use it)
+  for (const f of Object.values(frames)) f.G = f.cb ? f.W.clone() : Number.isFinite(f.front) ? f.c.add(f.x.scale(f.front)) : f.W.clone();
   // (always drawn: a box refreshed in one pose culled the moved glove once the hand went up, e.g. rallying)
   const sk2 = sk.clone(sk.name + '_hands'); gm.forEach((m) => { m.skeleton = sk2; m.alwaysSelectAsActiveMesh = true; });
-  for (const f of Object.values(frames)) { f.hb2 = sk2.bones[sk.bones.indexOf(f.hb)]; f.node = f.hb.getTransformNode(); f.hb2.linkTransformNode(null); f.inv = f.hb.getAbsoluteInverseBindMatrix().clone(); }
-  // every frame, after the animation: each glove Hand bone = the animated hand x the preview's move / resize
+  for (const f of Object.values(frames)) {
+    f.hb2 = sk2.bones[sk.bones.indexOf(f.hb)]; f.node = f.hb.getTransformNode(); f.hb2.linkTransformNode(null); f.inv = f.hb.getAbsoluteInverseBindMatrix().clone(); f.invF = f.fb.getAbsoluteInverseBindMatrix().clone();
+    if (f.cb) { f.cb2 = sk2.bones[sk.bones.indexOf(f.cb)]; f.cnode = f.cb.getTransformNode(); f.cb2.linkTransformNode(null); }
+  }
+  // every frame, after the animation: each glove Hand bone = the animated hand x the preview's resize, its pivot moved
+  // with the glove (rigger 2.21 turns the hand about the glove's middle); the cuff bone moves with the pivot
+  const quatOf = (n) => n.rotationQuaternion || BABYLON.Quaternion.FromEulerVector(n.rotation);
   const obs = scene.onBeforeRenderObservable.add(() => {
     for (const f of Object.values(frames)) {
-      const n = f.node, q = n.rotationQuaternion || BABYLON.Quaternion.FromEulerVector(n.rotation), s0 = n.scaling, u = f.T.u;
-      f.hb2.position = n.position.add(new V3(s0.x * u.x, s0.y * u.y, s0.z * u.z).applyRotationQuaternion(q));
+      const n = f.node, q = quatOf(n), s0 = n.scaling, u = f.T.u;
+      f.hb2.position = n.position.add(f.T.dp).add(new V3(s0.x * u.x, s0.y * u.y, s0.z * u.z).applyRotationQuaternion(q));
       f.hb2.rotationQuaternion = q; f.hb2.scaling = s0.scale(f.T.k);
+      if (f.cb2) { const c = f.cnode; f.cb2.position = c.position.add(f.T.dp); f.cb2.rotationQuaternion = quatOf(c); f.cb2.scaling = c.scaling; }
     }
   });
   const mats = {}; gm.forEach((m) => { const k = /Cuff/.test(m.material.name) ? 'cuff' : 'glove'; if (!mats[k]) mats[k] = { mat: m.material, c0: (m.material.albedoColor || m.material.diffuseColor || BABYLON.Color3.White()).clone() }; });
@@ -503,13 +519,14 @@ function previewHands() {
     const f = H.frames[s], now = fitOf(h, s), was = fitOf(built, s), Ld = f.L / (was.size || 1), k = now.size / (was.size || 1);
     const d = f.x.scale((now.along - was.along) * Ld).add(f.thumb.scale((now.thumb - was.thumb) * Ld)).add(f.z.scale((now.back - was.back) * Ld));
     const u = f.G.scale(1 - k).add(d);   // bind space: T(p) = k p + u, resized about the glove's origin, then moved
-    f.T = { k, u: V3.TransformCoordinates(f.G, f.inv).scale(1 - k).add(V3.TransformNormal(d, f.inv)) };   // the same in the hand bone's space
+    // the resize in the hand bone's space; the move goes to the pivot (in the forearm's space), as the re-rig moves it
+    f.T = { k, u: V3.TransformCoordinates(f.G, f.inv).scale(1 - k), dp: V3.TransformNormal(d, f.invF) };
     return { f, k, d, u, sL: f.L / 0.95, cs: now.cuffSize / (was.cuffSize || 1), cl: now.cuffLen / (was.cuffLen || 1), cl0: was.cuffLen || 1 };
   });
-  for (const { m, P0, side, wh, cuff } of H.parts) {
+  for (const { m, P0, side, wh, wc, cuff } of H.parts) {
     const P = new Float32Array(P0.length);
     for (let i = 0; i < side.length; i++) {
-      const t = tf[side[i]], f = t.f, G = f.G, x = f.x, j = 3 * i, w = wh[i], X = P0[j], Y = P0[j + 1], Z = P0[j + 2];
+      const t = tf[side[i]], f = t.f, G = f.G, x = f.x, j = 3 * i, w = wh[i], wq = wc[i], X = P0[j], Y = P0[j + 1], Z = P0[j + 2];
       // where the re-rigged NPC has this point at rest: the glove moved and resized (T); the cuff moved, its length
       // following the glove's size x the cuff length, its width the glove's near the hand and the sleeve's x the cuff
       // size deeper in (the rigger fits the cuff to the sleeve)
@@ -519,9 +536,10 @@ function previewHands() {
         const kk = Math.min(1, Math.max(0, -a / (0.07 * t.sL * t.cl0))), kr = (1 - kk) * t.k + kk * t.cs, ax = a * t.k * t.cl;
         tx = G.x + t.d.x + x.x * ax + (rx - x.x * a) * kr; ty = G.y + t.d.y + x.y * ax + (ry - x.y * a) * kr; tz = G.z + t.d.z + x.z * ax + (rz - x.z * a) * kr;
       }
-      // the glove's Hand bone already moves its share w of the point by T: solve w T(P) + (1 - w) P = target
+      // the glove's Hand bone already moves its share w of the point by T and the cuff bone its share wq by the move d:
+      // solve w T(P) + wq (P + d) + (1 - w - wq) P = target
       const den = 1 - w + w * t.k;
-      P[j] = (tx - w * t.u.x) / den; P[j + 1] = (ty - w * t.u.y) / den; P[j + 2] = (tz - w * t.u.z) / den;
+      P[j] = (tx - w * t.u.x - wq * t.d.x) / den; P[j + 1] = (ty - w * t.u.y - wq * t.d.y) / den; P[j + 2] = (tz - w * t.u.z - wq * t.d.z) / den;
     }
     m.setVerticesData(BABYLON.VertexBuffer.PositionKind, P, true); m.refreshBoundingInfo(true);
   }
