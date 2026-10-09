@@ -275,3 +275,9 @@ Friend villages (Queens, Cute & Creepy, Saints LA; Chumps not in registry yet): 
 - handswap.py OPEN_RAISED {'wave_short'}: the raised hand (source wrist above its arm joint) takes the open pose.
 - Ashigaru: QA wave_short stretch p99.9 4.05 -> 2.68, tear .057 -> .028, other clips identical; glove 7-20 cm from the head mesh all clip.
 
+## Village NPCs linked + Retry fix (dev d92160a.., Oct 9)
+- NPC Forge: a failed Rebel Forge sculpt (Meshy 'could not be finalized', server_error) left the failed build on the NPC, so Retry re-polled the dead task forever. Now Retry after a failed sculpt starts a fresh one (renders kept); the error shows Meshy's task_error type.
+- Approved in the NPC library: ashigaru_villager (build_1791414451975) and buke_villager (build_1791503072103; QA review: armpit stretch in waving / rallying / pick_up when the arms go overhead; shoulder plates stand up with the arms, no tears).
+- Layouts: buke.json 4 NPCs -> libraryKey buke_villager; ashigaru.json 5 NPCs -> ashigaru_villager (Hub's 8 already had it). Miguel: reload those villages before a Hard Save, or an older page state drops the keys.
+- Headless village shots of forged NPCs: swiftshader runs ~0.2 fps, so the 0.12-per-frame clip blend leaves NPCs near the rest pose; restart the playing group with enableBlending false before the shot (t/villnpc.mjs pattern).
+
