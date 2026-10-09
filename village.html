@@ -2115,6 +2115,76 @@ const BOOK1_WIRING = {
       { id:'council', objective:'Return to the Hub Guide for the first council.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
         say:['Dust on the roots. A scout with no shadow. Cracks in the dojo. Lanterns that lean.', 'The Ronin kept a debt, and the Ashigaru now carry the warning.', 'Write it all down. This is the first chapter of something bigger.'] },
       { id:'review-journal', objective:'Open your journal and review the first warnings.', objectiveType:'openJournal' }
+    ],
+    // Chapter 2, Echoes Beneath: Hub, Sohei, Yamabushi, Buke and back to the Ronin
+    11: [
+      { id:'feel-tremor', objective:'Talk to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['The council was barely over when the ground spoke again.', 'Stand in the square by the cherry tree and feel it with me. Do not move until it passes.'] },
+      { id:'stand-center', objective:'Stand still in the square by the cherry tree.', objectiveType:'useQuestSpot', targetObjectId:'hub-second-tremor', villageId:'hub' },
+      { id:'record-tremor', objective:'Tell the Hub Guide what you felt.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['It rolled away, then rolled back? Then the first tremor was a question, and something below just answered it.', 'The Sohei bells hear the ground better than any of us. Go to Sohei Village and find their Bell Keeper.'] }
+    ],
+    12: [
+      { id:'meet-bellkeeper', objective:'Find the Bell Keeper in Sohei Village.', objectiveType:'talkToNpc', targetNpcId:'sohei-bellkeeper-01', villageId:'sohei',
+        say:['You came about the bells. Of course you did.', 'Last night our listening bells rang with no wind at all: one at the gate, one at the library, one at the hall.', 'Listen to each of them. Then tell me what they said.'] },
+      { id:'listen-bells', objective:'Listen to the three listening bells: the gate, the library and the hall.', objectiveType:'useQuestSpot', targetObjectId:'sohei-listening-bell', count:3, villageId:'sohei' },
+      { id:'tell-bellkeeper', objective:'Tell the Bell Keeper what the bells said.', objectiveType:'talkToNpc', targetNpcId:'sohei-bellkeeper-01', villageId:'sohei',
+        say:['They all leaned the same way? Toward the Hub?', 'Then the bells agree with the ground. The trouble runs from here to your square.', 'The Yamabushi feel the roots the way we hear the bells. Their Seer will want to know.'] }
+    ],
+    13: [
+      { id:'meet-seer', objective:'Speak with the Yamabushi Seer on the dojo terrace.', objectiveType:'talkToNpc', targetNpcId:'yamabushi-monk-01', villageId:'yamabushi',
+        say:['The Sohei sent you. The bells and the roots tell one story in two voices.', 'Where the roots break through the stone, rest your hand on them and be still.', 'There are three such places on this mountain. Find them.'] },
+      { id:'root-sense', objective:'Rest your hand on the three roots that break through the stone.', objectiveType:'useQuestSpot', targetObjectId:'yam-root-sense', count:3, villageId:'yamabushi' },
+      { id:'return-seer', objective:'Return to the Yamabushi Seer.', objectiveType:'talkToNpc', targetNpcId:'yamabushi-monk-01', villageId:'yamabushi',
+        say:['Warm, pulling, beating. That is not the mountain. That is something under it.', 'Balance breaks before walls do. The Buke will not believe a monk, but they will believe a measurement. Go to their engineer.'] }
+    ],
+    14: [
+      { id:'meet-engineer', objective:'Find the Buke Engineer in Buke Village.', objectiveType:'talkToNpc', targetNpcId:'buke-scholar-01', villageId:'buke',
+        say:['A Seer\'s feelings? We build with lines, not feelings.', 'Still... my survey marks moved last night. I set three across the canyon. Bring them to me and we will see what the stone says.'] },
+      { id:'collect-marks', objective:'Collect the three survey marks around the canyon.', objectiveType:'collectCollectible', targetObjectId:'buke-survey-mark', count:3, villageId:'buke' },
+      { id:'bring-marks', objective:'Bring the survey marks to the Buke Engineer.', objectiveType:'talkToNpc', targetNpcId:'buke-scholar-01', villageId:'buke',
+        say:['Three marks, and every one has slipped the same way: a finger\'s width toward the Hub.', 'Stone does not lie. The pressure is real, and it is moving.', 'Take this pressure map to your Hub Guide. Tell them the Buke measured it.'] }
+    ],
+    15: [
+      { id:'show-map', objective:'Bring the Buke pressure map to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['The Buke measured it? Then even they cannot deny it.', 'Look where the lines meet: the old scout path past the south torii. Walk it and listen to every step.'] },
+      { id:'hollow-step', objective:'Find the hollow step on the old scout path past the south torii.', objectiveType:'useQuestSpot', targetObjectId:'hub-hollow-step', villageId:'hub' },
+      { id:'mark-chamber', objective:'Mark the sealed chamber under the path.', objectiveType:'useQuestSpot', targetObjectId:'hub-sealed-chamber', villageId:'hub' }
+    ],
+    16: [
+      { id:'cold-air', objective:'Return to the Sohei Bell Keeper.', objectiveType:'talkToNpc', targetNpcId:'sohei-bellkeeper-01', villageId:'sohei',
+        say:['Since you left, the pond freezes at its edge every morning, and the zen garden stones are wet with cold.', 'The tunnels are breathing. Find where the cold air comes out.'] },
+      { id:'find-vents', objective:'Find the two cold vents: by the pond and in the zen garden.', objectiveType:'useQuestSpot', targetObjectId:'sohei-cold-vent', count:2, villageId:'sohei' },
+      { id:'air-direction', objective:'Hold up a prayer ribbon on the bell platform to see where the air goes.', objectiveType:'useQuestSpot', targetObjectId:'sohei-wind-ribbon', villageId:'sohei' }
+    ],
+    17: [
+      { id:'seer-map', objective:'Return to the Yamabushi Seer.', objectiveType:'talkToNpc', targetNpcId:'yamabushi-monk-01', villageId:'yamabushi',
+        say:['The air flows to the Hub, the stone slips to the Hub, the roots pull to the Hub.', 'There is an old root map, older than this village, kept in the shrine on the pillar. Cross the bridge and bring it to the light.'] },
+      { id:'get-map', objective:'Recover the old root map from the pillar shrine.', objectiveType:'collectCollectible', targetObjectId:'yam-old-root-map', villageId:'yamabushi' },
+      { id:'compare-map', objective:'Hold the map up to the valley from the bridge.', objectiveType:'useQuestSpot', targetObjectId:'yam-map-overlook', villageId:'yamabushi' }
+    ],
+    18: [
+      { id:'ask-watcher', objective:'Show the old root map to the Ronin Watcher.', objectiveType:'talkToNpc', targetNpcId:'ronin-guard-01', villageId:'ronin',
+        say:['That map... I hoped no one had kept a copy.', 'Go back to the old debt marker. Look below the words, where the stone was cut.'] },
+      { id:'omitted-mark', objective:'Look below the words on the old debt marker.', objectiveType:'useQuestSpot', targetObjectId:'ronin-omitted-mark', villageId:'ronin' },
+      { id:'hear-truth', objective:'Return to the Ronin Watcher.', objectiveType:'talkToNpc', targetNpcId:'ronin-guard-01', villageId:'ronin',
+        say:['Now you see what we left out. The door we keep is not the only one. Our tunnel runs on, under the Hub, to a second door.', 'We did not lie. We left room for you to survive the truth.', 'Gather what the other villages felt, and take it home.'] }
+    ],
+    19: [
+      { id:'sohei-report', objective:'Collect the bell report from the Sohei Bell Keeper.', objectiveType:'talkToNpc', targetNpcId:'sohei-bellkeeper-01', villageId:'sohei',
+        say:['Our bells rang twice on the night the Ronin finally spoke. Here are the hours of both rings.', 'Take them to the Hub. Every report should lie side by side.'] },
+      { id:'buke-report', objective:'Collect the pressure report from the Buke Engineer.', objectiveType:'talkToNpc', targetNpcId:'buke-scholar-01', villageId:'buke',
+        say:['Here are our readings, hour by hour. The pressure peaked twice.', 'If the Hub and the Sohei line up with this, it is not chance. It is a pattern.'] },
+      { id:'hub-report', objective:'Collect the lantern report from the Ashigaru Lantern Keeper.', objectiveType:'talkToNpc', targetNpcId:'hub-ashigaru-villager-1779752263951-142', villageId:'hub',
+        say:['The lanterns leaned twice that night. I wrote down when.', 'Lay my notes with the others. I want to know if I am mad or right.'] },
+      { id:'assemble', objective:'Lay the three reports out on the flat rock by the Hub Guide.', objectiveType:'useQuestSpot', targetObjectId:'hub-tremor-pattern', villageId:'hub' }
+    ],
+    20: [
+      { id:'guide-seal', objective:'Tell the Hub Guide where the lines meet.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['The sealed chamber. Of course. We walked over it every day.', 'Go back to it and copy the seal. Every line of it.'] },
+      { id:'record-seal', objective:'Copy the seal on the sealed chamber.', objectiveType:'useQuestSpot', targetObjectId:'hub-chamber-seal', villageId:'hub' },
+      { id:'echo-council', objective:'Bring the seal to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['Together. Every village, or none of them.', 'The seal is not a lock. It is a warning made of stone.', 'The villages heard the echo. Now each of them will want to answer it in its own way.'] }
     ]
   },
   side: {
