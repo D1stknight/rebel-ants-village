@@ -19,7 +19,8 @@ R="$FW/rigger"; O="$FORGE_OUT"
 NPC="${FORGE_NPC:-}"; MOVES="$FW/anim/clips.json"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"
-  export FORGE_HEAD_SKIP="${FORGE_HEAD_SKIP-$("$PY" -c 'import json, sys; print(",".join(c["name"] for c in json.load(open(sys.argv[1])) if not c.get("headfix")))' "$MOVES")}"
+  # v2.19: the acrobatic master moves stay unlevelled as on a Rebel (levelling turned the head round mid flip_kick)
+  export FORGE_HEAD_SKIP="${FORGE_HEAD_SKIP-cartwheel,backflip,front_flip,flip_kick,spin_flip_kick,knockdown,get_up,$("$PY" -c 'import json, sys; print(",".join(c["name"] for c in json.load(open(sys.argv[1])) if not c.get("headfix")))' "$MOVES")}"
 fi
 mkdir -p "$O"; : > "$JOB/log"
 T0=$(date +%s)
