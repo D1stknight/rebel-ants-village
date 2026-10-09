@@ -7703,7 +7703,8 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     isClone: true,
     collectibleId: id,
     collectibleType: type,
-    collectibleLabel: cfg.label,
+    // a layout's own label ("Survey Mark") wins over the type's ("Ancient Scroll"); another type's default does not
+    collectibleLabel: options.collectibleLabel && !Object.values(COLLECTIBLE_TYPES).some(t => t.label === options.collectibleLabel) ? String(options.collectibleLabel) : cfg.label,
     villageId: CURRENT_VILLAGE_ID,
     interiorRuntime: !!options.interiorId,
     isInteriorObject: !!options.interiorId,
@@ -22367,7 +22368,8 @@ function loadWorldLayout(){
           name: item.name,
           rotation: item.rotation,
           scaling: item.scaling,
-          collectibleId: item.collectibleId || null
+          collectibleId: item.collectibleId || null,
+          collectibleLabel: item.collectibleLabel || null
         }
       );
       if (collectible) registerEditableRoot(collectible.name, collectible);
@@ -31766,7 +31768,8 @@ function createLayoutNodeForHistory(item) {
       name: item.name,
       rotation: item.rotation,
       scaling: item.scaling,
-      collectibleId: item.collectibleId || null
+      collectibleId: item.collectibleId || null,
+      collectibleLabel: item.collectibleLabel || null
     });
   } else if (ASSETS[item.type]?.procedural) {
     node = spawnAsset(item.type, pos, { isClone: true, ...item });
