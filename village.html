@@ -2608,6 +2608,7 @@ function loadSideQuestState() {
 function saveSideQuestState() {
   try { localStorage.setItem(SIDE_QUEST_KEY, JSON.stringify(SideQuestState)); } catch(e) {}
   try { updateQuestTracker(); } catch(e) {}
+  scheduleQuestItemCredit();
 }
 
 function getSideQuestWiring(questId) {
@@ -2734,6 +2735,31 @@ function getActiveSideQuestTrackerLines(limit = 2) {
     const n = step.count > 1 ? ` (${Math.min((st.steps?.[step.id]?.ids || []).length, step.count)}/${step.count})` : '';
     return `${quest.title}: ${step.objective}${n}`;
   }).filter(Boolean);
+}
+
+// Quest items found before their step asked for them (a collectible can be picked up any time, and a picked-up item
+// is gone for good) count as soon as the step is current, for the main story and for side quests. Without this a
+// collect step that came after the find could never finish.
+function creditFoundQuestItems() {
+  const found = ProgressionState.collectiblesFound || [];
+  if (!found.length) return;
+  const items = found.map(key => { const i = String(key).indexOf(':'); return { village:String(key).slice(0, i), id:String(key).slice(i + 1) }; });
+  const matches = step => {
+    if (!step?.wired || normalizeQuestObjectiveAction(step.objectiveType) !== 'collectCollectible') return [];
+    const want = String(step.targetObjectId || '').toLowerCase();
+    return want ? items.filter(it => it.id.toLowerCase().includes(want) && (!step.villageId || it.village === step.villageId)).map(it => it.id) : [];
+  };
+  if (QuestState.completed !== true && QUEST_DEFINITIONS[QuestState.questId]) {
+    for (const id of matches(getQuestStep(QuestState.questId, QuestState.step))) advanceMainQuestObjective('collectCollectible', { collectibleId:id, targetObjectId:id, progressId:id });
+  }
+  for (const questId of Object.keys(SideQuestState.active)) {
+    const st = SideQuestState.active[questId];
+    for (const id of matches(st && getQuestStep(questId, st.step))) advanceSideQuests('collectCollectible', { collectibleId:id, targetObjectId:id, progressId:id });
+  }
+}
+function scheduleQuestItemCredit() {
+  clearTimeout(scheduleQuestItemCredit.timer);
+  scheduleQuestItemCredit.timer = setTimeout(() => { try { creditFoundQuestItems(); } catch (e) { console.warn('quest item credit', e); } }, 400);
 }
 
 function isQuestSpotTargetedBySideQuest(spotId) {
@@ -8484,6 +8510,7 @@ const SECRET_DEFINITIONS = [
 function getSecretTotalCount() { return SECRET_TOTAL; }
 // badges earned before these definitions existed are awarded quietly; emblems load for the badge art
 setTimeout(() => { try { preloadBadgeEmblems(); checkAutoBadges(true); } catch(e) { console.warn('auto badges', e); } }, 0);
+setTimeout(scheduleQuestItemCredit, 2500);
 function getSecretDefinition(secretId) { return SECRET_DEFINITIONS.find(d => d.secretId === secretId) || null; }
 function getSecretVillageTotal(villageId) {
   if (SECRET_PER_VILLAGE[villageId]) return SECRET_PER_VILLAGE[villageId];
@@ -11235,6 +11262,7 @@ function saveQuestState() {
   updateQuestTracker();
   if (typeof updateQuestTargetMarkers === 'function') updateQuestTargetMarkers(0);
   if (typeof updateQuestBuilderStatus === 'function') updateQuestBuilderStatus();
+  scheduleQuestItemCredit();
 }
 
 function getQuestStep(questId, stepId) {
