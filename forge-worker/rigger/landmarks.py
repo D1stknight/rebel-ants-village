@@ -1,5 +1,8 @@
-import numpy as np
+import os, numpy as np
 from sil import silhouette
+# v2.22 NPC villagers (FORGE_NPC): torn skirt strips, knee pads and tall boots around the legs threw off the ankle, knee
+# and hip landmarks (Wokou: ankle in the boot sole, knee 13 cm behind the leg, hips 5.5 cm lopsided -> rubbery legs)
+NPCM = bool(os.environ.get('FORGE_NPC'))
 def runs(row,minw=2):
     r=[];i=0;n=len(row)
     while i<n:
@@ -117,7 +120,9 @@ def detect(V,F):
         lm=(np.sign(x)==sg)&(z<zc)
         zz=np.linspace(0.005,zc,70); ext=np.array([np.ptp(y[lm&(np.abs(z-a)<0.012)]) if (lm&(np.abs(z-a)<0.012)).sum()>3 else 0 for a in zz])
         shin=np.median(ext[(zz>0.25*zc)&(zz<0.6*zc)]); foot=zz[(ext>1.3*shin)&(zz<0.35*zc)]
-        zank=(foot.max() if len(foot) else 0.07*zc)
+        if NPCM and not len(foot):   # skirt strips hanging past the knees widen the median shin: use the boot shaft
+            shin=np.percentile(ext[(zz>0.25*zc)&(zz<0.6*zc)],25); foot=zz[(ext>1.3*shin)&(zz<0.35*zc)]
+        zank=(foot.max() if len(foot) else (0.15 if NPCM else 0.07)*zc)
         ax=X(np.interp(zank,[Z(r) for r in lp[::-1,0]],lp[::-1,1]))
         hipx=X(lp[3,1])*0.85
         # v1.3: under a robe the rows just below the crotch can pick up a hand hanging beside the robe (TRELLIS #1555).
@@ -128,8 +133,16 @@ def detect(V,F):
         sh=lm&(np.abs(z-(zank+0.03))<0.01); yank=float((y[sh].min()+y[sh].max())/2) if sh.sum()>3 else depth(ax,zank)
         J[s+'UpLeg']=P(hipx,zc+0.03); J[s+'Foot']=np.array([float(ax),yank,float(zank)])
         J[s+'Leg']=P((hipx+ax)/2,(zc+0.03+zank)/2)
+        if NPCM:   # knees sit on the hip-ankle line (a hair forward); strips hanging behind the knee pulled it back
+            hy, ay, hz_ = J[s+'UpLeg'][1], yank, J[s+'UpLeg'][2]; t_ = (hz_-J[s+'Leg'][2])/max(1e-6, hz_-zank); ly = hy+(ay-hy)*t_
+            if abs(J[s+'Leg'][1]-ly) > 0.03: J[s+'Leg'][1] = ly-0.01
         fm=lm&(z<zank); ymin=y[fm].min()
         J[s+'ToeBase']=np.array([ax,J[s+'Foot'][1]*0.4+ymin*0.6,0.035]); J[s+'Toe_End']=np.array([ax,ymin,0.03])
+    if NPCM:   # hips: one side read a skirt strip or the joined legs (0.055 / 0.11 clamps) -> both at the mean
+        l_, r_ = abs(J['LeftUpLeg'][0]), abs(J['RightUpLeg'][0])
+        if abs(l_-r_) > 0.02:
+            hx = float(np.clip((l_+r_)/2, 0.08, 0.11)); J['LeftUpLeg'][0] = hx; J['RightUpLeg'][0] = -hx
+            for s_ in ('Left', 'Right'): J[s_+'Leg'][0] = (J[s_+'UpLeg'][0]+J[s_+'Foot'][0])/2
     return J,dbg
 def draw(J,dbg,path):
     from PIL import Image,ImageDraw
