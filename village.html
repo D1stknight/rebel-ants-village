@@ -17316,6 +17316,19 @@ async function refreshActiveForgeCharacterForVillage() {
     return selectedCharacter;
   }
 
+  if (!activeForgeCharacter && selectedRebel.activeForgeCharacter?.appearanceSource) {
+    // A cached admitted appearance cannot override a missing/revoked server
+    // record. Keep the controlled Rebel identity, use the ordinary starter form.
+    const cleared = { ...selectedRebel, activeForgeCharacter:null, activeGlbUrl:null,
+      riggedGlbUrl:null, forgeRigGlbUrl:null, characterSource:'starter_bundle', playableType:null, buildId:null };
+    for (const key of Object.keys(cleared)) if (/GlbUrl$/.test(key)) cleared[key]=null;
+    window.activeRebel=cleared;
+    window.activeCharacter=resolveCharacterConfig(cleared);
+    window.activeCharacter.formLabel='Starter form · reconnect to verify saved appearance';
+    try { localStorage.setItem('selectedRebel',JSON.stringify(cleared)); } catch {}
+    return window.activeCharacter;
+  }
+
   if (!activeForgeCharacter) {
     if (selectedRebel?.playableType === 'forge_build' && selectedRebel.activeForgeCharacter?.activeGlbUrl) {
       const selectedCharacter = resolveCharacterConfig(selectedRebel);

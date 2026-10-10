@@ -766,7 +766,7 @@ async function loadSelectedForgePlayableFromServer() {
 
     return buildForgePlayableCardFromActiveCharacter(data.activeCharacter, {
       id: `forge_playable_${data.activeCharacter?.activeForgeBuildId || 'selected'}`,
-      name: 'Active Forge Playable'
+      name: data.activeCharacter?.name || 'Active Forge Playable'
     });
   } catch(e) {
     console.warn('Could not load saved Forge playable character:', e);
@@ -779,14 +779,16 @@ async function loadSavedForgePlayableCards() {
 
   loadLocalForgePlayableCharacters().forEach((saved) => {
     const card = buildForgePlayableCardFromActiveCharacter(getForgePlayableActiveCharacter(saved), saved);
+    // An authenticated World appearance must be refreshed from its saved rights.
+    if (card?.activeForgeCharacter?.appearanceSource) return;
     if (card?.activeGlbUrl && (card.collectionKey || 'battle_for_colony') === 'battle_for_colony') playableById.set(card.id, card);
   });
 
   const serverSelectedPlayable = await loadSelectedForgePlayableFromServer();
   if (serverSelectedPlayable?.activeGlbUrl) {
     playableById.set(serverSelectedPlayable.id, {
-      ...serverSelectedPlayable,
-      ...(playableById.get(serverSelectedPlayable.id) || {})
+      ...(playableById.get(serverSelectedPlayable.id) || {}),
+      ...serverSelectedPlayable
     });
   }
 
@@ -1181,7 +1183,9 @@ async function loadNFTs(walletAddress) {
     let storedSel = {};
     try { storedSel = JSON.parse(localStorage.getItem('selectedRebel') || '{}') || {}; } catch(e) {}
     const storedCard = storedSel.tokenId ? ownedRebels.find((rebel) => String(rebel.tokenId || '') === String(storedSel.tokenId)) : (storedSel.playerModel ? ownedRebels.find((rebel) => rebel.id === storedSel.id) : null);
-    selectedAnt = storedCard ? storedCard.id : forgedReadyRebel ? forgedReadyRebel.id : (ownedRebels.find((rebel) => !rebel.playerModel) || ownedRebels[0]).id;
+    const serverChoice = savedForgePlayables.find(r => r.activeForgeCharacter?.appearanceSource && r.activeForgeCharacter?.walletAddress === walletAddress.toLowerCase());
+    const serverCard = serverChoice && walletRebels.find(r => String(r.tokenId) === String(serverChoice.tokenId));
+    selectedAnt = serverCard ? serverCard.id : storedCard ? storedCard.id : forgedReadyRebel ? forgedReadyRebel.id : (ownedRebels.find((rebel) => !rebel.playerModel) || ownedRebels[0]).id;
 
     charRow.innerHTML = '';
     ownedRebels.forEach(r => buildCard(r));
@@ -1800,3 +1804,4 @@ window.addEventListener('load', () => {
 </script>
 </body>
 </html>
+
