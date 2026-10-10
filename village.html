@@ -2185,6 +2185,79 @@ const BOOK1_WIRING = {
       { id:'record-seal', objective:'Copy the seal on the sealed chamber.', objectiveType:'useQuestSpot', targetObjectId:'hub-chamber-seal', villageId:'hub' },
       { id:'echo-council', objective:'Bring the seal to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
         say:['Together. Every village, or none of them.', 'The seal is not a lock. It is a warning made of stone.', 'The villages heard the echo. Now each of them will want to answer it in its own way.'] }
+    ],
+    // Chapter 3, Divided Paths: Samurai order, Ronin refusal, Wokou trade, Bushi songs, Kenshi rust, a split council
+    21: [
+      { id:'samurai-rider', objective:'Talk to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['A Samurai rider came through the gate at dawn and did not even stop to drink.', 'The Samurai Captain wants to see the one who copied the seal. That is you.', 'Go to Samurai Village. Listen to him, but keep your own eyes open.'] },
+      { id:'meet-captain', objective:'Find the Samurai Captain at the top of the dojo stairs.', objectiveType:'talkToNpc', targetNpcId:'samurai-captain-01', villageId:'samurai',
+        say:['So you are the one who copied the seal. Good. Then you hear this first.', 'Tunnels, tremors, red dust. Every village tells its own story, and every story makes the ants more afraid.', 'Fear needs order. The decree is posted at the foot of the dojo stairs. Read it.'] },
+      { id:'read-decree', objective:'Read the Samurai decree at the foot of the dojo stairs.', objectiveType:'useQuestSpot', targetObjectId:'sam-decree', villageId:'samurai' },
+      { id:'take-copy', objective:'Return to the Samurai Captain.', objectiveType:'talkToNpc', targetNpcId:'samurai-captain-01', villageId:'samurai',
+        say:['Now you know the law. Carry a copy to the Ronin.', 'They keep a door below. From today they keep it under our watch.', 'They will not like it. Order is rarely liked.'] }
+    ],
+    22: [
+      { id:'deliver-decree', objective:'Bring the Samurai decree to the Ronin Watcher.', objectiveType:'talkToNpc', targetNpcId:'ronin-guard-01', villageId:'ronin',
+        say:['A Samurai decree. For us.', 'The Ronin kept that door shut for longer than the Samurai have had a captain.', 'Take it to the brazier by the gate. That is our answer.'] },
+      { id:'burn-decree', objective:'Drop the decree into the brazier by the Ronin gate.', objectiveType:'useQuestSpot', targetObjectId:'ronin-burn-decree', villageId:'ronin' },
+      { id:'hear-refusal', objective:'Hear the Ronin Watcher\'s answer.', objectiveType:'talkToNpc', targetNpcId:'ronin-guard-01', villageId:'ronin',
+        say:['Tell the Captain the Ronin heard him. Tell him the door stays ours.', 'We did not keep it shut for a law. We kept it shut for a debt.', 'And watch the harbour. The Wokou have started buying whatever climbs out of the cracks.'] }
+    ],
+    23: [
+      { id:'meet-broker', objective:'Find the Wokou Broker at the trade house in Wokou Village.', objectiveType:'talkToNpc', targetNpcId:'wokou-broker-01', villageId:'wokou',
+        say:['A Hub runner in my harbour. Business must be good.', 'You want to know about the relics? So does everyone who can pay.', 'Have a look at the newest piece, in the crate on the quay by the crane. Careful: it is warm.'] },
+      { id:'inspect-relic', objective:'Open the relic crate on the quay by the crane.', objectiveType:'useQuestSpot', targetObjectId:'wok-traded-relic', villageId:'wokou' },
+      { id:'broker-price', objective:'Ask the Wokou Broker where the relics come from.', objectiveType:'talkToNpc', targetNpcId:'wokou-broker-01', villageId:'wokou',
+        say:['Three crates came up through a crack under the boat shed last month. My buyers pay gold for every shard.', 'The Hub sees a warning. The Samurai see a threat. I see a market.', 'Fear always sells, little runner. And the Bushi say the ground has started singing. Go and hear it, if you want a free show.'] }
+    ],
+    24: [
+      { id:'meet-foreman', objective:'Find the Bushi Foreman by the forge in Bushi Village.', objectiveType:'talkToNpc', targetNpcId:'bushi-smith-01', villageId:'bushi',
+        say:['Our work songs keep the hammers together. Three beats to lift, one to rest.', 'Lately the ground keeps time with us. Then it changes the beat.', 'Listen at the forge, the storehouse and the west wall. Tell me what rhythm you hear.'] },
+      { id:'listen-worksites', objective:'Listen at the three worksites: the forge, the storehouse and the west wall.', objectiveType:'useQuestSpot', targetObjectId:'bushi-work-rhythm', count:3, villageId:'bushi' },
+      { id:'old-songs', objective:'Look up the old work song in the Bushi library.', objectiveType:'useQuestSpot', targetObjectId:'bushi-song-book', villageId:'bushi' },
+      { id:'tell-foreman', objective:'Tell the Bushi Foreman what you found.', objectiveType:'talkToNpc', targetNpcId:'bushi-smith-01', villageId:'bushi',
+        say:['Three knocks, then a rest. Our own song, coming back up through the stone.', 'Either something down there learned our rhythm, or we learned it from something down there, long ago.', 'The Kenshi will want to hear this. Their blades have been coming back from practice stained red.'] }
+    ],
+    25: [
+      { id:'meet-duelist', objective:'Find the Kenshi Duelist in the training yard of Kenshi Village.', objectiveType:'talkToNpc', targetNpcId:'kenshi-trainee-01', villageId:'kenshi',
+        say:['Our practice blades come back from the posts with a red bloom along the edge.', 'Rust does not grow overnight. Look at the cuts in the posts yourself.'] },
+      { id:'inspect-marks', objective:'Inspect the blade marks on two training posts.', objectiveType:'useQuestSpot', targetObjectId:'kenshi-edge-mark', count:2, villageId:'kenshi' },
+      { id:'take-residue', objective:'Pick up the residue the smith scraped off the blades, by the forge.', objectiveType:'collectCollectible', targetObjectId:'kenshi-residue-reading', villageId:'kenshi' },
+      { id:'tell-duelist', objective:'Bring the residue to the Kenshi Duelist.', objectiveType:'talkToNpc', targetNpcId:'kenshi-trainee-01', villageId:'kenshi',
+        say:['The same red as the Ronin dust. Our posts stand in the yard, and the yard stands over something old.', 'A blade remembers what it cuts. Ours have been cutting something that comes from below.', 'Take this to your Hub. Five villages, five stories. Someone has to lay them side by side.'] }
+    ],
+    26: [
+      { id:'bring-reports', objective:'Bring the five faction reports to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['A Samurai decree. A Ronin refusal. Wokou prices, Bushi songs, Kenshi rust.', 'I have called the village envoys to the council stone by the old rock. Lay the reports out there, then wait for them and listen.'] },
+      { id:'lay-reports', objective:'Lay the reports out on the council stone by the old rock.', objectiveType:'useQuestSpot', targetObjectId:'hub-council-reports', villageId:'hub' },
+      { id:'attend-council', objective:'Wait at the council stone for the envoys and listen.', objectiveType:'useQuestSpot', targetObjectId:'hub-council-voices', villageId:'hub' },
+      { id:'guide-after', objective:'Talk to the Hub Guide after the council.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['The warning did not unite the villages. It gave each one a different fear.', 'The Wokou envoy left before the end. He said the Broker has terms for us, in writing.', 'Go to the harbour and read them properly. I want to know what they really want.'] }
+    ],
+    27: [
+      { id:'broker-terms', objective:'Ask the Wokou Broker for the terms.', objectiveType:'talkToNpc', targetNpcId:'wokou-broker-01', villageId:'wokou',
+        say:['The council talked. We listened. Here is our offer, in writing, the way honest ants do business.', 'The ledger is on the counter of the trade house. Read every line.'] },
+      { id:'read-terms', objective:'Read the Wokou terms on the trade house counter.', objectiveType:'useQuestSpot', targetObjectId:'wok-terms', villageId:'wokou' },
+      { id:'report-terms', objective:'Report the Wokou terms to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['A road under the bay, for the first claim on whatever wakes below and a seat at our table.', 'They write their price clearly, I will give them that.', 'We do not sign. But we do not forget that cave either. Now the Samurai Captain is closing roads, they tell me. Go and see.'] }
+    ],
+    28: [
+      { id:'captain-posts', objective:'Talk to the Samurai Captain.', objectiveType:'talkToNpc', targetNpcId:'samurai-captain-01', villageId:'samurai',
+        say:['The decree stands. My watch posts close every road near a tunnel sign.', 'Even the roads the Hub used to walk freely. Those most of all.', 'Go and look at them, if you doubt that I mean it.'] },
+      { id:'inspect-posts', objective:'Inspect the two watch posts: by the east burrow and by the road outside the gate.', objectiveType:'useQuestSpot', targetObjectId:'sam-watch-post', count:2, villageId:'samurai' },
+      { id:'find-way', objective:'Look for a way around the posts at the far west burrow, outside the palisade.', objectiveType:'useQuestSpot', targetObjectId:'sam-sealed-burrow', villageId:'samurai' }
+    ],
+    29: [
+      { id:'ask-ronin', objective:'Ask the Ronin Watcher about another road.', objectiveType:'talkToNpc', targetNpcId:'ronin-guard-01', villageId:'ronin',
+        say:['The Samurai closed every road they know. They never knew ours.', 'Long before the first seal, the Ronin cut a passage under the hills. It comes up beyond their posts.', 'The mouth is in the rock garden behind the strategy hall. Walk it, and bring back proof that it still runs.'] },
+      { id:'walk-passage', objective:'Walk into the old passage in the rock garden behind the strategy hall.', objectiveType:'useQuestSpot', targetObjectId:'ronin-old-passage', villageId:'ronin' },
+      { id:'passage-proof', objective:'Find the passage exit outside the Samurai palisade and take proof of the route.', objectiveType:'collectCollectible', targetObjectId:'sam-passage-proof', villageId:'samurai' }
+    ],
+    30: [
+      { id:'return-council', objective:'Return to the Hub Guide with the proof.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['A Ronin road under the Samurai posts, cut before any of us were born.', 'The Samurai close roads. The Ronin keep secret ones. The Wokou sell them. The Bushi listen, and the Kenshi sharpen their blades.', 'Write down where every faction stands. All of it. One day we will have to show them how far apart they drifted.'] },
+      { id:'record-positions', objective:'Write the council record on the council stone.', objectiveType:'useQuestSpot', targetObjectId:'hub-council-record', villageId:'hub' },
+      { id:'review-journal', objective:'Open your journal and read how the colony split.', objectiveType:'openJournal' }
     ]
   },
   side: {
