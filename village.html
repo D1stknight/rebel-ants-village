@@ -2302,6 +2302,35 @@ const BOOK1_WIRING = {
         { id:'hear-story', objective:'Listen to the Ronin Wanderer\'s story.', objectiveType:'talkToNpc', targetNpcId:'ronin-wanderer-01', villageId:'ronin',
           say:['I left the Ronin once. Swore I would never come back.', 'But the tunnels called every exile home, one by one. That is how I knew the warning was real.', 'The Ronin warm themselves with stories when fire is not enough.'] }
       ] },
+    7: { giver:'samurai-captain-01',
+      offer:['My patrols walk the palisade every night. Lately the villagers say the patrols frighten them more than the tremors.', 'Walk the route once, quietly. Check the four corner towers and tell me which paths are blocked.'],
+      steps:[
+        { id:'walk-route', objective:'Walk the patrol route past the four corner towers.', objectiveType:'useQuestSpot', targetObjectId:'sam-patrol-point', count:4, villageId:'samurai' },
+        { id:'report-captain', objective:'Report the blocked paths to the Samurai Captain.', objectiveType:'talkToNpc', targetNpcId:'samurai-captain-01', villageId:'samurai',
+          say:['Bamboo in the north-east corner, carts in the south lanes, a dark lantern at the gate. Noted.', 'Patrol is order written in footsteps. Good footsteps do not wake the village.'] }
+      ] },
+    8: { giver:'samurai-instructor-01',
+      offer:['When ants are afraid, they reach for their blades too quickly.', 'The old masters wrote three rules on scrolls: one is in the training yard, one at the library, one by the guest house. Bring them to me.'],
+      steps:[
+        { id:'collect-scrolls', objective:'Find the three etiquette scrolls: the training yard, the library and the guest house.', objectiveType:'collectCollectible', targetObjectId:'sam-etiquette-scroll', count:3, villageId:'samurai' },
+        { id:'return-instructor', objective:'Bring the scrolls to the Samurai Instructor.', objectiveType:'talkToNpc', targetNpcId:'samurai-instructor-01', villageId:'samurai',
+          say:['First: draw last. Second: sheathe first. Third: never in anger.', 'A blade is only as honourable as the ant carrying it. Remember that when the watch posts go up.'] }
+      ] },
+    9: { giver:'bushi-smith-01',
+      offer:['One of my scouts went to check the old work tunnel behind the dojo and has not come back.', 'Search the work path along the back wall. Bring me anything you find.'],
+      steps:[
+        { id:'search-path', objective:'Search the work path along the back wall, behind the dojo.', objectiveType:'useQuestSpot', targetObjectId:'bushi-work-path', count:2, villageId:'bushi' },
+        { id:'find-tag', objective:'Pick up the scout tag where the chalk arrows end, behind the dojo.', objectiveType:'collectCollectible', targetObjectId:'bushi-scout-tag', villageId:'bushi' },
+        { id:'report-foreman', objective:'Bring the scout tag to the Bushi Foreman.', objectiveType:'talkToNpc', targetNpcId:'bushi-smith-01', villageId:'bushi',
+          say:['Her tag. And her chalk arrows end at a wall that was not there last month.', 'She left the tag where the ground became too quiet. Bushi do not leave a crew behind. We will find her.'] }
+      ] },
+    10: { giver:'bushi-smith-01',
+      offer:['Every pile of fresh earth we dig up has something old in it: little chips of carved stone.', 'Three are still out by the work piles: behind the forge, by the strategy hall and at the well. Collect them before someone sells them to the Wokou.'],
+      steps:[
+        { id:'collect-chips', objective:'Collect three relic chips by the work piles: behind the forge, by the strategy hall and at the well.', objectiveType:'collectCollectible', targetObjectId:'bushi-relic-chip', count:3, villageId:'bushi' },
+        { id:'return-foreman', objective:'Bring the relic chips to the Bushi Foreman.', objectiveType:'talkToNpc', targetNpcId:'bushi-smith-01', villageId:'bushi',
+          say:['Carved, then grown over, then carved again. Same as the stone the Kenshi found.', 'We dug up yesterday and found something much older.'] }
+      ] },
     15: { giver:'buke-scholar-01',
       offer:['The canals sit right over the pressure lines. If anything cracks first, it will be a footbridge.', 'Check both footbridges and the west canal spout for me.'],
       steps:[
@@ -2316,6 +2345,37 @@ const BOOK1_WIRING = {
         { id:'dry-drawings', objective:'Dry the drawings by the lantern at the strategy hall.', objectiveType:'useQuestSpot', targetObjectId:'buke-blueprint-lantern', villageId:'buke' },
         { id:'return-draftsman', objective:'Bring the drawings back to the Buke Draftsman.', objectiveType:'talkToNpc', targetNpcId:'buke-villager-01', villageId:'buke',
           say:['The lines held. Barely.', 'Rain tried to erase what the Buke had already measured. It did not win.'] }
+      ] },
+    17: { giver:'kenshi-trainee-01',
+      offer:['Focus is tested when the ground is not steady.', 'Go to the trial stone on the dojo terrace and hold your stance through the next tremor.'],
+      steps:[
+        { id:'hold-stance', objective:'Hold your stance at the trial stone on the dojo terrace.', objectiveType:'useQuestSpot', targetObjectId:'kenshi-trial-stone', villageId:'kenshi' },
+        { id:'tell-duelist', objective:'Return to the Kenshi Duelist.', objectiveType:'talkToNpc', targetNpcId:'kenshi-trainee-01', villageId:'kenshi',
+          say:['You did not step off the stone. Good.', 'The edge is not on the blade. It is in the breath before you move.'] }
+      ] },
+    18: { giver:'kenshi-trainee-01',
+      offer:['In a duel last week my opponent\'s blade split a stone outside the east wall. There was a symbol inside it.', 'Find the broken stone and sketch what you see.'],
+      steps:[
+        { id:'find-stone', objective:'Find the broken stone outside the east wall.', objectiveType:'useQuestSpot', targetObjectId:'kenshi-broken-stone', villageId:'kenshi' },
+        { id:'sketch-symbol', objective:'Sketch the symbol on the other half of the stone.', objectiveType:'useQuestSpot', targetObjectId:'kenshi-stone-sketch', villageId:'kenshi' },
+        { id:'tell-duelist', objective:'Show the sketch to the Kenshi Duelist.', objectiveType:'talkToNpc', targetNpcId:'kenshi-trainee-01', villageId:'kenshi',
+          say:['A ring of roots around a closed eye. That is the Hub seal.', 'The symbol looked carved, then grown, then carved again.'] }
+      ] },
+    19: { giver:'wokou-broker-01',
+      offer:['My ledger lists every relic that has passed through this harbour. Some of them should not exist.', 'It lies on the bench in the boat shed. Read it, then find the three pieces I marked in red. They are still on the quay and the pier.'],
+      steps:[
+        { id:'read-ledger', objective:'Read the relic ledger in the boat shed.', objectiveType:'useQuestSpot', targetObjectId:'wok-ledger', villageId:'wokou' },
+        { id:'mark-relics', objective:'Find the three relics marked in red: two by the crate stacks on the quay, one on the east pier.', objectiveType:'useQuestSpot', targetObjectId:'wok-marked-relic', count:3, villageId:'wokou' },
+        { id:'tell-broker', objective:'Tell the Wokou Broker what you found.', objectiveType:'talkToNpc', targetNpcId:'wokou-broker-01', villageId:'wokou',
+          say:['Seen them? Good. Now you know why I keep that ledger honest.', 'The ledger was honest enough to be dangerous.'] }
+      ] },
+    20: { giver:'wokou-broker-01',
+      offer:['My stall keepers say the market talks back. Knock on a jar and the tunnels answer.', 'Listen at both market stalls. Then find the jar that sounds hollow.'],
+      steps:[
+        { id:'listen-stalls', objective:'Listen at the two market stalls.', objectiveType:'useQuestSpot', targetObjectId:'wok-echo-stall', count:2, villageId:'wokou' },
+        { id:'find-jar', objective:'Find the hollow jar behind the thatched house.', objectiveType:'collectCollectible', targetObjectId:'wok-hollow-jar', villageId:'wokou' },
+        { id:'tell-broker', objective:'Bring the hollow jar to the Wokou Broker.', objectiveType:'talkToNpc', targetNpcId:'wokou-broker-01', villageId:'wokou',
+          say:['Hollow, with tunnel air sealed inside. Someone is shipping the tunnels\' breath in jars.', 'The market repeated the tunnels in the language of trade.'] }
       ] },
     23: { giver:'sohei-bellkeeper-01',
       offer:['The old bell masters wrote down every tone. The wind scattered their notes across the compound.', 'Bring the three notes back before the rain ruins them.'],
