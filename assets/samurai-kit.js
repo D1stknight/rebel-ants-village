@@ -326,6 +326,48 @@
     const tt = noise(S, 2, 3, 41); // tatami: woven rush, a black cloth border
     T.tatami = pixelTex(scene, 'tatami', S, (x, y, i) => { const e = Math.min(x, 1 - x, y, 1 - y); if (e < .025) return [26, 24, 20]; const f = (.84 + .1 * Math.sin(y * S * 2.2) + .08 * tt[i]); return [184 * f, 168 * f, 104 * f]; });
     const mp = noise(S, 4, 4, 42); // the campaign map on the dojo's table: land, hills, a river
+    // rooms: the sunlit view out of the doorway; hanging scrolls (a column of brush characters, a red seal, silk mount)
+    T.doorview = cv('doorview', 64, 256, (c, W, H) => { const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#f6efdc'); g.addColorStop(.5, '#fffaf0'); g.addColorStop(.66, '#f0dfb6'); g.addColorStop(1, '#cdb88a'); c.fillStyle = g; c.fillRect(0, 0, W, H); });
+    const brush = (c, x, y, s, r) => {
+      c.strokeStyle = '#17110c'; c.lineCap = 'round'; c.lineJoin = 'round';
+      for (let k = 0, n = 3 + Math.floor(r() * 4); k < n; k++) {
+        const kind = r(), x0 = x + (r() - .5) * s * .7, y0 = y + (r() - .5) * s * .7; c.lineWidth = s * (.06 + .07 * r()); c.beginPath();
+        if (kind < .35) { c.moveTo(x - s * .42 + r() * s * .2, y0); c.quadraticCurveTo(x, y0 - s * .08, x + s * .42 - r() * s * .2, y0 + s * .05); }
+        else if (kind < .65) { c.moveTo(x0, y - s * .45 + r() * s * .2); c.quadraticCurveTo(x0 + s * .05, y, x0 - s * .04, y + s * .45 - r() * s * .2); }
+        else if (kind < .88) { c.moveTo(x0, y0); c.quadraticCurveTo(x0 + s * .15, y0 + s * .2, x0 + s * .35 * (r() < .5 ? -1 : 1), y0 + s * .4); }
+        else c.arc(x0, y0, s * .05, 0, 7);
+        c.stroke();
+      }
+    };
+    const scrollTex = (name, seed, chars) => cv(name, 256, 640, (c, W, H) => {
+      const r = rng(seed); c.fillStyle = '#26383a'; c.fillRect(0, 0, W, H);
+      c.fillStyle = 'rgba(200,170,90,.35)'; for (let y = 8; y < H; y += 16) for (let x = (y / 16) % 2 ? 8 : 0; x < W; x += 16) c.fillRect(x, y, 3, 3);
+      c.fillStyle = '#a8894a'; c.fillRect(0, 70, W, 16); c.fillRect(0, H - 134, W, 16);
+      c.fillStyle = '#efe5cc'; c.fillRect(24, 86, W - 48, H - 220);
+      const top = 86 + 60, step = (H - 220 - 120) / Math.max(1, chars - 1);
+      for (let i = 0; i < chars; i++) brush(c, W / 2, top + i * step, 78, r);
+      c.fillStyle = '#b3261e'; c.fillRect(W / 2 + 34, H - 190, 26, 26); c.fillStyle = '#efe5cc'; c.fillRect(W / 2 + 40, H - 184, 6, 14);
+    });
+    T.scroll_sam = scrollTex('scroll_sam', 7, 4); T.scroll_sam2 = scrollTex('scroll_sam2', 23, 3);
+    // the arcade's four games (Hub Rebel Arcade): attract screens, cabinet marquees, neon signs over each game's row
+    const GAMES = { fw: ['FACTION WARS', '#ff3b5c', '#3bd5ff'], raid: ['THE RAID', '#b25aff', '#ffcf3b'], tunnel: ['ANT TUNNEL', '#3bffb0', '#ff8a3b'], shuffle: ['EGG SHUFFLE', '#ffd43b', '#ff3b8d'] };
+    const neonText = (c, txt, x, y, size, col) => { c.font = `900 ${size}px Arial Black, Arial, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+      c.shadowColor = col; c.shadowBlur = size * .5; c.strokeStyle = col; c.lineWidth = size * .14; c.strokeText(txt, x, y); c.shadowBlur = size * .25; c.fillStyle = '#ffffff'; c.fillText(txt, x, y); c.shadowBlur = 0; };
+    for (const [g, [title, a, b]] of Object.entries(GAMES)) {
+      T['scr_' + g] = cv('scr_' + g, 256, 200, (c, W, H) => {
+        const r = rng(g.length * 97); c.fillStyle = '#05040c'; c.fillRect(0, 0, W, H);
+        if (g === 'fw') { c.fillStyle = '#123018'; c.fillRect(0, 120, W, 80); for (let k = 0; k < 7; k++) { c.fillStyle = a; c.fillRect(18 + k * 14, 128 + (k % 2) * 10, 8, 14); c.fillStyle = b; c.fillRect(W - 26 - k * 14, 128 + (k % 2) * 10, 8, 14); } c.fillStyle = '#ffffff'; c.fillRect(W / 2 - 2, 100, 4, 60); }
+        else if (g === 'raid') { c.fillStyle = '#1c1430'; for (let k = 0; k < 5; k++) c.fillRect(10 + k * 50, 70, 40, 120); c.fillStyle = '#ffb030'; for (let k = 0; k < 5; k++) { c.beginPath(); c.arc(30 + k * 50, 86, 6, 0, 7); c.fill(); } c.fillStyle = a; c.fillRect(110, 150, 36, 30); }
+        else if (g === 'tunnel') { c.strokeStyle = '#2a6a4a'; c.lineWidth = 14; c.beginPath(); c.moveTo(10, 180); for (let k = 0; k < 6; k++) c.lineTo(20 + k * 45, k % 2 ? 70 : 170); c.stroke(); c.strokeStyle = a; c.lineWidth = 3; c.stroke(); for (let k = 0; k < 9; k++) { c.fillStyle = k % 3 ? '#ffe066' : '#8af'; c.fillRect(r() * W, 60 + r() * 130, 5, 5); } }
+        else { for (let k = 0; k < 5; k++) { c.fillStyle = k === 2 ? a : '#f2ead8'; c.beginPath(); c.ellipse(30 + k * 49, 140, 18, 24, 0, 0, 7); c.fill(); } c.fillStyle = b; c.beginPath(); c.moveTo(128, 70); c.lineTo(118, 100); c.lineTo(138, 100); c.fill(); }
+        neonText(c, title, W / 2, 34, title.length > 9 ? 26 : 32, a); c.font = 'bold 14px monospace'; c.fillStyle = b; c.textAlign = 'center'; c.fillText('PRESS O TO PLAY', W / 2, H - 10);
+      });
+      T['mq_' + g] = cv('mq_' + g, 512, 128, (c, W, H) => { const gr = c.createLinearGradient(0, 0, W, 0); gr.addColorStop(0, '#120a24'); gr.addColorStop(.5, '#24103e'); gr.addColorStop(1, '#120a24'); c.fillStyle = gr; c.fillRect(0, 0, W, H); neonText(c, title, W / 2, H / 2 + 4, title.length > 9 ? 56 : 66, a); });
+      T['sign_' + g] = cv('sign_' + g, 1024, 192, (c, W, H) => { c.clearRect(0, 0, W, H); neonText(c, title, W / 2, H / 2 + 6, 120, a); });
+    }
+    T.runner = cv('runner', 128, 512, (c, W, H) => { c.fillStyle = '#6e1414'; c.fillRect(0, 0, W, H); c.fillStyle = '#c9a452'; c.fillRect(8, 0, 8, H); c.fillRect(W - 16, 0, 8, H); c.fillStyle = 'rgba(201,164,82,.55)'; for (let y = 32; y < H; y += 64) { c.beginPath(); c.moveTo(W / 2, y - 18); c.lineTo(W / 2 + 18, y); c.lineTo(W / 2, y + 18); c.lineTo(W / 2 - 18, y); c.fill(); } });
+    T.sign_prizes = cv('sign_prizes', 512, 128, (c, W, H) => { c.clearRect(0, 0, W, H); neonText(c, 'PRIZES', W / 2, H / 2 + 4, 76, '#ffd43b'); });
+    T.sign_claw = cv('sign_claw', 512, 128, (c, W, H) => { c.fillStyle = '#120a24'; c.fillRect(0, 0, W, H); neonText(c, 'ANT CLAW', W / 2, H / 2 + 4, 64, '#3bd5ff'); });
     T.war_map = pixelTex(scene, 'war_map', S, (x, y, i) => { const e = Math.min(x, 1 - x, y, 1 - y); if (e < .03) return [92, 64, 36]; const v = mp[i]; if (Math.abs(y - .5 - .18 * Math.sin(x * 7)) < .015) return [70, 110, 120]; return v > .62 ? [96, 112, 70] : v > .45 ? [150, 150, 96] : [196, 178, 128]; });
     return T;
   }
@@ -477,6 +519,15 @@
     blue_lift: { col: [.14, .28, .68] }, hoop_orange: { col: [.9, .35, .08] }, backboard: { col: [.93, .93, .92] }, sign_letter: { col: [.94, .94, .92] }, awning_red: { col: [.62, .12, .1] }, awning_green: { col: [.14, .4, .26] },
     spirit: { col: [.35, .62, 1], em: [.3, .62, 1] }, glow_spirit: { glow: [.3, .58, 1] }, // Yamabushi spirit lanterns: icy blue flame
     ...Object.fromEntries(Object.keys(FACTION_BANNERS).filter(id => id !== 'samurai' && id !== 'wokou').map(id => ['banner_' + id, { tex: 'banner_' + id, faction: id }])),
+    lacquer_red: { col: [.42, .045, .035], spec: [.55, .45, .42], power: 64 }, lacquer_black: { col: [.03, .025, .022], spec: [.5, .5, .5], power: 64 },
+    drum_skin: { col: [.86, .79, .62] }, andon: { col: [.98, .86, .62], em: [.78, .58, .3] }, doorview: { tex: 'doorview', self: true },
+    scroll_sam: { tex: 'scroll_sam' }, scroll_sam2: { tex: 'scroll_sam2' }, lacing: { col: [.78, .64, .3] },
+    neon_cyan: { col: [.1, .9, 1], em: [.12, .9, 1] }, neon_pink: { col: [1, .2, .72], em: [1, .16, .66] }, neon_purple: { col: [.6, .3, 1], em: [.55, .25, 1] }, neon_gold: { col: [1, .8, .3], em: [1, .72, .26] },
+    arcade_wall: { tex: 'plaster', tint: [.32, .29, .47] }, arcade_floor: { tex: 'darkwood', tint: [1.05, .98, 1.2] }, glass: { col: [.6, .8, 1], spec: [.9, .9, 1], power: 80, alpha: .22 },
+    lantern_violet: { col: [.55, .2, .9], em: [.5, .16, .9] }, lantern_cyan: { col: [.15, .75, .9], em: [.1, .7, .9] },
+    emblem_rebel: { img: 'assets/brand/icon-512.png', self: true }, books_dim: { tex: 'books' }, runner: { tex: 'runner' }, map_table: { tex: 'war_map' },
+    sign_prizes: { tex: 'sign_prizes', self: true, alphaTex: true }, sign_claw: { tex: 'sign_claw', self: true },
+    ...Object.fromEntries(['fw', 'raid', 'tunnel', 'shuffle'].flatMap(g => [['scr_' + g, { tex: 'scr_' + g, self: true }], ['mq_' + g, { tex: 'mq_' + g, self: true }], ['sign_' + g, { tex: 'sign_' + g, self: true, alphaTex: true }]])),
     glow: { glow: [.95, .5, .16] } // soft pool of lantern light on the ground (night only)
   };
   let TEX = null; const MATS = {};
@@ -489,22 +540,26 @@
   function material(scene, name) {
     if (MATS[name] && !MATS[name].isDisposed?.()) return MATS[name];
     TEX = TEX || makeTextures(scene);
-    const d = MAT[name];
+    const room = name.startsWith('rm_'), d = MAT[room ? name.slice(3) : name]; // rm_<name>: a room's copy (see ROOMS)
     if (d.faction && !TEX[d.tex]) TEX[d.tex] = bannerTex(scene, d.faction, ...FACTION_BANNERS[d.faction], 'logo:' + d.faction); // made on first use
     if (d.glow) {
       const m = new BABYLON.StandardMaterial('samKit_' + name, scene), tx = glowTex(scene);
       m.diffuseColor = BABYLON.Color3.Black(); m.specularColor = BABYLON.Color3.Black(); m.disableLighting = true;
       m.emissiveColor = new BABYLON.Color3(...d.glow); m.emissiveTexture = tx; m.opacityTexture = tx;
       m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.alpha = 0; m.backFaceCulling = false; m.zOffset = -2; m.disableDepthWrite = true;
+      if (room) { m.alpha = .5; MATS[name] = m; return m; }
       m.metadata = { kitGlow: true };
       MATS[name] = m; setLightFactor(); return m;
     }
     const m = new BABYLON.StandardMaterial('samKit_' + name, scene);
-    if (d.tex) { m.diffuseTexture = TEX[d.tex]; if (d.tint) m.diffuseColor = new BABYLON.Color3(...d.tint); } else m.diffuseColor = new BABYLON.Color3(...d.col);
+    if (d.img) { const t = new BABYLON.Texture(d.img, scene, false, true); t.hasAlpha = true; m.diffuseTexture = t; m.useAlphaFromDiffuseTexture = true; m.transparencyMode = 1; } // alpha test
+    else if (d.tex) { m.diffuseTexture = TEX[d.tex]; if (d.tint) m.diffuseColor = new BABYLON.Color3(...d.tint); if (d.alphaTex) { TEX[d.tex].hasAlpha = true; m.useAlphaFromDiffuseTexture = true; m.transparencyMode = 2; m.disableDepthWrite = true; } } else m.diffuseColor = new BABYLON.Color3(...d.col);
     if (d.alpha) { m.alpha = d.alpha; m.disableDepthWrite = true; } // ghosts
     m.specularColor = new BABYLON.Color3(...(d.spec || [.04, .04, .04])); m.specularPower = d.power || 16;
     if (d.em) m.emissiveColor = new BABYLON.Color3(...d.em);
-    m.backFaceCulling = false; m.twoSidedLighting = true; m.maxSimultaneousLights = 4;
+    if (d.self) { m.emissiveTexture = m.diffuseTexture; m.disableLighting = true; }
+    m.backFaceCulling = false; m.twoSidedLighting = true; m.maxSimultaneousLights = room ? 6 : 4;
+    if (room) { MATS[name] = m; return m; } // lit by the room's own lights (added after the village froze its materials)
     if (d.em) m.metadata = { kitBaseEmissive: m.emissiveColor.clone() }; // brightened at night: left unfrozen
     else m.freeze();
     MATS[name] = m; if (d.em) setLightFactor(); return m;
@@ -536,7 +591,7 @@
 
   class Kit {
     constructor() { this.parts = {}; }
-    part(m) { m = (this.remap && this.remap[m]) || m; m = (this.remap2 && this.remap2[m]) || m; return this.parts[m] || (this.parts[m] = { p: [], n: [], uv: [], i: [] }); }
+    part(m) { m = (this.remap && this.remap[m]) || m; m = (this.remap2 && this.remap2[m]) || m; if (this.room) m = 'rm_' + m; return this.parts[m] || (this.parts[m] = { p: [], n: [], uv: [], i: [] }); }
     poly(m, pts, uvs, nrm) {
       const P = this.part(m), base = P.p.length / 3;
       let nn = nrm;
@@ -2584,17 +2639,20 @@
 
   // ── templates + placement ───────────────────────────────────────────────
   const templates = {};
-  let parkRoot = null;
+  let parkRoot = null, roomPark = null;
   function template(scene, type) {
     const t = templates[type];
     if (t && t.every(m => !m.isDisposed())) return t;
     const M = new Kit(); B[type](M);
     parkRoot = parkRoot && !parkRoot.isDisposed() ? parkRoot : new BABYLON.TransformNode('samKitTemplates', scene);
     parkRoot.position.set(0, -10000, 0);
+    // a room's templates park apart: the village hides its own top-level nodes while you are inside a room
+    if (ROOMS[type] && !(roomPark && !roomPark.isDisposed())) { roomPark = new BABYLON.TransformNode('samKitRoomTemplates', scene); roomPark.position.set(0, -10000, 0); roomPark.metadata = { keepInInteriors: true }; }
+    const park = ROOMS[type] ? roomPark : parkRoot;
     const meshes = Object.entries(M.parts).map(([mat, P]) => {
       const m = new BABYLON.Mesh(`samKit_${type}_${mat}`, scene), vd = new BABYLON.VertexData();
       vd.positions = P.p; vd.normals = P.n; vd.uvs = P.uv; vd.indices = P.i; vd.applyToMesh(m);
-      m.material = material(scene, mat); m.parent = parkRoot; m.isPickable = false; m.receiveShadows = true; m.metadata = { isKitTemplate: true };
+      m.material = material(scene, mat); m.parent = park; m.isPickable = false; m.receiveShadows = true; m.metadata = { isKitTemplate: true };
       m.freezeNormals();
       return m;
     });
@@ -2877,6 +2935,349 @@
   // walkable decks in the type's own frame (Babylon x/z, deck top y above the origin)
   // stairs: walk surface on the treads (steps = how many), then the top landing
   const stairs = (W, R, H, n, surface) => [{ x: 0, z: 0, halfX: W / 2 - .05, halfZ: R / 2, y0: 0, y1: H, steps: n, surface }, { x: 0, z: R / 2 + .6, halfX: W / 2 - .05, halfZ: .75, y: H, surface }];
+  // ── rooms: interiors behind a dojo door (village.html buildInteriorRoom builds one when the entrance's interiorDefinition.kit
+  // names it). Built like the buildings, but every part gets the room's own copy of its material (Kit.room -> 'rm_' + name:
+  // never frozen, up to 6 lights) so the room's lights reach it; village lights are kept off the room's meshes.
+  // ROOMS (Babylon coordinates, the room's floor top at y 0): bounds [minX, maxX, minZ, maxZ] for the player, blockers
+  // ({ box: [x0, z0, x1, z1] } | { circle: [x, z, r] }), spawn [x, z, facing], exit [x, z] (walk into it to leave),
+  // hemi { i, c, g } fill light, lights [{ p: [x, y, z], c, i, r }] point lights.
+  const SD = { HX: 20, HY: 16, H: 9, CX: 13.5, CY: [-10.5, -3.5, 3.5, 10.5], ZN: 12.6, DW: 7, DH: 5.8, AW: 10, AD: 1.9, AZ: 8.4, DZ: .8 };
+  const AR = { HX: 22, HY: 20, H: 12, DW: 7, DH: 6, CABS: [-12.6, -10.2, -7.8, -5.4, 5.4, 7.8, 10.2, 12.6], COLS: [-12, -4, 4, 12] };
+  const LB = { HX: 18, HY: 22, H: 11, DW: 6, DH: 5.6, BAYS: [-19.8, -15.4, -11, -6.6, -2.2, 2.2, 6.6, 11, 15.4, 19.8], SHELF: [-19.8, -11, -2.2, 6.6, 15.4] };
+  const ROOMS = {
+    room_hub_library: {
+      bounds: [-LB.HX, LB.HX, -LB.HY, LB.HY + .2], spawn: [0, 17.6, Math.PI], exit: [0, LB.HY + .3], ceil: LB.H,
+      hemi: { i: .55, c: [1, .9, .74], g: [.3, .22, .16] },
+      lights: [{ p: [0, 6.5, 0], c: [1, .78, .5], i: 1, r: 14 }, { p: [0, 7, -16], c: [.85, .88, 1], i: .45, r: 16 }, { p: [0, 9, 8], c: [1, .86, .66], i: .5, r: 26 }, { p: [0, 5, 19.5], c: [.92, .94, 1], i: .4, r: 12 }],
+      blockers: [...LB.SHELF.flatMap(y => [{ box: [-LB.HX, y - 2.2, -LB.HX + 1.05, y + 2.2] }, { box: [LB.HX - 1.05, y - 2.2, LB.HX, y + 2.2] }]),
+        { circle: [0, 0, 2.75] }, { box: [-6, -LB.HY, 6, -20.6] }, ...[[-10.5, 9], [10.5, 9], [-10.5, 14], [10.5, 14]].map(([x, z]) => ({ box: [x - 1.6, z - .9, x + 1.6, z + .9] })),
+        { box: [-8.6, -4.3, -4.4, -1.7] }, { box: [-7.2, -15.6, -1.8, -14.4] }, { box: [1.8, -15.6, 7.2, -14.4] }, { box: [-16.4, 19.6, -11.2, LB.HY] }, { box: [11.2, 19.6, 16.4, LB.HY] }, { circle: [-7, 19.6, .9] }]
+    },
+    room_hub_arcade: {
+      bounds: [-AR.HX, AR.HX, -AR.HY, AR.HY + .2], spawn: [0, 15.6, Math.PI], exit: [0, AR.HY + .3], ceil: AR.H,
+      hemi: { i: .66, c: [.7, .64, 1], g: [.2, .16, .3] },
+      lights: [{ p: [0, 6, -15.5], c: [.5, .65, 1], i: 1.1, r: 22 }, { p: [-16, 8, 0], c: [1, .4, .82], i: .8, r: 26 }, { p: [16, 8, 0], c: [.35, .88, 1], i: .8, r: 26 },
+        { p: [0, 5.5, 15], c: [1, .86, .64], i: .55, r: 15 }, { p: [0, 7, 0], c: [.92, .66, 1], i: .6, r: 18 }],
+      blockers: [{ box: [-AR.HX, -14.1, -20.3, -3.9] }, { box: [-AR.HX, 3.9, -20.3, 14.1] }, { box: [20.3, -14.1, AR.HX, -3.9] }, { box: [20.3, 3.9, AR.HX, 14.1] },
+        { box: [-8.6, -AR.HY, 8.6, -17.15] }, { circle: [-6.5, -16.2, .75] }, { circle: [6.5, -16.2, .75] }, ...AR.COLS.flatMap(z => [{ circle: [-15.5, z, .65] }, { circle: [15.5, z, .65] }]),
+        { box: [-7, -12.1, -2, -10.9] }, { box: [2, -12.1, 7, -10.9] }, { box: [11.6, 13.6, 18.4, AR.HY] }, { box: [-16.3, 13.9, -13.7, 16.5] }, { circle: [7.6, 17.6, .9] }]
+    },
+    room_sam_dojo: {
+      bounds: [-SD.HX, SD.HX, -SD.HY, SD.HY + .2], spawn: [0, 11.6, Math.PI], exit: [0, SD.HY + .3],
+      hemi: { i: .6, c: [1, .9, .76], g: [.32, .24, .18] },
+      lights: [{ p: [0, 6, -9.6], c: [1, .7, .42], i: 1.05, r: 17 }, { p: [0, 10.5, -1], c: [1, .86, .66], i: .55, r: 30 }, { p: [0, 4.5, 13.2], c: [.92, .94, 1], i: .4, r: 12 }],
+      blockers: [{ box: [-11.4, -SD.HY, 11.4, -10.3] }, ...SD.CY.flatMap(z => [{ circle: [-SD.CX, z, .78] }, { circle: [SD.CX, z, .78] }]),
+        { box: [-SD.HX, -7.9, -18.85, -4.1] }, { box: [-SD.HX, .1, -18.85, 3.9] }, { circle: [16.6, -6, .62] }, { circle: [16.6, 2, .62] },
+        { box: [14.9, 11.25, 17.7, 13.35] }, { box: [-8.25, 14.7, -4.95, SD.HY] }, { box: [5.9, 14.4, 7.3, 15.8] }]
+    }
+  };
+  // ── room furniture (kit coordinates: z up, the hall's entrance wall is +y) ──
+  function yoroi(M, x, y, z) { // a samurai armour on its box stand, facing the hall (+y)
+    M.block('lacquer_black', x, y, z, 1.7, 1.3, .36); M.block('gold', x, y + .66, z + .1, .9, .03, .14);
+    M.cyl('lacquer_black', [x, y, z + .36], .09, 1.2, 8);
+    for (let k = 0; k < 4; k++) { const z0 = z + .52 + k * .22, r0 = .8 - k * .06; M.cyl('lacquer_red', [x, y, z0], r0, .24, 16, r0 - .05); M.cyl('lacing', [x, y, z0], r0 + .015, .035, 16); }
+    M.cyl('lacquer_red', [x, y, z + 1.38], .56, .9, 16, .63);
+    for (let k = 0; k < 4; k++) M.cyl('lacing', [x, y, z + 1.45 + k * .2], .575 + k * .016, .035, 16);
+    M.box('lacquer_black', [x, y + .52, z + 2.2], [.86, .16, .3]);
+    for (const s of [-1, 1]) {
+      M.box('lacquer_red', [x + s * .84, y, z + 1.85], [.13, .7, .92], 0, 0, s * .2);
+      for (let k = 0; k < 3; k++) M.box('lacing', [x + s * (.82 + k * .045 * -1 + .06), y, z + 1.55 + k * .28], [.15, .72, .035], 0, 0, s * .2);
+      M.box('lacquer_black', [x + s * .45, y, z + 2.3], [.32, .8, .12]);
+      M.rod('iron', [x + s * .66, y + .05, z + 2.2], [x + s * .78, y + .15, z + 1.3], .12, 6); M.cyl('gold', [x + s * .78, y + .15, z + 1.22], .14, .1, 8);
+    }
+    M.cyl('lacquer_black', [x, y, z + 2.28], .3, .18, 12);
+    for (let k = 0; k < 3; k++) { const r0 = .52 + k * .08; M.cyl('lacquer_red', [x, y - .04, z + 2.7 - k * .13], r0, .13, 16, r0 - .06); M.cyl('lacing', [x, y - .04, z + 2.7 - k * .13], r0 + .01, .03, 16); }
+    M.sphere('iron', [x, y, z + 2.86], .44, .82, 14, 7);
+    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; M.rod('lacing', [x + Math.cos(a) * .05, y + Math.sin(a) * .05, z + 3.22], [x + Math.cos(a) * .44, y + Math.sin(a) * .44, z + 2.88], .018, 4); }
+    M.box('lacquer_red', [x, y + .34, z + 2.5], [.44, .2, .32]); M.box('dark', [x, y + .45, z + 2.44], [.26, .03, .05]);
+    for (const s of [-1, 1]) { M.box('lacquer_black', [x + s * .45, y + .3, z + 2.78], [.08, .22, .26], 0, 0, s * .3); M.rod('gold', [x + s * .09, y + .44, z + 3.0], [x + s * .5, y + .52, z + 3.62], .035, 5); }
+    M.rod('gold', [x, y + .4, z + 3.05], [x, y + .47, z + 3.05], .17, 12);
+  }
+  function katanakake(M, x, y, z, w = 2.8) { // sword stand: three swords, hilts to the left as seen from the hall
+    M.block('lacquer_black', x, y, z, w, .6, .14);
+    for (const s of [-1, 1]) { M.block('lacquer_black', x + s * (w / 2 - .22), y, z + .14, .16, .44, 1.12); for (let k = 0; k < 3; k++) M.block('gold', x + s * (w / 2 - .22), y + .1, z + .44 + k * .3, .2, .26, .05); }
+    for (let k = 0; k < 3; k++) {
+      const zz = z + .52 + k * .3, L = w + .3 - k * .5, x1 = x + L / 2, x0 = x1 - L, yy = y + .14;
+      M.rod('dark', [x0, yy, zz], [x0 + .62, yy, zz + .01], .055, 6); M.rod('gold', [x0, yy, zz], [x0 + .04, yy, zz], .06, 6);
+      M.rod('gold', [x0 + .62, yy, zz], [x0 + .67, yy, zz], .12, 12);
+      M.rod('lacquer_black', [x0 + .67, yy, zz + .01], [x1, yy, zz + .07], .06, 6); M.rod('gold', [x1 - .06, yy, zz + .065], [x1, yy, zz + .07], .062, 6);
+    }
+  }
+  function andon(M, x, y, z, s = 1.4) { // floor lamp: paper box on a black frame
+    for (const [dx, dy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('lacquer_black', x + dx * .3 * s, y + dy * .3 * s, z, .06 * s, .06 * s, 1.5 * s);
+    M.block('andon', x, y, z + .5 * s, .56 * s, .56 * s, .88 * s); M.block('lacquer_black', x, y, z + 1.42 * s, .72 * s, .72 * s, .06 * s); M.block('lacquer_black', x, y, z + .44 * s, .68 * s, .68 * s, .06 * s);
+  }
+  function bonsai(M, x, y, z) {
+    M.cyl('lacquer_black', [x, y, z], .5, .34, 12, .6); M.cyl('earth', [x, y, z + .33], .52, .03, 12);
+    M.rod('bark', [x, y, z + .3], [x + .18, y, z + .95], .1, 6); M.rod('bark', [x + .18, y, z + .95], [x - .22, y + .05, z + 1.45], .08, 6); M.rod('bark', [x + .1, y, z + .8], [x + .5, y - .05, z + 1.1], .05, 5);
+    for (const [dx, dy, dz, r] of [[-.32, .02, 1.55, .44], [.52, -.04, 1.18, .34], [-.04, -.08, 1.86, .3], [.1, .12, 1.4, .3]]) M.sphere('leaf', [x + dx, y + dy, z + dz], r, .55, 10, 5);
+  }
+  function taiko(M, x, y, z) { // a big drum on its stand, skins facing +-y
+    const R = 1.05, L = 1.5, zc = z + 1.8;
+    for (const s of [-1, 1]) { M.block('darkwood', x + s * 1.15, y, z, .3, 2, .25); for (const t of [-1, 1]) M.rod('darkwood', [x + s * 1.15, y + t * .8, z + .2], [x + s * 1.02, y + t * .25, zc - .2], .09, 6); M.block('darkwood', x + s * 1.02, y, zc - .3, .22, .7, .2); }
+    M.tube('lacquer_red', [x, y - L / 2, zc], [x, y, zc], .95, 1.1, 18, false); M.tube('lacquer_red', [x, y, zc], [x, y + L / 2, zc], 1.1, .95, 18, false);
+    for (const t of [-1, 1]) {
+      M.rod('drum_skin', [x, y + t * (L / 2 - .02), zc], [x, y + t * (L / 2 + .015), zc], .97, 18);
+      for (let k = 0; k < 18; k++) { const a = k / 18 * Math.PI * 2; M.box('gold', [x + Math.cos(a) * .92, y + t * (L / 2 - .05), zc + Math.sin(a) * .92], [.07, .07, .07]); }
+      M.rod('lacquer_black', [x + .25 * t, y - .9, zc + 1.12], [x + .25 * t + .1, y + .9, zc + 1.1], .045, 6);
+    }
+    M.rod('gold', [x - .2, y, zc + 1.1], [x + .2, y, zc + 1.1], .02, 4);
+    M.cyl('gold', [x, y, zc + 1.03], .12, .1, 8);
+  }
+  function chochin(M, x, y, ztop, cord, r = .46, h = 1.1) { // hanging paper lantern
+    const zb = ztop - cord; M.rod('rope', [x, y, ztop], [x, y, zb], .025, 4);
+    M.cyl('lacquer_black', [x, y, zb - .12], r * .62, .12, 12);
+    M.tube('lantern', [x, y, zb - .12 - h / 2], [x, y, zb - .12], r, r * .66, 14, false); M.tube('lantern', [x, y, zb - .12 - h], [x, y, zb - .12 - h / 2], r * .66, r, 14, false);
+    for (const f of [.25, .5, .75]) M.cyl('dark', [x, y, zb - .12 - h * f], r * (1 - .34 * Math.abs(f - .5) * 2) + .006, .025, 14);
+    M.cyl('lacquer_black', [x, y, zb - .24 - h], r * .62, .12, 12);
+  }
+  function makiwara(M, x, y) { M.block('stone', x, y, 0, .9, .9, .25); M.block('wood', x, y, .25, .34, .34, 2.6); M.cyl('straw', [x, y, 1.45], .3, .78, 10); for (const zz of [1.5, 1.82, 2.12]) M.cyl('rope', [x, y, zz], .315, .05, 10); }
+  function cabinet(M, x0, y0, f, g, body, neon) { // an arcade cabinet against a side wall: f = +1 left wall (faces +x), -1 right wall
+    const W = 1.5, D = 1.4, P = (a, b, z) => [x0 + f * b, y0 + f * a, z], Q = (a, b, z) => P(a, b, z);
+    M.box('lacquer_black', P(0, D / 2 - .05, .15), [D - .1, W - .06, .3]); M.box(body, P(0, D / 2, 1.65), [D, W, 2.7]); M.box('lacquer_black', P(0, D / 2, 3.15), [D, W + .04, .3]);
+    M.quad('mq_' + g, [Q(-W / 2 + .04, D + .006, 3.02), Q(W / 2 - .04, D + .006, 3.02), Q(W / 2 - .04, D + .006, 3.28), Q(-W / 2 + .04, D + .006, 3.28)]);
+    M.quad('dark', [Q(-.66, D + .004, 1.72), Q(.66, D + .004, 1.72), Q(.66, D + .004, 2.84), Q(-.66, D + .004, 2.84)]);
+    M.quad('scr_' + g, [Q(-.58, D + .008, 1.8), Q(.58, D + .008, 1.8), Q(.58, D + .008, 2.76), Q(-.58, D + .008, 2.76)]);
+    M.box('lacquer_black', P(0, D + .2, 1.44), [.46, W - .1, .14], 0, 0, f * .3);
+    M.rod('lacquer_black', P(-.36, D + .22, 1.5), P(-.36, D + .24, 1.68), .03, 6); M.sphere(neon, P(-.36, D + .24, 1.72), .07, 1, 8, 4);
+    for (let k = 0; k < 3; k++) M.cyl(['neon_cyan', 'neon_gold', 'neon_pink'][k], P(.02 + k * .15, D + .2, 1.5), .045, .05, 8);
+    for (const t of [-1, 1]) M.box(neon, P(t * (W / 2 + .01), D - .02, 1.65), [.05, .05, 2.7]);
+    M.box('gold', P(0, D + .006, .75), [.02, .36, .44]); for (const t of [-1, 1]) M.box('neon_gold', P(t * .08, D + .02, .86), [.01, .04, .12]);
+  }
+  function bookcase(M, side, yc, w, h, X) { // floor-to-cornice shelves against a side wall (x = side * X), books facing the hall
+    const d = .95, xm = side * (X - d / 2), xb = side * (X - .1), y0 = yc - w / 2 + .2, y1 = yc + w / 2 - .2, A = side < 0 ? [y0, y1] : [y1, y0];
+    M.block('darkwood', xm, yc, 0, d, w, .32); M.block('darkwood', side * (X - d / 2 - .05), yc, h, d + .2, w + .3, .32);
+    for (const t of [-1, 1]) M.block('darkwood', xm, yc + t * (w / 2 - .1), 0, d, .2, h);
+    const rows = 6, rh = (h - .5) / rows;
+    for (let r = 0; r < rows; r++) {
+      const z0 = .38 + r * rh, v0 = (r % 5) * .2;
+      M.block('darkwood', xm, yc, z0 - .07, d - .02, w - .3, .07);
+      M.quad('books_dim', [[xb, A[0], z0], [xb, A[1], z0], [xb, A[1], z0 + rh - .1], [xb, A[0], z0 + rh - .1]], [[0, v0], [(w - .4) / 1.5, v0], [(w - .4) / 1.5, v0 + .2], [0, v0 + .2]]);
+    }
+  }
+  function wallQuad(M, side, yc, z0, w, h, mat, X) { // a sign or picture on a side wall (x = side * X), reads the right way round from inside
+    const x = side * (X - .06), y0 = yc - w / 2, y1 = yc + w / 2, A = side < 0 ? [y0, y1] : [y1, y0];
+    M.quad(mat, [[x, A[0], z0], [x, A[1], z0], [x, A[1], z0 + h], [x, A[0], z0 + h]]);
+  }
+  function kakejiku(M, side, y, zTop, w, h, mat) { // hanging scroll on a side wall (x = side * HX), reads the right way round from the hall
+    const x = side * (SD.HX - .05), y0 = y - w / 2, y1 = y + w / 2, A = side < 0 ? [y0, y1] : [y1, y0];
+    M.quad(mat, [[x, A[0], zTop - h], [x, A[1], zTop - h], [x, A[1], zTop], [x, A[0], zTop]]);
+    M.rod('darkwood', [x - side * .04, y0 - .14, zTop - h], [x - side * .04, y1 + .14, zTop - h], .065, 8); M.rod('darkwood', [x - side * .03, y0 - .04, zTop], [x - side * .03, y1 + .04, zTop], .04, 6);
+    M.rod('rope', [x - side * .02, y0 + .1, zTop], [x - side * .02, y, zTop + .5], .015, 4); M.rod('rope', [x - side * .02, y1 - .1, zTop], [x - side * .02, y, zTop + .5], .015, 4);
+  }
+  Object.assign(B, {
+    // the Samurai Great Dojo's hall: a plank floor round a tatami training square, two rows of columns carrying a raised nave
+    // (shoji clerestory, coffered ceiling), shoji windows high on the side walls, the dais (kamiza) with the great Samurai
+    // banner in its alcove, two armours, the sword stand, lamps and bonsai; weapon racks, makiwara posts, scrolls, a taiko by
+    // the door; the doorway looks out into daylight. NFT frames and hotspots come from the room's config (village layout).
+    // the Hub's Rebel Library (rebuilt from Miguel's room): a book-lined hall. The Warning plays on the screen at the far end
+    // between red curtains, the Book lies on a lit lectern in the middle (book GLB + hotspot from the room config), reading
+    // tables with lamps, a map table, scroll racks by the door, paper lanterns; NFT frames between the bookcases.
+    room_hub_library(M) {
+      M.room = true;
+      const { HX, HY, H, DW, DH, SHELF } = LB, T = .4;
+      M.block('wood', 0, 0, -.3, 2 * HX + 2 * T, 2 * HY + 2 * T + 2.6, .3);
+      M.quad('runner', [[-1.6, -18.5, .012], [1.6, -18.5, .012], [1.6, HY, .012], [-1.6, HY, .012]], [[0, 0], [1, 0], [1, (HY + 18.5) / 6.4], [0, (HY + 18.5) / 6.4]]);
+      for (const s of [-1, 1]) {
+        M.block('plaster', s * (HX + T / 2), 0, 0, T, 2 * HY + 2 * T, H + .4);
+        M.block('darkwood', s * (HX - .06), 0, 0, .12, 2 * HY, 1.6); M.block('wood', s * (HX - .12), 0, 1.6, .24, 2 * HY, .16);
+        for (let k = 0; k <= 10; k++) M.block('wood', s * (HX - .14), -HY + k * 4.4, 0, .28, .42, H);
+        M.block('wood', s * (HX - .16), 0, 7.4, .32, 2 * HY, .34); M.block('wood', s * (HX - .16), 0, H - .34, .32, 2 * HY, .34);
+        for (const y of SHELF) bookcase(M, s, y, 4.1, 7.2, HX);
+        for (let k = 0; k < 10; k++) { const y0 = -HY + k * 4.4 + .3, y1 = y0 + 3.8, x = s * (HX - .04), q = s < 0 ? [y0, y1] : [y1, y0]; M.quad('shoji', [[x, q[0], 7.9], [x, q[1], 7.9], [x, q[1], 10.2], [x, q[0], 10.2]], [[0, 0], [3.8 / 1.2, 0], [3.8 / 1.2, 1.5], [0, 1.5]]); }
+      }
+      // the far wall: the screen's carved frame, gold trim, red curtains, a low stage, benches facing it
+      M.block('plaster', 0, -HY - T / 2, 0, 2 * HX + 2 * T, T, H + .4); M.block('darkwood', 0, -HY + .06, 0, 2 * HX, .12, 1.6); M.block('wood', 0, -HY + .12, 1.6, 2 * HX, .24, .16);
+      M.block('darkwood', 0, -HY + .7, 0, 12, 1.4, .4); M.block('gold', 0, -HY + 1.38, .34, 12, .04, .06);
+      M.quad('dark', [[4.2, -HY + .05, 2.8], [-4.2, -HY + .05, 2.8], [-4.2, -HY + .05, 7.6], [4.2, -HY + .05, 7.6]]);
+      for (const [cx, cz, w, h] of [[0, 2.6, 9.2, .4], [0, 7.8, 9.2, .4], [-4.45, 5.2, .5, 5.6], [4.45, 5.2, .5, 5.6]]) M.box('darkwood', [cx, -HY + .2, cz], [w, .35, h]);
+      for (const [cx, cz, w, h] of [[0, 2.83, 8.5, .06], [0, 7.57, 8.5, .06], [-4.22, 5.2, .06, 4.8], [4.22, 5.2, .06, 4.8]]) M.box('gold', [cx, -HY + .38, cz], [w, .04, h]);
+      M.box('darkwood', [0, -HY + .3, 8.6], [10.4, .6, .5]); M.box('gold', [0, -HY + .62, 8.6], [1.6, .04, .3]);
+      for (const s of [-1, 1]) for (let k = 0; k < 5; k++) M.box('cloth', [s * (5.1 + k * .32), -HY + .55 + (k % 2) * .12, 4.6], [.3, .14, 8.2]);
+      for (const s of [-1, 1]) { M.block('darkwood', s * 4.5, -15, .1, 5.2, 1.1, .45); M.block('cloth', s * 4.5, -15, .55, 5.1, 1, .12); for (const t of [-1, 1]) M.block('darkwood', s * 4.5 + t * 2.3, -15, 0, .3, .9, .12); }
+      // the front wall: the door, plaster, scroll racks either side
+      const yf = HY + T / 2;
+      M.block('plaster', 0, yf, DH, 2 * HX + 2 * T, T, H + .4 - DH);
+      for (const s of [-1, 1]) { M.block('plaster', s * ((HX + T + DW / 2) / 2), yf, 0, HX + T - DW / 2, T, DH); M.block('darkwood', s * ((HX + DW / 2) / 2), HY - .06, 0, HX - DW / 2, .12, 1.6); M.block('wood', s * (DW / 2 + .22), HY - .06, 0, .44, .44, DH); }
+      M.block('darkwood', 0, HY - .06, DH, 2 * HX, .44, .32); M.block('wood', 0, HY - .16, 7.4, 2 * HX, .32, .34); M.block('wood', 0, HY - .16, H - .34, 2 * HX, .32, .34);
+      for (const s of [-1, 1]) M.block('darkwood', s * (DW / 2 + .1), HY + .75, 0, .2, 1.5, DH);
+      M.block('darkwood', 0, HY + .75, DH, DW + .4, 1.5, .2);
+      M.quad('doorview', [[-DW / 2, HY + 1.45, 0], [DW / 2, HY + 1.45, 0], [DW / 2, HY + 1.45, DH], [-DW / 2, HY + 1.45, DH]]);
+      for (const s of [-1, 1]) {
+        const cx = s * 13.8; M.block('darkwood', cx, HY - .7, 0, 5.2, 1.3, .25); M.block('darkwood', cx, HY - .7, 3.4, 5.4, 1.4, .2);
+        for (let i = 0; i <= 4; i++) M.block('darkwood', cx - 2.5 + i * 1.25, HY - .7, .25, .1, 1.3, 3.15);
+        for (let r = 0; r < 3; r++) { M.block('darkwood', cx, HY - .7, 1.2 + r * 1.05, 5.2, 1.3, .06); for (let i = 0; i < 4; i++) for (let k = 0; k < 3; k++) { const x = cx - 2.15 + i * 1.25 + k * .3, z = .5 + r * 1.05; M.rod('plaster', [x, HY - 1.3, z], [x, HY - .1, z], .12, 8); M.rod('red', [x, HY - .75, z], [x, HY - .65, z], .125, 8); } }
+      }
+      // the Book's lectern on its round dais, reading tables with lamps and cushions, the map table
+      M.cyl('darkwood', [0, 0, 0], 2.6, .35, 32); M.cyl('gold', [0, 0, .33], 2.62, .04, 32); M.cyl('wood', [0, 0, .35], 2.45, .03, 32);
+      M.block('darkwood', 0, 0, .38, .5, .5, 1.15); M.box('darkwood', [0, 0, 1.62], [1.3, 1, .14], 0, -.32, 0); M.box('gold', [0, -.5, 1.47], [1.3, .04, .04], 0, -.32, 0);
+      for (const [x, y] of [[-10.5, 9], [10.5, 9], [-10.5, 14], [10.5, 14]]) {
+        M.block('darkwood', x, y, .55, 3, 1.6, .12); for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.block('darkwood', x + a * 1.35, y + b * .65, 0, .14, .14, .55);
+        for (const t of [-1, 1]) M.block('cloth', x, y + t * 1.35, 0, 1.2, .9, .16);
+        andon(M, x + 1, y, .67, .55); M.block('plaster', x - .6, y, .67, .7, .5, .08); M.block('books_dim', x - .3, y + .2, .67, .5, .35, .18);
+      }
+      const mx = -6.5, my = -3; M.block('darkwood', mx, my, 0, 4, 2.4, .9); M.block('darkwood', mx, my, .9, 4.2, 2.6, .08); M.quad('map_table', [[mx - 1.9, my - 1.1, .99], [mx + 1.9, my - 1.1, .99], [mx + 1.9, my + 1.1, .99], [mx - 1.9, my + 1.1, .99]]);
+      M.cyl('bronze', [mx + 1.4, my + .6, .98], .12, .05, 8); M.rod('red', [mx - 1.2, my - .6, .99], [mx - .3, my - .2, .99], .03, 4);
+      // ceiling: beams, coffers, paper lanterns
+      M.block('wood', 0, 0, H, 2 * HX + 2 * T, 2 * HY + 2 * T, .25);
+      for (let i = 0; i <= 8; i++) M.block('darkwood', -HX + i * (2 * HX / 8), 0, H - .3, .25, 2 * HY, .3);
+      for (let j = 0; j <= 10; j++) M.block('darkwood', 0, -HY + j * 4.4, H - .45, 2 * HX, .4, .45);
+      M.remap = { lantern: 'andon' }; for (const [x, y] of [[-9, -8], [9, -8], [-9, 2], [9, 2], [-9, 12], [9, 12], [0, -9], [0, 15]]) chochin(M, x, y, H - .45, 1.6, .55, 1.25); M.remap = null;
+    },
+    // the Hub's Rebel Arcade (rebuilt from Miguel's room): a dojo at night lit by neon. Four games, four cabinets each
+    // (hotspots from the room config), a neon sign over each row, the big screen in a red torii on a stage, the Rebel Ants
+    // emblem inlaid in a glowing ring, a prize counter and a claw machine by the door, violet and cyan lanterns.
+    room_hub_arcade(M) {
+      M.room = true;
+      const { HX, HY, H, DW, DH, CABS, COLS } = AR, T = .4;
+      M.block('arcade_floor', 0, 0, -.3, 2 * HX + 2 * T, 2 * HY + 2 * T + 2.6, .3);
+      for (const [x0, y0, x1, y1] of [[-13, -14, 13, -13.86], [-13, 13.86, 13, 14], [-13, -14, -12.86, 14], [12.86, -14, 13, 14]]) M.quad('neon_cyan', [[x0, y0, .012], [x1, y0, .012], [x1, y1, .012], [x0, y1, .012]]);
+      M.cyl('neon_pink', [0, 0, 0], 6.35, .02, 48); M.cyl('lacquer_black', [0, 0, 0], 6.08, .03, 48); M.cyl('neon_purple', [0, 0, 0], 4.62, .036, 40); M.cyl('lacquer_black', [0, 0, 0], 4.5, .04, 40);
+      M.quad('emblem_rebel', [[4.3, 4.3, .045], [-4.3, 4.3, .045], [-4.3, -4.3, .045], [4.3, -4.3, .045]]);
+      // walls: dark indigo plaster over a black wainscot with a cyan rail, posts, a pink strip under the ceiling
+      for (const s of [-1, 1]) {
+        M.block('arcade_wall', s * (HX + T / 2), 0, 0, T, 2 * HY + 2 * T, H + .4);
+        M.block('lacquer_black', s * (HX - .06), 0, 0, .12, 2 * HY, 2.4); M.block('neon_cyan', s * (HX - .14), 0, 2.4, .06, 2 * HY, .07);
+        for (let k = 0; k <= 10; k++) M.block('darkwood', s * (HX - .14), -HY + k * 4, 0, .28, .4, H);
+        M.block('neon_pink', s * (HX - .2), 0, H - .55, .06, 2 * HY, .07);
+        for (const [i, g] of [[0, s < 0 ? 'raid' : 'tunnel'], [1, s < 0 ? 'fw' : 'shuffle']]) {
+          const neon = { fw: 'neon_pink', raid: 'neon_purple', tunnel: 'neon_cyan', shuffle: 'neon_gold' }[g], body = { fw: 'paint_red', raid: 'paint_purple', tunnel: 'paint_blue', shuffle: 'paint_gold' }[g];
+          for (const y of CABS.slice(i * 4, i * 4 + 4)) cabinet(M, s * HX, y, -s, g, body, neon);
+          wallQuad(M, s, i ? 9 : -9, 6.6, 9, 1.69, 'sign_' + g, HX);
+        }
+      }
+      // back wall: the stage, the big screen's black backing and its red torii, neon trim; front wall: the door, the emblem over it
+      M.block('arcade_wall', 0, -HY - T / 2, 0, 2 * HX + 2 * T, T, H + .4); M.block('lacquer_black', 0, -HY + .06, 0, 2 * HX, .12, 2.4); M.block('neon_cyan', 0, -HY + .14, 2.4, 2 * HX, .06, .07);
+      M.block('lacquer_black', 0, -HY + 1.4, 0, 17.2, 2.8, .6); M.block('neon_pink', 0, -HY + 2.82, .52, 17.2, .05, .06);
+      M.quad('dark', [[7, -HY + .03, 2.4], [-7, -HY + .03, 2.4], [-7, -HY + .03, 10.4], [7, -HY + .03, 10.4]]);
+      for (const [x0, z0, x1, z1] of [[-6.85, 2.55, 6.85, 2.65], [-6.85, 10.15, 6.85, 10.25], [-6.85, 2.55, -6.75, 10.25], [6.75, 2.55, 6.85, 10.25]]) M.box('neon_pink', [(x0 + x1) / 2, -HY + .1, (z0 + z1) / 2], [x1 - x0, .06, z1 - z0]);
+      for (const s of [-1, 1]) { M.cyl('lacquer_red', [s * 7.7, -HY + 1.2, .6], .45, H - 1.4, 14); M.cyl('lacquer_black', [s * 7.7, -HY + 1.2, .6], .58, .4, 14); M.cyl('neon_cyan', [s * 7.7, -HY + 1.2, 1.05], .47, .06, 14); }
+      M.box('lacquer_red', [0, -HY + 1.2, 10.75], [16.6, .55, .5]); M.box('lacquer_black', [0, -HY + 1.2, 11.35], [18.4, .9, .5]); M.box('gold', [0, -HY + 1.68, 10.75], [2, .05, .42]);
+      for (const s of [-1, 1]) M.box('gold', [s * 9.15, -HY + 1.2, 11.35], [.12, .92, .52]);
+      const yf = HY + T / 2;
+      M.block('arcade_wall', 0, yf, DH, 2 * HX + 2 * T, T, H + .4 - DH);
+      for (const s of [-1, 1]) { M.block('arcade_wall', s * ((HX + T + DW / 2) / 2), yf, 0, HX + T - DW / 2, T, DH); M.block('lacquer_black', s * ((HX + DW / 2) / 2), HY - .06, 0, HX - DW / 2, .12, 2.4); M.block('neon_cyan', s * ((HX + DW / 2) / 2), HY - .14, 2.4, HX - DW / 2, .06, .07); M.block('lacquer_red', s * (DW / 2 + .25), HY - .1, 0, .5, .5, DH + .3); }
+      M.block('lacquer_red', 0, HY - .1, DH, DW + 1, .5, .4); M.block('neon_pink', 0, HY - .38, DH - .06, DW, .05, .06);
+      for (const s of [-1, 1]) M.block('lacquer_black', s * (DW / 2 + .1), HY + .75, 0, .2, 1.5, DH);
+      M.block('lacquer_black', 0, HY + .75, DH, DW + .4, 1.5, .2);
+      M.quad('doorview', [[-DW / 2, HY + 1.45, 0], [DW / 2, HY + 1.45, 0], [DW / 2, HY + 1.45, DH], [-DW / 2, HY + 1.45, DH]]);
+      M.cyl('neon_gold', [0, HY - .1, 9.3], 2.35, .06, 40); M.quad('emblem_rebel', [[-2.2, HY - .12, 7.1], [2.2, HY - .12, 7.1], [2.2, HY - .12, 11.5], [-2.2, HY - .12, 11.5]]);
+      // columns, beams with purple neon underneath, the ceiling
+      for (const s of [-1, 1]) for (const y of COLS) { M.cyl('stone', [s * 15.5, y, 0], .7, .3, 12); M.cyl('lacquer_red', [s * 15.5, y, .3], .45, H - .3, 14); for (const zz of [.42, H - .9]) M.cyl('neon_cyan', [s * 15.5, y, zz], .47, .06, 14); }
+      M.block('lacquer_black', 0, 0, H, 2 * HX + 2 * T, 2 * HY + 2 * T, .3);
+      for (const x of [-15.5, 0, 15.5]) { M.block('darkwood', x, 0, H - .8, .6, 2 * HY, .8); M.block('neon_purple', x, 0, H - .84, .1, 2 * HY, .05); }
+      for (const y of COLS) { M.block('darkwood', 0, y, H - .7, 2 * HX, .5, .7); M.block('neon_purple', 0, y, H - .74, 2 * HX, .08, .05); }
+      M.remap = { lantern: 'lantern_violet' }; for (const s of [-1, 1]) for (const y of [-8, 0, 8]) chochin(M, s * 18.5, y, H - .8, 2.4, .5, 1.2);
+      M.remap = { lantern: 'lantern_cyan' }; for (const [x, y] of [[-5, -5], [5, -5], [-5, 5], [5, 5]]) chochin(M, x, y, H - .8, 2.2, .55, 1.3);
+      M.remap = null;
+      // benches facing the screen, the prize counter and the claw machine by the door
+      for (const s of [-1, 1]) { M.block('lacquer_black', s * 4.5, -11.5, .1, 5, 1.1, .45); M.block('cloth_purple', s * 4.5, -11.5, .55, 4.9, 1, .12); M.block('neon_purple', s * 4.5, -11.5, .04, 4.6, .9, .05); for (const t of [-1, 1]) M.block('lacquer_black', s * 4.5 + t * 2.2, -11.5, 0, .3, .9, .12); }
+      M.block('lacquer_black', 15, 15, 0, 6.6, 1.2, 1.4); M.block('gold', 15, 15, 1.4, 6.8, 1.35, .08); M.block('neon_gold', 15, 14.38, .1, 6.6, .04, .05);
+      for (let i = 0; i < 2; i++) M.block('darkwood', 15, HY - .45, 2.2 + i * 1.6, 6.4, .7, .1);
+      for (let i = 0; i < 2; i++) for (let k = 0; k < 7; k++) M.sphere(['flower_pink', 'neon_cyan', 'banana', 'neon_purple', 'red', 'neon_gold', 'lime'][(k + i * 3) % 7], [12.4 + k * .86, HY - .45, 2.62 + i * 1.6], .32, 1, 8, 5);
+      M.quad('sign_prizes', [[12.4, HY - .2, 5.6], [17.6, HY - .2, 5.6], [17.6, HY - .2, 6.9], [12.4, HY - .2, 6.9]]);
+      M.block('lacquer_black', -15, 15.2, 0, 2.4, 2.4, 1.2); M.block('neon_cyan', -15, 15.2, 1.2, 2.5, 2.5, .06);
+      M.box('glass', [-15, 15.2, 2.35], [2.3, 2.3, 2.2]); for (const [x, y] of [[-1.1, -1.1], [1.1, -1.1], [1.1, 1.1], [-1.1, 1.1]]) M.block('lacquer_black', -15 + x, 15.2 + y, 1.2, .1, .1, 2.3);
+      M.block('lacquer_black', -15, 15.2, 3.5, 2.5, 2.5, .3); M.quad('sign_claw', [[-16.2, 13.94, 3.52], [-13.8, 13.94, 3.52], [-13.8, 13.94, 3.78], [-16.2, 13.94, 3.78]]);
+      for (let k = 0; k < 9; k++) M.sphere(['flower_pink', 'neon_cyan', 'banana', 'neon_purple', 'red', 'lime'][k % 6], [-15.7 + (k % 3) * .7, 14.5 + Math.floor(k / 3) * .7, 1.5], .3, 1, 8, 5);
+      M.rod('iron', [-15, 15.2, 3.45], [-15, 15.2, 2.6], .03, 4); for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2; M.rod('iron', [-15, 15.2, 2.6], [-15 + Math.cos(a) * .25, 15.2 + Math.sin(a) * .25, 2.3], .025, 4); }
+    },
+    room_sam_dojo(M) {
+      M.room = true;
+      const { HX, HY, H, CX, CY, ZN, DW, DH, AW, AD, AZ, DZ } = SD, T = .4;
+      // floor: planks, the tatami square on a dark rail, cushions along it, the stone entry by the door
+      M.block('wood', 0, 0, -.3, 2 * HX + 2 * T, 2 * HY + 2 * T + 2, .3);
+      const TX = 12, TY = 7, mw = 2.4, mh = 1.4;
+      M.block('darkwood', 0, 0, 0, 2 * TX + .5, 2 * TY + .5, .05);
+      for (let i = 0; i < 10; i++) for (let j = 0; j < 10; j++) { const x0 = -TX + i * mw, y0 = -TY + j * mh; M.quad('tatami', [[x0, y0, .065], [x0 + mw, y0, .065], [x0 + mw, y0 + mh, .065], [x0, y0 + mh, .065]]); }
+      for (const s of [-1, 1]) for (let k = 0; k < 7; k++) { const y = -5.4 + k * 1.8; M.block('cloth', s * 11.1, y, .065, 1.15, 1.15, .16); for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) M.box('gold', [s * 11.1 + a * .55, y + b * .55, .2], [.08, .08, .08]); }
+      M.quad('stone', [[-5, 12.8, .015], [5, 12.8, .015], [5, HY + 1.3, .015], [-5, HY + 1.3, .015]], [[0, 0], [4.2, 0], [4.2, 1.85], [0, 1.85]]);
+      M.block('darkwood', 0, 12.7, 0, 10.4, .24, .07);
+      // side walls: dark wainscot to 2.6 m, plaster above, posts every 4 m, beams, a band of shoji windows high up
+      for (const s of [-1, 1]) {
+        M.block('plaster', s * (HX + T / 2), 0, 0, T, 2 * HY + 2 * T, H + .6);
+        M.block('darkwood', s * (HX - .06), 0, 0, .12, 2 * HY, 2.6); M.block('wood', s * (HX - .12), 0, 2.6, .24, 2 * HY, .2);
+        for (let k = 0; k <= 8; k++) M.block('wood', s * (HX - .14), -HY + k * 4, 0, .28, .42, H);
+        M.block('wood', s * (HX - .16), 0, 6.3, .32, 2 * HY, .34); M.block('wood', s * (HX - .16), 0, H - .34, .32, 2 * HY, .34);
+        for (let k = 0; k < 8; k++) { const y0 = -HY + k * 4 + .25, y1 = y0 + 3.5, x = s * (HX - .04), q = s < 0 ? [y0, y1] : [y1, y0]; M.quad('shoji', [[x, q[0], 6.75], [x, q[1], 6.75], [x, q[1], 8.55], [x, q[0], 8.55]], [[0, 0], [3.5 / 1.2, 0], [3.5 / 1.2, 1.2], [0, 1.2]]); }
+      }
+      // back wall with the alcove (tokonoma) behind the dais
+      const yb = -HY - T / 2;
+      for (const s of [-1, 1]) {
+        const w = HX + T - AW / 2, cx = s * (AW / 2 + w / 2), wi = HX - AW / 2, ci = s * (AW / 2 + wi / 2);
+        M.block('plaster', cx, yb, 0, w, T, H + .6); M.block('darkwood', ci, -HY + .06, 0, wi, .12, 2.6); M.block('wood', ci, -HY + .12, 2.6, wi, .24, .2);
+        M.block('wood', ci, -HY + .16, 6.3, wi, .32, .34); M.block('wood', ci, -HY + .16, H - .34, wi, .32, .34);
+        for (const x of [AW / 2 + 4, AW / 2 + 9.5]) M.block('wood', s * x, -HY + .14, 0, .42, .28, H);
+        M.block('plaster', s * (AW / 2 + T / 2), -HY - AD / 2, 0, T, AD, AZ);
+        M.block('darkwood', s * (AW / 2 + .18), -HY + .12, 0, .52, .52, AZ + .3);
+      }
+      M.block('plaster', 0, yb, AZ, AW, T, H + .6 - AZ); M.block('plaster', 0, -HY - AD - T / 2, 0, AW + 2 * T, T, AZ); M.block('wood', 0, -HY - AD / 2, AZ - .2, AW, AD, .2);
+      const ys = -HY - AD + .05; M.quad('shogun_screen', [[AW / 2, ys, DZ], [-AW / 2, ys, DZ], [-AW / 2, ys, AZ - .2], [AW / 2, ys, AZ - .2]], [[0, 0], [2, 0], [2, 1], [0, 1]]); // gold-leaf screen
+      for (let k = 1; k < 4; k++) M.box('darkwood', [-AW / 2 + k * AW / 4, ys + .03, (DZ + AZ - .2) / 2], [.08, .06, AZ - .2 - DZ]);
+      M.block('darkwood', 0, -HY + .12, AZ, AW + 1, .52, .45);
+      // front wall: the doorway, shoji screens either side, plaster end bays, plaster above the doors
+      const yf = HY + T / 2;
+      M.block('plaster', 0, yf, DH, 2 * HX + 2 * T, T, H + .6 - DH);
+      for (const s of [-1, 1]) {
+        M.block('plaster', s * (14 + (HX + T - 14) / 2), yf, 0, HX + T - 14, T, DH);
+        M.block('darkwood', s * 17, HY - .06, 0, 6, .12, 2.6); M.block('wood', s * 17, HY - .12, 2.6, 6, .24, .2);
+        const x0 = DW / 2 + .42, x1 = 14, n = 4, pw = (x1 - x0) / n;
+        for (let k = 0; k < n; k++) {
+          const a = s * (x0 + k * pw), b = s * (x0 + (k + 1) * pw), q = HY + .02, P = s > 0 ? [a, b] : [b, a];
+          M.quad('shoji', [[P[0], q, .08], [P[1], q, .08], [P[1], q, DH - .08], [P[0], q, DH - .08]], [[0, 0], [pw / 1.2, 0], [pw / 1.2, (DH - .16) / 1.5], [0, (DH - .16) / 1.5]]);
+          M.block('darkwood', s * (x0 + k * pw), HY, 0, .16, .22, DH);
+        }
+        M.block('wood', s * 14, HY - .06, 0, .42, .42, H); M.block('wood', s * 17, HY - .14, 0, .42, .28, H);
+        M.block('wood', s * (DW / 2 + .21), HY - .06, 0, .42, .42, DH);
+        for (let k = 0; k < 2; k++) { const xs = s * (DW / 2 + .5 + k * 1.6 + .8); M.block('darkwood', xs, HY - .3 - k * .14, .06, 1.6, .06, DH - .2); } // the door leaves, slid open
+      }
+      M.block('darkwood', 0, HY - .06, DH, 2 * HX, .42, .32); M.block('darkwood', 0, HY, 0, 2 * HX, .42, .06);
+      M.block('wood', 0, HY - .16, 6.3, 2 * HX, .32, .34); M.block('wood', 0, HY - .16, H - .34, 2 * HX, .32, .34);
+      for (const s of [-1, 1]) M.block('darkwood', s * (DW / 2 + .1), HY + .75, 0, .2, 1.5, DH);
+      M.block('darkwood', 0, HY + .75, DH, DW + .4, 1.5, .2);
+      M.quad('doorview', [[-DW / 2, HY + 1.45, 0], [DW / 2, HY + 1.45, 0], [DW / 2, HY + 1.45, DH], [-DW / 2, HY + 1.45, DH]]);
+      // columns on stone bases, the beams, the aisle ceilings, the raised nave: shoji clerestory and a coffered ceiling
+      for (const s of [-1, 1]) for (const y of CY) { M.cyl('stone', [s * CX, y, 0], .78, .32, 12); M.cyl('wood', [s * CX, y, .32], .46, ZN - .32, 14); M.cyl('iron', [s * CX, y, .32], .5, .14, 14); M.cyl('iron', [s * CX, y, H - .55], .5, .12, 14); }
+      for (const s of [-1, 1]) {
+        M.block('wood', s * CX, 0, H - .1, .62, 2 * HY, .72);
+        for (const y of CY) M.block('wood', s * (CX + (HX - CX) / 2), y, H - .1, HX - CX, .5, .6);
+        M.block('wood', s * (CX + (HX - CX) / 2), 0, H + .6, HX - CX, 2 * HY, .12);
+        for (let k = 0; k <= 16; k++) M.block('darkwood', s * (CX + (HX - CX) / 2), -HY + k * 2, H + .42, HX - CX, .14, .18);
+        M.block('plaster', s * CX, 0, H + .6, .3, 2 * HY, ZN - H - .6);
+        for (let k = 0; k < 8; k++) { const y0 = -HY + k * 4 + .4, y1 = y0 + 3.2, x = s * (CX - .17), q = s < 0 ? [y1, y0] : [y0, y1]; M.quad('shoji', [[x, q[0], H + 1.1], [x, q[1], H + 1.1], [x, q[1], ZN - .5], [x, q[0], ZN - .5]], [[0, 0], [3.2 / 1.2, 0], [3.2 / 1.2, (ZN - H - 1.6) / 1.5], [0, (ZN - H - 1.6) / 1.5]]); M.block('wood', s * (CX - .16), y0 - .2, H + .6, .2, .3, ZN - H - .6); }
+      }
+      for (const s of [-1, 1]) M.block('plaster', 0, s * (HY + T / 2), H + .6, 2 * CX, T, ZN - H);
+      M.block('wood', 0, 0, ZN + .25, 2 * CX + .4, 2 * HY + .4, .15);
+      for (let i = 0; i <= 12; i++) M.block('darkwood', -CX + i * (2 * CX / 12), 0, ZN, .2, 2 * HY, .26);
+      for (let j = 0; j <= 16; j++) M.block('darkwood', 0, -HY + j * 2, ZN, 2 * CX, .2, .26);
+      // the dais: polished top, gold edge, a step; the great banner in the alcove, armours, the sword stand, lamps, bonsai, incense
+      M.block('darkwood', 0, -HY - AD / 2 + (HY - 10.9 + AD) / 2 - AD / 2, 0, 22.8, HY - 10.9 + AD, DZ);
+      M.block('wood', 0, -HY - AD / 2 + (HY - 10.9 + AD) / 2 - AD / 2, DZ, 22.6, HY - 10.9 + AD - .2, .05);
+      M.block('gold', 0, -10.95, DZ - .14, 22.8, .06, .06); M.block('darkwood', 0, -10.6, 0, 20.4, .6, .4); M.block('gold', 0, -10.32, .34, 20.4, .04, .04);
+      const by = -HY - AD + .12, bw = 3.4, bz = AZ - .45, bh = 6.6;
+      M.quad('banner_red', [[bw / 2, by, bz - bh], [-bw / 2, by, bz - bh], [-bw / 2, by, bz], [bw / 2, by, bz]]);
+      M.rod('darkwood', [-bw / 2 - .3, by + .06, bz + .05], [bw / 2 + .3, by + .06, bz + .05], .07, 8); for (const s of [-1, 1]) M.cyl('gold', [s * (bw / 2 + .3), by + .06, bz - .03], .1, .16, 8);
+      for (const s of [-1, 1]) M.quad('scroll_sam2', s < 0 ? [[-AW / 2 + .05, -HY - AD + .6, 2.4], [-AW / 2 + .05, -HY - .4, 2.4], [-AW / 2 + .05, -HY - .4, 6.2], [-AW / 2 + .05, -HY - AD + .6, 6.2]] : [[AW / 2 - .05, -HY - .4, 2.4], [AW / 2 - .05, -HY - AD + .6, 2.4], [AW / 2 - .05, -HY - AD + .6, 6.2], [AW / 2 - .05, -HY - .4, 6.2]]);
+      M.cyl('bronze', [0, -HY - .9, DZ], .34, .5, 12, .42); for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2; M.rod('bronze', [Math.cos(a) * .3, -HY - .9 + Math.sin(a) * .3, DZ], [Math.cos(a) * .36, -HY - .9 + Math.sin(a) * .36, DZ + .2], .05, 4); }
+      for (const s of [-1, 1]) { yoroi(M, s * 7.4, -14.3, DZ + .05); andon(M, s * 3.9, -12.3, DZ + .05, 1.25); bonsai(M, s * 10.3, -15.3, DZ + .05); }
+      katanakake(M, 0, -11.7, DZ + .05);
+      // weapon racks (left wall), makiwara posts (right aisle), scrolls, hanging lanterns, the taiko, shoe shelf and flowers by the door
+      M.block('darkwood', -19.45, -6, 0, .7, 3.6, .3); M.block('darkwood', -19.62, -6, 2.15, .3, 3.6, .14); for (const t of [-1, 1]) M.block('darkwood', -19.62, -6 + t * 1.7, 0, .24, .2, 2.4);
+      for (let k = 0; k < 9; k++) { const y = -6 - 1.45 + k * .36; M.rod('wood', [-19.38, y, .3], [-19.68, y, 2.65], .05, 6); M.rod('dark', [-19.37, y, .3], [-19.43, y, .9], .058, 6); }
+      for (const zz of [1.1, 3.7]) M.block('darkwood', -19.78, 2, zz, .22, 3.6, .14);
+      for (let k = 0; k < 5; k++) { const y = 2 - 1.4 + k * .7, nag = k % 2; M.rod('darkwood', [-19.55, y, .05], [-19.66, y, 4.4], .055, 6); M.cyl('iron', [-19.55, y, .05], .07, .12, 6);
+        if (nag) M.box('iron', [-19.67, y + .06, 4.75], [.05, .16, .75], 0, 0, .1); else M.box('iron', [-19.66, y, 4.66], [.06, .1, .55]); M.cyl('gold', [-19.66, y, 4.36], .07, .08, 6); }
+      makiwara(M, 16.6, -6); makiwara(M, 16.6, 2);
+      kakejiku(M, -1, 14, 6.1, 1.7, 4.25, 'scroll_sam'); kakejiku(M, 1, 10, 6.1, 1.7, 4.25, 'scroll_sam2'); kakejiku(M, -1, -14, 6.1, 1.7, 4.25, 'scroll_sam2'); kakejiku(M, 1, -14, 6.1, 1.7, 4.25, 'scroll_sam');
+      for (const s of [-1, 1]) for (const y of CY) chochin(M, s * 16.75, y, H - .1, .55);
+      for (const [x, y] of [[-6, -5], [6, -5], [-6, 5], [6, 5]]) chochin(M, x, y, ZN, 3.4, .58, 1.35);
+      taiko(M, 16.3, 12.3, 0);
+      M.block('darkwood', -6.6, 15.35, 0, 3.2, 1.1, 1.3); for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) M.block('interior', -7.65 + i * 1.05, 14.79, .15 + j * .58, .9, .02, .45);
+      for (const x of [-7.4, -6.9, -6.2, -5.7]) { M.block('wood', x, 15.1, 1.3, .3, .62, .08); M.block('dark', x, 15.1, 1.38, .06, .5, .04); }
+      M.block('darkwood', 6.6, 15.1, 0, 1.3, 1.3, .62); M.cyl('lacquer_black', [6.6, 15.1, .62], .3, .55, 10, .2);
+      for (const [dx, dy, dz, c] of [[0, 0, 1.9, 'flower_pink'], [.25, .1, 1.6, 'flower_pink'], [-.22, -.05, 1.7, 'red'], [.05, -.2, 1.45, 'flower_pink']]) { M.rod('leaf', [6.6, 15.1, 1.1], [6.6 + dx, 15.1 + dy, dz], .025, 4); M.sphere(c, [6.6 + dx, 15.1 + dy, dz], .13, 1, 8, 4); }
+    }
+  });
   const decks = { wok_pier: [{ x: 0, z: 0, halfX: 2.05, halfZ: 4.5, y: 0 }], // a little past each end: steps on from the quay
     wok_boat: [{ x: 0, z: 0, halfX: 1.7, halfZ: 3, y: 1.05 }], wok_gangplank: [{ x: 0, z: 0, halfX: .55, halfZ: 2.5, y0: 0, y1: -2 }],
     kit_stairs_stone: stairs(3, 6.4, 4, 10, 'stone'), kit_stairs_wood: stairs(2.6, 6.4, 4, 12, 'wood'),
@@ -2889,5 +3290,5 @@
     chz_dock: [{ x: 0, z: 0, halfX: 4.05, halfZ: 3.05, y: 0 }], chz_pier: [{ x: 0, z: 0, halfX: 1.55, halfZ: 5.05, y: 0 }],
     shogun_bridge: [{ x: 0, z: -2.75, halfX: 1.05, halfZ: 2.75, y0: 0, y1: 1.3 }, { x: 0, z: 2.75, halfX: 1.05, halfZ: 2.75, y0: 1.3, y1: 0 }],
     ronin_great_dojo: [{ x: 0, z: 0, halfX: 15, halfZ: 12, y: 1.6 }, { x: 0, z: -13.13, halfX: 4.4, halfZ: 1.13, y0: 0, y1: 1.6, steps: 5, surface: 'stone' }] };
-  window.SamuraiKit = { build, setLightFactor, animate, actorAction, protoMeshes, decks, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B, _org: { blob, curveTube } };
+  window.SamuraiKit = { build, setLightFactor, animate, actorAction, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();

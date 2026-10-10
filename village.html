@@ -24626,15 +24626,34 @@ function getActiveInteriorBounds() {
   return getInteriorBoundsForRoom(ActiveInterior?.interiorType || 'training_dojo', ActiveInterior?.root?.metadata?.isCustomGlbInterior === true);
 }
 
+function interiorPointBlocked(blockers, x, z, r = INTERIOR_PLAYER_COLLISION_RADIUS) {
+  for (const b of blockers) {
+    if (b.box) {
+      const [x0, z0, x1, z1] = b.box, cx = Math.max(x0, Math.min(x1, x)), cz = Math.max(z0, Math.min(z1, z));
+      if ((x - cx) ** 2 + (z - cz) ** 2 < r * r) return true;
+    } else if (b.circle) {
+      const [cx, cz, cr] = b.circle;
+      if ((x - cx) ** 2 + (z - cz) ** 2 < (cr + r) ** 2) return true;
+    }
+  }
+  return false;
+}
+
 function resolveInteriorPlayerCollision(currentPosition, proposedPosition) {
   const bounds = getActiveInteriorBounds();
   if (!bounds) return { x: proposedPosition.x, z: proposedPosition.z, blocked: false };
-  const minX = -bounds.halfX + INTERIOR_PLAYER_COLLISION_RADIUS;
-  const maxX = bounds.halfX - INTERIOR_PLAYER_COLLISION_RADIUS;
-  const minZ = -bounds.halfZ + INTERIOR_PLAYER_COLLISION_RADIUS;
-  const maxZ = bounds.halfZ - INTERIOR_PLAYER_COLLISION_RADIUS;
-  const x = Math.min(maxX, Math.max(minX, proposedPosition.x));
-  const z = Math.min(maxZ, Math.max(minZ, proposedPosition.z));
+  const minX = (Number.isFinite(bounds.minX) ? bounds.minX : -bounds.halfX) + INTERIOR_PLAYER_COLLISION_RADIUS;
+  const maxX = (Number.isFinite(bounds.maxX) ? bounds.maxX : bounds.halfX) - INTERIOR_PLAYER_COLLISION_RADIUS;
+  const minZ = (Number.isFinite(bounds.minZ) ? bounds.minZ : -bounds.halfZ) + INTERIOR_PLAYER_COLLISION_RADIUS;
+  const maxZ = (Number.isFinite(bounds.maxZ) ? bounds.maxZ : bounds.halfZ) - INTERIOR_PLAYER_COLLISION_RADIUS;
+  let x = Math.min(maxX, Math.max(minX, proposedPosition.x));
+  let z = Math.min(maxZ, Math.max(minZ, proposedPosition.z));
+  const blockers = bounds.blockers;
+  if (blockers?.length && interiorPointBlocked(blockers, x, z) && !interiorPointBlocked(blockers, currentPosition.x, currentPosition.z)) {
+    if (!interiorPointBlocked(blockers, x, currentPosition.z)) z = currentPosition.z;   // slide along it
+    else if (!interiorPointBlocked(blockers, currentPosition.x, z)) x = currentPosition.x;
+    else { x = currentPosition.x; z = currentPosition.z; }
+  }
   return {
     x,
     z,
@@ -24819,8 +24838,9 @@ engine.runRenderLoop(()=>{
     if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
     _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
     const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
-    walk.position=BABYLON.Vector3.Lerp(walk.position,dc,0.1);
-    walk.setTarget(new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z));
+    const _camTarget = new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z);
+    walk.position=BABYLON.Vector3.Lerp(walk.position,ActiveInterior?clipInteriorCameraPosition(dc,_camTarget):dc,0.1);
+    walk.setTarget(_camTarget);
   }
   updateFootstepAudio();
   updateInteractionPrompt();
@@ -28105,6 +28125,7 @@ function shouldKeepNodeDuringInteriorIsolation(node) {
   if (!node || node.isDisposed?.()) return true;
   if (isPlayerRuntimeNode(node) || isInteriorRuntimeNode(node)) return true;
   if (node.metadata?.isPickProxy === true) return true;
+  if (node.metadata?.keepInInteriors === true) return true;
   if (node.name?.toLowerCase?.().includes('gizmo')) return true;
   return false;
 }
@@ -28864,6 +28885,7 @@ function applyInteriorLightingConfig(interiorId = getInteriorAdminLightingKey())
   const config = getInteriorLightingConfig(interiorId);
   let color = new BABYLON.Color3(1, .85, .54);
   try { color = BABYLON.Color3.FromHexString(config.color); } catch(e) {}
+  if (light.metadata?.kitRoom && !getInteriorRoomConfigs()[interiorId]?.lighting) color = light.metadata.kitColor.clone();
   const baseIntensity = Number.isFinite(light.metadata?.baseIntensity) ? light.metadata.baseIntensity : .78;
   light.metadata = { ...(light.metadata || {}), userColor:color, userBrightness:config.brightness, baseIntensity };
   applyActiveInteriorLightingState(getFakeLightStateFactor());
@@ -28875,6 +28897,13 @@ function applyActiveInteriorLightingState(fakeFactor = getFakeLightStateFactor()
   const baseIntensity = Number.isFinite(light.metadata?.baseIntensity) ? light.metadata.baseIntensity : .78;
   const userBrightness = clampInteriorLightingBrightness(light.metadata?.userBrightness ?? 1);
   const color = light.metadata?.userColor || new BABYLON.Color3(1, .85, .54);
+  if (light.metadata?.kitRoom) { // a kit room has only its own lights: same by day and night, admin brightness scales them all
+    light.intensity = baseIntensity * userBrightness;
+    light.diffuse = color;
+    light.groundColor = light.metadata.kitGround.multiply(color).scale(1 / Math.max(.2, Math.max(color.r, color.g, color.b)));
+    (ActiveInterior.root.metadata.interiorLights || []).forEach(l => { if (l !== light && Number.isFinite(l.metadata?.baseIntensity)) l.intensity = l.metadata.baseIntensity * userBrightness; });
+    return;
+  }
   const applied = Math.max(.18, Math.min(1.35, fakeFactor));
   light.intensity = baseIntensity * userBrightness * applied;
   light.diffuse = color;
@@ -29319,7 +29348,7 @@ function createInteriorUploadedGlbAsset(parent, config = {}) {
     loadAssetSource(assetKey);
     waitForAssetSourceReady(assetKey, () => {
       if (!parent.isDisposed?.() && ActiveInterior?.root === parent) createInteriorUploadedGlbAsset(parent, config);
-    });
+    }, 60000); // a slow first load (busy startup) gave up after 9 s and the room's prop never appeared
     return null;
   }
 
@@ -30800,6 +30829,79 @@ function buildInteriorProps(root, type, mats, options = {}) {
   }
 }
 
+// Kit rooms (samurai-kit.js ROOMS): bounds / blockers / spawn / exit / lights come with the room's geometry.
+function getKitInteriorBounds(spec) {
+  const [minX, maxX, minZ, maxZ] = spec.bounds;
+  return { halfX:Math.max(-minX, maxX), halfZ:Math.max(-minZ, maxZ), minX, maxX, minZ, maxZ, blockers:spec.blockers || [], ceil:spec.ceil || 9 };
+}
+
+function buildKitInteriorRoom(root, kitType) {
+  const holder = new BABYLON.TransformNode('kitInteriorRoom_' + kitType, scene);
+  holder.parent = root;
+  holder.position = new BABYLON.Vector3(0, INTERIOR_FLOOR_Y, 0);
+  holder.metadata = { type:'interior_glb_model', interiorRuntime:true, kitRoom:kitType };
+  window.SamuraiKit.build(holder, kitType, scene, null, true);
+  // the room is lit by its own lights only: keep the village's lights off the room's templates (their instances follow)
+  const templates = scene.meshes.filter(mesh => mesh.metadata?.isKitTemplate && mesh.name.startsWith('samKit_' + kitType + '_'));
+  scene.lights.forEach(light => {
+    if (light.metadata?.interiorRuntime === true) return;
+    templates.forEach(t => { if (!light.excludedMeshes.includes(t)) light.excludedMeshes.push(t); });
+  });
+  root.metadata.kitTemplates = templates;
+  holder.computeWorldMatrix(true);
+  holder.getChildMeshes(false).forEach(mesh => {
+    mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true, interiorGlbModel:true };
+    mesh.computeWorldMatrix(true);
+    mesh.freezeWorldMatrix();
+  });
+  return holder;
+}
+
+function addKitInteriorLights(root, spec, hemi) {
+  const h = spec.hemi || {};
+  hemi.intensity = h.i ?? .7;
+  hemi.diffuse = new BABYLON.Color3(...(h.c || [1, .9, .76]));
+  hemi.groundColor = new BABYLON.Color3(...(h.g || [.34, .26, .2]));
+  hemi.metadata = { ...(hemi.metadata || {}), baseIntensity:hemi.intensity, kitRoom:true, kitColor:hemi.diffuse.clone(), kitGround:hemi.groundColor.clone() };
+  (spec.lights || []).forEach((l, i) => {
+    const p = new BABYLON.PointLight('activeInteriorKitLight_' + i, new BABYLON.Vector3(l.p[0], INTERIOR_FLOOR_Y + l.p[1], l.p[2]), scene);
+    p.diffuse = new BABYLON.Color3(...l.c);
+    p.specular = p.diffuse.scale(.2);
+    p.intensity = l.i;
+    p.range = l.r;
+    p.metadata = { interiorRuntime:true, baseIntensity:l.i };
+    p.parent = root;
+    p.includedOnlyMeshes = (root.metadata.kitTemplates || []).slice();
+    root.metadata.interiorLights.push(p);
+  });
+}
+
+function snapWalkCameraBehindPlayer() {
+  if (!charMesh) return;
+  _orbitAngleH = charMesh.rotation.y + Math.PI;
+  const p = charMesh.position, d = _orbitDist, v = _orbitAngleV;
+  const dc = new BABYLON.Vector3(p.x + Math.sin(_orbitAngleH) * d * Math.cos(v), p.y + d * Math.sin(v) + 2, p.z + Math.cos(_orbitAngleH) * d * Math.cos(v));
+  const target = new BABYLON.Vector3(p.x, p.y + 2.8, p.z);
+  walk.position.copyFrom(ActiveInterior ? clipInteriorCameraPosition(dc, target) : dc);
+  walk.setTarget(target);
+}
+
+// keep the walk camera inside a kit room: pulled in along its line to the player (dc), under the ceiling
+function clipInteriorCameraPosition(dc, target) {
+  const b = ActiveInterior?.root?.metadata?.bounds;
+  if (!b || !Number.isFinite(b.minX)) return dc;
+  const m = .5, lo = [b.minX + m, -Infinity, b.minZ + m], hi = [b.maxX - m, INTERIOR_FLOOR_Y + b.ceil - .4, b.maxZ - m];
+  const p = [dc.x, dc.y, dc.z], q = [target.x, target.y, target.z];
+  let t = 1;
+  for (let k = 0; k < 3; k++) {
+    const d = p[k] - q[k];
+    if (p[k] > hi[k] && d > 1e-6) t = Math.min(t, (hi[k] - q[k]) / d);
+    if (p[k] < lo[k] && d < -1e-6) t = Math.min(t, (lo[k] - q[k]) / d);
+  }
+  t = Math.max(0, t);
+  return t < 1 ? new BABYLON.Vector3(q[0] + (p[0] - q[0]) * t, q[1] + (p[1] - q[1]) * t, q[2] + (p[2] - q[2]) * t) : dc;
+}
+
 function buildInteriorRoom(entrance) {
   cleanupInteriorRuntimeLights();
   cleanupOrphanInteriorRuntimeRoots();
@@ -30810,12 +30912,16 @@ function buildInteriorRoom(entrance) {
     : getInteriorDefinition(type);
   const style = def.style || 'dojo';
   const root = new BABYLON.TransformNode('activeInteriorRoot', scene);
-  const targetInteriorId = entrance?.metadata?.targetInteriorId || type;
-  const isCustomGlbInterior = !INTERIOR_TYPES[type] && Boolean(def.modelUrl);
+  let targetInteriorId = entrance?.metadata?.targetInteriorId || type;
+  // a room built from the village kit (interiorDefinition.kit names one of SamuraiKit.rooms): real size, walls and furniture block
+  const kitRoomType = !INTERIOR_TYPES[type] && def.kit && window.SamuraiKit?.rooms?.[def.kit] ? def.kit : '';
+  const kitRoom = kitRoomType ? window.SamuraiKit.rooms[kitRoomType] : null;
+  if (kitRoom && def.kitConfig) targetInteriorId = def.kitConfig; // a rebuilt room keeps its own config (older builds read the old one)
+  const isCustomGlbInterior = !kitRoom && !INTERIOR_TYPES[type] && Boolean(def.modelUrl);
   const isTrainingDojoInterior = type === 'training_dojo';
   const roomFloorY = isCustomGlbInterior ? CUSTOM_INTERIOR_FLOOR_Y : INTERIOR_FLOOR_Y;
   const playerFloorOffset = getInteriorPlayerFloorOffset(targetInteriorId);
-  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:def.modelUrl || '', floorY:roomFloorY + playerFloorOffset, baseFloorY:roomFloorY, playerFloorOffset, isCustomGlbInterior, bounds:getInteriorBoundsForRoom(type, isCustomGlbInterior) };
+  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:kitRoom ? '' : (def.modelUrl || ''), floorY:roomFloorY + playerFloorOffset, baseFloorY:roomFloorY, playerFloorOffset, isCustomGlbInterior, kitRoom:kitRoomType, spawn:kitRoom?.spawn || null, bounds:kitRoom ? getKitInteriorBounds(kitRoom) : getInteriorBoundsForRoom(type, isCustomGlbInterior) };
 
   const floorColor = style === 'gallery' ? new BABYLON.Color3(.24,.23,.21)
     : style === 'theater' || style === 'arcade' ? new BABYLON.Color3(.05,.04,.08)
@@ -30831,7 +30937,9 @@ function buildInteriorRoom(entrance) {
   const accentMat = makeInteriorMaterial('interiorAccentMat_' + type, def.accent, .38);
   const exitMat = makeInteriorMaterial('interiorExitMat_' + type, new BABYLON.Color3(.9,.72,.24), .24);
 
-  if (isCustomGlbInterior) {
+  if (kitRoom) {
+    buildKitInteriorRoom(root, kitRoomType);
+  } else if (isCustomGlbInterior) {
     buildCustomInteriorRoomShell(root, {
       floor: floorMat,
       wall: makeInteriorMaterial('customInteriorWallMat_' + type, new BABYLON.Color3(.12,.14,.13), .04),
@@ -30848,13 +30956,13 @@ function buildInteriorRoom(entrance) {
   }
   const exitRoot = new BABYLON.TransformNode('interiorExitRoot', scene);
   exitRoot.parent = root;
-  exitRoot.position = new BABYLON.Vector3(0, 0, 10.62);
+  exitRoot.position = kitRoom ? new BABYLON.Vector3(kitRoom.exit[0], 0, kitRoom.exit[1]) : new BABYLON.Vector3(0, 0, 10.62);
   exitRoot.metadata = { type:'interior_exit', isInteriorExit:true, interiorRuntime:true };
   applySerializedTransform(exitRoot, getInteriorSavedExitConfig(targetInteriorId) || {});
   addInteriorBox(exitRoot, 'interiorExitFrameTop', { width:4.6, height:.35, depth:.5 }, new BABYLON.Vector3(0, 4.82, 0), woodMat);
   addInteriorBox(exitRoot, 'interiorExitFrameLeft', { width:.35, height:4.5, depth:.5 }, new BABYLON.Vector3(-2.25, 2.7, 0), woodMat);
   addInteriorBox(exitRoot, 'interiorExitFrameRight', { width:.35, height:4.5, depth:.5 }, new BABYLON.Vector3(2.25, 2.7, 0), woodMat);
-  if (!isCustomGlbInterior && !isTrainingDojoInterior) {
+  if (!kitRoom && !isCustomGlbInterior && !isTrainingDojoInterior) {
     for (let i = 0; i < 5; i += 1) {
       addInteriorBox(root, 'interiorWallPanelBack_' + i, { width:2.6, height:3.8, depth:.08 }, new BABYLON.Vector3(-8 + i * 4, 3.2, -10.72), accentMat);
     }
@@ -30866,9 +30974,10 @@ function buildInteriorRoom(entrance) {
   exitDoor.unfreezeWorldMatrix();
   exitRoot.getChildMeshes?.(false).forEach(mesh => { mesh._editRoot = exitRoot; mesh.isPickable = true; });
   registerEditableRoot(exitRoot.name, exitRoot);
+  if (kitRoom) exitRoot.getChildMeshes?.(false).forEach(mesh => { mesh.visibility = 0; }); // the room's own doorway shows the way out
 
-  buildInteriorProps(root, type, { floor:floorMat, wall:wallMat, wood:woodMat, accent:accentMat, exit:exitMat }, { targetInteriorId });
-  if (def.modelUrl) {
+  if (!kitRoom) buildInteriorProps(root, type, { floor:floorMat, wall:wallMat, wood:woodMat, accent:accentMat, exit:exitMat }, { targetInteriorId });
+  if (def.modelUrl && !kitRoom) {
     renderInteriorGlbModel(root, def.modelUrl).then(node => {
       if (node && ActiveInterior?.root === root) ActiveInterior.loadedGlbRoot = node;
     });
@@ -30881,6 +30990,7 @@ function buildInteriorRoom(entrance) {
   light.parent = root;
   root.metadata.interiorLight = light;
   root.metadata.interiorLights = [light];
+  if (kitRoom) addKitInteriorLights(root, kitRoom, light);
   if (type === 'training_dojo') {
     const dojoFill = new BABYLON.PointLight('trainingDojoWarmFill', new BABYLON.Vector3(0, 5.8, -2), scene);
     dojoFill.intensity = .72;
@@ -31028,14 +31138,14 @@ function enterInterior(entrance, options = {}) {
       root = buildInteriorRoom(entrance);
       const currentDef = getInteriorDefinition(type);
       const savedDef = entrance.metadata.interiorDefinition || {};
-      const interiorAudioPath = getInteriorDefinitionAudioPath(currentDef) || getInteriorDefinitionAudioPath(savedDef);
+      const interiorAudioPath = getInteriorDefinitionAudioPath(currentDef) || getInteriorDefinitionAudioPath(savedDef) || (root.metadata?.kitRoom ? normalizeInteriorAudioPath(savedDef.kitMusic || '') : '');
       ActiveInterior = {
         root,
         entranceName: entrance.name,
         returnPosition,
         returnRotationY: charMesh?.rotation?.y || 0,
         interiorType: type,
-        targetInteriorId: entrance.metadata.targetInteriorId || '',
+        targetInteriorId: root.metadata?.targetInteriorId || entrance.metadata.targetInteriorId || '',
         floorY: root.metadata?.floorY || INTERIOR_FLOOR_Y,
         baseFloorY: root.metadata?.baseFloorY || root.metadata?.floorY || INTERIOR_FLOOR_Y,
         playerFloorOffset: root.metadata?.playerFloorOffset || 0,
@@ -31065,8 +31175,10 @@ function enterInterior(entrance, options = {}) {
         const activeFloorY = getActiveInteriorPlayerFloorY();
         const isCustomGlbInterior = root.metadata?.isCustomGlbInterior === true;
         const spawnZ = isCustomGlbInterior ? 0 : 7.1;
-        charMesh.position.set(0, activeFloorY + 0.08, spawnZ);
-        charMesh.rotation.y = Math.PI;
+        const spawn = root.metadata?.spawn;
+        charMesh.position.set(spawn ? spawn[0] : 0, activeFloorY + 0.08, spawn ? spawn[1] : spawnZ);
+        charMesh.rotation.y = spawn ? spawn[2] : Math.PI;
+        if (spawn) setTimeout(snapWalkCameraBehindPlayer, 0); // after ActiveInterior is set (the camera clip reads its bounds)
         charMesh._vel = 0;
         groundPlayableVisualToTerrain(activeFloorY);
       }
