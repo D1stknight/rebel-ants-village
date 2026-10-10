@@ -28064,6 +28064,12 @@ function setVillageTravelFade(on) {
 
 function getInteriorReturnPosition(entrance) {
   if (!entrance || !charMesh) return charMesh?.position?.clone?.() || new BABYLON.Vector3(0, 0, 0);
+  // the player walks back out where they stood at the door, on the ground they stood on (a porch, steps, a deck: the
+  // fresh ground probe after the room would start from the room's floor and leave them buried in it)
+  const fp = getInteriorEntranceFootprint(entrance);
+  if (fp && Number.isFinite(charMesh._terrainY) && Math.hypot(charMesh.position.x - fp.centerX, charMesh.position.z - fp.centerZ) <= INTERIOR_ENTRANCE_RANGE + Math.max(fp.halfX, fp.halfZ) + 1) {
+    return new BABYLON.Vector3(charMesh.position.x, charMesh._terrainY, charMesh.position.z);
+  }
   const yaw = entrance.rotation?.y || 0;
   const back = new BABYLON.Vector3(Math.sin(yaw + Math.PI), 0, Math.cos(yaw + Math.PI));
   const pos = entrance.position.add(back.scale(Math.max(3, Math.abs(entrance.scaling?.z || 1) + 1.4)));
@@ -31287,8 +31293,12 @@ function returnToVillageFromInterior() {
       charMesh.position.copyFrom(returnPosition);
       charMesh.rotation.y = returnRotationY;
       charMesh._vel = 0;
+      charMesh._terrainY = returnPosition.y; // the platform they stood on, so the next ground checks keep them on it
+      _playerGroundCache = null;
       const terrainY = getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z);
-      if (Number.isFinite(terrainY)) groundPlayableVisualToTerrain(terrainY);
+      const standY = Number.isFinite(terrainY) ? Math.max(terrainY, returnPosition.y) : returnPosition.y;
+      if (Number.isFinite(standY)) groundPlayableVisualToTerrain(standY);
+      snapWalkCameraBehindPlayer();
     }
     setInteriorTitle('', '');
     updateWeatherAudio();
