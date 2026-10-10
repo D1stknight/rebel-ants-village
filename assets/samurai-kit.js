@@ -3278,7 +3278,9 @@
       for (const [dx, dy, dz, c] of [[0, 0, 1.9, 'flower_pink'], [.25, .1, 1.6, 'flower_pink'], [-.22, -.05, 1.7, 'red'], [.05, -.2, 1.45, 'flower_pink']]) { M.rod('leaf', [6.6, 15.1, 1.1], [6.6 + dx, 15.1 + dy, dz], .025, 4); M.sphere(c, [6.6 + dx, 15.1 + dy, dz], .13, 1, 8, 4); }
     }
   });
-  const decks = { wok_pier: [{ x: 0, z: 0, halfX: 2.05, halfZ: 4.5, y: 0 }], // a little past each end: steps on from the quay
+  // the Samurai great dojo's stone base (walk round the hall, up to its door) and its front steps; the layout's collision box covers only the walls
+  const samDojoDeck = [{ x: 0, z: 0, halfX: 12, halfZ: 8.5, y: 1.35 }, { x: 0, z: -9.4, halfX: 4, halfZ: .9, y0: 0, y1: 1.2, steps: 4, surface: 'stone' }];
+  const decks = { sam_great_dojo: samDojoDeck, wok_pier: [{ x: 0, z: 0, halfX: 2.05, halfZ: 4.5, y: 0 }], // a little past each end: steps on from the quay
     wok_boat: [{ x: 0, z: 0, halfX: 1.7, halfZ: 3, y: 1.05 }], wok_gangplank: [{ x: 0, z: 0, halfX: .55, halfZ: 2.5, y0: 0, y1: -2 }],
     kit_stairs_stone: stairs(3, 6.4, 4, 10, 'stone'), kit_stairs_wood: stairs(2.6, 6.4, 4, 12, 'wood'),
     kit_stairs_cliff: [{ x: 0, z: -10.6 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'stone' }, { x: 0, z: 0, halfX: 1.45, halfZ: 1.05, y: 6, surface: 'stone' },
