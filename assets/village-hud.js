@@ -76,8 +76,11 @@ body.rebel-panel-open #questLine{display:none!important}
     if (text && text !== lastQuest) { if (lastQuest && !document.body.classList.contains('rebel-panel-open')) { dot = true; b.classList.add('has-news'); } lastQuest = text; }
   }
 
-  // one top-down picture of the village (orthographic camera over the middle, fog off), read back into a canvas
-  HUD.buildMap = function (R = 320, size = 1024) {
+  // one top-down picture of the village (orthographic camera over the middle, fog off), read back into a canvas.
+  // The orthographic camera needs its own shader versions (CAMERA_ORTHOGRAPHIC); a real GPU compiles them in the
+  // background, so the picture is only taken once the render target reports every mesh ready (else it comes out as
+  // the bare sky colour). Fog is zeroed by its strength, not its mode, so no fog shader versions are needed on top.
+  HUD.buildMap = function (R = 320, size = 1024, tries = 3) {
     if (!scene) return Promise.resolve(false);
     const cam = new BABYLON.FreeCamera('miniMapCam', new BABYLON.Vector3(0, 600, 0), scene);
     cam.rotation = new BABYLON.Vector3(Math.PI / 2, 0, 0); // looking straight down, +z (north) up, +x right
@@ -88,20 +91,36 @@ body.rebel-panel-open #questLine{display:none!important}
     const pr = scene.getTransformNodeByName('playerRoot');
     rtt.renderList = null; // a predicate, as the main render picks meshes (instanced copies draw through their source)
     rtt.renderListPredicate = m => m.isEnabled() && !skip.test(m.name || '') && !inside(m, pr);
-    let fog = 0;
-    rtt.onBeforeRenderObservable.add(() => { fog = scene.fogMode; scene.fogMode = BABYLON.Scene.FOGMODE_NONE; });
-    rtt.onAfterRenderObservable.add(() => { scene.fogMode = fog; });
-    try { rtt.render(false); } catch (e) { console.warn('minimap render failed', e); }
-    return Promise.resolve(rtt.readPixels()).then(px => {
+    const noFog = fn => { const f = [scene.fogDensity, scene.fogStart, scene.fogEnd]; scene.fogDensity = 0; scene.fogStart = 1e7; scene.fogEnd = 2e7; try { return fn(); } finally { [scene.fogDensity, scene.fogStart, scene.fogEnd] = f; } };
+    const t0 = performance.now();
+    const ready = () => new Promise(res => {
+      const tick = () => {
+        let ok = false; try { ok = noFog(() => rtt.isReadyForRendering()); } catch (e) { ok = true; }
+        if (ok || performance.now() - t0 > 20000) res(ok); else setTimeout(tick, 150);
+      };
+      tick();
+    });
+    let shot = null;
+    return ready().then(ok => {
+      try { noFog(() => rtt.render(false)); } catch (e) { console.warn('minimap render failed', e); }
+      return rtt.readPixels();
+    }).then(px => {
       if (!px) return false;
+      const src = new Uint8Array(px.buffer || px), n = size * size;
+      // an empty picture (nothing drawn yet) is one colour: keep the old one and try again a little later
+      let differ = 0; for (let i = 0; i < n; i += 37) { const j = i * 4; if (Math.abs(src[j] - src[0]) + Math.abs(src[j + 1] - src[1]) + Math.abs(src[j + 2] - src[2]) > 24) differ++; }
+      if (differ < n / 37 * .03) { shot = 'empty'; return false; }
       const c = document.createElement('canvas'); c.width = c.height = size;
-      const g = c.getContext('2d'), im = g.createImageData(size, size), src = new Uint8Array(px.buffer || px);
+      const g = c.getContext('2d'), im = g.createImageData(size, size);
       for (let y = 0; y < size; y++) im.data.set(src.subarray((size - 1 - y) * size * 4, (size - y) * size * 4), y * size * 4); // GL rows run bottom up
       for (let i = 3; i < im.data.length; i += 4) im.data[i] = 255;
       g.putImageData(im, 0, 0);
       map = { img: c, x0: -R, z1: R, mpp: 2 * R / size };
       built = true; return true;
-    }).catch(e => { console.warn('minimap read failed', e); return false; }).finally(() => { rtt.dispose(); cam.dispose(); });
+    }).catch(e => { console.warn('minimap read failed', e); return false; }).finally(() => {
+      rtt.dispose(); cam.dispose();
+      if (shot === 'empty' && tries > 1) setTimeout(() => HUD.buildMap(R, size, tries - 1), 5000);
+    });
   };
   HUD.isBuilt = () => built;
 
