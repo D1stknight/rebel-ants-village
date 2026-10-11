@@ -46548,5 +46548,1962 @@
     "enabled": true,
     "questObjectiveId": null,
     "editorLocked": false
+  },
+  {
+    "type": "war_armory_door",
+    "name": "war_armory_doorRootClone_1791800000003_1",
+    "disableGroundSnap": false,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -40.05,
+      "y": 0.45,
+      "z": 51.265
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "warrior",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": {},
+    "animationSpeed": {},
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "war_cellar_door",
+    "name": "war_cellar_doorRootClone_1791800000004_1",
+    "disableGroundSnap": false,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 36.48,
+      "y": 0.28,
+      "z": 44.8
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "warrior",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": {},
+    "animationSpeed": {},
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxy_cellardoor",
+    "disableGroundSnap": false,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 36.48,
+      "y": 0.7,
+      "z": 44.8
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 2.4,
+      "y": 1.2,
+      "z": 2.8
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "warrior",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": {},
+    "animationSpeed": {},
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "war_torchRootClone_1791500000007_2",
+    "proxyOwnerType": "war_torch",
+    "proxyOwnerAssetKey": "war_torch",
+    "terrainSurfaceType": "dirt",
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_warrior_armory",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -40.05,
+      "y": 0.45,
+      "z": 49.47
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "warrior",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_warrior_armory",
+    "targetObjectId": null,
+    "interiorName": "The Armory Door",
+    "interiorType": "warrior_armory",
+    "targetInteriorId": "warrior_armory",
+    "promptText": "Press O to Enter the Armory",
+    "interiorDefinition": {
+      "id": "warrior_armory",
+      "builtIn": false,
+      "title": "The Armory",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_war_armory",
+      "prompt": "Press O to Enter",
+      "description": "Every wall packed with battle-worn weapons, the forge hearth, the grinding wheel, the cracked-circle standard.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.7,
+        "g": 0.3,
+        "b": 0.14
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "warrior_armory",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_warrior_fighting_ring",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 0,
+      "y": 1.6,
+      "z": 39.2
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "warrior",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_warrior_fighting_ring",
+    "targetObjectId": null,
+    "interiorName": "The Fighting Ring Door",
+    "interiorType": "warrior_fighting_ring",
+    "targetInteriorId": "warrior_fighting_ring",
+    "promptText": "Press O to Enter the Fighting Ring",
+    "interiorDefinition": {
+      "id": "warrior_fighting_ring",
+      "builtIn": false,
+      "title": "The Fighting Ring",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_war_dojo",
+      "prompt": "Press O to Enter",
+      "description": "The sand pit under the great dojo, the seats stepping up round it, heavy bags and battle drums.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.7,
+        "g": 0.3,
+        "b": 0.14
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "warrior_fighting_ring",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_warrior_stores",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 36.48,
+      "y": 0.28,
+      "z": 43.1
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "warrior",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_warrior_stores",
+    "targetObjectId": null,
+    "interiorName": "The Stores Door",
+    "interiorType": "warrior_stores",
+    "targetInteriorId": "warrior_stores",
+    "promptText": "Press O to Enter the Stores",
+    "interiorDefinition": {
+      "id": "warrior_stores",
+      "builtIn": false,
+      "title": "The Stores",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_war_stores",
+      "prompt": "Press O to Enter",
+      "description": "Down the cellar stair: aisles of rice, arrows, barrels and crates, the quartermaster's ledger.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.7,
+        "g": 0.3,
+        "b": 0.14
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "warrior_stores",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_warrior_veterans_hall",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 34.95,
+      "y": 1.09,
+      "z": -4
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "warrior",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_warrior_veterans_hall",
+    "targetObjectId": null,
+    "interiorName": "The Veterans Hall Door",
+    "interiorType": "warrior_veterans_hall",
+    "targetInteriorId": "warrior_veterans_hall",
+    "promptText": "Press O to Enter the Veterans Hall",
+    "interiorDefinition": {
+      "id": "warrior_veterans_hall",
+      "builtIn": false,
+      "title": "The Veterans Hall",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_war_veterans",
+      "prompt": "Press O to Enter",
+      "description": "Torn banners from every battle, the long battle mural, the fire in its broken ring.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.7,
+        "g": 0.3,
+        "b": 0.14
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "warrior_veterans_hall",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_room_configs",
+    "name": "interiorRoomConfigs",
+    "position": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "configs": {
+      "warrior_armory": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_warrior",
+            "name": "Rebel Ants: Warrior",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "39",
+                "title": "Rebel Ants: Battle for the Colony #39",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=39&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/39"
+              },
+              {
+                "tokenId": "87",
+                "title": "Rebel Ants: Battle for the Colony #87",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=87&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/87"
+              },
+              {
+                "tokenId": "119",
+                "title": "Rebel Ants: Battle for the Colony #119",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=119&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/119"
+              },
+              {
+                "tokenId": "183",
+                "title": "Rebel Ants: Battle for the Colony #183",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=183&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/183"
+              },
+              {
+                "tokenId": "247",
+                "title": "Rebel Ants: Battle for the Colony #247",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=247&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/247"
+              },
+              {
+                "tokenId": "423",
+                "title": "Rebel Ants: Battle for the Colony #423",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=423&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/423"
+              },
+              {
+                "tokenId": "615",
+                "title": "Rebel Ants: Battle for the Colony #615",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=615&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/615"
+              },
+              {
+                "tokenId": "1479",
+                "title": "Rebel Ants: Battle for the Colony #1479",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1479&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1479"
+              },
+              {
+                "tokenId": "1719",
+                "title": "Rebel Ants: Battle for the Colony #1719",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1719&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1719"
+              },
+              {
+                "tokenId": "2151",
+                "title": "Rebel Ants: Battle for the Colony #2151",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2151&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2151"
+              },
+              {
+                "tokenId": "2455",
+                "title": "Rebel Ants: Battle for the Colony #2455",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2455&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2455"
+              },
+              {
+                "tokenId": "2583",
+                "title": "Rebel Ants: Battle for the Colony #2583",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2583&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2583"
+              },
+              {
+                "tokenId": "2855",
+                "title": "Rebel Ants: Battle for the Colony #2855",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2855&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2855"
+              },
+              {
+                "tokenId": "3383",
+                "title": "Rebel Ants: Battle for the Colony #3383",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3383&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3383"
+              },
+              {
+                "tokenId": "3431",
+                "title": "Rebel Ants: Battle for the Colony #3431",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3431&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3431"
+              },
+              {
+                "tokenId": "3639",
+                "title": "Rebel Ants: Battle for the Colony #3639",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3639&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3639"
+              }
+            ],
+            "updatedAt": "2026-10-10T15:14:45.854Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "warrior_armory",
+            "frameId": "nft_frame_warrior_armory_1",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 1,
+            "tokenId": "39",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -8,
+              "y": 4.1,
+              "z": 10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_armory",
+            "frameId": "nft_frame_warrior_armory_2",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 2,
+            "tokenId": "87",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 8,
+              "y": 4.1,
+              "z": 10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_armory",
+            "frameId": "nft_frame_warrior_armory_3",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 3,
+            "tokenId": "119",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -10.5,
+              "y": 5.1,
+              "z": -10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_armory",
+            "frameId": "nft_frame_warrior_armory_4",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 4,
+            "tokenId": "183",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 10.5,
+              "y": 5.1,
+              "z": -10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "warrior_armory",
+            "hotspotId": "hotspot_warrior_armory_wheel",
+            "linkName": "The Grinding Wheel",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Every blade that comes back from a fight is put to this stone the same day. A Warrior's weapon is never put away dull.",
+            "enabled": true,
+            "position": {
+              "x": 6.8,
+              "y": 2.1,
+              "z": -5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_armory",
+            "hotspotId": "hotspot_warrior_armory_standard",
+            "linkName": "The Cracked Circle",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The circle is the colony; the crack is every battle it has survived. The Warriors carry it into the fight so that everyone knows the circle still holds.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.1,
+              "z": -9.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T15:14:45.854Z"
+      },
+      "warrior_fighting_ring": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_warrior",
+            "name": "Rebel Ants: Warrior",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "39",
+                "title": "Rebel Ants: Battle for the Colony #39",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=39&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/39"
+              },
+              {
+                "tokenId": "87",
+                "title": "Rebel Ants: Battle for the Colony #87",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=87&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/87"
+              },
+              {
+                "tokenId": "119",
+                "title": "Rebel Ants: Battle for the Colony #119",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=119&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/119"
+              },
+              {
+                "tokenId": "183",
+                "title": "Rebel Ants: Battle for the Colony #183",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=183&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/183"
+              },
+              {
+                "tokenId": "247",
+                "title": "Rebel Ants: Battle for the Colony #247",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=247&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/247"
+              },
+              {
+                "tokenId": "423",
+                "title": "Rebel Ants: Battle for the Colony #423",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=423&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/423"
+              },
+              {
+                "tokenId": "615",
+                "title": "Rebel Ants: Battle for the Colony #615",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=615&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/615"
+              },
+              {
+                "tokenId": "1479",
+                "title": "Rebel Ants: Battle for the Colony #1479",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1479&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1479"
+              },
+              {
+                "tokenId": "1719",
+                "title": "Rebel Ants: Battle for the Colony #1719",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1719&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1719"
+              },
+              {
+                "tokenId": "2151",
+                "title": "Rebel Ants: Battle for the Colony #2151",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2151&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2151"
+              },
+              {
+                "tokenId": "2455",
+                "title": "Rebel Ants: Battle for the Colony #2455",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2455&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2455"
+              },
+              {
+                "tokenId": "2583",
+                "title": "Rebel Ants: Battle for the Colony #2583",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2583&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2583"
+              },
+              {
+                "tokenId": "2855",
+                "title": "Rebel Ants: Battle for the Colony #2855",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2855&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2855"
+              },
+              {
+                "tokenId": "3383",
+                "title": "Rebel Ants: Battle for the Colony #3383",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3383&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3383"
+              },
+              {
+                "tokenId": "3431",
+                "title": "Rebel Ants: Battle for the Colony #3431",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3431&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3431"
+              },
+              {
+                "tokenId": "3639",
+                "title": "Rebel Ants: Battle for the Colony #3639",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3639&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3639"
+              }
+            ],
+            "updatedAt": "2026-10-10T15:14:45.854Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "warrior_fighting_ring",
+            "frameId": "nft_frame_warrior_fighting_ring_5",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 5,
+            "tokenId": "247",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -4.5,
+              "y": 6.1,
+              "z": -17.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_fighting_ring",
+            "frameId": "nft_frame_warrior_fighting_ring_6",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 6,
+            "tokenId": "423",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 4.5,
+              "y": 6.1,
+              "z": -17.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_fighting_ring",
+            "frameId": "nft_frame_warrior_fighting_ring_7",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 7,
+            "tokenId": "615",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -17.86,
+              "y": 6.1,
+              "z": -4.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_fighting_ring",
+            "frameId": "nft_frame_warrior_fighting_ring_8",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 8,
+            "tokenId": "1479",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -17.86,
+              "y": 6.1,
+              "z": 4.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_fighting_ring",
+            "frameId": "nft_frame_warrior_fighting_ring_9",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 9,
+            "tokenId": "1719",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 17.86,
+              "y": 6.1,
+              "z": -4.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_fighting_ring",
+            "frameId": "nft_frame_warrior_fighting_ring_10",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 10,
+            "tokenId": "2151",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 17.86,
+              "y": 6.1,
+              "z": 4.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "warrior_fighting_ring",
+            "hotspotId": "hotspot_warrior_fighting_ring_ring",
+            "linkName": "The Ring",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Two Warriors step down onto the sand and only one walks back up first. Out of the ring they are brothers and sisters again.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.3,
+              "z": 6.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_fighting_ring",
+            "hotspotId": "hotspot_warrior_fighting_ring_drums",
+            "linkName": "The Battle Drums",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The drums beat the rhythm of the charge. In the ring they keep time for the sparring; on the field they tell every Warrior when to stand and when to run.",
+            "enabled": true,
+            "position": {
+              "x": 13.6,
+              "y": 4.1,
+              "z": 15.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T15:14:45.854Z"
+      },
+      "warrior_stores": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_warrior",
+            "name": "Rebel Ants: Warrior",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "39",
+                "title": "Rebel Ants: Battle for the Colony #39",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=39&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/39"
+              },
+              {
+                "tokenId": "87",
+                "title": "Rebel Ants: Battle for the Colony #87",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=87&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/87"
+              },
+              {
+                "tokenId": "119",
+                "title": "Rebel Ants: Battle for the Colony #119",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=119&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/119"
+              },
+              {
+                "tokenId": "183",
+                "title": "Rebel Ants: Battle for the Colony #183",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=183&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/183"
+              },
+              {
+                "tokenId": "247",
+                "title": "Rebel Ants: Battle for the Colony #247",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=247&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/247"
+              },
+              {
+                "tokenId": "423",
+                "title": "Rebel Ants: Battle for the Colony #423",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=423&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/423"
+              },
+              {
+                "tokenId": "615",
+                "title": "Rebel Ants: Battle for the Colony #615",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=615&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/615"
+              },
+              {
+                "tokenId": "1479",
+                "title": "Rebel Ants: Battle for the Colony #1479",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1479&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1479"
+              },
+              {
+                "tokenId": "1719",
+                "title": "Rebel Ants: Battle for the Colony #1719",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1719&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1719"
+              },
+              {
+                "tokenId": "2151",
+                "title": "Rebel Ants: Battle for the Colony #2151",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2151&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2151"
+              },
+              {
+                "tokenId": "2455",
+                "title": "Rebel Ants: Battle for the Colony #2455",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2455&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2455"
+              },
+              {
+                "tokenId": "2583",
+                "title": "Rebel Ants: Battle for the Colony #2583",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2583&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2583"
+              },
+              {
+                "tokenId": "2855",
+                "title": "Rebel Ants: Battle for the Colony #2855",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2855&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2855"
+              },
+              {
+                "tokenId": "3383",
+                "title": "Rebel Ants: Battle for the Colony #3383",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3383&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3383"
+              },
+              {
+                "tokenId": "3431",
+                "title": "Rebel Ants: Battle for the Colony #3431",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3431&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3431"
+              },
+              {
+                "tokenId": "3639",
+                "title": "Rebel Ants: Battle for the Colony #3639",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3639&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3639"
+              }
+            ],
+            "updatedAt": "2026-10-10T15:14:45.854Z"
+          }
+        ],
+        "nftFrames": [],
+        "hotspots": [
+          {
+            "interiorId": "warrior_stores",
+            "hotspotId": "hotspot_warrior_stores_ledger",
+            "linkName": "The Quartermaster's Ledger",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Every sack in, every arrow out. The quartermaster can tell you how many days the village would last under siege, to the day.",
+            "enabled": true,
+            "position": {
+              "x": 9.2,
+              "y": 1.9,
+              "z": 4.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_stores",
+            "hotspotId": "hotspot_warrior_stores_racks",
+            "linkName": "The Stores",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Rice, arrows, oil, rope and salt, stacked to the beams. The Warriors say battles are won in the stores long before anyone draws a blade.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.5,
+              "z": -0.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T15:14:45.854Z"
+      },
+      "warrior_veterans_hall": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_warrior",
+            "name": "Rebel Ants: Warrior",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "39",
+                "title": "Rebel Ants: Battle for the Colony #39",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=39&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/39"
+              },
+              {
+                "tokenId": "87",
+                "title": "Rebel Ants: Battle for the Colony #87",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=87&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/87"
+              },
+              {
+                "tokenId": "119",
+                "title": "Rebel Ants: Battle for the Colony #119",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=119&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/119"
+              },
+              {
+                "tokenId": "183",
+                "title": "Rebel Ants: Battle for the Colony #183",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=183&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/183"
+              },
+              {
+                "tokenId": "247",
+                "title": "Rebel Ants: Battle for the Colony #247",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=247&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/247"
+              },
+              {
+                "tokenId": "423",
+                "title": "Rebel Ants: Battle for the Colony #423",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=423&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/423"
+              },
+              {
+                "tokenId": "615",
+                "title": "Rebel Ants: Battle for the Colony #615",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=615&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/615"
+              },
+              {
+                "tokenId": "1479",
+                "title": "Rebel Ants: Battle for the Colony #1479",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1479&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1479"
+              },
+              {
+                "tokenId": "1719",
+                "title": "Rebel Ants: Battle for the Colony #1719",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1719&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1719"
+              },
+              {
+                "tokenId": "2151",
+                "title": "Rebel Ants: Battle for the Colony #2151",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2151&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2151"
+              },
+              {
+                "tokenId": "2455",
+                "title": "Rebel Ants: Battle for the Colony #2455",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2455&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2455"
+              },
+              {
+                "tokenId": "2583",
+                "title": "Rebel Ants: Battle for the Colony #2583",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2583&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2583"
+              },
+              {
+                "tokenId": "2855",
+                "title": "Rebel Ants: Battle for the Colony #2855",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2855&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2855"
+              },
+              {
+                "tokenId": "3383",
+                "title": "Rebel Ants: Battle for the Colony #3383",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3383&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3383"
+              },
+              {
+                "tokenId": "3431",
+                "title": "Rebel Ants: Battle for the Colony #3431",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3431&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3431"
+              },
+              {
+                "tokenId": "3639",
+                "title": "Rebel Ants: Battle for the Colony #3639",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3639&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3639"
+              }
+            ],
+            "updatedAt": "2026-10-10T15:14:45.854Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "warrior_veterans_hall",
+            "frameId": "nft_frame_warrior_veterans_hall_11",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 11,
+            "tokenId": "2455",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -8,
+              "y": 4.1,
+              "z": 11.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_veterans_hall",
+            "frameId": "nft_frame_warrior_veterans_hall_12",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 12,
+            "tokenId": "2583",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 8,
+              "y": 4.1,
+              "z": 11.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_veterans_hall",
+            "frameId": "nft_frame_warrior_veterans_hall_13",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 13,
+            "tokenId": "2855",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 14.86,
+              "y": 3.9,
+              "z": -3
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.6,
+              "y": 1.6,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_veterans_hall",
+            "frameId": "nft_frame_warrior_veterans_hall_14",
+            "frameName": "Warrior Rebel",
+            "collectionId": "rebel_ants_warrior",
+            "frameSlot": 14,
+            "tokenId": "3383",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 14.86,
+              "y": 3.9,
+              "z": 3
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.6,
+              "y": 1.6,
+              "z": 1
+            }
+          }
+        ],
+        "videoScreens": [
+          {
+            "interiorId": "warrior_veterans_hall",
+            "screenId": "video_screen_warrior_veterans",
+            "screenName": "The Warning Book 1",
+            "videoUrl": "/assets/video/interiors/rebel_library/video-1780690684331-Prologue_-1_Final.mp4",
+            "posterUrl": "",
+            "clickUrl": "",
+            "fallbackUrl": "",
+            "liveUrl": "",
+            "isLivePlaceholder": false,
+            "futureLiveMode": false,
+            "autoplay": true,
+            "muted": true,
+            "loop": false,
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 3.8,
+              "z": -11.8
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 3.932584269662921,
+              "y": 3.9,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "warrior_veterans_hall",
+            "hotspotId": "hotspot_warrior_veterans_hall_fire",
+            "linkName": "The Fire",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The fire has not gone out since the hall was built. The veterans sit round it and tell the old battles to anyone who will listen, and to each other when no one will.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.5,
+              "z": 2.9
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "warrior_veterans_hall",
+            "hotspotId": "hotspot_warrior_veterans_hall_trophies",
+            "linkName": "Trophies of the Old Wars",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "A helmet split by a blow that should have killed its owner, a sword broken in a siege, a horn that called the last charge. Each one has a story and a name.",
+            "enabled": true,
+            "position": {
+              "x": 6,
+              "y": 2.1,
+              "z": -10.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T15:14:45.855Z"
+      }
+    }
   }
 ]
