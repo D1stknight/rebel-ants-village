@@ -1963,6 +1963,21 @@
       M.block('darkwood', 0, -.1, H + .45, 1.3, .1, 1.3); M.quad('mark_warrior', [[-.55, -.16, H + .5], [.55, -.16, H + .5], [.55, -.16, H + 1.6], [-.55, -.16, H + 1.6]]);
       M.rod('iron', [-W / 2 - .6, -.05, 3.2], [-W / 2 - .6, -.4, 3.2], .03, 3); M.cyl('iron', [-W / 2 - .6, -.45, 3.2], .14, .2, 6, .2); flame(M, -W / 2 - .6, -.45, 3.4, .25);
     },
+    // a dojo's inner door (the Forest Dojo room's, on the back wall inside the forest dojo): a dark frame, two lit shoji
+    // panels with the right one slid across onto a warm doorway, the Rebel emblem on a board above, a paper lantern hung
+    // from each post (it fits a 3.4 m bay); front faces -y
+    hub_inner_door(M) {
+      const W = 2.6, H = 3.4, O = .35; // O: how far the slid panel passes the middle
+      recess(M, (O + W / 2) / 2, -.04, .12, W / 2 - O, H - .1, .8);
+      M.block('darkwood', 0, -.12, 0, W + .56, .5, .12);
+      for (const sd of [-1, 1]) M.block('darkwood', sd * (W / 2 + .14), -.12, 0, .28, .5, H + .3);
+      M.block('darkwood', 0, -.12, H + .02, W + .56, .5, .3);
+      M.block('shoji', -W / 4, -.2, .12, W / 2, .05, H - .1);          // the left panel, front track
+      M.block('shoji', -W / 4 + O, -.08, .12, W / 2, .05, H - .1);     // the right one slid left behind it
+      for (const [x, y] of [[-W / 4, -.23], [-W / 4 + O, -.11]]) for (let k = 1; k < 4; k++) M.block('darkwood', x - W / 4 + k * W / 8, y, .12, .03, .02, H - .1);
+      M.block('darkwood', 0, -.16, H + .42, 1.3, .1, 1.3); M.quad('emblem_rebel', [[-.55, -.22, H + .47], [.55, -.22, H + .47], [.55, -.22, H + 1.57], [-.55, -.22, H + 1.57]]);
+      for (const sd of [-1, 1]) { const x = sd * (W / 2 + .14); M.rod('darkwood', [x, -.37, 3.3], [x, -.64, 3.3], .03, 3); lantern(M, x, -.64, 2.7, .2); }
+    },
     // the game hall's back-room door (the Game Hall's): a purple arched door with a pumpkin lamp either side; front faces -y
     cc_hall_door(M) {
       archDoor(M, 0, -.02, 0, 2.4, 3.6); M.poly('roof_purple', archPts(0, -.04, .3, 2, 2.6)); for (const z of [1.1, 2]) M.box('iron', [0, -.07, z], [2.1, .03, .08]);
