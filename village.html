@@ -30094,6 +30094,7 @@ function openInteriorInfoPanel(title, description, kicker = 'Interior Record', o
   return true;
 }
 
+window.closeInteriorInfoPanel = closeInteriorInfoPanel; // the panel's backdrop and close button use inline onclick handlers
 function closeInteriorInfoPanel(event = null) {
   event?.preventDefault?.();
   event?.stopPropagation?.();
