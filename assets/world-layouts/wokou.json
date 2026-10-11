@@ -20369,9 +20369,9 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 39,
+      "x": 40.71,
       "y": 0.06,
-      "z": 47
+      "z": 45.69
     },
     "rotation": {
       "x": 0,
@@ -21842,7 +21842,7 @@
     "position": {
       "x": 32,
       "y": -9.7107,
-      "z": -57
+      "z": -59.3
     },
     "rotation": {
       "x": 0,
@@ -22579,5 +22579,1953 @@
     "questObjectiveId": null,
     "editorLocked": false,
     "chestTier": "wood"
+  },
+  {
+    "type": "wok_hatch",
+    "name": "wok_hatchRootClone_1791800000001_1",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 32,
+      "y": -3,
+      "z": -55.2
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": "#ffdd88",
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "wokou",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "wok_shed_wall",
+    "name": "wok_shed_wallRootClone_1791800000002_1",
+    "disableGroundSnap": false,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -40,
+      "y": 0,
+      "z": -14
+    },
+    "rotation": {
+      "x": 0,
+      "y": 3.141592653589793,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": "#ffdd88",
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "wokou",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxy_shedwall",
+    "disableGroundSnap": false,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -40,
+      "y": 2.3,
+      "z": -14
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 9.2,
+      "y": 4.6,
+      "z": 0.5
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "wokou",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "wok_craneRootClone_1790967762447_21",
+    "proxyOwnerType": "wok_crane",
+    "proxyOwnerAssetKey": "wok_crane",
+    "terrainSurfaceType": "dirt",
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_wokou_ship_hold",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 32,
+      "y": -1.95,
+      "z": -55.2
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1.8,
+      "y": 2,
+      "z": 1.8
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "wokou",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_wokou_ship_hold",
+    "targetObjectId": null,
+    "interiorName": "The Ship Hold Door",
+    "interiorType": "wokou_ship_hold",
+    "targetInteriorId": "wokou_ship_hold",
+    "promptText": "Press O to Enter the Ship Hold",
+    "interiorDefinition": {
+      "id": "wokou_ship_hold",
+      "builtIn": false,
+      "title": "The Ship Hold",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_wok_hold",
+      "prompt": "Press O to Enter",
+      "description": "Down the hatch into the hull: crates and barrels lashed for the voyage, hammocks in the bow, the captain's gold.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.16,
+        "g": 0.3,
+        "b": 0.6
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "wokou_ship_hold",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_wokou_trade_house",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 40.74,
+      "y": 0.06,
+      "z": 48.57
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.992894389832651,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "wokou",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_wokou_trade_house",
+    "targetObjectId": null,
+    "interiorName": "The Trade House Door",
+    "interiorType": "wokou_trade_house",
+    "targetInteriorId": "wokou_trade_house",
+    "promptText": "Press O to Enter the Trade House",
+    "interiorDefinition": {
+      "id": "wokou_trade_house",
+      "builtIn": false,
+      "title": "The Trade House",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_wok_trade",
+      "prompt": "Press O to Enter",
+      "description": "The counting hall: scales and ledgers, spices, silks and porcelain, the chart of every port the Wokou trade with.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.16,
+        "g": 0.3,
+        "b": 0.6
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "wokou_trade_house",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_wokou_boat_shed",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -40,
+      "y": 0,
+      "z": -12.6
+    },
+    "rotation": {
+      "x": 0,
+      "y": 3.141592653589793,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "wokou",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_wokou_boat_shed",
+    "targetObjectId": null,
+    "interiorName": "The Boat Shed Door",
+    "interiorType": "wokou_boat_shed",
+    "targetInteriorId": "wokou_boat_shed",
+    "promptText": "Press O to Enter the Boat Shed",
+    "interiorDefinition": {
+      "id": "wokou_boat_shed",
+      "builtIn": false,
+      "title": "The Boat Shed",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_wok_shed",
+      "prompt": "Press O to Enter",
+      "description": "A junk on the slipway, the sea doors open on the bay, the sail on the sewing table.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.16,
+        "g": 0.3,
+        "b": 0.6
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "wokou_boat_shed",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_wokou_great_dojo",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 0,
+      "y": 0.08,
+      "z": 72.59
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "wokou",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_wokou_great_dojo",
+    "targetObjectId": null,
+    "interiorName": "The Great Dojo Door",
+    "interiorType": "wokou_great_dojo",
+    "targetInteriorId": "wokou_great_dojo",
+    "promptText": "Press O to Enter the Great Dojo",
+    "interiorDefinition": {
+      "id": "wokou_great_dojo",
+      "builtIn": false,
+      "title": "The Great Dojo",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_wok_dojo",
+      "prompt": "Press O to Enter",
+      "description": "Stepping posts across the pool, chains and grappling hooks, the round window on the sea.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.16,
+        "g": 0.3,
+        "b": 0.6
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "wokou_great_dojo",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_room_configs",
+    "name": "interiorRoomConfigs",
+    "position": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "configs": {
+      "wokou_ship_hold": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_wokou",
+            "name": "Rebel Ants: Wokou",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "967",
+                "title": "Rebel Ants: Battle for the Colony #967",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=967&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/967"
+              },
+              {
+                "tokenId": "999",
+                "title": "Rebel Ants: Battle for the Colony #999",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=999&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/999"
+              },
+              {
+                "tokenId": "1063",
+                "title": "Rebel Ants: Battle for the Colony #1063",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1063&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1063"
+              },
+              {
+                "tokenId": "1079",
+                "title": "Rebel Ants: Battle for the Colony #1079",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1079&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1079"
+              },
+              {
+                "tokenId": "1671",
+                "title": "Rebel Ants: Battle for the Colony #1671",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1671&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1671"
+              },
+              {
+                "tokenId": "1687",
+                "title": "Rebel Ants: Battle for the Colony #1687",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1687&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1687"
+              },
+              {
+                "tokenId": "1879",
+                "title": "Rebel Ants: Battle for the Colony #1879",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1879&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1879"
+              },
+              {
+                "tokenId": "1911",
+                "title": "Rebel Ants: Battle for the Colony #1911",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1911&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1911"
+              },
+              {
+                "tokenId": "1959",
+                "title": "Rebel Ants: Battle for the Colony #1959",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1959&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1959"
+              },
+              {
+                "tokenId": "1991",
+                "title": "Rebel Ants: Battle for the Colony #1991",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1991&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1991"
+              },
+              {
+                "tokenId": "2231",
+                "title": "Rebel Ants: Battle for the Colony #2231",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2231&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2231"
+              },
+              {
+                "tokenId": "2535",
+                "title": "Rebel Ants: Battle for the Colony #2535",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2535&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2535"
+              },
+              {
+                "tokenId": "2807",
+                "title": "Rebel Ants: Battle for the Colony #2807",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2807&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2807"
+              },
+              {
+                "tokenId": "3111",
+                "title": "Rebel Ants: Battle for the Colony #3111",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3111&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3111"
+              },
+              {
+                "tokenId": "3319",
+                "title": "Rebel Ants: Battle for the Colony #3319",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3319&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3319"
+              },
+              {
+                "tokenId": "3735",
+                "title": "Rebel Ants: Battle for the Colony #3735",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3735&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3735"
+              }
+            ],
+            "updatedAt": "2026-10-10T15:14:44.648Z"
+          }
+        ],
+        "nftFrames": [],
+        "hotspots": [
+          {
+            "interiorId": "wokou_ship_hold",
+            "hotspotId": "hotspot_wokou_ship_hold_chest",
+            "linkName": "The Captain's Chest",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Every raid pays into this chest before anyone is paid. The captain keeps the key on a cord round the neck and sleeps in the bow beside it.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.1,
+              "z": -10.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_ship_hold",
+            "hotspotId": "hotspot_wokou_ship_hold_cargo",
+            "linkName": "Lashed Cargo",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Rice, salt fish, fresh water and rope: forty days at sea if the wind is fair. Everything is lashed down twice; a loose crate in a storm can break a hull.",
+            "enabled": true,
+            "position": {
+              "x": -1.6,
+              "y": 2.5,
+              "z": 5
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T15:14:44.648Z"
+      },
+      "wokou_trade_house": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_wokou",
+            "name": "Rebel Ants: Wokou",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "967",
+                "title": "Rebel Ants: Battle for the Colony #967",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=967&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/967"
+              },
+              {
+                "tokenId": "999",
+                "title": "Rebel Ants: Battle for the Colony #999",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=999&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/999"
+              },
+              {
+                "tokenId": "1063",
+                "title": "Rebel Ants: Battle for the Colony #1063",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1063&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1063"
+              },
+              {
+                "tokenId": "1079",
+                "title": "Rebel Ants: Battle for the Colony #1079",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1079&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1079"
+              },
+              {
+                "tokenId": "1671",
+                "title": "Rebel Ants: Battle for the Colony #1671",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1671&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1671"
+              },
+              {
+                "tokenId": "1687",
+                "title": "Rebel Ants: Battle for the Colony #1687",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1687&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1687"
+              },
+              {
+                "tokenId": "1879",
+                "title": "Rebel Ants: Battle for the Colony #1879",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1879&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1879"
+              },
+              {
+                "tokenId": "1911",
+                "title": "Rebel Ants: Battle for the Colony #1911",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1911&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1911"
+              },
+              {
+                "tokenId": "1959",
+                "title": "Rebel Ants: Battle for the Colony #1959",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1959&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1959"
+              },
+              {
+                "tokenId": "1991",
+                "title": "Rebel Ants: Battle for the Colony #1991",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1991&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1991"
+              },
+              {
+                "tokenId": "2231",
+                "title": "Rebel Ants: Battle for the Colony #2231",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2231&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2231"
+              },
+              {
+                "tokenId": "2535",
+                "title": "Rebel Ants: Battle for the Colony #2535",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2535&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2535"
+              },
+              {
+                "tokenId": "2807",
+                "title": "Rebel Ants: Battle for the Colony #2807",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2807&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2807"
+              },
+              {
+                "tokenId": "3111",
+                "title": "Rebel Ants: Battle for the Colony #3111",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3111&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3111"
+              },
+              {
+                "tokenId": "3319",
+                "title": "Rebel Ants: Battle for the Colony #3319",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3319&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3319"
+              },
+              {
+                "tokenId": "3735",
+                "title": "Rebel Ants: Battle for the Colony #3735",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3735&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3735"
+              }
+            ],
+            "updatedAt": "2026-10-10T15:14:44.648Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "wokou_trade_house",
+            "frameId": "nft_frame_wokou_trade_house_1",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 1,
+            "tokenId": "967",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -10,
+              "y": 3.9,
+              "z": 9.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_trade_house",
+            "frameId": "nft_frame_wokou_trade_house_2",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 2,
+            "tokenId": "999",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 10,
+              "y": 3.9,
+              "z": 9.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_trade_house",
+            "frameId": "nft_frame_wokou_trade_house_3",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 3,
+            "tokenId": "1063",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -12.86,
+              "y": 4.3,
+              "z": -1
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_trade_house",
+            "frameId": "nft_frame_wokou_trade_house_4",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 4,
+            "tokenId": "1079",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -12.86,
+              "y": 4.3,
+              "z": -6.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "wokou_trade_house",
+            "hotspotId": "hotspot_wokou_trade_house_map",
+            "linkName": "The Trade Routes",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Every red line is a voyage that came home. The Wokou trade where they can and raid where they must; the chart does not say which is which.",
+            "enabled": true,
+            "position": {
+              "x": 4.5,
+              "y": 1.7,
+              "z": -9.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_trade_house",
+            "hotspotId": "hotspot_wokou_trade_house_scales",
+            "linkName": "The Honest Scales",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "A merchant with false weights loses the right hand of trust. These scales are checked every new moon against the weights kept in the strongbox.",
+            "enabled": true,
+            "position": {
+              "x": -3,
+              "y": 2.7,
+              "z": 2.3
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_trade_house",
+            "hotspotId": "hotspot_wokou_trade_house_spices",
+            "linkName": "Spices of the South",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Turmeric, pepper, saffron, cinnamon and tea from islands most of the colony will never see. A sack of saffron is worth more than a house.",
+            "enabled": true,
+            "position": {
+              "x": -10.8,
+              "y": 2.1,
+              "z": 5.8
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T15:14:44.648Z"
+      },
+      "wokou_boat_shed": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_wokou",
+            "name": "Rebel Ants: Wokou",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "967",
+                "title": "Rebel Ants: Battle for the Colony #967",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=967&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/967"
+              },
+              {
+                "tokenId": "999",
+                "title": "Rebel Ants: Battle for the Colony #999",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=999&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/999"
+              },
+              {
+                "tokenId": "1063",
+                "title": "Rebel Ants: Battle for the Colony #1063",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1063&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1063"
+              },
+              {
+                "tokenId": "1079",
+                "title": "Rebel Ants: Battle for the Colony #1079",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1079&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1079"
+              },
+              {
+                "tokenId": "1671",
+                "title": "Rebel Ants: Battle for the Colony #1671",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1671&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1671"
+              },
+              {
+                "tokenId": "1687",
+                "title": "Rebel Ants: Battle for the Colony #1687",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1687&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1687"
+              },
+              {
+                "tokenId": "1879",
+                "title": "Rebel Ants: Battle for the Colony #1879",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1879&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1879"
+              },
+              {
+                "tokenId": "1911",
+                "title": "Rebel Ants: Battle for the Colony #1911",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1911&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1911"
+              },
+              {
+                "tokenId": "1959",
+                "title": "Rebel Ants: Battle for the Colony #1959",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1959&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1959"
+              },
+              {
+                "tokenId": "1991",
+                "title": "Rebel Ants: Battle for the Colony #1991",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1991&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1991"
+              },
+              {
+                "tokenId": "2231",
+                "title": "Rebel Ants: Battle for the Colony #2231",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2231&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2231"
+              },
+              {
+                "tokenId": "2535",
+                "title": "Rebel Ants: Battle for the Colony #2535",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2535&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2535"
+              },
+              {
+                "tokenId": "2807",
+                "title": "Rebel Ants: Battle for the Colony #2807",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2807&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2807"
+              },
+              {
+                "tokenId": "3111",
+                "title": "Rebel Ants: Battle for the Colony #3111",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3111&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3111"
+              },
+              {
+                "tokenId": "3319",
+                "title": "Rebel Ants: Battle for the Colony #3319",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3319&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3319"
+              },
+              {
+                "tokenId": "3735",
+                "title": "Rebel Ants: Battle for the Colony #3735",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3735&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3735"
+              }
+            ],
+            "updatedAt": "2026-10-10T15:14:44.648Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "wokou_boat_shed",
+            "frameId": "nft_frame_wokou_boat_shed_5",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 5,
+            "tokenId": "1671",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -8,
+              "y": 4.3,
+              "z": 9.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_boat_shed",
+            "frameId": "nft_frame_wokou_boat_shed_6",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 6,
+            "tokenId": "1687",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 8,
+              "y": 4.3,
+              "z": 9.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_boat_shed",
+            "frameId": "nft_frame_wokou_boat_shed_7",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 7,
+            "tokenId": "1879",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 14.86,
+              "y": 4.7,
+              "z": -6.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_boat_shed",
+            "frameId": "nft_frame_wokou_boat_shed_8",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 8,
+            "tokenId": "1911",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 14.86,
+              "y": 4.7,
+              "z": 7.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "wokou_boat_shed",
+            "hotspotId": "hotspot_wokou_boat_shed_hull",
+            "linkName": "The New Junk",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The keel was laid at the last full moon. The ribs are cypress, bent in the steam box; when the planking is done she will slide down the slip into the bay.",
+            "enabled": true,
+            "position": {
+              "x": 4.6,
+              "y": 2.5,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_boat_shed",
+            "hotspotId": "hotspot_wokou_boat_shed_sail",
+            "linkName": "The Sail",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Battened cloth, sewn by hand, the ant painted on it last. A Wokou sail is never thrown away: old ones become hammocks, then rags, then wicks.",
+            "enabled": true,
+            "position": {
+              "x": 10,
+              "y": 2.1,
+              "z": 3.8
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T15:14:44.648Z"
+      },
+      "wokou_great_dojo": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_wokou",
+            "name": "Rebel Ants: Wokou",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "967",
+                "title": "Rebel Ants: Battle for the Colony #967",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=967&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/967"
+              },
+              {
+                "tokenId": "999",
+                "title": "Rebel Ants: Battle for the Colony #999",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=999&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/999"
+              },
+              {
+                "tokenId": "1063",
+                "title": "Rebel Ants: Battle for the Colony #1063",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1063&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1063"
+              },
+              {
+                "tokenId": "1079",
+                "title": "Rebel Ants: Battle for the Colony #1079",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1079&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1079"
+              },
+              {
+                "tokenId": "1671",
+                "title": "Rebel Ants: Battle for the Colony #1671",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1671&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1671"
+              },
+              {
+                "tokenId": "1687",
+                "title": "Rebel Ants: Battle for the Colony #1687",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1687&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1687"
+              },
+              {
+                "tokenId": "1879",
+                "title": "Rebel Ants: Battle for the Colony #1879",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1879&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1879"
+              },
+              {
+                "tokenId": "1911",
+                "title": "Rebel Ants: Battle for the Colony #1911",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1911&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1911"
+              },
+              {
+                "tokenId": "1959",
+                "title": "Rebel Ants: Battle for the Colony #1959",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1959&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1959"
+              },
+              {
+                "tokenId": "1991",
+                "title": "Rebel Ants: Battle for the Colony #1991",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1991&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1991"
+              },
+              {
+                "tokenId": "2231",
+                "title": "Rebel Ants: Battle for the Colony #2231",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2231&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2231"
+              },
+              {
+                "tokenId": "2535",
+                "title": "Rebel Ants: Battle for the Colony #2535",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2535&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2535"
+              },
+              {
+                "tokenId": "2807",
+                "title": "Rebel Ants: Battle for the Colony #2807",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2807&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2807"
+              },
+              {
+                "tokenId": "3111",
+                "title": "Rebel Ants: Battle for the Colony #3111",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3111&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3111"
+              },
+              {
+                "tokenId": "3319",
+                "title": "Rebel Ants: Battle for the Colony #3319",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3319&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3319"
+              },
+              {
+                "tokenId": "3735",
+                "title": "Rebel Ants: Battle for the Colony #3735",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3735&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3735"
+              }
+            ],
+            "updatedAt": "2026-10-10T15:14:44.648Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "wokou_great_dojo",
+            "frameId": "nft_frame_wokou_great_dojo_9",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 9,
+            "tokenId": "1959",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -17.86,
+              "y": 6.9,
+              "z": -6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_great_dojo",
+            "frameId": "nft_frame_wokou_great_dojo_10",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 10,
+            "tokenId": "1991",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -17.86,
+              "y": 6.9,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_great_dojo",
+            "frameId": "nft_frame_wokou_great_dojo_11",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 11,
+            "tokenId": "2231",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 17.86,
+              "y": 6.9,
+              "z": -6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_great_dojo",
+            "frameId": "nft_frame_wokou_great_dojo_12",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 12,
+            "tokenId": "2535",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 17.86,
+              "y": 6.9,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_great_dojo",
+            "frameId": "nft_frame_wokou_great_dojo_13",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 13,
+            "tokenId": "2807",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -10,
+              "y": 4.3,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_great_dojo",
+            "frameId": "nft_frame_wokou_great_dojo_14",
+            "frameName": "Wokou Rebel",
+            "collectionId": "rebel_ants_wokou",
+            "frameSlot": 14,
+            "tokenId": "3111",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 10,
+              "y": 4.3,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "wokou_great_dojo",
+            "hotspotId": "hotspot_wokou_great_dojo_posts",
+            "linkName": "The Stepping Posts",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "A deck in a storm never stays level. Cross the posts without touching the water, then cross them again carrying a blade, then blindfolded.",
+            "enabled": true,
+            "position": {
+              "x": 3.6,
+              "y": 1.9,
+              "z": 2.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "wokou_great_dojo",
+            "hotspotId": "hotspot_wokou_great_dojo_window",
+            "linkName": "The Sea Window",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The first Wokou dojo was the deck of a ship. This window keeps the sea in sight, so no Wokou trains forgetting where the fight will be.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.1,
+              "z": -13.9
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T15:14:44.648Z"
+      }
+    }
   }
 ]
