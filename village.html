@@ -8293,7 +8293,7 @@ function updateInteractionPrompt() {
 
   const interiorEntrance = getNearestInteriorEntranceInRange();
   if (interiorEntrance) {
-    setInteractionPrompt(getInteriorEntrancePromptText(interiorEntrance), true);
+    setInteractionPrompt(isInteriorEntranceSealed(interiorEntrance) ? (interiorEntrance.metadata.interiorDefinition.sealedPrompt || 'Press O to Inspect') : getInteriorEntrancePromptText(interiorEntrance), true);
     return;
   }
 
@@ -24659,8 +24659,10 @@ function getActiveInteriorBounds() {
   return getInteriorBoundsForRoom(ActiveInterior?.interiorType || 'training_dojo', ActiveInterior?.root?.metadata?.isCustomGlbInterior === true);
 }
 
-function interiorPointBlocked(blockers, x, z, r = INTERIOR_PLAYER_COLLISION_RADIUS) {
+function interiorPointBlocked(blockers, x, z, r = INTERIOR_PLAYER_COLLISION_RADIUS, y = 0, yTo = y) {
   for (const b of blockers) {
+    // a rail on a balcony (minY: from the floor stood on or stepped up to), a post or a canal under it (maxY: from the floor stepped onto)
+    if ((b.minY != null && Math.max(y, yTo) < b.minY) || (b.maxY != null && yTo > b.maxY)) continue;
     if (b.box) {
       const [x0, z0, x1, z1] = b.box, cx = Math.max(x0, Math.min(x1, x)), cz = Math.max(z0, Math.min(z1, z));
       if ((x - cx) ** 2 + (z - cz) ** 2 < r * r) return true;
@@ -24672,6 +24674,65 @@ function interiorPointBlocked(blockers, x, z, r = INTERIOR_PLAYER_COLLISION_RADI
   return false;
 }
 
+// raised floors inside a kit room (ROOMS spec decks; room coordinates, heights above the room floor):
+// { box: [x0, z0, x1, z1] | circle: [x, z, r], y } flat; { box, y0, y1, axis: 'x' | 'z', steps } a ramp (or n treads)
+// rising from the box's low edge (y0) to its far edge (y1), flip: true the other way; under: true = open below (walk beneath)
+const INTERIOR_DECK_STEP = .45;
+function interiorDeckHeightAt(d, x, z) {
+  if (d.circle) { const [cx, cz, r] = d.circle; return (x - cx) ** 2 + (z - cz) ** 2 <= r * r ? d.y : null; }
+  const [x0, z0, x1, z1] = d.box;
+  if (x < x0 || x > x1 || z < z0 || z > z1) return null;
+  if (!Number.isFinite(d.y0)) return d.y;
+  let t = d.axis === 'x' ? (x - x0) / (x1 - x0) : (z - z0) / (z1 - z0);
+  if (d.flip) t = 1 - t;
+  if (d.steps) t = Math.min(d.steps, Math.floor(t * d.steps) + 1) / d.steps; // tread k (0-based) stands at (k + 1) risers
+  return d.y0 + (d.y1 - d.y0) * t;
+}
+function getInteriorDeckY(decks, x, z, fromY) { // the highest floor the player can step onto from fromY (0 = the room floor)
+  let best = 0;
+  for (const d of decks) { const h = interiorDeckHeightAt(d, x, z); if (h != null && h > best && h <= fromY + INTERIOR_DECK_STEP) best = h; }
+  return best;
+}
+function interiorDeckBlocks(decks, x, z, fromY, r = INTERIOR_PLAYER_COLLISION_RADIUS) { // a solid platform too high to step onto
+  // on a stair or ramp, the side of the platform it climbs to (as high as its top) does not hold the body back: a tread is
+  // shorter than the body is wide, so the platform's edge comes within reach while the feet are still a tread or two below
+  const ramp = decks.find(d => Number.isFinite(d.y0) && interiorDeckHeightAt(d, x, z) != null), rampTop = ramp ? Math.max(ramp.y0, ramp.y1) : null;
+  for (const d of decks) {
+    if (d.under) continue;
+    let h = interiorDeckHeightAt(d, x, z);
+    if (h == null) { // the body's edge against the platform's side
+      if (ramp && d !== ramp && Math.abs((Number.isFinite(d.y0) ? Math.max(d.y0, d.y1) : d.y) - rampTop) <= INTERIOR_DECK_STEP) continue;
+      const g = d.circle ? null : d.box;
+      if (g) { const cx = Math.max(g[0], Math.min(g[2], x)), cz = Math.max(g[1], Math.min(g[3], z)); if ((x - cx) ** 2 + (z - cz) ** 2 < r * r) h = interiorDeckHeightAt(d, cx, cz); }
+      else { const [ccx, ccz, cr] = d.circle, dd = Math.hypot(x - ccx, z - ccz); if (dd < cr + r) h = d.y; }
+    }
+    if (h != null && h > fromY + INTERIOR_DECK_STEP) return true;
+  }
+  return false;
+}
+// caves and tunnels: the player stays inside the union of the room's walk zones (spec walk: { path: [[x, z], ..], r } a
+// corridor round a polyline, { circle: [x, z, r] }, { box: [x0, z0, x1, z1] })
+function interiorInWalkZones(zones, x, z, r = INTERIOR_PLAYER_COLLISION_RADIUS) {
+  for (const w of zones) {
+    if (w.circle) { const [cx, cz, cr] = w.circle; if ((x - cx) ** 2 + (z - cz) ** 2 <= (cr - r) ** 2) return true; }
+    else if (w.box) { const [x0, z0, x1, z1] = w.box; if (x >= x0 + r && x <= x1 - r && z >= z0 + r && z <= z1 - r) return true; }
+    else if (w.path) {
+      const P = w.path, rr = (w.r - r) ** 2;
+      for (let i = 0; i + 1 < P.length; i++) {
+        const [ax, az] = P[i], [bx, bz] = P[i + 1], dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz;
+        const t = L > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L)) : 0, qx = ax + t * dx - x, qz = az + t * dz - z;
+        if (qx * qx + qz * qz <= rr) return true;
+      }
+    }
+  }
+  return false;
+}
+function updateInteriorDeckY() {
+  const decks = ActiveInterior?.root?.metadata?.bounds?.decks;
+  if (!ActiveInterior || !charMesh || !decks?.length) return;
+  ActiveInterior._deckY = getInteriorDeckY(decks, charMesh.position.x, charMesh.position.z, ActiveInterior._deckY || 0);
+}
+
 function resolveInteriorPlayerCollision(currentPosition, proposedPosition) {
   const bounds = getActiveInteriorBounds();
   if (!bounds) return { x: proposedPosition.x, z: proposedPosition.z, blocked: false };
@@ -24681,11 +24742,28 @@ function resolveInteriorPlayerCollision(currentPosition, proposedPosition) {
   const maxZ = (Number.isFinite(bounds.maxZ) ? bounds.maxZ : bounds.halfZ) - INTERIOR_PLAYER_COLLISION_RADIUS;
   let x = Math.min(maxX, Math.max(minX, proposedPosition.x));
   let z = Math.min(maxZ, Math.max(minZ, proposedPosition.z));
-  const blockers = bounds.blockers;
-  if (blockers?.length && interiorPointBlocked(blockers, x, z) && !interiorPointBlocked(blockers, currentPosition.x, currentPosition.z)) {
-    if (!interiorPointBlocked(blockers, x, currentPosition.z)) z = currentPosition.z;   // slide along it
-    else if (!interiorPointBlocked(blockers, currentPosition.x, z)) x = currentPosition.x;
-    else { x = currentPosition.x; z = currentPosition.z; }
+  const blockers = bounds.blockers, decks = bounds.decks, zones = bounds.walk;
+  if (blockers?.length || decks?.length || zones?.length) {
+    let fy = ActiveInterior?._deckY || 0;
+    // a platform's side is tested from the tread the player steps onto (the top of a stair runs into the platform's edge)
+    const hit = (px, pz) => { const fyTo = decks?.length ? getInteriorDeckY(decks, px, pz, fy) : fy;
+      return (blockers?.length && interiorPointBlocked(blockers, px, pz, INTERIOR_PLAYER_COLLISION_RADIUS, fy, fyTo)) || (decks?.length && interiorDeckBlocks(decks, px, pz, Math.max(fy, fyTo))) || (zones?.length && !interiorInWalkZones(zones, px, pz)); };
+    // the move goes in pieces of at most .2 m, the floor stood on updated after each: a long frame still climbs a stair tread by
+    // tread (one piece crossing two treads would rise more than a step and the stair would stop itself)
+    const n = Math.max(1, Math.ceil(Math.hypot(x - currentPosition.x, z - currentPosition.z) / .2)), sx = (x - currentPosition.x) / n, sz = (z - currentPosition.z) / n;
+    let px = currentPosition.x, pz = currentPosition.z;
+    for (let i = 0; i < n; i++) {
+      let tx = px + sx, tz = pz + sz;
+      if (hit(tx, tz) && !hit(px, pz)) {
+        if (!hit(tx, pz)) tz = pz;   // slide along it
+        else if (!hit(px, tz)) tx = px;
+        else break;
+      }
+      px = tx; pz = tz;
+      if (decks?.length) fy = getInteriorDeckY(decks, px, pz, fy);
+    }
+    x = px; z = pz;
+    if (ActiveInterior && decks?.length) ActiveInterior._deckY = fy;
   }
   return {
     x,
@@ -24861,6 +24939,7 @@ engine.runRenderLoop(()=>{
       charMesh.position.z = _resolvedPos.z;
       if (_resolvedPos.blocked) charMesh._vel *= 0.2;
     }
+    if (ActiveInterior) updateInteriorDeckY();
     const _terrainY = ActiveInterior ? getActiveInteriorPlayerFloorY() : getVillagePlayerGroundHeightAt(charMesh.position.x, charMesh.position.z);
     if (Number.isFinite(_terrainY)) {
       groundPlayableVisualToTerrain(_terrainY);
@@ -28065,13 +28144,25 @@ function entranceContainsPlayer(entrance) {
   return inZone || closeEnough;
 }
 
+// doors reach far (4.8 m past their footprint) and come before quest spots, chests and villagers in the O order: a door gives
+// way to any of those the player is standing nearer to than to the door itself
+function interiorEntranceYields(entrance) {
+  const p = charMesh.position, door = Math.hypot(entrance.position.x - p.x, entrance.position.z - p.z);
+  const c = window._nearestTreasureChest, chest = c && c.metadata?.opened !== true && !isChestLooted(c.metadata?.chestId) ? c : null;
+  return [QuestSpotRuntime.hold?.root || QuestSpotRuntime.nearest, chest, getNearestNPCInRange()].some(o => {
+    const q = o && !o.isDisposed?.() ? (o.getAbsolutePosition?.() || o.position) : null;
+    return q && Math.hypot(q.x - p.x, q.z - p.z) < door;
+  });
+}
+
 function getNearestInteriorEntranceInRange() {
   if (!walkMode || adminMode || ActiveInterior) return null;
   let nearest = null;
   let nearestDistSq = Infinity;
   scene.transformNodes.forEach(node => {
     if (node.metadata?.type !== 'interior_entrance' || node.metadata.enabled === false) return;
-    if (!entranceContainsPlayer(node)) return;
+    if (isInteriorEntranceSealed(node) && node.metadata.interiorDefinition.sealedHidden !== false) return; // no prompt until the story opens it
+    if (!entranceContainsPlayer(node) || interiorEntranceYields(node)) return;
     const dx = node.position.x - charMesh.position.x;
     const dz = node.position.z - charMesh.position.z;
     const distSq = dx * dx + dz * dz;
@@ -28837,7 +28928,7 @@ function getInteriorPlayerFloorOffset(interiorId) {
 function getActiveInteriorPlayerFloorY() {
   if (!ActiveInterior) return INTERIOR_FLOOR_Y;
   const base = Number.isFinite(ActiveInterior.baseFloorY) ? ActiveInterior.baseFloorY : (ActiveInterior.floorY || INTERIOR_FLOOR_Y);
-  return base + clampInteriorPlayerFloorOffset(ActiveInterior.playerFloorOffset || 0);
+  return base + clampInteriorPlayerFloorOffset(ActiveInterior.playerFloorOffset || 0) + (ActiveInterior._deckY || 0);
 }
 
 function updateInteriorFloorOffsetReadout() {
@@ -30871,28 +30962,68 @@ function buildInteriorProps(root, type, mats, options = {}) {
 // Kit rooms (samurai-kit.js ROOMS): bounds / blockers / spawn / exit / lights come with the room's geometry.
 function getKitInteriorBounds(spec) {
   const [minX, maxX, minZ, maxZ] = spec.bounds;
-  return { halfX:Math.max(-minX, maxX), halfZ:Math.max(-minZ, maxZ), minX, maxX, minZ, maxZ, blockers:spec.blockers || [], ceil:spec.ceil || 9 };
+  return { halfX:Math.max(-minX, maxX), halfZ:Math.max(-minZ, maxZ), minX, maxX, minZ, maxZ, blockers:spec.blockers || [], decks:spec.decks || [], walk:spec.walk || null, ceil:spec.ceil || 9 };
 }
 
 function buildKitInteriorRoom(root, kitType) {
+  const spec = window.SamuraiKit.rooms?.[kitType] || {};
   const holder = new BABYLON.TransformNode('kitInteriorRoom_' + kitType, scene);
   holder.parent = root;
   holder.position = new BABYLON.Vector3(0, INTERIOR_FLOOR_Y, 0);
   holder.metadata = { type:'interior_glb_model', interiorRuntime:true, kitRoom:kitType };
   window.SamuraiKit.build(holder, kitType, scene, null, true);
-  // the room is lit by its own lights only: keep the village's lights off the room's templates (their instances follow)
-  const templates = scene.meshes.filter(mesh => mesh.metadata?.isKitTemplate && mesh.name.startsWith('samKit_' + kitType + '_'));
-  scene.lights.forEach(light => {
-    if (light.metadata?.interiorRuntime === true) return;
-    templates.forEach(t => { if (!light.excludedMeshes.includes(t)) light.excludedMeshes.push(t); });
-  });
-  root.metadata.kitTemplates = templates;
   holder.computeWorldMatrix(true);
   holder.getChildMeshes(false).forEach(mesh => {
     mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true, interiorGlbModel:true };
     mesh.computeWorldMatrix(true);
     mesh.freezeWorldMatrix();
   });
+  // moving parts (spec parts: { type, p: [x, y, z], ry, anim: { spin | spinX | spinZ | bob | sway | swing } }) on pivots, built after the
+  // freeze so they can move
+  const anims = [];
+  (spec.parts || []).forEach((part, i) => {
+    const pivot = new BABYLON.TransformNode(`kitInteriorPart_${i}_${part.type}`, scene);
+    pivot.parent = holder;
+    pivot.position.set(part.p[0], part.p[1], part.p[2]);
+    pivot.rotation.y = part.ry || 0;
+    window.SamuraiKit.build(pivot, part.type, scene, null, true);
+    pivot.getChildMeshes(false).forEach(mesh => { mesh.metadata = { ...(mesh.metadata || {}), interiorRuntime:true, interiorGlbModel:true }; });
+    if (part.anim) anims.push({ node:pivot, a:part.anim, ph:i * 1.37, y0:pivot.position.y, ry0:pivot.rotation.y });
+  });
+  // the room is lit by its own lights only: keep the village's lights off the room's templates (their instances follow)
+  const types = [kitType, ...new Set((spec.parts || []).map(part => part.type))];
+  const templates = scene.meshes.filter(mesh => mesh.metadata?.isKitTemplate && types.some(t => mesh.name.startsWith('samKit_' + t + '_')));
+  scene.lights.forEach(light => {
+    if (light.metadata?.interiorRuntime === true) return;
+    templates.forEach(t => { if (!light.excludedMeshes.includes(t)) light.excludedMeshes.push(t); });
+  });
+  root.metadata.kitTemplates = templates;
+  // parts turning / bobbing, flickering lights (spec lights flicker: amount), scrolling textures (spec flows: { mat, u, v })
+  const flows = (spec.flows || []).map(f => ({ mat:scene.getMaterialByName('rm_' + f.mat), u:f.u || 0, v:f.v || 0 })).filter(f => f.mat);
+  if (anims.length || flows.length || (spec.lights || []).some(l => l.flicker)) {
+    const obs = scene.onBeforeRenderObservable.add(() => {
+      const t = performance.now() / 1000, dt = Math.min(.1, engine.getDeltaTime() / 1000);
+      for (const k of anims) {
+        const a = k.a, w = q => 2 * Math.PI / q;
+        if (a.spin) k.node.rotation.y = k.ry0 + t * a.spin;
+        if (a.spinX) k.node.rotation.x = t * a.spinX; // wheels and gears on level axles
+        if (a.spinZ) k.node.rotation.z = t * a.spinZ;
+        if (a.bob) k.node.position.y = k.y0 + a.bob[0] * Math.sin(t * w(a.bob[1]) + k.ph);
+        if (a.sway) k.node.rotation.z = a.sway[0] * Math.sin(t * w(a.sway[1]) + k.ph);
+        if (a.swing) k.node.rotation.x = a.swing[0] * Math.sin(t * w(a.swing[1]) + k.ph);
+      }
+      for (const f of flows) {
+        const tex = f.mat.diffuseTexture || f.mat.emissiveTexture;
+        if (tex) { tex.uOffset = (tex.uOffset + f.u * dt) % 1; tex.vOffset = (tex.vOffset + f.v * dt) % 1; }
+      }
+      const ub = clampInteriorLightingBrightness(root.metadata?.interiorLight?.metadata?.userBrightness ?? 1);
+      for (const l of root.metadata?.interiorLights || []) {
+        const fl = l.metadata?.flicker;
+        if (fl) l.intensity = l.metadata.baseIntensity * ub * (1 + fl * (.5 * Math.sin(t * 7.3 + l.metadata.ph) + .3 * Math.sin(t * 13.1 + l.metadata.ph * 2) + .2 * Math.sin(t * 2.3)));
+      }
+    });
+    root.onDisposeObservable.add(() => scene.onBeforeRenderObservable.remove(obs));
+  }
   return holder;
 }
 
@@ -30908,7 +31039,7 @@ function addKitInteriorLights(root, spec, hemi) {
     p.specular = p.diffuse.scale(.2);
     p.intensity = l.i;
     p.range = l.r;
-    p.metadata = { interiorRuntime:true, baseIntensity:l.i };
+    p.metadata = { interiorRuntime:true, baseIntensity:l.i, flicker:l.flicker || 0, ph:i * 2.1 };
     p.parent = root;
     p.includedOnlyMeshes = (root.metadata.kitTemplates || []).slice();
     root.metadata.interiorLights.push(p);
@@ -30938,6 +31069,11 @@ function clipInteriorCameraPosition(dc, target) {
     if (p[k] < lo[k] && d < -1e-6) t = Math.min(t, (lo[k] - q[k]) / d);
   }
   t = Math.max(0, t);
+  if (b.walk?.length) { // a cave or tunnel: keep the camera inside the walk zones too (march out from the player)
+    let ok = 0;
+    for (let k = 1; k <= 12; k++) { const u = t * k / 12; if (!interiorInWalkZones(b.walk, q[0] + (p[0] - q[0]) * u, q[2] + (p[2] - q[2]) * u, .15)) break; ok = u; }
+    t = Math.min(t, Math.max(ok, .12));
+  }
   return t < 1 ? new BABYLON.Vector3(q[0] + (p[0] - q[0]) * t, q[1] + (p[1] - q[1]) * t, q[2] + (p[2] - q[2]) * t) : dc;
 }
 
@@ -31167,6 +31303,7 @@ function recordInteriorQuestHook(entrance, actionType = 'enterInterior') {
 
 function enterInterior(entrance, options = {}) {
   if (!entrance || entrance.metadata?.type !== 'interior_entrance' || entrance.metadata.enabled === false || ActiveInterior) return false;
+  if (isInteriorEntranceSealed(entrance)) { showToast(entrance.metadata.interiorDefinition.sealedText || 'Sealed. It will not open yet.', 5200); return false; }
   const type = normalizeInteriorType(entrance.metadata.interiorType);
   setVillageTravelFade(true);
   playInteractionAudio('portalOpen');
@@ -31211,6 +31348,7 @@ function enterInterior(entrance, options = {}) {
       refreshInteriorVideoPlayback();
       updateInteriorFloorOffsetReadout();
       if (charMesh) {
+        if (ActiveInterior) ActiveInterior._deckY = root.metadata?.spawn?.[3] || 0; // kit rooms may start the player on a deck (spawn [x, z, facing, height])
         const activeFloorY = getActiveInteriorPlayerFloorY();
         const isCustomGlbInterior = root.metadata?.isCustomGlbInterior === true;
         const spawnZ = isCustomGlbInterior ? 0 : 7.1;
@@ -31246,10 +31384,20 @@ function enterInterior(entrance, options = {}) {
   return true;
 }
 
+// a door the story opens later (interiorDefinition.requiresQuestId): sealed until that quest is done; ?rooms=open lets a
+// reviewer in
+function isInteriorEntranceSealed(entrance) {
+  const q = entrance?.metadata?.interiorDefinition?.requiresQuestId;
+  if (!q) return false;
+  if (window._roomsOpen ?? (window._roomsOpen = /[?&]rooms=open\b/.test(location.search))) return false;
+  return !isQuestIdCompleted(q);
+}
+
 function tryEnterNearbyInterior() {
   if (!walkMode || adminMode || ActiveInterior) return false;
   const entrance = getNearestInteriorEntranceInRange();
   if (!entrance) return false;
+  if (isInteriorEntranceSealed(entrance)) { enterInterior(entrance); return true; } // shows why it stays shut
   return enterInterior(entrance);
 }
 
@@ -31347,6 +31495,9 @@ function getNearestInteriorExitInRange() {
   if (!ActiveInterior || !charMesh) return null;
   const exit = scene.getTransformNodeByName('interiorExitRoot') || scene.getMeshByName('interiorExitDoor');
   if (!exit || exit.isDisposed?.()) return null;
+  // the exit test is 2D: on a gallery over the door or a stair far below it, it must not fire (the door is on the spawn's level)
+  const doorY = ActiveInterior.root?.metadata?.spawn?.[3] || 0;
+  if (Math.abs((ActiveInterior._deckY || 0) - doorY) > .75) return null;
   const pos = exit.getAbsolutePosition();
   const dx = pos.x - charMesh.position.x;
   const dz = pos.z - charMesh.position.z;
@@ -31355,7 +31506,15 @@ function getNearestInteriorExitInRange() {
 
 function tryAutoExitInteriorFromTouch() {
   if (!walkMode || adminMode || !ActiveInterior || ActiveInterior.exiting === true) return false;
-  if (!getNearestInteriorExitInRange()) return false;
+  const exit = getNearestInteriorExitInRange();
+  if (!exit) return false;
+  // leaving means walking out the way the door faces (kit rooms: out through the room wall nearest the exit); walking past the door
+  // along a wall or round a pool does not leave (the Exit prompt and O still work there)
+  const p = exit.getAbsolutePosition(), b = ActiveInterior.root?.metadata?.kitRoom ? ActiveInterior.root.metadata.bounds : null, kit = !!(b && Number.isFinite(b.minX));
+  let ox = p.x - charMesh.position.x, oz = p.z - charMesh.position.z;
+  if (kit) [, ox, oz] = [[p.x - b.minX, -1, 0], [b.maxX - p.x, 1, 0], [p.z - b.minZ, 0, -1], [b.maxZ - p.z, 0, 1]].sort((u, w) => u[0] - w[0])[0];
+  const ol = Math.hypot(ox, oz) || 1;
+  if (Math.abs(charMesh._vel || 0) < .01 || (Math.sin(charMesh.rotation.y) * ox + Math.cos(charMesh.rotation.y) * oz) / ol < (kit ? .5 : .3)) return false;
   return returnToVillageFromInterior();
 }
 
