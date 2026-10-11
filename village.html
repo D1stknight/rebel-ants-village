@@ -8426,8 +8426,8 @@ function updateInteractionPrompt() {
     return;
   }
 
-  if (QuestSpotRuntime.nearest || QuestSpotRuntime.hold) {
-    setInteractionPrompt(getQuestSpotPromptText(QuestSpotRuntime.hold?.root || QuestSpotRuntime.nearest), true);
+  if (QuestSpotRuntime.nearest || QuestSpotRuntime.hold || QuestSpotRuntime.race) {
+    setInteractionPrompt(getQuestSpotPromptText(QuestSpotRuntime.hold?.root || QuestSpotRuntime.race?.root || QuestSpotRuntime.nearest), true);
     return;
   }
 
@@ -8629,7 +8629,18 @@ const SECRET_DEFINITIONS = [
   { secretId:'kenshi-centre-stone', villageId:'kenshi', name:'Centre Stone', hint:'The raked ring in the training yard has a heart. Sit in it.' },
   { secretId:'kenshi-first-blade', villageId:'kenshi', name:'The First Blade', hint:'Beside the forge lies a blade with no maker\'s mark.' },
   { secretId:'kenshi-well-echo', villageId:'kenshi', name:'Well Echo', hint:'Speak into the well pavilion and listen.' },
-  { secretId:'kenshi-crate-sleeper', villageId:'kenshi', name:'Crate Sleeper', miniAnt:true, hint:'Something tiny sleeps among the crates by the west houses.' }
+  { secretId:'kenshi-crate-sleeper', villageId:'kenshi', name:'Crate Sleeper', miniAnt:true, hint:'Something tiny sleeps among the crates by the west houses.' },
+  { secretId:'war-chalk-sprint', villageId:'warrior', name:'Chalk Sprint', hint:'The Warriors race the chalk lines in the sand yard. Beat their time.' },
+  { secretId:'war-cracked-circle', villageId:'warrior', name:'Cracked Circle', hint:'Down in the west ditch, a ring of old stones lies half buried.' },
+  { secretId:'war-scarred-stone', villageId:'warrior', name:'The Scarred Stone', hint:'A boulder inside the east palisade carries a mark that is not the Warriors\'.' },
+  { secretId:'war-torch-run', villageId:'warrior', name:'Torch Run', hint:'The gate torches wait for the night watch.' },
+  { secretId:'war-sawhorse-hideout', villageId:'warrior', name:'Sawhorse Hideout', hint:'Someone hides behind the sawhorses at the edge of the yard.' },
+  { secretId:'war-garden-guest', villageId:'warrior', name:'Garden Guest', miniAnt:true, hint:'Something tiny is tending the gardens by the south-west houses.' },
+  { secretId:'sho-under-bridge', villageId:'shogun', name:'Under the Bridge', hint:'Something glints under the arched bridge in the lower court.' },
+  { secretId:'sho-purple-hour', villageId:'shogun', name:'Purple Hour', hint:'Look out over the valley from the top terrace at dusk.' },
+  { secretId:'sho-golden-stairs', villageId:'shogun', name:'Golden Stairs', hint:'Stand at the foot of the great stairs when the sun comes up.' },
+  { secretId:'sho-shrine-bell', villageId:'shogun', name:'Shrine Bell', hint:'Ring the shrine bell on the top terrace. Three times.' },
+  { secretId:'sho-turret-watcher', villageId:'shogun', name:'Turret Watcher', miniAnt:true, hint:'Something tiny keeps watch by the north-east turret.' }
 ];
 function getSecretTotalCount() { return SECRET_TOTAL; }
 // badges earned before these definitions existed are awarded quietly; emblems load for the badge art
@@ -8654,9 +8665,9 @@ function renderSecretsJournal() {
   return `<div class="journal-card full"><strong>Secrets</strong><span>${found.size} / ${SECRET_TOTAL} found</span></div>${rows}`;
 }
 
-const QUEST_SPOT_ACTIONS = { inspect:'Inspect', read:'Read', listen:'Listen', light:'Light', ring:'Ring', hold:'Hold still', reach:'' };
+const QUEST_SPOT_ACTIONS = { inspect:'Inspect', read:'Read', listen:'Listen', light:'Light', ring:'Ring', hold:'Hold still', reach:'', race:'Start the run' };
 const QUEST_SPOT_TIME_HINTS = { night:'Something stirs here after dark.', day:'Come back in daylight.', dawn:'Come back at dawn.', dusk:'Come back at dusk.' };
-const QuestSpotRuntime = { hold:null, nearest:null, lastHintAt:0, reached:new Set() };
+const QuestSpotRuntime = { hold:null, race:null, nearest:null, lastHintAt:0, reached:new Set() };
 
 function normalizeQuestSpotConfig(cfg = {}) {
   const action = QUEST_SPOT_ACTIONS[cfg.action] !== undefined ? cfg.action : 'inspect';
@@ -8680,7 +8691,10 @@ function normalizeQuestSpotConfig(cfg = {}) {
     absY: cfg.absY === true,
     countBy: cfg.countBy === 'weather' ? 'weather' : null,
     miniAnt: cfg.miniAnt === true,
-    miniAntYaw: Number(cfg.miniAntYaw) || 0
+    miniAntYaw: Number(cfg.miniAntYaw) || 0,
+    // a timed run: from this spot through path [[x, z], ...] (in order, within pathRadius) in seconds
+    ...(action === 'race' ? { seconds: Math.max(3, Number(cfg.seconds) || 20), path: (Array.isArray(cfg.path) ? cfg.path : []).filter(q => Array.isArray(q) && q.length >= 2).map(q => [Number(q[0]), Number(q[1])]),
+      pathRadius: Math.max(1, Number(cfg.pathRadius) || 2.5), startText: String(cfg.startText || ''), failText: String(cfg.failText || '') } : {})
   };
 }
 
@@ -8774,6 +8788,10 @@ function getQuestSpotPromptText(root) {
     const left = Math.max(0, cfg.holdSeconds - (performance.now() - QuestSpotRuntime.hold.startedAt) / 1000);
     return `Hold still… ${left.toFixed(1)} s`;
   }
+  if (QuestSpotRuntime.race?.root === root) {
+    const left = Math.max(0, (QuestSpotRuntime.race.until - performance.now()) / 1000);
+    return `Run! ${Math.ceil(left)} s · ${QuestSpotRuntime.race.next} / ${(cfg.path || []).length}`;
+  }
   return `Press O to ${cfg.label || QUEST_SPOT_ACTIONS[cfg.action] || 'Inspect'}`;
 }
 
@@ -8860,6 +8878,11 @@ function tryUseNearbyQuestSpot() {
     QuestSpotRuntime.hold = { root, startedAt: performance.now(), x: charMesh.position.x, z: charMesh.position.z };
     return true;
   }
+  if (cfg.action === 'race') {
+    QuestSpotRuntime.race = { root, next: 0, until: performance.now() + cfg.seconds * 1000 };
+    showToast(cfg.startText || `Go! ${cfg.seconds} seconds.`, 4000);
+    return true;
+  }
   return completeQuestSpot(root);
 }
 
@@ -8890,8 +8913,11 @@ function updateQuestSpots() {
       const dx = root.position.x - charMesh.position.x, dz = root.position.z - charMesh.position.z;
       const inside = dx * dx + dz * dz <= cfg.radius * cfg.radius && Math.abs(root.position.y - charMesh.position.y) < 4.5;
       if (inside && !QuestSpotRuntime.reached.has(root)) {
-        if (!questSpotRequirementMiss(cfg)) { QuestSpotRuntime.reached.add(root); completeQuestSpot(root); }
-      } else if (!inside) QuestSpotRuntime.reached.delete(root);
+        const miss = questSpotRequirementMiss(cfg);
+        if (!miss) { QuestSpotRuntime.reached.add(root); completeQuestSpot(root); }
+        // the wrong time / weather: its hint once per visit, until the secret is found
+        else if (cfg.requires?.hint && !root.metadata._reachHinted && !(cfg.secretId && (ProgressionState.secretsFound || []).includes(cfg.secretId))) { root.metadata._reachHinted = true; showToast(miss); }
+      } else if (!inside) { QuestSpotRuntime.reached.delete(root); root.metadata._reachHinted = false; }
     }
   }
   const hold = QuestSpotRuntime.hold;
@@ -8899,6 +8925,18 @@ function updateQuestSpots() {
     const moved = !charMesh || Math.hypot(charMesh.position.x - hold.x, charMesh.position.z - hold.z) > .6;
     if (moved || hold.root.isDisposed?.() || !walkMode) { QuestSpotRuntime.hold = null; showToast('You moved. Try again and stay still.'); }
     else if ((performance.now() - hold.startedAt) / 1000 >= hold.root.metadata.spotConfig.holdSeconds) completeQuestSpot(hold.root);
+  }
+  // a timed run: each path point in order before the time is up
+  const race = QuestSpotRuntime.race;
+  if (race) {
+    const rc = race.root.metadata.spotConfig, pts = rc.path || [];
+    if (race.root.isDisposed?.() || !walkMode || ActiveInterior || !charMesh) QuestSpotRuntime.race = null;
+    else if (performance.now() > race.until) { QuestSpotRuntime.race = null; showToast(rc.failText || 'Too slow. Back to the start and try again.'); }
+    else {
+      const q = pts[race.next];
+      if (!q || Math.hypot(charMesh.position.x - q[0], charMesh.position.z - q[1]) < rc.pathRadius) race.next++;
+      if (race.next >= pts.length) { QuestSpotRuntime.race = null; completeQuestSpot(race.root); }
+    }
   }
   QuestSpotRuntime.nearest = getNearestQuestSpotInRange();
 }
