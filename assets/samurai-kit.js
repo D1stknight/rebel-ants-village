@@ -3579,7 +3579,7 @@
         { p: [0, 5.5, 15], c: [1, .86, .64], i: .55, r: 15 }, { p: [0, 7, 0], c: [.92, .66, 1], i: .6, r: 18 }],
       blockers: [{ box: [-AR.HX, -14.1, -20.3, -3.9] }, { box: [-AR.HX, 3.9, -20.3, 14.1] }, { box: [20.3, -14.1, AR.HX, -3.9] }, { box: [20.3, 3.9, AR.HX, 14.1] },
         { box: [-8.6, -AR.HY, 8.6, -17.15] }, { circle: [-6.5, -16.2, .75] }, { circle: [6.5, -16.2, .75] }, ...AR.COLS.flatMap(z => [{ circle: [-15.5, z, .65] }, { circle: [15.5, z, .65] }]),
-        { box: [-7, -12.1, -2, -10.9] }, { box: [2, -12.1, 7, -10.9] }, { box: [11.6, 13.6, 18.4, AR.HY] }, { box: [-16.3, 13.9, -13.7, 16.5] }, { circle: [7.6, 17.6, .9] }]
+        { box: [-7, -12.1, -2, -10.9] }, { box: [2, -12.1, 7, -10.9] }, { box: [11.6, 13.6, 18.4, AR.HY] }, { box: [-16.3, 13.9, -13.7, 16.5] }, { circle: [7.6, 17.6, .9] }, { box: [-AR.HX, -15.85, -20.3, -14.15] }]
     },
     room_sam_library: {
       bounds: [-SL.HX, SL.HX, -SL.HY, SL.HY + .2], spawn: [0, 6.4, Math.PI], exit: [0, SL.HY + .3], ceil: SL.H,
@@ -4111,17 +4111,17 @@
     M.cyl('lacquer_black', [x, y, zb - .24 - h], r * .62, .12, 12);
   }
   function makiwara(M, x, y) { M.block('stone', x, y, 0, .9, .9, .25); M.block('wood', x, y, .25, .34, .34, 2.6); M.cyl('straw', [x, y, 1.45], .3, .78, 10); for (const zz of [1.5, 1.82, 2.12]) M.cyl('rope', [x, y, zz], .315, .05, 10); }
-  function cabinet(M, x0, y0, f, g, body, neon) { // an arcade cabinet against a side wall: f = +1 left wall (faces +x), -1 right wall
-    const W = 1.5, D = 1.4, P = (a, b, z) => [x0 + f * b, y0 + f * a, z], Q = (a, b, z) => P(a, b, z);
+  function cabinet(M, x0, y0, f, g, body, neon) { // an arcade cabinet against a side wall: f = +1 left wall (faces +x), -1 right wall; g null = a dead one
+    const W = 1.5, D = 1.4, P = (a, b, z) => [x0 + f * b, y0 + f * a, z], Q = (a, b, z) => P(a, b, z), lit = m => g ? m : 'lacquer_black';
     M.box('lacquer_black', P(0, D / 2 - .05, .15), [D - .1, W - .06, .3]); M.box(body, P(0, D / 2, 1.65), [D, W, 2.7]); M.box('lacquer_black', P(0, D / 2, 3.15), [D, W + .04, .3]);
-    M.quad('mq_' + g, [Q(-W / 2 + .04, D + .006, 3.02), Q(W / 2 - .04, D + .006, 3.02), Q(W / 2 - .04, D + .006, 3.28), Q(-W / 2 + .04, D + .006, 3.28)]);
+    M.quad(g ? 'mq_' + g : 'dark', [Q(-W / 2 + .04, D + .006, 3.02), Q(W / 2 - .04, D + .006, 3.02), Q(W / 2 - .04, D + .006, 3.28), Q(-W / 2 + .04, D + .006, 3.28)]);
     M.quad('dark', [Q(-.66, D + .004, 1.72), Q(.66, D + .004, 1.72), Q(.66, D + .004, 2.84), Q(-.66, D + .004, 2.84)]);
-    M.quad('scr_' + g, [Q(-.58, D + .008, 1.8), Q(.58, D + .008, 1.8), Q(.58, D + .008, 2.76), Q(-.58, D + .008, 2.76)]);
+    if (g) M.quad('scr_' + g, [Q(-.58, D + .008, 1.8), Q(.58, D + .008, 1.8), Q(.58, D + .008, 2.76), Q(-.58, D + .008, 2.76)]);
     M.box('lacquer_black', P(0, D + .2, 1.44), [.46, W - .1, .14], 0, 0, f * .3);
     M.rod('lacquer_black', P(-.36, D + .22, 1.5), P(-.36, D + .24, 1.68), .03, 6); M.sphere(neon, P(-.36, D + .24, 1.72), .07, 1, 8, 4);
-    for (let k = 0; k < 3; k++) M.cyl(['neon_cyan', 'neon_gold', 'neon_pink'][k], P(.02 + k * .15, D + .2, 1.5), .045, .05, 8);
+    for (let k = 0; k < 3; k++) M.cyl(lit(['neon_cyan', 'neon_gold', 'neon_pink'][k]), P(.02 + k * .15, D + .2, 1.5), .045, .05, 8);
     for (const t of [-1, 1]) M.box(neon, P(t * (W / 2 + .01), D - .02, 1.65), [.05, .05, 2.7]);
-    M.box('gold', P(0, D + .006, .75), [.02, .36, .44]); for (const t of [-1, 1]) M.box('neon_gold', P(t * .08, D + .02, .86), [.01, .04, .12]);
+    M.box('gold', P(0, D + .006, .75), [.02, .36, .44]); for (const t of [-1, 1]) M.box(lit('neon_gold'), P(t * .08, D + .02, .86), [.01, .04, .12]);
   }
   function bookcase(M, side, yc, w, h, X) { // floor-to-cornice shelves against a side wall (x = side * X), books facing the hall
     const d = .95, xm = side * (X - d / 2), xb = side * (X - .1), y0 = yc - w / 2 + .2, y1 = yc + w / 2 - .2, A = side < 0 ? [y0, y1] : [y1, y0];
@@ -4307,6 +4307,7 @@
           wallQuad(M, s, i ? 9 : -9, 6.6, 9, 1.69, 'sign_' + g, HX);
         }
       }
+      cabinet(M, -HX, -15, 1, null, 'lacquer_black', 'lacquer_black'); // the Dark Cabinet: no light, no sound (a Hub secret wakes it at night)
       // back wall: the stage, the big screen's black backing and its red torii, neon trim; front wall: the door, the emblem over it
       M.block('arcade_wall', 0, -HY - T / 2, 0, 2 * HX + 2 * T, T, H + .4); M.block('lacquer_black', 0, -HY + .06, 0, 2 * HX, .12, 2.4); M.block('neon_cyan', 0, -HY + .14, 2.4, 2 * HX, .06, .07);
       M.block('lacquer_black', 0, -HY + 1.4, 0, 17.2, 2.8, .6); M.block('neon_pink', 0, -HY + 2.82, .52, 17.2, .05, .06);

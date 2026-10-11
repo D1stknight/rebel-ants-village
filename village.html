@@ -7734,8 +7734,11 @@ function getNearestTreasureChestInRange(range = 5.5) {
   let nearestDistSq = Infinity;
 
   getTreasureChestRoots().forEach(chest => {
-    const dx = chest.position.x - charMesh.position.x;
-    const dz = chest.position.z - charMesh.position.z;
+    if ((chest.metadata.interiorRuntime === true) !== Boolean(ActiveInterior)) return;
+    const p = chest.parent ? chest.getAbsolutePosition() : chest.position;
+    if (Math.abs(p.y - charMesh.position.y) > 3) return; // not from the floor or terrace above / below
+    const dx = p.x - charMesh.position.x;
+    const dz = p.z - charMesh.position.z;
     const distSq = dx * dx + dz * dz;
     if (distSq <= rangeSq && distSq < nearestDistSq) {
       nearest = chest;
@@ -8661,7 +8664,8 @@ const SECRET_DEFINITIONS = [
   { secretId:'sho-purple-hour', villageId:'shogun', name:'Purple Hour', hint:'Look out over the valley from the top terrace at dusk.' },
   { secretId:'sho-golden-stairs', villageId:'shogun', name:'Golden Stairs', hint:'Stand at the foot of the great stairs when the sun comes up.' },
   { secretId:'sho-shrine-bell', villageId:'shogun', name:'Shrine Bell', hint:'Ring the shrine bell on the top terrace. Three times.' },
-  { secretId:'sho-turret-watcher', villageId:'shogun', name:'Turret Watcher', miniAnt:true, hint:'Something tiny keeps watch by the north-east turret.' }
+  { secretId:'sho-turret-watcher', villageId:'shogun', name:'Turret Watcher', miniAnt:true, hint:'Something tiny keeps watch by the north-east turret.' },
+  { secretId:'sho-keep-roof', villageId:'shogun', name:'The Keep Roof', hint:'Climb the keep to its highest floor and look out.' }
 ];
 function getSecretTotalCount() { return SECRET_TOTAL; }
 // badges earned before these definitions existed are awarded quietly; emblems load for the badge art
@@ -29412,6 +29416,28 @@ function getInteriorSavedVideoScreenConfigs(interiorId) {
   return Array.isArray(configs[interiorId]?.videoScreens) ? configs[interiorId].videoScreens : [];
 }
 
+function getInteriorSavedChestConfigs(interiorId) {
+  const configs = getInteriorRoomConfigs();
+  return Array.isArray(configs[interiorId]?.chests) ? configs[interiorId].chests : [];
+}
+
+// a chest inside a room (room config chests: { chestId, chestTier, position, rotation, scale }): the village chest built
+// under the room, looted per player like any chest, never saved into the village layout (interiorRuntime)
+function createInteriorChest(parent, cfg = {}) {
+  if (!cfg.chestId) return null;
+  const root = new BABYLON.TransformNode('interiorChest_' + cfg.chestId, scene);
+  root.parent = parent;
+  root.position = new BABYLON.Vector3(cfg.position?.x || 0, cfg.position?.y ?? INTERIOR_FLOOR_Y, cfg.position?.z || 0);
+  root.rotation = new BABYLON.Vector3(0, cfg.rotation?.y || 0, 0);
+  root.scaling.setAll(Number(cfg.scale) || 1);
+  root.metadata = { type:'treasure_chest', isClone:true, interiorRuntime:true, chestId:cfg.chestId, chestTier:cfg.chestTier || 'wood', rewardType:'rebel_points', villageId:CURRENT_VILLAGE_ID };
+  buildTreasureChest(root);
+  root.metadata.interiorRuntime = true;
+  const meshes = root.getChildMeshes(false);
+  (parent.metadata?.interiorLights || []).forEach(l => { if (l.includedOnlyMeshes?.length) l.includedOnlyMeshes.push(...meshes); });
+  return root;
+}
+
 function getInteriorSavedCollectibleConfigs(interiorId) {
   const configs = getInteriorRoomConfigs();
   return Array.isArray(configs[interiorId]?.collectibles) ? configs[interiorId].collectibles : [];
@@ -29450,6 +29476,8 @@ function serializeInteriorHotspot(hotspot) {
     description: meta.description || '',
     enabled: meta.enabled !== false,
     ...(meta.questId ? { questId: meta.questId } : {}),
+    ...(meta.secretId ? { secretId: meta.secretId } : {}),
+    ...(meta.requires ? { requires: meta.requires } : {}),
     ...serializeNodeTransform(hotspot)
   };
 }
@@ -30153,6 +30181,8 @@ function createInteriorHotspot(parent, config = {}) {
     description: config.description || '',
     enabled: config.enabled !== false,
     questId: config.questId || '', // a quest hotspot: only there once that quest is active or done
+    secretId: config.secretId || '', // a secret inside a room (found on the first O)
+    requires: config.requires || null, // { time, weather, hint } like quest spots
     questObjectiveType:'interactInteriorHotspot'
   };
   root.isPickable = true;
@@ -30199,7 +30229,9 @@ function isQuestHotspotOpen(questId) {
 function interactInteriorHotspot(hotspot) {
   if (!hotspot || hotspot.metadata?.enabled === false) return false;
   const meta = hotspot.metadata || {};
+  if (meta.requires) { const miss = questSpotRequirementMiss({ requires: meta.requires }); if (miss) { showToast(miss); return true; } }
   recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.linkName, hotspotId:meta.hotspotId, targetObjectId:meta.hotspotId, label:meta.linkName, title:meta.linkName, url:meta.url, actionType:meta.actionType } }, 'interactInteriorHotspot');
+  if (meta.secretId && recordQuestSpotSecret({ secretId: meta.secretId, secretName: meta.linkName, text: meta.description })) return true; // the celebration shows its text
   if (meta.actionType === 'openUrl' && meta.url) {
     window.open(meta.url, '_blank', 'noopener');
     showToast('Opening: ' + (meta.linkName || 'Interior link'));
@@ -31509,6 +31541,7 @@ function buildInteriorRoom(entrance) {
   getInteriorSavedNftFrameConfigs(targetInteriorId).forEach(frameConfig => createInteriorNftFrameSlot(root, { ...frameConfig, interiorId:targetInteriorId }));
   getInteriorSavedAssetConfigs(targetInteriorId).forEach(assetConfig => createInteriorFakeLightAsset(root, assetConfig));
   getInteriorSavedHotspotConfigs(targetInteriorId).forEach(hotspotConfig => createInteriorHotspot(root, { ...hotspotConfig, interiorId:targetInteriorId }));
+  getInteriorSavedChestConfigs(targetInteriorId).forEach(chestConfig => createInteriorChest(root, chestConfig));
   getInteriorSavedVideoScreenConfigs(targetInteriorId).forEach(screenConfig => createInteriorVideoScreen(root, { ...screenConfig, interiorId:targetInteriorId }));
   getInteriorSavedUploadedGlbConfigs(targetInteriorId).forEach(glbConfig => createInteriorUploadedGlbAsset(root, { ...glbConfig, interiorId:targetInteriorId }));
   getInteriorSavedCollectibleConfigs(targetInteriorId).forEach(collectibleConfig => createCollectible(

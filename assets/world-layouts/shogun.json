@@ -48695,9 +48695,51 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "shogun_keep_interior",
+            "hotspotId": "hotspot_shogun_keep_interior_keep_roof",
+            "linkName": "The Keep Roof",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "From the top of the keep the whole valley lies below: every village roof, every road, and far off the great cherry of the Hub. The first Shogun climbed up here to count the villages. There were twelve then.",
+            "enabled": true,
+            "secretId": "sho-keep-roof",
+            "position": {
+              "x": -4.5,
+              "y": 20.5,
+              "z": -9.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
           }
         ],
-        "updatedAt": "2026-10-10T13:58:47.464Z"
+        "updatedAt": "2026-10-11T17:20:21.675Z",
+        "chests": [
+          {
+            "chestId": "sho-chest-legend-1",
+            "chestTier": "legend",
+            "position": {
+              "x": 4.2,
+              "y": 18.5,
+              "z": -10.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scale": 0.7
+          }
+        ]
       },
       "shogun_war_council": {
         "playerFloorOffset": 0,

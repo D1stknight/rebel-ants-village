@@ -44576,6 +44576,35 @@
               "y": 0.7,
               "z": 1
             }
+          },
+          {
+            "interiorId": "rebel_arcade_kit",
+            "hotspotId": "hotspot_rebel_arcade_kit_dark_cabinet",
+            "linkName": "Dark Cabinet",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "At midnight the dead cabinet flickers on by itself. No game: a map of the Hub in green lines, a blinking dot deep under the square, and one line of text. THE TUNNELS REMEMBER. Then the screen goes dark again.",
+            "enabled": true,
+            "secretId": "hub-dark-cabinet",
+            "position": {
+              "x": -21.3,
+              "y": 2.6,
+              "z": -15
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            },
+            "requires": {
+              "time": "night",
+              "hint": "This cabinet is dead: no light, no sound. The arcade regulars say it only wakes at midnight."
+            }
           }
         ],
         "videoScreens": [
@@ -44749,7 +44778,7 @@
             }
           }
         ],
-        "updatedAt": "2026-10-10T04:15:07.738Z"
+        "updatedAt": "2026-10-11T17:20:21.696Z"
       },
       "rebel_library_kit": {
         "playerFloorOffset": 0,
@@ -45521,6 +45550,31 @@
               "y": 0.5,
               "z": 1
             }
+          },
+          {
+            "interiorId": "rebel_library_kit",
+            "hotspotId": "hotspot_rebel_library_kit_hidden_shelf",
+            "linkName": "Hidden Shelf",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Between the bound histories, one book has no title and no number on any list. Inside: a hand-drawn map of the tunnels under the Hub, a door marked in red, and one line: WE SEALED IT TOGETHER.",
+            "enabled": true,
+            "secretId": "hub-hidden-shelf",
+            "position": {
+              "x": 16.6,
+              "y": 2.6,
+              "z": 6.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
           }
         ],
         "videoScreens": [
@@ -45655,7 +45709,7 @@
             }
           }
         ],
-        "updatedAt": "2026-10-10T04:15:07.739Z"
+        "updatedAt": "2026-10-11T17:20:21.696Z"
       },
       "hub_gathering_hall": {
         "playerFloorOffset": 0,
@@ -46605,7 +46659,8 @@
               "x": 1.2,
               "y": 1,
               "z": 1
-            }
+            },
+            "secretId": "hub-first-seal"
           },
           {
             "interiorId": "hub_ancient_tunnels",
@@ -46656,7 +46711,24 @@
             }
           }
         ],
-        "updatedAt": "2026-10-10T13:29:48.601Z"
+        "updatedAt": "2026-10-11T17:20:21.696Z",
+        "chests": [
+          {
+            "chestId": "hub-chest-legend-1",
+            "chestTier": "legend",
+            "position": {
+              "x": -21.2,
+              "y": 0.5,
+              "z": -27.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 2.38,
+              "z": 0
+            },
+            "scale": 0.85
+          }
+        ]
       }
     }
   },
