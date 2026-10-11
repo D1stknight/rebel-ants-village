@@ -24651,6 +24651,1187 @@
           }
         ],
         "updatedAt": "2026-05-31T17:41:59.369Z"
+      },
+      "buke_archive_vault": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_buke",
+            "name": "Rebel Ants: Buke",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "71",
+                "title": "Rebel Ants: Battle for the Colony #71",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=71&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/71"
+              },
+              {
+                "tokenId": "135",
+                "title": "Rebel Ants: Battle for the Colony #135",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=135&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/135"
+              },
+              {
+                "tokenId": "231",
+                "title": "Rebel Ants: Battle for the Colony #231",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=231&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/231"
+              },
+              {
+                "tokenId": "279",
+                "title": "Rebel Ants: Battle for the Colony #279",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=279&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/279"
+              },
+              {
+                "tokenId": "583",
+                "title": "Rebel Ants: Battle for the Colony #583",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=583&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/583"
+              },
+              {
+                "tokenId": "711",
+                "title": "Rebel Ants: Battle for the Colony #711",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=711&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/711"
+              },
+              {
+                "tokenId": "951",
+                "title": "Rebel Ants: Battle for the Colony #951",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=951&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/951"
+              },
+              {
+                "tokenId": "1191",
+                "title": "Rebel Ants: Battle for the Colony #1191",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1191&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1191"
+              },
+              {
+                "tokenId": "1367",
+                "title": "Rebel Ants: Battle for the Colony #1367",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1367&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1367"
+              },
+              {
+                "tokenId": "1383",
+                "title": "Rebel Ants: Battle for the Colony #1383",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1383&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1383"
+              },
+              {
+                "tokenId": "1575",
+                "title": "Rebel Ants: Battle for the Colony #1575",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1575&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1575"
+              },
+              {
+                "tokenId": "2279",
+                "title": "Rebel Ants: Battle for the Colony #2279",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2279&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2279"
+              },
+              {
+                "tokenId": "2487",
+                "title": "Rebel Ants: Battle for the Colony #2487",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2487&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2487"
+              },
+              {
+                "tokenId": "2599",
+                "title": "Rebel Ants: Battle for the Colony #2599",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2599&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2599"
+              },
+              {
+                "tokenId": "2871",
+                "title": "Rebel Ants: Battle for the Colony #2871",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2871&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2871"
+              },
+              {
+                "tokenId": "3143",
+                "title": "Rebel Ants: Battle for the Colony #3143",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3143&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3143"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:20:31.837Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "buke_archive_vault",
+            "frameId": "nft_frame_buke_archive_vault_1",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 1,
+            "tokenId": "71",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -9,
+              "y": 3.4,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_archive_vault",
+            "frameId": "nft_frame_buke_archive_vault_2",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 2,
+            "tokenId": "135",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -5,
+              "y": 3.4,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_archive_vault",
+            "frameId": "nft_frame_buke_archive_vault_3",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 3,
+            "tokenId": "231",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 5,
+              "y": 3.4,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_archive_vault",
+            "frameId": "nft_frame_buke_archive_vault_4",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 4,
+            "tokenId": "279",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 9,
+              "y": 3.4,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "buke_archive_vault",
+            "hotspotId": "hotspot_buke_archive_vault_drawer",
+            "linkName": "The Locked Drawer",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "One drawer in all the vault is sealed in red and locked. The archivists say the key was never made.",
+            "enabled": true,
+            "position": {
+              "x": -10.55,
+              "y": 2.3,
+              "z": -2.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.8,
+              "y": 0.6,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_archive_vault",
+            "hotspotId": "hotspot_buke_archive_vault_door",
+            "linkName": "The Vault Door",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "A round door of iron a hand thick. It stands open: the Buke keep their oldest records where anyone may read them, and guard them where no one may take them.",
+            "enabled": true,
+            "position": {
+              "x": 1.2,
+              "y": 2.7,
+              "z": -13.8
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_archive_vault",
+            "hotspotId": "hotspot_buke_archive_vault_charter",
+            "linkName": "The Charter",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The colony's first charter, in the hands of all eleven founders: steadfast unity, and defence of the inner colonies.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.4,
+              "z": -17.25
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.8,
+              "y": 0.6,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:20:31.838Z"
+      },
+      "buke_great_hall": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_buke",
+            "name": "Rebel Ants: Buke",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "71",
+                "title": "Rebel Ants: Battle for the Colony #71",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=71&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/71"
+              },
+              {
+                "tokenId": "135",
+                "title": "Rebel Ants: Battle for the Colony #135",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=135&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/135"
+              },
+              {
+                "tokenId": "231",
+                "title": "Rebel Ants: Battle for the Colony #231",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=231&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/231"
+              },
+              {
+                "tokenId": "279",
+                "title": "Rebel Ants: Battle for the Colony #279",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=279&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/279"
+              },
+              {
+                "tokenId": "583",
+                "title": "Rebel Ants: Battle for the Colony #583",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=583&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/583"
+              },
+              {
+                "tokenId": "711",
+                "title": "Rebel Ants: Battle for the Colony #711",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=711&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/711"
+              },
+              {
+                "tokenId": "951",
+                "title": "Rebel Ants: Battle for the Colony #951",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=951&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/951"
+              },
+              {
+                "tokenId": "1191",
+                "title": "Rebel Ants: Battle for the Colony #1191",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1191&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1191"
+              },
+              {
+                "tokenId": "1367",
+                "title": "Rebel Ants: Battle for the Colony #1367",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1367&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1367"
+              },
+              {
+                "tokenId": "1383",
+                "title": "Rebel Ants: Battle for the Colony #1383",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1383&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1383"
+              },
+              {
+                "tokenId": "1575",
+                "title": "Rebel Ants: Battle for the Colony #1575",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1575&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1575"
+              },
+              {
+                "tokenId": "2279",
+                "title": "Rebel Ants: Battle for the Colony #2279",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2279&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2279"
+              },
+              {
+                "tokenId": "2487",
+                "title": "Rebel Ants: Battle for the Colony #2487",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2487&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2487"
+              },
+              {
+                "tokenId": "2599",
+                "title": "Rebel Ants: Battle for the Colony #2599",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2599&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2599"
+              },
+              {
+                "tokenId": "2871",
+                "title": "Rebel Ants: Battle for the Colony #2871",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2871&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2871"
+              },
+              {
+                "tokenId": "3143",
+                "title": "Rebel Ants: Battle for the Colony #3143",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3143&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3143"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:20:31.838Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "buke_great_hall",
+            "frameId": "nft_frame_buke_great_hall_5",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 5,
+            "tokenId": "583",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -21.86,
+              "y": 4.3,
+              "z": -8
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_great_hall",
+            "frameId": "nft_frame_buke_great_hall_6",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 6,
+            "tokenId": "711",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -21.86,
+              "y": 4.3,
+              "z": 7
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_great_hall",
+            "frameId": "nft_frame_buke_great_hall_7",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 7,
+            "tokenId": "951",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 21.86,
+              "y": 4.3,
+              "z": -8
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_great_hall",
+            "frameId": "nft_frame_buke_great_hall_8",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 8,
+            "tokenId": "1191",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 21.86,
+              "y": 4.3,
+              "z": 7
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_great_hall",
+            "frameId": "nft_frame_buke_great_hall_9",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 9,
+            "tokenId": "1367",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -12,
+              "y": 4.3,
+              "z": 13.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_great_hall",
+            "frameId": "nft_frame_buke_great_hall_10",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 10,
+            "tokenId": "1383",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 12,
+              "y": 4.3,
+              "z": 13.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "buke_great_hall",
+            "hotspotId": "hotspot_buke_great_hall_shields",
+            "linkName": "The Shield Wall",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Twenty-seven shields, one for every family that has held the inner colonies. The trident: steadfast unity and defence.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.3,
+              "z": -10.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.4,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_great_hall",
+            "hotspotId": "hotspot_buke_great_hall_canal",
+            "linkName": "The Canal",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The Buke engineers brought the canal through the hall so that no siege could cut the water off. It has never been needed.",
+            "enabled": true,
+            "position": {
+              "x": 3,
+              "y": 2,
+              "z": 2.9
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:20:31.838Z"
+      },
+      "buke_cliff_tunnels": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_buke",
+            "name": "Rebel Ants: Buke",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "71",
+                "title": "Rebel Ants: Battle for the Colony #71",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=71&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/71"
+              },
+              {
+                "tokenId": "135",
+                "title": "Rebel Ants: Battle for the Colony #135",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=135&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/135"
+              },
+              {
+                "tokenId": "231",
+                "title": "Rebel Ants: Battle for the Colony #231",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=231&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/231"
+              },
+              {
+                "tokenId": "279",
+                "title": "Rebel Ants: Battle for the Colony #279",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=279&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/279"
+              },
+              {
+                "tokenId": "583",
+                "title": "Rebel Ants: Battle for the Colony #583",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=583&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/583"
+              },
+              {
+                "tokenId": "711",
+                "title": "Rebel Ants: Battle for the Colony #711",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=711&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/711"
+              },
+              {
+                "tokenId": "951",
+                "title": "Rebel Ants: Battle for the Colony #951",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=951&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/951"
+              },
+              {
+                "tokenId": "1191",
+                "title": "Rebel Ants: Battle for the Colony #1191",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1191&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1191"
+              },
+              {
+                "tokenId": "1367",
+                "title": "Rebel Ants: Battle for the Colony #1367",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1367&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1367"
+              },
+              {
+                "tokenId": "1383",
+                "title": "Rebel Ants: Battle for the Colony #1383",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1383&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1383"
+              },
+              {
+                "tokenId": "1575",
+                "title": "Rebel Ants: Battle for the Colony #1575",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1575&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1575"
+              },
+              {
+                "tokenId": "2279",
+                "title": "Rebel Ants: Battle for the Colony #2279",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2279&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2279"
+              },
+              {
+                "tokenId": "2487",
+                "title": "Rebel Ants: Battle for the Colony #2487",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2487&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2487"
+              },
+              {
+                "tokenId": "2599",
+                "title": "Rebel Ants: Battle for the Colony #2599",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2599&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2599"
+              },
+              {
+                "tokenId": "2871",
+                "title": "Rebel Ants: Battle for the Colony #2871",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2871&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2871"
+              },
+              {
+                "tokenId": "3143",
+                "title": "Rebel Ants: Battle for the Colony #3143",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3143&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3143"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:20:31.838Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "buke_cliff_tunnels",
+            "frameId": "nft_frame_buke_cliff_tunnels_11",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 11,
+            "tokenId": "1575",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -30.86,
+              "y": 3.5,
+              "z": -38
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "buke_cliff_tunnels",
+            "hotspotId": "hotspot_buke_cliff_tunnels_shoring",
+            "linkName": "The Shoring",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "A timber frame every three paces. The engineers count them: a tunnel with a missing frame is a tunnel waiting to fall.",
+            "enabled": true,
+            "position": {
+              "x": 2.4,
+              "y": 2.7,
+              "z": 8
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_cliff_tunnels",
+            "hotspotId": "hotspot_buke_cliff_tunnels_windows",
+            "linkName": "Windows on the Canyon",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Cut through to the gorge for light and air, and to watch the road in.",
+            "enabled": true,
+            "position": {
+              "x": -27.4,
+              "y": 3.1,
+              "z": -16
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_cliff_tunnels",
+            "hotspotId": "hotspot_buke_cliff_tunnels_lift",
+            "linkName": "The Lift",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The cage rises to the cliff top on the great pulley; the winch takes four Buke to turn. The counterweight is a block from the first tunnel.",
+            "enabled": true,
+            "position": {
+              "x": -26,
+              "y": 2.5,
+              "z": -34.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:20:31.838Z"
+      },
+      "buke_engineer_workshop": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_buke",
+            "name": "Rebel Ants: Buke",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "71",
+                "title": "Rebel Ants: Battle for the Colony #71",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=71&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/71"
+              },
+              {
+                "tokenId": "135",
+                "title": "Rebel Ants: Battle for the Colony #135",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=135&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/135"
+              },
+              {
+                "tokenId": "231",
+                "title": "Rebel Ants: Battle for the Colony #231",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=231&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/231"
+              },
+              {
+                "tokenId": "279",
+                "title": "Rebel Ants: Battle for the Colony #279",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=279&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/279"
+              },
+              {
+                "tokenId": "583",
+                "title": "Rebel Ants: Battle for the Colony #583",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=583&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/583"
+              },
+              {
+                "tokenId": "711",
+                "title": "Rebel Ants: Battle for the Colony #711",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=711&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/711"
+              },
+              {
+                "tokenId": "951",
+                "title": "Rebel Ants: Battle for the Colony #951",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=951&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/951"
+              },
+              {
+                "tokenId": "1191",
+                "title": "Rebel Ants: Battle for the Colony #1191",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1191&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1191"
+              },
+              {
+                "tokenId": "1367",
+                "title": "Rebel Ants: Battle for the Colony #1367",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1367&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1367"
+              },
+              {
+                "tokenId": "1383",
+                "title": "Rebel Ants: Battle for the Colony #1383",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1383&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1383"
+              },
+              {
+                "tokenId": "1575",
+                "title": "Rebel Ants: Battle for the Colony #1575",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1575&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1575"
+              },
+              {
+                "tokenId": "2279",
+                "title": "Rebel Ants: Battle for the Colony #2279",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2279&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2279"
+              },
+              {
+                "tokenId": "2487",
+                "title": "Rebel Ants: Battle for the Colony #2487",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2487&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2487"
+              },
+              {
+                "tokenId": "2599",
+                "title": "Rebel Ants: Battle for the Colony #2599",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2599&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2599"
+              },
+              {
+                "tokenId": "2871",
+                "title": "Rebel Ants: Battle for the Colony #2871",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2871&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2871"
+              },
+              {
+                "tokenId": "3143",
+                "title": "Rebel Ants: Battle for the Colony #3143",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3143&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3143"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:20:31.838Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "buke_engineer_workshop",
+            "frameId": "nft_frame_buke_engineer_workshop_12",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 12,
+            "tokenId": "2279",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 13.86,
+              "y": 4.7,
+              "z": -6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_engineer_workshop",
+            "frameId": "nft_frame_buke_engineer_workshop_13",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 13,
+            "tokenId": "2487",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 13.86,
+              "y": 4.7,
+              "z": 5.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_engineer_workshop",
+            "frameId": "nft_frame_buke_engineer_workshop_14",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 14,
+            "tokenId": "2599",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -8,
+              "y": 4.5,
+              "z": 10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_engineer_workshop",
+            "frameId": "nft_frame_buke_engineer_workshop_15",
+            "frameName": "Buke Rebel",
+            "collectionId": "rebel_ants_buke",
+            "frameSlot": 15,
+            "tokenId": "2871",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 8,
+              "y": 4.5,
+              "z": 10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "buke_engineer_workshop",
+            "hotspotId": "hotspot_buke_engineer_workshop_wheel",
+            "linkName": "The Waterwheel",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The canal turns the wheel; the wheel turns the gears; the gears turn the saw and the grindstone. Nothing in the workshop is pushed by hand that water can push.",
+            "enabled": true,
+            "position": {
+              "x": -9,
+              "y": 2.7,
+              "z": 1.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "buke_engineer_workshop",
+            "hotspotId": "hotspot_buke_engineer_workshop_rig",
+            "linkName": "The Stress Rig",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Every bridge the Buke build is built here first, small, and loaded until it breaks. Then the real one is built three times stronger.",
+            "enabled": true,
+            "position": {
+              "x": 4.5,
+              "y": 2.9,
+              "z": 4.65
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:20:31.838Z"
       }
     }
   },
@@ -26857,5 +28038,909 @@
     "questObjectiveId": null,
     "editorLocked": false,
     "chestTier": "wood"
+  },
+  {
+    "type": "buke_tunnel_door",
+    "name": "buke_tunnel_doorRootClone_1791700000001_1",
+    "disableGroundSnap": false,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 12.4,
+      "y": 0.06,
+      "z": -90
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": "#ffdd88",
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "buke",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxy_tunneldoor_l",
+    "disableGroundSnap": false,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 13.4,
+      "y": 3.76,
+      "z": -93.2
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 2,
+      "y": 7.4,
+      "z": 2.8
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "buke",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "buke_gateRootClone_1791200000035_6",
+    "proxyOwnerType": "buke_gate",
+    "proxyOwnerAssetKey": "buke_gate",
+    "terrainSurfaceType": "dirt",
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxy_tunneldoor_r",
+    "disableGroundSnap": false,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 13.4,
+      "y": 3.76,
+      "z": -86.8
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 2,
+      "y": 7.4,
+      "z": 2.8
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "buke",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "buke_gateRootClone_1791200000035_6",
+    "proxyOwnerType": "buke_gate",
+    "proxyOwnerAssetKey": "buke_gate",
+    "terrainSurfaceType": "dirt",
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "collision_proxy",
+    "name": "collision_proxy_tunneldoor_b",
+    "disableGroundSnap": false,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 15.15,
+      "y": 3.76,
+      "z": -90
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 0.4,
+      "y": 7.4,
+      "z": 3.6
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "buke",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": false,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": "blocker",
+    "proxyOwnerName": "buke_gateRootClone_1791200000035_6",
+    "proxyOwnerType": "buke_gate",
+    "proxyOwnerAssetKey": "buke_gate",
+    "terrainSurfaceType": "dirt",
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_buke_archive_vault",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -38,
+      "y": 0.1,
+      "z": 23.2
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "buke",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_buke_archive_vault",
+    "targetObjectId": null,
+    "interiorName": "the Archive Vault Door",
+    "interiorType": "buke_archive_vault",
+    "targetInteriorId": "buke_archive_vault",
+    "promptText": "Press O to Enter the Archive Vault",
+    "interiorDefinition": {
+      "id": "buke_archive_vault",
+      "builtIn": false,
+      "title": "The Archive Vault",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_buke_vault",
+      "prompt": "Press O to Enter",
+      "description": "Under the archive: stone vaults, iron drawers, and the round door that is never closed.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.5,
+        "g": 0.14,
+        "b": 0.16
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "buke_archive_vault",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_buke_great_hall",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 0,
+      "y": 0.08,
+      "z": 62.6
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "buke",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_buke_great_hall",
+    "targetObjectId": null,
+    "interiorName": "the Great Hall Door",
+    "interiorType": "buke_great_hall",
+    "targetInteriorId": "buke_great_hall",
+    "promptText": "Press O to Enter the Great Hall",
+    "interiorDefinition": {
+      "id": "buke_great_hall",
+      "builtIn": false,
+      "title": "The Great Hall",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_buke_great_hall",
+      "prompt": "Press O to Enter",
+      "description": "The clan's hall: the canal through the middle, the wall of shields, the lord's seat.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.5,
+        "g": 0.14,
+        "b": 0.16
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "buke_great_hall",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_buke_engineer_workshop",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 38,
+      "y": 0.1,
+      "z": 22.7
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "buke",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_buke_engineer_workshop",
+    "targetObjectId": null,
+    "interiorName": "the Engineer Workshop Door",
+    "interiorType": "buke_engineer_workshop",
+    "targetInteriorId": "buke_engineer_workshop",
+    "promptText": "Press O to Enter the Engineer Workshop",
+    "interiorDefinition": {
+      "id": "buke_engineer_workshop",
+      "builtIn": false,
+      "title": "The Engineer Workshop",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_buke_workshop",
+      "prompt": "Press O to Enter",
+      "description": "The waterwheel, the gears, the bridge models and the drawings of the Buke engineers.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.5,
+        "g": 0.14,
+        "b": 0.16
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "buke_engineer_workshop",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_buke_cliff_tunnels",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 10.3,
+      "y": 0,
+      "z": -90
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "buke",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_buke_cliff_tunnels",
+    "targetObjectId": null,
+    "interiorName": "the Cliff Tunnels Door",
+    "interiorType": "buke_cliff_tunnels",
+    "targetInteriorId": "buke_cliff_tunnels",
+    "promptText": "Press O to Enter the Cliff Tunnels",
+    "interiorDefinition": {
+      "id": "buke_cliff_tunnels",
+      "builtIn": false,
+      "title": "The Cliff Tunnels",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_buke_tunnels",
+      "prompt": "Press O to Enter",
+      "description": "The engineers' tunnels inside the canyon wall, out to the windows and up to the lift.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.5,
+        "g": 0.14,
+        "b": 0.16
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "buke_cliff_tunnels",
+    "editorLocked": false
   }
 ]
