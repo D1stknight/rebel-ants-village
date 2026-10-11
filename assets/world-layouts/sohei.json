@@ -20710,9 +20710,9 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": -44,
-      "y": 0.1,
-      "z": 4
+      "x": -49,
+      "y": 0.06,
+      "z": 4.5
     },
     "rotation": {
       "x": 0,
@@ -20822,9 +20822,9 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 44,
-      "y": 0.1,
-      "z": 4
+      "x": 49,
+      "y": 0.06,
+      "z": 4.5
     },
     "rotation": {
       "x": 0,
@@ -25721,9 +25721,34 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "sohei_rite_hall",
+            "hotspotId": "hotspot_sohei_rite_hall_rite",
+            "linkName": "The Warning Rite",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The monks set one lantern on the water for every village. Twelve lights drift together, then apart. The Bell Keeper strikes the smallest bell once and speaks the warning: every quarrel above feeds what wakes below.",
+            "enabled": true,
+            "questId": "book1-main-38",
+            "position": {
+              "x": -7,
+              "y": 2.4,
+              "z": -10.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
           }
         ],
-        "updatedAt": "2026-10-10T14:50:29.658Z"
+        "updatedAt": "2026-10-11T13:38:23.370Z"
       }
     }
   }

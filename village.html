@@ -2259,6 +2259,87 @@ const BOOK1_WIRING = {
         say:['A Ronin road under the Samurai posts, cut before any of us were born.', 'The Samurai close roads. The Ronin keep secret ones. The Wokou sell them. The Bushi listen, and the Kenshi sharpen their blades.', 'Write down where every faction stands. All of it. One day we will have to show them how far apart they drifted.'] },
       { id:'record-positions', objective:'Write the council record on the council stone.', objectiveType:'useQuestSpot', targetObjectId:'hub-council-record', villageId:'hub' },
       { id:'review-journal', objective:'Open your journal and read how the colony split.', objectiveType:'openJournal' }
+    ],
+    // Chapter 4, Gathering Storm: Warrior drills, the Shogun's summons, three reports for the Shogun Table (Warrior
+    // stores, the Kenshi circle, the Wokou vents in a quest storm), Buke braces, the Sohei rite, the Hub sorts the
+    // threats, the Shogun's united watch. Steps inside rooms target a room hotspot (targetInteriorId + its hotspot id).
+    31: [
+      { id:'hub-drums', objective:'Talk to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['The record is written, and every village has read it. Every village read it differently.', 'The Warriors read it as a call to arms. Their drums have not stopped for two days.', 'Go to Warrior Village and see what they are preparing for. Ask for the Drill Master.'] },
+      { id:'meet-drillmaster', objective:'Find the Drill Master in the sand yard of Warrior Village.', objectiveType:'talkToNpc', targetNpcId:'warrior-sensei-01', villageId:'warrior',
+        say:['Drums at dawn, drums at dusk. Every Warrior drills until the moves come without thinking.', 'We do not know the enemy, so we drill for all of them.', 'Watch the drills: the shield wall at the gate, the spear lines in the yard, the signal fires by the north-west tower.'] },
+      { id:'watch-drills', objective:'Watch the three drills: the gate, the sand yard and the north-west tower.', objectiveType:'useQuestSpot', targetObjectId:'war-drill', count:3, villageId:'warrior' },
+      { id:'drillmaster-after', objective:'Tell the Drill Master what you saw.', objectiveType:'talkToNpc', targetNpcId:'warrior-sensei-01', villageId:'warrior',
+        say:['Fast. Faster than last week. But a drill cannot tell you who the enemy is.', 'And the Quartermaster counts less in the stores every morning.', 'First, though: a Herald came from the Shogun. Every faction is summoned. Go up to the castle and hear it.'] }
+    ],
+    32: [
+      { id:'meet-herald', objective:'Find the Shogun Herald on the middle terrace of Shogun Village, by the inner gate.', objectiveType:'talkToNpc', targetNpcId:'shogun-steward-01', villageId:'shogun',
+        say:['You come from the Warrior drums. The Shogun hears them from up here.', 'Drums, decrees, prices, refusals. The colony is arming against itself before it knows what it fears.', 'The summons is posted by the inner gate. Read it, all of it.'] },
+      { id:'read-summons', objective:'Read the Shogun\'s summons by the inner gate.', objectiveType:'useQuestSpot', targetObjectId:'sho-summons', villageId:'shogun' },
+      { id:'herald-reports', objective:'Talk to the Shogun Herald.', objectiveType:'talkToNpc', targetNpcId:'shogun-steward-01', villageId:'shogun',
+        say:['The Shogun wants proof before anyone draws a blade. You walk between the villages; you can bring it.', 'Start with the Warriors. Their Quartermaster sent word of stores that empty themselves.', 'Bring me three reports for the Shogun Table. The stores first, and whatever else you find on the way.'] }
+    ],
+    33: [
+      { id:'meet-quartermaster', objective:'Find the Quartermaster by the stores in Warrior Village.', objectiveType:'talkToNpc', targetNpcId:'warrior-smith-01', villageId:'warrior',
+        say:['Rice, arrows, rope, oil. Counted at dawn and at dusk, every day.', 'Every dawn there is less. The doors are barred, the guards swear nobody passed, and I believe them.', 'Go down into the stores. Look at the far aisle on the right, and look at the floor.'] },
+      { id:'stores-aisle', objective:'Go down into the Warrior Stores and look at the far aisle on the right.', objectiveType:'interactInteriorLink', targetInteriorId:'warrior_stores', targetObjectId:'hotspot_warrior_stores_aisle', villageId:'warrior' },
+      { id:'stores-dust', objective:'Search the stores floor for tunnel dust, at the end of the aisle on the left.', objectiveType:'interactInteriorLink', targetInteriorId:'warrior_stores', targetObjectId:'hotspot_warrior_stores_dust', villageId:'warrior' },
+      { id:'quartermaster-after', objective:'Tell the Quartermaster what you found.', objectiveType:'talkToNpc', targetNpcId:'warrior-smith-01', villageId:'warrior',
+        say:['Downwards. So the guards told the truth, and that frightens me more than any thief.', 'Take my count to the Herald for the Shogun Table: that is your first report.', 'The Kenshi sent a runner too. One of their duelists saw something under the Duel Hall. Hear it on your way.'] }
+    ],
+    34: [
+      { id:'meet-witness', objective:'Hear the Kenshi witness: the Duelist in the training yard of Kenshi Village.', objectiveType:'talkToNpc', targetNpcId:'kenshi-trainee-01', villageId:'kenshi',
+        say:['I trained alone in the Duel Hall last night. No wind, no sound. Then the sand moved, from underneath.', 'I cut at it. I trust my blade more than my eyes, and my blade found nothing.', 'In the morning the circle had cracked. Go in and look at it.'] },
+      { id:'inspect-crack', objective:'Inspect the cracked circle in the Duel Hall.', objectiveType:'interactInteriorLink', targetInteriorId:'kenshi_duel_hall', targetObjectId:'hotspot_kenshi_duel_hall_crack', villageId:'kenshi' },
+      { id:'witness-after', objective:'Tell the Kenshi Duelist what you saw.', objectiveType:'talkToNpc', targetNpcId:'kenshi-trainee-01', villageId:'kenshi',
+        say:['So it was not my eyes. Good. And not good.', 'A blade cannot cut what stays underneath. Take that to the Shogun Table: your second report.', 'The Wokou say storms sit over their trade roads since the old vents started smoking. A third report, if you dare the weather.'] }
+    ],
+    35: [
+      { id:'broker-storms', objective:'Ask the Wokou Broker about the storms.', objectiveType:'talkToNpc', targetNpcId:'wokou-broker-01', villageId:'wokou',
+        say:['Storms every night, and only over our trade roads. My ships stay in, my buyers stay home.', 'The old vent markers on the roads smoke whenever the thunder rolls, as if the ground breathes with the sky.', 'Walk the roads in the storm and check the three markers: the west road, the east road and the north road.'] },
+      { id:'check-vents', objective:'Walk the trade roads in the storm and check the three vent markers: west, east and north.', objectiveType:'useQuestSpot', targetObjectId:'wok-vent', count:3, villageId:'wokou', weather:'storm' },
+      { id:'broker-after', objective:'Tell the Wokou Broker what the vents do.', objectiveType:'talkToNpc', targetNpcId:'wokou-broker-01', villageId:'wokou',
+        say:['Three vents, three breaths, every time the thunder rolls. The sky answers the tunnels.', 'Storms cost me more than any Samurai decree. Tell the Shogun Table that, word for word: your third report.', 'Free of charge. Do not get used to it.'] }
+    ],
+    36: [
+      { id:'herald-table', objective:'Bring the three reports to the Shogun Herald.', objectiveType:'talkToNpc', targetNpcId:'shogun-steward-01', villageId:'shogun',
+        say:['Warrior stores emptied from below. A Kenshi circle cracked from below. Wokou vents breathing with the storms.', 'Three villages, one direction: down.', 'Take them into the Throne Room and lay them at the head of the Table, before the throne.'] },
+      { id:'lay-reports', objective:'Lay the reports at the head of the Shogun Table, in the Throne Room.', objectiveType:'interactInteriorLink', targetInteriorId:'shogun_throne_room', targetObjectId:'hotspot_shogun_throne_room_reports', villageId:'shogun' },
+      { id:'shogun-answer', objective:'Climb to the throne and look for the Shogun\'s answer, on the left of the throne.', objectiveType:'interactInteriorLink', targetInteriorId:'shogun_throne_room', targetObjectId:'hotspot_shogun_throne_room_answer', villageId:'shogun' },
+      { id:'herald-answer', objective:'Tell the Shogun Herald what the answer was.', objectiveType:'talkToNpc', targetNpcId:'shogun-steward-01', villageId:'shogun',
+        say:['Three seals and no word. That is the Shogun\'s way: nothing is ordered until every voice has been heard.', 'The Buke were asked for braces against the tunnel roads. When they arrive, the Table can speak.', 'Go to the Buke Engineer and bring me the brace plans.'] }
+    ],
+    37: [
+      { id:'engineer-braces', objective:'Ask the Buke Engineer for the brace plans.', objectiveType:'talkToNpc', targetNpcId:'buke-scholar-01', villageId:'buke',
+        say:['Braces for the tunnel roads? We have been drawing them since the survey marks first moved.', 'Three plans, one for each road above the old tunnels. I left each where its road starts: the workshop yard, the gate yard and the great hall steps.', 'Gather them. A beam placed before panic saves more ants than a blade drawn after it.'] },
+      { id:'gather-plans', objective:'Gather the three brace plans: the workshop yard, the gate yard and the great hall steps.', objectiveType:'collectCollectible', targetObjectId:'buke-brace-plan', count:3, villageId:'buke' },
+      { id:'engineer-after', objective:'Bring the plans back to the Buke Engineer.', objectiveType:'talkToNpc', targetNpcId:'buke-scholar-01', villageId:'buke',
+        say:['All three. Every brace drawn twice as strong as the tunnels need. Fear makes bad engineers, so we drew them on calm days.', 'Take them to the Shogun Herald. The Buke stand with the Table.'] },
+      { id:'deliver-plans', objective:'Deliver the brace plans to the Shogun Herald.', objectiveType:'talkToNpc', targetNpcId:'shogun-steward-01', villageId:'shogun',
+        say:['Buke braces. A defence that needs no war. The Shogun will like that.', 'One voice is still missing. The Sohei sent word: their bells ring wrong, and they hold a warning rite.', 'Go to the Bell Keeper. Whatever the rite says, the Hub must hear it first.'] }
+    ],
+    38: [
+      { id:'bellkeeper-rite', objective:'Find the Sohei Bell Keeper by the bell temple.', objectiveType:'talkToNpc', targetNpcId:'sohei-bellkeeper-01', villageId:'sohei',
+        say:['The bells rang softer last night. A bell that rings softer is a bell that is afraid.', 'We hold the warning rite in the Rite Hall. Come. Walk to the back of the hall and listen.'] },
+      { id:'attend-rite', objective:'Attend the warning rite at the back of the Rite Hall.', objectiveType:'interactInteriorLink', targetInteriorId:'sohei_rite_hall', targetObjectId:'hotspot_sohei_rite_hall_rite', villageId:'sohei' },
+      { id:'bellkeeper-after', objective:'Talk to the Bell Keeper after the rite.', objectiveType:'talkToNpc', targetNpcId:'sohei-bellkeeper-01', villageId:'sohei',
+        say:['You heard it. Every quarrel above feeds what wakes below.', 'The colony fights itself, and the thing beneath grows stronger on it.', 'Carry the rite message to your Hub Guide, word for word.'] },
+      { id:'carry-message', objective:'Carry the rite message to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['Every quarrel above feeds what wakes below. The Sohei never speak in riddles when it matters.', 'Then every report we gathered is two reports at once.', 'The storm reports are laid out by the council stone. Read them all again.'] }
+    ],
+    39: [
+      { id:'review-reports', objective:'Review all the storm reports by the council stone.', objectiveType:'useQuestSpot', targetObjectId:'hub-storm-reports', villageId:'hub' },
+      { id:'sort-threats', objective:'Sort the reports into two piles: tunnel threats and faction threats.', objectiveType:'useQuestSpot', targetObjectId:'hub-two-piles', villageId:'hub' },
+      { id:'guide-two-enemies', objective:'Talk to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['Two piles. One enemy below, one between us. And the second feeds the first.', 'We cannot fight the one below while we fight each other.', 'A runner came from the Shogun Herald: the Shogun is ready to speak. Go, and bring back whatever is said.'] }
+    ],
+    40: [
+      { id:'herald-order', objective:'Hear the Shogun Herald.', objectiveType:'talkToNpc', targetNpcId:'shogun-steward-01', villageId:'shogun',
+        say:['The Shogun has spoken at last. Not to one faction: to all of them.', 'The order lies on the right of the throne, sealed. You carried every report, so you carry this.'] },
+      { id:'take-order', objective:'Take the united watch order from the right of the throne, in the Throne Room.', objectiveType:'interactInteriorLink', targetInteriorId:'shogun_throne_room', targetObjectId:'hotspot_shogun_throne_room_order', villageId:'shogun' },
+      { id:'order-to-hub', objective:'Bring the united watch order to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['A united watch. Not peace, not trust, but every village looking at the same door.', 'The Samurai will grumble and the Wokou will want paying, but they will stand the watch.', 'Rest while you can. The seal under the Hub is older than any of us, and tonight I think it is failing.'] },
+      { id:'storm-journal', objective:'Open your journal and read how the storm gathered.', objectiveType:'openJournal' }
     ]
   },
   side: {
@@ -2531,6 +2612,7 @@ function registerBook1QuestDefinitions() {
 	            count:Number(objective.count) > 1 ? Number(objective.count) : null,
 	            villageId:objective.villageId || null,
 	            say:Array.isArray(objective.say) ? objective.say : null,
+	            weather:objective.weather || null,
 	            wired:Boolean(objective.objectiveType)
 	          }
 	      ).concat({ id:'complete', objective:`Completed: ${quest.title}` })
@@ -11126,6 +11208,14 @@ function setWeatherMode(mode, manual = false) {
   updateSky();
 }
 
+// the weather the current main quest step asks for in this village (step.weather), else null
+function getQuestWeatherHold() {
+  if (QuestState.completed) return null;
+  const step = getQuestStep(QuestState.questId, QuestState.step);
+  if (!step?.weather || !WEATHER_MODES[step.weather]) return null;
+  return !step.villageId || step.villageId === CURRENT_VILLAGE_ID ? step.weather : null;
+}
+
 function setWeatherCyclePaused(paused) {
   WeatherManager.paused = paused === true;
   if (!WeatherManager.paused) WeatherManager.nextCycleAt = performance.now() + WeatherManager.cycleMs;
@@ -11159,6 +11249,11 @@ function updateWeatherManager() {
     return;
   }
   const now = performance.now();
+  const questWeather = getQuestWeatherHold();
+  if (questWeather) {
+    if (WeatherManager.mode !== questWeather) setWeatherMode(questWeather, false);
+    WeatherManager.nextCycleAt = now + WeatherManager.cycleMs;
+  }
   if (!WeatherManager.paused && now >= WeatherManager.nextCycleAt) {
     setWeatherMode(getNextWeatherMode(), false);
   }
@@ -11812,7 +11907,7 @@ function doesQuestContextMatchTarget(quest, context = {}, actionType = '', stepI
     return npcText.includes(String(quest.primaryNpc).toLowerCase());
   }
   if (targetVillageId) return String(context.targetVillageId || context.villageId || '').toLowerCase() === String(targetVillageId).toLowerCase();
-  if (targetInteriorId) return getContextSearchText(context).includes(String(targetInteriorId).toLowerCase());
+  if (targetInteriorId && !targetObjectId) return getContextSearchText(context).includes(String(targetInteriorId).toLowerCase());
   if (targetDoorId) return contextMatchesTargetValue(context, targetDoorId, ['targetDoorId', 'doorId', 'entranceId', 'entranceName', 'targetObjectId', 'objectId', 'questObjectiveId']);
   if (targetObjectId) {
     const objectId = getQuestTargetObjectIdFromContext(context).toLowerCase();
@@ -12183,6 +12278,11 @@ function getQuestStepGuideTarget(quest, step, doneIds = []) {
   if (action === 'collectCollectible' && want) {
     const root = near(scene.transformNodes.filter(n => n.metadata?.type === 'collectible' && n.metadata.enabled !== false && String(n.metadata.collectibleId || '').toLowerCase().includes(want) && !isCollectibleCollected?.(n.metadata.collectibleId)));
     return root ? { node:root, label:root.metadata.collectibleLabel || 'Collect' } : null;
+  }
+  // a step inside a room: its door
+  if ((action === 'enterInterior' || action === 'interactInteriorLink') && step.targetInteriorId) {
+    const door = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.enabled !== false && n.metadata.targetInteriorId === step.targetInteriorId);
+    return door ? { node:door, label:door.metadata.interiorDefinition?.title || door.metadata.interiorName || 'Go inside' } : null;
   }
   return null;
 }
@@ -29257,6 +29357,7 @@ function serializeInteriorHotspot(hotspot) {
     url: meta.url || '',
     description: meta.description || '',
     enabled: meta.enabled !== false,
+    ...(meta.questId ? { questId: meta.questId } : {}),
     ...serializeNodeTransform(hotspot)
   };
 }
@@ -29959,6 +30060,7 @@ function createInteriorHotspot(parent, config = {}) {
     url: config.url || '',
     description: config.description || '',
     enabled: config.enabled !== false,
+    questId: config.questId || '', // a quest hotspot: only there once that quest is active or done
     questObjectiveType:'interactInteriorHotspot'
   };
   root.isPickable = true;
@@ -29982,6 +30084,7 @@ function getNearestInteriorHotspotInRange() {
   let best = Infinity;
   getInteriorHotspotRoots().forEach(hotspot => {
     if (hotspot.metadata?.enabled === false || hotspot.isEnabled?.() === false) return;
+    if (hotspot.metadata?.questId && !isQuestHotspotOpen(hotspot.metadata.questId)) return;
     const pos = hotspot.getAbsolutePosition();
     const dx = pos.x - charMesh.position.x;
     const dz = pos.z - charMesh.position.z;
@@ -29995,10 +30098,16 @@ function getNearestInteriorHotspotInRange() {
   return nearest;
 }
 
+function isQuestHotspotOpen(questId) {
+  if (ProgressionState.completedQuests.includes(questId)) return true;
+  if (QuestState.questId === questId && !QuestState.completed) return true;
+  return Boolean(SideQuestState?.active?.[questId]);
+}
+
 function interactInteriorHotspot(hotspot) {
   if (!hotspot || hotspot.metadata?.enabled === false) return false;
   const meta = hotspot.metadata || {};
-  recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.linkName, hotspotId:meta.hotspotId, label:meta.linkName, title:meta.linkName, url:meta.url, actionType:meta.actionType } }, 'interactInteriorHotspot');
+  recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.linkName, hotspotId:meta.hotspotId, targetObjectId:meta.hotspotId, label:meta.linkName, title:meta.linkName, url:meta.url, actionType:meta.actionType } }, 'interactInteriorHotspot');
   if (meta.actionType === 'openUrl' && meta.url) {
     window.open(meta.url, '_blank', 'noopener');
     showToast('Opening: ' + (meta.linkName || 'Interior link'));

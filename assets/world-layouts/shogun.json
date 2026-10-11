@@ -46585,7 +46585,7 @@
     "fallbackType": "ant",
     "behavior": "patrol",
     "dialogueId": "default",
-    "customDialogue": null,
+    "customDialogue": "Every faction's envoy passes this gate sooner or later.\nThe Shogun sees them all.",
     "questId": null,
     "smallAntInstanceId": null,
     "haloColor": null,
@@ -46703,7 +46703,7 @@
     "fallbackType": "ant",
     "behavior": "idle",
     "dialogueId": "default",
-    "customDialogue": null,
+    "customDialogue": "Discipline is a wall you build inside yourself.\nThe castle walls are the easy part.",
     "questId": null,
     "smallAntInstanceId": null,
     "haloColor": null,
@@ -46766,9 +46766,9 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 6.5,
-      "y": 0.06,
-      "z": 65.5
+      "x": 9,
+      "y": 0.2,
+      "z": 12
     },
     "rotation": {
       "x": 0,
@@ -46802,15 +46802,15 @@
     "villageId": "shogun",
     "npcId": "shogun-steward-01",
     "factionId": "shogun",
-    "role": "villager",
-    "displayName": "Castle Steward",
+    "role": "herald",
+    "displayName": "Shogun Herald",
     "modelUrl": null,
     "modelScale": 1,
     "libraryKey": "shogun_villager",
     "fallbackType": "ant",
     "behavior": "idle",
     "dialogueId": "default",
-    "customDialogue": null,
+    "customDialogue": "The Shogun speaks rarely, and never twice.\nListen the first time.",
     "questId": null,
     "smallAntInstanceId": null,
     "haloColor": null,
@@ -46825,7 +46825,7 @@
     "wanderRadius": 6,
     "animationMap": {},
     "animationSpeed": {},
-    "patrolPoints": null,
+    "patrolPoints": [],
     "proxyAutoEnabled": true,
     "proxyWalkSurfaceEnabled": false,
     "proxyEntranceSide": null,
@@ -46917,7 +46917,7 @@
     "fallbackType": "ant",
     "behavior": "idle",
     "dialogueId": "default",
-    "customDialogue": null,
+    "customDialogue": "The court records every tremor.\nAnd every silence after one.",
     "questId": null,
     "smallAntInstanceId": null,
     "haloColor": null,
@@ -47024,7 +47024,7 @@
     "fallbackType": "ant",
     "behavior": "wander",
     "dialogueId": "default",
-    "customDialogue": null,
+    "customDialogue": "The wisteria in the Throne Room has not flowered in years.\nMy grandmother says it is waiting for something.",
     "questId": null,
     "smallAntInstanceId": null,
     "haloColor": null,
@@ -47942,9 +47942,84 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "shogun_throne_room",
+            "hotspotId": "hotspot_shogun_throne_room_reports",
+            "linkName": "The Head of the Table",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "You lay the reports side by side at the head of the Table: the emptied stores, the cracked circle, the breathing vents. Eleven banners hang over eleven empty seats.",
+            "enabled": true,
+            "questId": "book1-main-36",
+            "position": {
+              "x": 1.5,
+              "y": 2.2,
+              "z": -13.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_throne_room",
+            "hotspotId": "hotspot_shogun_throne_room_answer",
+            "linkName": "The Shogun's Answer",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "A scroll waits beside the throne, sealed with the crown. Inside there is no order and no word, only the Shogun's seal pressed three times: once for each report. The Shogun has heard. The Shogun will not speak yet.",
+            "enabled": true,
+            "questId": "book1-main-36",
+            "position": {
+              "x": -5,
+              "y": 2.9,
+              "z": -21
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_throne_room",
+            "hotspotId": "hotspot_shogun_throne_room_order",
+            "linkName": "The United Watch",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "BY THE SHOGUN, TO EVERY FACTION: From tonight each village keeps one watch over the old tunnels, and every watch reports to the Hub. No village marches on another. No road is closed against another. Whatever wakes below, the colony faces it together.",
+            "enabled": true,
+            "questId": "book1-main-40",
+            "position": {
+              "x": 5,
+              "y": 2.9,
+              "z": -21.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
           }
         ],
-        "updatedAt": "2026-10-10T13:58:47.463Z"
+        "updatedAt": "2026-10-11T13:38:18.501Z"
       },
       "shogun_court_of_records": {
         "playerFloorOffset": 0,
@@ -48951,6 +49026,118 @@
         ],
         "updatedAt": "2026-10-10T13:58:47.464Z"
       }
+    }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_sho-summons",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -6,
+      "y": 0.1,
+      "z": 7
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "shogun",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "sho-summons",
+      "action": "read",
+      "label": "Read the summons",
+      "text": "BY THE SHOGUN: Every faction shall bring what it knows, not what it fears, to the Shogun Table. Until the Table has spoken, no village marches, no road is closed, and nothing from below is sold."
     }
   }
 ]

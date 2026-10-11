@@ -24157,9 +24157,34 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "kenshi_duel_hall",
+            "hotspotId": "hotspot_kenshi_duel_hall_crack",
+            "linkName": "The Crack",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "A thin crack runs through the raked sand and the stone beneath, then turns back on itself, as if something below had pressed up and let go. Red dust lines its edges.",
+            "enabled": true,
+            "questId": "book1-main-34",
+            "position": {
+              "x": 2.5,
+              "y": 1.9,
+              "z": -1.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
           }
         ],
-        "updatedAt": "2026-10-10T14:31:47.755Z"
+        "updatedAt": "2026-10-11T13:38:19.632Z"
       },
       "kenshi_library_of_forms": {
         "playerFloorOffset": 0,
