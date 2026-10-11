@@ -2413,6 +2413,35 @@ const BOOK1_WIRING = {
         { id:'return-foreman', objective:'Bring the relic chips to the Bushi Foreman.', objectiveType:'talkToNpc', targetNpcId:'bushi-smith-01', villageId:'bushi',
           say:['Carved, then grown over, then carved again. Same as the stone the Kenshi found.', 'We dug up yesterday and found something much older.'] }
       ] },
+    11: { giver:'warrior-sensei-01',
+      offer:['One more thing, if you have the legs for it.', 'Our drill bells are tuned for battle. When the ground shakes, the Warriors hear "to the walls" and run straight under falling stone.', 'Ring the three bells by the south-west, south-east and north-east towers. Then we choose a safe signal.'],
+      steps:[
+        { id:'test-bells', objective:'Ring the three drill bells by the south-west, south-east and north-east towers.', objectiveType:'useQuestSpot', targetObjectId:'war-bell', count:3, villageId:'warrior' },
+        { id:'safe-signal', objective:'Tell the Drill Master which bell makes the safe signal.', objectiveType:'talkToNpc', targetNpcId:'warrior-sensei-01', villageId:'warrior',
+          say:['The cracked one. Of course: nobody runs from it, everybody stops.', 'Three slow strokes on the cracked bell: tremor, stand still, wait. A good alarm tells ants where to go, not only what to fear.'] }
+      ] },
+    12: { giver:'warrior-veteran-01',
+      offer:['In the Fighting Ring under the dojo roof, the shadows on the sand move out of time with the torches. My pupils will not spar there any more.', 'Look at the ring for me. Then hold a stance by the training posts, so I know your nerve is better than theirs.'],
+      steps:[
+        { id:'ring-shadows', objective:'Look at the shadows on the sand in the Fighting Ring, inside the great dojo.', objectiveType:'interactInteriorLink', targetInteriorId:'warrior_fighting_ring', targetObjectId:'hotspot_warrior_fighting_ring_shadows', villageId:'warrior' },
+        { id:'hold-stance', objective:'Hold your stance by the training posts in the sand yard.', objectiveType:'useQuestSpot', targetObjectId:'war-stance', villageId:'warrior' },
+        { id:'tell-trainer', objective:'Tell the Warrior Trainer what you saw.', objectiveType:'talkToNpc', targetNpcId:'warrior-veteran-01', villageId:'warrior',
+          say:['Shadows that breathe on their own. I will tell my pupils it is only the torches.', 'Even the shadows seemed to be practising for something.'] }
+      ] },
+    13: { giver:'shogun-steward-01',
+      offer:['Every warning the Shogun sends is tied with a purple ribbon and sealed. Three ribbons blew loose in the last storm.', 'An unsealed warning is a rumour. Find them before someone reads one as an order: one by the pond in the lower court, two on the top terrace.'],
+      steps:[
+        { id:'find-ribbons', objective:'Find the three seal ribbons: by the pond in the lower court and on the top terrace by the shrine and the storehouse.', objectiveType:'collectCollectible', targetObjectId:'sho-seal-ribbon', count:3, villageId:'shogun' },
+        { id:'return-ribbons', objective:'Return the ribbons to the Shogun Herald.', objectiveType:'talkToNpc', targetNpcId:'shogun-steward-01', villageId:'shogun',
+          say:['All three, and still sealed. Good.', 'Authority travels farther when it is tied with the right ribbon.'] }
+      ] },
+    14: { giver:'shogun-scholar-01',
+      offer:['After every tremor the court falls silent, and I write the silence down: how long, and who speaks first.', 'The silences are growing longer. Read my two latest notes in the Court of Records, then tell me I am imagining it.'],
+      steps:[
+        { id:'read-notes', objective:'Read the scribe\'s two latest notes in the Court of Records: on the desk by the door and on the drawer wall.', objectiveType:'interactInteriorLink', targetInteriorId:'shogun_court_of_records', targetObjectId:'hotspot_shogun_court_of_records_note', count:2, villageId:'shogun' },
+        { id:'tell-scribe', objective:'Speak with the Court Scribe.', objectiveType:'talkToNpc', targetNpcId:'shogun-scholar-01', villageId:'shogun',
+          say:['Forty breaths, then ninety. You read it too.', 'Silence can be evidence when everyone hears it at once.'] }
+      ] },
     15: { giver:'buke-scholar-01',
       offer:['The canals sit right over the pressure lines. If anything cracks first, it will be a footbridge.', 'Check both footbridges and the west canal spout for me.'],
       steps:[
