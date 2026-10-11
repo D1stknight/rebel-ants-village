@@ -7683,6 +7683,27 @@ function buildTreasureChest(root) {
   // a looted chest stays open (this player already took its coins)
   root.metadata.opened = isChestLooted(root.metadata.chestId);
 
+  // one mesh per material for the body and one per material for the lid (it still swings on its pivot): ~47 draw calls -> 11
+  [root, lidPivot].forEach(parent => {
+    const groups = new Map();
+    parent.getChildMeshes(true).forEach(m => { if (!groups.has(m.material)) groups.set(m.material, []); groups.get(m.material).push(m); });
+    groups.forEach((parts, mat) => {
+      if (parts.length < 2) return;
+      const data = parts.map(m => {
+        const d = BABYLON.VertexData.ExtractFromMesh(m, true, true);
+        d.transform(BABYLON.Matrix.Compose(m.scaling, m.rotationQuaternion || BABYLON.Quaternion.FromEulerVector(m.rotation), m.position));
+        return d;
+      });
+      const merged = new BABYLON.Mesh(`${parts[0].name}_merged`, scene);
+      data[0].merge(data.slice(1), true);
+      data[0].applyToMesh(merged);
+      merged.parent = parent;
+      merged.material = mat;
+      markEditable(merged);
+      parts.forEach(m => m.dispose());
+    });
+  });
+
   const glow = BABYLON.MeshBuilder.CreateCylinder(`${root.name}_rewardGlow`, { diameter: 2.2, height: 0.06, tessellation: 32 }, scene);
   glow.parent = root;
   glow.position.set(0, 1.42, 0);
