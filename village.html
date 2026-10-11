@@ -30157,7 +30157,7 @@ function applyInteriorHotspotVisual(hotspot) {
   if (panel) {
     panel.material?.dispose?.(false, false, true);
     panel.material = makeInteriorHotspotMaterial(hotspot);
-    panel.setEnabled(hotspot.metadata.enabled !== false && _interiorHotspotHelpersVisible);
+    panel.setEnabled(hotspot.metadata.enabled !== false && _interiorHotspotHelpersVisible && (adminMode || !hotspot.metadata.secretId)); // a secret has no marker (the editor still shows it)
   }
   hotspot.setEnabled(hotspot.metadata.enabled !== false || _interiorHotspotHelpersVisible);
 }
