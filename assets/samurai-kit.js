@@ -6691,6 +6691,11 @@
     chz_bait_shop: [{ x: 0, z: -1, halfX: 6.5, halfZ: 5, y: .5 }], chz_dice_hall: [{ x: 0, z: -1, halfX: 6.5, halfZ: 5, y: .5 }],
     chz_dock: [{ x: 0, z: 0, halfX: 4.05, halfZ: 3.05, y: 0 }], chz_pier: [{ x: 0, z: 0, halfX: 1.55, halfZ: 5.05, y: 0 }],
     shogun_bridge: [{ x: 0, z: -2.75, halfX: 1.05, halfZ: 2.75, y0: 0, y1: 1.3 }, { x: 0, z: 2.75, halfX: 1.05, halfZ: 2.75, y0: 1.3, y1: 0 }],
-    ronin_great_dojo: [{ x: 0, z: 0, halfX: 15, halfZ: 12, y: 1.6 }, { x: 0, z: -13.13, halfX: 4.4, halfZ: 1.13, y0: 0, y1: 1.6, steps: 5, surface: 'stone' }] };
+    ronin_great_dojo: [{ x: 0, z: 0, halfX: 15, halfZ: 12, y: 1.6 }, { x: 0, z: -13.13, halfX: 4.4, halfZ: 1.13, y0: 0, y1: 1.6, steps: 5, surface: 'stone' }],
+    // the Bushi dojo's stone base, its veranda boards and three front steps; the Ashigaru dojo's floor and four steps
+    bushi_great_dojo: [{ x: 0, z: 0, halfX: 14, halfZ: 9, y: 1 }, { x: 0, z: -8.2, halfX: 13.7, halfZ: .9, y: 1.14 }, { x: 0, z: -9.675, halfX: 5, halfZ: .675, y0: 0, y1: 1, steps: 3, surface: 'stone' }],
+    ashi_great_dojo: [{ x: 0, z: 0, halfX: 12.8, halfZ: 8.3, y: 1.52 }, { x: 0, z: -9.2, halfX: 4, halfZ: .9, y0: 0, y1: 1.4, steps: 4, surface: 'stone' }] };
+  // the dojos built on the Samurai dojo share its base and steps
+  for (const t of ['wok_great_dojo', 'yam_great_dojo', 'kenshi_great_dojo', 'sohei_great_dojo', 'buke_great_hall']) decks[t] = samDojoDeck;
   window.SamuraiKit = { build, setLightFactor, animate, actorAction, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();
