@@ -38833,5 +38833,1118 @@
       "label": "Walk into the passage",
       "text": "Between the stones of the rock garden a crack opens into the hill. Cold air, then darkness. The passage runs east under the hills, past roots and old Ronin handprints, until daylight again: grass, a palisade, Samurai lanterns. You are behind the watch posts."
     }
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_ronin_shadow_dojo",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 0,
+      "y": 1.68,
+      "z": 59
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ronin",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_ronin_shadow_dojo",
+    "targetObjectId": null,
+    "interiorName": "the Shadow Dojo Door",
+    "interiorType": "ronin_shadow_dojo",
+    "targetInteriorId": "ronin_shadow_dojo",
+    "promptText": "Press O to Enter the Shadow Dojo",
+    "interiorDefinition": {
+      "id": "ronin_shadow_dojo",
+      "builtIn": false,
+      "title": "the Shadow Dojo",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_ronin_shadow_dojo",
+      "prompt": "Press O to Enter",
+      "description": "Where the Ronin train in the dark: a black floor like still water, bars of moonlight, the red hand.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.6,
+        "g": 0.1,
+        "b": 0.1
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "ronin_shadow_dojo",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_ronin_strategy_room",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 41.5,
+      "y": 1,
+      "z": 12
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ronin",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_ronin_strategy_room",
+    "targetObjectId": null,
+    "interiorName": "the Strategy Room Door",
+    "interiorType": "ronin_strategy_room",
+    "targetInteriorId": "ronin_strategy_room",
+    "promptText": "Press O to Enter the Strategy Room",
+    "interiorDefinition": {
+      "id": "ronin_strategy_room",
+      "builtIn": false,
+      "title": "the Strategy Room",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_ronin_strategy",
+      "prompt": "Press O to Enter",
+      "description": "One candle, one map, one plan at a time.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.6,
+        "g": 0.1,
+        "b": 0.1
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "ronin_strategy_room",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_ronin_hall_of_debts",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -40.8,
+      "y": 1,
+      "z": 12
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ronin",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_ronin_hall_of_debts",
+    "targetObjectId": null,
+    "interiorName": "the Hall of Debts Door",
+    "interiorType": "ronin_hall_of_debts",
+    "targetInteriorId": "ronin_hall_of_debts",
+    "promptText": "Press O to Enter the Hall of Debts",
+    "interiorDefinition": {
+      "id": "ronin_hall_of_debts",
+      "builtIn": false,
+      "title": "the Hall of Debts",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_ronin_debts",
+      "prompt": "Press O to Enter",
+      "description": "Every debt the Ronin owe, and every debt owed to them, on a tablet of its own.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.6,
+        "g": 0.1,
+        "b": 0.1
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "ronin_hall_of_debts",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_ronin_old_door",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -9,
+      "y": 0,
+      "z": 71
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ronin",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_ronin_old_door",
+    "targetObjectId": null,
+    "interiorName": "the Old Door Door",
+    "interiorType": "ronin_old_door",
+    "targetInteriorId": "ronin_old_door",
+    "promptText": "Press O to Enter the Old Door",
+    "interiorDefinition": {
+      "id": "ronin_old_door",
+      "builtIn": false,
+      "title": "the Old Door",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_ronin_old_door",
+      "prompt": "Press O to Enter",
+      "description": "The door the Ronin swore to keep shut.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.6,
+        "g": 0.1,
+        "b": 0.1
+      },
+      "requiresQuestId": "book1-main-44"
+    },
+    "enabled": true,
+    "questObjectiveId": "ronin_old_door",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_room_configs",
+    "name": "interiorRoomConfigs",
+    "position": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "configs": {
+      "ronin_shadow_dojo": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_ronin",
+            "name": "Rebel Ants: Ronin",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 12,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "151",
+                "title": "Rebel Ants: Battle for the Colony #151",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=151&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/151"
+              },
+              {
+                "tokenId": "167",
+                "title": "Rebel Ants: Battle for the Colony #167",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=167&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/167"
+              },
+              {
+                "tokenId": "439",
+                "title": "Rebel Ants: Battle for the Colony #439",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=439&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/439"
+              },
+              {
+                "tokenId": "567",
+                "title": "Rebel Ants: Battle for the Colony #567",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=567&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/567"
+              },
+              {
+                "tokenId": "647",
+                "title": "Rebel Ants: Battle for the Colony #647",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=647&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/647"
+              },
+              {
+                "tokenId": "791",
+                "title": "Rebel Ants: Battle for the Colony #791",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=791&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/791"
+              },
+              {
+                "tokenId": "807",
+                "title": "Rebel Ants: Battle for the Colony #807",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=807&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/807"
+              },
+              {
+                "tokenId": "1095",
+                "title": "Rebel Ants: Battle for the Colony #1095",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1095&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1095"
+              },
+              {
+                "tokenId": "1127",
+                "title": "Rebel Ants: Battle for the Colony #1127",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1127&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1127"
+              },
+              {
+                "tokenId": "1159",
+                "title": "Rebel Ants: Battle for the Colony #1159",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1159&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1159"
+              },
+              {
+                "tokenId": "1463",
+                "title": "Rebel Ants: Battle for the Colony #1463",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1463&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1463"
+              },
+              {
+                "tokenId": "1527",
+                "title": "Rebel Ants: Battle for the Colony #1527",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1527&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1527"
+              }
+            ],
+            "updatedAt": "2026-10-10T13:20:27.732Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "ronin_shadow_dojo",
+            "frameId": "nft_frame_ronin_shadow_dojo_1",
+            "frameName": "Ronin Rebel",
+            "collectionId": "rebel_ants_ronin",
+            "frameSlot": 1,
+            "tokenId": "151",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -14.6,
+              "y": 3.9,
+              "z": -14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.4,
+              "y": 2.4,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ronin_shadow_dojo",
+            "frameId": "nft_frame_ronin_shadow_dojo_2",
+            "frameName": "Ronin Rebel",
+            "collectionId": "rebel_ants_ronin",
+            "frameSlot": 2,
+            "tokenId": "167",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 14.6,
+              "y": 3.9,
+              "z": -14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.4,
+              "y": 2.4,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ronin_shadow_dojo",
+            "frameId": "nft_frame_ronin_shadow_dojo_3",
+            "frameName": "Ronin Rebel",
+            "collectionId": "rebel_ants_ronin",
+            "frameSlot": 3,
+            "tokenId": "439",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -8.6,
+              "y": 3.9,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.4,
+              "y": 2.4,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ronin_shadow_dojo",
+            "frameId": "nft_frame_ronin_shadow_dojo_4",
+            "frameName": "Ronin Rebel",
+            "collectionId": "rebel_ants_ronin",
+            "frameSlot": 4,
+            "tokenId": "567",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 8.6,
+              "y": 3.9,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.4,
+              "y": 2.4,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ronin_shadow_dojo",
+            "frameId": "nft_frame_ronin_shadow_dojo_5",
+            "frameName": "Ronin Rebel",
+            "collectionId": "rebel_ants_ronin",
+            "frameSlot": 5,
+            "tokenId": "647",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -14.4,
+              "y": 3.9,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.4,
+              "y": 2.4,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ronin_shadow_dojo",
+            "frameId": "nft_frame_ronin_shadow_dojo_6",
+            "frameName": "Ronin Rebel",
+            "collectionId": "rebel_ants_ronin",
+            "frameSlot": 6,
+            "tokenId": "791",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 14.4,
+              "y": 3.9,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.4,
+              "y": 2.4,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "ronin_shadow_dojo",
+            "hotspotId": "hotspot_ronin_shadow_dojo_code",
+            "linkName": "The Silent Code",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Silence is the first weapon. The moon is the only witness.\n\nCross the light without being seen and you may train here. Cross it without making a sound and you may teach.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 1.4,
+              "z": -14.8
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T13:20:27.735Z"
+      },
+      "ronin_strategy_room": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_ronin",
+            "name": "Rebel Ants: Ronin",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 12,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "151",
+                "title": "Rebel Ants: Battle for the Colony #151",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=151&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/151"
+              },
+              {
+                "tokenId": "167",
+                "title": "Rebel Ants: Battle for the Colony #167",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=167&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/167"
+              },
+              {
+                "tokenId": "439",
+                "title": "Rebel Ants: Battle for the Colony #439",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=439&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/439"
+              },
+              {
+                "tokenId": "567",
+                "title": "Rebel Ants: Battle for the Colony #567",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=567&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/567"
+              },
+              {
+                "tokenId": "647",
+                "title": "Rebel Ants: Battle for the Colony #647",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=647&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/647"
+              },
+              {
+                "tokenId": "791",
+                "title": "Rebel Ants: Battle for the Colony #791",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=791&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/791"
+              },
+              {
+                "tokenId": "807",
+                "title": "Rebel Ants: Battle for the Colony #807",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=807&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/807"
+              },
+              {
+                "tokenId": "1095",
+                "title": "Rebel Ants: Battle for the Colony #1095",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1095&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1095"
+              },
+              {
+                "tokenId": "1127",
+                "title": "Rebel Ants: Battle for the Colony #1127",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1127&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1127"
+              },
+              {
+                "tokenId": "1159",
+                "title": "Rebel Ants: Battle for the Colony #1159",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1159&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1159"
+              },
+              {
+                "tokenId": "1463",
+                "title": "Rebel Ants: Battle for the Colony #1463",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1463&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1463"
+              },
+              {
+                "tokenId": "1527",
+                "title": "Rebel Ants: Battle for the Colony #1527",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1527&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1527"
+              }
+            ],
+            "updatedAt": "2026-10-10T13:20:27.735Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "ronin_strategy_room",
+            "frameId": "nft_frame_ronin_strategy_room_7",
+            "frameName": "Ronin Rebel",
+            "collectionId": "rebel_ants_ronin",
+            "frameSlot": 7,
+            "tokenId": "807",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -8.86,
+              "y": 3.3,
+              "z": -4.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ronin_strategy_room",
+            "frameId": "nft_frame_ronin_strategy_room_8",
+            "frameName": "Ronin Rebel",
+            "collectionId": "rebel_ants_ronin",
+            "frameSlot": 8,
+            "tokenId": "1095",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -8.86,
+              "y": 3.3,
+              "z": 4.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ronin_strategy_room",
+            "frameId": "nft_frame_ronin_strategy_room_9",
+            "frameName": "Ronin Rebel",
+            "collectionId": "rebel_ants_ronin",
+            "frameSlot": 9,
+            "tokenId": "1127",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 8.86,
+              "y": 3.3,
+              "z": 3.8
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "ronin_strategy_room",
+            "hotspotId": "hotspot_ronin_strategy_room_wall",
+            "linkName": "The Target Wall",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Names, places, routes, joined by red string.\n\nThe string always ends at the same place: under the Hub.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 3.4,
+              "z": -6.65
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.4,
+              "y": 1,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ronin_strategy_room",
+            "hotspotId": "hotspot_ronin_strategy_room_blades",
+            "linkName": "Hidden Blades",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The panel slides without a sound. Five blades, oiled and ready, none of them signed.",
+            "enabled": true,
+            "position": {
+              "x": 8.55,
+              "y": 2.1,
+              "z": -2.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.8,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T13:20:27.735Z"
+      },
+      "ronin_hall_of_debts": {
+        "playerFloorOffset": 0,
+        "hotspots": [
+          {
+            "interiorId": "ronin_hall_of_debts",
+            "hotspotId": "hotspot_ronin_hall_of_debts_altar",
+            "linkName": "The Altar of Debts",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "THE RONIN KEEP THE DOOR SHUT. THE DEBT IS PAID IN SILENCE.\n\nEvery tablet in this hall is a debt, owed or owing. When one is paid, its cord is cut and the tablet is burned in this flame.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 1.25,
+              "z": -19.05
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.6,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ronin_hall_of_debts",
+            "hotspotId": "hotspot_ronin_hall_of_debts_fresh",
+            "linkName": "A New Tablet",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "One tablet is new. The ink still smells of soot:\n\nTHE HUB. FOR THE WARNING. UNPAID.",
+            "enabled": true,
+            "position": {
+              "x": -4.75,
+              "y": 2.4,
+              "z": 3
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.7,
+              "y": 0.7,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T13:20:27.735Z"
+      },
+      "ronin_old_door": {
+        "playerFloorOffset": 0,
+        "hotspots": [
+          {
+            "interiorId": "ronin_old_door",
+            "hotspotId": "hotspot_ronin_old_door_door",
+            "linkName": "The Old Door",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Eleven marks in a ring, one for every Rebel village, and the red hand across the seam.\n\nUnder the hand, cut deep: WE SEALED IT TOGETHER. OPEN IT ONLY TOGETHER.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 3.6999999999999997,
+              "z": -16.8
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.4,
+              "y": 1,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T13:20:27.735Z"
+      }
+    }
   }
 ]
