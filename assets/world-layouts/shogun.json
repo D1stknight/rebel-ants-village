@@ -46766,9 +46766,9 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 0,
-      "y": 0.08,
-      "z": 69
+      "x": 6.5,
+      "y": 0.06,
+      "z": 65.5
     },
     "rotation": {
       "x": 0,
@@ -46873,9 +46873,9 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": -39,
+      "x": -44,
       "y": 0.1,
-      "z": 35
+      "z": 35.5
     },
     "rotation": {
       "x": 0,
@@ -47078,5 +47078,1879 @@
     "enabled": true,
     "questObjectiveId": null,
     "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_shogun_throne_room",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 0,
+      "y": 1.58,
+      "z": 50.6
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "shogun",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_shogun_throne_room",
+    "targetObjectId": null,
+    "interiorName": "the Throne Room Door",
+    "interiorType": "shogun_throne_room",
+    "targetInteriorId": "shogun_throne_room",
+    "promptText": "Press O to Enter the Throne Room",
+    "interiorDefinition": {
+      "id": "shogun_throne_room",
+      "builtIn": false,
+      "title": "The Throne Room",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_shogun_throne",
+      "prompt": "Press O to Enter",
+      "description": "Beyond the screen behind the dais: the Shogun Table, the throne and its wisteria.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.62,
+        "g": 0.3,
+        "b": 0.7
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "shogun_throne_room",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_shogun_court_of_records",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -39,
+      "y": 1.1,
+      "z": 38.28
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "shogun",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_shogun_court_of_records",
+    "targetObjectId": null,
+    "interiorName": "the Court of Records Door",
+    "interiorType": "shogun_court_of_records",
+    "targetInteriorId": "shogun_court_of_records",
+    "promptText": "Press O to Enter the Court of Records",
+    "interiorDefinition": {
+      "id": "shogun_court_of_records",
+      "builtIn": false,
+      "title": "The Court of Records",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_shogun_records",
+      "prompt": "Press O to Enter",
+      "description": "Where every judgement of the Shogunate is written down, sealed and kept.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.62,
+        "g": 0.3,
+        "b": 0.7
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "shogun_court_of_records",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_shogun_keep_interior",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 0,
+      "y": 0.08,
+      "z": 69
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "shogun",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_shogun_keep_interior",
+    "targetObjectId": null,
+    "interiorName": "the Keep Door",
+    "interiorType": "shogun_keep_interior",
+    "targetInteriorId": "shogun_keep_interior",
+    "promptText": "Press O to Enter the Keep",
+    "interiorDefinition": {
+      "id": "shogun_keep_interior",
+      "builtIn": false,
+      "title": "The Keep",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_shogun_keep",
+      "prompt": "Press O to Enter",
+      "description": "The castle keep: stairs up the walls to the lookout over the valley.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.62,
+        "g": 0.3,
+        "b": 0.7
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "shogun_keep_interior",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_shogun_war_council",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 40,
+      "y": 1.1,
+      "z": 39.05
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "shogun",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_shogun_war_council",
+    "targetObjectId": null,
+    "interiorName": "the War Council Door",
+    "interiorType": "shogun_war_council",
+    "targetInteriorId": "shogun_war_council",
+    "promptText": "Press O to Enter the War Council",
+    "interiorDefinition": {
+      "id": "shogun_war_council",
+      "builtIn": false,
+      "title": "The War Council",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_shogun_council",
+      "prompt": "Press O to Enter",
+      "description": "The round chamber where the Shogun's generals plan, under a dome of stars.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.62,
+        "g": 0.3,
+        "b": 0.7
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "shogun_war_council",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_room_configs",
+    "name": "interiorRoomConfigs",
+    "position": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "configs": {
+      "shogun_throne_room": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_shogun",
+            "name": "Rebel Ants: Shogun",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "199",
+                "title": "Rebel Ants: Battle for the Colony #199",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=199&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/199"
+              },
+              {
+                "tokenId": "327",
+                "title": "Rebel Ants: Battle for the Colony #327",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=327&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/327"
+              },
+              {
+                "tokenId": "359",
+                "title": "Rebel Ants: Battle for the Colony #359",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=359&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/359"
+              },
+              {
+                "tokenId": "871",
+                "title": "Rebel Ants: Battle for the Colony #871",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=871&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/871"
+              },
+              {
+                "tokenId": "887",
+                "title": "Rebel Ants: Battle for the Colony #887",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=887&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/887"
+              },
+              {
+                "tokenId": "935",
+                "title": "Rebel Ants: Battle for the Colony #935",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=935&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/935"
+              },
+              {
+                "tokenId": "1047",
+                "title": "Rebel Ants: Battle for the Colony #1047",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1047&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1047"
+              },
+              {
+                "tokenId": "1255",
+                "title": "Rebel Ants: Battle for the Colony #1255",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1255&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1255"
+              },
+              {
+                "tokenId": "1399",
+                "title": "Rebel Ants: Battle for the Colony #1399",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1399&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1399"
+              },
+              {
+                "tokenId": "1431",
+                "title": "Rebel Ants: Battle for the Colony #1431",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1431&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1431"
+              },
+              {
+                "tokenId": "1703",
+                "title": "Rebel Ants: Battle for the Colony #1703",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1703&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1703"
+              },
+              {
+                "tokenId": "1847",
+                "title": "Rebel Ants: Battle for the Colony #1847",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1847&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1847"
+              },
+              {
+                "tokenId": "1895",
+                "title": "Rebel Ants: Battle for the Colony #1895",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1895&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1895"
+              },
+              {
+                "tokenId": "1975",
+                "title": "Rebel Ants: Battle for the Colony #1975",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1975&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1975"
+              },
+              {
+                "tokenId": "2135",
+                "title": "Rebel Ants: Battle for the Colony #2135",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2135&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2135"
+              },
+              {
+                "tokenId": "2183",
+                "title": "Rebel Ants: Battle for the Colony #2183",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2183&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2183"
+              }
+            ],
+            "updatedAt": "2026-10-10T13:58:47.463Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "shogun_throne_room",
+            "frameId": "nft_frame_shogun_throne_room_1",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 1,
+            "tokenId": "199",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -16.86,
+              "y": 3.9,
+              "z": -12.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_throne_room",
+            "frameId": "nft_frame_shogun_throne_room_2",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 2,
+            "tokenId": "327",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 16.86,
+              "y": 3.9,
+              "z": -12.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_throne_room",
+            "frameId": "nft_frame_shogun_throne_room_3",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 3,
+            "tokenId": "359",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -16.86,
+              "y": 3.9,
+              "z": 2.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_throne_room",
+            "frameId": "nft_frame_shogun_throne_room_4",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 4,
+            "tokenId": "871",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 16.86,
+              "y": 3.9,
+              "z": 2.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_throne_room",
+            "frameId": "nft_frame_shogun_throne_room_5",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 5,
+            "tokenId": "887",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -16.86,
+              "y": 3.9,
+              "z": 17.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_throne_room",
+            "frameId": "nft_frame_shogun_throne_room_6",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 6,
+            "tokenId": "935",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 16.86,
+              "y": 3.9,
+              "z": 17.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "shogun_throne_room",
+            "hotspotId": "hotspot_shogun_throne_room_table",
+            "linkName": "The Shogun Table",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Twelve seats: eleven villages and the colony, each under its own banner.\n\nThe Shogun does not sit at the table but above it, so that every voice reaches the throne equally.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.4,
+              "z": 11.75
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.4,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_throne_room",
+            "hotspotId": "hotspot_shogun_throne_room_throne",
+            "linkName": "The Throne",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Power through wisdom. The crown on the throne's back is the Shogun's mark; the seat beneath it has been empty since the colony divided.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.7,
+              "z": -19.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_throne_room",
+            "hotspotId": "hotspot_shogun_throne_room_wisteria",
+            "linkName": "The Wisteria",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Planted the day the first council met. The old Shogun said it would flower in full only when all twelve seats were filled again.",
+            "enabled": true,
+            "position": {
+              "x": 9.2,
+              "y": 2.5,
+              "z": -19.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T13:58:47.463Z"
+      },
+      "shogun_court_of_records": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_shogun",
+            "name": "Rebel Ants: Shogun",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "199",
+                "title": "Rebel Ants: Battle for the Colony #199",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=199&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/199"
+              },
+              {
+                "tokenId": "327",
+                "title": "Rebel Ants: Battle for the Colony #327",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=327&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/327"
+              },
+              {
+                "tokenId": "359",
+                "title": "Rebel Ants: Battle for the Colony #359",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=359&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/359"
+              },
+              {
+                "tokenId": "871",
+                "title": "Rebel Ants: Battle for the Colony #871",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=871&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/871"
+              },
+              {
+                "tokenId": "887",
+                "title": "Rebel Ants: Battle for the Colony #887",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=887&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/887"
+              },
+              {
+                "tokenId": "935",
+                "title": "Rebel Ants: Battle for the Colony #935",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=935&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/935"
+              },
+              {
+                "tokenId": "1047",
+                "title": "Rebel Ants: Battle for the Colony #1047",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1047&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1047"
+              },
+              {
+                "tokenId": "1255",
+                "title": "Rebel Ants: Battle for the Colony #1255",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1255&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1255"
+              },
+              {
+                "tokenId": "1399",
+                "title": "Rebel Ants: Battle for the Colony #1399",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1399&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1399"
+              },
+              {
+                "tokenId": "1431",
+                "title": "Rebel Ants: Battle for the Colony #1431",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1431&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1431"
+              },
+              {
+                "tokenId": "1703",
+                "title": "Rebel Ants: Battle for the Colony #1703",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1703&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1703"
+              },
+              {
+                "tokenId": "1847",
+                "title": "Rebel Ants: Battle for the Colony #1847",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1847&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1847"
+              },
+              {
+                "tokenId": "1895",
+                "title": "Rebel Ants: Battle for the Colony #1895",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1895&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1895"
+              },
+              {
+                "tokenId": "1975",
+                "title": "Rebel Ants: Battle for the Colony #1975",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1975&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1975"
+              },
+              {
+                "tokenId": "2135",
+                "title": "Rebel Ants: Battle for the Colony #2135",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2135&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2135"
+              },
+              {
+                "tokenId": "2183",
+                "title": "Rebel Ants: Battle for the Colony #2183",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2183&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2183"
+              }
+            ],
+            "updatedAt": "2026-10-10T13:58:47.463Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "shogun_court_of_records",
+            "frameId": "nft_frame_shogun_court_of_records_7",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 7,
+            "tokenId": "1047",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -4.2,
+              "y": 4.7,
+              "z": 12.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_court_of_records",
+            "frameId": "nft_frame_shogun_court_of_records_8",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 8,
+            "tokenId": "1255",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 4.2,
+              "y": 4.7,
+              "z": 12.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_court_of_records",
+            "frameId": "nft_frame_shogun_court_of_records_9",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 9,
+            "tokenId": "1399",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -11.4,
+              "y": 4.7,
+              "z": 12.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_court_of_records",
+            "frameId": "nft_frame_shogun_court_of_records_10",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 10,
+            "tokenId": "1431",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 11.4,
+              "y": 4.7,
+              "z": 12.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "shogun_court_of_records",
+            "hotspotId": "hotspot_shogun_court_of_records_bench",
+            "linkName": "The Magistrate's Bench",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Three tiers: the clerks who write, the scribes who copy, the magistrate who decides.\n\nThe petitioner kneels on the straw mat in the white court below, where nothing can be hidden.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.1,
+              "z": -6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.4,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_court_of_records",
+            "hotspotId": "hotspot_shogun_court_of_records_press",
+            "linkName": "The Seal Press",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Every judgement is pressed with the Shogun's seal in red. A copy goes into a drawer on these walls, and stays there for ever.",
+            "enabled": true,
+            "position": {
+              "x": 10.2,
+              "y": 2.9,
+              "z": 8.9
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_court_of_records",
+            "hotspotId": "hotspot_shogun_court_of_records_drawers",
+            "linkName": "Ten Thousand Drawers",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Each drawer holds the records of one family of the colony. The ladders roll along the brass rails; the clerks know every drawer by heart.",
+            "enabled": true,
+            "position": {
+              "x": -14.1,
+              "y": 3.1,
+              "z": 1.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T13:58:47.464Z"
+      },
+      "shogun_keep_interior": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_shogun",
+            "name": "Rebel Ants: Shogun",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "199",
+                "title": "Rebel Ants: Battle for the Colony #199",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=199&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/199"
+              },
+              {
+                "tokenId": "327",
+                "title": "Rebel Ants: Battle for the Colony #327",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=327&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/327"
+              },
+              {
+                "tokenId": "359",
+                "title": "Rebel Ants: Battle for the Colony #359",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=359&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/359"
+              },
+              {
+                "tokenId": "871",
+                "title": "Rebel Ants: Battle for the Colony #871",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=871&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/871"
+              },
+              {
+                "tokenId": "887",
+                "title": "Rebel Ants: Battle for the Colony #887",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=887&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/887"
+              },
+              {
+                "tokenId": "935",
+                "title": "Rebel Ants: Battle for the Colony #935",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=935&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/935"
+              },
+              {
+                "tokenId": "1047",
+                "title": "Rebel Ants: Battle for the Colony #1047",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1047&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1047"
+              },
+              {
+                "tokenId": "1255",
+                "title": "Rebel Ants: Battle for the Colony #1255",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1255&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1255"
+              },
+              {
+                "tokenId": "1399",
+                "title": "Rebel Ants: Battle for the Colony #1399",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1399&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1399"
+              },
+              {
+                "tokenId": "1431",
+                "title": "Rebel Ants: Battle for the Colony #1431",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1431&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1431"
+              },
+              {
+                "tokenId": "1703",
+                "title": "Rebel Ants: Battle for the Colony #1703",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1703&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1703"
+              },
+              {
+                "tokenId": "1847",
+                "title": "Rebel Ants: Battle for the Colony #1847",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1847&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1847"
+              },
+              {
+                "tokenId": "1895",
+                "title": "Rebel Ants: Battle for the Colony #1895",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1895&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1895"
+              },
+              {
+                "tokenId": "1975",
+                "title": "Rebel Ants: Battle for the Colony #1975",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1975&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1975"
+              },
+              {
+                "tokenId": "2135",
+                "title": "Rebel Ants: Battle for the Colony #2135",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2135&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2135"
+              },
+              {
+                "tokenId": "2183",
+                "title": "Rebel Ants: Battle for the Colony #2183",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2183&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2183"
+              }
+            ],
+            "updatedAt": "2026-10-10T13:58:47.464Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "shogun_keep_interior",
+            "frameId": "nft_frame_shogun_keep_interior_11",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 11,
+            "tokenId": "1703",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -7.6,
+              "y": 3.5,
+              "z": 10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_keep_interior",
+            "frameId": "nft_frame_shogun_keep_interior_12",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 12,
+            "tokenId": "1847",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 7.6,
+              "y": 3.5,
+              "z": 10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_keep_interior",
+            "frameId": "nft_frame_shogun_keep_interior_13",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 13,
+            "tokenId": "1895",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -10.86,
+              "y": 14.1,
+              "z": 1
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_keep_interior",
+            "frameId": "nft_frame_shogun_keep_interior_14",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 14,
+            "tokenId": "1975",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 10.86,
+              "y": 8.5,
+              "z": 1.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "shogun_keep_interior",
+            "hotspotId": "hotspot_shogun_keep_interior_armour",
+            "linkName": "The Shogun's Armour",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Purple lacing on black iron. It was worn at the founding of the colony and never since.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 1.9,
+              "z": -7.7
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_keep_interior",
+            "hotspotId": "hotspot_shogun_keep_interior_treasury",
+            "linkName": "The Treasury",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The chests under the stairs hold the colony's reserve: rice notes, gold, and the seals of every village.",
+            "enabled": true,
+            "position": {
+              "x": -9.1,
+              "y": 1.7,
+              "z": 1
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_keep_interior",
+            "hotspotId": "hotspot_shogun_keep_interior_lookout",
+            "linkName": "The Lookout",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "From here the first Shogun watched the villages rise. On a clear evening you can count every roof in the valley.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 20.5,
+              "z": -9.7
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T13:58:47.464Z"
+      },
+      "shogun_war_council": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_shogun",
+            "name": "Rebel Ants: Shogun",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "199",
+                "title": "Rebel Ants: Battle for the Colony #199",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=199&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/199"
+              },
+              {
+                "tokenId": "327",
+                "title": "Rebel Ants: Battle for the Colony #327",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=327&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/327"
+              },
+              {
+                "tokenId": "359",
+                "title": "Rebel Ants: Battle for the Colony #359",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=359&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/359"
+              },
+              {
+                "tokenId": "871",
+                "title": "Rebel Ants: Battle for the Colony #871",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=871&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/871"
+              },
+              {
+                "tokenId": "887",
+                "title": "Rebel Ants: Battle for the Colony #887",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=887&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/887"
+              },
+              {
+                "tokenId": "935",
+                "title": "Rebel Ants: Battle for the Colony #935",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=935&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/935"
+              },
+              {
+                "tokenId": "1047",
+                "title": "Rebel Ants: Battle for the Colony #1047",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1047&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1047"
+              },
+              {
+                "tokenId": "1255",
+                "title": "Rebel Ants: Battle for the Colony #1255",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1255&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1255"
+              },
+              {
+                "tokenId": "1399",
+                "title": "Rebel Ants: Battle for the Colony #1399",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1399&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1399"
+              },
+              {
+                "tokenId": "1431",
+                "title": "Rebel Ants: Battle for the Colony #1431",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1431&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1431"
+              },
+              {
+                "tokenId": "1703",
+                "title": "Rebel Ants: Battle for the Colony #1703",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1703&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1703"
+              },
+              {
+                "tokenId": "1847",
+                "title": "Rebel Ants: Battle for the Colony #1847",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1847&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1847"
+              },
+              {
+                "tokenId": "1895",
+                "title": "Rebel Ants: Battle for the Colony #1895",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1895&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1895"
+              },
+              {
+                "tokenId": "1975",
+                "title": "Rebel Ants: Battle for the Colony #1975",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1975&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1975"
+              },
+              {
+                "tokenId": "2135",
+                "title": "Rebel Ants: Battle for the Colony #2135",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2135&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2135"
+              },
+              {
+                "tokenId": "2183",
+                "title": "Rebel Ants: Battle for the Colony #2183",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2183&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2183"
+              }
+            ],
+            "updatedAt": "2026-10-10T13:58:47.464Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "shogun_war_council",
+            "frameId": "nft_frame_shogun_war_council_15",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 15,
+            "tokenId": "2135",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 6.89,
+              "y": 3.9,
+              "z": 11.934
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0.5235987755982989,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_war_council",
+            "frameId": "nft_frame_shogun_war_council_16",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 16,
+            "tokenId": "2183",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -6.89,
+              "y": 3.9,
+              "z": 11.934
+            },
+            "rotation": {
+              "x": 0,
+              "y": -0.5235987755982987,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_war_council",
+            "frameId": "nft_frame_shogun_war_council_17",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 17,
+            "tokenId": "199",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 11.934,
+              "y": 4.9,
+              "z": 6.89
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.0471975511965979,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_war_council",
+            "frameId": "nft_frame_shogun_war_council_18",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 18,
+            "tokenId": "327",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -11.934,
+              "y": 4.9,
+              "z": 6.89
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.0471975511965979,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_war_council",
+            "frameId": "nft_frame_shogun_war_council_19",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 19,
+            "tokenId": "359",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -11.934,
+              "y": 4.9,
+              "z": -6.89
+            },
+            "rotation": {
+              "x": 0,
+              "y": -2.0943951023931953,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_war_council",
+            "frameId": "nft_frame_shogun_war_council_20",
+            "frameName": "Shogun Rebel",
+            "collectionId": "rebel_ants_shogun",
+            "frameSlot": 20,
+            "tokenId": "871",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 11.934,
+              "y": 4.9,
+              "z": -6.89
+            },
+            "rotation": {
+              "x": 0,
+              "y": -4.1887902047863905,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          }
+        ],
+        "videoScreens": [
+          {
+            "interiorId": "shogun_war_council",
+            "screenId": "video_screen_shogun_war_council",
+            "screenName": "The Warning Book 1",
+            "videoUrl": "/assets/video/interiors/rebel_library/video-1780690684331-Prologue_-1_Final.mp4",
+            "posterUrl": "",
+            "clickUrl": "",
+            "fallbackUrl": "",
+            "liveUrl": "",
+            "isLivePlaceholder": false,
+            "futureLiveMode": false,
+            "autoplay": true,
+            "muted": true,
+            "loop": false,
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 4.324999999999999,
+              "z": -13.17
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 4.044943820224719,
+              "y": 4.05,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "shogun_war_council",
+            "hotspotId": "hotspot_shogun_war_council_map",
+            "linkName": "The Colony Map",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Eleven villages in gold round the Hub, every road and river between them. The generals move lacquer markers across it; tonight the markers are all at home.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.4,
+              "z": 5.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.4,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "shogun_war_council",
+            "hotspotId": "hotspot_shogun_war_council_helmets",
+            "linkName": "The Generals' Helmets",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Four helmets for the four generals of the Shogunate. A general who leaves the council leaves the helmet on its stand.",
+            "enabled": true,
+            "position": {
+              "x": 10.392304845413264,
+              "y": 2.7,
+              "z": 5.999999999999999
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.0471975511965979,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T13:58:47.464Z"
+      }
+    }
   }
 ]
