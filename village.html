@@ -23299,6 +23299,8 @@ document.addEventListener('keyup', e => {
 let _orbitDragging=false, _orbitLastX=0, _orbitLastY=0;
 let _orbitAngleH=Math.PI, _orbitAngleV=0.35;
 let _orbitDist=9;
+// walking is camera-relative: tools steer by turning the orbit (headless walk tests)
+window._walkCamera = { get yaw() { return _orbitAngleH; }, set yaw(a) { _orbitAngleH = a; } };
 scene.onPointerObservable.add(evt=>{
   if(!walkMode)return;
   if(evt.type===BABYLON.PointerEventTypes.POINTERDOWN){_orbitDragging=true;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;}
@@ -24920,27 +24922,30 @@ engine.runRenderLoop(()=>{
   }
   if(walkMode&&charMesh){
     updateForgeActionPlayerMotion();
-    const moveSpeed=4.2*dt,turnSpeed=2.4*dt;
-    const tf=runKey?0.18:0.35;
-    // Back (S / down arrow) turns the character around to walk the other way instead of backing up.
-    const backOnly = moveBackward && !moveForward && !runKey;
-    if (backOnly && !charMesh._backHeld) charMesh._turnAroundTo = charMesh.rotation.y + Math.PI;
-    charMesh._backHeld = backOnly;
-    if (turnLeft || turnRight) charMesh._turnAroundTo = null;
-    let _turningAround = false;
-    if (charMesh._turnAroundTo != null) {
-      let d = charMesh._turnAroundTo - charMesh.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
-      const step = 9 * dt;
-      if (Math.abs(d) <= step) { charMesh.rotation.y += d; charMesh._turnAroundTo = null; }
-      else { charMesh.rotation.y += Math.sign(d) * step; _turningAround = Math.abs(d) > .5; }
+    const moveSpeed=4.2*dt;
+    // Camera-relative movement, as in most third-person games: W / S / A / D (or the arrows) walk away from, toward, left
+    // and right of the camera, and the character turns quickly to face that way (about a quarter second for a right
+    // angle) instead of steering round in a wide arc. R alone runs straight ahead.
+    const inF = (moveForward ? 1 : 0) - (moveBackward ? 1 : 0), inR = (turnRight ? 1 : 0) - (turnLeft ? 1 : 0);
+    let dirX = 0, dirZ = 0;
+    if (inF || inR) {
+      const fx = -Math.sin(_orbitAngleH), fz = -Math.cos(_orbitAngleH); // the camera's forward on the ground; its right is (fz, -fx)
+      const dx = fx * inF + fz * inR, dz = fz * inF - fx * inR, l = Math.hypot(dx, dz) || 1;
+      dirX = dx / l; dirZ = dz / l;
+    } else if (runKey) { dirX = Math.sin(charMesh.rotation.y); dirZ = Math.cos(charMesh.rotation.y); }
+    const hasDir = dirX !== 0 || dirZ !== 0;
+    let _turnRest = 0, _yawRate = 0;
+    if (hasDir) {
+      let d = Math.atan2(dirX, dirZ) - charMesh.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
+      const step = d * (1 - Math.exp(-16 * dt));
+      charMesh.rotation.y += step; _turnRest = d - step; _yawRate = step / Math.max(dt, 1e-3);
     }
-    if(turnLeft)charMesh.rotation.y-=turnSpeed*tf;
-    if(turnRight)charMesh.rotation.y+=turnSpeed*tf;
-    charMesh.rotation.z+=(((turnLeft?1:turnRight?-1:0)*0.08)-charMesh.rotation.z)*0.12;
+    charMesh.rotation.z+=((Math.max(-1,Math.min(1,-_yawRate/8))*0.08)-charMesh.rotation.z)*0.12; // a small lean into the turn
     const fwd=new BABYLON.Vector3(Math.sin(charMesh.rotation.y),0,Math.cos(charMesh.rotation.y));
     if(!charMesh._vel)charMesh._vel=0;
     const actionMovementSuppressed = isForgeActionMovementSuppressed();
-    const tv=actionMovementSuppressed?0:(moveForward||runKey)?moveSpeed*(runKey?2:1):backOnly?(_turningAround?moveSpeed*0.2:moveSpeed):0;
+    // turning right round (more than ~90 degrees still to go): nearly on the spot, then off at full speed
+    const tv=actionMovementSuppressed||!hasDir?0:moveSpeed*(runKey?2:1)*(Math.abs(_turnRest)>1.6?0.25:1);
     const _lf=tv!==0?0.22:0.28; charMesh._vel+=(tv-charMesh._vel)*_lf;
     if(Math.abs(charMesh._vel)>0.0001){
       const _currentPos = charMesh.position.clone();
@@ -24958,7 +24963,9 @@ engine.runRenderLoop(()=>{
     }
     if(animState!==2&&animState<3){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1);updateSandFootprints(_terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
-    if(moveForward||moveBackward||runKey)_orbitAngleH+=(charMesh.rotation.y+Math.PI-_orbitAngleH)*0.04;
+    // the camera swings back behind only when running straight ahead with R (no direction keys): following the
+    // character's facing while walking sideways or toward the camera would turn the walk into a circle
+    if(runKey&&!inF&&!inR){const _d=charMesh.rotation.y+Math.PI-_orbitAngleH;_orbitAngleH+=Math.atan2(Math.sin(_d),Math.cos(_d))*0.04;}
     _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
     const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
     const _camTarget = new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z);
