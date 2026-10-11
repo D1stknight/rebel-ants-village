@@ -22469,5 +22469,1729 @@
     "questObjectiveId": null,
     "editorLocked": false,
     "chestTier": "wood"
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_kenshi_duel_hall",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 0,
+      "y": 0.08,
+      "z": 62.6
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "kenshi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_kenshi_duel_hall",
+    "targetObjectId": null,
+    "interiorName": "the Duel Hall Door",
+    "interiorType": "kenshi_duel_hall",
+    "targetInteriorId": "kenshi_duel_hall",
+    "promptText": "Press O to Enter the Duel Hall",
+    "interiorDefinition": {
+      "id": "kenshi_duel_hall",
+      "builtIn": false,
+      "title": "The Duel Hall",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_kenshi_duel",
+      "prompt": "Press O to Enter",
+      "description": "One circle of white sand under the skylight. Focus, skill, deadly grace.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.14,
+        "g": 0.5,
+        "b": 0.48
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "kenshi_duel_hall",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_kenshi_library_of_forms",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -48,
+      "y": 0.06,
+      "z": 22.6
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "kenshi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_kenshi_library_of_forms",
+    "targetObjectId": null,
+    "interiorName": "the Library of Forms Door",
+    "interiorType": "kenshi_library_of_forms",
+    "targetInteriorId": "kenshi_library_of_forms",
+    "promptText": "Press O to Enter the Library of Forms",
+    "interiorDefinition": {
+      "id": "kenshi_library_of_forms",
+      "builtIn": false,
+      "title": "The Library of Forms",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_kenshi_library",
+      "prompt": "Press O to Enter",
+      "description": "The kata on the walls, the mannequins in their forms, the koi pond.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.14,
+        "g": 0.5,
+        "b": 0.48
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "kenshi_library_of_forms",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_kenshi_polishing_studio",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 50,
+      "y": 0.06,
+      "z": 66
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "kenshi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_kenshi_polishing_studio",
+    "targetObjectId": null,
+    "interiorName": "the Polishing Studio Door",
+    "interiorType": "kenshi_polishing_studio",
+    "targetInteriorId": "kenshi_polishing_studio",
+    "promptText": "Press O to Enter the Polishing Studio",
+    "interiorDefinition": {
+      "id": "kenshi_polishing_studio",
+      "builtIn": false,
+      "title": "The Polishing Studio",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_kenshi_forge",
+      "prompt": "Press O to Enter",
+      "description": "Where the Kenshi blades are polished over running water and tested on straw.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.14,
+        "g": 0.5,
+        "b": 0.48
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "kenshi_polishing_studio",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_kenshi_meditation_room",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 48,
+      "y": 0.06,
+      "z": 22.6
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "kenshi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_kenshi_meditation_room",
+    "targetObjectId": null,
+    "interiorName": "the Meditation Room Door",
+    "interiorType": "kenshi_meditation_room",
+    "targetInteriorId": "kenshi_meditation_room",
+    "promptText": "Press O to Enter the Meditation Room",
+    "interiorDefinition": {
+      "id": "kenshi_meditation_room",
+      "builtIn": false,
+      "title": "The Meditation Room",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_kenshi_meditation",
+      "prompt": "Press O to Enter",
+      "description": "The zen garden indoors, the maple on its island, and the story told in shadows on the shoji.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.14,
+        "g": 0.5,
+        "b": 0.48
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "kenshi_meditation_room",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_room_configs",
+    "name": "interiorRoomConfigs",
+    "position": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "configs": {
+      "kenshi_duel_hall": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_kenshi",
+            "name": "Rebel Ants: Kenshi",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "263",
+                "title": "Rebel Ants: Battle for the Colony #263",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=263&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/263"
+              },
+              {
+                "tokenId": "343",
+                "title": "Rebel Ants: Battle for the Colony #343",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=343&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/343"
+              },
+              {
+                "tokenId": "519",
+                "title": "Rebel Ants: Battle for the Colony #519",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=519&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/519"
+              },
+              {
+                "tokenId": "743",
+                "title": "Rebel Ants: Battle for the Colony #743",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=743&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/743"
+              },
+              {
+                "tokenId": "903",
+                "title": "Rebel Ants: Battle for the Colony #903",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=903&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/903"
+              },
+              {
+                "tokenId": "1015",
+                "title": "Rebel Ants: Battle for the Colony #1015",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1015&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1015"
+              },
+              {
+                "tokenId": "1031",
+                "title": "Rebel Ants: Battle for the Colony #1031",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1031&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1031"
+              },
+              {
+                "tokenId": "1271",
+                "title": "Rebel Ants: Battle for the Colony #1271",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1271&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1271"
+              },
+              {
+                "tokenId": "1287",
+                "title": "Rebel Ants: Battle for the Colony #1287",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1287&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1287"
+              },
+              {
+                "tokenId": "1303",
+                "title": "Rebel Ants: Battle for the Colony #1303",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1303&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1303"
+              },
+              {
+                "tokenId": "1511",
+                "title": "Rebel Ants: Battle for the Colony #1511",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1511&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1511"
+              },
+              {
+                "tokenId": "1607",
+                "title": "Rebel Ants: Battle for the Colony #1607",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1607&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1607"
+              },
+              {
+                "tokenId": "1655",
+                "title": "Rebel Ants: Battle for the Colony #1655",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1655&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1655"
+              },
+              {
+                "tokenId": "1799",
+                "title": "Rebel Ants: Battle for the Colony #1799",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1799&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1799"
+              },
+              {
+                "tokenId": "2023",
+                "title": "Rebel Ants: Battle for the Colony #2023",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2023&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2023"
+              },
+              {
+                "tokenId": "2087",
+                "title": "Rebel Ants: Battle for the Colony #2087",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2087&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2087"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:31:47.755Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "kenshi_duel_hall",
+            "frameId": "nft_frame_kenshi_duel_hall_1",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 1,
+            "tokenId": "263",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -9,
+              "y": 3.9,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_duel_hall",
+            "frameId": "nft_frame_kenshi_duel_hall_2",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 2,
+            "tokenId": "343",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 9,
+              "y": 3.9,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_duel_hall",
+            "frameId": "nft_frame_kenshi_duel_hall_3",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 3,
+            "tokenId": "519",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -14.86,
+              "y": 3.9,
+              "z": -10
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_duel_hall",
+            "frameId": "nft_frame_kenshi_duel_hall_4",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 4,
+            "tokenId": "743",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 14.86,
+              "y": 3.9,
+              "z": -10
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_duel_hall",
+            "frameId": "nft_frame_kenshi_duel_hall_5",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 5,
+            "tokenId": "903",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -14.86,
+              "y": 3.9,
+              "z": 10
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_duel_hall",
+            "frameId": "nft_frame_kenshi_duel_hall_6",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 6,
+            "tokenId": "1015",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 14.86,
+              "y": 3.9,
+              "z": 10
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "kenshi_duel_hall",
+            "hotspotId": "hotspot_kenshi_duel_hall_circle",
+            "linkName": "The Circle",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Two Kenshi kneel at its edge, rise, and meet once in the light. The sand is raked again after every duel, so that no footprint stays.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 1.9,
+              "z": 6.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_duel_hall",
+            "hotspotId": "hotspot_kenshi_duel_hall_stone",
+            "linkName": "The Single Stone",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The pool is so still the stone appears twice. A Kenshi's mind before a cut should be the same.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 1.9,
+              "z": -9.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:31:47.755Z"
+      },
+      "kenshi_library_of_forms": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_kenshi",
+            "name": "Rebel Ants: Kenshi",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "263",
+                "title": "Rebel Ants: Battle for the Colony #263",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=263&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/263"
+              },
+              {
+                "tokenId": "343",
+                "title": "Rebel Ants: Battle for the Colony #343",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=343&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/343"
+              },
+              {
+                "tokenId": "519",
+                "title": "Rebel Ants: Battle for the Colony #519",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=519&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/519"
+              },
+              {
+                "tokenId": "743",
+                "title": "Rebel Ants: Battle for the Colony #743",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=743&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/743"
+              },
+              {
+                "tokenId": "903",
+                "title": "Rebel Ants: Battle for the Colony #903",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=903&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/903"
+              },
+              {
+                "tokenId": "1015",
+                "title": "Rebel Ants: Battle for the Colony #1015",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1015&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1015"
+              },
+              {
+                "tokenId": "1031",
+                "title": "Rebel Ants: Battle for the Colony #1031",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1031&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1031"
+              },
+              {
+                "tokenId": "1271",
+                "title": "Rebel Ants: Battle for the Colony #1271",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1271&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1271"
+              },
+              {
+                "tokenId": "1287",
+                "title": "Rebel Ants: Battle for the Colony #1287",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1287&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1287"
+              },
+              {
+                "tokenId": "1303",
+                "title": "Rebel Ants: Battle for the Colony #1303",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1303&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1303"
+              },
+              {
+                "tokenId": "1511",
+                "title": "Rebel Ants: Battle for the Colony #1511",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1511&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1511"
+              },
+              {
+                "tokenId": "1607",
+                "title": "Rebel Ants: Battle for the Colony #1607",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1607&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1607"
+              },
+              {
+                "tokenId": "1655",
+                "title": "Rebel Ants: Battle for the Colony #1655",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1655&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1655"
+              },
+              {
+                "tokenId": "1799",
+                "title": "Rebel Ants: Battle for the Colony #1799",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1799&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1799"
+              },
+              {
+                "tokenId": "2023",
+                "title": "Rebel Ants: Battle for the Colony #2023",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2023&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2023"
+              },
+              {
+                "tokenId": "2087",
+                "title": "Rebel Ants: Battle for the Colony #2087",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2087&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2087"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:31:47.755Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "kenshi_library_of_forms",
+            "frameId": "nft_frame_kenshi_library_of_forms_7",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 7,
+            "tokenId": "1031",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -7.5,
+              "y": 4.1,
+              "z": 11.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_library_of_forms",
+            "frameId": "nft_frame_kenshi_library_of_forms_8",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 8,
+            "tokenId": "1271",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 7.5,
+              "y": 4.1,
+              "z": 11.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_library_of_forms",
+            "frameId": "nft_frame_kenshi_library_of_forms_9",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 9,
+            "tokenId": "1287",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -6.5,
+              "y": 4.3,
+              "z": -11.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_library_of_forms",
+            "frameId": "nft_frame_kenshi_library_of_forms_10",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 10,
+            "tokenId": "1303",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 6.5,
+              "y": 4.3,
+              "z": -11.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "kenshi_library_of_forms",
+            "hotspotId": "hotspot_kenshi_library_of_forms_forms",
+            "linkName": "The Forms",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Each mannequin holds one form exactly, so a student can walk round it and see the blade's line from every side.",
+            "enabled": true,
+            "position": {
+              "x": -8.1,
+              "y": 2.5,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_library_of_forms",
+            "hotspotId": "hotspot_kenshi_library_of_forms_koi",
+            "linkName": "The Koi",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The koi never stop and never hurry. The first master kept them to remind his students what a living rhythm looks like.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.4,
+              "z": 4.1000000000000005
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:31:47.755Z"
+      },
+      "kenshi_polishing_studio": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_kenshi",
+            "name": "Rebel Ants: Kenshi",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "263",
+                "title": "Rebel Ants: Battle for the Colony #263",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=263&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/263"
+              },
+              {
+                "tokenId": "343",
+                "title": "Rebel Ants: Battle for the Colony #343",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=343&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/343"
+              },
+              {
+                "tokenId": "519",
+                "title": "Rebel Ants: Battle for the Colony #519",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=519&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/519"
+              },
+              {
+                "tokenId": "743",
+                "title": "Rebel Ants: Battle for the Colony #743",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=743&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/743"
+              },
+              {
+                "tokenId": "903",
+                "title": "Rebel Ants: Battle for the Colony #903",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=903&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/903"
+              },
+              {
+                "tokenId": "1015",
+                "title": "Rebel Ants: Battle for the Colony #1015",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1015&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1015"
+              },
+              {
+                "tokenId": "1031",
+                "title": "Rebel Ants: Battle for the Colony #1031",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1031&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1031"
+              },
+              {
+                "tokenId": "1271",
+                "title": "Rebel Ants: Battle for the Colony #1271",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1271&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1271"
+              },
+              {
+                "tokenId": "1287",
+                "title": "Rebel Ants: Battle for the Colony #1287",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1287&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1287"
+              },
+              {
+                "tokenId": "1303",
+                "title": "Rebel Ants: Battle for the Colony #1303",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1303&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1303"
+              },
+              {
+                "tokenId": "1511",
+                "title": "Rebel Ants: Battle for the Colony #1511",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1511&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1511"
+              },
+              {
+                "tokenId": "1607",
+                "title": "Rebel Ants: Battle for the Colony #1607",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1607&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1607"
+              },
+              {
+                "tokenId": "1655",
+                "title": "Rebel Ants: Battle for the Colony #1655",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1655&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1655"
+              },
+              {
+                "tokenId": "1799",
+                "title": "Rebel Ants: Battle for the Colony #1799",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1799&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1799"
+              },
+              {
+                "tokenId": "2023",
+                "title": "Rebel Ants: Battle for the Colony #2023",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2023&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2023"
+              },
+              {
+                "tokenId": "2087",
+                "title": "Rebel Ants: Battle for the Colony #2087",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2087&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2087"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:31:47.755Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "kenshi_polishing_studio",
+            "frameId": "nft_frame_kenshi_polishing_studio_11",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 11,
+            "tokenId": "1511",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -6,
+              "y": 3.7,
+              "z": 8.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_polishing_studio",
+            "frameId": "nft_frame_kenshi_polishing_studio_12",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 12,
+            "tokenId": "1607",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 6,
+              "y": 3.7,
+              "z": 8.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_polishing_studio",
+            "frameId": "nft_frame_kenshi_polishing_studio_13",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 13,
+            "tokenId": "1655",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -6,
+              "y": 4.1,
+              "z": -8.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_polishing_studio",
+            "frameId": "nft_frame_kenshi_polishing_studio_14",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 14,
+            "tokenId": "1799",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 6,
+              "y": 4.1,
+              "z": -8.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "kenshi_polishing_studio",
+            "hotspotId": "hotspot_kenshi_polishing_studio_stones",
+            "linkName": "Water Stones",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Seven stones, coarse to fine, and running water to carry the steel away. A blade is polished for weeks before it is shown to anyone.",
+            "enabled": true,
+            "position": {
+              "x": -2,
+              "y": 1.7,
+              "z": -0.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_polishing_studio",
+            "hotspotId": "hotspot_kenshi_polishing_studio_straw",
+            "linkName": "The Test Line",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Rolled straw, soaked overnight: as hard to cut as a limb. A clean cut leaves the top half standing on the bottom for a moment before it falls.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.1,
+              "z": -6.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:31:47.755Z"
+      },
+      "kenshi_meditation_room": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_kenshi",
+            "name": "Rebel Ants: Kenshi",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "263",
+                "title": "Rebel Ants: Battle for the Colony #263",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=263&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/263"
+              },
+              {
+                "tokenId": "343",
+                "title": "Rebel Ants: Battle for the Colony #343",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=343&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/343"
+              },
+              {
+                "tokenId": "519",
+                "title": "Rebel Ants: Battle for the Colony #519",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=519&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/519"
+              },
+              {
+                "tokenId": "743",
+                "title": "Rebel Ants: Battle for the Colony #743",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=743&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/743"
+              },
+              {
+                "tokenId": "903",
+                "title": "Rebel Ants: Battle for the Colony #903",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=903&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/903"
+              },
+              {
+                "tokenId": "1015",
+                "title": "Rebel Ants: Battle for the Colony #1015",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1015&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1015"
+              },
+              {
+                "tokenId": "1031",
+                "title": "Rebel Ants: Battle for the Colony #1031",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1031&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1031"
+              },
+              {
+                "tokenId": "1271",
+                "title": "Rebel Ants: Battle for the Colony #1271",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1271&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1271"
+              },
+              {
+                "tokenId": "1287",
+                "title": "Rebel Ants: Battle for the Colony #1287",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1287&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1287"
+              },
+              {
+                "tokenId": "1303",
+                "title": "Rebel Ants: Battle for the Colony #1303",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1303&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1303"
+              },
+              {
+                "tokenId": "1511",
+                "title": "Rebel Ants: Battle for the Colony #1511",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1511&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1511"
+              },
+              {
+                "tokenId": "1607",
+                "title": "Rebel Ants: Battle for the Colony #1607",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1607&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1607"
+              },
+              {
+                "tokenId": "1655",
+                "title": "Rebel Ants: Battle for the Colony #1655",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1655&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1655"
+              },
+              {
+                "tokenId": "1799",
+                "title": "Rebel Ants: Battle for the Colony #1799",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1799&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1799"
+              },
+              {
+                "tokenId": "2023",
+                "title": "Rebel Ants: Battle for the Colony #2023",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2023&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2023"
+              },
+              {
+                "tokenId": "2087",
+                "title": "Rebel Ants: Battle for the Colony #2087",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2087&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2087"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:31:47.755Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "kenshi_meditation_room",
+            "frameId": "nft_frame_kenshi_meditation_room_15",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 15,
+            "tokenId": "2023",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -12.86,
+              "y": 3.9,
+              "z": -4
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_meditation_room",
+            "frameId": "nft_frame_kenshi_meditation_room_16",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 16,
+            "tokenId": "2087",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -12.86,
+              "y": 3.9,
+              "z": 4
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_meditation_room",
+            "frameId": "nft_frame_kenshi_meditation_room_17",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 17,
+            "tokenId": "263",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 12.86,
+              "y": 3.9,
+              "z": -4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "kenshi_meditation_room",
+            "frameId": "nft_frame_kenshi_meditation_room_18",
+            "frameName": "Kenshi Rebel",
+            "collectionId": "rebel_ants_kenshi",
+            "frameSlot": 18,
+            "tokenId": "343",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 12.86,
+              "y": 3.9,
+              "z": 4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          }
+        ],
+        "videoScreens": [
+          {
+            "interiorId": "kenshi_meditation_room",
+            "screenId": "video_screen_kenshi_meditation",
+            "screenName": "The Warning Book 1",
+            "videoUrl": "/assets/video/interiors/rebel_library/video-1780690684331-Prologue_-1_Final.mp4",
+            "posterUrl": "",
+            "clickUrl": "",
+            "fallbackUrl": "",
+            "liveUrl": "",
+            "isLivePlaceholder": false,
+            "futureLiveMode": false,
+            "autoplay": true,
+            "muted": true,
+            "loop": false,
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 4.6,
+              "z": -12.55
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 5.168539325842696,
+              "y": 5,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "kenshi_meditation_room",
+            "hotspotId": "hotspot_kenshi_meditation_room_garden",
+            "linkName": "The Garden",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The gravel is the sea, the moss is an island, the maple is the one thing on it that changes. Sit on a cushion and watch it until it stops changing.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 1.7,
+              "z": 6.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:31:47.755Z"
+      }
+    }
   }
 ]
