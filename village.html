@@ -22166,6 +22166,35 @@ function registerUploadedAssetsFromLayout(data) {
 // Only plain GLBs with no per-object material edits are instanced. ?instancing=off falls back to clones.
 const INSTANCED_ASSET_TYPES = new Set(['pine_1', 'tree_1', 'rock_1', 'fence_1', 'bamboo', 'cherry_blossom', 'dojo_9']);
 const INSTANCING_ENABLED = new URLSearchParams(window.location.search).get('instancing') !== 'off';
+// shadows, picking and light caps for a layout copy's meshes
+function prepareLayoutCopyMeshes(clone, type) {
+  const _noShadows = assetSkipsShadows(type);
+  // (was a loop nested inside itself: every mesh was registered once per sibling)
+  clone.getChildMeshes().forEach(m => {
+    if (!_noShadows) shadows.addShadowCaster(m);
+    m.receiveShadows = !_noShadows; m.isPickable = true;
+    m._editRoot = clone; // enables admin picker to find parent clone
+    if (m.material) {
+      m.material.maxSimultaneousLights = 4;
+      if (window._gpuMode === 'webgpu') webgpuCapMaterial4(m.material);
+    }
+  });
+}
+// A big model still downloading when the layout loads (the start-up wait gives up after 9 s: the forest dojos, the north
+// shrine on a slow line) was copied as an empty node and stayed empty. Fill the copy in once its model is ready.
+function fillLayoutCopyWhenReady(clone, type) {
+  waitForAssetSourceReady(type, () => {
+    if (!clone || clone.isDisposed?.() || clone.getChildMeshes(false).length) return;
+    const tmp = copyAssetSource(type, _assetSources[type], clone.name + '_fill');
+    if (!tmp) return;
+    tmp.getChildren().slice().forEach(child => { child.parent = clone; });
+    tmp.dispose();
+    prepareLayoutCopyMeshes(clone, type);
+    clone.computeWorldMatrix(true);
+    scheduleShadowRefresh('late layout model', 400);
+  }, 240000);
+}
+
 function copyAssetSource(type, source, name) {
   if (INSTANCING_ENABLED && INSTANCED_ASSET_TYPES.has(type) && typeof source?.instantiateHierarchy === 'function') {
     try {
@@ -22688,17 +22717,8 @@ function loadWorldLayout(){
     clone.position = new BABYLON.Vector3(item.position.x, item.position.y, item.position.z);
     clone.rotation = new BABYLON.Vector3(item.rotation.x, item.rotation.y, item.rotation.z);
     clone.scaling = new BABYLON.Vector3(item.scaling.x, item.scaling.y, item.scaling.z);
-    const _noShadows = assetSkipsShadows(item.type);
-    // (was a loop nested inside itself: every mesh was registered once per sibling)
-    clone.getChildMeshes().forEach(m => {
-      if (!_noShadows) shadows.addShadowCaster(m);
-      m.receiveShadows = !_noShadows; m.isPickable = true;
-      m._editRoot = clone; // enables admin picker to find parent clone
-      if (m.material) {
-        m.material.maxSimultaneousLights = 4;
-        if (window._gpuMode === 'webgpu') webgpuCapMaterial4(m.material);
-      }
-    });
+    prepareLayoutCopyMeshes(clone, item.type);
+    if (!isAssetSourceReady(item.type)) fillLayoutCopyWhenReady(clone, item.type);
   });
 
   selectedObject = null;
