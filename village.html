@@ -7557,12 +7557,18 @@ function getDefaultTreasureChestMetadata(source = {}) {
   };
 }
 
+// The chest model is built at 3.2 m wide (more than a Rebel's height across); it is shown at CHEST_MODEL_SCALE under an
+// inner node, so the layout's own scale stays 1 and chests are about waist high (2 m wide, 1.1 m tall with the lid).
+const CHEST_MODEL_SCALE = .62;
 function buildTreasureChest(root) {
   if (!root) return;
   root.metadata = {
     ...(root.metadata || {}),
     ...getDefaultTreasureChestMetadata(root.metadata || {})
   };
+  const model = new BABYLON.TransformNode(`${root.name}_chestModel`, scene);
+  model.parent = root;
+  model.scaling.setAll(CHEST_MODEL_SCALE);
 
   const woodMat = new BABYLON.StandardMaterial(`${root.name}_treasureChestWoodMat`, scene);
   woodMat.diffuseColor = new BABYLON.Color3(0.46, 0.21, 0.075);
@@ -7608,7 +7614,7 @@ function buildTreasureChest(root) {
     return mesh;
   };
 
-  const addBox = (name, size, position, material, parent = root) => {
+  const addBox = (name, size, position, material, parent = model) => {
     const mesh = BABYLON.MeshBuilder.CreateBox(`${root.name}_${name}`, size, scene);
     mesh.parent = parent;
     mesh.position.set(position.x, position.y, position.z);
@@ -7616,7 +7622,7 @@ function buildTreasureChest(root) {
     return markEditable(mesh);
   };
 
-  const addCylinder = (name, options, position, material, parent = root, rotation = null, pickable = true) => {
+  const addCylinder = (name, options, position, material, parent = model, rotation = null, pickable = true) => {
     const mesh = BABYLON.MeshBuilder.CreateCylinder(`${root.name}_${name}`, options, scene);
     mesh.parent = parent;
     mesh.position.set(position.x, position.y, position.z);
@@ -7639,7 +7645,7 @@ function buildTreasureChest(root) {
   addBox('backTopRail', { width: 3.42, height: 0.22, depth: 0.16 }, { x: 0, y: 1.24, z: 1.09 }, metalMat);
 
   const lidPivot = new BABYLON.TransformNode(`${root.name}_lidPivot`, scene);
-  lidPivot.parent = root;
+  lidPivot.parent = model;
   lidPivot.position.set(0, 1.28, 0.9);
 
   const lid = addBox('lid', { width: 3.25, height: 0.58, depth: 2.1 }, { x: 0, y: 0.18, z: -0.9 }, lidMat, lidPivot);
@@ -7666,11 +7672,11 @@ function buildTreasureChest(root) {
 
   const latch = addBox('latchPlate', { width: 0.58, height: 0.62, depth: 0.14 }, { x: 0, y: 0.95, z: -1.16 }, goldMat);
   addBox('latchTop', { width: 0.46, height: 0.14, depth: 0.16 }, { x: 0, y: 1.31, z: -1.16 }, goldMat);
-  addCylinder('keyholeRound', { diameter: 0.14, height: 0.13, tessellation: 18 }, { x: 0, y: 1, z: -1.24 }, blackMat, root, { x: Math.PI / 2 });
+  addCylinder('keyholeRound', { diameter: 0.14, height: 0.13, tessellation: 18 }, { x: 0, y: 1, z: -1.24 }, blackMat, model, { x: Math.PI / 2 });
   addBox('keyholeSlot', { width: 0.08, height: 0.22, depth: 0.14 }, { x: 0, y: 0.82, z: -1.24 }, blackMat);
 
   addCylinder('flowerMedallion', { diameter: 0.44, height: 0.08, tessellation: 32 }, { x: 0, y: 0.48, z: -0.9 }, goldMat, lidPivot, { x: Math.PI / 2 });
-  addCylinder('sideRing', { diameter: 0.52, height: 0.07, tessellation: 28 }, { x: 1.72, y: 0.75, z: 0.18 }, goldMat, root, { z: Math.PI / 2 });
+  addCylinder('sideRing', { diameter: 0.52, height: 0.07, tessellation: 28 }, { x: 1.72, y: 0.75, z: 0.18 }, goldMat, model, { z: Math.PI / 2 });
   addBox('sideRingPlate', { width: 0.1, height: 0.34, depth: 0.34 }, { x: 1.62, y: 0.75, z: 0.18 }, goldMat);
 
   // the tier's colours (wood body, metal bands, gold trim)
@@ -7684,7 +7690,7 @@ function buildTreasureChest(root) {
   root.metadata.opened = isChestLooted(root.metadata.chestId);
 
   // one mesh per material for the body and one per material for the lid (it still swings on its pivot): ~47 draw calls -> 11
-  [root, lidPivot].forEach(parent => {
+  [model, lidPivot].forEach(parent => {
     const groups = new Map();
     parent.getChildMeshes(true).forEach(m => { if (!groups.has(m.material)) groups.set(m.material, []); groups.get(m.material).push(m); });
     groups.forEach((parts, mat) => {
@@ -7705,7 +7711,7 @@ function buildTreasureChest(root) {
   });
 
   const glow = BABYLON.MeshBuilder.CreateCylinder(`${root.name}_rewardGlow`, { diameter: 2.2, height: 0.06, tessellation: 32 }, scene);
-  glow.parent = root;
+  glow.parent = model;
   glow.position.set(0, 1.42, 0);
   glow.material = glowMat;
   glow.isPickable = false;
@@ -8515,7 +8521,7 @@ function openTreasureChest(chest) {
 // Coins burst out of an opened chest, hang in the air for a moment, then fly to the player one by one.
 // One shared coin mesh (thin instances would also do; instances keep it simple), removed when done.
 function spawnRebelCoinBurst(chest, count, points) {
-  const origin = chest.getAbsolutePosition().add(new BABYLON.Vector3(0, 1.5, 0));
+  const origin = chest.getAbsolutePosition().add(new BABYLON.Vector3(0, 1.6 * CHEST_MODEL_SCALE * Math.abs(chest.scaling?.y || 1), 0));
   if (!spawnRebelCoinBurst.base || spawnRebelCoinBurst.base.isDisposed?.()) {
     const mat = new BABYLON.StandardMaterial('rebelCoinMat', scene);
     mat.diffuseColor = new BABYLON.Color3(1, .78, .25); mat.emissiveColor = new BABYLON.Color3(.75, .5, .1); mat.specularColor = new BABYLON.Color3(1, .9, .6);
@@ -24465,6 +24471,13 @@ function addTreeTrunkBlockers(node, blockers) {
     x: node.position.x + (t.x * c + t.z * sn) * s, z: node.position.z + (-t.x * sn + t.z * c) * s, radius: t.r * s }));
 }
 
+// A chest is solid: its footprint (body, bands, side ring and latch; the lid swings up over it), widened by about the
+// body's half-width, as the body's centre is what the village tests against blockers.
+function getTreasureChestFootprint(node) {
+  const yaw = node.rotation?.y || 0, c = Math.cos(yaw), sn = Math.sin(yaw), k = CHEST_MODEL_SCALE * Math.abs(node.scaling?.x || 1);
+  return { centerX: node.position.x, centerZ: node.position.z, axisX: { x: c, z: -sn }, axisZ: { x: sn, z: c }, yaw, halfX: 1.78 * k + .3, halfZ: 1.3 * k + .3 };
+}
+
 // Kit piers (and any kit piece with a deck) are walkable at their deck height, also out over the water.
 // Stairs and gangplanks are sloped decks: y0 at the deck's -z end, y1 at its +z end (in the piece's own frame).
 function addKitDeckSurfaces(node, surfaces) {
@@ -24536,6 +24549,8 @@ function rebuildVillageCollisionBlockers() {
       addManualCollisionProxyToWorld(node, blockers, walkableSurfaces);
     } else if (node.metadata?.isClone === true && TREE_TRUNK_TYPES.has(node.metadata.type)) {
       addTreeTrunkBlockers(node, blockers);
+    } else if (node.metadata?.isClone === true && node.metadata.type === 'treasure_chest') {
+      blockers.push({ kind: 'obb', type: 'treasure_chest', name: node.name, ...getTreasureChestFootprint(node) });
     } else if (node.metadata?.isClone === true && window.SamuraiKit?.decks?.[node.metadata.type]) {
       addKitDeckSurfaces(node, walkableSurfaces);
     } else if (HUB_GLB_WALK?.[node.metadata?.type] && (node.metadata.isClone === true || node.name?.includes('RootClone_'))) {
@@ -29433,6 +29448,12 @@ function createInteriorChest(parent, cfg = {}) {
   root.metadata = { type:'treasure_chest', isClone:true, interiorRuntime:true, chestId:cfg.chestId, chestTier:cfg.chestTier || 'wood', rewardType:'rebel_points', villageId:CURRENT_VILLAGE_ID };
   buildTreasureChest(root);
   root.metadata.interiorRuntime = true;
+  const b = parent.metadata?.bounds;
+  if (b) {
+    const k = CHEST_MODEL_SCALE * root.scaling.x, ry = root.rotation.y, hx = 1.78 * k, hz = 1.3 * k;
+    const ex = Math.abs(Math.cos(ry)) * hx + Math.abs(Math.sin(ry)) * hz, ez = Math.abs(Math.sin(ry)) * hx + Math.abs(Math.cos(ry)) * hz, h = root.position.y - INTERIOR_FLOOR_Y;
+    b.blockers = [...(b.blockers || []), { box: [root.position.x - ex, root.position.z - ez, root.position.x + ex, root.position.z + ez], minY: h - 1, maxY: h + 1 }];
+  }
   const meshes = root.getChildMeshes(false);
   (parent.metadata?.interiorLights || []).forEach(l => { if (l.includedOnlyMeshes?.length) l.includedOnlyMeshes.push(...meshes); });
   return root;
