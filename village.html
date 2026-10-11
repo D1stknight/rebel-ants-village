@@ -23716,6 +23716,10 @@ function getVillageBaseGroundHeightAt(x, z) {
   if (window._newTerrain) {
     const terrainHeight = window._newTerrain.heightAt(x, z);
     if (window._newTerrain.sea && Number.isFinite(terrainHeight) && terrainHeight < 0) return terrainHeight; // shore / sea bed
+    // a village built on its own ground (the courtyard, plaza and path strips are hidden): their floor heights only
+    // hold on flat ground; where the ground dips under them the floor eases onto it within half a metre, so the
+    // player walks down into ditches and moats instead of over them
+    if (window._newTerrain.villageGround && Number.isFinite(terrainHeight) && height > terrainHeight) { const d = height - terrainHeight; return d >= .5 ? terrainHeight : height - 2 * d * d; }
     if (Number.isFinite(terrainHeight)) height = Math.max(height, terrainHeight);
   } else if (ground && typeof ground.getHeightAtCoordinates === 'function') {
     const groundHeight = ground.getHeightAtCoordinates(x, z);
