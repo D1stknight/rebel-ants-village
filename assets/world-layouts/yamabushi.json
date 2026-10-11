@@ -26630,5 +26630,1581 @@
     "questObjectiveId": null,
     "editorLocked": false,
     "chestTier": "wood"
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_yamabushi_falls_cave",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 40,
+      "y": 0.1,
+      "z": 22.6
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "yamabushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_yamabushi_falls_cave",
+    "targetObjectId": null,
+    "interiorName": "The Falls Cave Door",
+    "interiorType": "yamabushi_falls_cave",
+    "targetInteriorId": "yamabushi_falls_cave",
+    "promptText": "Press O to Enter the Falls Cave",
+    "interiorDefinition": {
+      "id": "yamabushi_falls_cave",
+      "builtIn": false,
+      "title": "The Falls Cave",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_yam_falls",
+      "prompt": "Press O to Enter",
+      "description": "A cave behind falling water: wet rock, still pools, moss glowing blue, the hermit's ledge.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.2,
+        "g": 0.62,
+        "b": 0.8
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "yamabushi_falls_cave",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_yamabushi_library",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -40,
+      "y": 0.06,
+      "z": 56.6
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "yamabushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_yamabushi_library",
+    "targetObjectId": null,
+    "interiorName": "The Library Door",
+    "interiorType": "yamabushi_library",
+    "targetInteriorId": "yamabushi_library",
+    "promptText": "Press O to Enter the Library",
+    "interiorDefinition": {
+      "id": "yamabushi_library",
+      "builtIn": false,
+      "title": "The Library",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_yam_library",
+      "prompt": "Press O to Enter",
+      "description": "Two floors of herbs, star charts and old maps round the hanging spiral.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.2,
+        "g": 0.62,
+        "b": 0.8
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "yamabushi_library",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_yamabushi_spirit_shrine",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 0,
+      "y": 0.08,
+      "z": 58.6
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "yamabushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_yamabushi_spirit_shrine",
+    "targetObjectId": null,
+    "interiorName": "The Spirit Shrine Door",
+    "interiorType": "yamabushi_spirit_shrine",
+    "targetInteriorId": "yamabushi_spirit_shrine",
+    "promptText": "Press O to Enter the Spirit Shrine",
+    "interiorDefinition": {
+      "id": "yamabushi_spirit_shrine",
+      "builtIn": false,
+      "title": "The Spirit Shrine",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_yam_shrine",
+      "prompt": "Press O to Enter",
+      "description": "The bound stone on its white pebbles, the blue spirit flames, the charms that drift in the air.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.2,
+        "g": 0.62,
+        "b": 0.8
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "yamabushi_spirit_shrine",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_yamabushi_descent_path",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -24,
+      "y": 0.1,
+      "z": 22.6
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "yamabushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_yamabushi_descent_path",
+    "targetObjectId": null,
+    "interiorName": "The Descent Path Door",
+    "interiorType": "yamabushi_descent_path",
+    "targetInteriorId": "yamabushi_descent_path",
+    "promptText": "Press O to Enter the Descent Path",
+    "interiorDefinition": {
+      "id": "yamabushi_descent_path",
+      "builtIn": false,
+      "title": "The Descent Path",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_yam_descent",
+      "prompt": "Press O to Enter",
+      "requiresQuestId": "book1-main-41",
+      "description": "The stair down through the mountain, flight under flight, to the blue light far below.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.2,
+        "g": 0.62,
+        "b": 0.8
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "yamabushi_descent_path",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_room_configs",
+    "name": "interiorRoomConfigs",
+    "position": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "configs": {
+      "yamabushi_falls_cave": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_yamabushi",
+            "name": "Rebel Ants: Yamabushi",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "407",
+                "title": "Rebel Ants: Battle for the Colony #407",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=407&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/407"
+              },
+              {
+                "tokenId": "471",
+                "title": "Rebel Ants: Battle for the Colony #471",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=471&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/471"
+              },
+              {
+                "tokenId": "535",
+                "title": "Rebel Ants: Battle for the Colony #535",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=535&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/535"
+              },
+              {
+                "tokenId": "551",
+                "title": "Rebel Ants: Battle for the Colony #551",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=551&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/551"
+              },
+              {
+                "tokenId": "631",
+                "title": "Rebel Ants: Battle for the Colony #631",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=631&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/631"
+              },
+              {
+                "tokenId": "663",
+                "title": "Rebel Ants: Battle for the Colony #663",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=663&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/663"
+              },
+              {
+                "tokenId": "759",
+                "title": "Rebel Ants: Battle for the Colony #759",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=759&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/759"
+              },
+              {
+                "tokenId": "823",
+                "title": "Rebel Ants: Battle for the Colony #823",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=823&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/823"
+              },
+              {
+                "tokenId": "1143",
+                "title": "Rebel Ants: Battle for the Colony #1143",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1143&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1143"
+              },
+              {
+                "tokenId": "1447",
+                "title": "Rebel Ants: Battle for the Colony #1447",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1447&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1447"
+              },
+              {
+                "tokenId": "1591",
+                "title": "Rebel Ants: Battle for the Colony #1591",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1591&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1591"
+              },
+              {
+                "tokenId": "1639",
+                "title": "Rebel Ants: Battle for the Colony #1639",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1639&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1639"
+              },
+              {
+                "tokenId": "1927",
+                "title": "Rebel Ants: Battle for the Colony #1927",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1927&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1927"
+              },
+              {
+                "tokenId": "2007",
+                "title": "Rebel Ants: Battle for the Colony #2007",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2007&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2007"
+              },
+              {
+                "tokenId": "2103",
+                "title": "Rebel Ants: Battle for the Colony #2103",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2103&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2103"
+              },
+              {
+                "tokenId": "2119",
+                "title": "Rebel Ants: Battle for the Colony #2119",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2119&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2119"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:50:28.561Z"
+          }
+        ],
+        "nftFrames": [],
+        "hotspots": [
+          {
+            "interiorId": "yamabushi_falls_cave",
+            "hotspotId": "hotspot_yamabushi_falls_cave_falls",
+            "linkName": "Behind the Falls",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "From in here the falls are a wall of moving glass. The Yamabushi say the water carries the mountain's voice down to the colony; sit long enough and you can hear it speak.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.5,
+              "z": -10.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_falls_cave",
+            "hotspotId": "hotspot_yamabushi_falls_cave_hermit",
+            "linkName": "The Hermit's Ledge",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "A straw mat, five candles and a shrine no bigger than a lantern. Whoever sits here keeps the candles lit; nobody remembers who lit them first.",
+            "enabled": true,
+            "position": {
+              "x": 9.4,
+              "y": 2.8,
+              "z": -6.35
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:50:28.562Z"
+      },
+      "yamabushi_library": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_yamabushi",
+            "name": "Rebel Ants: Yamabushi",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "407",
+                "title": "Rebel Ants: Battle for the Colony #407",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=407&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/407"
+              },
+              {
+                "tokenId": "471",
+                "title": "Rebel Ants: Battle for the Colony #471",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=471&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/471"
+              },
+              {
+                "tokenId": "535",
+                "title": "Rebel Ants: Battle for the Colony #535",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=535&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/535"
+              },
+              {
+                "tokenId": "551",
+                "title": "Rebel Ants: Battle for the Colony #551",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=551&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/551"
+              },
+              {
+                "tokenId": "631",
+                "title": "Rebel Ants: Battle for the Colony #631",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=631&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/631"
+              },
+              {
+                "tokenId": "663",
+                "title": "Rebel Ants: Battle for the Colony #663",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=663&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/663"
+              },
+              {
+                "tokenId": "759",
+                "title": "Rebel Ants: Battle for the Colony #759",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=759&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/759"
+              },
+              {
+                "tokenId": "823",
+                "title": "Rebel Ants: Battle for the Colony #823",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=823&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/823"
+              },
+              {
+                "tokenId": "1143",
+                "title": "Rebel Ants: Battle for the Colony #1143",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1143&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1143"
+              },
+              {
+                "tokenId": "1447",
+                "title": "Rebel Ants: Battle for the Colony #1447",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1447&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1447"
+              },
+              {
+                "tokenId": "1591",
+                "title": "Rebel Ants: Battle for the Colony #1591",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1591&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1591"
+              },
+              {
+                "tokenId": "1639",
+                "title": "Rebel Ants: Battle for the Colony #1639",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1639&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1639"
+              },
+              {
+                "tokenId": "1927",
+                "title": "Rebel Ants: Battle for the Colony #1927",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1927&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1927"
+              },
+              {
+                "tokenId": "2007",
+                "title": "Rebel Ants: Battle for the Colony #2007",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2007&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2007"
+              },
+              {
+                "tokenId": "2103",
+                "title": "Rebel Ants: Battle for the Colony #2103",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2103&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2103"
+              },
+              {
+                "tokenId": "2119",
+                "title": "Rebel Ants: Battle for the Colony #2119",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2119&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2119"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:50:28.562Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "yamabushi_library",
+            "frameId": "nft_frame_yamabushi_library_1",
+            "frameName": "Yamabushi Rebel",
+            "collectionId": "rebel_ants_yamabushi",
+            "frameSlot": 1,
+            "tokenId": "407",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -10.86,
+              "y": 5,
+              "z": 4
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_library",
+            "frameId": "nft_frame_yamabushi_library_2",
+            "frameName": "Yamabushi Rebel",
+            "collectionId": "rebel_ants_yamabushi",
+            "frameSlot": 2,
+            "tokenId": "471",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -10.86,
+              "y": 6.699999999999999,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_library",
+            "frameId": "nft_frame_yamabushi_library_3",
+            "frameName": "Yamabushi Rebel",
+            "collectionId": "rebel_ants_yamabushi",
+            "frameSlot": 3,
+            "tokenId": "535",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -6,
+              "y": 3.7,
+              "z": 10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_library",
+            "frameId": "nft_frame_yamabushi_library_4",
+            "frameName": "Yamabushi Rebel",
+            "collectionId": "rebel_ants_yamabushi",
+            "frameSlot": 4,
+            "tokenId": "551",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 5.5,
+              "y": 3.7,
+              "z": 10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_library",
+            "frameId": "nft_frame_yamabushi_library_5",
+            "frameName": "Yamabushi Rebel",
+            "collectionId": "rebel_ants_yamabushi",
+            "frameSlot": 5,
+            "tokenId": "631",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 10.86,
+              "y": 9.3,
+              "z": -3
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_library",
+            "frameId": "nft_frame_yamabushi_library_6",
+            "frameName": "Yamabushi Rebel",
+            "collectionId": "rebel_ants_yamabushi",
+            "frameSlot": 6,
+            "tokenId": "663",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 10.86,
+              "y": 9.3,
+              "z": 1
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "yamabushi_library",
+            "hotspotId": "hotspot_yamabushi_library_spiral",
+            "linkName": "The Spiral",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Energy flows through nature the way the spiral turns: always moving, always returning. It was carved from one root, and it has never stopped turning since it was hung.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2,
+              "z": 1.7
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_library",
+            "hotspotId": "hotspot_yamabushi_library_telescope",
+            "linkName": "The Telescope",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The Yamabushi read the weather in the stars before every climb. The star charts on the back wall go back further than the colony's own records.",
+            "enabled": true,
+            "position": {
+              "x": 9.5,
+              "y": 9.6,
+              "z": 9.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_library",
+            "hotspotId": "hotspot_yamabushi_library_herbs",
+            "linkName": "Mountain Herbs",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "A jar for every herb that grows above the mist: for fever, for cold, for the climb, for sleep. The labels are written in a hand only the Herbalist can read.",
+            "enabled": true,
+            "position": {
+              "x": 9.7,
+              "y": 2.7,
+              "z": -1.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:50:28.562Z"
+      },
+      "yamabushi_spirit_shrine": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_yamabushi",
+            "name": "Rebel Ants: Yamabushi",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "407",
+                "title": "Rebel Ants: Battle for the Colony #407",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=407&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/407"
+              },
+              {
+                "tokenId": "471",
+                "title": "Rebel Ants: Battle for the Colony #471",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=471&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/471"
+              },
+              {
+                "tokenId": "535",
+                "title": "Rebel Ants: Battle for the Colony #535",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=535&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/535"
+              },
+              {
+                "tokenId": "551",
+                "title": "Rebel Ants: Battle for the Colony #551",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=551&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/551"
+              },
+              {
+                "tokenId": "631",
+                "title": "Rebel Ants: Battle for the Colony #631",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=631&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/631"
+              },
+              {
+                "tokenId": "663",
+                "title": "Rebel Ants: Battle for the Colony #663",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=663&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/663"
+              },
+              {
+                "tokenId": "759",
+                "title": "Rebel Ants: Battle for the Colony #759",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=759&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/759"
+              },
+              {
+                "tokenId": "823",
+                "title": "Rebel Ants: Battle for the Colony #823",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=823&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/823"
+              },
+              {
+                "tokenId": "1143",
+                "title": "Rebel Ants: Battle for the Colony #1143",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1143&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1143"
+              },
+              {
+                "tokenId": "1447",
+                "title": "Rebel Ants: Battle for the Colony #1447",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1447&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1447"
+              },
+              {
+                "tokenId": "1591",
+                "title": "Rebel Ants: Battle for the Colony #1591",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1591&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1591"
+              },
+              {
+                "tokenId": "1639",
+                "title": "Rebel Ants: Battle for the Colony #1639",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1639&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1639"
+              },
+              {
+                "tokenId": "1927",
+                "title": "Rebel Ants: Battle for the Colony #1927",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1927&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1927"
+              },
+              {
+                "tokenId": "2007",
+                "title": "Rebel Ants: Battle for the Colony #2007",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2007&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2007"
+              },
+              {
+                "tokenId": "2103",
+                "title": "Rebel Ants: Battle for the Colony #2103",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2103&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2103"
+              },
+              {
+                "tokenId": "2119",
+                "title": "Rebel Ants: Battle for the Colony #2119",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2119&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2119"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:50:28.562Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "yamabushi_spirit_shrine",
+            "frameId": "nft_frame_yamabushi_spirit_shrine_7",
+            "frameName": "Yamabushi Rebel",
+            "collectionId": "rebel_ants_yamabushi",
+            "frameSlot": 7,
+            "tokenId": "759",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -14.86,
+              "y": 4.1,
+              "z": -6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_spirit_shrine",
+            "frameId": "nft_frame_yamabushi_spirit_shrine_8",
+            "frameName": "Yamabushi Rebel",
+            "collectionId": "rebel_ants_yamabushi",
+            "frameSlot": 8,
+            "tokenId": "823",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -14.86,
+              "y": 4.1,
+              "z": 6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_spirit_shrine",
+            "frameId": "nft_frame_yamabushi_spirit_shrine_9",
+            "frameName": "Yamabushi Rebel",
+            "collectionId": "rebel_ants_yamabushi",
+            "frameSlot": 9,
+            "tokenId": "1143",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 14.86,
+              "y": 4.1,
+              "z": -10
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_spirit_shrine",
+            "frameId": "nft_frame_yamabushi_spirit_shrine_10",
+            "frameName": "Yamabushi Rebel",
+            "collectionId": "rebel_ants_yamabushi",
+            "frameSlot": 10,
+            "tokenId": "1447",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 14.86,
+              "y": 4.1,
+              "z": 7
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_spirit_shrine",
+            "frameId": "nft_frame_yamabushi_spirit_shrine_11",
+            "frameName": "Yamabushi Rebel",
+            "collectionId": "rebel_ants_yamabushi",
+            "frameSlot": 11,
+            "tokenId": "1591",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -8,
+              "y": 4.1,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_spirit_shrine",
+            "frameId": "nft_frame_yamabushi_spirit_shrine_12",
+            "frameName": "Yamabushi Rebel",
+            "collectionId": "rebel_ants_yamabushi",
+            "frameSlot": 12,
+            "tokenId": "1639",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 8,
+              "y": 4.1,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "yamabushi_spirit_shrine",
+            "hotspotId": "hotspot_yamabushi_spirit_shrine_stone",
+            "linkName": "The Bound Stone",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The first Yamabushi found this stone humming on the peak and carried it down on their backs. The rope holds the spirit in; the paper streamers show where it wants to go.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.1,
+              "z": 4.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_spirit_shrine",
+            "hotspotId": "hotspot_yamabushi_spirit_shrine_ema",
+            "linkName": "Wishes",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Wooden plaques with a wish on each: safe climbs, clear skies, a cure for a fever. When the rack is full the oldest are burned so the wishes rise.",
+            "enabled": true,
+            "position": {
+              "x": 13.6,
+              "y": 2.3,
+              "z": -2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:50:28.562Z"
+      },
+      "yamabushi_descent_path": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_yamabushi",
+            "name": "Rebel Ants: Yamabushi",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "407",
+                "title": "Rebel Ants: Battle for the Colony #407",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=407&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/407"
+              },
+              {
+                "tokenId": "471",
+                "title": "Rebel Ants: Battle for the Colony #471",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=471&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/471"
+              },
+              {
+                "tokenId": "535",
+                "title": "Rebel Ants: Battle for the Colony #535",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=535&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/535"
+              },
+              {
+                "tokenId": "551",
+                "title": "Rebel Ants: Battle for the Colony #551",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=551&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/551"
+              },
+              {
+                "tokenId": "631",
+                "title": "Rebel Ants: Battle for the Colony #631",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=631&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/631"
+              },
+              {
+                "tokenId": "663",
+                "title": "Rebel Ants: Battle for the Colony #663",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=663&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/663"
+              },
+              {
+                "tokenId": "759",
+                "title": "Rebel Ants: Battle for the Colony #759",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=759&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/759"
+              },
+              {
+                "tokenId": "823",
+                "title": "Rebel Ants: Battle for the Colony #823",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=823&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/823"
+              },
+              {
+                "tokenId": "1143",
+                "title": "Rebel Ants: Battle for the Colony #1143",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1143&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1143"
+              },
+              {
+                "tokenId": "1447",
+                "title": "Rebel Ants: Battle for the Colony #1447",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1447&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1447"
+              },
+              {
+                "tokenId": "1591",
+                "title": "Rebel Ants: Battle for the Colony #1591",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1591&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1591"
+              },
+              {
+                "tokenId": "1639",
+                "title": "Rebel Ants: Battle for the Colony #1639",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1639&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1639"
+              },
+              {
+                "tokenId": "1927",
+                "title": "Rebel Ants: Battle for the Colony #1927",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1927&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1927"
+              },
+              {
+                "tokenId": "2007",
+                "title": "Rebel Ants: Battle for the Colony #2007",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2007&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2007"
+              },
+              {
+                "tokenId": "2103",
+                "title": "Rebel Ants: Battle for the Colony #2103",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2103&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2103"
+              },
+              {
+                "tokenId": "2119",
+                "title": "Rebel Ants: Battle for the Colony #2119",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2119&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2119"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:50:28.562Z"
+          }
+        ],
+        "nftFrames": [],
+        "hotspots": [
+          {
+            "interiorId": "yamabushi_descent_path",
+            "hotspotId": "hotspot_yamabushi_descent_path_pillar",
+            "linkName": "The Pillar Shrine",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Halfway down, a stone pillar stands alone in the shaft. The Yamabushi rest here on the way down, and leave a blue flame burning for whoever comes next.",
+            "enabled": true,
+            "position": {
+              "x": -0.1,
+              "y": 18.2,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_descent_path",
+            "hotspotId": "hotspot_yamabushi_descent_path_pool",
+            "linkName": "The Blue Pool",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The light at the bottom comes from the water itself. Nobody has found where it comes from, only that it gets brighter when the ground shakes.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.1,
+              "z": 5.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:50:28.562Z"
+      }
+    }
   }
 ]
