@@ -22938,5 +22938,1945 @@
     "questObjectiveId": null,
     "editorLocked": false,
     "chestTier": "wood"
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_sohei_bell_temple",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -42.2,
+      "y": 0.06,
+      "z": 69
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "sohei",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_sohei_bell_temple",
+    "targetObjectId": null,
+    "interiorName": "The Bell Temple Door",
+    "interiorType": "sohei_bell_temple",
+    "targetInteriorId": "sohei_bell_temple",
+    "promptText": "Press O to Enter the Bell Temple",
+    "interiorDefinition": {
+      "id": "sohei_bell_temple",
+      "builtIn": false,
+      "title": "The Bell Temple",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_sohei_bell",
+      "prompt": "Press O to Enter",
+      "description": "The great bronze bell in its timber frame, the striking log, the candle racks.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.9,
+        "g": 0.55,
+        "b": 0.16
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "sohei_bell_temple",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_sohei_great_dojo",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 0,
+      "y": 0.08,
+      "z": 52.6
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "sohei",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_sohei_great_dojo",
+    "targetObjectId": null,
+    "interiorName": "The Great Dojo Door",
+    "interiorType": "sohei_great_dojo",
+    "targetInteriorId": "sohei_great_dojo",
+    "promptText": "Press O to Enter the Great Dojo",
+    "interiorDefinition": {
+      "id": "sohei_great_dojo",
+      "builtIn": false,
+      "title": "The Great Dojo",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_sohei_dojo",
+      "prompt": "Press O to Enter",
+      "description": "The goma fire on its altar, the training ring, staffs and naginata, the prayer ribbons.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.9,
+        "g": 0.55,
+        "b": 0.16
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "sohei_great_dojo",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_sohei_library",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -44,
+      "y": 0.1,
+      "z": 6.9
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "sohei",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_sohei_library",
+    "targetObjectId": null,
+    "interiorName": "The Library Door",
+    "interiorType": "sohei_library",
+    "targetInteriorId": "sohei_library",
+    "promptText": "Press O to Enter the Library",
+    "interiorDefinition": {
+      "id": "sohei_library",
+      "builtIn": false,
+      "title": "The Library",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_sohei_library",
+      "prompt": "Press O to Enter",
+      "description": "The turning sutra library in the middle of the hall, the reading desks, the sutra boxes.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.9,
+        "g": 0.55,
+        "b": 0.16
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "sohei_library",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_sohei_rite_hall",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 44,
+      "y": 0.1,
+      "z": 7
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "sohei",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_sohei_rite_hall",
+    "targetObjectId": null,
+    "interiorName": "The Rite Hall Door",
+    "interiorType": "sohei_rite_hall",
+    "targetInteriorId": "sohei_rite_hall",
+    "promptText": "Press O to Enter the Rite Hall",
+    "interiorDefinition": {
+      "id": "sohei_rite_hall",
+      "builtIn": false,
+      "title": "The Rite Hall",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_sohei_rite",
+      "prompt": "Press O to Enter",
+      "description": "A shallow pool with lanterns floating on it, a walkway to the stage, silk banners.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.9,
+        "g": 0.55,
+        "b": 0.16
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "sohei_rite_hall",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_room_configs",
+    "name": "interiorRoomConfigs",
+    "position": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "configs": {
+      "sohei_bell_temple": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_sohei",
+            "name": "Rebel Ants: Sohei",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "23",
+                "title": "Rebel Ants: Battle for the Colony #23",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=23&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/23"
+              },
+              {
+                "tokenId": "103",
+                "title": "Rebel Ants: Battle for the Colony #103",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=103&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/103"
+              },
+              {
+                "tokenId": "295",
+                "title": "Rebel Ants: Battle for the Colony #295",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=295&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/295"
+              },
+              {
+                "tokenId": "311",
+                "title": "Rebel Ants: Battle for the Colony #311",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=311&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/311"
+              },
+              {
+                "tokenId": "375",
+                "title": "Rebel Ants: Battle for the Colony #375",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=375&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/375"
+              },
+              {
+                "tokenId": "503",
+                "title": "Rebel Ants: Battle for the Colony #503",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=503&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/503"
+              },
+              {
+                "tokenId": "599",
+                "title": "Rebel Ants: Battle for the Colony #599",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=599&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/599"
+              },
+              {
+                "tokenId": "1319",
+                "title": "Rebel Ants: Battle for the Colony #1319",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1319&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1319"
+              },
+              {
+                "tokenId": "1335",
+                "title": "Rebel Ants: Battle for the Colony #1335",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1335&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1335"
+              },
+              {
+                "tokenId": "1735",
+                "title": "Rebel Ants: Battle for the Colony #1735",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1735&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1735"
+              },
+              {
+                "tokenId": "1751",
+                "title": "Rebel Ants: Battle for the Colony #1751",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1751&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1751"
+              },
+              {
+                "tokenId": "1831",
+                "title": "Rebel Ants: Battle for the Colony #1831",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1831&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1831"
+              },
+              {
+                "tokenId": "2055",
+                "title": "Rebel Ants: Battle for the Colony #2055",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2055&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2055"
+              },
+              {
+                "tokenId": "2167",
+                "title": "Rebel Ants: Battle for the Colony #2167",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2167&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2167"
+              },
+              {
+                "tokenId": "2215",
+                "title": "Rebel Ants: Battle for the Colony #2215",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2215&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2215"
+              },
+              {
+                "tokenId": "2983",
+                "title": "Rebel Ants: Battle for the Colony #2983",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2983&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2983"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:50:29.658Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "sohei_bell_temple",
+            "frameId": "nft_frame_sohei_bell_temple_1",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 1,
+            "tokenId": "23",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -11.86,
+              "y": 3.9,
+              "z": 7
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_bell_temple",
+            "frameId": "nft_frame_sohei_bell_temple_2",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 2,
+            "tokenId": "103",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 11.86,
+              "y": 3.9,
+              "z": 7
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_bell_temple",
+            "frameId": "nft_frame_sohei_bell_temple_3",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 3,
+            "tokenId": "295",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -7,
+              "y": 4.1,
+              "z": 11.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_bell_temple",
+            "frameId": "nft_frame_sohei_bell_temple_4",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 4,
+            "tokenId": "311",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 7,
+              "y": 4.1,
+              "z": 11.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_bell_temple",
+            "frameId": "nft_frame_sohei_bell_temple_5",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 5,
+            "tokenId": "375",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -11.86,
+              "y": 6.9,
+              "z": -4
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_bell_temple",
+            "frameId": "nft_frame_sohei_bell_temple_6",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 6,
+            "tokenId": "503",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 11.86,
+              "y": 6.9,
+              "z": -4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "sohei_bell_temple",
+            "hotspotId": "hotspot_sohei_bell_temple_bell",
+            "linkName": "The Great Bell",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Cast from every broken blade the Sohei ever carried. It is struck one hundred and eight times at the year's end, once for every fault an ant must leave behind.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.1,
+              "z": 3.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_bell_temple",
+            "hotspotId": "hotspot_sohei_bell_temple_fish",
+            "linkName": "The Wooden Fish",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "A fish never closes its eyes. The drum keeps the chanting steady and the monks awake through the long night prayers.",
+            "enabled": true,
+            "position": {
+              "x": -6,
+              "y": 2.3,
+              "z": 7.7
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:50:29.658Z"
+      },
+      "sohei_great_dojo": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_sohei",
+            "name": "Rebel Ants: Sohei",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "23",
+                "title": "Rebel Ants: Battle for the Colony #23",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=23&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/23"
+              },
+              {
+                "tokenId": "103",
+                "title": "Rebel Ants: Battle for the Colony #103",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=103&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/103"
+              },
+              {
+                "tokenId": "295",
+                "title": "Rebel Ants: Battle for the Colony #295",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=295&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/295"
+              },
+              {
+                "tokenId": "311",
+                "title": "Rebel Ants: Battle for the Colony #311",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=311&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/311"
+              },
+              {
+                "tokenId": "375",
+                "title": "Rebel Ants: Battle for the Colony #375",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=375&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/375"
+              },
+              {
+                "tokenId": "503",
+                "title": "Rebel Ants: Battle for the Colony #503",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=503&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/503"
+              },
+              {
+                "tokenId": "599",
+                "title": "Rebel Ants: Battle for the Colony #599",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=599&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/599"
+              },
+              {
+                "tokenId": "1319",
+                "title": "Rebel Ants: Battle for the Colony #1319",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1319&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1319"
+              },
+              {
+                "tokenId": "1335",
+                "title": "Rebel Ants: Battle for the Colony #1335",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1335&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1335"
+              },
+              {
+                "tokenId": "1735",
+                "title": "Rebel Ants: Battle for the Colony #1735",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1735&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1735"
+              },
+              {
+                "tokenId": "1751",
+                "title": "Rebel Ants: Battle for the Colony #1751",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1751&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1751"
+              },
+              {
+                "tokenId": "1831",
+                "title": "Rebel Ants: Battle for the Colony #1831",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1831&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1831"
+              },
+              {
+                "tokenId": "2055",
+                "title": "Rebel Ants: Battle for the Colony #2055",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2055&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2055"
+              },
+              {
+                "tokenId": "2167",
+                "title": "Rebel Ants: Battle for the Colony #2167",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2167&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2167"
+              },
+              {
+                "tokenId": "2215",
+                "title": "Rebel Ants: Battle for the Colony #2215",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2215&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2215"
+              },
+              {
+                "tokenId": "2983",
+                "title": "Rebel Ants: Battle for the Colony #2983",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2983&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2983"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:50:29.658Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "sohei_great_dojo",
+            "frameId": "nft_frame_sohei_great_dojo_7",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 7,
+            "tokenId": "599",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -18.86,
+              "y": 4.1,
+              "z": -6
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_great_dojo",
+            "frameId": "nft_frame_sohei_great_dojo_8",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 8,
+            "tokenId": "1319",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -18.86,
+              "y": 4.1,
+              "z": 1
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_great_dojo",
+            "frameId": "nft_frame_sohei_great_dojo_9",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 9,
+            "tokenId": "1335",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -18.86,
+              "y": 4.1,
+              "z": 8
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_great_dojo",
+            "frameId": "nft_frame_sohei_great_dojo_10",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 10,
+            "tokenId": "1735",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 18.86,
+              "y": 4.1,
+              "z": -6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_great_dojo",
+            "frameId": "nft_frame_sohei_great_dojo_11",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 11,
+            "tokenId": "1751",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 18.86,
+              "y": 4.1,
+              "z": 1
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_great_dojo",
+            "frameId": "nft_frame_sohei_great_dojo_12",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 12,
+            "tokenId": "1831",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 18.86,
+              "y": 4.1,
+              "z": 8
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_great_dojo",
+            "frameId": "nft_frame_sohei_great_dojo_13",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 13,
+            "tokenId": "2055",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -9,
+              "y": 4.3,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_great_dojo",
+            "frameId": "nft_frame_sohei_great_dojo_14",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 14,
+            "tokenId": "2167",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 9,
+              "y": 4.3,
+              "z": 14.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "sohei_great_dojo",
+            "hotspotId": "hotspot_sohei_great_dojo_goma",
+            "linkName": "The Goma Fire",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Each stick carries a written wish or a fault, and the fire takes them all. The Sohei train in front of it so that every strike is also a prayer.",
+            "enabled": true,
+            "position": {
+              "x": 2.6,
+              "y": 3.3,
+              "z": -10.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_great_dojo",
+            "hotspotId": "hotspot_sohei_great_dojo_ribbons",
+            "linkName": "Prayer Ribbons",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Saffron for courage, red for sacrifice, white for peace. A ribbon is tied on for every sparring match fought fairly in the ring.",
+            "enabled": true,
+            "position": {
+              "x": -10.1,
+              "y": 2.5,
+              "z": 4
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:50:29.658Z"
+      },
+      "sohei_library": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_sohei",
+            "name": "Rebel Ants: Sohei",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "23",
+                "title": "Rebel Ants: Battle for the Colony #23",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=23&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/23"
+              },
+              {
+                "tokenId": "103",
+                "title": "Rebel Ants: Battle for the Colony #103",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=103&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/103"
+              },
+              {
+                "tokenId": "295",
+                "title": "Rebel Ants: Battle for the Colony #295",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=295&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/295"
+              },
+              {
+                "tokenId": "311",
+                "title": "Rebel Ants: Battle for the Colony #311",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=311&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/311"
+              },
+              {
+                "tokenId": "375",
+                "title": "Rebel Ants: Battle for the Colony #375",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=375&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/375"
+              },
+              {
+                "tokenId": "503",
+                "title": "Rebel Ants: Battle for the Colony #503",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=503&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/503"
+              },
+              {
+                "tokenId": "599",
+                "title": "Rebel Ants: Battle for the Colony #599",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=599&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/599"
+              },
+              {
+                "tokenId": "1319",
+                "title": "Rebel Ants: Battle for the Colony #1319",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1319&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1319"
+              },
+              {
+                "tokenId": "1335",
+                "title": "Rebel Ants: Battle for the Colony #1335",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1335&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1335"
+              },
+              {
+                "tokenId": "1735",
+                "title": "Rebel Ants: Battle for the Colony #1735",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1735&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1735"
+              },
+              {
+                "tokenId": "1751",
+                "title": "Rebel Ants: Battle for the Colony #1751",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1751&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1751"
+              },
+              {
+                "tokenId": "1831",
+                "title": "Rebel Ants: Battle for the Colony #1831",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1831&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1831"
+              },
+              {
+                "tokenId": "2055",
+                "title": "Rebel Ants: Battle for the Colony #2055",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2055&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2055"
+              },
+              {
+                "tokenId": "2167",
+                "title": "Rebel Ants: Battle for the Colony #2167",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2167&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2167"
+              },
+              {
+                "tokenId": "2215",
+                "title": "Rebel Ants: Battle for the Colony #2215",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2215&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2215"
+              },
+              {
+                "tokenId": "2983",
+                "title": "Rebel Ants: Battle for the Colony #2983",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2983&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2983"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:50:29.658Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "sohei_library",
+            "frameId": "nft_frame_sohei_library_15",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 15,
+            "tokenId": "2215",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -7,
+              "y": 3.9,
+              "z": 11.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_library",
+            "frameId": "nft_frame_sohei_library_16",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 16,
+            "tokenId": "2983",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 7,
+              "y": 3.9,
+              "z": 11.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_library",
+            "frameId": "nft_frame_sohei_library_17",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 17,
+            "tokenId": "23",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -9.6,
+              "y": 3.9,
+              "z": -11.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.6,
+              "y": 1.6,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_library",
+            "frameId": "nft_frame_sohei_library_18",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 18,
+            "tokenId": "103",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 9.6,
+              "y": 3.9,
+              "z": -11.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.6,
+              "y": 1.6,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_library",
+            "frameId": "nft_frame_sohei_library_19",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 19,
+            "tokenId": "295",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -11.86,
+              "y": 7.9,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_library",
+            "frameId": "nft_frame_sohei_library_20",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 20,
+            "tokenId": "311",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 11.86,
+              "y": 7.9,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "sohei_library",
+            "hotspotId": "hotspot_sohei_library_rinzo",
+            "linkName": "The Turning Library",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Every sutra the Sohei own is in its drawers. Push it round once and it counts as reading them all; the monks still read every one.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2.1,
+              "z": 3.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_library",
+            "hotspotId": "hotspot_sohei_library_sutra",
+            "linkName": "An Open Sutra",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Enlightenment through conflict: the struggle is not the enemy of peace, it is the road to it.",
+            "enabled": true,
+            "position": {
+              "x": 6.5,
+              "y": 1.7,
+              "z": 7.1
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:50:29.658Z"
+      },
+      "sohei_rite_hall": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_sohei",
+            "name": "Rebel Ants: Sohei",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "23",
+                "title": "Rebel Ants: Battle for the Colony #23",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=23&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/23"
+              },
+              {
+                "tokenId": "103",
+                "title": "Rebel Ants: Battle for the Colony #103",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=103&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/103"
+              },
+              {
+                "tokenId": "295",
+                "title": "Rebel Ants: Battle for the Colony #295",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=295&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/295"
+              },
+              {
+                "tokenId": "311",
+                "title": "Rebel Ants: Battle for the Colony #311",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=311&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/311"
+              },
+              {
+                "tokenId": "375",
+                "title": "Rebel Ants: Battle for the Colony #375",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=375&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/375"
+              },
+              {
+                "tokenId": "503",
+                "title": "Rebel Ants: Battle for the Colony #503",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=503&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/503"
+              },
+              {
+                "tokenId": "599",
+                "title": "Rebel Ants: Battle for the Colony #599",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=599&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/599"
+              },
+              {
+                "tokenId": "1319",
+                "title": "Rebel Ants: Battle for the Colony #1319",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1319&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1319"
+              },
+              {
+                "tokenId": "1335",
+                "title": "Rebel Ants: Battle for the Colony #1335",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1335&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1335"
+              },
+              {
+                "tokenId": "1735",
+                "title": "Rebel Ants: Battle for the Colony #1735",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1735&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1735"
+              },
+              {
+                "tokenId": "1751",
+                "title": "Rebel Ants: Battle for the Colony #1751",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1751&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1751"
+              },
+              {
+                "tokenId": "1831",
+                "title": "Rebel Ants: Battle for the Colony #1831",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1831&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1831"
+              },
+              {
+                "tokenId": "2055",
+                "title": "Rebel Ants: Battle for the Colony #2055",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2055&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2055"
+              },
+              {
+                "tokenId": "2167",
+                "title": "Rebel Ants: Battle for the Colony #2167",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2167&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2167"
+              },
+              {
+                "tokenId": "2215",
+                "title": "Rebel Ants: Battle for the Colony #2215",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2215&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2215"
+              },
+              {
+                "tokenId": "2983",
+                "title": "Rebel Ants: Battle for the Colony #2983",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2983&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2983"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:50:29.658Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "sohei_rite_hall",
+            "frameId": "nft_frame_sohei_rite_hall_21",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 21,
+            "tokenId": "375",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -14.86,
+              "y": 3.9,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_rite_hall",
+            "frameId": "nft_frame_sohei_rite_hall_22",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 22,
+            "tokenId": "503",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -14.86,
+              "y": 3.9,
+              "z": 8
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_rite_hall",
+            "frameId": "nft_frame_sohei_rite_hall_23",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 23,
+            "tokenId": "599",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 14.86,
+              "y": 3.9,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_rite_hall",
+            "frameId": "nft_frame_sohei_rite_hall_24",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 24,
+            "tokenId": "1319",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 14.86,
+              "y": 3.9,
+              "z": 8
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_rite_hall",
+            "frameId": "nft_frame_sohei_rite_hall_25",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 25,
+            "tokenId": "1335",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -8,
+              "y": 4.1,
+              "z": 12.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "sohei_rite_hall",
+            "frameId": "nft_frame_sohei_rite_hall_26",
+            "frameName": "Sohei Rebel",
+            "collectionId": "rebel_ants_sohei",
+            "frameSlot": 26,
+            "tokenId": "1735",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 8,
+              "y": 4.1,
+              "z": 12.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "videoScreens": [
+          {
+            "interiorId": "sohei_rite_hall",
+            "screenId": "video_screen_sohei_rite",
+            "screenName": "The Warning Book 1",
+            "videoUrl": "/assets/video/interiors/rebel_library/video-1780690684331-Prologue_-1_Final.mp4",
+            "posterUrl": "",
+            "clickUrl": "",
+            "fallbackUrl": "",
+            "liveUrl": "",
+            "isLivePlaceholder": false,
+            "futureLiveMode": false,
+            "autoplay": true,
+            "muted": true,
+            "loop": false,
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 3.9000000000000004,
+              "z": -11.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.8089887640449436,
+              "y": 2.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "sohei_rite_hall",
+            "hotspotId": "hotspot_sohei_rite_hall_pool",
+            "linkName": "The Lantern Pool",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "One lantern for every Sohei who fell defending the temple. They are lit again every evening and set back on the water.",
+            "enabled": true,
+            "position": {
+              "x": 2.2,
+              "y": 2.4,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:50:29.658Z"
+      }
+    }
   }
 ]
