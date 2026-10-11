@@ -42319,5 +42319,1259 @@
     "enabled": true,
     "questObjectiveId": null,
     "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_ashigaru_workshop",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 27.83,
+      "y": 0.1,
+      "z": 33.88
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.6091634656607725,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ashigaru",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_ashigaru_workshop",
+    "targetObjectId": null,
+    "interiorName": "the Workshop Door",
+    "interiorType": "ashigaru_workshop",
+    "targetInteriorId": "ashigaru_workshop",
+    "promptText": "Press O to Enter the Workshop",
+    "interiorDefinition": {
+      "id": "ashigaru_workshop",
+      "builtIn": false,
+      "title": "The Workshop",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_ashi_workshop",
+      "prompt": "Press O to Enter",
+      "description": "The carpenters' shop: logs, saws, stakes for the palisade, spear shafts drying.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.3,
+        "g": 0.55,
+        "b": 0.22
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "ashigaru_workshop",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_ashigaru_seed_archive",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -34.2,
+      "y": 0.1,
+      "z": 10
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ashigaru",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_ashigaru_seed_archive",
+    "targetObjectId": null,
+    "interiorName": "the Seed Archive Door",
+    "interiorType": "ashigaru_seed_archive",
+    "targetInteriorId": "ashigaru_seed_archive",
+    "promptText": "Press O to Enter the Seed Archive",
+    "interiorDefinition": {
+      "id": "ashigaru_seed_archive",
+      "builtIn": false,
+      "title": "The Seed Archive",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_ashi_archive",
+      "prompt": "Press O to Enter",
+      "description": "Every seed the colony grows, kept in pots and drawers under the thatch, and the planting calendar.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.3,
+        "g": 0.55,
+        "b": 0.22
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "ashigaru_seed_archive",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_ashigaru_dojo",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 0,
+      "y": 0.1,
+      "z": 41
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ashigaru",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_ashigaru_dojo",
+    "targetObjectId": null,
+    "interiorName": "the Dojo Door",
+    "interiorType": "ashigaru_dojo",
+    "targetInteriorId": "ashigaru_dojo",
+    "promptText": "Press O to Enter the Dojo",
+    "interiorDefinition": {
+      "id": "ashigaru_dojo",
+      "builtIn": false,
+      "title": "The Dojo",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_ashi_dojo",
+      "prompt": "Press O to Enter",
+      "description": "The obstacle course: logs, ropes, the net and the mud.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.3,
+        "g": 0.55,
+        "b": 0.22
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "ashigaru_dojo",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_room_configs",
+    "name": "interiorRoomConfigs",
+    "position": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "configs": {
+      "ashigaru_workshop": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_ashigaru",
+            "name": "Rebel Ants: Ashigaru",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "7",
+                "title": "Rebel Ants: Battle for the Colony #7",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=7&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/7"
+              },
+              {
+                "tokenId": "855",
+                "title": "Rebel Ants: Battle for the Colony #855",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=855&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/855"
+              },
+              {
+                "tokenId": "983",
+                "title": "Rebel Ants: Battle for the Colony #983",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=983&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/983"
+              },
+              {
+                "tokenId": "1415",
+                "title": "Rebel Ants: Battle for the Colony #1415",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1415&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1415"
+              },
+              {
+                "tokenId": "1495",
+                "title": "Rebel Ants: Battle for the Colony #1495",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1495&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1495"
+              },
+              {
+                "tokenId": "1559",
+                "title": "Rebel Ants: Battle for the Colony #1559",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1559&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1559"
+              },
+              {
+                "tokenId": "2775",
+                "title": "Rebel Ants: Battle for the Colony #2775",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2775&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2775"
+              },
+              {
+                "tokenId": "2919",
+                "title": "Rebel Ants: Battle for the Colony #2919",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2919&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2919"
+              },
+              {
+                "tokenId": "2935",
+                "title": "Rebel Ants: Battle for the Colony #2935",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2935&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2935"
+              },
+              {
+                "tokenId": "3159",
+                "title": "Rebel Ants: Battle for the Colony #3159",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3159&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3159"
+              },
+              {
+                "tokenId": "3175",
+                "title": "Rebel Ants: Battle for the Colony #3175",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3175&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3175"
+              },
+              {
+                "tokenId": "3399",
+                "title": "Rebel Ants: Battle for the Colony #3399",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3399&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3399"
+              },
+              {
+                "tokenId": "3415",
+                "title": "Rebel Ants: Battle for the Colony #3415",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3415&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3415"
+              },
+              {
+                "tokenId": "3751",
+                "title": "Rebel Ants: Battle for the Colony #3751",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3751&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3751"
+              },
+              {
+                "tokenId": "4167",
+                "title": "Rebel Ants: Battle for the Colony #4167",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=4167&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/4167"
+              },
+              {
+                "tokenId": "4199",
+                "title": "Rebel Ants: Battle for the Colony #4199",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=4199&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/4199"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:31:46.642Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "ashigaru_workshop",
+            "frameId": "nft_frame_ashigaru_workshop_1",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 1,
+            "tokenId": "7",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -8,
+              "y": 4.1,
+              "z": 9.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ashigaru_workshop",
+            "frameId": "nft_frame_ashigaru_workshop_2",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 2,
+            "tokenId": "855",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 7,
+              "y": 4.1,
+              "z": 9.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ashigaru_workshop",
+            "frameId": "nft_frame_ashigaru_workshop_3",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 3,
+            "tokenId": "983",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -6,
+              "y": 4.3,
+              "z": -9.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ashigaru_workshop",
+            "frameId": "nft_frame_ashigaru_workshop_4",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 4,
+            "tokenId": "1415",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 12.86,
+              "y": 4.1,
+              "z": 6.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "ashigaru_workshop",
+            "hotspotId": "hotspot_ashigaru_workshop_saw",
+            "linkName": "The Two-Man Saw",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "One Ashigaru on each handle, pull and let go, pull and let go. Growth through endurance: a log a day for every palisade stake the colony needs.",
+            "enabled": true,
+            "position": {
+              "x": -6,
+              "y": 2.5,
+              "z": -2.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ashigaru_workshop",
+            "hotspotId": "hotspot_ashigaru_workshop_stakes",
+            "linkName": "Palisade Stakes",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Cut, sharpened, fire-hardened at the tip. The palisade round the village has more than four hundred of them.",
+            "enabled": true,
+            "position": {
+              "x": -8,
+              "y": 1.9,
+              "z": 4.7
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:31:46.642Z"
+      },
+      "ashigaru_seed_archive": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_ashigaru",
+            "name": "Rebel Ants: Ashigaru",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "7",
+                "title": "Rebel Ants: Battle for the Colony #7",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=7&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/7"
+              },
+              {
+                "tokenId": "855",
+                "title": "Rebel Ants: Battle for the Colony #855",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=855&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/855"
+              },
+              {
+                "tokenId": "983",
+                "title": "Rebel Ants: Battle for the Colony #983",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=983&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/983"
+              },
+              {
+                "tokenId": "1415",
+                "title": "Rebel Ants: Battle for the Colony #1415",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1415&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1415"
+              },
+              {
+                "tokenId": "1495",
+                "title": "Rebel Ants: Battle for the Colony #1495",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1495&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1495"
+              },
+              {
+                "tokenId": "1559",
+                "title": "Rebel Ants: Battle for the Colony #1559",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1559&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1559"
+              },
+              {
+                "tokenId": "2775",
+                "title": "Rebel Ants: Battle for the Colony #2775",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2775&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2775"
+              },
+              {
+                "tokenId": "2919",
+                "title": "Rebel Ants: Battle for the Colony #2919",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2919&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2919"
+              },
+              {
+                "tokenId": "2935",
+                "title": "Rebel Ants: Battle for the Colony #2935",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2935&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2935"
+              },
+              {
+                "tokenId": "3159",
+                "title": "Rebel Ants: Battle for the Colony #3159",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3159&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3159"
+              },
+              {
+                "tokenId": "3175",
+                "title": "Rebel Ants: Battle for the Colony #3175",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3175&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3175"
+              },
+              {
+                "tokenId": "3399",
+                "title": "Rebel Ants: Battle for the Colony #3399",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3399&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3399"
+              },
+              {
+                "tokenId": "3415",
+                "title": "Rebel Ants: Battle for the Colony #3415",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3415&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3415"
+              },
+              {
+                "tokenId": "3751",
+                "title": "Rebel Ants: Battle for the Colony #3751",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3751&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3751"
+              },
+              {
+                "tokenId": "4167",
+                "title": "Rebel Ants: Battle for the Colony #4167",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=4167&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/4167"
+              },
+              {
+                "tokenId": "4199",
+                "title": "Rebel Ants: Battle for the Colony #4199",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=4199&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/4199"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:31:46.643Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "ashigaru_seed_archive",
+            "frameId": "nft_frame_ashigaru_seed_archive_5",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 5,
+            "tokenId": "1495",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -5.5,
+              "y": 3.1,
+              "z": 8.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.6,
+              "y": 1.6,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ashigaru_seed_archive",
+            "frameId": "nft_frame_ashigaru_seed_archive_6",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 6,
+            "tokenId": "1559",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 5.5,
+              "y": 3.1,
+              "z": 8.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.6,
+              "y": 1.6,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ashigaru_seed_archive",
+            "frameId": "nft_frame_ashigaru_seed_archive_7",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 7,
+            "tokenId": "2775",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -7.4,
+              "y": 3.1,
+              "z": -8.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.6,
+              "y": 1.6,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ashigaru_seed_archive",
+            "frameId": "nft_frame_ashigaru_seed_archive_8",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 8,
+            "tokenId": "2919",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 7.4,
+              "y": 3.1,
+              "z": -8.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.6,
+              "y": 1.6,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "ashigaru_seed_archive",
+            "hotspotId": "hotspot_ashigaru_seed_archive_wheel",
+            "linkName": "The Planting Wheel",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Twelve months round the rice: sow, flood, plant out, weed, drain, harvest, thresh, rest. The pointer is moved on the first day of each month, by the youngest Ashigaru.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 1.7,
+              "z": -8.3
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ashigaru_seed_archive",
+            "hotspotId": "hotspot_ashigaru_seed_archive_pots",
+            "linkName": "The Seed Pots",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "A pot for every kind of seed the colony grows, each one sprouted every spring to prove the seed still lives.",
+            "enabled": true,
+            "position": {
+              "x": -8.5,
+              "y": 2.9,
+              "z": 2
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:31:46.643Z"
+      },
+      "ashigaru_dojo": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_ashigaru",
+            "name": "Rebel Ants: Ashigaru",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 16,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "7",
+                "title": "Rebel Ants: Battle for the Colony #7",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=7&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/7"
+              },
+              {
+                "tokenId": "855",
+                "title": "Rebel Ants: Battle for the Colony #855",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=855&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/855"
+              },
+              {
+                "tokenId": "983",
+                "title": "Rebel Ants: Battle for the Colony #983",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=983&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/983"
+              },
+              {
+                "tokenId": "1415",
+                "title": "Rebel Ants: Battle for the Colony #1415",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1415&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1415"
+              },
+              {
+                "tokenId": "1495",
+                "title": "Rebel Ants: Battle for the Colony #1495",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1495&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1495"
+              },
+              {
+                "tokenId": "1559",
+                "title": "Rebel Ants: Battle for the Colony #1559",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1559&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1559"
+              },
+              {
+                "tokenId": "2775",
+                "title": "Rebel Ants: Battle for the Colony #2775",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2775&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2775"
+              },
+              {
+                "tokenId": "2919",
+                "title": "Rebel Ants: Battle for the Colony #2919",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2919&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2919"
+              },
+              {
+                "tokenId": "2935",
+                "title": "Rebel Ants: Battle for the Colony #2935",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2935&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2935"
+              },
+              {
+                "tokenId": "3159",
+                "title": "Rebel Ants: Battle for the Colony #3159",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3159&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3159"
+              },
+              {
+                "tokenId": "3175",
+                "title": "Rebel Ants: Battle for the Colony #3175",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3175&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3175"
+              },
+              {
+                "tokenId": "3399",
+                "title": "Rebel Ants: Battle for the Colony #3399",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3399&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3399"
+              },
+              {
+                "tokenId": "3415",
+                "title": "Rebel Ants: Battle for the Colony #3415",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3415&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3415"
+              },
+              {
+                "tokenId": "3751",
+                "title": "Rebel Ants: Battle for the Colony #3751",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=3751&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/3751"
+              },
+              {
+                "tokenId": "4167",
+                "title": "Rebel Ants: Battle for the Colony #4167",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=4167&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/4167"
+              },
+              {
+                "tokenId": "4199",
+                "title": "Rebel Ants: Battle for the Colony #4199",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=4199&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/4199"
+              }
+            ],
+            "updatedAt": "2026-10-10T14:31:46.643Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "ashigaru_dojo",
+            "frameId": "nft_frame_ashigaru_dojo_9",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 9,
+            "tokenId": "2935",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -11,
+              "y": 4.1,
+              "z": 13.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ashigaru_dojo",
+            "frameId": "nft_frame_ashigaru_dojo_10",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 10,
+            "tokenId": "3159",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 11,
+              "y": 4.1,
+              "z": 13.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ashigaru_dojo",
+            "frameId": "nft_frame_ashigaru_dojo_11",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 11,
+            "tokenId": "3175",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -17.86,
+              "y": 4.1,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ashigaru_dojo",
+            "frameId": "nft_frame_ashigaru_dojo_12",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 12,
+            "tokenId": "3399",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 17.86,
+              "y": 4.1,
+              "z": 6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "ashigaru_dojo",
+            "frameId": "nft_frame_ashigaru_dojo_13",
+            "frameName": "Ashigaru Rebel",
+            "collectionId": "rebel_ants_ashigaru",
+            "frameSlot": 13,
+            "tokenId": "3415",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 4.7,
+              "z": -13.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2.2,
+              "y": 2.2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "ashigaru_dojo",
+            "hotspotId": "hotspot_ashigaru_dojo_course",
+            "linkName": "The Course",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Logs, ropes, the net, the mud, the wall, then the targets. Every Ashigaru runs it at dawn; the record is chalked on the post by the door.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 1.9,
+              "z": 8.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T14:31:46.643Z"
+      }
+    }
   }
 ]
