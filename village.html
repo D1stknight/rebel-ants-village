@@ -1638,6 +1638,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 <script src="assets/forge-core.js"></script>
+<script src="assets/village-hud.js"></script>
 <script src="assets/samurai-kit.js"></script>
 <script src="assets/forge-sfx.js"></script>
 <script src="assets/rebel-weapon.js"></script>
@@ -23097,6 +23098,7 @@ function toggleWalk() {
     scene.activeCamera = walk; walk.detachControl(); orbit.detachControl();
     wb.textContent = 'EXIT WALK'; wb.classList.add('on'); xh.classList.remove('on');
     runVillagePerformancePass(true);
+    buildVillageHudMap();
   } else {
     if (!configureInteriorEditCamera()) {
       scene.activeCamera = orbit; orbit.attachControl(canvas, true); walk.detachControl();
@@ -25062,6 +25064,7 @@ engine.runRenderLoop(()=>{
   updateSmallVillageAntPopulation(dt);
   runVillagePerformancePass(false);
   updatePerformanceDebugPanel();
+  try { window.VillageHud?.update(); } catch (e) {}
   applyFakeLightState(false);
   enforceInteriorIsolation();
   if (window._gpuMode === 'webgpu') {
@@ -25293,6 +25296,34 @@ async function loadForgeCollectionsConfig() {
   }
 }
 
+// the round Rebel button (opens the Rebel panel), the quest line beside it and the minimap (assets/village-hud.js)
+function initVillageHud() {
+  try {
+    window.VillageHud?.init(scene, {
+      isWalking: () => walkMode && !adminMode,
+      inInterior: () => !!ActiveInterior,
+      questTarget: () => {
+        // the auto guide's target (wired steps), else the quest's own glowing marker or its NPC (looked up twice a second)
+        let n = AutoQuestGuide.target?.node;
+        if (!n || n.isDisposed?.()) {
+          const now = performance.now();
+          if (!initVillageHud._g || now - initVillageHud._g.at > 500) { const g = getQuestTargetGuidance?.(); initVillageHud._g = { at: now, node: g?.marker || g?.npc || null }; }
+          n = initVillageHud._g.node;
+        }
+        if (!n || n.isDisposed?.()) return null;
+        const p = n.getAbsolutePosition ? n.getAbsolutePosition() : n.position; return { x: p.x, z: p.z };
+      }
+    });
+  } catch (e) { console.warn('Village HUD failed to start', e); }
+}
+// the minimap's picture: one top-down render once walking starts, and again a little later for models that load late
+function buildVillageHudMap() {
+  if (!window.VillageHud?.buildMap || buildVillageHudMap.done) return;
+  buildVillageHudMap.done = true;
+  setTimeout(() => window.VillageHud.buildMap(320, 1536), 600);
+  setTimeout(() => window.VillageHud.buildMap(320, 1536), 30000);
+}
+
 function markVillageStartupInteractive() {
   if (VillageStartupRuntime.interactive) return;
   VillageStartupRuntime.interactive = true;
@@ -25302,6 +25333,7 @@ function markVillageStartupInteractive() {
   scheduleProgressiveAssetSourceLoad(excluded);
   schedulePostInteractiveStartupTask(loadForgeCollectionsConfig, 650);
   schedulePostInteractiveStartupTask(startVillagePetalEffects, 1200);
+  schedulePostInteractiveStartupTask(initVillageHud, 300);
   const ld = document.getElementById('ld');
   if (ld) { ld.style.opacity='0'; setTimeout(()=>{ ld.style.display='none'; }, 900); }
 }
