@@ -24998,9 +24998,9 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": -37,
+      "x": -35.96,
       "y": 0.06,
-      "z": 66
+      "z": 68.37
     },
     "rotation": {
       "x": 0,
@@ -26601,6 +26601,819 @@
           }
         ],
         "updatedAt": "2026-10-10T02:48:55.982Z"
+      },
+      "samurai_library": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_samurai",
+            "name": "Rebel Ants: Samurai",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 12,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "215",
+                "title": "Rebel Ants: Battle for the Colony #215",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=215&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/215"
+              },
+              {
+                "tokenId": "487",
+                "title": "Rebel Ants: Battle for the Colony #487",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=487&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/487"
+              },
+              {
+                "tokenId": "839",
+                "title": "Rebel Ants: Battle for the Colony #839",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=839&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/839"
+              },
+              {
+                "tokenId": "1351",
+                "title": "Rebel Ants: Battle for the Colony #1351",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1351&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1351"
+              },
+              {
+                "tokenId": "2199",
+                "title": "Rebel Ants: Battle for the Colony #2199",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2199&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2199"
+              },
+              {
+                "tokenId": "2295",
+                "title": "Rebel Ants: Battle for the Colony #2295",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2295&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2295"
+              },
+              {
+                "tokenId": "2615",
+                "title": "Rebel Ants: Battle for the Colony #2615",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2615&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2615"
+              },
+              {
+                "tokenId": "1175",
+                "title": "Rebel Ants: Battle for the Colony #1175",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1175&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1175"
+              },
+              {
+                "tokenId": "2071",
+                "title": "Rebel Ants: Battle for the Colony #2071",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2071&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2071"
+              },
+              {
+                "tokenId": "2311",
+                "title": "Rebel Ants: Battle for the Colony #2311",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2311&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2311"
+              },
+              {
+                "tokenId": "2647",
+                "title": "Rebel Ants: Battle for the Colony #2647",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2647&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2647"
+              },
+              {
+                "tokenId": "2903",
+                "title": "Rebel Ants: Battle for the Colony #2903",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2903&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2903"
+              }
+            ],
+            "updatedAt": "2026-10-10T13:28:16.552Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "samurai_library",
+            "frameId": "nft_frame_samurai_library_1",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 1,
+            "tokenId": "215",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -7.4,
+              "y": 3.5,
+              "z": 10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_library",
+            "frameId": "nft_frame_samurai_library_2",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 2,
+            "tokenId": "487",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 7.4,
+              "y": 3.5,
+              "z": 10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_library",
+            "frameId": "nft_frame_samurai_library_3",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 3,
+            "tokenId": "839",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -10.9,
+              "y": 3.5,
+              "z": 10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_library",
+            "frameId": "nft_frame_samurai_library_4",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 4,
+            "tokenId": "1351",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 10.9,
+              "y": 3.5,
+              "z": 10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_library",
+            "frameId": "nft_frame_samurai_library_5",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 5,
+            "tokenId": "2199",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -10.4,
+              "y": 3.5,
+              "z": -10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_library",
+            "frameId": "nft_frame_samurai_library_6",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 6,
+            "tokenId": "2295",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 10.4,
+              "y": 3.5,
+              "z": -10.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "samurai_library",
+            "hotspotId": "hotspot_samurai_library_desk",
+            "linkName": "Calligraphy Practice",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The same character, written a hundred times: LOYALTY.\n\nThe master's note in red at the bottom: Again. The line is not yet still.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 1.1,
+              "z": -1.1500000000000001
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.8,
+              "y": 0.5,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_library",
+            "hotspotId": "hotspot_samurai_library_window",
+            "linkName": "The Moon Window",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The maple outside was planted by the first librarian. Every autumn a leaf is pressed into the newest scroll.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 2,
+              "z": -10.7
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T13:28:16.553Z"
+      },
+      "samurai_forge": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_samurai",
+            "name": "Rebel Ants: Samurai",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 12,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "215",
+                "title": "Rebel Ants: Battle for the Colony #215",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=215&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/215"
+              },
+              {
+                "tokenId": "487",
+                "title": "Rebel Ants: Battle for the Colony #487",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=487&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/487"
+              },
+              {
+                "tokenId": "839",
+                "title": "Rebel Ants: Battle for the Colony #839",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=839&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/839"
+              },
+              {
+                "tokenId": "1351",
+                "title": "Rebel Ants: Battle for the Colony #1351",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1351&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1351"
+              },
+              {
+                "tokenId": "2199",
+                "title": "Rebel Ants: Battle for the Colony #2199",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2199&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2199"
+              },
+              {
+                "tokenId": "2295",
+                "title": "Rebel Ants: Battle for the Colony #2295",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2295&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2295"
+              },
+              {
+                "tokenId": "2615",
+                "title": "Rebel Ants: Battle for the Colony #2615",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2615&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2615"
+              },
+              {
+                "tokenId": "1175",
+                "title": "Rebel Ants: Battle for the Colony #1175",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1175&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1175"
+              },
+              {
+                "tokenId": "2071",
+                "title": "Rebel Ants: Battle for the Colony #2071",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2071&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2071"
+              },
+              {
+                "tokenId": "2311",
+                "title": "Rebel Ants: Battle for the Colony #2311",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2311&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2311"
+              },
+              {
+                "tokenId": "2647",
+                "title": "Rebel Ants: Battle for the Colony #2647",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2647&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2647"
+              },
+              {
+                "tokenId": "2903",
+                "title": "Rebel Ants: Battle for the Colony #2903",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2903&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2903"
+              }
+            ],
+            "updatedAt": "2026-10-10T13:28:16.553Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "samurai_forge",
+            "frameId": "nft_frame_samurai_forge_7",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 7,
+            "tokenId": "2615",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -5.6,
+              "y": 3.7,
+              "z": 9.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_forge",
+            "frameId": "nft_frame_samurai_forge_8",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 8,
+            "tokenId": "1175",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 5.6,
+              "y": 3.7,
+              "z": 9.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_forge",
+            "frameId": "nft_frame_samurai_forge_9",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 9,
+            "tokenId": "2071",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -9.6,
+              "y": 3.7,
+              "z": 9.86
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 2,
+              "y": 2,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "samurai_forge",
+            "hotspotId": "hotspot_samurai_forge_blades",
+            "linkName": "From Bar to Blade",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Six stages on the wall: the raw bar, the drawn bar, the shaped blade, the hardened edge, the polish, the finished sword.\n\nA Samurai blade is folded until the smith can no longer count the layers.",
+            "enabled": true,
+            "position": {
+              "x": -11.45,
+              "y": 2.4,
+              "z": -1
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_forge",
+            "hotspotId": "hotspot_samurai_forge_hearth",
+            "linkName": "The Hearth",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The fire has been fed charcoal every day for three generations. The smiths say the blades remember it.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 1.9,
+              "z": -6.9
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.6,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T13:28:16.553Z"
+      },
+      "samurai_ancestor_hall": {
+        "playerFloorOffset": 0,
+        "nftCollections": [
+          {
+            "collectionId": "rebel_ants_samurai",
+            "name": "Rebel Ants: Samurai",
+            "chain": "ethereum",
+            "contract": "0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221",
+            "collectionUrl": "",
+            "limit": 12,
+            "source": "opensea",
+            "items": [
+              {
+                "tokenId": "215",
+                "title": "Rebel Ants: Battle for the Colony #215",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=215&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/215"
+              },
+              {
+                "tokenId": "487",
+                "title": "Rebel Ants: Battle for the Colony #487",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=487&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/487"
+              },
+              {
+                "tokenId": "839",
+                "title": "Rebel Ants: Battle for the Colony #839",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=839&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/839"
+              },
+              {
+                "tokenId": "1351",
+                "title": "Rebel Ants: Battle for the Colony #1351",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1351&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1351"
+              },
+              {
+                "tokenId": "2199",
+                "title": "Rebel Ants: Battle for the Colony #2199",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2199&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2199"
+              },
+              {
+                "tokenId": "2295",
+                "title": "Rebel Ants: Battle for the Colony #2295",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2295&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2295"
+              },
+              {
+                "tokenId": "2615",
+                "title": "Rebel Ants: Battle for the Colony #2615",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2615&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2615"
+              },
+              {
+                "tokenId": "1175",
+                "title": "Rebel Ants: Battle for the Colony #1175",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=1175&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/1175"
+              },
+              {
+                "tokenId": "2071",
+                "title": "Rebel Ants: Battle for the Colony #2071",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2071&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2071"
+              },
+              {
+                "tokenId": "2311",
+                "title": "Rebel Ants: Battle for the Colony #2311",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2311&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2311"
+              },
+              {
+                "tokenId": "2647",
+                "title": "Rebel Ants: Battle for the Colony #2647",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2647&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2647"
+              },
+              {
+                "tokenId": "2903",
+                "title": "Rebel Ants: Battle for the Colony #2903",
+                "imageUrl": "/api/nft-image?c=battle_for_colony&t=2903&s=thumb",
+                "collection": "rebel-ants-battle-for-the-colony",
+                "openseaUrl": "https://opensea.io/assets/ethereum/0x96c1469c1c76e3bb0e37c23a830d0eea6bcf9221/2903"
+              }
+            ],
+            "updatedAt": "2026-10-10T13:28:16.553Z"
+          }
+        ],
+        "nftFrames": [
+          {
+            "interiorId": "samurai_ancestor_hall",
+            "frameId": "nft_frame_samurai_ancestor_hall_10",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 10,
+            "tokenId": "2311",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -11.86,
+              "y": 2.5,
+              "z": -2
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_ancestor_hall",
+            "frameId": "nft_frame_samurai_ancestor_hall_11",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 11,
+            "tokenId": "2647",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": -11.86,
+              "y": 2.5,
+              "z": 3
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_ancestor_hall",
+            "frameId": "nft_frame_samurai_ancestor_hall_12",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 12,
+            "tokenId": "2903",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 11.86,
+              "y": 2.5,
+              "z": -2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_ancestor_hall",
+            "frameId": "nft_frame_samurai_ancestor_hall_13",
+            "frameName": "Samurai Rebel",
+            "collectionId": "rebel_ants_samurai",
+            "frameSlot": 13,
+            "tokenId": "215",
+            "frameStatus": "Owned",
+            "imageUrl": "",
+            "title": "",
+            "enabled": true,
+            "position": {
+              "x": 11.86,
+              "y": 2.5,
+              "z": 3
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.8,
+              "y": 1.8,
+              "z": 1
+            }
+          }
+        ],
+        "hotspots": [
+          {
+            "interiorId": "samurai_ancestor_hall",
+            "hotspotId": "hotspot_samurai_ancestor_hall_tablets",
+            "linkName": "The Ancestor Tablets",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Two hundred names in gold, one for every Samurai who held the line and did not come back.\n\nThe newest tablet is blank. It is kept ready.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 1.3,
+              "z": -11.1
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1.2,
+              "y": 0.6,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "samurai_ancestor_hall",
+            "hotspotId": "hotspot_samurai_ancestor_hall_armour",
+            "linkName": "The First Armour",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The armour of the first Samurai of the colony. The crimson lacing was rewoven by every generation since; the iron is the original.",
+            "enabled": true,
+            "position": {
+              "x": -8.15,
+              "y": 2.1,
+              "z": 7.1
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 0.8,
+              "y": 0.8,
+              "z": 1
+            }
+          }
+        ],
+        "updatedAt": "2026-10-10T13:28:16.553Z"
       }
     }
   },
@@ -27450,6 +28263,366 @@
     "interiorDefinition": null,
     "enabled": true,
     "questObjectiveId": null,
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_samurai_library",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -37.4,
+      "y": 1.06,
+      "z": 40.74
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.044169055361146,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "samurai",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_samurai_library",
+    "targetObjectId": null,
+    "interiorName": "the Samurai Library Door",
+    "interiorType": "samurai_library",
+    "targetInteriorId": "samurai_library",
+    "promptText": "Press O to Enter the Samurai Library",
+    "interiorDefinition": {
+      "id": "samurai_library",
+      "builtIn": false,
+      "title": "the Samurai Library",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_sam_library",
+      "prompt": "Press O to Enter",
+      "description": "Scrolls in their thousands, the calligraphy desks, the moon window and its maple.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.86,
+        "g": 0.3,
+        "b": 0.18
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "samurai_library",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_samurai_forge",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -38.72,
+      "y": 0.42,
+      "z": 67.52
+    },
+    "rotation": {
+      "x": 0,
+      "y": -0.8876048815047018,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "samurai",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_samurai_forge",
+    "targetObjectId": null,
+    "interiorName": "the Forge Door",
+    "interiorType": "samurai_forge",
+    "targetInteriorId": "samurai_forge",
+    "promptText": "Press O to Enter the Forge",
+    "interiorDefinition": {
+      "id": "samurai_forge",
+      "builtIn": false,
+      "title": "the Forge",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_sam_forge",
+      "prompt": "Press O to Enter",
+      "description": "The smiths' hearth, the anvils and the blades of the Samurai.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.86,
+        "g": 0.3,
+        "b": 0.18
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "samurai_forge",
+    "editorLocked": false
+  },
+  {
+    "type": "interior_entrance",
+    "name": "interiorEntrance_samurai_ancestor_hall",
+    "disableGroundSnap": false,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -78.82,
+      "y": 0,
+      "z": 40
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 4,
+      "y": 4,
+      "z": 2.4
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "samurai",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": true,
+    "proxyWalkSurfaceEnabled": false,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": false,
+    "createdByTerrainBrush": false,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": "interiorEntrance_samurai_ancestor_hall",
+    "targetObjectId": null,
+    "interiorName": "the Ancestor Hall Door",
+    "interiorType": "samurai_ancestor_hall",
+    "targetInteriorId": "samurai_ancestor_hall",
+    "promptText": "Press O to Enter the Ancestor Hall",
+    "interiorDefinition": {
+      "id": "samurai_ancestor_hall",
+      "builtIn": false,
+      "title": "the Ancestor Hall",
+      "category": "custom",
+      "style": "dojo",
+      "kit": "room_sam_ancestors",
+      "prompt": "Press O to Enter",
+      "description": "Under the burrow: the tablets of every Samurai who held the line.",
+      "modelUrl": "",
+      "musicPath": "",
+      "accent": {
+        "r": 0.86,
+        "g": 0.3,
+        "b": 0.18
+      }
+    },
+    "enabled": true,
+    "questObjectiveId": "samurai_ancestor_hall",
     "editorLocked": false
   }
 ]
