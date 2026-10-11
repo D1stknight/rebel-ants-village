@@ -22794,7 +22794,7 @@
       "label": "Look closer",
       "miniAnt": true,
       "miniAntYaw": -1.6,
-      "radius": 2.2,
+      "radius": 1.2,
       "text": "A tiny ant peeks out at you."
     }
   },
