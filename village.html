@@ -1640,6 +1640,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <script src="assets/forge-core.js"></script>
 <script src="assets/village-hud.js"></script>
 <script src="assets/samurai-kit.js"></script>
+<script src="assets/walk-gen.js"></script>
 <script src="assets/forge-sfx.js"></script>
 <script src="assets/rebel-weapon.js"></script>
 <script type="module">
@@ -23801,14 +23802,22 @@ function villageRampHeightAt(surface, local) {
   return surface.startY + (surface.endY - surface.startY) * t;
 }
 
+// every walk surface whose box holds (x, z); a group (one placed piece's floors) is opened only within its reach
+function villageSurfacesAt(x, z, fn) {
+  const visit = surface => {
+    const local = pointToVillageSurfaceLocal(surface, x, z);
+    if (Math.abs(local.x) <= surface.halfX && Math.abs(local.z) <= surface.halfZ) fn(surface, local);
+  };
+  for (const surface of villageWalkableSurfaces) {
+    if (surface.kind === 'group') { const dx = x - surface.x, dz = z - surface.z; if (dx * dx + dz * dz <= surface.r * surface.r) surface.items.forEach(visit); }
+    else visit(surface);
+  }
+}
+
 function getVillageWalkableSurfaceHeightAt(x, z) {
   let height = -Infinity;
 
-  villageWalkableSurfaces.forEach(surface => {
-    const local = pointToVillageSurfaceLocal(surface, x, z);
-
-    if (Math.abs(local.x) > surface.halfX || Math.abs(local.z) > surface.halfZ) return;
-
+  villageSurfacesAt(x, z, (surface, local) => {
     if (surface.kind === 'terrain_stamp') {
       const localHeight = getTerrainStampLocalHeight(surface.terrainStampType, surface.shape, local.x, local.z);
       if (Number.isFinite(localHeight)) height = Math.max(height, surface.centerY + localHeight);
@@ -23830,10 +23839,7 @@ function getVillageWalkSurfaceInfoAt(x, z) {
   let bestSurface = null;
   let bestHeight = -Infinity;
 
-  villageWalkableSurfaces.forEach(surface => {
-    const local = pointToVillageSurfaceLocal(surface, x, z);
-    if (Math.abs(local.x) > surface.halfX || Math.abs(local.z) > surface.halfZ) return;
-
+  villageSurfacesAt(x, z, (surface, local) => {
     let y = surface.y;
     if (surface.kind === 'terrain_stamp') {
       const height = getTerrainStampLocalHeight(surface.terrainStampType, surface.shape, local.x, local.z);
@@ -24382,7 +24388,7 @@ function renderSelectedWalkSurfaceGuide() {
   const materials = getVillageProxyDebugMaterials();
 
   villageWalkableSurfaces
-    .filter(surface => surface.name && surface.name.startsWith(prefix))
+    .filter(surface => surface.kind !== 'group' && surface.name && surface.name.startsWith(prefix))
     .forEach(surface => {
       const isRamp = surface.kind === 'ramp';
       const y = isRamp
@@ -24514,25 +24520,64 @@ var HUB_GLB_WALK = { // var: the collision rebuild can run before this line
     blockers: [[-8.35, -6.7, 14.2, 6.4], [-9.43, -.2, -8.73, .2], [-9.35, 3.28, -8.81, 3.6]] } // the porch posts at their own size: the ledge passes them
 };
 var _glbWalkV = new BABYLON.Vector3();
+// Kit pieces without hand-made decks walk by tables made from their own geometry (assets/walk-gen.js; tools/gen-kit-walk.mjs
+// writes assets/kit-walk.json): porches, raised floors, plinth steps and stairs are floors at their own heights, and what
+// stands at body height that the walk cannot reach (walls, posts, counters, rails, a raised floor with no steps) is a wall.
+// A type whose geometry no longer matches its table (the kit changed since the file was made) is worked out here instead.
+var _kitWalkTables = null, _kitWalkRooms = null, _kitWalkLive = {}, _kitWalkOff = false;
+fetch('assets/kit-walk.json').then(r => r.ok ? r.json() : null).then(j => { if (j?.types) { _kitWalkTables = j.types; _kitWalkRooms = j.rooms || null; villageLastBlockerRebuild = 0; } }).catch(() => {});
+// the Hub's other model buildings (the pagoda dojo_7, dojo_6, the hill shrine): the same generator run on their triangles,
+// measured in one placed copy (assets/glb-walk.json; dojo_9 and dojo_5 keep their hand-made HUB_GLB_WALK tables)
+var _glbWalkTables = null;
+fetch('assets/glb-walk.json').then(r => r.ok ? r.json() : null).then(j => { if (j?.types) { Object.values(j.types).forEach(t => { t.auto = true; }); _glbWalkTables = j.types; villageLastBlockerRebuild = 0; } }).catch(() => {});
+function getGlbWalkTable(type) { return type && !_kitWalkOff && _glbWalkTables?.[type] || null; }
+function getKitWalkTable(type) {
+  if (!_kitWalkTables || _kitWalkOff || !window.SamuraiKit?.walkEligible?.(type)) return null;
+  if (_kitWalkLive[type] !== undefined) return _kitWalkLive[type];
+  let t = _kitWalkTables[type] || null;
+  try {
+    const live = window.SamuraiKit.walkTrianglesOf(scene, type);
+    const same = t && t.sig.length === live.sig.length && t.sig.every((v, i) => Math.abs(v - live.sig[i]) < .015);
+    if (!same && live.tris.length && window.WalkGen) { // (a piece of soft parts only, candles or a glow, has no table and walks as ground)
+      const r = window.WalkGen.fromTriangles(live.tris, {});
+      t = r ? { decks: r.decks, walls: r.blockers } : null;
+      console.warn('assets/kit-walk.json is out of date for', type, '- worked out here (run tools/gen-kit-walk.mjs)');
+    }
+  } catch (e) { console.warn('kit walk table failed for', type, e); }
+  return (_kitWalkLive[type] = t ? { decks: t.decks.map(d => [...d, 'w']), blockers: t.walls, auto: true } : null);
+}
 function addGlbBuildingWalk(node, spec, blockers, surfaces) {
   node.computeWorldMatrix(true);
   const M = node.getWorldMatrix().clone(); M.setTranslationFromFloats(0, 0, 0);
-  if (!spec._Binv) spec._Binv = BABYLON.Matrix.Compose(new BABYLON.Vector3(...spec.ref.s), BABYLON.Quaternion.RotationYawPitchRoll(0, spec.ref.r[0], spec.ref.r[1]), BABYLON.Vector3.Zero()).invert();
+  if (!spec._Binv) spec._Binv = spec.ref ? BABYLON.Matrix.Compose(new BABYLON.Vector3(...spec.ref.s), BABYLON.Quaternion.RotationYawPitchRoll(0, spec.ref.r[0], spec.ref.r[1]), BABYLON.Vector3.Zero()).invert() : BABYLON.Matrix.Identity();
   const A = spec._Binv.multiply(M), P = node.getAbsolutePosition(); // A: measured frame -> this copy (row vectors)
   const at = (x, y, z) => { BABYLON.Vector3.TransformNormalFromFloatsToRef(x, y, z, A, _glbWalkV); return { x: P.x + _glbWalkV.x, y: P.y + _glbWalkV.y, z: P.z + _glbWalkV.z }; };
   const ux = at(1, 0, 0), uz = at(0, 0, 1), kx = Math.hypot(ux.x - P.x, ux.z - P.z), kz = Math.hypot(uz.x - P.x, uz.z - P.z);
   if (kx < 1e-6 || kz < 1e-6) return;
   const axisX = { x: (ux.x - P.x) / kx, z: (ux.z - P.z) / kx }, axisZ = { x: (uz.x - P.x) / kz, z: (uz.z - P.z) / kz }, yaw = Math.atan2(axisZ.x, axisZ.z);
   const box = (x0, z0, x1, z1, y) => { const c = at((x0 + x1) / 2, y, (z0 + z1) / 2); return { centerX: c.x, centerZ: c.z, y: c.y, axisX, axisZ, yaw, halfX: (x1 - x0) / 2 * kx, halfZ: (z1 - z0) / 2 * kz }; };
-  spec.decks.forEach(([x0, z0, x1, z1, y, s]) => surfaces.push({ kind: 'flat', type: 'kit_deck', name: node.name, surfaceType: s === 'w' ? 'wood' : 'stone', ...box(x0, z0, x1, z1, y) }));
-  if (spec._r == null) spec._r = Math.max(...spec.blockers.flatMap(([x0, z0, x1, z1]) => [Math.hypot(x0, z0), Math.hypot(x0, z1), Math.hypot(x1, z0), Math.hypot(x1, z1)]));
-  const items = spec.blockers.map(([x0, z0, x1, z1], i) => ({ kind: 'obb', type: 'building', name: node.name + '_wall_' + i, ...box(x0, z0, x1, z1, 0) }));
-  blockers.push({ kind: 'group', x: P.x, z: P.z, r: spec._r * Math.max(kx, kz) + .5, items, name: node.name }); // tested only near the building
+  const floors = spec.decks.map(([x0, z0, x1, z1, y, s]) => ({ kind: 'flat', type: 'kit_deck', name: node.name, surfaceType: s === 'w' ? 'wood' : 'stone', ...box(x0, z0, x1, z1, y) }));
+  const reach = list => Math.max(0, ...list.flatMap(([x0, z0, x1, z1]) => [Math.hypot(x0, z0), Math.hypot(x0, z1), Math.hypot(x1, z0), Math.hypot(x1, z1)]));
+  if (spec.auto) { if (floors.length) { if (spec._rd == null) spec._rd = reach(spec.decks); surfaces.push({ kind: 'group', type: 'kit_deck', name: node.name, x: P.x, z: P.z, r: spec._rd * Math.max(kx, kz) + .5, items: floors }); } }
+  else surfaces.push(...floors);
+  if (!spec.blockers.length) return;
+  if (spec._r == null) spec._r = reach(spec.blockers);
+  // a generated wall (spec.auto) stops a body standing at its own floor level only, like a room's: the plinth face under a
+  // veranda stops the walk on the ground, not on the veranda over it. Walls of the ground (level ~0) hold up to a body
+  // height above the piece's base (copies stand on slopes); walls of a raised floor from 1 m below it (the ground beside a
+  // low porch, a step under it) to .45 over it
+  const items = spec.blockers.map(([x0, z0, x1, z1, lev], i) => {
+    const b = { kind: 'obb', type: 'building', name: node.name + '_wall_' + i, ...box(x0, z0, x1, z1, 0) };
+    if (spec.auto && Number.isFinite(lev)) { const wy = at((x0 + x1) / 2, lev, (z0 + z1) / 2).y; if (lev <= .15) b.maxY = wy + 2.4; else { b.minY = wy - 1; b.maxY = wy + .45; } }
+    return b;
+  });
+  blockers.push({ kind: 'group', x: P.x, z: P.z, r: spec._r * Math.max(kx, kz) + .5, items, name: node.name, auto: !!spec.auto }); // tested only near the building
 }
-// a model building's wall between two points: a door's prompt (it reaches 4.8 m round) does not carry through it
+// a model building's wall between two points: a door's prompt (it reaches 4.8 m round) does not carry through it (the
+// hand-made HUB_GLB_WALK walls only: generated walls ring hatches, trapdoors and doorways their doors stand in)
 function villageBuildingWallBetween(x0, z0, x1, z1) {
   const mx = (x0 + x1) / 2, mz = (z0 + z1) / 2, half = Math.hypot(x1 - x0, z1 - z0) / 2;
-  return villageCollisionBlockers.some(g => g.kind === 'group' && Math.hypot(mx - g.x, mz - g.z) < g.r + half && g.items.some(b => villageSegmentIntersectsObb(b, x0, z0, x1, z1, 0)));
+  return villageCollisionBlockers.some(g => g.kind === 'group' && !g.auto && Math.hypot(mx - g.x, mz - g.z) < g.r + half && g.items.some(b => villageSegmentIntersectsObb(b, x0, z0, x1, z1, 0)));
 }
 
 function rebuildVillageCollisionBlockers() {
@@ -24553,8 +24598,10 @@ function rebuildVillageCollisionBlockers() {
       blockers.push({ kind: 'obb', type: 'treasure_chest', name: node.name, ...getTreasureChestFootprint(node) });
     } else if (node.metadata?.isClone === true && window.SamuraiKit?.decks?.[node.metadata.type]) {
       addKitDeckSurfaces(node, walkableSurfaces);
-    } else if (HUB_GLB_WALK?.[node.metadata?.type] && (node.metadata.isClone === true || node.name?.includes('RootClone_'))) {
-      addGlbBuildingWalk(node, HUB_GLB_WALK[node.metadata.type], blockers, walkableSurfaces);
+    } else if (node.metadata?.isClone === true && ASSETS[node.metadata.type]?.kit === 'samurai' && getKitWalkTable(node.metadata.type)) {
+      addGlbBuildingWalk(node, getKitWalkTable(node.metadata.type), blockers, walkableSurfaces);
+    } else if ((HUB_GLB_WALK?.[node.metadata?.type] || getGlbWalkTable(node.metadata?.type)) && (node.metadata.isClone === true || node.name?.includes('RootClone_'))) {
+      addGlbBuildingWalk(node, HUB_GLB_WALK[node.metadata.type] || getGlbWalkTable(node.metadata.type), blockers, walkableSurfaces);
     } else if (node.metadata?.type === 'terrain_stamp') {
       addTerrainStampToWorld(node, walkableSurfaces);
     }
@@ -24612,11 +24659,9 @@ function liveManualCollisionProxyBlocksSegment(startX, startZ, endX, endZ, paddi
 }
 
 function villageOnKitDeck(x, z) {
-  return villageWalkableSurfaces.some(sf => {
-    if (sf.type !== 'kit_deck') return false;
-    const l = pointToVillageSurfaceLocal(sf, x, z);
-    return Math.abs(l.x) <= sf.halfX && Math.abs(l.z) <= sf.halfZ;
-  });
+  let on = false;
+  villageSurfacesAt(x, z, sf => { if (sf.type === 'kit_deck') on = true; });
+  return on;
 }
 function villageSeaBlocks(x, z) {
   return !!window._newTerrain?.seaBlocks?.(x, z) && !Number.isFinite(getVillageWalkableSurfaceHeightAt(x, z));
@@ -24655,11 +24700,22 @@ function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PA
 // is a short step blocked, and how high is the ground there.
 window._walkProbe = {
   blocked: (x, z) => villagePointBlocked(x, z),
-  step: (x0, z0, x1, z1) => villageSegmentBlocked(x0, z0, x1, z1),
+  step: (x0, z0, x1, z1, y) => { _villageWalkerY = Number.isFinite(y) ? y : NaN; try { return villageSegmentBlocked(x0, z0, x1, z1); } finally { _villageWalkerY = NaN; } },
   ground: (x, z) => getVillageGroundHeightAt(x, z),
-  refresh: () => refreshVillageCollisionBlockersIfNeeded()
+  refresh: () => refreshVillageCollisionBlockersIfNeeded(),
+  // the parts of the player's floor rule (the walk audit, t/burial.mjs)
+  rebuild: () => rebuildVillageCollisionBlockers(),
+  support: (x, z) => getVillageRaycastGroundHeightAt(x, z, { includeManualWalkSurfaces: false }),
+  base: (x, z) => getVillageBaseGroundHeightAt(x, z),
+  surface: (x, z) => getVillageWalkableSurfaceHeightAt(x, z),
+  deckTop: (x, z) => villageKitDeckTopAt(x, z),
+  npcRoots: () => NPCManager.roots.slice(),
+  autoWalk: on => { _kitWalkOff = !on; rebuildVillageCollisionBlockers(); return !!_kitWalkTables; },
+  stats: () => ({ blockers: villageCollisionBlockers.length, autoWalls: villageCollisionBlockers.filter(b => b.auto).length, surfaces: villageWalkableSurfaces.length, floorGroups: villageWalkableSurfaces.filter(sf => sf.kind === 'group').length })
 };
 
+// the floor the walker being tested stands on (the player while its move is resolved); unknown (NaN) = every wall holds
+var _villageWalkerY = NaN;
 function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   const onDeck = villageOnKitDeck(endX, endZ);
   if (!onDeck && window._newTerrain?.decorBlocksPoint(endX, endZ, padding)) return true;
@@ -24667,7 +24723,8 @@ function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MAN
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'group') {
       const dx = endX - blocker.x, dz = endZ - blocker.z, rr = blocker.r + padding + 1;
-      return dx * dx + dz * dz <= rr * rr && blocker.items.some(b => villageSegmentIntersectsObb(b, startX, startZ, endX, endZ, padding));
+      // a generated wall the player already stands inside (spawned or set down there) does not hold it: it walks out
+      return dx * dx + dz * dz <= rr * rr && blocker.items.some(b => !(blocker.auto && villageObbContainsPoint(b, startX, startZ, 0)) && !(Number.isFinite(_villageWalkerY) && (_villageWalkerY > b.maxY || _villageWalkerY < b.minY)) && villageSegmentIntersectsObb(b, startX, startZ, endX, endZ, padding));
     }
     if (blocker.kind === 'circle') return villagePointBlocked(endX, endZ, padding);
     if (blocker.kind === 'obb') return villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ, padding);
@@ -24905,13 +24962,11 @@ window.auditVillageCollisionSources = function auditVillageCollisionSources() {
 const VILLAGE_LEDGE_REACH = .5; // the body's front, ahead of its centre
 function villageKitDeckTopAt(x, z) {
   let h = -Infinity;
-  for (const sf of villageWalkableSurfaces) {
-    if (sf.type !== 'kit_deck') continue;
-    const l = pointToVillageSurfaceLocal(sf, x, z);
-    if (Math.abs(l.x) > sf.halfX || Math.abs(l.z) > sf.halfZ) continue;
+  villageSurfacesAt(x, z, (sf, l) => {
+    if (sf.type !== 'kit_deck') return;
     const y = sf.kind === 'ramp' ? villageRampHeightAt(sf, l) : sf.y;
     if (y > h) h = y;
-  }
+  });
   return h;
 }
 function villageLedgeBlocks(x0, z0, x1, z1) {
@@ -24928,8 +24983,8 @@ function villageLedgeBlocks(x0, z0, x1, z1) {
 function resolveVillagePlayerCollision(currentPosition, proposedPosition) {
   if (ActiveInterior) return resolveInteriorPlayerCollision(currentPosition, proposedPosition);
   refreshVillageCollisionBlockersIfNeeded();
-  const cx = currentPosition.x, cz = currentPosition.z;
-  const stops = (x, z) => villageSegmentBlocked(cx, cz, x, z) || villageLedgeBlocks(cx, cz, x, z);
+  const cx = currentPosition.x, cz = currentPosition.z, wy = charMesh?._terrainY;
+  const stops = (x, z) => { _villageWalkerY = Number.isFinite(wy) ? wy : NaN; try { return villageSegmentBlocked(cx, cz, x, z) || villageLedgeBlocks(cx, cz, x, z); } finally { _villageWalkerY = NaN; } };
 
   if (!stops(proposedPosition.x, proposedPosition.z)) {
     return { x: proposedPosition.x, z: proposedPosition.z, blocked: false };

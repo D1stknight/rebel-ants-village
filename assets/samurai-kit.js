@@ -6713,5 +6713,46 @@
     ashi_great_dojo: [{ x: 0, z: 0, halfX: 12.8, halfZ: 8.3, y: 1.52 }, { x: 0, z: -9.2, halfX: 4, halfZ: .9, y0: 0, y1: 1.4, steps: 4, surface: 'stone' }] };
   // the dojos built on the Samurai dojo share its base and steps
   for (const t of ['wok_great_dojo', 'yam_great_dojo', 'kenshi_great_dojo', 'sohei_great_dojo', 'buke_great_hall']) decks[t] = samDojoDeck;
-  window.SamuraiKit = { build, setLightFactor, animate, actorAction, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), _Kit: Kit, _B: B, _org: { blob, curveTube } };
+  // walk floors and walls made from the geometry (assets/walk-gen.js, tools/gen-kit-walk.mjs -> assets/kit-walk.json): every
+  // placed piece without hand-made decks; cloth, rope, glow, fire, water and smoke are not solid
+  const WALK_SOFT = /^(rm_)?(banner|noren|sail|rope|cloth|net$|curtain|glow|window_glow|win_lit|fire|water|smoke|ghost|spirit|neon|emblem|mark_|teal_glow|candle$|mist|shaft)/;
+  const SUBPART_TYPES = new Set(Object.values(SUBPARTS).flat().map(s => s[0]));
+  function walkEligible(type) {
+    return !!B[type] && !type.startsWith('room_') && !type.includes('__') && !type.startsWith('chz_ape_') && !CHAR[type] && !FLOAT.has(type) && !STAIRS[type] && !decks[type] && !SUBPART_TYPES.has(type);
+  }
+  // the solid triangles of a type (from a Kit's parts, or from its built template meshes) and their signature (count + size)
+  function walkTriangles(parts) {
+    const out = []; let mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+    for (const [mat, P] of Object.entries(parts)) {
+      if (WALK_SOFT.test(mat)) continue;
+      for (const ix of P.i) for (let k = 0; k < 3; k++) { const v = P.p[ix * 3 + k]; out.push(v); if (v < mn[k]) mn[k] = v; if (v > mx[k]) mx[k] = v; }
+    }
+    const r = v => Math.round(v * 100) / 100;
+    return { tris: new Float32Array(out), sig: [out.length / 9, ...mn.map(r), ...mx.map(r)] };
+  }
+  // a room's geometry: its builder plus its placed moving parts, in the room's frame (floor top at y 0)
+  function walkRoomParts(type) {
+    const spec = ROOMS[type], parts = {}; if (!spec) return parts;
+    const items = [[type, 0, 0, 0, 0], ...(spec.parts || []).map(q => [q.type, q.p[0], q.p[1], q.p[2], q.ry || 0])];
+    items.forEach(([t, px, py, pz, ry], n) => {
+      if (!B[t]) return;
+      const M = new Kit(); M.room = true; B[t](M);
+      const c = Math.cos(ry), sn = Math.sin(ry);
+      for (const [mat, P] of Object.entries(M.parts)) {
+        const p = new Float32Array(P.p.length);
+        for (let i = 0; i < P.p.length; i += 3) { const x = P.p[i], y = P.p[i + 1], z = P.p[i + 2]; p[i] = px + x * c + z * sn; p[i + 1] = py + y; p[i + 2] = pz - x * sn + z * c; }
+        parts[n ? mat + '#' + n : mat] = { p, i: P.i };
+      }
+    });
+    return parts;
+  }
+  function walkTrianglesOf(scene, type) {
+    const parts = {};
+    for (const m of template(scene, type)) {
+      const mat = m.name.slice(('samKit_' + type + '_').length), p = m.getVerticesData(BABYLON.VertexBuffer.PositionKind), i = m.getIndices();
+      if (p && i) parts[mat] = { p, i };
+    }
+    return walkTriangles(parts);
+  }
+  window.SamuraiKit = { build, setLightFactor, animate, actorAction, protoMeshes, decks, rooms: ROOMS, stairsSteps, refreshStairs, types: Object.keys(B), walkEligible, walkTriangles, walkTrianglesOf, walkRoomParts, _Kit: Kit, _B: B, _org: { blob, curveTube } };
 })();
