@@ -293,7 +293,7 @@ async function forgeOne(id, opts = {}) {
     // 5. Forge Rigger, NPC mode (NPC clips, NPC checks)
     if (!n.rig?.url) {
       n.phase = 'rigging'; n.rig = { p: 0, step: 'starting' }; save(); renderList();
-      await twice(() => api('/api/forge-rig-start', { buildId: n.buildId, npc: true, ...(opts.rerig ? { force: true } : {}), ...(n.handFit ? { handFit: n.handFit } : {}) }));
+      await twice(() => api('/api/forge-rig-start', { buildId: n.buildId, npc: true, species: colOf(n).species, ...(opts.rerig ? { force: true } : {}), ...(n.handFit ? { handFit: n.handFit } : {}) }));
       for (;;) {
         await sleep(6000);
         let d; try { d = await api(`/api/forge-rig-status?buildId=${encodeURIComponent(n.buildId)}`); } catch (e) { continue; }
@@ -343,6 +343,7 @@ function renderList() {
         ${qa ? `<span class="verdict v-${qa}">${qa}</span>` : ''}</div>
       <div class="row" style="margin-top:6px"><select onchange="setField('${n.id}','collection',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Collection">${Object.entries(COLLECTIONS).map(([k, c]) => `<option value="${k}" ${k === (n.collection || 'rebel') ? 'selected' : ''}>${c.label}</option>`).join('')}</select><input class="grow" placeholder="library key" value="${esc(n.key)}" onchange="setField('${n.id}','key',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Library key (samurai_villager replaces that villager's placeholder; chumpz_bartender replaces Big Chain)"></div>
       ${n.buildId ? '' : `<div class="slots">${slots}</div>`}
+      ${n.buildId || colOf(n).species === 'ant' ? '' : `<div class="info">Renders for ${colOf(n).label}: A-pose, a clear gap between each arm and the body all the way down (background showing under the armpits) and the hands open, away from the hips. Arms or hands touching the body are fused in the sculpt and tear when they move.</div>`}
       <div class="state">${stateLine(n)}</div><div class="bar"><i style="width:${pct(n)}%"></i></div>
       <div class="info" id="info_${n.id}">${statusLines(n).join('<br>')}</div>
       ${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}
@@ -579,7 +580,7 @@ function handFitNow(n) { return n.handFit || (n.handFit = { Left: { ...HF0 }, Ri
 function renderHands() {
   const n = npc(selId), on = !!(n && view.hands && n.rig?.url);
   $('#handsCtl').style.display = on ? '' : 'none';
-  $('#handsMsg').textContent = !n ? 'Pick a forged NPC to fit its hands.' : !n.rig?.url ? 'Forge this NPC first.' : !view.hands ? 'This rig has no Forge gloves to fit.' : 'Move, resize or recolour the gloves and check them on any animation.';
+  $('#handsMsg').textContent = !n ? 'Pick a forged NPC to fit its hands.' : !n.rig?.url ? 'Forge this NPC first.' : !view.hands ? (colOf(n).species !== 'ant' ? `${colOf(n).label} NPCs keep their own hands from the sculpt (no Forge gloves).` : 'This rig has no Forge gloves to fit.') : 'Move, resize or recolour the gloves and check them on any animation.';
   if (!on) return;
   const h = handFitNow(n); const f = fitOf(h, handSide === 'both' ? 'Right' : handSide);
   [['hfAlong', f.along], ['hfThumb', f.thumb], ['hfBack', f.back]].forEach(([id, v]) => { $('#' + id).value = Math.round(v / HF_STEP); $('#' + id + 'V').textContent = (v > 0 ? '+' : '') + Math.round(v / HF_STEP); });
