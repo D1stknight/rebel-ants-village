@@ -31398,10 +31398,27 @@ function buildInteriorProps(root, type, mats, options = {}) {
   }
 }
 
-// Kit rooms (samurai-kit.js ROOMS): bounds / blockers / spawn / exit / lights come with the room's geometry.
-function getKitInteriorBounds(spec) {
+// Kit rooms (samurai-kit.js ROOMS): bounds / blockers / spawn / exit / lights come with the room's geometry. On top of the
+// room's own decks and blockers, the floors and walls made from its geometry (assets/kit-walk.json, tools/gen-kit-walk.mjs):
+// low platforms and steps its decks do not cover, and furniture as walls at the floor level it stands on (minY / maxY).
+function getKitRoomWalkTable(type) {
+  const t = _kitWalkRooms?.[type];
+  if (!t || _kitWalkOff) return null;
+  if (_kitWalkLive['room:' + type] !== undefined) return _kitWalkLive['room:' + type];
+  let ok = true;
+  try { const live = window.SamuraiKit.walkTrianglesOf(scene, type).sig; ok = t.sig.length === live.length && t.sig.every((v, i) => Math.abs(v - live[i]) < .015); } catch (e) {}
+  if (!ok) console.warn('assets/kit-walk.json is out of date for', type, '- its generated floors are left out (run tools/gen-kit-walk.mjs)');
+  return (_kitWalkLive['room:' + type] = ok ? t : null);
+}
+function getKitInteriorBounds(spec, type) {
   const [minX, maxX, minZ, maxZ] = spec.bounds;
-  return { halfX:Math.max(-minX, maxX), halfZ:Math.max(-minZ, maxZ), minX, maxX, minZ, maxZ, blockers:spec.blockers || [], decks:spec.decks || [], walk:spec.walk || null, ceil:spec.ceil || 9 };
+  let blockers = spec.blockers || [], decks = spec.decks || [];
+  const auto = type ? getKitRoomWalkTable(type) : null;
+  if (auto) {
+    decks = [...decks, ...auto.decks.map(([x0, z0, x1, z1, y]) => ({ box: [x0, z0, x1, z1], y, auto: true }))];
+    blockers = [...blockers, ...auto.walls.map(([x0, z0, x1, z1, lev]) => ({ box: [x0, z0, x1, z1], minY: lev - .5, maxY: lev + .45, auto: true }))];
+  }
+  return { halfX:Math.max(-minX, maxX), halfZ:Math.max(-minZ, maxZ), minX, maxX, minZ, maxZ, blockers, decks, walk:spec.walk || null, ceil:spec.ceil || 9 };
 }
 
 function buildKitInteriorRoom(root, kitType) {
@@ -31535,7 +31552,7 @@ function buildInteriorRoom(entrance) {
   const isTrainingDojoInterior = type === 'training_dojo';
   const roomFloorY = isCustomGlbInterior ? CUSTOM_INTERIOR_FLOOR_Y : INTERIOR_FLOOR_Y;
   const playerFloorOffset = getInteriorPlayerFloorOffset(targetInteriorId);
-  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:kitRoom ? '' : (def.modelUrl || ''), floorY:roomFloorY + playerFloorOffset, baseFloorY:roomFloorY, playerFloorOffset, isCustomGlbInterior, kitRoom:kitRoomType, spawn:kitRoom?.spawn || null, bounds:kitRoom ? getKitInteriorBounds(kitRoom) : getInteriorBoundsForRoom(type, isCustomGlbInterior) };
+  root.metadata = { type:'interior_runtime', interiorType:type, targetInteriorId, modelUrl:kitRoom ? '' : (def.modelUrl || ''), floorY:roomFloorY + playerFloorOffset, baseFloorY:roomFloorY, playerFloorOffset, isCustomGlbInterior, kitRoom:kitRoomType, spawn:kitRoom?.spawn || null, bounds:kitRoom ? getKitInteriorBounds(kitRoom, kitRoomType) : getInteriorBoundsForRoom(type, isCustomGlbInterior) };
 
   const floorColor = style === 'gallery' ? new BABYLON.Color3(.24,.23,.21)
     : style === 'theater' || style === 'arcade' ? new BABYLON.Color3(.05,.04,.08)

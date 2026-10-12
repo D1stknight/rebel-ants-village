@@ -6536,7 +6536,7 @@
       // the chart table, the map, the instruments, a stool
       M.block('darkwood', 0, -2.4, 0, 3, 1.8, .95); M.quad('treasure_map', [[-1.2, -3.1, .96], [1.2, -3.1, .96], [1.2, -1.7, .96], [-1.2, -1.7, .96]]);
       M.cyl('brass', [.9, -2.9, .96], .16, .06, 12); M.rod('brass', [-1, -1.9, 1], [-.5, -2, 1.05], .02, 4); M.rod('brass', [-1, -1.9, 1], [-.8, -1.8, 1.25], .02, 4); M.rod('paper', [1.2, -1.8, 1.02], [.2, -1.8, 1.02], .06, 8); M.cyl('brass', [-1.1, -2.9, .96], .1, .3, 8); M.sphere('window_glow', [-1.1, -2.9, 1.34], .1, 1.2, 6, 3);
-      M.cyl('wood', [0, -.6, 0], .3, .7, 8);
+      M.cyl('wood', [2.3, -2.4, 0], .3, .7, 8); // the stool beside the table (in front of the spawn it was walked through)
       // the hammock across the front-left corner, the sea chest, a barrel, rope
       const rows = [], uv = []; for (let i = 0; i <= 8; i++) { const t = i / 8, x = -HX + .8 + 3.2 * t, y = 1.2 + 2.8 * t, z = 2.6 - 1 * Math.sin(Math.PI * t); rows.push([[x - .3, y + .3, z + .1], [x + .3, y - .3, z + .1]]); uv.push([[0, t], [1, t]]); } M.grid('sail', rows, uv); M.rod('rope', [-HX + .5, .9, 3.2], [-HX + .8, 1.2, 2.7], .02, 3); M.rod('rope', [-HX + 4.3, 4.3, 3.2], [-HX + 4, 4, 2.7], .02, 3);
       M.block('darkwood', 4.7, 2.9, 0, 1.6, 1, .8); M.box('darkwood', [4.7, 2.9, .9], [1.62, 1.02, .26]); for (const dx of [-.5, .5]) M.block('brass', 4.7 + dx, 2.9, 0, .06, 1.04, .92);
