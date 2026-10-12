@@ -39941,9 +39941,34 @@
               "y": 1,
               "z": 1
             }
+          },
+          {
+            "interiorId": "ronin_old_door",
+            "hotspotId": "hotspot_ronin_old_door_opening",
+            "linkName": "The Opening",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The Watcher cuts the crimson rope that has crossed the door for a hundred years. The two great leaves grind apart a hand's width, then an arm's, then wide enough for an ant. Cold air rolls out, smelling of roots and old stone. The road under every village is open.",
+            "enabled": true,
+            "questId": "book1-main-45",
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": -9
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
           }
         ],
-        "updatedAt": "2026-10-10T13:20:27.735Z"
+        "updatedAt": "2026-10-12T00:34:20.812Z"
       }
     }
   },

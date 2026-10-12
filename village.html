@@ -2341,6 +2341,75 @@ const BOOK1_WIRING = {
       { id:'order-to-hub', objective:'Bring the united watch order to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
         say:['A united watch. Not peace, not trust, but every village looking at the same door.', 'The Samurai will grumble and the Wokou will want paying, but they will stand the watch.', 'Rest while you can. The seal under the Hub is older than any of us, and tonight I think it is failing.'] },
       { id:'storm-journal', objective:'Open your journal and read how the storm gathered.', objectiveType:'openJournal' }
+    ],
+    41: [
+      { id:'guide-seal', objective:'Talk to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['I did not sleep. Nobody did. Just before dawn the whole Hub shook, once, like a door slammed far below.', 'The seal on the old scout path, past the south torii. That is where the sound came from.', 'Go and look at the seal. And look at the ground round it: if it has opened, I need to know how far.'] },
+      { id:'inspect-seal', objective:'Inspect the Hub seal at the sealed chamber on the old scout path.', objectiveType:'useQuestSpot', targetObjectId:'hub-seal-failing', villageId:'hub' },
+      { id:'record-fracture', objective:'Record the open fracture beside the sealed chamber.', objectiveType:'useQuestSpot', targetObjectId:'hub-open-fracture', villageId:'hub' },
+      { id:'guide-fracture', objective:'Tell the Hub Guide what the seal looks like.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['Cracked through, and breathing. Then the seal has stopped warning us. It has started to break.', 'The Yamabushi Seer once told me the Descent Path under their village opens the day the seal breaks. I thought it was a story.', 'Go to the Seer. If the path is open, we need someone who has walked it.'] }
+    ],
+    42: [
+      { id:'seer-descent', objective:'Meet the Yamabushi Seer on the dojo terrace.', objectiveType:'talkToNpc', targetNpcId:'yamabushi-monk-01', villageId:'yamabushi',
+        say:['You felt it too. At dawn the burrow arch by the plaza wall stood open, and cold air came up out of it.', 'The Descent Path. It was closed when the seal was made, and it opened by itself.', 'Go down and mark the path for those who follow: one mark on the top landing, one where the stair reaches the pillar, one by the pool at the bottom.'] },
+      { id:'mark-path', objective:'Go down the Descent Path and leave three marks: the top landing, the pillar and the pool.', objectiveType:'interactInteriorLink', targetInteriorId:'yamabushi_descent_path', targetObjectId:'hotspot_yamabushi_descent_path_mark', count:3, villageId:'yamabushi' },
+      { id:'seer-after', objective:'Tell the Yamabushi Seer the path is marked.', objectiveType:'talkToNpc', targetNpcId:'yamabushi-monk-01', villageId:'yamabushi',
+        say:['Three marks. Now any Rebel can find the way down, and the way back up.', 'The descent was never lost. It was waiting for someone with the courage to walk it.', 'A path down is not enough. The Sohei say they can steady it: ask the Bell Keeper for the balance thread.'] }
+    ],
+    43: [
+      { id:'bellkeeper-thread', objective:'Ask the Sohei Bell Keeper about the balance thread.', objectiveType:'talkToNpc', targetNpcId:'sohei-bellkeeper-01', villageId:'sohei',
+        say:['A balance thread is woven from three tokens: one rung from the bell, one dipped in the pond, one warmed on the zen garden stone.', 'The monks set them out at dawn. Bring all three, and I will weave.', 'A thread is small. It is strong only when every village holds one end.'] },
+      { id:'collect-tokens', objective:'Collect the three balance tokens: by the bell platform, by the pond and in the zen garden.', objectiveType:'collectCollectible', targetObjectId:'sohei-balance-token', count:3, villageId:'sohei' },
+      { id:'receive-thread', objective:'Bring the tokens to the Bell Keeper and receive the Sohei thread.', objectiveType:'talkToNpc', targetNpcId:'sohei-bellkeeper-01', villageId:'sohei',
+        say:['Bell, water, stone. Hold still.', 'There. One end stays with the Sohei, the other goes down with you. When the thread pulls, the bells will hear it.', 'The Samurai Captain sent word: their patrols are holding the roads open. Go and see that they do.'] }
+    ],
+    44: [
+      { id:'captain-roads', objective:'Find the Samurai Captain at the top of the dojo stairs.', objectiveType:'talkToNpc', targetNpcId:'samurai-captain-01', villageId:'samurai',
+        say:['Not long ago I closed those roads with a decree. Tonight my patrols keep them open for every faction.', 'Two watches stand outside the palisade: one on the east road, one on the west road.', 'Confirm both. Order is only useful if it guards roads instead of pride.'] },
+      { id:'confirm-watches', objective:'Confirm the two road watches outside the palisade: the east road and the west road.', objectiveType:'useQuestSpot', targetObjectId:'sam-road-watch', count:2, villageId:'samurai' },
+      { id:'thank-captain', objective:'Thank the Samurai Captain.', objectiveType:'talkToNpc', targetNpcId:'samurai-captain-01', villageId:'samurai',
+        say:['Both watches standing. Good. The roads hold.', 'Do not thank me. Thank the ants out there in the dark.', 'The Ronin Watcher asked for you this morning. He would not say why. With the Ronin, that usually means it matters.'] }
+    ],
+    45: [
+      { id:'watcher-door', objective:'Return to the Ronin Watcher.', objectiveType:'talkToNpc', targetNpcId:'ronin-guard-01', villageId:'ronin',
+        say:['Our oldest oath: the Old Door stays shut until the colony needs it more than the Ronin need their secret.', 'Today the colony needs it. The road through the Old Door runs under every village, all the way to the Hub.', 'The Old Door behind the great dojo is unsealed. Go in and witness the opening. Someone outside the Ronin must see it.'] },
+      { id:'witness-opening', objective:'Witness the Old Door opening, through the door behind the great dojo.', objectiveType:'interactInteriorLink', targetInteriorId:'ronin_old_door', targetObjectId:'hotspot_ronin_old_door_opening', villageId:'ronin' },
+      { id:'watcher-after', objective:'Talk to the Ronin Watcher.', objectiveType:'talkToNpc', targetNpcId:'ronin-guard-01', villageId:'ronin',
+        say:['It is done. The oath is broken, and I feel lighter for it.', 'The Ronin kept that road shut for the colony. Now we keep it open for the colony.', 'The Wokou are moving supplies to the Hub. Go to the Broker; she will want a witness too, so nobody says the Wokou did nothing.'] }
+    ],
+    46: [
+      { id:'broker-supplies', objective:'Ask the Wokou Broker about the supplies.', objectiveType:'talkToNpc', targetNpcId:'wokou-broker-01', villageId:'wokou',
+        say:['Rope, oil, rice, lamp wicks. Everything the Hub will need below, and I am not charging for any of it.', 'Do not look at me like that. Profit is paused. Not gone. Paused.', 'The ledgers are with the loads: one on the quay, one by the boat shed, one at the market stalls. Collect them so the Hub knows what is coming.'] },
+      { id:'collect-ledgers', objective:'Collect the three Wokou supply ledgers: the quay, the boat shed and the market.', objectiveType:'collectCollectible', targetObjectId:'wok-supply-ledger', count:3, villageId:'wokou' },
+      { id:'broker-after', objective:'Bring the ledgers to the Wokou Broker.', objectiveType:'talkToNpc', targetNpcId:'wokou-broker-01', villageId:'wokou',
+        say:['All accounted for. The loads went ahead on the road an hour ago.', 'Meet them at the Hub and see them unloaded in the square, by the great cherry tree. Sign for them in my name.'] },
+      { id:'deliver-supplies', objective:'Unload the Wokou supplies at the Hub square.', objectiveType:'useQuestSpot', targetObjectId:'hub-supply-drop', villageId:'hub' }
+    ],
+    47: [
+      { id:'foreman-brace', objective:'Ask the Bushi Foreman for help with the breach.', objectiveType:'talkToNpc', targetNpcId:'bushi-smith-01', villageId:'bushi',
+        say:['The Hub breach? We have braced worse. Not much worse.', 'I need three things: timber from the storehouse, iron bands from the forge, rope from the gate.', 'Gather them and meet my crew at the fracture by the sealed chamber. We hold the ground, you hold the beam.'] },
+      { id:'gather-materials', objective:'Gather the brace materials: timber by the storehouse, iron by the forge, rope by the gate.', objectiveType:'collectCollectible', targetObjectId:'bushi-brace-material', count:3, villageId:'bushi' },
+      { id:'support-breach', objective:'Support the breach work at the fracture by the Hub\'s sealed chamber.', objectiveType:'useQuestSpot', targetObjectId:'hub-breach-brace', villageId:'hub' }
+    ],
+    48: [
+      { id:'guide-answers', objective:'Talk to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['The breach holds. And all morning, runners have been coming in through the gates.', 'Every village has answered the call in its own voice. Their messages are pinned on the message posts round the council stone.', 'Read them all, then come back to me.'] },
+      { id:'read-answers', objective:'Read the five faction answers on the message posts round the council stone.', objectiveType:'useQuestSpot', targetObjectId:'hub-answer', count:5, villageId:'hub' },
+      { id:'guide-all-answered', objective:'Return to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['The colony sounded different today. Not one voice. All of them, at once.', 'Then there is nothing left to wait for. The Ancient Tunnels under the Hub are unsealed.', 'Go down past the old scout path, to the threshold of the root chamber. Whatever is there, see it first, then tell us.'] }
+    ],
+    49: [
+      { id:'threshold', objective:'Go down into the Ancient Hub Tunnels and approach the threshold of the root chamber.', objectiveType:'interactInteriorLink', targetInteriorId:'hub_ancient_tunnels', targetObjectId:'hotspot_hub_ancient_tunnels_threshold', villageId:'hub' },
+      { id:'glimpse', objective:'Step into the Great Root Chamber and record the first glimpse.', objectiveType:'interactInteriorLink', targetInteriorId:'hub_ancient_tunnels', targetObjectId:'hotspot_hub_ancient_tunnels_glimpse', villageId:'hub' }
+    ],
+    50: [
+      { id:'guide-glimpse', objective:'Return to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['You are shaking. Sit. Tell me slowly.', 'Something that big, and that old, and it was not fully awake. That is worse than any monster.', 'Write it down in the council record, all of it. Every village will read it tonight.'] },
+      { id:'council-record', objective:'Complete the Book One council record at the council stone.', objectiveType:'useQuestSpot', targetObjectId:'hub-book-record', villageId:'hub' },
+      { id:'guide-colony-awake', objective:'Talk to the Hub Guide.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+        say:['Eleven villages that would not speak to each other a season ago, and now they stand one watch.', 'The colony is awake. So is the danger beneath it.', 'Rest, Rebel. When it stirs again, the colony will need you first.'] },
+      { id:'book-journal', objective:'Open your journal and read the last entry of Book One.', objectiveType:'openJournal' }
     ]
   },
   side: {
@@ -2516,6 +2585,34 @@ const BOOK1_WIRING = {
         { id:'gather-herbs', objective:'Gather three root herbs at the edges of the mountain top.', objectiveType:'collectCollectible', targetObjectId:'yam-root-herb', count:3, villageId:'yamabushi' },
         { id:'return-herbalist', objective:'Bring the root herbs to the Yamabushi Herbalist.', objectiveType:'talkToNpc', targetNpcId:'yamabushi-villager-01', villageId:'yamabushi',
           say:['Good. Steep them slowly.', 'The tea does not cure fear. It gives fear a smaller chair.'] }
+      ] },
+    21: { giver:'ashigaru-trainee-01',
+      offer:['Runners keep the warning roads open. But three of our route markers have not been checked since the tremors started.', 'Check them for me: the bridge head past the moat, and the two by the south watchtowers, east and west.'],
+      steps:[
+        { id:'check-markers', objective:'Check the three route markers: the bridge head past the moat and the two by the south watchtowers.', objectiveType:'useQuestSpot', targetObjectId:'ashi-route-marker', count:3, villageId:'ashigaru' },
+        { id:'report-runner', objective:'Tell the Ashigaru Runner the markers are standing.', objectiveType:'talkToNpc', targetNpcId:'ashigaru-trainee-01', villageId:'ashigaru',
+          say:['All three still standing? Then a runner can find the way with her eyes shut.', 'A message is only as strong as the road beneath it.'] }
+      ] },
+    22: { giver:'ashigaru-villager-01',
+      offer:['New travellers come through our gate every day now, and the starter lanterns on the road have gone dark.', 'Light three for me: one past the bridge, one by the inner gate, one on the road up to the square.'],
+      steps:[
+        { id:'light-lanterns', objective:'Light the three starter lanterns: past the bridge, by the inner gate and on the road up to the square.', objectiveType:'useQuestSpot', targetObjectId:'ashi-starter-lantern', count:3, villageId:'ashigaru' },
+        { id:'report-keeper', objective:'Tell the Lantern Keeper the lanterns are lit.', objectiveType:'talkToNpc', targetNpcId:'ashigaru-villager-01', villageId:'ashigaru',
+          say:['Three lights on the road. A traveller who sees them knows somebody expected them.', 'Every beginning deserves a light that knows its job.'] }
+      ] },
+    29: { giver:HUB_GUIDE_NPC,
+      offer:['The old tunnel builders left signs: small ones, away from the main roads, so only those who wander ever find them.', 'Two are said to be in the Hub: one in the western woods past the council stone, one out beyond the far east dojos.'],
+      steps:[
+        { id:'find-signs', objective:'Find the two hidden tunnel signs: the western woods past the council stone and beyond the far east dojos.', objectiveType:'useQuestSpot', targetObjectId:'hidden-tunnel-sign', count:2, villageId:'hub' },
+        { id:'tell-guide', objective:'Tell the Hub Guide where the signs point.', objectiveType:'talkToNpc', targetNpcId:HUB_GUIDE_NPC, villageId:'hub',
+          say:['Both pointing down, and both pointing the same way: toward the old scout path and the sealed chamber.', 'The hidden tunnels do not ask to be found. That is why finding them matters.'] }
+      ] },
+    30: { giver:'hub-archivist',
+      offer:['Every village digs, and every village finds the same thing: little carved fragments, older than any of us.', 'Bring me five for the archive: one from the Shogun castle, the Kenshi grove, the Buke canyon, the Warrior fort and the Ashigaru mound.'],
+      steps:[
+        { id:'collect-relics', objective:'Collect five ancient relic fragments: Shogun, Kenshi, Buke, Warrior and Ashigaru villages.', objectiveType:'collectCollectible', targetObjectId:'ancient-relic-fragment', count:5 },
+        { id:'return-archive', objective:'Bring the relic fragments to the Hub Archivist.', objectiveType:'talkToNpc', targetNpcId:'hub-archivist', villageId:'hub',
+          say:['Five pieces from five villages, and look: they fit. Each one is part of the same carved ring.', 'Every fragment is small until the archive teaches it where to stand.'] }
       ] }
   },
   badges: { 2:'story-dust-reader' }

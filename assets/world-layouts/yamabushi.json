@@ -29049,9 +29049,84 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "yamabushi_descent_path",
+            "hotspotId": "hotspot_yamabushi_descent_path_mark-top",
+            "linkName": "Mark: The Top Landing",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "You tie a strip of Yamabushi blue cloth here and press the ash mark of the spiral into the stone. Whoever comes down after you will see it.",
+            "enabled": true,
+            "questId": "book1-main-42",
+            "position": {
+              "x": -5,
+              "y": 31.8,
+              "z": 11
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_descent_path",
+            "hotspotId": "hotspot_yamabushi_descent_path_mark-mid",
+            "linkName": "Mark: The Pillar Bridge",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "You tie a strip of Yamabushi blue cloth here and press the ash mark of the spiral into the stone. Whoever comes down after you will see it. The rope bridge creaks under you; below, the blue glow is closer.",
+            "enabled": true,
+            "questId": "book1-main-42",
+            "position": {
+              "x": 6,
+              "y": 18.1,
+              "z": 1.25
+            },
+            "rotation": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
+          },
+          {
+            "interiorId": "yamabushi_descent_path",
+            "hotspotId": "hotspot_yamabushi_descent_path_mark-low",
+            "linkName": "Mark: The Pool",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "You tie a strip of Yamabushi blue cloth here and press the ash mark of the spiral into the stone. Whoever comes down after you will see it. At the bottom the pool glows from underneath, and the cold air rising out of it smells of roots.",
+            "enabled": true,
+            "questId": "book1-main-42",
+            "position": {
+              "x": -6,
+              "y": 1.6,
+              "z": -5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            }
           }
         ],
-        "updatedAt": "2026-10-10T14:50:28.562Z"
+        "updatedAt": "2026-10-12T00:34:16.301Z"
       }
     }
   }
