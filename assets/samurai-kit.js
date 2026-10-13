@@ -2073,6 +2073,7 @@
     kit_stairs_stone(M) { buildStairs(M, 'kit_stairs_stone'); },
     kit_stairs_wood(M) { buildStairs(M, 'kit_stairs_wood'); },
     kit_stairs_cliff(M) { buildStairs(M, 'kit_stairs_cliff'); },
+    kit_stairs_fire(M) { buildStairs(M, 'kit_stairs_fire'); },
     // ── Ashigaru (foot soldiers' round fort): white plaster and timber, dark tile and thatch, sharpened stakes,
     //    crimson + gold banners with the sprout emblem ──
     // great dojo on a stone plinth: open front between red curtains, a black hanging with the emblem in the doorway
@@ -3113,7 +3114,9 @@
   const STAIRS = {
     kit_stairs_stone: { W: 3, flights: [[-3.2, 3.2, 0, 4]], landings: [[3.2, 4.4, 4]] },
     kit_stairs_wood: { W: 2.6, wood: true, flights: [[-3.2, 3.2, 0, 4]], landings: [[3.2, 4.4, 4]] },
-    kit_stairs_cliff: { W: 3, lanterns: true, flights: [[-10.6, -1, 0, 6], [1, 10.6, 6, 12]], landings: [[-1, 1, 6], [10.6, 11.8, 12]] }
+    kit_stairs_cliff: { W: 3, lanterns: true, flights: [[-10.6, -1, 0, 6], [1, 10.6, 6, 12]], landings: [[-1, 1, 6], [10.6, 11.8, 12]] },
+    // a city fire escape: open iron treads and rails (the wooden stair build in iron)
+    kit_stairs_fire: { W: 2.4, wood: true, metal: true, flights: [[-10.6, -1, 0, 6], [1, 10.6, 6, 12]], landings: [[-1, 1, 6], [10.6, 11.8, 12]] }
   };
   const STEP = .3;
   function stairsSteps(type, sy = 1) { const S = STAIRS[type]; return S ? S.flights.map(f => Math.max(3, Math.round((f[3] - f[2]) * sy / STEP))) : null; }
@@ -3123,19 +3126,20 @@
       const y0 = a * sz, y1 = b * sz, z0 = h0 * sy, z1 = h1 * sy, N = n[k], t = (y1 - y0) / N, L = Math.hypot(y1 - y0, z1 - z0), ang = Math.atan2(z1 - z0, y1 - y0);
       for (let i = 0; i < N; i++) {
         const top = z0 + (i + 1) * (z1 - z0) / N, yc = y0 + (i + .5) * t;
-        if (S.wood) M.box('wood', [0, yc, top - .05], [W, t + .04, .1]);
+        if (S.wood) M.box(S.metal ? 'iron' : 'wood', [0, yc, top - .05], [W, t + .04, .1]);
         else { M.block('stone', 0, yc, 0, W, t + .02, top); for (const sd of [-1, 1]) M.block('stone', sd * (W / 2 + .2), yc, 0, .4, t + .02, top + .45); }
       }
       if (S.wood) for (const sd of [-1, 1]) {
-        M.box('darkwood', [sd * W / 2, (y0 + y1) / 2, (z0 + z1) / 2 - .15], [.16, L, .32], 0, ang);
+        const R = S.metal ? 'iron' : 'darkwood';
+        M.box(R, [sd * W / 2, (y0 + y1) / 2, (z0 + z1) / 2 - .15], [.16, L, .32], 0, ang);
         const posts = Math.max(2, Math.ceil(L / 2.5));
-        for (let q = 0; q <= posts; q++) { const f = q / posts; M.block('darkwood', sd * (W / 2 + .1), y0 + f * (y1 - y0), 0, .16, .16, z0 + f * (z1 - z0) + 1); }
-        M.rod('darkwood', [sd * (W / 2 + .1), y0, z0 + 1], [sd * (W / 2 + .1), y1, z1 + 1], .05, 6);
+        for (let q = 0; q <= posts; q++) { const f = q / posts; M.block(R, sd * (W / 2 + .1), y0 + f * (y1 - y0), 0, .16, .16, z0 + f * (z1 - z0) + 1); }
+        M.rod(R, [sd * (W / 2 + .1), y0, z0 + 1], [sd * (W / 2 + .1), y1, z1 + 1], .05, 6);
       }
     });
     S.landings.forEach(([a, b, h]) => {
       const y0 = a * sz, y1 = b * sz, z = h * sy;
-      if (S.wood) { M.block('wood', 0, (y0 + y1) / 2, z - .12, W, y1 - y0, .12); for (const sd of [-1, 1]) for (const y of [y0, y1]) M.block('darkwood', sd * (W / 2 - .1), y, 0, .18, .18, z); }
+      if (S.wood) { M.block(S.metal ? 'iron' : 'wood', 0, (y0 + y1) / 2, z - .12, W, y1 - y0, .12); for (const sd of [-1, 1]) for (const y of [y0, y1]) M.block(S.metal ? 'iron' : 'darkwood', sd * (W / 2 - .1), y, 0, .18, .18, z); }
       else { M.block('stone', 0, (y0 + y1) / 2, 0, W, y1 - y0, z); for (const sd of [-1, 1]) M.block('stone', sd * (W / 2 + .2), (y0 + y1) / 2, 0, .4, y1 - y0, z + .45); }
       if (S.lanterns && h < S.landings[S.landings.length - 1][2]) for (const sd of [-1, 1]) M.cyl('lantern', [sd * (W / 2 + .2), (y0 + y1) / 2, z + .45], .16, .35, 6);
     });
@@ -6728,7 +6732,9 @@
     wok_boat: [{ x: 0, z: 0, halfX: 1.7, halfZ: 3, y: 1.05 }], wok_gangplank: [{ x: 0, z: 0, halfX: .55, halfZ: 2.5, y0: 0, y1: -2 }],
     kit_stairs_stone: stairs(3, 6.4, 4, 10, 'stone'), kit_stairs_wood: stairs(2.6, 6.4, 4, 12, 'wood'),
     kit_stairs_cliff: [{ x: 0, z: -10.6 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'stone' }, { x: 0, z: 0, halfX: 1.45, halfZ: 1.05, y: 6, surface: 'stone' },
-      { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }], ashi_bridge: [{ x: 0, z: 0, halfX: 1.55, halfZ: 10.3, y0: 0, y1: 2.4 }],
+      { x: 0, z: 1 + 4.8, halfX: 1.45, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'stone' }, { x: 0, z: 10.6 + .6, halfX: 1.45, halfZ: .75, y: 12, surface: 'stone' }],
+    kit_stairs_fire: [{ x: 0, z: -10.6 + 4.8, halfX: 1.15, halfZ: 4.8, y0: 0, y1: 6, steps: 15, surface: 'wood' }, { x: 0, z: 0, halfX: 1.15, halfZ: 1.05, y: 6, surface: 'wood' },
+      { x: 0, z: 1 + 4.8, halfX: 1.15, halfZ: 4.8, y0: 6, y1: 12, steps: 15, surface: 'wood' }, { x: 0, z: 10.6 + .6, halfX: 1.15, halfZ: .75, y: 12, surface: 'wood' }], yam_bridge: [{ x: 0, z: 0, halfX: 1.45, halfZ: 16.2, y: 0 }], buke_footbridge: [{ x: 0, z: 0, halfX: 1.2, halfZ: 4.1, y: 0 }], ashi_bridge: [{ x: 0, z: 0, halfX: 1.55, halfZ: 10.3, y0: 0, y1: 2.4 }],
     war_great_dojo: [{ x: 0, z: (-12.4 + 10.5) / 2, halfX: 14.7, halfZ: (10.5 + 12.4) / 2, y: 1.5 }, { x: 0, z: -12.4 - .9, halfX: 3.9, halfZ: .9, y0: 0, y1: 1.4, steps: 4, surface: 'stone' }],
     shogun_great_dojo: [{ x: 0, z: (-12.4 + 10.5) / 2, halfX: 14.7, halfZ: (10.5 + 12.4) / 2, y: 1.5 }, { x: 0, z: -12.4 - .9, halfX: 3.9, halfZ: .9, y0: 0, y1: 1.4, steps: 4, surface: 'stone' }],
     chz_bar: [{ x: 0, z: -1.6, halfX: 13, halfZ: 8.6, y: .7 }, { x: 0, z: -7 - 3.2 - .45, halfX: 4, halfZ: .45, y0: 0, y1: .7, steps: 2, surface: 'wood' }],
