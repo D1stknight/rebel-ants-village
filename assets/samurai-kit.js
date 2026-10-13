@@ -836,7 +836,7 @@
     skin_w: { col: [.95, .92, .9] }, skin_blue: { col: [.72, .82, .93] }, hair_black: { col: [.06, .06, .07], spec: [.3, .3, .35], power: 30 }, hair_blue: { col: [.06, .12, .3], spec: [.3, .4, .6], power: 30 },
     obi_red: { col: [.62, .07, .1] }, obi_silver: { col: [.78, .82, .88], spec: [.6, .6, .7], power: 40 }, obi_black: { col: [.06, .07, .08] }, horn: { col: [.88, .9, .95] }, ear_os: { col: [.1, .14, .18] },
     flower_pink: { col: [.95, .55, .66] }, flower_teal: { col: [.3, .75, .7], em: [.05, .2, .18] }, flower_orange: { col: [.95, .5, .12] }, ear_pink: { col: [.95, .62, .7] },
-    cat_black: { col: [.07, .065, .07] }, cat_white: { col: [.95, .93, .9] }, collar_red: { col: [.7, .08, .1] }, gem_green: { col: [.2, .9, .4], em: [.1, .6, .25] }, rose_quartz: { col: [.97, .66, .78], em: [.5, .16, .3], spec: [1, .92, .96], power: 90 }, moon_cake: { col: [.72, .45, .18] }, moon_cake_top: { col: [.9, .64, .32] },
+    cat_black: { col: [.07, .065, .07] }, cat_white: { col: [.95, .93, .9] }, collar_red: { col: [.7, .08, .1] }, gem_green: { col: [.2, .9, .4], em: [.1, .6, .25] }, rose_quartz: { col: [.97, .66, .78], em: [.5, .16, .3], spec: [1, .92, .96], power: 90 }, moon_cake: { col: [.72, .45, .18] }, moon_cake_top: { col: [.9, .64, .32] }, shadow_wisp: { col: [.05, .03, .08], em: [.03, .01, .06], alpha: .72 }, wisp_eye: { col: [.85, .5, 1], em: [.85, .45, 1] }, starlight: { col: [.86, .9, 1], em: [.72, .8, 1] },
     orb: { col: [.6, .85, 1], em: [.45, .75, 1] }, glow_blue: { glow: [.35, .6, 1] },
     palm_leaf: { tex: 'palm_leaf' }, banana_leaf: { tex: 'banana_leaf' }, palm_bark: { tex: 'palm_bark' }, coconut: { col: [.36, .24, .12] }, banana: { col: [.95, .8, .22] }, banana_stem: { col: [.36, .5, .18] }, flower_purple: { col: [.45, .12, .3] },
     plank_teal: { tex: 'plank_teal' }, plank_yellow: { tex: 'plank_yellow' }, plank_red: { tex: 'plank_red' }, tin_roof: { tex: 'tin_roof' }, banana_big: { tex: 'banana_big' }, brick: { tex: 'brick' },
@@ -2897,6 +2897,28 @@
       });
       cluster([-.2, 0, 9.3], 8, .6);
     },
+    // ── the Moon Tales: Ostara's tale ──
+    cc_moon_ledge(M) { // Ostara's moon-gazing ledge: a round stone drum 1.2 m high, steps on the front, an iron rail, a stone bench facing the moon (+y)
+      const R = 3.2, H = 1.2;
+      M.tube('stone_dark', [0, 0, 0], [0, 0, H], R, R, 22); M.tube('stone', [0, 0, H], [0, 0, H + .06], R + .04, R + .04, 22);
+      for (let i = 0; i < 4; i++) M.block('stone', 0, -R - .45 * (3 - i) - .2, 0, 1.7, .5, .3 * (i + 1)); // the steps up from the front
+      const posts = []; for (let a = -Math.PI / 2 + .48; a <= 1.5 * Math.PI - .47; a += .42) posts.push([Math.cos(a) * (R - .15), Math.sin(a) * (R - .15)]);
+      posts.forEach(([x, y], i) => { M.rod('iron', [x, y, H + .06], [x, y, H + 1.02], .035, 4); if (i) M.rod('iron', [posts[i - 1][0], posts[i - 1][1], H + 1], [x, y, H + 1], .03, 4); });
+      M.block('stone', 0, 2.15, H + .06, 1.7, .5, .42); for (const sx of [-1, 1]) M.block('stone_dark', sx * .68, 2.15, H + .06, .22, .44, .42); // the bench
+      M.cyl('stone', [-2.3, .8, H + .06], .16, .55, 6); M.block('window_glow', -2.3, .8, H + .62, .24, .24, .26); M.cyl('stone', [-2.3, .8, H + .88], .2, .08, 6, .04); // a moon lantern
+      for (const [x, y, r] of [[2.2, .9, .12], [2.5, .1, .1], [-1.3, 2.25, .1], [1.35, 2.3, .11], [-2.6, -.4, .09]]) ccFlower(M, 'flower_teal', x, y, H + .1, r);
+      M.quad('glow', [[-3.4, -3.4, H + .08], [3.4, -3.4, H + .08], [3.4, 3.4, H + .08], [-3.4, 3.4, H + .08]]);
+    },
+    cc_chime_light(M) { // a silver shimmer that rings when you reach it (the chime trail to the Moon Ledge); hovers (CHAR 'hover')
+      M.sphere('starlight', [0, 0, 1.5], .16, 1.4, 4, 2); M.sphere('chrome', [0, 0, 1.5], .08, 1.4, 4, 2);
+      for (const [dx, dz] of [[.32, 0], [-.32, 0], [0, .38], [0, -.38]]) M.rod('starlight', [dx * .4, 0, 1.5 + dz * .4], [dx, 0, 1.5 + dz], .012, 3);
+      M.quad('glow', [[-.9, -.9, .05], [.9, -.9, .05], [.9, .9, .05], [-.9, .9, .05]]);
+    },
+    cc_shadow(M) { // shadows and an unwelcome spirit with violet eyes, gathered in a dark corner (Ostara's silver bell sends them off); hovers
+      for (const [x, y, z, r] of [[0, 0, 1, .5], [.38, .12, .72, .36], [-.36, .1, .78, .34], [.1, -.05, 1.42, .32], [-.15, .25, .45, .3], [.25, -.2, .4, .26]]) M.sphere('shadow_wisp', [x, y, z], r, 1.15, 14, 9);
+      for (const [x, y, z, r] of [[.06, .08, 1.82, .17], [-.1, .04, 2.1, .11], [.08, 0, 2.31, .065]]) M.sphere('shadow_wisp', [x, y, z], r, 1.3, 10, 6); // smoke rising off it
+      for (const sd of [-1, 1]) M.sphere('wisp_eye', [sd * .13, -.47, 1.08], .06, .65, 10, 6);
+    },
     cc_candles(M) { ccCandles(M, 0, 0, 5); M.quad('glow', [[-1.4, -1.4, .05], [1.4, -1.4, .05], [1.4, 1.4, .05], [-1.4, 1.4, .05]]); },
     cc_bench(M) { M.block('darkwood', 0, 0, .45, 2.4, .5, .1); for (const sd of [-1, 1]) M.block('darkwood', sd * 1, 0, 0, .12, .45, .45); M.block('darkwood', 0, .22, .55, 2.4, .08, .55); },
     // ── the Cute & Creepy gang (Miguel's NFTs), low poly: three kokeshi dolls and two lucky cats; used as NPC
@@ -3430,7 +3452,7 @@
   // floating pieces (ghosts): their instances bob and sway under the placed root, so saved positions never move
   const FLOAT = new Set(['cc_ghost']), floaters = [];
   // characters: the body rocks (kokeshi) or breathes (cats); subparts under their own pivots wave, flicker, pulse
-  const CHAR = { cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover' };
+  const CHAR = { cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
   const SUBPARTS = { cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']] };
   const actors = [];
   function animateActors(t) {
