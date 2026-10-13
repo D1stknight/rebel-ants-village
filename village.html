@@ -975,6 +975,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 	        <select id="questSpotActionInput" class="admin-select">
 	          <option value="inspect">inspect</option><option value="read">read</option><option value="listen">listen</option>
 	          <option value="light">light</option><option value="ring">ring</option><option value="hold">hold still</option><option value="reach">reach (no key)</option>
+	          <option value="race">run / walk a path</option><option value="follow">follow</option>
 	        </select>
 	      </label>
 	      <label class="admin-field">Prompt word <input id="questSpotLabelInput" placeholder="Inspect the cracks"></label>
@@ -3383,6 +3384,7 @@ function getDefaultProgressionState() {
     chestsOpened: [],
     collectiblesFound: [],
     secretsFound: [],
+    secretParts: {},
     rebelPoints: 0,
     rebelPointsLog: [],
     ecosystemActions: {},
@@ -5150,7 +5152,9 @@ function createCollisionProxyPiece(kind, position, options = {}) {
     proxyOwnerAssetKey: options.proxyOwnerAssetKey || options.proxyOwnerType || null,
     terrainSurfaceType: options.terrainSurfaceType || 'dirt',
     terrainToolPatch: options.terrainToolPatch === true,
-    terrainStampType: options.terrainStampType || null
+    terrainStampType: options.terrainStampType || null,
+    // a building box you can stand on top of (a roof deck over it): it holds the player only below its own top
+    proxyOpenAbove: options.proxyOpenAbove === true
   };
   root.material = getCollisionProxyMaterials()[proxyKind];
   root.isPickable = true;
@@ -8554,8 +8558,8 @@ function updateInteractionPrompt() {
     return;
   }
 
-  if (QuestSpotRuntime.nearest || QuestSpotRuntime.hold || QuestSpotRuntime.race) {
-    setInteractionPrompt(getQuestSpotPromptText(QuestSpotRuntime.hold?.root || QuestSpotRuntime.race?.root || QuestSpotRuntime.nearest), true);
+  if (QuestSpotRuntime.nearest || QuestSpotRuntime.hold || QuestSpotRuntime.race || QuestSpotRuntime.follow) {
+    setInteractionPrompt(getQuestSpotPromptText(QuestSpotRuntime.hold?.root || QuestSpotRuntime.race?.root || QuestSpotRuntime.follow?.root || QuestSpotRuntime.nearest), true);
     return;
   }
 
@@ -8794,9 +8798,9 @@ function renderSecretsJournal() {
   return `<div class="journal-card full"><strong>Secrets</strong><span>${found.size} / ${SECRET_TOTAL} found</span></div>${rows}`;
 }
 
-const QUEST_SPOT_ACTIONS = { inspect:'Inspect', read:'Read', listen:'Listen', light:'Light', ring:'Ring', hold:'Hold still', reach:'', race:'Start the run' };
+const QUEST_SPOT_ACTIONS = { inspect:'Inspect', read:'Read', listen:'Listen', light:'Light', ring:'Ring', hold:'Hold still', reach:'', race:'Start the run', follow:'Follow' };
 const QUEST_SPOT_TIME_HINTS = { night:'Something stirs here after dark.', day:'Come back in daylight.', dawn:'Come back at dawn.', dusk:'Come back at dusk.' };
-const QuestSpotRuntime = { hold:null, race:null, nearest:null, lastHintAt:0, reached:new Set() };
+const QuestSpotRuntime = { hold:null, race:null, follow:null, nearest:null, lastHintAt:0, reached:new Set() };
 
 function normalizeQuestSpotConfig(cfg = {}) {
   const action = QUEST_SPOT_ACTIONS[cfg.action] !== undefined ? cfg.action : 'inspect';
@@ -8821,9 +8825,14 @@ function normalizeQuestSpotConfig(cfg = {}) {
     countBy: cfg.countBy === 'weather' ? 'weather' : null,
     miniAnt: cfg.miniAnt === true,
     miniAntYaw: Number(cfg.miniAntYaw) || 0,
-    // a timed run: from this spot through path [[x, z], ...] (in order, within pathRadius) in seconds
-    ...(action === 'race' ? { seconds: Math.max(3, Number(cfg.seconds) || 20), path: (Array.isArray(cfg.path) ? cfg.path : []).filter(q => Array.isArray(q) && q.length >= 2).map(q => [Number(q[0]), Number(q[1])]),
-      pathRadius: Math.max(1, Number(cfg.pathRadius) || 2.5), startText: String(cfg.startText || ''), failText: String(cfg.failText || '') } : {})
+    // a secret made of several spots: each spot with this secretId counts once, the secret is found at the setCount-th
+    setCount: Math.max(0, Math.floor(Number(cfg.setCount) || 0)),
+    // a timed run: from this spot through path [[x, z], ...] (in order, within pathRadius) in seconds (0 = a walk, no time limit)
+    ...(action === 'race' ? { seconds: Number(cfg.seconds) === 0 ? 0 : Math.max(3, Number(cfg.seconds) || 20), path: (Array.isArray(cfg.path) ? cfg.path : []).filter(q => Array.isArray(q) && q.length >= 2).map(q => [Number(q[0]), Number(q[1])]),
+      pathRadius: Math.max(1, Number(cfg.pathRadius) || 2.5), startText: String(cfg.startText || ''), failText: String(cfg.failText || '') } : {}),
+    // follow: stay within followRadius of the nearest layout piece of followType (its moving part) for followSeconds
+    ...(action === 'follow' ? { followType: String(cfg.followType || ''), followRadius: Math.max(1, Number(cfg.followRadius) || 2), followSeconds: Math.max(3, Number(cfg.followSeconds) || 20),
+      startText: String(cfg.startText || ''), failText: String(cfg.failText || '') } : {})
   };
 }
 
@@ -8918,8 +8927,13 @@ function getQuestSpotPromptText(root) {
     return `Hold still… ${left.toFixed(1)} s`;
   }
   if (QuestSpotRuntime.race?.root === root) {
+    if (!cfg.seconds) return `Keep going · ${QuestSpotRuntime.race.next} / ${(cfg.path || []).length}`;
     const left = Math.max(0, (QuestSpotRuntime.race.until - performance.now()) / 1000);
     return `Run! ${Math.ceil(left)} s · ${QuestSpotRuntime.race.next} / ${(cfg.path || []).length}`;
+  }
+  if (QuestSpotRuntime.follow?.root === root) {
+    const f = QuestSpotRuntime.follow;
+    return f.close ? `Stay close… ${Math.ceil(Math.max(0, cfg.followSeconds - f.got))} s` : 'Closer!';
   }
   return `Press O to ${cfg.label || QUEST_SPOT_ACTIONS[cfg.action] || 'Inspect'}`;
 }
@@ -8967,8 +8981,13 @@ function completeQuestSpot(root) {
   const cfg = cfg0.miniAnt ? { ...cfg0, text:`${cfg0.text ? cfg0.text + ' ' : ''}${getMiniAntWhisper()}` } : cfg0;
   QuestSpotRuntime.hold = null;
   if (cfg.action === 'light' || cfg.action === 'ring') playInteractionAudio(cfg.action === 'ring' ? 'templeBell' : 'collectiblePickup');
-  let secretNew = false;
-  if (cfg.secretId) secretNew = recordQuestSpotSecret(cfg);
+  let secretNew = false, setNote = '';
+  if (cfg.secretId && cfg.setCount > 1 && !(ProgressionState.secretsFound || []).includes(cfg.secretId)) {
+    const parts = (ProgressionState.secretParts ||= {})[cfg.secretId] ||= [];
+    if (!parts.includes(cfg.spotId)) { parts.push(cfg.spotId); saveProgressionState(); }
+    if (parts.length >= cfg.setCount) secretNew = recordQuestSpotSecret(cfg);
+    else setNote = `${parts.length} / ${cfg.setCount}`;
+  } else if (cfg.secretId) secretNew = recordQuestSpotSecret(cfg);
   let weather = 'clear';
   try { weather = WeatherManager?.mode || 'clear'; } catch(e) {}
   const advanced = advanceHubTutorialObjective('useQuestSpot', {
@@ -8976,7 +8995,7 @@ function completeQuestSpot(root) {
     progressId: cfg.countBy === 'weather' ? `${cfg.spotId}:${weather}` : undefined
   });
   try { window.dispatchEvent(new CustomEvent('rebelAntsQuestSpot', { detail:{ spotId:cfg.spotId, action:cfg.action, villageId:CURRENT_VILLAGE_ID } })); } catch(e) {}
-  if (!secretNew && cfg.text) showToast(cfg.text, Math.min(12000, Math.max(4500, cfg.text.length * 65)));
+  if (!secretNew && (cfg.text || setNote)) { const t = [cfg.text, setNote && `(${setNote})`].filter(Boolean).join(' '); showToast(t, Math.min(12000, Math.max(4500, t.length * 65))); }
   else if (!secretNew && !advanced) showToast(cfg.action === 'listen' ? 'Only the wind.' : 'Nothing more to find here.');
   return true;
 }
@@ -8997,6 +9016,37 @@ function recordQuestSpotSecret(cfg) {
   return true;
 }
 
+// follow: the nearest layout piece of the spot's followType, and where its moving part is now (kit ghosts move their
+// meshes, not the root)
+function getQuestSpotFollowTarget(root, cfg) {
+  if (!cfg.followType) return null;
+  let best = null, bd = Infinity;
+  for (const n of scene.transformNodes) {
+    if (n.metadata?.type !== cfg.followType || !n.metadata.isClone || n.isDisposed?.()) continue;
+    const d = Math.hypot(n.position.x - root.position.x, n.position.z - root.position.z);
+    if (d < bd) { bd = d; best = n; }
+  }
+  return bd < 30 ? best : null;
+}
+function getQuestSpotFollowPoint(node) {
+  if (!node || node.isDisposed?.()) return null;
+  const m = node.getChildMeshes(true)[0];
+  return (m || node).getAbsolutePosition();
+}
+
+// A secret for talking to a set of NPCs in one visit (SECRET_DEFINITIONS npcs: [npcId, ...], progressText with {n} / {N})
+const SecretTalkRuntime = { heard:new Set() };
+function noteSecretNpcTalk(npcId) {
+  if (!npcId) return;
+  SecretTalkRuntime.heard.add(npcId);
+  for (const d of SECRET_DEFINITIONS) {
+    if (!Array.isArray(d.npcs) || d.villageId !== CURRENT_VILLAGE_ID || !d.npcs.includes(npcId) || (ProgressionState.secretsFound || []).includes(d.secretId)) continue;
+    const n = d.npcs.filter(id => SecretTalkRuntime.heard.has(id)).length;
+    if (n >= d.npcs.length) recordQuestSpotSecret({ secretId:d.secretId, secretName:d.name, text:d.foundText || '' });
+    else if (n > 1 && d.progressText) showToast(d.progressText.replace('{n}', n).replace('{N}', d.npcs.length));
+  }
+}
+
 function tryUseNearbyQuestSpot() {
   const root = getNearestQuestSpotInRange();
   if (!root) return false;
@@ -9008,8 +9058,15 @@ function tryUseNearbyQuestSpot() {
     return true;
   }
   if (cfg.action === 'race') {
-    QuestSpotRuntime.race = { root, next: 0, until: performance.now() + cfg.seconds * 1000 };
-    showToast(cfg.startText || `Go! ${cfg.seconds} seconds.`, 4000);
+    QuestSpotRuntime.race = { root, next: 0, until: cfg.seconds ? performance.now() + cfg.seconds * 1000 : Infinity };
+    showToast(cfg.startText || (cfg.seconds ? `Go! ${cfg.seconds} seconds.` : 'Off you go. Take your time.'), 4000);
+    return true;
+  }
+  if (cfg.action === 'follow') {
+    const target = getQuestSpotFollowTarget(root, cfg);
+    if (!target) return completeQuestSpot(root);
+    QuestSpotRuntime.follow = { root, target, got: 0, away: 0, close: false, last: performance.now() };
+    showToast(cfg.startText || 'Stay close.', 4000);
     return true;
   }
   return completeQuestSpot(root);
@@ -9065,6 +9122,22 @@ function updateQuestSpots() {
       const q = pts[race.next];
       if (!q || Math.hypot(charMesh.position.x - q[0], charMesh.position.z - q[1]) < rc.pathRadius) race.next++;
       if (race.next >= pts.length) { QuestSpotRuntime.race = null; completeQuestSpot(race.root); }
+      // a walk (no time limit) ends when you wander far from the next point
+      else if (!rc.seconds && q && Math.hypot(charMesh.position.x - q[0], charMesh.position.z - q[1]) > 60) { QuestSpotRuntime.race = null; showToast(rc.failText || 'You left the way. Start again at the marker.'); }
+    }
+  }
+  // follow: stay close to the moving piece for followSeconds (2D), more than 2.5 s away and it is lost
+  const follow = QuestSpotRuntime.follow;
+  if (follow) {
+    const fc = follow.root.metadata.spotConfig, now = performance.now(), dt = Math.min(.25, (now - follow.last) / 1000);
+    follow.last = now;
+    const tp = getQuestSpotFollowPoint(follow.target);
+    if (follow.root.isDisposed?.() || !tp || !walkMode || ActiveInterior || !charMesh) QuestSpotRuntime.follow = null;
+    else {
+      follow.close = Math.hypot(charMesh.position.x - tp.x, charMesh.position.z - tp.z) <= fc.followRadius;
+      if (follow.close) { follow.got += dt; follow.away = 0; } else follow.away += dt;
+      if (follow.got >= fc.followSeconds) { QuestSpotRuntime.follow = null; completeQuestSpot(follow.root); }
+      else if (follow.away > 2.5) { QuestSpotRuntime.follow = null; showToast(fc.failText || 'Lost it. Try again from the start.'); }
     }
   }
   QuestSpotRuntime.nearest = getNearestQuestSpotInRange();
@@ -16104,6 +16177,7 @@ function getNearestNPCInRange(range = 4.8) {
 function handleNPCQuestEvent(npc, finishedDialogue = false) {
   if (!finishedDialogue || !npc?.metadata) return;
   const meta = npc.metadata;
+  try { noteSecretNpcTalk(meta.npcId || npc.name); } catch(e) { console.warn('secret talk', e); }
   const npcContext = {
     targetNpcId: meta.npcId || npc.name,
     npcName: meta.displayName || npc.name,
@@ -22169,6 +22243,7 @@ function collectWorldLayoutData() {
     proxyRampDepth: Number.isFinite(node.metadata.proxyRampDepth) ? node.metadata.proxyRampDepth : null,
     proxyFloorHeight: Number.isFinite(node.metadata.proxyFloorHeight) ? node.metadata.proxyFloorHeight : null,
     proxyPieceKind: node.metadata.proxyPieceKind || null,
+    ...(node.metadata.proxyOpenAbove === true ? { proxyOpenAbove: true } : {}),
     proxyOwnerName: node.metadata.proxyOwnerName || null,
     proxyOwnerType: node.metadata.proxyOwnerType || null,
     proxyOwnerAssetKey: node.metadata.proxyOwnerAssetKey || node.metadata.proxyOwnerType || null,
@@ -22812,6 +22887,7 @@ function loadWorldLayout(){
         name: item.name,
         rotation: item.rotation,
         scaling: item.scaling,
+        proxyOpenAbove: item.proxyOpenAbove === true,
         proxyOwnerName: item.proxyOwnerName || null,
         proxyOwnerType: item.proxyOwnerType || item.proxyOwnerAssetKey || null,
         proxyOwnerAssetKey: item.proxyOwnerAssetKey || item.proxyOwnerType || null,
@@ -24387,9 +24463,16 @@ function getManualBlockerObbFromProxy(proxyRoot) {
     halfX: footprint.halfX,
     halfZ: footprint.halfZ,
     type: 'collision_proxy',
-    name: proxyRoot.name
+    name: proxyRoot.name,
+    ...(proxyRoot.metadata.proxyOpenAbove === true ? { openAboveY: getCollisionProxyWorldTop(proxyRoot) } : {})
   };
 }
+
+function getCollisionProxyWorldTop(proxyRoot) {
+  try { proxyRoot.computeWorldMatrix(true); proxyRoot.refreshBoundingInfo?.(); return proxyRoot.getBoundingInfo().boundingBox.maximumWorld.y; } catch(e) { return Infinity; }
+}
+// the player standing higher than a building box flagged proxyOpenAbove (on its roof deck) is not held by it
+function villageWalkerAboveBlocker(b) { return b.openAboveY != null && Number.isFinite(_villageWalkerY) && _villageWalkerY > b.openAboveY; }
 
 function villageObbContainsPoint(blocker, x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   if (!blocker) return false;
@@ -24780,7 +24863,7 @@ function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PA
     }
 
     if (blocker.kind === 'obb') {
-      return villageObbContainsPoint(blocker, x, z, padding);
+      return !villageWalkerAboveBlocker(blocker) && villageObbContainsPoint(blocker, x, z, padding);
     }
 
       return x >= blocker.minX - padding &&
@@ -24824,7 +24907,7 @@ function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MAN
       return dx * dx + dz * dz <= rr * rr && blocker.items.some(b => !(blocker.auto && villageObbContainsPoint(b, startX, startZ, 0)) && !(Number.isFinite(_villageWalkerY) && (_villageWalkerY > b.maxY || _villageWalkerY < b.minY)) && villageSegmentIntersectsObb(b, startX, startZ, endX, endZ, padding));
     }
     if (blocker.kind === 'circle') return villagePointBlocked(endX, endZ, padding);
-    if (blocker.kind === 'obb') return villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ, padding);
+    if (blocker.kind === 'obb') return !villageWalkerAboveBlocker(blocker) && villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ, padding);
     return villagePointBlocked(endX, endZ, padding);
   });
 
@@ -32801,6 +32884,7 @@ function createLayoutNodeForHistory(item) {
       name: item.name,
       rotation: item.rotation,
       scaling: item.scaling,
+      proxyOpenAbove: item.proxyOpenAbove === true,
       proxyOwnerName: item.proxyOwnerName || null,
       proxyOwnerType: item.proxyOwnerType || item.proxyOwnerAssetKey || null,
       proxyOwnerAssetKey: item.proxyOwnerAssetKey || item.proxyOwnerType || null,
