@@ -44570,7 +44570,7 @@
     "fallbackType": "kit:cc_mamoru",
     "behavior": "patrol",
     "dialogueId": "default",
-    "customDialogue": "Mamoru blinks his green eyes. The candle on his skull flickers.\nI keep the gate. Nothing walks in after midnight that I do not see.\nMind the pumpkins. Some of them are listening.",
+    "customDialogue": "Mamoru lifts her skull candle. Her emerald eyes gleam beneath the bones of her suit.\nThe Harvest Moon called me home. Where the Coven gathers, I keep the watch.\nTricksters slip in from beyond the veil on harvest nights. My candle sends them home.",
     "questId": null,
     "smallAntInstanceId": null,
     "haloColor": null,
@@ -44687,7 +44687,7 @@
     "fallbackType": "kit:cc_flower_moon",
     "behavior": "idle",
     "dialogueId": "default",
-    "customDialogue": "Under the flower moon the old tree remembers every name.\nIts lanterns are the souls who stayed. They light the way for the ones who are lost.\nWould you like to hang one of your own someday?",
+    "customDialogue": "Kokeshi Flower Moon hums a melody as soft as a nightingale's song.\nWhen the Flower Moon takes its throne, the sleeping buds wake and the whole hill breathes out in colour.\nBe grateful for what is beautiful, be patient, and tend your seeds. Every ending here is a beginning.",
     "questId": null,
     "smallAntInstanceId": null,
     "haloColor": null,
@@ -44793,7 +44793,7 @@
     "fallbackType": "kit:cc_mochi",
     "behavior": "idle",
     "dialogueId": "default",
-    "customDialogue": "Mochi waves her paw. Luck in, luck in!\nThe game hall never closes. Dice, cards, and the occasional cursed coin.\nWin or lose, you leave with a story.",
+    "customDialogue": "Mochi lifts his right paw and beckons. Luck in, luck in!\nI am Mochi. So long as I am near, no darkness shall harm you.\nThe game hall never closes. Win or lose, nobody here walks alone.",
     "questId": null,
     "smallAntInstanceId": null,
     "haloColor": null,
@@ -44899,7 +44899,7 @@
     "fallbackType": "kit:cc_ostara",
     "behavior": "idle",
     "dialogueId": "default",
-    "customDialogue": "Ostara tilts her head. Her ears twitch at a sound you cannot hear.\nThe library keeps the lore of this hill: witches, ghosts, the moon that never sets.\nRead carefully. Some books read you back.",
+    "customDialogue": "Ostara sits still as starlight, her head tilted to the moon. A tiny silver bell chimes at her neck.\nThey call me the Dreamer. I watch the moon, and the moon watches over everything that grows.\nListen. Can you hear the sap rising in the trees?",
     "questId": null,
     "smallAntInstanceId": null,
     "haloColor": null,
@@ -45785,7 +45785,7 @@
             "linkName": "The Cauldron",
             "actionType": "showInfo",
             "url": "",
-            "description": "Something green and friendly is bubbling. The witch says it is soup. The bats say otherwise.",
+            "description": "Something green and friendly is bubbling. The Lunar Witch says it is soup. The bats say otherwise.",
             "enabled": true,
             "position": {
               "x": 0,
@@ -45809,7 +45809,7 @@
             "linkName": "The Spell Book",
             "actionType": "showInfo",
             "url": "",
-            "description": "Half the pages are spells, half are recipes, and the witch is not always sure which is which.",
+            "description": "Half the pages are spells, half are recipes, and the Lunar Witch is not always sure which is which.",
             "enabled": true,
             "position": {
               "x": 4.8,
@@ -46239,7 +46239,7 @@
       "radius": 2.2,
       "secretId": "cc-midnight-brew",
       "secretName": "Midnight Brew",
-      "text": "Round and round. The green brew goes purple, then gold, and a bubble the size of a pumpkin floats up and pops: it smells of toffee apples. The witch would be proud."
+      "text": "Round and round. The green brew goes purple, then gold, and a bubble the size of a pumpkin floats up and pops: it smells of toffee apples. The Lunar Witch would be proud."
     }
   },
   {
