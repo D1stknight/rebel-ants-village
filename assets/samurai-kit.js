@@ -1390,9 +1390,9 @@
   }
   function chzLantern(M, x, y, z) { M.block('iron', x, y, z, .34, .34, .06); M.block('window_glow', x, y, z - .45, .28, .28, .45); M.cyl('iron', [x, y, z + .06], .22, .16, 4, .03); M.block('iron', x, y, z - .5, .34, .34, .05); }
   // a big banana along x (length L, radius r, centre sag s), brown ends; on: the ends tip up (resting on posts)
-  function chzBanana(M, x, y, z, L, r, s, on) {
+  function chzBanana(M, x, y, z, L, r, s, on, mat = 'banana_big') {
     const pts = []; for (let k = 0; k <= 6; k++) { const f = k / 6, u = f * 2 - 1; pts.push([x + u * L / 2, y, z - s * (1 - u * u) + (on ? .6 * u * u : 0)]); }
-    curveTube(M, 'banana_big', pts, [r * .18, r * .62, r * .92, r, r * .92, r * .62, r * .2], { segs: 10, n: 3, ridge: .12, k: 5, bump: .04, seed: 2 });
+    curveTube(M, mat, pts, [r * .18, r * .62, r * .92, r, r * .92, r * .62, r * .2], { segs: 10, n: 3, ridge: .12, k: 5, bump: .04, seed: 2 });
     for (const sd of [-1, 1]) M.cyl('darkwood', [x + sd * (L / 2 + .1), y, z + (on ? .6 : 0) - .15], r * .18, .5, 6, r * .1);
   }
   function chzFish(M, x, y, z) { M.rod('rope', [x, y, z], [x, y, z - .25], .01, 3); M.sphere('fish', [x, y, z - .6], .12, 3.2, 6, 4); M.poly('fish', [[x, y, z - 1.0], [x - .12, y, z - 1.22], [x + .12, y, z - 1.22]]); }
@@ -2943,6 +2943,9 @@
       // the giant banana sign hung on the balcony front
       chzBanana(M, 0, yF - 2.5, Z + H1 + 2.4, 13, .95, 1.5);
       for (const sd of [-1, 1]) M.rod('rope', [sd * 5, yF - 2.4, Z + H1 + 2.6], [sd * 5, yF - 2.4, Z + H1 + 1.9], .04, 4);
+      // one banana on the sign is gold (a Chumpz secret), hung under the big one; a ship's bell over the counter (last call)
+      M.rod('rope', [3.8, yF - 2.5, Z + H1 + 1.6], [3.8, yF - 2.5, Z + H1 + .5], .03, 3); chzBanana(M, 3.8, yF - 2.5, Z + H1 + .5, 2.2, .32, .3, false, 'gold');
+      M.rod('rope', [-3.5, D / 2 - 2.4, Z + H1], [-3.5, D / 2 - 2.4, Z + 2.75], .02, 3); M.cyl('gold', [-3.5, D / 2 - 2.4, Z + 2.25], .26, .5, 10, .1); M.sphere('iron', [-3.5, D / 2 - 2.4, Z + 2.2], .07, 1, 6, 3);
       // yellow awnings either side of the doors
       for (const sd of [-1, 1]) { const x0 = sd * 4.6, x1 = sd * 11; M.quad('awning', [[Math.min(x0, x1), yF - .1, Z + 3.8], [Math.max(x0, x1), yF - .1, Z + 3.8], [Math.max(x0, x1), yF - 3, Z + 3], [Math.min(x0, x1), yF - 3, Z + 3]]); for (const x of [x0, x1]) M.rod('wood', [x, yF - 3, Z], [x, yF - 3, Z + 3.05], .06, 4); }
       // roof: tin patchwork with thatch patches, a chimney; the outside stair (right)
