@@ -844,7 +844,7 @@
     felt_green: { col: [.12, .45, .3] }, felt_blue: { col: [.14, .3, .6] }, felt_red: { col: [.6, .12, .12] }, darts: { col: [.12, .1, .08] }, fish: { col: [.66, .72, .78], spec: [.8, .8, .8], power: 60 },
     net: { col: [.62, .56, .42] }, lily: { col: [.26, .55, .2] }, smoke: { col: [.7, .7, .7], em: [.25, .25, .25], alpha: .32 },
     bottle_green: { col: [.15, .45, .2], spec: [.8, .8, .8], power: 80 }, bottle_brown: { col: [.42, .22, .08], spec: [.8, .8, .8], power: 80 }, bottle_clear: { col: [.75, .85, .82], spec: [.9, .9, .9], power: 90 },
-    sack: { col: [.7, .62, .46] }, leaf: { col: [.26, .42, .14] }, leaves: { tex: 'leaves' },
+    sack: { col: [.7, .62, .46] }, leaf: { col: [.26, .42, .14] }, leaves: { tex: 'leaves' }, sprout: { col: [.45, .8, .25], em: [.06, .12, .03] },
     ape_overall: { col: [.42, .25, .12] }, ape_denim: { col: [.18, .27, .42] }, ape_khaki: { col: [.46, .38, .25] }, ape_bandana: { tex: 'ape_bandana' }, band_rb: { tex: 'band_rb' },
     cap_blue: { col: [.1, .33, .78] }, cap_logo: { tex: 'cap_logo' }, hat_white: { col: [.9, .89, .86] }, patch_apechain: { tex: 'patch_apechain' },
     glass_dark: { col: [.03, .035, .04], spec: [.9, .9, .9], power: 90 }, peng_blue: { col: [.42, .6, .9] }, peng_white: { col: [.95, .95, .95] }, peng_beak: { col: [.95, .6, .12] },
@@ -2155,6 +2155,25 @@
       ashiLogs(M, W / 2 + 1.2, -1, 0, 3, 2);
     },
     ashi_log_pile(M) { ashiLogs(M, 0, 0, 0, 4, 3); },
+    // the lookout: a stair of stacked logs against the inside of the palisade, 8 steps of .4 m up to a landing at 3.2 m
+    // (high enough to look over the stakes); the front faces -y, the back stands against the palisade
+    ashi_lookout_logs(M) {
+      const W = 5, n = 8, R = .4, T = .5, y0 = -2.6, back = 2.6;
+      for (let k = 0; k < n; k++) {
+        const yf = y0 + k * T;
+        M.block('darkwood', 0, (yf + back) / 2, k * R, W, back - yf, R - .04);
+        M.block('wood', 0, (yf + back) / 2, (k + 1) * R - .04, W - .1, back - yf, .04);
+        M.rod('bark', [-W / 2, yf + .2, (k + 1) * R - .2], [W / 2, yf + .2, (k + 1) * R - .2], .2, 8);
+      }
+      for (const sd of [-1, 1]) M.block('darkwood', sd * (W / 2 - .12), back - .12, 0, .22, .22, n * R + 1.1);
+      M.rod('wood', [-W / 2 + .12, back - .12, n * R + 1], [W / 2 - .12, back - .12, n * R + 1], .06, 5);
+    },
+    // a single sprout: the Ashigaru mark, growing out of the moat stream
+    ashi_sprout(M) {
+      M.rod('sprout', [0, 0, 0], [0, .03, .55], .025, 5);
+      for (const [a, b] of [[[.32, .02, .72], [.12, .02, .52]], [[-.3, .04, .66], [-.1, .03, .5]]]) { M.poly('sprout', [[0, .03, .5], a, b]); M.poly('sprout', [[0, .03, .5], b, a]); }
+      M.cyl('earth', [0, 0, -.05], .22, .1, 8, .18);
+    },
     // cheval de frise: a log with crossed sharpened stakes, 3.4 m
     ashi_barricade(M) {
       M.rod('bark', [-1.7, 0, .75], [1.7, 0, .75], .18, 8);
@@ -2778,6 +2797,10 @@
       }
     },
     // a cluster of graves: headstones (round, cross, obelisk), earth mounds, candles
+    // the thirteenth grave: a plain stone with no name, on a fresh mound
+    cc_grave_nameless(M) { ccStone(M, 0, 0, 'round', 1.25); M.block('earth', 0, -1.3, 0, 1.1, 2.1, .3); },
+    // a skeleton on its own, standing at the roadside
+    cc_skeleton(M) { ccSkeleton(M, 0, 0, 0); },
     cc_graves(M) {
       ccStone(M, -2.2, 0, 'round', 1.3); ccStone(M, 0, .4, 'cross', 1.6); ccStone(M, 2.2, -.1, 'obelisk', 2.1);
       for (const x of [-2.2, 0, 2.2]) M.block('earth', x, -1.4, 0, 1.1, 2.2, .25);
@@ -2976,6 +2999,8 @@
       for (const sd of [-1, 1]) M.rod('rope', [sd * 1.35, -4.8, .85], [sd * 1.35, 4.8, .85], .03, 3);
     },
     // rowboat with oars, a net and a barrel (floats on the water)
+    // the same rowboat, sunk: placed on the sea bed (absolute height), not floating
+    chz_rowboat_sunk(M) { B.chz_rowboat(M); },
     chz_rowboat(M) {
       const L = 4.6;
       chzHull(M, L, .95, .95, 'plank_teal', 'wood');
@@ -6710,7 +6735,9 @@
     ronin_great_dojo: [{ x: 0, z: 0, halfX: 15, halfZ: 12, y: 1.6 }, { x: 0, z: -13.13, halfX: 4.4, halfZ: 1.13, y0: 0, y1: 1.6, steps: 5, surface: 'stone' }],
     // the Bushi dojo's stone base, its veranda boards and three front steps; the Ashigaru dojo's floor and four steps
     bushi_great_dojo: [{ x: 0, z: 0, halfX: 14, halfZ: 9, y: 1 }, { x: 0, z: -8.2, halfX: 13.7, halfZ: .9, y: 1.14 }, { x: 0, z: -9.675, halfX: 5, halfZ: .675, y0: 0, y1: 1, steps: 3, surface: 'stone' }],
-    ashi_great_dojo: [{ x: 0, z: 0, halfX: 12.8, halfZ: 8.3, y: 1.52 }, { x: 0, z: -9.2, halfX: 4, halfZ: .9, y0: 0, y1: 1.4, steps: 4, surface: 'stone' }] };
+    ashi_great_dojo: [{ x: 0, z: 0, halfX: 12.8, halfZ: 8.3, y: 1.52 }, { x: 0, z: -9.2, halfX: 4, halfZ: .9, y0: 0, y1: 1.4, steps: 4, surface: 'stone' }],
+    // the log lookout: 8 treads (.4 rise, .5 run) from its front edge, then the landing at 3.2 m
+    ashi_lookout_logs: [{ x: 0, z: -.6, halfX: 2.45, halfZ: 2, y0: 0, y1: 3.2, steps: 8, surface: 'wood' }, { x: 0, z: 2, halfX: 2.45, halfZ: .6, y: 3.2, surface: 'wood' }] };
   // the dojos built on the Samurai dojo share its base and steps
   for (const t of ['wok_great_dojo', 'yam_great_dojo', 'kenshi_great_dojo', 'sohei_great_dojo', 'buke_great_hall']) decks[t] = samDojoDeck;
   // walk floors and walls made from the geometry (assets/walk-gen.js, tools/gen-kit-walk.mjs -> assets/kit-walk.json): every
