@@ -3173,6 +3173,9 @@ const DEFAULT_BADGE_DEFINITIONS = [
   { badgeId:'builder-root-sculptor', name:'Root Sculptor', category:'builder', rarity:'Rare', imageUrl:'/assets/badges/builder-root-sculptor.png', requirementType:'builder', requirementValue:'future-terrain', requirementText:'Future terrain builder milestone', description:'You shaped land around the old roots.' },
   { badgeId:'secret-beneath-roots', name:'Beneath the Roots', category:'story', rarity:'Mythic', imageUrl:'/assets/badges/secret-beneath-roots.png', requirementType:'secret', requirementValue:'beneath-roots', requirementText:'Hidden discovery', description:'Something beneath the roots answered back.', hidden:true }
 ];
+// Every collectible placed in the village layouts (Hub + 14 villages; rooms have none): the Relic Keeper badge asks for
+// all of them. Update it whenever collectibles are added or removed (the friend-village quests will bring their items).
+const COLLECTIBLE_TOTAL = 82;
 // The other 46 of the 72 badges: a crest and an all-secrets badge per village, secret milestones, mini ant
 // spotters, chest and collector badges. All award themselves (checkAutoBadges).
 (() => {
@@ -3187,9 +3190,9 @@ const DEFAULT_BADGE_DEFINITIONS = [
   add({ badgeId:'mini-ants-15', name:'All the Little Ones', category:'secrets', rarity:'Legendary', requirementType:'miniAnts', requirementValue:15, requirementText:'Find all 15 hidden mini ants', description:'Every mini ant in every village.' });
   add({ badgeId:'chest-first-coin', name:'First Coin', category:'collector', rarity:'Common', requirementType:'chestCount', requirementValue:1, requirementText:'Open your first chest', description:'The first Rebel points of many.' });
   add({ badgeId:'chest-hunter', name:'Chest Hunter', category:'collector', rarity:'Rare', requirementType:'chestCount', requirementValue:25, requirementText:'Open 25 chests', description:'You know where chests like to hide.' });
-  add({ badgeId:'chest-master', name:'Hoard of the Colony', category:'collector', rarity:'Mythic', requirementType:'chestCount', requirementValue:100, requirementText:'Open all 100 chests', description:'Every chest in the universe, opened.' });
+  add({ badgeId:'chest-master', name:'Hoard of the Colony', category:'collector', rarity:'Mythic', requirementType:'chestCount', requirementValue:100, requirementText:'Open 100 chests', description:'One hundred chests, opened.' });
   ['hub','ronin','shogun','yamabushi','wokou'].forEach(v => add({ badgeId:`legend-chest-${v}`, name:`Legend of ${short(v)}`, category:'collector', rarity:'Legendary', emblem:FACTION_ART.has(v) ? v : null, requirementType:'chestId', requirementValue:`${v}-chest-legend-1`, requirementText:`Open the legend chest in ${short(v)}`, description:'A thousand Rebel points, and a story to go with it.' }));
-  add({ badgeId:'collector-relic-keeper', name:'Relic Keeper', category:'collector', rarity:'Epic', requirementType:'collectibleCount', requirementValue:91, requirementText:'Collect every collectible', description:'The archive has nothing left to ask of you.' });
+  add({ badgeId:'collector-relic-keeper', name:'Relic Keeper', category:'collector', rarity:'Epic', requirementType:'collectibleCount', requirementValue:COLLECTIBLE_TOTAL, requirementText:'Collect every collectible', description:'The archive has nothing left to ask of you.' });
 })();
 
 // Quests that count toward a village crest: wired Book One quests set in that village.
@@ -3807,7 +3810,7 @@ function renderProgressionJournal() {
   }
   if (activeJournalTab === 'collections') {
     const rows = Object.entries(COLLECTIBLE_TYPES).map(([type, cfg]) => `<div class="journal-row"><b>${escapeHTML(cfg.label)}</b><br>${collectibleCounts[type] || 0} collected</div>`).join('');
-    grid.innerHTML = `<div class="journal-card full"><strong>Collection Progress</strong><span>${totalCollectibles} total collectibles found</span><div class="journal-progress"><div style="width:${Math.min(100, totalCollectibles * 10)}%"></div></div></div>${rows}`;
+    grid.innerHTML = `<div class="journal-card full"><strong>Collection Progress</strong><span>${totalCollectibles} / ${COLLECTIBLE_TOTAL} collectibles found</span><div class="journal-progress"><div style="width:${Math.min(100, Math.round(totalCollectibles / COLLECTIBLE_TOTAL * 100))}%"></div></div></div>${rows}`;
     return;
   }
   if (activeJournalTab === 'story') {
@@ -3842,7 +3845,7 @@ function renderProgressionJournal() {
     ['Villages Visited', ProgressionState.villagesVisited.length],
     ['Chests Opened', ProgressionState.chestsOpened.length],
     ['Rebel Points', (Number(ProgressionState.rebelPoints) || 0).toLocaleString('en-US')],
-    ['Collectibles Found', totalCollectibles],
+    ['Collectibles Found', `${totalCollectibles} / ${COLLECTIBLE_TOTAL}`],
     ['Secrets Found', `${ProgressionState.secretsFound.length} / ${SECRET_TOTAL}`],
     ['Ecosystem Actions', ecosystemCount],
     ['Badges Earned', earnedActiveBadges.length ? earnedActiveBadges.length : 'None yet']
