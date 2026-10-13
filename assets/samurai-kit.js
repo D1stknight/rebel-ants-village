@@ -836,7 +836,7 @@
     skin_w: { col: [.95, .92, .9] }, skin_blue: { col: [.72, .82, .93] }, hair_black: { col: [.06, .06, .07], spec: [.3, .3, .35], power: 30 }, hair_blue: { col: [.06, .12, .3], spec: [.3, .4, .6], power: 30 },
     obi_red: { col: [.62, .07, .1] }, obi_silver: { col: [.78, .82, .88], spec: [.6, .6, .7], power: 40 }, obi_black: { col: [.06, .07, .08] }, horn: { col: [.88, .9, .95] }, ear_os: { col: [.1, .14, .18] },
     flower_pink: { col: [.95, .55, .66] }, flower_teal: { col: [.3, .75, .7], em: [.05, .2, .18] }, flower_orange: { col: [.95, .5, .12] }, ear_pink: { col: [.95, .62, .7] },
-    cat_black: { col: [.07, .065, .07] }, cat_white: { col: [.95, .93, .9] }, collar_red: { col: [.7, .08, .1] }, gem_green: { col: [.2, .9, .4], em: [.1, .6, .25] },
+    cat_black: { col: [.07, .065, .07] }, cat_white: { col: [.95, .93, .9] }, collar_red: { col: [.7, .08, .1] }, gem_green: { col: [.2, .9, .4], em: [.1, .6, .25] }, rose_quartz: { col: [.97, .66, .78], em: [.5, .16, .3], spec: [1, .92, .96], power: 90 },
     orb: { col: [.6, .85, 1], em: [.45, .75, 1] }, glow_blue: { glow: [.35, .6, 1] },
     palm_leaf: { tex: 'palm_leaf' }, banana_leaf: { tex: 'banana_leaf' }, palm_bark: { tex: 'palm_bark' }, coconut: { col: [.36, .24, .12] }, banana: { col: [.95, .8, .22] }, banana_stem: { col: [.36, .5, .18] }, flower_purple: { col: [.45, .12, .3] },
     plank_teal: { tex: 'plank_teal' }, plank_yellow: { tex: 'plank_yellow' }, plank_red: { tex: 'plank_red' }, tin_roof: { tex: 'tin_roof' }, banana_big: { tex: 'banana_big' }, brick: { tex: 'brick' },
@@ -2861,6 +2861,10 @@
       for (const sd of [-1, 1]) { M.sphere('ear_os', [sd * .17, .06, 2.08], .12, 2.9, 8, 6); M.sphere('flower_teal', [sd * .17, -.03, 2.1], .06, 3.6, 6, 4); }
       M.sphere('bone', [0, .02, 1.84], .14, .95, 8, 5); for (const sd of [-1, 1]) M.quad('teal_glow', [[sd * .05 - .03, -.12, 1.84], [sd * .05 + .03, -.12, 1.84], [sd * .05 + .03, -.12, 1.88], [sd * .05 - .03, -.12, 1.88]]);
       for (const [x, y, z, r] of [[-.2, -.04, 1.8, .08], [.2, -.04, 1.8, .08], [0, -.12, 1.94, .06]]) ccFlower(M, 'flower_teal', x, y, z, r);
+      // her tiny silver bell on a red cord round the neck (Miguel's Hare Moon tale)
+      M.tube('red', [0, 0, .99], [0, 0, 1.03], .352, .292, 16, false); M.rod('red', [0, -.35, .995], [0, -.43, .99], .012, 4);
+      M.sphere('chrome', [0, -.44, .925], .07, 1, 10, 6); M.cyl('chrome', [0, -.44, .99], .02, .025, 6);
+      M.quad('dark', [[-.04, -.508, .905], [.04, -.508, .905], [.04, -.506, .915], [-.04, -.506, .915]]); M.sphere('dark', [0, -.47, .862], .018, 1, 5, 3);
     },
     cc_mamoru(M) { // Mamoru: black skeleton lucky cat, a skull with a candle on its head, a jack-o'-lantern under one paw
       luckyCat(M, 'coat_mamoru', 'cat_black', 'face_mamoru', 'flower_orange');
@@ -2879,7 +2883,11 @@
     },
     // subparts (built under their own pivot so they move): the beckoning paws, Mamoru's flame, Nariko's orb
     cc_paw_black(M) { M.rod('cat_black', [0, 0, 0], [.02, -.08, .4], .11, 7); M.sphere('cat_black', [.02, -.09, .46], .14, 1, 8, 5); for (const x of [-.05, 0, .05]) M.sphere('bone', [.02 + x, -.22, .5], .028, 1, 5, 3); M.sphere('bone', [.02, -.22, .42], .045, 1, 5, 3); },
-    cc_paw_white(M) { M.rod('cat_white', [0, 0, 0], [.02, -.08, .4], .11, 7); M.sphere('cat_white', [.02, -.09, .46], .14, 1, 8, 5); for (const x of [-.05, 0, .05]) M.sphere('ear_pink', [.02 + x, -.22, .5], .028, 1, 5, 3); M.sphere('ear_pink', [.02, -.22, .42], .045, 1, 5, 3); },
+    cc_paw_white(M) { // Mochi's beckoning paw, the Rose Quartz pendant hanging from it on a silver chain (Miguel's Pink Moon tale)
+      M.rod('cat_white', [0, 0, 0], [.02, -.08, .4], .11, 7); M.sphere('cat_white', [.02, -.09, .46], .14, 1, 8, 5); for (const x of [-.05, 0, .05]) M.sphere('ear_pink', [.02 + x, -.22, .5], .028, 1, 5, 3); M.sphere('ear_pink', [.02, -.22, .42], .045, 1, 5, 3);
+      for (const dx of [-.04, .04]) M.rod('chrome', [.02 + dx, -.21, .36], [.02, -.28, .23], .008, 3);
+      M.sphere('rose_quartz', [.02, -.29, .1], .08, 1.6, 6, 3);
+    },
     cc_candle_flame(M) { M.quad('fire', [[-.05, 0, 0], [.05, 0, 0], [0, 0, .16]]); M.quad('fire', [[0, -.05, 0], [0, .05, 0], [0, 0, .14]]); },
     cc_orb(M) {
       M.sphere('orb', [0, 0, 0], .2, 1, 12, 8);
@@ -3429,8 +3437,11 @@
   }
   function actorAction(root, kind, dur) { const a = actors.find(x => x.root === root); if (a) a.act = { kind, t0: null, dur: dur || (kind === 'jump' ? .9 : 1.1) }; return !!a; }
   function ensureAnim(scene) { if (!scene._kitFloat) scene._kitFloat = scene.onBeforeRenderObservable.add(() => animate(performance.now() / 1000)); }
+  const heartbeat = t => { const u = (t * 1.1) % 1; return Math.exp(-(((u - .1) / .05) ** 2)) + .6 * Math.exp(-(((u - .3) / .05) ** 2)); };
   function animate(t) {
     animateActors(t);
+    const rq = MATS.rose_quartz; // Mochi's pendant glows "soft and warm like a heartbeat"
+    if (rq && !rq.isDisposed?.() && rq.metadata?.kitBaseEmissive) rq.emissiveColor = rq.metadata.kitBaseEmissive.scale((.6 + .7 * Math.min(1, Math.max(0, lightFactor))) * (.55 + .8 * heartbeat(t)));
     for (let i = floaters.length - 1; i >= 0; i--) {
       const f = floaters[i]; if (f.root.isDisposed?.()) { floaters.splice(i, 1); continue; }
       // each ghost drifts round its own loop (3-5 m), rising and sinking, turning to face where it goes, leaning in
