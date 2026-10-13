@@ -437,7 +437,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #progressionOverlay.on{opacity:1;pointer-events:all}
 #progressionPanel{width:min(760px,94vw);max-height:86vh;overflow:auto;background:rgba(5,10,28,.96);border:1px solid rgba(232,197,106,.52);box-shadow:0 0 60px rgba(94,207,202,.12);padding:24px}
 #progressionPanel h2{font-family:'Cinzel Decorative',serif;font-size:17px;color:#e8c56a;letter-spacing:3px;text-align:center;margin-bottom:12px}
-.journal-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-bottom:12px}
+.journal-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:5px;margin-bottom:12px}
+.tale-page{padding:14px 16px}
+.tale-head{display:flex;align-items:center;gap:12px}
+.tale-head b{display:block;color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:12px;letter-spacing:1.4px;line-height:1.35}
+.tale-head span{display:block;color:rgba(255,255,255,.55);font-size:11px;margin-top:3px}
+.tale-disc{width:34px;height:34px;border-radius:50%;flex:0 0 34px}
+.tale-page.locked .tale-disc{filter:grayscale(.75) brightness(.6);box-shadow:none!important}
+.tale-text{margin-top:12px;color:rgba(255,255,255,.86);font-size:13.5px;line-height:1.65}
+.tale-text p+p{margin-top:9px}
+.tale-locked{margin-top:8px;color:rgba(255,255,255,.45);font-size:12px;font-style:italic}
 .journal-tab{border:1px solid rgba(94,207,202,.22);background:rgba(255,255,255,.035);color:rgba(255,255,255,.7);font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:1.4px;padding:8px 5px;cursor:pointer}
 .journal-tab.active{border-color:rgba(232,197,106,.65);color:#e8c56a;background:rgba(232,197,106,.1)}
 .journal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -2834,6 +2843,7 @@ function loadSideQuestState() {
 function saveSideQuestState() {
   try { localStorage.setItem(SIDE_QUEST_KEY, JSON.stringify(SideQuestState)); } catch(e) {}
   try { updateQuestTracker(); } catch(e) {}
+  try { refreshTaleMoon(); } catch(e) {}
   scheduleQuestItemCredit();
 }
 
@@ -2890,7 +2900,7 @@ function startSideQuest(questId) {
   if (!isSideQuestAvailable(questId)) return false;
   const first = (QUEST_DEFINITIONS[questId].steps || []).find(s => s.id !== 'complete');
   if (!first) return false;
-  SideQuestState.active[questId] = { step:first.id, steps:{} };
+  SideQuestState.active[questId] = { step:first.id, steps:{}, touched:Date.now() };
   saveSideQuestState();
   playProgressionAudio('progressMilestone');
   showToast(`Side quest started: ${QUEST_DEFINITIONS[questId].title}. ${first.objective}`, 6500);
@@ -2923,6 +2933,7 @@ function advanceSideQuests(actionType, context = {}) {
       if (progress.ids.length < step.count) { showToast(`${quest.title}: ${progress.ids.length} / ${step.count}`); continue; }
     }
     advanced = true;
+    st.touched = Date.now();
     const steps = (quest.steps || []).filter(s => s.id !== 'complete');
     const index = steps.findIndex(s => s.id === st.step);
     if (index >= 0 && index < steps.length - 1) {
@@ -2996,6 +3007,117 @@ function isQuestSpotTargetedBySideQuest(spotId) {
     const want = String(step.targetObjectId || '').toLowerCase();
     return want && id.includes(want) && !(st.steps?.[step.id]?.ids || []).map(v => String(v).toLowerCase()).includes(id);
   });
+}
+
+// ═══════════════════════════════════════
+// MOON TALES (Cute & Creepy) — Miguel's tales of the Mystic Moons, word for word (two small fixes he approved:
+// "Its light", "she followed"). Each tale has its own moon: the village sky shows the moon of the tale whose quest
+// moved on last (MOON_TALE_QUEST_MOONS: quest number -> tale; quests moon-tales-NN), the purple moon between tales.
+// A tale's journal page (Journal > Moon Tales) opens when its last quest is done. Nariko's tale is still to come.
+// Preview a moon: village.html?village=cute-creepy&taleMoon=pink (or window.setTaleMoon('pink'), null to clear).
+// ═══════════════════════════════════════
+const MOON_TALES = [
+  { id:'pink', teller:'Mochi', moonName:'Pink Moon', unlockQuestId:'moon-tales-08', title:'Lunar Witch and Mochi Pink Moon',
+    moon:{ pos:[-150, 215, 430], size:3.5, color:[1, .64, .8], halo:[.62, .22, .42], light:[.68, .48, .7] },
+    text:[
+      'During the spring, when the world danced with blossoms and birdsong, and love bloomed like wildflowers, Lunar Witch, though wise and kind, sometimes felt a hollow ache in her heart.',
+      'One night, as The Pink Moon rose high and glowing above the treetops, a curious shimmer stirred in the shadows. From that light stepped a Maneki-Neko cat, his fur white as clouds and his eyes like pools of emerald. He lifted his right paw and beckoned her silently, drawing her to a moonlit clearing wrapped in cherry blossoms.',
+      'In his left paw he carried a Rose Quartz crystal pendant, glowing soft and warm like a heartbeat. With great care, he placed it in her palm. “This will open your heart like a flower in the sun,” he whispered in a voice as soft as night wind. “It will fill you with joy and the sweetness of self-love.”',
+      'The Lunar Witch felt warmth bloom in her chest. Her loneliness began to melt like the morning frost.',
+      '“I am Mochi,” said the cat, curling his tail around her wrist, “and I will walk beside you from this day forward. So long as I am near, no darkness shall harm you, and you shall never walk alone.”',
+      'They lived together beneath the watchful moon, hearts full and spirits light, spinning their own kind of magic in the world. They spoke of future days rich with laughter and love’s gentle bloom, of fortunes bright and friends yet to come.'
+    ] },
+  { id:'flower', teller:'Kokeshi Flower Moon', moonName:'Flower Moon', unlockQuestId:'moon-tales-12', title:'Kokeshi Flower Moon',
+    moon:{ pos:[-120, 235, 430], size:3.5, color:[1, .95, .86], halo:[.64, .4, .5], light:[.66, .58, .74] },
+    text:[
+      'As the full Flower moon ascends to its throne in the sky, Kokeshi weaves an enchanting melody, as soft and melodious as the song of a nightingale.',
+      'Her spell, spun from the whispering wind and the dreams of blossoming buds, dances across the enchanted lands. Slumbering flowers awaken, bursting into vibrant blooms as May\'s gentle warmth kisses their leaves and petals. This miraculous moon heralds the cycle of life and death, a sacred time when the world itself seems to inhale deeply and exhale in a myriad of colours and fragrances.',
+      'Kokeshi Flower Moon chants softly an ancient truth, of gratitude for the world\'s beauty, the virtue of patience, and the importance of nurturing the seeds of new beginnings. The hearts of all who hear her magical lullaby are filled with hope and love, and a profound joy of life’s perpetual renewal.'
+    ] },
+  { id:'hare', teller:'Ostara', moonName:'Hare Moon', unlockQuestId:'moon-tales-16', title:'Lunar Witch and the Ostara The Moon Gazing Hare',
+    moon:{ pos:[-150, 205, 430], size:3.8, color:[.9, .94, 1], halo:[.42, .48, .64], light:[.58, .6, .84] },
+    text:[
+      'As spring tiptoed across the land, the Lunar Witch strolled under blossoming boughs, above her the Hare Moon hung fat and bright in the sky, casting silver spells over the sleeping earth.',
+      'As she wandered, she followed a shimmer, a sound, a faint chime, like starlight ringing.',
+      'There, bathed in the glow of the full moon, sat a hare unlike any she had seen.',
+      'She knew at once who it was: Ostara, the Dreamer, an ancient moon-gazing spirit, talisman of luck & guardian of growth.',
+      'She did not blink. She did not stir. Still as starlight, she tilted her head to the heavens, entranced by the moon’s radiant face. Her eyes shimmered like pools of emerald, reflecting not just light, but something deeper, the eternal dance of life renewing itself.',
+      'Around her neck hung a tiny silver bell. It was said this bell kept her safe from harm, warding off shadows and unwelcome spirits with every delicate chime.',
+      'The Lunar Witch stood quietly, watching. She felt the pulse of magic in the air, the thrum of sap rising in the trees, the silent stirring of seeds underground. With each breath, she was filled with hope, warmth, and joy as if the moon herself whispered promises of rebirth and new beginnings.'
+    ] },
+  { id:'harvest', teller:'Mamoru', moonName:'Harvest Moon', unlockQuestId:'moon-tales-20', title:'🐾 The Tale of Mamoru Harvest Moon 🕯️🎃',
+    moon:{ pos:[-140, 192, 430], size:5.2, color:[1, .78, .36], halo:[.64, .38, .1], light:[.74, .58, .46] },
+    text:[
+      'The Harvest Super Moon swelled full, huge, golden, and fat in the sky. Its light poured across the Lunar Witch universe, chasing shadows from even the darkest corners.',
+      'From that moonlight stepped Mamoru the Maneki Neko, her emerald eyes gleaming beneath a black skeleton suit stitched with protective magic. She carried a skull candle, its flame burning bright to ward off mischievous spirits drawn to the harvest night.',
+      'The moon had called her home to join the Mystic Moon Coven in a grand Harvest Festival of gratitude and light. Together, the witches feasted on sweet moon cakes, carried jack-o’-lanterns glowing with laughter, and gave thanks for Earth’s autumn bounty.',
+      'All through the night, Mamoru kept watch, her candle steady, her pumpkin lantern glowing warm. She guarded her sisters from tricksters beyond the veil, keeping their joy safe until the first blush of dawn.',
+      'Each year, when the Harvest Moon rises again, Mamoru will return, a faithful guardian cat protecting the coven, blessing all who gather in her glow. 🌕🐈‍⬛🕸️'
+    ] },
+  { id:'nariko', teller:'Nariko', moonName:'', unlockQuestId:'moon-tales-19', title:'Nariko', pending:true, text:[] }
+];
+const MOON_TALE_QUEST_MOONS = { 1:'harvest', 2:'harvest', 3:'harvest', 4:'harvest', 6:'pink', 7:'pink', 8:'pink', 9:'flower', 10:'flower', 11:'flower', 12:'flower', 14:'hare', 15:'hare', 16:'hare', 20:'harvest' };
+let TaleMoonPreview = (() => { const v = new URLSearchParams(window.location.search).get('taleMoon'); return v == null ? undefined : (v === 'none' ? null : v); })();
+
+// The tale moon for the sky now: a preview if one is set, else the moon of the Moon Tales quest moved on last.
+function currentTaleMoonKey() {
+  if (CURRENT_VILLAGE_ID !== 'cute-creepy') return null;
+  if (TaleMoonPreview !== undefined) return MOON_TALES.some(t => t.id === TaleMoonPreview && t.moon) ? TaleMoonPreview : null;
+  let best = null, bestT = -1;
+  for (const [questId, st] of Object.entries(SideQuestState.active || {})) {
+    const key = MOON_TALE_QUEST_MOONS[Number(String(questId).match(/^moon-tales-(\d+)$/)?.[1] || 0)];
+    if (key && (Number(st?.touched) || 0) > bestT) { best = key; bestT = Number(st?.touched) || 0; }
+  }
+  return best;
+}
+function taleMoonParams(key) {
+  const md = villageRecipe()?.moonDisc; if (!md) return null;
+  const t = key && MOON_TALES.find(m => m.id === key)?.moon;
+  return { pos:(t || md).pos, size:(t || md).size, color:(t || md).color, halo:(t || md).halo, light:t?.light || null };
+}
+// The moonlight takes on 40% of the tale moon's colour (updateSky reads it).
+function taleMoonLightColor(base) {
+  const p = TaleMoonView.key ? taleMoonParams(TaleMoonView.key) : null;
+  return p?.light ? base.map((c, i) => c * .6 + p.light[i] * .4) : base;
+}
+// The sky moon glides to the tale's moon (position, size, colour, halo) over ~4 s, then the lights follow.
+const TaleMoonView = { key:undefined, ob:null };
+function refreshTaleMoon(immediate = false, fromSky = false) {
+  const moon = scene?.getMeshByName?.('moon'), halo = scene?.getMeshByName?.('halo');
+  if (!moon || !villageRecipe()?.moonDisc) return;
+  const key = currentTaleMoonKey();
+  if (key === TaleMoonView.key && !immediate) return;
+  const to = taleMoonParams(key);
+  const cur = () => ({ pos:[moon.position.x, moon.position.y, moon.position.z], size:moon.scaling.x, color:[moon.material.emissiveColor.r, moon.material.emissiveColor.g, moon.material.emissiveColor.b], halo:halo ? [halo.material.emissiveColor.r, halo.material.emissiveColor.g, halo.material.emissiveColor.b] : to.halo });
+  for (const m of [moon, halo]) if (m) { m.unfreezeWorldMatrix?.(); m.material?.unfreeze?.(); }
+  const set = p => {
+    moon.position.set(...p.pos); moon.scaling.setAll(p.size); moon.material.emissiveColor.set(...p.color); moon.material.fogEnabled = false; moon.applyFog = false;
+    if (halo) { halo.position.set(...p.pos); halo.scaling.setAll(p.size * 1.15); halo.material.emissiveColor.set(...p.halo); halo.material.alpha = .22; halo.material.fogEnabled = false; halo.applyFog = false; }
+  };
+  const first = TaleMoonView.key === undefined;
+  TaleMoonView.key = key;
+  if (TaleMoonView.ob) { scene.onBeforeRenderObservable.remove(TaleMoonView.ob); TaleMoonView.ob = null; }
+  if (immediate || first) { set(to); if (!fromSky) updateSky(); return; }
+  const from = cur(), t0 = performance.now(), L = (a, b, k) => a.map((v, i) => v + (b[i] - v) * k);
+  TaleMoonView.ob = scene.onBeforeRenderObservable.add(() => {
+    const u = Math.min(1, (performance.now() - t0) / 4000), k = u * u * (3 - 2 * u);
+    set({ pos:L(from.pos, to.pos, k), size:from.size + (to.size - from.size) * k, color:L(from.color, to.color, k), halo:L(from.halo, to.halo, k) });
+    if (u >= 1) { scene.onBeforeRenderObservable.remove(TaleMoonView.ob); TaleMoonView.ob = null; updateSky(); }
+  });
+}
+window.setTaleMoon = key => { TaleMoonPreview = key === undefined ? undefined : key; refreshTaleMoon(); return currentTaleMoonKey(); };
+
+// Journal > Moon Tales: one page per tale, its text once its last quest is done.
+function renderMoonTalesJournal() {
+  const disc = t => { const m = t.moon, c = m ? m.color.map(v => Math.round(Math.min(1, v) * 255)) : [90, 80, 110], h = m ? m.halo.map(v => Math.round(Math.min(1, v) * 255)) : [40, 34, 54];
+    return `<div class="tale-disc" style="background:radial-gradient(circle at 36% 34%,#fff,rgb(${c}) 46%,rgb(${h}) 100%);box-shadow:0 0 18px rgba(${c},.45)"></div>`; };
+  return MOON_TALES.map(t => {
+    const open = !t.pending && isQuestIdCompleted(t.unlockQuestId);
+    const head = `<div class="tale-head">${disc(t)}<div><b>${escapeHTML(open ? t.title : (t.pending ? `${t.teller}'s tale` : t.moonName))}</b><span>${escapeHTML(t.pending ? 'Her tale is still being written.' : `Told by ${t.teller}`)}</span></div></div>`;
+    const body = open ? `<div class="tale-text">${t.text.map(p => `<p>${escapeHTML(p)}</p>`).join('')}</div>`
+      : `<div class="tale-locked">${t.pending ? 'Come back when the moon turns again.' : `Finish ${escapeHTML(t.teller)}'s tale in Cute &amp; Creepy to read it.`}</div>`;
+    return `<div class="journal-card full tale-page ${open ? '' : 'locked'}">${head}${body}</div>`;
+  }).join('');
 }
 
 const QUEST_BUILDER_CONFIG_KEY = 'rebelAntsQuestBuilderConfig:v1';
@@ -3760,6 +3882,11 @@ function renderBadgeGallery() {
   }).join('');
 }
 
+// The Moon Tales tab appears once Cute & Creepy has been visited (or a tale begun).
+function showMoonTalesJournal() {
+  return (ProgressionState.villagesVisited || []).includes('cute-creepy') || [...Object.keys(SideQuestState.active || {}), ...(SideQuestState.done || [])].some(id => /^moon-tales-/.test(id));
+}
+
 function renderJournalTabs() {
   const tabs = [
     ['overview', 'Overview'],
@@ -3767,7 +3894,8 @@ function renderJournalTabs() {
     ['collections', 'Collections'],
     ['story', 'Story'],
     ['villages', 'Villages'],
-    ['secrets', 'Secrets']
+    ['secrets', 'Secrets'],
+    ...(showMoonTalesJournal() ? [['tales', 'Moon Tales']] : [])
   ];
   const target = document.getElementById('progressionJournalTabs');
   if (!target) return;
@@ -3835,6 +3963,10 @@ function renderProgressionJournal() {
   }
   if (activeJournalTab === 'secrets') {
     grid.innerHTML = renderSecretsJournal();
+    return;
+  }
+  if (activeJournalTab === 'tales') {
+    grid.innerHTML = renderMoonTalesJournal();
     return;
   }
   const cards = [
@@ -10258,8 +10390,8 @@ function updateSky(){
   else if(h>=9&&h<17){sun.diffuse=new BABYLON.Color3(1,.97,.88);}
   else if(h>=17&&h<20){sun.diffuse=new BABYLON.Color3(1,.48,.15);}
   else{sun.diffuse=new BABYLON.Color3(.18,.22,.48);sun.intensity=0.12;
-    const _md = villageRecipe()?.moonDisc, _mm = _md && scene.getMeshByName('moon'); if (_mm && !_mm._villageDisc) { _mm._villageDisc = true; _mm.position.set(..._md.pos); _mm.scaling.setAll(_md.size); _mm.material.emissiveColor = new BABYLON.Color3(..._md.color); _mm.material.fogEnabled = false; _mm.applyFog = false; const _hl = scene.getMeshByName('halo'); if (_hl) { _hl.position.set(..._md.pos); _hl.scaling.setAll(_md.size * 1.15); _hl.material.emissiveColor = new BABYLON.Color3(..._md.halo); _hl.material.alpha = .22; _hl.material.fogEnabled = false; _hl.applyFog = false; } } // a village's own moon (Cute & Creepy)
-    const _moon = villageRecipe()?.moon; if (_moon) { sun.intensity = _moon.sun; hemi.intensity *= _moon.hemi; sun.diffuse = new BABYLON.Color3(..._moon.color); hemi.diffuse = new BABYLON.Color3(..._moon.color); } } // moonlit villages
+    if (villageRecipe()?.moonDisc && TaleMoonView.key === undefined) refreshTaleMoon(true, true); // a village's own moon (Cute & Creepy), the Moon Tales' moons
+    const _moon = villageRecipe()?.moon; if (_moon) { const _mc = taleMoonLightColor(_moon.color); sun.intensity = _moon.sun; hemi.intensity *= _moon.hemi; sun.diffuse = new BABYLON.Color3(..._mc); hemi.diffuse = new BABYLON.Color3(..._mc); } } // moonlit villages
   if (_vl?.tint && h>=6 && h<20) sun.diffuse = sun.diffuse.multiply(new BABYLON.Color3(..._vl.tint)); // e.g. Samurai's golden light
   const clearFogColor=h>=6&&h<20?new BABYLON.Color3(.58,.74,.9):new BABYLON.Color3(.04,.06,.16);
   scene.fogColor=clearFogColor;
