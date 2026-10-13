@@ -21,7 +21,7 @@ let nd = 0, nb = 0;
 for (const t of types) {
   const M = new K._Kit(); K._B[t](M);
   const tri = K.walkTriangles(M.parts), r = WG.fromTriangles(tri.tris, {});
-  if (!r) continue;
+  if (!r) { delete out.types[t]; continue; } // soft parts only (a bush of leaves): no table, it walks as ground
   out.types[t] = { sig: tri.sig, decks: r.decks, walls: r.blockers };
   nd += r.decks.length; nb += r.blockers.length;
 }
@@ -37,7 +37,7 @@ if (!only.length || only.some(t => t.startsWith('room_'))) {
     // the signature is of the room's own builder (what the village can read back from its built template), not its parts
     const sig = K.walkTriangles(Object.fromEntries(Object.entries(parts).filter(([k]) => !k.includes('#')))).sig;
     const r = WG.fromTriangles(tri.tris, { seeds: [[spec.spawn[0], spec.spawn[1], spec.spawn[3] || 0]], stepUp: .45, inflate: 0, minFloor: .12, maxFloor: 2.6, skipFloor: (x, z) => decksOwn.some(d => deckAt(d, x, z)) });
-    if (!r) continue;
+    if (!r) { delete out.rooms[t]; continue; }
     // a room that lists its walk zones (tunnels, ledges) keeps the generated walls too (boulders, sacks, stairs inside the
     // zones), except any within 1.4 m of its spawn or exit: the zones already hold the body there
     const near = ([x0, z0, x1, z1], [px, pz]) => Math.hypot(Math.max(x0 - px, 0, px - x1), Math.max(z0 - pz, 0, pz - z1)) < 1.4;

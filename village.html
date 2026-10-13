@@ -24799,7 +24799,8 @@ function getKitWalkTable(type) {
   try {
     const live = window.SamuraiKit.walkTrianglesOf(scene, type);
     const same = t && t.sig.length === live.sig.length && t.sig.every((v, i) => Math.abs(v - live.sig[i]) < .015);
-    if (!same && live.tris.length && window.WalkGen) { // (a piece of soft parts only, candles or a glow, has no table and walks as ground)
+    if (!same && !live.tris.length) t = null; // (a piece of soft parts only, candles or a glow, has no table and walks as ground)
+    else if (!same && window.WalkGen) {
       const r = window.WalkGen.fromTriangles(live.tris, {});
       t = r ? { decks: r.decks, walls: r.blockers } : null;
       console.warn('assets/kit-walk.json is out of date for', type, '- worked out here (run tools/gen-kit-walk.mjs)');
