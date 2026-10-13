@@ -2624,11 +2624,11 @@ const BOOK1_WIRING = {
           say:['Both pointing down, and both pointing the same way: toward the old scout path and the sealed chamber.', 'The hidden tunnels do not ask to be found. That is why finding them matters.'] }
       ] },
     30: { giver:'hub-archivist',
-      offer:['Every village digs, and every village finds the same thing: little carved fragments, older than any of us.', 'Bring me five for the archive: one from the Shogun castle, the Kenshi grove, the Buke canyon, the Warrior fort and the Ashigaru mound.'],
+      offer:['Every village digs, and every village finds the same thing: little carved fragments, older than any of us.', 'Bring me five for the archive. Look anywhere: here in the Hub, the Ronin fortress, the Shogun castle, the Warrior fort. Most villages have a few.'],
       steps:[
-        { id:'collect-relics', objective:'Collect five ancient relic fragments: Shogun, Kenshi, Buke, Warrior and Ashigaru villages.', objectiveType:'collectCollectible', targetObjectId:'ancient-relic-fragment', count:5 },
+        { id:'collect-relics', objective:'Collect five ancient relic fragments, from any village.', objectiveType:'collectCollectible', targetObjectId:'ancient-relic-fragment', count:5 },
         { id:'return-archive', objective:'Bring the relic fragments to the Hub Archivist.', objectiveType:'talkToNpc', targetNpcId:'hub-archivist', villageId:'hub',
-          say:['Five pieces from five villages, and look: they fit. Each one is part of the same carved ring.', 'Every fragment is small until the archive teaches it where to stand.'] }
+          say:['Five pieces, and look: they fit. Each one is part of the same carved ring.', 'Every fragment is small until the archive teaches it where to stand.'] }
       ] }
   },
   badges: { 2:'story-dust-reader' }
