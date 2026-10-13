@@ -2739,7 +2739,11 @@ const MOON_TALES_QUESTS = [
   makeMoonTaleQuest(1, 'Called Home', 'Mamoru', 'The Harvest Moon calls the Mystic Moon Coven home to its festival of gratitude and light.', ['Watch the Harvest Moon rise from the gate.', 'Tell Mamoru what you saw.'], ['+40 progress'], 'The Harvest Moon swelled over the hill, and Mamoru came home to keep the watch.'),
   makeMoonTaleQuest(2, 'Lanterns Glowing with Laughter', 'Mamoru', "Five jack-o'-lanterns round the court have gone dark before the Harvest Festival.", ["Light five jack-o'-lanterns.", 'Tell Mamoru.'], ['+45 progress'], "Every jack-o'-lantern on the hill is giggling again.", ['moon-tales-01']),
   makeMoonTaleQuest(3, 'Sweet Moon Cakes', 'Mamoru', 'The witches feast on sweet moon cakes at the Harvest Festival.', ['Find three moon cakes.', 'Set them on the feast table.', 'Tell Mamoru.'], ['+45 progress'], 'Three moon cakes on the feast table, each stamped with a little moon.', ['moon-tales-02']),
-  makeMoonTaleQuest(4, 'Tricksters Beyond the Veil', 'Mamoru', 'Mischievous spirits drawn to the harvest night have slipped onto the hill.', ['Hold up the skull candle to three tricksters.', 'Tell Mamoru.'], ['+50 progress'], 'Three tricksters sent back beyond the veil by the light of a skull candle.', ['moon-tales-03'])
+  makeMoonTaleQuest(4, 'Tricksters Beyond the Veil', 'Mamoru', 'Mischievous spirits drawn to the harvest night have slipped onto the hill.', ['Hold up the skull candle to three tricksters.', 'Tell Mamoru.'], ['+50 progress'], 'Three tricksters sent back beyond the veil by the light of a skull candle.', ['moon-tales-03']),
+  makeMoonTaleQuest(9, "The Nightingale's Lullaby", 'Kokeshi Flower Moon', 'As the Flower Moon ascends to its throne, Kokeshi weaves her melody under the great tree.', ['Listen to her lullaby.', 'Tell her what you heard.'], ['+40 progress'], 'A lullaby as soft as a nightingale, and the whole hill breathing in.', ['moon-tales-01']),
+  makeMoonTaleQuest(10, 'Slumbering Buds', 'Kokeshi Flower Moon', 'Five flower beds on the hill are sleeping through the spring.', ['Hum the lullaby over five sleeping beds.', 'Tell Kokeshi Flower Moon.'], ['+45 progress'], 'Slumbering flowers awaken, bursting into vibrant blooms.', ['moon-tales-09']),
+  makeMoonTaleQuest(11, 'The Virtue of Patience', 'Kokeshi Flower Moon', 'Kokeshi Flower Moon chants an ancient truth to those who stay still long enough.', ['Sit with her for thirty seconds.', 'Talk to her.'], ['+40 progress'], 'Gratitude for the world\'s beauty, the virtue of patience, the seeds of new beginnings.', ['moon-tales-10']),
+  makeMoonTaleQuest(12, 'Seeds of New Beginnings', 'Kokeshi Flower Moon', 'Two seeds have fallen where nothing grows.', ['Find two moon seeds.', 'Plant them at the roots of the great tree.', 'Talk to Kokeshi Flower Moon.'], ['+50 progress'], 'Two seeds planted at the old tree\'s roots, and the dead tree remembered how to bloom.', ['moon-tales-11'])
 ];
 const MOON_TALES_WIRING = {
   1: { giver:'cc-mamoru',
@@ -2770,6 +2774,35 @@ const MOON_TALES_WIRING = {
       { id:'ward-tricksters', objective:'Hold up the skull candle to three tricksters: the scarecrows, behind the library, behind the game hall.', objectiveType:'useQuestSpot', targetObjectId:'mt-trickster', count:3, villageId:'cute-creepy' },
       { id:'tricksters-gone', objective:'Tell Mamoru the tricksters are gone.', objectiveType:'talkToNpc', targetNpcId:'cc-mamoru', villageId:'cute-creepy',
         say:['Gone, all three, back beyond the veil. My candle burns steadier already.', 'When my sisters have told their tales, come back to me. Then the Coven gathers, and I keep the watch until dawn.'] }
+    ] },
+  9: { giver:'cc-flower-moon',
+    offer:['The Flower Moon is rising to its throne, little Rebel. Can you feel the air change?', 'Stand with me under the old tree and listen. The song is soft, so stay close.'],
+    steps:[
+      { id:'hear-lullaby', objective:"Listen to Kokeshi Flower Moon's lullaby under the great tree.", objectiveType:'useQuestSpot', targetObjectId:'mt-lullaby', villageId:'cute-creepy' },
+      { id:'lullaby-heard', objective:'Tell Kokeshi Flower Moon what you heard.', objectiveType:'talkToNpc', targetNpcId:'cc-flower-moon', villageId:'cute-creepy',
+        say:['Did you feel it? The whole hill breathed in.', 'The buds are still asleep, though. They need to hear it too.'] }
+    ] },
+  10: { giver:'cc-flower-moon',
+    offer:['Five flower beds on the hill are sleeping through the spring: in the graveyard, by the manor steps, in the witch\'s corner, by the library and by the east cottages.', 'Hum my lullaby over each one. They will wake.'],
+    steps:[
+      { id:'wake-buds', objective:'Hum the lullaby over five sleeping flower beds.', objectiveType:'useQuestSpot', targetObjectId:'mt-bud', count:5, villageId:'cute-creepy' },
+      { id:'buds-awake', objective:'Tell Kokeshi Flower Moon the flowers are awake.', objectiveType:'talkToNpc', targetNpcId:'cc-flower-moon', villageId:'cute-creepy',
+        say:["They woke! Can you smell them? May's gentle warmth on every petal.", 'Now sit with me a while.'] }
+    ] },
+  11: { giver:'cc-flower-moon',
+    offer:['Sit with me a while, little Rebel. There is an old truth I sing at this moon.', 'It takes as long as it takes. Stay still, and listen.'],
+    steps:[
+      { id:'sit-still', objective:'Sit with Kokeshi Flower Moon for thirty seconds without moving.', objectiveType:'useQuestSpot', targetObjectId:'mt-patience', villageId:'cute-creepy' },
+      { id:'patience-done', objective:'Talk to Kokeshi Flower Moon.', objectiveType:'talkToNpc', targetNpcId:'cc-flower-moon', villageId:'cute-creepy',
+        say:['Thirty breaths, and you never moved. The old tree noticed.', 'One last thing. Two seeds want planting.'] }
+    ] },
+  12: { giver:'cc-flower-moon',
+    offer:['Two moon seeds have fallen where nothing grows: one by the nameless grave, one in the scarecrow yard.', 'Bring them to the roots of the great tree and plant them. Every ending here is a beginning.'],
+    steps:[
+      { id:'find-seeds', objective:'Find two moon seeds: by the nameless grave and in the scarecrow yard.', objectiveType:'collectCollectible', targetObjectId:'moon-seed', count:2, villageId:'cute-creepy' },
+      { id:'plant-seeds', objective:'Plant the moon seeds at the roots of the great tree.', objectiveType:'useQuestSpot', targetObjectId:'mt-plant', villageId:'cute-creepy' },
+      { id:'tree-blooms', objective:'Talk to Kokeshi Flower Moon.', objectiveType:'talkToNpc', targetNpcId:'cc-flower-moon', villageId:'cute-creepy',
+        say:['Look up. The old tree remembers how to bloom.', "That is the whole of my song: gratitude, patience, and seeds. Carry it with you, and read it in your journal when the moon turns."] }
     ] }
 };
 
@@ -3163,6 +3196,50 @@ function refreshTaleMoon(immediate = false, fromSky = false) {
 }
 window.setTaleMoon = key => { TaleMoonPreview = key === undefined ? undefined : key; refreshTaleMoon(); return currentTaleMoonKey(); };
 
+// Moon Tales sounds, made in the browser: Kokeshi Flower Moon's lullaby (a music box), a short hum for the sleeping buds,
+// a slow chant for patience. They follow the Master and Interaction sliders; a new one fades out the one playing.
+const MoonTaleSounds = (() => {
+  let ctx = null, out = null, bus = null;
+  const vol = () => WeatherManager.interactionAudioEnabled === false ? 0 : (WeatherManager.masterVolume ?? .8) * (WeatherManager.interactionVolume ?? .7);
+  const ensure = () => {
+    if (ctx) return ctx;
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      out = ctx.createGain(); out.connect(ctx.destination);
+      const dl = ctx.createDelay(1), fb = ctx.createGain(), wet = ctx.createGain(); // a little room echo
+      dl.delayTime.value = .31; fb.gain.value = .3; wet.gain.value = .3; out.connect(dl); dl.connect(fb).connect(dl); dl.connect(wet).connect(ctx.destination);
+    } catch (e) { ctx = null; }
+    return ctx;
+  };
+  const N = { C3:130.81, G3:196, C4:261.63, D4:293.66, E4:329.63, G4:392, A4:440, C5:523.25, D5:587.33, E5:659.25, G5:783.99, A5:880, C6:1046.5 };
+  // one music-box note: a sine with a soft octave, a quick attack and a long decay
+  const note = (f, t, dur, g) => {
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), e = ctx.createGain(), m = ctx.createGain();
+    o.type = 'sine'; o2.type = 'triangle'; o.frequency.value = f; o2.frequency.value = f * 2; m.gain.value = .22;
+    o.connect(e); o2.connect(m).connect(e); e.connect(bus);
+    e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + .012); e.gain.exponentialRampToValueAtTime(.0006, t + dur);
+    o.start(t); o2.start(t); o.stop(t + dur + .05); o2.stop(t + dur + .05);
+  };
+  const SONGS = {
+    // 3/4 at 0.5 s a beat, 24 beats: E G A | G E D | C D E | D . . | E G A | C' A G | E D C | C . .
+    lullaby: { beat:.5, notes:[['E5', 0], ['G5', 1], ['A5', 2], ['G5', 3], ['E5', 4], ['D5', 5], ['C5', 6], ['D5', 7], ['E5', 8], ['D5', 9, 2.2], ['E5', 12], ['G5', 13], ['A5', 14], ['C6', 15], ['A5', 16], ['G5', 17], ['E5', 18], ['D5', 19], ['C5', 20], ['C5', 21, 2.6]],
+      bass:[['C3', 0], ['G3', 3], ['C3', 6], ['G3', 9], ['C3', 12], ['G3', 15], ['C3', 18], ['C3', 21]] },
+    hum: { beat:.32, notes:[['E5', 0], ['G5', 1], ['A5', 2], ['G5', 3], ['E5', 4, 1.6]] },
+    chant: { beat:2.4, notes:[['C4', 0, 3.4], ['E4', 1, 3.4], ['G4', 2, 3.4], ['A4', 3, 3.4], ['G4', 4, 3.4], ['E4', 5, 3.4], ['D4', 6, 3.4], ['C4', 7, 3.4], ['E4', 8, 3.4], ['G4', 9, 3.4], ['E4', 10, 3.4], ['C4', 11, 4]], bass:[['C3', 0], ['C3', 4], ['C3', 8]] }
+  };
+  function stop(fade = .6) { if (bus && ctx) { const b = bus; b.gain.setTargetAtTime(0, ctx.currentTime, fade / 3); setTimeout(() => { try { b.disconnect(); } catch (e) {} }, fade * 1500); } bus = null; }
+  function play(name) {
+    const song = SONGS[name]; if (!song || !ensure() || document.hidden) return;
+    try { if (ctx.state === 'suspended') ctx.resume(); } catch (e) {}
+    stop(.3);
+    out.gain.value = .55 * vol(); bus = ctx.createGain(); bus.connect(out);
+    const t0 = ctx.currentTime + .05;
+    for (const [n, b, d] of song.notes) note(N[n], t0 + b * song.beat, d || 1.4, .32);
+    for (const [n, b] of song.bass || []) note(N[n], t0 + b * song.beat, 2.6, .14);
+  }
+  return { play, stop };
+})();
+
 // Journal > Moon Tales: one page per tale, its text once its last quest is done.
 function renderMoonTalesJournal() {
   const disc = t => { const m = t.moon, c = m ? m.color.map(v => Math.round(Math.min(1, v) * 255)) : [90, 80, 110], h = m ? m.halo.map(v => Math.round(Math.min(1, v) * 255)) : [40, 34, 54];
@@ -3353,7 +3430,7 @@ const DEFAULT_BADGE_DEFINITIONS = [
 ];
 // Every collectible placed in the village layouts (Hub + 14 villages; rooms have none): the Relic Keeper badge asks for
 // all of them. Update it whenever collectibles are added or removed (the friend-village quests will bring their items).
-const COLLECTIBLE_TOTAL = 85;
+const COLLECTIBLE_TOTAL = 87;
 // The other 46 of the 72 badges: a crest and an all-secrets badge per village, secret milestones, mini ant
 // spotters, chest and collector badges. All award themselves (checkAutoBadges).
 (() => {
@@ -3533,7 +3610,9 @@ const COLLECTIBLE_TYPES = {
   // a wrapped box, no model file; each friend village wraps its own (FRIEND_GIFT_LOOKS: box, ribbon)
   friend_gift: { label:'Friend Gift', color:'#8a4fd8', accent:'#ffd45c' },
   // the Moon Tales' moon cakes for the Harvest Festival (Cute & Creepy)
-  moon_cake: { label:'Moon Cake', color:'#c9893c', accent:'#ffe6a6' }
+  moon_cake: { label:'Moon Cake', color:'#c9893c', accent:'#ffe6a6' },
+  // Kokeshi Flower Moon's seeds of new beginnings (Cute & Creepy)
+  moon_seed: { label:'Moon Seed', color:'#e9a6d0', accent:'#fff2b8' }
 };
 const FRIEND_GIFT_LOOKS = { 'cute-creepy':['#6a32b8', '#ff8a24'], chumpz:['#1fa89c', '#ffd23a'], 'saints-la':['#4b2378', '#e8c56a'] };
 const INTERIOR_TYPES = {
@@ -8452,6 +8531,14 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     const bite = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_stampBite`, { height: .035, diameter: .22, tessellation: 18 }, scene);
     bite.position.set(.07, 1.23, -.04); bite.material = topMat; markCollectibleMesh(bite, bite.position.y);
     addSparkle('cakeSpark', .3, 1.36, -.12, .07);
+  } else if (type === 'moon_seed') {
+    const seedMat = makeCollectibleMat(root, 'moonSeedMat', '#e9a6d0', '#ffd8ee', .95), sproutMat = makeCollectibleMat(root, 'moonSeedSproutMat', '#7fcf6a', '#c8ffb0', .95);
+    const seed = BABYLON.MeshBuilder.CreateSphere(`collectibleMesh_${root.name}_seed`, { diameter: .44, segments: 12 }, scene);
+    seed.position.y = 1.1; seed.scaling.set(.78, 1.18, .78); seed.material = seedMat; markCollectibleMesh(seed, seed.position.y);
+    const stem = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_sprout`, { height: .22, diameter: .035, tessellation: 6 }, scene);
+    stem.position.y = 1.43; stem.material = sproutMat; markCollectibleMesh(stem, stem.position.y);
+    [-1, 1].forEach((side, i) => { const leaf = BABYLON.MeshBuilder.CreateSphere(`collectibleMesh_${root.name}_leaf_${i}`, { diameter: .16, segments: 6 }, scene); leaf.position.set(side * .08, 1.53, 0); leaf.scaling.set(1, .35, .6); leaf.rotation.z = side * .5; leaf.material = sproutMat; markCollectibleMesh(leaf, leaf.position.y); });
+    addSparkle('seedSpark', .22, 1.3, -.1, .06);
   } else if (type === 'red_dust_fragment') {
     for (let i = 0; i < 4; i += 1) {
       const shard = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_dustShard_${i}`, { height: .62 - i * .06, diameterTop: .06, diameterBottom: .28 - i * .03, tessellation: 5 }, scene);
@@ -9129,6 +9216,14 @@ function normalizeQuestSpotConfig(cfg = {}) {
     pieceOffset: Array.isArray(cfg.pieceOffset) ? cfg.pieceOffset.slice(0, 3).map(Number) : null,
     pieceRy: Number(cfg.pieceRy) || 0,
     pieceScale: Number(cfg.pieceScale) || 1,
+    // its pieces follow another spot's done state (the great tree blooms when the seeds are planted)
+    doneWith: cfg.doneWith ? String(cfg.doneWith) : null,
+    // a spot that only shows pieces: no prompt, never used
+    visualOnly: cfg.visualOnly === true,
+    // a Moon Tales sound (MoonTaleSounds): while a hold lasts, or when the spot is used
+    sound: cfg.sound ? String(cfg.sound) : null,
+    // lines shown one after another while a hold lasts
+    holdLines: Array.isArray(cfg.holdLines) ? cfg.holdLines.map(String) : null,
     // a secret made of several spots: each spot with this secretId counts once, the secret is found at the setCount-th
     setCount: Math.max(0, Math.floor(Number(cfg.setCount) || 0)),
     // a timed run: from this spot through path [[x, z], ...] (in order, within pathRadius) in seconds (0 = a walk, no time limit)
@@ -9171,10 +9266,11 @@ function createQuestSpot(position, options = {}) {
 
 // A quest's own spot (spotConfig.questId) answers only while one of that quest's steps is asking for it.
 function isQuestSpotOpen(cfg) {
+  if (cfg?.visualOnly) return false;
   if (!cfg?.questId) return true;
   return isQuestSpotTargetedBySideQuest(cfg.spotId) || isQuestSpotTargetedByActiveQuest(cfg.spotId);
 }
-function isQuestSpotUsed(cfg) { return (ProgressionState.spotsUsed || []).includes(cfg?.spotId); }
+function isQuestSpotUsed(cfg) { return (ProgressionState.spotsUsed || []).includes(cfg?.doneWith || cfg?.spotId); }
 // piece / donePiece: a kit piece under the spot (an unlit jack-o'-lantern, a trickster ghost), swapped once the spot is used
 function syncQuestSpotPiece(root, cfg) {
   const want = (isQuestSpotUsed(cfg) ? cfg.donePiece : cfg.piece) || '';
@@ -9306,7 +9402,8 @@ function completeQuestSpot(root) {
   const cfg = cfg0.miniAnt ? { ...cfg0, text:`${cfg0.text ? cfg0.text + ' ' : ''}${getMiniAntWhisper()}` } : cfg0;
   QuestSpotRuntime.hold = null;
   if (cfg.action === 'light' || cfg.action === 'ring') playInteractionAudio(cfg.action === 'ring' ? 'templeBell' : 'collectiblePickup');
-  if ((cfg.piece || cfg.donePiece) && !isQuestSpotUsed(cfg)) { (ProgressionState.spotsUsed ||= []).push(cfg.spotId); saveProgressionState(); }
+  if ((cfg.piece || cfg.donePiece || cfg.questId) && !(ProgressionState.spotsUsed || []).includes(cfg.spotId)) { (ProgressionState.spotsUsed ||= []).push(cfg.spotId); saveProgressionState(); }
+  if (cfg.sound && cfg.action !== 'hold') MoonTaleSounds.play(cfg.sound);
   let secretNew = false, setNote = '';
   if (cfg.secretId && cfg.setCount > 1 && !(ProgressionState.secretsFound || []).includes(cfg.secretId)) {
     const parts = (ProgressionState.secretParts ||= {})[cfg.secretId] ||= [];
@@ -9380,7 +9477,8 @@ function tryUseNearbyQuestSpot() {
   const miss = questSpotRequirementMiss(cfg);
   if (miss) { showToast(miss); return true; }
   if (cfg.action === 'hold') {
-    QuestSpotRuntime.hold = { root, startedAt: performance.now(), x: charMesh.position.x, z: charMesh.position.z };
+    QuestSpotRuntime.hold = { root, startedAt: performance.now(), x: charMesh.position.x, z: charMesh.position.z, line: 0 };
+    if (cfg.sound) MoonTaleSounds.play(cfg.sound);
     return true;
   }
   if (cfg.action === 'race') {
@@ -9436,8 +9534,11 @@ function updateQuestSpots() {
   const hold = QuestSpotRuntime.hold;
   if (hold) {
     const moved = !charMesh || Math.hypot(charMesh.position.x - hold.x, charMesh.position.z - hold.z) > .6;
-    if (moved || hold.root.isDisposed?.() || !walkMode) { QuestSpotRuntime.hold = null; showToast('You moved. Try again and stay still.'); }
-    else if ((performance.now() - hold.startedAt) / 1000 >= hold.root.metadata.spotConfig.holdSeconds) completeQuestSpot(hold.root);
+    const hc = hold.root.metadata.spotConfig, held = (performance.now() - hold.startedAt) / 1000;
+    if (moved || hold.root.isDisposed?.() || !walkMode) { QuestSpotRuntime.hold = null; if (hc.sound) MoonTaleSounds.stop(); showToast('You moved. Try again and stay still.'); }
+    else if (held >= hc.holdSeconds) completeQuestSpot(hold.root);
+    // lines one after another through the hold (Kokeshi Flower Moon's chant)
+    else if (hc.holdLines?.length && hold.line < hc.holdLines.length && held >= (hold.line + 1) * hc.holdSeconds / (hc.holdLines.length + 1)) showToast(hc.holdLines[hold.line++], 6000);
   }
   // a timed run: each path point in order before the time is up
   const race = QuestSpotRuntime.race;

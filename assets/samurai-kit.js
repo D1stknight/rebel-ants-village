@@ -2868,6 +2868,35 @@
       M.poly('dark', [[-.2, -.43, 1.38], [.2, -.43, 1.38], [.14, -.43, 1.3], [0, -.43, 1.27], [-.14, -.43, 1.3]]); // the grin
       M.sphere('red', [.05, -.43, 1.29], .045, .6, 6, 3); // tongue out
     },
+    // ── the Moon Tales: Kokeshi Flower Moon's tale ──
+    cc_buds(M) { // a flower bed asleep: a mound of dark earth, stems with closed buds (it wakes into cc_bloom)
+      M.sphere('earth', [0, 0, 0], 1.05, .18, 12, 4);
+      for (let k = 0; k < 9; k++) { const a = k * 2.4, r = .25 + .55 * ((k * 5) % 9) / 9, x = Math.cos(a) * r, y = Math.sin(a) * r, h = .3 + .18 * ((k * 7) % 4) / 3;
+        M.rod('leaf', [x, y, .1], [x * 1.05, y * 1.05, h], .025, 4); M.sphere('flower_purple', [x * 1.05, y * 1.05, h + .05], .07, 1.7, 6, 4); }
+    },
+    cc_bloom(M) { // the same bed awake: taller stems, open flowers in the Coven's colours, a soft glow at night
+      M.sphere('earth', [0, 0, 0], 1.05, .18, 12, 4);
+      const mats = ['flower_pink', 'flower_orange', 'flower_teal', 'candle', 'flower_pink'];
+      for (let k = 0; k < 11; k++) { const a = k * 2.4, r = .2 + .65 * ((k * 5) % 11) / 11, x = Math.cos(a) * r, y = Math.sin(a) * r, h = .42 + .3 * ((k * 7) % 4) / 3;
+        M.rod('leaf', [x, y, .1], [x * 1.08, y * 1.08, h], .028, 4); ccFlower(M, mats[k % mats.length], x * 1.08, y * 1.08 - .02, h + .02, .11 + .03 * (k % 3)); }
+      M.quad('glow', [[-1.5, -1.5, .06], [1.5, -1.5, .06], [1.5, 1.5, .06], [-1.5, 1.5, .06]]);
+    },
+    cc_sprout(M) { // two moon seeds just planted at the great tree's roots, sprouting
+      for (const [x, y, s] of [[-.25, 0, 1], [.25, .1, .8]]) { M.sphere('earth', [x, y, 0], .26 * s, .3, 8, 3); M.rod('leaf', [x, y, .04], [x, y, .32 * s], .02, 4);
+        for (const sd of [-1, 1]) M.sphere('leaf', [x + sd * .07 * s, y, .3 * s], .07 * s, .35, 6, 3); M.sphere('flower_pink', [x, y, .36 * s], .035 * s, 1, 5, 3); }
+    },
+    cc_tree_blossoms(M) { // pink blossom clusters on the great tree's branch tips (cc_great_tree's own branch layout)
+      const br = [[0, 6, 8.6, 5.2], [1.1, 5.4, 9.4, 4.8], [2.3, 6.4, 9, 5.6], [3.4, 5, 9.8, 4.6], [4.5, 6.6, 8.8, 5.4], [5.6, 7.4, 9.6, 3.8]];
+      const cluster = (p, n, R) => { for (let i = 0; i < n; i++) { const a = i * 2.4, r = R * Math.sqrt((i + .5) / n); ccFlower(M, i % 4 === 3 ? 'candle' : 'flower_pink', p[0] + Math.cos(a) * r, p[1] + Math.sin(a) * r, p[2] + .3 * Math.sin(i * 1.7), .16 + .06 * (i % 3)); } };
+      br.forEach(([a, z0, z1, L], k) => {
+        const c = Math.cos(a), s = Math.sin(a);
+        cluster([c * L, s * L, z1 + .6 * Math.sin(k * 2.1) + .1], 10, .75);
+        cluster([c * L * .8 - s * .6, s * L * .8 + c * .6, z1 - .2], 8, .6);
+        cluster([c * L * .5 + s * 2, s * L * .5 - c * 2, z0 + 3.5], 6, .45);
+        cluster([c * L * .55, s * L * .55, z0 + 1.9], 5, .4);
+      });
+      cluster([-.2, 0, 9.3], 8, .6);
+    },
     cc_candles(M) { ccCandles(M, 0, 0, 5); M.quad('glow', [[-1.4, -1.4, .05], [1.4, -1.4, .05], [1.4, 1.4, .05], [-1.4, 1.4, .05]]); },
     cc_bench(M) { M.block('darkwood', 0, 0, .45, 2.4, .5, .1); for (const sd of [-1, 1]) M.block('darkwood', sd * 1, 0, 0, .12, .45, .45); M.block('darkwood', 0, .22, .55, 2.4, .08, .55); },
     // ── the Cute & Creepy gang (Miguel's NFTs), low poly: three kokeshi dolls and two lucky cats; used as NPC
