@@ -836,7 +836,7 @@
     skin_w: { col: [.95, .92, .9] }, skin_blue: { col: [.72, .82, .93] }, hair_black: { col: [.06, .06, .07], spec: [.3, .3, .35], power: 30 }, hair_blue: { col: [.06, .12, .3], spec: [.3, .4, .6], power: 30 },
     obi_red: { col: [.62, .07, .1] }, obi_silver: { col: [.78, .82, .88], spec: [.6, .6, .7], power: 40 }, obi_black: { col: [.06, .07, .08] }, horn: { col: [.88, .9, .95] }, ear_os: { col: [.1, .14, .18] },
     flower_pink: { col: [.95, .55, .66] }, flower_teal: { col: [.3, .75, .7], em: [.05, .2, .18] }, flower_orange: { col: [.95, .5, .12] }, ear_pink: { col: [.95, .62, .7] },
-    cat_black: { col: [.07, .065, .07] }, cat_white: { col: [.95, .93, .9] }, collar_red: { col: [.7, .08, .1] }, gem_green: { col: [.2, .9, .4], em: [.1, .6, .25] }, rose_quartz: { col: [.97, .66, .78], em: [.5, .16, .3], spec: [1, .92, .96], power: 90 },
+    cat_black: { col: [.07, .065, .07] }, cat_white: { col: [.95, .93, .9] }, collar_red: { col: [.7, .08, .1] }, gem_green: { col: [.2, .9, .4], em: [.1, .6, .25] }, rose_quartz: { col: [.97, .66, .78], em: [.5, .16, .3], spec: [1, .92, .96], power: 90 }, moon_cake: { col: [.72, .45, .18] }, moon_cake_top: { col: [.9, .64, .32] },
     orb: { col: [.6, .85, 1], em: [.45, .75, 1] }, glow_blue: { glow: [.35, .6, 1] },
     palm_leaf: { tex: 'palm_leaf' }, banana_leaf: { tex: 'banana_leaf' }, palm_bark: { tex: 'palm_bark' }, coconut: { col: [.36, .24, .12] }, banana: { col: [.95, .8, .22] }, banana_stem: { col: [.36, .5, .18] }, flower_purple: { col: [.45, .12, .3] },
     plank_teal: { tex: 'plank_teal' }, plank_yellow: { tex: 'plank_yellow' }, plank_red: { tex: 'plank_red' }, tin_roof: { tex: 'tin_roof' }, banana_big: { tex: 'banana_big' }, brick: { tex: 'brick' },
@@ -1290,13 +1290,13 @@
     M.quad('glow_green', [[x - 2.4, y - 2.4, .06], [x + 2.4, y - 2.4, .06], [x + 2.4, y + 2.4, .06], [x - 2.4, y + 2.4, .06]]);
   }
   // jack-o'-lantern of radius r at (x, y, z) turned by a (its face toward -y before turning)
-  function ccPumpkin(M, x, y, z, r, a) {
+  function ccPumpkin(M, x, y, z, r, a, face = 'fire') {
     const c = Math.cos(a), s = Math.sin(a), R = (px, py, pz) => [x + px * c - py * s, y + px * s + py * c, z + pz];
     for (let k = 0; k < 6; k++) { const b = k / 6 * Math.PI * 2; M.sphere('pumpkin', R(Math.cos(b) * r * .32, Math.sin(b) * r * .32, r * .78), r * .72, .95, 8, 5); }
     M.cyl('leaf', R(0, 0, r * 1.45), r * .1, r * .4, 5, r * .05);
     const yF = -r * 1.02, P = pts => pts.map(([px, pz]) => R(px * r, yF, pz * r));
-    for (const sd of [-1, 1]) M.poly('fire', P([[sd * .18, .95], [sd * .48, .95], [sd * .33, 1.22]]).reverse());
-    M.poly('fire', P([[-.5, .55], [-.3, .45], [-.15, .55], [0, .42], [.15, .55], [.3, .45], [.5, .55], [.35, .32], [-.35, .32]]).reverse());
+    for (const sd of [-1, 1]) M.poly(face, P([[sd * .18, .95], [sd * .48, .95], [sd * .33, 1.22]]).reverse());
+    M.poly(face, P([[-.5, .55], [-.3, .45], [-.15, .55], [0, .42], [.15, .55], [.3, .45], [.5, .55], [.35, .32], [-.35, .32]]).reverse());
   }
   function ccSkeleton(M, x, y, z) {
     M.sphere('bone', [x, y, z + 1.7], .2, 1.1, 8, 5); for (const sd of [-1, 1]) M.quad('dark', [[x + sd * .08 - .04, y - .19, z + 1.72], [x + sd * .08 + .04, y - .19, z + 1.72], [x + sd * .08 + .04, y - .19, z + 1.8], [x + sd * .08 - .04, y - .19, z + 1.8]]);
@@ -2840,6 +2840,34 @@
       for (const sd of [-1, 1]) { M.rod('ghost', [sd * .4, -.1, 1.65], [sd * .85, -.35, 1.3], .14, 6); M.quad('dark', [[sd * .17 - .08, -.46, 2.08], [sd * .17 + .08, -.46, 2.08], [sd * .17 + .06, -.45, 2.26], [sd * .17 - .06, -.45, 2.26]]); }
       M.quad('dark', [[-.1, -.47, 1.82], [.1, -.47, 1.82], [.08, -.46, 1.95], [-.08, -.46, 1.95]]);
     },
+    // ── the Moon Tales (Cute & Creepy): Mamoru's Harvest Festival ──
+    cc_jack_dark(M) { ccPumpkin(M, 0, 0, 0, .5, 0, 'dark'); }, // a jack-o'-lantern gone dark (lit again for the festival: cc_jack_lit)
+    cc_jack_lit(M) { ccPumpkin(M, 0, 0, 0, .5, 0); M.quad('glow', [[-1.6, -1.6, .05], [1.6, -1.6, .05], [1.6, 1.6, .05], [-1.6, 1.6, .05]]); },
+    cc_feast_table(M) { // the Coven's feast table under the great tree: dark wood, a purple runner, candles, a little jack-o'-lantern
+      const L = 4.4, W = 1.4, H = .95;
+      M.block('darkwood', 0, 0, H - .1, L, W, .1);
+      for (const sx of [-1, 1]) for (const sy of [-1, 1]) M.block('darkwood', sx * (L / 2 - .2), sy * (W / 2 - .15), 0, .14, .14, H - .1);
+      M.block('darkwood', 0, 0, .25, L - .4, .08, .08);
+      M.block('cloth_purple', 0, 0, H, L + .1, .62, .015); for (const sx of [-1, 1]) M.block('cloth_purple', sx * (L / 2 + .04), 0, H - .35, .02, .62, .35);
+      for (const sx of [-1, 1]) for (const [dx, dy, h] of [[0, 0, .3], [.12, .1, .22], [-.1, .12, .18]]) { const x = sx * 1.7 + dx, y = dy; M.cyl('candle', [x, y, H + .015], .045, h, 6); M.quad('fire', [[x - .035, y, H + .015 + h], [x + .035, y, H + .015 + h], [x, y, H + .145 + h]]); }
+      ccPumpkin(M, -.9, .05, H + .015, .18, .3); ccPumpkin(M, .9, -.05, H + .015, .16, -.4);
+      M.quad('glow', [[-2.6, -1.4, .05], [2.6, -1.4, .05], [2.6, 1.4, .05], [-2.6, 1.4, .05]]);
+    },
+    cc_moon_cakes(M) { // three moon cakes on a plate, each stamped with a little moon (set on the feast table)
+      M.cyl('bone', [0, 0, 0], .58, .03, 18);
+      for (const [x, y] of [[-.26, -.1], [.26, -.08], [0, .24]]) { M.cyl('moon_cake', [x, y, .03], .2, .12, 14); M.cyl('moon_cake_top', [x, y, .15], .17, .015, 14); M.cyl('candle', [x + .03, y - .02, .165], .07, .008, 12); }
+    },
+    cc_trickster(M) { // a mischievous spirit from beyond the veil, winking, arms up (it hovers and sways: CHAR 'hover')
+      M.sphere('ghost', [0, 0, 1.45], .4, 1.1, 12, 6);
+      const n = 12, ring = (z, r, w) => Array.from({ length: n }, (_, k) => { const a = k / n * Math.PI * 2; return [Math.cos(a) * r, Math.sin(a) * r, z + w * Math.sin(a * 4)]; });
+      const rows = [ring(1.42, .42, 0), ring(1.0, .5, .03), ring(.6, .6, .09)];
+      for (let i = 0; i < rows.length - 1; i++) for (let k = 0; k < n; k++) { const k2 = (k + 1) % n; M.poly('ghost', [rows[i][k], rows[i][k2], rows[i + 1][k2], rows[i + 1][k]]); }
+      for (const sd of [-1, 1]) M.rod('ghost', [sd * .32, -.05, 1.28], [sd * .66, -.18, 1.68], .1, 6);
+      M.quad('dark', [[-.2, -.43, 1.52], [-.08, -.43, 1.52], [-.09, -.42, 1.68], [-.19, -.42, 1.68]]); // the open eye
+      M.quad('dark', [[.07, -.43, 1.58], [.21, -.43, 1.56], [.21, -.425, 1.6], [.07, -.425, 1.62]]); // the wink
+      M.poly('dark', [[-.2, -.43, 1.38], [.2, -.43, 1.38], [.14, -.43, 1.3], [0, -.43, 1.27], [-.14, -.43, 1.3]]); // the grin
+      M.sphere('red', [.05, -.43, 1.29], .045, .6, 6, 3); // tongue out
+    },
     cc_candles(M) { ccCandles(M, 0, 0, 5); M.quad('glow', [[-1.4, -1.4, .05], [1.4, -1.4, .05], [1.4, 1.4, .05], [-1.4, 1.4, .05]]); },
     cc_bench(M) { M.block('darkwood', 0, 0, .45, 2.4, .5, .1); for (const sd of [-1, 1]) M.block('darkwood', sd * 1, 0, 0, .12, .45, .45); M.block('darkwood', 0, .22, .55, 2.4, .08, .55); },
     // ── the Cute & Creepy gang (Miguel's NFTs), low poly: three kokeshi dolls and two lucky cats; used as NPC
@@ -3373,7 +3401,7 @@
   // floating pieces (ghosts): their instances bob and sway under the placed root, so saved positions never move
   const FLOAT = new Set(['cc_ghost']), floaters = [];
   // characters: the body rocks (kokeshi) or breathes (cats); subparts under their own pivots wave, flicker, pulse
-  const CHAR = { cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_mamoru: 'bob', cc_mochi: 'bob' };
+  const CHAR = { cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover' };
   const SUBPARTS = { cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']] };
   const actors = [];
   function animateActors(t) {
@@ -3381,6 +3409,7 @@
       const a = actors[i]; if (a.body.isDisposed?.()) { actors.splice(i, 1); continue; }
       if (a.kind === 'ape') { animateApe(a, t); continue; }
       if (a.kind === 'rock') { a.body.rotation.z = .07 * Math.sin(t * 1.5 + a.ph); a.body.rotation.x = .035 * Math.sin(t * 1.1 + a.ph * 2); }
+      else if (a.kind === 'hover') { a.body.position.y = .22 + .18 * Math.sin(t * 2.2 + a.ph); a.body.rotation.z = .12 * Math.sin(t * 1.4 + a.ph); a.body.rotation.y = .35 * Math.sin(t * .7 + a.ph); }
       else { const b = Math.sin(t * 1.8 + a.ph); a.body.scaling.set(1 + .015 * b, 1 - .012 * b, 1 + .015 * b); }
       for (const s of a.subs) {
         if (s.kind === 'wave') s.node.rotation.x = .25 - .55 * Math.max(0, Math.sin(t * 3 + a.ph));
