@@ -1266,6 +1266,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
         <option value="ancient_scroll">Ancient Scroll</option>
         <option value="red_dust_fragment">Red Dust Fragment</option>
         <option value="root_memory">Root Memory</option>
+        <option value="friend_gift">Friend Gift</option>
       </select>
     </label>
     <button class="ctrl-btn full" onclick="placeCollectibleFromAdmin()">Add Collectible</button>
@@ -2601,6 +2602,20 @@ const BOOK1_WIRING = {
         { id:'report-keeper', objective:'Tell the Lantern Keeper the lanterns are lit.', objectiveType:'talkToNpc', targetNpcId:'ashigaru-villager-01', villageId:'ashigaru',
           say:['Three lights on the road. A traveller who sees them knows somebody expected them.', 'Every beginning deserves a light that knows its job.'] }
       ] },
+    27: { giver:'hub-traveling-guide',
+      offer:['I walk the roads between our village and the friend villages: Cute & Creepy, Chumpz and the Saints of Los Angeles.', 'Each of them put up a welcome sign by its gate. Read all three, then come and tell me what they say.'],
+      steps:[
+        { id:'read-welcomes', objective:'Read the welcome signs in Cute & Creepy, Chumpz and Saints LA.', objectiveType:'useQuestSpot', targetObjectId:'friend-welcome', count:3 },
+        { id:'tell-guide', objective:'Tell the Traveling Guide what the welcome signs say.', objectiveType:'talkToNpc', targetNpcId:'hub-traveling-guide', villageId:'hub',
+          say:['Ghosts, bananas and basketball. That sounds like them.', 'The Universe grows wider when friends build beside it.'] }
+      ] },
+    28: { giver:'hub-traveling-guide',
+      offer:['Our friends left a gift for the colony in each of their villages, wrapped in their own colours.', 'In Cute & Creepy, by the crooked cottages on the east side. In Chumpz, at the hut in the palms past the bar. In Saints LA, up on the plaza by the arena. Will you bring them here?'],
+      steps:[
+        { id:'find-gifts', objective:'Find the three friend gifts: the Cute & Creepy cottages, the Chumpz hut past the bar, the Saints plaza by the arena.', objectiveType:'collectCollectible', targetObjectId:'friend_gift', count:3 },
+        { id:'bring-gifts', objective:'Bring the gifts to the Traveling Guide.', objectiveType:'talkToNpc', targetNpcId:'hub-traveling-guide', villageId:'hub',
+          say:['A pumpkin candle, a golden banana and a pair of little gold wings. They thought about us.', 'A gift from another village can make the colony feel less alone.'] }
+      ] },
     29: { giver:HUB_GUIDE_NPC,
       offer:['The old tunnel builders left signs: small ones, away from the main roads, so only those who wander ever find them.', 'Two are said to be in the Hub: one in the western woods past the council stone, one out beyond the far east dojos.'],
       steps:[
@@ -2699,8 +2714,8 @@ const BOOK1_SIDE_QUESTS = [
   makeBook1SideQuest(24, 'Prayer Thread', 'Sohei Village', 'Sohei Acolyte', 'Carry a prayer thread between quiet markers.', ['Visit three prayer markers.'], ['+45 progress','Journal: Prayer Thread'], 'The thread did not stop the tremor, but it steadied the hands that felt it.'),
   makeBook1SideQuest(25, 'Yamabushi Stone Breath', 'Yamabushi Village', 'Yamabushi Seer', 'Find stones that breathe cold tunnel air.', ['Inspect three breathing stones.'], ['+50 progress','Yamabushi lore entry'], 'The stones breathed like they were remembering a mountain underground.'),
   makeBook1SideQuest(26, 'Mountain Root Tea', 'Yamabushi Village', 'Yamabushi Herbalist', 'Gather herbs used to calm tremor-sick scouts.', ['Collect three root herbs.'], ['+40 progress','Collectible unlock: Root Herbs'], 'The tea did not cure fear. It gave fear a smaller chair.'),
-  makeBook1SideQuest(27, 'Friend Village Welcome', 'Friend Villages', 'Traveling Guide', 'Visit a friend village signpost and record its welcome.', ['Visit any friend village marker.'], ['+45 progress','Community progress'], 'The Universe grows wider when friends build beside it.'),
-  makeBook1SideQuest(28, 'Friend Village Gift', 'Friend Villages', 'Traveling Guide', 'Find a small gift left by a friend village.', ['Find one friend village gift marker.'], ['+45 progress','Journal: Friend Gift'], 'A gift from another village can make the colony feel less alone.'),
+  makeBook1SideQuest(27, 'Friend Village Welcome', 'Friend Villages', 'Traveling Guide', 'Read the welcome signs of the three friend villages and record their welcomes.', ['Read the welcome signs in Cute & Creepy, Chumpz and Saints LA.'], ['+45 progress','Community progress'], 'The Universe grows wider when friends build beside it.'),
+  makeBook1SideQuest(28, 'Friend Village Gift', 'Friend Villages', 'Traveling Guide', 'Find the small gifts the friend villages left for the colony.', ['Find the three friend village gifts.'], ['+45 progress','Journal: Friend Gift'], 'A gift from another village can make the colony feel less alone.'),
   makeBook1SideQuest(29, 'Hidden Tunnels', 'Hub / Any Village', 'Hub Guide', 'Find optional tunnel signs hidden away from main roads.', ['Discover two hidden tunnel signs.'], ['+60 progress','Secret progress'], 'The hidden tunnels do not ask to be found. That is why finding them matters.'),
   makeBook1SideQuest(30, 'Ancient Relics', 'Any Faction Village', 'Hub Archivist', 'Collect relic fragments from across faction villages.', ['Collect five ancient relic fragments.','Return to the Hub archive.'], ['+75 progress','Collector progress','Journal: Ancient Relics'], 'Every fragment is small until the archive teaches it where to stand.')
 ];
@@ -3333,8 +3348,11 @@ const COLLECTIBLE_TYPES = {
   flame_shard: { label:'Flame Shard', color:'#ff7a22', accent:'#ffd45c', modelUrl:'/assets/collectibles/flame-shard.glb', modelScale:COLLECTIBLE_MODEL_SCALES.flameShardScale },
   ancient_scroll: { label:'Ancient Scroll', color:'#d8b36a', accent:'#fff0b6', modelUrl:'/assets/collectibles/ancient-scroll.glb', modelScale:COLLECTIBLE_MODEL_SCALES.ancientScrollScale },
   red_dust_fragment: { label:'Red Dust Fragment', color:'#c92e35', accent:'#ff8b86', modelUrl:'/assets/collectibles/red-dust-fragment.glb', modelScale:COLLECTIBLE_MODEL_SCALES.redDustFragmentScale },
-  root_memory: { label:'Root Memory', color:'#5ecfca', accent:'#a7fff5', modelUrl:'/assets/collectibles/root-memory.glb', modelScale:COLLECTIBLE_MODEL_SCALES.rootMemoryScale }
+  root_memory: { label:'Root Memory', color:'#5ecfca', accent:'#a7fff5', modelUrl:'/assets/collectibles/root-memory.glb', modelScale:COLLECTIBLE_MODEL_SCALES.rootMemoryScale },
+  // a wrapped box, no model file; each friend village wraps its own (FRIEND_GIFT_LOOKS: box, ribbon)
+  friend_gift: { label:'Friend Gift', color:'#8a4fd8', accent:'#ffd45c' }
 };
+const FRIEND_GIFT_LOOKS = { 'cute-creepy':['#6a32b8', '#ff8a24'], chumpz:['#1fa89c', '#ffd23a'], 'saints-la':['#4b2378', '#e8c56a'] };
 const INTERIOR_TYPES = {
   nft_museum: { title:'NFT Museum', category:'museum', style:'gallery', accent:new BABYLON.Color3(.85,.62,.22), prompt:'Press O to Enter Museum', description:'Gallery for Rebel NFTs first, future-ready for ownedRebelNfts.' },
   youtube_theater: { title:'YouTube Theater', category:'media', style:'theater', accent:new BABYLON.Color3(.86,.08,.08), prompt:'Press O to Enter Theater', description:'Media room for Rebel Ants YouTube and video links.' },
@@ -8110,7 +8128,8 @@ async function tryLoadCollectibleModel(root, cfg) {
 }
 
 function createCollectible(type = 'flame_shard', position, options = {}) {
-  const cfg = COLLECTIBLE_TYPES[type] || COLLECTIBLE_TYPES.flame_shard;
+  const look = type === 'friend_gift' ? FRIEND_GIFT_LOOKS[CURRENT_VILLAGE_ID] : null;
+  const cfg = look ? { ...COLLECTIBLE_TYPES.friend_gift, color:look[0], accent:look[1] } : (COLLECTIBLE_TYPES[type] || COLLECTIBLE_TYPES.flame_shard);
   const collectibleScope = options.interiorId || CURRENT_VILLAGE_ID;
   const id = options.collectibleId || `${collectibleScope}-${type}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
   const root = new BABYLON.TransformNode(options.name || makeUniqueVillageNodeName('collectibleRootClone_' + type + '_' + Date.now()), scene);
@@ -8193,6 +8212,30 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     halo.rotation.x = Math.PI / 2;
     halo.material = accentMat;
     markCollectibleMesh(halo, halo.position.y);
+  } else if (type === 'friend_gift') {
+    const boxMat = makeCollectibleMat(root, 'giftBoxMat', cfg.color, cfg.color, 1), ribbonMat = makeCollectibleMat(root, 'giftRibbonMat', cfg.accent, cfg.accent, 1); // opaque: see-through box and ribbon draw in any order
+    const box = BABYLON.MeshBuilder.CreateBox(`collectibleMesh_${root.name}_giftBox`, { width: .62, height: .5, depth: .62 }, scene);
+    box.position.y = 1.02;
+    box.material = boxMat;
+    markCollectibleMesh(box, box.position.y);
+    const lid = BABYLON.MeshBuilder.CreateBox(`collectibleMesh_${root.name}_giftLid`, { width: .7, height: .12, depth: .7 }, scene);
+    lid.position.y = 1.31;
+    lid.material = boxMat;
+    markCollectibleMesh(lid, lid.position.y);
+    [[.66, .64, .1], [.1, .64, .66]].forEach(([w, h, d], index) => {
+      const band = BABYLON.MeshBuilder.CreateBox(`collectibleMesh_${root.name}_giftRibbon_${index}`, { width: w + .04, height: h, depth: d + .04 }, scene);
+      band.position.y = 1.07;
+      band.material = ribbonMat;
+      markCollectibleMesh(band, band.position.y);
+    });
+    [-1, 1].forEach((side, index) => {
+      const loop = BABYLON.MeshBuilder.CreateTorus(`collectibleMesh_${root.name}_giftBow_${index}`, { diameter: .26, thickness: .06, tessellation: 16 }, scene);
+      loop.position.set(side * .12, 1.47, 0);
+      loop.rotation.set(Math.PI / 2, 0, side * .5);
+      loop.material = ribbonMat;
+      markCollectibleMesh(loop, loop.position.y);
+    });
+    addSparkle('giftKnot', 0, 1.42, 0, .1);
   } else if (type === 'red_dust_fragment') {
     for (let i = 0; i < 4; i += 1) {
       const shard = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_dustShard_${i}`, { height: .62 - i * .06, diameterTop: .06, diameterBottom: .28 - i * .03, tessellation: 5 }, scene);
@@ -25893,11 +25936,11 @@ function renderSignTexture(clone, cfg) {
   if (cfg.icon) { ctx.font='44px serif'; ctx.textAlign='center'; ctx.fillText(cfg.icon, 256, 70); }
   ctx.font='bold 54px "Cinzel Decorative",serif'; ctx.fillStyle='#e8c56a';
   ctx.shadowColor='#e8c56a'; ctx.shadowBlur=14; ctx.textAlign='center';
-  ctx.fillText(cfg.label, 256, cfg.icon ? 138 : 120); ctx.shadowBlur=0;
+  ctx.fillText(cfg.label, 256, cfg.icon ? 138 : 120, 470); ctx.shadowBlur=0;
   if (cfg.sub) {
     ctx.font='22px "Cinzel Decorative",serif'; ctx.fillStyle=color;
     ctx.shadowColor=color; ctx.shadowBlur=8;
-    ctx.fillText(cfg.sub, 256, cfg.icon ? 175 : 165); ctx.shadowBlur=0;
+    ctx.fillText(cfg.sub, 256, cfg.icon ? 175 : 165, 470); ctx.shadowBlur=0;
   }
   ctx.font='italic 16px serif'; ctx.fillStyle='rgba(232,197,106,0.5)';
   ctx.fillText('rebelants.io', 256, 220);
