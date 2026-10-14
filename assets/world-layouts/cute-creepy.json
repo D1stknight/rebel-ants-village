@@ -45301,7 +45301,7 @@
       "style": "dojo",
       "kit": "room_cc_witch",
       "prompt": "Press O to Enter",
-      "description": "The cauldron bubbling green, potions on every shelf, bats in the beams, the black cat by the fire.",
+      "description": "The Lunar Witch's cottage: the cauldron bubbling green, potions on every shelf, bats in the beams, the black cat by the fire.",
       "modelUrl": "",
       "musicPath": "",
       "accent": {
@@ -45676,10 +45676,10 @@
           {
             "interiorId": "cc_witch_cottage",
             "hotspotId": "hotspot_cc_witch_cottage_cauldron",
-            "linkName": "The Cauldron",
+            "linkName": "The Lunar Witch's Cauldron",
             "actionType": "showInfo",
             "url": "",
-            "description": "Something green and friendly is bubbling. The Lunar Witch says it is soup. The bats say otherwise.",
+            "description": "Something green and friendly is bubbling. Her note is pinned to the beam above it, in silver ink: \"One for each moon. A cherry petal for the Pink, a sleepy bud for the Flower, a silver chime for the Hare, a crumb of moon cake for the Harvest. Stir until it tastes like friendship.\" The Lunar Witch says it is soup. The bats say otherwise.",
             "enabled": true,
             "position": {
               "x": 0,
