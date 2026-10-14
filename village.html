@@ -3512,12 +3512,13 @@ function completeSideQuest(questId) {
 }
 
 function getActiveSideQuestTrackerLines(limit = 2) {
-  return Object.entries(SideQuestState.active).slice(0, limit).map(([questId, st]) => {
-    const quest = QUEST_DEFINITIONS[questId], step = getQuestStep(questId, st.step);
-    if (!quest || !step) return '';
-    const n = step.count > 1 ? ` (${Math.min((st.steps?.[step.id]?.ids || []).length, step.count)}/${step.count})` : '';
-    return `${quest.title}: ${step.objective}${n}`;
-  }).filter(Boolean);
+  return Object.keys(SideQuestState.active).slice(0, limit).map(getSideQuestTrackerLine).filter(Boolean);
+}
+function getSideQuestTrackerLine(questId) {
+  const st = SideQuestState.active[questId], quest = QUEST_DEFINITIONS[questId], step = st && getQuestStep(questId, st.step);
+  if (!quest || !step) return '';
+  const n = step.count > 1 ? ` (${Math.min((st.steps?.[step.id]?.ids || []).length, step.count)}/${step.count})` : '';
+  return `${quest.title}: ${step.objective}${n}`;
 }
 
 // Quest items found before their step asked for them (a collectible can be picked up any time, and a picked-up item
@@ -13482,20 +13483,29 @@ function updateQuestTracker() {
     ? ` (${Math.min(progress.count, 3)}/3)`
     : '';
   const guidance = getQuestTargetGuidance();
-  let objectiveText = getQuestObjectiveDisplayText(QuestState.questId, QuestState.step);
+  const ownText = getQuestObjectiveDisplayText(QuestState.questId, QuestState.step);
+  let objectiveText = ownText;
   if (step?.wired) {
     // the step's own words; the auto guide marker shows the way
   } else if (guidance?.missing) {
-    objectiveText = 'Quest target not placed yet.';
+    if (adminMode) objectiveText = 'Quest target not placed yet.'; // a hint for the editor; players keep the step's own words
   } else if (guidance?.marker && guidance.label) {
     objectiveText = `Follow the glowing marker to ${guidance.label}.`;
   }
   const configuredAction = getConfiguredQuestAction(quest, QuestState.step);
   if (configuredAction === 'observeTime') objectiveText = 'Press O to observe the village light and time.';
   if (configuredAction === 'experienceWeather') objectiveText = 'Press O to observe the sky and current weather.';
-  objective.textContent = `${quest?.title || 'Quest'}: ${objectiveText}${progressText}`;
+  let mainLine = `${quest?.title || 'Quest'}: ${objectiveText}${progressText}`, sideLines = getActiveSideQuestTrackerLines(3);
+  // when the guide points at a side quest here (the story's next step is in another village or waits), that quest
+  // leads the line (the round HUD's quest line shows it) and the story moves down to the second line
+  let lead = null; try { lead = AutoQuestGuide.target?.questId; } catch (e) {} // (declared further down the page)
+  if (lead && lead !== QuestState.questId && SideQuestState.active[lead]) {
+    const leadLine = getSideQuestTrackerLine(lead);
+    if (leadLine) { sideLines = [`Story · ${quest?.title || 'Quest'}: ${ownText}${progressText}`, ...sideLines.filter(l => l !== leadLine).map(l => 'Side · ' + l)]; mainLine = leadLine; }
+  } else sideLines = sideLines.map(l => 'Side · ' + l);
+  objective.textContent = mainLine;
   const side = document.getElementById('questTrackerSide');
-  if (side) side.textContent = getActiveSideQuestTrackerLines().map(line => 'Side · ' + line).join('\n');
+  if (side) side.textContent = sideLines.slice(0, 2).join('\n');
   tracker.classList.add('on');
 }
 
@@ -13694,12 +13704,13 @@ function getAutoQuestGuideTarget() {
   const main = step?.wired && !step.targetMarkerId ? getQuestStepGuideTarget(quest, step, getQuestStepProgress(quest.questId, step.id).ids) : null;
   // the main story first; when its next target is in another village (or the story waits), an active side quest
   // here gets the marker
+  if (main) main.questId = quest.questId; // which quest the guide follows (the quest line follows it too)
   if (main && !main.elsewhere) return main;
   for (const [questId, st] of Object.entries(SideQuestState.active).sort((a, b) => (Number(b[1]?.touched) || 0) - (Number(a[1]?.touched) || 0))) {
     const sq = QUEST_DEFINITIONS[questId], sStep = sq && getQuestStep(questId, st.step);
     if (!sStep?.wired || (sStep.villageId && sStep.villageId !== CURRENT_VILLAGE_ID)) continue;
     const t = getQuestStepGuideTarget(sq, sStep, st.steps?.[sStep.id]?.ids || []);
-    if (t && !t.elsewhere) return t;
+    if (t && !t.elsewhere) { t.questId = questId; return t; }
   }
   return main;
 }
@@ -13727,7 +13738,7 @@ function getQuestStepGuideTarget(quest, step, doneIds = []) {
   if (action === 'useQuestSpot' && want) {
     const done = new Set(doneIds.map(id => String(id).toLowerCase()));
     const root = near(getQuestSpotRoots().filter(r => { const id = String(r.metadata.spotConfig?.spotId || '').toLowerCase(); return id.includes(want) && !done.has(id); }));
-    return root ? { node:root, label:root.metadata.spotConfig.label || 'Look here' } : null;
+    return root ? { node:root, label:root.metadata.spotConfig.label || quest.title || 'Look here' } : null;
   }
   if (action === 'collectCollectible' && want) {
     const root = near(scene.transformNodes.filter(n => n.metadata?.type === 'collectible' && n.metadata.enabled !== false && String(n.metadata.collectibleId || '').toLowerCase().includes(want) && !isCollectibleCollected?.(n.metadata.collectibleId)));
@@ -13743,7 +13754,12 @@ function getQuestStepGuideTarget(quest, step, doneIds = []) {
 
 function getAutoQuestGuideMarker() {
   const now = performance.now();
-  if (now - AutoQuestGuide.at > 250) { AutoQuestGuide.at = now; AutoQuestGuide.target = getAutoQuestGuideTarget(); }
+  if (now - AutoQuestGuide.at > 250) {
+    AutoQuestGuide.at = now; AutoQuestGuide.target = getAutoQuestGuideTarget();
+    // the quest line leads with the quest the guide points at: redraw it when that changes
+    const lead = AutoQuestGuide.target?.questId || '';
+    if (lead !== AutoQuestGuide.lead) { AutoQuestGuide.lead = lead; setTimeout(() => { try { updateQuestTracker(); } catch (e) {} }, 0); }
+  }
   const target = AutoQuestGuide.target;
   if (!target || target.node.isDisposed?.()) return null;
   if (!AutoQuestGuide.root || AutoQuestGuide.root.isDisposed?.()) {

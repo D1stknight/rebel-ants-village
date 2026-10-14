@@ -21431,7 +21431,8 @@
       "glint": "quest",
       "action": "reach",
       "questId": "saints-la-01",
-      "text": "The court. Winners stay on, losers buy the lemonade. The Court Regular has been here since sunrise."
+      "text": "The court. Winners stay on, losers buy the lemonade. The Court Regular has been here since sunrise.",
+      "label": "The court"
     }
   },
   {
@@ -21545,7 +21546,8 @@
       "glint": "quest",
       "action": "reach",
       "questId": "saints-la-01",
-      "text": "The library. Free cards, free books, free air conditioning. The best deal in the city."
+      "text": "The library. Free cards, free books, free air conditioning. The best deal in the city.",
+      "label": "The library"
     }
   },
   {
@@ -21659,7 +21661,8 @@
       "glint": "quest",
       "action": "reach",
       "questId": "saints-la-01",
-      "text": "The custom shop. Three lowriders, twelve coats of candy paint and one very tired mechanic."
+      "text": "The custom shop. Three lowriders, twelve coats of candy paint and one very tired mechanic.",
+      "label": "The custom shop"
     }
   },
   {
@@ -21773,7 +21776,8 @@
       "glint": "quest",
       "action": "reach",
       "questId": "saints-la-01",
-      "text": "The arena, gold wings all the way round. On game nights you can hear it from the hills."
+      "text": "The arena, gold wings all the way round. On game nights you can hear it from the hills.",
+      "label": "The arena"
     }
   },
   {
