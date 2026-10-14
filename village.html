@@ -10210,8 +10210,9 @@ function updateQuestSpots() {
     else if (hc.holdLines?.length && hold.line < hc.holdLines.length && held >= (hold.line + 1) * hc.holdSeconds / (hc.holdLines.length + 1)) showToast(hc.holdLines[hold.line++], 6000);
     if (QuestSpotRuntime.hold === hold && hc.cheer?.length && performance.now() > (hold.cheerAt || 0)) {
       hold.cheerAt = performance.now() + 450 + Math.random() * 650;
-      const km = getNPCById?.(hc.cheer[Math.floor(Math.random() * hc.cheer.length)])?.metadata?.kitModel;
+      const npc = getNPCById?.(hc.cheer[Math.floor(Math.random() * hc.cheer.length)]), km = npc?.metadata?.kitModel;
       if (km) window.SamuraiKit?.actorAction?.(km, Math.random() < .75 ? 'jump' : 'kick');
+      else if (npc) playNPCPartyMove(npc); // forged NPCs dance with their own clips
     }
   }
   // a timed run: each path point in order before the time is up
@@ -17158,9 +17159,27 @@ function findNPCAnimationGroup(meta, state) {
 // One-shot NPC gestures (Mixamo NPC pack clips, on every villager GLB that carries them): greet when a talk opens,
 // a bow when it finishes, a nod when the talk moved a quest on. NPCs without the clip just skip it.
 const NPC_GESTURE_CLIPS = { greet:'wave_short', bye:'bow', yes:'nod_yes', cheer:'clapping' };
-function playNPCGesture(root, gesture) {
+// a forged NPC at a party hold (spot cheer: the Beach / Block Party dances): one of its lively clips at a time, each
+// played to its end; an NPC without them (a placeholder ant) hops
+const NPC_PARTY_CLIPS = ['clapping', 'rallying', 'jump', 'waving', 'yelling', 'wave_short'];
+function playNPCPartyMove(root) {
   const meta = root?.metadata;
-  const clip = NPC_GESTURE_CLIPS[gesture];
+  if (!meta || meta.gestureGroup?.isPlaying || meta.partyHop) return false;
+  const clips = meta.modelLoaded && Array.isArray(meta.animationGroups) ? NPC_PARTY_CLIPS.filter(c => meta.animationGroups.some(g => g.name.toLowerCase().endsWith(c))) : [];
+  if (clips.length) return playNPCGesture(root, 'party', clips[Math.floor(Math.random() * clips.length)]);
+  const vis = meta.modelRoot || root.getChildren?.().find(n => n.getChildMeshes?.().length);
+  if (!vis) return false;
+  const y0 = vis.position.y, t0 = performance.now();
+  meta.partyHop = scene.onBeforeRenderObservable.add(() => {
+    const t = (performance.now() - t0) / 520;
+    if (t >= 1 || vis.isDisposed?.()) { vis.position.y = y0; scene.onBeforeRenderObservable.remove(meta.partyHop); meta.partyHop = null; return; }
+    vis.position.y = y0 + Math.sin(t * Math.PI) * .7;
+  });
+  return true;
+}
+function playNPCGesture(root, gesture, clipName) {
+  const meta = root?.metadata;
+  const clip = clipName || NPC_GESTURE_CLIPS[gesture];
   if (!clip || !meta?.modelLoaded || !Array.isArray(meta.animationGroups)) return false;
   const group = meta.animationGroups.find(g => g.name.toLowerCase().endsWith(clip) || g.name.toLowerCase() === clip);
   if (!group) return false;
