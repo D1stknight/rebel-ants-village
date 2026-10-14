@@ -1439,7 +1439,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
   <div style="font-size:9px;letter-spacing:2px;color:#b48cff;margin:6px 8px 4px;text-transform:uppercase">Mystic Moons</div>
   <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_mamoru')"><span class="ap-icon">🐈‍⬛</span><span class="ap-name">Mamoru</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_flower_moon')"><span class="ap-icon">🎎</span><span class="ap-name">Kokeshi Flower Moon</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_mochi')"><span class="ap-icon">🐱</span><span class="ap-name">Mochi</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_ostara')"><span class="ap-icon">🐰</span><span class="ap-name">Ostara</span></div><div class="ap-card" onclick="spawnNPCFromPanel('mystic_moons_nariko')"><span class="ap-icon">⚡</span><span class="ap-name">Nariko</span></div></div>
   <div style="font-size:9px;letter-spacing:2px;color:#f2c84b;margin:6px 8px 4px;text-transform:uppercase">Chumpz Apes</div>
-  <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_racer')"><span class="ap-icon">🏎️</span><span class="ap-name">Racer</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_chain')"><span class="ap-icon">⛓️</span><span class="ap-name">Big Chain</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_peel')"><span class="ap-icon">😎</span><span class="ap-name">Peely</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_peng')"><span class="ap-icon">🐧</span><span class="ap-name">Pengu</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_band')"><span class="ap-icon">🍌</span><span class="ap-name">Banana Band</span></div></div>
+  <div class="ap-grid"><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_racer')"><span class="ap-icon">🏎️</span><span class="ap-name">Racer</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_chain')"><span class="ap-icon">⛓️</span><span class="ap-name">Big Chain</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_peel')"><span class="ap-icon">😎</span><span class="ap-name">Peely</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_peng')"><span class="ap-icon">🐧</span><span class="ap-name">Pengu</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_band')"><span class="ap-icon">🍌</span><span class="ap-name">Banana Band</span></div><div class="ap-card" onclick="spawnNPCFromPanel('chumpz_barnacle')"><span class="ap-icon">⚓</span><span class="ap-name">Barnacle</span></div></div>
   <div style="padding:0 8px 6px;display:grid;grid-template-columns:1fr 1fr;gap:5px">
     <button class="ctrl-btn" id="npcVisibilityBtn" onclick="toggleNPCVisibility()">Hide NPCs</button>
     <button class="ctrl-btn" id="npcPauseBtn" onclick="toggleNPCPause()">Pause NPCs</button>
@@ -1816,6 +1816,7 @@ const NPC_LIBRARY = {
   chumpz_chain: { npcIdPrefix: 'chumpz-chain', factionId: 'chumpz', role: 'villager', displayName: 'Big Chain', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_chain', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'Big Chain polishes a glass and grins under his bucket hat.\nWelcome to the Banana Bar! First round is on the house.\nThe band plays when the sun goes down. The chumpz dance until it comes back up.' },
   chumpz_peel: { npcIdPrefix: 'chumpz-peel', factionId: 'chumpz', role: 'villager', displayName: 'Peely', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_peel', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'Peely lowers his shades. Roll the bones, friend.\nSnake eyes buys the next round. House rules: no peeling bananas at the table.\nI wear mine on my head. Keeps the luck in.' },
   chumpz_peng: { npcIdPrefix: 'chumpz-peng', factionId: 'chumpz', role: 'villager', displayName: 'Pengu', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_peng', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'Pengu adjusts his goggles. Shh. The big one bites at noon.\nThe bait shop sells worms and books. Same shelf. Do not mix them up.\nCatch a fish, trade it at the bar. That is how we pay around here.' },
+  chumpz_barnacle: { npcIdPrefix: 'chumpz-barnacle', factionId: 'chumpz', role: 'merchant', displayName: 'Barnacle', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_barnacle', behavior: 'idle', wanderRadius: 4, moveSpeed: .5, customDialogue: "Barnacle squints at you from under her captain's cap. Bait's fresh, books are used, both smell of fish.\nI've run this shop since before the bar had a roof. Nobody remembers the bar without a roof. That's how long.\nThe tide waits for nobody. Neither do I." },
   chumpz_band: { npcIdPrefix: 'chumpz-band', factionId: 'chumpz', role: 'villager', displayName: 'Banana Band', modelUrl: null, modelScale: 1, fallbackType: 'kit:chz_ape_band', behavior: 'idle', wanderRadius: 6, moveSpeed: .6, customDialogue: 'Banana Band taps the banana in his headband. Emergency snack.\nThe lagoon is warm, the bar is open, the hammocks are free.\nIf you see a ripe one on the big sign, tell me. It has been yellow for years.' },
 };
 // NPC Forge (admin, npc-forge.html): approved forged NPCs by library key (a built-in key like samurai_villager, or a new
@@ -2849,9 +2850,197 @@ const MOON_TALES_WIRING = {
     ] }
 };
 
+// CHUMPZ COVE (Chumpz): side quests round the cove before the Beach Party, ids chumpz-cove-NN (chapter 'Chumpz Cove'),
+// wired in CHUMPZ_COVE_WIRING like the Moon Tales. Big Chain's order (01) introduces the cove and opens everyone's first
+// quest: Pengu's fishing (02, 07, 08, 12, 13, 18), Peely's dice and map (03, 19), Banana Band's instruments, shades and
+// bananas (04, 09, 14), the Racer's lap (05), Barnacle's bait shop and docks (06, 11, 16), Big Chain's bar (10, 15, 17).
+function makeCoveQuest(index, title, giver, description, objectives, rewards, journalEntry, prerequisites) {
+  return { questId:`chumpz-cove-${String(index).padStart(2, '0')}`, title, chapter:'Chumpz Cove', village:'Chumpz', primaryNpc:giver, description, objectives, rewards, journalEntry, prerequisites:prerequisites || ['hub-tutorial-complete'], type:'side' };
+}
+const CHUMPZ_COVE_QUESTS = [
+  makeCoveQuest(1, 'The Order', 'Big Chain', "Big Chain is throwing the Beach Party, and the Banana Bar's order has to go round the cove.", ['Ask Pengu what is biting.', 'Ask Peely for fresh dice.', 'Ask Banana Band what the band is playing.', 'Bring the order back to Big Chain.'], ['+40 progress'], 'Fish from Pengu, dice from Peely, songs from the band: the Banana Bar\'s party order is in.'),
+  makeCoveQuest(2, 'First Catch', 'Pengu', 'Pengu lends you his spare rod. The fish can smell fidgeting.', ['Fish off the end of the west pier.', 'Show Pengu your catch.'], ['+40 progress'], 'First cast off the west pier, and a snapper that looked at you like you owed it money.', ['chumpz-cove-01']),
+  makeCoveQuest(3, 'Dice Roll', 'Peely', 'New in the cove? Then you roll with Peely. House rules.', ['Roll the dice at the green table in the Jungle Casino.', 'Tell Peely how they landed.'], ['+40 progress'], 'Snake eyes on the green table, first roll. Peely says that is his kind of luck.', ['chumpz-cove-01']),
+  makeCoveQuest(4, 'Lost Instruments', 'Banana Band', "The band's instruments went missing after last night's jam.", ['Find the ukulele, the bongos and the maracas.', 'Set them up on the bar stage.', 'Tell Banana Band.'], ['+45 progress'], 'A ukulele in the sand, bongos by the fish racks, maracas on the boardwalk, and the band is back.', ['chumpz-cove-01']),
+  makeCoveQuest(5, 'Boardwalk Lap', 'Racer', 'The Racer challenges you to one lap of the cove, flag to flag.', ['Run the lap in under thirty-two seconds.', 'Talk to the Racer.'], ['+45 progress'], 'One lap of the cove under thirty-two seconds. The Racer calls you Racer Junior now.', ['chumpz-cove-01']),
+  makeCoveQuest(6, 'Bait Run', 'Barnacle', 'Pengu is out of bait and the tide is turning.', ['Take the bait bucket from the cooler in the Bait Shop.', 'Run it to Pengu on the long pier before the fish get bored.', 'Hand it to Pengu.'], ['+45 progress'], 'One bucket of wriggling bait, from the cooler to the long pier in eight seconds flat.', ['chumpz-cove-01']),
+  makeCoveQuest(7, 'Smokehouse Fish', 'Pengu', 'That snapper of yours deserves the smokehouse.', ['Hang your snapper in the smokehouse.', 'Feed the fire until the smoke turns sweet.', 'Tell Pengu.'], ['+40 progress'], 'Your snapper swinging in sweet smoke with eleven others, like a very slow wind chime.', ['chumpz-cove-02']),
+  makeCoveQuest(8, 'Net Repair', 'Pengu', 'Something big swam through the drying nets. Pengu is not saying it was the big one.', ['Mend the nets on the west quay, the east quay and the long pier.', 'Tell Pengu.'], ['+45 progress'], 'Knot, loop, pull: three nets without a hole between them.', ['chumpz-cove-07']),
+  makeCoveQuest(9, 'Lost Sunglasses', 'Banana Band', "Banana Band's gold sunglasses are gone. A drummer without shades is just a guy hitting things.", ['Look on the bar porch where he was dancing.', 'Look by the fish racks where the conga ended.', 'Follow the shiny crab to the west huts.', 'Give Banana Band his sunglasses.'], ['+45 progress'], 'The sunglasses were on a crab. The crab looked fantastic. One banana bought them back.', ['chumpz-cove-04']),
+  makeCoveQuest(10, 'Banana Well Wish', 'Big Chain', 'Every Chumpz makes one wish a year at the banana well, the week of the Beach Party.', ['Find two lucky shells on the beaches east and west.', 'Drop them in the banana well and make a wish.', 'Tell Big Chain.'], ['+45 progress'], 'Two lucky shells in the banana well, plip and plop, and a wish nobody gets to hear.', ['chumpz-cove-01']),
+  makeCoveQuest(11, 'Dock Inspection', 'Barnacle', 'A big crowd on the boardwalk Saturday, and nobody wants to swim in a party shirt.', ['Hammer down a loose board on each of the four piers.', 'Report to Barnacle.'], ['+45 progress'], 'Four piers, four loose boards, zero swimmers in party shirts.', ['chumpz-cove-06']),
+  makeCoveQuest(12, 'Rig the Sailboat', 'Pengu', 'The red sailboat at the long pier is taking the band out for the party. Ten metres out.', ['Tie off the bow line and the stern line.', 'Haul up the sail.', 'Tell Pengu.'], ['+45 progress'], 'Lines tied, sail up in yellow and white, and the prettiest boat in the cove ready to go.', ['chumpz-cove-08']),
+  makeCoveQuest(13, 'Rowboat Return', 'Pengu', "Somebody untied Pengu's little rowboat and the tide carried her off down the east beach.", ['Find the rowboat on the east beach and push her back into the water.', 'Tell Pengu she is home.'], ['+45 progress'], 'A rowboat found on the far east beach, shoved off the sand and rowed home to the long pier.', ['chumpz-cove-12']),
+  makeCoveQuest(14, 'Jungle Bananas', 'Banana Band', 'Snack emergency: the band needs bananas, and so does the banana rum.', ['Pick three ripe bunches in the banana grove.', 'Take them to Big Chain at the bar.'], ['+45 progress'], 'Three bunches from the grove, and a bar that smells like a smoothie.', ['chumpz-cove-09']),
+  makeCoveQuest(15, 'Bar Tab', 'Big Chain', "Big Chain keeps his bar tabs in bottles, and the tide took three of them.", ['Find the three bottles washed up along the shore.', 'Bring the names back to Big Chain.'], ['+45 progress'], 'Forty-two banana shakes, one broken table and a "see you after the gig": every tab in the cove, cleared for party week.', ['chumpz-cove-10']),
+  makeCoveQuest(16, 'Fish Rack Count', 'Barnacle', 'Big Chain wants fish for two hundred guests. Barnacle wants to know if there are fish for two hundred guests.', ['Count the fish on both drying racks and in the smokehouse.', 'Bring Barnacle the number.'], ['+40 progress'], 'Forty-two fish: exactly enough for two hundred guests, if nobody is very hungry.', ['chumpz-cove-11']),
+  makeCoveQuest(17, 'Dock Lanterns', 'Big Chain', 'The tiki torches along the boardwalk have been dark since the storm.', ['Light the five tiki torches along the boardwalk.', 'Tell Big Chain.'], ['+45 progress'], 'Five tiki torches burning from the west pier to the east, and the whole boardwalk glowing.', ['chumpz-cove-15']),
+  makeCoveQuest(18, 'The Big Catch', 'Pengu', 'The big one bites at noon. Or whenever Pengu says it is noon.', ['Hold on to the big one at the end of the long pier.', 'Tell Pengu.'], ['+55 progress'], 'The big one bit: a giant golden snapper, longer than a Rebel is tall.', ['chumpz-cove-13', 'chumpz-cove-06']),
+  makeCoveQuest(19, 'Treasure Map Piece', 'Peely', "Peely won the corner of a treasure map off Barnacle at dice, twenty years ago.", ['Fit the corner to the map in the Ship Cabin.', 'Follow the map path from the banana well.', 'Dig at the X.', 'Show Peely what you found.'], ['+55 progress'], 'The map\'s path started at the banana well and ended at an X on the east beach, over the Golden Coconut.', ['chumpz-cove-03', 'chumpz-cove-12']),
+  Object.assign(makeCoveQuest(20, 'Beach Party', 'Big Chain', 'The torches are lit, the fish are counted, the band has its shades and the Golden Coconut is home. It is party time.', ['Light the bonfire on the beach.', 'Dance at the bonfire with the whole cove.', 'Talk to Big Chain.'], ['+80 progress', 'Badge: Life of the Party'], 'The bonfire roared, the sun set on cue, and the whole cove danced until the stars came out.', ['chumpz-cove-05', 'chumpz-cove-14', 'chumpz-cove-16', 'chumpz-cove-17', 'chumpz-cove-18', 'chumpz-cove-19']), { badgeRewardId:'chumpz-cove-party' })
+];
+const CHUMPZ_COVE_WIRING = {
+  1: { giver:'chumpz-bartender',
+    offer:['Ahoy, little Rebel! Welcome to the Banana Bar. Saturday is the Beach Party, the biggest night of the year at Chumpz Cove, and Big Chain has an order to fill.', 'Run it round the cove for me: ask Pengu on the long pier what is biting, ask Peely at the dice hall for fresh dice, and ask Banana Band what the band is playing.'],
+    steps:[
+      { id:'ask-pengu', objective:'Ask Pengu on the long pier what is biting.', objectiveType:'talkToNpc', targetNpcId:'chumpz-fisher', villageId:'chumpz',
+        say:['Shh. The order? Tell Big Chain: snapper, if the tide is kind. The big one, if I am lucky.', 'And tell him I want my tab cleared. He knows which tab.'] },
+      { id:'ask-peely', objective:'Ask Peely at the dice hall for fresh dice.', objectiveType:'talkToNpc', targetNpcId:'chumpz-dealer', villageId:'chumpz',
+        say:['Fresh dice for the party. Here, still warm from the box.', 'Tell Big Chain they are honest dice. Mostly.'] },
+      { id:'ask-band', objective:'Ask Banana Band what the band is playing.', objectiveType:'talkToNpc', targetNpcId:'chumpz-villager', villageId:'chumpz',
+        say:['The setlist? Island songs, more island songs, and one heavy metal track nobody admits to choosing.', 'Tell him we need our instruments first. Long story.'] },
+      { id:'order-in', objective:'Bring the order back to Big Chain.', objectiveType:'talkToNpc', targetNpcId:'chumpz-bartender', villageId:'chumpz',
+        say:['Snapper, honest dice and a band with no instruments. Sounds like a Chumpz party already.', 'Go and meet everyone properly. The whole cove could use a hand before Saturday, and so could Big Chain.'] }
+    ] },
+  2: { giver:'chumpz-fisher',
+    offer:['You have never caught a fish? Shh. Do not let the fish hear that.', 'Take my spare rod. End of the west pier, cast out, and stay still. The fish can smell fidgeting.'],
+    steps:[
+      { id:'cast', objective:'Fish off the end of the west pier. Stay still.', objectiveType:'useQuestSpot', targetObjectId:'cz-first-catch', villageId:'chumpz' },
+      { id:'show-catch', objective:'Show Pengu your catch.', objectiveType:'talkToNpc', targetNpcId:'chumpz-fisher', villageId:'chumpz',
+        say:['Look at that! A snapper, first cast. The fish like you. That is rare. They do not like me.', 'Keep the rod. You are a fisher now.'] }
+    ] },
+  3: { giver:'chumpz-dealer',
+    offer:['New in the cove? Then you roll with Peely. House rules.', 'Back room of the dice hall, the green table on the left. Roll the bones. Snake eyes buys the next round.'],
+    steps:[
+      { id:'roll', objective:'Roll the dice at the green table in the Jungle Casino.', objectiveType:'interactInteriorLink', targetInteriorId:'chz_jungle_casino', targetObjectId:'hotspot_chz_jungle_casino_roll', villageId:'chumpz' },
+      { id:'tell-roll', objective:'Tell Peely how they landed.', objectiveType:'talkToNpc', targetNpcId:'chumpz-dealer', villageId:'chumpz',
+        say:['Snake eyes? On your first roll? That is my kind of luck.', 'The round is on you, then. I will tell Big Chain to put it on your tab. Kidding. Mostly.'] }
+    ] },
+  4: { giver:'chumpz-villager',
+    offer:["The band's instruments went missing after last night's jam. The ukulele, the bongos and the maracas.", 'We were dancing all over the cove. Look behind the bar, by the fish racks and along the boardwalk, then set them up on the bar stage.'],
+    steps:[
+      { id:'find-instruments', objective:'Find the ukulele, the bongos and the maracas.', objectiveType:'useQuestSpot', targetObjectId:'cz-instrument', count:3, villageId:'chumpz' },
+      { id:'set-stage', objective:'Set the instruments up on the bar stage.', objectiveType:'useQuestSpot', targetObjectId:'cz-stage', villageId:'chumpz' },
+      { id:'band-back', objective:'Tell Banana Band the band is back.', objectiveType:'talkToNpc', targetNpcId:'chumpz-villager', villageId:'chumpz',
+        say:['Our babies are home! The band is back.', 'Now if only I could find my sunglasses.'] }
+    ] },
+  5: { giver:'chumpz-racer',
+    offer:['Hey! You look fast. You are not fast. But you look it.', 'Race me. One lap of the cove: down the boardwalk to the east end, back along the sand to the west end. Under thirty-two seconds and I will call you Racer Junior.', 'Start at the flag by the west end. Run! Walking does not count.'],
+    steps:[
+      { id:'lap', objective:'Run the lap, flag to flag, in under thirty-two seconds.', objectiveType:'useQuestSpot', targetObjectId:'cz-lap', villageId:'chumpz' },
+      { id:'lap-done', objective:'Talk to the Racer.', objectiveType:'talkToNpc', targetNpcId:'chumpz-racer', villageId:'chumpz',
+        say:['Under thirty-two seconds? Okay. Okay. Racer Junior it is.', 'At the Beach Party there is a real race. Bring those legs.'] }
+    ] },
+  6: { giver:'chumpz-barnacle',
+    offer:['You. Yes, you, with the legs. Pengu is out of bait and the tide is turning.', 'Grab the bait bucket from the cooler in my back room, then run it down to Pengu on the long pier. Fast, mind. The fish get bored.'],
+    steps:[
+      { id:'get-bait', objective:'Take the bait bucket from the cooler in the Bait Shop.', objectiveType:'interactInteriorLink', targetInteriorId:'chz_bait_shop', targetObjectId:'hotspot_chz_bait_shop_bucket', villageId:'chumpz' },
+      { id:'run-bait', objective:'Run the bait to Pengu: start at the flag in front of the Bait Shop, eight seconds.', objectiveType:'useQuestSpot', targetObjectId:'cz-bait-run', villageId:'chumpz' },
+      { id:'bait-in', objective:'Hand the bait to Pengu.', objectiveType:'talkToNpc', targetNpcId:'chumpz-fisher', villageId:'chumpz',
+        say:['Bait! You are a hero. A wet, smelly hero.', 'Tell Barnacle the fish say thanks. Well. They do not. But I do.'] }
+    ] },
+  7: { giver:'chumpz-fisher',
+    offer:['That snapper of yours deserves the smokehouse. The best fish in the cove comes out of there.', 'It is up the east path. Hang your fish on the rack, then feed the fire until the smoke turns sweet.'],
+    steps:[
+      { id:'hang-fish', objective:'Hang your snapper in the smokehouse.', objectiveType:'useQuestSpot', targetObjectId:'cz-smoke-hang', villageId:'chumpz' },
+      { id:'feed-fire', objective:'Feed the smokehouse fire until the smoke turns sweet.', objectiveType:'useQuestSpot', targetObjectId:'cz-smoke-fire', villageId:'chumpz' },
+      { id:'smoked', objective:'Tell Pengu the fish is smoking.', objectiveType:'talkToNpc', targetNpcId:'chumpz-fisher', villageId:'chumpz',
+        say:['Smell that? That is a party coming.', 'My nets, though. The nets are a mess.'] }
+    ] },
+  8: { giver:'chumpz-fisher',
+    offer:['The drying nets have more holes than net. Something big swam through them, and I am not saying it was the big one, but it was the big one.', 'Mend them for me: the nets on the west quay, on the east quay, and the one heaped on the long west pier.'],
+    steps:[
+      { id:'mend-nets', objective:'Mend the nets on the west quay, the east quay and the long pier.', objectiveType:'useQuestSpot', targetObjectId:'cz-net', count:3, villageId:'chumpz' },
+      { id:'nets-done', objective:'Tell Pengu the nets are mended.', objectiveType:'talkToNpc', targetNpcId:'chumpz-fisher', villageId:'chumpz',
+        say:['Not a hole left. If the big one comes through now, it will bounce.', 'Speaking of boats. The red sailboat needs rigging before the party.'] }
+    ] },
+  9: { giver:'chumpz-villager',
+    offer:['My sunglasses. Gold frames, very cool, very me. Gone.', 'Last time I had them I was dancing on the bar porch. Start there.'],
+    steps:[
+      { id:'look-bar', objective:'Look for the sunglasses on the bar porch.', objectiveType:'useQuestSpot', targetObjectId:'cz-shades-bar', villageId:'chumpz' },
+      { id:'look-racks', objective:'Look by the east fish rack, where the conga ended.', objectiveType:'useQuestSpot', targetObjectId:'cz-shades-racks', villageId:'chumpz' },
+      { id:'look-crab', objective:'Follow the shiny crab to the west huts.', objectiveType:'useQuestSpot', targetObjectId:'cz-shades-crab', villageId:'chumpz' },
+      { id:'shades-back', objective:'Give Banana Band his sunglasses.', objectiveType:'talkToNpc', targetNpcId:'chumpz-villager', villageId:'chumpz',
+        say:['My shades! A crab? Wearing them? Respect.', 'Now I can see the future, and the future is: a party. And snacks.'] }
+    ] },
+  10: { giver:'chumpz-bartender',
+    offer:['Every Chumpz makes one wish a year at the banana well, the week of the Beach Party. Tradition.', 'You need two lucky shells for a wish, though. They wash up on the beaches past the boardwalk, east and west. Find two, drop them in the well, and wish.'],
+    steps:[
+      { id:'find-shells', objective:'Find two lucky shells on the beaches east and west.', objectiveType:'collectCollectible', targetObjectId:'cove-shell', count:2, villageId:'chumpz' },
+      { id:'make-wish', objective:'Drop the shells in the banana well and make a wish.', objectiveType:'useQuestSpot', targetObjectId:'cz-wish', villageId:'chumpz' },
+      { id:'wished', objective:'Tell Big Chain you made your wish.', objectiveType:'talkToNpc', targetNpcId:'chumpz-bartender', villageId:'chumpz',
+        say:['What did you wish for? No, do not tell me. That is how wishes break.', 'Mine is always the same: a bigger bar. Bigger party, bigger bar.'] }
+    ] },
+  11: { giver:'chumpz-barnacle',
+    offer:['Big crowd on the boardwalk Saturday. If a board snaps, somebody goes swimming in their party shirt.', 'Every pier has a loose board somewhere. Find it and hammer it down: the west pier, the two long ones, and the east.'],
+    steps:[
+      { id:'hammer-boards', objective:'Hammer down a loose board on each of the four piers.', objectiveType:'useQuestSpot', targetObjectId:'cz-board', count:4, villageId:'chumpz' },
+      { id:'piers-safe', objective:'Report to Barnacle.', objectiveType:'talkToNpc', targetNpcId:'chumpz-barnacle', villageId:'chumpz',
+        say:['Four piers, zero loose boards. You would make a decent harbour master.', 'Do not tell Pengu. He thinks he is the harbour master.'] }
+    ] },
+  12: { giver:'chumpz-fisher',
+    offer:['The red sailboat at the end of the long pier is taking the band out for the party. Well. Ten metres out.', 'Tie off her bow line and stern line on the pier, then haul up the sail.'],
+    steps:[
+      { id:'tie-lines', objective:'Tie off the bow line and the stern line on the long pier.', objectiveType:'useQuestSpot', targetObjectId:'cz-line', count:2, villageId:'chumpz' },
+      { id:'hoist', objective:'Haul up the sail.', objectiveType:'useQuestSpot', targetObjectId:'cz-hoist', villageId:'chumpz' },
+      { id:'rigged', objective:'Tell Pengu the boat is rigged.', objectiveType:'talkToNpc', targetNpcId:'chumpz-fisher', villageId:'chumpz',
+        say:['Look at her. The prettiest boat in the cove. Second prettiest.', 'My rowboat is the prettiest. Where IS my rowboat?'] }
+    ] },
+  13: { giver:'chumpz-fisher',
+    offer:['My rowboat. The little teal one. Somebody untied her, and the tide carried her off down the east beach.', 'Find her, push her back into the water and row her home. I will be waiting. Fretting, mostly.'],
+    steps:[
+      { id:'find-rowboat', objective:'Find the rowboat on the far east beach and push her back into the water.', objectiveType:'useQuestSpot', targetObjectId:'cz-rowboat', villageId:'chumpz' },
+      { id:'rowboat-home', objective:'Tell Pengu his rowboat is home.', objectiveType:'talkToNpc', targetNpcId:'chumpz-fisher', villageId:'chumpz',
+        say:['There she is, tied up beside the long pier where she belongs! Did she give you trouble? She gives me trouble.', 'Now. You are ready. The big one.'] }
+    ] },
+  14: { giver:'chumpz-villager',
+    offer:['Snack emergency. The band needs bananas, and Big Chain needs them for the banana rum.', 'The banana grove is up the north-east path. Pick three good bunches and take them straight to Big Chain.'],
+    steps:[
+      { id:'pick-bananas', objective:'Pick three ripe bunches in the banana grove.', objectiveType:'useQuestSpot', targetObjectId:'cz-bunch', count:3, villageId:'chumpz' },
+      { id:'bananas-in', objective:'Take the bananas to Big Chain at the bar.', objectiveType:'talkToNpc', targetNpcId:'chumpz-bartender', villageId:'chumpz',
+        say:['Now THOSE are bananas. The rum thanks you. The band thanks you. My bar smells like a smoothie.', 'Banana Band can stop panicking. Snacks are sorted.'] }
+    ] },
+  15: { giver:'chumpz-bartender',
+    offer:['Big Chain keeps his bar tabs in bottles. Do not ask. The tide took three of them out of the back room, and now they are washing up all along the shore.', 'Find the three bottles. Read them if you like, then bring me the names.'],
+    steps:[
+      { id:'find-bottles', objective:'Find the three bottles washed up along the shore.', objectiveType:'collectCollectible', targetObjectId:'cove-bottle', count:3, villageId:'chumpz' },
+      { id:'tabs-in', objective:'Bring the names back to Big Chain.', objectiveType:'talkToNpc', targetNpcId:'chumpz-bartender', villageId:'chumpz',
+        say:['Pengu: forty-two banana shakes. Peely: one table, broken, "by accident". Banana Band: "see you after the gig". Ha!', 'It is party week. Every tab in the cove is cleared. Tell nobody Big Chain said that.'] }
+    ] },
+  16: { giver:'chumpz-barnacle',
+    offer:['Big Chain wants fish for two hundred guests. I want to know if we HAVE fish for two hundred guests.', 'Count the fish on both drying racks by the gate and in the smokehouse. Bring me the number.'],
+    steps:[
+      { id:'count-fish', objective:'Count the fish on both drying racks and in the smokehouse.', objectiveType:'useQuestSpot', targetObjectId:'cz-count', count:3, villageId:'chumpz' },
+      { id:'fish-counted', objective:'Bring Barnacle the number.', objectiveType:'talkToNpc', targetNpcId:'chumpz-barnacle', villageId:'chumpz',
+        say:['Forty-two. Exactly enough for two hundred guests, if nobody is very hungry.', 'Pengu will eat six of them before Saturday. I will count again on Sunday.'] }
+    ] },
+  17: { giver:'chumpz-bartender',
+    offer:['The party needs light. The tiki torches along the boardwalk have been dark since the storm.', 'Light all five of them, from the west pier to the east pier. Then come and tell me.'],
+    steps:[
+      { id:'light-torches', objective:'Light the five tiki torches along the boardwalk.', objectiveType:'useQuestSpot', targetObjectId:'cz-torch', count:5, villageId:'chumpz' },
+      { id:'torches-lit', objective:'Tell Big Chain the torches are lit.', objectiveType:'talkToNpc', targetNpcId:'chumpz-bartender', villageId:'chumpz',
+        say:['Big Chain can see them from here! The whole boardwalk is glowing.', 'That is the bar ready. When everyone else is ready too, the party starts.'] }
+    ] },
+  18: { giver:'chumpz-fisher',
+    offer:['Shh. The big one bites at noon. Or whenever Pengu says it is noon. It is noon.', "Take Barnacle's bait to the end of the long pier, cast as far as you can, and hold on. Whatever happens, do not let go."],
+    steps:[
+      { id:'big-catch', objective:'Hold on to the big one at the end of the long pier. Do not let go.', objectiveType:'useQuestSpot', targetObjectId:'cz-big-catch', villageId:'chumpz' },
+      { id:'big-told', objective:'Tell Pengu.', objectiveType:'talkToNpc', targetNpcId:'chumpz-fisher', villageId:'chumpz',
+        say:['THE BIG ONE. You caught the big one. Thirty years I have waited, and you did it in one afternoon.', 'It goes to the party. Middle of the table. Nobody eats it; we just look at it and feel proud.'] }
+    ] },
+  19: { giver:'chumpz-dealer',
+    offer:['Want to know a secret, friend? I won this off Barnacle at dice, twenty years ago.', 'The corner of a treasure map. The rest of it is in the cabin of the red sailboat at the long pier. Put them together and see where the path starts.'],
+    steps:[
+      { id:'fit-map', objective:'Fit the torn corner to the treasure map in the Ship Cabin.', objectiveType:'interactInteriorLink', targetInteriorId:'chz_ship_cabin', targetObjectId:'hotspot_chz_ship_cabin_corner', villageId:'chumpz' },
+      { id:'walk-path', objective:'Follow the map path from the banana well, stake by stake.', objectiveType:'useQuestSpot', targetObjectId:'cz-map-path', villageId:'chumpz' },
+      { id:'dig', objective:'Dig at the X on the east beach.', objectiveType:'useQuestSpot', targetObjectId:'cz-dig', villageId:'chumpz' },
+      { id:'show-peely', objective:'Show Peely what you dug up.', objectiveType:'talkToNpc', targetNpcId:'chumpz-dealer', villageId:'chumpz',
+        say:['The Golden Coconut! Barnacle swore it was a legend.', 'Every Beach Party used to have a dance for it. This year it does again. Give it to Big Chain for the party; I would only lose it at dice.'] }
+    ] },
+  20: { giver:'chumpz-bartender',
+    offer:['The torches are lit, the fish are counted, the band has its shades and the Golden Coconut is home.', 'Everybody is ready. Big Chain is ready. Are you? Then go and light the bonfire on the beach by the west pier, and the sun will know what to do.'],
+    steps:[
+      { id:'light-bonfire', objective:'Light the bonfire on the beach by the west pier.', objectiveType:'useQuestSpot', targetObjectId:'cz-bonfire', villageId:'chumpz' },
+      { id:'dance', objective:'Dance at the bonfire with the whole cove.', objectiveType:'useQuestSpot', targetObjectId:'cz-dance', villageId:'chumpz' },
+      { id:'party-told', objective:'Talk to Big Chain at the bonfire.', objectiveType:'talkToNpc', targetNpcId:'chumpz-bartender', villageId:'chumpz',
+        say:['Best. Party. Ever. And Big Chain has thrown all of them.', 'The Golden Coconut goes to the best dancer on the beach, and that is you, little Rebel. Pengu came second. Do not tell him.', 'You are a Chumpz now. The bar is always open for you. Well. Mostly open.'] }
+    ] }
+};
+
 // Friend-village quest series: side quests with a chapter of their own, ids <prefix>-NN, wired like BOOK1_WIRING.side.
 const QUEST_SERIES = [
-  { prefix:'moon-tales', kind:'Moon Tale', done:'Moon Tale Complete', quests:MOON_TALES_QUESTS, wiring:MOON_TALES_WIRING }
+  { prefix:'moon-tales', kind:'Moon Tale', done:'Moon Tale Complete', quests:MOON_TALES_QUESTS, wiring:MOON_TALES_WIRING },
+  { prefix:'chumpz-cove', kind:'Cove quest', done:'Cove Quest Complete', quests:CHUMPZ_COVE_QUESTS, wiring:CHUMPZ_COVE_WIRING }
 ];
 function questSeriesOf(questId) {
   const m = /^([a-z-]+)-(\d+)$/.exec(String(questId || '')), series = m && QUEST_SERIES.find(x => x.prefix === m[1]);
@@ -3237,13 +3426,20 @@ const MOON_TALE_QUEST_MOONS = { 1:['harvest', 'tell-mamoru'], 2:'harvest', 3:'ha
 // NPCs that move with a quest: once a quest reaches a step (or is done), the NPC lives there (Ostara on her Moon Ledge).
 // whileActive places hold only while their quest runs (the Coven round the feast table at the Harvest Festival); still =
 // no patrol or wander there (Mamoru keeping watch at the gate). Without a place the NPC stands at its own layout spot.
-const FESTIVAL = { quest:'moon-tales-20', whileActive:true };
+const FESTIVAL = { quest:'moon-tales-20', whileActive:true }, BEACH_PARTY = { quest:'chumpz-cove-20', whileActive:true, still:true };
 const QUEST_NPC_PLACES = {
   'cc-ostara': [{ quest:'moon-tales-13', step:'meet-ostara', x:-22.6, z:70.2, ry:0 }, { ...FESTIVAL, x:1.25, z:6.75, ry:Math.PI }],
   'cc-flower-moon': [{ ...FESTIVAL, x:-1.25, z:6.75, ry:Math.PI }],
   'cc-mochi': [{ ...FESTIVAL, x:3.3, z:5.3, ry:-1.66 }],
   'cc-nariko': [{ ...FESTIVAL, x:-3.1, z:6.4, ry:2 }],
-  'cc-mamoru': [{ ...FESTIVAL, step:'keep-watch', still:true, x:0, z:-53, ry:Math.PI }]
+  'cc-mamoru': [{ ...FESTIVAL, step:'keep-watch', still:true, x:0, z:-53, ry:Math.PI }],
+  // the Beach Party (Chumpz Cove 20): the whole cove round the bonfire on the beach by the west pier (-38, -32), facing the fire
+  'chumpz-bartender': [{ ...BEACH_PARTY, x:-38, z:-28.4, ry:Math.PI }],
+  'chumpz-fisher': [{ ...BEACH_PARTY, x:-41.3, z:-30.2, ry:2.07 }],
+  'chumpz-villager': [{ ...BEACH_PARTY, x:-41.6, z:-33.4, ry:1.2 }],
+  'chumpz-dealer': [{ ...BEACH_PARTY, x:-34.6, z:-29.9, ry:-2.12 }],
+  'chumpz-racer': [{ ...BEACH_PARTY, x:-34.4, z:-35.3, ry:-.83 }],
+  'chumpz-barnacle': [{ ...BEACH_PARTY, x:-41.2, z:-36.1, ry:.66 }]
 };
 function questNpcPlace(places) {
   const reached = p => SideQuestState.active?.[p.quest] && (!p.step || questStepReached(p.quest, SideQuestState.active[p.quest].step, p.step));
@@ -3371,7 +3567,32 @@ const MoonTaleSounds = (() => {
     }
   };
   const PAN = [[1, 1, 1], [2, .5, .55], [3.01, .22, .3], [4.2, .06, .15]], PLUCK = [[1, 1, 1], [2, .35, .5], [3, .2, .3], [4, .08, .2]];
+  // a fishing reel: bursts of ratchet clicks (n bursts, every gap s)
+  const reel = (t0, n, gap, g = .2) => { for (let b = 0; b < n; b++) for (let k = 0; k < 18 + 4 * b; k++) noise(t0 + b * gap + k * (.075 - .002 * Math.min(k, 20)), .022, g * (1 + .08 * b), 'highpass', 3200, 1); };
+  const splash = (t0, g = .4) => { noise(t0, .9, g, 'lowpass', 1500); noise(t0 + .04, .5, g * .7, 'bandpass', 650, 1.3); glide(420, 110, t0, .3, g * .5); for (let k = 0; k < 7; k++) noise(t0 + .2 + k * .09 + Math.random() * .05, .05, g * .25, 'highpass', 2500); };
   const SONGS = {
+    // Chumpz Cove: the fishing reel, the splash of a catch, the big one (a long fight), the ukulele, the dice, the wish
+    // at the banana well, the hammer on a loose board, the race whistle and the race flags, the smokehouse fire
+    reel: { fx:t0 => reel(t0, 3, 3) },
+    bigreel: { fx:t0 => reel(t0, 6, 3, .26) },
+    splash: { fx:t0 => splash(t0) },
+    strum: { fx:t0 => { for (const [d, up] of [[0, 0], [.32, 1], [.64, 0], [1.28, 0]]) [N.G4, N.C4, N.E4, N.C5].forEach((f, i) => tone(f, t0 + d + (up ? 3 - i : i) * .022, 1.1, .16, PLUCK)); } },
+    dice: { fx:t0 => { for (let k = 0; k < 12; k++) noise(t0 + k * .045 + Math.random() * .02, .03, .22, 'bandpass', 2200 + Math.random() * 1500, 2); for (const d of [.72, .8, .86]) noise(t0 + d, .06, .38, 'bandpass', 1500, 3); } },
+    wish: { fx:t0 => { glide(950, 480, t0, .14, .25); glide(640, 300, t0 + .32, .18, .25); [['G5', .9], ['C6', 1.02], ['E6', 1.14], ['G5', 1.6], ['C6', 1.72], ['E6', 1.84]].forEach(([n, d]) => note(N[n], t0 + d, 1.4, .2)); } },
+    hammer: { fx:t0 => { for (const d of [0, .38, .76]) { noise(t0 + d, .16, .55, 'lowpass', 420); tone(105, t0 + d, .25, .3, [[1, 1, 1]]); noise(t0 + d, .04, .25, 'bandpass', 2400, 2); } } },
+    whistle: { fx:t0 => { glide(2250, 2350, t0, .22, .16); glide(2650, 2600, t0 + .28, .5, .16); } },
+    flag: { fx:t0 => { tone(N.G5, t0, .35, .2, PAN); tone(N.C6, t0 + .08, .4, .16, PAN); } },
+    crackle: { fx:t0 => { noise(t0, 8, .1, 'lowpass', 300); for (let k = 0; k < 46; k++) noise(t0 + Math.random() * 7.6, .025 + Math.random() * .03, .08 + Math.random() * .2, 'bandpass', 1200 + Math.random() * 2800, 1.5); } },
+    // the Beach Party: a steel-pan calypso (8 bars of eighths at 0.26 s), bass on the beats, a shaker on every eighth
+    party: { fx:t0 => {
+      const E = .26, bars = ['E5 . G5 E5 . C5 D5 E5', 'F5 . A5 F5 . D5 E5 F5', 'G5 G5 A5 G5 F5 E5 D5 C5', 'D5 . . B4 C5 . . .', 'E5 . G5 E5 . C5 D5 E5', 'F5 . A5 F5 . D5 E5 F5', 'G5 A5 G5 F5 E5 D5 E5 F5', 'G4 B4 D5 F5 E5 . C5 .'];
+      const bass = ['C3', 'F3', 'G3', 'G3', 'C3', 'F3', 'G3', 'C3'];
+      bars.forEach((bar, b) => {
+        bar.split(' ').forEach((n, k) => { if (n !== '.') tone(N[n], t0 + (b * 8 + k) * E, .9, .17, PAN); });
+        for (const k of [0, 3, 4, 6]) tone(N[bass[b]] * (k === 3 ? 1.5 : 1), t0 + (b * 8 + k) * E, .5, .2, [[1, 1, 1], [2, .25, .5]]);
+        for (let k = 0; k < 8; k++) noise(t0 + (b * 8 + k) * E, .05, k % 2 ? .06 : .035, 'highpass', 6500);
+      });
+    } },
     // 3/4 at 0.5 s a beat, 24 beats: E G A | G E D | C D E | D . . | E G A | C' A G | E D C | C . .
     lullaby: { beat:.5, notes:[['E5', 0], ['G5', 1], ['A5', 2], ['G5', 3], ['E5', 4], ['D5', 5], ['C5', 6], ['D5', 7], ['E5', 8], ['D5', 9, 2.2], ['E5', 12], ['G5', 13], ['A5', 14], ['C6', 15], ['A5', 16], ['G5', 17], ['E5', 18], ['D5', 19], ['C5', 20], ['C5', 21, 2.6]],
       bass:[['C3', 0], ['G3', 3], ['C3', 6], ['G3', 9], ['C3', 12], ['G3', 15], ['C3', 18], ['C3', 21]] },
@@ -3573,6 +3794,7 @@ const DEFAULT_BADGE_DEFINITIONS = [
   { badgeId:'book1-echo-witness', name:'Echo Witness', category:'story', rarity:'Uncommon', imageUrl:'/assets/badges/book1-echo-witness.png', requirementType:'quest', requirementValue:'book1-main-20', requirementText:'Complete Book 1 Chapter 2', description:'You heard the old tunnels answer back.' },
   { badgeId:'book1-faction-envoy', name:'Faction Envoy', category:'story', rarity:'Rare', imageUrl:'/assets/badges/book1-faction-envoy.png', requirementType:'quest', requirementValue:'book1-main-30', requirementText:'Complete Book 1 Chapter 3', description:'You carried truth between divided villages.' },
   { badgeId:'book1-storm-watcher', name:'Storm Watcher', category:'story', rarity:'Epic', imageUrl:'/assets/badges/book1-storm-watcher.png', requirementType:'quest', requirementValue:'book1-main-40', requirementText:'Complete Book 1 Chapter 4', description:'You stood with the colony before the awakening.' },
+  { badgeId:'chumpz-cove-party', name:'Life of the Party', category:'story', rarity:'Legendary', imageUrl:'', emblem:null, requirementType:'quest', requirementValue:'chumpz-cove-20', requirementText:'Dance at the Chumpz Cove Beach Party', description:'You got the whole cove ready for the Beach Party and danced until the stars came out.' },
   { badgeId:'moon-tales-coven', name:'Mystic Moon Coven', category:'story', rarity:'Legendary', imageUrl:'', emblem:null, requirementType:'quest', requirementValue:'moon-tales-20', requirementText:'Keep watch with Mamoru at the Harvest Festival', description:'You kept the Coven\'s joy safe until the first blush of dawn.' },
   { badgeId:'book1-colony-awake', name:'Colony Awake', category:'story', rarity:'Legendary', imageUrl:'/assets/badges/book1-colony-awake.png', requirementType:'quest', requirementValue:'book1-main-50', requirementText:'Complete Book 1', description:'You helped the villages remember they are one colony.' },
   { badgeId:'story-tunnel-witness', name:'Tunnel Witness', category:'story', rarity:'Uncommon', imageUrl:'/assets/badges/story-tunnel-witness.png', requirementType:'story', requirementValue:'future-tunnels', requirementText:'Future Book 1 story milestone', description:'You witnessed signs beneath the roots.' },
@@ -3593,7 +3815,7 @@ const DEFAULT_BADGE_DEFINITIONS = [
 ];
 // Every collectible placed in the village layouts (Hub + 14 villages; rooms have none): the Relic Keeper badge asks for
 // all of them. Update it whenever collectibles are added or removed (the friend-village quests will bring their items).
-const COLLECTIBLE_TOTAL = 87;
+const COLLECTIBLE_TOTAL = 92;
 // The other 46 of the 73 badges: a crest and an all-secrets badge per village, secret milestones, mini ant
 // spotters, chest and collector badges. All award themselves (checkAutoBadges).
 (() => {
@@ -3775,7 +3997,10 @@ const COLLECTIBLE_TYPES = {
   // the Moon Tales' moon cakes for the Harvest Festival (Cute & Creepy)
   moon_cake: { label:'Moon Cake', color:'#c9893c', accent:'#ffe6a6' },
   // Kokeshi Flower Moon's seeds of new beginnings (Cute & Creepy)
-  moon_seed: { label:'Moon Seed', color:'#e9a6d0', accent:'#fff2b8' }
+  moon_seed: { label:'Moon Seed', color:'#e9a6d0', accent:'#fff2b8' },
+  // Chumpz Cove: Big Chain's bar tabs washed up in bottles, lucky shells for the banana well
+  message_bottle: { label:'Message in a Bottle', color:'#2f8f5a', accent:'#c8ffe0' },
+  cove_shell: { label:'Lucky Shell', color:'#f4c3ae', accent:'#fff0e6' }
 };
 const FRIEND_GIFT_LOOKS = { 'cute-creepy':['#6a32b8', '#ff8a24'], chumpz:['#1fa89c', '#ffd23a'], 'saints-la':['#4b2378', '#e8c56a'] };
 const INTERIOR_TYPES = {
@@ -8705,6 +8930,28 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     stem.position.y = 1.43; stem.material = sproutMat; markCollectibleMesh(stem, stem.position.y);
     [-1, 1].forEach((side, i) => { const leaf = BABYLON.MeshBuilder.CreateSphere(`collectibleMesh_${root.name}_leaf_${i}`, { diameter: .16, segments: 6 }, scene); leaf.position.set(side * .08, 1.53, 0); leaf.scaling.set(1, .35, .6); leaf.rotation.z = side * .5; leaf.material = sproutMat; markCollectibleMesh(leaf, leaf.position.y); });
     addSparkle('seedSpark', .22, 1.3, -.1, .06);
+  } else if (type === 'message_bottle') {
+    // a bottle lying on its side, corked, a rolled note inside
+    const glassMat = makeCollectibleMat(root, 'bottleGlassMat', '#2f8f5a', '#5fd496', .6), corkMat = makeCollectibleMat(root, 'bottleCorkMat', '#a27040', '#4a2e14', 1), noteMat = makeCollectibleMat(root, 'bottleNoteMat', '#f4ecd2', '#fff4d8', 1);
+    const lay = (mesh, x) => { mesh.rotation.z = Math.PI / 2; mesh.position.set(x, 1.08, 0); return markCollectibleMesh(mesh, 1.08); };
+    lay(BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_bottleNote`, { height: .42, diameter: .12, tessellation: 10 }, scene), -.04).material = noteMat;
+    lay(BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_bottleBody`, { height: .6, diameter: .27, tessellation: 16 }, scene), -.05).material = glassMat;
+    lay(BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_bottleNeck`, { height: .2, diameterTop: .1, diameterBottom: .25, tessellation: 14 }, scene), .35).material = glassMat;
+    lay(BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_bottleCork`, { height: .1, diameter: .1, tessellation: 10 }, scene), .5).material = corkMat;
+    addSparkle('bottleSpark', .2, 1.32, -.1, .07);
+  } else if (type === 'cove_shell') {
+    // a scallop shell standing up: a fan of ribs over a pink half-disc, a little hinge
+    const shellMat = makeCollectibleMat(root, 'shellMat', '#f6cdb8', '#ffd9c8', 1), ribMat = makeCollectibleMat(root, 'shellRibMat', '#e3907a', '#ffb8a0', 1);
+    const fan = BABYLON.MeshBuilder.CreateDisc(`collectibleMesh_${root.name}_shellFan`, { radius: .36, arc: .5, tessellation: 22, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, scene);
+    fan.position.y = .92; fan.rotation.x = -.35; fan.material = shellMat; markCollectibleMesh(fan, .92);
+    for (let k = 0; k < 7; k++) { // ribs in the fan's tilted plane (each bobs with the shell, not parented to it)
+      const a = (k + .5) / 7 * Math.PI, ly = Math.sin(a) * .18, lz = -.012, c = Math.cos(-.35), sn = Math.sin(-.35);
+      const rib = BABYLON.MeshBuilder.CreateBox(`collectibleMesh_${root.name}_shellRib_${k}`, { width: .34, height: .035, depth: .03 }, scene);
+      rib.position.set(Math.cos(a) * .18, .92 + ly * c - lz * sn, ly * sn + lz * c); rib.rotation.set(-.35, 0, a); rib.material = ribMat; markCollectibleMesh(rib, rib.position.y);
+    }
+    const hinge = BABYLON.MeshBuilder.CreateBox(`collectibleMesh_${root.name}_shellHinge`, { width: .2, height: .07, depth: .06 }, scene);
+    hinge.position.y = .9; hinge.material = ribMat; markCollectibleMesh(hinge, .9);
+    addSparkle('shellSpark', .22, 1.28, -.08, .06);
   } else if (type === 'red_dust_fragment') {
     for (let i = 0; i < 4; i += 1) {
       const shard = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_dustShard_${i}`, { height: .62 - i * .06, diameterTop: .06, diameterBottom: .28 - i * .03, tessellation: 5 }, scene);
@@ -10795,7 +11042,8 @@ function villageClockHour(now = new Date()) {
 // (Chumpz Cove 20: from the real hour to 21:36, unless it is night already). Seen live the hour eases there over
 // TALE_DAWN_MS; loaded at that step it is already there. window.setTaleDawn(true / false) previews.
 const QUEST_CLOCKS = [
-  { village:'cute-creepy', quest:'moon-tales-20', step:'dawn-told', to:6.6 }
+  { village:'cute-creepy', quest:'moon-tales-20', step:'dawn-told', to:6.6 },
+  { village:'chumpz', quest:'chumpz-cove-20', step:'dance', to:21.6, skip:h => h >= 20 || h < 5 }
 ];
 const TaleDawn = { since:null, preview:undefined, iv:null };
 const TALE_DAWN_MS = 12000;
