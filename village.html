@@ -3037,10 +3037,190 @@ const CHUMPZ_COVE_WIRING = {
     ] }
 };
 
+// SAINTS OF LA (Saints LA): side quests round the block before the Block Party, ids saints-la-NN (chapter 'Saints of LA'),
+// wired in SAINTS_LA_WIRING like the Moon Tales. The Greeter's City Tour (01) opens everyone's first quest: the Greeter
+// (08, 10, 13, 14, 17), the Mechanic (02, 04, 09, 11), the Court Regular (03, 16, 18), the Librarian (05, 15, 19), the
+// Shopkeeper (07, 12), the DJ (06, then the Block Party, 20).
+function makeCityQuest(index, title, giver, description, objectives, rewards, journalEntry, prerequisites) {
+  return { questId:`saints-la-${String(index).padStart(2, '0')}`, title, chapter:'Saints of LA', village:'Saints LA', primaryNpc:giver, description, objectives, rewards, journalEntry, prerequisites:prerequisites || ['hub-tutorial-complete'], type:'side' };
+}
+const SAINTS_LA_QUESTS = [
+  makeCityQuest(1, 'City Tour', 'Saints Greeter', 'New on the block? The Greeter shows you round Saints, Los Angeles.', ['Visit the court, the library, the custom shop and the arena.', 'Tell the Greeter what you think.'], ['+40 progress'], 'The court where everybody plays, the library where everybody learns, the shop where the cars shine, the arena where everybody yells.'),
+  makeCityQuest(2, 'Spare Parts', 'Shop Mechanic', 'The purple lowrider bounced so hard three parts rolled off round the block.', ['Find the hubcap, the spring and the chain wheel.', 'Bring them to the Mechanic.'], ['+40 progress'], 'A chrome hubcap, a hydraulic spring and a gold chain wheel, back on the purple lowrider.', ['saints-la-01']),
+  makeCityQuest(3, 'Court Challenge', 'Court Regular', 'You want next on the court? First you run it.', ['Run all four corners of the court in fourteen seconds.', 'Talk to the Court Regular.'], ['+40 progress'], 'Four corners in fourteen seconds. You got next.', ['saints-la-01']),
+  makeCityQuest(4, 'Lowrider Show', 'Shop Mechanic', 'The lowrider show is coming, and the cars need to shine.', ['Polish the three lowriders.', 'Tell the Mechanic.'], ['+45 progress'], 'Three lowriders polished until you could see the halo in the hoods.', ['saints-la-02']),
+  makeCityQuest(5, 'Library Card', 'Librarian', 'Everything in the library is free, starting with a card.', ['Sign up for a card at the round desk in the library.', 'Read the story of the block on the bench by the court.', 'Talk to the Librarian.'], ['+40 progress'], 'A library card that never expires, and the story of a block that used to be an empty lot.', ['saints-la-01']),
+  makeCityQuest(6, 'Arcade Night', 'DJ', 'Arcade night in the game hall, and the lanes need a champion.', ['Bowl a strike in the game hall.', "Pick a record from the DJ's crate.", 'Talk to the DJ.'], ['+40 progress'], 'A strike on the lanes and a record with a bounce in it.', ['saints-la-01']),
+  makeCityQuest(7, 'Market Run', 'Shopkeeper', 'The market has three boxes going out and the Shopkeeper has one trip left in her legs.', ['Take the crate from the market table.', 'Drop the boxes at the HQ food bank, the custom shop and the apartments.', 'Tell the Shopkeeper.'], ['+45 progress'], 'Three boxes delivered round the block, and nothing bruised.', ['saints-la-01']),
+  makeCityQuest(8, 'Apartment Delivery', 'Saints Greeter', "Grandma Lupe's package has to go up to the roof, and the inside stairs are being painted.", ['Climb the apartments by the fire escape and deliver the package on the roof.', 'Tell the Greeter.'], ['+45 progress'], 'A package delivered by fire escape, and a tomato from Grandma Lupe: the highest honour on the block.', ['saints-la-01']),
+  makeCityQuest(9, 'Garage Tune-up', 'Shop Mechanic', 'The show cars shine; now they need to purr.', ['Take the wrench from the tool chest in the custom shop.', 'Tune the engine on the stand.', 'Tell the Mechanic.'], ['+45 progress'], 'One wrench, one engine, and the sound of a happy lowrider.', ['saints-la-04']),
+  makeCityQuest(10, 'Mural Hunt', 'Saints Greeter', 'Kids from the block painted angels and wings all over the neighbourhood one summer.', ['Find the murals on the library, the game hall, the custom shop and the arena.', 'Tell the Greeter.'], ['+45 progress'], 'Four murals, four summers of paint, and the kids who painted them run the block now.', ['saints-la-08']),
+  makeCityQuest(11, 'Streetlight Repair', 'Shop Mechanic', 'Three streetlights on the block keep flickering, and a party needs light.', ['Fix the three flickering streetlights.', 'Tell the Mechanic.'], ['+45 progress'], 'No more flicker: the block glows from the street to the HQ steps.', ['saints-la-09']),
+  makeCityQuest(12, 'Halo Pins', 'Shopkeeper', 'The wind took two brand new halo pins off the market table.', ['Find the two halo pins: one on the HQ roof, one by the arena.', 'Bring them to the Shopkeeper.'], ['+45 progress'], 'Two halo pins found, and one of them pinned over your heart.', ['saints-la-07']),
+  makeCityQuest(13, 'Palm Row', 'Saints Greeter', 'The palms on the west side are thirsty.', ['Water the five palms along the west side of the block.', 'Tell the Greeter.'], ['+40 progress'], 'Five palms watered slowly, the way palms like it.', ['saints-la-10']),
+  makeCityQuest(14, 'Hills Hike', 'Saints Greeter', 'Every Saint walks up to the sign on the hills once.', ['Follow the trail flags from the north street up to the hills sign.', 'Take a picture at the sign.', 'Show the Greeter.'], ['+50 progress'], 'A walk up the hills and a picture at the sign, with the whole block below like a little halo.', ['saints-la-13']),
+  makeCityQuest(15, 'Tower View', 'Librarian', 'The Librarian is counting the windows of the towers on the hills, for a book.', ['Climb to the HQ roof and count the tower windows.', 'Tell the Librarian.'], ['+45 progress'], 'Four hundred and twelve windows, counted from the HQ roof.', ['saints-la-05']),
+  makeCityQuest(16, 'Block Patrol', 'Court Regular', 'Before every big game the Court Regular walks the block.', ['Walk the sidewalks all the way round the block, corner to corner.', 'Talk to the Court Regular.'], ['+40 progress'], 'One walk round the block, every corner, and a quiet street the whole way.', ['saints-la-03']),
+  makeCityQuest(17, 'HQ Briefing', 'Saints Greeter', 'The plan for the block party is on the briefing table in the HQ.', ['Read the plan on the briefing table.', 'Look out over the city from the big window.', 'Talk to the Greeter.'], ['+45 progress'], 'The food bank, the gym, the study rooms, the court: everything the block party is for.', ['saints-la-14', 'saints-la-12']),
+  makeCityQuest(18, 'Free Throw Streak', 'Court Regular', 'Five in a row from the line, no misses: the rule of the court.', ['Shoot five free throws in a row from the east line.', 'Talk to the Court Regular.'], ['+45 progress'], 'Five free throws in a row, and a spot on the Court Regular\'s team.', ['saints-la-16']),
+  makeCityQuest(19, 'Crosswalk Safety', 'Librarian', 'The kids walk to the library every day, and the crosswalks are fading.', ['Repaint the crosswalks at the four corners of the block.', 'Tell the Librarian.'], ['+45 progress'], 'Four crosswalks with bright white stripes again, for the kids and the drivers.', ['saints-la-15']),
+  Object.assign(makeCityQuest(20, 'Block Party', 'DJ', 'The cars shine, the lights work, the court is ready and the whole block knows the plan.', ['Switch on the party lights over the court.', 'Dance on the court with the whole block.', 'Talk to the DJ.'], ['+80 progress', 'Badge: Saint of the Block'], 'The lights came on, the sun took the hint, and the whole block danced on the court until the stars came out.', ['saints-la-06', 'saints-la-11', 'saints-la-12', 'saints-la-17', 'saints-la-18', 'saints-la-19']), { badgeRewardId:'saints-la-party' })
+];
+const SAINTS_LA_WIRING = {
+  1: { giver:'saints-greeter',
+    offer:['Welcome to Saints, Los Angeles. City of wings. You are new, so let me show you the block.', 'Four stops: the court, the library, the custom shop and the arena. Walk past all four, then come back and tell me what you think.'],
+    steps:[
+      { id:'tour', objective:'Visit the court, the library, the custom shop and the arena.', objectiveType:'useQuestSpot', targetObjectId:'sl-tour', count:4, villageId:'saints-la' },
+      { id:'tour-done', objective:'Tell the Greeter what you think.', objectiveType:'talkToNpc', targetNpcId:'saints-greeter', villageId:'saints-la',
+        say:['So? The court where everybody plays, the library where everybody learns, the shop where the cars shine, the arena where everybody yells.', 'Everybody eats here, everybody trains, everybody learns. Now you are part of everybody. Go and meet the block.'] }
+    ] },
+  2: { giver:'saints-mechanic',
+    offer:['Hey, you, with the hands. The purple lowrider is missing three parts: a chrome hubcap, a hydraulic spring and a gold chain wheel.', 'They rolled off somewhere round the block when she bounced too hard. Bring them back to the shop.'],
+    steps:[
+      { id:'find-parts', objective:'Find the hubcap, the spring and the chain wheel round the block.', objectiveType:'collectCollectible', targetObjectId:'sl-spare-part', count:3, villageId:'saints-la' },
+      { id:'parts-in', objective:'Bring the parts to the Mechanic.', objectiveType:'talkToNpc', targetNpcId:'saints-mechanic', villageId:'saints-la',
+        say:['All three! Hubcap, spring, chain wheel. She will bounce like new.', 'You have a good eye for chrome. Come back, I will have more work.'] }
+    ] },
+  3: { giver:'saints-hooper',
+    offer:['You want next? Not so fast. First you run the court.', 'Every corner of the court in fourteen seconds, starting at the cone by the south-west corner. Hold R and go.'],
+    steps:[
+      { id:'run-court', objective:'Run all four corners of the court in fourteen seconds.', objectiveType:'useQuestSpot', targetObjectId:'sl-court-run', villageId:'saints-la' },
+      { id:'court-done', objective:'Talk to the Court Regular.', objectiveType:'talkToNpc', targetNpcId:'saints-hooper', villageId:'saints-la',
+        say:['Fourteen seconds and you are not even breathing hard. Okay. You got next.', 'Winners stay on. We will see about that.'] }
+    ] },
+  4: { giver:'saints-mechanic',
+    offer:['The lowrider show is coming to the block, and the cars need to shine.', 'Polish all three: the purple one on the lift, the gold one in the middle and the blue one. Do not breathe on the paint.'],
+    steps:[
+      { id:'polish', objective:'Polish the three lowriders.', objectiveType:'useQuestSpot', targetObjectId:'sl-polish', count:3, villageId:'saints-la' },
+      { id:'polished', objective:'Tell the Mechanic the cars shine.', objectiveType:'talkToNpc', targetNpcId:'saints-mechanic', villageId:'saints-la',
+        say:['Look at that shine. You can see the halo in the hoods.', 'The paint is ready. Now the engines. Come back for a tune-up.'] }
+    ] },
+  5: { giver:'saints-librarian',
+    offer:['Welcome to the library. Everything here is free except quiet, and we do not charge for that either.', 'First, a library card: sign up at the round desk inside. Then borrow the story of the block and read it on the bench by the court.'],
+    steps:[
+      { id:'card', objective:'Sign up for a library card at the round desk in the library.', objectiveType:'interactInteriorLink', targetInteriorId:'sl_library', targetObjectId:'hotspot_sl_library_card', villageId:'saints-la' },
+      { id:'read', objective:'Read the story of the block on the bench by the court.', objectiveType:'useQuestSpot', targetObjectId:'sl-read', villageId:'saints-la' },
+      { id:'read-done', objective:'Talk to the Librarian.', objectiveType:'talkToNpc', targetNpcId:'saints-librarian', villageId:'saints-la',
+        say:['You read it all? The block was an empty lot before the Saints. Now look at it.', 'Keep the card. It never expires. Neither does curiosity.'] }
+    ] },
+  6: { giver:'saints-dj',
+    offer:['Arcade night in the game hall! I am on the decks, but my lanes need a champion.', 'Bowl a strike in the back room, then pick a record from my crate by the booth. Something with a bounce.'],
+    steps:[
+      { id:'strike', objective:'Bowl a strike on the lanes in the game hall.', objectiveType:'interactInteriorLink', targetInteriorId:'sl_block_party', targetObjectId:'hotspot_sl_block_party_strike', villageId:'saints-la' },
+      { id:'record', objective:"Pick a record from the DJ's crate.", objectiveType:'interactInteriorLink', targetInteriorId:'sl_block_party', targetObjectId:'hotspot_sl_block_party_crate', villageId:'saints-la' },
+      { id:'arcade-done', objective:'Talk to the DJ.', objectiveType:'talkToNpc', targetNpcId:'saints-dj', villageId:'saints-la',
+        say:['A strike AND good taste in records? You are dangerous.', 'Save that energy. When the block party comes, I want you on the dance floor.'] }
+    ] },
+  7: { giver:'saints-shopkeeper',
+    offer:['The market has three boxes going out and my legs have one trip left in them.', 'Take the crate from my table, then drop a box at the HQ food bank, at the custom shop and at the apartments.'],
+    steps:[
+      { id:'crate', objective:'Take the crate from the market table.', objectiveType:'useQuestSpot', targetObjectId:'sl-crate', villageId:'saints-la' },
+      { id:'deliver', objective:'Drop the boxes at the HQ food bank, the custom shop and the apartments.', objectiveType:'useQuestSpot', targetObjectId:'sl-deliver', count:3, villageId:'saints-la' },
+      { id:'run-done', objective:'Tell the Shopkeeper.', objectiveType:'talkToNpc', targetNpcId:'saints-shopkeeper', villageId:'saints-la',
+        say:['All three, and nothing bruised. You are hired. Unpaid, but hired.', 'The food bank says thank you. They always do. That is why we keep doing it.'] }
+    ] },
+  8: { giver:'saints-greeter',
+    offer:['Grandma Lupe on the top floor of the apartments ordered a package, and the stairs inside are being painted.', 'Take the fire escape on the east end of the apartments all the way up to the roof. She keeps her tomatoes up there.'],
+    steps:[
+      { id:'deliver-roof', objective:'Climb the apartments by the fire escape and deliver the package on the roof.', objectiveType:'useQuestSpot', targetObjectId:'sl-roof-delivery', villageId:'saints-la' },
+      { id:'delivered', objective:'Tell the Greeter.', objectiveType:'talkToNpc', targetNpcId:'saints-greeter', villageId:'saints-la',
+        say:['She gave you a tomato? She never gives anybody a tomato.', 'The roof is the best view on the block. Lupe knows.'] }
+    ] },
+  9: { giver:'saints-mechanic',
+    offer:['The show cars shine; now they need to purr.', 'In the back room of the custom shop: take the wrench from the tool chest, then tune the engine on the stand.'],
+    steps:[
+      { id:'wrench', objective:'Take the wrench from the tool chest in the custom shop.', objectiveType:'interactInteriorLink', targetInteriorId:'sl_custom_shop', targetObjectId:'hotspot_sl_custom_shop_tools', villageId:'saints-la' },
+      { id:'engine', objective:'Tune the engine on the stand.', objectiveType:'interactInteriorLink', targetInteriorId:'sl_custom_shop', targetObjectId:'hotspot_sl_custom_shop_engine', villageId:'saints-la' },
+      { id:'tuned', objective:'Tell the Mechanic.', objectiveType:'talkToNpc', targetNpcId:'saints-mechanic', villageId:'saints-la',
+        say:['Hear that? Purring. That is the sound of a happy lowrider.', 'One more job and the block is ready: the streetlights.'] }
+    ] },
+  10: { giver:'saints-greeter',
+    offer:['Kids from the block painted angels and wings all over the neighbourhood one summer.', 'Find four of them: on the library, on the game hall, on the front of the custom shop and on the arena. Every one is different.'],
+    steps:[
+      { id:'murals', objective:'Find the murals on the library, the game hall, the custom shop and the arena.', objectiveType:'useQuestSpot', targetObjectId:'sl-mural', count:4, villageId:'saints-la' },
+      { id:'murals-done', objective:'Tell the Greeter.', objectiveType:'talkToNpc', targetNpcId:'saints-greeter', villageId:'saints-la',
+        say:['You found them all. The angel on the library is my favourite. Do not tell the others.', 'The kids who painted them are grown now. Some of them run the block.'] }
+    ] },
+  11: { giver:'saints-mechanic',
+    offer:['Three streetlights on the block keep flickering, and a party needs light.', 'The two by the street at the front and the one by the HQ steps. Here, take my tester.'],
+    steps:[
+      { id:'fix-lights', objective:'Fix the three flickering streetlights.', objectiveType:'useQuestSpot', targetObjectId:'sl-light', count:3, villageId:'saints-la' },
+      { id:'lights-done', objective:'Tell the Mechanic.', objectiveType:'talkToNpc', targetNpcId:'saints-mechanic', villageId:'saints-la',
+        say:['No more flicker. The block glows.', 'Cars, lights, and you even fixed my mood. Go and see the DJ. Something big is coming.'] }
+    ] },
+  12: { giver:'saints-shopkeeper',
+    offer:['Every Saint gets a halo pin when they join the block. I made two new ones, and the wind took them right off my table.', 'One blew up onto the HQ roof, the other over to the corner by the arena. Bring them back and one is yours.'],
+    steps:[
+      { id:'find-pins', objective:'Find the two halo pins: one on the HQ roof, one by the arena.', objectiveType:'collectCollectible', targetObjectId:'sl-halo-pin', count:2, villageId:'saints-la' },
+      { id:'pins-in', objective:'Bring the pins to the Shopkeeper.', objectiveType:'talkToNpc', targetNpcId:'saints-shopkeeper', villageId:'saints-la',
+        say:['Both pins! This one is yours. Wear it over your heart.', 'Now you are a Saint. Officially. Well. As officially as we get round here.'] }
+    ] },
+  13: { giver:'saints-greeter',
+    offer:['The palms on the west side are thirsty. It has not rained since forever.', 'Water the five palms along the west side of the block. Slowly. Palms like to take their time.'],
+    steps:[
+      { id:'water', objective:'Water the five palms along the west side of the block.', objectiveType:'useQuestSpot', targetObjectId:'sl-palm', count:5, villageId:'saints-la' },
+      { id:'watered', objective:'Tell the Greeter.', objectiveType:'talkToNpc', targetNpcId:'saints-greeter', villageId:'saints-la',
+        say:['The palms say thank you. Well. They rustled. Same thing.', 'Now, have you been up to the sign on the hills?'] }
+    ] },
+  14: { giver:'saints-greeter',
+    offer:['Have you seen the sign on the hills? Every Saint walks up there once.', 'Start at the north street behind the HQ and follow the trail flags all the way up. Take a picture at the sign and bring it back.'],
+    steps:[
+      { id:'hike', objective:'Follow the trail flags from the north street up to the hills sign.', objectiveType:'useQuestSpot', targetObjectId:'sl-hike', villageId:'saints-la' },
+      { id:'photo', objective:'Take a picture at the hills sign.', objectiveType:'useQuestSpot', targetObjectId:'sl-photo', villageId:'saints-la' },
+      { id:'hike-done', objective:'Show the Greeter your picture.', objectiveType:'talkToNpc', targetNpcId:'saints-greeter', villageId:'saints-la',
+        say:['That is a good picture. You can see the whole block from up there, our little halo of a neighbourhood.', 'One more thing before the party: the briefing in the HQ.'] }
+    ] },
+  15: { giver:'saints-librarian',
+    offer:['The towers on the hills behind the city: I have been trying to count their windows for my book.', 'The best view is from the HQ roof. Climb the fire escape on the west side and count them for me.'],
+    steps:[
+      { id:'count', objective:'Climb to the HQ roof and count the tower windows.', objectiveType:'useQuestSpot', targetObjectId:'sl-tower-view', villageId:'saints-la' },
+      { id:'counted', objective:'Tell the Librarian.', objectiveType:'talkToNpc', targetNpcId:'saints-librarian', villageId:'saints-la',
+        say:['Four hundred and twelve windows? Are you sure? I will write four hundred and twelve.', 'The view from up there is in no book. You have to climb for it.'] }
+    ] },
+  16: { giver:'saints-hooper',
+    offer:['Before every big game, I walk the block. Keeps the head clear.', 'Walk it with me. All the way round the sidewalks, corner to corner. Start at the cone by the gate.'],
+    steps:[
+      { id:'patrol', objective:'Walk the sidewalks all the way round the block.', objectiveType:'useQuestSpot', targetObjectId:'sl-patrol', villageId:'saints-la' },
+      { id:'patrol-done', objective:'Talk to the Court Regular.', objectiveType:'talkToNpc', targetNpcId:'saints-hooper', villageId:'saints-la',
+        say:['Good walk. Quiet block. That is how we like it.', 'Now: free throws. Five in a row.'] }
+    ] },
+  17: { giver:'saints-greeter',
+    offer:['The block party plan is on the briefing table in the HQ.', 'Read it, then look out over the city from the big window. Then you will know what we are throwing a party for.'],
+    steps:[
+      { id:'plan', objective:'Read the block party plan on the briefing table in the HQ.', objectiveType:'interactInteriorLink', targetInteriorId:'sl_hq', targetObjectId:'hotspot_sl_hq_plan', villageId:'saints-la' },
+      { id:'window', objective:'Look out over the city from the big window.', objectiveType:'interactInteriorLink', targetInteriorId:'sl_hq', targetObjectId:'hotspot_sl_hq_skyline', villageId:'saints-la' },
+      { id:'briefed', objective:'Talk to the Greeter.', objectiveType:'talkToNpc', targetNpcId:'saints-greeter', villageId:'saints-la',
+        say:['The food bank, the gym, the study rooms, the court, the shop. All of it from nothing. That is what the party is for.', 'The DJ is ready when you are.'] }
+    ] },
+  18: { giver:'saints-hooper',
+    offer:['Five in a row from the line. No misses. That is the rule of the court.', 'Stand on the free-throw line at the east hoop and shoot until you have five. Stay still; shooters do not wobble.'],
+    steps:[
+      { id:'free-throws', objective:'Shoot five free throws in a row from the east line.', objectiveType:'useQuestSpot', targetObjectId:'sl-free-throw', villageId:'saints-la' },
+      { id:'streak-done', objective:'Talk to the Court Regular.', objectiveType:'talkToNpc', targetNpcId:'saints-hooper', villageId:'saints-la',
+        say:['FIVE in a row? Okay. Okay. You are on my team for the block party game.'] }
+    ] },
+  19: { giver:'saints-librarian',
+    offer:['The kids walk to the library every day, and the crosswalks at the corners of the block are fading.', 'Check all four corners of the block and repaint the stripes.'],
+    steps:[
+      { id:'crosswalks', objective:'Repaint the crosswalks at the four corners of the block.', objectiveType:'useQuestSpot', targetObjectId:'sl-crosswalk', count:4, villageId:'saints-la' },
+      { id:'crosswalks-done', objective:'Tell the Librarian.', objectiveType:'talkToNpc', targetNpcId:'saints-librarian', villageId:'saints-la',
+        say:['Bright white stripes again. The kids will see them, and so will the drivers.', 'Safety is the most boring thing in the world. Until the day it is not.'] }
+    ] },
+  20: { giver:'saints-dj',
+    offer:['The cars shine, the lights work, the court is ready and the whole block knows the plan.', 'Switch on the party lights over the court, and the sun will take the hint. Then we dance.'],
+    steps:[
+      { id:'party-lights', objective:'Switch on the party lights over the court.', objectiveType:'useQuestSpot', targetObjectId:'sl-party-lights', villageId:'saints-la' },
+      { id:'dance', objective:'Dance on the court with the whole block.', objectiveType:'useQuestSpot', targetObjectId:'sl-party-dance', villageId:'saints-la' },
+      { id:'party-done', objective:'Talk to the DJ.', objectiveType:'talkToNpc', targetNpcId:'saints-dj', villageId:'saints-la',
+        say:['That was the best block party since the block was a parking lot.', 'Everybody ate, everybody danced, everybody learned at least one new move. You are a Saint of the block now.'] }
+    ] }
+};
+
 // Friend-village quest series: side quests with a chapter of their own, ids <prefix>-NN, wired like BOOK1_WIRING.side.
 const QUEST_SERIES = [
   { prefix:'moon-tales', kind:'Moon Tale', done:'Moon Tale Complete', quests:MOON_TALES_QUESTS, wiring:MOON_TALES_WIRING },
-  { prefix:'chumpz-cove', kind:'Cove quest', done:'Cove Quest Complete', quests:CHUMPZ_COVE_QUESTS, wiring:CHUMPZ_COVE_WIRING }
+  { prefix:'chumpz-cove', kind:'Cove quest', done:'Cove Quest Complete', quests:CHUMPZ_COVE_QUESTS, wiring:CHUMPZ_COVE_WIRING },
+  { prefix:'saints-la', kind:'City quest', done:'City Quest Complete', quests:SAINTS_LA_QUESTS, wiring:SAINTS_LA_WIRING }
 ];
 function questSeriesOf(questId) {
   const m = /^([a-z-]+)-(\d+)$/.exec(String(questId || '')), series = m && QUEST_SERIES.find(x => x.prefix === m[1]);
@@ -3426,7 +3606,7 @@ const MOON_TALE_QUEST_MOONS = { 1:['harvest', 'tell-mamoru'], 2:'harvest', 3:'ha
 // NPCs that move with a quest: once a quest reaches a step (or is done), the NPC lives there (Ostara on her Moon Ledge).
 // whileActive places hold only while their quest runs (the Coven round the feast table at the Harvest Festival); still =
 // no patrol or wander there (Mamoru keeping watch at the gate). Without a place the NPC stands at its own layout spot.
-const FESTIVAL = { quest:'moon-tales-20', whileActive:true }, BEACH_PARTY = { quest:'chumpz-cove-20', whileActive:true, still:true };
+const FESTIVAL = { quest:'moon-tales-20', whileActive:true }, BEACH_PARTY = { quest:'chumpz-cove-20', whileActive:true, still:true }, BLOCK_PARTY = { quest:'saints-la-20', whileActive:true, still:true };
 const QUEST_NPC_PLACES = {
   'cc-ostara': [{ quest:'moon-tales-13', step:'meet-ostara', x:-22.6, z:70.2, ry:0 }, { ...FESTIVAL, x:1.25, z:6.75, ry:Math.PI }],
   'cc-flower-moon': [{ ...FESTIVAL, x:-1.25, z:6.75, ry:Math.PI }],
@@ -3439,7 +3619,14 @@ const QUEST_NPC_PLACES = {
   'chumpz-villager': [{ ...BEACH_PARTY, x:-41.6, z:-33.4, ry:1.2 }],
   'chumpz-dealer': [{ ...BEACH_PARTY, x:-34.6, z:-29.9, ry:-2.12 }],
   'chumpz-racer': [{ ...BEACH_PARTY, x:-34.4, z:-35.3, ry:-.83 }],
-  'chumpz-barnacle': [{ ...BEACH_PARTY, x:-41.2, z:-36.1, ry:.66 }]
+  'chumpz-barnacle': [{ ...BEACH_PARTY, x:-41.2, z:-36.1, ry:.66 }],
+  // the Block Party (Saints of LA 20): the DJ behind the decks on the north side of the court, the block round the dance
+  'saints-dj': [{ ...BLOCK_PARTY, x:0, z:18.4, ry:Math.PI }],
+  'saints-greeter': [{ ...BLOCK_PARTY, x:8.5, z:8, ry:-1.99 }],
+  'saints-mechanic': [{ ...BLOCK_PARTY, x:8, z:2.5, ry:-.85 }],
+  'saints-hooper': [{ ...BLOCK_PARTY, x:0, z:2, ry:.79 }],
+  'saints-librarian': [{ ...BLOCK_PARTY, x:-.5, z:9, ry:2.16 }],
+  'saints-shopkeeper': [{ ...BLOCK_PARTY, x:4, z:11, ry:Math.PI }]
 };
 function questNpcPlace(places) {
   const reached = p => SideQuestState.active?.[p.quest] && (!p.step || questStepReached(p.quest, SideQuestState.active[p.quest].step, p.step));
@@ -3583,6 +3770,25 @@ const MoonTaleSounds = (() => {
     whistle: { fx:t0 => { glide(2250, 2350, t0, .22, .16); glide(2650, 2600, t0 + .28, .5, .16); } },
     flag: { fx:t0 => { tone(N.G5, t0, .35, .2, PAN); tone(N.C6, t0 + .08, .4, .16, PAN); } },
     crackle: { fx:t0 => { noise(t0, 8, .1, 'lowpass', 300); for (let k = 0; k < 46; k++) noise(t0 + Math.random() * 7.6, .025 + Math.random() * .03, .08 + Math.random() * .2, 'bandpass', 1200 + Math.random() * 2800, 1.5); } },
+    // Saints of LA: a polish squeak, a bowling strike, a record scratch, a streetlight's electric zap, water poured on a palm,
+    // a camera shutter, five free throws (bounce, bounce, swish), and the block party funk
+    polish: { fx:t0 => { for (let k = 0; k < 4; k++) { glide(k % 2 ? 2400 : 1700, k % 2 ? 1600 : 2500, t0 + k * .28, .16, .07); noise(t0 + k * .28, .2, .05, 'bandpass', 3200, 2); } note(N.E6, t0 + 1.25, 1.2, .12); } },
+    strike: { fx:t0 => { noise(t0, 1.3, .2, 'lowpass', 260); for (let k = 0; k < 10; k++) noise(t0 + 1.25 + Math.random() * .25, .08, .3, 'bandpass', 1300 + Math.random() * 1600, 3); noise(t0 + 1.25, .5, .18, 'bandpass', 900, .8); [['C5', 1.8], ['E5', 1.92], ['G5', 2.04], ['C6', 2.2]].forEach(([n, d]) => tone(N[n], t0 + d, .7, .14, PAN)); } },
+    scratch: { fx:t0 => { for (const [d, f0, f1] of [[0, 300, 1400], [.16, 1400, 260], [.36, 320, 1100], [.5, 1100, 300]]) { glide(f0, f1, t0 + d, .15, .12, 'sawtooth'); noise(t0 + d, .15, .1, 'bandpass', (f0 + f1) / 2, 1.5); } } },
+    zap: { fx:t0 => { glide(118, 122, t0, .7, .06, 'sawtooth'); for (let k = 0; k < 9; k++) noise(t0 + Math.random() * .7, .03, .18, 'highpass', 3500); noise(t0 + .78, .05, .3, 'bandpass', 2000, 2); tone(N.C6, t0 + .85, .6, .1, [[1, 1, 1]]); } },
+    water: { fx:t0 => { noise(t0, 2.4, .1, 'bandpass', 950, 1); for (let k = 0; k < 18; k++) noise(t0 + .2 + Math.random() * 2, .04, .06, 'bandpass', 1200 + Math.random() * 1400, 4); } },
+    camera: { fx:t0 => { noise(t0, .03, .4, 'highpass', 4000); noise(t0 + .07, .05, .3, 'bandpass', 1600, 2); glide(1300, 1900, t0 + .14, .12, .06); } },
+    hoops: { fx:t0 => { for (let r = 0; r < 5; r++) { const t = t0 + r * 2; for (const d of [0, .38]) { tone(92, t + d, .22, .3, [[1, 1, 1]]); noise(t + d, .08, .2, 'lowpass', 500); } noise(t + 1.1, .4, .14, 'highpass', 2600); } } },
+    funk: { fx:t0 => { // 8 bars at 0.25 s an eighth: a slap bassline, brass stabs on the off-beats, hi-hats, a snare on 2 and 4
+      const E = .25, bass = ['C3', 'C3', 'G3', 'A3', 'F3', 'F3', 'G3', 'G3'], riff = [0, 3, 4, 6];
+      for (let b = 0; b < 8; b++) {
+        const root = N[bass[b]] || N.C3;
+        for (const k of riff) tone(root * (k === 6 ? 1.5 : 1), t0 + (b * 8 + k) * E, .32, .24, PLUCK);
+        for (const k of [2, 6]) noise(t0 + (b * 8 + k) * E, .12, .14, 'bandpass', 1800, 1);
+        for (let k = 0; k < 8; k++) noise(t0 + (b * 8 + k) * E, .04, k % 2 ? .05 : .03, 'highpass', 7000);
+        if (b % 2) for (const [k, n] of [[3, 'E5'], [5, 'G5'], [7, 'A5']]) tone(N[n], t0 + (b * 8 + k) * E, .22, .12, [[1, 1, 1], [2, .5, .7], [3, .3, .5]]);
+      }
+    } },
     // the Beach Party: a steel-pan calypso (8 bars of eighths at 0.26 s), bass on the beats, a shaker on every eighth
     party: { fx:t0 => {
       const E = .26, bars = ['E5 . G5 E5 . C5 D5 E5', 'F5 . A5 F5 . D5 E5 F5', 'G5 G5 A5 G5 F5 E5 D5 C5', 'D5 . . B4 C5 . . .', 'E5 . G5 E5 . C5 D5 E5', 'F5 . A5 F5 . D5 E5 F5', 'G5 A5 G5 F5 E5 D5 E5 F5', 'G4 B4 D5 F5 E5 . C5 .'];
@@ -3794,6 +4000,7 @@ const DEFAULT_BADGE_DEFINITIONS = [
   { badgeId:'book1-echo-witness', name:'Echo Witness', category:'story', rarity:'Uncommon', imageUrl:'/assets/badges/book1-echo-witness.png', requirementType:'quest', requirementValue:'book1-main-20', requirementText:'Complete Book 1 Chapter 2', description:'You heard the old tunnels answer back.' },
   { badgeId:'book1-faction-envoy', name:'Faction Envoy', category:'story', rarity:'Rare', imageUrl:'/assets/badges/book1-faction-envoy.png', requirementType:'quest', requirementValue:'book1-main-30', requirementText:'Complete Book 1 Chapter 3', description:'You carried truth between divided villages.' },
   { badgeId:'book1-storm-watcher', name:'Storm Watcher', category:'story', rarity:'Epic', imageUrl:'/assets/badges/book1-storm-watcher.png', requirementType:'quest', requirementValue:'book1-main-40', requirementText:'Complete Book 1 Chapter 4', description:'You stood with the colony before the awakening.' },
+  { badgeId:'saints-la-party', name:'Saint of the Block', category:'story', rarity:'Legendary', imageUrl:'', emblem:null, requirementType:'quest', requirementValue:'saints-la-20', requirementText:'Dance at the Saints Block Party', description:'You helped the whole block get ready and danced on the court until the stars came out.' },
   { badgeId:'chumpz-cove-party', name:'Life of the Party', category:'story', rarity:'Legendary', imageUrl:'', emblem:null, requirementType:'quest', requirementValue:'chumpz-cove-20', requirementText:'Dance at the Chumpz Cove Beach Party', description:'You got the whole cove ready for the Beach Party and danced until the stars came out.' },
   { badgeId:'moon-tales-coven', name:'Mystic Moon Coven', category:'story', rarity:'Legendary', imageUrl:'', emblem:null, requirementType:'quest', requirementValue:'moon-tales-20', requirementText:'Keep watch with Mamoru at the Harvest Festival', description:'You kept the Coven\'s joy safe until the first blush of dawn.' },
   { badgeId:'book1-colony-awake', name:'Colony Awake', category:'story', rarity:'Legendary', imageUrl:'/assets/badges/book1-colony-awake.png', requirementType:'quest', requirementValue:'book1-main-50', requirementText:'Complete Book 1', description:'You helped the villages remember they are one colony.' },
@@ -3815,8 +4022,8 @@ const DEFAULT_BADGE_DEFINITIONS = [
 ];
 // Every collectible placed in the village layouts (Hub + 14 villages; rooms have none): the Relic Keeper badge asks for
 // all of them. Update it whenever collectibles are added or removed (the friend-village quests will bring their items).
-const COLLECTIBLE_TOTAL = 92;
-// The other 46 of the 73 badges: a crest and an all-secrets badge per village, secret milestones, mini ant
+const COLLECTIBLE_TOTAL = 97;
+// The other 46 of the 75 badges: a crest and an all-secrets badge per village, secret milestones, mini ant
 // spotters, chest and collector badges. All award themselves (checkAutoBadges).
 (() => {
   const FACTION_ART = new Set(['ronin','samurai','shogun','bushi','buke','ashigaru','kenshi','yamabushi','sohei','wokou','warrior']);
@@ -4000,7 +4207,10 @@ const COLLECTIBLE_TYPES = {
   moon_seed: { label:'Moon Seed', color:'#e9a6d0', accent:'#fff2b8' },
   // Chumpz Cove: Big Chain's bar tabs washed up in bottles, lucky shells for the banana well
   message_bottle: { label:'Message in a Bottle', color:'#2f8f5a', accent:'#c8ffe0' },
-  cove_shell: { label:'Lucky Shell', color:'#f4c3ae', accent:'#fff0e6' }
+  cove_shell: { label:'Lucky Shell', color:'#f4c3ae', accent:'#fff0e6' },
+  // Saints of LA: the purple lowrider's spare parts, the Shopkeeper's halo pins
+  spare_part: { label:'Spare Part', color:'#c9ced6', accent:'#ffffff' },
+  halo_pin: { label:'Halo Pin', color:'#e8c56a', accent:'#fff3c4' }
 };
 const FRIEND_GIFT_LOOKS = { 'cute-creepy':['#6a32b8', '#ff8a24'], chumpz:['#1fa89c', '#ffd23a'], 'saints-la':['#4b2378', '#e8c56a'] };
 const INTERIOR_TYPES = {
@@ -8952,6 +9162,24 @@ function createCollectible(type = 'flame_shard', position, options = {}) {
     const hinge = BABYLON.MeshBuilder.CreateBox(`collectibleMesh_${root.name}_shellHinge`, { width: .2, height: .07, depth: .06 }, scene);
     hinge.position.y = .9; hinge.material = ribMat; markCollectibleMesh(hinge, .9);
     addSparkle('shellSpark', .22, 1.28, -.08, .06);
+  } else if (type === 'spare_part') {
+    // a chrome hubcap standing on its rim: a dished disc, five spokes, a gold centre cap
+    const chromeMat = makeCollectibleMat(root, 'chromeMat', '#c9ced6', '#7c8696', 1), capMat = makeCollectibleMat(root, 'chromeCapMat', '#e8c56a', '#b88a2a', 1);
+    const disc = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_hubcap`, { height: .06, diameter: .62, tessellation: 22 }, scene);
+    disc.rotation.x = Math.PI / 2; disc.position.y = 1.08; disc.material = chromeMat; markCollectibleMesh(disc, 1.08);
+    for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2, sp = BABYLON.MeshBuilder.CreateBox(`collectibleMesh_${root.name}_spoke_${k}`, { width: .05, height: .26, depth: .05 }, scene);
+      sp.position.set(Math.sin(a) * .14, 1.08 + Math.cos(a) * .14, -.045); sp.rotation.z = -a; sp.material = chromeMat; markCollectibleMesh(sp, sp.position.y); }
+    const cap = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_cap`, { height: .05, diameter: .14, tessellation: 12 }, scene);
+    cap.rotation.x = Math.PI / 2; cap.position.set(0, 1.08, -.06); cap.material = capMat; markCollectibleMesh(cap, 1.08);
+    addSparkle('partSpark', .26, 1.36, -.1, .06);
+  } else if (type === 'halo_pin') {
+    // a gold halo with two little wings
+    const goldMat = makeCollectibleMat(root, 'haloPinMat', '#e8c56a', '#c89a3a', 1), wingMat = makeCollectibleMat(root, 'haloWingMat', '#fbf3df', '#e8dcc0', 1);
+    const ring = BABYLON.MeshBuilder.CreateTorus(`collectibleMesh_${root.name}_halo`, { diameter: .42, thickness: .07, tessellation: 22 }, scene);
+    ring.position.y = 1.12; ring.rotation.x = 1.1; ring.material = goldMat; markCollectibleMesh(ring, 1.12);
+    [-1, 1].forEach((side, i) => { const w = BABYLON.MeshBuilder.CreateSphere(`collectibleMesh_${root.name}_wing_${i}`, { diameter: .3, segments: 8 }, scene);
+      w.position.set(side * .28, 1.1, 0); w.scaling.set(1, .5, .18); w.rotation.z = side * -.45; w.material = wingMat; markCollectibleMesh(w, 1.1); });
+    addSparkle('haloSpark', .2, 1.38, -.08, .06);
   } else if (type === 'red_dust_fragment') {
     for (let i = 0; i < 4; i += 1) {
       const shard = BABYLON.MeshBuilder.CreateCylinder(`collectibleMesh_${root.name}_dustShard_${i}`, { height: .62 - i * .06, diameterTop: .06, diameterBottom: .28 - i * .03, tessellation: 5 }, scene);
@@ -11043,7 +11271,8 @@ function villageClockHour(now = new Date()) {
 // TALE_DAWN_MS; loaded at that step it is already there. window.setTaleDawn(true / false) previews.
 const QUEST_CLOCKS = [
   { village:'cute-creepy', quest:'moon-tales-20', step:'dawn-told', to:6.6 },
-  { village:'chumpz', quest:'chumpz-cove-20', step:'dance', to:21.6, skip:h => h >= 20 || h < 5 }
+  { village:'chumpz', quest:'chumpz-cove-20', step:'dance', to:21.6, skip:h => h >= 20 || h < 5 },
+  { village:'saints-la', quest:'saints-la-20', step:'dance', to:21.6, skip:h => h >= 20 || h < 5 }
 ];
 const TaleDawn = { since:null, preview:undefined, iv:null };
 const TALE_DAWN_MS = 12000;

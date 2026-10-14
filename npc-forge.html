@@ -147,7 +147,7 @@ const VILLAGERS = ['ashigaru', 'ronin', 'samurai', 'shogun', 'bushi', 'warrior',
 const COLLECTIONS = {
   rebel: { label: 'Rebel Ants', species: 'ant', village: '', npcs: Object.fromEntries(VILLAGERS.map((v) => [`${v}_villager`, `${v[0].toUpperCase()}${v.slice(1)} Villager`])) },
   chumpz: { label: 'Chumpz', species: 'ape', village: 'chumpz', prefix: 'chumpz_', npcs: { chumpz_bartender: 'Big Chain', chumpz_fisher: 'Pengu', chumpz_dealer: 'Peely', chumpz_villager: 'Banana Band', chumpz_barnacle: 'Barnacle' } },
-  saints: { label: 'Saints', species: 'human', village: 'saints-la', prefix: 'saints_', npcs: { saints_greeter: 'Saints Greeter', saints_mechanic: 'Shop Mechanic', saints_hooper: 'Court Regular' } }
+  saints: { label: 'Saints', species: 'human', village: 'saints-la', prefix: 'saints_', npcs: { saints_greeter: 'Saints Greeter', saints_mechanic: 'Shop Mechanic', saints_hooper: 'Court Regular', saints_librarian: 'Librarian', saints_dj: 'DJ', saints_shopkeeper: 'Shopkeeper' } }
 };
 const colOf = (n) => COLLECTIONS[n?.collection] || COLLECTIONS.rebel;
 const NPC_CLIPS = ['idle', 'walk', 'run', 'talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping', 'rallying', 'yelling', 'look_around', 'idle_looking'];
