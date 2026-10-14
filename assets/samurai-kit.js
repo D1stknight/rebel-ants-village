@@ -6946,8 +6946,8 @@
   // the dojos built on the Samurai dojo share its base and steps
   for (const t of ['wok_great_dojo', 'yam_great_dojo', 'kenshi_great_dojo', 'sohei_great_dojo', 'buke_great_hall']) decks[t] = samDojoDeck;
   // walk floors and walls made from the geometry (assets/walk-gen.js, tools/gen-kit-walk.mjs -> assets/kit-walk.json): every
-  // placed piece without hand-made decks; cloth, rope, glow, fire, water, smoke and leaves are not solid (stems and trunks are)
-  const WALK_SOFT = /^(rm_)?(leaf|leaves|palm_leaf|banana_leaf|banner|noren|sail|rope|cloth|net$|curtain|glow|window_glow|win_lit|fire|water|smoke|ghost|spirit|neon|emblem|mark_|teal_glow|candle$|mist|shaft)/;
+  // placed piece without hand-made decks; cloth, rope, glow, fire, water, smoke, leaves and bottles are not solid (stems and trunks are)
+  const WALK_SOFT = /^(rm_)?(leaf|leaves|palm_leaf|banana_leaf|bottle_|banner|noren|sail|rope|cloth|net$|curtain|glow|window_glow|win_lit|fire|water|smoke|ghost|spirit|neon|emblem|mark_|teal_glow|candle$|mist|shaft)/;
   const SUBPART_TYPES = new Set(Object.values(SUBPARTS).flat().map(s => s[0]));
   function walkEligible(type) {
     return !!B[type] && !type.startsWith('room_') && !type.includes('__') && !type.startsWith('chz_ape_') && !CHAR[type] && !FLOAT.has(type) && !STAIRS[type] && !decks[type] && !SUBPART_TYPES.has(type);
