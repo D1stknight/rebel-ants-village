@@ -26967,6 +26967,22 @@ function initVillageHud() {
         }
         if (!n || n.isDisposed?.()) return null;
         const p = n.getAbsolutePosition ? n.getAbsolutePosition() : n.position; return { x: p.x, z: p.z };
+      },
+      // the map's picture is taken in noon light (the village's own sun / hemi strength and tint, the sun high), lanterns at
+      // their day glow. Lights upload their values once per render id, so the id is moved on for the picture and after it.
+      mapLight: draw => {
+        const keep = { si: sun.intensity, sd: sun.diffuse.clone(), dir: sun.direction.clone(), hi: hemi.intensity, hd: hemi.diffuse.clone() }, vl = villageRecipe()?.light;
+        sun.intensity = 1.95 * (vl?.sun ?? 1); hemi.intensity = .63 * (vl?.hemi ?? 1);
+        sun.diffuse = new BABYLON.Color3(1, .97, .88); if (vl?.tint) sun.diffuse = sun.diffuse.multiply(new BABYLON.Color3(...vl.tint));
+        sun.direction = new BABYLON.Vector3(-.9, -.45, .3).normalize();
+        hemi.diffuse = new BABYLON.Color3(.52, .7, .98);
+        window.SamuraiKit?.setLightFactor?.(0);
+        scene.incrementRenderId();
+        try { return draw(); } finally {
+          sun.intensity = keep.si; sun.diffuse = keep.sd; sun.direction = keep.dir; hemi.intensity = keep.hi; hemi.diffuse = keep.hd;
+          window.SamuraiKit?.setLightFactor?.(getFakeLightStateFactor());
+          scene.incrementRenderId();
+        }
       }
     });
   } catch (e) { console.warn('Village HUD failed to start', e); }

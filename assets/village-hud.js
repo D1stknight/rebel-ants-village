@@ -102,7 +102,10 @@ body.rebel-panel-open #questLine{display:none!important}
     });
     let shot = null;
     return ready().then(ok => {
-      try { noFog(() => rtt.render(false)); } catch (e) { console.warn('minimap render failed', e); }
+      // in the light the page gives the picture (noon, whatever the hour: a night picture is too dark to read and
+      // an almost black one counts as not drawn yet)
+      const draw = () => noFog(() => rtt.render(false));
+      try { if (opts.mapLight) opts.mapLight(draw); else draw(); } catch (e) { console.warn('minimap render failed', e); }
       return rtt.readPixels();
     }).then(px => {
       if (!px) return false;
@@ -123,6 +126,7 @@ body.rebel-panel-open #questLine{display:none!important}
     });
   };
   HUD.isBuilt = () => built;
+  HUD._mapImage = () => map?.img || null; // the picture itself (tests)
 
   function inside(m, root) { if (!root) return false; for (let n = m; n; n = n.parent) if (n === root) return true; return false; }
 
