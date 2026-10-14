@@ -21888,7 +21888,7 @@
       "action": "race",
       "label": "Run the court",
       "questId": "saints-la-03",
-      "seconds": 14,
+      "seconds": 12,
       "path": [
         [
           13,
@@ -21917,7 +21917,7 @@
         0,
         0
       ],
-      "startText": "Corner to corner, fourteen seconds. GO! Hold R to run!",
+      "startText": "Corner to corner, twelve seconds. GO! Hold R to run!",
       "failText": "Too slow. The Court Regular is yawning. Back to the cone and run it again.",
       "text": "Four corners, and you are back before the Court Regular finishes yawning."
     }

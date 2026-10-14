@@ -3047,7 +3047,7 @@ function makeCityQuest(index, title, giver, description, objectives, rewards, jo
 const SAINTS_LA_QUESTS = [
   makeCityQuest(1, 'City Tour', 'Saints Greeter', 'New on the block? The Greeter shows you round Saints, Los Angeles.', ['Visit the court, the library, the custom shop and the arena.', 'Tell the Greeter what you think.'], ['+40 progress'], 'The court where everybody plays, the library where everybody learns, the shop where the cars shine, the arena where everybody yells.'),
   makeCityQuest(2, 'Spare Parts', 'Shop Mechanic', 'The purple lowrider bounced so hard three parts rolled off round the block.', ['Find the hubcap, the spring and the chain wheel.', 'Bring them to the Mechanic.'], ['+40 progress'], 'A chrome hubcap, a hydraulic spring and a gold chain wheel, back on the purple lowrider.', ['saints-la-01']),
-  makeCityQuest(3, 'Court Challenge', 'Court Regular', 'You want next on the court? First you run it.', ['Run all four corners of the court in fourteen seconds.', 'Talk to the Court Regular.'], ['+40 progress'], 'Four corners in fourteen seconds. You got next.', ['saints-la-01']),
+  makeCityQuest(3, 'Court Challenge', 'Court Regular', 'You want next on the court? First you run it.', ['Run all four corners of the court in twelve seconds.', 'Talk to the Court Regular.'], ['+40 progress'], 'Four corners in twelve seconds. You got next.', ['saints-la-01']),
   makeCityQuest(4, 'Lowrider Show', 'Shop Mechanic', 'The lowrider show is coming, and the cars need to shine.', ['Polish the three lowriders.', 'Tell the Mechanic.'], ['+45 progress'], 'Three lowriders polished until you could see the halo in the hoods.', ['saints-la-02']),
   makeCityQuest(5, 'Library Card', 'Librarian', 'Everything in the library is free, starting with a card.', ['Sign up for a card at the round desk in the library.', 'Read the story of the block on the bench by the court.', 'Talk to the Librarian.'], ['+40 progress'], 'A library card that never expires, and the story of a block that used to be an empty lot.', ['saints-la-01']),
   makeCityQuest(6, 'Arcade Night', 'DJ', 'Arcade night in the game hall, and the lanes need a champion.', ['Bowl a strike in the game hall.', "Pick a record from the DJ's crate.", 'Talk to the DJ.'], ['+40 progress'], 'A strike on the lanes and a record with a bounce in it.', ['saints-la-01']),
@@ -3082,11 +3082,11 @@ const SAINTS_LA_WIRING = {
         say:['All three! Hubcap, spring, chain wheel. She will bounce like new.', 'You have a good eye for chrome. Come back, I will have more work.'] }
     ] },
   3: { giver:'saints-hooper',
-    offer:['You want next? Not so fast. First you run the court.', 'Every corner of the court in fourteen seconds, starting at the cone by the south-west corner. Hold R and go.'],
+    offer:['You want next? Not so fast. First you run the court.', 'Every corner of the court in twelve seconds, starting at the cone by the south-west corner. Hold R and go.'],
     steps:[
-      { id:'run-court', objective:'Run all four corners of the court in fourteen seconds.', objectiveType:'useQuestSpot', targetObjectId:'sl-court-run', villageId:'saints-la' },
+      { id:'run-court', objective:'Run all four corners of the court in twelve seconds.', objectiveType:'useQuestSpot', targetObjectId:'sl-court-run', villageId:'saints-la' },
       { id:'court-done', objective:'Talk to the Court Regular.', objectiveType:'talkToNpc', targetNpcId:'saints-hooper', villageId:'saints-la',
-        say:['Fourteen seconds and you are not even breathing hard. Okay. You got next.', 'Winners stay on. We will see about that.'] }
+        say:['Twelve seconds and you are not even breathing hard. Okay. You got next.', 'Winners stay on. We will see about that.'] }
     ] },
   4: { giver:'saints-mechanic',
     offer:['The lowrider show is coming to the block, and the cars need to shine.', 'Polish all three: the purple one on the lift, the gold one in the middle and the blue one. Do not breathe on the paint.'],
@@ -9947,9 +9947,41 @@ function syncQuestSpotPathPieces(root, cfg) {
     });
   }
   if (!m._pathPieces) return;
-  // light by light: on the way, the lights already passed go out (all back if the walk is lost)
-  const passed = QuestSpotRuntime.race?.root === root ? QuestSpotRuntime.race.next : 0;
-  if (m._pathPassed !== passed) { m._pathPassed = passed; m._pathPieces.forEach((n, i) => n.setEnabled(i >= passed)); }
+  // light by light: on the way, the lights already passed go out (all back if the walk is lost); the next one pulses
+  const racing = QuestSpotRuntime.race?.root === root, passed = racing ? QuestSpotRuntime.race.next : 0;
+  if (m._pathPassed !== passed) { m._pathPassed = passed; m._pathPieces.forEach((n, i) => { n.setEnabled(i >= passed); n.scaling.setAll(1); }); }
+  const nx = racing && m._pathPieces[passed];
+  if (nx) nx.scaling.setAll(1 + .22 * Math.abs(Math.sin(performance.now() / 240)));
+}
+
+// the next point of a run or walk while it runs: a soft gold beam and ring on it (the minimap's diamond goes there too)
+const RaceNextMarker = { root:null, mat:null, at:-1, spot:null };
+function getRaceNextPoint() {
+  const race = QuestSpotRuntime.race;
+  return race && !race.root.isDisposed?.() ? (race.root.metadata.spotConfig.path || [])[race.next] || null : null;
+}
+function updateRaceNextMarker() {
+  const q = getRaceNextPoint(), race = QuestSpotRuntime.race;
+  if (!q) { if (RaceNextMarker.root?.isEnabled()) RaceNextMarker.root.setEnabled(false); return; }
+  if (!RaceNextMarker.root || RaceNextMarker.root.isDisposed?.()) {
+    const root = new BABYLON.TransformNode('raceNextMarker', scene); root.metadata = { _perfNeverFreeze:true };
+    const mat = new BABYLON.StandardMaterial('raceNextBeamMat', scene);
+    mat.disableLighting = true; mat.emissiveColor = new BABYLON.Color3(1, .78, .3); mat.alpha = .3; mat.alphaMode = BABYLON.Engine.ALPHA_ADD; mat.backFaceCulling = false;
+    const beam = BABYLON.MeshBuilder.CreateCylinder('raceNextBeam', { height:7, diameterTop:.5, diameterBottom:1.5, tessellation:20, cap:BABYLON.Mesh.NO_CAP }, scene);
+    const ring = BABYLON.MeshBuilder.CreateTorus('raceNextBeamRing', { diameter:2.8, thickness:.16, tessellation:36 }, scene);
+    beam.position.y = 3.5; ring.position.y = .14;
+    [beam, ring].forEach(mm => { mm.material = mat; mm.isPickable = false; mm.parent = root; mm.metadata = { _perfNeverFreeze:true }; });
+    RaceNextMarker.root = root; RaceNextMarker.mat = mat; RaceNextMarker.at = -1;
+  }
+  const root = RaceNextMarker.root;
+  if (!root.isEnabled()) root.setEnabled(true);
+  if (RaceNextMarker.at !== race.next || RaceNextMarker.spot !== race.root) {
+    RaceNextMarker.at = race.next; RaceNextMarker.spot = race.root;
+    const y = getNPCGroundHeightAt?.(q[0], q[1]);
+    root.position.set(q[0], Number.isFinite(y) ? y : (charMesh?.position.y || 0), q[1]);
+  }
+  const t = performance.now() / 1000, k = 1 + .1 * Math.sin(t * 6);
+  RaceNextMarker.mat.alpha = .22 + .14 * Math.sin(t * 6); root.scaling.set(k, 1, k);
 }
 
 function getQuestSpotRoots() {
@@ -10229,6 +10261,7 @@ function updateQuestSpots() {
       else if (!rc.seconds && q && Math.hypot(charMesh.position.x - q[0], charMesh.position.z - q[1]) > 60) { QuestSpotRuntime.race = null; showToast(rc.failText || 'You left the way. Start again at the marker.'); }
     }
   }
+  updateRaceNextMarker();
   // follow: stay close to the moving piece for followSeconds (2D), more than 2.5 s away and it is lost
   const follow = QuestSpotRuntime.follow;
   if (follow) {
@@ -26923,6 +26956,8 @@ function initVillageHud() {
       isWalking: () => walkMode && !adminMode,
       inInterior: () => !!ActiveInterior,
       questTarget: () => {
+        // a run or walk on the way: its next point
+        const rq = getRaceNextPoint(); if (rq) return { x: rq[0], z: rq[1] };
         // the auto guide's target (wired steps), else the quest's own glowing marker or its NPC (looked up twice a second)
         let n = AutoQuestGuide.target?.node;
         if (!n || n.isDisposed?.()) {
