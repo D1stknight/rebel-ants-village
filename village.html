@@ -2747,7 +2747,8 @@ const MOON_TALES_QUESTS = [
   makeMoonTaleQuest(14, 'Still as Starlight', 'Ostara', 'Ostara gazes at the moon and does not blink, does not stir.', ['Gaze at the moon beside Ostara, perfectly still.', 'Talk to Ostara.'], ['+40 progress'], 'Still as starlight, and the moon turned silver.', ['moon-tales-13']),
   makeMoonTaleQuest(15, 'The Silver Bell', 'Ostara', "Ostara's tiny silver bell wards off shadows and unwelcome spirits.", ['Ring the silver bell at three shadowed places.', 'Talk to Ostara.'], ['+45 progress'], 'Three shadows gone, one delicate chime at a time.', ['moon-tales-14']),
   makeMoonTaleQuest(16, 'Sap and Seed', 'Ostara', 'The pulse of magic in the air, the thrum of sap, the stirring of seeds.', ['Listen at the great tree, the pumpkin patch and the Moon Ledge.', 'Talk to Ostara.'], ['+50 progress'], 'Sap rising, seeds stirring, and the moon whispering promises of new beginnings.', ['moon-tales-15']),
-  makeMoonTaleQuest(12, 'Seeds of New Beginnings', 'Kokeshi Flower Moon', 'Two seeds have fallen where nothing grows.', ['Find two moon seeds.', 'Plant them at the roots of the great tree.', 'Talk to Kokeshi Flower Moon.'], ['+50 progress'], 'Two seeds planted at the old tree\'s roots, and the dead tree remembered how to bloom.', ['moon-tales-11'])
+  makeMoonTaleQuest(12, 'Seeds of New Beginnings', 'Kokeshi Flower Moon', 'Two seeds have fallen where nothing grows.', ['Find two moon seeds.', 'Plant them at the roots of the great tree.', 'Talk to Kokeshi Flower Moon.'], ['+50 progress'], 'Two seeds planted at the old tree\'s roots, and the dead tree remembered how to bloom.', ['moon-tales-11']),
+  Object.assign(makeMoonTaleQuest(20, 'Until the First Blush of Dawn', 'Mamoru', 'The Mystic Moon Coven gathers for the Harvest Festival, and Mamoru keeps watch through the night.', ['Give thanks with the Coven at the feast table.', 'Return to Mamoru at the gate.', 'Keep watch beside Mamoru until dawn.', 'Talk to Mamoru.'], ['+80 progress', 'Badge: Mystic Moon Coven'], 'The Coven feasted, Mamoru kept watch, and for the first time the sky over the hill turned to dawn.', ['moon-tales-04', 'moon-tales-08', 'moon-tales-12', 'moon-tales-16']), { badgeRewardId:'moon-tales-coven' })
 ];
 const MOON_TALES_WIRING = {
   1: { giver:'cc-mamoru',
@@ -2835,6 +2836,16 @@ const MOON_TALES_WIRING = {
       { id:'listen-hill', objective:'Listen at the great tree, the pumpkin patch and the Moon Ledge.', objectiveType:'useQuestSpot', targetObjectId:'mt-listen', count:3, villageId:'cute-creepy' },
       { id:'tale-heard', objective:'Talk to Ostara.', objectiveType:'talkToNpc', targetNpcId:'cc-ostara', villageId:'cute-creepy',
         say:['The sap rising in the trees, the seeds stirring underground, the moon whispering its promises. You felt them.', 'That is my tale, as the moon told it to the Lunar Witch. It is in your journal now.'] }
+    ] },
+  20: { giver:'cc-mamoru',
+    offer:['The Harvest Moon is at its fullest, and the Coven is home. Every one of them.', 'Go to the feast table and give thanks with them, little Rebel. Then come back to me at the gate.'],
+    steps:[
+      { id:'give-thanks', objective:'Give thanks with the Coven at the feast table.', objectiveType:'useQuestSpot', targetObjectId:'mt-thanks', villageId:'cute-creepy' },
+      { id:'join-watch', objective:'Return to Mamoru at the gate.', objectiveType:'talkToNpc', targetNpcId:'cc-mamoru', villageId:'cute-creepy',
+        say:['Sweet, were they not? Now the quiet part of the festival.', 'Stand with me at the gate. We keep watch until the first blush of dawn.'] },
+      { id:'keep-watch', objective:'Keep watch beside Mamoru until dawn.', objectiveType:'useQuestSpot', targetObjectId:'mt-dawn-watch', villageId:'cute-creepy' },
+      { id:'dawn-told', objective:'Talk to Mamoru.', objectiveType:'talkToNpc', targetNpcId:'cc-mamoru', villageId:'cute-creepy',
+        say:['The first blush of dawn. Their joy is safe, and so are you.', 'Each year, when the Harvest Moon rises again, I will return. That is my tale. It is in your journal now.'] }
     ] }
 };
 
@@ -2954,6 +2965,7 @@ function loadSideQuestState() {
 function saveSideQuestState() {
   try { localStorage.setItem(SIDE_QUEST_KEY, JSON.stringify(SideQuestState)); } catch(e) {}
   try { updateQuestTracker(); } catch(e) {}
+  try { refreshTaleDawn(); } catch(e) {} // first: the moon refresh may read the clock (and would skip the sunrise)
   try { refreshTaleMoon(); } catch(e) {}
   try { applyQuestNpcPlaces(); } catch(e) {}
   scheduleQuestItemCredit();
@@ -3173,13 +3185,29 @@ const MOON_TALES = [
   { id:'nariko', teller:'Nariko', moonName:'', unlockQuestId:'moon-tales-19', title:'Nariko', pending:true, text:[] }
 ];
 const MOON_TALE_QUEST_MOONS = { 1:['harvest', 'tell-mamoru'], 2:'harvest', 3:'harvest', 4:'harvest', 6:'pink', 7:'pink', 8:'pink', 9:'flower', 10:'flower', 11:'flower', 12:'flower', 14:['hare', 'starlight-told'], 15:'hare', 16:'hare', 20:'harvest' };
-// NPCs that move with a quest: once a quest reaches a step (or is done), the NPC lives there (Ostara on her Moon Ledge)
-const QUEST_NPC_PLACES = { 'cc-ostara': [{ quest:'moon-tales-13', step:'meet-ostara', x:-22.6, z:70.2, ry:0 }] };
+// NPCs that move with a quest: once a quest reaches a step (or is done), the NPC lives there (Ostara on her Moon Ledge).
+// whileActive places hold only while their quest runs (the Coven round the feast table at the Harvest Festival); still =
+// no patrol or wander there (Mamoru keeping watch at the gate). Without a place the NPC stands at its own layout spot.
+const FESTIVAL = { quest:'moon-tales-20', whileActive:true };
+const QUEST_NPC_PLACES = {
+  'cc-ostara': [{ quest:'moon-tales-13', step:'meet-ostara', x:-22.6, z:70.2, ry:0 }, { ...FESTIVAL, x:1.25, z:6.75, ry:Math.PI }],
+  'cc-flower-moon': [{ ...FESTIVAL, x:-1.25, z:6.75, ry:Math.PI }],
+  'cc-mochi': [{ ...FESTIVAL, x:3.3, z:5.3, ry:-1.66 }],
+  'cc-nariko': [{ ...FESTIVAL, x:-3.1, z:6.4, ry:2 }],
+  'cc-mamoru': [{ ...FESTIVAL, step:'keep-watch', still:true, x:0, z:-53, ry:Math.PI }]
+};
+function questNpcPlace(places) {
+  const reached = p => SideQuestState.active?.[p.quest] && (!p.step || questStepReached(p.quest, SideQuestState.active[p.quest].step, p.step));
+  return places.find(p => p.whileActive && reached(p))
+    || [...places].reverse().find(p => !p.whileActive && (isQuestIdCompleted(p.quest) || SideQuestState.done?.includes(p.quest) || reached(p))) || null;
+}
 function applyQuestNpcPlaces() {
   for (const [npcId, places] of Object.entries(QUEST_NPC_PLACES)) {
     const npc = typeof getNPCById === 'function' ? getNPCById(npcId) : null; if (!npc) continue;
-    const at = [...places].reverse().find(p => isQuestIdCompleted(p.quest) || SideQuestState.done?.includes(p.quest) || (SideQuestState.active?.[p.quest] && questStepReached(p.quest, SideQuestState.active[p.quest].step, p.step)));
-    if (!at || npc.metadata._questPlace === at) continue;
+    const m = npc.metadata;
+    if (!m._layoutPlace) m._layoutPlace = { x:npc.position.x, z:npc.position.z, ry:npc.rotation.y, home:true };
+    const at = questNpcPlace(places) || m._layoutPlace;
+    if (m._questPlace === at || (!m._questPlace && at.home)) continue;
     npc.metadata._questPlace = at;
     const y = getNPCGroundHeightAt?.(at.x, at.z);
     npc.position.set(at.x, Number.isFinite(y) ? y : npc.position.y, at.z);
@@ -3259,7 +3287,7 @@ const MoonTaleSounds = (() => {
     } catch (e) { ctx = null; }
     return ctx;
   };
-  const N = { E6:1318.5, C3:130.81, G3:196, C4:261.63, D4:293.66, E4:329.63, G4:392, A4:440, C5:523.25, D5:587.33, E5:659.25, G5:783.99, A5:880, C6:1046.5 };
+  const N = { E6:1318.5, F5:698.46, C3:130.81, G3:196, C4:261.63, D4:293.66, E4:329.63, G4:392, A4:440, C5:523.25, D5:587.33, E5:659.25, G5:783.99, A5:880, C6:1046.5 };
   // one music-box note: a sine with a soft octave, a quick attack and a long decay
   const note = (f, t, dur, g) => {
     const o = ctx.createOscillator(), o2 = ctx.createOscillator(), e = ctx.createGain(), m = ctx.createGain();
@@ -3275,6 +3303,8 @@ const MoonTaleSounds = (() => {
     hum: { beat:.32, notes:[['E5', 0], ['G5', 1], ['A5', 2], ['G5', 3], ['E5', 4, 1.6]] },
     chime: { beat:.11, notes:[['G5', 0, .9], ['C6', 1, .9], ['E6', 2, 1.2]], gain:.22 },
     silverbell: { bell:true },
+    thanks: { beat:.42, notes:[['C5', 0], ['E5', 1], ['G5', 2], ['E5', 3], ['F5', 4], ['A5', 5], ['G5', 6, 1.8], ['E5', 8], ['G5', 9], ['C6', 10], ['A5', 11], ['G5', 12], ['E5', 13], ['C5', 14, 2.4]],
+      bass:[['C3', 0], ['G3', 4], ['C3', 8], ['C3', 12]] },
     sap: { beat:1.1, notes:[['C4', 0, 2.6], ['G3', 1, 2.6], ['C4', 2, 3]], gain:.2 },
     chant: { beat:2.4, notes:[['C4', 0, 3.4], ['E4', 1, 3.4], ['G4', 2, 3.4], ['A4', 3, 3.4], ['G4', 4, 3.4], ['E4', 5, 3.4], ['D4', 6, 3.4], ['C4', 7, 3.4], ['E4', 8, 3.4], ['G4', 9, 3.4], ['E4', 10, 3.4], ['C4', 11, 4]], bass:[['C3', 0], ['C3', 4], ['C3', 8]] }
   };
@@ -3466,6 +3496,7 @@ const DEFAULT_BADGE_DEFINITIONS = [
   { badgeId:'book1-echo-witness', name:'Echo Witness', category:'story', rarity:'Uncommon', imageUrl:'/assets/badges/book1-echo-witness.png', requirementType:'quest', requirementValue:'book1-main-20', requirementText:'Complete Book 1 Chapter 2', description:'You heard the old tunnels answer back.' },
   { badgeId:'book1-faction-envoy', name:'Faction Envoy', category:'story', rarity:'Rare', imageUrl:'/assets/badges/book1-faction-envoy.png', requirementType:'quest', requirementValue:'book1-main-30', requirementText:'Complete Book 1 Chapter 3', description:'You carried truth between divided villages.' },
   { badgeId:'book1-storm-watcher', name:'Storm Watcher', category:'story', rarity:'Epic', imageUrl:'/assets/badges/book1-storm-watcher.png', requirementType:'quest', requirementValue:'book1-main-40', requirementText:'Complete Book 1 Chapter 4', description:'You stood with the colony before the awakening.' },
+  { badgeId:'moon-tales-coven', name:'Mystic Moon Coven', category:'story', rarity:'Legendary', imageUrl:'', emblem:null, requirementType:'quest', requirementValue:'moon-tales-20', requirementText:'Keep watch with Mamoru at the Harvest Festival', description:'You kept the Coven\'s joy safe until the first blush of dawn.' },
   { badgeId:'book1-colony-awake', name:'Colony Awake', category:'story', rarity:'Legendary', imageUrl:'/assets/badges/book1-colony-awake.png', requirementType:'quest', requirementValue:'book1-main-50', requirementText:'Complete Book 1', description:'You helped the villages remember they are one colony.' },
   { badgeId:'story-tunnel-witness', name:'Tunnel Witness', category:'story', rarity:'Uncommon', imageUrl:'/assets/badges/story-tunnel-witness.png', requirementType:'story', requirementValue:'future-tunnels', requirementText:'Future Book 1 story milestone', description:'You witnessed signs beneath the roots.' },
   { badgeId:'story-dust-reader', name:'Dust Reader', category:'story', rarity:'Rare', imageUrl:'/assets/badges/story-dust-reader.png', requirementType:'story', requirementValue:'future-red-dust', requirementText:'Future Book 1 story milestone', description:'You learned to read the red dust.' },
@@ -3486,7 +3517,7 @@ const DEFAULT_BADGE_DEFINITIONS = [
 // Every collectible placed in the village layouts (Hub + 14 villages; rooms have none): the Relic Keeper badge asks for
 // all of them. Update it whenever collectibles are added or removed (the friend-village quests will bring their items).
 const COLLECTIBLE_TOTAL = 87;
-// The other 46 of the 72 badges: a crest and an all-secrets badge per village, secret milestones, mini ant
+// The other 46 of the 73 badges: a crest and an all-secrets badge per village, secret milestones, mini ant
 // spotters, chest and collector badges. All award themselves (checkAutoBadges).
 (() => {
   const FACTION_ART = new Set(['ronin','samurai','shogun','bushi','buke','ashigaru','kenshi','yamabushi','sohei','wokou','warrior']);
@@ -10669,11 +10700,42 @@ function updateSandFootprints(groundY) {
 function villageRecipe() { return window._newTerrain?.recipe || NEW_TERRAIN_MODULE?.TERRAIN_RECIPES?.[CURRENT_VILLAGE_ID] || null; }
 function villageClockHour(now = new Date()) {
   const fixed = villageRecipe()?.hour;
-  return Number.isFinite(fixed) ? fixed : now.getHours() + now.getMinutes() / 60;
+  const h = Number.isFinite(fixed) ? fixed : now.getHours() + now.getMinutes() / 60;
+  return taleDawnHour(h);
 }
+// The Harvest Festival's dawn (Moon Tales 20): from the step after the watch, and for the rest of that visit once seen.
+// Seen live it rises over TALE_DAWN_MS; loaded at that step it is already there. window.setTaleDawn(true / false) previews.
+const TaleDawn = { since:null, preview:undefined, iv:null };
+const TALE_DAWN_TO = 6.6, TALE_DAWN_MS = 12000;
+function taleDawnWanted() {
+  if (CURRENT_VILLAGE_ID !== 'cute-creepy') return false;
+  if (TaleDawn.preview !== undefined) return TaleDawn.preview;
+  const q = SideQuestState.active?.['moon-tales-20'];
+  return TaleDawn.since != null || !!(q && questStepReached('moon-tales-20', q.step, 'dawn-told'));
+}
+// 0 = the village's own night, 1 = dawn (eased)
+function taleDawnProgress() {
+  if (!taleDawnWanted()) return 0;
+  if (TaleDawn.since == null) TaleDawn.since = -1e9;
+  const u = Math.min(1, Math.max(0, (performance.now() - TaleDawn.since) / TALE_DAWN_MS));
+  return u * u * (3 - 2 * u);
+}
+function taleDawnHour(h) {
+  const e = taleDawnProgress();
+  return e ? (h + (TALE_DAWN_TO + 24 - h) % 24 * e) % 24 : h;
+}
+function refreshTaleDawn() {
+  if (TaleDawn.since != null || !taleDawnWanted()) return;
+  TaleDawn.since = performance.now();
+  clearInterval(TaleDawn.iv);
+  TaleDawn.iv = setInterval(() => { try { updateSky(); } catch (e) {} if (performance.now() - TaleDawn.since > TALE_DAWN_MS + 200) { clearInterval(TaleDawn.iv); TaleDawn.iv = null; } }, 120);
+}
+window.getVillageClockHour = () => villageClockHour();
+window.setTaleDawn = on => { TaleDawn.preview = on === undefined ? undefined : !!on; TaleDawn.since = on ? performance.now() - TALE_DAWN_MS : null; updateSky(); return villageClockHour(); };
 function updateSky(){
   if (_worklightOn) return; // don't override worklight
   const now=new Date(), h=villageClockHour(now);
+  if (villageRecipe()?.moonDisc && TaleMoonView.key === undefined) refreshTaleMoon(true, true); // a village's own moon (Cute & Creepy), the Moon Tales' moons
   const d=Math.max(0,Math.sin(((h/24)-.25)*Math.PI*2));
   skyMat.inclination=-Math.sin(((h/24)-.25)*Math.PI*2)*.5;
   sun.intensity=0.15+d*1.8; hemi.intensity=0.18+d*.45;
@@ -10683,9 +10745,17 @@ function updateSky(){
   else if(h>=9&&h<17){sun.diffuse=new BABYLON.Color3(1,.97,.88);}
   else if(h>=17&&h<20){sun.diffuse=new BABYLON.Color3(1,.48,.15);}
   else{sun.diffuse=new BABYLON.Color3(.18,.22,.48);sun.intensity=0.12;
-    if (villageRecipe()?.moonDisc && TaleMoonView.key === undefined) refreshTaleMoon(true, true); // a village's own moon (Cute & Creepy), the Moon Tales' moons
     const _moon = villageRecipe()?.moon; if (_moon) { const _mc = taleMoonLightColor(_moon.color); sun.intensity = _moon.sun; hemi.intensity *= _moon.hemi; sun.diffuse = new BABYLON.Color3(..._mc); hemi.diffuse = new BABYLON.Color3(..._mc); } } // moonlit villages
   if (_vl?.tint && h>=6 && h<20) sun.diffuse = sun.diffuse.multiply(new BABYLON.Color3(..._vl.tint)); // e.g. Samurai's golden light
+  // Moon Tales 20: the moonlit night eases into the recipe's dawn light (the night is kept from before the dawn began)
+  const _dk = taleDawnProgress(), _dw = villageRecipe()?.dawn;
+  if (!_dk) TaleDawn.night = { sunI:sun.intensity, sunC:sun.diffuse.clone(), hemiI:hemi.intensity, hemiC:hemi.diffuse.clone() };
+  else if (_dw) {
+    const dc = new BABYLON.Color3(..._dw.color), dh = new BABYLON.Color3(..._dw.hemiColor);
+    const n = TaleDawn.night || { sunI:_dw.sun, sunC:dc, hemiI:_dw.hemi, hemiC:dh };
+    sun.intensity = n.sunI + (_dw.sun - n.sunI) * _dk; sun.diffuse = BABYLON.Color3.Lerp(n.sunC, dc, _dk);
+    hemi.intensity = n.hemiI + (_dw.hemi - n.hemiI) * _dk; hemi.diffuse = BABYLON.Color3.Lerp(n.hemiC, dh, _dk);
+  }
   const clearFogColor=h>=6&&h<20?new BABYLON.Color3(.58,.74,.9):new BABYLON.Color3(.04,.06,.16);
   scene.fogColor=clearFogColor;
   WeatherManager.baseSunIntensity = sun.intensity;
@@ -11903,6 +11973,8 @@ function applyWeatherLighting() {
     scene.fogDensity = vf?.density ?? 0.0016;
     const night = (WeatherManager.baseFogColor?.r ?? 1) < .2;
     scene.fogColor = vf ? new BABYLON.Color3(...(night ? vf.night : vf.day)) : (cfg.fogColor || WeatherManager.baseFogColor);
+    const _dk = taleDawnProgress(), _df = window._newTerrain.recipe.dawn?.fog; // Moon Tales 20: the sky blushes
+    if (_dk && _df && vf) scene.fogColor = BABYLON.Color3.Lerp(new BABYLON.Color3(...vf.night), new BABYLON.Color3(..._df), _dk);
   } else if (cfg.fog === BABYLON.Scene.FOGMODE_NONE) {
     scene.fogMode = BABYLON.Scene.FOGMODE_NONE;
   } else {
@@ -16636,7 +16708,8 @@ function updateNPCPopulation(dt) {
       return;
     }
     let moving = false;
-    if (meta.behavior === 'wander') {
+    if (meta._questPlace?.still) returnNPCToBaseRotation(root, npcDt); // keeping watch where a quest put it
+    else if (meta.behavior === 'wander') {
       if (!meta.target && now >= (meta.waitUntil || 0)) chooseNPCWanderTarget(root);
       moving = meta.target ? moveNPCToward(root, meta.target, npcDt) : false;
       if (!moving) {

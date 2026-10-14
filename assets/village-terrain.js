@@ -594,6 +594,7 @@ export const TERRAIN_RECIPES = {
     seed: 6669, dropSeed: 13, drops: 60000, roads: false,
     hour: 22.5, moon: { sun: .85, hemi: 3.4, color: [.56, .5, .82] }, // the village keeps its own night
     moonDisc: { pos: [-150, 170, 430], size: 3.2, color: [.8, .68, .98], halo: [.42, .3, .62] }, // the big purple moon behind the manor
+    dawn: { fog: [.5, .31, .37], sun: 1.05, color: [1, .7, .48], hemi: 1.15, hemiColor: [.95, .78, .8] }, // the Harvest Festival's first dawn (Moon Tales 20)
     hills: 1.3, shape: { fbm: 30, ridge: 30, wall: 160,
       spires: [{ from: 120, cell: 70, chance: .4, radius: [10, 18], height: [30, 70] }] },
     flatHalf: 96, hillStart: 100, hillFull: 210, wallStart: 240,
