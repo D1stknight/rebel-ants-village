@@ -2947,6 +2947,46 @@ function getBook1StoryJournalEntries() {
 
 registerBook1QuestDefinitions();
 
+// Playtest jumps (preview and local builds only, for testing): village.html?village=<v>&play=<questId>[@<stepId>]
+// starts a quest with everything before it done (its prerequisites and theirs, the Hub Journey whole). Main quests
+// start at their first step or the one named; side quests and Moon Tales wait for their giver (@ready, the default) or
+// start at the step named. The tester's own save is put aside the first time (rebelAntsPlaytestBackup) and
+// &play=restore brings it back. Runs before the saves are read below, so the game loads the test save directly.
+const PlaytestNote = (() => {
+  const want = new URLSearchParams(location.search).get('play');
+  if (!want || !/(-git-|^localhost$|^127\.0\.0\.1$)/.test(location.hostname)) return null;
+  const SAVE_KEYS = ['rebelAntsProgression:v1', 'rebelAntsSideQuests:v1', 'rebelAntsTutorialQuestChain:v1', 'rebelAntsTutorialQuestChain:pendingHubReturn', 'rebelAntsTutorialQuestChain:leftHubForRonin', 'rebelAntsTutorialQuestChain:hubJourneyVisitedAway'];
+  const BACKUP = 'rebelAntsPlaytestBackup';
+  const url = new URL(location.href); url.searchParams.delete('play'); history.replaceState(null, '', url); // a refresh keeps playing the test save
+  try {
+    if (want === 'restore') {
+      const b = JSON.parse(localStorage.getItem(BACKUP) || 'null'); if (!b) return 'There is no saved game put aside to bring back.';
+      for (const k of SAVE_KEYS) { if (b[k] == null) localStorage.removeItem(k); else localStorage.setItem(k, b[k]); }
+      localStorage.removeItem(BACKUP);
+      return 'Your own save is back.';
+    }
+    const [questId, stepArg] = want.split('@'), quest = QUEST_DEFINITIONS[questId];
+    if (!quest || /^hub-/.test(questId)) return `There is no quest ${questId} to jump to.`;
+    const steps = (quest.steps || []).map(st => st.id).filter(id => id !== 'complete');
+    const step = stepArg && stepArg !== 'ready' ? stepArg : null;
+    if (step && !steps.includes(step)) return `${quest.title} has no step ${step}: ${steps.join(', ')}.`;
+    if (!localStorage.getItem(BACKUP)) localStorage.setItem(BACKUP, JSON.stringify(Object.fromEntries(SAVE_KEYS.map(k => [k, localStorage.getItem(k)]))));
+    const hub = Object.keys(QUEST_DEFINITIONS).filter(id => /^hub-/.test(id)), done = new Set();
+    const add = id => { if (id === 'book1-main-01') id = 'first-warning'; // M1's id (M2 names it book1-main-01)
+      if (!id || id === questId || done.has(id)) return; done.add(id); if (id === 'hub-tutorial-complete') hub.forEach(h => done.add(h)); (QUEST_DEFINITIONS[id]?.prerequisites || []).forEach(add); };
+    (quest.prerequisites || []).forEach(add);
+    const isMain = quest.type === 'main', mains = BOOK1_MAIN_QUESTS.map(q => q.questId);
+    // a clean test save: only what comes before this quest is done (chests, secrets and finds start over)
+    localStorage.setItem('rebelAntsProgression:v1', JSON.stringify({ completedQuests:[...done], villagesVisited:['hub'] }));
+    localStorage.setItem('rebelAntsSideQuests:v1', JSON.stringify({ active:!isMain && step ? { [questId]:{ step, steps:{}, touched:Date.now() } } : {}, done:[...done].filter(id => QUEST_DEFINITIONS[id]?.type === 'side') }));
+    const chain = isMain ? questId : (mains.find(id => !done.has(id)) || mains[mains.length - 1]);
+    localStorage.setItem('rebelAntsTutorialQuestChain:v1', JSON.stringify({ questId:chain, step:isMain ? (step || steps[0]) : (QUEST_DEFINITIONS[chain]?.steps?.[0]?.id || 'talk'), completed:false, completedQuestIds:[...done].filter(id => /^hub-/.test(id) || mains.includes(id)), objectiveProgress:{} }));
+    for (const k of SAVE_KEYS.slice(3)) localStorage.removeItem(k);
+    localStorage.setItem('rebelAntsHubOnboardingSeen:v1', '1');
+    return `Playtest: ${quest.title}${step ? ' (' + step + ')' : isMain ? '' : ': talk to ' + (quest.primaryNpc || 'its giver')}. Everything before it is done. &play=restore brings your own save back.`;
+  } catch (e) { console.warn('Playtest jump failed', e); return 'The playtest jump failed: ' + e.message; }
+})();
+
 // ═══════════════════════════════════════
 // SIDE QUESTS — run beside the main story. A giver NPC offers one (BOOK1_WIRING.side[n].giver / offer); after
 // that conversation it is active. Its steps use the same objective types and matching as main quests, and
@@ -9360,7 +9400,7 @@ function isQuestSpotOpen(cfg) {
   if (!cfg?.questId) return true;
   return isQuestSpotTargetedBySideQuest(cfg.spotId) || isQuestSpotTargetedByActiveQuest(cfg.spotId);
 }
-function isQuestSpotUsed(cfg) { return (ProgressionState.spotsUsed || []).includes(cfg?.doneWith || cfg?.spotId); }
+function isQuestSpotUsed(cfg) { return (ProgressionState.spotsUsed || []).includes(cfg?.doneWith || cfg?.spotId) || !!(cfg?.questId && isQuestIdCompleted(cfg.questId)); }
 // piece / donePiece: a kit piece under the spot (an unlit jack-o'-lantern, a trickster ghost), swapped once the spot is used
 function syncQuestSpotPiece(root, cfg) {
   const want = (isQuestSpotUsed(cfg) ? cfg.donePiece : cfg.piece) || '';
@@ -26365,6 +26405,7 @@ function markVillageStartupInteractive() {
   schedulePostInteractiveStartupTask(loadForgeCollectionsConfig, 650);
   schedulePostInteractiveStartupTask(startVillagePetalEffects, 1200);
   schedulePostInteractiveStartupTask(initVillageHud, 300);
+  if (PlaytestNote) schedulePostInteractiveStartupTask(() => showToast(PlaytestNote, 9000), 2500); // a playtest jump says where it put you
   const ld = document.getElementById('ld');
   if (ld) { ld.style.opacity='0'; setTimeout(()=>{ ld.style.display='none'; }, 900); }
 }
