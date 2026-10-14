@@ -45061,7 +45061,7 @@
       "style": "dojo",
       "kit": "room_cc_manor",
       "prompt": "Press O to Enter",
-      "description": "The grand foyer: twin stairs to the gallery, the candle chandelier, purple stained glass, the gang's portraits.",
+      "description": "The grand foyer: twin stairs to the gallery, the candle chandelier, purple stained glass, the Coven's portraits.",
       "modelUrl": "",
       "musicPath": "",
       "accent": {
@@ -45566,10 +45566,10 @@
           {
             "interiorId": "cc_gothic_manor",
             "hotspotId": "hotspot_cc_gothic_manor_gang",
-            "linkName": "The Gang",
+            "linkName": "The Coven",
             "actionType": "showInfo",
             "url": "",
-            "description": "Flower Moon, Pumpkin Jack, Midnight and Lady Bones: the first family of the manor. Their portraits watch the door so nobody comes in uninvited.",
+            "description": "The Mystic Moon Coven, painted by moonlight, each under their own moon: Mamoru with her skull candle, Mochi with his beckoning paw, Kokeshi Flower Moon, Ostara the Dreamer, and Nariko over the door. Their portraits watch the door so nobody comes in uninvited.",
             "enabled": true,
             "position": {
               "x": -7.8,

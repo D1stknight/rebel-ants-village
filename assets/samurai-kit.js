@@ -608,21 +608,10 @@
     }),
     banner_torn: cv => tornBanner(cv, 'banner_torn', '#33502e', '#d8b04a', 104),
     banner_torn_rust: cv => tornBanner(cv, 'banner_torn_rust', '#6e2a1a', '#d89a4a', 105),
-    // Cute & Creepy: the manor's checker floor, the gang's portraits, stained glass (purple manor, green crypt), the spell book.
+    // Cute & Creepy: the manor's checker floor, stained glass (purple manor, green crypt), the spell book (the Coven's portraits are an image).
     // Chumpz: bamboo walls, tiki masks, the turquoise sea through the cabin windows, the treasure map. Saints: the skyline
     // through the HQ's glass wall, the rotunda's dome, the LA mural, the neon signs, the scoreboard, the maple court
     checker_cc: cv => { const t = cv('checker_cc', 256, 256, (c, W) => { const q = W / 4, r = rng(111); for (let i = 0; i < 4; i++) for (let k = 0; k < 4; k++) { c.fillStyle = (i + k) % 2 ? '#d6cde4' : '#24172f'; c.fillRect(i * q, k * q, q, q); } for (let n = 0; n < 900; n++) { c.fillStyle = `rgba(${r() < .5 ? '0,0,0' : '255,255,255'},${.03 + .04 * r()})`; c.fillRect(r() * W, r() * W, 2 + 4 * r(), 2 + 4 * r()); } c.strokeStyle = 'rgba(20,10,30,.6)'; c.lineWidth = 2; for (let i = 0; i <= 4; i++) { c.beginPath(); c.moveTo(i * q, 0); c.lineTo(i * q, W); c.stroke(); c.beginPath(); c.moveTo(0, i * q); c.lineTo(W, i * q); c.stroke(); } }); t.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE; return t; },
-    cc_portraits: cv => cv('cc_portraits', 1024, 320, (c, W, H) => {
-      const pw = W / 4;
-      for (let k = 0; k < 4; k++) {
-        const x0 = k * pw, cx = x0 + pw / 2, cy = H / 2 + 10, g = c.createRadialGradient(cx, cy - 30, 10, cx, cy, 170); g.addColorStop(0, ['#5a3a72', '#3a2a4a', '#2e3c52', '#4a2a3a'][k]); g.addColorStop(1, '#120a18'); c.fillStyle = g; c.fillRect(x0, 0, pw, H);
-        if (k === 0) { c.fillStyle = '#f2f0f6'; c.beginPath(); c.moveTo(cx - 70, H - 20); c.quadraticCurveTo(cx - 80, 80, cx, 70); c.quadraticCurveTo(cx + 80, 80, cx + 70, H - 20); for (let w = 0; w < 5; w++) c.lineTo(cx + 70 - w * 35 - 17, H - 40 + (w % 2) * 20); c.fill(); c.fillStyle = '#1a1020'; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(cx + s * 24, 150, 10, 15, 0, 0, 7); c.fill(); } c.beginPath(); c.ellipse(cx, 196, 12, 8, 0, 0, 7); c.fill(); c.fillStyle = '#e04a7a'; c.beginPath(); c.moveTo(cx + 26, 92); c.lineTo(cx + 60, 74); c.lineTo(cx + 56, 110); c.fill(); c.beginPath(); c.moveTo(cx + 26, 92); c.lineTo(cx - 6, 72); c.lineTo(cx - 2, 108); c.fill(); }
-        if (k === 1) { c.fillStyle = '#e8762a'; c.beginPath(); c.ellipse(cx, 190, 82, 70, 0, 0, 7); c.fill(); c.strokeStyle = '#b8541a'; c.lineWidth = 4; for (const dx of [-40, 0, 40]) { c.beginPath(); c.ellipse(cx + dx, 190, 22, 68, 0, 0, 7); c.stroke(); } c.fillStyle = '#ffd25a'; for (const s of [-1, 1]) { c.beginPath(); c.moveTo(cx + s * 40, 168); c.lineTo(cx + s * 16, 168); c.lineTo(cx + s * 28, 148); c.fill(); } c.beginPath(); c.moveTo(cx - 40, 212); c.quadraticCurveTo(cx, 240, cx + 40, 212); c.lineTo(cx + 30, 222); c.quadraticCurveTo(cx, 236, cx - 30, 222); c.fill(); c.fillStyle = '#16101c'; c.fillRect(cx - 50, 92, 100, 18); c.fillRect(cx - 34, 30, 68, 64); c.fillStyle = '#6a2a8a'; c.fillRect(cx - 34, 80, 68, 10); }
-        if (k === 2) { c.fillStyle = '#0d0a10'; c.beginPath(); c.ellipse(cx, 230, 74, 70, 0, 0, 7); c.fill(); c.beginPath(); c.arc(cx, 140, 62, 0, 7); c.fill(); for (const s of [-1, 1]) { c.beginPath(); c.moveTo(cx + s * 56, 120); c.lineTo(cx + s * 44, 66); c.lineTo(cx + s * 18, 92); c.fill(); } c.fillStyle = '#f2e6ff'; for (let q = 0; q < 10; q++) { const a = Math.PI * (.15 + .7 * q / 9); c.beginPath(); c.ellipse(cx + Math.cos(a) * 72, 196 + Math.sin(a) * 18, 14, 9, a, 0, 7); c.fill(); } c.fillStyle = '#8ff07a'; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(cx + s * 24, 136, 13, 16, 0, 0, 7); c.fill(); } c.fillStyle = '#0d0a10'; for (const s of [-1, 1]) c.fillRect(cx + s * 24 - 3, 124, 6, 24); }
-        if (k === 3) { c.fillStyle = '#efe8dc'; c.beginPath(); c.ellipse(cx, 150, 58, 66, 0, 0, 7); c.fill(); c.fillStyle = '#1a1020'; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(cx + s * 22, 146, 15, 18, 0, 0, 7); c.fill(); } c.beginPath(); c.moveTo(cx, 166); c.lineTo(cx - 7, 180); c.lineTo(cx + 7, 180); c.fill(); for (let t = -3; t <= 3; t++) c.fillRect(cx + t * 8 - 2, 192, 4, 10); c.fillStyle = '#7a2a5a'; c.beginPath(); c.moveTo(cx - 90, H); c.quadraticCurveTo(cx, 200, cx + 90, H); c.fill(); for (const [fx, fy, fc] of [[-48, 92, '#ff6a9a'], [-22, 80, '#ffd25a'], [10, 82, '#8a6aff'], [40, 94, '#ff6a9a']]) { c.fillStyle = fc; c.beginPath(); c.arc(cx + fx, fy, 13, 0, 7); c.fill(); } }
-        c.strokeStyle = '#c9a24a'; c.lineWidth = 10; c.strokeRect(x0 + 5, 5, pw - 10, H - 10);
-      }
-    }),
     stained_purple: cv => stainedGlass(cv, 'stained_purple', ['#5a2a9a', '#8a4ad0', '#2a6a9a', '#c9a24a', '#3a1a6a'], 112),
     stained_green: cv => stainedGlass(cv, 'stained_green', ['#2a8a4a', '#6ad07a', '#1a5a3a', '#c9d04a', '#0e3a24'], 113),
     spellbook: cv => cv('spellbook', 256, 192, (c, W, H) => {
@@ -896,7 +885,7 @@
     coin: { col: [.95, .74, .26], spec: [1, .9, .5], power: 60, em: [.14, .09, .02] }, rust: { col: [.42, .18, .09], spec: [.3, .2, .15], power: 20 }, mural_battle: { tex: 'mural_battle', em: [.12, .08, .06] },
     banner_torn: { tex: 'banner_torn', alphaTex: true }, banner_torn_rust: { tex: 'banner_torn_rust', alphaTex: true }, sand_ring: { tex: 'sand_ring' },
     mark_warrior_chalk: { img: 'assets/brand/factions/warrior.png', tint: [.95, .93, .88], em: [.22, .22, .2] },
-    checker_cc: { tex: 'checker_cc', spec: [.4, .4, .45], power: 60 }, cc_portraits: { tex: 'cc_portraits', em: [.14, .1, .16] }, stained_purple: { tex: 'stained_purple', self: true }, stained_green: { tex: 'stained_green', self: true },
+    checker_cc: { tex: 'checker_cc', spec: [.4, .4, .45], power: 60 }, cc_portraits: { img: 'assets/interiors/cc-coven-portraits.jpg', em: [.14, .1, .16] }, stained_purple: { tex: 'stained_purple', self: true }, stained_green: { tex: 'stained_green', self: true },
     spellbook: { tex: 'spellbook', em: [.3, .28, .22] }, potion_pink: { col: [1, .3, .7], em: [.7, .14, .45], alpha: .85 }, potion_cyan: { col: [.2, .9, 1], em: [.1, .6, .7], alpha: .85 }, potion_lime: { col: [.6, 1, .2], em: [.36, .7, .1], alpha: .85 }, potion_violet: { col: [.6, .3, 1], em: [.4, .16, .8], alpha: .85 },
     tent_stripe: { col: [.42, .16, .52] }, crystal: { col: [.7, .85, 1], em: [.35, .5, .8], spec: [1, 1, 1], power: 90, alpha: .6 },
     bamboo_wall: { tex: 'bamboo_wall' }, tiki_mask: { tex: 'tiki_mask' }, sea_turq: { tex: 'sea_turq', self: true }, treasure_map: { tex: 'treasure_map', em: [.16, .14, .1] },
@@ -6423,8 +6412,13 @@
       // the fireplace under the gallery
       M.block('stone_dark', 0, -HY + .6, 0, 6, 1.2, 3.8); M.block('dark', 0, -HY + 1.21, .3, 3, .02, 2.2); M.block('stone', 0, -HY + .8, 3.8, 6.6, 1.6, .3); flame(M, 0, -HY + .8, .3, .8); flame(M, -.6, -HY + .9, .3, .5); flame(M, .6, -HY + .9, .3, .5);
       for (const x of [-2.6, 2.6]) { M.cyl('candle', [x, -HY + .7, 4.1], .06, .4, 6); M.sphere('fire', [x, -HY + .7, 4.58], .06, 1.6, 5, 3); }
-      // the gang's portraits by the door, in gold frames
-      [-10, -5.6, 5.6, 10].forEach((u, k) => { wallArt(M, 'front', u, 2.8, 2.8, 3.6, 'cc_portraits', HX, HY, .1, [[k / 4, 0], [(k + 1) / 4, 0], [(k + 1) / 4, 1], [k / 4, 1]]); for (const [dx, dz, w, h] of [[0, -.1, 3.1, .16], [0, 3.6, 3.1, .16], [-1.48, 1.7, .16, 3.9], [1.48, 1.7, .16, 3.9]]) M.block('gold', u + dx, HY - .08, 2.8 + dz, w, .1, h); });
+      // the Coven's portraits in gold frames: Mamoru, Mochi, Kokeshi Flower Moon and Ostara by the door, Nariko over it
+      const portrait = (u, z0, w, h, k) => {
+        wallArt(M, 'front', u, z0, w, h, 'cc_portraits', HX, HY, .1, [[k / 5, 0], [(k + 1) / 5, 0], [(k + 1) / 5, 1], [k / 5, 1]]);
+        for (const [dx, z, bw, bh] of [[0, z0 - .1, w + .3, .16], [0, z0 + h, w + .3, .16], [-(w / 2 + .08), z0 - .1, .16, h + .26], [w / 2 + .08, z0 - .1, .16, h + .26]]) M.block('gold', u + dx, HY - .08, z, bw, .1, bh);
+      };
+      [-10, -5.6, 5.6, 10].forEach((u, k) => portrait(u, 2.8, 2.8, 3.6, k));
+      portrait(0, 5.9, 2.2, 2.75, 4);
       // candelabras at the stair feet, pumpkin lanterns by the door
       for (const sd of [-1, 1]) { const x = sd * (SX[0] - 1), y = ST[0] + .8; M.cyl('iron', [x, y, 0], .3, .1, 8); M.rod('iron', [x, y, .1], [x, y, 2.2], .05, 5); for (const t of [-1, 0, 1]) { M.rod('iron', [x, y, 2], [x + t * .4, y, 2.3], .03, 4); M.cyl('candle', [x + t * .4, y, 2.3], .05, .3, 6); M.sphere('fire', [x + t * .4, y, 2.66], .05, 1.6, 5, 3); } }
       for (const x of [-3.4, 3.4]) ccPumpkin(M, x, HY - 1, 0, .5, 0);
