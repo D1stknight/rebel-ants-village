@@ -14741,9 +14741,9 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": -4,
+      "x": -8,
       "y": 0.1,
-      "z": 17
+      "z": 16.8
     },
     "rotation": {
       "x": 0,
@@ -14847,9 +14847,9 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": -4,
+      "x": -8,
       "y": 0.8,
-      "z": 17
+      "z": 16.8
     },
     "rotation": {
       "x": 0,
@@ -14953,9 +14953,9 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 5,
+      "x": 8,
       "y": 0.1,
-      "z": 17
+      "z": 16.8
     },
     "rotation": {
       "x": 0,
@@ -15059,9 +15059,9 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 5,
+      "x": 8,
       "y": 0.8,
-      "z": 17
+      "z": 16.8
     },
     "rotation": {
       "x": 0,
@@ -32231,9 +32231,9 @@
     "assetFile": null,
     "uploadedAutoFitApplied": false,
     "position": {
-      "x": 0,
+      "x": -15.5,
       "y": 0.1,
-      "z": 18
+      "z": 8.8
     },
     "rotation": {
       "x": 0,
