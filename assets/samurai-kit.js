@@ -238,9 +238,12 @@
         } else if (o.top === 'tank') {
           c.fillStyle = o.cloth; c.fillRect(0, 118, W, H - 118); c.fillRect(F - 74, 22, 148, 100); c.fillRect(B - 74, 22, 148, 100);
           c.fillStyle = o.fur; c.beginPath(); c.ellipse(F, 22, 42, 30, 0, 0, 7); c.fill(); // the neckline
+          if (o.stripes) { c.fillStyle = o.stripes; for (let y = 40; y < 206; y += 26) { c.fillRect(0, y, W, 11); } c.fillStyle = o.fur; c.beginPath(); c.ellipse(F, 22, 42, 30, 0, 0, 7); c.fill(); c.beginPath(); c.ellipse(B, 22, 42, 30, 0, 0, 7); c.fill(); } // a sailor's stripes
+          else {
           c.fillStyle = '#121110'; c.strokeStyle = '#121110'; c.lineCap = 'round'; // the gorilla print
           dot(c, F, 104, 15); c.beginPath(); c.ellipse(F, 140, 36, 25, 0, 0, 7); c.fill(); c.lineWidth = 13;
           for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(F + sd * 26, 126); c.lineTo(F + sd * 42, 176); c.stroke(); c.beginPath(); c.moveTo(F + sd * 14, 158); c.lineTo(F + sd * 16, 178); c.stroke(); }
+          }
           c.fillStyle = o.pants; c.fillRect(0, 206, W, 50);
         } else { // bare chest: lighter skin on the chest and belly, shorts
           ell(c, F - 34, 104, 38, 27, o.chest); ell(c, F + 34, 104, 38, 27, o.chest); ell(c, F, 156, 36, 34, o.chest);
@@ -791,6 +794,7 @@
     band: { fur: '#8e8a86', furD: '#5c5854', furL: '#b8b4ae', skin: '#a0948a', skinD: '#665a52', eye: '#e6cc2a', pupil: '#2a2208', top: 'tank', cloth: '#3a3836', pants: '#2e4569', hat: 'headband', earring: true, pantsMat: 'ape_denim' },
     chain: { fur: '#c4b08c', furD: '#8e7a58', furL: '#ded0b2', skin: '#b8987e', skinD: '#80624a', eye: '#f2efe6', top: 'bare', chest: '#c8aa90', pants: '#76663f', hat: 'bucket', chain: true, bandana: true, earring: true, pantsMat: 'ape_khaki' },
     peel: { fur: '#cfc4ac', furD: '#9c9078', furL: '#e8e0cf', skin: '#bea490', skinD: '#866c5a', eye: '#f0ece2', pupil: '#222222', top: 'overalls', cloth: '#6b4220', clothL: '#a87a4c', hat: 'peel', glasses: 'shades', bandana: true, earring: true, pantsMat: 'ape_overall', shins: 'ape_overall' },
+    barnacle: { fur: '#b9b3a8', furD: '#857f75', furL: '#e2ded6', skin: '#b0998a', skinD: '#76625a', eye: '#ece8de', pupil: '#20262e', top: 'tank', cloth: '#25407a', stripes: '#eeeae0', pants: '#5a4a30', hat: 'captain', beard: true, earring: true, pantsMat: 'ape_khaki' },
     peng: { fur: '#3b3835', furD: '#222222', furL: '#5a554f', skin: '#4f4945', skinD: '#28231f', eye: '#e8e4da', pupil: '#111111', top: 'overalls', cloth: '#6b4220', clothL: '#a87a4c', hat: 'penguin', glasses: 'goggles', bandana: true, pantsMat: 'ape_overall', shins: 'ape_overall' }
   };
   const hex3 = (h, k = 1) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255 * k);
@@ -836,7 +840,7 @@
     sack: { col: [.7, .62, .46] }, leaf: { col: [.26, .42, .14] }, leaves: { tex: 'leaves' }, sprout: { col: [.45, .8, .25], em: [.06, .12, .03] },
     ape_overall: { col: [.42, .25, .12] }, ape_denim: { col: [.18, .27, .42] }, ape_khaki: { col: [.46, .38, .25] }, ape_bandana: { tex: 'ape_bandana' }, band_rb: { tex: 'band_rb' },
     cap_blue: { col: [.1, .33, .78] }, cap_logo: { tex: 'cap_logo' }, hat_white: { col: [.9, .89, .86] }, patch_apechain: { tex: 'patch_apechain' },
-    glass_dark: { col: [.03, .035, .04], spec: [.9, .9, .9], power: 90 }, peng_blue: { col: [.42, .6, .9] }, peng_white: { col: [.95, .95, .95] }, peng_beak: { col: [.95, .6, .12] },
+    glass_dark: { col: [.03, .035, .04], spec: [.9, .9, .9], power: 90 }, beard_white: { col: [.9, .88, .84] }, crab: { col: [.82, .2, .1] }, check_white: { col: [.95, .95, .93] }, sail_stripe: { col: [.95, .74, .2] }, peng_blue: { col: [.42, .6, .9] }, peng_white: { col: [.95, .95, .95] }, peng_beak: { col: [.95, .6, .12] },
     ...Object.fromEntries(Object.entries(APE_LOOK).flatMap(([id, o]) => [['fur_' + id, { tex: 'fur', tint: hex3(o.fur, 1 / .85) }], ['skin_' + id, { col: hex3(o.skin) }], ['face_' + id, { tex: 'face_' + id }], ['muzzle_' + id, { tex: 'muzzle_' + id }], ['torso_' + id, { tex: 'torso_' + id }]])),
     deco: { tex: 'plaster', tint: [1.04, .98, .88] }, deco_trim: { col: [.86, .82, .72] }, navy: { col: [.07, .11, .25], spec: [.2, .2, .3], power: 30 },
     emblem_saints: { tex: 'emblem_saints' }, mural_angel: { tex: 'mural_angel' }, mural_wings: { tex: 'mural_wings' }, sign_saints_book: { tex: 'sign_saints_book', em: [.12, .1, .06] }, sign_saints_game: { tex: 'sign_saints_game', em: [.12, .1, .06] },
@@ -1384,6 +1388,23 @@
     curveTube(M, mat, pts, [r * .18, r * .62, r * .92, r, r * .92, r * .62, r * .2], { segs: 10, n: 3, ridge: .12, k: 5, bump: .04, seed: 2 });
     for (const sd of [-1, 1]) M.cyl('darkwood', [x + sd * (L / 2 + .1), y, z + (on ? .6 : 0) - .15], r * .18, .5, 6, r * .1);
   }
+  // Chumpz Cove quest props: the band's instruments, a crab
+  function chzUke(M, x, y, z, up) { // a ukulele: lying flat in the sand (up false, neck along +y) or standing on its stand (up true)
+    if (up) { blob(M, 'wood', [x, y, z + .32], .2, .06, .2, { amp: 0, segs: 12, rings: 6 }); blob(M, 'wood', [x, y, z + .62], .16, .06, .16, { amp: 0, segs: 12, rings: 6 }); M.cyl('dark', [x, y - .07, z + .5], .055, .01, 10); M.box('darkwood', [x, y - .02, z + 1.04], [.07, .04, .6]); M.box('darkwood', [x, y - .02, z + 1.4], [.1, .05, .14]); for (let k = 0; k < 4; k++) M.rod('iron', [x - .03 + k * .02, y - .07, z + .25], [x - .03 + k * .02, y - .05, z + 1.36], .003, 3); return; }
+    blob(M, 'wood', [x, y, z + .07], .2, .2, .06, { amp: 0, segs: 12, rings: 6 }); blob(M, 'wood', [x, y + .3, z + .07], .16, .16, .06, { amp: 0, segs: 12, rings: 6 }); M.cyl('dark', [x, y + .18, z + .125], .055, .01, 10);
+    M.box('darkwood', [x, y + .72, z + .09], [.07, .6, .04]); M.box('darkwood', [x, y + 1.08, z + .1], [.1, .14, .05]); for (let k = 0; k < 4; k++) M.rod('iron', [x - .03 + k * .02, y - .08, z + .14], [x - .03 + k * .02, y + 1.04, z + .13], .003, 3);
+  }
+  function chzBongo(M, x, y, z) { for (const [dx, r, h] of [[-.21, .17, .32], [.21, .21, .36]]) { M.cyl('plank_red', [x + dx, y, z], r * .82, h, 12, r); M.cyl('check_white', [x + dx, y, z + h], r + .01, .02, 12); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; M.rod('iron', [x + dx + Math.cos(a) * r, y + Math.sin(a) * r, z + h - .02], [x + dx + Math.cos(a) * r * .8, y + Math.sin(a) * r * .8, z + .04], .008, 3); } } M.box('darkwood', [x, y, z + .2], [.1, .08, .08]); }
+  function chzMaraca(M, x, y, z, a, m) { const dx = Math.sin(a), dy = Math.cos(a); M.sphere(m, [x + dx * .16, y + dy * .16, z], .12, 1, 10, 6); M.rod('darkwood', [x - dx * .2, y - dy * .2, z], [x + dx * .06, y + dy * .06, z], .025, 5); for (let k = 0; k < 3; k++) M.cyl('check_white', [x + dx * (.08 + k * .07), y + dy * (.08 + k * .07), z - .123 + .004], .02, .005, 6); }
+  function chzCrab(M, shades) { // a big red beach crab facing -y, eyes on stalks, claws up (the shades: Banana Band's gold sunglasses)
+    blob(M, 'crab', [0, 0, .2], .34, .24, .13, { amp: .05, segs: 14, rings: 7 });
+    for (const sd of [-1, 1]) {
+      M.rod('crab', [sd * .09, -.16, .26], [sd * .12, -.2, .5], .025, 4); M.sphere('white', [sd * .12, -.21, .54], .055, 1, 8, 5); M.sphere('dark', [sd * .12, -.26, .55], .025, 1, 6, 3);
+      M.rod('crab', [sd * .3, -.1, .2], [sd * .48, -.3, .34], .045, 5); blob(M, 'crab', [sd * .52, -.38, .4], .13, .16, .1, { amp: .04, segs: 10, rings: 6 }); M.rod('crab', [sd * .5, -.5, .44], [sd * .42, -.62, .5], .03, 4); M.rod('crab', [sd * .58, -.5, .4], [sd * .56, -.64, .44], .03, 4);
+      for (let k = 0; k < 3; k++) { const y0 = .12 - k * .1; M.rod('crab', [sd * .3, y0, .16], [sd * .52, y0 + .05, .2], .025, 3); M.rod('crab', [sd * .52, y0 + .05, .2], [sd * .62, y0 + .08, 0], .02, 3); }
+    }
+    if (shades) { for (const sd of [-1, 1]) M.box('glass_dark', [sd * .12, -.28, .55], [.13, .02, .08]); M.box('gold', [0, -.28, .58], [.36, .015, .02]); }
+  }
   function chzFish(M, x, y, z) { M.rod('rope', [x, y, z], [x, y, z - .25], .01, 3); M.sphere('fish', [x, y, z - .6], .12, 3.2, 6, 4); M.poly('fish', [[x, y, z - 1.0], [x - .12, y, z - 1.22], [x + .12, y, z - 1.22]]); }
   function chzDoor(M, sign, plank) { // a plank door against a wall, front faces -y
     const W = 2.2, H = 3.6; for (const sd of [-1, 1]) M.block('palm_bark', sd * (W / 2 + .12), -.12, 0, .24, .24, H + .2); M.block('palm_bark', 0, -.12, H, W + .5, .24, .24);
@@ -1484,12 +1505,18 @@
         M.cyl('darkwood', [0, hy, 3.2], .05, .12, 6, .03);
         for (let k = 0; k < 4; k++) { const a = Math.PI / 4 + k * Math.PI / 2 + .2, d = [Math.cos(a), Math.sin(a)]; leafStrip(M, 'banana', u => [d[0] * (.05 + .44 * u), hy + d[1] * (.05 + .44 * u), 3.25 + .09 * Math.sin(Math.PI * u) - .3 * u * u], u => .17 * Math.sin(Math.PI * Math.min(1, .35 + u * .75)), d, .05, 6); }
         M.cyl('banana', [0, hy, 3.18], .1, .14, 8, .07);
+      } else if (o.hat === 'captain') { // a skipper's cap: white crown over a navy band, a black peak, a gold anchor badge
+        latheE(M, 'navy', [[.455, 2.86], [.462, 2.98]], 20, 1, hy);
+        latheE(M, 'hat_white', [[.462, 2.98], [.5, 3.08], [.55, 3.15], [.52, 3.22], [.3, 3.27], [0, 3.28]], 20, 1, hy);
+        const n = 10; for (let i = 0; i < n; i++) { const P = [i / n, (i + 1) / n].map(u => { const th = u * Math.PI, x = .44 * Math.cos(th), yi = hy - Math.sqrt(Math.max(0, .46 * .46 - x * x)), yo = yi - .24 * Math.sin(th) ** .7 - .02, z = 2.88 - .04 * Math.sin(th); return [[x, yi, z], [x, yo, z - .05]]; }); M.poly('lacquer_black', [P[0][0], P[1][0], P[1][1], P[0][1]]); M.poly('lacquer_black', [P[0][1], P[1][1], P[1][0], P[0][0]]); }
+        blob(M, 'gold', [0, hy - .5, 3.03], .07, .02, .06, { amp: 0, segs: 8, rings: 5 }); M.rod('gold', [0, hy - .52, 2.97], [0, hy - .52, 3.1], .012, 3);
       } else if (o.hat === 'penguin') {
         latheE(M, 'peng_blue', [[.45, 2.88], [.445, 3.0], [.38, 3.13], [.24, 3.24], [0, 3.29]], 18, 1, hy);
         blob(M, 'peng_white', [0, -.47, 3.04], .24, .06, .13, { amp: 0, segs: 12, rings: 6 });
         for (const s of [-1, 1]) { M.sphere('dark', [s * .08, -.53, 3.08], .035, 1, 6, 3); blob(M, 'peng_blue', [s * .47, -.02, 2.68], .07, .2, .28, { amp: .04, segs: 10, rings: 6 }); M.rod('rope', [s * .47, -.06, 2.42], [s * .3, -.42, 1.96], .012, 3); }
         M.tube('peng_beak', [0, -.52, 3.0], [0, -.64, 2.97], .05, .005, 6);
       }
+      if (o.beard) blob(M, 'beard_white', [0, -.4, 2.36], .24, .14, .2, { amp: .08, segs: 12, rings: 7 }); // an old sea dog's white beard
       if (o.glasses === 'shades') {
         for (const s of [-1, 1]) { M.box('glass_dark', [s * .13, -.48, 2.76], [.22, .03, .11]); M.rod('iron', [s * .24, -.47, 2.79], [s * .43, -.1, 2.8], .012, 3); }
         M.box('iron', [0, -.48, 2.79], [.06, .02, .02]);
@@ -3105,6 +3132,66 @@
     chz_table(M) { chzTable(M, 0, 0, 0); },
     chz_lantern_post(M) { M.cyl('wood', [0, 0, 0], .14, 2.5, 6); M.cyl('rope', [0, 0, 1.6], .17, .4, 8); M.rod('wood', [0, 0, 2.3], [.55, 0, 2.3], .05, 4); chzLantern(M, .55, 0, 2.25); M.quad('glow', [[-2, -2, .05], [2, -2, .05], [2, 2, .05], [-2, 2, .05]]); },
     chz_net_line(M) { for (const x of [-2, 2]) M.cyl('wood', [x, 0, 0], .12, 2.2, 6); M.rod('rope', [-2, 0, 2], [2, 0, 2], .02, 3); for (let i = 0; i < 4; i++) M.quad('net', [[-2 + i, 0, .4 + .2 * Math.sin(i)], [-1 + i, 0, .5], [-1 + i, 0, 2], [-2 + i, 0, 2]]); },
+    // Chumpz Cove quest props (spot pieces): a first catch, the band's instruments and their stage set, race flags, a crab
+    // with (and without) Banana Band's sunglasses, a banana bunch, the rigged sail, the big one, tiki torches dark / lit, the
+    // party bonfire dark / lit, the treasure map's stakes, the X on the sand and the dug-up chest with the Golden Coconut
+    chz_fish_bucket(M) { // a pail with a silver snapper's tail out of the top and the spare rod leaning on it
+      M.cyl('wood', [0, 0, 0], .3, .52, 12, .36); for (const z of [.06, .44]) M.cyl('iron', [0, 0, z], .35, .04, 12); M.cyl('water', [0, 0, .46], .33, .02, 12);
+      M.sphere('fish', [.04, 0, .62], .13, 2.4, 8, 4); M.poly('fish', [[.04, 0, .9], [-.12, 0, 1.12], [.2, 0, 1.12]]); M.poly('fish', [[.04, 0, .9], [.2, 0, 1.12], [-.12, 0, 1.12]]);
+      M.rod('darkwood', [-.6, -.3, 0], [.5, .25, 1.7], .025, 4); M.rod('rope', [.5, .25, 1.7], [.7, .5, .2], .004, 3); M.cyl('metal', [-.38, -.19, .36], .06, .08, 6);
+    },
+    chz_ukulele(M) { chzUke(M, 0, -.5, 0, false); },
+    chz_bongos(M) { chzBongo(M, 0, 0, 0); },
+    chz_maracas(M) { chzMaraca(M, -.08, 0, .12, .5, 'banana'); chzMaraca(M, .12, .1, .12, -.4, 'plank_red'); },
+    chz_band_set(M) { // on the bar stage: the ukulele on its stand, the bongos on a stool, the maracas in a bucket
+      M.rod('iron', [-1.3, .15, 0], [-1.3, .05, .3], .02, 4); M.rod('iron', [-1.45, .2, 0], [-1.3, .05, .3], .02, 4); M.rod('iron', [-1.15, .2, 0], [-1.3, .05, .3], .02, 4); chzUke(M, -1.3, 0, 0, true);
+      chzStool(M, 0, .1, 0); chzBongo(M, 0, .1, .78);
+      M.cyl('plank_teal', [1.25, 0, 0], .2, .4, 10, .24); chzMaraca(M, 1.2, 0, .55, .25, 'banana'); chzMaraca(M, 1.32, .05, .55, -.3, 'plank_red');
+    },
+    chz_race_flag(M) { // a checkered race flag on a pole
+      M.cyl('iron', [0, 0, 0], .045, 2.5, 6); M.sphere('gold', [0, 0, 2.52], .07, 1, 6, 3); M.cyl('check_white', [0, 0, 0], .3, .06, 10);
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) M.box((i + j) % 2 ? 'dark' : 'check_white', [.12 + i * .22, 0, 1.75 + j * .22], [.22, .025, .22]);
+    },
+    chz_crab_shades(M) { chzCrab(M, true); },
+    chz_crab(M) { chzCrab(M, false); },
+    chz_bunch(M) { // a ripe banana bunch hung on a stake to finish ripening
+      M.cyl('palm_bark', [0, 0, 0], .06, 2.3, 6); M.rod('palm_bark', [0, 0, 2.2], [.5, 0, 2.2], .05, 5); M.rod('rope', [.45, 0, 2.2], [.45, 0, 1.85], .015, 3);
+      M.rod('banana_stem', [.45, 0, 1.95], [.45, 0, 1.15], .05, 6);
+      for (let t = 0; t < 3; t++) for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + t * .5, c = Math.cos(a), sn = Math.sin(a), z = 1.25 + t * .22;
+        curveTube(M, 'banana', [[.45 + c * .06, sn * .06, z], [.45 + c * .24, sn * .24, z - .06], [.45 + c * .36, sn * .36, z + .12]], [.03, .055, .025], { segs: 6, n: 3, ridge: .1, k: 5, bump: .01, seed: t * 6 + k }); }
+    },
+    chz_sail_up(M) { // the sailboat's sail hauled up, yellow and white stripes, a red pennant at the masthead
+      for (let k = 0; k < 6; k++) { const z0 = 2.6 + k * .9, z1 = z0 + .9, w0 = 3.5 * (1 - (z0 - 2.6) / 5.6), w1 = 3.5 * (1 - (z1 - 2.6) / 5.6), m = k % 2 ? 'check_white' : 'sail_stripe';
+        M.poly(m, [[0, .12, z0], [0, .12 + w0, z0], [0, .12 + w1, z1], [0, .12, z1]]); M.poly(m, [[0, .12, z1], [0, .12 + w1, z1], [0, .12 + w0, z0], [0, .12, z0]]); }
+      M.poly('lacquer_red', [[0, 0, 8.2], [0, -1.4, 8.4], [0, 0, 8.6]]); M.poly('lacquer_red', [[0, 0, 8.6], [0, -1.4, 8.4], [0, 0, 8.2]]);
+    },
+    chz_big_fish(M) { // the big one: a giant golden snapper lying on the pier, longer than a Rebel is tall
+      blob(M, 'gold', [0, 0, .42], .45, 1.6, .42, { amp: .03, segs: 16, rings: 9 });
+      M.poly('gold', [[0, 1.45, .45], [-.05, 2.25, 1.05], [.05, 2.25, -.05]]); M.poly('gold', [[0, 1.45, .45], [.05, 2.25, -.05], [-.05, 2.25, 1.05]]);
+      M.poly('gold', [[0, -.5, .82], [0, .9, .78], [0, .2, 1.18]]); M.poly('gold', [[0, .9, .78], [0, -.5, .82], [0, .2, 1.18]]);
+      for (const sd of [-1, 1]) { M.sphere('white', [sd * .3, -1.2, .55], .1, 1, 8, 5); M.sphere('dark', [sd * .36, -1.24, .56], .05, 1, 6, 3); }
+      M.rod('dark', [-.12, -1.58, .36], [.12, -1.58, .36], .02, 3);
+    },
+    chz_torch_dark(M) { M.cyl('palm_bark', [0, 0, 0], .06, 2.3, 6); M.cyl('bamboo_wall', [0, 0, 2.2], .14, .3, 8, .19); M.cyl('dark', [0, 0, 2.48], .16, .02, 8); },
+    chz_torch_lit(M) { M.cyl('palm_bark', [0, 0, 0], .06, 2.3, 6); M.cyl('bamboo_wall', [0, 0, 2.2], .14, .3, 8, .19); M.quad('glow', [[-2.4, -2.4, .05], [2.4, -2.4, .05], [2.4, 2.4, .05], [-2.4, 2.4, .05]]); },
+    chz_torch_flame(M) { flame(M, 0, 0, 0, .42); },
+    chz_bonfire_dark(M) { // a ring of stones round a teepee of driftwood
+      for (let k = 0; k < 11; k++) { const a = k / 11 * Math.PI * 2; M.sphere('stone', [Math.cos(a) * 1.2, Math.sin(a) * 1.2, .08], .2 + .05 * (k % 3), .7, 7, 4); }
+      for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2; M.rod('bark', [Math.cos(a) * .9, Math.sin(a) * .9, 0], [Math.cos(a) * .08, Math.sin(a) * .08, 1.5], .08, 5); }
+      M.cyl('dark', [0, 0, 0], .9, .03, 12);
+    },
+    chz_bonfire_lit(M) { B.chz_bonfire_dark(M); M.quad('glow', [[-5, -5, .05], [5, -5, .05], [5, 5, .05], [-5, 5, .05]]); for (let k = 0; k < 9; k++) { const a = k * 2.4; M.sphere('fire', [Math.cos(a) * .5, Math.sin(a) * .5, .1], .1, .6, 5, 3); } },
+    chz_bonfire_flame(M) { flame(M, 0, 0, 0, 1.5); flame(M, .35, .2, 0, .9); flame(M, -.3, -.25, 0, 1); },
+    chz_map_stake(M) { M.cyl('palm_bark', [0, 0, 0], .045, 1.1, 5); M.poly('lacquer_red', [[0, 0, 1.08], [.42, 0, .98], [0, 0, .86]]); M.poly('lacquer_red', [[0, 0, .86], [.42, 0, .98], [0, 0, 1.08]]); M.cyl('lacquer_red', [0, 0, 0], .16, .015, 8); },
+    chz_x_mark(M) { // the X on the sand where the map's path ends, a shovel stuck in beside it
+      for (const a of [.785, -.785]) M.box('lacquer_red', [0, 0, .02], [1.6, .22, .03], a);
+      M.rod('darkwood', [.9, .4, .3], [.95, .45, 1.5], .035, 4); M.box('metal', [.88, .38, .15], [.32, .06, .38]);
+    },
+    chz_dug_chest(M) { // the dug hole, the sand heaped round it, the old sea chest open and the Golden Coconut inside
+      M.cyl('dark', [0, 0, 0], .95, .02, 14); for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; M.sphere('sack', [Math.cos(a) * 1.25, Math.sin(a) * 1.25, 0], .45, .5, 7, 4); }
+      M.block('darkwood', 0, 0, 0, 1, .66, .5); for (const dx of [-.4, .4]) M.block('brass', dx, 0, 0, .06, .7, .52);
+      M.box('darkwood', [0, .38, .76], [1, .1, .56], 0, -.3); M.sphere('gold', [0, 0, .62], .2, 1.1, 10, 6); M.rod('darkwood', [0, 0, .82], [.05, 0, .9], .02, 3);
+    },
     chz_lilypads(M) { for (let i = 0; i < 9; i++) { const a = i * 2.4, r = .4 + .35 * (i % 4); M.cyl('lily', [Math.cos(a) * r * 1.6, Math.sin(a) * r * 1.6, 0], .32 + .1 * (i % 3), .03, 9); if (i % 4 === 0) M.sphere('flower_pink', [Math.cos(a) * r * 1.6, Math.sin(a) * r * 1.6, .08], .08, .8, 6, 3); } },
     cc_banner_pole(M) {
       M.cyl('iron', [0, 0, 0], .07, 5.6, 6); M.cyl('stone_dark', [0, 0, 0], .4, .4, 8, .32);
@@ -3441,14 +3528,15 @@
   // floating pieces (ghosts): their instances bob and sway under the placed root, so saved positions never move
   const FLOAT = new Set(['cc_ghost']), floaters = [];
   // characters: the body rocks (kokeshi) or breathes (cats); subparts under their own pivots wave, flicker, pulse
-  const CHAR = { cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
-  const SUBPARTS = { cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']] };
+  const CHAR = { chz_torch_lit: 'still', chz_bonfire_lit: 'still', chz_crab: 'rock', chz_crab_shades: 'rock', cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
+  const SUBPARTS = { chz_torch_lit: [['chz_torch_flame', [0, 0, 2.5], 'flicker']], chz_bonfire_lit: [['chz_bonfire_flame', [0, 0, .05], 'flicker']], cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']] };
   const actors = [];
   function animateActors(t) {
     for (let i = actors.length - 1; i >= 0; i--) {
       const a = actors[i]; if (a.body.isDisposed?.()) { actors.splice(i, 1); continue; }
       if (a.kind === 'ape') { animateApe(a, t); continue; }
-      if (a.kind === 'rock') { a.body.rotation.z = .07 * Math.sin(t * 1.5 + a.ph); a.body.rotation.x = .035 * Math.sin(t * 1.1 + a.ph * 2); }
+      if (a.kind === 'still') { /* only the subparts move */ }
+      else if (a.kind === 'rock') { a.body.rotation.z = .07 * Math.sin(t * 1.5 + a.ph); a.body.rotation.x = .035 * Math.sin(t * 1.1 + a.ph * 2); }
       else if (a.kind === 'hover') { a.body.position.y = .22 + .18 * Math.sin(t * 2.2 + a.ph); a.body.rotation.z = .12 * Math.sin(t * 1.4 + a.ph); a.body.rotation.y = .35 * Math.sin(t * .7 + a.ph); }
       else { const b = Math.sin(t * 1.8 + a.ph); a.body.scaling.set(1 + .015 * b, 1 - .012 * b, 1 + .015 * b); }
       for (const s of a.subs) {
