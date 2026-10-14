@@ -3485,6 +3485,29 @@
     sl_streetlight(M) { M.cyl('metal', [0, 0, 0], .2, 8.4, 8, .12); M.rod('metal', [0, 0, 8.2], [0, -2.4, 8.5], .08, 5); M.block('metal', 0, -2.6, 8.15, .7, .9, .35); M.block('lantern', 0, -2.6, 8.05, .55, .7, .12); M.quad('glow', [[-3, -5.6, .06], [3, -5.6, .06], [3, .4, .06], [-3, .4, .06]]); },
     sl_util_pole(M) { M.cyl('bark', [0, 0, -.3], .26, 11.6, 7, .2); M.block('darkwood', 0, 0, 10.2, 3.6, .2, .2); for (const x of [-1.5, 0, 1.5]) M.cyl('bone', [x, 0, 10.4], .07, .3, 5); M.cyl('metal', [.35, 0, 8], .3, 1.1, 8); },
     sl_planter(M) { slPlanter(M, 0, 0, 0, 4, true); },
+    // Saints of LA quest props (spot pieces)
+    sl_cone(M) { M.block('dark', 0, 0, 0, .62, .62, .06); M.cyl('orange', [0, 0, .06], .27, .72, 10, .04); M.cyl('white', [0, 0, .34], .17, .13, 10, .135); },
+    sl_crate(M) { // the market crate: oranges, greens and a loaf of bread
+      M.block('wood', 0, 0, 0, 1.1, .72, .42); for (const sd of [-1, 1]) M.block('darkwood', sd * .5, 0, .1, .1, .74, .3);
+      for (let k = 0; k < 6; k++) M.sphere('orange', [-.36 + (k % 3) * .17, -.14 + Math.floor(k / 3) * .2, .48], .09, 1, 8, 5);
+      for (let k = 0; k < 3; k++) M.sphere('lime', [.18 + k * .1, .12, .5], .1, .7, 7, 4);
+      blob(M, 'sack', [.24, -.14, .5], .2, .1, .08, { amp: .02, segs: 10, rings: 5 });
+    },
+    sl_package(M) { M.block('sack', 0, 0, 0, .7, .5, .48); for (const [sx, sy] of [[.72, .07], [.07, .52]]) M.block('lacquer_red', 0, 0, 0, sx, sy, .5); M.sphere('lacquer_red', [-.06, 0, .55], .08, .8, 6, 4); M.sphere('lacquer_red', [.06, 0, .55], .08, .8, 6, 4); },
+    sl_sparks(M) { for (let k = 0; k < 9; k++) { const a = k * 2.4, r = .15 + (k % 3) * .12; M.sphere(k % 2 ? 'window_glow' : 'lantern', [Math.cos(a) * r, Math.sin(a) * r, -.2 - (k % 4) * .18], .05, 1, 5, 3); } },
+    sl_trail_flag(M) { M.cyl('metal', [0, 0, 0], .035, 1.5, 5); M.poly('cloth_purple', [[0, 0, 1.48], [.6, 0, 1.36], [0, 0, 1.18]]); M.poly('cloth_purple', [[0, 0, 1.18], [.6, 0, 1.36], [0, 0, 1.48]]); M.sphere('gold', [0, 0, 1.52], .05, 1, 6, 3); },
+    sl_party_lights(M) { // over the court (origin = the court's centre): four poles, string lights between them, the DJ table on the north side
+      const C = [[-15.6, -8.8], [15.6, -8.8], [15.6, 8.8], [-15.6, 8.8]], H = 5.6, bulbs = ['neon_pink', 'neon_cyan', 'neon_gold', 'window_glow'];
+      for (const [x, y] of C) { M.cyl('metal', [x, y, 0], .09, H, 6); M.sphere('gold', [x, y, H + .05], .1, 1, 6, 3); }
+      for (let e = 0; e < 6; e++) {
+        const [a, b] = [[0, 1], [1, 2], [2, 3], [3, 0], [0, 2], [1, 3]][e], A = C[a], Bp = C[b], n = 14;
+        for (let k = 0; k < n; k++) { const t0 = k / n, t1 = (k + 1) / n, P = t => [A[0] + (Bp[0] - A[0]) * t, A[1] + (Bp[1] - A[1]) * t, H - 1.2 * Math.sin(Math.PI * t)];
+          M.rod('rope', P(t0), P(t1), .012, 3); M.sphere(bulbs[(k + e) % 4], P(t0 + .5 / n), .09, 1, 6, 4); }
+      }
+      M.block('dark', 0, 11, 0, 3.4, 1.1, .95); M.block('cloth_purple', 0, 10.42, .1, 3.5, .04, .8); M.block('records', -.7, 11, .95, .8, .8, .04); M.block('records', .7, 11, .95, .8, .8, .04);
+      for (const sd of [-1, 1]) { M.block('dark', sd * 2.6, 11, 0, 1.1, 1, 2.2); M.tube('metal', [sd * 2.6, 10.5, .7], [sd * 2.6, 10.44, .7], .32, .32, 12, true); M.tube('metal', [sd * 2.6, 10.5, 1.6], [sd * 2.6, 10.44, 1.6], .22, .22, 12, true); }
+      M.quad('glow', [[-16, -9, .06], [16, -9, .06], [16, 12, .06], [-16, 12, .06]]);
+    },
     sl_bench(M) { M.block('concrete', 0, 0, 0, 3.2, .7, .5); M.block('wood', 0, 0, .5, 3.2, .7, .1); M.block('wood', 0, .32, .6, 3.2, .1, .6); },
     // city filler round the block (placed by the terrain): quarter blocks of shops, brick walk-ups, apartments, offices
     sl_lot_a(M) {
