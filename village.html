@@ -2849,8 +2849,17 @@ const MOON_TALES_WIRING = {
     ] }
 };
 
+// Friend-village quest series: side quests with a chapter of their own, ids <prefix>-NN, wired like BOOK1_WIRING.side.
+const QUEST_SERIES = [
+  { prefix:'moon-tales', kind:'Moon Tale', done:'Moon Tale Complete', quests:MOON_TALES_QUESTS, wiring:MOON_TALES_WIRING }
+];
+function questSeriesOf(questId) {
+  const m = /^([a-z-]+)-(\d+)$/.exec(String(questId || '')), series = m && QUEST_SERIES.find(x => x.prefix === m[1]);
+  return series ? { series, n:Number(m[2]) } : null;
+}
+
 function registerBook1QuestDefinitions() {
-  [...BOOK1_MAIN_QUESTS, ...BOOK1_SIDE_QUESTS, ...MOON_TALES_QUESTS].forEach(quest => {
+  [...BOOK1_MAIN_QUESTS, ...BOOK1_SIDE_QUESTS, ...QUEST_SERIES.flatMap(x => x.quests)].forEach(quest => {
     QUEST_DEFINITIONS[quest.questId] = {
       questId: quest.questId,
       title: quest.title,
@@ -2903,8 +2912,8 @@ function registerBook1QuestDefinitions() {
 }
 
 function getBook1Wiring(quest) {
-  const tale = Number(String(quest?.questId || '').match(/^moon-tales-(\d+)$/)?.[1] || 0);
-  if (tale) { const w = MOON_TALES_WIRING[tale]; return Array.isArray(w) ? w : (w?.steps || null); }
+  const fs = questSeriesOf(quest?.questId);
+  if (fs) { const w = fs.series.wiring[fs.n]; return Array.isArray(w) ? w : (w?.steps || null); }
   const num = Number(String(quest?.questId || '').match(/^book1-(main|side)-(\d+)$/)?.[2] || 0);
   if (!num) return null;
   const table = quest.type === 'side' ? BOOK1_WIRING.side : BOOK1_WIRING.main;
@@ -3012,15 +3021,15 @@ function saveSideQuestState() {
 }
 
 function getSideQuestWiring(questId) {
-  const tale = Number(String(questId || '').match(/^moon-tales-(\d+)$/)?.[1] || 0);
-  if (tale) { const w = MOON_TALES_WIRING[tale]; return w && !Array.isArray(w) ? w : null; }
+  const fs = questSeriesOf(questId);
+  if (fs) { const w = fs.series.wiring[fs.n]; return w && !Array.isArray(w) ? w : null; }
   const n = Number(String(questId || '').match(/^book1-side-(\d+)$/)?.[1] || 0);
   const w = n ? BOOK1_WIRING.side?.[n] : null;
   return w && !Array.isArray(w) ? w : null;
 }
 
 function getSideQuestIds() {
-  return [...Object.keys(BOOK1_WIRING.side || {}).map(n => `book1-side-${String(n).padStart(2, '0')}`), ...Object.keys(MOON_TALES_WIRING).map(n => `moon-tales-${String(n).padStart(2, '0')}`)].filter(id => QUEST_DEFINITIONS[id]);
+  return [...Object.keys(BOOK1_WIRING.side || {}).map(n => `book1-side-${String(n).padStart(2, '0')}`), ...QUEST_SERIES.flatMap(x => Object.keys(x.wiring).map(n => `${x.prefix}-${String(n).padStart(2, '0')}`))].filter(id => QUEST_DEFINITIONS[id]);
 }
 
 function isQuestIdCompleted(questId) {
@@ -3062,7 +3071,7 @@ function getSideQuestDialogueLines(npc) {
   return null;
 }
 
-function sideQuestKindLabel(questId) { return QUEST_DEFINITIONS[questId]?.chapter === 'Moon Tales' ? 'Moon Tale' : 'Side quest'; }
+function sideQuestKindLabel(questId) { return questSeriesOf(questId)?.series.kind || 'Side quest'; }
 
 function startSideQuest(questId) {
   if (!isSideQuestAvailable(questId)) return false;
@@ -3124,7 +3133,7 @@ function completeSideQuest(questId) {
   const badge = getQuestConfiguredBadge(quest)?.name || null;
   if (recordProgressionEvent('quest', questId, reward, badge)) unlockQuestJournalEntry(quest);
   queueQuestCelebration({
-    kicker:quest.chapter === 'Moon Tales' ? 'Moon Tale Complete' : 'Side Quest Complete',
+    kicker:questSeriesOf(questId)?.series.done || 'Side Quest Complete',
     title:quest.title || 'Side Quest',
     body:quest.journalEntry ? escapeHTML(quest.journalEntry) : '',
     chips:[{ label:`+${reward} XP`, tone:'gold' }, ...(badge ? [{ label:`Badge: ${badge}` }] : [])],
@@ -3327,7 +3336,8 @@ const MoonTaleSounds = (() => {
     } catch (e) { ctx = null; }
     return ctx;
   };
-  const N = { E6:1318.5, F5:698.46, C3:130.81, G3:196, C4:261.63, D4:293.66, E4:329.63, G4:392, A4:440, C5:523.25, D5:587.33, E5:659.25, G5:783.99, A5:880, C6:1046.5 };
+  const N = { E6:1318.5, F5:698.46, C3:130.81, G3:196, C4:261.63, D4:293.66, E4:329.63, G4:392, A4:440, C5:523.25, D5:587.33, E5:659.25, G5:783.99, A5:880, C6:1046.5,
+    F3:174.61, A3:220, F4:349.23, B4:493.88, D6:1174.66 };
   // one music-box note: a sine with a soft octave, a quick attack and a long decay
   const note = (f, t, dur, g) => {
     const o = ctx.createOscillator(), o2 = ctx.createOscillator(), e = ctx.createGain(), m = ctx.createGain();
@@ -3336,6 +3346,31 @@ const MoonTaleSounds = (() => {
     e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + .012); e.gain.exponentialRampToValueAtTime(.0006, t + dur);
     o.start(t); o2.start(t); o.stop(t + dur + .05); o2.stop(t + dur + .05);
   };
+  // sound effects (Chumpz Cove): filtered noise bursts, pitch glides, plucked / steel-pan tones (partials: [ratio, gain, decay])
+  let noiseBuf = null;
+  const noise = (t, dur, g, type = 'lowpass', freq = 1200, q = .7) => {
+    if (!noiseBuf) { noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), e = ctx.createGain();
+    src.buffer = noiseBuf; src.loop = true; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    src.connect(f).connect(e); e.connect(bus);
+    e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + .004); e.gain.exponentialRampToValueAtTime(.0006, t + dur);
+    src.start(t, Math.random() * .5); src.stop(t + dur + .05);
+  };
+  const glide = (f0, f1, t, dur, g, type = 'sine') => {
+    const o = ctx.createOscillator(), e = ctx.createGain(); o.type = type;
+    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    o.connect(e); e.connect(bus);
+    e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + .01); e.gain.exponentialRampToValueAtTime(.0006, t + dur);
+    o.start(t); o.stop(t + dur + .05);
+  };
+  const tone = (f, t, dur, g, partials = [[1, 1, 1], [2, .4, .6], [3, .15, .35]]) => {
+    for (const [k, pg, pd] of partials) {
+      const o = ctx.createOscillator(), e = ctx.createGain(); o.type = 'sine'; o.frequency.value = f * k; o.connect(e); e.connect(bus);
+      e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g * pg, t + .006); e.gain.exponentialRampToValueAtTime(.0006, t + dur * pd);
+      o.start(t); o.stop(t + dur * pd + .05);
+    }
+  };
+  const PAN = [[1, 1, 1], [2, .5, .55], [3.01, .22, .3], [4.2, .06, .15]], PLUCK = [[1, 1, 1], [2, .35, .5], [3, .2, .3], [4, .08, .2]];
   const SONGS = {
     // 3/4 at 0.5 s a beat, 24 beats: E G A | G E D | C D E | D . . | E G A | C' A G | E D C | C . .
     lullaby: { beat:.5, notes:[['E5', 0], ['G5', 1], ['A5', 2], ['G5', 3], ['E5', 4], ['D5', 5], ['C5', 6], ['D5', 7], ['E5', 8], ['D5', 9, 2.2], ['E5', 12], ['G5', 13], ['A5', 14], ['C6', 15], ['A5', 16], ['G5', 17], ['E5', 18], ['D5', 19], ['C5', 20], ['C5', 21, 2.6]],
@@ -3359,9 +3394,11 @@ const MoonTaleSounds = (() => {
       for (const [k, g, d] of [[1, .3, 2.6], [2.76, .12, 1.6], [5.4, .07, 1], [8.93, .04, .6]]) note(2093 * k / 2, t0, d, g);
       return;
     }
+    if (song.fx) { song.fx(t0); return; }
     for (const [n, b, d] of song.notes) note(N[n], t0 + b * song.beat, d || 1.4, song.gain || .32);
     for (const [n, b] of song.bass || []) note(N[n], t0 + b * song.beat, 2.6, .14);
   }
+  window._taleSounds = { play, stop, names:() => Object.keys(SONGS), ctx:() => ctx }; // tests
   return { play, stop };
 })();
 
@@ -9353,6 +9390,10 @@ function normalizeQuestSpotConfig(cfg = {}) {
     sound: cfg.sound ? String(cfg.sound) : null,
     // lines shown one after another while a hold lasts
     holdLines: Array.isArray(cfg.holdLines) ? cfg.holdLines.map(String) : null,
+    // a sound when the spot is used (after a hold's own sound: the splash of a catch)
+    doneSound: cfg.doneSound ? String(cfg.doneSound) : null,
+    // NPCs (kit apes) that hop and kick while a hold lasts (the Beach Party dance)
+    cheer: Array.isArray(cfg.cheer) ? cfg.cheer.map(String) : null,
     // a secret made of several spots: each spot with this secretId counts once, the secret is found at the setCount-th
     setCount: Math.max(0, Math.floor(Number(cfg.setCount) || 0)),
     // a timed run: from this spot through path [[x, z], ...] (in order, within pathRadius) in seconds (0 = a walk, no time limit)
@@ -9551,9 +9592,10 @@ function completeQuestSpot(root) {
   const cfg0 = root.metadata.spotConfig;
   const cfg = cfg0.miniAnt ? { ...cfg0, text:`${cfg0.text ? cfg0.text + ' ' : ''}${getMiniAntWhisper()}` } : cfg0;
   QuestSpotRuntime.hold = null;
-  if ((cfg.action === 'light' || cfg.action === 'ring') && !cfg.sound) playInteractionAudio(cfg.action === 'ring' ? 'templeBell' : 'collectiblePickup');
+  if ((cfg.action === 'light' || cfg.action === 'ring') && !cfg.sound && !cfg.doneSound) playInteractionAudio(cfg.action === 'ring' ? 'templeBell' : 'collectiblePickup');
   if ((cfg.piece || cfg.donePiece || cfg.questId) && !(ProgressionState.spotsUsed || []).includes(cfg.spotId)) { (ProgressionState.spotsUsed ||= []).push(cfg.spotId); saveProgressionState(); }
-  if (cfg.sound && cfg.action !== 'hold') MoonTaleSounds.play(cfg.sound);
+  if (cfg.doneSound) MoonTaleSounds.play(cfg.doneSound);
+  else if (cfg.sound && cfg.action !== 'hold' && cfg.action !== 'race') MoonTaleSounds.play(cfg.sound);
   let secretNew = false, setNote = '';
   if (cfg.secretId && cfg.setCount > 1 && !(ProgressionState.secretsFound || []).includes(cfg.secretId)) {
     const parts = (ProgressionState.secretParts ||= {})[cfg.secretId] ||= [];
@@ -9691,6 +9733,11 @@ function updateQuestSpots() {
     else if (held >= hc.holdSeconds) completeQuestSpot(hold.root);
     // lines one after another through the hold (Kokeshi Flower Moon's chant)
     else if (hc.holdLines?.length && hold.line < hc.holdLines.length && held >= (hold.line + 1) * hc.holdSeconds / (hc.holdLines.length + 1)) showToast(hc.holdLines[hold.line++], 6000);
+    if (QuestSpotRuntime.hold === hold && hc.cheer?.length && performance.now() > (hold.cheerAt || 0)) {
+      hold.cheerAt = performance.now() + 450 + Math.random() * 650;
+      const km = getNPCById?.(hc.cheer[Math.floor(Math.random() * hc.cheer.length)])?.metadata?.kitModel;
+      if (km) window.SamuraiKit?.actorAction?.(km, Math.random() < .75 ? 'jump' : 'kick');
+    }
   }
   // a timed run: each path point in order before the time is up
   const race = QuestSpotRuntime.race;
@@ -10743,15 +10790,21 @@ function villageClockHour(now = new Date()) {
   const h = Number.isFinite(fixed) ? fixed : now.getHours() + now.getMinutes() / 60;
   return taleDawnHour(h);
 }
-// The Harvest Festival's dawn (Moon Tales 20): from the step after the watch, and for the rest of that visit once seen.
-// Seen live it rises over TALE_DAWN_MS; loaded at that step it is already there. window.setTaleDawn(true / false) previews.
+// Quest clocks: a quest step that turns a village's clock, from that step on and for the rest of that visit once seen:
+// the Harvest Festival's dawn (Moon Tales 20, Cute & Creepy's own 22:30 to 06:36) and the Beach Party's sunset
+// (Chumpz Cove 20: from the real hour to 21:36, unless it is night already). Seen live the hour eases there over
+// TALE_DAWN_MS; loaded at that step it is already there. window.setTaleDawn(true / false) previews.
+const QUEST_CLOCKS = [
+  { village:'cute-creepy', quest:'moon-tales-20', step:'dawn-told', to:6.6 }
+];
 const TaleDawn = { since:null, preview:undefined, iv:null };
-const TALE_DAWN_TO = 6.6, TALE_DAWN_MS = 12000;
+const TALE_DAWN_MS = 12000;
+function questClock() { return QUEST_CLOCKS.find(c => c.village === CURRENT_VILLAGE_ID) || null; }
 function taleDawnWanted() {
-  if (CURRENT_VILLAGE_ID !== 'cute-creepy') return false;
+  const c = questClock(); if (!c) return false;
   if (TaleDawn.preview !== undefined) return TaleDawn.preview;
-  const q = SideQuestState.active?.['moon-tales-20'];
-  return TaleDawn.since != null || !!(q && questStepReached('moon-tales-20', q.step, 'dawn-told'));
+  const q = SideQuestState.active?.[c.quest];
+  return TaleDawn.since != null || !!(q && questStepReached(c.quest, q.step, c.step));
 }
 // 0 = the village's own night, 1 = dawn (eased)
 function taleDawnProgress() {
@@ -10761,8 +10814,8 @@ function taleDawnProgress() {
   return u * u * (3 - 2 * u);
 }
 function taleDawnHour(h) {
-  const e = taleDawnProgress();
-  return e ? (h + (TALE_DAWN_TO + 24 - h) % 24 * e) % 24 : h;
+  const e = taleDawnProgress(), c = questClock();
+  return e && c && !c.skip?.(h) ? (h + (c.to + 24 - h) % 24 * e) % 24 : h;
 }
 function refreshTaleDawn() {
   if (TaleDawn.since != null || !taleDawnWanted()) return;
@@ -30359,6 +30412,7 @@ function serializeInteriorHotspot(hotspot) {
     ...(meta.questId ? { questId: meta.questId } : {}),
     ...(meta.secretId ? { secretId: meta.secretId } : {}),
     ...(meta.requires ? { requires: meta.requires } : {}),
+    ...(meta.sound ? { sound: meta.sound } : {}),
     ...serializeNodeTransform(hotspot)
   };
 }
@@ -31065,6 +31119,7 @@ function createInteriorHotspot(parent, config = {}) {
     questId: config.questId || '', // a quest hotspot: only there once that quest is active or done
     secretId: config.secretId || '', // a secret inside a room (found on the first O)
     requires: config.requires || null, // { time, weather, hint } like quest spots
+    sound: config.sound || '', // a quest sound when it is used (MoonTaleSounds: the dice rattling on the casino felt)
     questObjectiveType:'interactInteriorHotspot'
   };
   root.isPickable = true;
@@ -31112,6 +31167,7 @@ function interactInteriorHotspot(hotspot) {
   if (!hotspot || hotspot.metadata?.enabled === false) return false;
   const meta = hotspot.metadata || {};
   if (meta.requires) { const miss = questSpotRequirementMiss({ requires: meta.requires }); if (miss) { showToast(miss); return true; } }
+  if (meta.sound) MoonTaleSounds.play(meta.sound);
   recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.linkName, hotspotId:meta.hotspotId, targetObjectId:meta.hotspotId, label:meta.linkName, title:meta.linkName, url:meta.url, actionType:meta.actionType } }, 'interactInteriorHotspot');
   if (meta.secretId && recordQuestSpotSecret({ secretId: meta.secretId, secretName: meta.linkName, text: meta.description })) return true; // the celebration shows its text
   if (meta.actionType === 'openUrl' && meta.url) {
