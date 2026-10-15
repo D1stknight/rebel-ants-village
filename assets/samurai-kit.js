@@ -3786,6 +3786,10 @@
   const QG = { HX: 13, HY: 10, H: 8, DW: 4.4, DH: 4.8 };
   const QL = { R: 12, WH: 7, DOME: 5, DW: 3.66, DH: 4.6, NS: 48 };
   const QB = { HX: 15, HY: 12, H: 8, DW: 3.6, DH: 4.4, LN: [-14.6, -4.4], LY: [-11.6, 3.6] };
+  // the ball returns behind lanes 1-3, beside lane 4 (the bowling game's lane: its pins and ball are parts the game moves)
+  QB.RET = [QB.LN[0] + 1.3, QB.LN[0] + 4, QB.LN[0] + 6.6, QB.LN[1] + .75];
+  QB.BLX = QB.LN[0] + (QB.LN[1] - QB.LN[0]) / 4 * 3.5;
+  QB.RACK = []; for (let b = 0; b < 4; b++) for (let a = -b; a <= b; a += 2) QB.RACK.push([QB.BLX + a * .28, -9.6 - b * .485]);
   const ROOMS = {
     room_hub_library: {
       bounds: [-LB.HX, LB.HX, -LB.HY, LB.HY + .2], spawn: [0, 17.6, Math.PI], exit: [0, LB.HY + .3], ceil: LB.H,
@@ -4269,8 +4273,9 @@
       bounds: [-QB.HX, QB.HX, -QB.HY, QB.HY + .2], spawn: [2, QB.HY - 4.6, Math.PI], exit: [0, QB.HY + .3], ceil: QB.H,
       hemi: { i: .36, c: [.7, .96, 1], g: [.2, .12, .1] },
       lights: [{ p: [-9.5, 5.5, -4], c: [.4, 1, .95], i: .6, r: 16 }, { p: [7, 5, -.5], c: [1, .7, .4], i: .55, r: 12 }, { p: [10, 3.4, -9], c: [1, .5, .2], i: .55, r: 9 }, { p: [-9.5, 2, -10.5], c: [1, .96, .9], i: .5, r: 7 }, { p: [0, 4, QB.HY - 1.5], c: [.92, .94, 1], i: .35, r: 8 }],
-      parts: [{ type: 'room_sl_discoball', p: [5, QB.H - .5, -2], anim: { spin: .6 } }, ...[-1, 1].map(s => ({ type: 'room_sl_record', p: [10 + s * .8, 1.26, -9.6], anim: { spin: 3.4 } }))],
-      blockers: [{ box: [QB.LN[0] - .4, -QB.HY, QB.LN[1] + .2, QB.LY[1]] }, ...[-4, 3].map(z => ({ box: [5.2, z - 1.6, 8.8, z + 1.6] })), { box: [7.2, -QB.HY, 13.6, -8.4] }, ...[QB.LN[0] + 1.3, QB.LN[0] + 4, QB.LN[0] + 6.6, QB.LN[0] + 9.2].map(x => ({ circle: [x, QB.LY[1] + 1, .5] }))]
+      parts: [{ type: 'room_sl_discoball', p: [5, QB.H - .5, -2], anim: { spin: .6 } }, ...[-1, 1].map(s => ({ type: 'room_sl_record', p: [10 + s * .8, 1.26, -9.6], anim: { spin: 3.4 } })),
+        ...QB.RACK.map(([x, z]) => ({ type: 'room_sl_pin', p: [x, .05, z] })), { type: 'room_sl_ball', p: [QB.RET[3] - .2, .9, QB.LY[1] + 1.3] }],
+      blockers: [{ box: [QB.LN[0] - .4, -QB.HY, QB.LN[1] + .2, QB.LY[1]] }, ...[-4, 3].map(z => ({ box: [5.2, z - 1.6, 8.8, z + 1.6] })), { box: [7.2, -QB.HY, 13.6, -8.4] }, ...QB.RET.map(x => ({ circle: [x, QB.LY[1] + 1, .5] }))]
     }
   };
   // ── room furniture (kit coordinates: z up, the hall's entrance wall is +y) ──
@@ -6896,13 +6901,13 @@
       const lw = (LN[1] - LN[0]) / 4;
       for (let i = 0; i < 4; i++) {
         const x = LN[0] + lw * (i + .5); M.block('wood', x, (LY[0] + LY[1]) / 2, 0, lw - .6, LY[1] - LY[0], .05); for (const sd of [-1, 1]) M.block('dark', x + sd * (lw / 2 - .15), (LY[0] + LY[1]) / 2, 0, .3, LY[1] - LY[0], .02);
-        for (const [a, b] of [[0, 0], [-1, 1], [1, 1], [-2, 2], [0, 2], [2, 2], [-3, 3], [-1, 3], [1, 3], [3, 3]]) slPin(M, x + a * .2, LY[0] + 1.6 - b * .34);
+        if (i < 3) for (const [a, b] of [[0, 0], [-1, 1], [1, 1], [-2, 2], [0, 2], [2, 2], [-3, 3], [-1, 3], [1, 3], [3, 3]]) slPin(M, x + a * .2, LY[0] + 1.6 - b * .34);
         M.quad('scoreboard', [[x - .9, LY[0] - .1, 4.2], [x + .9, LY[0] - .1, 4.2], [x + .9, LY[0] - .1, 5.1], [x - .9, LY[0] - .1, 5.1]]);
         for (let q = 0; q < 6; q++) M.block('window_glow', x - .9 + q * .36, LY[1] - .2, .06, .2, .1, .02);
       }
       for (let i = 0; i <= 4; i++) M.block('metal', LN[0] + lw * i, (LY[0] + LY[1]) / 2, 0, .1, LY[1] - LY[0], .3);
       M.block('dark', (LN[0] + LN[1]) / 2, LY[0] - .3, 0, LN[1] - LN[0], .6, 2.4); M.block('neon_cyan', (LN[0] + LN[1]) / 2, LY[0] - .02, 2.4, LN[1] - LN[0], .06, .12);
-      for (const x of [LN[0] + 1.3, LN[0] + 4, LN[0] + 6.6, LN[0] + 9.2]) { M.block('metal', x, LY[1] + 1, 0, .9, .9, .7); M.sphere('metal', [x, LY[1] + 1, .7], .45, .6, 10, 4); for (const [dx, m] of [[-.2, 'paint_blue'], [.2, 'paint_red']]) M.sphere(m, [x + dx, LY[1] + 1.3, .9], .22, 1, 10, 5); }
+      QB.RET.forEach((x, ri) => { M.block('metal', x, LY[1] + 1, 0, .9, .9, .7); M.sphere('metal', [x, LY[1] + 1, .7], .45, .6, 10, 4); for (const [dx, m] of ri < 3 ? [[-.2, 'paint_blue'], [.2, 'paint_red']] : [[.2, 'paint_red']]) M.sphere(m, [x + dx, LY[1] + 1.3, .9], .22, 1, 10, 5); });
       for (const x of [-12, -7]) { M.block('paint_red', x, 8, 0, 4, 1, .5); M.block('paint_red', x, 8.45, .5, 4, .2, .8); }
       // pool tables, the cue rack, the DJ booth, the speakers, the sign
       for (const [y, m] of [[-4, 'felt_blue'], [3, 'felt_green']]) { M.block('darkwood', 7, y, 0, 3.6, 2, .9); M.block(m, 7, y, .9, 3.2, 1.6, .05); for (const sx of [-1, 0, 1]) for (const sy of [-1, 1]) M.cyl('dark', [7 + sx * 1.6, y + sy * .8, .92], .1, .04, 8); for (let k = 0; k < 6; k++) M.sphere(['paint_red', 'paint_gold', 'paint_blue', 'white', 'paint_black', 'paint_purple'][k], [6.4 + (k % 3) * .3, y - .2 + (k > 2 ? .3 : 0), 1.05], .1, 1, 8, 4); }
@@ -6914,6 +6919,8 @@
     },
     // the disco ball and a record on a turntable (parts)
     room_sl_discoball(M) { M.room = true; M.rod('metal', [0, 0, 0], [0, 0, -.5], .02, 3); M.sphere('chrome', [0, 0, -1.1], .6, 1, 16, 8); for (let k = 0; k < 40; k++) { const a = k * 2.4, e = Math.asin(((k * 37) % 40) / 20 - 1); M.box('glass', [Math.cos(a) * .6 * Math.cos(e), Math.sin(a) * .6 * Math.cos(e), -1.1 + .6 * Math.sin(e)], [.1, .1, .1], a); } },
+    room_sl_pin(M) { M.room = true; slPin(M, 0, 0); },
+    room_sl_ball(M) { M.room = true; M.sphere('paint_purple', [0, 0, 0], .22, 1, 14, 8); M.cyl('paint_gold', [0, 0, -.015], .222, .03, 16); for (const [dx, dy] of [[-.05, .02], [.05, .02], [0, -.07]]) M.cyl('dark', [dx, dy, .2], .026, .025, 8); },
     room_sl_record(M) { M.room = true; M.cyl('records', [0, 0, 0], .32, .02, 20); M.cyl('paint_red', [0, 0, .021], .1, .005, 12); M.cyl('metal', [0, 0, 0], .015, .05, 6); }
   });
   // a koi swimming a circle of radius d round its pivot (body, tail, fins); facing along +x at (0, d)

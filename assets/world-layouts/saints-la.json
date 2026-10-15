@@ -16294,16 +16294,15 @@
           {
             "interiorId": "sl_block_party",
             "hotspotId": "hotspot_sl_block_party_strike",
-            "linkName": "Bowl a Strike",
+            "linkName": "Bowling",
             "actionType": "showInfo",
             "url": "",
-            "description": "You line up, swing and let it roll. The ball glows all the way down the lane... STRIKE! The scoreboard cheers.",
+            "description": "Lane 4 by the DJ booth: ten frames, your best score kept.",
             "enabled": true,
-            "questId": "saints-la-06",
             "position": {
-              "x": -6.5,
+              "x": -5.7,
               "y": 1.6,
-              "z": 4.4
+              "z": 4.6
             },
             "rotation": {
               "x": 0,
@@ -16315,7 +16314,14 @@
               "y": 0.8,
               "z": 1
             },
-            "sound": "strike"
+            "game": {
+              "type": "bowling",
+              "id": "sl-bowling",
+              "title": "Bowling",
+              "pass": 80,
+              "points": 50,
+              "questOn": "strike"
+            }
           },
           {
             "interiorId": "sl_block_party",
