@@ -53402,5 +53402,183 @@
         "text": "Plenty of guests here, and every one of them leaves by morning. Look for a house that nobody lives in."
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_cc-mochi-riddles",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 30.79,
+      "y": 0.1,
+      "z": -0.17
+    },
+    "rotation": {
+      "x": 0,
+      "y": 2.444,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "cute-creepy",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "cc-mochi-riddles",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.4,
+      "label": "",
+      "game": {
+        "type": "riddle",
+        "id": "cc-mochi-riddles",
+        "title": "Mochi's Lucky Riddles",
+        "giver": "cc-mochi",
+        "riddles": [
+          {
+            "q": "What has a head and a tail, but no body?",
+            "a": [
+              "A ghost",
+              "A coin",
+              "A comet",
+              "A kite"
+            ],
+            "right": 1,
+            "why": "Mochi keeps a pawful of them for luck."
+          },
+          {
+            "q": "I am lighter than a feather, yet the strongest ant cannot hold me for five minutes. What am I?",
+            "a": [
+              "A bubble",
+              "Your breath",
+              "A shadow",
+              "A whisper"
+            ],
+            "right": 1,
+            "why": "Try it. Mochi will wait."
+          },
+          {
+            "q": "Three jars are labelled Candy, Bones and Mixed, and every label is wrong. You may take one thing from one jar without looking in. Which jar do you pick from to fix all three labels?",
+            "a": [
+              "Candy",
+              "Bones",
+              "Mixed",
+              "It cannot be done"
+            ],
+            "right": 2,
+            "why": "The jar labelled Mixed is not mixed, so one piece tells you what it really holds. The other two labels can then only swap one way."
+          },
+          {
+            "q": "What gets wetter the more it dries?",
+            "a": [
+              "A towel",
+              "The moon",
+              "A cauldron",
+              "A cloud"
+            ],
+            "right": 0,
+            "why": "The witch’s towel after a long night of brewing."
+          },
+          {
+            "q": "Some months have 30 days, some 31. How many have 28?",
+            "a": [
+              "One",
+              "All twelve",
+              "Two",
+              "None"
+            ],
+            "right": 1,
+            "why": "Every month has at least 28 days."
+          }
+        ],
+        "pass": 5,
+        "points": 60
+      }
+    }
   }
 ]

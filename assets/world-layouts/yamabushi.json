@@ -30221,5 +30221,183 @@
         ]
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_yam-herbalist-questions",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 12.21,
+      "y": 0.1,
+      "z": -11.17
+    },
+    "rotation": {
+      "x": 0,
+      "y": -2.444,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "yamabushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "yam-herbalist-questions",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.4,
+      "label": "",
+      "game": {
+        "type": "riddle",
+        "id": "yam-herbalist-questions",
+        "title": "The Herbalist's Questions",
+        "giver": "yamabushi-villager-01",
+        "riddles": [
+          {
+            "q": "What goes up the mountain and down again, yet never moves?",
+            "a": [
+              "The mist",
+              "The path",
+              "The wind",
+              "A stream"
+            ],
+            "right": 1,
+            "why": "The path climbs to the shrine and comes back down, and never takes a step."
+          },
+          {
+            "q": "A spring fills the shrine basin in 6 hours; its drain empties it in 12. With the drain left open, how long does the empty basin take to fill?",
+            "a": [
+              "6 hours",
+              "9 hours",
+              "12 hours",
+              "18 hours"
+            ],
+            "right": 2,
+            "why": "Each hour the spring adds a sixth and the drain takes a twelfth: a twelfth an hour, so 12 hours."
+          },
+          {
+            "q": "A monk weighing 90 kg must cross a rope bridge that holds 100 kg, carrying two 6 kg stones. He juggles them so that one is always in the air. Does the bridge hold?",
+            "a": [
+              "Yes, it only ever carries 96 kg",
+              "No, every throw pushes down harder than the stone weighs",
+              "Only if he walks slowly",
+              "Only if both stones stay in the air"
+            ],
+            "right": 1,
+            "why": "To throw a stone up he must push down harder than its weight. Two crossings are wiser."
+          },
+          {
+            "q": "I am always coming, but I never arrive. What am I?",
+            "a": [
+              "The wind",
+              "Tomorrow",
+              "The tide",
+              "An echo"
+            ],
+            "right": 1,
+            "why": "When it comes, it is today."
+          },
+          {
+            "q": "Feed me and I grow; give me a drink and I die. What am I?",
+            "a": [
+              "A flame",
+              "A seedling",
+              "A spirit",
+              "Moss"
+            ],
+            "right": 0,
+            "why": "The shrine fire eats wood and dies in the rain."
+          }
+        ],
+        "pass": 5,
+        "points": 70
+      }
+    }
   }
 ]
