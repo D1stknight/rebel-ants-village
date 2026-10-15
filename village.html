@@ -145,6 +145,12 @@ body.walk-photo #photoBtn{display:block}
 #danceOff .do-score{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px}
 #danceOff .do-judge{color:#ffe9b0;min-width:110px;text-align:right}
 #danceOff .do-pads{display:flex;justify-content:center;gap:10px;margin-top:8px}
+#danceOff .do-levels{display:none;gap:10px;justify-content:center;margin:10px 0 4px}
+#danceOff.choose .do-levels{display:flex}
+#danceOff.choose .do-lane,#danceOff.choose .do-score,#danceOff.choose .do-pads,#danceOff.choose .mg-restart{display:none}
+#danceOff .do-level{display:flex;flex-direction:column;gap:3px;flex:1 1 0;min-width:0;max-width:170px;padding:10px 8px;border-radius:10px;border:1px solid #d8b35c;background:rgba(255,216,119,.08);color:#ffe9b0;font:600 14px Georgia,serif;cursor:pointer}
+#danceOff .do-level span{font-size:11px;color:#cfd8e6;letter-spacing:.04em}
+#danceOff .do-level:hover,#danceOff .do-level:focus-visible{background:rgba(255,216,119,.2);outline:none}
 #danceOff .do-pad{width:46px;height:40px;border-radius:10px;border:1px solid #d8b35c;background:rgba(255,216,119,.08);color:#ffe9b0;font:700 20px/38px sans-serif;cursor:pointer}
 /* the timing bar (SkillBar): stop the sliding marker in the gold */
 #skillBar{position:fixed;left:50%;bottom:24%;transform:translateX(-50%);width:min(440px,86vw);padding:14px 18px 12px;background:rgba(10,13,22,.9);border:1px solid rgba(216,179,92,.6);border-radius:12px;color:#f3e6c4;font:600 14px/1.3 Georgia,serif;text-align:center;z-index:60;display:none;box-shadow:0 8px 30px rgba(0,0,0,.45);user-select:none}
@@ -1624,7 +1630,7 @@ body.walk-photo #photoBtn{display:block}
 <button id="photoBtn" title="Take a picture (P)" onclick="window.takeVillagePhoto && window.takeVillagePhoto()">&#128247;</button>
 <div id="photoFlash"></div>
 <div id="photoOverlay"><div class="ph-card"><img id="photoImg" alt="Your picture"><div class="ph-cap"></div><div class="ph-btns"><button onclick="window.saveVillagePhoto()">Save</button><button onclick="window.shareVillagePhoto()">Share</button><button onclick="window.closeVillagePhoto()">Close</button></div></div></div>
-<div id="danceOff"><div class="do-title"></div><div class="do-lane"><div class="do-ring"></div><div class="do-notes"></div></div><div class="do-score"><span class="do-count"></span><span class="do-judge"></span></div><div class="do-pads"><button class="do-pad" onclick="window.pressDance && window.pressDance(0)">←</button><button class="do-pad" onclick="window.pressDance && window.pressDance(1)">↑</button><button class="do-pad" onclick="window.pressDance && window.pressDance(2)">→</button><button class="do-pad" onclick="window.pressDance && window.pressDance(3)">↓</button></div><button class="mg-restart" onclick="this.blur(); window.restartDanceOff && window.restartDanceOff()">Restart</button></div>
+<div id="danceOff"><div class="do-title"></div><div class="do-levels"></div><div class="do-lane"><div class="do-ring"></div><div class="do-notes"></div></div><div class="do-score"><span class="do-count"></span><span class="do-judge"></span></div><div class="do-pads"><button class="do-pad" onclick="window.pressDance && window.pressDance(0)">←</button><button class="do-pad" onclick="window.pressDance && window.pressDance(1)">↑</button><button class="do-pad" onclick="window.pressDance && window.pressDance(2)">→</button><button class="do-pad" onclick="window.pressDance && window.pressDance(3)">↓</button></div><button class="mg-restart" onclick="this.blur(); window.restartDanceOff && window.restartDanceOff()">Restart</button></div>
 <div id="skillBar" onclick="window.pressSkillBar && window.pressSkillBar()"><div class="sb-title"></div><div class="sb-track"><div class="sb-zone"></div><div class="sb-mark"></div></div><div class="sb-pips"></div><div class="sb-msg"></div><button class="mg-restart" onclick="event.stopPropagation(); this.blur(); window.restartSkillBar && window.restartSkillBar()">Restart</button></div>
 <div id="playerStartupOverlay" aria-hidden="true">
   <div id="playerStartupPanel" role="dialog" aria-modal="true" aria-labelledby="playerStartupTitle">
@@ -9588,6 +9594,7 @@ function tryOpenNearbySign() {
 
 function updateInteractionPrompt() {
   updateTreasureChestPrompt();
+  if (window._danceOff?.on || window._danceOff?.choosing) { setInteractionPrompt('', false); return; } // the dance panel is up
 
   if (ActiveInterior && getNearestInteriorExitInRange()) {
     setInteractionPrompt('Exit', true);
@@ -9950,11 +9957,16 @@ function normalizeQuestSpotConfig(cfg = {}) {
       every: Math.max(.5, Number(cfg.dance.every) || 1.04), lead: Math.max(.5, Number(cfg.dance.lead) || 1.6), title: String(cfg.dance.title || ''), winText: String(cfg.dance.winText || ''), loseText: String(cfg.dance.loseText || ''),
       // or a pattern: bars of beats ('x' a move, '.' a rest) at beat seconds a beat; the song played loops times; window = how far off a press still counts
       pattern: Array.isArray(cfg.dance.pattern) ? cfg.dance.pattern.slice(0, 64).map(b => String(b).replace(/[^x.]/g, '')).filter(Boolean) : null,
-      beat: Math.max(.2, Number(cfg.dance.beat) || .5), loops: Math.max(1, Math.min(4, Math.floor(Number(cfg.dance.loops) || 1))), window: Math.max(.12, Math.min(.4, Number(cfg.dance.window) || .3)) } : null,
+      beat: Math.max(.2, Number(cfg.dance.beat) || .5), loops: Math.max(1, Math.min(4, Math.floor(Number(cfg.dance.loops) || 1))), window: Math.max(.12, Math.min(.4, Number(cfg.dance.window) || .3)),
+      // levels: true = the player picks Easy / Normal / Hard first (DANCE_LEVELS; bars always span four beats)
+      levels: cfg.dance.levels === true } : null,
     // the spot takes a picture when it is used (the Hills Hike's photo at the sign): the caption under it
     photo: cfg.photo ? String(cfg.photo) : null,
     // a mini-game played here (assets/games/<type>.js; MiniGames): { type, id, title, pass, points, questOn, ...its own fields }
     game: normalizeMiniGameDef(cfg.game, cfg.spotId),
+    // a place riddle read out here: { id, title, parts: [{ text }], points, solvedText, reset } (reset: a wrong answer
+    riddle: cfg.riddle && typeof cfg.riddle === 'object' && cfg.riddle.id && Array.isArray(cfg.riddle.parts) && cfg.riddle.parts.length ? { id:String(cfg.riddle.id), title:String(cfg.riddle.title || 'A riddle'),
+      parts:cfg.riddle.parts.map(x => ({ text:String(x?.text || '') })), points:Math.max(0, Math.floor(Number(cfg.riddle.points) || 0)), solvedText:String(cfg.riddle.solvedText || ''), reset:cfg.riddle.reset === true } : null,
     // a timing bar before the spot is used (SkillBar): hits good stops in the gold middle, the marker speeding up each time
     skill: cfg.skill && typeof cfg.skill === 'object' ? { hits: Math.max(1, Math.min(6, Math.floor(Number(cfg.skill.hits) || 3))), speed: Math.max(.3, Number(cfg.skill.speed) || 1.1),
       zone: Math.max(.06, Math.min(.5, Number(cfg.skill.zone) || .16)), title: String(cfg.skill.title || ''), startText: String(cfg.skill.startText || ''),
@@ -10003,9 +10015,11 @@ function createQuestSpot(position, options = {}) {
 // A quest's own spot (spotConfig.questId) answers only while one of that quest's steps is asking for it.
 function isQuestSpotOpen(cfg) {
   if (cfg?.visualOnly) return false;
-  if (!cfg?.questId) return true;
+  if (!cfg?.questId || isDanceReplay(cfg)) return true;
   return isQuestSpotTargetedBySideQuest(cfg.spotId) || isQuestSpotTargetedByActiveQuest(cfg.spotId);
 }
+// a dance-off with levels stays open after its quest: played again for the best per level, no quest effects
+function isDanceReplay(cfg) { return !!(cfg?.dance?.levels && cfg.questId && (isQuestIdCompleted(cfg.questId) || SideQuestState.done.includes(cfg.questId))); }
 function isQuestSpotUsed(cfg) { return (ProgressionState.spotsUsed || []).includes(cfg?.doneWith || cfg?.spotId) || !!(cfg?.questId && isQuestIdCompleted(cfg.questId)); }
 // piece / donePiece: a kit piece under the spot (an unlit jack-o'-lantern, a trickster ghost), swapped once the spot is used
 function syncQuestSpotPiece(root, cfg) {
@@ -10651,16 +10665,26 @@ function questSpotCheerTick(hc, state) {
 // good presses of `notes` use the spot. Walking keys dance instead of walking while it runs; walking away ends it.
 const DanceOff = { on:false };
 const DANCE_KEYS = { arrowleft:0, a:0, arrowup:1, w:1, arrowright:2, d:2, arrowdown:3, s:3 }, DANCE_ARROWS = ['←', '↑', '→', '↓'];
-function openDanceOff(root, cfg) {
-  const dc = cfg.dance, el = document.getElementById('danceOff');
+// three levels for dance-offs that offer them: the bars after the count-in (4 beats each; 8 marks = eighth notes), how
+// many moves must land and how far off a press may be
+const DANCE_LEVELS = {
+  easy: { label:'Easy', need:18, window:.3, pattern:['x...', 'x...', ...Array(12).fill('x.x.'), 'x...'] },
+  normal: { label:'Normal', need:32, window:.22, pattern:['x.x.', 'x.x.', 'x.xx', 'x.x.', 'xxx.', 'x.xx', 'xxx.', 'xxx.', 'x.xx', 'xxx.', 'xxxx', 'xxx.', 'xxxx', 'xxxx', 'x...'] },
+  hard: { label:'Hard', need:46, window:.2, pattern:['x.x.', 'x.x.', 'xxx.', 'xxx.', 'xxxx', 'xxxx', 'x.xxx.x.', 'xx.x', 'xxxx', 'x.x.xxxx', 'xxxx', 'xx.xxx.x', 'xxxx', 'xxxxxxxx', 'x...'] }
+};
+function openDanceOff(root, cfg, level) {
+  const el = document.getElementById('danceOff');
   if (!el || !charMesh) return completeQuestSpot(root);
   holdBadgeUnlockPopup();
+  if (cfg.dance.levels && !level) return chooseDanceLevel(root, cfg);
+  const dc = level ? { ...cfg.dance, ...DANCE_LEVELS[level] } : cfg.dance;
+  el.classList.remove('choose');
   // the song starts a moment after (and is heard a little after that): the moves wait for it
   const t0 = performance.now() / 1000 + dc.lead + .05 + (MoonTaleSounds.latency?.() || 0), lane = el.querySelector('.do-notes');
   lane.innerHTML = '';
   let last = -1, at = 0;
   const times = [];
-  if (dc.pattern) for (const bar of dc.pattern) { [...bar].forEach((c, k) => { if (c === 'x') times.push((at + k) * dc.beat); }); at += bar.length; }
+  if (dc.pattern) for (const bar of dc.pattern) { const step = (dc.levels || level ? 4 / bar.length : 1); [...bar].forEach((c, k) => { if (c === 'x') times.push((at + k * step) * dc.beat); }); at += dc.levels || level ? 4 : bar.length; }
   else for (let i = 0; i < dc.notes; i++) times.push(i * dc.every);
   const notes = times.map(t => {
     let dir = Math.floor(Math.random() * 4); if (dir === last) dir = (dir + 1 + Math.floor(Math.random() * 3)) % 4; last = dir;
@@ -10668,8 +10692,8 @@ function openDanceOff(root, cfg) {
     return { t: t0 + t, dir, el: n, judged: false };
   });
   moveForward = moveBackward = turnLeft = turnRight = false;
-  Object.assign(DanceOff, { on:true, root, cfg, notes, need:Math.min(dc.need, notes.length), hits:0, combo:0, px:charMesh.position.x, pz:charMesh.position.z, end:t0 + times[times.length - 1] + .6, cheerAt:0 });
-  el.querySelector('.do-title').textContent = dc.title || cfg.label || 'Dance-off';
+  Object.assign(DanceOff, { on:true, choosing:false, replay:isDanceReplay(cfg), root, cfg, level, dc, notes, need:Math.min(dc.need, notes.length), hits:0, combo:0, px:charMesh.position.x, pz:charMesh.position.z, end:t0 + times[times.length - 1] + .6, cheerAt:0 });
+  el.querySelector('.do-title').textContent = (dc.title || cfg.label || 'Dance-off') + (level ? ' · ' + DANCE_LEVELS[level].label : '');
   el.querySelector('.do-judge').textContent = 'Get ready...';
   updateDanceOffScore();
   el.classList.add('on');
@@ -10677,36 +10701,64 @@ function openDanceOff(root, cfg) {
   return true;
 }
 function updateDanceOffScore() { const el = document.querySelector('#danceOff .do-count'); if (el) el.textContent = `${DanceOff.hits} / ${DanceOff.need} moves${DanceOff.combo > 2 ? ' · combo ' + DanceOff.combo : ''}`; }
-// Restart: the song and the moves from the top
+// the level first: three buttons in the dance panel (or 1 / 2 / 3); the best moves landed per level shown on each
+function chooseDanceLevel(root, cfg) {
+  const el = document.getElementById('danceOff'), box = el.querySelector('.do-levels');
+  moveForward = moveBackward = turnLeft = turnRight = false;
+  Object.assign(DanceOff, { on:false, choosing:true, root, cfg, px:charMesh.position.x, pz:charMesh.position.z });
+  el.querySelector('.do-title').textContent = cfg.dance.title || cfg.label || 'Dance-off';
+  box.innerHTML = '';
+  Object.entries(DANCE_LEVELS).forEach(([k, L], i) => {
+    const best = (ProgressionState.games || {})[`dance:${cfg.spotId}:${k}`]?.best;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'do-level';
+    const total = L.pattern.join('').split('x').length - 1;
+    b.innerHTML = `<b>${i + 1} · ${L.label}</b><span>${L.need} of ${total} moves${best ? ` · best ${best}` : ''}</span>`;
+    b.onclick = () => { b.blur(); pickDanceLevel(k); };
+    box.appendChild(b);
+  });
+  el.classList.add('on', 'choose');
+  return true;
+}
+function pickDanceLevel(level) {
+  if (!DanceOff.choosing || !DANCE_LEVELS[level]) return false;
+  DanceOff.choosing = false;
+  return openDanceOff(DanceOff.root, DanceOff.cfg, level);
+}
+window.pickDanceLevel = pickDanceLevel;
+// Restart: the song and the moves from the top (the same level)
 function restartDanceOff() {
   if (!DanceOff.on) return false;
-  const { root, cfg } = DanceOff;
+  const { root, cfg, level } = DanceOff;
   closeDanceOff();
-  return openDanceOff(root, cfg);
+  return openDanceOff(root, cfg, level);
 }
 window.restartDanceOff = restartDanceOff;
-function closeDanceOff() { DanceOff.on = false; document.getElementById('danceOff')?.classList.remove('on'); setTimeout(processBadgeUnlockQueue, 400); }
+function closeDanceOff() { DanceOff.on = false; DanceOff.choosing = false; document.getElementById('danceOff')?.classList.remove('on', 'choose'); setTimeout(processBadgeUnlockQueue, 400); }
 function updateDanceOff() {
+  if (DanceOff.choosing && (!walkMode || ActiveInterior || !charMesh || Math.hypot(charMesh.position.x - DanceOff.px, charMesh.position.z - DanceOff.pz) > 2)) { closeDanceOff(); return; }
   if (!DanceOff.on) return;
   const now = performance.now() / 1000, el = document.getElementById('danceOff');
   if (!walkMode || ActiveInterior || !charMesh || DanceOff.root.isDisposed?.() || Math.hypot(charMesh.position.x - DanceOff.px, charMesh.position.z - DanceOff.pz) > 2) { closeDanceOff(); MoonTaleSounds.stop(); return; }
   const w = el.querySelector('.do-lane').clientWidth || 500, ring = w * .09, pxs = w * .36; // the lane shows ~2.5 s ahead
   for (const n of DanceOff.notes) {
     n.el.style.left = (ring + (n.t - now) * pxs) + 'px';
-    if (!n.judged && now - n.t > DanceOff.cfg.dance.window - .06) { n.judged = true; n.el.classList.add('miss'); DanceOff.combo = 0; el.querySelector('.do-judge').textContent = 'Miss'; updateDanceOffScore(); }
+    if (!n.judged && now - n.t > (DanceOff.dc || DanceOff.cfg.dance).window - .06) { n.judged = true; n.el.classList.add('miss'); DanceOff.combo = 0; el.querySelector('.do-judge').textContent = 'Miss'; updateDanceOffScore(); }
   }
   questSpotCheerTick(DanceOff.cfg, DanceOff);
   if (now > DanceOff.end) {
-    const dc = DanceOff.cfg.dance, root = DanceOff.root, won = DanceOff.hits >= DanceOff.need;
+    const dc = DanceOff.dc || DanceOff.cfg.dance, root = DanceOff.root, won = DanceOff.hits >= DanceOff.need;
+    let newBest = false;
+    if (DanceOff.level) { const rec = ((ProgressionState.games ||= {})[`dance:${DanceOff.cfg.spotId}:${DanceOff.level}`] ||= { best:0, plays:0 }); rec.plays++; newBest = DanceOff.hits > rec.best; rec.best = Math.max(rec.best, DanceOff.hits); saveProgressionState(); }
     closeDanceOff();
-    if (won) completeQuestSpot(root);
+    if (won && !DanceOff.replay) completeQuestSpot(root);
+    else if (won) { MoonTaleSounds.fx?.('gamewin'); showToast(`${DANCE_LEVELS[DanceOff.level]?.label || 'Dance'} cleared: ${DanceOff.hits} of ${DanceOff.notes.length} moves${newBest ? ' · a new best!' : '.'}`, 6000); }
     else { MoonTaleSounds.stop(); showToast(dc.loseText || `So close: ${DanceOff.hits} of ${DanceOff.need} moves. Press O to dance again.`, 6000); }
   }
 }
 function pressDance(dir) {
   if (!DanceOff.on) return false;
   const now = performance.now() / 1000, el = document.getElementById('danceOff'), judge = el.querySelector('.do-judge');
-  const win = DanceOff.cfg.dance.window;
+  const win = (DanceOff.dc || DanceOff.cfg.dance).window;
   let best = null; for (const n of DanceOff.notes) if (!n.judged && Math.abs(n.t - now) <= win && (!best || Math.abs(n.t - now) < Math.abs(best.t - now))) best = n;
   if (!best) { judge.textContent = 'Off beat'; DanceOff.combo = 0; updateDanceOffScore(); return true; }
   best.judged = true;
@@ -25238,6 +25290,7 @@ document.addEventListener('keydown', async e => {
   if (document.getElementById('photoOverlay')?.classList.contains('on')) { if (key === 'escape' || key === 'p' || key === 'enter') { e.preventDefault(); closeVillagePhoto(); } return; }
   if (MiniGames.on) { miniGameKey(e, true); return; }
   if (key === 'p' && !adminMode && walkMode && !e.repeat && !DanceOff.on && !SkillBar.on) { e.preventDefault(); takeVillagePhoto(); return; }
+  if (DanceOff.choosing) { if (key === 'escape') closeDanceOff(); else { const lv = { 1:'easy', 2:'normal', 3:'hard' }[key]; if (lv) { e.preventDefault(); pickDanceLevel(lv); } } return; }
   if (DanceOff.on && DANCE_KEYS[key] !== undefined) { e.preventDefault(); if (!e.repeat) pressDance(DANCE_KEYS[key]); return; }
   if (DanceOff.on && key === 'escape') { closeDanceOff(); MoonTaleSounds.stop(); return; }
   if (SkillBar.on && (key === 'o' || key === ' ' || key === 'enter')) { e.preventDefault(); pressSkillBar(); return; }

@@ -25869,7 +25869,8 @@
         ],
         "beat": 0.5,
         "loops": 2,
-        "window": 0.24
+        "window": 0.24,
+        "levels": true
       },
       "cheer": [
         "saints-greeter",
