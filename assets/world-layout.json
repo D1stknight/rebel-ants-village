@@ -46630,6 +46630,43 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "hub_forest_dojo",
+            "hotspotId": "hotspot_hub_forest_dojo_drill",
+            "linkName": "Dummy Drill",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The drill ring by the east wall: four straw dummies, thirty seconds. Strike the one that lights up.",
+            "enabled": true,
+            "position": {
+              "x": 11,
+              "y": 1.6,
+              "z": 0
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            },
+            "game": {
+              "type": "drill",
+              "id": "hub-dummy-drill",
+              "title": "Dummy Drill",
+              "pass": 250,
+              "points": 50,
+              "questOn": "pass",
+              "at": [
+                11,
+                0
+              ],
+              "face": 1.5707963267948966
+            }
           }
         ],
         "updatedAt": "2026-10-10T13:29:48.601Z"
