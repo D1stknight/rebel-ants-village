@@ -121,6 +121,32 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 }
 #questTrackerSide{font-size:7.5px;color:rgba(232,197,106,.85);line-height:1.35;letter-spacing:.6px;overflow-wrap:anywhere;white-space:pre-line}
 #questTrackerSide:empty{display:none}
+/* the dance-off (DanceOff): arrows come down the lane to the ring */
+#danceOff{position:fixed;left:50%;bottom:20%;transform:translateX(-50%);width:min(560px,92vw);padding:12px 16px 12px;background:rgba(10,13,22,.9);border:1px solid rgba(216,179,92,.6);border-radius:14px;color:#f3e6c4;font:600 14px/1.3 Georgia,serif;text-align:center;z-index:60;display:none;box-shadow:0 8px 30px rgba(0,0,0,.45);user-select:none}
+#danceOff.on{display:block}
+#danceOff .do-title{letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:#d8b35c;margin-bottom:8px}
+#danceOff .do-lane{position:relative;height:58px;border-radius:29px;background:linear-gradient(90deg,rgba(255,216,119,.12),rgba(255,255,255,.04));overflow:hidden}
+#danceOff .do-ring{position:absolute;left:9%;top:5px;width:48px;height:48px;margin-left:-24px;border-radius:50%;border:3px solid #ffd877;box-shadow:0 0 14px #ffcc66,inset 0 0 10px rgba(255,204,102,.5)}
+#danceOff .do-note{position:absolute;top:8px;width:42px;height:42px;margin-left:-21px;border-radius:50%;background:#2a1d3a;border:2px solid #d8b35c;color:#ffe9b0;font:700 24px/38px sans-serif;text-align:center}
+#danceOff .do-note.hit{background:#ffd877;color:#3c2800;transition:opacity .35s,transform .35s;opacity:0;transform:scale(1.6)}
+#danceOff .do-note.miss{opacity:.25;border-color:#777}
+#danceOff .do-score{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px}
+#danceOff .do-judge{color:#ffe9b0;min-width:110px;text-align:right}
+#danceOff .do-pads{display:flex;justify-content:center;gap:10px;margin-top:8px}
+#danceOff .do-pad{width:46px;height:40px;border-radius:10px;border:1px solid #d8b35c;background:rgba(255,216,119,.08);color:#ffe9b0;font:700 20px/38px sans-serif;cursor:pointer}
+/* the timing bar (SkillBar): stop the sliding marker in the gold */
+#skillBar{position:fixed;left:50%;bottom:24%;transform:translateX(-50%);width:min(440px,86vw);padding:14px 18px 12px;background:rgba(10,13,22,.9);border:1px solid rgba(216,179,92,.6);border-radius:12px;color:#f3e6c4;font:600 14px/1.3 Georgia,serif;text-align:center;z-index:60;display:none;box-shadow:0 8px 30px rgba(0,0,0,.45);user-select:none}
+#skillBar.on{display:block}
+#skillBar .sb-title{letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:#d8b35c;margin-bottom:10px}
+#skillBar .sb-track{position:relative;height:20px;border-radius:10px;background:linear-gradient(90deg,#2a140e,#4a2414 40%,#4a2414 60%,#2a140e);cursor:pointer}
+#skillBar .sb-zone{position:absolute;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,#b77b22,#ffd877,#b77b22);box-shadow:0 0 12px #ffcc66}
+#skillBar .sb-mark{position:absolute;top:-4px;bottom:-4px;width:5px;margin-left:-2.5px;background:#fff;box-shadow:0 0 8px #fff;border-radius:3px}
+#skillBar .sb-pips{margin-top:10px;display:flex;justify-content:center;gap:8px}
+#skillBar .sb-pip{width:12px;height:12px;border-radius:50%;border:1px solid #d8b35c}
+#skillBar .sb-pip.on{background:#ffd877;box-shadow:0 0 8px #ffcc66}
+#skillBar .sb-msg{margin-top:8px;min-height:18px;font-size:13px;color:#ffe9b0}
+#skillBar.miss .sb-track{animation:sbShake .25s}
+@keyframes sbShake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 #questTrackerObjective{
   font-size:8px;
   color:#5ecfca;
@@ -1581,6 +1607,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="weatherLightningFlash"></div>
 <div id="weatherHeatHaze"></div>
 <div id="villageTravelFade"></div>
+<!-- the quest mini-games: the dance-off lane and the timing bar (top level: the Rebel panel hides its children) -->
+<div id="danceOff"><div class="do-title"></div><div class="do-lane"><div class="do-ring"></div><div class="do-notes"></div></div><div class="do-score"><span class="do-count"></span><span class="do-judge"></span></div><div class="do-pads"><button class="do-pad" onclick="window.pressDance && window.pressDance(0)">←</button><button class="do-pad" onclick="window.pressDance && window.pressDance(1)">↑</button><button class="do-pad" onclick="window.pressDance && window.pressDance(2)">→</button><button class="do-pad" onclick="window.pressDance && window.pressDance(3)">↓</button></div></div>
+<div id="skillBar" onclick="window.pressSkillBar && window.pressSkillBar()"><div class="sb-title"></div><div class="sb-track"><div class="sb-zone"></div><div class="sb-mark"></div></div><div class="sb-pips"></div><div class="sb-msg"></div></div>
 <div id="playerStartupOverlay" aria-hidden="true">
   <div id="playerStartupPanel" role="dialog" aria-modal="true" aria-labelledby="playerStartupTitle">
     <div id="playerStartupKicker">Welcome</div>
@@ -9870,6 +9899,13 @@ function normalizeQuestSpotConfig(cfg = {}) {
     doneSound: cfg.doneSound ? String(cfg.doneSound) : null,
     // NPCs (kit apes) that hop and kick while a hold lasts (the Beach Party dance)
     cheer: Array.isArray(cfg.cheer) ? cfg.cheer.map(String) : null,
+    // a dance-off instead of a plain hold (DanceOff): notes arrows, every seconds apart after lead, need good presses to finish
+    dance: cfg.dance && typeof cfg.dance === 'object' ? { notes: Math.max(4, Math.min(24, Math.floor(Number(cfg.dance.notes) || 12))), need: Math.max(1, Math.floor(Number(cfg.dance.need) || 8)),
+      every: Math.max(.5, Number(cfg.dance.every) || 1.04), lead: Math.max(.5, Number(cfg.dance.lead) || 1.6), title: String(cfg.dance.title || ''), winText: String(cfg.dance.winText || ''), loseText: String(cfg.dance.loseText || '') } : null,
+    // a timing bar before the spot is used (SkillBar): hits good stops in the gold middle, the marker speeding up each time
+    skill: cfg.skill && typeof cfg.skill === 'object' ? { hits: Math.max(1, Math.min(6, Math.floor(Number(cfg.skill.hits) || 3))), speed: Math.max(.3, Number(cfg.skill.speed) || 1.1),
+      zone: Math.max(.06, Math.min(.5, Number(cfg.skill.zone) || .16)), title: String(cfg.skill.title || ''), startText: String(cfg.skill.startText || ''),
+      hitText: Array.isArray(cfg.skill.hitText) ? cfg.skill.hitText.map(String) : [], hitSound: cfg.skill.hitSound ? String(cfg.skill.hitSound) : null } : null,
     // a secret made of several spots: each spot with this secretId counts once, the secret is found at the setCount-th
     setCount: Math.max(0, Math.floor(Number(cfg.setCount) || 0)),
     // a timed run: from this spot through path [[x, z], ...] (in order, within pathRadius) in seconds (0 = a walk, no time limit)
@@ -10176,6 +10212,7 @@ function tryUseNearbyQuestSpot() {
   const cfg = root.metadata.spotConfig;
   const miss = questSpotRequirementMiss(cfg);
   if (miss) { showToast(miss); return true; }
+  if (cfg.dance) return openDanceOff(root, cfg);
   if (cfg.action === 'hold') {
     QuestSpotRuntime.hold = { root, startedAt: performance.now(), x: charMesh.position.x, z: charMesh.position.z, line: 0 };
     if (cfg.sound) MoonTaleSounds.play(cfg.sound);
@@ -10194,7 +10231,138 @@ function tryUseNearbyQuestSpot() {
     showToast(cfg.startText || 'Stay close.', 4000);
     return true;
   }
+  if (cfg.skill && !isQuestSpotUsed(cfg)) return openSkillBar(root, cfg);
   return completeQuestSpot(root);
+}
+
+// The timing bar (spotConfig.skill { hits, speed, zone, title, startText, hitText: [..], hitSound }): a marker slides across
+// the bar and back; O, Space or a tap stops it. In the gold middle is a hit (the marker then runs faster), outside a miss
+// (one hit lost); hits good stops use the spot. Walking away closes it. (The Beach Party bonfire, the Block Party lights.)
+const SkillBar = { on:false };
+function openSkillBar(root, cfg) {
+  const sk = cfg.skill, el = document.getElementById('skillBar');
+  if (!el || !charMesh) return completeQuestSpot(root);
+  Object.assign(SkillBar, { on:true, root, cfg, hits:0, need:sk.hits, zone:sk.zone, speed:sk.speed, x:0, dir:1, last:performance.now(), px:charMesh.position.x, pz:charMesh.position.z, lock:performance.now() + 300 });
+  el.querySelector('.sb-title').textContent = sk.title || cfg.label || 'Get it right';
+  const z = el.querySelector('.sb-zone'); z.style.left = (50 - sk.zone * 50) + '%'; z.style.width = (sk.zone * 100) + '%';
+  el.querySelector('.sb-pips').innerHTML = '<span class="sb-pip"></span>'.repeat(sk.hits);
+  el.querySelector('.sb-msg').textContent = sk.startText || 'Press O when the marker is in the gold.';
+  el.classList.remove('miss'); el.classList.add('on');
+  return true;
+}
+function closeSkillBar() { SkillBar.on = false; document.getElementById('skillBar')?.classList.remove('on', 'miss'); }
+function updateSkillBar() {
+  if (!SkillBar.on) return;
+  const now = performance.now(), dt = Math.min(.05, (now - SkillBar.last) / 1000); SkillBar.last = now;
+  if (!walkMode || ActiveInterior || !charMesh || SkillBar.root.isDisposed?.() || Math.hypot(charMesh.position.x - SkillBar.px, charMesh.position.z - SkillBar.pz) > 1.2) { closeSkillBar(); return; }
+  if (SkillBar.lock === Infinity) return; // done: the marker rests where it hit
+  SkillBar.x += SkillBar.dir * SkillBar.speed * dt;
+  if (SkillBar.x > 1) { SkillBar.x = 2 - SkillBar.x; SkillBar.dir = -1; } else if (SkillBar.x < 0) { SkillBar.x = -SkillBar.x; SkillBar.dir = 1; }
+  const m = document.querySelector('#skillBar .sb-mark'); if (m) m.style.left = (SkillBar.x * 100) + '%';
+}
+function pressSkillBar() {
+  if (!SkillBar.on) return false;
+  if (performance.now() < SkillBar.lock) return true;
+  const sk = SkillBar.cfg.skill, el = document.getElementById('skillBar'), msg = el.querySelector('.sb-msg'), off = SkillBar.x - .5;
+  SkillBar.lock = performance.now() + 250;
+  if (Math.abs(off) <= SkillBar.zone / 2) {
+    SkillBar.hits++; SkillBar.speed *= 1.18;
+    MoonTaleSounds.play(sk.hitSound || 'flag');
+    msg.textContent = sk.hitText[SkillBar.hits - 1] || 'Yes!';
+  } else {
+    SkillBar.hits = Math.max(0, SkillBar.hits - 1);
+    msg.textContent = off * SkillBar.dir < 0 ? 'Too early!' : 'Too late!';
+    el.classList.remove('miss'); void el.offsetWidth; el.classList.add('miss');
+  }
+  el.querySelectorAll('.sb-pip').forEach((p, i) => p.classList.toggle('on', i < SkillBar.hits));
+  if (SkillBar.hits >= SkillBar.need) {
+    SkillBar.lock = Infinity; const root = SkillBar.root;
+    setTimeout(() => { closeSkillBar(); completeQuestSpot(root); }, 550);
+  }
+  return true;
+}
+window.pressSkillBar = pressSkillBar;
+window._skillBar = SkillBar; // tests
+
+// the crowd at a hold or dance-off with spotConfig.cheer: now and then one of them hops or kicks (kit apes) or plays a
+// lively clip (forged NPCs)
+function questSpotCheerTick(hc, state) {
+  if (!hc.cheer?.length || performance.now() < (state.cheerAt || 0)) return;
+  state.cheerAt = performance.now() + 450 + Math.random() * 650;
+  const npc = getNPCById?.(hc.cheer[Math.floor(Math.random() * hc.cheer.length)]), km = npc?.metadata?.kitModel;
+  if (km) window.SamuraiKit?.actorAction?.(km, Math.random() < .75 ? 'jump' : 'kick');
+  else if (npc) playNPCPartyMove(npc); // forged NPCs dance with their own clips
+}
+
+// The dance-off (spotConfig.dance { notes, need, every, lead, title, winText, loseText }): the spot's song plays and an arrow
+// comes down the lane every `every` seconds; press it (arrow keys, W A S D or the pads) as it reaches the ring. A good
+// press makes your Rebel dance (cartwheel, jump, front flip, backflip; apes kick and jump) and the crowd cheers; `need`
+// good presses of `notes` use the spot. Walking keys dance instead of walking while it runs; walking away ends it.
+const DanceOff = { on:false };
+const DANCE_KEYS = { arrowleft:0, a:0, arrowup:1, w:1, arrowright:2, d:2, arrowdown:3, s:3 }, DANCE_ARROWS = ['←', '↑', '→', '↓'];
+function openDanceOff(root, cfg) {
+  const dc = cfg.dance, el = document.getElementById('danceOff');
+  if (!el || !charMesh) return completeQuestSpot(root);
+  const t0 = performance.now() / 1000 + dc.lead, lane = el.querySelector('.do-notes');
+  lane.innerHTML = '';
+  let last = -1;
+  const notes = Array.from({ length: dc.notes }, (_, i) => {
+    let dir = Math.floor(Math.random() * 4); if (dir === last) dir = (dir + 1 + Math.floor(Math.random() * 3)) % 4; last = dir;
+    const n = document.createElement('div'); n.className = 'do-note'; n.textContent = DANCE_ARROWS[dir]; lane.appendChild(n);
+    return { t: t0 + i * dc.every, dir, el: n, judged: false };
+  });
+  moveForward = moveBackward = turnLeft = turnRight = false;
+  Object.assign(DanceOff, { on:true, root, cfg, notes, hits:0, combo:0, px:charMesh.position.x, pz:charMesh.position.z, end:t0 + (dc.notes - 1) * dc.every + .6, cheerAt:0 });
+  el.querySelector('.do-title').textContent = dc.title || cfg.label || 'Dance-off';
+  el.querySelector('.do-judge').textContent = 'Get ready...';
+  updateDanceOffScore();
+  el.classList.add('on');
+  if (cfg.sound) MoonTaleSounds.play(cfg.sound);
+  return true;
+}
+function updateDanceOffScore() { const el = document.querySelector('#danceOff .do-count'); if (el) el.textContent = `${DanceOff.hits} / ${DanceOff.cfg.dance.need} moves${DanceOff.combo > 2 ? ' · combo ' + DanceOff.combo : ''}`; }
+function closeDanceOff() { DanceOff.on = false; document.getElementById('danceOff')?.classList.remove('on'); }
+function updateDanceOff() {
+  if (!DanceOff.on) return;
+  const now = performance.now() / 1000, el = document.getElementById('danceOff');
+  if (!walkMode || ActiveInterior || !charMesh || DanceOff.root.isDisposed?.() || Math.hypot(charMesh.position.x - DanceOff.px, charMesh.position.z - DanceOff.pz) > 2) { closeDanceOff(); MoonTaleSounds.stop(); return; }
+  const w = el.querySelector('.do-lane').clientWidth || 500, ring = w * .09, pxs = w * .36; // the lane shows ~2.5 s ahead
+  for (const n of DanceOff.notes) {
+    n.el.style.left = (ring + (n.t - now) * pxs) + 'px';
+    if (!n.judged && now - n.t > .24) { n.judged = true; n.el.classList.add('miss'); DanceOff.combo = 0; el.querySelector('.do-judge').textContent = 'Miss'; updateDanceOffScore(); }
+  }
+  questSpotCheerTick(DanceOff.cfg, DanceOff);
+  if (now > DanceOff.end) {
+    const dc = DanceOff.cfg.dance, root = DanceOff.root, won = DanceOff.hits >= dc.need;
+    closeDanceOff();
+    if (won) completeQuestSpot(root);
+    else { MoonTaleSounds.stop(); showToast(dc.loseText || `So close: ${DanceOff.hits} of ${dc.need} moves. Press O to dance again.`, 6000); }
+  }
+}
+function pressDance(dir) {
+  if (!DanceOff.on) return false;
+  const now = performance.now() / 1000, el = document.getElementById('danceOff'), judge = el.querySelector('.do-judge');
+  let best = null; for (const n of DanceOff.notes) if (!n.judged && Math.abs(n.t - now) <= .3 && (!best || Math.abs(n.t - now) < Math.abs(best.t - now))) best = n;
+  if (!best) { judge.textContent = 'Off beat'; DanceOff.combo = 0; updateDanceOffScore(); return true; }
+  best.judged = true;
+  if (best.dir !== dir) { best.el.classList.add('miss'); judge.textContent = 'Wrong move'; DanceOff.combo = 0; updateDanceOffScore(); return true; }
+  const dt = Math.abs(best.t - now); best.el.classList.add('hit');
+  DanceOff.hits++; DanceOff.combo++;
+  judge.textContent = dt <= .1 ? 'Perfect!' : 'Good';
+  playDanceMove(dir);
+  updateDanceOffScore();
+  return true;
+}
+window.pressDance = pressDance;
+window._danceOff = DanceOff; // tests
+// the move a good press plays: Forge rigs cartwheel / jump / front flip / backflip; a Chumpz ape kicks or jumps; the starter
+// ant flip-kicks or jumps (a move still playing finishes first)
+function playDanceMove(dir) {
+  if (window.forgeRigBundleInfo && playForgeRigAction([9, 4, 12, 11][dir])) return;
+  if (window.kitPlayerModel) { window.SamuraiKit?.actorAction?.(window.kitPlayerModel, dir === 1 || dir === 3 ? 'jump' : 'kick'); return; }
+  if (animState >= 3) return;
+  switchAnim(dir === 1 || dir === 3 ? 4 : 3, false);
+  setTimeout(() => { if (animState >= 3) switchAnim(0, true); }, 900);
 }
 
 function updateQuestSpots() {
@@ -10241,12 +10409,7 @@ function updateQuestSpots() {
     else if (held >= hc.holdSeconds) completeQuestSpot(hold.root);
     // lines one after another through the hold (Kokeshi Flower Moon's chant)
     else if (hc.holdLines?.length && hold.line < hc.holdLines.length && held >= (hold.line + 1) * hc.holdSeconds / (hc.holdLines.length + 1)) showToast(hc.holdLines[hold.line++], 6000);
-    if (QuestSpotRuntime.hold === hold && hc.cheer?.length && performance.now() > (hold.cheerAt || 0)) {
-      hold.cheerAt = performance.now() + 450 + Math.random() * 650;
-      const npc = getNPCById?.(hc.cheer[Math.floor(Math.random() * hc.cheer.length)]), km = npc?.metadata?.kitModel;
-      if (km) window.SamuraiKit?.actorAction?.(km, Math.random() < .75 ? 'jump' : 'kick');
-      else if (npc) playNPCPartyMove(npc); // forged NPCs dance with their own clips
-    }
+    if (QuestSpotRuntime.hold === hold) questSpotCheerTick(hc, hold);
   }
   // a timed run: each path point in order before the time is up
   const race = QuestSpotRuntime.race;
@@ -24706,6 +24869,10 @@ document.addEventListener('keydown', async e => {
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;
   const key = e.key.toLowerCase();
 
+  if (DanceOff.on && DANCE_KEYS[key] !== undefined) { e.preventDefault(); if (!e.repeat) pressDance(DANCE_KEYS[key]); return; }
+  if (DanceOff.on && key === 'escape') { closeDanceOff(); MoonTaleSounds.stop(); return; }
+  if (SkillBar.on && (key === 'o' || key === ' ' || key === 'enter')) { e.preventDefault(); pressSkillBar(); return; }
+  if (SkillBar.on && key === 'escape') { closeSkillBar(); return; }
   if (isVillageGateMenuOpen()) {
     if (key === 'escape') closeVillageGateMenu();
     else handleVillageGateNumberKey(key);
@@ -26726,6 +26893,8 @@ engine.runRenderLoop(()=>{
   updateTutorialQuestWorldProgress();
   updateQuestTargetMarkers(dt);
   updateQuestSpots();
+  updateSkillBar();
+  updateDanceOff();
   tryAutoOpenVillageGateFromWalkthrough();
   updateCollectiblesSafe(dt);
   updateWeatherManager();

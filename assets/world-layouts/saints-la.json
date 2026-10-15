@@ -25702,7 +25702,19 @@
         -11
       ],
       "doneSound": "zap",
-      "text": "The lights snake on over the court, pole to pole. As if on cue, the sun starts to set behind the hills."
+      "text": "The lights snake on over the court, pole to pole. As if on cue, the sun starts to set behind the hills.",
+      "skill": {
+        "hits": 3,
+        "speed": 1.2,
+        "zone": 0.16,
+        "title": "Switch on the party lights",
+        "startText": "Throw each breaker when the marker is in the gold.",
+        "hitText": [
+          "Breaker one!",
+          "Breaker two!",
+          "Lights!"
+        ]
+      }
     }
   },
   {
@@ -25825,7 +25837,22 @@
         "The Mechanic and the Shopkeeper do the robot. Badly.",
         "Somewhere up high, Grandma Lupe is dancing on the apartment roof."
       ],
-      "text": "The whole block dances on the court until the stars come out."
+      "text": "The whole block dances on the court until the stars come out.",
+      "dance": {
+        "notes": 12,
+        "need": 8,
+        "every": 1,
+        "lead": 2,
+        "title": "Dance-off on the court"
+      },
+      "cheer": [
+        "saints-greeter",
+        "saints-mechanic",
+        "saints-hooper",
+        "saints-librarian",
+        "saints-dj",
+        "saints-shopkeeper"
+      ]
     }
   },
   {

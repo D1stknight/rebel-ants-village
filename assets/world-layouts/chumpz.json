@@ -43184,7 +43184,19 @@
         0
       ],
       "doneSound": "crackle",
-      "text": "The bonfire roars up. As if it heard, the sun starts sliding into the sea, and every torch on the boardwalk answers."
+      "text": "The bonfire roars up. As if it heard, the sun starts sliding into the sea, and every torch on the boardwalk answers.",
+      "skill": {
+        "hits": 3,
+        "speed": 1.15,
+        "zone": 0.16,
+        "title": "Light the bonfire",
+        "startText": "Strike when the marker is in the gold. Three good strikes light it.",
+        "hitText": [
+          "A spark!",
+          "Smoke!",
+          "Flames!"
+        ]
+      }
     }
   },
   {
@@ -43315,7 +43327,14 @@
         "Peely spins Barnacle round. Barnacle allows it.",
         "The Racer tries to race the conga line. The conga line wins."
       ],
-      "text": "The whole cove dances round the fire until the stars come out. Then it dances some more."
+      "text": "The whole cove dances round the fire until the stars come out. Then it dances some more.",
+      "dance": {
+        "notes": 12,
+        "need": 8,
+        "every": 1.04,
+        "lead": 2.08,
+        "title": "Dance-off round the fire"
+      }
     }
   },
   {
