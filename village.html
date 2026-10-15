@@ -1699,6 +1699,7 @@ body.walk-photo #photoBtn{display:block}
 <script src="assets/walk-gen.js"></script>
 <script src="assets/forge-sfx.js"></script>
 <script src="assets/rebel-weapon.js"></script>
+<script src="assets/rebel-games.js"></script>
 <script type="module">
 // New terrain (Oct 2026): villages with a terrain recipe (hub, ronin, samurai) get the Terrain Lab ground: eroded hills, painted
 // ground, far mountains, grass, trees, rocks (the hub also has its river and waterfall). ?terrain=old shows the previous
@@ -3845,6 +3846,16 @@ const MoonTaleSounds = (() => {
         for (let k = 0; k < 8; k++) noise(t0 + (b * 8 + k) * E, .05, k % 2 ? .06 : .035, 'highpass', 6500);
       });
     } },
+    // mini-games: the ball rolling down the lane, the pins crashing (or a few), the gutter, a thrown star, a hit on paper
+    // or wood, a little win fanfare
+    bowlroll: { fx:t0 => { noise(t0, 2.2, .18, 'lowpass', 160, 1); noise(t0, 2.2, .05, 'bandpass', 380, 1.2); } },
+    pins: { fx:t0 => { noise(t0, .5, .3, 'lowpass', 900); for (let k = 0; k < 14; k++) { const t = t0 + Math.random() * Math.random() * .45; noise(t, .07 + Math.random() * .08, .35 * (1 - k / 20), 'bandpass', 1300 + Math.random() * 2200, 4); tone(700 + Math.random() * 900, t, .12, .04, [[1, 1, 1], [2.7, .4, .5]]); } } },
+    pinsfew: { fx:t0 => { for (let k = 0; k < 4; k++) { const t = t0 + k * .09 + Math.random() * .04; noise(t, .08, .3, 'bandpass', 1500 + Math.random() * 1500, 4); tone(800 + Math.random() * 600, t, .1, .04, [[1, 1, 1], [2.7, .4, .5]]); } } },
+    gutter: { fx:t0 => { noise(t0, 1.4, .12, 'lowpass', 120, 1); noise(t0, .3, .08, 'bandpass', 600, 2); } },
+    whoosh: { fx:t0 => { noise(t0, .18, .22, 'bandpass', 2600, 1.5); glide(1800, 600, t0, .16, .025, 'sawtooth'); } },
+    thock: { fx:t0 => { noise(t0, .09, .42, 'bandpass', 900, 2); tone(210, t0, .14, .1, [[1, 1, 1]]); } },
+    paper: { fx:t0 => { noise(t0, .2, .26, 'highpass', 2800); noise(t0 + .03, .12, .16, 'bandpass', 1400, 1.2); } },
+    gamewin: { fx:t0 => { [['C5', 0], ['E5', .11], ['G5', .22], ['C6', .36]].forEach(([n, d]) => tone(N[n], t0 + d, .9, .16, PAN)); } },
     // 3/4 at 0.5 s a beat, 24 beats: E G A | G E D | C D E | D . . | E G A | C' A G | E D C | C . .
     lullaby: { beat:.5, notes:[['E5', 0], ['G5', 1], ['A5', 2], ['G5', 3], ['E5', 4], ['D5', 5], ['C5', 6], ['D5', 7], ['E5', 8], ['D5', 9, 2.2], ['E5', 12], ['G5', 13], ['A5', 14], ['C6', 15], ['A5', 16], ['G5', 17], ['E5', 18], ['D5', 19], ['C5', 20], ['C5', 21, 2.6]],
       bass:[['C3', 0], ['G3', 3], ['C3', 6], ['G3', 9], ['C3', 12], ['G3', 15], ['C3', 18], ['C3', 21]] },
@@ -3871,8 +3882,16 @@ const MoonTaleSounds = (() => {
     for (const [n, b, d] of song.notes) note(N[n], t0 + b * song.beat, d || 1.4, song.gain || .32);
     for (const [n, b] of song.bass || []) note(N[n], t0 + b * song.beat, 2.6, .14);
   }
-  window._taleSounds = { play, stop, names:() => Object.keys(SONGS), ctx:() => ctx }; // tests
-  return { play, stop, latency:() => (ctx ? (ctx.outputLatency || ctx.baseLatency || 0) : 0) };
+  // a short effect over whatever plays (its own bus; the music goes on): the mini-games' sounds
+  function fx(name) {
+    const song = SONGS[name]; if (!song?.fx || !ensure() || document.hidden) return;
+    try { if (ctx.state === 'suspended') ctx.resume(); } catch (e) {}
+    const keep = bus; out.gain.value = .55 * vol(); bus = ctx.createGain(); bus.connect(out);
+    const mine = bus; try { song.fx(ctx.currentTime + .02); } finally { bus = keep; }
+    setTimeout(() => { try { mine.disconnect(); } catch (e) {} }, 4000);
+  }
+  window._taleSounds = { play, stop, fx, names:() => Object.keys(SONGS), ctx:() => ctx }; // tests
+  return { play, stop, fx, latency:() => (ctx ? (ctx.outputLatency || ctx.baseLatency || 0) : 0) };
 })();
 
 // Journal > Moon Tales: one page per tale, its text once its last quest is done.
@@ -9571,7 +9590,8 @@ function updateInteractionPrompt() {
   }
 
   if (ActiveInterior && (getNearestInteriorHotspotInRange() || getNearestInteriorVideoScreenInRange())) {
-    setInteractionPrompt('Press O to Interact', true);
+    const g = getNearestInteriorHotspotInRange()?.metadata?.game;
+    setInteractionPrompt(g ? `Press O to play ${g.title || 'the game'}` : 'Press O to Interact', true);
     return;
   }
 
@@ -9923,6 +9943,8 @@ function normalizeQuestSpotConfig(cfg = {}) {
       beat: Math.max(.2, Number(cfg.dance.beat) || .5), loops: Math.max(1, Math.min(4, Math.floor(Number(cfg.dance.loops) || 1))), window: Math.max(.12, Math.min(.4, Number(cfg.dance.window) || .3)) } : null,
     // the spot takes a picture when it is used (the Hills Hike's photo at the sign): the caption under it
     photo: cfg.photo ? String(cfg.photo) : null,
+    // a mini-game played here (assets/games/<type>.js; MiniGames): { type, id, title, pass, points, questOn, ...its own fields }
+    game: normalizeMiniGameDef(cfg.game, cfg.spotId),
     // a timing bar before the spot is used (SkillBar): hits good stops in the gold middle, the marker speeding up each time
     skill: cfg.skill && typeof cfg.skill === 'object' ? { hits: Math.max(1, Math.min(6, Math.floor(Number(cfg.skill.hits) || 3))), speed: Math.max(.3, Number(cfg.skill.speed) || 1.1),
       zone: Math.max(.06, Math.min(.5, Number(cfg.skill.zone) || .16)), title: String(cfg.skill.title || ''), startText: String(cfg.skill.startText || ''),
@@ -10137,7 +10159,7 @@ function getQuestSpotPromptText(root) {
     const f = QuestSpotRuntime.follow;
     return f.close ? `Stay close… ${Math.ceil(Math.max(0, cfg.followSeconds - f.got))} s` : 'Closer!';
   }
-  return `Press O to ${cfg.label || QUEST_SPOT_ACTIONS[cfg.action] || 'Inspect'}`;
+  return `Press O to ${cfg.label || (cfg.game ? 'play ' + (cfg.game.title || 'the game') : QUEST_SPOT_ACTIONS[cfg.action] || 'Inspect')}`;
 }
 
 // A hidden mini ant (spot with miniAnt): the small ant model appears only within 30 m (one shared model
@@ -10259,6 +10281,7 @@ function tryUseNearbyQuestSpot() {
   const cfg = root.metadata.spotConfig;
   const miss = questSpotRequirementMiss(cfg);
   if (miss) { showToast(miss); return true; }
+  if (cfg.game) return startMiniGame(cfg.game, { kind:'spot', root, cfg });
   if (cfg.dance) return openDanceOff(root, cfg);
   if (cfg.action === 'hold') {
     QuestSpotRuntime.hold = { root, startedAt: performance.now(), x: charMesh.position.x, z: charMesh.position.z, line: 0 };
@@ -10378,6 +10401,228 @@ async function shareVillagePhoto() {
   catch (e) { saveVillagePhoto(); showToast('Picture saved: share it from your downloads.'); }
 }
 Object.assign(window, { takeVillagePhoto, closeVillagePhoto, saveVillagePhoto, shareVillagePhoto });
+
+// ── Mini-games (Oct 15): a quest spot (spotConfig.game) or a room hotspot (game) with { type, id, title, pass, points,
+// questOn, ...the game's own fields } starts one. assets/rebel-games.js runs it; the game itself (assets/games/<type>.js)
+// loads the first time it is played. While it plays the walk stops and its HUD steps aside, the game drives the walk
+// camera, gets the keys and the pointer, and the village skips the work a game doesn't need (prompts, spots, pick-ups,
+// the minimap); a room already hides the village. Best scores per game id in ProgressionState.games; the first score of
+// def.pass or more pays def.points Rebel points. questOn: 'pass' or a game event ('strike') counts the spot / hotspot
+// for the quest step that asks for it.
+const MiniGames = { on:false, busy:false, inst:null, impl:null, ctx:null, def:null, src:null, objs:[], escAt:0, pointerObs:null, saved:null };
+function miniGameRecord(id) { const g = (ProgressionState.games ||= {}); return (g[id] ||= { best:0, plays:0, cleared:false }); }
+function normalizeMiniGameDef(g, fallbackId) {
+  if (!g || typeof g !== 'object' || !/^[a-z0-9_-]+$/.test(String(g.type || ''))) return null;
+  return { ...g, type:String(g.type), id:String(g.id || fallbackId || g.type), title:String(g.title || ''), pass:Math.max(0, Number(g.pass) || 0),
+    points:Math.max(0, Math.floor(Number(g.points) || 0)), questOn:g.questOn ? String(g.questOn) : 'pass' };
+}
+async function startMiniGame(def, src) {
+  if (MiniGames.on || MiniGames.busy) return true;
+  if (!walkMode || adminMode || !charMesh || !window.RebelGames || !def?.type) return false;
+  MiniGames.busy = true;
+  RebelGames.HUD.loading(true);
+  let impl = null;
+  try { impl = await RebelGames.load(def.type); } catch (e) { console.warn('mini-game', e); }
+  RebelGames.HUD.loading(false);
+  if (!impl || !walkMode || adminMode) { MiniGames.busy = false; if (!impl) showToast('This game is not ready yet.'); return true; }
+  closeSkillBar(); closeDanceOff(); QuestSpotRuntime.hold = null;
+  moveForward = moveBackward = turnLeft = turnRight = runKey = false; charMesh._vel = 0;
+  _camOcc.dist = null; setPlayerCameraFade(1);
+  const guide = scene.getTransformNodeByName?.('questTargetAutoGuide');
+  MiniGames.saved = { x:charMesh.position.x, z:charMesh.position.z, ry:charMesh.rotation.y, fov:walk.fov, camYaw:_orbitAngleH, guide, guideOn:guide?.isEnabled() };
+  guide?.setEnabled(false);
+  MiniGames.saved.hidden = [src.root, ...(ActiveInterior ? getInteriorHotspotRoots() : [])].filter(n => n?.isEnabled?.());
+  MiniGames.saved.hidden.forEach(n => n.setEnabled(false));
+  Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0 });
+  document.getElementById('interactionPrompt')?.classList.remove('on');
+  document.getElementById('badgeUnlockPopup')?.classList.remove('on'); // a badge card left open would sit over the game
+  RebelGames.HUD.show(true);
+  RebelGames.HUD.title(def.title || impl.title || 'Game');
+  RebelGames.HUD.score(''); RebelGames.HUD.info(''); RebelGames.HUD.hint('');
+  RebelGames.HUD.onQuit(() => quitMiniGame());
+  MiniGames.pointerObs = scene.onPointerObservable.add(evt => { try { MiniGames.inst?.pointer?.(evt); } catch (e) { console.warn('mini-game pointer', e); } });
+  runMiniGameInstance();
+  return true;
+}
+// the stage: room coordinates in a room (the kit room's holder: x, floor-up y, z as in its spec), else a frame at the spot
+// facing the way the spot faces (local +z ahead)
+function makeMiniGameFrame(src) {
+  const frame = new BABYLON.TransformNode('miniGameFrame', scene);
+  frame.metadata = { _perfNeverFreeze:true, miniGame:true };
+  const holder = ActiveInterior?.root?.getChildren?.(n => /^kitInteriorRoom_/.test(n.name), false)?.[0];
+  if (src.kind === 'hotspot' && holder) frame.parent = holder;
+  else { const p = src.root.getAbsolutePosition(); frame.position.set(p.x, p.y, p.z); frame.rotation.y = src.root.rotation?.y || 0; }
+  frame.computeWorldMatrix(true);
+  return frame;
+}
+function runMiniGameInstance() {
+  const def = MiniGames.def, src = MiniGames.src;
+  const frame = makeMiniGameFrame(src);
+  MiniGames.objs = [frame];
+  const ctx = MiniGames.ctx = buildMiniGameCtx(def, src, frame);
+  try { MiniGames.inst = MiniGames.impl.start(ctx) || {}; }
+  catch (e) { console.warn('mini-game start', e); showToast('The game hit a snag.'); endMiniGame(); }
+}
+function buildMiniGameCtx(def, src, frame) {
+  const V3 = BABYLON.Vector3;
+  const frameYaw = () => { const q = new BABYLON.Quaternion(); frame.getWorldMatrix().decompose(undefined, q); return q.toEulerAngles().y; };
+  const ctx = {
+    B: BABYLON, scene, engine, def, frame, camera: walk, HUD: RebelGames.HUD, util: RebelGames.util, inRoom: !!ActiveInterior,
+    best: () => miniGameRecord(def.id).best,
+    toWorld: (x, y, z) => V3.TransformCoordinates(new V3(x, y, z), frame.getWorldMatrix()),
+    toLocal: (p) => V3.TransformCoordinates(p, BABYLON.Matrix.Invert(frame.getWorldMatrix())),
+    // the camera: at local position p, looking at local point t
+    look(p, t, fov) { walk.position.copyFrom(ctx.toWorld(p[0], p[1], p[2])); walk.setTarget(ctx.toWorld(t[0], t[1], t[2])); if (fov) walk.fov = fov; },
+    // keep a game object: disposed with the game; lit by the room's lights in a room
+    add(node) {
+      if (!node) return node;
+      if (!node.parent) node.parent = frame;
+      MiniGames.objs.push(node);
+      if (ActiveInterior) { const ms = node.getChildMeshes ? [node, ...node.getChildMeshes(false)].filter(m => m.getTotalVertices) : [];
+        (ActiveInterior.root?.metadata?.interiorLights || []).forEach(l => { if (l.includedOnlyMeshes?.length) l.includedOnlyMeshes.push(...ms); }); }
+      return node;
+    },
+    // a material kept for this game (one per key)
+    mat(key, make) { const n = 'miniGameMat_' + def.type + '_' + key; let m = scene.getMaterialByName(n); if (!m) { m = make(n); m.name = n; if ('maxSimultaneousLights' in m) m.maxSimultaneousLights = 4; } return m; },
+    kit(type, parent) { const n = new BABYLON.TransformNode('miniGameKit_' + type, scene); n.parent = parent || frame; window.SamuraiKit?.build(n, type, scene, null, !!ActiveInterior); ctx.add(n); n.getChildMeshes(false).forEach(m => { m.isPickable = false; }); return n; },
+    sound(name) { if (name) MoonTaleSounds.fx(name); },     // a short effect over the music
+    music(name, loops) { if (name) MoonTaleSounds.play(name, loops); }, stopMusic() { MoonTaleSounds.stop(.3); },
+    sfx(name, opts) { try { (MiniGames.sfx ||= window.RebelWeapon?.sfx?.({ scene, clip: () => null, kind: 'bow', volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) }))?.play?.(name, opts); } catch (e) {} },
+    // a screen point (CSS px) of a world point, for score pops
+    screenOf(p) { const r = engine.getRenderingCanvasClientRect(); const v = BABYLON.Vector3.Project(p, BABYLON.Matrix.Identity(), scene.getTransformMatrix(), walk.viewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight()));
+      return { x: (r?.left || 0) + v.x * (r ? r.width / engine.getRenderWidth() : 1), y: (r?.top || 0) + v.y * (r ? r.height / engine.getRenderHeight() : 1), behind: v.z > 1 || v.z < 0 }; },
+    // the pointer as a ray through the scene (CSS px of the canvas, as scene.pointerX / pointerY)
+    ray(x = scene.pointerX, y = scene.pointerY) { return scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), walk); },
+    player: {
+      root: charMesh,
+      rig: !!window.forgeRigBundleInfo, ape: !!window.kitPlayerModel,
+      height: 3.4,
+      // stand at local (x, z) facing local yaw (0 = local +z)
+      place(x, z, yaw = 0) { const w = ctx.toWorld(x, 0, z); charMesh.position.x = w.x; charMesh.position.z = w.z; charMesh.rotation.y = frameYaw() + yaw; charMesh._vel = 0; _playerDeckSnapUntil = performance.now() + 600; },
+      pos() { return ctx.toLocal(charMesh.position); },
+      face(yaw) { charMesh.rotation.y = frameYaw() + yaw; },
+      show(on) { charMesh.getChildMeshes(false).forEach(m => { m.visibility = on ? 1 : 0; }); },
+      // a move by name: Forge rigs any slot by its clip name (idle walk run jab cross_punch front_kick ...), held on its
+      // last frame with hold; kit apes kick / jump; the starter ant flip-kicks / jumps
+      clip(name, o = {}) { return playMiniGameClip(name, o); },
+      idle() { if (animState !== 0) { const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } },
+      // where a bone is drawn now (world), e.g. 'RightHand'; null without a rig
+      bone(name) { return getPlayerBoneWorld(name); }
+    },
+    event(name, data) { miniGameEvent(name, data); },
+    finish(result) { finishMiniGame(result || {}); }
+  };
+  return ctx;
+}
+function getPlayerBoneWorld(name) {
+  const sm = charMesh?.getChildMeshes(false).find(m => m.skeleton);
+  const b = sm?.skeleton?.bones.find(x => x.name === 'mixamorig:' + name || x.name === 'mixamorig_' + name || x.name.endsWith(':' + name) || x.name.endsWith('_' + name) || x.name === name);
+  if (!b) return null;
+  return BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.Zero(), b.getFinalMatrix().multiply(sm.getWorldMatrix()));
+}
+function playMiniGameClip(name, o = {}) {
+  if (window.forgeRigBundleInfo) {
+    const slot = (window._forgeClipSlots || {})[name];
+    const g = slot != null ? animGroups[slot] : null; if (!g) return false;
+    if (animState === slot) { if (g.isPlaying) g.stop(); animState = -1; } // the same move again: from its start
+    if (o.speed) g.speedRatio = o.speed;
+    if (o.loop) { switchAnim(slot, true); return true; }
+    if (o.hold) { switchAnim(slot, false); return true; } // stays on its last frame until the next move
+    return playForgeRigAction(slot, null, true);
+  }
+  if (window.kitPlayerModel) { window.SamuraiKit?.actorAction?.(window.kitPlayerModel, /jump|flip/.test(name) ? 'jump' : 'kick'); return true; }
+  if (/kick|punch|jab|throw|roll/.test(name) && animGroups[3]) { if (animState === 3) { animGroups[3].stop(); animState = -1; } switchAnim(3, false); setTimeout(() => { if (animState === 3) switchAnim(0, true); }, 900); return true; }
+  return false;
+}
+function updateMiniGame(dt) {
+  if (!MiniGames.on || !MiniGames.inst) return;
+  if (!walkMode) { endMiniGame(); return; }
+  try { MiniGames.inst.update?.(Math.min(.1, dt)); } catch (e) { console.warn('mini-game update', e); showToast('The game hit a snag.'); endMiniGame(); }
+}
+function miniGameKey(e, down) {
+  const key = e.key.toLowerCase();
+  if (RebelGames.resultOpen()) { if (down && (key === 'enter' || key === 'escape')) { e.preventDefault(); document.querySelector('#gameResult .gr-done')?.click(); } return; }
+  if (down && key === 'escape') {
+    e.preventDefault();
+    if (performance.now() - MiniGames.escAt < 1800) { quitMiniGame(); return; }
+    MiniGames.escAt = performance.now(); RebelGames.HUD.msg('Esc again to quit', 1700); return;
+  }
+  if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) e.preventDefault();
+  try { MiniGames.inst?.key?.(e, down); } catch (err) { console.warn('mini-game key', err); }
+}
+// the spot or hotspot counts for the quest step asking for it (the step moves on only if one does)
+function miniGameQuestHook() {
+  const src = MiniGames.src; if (!src) return;
+  if (src.kind === 'spot') {
+    const cfg = src.cfg;
+    advanceHubTutorialObjective('useQuestSpot', { spotId:cfg.spotId, targetObjectId:cfg.spotId, spotAction:'game' });
+    try { window.dispatchEvent(new CustomEvent('rebelAntsQuestSpot', { detail:{ spotId:cfg.spotId, action:'game', villageId:CURRENT_VILLAGE_ID } })); } catch (e) {}
+  } else if (src.kind === 'hotspot') {
+    const meta = src.root.metadata || {};
+    recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.linkName, hotspotId:meta.hotspotId, targetObjectId:meta.hotspotId, label:meta.linkName, title:meta.linkName, url:meta.url, actionType:meta.actionType } }, 'interactInteriorHotspot');
+  }
+}
+function miniGameEvent(name, data) {
+  if (!MiniGames.on) return;
+  if (MiniGames.def.questOn === name) miniGameQuestHook();
+  try { window.dispatchEvent(new CustomEvent('rebelAntsGameEvent', { detail:{ game:MiniGames.def.id, name, data } })); } catch (e) {}
+}
+function finishMiniGame(r) {
+  if (!MiniGames.on) return;
+  const def = MiniGames.def, rec = miniGameRecord(def.id);
+  const score = Math.max(0, Math.round(Number(r.score) || 0)), passed = r.passed != null ? !!r.passed : score >= def.pass;
+  const prevBest = rec.best || 0, newBest = score > prevBest && rec.plays > 0;
+  rec.plays = (rec.plays || 0) + 1; rec.best = Math.max(prevBest, score); rec.last = score; rec.at = Date.now();
+  let points = 0;
+  if (passed && !rec.cleared) {
+    rec.cleared = true; rec.clearedAt = Date.now(); points = def.points || 0;
+    if (points) {
+      ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + points;
+      if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
+      ProgressionState.rebelPointsLog.push({ gameId:def.id, villageId:CURRENT_VILLAGE_ID, points, at:Date.now(), synced:false });
+      try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ gameId:def.id, points, total:ProgressionState.rebelPoints } })); } catch (e) {}
+    }
+  }
+  saveProgressionState();
+  if (passed && def.questOn === 'pass') miniGameQuestHook();
+  try { window.dispatchEvent(new CustomEvent('rebelAntsGameEnd', { detail:{ game:def.id, score, passed, best:rec.best, newBest, points } })); } catch (e) {}
+  if (points) setTimeout(() => showRebelPointsPop(points), 600);
+  const extra = [r.extra || '', points ? `First clear: +${points} Rebel points.` : (!passed && def.pass ? `Score ${def.pass} to clear it.` : '')].filter(Boolean).join(' ');
+  RebelGames.showResult({ kicker: passed ? 'Cleared' : 'Game over', title: def.title || MiniGames.impl?.title || '', score, label: r.label || 'points', best: rec.best, newBest, extra,
+    onAgain: () => restartMiniGame(), onDone: () => endMiniGame() });
+}
+function disposeMiniGameInstance() {
+  try { MiniGames.inst?.dispose?.(); } catch (e) { console.warn('mini-game dispose', e); }
+  MiniGames.inst = null;
+  MiniGames.objs.slice().reverse().forEach(n => { try { if (!n.isDisposed?.()) n.dispose(false, false); } catch (e) {} });
+  MiniGames.objs = [];
+  RebelGames.HUD.meter(null); RebelGames.HUD.reticle(null); RebelGames.HUD.card(''); RebelGames.HUD.msg('');
+}
+function restartMiniGame() {
+  if (!MiniGames.on) return;
+  disposeMiniGameInstance();
+  RebelGames.HUD.score(''); RebelGames.HUD.info(''); RebelGames.HUD.hint('');
+  runMiniGameInstance();
+}
+function quitMiniGame() { RebelGames.hideResult(); endMiniGame(); }
+function endMiniGame() {
+  if (!MiniGames.on) return;
+  disposeMiniGameInstance();
+  if (MiniGames.pointerObs) { scene.onPointerObservable.remove(MiniGames.pointerObs); MiniGames.pointerObs = null; }
+  RebelGames.hideResult(); RebelGames.HUD.show(false);
+  const s = MiniGames.saved;
+  MiniGames.on = false; MiniGames.ctx = null;
+  moveForward = moveBackward = turnLeft = turnRight = runKey = false;
+  if (charMesh) {
+    if (s) { charMesh.position.x = s.x; charMesh.position.z = s.z; charMesh.rotation.y = s.ry; _playerDeckSnapUntil = performance.now() + 600; }
+    charMesh._vel = 0; charMesh.getChildMeshes(false).forEach(m => { m.visibility = 1; });
+    const g = animGroups[animState]; if (animState !== 0 && g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true);
+  }
+  if (s) { walk.fov = s.fov; if (s.guide && !s.guide.isDisposed?.()) s.guide.setEnabled(!!s.guideOn); (s.hidden || []).forEach(n => { if (!n.isDisposed?.()) n.setEnabled(true); }); }
+  snapWalkCameraBehindPlayer();
+}
+window._miniGames = MiniGames; // tests
+window.startMiniGame = startMiniGame;
 
 // the crowd at a hold or dance-off with spotConfig.cheer: now and then one of them hops or kicks (kit apes) or plays a
 // lively clip (forged NPCs)
@@ -23040,6 +23285,7 @@ const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(acti
       front_kick: 5, roundhouse_kick: 6, side_kick: 7, punch_combo: 8, cartwheel: 9,
       jump_run: 10, backflip: 11, front_flip: 12, hurricane_kick: 13, spin_flip_kick: 14, crescent_kick: 15,
       jab: 16, cross_punch: 17, hook_punch: 18, elbow_punch: 19, fight_idle: 20, hit_reaction: 21, knockdown: 22, get_up: 23 };
+    window._forgeClipSlots = _slot; // mini-games play moves by name
     window._forgeIdleOrig = null; window._forgeFightStance = false;
     r.animationGroups.forEach(g => {
       g.stop();
@@ -24978,6 +25224,7 @@ document.addEventListener('keydown', async e => {
   const key = e.key.toLowerCase();
 
   if (document.getElementById('photoOverlay')?.classList.contains('on')) { if (key === 'escape' || key === 'p' || key === 'enter') { e.preventDefault(); closeVillagePhoto(); } return; }
+  if (MiniGames.on) { miniGameKey(e, true); return; }
   if (key === 'p' && !adminMode && walkMode && !e.repeat && !DanceOff.on && !SkillBar.on) { e.preventDefault(); takeVillagePhoto(); return; }
   if (DanceOff.on && DANCE_KEYS[key] !== undefined) { e.preventDefault(); if (!e.repeat) pressDance(DANCE_KEYS[key]); return; }
   if (DanceOff.on && key === 'escape') { closeDanceOff(); MoonTaleSounds.stop(); return; }
@@ -25162,6 +25409,7 @@ document.addEventListener('keydown', async e => {
 });
 
 document.addEventListener('keyup', e => {
+  if (MiniGames.on) { miniGameKey(e, false); return; }
   const key = e.key.toLowerCase();
   if (key === 'w' || e.key === 'ArrowUp') moveForward = false;
   if (key === 's' || e.key === 'ArrowDown') moveBackward = false;
@@ -25204,13 +25452,13 @@ function getCameraOccluders() {
 // walking is camera-relative: tools steer by turning the orbit (headless walk tests)
 window._walkCamera = { get yaw() { return _orbitAngleH; }, set yaw(a) { _orbitAngleH = a; } };
 scene.onPointerObservable.add(evt=>{
-  if(!walkMode)return;
+  if(!walkMode||MiniGames.on)return;
   if(evt.type===BABYLON.PointerEventTypes.POINTERDOWN){_orbitDragging=true;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;}
   else if(evt.type===BABYLON.PointerEventTypes.POINTERUP){_orbitDragging=false;}
   else if(evt.type===BABYLON.PointerEventTypes.POINTERMOVE&&_orbitDragging){const dx=scene.pointerX-_orbitLastX,dy=scene.pointerY-_orbitLastY;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;_orbitAngleH+=dx*0.008;_orbitAngleV=Math.max(0.08,Math.min(0.85,_orbitAngleV+dy*0.006));if(Math.abs(dx)+Math.abs(dy)>0)_camManualUntil=performance.now()+1800;}
 });
 scene.onPointerObservable.add(evt=>{
-  if(!charMesh)return;
+  if(!charMesh||MiniGames.on)return;
   if(evt.type!==BABYLON.PointerEventTypes.POINTERPICK)return;
   const hit=evt.pickInfo; if(!hit||!hit.hit)return;
   if (walkMode && !adminMode) {
@@ -27063,7 +27311,8 @@ engine.runRenderLoop(()=>{
     _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
     let dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
     const _camTarget = new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z);
-    if (!ActiveInterior) {
+    if (MiniGames.on) { /* the game drives the camera */ }
+    else if (!ActiveInterior) {
       // a building between the head and the camera pulls the camera in front of it (snaps in, eases back out)
       const head = new BABYLON.Vector3(charMesh.position.x, charMesh.position.y + 2.4, charMesh.position.z), toCam = dc.subtract(head), full = toCam.length();
       if (full > .1) {
@@ -27082,26 +27331,30 @@ engine.runRenderLoop(()=>{
         setPlayerCameraFade(_camOcc.dist < 2.4 ? .35 : 1);
       }
     } else { _camOcc.dist = null; setPlayerCameraFade(1); }
-    walk.position=BABYLON.Vector3.Lerp(walk.position,ActiveInterior?clipInteriorCameraPosition(dc,_camTarget):dc,0.1);
-    walk.setTarget(_camTarget);
+    if (!MiniGames.on) {
+      walk.position=BABYLON.Vector3.Lerp(walk.position,ActiveInterior?clipInteriorCameraPosition(dc,_camTarget):dc,0.1);
+      walk.setTarget(_camTarget);
+    }
   }
   updateFootstepAudio();
-  updateInteractionPrompt();
-  tryAutoExitInteriorFromTouch();
-  updateTutorialQuestWorldProgress();
-  updateQuestTargetMarkers(dt);
-  updateQuestSpots();
-  updateSkillBar();
-  updateDanceOff();
+  if (MiniGames.on) updateMiniGame(dt);
+  else {
+    updateInteractionPrompt();
+    tryAutoExitInteriorFromTouch();
+    updateTutorialQuestWorldProgress();
+    updateQuestTargetMarkers(dt);
+    updateQuestSpots();
+    updateSkillBar();
+    updateDanceOff();
+  }
   { const wantPhoto = walkMode && !adminMode; if (document.body.classList.contains('walk-photo') !== wantPhoto) document.body.classList.toggle('walk-photo', wantPhoto); }
-  tryAutoOpenVillageGateFromWalkthrough();
-  updateCollectiblesSafe(dt);
+  if (!MiniGames.on) { tryAutoOpenVillageGateFromWalkthrough(); updateCollectiblesSafe(dt); }
   updateWeatherManager();
   updateNPCPopulation(dt);
   updateSmallVillageAntPopulation(dt);
   runVillagePerformancePass(false);
   updatePerformanceDebugPanel();
-  try { window.VillageHud?.update(); } catch (e) {}
+  if (!MiniGames.on) try { window.VillageHud?.update(); } catch (e) {}
   applyFakeLightState(false);
   enforceInteriorIsolation();
   if (window._gpuMode === 'webgpu') {
@@ -31344,6 +31597,7 @@ function serializeInteriorHotspot(hotspot) {
     ...(meta.secretId ? { secretId: meta.secretId } : {}),
     ...(meta.requires ? { requires: meta.requires } : {}),
     ...(meta.sound ? { sound: meta.sound } : {}),
+    ...(meta.game ? { game: meta.game } : {}),
     ...serializeNodeTransform(hotspot)
   };
 }
@@ -32051,6 +32305,7 @@ function createInteriorHotspot(parent, config = {}) {
     secretId: config.secretId || '', // a secret inside a room (found on the first O)
     requires: config.requires || null, // { time, weather, hint } like quest spots
     sound: config.sound || '', // a quest sound when it is used (MoonTaleSounds: the dice rattling on the casino felt)
+    game: normalizeMiniGameDef(config.game, hotspotId), // a mini-game played here (MiniGames)
     questObjectiveType:'interactInteriorHotspot'
   };
   root.isPickable = true;
@@ -32098,6 +32353,7 @@ function interactInteriorHotspot(hotspot) {
   if (!hotspot || hotspot.metadata?.enabled === false) return false;
   const meta = hotspot.metadata || {};
   if (meta.requires) { const miss = questSpotRequirementMiss({ requires: meta.requires }); if (miss) { showToast(miss); return true; } }
+  if (meta.game) return startMiniGame(meta.game, { kind:'hotspot', root:hotspot, meta });
   if (meta.sound) MoonTaleSounds.play(meta.sound);
   recordInteriorQuestHook({ metadata: { interiorType: ActiveInterior?.interiorType, targetInteriorId: ActiveInterior?.targetInteriorId, interiorName: meta.linkName, hotspotId:meta.hotspotId, targetObjectId:meta.hotspotId, label:meta.linkName, title:meta.linkName, url:meta.url, actionType:meta.actionType } }, 'interactInteriorHotspot');
   if (meta.secretId && recordQuestSpotSecret({ secretId: meta.secretId, secretName: meta.linkName, text: meta.description })) return true; // the celebration shows its text
