@@ -3832,6 +3832,10 @@ const MoonTaleSounds = (() => {
     water: { fx:t0 => { noise(t0, 2.4, .1, 'bandpass', 950, 1); for (let k = 0; k < 18; k++) noise(t0 + .2 + Math.random() * 2, .04, .06, 'bandpass', 1200 + Math.random() * 1400, 4); } },
     camera: { fx:t0 => { noise(t0, .03, .4, 'highpass', 4000); noise(t0 + .07, .05, .3, 'bandpass', 1600, 2); glide(1300, 1900, t0 + .14, .12, .06); } },
     hoops: { fx:t0 => { for (let r = 0; r < 5; r++) { const t = t0 + r * 2; for (const d of [0, .38]) { tone(92, t + d, .22, .3, [[1, 1, 1]]); noise(t + d, .08, .2, 'lowpass', 500); } noise(t + 1.1, .4, .14, 'highpass', 2600); } } },
+    // the 3-point contest: a swish through the net, a clang off the rim, a bounce on the court
+    swish: { fx:t0 => noise(t0, .35, .16, 'highpass', 2600) },
+    clang: { fx:t0 => { tone(540, t0, .5, .14, [[1, 1, 1], [2.76, .5, .5], [5.4, .25, .3]]); noise(t0, .05, .2, 'bandpass', 2200, 2); } },
+    bounce: { fx:t0 => { tone(92, t0, .22, .3, [[1, 1, 1]]); noise(t0, .08, .2, 'lowpass', 500); } },
     funk: { len:16, fx:t0 => { // 8 bars at 0.25 s an eighth: a slap bassline, brass stabs on the off-beats, hi-hats, a snare on 2 and 4
       const E = .25, bass = ['C3', 'C3', 'G3', 'A3', 'F3', 'F3', 'G3', 'G3'], riff = [0, 3, 4, 6];
       for (let b = 0; b < 8; b++) {
