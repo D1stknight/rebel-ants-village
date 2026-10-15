@@ -10334,6 +10334,8 @@ function completeQuestSpot(root) {
   return true;
 }
 
+// Miguel (Oct 15): a first clear of a game or a place riddle pays double the points its layout lists
+const GAME_POINTS_X = 2;
 // Place riddles (ProgressionState.riddles[id] = { asked, part, solved, at }): the riddle spot reads the current part out
 // in the quest card; the right answer spot moves it on (the next part read out at once) or solves it (Rebel points the
 // first time); a wrong one only says so, or starts the riddle over when it resets
@@ -10368,17 +10370,18 @@ function answerPlaceRiddle(cfg) {
   r.part = (r.part || 0) + 1;
   if (r.part < R.parts.length) { saveProgressionState(); if (A.text) showToast(A.text, 4500); showPlaceRiddlePart(R, r.part); return true; }
   r.solved = true; r.solvedAt = Date.now();
-  if (R.points) {
-    ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + R.points;
+  const pts = (R.points || 0) * GAME_POINTS_X;
+  if (pts) {
+    ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + pts;
     if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
-    ProgressionState.rebelPointsLog.push({ riddleId:R.id, villageId:CURRENT_VILLAGE_ID, points:R.points, at:Date.now(), synced:false });
-    try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ riddleId:R.id, points:R.points, total:ProgressionState.rebelPoints } })); } catch (e) {}
-    setTimeout(() => showRebelPointsPop(R.points), 600);
+    ProgressionState.rebelPointsLog.push({ riddleId:R.id, villageId:CURRENT_VILLAGE_ID, points:pts, at:Date.now(), synced:false });
+    try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ riddleId:R.id, points:pts, total:ProgressionState.rebelPoints } })); } catch (e) {}
+    setTimeout(() => showRebelPointsPop(pts), 600);
   }
   saveProgressionState();
   try { window.dispatchEvent(new CustomEvent('rebelAntsRiddle', { detail:{ riddleId:R.id, villageId:CURRENT_VILLAGE_ID } })); } catch (e) {}
   MoonTaleSounds.fx?.('gamewin');
-  queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(A.text || R.solvedText || ''), chips:R.points ? [{ label:`+${R.points} Rebel points`, tone:'gold' }] : [], duration:7000 });
+  queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(A.text || R.solvedText || ''), chips:pts ? [{ label:`+${pts} Rebel points`, tone:'gold' }] : [], duration:7000 });
   return true;
 }
 window._placeRiddles = { read:readPlaceRiddle, answer:answerPlaceRiddle }; // tests
@@ -10770,7 +10773,7 @@ function finishMiniGame(r) {
   if (low) rec.low = true;
   let points = 0;
   if (passed && !rec.cleared) {
-    rec.cleared = true; rec.clearedAt = Date.now(); points = def.points || 0;
+    rec.cleared = true; rec.clearedAt = Date.now(); points = (def.points || 0) * GAME_POINTS_X;
     if (points) {
       ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + points;
       if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
