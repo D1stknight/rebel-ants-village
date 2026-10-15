@@ -26209,5 +26209,159 @@
         "max": 10
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_sohei-monk-koan",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -36.2,
+      "y": 0.06,
+      "z": 59.8
+    },
+    "rotation": {
+      "x": 0,
+      "y": -0.4049,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "sohei",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "sohei-monk-koan",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.4,
+      "label": "",
+      "game": {
+        "type": "riddle",
+        "id": "sohei-monk-koan",
+        "title": "The Monk's Koan",
+        "giver": "sohei-bellkeeper-01",
+        "riddles": [
+          {
+            "q": "Two monks argue by the gate. One says the banner moves; the other says the wind moves. The old master walks past. What does he say?",
+            "a": [
+              "It is the wind that moves.",
+              "It is the banner that moves.",
+              "It is your mind that moves."
+            ],
+            "right": 2,
+            "why": "Neither the wind nor the banner: the restless mind is what moves."
+          },
+          {
+            "q": "The great bell hangs silent in the tower. When is it loudest?",
+            "a": [
+              "When the strongest monk strikes it",
+              "When the listener's heart is still",
+              "When the whole colony is awake"
+            ],
+            "right": 1,
+            "why": "The sound was there all along. A quiet heart hears it."
+          },
+          {
+            "q": "The cup is already full of tea, yet the master keeps pouring. Why?",
+            "a": [
+              "To show that a full cup holds nothing new",
+              "To make the tea stronger",
+              "To test the student's patience"
+            ],
+            "right": 0,
+            "why": "Empty your cup first. A full mind has no room to learn."
+          }
+        ],
+        "pass": 3,
+        "points": 50,
+        "bell": 98
+      }
+    }
   }
 ]

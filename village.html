@@ -10525,6 +10525,7 @@ function buildMiniGameCtx(def, src, frame) {
     kit(type, parent) { const n = new BABYLON.TransformNode('miniGameKit_' + type, scene); n.parent = parent || frame; window.SamuraiKit?.build(n, type, scene, null, !!ActiveInterior); ctx.add(n); n.getChildMeshes(false).forEach(m => { m.isPickable = false; }); return n; },
     sound(name) { if (name) MoonTaleSounds.fx(name); },     // a short effect over the music
     note(f, kind) { MoonTaleSounds.ping(f, kind); },         // one pitched note: 'bell', 'lantern' or 'fire'
+    npc(id) { return getNPCById(id); },                      // a village NPC's root (riddle-givers, opponents)
     music(name, loops) { if (name) MoonTaleSounds.play(name, loops); }, stopMusic() { MoonTaleSounds.stop(.3); },
     sfx(name, opts) { try { (MiniGames.sfx ||= window.RebelWeapon?.sfx?.({ scene, clip: () => null, kind: 'bow', volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) }))?.play?.(name, opts); } catch (e) {} },
     // a screen point (CSS px) of a world point, for score pops
