@@ -53780,5 +53780,210 @@
         ]
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_war-spy-in-the-fort",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -40,
+      "y": 0.1,
+      "z": -35
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "warrior",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "war-spy-in-the-fort",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "chase",
+        "id": "war-spy-in-the-fort",
+        "title": "Spy in the Fort",
+        "points": 60,
+        "questOn": "pass",
+        "loop": [
+          [
+            -40,
+            -35
+          ],
+          [
+            -9.5,
+            -37
+          ],
+          [
+            -6.5,
+            -36
+          ],
+          [
+            37,
+            -36.5
+          ],
+          [
+            40,
+            -35
+          ],
+          [
+            29.5,
+            -13.5
+          ],
+          [
+            30,
+            7
+          ],
+          [
+            34,
+            9
+          ],
+          [
+            42,
+            10
+          ],
+          [
+            17,
+            17
+          ],
+          [
+            0,
+            20
+          ],
+          [
+            -39.5,
+            12.5
+          ],
+          [
+            -42,
+            10
+          ],
+          [
+            -49,
+            6.5
+          ],
+          [
+            -49,
+            -29
+          ],
+          [
+            -45,
+            -32.5
+          ]
+        ],
+        "medals": [
+          49,
+          61,
+          80
+        ],
+        "look": "thief",
+        "carry": "scroll",
+        "color": [
+          0.12,
+          0.16,
+          0.1
+        ],
+        "trim": [
+          0.75,
+          0.6,
+          0.25
+        ],
+        "name": "the spy",
+        "text": "A spy slipped in past the gate"
+      }
+    }
   }
 ]

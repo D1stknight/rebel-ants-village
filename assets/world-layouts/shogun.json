@@ -52946,5 +52946,218 @@
         ]
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_shogun-keep-thief",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 44.6,
+      "y": 0.1,
+      "z": -38
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "shogun",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "shogun-keep-thief",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "chase",
+        "id": "shogun-keep-thief",
+        "title": "Keep Thief",
+        "points": 60,
+        "questOn": "pass",
+        "loop": [
+          [
+            40,
+            -38.5
+          ],
+          [
+            46,
+            -24.5
+          ],
+          [
+            45.5,
+            -13.5
+          ],
+          [
+            42.5,
+            -12.5
+          ],
+          [
+            42,
+            -12.5
+          ],
+          [
+            2.5,
+            -9.5
+          ],
+          [
+            0,
+            -12
+          ],
+          [
+            -9.5,
+            -9.5
+          ],
+          [
+            -41.5,
+            -14.5
+          ],
+          [
+            -42,
+            -15
+          ],
+          [
+            -35,
+            -27
+          ],
+          [
+            -33.5,
+            -33.5
+          ],
+          [
+            -35.5,
+            -36.5
+          ],
+          [
+            -39.5,
+            -40
+          ],
+          [
+            -40,
+            -40
+          ],
+          [
+            -37,
+            -38.5
+          ],
+          [
+            -33.5,
+            -35.5
+          ],
+          [
+            37,
+            -35.5
+          ]
+        ],
+        "medals": [
+          52,
+          66,
+          86
+        ],
+        "look": "thief",
+        "carry": "gold",
+        "color": [
+          0.16,
+          0.08,
+          0.14
+        ],
+        "trim": [
+          0.85,
+          0.68,
+          0.3
+        ],
+        "name": "the thief",
+        "text": "A thief took gold from the keep"
+      }
+    }
   }
 ]
