@@ -3896,8 +3896,22 @@ const MoonTaleSounds = (() => {
     const mine = bus; try { song.fx(ctx.currentTime + .02); } finally { bus = keep; }
     setTimeout(() => { try { mine.disconnect(); } catch (e) {} }, 4000);
   }
-  window._taleSounds = { play, stop, fx, names:() => Object.keys(SONGS), ctx:() => ctx }; // tests
-  return { play, stop, fx, latency:() => (ctx ? (ctx.outputLatency || ctx.baseLatency || 0) : 0) };
+  // one pitched note over whatever plays (the sequence puzzles): a bronze bell, a spirit lantern's hum, a signal fire's
+  // drum and roar
+  function ping(f, kind = 'bell') {
+    if (!(f > 0) || !ensure() || document.hidden) return;
+    try { if (ctx.state === 'suspended') ctx.resume(); } catch (e) {}
+    const keep = bus; out.gain.value = .55 * vol(); bus = ctx.createGain(); bus.connect(out);
+    const mine = bus, t = ctx.currentTime + .02;
+    try {
+      if (kind === 'lantern') { note(f, t, 1.8, .3); note(f * 1.5, t + .012, 1.3, .07); }
+      else if (kind === 'fire') { noise(t, .55, .34, 'lowpass', 340); tone(f, t, .8, .3, PLUCK); glide(f * 1.7, f, t, .28, .2, 'triangle'); }
+      else tone(f, t, 2.6, .3, [[1, 1, 1], [2.76, .32, .55], [5.4, .14, .32], [8.93, .05, .18]]);
+    } finally { bus = keep; }
+    setTimeout(() => { try { mine.disconnect(); } catch (e) {} }, 4000);
+  }
+  window._taleSounds = { play, stop, fx, ping, names:() => Object.keys(SONGS), ctx:() => ctx }; // tests
+  return { play, stop, fx, ping, latency:() => (ctx ? (ctx.outputLatency || ctx.baseLatency || 0) : 0) };
 })();
 
 // Journal > Moon Tales: one page per tale, its text once its last quest is done.
@@ -10510,6 +10524,7 @@ function buildMiniGameCtx(def, src, frame) {
     mat(key, make) { const n = 'miniGameMat_' + def.type + '_' + key; let m = scene.getMaterialByName(n); if (!m) { m = make(n); m.name = n; if ('maxSimultaneousLights' in m) m.maxSimultaneousLights = 4; } return m; },
     kit(type, parent) { const n = new BABYLON.TransformNode('miniGameKit_' + type, scene); n.parent = parent || frame; window.SamuraiKit?.build(n, type, scene, null, !!ActiveInterior); ctx.add(n); n.getChildMeshes(false).forEach(m => { m.isPickable = false; }); return n; },
     sound(name) { if (name) MoonTaleSounds.fx(name); },     // a short effect over the music
+    note(f, kind) { MoonTaleSounds.ping(f, kind); },         // one pitched note: 'bell', 'lantern' or 'fire'
     music(name, loops) { if (name) MoonTaleSounds.play(name, loops); }, stopMusic() { MoonTaleSounds.stop(.3); },
     sfx(name, opts) { try { (MiniGames.sfx ||= window.RebelWeapon?.sfx?.({ scene, clip: () => null, kind: 'bow', volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) }))?.play?.(name, opts); } catch (e) {} },
     // a screen point (CSS px) of a world point, for score pops

@@ -40499,5 +40499,272 @@
     "enabled": true,
     "questObjectiveId": null,
     "editorLocked": false
+  },
+  {
+    "type": "ronin_brazier",
+    "name": "ronin_brazierRootClone_bushi_signal_fires_item0",
+    "position": {
+      "x": 29,
+      "y": 0.1,
+      "z": -23.8
+    },
+    "rotation": {
+      "x": 0,
+      "y": 4.71238898038469,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "villageId": "bushi",
+    "animationMap": {},
+    "animationSpeed": {},
+    "proxyAutoEnabled": true,
+    "enabled": true
+  },
+  {
+    "type": "ronin_brazier",
+    "name": "ronin_brazierRootClone_bushi_signal_fires_item1",
+    "position": {
+      "x": 29.6,
+      "y": 0.1,
+      "z": -25.4
+    },
+    "rotation": {
+      "x": 0,
+      "y": 4.71238898038469,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "villageId": "bushi",
+    "animationMap": {},
+    "animationSpeed": {},
+    "proxyAutoEnabled": true,
+    "enabled": true
+  },
+  {
+    "type": "ronin_brazier",
+    "name": "ronin_brazierRootClone_bushi_signal_fires_item2",
+    "position": {
+      "x": 29.8,
+      "y": 0.1,
+      "z": -27
+    },
+    "rotation": {
+      "x": 0,
+      "y": 4.71238898038469,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "villageId": "bushi",
+    "animationMap": {},
+    "animationSpeed": {},
+    "proxyAutoEnabled": true,
+    "enabled": true
+  },
+  {
+    "type": "ronin_brazier",
+    "name": "ronin_brazierRootClone_bushi_signal_fires_item3",
+    "position": {
+      "x": 29.6,
+      "y": 0.1,
+      "z": -28.6
+    },
+    "rotation": {
+      "x": 0,
+      "y": 4.71238898038469,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "villageId": "bushi",
+    "animationMap": {},
+    "animationSpeed": {},
+    "proxyAutoEnabled": true,
+    "enabled": true
+  },
+  {
+    "type": "ronin_brazier",
+    "name": "ronin_brazierRootClone_bushi_signal_fires_item4",
+    "position": {
+      "x": 29,
+      "y": 0.1,
+      "z": -30.2
+    },
+    "rotation": {
+      "x": 0,
+      "y": 4.71238898038469,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "villageId": "bushi",
+    "animationMap": {},
+    "animationSpeed": {},
+    "proxyAutoEnabled": true,
+    "enabled": true
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_bushi-signal-fires",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 24,
+      "y": 0.1,
+      "z": -27
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "bushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "bushi-signal-fires",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "sequence",
+        "id": "bushi-signal-fires",
+        "title": "Signal Fires",
+        "style": "fire",
+        "items": [
+          [
+            -3.2,
+            5
+          ],
+          [
+            -1.6,
+            5.6
+          ],
+          [
+            0,
+            5.8
+          ],
+          [
+            1.6,
+            5.6
+          ],
+          [
+            3.2,
+            5
+          ]
+        ],
+        "pass": 6,
+        "points": 50,
+        "max": 8,
+        "hide": [
+          "ronin_brazier"
+        ]
+      }
+    }
   }
 ]
