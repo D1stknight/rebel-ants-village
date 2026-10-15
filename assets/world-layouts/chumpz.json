@@ -43330,10 +43330,30 @@
       "text": "The whole cove dances round the fire until the stars come out. Then it dances some more.",
       "dance": {
         "notes": 12,
-        "need": 8,
+        "need": 27,
         "every": 1.04,
         "lead": 2.08,
-        "title": "Dance-off round the fire"
+        "title": "Dance-off round the fire",
+        "pattern": [
+          "x.x.",
+          "x.x.",
+          "x.x.",
+          "x.x.",
+          "x.x.",
+          "x.x.",
+          "x.x.",
+          "xxx.",
+          "xxx.",
+          "xxx.",
+          "xxx.",
+          "xxx.",
+          "xxx.",
+          "xxxx",
+          "x..."
+        ],
+        "beat": 0.52,
+        "loops": 2,
+        "window": 0.24
       }
     }
   },

@@ -25840,10 +25840,30 @@
       "text": "The whole block dances on the court until the stars come out.",
       "dance": {
         "notes": 12,
-        "need": 8,
+        "need": 27,
         "every": 1,
         "lead": 2,
-        "title": "Dance-off on the court"
+        "title": "Dance-off on the court",
+        "pattern": [
+          "x.x.",
+          "x.x.",
+          "x.x.",
+          "x.x.",
+          "x.x.",
+          "x.x.",
+          "x.x.",
+          "xxx.",
+          "xxx.",
+          "xxx.",
+          "xxx.",
+          "xxx.",
+          "xxx.",
+          "xxxx",
+          "x..."
+        ],
+        "beat": 0.5,
+        "loops": 2,
+        "window": 0.24
       },
       "cheer": [
         "saints-greeter",
