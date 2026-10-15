@@ -135,7 +135,7 @@
       }
       function medalOf(t) { return t <= gold ? 'Gold' : t <= silver ? 'Silver' : t <= bronze ? 'Bronze' : null; }
       function finish(done) {
-        if (st.phase === 'done') return; st.phase = 'done'; ctx.player.hold(false); beam.setEnabled(false);
+        if (st.phase === 'done') return; st.phase = 'done'; ctx.player.hold(false); beam.setEnabled(false); H.info(`Tagged ${st.caught} / ${catches}`);
         const t = st.el, medal = done ? medalOf(t) : null, lines = `Gold ${gold} s · silver ${silver} s · bronze ${bronze} s.`;
         if (done) { H.msg(medal ? medal + '!' : 'Got ' + (catches > 1 ? 'them all' : name), 1600, fmt(t) + ' s');
           ctx.finish({ time: t, finished: true, passed: !!medal, kicker: medal ? medal + ' medal' : 'Caught', extra: (medal === 'Gold' ? 'Nothing gets away from you. ' : medal ? `${medal === 'Silver' ? 'Gold' : 'Silver'} is ${medal === 'Silver' ? gold : silver} s. ` : 'Run (hold R) and cut across the loop when it turns. ') + lines }); }

@@ -117,7 +117,7 @@
       }
       function medalOf(t) { return t <= gold ? 'Gold' : t <= silver ? 'Silver' : t <= bronze ? 'Bronze' : null; }
       function finish(done) {
-        if (st.phase === 'done') return; st.phase = 'done'; ctx.player.hold(false); beam.setEnabled(false);
+        if (st.phase === 'done') return; st.phase = 'done'; ctx.player.hold(false); beam.setEnabled(false); hud();
         const t = st.el, medal = done ? medalOf(t) : null, lines = `Gold ${gold} s · silver ${silver} s · bronze ${bronze} s.`;
         if (done) { H.msg(medal ? medal + '!' : 'All in', 1600, fmt(t) + ' s');
           ctx.finish({ time: t, finished: true, passed: !!medal, kicker: medal ? medal + ' medal' : 'Done', extra: (medal === 'Gold' ? 'The quickest round there is. ' : medal ? `${medal === 'Silver' ? 'Gold' : 'Silver'} is ${medal === 'Silver' ? gold : silver} s. ` : 'Hold R to run, and plan the shortest way round. ') + lines }); }
