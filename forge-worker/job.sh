@@ -10,6 +10,22 @@ export FORGE_OUT="$JOB/out" FORGE_CLIPS="$FW/clips" FORGE_PACK="$FW/pack" FORGE_
 # v1.6: keep bridge/tear faces (fixarm reweights them) so robes have no see-through cracks
 export FORGE_KEEP_TEAR="${FORGE_KEEP_TEAR-1}" FORGE_KEEP_BRIDGE="${FORGE_KEEP_BRIDGE-1}"   # set to empty to cut them (TRELLIS)
 R="$FW/rigger"; O="$FORGE_OUT"
+# v2.13 NPC villagers (FORGE_NPC=1, the admin NPC Forge): the NPC clip set (master idle / walk / run + Mixamo gestures,
+# anim/clips_npc.json) instead of the fight and weapon moves. Gestures keep their own head motion (headfix levels the
+# head for fight moves: it cut nods to a tenth and flipped the head in pick_up's deep bend); a long-armed villager
+# reaching down keeps its fingertips on the floor (handfloor); 1024 base textures (a village shows several NPCs).
+# v2.14: NPCs get the Rebels' full jump (take-off, flight, landing); the master jump alone ends in the air. Moves marked
+# "headfix" get the head levelling like a Rebel's.
+NPC="${FORGE_NPC:-}"; MOVES="$FW/anim/clips.json"
+# v2.23 NPC species (FORGE_NPC_SPECIES, set by the NPC Forge for its Chumpz and Saints collections only): apes and humans
+# keep their own hands (the sculpt's: furry ape hands, human hands) instead of the Rebel gloves; Rebel villagers (unset)
+# are rigged exactly as before
+SPECIES="${FORGE_NPC_SPECIES:-}"
+if [ -n "$NPC" ]; then
+  MOVES="$FW/anim/clips_npc.json"
+  # v2.19: the acrobatic master moves stay unlevelled as on a Rebel (levelling turned the head round mid flip_kick)
+  export FORGE_HEAD_SKIP="${FORGE_HEAD_SKIP-cartwheel,backflip,front_flip,flip_kick,spin_flip_kick,knockdown,get_up,$("$PY" -c 'import json, sys; print(",".join(c["name"] for c in json.load(open(sys.argv[1])) if not c.get("headfix")))' "$MOVES")}"
+fi
 mkdir -p "$O"; : > "$JOB/log"
 T0=$(date +%s)
 step(){ echo "$1" > "$JOB/progress"; echo "== $1 ($(( $(date +%s) - T0 ))s)" >> "$JOB/log"; }
@@ -47,27 +63,38 @@ step hands;      run "$R/handfix.py" -- "$O/weighted.blend" "$O/weighted_hf.blen
 if [ "${FORGE_SKIRTFIX:-0}" = "1" ]; then run "$R/skirtfix.py" -- "$O/weighted_hf.blend" "$O/weighted_hf.blend"; fi
 step cloth;      run "$R/clothbones.py" -- "$O/weighted_hf.blend" "$O/weighted_cb.blend"
 step animate;    run "$R/retarget.py" -- "$O/weighted_cb.blend" "$O/anim6.blend"
-step moves;      run "$FW/anim/retarget_bvh.py" -- "$O/anim6.blend" "$O/anim6_ma.blend" "$FW/anim/clips.json"
+step moves;      if [ -n "$NPC" ]; then for f in $(grep -o '"file": *"[^"]*"' "$MOVES" | sed 's/.*"\([^"]*\)"$/\1/'); do
+                   [ -f "$FORGE_PACK/$f" ] || { echo "NPC gesture pack missing: $f (upload it in the NPC Forge, then rebuild the worker)" >> "$JOB/log"; false; }; done; fi
+                 run "$FW/anim/retarget_bvh.py" -- "$O/anim6.blend" "$O/anim6_ma.blend" "$MOVES"
 # v2.11 weapon moves (sword / twin blades / bow, Mixamo): retargeted like the other moves, cleaned up with them, shipped
 # in their own moves.glb (the rig.glb keeps its 24 clips)
+if [ -z "$NPC" ]; then
 export FORGE_WEAPON_CLIPS="$FW/anim/clips_weapons.json"
 step weapons;    run "$FW/anim/retarget_bvh.py" -- "$O/anim6_ma.blend" "$O/anim6_ma.blend" "$FORGE_WEAPON_CLIPS"
+fi
 step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/footfix.py" -- "$O/anim6_fix.blend" "$O/anim6_ff0.blend"
                  run "$R/padfix.py" -- "$O/anim6_ff0.blend" "$O/anim6_ff1.blend"
                  run "$R/smoothfix.py" -- "$O/anim6_ff1.blend" "$O/anim6_ff2.blend"
                  run "$R/layerfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff2.blend"
-                 run "$R/headfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff.blend"
+                 run "$R/headfix.py" -- "$O/anim6_ff2.blend" "$O/anim6_ff.blend"   # v1.8 head carriage; v2.19 NPCs: yaw from the twist (no turn-round in the jump)
                  run "$R/armpitfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9c no shards under the arms
                  run "$R/armorfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # re-assert after the cloth cleanups
                  run "$R/seamfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9d cut fingertips fused to the thigh
-                 run "$R/handswap.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 standard 5-finger hands + hand poses
+if [ -z "$SPECIES" ]; then run "$R/handswap.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 standard 5-finger hands + hand poses; v2.18 NPCs: centred, one size, FORGE_HAND_FIT (v2.20 + cuff size / length)
+else run "$R/handkeep.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi   # v2.23 apes / humans keep their own hands; loose nails / fingertips ride the hand
                  run "$R/shoulderfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 sleeves ride the arm
                  run "$R/antennafix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.1 jointed antennae with follow-through
-step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=2048 FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
+if [ -n "$NPC" ]; then run "$R/npcarms.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.16 NPC arms: no elbow flick, pointing line, wave rebuilt on the villager's own arm (flat shoulder pad, palm forward), claps meet
+                       run "$R/handfloor.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.13 NPC hands on the floor
+                       run "$R/npcstance.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.14 NPCs stand tall, head up in the run
+                       if [ -z "$SPECIES" ]; then run "$R/cufftwist.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi; fi  # v2.21 NPC cuffs follow the hand's twist only (after every hand step); no cuffs on own hands
+step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=$([ -n "$NPC" ] && echo 1024 || echo 2048) FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
 # v2.12 head cloth: skully-wrap flaps / bandana tails get spring chains (cloth_flap_*), on the finished GLB. Optional.
 step headcloth;  run "$R/headcloth.py" "$JOB/rig.glb" "$JOB/rig.glb" --report "$JOB/headcloth.json" || echo "headcloth failed (non-fatal)" >> "$JOB/log"
+if [ -z "$NPC" ]; then
 step movespack;  run "$R/exp_moves.py" -- "$O/anim6_ff.blend" "$FORGE_WEAPON_CLIPS" "$JOB/moves.glb"
+fi
 step qa;         run "$FW/qa_job.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb" "$JOB/qa.json" "$JOB/log"
 step thumb;      "$PY" "$FW/thumb.py" -- "$JOB/rig.glb" "$JOB/thumb.jpg" 640 >> "$JOB/log" 2>&1 || echo "thumb failed (non-fatal)" >> "$JOB/log"
 SECS=$(( $(date +%s) - T0 ))

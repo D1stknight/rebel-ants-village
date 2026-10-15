@@ -88,7 +88,7 @@ async function status() {
       try { await sandbox.stop(); } catch (e) {}
     }
   }
-  return { ok: true, worker, packFiles: Object.keys(pack).length };
+  return { ok: true, worker, packFiles: Object.keys(pack).length, packPaths: Object.keys(pack).sort() };
 }
 
 async function renderThumb({ glbUrl, name }) {

@@ -1,5 +1,13 @@
-import numpy as np
+import os, numpy as np
 from sil import silhouette
+# v2.22 NPC villagers (FORGE_NPC): torn skirt strips, knee pads and tall boots around the legs threw off the ankle, knee
+# and hip landmarks (Wokou: ankle in the boot sole, knee 13 cm behind the leg, hips 5.5 cm lopsided -> rubbery legs)
+NPCM = bool(os.environ.get('FORGE_NPC'))
+# v2.23 NPC species (FORGE_NPC_SPECIES ape / human: Chumpz, Saints): sculpted hands come out of a sleeve, and the narrowest
+# arm cross-section is the sleeve cuff, 4-6 % of the height up the forearm, so the hands came out long and turned from
+# mid-forearm. Their wrist sits one hand length (of the body height) back from the fingertip along the arm's own centre line.
+SPECIES = os.environ.get('FORGE_NPC_SPECIES', '') if NPCM else ''
+HAND_LEN = {'human': 0.11, 'ape': 0.12}
 def runs(row,minw=2):
     r=[];i=0;n=len(row)
     while i<n:
@@ -101,6 +109,14 @@ def detect(V,F):
         tw=float(ts[np.nonzero(wm)[0][np.argmin(ws[wm])]]) if wm.any() else 0.74
         if DEBUG: print(s,'profile',np.nan_to_num(ws,nan=-1).astype(int).tolist(),'palm',round(float(ts[ip]),2),'wrist',round(tw,2))
         W_=S+u*tw*L; E_=S+u*tw*L*0.53; HC=W_+(T-W_)*0.45
+        if SPECIES in HAND_LEN and len(pts) > 8:
+            C=np.array([[Z(r_),X(c_)] for r_,c_ in pts]); k_=max(1,int(0.006*rows))
+            C=np.array([C[max(0,i-k_):i+k_+1].mean(0) for i in range(len(C))])   # arm centre line (z, x), armpit -> fingertip
+            back=np.concatenate([np.cumsum(np.linalg.norm(np.diff(C,axis=0),axis=1)[::-1])[::-1],[0.0]])   # arc length to the tip
+            i_=int(np.argmin(np.abs(back-HAND_LEN[SPECIES]*Hb*zr/(rows-1))))
+            Wp=np.array([(zr-C[i_][0])/zr*(rows-1),(C[i_][1]+ar)*(cols-1)/(2*ar)])
+            if DEBUG: print(s,'own hand: wrist t',round(float((Wp-S)@u/L),3),'was',round(tw,3))
+            W_=Wp; E_=S+(Wp-S)*0.53; HC=W_+(T-W_)*0.45
         J[s+'Arm']=P(shx,shz); J[s+'Shoulder']=P(sg*abs(shx)*0.35,shz+0.01)
         J[s+'Hand']=P(X(W_[1]),Z(W_[0])); J[s+'ForeArm']=P(X(E_[1]),Z(E_[0]))
         J[s+'_handC']=P(X(HC[1]),Z(HC[0])); J[s+'_tip']=P(X(T[1]),Z(T[0]))
@@ -117,7 +133,9 @@ def detect(V,F):
         lm=(np.sign(x)==sg)&(z<zc)
         zz=np.linspace(0.005,zc,70); ext=np.array([np.ptp(y[lm&(np.abs(z-a)<0.012)]) if (lm&(np.abs(z-a)<0.012)).sum()>3 else 0 for a in zz])
         shin=np.median(ext[(zz>0.25*zc)&(zz<0.6*zc)]); foot=zz[(ext>1.3*shin)&(zz<0.35*zc)]
-        zank=(foot.max() if len(foot) else 0.07*zc)
+        if NPCM and not len(foot):   # skirt strips hanging past the knees widen the median shin: use the boot shaft
+            shin=np.percentile(ext[(zz>0.25*zc)&(zz<0.6*zc)],25); foot=zz[(ext>1.3*shin)&(zz<0.35*zc)]
+        zank=(foot.max() if len(foot) else (0.15 if NPCM else 0.07)*zc)
         ax=X(np.interp(zank,[Z(r) for r in lp[::-1,0]],lp[::-1,1]))
         hipx=X(lp[3,1])*0.85
         # v1.3: under a robe the rows just below the crotch can pick up a hand hanging beside the robe (TRELLIS #1555).
@@ -128,8 +146,16 @@ def detect(V,F):
         sh=lm&(np.abs(z-(zank+0.03))<0.01); yank=float((y[sh].min()+y[sh].max())/2) if sh.sum()>3 else depth(ax,zank)
         J[s+'UpLeg']=P(hipx,zc+0.03); J[s+'Foot']=np.array([float(ax),yank,float(zank)])
         J[s+'Leg']=P((hipx+ax)/2,(zc+0.03+zank)/2)
+        if NPCM:   # knees sit on the hip-ankle line (a hair forward); strips hanging behind the knee pulled it back
+            hy, ay, hz_ = J[s+'UpLeg'][1], yank, J[s+'UpLeg'][2]; t_ = (hz_-J[s+'Leg'][2])/max(1e-6, hz_-zank); ly = hy+(ay-hy)*t_
+            if abs(J[s+'Leg'][1]-ly) > 0.03: J[s+'Leg'][1] = ly-0.01
         fm=lm&(z<zank); ymin=y[fm].min()
         J[s+'ToeBase']=np.array([ax,J[s+'Foot'][1]*0.4+ymin*0.6,0.035]); J[s+'Toe_End']=np.array([ax,ymin,0.03])
+    if NPCM:   # hips: one side read a skirt strip or the joined legs (0.055 / 0.11 clamps) -> both at the mean
+        l_, r_ = abs(J['LeftUpLeg'][0]), abs(J['RightUpLeg'][0])
+        if abs(l_-r_) > 0.02:
+            hx = float(np.clip((l_+r_)/2, 0.08, 0.11)); J['LeftUpLeg'][0] = hx; J['RightUpLeg'][0] = -hx
+            for s_ in ('Left', 'Right'): J[s_+'Leg'][0] = (J[s_+'UpLeg'][0]+J[s_+'Foot'][0])/2
     return J,dbg
 def draw(J,dbg,path):
     from PIL import Image,ImageDraw

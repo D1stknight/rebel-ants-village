@@ -1,137 +1,52 @@
-const ACTIVE_CHARACTER_VERSION = 'v1';
-
-function getRedisConfig() {
-  return {
-    url: process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || '',
-    token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || ''
-  };
+import {walletOf,holderOf} from './_wallet.mjs';
+import {canonical,admissionKey} from './_raap-world-build.mjs';
+import crypto from 'node:crypto';
+const hash=(domain,value)=>'0x'+crypto.createHash('sha256').update(domain+'\0'+canonical(value)).digest('hex');
+async function read(keys){
+  const origin=process.env.UPSTASH_REDIS_REST_URL||process.env.KV_REST_API_URL;
+  const token=process.env.UPSTASH_REDIS_REST_TOKEN||process.env.KV_REST_API_TOKEN;
+  if(!origin||!token)throw Error('Character storage is unavailable');
+  const response=await fetch(origin+'/pipeline',{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},
+    body:JSON.stringify([['MGET',...keys]]),signal:AbortSignal.timeout(4000),cache:'no-store',redirect:'error'});
+  const rows=await response.json();if(!response.ok||rows?.length!==1||rows[0].error||!Array.isArray(rows[0].result)||rows[0].result.length!==keys.length)throw Error('Character read failed');
+  return rows[0].result;
 }
-
-function isRedisConfigured() {
-  const { url, token } = getRedisConfig();
-  return Boolean(url && token);
+const parse=raw=>raw?JSON.parse(raw):null;
+const matches=(record,collection,token)=>record&&record.collectionKey===collection&&(!token||String(record.tokenId)===token);
+async function usableAppearance(record,owner){
+  const a=record.appearanceSource;if(!a)return true;
+  if(a.schema!=='raap.r7.world-appearance.v1'||a.buildId!==record.activeForgeBuildId||a.collectionKey!==record.collectionKey)return false;
+  const [saved,build,fence]=await read([admissionKey(a.collectionKey,a.buildId),'forge:3d-build:v1:'+a.buildId,'raap:r7:world-writer:v1:'+record.walletAddress]);
+  const r=parse(saved),b=parse(build),now=Math.floor(Date.now()/1000);
+  return !!(r&&b&&r.schema==='raap.r7.world-saved-build.v2'&&r.qualificationCommitment===fence&&
+    r.buildId===a.buildId&&r.buildCommitment===hash('raap.r7.world-build-content.v2',b)&&r.source.collectionKey===a.collectionKey&&r.source.tokenId===a.tokenId&&
+    r.rights.use==='WORLD_APPEARANCE'&&r.rights.validUntil>now&&r.rights.kind===a.kind&&
+    (a.kind==='SHARED_SAMPLE'?r.rights.controller===null:a.kind==='OWNER_BUILD'&&r.rights.controller===owner&&a.tokenId===String(record.tokenId))&&
+    r.character.activeGlbUrl===record.activeGlbUrl);
 }
-
-function getActiveCharacterKey({ walletAddress, collectionKey, tokenId, rebelId }) {
-  const ownerKey = walletAddress || 'local_testing_wallet';
-  const safeCollectionKey = collectionKey || 'battle_for_colony';
-  const safeTokenId = tokenId || rebelId || 'unknown_token';
-
-  return `forge:active-character:${ACTIVE_CHARACTER_VERSION}:${ownerKey}:${safeCollectionKey}:${safeTokenId}`;
-}
-
-function getActiveCharacterByWalletKey(walletAddress) {
-  const ownerKey = walletAddress || 'local_testing_wallet';
-  return `forge:active-character:${ACTIVE_CHARACTER_VERSION}:${ownerKey}:selected`;
-}
-
-async function redisPipeline(commands) {
-  const { url, token } = getRedisConfig();
-
-  if (!url || !token) {
-    throw new Error('Redis is not configured');
-  }
-
-  const response = await fetch(`${url}/pipeline`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(commands)
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.error || `Redis request failed with status ${response.status}`);
-  }
-
-  return Array.isArray(data) ? data : [];
-}
-
-function getQueryValue(req, key) {
-  return req.query?.[key] || null;
-}
-
-function parseActiveCharacter(rawRecord) {
-  if (!rawRecord) return null;
-
-  try {
-    return JSON.parse(rawRecord);
-  } catch(e) {
-    return null;
-  }
-}
-
-export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', 'GET');
-    return res.status(405).json({ ok: false, error: 'Method not allowed' });
-  }
-
-  try {
-    const walletAddress = getQueryValue(req, 'walletAddress') || getQueryValue(req, 'wallet') || null;
-    const collectionKey = getQueryValue(req, 'collectionKey') || 'battle_for_colony';
-    const tokenId = getQueryValue(req, 'tokenId');
-    const rebelId = getQueryValue(req, 'rebelId');
-
-    if (!isRedisConfigured()) {
-      return res.status(200).json({
-        ok: true,
-        activeCharacter: null,
-        hasActiveCharacter: false,
-        storageResult: {
-          storage: 'not_configured',
-          message: 'Redis env vars are not configured yet.'
-        }
-      });
+export default async function handler(req,res){
+  res.setHeader('Cache-Control','private, no-store');
+  if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({ok:false,error:'Method not allowed'});}
+  try{
+    const q=req.query||{},collection=String(q.collectionKey||'battle_for_colony'),token=q.tokenId!==undefined?String(q.tokenId):q.rebelId?String(q.rebelId).replace(/^rebel_/,''):'';
+    if(!/^[a-z0-9_]{1,64}$/.test(collection)||token&&!/^(0|[1-9][0-9]{0,77})$/.test(token))return res.status(400).json({ok:false,error:'Invalid character reference'});
+    const wallet=walletOf(req),requested=q.walletAddress||q.wallet;
+    if(requested&&String(requested).toLowerCase()!==wallet)return res.status(403).json({ok:false,error:'Read only your signed-in wallet selection'});
+    const guest=q.guest==='1'||!wallet,ownerKey=guest?'local_testing_wallet':wallet;
+    const keys=[`forge:active-character:v1:${ownerKey}:selected`];
+    if(token)keys.push(`forge:active-character:v1:${ownerKey}:${collection}:${token}`);
+    if(!guest&&token)keys.push(`forge:active-character:v1:local_testing_wallet:${collection}:${token}`);
+    const rows=await read(keys),selected=parse(rows[0]),specific=token?parse(rows[1]):null;
+    let character=matches(specific,collection,token)?specific:matches(selected,collection,token)?selected:null,unavailable=false;
+    if(character&&character.walletAddress){
+      if(guest||character.walletAddress!==wallet){character=null;unavailable=true;}
+      else {const h=await holderOf(collection,String(character.tokenId),wallet,{fresh:true});
+        if(!h.holder||!await usableAppearance(character,h.owner)){character=null;unavailable=true;}}
     }
-
-    const commands = [];
-    const selectedKey = getActiveCharacterByWalletKey(walletAddress);
-    commands.push(['GET', selectedKey]);
-
-    let tokenSpecificKey = null;
-
-    if (tokenId || rebelId) {
-      tokenSpecificKey = getActiveCharacterKey({
-        walletAddress,
-        collectionKey,
-        tokenId,
-        rebelId
-      });
-      commands.push(['GET', tokenSpecificKey]);
-    }
-
-    const results = await redisPipeline(commands);
-    const selectedCharacter = parseActiveCharacter(results?.[0]?.result || null);
-    const tokenSpecificCharacter = parseActiveCharacter(results?.[1]?.result || null);
-    // Phase 0: when a specific Rebel is asked for, never answer with a different Rebel's "selected" character
-    // (that made #4998's Forge preview show an old #469 build).
-    const selectedMatches = !(tokenId || rebelId) || (selectedCharacter && (
-      (tokenId && String(selectedCharacter.tokenId || '') === String(tokenId)) ||
-      (rebelId && String(selectedCharacter.rebelId || '') === String(rebelId))));
-    const activeCharacter = tokenSpecificCharacter || (selectedMatches ? selectedCharacter : null) || null;
-
-    return res.status(200).json({
-      ok: true,
-      activeCharacter,
-      hasActiveCharacter: Boolean(activeCharacter),
-      storageResult: {
-        storage: 'redis',
-        selectedKey,
-        tokenSpecificKey,
-        source: tokenSpecificCharacter ? 'token_specific' : activeCharacter ? 'wallet_selected' : 'none'
-      }
-    });
-  } catch (err) {
-    console.error('forge-active-character-get error:', err);
-
-    return res.status(500).json({
-      ok: false,
-      error: 'Could not load active Forge character',
-      detail: err && err.message ? err.message : 'Unknown error'
-    });
-  }
+    // Public showcase records remain public. They never become a wallet's NFT
+    // identity or grant its private selection/RAAP permissions.
+    if(!character&&!unavailable&&!guest&&token){const sample=parse(rows[2]);if(matches(sample,collection,token)&&!sample.walletAddress)character=sample;}
+    return res.status(200).json({ok:true,activeCharacter:character,hasActiveCharacter:!!character,selectionUnavailable:unavailable,
+      storageResult:{storage:'redis',source:character?(character.walletAddress?'wallet_selection':'public_sample'):'none'}});
+  }catch{ return res.status(503).json({ok:false,error:'Could not verify the saved character. Please reload before playing.'});}
 }

@@ -1,6 +1,7 @@
 import { walletOf, holderOf } from './_wallet.mjs';
 import { enforceRateLimit, isAllowedModelRef, isCleanId, sanitizeDeep } from './_guard.mjs';
 import { isAdminRequest } from './_admin-auth.mjs';
+import { admissionKey, canonical, worldConfiguration, makeWorldAdmission, ownerRightsEvidence, SAVE_CHARACTER_LUA } from './_raap-world-build.mjs';
 const ACTIVE_CHARACTER_VERSION = 'v1';
 
 function getRedisConfig() {
@@ -50,7 +51,8 @@ async function redisPipeline(commands) {
     throw new Error(data?.error || `Redis request failed with status ${response.status}`);
   }
 
-  return Array.isArray(data) ? data : [];
+  if (!Array.isArray(data) || data.length !== commands.length || data.some(row => !row || row.error || !Object.hasOwn(row, 'result'))) throw new Error('Redis did not confirm the operation');
+  return data;
 }
 
 function sanitizeActiveCharacterPayload(payload) {
@@ -361,32 +363,6 @@ function scrubActiveCharacter(value, key = '') {
   return value;
 }
 
-async function saveActiveCharacter(activeCharacter) {
-  if (!isRedisConfigured()) {
-    return {
-      saved: false,
-      storage: 'not_configured',
-      message: 'Redis env vars are not configured yet.'
-    };
-  }
-
-  const recordKey = getActiveCharacterKey(activeCharacter);
-  const selectedKey = getActiveCharacterByWalletKey(activeCharacter.walletAddress);
-  const value = JSON.stringify(activeCharacter);
-
-  await redisPipeline([
-    ['SET', recordKey, value],
-    ['SET', selectedKey, value]
-  ]);
-
-  return {
-    saved: true,
-    storage: 'redis',
-    recordKey,
-    selectedKey
-  };
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -395,36 +371,53 @@ export default async function handler(req, res) {
 
   try {
     if (!(await enforceRateLimit(req, res, 'active-save', 60, 3600, 'saves'))) return;
-    const payload = { ...(req.body || {}) };
-    // Pull the stored build record so a rig finished after the page loaded is still picked up.
-    const buildIdForRig = payload.buildId || payload.build?.buildId || payload.buildRecord?.buildId;
-    // Phase 0: the character must come from a real Forge build of the same token (no arbitrary GLBs / other tokens).
-    if (!isCleanId(String(buildIdForRig || ''))) return res.status(400).json({ ok: false, error: 'Missing or invalid buildId' });
-    if (isRedisConfigured() && !isAdminRequest(req)) {
-      const [chk] = await redisPipeline([['GET', `forge:3d-build:v1:${buildIdForRig}`]]);
-      const rec0 = chk?.result ? JSON.parse(chk.result) : null;
-      if (!rec0) return res.status(404).json({ ok: false, error: 'Build not found' });
-      const tok = String(payload.tokenId || payload.build?.tokenId || payload.buildRecord?.tokenId || '');
-      if (tok && rec0.tokenId && String(rec0.tokenId) !== tok) return res.status(400).json({ ok: false, error: 'Build belongs to a different Rebel' });
-      // Phase 2: only the wallet that holds this Rebel can set its character
-      const wallet = walletOf(req);
-      if (!wallet) return res.status(401).json({ ok: false, error: 'Sign in with your wallet to make this your Rebel', code: 'wallet_required' });
-      const h = await holderOf(rec0.collectionKey || payload.collectionKey || 'battle_for_colony', String(rec0.tokenId || tok), wallet, { fresh: true });
-      if (!h.holder) return res.status(403).json({ ok: false, error: 'Only the wallet that holds this Rebel (or its delegate.xyz delegate) can set its character', code: 'not_owner' });
+    const payload = { ...(req.body || {}) }, admin=isAdminRequest(req);
+    const buildId=String(payload.buildId || payload.build?.buildId || payload.buildRecord?.buildId || '');
+    if (!isCleanId(buildId) || !/^[A-Za-z0-9_-]{1,128}$/.test(buildId)) return res.status(400).json({ok:false,error:'Missing or invalid buildId'});
+    if (!isRedisConfigured()) return res.status(503).json({ok:false,error:'Character storage is unavailable'});
+    const buildKey=`forge:3d-build:v1:${buildId}`;
+    const [source]=await redisPipeline([['GET',buildKey]]), buildRaw=source.result;
+    const stored=buildRaw?JSON.parse(buildRaw):null;
+    if (!stored || stored.buildId!==buildId) return res.status(404).json({ok:false,error:'Saved build not found'});
+    const tokenId=String(stored.tokenId), collectionKey=stored.collectionKey;
+    if (!/^(0|[1-9][0-9]{0,77})$/.test(tokenId) || !/^[a-z0-9_]{1,64}$/.test(collectionKey)) throw Error('Invalid saved build identity');
+    const requestedToken=payload.tokenId || payload.build?.tokenId || payload.buildRecord?.tokenId;
+    if (requestedToken!==undefined && String(requestedToken)!==tokenId || payload.collectionKey && payload.collectionKey!==collectionKey)
+      return res.status(400).json({ok:false,error:'Build belongs to a different Rebel'});
+    const wallet=admin?((payload.walletAddress||payload.wallet||'').toLowerCase()||null):walletOf(req);
+    if (wallet!==null && !/^0x[0-9a-f]{40}$/.test(wallet)) return res.status(400).json({ok:false,error:'Invalid signed wallet'});
+    let holder=null;
+    if (!admin) {
+      if (!wallet) return res.status(401).json({ok:false,error:'Sign in with your wallet to make this your Rebel',code:'wallet_required'});
+      holder=await holderOf(collectionKey,tokenId,wallet,{fresh:true});
+      if (!holder.holder) return res.status(403).json({ok:false,error:'Only the holder or its delegate can set this character',code:'not_owner'});
     }
-    if (buildIdForRig && isRedisConfigured()) {
-      try {
-        const [rec] = await redisPipeline([['GET', `forge:3d-build:v1:${buildIdForRig}`]]);
-        const stored = rec?.result ? JSON.parse(rec.result) : null;
-        if (stored?.output?.forgeRigGlbUrl) {
-          const build = payload.build || payload.buildRecord || {};
-          payload.build = { ...stored, ...build, output: { ...(stored.output || {}), ...(build.output || {}), forgeRigGlbUrl: stored.output.forgeRigGlbUrl, forgeRigThumbUrl: stored.output.forgeRigThumbUrl || null }, forgeRig: stored.forgeRig };
-        }
-      } catch (e) { /* the payload alone still works */ }
+    // Never let a request body replace the signed wallet or saved model fields.
+    let activeCharacter=scrubActiveCharacter(sanitizeActiveCharacterPayload({buildId,tokenId,rebelId:'rebel_'+tokenId,
+      collectionKey,walletAddress:wallet,build:stored,activeGlbUrl:stored.output?.forgeRigGlbUrl||undefined}));
+    if(!activeCharacter.activeGlbUrl)throw Error('The saved build has no usable stored model');
+    const recordKey=getActiveCharacterKey(activeCharacter), selectedKey=getActiveCharacterByWalletKey(wallet);
+    const fenceKey=`raap:r7:world-writer:v1:${wallet||'local_testing_wallet'}`, savedAdmissionKey=admissionKey(collectionKey,buildId);
+    const [snapshot]=await redisPipeline([['MGET',recordKey,selectedKey,fenceKey,savedAdmissionKey]]);
+    if(!Array.isArray(snapshot.result)||snapshot.result.length!==4)throw Error('Could not read current selection');
+    const [oldCharacter,oldSelected,oldFence,oldAdmission]=snapshot.result;
+    const config=worldConfiguration();let admission=null;
+    if(config && holder && collectionKey==='battle_for_colony' && ['completed','rigged_glb_stored_in_rebel_blob','completed_stored_in_rebel_blob'].includes(stored.status) && (stored.output?.forgeRigGlbUrl || stored.forgeRig?.forgeRigGlbUrl || stored.output?.riggedRebelGlbUrl || stored.output?.riggedGlbUrl || stored.rigging?.riggedRebelGlbUrl || stored.rigging?.riggedGlbUrl)) {
+      if(oldFence!==null&&oldFence!==config.qualificationCommitment)throw Error('The World writer changed; refresh before selecting');
+      admission=await makeWorldAdmission(stored,{kind:'OWNER_BUILD',controller:holder.owner,evidenceCommitment:ownerRightsEvidence(stored,holder.owner)},config);
+      const fresh=await holderOf(collectionKey,tokenId,wallet,{fresh:true});
+      if(!fresh.holder||fresh.owner!==holder.owner)throw Error('Rebel ownership changed; review the character again');
+      const at=new Date().toISOString();
+      activeCharacter={...admission.character,walletAddress:wallet,selectedAt:at,updatedAt:at,
+        appearanceSource:{schema:'raap.r7.world-appearance.v1',kind:'OWNER_BUILD',collectionKey,tokenId,buildId}};
     }
-    const activeCharacter = scrubActiveCharacter(sanitizeActiveCharacterPayload(payload));
-    if (!activeCharacter.activeGlbUrl) return res.status(400).json({ ok: false, error: 'Active GLB must be a Forge asset' });
-    const storageResult = await saveActiveCharacter(activeCharacter);
+    const expiry=Math.min(Math.floor(Date.now()/1000)+120,admission?config.validUntil:Number.MAX_SAFE_INTEGER);
+    const [save]=await redisPipeline([['EVAL',SAVE_CHARACTER_LUA,'5',buildKey,recordKey,selectedKey,fenceKey,savedAdmissionKey,
+      buildRaw,oldCharacter??'__R7_ABSENT__',oldSelected??'__R7_ABSENT__',oldFence??'__R7_ABSENT__',oldAdmission??'__R7_ABSENT__',
+      canonical(activeCharacter),admission?canonical(admission):'',admission?config.qualificationCommitment:'',String(expiry),collectionKey==='battle_for_colony'?'1':'0']]);
+    if(save.result?.[0]!=='SAVED')return res.status(409).json({ok:false,error:'The saved build or selection changed. Reload before choosing again.'});
+    const storageResult={saved:true,storage:'redis',recordKey,selectedKey:collectionKey==='battle_for_colony'?selectedKey:null,
+      worldAdmission:admission?'saved':'not_requested'};
 
     return res.status(200).json({
       ok: true,
@@ -443,3 +436,4 @@ export default async function handler(req, res) {
     });
   }
 }
+

@@ -45,6 +45,8 @@ def dir_child(short):
 # v1.3: feet are NOT direction-aligned. Aligning the Foot bone to the master's steeper foot bone tipped the toes down
 # (characters stood on tiptoe). Both rests have flat soles, so the raw world delta keeps the sole flat.
 NO_ALIGN = {'Hips', 'Head', 'HeadTop_End', 'LeftToeBase', 'RightToeBase', 'LeftToe_End', 'RightToe_End', 'LeftFoot', 'RightFoot'}
+# NPC option: keep the spine as modelled (stylised bodies whose chest bone sits off vertical would otherwise be tipped)
+if _os.environ.get('FORGE_NO_SPINE_ALIGN'): NO_ALIGN |= {'Spine', 'Spine1', 'Spine2', 'Neck'}
 
 m0 = Master(f'{CLIPS_DIR}/{CLIPS[0][1]}.glb')
 MESHNODE = None

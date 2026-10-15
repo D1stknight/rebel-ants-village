@@ -1053,7 +1053,14 @@ addEventListener('resize', () => engine.resize());
    A session per Rebel lives in localStorage, so a reload resumes where it was. Meshy and the Rigger keep working
    server-side if the player leaves; the image steps (first ~5 min) need this page open.
    ========================================================= */
-const COL = 'battle_for_colony';
+// ?col=<collection> (default Battle for the Colony). Friend collections without on-chain art can be forged by an admin
+// from a finished reference render: ?ref=/assets/forge/sources/<file>&species=ape&name=..&token=N. The render is the
+// clean reference (no concept painting); the forge then draws its back and sides, sculpts, rigs as usual.
+const COL = /^[a-z0-9_]{1,60}$/.test(Q.get('col') || '') ? Q.get('col') : 'battle_for_colony';
+const REF = /^\/assets\/forge\/sources\/[\w.-]+\.(png|jpe?g|webp)$/.test(Q.get('ref') || '') ? Q.get('ref') : null;
+const SPECIES = REF ? (/^[a-z]{2,20}$/.test(Q.get('species') || '') ? Q.get('species') : 'ape') : null;
+const REF_NAME = REF ? String(Q.get('name') || '').slice(0, 60) : '';
+async function refDataUrl() { const b = await (await fetch(REF)).blob(); return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); }); }
 const VARIANTS = Math.max(1, Math.min(3, parseInt(Q.get('variants') || '3', 10) || 3));
 // v5: Meshy's A-pose by default. Keeping the drawing's own pose (?pose=none, used for #4998's bulky armour) leaves the
 // arms hanging against the hips, and the sculpt fuses the fists into the thighs (#893: gloves stayed at the hips).
@@ -1133,19 +1140,20 @@ async function signInForge() {
   renderSummon(0, true);
 }
 function selectedRebel() { try { const r = JSON.parse(localStorage.getItem('selectedRebel') || 'null'); return r && String(r.tokenId || '') === String(state.token) ? r : null; } catch (e) { return null; } }
-function rebelId() { return selectedRebel()?.rebelId || `rebel_${state.token}`; }
+function rebelId() { return selectedRebel()?.rebelId || (COL === 'battle_for_colony' ? `rebel_${state.token}` : `${COL}_${state.token}`); }
 let GI_CACHE = null;
 function GI() {
   if (GI_CACHE && GI_CACHE.tokenId === String(state.token)) return GI_CACHE;
   const traits = {}; (state.meta?.traits || []).forEach((t) => { traits[t.trait_type] = t.value; });
   const sel = selectedRebel() || {};
   const rebel = {
-    id: rebelId(), tokenId: String(state.token), collectionKey: COL, name: `Rebel #${state.token}`,
-    image: `/api/nft-image?c=${COL}&t=${encodeURIComponent(state.token)}&s=full`,   // resolved to our Blob copy server-side
+    id: rebelId(), tokenId: String(state.token), collectionKey: COL, name: REF ? (state.meta?.name || `#${state.token}`) : `Rebel #${state.token}`,
+    image: REF ? location.origin + REF : `/api/nft-image?c=${COL}&t=${encodeURIComponent(state.token)}&s=full`,   // resolved to our Blob copy server-side
     traits: Object.keys(traits).length ? traits : (sel.traits || {}), gangName: traits['Gang Names'] || sel.gangName || null
   };
   const bp = window.buildCharacterBlueprint(rebel, { formType: 'starter', formLabel: 'Starter 3D Form', hasGeneratedModel: false, bundleId: 'starter_ant' });
   GI_CACHE = window.buildForgeGenerationInput(bp);
+  if (REF) GI_CACHE = { ...GI_CACHE, species: SPECIES, name: state.meta?.name || GI_CACHE.name, referenceImage: true };
   return GI_CACHE;
 }
 function refConcept(kind, imageUrl, extra) {
@@ -1185,10 +1193,12 @@ async function twice(fn) {
 /* ---- phases ---- */
 const RUN = {
   async concept() {
+    if (REF) { S.conceptUrl = await upload('concept', await refDataUrl()); return; }   // the finished render is the reference
     const d = await twice(() => api('/api/forge-generate-fullbody-preview', { generationInput: GI() }));
     S.conceptUrl = await upload('concept', d.previewImage?.dataUrl);
   },
   async prod() {
+    if (REF) { S.prodUrl = S.conceptUrl; return; }
     const c = refConcept('concept', S.conceptUrl);
     const d = await twice(() => api('/api/forge-generate-production-reference', { generationInput: GI(), selectedConcept: c, concept: c, selectedConceptImageUrl: S.conceptUrl }));
     S.prodUrl = await upload('prod', d.productionImage?.dataUrl);
@@ -1521,6 +1531,8 @@ function markNodes() {
    Data
    ========================================================= */
 async function loadToken(t) {
+  if (REF) return { tokenId: t, name: REF_NAME || `#${t}`, img: REF, thumb: REF,
+    traits: [{ trait_type: 'Collection', value: COL }, { trait_type: 'Species', value: SPECIES }, { trait_type: 'Source', value: 'Reference render' }] };
   const out = { tokenId: t, name: `Rebel #${t}`, traits: [], img: `/api/nft-image?c=${COL}&t=${t}&s=full`, thumb: `/api/nft-image?c=${COL}&t=${t}&s=thumb` };
   try { const j = await (await fetch(`/api/nft-token?c=${COL}&t=${encodeURIComponent(t)}`)).json(); if (j.ok) { out.name = j.name || out.name; out.traits = j.traits || []; } } catch (e) {}
   return out;
@@ -1647,7 +1659,7 @@ function renderSummon(prev, quiet) {
     <div class="note">${active() ? `Forging now · about ${fmtMin(forgeProgress().rem)} left.` : `The forge paints your Rebel, draws all four sides, sculpts three versions for you to choose from, then gives it a skeleton and 24 moves. About ${Math.round(total / 60)} minutes. ${allowanceNote()}`}</div>
   `, quiet);
   if (!quiet) {
-    center.innerHTML = `<div class="nftcard" id="nftCard"><img src="${state.meta?.img || ''}" alt=""><div class="cap"><div><b>#${esc(state.token)}</b><br><span>${esc(traitVal('Gang Names') || 'Rebel Ants')}</span></div><span>Battle for the Colony</span></div></div>`;
+    center.innerHTML = `<div class="nftcard" id="nftCard"><img src="${state.meta?.img || ''}" alt=""><div class="cap"><div><b>#${esc(state.token)}</b><br><span>${esc(REF ? REF_NAME : traitVal('Gang Names') || 'Rebel Ants')}</span></div><span>${REF ? esc(COL[0].toUpperCase() + COL.slice(1)) : 'Battle for the Colony'}</span></div></div>`;
     const nc = $('#nftCard'); if (state.summoned) gsap.set(nc, { opacity: 0 }); else inkSmokeIn(nc);
   }
   card.querySelectorAll('.picker button').forEach((b) => b.onclick = () => selectToken(b.dataset.t));

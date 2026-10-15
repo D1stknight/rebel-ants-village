@@ -130,7 +130,7 @@ async function updateBuildWithMeshyTask({ buildId, meshyTaskId, meshyRequest, me
       saved: false,
       storage: 'redis',
       recordKey,
-      message: 'Build record was not found. Meshy task still started.'
+      message: 'Build record was not found. The Rebel Forge sculpt still started.'
     };
   }
 
@@ -221,13 +221,13 @@ export default async function handler(req, res) {
 
     if (!meshyResponse.ok) {
       console.error('Meshy create error:', meshyData);
-      throw new Error(meshyData?.message || meshyData?.error || `Meshy create failed with status ${meshyResponse.status}`);
+      throw new Error(meshyData?.message || meshyData?.error || `Rebel Forge sculpt failed to start (status ${meshyResponse.status})`);
     }
 
     const meshyTaskId = meshyData?.result || meshyData?.id || meshyData?.task_id || null;
 
     if (!meshyTaskId) {
-      throw new Error('Meshy did not return a task ID');
+      throw new Error('The Rebel Forge sculpt did not start (no task ID)');
     }
 
     const storageResult = await updateBuildWithMeshyTask({
@@ -249,14 +249,14 @@ export default async function handler(req, res) {
       meshyRequest,
       meshyResponse: meshyData,
       storageResult,
-      message: 'Meshy 3D generation task started.'
+      message: 'Rebel Forge sculpt started.'
     });
   } catch (err) {
     console.error('forge-3d-engine-meshy-create error:', err);
 
     return res.status(500).json({
       ok: false,
-      error: 'Could not start Meshy 3D generation task',
+      error: 'Could not start the Rebel Forge sculpt',
       detail: err && err.message ? err.message : 'Unknown error'
     });
   }

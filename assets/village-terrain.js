@@ -4,6 +4,48 @@
 // Each village gets a recipe; only the hub has one so far. Loaded by village.html (hub default; ?terrain=old turns it off).
 /* global BABYLON */
 
+// Saints of LA: the city round the Saints' block (placed by the terrain as thin instances): quarter-block lots on every
+// block of the grid, a downtown cluster behind on the left, towers and the sign on the hills, palms, street lights,
+// utility poles and parked cars along the curbs. Grid: streets every 132 m (x) / 144 m (z), 14 m wide, 4 m sidewalks.
+function saintsCity() {
+  const r = (() => { let q = 77; return () => (q = (q * 16807) % 2147483647) / 2147483647; })();
+  const SX = [-198, -66, 66, 198], SZ = [-196, -52, 92, 236], BX = [-132, 0, 132], BZ = [-124, 20, 164];
+  const lots = { sl_lot_a: [], sl_lot_b: [], sl_lot_c: [], sl_lot_d: [] }, towers = { sl_tower_a: [], sl_tower_b: [], sl_tower_c: [] };
+  for (const bx of BX) for (const bz of BZ) {
+    if (bx === 0 && bz === 20) continue; // the Saints' block
+    for (const qx of [-1, 1]) for (const qz of [-1, 1]) {
+      const x = bx + qx * 27.5, z = bz + qz * 30.5, yaw = qz < 0 ? 0 : Math.PI;
+      lots[['sl_lot_a', 'sl_lot_b', 'sl_lot_c', 'sl_lot_d'][Math.floor(r() * 4)]].push([x, z, yaw, 1]);
+    }
+  }
+  // downtown on the skyline, back left beyond the last street
+  for (const [x, z, k, sc] of [[-210, 292, 'sl_tower_b', 1], [-176, 310, 'sl_tower_a', 1.15], [-140, 296, 'sl_tower_c', 1], [-238, 318, 'sl_tower_c', .95], [-112, 318, 'sl_tower_a', .85], [-196, 334, 'sl_tower_a', 1.05], [-150, 336, 'sl_tower_b', 1.2], [-82, 300, 'sl_tower_c', .8], [-262, 296, 'sl_tower_a', .9]]) towers[k].push([x, z, r() * .3, sc]);
+  const nearStreet = (v, S, m) => S.some(s => Math.abs(v - s) < m);
+  const palms = [], tallPalms = [], lights = [], poles = [], cars = { sl_car_blue: [], sl_car_gold: [], sl_car_red: [], sl_car_black: [], sl_car_white: [], sl_car_purple: [] };
+  const carKinds = Object.keys(cars);
+  for (const sx of SX) for (const sd of [-1, 1]) for (let z = -232; z <= 232; z += 24) {
+    if (nearStreet(z, SZ, 15)) continue;
+    (Math.abs(sx) < 100 || r() < .6 ? tallPalms : palms).push([sx + sd * 9.4, z + (r() - .5) * 3, r() * 6.28, .85 + r() * .3]);
+    if ((z / 24 | 0) % 2 === 0) lights.push([sx + sd * 8.6, z + 12, sd < 0 ? -Math.PI / 2 : Math.PI / 2, 1]);
+    if (Math.abs(sx) < 140 && Math.abs(z) < 150 && r() < .55) cars[carKinds[Math.floor(r() * 6)]].push([sx + sd * 5.2, z + 6, sd < 0 ? Math.PI / 2 : -Math.PI / 2, 1]);
+  }
+  for (const sz of SZ) for (const sd of [-1, 1]) for (let x = -232; x <= 232; x += 24) {
+    if (nearStreet(x, SX, 15)) continue;
+    (Math.abs(sz - 20) < 100 || r() < .6 ? tallPalms : palms).push([x + (r() - .5) * 3, sz + sd * 9.4, r() * 6.28, .85 + r() * .3]);
+    if (sd < 0) poles.push([x + 12, sz - 9.8, 0, 1]); else if ((x / 24 | 0) % 2 === 0) lights.push([x + 12, sz + 8.6, Math.PI, 1]);
+    if (Math.abs(x) < 150 && Math.abs(sz - 20) < 160 && r() < .55) cars[carKinds[Math.floor(r() * 6)]].push([x + 6, sz + sd * 5.2, sd < 0 ? 0 : Math.PI, 1]);
+  }
+  const E = (kit, at, o = {}) => ({ kit, at, count: Math.max(1, at.length), minSq: 0, maxSq: 360, road: 0, ...o });
+  return [
+    ...Object.entries(lots).map(([k, at]) => E(k, at, { blockBox: [25, 28] })),
+    ...Object.entries(towers).map(([k, at]) => E(k, at, { sink: 3, blockBox: [16, 16] })),
+    E('sl_hills_sign', [[150, 322, 0, 1.6]], { sink: 1 }),
+    E('sl_palm_tall', tallPalms, { block: .5, cull: 300 }), E('chz_palm', palms, { block: .4, cull: 260 }),
+    E('sl_streetlight', lights, { block: .3, cull: 240 }), E('sl_util_pole', poles, { block: .35, cull: 240 }),
+    ...Object.entries(cars).map(([k, at]) => E(k, at, { blockBox: [3.9, 1.4], cull: 220 }))
+  ];
+}
+
 export const TERRAIN_RECIPES = {
   hub: {
     seed: 1337, dropSeed: 99, drops: 70000,
@@ -323,6 +365,7 @@ export const TERRAIN_RECIPES = {
         ['r', -30, 46, 30, 53.5], ['r', -66, 56, 66, 88], [-30, -26, -66, -26, 2], [30, -26, 66, -26, 2], [-30, 8, -49, 13, 2], [30, 8, 49, 13, 2]
       ],
       dirt: [['r', -26, 14, 26, 44]],
+      rake: [{ ring: [0, 29, 10] }, { r: [-26, 14, 26, 44], axis: 'x' }],
       grass: 7000, flowers: 700
     }
   },
@@ -374,7 +417,47 @@ export const TERRAIN_RECIPES = {
         ['r', -30, 36.5, 62, 64], ['r', -62, 53, -30, 57], ['r', -35, 63, -27, 73], ['r', -57, 58.5, -35, 79.5], ['r', -22, 64, 22, 84]
       ],
       dirt: [['r', -24, 2, 24, 28]],
+      rake: [{ r: [-24, 2, 24, 28], axis: 'x' }],
       grass: 7000, flowers: 500
+    }
+  },
+  // Bushi: tactical officers, the mind behind the blade. A square stone fortress on dry, rocky hill country: walls
+  // with tiled copings, corner and gate towers; inside, rows of houses either side of the gate road, the well pavilion,
+  // the raised raked-sand training yard in the middle, the dojo on its stone terrace at the back, the library and the
+  // forge (west), the strategy hall and the storehouse (east). Crimson + gold banners. From Miguel's four Bushi images.
+  bushi: {
+    seed: 5179, dropSeed: 27, drops: 60000, roads: false,
+    hills: .95, shape: { fbm: 26, ridge: 26, wall: 120 },
+    flatHalf: 84, hillStart: 92, hillFull: 200, wallStart: 260,
+    palette: {
+      grassA: [0.36, 0.33, 0.2], grassB: [0.5, 0.43, 0.27], wet: [0.26, 0.27, 0.15],
+      dirt: [0.62, 0.5, 0.34], yard: [0.47, 0.42, 0.33], rockTint: [1.0, .97, .92], highTint: [1.0, .97, .88], peak: [0.84, 0.82, 0.78]
+    },
+    grass: { count: 60000, base: [0.22, 0.21, 0.09], tip: [0.72, 0.62, 0.36] },
+    flowers: { count: 1200, stem: [0.18, 0.22, 0.08], petal: [0.95, 0.84, 0.4] },
+    pines: { file: 'pine_1.glb', count: 420, scale: [1.4, 3.0], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 460, scale: [1.2, 4.4], body: 0.75, settle: .9, sink: .1, tint: [1.75, 1.68, 1.55], minSq: 74 }, // pale granite outcrops
+    fog: { density: .0011, day: [.8, .84, .86], night: [.04, .05, .1] },
+    light: { sun: 1.12, hemi: .96, tint: [1.0, .95, .84] },
+    sky: { turbidity: 4, luminance: 1, rayleigh: 2.6, mieCoefficient: .004 },
+    court: { texture: 'stone', court: [1.5, 1.46, 1.38], plaza: [1.32, 1.28, 1.2], path: [1.2, 1.16, 1.08] },
+    village: {
+      rect: [-66, -94, 66, 74], res: .9, wall: .6,
+      terraces: [
+        { r: [-62, -64, 62, 70], h: 1.2 },     // the fortress platform (walls stand on its edge)
+        { r: [-17, -14, 17, 12], h: 2 },       // the raised sand training yard
+        { r: [-27, 26, 27, 50], h: 4.4 }       // the dojo terrace
+      ],
+      ramps: [
+        { r: [-5, -73, 5, -64], axis: 'z', from: 0, to: 1.2 },     // steps up to the gate
+        { r: [-5, -17, 5, -14], axis: 'z', from: 1.2, to: 2 },     // yard steps (front)
+        { r: [-5, 12, 5, 15], axis: 'z', from: 2, to: 1.2 },       // yard steps (back)
+        { r: [-6, 18, 6, 26], axis: 'z', from: 1.2, to: 4.4 }      // great stairs to the dojo
+      ],
+      pave: [['r', -60, -62, 60, -12.9], ['r', -60, 10.9, 60, 68], ['r', -60, -13, -15.9, 11], ['r', 15.9, -13, 60, 11], ['r', -5, -92, 5, -62]], // round the sand yard
+      dirt: [['r', -15.5, -12.5, 15.5, 10.5]],
+      rake: [{ ring: [0, -1, 9.5] }, { r: [-15.5, -12.5, 15.5, 10.5], axis: 'x' }],
+      grass: 2400, flowers: 200
     }
   },
   // Ashigaru: the foot soldiers. A round fort on a low mound in dry grassland: a palisade of sharpened stakes, a moat
@@ -415,6 +498,214 @@ export const TERRAIN_RECIPES = {
       ],
       grass: 9000, flowers: 400
     }
+  },
+  // Warrior: battle-tested frontline veterans. A square fort of sharpened stakes in open golden grassland with oak
+  // trees and rocks, a dry ditch all round, a gate tower over the cobbled road, corner watchtowers; inside on bare
+  // dirt: rows of tiled houses with gardens, a covered well, the fenced sand training yard (chalk lines), the great
+  // dojo on its stone base, the forge with its stone chimney, the thatched storehouse, a two-storey house and a hall.
+  // Green + gold banners, torches everywhere. From Miguel's four Warrior images.
+  warrior: {
+    seed: 6203, dropSeed: 41, drops: 50000, roads: false,
+    hills: .45, shape: { fbm: 30, ridge: 5, wall: 34 }, // rolling dry plains, soft wooded hills, mountains far off
+    flatHalf: 92, hillStart: 104, hillFull: 250, wallStart: 315, // (wallStart must stay under 352)
+    palette: {
+      grassA: [0.42, 0.38, 0.2], grassB: [0.55, 0.47, 0.27], wet: [0.3, 0.31, 0.16],
+      dirt: [0.58, 0.47, 0.33], yard: [0.47, 0.4, 0.3], rockTint: [1.0, .97, .92], highTint: [1.0, .96, .88], peak: [0.82, 0.8, 0.76]
+    },
+    grass: { count: 70000, base: [0.26, 0.23, 0.09], tip: [0.78, 0.66, 0.38] },
+    flowers: { count: 900, stem: [0.22, 0.24, 0.08], petal: [0.96, 0.84, 0.36] },
+    pines: { file: 'pine_1.glb', count: 40, scale: [1.6, 3.0], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 320, scale: [.8, 2.6], body: 0.75, settle: .9, sink: .1, tint: [1.3, 1.24, 1.14], minSq: 82 },
+    extras: [
+      { file: 'tree_1.glb', count: 320, scale: [.8, 1.4], body: .5, settle: .5, sink: .15, cull: 300, maxSlope: .45, minSq: 84, road: 0, clump: { freq: .011, ox: 23, above: -.1 } }
+    ],
+    fog: { density: .001, day: [.82, .85, .86], night: [.04, .05, .1] },
+    light: { sun: 1.14, hemi: .96, tint: [1.0, .94, .8] },
+    sky: { turbidity: 4, luminance: 1, rayleigh: 2.4, mieCoefficient: .004 },
+    court: { texture: 'stone', court: [1.4, 1.36, 1.28], plaza: [1.25, 1.2, 1.1], path: [1.15, 1.1, 1.0] },
+    village: {
+      rect: [-80, -100, 80, 84], res: .9, wall: .6,
+      terraces: [{ r: [-64, -64, 64, 68], h: .5, edge: 1.2 }],       // the fort's ground, a little above the plain
+      digs: [{ rr: [-73, -73, 73, 77, 7], depth: 2.6, edge: 3.4 }],   // the dry ditch outside the palisade
+      ramps: [{ r: [-5, -78, 5, -64], axis: 'z', from: 0, to: .5 }],  // the causeway over the ditch to the gate
+      pave: [['r', -6.5, -96, 6.5, -34], ['r', -15, -34, 15, -21.5], ['r', -4.5, 10, 4.5, 22.4], ['c', 17, -27.5, 3.4]], // road, the square before the yard, to the dojo stairs, the well
+      dirt: [['r', -64, -64, 64, 68]],
+      chalk: [[-7, -15.5, -7, 6.5, .22], [7, -15.5, 7, 6.5, .22]],
+      grass: 5000, flowers: 300
+    }
+  },
+  // Shogun: the commanders. A castle on a forested hilltop: battered stone walls with white plaster parapets and
+  // corner turrets, the gatehouse up stone stairs; the lower court with houses, a covered well, a garden pond with an
+  // arched bridge; a walled middle terrace (central and side stairs) with the raked-sand yard, the great dojo, the
+  // library and the strategy hall; the top terrace with the keep, a shrine and the storehouse. Purple + gold banners.
+  // From Miguel's four Shogun images.
+  shogun: {
+    seed: 8513, dropSeed: 37, drops: 60000, roads: false,
+    hills: 1.15, shape: { fbm: 34, ridge: 22, wall: 90 }, // forested mountains all round
+    flatHalf: 98, hillStart: 104, hillFull: 220, wallStart: 270,
+    mesa: { drop: 30, cliff: 5, wobble: 3, fade: [170, 260],
+      pieces: [{ r: [-72, -66, 72, 102], round: 20 }, { r: [-13, -104, 13, -60], round: 6 }] },
+    palette: {
+      grassA: [0.24, 0.32, 0.15], grassB: [0.36, 0.4, 0.2], wet: [0.17, 0.25, 0.12],
+      dirt: [0.6, 0.52, 0.4], yard: [0.56, 0.5, 0.4], rockTint: [0.92, 0.92, 0.9], highTint: [0.96, 0.97, .94], peak: [0.8, 0.8, 0.8]
+    },
+    grass: { count: 70000, base: [0.12, 0.18, 0.06], tip: [0.5, 0.56, 0.26] },
+    flowers: { count: 1400, stem: [0.12, 0.22, 0.08], petal: [0.86, 0.5, 0.78] },
+    pines: { file: 'pine_1.glb', count: 560, scale: [1.8, 3.6], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 300, scale: [1.2, 3.6], body: 0.75, settle: .9, sink: .1, tint: [1.15, 1.13, 1.1], minSq: 80 },
+    extras: [
+      { file: 'pine_1.glb', count: 46, scale: [.9, 1.6], body: .3, settle: .35, sink: .15, minSq: 0, maxSq: 96, maxSlope: .3, road: 0, village: true }, // garden pines
+      { file: 'cherry_blossom.glb', count: 7, scale: [.45, .65], body: .9, trunkFromMesh: true, settle: .6, sink: .2, cull: 230, minSq: 0, maxSq: 70, maxSlope: .3, road: 0, village: true, tint: [1.35, .42, .3] } // red maples in the gardens
+    ],
+    fog: { density: .0011, day: [.78, .84, .9], night: [.05, .05, .12] },
+    light: { sun: 1.1, hemi: .98, tint: [1.0, .96, .88] },
+    sky: { turbidity: 3.5, luminance: 1, rayleigh: 2.2, mieCoefficient: .004 },
+    court: { texture: 'stone', court: [1.45, 1.42, 1.36], plaza: [1.3, 1.26, 1.2], path: [1.2, 1.16, 1.1] },
+    village: {
+      rect: [-72, -104, 72, 100], res: .9, wall: .7,
+      terraces: [
+        { r: [-66, -60, 66, 98], h: 3 },      // the castle court (walls on its edge): houses, the well, the pond
+        { r: [-62, 4, 62, 60], h: 7.5 },      // middle terrace: yard, dojo, library, strategy hall
+        { r: [-58, 66, 58, 96], h: 12.5 }     // top terrace: the keep, the shrine, the storehouse
+      ],
+      ramps: [
+        { r: [-6, -72, 6, -60], axis: 'z', from: 0, to: 3 },       // stone stairs up to the gate
+        { r: [-6, -6, 6, 4.5], axis: 'z', from: 3, to: 7.5 },      // central stairs (inner gate)
+        { r: [-48, -6, -40, 4.5], axis: 'z', from: 3, to: 7.5 }, { r: [40, -6, 48, 4.5], axis: 'z', from: 3, to: 7.5 },
+        { r: [-46, 52, -38, 66.5], axis: 'z', from: 7.5, to: 12.5 }, { r: [38, 52, 46, 66.5], axis: 'z', from: 7.5, to: 12.5 }
+      ],
+      digs: [{ c: [-42, -32, 7.4], depth: 1.6, edge: 1.4 }],  // the garden pond
+      pools: [{ c: [-42, -32, 7], y: 2.5 }],
+      pave: [
+        ['r', -6.5, -104, 6.5, -6], ['c', 0, -32, 7.5], [-6, -32, -30, -32, 2], [6, -32, 52, -32, 2], [-6, -14, -44, -14, 2.2], [6, -14, 44, -14, 2.2], [-44, -14, -44, -6, 2.2], [44, -14, 44, -6, 2.2],
+        ['r', -62, 4, 62, 9.4], ['r', -62, 31.6, 62, 60], ['r', -62, 9, -22.6, 32], ['r', 22.6, 9, 62, 32], ['r', -58, 60, 58, 96]
+      ],
+      dirt: [['r', -22, 10, 22, 31]],
+      rake: [{ ring: [-16.5, 15.5, 4.5] }, { ring: [16.5, 15.5, 4.5] }, { r: [-22, 10, 22, 31], axis: 'x' }],
+      grass: 6000, flowers: 500
+    }
+  },
+  // Cute & Creepy (friend collection): a haunted hilltop village under a purple moon, always night, fog pooling
+  // below the cliffs and drifting through the lanes: an iron gate with pumpkin pillars up wooden steps, cobbled
+  // winding lanes, a giant dead tree with hanging lanterns by the well, the witch's cottage with its cauldron, the
+  // library, the game hall, crooked cottages, a graveyard with a crypt (back left), the gothic manor with its scarecrow yard.
+  // From Miguel's four Cute & Creepy images.
+  'cute-creepy': {
+    seed: 6669, dropSeed: 13, drops: 60000, roads: false,
+    hour: 22.5, moon: { sun: .85, hemi: 3.4, color: [.56, .5, .82] }, // the village keeps its own night
+    moonDisc: { pos: [-150, 170, 430], size: 3.2, color: [.8, .68, .98], halo: [.42, .3, .62] }, // the big purple moon behind the manor
+    dawn: { fog: [.5, .31, .37], sun: 1.05, color: [1, .7, .48], hemi: 1.15, hemiColor: [.95, .78, .8] }, // the Harvest Festival's first dawn (Moon Tales 20)
+    hills: 1.3, shape: { fbm: 30, ridge: 30, wall: 160,
+      spires: [{ from: 120, cell: 70, chance: .4, radius: [10, 18], height: [30, 70] }] },
+    flatHalf: 96, hillStart: 100, hillFull: 210, wallStart: 240,
+    mesa: { drop: 34, cliff: 6, wobble: 4, fade: [170, 260],
+      pieces: [{ r: [-70, -62, 70, 80], round: 26 }, { r: [-8, -98, 8, -58], round: 4 }] },
+    mist: { layers: [[-30, .62], [-23, .45], [-15, .32]], color: [.4, .34, .58], glow: .1 },
+    groundFog: { area: [-80, -95, 80, 85], y: [.6, 3.2], count: 420, size: [9, 20], color: [.5, .44, .68], alpha: .3 }, // fog banks drifting through the lanes
+    palette: {
+      grassA: [0.13, 0.12, 0.13], grassB: [0.21, 0.17, 0.2], wet: [0.1, 0.09, 0.11],
+      dirt: [0.3, 0.25, 0.22], yard: [0.32, 0.26, 0.22], rockTint: [0.62, 0.58, 0.68], highTint: [0.72, 0.68, 0.8], peak: [0.6, 0.58, 0.66]
+    },
+    grass: { count: 60000, base: [0.06, 0.05, 0.06], tip: [0.3, 0.24, 0.26] },
+    flowers: { count: 700, stem: [0.06, 0.07, 0.04], petal: [0.95, 0.42, 0.08] },
+    pines: { file: 'pine_1.glb', count: 360, scale: [2.0, 3.8], trunk: 0.32, settle: .35, sink: .15, tint: [0.32, 0.3, 0.42] },
+    rocks: { file: 'rock_1.glb', count: 340, scale: [1.2, 3.8], body: 0.75, settle: .9, sink: .1, tint: [0.5, 0.47, 0.56], minSq: 76 },
+    fog: { density: .0034, day: [.14, .11, .21], night: [.13, .1, .2] },
+    light: { sun: 1, hemi: 1 },
+    sky: { turbidity: 10, luminance: .6, rayleigh: 1.4, mieCoefficient: .007 },
+    court: { texture: 'stone', court: [1.05, .98, 1.1], plaza: [1.0, .94, 1.06], path: [1.05, .98, 1.1] },
+    village: {
+      rect: [-72, -98, 72, 82], res: .9, wall: .8,
+      terraces: [
+        { r: [-66, -58, 66, 76], h: 1.2 },     // the village court
+        { r: [-64, 26, -38, 72], h: 2.2 },     // the graveyard (back left)
+        { r: [-34, 40, 34, 74], h: 3.6 },      // the manor terrace
+        { r: [34, 30, 66, 74], h: 2.6 }        // the witch's corner (back right)
+      ],
+      ramps: [
+        { r: [-4, -70, 4, -58], axis: 'z', from: 0, to: 1.2 },      // wooden steps up to the gate
+        { r: [-38.5, 28, -31, 33.5], axis: 'x', from: 2.2, to: 1.2 },  // into the graveyard
+        { r: [-6, 33, 6, 40.5], axis: 'z', from: 1.2, to: 3.6 },     // up to the manor
+        { r: [26, 34, 34.5, 41], axis: 'x', from: 1.2, to: 2.6 }     // up to the witch's cottage
+      ],
+      pave: [['r', -6, -98, 6, -56], ['r', -64, -56, 64, 11.5], ['r', -64, 11.5, -20.5, 25.5], ['r', 20.5, 11.5, 64, 40], ['r', -20.5, 32.5, 20.5, 40], ['r', -37.5, 25.5, -20.5, 40], ['r', -34, 40, 34, 74], ['r', 34, 30, 64, 74], [-31, 30.75, -40, 30.75, 2.2]],
+      dirt: [['r', -20, 12, 20, 32], [-40, 30.75, -61, 30.75, 1.6], [-51, 30.75, -51, 68, 1.6]],
+      grass: 5000, flowers: 400
+    }
+  },
+  // Chumpz (friend collection: the apes): a tropical banana-bar village on a sandy shore above a turquoise lagoon:
+  // boardwalk docks with piers, rowboats and sailboats, the two-storey banana bar with its stage, the bait & book
+  // shop, the dice hall, colourful tin-roofed shacks, a fish smokehouse, the giant banana over the well; palms and
+  // banana groves on jungle hills behind, islands out in the bay. From Miguel's four Chumpz images.
+  chumpz: {
+    seed: 7071, dropSeed: 17, drops: 50000, roads: false,
+    hills: 1.05, shape: { fbm: 30, ridge: 24, wall: 110 }, // jungle hills, rocky peaks behind
+    flatHalf: 84, hillStart: 90, hillFull: 200, wallStart: 280,
+    coast: { shore: -40, headland: -64, bayHalf: 88, headWidth: 80, wobble: 9, beach: .12, cliff: .9, depth: 14, shelf: .12, islets: true },
+    sea: { y: -1.6, deck: .8, waves: .1, surf: 'calm', shallow: [.16, .78, .74], mid: [.04, .55, .62], deep: [.02, .3, .48], sky: [.76, .88, .95] },
+    palette: {
+      grassA: [0.2, 0.36, 0.1], grassB: [0.34, 0.46, 0.16], wet: [0.14, 0.28, 0.1],
+      dirt: [0.74, 0.62, 0.44], yard: [0.68, 0.58, 0.42], sand: [0.86, 0.78, 0.58], rockTint: [0.96, 0.92, 0.86], highTint: [1.0, .98, .9], peak: [0.8, 0.78, 0.74]
+    },
+    grass: { count: 70000, base: [0.08, 0.2, 0.05], tip: [0.46, 0.66, 0.22] },
+    flowers: { count: 1800, stem: [0.1, 0.24, 0.06], petal: [0.96, 0.3, 0.42] }, // hibiscus
+    pines: { kit: 'chz_palm', count: 720, scale: [.9, 1.5], trunk: 0.35, settle: .3, sink: .1 },
+    rocks: { file: 'rock_1.glb', count: 260, scale: [1.0, 3.2], body: 0.75, settle: .9, sink: .1, tint: [1.05, 1.0, .92], minSq: 82 },
+    extras: [
+      { kit: 'chz_banana', count: 900, scale: [.9, 1.5], body: .4, settle: .3, sink: .05, cull: 220, maxSlope: .5, minSq: 86, road: 0, clump: { freq: .016, ox: 13, above: -.05 } },
+      { kit: 'chz_palm', count: 60, scale: [1.0, 1.4], body: .35, settle: .3, sink: .1, minSq: 0, maxSq: 84, maxSlope: .4, road: 0, water: 1, village: true }, // palms in the village and on the beach
+      { kit: 'chz_banana', count: 90, scale: [.7, 1.1], body: .4, settle: .3, sink: .05, minSq: 0, maxSq: 84, maxSlope: .4, road: 0, village: true }
+    ],
+    fog: { density: .0012, day: [.78, .88, .94], night: [.04, .06, .12] },
+    light: { sun: 1.16, hemi: 1.0, tint: [1.0, .95, .84] },
+    sky: { turbidity: 3, luminance: 1, rayleigh: 2.2, mieCoefficient: .004 },
+    court: { texture: 'stone', court: [1.45, 1.38, 1.26], plaza: [1.3, 1.24, 1.12], path: [1.2, 1.14, 1.04] },
+    village: {
+      rect: [-74, -48, 74, 76], res: .8, wall: .8,
+      terraces: [{ r: [-70, -38, 70, 72], h: .8, abs: true, edge: 1.2 }], // the sandy village ground above the shore
+      digs: [{ r: [-66, -54, 66, -38.5], h: -3.4, edge: 1.2 }],            // the lagoon right up to the boardwalk
+      ramps: [],
+      pave: [[0, -36, 0, -14, 3.2], ['c', 0, -2, 11], [0, 9, 0, 22, 3.6], [-9, -6, -34, -16, 2.2], [9, -6, 34, -16, 2.2], [-8, 4, -36, 18, 2], [8, 4, 36, 18, 2], [0, 22, -26, 46, 1.8], [0, 22, 26, 46, 1.8]],
+      dirt: [['c', 0, -2, 27], ['r', -70, -38, 70, -22], ['c', 0, 28, 20], [-20, -12, -50, 4, 7], [20, -12, 50, 4, 7], [-14, 34, -46, 48, 6], [14, 34, 46, 48, 6]],
+      grass: 4000, flowers: 600
+    }
+  },
+  // Saints of LA (friend collection): a city block in Los Angeles under the Hollywood hills, downtown towers behind.
+  // Streets all round (a grid painted by the terrain shader: asphalt, yellow centre lines, crosswalks, sidewalks with
+  // red curbs at the corners); the Saints' block rises in concrete terraces: street level in front (the garage with
+  // lowriders, the market tent, the apartments), steps up to the court plaza (basketball court, the library, the game
+  // hall), the grand stairs up to the HQ terrace (the art-deco HQ, the arena). From Miguel's four Saints images.
+  'saints-la': {
+    seed: 9311, dropSeed: 23, drops: 20000, roads: false,
+    hills: .55, shape: { fbm: 24, ridge: 14, wall: 12 }, // the soft dry hills round the basin
+    flatHalf: 252, hillStart: 258, hillFull: 348, wallStart: 296,
+    palette: {
+      grassA: [0.24, 0.27, 0.13], grassB: [0.33, 0.31, 0.17], wet: [0.2, 0.24, 0.12],
+      dirt: [0.62, 0.56, 0.46], yard: [0.6, 0.56, 0.5], rockTint: [0.52, 0.48, 0.4], highTint: [0.86, .84, .7], peak: [0.6, 0.58, 0.46]
+    },
+    grass: { count: 30000, base: [0.2, 0.24, 0.08], tip: [0.62, 0.6, 0.32] },
+    flowers: { count: 500, stem: [0.14, 0.26, 0.08], petal: [0.9, 0.28, 0.6] }, // bougainvillea
+    pines: { file: 'pine_1.glb', count: 140, scale: [1.0, 1.8], trunk: 0.32, settle: .35, sink: .15 },
+    rocks: { file: 'rock_1.glb', count: 120, scale: [1.0, 2.6], body: 0.75, settle: .9, sink: .1, tint: [1.2, 1.12, 1.0], minSq: 262 },
+    extras: saintsCity(),
+    fog: { density: .0009, day: [.86, .84, .78], night: [.05, .06, .12] },
+    light: { sun: 1.05, hemi: .92, tint: [1.0, .93, .8] },
+    sky: { turbidity: 5, luminance: 1, rayleigh: 2.0, mieCoefficient: .005 },
+    court: { texture: 'stone', court: [1.45, 1.42, 1.36], plaza: [1.3, 1.26, 1.2], path: [1.2, 1.16, 1.1] },
+    city: { gx: 132, gz: 144, cx: -66, cz: -52, w: 14, sw: 4, extent: 246 },
+    village: {
+      rect: [-59, -45, 59, 85], res: .8, wall: .7,
+      terraces: [
+        { r: [-55, -22, 55, 40], h: 2.0 },  // the court plaza: basketball court, the library, the game hall
+        { r: [-55, 40, 55, 81], h: 4.6 }    // the HQ terrace: the art-deco HQ and the arena
+      ],
+      ramps: [
+        { r: [-7, -31, 7, -21], axis: 'z', from: 0, to: 2.0 },  // steps up from the street
+        { r: [-7, 29, 7, 41], axis: 'z', from: 2.0, to: 4.6 }   // the grand stairs to the HQ
+      ],
+      pave: [['r', -59, -45, 59, 85]],
+      grass: 0, flowers: 0
+    }
   }
 };
 
@@ -424,8 +715,10 @@ export function makeVillageShape(V, baseAt = () => 0) {
   const rectD = (r, x, z) => { const dx = Math.max(r[0] - x, x - r[2]), dz = Math.max(r[1] - z, z - r[3]); return dx > 0 || dz > 0 ? Math.hypot(Math.max(dx, 0), Math.max(dz, 0)) : Math.max(dx, dz); };
   const inside = (x, z) => x > X0 && x < X1 && z > Z0 && z < Z1;
   // signed distance to a terrace / dig (negative inside): r = rectangle, c = [x, z, radius] disc, ring = [x, z, r0, r1]
+  // rr = [x0, z0, x1, z1, w]: a square ring w wide just inside the rectangle (a ditch round a square fort)
   const shapeD = (t, x, z) => t.c ? Math.hypot(x - t.c[0], z - t.c[1]) - t.c[2]
-    : t.ring ? (rho => Math.max(t.ring[2] - rho, rho - t.ring[3]))(Math.hypot(x - t.ring[0], z - t.ring[1])) : rectD(t.r, x, z);
+    : t.ring ? (rho => Math.max(t.ring[2] - rho, rho - t.ring[3]))(Math.hypot(x - t.ring[0], z - t.ring[1]))
+    : t.rr ? Math.max(rectD(t.rr.slice(0, 4), x, z), -rectD([t.rr[0] + t.rr[4], t.rr[1] + t.rr[4], t.rr[2] - t.rr[4], t.rr[3] - t.rr[4]], x, z)) : rectD(t.r, x, z);
   // final height over a base ground b: terraces rise h above it ('abs' terraces: to height h, e.g. a quay over a
   // beach), ramps climb from the base; the base stays wherever it is already higher
   const apply = (x, z, b) => {
@@ -778,7 +1071,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   writeMask();
   const maskTex = new BABYLON.RawTexture(mask, N, N, BABYLON.Engine.TEXTUREFORMAT_RGBA, scene, false, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
   maskTex.wrapU = maskTex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-  const material = makeTerrainMaterial(scene, maskTex, recipe.palette, recipe.village, recipe.sea, recipe.mesa);
+  const material = makeTerrainMaterial(scene, maskTex, recipe.palette, recipe.village, recipe.sea, recipe.mesa, recipe.city);
   ground.material = material;
 
   // horizon: the same land continues into far mountains (sunk under the main terrain inside the square)
@@ -799,6 +1092,7 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   const seaY = recipe.sea ? (recipe.sea.y ?? -3) : null;
   const sea = recipe.sea ? buildSea(scene, recipe.sea, H0, seaY) : null;
   const mesa = makeMesa(recipe), mist = recipe.mist ? buildMist(scene, recipe.mist) : null;
+  if (recipe.groundFog) buildGroundFog(scene, recipe.groundFog);
 
   // The village's own ground: a fine grid (0.8 m) so terrace walls and ramps come out crisp. Named 'pa…' so the
   // admin placement/snap rays (which look for the courtyard and 'pa' path meshes) land on it.
@@ -822,8 +1116,10 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
       edge.forEach(([x, z], k) => { const y = VS.h(x, z); pos.push(x, y, z, x, y - 3, z); if (k) idx.push(2 * k - 2, 2 * k - 1, 2 * k, 2 * k - 1, 2 * k + 1, 2 * k); });
       const n = edge.length; idx.push(2 * n - 2, 2 * n - 1, 0, 2 * n - 1, 1, 0);
       for (let i = idx.length - 3; i >= 0; i -= 3) idx.push(idx[i], idx[i + 2], idx[i + 1]); // both faces
-      const sk = new BABYLON.Mesh('villageGroundSkirt', scene), vd = new BABYLON.VertexData(), nrm = [];
-      BABYLON.VertexData.ComputeNormals(pos, idx, nrm); vd.positions = pos; vd.indices = idx; vd.normals = nrm; vd.applyToMesh(sk);
+      // normals point up, so the strip shades like the ground beside it (computed from both faces they cancelled out:
+      // a black hairline round every village)
+      const sk = new BABYLON.Mesh('villageGroundSkirt', scene), vd = new BABYLON.VertexData(), nrm = pos.map((_, i) => i % 3 === 1 ? 1 : 0);
+      vd.positions = pos; vd.indices = idx; vd.normals = nrm; vd.applyToMesh(sk);
       sk.material = material; sk.isPickable = false; sk.metadata = { type: 'visual_backdrop', visualOnly: true }; sk.freezeWorldMatrix(); }
   }
 
@@ -931,9 +1227,9 @@ export function createVillageTerrain(scene, baseRecipe, opts = {}) {
   return T;
 }
 
-function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA) {
+function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA, CITY) {
   const vr = V ? V.rect : [0, 0, 0, 0];
-  const v3 = a => `vec3(${a.map(n => n.toFixed(3)).join(',')})`;
+  const v3 = a => `vec3(${a.map(n => n.toFixed(3)).join(',')})`, f = v => Number(v).toFixed(2);
   const m = new BABYLON.CustomMaterial('terrainMat', scene);
   m.metadata = { perfKeepLive: true }; // backdrop meshes share it; village.html's static optimizer must not freeze it to 2 lights
   m.specularColor = new BABYLON.Color3(.03, .03, .03);
@@ -960,10 +1256,19 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA) {
       vec3 bw = pow(abs(nw), vec3(4.0)); bw /= (bw.x + bw.y + bw.z);
       vec3 rock = texture2D(uRockTex, pw.zy*0.05).rgb*bw.x + texture2D(uRockTex, pw.xz*0.05).rgb*bw.y + texture2D(uRockTex, pw.xy*0.05).rgb*bw.z;
       rock *= ${v3(P.rockTint)}; rock = mix(rock, rock*vec3(0.72,0.78,0.7), wet);
+      // village yards: a darker raked sand with fine grain (the palette dirt was near white in full sun)
+      vec3 yard = ${v3(P.yard || (d => d.map(v => v * .6 * .8 + (d[0] + d[1] + d[2]) / 3 * .6 * .2))(P.dirt))} * (0.84 + 0.26*micro) * (0.9 + 0.2*tvn(p*3.1));
+      ${(V?.rake || []).map(k => k.ring
+        ? `{ float d = length(p - vec2(${k.ring[0].toFixed(1)}, ${k.ring[1].toFixed(1)})); yard *= 1.0 - 0.16 * step(d, ${k.ring[2].toFixed(1)}) * smoothstep(0.35, 1.0, sin(d * 12.566)); }`
+        : `{ float inR = step(${k.r[0].toFixed(1)}, p.x) * step(p.x, ${k.r[2].toFixed(1)}) * step(${k.r[1].toFixed(1)}, p.y) * step(p.y, ${k.r[3].toFixed(1)}); yard *= 1.0 - 0.13 * inR * smoothstep(0.35, 1.0, sin(p.${k.axis === 'x' ? 'x' : 'y'} * 12.566)); }`).join('\n      ')}
+      ${(V?.chalk || []).map(k => `{ vec2 a = vec2(${k[0].toFixed(1)}, ${k[1].toFixed(1)}), b = vec2(${k[2].toFixed(1)}, ${k[3].toFixed(1)}), ab = b - a; float t = clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0); float d = length(p - a - ab * t); yard = mix(yard, vec3(0.8, 0.77, 0.68) * (0.9 + 0.15*micro), 0.85 * (1.0 - smoothstep(${(k[4] / 2).toFixed(2)}, ${(k[4] / 2 + .05).toFixed(2)}, d)) * (0.75 + 0.25*tvn(p*2.3))); }`).join('\n      ')}
+      dirt = mix(dirt, yard, vil);
       vec3 col = mix(grass, dirt, clamp(road + smoothstep(0.17,0.3,slope)*0.55*(1.0-wet), 0.0, 1.0));
       // village cobble (warm, like the courtyard stone) and finer, lighter stone on the terrace walls
       vec3 cob = texture2D(uRockTex, p*0.16).rgb;
       cob = mix(vec3(dot(cob, vec3(0.333))), cob, 0.55) * vec3(1.02,0.98,0.9) * (0.85 + 0.25*macro);
+      // city plazas: light concrete slabs
+      ${CITY ? 'cob = vec3(0.5, 0.485, 0.45) * (0.86 + 0.2*micro) * (1.0 - 0.2*max(step(0.95, fract(p.x/1.2)), step(0.95, fract(p.y/1.2))));' : ''}
       // ramps read as stone steps: a dark riser line every 0.38 m of height
       cob *= 1.0 - 0.45 * vil * smoothstep(0.12, 0.2, slope) * (1.0 - smoothstep(0.45, 0.6, slope)) * smoothstep(0.8, 0.95, fract(pw.y / 0.38));
       col = mix(col, cob, smoothstep(0.25, 0.75, pave) * (1.0 - smoothstep(0.3, 0.5, slope)));
@@ -985,6 +1290,29 @@ function makeTerrainMaterial(scene, maskTex, P, V, SEA, MESA) {
       vec3 sand = ${v3(P.sand || [.78, .7, .52])} * (0.85 + 0.3*micro);
       col = mix(col, sand, smoothstep(seaY + 1.8, seaY + 0.5, pw.y + (micro-0.5)*0.8) * (1.0 - smoothstep(0.35, 0.6, slope)));
       col *= mix(vec3(1.0), vec3(0.62, 0.78, 0.8), smoothstep(seaY, seaY - 8.0, pw.y));` : ''}
+      ${CITY ? `// city (recipe.city): a grid of asphalt streets with yellow centre lines, lane dashes and crosswalks, concrete
+      // sidewalks round every block, the curb line painted red at the corners
+      {
+        float k = (1.0 - smoothstep(${f(CITY.extent)}, ${f(CITY.extent + 12)}, max(abs(p.x), abs(p.y)))) * (1.0 - smoothstep(0.08, 0.16, slope));
+        float gx = ${f(CITY.gx)}, gz = ${f(CITY.gz)}, W = ${f(CITY.w / 2)}, SW = ${f(CITY.sw)};
+        float dx = abs(mod(p.x - (${f(CITY.cx)}) + gx*0.5, gx) - gx*0.5), dz = abs(mod(p.y - (${f(CITY.cz)}) + gz*0.5, gz) - gz*0.5);
+        float onX = step(dx, W), onZ = step(dz, W), street = max(onX, onZ);
+        vec3 asph = vec3(0.13, 0.13, 0.14) * (0.8 + 0.35*micro) * (0.92 + 0.12*tvn(p*1.7));
+        float yl = (step(0.1, dx) - step(0.26, dx)) * onX * (1.0 - onZ) + (step(0.1, dz) - step(0.26, dz)) * onZ * (1.0 - onX);
+        asph = mix(asph, vec3(0.7, 0.54, 0.14), yl * 0.9);
+        float dash = (1.0 - step(0.1, abs(dx - W*0.5))) * step(0.5, fract(p.y / 6.0)) * onX * (1.0 - onZ) + (1.0 - step(0.1, abs(dz - W*0.5))) * step(0.5, fract(p.x / 6.0)) * onZ * (1.0 - onX);
+        asph = mix(asph, vec3(0.62), dash * 0.8);
+        float cwX = onX * step(W + 0.6, dz) * (1.0 - step(W + 3.6, dz)) * step(0.5, fract(p.x / 1.1)) * step(dx, W - 0.4);
+        float cwZ = onZ * step(W + 0.6, dx) * (1.0 - step(W + 3.6, dx)) * step(0.5, fract(p.y / 1.1)) * step(dz, W - 0.4);
+        asph = mix(asph, vec3(0.66), max(cwX, cwZ) * 0.9);
+        float side = (1.0 - street) * max(step(dx, W + SW), step(dz, W + SW));
+        float jt = max(step(0.95, fract(p.x / 1.5)), step(0.95, fract(p.y / 1.5)));
+        vec3 walk = vec3(0.47, 0.455, 0.43) * (0.88 + 0.18*micro) * (1.0 - 0.22*jt);
+        float curb = (1.0 - street) * max(step(dx, W + 0.35), step(dz, W + 0.35)), corner = step(dx, W + 9.0) * step(dz, W + 9.0);
+        walk = mix(walk, mix(vec3(0.38, 0.38, 0.37), vec3(0.55, 0.12, 0.1), corner), curb);
+        col = mix(col, asph, street * k);
+        col = mix(col, walk, side * k);
+      }` : ''}
       return col;
     }
   `);
@@ -1013,6 +1341,7 @@ async function buildDecor(scene, T, avoid) {
   const villageWet = (x, z, m) => [...(R.village?.pools || []), ...(R.village?.digs || [])].some(p => {
     if (p.c) return Math.hypot(x - p.c[0], z - p.c[1]) < p.c[2] + m && (!p.ring || Math.hypot(x - p.c[0], z - p.c[1]) > p.ring[0] - m);
     if (p.ring) { const rho = Math.hypot(x - p.ring[0], z - p.ring[1]); return rho > p.ring[2] - m && rho < p.ring[3] + m; }
+    if (p.rr) { const r = p.rr, w = r[4]; return x > r[0] - m && x < r[2] + m && z > r[1] - m && z < r[3] + m && !(x > r[0] + w + m && x < r[2] - w - m && z > r[1] + w + m && z < r[3] - w - m); }
     const r = p.r; return x > r[0] - m && x < r[2] + m && z > r[1] - m && z < r[3] + m;
   });
   const dry = (x, z, m = .8) => T.seaY === null || T.seaY === undefined || h(x, z) > T.seaY + m; // above the sea
@@ -1136,6 +1465,7 @@ async function buildDecor(scene, T, avoid) {
   async function scatter(spec, ok, blockR, cast) {
     let parts;
     if (spec.build) parts = [spec.build(scene)];
+    else if (spec.kit) parts = window.SamuraiKit?.protoMeshes?.(scene, spec.kit) || []; // a procedural kit plant (palms, bananas)
     else {
       const res = await BABYLON.SceneLoader.ImportMeshAsync('', '/assets/buildings/', spec.file, scene);
       parts = res.meshes.filter(mm => mm.getTotalVertices() > 0);
@@ -1163,7 +1493,18 @@ async function buildDecor(scene, T, avoid) {
     }
     const per = spec.count, bufs = [...Array(16)].map(() => new Float32Array(per * 16)), cnt = new Array(16).fill(0);
     let k = 0, t = 0;
-    while (k < spec.count && t < spec.count * 40) {
+    if (spec.at) for (const [x, z, yaw = 0, s = 1, y] of spec.at) {
+      const tile = tileOf(x, z); if (cnt[tile] >= per) continue;
+      BABYLON.Quaternion.FromEulerAnglesToRef(0, yaw, 0, q); S.set(s, s, s); P.set(x, y ?? h(x, z) - (spec.sink ?? 0) * s, z);
+      BABYLON.Matrix.ComposeToRef(S, q, P, m4); m4.copyToArray(bufs[tile], cnt[tile] * 16); cnt[tile]++; k++;
+      if (spec.block) addBlocker(x, z, spec.block * s);
+      if (spec.blockBox) { // [halfX, halfZ] in the piece's own frame: circles of the short half-size covering it
+        const [hx, hz] = spec.blockBox.map(v => v * s), r = Math.min(hx, hz), c = Math.cos(yaw), sn = Math.sin(yaw);
+        const nx = Math.max(1, Math.ceil(hx / r)), nz = Math.max(1, Math.ceil(hz / r));
+        for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) { const lx = -hx + r + (nx > 1 ? i * (2 * hx - 2 * r) / (nx - 1) : hx - r), lz = -hz + r + (nz > 1 ? j * (2 * hz - 2 * r) / (nz - 1) : hz - r); addBlocker(x + lx * c + lz * sn, z - lx * sn + lz * c, r * 1.15); }
+      }
+    }
+    while (!spec.at && k < spec.count && t < spec.count * 40) {
       t++;
       const x = (rnd() - .5) * 680, z = (rnd() - .5) * 680; if (!ok(x, z) || !clear(x, z, 2)) continue;
       const s = spec.scale[0] + rnd() * (spec.scale[1] - spec.scale[0]), yaw = rnd() * 6.28; BABYLON.Quaternion.FromEulerAnglesToRef(0, yaw, 0, q);
@@ -1177,7 +1518,7 @@ async function buildDecor(scene, T, avoid) {
       addAvoid(x, z, blockR * s + 1);
     }
     const before = meshes.length;
-    fillTiles(parts, bufs, cnt, 'terrain_' + (spec.file ? spec.file.replace('.glb', '') : spec.name));
+    fillTiles(parts, bufs, cnt, 'terrain_' + (spec.file ? spec.file.replace('.glb', '') : spec.kit || spec.name));
     if (cast) meshes.slice(before).forEach(m => cast(m));
     return k;
   }
@@ -1416,6 +1757,31 @@ function buildFalls(scene, T, F) {
   scene.onBeforeRenderObservable.add(() => { tex.vOffset -= Math.min(.05, scene.getEngine().getDeltaTime() / 1000) * 1.3; });
   return out;
 }
+// Fog banks drifting along the ground (recipe.groundFog { area: [x0, z0, x1, z1], y: [lo, hi], count, size: [a, b],
+// color, alpha }): a particle system of big soft billboards that fade in, wander slowly and fade out.
+function buildGroundFog(scene, G) {
+  const S = 128, t = new BABYLON.DynamicTexture('groundFogTex', { width: S, height: S }, scene, true), c = t.getContext(), img = c.createImageData(S, S);
+  const { perlin } = makeNoise(777);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const u = x / S - .5, v = y / S - .5, r = Math.hypot(u, v) * 2, n = perlin(x / 22, y / 22) * .5 + perlin(x / 9, y / 9) * .25;
+    const a = Math.max(0, Math.min(1, (1 - r) * 1.3 + n)) * Math.max(0, 1 - r) ** .8, k = (y * S + x) * 4;
+    img.data[k] = img.data[k + 1] = img.data[k + 2] = 255; img.data[k + 3] = Math.round(255 * a);
+  }
+  c.putImageData(img, 0, 0); t.update(); t.hasAlpha = true;
+  const ps = new BABYLON.ParticleSystem('groundFog', G.count || 260, scene), [x0, z0, x1, z1] = G.area, [ylo, yhi] = G.y || [.4, 2.6];
+  ps.particleTexture = t; ps.emitter = new BABYLON.Vector3(0, 0, 0);
+  ps.minEmitBox = new BABYLON.Vector3(x0, ylo, z0); ps.maxEmitBox = new BABYLON.Vector3(x1, yhi, z1);
+  const col = G.color || [.5, .44, .66], a = G.alpha ?? .22;
+  ps.addColorGradient(0, new BABYLON.Color4(...col, 0)); ps.addColorGradient(.25, new BABYLON.Color4(...col, a));
+  ps.addColorGradient(.75, new BABYLON.Color4(...col, a)); ps.addColorGradient(1, new BABYLON.Color4(...col, 0));
+  ps.minSize = G.size?.[0] ?? 8; ps.maxSize = G.size?.[1] ?? 18; ps.minLifeTime = 26; ps.maxLifeTime = 44;
+  ps.emitRate = (G.count || 260) / 35; ps.direction1 = new BABYLON.Vector3(-.5, 0, -.3); ps.direction2 = new BABYLON.Vector3(.6, .04, .4);
+  ps.minEmitPower = .2; ps.maxEmitPower = .6; ps.minAngularSpeed = -.05; ps.maxAngularSpeed = .05; ps.minInitialRotation = 0; ps.maxInitialRotation = 6.28;
+  ps.gravity = BABYLON.Vector3.Zero(); ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD; ps.updateSpeed = .016;
+  ps.preWarmCycles = 160; ps.preWarmStepOffset = 14; // full of fog from the first frame
+  ps.start(); return ps;
+}
+
 // Mist lying in the ravine (recipe.mist): a few huge soft cloud layers at fixed heights, drifting slowly. Lit by the
 // scene (dark at night) with a little glow of their own, so the valley keeps a faint blue shimmer after dark.
 function buildMist(scene, M) {

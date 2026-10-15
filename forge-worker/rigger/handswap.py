@@ -3,8 +3,10 @@
 # They are cut off at the wrist and replaced by the standard 5-finger glove (glove.py), sized to the Rebel's own hand,
 # tinted with the colour of the Rebel's own glove, with real finger bones and weights. Every clip then gets a hand pose:
 # fists for strikes, kicks and the guard, open hands for cartwheels and getting up, relaxed hands for the rest.
+# v2.14 NPC gestures: the hand shape follows the mocap actor's fingers frame by frame (rallying: fist, open, fist;
+# pointing: the index goes out while the arm points; clapping: flat hands).
 # usage: python3.13 handswap.py -- in.blend out.blend
-import bpy, bmesh, sys, os, math, numpy as np, mathutils as mu
+import bpy, bmesh, sys, os, math, json, numpy as np, mathutils as mu
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import glove
 
@@ -37,6 +39,25 @@ uvl = me.uv_layers.active
 
 def srgb2lin(c): return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
 
+# v2.18 NPC hands (FORGE_NPC, the admin NPC Forge): both gloves one size, from the two generated hands together and
+# kept within what the approved villagers have (11.2-12.4 % of the body height); a lone big or small blob hand made one
+# glove 40 % bigger than the other (Shogun). Rebels keep their own per-hand sizes.
+NPCM = bool(os.environ.get('FORGE_NPC'))
+HGT = float(co[:, 2].max() - co[:, 2].min())
+# the NPC Forge hands panel: per side {along, thumb, back} (fractions of the hand length), size (x), v2.20 cuffSize and cuffLen (x)
+try: FIT = json.loads(os.environ.get('FORGE_HAND_FIT') or '{}') or {}
+except Exception: FIT = {}
+L_NPC = None
+if NPCM:
+    reaches = []
+    for side in ('Left', 'Right'):
+        hb = arm.data.bones[P + side + 'Hand']; fb = arm.data.bones[P + side + 'ForeArm']
+        W = np.array((Aw @ hb.head_local)[:]); E = np.array((Aw @ fb.head_local)[:]); x = (W - E) / np.linalg.norm(W - E)
+        tt = (co - W) @ x; handw = Wt[:, names.index(P + side + 'Hand')] / Wsum; own = (handw > 0.5) & (tt > 0.0)
+        reaches.append(np.percentile(tt[own], 98) if own.sum() > 20 else 0.75 * np.linalg.norm(W - E))
+    L_NPC = float(np.clip(np.mean(reaches), 0.112 * HGT, 0.124 * HGT))
+    print(f'handswap NPC: one glove length {L_NPC:.3f} for both hands (reach {np.round(reaches, 3).tolist()}, height {HGT:.3f})')
+
 plan, cut = {}, np.zeros(nv, bool)
 for side in ('Left', 'Right'):
     hb = arm.data.bones[P + side + 'Hand']; fb = arm.data.bones[P + side + 'ForeArm']
@@ -52,7 +73,7 @@ for side in ('Left', 'Right'):
     own = (handw > 0.5) & (tt > 0.0)
     reach = np.percentile(tt[own], 98) if own.sum() > 20 else 0.75 * np.linalg.norm(W - E)
     fore = np.linalg.norm(W - E)
-    L = float(np.clip(reach, 0.55 * fore, 1.05 * fore))
+    L = float(np.clip(reach, 0.55 * fore, 1.05 * fore)) if L_NPC is None else L_NPC
     rm = ((handw > 0.5) & (tt > -0.004)) | ((armw > 0.5) & (tt > 0.012) & (rr < 0.9 * L))
     # wrist girth: the glove cuff should fill the sleeve opening, not float inside it
     ring = (np.abs(tt) < 0.015) & (armw > 0.5)
@@ -82,7 +103,9 @@ for side in ('Left', 'Right'):
             print(f'handswap {side} wrist probe: sleeve bins {gapbins} off {np.linalg.norm(o_) / L:.3f}L radius {R_ / L:.3f}L')
             # only a loose sleeve around a bare / wrapped wrist (#4: 4-8 sleeve bins, wrist 0.09 L off the bone). Suits and
             # gauntlets (#1738, #4722: wrist ring 0.22 L off) and every Rebel without a sleeve layer keep the v2.9 cuff.
-            if 0.08 * L < R_ < 0.3 * L and gapbins >= 3 and np.linalg.norm(o_) < 0.15 * L:
+            # v2.18 NPCs: the glove goes to the middle of the wrist / arm guard opening whenever the wrist joint sits off
+            # its centre (Shogun: 0.16 L and 0.24 L off, the hand hung out of the bottom of the cuff)
+            if (0.08 * L < R_ < 0.3 * L and gapbins >= 3 and np.linalg.norm(o_) < 0.15 * L) or (NPCM and 0.08 * L < R_ < 0.35 * L and 0.05 * L < np.linalg.norm(o_) < 0.35 * L):
                 fixw = True; off = o_
                 uu = u_[keep] - off[0]; vv = v_[keep] - off[1]; r2 = np.hypot(uu, vv)
                 girth = float(np.clip(np.percentile(r2, 92), 0.14 * L, 0.32 * L))
@@ -132,7 +155,14 @@ for side in ('Left', 'Right'):
     prof = np.clip((np.roll(prof, 1) + 2 * prof + np.roll(prof, -1)) / 4, 0.12 * L, 0.34 * L)
     print(f'handswap {side} cuff shape {prof.max() / np.median(prof):.2f}')   # v2.10 QA: a flared cuff reads as a lump at the wrist
     cut |= rm
-    plan[side] = dict(W=W + off[0] * y + off[1] * z, x=x, y=y, z=z, L=L, girth=girth, bend=bend, col=col, ccol=ccol, prof=prof, mirror=(side == 'Left'))
+    f_ = FIT.get(side) or {}
+    fit = np.clip([float(f_.get(k, 0) or 0) for k in ('along', 'thumb', 'back')], -0.6, 0.6) * L
+    size = float(np.clip(float(f_.get('size', 1) or 1), 0.6, 1.5))
+    # v2.20 the cuff's own width (where it sits in the sleeve) and length (from the wrist back into the sleeve)
+    cuffw = float(np.clip(float(f_.get('cuffSize', 1) or 1), 0.5, 1.5)); cuffl = float(np.clip(float(f_.get('cuffLen', 1) or 1), 0.4, 1.6))
+    thumb_ax = -y if side == 'Left' else y     # the left glove is mirrored: its thumb is on -y
+    if f_: print(f'handswap {side} hand fit: along {fit[0]:+.3f} thumb {fit[1]:+.3f} back {fit[2]:+.3f} size x{size:.2f} cuff x{cuffw:.2f} cuff length x{cuffl:.2f}')
+    plan[side] = dict(W=W + off[0] * y + off[1] * z + fit[0] * x + fit[1] * thumb_ax + fit[2] * z, x=x, y=y, z=z, L=L * size, girth=girth, bend=bend, col=col, ccol=ccol, prof=prof, mirror=(side == 'Left'), cuffw=cuffw, cuffl=cuffl)
     print(f'handswap {side}: hand length {L:.3f} (reach {reach:.3f}, forearm {fore:.3f}) wrist girth {girth:.3f} (raw {girth_raw:.3f}) '
           f'sleeve end {bend:+.3f} verts removed {int(rm.sum())} glove colour {np.round(col, 3).tolist()}')
 
@@ -177,6 +207,21 @@ for f in res['faces']:
             if other: l[uvL].uv = other[0][uvL].uv
 print('handswap sleeve-end caps', len(res['faces']), 'from boundary edges', len(edges))
 bm.to_mesh(me); bm.free(); me.update()
+# v2.21 NPCs: what is left of the arm at the wrist (sleeve / arm guard end) rides the forearm only. Its leftover hand
+# weights twisted it with the hand (~100 deg in talking): the rim pinched in and the cuff showed outside it.
+if NPCM:
+    moved = 0
+    for side in ('Left', 'Right'):
+        hg_ = {g.index for g in body.vertex_groups if g.name == P + side + 'Hand' or g.name.startswith(P + side + 'Hand') and g.name[len(P + side + 'Hand'):][:1].isupper()}
+        fg_ = body.vertex_groups.get(P + side + 'ForeArm') or body.vertex_groups.new(name=P + side + 'ForeArm')
+        add = {}
+        for v in me.vertices:
+            w = sum(g.weight for g in v.groups if g.group in hg_)
+            if w > 0: add[v.index] = w
+        for gi in hg_: body.vertex_groups[gi].remove(list(add))
+        for vi, w in add.items(): fg_.add([vi], w, 'ADD')
+        moved += len(add)
+    print('handswap NPC: sleeve verts off the hand onto the forearm', moved)
 
 # ---- one glove per side ----
 gme, J = glove.build()
@@ -185,6 +230,8 @@ G = np.array([v.co[:] for v in gme.vertices])
 mat = bpy.data.materials.new('Glove'); mat.use_nodes = True
 bsdf = mat.node_tree.nodes['Principled BSDF']
 col = np.mean([plan[s]['col'] for s in plan], 0)            # both hands the same colour
+import os as _hos
+if _hos.environ.get('FORGE_GLOVE_RGB'): col = np.array([float(v) for v in _hos.environ['FORGE_GLOVE_RGB'].split(',')])   # NPC override (sRGB 0-1)
 lin = srgb2lin(col)
 bsdf.inputs['Base Color'].default_value = (*lin.tolist(), 1.0); bsdf.inputs['Roughness'].default_value = 0.62
 bsdf.inputs['Metallic'].default_value = 0.0
@@ -192,6 +239,7 @@ me.materials.append(mat); gmi = len(me.materials) - 1
 cmat = bpy.data.materials.new('GloveCuff'); cmat.use_nodes = True
 cb_ = cmat.node_tree.nodes['Principled BSDF']
 ccol = np.mean([plan[s]['ccol'] for s in plan], 0)
+if _hos.environ.get('FORGE_CUFF_RGB'): ccol = np.array([float(v) for v in _hos.environ['FORGE_CUFF_RGB'].split(',')])
 cb_.inputs['Base Color'].default_value = (*srgb2lin(ccol).tolist(), 1.0); cb_.inputs['Roughness'].default_value = 0.7
 me.materials.append(cmat); cmi = len(me.materials) - 1
 print('handswap cuff colour', np.round(ccol, 3).tolist())
@@ -213,6 +261,17 @@ for side, pl in plan.items():
             hd = world(pts[i - 1]); tl = world(pts[i]) if i < 4 else world(pts[3]) + (world(pts[3]) - world(pts[2])) * 0.35
             b.head = Ai @ mu.Vector(hd.tolist()); b.tail = Ai @ mu.Vector(tl.tolist())
             b.align_roll(Ai.to_3x3() @ mu.Vector(pl['z'].tolist()))
+    # v2.21 NPCs: the hand turns about the middle of its own glove, not the generated wrist joint (up to 4 cm off it on
+    # the Shogun: the glove and cuff swung round the joint when the hand twisted, ~100 deg in talking), and a cuff bone at
+    # the same point under the forearm carries the cuff: it follows only the hand's twist (cufftwist.py), never its bend
+    if NPCM:
+        hb_ = eb[P + side + 'Hand']; hb_.use_connect = False
+        sh_ = Ai @ mu.Vector(pl['W'].tolist()) - hb_.head; hb_.head += sh_; hb_.tail += sh_
+        cb_ = eb.get(P + side + 'ForeArmCuff') or eb.new(P + side + 'ForeArmCuff')   # along the sleeve (the glove's x), not the hand bone (9-13 deg off it)
+        cb_.head = hb_.head.copy(); cb_.tail = hb_.head + (Ai.to_3x3() @ mu.Vector(pl['x'].tolist())).normalized() * (0.5 * hb_.length)
+        cb_.align_roll(Ai.to_3x3() @ mu.Vector(pl['z'].tolist()))
+        cb_.parent = eb[P + side + 'ForeArm']; cb_.use_connect = False; cb_.use_deform = True
+        print(f'handswap {side}: hand pivot moved {sh_.length * 100:.1f} cm to the glove, cuff bone added')
 bpy.ops.object.mode_set(mode='OBJECT')
 
 bm = bmesh.new(); bm.from_mesh(me)
@@ -230,8 +289,9 @@ for side, pl in plan.items():
             k = float(np.clip(-p[0] / 0.07, 0, 1))
             a1 = -p[1] if pl['mirror'] else p[1]
             b_ = int((np.arctan2(p[2], a1) + np.pi) / (2 * np.pi) * len(pl['prof'])) % len(pl['prof'])
-            tg = 0.97 * pl['prof'][b_]
+            tg = 0.97 * pl['prof'][b_] * pl['cuffw']
             if rad > 1e-6: p[1:] *= (1 - k) + k * (tg / rad)
+            p[0] *= pl['cuffl']
         nvv = bm.verts.new(Bi @ mu.Vector(pl['world'](p).tolist())); vmap[v.index] = nvv
     bm.verts.index_update()
     for f in gb.faces:
@@ -243,11 +303,25 @@ for side, pl in plan.items():
         n = P + side + ('Hand' if k == 'Hand' else 'Hand' + k)
         g = body.vertex_groups.get(n) or body.vertex_groups.new(name=n); gid[k] = g.index
     fore = (body.vertex_groups.get(P + side + 'ForeArm') or body.vertex_groups.new(name=P + side + 'ForeArm')).index
+    cuffg = (body.vertex_groups.get(P + side + 'ForeArmCuff') or body.vertex_groups.new(name=P + side + 'ForeArmCuff')).index if NPCM else None
     for i, v in vmap.items():
         for k, w in GW.items():
             if w[i] > 0.01: v[dl][gid[k]] = float(w[i])
         gx = G[i, 0]
-        if gx < 0:                      # the cuff blends into the forearm so it stays in the sleeve when the wrist bends
+        if NPCM:
+            # v2.21 the cuff rides its bone alone (no hand, no thumb share: it moved up to 10 cm against the sleeve in
+            # talking); the glove's wrist blends from it into the hand over the first ~1.5 cm
+            tc = float(np.clip((gx + 0.01) / 0.07, 0, 1)); c = 1 - tc * tc * (3 - 2 * tc)
+            if c > 0:
+                d_ = v[dl]
+                if gx < 0:
+                    fs = 0.0
+                    for k in GW:
+                        if k != 'Hand' and gid[k] in d_: fs += d_[gid[k]]; del d_[gid[k]]
+                    d_[gid['Hand']] = d_.get(gid['Hand'], 0.0) + fs
+                for g_ in list(d_.keys()): d_[g_] = d_[g_] * (1 - c)
+                d_[cuffg] = c
+        elif gx < 0:                    # the cuff blends into the forearm so it stays in the sleeve when the wrist bends
             t = float(np.clip(-gx / 0.14, 0, 0.85)); hw = v[dl].get(gid['Hand'], 0.0)
             if hw > 0: v[dl][gid['Hand']] = hw * (1 - t); v[dl][fore] = hw * t
 bm.to_mesh(me); bm.free(); me.update()
@@ -257,22 +331,29 @@ print('handswap gloves added, verts', len(me.vertices))
 FIST = {'jab', 'cross_punch', 'hook_punch', 'elbow_punch', 'punch_combo', 'front_kick', 'side_kick', 'roundhouse_kick',
         'crescent_kick', 'hurricane_kick', 'flip_kick', 'spin_flip_kick', 'fight_idle', 'hit_reaction', 'jump_run'}
 OPEN = {'cartwheel', 'get_up', 'knockdown', 'backflip', 'front_flip'}
+# NPC gestures (village villagers): open palms for waves / claps / calls, a talking hand for speech, the index out to point
+OPEN |= {'waving', 'wave_short', 'clapping', 'rallying', 'bow'}
+TALK = {'talking', 'talking2', 'yelling', 'shake_no', 'nod_yes', 'look_around', 'idle_looking'}
 POSE = {   # degrees about the finger's own X axis (negative closes toward the palm): [seg1, seg2, seg3]
     'fist':    {'Index': (-88, -95, -50), 'Middle': (-90, -95, -50), 'Ring': (-90, -95, -50), 'Pinky': (-90, -95, -50), 'Thumb': (None, -25, -30)},
     'relaxed': {'Index': (-14, -22, -14), 'Middle': (-18, -26, -16), 'Ring': (-22, -30, -18), 'Pinky': (-26, -34, -20), 'Thumb': (None, -10, -10)},
     'open':    {'Index': (-4, -6, -4), 'Middle': (-4, -6, -4), 'Ring': (-4, -6, -4), 'Pinky': (-4, -6, -4), 'Thumb': (None, -4, -4)},
+    'talk':    {'Index': (-8, -12, -8), 'Middle': (-11, -15, -9), 'Ring': (-14, -18, -11), 'Pinky': (-17, -21, -12), 'Thumb': (None, -6, -6)},
+    'point':   {'Index': (0, -2, -2), 'Middle': (-88, -95, -50), 'Ring': (-90, -95, -50), 'Pinky': (-90, -95, -50), 'Thumb': (None, -25, -30)},
     # v2.11 weapon moves: a hand closed round a hilt / bow grip (a fist with room for the handle)
     'grip':    {'Index': (-62, -78, -40), 'Middle': (-68, -80, -42), 'Ring': (-72, -82, -42), 'Pinky': (-76, -84, -42), 'Thumb': (None, -20, -24)},
 }
 # the thumb's base swings across the curled fingers (solved so the tip rests on the index/middle middle joints);
 # right-hand XYZ euler degrees, the left hand mirrors Y and Z
-THUMB1 = {'fist': (-8, -8, -37), 'relaxed': (-3, -2, -10), 'open': (0, 0, 0), 'grip': (-6, -6, -30)}
+THUMB1 = {'fist': (-8, -8, -37), 'relaxed': (-3, -2, -10), 'open': (0, 0, 0), 'grip': (-6, -6, -30), 'talk': (-2, -1, -6), 'point': (-8, -8, -37)}
 
 
 def hand_pose(clip, side):
     # weapon moves (v2.11): swords are held in both hands; the bow in the left hand (the right draws the string)
     if clip.startswith('sword_') or clip.startswith('twin_'): return 'grip'
     if clip.startswith('bow_'): return 'grip' if side == 'Left' or clip in ('bow_draw', 'bow_sheathe') else 'relaxed'
+    if clip == 'pointing': return 'point' if side == 'Right' else 'relaxed'
+    if clip in TALK: return 'talk'
     return 'fist' if clip in FIST else 'open' if clip in OPEN else 'relaxed'
 
 
@@ -290,23 +371,89 @@ def bags(act):
             for cb in st.channelbags: yield cb
 
 
-n_act = 0
+# NPC gestures: per frame, how far the actor's index finger is curled (degrees over its three joints, 0 = straight).
+# The pack's Mixamo sources carry the thumb and index only, so every finger follows the index: open -> relaxed -> fist,
+# matched on the index's total bend. In 'pointing' the hand that points gets the point pose while its index is out.
+CURL = [(14, 'open'), (50, 'relaxed'), (233, 'fist')]      # our poses' total index bend
+OPEN_RAISED = {'wave_short'}   # v2.16: the raised (waving) hand is open, whatever the actor's fingers did
+NPC_HANDS = {}
+if os.environ.get('FORGE_NPC'):
+    import json
+    from scipy.spatial.transform import Rotation as Rot
+    for c in json.load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'anim', 'clips_npc.json'))):
+        src_ = os.path.join(os.environ.get('FORGE_PACK', '.'), c['file'])
+        if c.get('airborne') or not src_.endswith('.npz') or not os.path.exists(src_): continue
+        z = np.load(src_); nm = [str(n) for n in z['names']]; Q = z['Q']; hands = {}
+        up_ = int(np.argmax(np.abs(z['rest'][nm.index('Head')] - z['rest'][nm.index('Hips')]))) if 'Head' in nm and 'Hips' in nm else 1
+        for side in ('Left', 'Right'):
+            ch = [side + 'Hand', side + 'HandIndex1', side + 'HandIndex2', side + 'HandIndex3']
+            if not all(n in nm for n in ch): break
+            R = [Rot.from_quat(Q[:, nm.index(n)]) for n in ch]
+            curl = sum(np.degrees((R[k].inv() * R[k + 1]).magnitude()) for k in range(3))
+            curl = np.convolve(np.pad(curl, 2, mode='edge'), np.ones(5) / 5, mode='valid')
+            point = np.clip((22 - curl) / 10, 0, 1) if c['name'] == 'pointing' else np.zeros(len(curl))
+            if np.ptp(curl) < 25 and not point.any(): curl = np.full(2, np.median(curl)); point = np.zeros(2)   # a steady hand: one pose (2 keys)
+            if c['name'] in OPEN_RAISED and side + 'Arm' in nm and np.mean(z['P'][:, nm.index(side + 'Hand'), up_]) > np.mean(z['P'][:, nm.index(side + 'Arm'), up_]) + 0.05:
+                curl = np.full(2, float(CURL[0][0])); point = np.zeros(2)
+            hands[side] = (curl, point)
+        else:
+            NPC_HANDS[c['name']] = hands
+
+
+def blend(curl, point):
+    # pose weights for an index bend (piecewise between the CURL anchors), then the point pose on top
+    w = {}
+    if curl <= CURL[0][0]: w[CURL[0][1]] = 1.0
+    elif curl >= CURL[-1][0]: w[CURL[-1][1]] = 1.0
+    else:
+        for (c0, p0), (c1, p1) in zip(CURL, CURL[1:]):
+            if c0 <= curl <= c1: t = (curl - c0) / (c1 - c0); w[p0] = 1 - t; w[p1] = t; break
+    w = {k: round(v * (1 - point) * 64) / 64 for k, v in w.items()}
+    if point > 0: w['point'] = 1 - sum(w.values())
+    return w
+
+
+def quat_mix(w, side, f, i):
+    if f == 'Thumb' and i == 1:
+        e = sum(np.array(THUMB1[p_]) * v for p_, v in w.items())
+        if side == 'Left': e[1], e[2] = -e[1], -e[2]
+        return mu.Euler(tuple(math.radians(x) for x in e), 'XYZ').to_quaternion()
+    return mu.Quaternion((1, 0, 0), math.radians(sum(POSE[p_][f][i - 1] * v for p_, v in w.items())))
+
+
+n_act = n_live = 0
 for act in bpy.data.actions:
     f0, f1 = act.frame_range
+    live = NPC_HANDS.get(act.name)
     for cb in bags(act):
         for fc in list(cb.fcurves):
             if any(('Hand' + f) in fc.data_path for f in FING): cb.fcurves.remove(fc)
         for side in ('Left', 'Right'):
+            if live and side in live:
+                curl, point = live[side]; nf = int(f1 - f0) + 1
+                if len(curl) == 2: ws = {0: blend(float(curl[0]), 0.0)}; ws[nf - 1] = ws[0]; keep = [0, nf - 1]
+                else:
+                    ws = [blend(float(curl[min(k, len(curl) - 1)]), float(point[min(k, len(point) - 1)])) for k in range(nf)]
+                    keep = [k for k in range(nf) if k in (0, nf - 1) or ws[k] != ws[k - 1] or ws[k] != ws[k + 1]]
             for f in FING:
                 for i in range(1, 4):
                     bn = P + side + 'Hand' + f + str(i)
                     if bn not in arm.pose.bones: continue
+                    fcs = [cb.fcurves.new(f'pose.bones["{bn}"].rotation_quaternion', index=ci, group_name=bn) for ci in range(4)]
+                    if live and side in live:
+                        qs = [quat_mix(ws[k], side, f, i) for k in keep]
+                        for ci in range(4):
+                            fcs[ci].keyframe_points.add(len(keep)); fcs[ci].keyframe_points.foreach_set('co', np.c_[np.array(keep, float) + f0, [q[ci] for q in qs]].ravel())
+                            for kp in fcs[ci].keyframe_points: kp.interpolation = 'LINEAR'
+                        continue
                     q = quat(hand_pose(act.name, side), side, f, i)
                     for ci in range(4):
-                        fc = cb.fcurves.new(f'pose.bones["{bn}"].rotation_quaternion', index=ci, group_name=bn)
-                        fc.keyframe_points.add(2); fc.keyframe_points.foreach_set('co', [f0, q[ci], f1, q[ci]])
-        n_act += 1
+                        fcs[ci].keyframe_points.add(2); fcs[ci].keyframe_points.foreach_set('co', [f0, q[ci], f1, q[ci]])
+        n_act += 1; n_live += bool(live)
 for pb in arm.pose.bones:
     if any(('Hand' + f) in pb.name for f in FING): pb.rotation_mode = 'QUATERNION'
-print('handswap hand poses written to clips', n_act)
+print('handswap hand poses written to clips', n_act, '| following the mocap fingers', n_live)
+if NPCM:
+    import cufftwist   # v2.21 the cuff bones' twist keys (baked again after the NPC arm steps)
+    print('handswap cuff twist keys', cufftwist.bake(arm))
 bpy.ops.wm.save_as_mainfile(filepath=dst)

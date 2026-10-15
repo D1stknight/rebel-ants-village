@@ -27,15 +27,36 @@ async function headAutoFor(rec) {
   } catch (e) { return false; }
 }
 const DAILY_LIMIT = parseInt(process.env.FORGE_RIG_DAILY_LIMIT || '200', 10);
+// v2.18 NPC Forge hands panel: per hand offsets (fractions of the hand length) and size, glove / cuff colours (#rrggbb);
+// v2.20 per hand cuff width and length (factors)
+function cleanHandFit(h) {
+  if (!h || typeof h !== 'object') return null;
+  const side = (s) => {
+    const o = h[s]; if (!o || typeof o !== 'object') return null;
+    const n = (k, lo, hi, d) => { const v = Number(o[k]); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+    const r = { along: n('along', -0.6, 0.6, 0), thumb: n('thumb', -0.6, 0.6, 0), back: n('back', -0.6, 0.6, 0), size: n('size', 0.6, 1.5, 1), cuffSize: n('cuffSize', 0.5, 1.5, 1), cuffLen: n('cuffLen', 0.4, 1.6, 1) };
+    return r.along || r.thumb || r.back || r.size !== 1 || r.cuffSize !== 1 || r.cuffLen !== 1 ? r : null;
+  };
+  const hex = (v) => (/^#[0-9a-f]{6}$/i.test(String(v || '')) ? String(v).toLowerCase() : null);
+  const out = { Left: side('Left'), Right: side('Right'), glove: hex(h.glove), cuff: hex(h.cuff) };
+  return out.Left || out.Right || out.glove || out.cuff ? out : null;
+}
+const srgb01 = (hex) => { const x = parseInt(hex.slice(1), 16); return [(x >> 16) & 255, (x >> 8) & 255, x & 255].map((c) => (c / 255).toFixed(3)).join(','); };
+function handFitEnv(hf) {
+  if (!hf) return {};
+  const fit = { ...(hf.Left ? { Left: hf.Left } : {}), ...(hf.Right ? { Right: hf.Right } : {}) };
+  return { ...(Object.keys(fit).length ? { FORGE_HAND_FIT: JSON.stringify(fit) } : {}), ...(hf.glove ? { FORGE_GLOVE_RGB: srgb01(hf.glove) } : {}), ...(hf.cuff ? { FORGE_CUFF_RGB: srgb01(hf.cuff) } : {}) };
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
-  const { buildId, force, sourceUrl, skirtfix, headUp, headUrl, armorUrl, anchorsUrl, cutBridges, headScale } = body(req);
+  const { buildId, force, sourceUrl, skirtfix, headUp, headUrl, armorUrl, anchorsUrl, cutBridges, headScale, npc, handFit, species } = body(req);
   if (!buildId) return res.status(400).json({ ok: false, error: 'Missing buildId' });
   try {
     const rec = await loadBuild(buildId);
     const admin = isAdminRequest(req);
-    if ((sourceUrl || skirtfix || headUp || headUrl || armorUrl || anchorsUrl || cutBridges || headScale) && !admin) return res.status(401).json({ ok: false, error: 'sourceUrl / skirtfix / headUp / headUrl / armorUrl / anchorsUrl / cutBridges / headScale require admin' });
+    if ((sourceUrl || skirtfix || headUp || headUrl || armorUrl || anchorsUrl || cutBridges || headScale || npc || handFit) && !admin) return res.status(401).json({ ok: false, error: 'sourceUrl / skirtfix / headUp / headUrl / armorUrl / anchorsUrl / cutBridges / headScale / npc / handFit require admin' });
+    const hf = npc ? cleanHandFit(handFit) : null;
     const hs = headScale == null || headScale === '' ? null : Number(headScale); if (hs !== null && (!Number.isFinite(hs) || hs < 0.8 || hs > 1.1)) return res.status(400).json({ ok: false, error: 'headScale must be 0.8..1.1' });
     const up = Number(headUp || 0); if (!Number.isFinite(up) || up < -20 || up > 25) return res.status(400).json({ ok: false, error: 'headUp must be -20..25 degrees' });
     if (sourceUrl && !SOURCE_OK.test(String(sourceUrl))) return res.status(400).json({ ok: false, error: 'sourceUrl must be a GLB in this repo or our Blob store' });
@@ -62,8 +83,12 @@ export default async function handler(req, res) {
     const worker = await getJson(WORKER_KEY);
     if (!worker?.snapshotId) return res.status(503).json({ ok: false, error: 'Rig worker is not built yet' });
 
-    const name = `rebel${sanitize(rec.tokenId || rec.rebelId, 'x')}`;
-    const headAuto = hs === null ? await headAutoFor(rec) : false;
+    // v2.13 NPC Forge (admin): the NPC clip set instead of the fight / weapon moves (job.sh FORGE_NPC)
+    const name = npc ? `npc_${sanitize(rec.tokenId || rec.rebelId, 'x')}` : `rebel${sanitize(rec.tokenId || rec.rebelId, 'x')}`;
+    const headAuto = hs === null && !npc ? await headAutoFor(rec) : false;
+    // v2.23 NPC species (the NPC Forge's collection): Chumpz are apes, Saints are humans, from the page or the NPC's key
+    // (chumpz_ / saints_). Only those get FORGE_NPC_SPECIES; Rebel villagers (ants) run exactly as before.
+    const npcSpecies = !npc ? '' : ['ape', 'human'].includes(String(species)) ? String(species) : String(species) === 'ant' ? '' : /^chumpz_/.test(rec.tokenId || '') ? 'ape' : /^saints_/.test(rec.tokenId || '') ? 'human' : '';
     const sandbox = await Sandbox.create({
       source: { type: 'snapshot', snapshotId: worker.snapshotId },
       persistent: false,
@@ -75,7 +100,7 @@ export default async function handler(req, res) {
     const cmd = await sandbox.runCommand({
       cmd: 'bash',
       args: ['-c', `mkdir -p ${JOB_DIR} && bash ${FW}/job.sh "$SRC_URL" "$RIG_NAME" ${JOB_DIR}`],
-      env: { SRC_URL: src, RIG_NAME: name, ...(skirtfix ? { FORGE_SKIRTFIX: '1', FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(up ? { FORGE_HEAD_UP: String(up) } : {}), ...(headUrl ? { FORGE_HEAD_URL: String(headUrl) } : {}), ...(armorUrl ? { FORGE_ARMOR_URL: String(armorUrl), FORGE_ANCHORS_URL: String(anchorsUrl) } : {}), ...(cutBridges && !skirtfix ? { FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(hs !== null ? { FORGE_HEAD_SCALE: String(hs) } : {}), ...(headAuto ? { FORGE_HEAD_AUTO: '1' } : {}) },
+      env: { SRC_URL: src, RIG_NAME: name, ...(skirtfix ? { FORGE_SKIRTFIX: '1', FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(up ? { FORGE_HEAD_UP: String(up) } : {}), ...(headUrl ? { FORGE_HEAD_URL: String(headUrl) } : {}), ...(armorUrl ? { FORGE_ARMOR_URL: String(armorUrl), FORGE_ANCHORS_URL: String(anchorsUrl) } : {}), ...(cutBridges && !skirtfix ? { FORGE_KEEP_TEAR: '', FORGE_KEEP_BRIDGE: '' } : {}), ...(hs !== null ? { FORGE_HEAD_SCALE: String(hs) } : {}), ...(headAuto ? { FORGE_HEAD_AUTO: '1' } : {}), ...(npc ? { FORGE_NPC: '1' } : {}), ...(npcSpecies ? { FORGE_NPC_SPECIES: npcSpecies } : {}), ...handFitEnv(hf) },
       sudo: true,
       detached: true
     });
@@ -87,7 +112,7 @@ export default async function handler(req, res) {
       cmdId: cmd.cmdId,
       workerCommit: worker.commit || null,
       sourceGlbUrl: src,
-      options: { skirtfix: !!skirtfix, headUp: up || 0, headUrl: headUrl || null, armorUrl: armorUrl || null, anchorsUrl: anchorsUrl || null, cutBridges: !!cutBridges, headScale: hs, headAuto },
+      options: { skirtfix: !!skirtfix, headUp: up || 0, headUrl: headUrl || null, armorUrl: armorUrl || null, anchorsUrl: anchorsUrl || null, cutBridges: !!cutBridges, headScale: hs, headAuto, npc: !!npc, handFit: hf, species: npcSpecies || null },
       startedAt: new Date().toISOString(),
       finishedAt: null,
       error: null

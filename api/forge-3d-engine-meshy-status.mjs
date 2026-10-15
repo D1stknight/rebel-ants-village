@@ -174,7 +174,7 @@ export default async function handler(req, res) {
     if (!meshyTaskId) {
       return res.status(400).json({
         ok: false,
-        error: 'Missing Meshy task ID'
+        error: 'Missing Rebel Forge sculpt task ID'
       });
     }
 
@@ -194,7 +194,7 @@ export default async function handler(req, res) {
 
     if (!meshyResponse.ok) {
       console.error('Meshy status error:', meshyData);
-      throw new Error(meshyData?.message || meshyData?.error || `Meshy status failed with status ${meshyResponse.status}`);
+      throw new Error(meshyData?.message || meshyData?.error || `Rebel Forge sculpt check failed (status ${meshyResponse.status})`);
     }
 
     const updatedBuildRecord = await updateBuildRecordWithMeshyStatus({
@@ -215,15 +215,15 @@ export default async function handler(req, res) {
       meshyResponse: meshyData,
       buildRecord: updatedBuildRecord,
       message: updatedBuildRecord.output?.glbUrl
-        ? 'Meshy 3D model is complete. GLB URL is ready.'
-        : 'Meshy 3D model is still processing.'
+        ? 'Rebel Forge sculpt is complete. GLB URL is ready.'
+        : 'Rebel Forge sculpt is still processing.'
     });
   } catch (err) {
     console.error('forge-3d-engine-meshy-status error:', err);
 
     return res.status(500).json({
       ok: false,
-      error: 'Could not check Meshy 3D generation status',
+      error: 'Could not check the Rebel Forge sculpt',
       detail: err && err.message ? err.message : 'Unknown error'
     });
   }

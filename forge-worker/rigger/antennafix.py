@@ -34,6 +34,8 @@ def grow(seeds, allowed):
 
 
 hv = np.nonzero(hw > 0.5)[0]
+# v2.22: a hood or scarf can leave no vertex mostly on the head (Wokou NPC): nothing to rig, not a failed job
+if len(hv) < 50: print('antennafix: head too small to search,', len(hv), 'verts, skipped'); bpy.ops.wm.save_as_mainfile(filepath=dst); sys.exit(0)
 c0 = np.median(co[hv], 0); d0 = np.linalg.norm(co[hv] - c0, axis=1)
 far = np.zeros(len(co), bool); far[hv[d0 > 1.25 * np.percentile(d0, 80)]] = True
 seeds = grow(np.nonzero(far)[0], far)

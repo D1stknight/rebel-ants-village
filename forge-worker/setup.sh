@@ -42,5 +42,9 @@ need = sorted(set(c['file'] for c in json.load(open('anim/clips.json')) + json.l
 miss = [f for f in need if not os.path.exists(os.path.join('pack', f))]
 assert not miss, f'missing mocap files: {miss}'
 print('clips ok', len(need))
+# v2.13 NPC gesture pack (NPC Forge): optional here, an NPC job without it stops with a clear message
+npc = sorted(set(c['file'] for c in json.load(open('anim/clips_npc.json'))))
+nmiss = [f for f in npc if not os.path.exists(os.path.join('pack', f))]
+print('npc clips', len(npc) - len(nmiss), 'of', len(npc), ('missing: ' + ', '.join(nmiss)) if nmiss else 'ok')
 PY
 echo ready > "$FW/READY"
