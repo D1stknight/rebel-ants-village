@@ -3823,6 +3823,8 @@ const MoonTaleSounds = (() => {
     whistle: { fx:t0 => { glide(2250, 2350, t0, .22, .16); glide(2650, 2600, t0 + .28, .5, .16); } },
     flag: { fx:t0 => { tone(N.G5, t0, .35, .2, PAN); tone(N.C6, t0 + .08, .4, .16, PAN); } },
     crackle: { fx:t0 => { noise(t0, 8, .1, 'lowpass', 300); for (let k = 0; k < 46; k++) noise(t0 + Math.random() * 7.6, .025 + Math.random() * .03, .08 + Math.random() * .2, 'bandpass', 1200 + Math.random() * 2800, 1.5); } },
+    // Wokou: the swivel gun (a low boom, the crack of the charge, the roll of it over the water)
+    boom: { fx:t0 => { noise(t0, .9, .7, 'lowpass', 180); glide(92, 36, t0, .75, .55); noise(t0, .1, .45, 'bandpass', 950, 1); noise(t0 + .06, 1.6, .13, 'lowpass', 480); } },
     // Saints of LA: a polish squeak, a bowling strike, a record scratch, a streetlight's electric zap, water poured on a palm,
     // a camera shutter, five free throws (bounce, bounce, swish), and the block party funk
     polish: { fx:t0 => { for (let k = 0; k < 4; k++) { glide(k % 2 ? 2400 : 1700, k % 2 ? 1600 : 2500, t0 + k * .28, .16, .07); noise(t0 + k * .28, .2, .05, 'bandpass', 3200, 2); } note(N.E6, t0 + 1.25, 1.2, .12); } },
