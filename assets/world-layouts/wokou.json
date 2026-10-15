@@ -24736,6 +24736,64 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "wokou_trade_house",
+            "hotspotId": "hotspot_wokou_trade_house_strongbox",
+            "linkName": "The Broker's Strongbox",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Four sea marks seal the strongbox behind the counter. The Broker says anyone who opens it without a key may keep the shine.",
+            "enabled": true,
+            "position": {
+              "x": 3,
+              "y": 1.6,
+              "z": 3.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            },
+            "game": {
+              "type": "lock",
+              "id": "wok-strongbox",
+              "title": "The Broker's Strongbox",
+              "pass": 50,
+              "points": 60,
+              "questOn": "pass",
+              "box": [
+                2.6,
+                0,
+                -5.6
+              ],
+              "size": [
+                1.66,
+                1.06,
+                1.16
+              ],
+              "face": 0,
+              "tries": 8,
+              "playerAt": [
+                2.6,
+                -3.3
+              ],
+              "cam": [
+                3.9,
+                3.3,
+                -1.2
+              ],
+              "at": [
+                2.6,
+                0.7,
+                -5.6
+              ]
+            }
           }
         ],
         "updatedAt": "2026-10-10T15:14:44.648Z"
