@@ -39622,6 +39622,38 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "ronin_shadow_dojo",
+            "hotspotId": "hotspot_ronin_shadow_dojo_shuriken",
+            "linkName": "Shuriken",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The throwing line of the Shadow Dojo: 45 seconds, the red hands only.",
+            "enabled": true,
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 7.6
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            },
+            "game": {
+              "type": "shuriken",
+              "id": "ronin-shuriken",
+              "title": "Shuriken",
+              "pass": 150,
+              "points": 50,
+              "questOn": "pass"
+            }
           }
         ],
         "updatedAt": "2026-10-10T13:20:27.735Z"
