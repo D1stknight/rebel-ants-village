@@ -39620,6 +39620,43 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "bushi_strategy_hall",
+            "hotspotId": "hotspot_bushi_strategy_hall_banners",
+            "linkName": "The Tactician's Banners",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The Strategist sets this puzzle for every young officer: plant one banner in every row of the board so that no banner can see another along a row, a column or a diagonal.",
+            "enabled": true,
+            "position": {
+              "x": -8.6,
+              "y": 1.6,
+              "z": -1.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": -1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            },
+            "game": {
+              "type": "queens",
+              "id": "bushi-banners",
+              "title": "The Tactician's Banners",
+              "pass": 20,
+              "points": 60,
+              "questOn": "pass",
+              "at": [
+                0,
+                -1.5
+              ],
+              "size": 10.4
+            }
           }
         ],
         "updatedAt": "2026-10-10T14:20:30.420Z"
