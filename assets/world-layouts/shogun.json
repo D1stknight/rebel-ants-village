@@ -48381,6 +48381,43 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "shogun_court_of_records",
+            "hotspotId": "hotspot_shogun_court_of_records_seal",
+            "linkName": "The Broken Seal",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "A forger cut the Shogun's seal into slabs and scattered them across the court. The magistrate wants it whole again before the next judgment.",
+            "enabled": true,
+            "position": {
+              "x": 6.2,
+              "y": 1.4,
+              "z": 1.5
+            },
+            "rotation": {
+              "x": 0,
+              "y": 1.5707963267948966,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            },
+            "game": {
+              "type": "slide",
+              "id": "shogun-broken-seal",
+              "title": "The Broken Seal",
+              "pass": 30,
+              "points": 70,
+              "questOn": "pass",
+              "at": [
+                0,
+                1.5
+              ],
+              "size": 6.4
+            }
           }
         ],
         "updatedAt": "2026-10-11T15:11:19.990Z"
