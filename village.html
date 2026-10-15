@@ -9987,7 +9987,8 @@ function normalizeQuestSpotConfig(cfg = {}) {
     // a place riddle read out here: { id, title, parts: [{ text }], points, solvedText, reset } (reset: a wrong answer
     // starts it over); its answers are spots with riddleAnswer { riddle, part, right, text }, open only while asked
     riddle: cfg.riddle && typeof cfg.riddle === 'object' && cfg.riddle.id && Array.isArray(cfg.riddle.parts) && cfg.riddle.parts.length ? { id:String(cfg.riddle.id), title:String(cfg.riddle.title || 'A riddle'),
-      parts:cfg.riddle.parts.map(x => ({ text:String(x?.text || '') })), points:Math.max(0, Math.floor(Number(cfg.riddle.points) || 0)), solvedText:String(cfg.riddle.solvedText || ''), reset:cfg.riddle.reset === true } : null,
+      parts:cfg.riddle.parts.map(x => ({ text:String(x?.text || '') })), points:Math.max(0, Math.floor(Number(cfg.riddle.points) || 0)), solvedText:String(cfg.riddle.solvedText || ''), reset:cfg.riddle.reset === true,
+      travels:cfg.riddle.travels === true } : null, // travels: its answers lie in other villages (the riddle goes into the save when read)
     riddleAnswer: cfg.riddleAnswer && typeof cfg.riddleAnswer === 'object' && cfg.riddleAnswer.riddle ? { riddle:String(cfg.riddleAnswer.riddle), part:Math.max(0, Math.floor(Number(cfg.riddleAnswer.part) || 0)),
       right:cfg.riddleAnswer.right === true, text:String(cfg.riddleAnswer.text || '') } : null,
     // a timing bar before the spot is used (SkillBar): hits good stops in the gold middle, the marker speeding up each time
@@ -10284,7 +10285,9 @@ function completeQuestSpot(root) {
 function readPlaceRiddle(cfg) {
   const R = cfg.riddle, all = (ProgressionState.riddles ||= {}), r = (all[R.id] ||= { asked:false, part:0, solved:false });
   if (r.solved) { queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(R.solvedText || 'You found every answer.'), chips:[], duration:6000 }); return true; }
-  r.asked = true; r.part = Math.min(r.part || 0, R.parts.length - 1); r.at = Date.now(); saveProgressionState();
+  r.asked = true; r.part = Math.min(r.part || 0, R.parts.length - 1); r.at = Date.now();
+  if (R.travels) r.def = { id:R.id, title:R.title, parts:R.parts, points:R.points, solvedText:R.solvedText, reset:R.reset, travels:true };
+  saveProgressionState();
   showPlaceRiddlePart(R, r.part);
   return true;
 }
@@ -10294,7 +10297,8 @@ function showPlaceRiddlePart(R, k) {
 }
 function findPlaceRiddle(id) {
   for (const root of getQuestSpotRoots()) { const c = root.metadata?.spotConfig; if (c?.riddle?.id === id) return c.riddle; }
-  return null;
+  const d = (ProgressionState.riddles || {})[id]?.def; // a travelling riddle read in another village
+  return d && Array.isArray(d.parts) && d.parts.length ? d : null;
 }
 function answerPlaceRiddle(cfg) {
   const A = cfg.riddleAnswer, R = findPlaceRiddle(A.riddle), r = (ProgressionState.riddles || {})[A.riddle];
