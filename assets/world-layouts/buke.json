@@ -26154,6 +26154,49 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "buke_great_hall",
+            "hotspotId": "hotspot_buke_great_hall_basins",
+            "linkName": "The Engineer's Basins",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "Basins of every size by the canal, and not one mark on them. The Engineer measures water with them anyway, and asks every apprentice to do the same.",
+            "enabled": true,
+            "position": {
+              "x": -7.2,
+              "y": 1.5,
+              "z": 6.8
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            },
+            "game": {
+              "type": "basins",
+              "id": "buke-engineer-basins",
+              "title": "The Engineer's Basins",
+              "pass": 20,
+              "points": 60,
+              "questOn": "pass",
+              "at": [
+                -3,
+                4.6
+              ],
+              "canal": [
+                -6.4,
+                -1.6,
+                1.6,
+                1.6
+              ],
+              "canalY": -0.4
+            }
           }
         ],
         "updatedAt": "2026-10-10T14:20:31.838Z"
