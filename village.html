@@ -25396,6 +25396,18 @@ function getVillageWalkableSurfaceHeightAt(x, z) {
   return Number.isFinite(height) ? height : null;
 }
 
+// all the walk floors over a point (kit decks, ramps, walk boxes, terrain stamps), highest first
+function getVillageWalkableSurfaceHeightsAt(x, z) {
+  const out = [];
+  villageSurfacesAt(x, z, (surface, local) => {
+    let y = surface.y;
+    if (surface.kind === 'terrain_stamp') { const h = getTerrainStampLocalHeight(surface.terrainStampType, surface.shape, local.x, local.z); y = Number.isFinite(h) ? surface.centerY + h : NaN; }
+    else if (surface.kind === 'ramp') y = villageRampHeightAt(surface, local);
+    if (Number.isFinite(y)) out.push(y);
+  });
+  return out.sort((a, b) => b - a);
+}
+
 function getVillageWalkSurfaceInfoAt(x, z) {
   let bestSurface = null;
   let bestHeight = -Infinity;
@@ -25588,20 +25600,15 @@ function computeVillagePlayerGroundHeightAt(x, z) {
     supportHeight = Math.max(supportHeight, centerHeight);
   }
 
-  const surfaceHeight = getVillageWalkableSurfaceHeightAt(x, z);
+  // every floor over this point, highest first: the player stands on the highest one it can step onto (a roof's walk
+  // floor reaching out over a fire escape is far above the stair; it must not hide the stair's own tread)
   const previousGroundHeight = charMesh?._terrainY;
-  const surfaceIsReachableStep =
-    Number.isFinite(surfaceHeight) &&
-    surfaceHeight >= supportHeight - 0.12 &&
-    surfaceHeight <= supportHeight + VILLAGE_PLAYER_WALK_SURFACE_MAX_RISE;
-  const surfaceIsCurrentPlatform =
-    Number.isFinite(surfaceHeight) &&
-    Number.isFinite(previousGroundHeight) &&
-    Math.abs(surfaceHeight - previousGroundHeight) <= VILLAGE_PLAYER_WALK_SURFACE_MAX_RISE;
-
-  const surfaceIsSpawnDeck = Number.isFinite(surfaceHeight) && performance.now() < _playerDeckSnapUntil && surfaceHeight > supportHeight && villageOnKitDeck(x, z);
-  if (surfaceIsReachableStep || surfaceIsCurrentPlatform || surfaceIsSpawnDeck) {
-    supportHeight = Math.max(supportHeight, surfaceHeight);
+  const spawnSnap = performance.now() < _playerDeckSnapUntil;
+  for (const surfaceHeight of getVillageWalkableSurfaceHeightsAt(x, z)) {
+    const surfaceIsReachableStep = surfaceHeight >= supportHeight - 0.12 && surfaceHeight <= supportHeight + VILLAGE_PLAYER_WALK_SURFACE_MAX_RISE;
+    const surfaceIsCurrentPlatform = Number.isFinite(previousGroundHeight) && Math.abs(surfaceHeight - previousGroundHeight) <= VILLAGE_PLAYER_WALK_SURFACE_MAX_RISE;
+    const surfaceIsSpawnDeck = spawnSnap && surfaceHeight > supportHeight && villageOnKitDeck(x, z);
+    if (surfaceIsReachableStep || surfaceIsCurrentPlatform || surfaceIsSpawnDeck) { supportHeight = Math.max(supportHeight, surfaceHeight); break; }
   }
 
   return Number.isFinite(supportHeight) ? supportHeight : getVillageGroundHeightAt(x, z);
@@ -26070,6 +26077,31 @@ function addKitDeckSurfaces(node, surfaces) {
   });
 }
 
+// Railed stairs (the Saints fire escapes): both long sides of every flight and landing hold a walker standing on the
+// stairs at that height (1 m pieces, from .7 under the tread to 1.2 over it), so nobody steps off into the air; under the
+// stairs and beside them on the ground nothing holds. The ends stay open (the foot, the roof at the top).
+const KIT_STAIR_RAILS = new Set(['kit_stairs_fire']);
+function addKitStairRails(node, blockers) {
+  const yaw = node.rotation?.y || 0, c = Math.cos(yaw), sn = Math.sin(yaw);
+  const sx = Math.abs(node.scaling?.x || 1), sy = Math.abs(node.scaling?.y || sx), sz = Math.abs(node.scaling?.z || sx);
+  const axisX = { x: c, z: -sn }, axisZ = { x: sn, z: c }, items = [];
+  window.SamuraiKit.decks[node.metadata.type].forEach((d, di) => {
+    const z0 = d.z - d.halfZ, z1 = d.z + d.halfZ, n = Math.max(1, Math.round((z1 - z0) * sz));
+    for (let k = 0; k < n; k++) {
+      const lz = z0 + (k + .5) * (z1 - z0) / n, t = (lz - z0) / (z1 - z0);
+      const h = node.position.y + (Number.isFinite(d.y1) ? d.y0 + (d.y1 - d.y0) * t : (d.y ?? 0)) * sy;
+      for (const side of [-1, 1]) {
+        const lx = side * (d.halfX + .12);
+        items.push({ kind: 'obb', type: 'kit_rail', name: `${node.name}_rail_${di}_${k}_${side}`, centerX: node.position.x + (lx * sx * c + lz * sz * sn), centerZ: node.position.z + (-lx * sx * sn + lz * sz * c),
+          axisX, axisZ, yaw, halfX: .1, halfZ: (z1 - z0) / n * sz / 2 + .02, minY: h - .7, maxY: h + 1.2 });
+      }
+    }
+  });
+  if (!items.length) return;
+  const r = Math.max(...items.map(b => Math.hypot(b.centerX - node.position.x, b.centerZ - node.position.z))) + 1;
+  blockers.push({ kind: 'group', x: node.position.x, z: node.position.z, r, items, name: node.name + '_rails', auto: true });
+}
+
 // The Hub's model buildings (GLBs, not kit pieces) get floors and walls from tables measured in the models (floors set
 // by hand from the model's treads, walls traced where the model has geometry at body height above each floor). Metres in
 // the measured copy's frame turned back by its yaw; ref = that copy's pitch / roll and scaling, so every copy maps them
@@ -26167,6 +26199,7 @@ function rebuildVillageCollisionBlockers() {
       blockers.push({ kind: 'obb', type: 'treasure_chest', name: node.name, ...getTreasureChestFootprint(node) });
     } else if (node.metadata?.isClone === true && window.SamuraiKit?.decks?.[node.metadata.type]) {
       addKitDeckSurfaces(node, walkableSurfaces);
+      if (KIT_STAIR_RAILS.has(node.metadata.type)) addKitStairRails(node, blockers);
     } else if (node.metadata?.isClone === true && ASSETS[node.metadata.type]?.kit === 'samurai' && getKitWalkTable(node.metadata.type)) {
       addGlbBuildingWalk(node, getKitWalkTable(node.metadata.type), blockers, walkableSurfaces);
     } else if ((HUB_GLB_WALK?.[node.metadata?.type] || getGlbWalkTable(node.metadata?.type)) && (node.metadata.isClone === true || node.name?.includes('RootClone_'))) {
@@ -26296,7 +26329,8 @@ function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MAN
       return dx * dx + dz * dz <= rr * rr && blocker.items.some(b => !(blocker.auto && villageObbContainsPoint(b, startX, startZ, 0)) && !(Number.isFinite(_villageWalkerY) && (_villageWalkerY > b.maxY || _villageWalkerY < b.minY)) && villageSegmentIntersectsObb(b, startX, startZ, endX, endZ, padding));
     }
     if (blocker.kind === 'circle') return villagePointBlocked(endX, endZ, padding);
-    if (blocker.kind === 'obb') return !villageWalkerAboveBlocker(blocker) && villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ, padding);
+    // a box the walker already stands inside (fell or was set down into it) does not hold it: it walks out
+    if (blocker.kind === 'obb') return !villageWalkerAboveBlocker(blocker) && !villageObbContainsPoint(blocker, startX, startZ, 0) && villageSegmentIntersectsObb(blocker, startX, startZ, endX, endZ, padding);
     return villagePointBlocked(endX, endZ, padding);
   });
 
