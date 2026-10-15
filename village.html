@@ -4511,6 +4511,7 @@ function getBadgeMeta(name) {
 
 function processBadgeUnlockQueue() {
   if (badgePopupActive || !badgeUnlockQueue.length) return;
+  if (window._miniGames?.on || window._danceOff?.on || window._danceOff?.choosing) return; // shown after the game / dance
   const name = badgeUnlockQueue.shift();
   const popup = document.getElementById('badgeUnlockPopup');
   if (!popup) return;
@@ -4539,6 +4540,15 @@ function showBadgeUnlockPopup(name) {
   processBadgeUnlockQueue();
 }
 
+// a badge card open when a game or a dance-off starts would sit over it: it goes back to the front of the queue and shows
+// again afterwards (processBadgeUnlockQueue waits while one is on)
+function holdBadgeUnlockPopup() {
+  const popup = document.getElementById('badgeUnlockPopup');
+  if (!popup?.classList.contains('on')) return;
+  const name = document.getElementById('badgeUnlockName')?.textContent;
+  closeBadgeUnlockPopup();
+  if (name && !badgeUnlockQueue.includes(name)) badgeUnlockQueue.unshift(name);
+}
 function closeBadgeUnlockPopup() {
   const popup = document.getElementById('badgeUnlockPopup');
   if (!popup) return;
@@ -10435,7 +10445,7 @@ async function startMiniGame(def, src) {
   MiniGames.saved.hidden.forEach(n => n.setEnabled(false));
   Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0 });
   document.getElementById('interactionPrompt')?.classList.remove('on');
-  document.getElementById('badgeUnlockPopup')?.classList.remove('on'); // a badge card left open would sit over the game
+  holdBadgeUnlockPopup(); // a badge card left open would sit over the game
   RebelGames.HUD.show(true);
   RebelGames.HUD.title(def.title || impl.title || 'Game');
   RebelGames.HUD.score(''); RebelGames.HUD.info(''); RebelGames.HUD.hint('');
@@ -10620,6 +10630,7 @@ function endMiniGame() {
   }
   if (s) { walk.fov = s.fov; if (s.guide && !s.guide.isDisposed?.()) s.guide.setEnabled(!!s.guideOn); (s.hidden || []).forEach(n => { if (!n.isDisposed?.()) n.setEnabled(true); }); }
   snapWalkCameraBehindPlayer();
+  setTimeout(processBadgeUnlockQueue, 400); // a badge earned in the game
 }
 window._miniGames = MiniGames; // tests
 window.startMiniGame = startMiniGame;
@@ -10643,6 +10654,7 @@ const DANCE_KEYS = { arrowleft:0, a:0, arrowup:1, w:1, arrowright:2, d:2, arrowd
 function openDanceOff(root, cfg) {
   const dc = cfg.dance, el = document.getElementById('danceOff');
   if (!el || !charMesh) return completeQuestSpot(root);
+  holdBadgeUnlockPopup();
   // the song starts a moment after (and is heard a little after that): the moves wait for it
   const t0 = performance.now() / 1000 + dc.lead + .05 + (MoonTaleSounds.latency?.() || 0), lane = el.querySelector('.do-notes');
   lane.innerHTML = '';
@@ -10673,7 +10685,7 @@ function restartDanceOff() {
   return openDanceOff(root, cfg);
 }
 window.restartDanceOff = restartDanceOff;
-function closeDanceOff() { DanceOff.on = false; document.getElementById('danceOff')?.classList.remove('on'); }
+function closeDanceOff() { DanceOff.on = false; document.getElementById('danceOff')?.classList.remove('on'); setTimeout(processBadgeUnlockQueue, 400); }
 function updateDanceOff() {
   if (!DanceOff.on) return;
   const now = performance.now() / 1000, el = document.getElementById('danceOff');
