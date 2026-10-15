@@ -38,7 +38,7 @@
         const CS = Math.min((TEX - 96) / C, (TEX - 96) / R), X0 = (TEX - CS * C) / 2, Y0 = (TEX - CS * R) / 2;
         bd = { k, L, R, C, N, num, sol: Uint8Array.from(L.sol, ch => ch === '1' ? 1 : 0), mark: new Int8Array(N), hints: 0, time: 0, cur: 0, undo: [], flash: null, X0, Y0, CS };
         for (let i = 0; i < N; i++) if (num[i]) bd.mark[i] = 2; // numbered squares are land
-        ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info();
+        ctx.player.place(0, cam[2] - 1.6, 0); draw(); info();
       }
       const nb = i => { const { R, C } = bd, r = Math.floor(i / C), c = i % C, o = []; if (r > 0) o.push(i - C); if (r < R - 1) o.push(i + C); if (c > 0) o.push(i - 1); if (c < C - 1) o.push(i + 1); return o; };
       function pools() { const { R, C } = bd, out = new Set(); for (let r = 0; r < R - 1; r++) for (let c = 0; c < C - 1; c++) { const i = r * C + c, q = [i, i + 1, i + C, i + C + 1]; if (q.every(j => bd.mark[j] === 1)) q.forEach(j => out.add(j)); } return out; }
@@ -104,7 +104,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Map ${k + 1}`, 900, `${LV[k].name}: ${LV[k].clues.length} islands`); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.3, -3.4], at = [0, TY, -.3];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#d9cfae'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'The Canal Islands'); H.score(''); info();
       H.hint('Click to mark with the brush (<kbd>Tab</kbd> canal / land; right click the other), drag to paint. <kbd>U</kbd> undo, <kbd>H</kbd> hint.');

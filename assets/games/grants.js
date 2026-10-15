@@ -37,7 +37,7 @@
       const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
       let rid = 1;
       function build(k) { const L = LV[k], n = L.n; bd = { k, n, L, clueAt: new Int16Array(n * n).fill(-1), rects: [], undo: [], hints: 0, time: 0, cur: Math.floor(n / 2) * n + Math.floor(n / 2), anchor: -1, flash: null };
-        L.clues.forEach(([i], j) => bd.clueAt[i] = j); ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info(); }
+        L.clues.forEach(([i], j) => bd.clueAt[i] = j); ctx.player.place(0, cam[2] - 1.6, 0); draw(); info(); }
       const area = R => (R.r1 - R.r0 + 1) * (R.c1 - R.c0 + 1);
       const inR = (R, r, c) => r >= R.r0 && r <= R.r1 && c >= R.c0 && c <= R.c1;
       const overlap = (A, Bq) => !(A.r1 < Bq.r0 || Bq.r1 < A.r0 || A.c1 < Bq.c0 || Bq.c1 < A.c0);
@@ -106,7 +106,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Map ${k + 1}`, 900, `${LV[k].name}: ${LV[k].clues.length} seals`); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.5, -3.5], at = [0, TY, -.32];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#7c9a52'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'The Land Grants'); H.score(''); info();
       H.hint('Drag from corner to corner to grant a rectangle; click a grant to take it back. Keys: arrows, <kbd>Space</kbd> twice for the corners, <kbd>Del</kbd>, <kbd>U</kbd> undo, <kbd>H</kbd> hint.');

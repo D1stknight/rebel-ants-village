@@ -47,7 +47,7 @@
       function clearTiles() { if (bd) bd.tiles.forEach(dropTile); }
       function build(k) { const L = LV[k]; let best = 0; try { best = Number(localStorage.getItem(bestKey(k))) || 0; } catch (e) {}
         clearTiles(); bd = { k, n: L.n, goal: L.goal, P: (S - 2 * MG - (L.n - 1) * GAPW) / L.n, tiles: [], score: 0, best, moves: 0, won: false, top: 2 };
-        drawBoard(); spawn(); spawn(); ctx.player.place(0, S / 2 + 1.2, Math.PI); info(); }
+        drawBoard(); spawn(); spawn(); ctx.player.place(0, cam[2] - 1.6, 0); info(); }
       const info = () => H.info(bd ? `${LV[bd.k].name} · ${bd.n} × ${bd.n} · best crate ${bd.top} · slides ${bd.moves} · best score ${bd.best}` : 'Pick a board');
       function canMove() { const n = bd.n, at = (r, c) => bd.tiles.find(t => t.r === r && t.c === c); if (bd.tiles.length < n * n) return true;
         for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) { const a = at(r, c); if (c + 1 < n && at(r, c + 1).v === a.v) return true; if (r + 1 < n && at(r + 1, c).v === a.v) return true; } return false; }
@@ -83,7 +83,7 @@
       function choose(k) { if (st.phase !== 'pick') return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'grid'; H.score(0); H.msg(LV[k].name, 1000, `merge up to ${LV[k].goal}`); }
       hud.append(pick, pads);
       const cam = [0, TY + 5.3, -3.0], at = [0, TY, -.28];
-      ctx.player.place(0, S / 2 + 1.2, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#7a5a3c'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'Banana Merge'); H.score(''); info();
       H.hint('Arrows, <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or a swipe slide every crate; equal crates merge. "Bank it" ends the run with your score.');

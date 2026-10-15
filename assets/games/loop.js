@@ -45,7 +45,7 @@
         const CS = Math.min((TEX - 120) / C, (TEX - 120) / R), X0 = (TEX - CS * C) / 2, Y0 = (TEX - CS * R) / 2;
         bd = { k, L, R, C, HN, EN, VX, hE, vE, s: new Int8Array(EN), sol: Uint8Array.from(L.loop, ch => ch === '1' ? 1 : 0), clues: Int8Array.from(L.clues, ch => ch === '.' ? -1 : +ch),
           cellE, edgeV, vertE, hints: 0, time: 0, cur: 0, undo: [], flash: null, X0, Y0, CS }; st.warned = '';
-        ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info();
+        ctx.player.place(0, cam[2] - 1.6, 0); draw(); info();
       }
       const ropeCount = () => { let n = 0; for (const v of bd.s) if (v === 1) n++; return n; };
       const deg = v => { let d = 0; for (const e of bd.vertE[v]) if (bd.s[e] === 1) d++; return d; };
@@ -119,7 +119,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Board ${k + 1}`, 900, `${LV[k].name}: ${LV[k].r} × ${LV[k].c}`); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.3, -3.4], at = [0, TY, -.3];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#e4dcc6'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'The Sacred Rope'); H.score(''); info();
       H.hint('Click a line to lay rope (<kbd>Tab</kbd> rope / cross; right click the other), drag dot to dot, click a number to settle its sides. <kbd>U</kbd> undo, <kbd>H</kbd> hint.');

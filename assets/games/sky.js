@@ -41,7 +41,7 @@
         const L = LV[k], N = L.n, CS = (TEX - 80) / (N + 2), X0 = (TEX - CS * N) / 2, Y0 = (TEX - CS * N) / 2;
         bd = { k, L, N, sol: [...L.sol].map(Number), given: [...L.given].map(Number), notes: new Array(N * N).fill(0), sel: 0, notesOn: false, hist: [], hints: 0, time: 0, flash: null, X0, Y0, CS, rise: 0 };
         bd.val = bd.given.slice(); bd.sel = bd.val.findIndex(v => !v); if (bd.sel < 0) bd.sel = 0;
-        tower.isVisible = false; ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info();
+        tower.isVisible = false; ctx.player.place(0, cam[2] - 1.6, 0); draw(); info();
       }
       const row = r => bd.val.slice(r * bd.N, r * bd.N + bd.N), col = c => bd.val.filter((_, i) => i % bd.N === c);
       function lines() { // each clue: [kind, index, value, line from its end]
@@ -115,7 +115,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); drawPads(bd.N); pads.style.display = 'grid'; H.msg(`Block ${k + 1}`, 900, `${LV[k].name}: ${LV[k].n} × ${LV[k].n}`); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.3, -3.4], at = [0, TY, -.3];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#20232c'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'Skyline View'); H.score(''); info();
       H.hint('Click a square and type its height (<kbd>N</kbd> notes, <kbd>0</kbd> rub out). <kbd>U</kbd> undo, <kbd>H</kbd> hint.');

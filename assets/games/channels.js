@@ -34,7 +34,7 @@
       const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
       const adj = (a, b) => { const n = bd.n; return (Math.abs(a - b) === n) || (Math.abs(a - b) === 1 && Math.floor(a / n) === Math.floor(b / n)); };
       function build(k) { const L = LV[k], n = L.n; bd = { k, n, L, endOf: new Int8Array(n * n).fill(-1), paths: L.ends.map(() => []), undo: [], hints: 0, time: 0, cur: L.ends[0][0], sel: -1 };
-        L.ends.forEach(([a, b], j) => { bd.endOf[a] = j; bd.endOf[b] = j; }); ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info(); }
+        L.ends.forEach(([a, b], j) => { bd.endOf[a] = j; bd.endOf[b] = j; }); ctx.player.place(0, cam[2] - 1.6, 0); draw(); info(); }
       const ownerMap = () => { const o = new Int8Array(bd.n * bd.n).fill(-1); bd.paths.forEach((p, j) => p.forEach(c => o[c] = j)); bd.L.ends.forEach(([a, b], j) => { o[a] = j; o[b] = j; }); return o; };
       const joined = j => { const p = bd.paths[j], [a, b] = bd.L.ends[j]; return p.length >= 2 && ((p[0] === a && p[p.length - 1] === b) || (p[0] === b && p[p.length - 1] === a)); };
       const watered = () => { const o = ownerMap(); let w = 0; for (let i = 0; i < o.length; i++) if (o[i] >= 0) w++; return w; };
@@ -102,7 +102,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Map ${k + 1}`, 900, `${LV[k].name}: ${LV[k].ends.length} pairs of gates`); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.2, -3.5], at = [0, TY, -.3];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#6f8a3e'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'The Irrigation Channels'); H.score(''); info();
       H.hint('Drag from a gate to dig its channel, back over it to fill in. Keys: arrows move, <kbd>Space</kbd> picks up / drops. <kbd>U</kbd> undo, <kbd>H</kbd> hint.');

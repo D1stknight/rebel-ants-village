@@ -94,7 +94,7 @@
         const OX = (TEX - (maxX / 2 * TW + layers * OFF)) / 2 + layers * OFF, OY = (TEX - (maxY / 2 * TH + layers * OFF)) / 2 + layers * OFF;
         const order = pos.map((_, i) => i).sort((a, b) => pos[a][0] - pos[b][0] || pos[a][2] - pos[b][2] || pos[a][1] - pos[b][1]);
         bd = { k, G: g, pos, alive, kind, sel: -1, hints: 0, shuffles: 0, time: 0, undo: [], flash: null, TW, TH, OX, OY, OFF, order };
-        ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info();
+        ctx.player.place(0, cam[2] - 1.6, 0); draw(); info();
       }
       const faceRect = i => { const [l, x, y] = bd.pos[i]; return [bd.OX + x / 2 * bd.TW - l * bd.OFF, bd.OY + y / 2 * bd.TH - l * bd.OFF, bd.TW, bd.TH]; };
       const left = () => bd.alive.filter(Boolean).length;
@@ -151,7 +151,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= GARDENS.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Garden ${k + 1}`, 900, `${GARDENS[k].name}: ${bd.pos.length} tiles`); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 3.8, -2.2], at = [0, TY, -.3]; // closer than the other boards: the tiles are small
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#2f4a2c'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'The Tile Garden'); H.score(''); info();
       H.hint('Click two free tiles that match to take them. <kbd>H</kbd> a pair, <kbd>S</kbd> shuffle, <kbd>U</kbd> take a pair back.');

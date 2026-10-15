@@ -42,8 +42,8 @@
         const slab = keep(B.MeshBuilder.CreateBox('sudokuSlab', { width: S + .7, height: .42, depth: S + .7 }, scene)); slab.material = stoneM; slab.position.set(0, .21, 0); built.push(slab);
         for (const [x, z, w, d] of [[0, S / 2 + .2, S + .5, .14], [0, -S / 2 - .2, S + .5, .14], [S / 2 + .2, 0, .14, S + .26], [-S / 2 - .2, 0, .14, S + .26]]) { const f = keep(B.MeshBuilder.CreateBox('sudokuFrame', { width: w, height: .1, depth: d }, scene)); f.material = woodM; f.position.set(x, .47, z); built.push(f); }
         const m = keep(B.MeshBuilder.CreateGround('sudokuBoard', { width: S, height: S }, scene)); m.material = boardM; m.position.y = .425; m.isPickable = true; m.metadata = { sudokuBoard: true }; built.push(m); board.mesh = m;
-        ctx.player.place(0, S / 2 + 1.25, Math.PI);
         st.cam = [0, S * 1.22 + 1.3, -S * .66 - .9]; st.at = [0, .42, S * .03];
+        ctx.player.place(0, st.cam[2] - 1.6, 0); // the player waits behind the camera, out of the picture
         select(N === 9 ? 40 : N === 6 ? 14 : 5); draw(); info();
       }
       const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;

@@ -80,7 +80,7 @@
         if (g && st.phase === 'play' && g.cur >= 0) { x.strokeStyle = 'rgba(255,255,255,.75)'; x.lineWidth = 2; x.strokeRect(m + (g.cur & 7) * C + 6, m + (g.cur >> 3) * C + 6, C - 12, C - 12); }
         tex.update(); }
       function build(k) { const b = new Int8Array(64); b[27] = -1; b[36] = -1; b[28] = 1; b[35] = 1; g = { k, opp: OPP[k], b, turn: 1, last: -1, flips: [], passes: 0, cur: 19 };
-        for (let i = 0; i < 64; i++) show(i, false); drawBoard(); info(); ctx.player.place(0, S / 2 + 1.3, Math.PI); }
+        for (let i = 0; i < 64; i++) show(i, false); drawBoard(); info(); ctx.player.place(0, cam[2] - 1.6, 0); }
       function play(i, who) { const f = flipsOf(g.b, i, who); if (!f) return false; g.b[i] = who; show(i, false); inst[i].scaling.setAll(.3); g.grow = { i, t: 0 };
         f.forEach((j, n) => { g.b[j] = who; show(j, true); g.flips[g.flips.length - 1].t = -n * .05; }); g.last = i; ctx.note(who === 1 ? 520 + f.length * 30 : 300 + f.length * 20, who === 1 ? 'bell' : 'lantern'); return true; }
       function next() { // after a move: who plays now, passes, the end
@@ -103,7 +103,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > beaten || k >= OPP.length) return; pick.remove(); st.phase = 'play'; build(k); H.msg(OPP[k].name, 1000, 'you play red, and you start'); }
       hud.append(pick); drawPick();
       const cam = [0, TY + 5.2, -3.0], at = [0, TY, -.28];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8); drawBoard();
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); drawBoard(); // the player waits behind the camera, out of the picture
       H.title(def.title || 'Colony Corners'); H.score(''); info();
       H.hint('Click a square with a gold dot to place a red stone. Arrows + <kbd>Space</kbd> work too. Corners can never be flipped back.');
       return {

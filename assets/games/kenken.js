@@ -40,7 +40,7 @@
         const L = LV[k], N = L.n; bd = { k, N, L, sol: [...L.s].map(Number), giv: new Array(N * N).fill(0), notes: new Array(N * N).fill(0), cageOf: new Int16Array(N * N), cages: L.cages.map(([cells, op, t]) => ({ cells, op, t, top: Math.min(...cells) })), sel: -1, notesOn: false, hist: [], hints: 0, time: 0, flash: null };
         bd.cages.forEach((cg, j) => { cg.cells.forEach(i => bd.cageOf[i] = j); if (cg.op === '=') bd.giv[cg.cells[0]] = cg.t; });
         bd.val = bd.giv.slice(); bd.sel = bd.val.findIndex(v => !v);
-        ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info(); }
+        ctx.player.place(0, cam[2] - 1.6, 0); draw(); info(); }
       const info = () => H.info(bd ? `Tablet ${bd.k + 1} / ${LV.length} · ${bd.L.name} · ${bd.N} × ${bd.N} · ${fmt(bd.time)}${bd.notesOn ? ' · notes on' : ''}${bd.hints ? ` · hints ${bd.hints}` : ''}` : 'Pick a tablet');
       const peersOf = i => { const N = bd.N, r = Math.floor(i / N), c = i % N, p = []; for (let q = 0; q < N; q++) { if (q !== c) p.push(r * N + q); if (q !== r) p.push(q * N + c); } return p; };
       function cageOk(cg) { const v = cg.cells.map(i => bd.val[i]); if (v.some(x => !x)) return null;
@@ -108,7 +108,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); drawPads(bd.N); pads.style.display = 'grid'; H.msg(`Tablet ${k + 1}`, 900, LV[k].name); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 5.9, -3.35], at = [0, TY, -.3];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#ead3a2'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'The Temple Abacus'); H.score(''); info();
       H.hint('Click a square, type its number. <kbd>N</kbd> pencil notes, <kbd>0</kbd> rub out, <kbd>U</kbd> undo, <kbd>H</kbd> hint.');

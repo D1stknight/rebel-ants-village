@@ -43,7 +43,7 @@
       const count = i => nbr(i).filter(j => bd.mines.has(j)).length;
       function build(k) {
         const L = LV[k]; bd = { k, n: L.n, total: L.spirits, mines: null, open: new Set(), flags: new Set(), hints: 0, hit: -1, cur: Math.floor(L.n / 2) * L.n + Math.floor(L.n / 2), time: 0, ghost: null };
-        ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info();
+        ctx.player.place(0, cam[2] - 1.6, 0); draw(); info();
       }
       // the spirits are laid only after the first dig: none on or around it, and only a graveyard reasoning can clear
       function lay(first) {
@@ -99,7 +99,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Graveyard ${k + 1}`, 900, `${LV[k].spirits} restless spirits`); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.4, -3.3], at = [0, TY, .1];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#2d4a2e'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'The Restless Graves'); H.score(''); info();
       H.hint('Click a plot to dig; <kbd>Tab</kbd> (or the button) switches to candles for spirits; <kbd>F</kbd> sets one on the square you are on. <kbd>H</kbd> hint.');

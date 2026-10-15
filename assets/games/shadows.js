@@ -34,7 +34,7 @@
       const st = { phase: 'pick', t: 0, mode: 1, drag: null };
       const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
       const nb = i => { const n = bd.n, r = Math.floor(i / n), c = i % n, o = []; if (r > 0) o.push(i - n); if (r < n - 1) o.push(i + n); if (c > 0) o.push(i - 1); if (c < n - 1) o.push(i + 1); return o; };
-      function build(k) { const L = LV[k]; bd = { k, n: L.n, L, mark: new Int8Array(L.n * L.n), hints: 0, time: 0, cur: 0, undo: [], flash: null }; ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info(); }
+      function build(k) { const L = LV[k]; bd = { k, n: L.n, L, mark: new Int8Array(L.n * L.n), hints: 0, time: 0, cur: 0, undo: [], flash: null }; ctx.player.place(0, cam[2] - 1.6, 0); draw(); info(); }
       const info = () => H.info(bd ? `Courtyard ${bd.k + 1} / ${LV.length} · ${bd.L.name} · ${bd.n} × ${bd.n} · ${fmt(bd.time)} · brush ${st.mode === 1 ? 'shadow' : 'stone'}${bd.hints ? ` · hints ${bd.hints}` : ''}` : 'Pick a courtyard');
       function problems() { // repeated lit numbers, touching shadows, and a lit area split in two
         const n = bd.n, g = bd.L.g, m = bd.mark, dup = new Set(), touch = new Set();
@@ -85,7 +85,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Courtyard ${k + 1}`, 900, LV[k].name); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.2, -3.5], at = [0, TY, -.3];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#d9cdb4'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || "The Ronin's Shadows"); H.score(''); info();
       H.hint('Click to mark with the brush (<kbd>Tab</kbd> shadow / stone; right click the other), drag to paint. A red bar means the light is split. <kbd>U</kbd> undo, <kbd>H</kbd> hint.');

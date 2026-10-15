@@ -40,7 +40,7 @@
       function build(k) {
         const L = LV[k], n = L.n; bd = { k, n, L, mark: new Int8Array(n * n), given: new Array(n * n).fill(null), hints: 0, time: 0, cur: 0, undo: [], flash: null };
         for (const [i, t] of L.hints) { bd.given[i] = t; bd.mark[i] = t === 'w' ? 1 : 2; }
-        ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info(); fleetPanel();
+        ctx.player.place(0, cam[2] - 1.6, 0); draw(); info(); fleetPanel();
       }
       const lineCount = (kind, a) => { const n = bd.n; let s = 0, u = 0; for (let b = 0; b < n; b++) { const v = bd.mark[kind ? b * n + a : a * n + b]; if (v === 2) s++; else if (!v) u++; } return { s, u, need: kind ? bd.L.cols[a] : bd.L.rows[a] }; };
       // finished ships in the marks: straight runs closed by water or the edge (a lone square closed on all four sides)
@@ -122,7 +122,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; fleetEl.style.display = 'block'; H.msg(`Chart ${k + 1}`, 900, `${LV[k].name}: ${LV[k].fleet.length} ships`); }
       hud.append(pick, pads, fleetEl); drawPick();
       const cam = [0, TY + 6.3, -3.4], at = [0, TY, -.3];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#e6d6aa'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'The Fleet Chart'); H.score(''); info();
       H.hint('Click to mark with the brush (<kbd>Tab</kbd> water / ship; right click the other), drag to paint, click a number to fill its line. <kbd>U</kbd> undo, <kbd>H</kbd> hint.');

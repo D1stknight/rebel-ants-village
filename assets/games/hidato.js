@@ -36,7 +36,7 @@
       const near = (a, b) => a !== b && Math.max(Math.abs(Math.floor(a / bd.w) - Math.floor(b / bd.w)), Math.abs(a % bd.w - b % bd.w)) <= 1;
       function build(k) { const L = LV[k]; const N = [...L.open].filter(x => x === '1').length;
         bd = { k, L, w: L.w, h: L.h, N, val: new Int16Array(L.w * L.h), giv: new Uint8Array(L.w * L.h), pen: -1, cur: -1, undo: [], hints: 0, time: 0, typed: '', flash: null };
-        for (const i of L.given) { bd.val[i] = L.sol[i]; bd.giv[i] = 1; } bd.pen = bd.val.indexOf(1); bd.cur = bd.pen; ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info(); }
+        for (const i of L.given) { bd.val[i] = L.sol[i]; bd.giv[i] = 1; } bd.pen = bd.val.indexOf(1); bd.cur = bd.pen; ctx.player.place(0, cam[2] - 1.6, 0); draw(); info(); }
       const where = v => bd.val.indexOf(v);
       const placed = () => bd.val.reduce((a, v) => a + (v > 0 ? 1 : 0), 0);
       const info = () => H.info(bd ? `Trail ${bd.k + 1} / ${LV.length} · ${bd.L.name} · steps ${placed()} / ${bd.N} · pen ${bd.pen >= 0 ? bd.val[bd.pen] : '-'}${bd.typed ? ` · typing ${bd.typed}` : ''} · ${fmt(bd.time)}${bd.hints ? ` · hints ${bd.hints}` : ''}` : 'Pick a trail');
@@ -98,7 +98,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Trail ${k + 1}`, 900, `${LV[k].name}: ${bd.N} steps`); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.3, -3.5], at = [0, TY, -.3];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#20302e'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || "The Pilgrim's Path"); H.score(''); info();
       H.hint('Click a number to take it as the pen, then a stone beside it for the next step. Or click a stone and type its number. <kbd>⌫</kbd> rub out, <kbd>U</kbd> undo, <kbd>H</kbd> hint.');

@@ -43,7 +43,7 @@
         for (const i of L.trees) bd.tree[i] = 1; for (const i of L.tents) bd.sol[i] = 1;
         for (let i = 0; i < N2; i++) bd.open[i] = !bd.tree[i] && orth(i).some(j => bd.tree[j]) ? 1 : 0;
         bd.cur = Math.max(0, bd.open.indexOf(1)); st.warned = '';
-        ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info();
+        ctx.player.place(0, cam[2] - 1.6, 0); draw(); info();
       }
       const lineCount = (kind, a) => { const n = bd.n; let s = 0, u = 0; for (let b = 0; b < n; b++) { const i = kind ? b * n + a : a * n + b; if (bd.mark[i] === 2) s++; else if (bd.open[i] && !bd.mark[i]) u++; } return { s, u, need: kind ? bd.L.cols[a] : bd.L.rows[a] }; };
       const tentCount = () => { let s = 0; for (const v of bd.mark) if (v === 2) s++; return s; };
@@ -118,7 +118,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Camp ${k + 1}`, 900, `${LV[k].name}: ${LV[k].trees.length} tents to pitch`); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.5, -3.5], at = [0, TY, -.3];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#e6d6aa'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'The War Camp'); H.score(''); info();
       H.hint('Click to mark with the brush (<kbd>Tab</kbd> tent / grass; right click the other), drag to paint, click a number to fill its line. <kbd>U</kbd> undo, <kbd>H</kbd> hint.');

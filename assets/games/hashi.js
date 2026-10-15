@@ -42,7 +42,7 @@
       function build(k) {
         const L = LV[k]; bd = { k, n: L.n, isl: L.isl, E: edgesOf(L.isl), sel: -1, hist: [], hints: 0, flash: null };
         bd.v = bd.E.map(() => 0); bd.sol = new Map(L.sol.map(([a, b, w]) => [Math.min(a, b) + ',' + Math.max(a, b), w]));
-        ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info();
+        ctx.player.place(0, cam[2] - 1.6, 0); draw(); info();
       }
       const info = () => H.info(bd ? `Pond ${bd.k + 1} / ${LV.length} · ${bd.isl.length} stones · ${bd.v.reduce((s, x) => s + x, 0)} planks${bd.hints ? ` · hints ${bd.hints}` : ''}` : 'Pick a pond');
       const geo = () => { const C = TEX / (bd.n + 1); return { C, px: x => (x + 1) * C, py: y => (y + 1) * C }; };
@@ -96,7 +96,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Pond ${k + 1}`, 900, `${LV[k].isl.length} stones`); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 6.6, -3.3], at = [0, TY, .05];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#2f5f73'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || 'The Garden Bridges'); H.score(''); info();
       H.hint('Click a stone, then a stone in line with it: one plank, two, none. <kbd>U</kbd> undo, <kbd>H</kbd> hint.');

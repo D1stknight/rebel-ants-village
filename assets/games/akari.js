@@ -43,7 +43,7 @@
         const L = LV[k], N = Math.round(Math.sqrt(L.g.length));
         bd = { k, N, g: [...L.g], sol: new Set(L.sol), lamps: new Set(), marks: new Set(), inst: new Map(), hist: [], hints: 0, flash: null, seen: null };
         bd.seen = bd.g.map((c, i) => c === '.' ? sees(i) : null);
-        ctx.player.place(0, S / 2 + 1.3, Math.PI); draw(); info();
+        ctx.player.place(0, cam[2] - 1.6, 0); draw(); info();
       }
       const cellPos = i => { const N = bd.N, c = S / N; return [-S / 2 + (i % N + .5) * c, S / 2 - (Math.floor(i / N) + .5) * c]; };
       const info = () => H.info(bd ? `Courtyard ${bd.k + 1} / ${LV.length} · ${bd.N} × ${bd.N} · lanterns ${bd.lamps.size} · ${st.mode === 1 ? 'lanterns' : 'marks'}${bd.hints ? ` · hints ${bd.hints}` : ''}` : 'Pick a courtyard');
@@ -96,7 +96,7 @@
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Courtyard ${k + 1}`, 900); }
       hud.append(pick, pads); drawPick();
       const cam = [0, TY + 5.2, -3.9], at = [0, TY, .2];
-      ctx.player.place(0, S / 2 + 1.3, Math.PI); ctx.look(cam, at, def.fov || .8);
+      ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#2b2f3a'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || "The Watchman's Lanterns"); H.score(''); info();
       H.hint('Click a square for a lantern (again to take it away). <kbd>Tab</kbd> or the button switches to dots for "no lantern". <kbd>U</kbd> undo, <kbd>H</kbd> hint.');
