@@ -10531,7 +10531,9 @@ function buildMiniGameCtx(def, src, frame) {
       clip(name, o = {}) { return playMiniGameClip(name, o); },
       idle() { if (animState !== 0) { const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } },
       // where a bone is drawn now (world), e.g. 'RightHand'; null without a rig
-      bone(name) { return getPlayerBoneWorld(name); }
+      bone(name) { return getPlayerBoneWorld(name); },
+      // a bow or a katana in hand with its moves (Promise of { kind, H, onRelease(fn) } or null)
+      weapon(kind, weaponId) { return lendGameWeapon(kind, weaponId); }
     },
     event(name, data) { miniGameEvent(name, data); },
     finish(result) { finishMiniGame(result || {}); }
@@ -10546,7 +10548,7 @@ function getPlayerBoneWorld(name) {
 }
 function playMiniGameClip(name, o = {}) {
   if (window.forgeRigBundleInfo) {
-    const slot = (window._forgeClipSlots || {})[name];
+    const slot = MiniGames.weapon?.slots?.[name] ?? (window._forgeClipSlots || {})[name];
     const g = slot != null ? animGroups[slot] : null; if (!g) return false;
     if (animState === slot) { if (g.isPlaying) g.stop(); animState = -1; } // the same move again: from its start
     if (o.speed) g.speedRatio = o.speed;
@@ -10618,6 +10620,7 @@ function finishMiniGame(r) {
 function disposeMiniGameInstance() {
   try { MiniGames.inst?.dispose?.(); } catch (e) { console.warn('mini-game dispose', e); }
   MiniGames.inst = null;
+  putAwayGameWeapon();
   MiniGames.objs.slice().reverse().forEach(n => { try { if (!n.isDisposed?.()) n.dispose(false, false); } catch (e) {} });
   MiniGames.objs = [];
   RebelGames.HUD.meter(null); RebelGames.HUD.reticle(null); RebelGames.HUD.card(''); RebelGames.HUD.msg('');
@@ -23197,6 +23200,58 @@ function capWeaponMaterial(mat, m) {
 // Weapon moves (Sept 29): Q draws / puts away the weapon; while it is out, walk / run / idle use the weapon's own
 // clips and F / G cycle its attacks. Clips come from the rig's moves pack; the props close in the Rebel's fist.
 const WEAPON_SLOT0 = 30;
+// A weapon lent for a mini-game (archery, sword trials): the Dawn's Light bow or a katana from the weapon catalog in the
+// Rebel's hands, playing that weapon's moves from the Rebel's own moves pack (Forge rigs made since the weapon moves).
+// Built the first time a game asks, kept for the visit and hidden between games; the Rebel's own weapon is out of sight
+// while it is out. null = this Rebel can't hold one (no rig or no moves pack): the game plays without.
+const GameWeapons = {}, GAME_WEAPON_SLOT0 = 70;
+async function lendGameWeapon(kind, weaponId) {
+  if (!window.forgeRigBundleInfo || !window.RebelWeapon || !window._playerImport || !charMesh) return null;
+  const id = weaponId || (kind === 'bow' ? 'dawns_light_arrows' : 'eclipse_edge'), key = id;
+  let L = GameWeapons[key];
+  if (!L) {
+    L = GameWeapons[key] = { ready: (async () => {
+      const rigUrl = (activeCharacter.basePath || '') + (_forgeSingleGlb || '');
+      const url = await RebelWeapon.movesFor(rigUrl); if (!url) return false;
+      const weapon = (await RebelWeapon.catalog()).find(w => w.id === id); if (!weapon) return false;
+      const r = window._playerImport, body = r.meshes.filter(m => m.getTotalVertices && m.getTotalVertices() > 0);
+      const back = await RebelWeapon.attach({ scene, root: r.meshes[0], meshes: body, animationGroups: animGroups.filter(Boolean), weapon, hilt: 'R', onMaterial: capWeaponMaterial });
+      if (!back) return false;
+      const groups = await RebelWeapon.loadMoves({ scene, root: r.meshes[0], url });
+      const slots = {}; let i = GAME_WEAPON_SLOT0 + Object.keys(GameWeapons).indexOf(key) * 40;
+      for (const [name, g] of Object.entries(groups)) { g.enableBlending = true; g.blendingSpeed = 0.12; animGroups[i] = g; slots[name] = i++; }
+      const kindOf = RebelWeapon.kindOf(weapon.id), set = RebelWeapon.MOVESET[kindOf];
+      const held = await RebelWeapon.holdAll({ scene, meshes: body, weapon, H: back.info.H, onMaterial: capWeaponMaterial, alt: false, groups });
+      const grip = RebelWeapon.twoHand({ scene, meshes: body, held, H: back.info.H });
+      const curClip = () => { const g = animGroups[animState]; if (!g) return null; const an = g.animatables && g.animatables[0]; const fps = (g.targetedAnimations[0] && g.targetedAnimations[0].animation.framePerSecond) || 30;
+        return { name: g.name, frac: an ? (an.masterFrame - g.from) / ((g.to - g.from) || 1) : 0, dur: (g.to - g.from) / fps / (g.speedRatio || 1) }; };
+      const sfx = RebelWeapon.sfx({ scene, clip: curClip, kind: kindOf, volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) });
+      // the bow's own arrow is the game's to fly: onRelease hands over the release point (the archer's arrow is removed)
+      const archer = kindOf === 'bow' ? RebelWeapon.archer({ scene, meshes: body, held, back, H: back.info.H, clip: curClip, ignore: (m) => m.isDescendantOf && m.isDescendantOf(charMesh),
+        onNock: () => sfx.play('arrow_nock'), onRelease: (p) => { sfx.play('bow_release'); const a = L.archer?.flying.pop(); a?.n.dispose(); L.onRelease?.(p); } }) : null;
+      Object.assign(L, { weapon, kind: kindOf, set, back, held, grip, archer, sfx, slots, H: back.info.H });
+      RebelWeapon.showHeld(held, back, set, 'none'); back.pivot.setEnabled(false);
+      return true;
+    })().catch(e => { console.warn('lent weapon', e); return false; }) };
+  }
+  if (!(await L.ready)) return null;
+  // out: the lent one in hand, the Rebel's own out of sight
+  const own = window._villageWeapon, ownBack = window._rebelWeapon;
+  L.restore = { ownBack: ownBack?.pivot?.isEnabled?.(), ownMode: own?.held?._mode };
+  if (ownBack?.pivot) ownBack.pivot.setEnabled(false);
+  if (own) RebelWeapon.showHeld(own.held, own.back, own.set, 'none');
+  L.back.pivot.setEnabled(true); RebelWeapon.showHeld(L.held, L.back, L.set, 'main');
+  MiniGames.weapon = L;
+  return { kind: L.kind, H: L.H, onRelease: (fn) => { L.onRelease = fn; } };
+}
+function putAwayGameWeapon() {
+  const L = MiniGames.weapon; if (!L) return;
+  MiniGames.weapon = null; L.onRelease = null;
+  RebelWeapon.showHeld(L.held, L.back, L.set, 'none'); L.back.pivot.setEnabled(false);
+  const own = window._villageWeapon, ownBack = window._rebelWeapon, rs = L.restore || {};
+  if (ownBack?.pivot && rs.ownBack) ownBack.pivot.setEnabled(true);
+  if (own && rs.ownMode) RebelWeapon.showHeld(own.held, own.back, own.set, rs.ownMode);
+}
 async function armVillageWeapon(r, body, pick, back) {
   const rigUrl = (activeCharacter.basePath || '') + (_forgeSingleGlb || '');
   const url = await RebelWeapon.movesFor(rigUrl);
@@ -23350,6 +23405,7 @@ const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(acti
       jump_run: 10, backflip: 11, front_flip: 12, hurricane_kick: 13, spin_flip_kick: 14, crescent_kick: 15,
       jab: 16, cross_punch: 17, hook_punch: 18, elbow_punch: 19, fight_idle: 20, hit_reaction: 21, knockdown: 22, get_up: 23 };
     window._forgeClipSlots = _slot; // mini-games play moves by name
+    window._playerImport = r;       // ... and lend weapons to its hands
     window._forgeIdleOrig = null; window._forgeFightStance = false;
     r.animationGroups.forEach(g => {
       g.stop();

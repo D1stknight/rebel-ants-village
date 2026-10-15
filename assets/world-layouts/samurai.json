@@ -29168,5 +29168,245 @@
     "enabled": true,
     "questObjectiveId": null,
     "editorLocked": false
+  },
+  {
+    "type": "ashi_target",
+    "name": "ashi_targetRootClone_yabusame_target_0",
+    "position": {
+      "x": -30,
+      "y": 0,
+      "z": -83.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1.3,
+      "y": 1.3,
+      "z": 1.3
+    },
+    "villageId": "samurai",
+    "animationMap": {},
+    "animationSpeed": {},
+    "proxyAutoEnabled": true,
+    "enabled": true
+  },
+  {
+    "type": "ashi_target",
+    "name": "ashi_targetRootClone_yabusame_target_1",
+    "position": {
+      "x": -38,
+      "y": 0,
+      "z": -77.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1.3,
+      "y": 1.3,
+      "z": 1.3
+    },
+    "villageId": "samurai",
+    "animationMap": {},
+    "animationSpeed": {},
+    "proxyAutoEnabled": true,
+    "enabled": true
+  },
+  {
+    "type": "ashi_target",
+    "name": "ashi_targetRootClone_yabusame_target_2",
+    "position": {
+      "x": -46,
+      "y": 0,
+      "z": -81
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1.3,
+      "y": 1.3,
+      "z": 1.3
+    },
+    "villageId": "samurai",
+    "animationMap": {},
+    "animationSpeed": {},
+    "proxyAutoEnabled": true,
+    "enabled": true
+  },
+  {
+    "type": "sam_banner_pole",
+    "name": "sam_banner_poleRootClone_yabusame_banner",
+    "position": {
+      "x": -13.4,
+      "y": 0,
+      "z": -82.2
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "villageId": "samurai",
+    "animationMap": {},
+    "animationSpeed": {},
+    "proxyAutoEnabled": true,
+    "enabled": true
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_sam-yabusame",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -14,
+      "y": 0,
+      "z": -80
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "samurai",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "sam-yabusame",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "archery",
+        "id": "sam-yabusame",
+        "title": "Yabusame Range",
+        "pass": 40,
+        "points": 50,
+        "targets": [
+          [
+            -3.5,
+            16
+          ],
+          [
+            2.5,
+            24
+          ],
+          [
+            -1,
+            32
+          ]
+        ],
+        "mover": {
+          "z": 21,
+          "amp": 5,
+          "speed": 2.4
+        },
+        "gold": {
+          "x": 3.5,
+          "z": 30,
+          "h": 4.4
+        }
+      }
+    }
   }
 ]
