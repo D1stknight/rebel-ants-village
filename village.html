@@ -10593,7 +10593,7 @@ async function startMiniGame(def, src) {
   // a roam game (impl.roam: runs, chases, lights to keep lit) keeps the walk: the keys walk, the camera follows, the
   // minimap stays; the game watches the player and gets a key first (O, Space ...)
   const roam = !!(impl.roam || def.roam);
-  Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0, roam, holdWalk:false });
+  Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0, roam, holdWalk:false, walkLight:null });
   document.body.classList.toggle('game-roam', roam);
   window._newTerrain?.birds?.setVisible(false);
   document.getElementById('interactionPrompt')?.classList.remove('on');
@@ -10688,6 +10688,7 @@ function buildMiniGameCtx(def, src, frame) {
     ground(x, z) { const g = getNPCGroundHeightAt?.(x, z); return Number.isFinite(g) ? g : 0; },
     village: CURRENT_VILLAGE_ID,
     night() { return getFakeLightStateFactor?.() || 0; },
+    walkLight(k) { MiniGames.walkLight = k; },              // scale the walking light while the game is on (a stealth game dims it)
     event(name, data) { miniGameEvent(name, data); },
     finish(result) { finishMiniGame(result || {}); }
   };
@@ -27598,7 +27599,7 @@ engine.runRenderLoop(()=>{
       // Slope tilt removed — character stays upright
     }
     if(animState!==2&&animState<3){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
-    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1);updateSandFootprints(_terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
+    if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1)*(MiniGames.on?(MiniGames.walkLight??1):1);updateSandFootprints(_terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
     // the camera swings round behind the character while it moves (about two seconds for a half turn at a walk, quicker
     // running), unless the mouse just turned it: walking out of a doorway toward the camera, it comes round behind
     if (hasDir && Math.abs(charMesh._vel) > .01 && performance.now() > _camManualUntil && !DanceOff.on) {

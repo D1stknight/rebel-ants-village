@@ -18,12 +18,22 @@
       const nodes = [], keep = n => { ctx.add(n); n.parent = null; nodes.push(n); if (n.isPickable !== undefined) n.isPickable = false; return n; };
       const mat = (k, c, em, o = {}) => ctx.mat('ss_' + k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(.05, .05, .05); if (em) m.emissiveColor = new B.Color3(...em); if (o.alpha != null) m.alpha = o.alpha; if (o.add) { m.disableLighting = true; m.alphaMode = B.Engine.ALPHA_ADD; m.backFaceCulling = false; } return m; });
       const robe = def.color || [.36, .08, .08], robeM = mat('robe' + robe.join('_'), robe, robe.map(v => v * .2)), dark = mat('dark', [.06, .05, .05]), straw = mat('straw', [.62, .5, .3], [.08, .06, .03]);
-      const lampM = mat('lamp', [1, .7, .35], [1, .6, .25]), coneM = mat('cone', [0, 0, 0], [1, .7, .32], { alpha: .3, add: true }), seenM = mat('seen', [0, 0, 0], [1, .2, .12], { alpha: .45, add: true });
+      const lampM = mat('lamp', [1, .7, .35], [1, .6, .25]), coneM = mat('cone', [0, 0, 0], [1, .7, .32], { alpha: .36, add: true }), seenM = mat('seen', [0, 0, 0], [1, .2, .12], { alpha: .45, add: true });
+      const edgeM = mat('edge', [0, 0, 0], [1, .88, .55], { alpha: .8, add: true }), seenEdgeM = mat('seenEdge', [0, 0, 0], [1, .3, .2], { alpha: .9, add: true });
       // the light a watchman sees by: a fan on the ground
       function fan(n) {
         const pos = [0, 0, 0], idx = [], S = 18;
         for (let i = 0; i <= S; i++) { const a = -HALF + 2 * HALF * i / S; pos.push(Math.sin(a) * VIEW, 0, Math.cos(a) * VIEW); if (i) idx.push(0, i, i + 1); }
         const m = new B.Mesh(n, scene), vd = new B.VertexData(); vd.positions = pos; vd.indices = idx; vd.normals = []; B.VertexData.ComputeNormals(pos, idx, vd.normals); vd.applyToMesh(m); m.material = coneM; m.isPickable = false; return m;
+      }
+      // its rim: a bright band along the arc and both sides, so the edge of the light reads at night
+      function fanEdge(n) {
+        const pos = [], idx = [], S = 18, W = .16, quad = (a, b, c, d) => { const k = pos.length / 3; pos.push(...a, ...b, ...c, ...d); idx.push(k, k + 1, k + 2, k, k + 2, k + 3); };
+        for (let i = 0; i < S; i++) { const a0 = -HALF + 2 * HALF * i / S, a1 = -HALF + 2 * HALF * (i + 1) / S, r0 = VIEW - W, r1 = VIEW;
+          quad([Math.sin(a0) * r0, 0, Math.cos(a0) * r0], [Math.sin(a0) * r1, 0, Math.cos(a0) * r1], [Math.sin(a1) * r1, 0, Math.cos(a1) * r1], [Math.sin(a1) * r0, 0, Math.cos(a1) * r0]); }
+        for (const a of [-HALF, HALF]) { const dx = Math.sin(a), dz = Math.cos(a), nx = dz * W / 2, nz = -dx * W / 2;
+          quad([nx, 0, nz], [dx * VIEW + nx, 0, dz * VIEW + nz], [dx * VIEW - nx, 0, dz * VIEW - nz], [-nx, 0, -nz]); }
+        const m = new B.Mesh(n, scene), vd = new B.VertexData(); vd.positions = pos; vd.indices = idx; vd.normals = []; B.VertexData.ComputeNormals(pos, idx, vd.normals); vd.applyToMesh(m); m.material = edgeM; m.isPickable = false; return m;
       }
       const cyl = (n, h, d0, d1, m, x, y, z, par) => { const c = B.MeshBuilder.CreateCylinder(n, { height: h, diameterTop: d0, diameterBottom: d1, tessellation: 12 }, scene); c.material = m; c.parent = par; c.position.set(x, y, z); c.isPickable = false; return c; };
       const guards = (def.guards || []).map((g, i) => {
@@ -34,8 +44,9 @@
         const pole = cyl('ssPole', 1.3, .05, .05, dark, .42, 2.3, .55, body); pole.rotation.x = -.7;
         const lamp = cyl('ssLamp', .42, .3, .3, lampM, .42, 2.6, 1.05, body);
         const cone = fan('ssCone' + i); cone.parent = root; cone.position.y = .07;
+        const edge = fanEdge('ssEdge' + i); edge.parent = root; edge.position.y = .08;
         const path = (g.path || [[0, 0]]).map(([x, z]) => ({ x: +x, z: +z }));
-        const G = { root, body, cone, lamp, path, speed: g.speed || 2, wait: g.wait ?? 1.2, loop: !!g.loop, look: g.look || null, seg: 0, dir: 1, u: 0, pause: 0, x: path[0].x, z: path[0].z, yaw: g.look ? g.look[0] : 0, alert: 0, ph: i * 1.7 };
+        const G = { root, body, cone, edge, lamp, path, speed: g.speed || 2, wait: g.wait ?? 1.2, loop: !!g.loop, look: g.look || null, seg: 0, dir: 1, u: 0, pause: 0, x: path[0].x, z: path[0].z, yaw: g.look ? g.look[0] : 0, alert: 0, ph: i * 1.7 };
         if (path.length > 1) G.yaw = Math.atan2(path[1].x - path[0].x, path[1].z - path[0].z);
         return G;
       });
@@ -47,7 +58,7 @@
       const startW = ctx.player.world(); st.safe = { x: startW.x, z: startW.z, yaw: ctx.player.yaw?.() ?? 0 };
       function next() { const c = cps.find(q => !q.got); return c || goal; }
       function seen(g) {
-        st.caught++; st.seenT = 1.1; g.cone.material = seenM; g.alert = 1.6; ctx.sound('clang'); H.msg('Seen!', 900, 'back to the last post');
+        st.caught++; st.seenT = 1.1; g.cone.material = seenM; g.edge.material = seenEdgeM; g.alert = 1.6; ctx.sound('clang'); H.msg('Seen!', 900, 'back to the last post');
         st.back = .55; ctx.player.hold(true);
       }
       function finish(done) {
@@ -57,7 +68,7 @@
           ctx.finish({ time: t, finished: true, passed: !!medal, kicker: medal ? medal + ' medal' : 'Through unseen', extra: `${st.caught ? `Seen ${st.caught} time${st.caught > 1 ? 's' : ''}. ` : 'Never seen. '}${medal === 'Gold' ? 'A shadow among shadows. ' : 'Wait for a lantern to turn away, then go behind it. '}${lines}` }); }
         else { H.msg('Out of time', 1800); ctx.finish({ time: t, finished: false, passed: false, kicker: 'Out of time', extra: `Seen ${st.caught} ${st.caught === 1 ? 'time' : 'times'}. Watch the light on the ground: it is all they can see. ${lines}` }); }
       }
-      ctx.player.hold(true);
+      ctx.player.hold(true); ctx.walkLight?.(def.walkLight ?? .3); // the Rebel's own glow would read as lantern light
       H.title(def.title || 'Silent Steps'); H.score('0.0'); H.info(`${guards.length} watchmen · gold ${gold} s`);
       H.hint(`${def.text ? def.text + ' · ' : ''}Keep out of the lantern light · walk (running makes them look) · blue rings are posts`);
       return {
@@ -85,7 +96,7 @@
             g.y = ctx.ground(g.x, g.z); g.root.position.set(g.x, g.y, g.z); g.root.rotation.y = g.yaw;
             g.body.position.y = g.pause > 0 || g.look ? 0 : Math.abs(Math.sin(t * 5 + g.ph)) * .06;
             g.lamp.scaling.y = 1 + .06 * Math.sin(t * 11 + g.ph);
-            if (st.seenT <= 0 && g.cone.material !== coneM) g.cone.material = coneM;
+            if (st.seenT <= 0 && g.cone.material !== coneM) { g.cone.material = coneM; g.edge.material = edgeM; }
           }
           if (st.seenT > 0) st.seenT -= dt;
           if (st.back != null) { st.back -= dt; if (st.back <= 0) { st.back = null; ctx.player.placeWorld(st.safe.x, st.safe.z, st.safe.yaw); ctx.player.hold(false); } }
