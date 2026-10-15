@@ -9980,15 +9980,40 @@ function syncQuestSpotPathPieces(root, cfg) {
       const n = new BABYLON.TransformNode(`${root.name}_path${i}`, scene); n.metadata = { _perfNeverFreeze:true };
       const y = getNPCGroundHeightAt?.(x, z); n.position.set(x, Number.isFinite(y) ? y : root.position.y, z);
       window.SamuraiKit.build(n, cfg.pathPiece, scene); n.getChildMeshes(false).forEach(c => { c.isPickable = false; });
+      // a soft gold glow on the ground under each piece, stronger at night (the flags are dark after sunset)
+      const glow = getPathGlowDisc().createInstance(`${root.name}_pathHalo${i}`);
+      glow.rotation.x = Math.PI / 2; glow.position.y = .06; glow.parent = n; glow.isPickable = false;
       return n;
     });
   }
   if (!m._pathPieces) return;
+  const pg = getPathGlowMaterial(), now = performance.now();
+  if (now - (pg.metadata.at || 0) > 1000) { pg.metadata.at = now; pg.alpha = .12 + .5 * Math.min(1, Math.max(0, getFakeLightStateFactor?.() || 0)); }
   // light by light: on the way, the lights already passed go out (all back if the walk is lost); the next one pulses
   const racing = QuestSpotRuntime.race?.root === root, passed = racing ? QuestSpotRuntime.race.next : 0;
   if (m._pathPassed !== passed) { m._pathPassed = passed; m._pathPieces.forEach((n, i) => { n.setEnabled(i >= passed); n.scaling.setAll(1); }); }
   const nx = racing && m._pathPieces[passed];
   if (nx) nx.scaling.setAll(1 + .22 * Math.abs(Math.sin(performance.now() / 240)));
+}
+
+// the shared glow under path pieces (additive gold; its strength follows the night)
+let _pathGlowMat = null;
+function getPathGlowMaterial() {
+  if (_pathGlowMat && !_pathGlowMat.isDisposed?.()) return _pathGlowMat;
+  const m = new BABYLON.StandardMaterial('pathGlowBeamMat', scene);
+  m.disableLighting = true; m.emissiveColor = new BABYLON.Color3(1, .8, .35); m.alpha = .3; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.backFaceCulling = false;
+  m.opacityTexture = (() => { const t = new BABYLON.DynamicTexture('pathGlowTex', 64, scene, false); const g = t.getContext(), r = g.createRadialGradient(32, 32, 2, 32, 32, 31);
+    r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.55, 'rgba(255,255,255,.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); t.update(); t.hasAlpha = true; return t; })();
+  m.metadata = { perfKeepLive: true, at: 0 };
+  return (_pathGlowMat = m);
+}
+// the glow disc itself: hidden, its copies (one per path piece) draw together in one call
+let _pathGlowDisc = null;
+function getPathGlowDisc() {
+  if (_pathGlowDisc && !_pathGlowDisc.isDisposed()) return _pathGlowDisc;
+  const d = BABYLON.MeshBuilder.CreateDisc('pathGlowDisc', { radius: 1.15, tessellation: 24 }, scene);
+  d.material = getPathGlowMaterial(); d.isPickable = false; d.isVisible = false; d.metadata = { _perfNeverFreeze: true };
+  return (_pathGlowDisc = d);
 }
 
 // the next point of a run or walk while it runs: a soft gold beam and ring on it (the minimap's diamond goes there too)
