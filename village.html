@@ -25062,13 +25062,42 @@ document.addEventListener('keyup', e => {
 let _orbitDragging=false, _orbitLastX=0, _orbitLastY=0;
 let _orbitAngleH=Math.PI, _orbitAngleV=0.35;
 let _orbitDist=9;
+// the camera follows behind the walk (see the render loop): a mouse drag holds it where it was put for a moment; held
+// movement keys keep the direction they were pressed in (the camera's yaw then), so the swing never bends the walk
+let _camManualUntil = 0, _moveRefYaw = null, _moveRefKeys = '';
+// the camera stays clear of buildings: a ray from the character's head to where the camera wants to be; the solid meshes
+// near the player are listed every 0.6 s (low things, plants, glows and the ground are left out), so one ray costs little
+const _camOcc = { list: [], at: 0, dist: null, frame: 0, hit: Infinity };
+const CAM_OCC_SKIP = /leaf|leaves|grass|flower|glow|halo|beam|ray|mist|fog|smoke|fire|flame|water|sea|sky|star|moon|particle|npc|quest|marker|glint|banner|noren|rope|cloth|net|shadow|terrain|gnd|ground|skirt|footprint|print|bird|petal|rain|snow|spark/i;
+// the character's meshes see-through (camera right behind the head) or back to solid; only touched when it changes
+let _playerFade = 1;
+function setPlayerCameraFade(v) {
+  if (v === _playerFade) return;
+  _playerFade = v;
+  scene.getTransformNodeByName('playerRoot')?.getChildMeshes(false).forEach(m => { m.visibility = v; });
+}
+function getCameraOccluders() {
+  const now = performance.now();
+  if (now - _camOcc.at < 600) return _camOcc.list;
+  _camOcc.at = now;
+  const p = charMesh.position, pr = scene.getTransformNodeByName('playerRoot');
+  _camOcc.list = scene.meshes.filter(m => {
+    if (!m.isEnabled() || !m.isVisible || m.visibility < .5 || !m.getTotalVertices?.() || m.metadata?.keepInInteriors || m.isAnInstance === false && m.metadata?.samKitTemplate) return false;
+    if (CAM_OCC_SKIP.test(m.name || '') || CAM_OCC_SKIP.test(m.material?.name || '')) return false;
+    for (let n = m.parent; n; n = n.parent) if (n === pr) return false;
+    const bb = m.getBoundingInfo().boundingBox, c = bb.centerWorld, e = bb.extendSizeWorld;
+    if (e.y < 1.1 || Math.max(e.x, e.z) > 120) return false; // low things never hide the character; huge ones are terrain
+    return Math.hypot(c.x - p.x, c.z - p.z) < 22 + Math.max(e.x, e.z);
+  });
+  return _camOcc.list;
+}
 // walking is camera-relative: tools steer by turning the orbit (headless walk tests)
 window._walkCamera = { get yaw() { return _orbitAngleH; }, set yaw(a) { _orbitAngleH = a; } };
 scene.onPointerObservable.add(evt=>{
   if(!walkMode)return;
   if(evt.type===BABYLON.PointerEventTypes.POINTERDOWN){_orbitDragging=true;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;}
   else if(evt.type===BABYLON.PointerEventTypes.POINTERUP){_orbitDragging=false;}
-  else if(evt.type===BABYLON.PointerEventTypes.POINTERMOVE&&_orbitDragging){const dx=scene.pointerX-_orbitLastX,dy=scene.pointerY-_orbitLastY;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;_orbitAngleH+=dx*0.008;_orbitAngleV=Math.max(0.08,Math.min(0.85,_orbitAngleV+dy*0.006));}
+  else if(evt.type===BABYLON.PointerEventTypes.POINTERMOVE&&_orbitDragging){const dx=scene.pointerX-_orbitLastX,dy=scene.pointerY-_orbitLastY;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;_orbitAngleH+=dx*0.008;_orbitAngleV=Math.max(0.08,Math.min(0.85,_orbitAngleV+dy*0.006));if(Math.abs(dx)+Math.abs(dy)>0)_camManualUntil=performance.now()+1800;}
 });
 scene.onPointerObservable.add(evt=>{
   if(!charMesh)return;
@@ -26877,11 +26906,14 @@ engine.runRenderLoop(()=>{
     // angle) instead of steering round in a wide arc. R alone runs straight ahead.
     const inF = (moveForward ? 1 : 0) - (moveBackward ? 1 : 0), inR = (turnRight ? 1 : 0) - (turnLeft ? 1 : 0);
     let dirX = 0, dirZ = 0;
+    const _keysNow = inF + ',' + inR;
     if (inF || inR) {
-      const fx = -Math.sin(_orbitAngleH), fz = -Math.cos(_orbitAngleH); // the camera's forward on the ground; its right is (fz, -fx)
+      // the direction is taken from the camera when the keys change (or while the mouse turns it), then kept
+      if (_keysNow !== _moveRefKeys || _moveRefYaw === null || performance.now() < _camManualUntil) { _moveRefYaw = _orbitAngleH; _moveRefKeys = _keysNow; }
+      const fx = -Math.sin(_moveRefYaw), fz = -Math.cos(_moveRefYaw); // the camera's forward on the ground; its right is (fz, -fx)
       const dx = fx * inF + fz * inR, dz = fz * inF - fx * inR, l = Math.hypot(dx, dz) || 1;
       dirX = dx / l; dirZ = dz / l;
-    } else if (runKey) { dirX = Math.sin(charMesh.rotation.y); dirZ = Math.cos(charMesh.rotation.y); }
+    } else { _moveRefKeys = ''; if (runKey) { dirX = Math.sin(charMesh.rotation.y); dirZ = Math.cos(charMesh.rotation.y); } }
     const hasDir = dirX !== 0 || dirZ !== 0;
     let _turnRest = 0, _yawRate = 0;
     if (hasDir) {
@@ -26912,12 +26944,34 @@ engine.runRenderLoop(()=>{
     }
     if(animState!==2&&animState<3){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1);updateSandFootprints(_terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
-    // the camera swings back behind only when running straight ahead with R (no direction keys): following the
-    // character's facing while walking sideways or toward the camera would turn the walk into a circle
-    if(runKey&&!inF&&!inR){const _d=charMesh.rotation.y+Math.PI-_orbitAngleH;_orbitAngleH+=Math.atan2(Math.sin(_d),Math.cos(_d))*0.04;}
+    // the camera swings round behind the character while it moves (about two seconds for a half turn at a walk, quicker
+    // running), unless the mouse just turned it: walking out of a doorway toward the camera, it comes round behind
+    if (hasDir && Math.abs(charMesh._vel) > .01 && performance.now() > _camManualUntil && !DanceOff.on) {
+      const _d = charMesh.rotation.y + Math.PI - _orbitAngleH, da = Math.atan2(Math.sin(_d), Math.cos(_d));
+      _orbitAngleH += da * (1 - Math.exp(-(runKey ? 2.4 : 1.5) * dt));
+    }
     _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
-    const dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
+    let dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
     const _camTarget = new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z);
+    if (!ActiveInterior) {
+      // a building between the head and the camera pulls the camera in front of it (snaps in, eases back out)
+      const head = new BABYLON.Vector3(charMesh.position.x, charMesh.position.y + 2.4, charMesh.position.z), toCam = dc.subtract(head), full = toCam.length();
+      if (full > .1) {
+        toCam.scaleInPlace(1 / full);
+        if ((++_camOcc.frame & 1) === 0) {
+          const ray = new BABYLON.Ray(head, toCam, full); let hit = Infinity;
+          for (const m of getCameraOccluders()) { const pi = ray.intersectsMesh(m, false); if (pi.hit && pi.distance < hit) hit = pi.distance; }
+          _camOcc.hit = hit;
+        }
+        const want = Number.isFinite(_camOcc.hit) ? Math.max(1.4, _camOcc.hit - .4) : full;
+        _camOcc.dist = _camOcc.dist == null ? want : want < _camOcc.dist ? _camOcc.dist + (want - _camOcc.dist) * .5 : _camOcc.dist + (want - _camOcc.dist) * .08;
+        if (_camOcc.dist < full) dc = head.add(toCam.scale(_camOcc.dist));
+        // pulled in close, the camera rises to look over the head, and the character fades so the way ahead shows
+        if (_camOcc.dist < 3.4) dc.y += (3.4 - _camOcc.dist) * 1.1;
+        const gy = getVillageBaseGroundHeightAt(dc.x, dc.z); if (Number.isFinite(gy) && dc.y < gy + .7) dc.y = gy + .7; // never under the ground (the terrain, not roofs)
+        setPlayerCameraFade(_camOcc.dist < 2.4 ? .35 : 1);
+      }
+    } else { _camOcc.dist = null; setPlayerCameraFade(1); }
     walk.position=BABYLON.Vector3.Lerp(walk.position,ActiveInterior?clipInteriorCameraPosition(dc,_camTarget):dc,0.1);
     walk.setTarget(_camTarget);
   }
