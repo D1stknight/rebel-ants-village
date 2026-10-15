@@ -107,7 +107,7 @@
           if (st.phase === 'solved' && (st.wait -= dt) <= 0) {
             st.phase = 'done'; H.hint('');
             const k = bd.k, score = SCORE[k] ?? 20 * (k + 1);
-            ctx.finish({ score, label: 'points', passed: score >= (def.pass || 0), extra: `Level ${k + 1} won (${label(LV[k])}) with ${bd.toggles} moves.${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level won.'}` });
+            ctx.finish({ score, label: 'points', solved: true, passed: score >= (def.pass || 0), extra: `Level ${k + 1} won (${label(LV[k])}) with ${bd.toggles} moves.${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level won.'}` });
           }
         },
         key(e, down) {

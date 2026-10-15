@@ -113,7 +113,7 @@
           if (st.phase === 'solved' && (st.wait -= dt) <= 0) {
             st.phase = 'done'; H.hint(''); tags.forEach(t => t.remove());
             const k = lv.k, score = (SCORE[k] ?? 20 * (k + 1)) + (lv.moves <= lv.best ? 10 : 0);
-            ctx.finish({ score, label: 'points', passed: score >= (def.pass || 0), extra: `Level ${k + 1} measured in ${lv.moves} moves (the fewest is ${lv.best}).${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level measured.'}` });
+            ctx.finish({ score, label: 'points', solved: true, passed: score >= (def.pass || 0), extra: `Level ${k + 1} measured in ${lv.moves} moves (the fewest is ${lv.best}).${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level measured.'}` });
           }
         },
         key(e, down) {

@@ -134,7 +134,7 @@
           if ((st.phase === 'won' || st.phase === 'lost') && (st.wait -= dt) <= 0) {
             const won = st.phase === 'won'; st.phase = 'done'; H.hint('');
             const k = bd.k, score = won ? (SCORE[k] ?? 25 * (k + 1)) : 0;
-            ctx.finish({ score, label: 'points', passed: won && score >= (def.pass || 0), extra: won ? `Level ${k + 1} (${label(LV[k])}) won in ${Math.ceil(bd.turns / 2)} turns.${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level won.'}`
+            ctx.finish({ score, label: 'points', passed: won && score >= (def.pass || 0), solved: won, solvedWord: 'Won', extra: won ? `Level ${k + 1} (${label(LV[k])}) won in ${Math.ceil(bd.turns / 2)} turns.${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level won.'}`
               : `The Archivist won level ${k + 1}. He says: ${HINTS[Math.min(HINTS.length - 1, losses - 1)]}` });
           }
         },

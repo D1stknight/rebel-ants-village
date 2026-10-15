@@ -98,7 +98,7 @@
           if ((st.phase === 'won' || st.phase === 'fail') && (st.wait -= dt) <= 0) {
             const won = st.phase === 'won'; st.phase = 'done'; H.hint('');
             const k = lv.k, score = won ? (SCORE[k] ?? 30 * (k + 1)) + (3 - lv.falls) * 5 : 0;
-            ctx.finish({ score, label: 'points', passed: won && score >= (def.pass || 0), extra: won ? `Level ${k + 1} crossed with ${lv.falls} fall${lv.falls === 1 ? '' : 's'}.${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every path crossed.'}` : `The mist won on level ${k + 1}.` });
+            ctx.finish({ score, label: 'points', passed: won && score >= (def.pass || 0), solved: won, extra: won ? `Level ${k + 1} crossed with ${lv.falls} fall${lv.falls === 1 ? '' : 's'}.${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every path crossed.'}` : `The mist won on level ${k + 1}.` });
           }
         },
         key(e, down) {

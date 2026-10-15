@@ -10740,8 +10740,8 @@ function finishMiniGame(r) {
   if (passed && def.questOn === 'pass') miniGameQuestHook();
   try { window.dispatchEvent(new CustomEvent('rebelAntsGameEnd', { detail:{ game:def.id, score, passed, best:rec.best, newBest, points } })); } catch (e) {}
   if (points) setTimeout(() => showRebelPointsPop(points), 600);
-  const extra = [r.extra || '', points ? `First clear: +${points} Rebel points.` : (!passed && def.pass ? `Score ${def.pass} to clear it.` : '')].filter(Boolean).join(' ');
-  RebelGames.showResult({ kicker: passed ? 'Cleared' : 'Game over', title: def.title || MiniGames.impl?.title || '', score, label: r.label || 'points', best: rec.best, newBest, extra,
+  const extra = [r.extra || '', points ? `First clear: +${points} Rebel points.` : (!passed && def.pass ? (r.solved ? `${def.pass} points clears the game: try a harder level.` : `Score ${def.pass} to clear it.`) : '')].filter(Boolean).join(' ');
+  RebelGames.showResult({ kicker: passed ? 'Cleared' : r.solved ? (r.solvedWord || 'Solved') : 'Game over', title: def.title || MiniGames.impl?.title || '', score, label: r.label || 'points', best: rec.best, newBest, extra,
     onAgain: () => restartMiniGame(), onDone: () => endMiniGame() });
 }
 function disposeMiniGameInstance() {

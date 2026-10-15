@@ -148,7 +148,7 @@
           if (st.phase === 'solved' && (st.wait -= dt) <= 0) {
             st.phase = 'done'; H.hint('');
             const k = bd.k, base = SCORE[k] ?? 20 * (k + 1), fewest = bd.moves <= bd.min, score = Math.max(5, base - bd.hints * 10 + (fewest && !bd.hints ? 15 : 0));
-            ctx.finish({ score, label: 'points', passed: score >= (def.pass || 0), extra: `Level ${k + 1} (${label(LV[k])}): ${bd.moves} waterings, the fewest is ${bd.min}${fewest && !bd.hints ? ' (+15)' : ''}${bd.hints ? `, ${bd.hints} hint${bd.hints === 1 ? '' : 's'}` : ''}.${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level won.'}` });
+            ctx.finish({ score, label: 'points', solved: true, passed: score >= (def.pass || 0), extra: `Level ${k + 1} (${label(LV[k])}): ${bd.moves} waterings, the fewest is ${bd.min}${fewest && !bd.hints ? ' (+15)' : ''}${bd.hints ? `, ${bd.hints} hint${bd.hints === 1 ? '' : 's'}` : ''}.${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level won.'}` });
           }
         },
         key(e, down) {

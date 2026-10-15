@@ -101,7 +101,7 @@
           if (st.phase === 'solved' && (st.wait -= dt) <= 0) {
             st.phase = 'done'; H.hint('');
             const k = bd.k, score = SCORE[k] ?? 30 * (k + 1);
-            ctx.finish({ score, label: 'points', passed: score >= (def.pass || 0), extra: `The ${bd.n} × ${bd.n} seal is whole in ${bd.moves} moves (${Math.round(bd.t)} s).${k + 1 < LV.length ? ` The ${LV[k + 1].n} × ${LV[k + 1].n} is open.` : ' Every seal is whole.'}` });
+            ctx.finish({ score, label: 'points', solved: true, passed: score >= (def.pass || 0), extra: `The ${bd.n} × ${bd.n} seal is whole in ${bd.moves} moves (${Math.round(bd.t)} s).${k + 1 < LV.length ? ` The ${LV[k + 1].n} × ${LV[k + 1].n} is open.` : ' Every seal is whole.'}` });
           }
         },
         key(e, down) {

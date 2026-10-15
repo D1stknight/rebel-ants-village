@@ -102,7 +102,7 @@
           if ((st.phase === 'won' || st.phase === 'lost') && (st.wait -= dt) <= 0) {
             const won = st.phase === 'won'; st.phase = 'done'; H.hint('');
             const k2 = lv.k, score = won ? (SCORE[k2] ?? 30) + Math.ceil(lv.left) : lv.found * 4;
-            ctx.finish({ score, label: 'points', passed: won && score >= (def.pass || 0), extra: won ? `Level ${k2 + 1}: every scout spotted with ${Math.ceil(lv.left)} s to spare${lv.wrong ? `, ${lv.wrong} wrong call${lv.wrong === 1 ? '' : 's'}` : ''}.${k2 + 1 < LV.length ? ` Level ${k2 + 2} is open.` : ' Every level won.'}`
+            ctx.finish({ score, label: 'points', passed: won && score >= (def.pass || 0), solved: won, extra: won ? `Level ${k2 + 1}: every scout spotted with ${Math.ceil(lv.left)} s to spare${lv.wrong ? `, ${lv.wrong} wrong call${lv.wrong === 1 ? '' : 's'}` : ''}.${k2 + 1 < LV.length ? ` Level ${k2 + 2} is open.` : ' Every level won.'}`
               : `${lv.found} of ${lv.L.n} scouts spotted.` });
           }
         },

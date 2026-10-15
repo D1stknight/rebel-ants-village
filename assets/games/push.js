@@ -111,7 +111,7 @@
           if (st.phase === 'solved' && (st.solvedAt -= dt) <= 0) {
             st.phase = 'done'; H.hint('');
             const k = board.k, best = BS[k] || board.moves, score = (k + 1) * 20 + (board.moves <= Math.ceil(best * 1.2) ? 10 : 0);
-            ctx.finish({ score, label: 'points', extra: `Level ${k + 1} solved in ${board.moves} steps (the fewest is ${best}).${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level solved.'}` });
+            ctx.finish({ score, label: 'points', solved: true, extra: `Level ${k + 1} solved in ${board.moves} steps (the fewest is ${best}).${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level solved.'}` });
           }
         },
         key(e, down) {

@@ -123,7 +123,7 @@
           if ((st.phase === 'solved' || st.phase === 'fail') && (st.wait -= dt) <= 0) {
             const won = st.phase === 'solved'; st.phase = 'done'; H.hint(''); gong.remove();
             const k = lv.k, score = won ? (k + 1) * 25 + (lv.hidden ? lv.shines * 5 : (lv.toggles <= lv.best + 1 ? 10 : 0)) : 0;
-            ctx.finish({ score, label: 'points', passed: won && score >= (def.pass || 0), extra: won ? `Level ${k + 1} lit with ${lv.toggles} turns (the fewest is ${lv.best})${lv.hidden ? `, ${lv.shines} of ${SHINES} gong strikes left` : ''}.${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level lit.'}` : `Level ${k + 1}: the sun set first.` });
+            ctx.finish({ score, label: 'points', passed: won && score >= (def.pass || 0), solved: won, extra: won ? `Level ${k + 1} lit with ${lv.toggles} turns (the fewest is ${lv.best})${lv.hidden ? `, ${lv.shines} of ${SHINES} gong strikes left` : ''}.${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level lit.'}` : `Level ${k + 1}: the sun set first.` });
           }
         },
         key(e, down) {

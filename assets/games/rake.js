@@ -121,7 +121,7 @@
           if (st.phase === 'solved' && (st.wait -= dt) <= 0) {
             st.phase = 'done'; H.hint('');
             const k = bd.k, score = SCORE[k] ?? 30 * (k + 1);
-            ctx.finish({ score, label: 'points', passed: score >= (def.pass || 0), extra: `Level ${k + 1} raked in one line (${bd.undos} step${bd.undos === 1 ? '' : 's'} back).${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every garden raked.'}` });
+            ctx.finish({ score, label: 'points', solved: true, passed: score >= (def.pass || 0), extra: `Level ${k + 1} raked in one line (${bd.undos} step${bd.undos === 1 ? '' : 's'} back).${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every garden raked.'}` });
           }
         },
         key(e, down) {

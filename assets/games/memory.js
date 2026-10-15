@@ -116,7 +116,7 @@
           if ((st.phase === 'won' || st.phase === 'lost') && (st.wait2 -= dt) <= 0) {
             const won = st.phase === 'won'; st.phase = 'done'; H.hint('');
             const k = bd.k, base = SCORE[k] ?? 20 * (k + 1), score = won ? Math.max(5, base - Math.max(0, bd.misses - bd.cards.length / 2)) : found() * 2;
-            ctx.finish({ score, label: 'points', passed: won && score >= (def.pass || 0), extra: won ? `Level ${k + 1} (${label(LV[k])}): every pair in ${bd.turns} turns, ${bd.misses} misses.${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level won.'}`
+            ctx.finish({ score, label: 'points', passed: won && score >= (def.pass || 0), solved: won, extra: won ? `Level ${k + 1} (${label(LV[k])}): every pair in ${bd.turns} turns, ${bd.misses} misses.${k + 1 < LV.length ? ` Level ${k + 2} is open.` : ' Every level won.'}`
               : `${found()} of ${bd.cards.length / 2} pairs before the misses ran out.` });
           }
         },
