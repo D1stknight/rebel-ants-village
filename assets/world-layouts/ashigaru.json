@@ -48455,5 +48455,182 @@
         "text": "The coop is open: catch all five chickens"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_ashi-harvest-run",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -16,
+      "y": 0.1,
+      "z": -12
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ashigaru",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "ashi-harvest-run",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "gather",
+        "id": "ashi-harvest-run",
+        "title": "Harvest Run",
+        "points": 60,
+        "questOn": "pass",
+        "look": "sheaf",
+        "carry": 3,
+        "name": "sheaf",
+        "names": "sheaves",
+        "dropName": "the cart",
+        "text": "Bring the rice sheaves in before the rain",
+        "items": [
+          [
+            4.8,
+            29.7
+          ],
+          [
+            22.5,
+            21.4
+          ],
+          [
+            31.6,
+            4.9
+          ],
+          [
+            28.6,
+            -13.4
+          ],
+          [
+            14.7,
+            -26.6
+          ],
+          [
+            -4.8,
+            -29.7
+          ],
+          [
+            -22.5,
+            -21.4
+          ],
+          [
+            -31.8,
+            -5.3
+          ],
+          [
+            -28.6,
+            13.4
+          ],
+          [
+            -13.2,
+            26.6
+          ]
+        ],
+        "drop": [
+          -12,
+          -6
+        ],
+        "medals": [
+          62,
+          78,
+          106
+        ]
+      }
+    }
   }
 ]
