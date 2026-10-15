@@ -27683,7 +27683,7 @@
     },
     "rotation": {
       "x": 0,
-      "y": 2.3562,
+      "y": -0.7854,
       "z": 0
     },
     "scaling": {
@@ -27788,11 +27788,18 @@
         "pass": 0,
         "questOn": "pass",
         "song": "saints-la",
-        "car": "sl_car_purple",
+        "car": "sl_car_gold",
         "floor": [
           0.39,
           0.616,
           1
+        ],
+        "camR": 12,
+        "camY": 4.2,
+        "camT": [
+          -1,
+          0.3,
+          0
         ]
       }
     }
