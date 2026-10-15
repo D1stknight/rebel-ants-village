@@ -3943,8 +3943,16 @@ const MoonTaleSounds = (() => {
     } finally { bus = keep; }
     setTimeout(() => { try { mine.disconnect(); } catch (e) {} }, 4000);
   }
-  window._taleSounds = { play, stop, fx, ping, names:() => Object.keys(SONGS), ctx:() => ctx }; // tests
-  return { play, stop, fx, ping, latency:() => (ctx ? (ctx.outputLatency || ctx.baseLatency || 0) : 0) };
+  // a bus of its own for a game's music (the dance-offs' songs): { ctx, out (a gain at the mix level), latency }; the game
+  // disconnects it when done
+  function mix() {
+    if (!ensure() || document.hidden) return null;
+    try { if (ctx.state === 'suspended') ctx.resume(); } catch (e) {}
+    out.gain.value = .55 * vol(); const g = ctx.createGain(); g.connect(out);
+    return { ctx, out: g, latency: ctx.outputLatency || ctx.baseLatency || 0 };
+  }
+  window._taleSounds = { play, stop, fx, ping, mix, names:() => Object.keys(SONGS), ctx:() => ctx }; // tests
+  return { play, stop, fx, ping, mix, latency:() => (ctx ? (ctx.outputLatency || ctx.baseLatency || 0) : 0) };
 })();
 
 // Journal > Moon Tales: one page per tale, its text once its last quest is done.
@@ -9953,7 +9961,7 @@ function renderGamesJournal() {
   const rows = Object.values(VILLAGE_REGISTRY).map(village => {
     const list = GAME_LIST.filter(g => g[2] === village.villageId); if (!list.length) return '';
     const mine = list.filter(([id]) => rec[id]?.plays), left = list.length - mine.length;
-    const names = mine.map(([id, title]) => `<span class="journal-secret-name">${escapeHTML(title)} · best ${Math.round(rec[id].best || 0)}${rec[id].cleared ? ' ✓' : ''}</span>`).join(' · ');
+    const names = mine.map(([id, title]) => `<span class="journal-secret-name">${escapeHTML(title)} · best ${rec[id].low ? (rec[id].best ? rec[id].best.toFixed(1) + ' s' : '—') : Math.round(rec[id].best || 0)}${rec[id].cleared ? ' ✓' : ''}</span>`).join(' · ');
     return `<div class="journal-row ${mine.length ? '' : 'locked'}"><b>${escapeHTML(village.displayName)}</b> · ${mine.length} / ${list.length}<br>${names}${left ? `${names ? ' · ' : ''}${left === 1 ? 'one game' : left + ' games'} still to find` : ''}</div>`;
   }).join('');
   return `<div class="journal-card full"><strong>Games</strong><span>${played} / ${GAME_LIST.length} found · ${cleared} cleared</span><div class="journal-progress"><div style="width:${Math.round(cleared / Math.max(1, GAME_LIST.length) * 100)}%"></div></div></div>${rows}`;
@@ -10582,7 +10590,11 @@ async function startMiniGame(def, src) {
   guide?.setEnabled(false);
   MiniGames.saved.hidden = [src.root, ...(ActiveInterior ? getInteriorHotspotRoots() : [])].filter(n => n?.isEnabled?.());
   MiniGames.saved.hidden.forEach(n => n.setEnabled(false));
-  Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0 });
+  // a roam game (impl.roam: runs, chases, lights to keep lit) keeps the walk: the keys walk, the camera follows, the
+  // minimap stays; the game watches the player and gets a key first (O, Space ...)
+  const roam = !!(impl.roam || def.roam);
+  Object.assign(MiniGames, { on:true, busy:false, impl, def, src, objs:[], escAt:0, roam, holdWalk:false });
+  document.body.classList.toggle('game-roam', roam);
   window._newTerrain?.birds?.setVisible(false);
   document.getElementById('interactionPrompt')?.classList.remove('on');
   holdBadgeUnlockPopup(); // a badge card left open would sit over the game
@@ -10639,6 +10651,7 @@ function buildMiniGameCtx(def, src, frame) {
     note(f, kind) { MoonTaleSounds.ping(f, kind); },         // one pitched note: 'bell', 'lantern' or 'fire'
     npc(id) { return getNPCById(id); },                      // a village NPC's root (riddle-givers, opponents)
     music(name, loops) { if (name) MoonTaleSounds.play(name, loops); }, stopMusic() { MoonTaleSounds.stop(.3); },
+    audio() { return MoonTaleSounds.mix(); },                // a music bus of the game's own (Web Audio), or null
     sfx(name, opts) { try { (MiniGames.sfx ||= window.RebelWeapon?.sfx?.({ scene, clip: () => null, kind: 'bow', volume: () => (WeatherManager.interactionAudioEnabled ? WeatherManager.masterVolume * WeatherManager.interactionVolume * 1.4 : 0) }))?.play?.(name, opts); } catch (e) {} },
     // a screen point (CSS px) of a world point, for score pops
     screenOf(p) { const r = engine.getRenderingCanvasClientRect(); const v = BABYLON.Vector3.Project(p, BABYLON.Matrix.Identity(), scene.getTransformMatrix(), walk.viewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight()));
@@ -10661,8 +10674,20 @@ function buildMiniGameCtx(def, src, frame) {
       // where a bone is drawn now (world), e.g. 'RightHand'; null without a rig
       bone(name) { return getPlayerBoneWorld(name); },
       // a bow or a katana in hand with its moves (Promise of { kind, H, onRelease(fn) } or null)
-      weapon(kind, weaponId) { return lendGameWeapon(kind, weaponId); }
+      weapon(kind, weaponId) { return lendGameWeapon(kind, weaponId); },
+      // roam games: where the player is (world), stand somewhere in the village (world x, z, facing yaw), hold the walk
+      // (a countdown: the walking keys do nothing), and whether R is held
+      world() { return charMesh.position.clone(); },
+      placeWorld(x, z, yaw) { charMesh.position.x = x; charMesh.position.z = z; if (yaw != null) charMesh.rotation.y = yaw; charMesh._vel = 0; _playerDeckSnapUntil = performance.now() + 600;
+        const g = getVillagePlayerGroundHeightAt(x, z); if (Number.isFinite(g)) groundPlayableVisualToTerrain(g); snapWalkCameraBehindPlayer(); },
+      hold(on) { MiniGames.holdWalk = !!on; if (on) { moveForward = moveBackward = turnLeft = turnRight = runKey = false; charMesh._vel = 0; } },
+      running() { return !!runKey; },
+      speed() { return Math.abs(charMesh._vel || 0) / Math.max(1e-3, engine.getDeltaTime() / 1000); }
     },
+    // the ground (or a kit floor) at a world point
+    ground(x, z) { const g = getNPCGroundHeightAt?.(x, z); return Number.isFinite(g) ? g : 0; },
+    village: CURRENT_VILLAGE_ID,
+    night() { return getFakeLightStateFactor?.() || 0; },
     event(name, data) { miniGameEvent(name, data); },
     finish(result) { finishMiniGame(result || {}); }
   };
@@ -10704,6 +10729,18 @@ function miniGameKey(e, down) {
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) e.preventDefault();
   try { MiniGames.inst?.key?.(e, down); } catch (err) { console.warn('mini-game key', err); }
 }
+// a roam game's keys: the result card and Esc as in other games; the game gets each key first (true = used); the
+// village's own O / Tab / M wait while it runs (no doors or talks mid-run); everything else walks. false = walk on.
+function miniGameRoamKey(e, down) {
+  const key = e.key.toLowerCase();
+  if (RebelGames.resultOpen() || key === 'escape') { if (down || RebelGames.resultOpen()) miniGameKey(e, down); return true; }
+  let used = false;
+  try { used = !!MiniGames.inst?.key?.(e, down); } catch (err) { console.warn('mini-game key', err); }
+  if (!down) return false; // a key let go always reaches the walk (no stuck keys)
+  if (used) { e.preventDefault(); return true; }
+  if (MiniGames.holdWalk && ['w', 's', 'a', 'd', 'r', ' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) { e.preventDefault(); return true; }
+  return key === 'o' || key === 'tab' || key === 'm' || key === 'enter';
+}
 // the spot or hotspot counts for the quest step asking for it (the step moves on only if one does)
 function miniGameQuestHook() {
   const src = MiniGames.src; if (!src) return;
@@ -10724,9 +10761,12 @@ function miniGameEvent(name, data) {
 function finishMiniGame(r) {
   if (!MiniGames.on) return;
   const def = MiniGames.def, rec = miniGameRecord(def.id);
-  const score = Math.max(0, Math.round(Number(r.score) || 0)), passed = r.passed != null ? !!r.passed : score >= def.pass;
-  const prevBest = rec.best || 0, newBest = score > prevBest && rec.plays > 0;
-  rec.plays = (rec.plays || 0) + 1; rec.best = Math.max(prevBest, score); rec.last = score; rec.at = Date.now();
+  // a time trial (r.time in seconds): the lowest time is the best; a run not finished (r.finished false) counts no time
+  const low = r.time != null, done = !low || r.finished !== false;
+  const score = low ? Math.round(Number(r.time) * 10) / 10 : Math.max(0, Math.round(Number(r.score) || 0)), passed = r.passed != null ? !!r.passed : !low && score >= def.pass;
+  const prevBest = rec.best || 0, newBest = rec.plays > 0 && done && (low ? !prevBest || score < prevBest : score > prevBest);
+  rec.plays = (rec.plays || 0) + 1; rec.best = low ? (done ? (prevBest ? Math.min(prevBest, score) : score) : prevBest) : Math.max(prevBest, score); rec.last = score; rec.at = Date.now();
+  if (low) rec.low = true;
   let points = 0;
   if (passed && !rec.cleared) {
     rec.cleared = true; rec.clearedAt = Date.now(); points = def.points || 0;
@@ -10741,8 +10781,9 @@ function finishMiniGame(r) {
   if (passed && def.questOn === 'pass') miniGameQuestHook();
   try { window.dispatchEvent(new CustomEvent('rebelAntsGameEnd', { detail:{ game:def.id, score, passed, best:rec.best, newBest, points } })); } catch (e) {}
   if (points) setTimeout(() => showRebelPointsPop(points), 600);
+  if (MiniGames.roam) { moveForward = moveBackward = turnLeft = turnRight = runKey = false; if (charMesh) charMesh._vel = 0; }
   const extra = [r.extra || '', points ? `First clear: +${points} Rebel points.` : (!passed && def.pass ? (r.solved ? `${def.pass} points clears the game: try a harder level.` : `Score ${def.pass} to clear it.`) : '')].filter(Boolean).join(' ');
-  RebelGames.showResult({ kicker: passed ? 'Cleared' : r.solved ? (r.solvedWord || 'Solved') : 'Game over', title: def.title || MiniGames.impl?.title || '', score, label: r.label || 'points', best: rec.best, newBest, extra,
+  RebelGames.showResult({ kicker: r.kicker || (passed ? 'Cleared' : r.solved ? (r.solvedWord || 'Solved') : 'Game over'), title: def.title || MiniGames.impl?.title || '', score: low ? (done ? score.toFixed(1) : '—') : score, label: r.label || (low ? 'seconds' : 'points'), best: low ? (rec.best ? rec.best.toFixed(1) + ' s' : null) : rec.best, newBest, extra,
     onAgain: () => restartMiniGame(), onDone: () => endMiniGame() });
 }
 function disposeMiniGameInstance() {
@@ -10765,17 +10806,18 @@ function endMiniGame() {
   disposeMiniGameInstance();
   if (MiniGames.pointerObs) { scene.onPointerObservable.remove(MiniGames.pointerObs); MiniGames.pointerObs = null; }
   RebelGames.hideResult(); RebelGames.HUD.show(false);
-  const s = MiniGames.saved;
-  MiniGames.on = false; MiniGames.ctx = null;
+  const s = MiniGames.saved, roam = MiniGames.roam;
+  MiniGames.on = false; MiniGames.ctx = null; MiniGames.roam = false; MiniGames.holdWalk = false;
+  document.body.classList.remove('game-roam');
   window._newTerrain?.birds?.setVisible(birdsShownFor(getFakeLightStateFactor()));
   moveForward = moveBackward = turnLeft = turnRight = runKey = false;
   if (charMesh) {
-    if (s) { charMesh.position.x = s.x; charMesh.position.z = s.z; charMesh.rotation.y = s.ry; _playerDeckSnapUntil = performance.now() + 600; }
+    if (s && !roam) { charMesh.position.x = s.x; charMesh.position.z = s.z; charMesh.rotation.y = s.ry; _playerDeckSnapUntil = performance.now() + 600; }
     charMesh._vel = 0; charMesh.getChildMeshes(false).forEach(m => { m.visibility = 1; });
     const g = animGroups[animState]; if (animState !== 0 && g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true);
   }
   if (s) { walk.fov = s.fov; if (s.guide && !s.guide.isDisposed?.()) s.guide.setEnabled(!!s.guideOn); (s.hidden || []).forEach(n => { if (!n.isDisposed?.()) n.setEnabled(true); }); }
-  snapWalkCameraBehindPlayer();
+  if (!roam) snapWalkCameraBehindPlayer();
   setTimeout(processBadgeUnlockQueue, 400); // a badge earned in the game
 }
 window._miniGames = MiniGames; // tests
@@ -25477,7 +25519,7 @@ document.addEventListener('keydown', async e => {
   const key = e.key.toLowerCase();
 
   if (document.getElementById('photoOverlay')?.classList.contains('on')) { if (key === 'escape' || key === 'p' || key === 'enter') { e.preventDefault(); closeVillagePhoto(); } return; }
-  if (MiniGames.on) { miniGameKey(e, true); return; }
+  if (MiniGames.on && (!MiniGames.roam || miniGameRoamKey(e, true))) { if (!MiniGames.roam) miniGameKey(e, true); return; }
   if (key === 'p' && !adminMode && walkMode && !e.repeat && !DanceOff.on && !SkillBar.on) { e.preventDefault(); takeVillagePhoto(); return; }
   if (DanceOff.choosing) { if (key === 'escape') closeDanceOff(); else { const lv = { 1:'easy', 2:'normal', 3:'hard' }[key]; if (lv) { e.preventDefault(); pickDanceLevel(lv); } } return; }
   if (DanceOff.on && DANCE_KEYS[key] !== undefined) { e.preventDefault(); if (!e.repeat) pressDance(DANCE_KEYS[key]); return; }
@@ -25663,7 +25705,8 @@ document.addEventListener('keydown', async e => {
 });
 
 document.addEventListener('keyup', e => {
-  if (MiniGames.on) { miniGameKey(e, false); return; }
+  if (MiniGames.on && !MiniGames.roam) { miniGameKey(e, false); return; }
+  if (MiniGames.on) miniGameRoamKey(e, false);
   const key = e.key.toLowerCase();
   if (key === 'w' || e.key === 'ArrowUp') moveForward = false;
   if (key === 's' || e.key === 'ArrowDown') moveBackward = false;
@@ -25704,9 +25747,9 @@ function getCameraOccluders() {
   return _camOcc.list;
 }
 // walking is camera-relative: tools steer by turning the orbit (headless walk tests)
-window._walkCamera = { get yaw() { return _orbitAngleH; }, set yaw(a) { _orbitAngleH = a; } };
+window._walkCamera = { get yaw() { return _orbitAngleH; }, set yaw(a) { _orbitAngleH = a; }, set moveYaw(a) { _moveRefYaw = a; } };
 scene.onPointerObservable.add(evt=>{
-  if(!walkMode||MiniGames.on)return;
+  if(!walkMode||(MiniGames.on&&!MiniGames.roam))return;
   if(evt.type===BABYLON.PointerEventTypes.POINTERDOWN){_orbitDragging=true;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;}
   else if(evt.type===BABYLON.PointerEventTypes.POINTERUP){_orbitDragging=false;}
   else if(evt.type===BABYLON.PointerEventTypes.POINTERMOVE&&_orbitDragging){const dx=scene.pointerX-_orbitLastX,dy=scene.pointerY-_orbitLastY;_orbitLastX=scene.pointerX;_orbitLastY=scene.pointerY;_orbitAngleH+=dx*0.008;_orbitAngleV=Math.max(0.08,Math.min(0.85,_orbitAngleV+dy*0.006));if(Math.abs(dx)+Math.abs(dy)>0)_camManualUntil=performance.now()+1800;}
@@ -27565,7 +27608,7 @@ engine.runRenderLoop(()=>{
     _orbitDist+=((runKey?13.5:9)-_orbitDist)*0.06;
     let dc=new BABYLON.Vector3(charMesh.position.x+Math.sin(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV),charMesh.position.y+_orbitDist*Math.sin(_orbitAngleV)+2,charMesh.position.z+Math.cos(_orbitAngleH)*_orbitDist*Math.cos(_orbitAngleV));
     const _camTarget = new BABYLON.Vector3(charMesh.position.x,charMesh.position.y+2.8,charMesh.position.z);
-    if (MiniGames.on) { /* the game drives the camera */ }
+    if (MiniGames.on && !MiniGames.roam) { /* the game drives the camera */ }
     else if (!ActiveInterior) {
       // a building between the head and the camera pulls the camera in front of it (snaps in, eases back out)
       const head = new BABYLON.Vector3(charMesh.position.x, charMesh.position.y + 2.4, charMesh.position.z), toCam = dc.subtract(head), full = toCam.length();
@@ -27585,7 +27628,7 @@ engine.runRenderLoop(()=>{
         setPlayerCameraFade(_camOcc.dist < 2.4 ? .35 : 1);
       }
     } else { _camOcc.dist = null; setPlayerCameraFade(1); }
-    if (!MiniGames.on) {
+    if (!MiniGames.on || MiniGames.roam) {
       walk.position=BABYLON.Vector3.Lerp(walk.position,ActiveInterior?clipInteriorCameraPosition(dc,_camTarget):dc,0.1);
       walk.setTarget(_camTarget);
     }
@@ -27608,7 +27651,7 @@ engine.runRenderLoop(()=>{
   updateSmallVillageAntPopulation(dt);
   runVillagePerformancePass(false);
   updatePerformanceDebugPanel();
-  if (!MiniGames.on) try { window.VillageHud?.update(); } catch (e) {}
+  if (!MiniGames.on || MiniGames.roam) try { window.VillageHud?.update(); } catch (e) {}
   applyFakeLightState(false);
   enforceInteriorIsolation();
   if (window._gpuMode === 'webgpu') {
@@ -27847,6 +27890,8 @@ function initVillageHud() {
       isWalking: () => walkMode && !adminMode,
       inInterior: () => !!ActiveInterior,
       questTarget: () => {
+        // a roam game (a run, a chase): where it wants you next
+        if (MiniGames.on && MiniGames.roam) { try { return MiniGames.inst?.target?.() || null; } catch (e) { return null; } }
         // a run or walk on the way: its next point
         const rq = getRaceNextPoint(); if (rq) return { x: rq[0], z: rq[1] };
         // the auto guide's target (wired steps), else the quest's own glowing marker or its NPC (looked up twice a second)

@@ -18,10 +18,11 @@
   }
 
   // ── the HUD: a top bar (title, score, info), a hint line, a big centre message, a meter, a card slot (a scorecard),
-  // a reticle that follows the aim, floating score pops, Quit; the result card; the walk HUD steps aside (body.in-game) ──
+  // a reticle that follows the aim, floating score pops, Quit; the result card; the walk HUD steps aside (body.in-game),
+// except the minimap in a roam game (body.game-roam: runs and chases keep the walk) ──
   const CSS = `
 body.in-game #hud,body.in-game #selectedRebelPanel,body.in-game #returnHubBtn,body.in-game #wb,body.in-game #backToLobbyBtn,body.in-game #rebelHudBtn,
-body.in-game #questLine,body.in-game #miniMap,body.in-game #photoBtn,body.in-game #interactionPrompt,body.in-game #xhair{display:none!important}
+body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #photoBtn,body.in-game #interactionPrompt,body.in-game #xhair{display:none!important}
 #gameHud{position:fixed;inset:0;pointer-events:none;z-index:70;display:none;font:600 14px/1.3 Georgia,serif;color:#f3e6c4;user-select:none}
 #gameHud.on{display:block}
 #gameHud .gh-top{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:rgba(10,13,22,.86);border:1px solid rgba(216,179,92,.6);border-radius:12px;padding:8px 16px;white-space:nowrap;max-width:94vw}
