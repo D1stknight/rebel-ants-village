@@ -83,9 +83,9 @@
       function end() {
         if (st.phase === 'done') return; st.phase = 'done'; pads.remove();
         const passed = st.score >= (def.pass || 0), broke = st.cracks >= CRACKS;
-        H.msg(broke ? 'The seal broke' : 'The seal holds', 1500, `${st.cut} roots cut`);
+        H.msg(broke ? 'The seal broke' : 'The seal holds', 1500, `${st.cut} ${st.cut === 1 ? 'root' : 'roots'} cut`);
         if (passed) ctx.sound('gamewin');
-        setTimeout(() => ctx.finish({ score: st.score, passed, kicker: broke ? 'Seal broken' : passed ? 'The seal holds' : 'Time', extra: `${st.cut} roots cut, best run ${st.best}${broke ? '; three roots reached the seal' : ''}. Strike when the tip is in the ring: closer to the seal scores more.` }), 1000);
+        setTimeout(() => ctx.finish({ score: st.score, passed, kicker: broke ? 'Seal broken' : passed ? 'The seal holds' : 'Time', extra: `${st.cut} ${st.cut === 1 ? 'root' : 'roots'} cut, best run ${st.best}${broke ? '; three roots reached the seal' : ''}. Strike when the tip is in the ring: closer to the seal scores more.` }), 1000);
       }
       return {
         update(dt) {

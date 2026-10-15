@@ -112,7 +112,7 @@
         const passed = st.score >= (def.pass || 0);
         H.msg(st.lives > 0 ? 'Time!' : 'Round over', 1400, `${st.cuts} cut`);
         if (passed) ctx.sound('gamewin');
-        setTimeout(() => ctx.finish({ score: st.score, passed, extra: `${st.cuts} pieces cut, best stroke ${st.best}${st.lives <= 0 ? ', three misses' : ''}.` }), 900);
+        setTimeout(() => ctx.finish({ score: st.score, passed, extra: `${st.cuts} ${st.cuts === 1 ? 'piece' : 'pieces'} cut, best stroke ${st.best}${st.lives <= 0 ? ', three misses' : ''}.` }), 900);
       }
       const DPR = () => (cv.width / Math.max(1, cv.clientWidth)) || 1;
       return {

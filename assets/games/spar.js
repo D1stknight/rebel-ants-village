@@ -82,9 +82,9 @@
       function end() {
         if (st.phase === 'done') return; st.phase = 'done'; pads.remove();
         const passed = st.score >= (def.pass || 0), down = st.hearts <= 0;
-        H.msg(down ? 'Down!' : 'Well fought', 1500, `${st.blocks} blocks · ${st.counters} counters`);
+        H.msg(down ? 'Down!' : 'Well fought', 1500, `${st.blocks} ${st.blocks === 1 ? 'block' : 'blocks'} · ${st.counters} ${st.counters === 1 ? 'counter' : 'counters'}`);
         if (passed) ctx.sound('gamewin');
-        setTimeout(() => ctx.finish({ score: st.score, passed, kicker: down ? 'Knocked down' : passed ? 'Well fought' : 'Rounds over', extra: `${st.blocks} blocks, ${st.counters} counters, best run ${st.best}${st.feints ? `, ${st.feints} feints bitten` : ''}. Block late, as the arm swings, then strike.` }), 1100);
+        setTimeout(() => ctx.finish({ score: st.score, passed, kicker: down ? 'Knocked down' : passed ? 'Well fought' : 'Rounds over', extra: `${st.blocks} ${st.blocks === 1 ? 'block' : 'blocks'}, ${st.counters} ${st.counters === 1 ? 'counter' : 'counters'}, best run ${st.best}${st.feints ? `, ${st.feints} ${st.feints === 1 ? 'feint' : 'feints'} bitten` : ''}. Block late, as the arm swings, then strike.` }), 1100);
       }
       return {
         update(dt) {

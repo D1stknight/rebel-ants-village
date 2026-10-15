@@ -53,7 +53,7 @@
       const camP = def.camP || [P.x, WY + 8.5, P.z - 9.5], camT = def.camT || [P.x, WY, P.z + 1.5]; // the bank, above the near edge
       ctx.look(camP, camT, .9);
       ctx.player.place(def.playerAt?.[0] ?? -2.6, def.playerAt?.[1] ?? -1.4, Math.atan2(P.x + 2.6, P.z + 1.4));
-      function hud() { H.score(st.score); H.info(`${st.fed} / ${koi.length} full · ${st.left} pellets · ${Math.max(0, Math.ceil(SECS - st.el))} s`); }
+      function hud() { H.score(st.score); H.info(`${st.fed} / ${koi.length} full · ${st.left} ${st.left === 1 ? 'pellet' : 'pellets'} · ${Math.max(0, Math.ceil(SECS - st.el))} s`); }
       H.title(def.title || 'Koi Feeding'); hud();
       H.hint('Click the water to toss a pellet near a hungry koi (red ring) · full koi (grey) eat for nothing');
       function eat(k, f) {
@@ -72,7 +72,7 @@
         const passed = st.score >= (def.pass || 0);
         H.msg(all ? 'Every koi is full' : 'The koi are still hungry', 1500, bonus ? `+${bonus} bonus` : '');
         if (passed) ctx.sound('gamewin');
-        setTimeout(() => ctx.finish({ score: st.score, passed, extra: `${st.fed} of ${koi.length} koi fed full${st.gold ? (st.gold.full ? ', the golden koi too' : '; the golden koi went hungry') : ''}${all ? `, ${st.left} pellets left` : ''}. Toss near a hungry one, away from the full ones.` }), 1000);
+        setTimeout(() => ctx.finish({ score: st.score, passed, extra: `${st.fed} of ${koi.length} koi fed full${st.gold ? (st.gold.full ? ', the golden koi too' : '; the golden koi went hungry') : ''}${all ? `, ${st.left} ${st.left === 1 ? 'pellet' : 'pellets'} left` : ''}. Toss near a hungry one, away from the full ones.` }), 1000);
       }
       st.goldDue = true;
       return {

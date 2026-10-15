@@ -55,7 +55,7 @@
         const t = st.el, medal = done ? (t <= gold ? 'Gold' : t <= silver ? 'Silver' : t <= bronze ? 'Bronze' : null) : null, lines = `Gold ${gold} s · silver ${silver} s · bronze ${bronze} s.`;
         if (done) { H.msg(medal ? medal + '!' : 'Through', 1600, fmt(t) + ' s'); ctx.sound('gamewin');
           ctx.finish({ time: t, finished: true, passed: !!medal, kicker: medal ? medal + ' medal' : 'Through unseen', extra: `${st.caught ? `Seen ${st.caught} time${st.caught > 1 ? 's' : ''}. ` : 'Never seen. '}${medal === 'Gold' ? 'A shadow among shadows. ' : 'Wait for a lantern to turn away, then go behind it. '}${lines}` }); }
-        else { H.msg('Out of time', 1800); ctx.finish({ time: t, finished: false, passed: false, kicker: 'Out of time', extra: `Seen ${st.caught} times. Watch the light on the ground: it is all they can see. ${lines}` }); }
+        else { H.msg('Out of time', 1800); ctx.finish({ time: t, finished: false, passed: false, kicker: 'Out of time', extra: `Seen ${st.caught} ${st.caught === 1 ? 'time' : 'times'}. Watch the light on the ground: it is all they can see. ${lines}` }); }
       }
       ctx.player.hold(true);
       H.title(def.title || 'Silent Steps'); H.score('0.0'); H.info(`${guards.length} watchmen · gold ${gold} s`);
