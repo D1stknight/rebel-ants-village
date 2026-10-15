@@ -24182,6 +24182,44 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "kenshi_duel_hall",
+            "hotspotId": "hotspot_kenshi_duel_hall_quickdraw",
+            "linkName": "The Quick Draw",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The hall keeps a shadow for anyone who wants to test their draw. It waits on the circle, still as the water, for a leaf to fall.",
+            "enabled": true,
+            "position": {
+              "x": -4.5,
+              "y": 1.6,
+              "z": 6.4
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            },
+            "game": {
+              "type": "quickdraw",
+              "id": "kenshi-quick-draw",
+              "title": "The Quick Draw",
+              "pass": 60,
+              "points": 60,
+              "questOn": "pass",
+              "at": [
+                0,
+                0
+              ],
+              "gap": 6,
+              "floor": 0.15
+            }
           }
         ],
         "updatedAt": "2026-10-11T13:38:19.632Z"
