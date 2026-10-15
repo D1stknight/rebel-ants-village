@@ -121,6 +121,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 }
 #questTrackerSide{font-size:7.5px;color:rgba(232,197,106,.85);line-height:1.35;letter-spacing:.6px;overflow-wrap:anywhere;white-space:pre-line}
 #questTrackerSide:empty{display:none}
+/* the photo camera: P or the camera button; the picture full size with Save / Share */
+#photoBtn{position:fixed;right:22px;bottom:200px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(216,179,92,.7);background:rgba(10,13,22,.85);color:#ffe9b0;font-size:20px;line-height:42px;text-align:center;z-index:13;cursor:pointer;display:none;padding:0}
+body.walk-photo #photoBtn{display:block}
+@media (max-width:480px){#photoBtn{right:14px;bottom:194px;width:40px;height:40px;line-height:38px}}
+#photoFlash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:10001;transition:opacity .45s ease-out}
+#photoOverlay{position:fixed;inset:0;background:rgba(2,6,14,.78);display:none;align-items:center;justify-content:center;z-index:10000;padding:18px}
+#photoOverlay.on{display:flex}
+#photoOverlay .ph-card{background:#f6f0e2;padding:12px 12px 14px;border-radius:6px;box-shadow:0 14px 40px rgba(0,0,0,.6);max-width:min(1100px,96vw);transform:rotate(-1deg)}
+#photoOverlay img{display:block;max-width:100%;max-height:72vh;border-radius:2px}
+#photoOverlay .ph-cap{font:600 15px/1.3 Georgia,serif;color:#3b2a14;margin:10px 4px 8px;text-align:center}
+#photoOverlay .ph-btns{display:flex;justify-content:center;gap:10px}
+#photoOverlay .ph-btns button{font:600 13px Georgia,serif;letter-spacing:.06em;padding:8px 18px;border-radius:6px;border:1px solid #8a6a2a;background:#2a1d10;color:#ffe9b0;cursor:pointer}
 /* the dance-off (DanceOff): arrows come down the lane to the ring */
 #danceOff{position:fixed;left:50%;bottom:20%;transform:translateX(-50%);width:min(560px,92vw);padding:12px 16px 12px;background:rgba(10,13,22,.9);border:1px solid rgba(216,179,92,.6);border-radius:14px;color:#f3e6c4;font:600 14px/1.3 Georgia,serif;text-align:center;z-index:60;display:none;box-shadow:0 8px 30px rgba(0,0,0,.45);user-select:none}
 #danceOff.on{display:block}
@@ -1608,6 +1620,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 <div id="weatherHeatHaze"></div>
 <div id="villageTravelFade"></div>
 <!-- the quest mini-games: the dance-off lane and the timing bar (top level: the Rebel panel hides its children) -->
+<button id="photoBtn" title="Take a picture (P)" onclick="window.takeVillagePhoto && window.takeVillagePhoto()">&#128247;</button>
+<div id="photoFlash"></div>
+<div id="photoOverlay"><div class="ph-card"><img id="photoImg" alt="Your picture"><div class="ph-cap"></div><div class="ph-btns"><button onclick="window.saveVillagePhoto()">Save</button><button onclick="window.shareVillagePhoto()">Share</button><button onclick="window.closeVillagePhoto()">Close</button></div></div></div>
 <div id="danceOff"><div class="do-title"></div><div class="do-lane"><div class="do-ring"></div><div class="do-notes"></div></div><div class="do-score"><span class="do-count"></span><span class="do-judge"></span></div><div class="do-pads"><button class="do-pad" onclick="window.pressDance && window.pressDance(0)">←</button><button class="do-pad" onclick="window.pressDance && window.pressDance(1)">↑</button><button class="do-pad" onclick="window.pressDance && window.pressDance(2)">→</button><button class="do-pad" onclick="window.pressDance && window.pressDance(3)">↓</button></div></div>
 <div id="skillBar" onclick="window.pressSkillBar && window.pressSkillBar()"><div class="sb-title"></div><div class="sb-track"><div class="sb-zone"></div><div class="sb-mark"></div></div><div class="sb-pips"></div><div class="sb-msg"></div></div>
 <div id="playerStartupOverlay" aria-hidden="true">
@@ -9902,6 +9917,8 @@ function normalizeQuestSpotConfig(cfg = {}) {
     // a dance-off instead of a plain hold (DanceOff): notes arrows, every seconds apart after lead, need good presses to finish
     dance: cfg.dance && typeof cfg.dance === 'object' ? { notes: Math.max(4, Math.min(24, Math.floor(Number(cfg.dance.notes) || 12))), need: Math.max(1, Math.floor(Number(cfg.dance.need) || 8)),
       every: Math.max(.5, Number(cfg.dance.every) || 1.04), lead: Math.max(.5, Number(cfg.dance.lead) || 1.6), title: String(cfg.dance.title || ''), winText: String(cfg.dance.winText || ''), loseText: String(cfg.dance.loseText || '') } : null,
+    // the spot takes a picture when it is used (the Hills Hike's photo at the sign): the caption under it
+    photo: cfg.photo ? String(cfg.photo) : null,
     // a timing bar before the spot is used (SkillBar): hits good stops in the gold middle, the marker speeding up each time
     skill: cfg.skill && typeof cfg.skill === 'object' ? { hits: Math.max(1, Math.min(6, Math.floor(Number(cfg.skill.hits) || 3))), speed: Math.max(.3, Number(cfg.skill.speed) || 1.1),
       zone: Math.max(.06, Math.min(.5, Number(cfg.skill.zone) || .16)), title: String(cfg.skill.title || ''), startText: String(cfg.skill.startText || ''),
@@ -10165,6 +10182,7 @@ function completeQuestSpot(root) {
   if ((cfg.piece || cfg.donePiece || cfg.questId) && !(ProgressionState.spotsUsed || []).includes(cfg.spotId)) { (ProgressionState.spotsUsed ||= []).push(cfg.spotId); saveProgressionState(); }
   if (cfg.doneSound) MoonTaleSounds.play(cfg.doneSound);
   else if (cfg.sound && cfg.action !== 'hold' && cfg.action !== 'race') MoonTaleSounds.play(cfg.sound);
+  if (cfg.photo) setTimeout(() => takeVillagePhoto(cfg.photo), 250); // a picture spot takes a real one
   let secretNew = false, setNote = '';
   if (cfg.secretId && cfg.setCount > 1 && !(ProgressionState.secretsFound || []).includes(cfg.secretId)) {
     const parts = (ProgressionState.secretParts ||= {})[cfg.secretId] ||= [];
@@ -10308,6 +10326,43 @@ function pressSkillBar() {
 }
 window.pressSkillBar = pressSkillBar;
 window._skillBar = SkillBar; // tests
+
+// The photo camera: P (out of the editor) or the camera button takes a picture of the game view (the page's HUD is not in
+// it; the quest guide's beam is left out): a flash and a shutter, then the picture full size with a caption, Save (a PNG
+// download) and Share (the system share sheet with the picture where there is one, else a copy to paste, else a save).
+const VillagePhoto = { url:null, blob:null, caption:'', busy:false };
+async function takeVillagePhoto(caption) {
+  if (!walkMode || adminMode || VillagePhoto.busy || document.getElementById('photoOverlay')?.classList.contains('on')) return false;
+  VillagePhoto.busy = true;
+  const guide = scene.getTransformNodeByName?.('questTargetAutoGuide'), guideOn = guide?.isEnabled();
+  try {
+    guide?.setEnabled(false);
+    const url = await BABYLON.Tools.CreateScreenshotAsync(engine, scene.activeCamera, { precision: 1 }, 'image/png');
+    MoonTaleSounds.play('camera');
+    const fl = document.getElementById('photoFlash'); if (fl) { fl.style.transition = 'none'; fl.style.opacity = '.85'; void fl.offsetWidth; fl.style.transition = ''; fl.style.opacity = '0'; }
+    VillagePhoto.url = url; VillagePhoto.blob = await (await fetch(url)).blob();
+    VillagePhoto.caption = caption || `${VILLAGE_REGISTRY[CURRENT_VILLAGE_ID]?.displayName || 'Rebel Ants'} · ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    document.getElementById('photoImg').src = url;
+    document.querySelector('#photoOverlay .ph-cap').textContent = VillagePhoto.caption;
+    setTimeout(() => document.getElementById('photoOverlay')?.classList.add('on'), 380);
+    return true;
+  } catch (e) { console.warn('photo failed', e); showToast('The camera jammed. Try again.'); return false; }
+  finally { if (guide) guide.setEnabled(guideOn); VillagePhoto.busy = false; }
+}
+function closeVillagePhoto() { document.getElementById('photoOverlay')?.classList.remove('on'); }
+function saveVillagePhoto() {
+  if (!VillagePhoto.url) return;
+  const a = document.createElement('a'); a.href = VillagePhoto.url; a.download = `rebel-ants-${CURRENT_VILLAGE_ID}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.png`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+async function shareVillagePhoto() {
+  if (!VillagePhoto.blob) return;
+  const file = new File([VillagePhoto.blob], 'rebel-ants-photo.png', { type: 'image/png' });
+  if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], title: 'Rebel Ants', text: VillagePhoto.caption }); return; } catch (e) { if (e?.name === 'AbortError') return; } }
+  try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': VillagePhoto.blob })]); showToast('Picture copied: paste it anywhere to share it.'); }
+  catch (e) { saveVillagePhoto(); showToast('Picture saved: share it from your downloads.'); }
+}
+Object.assign(window, { takeVillagePhoto, closeVillagePhoto, saveVillagePhoto, shareVillagePhoto });
 
 // the crowd at a hold or dance-off with spotConfig.cheer: now and then one of them hops or kicks (kit apes) or plays a
 // lively clip (forged NPCs)
@@ -24894,6 +24949,8 @@ document.addEventListener('keydown', async e => {
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;
   const key = e.key.toLowerCase();
 
+  if (document.getElementById('photoOverlay')?.classList.contains('on')) { if (key === 'escape' || key === 'p' || key === 'enter') { e.preventDefault(); closeVillagePhoto(); } return; }
+  if (key === 'p' && !adminMode && walkMode && !e.repeat && !DanceOff.on && !SkillBar.on) { e.preventDefault(); takeVillagePhoto(); return; }
   if (DanceOff.on && DANCE_KEYS[key] !== undefined) { e.preventDefault(); if (!e.repeat) pressDance(DANCE_KEYS[key]); return; }
   if (DanceOff.on && key === 'escape') { closeDanceOff(); MoonTaleSounds.stop(); return; }
   if (SkillBar.on && (key === 'o' || key === ' ' || key === 'enter')) { e.preventDefault(); pressSkillBar(); return; }
@@ -27008,6 +27065,7 @@ engine.runRenderLoop(()=>{
   updateQuestSpots();
   updateSkillBar();
   updateDanceOff();
+  { const wantPhoto = walkMode && !adminMode; if (document.body.classList.contains('walk-photo') !== wantPhoto) document.body.classList.toggle('walk-photo', wantPhoto); }
   tryAutoOpenVillageGateFromWalkthrough();
   updateCollectiblesSafe(dt);
   updateWeatherManager();

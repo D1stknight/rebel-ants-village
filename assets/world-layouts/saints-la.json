@@ -24680,11 +24680,11 @@
       "holdSeconds": 4,
       "label": "Take a picture",
       "questId": "saints-la-14",
-      "doneSound": "camera",
       "holdLines": [
         "Say cheese..."
       ],
-      "text": "Click. You, the sign, the city and the block, all in one picture."
+      "text": "Click. You, the sign, the city and the block, all in one picture.",
+      "photo": "Saints of LA · the hills sign"
     }
   },
   {
