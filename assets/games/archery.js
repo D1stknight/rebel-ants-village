@@ -20,19 +20,20 @@
       for (const [x, z] of def.targets || [[-3.5, 16], [2.5, 24], [-1, 32]]) {
         const w = ctx.toWorld(x, 0, z);
         let node = layoutTargets.find(n => Math.hypot(n.getAbsolutePosition().x - w.x, n.getAbsolutePosition().z - w.z) < 1.6);
-        if (!node) { node = ctx.kit('ashi_target'); node.position.set(x, 0, z); node.scaling.setAll(SC); }
+        if (!node) { node = ctx.kit('ashi_target'); node.position.set(x, def.onGround && ctx.ground ? ctx.ground(w.x, w.z) - ctx.toWorld(0, 0, 0).y : 0, z); node.scaling.setAll(SC); }
         node.computeWorldMatrix(true);
         targets.push(faceOf(node, .62 * Math.abs(node.scaling.x), 1, 'straw'));
       }
       // the slider: a target on a sled along a rail
       const mv = { z: 21, amp: 5, speed: 2.4, ...(def.mover || {}) };
+      const gy = (x, z) => { if (!def.onGround || !ctx.ground) return 0; const w = ctx.toWorld(x, 0, z); return ctx.ground(w.x, w.z) - ctx.toWorld(0, 0, 0).y; };
       const railMat = ctx.mat('rail', n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(.32, .2, .1); m.specularColor = new B.Color3(.05, .05, .05); return m; });
-      const rail = B.MeshBuilder.CreateBox('archRail', { width: mv.amp * 2 + 2.4, height: .16, depth: .5 }, scene); rail.material = railMat; rail.position.set(0, .08, mv.z); rail.isPickable = false; ctx.add(rail);
-      const slider = ctx.kit('ashi_target'); slider.position.set(0, .16, mv.z); slider.scaling.setAll(SC); slider.setEnabled(false);
+      const rail = B.MeshBuilder.CreateBox('archRail', { width: mv.amp * 2 + 2.4, height: .16, depth: .5 }, scene); rail.material = railMat; rail.position.set(0, .08 + gy(0, mv.z), mv.z); rail.isPickable = false; ctx.add(rail);
+      const slider = ctx.kit('ashi_target'); slider.position.set(0, .16 + gy(0, mv.z), mv.z); slider.scaling.setAll(SC); slider.setEnabled(false);
       const sliderT = faceOf(slider, R, 1, 'moving'); sliderT.off = true; targets.push(sliderT);
       // the gold target: a small gold disc with a red heart on a tall pole
       const gd = { x: 3.5, z: 30, h: 4.4, ...(def.gold || {}) };
-      const gold = new B.TransformNode('archGold', scene); ctx.add(gold); gold.position.set(gd.x, 0, gd.z);
+      const gold = new B.TransformNode('archGold', scene); ctx.add(gold); gold.position.set(gd.x, gy(gd.x, gd.z), gd.z);
       const goldMat = ctx.mat('gold', n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(.9, .68, .2); m.emissiveColor = new B.Color3(.35, .25, .06); m.specularColor = new B.Color3(1, .9, .5); m.backFaceCulling = false; return m; });
       const redMat = ctx.mat('red', n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(.75, .08, .06); m.emissiveColor = new B.Color3(.25, .02, .02); m.backFaceCulling = false; return m; });
       const pole = B.MeshBuilder.CreateCylinder('archPole', { height: gd.h, diameter: .14, tessellation: 8 }, scene); pole.material = railMat; pole.parent = gold; pole.position.y = gd.h / 2; pole.isPickable = false;
@@ -56,7 +57,7 @@
       // ── state ──
       const st = { n: 0, score: 0, hits: 0, phase: 'intro', t: 0, wait: 1.4, power: 0, holdT: 0, wind: 0, flying: [], stuck: [], aimX: null, aimY: null, wob: [0, 0], rings: [], bow: null, releaseAt: -1, shot: null };
       const canvas = ctx.engine.getRenderingCanvas();
-      const camP = [.95, 3.55, -2.7], camT = [0, 2.2, 26];
+      const camP = def.camP || [.95, 3.55, -2.7], camT = def.camT || [0, 2.2, 26];
       function hud() {
         H.score(st.score);
         const w = st.wind, wt = Math.abs(w) < .05 ? 'calm' : `${w < 0 ? '←' : '→'} ${Math.abs(w).toFixed(1)}`;
