@@ -38,6 +38,8 @@
       const halfGold = (() => { const m = source('half').clone('bcSrc_halfGold'); m.material = goldM; m.isVisible = false; keep(m); return m; })();
       // the gold band for Space cuts: a soft strip across the throw
       const band = keep(B.MeshBuilder.CreatePlane('bcBand', { width: 12, height: BAND[1] - BAND[0] }, scene)); band.position.set(0, (BAND[0] + BAND[1]) / 2, 6.2); band.material = mat('band', [0, 0, 0], [1, .82, .4], { alpha: .1, add: true });
+      const edgeM = mat('bandEdge', [0, 0, 0], [1, .78, .3], { alpha: .55, add: true }); // gold edges: the band reads in any light
+      for (const y of BAND) { const e = keep(B.MeshBuilder.CreatePlane('bcBandEdge', { width: 12, height: .06 }, scene)); e.position.set(0, y, 6.19); e.material = edgeM; }
       // the slash trail over the view
       const hud = document.getElementById('gameHud'), cv = document.createElement('canvas');
       cv.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none';
