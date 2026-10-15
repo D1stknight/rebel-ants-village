@@ -42624,5 +42624,435 @@
         ]
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_ronin-silent-steps",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 7.3,
+      "y": 0.1,
+      "z": -40.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ronin",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "ronin-silent-steps",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "id": "ronin-silent-steps",
+        "title": "Silent Steps",
+        "points": 60,
+        "questOn": "pass",
+        "type": "stealth",
+        "goal": [
+          0,
+          30
+        ],
+        "checkpoints": [
+          [
+            -16,
+            -14
+          ],
+          [
+            14,
+            14
+          ]
+        ],
+        "guards": [
+          {
+            "path": [
+              [
+                -26.5,
+                -30
+              ],
+              [
+                -26,
+                -29.5
+              ],
+              [
+                -25.5,
+                -29
+              ],
+              [
+                -24.5,
+                -28.5
+              ],
+              [
+                -18,
+                -28.5
+              ],
+              [
+                -17.5,
+                -28
+              ],
+              [
+                -16.5,
+                -27.5
+              ],
+              [
+                -12,
+                -28
+              ],
+              [
+                1.5,
+                -28.5
+              ],
+              [
+                18,
+                -29
+              ],
+              [
+                25,
+                -28.5
+              ],
+              [
+                25.5,
+                -29
+              ],
+              [
+                26,
+                -29.5
+              ],
+              [
+                26.5,
+                -30
+              ]
+            ],
+            "speed": 2.2,
+            "wait": 1.4
+          },
+          {
+            "path": [
+              [
+                0,
+                -26
+              ],
+              [
+                6.5,
+                -22.5
+              ],
+              [
+                7,
+                -22
+              ],
+              [
+                7.5,
+                -21.5
+              ],
+              [
+                8,
+                -21
+              ],
+              [
+                8.5,
+                -20
+              ],
+              [
+                9.5,
+                -18.5
+              ],
+              [
+                12,
+                -14.5
+              ],
+              [
+                11.5,
+                -14
+              ],
+              [
+                8.5,
+                -7.5
+              ],
+              [
+                8,
+                -7
+              ],
+              [
+                7.5,
+                -6.5
+              ],
+              [
+                7,
+                -6
+              ],
+              [
+                5.5,
+                -5
+              ],
+              [
+                4.5,
+                -4.5
+              ],
+              [
+                0,
+                -2
+              ],
+              [
+                -5,
+                -5
+              ],
+              [
+                -5.5,
+                -5.5
+              ],
+              [
+                -7,
+                -6
+              ],
+              [
+                -7.5,
+                -6.5
+              ],
+              [
+                -8,
+                -7
+              ],
+              [
+                -9,
+                -8.5
+              ],
+              [
+                -9.5,
+                -9.5
+              ],
+              [
+                -10,
+                -10.5
+              ],
+              [
+                -11.5,
+                -14
+              ],
+              [
+                -12,
+                -14.5
+              ],
+              [
+                -9,
+                -19.5
+              ],
+              [
+                -8.5,
+                -20
+              ],
+              [
+                -8,
+                -21
+              ],
+              [
+                -7.5,
+                -21.5
+              ],
+              [
+                -7,
+                -22
+              ],
+              [
+                -6,
+                -22.5
+              ]
+            ],
+            "loop": true,
+            "speed": 1.9
+          },
+          {
+            "path": [
+              [
+                -24,
+                1
+              ],
+              [
+                15.5,
+                1.5
+              ],
+              [
+                16,
+                2
+              ],
+              [
+                17,
+                2.5
+              ],
+              [
+                24,
+                1
+              ]
+            ],
+            "speed": 2.4,
+            "wait": 1
+          },
+          {
+            "path": [
+              [
+                -26,
+                20
+              ],
+              [
+                -25,
+                12.5
+              ],
+              [
+                -24.5,
+                12
+              ],
+              [
+                -24,
+                11.5
+              ],
+              [
+                -23.5,
+                11
+              ],
+              [
+                -5.5,
+                5.5
+              ],
+              [
+                18.5,
+                6
+              ],
+              [
+                23.5,
+                11
+              ],
+              [
+                24,
+                11.5
+              ],
+              [
+                24.5,
+                12
+              ],
+              [
+                25,
+                12.5
+              ],
+              [
+                26,
+                20
+              ]
+            ],
+            "speed": 2.1,
+            "wait": 1.2
+          },
+          {
+            "path": [
+              [
+                0,
+                9
+              ]
+            ],
+            "look": [
+              3.141592653589793,
+              1.1
+            ]
+          }
+        ],
+        "medals": [
+          45,
+          65,
+          95
+        ],
+        "text": "Reach the dojo yard unseen"
+      }
+    }
   }
 ]
