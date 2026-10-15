@@ -4,7 +4,7 @@
 // the next one (the minimap points at it). Bronze, silver and gold times.
 // def: { items: [[x, z], ...], look: 'sheaf' | 'scroll' | 'flag' | 'post', one (one at a time), drop: [x, z] (bring them
 //   here), carry (how many you can hold, with a drop: 3), medals: [gold, silver, bronze] s, limit (s), name ('sheaf'),
-//   dropName ('the cart'), color [r, g, b], text }
+//   dropName ('the cart'), dropLook ('cart' | 'line': what fills up at the drop), dropYaw, lineSpan, color [r, g, b], text }
 (function () {
   const fmt = t => { const m = Math.floor(t / 60), s = t - m * 60; return m ? `${m}:${s.toFixed(1).padStart(4, '0')}` : s.toFixed(1); };
   const G = {
@@ -49,6 +49,51 @@
         return best || (drop && st.carried ? drop : null);
       }
       const total = items.length;
+      // what the drop shows (def.dropLook): 'cart' = a handcart whose bed fills with the sheaves brought in, 'line' = a
+      // rope between two poles where each flag brought in is hung; it faces where the run starts (def.dropYaw turns it)
+      const shown = [], dropLook = drop && def.dropLook;
+      if (dropLook) {
+        const w0 = ctx.player.world(), yaw = def.dropYaw ?? Math.atan2(w0.x - drop.x, w0.z - drop.z), cy = Math.cos(yaw), sy = Math.sin(yaw);
+        const dr = keep(new B.TransformNode('gaDropLook', scene)); dr.position.set(drop.x, drop.y, drop.z); dr.rotation.y = yaw;
+        const gy = (lx, lz) => ctx.ground(drop.x + lx * cy + lz * sy, drop.z - lx * sy + lz * cy) - drop.y; // ground under a local point
+        const box = (n, w, h, d, m, x, y, z) => { const b = B.MeshBuilder.CreateBox(n, { width: w, height: h, depth: d }, scene); b.material = m; b.parent = dr; b.position.set(x, y, z); b.isPickable = false; return b; };
+        if (dropLook === 'cart') {
+          const plank = std('plank', [.52, .37, .22], [.07, .05, .03]);
+          box('gaBed', 1.8, .12, 3, plank, 0, 1.05, 0);
+          for (const s of [-1, 1]) { box('gaSide', .1, .6, 3, plank, s * .9, 1.4, 0); box('gaEndB', 1.8, .6, .1, plank, 0, 1.4, s * 1.5); }
+          for (const s of [-1, 1]) {
+            const wh = cyl('gaWheel', .16, 1.5, 1.5, wood, s * 1.04, .75, -.35, dr, 18); wh.rotation.z = Math.PI / 2;
+            const hub = cyl('gaHub', .26, .34, .34, tie, s * 1.1, .75, -.35, dr, 10); hub.rotation.z = Math.PI / 2;
+            const h = box('gaHandle', .12, .12, 2.1, wood, s * .62, 1.02, 2.5); h.rotation.x = .1;
+            box('gaLeg', .12, 1, .12, wood, s * .75, .5, 1.3);
+          }
+          const ax = cyl('gaAxle', 2.3, .1, .1, wood, 0, .75, -.35, dr, 8); ax.rotation.z = Math.PI / 2;
+          // the load: one merged sheaf per slot, layers of 4, 3, 2, 1 lying along the bed
+          let L = 0, j = 0;
+          for (let k = 0; k < total; k++) {
+            const nL = Math.max(1, 4 - (L % 4)), parts = [];
+            for (let q = 0; q < 7; q++) { const a = q * .9, c = cyl('gaStalk', 1.5, .1, .16, straw, Math.sin(a) * .14, .75, Math.cos(a) * .14, null, 6); c.rotation.set(Math.cos(a) * .12, 0, -Math.sin(a) * .12); parts.push(c); }
+            for (let q = 0; q < 9; q++) { const a = q * .7, c = cyl('gaHead', .5, .02, .1, straw, Math.sin(a) * .26, 1.62, Math.cos(a) * .26, null, 5); c.rotation.set(Math.cos(a) * .6, 0, -Math.sin(a) * .6); parts.push(c); }
+            const m = B.Mesh.MergeMeshes(parts, true, true); m.isPickable = false; m.parent = dr;
+            cyl('gaTie', .1, .36, .36, tie, 0, .75, 0, m, 12);
+            m.rotation.set(Math.PI / 2, 0, 0); m.position.set((j - (nL - 1) / 2) * .4, 1.32 + L * .34, -.95 + (L % 2 ? .22 : -.08));
+            m.setEnabled(false); shown.push(m);
+            if (++j >= nL) { j = 0; L++; }
+          }
+        } else {
+          const span = def.lineSpan || 7, top = 5.2, sag = .7, bamboo = std('bamboo', [.62, .66, .38], [.08, .09, .04]);
+          const at = u => top - sag * 4 * u * (1 - u);
+          for (const s of [-1, 1]) { const g = gy(s * span / 2, 0); cyl('gaLinePole', top + .3 - g, .1, .13, bamboo, s * span / 2, g + (top + .3 - g) / 2, 0, dr, 8); }
+          const path = []; for (let k = 0; k <= 16; k++) path.push(new V3((k / 16 - .5) * span, at(k / 16), 0));
+          const rope = B.MeshBuilder.CreateTube('gaRope', { path, radius: .035, tessellation: 6 }, scene); rope.material = tie; rope.parent = dr; rope.isPickable = false;
+          for (let k = 0; k < total; k++) {
+            const u = (k + 1) / (total + 1), fc = FLAGC[k % FLAGC.length], hg = new B.TransformNode('gaHang', scene); hg.parent = dr; hg.position.set((u - .5) * span, at(u), 0);
+            const f = B.MeshBuilder.CreatePlane('gaHung', { width: .62, height: .78, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
+            f.material = std('flag' + (k % FLAGC.length), fc, fc.map(v => v * .4)); f.parent = hg; f.position.y = -.4; f.isPickable = false;
+            hg.setEnabled(false); hg.ph = k * 1.3; shown.push(hg);
+          }
+        }
+      }
       function hud() {
         H.score(fmt(st.el));
         const got = drop ? st.done : st.got;
@@ -64,6 +109,7 @@
         if (!drop && st.got >= total) finish(true);
       }
       function deliver() {
+        for (let k = st.done; k < Math.min(shown.length, st.done + st.carried); k++) { shown[k].setEnabled(true); shown[k].scaling.setAll(.01); shown[k].pop = -(k - st.done) * .12; }
         st.done += st.carried; const n = st.carried; st.carried = 0;
         ctx.sound(st.done >= total ? 'gamewin' : 'strike');
         const sp = ctx.screenOf(new V3(drop.x, drop.y + 2.4, drop.z)); if (!sp.behind) H.pop(sp.x, sp.y, `+${n} · ${st.done} / ${total}`);
@@ -91,6 +137,7 @@
             it.root.position.y = it.y + (look === 'scroll' ? .12 * Math.sin(t * 2.2 + it.ph) : 0);
           }
           if (dropRing) { const k = 1 + .05 * Math.sin(t * 5); dropRing.scaling.set(k, 1, k); }
+          for (const s of shown) { if (s.pop != null) { s.pop = Math.min(1, s.pop + dt * 4); s.scaling.setAll(.01 + .99 * Math.max(0, s.pop)); if (s.pop >= 1) s.pop = null; } if (s.ph != null) s.rotation.x = .22 * Math.sin(t * 2.4 + s.ph); }
           if (st.puff != null) { st.puff += dt; puff.scaling.setAll(.5 + st.puff * 5); puff.material.alpha = Math.max(0, .8 - st.puff * 1.6); if (st.puff > .5) { puff.setEnabled(false); st.puff = null; } }
           if (st.phase === 'count') {
             st.t -= dt;
@@ -113,7 +160,7 @@
           const n = next(); if (n && st.phase !== 'done') { beam.setEnabled(true); beam.position.set(n.x, (n.y ?? 0) + 7, n.z); beam.material.alpha = .2 + .1 * Math.sin(t * 6); } else beam.setEnabled(false);
         },
         target() { const n = next(); return n ? { x: n.x, z: n.z } : null; },
-        _test: { st, items, next, finish, drop },
+        _test: { st, items, next, finish, drop, shown },
         dispose() { ctx.player.hold(false); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
     }
