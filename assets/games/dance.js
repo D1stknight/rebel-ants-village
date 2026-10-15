@@ -3,7 +3,8 @@
 // (arrow keys, W A S D or the pads) as each one reaches it. A good press makes your Rebel dance (cartwheels, flips,
 // kicks, the village's own move set) and builds a combo. Land enough moves to clear the level; harder levels score more.
 // def: { song: <id in SONGS>, moves: [left, up, right, down] clip names, floor: [r, g, b], pass, points,
-// car: true (Saints Lowrider Hop: the moves bounce the lowrider on its hydraulics instead) }
+// car: true | kit type (Saints Lowrider Hop: the moves bounce the lowrider on its hydraulics instead), carYaw,
+//   camR / camY / camT [x, y, z] (the camera: distance, height, look-at), playerAt [x, z, yaw] }
 (function () {
   const BEST_KEY = 'rebelAntsDanceBest:v1';
   const loadBest = () => { try { return JSON.parse(localStorage.getItem(BEST_KEY) || '{}') || {}; } catch (e) { return {}; } };
@@ -170,8 +171,9 @@
       // the lowrider (Saints): the car on the floor bounces on its hydraulics
       if (def.car) { st.car = ctx.kit(def.car === true ? 'sl_car_purple' : def.car); st.car.position.set(0, 0, 0); st.car.rotation.y = def.carYaw ?? 0; st.carBase = st.car.position.y; } // broadside to the camera (end-on its 7.6 m filled the view)
       // the player: on the floor facing the camera (beside the car for the lowrider)
-      if (def.car) ctx.player.place(-5.3, 1, .6); else ctx.player.place(0, 0, 0); // by the car's nose
-      const camR = def.car ? 9.5 : 7, look = t => { const a = Math.sin(t * .25) * .38; ctx.look([Math.sin(a) * camR, def.car ? 3 : 2.4, Math.cos(a) * camR], [def.car ? -1 : 0, def.car ? 1.1 : .9, 0], .8); };
+      const pAt = def.playerAt || (def.car ? [-5.3, 1, .6] : [0, 0, 0]); ctx.player.place(pAt[0], pAt[1], pAt[2] || 0); // the lowrider's dancer by its nose
+      const camR = def.camR || (def.car ? 9.5 : 7), camY = def.camY || (def.car ? 3 : 2.4), camT = def.camT || (def.car ? [-1, 1.1, 0] : [0, .9, 0]);
+      const look = t => { const a = Math.sin(t * .25) * .38; ctx.look([Math.sin(a) * camR, camY, Math.cos(a) * camR], camT, .8); };
       look(0);
       // the lane, the pads and the level choice in the game HUD
       const hud = document.getElementById('gameHud');
