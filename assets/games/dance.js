@@ -168,9 +168,9 @@
       const ring2 = keep(B.MeshBuilder.CreateTorus('dnRing2', { diameter: 3.4, thickness: .08, tessellation: 40 }, scene)); ring2.position.y = .08; ring2.material = ring.material;
       [disc, ring, ring2].forEach(m => { m.position.y += ctx.ground(ctx.toWorld(0, 0, 0).x, ctx.toWorld(0, 0, 0).z) - ctx.toWorld(0, 0, 0).y; });
       // the lowrider (Saints): the car on the floor bounces on its hydraulics
-      if (def.car) { st.car = ctx.kit(def.car === true ? 'sl_car_purple' : def.car); st.car.position.set(0, 0, 0); st.car.rotation.y = Math.PI / 2; st.carBase = st.car.position.y; }
+      if (def.car) { st.car = ctx.kit(def.car === true ? 'sl_car_purple' : def.car); st.car.position.set(0, 0, 0); st.car.rotation.y = def.carYaw ?? 0; st.carBase = st.car.position.y; } // broadside to the camera (end-on its 7.6 m filled the view)
       // the player: on the floor facing the camera (beside the car for the lowrider)
-      if (def.car) ctx.player.place(-3.4, 1.2, .5); else ctx.player.place(0, 0, 0);
+      if (def.car) ctx.player.place(-5.3, 1, .6); else ctx.player.place(0, 0, 0); // by the car's nose
       const camR = def.car ? 9.5 : 7, look = t => { const a = Math.sin(t * .25) * .38; ctx.look([Math.sin(a) * camR, def.car ? 3 : 2.4, Math.cos(a) * camR], [def.car ? -1 : 0, def.car ? 1.1 : .9, 0], .8); };
       look(0);
       // the lane, the pads and the level choice in the game HUD
