@@ -3033,7 +3033,17 @@
       // pool tables and darts (right), round tables
       for (const [x, y, m] of [[7.5, -1.5, 'felt_green'], [7.5, 2, 'felt_blue']]) { M.block('darkwood', x, y, Z, 3, 1.6, .85); M.block(m, x, y, Z + .85, 2.7, 1.3, .05); for (const sx of [-1, 1]) for (const sy of [-1, 1]) M.block('darkwood', x + sx * 1.3, y + sy * .65, Z, .18, .18, .85); }
       M.tube('darts', [W / 2 - .32, 3, Z + 2.2], [W / 2 - .34, 3, Z + 2.2], .45, .45, 16);
-      for (const [x, y] of [[-2.5, -3], [0, -1], [2.8, -3.2], [-4.5, -.5]]) chzTable(M, x, y, Z);
+      for (const [x, y] of [[-2.5, -3], [-4.5, -.5]]) chzTable(M, x, y, Z);
+      // the beer pong table (Oct 15; the game lays out the cups): black top, white rails and a centre line, a banana moon,
+      // a white ring where each cup of the two racks stands
+      { const tx = 1, ty = -2, L = 3.84, Wd = 1.04, T = Z + 1.16;
+        M.block('paint_black', tx, ty, T - .06, L, Wd, .06);
+        for (const sd of [-1, 1]) M.block('paint_white', tx, ty + sd * (Wd / 2 - .03), T, L, .05, .006);
+        for (const sd of [-1, 1]) M.block('paint_white', tx + sd * (L / 2 - .03), ty, T, .05, Wd, .006);
+        M.block('paint_white', tx, ty, T, .03, Wd - .1, .006);
+        M.cyl('banana', [tx, ty, T], .2, .007, 18); M.cyl('paint_black', [tx + .05, ty + .03, T + .007], .15, .004, 18); // a banana moon
+        for (const sd of [-1, 1]) for (const [r, c] of [[0, -1], [0, 0], [0, 1], [1, -.5], [1, .5], [2, 0]]) M.cyl('paint_white', [tx + sd * (L / 2 - .3 - r * .132), ty + c * .152, T], .072, .005, 10);
+        for (const sx of [-1, 1]) for (const sy of [-1, 1]) M.block('darkwood', tx + sx * (L / 2 - .2), ty + sy * (Wd / 2 - .12), Z, .1, .1, 1.1); }
       // upper floor, balcony with railing and string lights, upper walls with lit windows
       M.block('wood', 0, -1, Z + H1, W + .6, D + 2.4, .3);
       for (let i = 0; i <= 12; i++) { const x = -W / 2 + i * W / 12; M.block('wood', x, yF - 2, Z + H1 + .3, .14, .14, 1.1); }
