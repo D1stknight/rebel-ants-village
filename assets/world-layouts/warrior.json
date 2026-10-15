@@ -52458,5 +52458,261 @@
         "points": 50
       }
     }
+  },
+  {
+    "type": "war_target",
+    "name": "war_targetRootClone__war_spear_throw_board0",
+    "position": {
+      "x": -6,
+      "y": 0.1,
+      "z": 18.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "villageId": "warrior",
+    "animationMap": {},
+    "animationSpeed": {},
+    "proxyAutoEnabled": true,
+    "enabled": true
+  },
+  {
+    "type": "war_target",
+    "name": "war_targetRootClone__war_spear_throw_board1",
+    "position": {
+      "x": -2,
+      "y": 0.1,
+      "z": 15.8
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "villageId": "warrior",
+    "animationMap": {},
+    "animationSpeed": {},
+    "proxyAutoEnabled": true,
+    "enabled": true
+  },
+  {
+    "type": "war_target",
+    "name": "war_targetRootClone__war_spear_throw_board2",
+    "position": {
+      "x": 2,
+      "y": 0.1,
+      "z": 17.4
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "villageId": "warrior",
+    "animationMap": {},
+    "animationSpeed": {},
+    "proxyAutoEnabled": true,
+    "enabled": true
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_war-spear-throw",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -14,
+      "y": 0.1,
+      "z": 17
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "warrior",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "war-spear-throw",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.4,
+      "label": "",
+      "game": {
+        "id": "war-spear-throw",
+        "type": "toss",
+        "title": "Spear Throw",
+        "item": "spear",
+        "shots": 10,
+        "pass": 50,
+        "points": 50,
+        "targets": [
+          {
+            "x": -1.5,
+            "y": 1.3,
+            "z": 8,
+            "r": 0.7,
+            "kind": "board",
+            "label": "near",
+            "anchor": {
+              "type": "war_target",
+              "local": [
+                0,
+                1.3,
+                0
+              ]
+            }
+          },
+          {
+            "x": 1.2,
+            "y": 1.3,
+            "z": 12,
+            "r": 0.7,
+            "kind": "board",
+            "mult": 1.5,
+            "label": "middle",
+            "anchor": {
+              "type": "war_target",
+              "local": [
+                0,
+                1.3,
+                0
+              ]
+            }
+          },
+          {
+            "x": -0.4,
+            "y": 1.3,
+            "z": 16,
+            "r": 0.7,
+            "kind": "board",
+            "mult": 2,
+            "label": "far",
+            "anchor": {
+              "type": "war_target",
+              "local": [
+                0,
+                1.3,
+                0
+              ]
+            }
+          }
+        ],
+        "cam": [
+          -1.6,
+          3.2,
+          -3.6
+        ],
+        "at": [
+          0,
+          1.6,
+          11
+        ]
+      }
+    }
   }
 ]
