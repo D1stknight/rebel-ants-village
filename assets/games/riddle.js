@@ -1,7 +1,7 @@
 // Riddles (Oct 15): a riddle-giver's questions one at a time, three or four answers each (click one or press its
 // number). A right answer gets its reason and the next riddle; a wrong one shows the right answer and its reason. The
 // score is the riddles answered right (Bushi Strategist's Question, Sohei Monk's Koan, Warrior Cracked Circle).
-// def: { riddles: [{ q, a: [answers], right: index, why }], pass (right answers to clear it), giver: npcId (the camera
+// def: { riddles: [{ q, a: [answers], right: index, why }], ask (how many to ask), pass (right answers to clear it), giver: npcId (the camera
 //        looks at them), cam, at (frame coordinates), bell: Hz (a right answer rings a bell of that pitch) }
 (function () {
   const G = {
@@ -12,6 +12,8 @@
       const mix = n => { const a = [...Array(n).keys()]; for (let i = n - 1; i > 0; i--) { const k = Math.floor(Math.random() * (i + 1)); [a[i], a[k]] = [a[k], a[i]]; } return a; };
       const R = (def.riddles || []).filter(r => r && r.q && Array.isArray(r.a) && r.a.length >= 2)
         .map(r => { if (def.keepOrder) return r; const o = mix(r.a.length); return { ...r, a: o.map(i => r.a[i]), right: o.indexOf(r.right) }; });
+      // def.ask: only that many of the riddles, picked afresh each play (a quiz drawn from a longer list)
+      if (def.ask > 0 && def.ask < R.length) { const keep = mix(R.length).slice(0, def.ask).sort((x, y) => x - y); R.splice(0, R.length, ...keep.map(i => R[i])); }
       // the camera over the shoulder, on the riddle-giver when there is one
       const giver = def.giver && ctx.npc ? ctx.npc(def.giver) : null;
       let at = def.at || [0, 2, 5];

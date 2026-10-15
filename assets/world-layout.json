@@ -54852,5 +54852,327 @@
         ]
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_hub-sorting-crates",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -17.23,
+      "y": 0,
+      "z": 46.22
+    },
+    "rotation": {
+      "x": 0,
+      "y": -3.1407,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "hub",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "hub-sorting-crates",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.4,
+      "label": "",
+      "game": {
+        "type": "riddle",
+        "id": "hub-sorting-crates",
+        "title": "Sorting the Crates",
+        "giver": "hub-ashigaru-villager-1779752096556-469",
+        "riddles": [
+          {
+            "q": "This crate is marked with a red handprint: judgment, sacrifice, power in silence. Which village is it for?",
+            "a": [
+              "Ronin",
+              "Samurai",
+              "Warrior",
+              "Kenshi"
+            ],
+            "right": 0,
+            "why": "The red hand is the Ronin mark, the silent assassins of the colony."
+          },
+          {
+            "q": "An ant on a red field: loyalty, structure, ancestral pride. Where does this crate go?",
+            "a": [
+              "Samurai",
+              "Shogun",
+              "Bushi",
+              "Ashigaru"
+            ],
+            "right": 0,
+            "why": "The ant on red flies over the Samurai, the disciplined core soldiers."
+          },
+          {
+            "q": "A crown, for power through wisdom. Whose crate?",
+            "a": [
+              "Shogun",
+              "Samurai",
+              "Buke",
+              "Sohei"
+            ],
+            "right": 0,
+            "why": "The crown is the Shogun mark: the commanders and rulers."
+          },
+          {
+            "q": "Crossed swords under a rising sun: the mind behind the blade. Which village?",
+            "a": [
+              "Bushi",
+              "Kenshi",
+              "Warrior",
+              "Samurai"
+            ],
+            "right": 0,
+            "why": "The Bushi are the tactical officers and advisors."
+          },
+          {
+            "q": "A trident, for steadfast unity and defence. Where does it go?",
+            "a": [
+              "Buke",
+              "Wokou",
+              "Bushi",
+              "Ashigaru"
+            ],
+            "right": 0,
+            "why": "The trident marks the Buke, noble defenders of the inner colonies."
+          },
+          {
+            "q": "A sprouting plant: growth through endurance. Whose crate is this?",
+            "a": [
+              "Ashigaru",
+              "Yamabushi",
+              "Sohei",
+              "Buke"
+            ],
+            "right": 0,
+            "why": "The sprout is the Ashigaru mark: the foot soldiers who carry the colony."
+          },
+          {
+            "q": "A curved blade: focus, skill, deadly grace. Which village?",
+            "a": [
+              "Kenshi",
+              "Ronin",
+              "Samurai",
+              "Bushi"
+            ],
+            "right": 0,
+            "why": "The curved blade belongs to the Kenshi swordmasters."
+          },
+          {
+            "q": "A spiral, the flow of energy through nature. Where does this one go?",
+            "a": [
+              "Yamabushi",
+              "Sohei",
+              "Kenshi",
+              "Wokou"
+            ],
+            "right": 0,
+            "why": "The spiral is the Yamabushi mark, the mountain mystics."
+          },
+          {
+            "q": "A cross and a sun: enlightenment through conflict. Whose crate?",
+            "a": [
+              "Sohei",
+              "Yamabushi",
+              "Shogun",
+              "Warrior"
+            ],
+            "right": 0,
+            "why": "Cross and sun mark the Sohei, the monastic warriors."
+          },
+          {
+            "q": "A wave and a dagger, the power of tides and rebellion. Which village?",
+            "a": [
+              "Wokou",
+              "Buke",
+              "Kenshi",
+              "Ashigaru"
+            ],
+            "right": 0,
+            "why": "Wave and dagger fly on the Wokou sails: sea raiders and explorers."
+          },
+          {
+            "q": "A cracked circle: the will to fight against all odds. Where does it go?",
+            "a": [
+              "Warrior",
+              "Ronin",
+              "Ashigaru",
+              "Bushi"
+            ],
+            "right": 0,
+            "why": "The cracked circle is the Warrior mark, the battle-tested veterans."
+          },
+          {
+            "q": "This crate is for the silent ones who act only when the colony's fate hangs by a thread. Which village?",
+            "a": [
+              "Ronin",
+              "Kenshi",
+              "Bushi",
+              "Wokou"
+            ],
+            "right": 0,
+            "why": "The Ronin: matte black armour, a crimson visor, and very few words."
+          },
+          {
+            "q": "This one is for the colony's foot soldiers and labour force. Where does it go?",
+            "a": [
+              "Ashigaru",
+              "Samurai",
+              "Buke",
+              "Warrior"
+            ],
+            "right": 0,
+            "why": "The Ashigaru: green fields, rice paddies, hard work. Like these crates."
+          },
+          {
+            "q": "These herbs and incense are for the mystics on the highest cliffs. Which village?",
+            "a": [
+              "Yamabushi",
+              "Sohei",
+              "Shogun",
+              "Kenshi"
+            ],
+            "right": 0,
+            "why": "The Yamabushi live up among the cliffs, waterfalls and blue mist."
+          },
+          {
+            "q": "Rope and tar for the raiders by the sea. Where does this crate go?",
+            "a": [
+              "Wokou",
+              "Kenshi",
+              "Samurai",
+              "Buke"
+            ],
+            "right": 0,
+            "why": "The Wokou harbour: piers, ships and sea fog."
+          },
+          {
+            "q": "Ink and maps for the colony's commanders and rulers. Whose crate?",
+            "a": [
+              "Shogun",
+              "Bushi",
+              "Samurai",
+              "Buke"
+            ],
+            "right": 0,
+            "why": "The Shogun rule from the castle on the hill."
+          },
+          {
+            "q": "Plans and chalk for the tacticians who are the mind behind the blade. Which village?",
+            "a": [
+              "Bushi",
+              "Shogun",
+              "Kenshi",
+              "Ronin"
+            ],
+            "right": 0,
+            "why": "The Bushi: strategy halls, sand yards and sunrise watches."
+          },
+          {
+            "q": "Shields for the noble defenders of the inner colonies. Where does it go?",
+            "a": [
+              "Buke",
+              "Bushi",
+              "Samurai",
+              "Warrior"
+            ],
+            "right": 0,
+            "why": "The Buke hold the canyon village with its canals and palisades."
+          }
+        ],
+        "ask": 8,
+        "pass": 7,
+        "points": 50
+      }
+    }
   }
 ]
