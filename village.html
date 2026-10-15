@@ -3417,6 +3417,33 @@ const PlaytestNote = (() => {
   } catch (e) { console.warn('Playtest jump failed', e); return 'The playtest jump failed: ' + e.message; }
 })();
 
+// Game jumps (preview and local builds only, for testing the mini-games): village.html?village=<v>&game=<gameId> puts the
+// Rebel beside that game once the village is up: in front of its quest spot, or through its room's door (sealed doors
+// open with &rooms=open) and beside the room's hotspot. Press O there to play.
+const GameJump = (() => { const id = new URLSearchParams(location.search).get('game'); return id && /(-git-|^localhost$|^127\.0\.0\.1$)/.test(location.hostname) ? id : null; })();
+function runGameJump(tries = 0) {
+  if (!GameJump) return;
+  const again = () => { if (tries < 60) setTimeout(() => runGameJump(tries + 1), 500); };
+  if (!charMesh || !walkMode) { if (!walkMode && !adminMode && tries === 0) try { toggleWalk(); } catch (e) {} return again(); }
+  const spot = getQuestSpotRoots().find(r => r.metadata?.spotConfig?.game?.id === GameJump);
+  if (spot) {
+    const p = spot.getAbsolutePosition(), yaw = spot.rotation?.y || 0;
+    charMesh.position.x = p.x - Math.sin(yaw) * 1.4; charMesh.position.z = p.z - Math.cos(yaw) * 1.4; charMesh.rotation.y = yaw; _playerDeckSnapUntil = performance.now() + 1500;
+    showToast(`Game jump: ${spot.metadata.spotConfig.game.title || GameJump}. Press O to play.`, 7000); return;
+  }
+  const configs = getInteriorRoomConfigs(); let room = null, hotspot = null;
+  for (const [rid, cfg] of Object.entries(configs)) for (const h of cfg?.hotspots || []) if (h?.game?.id === GameJump) { room = rid; hotspot = h; }
+  if (!room) return tries < 6 ? again() : showToast(`There is no game ${GameJump} in this village.`, 6000);
+  const at = () => { const h = scene.getTransformNodeByName('interiorHotspotRoot_' + hotspot.hotspotId); if (!h) return false; const p = h.getAbsolutePosition();
+    const toward = Math.atan2(-p.x, -p.z); charMesh.position.x = p.x + Math.sin(toward) * 1.3; charMesh.position.z = p.z + Math.cos(toward) * 1.3; charMesh.rotation.y = toward + Math.PI; _playerDeckSnapUntil = performance.now() + 1500;
+    showToast(`Game jump: ${hotspot.game.title || GameJump}. Press O to play.`, 7000); return true; };
+  if (ActiveInterior) { if (!at()) again(); return; }
+  const door = scene.transformNodes.find(n => n.metadata?.type === 'interior_entrance' && n.metadata.targetInteriorId === room);
+  if (!door) return showToast(`The door to ${room} is not in this village.`, 6000);
+  enterInterior(door);
+  const wait = (k = 0) => { if (ActiveInterior && at()) return; if (k < 40) setTimeout(() => wait(k + 1), 400); }; setTimeout(wait, 1200);
+}
+
 // ═══════════════════════════════════════
 // SIDE QUESTS — run beside the main story. A giver NPC offers one (BOOK1_WIRING.side[n].giver / offer); after
 // that conversation it is active. Its steps use the same objective types and matching as main quests, and
@@ -27844,6 +27871,7 @@ function markVillageStartupInteractive() {
   schedulePostInteractiveStartupTask(startVillagePetalEffects, 1200);
   schedulePostInteractiveStartupTask(initVillageHud, 300);
   if (PlaytestNote) schedulePostInteractiveStartupTask(() => showToast(PlaytestNote, 9000), 2500); // a playtest jump says where it put you
+  if (GameJump) schedulePostInteractiveStartupTask(() => runGameJump(), 3000); // a game jump walks the Rebel to that game
   const ld = document.getElementById('ld');
   if (ld) { ld.style.opacity='0'; setTimeout(()=>{ ld.style.display='none'; }, 900); }
 }
