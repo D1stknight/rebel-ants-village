@@ -45720,6 +45720,52 @@
               "y": 0.8,
               "z": 1
             }
+          },
+          {
+            "interiorId": "cc_witch_cottage",
+            "hotspotId": "hotspot_cc_witch_cottage_brew",
+            "linkName": "The Witch's Brew",
+            "actionType": "showInfo",
+            "url": "",
+            "description": "The Lunar Witch's recipe page lies open by the cauldron: a riddle for each ingredient. Pour them in order.",
+            "enabled": true,
+            "position": {
+              "x": -2.6,
+              "y": 1.6,
+              "z": -2.2
+            },
+            "rotation": {
+              "x": 0,
+              "y": 3.141592653589793,
+              "z": 0
+            },
+            "scaling": {
+              "x": 1,
+              "y": 0.8,
+              "z": 1
+            },
+            "game": {
+              "type": "brew",
+              "id": "cc-witch-brew",
+              "title": "The Witch's Brew",
+              "pass": 55,
+              "points": 50,
+              "questOn": "pass",
+              "cauldron": [
+                0,
+                -3.6
+              ],
+              "rim": 1.52,
+              "shelf": [
+                -2.7,
+                2.15,
+                -3.1
+              ],
+              "playerAt": [
+                1.9,
+                -2.5
+              ]
+            }
           }
         ],
         "updatedAt": "2026-10-10T15:34:06.629Z"
@@ -45798,6 +45844,29 @@
               "x": 1,
               "y": 0.8,
               "z": 1
+            },
+            "game": {
+              "type": "claw",
+              "id": "cc-claw-machine",
+              "title": "Claw Machine",
+              "pass": 40,
+              "points": 40,
+              "questOn": "pass",
+              "box": [
+                4.05,
+                -10.05,
+                5.95,
+                -8.15
+              ],
+              "floor": 1.72,
+              "top": 3.15,
+              "chute": [
+                4.35,
+                -8.45
+              ],
+              "tries": 5,
+              "seconds": 15,
+              "prizes": 6
             }
           },
           {
