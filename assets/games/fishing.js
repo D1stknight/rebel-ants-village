@@ -3,9 +3,10 @@
 // the fish off. When the float goes right under, strike (Space) quickly. Reel: hold Space (or the mouse) to lift the
 // green catch zone, let go to drop it; keep the fish inside it until the line is reeled in. The golden snapper lives
 // only far out and fights hardest. Score: the catch's points.
-// def: { seaY (world height of the sea, -1.6), casts: 5, reach: [6, 22], pass, points }
+// def: { seaY (world height of the sea, -1.6), casts: 5, reach: [6, 22], pass, points, fish (another catch table: [{ name,
+//   pts, fight, size, col, far, gold?, boot? }]) }
 (function () {
-  const FISH = [ // name, points, fight (0..1), size (m), colour, far (how much it favours long casts)
+  const FISH0 = [ // name, points, fight (0..1), size (m), colour, far (how much it favours long casts)
     { name: 'an old boot', pts: 2, fight: .05, size: .32, col: [.3, .22, .15], far: 0, boot: true },
     { name: 'a sardine', pts: 10, fight: .2, size: .28, col: [.62, .7, .78], far: 0 },
     { name: 'a mackerel', pts: 20, fight: .36, size: .42, col: [.3, .5, .55], far: .3 },
@@ -18,7 +19,7 @@
     title: 'Pier Fishing',
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, U = ctx.util, scene = ctx.scene, def = ctx.def;
-      const CASTS = def.casts || 5, REACH = def.reach || [6, 22];
+      const CASTS = def.casts || 5, REACH = def.reach || [6, 22], FISH = def.fish?.length ? def.fish : FISH0;
       const frameY = ctx.toWorld(0, 0, 0).y, WY = (def.seaY ?? -1.6) - frameY + .02;
       const mat = (k, c, em, o = {}) => ctx.mat(k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(...(o.spec || [.15, .15, .15])); if (em) m.emissiveColor = new B.Color3(...em); if (o.flat) m.disableLighting = true; if (o.alpha != null) m.alpha = o.alpha; return m; });
       const rodM = mat('rod', [.42, .28, .14], [.06, .04, .02]), redM = mat('bobRed', [.9, .15, .12], [.35, .05, .04]), whiteM = mat('bobWhite', [.95, .95, .92], [.3, .3, .3]);

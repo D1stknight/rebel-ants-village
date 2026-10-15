@@ -27916,5 +27916,219 @@
         ]
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_wok-harbour-fishing",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -21.5,
+      "y": 0.1,
+      "z": -44
+    },
+    "rotation": {
+      "x": 0,
+      "y": 1.5707963267948966,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "wokou",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "wok-harbour-fishing",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "id": "wok-harbour-fishing",
+        "title": "Harbour Fishing",
+        "points": 60,
+        "questOn": "pass",
+        "type": "fishing",
+        "seaY": -3,
+        "reach": [
+          8,
+          26
+        ],
+        "fish": [
+          {
+            "name": "a rusty chain",
+            "pts": 2,
+            "fight": 0.05,
+            "size": 0.4,
+            "col": [
+              0.36,
+              0.24,
+              0.16
+            ],
+            "far": 0,
+            "boot": true
+          },
+          {
+            "name": "a horse mackerel",
+            "pts": 10,
+            "fight": 0.22,
+            "size": 0.3,
+            "col": [
+              0.55,
+              0.65,
+              0.72
+            ],
+            "far": 0
+          },
+          {
+            "name": "a sea bream",
+            "pts": 22,
+            "fight": 0.38,
+            "size": 0.42,
+            "col": [
+              0.85,
+              0.45,
+              0.45
+            ],
+            "far": 0.3
+          },
+          {
+            "name": "an octopus",
+            "pts": 35,
+            "fight": 0.55,
+            "size": 0.5,
+            "col": [
+              0.72,
+              0.3,
+              0.35
+            ],
+            "far": 0.5
+          },
+          {
+            "name": "a yellowtail",
+            "pts": 50,
+            "fight": 0.66,
+            "size": 0.7,
+            "col": [
+              0.75,
+              0.8,
+              0.5
+            ],
+            "far": 0.7
+          },
+          {
+            "name": "a bluefin tuna",
+            "pts": 80,
+            "fight": 0.85,
+            "size": 1.05,
+            "col": [
+              0.18,
+              0.25,
+              0.45
+            ],
+            "far": 0.9
+          },
+          {
+            "name": "the raider's pearl",
+            "pts": 150,
+            "fight": 0.95,
+            "size": 0.5,
+            "col": [
+              1,
+              0.92,
+              0.78
+            ],
+            "far": 1,
+            "gold": true
+          }
+        ],
+        "pass": 60
+      }
+    }
   }
 ]
