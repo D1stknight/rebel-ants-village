@@ -41655,5 +41655,602 @@
         "questOn": "pass"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_ronin-fortress-run",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -12,
+      "y": 0.1,
+      "z": -40.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ronin",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "ronin-fortress-run",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "ronin-fortress-run",
+        "title": "Fortress Run",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            -49,
+            -38
+          ],
+          [
+            -56,
+            0
+          ],
+          [
+            -45,
+            28
+          ],
+          [
+            0,
+            47
+          ],
+          [
+            45,
+            28
+          ],
+          [
+            54.5,
+            -20.5
+          ],
+          [
+            20,
+            -40.5
+          ],
+          [
+            2,
+            -28
+          ]
+        ],
+        "start": [
+          -13.6,
+          -40.39
+        ],
+        "path": [
+          [
+            -18.5,
+            -40
+          ],
+          [
+            -20.5,
+            -41
+          ],
+          [
+            -21,
+            -41.5
+          ],
+          [
+            -21.5,
+            -42
+          ],
+          [
+            -22,
+            -42.5
+          ],
+          [
+            -22.5,
+            -43
+          ],
+          [
+            -23.5,
+            -43.5
+          ],
+          [
+            -49,
+            -38
+          ],
+          [
+            -47.5,
+            -36
+          ],
+          [
+            -47,
+            -35.5
+          ],
+          [
+            -46.5,
+            -35
+          ],
+          [
+            -46,
+            -34.5
+          ],
+          [
+            -45.5,
+            -34
+          ],
+          [
+            -44.5,
+            -33.5
+          ],
+          [
+            -35.5,
+            -30.5
+          ],
+          [
+            -35,
+            -30
+          ],
+          [
+            -34.5,
+            -29.5
+          ],
+          [
+            -29,
+            -9
+          ],
+          [
+            -23.5,
+            -1
+          ],
+          [
+            -23,
+            -0.5
+          ],
+          [
+            -22.5,
+            0
+          ],
+          [
+            -23,
+            0.5
+          ],
+          [
+            -23.5,
+            1
+          ],
+          [
+            -55.5,
+            0.5
+          ],
+          [
+            -56,
+            0
+          ],
+          [
+            -53,
+            21
+          ],
+          [
+            -52.5,
+            21.5
+          ],
+          [
+            -52,
+            22
+          ],
+          [
+            -47,
+            26
+          ],
+          [
+            -45,
+            28
+          ],
+          [
+            -39,
+            22
+          ],
+          [
+            -38.5,
+            21.5
+          ],
+          [
+            -38,
+            21
+          ],
+          [
+            -37.5,
+            20.5
+          ],
+          [
+            -33,
+            8
+          ],
+          [
+            -32.5,
+            7.5
+          ],
+          [
+            -32,
+            7
+          ],
+          [
+            -6,
+            5.5
+          ],
+          [
+            -5.5,
+            6
+          ],
+          [
+            -5,
+            6.5
+          ],
+          [
+            -5,
+            39.5
+          ],
+          [
+            -4.5,
+            40
+          ],
+          [
+            -4,
+            40.5
+          ],
+          [
+            -3.5,
+            41
+          ],
+          [
+            -3.5,
+            41.5
+          ],
+          [
+            -1,
+            46
+          ],
+          [
+            0,
+            47
+          ],
+          [
+            0,
+            41.5
+          ],
+          [
+            0,
+            41
+          ],
+          [
+            0,
+            40.5
+          ],
+          [
+            0,
+            40
+          ],
+          [
+            0,
+            39.5
+          ],
+          [
+            5,
+            6.5
+          ],
+          [
+            5.5,
+            6
+          ],
+          [
+            6,
+            5.5
+          ],
+          [
+            32,
+            7
+          ],
+          [
+            32.5,
+            7.5
+          ],
+          [
+            33,
+            8
+          ],
+          [
+            37.5,
+            22
+          ],
+          [
+            38,
+            22.5
+          ],
+          [
+            38.5,
+            23
+          ],
+          [
+            39,
+            23.5
+          ],
+          [
+            45,
+            28
+          ],
+          [
+            39,
+            23.5
+          ],
+          [
+            38.5,
+            23
+          ],
+          [
+            38,
+            22.5
+          ],
+          [
+            33.5,
+            16
+          ],
+          [
+            33,
+            8
+          ],
+          [
+            32.5,
+            7.5
+          ],
+          [
+            32,
+            7
+          ],
+          [
+            23.5,
+            1
+          ],
+          [
+            23,
+            0.5
+          ],
+          [
+            22.5,
+            0
+          ],
+          [
+            29,
+            -9.5
+          ],
+          [
+            29.5,
+            -10
+          ],
+          [
+            30,
+            -10.5
+          ],
+          [
+            53.5,
+            -16
+          ],
+          [
+            54,
+            -16.5
+          ],
+          [
+            54.5,
+            -17
+          ],
+          [
+            55,
+            -20
+          ],
+          [
+            54.5,
+            -20.5
+          ],
+          [
+            54.5,
+            -23.5
+          ],
+          [
+            46,
+            -32
+          ],
+          [
+            45.5,
+            -32.5
+          ],
+          [
+            45,
+            -33
+          ],
+          [
+            30,
+            -37
+          ],
+          [
+            27.5,
+            -39.5
+          ],
+          [
+            27,
+            -40
+          ],
+          [
+            26.5,
+            -40.5
+          ],
+          [
+            26,
+            -41
+          ],
+          [
+            25.5,
+            -41.5
+          ],
+          [
+            25,
+            -42
+          ],
+          [
+            24.5,
+            -42.5
+          ],
+          [
+            24,
+            -43
+          ],
+          [
+            23.5,
+            -43.5
+          ],
+          [
+            22.5,
+            -43
+          ],
+          [
+            22,
+            -42.5
+          ],
+          [
+            21.5,
+            -42
+          ],
+          [
+            21,
+            -41.5
+          ],
+          [
+            20.5,
+            -41
+          ],
+          [
+            20,
+            -40.5
+          ],
+          [
+            12,
+            -36
+          ],
+          [
+            10.5,
+            -34.5
+          ],
+          [
+            10,
+            -34
+          ],
+          [
+            9.5,
+            -33.5
+          ],
+          [
+            2,
+            -28
+          ]
+        ],
+        "medals": [
+          67,
+          79,
+          101
+        ],
+        "radius": 3,
+        "cloth": [
+          0.416,
+          0.102,
+          0.114
+        ],
+        "text": "Through the fortress and up the stairs to the dojo",
+        "length": 491.6
+      }
+    }
   }
 ]

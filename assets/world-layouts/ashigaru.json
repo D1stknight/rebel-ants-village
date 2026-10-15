@@ -47804,5 +47804,350 @@
         "questOn": "pass"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_ashi-palisade-run",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 13.5,
+      "y": 0.1,
+      "z": -45
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "ashigaru",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "ashi-palisade-run",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "ashi-palisade-run",
+        "title": "Palisade Run",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            45,
+            -35
+          ],
+          [
+            56,
+            5
+          ],
+          [
+            39.5,
+            39.5
+          ],
+          [
+            2,
+            40
+          ],
+          [
+            -40,
+            40
+          ],
+          [
+            -56,
+            0
+          ],
+          [
+            -45,
+            -35
+          ],
+          [
+            -8,
+            -12
+          ],
+          [
+            5,
+            -45.5
+          ]
+        ],
+        "start": [
+          15.02,
+          -44.52
+        ],
+        "path": [
+          [
+            14,
+            -44.5
+          ],
+          [
+            14.5,
+            -44
+          ],
+          [
+            15,
+            -43.5
+          ],
+          [
+            31,
+            -33.5
+          ],
+          [
+            31.5,
+            -33
+          ],
+          [
+            32,
+            -32.5
+          ],
+          [
+            32.5,
+            -32
+          ],
+          [
+            45,
+            -35
+          ],
+          [
+            48.5,
+            -28
+          ],
+          [
+            49.5,
+            -24.5
+          ],
+          [
+            52,
+            -19
+          ],
+          [
+            56,
+            5
+          ],
+          [
+            54,
+            9
+          ],
+          [
+            39.5,
+            39.5
+          ],
+          [
+            28,
+            44.5
+          ],
+          [
+            27.5,
+            44
+          ],
+          [
+            27,
+            43.5
+          ],
+          [
+            26.5,
+            43
+          ],
+          [
+            11,
+            41
+          ],
+          [
+            5,
+            41
+          ],
+          [
+            4.5,
+            40.5
+          ],
+          [
+            4,
+            40.5
+          ],
+          [
+            2,
+            40
+          ],
+          [
+            -4,
+            40
+          ],
+          [
+            -4.5,
+            40.5
+          ],
+          [
+            -5,
+            41
+          ],
+          [
+            -12.5,
+            41
+          ],
+          [
+            -28,
+            43.5
+          ],
+          [
+            -40,
+            40
+          ],
+          [
+            -51.5,
+            23
+          ],
+          [
+            -51.5,
+            4.5
+          ],
+          [
+            -56,
+            0
+          ],
+          [
+            -50.5,
+            -24
+          ],
+          [
+            -50,
+            -25
+          ],
+          [
+            -49.5,
+            -26
+          ],
+          [
+            -49,
+            -28.5
+          ],
+          [
+            -45,
+            -35
+          ],
+          [
+            -8,
+            -12
+          ],
+          [
+            6,
+            -43.5
+          ],
+          [
+            6,
+            -44.5
+          ],
+          [
+            5.5,
+            -45
+          ],
+          [
+            5,
+            -45.5
+          ]
+        ],
+        "medals": [
+          50,
+          58,
+          76
+        ],
+        "radius": 3,
+        "cloth": [
+          0.549,
+          0.11,
+          0.11
+        ],
+        "text": "Round the mound inside the palisade",
+        "length": 361.6
+      }
+    }
   }
 ]

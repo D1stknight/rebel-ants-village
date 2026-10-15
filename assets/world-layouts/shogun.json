@@ -52268,5 +52268,550 @@
         "questOn": "pass"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_shogun-castle-run",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -16,
+      "y": 0.1,
+      "z": -45
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "shogun",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "shogun-castle-run",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "shogun-castle-run",
+        "title": "Castle Run",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            -48,
+            -42
+          ],
+          [
+            -42,
+            -24.5
+          ],
+          [
+            0,
+            -2
+          ],
+          [
+            -40,
+            30
+          ],
+          [
+            -45,
+            62
+          ],
+          [
+            -27,
+            82
+          ],
+          [
+            40,
+            30
+          ],
+          [
+            3,
+            -8
+          ],
+          [
+            40,
+            -35
+          ],
+          [
+            12,
+            -46
+          ]
+        ],
+        "start": [
+          -17.59,
+          -44.85
+        ],
+        "path": [
+          [
+            -15,
+            -40
+          ],
+          [
+            -15,
+            -38.5
+          ],
+          [
+            -15.5,
+            -38
+          ],
+          [
+            -16,
+            -37.5
+          ],
+          [
+            -16.5,
+            -37
+          ],
+          [
+            -17,
+            -36.5
+          ],
+          [
+            -28.5,
+            -36.5
+          ],
+          [
+            -31,
+            -39
+          ],
+          [
+            -31.5,
+            -39.5
+          ],
+          [
+            -32,
+            -40
+          ],
+          [
+            -41,
+            -40
+          ],
+          [
+            -41.5,
+            -39.5
+          ],
+          [
+            -43,
+            -39.5
+          ],
+          [
+            -43.5,
+            -40
+          ],
+          [
+            -48,
+            -42
+          ],
+          [
+            -43.5,
+            -40
+          ],
+          [
+            -43,
+            -39.5
+          ],
+          [
+            -42.5,
+            -39
+          ],
+          [
+            -42,
+            -24.5
+          ],
+          [
+            -41,
+            -24.5
+          ],
+          [
+            -40.5,
+            -24
+          ],
+          [
+            -27.5,
+            -13
+          ],
+          [
+            -27,
+            -12.5
+          ],
+          [
+            -26.5,
+            -12
+          ],
+          [
+            -4.5,
+            -6.5
+          ],
+          [
+            0,
+            -2
+          ],
+          [
+            -5,
+            4.5
+          ],
+          [
+            -5.5,
+            5
+          ],
+          [
+            -6,
+            5.5
+          ],
+          [
+            -6.5,
+            6
+          ],
+          [
+            -24.5,
+            15.5
+          ],
+          [
+            -40,
+            30
+          ],
+          [
+            -48.5,
+            35
+          ],
+          [
+            -49,
+            35.5
+          ],
+          [
+            -49.5,
+            36
+          ],
+          [
+            -50,
+            37
+          ],
+          [
+            -50,
+            51
+          ],
+          [
+            -49.5,
+            51.5
+          ],
+          [
+            -49,
+            52
+          ],
+          [
+            -46,
+            52.5
+          ],
+          [
+            -45.5,
+            53
+          ],
+          [
+            -45,
+            53.5
+          ],
+          [
+            -45,
+            62
+          ],
+          [
+            -32,
+            73.5
+          ],
+          [
+            -28.5,
+            74
+          ],
+          [
+            -28,
+            74.5
+          ],
+          [
+            -27.5,
+            75
+          ],
+          [
+            -27,
+            75.5
+          ],
+          [
+            -27,
+            82
+          ],
+          [
+            -27,
+            75.5
+          ],
+          [
+            -27.5,
+            75
+          ],
+          [
+            -28,
+            74.5
+          ],
+          [
+            -38,
+            68
+          ],
+          [
+            -38.5,
+            67.5
+          ],
+          [
+            -39,
+            67
+          ],
+          [
+            -39,
+            53.5
+          ],
+          [
+            -38.5,
+            53
+          ],
+          [
+            -38,
+            52.5
+          ],
+          [
+            -29,
+            52
+          ],
+          [
+            -28.5,
+            51.5
+          ],
+          [
+            -28,
+            51
+          ],
+          [
+            -15.5,
+            35
+          ],
+          [
+            -15,
+            34.5
+          ],
+          [
+            -14.5,
+            34
+          ],
+          [
+            -4,
+            33.5
+          ],
+          [
+            -3.5,
+            33.5
+          ],
+          [
+            3.5,
+            33.5
+          ],
+          [
+            4,
+            33.5
+          ],
+          [
+            15.5,
+            32.5
+          ],
+          [
+            16,
+            32
+          ],
+          [
+            16.5,
+            31.5
+          ],
+          [
+            24.5,
+            30
+          ],
+          [
+            40,
+            30
+          ],
+          [
+            10,
+            8.5
+          ],
+          [
+            9.5,
+            8
+          ],
+          [
+            9,
+            7.5
+          ],
+          [
+            8.5,
+            7
+          ],
+          [
+            6.5,
+            6
+          ],
+          [
+            6,
+            5.5
+          ],
+          [
+            5.5,
+            5
+          ],
+          [
+            5,
+            4.5
+          ],
+          [
+            3,
+            -8
+          ],
+          [
+            6,
+            -13
+          ],
+          [
+            16.5,
+            -25
+          ],
+          [
+            17,
+            -25.5
+          ],
+          [
+            17.5,
+            -26
+          ],
+          [
+            40,
+            -35
+          ],
+          [
+            17,
+            -36.5
+          ],
+          [
+            16.5,
+            -37
+          ],
+          [
+            16,
+            -37.5
+          ],
+          [
+            12,
+            -46
+          ]
+        ],
+        "medals": [
+          68,
+          79,
+          102
+        ],
+        "radius": 3,
+        "cloth": [
+          0.373,
+          0.114,
+          0.271
+        ],
+        "text": "Over the garden bridge, up to the shrine and back down",
+        "length": 495.7
+      }
+    }
   }
 ]

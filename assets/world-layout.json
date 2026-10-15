@@ -55295,5 +55295,290 @@
         "questOn": "pass"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_hub-courtyard-circuit",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 22,
+      "y": 0,
+      "z": -50
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "hub",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "hub-courtyard-circuit",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "hub-courtyard-circuit",
+        "title": "Courtyard Circuit",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            45,
+            -42
+          ],
+          [
+            48,
+            40
+          ],
+          [
+            -45,
+            48
+          ],
+          [
+            -48,
+            -40
+          ],
+          [
+            0,
+            -79
+          ],
+          [
+            22,
+            -58
+          ]
+        ],
+        "start": [
+          23.51,
+          -49.47
+        ],
+        "path": [
+          [
+            45,
+            -42
+          ],
+          [
+            48,
+            40
+          ],
+          [
+            -45,
+            48
+          ],
+          [
+            -48,
+            -40
+          ],
+          [
+            -2,
+            -70.5
+          ],
+          [
+            -1.5,
+            -71
+          ],
+          [
+            -1,
+            -71.5
+          ],
+          [
+            -1,
+            -72
+          ],
+          [
+            -1,
+            -72.5
+          ],
+          [
+            -1,
+            -73
+          ],
+          [
+            -1,
+            -73.5
+          ],
+          [
+            -1,
+            -74
+          ],
+          [
+            -1,
+            -74.5
+          ],
+          [
+            -1,
+            -75
+          ],
+          [
+            -1,
+            -75.5
+          ],
+          [
+            -1,
+            -76
+          ],
+          [
+            0,
+            -79
+          ],
+          [
+            0,
+            -76
+          ],
+          [
+            0,
+            -75.5
+          ],
+          [
+            0,
+            -75
+          ],
+          [
+            0,
+            -74.5
+          ],
+          [
+            0,
+            -74
+          ],
+          [
+            0,
+            -73.5
+          ],
+          [
+            0,
+            -73
+          ],
+          [
+            0.5,
+            -72.5
+          ],
+          [
+            1,
+            -72
+          ],
+          [
+            1.5,
+            -71.5
+          ],
+          [
+            2,
+            -71
+          ],
+          [
+            2.5,
+            -70.5
+          ],
+          [
+            22,
+            -58
+          ]
+        ],
+        "medals": [
+          53,
+          62,
+          80
+        ],
+        "radius": 3,
+        "cloth": [
+          0.612,
+          0.11,
+          0.11
+        ],
+        "text": "Round the courtyard and up the Gathering Hall steps",
+        "length": 384.8
+      }
+    }
   }
 ]

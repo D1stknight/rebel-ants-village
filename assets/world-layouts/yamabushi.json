@@ -30641,5 +30641,294 @@
         "questOn": "pass"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_yam-before-the-mist",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -6.5,
+      "y": 0,
+      "z": -68
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "yamabushi",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "yam-before-the-mist",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "yam-before-the-mist",
+        "title": "Before the Mist",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            0,
+            -55
+          ],
+          [
+            -35,
+            -30
+          ],
+          [
+            -35,
+            10
+          ],
+          [
+            0,
+            18
+          ],
+          [
+            0,
+            32
+          ],
+          [
+            40,
+            45
+          ],
+          [
+            62,
+            54
+          ],
+          [
+            85,
+            54
+          ],
+          [
+            97.5,
+            54
+          ]
+        ],
+        "start": [
+          -5.78,
+          -66.57
+        ],
+        "path": [
+          [
+            -6.5,
+            -70
+          ],
+          [
+            -6,
+            -70.5
+          ],
+          [
+            -5.5,
+            -71
+          ],
+          [
+            -5,
+            -71.5
+          ],
+          [
+            -4.5,
+            -71
+          ],
+          [
+            -4,
+            -70.5
+          ],
+          [
+            0,
+            -57.5
+          ],
+          [
+            0,
+            -55
+          ],
+          [
+            -14,
+            -43.5
+          ],
+          [
+            -35,
+            -30
+          ],
+          [
+            -34,
+            -15.5
+          ],
+          [
+            -33,
+            -12.5
+          ],
+          [
+            -33.5,
+            8.5
+          ],
+          [
+            -35,
+            10
+          ],
+          [
+            -22,
+            9
+          ],
+          [
+            -6,
+            10
+          ],
+          [
+            -5.5,
+            10.5
+          ],
+          [
+            -5,
+            11
+          ],
+          [
+            0,
+            18
+          ],
+          [
+            0,
+            32
+          ],
+          [
+            5,
+            32
+          ],
+          [
+            17.5,
+            39.5
+          ],
+          [
+            23.5,
+            40.5
+          ],
+          [
+            40,
+            45
+          ],
+          [
+            62,
+            54
+          ],
+          [
+            85,
+            54
+          ],
+          [
+            97.5,
+            54
+          ]
+        ],
+        "medals": [
+          36,
+          43,
+          56
+        ],
+        "radius": 3,
+        "cloth": [
+          0.145,
+          0.251,
+          0.176
+        ],
+        "text": "Reach the pillar shrine before the mist closes the path",
+        "mist": {
+          "delay": 3,
+          "speed": 5.6
+        },
+        "length": 260.7
+      }
+    }
   }
 ]

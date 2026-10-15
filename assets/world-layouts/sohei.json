@@ -26853,5 +26853,426 @@
         "questOn": "pass"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_sohei-temple-steps",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -15,
+      "y": 0.1,
+      "z": -45
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "sohei",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "sohei-temple-steps",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "sohei-temple-steps",
+        "title": "Temple Steps",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            0,
+            -8
+          ],
+          [
+            -45,
+            21
+          ],
+          [
+            0,
+            37
+          ],
+          [
+            -38,
+            72
+          ],
+          [
+            39.5,
+            82
+          ],
+          [
+            50,
+            45
+          ],
+          [
+            45,
+            21
+          ],
+          [
+            2,
+            -10
+          ],
+          [
+            22,
+            -45
+          ]
+        ],
+        "start": [
+          -14.4,
+          -43.52
+        ],
+        "path": [
+          [
+            -3.5,
+            -21
+          ],
+          [
+            0,
+            -8
+          ],
+          [
+            -5.5,
+            -1.5
+          ],
+          [
+            -6,
+            -1
+          ],
+          [
+            -6.5,
+            -0.5
+          ],
+          [
+            -7,
+            0
+          ],
+          [
+            -25,
+            0
+          ],
+          [
+            -25.5,
+            0.5
+          ],
+          [
+            -26,
+            1
+          ],
+          [
+            -26.5,
+            1.5
+          ],
+          [
+            -35,
+            20
+          ],
+          [
+            -35.5,
+            20.5
+          ],
+          [
+            -36,
+            21
+          ],
+          [
+            -45,
+            21
+          ],
+          [
+            -23.5,
+            28
+          ],
+          [
+            -6.5,
+            28.5
+          ],
+          [
+            -6,
+            29
+          ],
+          [
+            -5.5,
+            29.5
+          ],
+          [
+            -5,
+            30
+          ],
+          [
+            0,
+            37
+          ],
+          [
+            -12.5,
+            48.5
+          ],
+          [
+            -28.5,
+            64
+          ],
+          [
+            -29,
+            64.5
+          ],
+          [
+            -29.5,
+            65
+          ],
+          [
+            -38,
+            72
+          ],
+          [
+            -34,
+            71
+          ],
+          [
+            -27.5,
+            71
+          ],
+          [
+            0,
+            75.5
+          ],
+          [
+            32.5,
+            76
+          ],
+          [
+            37,
+            80.5
+          ],
+          [
+            37.5,
+            81
+          ],
+          [
+            38,
+            81.5
+          ],
+          [
+            39,
+            82
+          ],
+          [
+            39.5,
+            82
+          ],
+          [
+            40,
+            82.5
+          ],
+          [
+            40.5,
+            83
+          ],
+          [
+            41,
+            82.5
+          ],
+          [
+            41.5,
+            82
+          ],
+          [
+            51,
+            69.5
+          ],
+          [
+            51,
+            46
+          ],
+          [
+            50,
+            45
+          ],
+          [
+            45,
+            21
+          ],
+          [
+            36,
+            21
+          ],
+          [
+            35.5,
+            20.5
+          ],
+          [
+            35,
+            20
+          ],
+          [
+            26.5,
+            1.5
+          ],
+          [
+            26,
+            1
+          ],
+          [
+            25.5,
+            0.5
+          ],
+          [
+            24.5,
+            0
+          ],
+          [
+            7,
+            0
+          ],
+          [
+            6.5,
+            -0.5
+          ],
+          [
+            6,
+            -1
+          ],
+          [
+            5.5,
+            -1.5
+          ],
+          [
+            5,
+            -6
+          ],
+          [
+            2,
+            -10
+          ],
+          [
+            13.5,
+            -32.5
+          ],
+          [
+            20,
+            -43
+          ],
+          [
+            20.5,
+            -43.5
+          ],
+          [
+            21,
+            -44
+          ],
+          [
+            21.5,
+            -44.5
+          ],
+          [
+            22,
+            -45
+          ]
+        ],
+        "medals": [
+          62,
+          73,
+          94
+        ],
+        "radius": 3,
+        "cloth": [
+          0.765,
+          0.553,
+          0.165
+        ],
+        "text": "Up every terrace of the temple and back down",
+        "length": 454.9
+      }
+    }
   }
 ]

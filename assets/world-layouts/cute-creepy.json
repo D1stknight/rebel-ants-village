@@ -53943,5 +53943,502 @@
         "questOn": "pass"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_cc-graveyard-run",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 10.5,
+      "y": 0.1,
+      "z": -44.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "cute-creepy",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "cc-graveyard-run",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "cc-graveyard-run",
+        "title": "Graveyard Run",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            -45,
+            -40
+          ],
+          [
+            -50,
+            10
+          ],
+          [
+            -50,
+            45
+          ],
+          [
+            12,
+            44
+          ],
+          [
+            50,
+            46.5
+          ],
+          [
+            45,
+            1.5
+          ],
+          [
+            -1,
+            -21.5
+          ],
+          [
+            5,
+            -45
+          ]
+        ],
+        "start": [
+          8.91,
+          -44.37
+        ],
+        "path": [
+          [
+            -5.5,
+            -38.5
+          ],
+          [
+            -43.5,
+            -38.5
+          ],
+          [
+            -45,
+            -40
+          ],
+          [
+            -45.5,
+            -19.5
+          ],
+          [
+            -48,
+            -17
+          ],
+          [
+            -48.5,
+            -16.5
+          ],
+          [
+            -49,
+            -16
+          ],
+          [
+            -49,
+            5
+          ],
+          [
+            -48.5,
+            5.5
+          ],
+          [
+            -49,
+            9
+          ],
+          [
+            -50,
+            10
+          ],
+          [
+            -33,
+            25.5
+          ],
+          [
+            -32.5,
+            26
+          ],
+          [
+            -32,
+            26.5
+          ],
+          [
+            -32,
+            27.5
+          ],
+          [
+            -32.5,
+            28
+          ],
+          [
+            -33,
+            28.5
+          ],
+          [
+            -34,
+            29
+          ],
+          [
+            -38.5,
+            32.5
+          ],
+          [
+            -39,
+            33
+          ],
+          [
+            -39.5,
+            33.5
+          ],
+          [
+            -41.5,
+            37
+          ],
+          [
+            -42,
+            37.5
+          ],
+          [
+            -42.5,
+            38
+          ],
+          [
+            -48,
+            42
+          ],
+          [
+            -48.5,
+            42.5
+          ],
+          [
+            -49,
+            43
+          ],
+          [
+            -50,
+            45
+          ],
+          [
+            -49,
+            43
+          ],
+          [
+            -48.5,
+            42.5
+          ],
+          [
+            -48,
+            42
+          ],
+          [
+            -42.5,
+            38
+          ],
+          [
+            -42,
+            37.5
+          ],
+          [
+            -41.5,
+            37
+          ],
+          [
+            -41,
+            36
+          ],
+          [
+            -39.5,
+            33.5
+          ],
+          [
+            -39,
+            33
+          ],
+          [
+            -38.5,
+            32.5
+          ],
+          [
+            -22,
+            33
+          ],
+          [
+            -21.5,
+            33.5
+          ],
+          [
+            -21,
+            34
+          ],
+          [
+            -20.5,
+            34.5
+          ],
+          [
+            -5,
+            33.5
+          ],
+          [
+            3,
+            41.5
+          ],
+          [
+            3.5,
+            42
+          ],
+          [
+            4,
+            42.5
+          ],
+          [
+            7.5,
+            43.5
+          ],
+          [
+            12,
+            44
+          ],
+          [
+            6.5,
+            43.5
+          ],
+          [
+            4,
+            42.5
+          ],
+          [
+            3.5,
+            42
+          ],
+          [
+            3,
+            41.5
+          ],
+          [
+            4,
+            35.5
+          ],
+          [
+            5,
+            34.5
+          ],
+          [
+            5.5,
+            34
+          ],
+          [
+            6,
+            33.5
+          ],
+          [
+            23.5,
+            34.5
+          ],
+          [
+            30.5,
+            36
+          ],
+          [
+            41,
+            42
+          ],
+          [
+            50,
+            46.5
+          ],
+          [
+            40,
+            41.5
+          ],
+          [
+            29.5,
+            36
+          ],
+          [
+            29,
+            35.5
+          ],
+          [
+            28.5,
+            35
+          ],
+          [
+            28,
+            34.5
+          ],
+          [
+            27.5,
+            34
+          ],
+          [
+            45,
+            1.5
+          ],
+          [
+            36,
+            1.5
+          ],
+          [
+            35.5,
+            1
+          ],
+          [
+            35,
+            0.5
+          ],
+          [
+            8.5,
+            -24
+          ],
+          [
+            8,
+            -24.5
+          ],
+          [
+            7.5,
+            -25
+          ],
+          [
+            7,
+            -25.5
+          ],
+          [
+            6,
+            -26
+          ],
+          [
+            2,
+            -25
+          ],
+          [
+            1.5,
+            -24.5
+          ],
+          [
+            1,
+            -24
+          ],
+          [
+            -0.5,
+            -22
+          ],
+          [
+            -1,
+            -21.5
+          ],
+          [
+            5,
+            -45
+          ]
+        ],
+        "medals": [
+          61,
+          71,
+          92
+        ],
+        "radius": 3,
+        "cloth": [
+          0.851,
+          0.408,
+          0.11
+        ],
+        "text": "Through the graveyard, past the manor and the witch",
+        "length": 443.6
+      }
+    }
   }
 ]

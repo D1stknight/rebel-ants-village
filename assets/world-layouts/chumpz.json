@@ -44859,5 +44859,498 @@
         "questOn": "pass"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_chz-jungle-run",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 40,
+      "y": 0.1,
+      "z": -25
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "chumpz",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "chz-jungle-run",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "chz-jungle-run",
+        "title": "Jungle Run",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            55,
+            15
+          ],
+          [
+            52,
+            55
+          ],
+          [
+            0,
+            62
+          ],
+          [
+            -45,
+            55
+          ],
+          [
+            -60,
+            10
+          ],
+          [
+            -30,
+            -11
+          ],
+          [
+            2,
+            8
+          ],
+          [
+            12,
+            30
+          ],
+          [
+            30,
+            -22
+          ]
+        ],
+        "start": [
+          40.56,
+          -23.5
+        ],
+        "path": [
+          [
+            51.5,
+            5.5
+          ],
+          [
+            55,
+            15
+          ],
+          [
+            57.5,
+            19.5
+          ],
+          [
+            57.5,
+            21
+          ],
+          [
+            56.5,
+            50.5
+          ],
+          [
+            56,
+            51
+          ],
+          [
+            55.5,
+            51.5
+          ],
+          [
+            55,
+            52
+          ],
+          [
+            54.5,
+            52.5
+          ],
+          [
+            53.5,
+            53.5
+          ],
+          [
+            53,
+            54
+          ],
+          [
+            52.5,
+            54.5
+          ],
+          [
+            52,
+            55
+          ],
+          [
+            39,
+            58.5
+          ],
+          [
+            0.5,
+            61.5
+          ],
+          [
+            0,
+            62
+          ],
+          [
+            -10,
+            58.5
+          ],
+          [
+            -17.5,
+            57
+          ],
+          [
+            -43,
+            57
+          ],
+          [
+            -45,
+            55
+          ],
+          [
+            -56.5,
+            35.5
+          ],
+          [
+            -57,
+            35
+          ],
+          [
+            -57.5,
+            34.5
+          ],
+          [
+            -59.5,
+            15.5
+          ],
+          [
+            -60,
+            10
+          ],
+          [
+            -48.5,
+            -9
+          ],
+          [
+            -37.5,
+            -21
+          ],
+          [
+            -37,
+            -21.5
+          ],
+          [
+            -36.5,
+            -22
+          ],
+          [
+            -36,
+            -22
+          ],
+          [
+            -35.5,
+            -22
+          ],
+          [
+            -34.5,
+            -22
+          ],
+          [
+            -34,
+            -21.5
+          ],
+          [
+            -33.5,
+            -21
+          ],
+          [
+            -30,
+            -11
+          ],
+          [
+            -22,
+            -22.5
+          ],
+          [
+            -21.5,
+            -23
+          ],
+          [
+            -21,
+            -23.5
+          ],
+          [
+            -21,
+            -24.5
+          ],
+          [
+            -20.5,
+            -25
+          ],
+          [
+            -20,
+            -25.5
+          ],
+          [
+            -19,
+            -25.5
+          ],
+          [
+            -18.5,
+            -25
+          ],
+          [
+            -18,
+            -24.5
+          ],
+          [
+            -17.5,
+            -24
+          ],
+          [
+            -12,
+            -9
+          ],
+          [
+            2,
+            8
+          ],
+          [
+            1,
+            12
+          ],
+          [
+            2,
+            18
+          ],
+          [
+            2.5,
+            18.5
+          ],
+          [
+            3,
+            19
+          ],
+          [
+            3.5,
+            19.5
+          ],
+          [
+            6,
+            26.5
+          ],
+          [
+            6.5,
+            27
+          ],
+          [
+            7,
+            27.5
+          ],
+          [
+            11,
+            28.5
+          ],
+          [
+            11.5,
+            29
+          ],
+          [
+            12,
+            29.5
+          ],
+          [
+            12,
+            30
+          ],
+          [
+            12,
+            29.5
+          ],
+          [
+            11.5,
+            29
+          ],
+          [
+            11,
+            28.5
+          ],
+          [
+            7,
+            27.5
+          ],
+          [
+            6.5,
+            27
+          ],
+          [
+            6,
+            26.5
+          ],
+          [
+            3.5,
+            21
+          ],
+          [
+            2,
+            19.5
+          ],
+          [
+            2,
+            19
+          ],
+          [
+            2,
+            18.5
+          ],
+          [
+            2,
+            18
+          ],
+          [
+            1,
+            12
+          ],
+          [
+            4,
+            -1
+          ],
+          [
+            5,
+            -2.5
+          ],
+          [
+            9,
+            -9.5
+          ],
+          [
+            18,
+            -20
+          ],
+          [
+            18.5,
+            -20.5
+          ],
+          [
+            19,
+            -21
+          ],
+          [
+            19.5,
+            -21.5
+          ],
+          [
+            30,
+            -22
+          ]
+        ],
+        "medals": [
+          61,
+          72,
+          92
+        ],
+        "radius": 3,
+        "cloth": [
+          0.886,
+          0.718,
+          0.18
+        ],
+        "text": "Through the banana jungle and up onto the Banana Bar",
+        "length": 446.2
+      }
+    }
   }
 ]

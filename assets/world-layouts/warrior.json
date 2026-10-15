@@ -53202,5 +53202,450 @@
         "questOn": "pass"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_war-obstacle-course",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -22,
+      "y": 0.06,
+      "z": -50.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "warrior",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "war-obstacle-course",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "war-obstacle-course",
+        "title": "Obstacle Course",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            -50,
+            -39.5
+          ],
+          [
+            -52,
+            10
+          ],
+          [
+            -32,
+            56
+          ],
+          [
+            0,
+            38
+          ],
+          [
+            32,
+            56
+          ],
+          [
+            48,
+            17.5
+          ],
+          [
+            42,
+            -26
+          ],
+          [
+            0,
+            -28
+          ],
+          [
+            9,
+            -45
+          ]
+        ],
+        "start": [
+          -23.49,
+          -49.91
+        ],
+        "path": [
+          [
+            -22.5,
+            -51
+          ],
+          [
+            -23,
+            -51.5
+          ],
+          [
+            -27.5,
+            -54
+          ],
+          [
+            -29.5,
+            -55
+          ],
+          [
+            -50,
+            -55
+          ],
+          [
+            -51,
+            -54
+          ],
+          [
+            -51.5,
+            -53.5
+          ],
+          [
+            -52,
+            -53
+          ],
+          [
+            -54,
+            -49.5
+          ],
+          [
+            -54,
+            -40.5
+          ],
+          [
+            -53.5,
+            -40
+          ],
+          [
+            -53,
+            -39.5
+          ],
+          [
+            -50,
+            -39.5
+          ],
+          [
+            -52,
+            10
+          ],
+          [
+            -48.5,
+            10.5
+          ],
+          [
+            -47.5,
+            11.5
+          ],
+          [
+            -47,
+            12
+          ],
+          [
+            -46.5,
+            12.5
+          ],
+          [
+            -36.5,
+            35.5
+          ],
+          [
+            -33.5,
+            38.5
+          ],
+          [
+            -33,
+            39
+          ],
+          [
+            -32.5,
+            39.5
+          ],
+          [
+            -26.5,
+            51
+          ],
+          [
+            -26.5,
+            52.5
+          ],
+          [
+            -27,
+            53
+          ],
+          [
+            -27.5,
+            53.5
+          ],
+          [
+            -32,
+            56
+          ],
+          [
+            -27.5,
+            53.5
+          ],
+          [
+            -27,
+            53
+          ],
+          [
+            -26.5,
+            52.5
+          ],
+          [
+            -15.5,
+            24
+          ],
+          [
+            -15,
+            23.5
+          ],
+          [
+            -14.5,
+            23
+          ],
+          [
+            -4.5,
+            23
+          ],
+          [
+            -4,
+            22.5
+          ],
+          [
+            -3.5,
+            22.5
+          ],
+          [
+            -3,
+            23
+          ],
+          [
+            0,
+            38
+          ],
+          [
+            3,
+            23
+          ],
+          [
+            3.5,
+            22.5
+          ],
+          [
+            4,
+            22.5
+          ],
+          [
+            5,
+            23
+          ],
+          [
+            14.5,
+            23
+          ],
+          [
+            15,
+            23.5
+          ],
+          [
+            15.5,
+            24
+          ],
+          [
+            32,
+            54
+          ],
+          [
+            32,
+            56
+          ],
+          [
+            32,
+            33.5
+          ],
+          [
+            47,
+            18.5
+          ],
+          [
+            47.5,
+            18
+          ],
+          [
+            48,
+            17.5
+          ],
+          [
+            47.5,
+            17.5
+          ],
+          [
+            40.5,
+            13.5
+          ],
+          [
+            31,
+            7.5
+          ],
+          [
+            30.5,
+            7
+          ],
+          [
+            30,
+            6.5
+          ],
+          [
+            30,
+            -14.5
+          ],
+          [
+            30.5,
+            -15
+          ],
+          [
+            31,
+            -15.5
+          ],
+          [
+            42,
+            -26
+          ],
+          [
+            21.5,
+            -26.5
+          ],
+          [
+            21,
+            -26
+          ],
+          [
+            20.5,
+            -25.5
+          ],
+          [
+            19,
+            -24.5
+          ],
+          [
+            3,
+            -25
+          ],
+          [
+            0,
+            -28
+          ],
+          [
+            9,
+            -45
+          ]
+        ],
+        "medals": [
+          62,
+          73,
+          94
+        ],
+        "radius": 3,
+        "cloth": [
+          0.204,
+          0.314,
+          0.18
+        ],
+        "text": "Round the fort and through the great dojo",
+        "length": 454.9
+      }
+    }
   }
 ]

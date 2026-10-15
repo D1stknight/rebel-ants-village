@@ -31044,5 +31044,426 @@
         "questOn": "pass"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_buke-canal-run",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -15,
+      "y": 0,
+      "z": -62
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "buke",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "buke-canal-run",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "course",
+        "id": "buke-canal-run",
+        "title": "Canal Run",
+        "points": 60,
+        "questOn": "pass",
+        "gates": [
+          [
+            -42,
+            -48
+          ],
+          [
+            -29,
+            -25
+          ],
+          [
+            -52,
+            2
+          ],
+          [
+            -35,
+            37
+          ],
+          [
+            0,
+            62
+          ],
+          [
+            40,
+            37
+          ],
+          [
+            29,
+            -25
+          ],
+          [
+            45,
+            -52
+          ],
+          [
+            10,
+            -60
+          ]
+        ],
+        "start": [
+          -16.42,
+          -61.26
+        ],
+        "path": [
+          [
+            -42,
+            -48
+          ],
+          [
+            -6,
+            -47.5
+          ],
+          [
+            -5.5,
+            -47
+          ],
+          [
+            -5,
+            -46.5
+          ],
+          [
+            -5,
+            -39.5
+          ],
+          [
+            -5.5,
+            -39
+          ],
+          [
+            -6,
+            -38.5
+          ],
+          [
+            -6.5,
+            -38
+          ],
+          [
+            -27.5,
+            -29
+          ],
+          [
+            -28,
+            -28.5
+          ],
+          [
+            -28.5,
+            -28
+          ],
+          [
+            -29,
+            -25
+          ],
+          [
+            -29.5,
+            -22
+          ],
+          [
+            -30,
+            -21.5
+          ],
+          [
+            -30.5,
+            -21
+          ],
+          [
+            -46.5,
+            -13
+          ],
+          [
+            -47,
+            -12.5
+          ],
+          [
+            -47.5,
+            -12
+          ],
+          [
+            -52,
+            2
+          ],
+          [
+            -46.5,
+            36
+          ],
+          [
+            -46,
+            36.5
+          ],
+          [
+            -45.5,
+            37
+          ],
+          [
+            -35,
+            37
+          ],
+          [
+            -7.5,
+            44.5
+          ],
+          [
+            -6.5,
+            44.5
+          ],
+          [
+            -6,
+            44
+          ],
+          [
+            -5.5,
+            44.5
+          ],
+          [
+            -5,
+            45
+          ],
+          [
+            0,
+            62
+          ],
+          [
+            5,
+            45
+          ],
+          [
+            5.5,
+            44.5
+          ],
+          [
+            6,
+            44
+          ],
+          [
+            7,
+            44.5
+          ],
+          [
+            39,
+            38
+          ],
+          [
+            40,
+            37
+          ],
+          [
+            46.5,
+            37
+          ],
+          [
+            47,
+            36.5
+          ],
+          [
+            47.5,
+            36
+          ],
+          [
+            47.5,
+            12
+          ],
+          [
+            47,
+            5.5
+          ],
+          [
+            46.5,
+            5
+          ],
+          [
+            46,
+            4.5
+          ],
+          [
+            40,
+            4
+          ],
+          [
+            36,
+            0
+          ],
+          [
+            35.5,
+            -0.5
+          ],
+          [
+            35,
+            -1
+          ],
+          [
+            29.5,
+            -22.5
+          ],
+          [
+            29,
+            -25
+          ],
+          [
+            28.5,
+            -28
+          ],
+          [
+            28,
+            -28.5
+          ],
+          [
+            27.5,
+            -29
+          ],
+          [
+            6.5,
+            -38
+          ],
+          [
+            6,
+            -38.5
+          ],
+          [
+            5.5,
+            -39
+          ],
+          [
+            5,
+            -39.5
+          ],
+          [
+            5,
+            -46.5
+          ],
+          [
+            5.5,
+            -47
+          ],
+          [
+            6,
+            -47.5
+          ],
+          [
+            45,
+            -52
+          ],
+          [
+            34.5,
+            -53
+          ],
+          [
+            10,
+            -60
+          ]
+        ],
+        "medals": [
+          66,
+          77,
+          99
+        ],
+        "radius": 3,
+        "cloth": [
+          0.369,
+          0.102,
+          0.125
+        ],
+        "text": "Over the footbridges and up to the great hall",
+        "length": 483.5
+      }
+    }
   }
 ]
