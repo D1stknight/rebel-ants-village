@@ -44032,5 +44032,183 @@
         "opponent": "chumpz-bartender"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_chumpz-peely-riddles",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 31.33,
+      "y": 0.1,
+      "z": -19.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.0472,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "chumpz",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "chumpz-peely-riddles",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.4,
+      "label": "",
+      "game": {
+        "type": "riddle",
+        "id": "chumpz-peely-riddles",
+        "title": "Peely's Riddles",
+        "giver": "chumpz-dealer",
+        "riddles": [
+          {
+            "q": "What gets wetter the more it dries?",
+            "a": [
+              "A towel",
+              "A sponge",
+              "A fish",
+              "The beach"
+            ],
+            "right": 0,
+            "why": "Ask any ape at the Banana Bar: the bar towel never gets a day off."
+          },
+          {
+            "q": "How many bananas can you eat on an empty stomach?",
+            "a": [
+              "As many as you like",
+              "One. After that it isn't empty",
+              "None",
+              "Three"
+            ],
+            "right": 1,
+            "why": "After the first banana your stomach isn't empty any more."
+          },
+          {
+            "q": "Pengu caught 3 fish. Two fathers and two sons each ate a whole fish, and none were left over. How?",
+            "a": [
+              "One fish was cut in half",
+              "They were a grandfather, his son and his grandson",
+              "Pengu went back for a fourth",
+              "One of them only ate the bones"
+            ],
+            "right": 1,
+            "why": "The grandfather and the father are two fathers; the father and the grandson are two sons. Three apes, three fish."
+          },
+          {
+            "q": "I'm full of holes, yet I still hold water. What am I?",
+            "a": [
+              "A fishing net",
+              "A sponge",
+              "A coconut",
+              "A bucket"
+            ],
+            "right": 1,
+            "why": "A net lets the water through. A sponge keeps it."
+          },
+          {
+            "q": "Peely rolls two dice. Which total comes up most often?",
+            "a": [
+              "12",
+              "7",
+              "6",
+              "2"
+            ],
+            "right": 1,
+            "why": "Six ways make 7 (1 and 6, 2 and 5, 3 and 4, and back again). Only one way makes 2 or 12."
+          }
+        ],
+        "pass": 5,
+        "points": 50
+      }
+    }
   }
 ]

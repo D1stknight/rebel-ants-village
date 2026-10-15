@@ -26605,5 +26605,183 @@
         ]
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_wokou-broker-wagers",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 47.63,
+      "y": 0.06,
+      "z": 40
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.0472,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "wokou",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "wokou-broker-wagers",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.4,
+      "label": "",
+      "game": {
+        "type": "riddle",
+        "id": "wokou-broker-wagers",
+        "title": "The Broker's Wagers",
+        "giver": "wokou-broker-01",
+        "riddles": [
+          {
+            "q": "A rope ladder hangs over the side of a junk, its bottom rung just touching the water. The rungs are 30 cm apart, and the tide rises 15 cm an hour. How many rungs are under water after 4 hours?",
+            "a": [
+              "2",
+              "3",
+              "None",
+              "4"
+            ],
+            "right": 2,
+            "why": "The ship floats. It rises with the tide, and the ladder rises with it."
+          },
+          {
+            "q": "A merchant buys a sword for 60 shells, sells it for 70, buys it back for 80 and sells it again for 90. How much does the merchant make?",
+            "a": [
+              "10 shells",
+              "20 shells",
+              "30 shells",
+              "Nothing"
+            ],
+            "right": 1,
+            "why": "Two trades, each making 10. Buying it back dearer does not undo the first sale."
+          },
+          {
+            "q": "A bow and an arrow cost 110 shells together. The bow costs 100 more than the arrow. What does the arrow cost?",
+            "a": [
+              "10 shells",
+              "5 shells",
+              "1 shell",
+              "15 shells"
+            ],
+            "right": 1,
+            "why": "Arrow 5, bow 105: together 110, and the bow costs 100 more."
+          },
+          {
+            "q": "The more of me rolls in from the sea at dawn, the less of the harbour you see. What am I?",
+            "a": [
+              "Darkness",
+              "Fog",
+              "The tide",
+              "Rain"
+            ],
+            "right": 1,
+            "why": "Sea fog. The Wokou sail in it when they don't want to be seen."
+          },
+          {
+            "q": "What has a bed but never sleeps, a mouth but never eats, and runs but never walks?",
+            "a": [
+              "A river",
+              "A ship",
+              "The tide",
+              "A crab"
+            ],
+            "right": 0,
+            "why": "A river runs to the bay day and night, and never once lies down in its bed."
+          }
+        ],
+        "pass": 5,
+        "points": 90
+      }
+    }
   }
 ]

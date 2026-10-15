@@ -30455,5 +30455,183 @@
         "points": 50
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_buke-engineer-puzzles",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -24.34,
+      "y": 0.1,
+      "z": 20
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.3959,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "buke",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "buke-engineer-puzzles",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.4,
+      "label": "",
+      "game": {
+        "type": "riddle",
+        "id": "buke-engineer-puzzles",
+        "title": "The Engineer's Puzzles",
+        "giver": "buke-scholar-01",
+        "riddles": [
+          {
+            "q": "A beetle falls into a dry well 10 m deep. Each day it climbs 3 m; each night it slides back 2 m. On which day does it climb out?",
+            "a": [
+              "The 10th day",
+              "The 8th day",
+              "The 7th day",
+              "The 5th day"
+            ],
+            "right": 1,
+            "why": "After seven days and nights it is 7 m up. On the eighth day it climbs the last 3 m and is out before night can pull it back."
+          },
+          {
+            "q": "If three ants dig three tunnels in three days, how long do nine ants take to dig nine tunnels?",
+            "a": [
+              "9 days",
+              "3 days",
+              "1 day",
+              "27 days"
+            ],
+            "right": 1,
+            "why": "Each ant digs one tunnel in three days. Nine ants, nine tunnels: the same three days."
+          },
+          {
+            "q": "An engineer must ferry a fox, a beetle and a sack of seeds across the canal. The raft holds the engineer and one more. Left alone, the fox eats the beetle and the beetle eats the seeds. What crosses first?",
+            "a": [
+              "The fox",
+              "The beetle",
+              "The seeds",
+              "It cannot be done"
+            ],
+            "right": 1,
+            "why": "The fox will not touch the seeds. Take the beetle, go back for the fox, bring the beetle back, take the seeds, then fetch the beetle last."
+          },
+          {
+            "q": "Nine relic coins look alike, but one is a lighter fake. With a balance scale, what is the fewest weighings that always finds it?",
+            "a": [
+              "2",
+              "3",
+              "4",
+              "1"
+            ],
+            "right": 0,
+            "why": "Weigh three against three. The lighter pan, or the three left off if they balance, hides the fake. Then weigh one of those three against another."
+          },
+          {
+            "q": "Water in a canal lock doubles every minute, and the lock is full after 12 minutes. When was it half full?",
+            "a": [
+              "After 6 minutes",
+              "After 11 minutes",
+              "After 10 minutes",
+              "After 3 minutes"
+            ],
+            "right": 1,
+            "why": "It doubles every minute, so one minute before it was full, it was half full."
+          }
+        ],
+        "pass": 5,
+        "points": 90
+      }
+    }
   }
 ]

@@ -54293,5 +54293,183 @@
         "points": 40
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_hub-archivist-riddles",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 74.92,
+      "y": 0,
+      "z": 61.13
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.3958,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "hub",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "hub-archivist-riddles",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.4,
+      "label": "",
+      "game": {
+        "type": "riddle",
+        "id": "hub-archivist-riddles",
+        "title": "The Archivist's Riddles",
+        "giver": "hub-archivist",
+        "riddles": [
+          {
+            "q": "I belong to you, yet the whole colony uses me far more than you do. What am I?",
+            "a": [
+              "Your burrow",
+              "Your name",
+              "Your shadow",
+              "Your boots"
+            ],
+            "right": 1,
+            "why": "Others call it every day. You hardly ever say it yourself."
+          },
+          {
+            "q": "I have cities but no houses, forests but no trees, and rivers without a drop of water. The Archivist keeps a drawer full of me.",
+            "a": [
+              "A dream",
+              "A map",
+              "A painting",
+              "A book of tales"
+            ],
+            "right": 1,
+            "why": "Everything is on a map except the things themselves."
+          },
+          {
+            "q": "A Rebel walks from the Hub up to the Yamabushi cliffs, leaving at dawn and arriving at dusk. Next day they walk back down the same path, dawn to dusk, at a different pace. Is there a spot on the path they pass at the very same hour on both days?",
+            "a": [
+              "Only if they walk at the same speed",
+              "Yes, always",
+              "No, never",
+              "Only if they never stop to rest"
+            ],
+            "right": 1,
+            "why": "Picture both days at once: one Rebel going up, another coming down the same path. They must meet somewhere, and there the hour is the same."
+          },
+          {
+            "q": "What can you give to someone and still keep?",
+            "a": [
+              "A coin",
+              "Your word",
+              "A relic",
+              "A map"
+            ],
+            "right": 1,
+            "why": "Give your word, then keep it. The best Rebels do both."
+          },
+          {
+            "q": "The Archivist's oldest scroll is signed 'written in the year 30 before the Founding'. Why does the Archivist know at once it is not that old?",
+            "a": [
+              "The ink is too fresh",
+              "Nobody could know the Founding was still 30 years away",
+              "Scrolls were not made then",
+              "The year 30 is too early for writing"
+            ],
+            "right": 1,
+            "why": "Whoever wrote that date already knew about the Founding. It is a later copy, or a fake."
+          }
+        ],
+        "pass": 5,
+        "points": 60
+      }
+    }
   }
 ]

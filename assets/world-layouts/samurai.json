@@ -30338,5 +30338,172 @@
         "text": "The fifth lantern burns before the great dojo."
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_samurai-captain-riddles",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 7.92,
+      "y": 0.1,
+      "z": 42.87
+    },
+    "rotation": {
+      "x": 0,
+      "y": -1.7458,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "samurai",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "samurai-captain-riddles",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.4,
+      "label": "",
+      "game": {
+        "type": "riddle",
+        "id": "samurai-captain-riddles",
+        "title": "The Captain's Riddles",
+        "giver": "samurai-captain-01",
+        "riddles": [
+          {
+            "q": "A Samurai had 17 swords. All but 9 were stolen. How many were left?",
+            "a": [
+              "8",
+              "9",
+              "17",
+              "None"
+            ],
+            "right": 1,
+            "why": "All but nine: nine stayed on the rack."
+          },
+          {
+            "q": "In a race to the dojo you overtake the runner in second place. What place are you in now?",
+            "a": [
+              "First",
+              "Second",
+              "Third",
+              "Last"
+            ],
+            "right": 1,
+            "why": "You took their place: second. First is still ahead of you."
+          },
+          {
+            "q": "Three banners hang on the gate: red, gold and blue. The red banner is not to the left of the gold one. The blue banner is to the right of the red one. The gold banner is not in the middle. How do they hang, left to right?",
+            "a": [
+              "Gold, red, blue",
+              "Red, gold, blue",
+              "Gold, blue, red",
+              "Blue, red, gold"
+            ],
+            "right": 0,
+            "why": "Red is right of gold and blue is right of red, so gold, red, blue. Gold is not in the middle either."
+          },
+          {
+            "q": "What is always in front of a Samurai, yet no Samurai has ever seen it?",
+            "a": [
+              "The enemy",
+              "The future",
+              "The horizon",
+              "The wind"
+            ],
+            "right": 1,
+            "why": "Every Samurai faces it. None has ever seen it coming."
+          }
+        ],
+        "pass": 4,
+        "points": 50
+      }
+    }
   }
 ]

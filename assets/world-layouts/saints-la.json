@@ -26561,5 +26561,183 @@
         ]
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_saints-librarian-riddles",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": -42.5,
+      "y": 0.1,
+      "z": -5.33
+    },
+    "rotation": {
+      "x": 0,
+      "y": -0.5236,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "saints-la",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "saints-librarian-riddles",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.4,
+      "label": "",
+      "game": {
+        "type": "riddle",
+        "id": "saints-librarian-riddles",
+        "title": "The Librarian's Riddles",
+        "giver": "saints-librarian",
+        "riddles": [
+          {
+            "q": "I have a spine but no bones, leaves but no branches, and I tell stories without a mouth. What am I?",
+            "a": [
+              "A tree",
+              "A book",
+              "A palm",
+              "A record"
+            ],
+            "right": 1,
+            "why": "The pages are leaves, the spine holds them, and the stories are inside."
+          },
+          {
+            "q": "The day before yesterday the DJ was 17. Next year they will be 20. How can that be?",
+            "a": [
+              "They're lying",
+              "Today is New Year's Day, and their birthday is New Year's Eve",
+              "It's a leap year",
+              "They were born on 29 February"
+            ],
+            "right": 1,
+            "why": "On 30 December they were 17. They turned 18 on the 31st, they turn 19 this December and 20 the next."
+          },
+          {
+            "q": "How many times can you subtract 5 from 25?",
+            "a": [
+              "5 times",
+              "Once",
+              "4 times",
+              "As many as you like"
+            ],
+            "right": 1,
+            "why": "Once. After that you are subtracting from 20."
+          },
+          {
+            "q": "Which word becomes shorter when you add two letters to it?",
+            "a": [
+              "Long",
+              "Short",
+              "Tall",
+              "Small"
+            ],
+            "right": 1,
+            "why": "Add 'er' to short: shorter."
+          },
+          {
+            "q": "Three switches in the garage; one of them lights the lamp on the HQ roof. You may climb up only once. How do you tell which switch it is?",
+            "a": [
+              "Flip them one at a time and shout",
+              "Turn one on for a while, turn it off, turn another on, then climb up and feel the bulb",
+              "Flip all three at once",
+              "There is no way"
+            ],
+            "right": 1,
+            "why": "Lit: the second switch. Dark but warm: the first. Dark and cold: the one you never touched."
+          }
+        ],
+        "pass": 5,
+        "points": 60
+      }
+    }
   }
 ]
