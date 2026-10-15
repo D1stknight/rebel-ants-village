@@ -9979,8 +9979,11 @@ function normalizeQuestSpotConfig(cfg = {}) {
     // a mini-game played here (assets/games/<type>.js; MiniGames): { type, id, title, pass, points, questOn, ...its own fields }
     game: normalizeMiniGameDef(cfg.game, cfg.spotId),
     // a place riddle read out here: { id, title, parts: [{ text }], points, solvedText, reset } (reset: a wrong answer
+    // starts it over); its answers are spots with riddleAnswer { riddle, part, right, text }, open only while asked
     riddle: cfg.riddle && typeof cfg.riddle === 'object' && cfg.riddle.id && Array.isArray(cfg.riddle.parts) && cfg.riddle.parts.length ? { id:String(cfg.riddle.id), title:String(cfg.riddle.title || 'A riddle'),
       parts:cfg.riddle.parts.map(x => ({ text:String(x?.text || '') })), points:Math.max(0, Math.floor(Number(cfg.riddle.points) || 0)), solvedText:String(cfg.riddle.solvedText || ''), reset:cfg.riddle.reset === true } : null,
+    riddleAnswer: cfg.riddleAnswer && typeof cfg.riddleAnswer === 'object' && cfg.riddleAnswer.riddle ? { riddle:String(cfg.riddleAnswer.riddle), part:Math.max(0, Math.floor(Number(cfg.riddleAnswer.part) || 0)),
+      right:cfg.riddleAnswer.right === true, text:String(cfg.riddleAnswer.text || '') } : null,
     // a timing bar before the spot is used (SkillBar): hits good stops in the gold middle, the marker speeding up each time
     skill: cfg.skill && typeof cfg.skill === 'object' ? { hits: Math.max(1, Math.min(6, Math.floor(Number(cfg.skill.hits) || 3))), speed: Math.max(.3, Number(cfg.skill.speed) || 1.1),
       zone: Math.max(.06, Math.min(.5, Number(cfg.skill.zone) || .16)), title: String(cfg.skill.title || ''), startText: String(cfg.skill.startText || ''),
@@ -10029,6 +10032,7 @@ function createQuestSpot(position, options = {}) {
 // A quest's own spot (spotConfig.questId) answers only while one of that quest's steps is asking for it.
 function isQuestSpotOpen(cfg) {
   if (cfg?.visualOnly) return false;
+  if (cfg?.riddleAnswer) { const r = (ProgressionState.riddles || {})[cfg.riddleAnswer.riddle]; return !!(r && r.asked && !r.solved && (r.part || 0) === cfg.riddleAnswer.part); }
   if (!cfg?.questId || isDanceReplay(cfg)) return true;
   return isQuestSpotTargetedBySideQuest(cfg.spotId) || isQuestSpotTargetedByActiveQuest(cfg.spotId);
 }
@@ -10197,6 +10201,8 @@ function getQuestSpotPromptText(root) {
     const f = QuestSpotRuntime.follow;
     return f.close ? `Stay close… ${Math.ceil(Math.max(0, cfg.followSeconds - f.got))} s` : 'Closer!';
   }
+  if (cfg.riddleAnswer && !cfg.label) return 'Press O to answer here';
+  if (cfg.riddle && !cfg.label) return (ProgressionState.riddles || {})[cfg.riddle.id]?.solved ? 'Press O to read the solved riddle' : 'Press O to hear the riddle';
   return `Press O to ${cfg.label || (cfg.game ? 'play ' + (cfg.game.title || 'the game') : QUEST_SPOT_ACTIONS[cfg.action] || 'Inspect')}`;
 }
 
@@ -10266,6 +10272,52 @@ function completeQuestSpot(root) {
   return true;
 }
 
+// Place riddles (ProgressionState.riddles[id] = { asked, part, solved, at }): the riddle spot reads the current part out
+// in the quest card; the right answer spot moves it on (the next part read out at once) or solves it (Rebel points the
+// first time); a wrong one only says so, or starts the riddle over when it resets
+function readPlaceRiddle(cfg) {
+  const R = cfg.riddle, all = (ProgressionState.riddles ||= {}), r = (all[R.id] ||= { asked:false, part:0, solved:false });
+  if (r.solved) { queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(R.solvedText || 'You found every answer.'), chips:[], duration:6000 }); return true; }
+  r.asked = true; r.part = Math.min(r.part || 0, R.parts.length - 1); r.at = Date.now(); saveProgressionState();
+  showPlaceRiddlePart(R, r.part);
+  return true;
+}
+function showPlaceRiddlePart(R, k) {
+  queueQuestCelebration({ kicker:R.parts.length > 1 ? `Riddle · ${k + 1} of ${R.parts.length}` : 'Riddle', title:R.title, body:escapeHTML(R.parts[k].text).replace(/\n/g, '<br>'),
+    chips:[{ label:'Find the answer, then press O there', tone:'gold' }], duration:16000 });
+}
+function findPlaceRiddle(id) {
+  for (const root of getQuestSpotRoots()) { const c = root.metadata?.spotConfig; if (c?.riddle?.id === id) return c.riddle; }
+  return null;
+}
+function answerPlaceRiddle(cfg) {
+  const A = cfg.riddleAnswer, R = findPlaceRiddle(A.riddle), r = (ProgressionState.riddles || {})[A.riddle];
+  if (!R || !r || !r.asked || r.solved) return false;
+  if (!A.right) {
+    if (R.reset) { r.part = 0; r.asked = false; saveProgressionState(); showToast(`${A.text || 'Not here.'} The riddle fades: hear it again from the start.`, 6000); }
+    else showToast(A.text || 'Not here. Think again.', 4500);
+    MoonTaleSounds.fx?.('thock');
+    return true;
+  }
+  if (cfg.donePiece && !(ProgressionState.spotsUsed || []).includes(cfg.spotId)) (ProgressionState.spotsUsed ||= []).push(cfg.spotId); // its piece shows (a lantern lights)
+  r.part = (r.part || 0) + 1;
+  if (r.part < R.parts.length) { saveProgressionState(); if (A.text) showToast(A.text, 4500); showPlaceRiddlePart(R, r.part); return true; }
+  r.solved = true; r.solvedAt = Date.now();
+  if (R.points) {
+    ProgressionState.rebelPoints = (Number(ProgressionState.rebelPoints) || 0) + R.points;
+    if (!Array.isArray(ProgressionState.rebelPointsLog)) ProgressionState.rebelPointsLog = [];
+    ProgressionState.rebelPointsLog.push({ riddleId:R.id, villageId:CURRENT_VILLAGE_ID, points:R.points, at:Date.now(), synced:false });
+    try { window.dispatchEvent(new CustomEvent('rebelAntsRebelPoints', { detail:{ riddleId:R.id, points:R.points, total:ProgressionState.rebelPoints } })); } catch (e) {}
+    setTimeout(() => showRebelPointsPop(R.points), 600);
+  }
+  saveProgressionState();
+  try { window.dispatchEvent(new CustomEvent('rebelAntsRiddle', { detail:{ riddleId:R.id, villageId:CURRENT_VILLAGE_ID } })); } catch (e) {}
+  MoonTaleSounds.fx?.('gamewin');
+  queueQuestCelebration({ kicker:'Riddle Solved', title:R.title, body:escapeHTML(A.text || R.solvedText || ''), chips:R.points ? [{ label:`+${R.points} Rebel points`, tone:'gold' }] : [], duration:7000 });
+  return true;
+}
+window._placeRiddles = { read:readPlaceRiddle, answer:answerPlaceRiddle }; // tests
+
 function recordQuestSpotSecret(cfg) {
   const isNew = recordProgressionEvent('secret', cfg.secretId, PROGRESSION_POINTS.secret);
   if (!isNew) return false;
@@ -10319,6 +10371,8 @@ function tryUseNearbyQuestSpot() {
   const cfg = root.metadata.spotConfig;
   const miss = questSpotRequirementMiss(cfg);
   if (miss) { showToast(miss); return true; }
+  if (cfg.riddle) return readPlaceRiddle(cfg);
+  if (cfg.riddleAnswer) return answerPlaceRiddle(cfg);
   if (cfg.game) return startMiniGame(cfg.game, { kind:'spot', root, cfg });
   if (cfg.dance) return openDanceOff(root, cfg);
   if (cfg.action === 'hold') {
