@@ -40,7 +40,8 @@ export default async function handler(req, res) {
     rebels.forEach((r, i) => {
       r.games = st[i * 3]?.result || null; r.moves = st[i * 3 + 1]?.result || null;
       let j = null; try { j = st[i * 3 + 2]?.result ? JSON.parse(st[i * 3 + 2].result) : null; } catch (e) {}
-      r.job = j ? { status: j.status, startedAt: j.startedAt || null, finishedAt: j.finishedAt || null, error: j.error || null, games: j.games || null } : null;
+      r.job = j ? { status: j.status, gamesOnly: !!j.gamesOnly, startedAt: j.startedAt || null, finishedAt: j.finishedAt || null, error: j.error || null, games: j.games || null,
+        gamesMissing: j.gamesMissing || null, gamesError: j.gamesError || null } : null;
     });
     rebels.sort((p, q) => (p.collectionKey + p.tokenId.padStart(8, '0')).localeCompare(q.collectionKey + q.tokenId.padStart(8, '0')));
     return res.status(200).json({ ok: true, rebels });

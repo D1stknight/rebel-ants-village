@@ -79,7 +79,9 @@ async function status() {
       await setJson(WORKER_KEY, worker);
     } else if (ready) {
       const snap = await sandbox.snapshot({ expiration: 0 });
-      Object.assign(worker, { snapshotId: snap.snapshotId || snap.id, commit: s.commit, builtAt: new Date().toISOString() });
+      // Oct 16: what the image holds of the optional packs (setup.sh's self test), so a games run never starts on an
+      // image built before its moves were uploaded
+      Object.assign(worker, { snapshotId: snap.snapshotId || snap.id, commit: s.commit, builtAt: new Date().toISOString(), games: packCount(log, 'games'), npc: packCount(log, 'npc') });
       s.status = 'done'; s.finishedAt = worker.builtAt;
       await setJson(WORKER_KEY, worker);
     } else {
@@ -89,6 +91,12 @@ async function status() {
     }
   }
   return { ok: true, worker, packFiles: Object.keys(pack).length, packPaths: Object.keys(pack).sort() };
+}
+
+// setup.sh prints "games clips 12 of 14 missing: mixamo/gm_x.npz, ..." / "npc clips 14 of 14 ok"
+function packCount(log, kind) {
+  const m = new RegExp(`^${kind} clips (\\d+) of (\\d+)(?: ok| missing: (.*))?\\s*$`, 'm').exec(log || '');
+  return m ? { have: Number(m[1]), of: Number(m[2]), missing: m[3] ? m[3].split(',').map((x) => x.trim()).filter(Boolean) : [] } : null;
 }
 
 async function renderThumb({ glbUrl, name }) {
