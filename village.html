@@ -18357,8 +18357,9 @@ function findNPCAnimationGroup(meta, state) {
 // a bow when it finishes, a nod when the talk moved a quest on. NPCs without the clip just skip it.
 const NPC_GESTURE_CLIPS = { greet:'wave_short', bye:'bow', yes:'nod_yes', cheer:'clapping' };
 // a forged NPC at a party hold (spot cheer: the Beach / Block Party dances): one of its lively clips at a time, each
-// played to its end; an NPC without them (a placeholder ant) hops
-const NPC_PARTY_CLIPS = ['clapping', 'rallying', 'jump', 'waving', 'yelling', 'wave_short'];
+// played to its end; an NPC without them (a placeholder ant) hops. No arms-overhead clips (waving, rallying): on the
+// Chumpz / Saints rigs they pull the sweater / fur up with the arms
+const NPC_PARTY_CLIPS = ['clapping', 'jump', 'yelling', 'wave_short'];
 function playNPCPartyMove(root) {
   const meta = root?.metadata;
   if (!meta || meta.gestureGroup?.isPlaying || meta.partyHop) return false;
