@@ -517,7 +517,8 @@ export const TERRAIN_RECIPES = {
     pines: { file: 'pine_1.glb', count: 40, scale: [1.6, 3.0], trunk: 0.32, settle: .35, sink: .15 },
     rocks: { file: 'rock_1.glb', count: 320, scale: [.8, 2.6], body: 0.75, settle: .9, sink: .1, tint: [1.3, 1.24, 1.14], minSq: 82 },
     extras: [
-      { file: 'tree_1.glb', count: 320, scale: [.8, 1.4], body: .5, settle: .5, sink: .15, cull: 300, maxSlope: .45, minSq: 84, road: 0, clump: { freq: .011, ox: 23, above: -.1 } }
+      // crown 10.4 m at scale 1; kept off the Siege Engine's camera (12 m behind the trebuchet at (20, -92), all its turns)
+      { file: 'tree_1.glb', count: 320, scale: [.8, 1.4], body: .5, settle: .5, sink: .15, cull: 300, maxSlope: .45, minSq: 84, road: 0, clump: { freq: .011, ox: 23, above: -.1 }, crown: 10.4, keepOut: [[19, -80, 6]] }
     ],
     fog: { density: .001, day: [.82, .85, .86], night: [.04, .05, .1] },
     light: { sun: 1.14, hemi: .96, tint: [1.0, .94, .8] },
@@ -1508,6 +1509,9 @@ async function buildDecor(scene, T, avoid) {
       t++;
       const x = (rnd() - .5) * 680, z = (rnd() - .5) * 680; if (!ok(x, z) || !clear(x, z, 2)) continue;
       const s = spec.scale[0] + rnd() * (spec.scale[1] - spec.scale[0]), yaw = rnd() * 6.28; BABYLON.Quaternion.FromEulerAnglesToRef(0, yaw, 0, q);
+      // a view kept open (keepOut [x, z, r]: no crown (spec.crown x scale) within r of the point): the tree is drawn and
+      // counted but not planted, so every other tree stays where it was
+      if (spec.keepOut && spec.keepOut.some(([cx, cz, cr]) => Math.hypot(x - cx, z - cz) < cr + (spec.crown || 0) * s)) { k++; addAvoid(x, z, blockR * s + 1); continue; }
       // sit on the lowest ground under the base so the downhill side never floats
       let low = h(x, z); const rr = (spec.settle || .3) * s;
       for (let a = 0; a < 8; a++) low = Math.min(low, h(x + Math.cos(a * .785) * rr, z + Math.sin(a * .785) * rr));
