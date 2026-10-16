@@ -250,6 +250,7 @@ cb_.inputs['Base Color'].default_value = (*srgb2lin(ccol).tolist(), 1.0); cb_.in
 me.materials.append(cmat); cmi = len(me.materials) - 1
 print('handswap cuff colour', np.round(ccol, 3).tolist())
 
+HAND_FIX = {}   # v2.27 species: side -> the hand bone's rest turn before it was put on the glove's axis
 bpy.context.view_layer.objects.active = arm; bpy.ops.object.mode_set(mode='EDIT')
 eb = arm.data.edit_bones; Ai = Aw.inverted()
 for side, pl in plan.items():
@@ -278,6 +279,17 @@ for side, pl in plan.items():
         cb_.align_roll(Ai.to_3x3() @ mu.Vector(pl['z'].tolist()))
         cb_.parent = eb[P + side + 'ForeArm']; cb_.use_connect = False; cb_.use_deform = True
         print(f'handswap {side}: hand pivot moved {sh_.length * 100:.1f} cm to the glove, cuff bone added')
+        # v2.27 Chumpz / Saints: their hand bone came from the sculpted hand, which hangs 18-23 deg toward the palm (and
+        # 6-16 to a side). The clips line that bone up with the actor's hand, so the glove, built along the forearm, came
+        # out bent back by as much (palms to the floor). The hand bone is turned onto the glove's axis here (the shortest
+        # turn, so its roll comes along) and every clip re-keyed below to keep its pose: the glove points where the
+        # sculpted hand did. Rebel villagers' hand bones already run along the glove (0-2 deg).
+        if SPECIES:
+            R0 = hb_.matrix.to_3x3().normalized(); h0 = hb_.y_axis.normalized(); z0 = hb_.z_axis.normalized(); ln = hb_.length
+            xa = (Ai.to_3x3() @ mu.Vector(pl['x'].tolist())).normalized(); D3 = h0.rotation_difference(xa)
+            hb_.tail = hb_.head + xa * ln; hb_.align_roll(D3 @ z0)
+            HAND_FIX[side] = R0
+            print(f'handswap {side}: hand bone turned {math.degrees(h0.angle(xa)):.1f} deg onto the glove axis')
 bpy.ops.object.mode_set(mode='OBJECT')
 
 bm = bmesh.new(); bm.from_mesh(me)
@@ -464,6 +476,27 @@ for act in bpy.data.actions:
 for pb in arm.pose.bones:
     if any(('Hand' + f) in pb.name for f in FING): pb.rotation_mode = 'QUATERNION'
 print('handswap hand poses written to clips', n_act, '| following the mocap fingers', n_live)
+# v2.27 species: the turned hand bones keep every clip's hand pose (rest' @ basis' = rest @ basis, so basis' = K @ basis;
+# a quaternion product is linear in the keys, so the frames between keys are unchanged too)
+for side, R0 in HAND_FIX.items():
+    bn = P + side + 'Hand'; K = (arm.data.bones[bn].matrix_local.to_3x3().normalized().inverted() @ R0).to_quaternion(); nk = 0
+    for act in bpy.data.actions:
+        for cb in bags(act):
+            fcs = [cb.fcurves.find(f'pose.bones["{bn}"].rotation_quaternion', index=i) for i in range(4)]
+            if not all(fcs): continue
+            frames = sorted({round(kp.co[0], 4) for fc in fcs for kp in fc.keyframe_points}); vals = []
+            for fr in frames:
+                q = K @ mu.Quaternion([fc.evaluate(fr) for fc in fcs])
+                if vals and vals[-1].dot(q) < 0: q.negate()
+                vals.append(q)
+            for fc in fcs: cb.fcurves.remove(fc)
+            for i in range(4):
+                fc = cb.fcurves.new(f'pose.bones["{bn}"].rotation_quaternion', index=i, group_name=bn)
+                fc.keyframe_points.add(len(frames)); fc.keyframe_points.foreach_set('co', [x for fr, q in zip(frames, vals) for x in (fr, q[i])])
+                for kp in fc.keyframe_points: kp.interpolation = 'LINEAR'
+                fc.update()
+            nk += 1
+    print(f'handswap {side}: hand keys kept on the turned bone in {nk} clips (K {math.degrees(K.angle):.1f} deg)')
 if NPCM:
     import cufftwist   # v2.21 the cuff bones' twist keys (baked again after the NPC arm steps)
     print('handswap cuff twist keys', cufftwist.bake(arm))
