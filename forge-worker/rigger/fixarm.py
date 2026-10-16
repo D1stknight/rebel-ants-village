@@ -1,8 +1,10 @@
 # v1.2 post-weight fix: cloth that touched the hand/arm in the static mesh (robe beside the hand) can keep arm weights
 # and fly off with the hand. Vertices whose arm-chain weight is high but which sit closer to a leg/hips bone than to
 # any arm bone get the weights of their nearest clean neighbours instead.
+# v2.26 NPC species (FORGE_NPC_SPECIES: Chumpz, Saints): a shirt or jacket that is one island with both sleeves is not a
+# rigid piece; the island rule moved both sleeves onto the body and the arms tore out of them (the Chumpz fisher).
 # usage: python3.13 fixarm.py -- in.blend out.blend
-import bpy, sys, numpy as np
+import bpy, os, sys, numpy as np
 from scipy.spatial import cKDTree
 a = sys.argv[sys.argv.index('--') + 1:]; src, dst = a[0], a[1]
 bpy.ops.wm.open_mainfile(filepath=src)
@@ -21,7 +23,18 @@ _E = np.zeros(len(me.data.edges) * 2, np.int64); me.data.edges.foreach_get('vert
 _, lab = connected_components(coo_matrix((np.ones(len(_E)), (_E[:, 0], _E[:, 1])), shape=(len(V), len(V))), directed=False)
 _o = np.argsort(lab, kind='stable'); _b = np.searchsorted(lab[_o], np.arange(lab.max() + 2))
 comp = {c: _o[_b[c]:_b[c + 1]] for c in range(lab.max() + 1)}
+SPECIES = os.environ.get('FORGE_NPC_SPECIES', '') if os.environ.get('FORGE_NPC') else ''
 report = {}
+def chainw(side):
+    cidx = [i for i, n in vg.items() if n.startswith(P + side) and any(k in n for k in ('Arm', 'ForeArm', 'Hand', 'Thumb', 'Index', 'Middle', 'Ring', 'Pinky')) and 'Shoulder' not in n]
+    W_ = np.zeros(len(V))
+    for v in me.data.vertices: W_[v.index] = sum(g.weight for g in v.groups if g.group in cidx)
+    return W_
+# v2.26: an island that both arms hold (each >= 300 verts, the smaller >= 0.4 of the larger) is a garment with two sleeves
+WS = {s_: chainw(s_) for s_ in ('Left', 'Right')} if SPECIES else None
+def twosleeves(ids):
+    nl, nr = int((WS['Left'][ids] > 0.3).sum()), int((WS['Right'][ids] > 0.3).sum())
+    return min(nl, nr) >= 300 and min(nl, nr) >= 0.4 * max(nl, nr)
 for side in ('Left', 'Right'):
     chain = [n for n in vg.values() if n.startswith(P + side) and any(k in n for k in ('Arm', 'ForeArm', 'Hand', 'Thumb', 'Index', 'Middle', 'Ring', 'Pinky')) and 'Shoulder' not in n]
     armsegs = [seg(n) for n in (P + side + 'Arm', P + side + 'ForeArm', P + side + 'Hand', P + side + 'HandMiddle1')]
@@ -56,7 +69,7 @@ for side in ('Left', 'Right'):
         if fr > 0.85: continue
         cen = V[ids].mean(0)[None]
         dac = min(dseg(cen, *s_)[0] for s_ in armsegs); dbc = min(dseg(cen, *s_)[0] for s_ in bodysegs)
-        if dbc < dac or V[ids, 2].min() < hz - 0.08:
+        if (dbc < dac or V[ids, 2].min() < hz - 0.08) and not (SPECIES and twosleeves(ids)):
             isl.append(ids[W[ids] > 0.02])
     isl = np.concatenate(isl) if isl else np.zeros(0, int)
     bad = np.union1d(bad, isl).astype(int)
