@@ -50,8 +50,8 @@ export default async function handler(req, res) {
     const glb = await sandbox.readFileToBuffer({ path: `${JOB_DIR}/out.glb` });
     const path = new URL(rigUrl).pathname.slice(1).replace(/(-[A-Za-z0-9]+)?\.glb$/, '').replace(/(_cloth\d*)+$/, '') + '_cloth.glb';
     const url = (await put(path, glb, { access: 'public', addRandomSuffix: true, contentType: 'model/gltf-binary' })).url;
-    const [mv] = await redis([['GET', `forge:moves:v1:${rigUrl}`]]);
-    await redis([['SET', `forge:rig-latest:v1:${rigUrl}`, url], ...(mv?.result ? [['SET', `forge:moves:v1:${url}`, mv.result]] : [])]);
+    const [mv, gm] = await redis([['GET', `forge:moves:v1:${rigUrl}`], ['GET', `forge:games:v1:${rigUrl}`]]);
+    await redis([['SET', `forge:rig-latest:v1:${rigUrl}`, url], ...(mv?.result ? [['SET', `forge:moves:v1:${url}`, mv.result]] : []), ...(gm?.result ? [['SET', `forge:games:v1:${url}`, gm.result]] : [])]);
     if (job.buildId) {
       try {
         const rec = await loadBuild(job.buildId);

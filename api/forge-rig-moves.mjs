@@ -1,8 +1,10 @@
 // Weapon moves pack for an EXISTING rig (admin, Sept 29): re-runs the Forge Rigger on the build's own source with its
 // recorded options (same skeleton as the live rig), keeps only moves.glb and links it to the live rig URL.
 // The build record and its rig are not touched.
-//   POST {buildId, rigUrl?}  -> start (rigUrl defaults to the build's current rig)
-//   GET  ?buildId=...        -> poll; when done: {status:'done', moves}
+//   POST {buildId, rigUrl?, gamesOnly?}  -> start (rigUrl defaults to the build's current rig)
+//   GET  ?buildId=...        -> poll; when done: {status:'done', moves, games}
+// v2.24 gamesOnly (the NPC Forge's games packs): the run adds the games pack and keeps a weapon moves pack the rig
+// already has (only a rig without one gets this run's).
 import { put } from '@vercel/blob';
 import { isAdminRequest } from './_admin-auth.mjs';
 import { Sandbox, creds, WORKER_KEY, FW, JOB_DIR, JOB_TIMEOUT_MS, redis, getJson, loadBuild, sourceGlbUrl, readText, sanitize, body } from './_forge-rig.mjs';
@@ -37,7 +39,7 @@ export default async function handler(req, res) {
       const sandbox = await Sandbox.create({ source: { type: 'snapshot', snapshotId: worker.snapshotId }, persistent: false, resources: { vcpus: 2 }, timeout: JOB_TIMEOUT_MS,
         tags: { purpose: 'forge-moves-job', build: buildId.slice(0, 200) }, ...creds() });
       const cmd = await sandbox.runCommand({ cmd: 'bash', args: ['-c', `mkdir -p ${JOB_DIR} && bash ${FW}/job.sh "$SRC_URL" "$RIG_NAME" ${JOB_DIR}`], env, sudo: true, detached: true });
-      const job = await setJob(buildId, { status: 'running', sandboxName: sandbox.name, cmdId: cmd.cmdId, rigUrl, src, workerCommit: worker.commit || null, startedAt: new Date().toISOString() });
+      const job = await setJob(buildId, { status: 'running', sandboxName: sandbox.name, cmdId: cmd.cmdId, rigUrl, src, gamesOnly: !!b.gamesOnly, workerCommit: worker.commit || null, startedAt: new Date().toISOString() });
       return res.status(200).json({ ok: true, job });
     }
     const job = await getJob(buildId);
@@ -60,11 +62,26 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, job: await setJob(buildId, { ...job, status: 'failed', error: `failed at ${result.step || progress}`, logTail: log.split('\n').slice(-20).join('\n') }) });
     }
     const mv = await sandbox.readFileToBuffer({ path: `${JOB_DIR}/moves.glb` });
-    const path = `forge/3d-builds/moves/${sanitize(buildId, 'build')}_forge_moves.glb`;
-    const url = (await put(path, mv, { access: 'public', addRandomSuffix: true, contentType: 'model/gltf-binary' })).url;
-    await redis([['SET', `forge:moves:v1:${job.rigUrl}`, url]]);
+    const [had] = job.gamesOnly ? await redis([['GET', `forge:moves:v1:${job.rigUrl}`]]) : [null];
+    let url = had?.result || null;
+    if (!url) {
+      const path = `forge/3d-builds/moves/${sanitize(buildId, 'build')}_forge_moves.glb`;
+      url = (await put(path, mv, { access: 'public', addRandomSuffix: true, contentType: 'model/gltf-binary' })).url;
+      await redis([['SET', `forge:moves:v1:${job.rigUrl}`, url]]);
+    }
+    // v2.24 the games pack from the same run (only when the worker has the games moves)
+    let games = null;
+    if (result.games) {
+      try {
+        const gm = await sandbox.readFileToBuffer({ path: `${JOB_DIR}/games.glb` });
+        if (gm && gm.length) {
+          games = (await put(`forge/3d-builds/moves/${sanitize(buildId, 'build')}_forge_games.glb`, gm, { access: 'public', addRandomSuffix: true, contentType: 'model/gltf-binary' })).url;
+          await redis([['SET', `forge:games:v1:${job.rigUrl}`, games]]);
+        }
+      } catch (e) { /* the moves pack is saved either way */ }
+    }
     try { await sandbox.stop(); } catch (e) {}
-    return res.status(200).json({ ok: true, job: await setJob(buildId, { ...job, status: 'done', moves: url, bytes: mv.length, seconds: result.seconds, finishedAt: new Date().toISOString() }) });
+    return res.status(200).json({ ok: true, job: await setJob(buildId, { ...job, status: 'done', moves: url, games, bytes: mv.length, seconds: result.seconds, finishedAt: new Date().toISOString() }) });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err?.message || String(err) });
   }

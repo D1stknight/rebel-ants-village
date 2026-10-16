@@ -352,6 +352,11 @@ def hand_pose(clip, side):
     # weapon moves (v2.11): swords are held in both hands; the bow in the left hand (the right draws the string)
     if clip.startswith('sword_') or clip.startswith('twin_'): return 'grip'
     if clip.startswith('bow_'): return 'grip' if side == 'Left' or clip in ('bow_draw', 'bow_sheathe') else 'relaxed'
+    # v2.24 games pack (anim/clips_games.json): both hands round the rod / shovel / axe; the throwing hand holds the ball
+    if clip in ('game_cast', 'game_reel', 'game_fish_wait', 'game_dig', 'game_chop'): return 'grip'
+    if clip in ('game_throw', 'game_throw_far'): return 'grip' if side == 'Right' else 'relaxed'
+    if clip in ('game_push', 'game_push_walk') or clip.startswith('dance_'): return 'open'
+    if clip == 'game_cheer': return 'fist'
     if clip == 'pointing': return 'point' if side == 'Right' else 'relaxed'
     if clip in TALK: return 'talk'
     return 'fist' if clip in FIST else 'open' if clip in OPEN else 'relaxed'

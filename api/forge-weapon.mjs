@@ -121,12 +121,13 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, weapons: list });
     }
     // the weapon moves pack made with a rig (skeleton + weapon clips); null = this rig has none yet
+    // v2.24: and its games pack (skeleton + the village games' moves: fishing, digging, throws, dances ...)
     if (req.method === 'GET' && action === 'moves') {
       const rig = String(req.query?.rig || '');
       if (!/^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//.test(rig)) return res.status(400).json({ ok: false, error: 'rig must be our Blob' });
-      const [r] = await redis([['GET', `forge:moves:v1:${rig}`]]);
+      const [r, g] = await redis([['GET', `forge:moves:v1:${rig}`], ['GET', `forge:games:v1:${rig}`]]);
       res.setHeader('Cache-Control', 'public, max-age=60');
-      return res.status(200).json({ ok: true, moves: r?.result || null });
+      return res.status(200).json({ ok: true, moves: r?.result || null, games: g?.result || null });
     }
     if (req.method === 'GET' && action === 'choice') {
       const t = String(req.query?.tokenId || ''), c = String(req.query?.collectionKey || 'battle_for_colony');

@@ -1,0 +1,114 @@
+[
+ {
+  "name": "game_cast",
+  "file": "mixamo/gm_fishing_cast.npz",
+  "t0": 0.3,
+  "t1": 3.0,
+  "pack": "games"
+ },
+ {
+  "name": "game_reel",
+  "file": "mixamo/gm_fishing_cast.npz",
+  "t0": 5.13,
+  "t1": 5.9,
+  "pack": "games"
+ },
+ {
+  "name": "game_fish_wait",
+  "file": "mixamo/gm_fishing_idle.npz",
+  "t0": 0.0,
+  "t1": 3.5,
+  "pack": "games"
+ },
+ {
+  "name": "game_dig",
+  "file": "mixamo/gm_digging.npz",
+  "t0": 0.0,
+  "t1": 4.83,
+  "pack": "games"
+ },
+ {
+  "name": "game_plant",
+  "file": "mixamo/gm_plant.npz",
+  "t0": 0.2,
+  "t1": 7.4,
+  "pack": "games"
+ },
+ {
+  "name": "game_pick_up",
+  "file": "mixamo/gm_throw_object.npz",
+  "t0": 0.2,
+  "t1": 1.8,
+  "pack": "games"
+ },
+ {
+  "name": "game_throw",
+  "file": "mixamo/gm_throw_object.npz",
+  "t0": 1.5,
+  "t1": 3.6,
+  "pack": "games"
+ },
+ {
+  "name": "game_throw_far",
+  "file": "mixamo/gm_goalie_throw.npz",
+  "t0": 0.3,
+  "t1": 3.0,
+  "pack": "games"
+ },
+ {
+  "name": "game_chop",
+  "file": "mixamo/gm_axe_combo.npz",
+  "t0": 0.0,
+  "t1": 2.7,
+  "pack": "games"
+ },
+ {
+  "name": "game_cheer",
+  "file": "mixamo/gm_cheering.npz",
+  "t0": 0.0,
+  "t1": 2.9,
+  "pack": "games"
+ },
+ {
+  "name": "game_push",
+  "file": "mixamo/gm_pushing.npz",
+  "t0": 0.0,
+  "t1": 2.67,
+  "pack": "games"
+ },
+ {
+  "name": "game_push_walk",
+  "file": "mixamo/gm_push.npz",
+  "t0": 2.83,
+  "t1": 4.5,
+  "pack": "games"
+ },
+ {
+  "name": "dance_wave",
+  "file": "mixamo/gm_dance_wave.npz",
+  "t0": 3.1,
+  "t1": 4.7,
+  "pack": "games"
+ },
+ {
+  "name": "dance_tut",
+  "file": "mixamo/gm_dance_tut.npz",
+  "t0": 6.8,
+  "t1": 8.4,
+  "pack": "games"
+ },
+ {
+  "name": "dance_house",
+  "file": "mixamo/gm_dance_house.npz",
+  "t0": 3.6,
+  "t1": 5.2,
+  "pack": "games"
+ },
+ {
+  "name": "dance_gangnam",
+  "file": "mixamo/gm_dance_gangnam.npz",
+  "t0": 4.8,
+  "t1": 7.2,
+  "pack": "games"
+ }
+]

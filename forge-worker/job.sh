@@ -72,6 +72,20 @@ if [ -z "$NPC" ]; then
 export FORGE_WEAPON_CLIPS="$FW/anim/clips_weapons.json"
 step weapons;    run "$FW/anim/retarget_bvh.py" -- "$O/anim6_ma.blend" "$O/anim6_ma.blend" "$FORGE_WEAPON_CLIPS"
 fi
+# v2.24 games pack (Miguel's Mixamo moves for the village games: fishing, digging, planting, throws, the axe, cheering,
+# pushing, four dances): retargeted and cleaned up with the other moves, shipped in their own games.glb (rig.glb and
+# moves.glb are unchanged). They keep their own head motion (headfix would level the look down at a shovel). A worker
+# built before the pack was uploaded makes no games.glb and everything else as before.
+GAMES=""
+if [ -z "$NPC" ]; then
+  export FORGE_GAME_CLIPS="$FW/anim/clips_games.json"; GAMES=1
+  for f in $(grep -o '"file": *"[^"]*"' "$FORGE_GAME_CLIPS" | sed 's/.*"\([^"]*\)"$/\1/' | sort -u); do
+    [ -f "$FORGE_PACK/$f" ] || { GAMES=""; echo "games pack missing: $f (upload it in the Rig worker box, then rebuild the worker); no games.glb" >> "$JOB/log"; }; done
+  if [ -n "$GAMES" ]; then
+    export FORGE_HEAD_SKIP="${FORGE_HEAD_SKIP-cartwheel,backflip,front_flip,flip_kick,spin_flip_kick,knockdown,get_up},$("$PY" -c 'import json, sys; print(",".join(c["name"] for c in json.load(open(sys.argv[1]))))' "$FORGE_GAME_CLIPS")"
+step games;      run "$FW/anim/retarget_bvh.py" -- "$O/anim6_ma.blend" "$O/anim6_ma.blend" "$FORGE_GAME_CLIPS"
+  fi
+fi
 step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/footfix.py" -- "$O/anim6_fix.blend" "$O/anim6_ff0.blend"
                  run "$R/padfix.py" -- "$O/anim6_ff0.blend" "$O/anim6_ff1.blend"
@@ -95,6 +109,9 @@ step headcloth;  run "$R/headcloth.py" "$JOB/rig.glb" "$JOB/rig.glb" --report "$
 if [ -z "$NPC" ]; then
 step movespack;  run "$R/exp_moves.py" -- "$O/anim6_ff.blend" "$FORGE_WEAPON_CLIPS" "$JOB/moves.glb"
 fi
+if [ -n "$GAMES" ]; then
+step gamespack;  run "$R/exp_moves.py" -- "$O/anim6_ff.blend" "$FORGE_GAME_CLIPS" "$JOB/games.glb"
+fi
 step qa;         run "$FW/qa_job.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb" "$JOB/qa.json" "$JOB/log"
 step thumb;      "$PY" "$FW/thumb.py" -- "$JOB/rig.glb" "$JOB/thumb.jpg" 640 >> "$JOB/log" 2>&1 || echo "thumb failed (non-fatal)" >> "$JOB/log"
 SECS=$(( $(date +%s) - T0 ))
@@ -102,7 +119,7 @@ SECS=$(( $(date +%s) - T0 ))
 import json, os, sys
 job, secs = sys.argv[1], int(sys.argv[2])
 qa = json.load(open(os.path.join(job, 'qa.json')))
-mv = os.path.join(job, 'moves.glb')
-json.dump({'ok': True, 'seconds': secs, 'bytes': os.path.getsize(os.path.join(job, 'rig.glb')), 'thumb': os.path.exists(os.path.join(job, 'thumb.jpg')), 'moves': os.path.getsize(mv) if os.path.exists(mv) else 0, 'qa': qa}, open(os.path.join(job, 'result.json'), 'w'))
+mv, gm = os.path.join(job, 'moves.glb'), os.path.join(job, 'games.glb')
+json.dump({'ok': True, 'seconds': secs, 'bytes': os.path.getsize(os.path.join(job, 'rig.glb')), 'thumb': os.path.exists(os.path.join(job, 'thumb.jpg')), 'moves': os.path.getsize(mv) if os.path.exists(mv) else 0, 'games': os.path.getsize(gm) if os.path.exists(gm) else 0, 'qa': qa}, open(os.path.join(job, 'result.json'), 'w'))
 PY
 echo done > "$JOB/progress"

@@ -1,8 +1,9 @@
 {
- "version": "2.23",
+ "version": "2.24",
  "files": [
   "anim/bvhfk.py",
   "anim/clips.json",
+  "anim/clips_games.json",
   "anim/clips_npc.json",
   "anim/clips_weapons.json",
   "anim/npzsrc.py",

@@ -694,6 +694,8 @@ async function unapprove(k) { if (!confirm(`Remove ${k} from the village? NPCs w
 
 /* ---------- rig worker: NPC gesture pack + rebuild ---------- */
 const NPC_PACK = ['talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping', 'rallying', 'yelling', 'look_around', 'idle_looking'].map((c) => `mixamo/${c}.npz`);
+// v2.24 the Rebels' games pack (Miguel's Mixamo moves for the village games), uploaded here with the same button
+const GAMES_PACK = ['fishing_cast', 'fishing_idle', 'digging', 'plant', 'throw_object', 'goalie_throw', 'axe_combo', 'cheering', 'pushing', 'push', 'dance_wave', 'dance_tut', 'dance_house', 'dance_gangnam'].map((c) => `mixamo/gm_${c}.npz`);
 let workerPoll = null, workerSetup = null, workerBuilding = false;
 // setup.sh prints these step markers; the last one in the log tail is the current step (progress floor, %)
 const SETUP_STEPS = [['== system libs', 'Installing system libraries', 3], ['== python 3.13 + bpy', 'Installing Blender (the longest step)', 8], ['== worker code', 'Loading the rigger code', 80], ['== mocap pack', 'Loading the animation pack', 86], ['== self test', 'Testing the worker', 94]];
@@ -717,7 +719,7 @@ function paintSetup() {
 setInterval(paintSetup, 1000);
 async function loadWorker() {
   let d; try { d = await api('/api/forge-rig-worker'); } catch (e) { $('#workerBox').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
-  const w = d.worker || {}; const have = new Set(d.packPaths || []); const miss = NPC_PACK.filter((p) => !have.has(p)); const s = w.setup || {};
+  const w = d.worker || {}; const have = new Set(d.packPaths || []); const miss = NPC_PACK.filter((p) => !have.has(p)), gmiss = GAMES_PACK.filter((p) => !have.has(p)); const s = w.setup || {};
   const was = workerBuilding; const building = s.status === 'running';
   workerBuilding = building; workerSetup = s;
   const wc = w.snapshotId ? w.commit || null : null; if (wc !== workerCommit) { workerCommit = wc; renderList(); }
@@ -725,11 +727,52 @@ async function loadWorker() {
   $('#workerBox').innerHTML = `<div class="state">Worker image: ${w.snapshotId ? `built ${w.builtAt ? new Date(w.builtAt).toLocaleString() : ''} from ${esc(String(w.commit || '').slice(0, 7))}` : 'not built'}${s.status === 'failed' && !building ? ' · <span class="bad">last rebuild failed</span>' : ''}</div>
     ${building ? '<div id="workerProgress" style="margin-top:6px"></div>' : ''}
     <div class="state" style="margin-top:4px">NPC gesture pack: ${NPC_PACK.length - miss.length} of ${NPC_PACK.length}${miss.length ? ` · missing ${miss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}</div>
-    <div class="row" style="margin-top:8px"><button onclick="uploadPack()">Upload gesture files (.npz)</button><button class="teal" onclick="rebuildWorker()" ${building ? 'disabled' : ''}>${building ? 'Rebuilding…' : 'Rebuild worker'}</button></div>
+    <div class="state" style="margin-top:2px">Games pack (Rebels): ${GAMES_PACK.length - gmiss.length} of ${GAMES_PACK.length}${gmiss.length ? ` · missing ${gmiss.map((m) => m.replace('mixamo/', '').replace('.npz', '')).join(', ')}` : ' ✓'}</div>
+    <div class="row" style="margin-top:8px"><button onclick="uploadPack()">Upload pack files (.npz)</button><button class="teal" onclick="rebuildWorker()" ${building ? 'disabled' : ''}>${building ? 'Rebuilding…' : 'Rebuild worker'}</button></div>
     <div class="state" style="margin-top:4px">Rebuild after uploading the pack or after a worker update (about 10 minutes). NPC jobs need all ${NPC_PACK.length} gesture files in the worker.</div>
-    ${s.logTail && (building || s.status === 'failed') ? `<pre style="white-space:pre-wrap;font-size:10px;color:${building ? 'var(--dim)' : 'var(--red)'};max-height:120px;overflow:auto">${esc(s.logTail)}</pre>` : ''}`;
-  paintSetup();
+    ${s.logTail && (building || s.status === 'failed') ? `<pre style="white-space:pre-wrap;font-size:10px;color:${building ? 'var(--dim)' : 'var(--red)'};max-height:120px;overflow:auto">${esc(s.logTail)}</pre>` : ''}
+    <div id="gamesBox" style="margin-top:10px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px"></div>`;
+  paintSetup(); paintGames();
   clearTimeout(workerPoll); if (building) workerPoll = setTimeout(loadWorker, 10000);
+}
+// Games packs for the Rebels in play (v2.24): each Rebel's active rig gets games.glb from a moves re-run on its own
+// sculpt (/api/forge-rig-moves; the rig is not touched). Needs a worker rebuilt with the games pack files.
+let gamesList = null; const gamesRun = { on: false, active: new Map() };
+async function loadGamesPacks() {
+  try { gamesList = (await api('/api/forge-games-packs')).rebels || []; } catch (e) { const b = $('#gamesBox'); if (b) b.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  paintGames();
+}
+function paintGames() {
+  const box = $('#gamesBox'); if (!box) return;
+  if (!gamesList) { box.innerHTML = `<button onclick="loadGamesPacks()">Rebels' games packs</button>`; return; }
+  const have = gamesList.filter((r) => r.games).length, todo = gamesList.filter((r) => !r.games);
+  const line = (r) => r.games ? '✓' : gamesRun.active.has(r.buildId) ? `making · ${esc(gamesRun.active.get(r.buildId))}` : r.job?.status === 'failed' ? `<span class="bad">failed: ${esc(r.job.error || '')}</span>` : r.job?.status === 'done' && !r.job.games ? '<span class="bad">made without the games moves: upload the pack files, rebuild the worker, make again</span>' : 'none yet';
+  box.innerHTML = `<div class="state"><b>Games packs</b>: ${have} of ${gamesList.length} Rebels in play${gamesRun.on ? ` · making ${gamesRun.active.size} now` : ''}</div>
+    <div style="max-height:180px;overflow:auto;margin-top:4px">${gamesList.map((r) => `<div class="state">${esc(r.name || '#' + r.tokenId)} <span style="opacity:.6">${esc(r.collectionKey)} ${esc(r.tokenId)}</span> · ${line(r)}</div>`).join('') || '<div class="state">No Rebels with a Forge rig in play.</div>'}</div>
+    <div class="row" style="margin-top:6px"><button class="teal" onclick="makeGamesPacks()" ${gamesRun.on || !todo.length ? 'disabled' : ''}>${gamesRun.on ? 'Making…' : `Make the missing ${todo.length}`}</button><button onclick="loadGamesPacks()" ${gamesRun.on ? 'disabled' : ''}>Refresh</button></div>
+    <div class="state" style="margin-top:4px">Each one re-runs the Rigger on that Rebel's own sculpt (about 8 minutes, two at a time) and keeps only the games moves; the rig and its weapon moves are not changed. Keep this page open while they run.</div>`;
+}
+async function makeGamesPacks() {
+  if (gamesRun.on || !gamesList) return;
+  const todo = gamesList.filter((r) => !r.games);
+  if (!todo.length || !confirm(`Make the games pack for ${todo.length} Rebel${todo.length > 1 ? 's' : ''}? Each runs the Rigger for about 8 minutes, two at a time. Their rigs are not changed.`)) return;
+  gamesRun.on = true; paintGames();
+  const one = async (r) => {
+    gamesRun.active.set(r.buildId, 'starting'); paintGames();
+    try {
+      await api('/api/forge-rig-moves', { buildId: r.buildId, gamesOnly: true });
+      for (let k = 0; k < 140; k++) {   // polls every 15 s, up to 35 minutes
+        await sleep(15000);
+        const j = (await twice(() => api('/api/forge-rig-moves?buildId=' + encodeURIComponent(r.buildId)))).job || {};
+        if (j.status === 'done' || j.status === 'failed') { r.job = j; r.games = j.games || null; break; }
+        gamesRun.active.set(r.buildId, j.progress || 'running'); paintGames();
+      }
+    } catch (e) { r.job = { status: 'failed', error: e.message }; }
+    gamesRun.active.delete(r.buildId); paintGames();
+  };
+  const queue = todo.slice();
+  await Promise.all([0, 1].map(async () => { while (queue.length) await one(queue.shift()); }));
+  gamesRun.on = false; paintGames(); toast('Games packs: done. Each Rebel plays its new moves on its next village visit.');
 }
 function uploadPack() {
   const inp = document.createElement('input'); inp.type = 'file'; inp.multiple = true; inp.accept = '.npz';
