@@ -103,6 +103,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;font-family:
 #hudProgressFill{height:100%;width:0;background:linear-gradient(90deg,#5ecfca,#e8c56a);box-shadow:0 0 8px rgba(94,207,202,.35)}
 #journalBtn{margin-top:7px;width:100%;height:26px;border:1px solid rgba(94,207,202,.34);background:rgba(94,207,202,.05);color:#5ecfca;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer}
 #journalBtn:hover{background:rgba(94,207,202,.13)}
+#gloveBtn{margin-top:5px;width:100%;height:24px;border:1px solid rgba(232,197,106,.34);background:rgba(232,197,106,.05);color:#e8c56a;font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:2px;cursor:pointer;display:none}
+#gloveBtn:hover{background:rgba(232,197,106,.13)}
+body.has-gloves #gloveBtn{display:block}
+#glovePanel{position:fixed;top:124px;left:340px;width:min(300px,calc(100vw - 32px));padding:12px;background:rgba(5,10,28,.95);border:1px solid rgba(232,197,106,.45);backdrop-filter:blur(12px);z-index:30;display:none;color:#f3e6c4;font:600 12px/1.3 Georgia,serif}
+#glovePanel.on{display:block}
+#glovePanel h4{margin:0 0 8px;font:700 10px 'Cinzel Decorative',serif;letter-spacing:2px;color:#e8c56a;text-transform:uppercase}
+#glovePanel .gp-row{margin-bottom:10px}
+#glovePanel .gp-label{font-size:11px;color:#cfd8e6;margin-bottom:5px;display:flex;justify-content:space-between}
+#glovePanel .gp-sw{display:flex;flex-wrap:wrap;gap:5px}
+#glovePanel .gp-sw button{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
+#glovePanel .gp-sw button.on{border-color:#ffe9b0;box-shadow:0 0 0 2px rgba(232,197,106,.55)}
+#glovePanel .gp-sw button.default,#glovePanel .gp-sw button.forged{position:relative}
+#glovePanel .gp-sw button.default::after,#glovePanel .gp-sw button.forged::after{content:'';position:absolute;inset:6px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.75)}
+#glovePanel .gp-sw button.forged::after{border-style:solid;inset:7px}
+#glovePanel .gp-sw input[type=color]{width:24px;height:24px;border:0;padding:0;background:none;cursor:pointer}
+#glovePanel .gp-note{font-size:11px;color:#aab3c2;margin-top:4px}
+#glovePanel .gp-close{position:absolute;top:8px;right:10px;background:none;border:0;color:#cfd8e6;font-size:16px;cursor:pointer}
+@media (max-width:700px){#glovePanel{left:50%;top:50%;transform:translate(-50%,-50%)}}
 #questTracker{
   margin-top:7px;
   padding-top:7px;
@@ -1689,6 +1707,7 @@ body.walk-photo #photoBtn{display:block}
       <div class="world-status-row"><span>Items</span><span class="world-status-value" id="hudCollectibleCount">0</span></div>
       <div class="world-status-row"><span>Quests</span><span class="world-status-value" id="hudQuestCount">0</span></div>
       <button id="journalBtn" type="button" onclick="openProgressionJournal()">Journal</button>
+      <button id="gloveBtn" type="button" onclick="togglePlayerGlovePanel()">Gloves</button>
     </div>
     <div id="questTracker">
       <div id="questTrackerTitle">Active Quest</div>
@@ -1697,6 +1716,7 @@ body.walk-photo #photoBtn{display:block}
     </div>
   </div>
 </div>
+<div id="glovePanel" role="dialog" aria-label="Glove colours"><button class="gp-close" type="button" onclick="togglePlayerGlovePanel(false)" aria-label="Close">✕</button><h4>Gloves</h4><div class="gp-row"><div class="gp-label"><span>Gloves</span><span class="gp-name" data-k="glove"></span></div><div class="gp-sw" data-k="glove"></div></div><div class="gp-row"><div class="gp-label"><span>Cuffs</span><span class="gp-name" data-k="cuff"></span></div><div class="gp-sw" data-k="cuff"></div></div><div class="gp-note">Saved for this Rebel on this device. The first swatch is how your Rebel looks now, the ringed one the colour the Forge gave it.</div></div>
 <button id="backToLobbyBtn" onclick="backToLobby()">← Back to Lobby</button>
 
 <button id="wb" onclick="toggleWalk()">⚔️ &nbsp;ENTER VILLAGE</button>
@@ -10731,6 +10751,68 @@ function getPlayerBoneWorld(name) {
   if (!b) return null;
   return BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.Zero(), b.getFinalMatrix().multiply(sm.getWorldMatrix()));
 }
+// Glove colours (Oct 16, Miguel's idea): the player picks their Rebel's glove and cuff colours in the Rebel panel (Gloves,
+// under Journal), saved per Rebel on this device (localStorage rebelAntsGloves:v1: { '<collection>:<token or id>':
+// { glove, cuff } }, each '#rrggbb', 'forged' or absent). Forge rigs carry the gloves as their own materials ('Glove',
+// 'GloveCuff'), so the colour is set on the loaded rig: no re-rig, the rig files untouched. Default = as the village has
+// always shown it (the loader paints untextured parts with a palette colour); Forged = the colour the Forge gave the
+// gloves (the rig's own, kept before that paint). Rigs without glove materials (older rigs, kit apes, the starter ant)
+// show no Gloves button.
+const PlayerGloves = (() => {
+  const KEY = 'rebelAntsGloves:v1';
+  const PRESETS = [['Ink', '#1b1b1f'], ['Bone', '#e9e2d0'], ['Crimson', '#8c1c1c'], ['Ember', '#d9622b'], ['Gold', '#d8b35c'], ['Moss', '#4f6b3a'],
+    ['Jade', '#2f8a6b'], ['Teal', '#1f5753'], ['Sky', '#4f8fd6'], ['Navy', '#1d2b4f'], ['Plum', '#5f1d45'], ['Rose', '#d98ba6']];
+  let mats = null; // { glove: [{ m, c0, forged }], cuff: [...] }: the rig's glove materials, their default and forged colours
+  const rebelKey = () => { const r = window.activeRebel || getSelectedRebel() || {}; return `${r.collectionKey || 'battle_for_colony'}:${r.tokenId ?? r.id ?? 'ant_1'}`; };
+  const all = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
+  const choice = () => all()[rebelKey()] || {};
+  const save = (c) => { try { const a = all(); if (c.glove || c.cuff) a[rebelKey()] = c; else delete a[rebelKey()]; localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} };
+  const hexOf = (lin) => lin.toGammaSpace().toHexString().toLowerCase();
+  function attach(meshes) {
+    mats = { glove: [], cuff: [] }; const seen = new Set();
+    for (const m of meshes || []) {
+      const mt = m.material; if (!mt || seen.has(mt) || !/^Glove/.test(mt.name || '')) continue; seen.add(mt);
+      const c0 = (mt.albedoColor || mt.diffuseColor)?.clone(); if (!c0) continue;
+      mt.unfreeze?.(); // a frozen material keeps its old colour
+      mats[/Cuff/i.test(mt.name) ? 'cuff' : 'glove'].push({ m: mt, c0, forged: mt._forgedAlbedo?.clone() || null });
+    }
+    if (!mats.glove.length && !mats.cuff.length) mats = null;
+    document.body.classList.toggle('has-gloves', !!mats); apply(); paint();
+  }
+  function colourFor(e, v) {
+    if (v === 'forged') return e.forged || e.c0;
+    return /^#[0-9a-f]{6}$/i.test(v || '') ? BABYLON.Color3.FromHexString(v).toLinearSpace() : e.c0;
+  }
+  function apply() {
+    if (!mats) return; const c = choice();
+    for (const k of ['glove', 'cuff']) for (const e of mats[k]) { const col = colourFor(e, c[k]); if (e.m.albedoColor) e.m.albedoColor = col.clone(); else e.m.diffuseColor = col.clone(); }
+  }
+  function set(k, v) { const c = { ...choice() }; c[k] = v ? String(v).toLowerCase() : null; save(c); apply(); paint(); }
+  function paint() {
+    const el = document.getElementById('glovePanel'); if (!el) return; const c = choice();
+    for (const k of ['glove', 'cuff']) {
+      const row = el.querySelector(`.gp-sw[data-k="${k}"]`), cur = c[k] || null; if (!row) continue;
+      row.closest('.gp-row').style.display = mats?.[k]?.length ? '' : 'none'; // older rigs have no cuff material of their own
+      if (!row.childElementCount && mats?.[k]?.length) {
+        const mk = (name, v, bg, cls) => { const b = document.createElement('button'); b.type = 'button'; b.title = name; b.dataset.v = v || ''; if (bg) b.style.background = bg; if (cls) b.className = cls; b.onclick = () => set(k, v); return b; };
+        const e = mats[k][0];
+        row.appendChild(mk('Default (as your Rebel looks now)', null, hexOf(e.c0), 'default'));
+        if (e.forged && hexOf(e.forged) !== hexOf(e.c0)) row.appendChild(mk('Forged (the colour the Forge gave it)', 'forged', hexOf(e.forged), 'forged'));
+        PRESETS.forEach(([n, h]) => row.appendChild(mk(n, h, h)));
+        const pick = document.createElement('input'); pick.type = 'color'; pick.title = 'Any colour'; pick.oninput = () => set(k, pick.value); row.appendChild(pick);
+      }
+      row.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.v || null) === cur));
+      const pk = row.querySelector('input[type=color]'); if (pk && /^#/.test(cur || '')) pk.value = cur;
+      const nm = el.querySelector(`.gp-name[data-k="${k}"]`); if (nm) nm.textContent = !cur ? 'Default' : cur === 'forged' ? 'Forged' : (PRESETS.find(p => p[1] === cur)?.[0] || cur);
+    }
+  }
+  return { attach, set, choice, apply, paint, PRESETS, available: () => !!mats, _mats: () => mats };
+})();
+window.PlayerGloves = PlayerGloves; // tests
+window.togglePlayerGlovePanel = function (on) {
+  const el = document.getElementById('glovePanel'); if (!el || !PlayerGloves.available()) return;
+  const show = on == null ? !el.classList.contains('on') : !!on; el.classList.toggle('on', show); if (show) PlayerGloves.paint();
+};
 // The games pack (v2.24): Miguel's Mixamo moves for the games (game_cast / reel / fish_wait, game_dig, game_plant,
 // game_pick_up, game_throw / throw_far, game_chop, game_cheer, game_push / push_walk, dance_wave / tut / house /
 // gangnam), made by the Forge Rigger for each Rebel beside its rig (games.glb: the skeleton + those clips). Loaded
@@ -23719,6 +23801,7 @@ const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(acti
         if (!mat.albedoTexture && !(_forgeSingleGlb && (activeCharacter.collectionKey || 'battle_for_colony') !== 'battle_for_colony')) {
           const ci = r.meshes.indexOf(m);
           const cols = [new BABYLON.Color3(.08,.15,.38),new BABYLON.Color3(.22,.12,.08),new BABYLON.Color3(.55,.45,.12),new BABYLON.Color3(.06,.06,.08),new BABYLON.Color3(.28,.18,.06)];
+          if (mat.albedoColor) mat._forgedAlbedo = mat.albedoColor.clone(); // the rig's own colour (the Gloves panel offers it)
           mat.albedoColor = cols[ci%cols.length]; mat.metallic=ci%3===0?.7:.1; mat.roughness=.6;
         }
       }
@@ -23758,6 +23841,7 @@ const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(acti
       jab: 16, cross_punch: 17, hook_punch: 18, elbow_punch: 19, fight_idle: 20, hit_reaction: 21, knockdown: 22, get_up: 23 };
     window._forgeClipSlots = _slot; // mini-games play moves by name
     window._playerImport = r;       // ... and lend weapons to its hands
+    PlayerGloves.attach(r.meshes);   // the player's glove colours (Gloves in the Rebel panel)
     setTimeout(() => { if (window._playerImport === r) loadGamesPack(); }, 15000); // the games pack, once the village has settled
     window._forgeIdleOrig = null; window._forgeFightStance = false;
     r.animationGroups.forEach(g => {
