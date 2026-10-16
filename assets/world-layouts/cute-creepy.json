@@ -54768,5 +54768,206 @@
         "text": "A trickster stole a lantern from the gate"
       }
     }
+  },
+  {
+    "type": "quest_spot",
+    "name": "questSpotRoot_cc-trick-or-treat",
+    "disableGroundSnap": true,
+    "worldUploadedGlb": false,
+    "assetFile": null,
+    "uploadedAutoFitApplied": false,
+    "position": {
+      "x": 21,
+      "y": 0.1,
+      "z": -22
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0.3927,
+      "z": 0
+    },
+    "scaling": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "signConfig": null,
+    "toroColor": null,
+    "lanternColor": null,
+    "lanternBrightness": null,
+    "chainHeight": null,
+    "glowColor": null,
+    "glowBrightness": null,
+    "glowShape": null,
+    "glowWidth": null,
+    "glowDepth": null,
+    "chestId": null,
+    "collectibleId": null,
+    "collectibleType": null,
+    "collectibleLabel": null,
+    "rewardType": null,
+    "rewardAmount": null,
+    "opened": false,
+    "cooldownSeconds": null,
+    "requiresWallet": false,
+    "villageId": "cute-creepy",
+    "npcId": null,
+    "factionId": null,
+    "role": null,
+    "displayName": null,
+    "modelUrl": null,
+    "modelScale": null,
+    "fallbackType": null,
+    "behavior": null,
+    "dialogueId": null,
+    "customDialogue": null,
+    "questId": null,
+    "smallAntInstanceId": null,
+    "haloColor": null,
+    "colorCycle": false,
+    "haloVerticalOffset": null,
+    "baseRotationY": null,
+    "moveSpeed": null,
+    "antWalkSpeed": null,
+    "antAnimationSpeedRatio": null,
+    "smallAntModelYawOffset": null,
+    "selectedAnimationName": null,
+    "wanderRadius": null,
+    "animationMap": null,
+    "animationSpeed": null,
+    "patrolPoints": null,
+    "proxyAutoEnabled": null,
+    "proxyWalkSurfaceEnabled": null,
+    "proxyEntranceSide": null,
+    "proxyEntranceOffset": null,
+    "proxyRampWidth": null,
+    "proxyRampDepth": null,
+    "proxyFloorHeight": null,
+    "proxyPieceKind": null,
+    "proxyOwnerName": null,
+    "proxyOwnerType": null,
+    "proxyOwnerAssetKey": null,
+    "terrainSurfaceType": null,
+    "terrainToolPatch": null,
+    "createdByTerrainBrush": null,
+    "terrainStampType": null,
+    "terrainStampShape": null,
+    "interactionZoneType": null,
+    "targetMarkerId": null,
+    "label": null,
+    "objectiveType": null,
+    "targetType": null,
+    "radius": null,
+    "ringColor": null,
+    "labelBoxColor": null,
+    "labelTextColor": null,
+    "pulseEnabled": null,
+    "targetNpcId": null,
+    "targetVillageId": null,
+    "targetDoorId": null,
+    "targetObjectId": null,
+    "interiorName": null,
+    "interiorType": null,
+    "targetInteriorId": null,
+    "promptText": null,
+    "interiorDefinition": null,
+    "enabled": true,
+    "questObjectiveId": null,
+    "editorLocked": false,
+    "spotConfig": {
+      "spotId": "cc-trick-or-treat",
+      "action": "inspect",
+      "glint": "always",
+      "radius": 2.6,
+      "label": "",
+      "game": {
+        "type": "trick",
+        "id": "cc-trick-or-treat",
+        "title": "Trick or Treat Night",
+        "points": 60,
+        "questOn": "pass",
+        "doors": [
+          [
+            -20.7,
+            -49.7,
+            0.9573,
+            "the Crooked Cottage",
+            ""
+          ],
+          [
+            -32.8,
+            -49.5,
+            -0.1144,
+            "the Pumpkin Cottage",
+            ""
+          ],
+          [
+            14.3,
+            -50.6,
+            0.0128,
+            "the Bat Cottage",
+            ""
+          ],
+          [
+            27.1,
+            -49,
+            0.6596,
+            "the Lantern Cottage",
+            ""
+          ],
+          [
+            -57.6,
+            -36.5,
+            1.6374,
+            "the Cobweb Cottage",
+            ""
+          ],
+          [
+            56.7,
+            -39.4,
+            -1.3475,
+            "the Moth Cottage",
+            ""
+          ],
+          [
+            -32.6,
+            -11,
+            -1.5684,
+            "the Library",
+            ""
+          ],
+          [
+            34,
+            -8,
+            1.5708,
+            "the Game Hall",
+            ""
+          ],
+          [
+            0,
+            45.9,
+            0,
+            "the Manor",
+            "manor"
+          ],
+          [
+            -52,
+            56.9,
+            0,
+            "the Crypt",
+            "crypt"
+          ],
+          [
+            47.5,
+            46.3,
+            0.0149,
+            "the Witch's Cottage",
+            "witch"
+          ]
+        ],
+        "seconds": 120,
+        "pass": 150
+      }
+    }
   }
 ]
