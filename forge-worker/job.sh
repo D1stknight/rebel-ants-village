@@ -18,8 +18,9 @@ R="$FW/rigger"; O="$FORGE_OUT"
 # "headfix" get the head levelling like a Rebel's.
 NPC="${FORGE_NPC:-}"; MOVES="$FW/anim/clips.json"
 # v2.23 NPC species (FORGE_NPC_SPECIES, set by the NPC Forge for its Chumpz and Saints collections only): apes and humans
-# keep their own hands (the sculpt's: furry ape hands, human hands) instead of the Rebel gloves; Rebel villagers (unset)
-# are rigged exactly as before
+# get their wrist from the hand length (landmarks); Rebel villagers (unset) are rigged exactly as before.
+# v2.25 they wear the Rebel gloves too (Miguel: their own sculpted hands came out too big and could not move); the
+# glove takes the sculpted hand's colour and a set share of the height (handswap)
 SPECIES="${FORGE_NPC_SPECIES:-}"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"
@@ -95,14 +96,14 @@ step cleanup;    run "$R/fixarm.py" -- "$O/anim6_ma.blend" "$O/anim6_fix.blend"
                  run "$R/armpitfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9c no shards under the arms
                  run "$R/armorfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # re-assert after the cloth cleanups
                  run "$R/seamfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v1.9d cut fingertips fused to the thigh
-if [ -z "$SPECIES" ]; then run "$R/handswap.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 standard 5-finger hands + hand poses; v2.18 NPCs: centred, one size, FORGE_HAND_FIT (v2.20 + cuff size / length)
-else run "$R/handkeep.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi   # v2.23 apes / humans keep their own hands; loose nails / fingertips ride the hand
+if [ -n "$SPECIES" ]; then run "$R/handkeep.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi   # v2.23 loose nails / fingertips ride the hand (v2.25: so the glove swap takes them off with it)
+                 run "$R/handswap.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 standard 5-finger hands + hand poses; v2.18 NPCs: centred, one size, FORGE_HAND_FIT (v2.20 + cuff size / length)
                  run "$R/shoulderfix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.0 sleeves ride the arm
                  run "$R/antennafix.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"  # v2.1 jointed antennae with follow-through
 if [ -n "$NPC" ]; then run "$R/npcarms.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.16 NPC arms: no elbow flick, pointing line, wave rebuilt on the villager's own arm (flat shoulder pad, palm forward), claps meet
                        run "$R/handfloor.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.13 NPC hands on the floor
                        run "$R/npcstance.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"   # v2.14 NPCs stand tall, head up in the run
-                       if [ -z "$SPECIES" ]; then run "$R/cufftwist.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi; fi  # v2.21 NPC cuffs follow the hand's twist only (after every hand step); no cuffs on own hands
+                       run "$R/cufftwist.py" -- "$O/anim6_ff.blend" "$O/anim6_ff.blend"; fi  # v2.21 NPC cuffs follow the hand's twist only (after every hand step)
 step export;     FORGE_NAME="$NAME" FORGE_DECIMATE="${FORGE_DECIMATE:-0.35}" FORGE_TEX_BASE=$([ -n "$NPC" ] && echo 1024 || echo 2048) FORGE_TEX_OTHER=512 run "$R/export.py" -- "$O/anim6_ff.blend" "$JOB/rig.glb"
 # v2.12 head cloth: skully-wrap flaps / bandana tails get spring chains (cloth_flap_*), on the finished GLB. Optional.
 step headcloth;  run "$R/headcloth.py" "$JOB/rig.glb" "$JOB/rig.glb" --report "$JOB/headcloth.json" || echo "headcloth failed (non-fatal)" >> "$JOB/log"

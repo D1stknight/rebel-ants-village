@@ -44,6 +44,11 @@ def srgb2lin(c): return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) 
 # glove 40 % bigger than the other (Shogun). Rebels keep their own per-hand sizes.
 NPCM = bool(os.environ.get('FORGE_NPC'))
 HGT = float(co[:, 2].max() - co[:, 2].min())
+# v2.25 Chumpz (ape) and Saints (human) NPCs wear the gloves too. Their sculpted hands are drawn oversized (1.6-1.8x a
+# glove's surface), so the glove takes a set share of the height instead of their reach: a human hand ~10.6 %, an ape's
+# a little longer
+SPECIES = os.environ.get('FORGE_NPC_SPECIES', '') if NPCM else ''
+GLOVE_LEN = {'human': 0.106, 'ape': 0.118}
 # the NPC Forge hands panel: per side {along, thumb, back} (fractions of the hand length), size (x), v2.20 cuffSize and cuffLen (x)
 try: FIT = json.loads(os.environ.get('FORGE_HAND_FIT') or '{}') or {}
 except Exception: FIT = {}
@@ -56,7 +61,8 @@ if NPCM:
         tt = (co - W) @ x; handw = Wt[:, names.index(P + side + 'Hand')] / Wsum; own = (handw > 0.5) & (tt > 0.0)
         reaches.append(np.percentile(tt[own], 98) if own.sum() > 20 else 0.75 * np.linalg.norm(W - E))
     L_NPC = float(np.clip(np.mean(reaches), 0.112 * HGT, 0.124 * HGT))
-    print(f'handswap NPC: one glove length {L_NPC:.3f} for both hands (reach {np.round(reaches, 3).tolist()}, height {HGT:.3f})')
+    if SPECIES in GLOVE_LEN: L_NPC = GLOVE_LEN[SPECIES] * HGT
+    print(f'handswap NPC: one glove length {L_NPC:.3f} for both hands (reach {np.round(reaches, 3).tolist()}, height {HGT:.3f}{", " + SPECIES if SPECIES in GLOVE_LEN else ""})')
 
 plan, cut = {}, np.zeros(nv, bool)
 for side in ('Left', 'Right'):
