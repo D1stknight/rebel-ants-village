@@ -15,7 +15,7 @@
   ];
   const BEST = [5, 19, 25, 36, 35, 34];
   const G = {
-    title: 'The Stone Court',
+    title: 'The Stone Court', moves: true,
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, BS = def.best || BEST, CELL = def.cell || 1.3, AT = def.at || [0, 0];
@@ -68,7 +68,8 @@
         st.moving = { from: cellPos(b.p), to: cellPos(t), t: 0, yaw, pushed, sFrom: pushed ? cellPos(pushed.from) : null, sTo: pushed ? cellPos(pushed.to) : null };
         b.p = t; if (pushed) { pushed.s.i = pushed.to; ctx.sound('thock'); }
         b.moves++; info();
-        ctx.player.clip('walk', { loop: true });
+        // a push leans into the stone (the games pack's push walk, when the Rebel has it)
+        ctx.player.clip(pushed && ctx.player.has?.('game_push_walk') ? 'game_push_walk' : 'walk', { loop: true });
       }
       function bump(dx, dy) { ctx.player.face(dx > 0 ? Math.PI / 2 : dx < 0 ? -Math.PI / 2 : dy < 0 ? 0 : Math.PI); }
       function undo() {
