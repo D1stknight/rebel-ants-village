@@ -54,7 +54,7 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
 #gameLoading.on{display:block}
 #gameResult{position:fixed;inset:0;z-index:73;display:none;align-items:center;justify-content:center;background:rgba(2,6,14,.55);padding:18px}
 #gameResult.on{display:flex}
-#gameResult .gr-card{width:min(420px,92vw);background:radial-gradient(circle at 50% 0%,rgba(232,197,106,.16),rgba(8,12,24,.97) 60%);border:1px solid rgba(232,197,106,.72);border-radius:14px;padding:20px 22px;text-align:center;color:#f3e6c4;font:600 14px/1.4 Georgia,serif;box-shadow:0 14px 40px rgba(0,0,0,.6)}
+#gameResult .gr-card{width:min(420px,92vw);max-height:calc(100vh - 36px);overflow:auto;background:radial-gradient(circle at 50% 0%,rgba(232,197,106,.16),rgba(8,12,24,.97) 60%);border:1px solid rgba(232,197,106,.72);border-radius:14px;padding:20px 22px;text-align:center;color:#f3e6c4;font:600 14px/1.4 Georgia,serif;box-shadow:0 14px 40px rgba(0,0,0,.6)}
 #gameResult .gr-kicker{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#5ecfca}
 #gameResult .gr-title{font-size:24px;color:#ffe9b0;margin:6px 0 10px}
 #gameResult .gr-score{font-size:46px;color:#ffd877;font-variant-numeric:tabular-nums;line-height:1}
@@ -64,6 +64,9 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
 #gameResult .gr-new{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:999px;background:#ffd877;color:#2a1d10;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
 #gameResult .gr-extra{margin-top:10px;font-size:13px;color:#e9dcbc}
 #gameResult .gr-extra:empty{display:none}
+#gameResult .gr-board{margin-top:16px;text-align:left}
+#gameResult .gr-board:empty{display:none}
+@media (min-width:760px){#gameResult .gr-card:has(.gr-board:not(:empty)){width:min(780px,94vw);display:flex;align-items:center;gap:26px}#gameResult .gr-card:has(.gr-board:not(:empty))>*{flex:1 1 0;min-width:0}#gameResult .gr-card:has(.gr-board:not(:empty))>.gr-board{margin-top:0}}
 #gameResult .gr-btns{display:flex;justify-content:center;gap:10px;margin-top:16px}
 #gameResult .gr-btns button{font:600 14px Georgia,serif;letter-spacing:.06em;padding:9px 18px;border-radius:7px;border:1px solid #8a6a2a;background:#2a1d10;color:#ffe9b0;cursor:pointer}
 #gameResult .gr-btns button.primary{background:#d8b35c;color:#2a1d10;border-color:#d8b35c}
@@ -80,8 +83,9 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
     const ret = document.createElement('div'); ret.id = 'gameReticle';
     const ld = document.createElement('div'); ld.id = 'gameLoading'; ld.textContent = 'Getting the game ready…';
     const res = document.createElement('div'); res.id = 'gameResult';
-    res.innerHTML = '<div class="gr-card"><div class="gr-kicker"></div><div class="gr-title"></div><div class="gr-score"></div><div class="gr-label"></div><div class="gr-best"></div><div class="gr-extra"></div>'
-      + '<div class="gr-btns"><button type="button" class="gr-again">Play again</button><button type="button" class="gr-done primary">Done</button></div></div>';
+    // the shared top 10 (.gr-board) sits beside the result on wide screens, under the buttons on narrow ones
+    res.innerHTML = '<div class="gr-card"><div class="gr-main"><div class="gr-kicker"></div><div class="gr-title"></div><div class="gr-score"></div><div class="gr-label"></div><div class="gr-best"></div><div class="gr-extra"></div>'
+      + '<div class="gr-btns"><button type="button" class="gr-again">Play again</button><button type="button" class="gr-done primary">Done</button></div></div><div class="gr-board"></div></div>';
     document.body.append(hud, ret, ld, res);
     els = { hud, ret, ld, res, q: (s) => hud.querySelector(s) };
     return els;
@@ -132,17 +136,19 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
     if (o.newBest) { const n = document.createElement('span'); n.className = 'gr-new'; n.textContent = 'New best!'; best.append(n); }
     else if (o.best != null) { best.append('Your best: '); const b = document.createElement('b'); b.textContent = String(o.best); best.append(b); }
     c.querySelector('.gr-extra').textContent = o.extra || '';
+    c.querySelector('.gr-board').innerHTML = '';                 // the shared top 10 fills in after (village.html GameBoard)
     const again = c.querySelector('.gr-again'), done = c.querySelector('.gr-done');
     again.onclick = () => { again.blur(); hideResult(); o.onAgain && o.onAgain(); };
     done.onclick = () => { done.blur(); hideResult(); o.onDone && o.onDone(); };
     c.classList.add('on');
   }
   function hideResult() { ensure().res.classList.remove('on'); }
+  const resultBoard = () => ensure().res.querySelector('.gr-board');
   const resultOpen = () => !!els && els.res.classList.contains('on');
 
   // ── small shared helpers for games ──
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   // a value sweeping 0..1..0 (a ping-pong meter) at speed sweeps per second, from phase t
   const pingPong = (t, speed) => { const u = (t * speed) % 2; return u < 1 ? u : 2 - u; };
-  window.RebelGames = { register, load, games, HUD, showResult, hideResult, resultOpen, util: { clamp, pingPong } };
+  window.RebelGames = { register, load, games, HUD, showResult, hideResult, resultOpen, resultBoard, util: { clamp, pingPong } };
 })();

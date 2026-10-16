@@ -528,6 +528,20 @@ body.walk-photo #photoBtn{display:block}
 .journal-row{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);border-radius:6px;padding:10px;color:rgba(255,255,255,.74);font-size:12px;line-height:1.35}
 .journal-row.locked{opacity:.52}
 .journal-row b{color:#e8c56a;font-family:'Cinzel Decorative',serif;letter-spacing:1px}
+/* shared game leaderboards (GameBoard): the result card and the journal's Games tab */
+.gb-head{font:600 11px/1.3 Georgia,serif;letter-spacing:.2em;text-transform:uppercase;color:#5ecfca;text-align:center;margin-bottom:6px}
+.gb-list{list-style:none;margin:0;padding:0;font:600 13px/1.25 Georgia,serif;text-align:left}
+.gb-list li{display:grid;grid-template-columns:24px minmax(0,1fr) auto auto;gap:8px;align-items:baseline;padding:3px 8px;border-radius:6px;color:#f3e6c4}
+.gb-list li:nth-child(odd){background:rgba(255,255,255,.04)}
+.gb-list li.you{background:rgba(232,197,106,.22);color:#ffe9b0}
+.gb-r{color:#d8b35c;text-align:right;font-variant-numeric:tabular-nums}
+.gb-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gb-t{font:500 11px ui-monospace,Menlo,monospace;color:#8f9bb0}
+.gb-v{color:#ffd877;font-variant-numeric:tabular-nums;text-align:right}
+.gb-note{margin-top:6px;font:600 12px/1.35 Georgia,serif;color:#aab3c2;text-align:center}
+.journal-game-link{all:unset;cursor:pointer;color:#e8c56a;border-bottom:1px dotted rgba(232,197,106,.5)}
+.journal-game-link:hover,.journal-game-link:focus-visible{color:#ffe9b0;border-bottom-color:#ffe9b0}
+.journal-board{margin-top:8px;padding:8px 6px 6px;border-top:1px solid rgba(232,197,106,.25)}
 .badge-image-drop{border:1px dashed rgba(94,207,202,.42);background:rgba(94,207,202,.045);border-radius:6px;padding:10px;text-align:center;color:rgba(255,255,255,.72);font-size:10px;line-height:1.45;cursor:pointer;margin:7px 0}
 .badge-image-drop.dragover{background:rgba(94,207,202,.12);border-color:#5ecfca;color:#5ecfca}
 .badge-image-help{font-size:9px;line-height:1.45;color:rgba(255,255,255,.58);padding:0 2px 6px}
@@ -9967,10 +9981,10 @@ function renderGamesJournal() {
   const rows = Object.values(VILLAGE_REGISTRY).map(village => {
     const list = GAME_LIST.filter(g => g[2] === village.villageId); if (!list.length) return '';
     const mine = list.filter(([id]) => rec[id]?.plays), left = list.length - mine.length;
-    const names = mine.map(([id, title]) => `<span class="journal-secret-name">${escapeHTML(title)} · best ${rec[id].low ? (rec[id].best ? rec[id].best.toFixed(1) + ' s' : '—') : Math.round(rec[id].best || 0)}${rec[id].cleared ? ' ✓' : ''}</span>`).join(' · ');
+    const names = mine.map(([id, title]) => `<button type="button" class="journal-game-link" title="Top 10" onclick="openJournalGameBoard(this, '${id}', ${rec[id].low ? 1 : 0})">${escapeHTML(title)} · best ${rec[id].low ? (rec[id].best ? GameBoard.fmt(rec[id].best, 't') : '—') : Math.round(rec[id].best || 0)}${rec[id].cleared ? ' ✓' : ''}</button>`).join(' · ');
     return `<div class="journal-row ${mine.length ? '' : 'locked'}"><b>${escapeHTML(village.displayName)}</b> · ${mine.length} / ${list.length}<br>${names}${left ? `${names ? ' · ' : ''}${left === 1 ? 'one game' : left + ' games'} still to find` : ''}</div>`;
   }).join('');
-  return `<div class="journal-card full"><strong>Games</strong><span>${played} / ${GAME_LIST.length} found · ${cleared} cleared</span><div class="journal-progress"><div style="width:${Math.round(cleared / Math.max(1, GAME_LIST.length) * 100)}%"></div></div></div>${rows}`;
+  return `<div class="journal-card full"><strong>Games</strong><span>${played} / ${GAME_LIST.length} found · ${cleared} cleared${played ? ' · tap a game for its top 10' : ''}</span><div class="journal-progress"><div style="width:${Math.round(cleared / Math.max(1, GAME_LIST.length) * 100)}%"></div></div></div>${rows}`;
 }
 
 function renderSecretsJournal() {
@@ -10826,7 +10840,53 @@ function finishMiniGame(r) {
   const clock = t => t >= 60 ? `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}` : t.toFixed(1); // a minute or more as m:ss.s
   RebelGames.showResult({ kicker: r.kicker || (passed ? 'Cleared' : r.solved ? (r.solvedWord || 'Solved') : 'Game over'), title: def.title || MiniGames.impl?.title || '', score: low ? (done ? clock(score) : '—') : score, label: r.label || (low ? (done && score >= 60 ? 'time' : 'seconds') : 'points'), best: low ? (rec.best ? (rec.best >= 60 ? clock(rec.best) : rec.best.toFixed(1) + ' s') : null) : rec.best, newBest, extra,
     onAgain: () => restartMiniGame(), onDone: () => endMiniGame() });
+  showGameResultBoard(def, low, done, score, rec);
 }
+// Shared leaderboards (api/game-board.mjs): every game's top 10, one entry per wallet. The result card shows the board;
+// a finished run posts this device's best first when the wallet is signed in (the lobby's sign-in), guests only see
+// the board. Time trials (rec.low) rank the lowest time. Tap a game in the journal's Games tab for its board too.
+const GameBoard = (() => {
+  let sess = null, tok = 0;
+  const session = () => sess || (sess = fetch('/api/wallet-auth?action=session', { credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : null).then(j => j?.address || null).catch(() => null));
+  const rebel = () => { const r = window.activeRebel || getSelectedRebel() || {}; return { col: r.collectionKey || 'battle_for_colony', id: r.tokenId ?? null }; };
+  const json = async (r) => { const j = await r.json().catch(() => null); return r.ok && j?.ok ? j : null; };
+  const get = (game, kind) => fetch(`/api/game-board?game=${encodeURIComponent(game)}&kind=${kind}`, { credentials: 'same-origin' }).then(json).catch(() => null);
+  const post = (game, kind, value) => fetch('/api/game-board', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ game, kind, value, rebel: rebel() }) }).then(json).catch(() => null);
+  const fmt = (v, kind) => kind === 't' ? (v >= 60 ? `${Math.floor(v / 60)}:${(v % 60).toFixed(1).padStart(4, '0')}` : `${(+v).toFixed(1)} s`) : Math.round(v).toLocaleString('en-US');
+  function html(b, kind, signedIn) {
+    const rows = (b?.top || []).map(t => `<li class="${t.you ? 'you' : ''}"><span class="gb-r">${t.rank}</span><span class="gb-n">${escapeHTML(t.name)}${t.you ? ' (you)' : ''}</span><span class="gb-t">${escapeHTML(t.tag || '')}</span><span class="gb-v">${fmt(t.value, kind)}</span></li>`).join('');
+    const you = b?.you && !(b.top || []).some(t => t.you) ? `<div class="gb-note">You: #${b.you.rank} · ${fmt(b.you.value, kind)}</div>` : '';
+    const note = signedIn ? '' : '<div class="gb-note">Sign in with your wallet in the lobby to put your scores on the board.</div>';
+    return `<div class="gb-head">Top 10</div>${rows ? `<ol class="gb-list">${rows}</ol>` : '<div class="gb-note">No scores yet: be the first.</div>'}${you}${note}`;
+  }
+  // into an element: 'Top 10 …' at once, the board when it comes, nothing if the boards can't be reached
+  async function show(el, game, kind, postValue) {
+    if (!el) return; const t = el._gbTok = ++tok; // each board waits for its own answer only
+    el.innerHTML = '<div class="gb-head">Top 10</div><div class="gb-note">Loading…</div>';
+    const me = await session();
+    let b = me && postValue != null ? await post(game, kind, postValue) : null;
+    if (!b) b = await get(game, kind);
+    if (t !== el._gbTok || !el.isConnected) return;
+    el.innerHTML = b ? html(b, kind, !!b.signedIn) : '';
+  }
+  return { session, get, post, show, html, fmt };
+})();
+window.GameBoard = GameBoard; // tests
+function showGameResultBoard(def, low, done, score, rec) {
+  const el = RebelGames.resultBoard?.(); if (!el || !def?.id) return;
+  // a finished run posts this device's best (the server keeps each wallet's best), so a best set before signing in counts too
+  GameBoard.show(el, def.id, low ? 't' : 's', done && rec.best > 0 ? rec.best : null);
+}
+window.openJournalGameBoard = function (btn, id, low) {
+  const row = btn?.closest('.journal-row'); if (!row) return;
+  let el = row.querySelector('.journal-board');
+  if (el && el.dataset.game === id) { el.remove(); return; }       // a second tap closes it
+  if (!el) { el = document.createElement('div'); el.className = 'journal-board'; row.appendChild(el); }
+  el.dataset.game = id;
+  GameBoard.show(el, id, low ? 't' : 's', null);
+};
 function disposeMiniGameInstance() {
   try { MiniGames.inst?.dispose?.(); } catch (e) { console.warn('mini-game dispose', e); }
   MiniGames.inst = null;
