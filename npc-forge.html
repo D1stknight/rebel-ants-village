@@ -580,7 +580,7 @@ function handFitNow(n) { return n.handFit || (n.handFit = { Left: { ...HF0 }, Ri
 function renderHands() {
   const n = npc(selId), on = !!(n && view.hands && n.rig?.url);
   $('#handsCtl').style.display = on ? '' : 'none';
-  $('#handsMsg').textContent = !n ? 'Pick a forged NPC to fit its hands.' : !n.rig?.url ? 'Forge this NPC first.' : !view.hands ? (colOf(n).species !== 'ant' ? `${colOf(n).label} NPCs keep their own hands from the sculpt (no Forge gloves).` : 'This rig has no Forge gloves to fit.') : 'Move, resize or recolour the gloves and check them on any animation.';
+  $('#handsMsg').textContent = !n ? 'Pick a forged NPC to fit its hands.' : !n.rig?.url ? 'Forge this NPC first.' : !view.hands ? (colOf(n).species !== 'ant' ? `This rig is from before Rigger 2.25 and keeps the sculpt's own hands. Rebuild the worker, then Re-rig: ${colOf(n).label} NPCs now get Forge gloves you can fit here.` : 'This rig has no Forge gloves to fit.') : 'Move, resize or recolour the gloves and check them on any animation.';
   if (!on) return;
   const h = handFitNow(n); const f = fitOf(h, handSide === 'both' ? 'Right' : handSide);
   [['hfAlong', f.along], ['hfThumb', f.thumb], ['hfBack', f.back]].forEach(([id, v]) => { $('#' + id).value = Math.round(v / HF_STEP); $('#' + id + 'V').textContent = (v > 0 ? '+' : '') + Math.round(v / HF_STEP); });
