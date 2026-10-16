@@ -831,6 +831,9 @@
     flower_pink: { col: [.95, .55, .66] }, flower_teal: { col: [.3, .75, .7], em: [.05, .2, .18] }, flower_orange: { col: [.95, .5, .12] }, ear_pink: { col: [.95, .62, .7] },
     cat_black: { col: [.07, .065, .07] }, cat_white: { col: [.95, .93, .9] }, collar_red: { col: [.7, .08, .1] }, gem_green: { col: [.2, .9, .4], em: [.1, .6, .25] }, rose_quartz: { col: [.97, .66, .78], em: [.5, .16, .3], spec: [1, .92, .96], power: 90 }, moon_cake: { col: [.72, .45, .18] }, moon_cake_top: { col: [.9, .64, .32] }, shadow_wisp: { col: [.05, .03, .08], em: [.03, .01, .06], alpha: .72 }, wisp_eye: { col: [.85, .5, 1], em: [.85, .45, 1] }, starlight: { col: [.86, .9, 1], em: [.72, .8, 1] },
     orb: { col: [.6, .85, 1], em: [.45, .75, 1] }, glow_blue: { glow: [.35, .6, 1] },
+    // Nariko's circle (Moon Tales 17-19): dark storm stone, the sigil's electric blue, the orb's glass, the three transformed burdens
+    storm_stone: { tex: 'granite', tint: [.6, .58, .68] }, storm_rune: { col: [.2, .45, .9], em: [.2, .5, 1] }, storm_arc: { col: [.7, .85, 1], em: [.62, .8, 1] }, orb_glass: { col: [.08, .16, .4], em: [.14, .36, .95], alpha: .5 }, glow_storm: { glow: [.05, .15, .55] }, glow_storm_soft: { glow: [.025, .07, .3] },
+    crystal_rose: { col: [1, .62, .8], em: [.75, .3, .55], alpha: .82 }, crystal_ember: { col: [1, .62, .25], em: [.85, .4, .1], alpha: .82 }, crystal_violet: { col: [.55, .4, .95], em: [.36, .2, .78], alpha: .82 },
     palm_leaf: { tex: 'palm_leaf' }, banana_leaf: { tex: 'banana_leaf' }, palm_bark: { tex: 'palm_bark' }, coconut: { col: [.36, .24, .12] }, banana: { col: [.95, .8, .22] }, banana_stem: { col: [.36, .5, .18] }, flower_purple: { col: [.45, .12, .3] },
     plank_teal: { tex: 'plank_teal' }, plank_yellow: { tex: 'plank_yellow' }, plank_red: { tex: 'plank_red' }, tin_roof: { tex: 'tin_roof' }, banana_big: { tex: 'banana_big' }, brick: { tex: 'brick' },
     bottles: { tex: 'bottles', em: [.25, .17, .08] }, sign_fishbook: { tex: 'sign_fishbook' }, sign_chzdice: { tex: 'sign_chzdice' }, awning: { col: [.95, .82, .36] }, curtain_red: { col: [.55, .08, .1] },
@@ -1354,6 +1357,30 @@
     curveTube(M, fur, [[0, .45, .2], [.3, .62, .35], [.42, .55, .75], [.3, .45, .9]], [.09, .08, .07, .03], { segs: 8, n: 3, ridge: .02, bump: .02, seed: 9 });
   }
   function ccFlower(M, m, x, y, z, r) { for (let k = 0; k < 5; k++) { const a = k * 1.2566; M.sphere(m, [x + Math.cos(a) * r * .55, y - .01, z + Math.sin(a) * r * .55], r * .5, .6, 6, 3); } M.sphere('gold', [x, y - .04, z], r * .25, 1, 5, 3); }
+  // a standing stone of Nariko's circle (Moon Tales 17-19), ~2.7 m: seven-sided, tapering and leaning a little, the top
+  // slanted; its flat face (-y) carries her storm sigil (a lightning bolt in a ring, tally marks over it, a chevron under it),
+  // carved dark or, once the stone is woken (lit), burning electric blue with a glow in front of it and on the ground
+  function stormStone(M, lit) {
+    const H = 2.7, A = .66, D = .4, deg = [240, 300, 352, 398, 450, 502, 548], J = [1, 1, .92, 1.08, .95, 1.06, .9];
+    const tap = z => 1 - .3 * z / H, lean = z => .1 * (z / H) * (z / H);
+    // the two front vertices keep their radius, so the face between them stays one plane: y = -.866 D tap(z)
+    const ring = (zf, k) => deg.map((d, i) => { const a = d * Math.PI / 180, z = zf(i), t = tap(z) * (i < 2 ? 1 : J[i] * (1 + .04 * Math.sin(i * 2.3 + k * 1.7))); return [Math.cos(a) * A * t + lean(z), Math.sin(a) * D * t, z]; });
+    const R = [ring(() => -.15, 0), ring(() => .9, 1), ring(() => 1.8, 2), ring(i => H + .2 * Math.cos(deg[i] * Math.PI / 180) - .06 * ((i * 5) % 3), 3)];
+    for (let r = 0; r < R.length - 1; r++) for (let i = 0; i < 7; i++) { const i2 = (i + 1) % 7; M.poly('storm_stone', [R[r][i], R[r][i2], R[r + 1][i2], R[r + 1][i]]); }
+    const T = R[R.length - 1], apex = [lean(H) + .04, -.02, H + .16];
+    for (let i = 0; i < 7; i++) M.poly('storm_stone', [T[i], T[(i + 1) % 7], apex]);
+    blob(M, 'moss', [0, .05, -.02], .86, .58, .17, { flat: .3, amp: .25, seed: 4, segs: 12, rings: 6 });
+    const m = lit ? 'storm_rune' : 'dark', off = lit ? .014 : .01, F = (u, z) => [u + lean(z), -.866 * D * tap(z) - off, z];
+    const stroke = (u0, z0, u1, z1, w) => { const L = Math.hypot(u1 - u0, z1 - z0) || 1, nu = -(z1 - z0) / L * w / 2, nz = (u1 - u0) / L * w / 2; M.poly(m, [F(u0 + nu, z0 + nz), F(u1 + nu, z1 + nz), F(u1 - nu, z1 - nz), F(u0 - nu, z0 - nz)]); };
+    const zc = 1.5;
+    for (let k = 0; k < 16; k++) { const a0 = k * Math.PI / 8, a1 = a0 + Math.PI / 8, r0 = .205, r1 = .24; M.poly(m, [F(Math.cos(a0) * r0, zc + Math.sin(a0) * r0), F(Math.cos(a0) * r1, zc + Math.sin(a0) * r1), F(Math.cos(a1) * r1, zc + Math.sin(a1) * r1), F(Math.cos(a1) * r0, zc + Math.sin(a1) * r0)]); }
+    stroke(.075, zc + .17, -.045, zc + .01, .055); stroke(-.06, zc + .012, .06, zc - .012, .05); stroke(.045, zc - .01, -.07, zc - .19, .05); // the bolt
+    for (const u of [-.08, 0, .08]) stroke(u, 2.0, u, 2.13, .03);
+    stroke(-.12, 1.07, 0, .97, .035); stroke(0, .97, .12, 1.07, .035);
+    if (!lit) return;
+    M.poly('glow_storm', [F(-.6, zc - .6), F(.6, zc - .6), F(.6, zc + .6), F(-.6, zc + .6)].map(q => [q[0], q[1] - .05, q[2]]));
+    M.quad('glow_storm', [[-1.7, -2.4, .05], [1.7, -2.4, .05], [1.7, 1, .05], [-1.7, 1, .05]]);
+  }
   // a leaf / frond as a strip along a spine (pt(f), f 0..1), half-width w(f), folded down from the midrib by fold;
   // d = the leaf's horizontal direction (the sides spread perpendicular to it)
   function leafStrip(M, m, pt, w, d, fold, n) {
@@ -2935,6 +2962,45 @@
       for (const [x, y, z, r] of [[.06, .08, 1.82, .17], [-.1, .04, 2.1, .11], [.08, 0, 2.31, .065]]) M.sphere('shadow_wisp', [x, y, z], r, 1.3, 10, 6); // smoke rising off it
       for (const sd of [-1, 1]) M.sphere('wisp_eye', [sd * .13, -.47, 1.08], .06, .65, 10, 6);
     },
+    // ── the Moon Tales: Nariko's tale (Thunder Moon) ──
+    cc_storm_stone(M) { stormStone(M, false); }, // one of the seven ancient stones, asleep
+    cc_storm_stone_lit(M) { stormStone(M, true); }, // woken: its sigil burns blue, a spark crackles over it (subpart cc_storm_spark)
+    cc_storm_spark(M) { // the spark over a woken stone (a subpart: it pulses and turns)
+      M.sphere('storm_arc', [0, 0, 0], .07, 1, 8, 5);
+      for (let k = 0; k < 5; k++) { const a = k * 1.2566, b = a + .5, p1 = [Math.cos(a) * .14, Math.sin(a) * .14, .05 * Math.sin(k * 2.1)], p2 = [Math.cos(b) * .26, Math.sin(b) * .26, .1 * Math.cos(k * 1.7)]; M.rod('storm_arc', [0, 0, 0], p1, .01, 3); M.rod('storm_arc', p1, p2, .008, 3); }
+      for (const a of [0, 1.571]) { const c = Math.cos(a) * .38, s = Math.sin(a) * .38; M.quad('glow_storm', [[-c, -s, -.38], [c, s, -.38], [c, s, .38], [-c, -s, .38]]); }
+    },
+    cc_storm_orb(M) { M.quad('glow_storm', [[-3.4, -3.4, .07], [3.4, -3.4, .07], [3.4, 3.4, .07], [-3.4, 3.4, .07]]); }, // her storm orb risen over the circle (the orb is the subpart cc_storm_orb_core), blue light on the ground under it
+    cc_storm_orb_core(M) {
+      M.sphere('orb_glass', [0, 0, 0], .62, 1, 16, 10); M.sphere('storm_arc', [0, 0, 0], .26, 1, 10, 6);
+      for (let k = 0; k < 9; k++) { // arcs crackling out of the core, through the glass
+        const a = k * 2.4, e = .9 * Math.sin(k * 1.9), d = [Math.cos(a) * Math.cos(e), Math.sin(a) * Math.cos(e), Math.sin(e)];
+        let p = [d[0] * .2, d[1] * .2, d[2] * .2];
+        for (let s = 1; s <= 4; s++) { const r = .2 + s * .17, j = .07 * (s % 2 ? 1 : -1), q = [d[0] * r + j * d[1], d[1] * r - j * d[0], d[2] * r + j]; M.rod('storm_arc', p, q, .016 - s * .002, 3); p = q; }
+      }
+      for (const a of [0, 1.571]) { const c = Math.cos(a) * 1.5, s = Math.sin(a) * 1.5; M.quad('glow_storm', [[-c, -s, -1.5], [c, s, -1.5], [c, s, 1.5], [-c, -s, 1.5]]); }
+    },
+    cc_storm_roots(M) { // from root to sky: veins of storm light in the ground from the seven stones (the circle's angles) to the centre, a column of light rising
+      for (let k = 0; k < 7; k++) {
+        const a = Math.PI / 7 + k * 2 * Math.PI / 7, c = Math.cos(a), s = Math.sin(a);
+        let p = [c * .7, s * .7];
+        for (let i = 1; i <= 6; i++) { const r = .7 + i * .58, w = i < 6 ? (i % 2 ? .28 : -.28) : 0, q = [c * r - s * w, s * r + c * w], L = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1, nx = -(q[1] - p[1]) / L * .05, ny = (q[0] - p[0]) / L * .05;
+          M.poly('storm_rune', [[p[0] + nx, p[1] + ny, .05], [q[0] + nx, q[1] + ny, .05], [q[0] - nx, q[1] - ny, .05], [p[0] - nx, p[1] - ny, .05]]); p = q; }
+      }
+      // the column: two narrow, fainter sheets at 45 deg to the circle's axes (a sheet seen edge-on is a bright line)
+      for (const a of [.785, 2.356]) { const c = Math.cos(a) * .45, s = Math.sin(a) * .45; M.quad('glow_storm_soft', [[-c, -s, 0], [c, s, 0], [c, s, 3.6], [-c, -s, 3.6]]); }
+      M.quad('glow_storm', [[-1.6, -1.6, .06], [1.6, -1.6, .06], [1.6, 1.6, .06], [-1.6, 1.6, .06]]);
+    },
+    cc_storm_crystals(M) { // pain, anger, fear: not destroyed, transformed. Three clusters of storm crystal west of the circle's centre
+      const shard = (m, x, y, h, r, tilt, rot) => { // a six-sided crystal with a pointed tip, leaning tilt toward rot
+        const tx = Math.cos(rot) * tilt, ty = Math.sin(rot) * tilt, P = (a, z, rr) => [x + Math.cos(a) * rr + tx * z, y + Math.sin(a) * rr + ty * z, z], top = h + r * 1.4, tip = [x + tx * top, y + ty * top, top];
+        for (let k = 0; k < 6; k++) { const a0 = k * Math.PI / 3, a1 = a0 + Math.PI / 3; M.poly(m, [P(a0, -.1, r), P(a1, -.1, r), P(a1, h, r * .92), P(a0, h, r * .92)]); M.poly(m, [P(a0, h, r * .92), P(a1, h, r * .92), tip]); }
+      };
+      for (const [m, x, y, s] of [['crystal_rose', -2.2, .9, 1], ['crystal_ember', -2.6, -.6, .85], ['crystal_violet', -1.6, -1.7, .9]]) {
+        shard(m, x, y, 1.1 * s, .17 * s, .12, Math.atan2(y, x)); shard(m, x + .32 * s, y + .12, .62 * s, .11 * s, .3, .4); shard(m, x - .2 * s, y - .25 * s, .5 * s, .09 * s, .35, -2.2);
+        M.quad('glow_storm', [[x - 1.1, y - 1.1, .06], [x + 1.1, y - 1.1, .06], [x + 1.1, y + 1.1, .06], [x - 1.1, y + 1.1, .06]]);
+      }
+    },
     cc_candles(M) { ccCandles(M, 0, 0, 5); M.quad('glow', [[-1.4, -1.4, .05], [1.4, -1.4, .05], [1.4, 1.4, .05], [-1.4, 1.4, .05]]); },
     cc_bench(M) { M.block('darkwood', 0, 0, .45, 2.4, .5, .1); for (const sd of [-1, 1]) M.block('darkwood', sd * 1, 0, 0, .12, .45, .45); M.block('darkwood', 0, .22, .55, 2.4, .08, .55); },
     // ── the Cute & Creepy gang (Miguel's NFTs), low poly: three kokeshi dolls and two lucky cats; used as NPC
@@ -3561,8 +3627,8 @@
   // floating pieces (ghosts): their instances bob and sway under the placed root, so saved positions never move
   const FLOAT = new Set(['cc_ghost']), floaters = [];
   // characters: the body rocks (kokeshi) or breathes (cats); subparts under their own pivots wave, flicker, pulse
-  const CHAR = { chz_torch_lit: 'still', chz_bonfire_lit: 'still', chz_crab: 'rock', chz_crab_shades: 'rock', cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
-  const SUBPARTS = { chz_torch_lit: [['chz_torch_flame', [0, 0, 2.5], 'flicker']], chz_bonfire_lit: [['chz_bonfire_flame', [0, 0, .05], 'flicker']], cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']] };
+  const CHAR = { cc_storm_stone_lit: 'still', cc_storm_orb: 'still', chz_torch_lit: 'still', chz_bonfire_lit: 'still', chz_crab: 'rock', chz_crab_shades: 'rock', cc_flower_moon: 'rock', cc_nariko: 'rock', cc_ostara: 'rock', cc_mamoru: 'bob', cc_mochi: 'bob', cc_trickster: 'hover', cc_chime_light: 'hover', cc_shadow: 'hover' };
+  const SUBPARTS = { cc_storm_stone_lit: [['cc_storm_spark', [.14, -.02, 3.12], 'pulse']], cc_storm_orb: [['cc_storm_orb_core', [0, 0, 3.7], 'pulse']], chz_torch_lit: [['chz_torch_flame', [0, 0, 2.5], 'flicker']], chz_bonfire_lit: [['chz_bonfire_flame', [0, 0, .05], 'flicker']], cc_mamoru: [['cc_paw_black', [.36, -.25, .92], 'wave'], ['cc_candle_flame', [0, 0, 2.17], 'flicker']], cc_mochi: [['cc_paw_white', [.36, -.25, .92], 'wave']], cc_nariko: [['cc_orb', [0, -.56, .74], 'pulse']] };
   const actors = [];
   function animateActors(t) {
     for (let i = actors.length - 1; i >= 0; i--) {

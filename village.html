@@ -2835,6 +2835,9 @@ const MOON_TALES_QUESTS = [
   makeMoonTaleQuest(15, 'The Silver Bell', 'Ostara', "Ostara's tiny silver bell wards off shadows and unwelcome spirits.", ['Ring the silver bell at three shadowed places.', 'Talk to Ostara.'], ['+45 progress'], 'Three shadows gone, one delicate chime at a time.', ['moon-tales-14']),
   makeMoonTaleQuest(16, 'Sap and Seed', 'Ostara', 'The pulse of magic in the air, the thrum of sap, the stirring of seeds.', ['Listen at the great tree, the pumpkin patch and the Moon Ledge.', 'Talk to Ostara.'], ['+50 progress'], 'Sap rising, seeds stirring, and the moon whispering promises of new beginnings.', ['moon-tales-15']),
   makeMoonTaleQuest(12, 'Seeds of New Beginnings', 'Kokeshi Flower Moon', 'Two seeds have fallen where nothing grows.', ['Find two moon seeds.', 'Plant them at the roots of the great tree.', 'Talk to Kokeshi Flower Moon.'], ['+50 progress'], 'Two seeds planted at the old tree\'s roots, and the dead tree remembered how to bloom.', ['moon-tales-11']),
+  makeMoonTaleQuest(17, 'Storm-Wrought Slumber', 'Nariko', 'The Thunder Moon rises over a sacred circle of seven ancient stones, and Nariko wakes from her storm-wrought slumber.', ['Wake the seven ancient stones.', 'Stand in the circle as the Thunder Moon rises.', 'Talk to Nariko.'], ['+45 progress'], 'Seven ancient stones woke one by one, the Thunder Moon rose, and Nariko rose with it from the centre of the circle.', ['moon-tales-01']),
+  makeMoonTaleQuest(18, 'The Storm Orb', 'Nariko', 'With hands aglow, Nariko summons a crackling orb of energy from the storm.', ['Call the lightning down into her orb.', 'Stand with her, from root to sky.', 'Talk to Nariko.'], ['+50 progress'], 'Bolts of lightning arced down from the heavens and fed the orb, and from root to sky Nariko grew stronger with every heartbeat.', ['moon-tales-17']),
+  makeMoonTaleQuest(19, 'Lightning in the Darkness', 'Nariko', "Nariko's thunder spell lifts the weight from others: the Coven's pain, anger and fear.", ['Ask Mamoru what she carries.', 'Ask Kokeshi Flower Moon what she carries.', 'Ask Ostara what she carries.', 'Release the burdens in the stone circle with the Coven.', 'Talk to Nariko.'], ['+60 progress'], 'Pain, anger, fear: not destroyed, transformed. The Mystic Moons stood taller, brighter, fiercer, and whispered her name in thanks.', ['moon-tales-18']),
   Object.assign(makeMoonTaleQuest(20, 'Until the First Blush of Dawn', 'Mamoru', 'The Mystic Moon Coven gathers for the Harvest Festival, and Mamoru keeps watch through the night.', ['Give thanks with the Coven at the feast table.', 'Return to Mamoru at the gate.', 'Keep watch beside Mamoru until dawn.', 'Talk to Mamoru.'], ['+80 progress', 'Badge: Mystic Moon Coven'], 'The Coven feasted, Mamoru kept watch, and for the first time the sky over the hill turned to dawn.', ['moon-tales-04', 'moon-tales-08', 'moon-tales-12', 'moon-tales-16']), { badgeRewardId:'moon-tales-coven' })
 ];
 const MOON_TALES_WIRING = {
@@ -2923,6 +2926,35 @@ const MOON_TALES_WIRING = {
       { id:'listen-hill', objective:'Listen at the great tree, the pumpkin patch and the Moon Ledge.', objectiveType:'useQuestSpot', targetObjectId:'mt-listen', count:3, villageId:'cute-creepy' },
       { id:'tale-heard', objective:'Talk to Ostara.', objectiveType:'talkToNpc', targetNpcId:'cc-ostara', villageId:'cute-creepy',
         say:['The sap rising in the trees, the seeds stirring underground, the moon whispering its promises. You felt them.', 'That is my tale, as the moon told it to the Lunar Witch. It is in your journal now.'] }
+    ] },
+  17: { giver:'cc-nariko',
+    offer:['Do you feel it, little Rebel? The night hums with heat, and the sky keeps splitting with light.', 'The Thunder Moon is coming. South of the graves stands a sacred circle of seven ancient stones, asleep the way I was.', 'Wake them for me, one by one. Then stand in the circle and watch the sky.'],
+    steps:[
+      { id:'wake-stones', objective:'Wake the seven ancient stones in the circle south of the graveyard.', objectiveType:'useQuestSpot', targetObjectId:'mt-storm-stone', count:7, villageId:'cute-creepy' },
+      { id:'watch-rise', objective:'Stand in the circle as the Thunder Moon rises.', objectiveType:'useQuestSpot', targetObjectId:'mt-storm-rise', villageId:'cute-creepy' },
+      { id:'nariko-rises', objective:'Talk to Nariko in the stone circle.', objectiveType:'talkToNpc', targetNpcId:'cc-nariko', villageId:'cute-creepy',
+        say:['The Thunder Moon, round and glowing with power. It woke me from my storm-wrought slumber.', 'I was born of stormlight, little Rebel: part dragon, my spirit forged in thunderclouds and bound to the pulse of the earth itself.', 'Now I begin my spell. Come back when you are ready to catch lightning.'] }
+    ] },
+  18: { giver:'cc-nariko',
+    offer:['With hands aglow I summon an orb from the storm. Feel it crackle? It is hungry, little Rebel.', 'Call the lightning down to it. When the marker crosses the gold, strike. Not before, not after.'],
+    steps:[
+      { id:'catch-lightning', objective:"Call the lightning down into Nariko's orb.", objectiveType:'useQuestSpot', targetObjectId:'mt-storm-orb', villageId:'cute-creepy' },
+      { id:'root-to-sky', objective:'Stand with Nariko in the circle, from root to sky.', objectiveType:'useQuestSpot', targetObjectId:'mt-storm-root', villageId:'cute-creepy' },
+      { id:'orb-fed', objective:'Talk to Nariko.', objectiveType:'talkToNpc', targetNpcId:'cc-nariko', villageId:'cute-creepy',
+        say:['From root to sky. Did you feel your heart keep time with the thunder?', 'This power is not for me alone. The whole Coven felt that surge in their bones, and every one of them carries a weight.'] }
+    ] },
+  19: { giver:'cc-nariko',
+    offer:['My sisters carry burdens: pain, anger, fear. A weight like that can bend a witch double.', 'Go to Mamoru, to Kokeshi Flower Moon and to Ostara, and ask them gently what they carry. Then bring them to the circle.'],
+    steps:[
+      { id:'ask-mamoru', objective:'Ask Mamoru what she carries.', objectiveType:'talkToNpc', targetNpcId:'cc-mamoru', villageId:'cute-creepy',
+        say:['Anger, little Rebel. Every harvest night the tricksters slip in, and every harvest night I am the one on watch.', 'I keep my candle steady. Inside, it burns too hot.', 'Nariko is calling? Then I will come to the circle.'] },
+      { id:'ask-flower-moon', objective:'Ask Kokeshi Flower Moon what she carries.', objectiveType:'talkToNpc', targetNpcId:'cc-flower-moon', villageId:'cute-creepy',
+        say:['Pain. I sing every bud awake, and every bloom still fades.', 'I know it is the cycle of life and death. Knowing does not make it hurt less.', 'I will come to the circle.'] },
+      { id:'ask-ostara', objective:'Ask Ostara what she carries.', objectiveType:'talkToNpc', targetNpcId:'cc-ostara', villageId:'cute-creepy',
+        say:['Fear. My bell keeps the shadows away, but I am always listening for them to come back.', 'Even still as starlight, part of me is waiting to run.', 'For Nariko, I will come.'] },
+      { id:'release', objective:'Release the burdens in the stone circle with the Coven.', objectiveType:'useQuestSpot', targetObjectId:'mt-storm-release', villageId:'cute-creepy' },
+      { id:'lightning-told', objective:'Talk to Nariko.', objectiveType:'talkToNpc', targetNpcId:'cc-nariko', villageId:'cute-creepy',
+        say:['Pain, anger, fear. My magic did not destroy them. It transformed them.', 'Look at my sisters, little Rebel: taller, brighter, fiercer. Lightning in the darkness, every one of them.', 'Own your fire, and fear nothing. That is my tale. It is in your journal now.'] }
     ] },
   20: { giver:'cc-mamoru',
     offer:['The Harvest Moon is at its fullest, and the Coven is home. Every one of them.', 'Go to the feast table and give thanks with them, little Rebel. Then come back to me at the gate.'],
@@ -3673,7 +3705,8 @@ function isQuestSpotTargetedBySideQuest(spotId) {
 // MOON TALES (Cute & Creepy) — Miguel's tales of the Mystic Moons, word for word (two small fixes he approved:
 // "Its light", "she followed"). Each tale has its own moon: the village sky shows the moon of the tale whose quest
 // moved on last (MOON_TALE_QUEST_MOONS: quest number -> tale; quests moon-tales-NN), the purple moon between tales.
-// A tale's journal page (Journal > Moon Tales) opens when its last quest is done. Nariko's tale is still to come.
+// A tale's journal page (Journal > Moon Tales) opens when its last quest is done. Nariko's tale (Oct 16, one fix:
+// "summer’s") brings the Thunder Moon: moon.storm = heat lightning over the hill while it is up (taleThunderSky).
 // Preview a moon: village.html?village=cute-creepy&taleMoon=pink (or window.setTaleMoon('pink'), null to clear).
 // ═══════════════════════════════════════
 const MOON_TALES = [
@@ -3714,19 +3747,29 @@ const MOON_TALES = [
       'All through the night, Mamoru kept watch, her candle steady, her pumpkin lantern glowing warm. She guarded her sisters from tricksters beyond the veil, keeping their joy safe until the first blush of dawn.',
       'Each year, when the Harvest Moon rises again, Mamoru will return, a faithful guardian cat protecting the coven, blessing all who gather in her glow. 🌕🐈‍⬛🕸️'
     ] },
-  { id:'nariko', teller:'Nariko', moonName:'', unlockQuestId:'moon-tales-19', title:'Nariko', pending:true, text:[] }
+  { id:'nariko', teller:'Nariko', moonName:'Thunder Moon', unlockQuestId:'moon-tales-19', title:'Nariko Thunder Moon',
+    moon:{ pos:[-135, 212, 430], size:4.4, color:[.88, .93, 1], halo:[.3, .4, .95], light:[.5, .58, 1], storm:true },
+    text:[
+      'One summer’s eve, when the night hummed with heat and lightning split the sky, the Thunder Moon rose, round and glowing with power, awakening Nariko from her storm-wrought slumber.',
+      'Born of stormlight, Nariko was part dragon, her spirit forged in thunderclouds and bound to the pulse of the earth itself. As the moon reached its fullest blaze, she rose from the centre of a sacred circle of seven ancient stones. The wind howled. The sky flashed. And Nariko began to cast her spell.',
+      'With eyes like molten silver and hands aglow, she summoned a crackling orb of energy from the storm. Bolts of lightning arced toward her from the heavens, feeding the sphere with raw power. From root to sky, Nariko channeled this wild force through her very being, growing stronger with every heartbeat.',
+      'The entire Mystic Moon Coven felt the surge in their bones. One by one, they turned toward the sky, drawn to her rising magic. For Nariko did not wield this power for herself alone, she used it to lift the weight from others. With her thunder spell, she taught the coven to release the burdens they carried: pain, anger, fear. Her magic did not destroy, it transformed.',
+      'And in that storm-lit moment, the Mystic Moons were reborn. Energised by Nariko’s connection to the earth and sky, they stood taller, brighter, fiercer.',
+      'With determination, focus, and fire in their hearts, they too became lightning in the darkness, each Mystic whispering her name in thanks: Nariko Thunder Moon. The Dragon Witch who taught us to own our fire and fear nothing.'
+    ] }
 ];
-const MOON_TALE_QUEST_MOONS = { 1:['harvest', 'tell-mamoru'], 2:'harvest', 3:'harvest', 4:'harvest', 6:'pink', 7:'pink', 8:'pink', 9:'flower', 10:'flower', 11:'flower', 12:'flower', 14:['hare', 'starlight-told'], 15:'hare', 16:'hare', 20:'harvest' };
+const MOON_TALE_QUEST_MOONS = { 1:['harvest', 'tell-mamoru'], 2:'harvest', 3:'harvest', 4:'harvest', 6:'pink', 7:'pink', 8:'pink', 9:'flower', 10:'flower', 11:'flower', 12:'flower', 14:['hare', 'starlight-told'], 15:'hare', 16:'hare', 17:['nariko', 'watch-rise'], 18:'nariko', 19:'nariko', 20:'harvest' };
 // NPCs that move with a quest: once a quest reaches a step (or is done), the NPC lives there (Ostara on her Moon Ledge).
 // whileActive places hold only while their quest runs (the Coven round the feast table at the Harvest Festival); still =
 // no patrol or wander there (Mamoru keeping watch at the gate). Without a place the NPC stands at its own layout spot.
-const FESTIVAL = { quest:'moon-tales-20', whileActive:true }, BEACH_PARTY = { quest:'chumpz-cove-20', whileActive:true, still:true }, BLOCK_PARTY = { quest:'saints-la-20', whileActive:true, still:true };
+const FESTIVAL = { quest:'moon-tales-20', whileActive:true }, STORM_CIRCLE = { quest:'moon-tales-19', step:'release', whileActive:true, still:true }, BEACH_PARTY = { quest:'chumpz-cove-20', whileActive:true, still:true }, BLOCK_PARTY = { quest:'saints-la-20', whileActive:true, still:true };
 const QUEST_NPC_PLACES = {
-  'cc-ostara': [{ quest:'moon-tales-13', step:'meet-ostara', x:-22.6, z:70.2, ry:0 }, { ...FESTIVAL, x:1.25, z:6.75, ry:Math.PI }],
-  'cc-flower-moon': [{ ...FESTIVAL, x:-1.25, z:6.75, ry:Math.PI }],
-  'cc-mochi': [{ ...FESTIVAL, x:3.3, z:5.3, ry:-1.66 }],
-  'cc-nariko': [{ ...FESTIVAL, x:-3.1, z:6.4, ry:2 }],
-  'cc-mamoru': [{ ...FESTIVAL, step:'keep-watch', still:true, x:0, z:-53, ry:Math.PI }],
+  // Nariko's circle of seven stones (Moon Tales 17-19) is centred on (-54.5, 16.5), open to the east
+  'cc-ostara': [{ quest:'moon-tales-13', step:'meet-ostara', x:-22.6, z:70.2, ry:0 }, { ...FESTIVAL, x:1.25, z:6.75, ry:Math.PI }, { ...STORM_CIRCLE, x:-56.05, z:13.82, ry:.524 }],
+  'cc-flower-moon': [{ ...FESTIVAL, x:-1.25, z:6.75, ry:Math.PI }, { ...STORM_CIRCLE, x:-56.05, z:19.18, ry:2.618 }],
+  'cc-mochi': [{ ...FESTIVAL, x:3.3, z:5.3, ry:-1.66 }, { ...STORM_CIRCLE, x:-52.95, z:13.82, ry:-.524 }],
+  'cc-nariko': [{ ...FESTIVAL, x:-3.1, z:6.4, ry:2 }, { quest:'moon-tales-17', step:'nariko-rises', x:-54.5, z:16.5, ry:Math.PI / 2 }],
+  'cc-mamoru': [{ ...FESTIVAL, step:'keep-watch', still:true, x:0, z:-53, ry:Math.PI }, { ...STORM_CIRCLE, x:-52.95, z:19.18, ry:-2.618 }],
   // the Beach Party (Chumpz Cove 20): the whole cove round the bonfire on the beach by the west pier (-38, -32), facing the fire
   'chumpz-bartender': [{ ...BEACH_PARTY, x:-38, z:-28.4, ry:Math.PI }],
   'chumpz-fisher': [{ ...BEACH_PARTY, x:-41.3, z:-30.2, ry:2.07 }],
@@ -3845,10 +3888,10 @@ const MoonTaleSounds = (() => {
   };
   // sound effects (Chumpz Cove): filtered noise bursts, pitch glides, plucked / steel-pan tones (partials: [ratio, gain, decay])
   let noiseBuf = null;
+  const nbuf = () => { if (!noiseBuf) { noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } return noiseBuf; };
   const noise = (t, dur, g, type = 'lowpass', freq = 1200, q = .7) => {
-    if (!noiseBuf) { noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
     const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), e = ctx.createGain();
-    src.buffer = noiseBuf; src.loop = true; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    src.buffer = nbuf(); src.loop = true; f.type = type; f.frequency.value = freq; f.Q.value = q;
     src.connect(f).connect(e); e.connect(bus);
     e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + .004); e.gain.exponentialRampToValueAtTime(.0006, t + dur);
     src.start(t, Math.random() * .5); src.stop(t + dur + .05);
@@ -3867,6 +3910,26 @@ const MoonTaleSounds = (() => {
       o.start(t); o.stop(t + dur * pd + .05);
     }
   };
+  // Nariko's storm (Moon Tales 17-19): wind that rises and falls (band-passed noise, its pitch swept), a hum that swells,
+  // a thunderclap (the crack, the boom, the roll) and a distant rumble
+  const wind = (t, dur, g, f0, f1, q = 4) => {
+    const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), e = ctx.createGain();
+    src.buffer = nbuf(); src.loop = true; f.type = 'bandpass'; f.Q.value = q;
+    f.frequency.setValueAtTime(f0, t); f.frequency.linearRampToValueAtTime(f1, t + dur * .55); f.frequency.linearRampToValueAtTime(f0 * 1.15, t + dur);
+    src.connect(f).connect(e); e.connect(bus);
+    e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + dur * .45); e.gain.linearRampToValueAtTime(g * .55, t + dur * .8); e.gain.linearRampToValueAtTime(0, t + dur);
+    src.start(t, Math.random() * .5); src.stop(t + dur + .05);
+  };
+  const swell = (f0, f1, t, dur, g, type = 'triangle') => {
+    const o = ctx.createOscillator(), e = ctx.createGain(); o.type = type;
+    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    o.connect(e); e.connect(bus);
+    e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + dur * .8); e.gain.linearRampToValueAtTime(0, t + dur);
+    o.start(t); o.stop(t + dur + .05);
+  };
+  const thunder = (t0, g = 1) => { noise(t0, .12, .6 * g, 'highpass', 1800); noise(t0 + .02, .5, .5 * g, 'bandpass', 700, .8); noise(t0 + .05, 2.8, .55 * g, 'lowpass', 140); glide(70, 34, t0 + .05, 1.6, .4 * g);
+    for (let k = 0; k < 6; k++) noise(t0 + .6 + k * .38 + Math.random() * .2, .9, .2 * g * (1 - k / 7), 'lowpass', 180 + Math.random() * 120); };
+  const rumble = (t0, g = 1) => { for (let k = 0; k < 5; k++) noise(t0 + k * .45 + Math.random() * .25, 1.1, .16 * g * (1 - k / 6), 'lowpass', 110 + Math.random() * 90); };
   const PAN = [[1, 1, 1], [2, .5, .55], [3.01, .22, .3], [4.2, .06, .15]], PLUCK = [[1, 1, 1], [2, .35, .5], [3, .2, .3], [4, .08, .2]];
   // a fishing reel: bursts of ratchet clicks (n bursts, every gap s)
   const reel = (t0, n, gap, g = .2) => { for (let b = 0; b < n; b++) for (let k = 0; k < 18 + 4 * b; k++) noise(t0 + b * gap + k * (.075 - .002 * Math.min(k, 20)), .022, g * (1 + .08 * b), 'highpass', 3200, 1); };
@@ -3935,6 +3998,21 @@ const MoonTaleSounds = (() => {
     hum: { beat:.32, notes:[['E5', 0], ['G5', 1], ['A5', 2], ['G5', 3], ['E5', 4, 1.6]] },
     chime: { beat:.11, notes:[['G5', 0, .9], ['C6', 1, .9], ['E6', 2, 1.2]], gain:.22 },
     silverbell: { bell:true },
+    // Nariko's tale: a stone waking (a grind, a low thrum, a crackle, two bell notes), a thunderclap, the Thunder Moon rising
+    // (wind howling, distant rolls, the crack at the end), her heartbeat quickening under a swelling hum, the release
+    // (three dark beating chords, each broken by a crack and lifted into a bright one, a last thunderclap, the major chord)
+    stonewake: { fx:t0 => { noise(t0, 1.1, .3, 'lowpass', 220); swell(46, 64, t0, 1.8, .26); for (let k = 0; k < 14; k++) noise(t0 + .45 + Math.random() * 1.1, .03, .1 + Math.random() * .14, 'highpass', 3000 + Math.random() * 2500); note(N.G4, t0 + .9, 2.2, .13); note(N.D5, t0 + 1.06, 2.2, .1); } },
+    thunderclap: { fx:t0 => thunder(t0) },
+    stormrise: { fx:t0 => { wind(t0, 10, .2, 360, 880); wind(t0 + 1.6, 8.4, .12, 620, 1350, 8); noise(t0, 10, .07, 'lowpass', 90); rumble(t0 + 2.2, .7); rumble(t0 + 5.4, 1); thunder(t0 + 8.6, .8); swell(110, 165, t0, 9.5, .05); } },
+    heartbeat: { fx:t0 => { let t = t0 + .3, gap = 1; while (t < t0 + 11.6) { tone(54, t, .24, .5, [[1, 1, 1], [2, .3, .5]]); noise(t, .1, .2, 'lowpass', 160); tone(47, t + .22 * gap, .2, .36, [[1, 1, 1]]); t += gap; gap = Math.max(.48, gap * .92); }
+      swell(55, 110, t0, 12, .07); for (let k = 0; k < 44; k++) { const u = Math.sqrt(Math.random()); noise(t0 + u * 11.6, .03, .05 + .14 * u, 'highpass', 3200 + Math.random() * 2000); } } },
+    release: { fx:t0 => {
+      [[N.A3 / 2, 0, [N.C5, N.E5, N.G5]], [N.C4 / 2, 2.3, [N.D5, N.F5, N.A5]], [N.D4 / 2, 4.6, [N.E5, N.G5, N.C6]]].forEach(([f, d, up]) => {
+        const t = t0 + d; tone(f, t, 2, .2, [[1, 1, 1], [1.06, .8, .9], [2, .3, .5]]);
+        noise(t + 1.5, .08, .4, 'highpass', 2200); glide(f * 4, f * 8, t + 1.5, .5, .08, 'triangle'); up.forEach((n, i) => note(n, t + 1.6 + i * .09, 1.2, .12));
+      });
+      thunder(t0 + 7.4, .9); [N.C5, N.E5, N.G5, N.C6].forEach((n, i) => note(n, t0 + 7.9 + i * .05, 3.2, .16));
+    } },
     thanks: { beat:.42, notes:[['C5', 0], ['E5', 1], ['G5', 2], ['E5', 3], ['F5', 4], ['A5', 5], ['G5', 6, 1.8], ['E5', 8], ['G5', 9], ['C6', 10], ['A5', 11], ['G5', 12], ['E5', 13], ['C5', 14, 2.4]],
       bass:[['C3', 0], ['G3', 4], ['C3', 8], ['C3', 12]] },
     sap: { beat:1.1, notes:[['C4', 0, 2.6], ['G3', 1, 2.6], ['C4', 2, 3]], gain:.2 },
@@ -10020,6 +10098,7 @@ function renderSecretsJournal() {
   return `<div class="journal-card full"><strong>Secrets</strong><span>${found.size} / ${SECRET_TOTAL} found</span></div>${rows}`;
 }
 
+function normalizeTaleBoltSpec(b) { return typeof b === 'string' && b ? b : (Array.isArray(b) && b.length >= 3 ? b.slice(0, 3).map(v => Number(v) || 0) : null); }
 const QUEST_SPOT_ACTIONS = { inspect:'Inspect', read:'Read', listen:'Listen', light:'Light', ring:'Ring', hold:'Hold still', reach:'', race:'Start the run', follow:'Follow' };
 const QUEST_SPOT_TIME_HINTS = { night:'Something stirs here after dark.', day:'Come back in daylight.', dawn:'Come back at dawn.', dusk:'Come back at dusk.' };
 const QuestSpotRuntime = { hold:null, race:null, follow:null, nearest:null, lastHintAt:0, reached:new Set() };
@@ -10065,6 +10144,8 @@ function normalizeQuestSpotConfig(cfg = {}) {
     holdLines: Array.isArray(cfg.holdLines) ? cfg.holdLines.map(String) : null,
     // a sound when the spot is used (after a hold's own sound: the splash of a catch)
     doneSound: cfg.doneSound ? String(cfg.doneSound) : null,
+    // a lightning bolt from the sky when the spot is used (strikeTaleBolt): an NPC id (its orb) or [x, y, z] in the spot's frame
+    bolt: normalizeTaleBoltSpec(cfg.bolt),
     // NPCs (kit apes) that hop and kick while a hold lasts (the Beach Party dance)
     cheer: Array.isArray(cfg.cheer) ? cfg.cheer.map(String) : null,
     // a dance-off instead of a plain hold (DanceOff): notes arrows, every seconds apart after lead, need good presses to finish
@@ -10089,7 +10170,8 @@ function normalizeQuestSpotConfig(cfg = {}) {
     // a timing bar before the spot is used (SkillBar): hits good stops in the gold middle, the marker speeding up each time
     skill: cfg.skill && typeof cfg.skill === 'object' ? { hits: Math.max(1, Math.min(6, Math.floor(Number(cfg.skill.hits) || 3))), speed: Math.max(.3, Number(cfg.skill.speed) || 1.1),
       zone: Math.max(.06, Math.min(.5, Number(cfg.skill.zone) || .16)), title: String(cfg.skill.title || ''), startText: String(cfg.skill.startText || ''),
-      hitText: Array.isArray(cfg.skill.hitText) ? cfg.skill.hitText.map(String) : [], hitSound: cfg.skill.hitSound ? String(cfg.skill.hitSound) : null } : null,
+      hitText: Array.isArray(cfg.skill.hitText) ? cfg.skill.hitText.map(String) : [], hitSound: cfg.skill.hitSound ? String(cfg.skill.hitSound) : null,
+      bolt: normalizeTaleBoltSpec(cfg.skill.bolt) } : null, // each good strike calls a bolt down there (Nariko's orb)
     // a secret made of several spots: each spot with this secretId counts once, the secret is found at the setCount-th
     setCount: Math.max(0, Math.floor(Number(cfg.setCount) || 0)),
     // a timed run: from this spot through path [[x, z], ...] (in order, within pathRadius) in seconds (0 = a walk, no time limit)
@@ -10354,6 +10436,7 @@ function completeQuestSpot(root) {
   if ((cfg.piece || cfg.donePiece || cfg.questId) && !(ProgressionState.spotsUsed || []).includes(cfg.spotId)) { (ProgressionState.spotsUsed ||= []).push(cfg.spotId); saveProgressionState(); }
   if (cfg.doneSound) MoonTaleSounds.play(cfg.doneSound);
   else if (cfg.sound && cfg.action !== 'hold' && cfg.action !== 'race') MoonTaleSounds.play(cfg.sound);
+  if (cfg.bolt) strikeTaleBolt(taleBoltTarget(root, cfg.bolt));
   if (cfg.photo) setTimeout(() => takeVillagePhoto(cfg.photo), 250); // a picture spot takes a real one
   let secretNew = false, setNote = '';
   if (cfg.secretId && cfg.setCount > 1 && !(ProgressionState.secretsFound || []).includes(cfg.secretId)) {
@@ -10538,6 +10621,7 @@ function pressSkillBar() {
   if (Math.abs(off) <= SkillBar.zone / 2) {
     SkillBar.hits++;
     MoonTaleSounds.play(sk.hitSound || 'flag');
+    if (sk.bolt) strikeTaleBolt(taleBoltTarget(SkillBar.root, sk.bolt));
     msg.textContent = sk.hitText[SkillBar.hits - 1] || 'Yes!';
   } else {
     SkillBar.hits = Math.max(0, SkillBar.hits - 1);
@@ -10563,6 +10647,53 @@ function restartSkillBar() {
 }
 window.pressSkillBar = pressSkillBar;
 window.restartSkillBar = restartSkillBar;
+
+// A lightning bolt from the sky to a point (Nariko's circle: a stone as it wakes, her orb, the centre): a jagged line of
+// light with two forks and a glow round it, on for a third of a second with one flicker, and the screen flash. The caller
+// plays the thunder. taleBoltTarget: an NPC id = the NPC's orb (kit subpart cc_orb), else its chest; [x, y, z] = a point
+// in that spot's own frame.
+const TaleBolt = { meshes:[], flashUntil:0, mat:null, glow:null };
+function taleBoltTarget(root, spec) {
+  if (!root || !spec) return null;
+  if (typeof spec === 'string') {
+    const npc = typeof getNPCById === 'function' ? getNPCById(spec) : null; if (!npc) return null;
+    const orb = npc.getChildTransformNodes?.(false).find(n => /_cc_orb$/.test(n.name));
+    if (orb) return orb.getAbsolutePosition().clone();
+    const p = npc.getAbsolutePosition(); return new BABYLON.Vector3(p.x, p.y + 1.2, p.z);
+  }
+  return BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(spec[0], spec[1], spec[2]), root.computeWorldMatrix(true));
+}
+function strikeTaleBolt(to) {
+  if (!scene || !to) return false;
+  if (!TaleBolt.mat) {
+    const mk = (n, c, a) => { const m = new BABYLON.StandardMaterial(n, scene); m.disableLighting = true; m.diffuseColor = BABYLON.Color3.Black(); m.specularColor = BABYLON.Color3.Black(); m.emissiveColor = new BABYLON.Color3(...c);
+      m.alpha = a; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.disableDepthWrite = true; m.fogEnabled = false; m.backFaceCulling = false; m.metadata = { perfKeepLive:true }; return m; };
+    TaleBolt.mat = mk('taleBoltMat', [.85, .93, 1], 1); TaleBolt.glow = mk('taleBoltGlow', [.22, .42, 1], .4);
+  }
+  TaleBolt.meshes.forEach(m => m.dispose()); TaleBolt.meshes = [];
+  const jag = (a, b, n, amp) => { const pts = []; for (let i = 0; i <= n; i++) { const u = i / n, q = BABYLON.Vector3.Lerp(a, b, u); if (i && i < n) { const k = amp * Math.sin(Math.PI * u); q.x += (Math.random() - .5) * k; q.z += (Math.random() - .5) * k; q.y += (Math.random() - .5) * k * .3; } pts.push(q); } return pts; };
+  const top = new BABYLON.Vector3(to.x + (Math.random() - .5) * 16, to.y + 48, to.z + (Math.random() - .5) * 16), main = jag(top, to, 16, 3.2), paths = [main];
+  for (const i of [5, 9]) paths.push(jag(main[i], main[i].add(new BABYLON.Vector3((Math.random() - .5) * 9, -6 - Math.random() * 5, (Math.random() - .5) * 9)), 6, 1.4)); // two forks
+  paths.forEach((path, k) => {
+    for (const [mat, r] of [[TaleBolt.mat, k ? .05 : .09], [TaleBolt.glow, k ? .22 : .38]]) {
+      const m = BABYLON.MeshBuilder.CreateTube('taleBolt_beam', { path, radius:r, tessellation:5, cap:BABYLON.Mesh.NO_CAP }, scene);
+      m.material = mat; m.isPickable = false; m.applyFog = false; m.alwaysSelectAsActiveMesh = true; m.metadata = { _perfNeverFreeze:true };
+      TaleBolt.meshes.push(m);
+    }
+  });
+  TaleBolt.flashUntil = performance.now() + 220;
+  const mine = TaleBolt.meshes;
+  setTimeout(() => mine.forEach(m => { if (!m.isDisposed()) m.setEnabled(false); }), 120); // one flicker
+  setTimeout(() => mine.forEach(m => { if (!m.isDisposed()) m.setEnabled(true); }), 170);
+  setTimeout(() => { mine.forEach(m => m.dispose()); if (TaleBolt.meshes === mine) TaleBolt.meshes = []; }, 340);
+  return true;
+}
+window._taleBolt = { state:TaleBolt, strike:strikeTaleBolt, target:taleBoltTarget, sky:() => taleThunderSky() }; // tests
+// Nariko's Thunder Moon (a tale moon with storm: true) up in the sky: heat lightning over the hill (the storm's flash,
+// softer, its distant bolts and thunder), no rain
+function taleThunderSky() {
+  return !!(TaleMoonView.key && MOON_TALES.find(t => t.id === TaleMoonView.key)?.moon?.storm) && !ActiveInterior;
+}
 window._skillBar = SkillBar; // tests
 
 // The photo camera: P (out of the editor) or the camera button takes a picture of the game view (the page's HUD is not in
@@ -13342,11 +13473,12 @@ function triggerDistantLightning() {
 function updateDistantLightning() {
   const root = ensureDistantLightning();
   const now = performance.now();
-  if (WeatherManager.mode === 'storm' && now >= WeatherManager.distantLightningStrikeAt) {
+  const tale = WeatherManager.mode !== 'storm' && taleThunderSky(), on = WeatherManager.mode === 'storm' || tale;
+  if (on && now >= WeatherManager.distantLightningStrikeAt) {
     triggerDistantLightning();
-    WeatherManager.distantLightningStrikeAt = now + 6500 + Math.random() * 11000;
+    WeatherManager.distantLightningStrikeAt = now + (tale ? 9000 + Math.random() * 12000 : 6500 + Math.random() * 11000);
   }
-  root.setEnabled(WeatherManager.mode === 'storm' && now < WeatherManager.distantLightningUntil);
+  root.setEnabled(on && now < WeatherManager.distantLightningUntil);
 }
 
 function ensureWeatherRainPool(count) {
@@ -13578,9 +13710,11 @@ function updateWeatherRain() {
 
 function applyWeatherLighting() {
   const cfg = getWeatherVisualConfig();
-  const lightningActive = cfg.lightning && performance.now() < WeatherManager.lightningUntil;
+  const nowL = performance.now(), boltFlash = nowL < TaleBolt.flashUntil, taleSky = !cfg.lightning && taleThunderSky();
+  const lightningActive = ((cfg.lightning || taleSky) && nowL < WeatherManager.lightningUntil) || boltFlash;
+  const flashK = cfg.lightning || boltFlash ? 1 : .6; // heat lightning under the Thunder Moon is softer than a storm's
   const flash = document.getElementById('weatherLightningFlash');
-  if (flash) flash.style.opacity = lightningActive ? '0.78' : '0';
+  if (flash) flash.style.opacity = lightningActive ? (.78 * flashK).toFixed(2) : '0';
   const heat = document.getElementById('weatherHeatHaze');
   if (heat) heat.style.opacity = cfg.warm ? '.22' : '0';
   if (cfg.fog === BABYLON.Scene.FOGMODE_NONE && window._newTerrain) {
@@ -13621,8 +13755,8 @@ function applyWeatherLighting() {
     skyMat.mieCoefficient = 0.002;
   } else if (lightningActive) {
     sun.diffuse.set(.74,.9,1);
-    sun.intensity = Math.max(sun.intensity, 3.4);
-    hemi.intensity = Math.max(hemi.intensity, 1.35);
+    sun.intensity = Math.max(sun.intensity, 3.4 * flashK);
+    hemi.intensity = Math.max(hemi.intensity, 1.35 * flashK);
     scene.clearColor.set(.7,.86,1,1);
   } else {
     skyMat.turbidity = 5;
@@ -13726,10 +13860,11 @@ function updateWeatherManager() {
     setWeatherMode(getNextWeatherMode(), false);
   }
 
-  if (WeatherManager.mode === 'storm' && now >= WeatherManager.nextLightningAt) {
+  const taleSky = WeatherManager.mode !== 'storm' && taleThunderSky(); // the Thunder Moon's heat lightning: further apart than a storm's
+  if ((WeatherManager.mode === 'storm' || taleSky) && now >= WeatherManager.nextLightningAt) {
     WeatherManager.lightningUntil = now + 380;
     WeatherManager.thunderCueUntil = now + 2200;
-    WeatherManager.nextLightningAt = now + 4200 + Math.random() * 7200;
+    WeatherManager.nextLightningAt = now + (taleSky ? 7000 + Math.random() * 9000 : 4200 + Math.random() * 7200);
     triggerDistantLightning();
     playWeatherThunderAudio(WeatherManager.nextLightningAt);
   }
