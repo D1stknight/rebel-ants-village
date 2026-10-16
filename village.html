@@ -9961,7 +9961,7 @@ function getSecretVillageTotal(villageId) {
 
 // The Games tab: every mini-game in the villages (GAME_LIST: [id, title, village], written by tools/gen-game-list.mjs
 // from the layouts); the ones played show their best score and a tick once cleared, the rest stay unnamed until found
-const GAME_LIST = [["hub-shell-game","Mini Ant Shell Game","hub"],["hub-archivist-riddles","The Archivist's Riddles","hub"],["hub-emblem-match","Emblem Match","hub"],["hub-sorting-crates","Sorting the Crates","hub"],["hub-colony-corners","Colony Corners","hub"],["hub-courtyard-circuit","Courtyard Circuit","hub"],["hub-rebel-groove","Rebel Groove","hub"],["hub-mini-ant-tag","Mini Ant Tag","hub"],["hub-root-seal","Root Seal","hub"],["hub-dummy-drill","Dummy Drill","hub"],["ashi-log-split","Log Split","ashigaru"],["ashi-sprout-field","Sprout Field","ashigaru"],["ashi-lookout","The Lookout","ashigaru"],["ashi-keeper-questions","The Archive Keeper's Questions","ashigaru"],["ashi-farmers-fields","The Farmer's Fields","ashigaru"],["ashi-irrigation-channels","The Irrigation Channels","ashigaru"],["ashi-palisade-run","Palisade Run","ashigaru"],["ashi-rice-planting-song","Rice Planting Song","ashigaru"],["ashi-loose-chickens","Loose Chickens","ashigaru"],["ashi-harvest-run","Harvest Run","ashigaru"],["ashi-rice-planting","Rice Planting","ashigaru"],["buke-shield-wall","Shield Wall","buke"],["buke-engineer-puzzles","The Engineer's Puzzles","buke"],["buke-canal-gates","The Canal Gates","buke"],["buke-canal-ferry","The Canal Ferry","buke"],["buke-canal-islands","The Canal Islands","buke"],["buke-canal-run","Canal Run","buke"],["buke-trident-march","Trident March","buke"],["buke-archive-thief","Archive Thief","buke"],["buke-canal-lanterns","Canal Lanterns","buke"],["buke-engineer-basins","The Engineer's Basins","buke"],["bushi-signal-fires","Signal Fires","bushi"],["bushi-strategist-question","The Strategist's Question","bushi"],["bushi-cavalry-ride","The Cavalry Ride","bushi"],["bushi-spys-code","The Spy's Code","bushi"],["bushi-war-camp","The War Camp","bushi"],["bushi-beacon-relay","Beacon Relay","bushi"],["bushi-war-fan-dance","War Fan Dance","bushi"],["bushi-catch-the-spy","Catch the Spy","bushi"],["bushi-long-shot","Long Shot","bushi"],["bushi-banners","The Tactician's Banners","bushi"],["chz-coconut-toss","Coconut Toss","chumpz"],["chz-high-low","High-Low with Peely","chumpz"],["chz-beer-pong","Beer Pong","chumpz"],["chumpz-peely-riddles","Peely's Riddles","chumpz"],["chz-pier-fishing","Pier Fishing","chumpz"],["chz-banana-merge","Banana Merge","chumpz"],["chz-banana-drop","Banana Drop","chumpz"],["chz-jungle-run","Jungle Run","chumpz"],["chz-calypso-cove","Calypso Cove","chumpz"],["chz-sneaky-crab","Sneaky Crab","chumpz"],["chz-treasure-dig","Treasure Dig","chumpz"],["chz-surf-the-cove","Surf the Cove","chumpz"],["cc-ghost-catch","Ghost Catch","cute-creepy"],["cc-mochi-riddles","Mochi's Lucky Riddles","cute-creepy"],["cc-potion-shelf","The Potion Shelf","cute-creepy"],["cc-restless-graves","The Restless Graves","cute-creepy"],["cc-moons-and-suns","Moons and Suns","cute-creepy"],["cc-graveyard-run","Graveyard Run","cute-creepy"],["cc-monster-mash","Monster Mash","cute-creepy"],["cc-lantern-thief","Lantern Thief","cute-creepy"],["cc-trick-or-treat","Trick or Treat Night","cute-creepy"],["cc-witch-brew","The Witch's Brew","cute-creepy"],["cc-claw-machine","Claw Machine","cute-creepy"],["kenshi-raked-stones","Raked Stones","kenshi"],["kenshi-duelist-questions","The Duelist's Questions","kenshi"],["kenshi-archivist-stones","The Archivist's Stones","kenshi"],["kenshi-stone-skipping","Stone Skipping","kenshi"],["kenshi-sacred-rope","The Sacred Rope","kenshi"],["kenshi-dojo-circuit","Dojo Circuit","kenshi"],["kenshi-blade-kata","Blade Kata","kenshi"],["kenshi-stolen-blade","The Stolen Blade","kenshi"],["kenshi-bamboo-cut","Bamboo Cut","kenshi"],["kenshi-quick-draw","The Quick Draw","kenshi"],["ronin-stone-court","The Stone Court","ronin"],["ronin-watcher-trial","The Watcher's Trial","ronin"],["ronin-silent-path","The Silent Path","ronin"],["ronin-watchmans-lanterns","The Watchman's Lanterns","ronin"],["ronin-ronins-shadows","The Ronin's Shadows","ronin"],["ronin-fortress-run","Fortress Run","ronin"],["ronin-shadow-chase","Shadow Chase","ronin"],["ronin-watch-fires","Watch Fires","ronin"],["ronin-silent-steps","Silent Steps","ronin"],["ronin-debt-marker-stones","The Debt Marker","ronin"],["ronin-shuriken","Shuriken","ronin"],["sl-three-point","3-Point Contest","saints-la"],["saints-librarian-riddles","The Librarian's Riddles","saints-la"],["sl-free-throws","Free Throws","saints-la"],["sl-crosswalk-rush","Crosswalk Rush","saints-la"],["sl-valet-parking","Valet Parking","saints-la"],["sl-skyline-blocks","Skyline Blocks","saints-la"],["sl-skyline-view","Skyline View","saints-la"],["sl-downtown-sprint","Downtown Sprint","saints-la"],["sl-lowrider-hop","Lowrider Hop","saints-la"],["sl-street-art","Street Art","saints-la"],["sl-bowling","Bowling","saints-la"],["sam-yabusame","Yabusame Range","samurai"],["sam-tameshigiri","Tameshigiri","samurai"],["samurai-captain-riddles","The Captain's Riddles","samurai"],["sam-swordsmith-forge","The Swordsmith's Forge","samurai"],["sam-ancestors-grid","The Ancestor's Grid","samurai"],["sam-tile-garden","The Tile Garden","samurai"],["sam-terrace-run","Terrace Run","samurai"],["sam-taiko-thunder","Taiko Thunder","samurai"],["sam-lantern-night","Lantern Night","samurai"],["sam-messenger-run","Messenger Run","samurai"],["shogun-sun-mirrors","The Sun Mirrors","shogun"],["shogun-lords-puzzles","The Lord's Puzzles","shogun"],["shogun-lacquer-floor","The Lacquer Floor","shogun"],["shogun-garden-bridges","The Garden Bridges","shogun"],["shogun-land-grants","The Land Grants","shogun"],["shogun-castle-run","Castle Run","shogun"],["shogun-court-fan-dance","Court Fan Dance","shogun"],["shogun-keep-thief","Keep Thief","shogun"],["shogun-koi-feeding","Koi Feeding","shogun"],["shogun-broken-seal","The Broken Seal","shogun"],["sohei-bell-song","Bell Song","sohei"],["sohei-monk-koan","The Monk's Koan","sohei"],["sohei-raking-path","The Raking Path","sohei"],["sohei-maple-catch","Maple Catch","sohei"],["sohei-temple-scales","The Temple Scales","sohei"],["sohei-temple-abacus","The Temple Abacus","sohei"],["sohei-temple-steps","Temple Steps","sohei"],["sohei-temple-drum","Temple Drum","sohei"],["sohei-temple-lamps","Temple Lamps","sohei"],["sohei-water-bowl","Water Bowl","sohei"],["warrior-cracked-circle","The Cracked Circle","warrior"],["war-spear-throw","Spear Throw","warrior"],["war-tug-of-war","Tug of War","warrior"],["war-siege-engine","The Siege Engine","warrior"],["war-war-banner","The War Banner","warrior"],["war-war-drums","The War Drums","warrior"],["war-obstacle-course","Obstacle Course","warrior"],["war-war-dance","War Dance","warrior"],["war-spy-in-the-fort","Spy in the Fort","warrior"],["war-fighting-ring","Fighting Ring","warrior"],["wok-cargo-crane","Cargo Crane","wokou"],["wok-swivel-gun","Swivel Gun","wokou"],["wokou-broker-wagers","The Broker's Wagers","wokou"],["wok-buried-chest","The Buried Chest","wokou"],["wok-fleet-chart","The Fleet Chart","wokou"],["wok-pearl-route","The Pearl Route","wokou"],["wok-pier-run","Pier Run","wokou"],["wok-sea-shanty","Sea Shanty","wokou"],["wok-harbour-fishing","Harbour Fishing","wokou"],["wok-strongbox","The Broker's Strongbox","wokou"],["yam-spirit-lanterns","Spirit Lanterns","yamabushi"],["yam-misty-stones","The Misty Stones","yamabushi"],["yam-cairn-stack","Cairn Stack","yamabushi"],["yam-herbalist-questions","The Herbalist's Questions","yamabushi"],["yam-hermits-pegs","The Hermit's Pegs","yamabushi"],["yam-pilgrims-path","The Pilgrim's Path","yamabushi"],["yam-before-the-mist","Before the Mist","yamabushi"],["yam-spirit-dance","Spirit Dance","yamabushi"],["yam-spirit-chase","Spirit Chase","yamabushi"],["yam-prayer-flags","Prayer Flags","yamabushi"]];
+const GAME_LIST = [["hub-shell-game","Mini Ant Shell Game","hub"],["hub-archivist-riddles","The Archivist's Riddles","hub"],["hub-emblem-match","Emblem Match","hub"],["hub-sorting-crates","Sorting the Crates","hub"],["hub-colony-corners","Colony Corners","hub"],["hub-courtyard-circuit","Courtyard Circuit","hub"],["hub-rebel-groove","Rebel Groove","hub"],["hub-mini-ant-tag","Mini Ant Tag","hub"],["hub-root-seal","Root Seal","hub"],["grand-relay","The Grand Relay","hub"],["hub-dummy-drill","Dummy Drill","hub"],["ashi-log-split","Log Split","ashigaru"],["ashi-sprout-field","Sprout Field","ashigaru"],["ashi-lookout","The Lookout","ashigaru"],["ashi-keeper-questions","The Archive Keeper's Questions","ashigaru"],["ashi-farmers-fields","The Farmer's Fields","ashigaru"],["ashi-irrigation-channels","The Irrigation Channels","ashigaru"],["ashi-palisade-run","Palisade Run","ashigaru"],["ashi-rice-planting-song","Rice Planting Song","ashigaru"],["ashi-loose-chickens","Loose Chickens","ashigaru"],["ashi-harvest-run","Harvest Run","ashigaru"],["ashi-rice-planting","Rice Planting","ashigaru"],["buke-shield-wall","Shield Wall","buke"],["buke-engineer-puzzles","The Engineer's Puzzles","buke"],["buke-canal-gates","The Canal Gates","buke"],["buke-canal-ferry","The Canal Ferry","buke"],["buke-canal-islands","The Canal Islands","buke"],["buke-canal-run","Canal Run","buke"],["buke-trident-march","Trident March","buke"],["buke-archive-thief","Archive Thief","buke"],["buke-canal-lanterns","Canal Lanterns","buke"],["buke-engineer-basins","The Engineer's Basins","buke"],["bushi-signal-fires","Signal Fires","bushi"],["bushi-strategist-question","The Strategist's Question","bushi"],["bushi-cavalry-ride","The Cavalry Ride","bushi"],["bushi-spys-code","The Spy's Code","bushi"],["bushi-war-camp","The War Camp","bushi"],["bushi-beacon-relay","Beacon Relay","bushi"],["bushi-war-fan-dance","War Fan Dance","bushi"],["bushi-catch-the-spy","Catch the Spy","bushi"],["bushi-long-shot","Long Shot","bushi"],["bushi-banners","The Tactician's Banners","bushi"],["chz-coconut-toss","Coconut Toss","chumpz"],["chz-high-low","High-Low with Peely","chumpz"],["chz-beer-pong","Beer Pong","chumpz"],["chumpz-peely-riddles","Peely's Riddles","chumpz"],["chz-pier-fishing","Pier Fishing","chumpz"],["chz-banana-merge","Banana Merge","chumpz"],["chz-banana-drop","Banana Drop","chumpz"],["chz-jungle-run","Jungle Run","chumpz"],["chz-calypso-cove","Calypso Cove","chumpz"],["chz-sneaky-crab","Sneaky Crab","chumpz"],["chz-treasure-dig","Treasure Dig","chumpz"],["chz-surf-the-cove","Surf the Cove","chumpz"],["cc-ghost-catch","Ghost Catch","cute-creepy"],["cc-mochi-riddles","Mochi's Lucky Riddles","cute-creepy"],["cc-potion-shelf","The Potion Shelf","cute-creepy"],["cc-restless-graves","The Restless Graves","cute-creepy"],["cc-moons-and-suns","Moons and Suns","cute-creepy"],["cc-graveyard-run","Graveyard Run","cute-creepy"],["cc-monster-mash","Monster Mash","cute-creepy"],["cc-lantern-thief","Lantern Thief","cute-creepy"],["cc-trick-or-treat","Trick or Treat Night","cute-creepy"],["cc-witch-brew","The Witch's Brew","cute-creepy"],["cc-claw-machine","Claw Machine","cute-creepy"],["kenshi-raked-stones","Raked Stones","kenshi"],["kenshi-duelist-questions","The Duelist's Questions","kenshi"],["kenshi-archivist-stones","The Archivist's Stones","kenshi"],["kenshi-stone-skipping","Stone Skipping","kenshi"],["kenshi-sacred-rope","The Sacred Rope","kenshi"],["kenshi-dojo-circuit","Dojo Circuit","kenshi"],["kenshi-blade-kata","Blade Kata","kenshi"],["kenshi-stolen-blade","The Stolen Blade","kenshi"],["kenshi-bamboo-cut","Bamboo Cut","kenshi"],["kenshi-quick-draw","The Quick Draw","kenshi"],["ronin-stone-court","The Stone Court","ronin"],["ronin-watcher-trial","The Watcher's Trial","ronin"],["ronin-silent-path","The Silent Path","ronin"],["ronin-watchmans-lanterns","The Watchman's Lanterns","ronin"],["ronin-ronins-shadows","The Ronin's Shadows","ronin"],["ronin-fortress-run","Fortress Run","ronin"],["ronin-shadow-chase","Shadow Chase","ronin"],["ronin-watch-fires","Watch Fires","ronin"],["ronin-silent-steps","Silent Steps","ronin"],["ronin-debt-marker-stones","The Debt Marker","ronin"],["ronin-shuriken","Shuriken","ronin"],["sl-three-point","3-Point Contest","saints-la"],["saints-librarian-riddles","The Librarian's Riddles","saints-la"],["sl-free-throws","Free Throws","saints-la"],["sl-crosswalk-rush","Crosswalk Rush","saints-la"],["sl-valet-parking","Valet Parking","saints-la"],["sl-skyline-blocks","Skyline Blocks","saints-la"],["sl-skyline-view","Skyline View","saints-la"],["sl-downtown-sprint","Downtown Sprint","saints-la"],["sl-lowrider-hop","Lowrider Hop","saints-la"],["sl-street-art","Street Art","saints-la"],["sl-bowling","Bowling","saints-la"],["sam-yabusame","Yabusame Range","samurai"],["sam-tameshigiri","Tameshigiri","samurai"],["samurai-captain-riddles","The Captain's Riddles","samurai"],["sam-swordsmith-forge","The Swordsmith's Forge","samurai"],["sam-ancestors-grid","The Ancestor's Grid","samurai"],["sam-tile-garden","The Tile Garden","samurai"],["sam-terrace-run","Terrace Run","samurai"],["sam-taiko-thunder","Taiko Thunder","samurai"],["sam-lantern-night","Lantern Night","samurai"],["sam-messenger-run","Messenger Run","samurai"],["shogun-sun-mirrors","The Sun Mirrors","shogun"],["shogun-lords-puzzles","The Lord's Puzzles","shogun"],["shogun-lacquer-floor","The Lacquer Floor","shogun"],["shogun-garden-bridges","The Garden Bridges","shogun"],["shogun-land-grants","The Land Grants","shogun"],["shogun-castle-run","Castle Run","shogun"],["shogun-court-fan-dance","Court Fan Dance","shogun"],["shogun-keep-thief","Keep Thief","shogun"],["shogun-koi-feeding","Koi Feeding","shogun"],["shogun-broken-seal","The Broken Seal","shogun"],["sohei-bell-song","Bell Song","sohei"],["sohei-monk-koan","The Monk's Koan","sohei"],["sohei-raking-path","The Raking Path","sohei"],["sohei-maple-catch","Maple Catch","sohei"],["sohei-temple-scales","The Temple Scales","sohei"],["sohei-temple-abacus","The Temple Abacus","sohei"],["sohei-temple-steps","Temple Steps","sohei"],["sohei-temple-drum","Temple Drum","sohei"],["sohei-temple-lamps","Temple Lamps","sohei"],["sohei-water-bowl","Water Bowl","sohei"],["warrior-cracked-circle","The Cracked Circle","warrior"],["war-spear-throw","Spear Throw","warrior"],["war-tug-of-war","Tug of War","warrior"],["war-siege-engine","The Siege Engine","warrior"],["war-war-banner","The War Banner","warrior"],["war-war-drums","The War Drums","warrior"],["war-obstacle-course","Obstacle Course","warrior"],["war-war-dance","War Dance","warrior"],["war-spy-in-the-fort","Spy in the Fort","warrior"],["war-fighting-ring","Fighting Ring","warrior"],["wok-cargo-crane","Cargo Crane","wokou"],["wok-swivel-gun","Swivel Gun","wokou"],["wokou-broker-wagers","The Broker's Wagers","wokou"],["wok-buried-chest","The Buried Chest","wokou"],["wok-fleet-chart","The Fleet Chart","wokou"],["wok-pearl-route","The Pearl Route","wokou"],["wok-pier-run","Pier Run","wokou"],["wok-sea-shanty","Sea Shanty","wokou"],["wok-harbour-fishing","Harbour Fishing","wokou"],["wok-strongbox","The Broker's Strongbox","wokou"],["yam-spirit-lanterns","Spirit Lanterns","yamabushi"],["yam-misty-stones","The Misty Stones","yamabushi"],["yam-cairn-stack","Cairn Stack","yamabushi"],["yam-herbalist-questions","The Herbalist's Questions","yamabushi"],["yam-hermits-pegs","The Hermit's Pegs","yamabushi"],["yam-pilgrims-path","The Pilgrim's Path","yamabushi"],["yam-before-the-mist","Before the Mist","yamabushi"],["yam-spirit-dance","Spirit Dance","yamabushi"],["yam-spirit-chase","Spirit Chase","yamabushi"],["yam-prayer-flags","Prayer Flags","yamabushi"]];
 function renderGamesJournal() {
   const rec = ProgressionState.games || {}, played = GAME_LIST.filter(([id]) => rec[id]?.plays).length, cleared = GAME_LIST.filter(([id]) => rec[id]?.cleared).length;
   const rows = Object.values(VILLAGE_REGISTRY).map(village => {
@@ -10642,6 +10642,8 @@ function buildMiniGameCtx(def, src, frame) {
   const ctx = {
     B: BABYLON, scene, engine, def, frame, camera: walk, HUD: RebelGames.HUD, util: RebelGames.util, inRoom: !!ActiveInterior,
     best: () => miniGameRecord(def.id).best,
+    record: () => ({ ...miniGameRecord(def.id) }),
+    quit() { setTimeout(() => quitMiniGame(), 0); },              // leave without a result card
     toWorld: (x, y, z) => V3.TransformCoordinates(new V3(x, y, z), frame.getWorldMatrix()),
     toLocal: (p) => V3.TransformCoordinates(p, BABYLON.Matrix.Invert(frame.getWorldMatrix())),
     // the camera: at local position p, looking at local point t
@@ -10821,7 +10823,8 @@ function finishMiniGame(r) {
   if (points) setTimeout(() => showRebelPointsPop(points), 600);
   if (MiniGames.roam) { moveForward = moveBackward = turnLeft = turnRight = runKey = false; if (charMesh) charMesh._vel = 0; }
   const extra = [r.extra || '', points ? `First clear: +${points} Rebel points.` : (!passed && def.pass ? (r.solved ? `${def.pass} points clears the game: try a harder level.` : `Score ${def.pass} to clear it.`) : '')].filter(Boolean).join(' ');
-  RebelGames.showResult({ kicker: r.kicker || (passed ? 'Cleared' : r.solved ? (r.solvedWord || 'Solved') : 'Game over'), title: def.title || MiniGames.impl?.title || '', score: low ? (done ? score.toFixed(1) : '—') : score, label: r.label || (low ? 'seconds' : 'points'), best: low ? (rec.best ? rec.best.toFixed(1) + ' s' : null) : rec.best, newBest, extra,
+  const clock = t => t >= 60 ? `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}` : t.toFixed(1); // a minute or more as m:ss.s
+  RebelGames.showResult({ kicker: r.kicker || (passed ? 'Cleared' : r.solved ? (r.solvedWord || 'Solved') : 'Game over'), title: def.title || MiniGames.impl?.title || '', score: low ? (done ? clock(score) : '—') : score, label: r.label || (low ? (done && score >= 60 ? 'time' : 'seconds') : 'points'), best: low ? (rec.best ? (rec.best >= 60 ? clock(rec.best) : rec.best.toFixed(1) + ' s') : null) : rec.best, newBest, extra,
     onAgain: () => restartMiniGame(), onDone: () => endMiniGame() });
 }
 function disposeMiniGameInstance() {
@@ -10860,6 +10863,81 @@ function endMiniGame() {
 }
 window._miniGames = MiniGames; // tests
 window.startMiniGame = startMiniGame;
+// The Grand Relay (Oct 16): one run through all fifteen villages in the gate menu's order (the Hub, then 1-14), gate to
+// gate. It starts at its spot in the Hub (assets/games/relay.js: the rules, your best, Start). In each village the leg
+// runs from arriving (the walk on) until you reach its gate, which takes you straight on to the next village; loading
+// between villages is not timed. The run lives in localStorage across the page loads (rebelAntsGrandRelay:v1, the leg's
+// own clock kept every 2 s, so a reload goes on from there instead of starting the leg again); going anywhere else
+// (another village, the lobby, three hours away) ends it. At the last gate the result card shows the
+// total: a 'relay' game run with finishTime, recorded like any game (the lowest time, first-clear points, badges).
+const GrandRelay = (() => {
+  const KEY = 'rebelAntsGrandRelay:v1', ORDER = ['hub', ...FACTION_VILLAGES], MEDALS = [195, 225, 270];
+  let S = null, t0 = null, el = null, beam = null, gate = null, away = false; // away: this page has handed the run to the next village
+  let base = 0, keptAt = 0; // base: seconds of this leg run before this page (a reload carries the leg's clock on)
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } };
+  const save = () => { try { if (S) localStorage.setItem(KEY, JSON.stringify(S)); else localStorage.removeItem(KEY); } catch (e) {} };
+  const fmt = t => { const m = Math.floor(t / 60), s = t - m * 60; return `${m}:${s.toFixed(1).padStart(4, '0')}`; };
+  const leg = () => base + (t0 != null ? (performance.now() - t0) / 1000 : 0);
+  const total = () => S ? S.done + leg() : 0;
+  const keep = () => { if (S && !away && t0 != null) { S.cur = +leg().toFixed(2); save(); } };
+  const name = v => VILLAGE_REGISTRY[v]?.displayName || v;
+  function hud(on) {
+    if (!on) { el?.remove(); el = null; beam?.dispose(); beam = null; return; }
+    if (el) return;
+    el = document.createElement('div'); el.id = 'grandRelayHud';
+    el.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:12px;background:rgba(14,12,20,.86);border:1px solid rgba(232,190,90,.7);color:#f4ecd8;font:600 14px/1.2 Georgia,serif;pointer-events:auto';
+    el.innerHTML = '<b style="color:#e8be5a;letter-spacing:.08em;text-transform:uppercase;font-size:12px">Grand Relay</b><span class="gr-leg"></span><span class="gr-time" style="font:700 17px ui-monospace,Menlo,monospace;color:#ffe9a0;min-width:66px;text-align:right"></span><button type="button" style="border:1px solid #7a6a4a;background:transparent;color:#cdbf9f;border-radius:8px;padding:3px 8px;font:12px Georgia,serif;cursor:pointer">Give up</button>';
+    el.querySelector('button').onclick = (e) => { e.stopPropagation(); if (confirm('Give up the Grand Relay?')) cancel('Relay given up.'); };
+    document.body.appendChild(el);
+  }
+  function begin() { S = { on: true, leg: 0, done: 0, cur: 0, legs: [], at: Date.now() }; base = 0; save(); t0 = performance.now(); hud(true); }
+  function resume() {
+    const s = load(); if (!s?.on) return;
+    if (Date.now() - (s.at || 0) > 3 * 3600e3 || ORDER[s.leg] !== CURRENT_VILLAGE_ID) {
+      try { localStorage.removeItem(KEY); } catch (e) {}
+      setTimeout(() => showToast('The Grand Relay was left part-way: start it again at the Hub.', 3600), 3000); return;
+    }
+    S = s; t0 = null; base = +s.cur || 0;
+  }
+  function tick() {
+    if (!S || away) return;
+    if (t0 == null) { if (!walkMode || !charMesh || adminMode) return; t0 = performance.now(); hud(true); showToast(`Grand Relay · ${name(CURRENT_VILLAGE_ID)}: run to the gate!`, 1800); }
+    hud(true);
+    el.querySelector('.gr-leg').textContent = `${S.leg + 1} / ${ORDER.length} · ${name(CURRENT_VILLAGE_ID)}`;
+    el.querySelector('.gr-time').textContent = fmt(total());
+    if (performance.now() - keptAt > 2000) { keptAt = performance.now(); keep(); }
+    if (!gate || gate.isDisposed?.()) gate = getVillageGateRoots()[0] || null;
+    if (gate && !beam) {
+      beam = BABYLON.MeshBuilder.CreateCylinder('grandRelayBeam', { height: 14, diameterTop: .4, diameterBottom: 1.4, tessellation: 16, cap: BABYLON.Mesh.NO_CAP }, scene);
+      const m = new BABYLON.StandardMaterial('grandRelayBeamMat', scene); m.disableLighting = true; m.emissiveColor = new BABYLON.Color3(1, .78, .3); m.alpha = .28; m.alphaMode = BABYLON.Engine.ALPHA_ADD; m.backFaceCulling = false; beam.material = m; beam.isPickable = false;
+      beam.onDisposeObservable.add(() => m.dispose());
+    }
+    if (gate && beam) { beam.position.set(gate.position.x, gate.position.y + 7, gate.position.z); beam.material.alpha = .22 + .1 * Math.sin(performance.now() / 160); }
+  }
+  // the gate opened during a leg: on to the next village (true: the gate menu stays shut). The page leaves a moment
+  // later (the travel fade, then the next page's load): meanwhile the clock stays stopped and the gate does nothing more
+  function atGate() {
+    if (away) return true;
+    if (!S || t0 == null || MiniGames.on) return false;
+    const t = leg(); S.legs.push(+t.toFixed(2)); S.done += t; S.leg++; S.cur = 0; base = 0; t0 = null;
+    if (S.leg >= ORDER.length) { const run = S; S = null; save(); hud(false); finish(run); return true; }
+    S.at = Date.now(); save(); hud(false); away = true; selectVillageGateDestination(ORDER[S.leg]); return true;
+  }
+  // the total on the result card (a 'relay' game run that only finishes)
+  function finish(run) {
+    _lastVillageGateAutoOpenAt = performance.now() + 6000; // standing in the gate: no menu straight after the card
+    const root = new BABYLON.TransformNode('grandRelayEnd', scene); root.position.copyFrom(charMesh.position); root.rotation.y = charMesh.rotation.y;
+    startMiniGame({ type: 'relay', id: 'grand-relay', title: 'The Grand Relay', finishTime: run.done, legs: run.legs, order: ORDER, medals: MEDALS, points: 60, pass: 0, questOn: 'pass' }, { kind: 'spot', root, cfg: {} });
+    setTimeout(() => root.dispose(), 60000);
+  }
+  function cancel(msg) { S = null; t0 = null; base = 0; save(); hud(false); if (msg) showToast(msg, 2200); }
+  // back to this page from the browser's cache (Back after a gate): the run went on elsewhere, so read it afresh
+  window.addEventListener('pageshow', (e) => { if (e.persisted && away) { away = false; S = null; t0 = null; hud(false); resume(); } });
+  window.addEventListener('pagehide', keep);
+  return { begin, resume, tick, atGate, cancel, on: () => !!S, target: () => { const g = gate || getVillageGateRoots()[0]; return S && g ? { x: g.position.x, z: g.position.z } : null; }, ORDER, MEDALS, fmt, names: () => ORDER.map(name), _state: () => S };
+})();
+window.GrandRelay = GrandRelay;
+GrandRelay.resume();
 
 // the crowd at a hold or dance-off with spotConfig.cheer: now and then one of them hops or kicks (kit apes) or plays a
 // lively clip (forged NPCs)
@@ -11566,6 +11644,7 @@ function isCharacterInsideVillageGateOpening(gate) {
 
 function openVillageGateMenu() {
   if (ActiveInterior) return false;
+  if (GrandRelay.atGate()) return true; // the Grand Relay: straight on to the next village
   const overlay = document.getElementById('villageGateOverlay');
   const list = document.getElementById('villageGateList');
   if (!overlay || !list) return false;
@@ -27674,6 +27753,7 @@ engine.runRenderLoop(()=>{
     }
   }
   updateFootstepAudio();
+  GrandRelay.tick(); // the relay's clock and gate beam
   if (MiniGames.on) updateMiniGame(dt);
   else {
     updateInteractionPrompt();
@@ -27685,7 +27765,7 @@ engine.runRenderLoop(()=>{
     updateDanceOff();
   }
   { const wantPhoto = walkMode && !adminMode; if (document.body.classList.contains('walk-photo') !== wantPhoto) document.body.classList.toggle('walk-photo', wantPhoto); }
-  if (!MiniGames.on) { tryAutoOpenVillageGateFromWalkthrough(); updateCollectiblesSafe(dt); }
+  if (!MiniGames.on && !MiniGames.busy) { tryAutoOpenVillageGateFromWalkthrough(); updateCollectiblesSafe(dt); } // busy: a game is loading (the relay's finish card, at the gate)
   updateWeatherManager();
   updateNPCPopulation(dt);
   updateSmallVillageAntPopulation(dt);
@@ -27932,6 +28012,8 @@ function initVillageHud() {
       questTarget: () => {
         // a roam game (a run, a chase): where it wants you next
         if (MiniGames.on && MiniGames.roam) { try { return MiniGames.inst?.target?.() || null; } catch (e) { return null; } }
+        // the Grand Relay: this village's gate
+        if (GrandRelay.on() && !MiniGames.on) { const g = GrandRelay.target(); if (g) return g; }
         // a run or walk on the way: its next point
         const rq = getRaceNextPoint(); if (rq) return { x: rq[0], z: rq[1] };
         // the auto guide's target (wired steps), else the quest's own glowing marker or its NPC (looked up twice a second)
