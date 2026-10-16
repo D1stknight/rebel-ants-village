@@ -62,6 +62,13 @@ th{color:var(--dim);font-weight:500}
 .bad{color:var(--red)} .warn{color:var(--amber)} .ok{color:var(--green)}
 .info{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.55}.info:empty{display:none}.info b{color:var(--txt);font-weight:600}
 .thumb{width:44px;height:44px;border-radius:6px;object-fit:cover;background:#0d1020}
+details.grp{margin-bottom:8px}
+details.grp>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#0e1222;font-weight:600;user-select:none}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::before{content:'▸';color:var(--gold);display:inline-block;transition:transform .15s}
+details.grp[open]>summary::before{transform:rotate(90deg)}
+details.grp>summary .cnt{margin-left:auto;color:var(--dim);font-weight:500;font-size:11px}
+details.grp>.gbody{padding-top:8px}
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#1d2336;border:1px solid var(--teal);padding:8px 14px;border-radius:8px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
 #toast.on{opacity:1}
 dialog{background:var(--panel);color:var(--txt);border:1px solid var(--teal);border-radius:10px;padding:16px;width:min(420px,92vw)}
@@ -78,7 +85,7 @@ small{color:var(--dim)}
   <header><h1>NPC FORGE</h1><span class="sub">Your renders → Rebel Forge sculpt → Forge Rigger (NPC clips) → test → approve</span><span id="workerPill"></span><a href="admin.html">← Admin Hub</a></header>
   <aside id="side">
     <h2>NPCs</h2>
-    <div class="row" style="margin-bottom:8px"><button class="gold" onclick="addNPC()">+ New NPC</button><button class="teal" id="forgeAllBtn" onclick="forgeAll()">Forge all ready</button></div>
+    <div class="row" style="margin-bottom:8px"><button class="teal" id="forgeAllBtn" onclick="forgeAll()">Forge all ready</button></div>
     <div id="npcList"></div>
     <h2>Approved (in the village)</h2>
     <div id="approvedList" class="state">Loading...</div>
@@ -150,6 +157,15 @@ const COLLECTIONS = {
   saints: { label: 'Saints', species: 'human', village: 'saints-la', prefix: 'saints_', npcs: { saints_greeter: 'Saints Greeter', saints_mechanic: 'Shop Mechanic', saints_hooper: 'Court Regular', saints_librarian: 'Librarian', saints_dj: 'DJ', saints_shopkeeper: 'Shopkeeper' } }
 };
 const colOf = (n) => COLLECTIONS[n?.collection] || COLLECTIONS.rebel;
+// Oct 16 (Miguel): both lists grouped by what the NPCs are, Rebels with Rebels, Chumpz with Chumpz, Saints with Saints.
+// An approved key's group comes from its prefix (chumpz_, saints_; the rest are Rebel villager keys).
+const GROUPS = [['rebel', 'Rebel Ants'], ['chumpz', 'Chumpz'], ['saints', 'Saints']];
+const groupOf = (n) => (COLLECTIONS[n?.collection] ? n.collection : 'rebel');
+const keyGroup = (k) => Object.entries(COLLECTIONS).find(([, c]) => c.prefix && k.startsWith(c.prefix))?.[0] || 'rebel';
+const GKEY = 'npcForge:groups';   // which groups are folded (per browser)
+let grpOpen = (() => { try { return JSON.parse(localStorage.getItem(GKEY) || '{}') || {}; } catch (e) { return {}; } })();
+function grpToggle(el) { grpOpen[el.dataset.g] = el.open; try { localStorage.setItem(GKEY, JSON.stringify(grpOpen)); } catch (e) {} }
+const grp = (g, label, count, body) => `<details class="grp" data-g="${g}" ${grpOpen[g] === false ? '' : 'open'} ontoggle="grpToggle(this)"><summary>${esc(label)}<span class="cnt">${count}</span></summary><div class="gbody">${body}</div></details>`;
 const NPC_CLIPS = ['idle', 'walk', 'run', 'talking', 'talking2', 'waving', 'wave_short', 'bow', 'pointing', 'pick_up', 'nod_yes', 'shake_no', 'clapping', 'rallying', 'yelling', 'look_around', 'idle_looking'];
 const PHASES = { draft: 'Draft', uploading: 'Uploading renders', building: 'Starting build', sculpting: 'Rebel Forge is sculpting', storing: 'Saving the sculpt', rigging: 'Forge Rigger', done: 'Forged', failed: 'Stopped' };
 let st = { npcs: [] }; let selId = null; let approved = {}, approvedLoaded = false;
@@ -202,12 +218,16 @@ async function api(path, body, method) {
 async function twice(fn) { const waits = [3000, 9000, 20000]; for (let k = 0; ; k++) { try { return await fn(); } catch (e) { if ((e.status && e.status < 500 && e.status !== 408) || k >= waits.length) throw e; await sleep(waits[k]); } } }
 
 /* ---------- NPC records ---------- */
-function addNPC() {
-  const n = { id: 'n' + Date.now().toString(36), name: '', key: '', factionId: '', role: 'villager', refs: {}, phase: 'draft' };
-  st.npcs.unshift(n); save(); renderList(); select(n.id);
+function addNPC(col = 'rebel') {
+  const n = { id: 'n' + Date.now().toString(36), name: '', key: '', collection: col, factionId: '', role: 'villager', refs: {}, phase: 'draft' };
+  grpOpen[col] = true; st.npcs.unshift(n); save(); renderList(); select(n.id);
 }
 function npc(id) { return st.npcs.find((n) => n.id === id); }
-function setField(id, f, v) { const n = npc(id); if (!n) return; n[f] = v; if ((f === 'name' || f === 'collection') && !n.keyTouched) n.key = guessKey(n.name, n.collection); if (f === 'key') { n.key = slug(v); n.keyTouched = true; } save(); setTimeout(renderList, 0); }   // not inside the input's own change / blur
+function setField(id, f, v) {
+  const n = npc(id); if (!n) return; n[f] = v; if ((f === 'name' || f === 'collection') && !n.keyTouched) n.key = guessKey(n.name, n.collection); if (f === 'key') { n.key = slug(v); n.keyTouched = true; }
+  if (f === 'collection') grpOpen[v] = true;   // it moves to that group: keep it in view
+  save(); setTimeout(renderList, 0);   // not inside the input's own change / blur
+}
 function guessKey(name, col) {
   const s = slug(name); const c = COLLECTIONS[col] || COLLECTIONS.rebel; if (!s) return '';
   if (!c.prefix) { const f = VILLAGERS.find((v) => s.startsWith(v)); return f && /villager|^[a-z]+$/.test(s) ? `${f}_villager` : s; }
@@ -333,27 +353,31 @@ function stateLine(n) {
 }
 function pct(n) { return n.phase === 'done' ? 100 : n.phase === 'rigging' ? 60 + 0.4 * (n.rig?.p || 0) : n.phase === 'storing' ? 58 : n.phase === 'sculpting' ? 8 + 0.5 * (n.meshy?.p || 0) : n.phase === 'building' ? 6 : n.phase === 'uploading' ? 3 : 0; }
 function renderList() {
-  const el = $('#npcList');
-  if (!st.npcs.length) { el.innerHTML = '<div class="state">No NPCs yet. Add one, give it a name and drop your four renders (front, back, left, right).</div>'; renderApproved(); return; }
-  el.innerHTML = st.npcs.map((n) => {
-    const busy = running.has(n.id); const qa = n.rig?.qa?.verdict;
-    const slots = SLOTS.map((s) => { const r = n.refs[s] || {}; const src = r.url || r.local; const up = r.uploading ? '<i class="up">uploading…</i>' : ''; return `<div class="slot" onclick="pick('${n.id}','${s}')" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropTo(event,'${n.id}','${s}')">${src ? `<img src="${src}" alt="">` : '+'}<b>${s}</b>${up}</div>`; }).join('');
-    return `<div class="card ${n.id === selId ? 'sel' : ''}" onclick="if(!event.target.closest('input,select,button,.slot'))select('${n.id}')">
-      <div class="row">${n.rig?.thumb ? `<img class="thumb" src="${n.rig.thumb}" alt="">` : ''}<input class="grow" placeholder="Name (e.g. Samurai Villager)" value="${esc(n.name)}" onchange="setField('${n.id}','name',this.value)" ${busy ? 'disabled' : ''}>
-        ${qa ? `<span class="verdict v-${qa}">${qa}</span>` : ''}</div>
-      <div class="row" style="margin-top:6px"><select onchange="setField('${n.id}','collection',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Collection">${Object.entries(COLLECTIONS).map(([k, c]) => `<option value="${k}" ${k === (n.collection || 'rebel') ? 'selected' : ''}>${c.label}</option>`).join('')}</select><input class="grow" placeholder="library key" value="${esc(n.key)}" onchange="setField('${n.id}','key',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Library key (samurai_villager replaces that villager's placeholder; chumpz_bartender replaces Big Chain)"></div>
-      ${n.buildId ? '' : `<div class="slots">${slots}</div>`}
-      ${n.buildId || colOf(n).species === 'ant' ? '' : `<div class="info">Renders for ${colOf(n).label}: A-pose, a clear gap between each arm and the body all the way down (background showing under the armpits) and the hands open, away from the hips. Arms or hands touching the body are fused in the sculpt and tear when they move.</div>`}
-      <div class="state">${stateLine(n)}</div><div class="bar"><i style="width:${pct(n)}%"></i></div>
-      <div class="info" id="info_${n.id}">${statusLines(n).join('<br>')}</div>
-      ${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}
-      <div class="row" style="margin-top:8px">
-        ${n.phase === 'done' ? `<button class="teal" onclick="select('${n.id}')">Test</button><button onclick="reRig('${n.id}')" title="Run the Forge Rigger again on the same sculpt">Re-rig</button>` : `<button class="gold" onclick="forgeOne('${n.id}')" ${busy || !ready(n) ? 'disabled' : ''}>${n.phase === 'failed' ? 'Retry' : ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase) && !busy ? 'Continue' : 'Forge'}</button>`}
-        ${n.buildId && !busy ? `<button onclick="if(confirm('Sculpt this NPC again from the same renders? (a new Rebel Forge sculpt)'))forgeOne('${n.id}',{resculpt:true})">Re-sculpt</button>` : ''}
-        ${!n.buildId && Object.keys(n.refs).length ? '' : ''}
-        <button class="red" style="margin-left:auto" onclick="removeNPC('${n.id}')" ${busy ? 'disabled' : ''}>Remove</button></div></div>`;
+  $('#npcList').innerHTML = GROUPS.map(([g, label]) => {
+    const list = st.npcs.filter((n) => groupOf(n) === g);
+    const body = `<div class="row" style="margin-bottom:8px"><button class="gold" onclick="addNPC('${g}')">+ New ${esc(label)} NPC</button></div>`
+      + (list.length ? list.map(card).join('') : `<div class="state">No ${esc(label)} NPCs yet: + New, give it a name and drop your four renders (front, back, left, right).</div>`);
+    return grp(g, label, list.length, body);
   }).join('');
   paintStatus(); renderApproved();
+}
+function card(n) {
+  const busy = running.has(n.id); const qa = n.rig?.qa?.verdict;
+  const slots = SLOTS.map((s) => { const r = n.refs[s] || {}; const src = r.url || r.local; const up = r.uploading ? '<i class="up">uploading…</i>' : ''; return `<div class="slot" onclick="pick('${n.id}','${s}')" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropTo(event,'${n.id}','${s}')">${src ? `<img src="${src}" alt="">` : '+'}<b>${s}</b>${up}</div>`; }).join('');
+  return `<div class="card ${n.id === selId ? 'sel' : ''}" onclick="if(!event.target.closest('input,select,button,.slot'))select('${n.id}')">
+    <div class="row">${n.rig?.thumb ? `<img class="thumb" src="${n.rig.thumb}" alt="">` : ''}<input class="grow" placeholder="Name (e.g. Samurai Villager)" value="${esc(n.name)}" onchange="setField('${n.id}','name',this.value)" ${busy ? 'disabled' : ''}>
+      ${qa ? `<span class="verdict v-${qa}">${qa}</span>` : ''}</div>
+    <div class="row" style="margin-top:6px"><select onchange="setField('${n.id}','collection',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Collection">${Object.entries(COLLECTIONS).map(([k, c]) => `<option value="${k}" ${k === (n.collection || 'rebel') ? 'selected' : ''}>${c.label}</option>`).join('')}</select><input class="grow" placeholder="library key" value="${esc(n.key)}" onchange="setField('${n.id}','key',this.value)" ${busy || n.buildId ? 'disabled' : ''} title="Library key (samurai_villager replaces that villager's placeholder; chumpz_bartender replaces Big Chain)"></div>
+    ${n.buildId ? '' : `<div class="slots">${slots}</div>`}
+    ${n.buildId || colOf(n).species === 'ant' ? '' : `<div class="info">Renders for ${colOf(n).label}: A-pose, a clear gap between each arm and the body all the way down (background showing under the armpits) and the hands open, away from the hips. Arms or hands touching the body are fused in the sculpt and tear when they move.</div>`}
+    <div class="state">${stateLine(n)}</div><div class="bar"><i style="width:${pct(n)}%"></i></div>
+    <div class="info" id="info_${n.id}">${statusLines(n).join('<br>')}</div>
+    ${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}
+    <div class="row" style="margin-top:8px">
+      ${n.phase === 'done' ? `<button class="teal" onclick="select('${n.id}')">Test</button><button onclick="reRig('${n.id}')" title="Run the Forge Rigger again on the same sculpt">Re-rig</button>` : `<button class="gold" onclick="forgeOne('${n.id}')" ${busy || !ready(n) ? 'disabled' : ''}>${n.phase === 'failed' ? 'Retry' : ['uploading', 'building', 'sculpting', 'storing', 'rigging'].includes(n.phase) && !busy ? 'Continue' : 'Forge'}</button>`}
+      ${n.buildId && !busy ? `<button onclick="if(confirm('Sculpt this NPC again from the same renders? (a new Rebel Forge sculpt)'))forgeOne('${n.id}',{resculpt:true})">Re-sculpt</button>` : ''}
+      ${!n.buildId && Object.keys(n.refs).length ? '' : ''}
+      <button class="red" style="margin-left:auto" onclick="removeNPC('${n.id}')" ${busy ? 'disabled' : ''}>Remove</button></div></div>`;
 }
 function select(id) { selId = id; renderList(); showNPC(id); }
 
@@ -684,11 +708,18 @@ async function loadApproved() {
 function renderApproved() {   // (with the list: a re-rig there shows here as a newer rig waiting)
   if (!approvedLoaded) return;
   const keys = Object.keys(approved).sort();
-  $('#approvedList').innerHTML = keys.length ? keys.map((k) => {
+  const row = (k) => {
     const e = approved[k], rec = st.npcs.find((n) => n.rig?.url === e.modelUrl) || st.npcs.find((n) => n.approvedKey === k);
     const newer = rec && rec.rig?.url && rec.rig.url !== e.modelUrl;   // re-rigged since: approve again to send it
     return `<div class="card row">${e.thumbUrl ? `<img class="thumb" src="${e.thumbUrl}" alt="">` : ''}<div class="grow"><b>${esc(e.displayName)}</b><br><small>${k} · ${esc(e.role || '')}${e.qa?.verdict ? ` · checks ${e.qa.verdict}` : ''}</small><div class="info" style="margin-top:2px">Approved <b>${when(e.approvedAt)}</b>${newer ? ` · <span class="warn">newer rig${rec.rig.at ? ' ' + when(rec.rig.at) : ''}: approve again</span>` : ''}</div></div><button class="red" onclick="unapprove('${k}')">Remove</button></div>`;
-  }).join('') : '<div class="state">None yet: the village shows placeholders.</div>';
+  };
+  $('#approvedList').innerHTML = GROUPS.map(([g, label]) => {
+    const mine = keys.filter((k) => keyGroup(k) === g), c = COLLECTIONS[g];
+    // the collection's own NPCs that are not in the village yet (the Chumpz keep their kit apes until then)
+    const left = Object.entries(c.npcs).filter(([k]) => !approved[k]).map(([, nm]) => nm);
+    const still = left.length ? `<div class="state" style="margin:0 0 8px">Not forged yet: ${left.map(esc).join(', ')} (${g === 'chumpz' ? 'kit apes' : 'placeholders'} in the village)</div>` : '';
+    return grp('a:' + g, label, mine.length, still + (mine.map(row).join('') || `<div class="state">None yet.</div>`));
+  }).join('');
 }
 async function unapprove(k) { if (!confirm(`Remove ${k} from the village? NPCs with that key go back to placeholders.`)) return; try { await api('/api/npc-library', { action: 'remove', key: k }); toast('Removed'); loadApproved(); } catch (e) { toast(e.message); } }
 
