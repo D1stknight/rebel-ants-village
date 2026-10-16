@@ -10589,6 +10589,8 @@ async function startMiniGame(def, src) {
   RebelGames.HUD.loading(true);
   let impl = null;
   try { impl = await RebelGames.load(def.type); } catch (e) { console.warn('mini-game', e); }
+  // a game that plays the games pack's moves waits for it the first time (a few seconds at most, then its stand-ins)
+  if (impl?.moves && !GamesPack.slots) { const t = loadGamesPack(); await Promise.race([t, new Promise(r => setTimeout(r, 3500))]); }
   RebelGames.HUD.loading(false);
   if (!impl || !walkMode || adminMode) { MiniGames.busy = false; if (!impl) showToast('This game is not ready yet.'); return true; }
   closeSkillBar(); closeDanceOff(); QuestSpotRuntime.hold = null;
@@ -10679,6 +10681,8 @@ function buildMiniGameCtx(def, src, frame) {
       // a move by name: Forge rigs any slot by its clip name (idle walk run jab cross_punch front_kick ...), held on its
       // last frame with hold; kit apes kick / jump; the starter ant flip-kicks / jumps
       clip(name, o = {}) { return playMiniGameClip(name, o); },
+      // whether this Rebel can play a move by that name (its rig's clips, a lent weapon's, the games pack's)
+      has(name) { return !!window.forgeRigBundleInfo && miniGameClipSlot(name) != null && !!animGroups[miniGameClipSlot(name)]; },
       idle() { if (animState !== 0) { const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } },
       // where a bone is drawn now (world), e.g. 'RightHand'; null without a rig
       bone(name) { return getPlayerBoneWorld(name); },
@@ -10709,15 +10713,35 @@ function getPlayerBoneWorld(name) {
   if (!b) return null;
   return BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.Zero(), b.getFinalMatrix().multiply(sm.getWorldMatrix()));
 }
+// The games pack (v2.24): Miguel's Mixamo moves for the games (game_cast / reel / fish_wait, game_dig, game_plant,
+// game_pick_up, game_throw / throw_far, game_chop, game_cheer, game_push / push_walk, dance_wave / tut / house /
+// gangnam), made by the Forge Rigger for each Rebel beside its rig (games.glb: the skeleton + those clips). Loaded
+// once a visit, a while after the Rebel arrives or when a game that plays them starts (impl.moves). null = this Rebel
+// has none (no rig, or a rig from before the pack): games play their stand-in moves.
+const GamesPack = { ready:null, slots:null }, GAMES_PACK_SLOT0 = 150;
+function loadGamesPack() {
+  if (GamesPack.ready) return GamesPack.ready;
+  if (!window.forgeRigBundleInfo || !window.RebelWeapon?.gamesFor || !window._playerImport || !charMesh) return Promise.resolve(null);
+  return GamesPack.ready = (async () => {
+    const url = await RebelWeapon.gamesFor((activeCharacter.basePath || '') + (_forgeSingleGlb || '')); if (!url) return null;
+    const groups = await RebelWeapon.loadMoves({ scene, root:window._playerImport.meshes[0], url });
+    const slots = {}; let i = GAMES_PACK_SLOT0;
+    for (const [name, g] of Object.entries(groups)) { g.enableBlending = true; g.blendingSpeed = 0.12; animGroups[i] = g; slots[name] = i++; }
+    return GamesPack.slots = slots;
+  })().catch(e => { console.warn('games pack', e); return null; });
+}
+window._gamesPack = GamesPack; // tests
+function miniGameClipSlot(name) { return MiniGames.weapon?.slots?.[name] ?? GamesPack.slots?.[name] ?? (window._forgeClipSlots || {})[name]; }
 function playMiniGameClip(name, o = {}) {
   if (window.forgeRigBundleInfo) {
-    const slot = MiniGames.weapon?.slots?.[name] ?? (window._forgeClipSlots || {})[name];
+    const slot = miniGameClipSlot(name);
     const g = slot != null ? animGroups[slot] : null; if (!g) return false;
     if (animState === slot) { if (g.isPlaying) g.stop(); animState = -1; } // the same move again: from its start
     if (o.speed) g.speedRatio = o.speed;
-    if (o.loop) { switchAnim(slot, true); return true; }
-    if (o.hold) { switchAnim(slot, false); return true; } // stays on its last frame until the next move
-    return playForgeRigAction(slot, null, true);
+    const from = () => { if (o.from) g.goToFrame(Math.min(g.to, g.from + o.from * 60)); }; // o.from: start that many seconds in
+    if (o.loop) { switchAnim(slot, true); from(); return true; }
+    if (o.hold) { switchAnim(slot, false); from(); return true; } // stays on its last frame until the next move
+    const ok = playForgeRigAction(slot, null, true, (o.from || 0) * 1000 / (g.speedRatio || 1)); from(); return ok;
   }
   if (window.kitPlayerModel) { window.SamuraiKit?.actorAction?.(window.kitPlayerModel, /jump|flip/.test(name) ? 'jump' : 'kick'); return true; }
   if (/kick|punch|jab|throw|roll/.test(name) && animGroups[3]) { if (animState === 3) { animGroups[3].stop(); animState = -1; } switchAnim(3, false); setTimeout(() => { if (animState === 3) switchAnim(0, true); }, 900); return true; }
@@ -10790,6 +10814,7 @@ function finishMiniGame(r) {
   saveProgressionState();
   if (firstClear) checkAutoBadges(); // a first clear can finish a village's games (the card waits for the game to end)
   if (passed && def.questOn === 'pass') miniGameQuestHook();
+  if (passed && GamesPack.slots?.game_cheer && !MiniGames.roam) playMiniGameClip('game_cheer'); // a Rebel with the games pack cheers a clear
   try { window.dispatchEvent(new CustomEvent('rebelAntsGameEnd', { detail:{ game:def.id, score, passed, best:rec.best, newBest, points } })); } catch (e) {}
   if (points) setTimeout(() => showRebelPointsPop(points), 600);
   if (MiniGames.roam) { moveForward = moveBackward = turnLeft = turnRight = runKey = false; if (charMesh) charMesh._vel = 0; }
@@ -23326,12 +23351,12 @@ function stripForgeClothTracks(groups) {
 }
 let animState = -1, animGroups = [];
 // One-shot move on a Forge Rigger bundle; returns to idle when the clip ends. Returns false if the clip isn't in this GLB.
-function playForgeRigAction(slot, thenSlot, force) {
+function playForgeRigAction(slot, thenSlot, force, skipMs = 0) {
   const g = animGroups[slot];
   if (!g || !walkMode) return false;
   if (!force && animState >= 3 && animGroups[animState] && animGroups[animState].isPlaying) return true;   // let the current move finish
   switchAnim(slot, false);
-  const ms = Math.max(300, ((g.to - g.from) / 60) * 1000 / (g.speedRatio || 1) - 80);
+  const ms = Math.max(300, ((g.to - g.from) / 60) * 1000 / (g.speedRatio || 1) - 80 - skipMs);   // skipMs: started part-way in
   clearTimeout(window._forgeRigActionTimer);
   window._forgeRigActionTimer = setTimeout(() => {
     if (animState !== slot) return;
@@ -23592,6 +23617,7 @@ const _forgeSingleGlb = activeCharacter.singleGlb ? await latestForgeRigUrl(acti
       jab: 16, cross_punch: 17, hook_punch: 18, elbow_punch: 19, fight_idle: 20, hit_reaction: 21, knockdown: 22, get_up: 23 };
     window._forgeClipSlots = _slot; // mini-games play moves by name
     window._playerImport = r;       // ... and lend weapons to its hands
+    setTimeout(() => { if (window._playerImport === r) loadGamesPack(); }, 15000); // the games pack, once the village has settled
     window._forgeIdleOrig = null; window._forgeFightStance = false;
     r.animationGroups.forEach(g => {
       g.stop();

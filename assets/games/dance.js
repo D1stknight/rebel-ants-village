@@ -155,10 +155,14 @@
   }
 
   const G = {
-    title: 'Dance-off',
+    title: 'Dance-off', moves: true,
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def, song = SONGS[def.song] || SONGS.hub;
-      const moves = def.moves || ['cartwheel', 'jump', 'front_flip', 'backflip'];
+      // def.packMoves: real dances from the Rebel's games pack (dance_wave / tut / house / gangnam) when it has them;
+      // they loop and an arrow switches to its dance (the same one keeps going). Else def.moves, one move per arrow.
+      const DANCES = !!(def.packMoves && def.packMoves.every(m => ctx.player.has?.(m)));
+      const moves = DANCES ? def.packMoves : def.moves || ['cartwheel', 'jump', 'front_flip', 'backflip'];
+      let dancing = null;
       const floorC = def.floor || [.95, .45, .7];
       const st = { phase: 'pick', lv: null, notes: [], ev: [], evi: 0, hits: 0, perfect: 0, combo: 0, maxCombo: 0, pts: 0, t0: 0, end: 0, judge: '', judgeAt: 0, beatAt: 0, car: null, carT: 0, carMove: -1 };
       const nodes = [], keep = n => { ctx.add(n); nodes.push(n); if (n.isPickable !== undefined) n.isPickable = false; return n; };
@@ -214,6 +218,7 @@
       function say(t, bad) { judgeEl.textContent = t; judgeEl.style.color = bad ? '#ff8a7a' : '#ffd877'; st.judgeAt = performance.now(); }
       function dance(d) {
         if (st.car) { st.carMove = d; st.carT = 0; return; }
+        if (DANCES) { if (dancing !== moves[d]) { dancing = moves[d]; ctx.player.clip(moves[d], { loop: true }); } return; }
         ctx.player.clip(moves[d]);
       }
       function press(d) {

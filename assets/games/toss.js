@@ -9,10 +9,13 @@
 //        kind 'float': a barrel on the water], cam, at, fov, pass, points }
 (function () {
   const G = {
-    title: 'Toss',
+    title: 'Toss', moves: true,
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const kindItem = ['ball', 'coconut', 'spear', 'cannon'].includes(def.item) ? def.item : 'coconut';
+      // with the Rebel's games pack a coconut gets a real overhand throw and a spear the long throw: the move starts at its
+      // wind-up (from, s) and the throw leaves the hand at its release (rel, s later)
+      const PACK = { coconut: { clip: 'game_throw', from: .55, rel: .32, hand: 'RightHand' }, spear: { clip: 'game_throw_far', from: .95, rel: .38 } }[kindItem], usePack = !!(PACK && ctx.player.has?.(PACK.clip));
       const ITEM = { ball: { r: .18, angle: 54, clip: 'jump', sound: 'thock' }, coconut: { r: .18, angle: 42, clip: 'cross_punch', sound: 'thock' }, spear: { r: .05, angle: 14, clip: 'jab', sound: 'whoosh' }, cannon: { r: .13, angle: 9, clip: null, sound: 'boom' } }[kindItem];
       const seaY = window._newTerrain?.seaY, WATER = def.water ?? (seaY != null ? seaY - ctx.toWorld(0, 0, 0).y : -3);
       const SHOTS = def.shots || 10, GR = 9.8, ANG = (def.angle || ITEM.angle) * Math.PI / 180;
@@ -113,10 +116,12 @@
         const v = idealV(targets[ti]) * (POW[0] + (POW[1] - POW[0]) * st.pow);
         const dir = new V3(Math.sin(yaw) * Math.cos(ANG), Math.sin(ANG), Math.cos(yaw) * Math.cos(ANG));
         st.flight = { p: gun ? REL.add(new V3(Math.sin(yaw) * .5, 0, Math.cos(yaw) * .5 - .45)) : REL.clone(), v: dir.scale(v), t: 0, done: false, bounced: 0, out: null };
-        proj.setEnabled(true); proj.position.copyFrom(st.flight.p);
+        proj.position.copyFrom(st.flight.p); H.meter(null); aimLine.setEnabled(false);
+        if (usePack) { ctx.player.face(yaw); ctx.player.clip(PACK.clip, { from: PACK.from }); st.phase = 'release'; st.relT = PACK.rel; proj.setEnabled(false); return; }
+        proj.setEnabled(true);
         ctx.player.face(yaw); if (ITEM.clip) ctx.player.clip(ITEM.clip); if (gun) { gun.rotation.y = yaw; gun.kick = 1; }
         ctx.sound(ITEM.sound);
-        st.phase = 'flight'; H.meter(null); aimLine.setEnabled(false);
+        st.phase = 'flight';
       }
       function result(kind, pts, txt) {
         const f = st.flight; f.done = true; f.out = kind;
@@ -193,7 +198,11 @@
             st.pow += st.powV * dt * (.75 + .03 * st.n); if (st.pow > 1) { st.pow = 1; st.powV = -1; } if (st.pow < 0) { st.pow = 0; st.powV = 1; }
             const ti = nearestT(yawOf(st.lockAim));
             H.meter({ label: targets[ti].label ? `Power · ${targets[ti].label}` : 'Power', value: st.pow, fill: st.pow, zone: [.45, .55] });
-          } else if (st.phase === 'flight') { const n = 4; for (let i = 0; i < n && st.phase === 'flight'; i++) step(dt / n); }
+          } else if (st.phase === 'release') {
+            // the coconut rides the throwing hand through the wind-up, then leaves from the release point
+            const h = PACK.hand && ctx.player.bone(PACK.hand); if (h) { proj.position.copyFrom(ctx.toLocal(h)); proj.setEnabled(true); }
+            if ((st.relT -= dt) <= 0) { st.phase = 'flight'; proj.position.copyFrom(st.flight.p); proj.setEnabled(true); ctx.sound(ITEM.sound); } }
+          else if (st.phase === 'flight') { const n = 4; for (let i = 0; i < n && st.phase === 'flight'; i++) step(dt / n); }
           else if (st.phase === 'after' && (st.wait -= dt) <= 0) {
             proj.setEnabled(false);
             if (st.n >= SHOTS) { st.phase = 'done'; H.hint(''); H.meter(null); if (st.score >= (def.pass || 0)) ctx.sound('gamewin');

@@ -5,6 +5,9 @@
 // only far out and fights hardest. Score: the catch's points.
 // def: { seaY (world height of the sea, -1.6), casts: 5, reach: [6, 22], pass, points, fish (another catch table: [{ name,
 //   pts, fight, size, col, far, gold?, boot? }]) }
+// With the Rebel's games pack (Forge rigs, v2.24) the Rebel fishes for real: holds the rod (game_fish_wait), winds up and
+// casts (game_cast: the float leaves at the release), reels (game_reel) and cheers a catch (game_cheer); the rod rides
+// the hands. Without it the rod stands beside the Rebel as before.
 (function () {
   const FISH0 = [ // name, points, fight (0..1), size (m), colour, far (how much it favours long casts)
     { name: 'an old boot', pts: 2, fight: .05, size: .32, col: [.3, .22, .15], far: 0, boot: true },
@@ -15,8 +18,9 @@
     { name: 'a tuna', pts: 70, fight: .78, size: .95, col: [.2, .28, .45], far: .9 },
     { name: 'the golden snapper', pts: 150, fight: .95, size: .7, col: [1, .78, .25], far: 1, gold: true }
   ];
+  const CAST_RELEASE = 1.45, CAST_LEN = 2.7; // game_cast: the rod comes forward 1.45 s in, the clip is 2.7 s long
   const G = {
-    title: 'Pier Fishing',
+    title: 'Pier Fishing', moves: true,
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, U = ctx.util, scene = ctx.scene, def = ctx.def;
       const CASTS = def.casts || 5, REACH = def.reach || [6, 22], FISH = def.fish?.length ? def.fish : FISH0;
@@ -28,9 +32,28 @@
       // the rod in the Rebel's right hand, out over the water
       const rod = keep(B.MeshBuilder.CreateCylinder('fishRod', { height: 3, diameterTop: .025, diameterBottom: .07, tessellation: 8 }, scene)); rod.material = rodM;
       const rodBase = new V3(.62, 1.55, .35), rodRest = .95;
-      const setRod = (pitch) => { rod.rotation.x = pitch; rod.position.set(rodBase.x, rodBase.y + Math.cos(pitch) * 1.5, rodBase.z + Math.sin(pitch) * 1.5); };
-      const tip = () => new V3(rodBase.x, rodBase.y + Math.cos(rod.rotation.x) * 3, rodBase.z + Math.sin(rod.rotation.x) * 3);
-      setRod(rodRest);
+      // the rod's pitch comes from the game (0 = straight up, rodRest = out over the water); with the games pack its butt
+      // rides the hands (both on it while waiting, the left while the right cranks the reel, the right in a cheer) and in
+      // the cast it swings through both hands
+      const PACK = !!ctx.player.has?.('game_cast');
+      let rodPitch = rodRest, swing = 0, swingTo = 0, move = '';
+      const rodB = rodBase.clone(), rodD = new V3(0, 1, 0), UP = new V3(0, 1, 0);
+      const handsAt = () => { const r = ctx.player.bone('RightHand'), l = ctx.player.bone('LeftHand'); return r && l ? [ctx.toLocal(r), ctx.toLocal(l)] : null; };
+      const poseRod = () => {
+        rodD.set(0, Math.cos(rodPitch), Math.sin(rodPitch));
+        const h = PACK ? handsAt() : null;
+        if (h) {
+          const [r, l] = h;
+          if (swing > 0) { const d = l.subtract(r); if (d.length() > .04) { d.normalize(); d.y = Math.max(d.y, -.3); d.normalize(); V3.LerpToRef(rodD, d, swing, rodD); rodD.normalize(); } }
+          rodB.copyFrom(st.phase === 'reel' ? l : st.phase === 'after' || st.phase === 'windup' || st.phase === 'fly' ? r : V3.Lerp(r, l, .5));
+        } else rodB.copyFrom(rodBase);
+        rod.position.copyFrom(rodB.add(rodD.scale(1.5)));
+        const ax = V3.Cross(UP, rodD), an = Math.acos(Math.max(-1, Math.min(1, V3.Dot(UP, rodD))));
+        rod.rotationQuaternion = ax.length() < 1e-6 ? B.Quaternion.Identity() : B.Quaternion.RotationAxis(ax.normalize(), an);
+      };
+      const setRod = (pitch) => { rodPitch = pitch; };
+      const tip = () => rodB.add(rodD.scale(3));
+      const play = (name, o) => { if (!PACK || move === name) return; move = name; ctx.player.clip(name, o); };
       const bob = keep(new B.TransformNode('fishBob', scene)); bob.parent = ctx.frame;
       { const top = B.MeshBuilder.CreateSphere('fishBobTop', { diameter: .24, segments: 8, slice: .5 }, scene); top.material = redM; top.parent = bob; top.isPickable = false; ctx.add(top);
         const bot = B.MeshBuilder.CreateSphere('fishBobBot', { diameter: .24, segments: 8, slice: .5 }, scene); bot.material = whiteM; bot.rotation.x = Math.PI; bot.parent = bob; bot.isPickable = false; ctx.add(bot); }
@@ -52,19 +75,21 @@
       bar.innerHTML = '<div style="position:absolute;left:0;top:0;bottom:0;width:30px;border-radius:15px;background:linear-gradient(#123,#0b1a2a);border:2px solid #d8b35c;overflow:hidden"><div class="fz" style="position:absolute;left:2px;right:2px;border-radius:12px;background:rgba(94,207,140,.6);border:1px solid #9fe8b8"></div><div class="ff" style="position:absolute;left:0;right:0;height:22px;margin-top:-11px;text-align:center;font-size:18px;line-height:22px">🐟</div></div><div style="position:absolute;left:38px;top:0;bottom:0;width:12px;border-radius:6px;background:#1b2230;border:1px solid #555;overflow:hidden"><div class="fp" style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(#ffd877,#3a8f7a)"></div></div>';
       hud.appendChild(bar);
       const fz = bar.querySelector('.fz'), ffi = bar.querySelector('.ff'), fp = bar.querySelector('.fp');
-      const st = { phase: 'intro', t: 0, wait: 1, cast: 0, score: 0, log: [], hold: false, power: 0, land: null, fish: -1, bite: 0, nibbles: 0, reel: null, catchAnim: null, scare: 0 };
-      ctx.player.place(0, 0, 0);
+      const st = { phase: 'intro', t: 0, wait: 1, cast: 0, score: 0, log: [], hold: false, power: 0, land: null, fish: -1, bite: 0, nibbles: 0, reel: null, catchAnim: null, scare: 0, castT: -1 };
+      ctx.player.place(0, 0, 0); play('game_fish_wait', { loop: true }); poseRod();
       const look = () => ctx.look([1.6, 4.2, -6], [0, -.5, 9], def.fov || .8);
       look();
       H.title(def.title || 'Pier Fishing'); H.score(0);
       const info = () => H.info(`Cast ${Math.min(CASTS, st.cast + 1)} / ${CASTS}${st.log.length ? ' · ' + st.log.map(l => l.pts).join(' + ') : ''}`);
       info(); H.msg('Pier Fishing', 1200, `${CASTS} casts`);
       const hint = (p) => H.hint(p === 'aim' ? '<kbd>Space</kbd> or click: stop the power mark and cast (farther = bigger fish)' : p === 'wait' ? 'Wait for the float to go right under, then strike: <kbd>Space</kbd>. Nibbles are only nibbles.' : p === 'reel' ? 'Hold <kbd>Space</kbd> (or the mouse) to lift the green zone; keep the fish inside it.' : '');
-      function aim() { st.phase = 'aim'; st.t = Math.random() * 2; setRod(rodRest); bob.setEnabled(false); if (line) line.setEnabled(false); hint('aim'); }
+      function aim() { st.phase = 'aim'; st.t = Math.random() * 2; setRod(rodRest); bob.setEnabled(false); if (line) line.setEnabled(false); hint('aim'); play('game_fish_wait', { loop: true }); }
       function cast() {
         st.power = U.pingPong(st.t, .7); H.meter(null);
         const d = REACH[0] + (REACH[1] - REACH[0]) * st.power, x = (Math.random() - .5) * 2.4;
-        st.land = new V3(x, WY, d); st.phase = 'fly'; st.t = 0; bob.setEnabled(true); ctx.player.clip('cross_punch'); hint('');
+        st.land = new V3(x, WY, d); hint('');
+        if (PACK) { st.phase = 'windup'; st.t = 0; st.castT = 0; swingTo = 1; play('game_cast', { hold: true }); return; } // the float goes at the release
+        st.phase = 'fly'; st.t = 0; bob.setEnabled(true); ctx.player.clip('cross_punch');
       }
       function pickFish() {
         const far = st.power, w = FISH.map(f => { if (f.gold && far < .72) return 0; const near = 1 - Math.abs(far - f.far); return Math.max(.02, near * near) * (f.gold ? .45 : f.boot ? .5 : 1); });
@@ -74,13 +99,14 @@
         if (st.phase === 'bite') {
           st.fish = pickFish(); const f = FISH[st.fish]; st.phase = 'reel'; st.t = 0; ctx.sound('reel');
           st.reel = { zone: .35, zv: 0, fishY: .5, target: .5, fv: 0, prog: .3, size: .3 - f.fight * .08, speed: .25 + f.fight * 1.1, dart: f.fight };
-          bar.style.display = 'block'; hint('reel'); H.msg('Hooked!', 700); return;
+          bar.style.display = 'block'; hint('reel'); H.msg('Hooked!', 700); play('game_reel', { loop: true }); return;
         }
         if (st.phase === 'wait') { st.scare++; H.msg('Too soon', 800, 'the fish swam off'); splashAt(bob.position); st.waitT = 2.5 + Math.random() * 3; st.nibbleT = 1 + Math.random() * 1.5; }
       }
       function endCast(caught) {
-        bar.style.display = 'none';
+        bar.style.display = 'none'; hint('');
         const f = caught ? FISH[st.fish] : null; st.log.push({ name: f ? f.name : 'nothing', pts: f ? f.pts : 0 }); st.score += f ? f.pts : 0; H.score(st.score);
+        if (f && !f.boot) play('game_cheer'); else play('game_fish_wait', { loop: true });
         if (f) { ctx.sound('splash'); H.msg(f.gold ? 'The golden snapper!' : f.boot ? 'An old boot…' : 'Caught!', 1500, `${f.name} · ${f.pts} points`);
           const n = makeFish(st.fish); n.position.copyFrom(bob.position); st.catchAnim = { n, t: 0, from: bob.position.clone() }; }
         else { H.msg('It got away', 1200); }
@@ -90,10 +116,15 @@
       return {
         update(dt) {
           look(); st.t += dt;
+          // the cast move: the rod swings with the hands, the float leaves at the release, back to holding at its end
+          if (st.castT >= 0) { st.castT += dt; if (st.castT >= CAST_LEN) { st.castT = -1; swingTo = 0; if (st.phase === 'wait' || st.phase === 'bite' || st.phase === 'fly') play('game_fish_wait', { loop: true }); } }
+          if (st.phase === 'windup' && st.castT >= CAST_RELEASE) { st.phase = 'fly'; st.t = 0; bob.setEnabled(true); }
+          swing += Math.max(-dt * 2.5, Math.min(dt * 4, swingTo - swing));
           for (let k = rings.length - 1; k >= 0; k--) { const r = rings[k]; r.t += dt; const s = 1 + r.t * (r.big ? 7 : 4); r.r.scaling.set(s, 1, s); r.r.material.alpha = Math.max(0, .7 - r.t * .8); if (r.t > .9) { r.r.dispose(); rings.splice(k, 1); } }
           if (st.catchAnim) { const c = st.catchAnim; c.t += dt; const u = Math.min(1, c.t / .8), e = u * u * (3 - 2 * u); const to = new V3(.2, 2.2, 1.6); c.n.position = V3.Lerp(c.from, to, e); c.n.position.y += Math.sin(u * Math.PI) * 1.2; c.n.rotation.z = Math.sin(c.t * 9) * .4 * (1 - u * .6); c.n.rotation.y = Math.PI / 2; if (c.t > 2.1) { c.n.dispose(); st.catchAnim = null; } }
           if (st.phase === 'intro' && (st.wait -= dt) <= 0) aim();
           if (st.phase === 'aim') { const p = U.pingPong(st.t, .7); H.meter({ label: 'Cast', fill: p, value: p }); setRod(rodRest - .3 * p); }
+          poseRod();
           if (st.phase === 'fly') { const u = Math.min(1, st.t / (.6 + st.power * .5)), a = tip(); setRod(rodRest + .55 * Math.min(1, st.t * 4) - .55 * u * .5);
             const p = V3.Lerp(a, st.land, u); p.y += Math.sin(u * Math.PI) * (2 + st.power * 4) * (1 - u * .2); bob.position.copyFrom(p); drawLine(tip(), bob.position);
             if (u >= 1) { splashAt(st.land); ctx.sound('thock'); st.phase = 'wait'; st.t = 0; st.waitT = 2 + Math.random() * 4.5; st.nibbleT = .8 + Math.random() * 1.2; st.dip = 0; hint('wait'); } }
