@@ -4,9 +4,11 @@
 // narrows the band and quickens the hammer. Last, the quench: stop the sweep in the narrow moonlight band. The blade's
 // quality is the score.
 // def: { folds: 6, pass, points }
+// Oct 17 (Miguel: "it just needs the animation of him swinging the hammer down"): with the games pack the hammer is in
+// the Rebel's right hand and each strike is an overhand swing down onto the anvil (game_throw from its wind-up's top).
 (function () {
   const G = {
-    title: "The Swordsmith's Forge",
+    title: "The Swordsmith's Forge", moves: true,
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, U = ctx.util, scene = ctx.scene, def = ctx.def;
       const FOLDS = def.folds || 6;
@@ -27,6 +29,11 @@
       const hammerPiv = keep(new B.TransformNode('forgeHammer', scene)); hammerPiv.position.set(-.55, 1.5, 2.95);
       box('forgeHammerHandle', .07, .07, 1, woodM, 0, 0, .5, hammerPiv); box('forgeHammerHead', .22, .22, .36, ironM, 0, 0, 1.0, hammerPiv);
       hammerPiv.rotation.y = Math.atan2(.55, -.95); hammerPiv.rotation.x = -.9;
+      // with the games pack the hammer rides the right hand: the handle runs on from the forearm through the fist
+      const PACK = !!ctx.player.has?.('game_throw');
+      const inHand = () => { const h = ctx.player.bone('RightHand'), f = ctx.player.bone('RightForeArm'); if (!h || !f) return false;
+        const lh = ctx.toLocal(h), d = lh.subtract(ctx.toLocal(f)).normalize(); hammerPiv.position.copyFrom(lh.subtract(d.scale(.12)));
+        hammerPiv.rotation.y = Math.atan2(d.x, d.z); hammerPiv.rotation.x = -Math.asin(Math.max(-1, Math.min(1, d.y))); return true; };
       const ring = keep(B.MeshBuilder.CreateTorus('forgeRing', { diameter: 1, thickness: .035, tessellation: 32 }, scene)); ring.material = ringM; ring.position.set(0, 1.18, 2); ring.setEnabled(false);
       const goal = keep(B.MeshBuilder.CreateTorus('forgeGoal', { diameter: .36, thickness: .05, tessellation: 32 }, scene)); goal.material = goalM; goal.position.set(0, 1.17, 2); goal.setEnabled(false);
       const sparks = []; const sSpark = keep(B.MeshBuilder.CreateBox('forgeSpark', { size: .04 }, scene)); sSpark.material = coalM; sSpark.isVisible = false;
@@ -54,7 +61,7 @@
       function strike() {
         if (st.phase !== 'strike' || !st.ring) return;
         const r = st.ring, s = 1.2 - (1.2 - .36) * (r.t / r.dur), err = Math.abs(s - .36) / (1.2 - .36) * r.dur; // seconds off the gold circle
-        const q = err < .06 ? 10 : err < .14 ? 6 : err < .24 ? 3 : 0; st.cur.strikes.push(q); st.hammer = .22; ctx.player.clip('cross_punch');
+        const q = err < .06 ? 10 : err < .14 ? 6 : err < .24 ? 3 : 0; st.cur.strikes.push(q); st.hammer = .22; if (PACK) ctx.player.clip('game_throw', { from: .72 }); else ctx.player.clip('cross_punch');
         ctx.sound('thock'); spark(q >= 6 ? 14 : 6); H.msg(q === 10 ? 'Perfect' : q === 6 ? 'Good' : q ? 'Rough' : 'Miss', 450);
         steel.scaling.z = 1 + st.cur.strikes.length * .12; st.heat = Math.max(0, st.heat - .07);
         ring.setEnabled(false); goal.setEnabled(false); st.ring = null;
@@ -77,7 +84,8 @@
           look(); st.t = (st.t || 0) + dt;
           for (let k = sparks.length - 1; k >= 0; k--) { const s = sparks[k]; s.t += dt; s.v.y -= 9.8 * dt; s.s.position.addInPlace(s.v.scale(dt)); if (s.t > .7) { s.s.dispose(); sparks.splice(k, 1); } }
           coals.material.emissiveColor.set(1, .3 + (st.held && st.phase === 'heat' ? .25 : 0) + Math.sin(st.t * 7) * .04, .06);
-          if (st.hammer > 0) { st.hammer = Math.max(0, st.hammer - dt); const u = st.hammer > .11 ? 1 - (st.hammer - .11) / .11 : st.hammer / .11; hammerPiv.rotation.x = -.9 + 1.15 * u; } else hammerPiv.rotation.x = -.9 + Math.sin(st.t * 2) * .03;
+          if (PACK && inHand()) st.hammer = 0;
+          else if (st.hammer > 0) { st.hammer = Math.max(0, st.hammer - dt); const u = st.hammer > .11 ? 1 - (st.hammer - .11) / .11 : st.hammer / .11; hammerPiv.rotation.x = -.9 + 1.15 * u; } else hammerPiv.rotation.x = -.9 + Math.sin(st.t * 2) * .03;
           if (st.phase === 'intro' && (st.wait -= dt) <= 0) startHeat();
           if (st.phase === 'heat') { st.heat = Math.max(0, Math.min(1, st.heat + (st.held ? .32 + st.fold * .03 : -.05) * dt)); bellows.scaling.y = st.held ? .7 + Math.abs(Math.sin(st.t * 9)) * .5 : 1; glow(st.heat); H.meter({ label: 'Heat', fill: st.heat, value: st.heat, zone: band() }); }
           if (st.phase === 'move') { const u = Math.min(1, st.t / .45); steel.position.set(-2 + 2 * u, 1.02 + .12 + Math.sin(u * Math.PI) * .4, 2.4 - .4 * u); st.heat = Math.max(0, st.heat - .04 * dt); glow(st.heat); if (u >= 1) { steel.position.set(0, 1.2, 2); nextStrike(); } }
