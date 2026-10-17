@@ -137,6 +137,22 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
       return new Promise(res => { howDone = () => { howDone = null; c.classList.remove('on'); res(); }; c.querySelector('button').onclick = (ev) => { ev.currentTarget.blur(); howDone && howDone(); }; });
     },
     closeHowTo() { if (howDone) howDone(); },
+    // a level picker (Oct 17, Miguel: twenty levels in the action games): { title, sub, n, open (the last playable
+    // level), done (how many are cleared), label(k) (a small line under a number), pick(k), color }. The digit keys pick
+    // levels 1-10 (panel.key(e) from the game's key handler); the game removes the panel when a level starts
+    levels(o) {
+      const p = document.createElement('div'), wide = o.n > 6 && innerWidth >= 600, col = o.color || '#d8b35c';
+      p.className = 'gh-levels';
+      p.style.cssText = `position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(${wide ? 560 : 390}px,92vw);max-height:86vh;overflow:auto;background:rgba(16,12,8,.94);border:1px solid ${col};border-radius:14px;padding:16px;text-align:center;pointer-events:auto;color:#f3e6c4;font:14px/1.4 system-ui,sans-serif`;
+      const btn = k => { const open = k <= o.open, ok = k < o.done, sub = open && o.label ? o.label(k) : '';
+        return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? col : '#444'};background:${ok ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? k + 1 : '\u{1F512}'}${ok ? ' \u2713' : ''}${sub ? `<div style="font:11px system-ui;opacity:.75">${sub}</div>` : ''}</button>`; };
+      p.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:${col};margin-bottom:8px">${o.title || 'Levels'}</div>`
+        + (o.sub ? `<div style="margin-bottom:12px;color:#bbb">${o.sub}</div>` : '')
+        + `<div style="display:grid;grid-template-columns:repeat(${wide ? 5 : 4},1fr);gap:8px">${Array.from({ length: o.n }, (_, k) => btn(k)).join('')}</div>`;
+      p.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); o.pick(+b.dataset.k); });
+      p.key = (e) => { if (!p.isConnected) return false; const d = '1234567890'.indexOf(e.key); if (d < 0 || d >= o.n) return false; const b = p.querySelector(`button[data-k="${d}"]:not([disabled])`); if (b) b.click(); return !!b; };
+      ensure().hud.appendChild(p); return p;
+    },
     howToOpen: () => !!els && els.how.classList.contains('on'),
     title(t) { ensure().q('.gh-title').textContent = t || ''; },
     score(t) { ensure().q('.gh-score').textContent = t == null ? '' : String(t); },
@@ -202,5 +218,11 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   // a value sweeping 0..1..0 (a ping-pong meter) at speed sweeps per second, from phase t
   const pingPong = (t, speed) => { const u = (t * speed) % 2; return u < 1 ? u : 2 - u; };
-  window.RebelGames = { register, load, games, HUD, showResult, hideResult, resultOpen, resultBoard, util: { clamp, pingPong } };
+  // how many levels of a game this player has cleared (in order), kept on the device; ?levels=open (previews) opens all
+  const levelsOpen = () => /[?&]levels=open\b/.test(location.search);
+  const levelStore = (id) => { const k = 'rebelAntsLevels:v1:' + id; return {
+    get() { let n = 0; try { n = Math.max(0, Number(localStorage.getItem(k)) || 0); } catch (e) {} return n; },
+    open(max) { return levelsOpen() ? max - 1 : Math.min(max - 1, this.get()); },
+    set(n) { try { if (n > this.get()) localStorage.setItem(k, String(n)); } catch (e) {} } }; };
+  window.RebelGames = { register, load, games, HUD, showResult, hideResult, resultOpen, resultBoard, util: { clamp, pingPong, levelStore } };
 })();
