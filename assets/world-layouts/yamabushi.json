@@ -29600,9 +29600,9 @@
             5
           ]
         ],
-        "pass": 7,
+        "pass": 10,
         "points": 50,
-        "max": 10,
+        "max": 16,
         "hide": [
           "yam_spirit_lantern"
         ]
