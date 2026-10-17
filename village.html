@@ -11004,11 +11004,17 @@ function buildMiniGameCtx(def, src, frame) {
       let res; try { res = await BABYLON.SceneLoader.ImportMeshAsync('', '', url, scene); } catch (e) { console.warn('game model', url, e?.message || e); return null; }
       const nodes = [...(res.transformNodes || []), ...(res.meshes || [])], set = new Set(nodes);
       if (!MiniGames.on || MiniGames.ctx !== ctx) { res.animationGroups.forEach(g => g.dispose()); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); return null; }
-      const holder = new BABYLON.TransformNode('miniGameModel_' + (o.name || 'm'), scene); holder.parent = frame;
-      nodes.forEach(n => { if (!n.parent || !set.has(n.parent)) n.parent = holder; });
+      const holder = new BABYLON.TransformNode('miniGameModel_' + (o.name || 'm'), scene), body = new BABYLON.TransformNode('miniGameModelBody_' + (o.name || 'm'), scene); body.parent = holder;
+      nodes.forEach(n => { if (!n.parent || !set.has(n.parent)) n.parent = body; });
       (res.meshes || []).forEach(m => { m.isPickable = false; m.alwaysSelectAsActiveMesh = true; if (o.opaque) makeNPCMaterialOpaque(m.material); }); // skinned bounds stay in the bind pose
-      if (o.size) { const { min, max } = holder.getHierarchyBoundingVectors(true), big = Math.max(max.x - min.x, max.y - min.y, max.z - min.z) || 1; holder.scaling.setAll(o.size / big); }
+      // size: measured on the skinned rest pose, which then stands on the holder's origin (a rigged model's own vertex data
+      // can sit anywhere: the Hub mini ant's is 1.6 cm across before its skin is applied and its skinned pose 3.3 units up, so
+      // in Mini Ant Tag it came out 140 times too big, then 190 m up in the air, and only its light showed)
+      if (o.size) { (res.skeletons || []).forEach(sk => { try { sk.prepare(true); } catch (e) {} }); (res.meshes || []).forEach(m => { if (m.skeleton) try { m.refreshBoundingInfo(true); } catch (e) {} });
+        const { min, max } = holder.getHierarchyBoundingVectors(true), big = Math.max(max.x - min.x, max.y - min.y, max.z - min.z) || 1; // the holder is still at the origin
+        body.position.set(-(min.x + max.x) / 2, -min.y, -(min.z + max.z) / 2); holder.scaling.setAll(o.size / big); }
       else holder.scaling.setAll(o.scale || 1);
+      holder.parent = frame;
       const groups = res.animationGroups || []; groups.forEach(g => { g.stop(); g.enableBlending = true; g.blendingSpeed = .2; });
       ctx.add(holder); MiniGames.objs.push({ dispose() { groups.forEach(g => g.dispose()); }, isDisposed: () => false });
       const find = n => groups.find(g => g.name.toLowerCase() === String(n).toLowerCase()) || groups.find(g => g.name.toLowerCase().endsWith(String(n).toLowerCase()));
