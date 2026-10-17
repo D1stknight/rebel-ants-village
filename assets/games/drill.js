@@ -3,7 +3,9 @@
 // punches it. Quick strikes score more, five in a row double every strike. Later two light at once, and a red one is a
 // feint: leave it alone. 30 seconds, the lights quicker as they come.
 // def: { at: [x, z] (frame coords where the Rebel stands), face: yaw (the way it faces: 0 = +z), r: 1.9 (the dummies'
-// distance), seconds: 30, pass, points }
+// distance), pass, points }
+// Oct 17 (Miguel: "make it longer and give it 10 levels"): ten levels from 40 s to 85 s, each starting where the last one's
+// pace left off (the lights shorter, pairs and feints sooner); a level is cleared with its number of strikes.
 (function () {
   const DIRS = [ // the dummy's place round the Rebel: the turn from its facing, the keys, the moves that reach it
     { name: 'front', turn: 0, keys: ['w', 'arrowup'], glyph: '↑', moves: ['front_kick', 'jab', 'cross_punch'] },
@@ -15,7 +17,10 @@
     title: 'Dummy Drill',
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
-      const AT = def.at || [0, 0], FACE = def.face || 0, R = def.r || 1.9, DUR = def.seconds || 30;
+      const AT = def.at || [0, 0], FACE = def.face || 0, R = def.r || 1.9;
+      const LEVELS = 10, store = ctx.util.levelStore(def.id || 'drill');
+      const LV = Array.from({ length: LEVELS }, (_, k) => { const seconds = 40 + 5 * k; return { seconds, base: .55 * k / (LEVELS - 1), need: Math.round(seconds * (.8 + .4 * k / (LEVELS - 1))) }; }); // about 60 % of what a quick player strikes
+      let L = LV[0], DUR = L.seconds;
       const fwd = [Math.sin(FACE), Math.cos(FACE)], rt = [Math.cos(FACE), -Math.sin(FACE)];
       const mat = (k, c, em, spec = .05) => ctx.mat(k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(spec, spec, spec); if (em) m.emissiveColor = new B.Color3(...em); return m; });
       const wood = mat('wood', [.34, .21, .1]), straw = mat('straw', [.6, .48, .28], [.06, .05, .02]), rope = mat('rope', [.45, .3, .16]);
@@ -43,9 +48,10 @@
       const hud = document.getElementById('gameHud');
       const glyphs = dummies.map(() => { const g = document.createElement('div'); g.style.cssText = 'position:absolute;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,233,176,.9);background:rgba(20,14,6,.72);color:#ffe9b0;font:700 26px/42px Georgia,serif;text-align:center;pointer-events:none;display:none;text-shadow:0 2px 0 #000'; hud.appendChild(g); return g; });
       // ── state ──
-      const st = { phase: 'intro', wait: 1.6, left: DUR, score: 0, streak: 0, best: 0, hits: 0, misses: 0, feints: 0, next: .4, bits: [], move: 0 };
-      const info = () => H.info(`${Math.ceil(st.left)} s${st.streak >= 5 ? ' · x2' : st.streak ? ' · combo ' + st.streak : ''}`);
-      const lvl = () => Math.min(1, (DUR - st.left) / DUR);
+      const st = { phase: 'pick', wait: 1.6, left: DUR, score: 0, streak: 0, best: 0, hits: 0, misses: 0, feints: 0, next: .4, bits: [], move: 0, level: 0 };
+      const info = () => H.info(`Level ${st.level + 1} \u00b7 ${st.hits} / ${L.need} \u00b7 ${Math.ceil(st.left)} s${st.streak >= 5 ? ' · x2' : st.streak ? ' · combo ' + st.streak : ''}`);
+      // the pace: the level's start, then on up through the level (the whole range by the end of level 10)
+      const lvl = () => Math.min(1, L.base + (1 - .55) * (DUR - st.left) / DUR);
       function light() {
         const L = lvl(), win = 1.5 - .9 * L, off = dummies.filter(m => m.state === 'off');
         if (!off.length) return;
@@ -80,12 +86,20 @@
         } else { st.streak = 0; H.msg('Not that one', 600); }
         info();
       }
+      // ── the level picker ──
+      let picker = null;
+      const showPicker = () => { picker = H.levels({ title: def.title || 'Dummy Drill', sub: 'Strike enough lit dummies before the time runs out. Ten levels, each longer and quicker.', n: LEVELS, open: store.open(LEVELS), done: store.get(), label: k => `${LV[k].need} in ${LV[k].seconds} s`, pick: begin }); };
+      function begin(k) {
+        if (st.phase !== 'pick') return; if (picker) { picker.remove(); picker = null; }
+        L = LV[k]; DUR = L.seconds; Object.assign(st, { level: k, phase: 'intro', wait: 1.4, left: DUR, score: 0, streak: 0, best: 0, hits: 0, misses: 0, feints: 0, next: .4 }); dummies.forEach(out);
+        H.score(0); info(); H.msg(`Level ${k + 1}`, 1300, `${L.need} strikes in ${DUR} s`);
+      }
       ctx.player.place(AT[0], AT[1], FACE);
       const cam = def.cam || [AT[0] - fwd[0] * 5.4, 8.2, AT[1] - fwd[1] * 5.4], at = def.look || [AT[0] + fwd[0] * .6, .9, AT[1] + fwd[1] * .6];
       ctx.look(cam, at, def.fov || .85);
       H.title(def.title || 'Dummy Drill'); H.score(0); info();
       H.hint('Strike the lit dummy: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> (or the arrows), or click it. Five in a row doubles every strike; leave the red ones.');
-      H.msg(def.title || 'Dummy Drill', 1500, `${DUR} seconds`);
+      showPicker();
       const inst = {
         update(dt) {
           ctx.look(cam, at);
@@ -106,18 +120,20 @@
           for (let k = st.bits.length - 1; k >= 0; k--) { const s = st.bits[k]; s.t += dt; s.v.y -= 9.8 * dt; s.b.position.addInPlace(s.v.scale(dt)); s.b.rotation.x += dt * 9; if (s.b.position.y < .03 || s.t > .9) { s.b.dispose(); st.bits.splice(k, 1); } }
           if (st.phase === 'end' && (st.wait -= dt) <= 0) {
             st.phase = 'done'; H.hint(''); glyphs.forEach(g => g.remove());
-            if (st.score >= (def.pass || 0)) ctx.sound('gamewin');
-            ctx.finish({ score: st.score, label: 'points', extra: `${st.hits} strikes, best combo ${st.best}${st.feints ? `, ${st.feints} feint${st.feints > 1 ? 's' : ''} hit` : ''}.` });
+            const ok = st.hits >= L.need; if (ok) { store.set(st.level + 1); ctx.sound('gamewin'); }
+            ctx.finish({ score: st.score, label: 'points', kicker: ok ? `Level ${st.level + 1} cleared` : `Level ${st.level + 1}`, solved: ok, next: ok && st.level + 1 < LEVELS ? st.level + 1 : null,
+              extra: `${st.hits} strikes (${L.need} clears it), best combo ${st.best}${st.feints ? `, ${st.feints} feint${st.feints > 1 ? 's' : ''} hit` : ''}.` });
           }
         },
-        key(e, down) { if (!down || e.repeat) return; const k = e.key.toLowerCase(); const i = DIRS.findIndex(d => d.keys.includes(k)); if (i >= 0) strike(i); },
+        key(e, down) { if (!down || e.repeat) return; if (picker && picker.key(e)) return; const k = e.key.toLowerCase(); const i = DIRS.findIndex(d => d.keys.includes(k)); if (i >= 0) strike(i); },
+        restart() { if (st.phase === 'pick') return; st.phase = 'pick'; dummies.forEach(out); showPicker(); },
         pointer(evt) {
           if (evt.type !== B.PointerEventTypes.POINTERDOWN) return;
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.drill !== undefined);
           if (hit && hit.hit) strike(hit.pickedMesh.metadata.drill);
         },
-        _test: { st, strike, dummies },
-        dispose() { glyphs.forEach(g => g.remove()); st.bits.forEach(s => { try { s.b.dispose(); } catch (e) {} }); }
+        _test: { st, strike, dummies, begin, LV, get L() { return L; } },
+        dispose() { if (picker) picker.remove(); glyphs.forEach(g => g.remove()); st.bits.forEach(s => { try { s.b.dispose(); } catch (e) {} }); }
       };
       return inst;
     }
