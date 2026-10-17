@@ -6,6 +6,8 @@
 // Every square is a thin instance of one box (one draw call for the well, one for the ghost), so a move only rewrites
 // a small buffer. def: { lines (rows to clear, default 25), points }
 // Oct 17: How to play (the rules) and Restart (a new run: an empty well, level 1, 0 points; the best stays).
+// Oct 17 (Miguel: every board game needs an image example and fuller rules): howTo with howto/blocks.png (a stack of real
+// pieces, a long piece, its ghost and a Skyline; scratchpad agents/htC/blocks/draw.py + check.py).
 (function () {
   const W = 10, Hh = 20, CS = .12;
   const SHAPES = { I: [[0, 1], [1, 1], [2, 1], [3, 1]], O: [[1, 0], [2, 0], [1, 1], [2, 1]], T: [[1, 0], [0, 1], [1, 1], [2, 1]], S: [[1, 0], [2, 0], [0, 1], [1, 1]], Z: [[0, 0], [1, 0], [1, 1], [2, 1]], J: [[0, 0], [0, 1], [1, 1], [2, 1]], L: [[2, 0], [0, 1], [1, 1], [2, 1]] };
@@ -16,11 +18,14 @@
   const G = {
     title: 'Skyline Blocks',
     howTo: { lines: [
-      'Press Start (or Enter). Pieces of four squares fall into the well, and a row filled from wall to wall clears.',
-      '← → (or A D) move a piece, ↑ or X turns it (Z the other way), ↓ drops it faster and Space drops it straight down.',
-      'Several rows at once score more, and every 10 rows the pieces fall faster.',
-      'The run ends when the well fills to the top; clear 25 rows in one run to clear the cabinet.',
-      'Tip: the next piece shows on the right and a faint ghost shows where this one will land; keep the stack flat.'] },
+      'Clear 25 rows in one run to clear the cabinet (then keep going for points). Press Start (or Enter): pieces of four squares fall one at a time into the well, ten squares wide and twenty high.',
+      'A row filled from wall to wall clears, and everything above it drops down a row.',
+      '← → (A D) move the piece, ↑ (W or X) turns it and Z (Q) turns it the other way; ↓ (S) drops it faster and Space drops it straight down. Held keys repeat; on a touch screen use the buttons at the bottom right.',
+      'A piece that lands can still slide or turn for half a second before it locks in place.',
+      'Points: 100 for one row, 300 for two, 500 for three and 800 for four at once (a Skyline), times the level; a soft drop pays 1 a square, a hard drop 2.',
+      'Every 10 rows the level rises and the pieces fall faster. The run ends when a new piece has no room at the top. Restart starts a new run (your best stays).',
+      'Tip: the next piece shows in the box at the top right, and a faint ghost shows where this one will land. Every seven pieces bring one of each shape, so keep one column open for the long piece.'],
+      img: 'howto/blocks.png', caption: 'A long piece drops into the one open column: the ghost shows where it lands, and four full rows clear at once, a Skyline.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def, GOAL = def.lines || 25, BEST = 'rebelAntsBlocksBest:' + (def.id || 'blocks');
       const mat = (k, c, em) => ctx.mat(k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(.1, .1, .1); if (em) m.emissiveColor = new B.Color3(...em); return m; });
