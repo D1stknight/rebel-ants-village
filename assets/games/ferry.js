@@ -89,7 +89,14 @@
         bd.pawns = L.units.map((u, i) => { const p = pawn(u, i); p.position.copyFrom(slot(i, 0)); return p; });
         boat.position.set(-DOCK, TY + .02, 0); rulesCard(); info(); ctx.player.place(0, 2.1, Math.PI);
       }
-      const info = () => H.info(bd ? `Crossing ${bd.k + 1} / ${LV.length} · trips ${bd.trips} · fewest ${bd.L.best}${bd.L.lamp ? ` · lamp ${bd.time} / ${bd.L.lamp} min` : ''}${bd.hints ? ` · hints ${bd.hints}` : ''}` : 'Pick a crossing');
+      const info = () => { H.info(bd ? `Crossing ${bd.k + 1} / ${LV.length} · trips ${bd.trips} · fewest ${bd.L.best}${bd.hints ? ` · hints ${bd.hints}` : ''}` : 'Pick a crossing'); lampGauge(); };
+      // the night crossings: a lamp gauge (Miguel: he ran out of lamp and could not tell why every trip slipped) with the
+      // minutes left and what the trip on the ferry now would cost
+      function lampGauge() {
+        const L = bd?.L; if (!L?.lamp || st.phase === 'pick') { H.meter(null); return; }
+        const left = L.lamp - bd.time, trip = bd.aboard.length ? Math.max(...bd.aboard.map(i => mins(L.units[i]))) : 0;
+        H.meter({ label: `Lamp: ${left} of ${L.lamp} min left${trip ? ` · this trip ${trip} min${trip > left ? ' (too long!)' : ''}` : ''}`, fill: left / L.lamp, value: trip ? Math.max(0, left - trip) / L.lamp : null });
+      }
       function moveTo(i, target) { st.anim.push({ p: bd.pawns[i], from: bd.pawns[i].position.clone(), to: target, t: 0 }); }
       function relayout() { // aboard pawns ride the boat; the rest stand in their places on their bank
         bd.aboard.forEach((i, k) => { const p = bd.pawns[i]; const s = seatPos(k, bd.L.cap); moveTo(i, new V3(boat.position.x + s.x, boat.position.y + s.y, s.z)); });
@@ -97,10 +104,10 @@
       }
       function click(i) {
         if (st.phase !== 'play' || st.cross || !bd) return;
-        if (bd.side[i] === 2) { bd.aboard = bd.aboard.filter(x => x !== i); bd.side[i] = bd.boatSide; relayout(); ctx.note(500, 'lantern'); return; }
+        if (bd.side[i] === 2) { bd.aboard = bd.aboard.filter(x => x !== i); bd.side[i] = bd.boatSide; relayout(); ctx.note(500, 'lantern'); lampGauge(); return; }
         if (bd.side[i] !== bd.boatSide) { H.msg('The ferry is on the other bank', 900); return; }
         if (bd.aboard.length >= bd.L.cap) { H.msg(`The ferry holds ${bd.L.cap}`, 900); return; }
-        bd.aboard.push(i); bd.side[i] = 2; relayout(); ctx.note(700, 'lantern');
+        bd.aboard.push(i); bd.side[i] = 2; relayout(); ctx.note(700, 'lantern'); lampGauge();
       }
       function cross() {
         if (st.phase !== 'play' || st.cross || !bd) return false; const L = bd.L, names = bd.aboard.map(i => L.units[i]);
@@ -115,6 +122,10 @@
         const bad = bankBad(L, onBank(0)) || bankBad(L, onBank(1)) || (L.lamp && bd.time > L.lamp ? 'The lamp burnt out' : null);
         info();
         if (bad) { bd.slips++; st.phase = 'slip'; st.wait = 1.7; H.msg(bad, 1600, 'the ferry goes back'); ctx.sound('thock'); return; }
+        if (L.lamp && !bd.side.every((v, i) => v === 1 || (v === 2 && bd.boatSide === 1))) {
+          let m = 0; bd.side.forEach((v, i) => { if ((v === 2 ? bd.boatSide : v) === 1) m |= 1 << i; });
+          if (!nextGroup(L, m, bd.boatSide, bd.time)) H.msg('Not enough lamp left to get everyone over', 2600, 'U undoes a crossing · R starts again');
+        }
         if (bd.side.every((v, i) => v === 1 || (v === 2 && bd.boatSide === 1))) { st.phase = 'won'; st.wt = 0; ctx.sound('gamewin'); H.msg('Everyone is across', 1500, `${bd.trips} trips`); pads.style.display = 'none';
           if (bd.k + 1 > solvedUpTo) { solvedUpTo = bd.k + 1; try { localStorage.setItem(KEY, String(solvedUpTo)); } catch (e) {} } }
       }
@@ -142,13 +153,14 @@
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
       const padBtn = (t, fn, css = '') => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.style.cssText = `min-width:54px;height:42px;padding:0 12px;border-radius:9px;border:1px solid #8fbf6a;background:rgba(14,20,10,.88);color:#f0ffe4;font:700 15px system-ui;cursor:pointer;${css}`; b.onclick = (e) => { e.stopPropagation(); b.blur(); fn(); }; pads.appendChild(b); return b; };
-      padBtn('↶ Undo', () => undo()); padBtn('Hint', hint); padBtn('⛵ Cross', cross, 'background:rgba(50,100,40,.9)');
+      function restart() { if (!bd || st.cross || (st.phase !== 'play' && st.phase !== 'slip')) return; st.phase = 'play'; st.anim.length = 0; build(bd.k); H.msg('Start again', 900); }
+      padBtn('⟲ Restart', restart); padBtn('↶ Undo', () => undo()); padBtn('Hint', hint); padBtn('⛵ Cross', cross, 'background:rgba(50,100,40,.9)');
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(LV[k].name, 1200, `the fewest trips: ${LV[k].best}`); }
       hud.append(pick, pads, card); drawPick();
       const cam = [0, TY + 2.9, -3.3], at = [0, TY + .2, .15];
       ctx.player.place(0, 2.1, Math.PI); ctx.look(cam, at, def.fov || .8);
       H.title(def.title || 'The Canal Ferry'); H.score(''); info();
-      H.hint('Click pieces on the ferry\'s bank to put them aboard (again to let them off). <kbd>Space</kbd> crosses, <kbd>U</kbd> undoes, <kbd>H</kbd> hint.');
+      H.hint('Click pieces on the ferry\'s bank to put them aboard (again to let them off). <kbd>Space</kbd> crosses, <kbd>U</kbd> undoes, <kbd>R</kbd> starts again, <kbd>H</kbd> hint.');
       const ease = u => u * u * (3 - 2 * u);
       return {
         update(dt) {
@@ -164,15 +176,15 @@
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
           if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
-          if (k === ' ' || k === 'enter' || k === 'c') cross(); else if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'h') hint();
+          if (k === ' ' || k === 'enter' || k === 'c') cross(); else if (k === 'u' || k === 'z' || k === 'backspace') undo(); else if (k === 'h') hint(); else if (k === 'r') restart();
           else if (/^[1-9]$/.test(k) && bd && +k <= bd.n) click(+k - 1);
         },
         pointer(evt) {
           if (evt.type !== B.PointerEventTypes.POINTERDOWN || st.phase !== 'play') return;
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.ferryUnit != null); if (hit?.pickedMesh) click(hit.pickedMesh.metadata.ferryUnit);
         },
-        _test: { st, choose, click, cross, undo, hint, nextGroup, get bd() { return bd; }, LV, boat },
-        dispose() { pick.remove(); pads.remove(); card.remove(); if (bd) bd.pawns.forEach(p => { try { p.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { waterM.dispose(); waterT.dispose(); } catch (e) {} }
+        _test: { st, choose, click, cross, undo, hint, restart, nextGroup, get bd() { return bd; }, LV, boat },
+        dispose() { H.meter(null); pick.remove(); pads.remove(); card.remove(); if (bd) bd.pawns.forEach(p => { try { p.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); try { waterM.dispose(); waterT.dispose(); } catch (e) {} }
       };
     }
   };
