@@ -2,7 +2,8 @@
 // one, or move the ring with the arrows / WASD and press Space) so it lights every crystal. The first two levels show the
 // beam as you work; in the last two the sun is behind the clouds: strike the gong (G, or the button) to let it shine for
 // a moment, three times at most, so the route has to be worked out first. A level opens when the one before is solved.
-// Oct 17: How to play (the rules in a few lines) and Restart (the level as picked: its mirrors, turns and gong strikes).
+// Oct 17: How to play (the rules + a lit 5 x 5, howto/mirrors.png) and Restart (the level as picked: its mirrors, turns
+// and gong strikes).
 // def: { at: [x, z] (frame coords of the board's middle), cell: 1.45, levels: [{ rows, hidden, best }], pass, points }
 (function () {
   const LEVELS = [
@@ -23,11 +24,14 @@
   const G = {
     title: 'The Sun Mirrors',
     howTo: { lines: [
-      'A beam of sunlight leaves the lantern and runs straight across the board. Each mirror turns it a quarter turn; stone blocks and the board\'s edge stop it.',
-      'Turn the mirrors so that the one beam passes through every crystal: they light up as it reaches them.',
-      'Click a mirror to turn it the other way (or move the gold ring with the arrows and press Space). Few turns earn a bonus.',
-      'On levels 3, 4 and 7 to 10 the sun hides behind clouds: strike the gong (G) to let it shine for a moment, three times at most (strikes left over earn the bonus). Mirrors cannot be turned while it shines, so work out the route first.',
-      'Tip: work backwards from a crystal: which mirror could send the beam through it?'] },
+      'A beam of sunlight leaves the lantern and runs straight across the board. Each mirror turns it a quarter turn; a stone block, the lantern or the board\'s edge stops it.',
+      'Turn the mirrors so that the one beam passes through every crystal: they light up gold as it reaches them.',
+      'Click a mirror to flip it the other way, / or \\ (or move the gold ring with the arrows or WASD and press Space).',
+      'On levels 3, 4 and 7 to 10 the sun hides behind clouds: strike the gong (G, or its button) to let it shine for a moment. Mirrors cannot be turned while it shines.',
+      'You have three strikes there: if the third shows the route still wrong, the sun sets and the level is lost.',
+      'Few turns earn a bonus; under the clouds every strike left over earns one. Restart puts the level back as it was picked.',
+      'Tip: work backwards from a crystal: which mirror could send the beam through it? Under the clouds, trace the whole route before you strike.'],
+      img: 'howto/mirrors.png', caption: 'A lit board: four mirrors turn the one beam through all four crystals, and a stone stops it.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, C = def.cell || 1.45, AT = def.at || [0, 0], SHINES = def.shines || 3, Y = 1.25;
