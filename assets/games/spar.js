@@ -3,10 +3,12 @@
 // with Space while it reels. Three rounds, each quicker, the last with feints that stop short (do not block a feint).
 // Five hits and you are down. Score: blocks, counters and the run of clean blocks.
 // def: { rounds (3), hearts (5), pass, points }
+// Oct 17 (Miguel's Center Block, games pack v2.30): a block raises both forearms into the swing (game_block), the Rebel
+// turned toward it; after each move it goes back to its fight stance (the stance used to drop after the first move).
 (function () {
   const SIDES = ['left', 'right', 'low'], ICON = { left: '←', right: '→', low: '↓' }, KEYS = { arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right', arrowdown: 'low', s: 'low' };
   const G = {
-    title: 'Fighting Ring',
+    title: 'Fighting Ring', moves: true,   // waits for the games pack (the block)
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const ROUNDS = def.rounds || 3, HEARTS = def.hearts || 5, RT = 22;
@@ -35,6 +37,9 @@
       const camP = [2.9, 3.3, -4.2], camT = [0, 2.1, 2.2];
       ctx.look(camP, camT, .85);
       ctx.player.place(0, 0, 0); ctx.player.clip('fight_idle', { loop: true });
+      // a move, then the fight stance again (a move hands back to the plain idle); a turn toward a block, then square on
+      const BLOCK = !!ctx.player.has?.('game_block');
+      const move = (name, o, back) => { ctx.player.clip(name, o); st.moveT = back; };
       // the pads (touch)
       const hud = document.getElementById('gameHud'), pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;left:50%;bottom:66px;transform:translateX(-50%);display:flex;gap:10px;pointer-events:auto';
@@ -57,7 +62,7 @@
       function resolve(hit) {
         const a = st.att; if (!a || a.done) return; a.done = true;
         arms[a.side].a.material = wood; arms[a.side].tip.material = iron;
-        if (hit) { st.hearts--; st.combo = 0; st.shake = .35; ctx.sound('strike'); ctx.player.clip('hit_reaction', { speed: 1.4 }); H.msg('Hit!', 600); hud2(); if (st.hearts <= 0) { ctx.player.clip('knockdown', { hold: true }); end(); } }
+        if (hit) { st.hearts--; st.combo = 0; st.shake = .35; ctx.sound('strike'); move('hit_reaction', { speed: 1.4 }, .7); H.msg('Hit!', 600); hud2(); if (st.hearts <= 0) { ctx.player.clip('knockdown', { hold: true }); st.moveT = 0; end(); } }
       }
       function block(side) {
         if (st.phase !== 'play') return;
@@ -70,15 +75,17 @@
         a.blocked = true; st.blocks++; st.combo++; st.best = Math.max(st.best, st.combo);
         const perfect = a.t >= a.wind; const pts = perfect ? 3 : 2; st.score += pts + (st.combo >= 5 ? 1 : 0);
         ctx.sound('clang'); spark.setEnabled(true); spark.position.copyFrom(arms[a.side].tip.getAbsolutePosition()); spark.scaling.setAll(.3); st.spark = 0;
-        // a block raises the forearm into the swing (the elbow strike's guard, quick), a low swing is hopped (Miguel, Oct 17:
-        // the moves were too slow and a block looked like a punch)
-        if (a.side === 'low') ctx.player.clip('jump', { speed: 1.6, from: .5 }); else ctx.player.clip('elbow_punch', { speed: 1.9 });
+        // a block raises both forearms into the swing (the games pack's center block, the Rebel turned toward it; else the
+        // elbow strike's guard), a low swing is hopped (Miguel, Oct 17: the moves were too slow and a block looked like a punch)
+        if (a.side === 'low') move('jump', { speed: 1.6, from: .5 }, .75);
+        else if (BLOCK) { move('game_block', { speed: 1.6, from: .25 }, .7); st.turn = { yaw: a.side === 'left' ? -.38 : .38, t: .5 }; }
+        else move('elbow_punch', { speed: 1.9 }, .6);
         H.msg(perfect ? 'Perfect block!' : 'Block', 500); st.open = .75; resolve(false); hud2();
       }
       function strike() {
         if (st.phase !== 'play') return;
-        if (st.open <= 0) { st.combo = 0; ctx.player.clip('jab'); H.msg('Guard up!', 450); hud2(); return; }
-        st.open = 0; st.counters++; st.score += 4; ctx.sound('thock'); ctx.player.clip(['punch_combo', 'roundhouse_kick', 'side_kick', 'hook_punch'][st.counters % 4], { speed: 1.5 });
+        if (st.open <= 0) { st.combo = 0; move('jab', {}, .55); H.msg('Guard up!', 450); hud2(); return; }
+        st.open = 0; st.counters++; st.score += 4; ctx.sound('thock'); st.turn = null; ctx.player.face(0); move(['punch_combo', 'roundhouse_kick', 'side_kick', 'hook_punch'][st.counters % 4], { speed: 1.5 }, .9);
         st.wobble = 1; H.msg('Counter!', 500); hud2();
       }
       function end() {
@@ -104,6 +111,8 @@
           if (st.wobble > 0) { st.wobble = Math.max(0, st.wobble - dt * 2); post.rotation.x = -.18 * st.wobble * Math.sin(t * 30); }
           if (st.shake > 0) { st.shake = Math.max(0, st.shake - dt); const k = st.shake * .25; ctx.look([camP[0] + Math.sin(t * 60) * k, camP[1] + Math.cos(t * 53) * k, camP[2]], camT, .85); }
           if (st.open > 0) st.open -= dt;
+          if (st.turn) { st.turn.t -= dt; ctx.player.face(st.turn.t > 0 ? st.turn.yaw : 0); if (st.turn.t <= 0) st.turn = null; }
+          if (st.moveT > 0 && (st.moveT -= dt) <= 0 && st.hearts > 0) ctx.player.clip('fight_idle', { loop: true });
           if (st.phase === 'intro') { if ((st.wait -= dt) <= 0) { st.phase = 'play'; H.msg('Round 1', 900); } return; }
           if (st.phase !== 'play') return;
           st.rt += dt;
@@ -114,7 +123,7 @@
           }
         },
         key(e, down) { if (!down || e.repeat) return; const k = e.key.toLowerCase(); if (k === ' ') { strike(); return; } const s = KEYS[k]; if (s) block(s); },
-        _test: { st, block, strike, attack, end },
+        _test: { st, block, strike, attack, end, BLOCK: () => BLOCK },
         dispose() { pads.remove(); nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
     }
