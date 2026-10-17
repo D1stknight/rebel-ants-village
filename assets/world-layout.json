@@ -55415,8 +55415,8 @@
         "questOn": "pass",
         "gates": [
           [
-            45,
-            -42
+            48,
+            -48
           ],
           [
             48,
@@ -55445,8 +55445,8 @@
         ],
         "path": [
           [
-            45,
-            -42
+            48,
+            -48
           ],
           [
             48,
@@ -55566,9 +55566,9 @@
           ]
         ],
         "medals": [
-          53,
-          62,
-          80
+          54,
+          63,
+          81
         ],
         "radius": 3,
         "cloth": [
@@ -55577,7 +55577,7 @@
           0.11
         ],
         "text": "Round the courtyard and up the Gathering Hall steps",
-        "length": 384.8
+        "length": 392.5
       }
     }
   },
