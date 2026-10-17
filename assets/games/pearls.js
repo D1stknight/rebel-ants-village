@@ -7,6 +7,13 @@
 // it. H hint (no clean bonus). Score: the chart x 20, +10 without a hint. def: { levels, pass, points }
 // Oct 17: How to play (the rules + a solved 6 x 6, howto/pearls.png) and Restart (the chart as picked: no route,
 // crosses, undo, hints or time).
+// Oct 17 (Miguel: "the Pearl Route should be 10 games, explanation works great"): three more after the Black Pearl
+// Passage, 10 x 10, 11 x 11 and 12 x 12. At that size a random route's full pearl set almost never pins one route down,
+// so the route is reshaped first (scratchpad agents/lvA/pearls/climb.mjs: a hill climb until propagation + one-border
+// what-ifs sail it with every pearl it allows), then pearls go while that logic still sails it (so it is the only
+// answer): 21, 26 and 32 what-ifs (the Black Pearl Passage 17), and 19, 24 and 29 by a second grader written apart from
+// the generators (logic.py; the Black Pearl Passage 15). Each has one answer by a SAT model of the rules (sat.py; all
+// ten pass).
 (function () {
   const LEVELS = [
     { name: "The Oyster Bed", r: 6, c: 6, pearls: 'b...w....b.......w.b.......w........', loop: '111110110010000011010011001000100001110101000101010010011000' },
@@ -15,7 +22,11 @@
     { name: "Pearl Divers' Bay", r: 7, c: 7, pearls: '........w.b.b..w......w.b..w........w..w...ww....', loop: '111111110110110000111010001101110110111000100000100110111001011000010100100101001000' },
     { name: "The Night Run", r: 8, c: 8, pearls: '..b..w..w..b.....w...................b....w...w.w..b.w....b..w..', loop: '1011110000111000001000101000010101100001110001110101111011100010111100001111110010000100111110011111000011100010' },
     { name: "The Storm Channel", r: 8, c: 8, pearls: '.w..ww.......w............w.ww........b....w...www..........b...', loop: '1101110001011001010010001110001011000000000010001101100010110010100010001111001111100001110110111101101111101000' },
-    { name: "The Black Pearl Passage", r: 9, c: 9, pearls: '...........b...w.w.w...........w.ww...w.w.ww.....w....bw..w.....w...w.w....w...w.', loop: '000000011011011000010101000110000001100001011101110110111101001111110111000000011111011001111100110111001110111100110100000001001101100100011001' }
+    { name: "The Black Pearl Passage", r: 9, c: 9, pearls: '...........b...w.w.w...........w.ww...w.w.ww.....w....bw..w.....w...w.w....w...w.', loop: '000000011011011000010101000110000001100001011101110110111101001111110111000000011111011001111100110111001110111100110100000001001101100100011001' },
+    // Oct 17: 10 x 10, 11 x 11 and 12 x 12, 21 / 26 / 32 trials, 19 / 24 / 29 what-ifs (scratchpad agents/lvA/pearls)
+    { name: "The Coral Maze", r: 10, c: 10, pearls: '.w...w..w....w....w......w....b..wb....b............b..ww..w...b.w....b..w........ww.ww............b', loop: '110011111001100011000111000110011011000000000110011100111011101111101001011100000100010111101010000110000001001001001100001110000100111000011001000101000010001010000110011100111001' },
+    { name: "The Sunken Wreck", r: 11, c: 11, pearls: '...b........w..w.w..w..w..w.w.ww...b...w.........bw......bw...wb............w.ww.w..b....b...............w.www....w......', loop: '1110100010110001100011000110001101011101000101111111000011010000010000111001101001110100100010000000010111010110011100110001110011101001110011000100000001001111000001001111011110011000111000011010010100001111101110011111' },
+    { name: "The Dragon Pearl", r: 12, c: 12, pearls: '...b...w.w.................b.b....b..wb..........w...w.ww......w.www...w............b.......b....w.b......w..w..w.ww..ww.ww...w.ww......w.......', loop: '000110111100000001011001100110110001101010000001000000110000000000000010100001100011101011100101000111000000001110100000111111010100000101100010000101011000010000000010011011111010011101111001101101111001101110001001000111000111100010111111000110111111100001111100' }
   ];
   const G = {
     title: 'The Pearl Route',
@@ -23,8 +34,8 @@
       'Draw one closed route (a loop) through the middle of the squares that passes every pearl. It never branches or crosses itself, and it need not visit every square.',
       'On a black pearl the route turns, and on both sides it runs straight on through the next square.',
       'On a white pearl the route runs straight through, and turns in the square just before or just after it (or both).',
-      'Click between two squares to lay a piece of route, right click to cross that border out (Tab swaps them); drag across squares to lay a run. Arrows move the cursor, Shift + arrow lays route from it.',
-      'U undoes, H fixes one piece (no clean bonus then). A pearl whose rule is broken gets a red ring.',
+      'Click (or tap) between two squares to lay a piece of route, right click to cross that border out (Tab or the brush button swaps them); drag across squares to lay a run. Arrows move the cursor, Shift + arrow lays route from it, Alt + arrow crosses out.',
+      'A pearl whose rule is broken gets a red ring, a square where three ways meet a red dot. U undoes, H fixes one piece (no clean bonus then), Restart starts the chart again.',
       'Tip: a black pearl on the edge, or one square in from it, must head away from that edge.'],
       img: 'howto/pearls.png', caption: 'A solved 6 x 6 chart: one loop, turning on each black pearl, straight through each white one.' },
     start(ctx) {
@@ -140,10 +151,10 @@
         if (bd.k + 1 > solvedUpTo) { solvedUpTo = bd.k + 1; try { localStorage.setItem(KEY, String(solvedUpTo)); } catch (e) {} } return true; }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(430px,92vw);background:rgba(12,18,26,.95);border:1px solid rgba(214,178,96,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 430) + 'px,92vw);background:rgba(12,18,26,.95);border:1px solid rgba(214,178,96,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#e2c27a;margin-bottom:10px">The Pearl Route</div><div style="margin-bottom:12px;color:#bbb">Draw one closed route through the squares that passes every pearl. Black: the route turns on it, then runs straight on both ways. White: straight through, turning just before or after.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#e2c27a' : '#444'};background:${ok ? 'rgba(226,194,122,.18)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#cdbf9a">${L.r} × ${L.c}</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
-          + `<div style="margin-top:10px;font-size:12px;color:#998">Keys 1-${LV.length} pick a chart</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#e2c27a' : '#444'};background:${ok ? 'rgba(226,194,122,.18)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#cdbf9a">${L.r} × ${L.c}</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
+          + `<div style="margin-top:10px;font-size:12px;color:#998">Keys ${LV.length > 9 ? '1-9 and 0' : '1-' + LV.length} pick a chart</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
