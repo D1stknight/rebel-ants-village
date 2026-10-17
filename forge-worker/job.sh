@@ -23,6 +23,8 @@ NPC="${FORGE_NPC:-}"; MOVES="$FW/anim/clips.json"
 # glove takes the sculpted hand's colour and a set share of the height (handswap)
 # v2.28 bare arms (Chumpz in shorts): normalize keeps the vertex colours, landmarks moves the wrist up to where the arm's
 # colour turns into the sculpted hand's (the hand-length wrist left the palm on the arm beside the glove)
+# v2.29 NPCs dance at the parties: the games pack's four dances (dance_wave / tut / house / gangnam) are NPC clips too,
+# when the worker has their files (optional moves in anim/clips_npc.json)
 SPECIES="${FORGE_NPC_SPECIES:-}"
 if [ -n "$NPC" ]; then
   MOVES="$FW/anim/clips_npc.json"
@@ -66,8 +68,18 @@ step hands;      run "$R/handfix.py" -- "$O/weighted.blend" "$O/weighted_hf.blen
 if [ "${FORGE_SKIRTFIX:-0}" = "1" ]; then run "$R/skirtfix.py" -- "$O/weighted_hf.blend" "$O/weighted_hf.blend"; fi
 step cloth;      run "$R/clothbones.py" -- "$O/weighted_hf.blend" "$O/weighted_cb.blend"
 step animate;    run "$R/retarget.py" -- "$O/weighted_cb.blend" "$O/anim6.blend"
-step moves;      if [ -n "$NPC" ]; then for f in $(grep -o '"file": *"[^"]*"' "$MOVES" | sed 's/.*"\([^"]*\)"$/\1/'); do
-                   [ -f "$FORGE_PACK/$f" ] || { echo "NPC gesture pack missing: $f (upload it in the NPC Forge, then rebuild the worker)" >> "$JOB/log"; false; }; done; fi
+step moves;      if [ -n "$NPC" ]; then
+                   # v2.29 the four party dances (optional: the games pack's files): a worker image without them rigs without them
+                   "$PY" - "$MOVES" "$FORGE_PACK" "$O/moves_npc.json" >> "$JOB/log" 2>&1 <<'PY'
+import json, os, sys
+moves, pack, out = sys.argv[1:4]; keep = []
+for c in json.load(open(moves)):
+    if os.path.exists(os.path.join(pack, c['file'])): keep.append(c)
+    elif c.get('optional'): print('NPC move skipped (not in the worker):', c['file'])
+    else: print('NPC gesture pack missing:', c['file'], '(upload it in the NPC Forge, then rebuild the worker)'); sys.exit(1)
+json.dump(keep, open(out, 'w'), indent=1)
+PY
+                   MOVES="$O/moves_npc.json"; fi
                  run "$FW/anim/retarget_bvh.py" -- "$O/anim6.blend" "$O/anim6_ma.blend" "$MOVES"
 # v2.11 weapon moves (sword / twin blades / bow, Mixamo): retargeted like the other moves, cleaned up with them, shipped
 # in their own moves.glb (the rig.glb keeps its 24 clips)

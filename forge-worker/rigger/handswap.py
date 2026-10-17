@@ -407,6 +407,8 @@ if os.environ.get('FORGE_NPC'):
         src_ = os.path.join(os.environ.get('FORGE_PACK', '.'), c['file'])
         if c.get('airborne') or not src_.endswith('.npz') or not os.path.exists(src_): continue
         z = np.load(src_); nm = [str(n) for n in z['names']]; Q = z['Q']; hands = {}
+        if 't0' in c or 't1' in c:   # v2.29 a window of the source (the dances): the frames the retarget took, at 30 a second
+            dt_ = float(z['dt']); Q = Q[np.arange(int(c.get('t0', 0) / dt_), min(int(c.get('t1', 1e9) / dt_), len(Q) - 1) + 1, max(1, int(round(1 / (30 * dt_)))))]
         up_ = int(np.argmax(np.abs(z['rest'][nm.index('Head')] - z['rest'][nm.index('Hips')]))) if 'Head' in nm and 'Hips' in nm else 1
         for side in ('Left', 'Right'):
             ch = [side + 'Hand', side + 'HandIndex1', side + 'HandIndex2', side + 'HandIndex3']

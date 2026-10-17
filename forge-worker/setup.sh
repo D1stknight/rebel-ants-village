@@ -43,7 +43,7 @@ miss = [f for f in need if not os.path.exists(os.path.join('pack', f))]
 assert not miss, f'missing mocap files: {miss}'
 print('clips ok', len(need))
 # v2.13 NPC gesture pack (NPC Forge): optional here, an NPC job without it stops with a clear message
-npc = sorted(set(c['file'] for c in json.load(open('anim/clips_npc.json'))))
+npc = sorted(set(c['file'] for c in json.load(open('anim/clips_npc.json')) if not c.get('optional')))   # v2.29 the dances: optional (games files)
 nmiss = [f for f in npc if not os.path.exists(os.path.join('pack', f))]
 print('npc clips', len(npc) - len(nmiss), 'of', len(npc), ('missing: ' + ', '.join(nmiss)) if nmiss else 'ok')
 # v2.24 games pack (Rebels' village game moves): optional too, a job without it makes no games.glb

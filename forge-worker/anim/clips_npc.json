@@ -60,5 +60,33 @@
   "file": "mixamo/jump.npz",
   "airborne": true,
   "headfix": true
+ },
+ {
+  "name": "dance_wave",
+  "file": "mixamo/gm_dance_wave.npz",
+  "t0": 3.1,
+  "t1": 4.7,
+  "optional": true
+ },
+ {
+  "name": "dance_tut",
+  "file": "mixamo/gm_dance_tut.npz",
+  "t0": 6.8,
+  "t1": 8.4,
+  "optional": true
+ },
+ {
+  "name": "dance_house",
+  "file": "mixamo/gm_dance_house.npz",
+  "t0": 3.6,
+  "t1": 5.2,
+  "optional": true
+ },
+ {
+  "name": "dance_gangnam",
+  "file": "mixamo/gm_dance_gangnam.npz",
+  "t0": 4.8,
+  "t1": 7.2,
+  "optional": true
  }
 ]
