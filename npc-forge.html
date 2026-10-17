@@ -303,19 +303,27 @@ async function forgeOne(id, opts = {}) {
       if (!j.imageUrl) throw new Error('Upload returned no image URL');
       n.refs[s] = { url: j.imageUrl }; save(); renderList();
     }
-    // 2. build record + 3. Meshy (front + back + both sides)
+    // 2. build record + 3. Meshy (front + back + both sides). Oct 17: a build whose sculpt never started (the create call
+    // failed once) starts it on Retry; it used to poll for ever and stop at "Missing Rebel Forge sculpt task ID"
+    const c = refConcept(n);
     if (!n.buildId) {
       n.phase = 'building'; save(); renderList();
-      const c = refConcept(n);
       const j = await twice(() => api('/api/forge-build-3d-character', { generationInput: gi(n), selectedConcept: c, productionReference: c }));
       n.buildId = j.buildRequest?.buildId; if (!n.buildId) throw new Error('The forge returned no build id');
+      save();
+    }
+    if (!n.meshy) {
+      n.phase = 'building'; save(); renderList();
       await twice(() => api('/api/forge-3d-engine-meshy-create', { buildId: n.buildId, generationInput: gi(n), productionReference: c, selectedConcept: c, sideImageUrls: [n.refs.left.url, n.refs.right.url] }));
       n.meshy = { p: 0 }; save();
     }
     if (!n.meshy?.glb) {
       n.phase = 'sculpting'; save(); renderList(); let errs = 0;
       for (;;) {
-        let d; try { d = await api('/api/forge-3d-engine-meshy-status', { buildId: n.buildId }); errs = 0; } catch (e) { if (++errs > 10) throw e; await sleep(8000); continue; }
+        let d; try { d = await api('/api/forge-3d-engine-meshy-status', { buildId: n.buildId }); errs = 0; } catch (e) {
+          // no sculpt task on this build (made before the fix above): start the sculpt on the next Retry
+          if (/sculpt task ID/i.test(e.message || '')) { n.meshy = null; save(); throw new Error('The Rebel Forge sculpt never started for this build: press Retry to start it.'); }
+          if (++errs > 10) throw e; await sleep(8000); continue; }
         const r = d.meshyResponse || {}; n.meshy.p = Math.max(n.meshy.p || 0, Number(r.progress || 0)); if (r.thumbnail_url) n.meshy.thumb = r.thumbnail_url;
         if (d.glbUrl) { n.meshy.glb = d.glbUrl; n.meshy.p = 100; break; }
         if (['FAILED', 'CANCELED', 'EXPIRED'].includes(String(d.meshyStatus || '').toUpperCase())) {
