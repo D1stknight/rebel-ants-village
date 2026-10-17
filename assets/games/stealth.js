@@ -4,7 +4,10 @@
 // running near a watchman makes him turn to look. Time from the start to the goal; bronze, silver and gold.
 // def: { goal: [x, z], checkpoints: [[x, z], ...], guards: [{ path: [[x, z], ...], speed (m/s), wait (s at each end),
 //   loop (a closed beat), look: [yaw, sweep] (a watchman who stands and turns) }], view (m, 8), fov (deg, 64),
-//   medals: [gold, silver, bronze] s, limit (s), color [r, g, b] (their robes), text }
+//   medals: [gold, silver, bronze] s, limit (s), color [r, g, b] (their robes), text, guardModel: NPC library keys }
+// The watchmen (Oct 17, Miguel: "we need to make the watchmen look better"): each takes the forged Ronin villager's model
+// (the NPC library's ronin_villager) once it has loaded, in place of the robe-and-hat figure: it walks its beat with the
+// walk clip, looks round when it stands, and its lantern pole runs from its right hand to the lamp ahead of it.
 (function () {
   const fmt = t => { const m = Math.floor(t / 60), s = t - m * 60; return m ? `${m}:${s.toFixed(1).padStart(4, '0')}` : s.toFixed(1); };
   const G = {
@@ -46,10 +49,29 @@
         const cone = fan('ssCone' + i); cone.parent = root; cone.position.y = .07;
         const edge = fanEdge('ssEdge' + i); edge.parent = root; edge.position.y = .08;
         const path = (g.path || [[0, 0]]).map(([x, z]) => ({ x: +x, z: +z }));
-        const G = { root, body, cone, edge, lamp, path, speed: g.speed || 2, wait: g.wait ?? 1.2, loop: !!g.loop, look: g.look || null, seg: 0, dir: 1, u: 0, pause: 0, x: path[0].x, z: path[0].z, yaw: g.look ? g.look[0] : 0, alert: 0, ph: i * 1.7 };
+        const G = { root, body, cone, edge, lamp, pole, path, speed: g.speed || 2, wait: g.wait ?? 1.2, loop: !!g.loop, look: g.look || null, seg: 0, dir: 1, u: 0, pause: 0, x: path[0].x, z: path[0].z, yaw: g.look ? g.look[0] : 0, alert: 0, ph: i * 1.7 };
         if (path.length > 1) G.yaw = Math.atan2(path[1].x - path[0].x, path[1].z - path[0].z);
         return G;
       });
+      // the forged watchmen (see the top), loaded one after another (the browser fetches the model once)
+      (async () => {
+        for (const G of guards) {
+          const n = await ctx.npcModel?.(def.guardModel || ['ronin_villager']); if (!n || st.phase === 'done') return;
+          G.npc = n; G.hand = n.bone('mixamorig_RightHand'); n.root.parent = G.root; n.root.position.set(0, 0, 0);
+          G.body.getChildMeshes(false).forEach(m => { if (m !== G.lamp && m !== G.pole) m.setEnabled(false); });
+          G.pole.parent = null; G.pole.rotationQuaternion = new B.Quaternion(); G.anim = '';
+        }
+      })();
+      const UP = V3.Up(), LAMP = new V3(.42, 2.45, 1.05);
+      // a forged watchman's clip for what it is doing, and the pole from its hand to the lamp
+      function npcPose(g, moving) {
+        const want = g.alert > 0 ? 'look_around' : moving ? 'walk' : g.look ? 'look_around' : 'idle';
+        if (want !== g.anim) { g.anim = want; g.npc.play(want, { loop: true, speed: want === 'walk' ? Math.max(.6, Math.min(1.8, g.speed / 1.35)) : want === 'look_around' && g.alert > 0 ? 1.6 : 1 }); }
+        if (!g.hand) return;
+        const h = g.hand.getAbsolutePosition(), l = V3.TransformCoordinates(LAMP, g.root.getWorldMatrix()), d = l.subtract(h), len = d.length() || 1;
+        g.pole.position.copyFrom(h.add(l).scale(.5)); g.pole.scaling.y = len / 1.3;
+        B.Quaternion.FromUnitVectorsToRef(UP, d.scale(1 / len), g.pole.rotationQuaternion);
+      }
       // the lantern posts (checkpoints) and the goal: a ring and a beam each, the goal in gold
       const postM = mat('post', [0, 0, 0], [.55, .85, 1], { alpha: .6, add: true }), goalM = mat('goal', [0, 0, 0], [1, .8, .35], { alpha: .65, add: true });
       cps.forEach((c, i) => { c.ring = keep(B.MeshBuilder.CreateTorus('ssCp' + i, { diameter: 3.2, thickness: .1, tessellation: 40 }, scene)); c.ring.material = postM; c.ring.position.set(c.x, c.y + .1, c.z); });
@@ -94,7 +116,8 @@
               }
             }
             g.y = ctx.ground(g.x, g.z); g.root.position.set(g.x, g.y, g.z); g.root.rotation.y = g.yaw;
-            g.body.position.y = g.pause > 0 || g.look ? 0 : Math.abs(Math.sin(t * 5 + g.ph)) * .06;
+            g.body.position.y = g.npc || g.pause > 0 || g.look ? 0 : Math.abs(Math.sin(t * 5 + g.ph)) * .06;
+            if (g.npc) { g.root.computeWorldMatrix(true); npcPose(g, st.phase === 'run' && g.path.length > 1 && !g.look && g.pause <= 0 && g.alert <= 0); }
             g.lamp.scaling.y = 1 + .06 * Math.sin(t * 11 + g.ph);
             if (st.seenT <= 0 && g.cone.material !== coneM) { g.cone.material = coneM; g.edge.material = edgeM; }
           }
