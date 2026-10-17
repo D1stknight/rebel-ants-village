@@ -51,11 +51,13 @@
     title: 'Sprout Field',
     howTo: { lines: [
       'Stand every rice sprout up.',
-      'Watering a bed flips it: fallen sprouts stand up, standing ones are knocked flat. The four beds beside it (above, below, left, right) flip too.',
-      'Click a bed to water it, or move the ring with the arrows / W A S D and press Space.',
-      'H rings one bed worth watering (each hint costs 10 points). R (or Restart) lays the field out as it was.',
-      'The result tells the fewest waterings it takes; manage that with no hint for 15 more points.',
-      'Tip: the order never matters, only which beds you water, and watering a bed twice undoes it.'] },
+      'Watering a bed flips it: fallen sprouts stand up, standing ones are knocked flat. The four beds beside it (above, below, left and right) flip too; a bed on the edge has fewer, a corner only two.',
+      'Click (or tap) a bed to water it, or move the gold ring with the arrows / W A S D and press Space.',
+      'There is no undo: watering the same bed again flips the same beds back. R (or Restart) lays the field out as it was.',
+      'H rings one bed worth watering; each hint costs 10 points.',
+      'The result tells the fewest waterings: manage that with no hint for 15 more points.',
+      'Tip: the order never matters, only which beds you water, and watering a bed twice undoes it.'],
+      img: 'howto/sprouts.png', caption: 'A 3 x 3 field in its fewest waterings: the middle bed (five beds flip), then the top right corner (three flip), and every sprout stands.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 0], W = def.size || 7.6;
