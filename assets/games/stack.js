@@ -2,6 +2,9 @@
 // along one way then the other; drop it (Space, Enter or a click) and whatever hangs over the stone below breaks off
 // and falls. The cairn grows only as wide as your drops are true: a perfect drop keeps the whole stone, and four in a
 // row grow it back a little. How high can it go before a stone misses entirely?
+// Oct 17 (Miguel: "i hope we can get really really high lol"): no top to it, as before, and now the height in metres, a
+// cheer at 10, 20, 30, 50, 75 and 100 stones, the best cairn on this device to beat (a "new record" the moment it is
+// passed), and the camera stepping back as the cairn grows so the whole tower stays in view.
 // def: { at: [x, z] (the cairn's foot, frame coordinates), size: first stone (m), cam, pass, points }
 (function () {
   const G = {
@@ -17,7 +20,11 @@
       const slab = (w, d, k) => { const b = keep(B.MeshBuilder.CreateBox('stkStone', { width: 1, height: TH, depth: 1 }, scene)); b.scaling.set(w, 1, d); b.material = mats[k % mats.length]; b.isPickable = false; return b; };
       // the base: a broad flat rock the cairn stands on
       const base = keep(B.MeshBuilder.CreateCylinder('stkBase', { height: .4, diameterTop: S0 * 1.6, diameterBottom: S0 * 1.9, tessellation: 9 }, scene)); base.material = mats[1]; base.position.set(AT[0], .2, AT[1]); base.isPickable = false;
-      const st = { phase: 'intro', wait: 1.2, n: 0, top: { x: AT[0], z: AT[1], w: S0, d: S0, y: .4 }, mov: null, t: 0, streak: 0, best: 0, falls: [], camY: 0, flash: null, perfects: 0 };
+      const st = { phase: 'intro', wait: 1.2, n: 0, top: { x: AT[0], z: AT[1], w: S0, d: S0, y: .4 }, mov: null, t: 0, streak: 0, best: 0, falls: [], camY: 0, camK: 1, flash: null, perfects: 0 };
+      // the best cairn on this device (stones), and the cheers on the way up
+      const BEST_KEY = 'rebelAntsCairnBest:' + (def.id || 'stack'); let record = 0; try { record = Number(localStorage.getItem(BEST_KEY)) || 0; } catch (e) {}
+      const MILESTONES = { 10: 'taller than you', 20: 'taller than the dojo door', 30: 'the mist is below you', 50: 'the eagles are watching', 75: 'a cairn for the ages', 100: 'one hundred stones!' };
+      const meters = () => Math.max(0, st.top.y - .4).toFixed(1);
       function next() {
         const k = st.n + 1, axis = k % 2 ? 'x' : 'z', top = st.top, speed = 1 + Math.min(1.4, st.n * .04);
         const m = slab(top.w, top.d, k); m.position.set(top.x, top.y + TH / 2, top.z);
@@ -53,11 +60,17 @@
           const f = keep(B.MeshBuilder.CreateBox('stkFlash', { width: 1, height: .04, depth: 1 }, scene)); f.material = glow; f.isPickable = false; f.position.set(m.position.x, m.position.y + TH / 2 + .02, m.position.z); f.scaling.set(m.scaling.x + .12, 1, m.scaling.z + .12); st.flash = { f, t: .35 };
         }
         st.top = { x: m.position.x, z: m.position.z, w: m.scaling.x, d: m.scaling.z, y: mv.y + TH / 2 };
-        st.n++; st.mov = null; H.score(st.n); info(); next();
+        st.n++; st.mov = null; H.score(st.n);
+        if (MILESTONES[st.n]) { H.msg(`${st.n} stones!`, 1500, MILESTONES[st.n]); [523, 659, 784].forEach((f, i) => setTimeout(() => ctx.note(f, 'bell'), i * 110)); }
+        else if (record > 0 && st.n === record + 1) { H.msg('New record!', 1300, `higher than your best, ${record} stones`); ctx.note(880, 'bell'); }
+        info(); next();
       }
-      const info = () => H.info(st.streak >= 2 ? `${st.streak} perfect in a row` : `${Math.round((st.top.w * st.top.d) / (S0 * S0) * 100)}% of the stone left`);
+      const info = () => H.info(`${meters()} m high · ` + (st.streak >= 2 ? `${st.streak} perfect in a row` : `${Math.round((st.top.w * st.top.d) / (S0 * S0) * 100)}% of the stone left`) + (record ? ` · best ${Math.max(record, st.n)}` : ''));
       const cam = def.cam || [AT[0] + 4.6, 3.2, AT[1] - 5.4];
-      const look = () => { const y = Math.max(0, st.top.y - 1.4); st.camY += (y - st.camY) * .08; ctx.look([cam[0], cam[1] + st.camY, cam[2]], [AT[0], 1.1 + st.camY, AT[1]], def.fov || .8); };
+      // the camera rises with the top and steps back as the cairn grows (up to twice as far), so the tower stays in view
+      const look = () => { const y = Math.max(0, st.top.y - 1.4); st.camY += (y - st.camY) * .08; st.camK += (1 + Math.min(1, st.n / 60) - st.camK) * .05;
+        const k = st.camK, cx = AT[0] + (cam[0] - AT[0]) * k, cz = AT[1] + (cam[2] - AT[1]) * k;
+        ctx.look([cx, cam[1] * k + st.camY, cz], [AT[0], 1.1 + st.camY - (k - 1) * 1.6, AT[1]], def.fov || .8); };
       ctx.player.place(AT[0] - 2.6, AT[1] - 1.4, Math.PI / 3);
       H.title(def.title || 'Cairn Stack'); H.score(0); info();
       H.hint('Drop each stone (<kbd>Space</kbd>, <kbd>Enter</kbd> or a click) right over the one below. What hangs over breaks off.');
@@ -74,8 +87,9 @@
           if (st.flash && (st.flash.t -= dt) <= 0) { st.flash.f.dispose(); st.flash = null; }
           if (st.phase === 'end' && (st.wait -= dt) <= 0) {
             st.phase = 'done'; H.hint('');
-            const score = st.n * 2 + st.perfects;
-            ctx.finish({ score, label: 'points', passed: score >= (def.pass || 0), extra: `${st.n} stones high, ${st.perfects} perfect drops.` });
+            const score = st.n * 2 + st.perfects, newRecord = st.n > record;
+            if (newRecord) try { localStorage.setItem(BEST_KEY, String(st.n)); } catch (e) {}
+            ctx.finish({ score, label: 'points', passed: score >= (def.pass || 0), extra: `${st.n} stones, ${meters()} m high, ${st.perfects} perfect drops.${newRecord && record ? ' A new record!' : record ? ` Your best: ${record} stones.` : ''}` });
           }
         },
         key(e, down) { if (!down || e.repeat) return; if (e.key === ' ' || e.key === 'Enter') drop(); },
