@@ -4,7 +4,8 @@
 // the night crossings the lamp only lasts so long (each trip takes as long as the slowest aboard). A broken rule
 // sends the ferry back. U undoes a crossing, H shows the next good one (no clean bonus then). Seven crossings, the
 // fewest trips found by a solver. Score: the crossing x 20, +10 in the fewest trips without a hint or a slip.
-// Oct 17: How to play (the rules) and Restart beside Quit (its own restart: the pad's ⟲ and R).
+// Oct 17: How to play (the rules + a broken rule and a night trip, howto/ferry.png) and Restart beside Quit (its own
+// restart: the pad's ⟲ and R).
 // Oct 17 (Miguel: "make it 10 crossings"): three more, made only of the rules the ferry already has (scratchpad
 // lv/ferry/search.mjs + search2.mjs tried ~5,000 designs, SP/ferry/solve.mjs = these rules, BFS fewest trips): The Darkest
 // Night (six on the lamp: 9 trips in 36 minutes, the least time there is (35 has no way); its slowest pair wants the
@@ -50,12 +51,14 @@
   const G = {
     title: 'The Canal Ferry',
     howTo: { lines: [
-      "Get everyone across the canal in the little ferry; the card on the left lists this crossing's rules.",
+      "Get everyone across the canal in the little ferry. The card on the left lists this crossing's rules.",
       "Click a piece on the ferry's bank to put it aboard (click it again to let it off), then press Space or ⛵ Cross.",
-      'Someone must row (on some crossings only the ferryman can) and the ferry holds only so many; a rule broken on either bank sends the ferry back.',
-      'On the night crossings a trip takes as long as the slowest one aboard, and the lamp lasts only so long.',
-      'U undoes a crossing, H puts a good next group aboard (no +10 then); the fewest trips earn +10.',
-      'Tip: sometimes the way forward is to bring someone back.'] },
+      'The ferry holds only so many, and someone aboard must row (on some crossings only the ferryman, or his dog, can).',
+      'When the ferry lands, neither bank may break a rule: no eater left with what it eats while the ferryman is away, and no more ronin than samurai on a bank (ronin on their own are fine; the ferry counts with the bank it is at). A broken rule sends the ferry back.',
+      'On the night crossings a trip takes as long as the slowest one aboard, and the lamp lasts only so long: the gauge shows the minutes left and what this trip would cost.',
+      'U (↶ Undo) takes back a crossing, H (Hint) puts a good next group aboard, R (⟲ Restart) starts the crossing again. The fewest trips with no hint and no slip earn +10.',
+      'Tip: sometimes the way forward is to bring someone back.'],
+      img: 'howto/ferry.png', caption: 'Top: the ferryman rows the rice over and leaves the fox with the hen, so the fox eats the hen and the ferry goes back. Bottom: the 1 and the 10 cross together in 10 minutes.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsFerryProgress:' + (def.id || 'ferry');
