@@ -2,17 +2,22 @@
 // emblem. Turn two at a time: a pair stays face up, two that differ turn back. Find every pair. Levels: 4 x 3, 4 x 4,
 // 5 x 4, 6 x 5 (the same emblems in two colourings), 6 x 6 with at most 22 misses. Click a tablet (or move the ring
 // with the arrows and press Space).
+// Oct 17: How to play (the rules in a few lines) and Restart (the level dealt afresh, every tablet face down, no misses).
 // def: { at: [x, z] (the board's middle, frame coordinates), gap: tablet spacing (m), player: [x, z, yaw], cam, look, levels, pass, points }
 (function () {
-  const LEVELS = [{ c: 4, r: 3 }, { c: 4, r: 4 }, { c: 5, r: 4 }, { c: 6, r: 5 }, { c: 6, r: 6, misses: 22 }];
-  const SCORE = [20, 30, 45, 65, 90];
+  // Oct 17 (Miguel: "give it more levels"): up to 8 x 8 (32 pairs, the emblems in three colourings), a cap on misses
+  const LEVELS = [{ c: 4, r: 3 }, { c: 4, r: 4 }, { c: 5, r: 4 }, { c: 6, r: 5 }, { c: 6, r: 6, misses: 22 },
+    { c: 7, r: 6, misses: 30 }, { c: 8, r: 6, misses: 32 }, { c: 8, r: 7, misses: 36 }, { c: 8, r: 8, misses: 40 }, { c: 8, r: 8, misses: 30 }];
+  const SCORE = [20, 30, 45, 65, 90, 110, 130, 150, 175, 200];
   // faction cloth / emblem colours (as the kit's banners)
   const F = { samurai: ['#961816', '#ecd6aa'], wokou: ['#1c2a4c', '#d9a743'], yamabushi: ['#25402d', '#d6a640'], ronin: ['#6a1a1d', '#e3cfa4'],
     shogun: ['#5f1d45', '#d8b04a'], bushi: ['#7d2b22', '#d9b35a'], buke: ['#5e1a20', '#d8b35c'], ashigaru: ['#8c1c1c', '#d8b45a'],
     kenshi: ['#1f5753', '#d8b450'], sohei: ['#c38d2a', '#f8edd2'], warrior: ['#34502e', '#dcb24e'] };
   const IDS = Object.keys(F);
-  // kinds: 0-10 the emblem in its gold on the faction's cloth, 11-21 the same emblem in the cloth colour on cream
-  const KINDS = [...IDS.map(id => ({ id, bg: F[id][0], fg: F[id][1] })), ...IDS.map(id => ({ id, bg: '#efe6cf', fg: F[id][0], ring: F[id][0] }))];
+  // kinds: 0-10 the emblem in its gold on the faction's cloth, 11-21 the same emblem in the cloth colour on cream,
+  // 22-32 the emblem in cream on the cloth inside a gold ring
+  const KINDS = [...IDS.map(id => ({ id, bg: F[id][0], fg: F[id][1] })), ...IDS.map(id => ({ id, bg: '#efe6cf', fg: F[id][0], ring: F[id][0] })),
+    ...IDS.map(id => ({ id, bg: F[id][0], fg: '#f6efdc', ring: F[id][1] }))];
   const imgs = {};
   function emblem(id, cb) {
     let L = imgs[id];
@@ -21,6 +26,12 @@
   }
   const G = {
     title: 'Emblem Match',
+    howTo: { lines: [
+      'The tablets lie face down, and every emblem is carved on exactly two of them.',
+      'Turn two tablets: the same emblem twice stays face up, two that differ turn back over (a miss).',
+      'Find every pair. Fewer misses score more; from level 5 each board allows only so many misses (shown at the top).',
+      'Click a tablet to turn it (or move the gold ring with the arrows and press Space).',
+      'Tip: from level 4 each emblem also comes in a second colouring (and from level 7 a third), and only the same emblem in the same colours makes a pair.'] },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 0], GAP = def.gap || 1.05;
@@ -32,7 +43,7 @@
       // the back of every tablet: a carved ring (one texture)
       const backTex = new B.DynamicTexture('emBackTex', { width: 128, height: 128 }, scene, true); { const g = backTex.getContext(); g.fillStyle = '#6c6a66'; g.fillRect(0, 0, 128, 128); g.strokeStyle = '#4e4c49'; g.lineWidth = 7; g.beginPath(); g.arc(64, 64, 40, 0, Math.PI * 2); g.stroke(); g.lineWidth = 3; g.beginPath(); g.arc(64, 64, 22, 0, Math.PI * 2); g.stroke(); backTex.update(); }
       const backM = ctx.mat('back', n => { const m = new B.StandardMaterial(n, scene); m.diffuseTexture = backTex; m.specularColor = new B.Color3(.08, .08, .08); m.emissiveColor = new B.Color3(.12, .12, .12); return m; });
-      const own = []; // textures / materials made per game
+      const own = [], faces = {}; // textures / materials made per game (one per emblem kind, kept for a fresh deal)
       function faceMat(k) {
         const K = KINDS[k], t = new B.DynamicTexture('emFaceTex' + k, { width: 256, height: 256 }, scene, true), g = t.getContext();
         const draw = img => { g.fillStyle = K.bg; g.fillRect(0, 0, 256, 256); g.strokeStyle = K.ring || K.fg; g.lineWidth = 12; g.strokeRect(10, 10, 236, 236);
@@ -44,14 +55,14 @@
       }
       let bd = null; // { k, c, r, cards: [{ root, kind, state: 'down'|'up'|'done', flip: { t, to } }], nodes, turns, misses, open: [] }
       const st = { phase: 'pick', cr: 0, cc: 0, wait: 0 };
-      const cellPos = (r, c) => new V3(AT[0] + (c - (bd.c - 1) / 2) * GAP, 0, AT[1] + ((bd.r - 1) / 2 - r) * GAP);
+      const cellPos = (r, c) => new V3(AT[0] + (c - (bd.c - 1) / 2) * bd.gap, 0, AT[1] + ((bd.r - 1) / 2 - r) * bd.gap);
       function build(k) {
         if (bd) bd.nodes.forEach(n => { try { n.dispose(); } catch (e) {} });
-        const L = LV[k], n = L.c * L.r, pairs = n / 2;
-        // the kinds: different factions first, both colourings past 11 pairs; dealt at random
-        const kinds = []; for (let i = 0; i < pairs; i++) kinds.push(i < 11 ? i : 11 + (i - 11) * 2 % 11);
+        const L = LV[k], n = L.c * L.r, pairs = n / 2, GAP = Math.min(def.gap || 1.05, 6.4 / Math.max(L.c, L.r)); // big boards: smaller tablets
+        // the kinds: different factions first, the second colouring past 11 pairs, the third past 22; dealt at random
+        const kinds = []; for (let i = 0; i < pairs; i++) kinds.push(i < 11 ? i : i < 22 ? 11 + (i - 11) * 2 % 11 : 22 + (i - 22) * 3 % 11);
         const deck = []; kinds.forEach(q => deck.push(q, q)); for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
-        bd = { k, c: L.c, r: L.r, cards: [], nodes: [], turns: 0, misses: 0, open: [], limit: L.misses || 0, mats: {} };
+        bd = { k, c: L.c, r: L.r, gap: GAP, cards: [], nodes: [], turns: 0, misses: 0, open: [], limit: L.misses || 0, mats: {} };
         const add = n => { n.parent = ctx.frame; ctx.add(n); bd.nodes.push(n); return n; };
         const base = add(B.MeshBuilder.CreateBox('emBase', { width: L.c * GAP + .5, height: .06, depth: L.r * GAP + .5 }, scene)); base.material = M.base; base.position.set(AT[0], .03, AT[1]); base.isPickable = false;
         let body0 = null, back0 = null; const front0 = {};
@@ -61,7 +72,7 @@
           body.isPickable = true; body.metadata = { emCard: i }; ctx.add(body);
           const back = back0 ? back0.createInstance('emBackI') : (back0 = B.MeshBuilder.CreatePlane('emBack', { size: GAP * .72 }, scene)); back.parent = root; back.position.y = .051; back.rotation.x = Math.PI / 2; if (back === back0) back.material = backM; back.isPickable = false; ctx.add(back);
           const front = front0[q] ? front0[q].createInstance('emFrontI') : (front0[q] = B.MeshBuilder.CreatePlane('emFront', { size: GAP * .72 }, scene)); front.parent = root; front.position.y = -.051; front.rotation.x = -Math.PI / 2;
-          if (front === front0[q]) front.material = faceMat(q); front.isPickable = false; ctx.add(front);
+          if (front === front0[q]) front.material = faces[q] || (faces[q] = faceMat(q)); front.isPickable = false; ctx.add(front);
           bd.cards.push({ root, kind: q, state: 'down', flip: null, i });
         });
         // the instance sources go last, so they are disposed after their instances
@@ -94,10 +105,10 @@
       }
       // the level picker
       const hud = document.getElementById('gameHud'), pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,90vw);background:rgba(12,16,30,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 400) + 'px,92vw);background:rgba(12,16,30,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
       const label = L => `${L.c} × ${L.r}${L.misses ? ` · ${L.misses} misses at most` : ''}`;
       pick.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">Emblem Match</div><div style="margin-bottom:12px;color:#bbb">Turn two tablets at a time. The same emblem twice stays face up. Find every pair.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? 'Level ' + (k + 1) : '🔒'}${done ? ' ✓' : ''}${open ? `<div style="font:12px Georgia,serif;color:#c9b88a">${label(L)}</div>` : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 2},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? 'Level ' + (k + 1) : '🔒'}${done ? ' ✓' : ''}${open ? `<div style="font:12px Georgia,serif;color:#c9b88a">${label(L)}</div>` : ''}</button>`; }).join('')}</div>`;
       pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); });
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); H.msg(`Level ${k + 1}`, 900, label(LV[k])); }
       hud.appendChild(pick);
@@ -122,7 +133,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           if (k === 'arrowup' || k === 'w') st.cr = Math.max(0, st.cr - 1); else if (k === 'arrowdown' || k === 's') st.cr = Math.min(bd.r - 1, st.cr + 1);
           else if (k === 'arrowleft' || k === 'a') st.cc = Math.max(0, st.cc - 1); else if (k === 'arrowright' || k === 'd') st.cc = Math.min(bd.c - 1, st.cc + 1);
@@ -132,6 +143,8 @@
           if (evt.type !== B.PointerEventTypes.POINTERDOWN || st.phase !== 'play') return;
           const hit = scene.pickWithRay(ctx.ray(), m => m.metadata?.emCard != null); if (hit?.hit) flip(hit.pickedMesh.metadata.emCard);
         },
+        // Restart: the level dealt afresh (a new shuffle: the old places are known), every tablet down, no turns or misses
+        restart() { if (st.phase !== 'play' || !bd) return; st.wait = 0; st.match = false; build(bd.k); H.msg('Start again', 900, 'a fresh deal'); },
         _test: { st, choose, flip, get bd() { return bd; } },
         dispose() { pick.remove(); if (bd) bd.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); own.forEach(o => { try { o.dispose(); } catch (e) {} }); try { backTex.dispose(); } catch (e) {} }
       };
