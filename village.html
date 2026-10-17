@@ -3491,8 +3491,12 @@ const PlaytestNote = (() => {
 const GameJump = (() => { const id = new URLSearchParams(location.search).get('game'); return id && /(-git-|^localhost$|^127\.0\.0\.1$)/.test(location.hostname) ? id : null; })();
 function runGameJump(tries = 0) {
   if (!GameJump) return;
-  const again = () => { if (tries < 60) setTimeout(() => runGameJump(tries + 1), 500); };
-  if (!charMesh || !walkMode) { if (!walkMode && !adminMode && tries === 0) try { toggleWalk(); } catch (e) {} return again(); }
+  // patient (Oct 17, Miguel: the Yabusame jump "still did not jump me"): a Rebel and its moves can take more than the 30 s
+  // this used to wait on a slow connection, and a village's spots can come after that; it now waits up to 3 minutes
+  const again = () => { if (tries < 360) setTimeout(() => runGameJump(tries + 1), 500); };
+  if (tries === 0) showToast(`Game jump: getting your Rebel to ${GameJump}…`, 4000);
+  if (!charMesh || !walkMode) { if (!walkMode && !adminMode && tries % 20 === 0) try { toggleWalk(); } catch (e) {} return again(); }
+  if (window.forgeRigBundleInfo && !GamesPack.ready) loadGamesPack(); // the games pack on its way while the Rebel walks over
   // a game's spot, else any quest spot by its id (the Wanderer's Map stone, a place riddle: &game=<spotId> works for them too)
   const roots = getQuestSpotRoots();
   const spot = roots.find(r => r.metadata?.spotConfig?.game?.id === GameJump) || roots.find(r => r.metadata?.spotConfig?.spotId === GameJump || r.name === 'questSpotRoot_' + GameJump);
@@ -3503,7 +3507,7 @@ function runGameJump(tries = 0) {
   }
   const configs = getInteriorRoomConfigs(); let room = null, hotspot = null;
   for (const [rid, cfg] of Object.entries(configs)) for (const h of cfg?.hotspots || []) if (h?.game?.id === GameJump) { room = rid; hotspot = h; }
-  if (!room) return tries < 6 ? again() : showToast(`There is no game ${GameJump} in this village.`, 6000);
+  if (!room) return tries < 120 ? again() : showToast(`There is no game ${GameJump} in this village.`, 6000);
   const at = () => { const h = scene.getTransformNodeByName('interiorHotspotRoot_' + hotspot.hotspotId); if (!h) return false; const p = h.getAbsolutePosition();
     const toward = Math.atan2(-p.x, -p.z); charMesh.position.x = p.x + Math.sin(toward) * 1.3; charMesh.position.z = p.z + Math.cos(toward) * 1.3; charMesh.rotation.y = toward + Math.PI; _playerDeckSnapUntil = performance.now() + 1500;
     showToast(`Game jump: ${hotspot.game.title || GameJump}. Press O to play.`, 7000); return true; };
@@ -10857,8 +10861,10 @@ async function startMiniGame(def, src) {
   RebelGames.HUD.loading(true);
   let impl = null;
   try { impl = await RebelGames.load(def.type); } catch (e) { console.warn('mini-game', e); }
-  // a game that plays the games pack's moves waits for it the first time (a few seconds at most, then its stand-ins)
-  if (impl?.moves && !GamesPack.slots) { const t = loadGamesPack(); await Promise.race([t, new Promise(r => setTimeout(r, 3500))]); }
+  // a game that plays the games pack's moves waits for it the first time (up to 12 s, then its stand-ins). Oct 17: it
+  // waited 3.5 s, and a game started at once (a game jump, a game near the gate) missed a pack still downloading, so it
+  // played the whole game with the stand-ins (no dribble, no dances)
+  if (impl?.moves && !GamesPack.slots) { const t = loadGamesPack(); await Promise.race([t, new Promise(r => setTimeout(r, 12000))]); }
   RebelGames.HUD.loading(false);
   if (!impl || !walkMode || adminMode) { MiniGames.busy = false; if (!impl) showToast('The game did not load (slow connection?). Press O to try again.', 6000); return true; }
   closeSkillBar(); closeDanceOff(); QuestSpotRuntime.hold = null; endHoldShow(false);
