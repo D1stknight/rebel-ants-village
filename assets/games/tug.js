@@ -9,9 +9,11 @@
 // swell, 0.8 s by the end) and shows its moment: the disc grows to the gold ring and both light up while a pull counts;
 // the Rebel holds the rope in both hands (the games pack's push stance, leaning back; the rope runs from its hands) and
 // heaves back on every good pull.
+// Oct 17 (Miguel's Pulling A Rope, games pack v2.30): the Rebel pulls hand over hand side on, its right hand toward the
+// opponent (the move leans away from the rope by itself); Rebels without it keep the push stance.
 (function () {
   const G = {
-    title: 'Tug of War',
+    title: 'Tug of War', moves: true,   // waits for the games pack (the rope pull)
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const GAP = def.gap || 5.2, SEC = def.seconds || 40, CYCLE = def.cycle || 1.05, CYCLE_END = def.cycleEnd || .8, LINE = 1.25, WIN = .88;
@@ -25,8 +27,10 @@
       const npc = def.opponent ? ctx.npc(def.opponent) : null, npcWas = npc ? { p: npc.position.clone(), ry: npc.rotation.y, rx: npc.rotation.x, open: npc.metadata?.dialogueOpen, m: { home: npc.metadata?.home, wo: npc.metadata?.wanderOrigin, target: npc.metadata?.target } } : null;
       const pr = ctx.player.root, prWas = pr ? pr.rotation.x : 0;
       const st = { phase: 'intro', intro: 2, t: 0, ph: 0, left: SEC, b: 0, good: 0, weak: 0, combo: 0, heave: 0, warn: 0, nextHeave: 3.5 + Math.random() * 1.5, flash: 0, best: 0, kick: 0, lit: null };
-      // the Rebel's stance: both hands forward on the rope (the games pack's push), else its idle
-      const stance = !!ctx.player.has?.('game_push'); if (stance) ctx.player.clip('game_push', { loop: true });
+      // the Rebel's stance: hand over hand on the rope (the games pack's rope pull: the rope runs along its right side, so it
+      // stands side on, facing the camera's side), else both hands forward (the push), else its idle
+      const ROPE = !!ctx.player.has?.('game_rope_pull'), stance = ROPE || !!ctx.player.has?.('game_push'), YAW = ROPE ? Math.PI / 2 : 0;
+      if (ROPE) ctx.player.clip('game_rope_pull', { loop: true }); else if (stance) ctx.player.clip('game_push', { loop: true });
       // the opponent's hands, when its model has hand joints (forged NPCs): the rope's far end
       const npcHands = npc ? npc.getChildTransformNodes(false).filter(n => /(^|[:_])(Left|Right)Hand$/.test(n.name)) : [];
       // the ring: swells to full once a cycle; a pull near the top counts
@@ -49,21 +53,22 @@
       }
       const place = () => { // the pullers slide with the ribbon and lean back
         const shift = st.b * LINE, lean = (stance ? .26 : .1) + Math.abs(st.b) * .08; // the ribbon reaches a chalk line at b = ±1
-        ctx.player.place(0, -GAP / 2 - shift - st.kick * .5, 0); if (pr) pr.rotation.x = -(lean + st.kick);
+        ctx.player.place(0, -GAP / 2 - shift - st.kick * .5, YAW); if (pr) pr.rotation.x = ROPE ? 0 : -(lean + st.kick);
         if (npc) { const w = ctx.toWorld(0, 0, GAP / 2 - shift); npc.position.x = w.x; npc.position.z = w.z; const f = ctx.toWorld(0, 0, -GAP); npc.rotation.y = Math.atan2(f.x - w.x, f.z - w.z); npc.rotation.x = -lean;
           if (npc.metadata) { npc.metadata.target = null; npc.metadata.home = npc.position.clone(); npc.metadata.wanderOrigin = npc.position.clone(); npc.metadata.dialogueOpen = true; } }
         // the rope from hand to hand, sagging a little; the ribbon at its middle
         const mid = (nodes2, f) => { const ps = nodes2.map(f).filter(Boolean); return ps.length ? ps.reduce((u, v) => u.addInPlace(v), new V3(0, 0, 0)).scaleInPlace(1 / ps.length) : null; };
         const ph = stance ? mid(['RightHand', 'LeftHand'], n => ctx.player.bone(n)) : null, nh = mid(npcHands, n => n.getAbsolutePosition().clone());
         const a = ph ? ctx.toLocal(ph) : new V3(0, 1.45, -GAP / 2 - shift + .55), c = nh ? ctx.toLocal(nh) : new V3(0, a.y, GAP / 2 - shift - .55), pts = [];
-        a.x = c.x = 0; // the rope runs straight between the pullers
+        a.x = c.x = ROPE && ph ? a.x : 0; // the rope runs straight between the pullers (through the Rebel's hands side on)
         for (let i = 0; i <= 10; i++) { const f = i / 10, p = V3.Lerp(a, c, f); p.y -= Math.sin(Math.PI * f) * .12; pts.push(p); }
         rope = B.MeshBuilder.CreateTube('tgRope', { path: pts, radius: .045, tessellation: 6, updatable: true, instance: rope || undefined }, scene);
         if (!rope.material) { rope.material = M.rope; rope.isPickable = false; keep(rope); }
         ribbon.position.set(0, (a.y + c.y) / 2 - .25, -shift);
       };
       place();
-      const cam = def.cam || [3.6, 2.6, -1.4], look = def.look || [0, 1.3, 0];
+      // both pullers in view (the Rebel was cut at the left edge; side on, it faces this camera)
+      const cam = def.cam || [6.6, 3.0, -1.0], look = def.look || [0, 1.5, -.4];
       ctx.look(cam, look, def.fov || .8);
       H.title(def.title || 'Tug of War'); H.score(''); H.info(`${SEC} s`);
       H.hint('Pull (<kbd>Space</kbd>, <kbd>Enter</kbd> or a click) as the ring swells full. Hold on through his heaves: a good pull then counts double.');
@@ -100,7 +105,7 @@
         },
         key(e, down) { if (!down || e.repeat) return; if (e.key === ' ' || e.key === 'Enter') pull(); },
         pointer(evt) { if (evt.type === B.PointerEventTypes.POINTERDOWN) pull(); },
-        _test: { st, pull, swell, CYCLE, cycleNow, stance },
+        _test: { st, pull, swell, CYCLE, cycleNow, stance, ROPE },
         dispose() { ringBox.remove(); flash.remove(); if (pr) pr.rotation.x = prWas; nodes.forEach(n => { try { n.dispose(); } catch (e) {} });
           if (npc && npcWas) { npc.position.copyFrom(npcWas.p); npc.rotation.y = npcWas.ry; npc.rotation.x = npcWas.rx || 0; if (npc.metadata) { npc.metadata.home = npcWas.m.home; npc.metadata.wanderOrigin = npcWas.m.wo; npc.metadata.target = npcWas.m.target; npc.metadata.dialogueOpen = !!npcWas.open; } } }
       };
