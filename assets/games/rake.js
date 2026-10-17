@@ -26,10 +26,12 @@
     title: 'The Raking Path',
     howTo: { lines: [
       'Rake every square of sand in one unbroken line, starting where the rake stands (the small stone ring).',
-      'The line moves one square at a time (up, down, left or right). It may never cross a square already raked, and never touch a rock.',
-      'Move with the arrows / W A S D, or click the next square. Stepping back the way you came (or U) takes back the last square.',
-      'R (or Restart) smooths the sand and starts again.',
-      'Tip: a square with only one free neighbour is a dead end, so the line has to finish there. Plan the route to end on it.'] },
+      'The line moves one square at a time: up, down, left or right, never on a slant. It may never cross a square already raked, and never touch a rock.',
+      'Move with the arrows / W A S D, or click (tap) the square next to the rake.',
+      'Stepping back the way you came (or U) takes back the last square. R (or Restart) smooths the sand and starts again.',
+      'From level 3 the message at the start tells how many ways through there are: the later gardens have only one to six.',
+      'Tip: a square with only one free neighbour is a dead end, so the line has to finish there. Plan the route to end on it.'],
+      img: 'howto/rake.png', caption: 'A solved 5 x 5 garden: one line from the stone ring through every square of sand, ending in the dead end between two rocks. It is the only way.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 0], W = def.size || 7.2;
