@@ -64,11 +64,13 @@
     title: 'The Silent Path',
     howTo: { lines: [
       'Reach the scroll without being seen.',
-      'Every step you take is one turn (Space waits a turn). After it the watchmen move: a walker steps along its beat, a turner turns on the spot (the small arrow shows where it looks next), a still one keeps watching one way.',
-      'Each lantern lights the squares in front of its watchman (walls stop the light). Step into the light, or let a watchman walk into you, and you are seen: the step is taken back.',
-      'Step onto a watchman from behind or from the side to take him out.',
-      'Move with the arrows / W A S D or the pads. U undoes a turn, R (or Restart) starts the level again.',
-      'Tip: watch a beat go round once before you move; waiting a turn is often the way through.'] },
+      'Every step you take is one turn; Space (or the · pad) waits a turn. After each turn the watchmen move: a walker steps along its beat and back, a turner turns on the spot (the small arrow shows where it looks next), a still one keeps watching one way.',
+      'Each lantern lights the squares in front of its watchman (walls stop the light). Step into a lit square, stand in one after the watchmen move, or let a watchman walk into you, and you are seen: the step is taken back.',
+      'Step onto a watchman from behind or from the side to take him out: his lantern goes out with him.',
+      'Move with the arrows / W A S D or the pads. U (or ↶) undoes a turn, R (or ⟲, or Restart) starts the level again.',
+      'The fewest turns is shown at the top: reach the scroll within a quarter more for 10 more points.',
+      'Tip: watch a beat go round once before you move; waiting a turn is often the way through.'],
+      img: 'howto/silent.png', caption: 'The fewest way, numbered: turn 1 takes the walker from behind. At turn 5 the turner faces the scroll, as he does now, so the Rebel waits, and takes it at 6.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, CELL = def.cell || 1.2, AT = def.at || [0, 0];
