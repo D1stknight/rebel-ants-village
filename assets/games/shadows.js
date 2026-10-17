@@ -5,6 +5,12 @@
 // Click marks with the brush (Tab switches shadow / stone, right click the other one), drag paints, U undo, H hint
 // (no clean bonus). Score: the courtyard x 20, +10 without a hint. def: { levels, pass, points }
 // Oct 17: How to play (the rules + a solved 5 x 5 courtyard, howto/shadows.png) and Restart (every square lit again).
+// Oct 17 (Miguel: "all board games need to be 10 or 15 [levels]"): three more courtyards, 10 x 10, 11 x 11 and 12 x 12,
+// made by a new generator (scratchpad agents/lvB/shadows/gen.mjs: a Latin square, a legal shading, sly repeats under
+// the shadows, a climb toward harder ones) and graded by the what-ifs a player needs on top of the usual shortcuts
+// (pairs, a b a, cut squares): the Last Shadow 2; new 5, 7, 12 (the longest runs 13 squares before it breaks). Each
+// has one answer (every legal shading counted, extra shadows too) by the generator's search and by a SAT model of the
+// rules written apart from it (agents/lvB/shadows/check.py; all ten pass).
 (function () {
   const LEVELS = [
     { name: "The First Shadow", n: 5, g: [1,2,1,1,3,2,5,1,3,4,1,2,5,5,2,5,4,3,2,4,3,1,3,5,3], sol: '1010100000010100000110100' },
@@ -13,17 +19,22 @@
     { name: "The Silent Garden", n: 8, g: [3,3,2,8,1,4,6,8,6,7,8,5,4,2,3,3,2,3,8,6,2,2,4,7,5,2,4,5,3,2,7,1,3,1,7,4,7,5,2,5,7,8,1,3,6,3,5,4,4,6,6,3,2,6,1,2,4,4,6,1,3,7,8,3], sol: '0101000000000101101010000001010010100001000100000010010110001000' },
     { name: "The Hall of Debts", n: 8, g: [5,5,6,7,2,1,2,3,3,2,8,8,5,7,1,7,7,6,3,1,6,2,2,4,2,3,8,5,4,5,6,1,6,7,5,3,2,4,7,8,5,4,2,8,1,6,5,2,8,2,2,6,1,4,4,5,7,6,4,7,3,5,6,7], sol: '1000100000010001010000100010010001000000001010100100010010010010' },
     { name: "Crimson Night", n: 9, g: [7,4,3,8,6,5,3,7,2,2,1,6,3,2,8,6,4,9,8,9,6,8,7,2,2,7,8,8,6,5,6,4,1,6,9,3,7,6,2,7,8,3,5,5,4,1,7,7,5,1,6,2,2,9,6,1,1,4,2,3,9,5,5,1,8,4,5,9,2,3,5,6,3,5,5,2,3,6,8,6,6], sol: '100000100001010001100101010010000100000100010101000100010001010000100000101001001' },
-    { name: "The Ronin's Last Shadow", n: 10, g: [1,1,3,5,9,4,4,2,3,8,10,9,3,10,2,8,4,5,4,8,4,6,7,3,6,3,1,10,4,2,2,2,4,10,9,1,8,3,7,9,1,3,8,8,4,6,7,7,2,8,1,6,8,2,10,10,9,3,1,5,9,1,2,1,7,10,9,8,5,2,8,10,10,7,2,5,2,4,7,6,5,8,6,2,1,3,3,9,10,7,10,7,9,9,3,3,10,7,6,6], sol: '1010010000000100100101000100101000100100001000100110010100000100001001001010001000000100001010100101' }
+    { name: "The Ronin's Last Shadow", n: 10, g: [1,1,3,5,9,4,4,2,3,8,10,9,3,10,2,8,4,5,4,8,4,6,7,3,6,3,1,10,4,2,2,2,4,10,9,1,8,3,7,9,1,3,8,8,4,6,7,7,2,8,1,6,8,2,10,10,9,3,1,5,9,1,2,1,7,10,9,8,5,2,8,10,10,7,2,5,2,4,7,6,5,8,6,2,1,3,3,9,10,7,10,7,9,9,3,3,10,7,6,6], sol: '1010010000000100100101000100101000100100001000100110010100000100001001001010001000000100001010100101' },
+    // Oct 17: 10 x 10, 11 x 11 and 12 x 12, 5 / 7 / 12 what-ifs (scratchpad agents/lvB/shadows)
+    { name: "The Lantern Gate", n: 10, g: [2,9,3,1,1,10,4,8,6,4,5,6,8,9,2,1,10,2,5,3,6,2,4,6,8,3,9,10,7,5,4,3,10,8,10,4,2,9,1,1,10,3,6,4,4,2,6,9,3,7,9,5,2,3,7,8,4,1,9,3,1,10,8,5,9,6,7,2,4,1,1,10,8,2,7,5,3,4,9,1,8,1,10,5,4,6,7,4,2,6,9,4,6,10,3,1,6,7,2,2], sol: '0001001000101001010100010000000010010101010010100000010000101010001000010010000100010101001010000010' },
+    { name: "The Red Hand", n: 11, g: [3,5,2,2,4,9,11,3,6,8,6,1,6,3,4,9,5,3,2,8,11,3,8,4,7,11,3,4,6,10,9,10,2,7,9,7,7,1,2,10,11,6,10,5,6,9,11,10,8,10,9,5,2,2,3,5,3,8,2,10,11,2,10,1,7,7,4,8,6,9,5,11,1,4,3,7,11,10,1,5,8,4,7,1,6,11,9,5,4,6,5,2,9,6,7,3,11,3,8,2,2,1,9,7,4,6,8,6,6,5,9,11,5,5,6,1,4,2,7,1,3], sol: '1001000010000101001001000001000101010001000001000100101000100010101000010000000101010101010000010001001001010100100100000' },
+    { name: "A Thousand Shadows", n: 12, g: [12,9,11,2,1,8,3,3,1,5,6,2,12,1,7,11,9,3,6,11,5,10,2,8,5,5,11,6,1,12,2,1,4,4,11,1,2,4,12,11,3,7,4,10,6,8,1,11,12,6,12,9,12,10,8,11,3,5,4,7,6,10,3,4,8,8,5,7,4,10,9,2,11,7,1,12,4,2,1,4,10,3,5,7,3,11,9,11,5,6,11,2,7,6,8,4,3,11,11,10,4,1,4,5,6,6,7,10,1,3,2,7,6,12,10,2,12,11,4,5,7,2,4,8,1,4,11,6,11,12,12,7,10,8,6,3,11,5,7,8,3,2,10,1], sol: '101010100101000000010000101010001001000100100000101000001010000101000100001000010001100100100100010010001001000001010000001000100101100100010000' }
   ];
   const G = {
     title: "The Ronin's Shadows",
     howTo: { lines: [
-      'Shade squares until no number shows twice in any row or column among the squares left in the light.',
+      'Cast shadows over some squares of the courtyard until no number shows twice in any row or column among the squares left in the light.',
       'Two shadows never touch side by side (corner to corner is fine).',
-      'All the lit squares must stay joined in one piece; a red bar under the board means the light is split.',
-      'Click a square to shade it. Tab turns the brush into a white stone, for a square you are sure stays lit (right click uses the other one); drag to paint several.',
-      'U undoes, H shows a mistake or one right square (no +10 clean bonus then).',
-      'Tip: every square beside a shadow stays lit, so give it a stone.'],
+      'All the lit squares must stay joined in one piece, side by side; a red bar under the board means the light is split.',
+      'Click a square to shade it, again to clear it. Tab (or the Shadow / Stone button) turns the brush into a white stone, a note for a square you are sure stays lit; right click uses the other one, drag paints several.',
+      'Keys: arrows or WASD move, Space or Enter marks with the brush, Q shades, E sets a stone, 0 or Backspace clears. Only the shadows count: the courtyard is done when every one is in place.',
+      'A repeated lit number turns red and touching shadows get a red frame. U undoes; H shows a mistake or one right square (no +10 clean bonus then). Restart lights every square again.',
+      'Tip: every square beside a shadow stays lit (give it a stone); a number between two of the same (3 1 3) stays lit; of two equal numbers side by side one is in shadow, so any third one in that line is too.'],
       img: 'howto/shadows.png', caption: 'A solved courtyard: no lit number twice in a line, no shadows side by side, the light in one piece.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
@@ -82,9 +93,9 @@
         if (bd.k + 1 > solvedUpTo) { solvedUpTo = bd.k + 1; try { localStorage.setItem(KEY, String(solvedUpTo)); } catch (e) {} } return true; }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);background:rgba(16,8,10,.95);border:1px solid rgba(200,50,60,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 420) + 'px,92vw);background:rgba(16,8,10,.95);border:1px solid rgba(200,50,60,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#ff7a80;margin-bottom:10px">The Ronin's Shadows</div><div style="margin-bottom:12px;color:#bbb">Shade squares until no lit number repeats in a line. Shadows never touch; the light stays one.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#ff7a80' : '#444'};background:${ok ? 'rgba(255,122,128,.18)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.n}×${L.n}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#ff7a80' : '#444'};background:${ok ? 'rgba(255,122,128,.18)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.n}×${L.n}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
