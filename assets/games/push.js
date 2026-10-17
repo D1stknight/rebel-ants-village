@@ -26,10 +26,12 @@
     howTo: { lines: [
       'Push every debt stone onto a red hand. When each hand holds a stone, the level is solved.',
       'Walk the Rebel one square at a time with the arrows / W A S D (or the pads). Walking into a stone pushes it one square on.',
-      'Stones can only be pushed, never pulled. A stone will not move into a wall or into another stone.',
-      'U (or Z) takes a step back; R (or Restart) lays the level out again.',
-      'Solve it in close to the fewest steps (shown at the top) for 10 more points.',
-      'Tip: never push a stone into a corner without a hand: it can never be pushed out again.'] },
+      'Stones can only be pushed, never pulled. A stone will not move into a wall or into another stone, so two in a row will not budge.',
+      'A stone on a hand glows red. It can still be pushed off again: only where the stones end up counts.',
+      'U (or Z, or ↶) takes a step back; R (or ⟲, or Restart) lays the level out again.',
+      'Steps are counted and the fewest is shown at the top: solve it within a fifth more than the fewest for 10 more points.',
+      'Tip: never push a stone into a corner without a hand: it can never be pushed out again. A stone against a wall can only slide along it.'],
+      img: 'howto/push.png', caption: 'One step right pushes the stone onto its hand; the red one is home already. A stone in the crossed corner would be stuck for good.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, BS = def.best || BEST, CELL = def.cell || 1.3, AT = def.at || [0, 0];
