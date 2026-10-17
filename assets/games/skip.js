@@ -3,7 +3,8 @@
 // and fast; every skip slows it. Each throw scores its skips x 12 plus how far it went (m).
 // Oct 17 (Miguel: "it needs the throwing animation and needs to be longer"): ten stones, a skip keeps more of the
 // stone's speed (up to nine skips), and with the games pack the Rebel throws (game_throw): the stone rides the right
-// hand through the wind-up and whips low off it onto the skipping line.
+// hand through the wind-up and whips low off it onto the skipping line. Later on Oct 17 the low underhand throwing move
+// (game_bowl) takes the overhand throw's place when the pack has it.
 // def: { seaY (world height of the lake, -1.2), stones: 10, pass, points }
 (function () {
   const G = {
@@ -26,12 +27,15 @@
       info(); H.msg('Stone Skipping', 1200, `${STONES} stones`);
       const hint = p => H.hint(p === 'angle' ? '<kbd>Space</kbd> or click: stop the mark for the angle (low is good: the gold band)' : p === 'power' ? '<kbd>Space</kbd> or click again: the power (the gold band is a hard throw)' : '');
       function ready() { st.phase = 'angle'; st.t = Math.random() * 1.5; hint('angle'); }
-      // with the games pack: the throw (game_throw from .55 s) lets go .3 s after the press
-      const PACK = !!ctx.player.has?.('game_throw'), REL = .3, inHand = () => { const h = ctx.player.bone('RightHand'); return h ? ctx.toLocal(h) : null; };
+      // with the games pack: the throwing move (game_bowl: the low underhand swing, Oct 17, Miguel: "we can also use this
+      // for stone skipping") from .5 s lets go .53 s after the press, as the hand sweeps forward fastest; a pack without it
+      // throws overhand (game_throw from .55 s, letting go .3 s after the press)
+      const LOW = !!ctx.player.has?.('game_bowl'), PACK = LOW || !!ctx.player.has?.('game_throw'), REL = LOW ? .53 : .3, MOVE = LOW ? ['game_bowl', .5] : ['game_throw', .55];
+      const inHand = () => { const h = ctx.player.bone('RightHand'); return h ? ctx.toLocal(h) : null; };
       function press() {
         if (st.phase === 'angle') { st.a = U.pingPong(st.t, .8); st.phase = 'power'; st.t = Math.random() * 1.5; hint('power'); return; }
         if (st.phase === 'power') { st.v = U.pingPong(st.t, 1.05); H.meter(null); hint('');
-          if (PACK) { st.phase = 'windup'; st.wind = REL; ctx.player.clip('game_throw', { from: .55 }); const h = inHand(); if (h) { stone.position.copyFrom(h); stone.setEnabled(true); } }
+          if (PACK) { st.phase = 'windup'; st.wind = REL; ctx.player.clip(MOVE[0], { from: MOVE[1] }); const h = inHand(); if (h) { stone.position.copyFrom(h); stone.setEnabled(true); } }
           else throwIt(); }
       }
       function throwIt() {
