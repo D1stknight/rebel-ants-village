@@ -3,7 +3,8 @@
 // Clear the board until one stone is left, in the gold hole. Click a stone, then a glowing hole; U undoes, R starts
 // again, H finds a good jump (no clean bonus then). Seven boards, from six stones to the full 32-stone solitaire
 // (each checked by a solver). Score: the board x 20, +10 without a hint.
-// Oct 17: How to play (the rules in a few lines); the HUD's Restart is R (now also mid-jump: the jump is dropped).
+// Oct 17: How to play (the rules + a picked stone and its two jumps, howto/pegs.png); the HUD's Restart is R (now also
+// mid-jump: the jump is dropped).
 // Oct 17 (Miguel: "make this one 10 boards"): boards 8-10 go past the full board: The Far Corner (the full cross,
 // corner to far corner) and two on the French board (37 holes: the corners between the arms filled in, 36 stones; only
 // starts the colour classes allow). Their ways come from a beam search (scratchpad lv/pegs/beam.mjs), checked jump by
@@ -61,9 +62,12 @@
     howTo: { lines: [
       'A stone jumps over a stone right beside it (up, down, left or right, never diagonally) into the empty hole just behind; the stone it jumped over leaves the board.',
       'Keep jumping until only one stone is left, and it must end in the hole with the gold ring.',
-      'Click a stone to pick it up: the holes it can jump to glow. Then click a glowing hole.',
-      'U undoes a jump, R starts the board again, H shows a jump that still leads to a win (no bonus then).',
-      'Tip: keep the stones together. A stone left on its own, with no neighbour, can never be jumped away.'] },
+      'Click a stone to pick it up: the holes it can jump to glow. Then click a glowing hole. Click the stone again to put it down.',
+      'U (↶ Undo) takes back a jump, R (⟲ or Restart) starts the board again.',
+      'H (Hint) lifts a stone whose jump still leads to a win, but costs the +10 for a board cleared without hints. On the big boards it may ask you to undo a jump or two first.',
+      'Boards 9 and 10 are the French board: four more holes, in the corners between the arms.',
+      'Tip: keep the stones together and clear the far arms early. A stone left far from the others can only leave once another stone comes beside it.'],
+      img: 'howto/pegs.png', caption: 'A stone picked: its two holes glow. The jump left over its neighbour (red ring: it leaves the board) still ends with one stone in the gold hole; the jump down does not.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, KEY = 'rebelAntsPegsProgress:' + (def.id || 'pegs');
