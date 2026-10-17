@@ -4,7 +4,6 @@
 // and is worth the most. Score: points for the koi you fed, a bonus for every one full and pellets to spare.
 // def: { pond: [x, z, r] (world centre and radius), water (world height), koi (8), pellets (26), seconds (60), pass, points }
 (function () {
-  const COLS = [[.95, .45, .12], [.98, .96, .92], [.9, .2, .1], [.15, .13, .13], [.98, .7, .2], [.95, .95, .9], [.85, .35, .1], [.2, .18, .2]];
   const G = {
     title: 'Koi Feeding',
     start(ctx) {
@@ -15,19 +14,55 @@
       const st = { phase: 'intro', wait: 1.1, el: 0, score: 0, left: PELLETS, fed: 0, food: [], ripples: [], gold: null };
       const nodes = [], keep = n => { ctx.add(n); nodes.push(n); if (n.isPickable !== undefined) n.isPickable = false; return n; };
       const mat = (k, c, em, o = {}) => ctx.mat('kf_' + k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(...(o.spec || [.35, .35, .35])); if (em) m.emissiveColor = new B.Color3(...em); if (o.alpha != null) m.alpha = o.alpha; if (o.add) { m.disableLighting = true; m.alphaMode = B.Engine.ALPHA_ADD; m.backFaceCulling = false; } return m; });
-      // a koi: a long body, a tail fin that sweeps, two side fins; patched colours (two materials)
+      // a koi (Oct 17, Miguel: "lets make the fish look better"): a tapered body in two parts that swims with an S-curve,
+      // a koi pattern painted on it (kohaku, sanke, showa, asagi; the golden one an ogon), a forked see-through tail, a
+      // dorsal ridge, side fins, eyes and whiskers
+      const KINDS = ['kohaku', 'sanke', 'showa', 'asagi', 'kohaku', 'sanke', 'chagoi', 'showa'];
+      function koiTex(kind, seed) {
+        const S = 256, tex = new B.DynamicTexture('kfTex_' + kind + seed, { width: S, height: S }, scene, true), g = tex.getContext();
+        let r = seed * 9301 + 49297; const rnd = () => (r = (Math.imul(r, 1103515245) + 12345) >>> 0) / 4294967296;
+        const base = { kohaku: '#f6f2ea', sanke: '#f4f0e6', showa: '#1c1a1c', asagi: '#6d8aa0', chagoi: '#8a6040', ogon: '#e9b640' }[kind];
+        g.fillStyle = base; g.fillRect(0, 0, S, S);
+        const blob = (col, n, rmin, rmax) => { g.fillStyle = col; for (let i = 0; i < n; i++) { const x = rnd() * S, y = rnd() * S, rx = rmin + rnd() * (rmax - rmin), ry = rx * (.6 + rnd() * .7); g.beginPath(); g.ellipse(x, y, rx, ry, rnd() * 3, 0, Math.PI * 2); g.fill(); g.beginPath(); g.ellipse(x + (x < S / 2 ? S : -S), y, rx, ry, 0, 0, Math.PI * 2); g.fill(); } };
+        if (kind === 'kohaku') blob('#d8381c', 5, 26, 60);
+        if (kind === 'sanke') { blob('#d33a1e', 4, 24, 52); blob('#18161a', 6, 7, 16); }
+        if (kind === 'showa') { blob('#d8401e', 5, 22, 46); blob('#f2eee6', 4, 14, 32); }
+        if (kind === 'asagi') { g.fillStyle = '#e4783a'; g.fillRect(0, S * .72, S, S * .28); g.strokeStyle = 'rgba(30,45,60,.35)'; g.lineWidth = 2; for (let y = 6; y < S * .7; y += 12) for (let x = (y / 12 % 2) * 6; x < S; x += 12) { g.beginPath(); g.arc(x, y, 6, 0, Math.PI); g.stroke(); } }
+        if (kind === 'chagoi') { g.strokeStyle = 'rgba(60,35,18,.4)'; g.lineWidth = 2; for (let y = 6; y < S; y += 12) for (let x = (y / 12 % 2) * 6; x < S; x += 12) { g.beginPath(); g.arc(x, y, 6, 0, Math.PI); g.stroke(); } }
+        if (kind === 'ogon') { const gr = g.createLinearGradient(0, 0, 0, S); gr.addColorStop(0, 'rgba(255,240,170,.7)'); gr.addColorStop(.5, 'rgba(255,255,255,0)'); gr.addColorStop(1, 'rgba(255,230,140,.6)'); g.fillStyle = gr; g.fillRect(0, 0, S, S); }
+        tex.update(); return tex;
+      }
+      const prof = t => .2 * (t < .22 ? Math.sqrt(Math.max(.02, t / .22)) : 1 - .8 * Math.pow((t - .22) / .78, 1.25)); // the body's half width, head (0) to tail (1)
+      const Z0 = .52, LEN = 1.02, SPLIT = .56, zAt = t => Z0 - LEN * t;
+      const tube = (n, t0, t1, mt, par, z0) => { const path = [], N = 10; for (let i = 0; i <= N; i++) path.push(new V3(0, 0, zAt(t0 + (t1 - t0) * i / N) - z0));
+        const m = B.MeshBuilder.CreateTube(n, { path, radiusFunction: i => prof(t0 + (t1 - t0) * i / N), tessellation: 14, cap: B.Mesh.CAP_ALL }, scene); m.scaling.y = .8; m.material = mt; m.parent = par; m.isPickable = false; return m; };
+      const finShape = (n, pts, mt, par) => { // a flat fin: a fan from its first point (every point is seen from it)
+        const m = new B.Mesh(n, scene), vd = new B.VertexData(), idx = []; vd.positions = pts.flatMap(([x, z]) => [x, 0, z]);
+        for (let k = 1; k < pts.length - 1; k++) idx.push(0, k, k + 1);
+        vd.indices = idx; vd.normals = pts.flatMap(() => [0, 1, 0]); vd.applyToMesh(m); m.material = mt; m.parent = par; m.isPickable = false; return m; };
       function makeKoi(i, gold) {
-        const root = keep(new B.TransformNode('kfKoi' + i, scene)), c1 = gold ? [1, .78, .25] : COLS[i % COLS.length], c2 = gold ? [1, .9, .5] : COLS[(i * 3 + 1) % COLS.length];
-        const m1 = mat('koi' + c1.join('_'), c1, c1.map(v => v * (gold ? .5 : .18)), { spec: gold ? [1, .9, .5] : [.4, .4, .4] }), m2 = mat('koi' + c2.join('_'), c2, c2.map(v => v * .18));
-        const body = B.MeshBuilder.CreateSphere('kfBody', { diameter: .5, segments: 10 }, scene); body.scaling.set(.62, .42, 2.1); body.material = m1; body.parent = root; body.isPickable = false;
-        const patch = B.MeshBuilder.CreateSphere('kfPatch', { diameter: .36, segments: 8 }, scene); patch.scaling.set(.66, .36, 1.3); patch.position.set(0, .07, .12); patch.material = m2; patch.parent = root; patch.isPickable = false;
-        const tail = new B.TransformNode('kfTail', scene); tail.parent = root; tail.position.z = -.5;
-        const fin = B.MeshBuilder.CreateDisc('kfFin', { radius: .26, tessellation: 3, sideOrientation: B.Mesh.DOUBLESIDE }, scene); fin.rotation.set(Math.PI / 2, 0, Math.PI / 2); fin.scaling.set(1, 1.3, 1); fin.position.z = -.18; fin.material = m2; fin.parent = tail; fin.isPickable = false;
-        for (const s of [-1, 1]) { const f = B.MeshBuilder.CreateDisc('kfSide', { radius: .1, tessellation: 3, sideOrientation: B.Mesh.DOUBLESIDE }, scene); f.rotation.set(Math.PI / 2, s * .9, 0); f.position.set(s * .16, -.04, .18); f.material = m1; f.parent = root; f.isPickable = false; }
+        const root = keep(new B.TransformNode('kfKoi' + i, scene)), kind = gold ? 'ogon' : KINDS[i % KINDS.length];
+        const skin = ctx.mat('kfSkin_' + kind + (i % 3), n => { const m = new B.StandardMaterial(n, scene); m.diffuseTexture = koiTex(kind, i % 3 + 1); m.specularColor = new B.Color3(.55, .55, .5); m.specularPower = 48; m.emissiveColor = gold ? new B.Color3(.45, .32, .08) : new B.Color3(.12, .11, .1); return m; });
+        const finCol = { kohaku: [.98, .9, .85], sanke: [.95, .88, .82], showa: [.35, .3, .3], asagi: [.9, .55, .35], chagoi: [.6, .42, .28], ogon: [1, .85, .45] }[kind];
+        const finM = mat('fin_' + kind, finCol, finCol.map(v => v * .25), { alpha: .62 }); finM.backFaceCulling = false;
+        const eyeM = mat('eye', [.03, .03, .04], null, { spec: [.9, .9, .9] }), whiskM = mat('whisk', [.75, .6, .45]);
+        const swim = new B.TransformNode('kfSwim', scene); swim.parent = root;
+        tube('kfFront', 0, SPLIT, skin, swim, 0);
+        const rear = new B.TransformNode('kfRear', scene); rear.parent = swim; rear.position.z = zAt(SPLIT);
+        tube('kfBack', SPLIT - .02, 1, skin, rear, zAt(SPLIT));
+        const tail = new B.TransformNode('kfTail', scene); tail.parent = rear; tail.position.z = zAt(1) - zAt(SPLIT);
+        const tf = finShape('kfTailFin', [[0, .02], [.2, -.3], [.07, -.2], [0, -.12], [-.07, -.2], [-.2, -.3]], finM, tail); tf.rotation.z = Math.PI / 2; // upright, forked
+        const dorsal = finShape('kfDorsal', [[0, .18], [.07, .06], [.06, -.28], [0, -.32]], finM, swim); dorsal.rotation.z = Math.PI / 2; dorsal.position.set(0, .15, 0);
+        for (const sd of [-1, 1]) {
+          const pf = finShape('kfSide', [[0, 0], [sd * .2, -.06], [sd * .17, -.16], [0, -.08]], finM, swim); pf.position.set(sd * .12, -.07, .26); pf.rotation.z = sd * .35;
+          const e = B.MeshBuilder.CreateSphere('kfEye', { diameter: .055, segments: 6 }, scene); e.material = eyeM; e.parent = swim; e.position.set(sd * .1, .05, .42); e.isPickable = false;
+          const w = B.MeshBuilder.CreateCylinder('kfWhisker', { height: .12, diameterTop: .004, diameterBottom: .012, tessellation: 4 }, scene); w.material = whiskM; w.parent = swim; w.position.set(sd * .05, -.04, .53); w.rotation.set(1.2, 0, sd * .6); w.isPickable = false;
+        }
         const ring = B.MeshBuilder.CreateTorus('kfHunger', { diameter: .9, thickness: .05, tessellation: 24 }, scene); ring.parent = root; ring.position.y = .32; ring.isPickable = false;
+        root.getChildMeshes(false).forEach(m => ctx.add(m));
         const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * R * .8;
         root.scaling.setAll(gold ? 1.5 : 1.2 + Math.random() * .5);
-        return { root, tail, ring, gold, x: P.x + Math.cos(a) * r, z: P.z + Math.sin(a) * r, yaw: Math.random() * 6.28, v: .6, hunger: gold ? 3 : 2 + Math.floor(Math.random() * 2), full: false, wt: Math.random() * 6, ph: Math.random() * 6, target: null };
+        return { root, swim, rear, tail, ring, gold, x: P.x + Math.cos(a) * r, z: P.z + Math.sin(a) * r, yaw: Math.random() * 6.28, v: .6, hunger: gold ? 3 : 2 + Math.floor(Math.random() * 2), full: false, wt: Math.random() * 6, ph: Math.random() * 6, target: null };
       }
       const hungryM = mat('hungry', [0, 0, 0], [1, .25, .15], { alpha: .75, add: true }), fullM = mat('full', [0, 0, 0], [.4, .42, .45], { alpha: .35, add: true });
       const koi = Array.from({ length: NK }, (_, i) => makeKoi(i, false));
@@ -99,7 +134,8 @@
             k.x += Math.sin(k.yaw) * k.v * dt; k.z += Math.cos(k.yaw) * k.v * dt;
             const dc = Math.hypot(k.x - P.x, k.z - P.z); if (dc > R) { k.x = P.x + (k.x - P.x) / dc * R; k.z = P.z + (k.z - P.z) / dc * R; k.yaw += Math.PI * .5 * dt * 4; }
             k.root.position.set(k.x, WY - (k.full ? .32 : .14) + .03 * Math.sin(t * 2 + k.ph), k.z); k.root.rotation.y = k.yaw;
-            k.tail.rotation.y = .45 * Math.sin(t * (4 + k.v * 4) + k.ph);
+            const sw = t * (4 + k.v * 4) + k.ph, amp = .22 + .18 * Math.min(1, k.v); // the swim: an S along the body, the tail last
+            k.swim.rotation.y = -.25 * amp * Math.sin(sw); k.rear.rotation.y = amp * Math.sin(sw - .7); k.tail.rotation.y = 1.5 * amp * Math.sin(sw - 1.5);
             k.ring.material = k.full ? fullM : hungryM; k.ring.scaling.setAll(k.full ? 1 : 1 + .12 * Math.sin(t * 6 + k.ph));
           }
         },
