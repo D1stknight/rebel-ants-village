@@ -28393,9 +28393,34 @@ function initVillageHud() {
           window.SamuraiKit?.setLightFactor?.(getFakeLightStateFactor());
           scene.incrementRenderId();
         }
-      }
+      },
+      onMapBuilt: (canvas, R) => { if (R === 320 && canvas.toBlob) canvas.toBlob(b => { if (b) minimapCache('readwrite', st => st.put(b, CURRENT_VILLAGE_ID)).catch(() => {}); }, 'image/webp', .82); }
     });
+    showSavedMinimap();
   } catch (e) { console.warn('Village HUD failed to start', e); }
+}
+// The minimap's live picture takes a while on the first frames (every material's top-down shader compiles first), so the
+// picture from the last visit (IndexedDB rebelAntsMinimap, one per village) shows at once; the live render replaces it as
+// soon as it is ready
+function minimapCache(mode, fn) {
+  return new Promise((res, rej) => {
+    if (!window.indexedDB) return rej(new Error('no IndexedDB'));
+    const rq = indexedDB.open('rebelAntsMinimap', 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore('maps');
+    rq.onerror = () => rej(rq.error);
+    rq.onsuccess = () => {
+      const db = rq.result; let r = null;
+      try { const tx = db.transaction('maps', mode); r = fn(tx.objectStore('maps')); tx.oncomplete = () => { db.close(); res(r?.result); }; tx.onerror = () => { db.close(); rej(tx.error); }; }
+      catch (e) { db.close(); rej(e); }
+    };
+  });
+}
+function showSavedMinimap() {
+  const S = window._minimapSaved = { at: performance.now() }; // what the saved picture did (tests)
+  const use = img => { S.img = !!img; if (img && !window.VillageHud?.isBuilt?.()) S.set = window.VillageHud?.setMapImage?.(img, 320); };
+  minimapCache('readonly', st => st.get(CURRENT_VILLAGE_ID))
+    .then(b => { S.blob = b ? b.size : 0; return b && window.createImageBitmap ? createImageBitmap(b).then(use) : null; })
+    .catch(e => { S.error = String(e?.message || e); });
 }
 // the minimap's picture: one top-down render once walking starts, and again a little later for models that load late
 function buildVillageHudMap() {
