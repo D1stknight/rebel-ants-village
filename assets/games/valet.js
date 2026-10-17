@@ -35,10 +35,13 @@
     title: 'Valet Parking',
     howTo: { lines: [
       'Get the purple lowrider out through the gap in the curb on the right.',
-      'Cars only roll forward and back along their own line; they never turn.',
-      'Click a car (or press Tab to step through them), then click a glowing dot or use the arrow keys to roll it.',
-      'Moving a car counts as one move however far it rolls (more slides of the same car in a row still count once); the fewest moves earn +10. U undoes.',
-      'Tip: start from the lowrider: which car blocks its way out, and which cars block that one?'] },
+      'Cars only roll forward and back along their own line: they never turn, and they cannot pass through each other.',
+      'Click (or tap) a car, or press Tab (or ⇥) to step through them: the gold outline marks it and the glowing dots show where it can roll. Click a dot (or a free square in its line), or press the arrows / W A S D to roll it one square at a time.',
+      'Moving a car counts as one move however far it rolls (more slides of the same car in a row still count once).',
+      'U (or ↶) undoes; R (or ⟲, or Restart) parks every car back where the lot started.',
+      'The fewest moves are shown at the top: clear the lot in them for 10 more points.',
+      'Tip: start from the lowrider: which car blocks its way out, and which cars block that one?'],
+      img: 'howto/valet.png', caption: 'A lot cleared in its fewest moves, as numbered: the gold car rolls left so the red one can roll down out of the row, the blue car rolls up, and the lowrider is out.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, CELL = def.cell || 1.4, AT = def.at || [0, 0];
