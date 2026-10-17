@@ -36,7 +36,8 @@
       const KEY = 'rebelAntsRakeProgress:' + (def.id || 'rake');
       let solvedUpTo = 0; try { solvedUpTo = Math.max(0, Math.min(LV.length, Number(localStorage.getItem(KEY)) || 0)); } catch (e) {}
       const mat = (k, c, em, spec = .1) => ctx.mat(k, n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(...c); m.specularColor = new B.Color3(spec, spec, spec); if (em) m.emissiveColor = new B.Color3(...em); return m; });
-      const M = { rock: mat('rock', [.34, .34, .33], [.04, .04, .04]), moss: mat('moss', [.28, .4, .2], [.03, .05, .02]), wood: mat('wood', [.5, .36, .22], [.07, .05, .03]), rim: mat('rim', [.3, .24, .18], [.04, .03, .02]) };
+      const M = { rock: mat('rock', [.34, .34, .33], [.04, .04, .04]), moss: mat('moss', [.28, .4, .2], [.03, .05, .02]), wood: mat('wood', [.5, .36, .22], [.07, .05, .03]), rim: mat('rim', [.3, .24, .18], [.04, .03, .02]),
+        bamboo: mat('bamboo', [.78, .72, .42], [.12, .11, .06]), node: mat('bambooNode', [.55, .5, .26], [.07, .06, .03]), rope: mat('rope', [.82, .74, .56], [.12, .1, .07]) };
       // the sand: a speckled base painted once, the raked line drawn over it after every move
       const base = document.createElement('canvas'); base.width = base.height = 1024;
       { const g = base.getContext('2d'); g.fillStyle = '#e4d6b4'; g.fillRect(0, 0, 1024, 1024); for (let i = 0; i < 9000; i++) { const v = 180 + Math.random() * 60 | 0; g.fillStyle = `rgba(${v},${v - 14},${v - 40},.35)`; g.fillRect(Math.random() * 1024, Math.random() * 1024, 2, 2); } }
@@ -90,11 +91,18 @@
         cells.forEach((r, y) => r.forEach((ch, x) => { if (ch !== '#') return; const p = posOf(x, y);
           const rk = keep(B.MeshBuilder.CreatePolyhedron('rkRock', { type: 3, size: C * .28 }, scene)); rk.material = M.rock; rk.position.set(p.x, C * .16, p.z); rk.scaling.set(1.1, .62, .9); rk.rotation.set(x * .9, y * 1.7, .3); rk.isPickable = false;
           const ms = keep(B.MeshBuilder.CreateSphere('rkMoss', { diameter: C * .34, segments: 6 }, scene)); ms.material = M.moss; ms.position.set(p.x + C * .08, C * .3, p.z - C * .05); ms.scaling.y = .35; ms.isPickable = false; }));
-        // the rake: a wooden head with teeth on a long handle
-        const parts = [B.MeshBuilder.CreateBox('rkHead', { width: C * .7, height: .08, depth: .1 }, scene)];
-        for (let t = 0; t < 6; t++) { const tooth = B.MeshBuilder.CreateBox('rkTooth', { width: .03, height: .14, depth: .03 }, scene); tooth.position.set((t - 2.5) * C * .12, -.09, 0); parts.push(tooth); }
-        const handle = B.MeshBuilder.CreateCylinder('rkHandle', { height: 1.9, diameter: .05, tessellation: 6 }, scene); handle.rotation.x = -1.05; handle.position.set(0, .8, -.47); parts.push(handle);
-        const rake = B.Mesh.MergeMeshes(parts, true); rake.name = 'rkRake'; rake.material = M.wood; rake.isPickable = false; keep(rake); bd.rake = rake;
+        // the rake (Oct 17, Miguel: "make the rake look better"): a zen-garden rake, a capped wooden head with eight tapered
+        // pegs, a bamboo handle with its nodes, two braces and a rope lashing at the joint
+        const rake = new B.TransformNode('rkRake', scene); keep(rake); bd.rake = rake;
+        const RW = C * .78, part = (m, mt, x, y, z, rx = 0, rz = 0, par = rake) => { m.material = mt; m.parent = par; m.position.set(x, y, z); m.rotation.set(rx, 0, rz); m.isPickable = false; ctx.add(m); return m; };
+        part(B.MeshBuilder.CreateBox('rkHead', { width: RW, height: .07, depth: .085 }, scene), M.wood, 0, 0, 0);
+        part(B.MeshBuilder.CreateBox('rkHeadCap', { width: RW * .97, height: .022, depth: .06 }, scene), M.rim, 0, .046, 0);
+        for (let t = 0; t < 8; t++) part(B.MeshBuilder.CreateCylinder('rkTooth', { height: .15, diameterTop: .032, diameterBottom: .012, tessellation: 6 }, scene), M.wood, (t - 3.5) * RW / 8, -.105, 0);
+        const shaft = new B.TransformNode('rkShaft', scene); shaft.parent = rake; shaft.position.set(0, .03, -.02); shaft.rotation.x = -1.05; ctx.add(shaft); // leaning up and back
+        part(B.MeshBuilder.CreateCylinder('rkPole', { height: 1.9, diameter: .055, tessellation: 10 }, scene), M.bamboo, 0, .95, 0, 0, 0, shaft);
+        for (let k = 1; k <= 4; k++) part(B.MeshBuilder.CreateTorus('rkNode', { diameter: .062, thickness: .014, tessellation: 12 }, scene), M.node, 0, k * .4, 0, 0, 0, shaft);
+        part(B.MeshBuilder.CreateTorus('rkRope', { diameter: .09, thickness: .024, tessellation: 14 }, scene), M.rope, 0, .12, 0, 0, 0, shaft);
+        for (const sd of [-1, 1]) part(B.MeshBuilder.CreateCylinder('rkBrace', { height: .46, diameter: .022, tessellation: 6 }, scene), M.bamboo, sd * RW * .2, .17, -.13, -.95, sd * .72);
         const p0 = posOf(sx, sy); rake.position.set(p0.x, .2, p0.z); bd.rakeYaw = 0;
         paint(); info(); st.stuckShown = false;
       }
