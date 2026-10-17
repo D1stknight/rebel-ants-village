@@ -16,6 +16,8 @@
 // finishes 99.9%, 98.3%, 100% and over 99.9% of the placements in time. The same search on the first six beaches:
 // always winnable in 3, 3, 7, 3, 7 and 11 digs (never fewer for 1-5, so beach 4 has a dig over the best way). The
 // camera sits a little farther back and aims nearer: the near rope sat under the hint bar.
+// Oct 17 (Miguel: "its not using the digging animation"): with the Rebel's games pack each dig is the pack's dig
+// (game_dig) beside the square, a shovel through both hands while it lasts; without one, the old quick chop.
 (function () {
   const LEVELS = [
     { n: 6, chests: 1, digs: 6 },
@@ -31,7 +33,7 @@
     { n: 10, chests: 4, digs: 16, rocks: [14, 17, 25, 31, 33, 45, 48, 51, 62, 65, 73, 75] }
   ];
   const G = {
-    title: 'The Buried Chest',
+    title: 'The Buried Chest', moves: true,
     howTo: {
       lines: ['Chests are buried somewhere on this beach. Find all of them before your digs run out (the info line counts both).',
         'Click a square to dig it, or move the gold frame with the arrow keys and press Space.',
@@ -62,7 +64,18 @@
       const sRope = src(B.MeshBuilder.CreateBox('digRope', { width: CELL, height: .04, depth: .04 }, scene), ropeM);
       const sel = B.MeshBuilder.CreateTorus('digSel', { diameter: CELL * 1.18, thickness: .06, tessellation: 4 }, scene); sel.material = selM; sel.rotation.y = Math.PI / 4; sel.parent = ctx.frame; sel.isPickable = false; ctx.add(sel); sel.setEnabled(false);
       let board = null; // { k, n, rocks:Set, chests:[], found:Set, dug:Map(i -> number|'X'), digs, nodes[], sel }
-      const st = { phase: 'pick', wait: 0, anim: null };
+      const st = { phase: 'pick', wait: 0, anim: null, digT: 0 };
+      // the shovel (games pack): only while a dig lasts, its handle through both hands, the blade below the lower one
+      const shovel = new B.TransformNode('digShovel', scene); ctx.add(shovel); shovel.parent = null; shovel.setEnabled(false);
+      { const h = B.MeshBuilder.CreateCylinder('digShovelHandle', { height: 1.7, diameter: .07, tessellation: 8 }, scene); h.material = mat('shovelWood', [.45, .28, .14], [.06, .04, .02]); h.parent = shovel; h.position.y = .25; h.isPickable = false;
+        const bl = B.MeshBuilder.CreateBox('digShovelBlade', { width: .36, height: .44, depth: .04 }, scene); bl.material = mat('shovelIron', [.3, .3, .32], [.04, .04, .05]); bl.parent = shovel; bl.position.y = -.82; bl.isPickable = false; }
+      const UP = new V3(0, 1, 0);
+      function poseShovel() {
+        const r = ctx.player.bone('RightHand'), l = ctx.player.bone('LeftHand'); if (!r || !l) { shovel.setEnabled(false); return; }
+        const hi = r.y > l.y ? r : l, lo = r.y > l.y ? l : r, d = hi.subtract(lo); if (d.length() < .05) return; d.normalize();
+        shovel.position.copyFrom(lo.add(d.scale(-.1))); const ax = V3.Cross(UP, d), an = Math.acos(Math.max(-1, Math.min(1, V3.Dot(UP, d))));
+        shovel.rotationQuaternion = ax.length() < 1e-6 ? B.Quaternion.Identity() : B.Quaternion.RotationAxis(ax.normalize(), an);
+      }
       const posOf = i => new V3(AT[0] + (i % board.n - (board.n - 1) / 2) * CELL, 0, AT[1] + ((board.n - 1) / 2 - Math.floor(i / board.n)) * CELL);
       const dist = (a, b) => Math.abs(a % board.n - b % board.n) + Math.abs(Math.floor(a / board.n) - Math.floor(b / board.n));
       function build(k) {
@@ -88,7 +101,8 @@
       function dig(i) {
         if (st.phase !== 'play' || st.anim || i == null || board.rocks.has(i) || board.dug.has(i) || board.digs <= 0) return false;
         board.sel = i; moveSel(0, 0); board.digs--;
-        const p = posOf(i); ctx.player.place(p.x - CELL * .55, p.z - CELL * .55, Math.PI / 4); ctx.player.clip('cross_punch'); ctx.sound('thock');
+        const p = posOf(i); ctx.player.place(p.x - CELL * .55, p.z - CELL * .55, Math.PI / 4); ctx.sound('thock');
+        if (ctx.player.has?.('game_dig')) { ctx.player.clip('game_dig', { from: .6, hold: true }); shovel.setEnabled(true); st.digT = 1.3; poseShovel(); } else ctx.player.clip('cross_punch');
         const put = (s, y, name) => { const m = s.createInstance(name || 'digPart'); m.parent = ctx.frame; ctx.add(m); m.position.set(p.x, y, p.z); board.nodes.push(m); return m; };
         put(sHole, .115); const md = put(sMound, .14); md.position.x += CELL * .32; md.position.z += CELL * .3;
         const left = board.chests.filter(c => !board.found.has(c));
@@ -126,6 +140,7 @@
       return {
         update(dt) {
           ctx.look(st.cam, st.at);
+          if (st.digT > 0) { st.digT -= dt; poseShovel(); if (st.digT <= 0) { shovel.setEnabled(false); ctx.player.idle(); } }
           if ((st.phase === 'solved' || st.phase === 'lost') && (st.wait -= dt) <= 0) {
             const won = st.phase === 'solved', k = board.k; st.phase = 'done'; H.hint('');
             const score = won ? (k + 1) * 20 + board.digs * 5 : 0;
@@ -144,7 +159,7 @@
         },
         restart, // the HUD's Restart button
         _test: { st, dig, choose, moveSel, dist, get board() { return board; }, LV },
-        dispose() { pick.remove(); pads.remove(); sel.dispose(); if (board) board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
+        dispose() { pick.remove(); pads.remove(); sel.dispose(); try { shovel.dispose(); } catch (e) {} if (board) board.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); }
       };
     }
   };
