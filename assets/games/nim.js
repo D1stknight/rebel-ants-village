@@ -3,15 +3,25 @@
 // (or move the ring with the arrows and press Space). Whoever takes the last stone wins; on the last level whoever has
 // to take it loses. From level 2 the Archivist never misses a winning move, so each of your turns must leave him a
 // position he cannot win from. After a loss he gives a hint, plainer each time.
+// Oct 17: How to play (the rules in a few lines) and Restart (a new game of the level: the rows set out again, you
+// first; a game already won or lost goes to its result).
 // def: { opponent: npcId, at: [x, z] (the table's middle, frame coordinates), player: [x, z, yaw], cam, look, levels, pass, points }
 (function () {
   const LEVELS = [
     { rows: [1, 3, 5], smart: .35 },
     { rows: [3, 4, 5], smart: 1 },
     { rows: [2, 5, 6, 7], smart: 1 },
-    { rows: [3, 5, 7], smart: 1, misere: true }
+    { rows: [3, 5, 7], smart: 1, misere: true },
+    // Oct 17 (Miguel: "make it 10 levels"): more and longer rows; every start leaves the first player a winning move
+    // (the rows' fours, twos and ones are not all paired), the Archivist never slips
+    { rows: [3, 4, 6, 7], smart: 1 },
+    { rows: [1, 4, 5, 7, 8], smart: 1 },
+    { rows: [2, 4, 6, 8], smart: 1, misere: true },
+    { rows: [3, 5, 6, 7, 8], smart: 1 },
+    { rows: [4, 5, 7, 8, 8], smart: 1, misere: true },
+    { rows: [5, 6, 7, 8, 8], smart: 1, misere: true }
   ];
-  const SCORE = [25, 45, 65, 90];
+  const SCORE = [25, 45, 65, 90, 105, 120, 140, 160, 185, 210];
   const HINTS = [
     '"Every row can be counted in fours, twos and ones."',
     '"Seven is a four, a two and a one; five is a four and a one. Leave me rows where every four, every two and every one has a partner in another row."',
@@ -36,6 +46,13 @@
   }
   const G = {
     title: "The Archivist's Stones",
+    howTo: { lines: [
+      'You and the Archivist take turns, and you go first.',
+      'On your turn take one or more stones, all from the same row.',
+      'Whoever takes the last stone wins, except on the last level, where whoever has to take it loses.',
+      'Click a stone: it and every stone to its right are yours (they glow red first). Or move the ring with the arrows and press Space.',
+      'From level 2 he never misses a winning move, so every turn must leave him a position he cannot win from. After a loss he drops a hint.',
+      'Tip: when the last stone wins, leave him two equal rows, then take from one row whatever he takes from the other.'] },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 0];
@@ -109,10 +126,10 @@
       }
       // the level picker
       const hud = document.getElementById('gameHud'), pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,90vw);background:rgba(12,16,30,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 400) + 'px,92vw);background:rgba(12,16,30,.94);border:1px solid rgba(216,179,92,.7);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
       const label = L => `${L.rows.join(' · ')}${L.misere ? ' · last stone loses' : ''}`;
       pick.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b35c;margin-bottom:10px">The Archivist's Stones</div><div style="margin-bottom:12px;color:#bbb">Take turns. On your turn take one or more stones from one row. Whoever takes the last stone wins. You go first.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? 'Level ' + (k + 1) : '🔒'}${done ? ' ✓' : ''}${open ? `<div style="font:12px Georgia,serif;color:#c9b88a">${label(L)}</div>` : ''}</button>`; }).join('')}</div>`
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 2},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#d8b35c' : '#444'};background:${done ? 'rgba(216,179,92,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? 'Level ' + (k + 1) : '🔒'}${done ? ' ✓' : ''}${open ? `<div style="font:12px Georgia,serif;color:#c9b88a">${label(L)}</div>` : ''}</button>`; }).join('')}</div>`
         + (losses ? `<div style="margin-top:12px;font:italic 13px/1.4 Georgia,serif;color:#cfd8e6">The Archivist: ${HINTS[Math.min(HINTS.length - 1, losses - 1)]}</div>` : '');
       pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); });
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k);
@@ -121,13 +138,16 @@
       hud.appendChild(pick);
       build(Math.min(solvedUpTo, LV.length - 1)); // the table behind the picker
       const WMAX = Math.max(...LV.map(L => Math.max(...L.rows))) * SP + 1.1, P = def.player || [AT[0] - WMAX / 2 - 1, AT[1] - .5, Math.PI / 2 - .3]; ctx.player.place(P[0], P[1], P[2]); // beside the table's left end
-      const cam = def.cam || [AT[0] + 1.3, 5.8, AT[1] - 3.6], at = def.look || [AT[0] - .1, .3, AT[1] + .6];
+      // the camera backs off for the bigger tables (wider than 4.3 m or deeper than 3.2 m)
+      const back = () => bd ? Math.max(0, bd.W - 4.3, (bd.D - 3.2) * 1.3) * .9 : 0;
+      const camAt = () => def.cam || [AT[0] + 1.3, 5.8 + back() * .8, AT[1] - 3.6 - back()];
+      let cam = camAt(); const at = def.look || [AT[0] - .1, .3, AT[1] + .6];
       ctx.look(cam, at, def.fov || .82);
       H.title(def.title || "The Archivist's Stones"); H.score(''); info();
       H.hint('Pick a level: click it or press its number.');
       return {
         update(dt) {
-          ctx.look(cam, at);
+          cam = camAt(); ctx.look(cam, at);
           for (let k = st.fly.length - 1; k >= 0; k--) { const f = st.fly[k]; if (f.delay > 0) { f.delay -= dt; continue; } f.t = Math.min(1, f.t + dt / .42);
             const p = V3.Lerp(f.from, f.to, f.t); p.y += Math.sin(Math.PI * f.t) * .45; f.m.position.copyFrom(p); if (f.t >= 1) st.fly.splice(k, 1); }
           if (st.phase === 'ai' && (st.wait -= dt) <= 0) hisTake();
@@ -140,7 +160,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= LV.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play') return;
           st.hover = null;
           const rowsWith = bd.rows.map((n, i) => n ? i : -1).filter(i => i >= 0);
@@ -157,6 +177,8 @@
           if (evt.type === B.PointerEventTypes.POINTERMOVE) { const was = st.hover; st.hover = on; if (String(was) !== String(on)) paint(); }
           else if (evt.type === B.PointerEventTypes.POINTERDOWN && on) { st.ri = on[0]; st.si = on[1]; myTake(on[0], on[1]); }
         },
+        // Restart: a new game of the same level (the rows set out again, your turn; his turn in progress is dropped)
+        restart() { if ((st.phase !== 'play' && st.phase !== 'ai') || !bd) return; st.fly = []; st.hover = null; st.phase = 'play'; build(bd.k); H.msg('A new game', 1000, 'you go first'); },
         _test: { st, choose, myTake, wins, aiMove, get bd() { return bd; } },
         dispose() { pick.remove(); if (bd) bd.nodes.forEach(n => { try { n.dispose(); } catch (e) {} }); nodes.forEach(n => { try { n.dispose(); } catch (e) {} });
           if (npc && npcWas) { npc.position.copyFrom(npcWas.p); npc.rotation.y = npcWas.ry; if (npc.metadata) { npc.metadata.home = npcWas.m.home; npc.metadata.wanderOrigin = npcWas.m.wo; npc.metadata.target = npcWas.m.target; npc.metadata.dialogueOpen = !!npcWas.open; } } }
