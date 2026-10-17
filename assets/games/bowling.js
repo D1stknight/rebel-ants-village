@@ -110,11 +110,11 @@
       const parts = holder ? holder.getChildren(n => /_room_sl_pin$/.test(n.name), false) : [];
       const pinNodes = sim.pins.map(p => {
         const own = parts.find(n => near(n, p.rx, p.rz));
-        const n = own || ctx.kit('room_sl_pin');
+        const n = own ? ctx.movable(own) : ctx.kit('room_sl_pin');
         return { n, own: !!own, rest: own ? { p: own.position.clone(), r: own.rotation.clone() } : null };
       });
       const ballPart = holder ? holder.getChildren(n => /_room_sl_ball$/.test(n.name), false)[0] : null;
-      const ballNode = ballPart || ctx.kit('room_sl_ball');
+      const ballNode = ballPart ? ctx.movable(ballPart) : ctx.kit('room_sl_ball');
       const ballRest = ballPart ? { p: ballPart.position.clone(), r: ballPart.rotation.clone(), q: ballPart.rotationQuaternion?.clone() } : null;
       ballNode.rotationQuaternion = B.Quaternion.Identity();
       // the aim arrow on the lane (flat, glowing)
@@ -164,12 +164,19 @@
       }
       function beginAim() {
         state.phase = 'aim'; state.t = 0; arrow.setEnabled(true); ballNode.setEnabled(true); setStand(); ctx.player.idle();
+        if (state.hidden) { state.hidden = false; ctx.player.show(true); }
         H.hint('<kbd>A</kbd> <kbd>D</kbd> move along the line · <kbd>Space</kbd>, <kbd>O</kbd> or click: set the aim'); H.meter(null); refreshCard();
       }
       function lock() {
         if (state.phase === 'aim') { state.phase = 'power'; state.t = 0; H.hint('<kbd>Space</kbd> or click: set the power'); }
         else if (state.phase === 'power') { state.phase = 'spin'; state.t = 0; H.hint('<kbd>Space</kbd> or click: set the spin (the middle rolls straight)'); }
-        else if (state.phase === 'spin') { state.phase = 'throw'; state.t = 0; H.meter(null); H.hint(''); arrow.setEnabled(false); ctx.player.clip('cross_punch'); state.release = .32; }
+        else if (state.phase === 'spin') {
+          state.phase = 'throw'; state.t = 0; H.meter(null); H.hint(''); arrow.setEnabled(false);
+          // the games pack's low reach (bend forward, the hand down by the floor in front at 0.7 s) is the delivery; the ball
+          // leaves the hand at its lowest point. Without the pack, a punch stands in.
+          if (ctx.player.has?.('game_pick_up')) { ctx.player.clip('game_pick_up', { hold: true }); state.release = .66; }
+          else { ctx.player.clip('cross_punch'); state.release = .32; }
+        }
       }
       function afterRoll() {
         const n = sim.knocked(); state.rolls.push(n); state.frameRolls.push(n);
@@ -244,6 +251,8 @@
             if (state.crashIn > 0 && (state.crashIn -= dt) <= 0) ctx.sound(sim.knocked() >= 5 ? 'pins' : 'pinsfew');
             if (sim.ball.st === 'gutter' && !state.gutterShown) { state.gutterShown = true; ctx.sound('gutter'); }
             const b = sim.ball;
+            // the camera follows the ball down the lane, through where the Rebel stands: the Rebel steps out of the picture
+            if (state.t > .25 && !state.hidden) { state.hidden = true; ctx.player.show(false); }
             if (b.z > L.head + 5.2 && b.st !== 'gone') camTo([b.x * .5 + L.x * .5 + .8, 1.7, b.z + 4.4], [b.x, .4, b.z - 5], dt, 6);
             else camTo([L.x + .6, 2.7, L.head + 5.4], [L.x, .3, L.head - .8], dt, 3);
             if ((b.st === 'gone' || state.t > 7) && !sim.moving()) { state.wait = (state.wait || 0) + dt; if (state.wait > .7 || state.t > 9) { state.wait = 0; afterRoll(); } }
@@ -257,7 +266,7 @@
           if (down && !e.repeat && (k === ' ' || k === 'o' || k === 'enter')) lock();
         },
         pointer(evt) { if (evt.type === B.PointerEventTypes.POINTERDOWN) lock(); },
-        _test: { state, sim, lock }, // headless tests drive the rolls
+        _test: { state, sim, lock, ballNode }, // headless tests drive the rolls
         dispose() {
           pinNodes.forEach(({ n, own, rest }) => { if (!own) return; n.setEnabled(true); n.position.copyFrom(rest.p); n.rotationQuaternion = null; n.rotation.copyFrom(rest.r); });
           if (ballPart && ballRest) { ballPart.setEnabled(true); ballPart.position.copyFrom(ballRest.p); ballPart.rotationQuaternion = ballRest.q || null; if (!ballRest.q) ballPart.rotation.copyFrom(ballRest.r); }

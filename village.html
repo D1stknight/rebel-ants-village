@@ -10855,6 +10855,15 @@ function buildMiniGameCtx(def, src, frame) {
         (ActiveInterior.root?.metadata?.interiorLights || []).forEach(l => { if (l.includedOnlyMeshes?.length) l.includedOnlyMeshes.push(...ms); }); }
       return node;
     },
+    // a room's own part the game moves (the bowling ball and pins): room meshes are built with their bounds frozen, so a
+    // moved part would keep its old box and drop out of view; its bounds follow it until the game ends
+    movable(node) {
+      for (const m of node ? [node, ...(node.getChildMeshes?.(false) || [])] : []) {
+        if (!m.getTotalVertices || m.doNotSyncBoundingInfo !== true) continue;
+        m.doNotSyncBoundingInfo = false; (MiniGames.movables ||= []).push(m);
+      }
+      return node;
+    },
     // a material kept for this game (one per key)
     mat(key, make) { const n = 'miniGameMat_' + def.type + '_' + key; let m = scene.getMaterialByName(n); if (!m) { m = make(n); m.name = n; if ('maxSimultaneousLights' in m) m.maxSimultaneousLights = 4; } return m; },
     kit(type, parent) { const n = new BABYLON.TransformNode('miniGameKit_' + type, scene); n.parent = parent || frame; window.SamuraiKit?.build(n, type, scene, null, !!ActiveInterior); ctx.add(n); n.getChildMeshes(false).forEach(m => { m.isPickable = false; }); return n; },
@@ -11139,6 +11148,8 @@ function disposeMiniGameInstance() {
   putAwayGameWeapon();
   MiniGames.objs.slice().reverse().forEach(n => { try { if (!n.isDisposed?.()) n.dispose(false, false); } catch (e) {} });
   MiniGames.objs = [];
+  (MiniGames.movables || []).forEach(m => { if (!m.isDisposed?.()) { m.parent?.computeWorldMatrix?.(true); m.computeWorldMatrix(true); m.doNotSyncBoundingInfo = true; } });
+  MiniGames.movables = [];
   RebelGames.HUD.meter(null); RebelGames.HUD.reticle(null); RebelGames.HUD.card(''); RebelGames.HUD.msg('');
 }
 function restartMiniGame() {
