@@ -29,10 +29,12 @@
     howTo: { lines: [
       'The Shogun\'s seal lies cut into slabs, with one slab missing. Slide the slabs back until the seal is whole.',
       'Whole means the numbers in the slabs\' corners run 1, 2, 3 ... row by row from the top left, with the gap at the bottom right.',
-      'Click a slab in line with the gap (same row or column): it slides toward the gap, and the slabs between go with it.',
-      'Or press an arrow (W A S D) to move the slab beside the gap that way. Restart lays the slabs out as they were dealt.',
-      'Ten seals: later ones belong to other clans, and two are picture only (no numbers): the small picture beside the board shows the seal whole.',
-      'Tip: finish the top row, then the left column; what is left is a smaller seal of the same kind.'] },
+      'Click (or tap) a slab in line with the gap (the same row or column): it slides toward the gap, and the slabs between go with it.',
+      'Or press an arrow (or W A S D) to move the slab beside the gap that way: ↑ moves the slab under the gap up into it.',
+      'Every slab that moves counts as one move. Restart lays the slabs out again as they were dealt.',
+      'Ten seals: the later ones belong to other clans, and two are picture only (no numbers): the small picture at the top left of the screen shows the seal whole.',
+      'Tip: finish the top row, then the left column; what is left is a smaller seal of the same kind.'],
+      img: 'howto/slide.png', caption: 'Slab 8 is in line with the gap, so one click slides 8 and 7 together and the seal is whole: 1 to 8 in order, the gap in the bottom right.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const LV = def.levels || LEVELS, AT = def.at || [0, 0], W = def.size || 6.4;
