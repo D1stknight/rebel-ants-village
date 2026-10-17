@@ -9,7 +9,10 @@
 //   rests), alert (m, 18), color / trim [r, g, b],
 //   carry: 'scroll' | 'lantern' | 'banana' | 'gold' | 'sword' | null (what it holds; carryAt [x, y, z] on a kit critter),
 //   yawOff (a kit critter's turn: a crab runs sideways), height (m, for the beam), scale, name ('the thief'), text,
-//   erratic (0-1: random turns, chickens) }
+//   erratic (0-1: random turns, chickens), npcModel (keys, a thief's), antModel / antSize (the mini ant's), modelYaw }
+// The real look (Oct 17, Miguel: the thief and the spy "need to look way better", the Hub ant "more realistic" with
+// better animations): a thief or spy is that village's forged villager (the NPC library's <village>_villager), the mini
+// ant the village's own small-ant model; each takes over from the stand-in once loaded and runs on its own clips.
 (function () {
   const fmt = t => { const m = Math.floor(t / 60), s = t - m * 60; return m ? `${m}:${s.toFixed(1).padStart(4, '0')}` : s.toFixed(1); };
   const G = {
@@ -121,6 +124,20 @@
         c.trail.forEach(t => t.setEnabled(true));
       }
       for (let i = 0; i < count; i++) { const c = makeCritter(i); crit.push(c); c.root.setEnabled(false); }
+      // the real look (see the top), loaded one after another
+      const modelOf = look === 'thief' ? () => ctx.npcModel?.(def.npcModel || [ctx.village + '_villager'])
+        : look === 'ant' ? () => ctx.model?.(def.antModel || 'assets/village-life/small-ant/small-village-ant.glb', { size: def.antSize || 2.2, name: 'ant' }) : null;
+      if (modelOf) (async () => { for (const c of crit) { const m = await modelOf(); if (!m || st.phase === 'done') return; attachModel(c, m); } })();
+      function attachModel(c, m) {
+        c.model = m; m.root.parent = c.root; m.root.position.set(0, 0, 0); m.root.rotation.y = def.modelYaw ?? 0;
+        const item = c.item; c.body.getChildMeshes(false).forEach(x => { if (!item || (x !== item && !x.isDescendantOf(item))) x.setEnabled(false); });
+        const hand = item && m.bone('mixamorig_RightHand');
+        if (hand) { // the loot in its right fist, at the critter's own scale
+          c.root.computeWorldMatrix(true); hand.computeWorldMatrix(true);
+          const hold = new B.TransformNode('chItemHold', scene); hold.parent = hand; ctx.add(hold); hold.scaling.setAll((c.root.scaling.x || 1) / Math.max(1e-4, hand.absoluteScaling.x));
+          item.parent = hold; item.position.set(0, .1, .05);
+        }
+      }
       // the first ones: ahead of you along the loop, spread round it
       { const s0 = nearestS(ctx.player.world()); crit.forEach((c, i) => spawn(c, s0 + 14 + i * L / Math.max(2, count + 1))); st.out = count; }
       const roundSpeed = () => speed[0] + (speed[1] - speed[0]) * (catches > 1 ? Math.min(1, st.caught / (catches - 1)) : 0);
@@ -179,17 +196,25 @@
         c.gait += dt * sp / (look === 'ant' ? .9 : look === 'chicken' ? .7 : 2.6) * Math.PI * 2 / Math.max(.4, sc);
         const g = c.gait, bob = Math.abs(Math.sin(g)) * .09 * A;
         if (look === 'wisp') { c.body.position.y = .25 * Math.sin(t * 2.4 + c.s) + hopY; c.body.rotation.y = t * 2; }
-        else if (!c.kit) { c.body.position.y = bob + hopY; c.body.rotation.x = .12 * A + (look === 'thief' ? .18 * Math.min(1, sp / 7) : 0); }
-        else c.body.position.y = hopY;
+        else if (!c.kit) { c.body.position.y = bob + hopY; c.body.rotation.x = .12 * A + (look === 'thief' ? .18 * Math.min(1, sp / 7) : 0);
+          if (look === 'chicken') c.body.rotation.z = .16 * A * Math.sin(g); } // a hen waddles side to side
+        else { // a kit critter (the crab) scuttles: a quick bounce and rock on every step
+          c.body.position.y = hopY + Math.abs(Math.sin(g * 1.6)) * .12 * A; c.body.rotation.z = .14 * A * Math.sin(g * 1.6); c.body.rotation.x = .06 * A * Math.sin(g * 3.2); }
         c.root.position.set(c.x, c.y, c.z); c.root.rotation.y = c.yaw;
+        if (c.model) { // its own clips: idle, walk, run (the ant: Idle / Walk, sped up with the chase)
+          const ant = look === 'ant', want = sp < .3 ? (ant ? 'Idle' : 'idle') : ant ? 'Walk' : sp > 3.2 ? 'run' : 'walk';
+          c.model.play(want, { loop: true, speed: ant ? Math.max(.8, Math.min(3.5, sp / 1.6)) : want === 'run' ? Math.max(.8, Math.min(1.9, sp / 5.5)) : Math.max(.7, Math.min(1.6, sp / 1.4)) });
+          c.model.root.position.y = hopY;
+        }
         for (const l of c.legs) {
           if (look === 'ant') { const s = Math.sin(g + l.phase); l.rotation.y = .45 * A * s; l.rotation.z = .2 * A * Math.max(0, Math.cos(g + l.phase)) * Math.sign(l.position.x); }
           else if (look === 'chicken') l.rotation.x = .8 * A * Math.sin(g + l.phase);
           else { const s = Math.sin(g + l.phase); l.rotation.x = -(.55 + .25 * Math.min(1, sp / 7)) * A * s; l.knee.rotation.x = A * (.25 + 1.1 * Math.max(0, -Math.cos(g + l.phase))); }
         }
         for (const a of c.arms) a.rotation.x = .7 * A * Math.sin(g + a.phase) - .15 * A;
-        for (const w of c.wings) w.rotation.z = w.side * (chased && sp > 2 ? .25 + .55 * Math.abs(Math.sin(t * 22)) : .05);
-        if (c.head && look === 'chicken') c.head.position.z = .45 + .07 * Math.sin(g * 2);
+        // a hen flaps hard when chased (and a little as it runs), its head jerking forward and back on every step
+        for (const w of c.wings) w.rotation.z = w.side * (chased && sp > 2 ? .35 + .75 * Math.abs(Math.sin(t * 24)) : .05 + .18 * A * Math.abs(Math.sin(g)));
+        if (c.head && look === 'chicken') { const jerk = Math.sin(g * 2); c.head.position.z = .45 + .16 * A * (jerk > 0 ? Math.sqrt(jerk) : -.5 * Math.sqrt(-jerk)); c.head.position.y = 1.45 + .05 * A * Math.abs(jerk); c.head.rotation.x = -.25 * A * jerk; }
         if (c.scarf) c.scarf.rotation.x = -.25 - 1.0 * Math.min(1, sp / 7) + .12 * Math.sin(t * 9);
         if (c.item && look.startsWith('kit:')) c.item.rotation.z = .3 * Math.sin(g);
         if (c.trail.length) { c.hist = c.hist || []; c.hist.unshift([c.x, c.y + 1.6 + c.body.position.y, c.z]); if (c.hist.length > 30) c.hist.pop();
