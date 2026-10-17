@@ -3,7 +3,8 @@
 // the other is full), or the canal to empty it; click the canal first (or press C) and then a basin to fill it from the
 // canal. Levels without the canal start with one basin full. A level opens when the one before is done.
 // def: { at: [x, z] (the middle basin, frame coordinates), canal: [x0, z0, x1, z1] (the clickable strip), player, cam, look, pass, points }
-// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart = R.
+// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules + measuring 1 with a 5 and a 3
+// worked through, howto/basins.png; not level 1's way) and inst.restart = R.
 (function () {
   const LEVELS = [
     { caps: [3, 5], start: [0, 0], canal: true, goal: { any: 4 }, best: 6 },
@@ -22,11 +23,14 @@
   const G = {
     title: "The Engineer's Basins",
     howTo: {
-      lines: ['Measure out water exactly. The basins carry no marks, only their size: the tag over each one shows its water / its size.',
-        'Click a basin (or press its number) to pick it up, then click another basin to pour into it: the water runs until the first is empty or the second is full.',
-        'Where there is a canal, click it (or press C) and then a basin to fill that basin to the top; pick a basin up and click the canal to empty it.',
-        'The goal is on the info line: "Measure exactly 4" (any basin holding 4) or "Split the water 4 and 4" (two basins with 4 each). R starts the level again.',
-        'Tip: pouring a full basin into a smaller one leaves the difference behind (a full 5 into an empty 3 leaves 2). The fewest moves earns a bonus.']
+      lines: ['Measure the water exactly. The goal is on the info line: "Measure exactly 4" (any basin holding 4) or "Split the water 4 and 4" (two basins with 4 each, any other basin empty).',
+        'The tag over each basin shows its water / its size. A pour cannot be stopped by eye: the water runs until the first basin is empty or the second is full.',
+        'Click a basin (or press its number) to pick it up: its rim glows gold. Then click another basin to pour into it. Click the picked basin again (or press X) to put it down.',
+        'Where there is a canal: click it (or press C), then a basin, to fill that basin to the top; or pick a basin up and click the canal to empty it.',
+        'Levels without a canal start with one basin full, and that water is all there is.',
+        'R (or Restart) starts the level again. Measuring in the fewest moves earns +10; the result card shows the fewest.',
+        'Tip: a full basin poured into a smaller empty one leaves the difference behind: a full 5 into an empty 3 leaves 2.'],
+      img: 'howto/basins.png', caption: 'A 5 and a 3 by the canal: fill the 3, pour it into the 5, fill it again, pour again. The 5 fills up and 1 stays in the 3.'
     },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
