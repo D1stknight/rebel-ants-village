@@ -2,11 +2,17 @@
 // number is how many bridges touch it; bridges run straight across the water (never on a slant), at most two between
 // the same two stones, and never across another bridge; in the end every stone must be joined to every other. Click
 // a stone, then a stone in line with it: one plank, two, none. U undoes, H lays one right bridge (no clean bonus
-// then). Seven ponds from 5 stones to 28, each with one answer (checked by a solver). Score: the pond x 20, +10
+// then). Ten ponds from 5 stones to 44, each with one answer (checked by a solver). Score: the pond x 20, +10
 // without a hint.
 // def: { levels: [{ n (grid), isl: [[x, y, number]], sol: [[a, b, planks]] }], pass, points }
 // Oct 17 (Miguel: the puzzles need a how-to with an example, every board a Restart): howTo (the rules + a bridged
 // 8-stone pond, howto/hashi.png) and inst.restart (the same pond with no planks; hints still count: they cost the bonus).
+// Oct 17 (Miguel: "make it 10 games"): ponds 8-10, 32 stones on 13 x 13, then 38 and 44 on 15 x 15. Grown by scratchpad
+// lv/hashi/gen10.mjs: the old grower let a new stone land on a bridge already laid (that cut it, so most big ponds had
+// no answer); now it can't, and a few extra bridges close loops between stones that see each other. Each pond has one
+// answer (the exhaustive solve() of scratchpad hashi/gen.mjs, run to 3 answers) and needs the most "what if" steps of
+// its pool after the plain rules (11, 14, 17; ponds 1-7: 0-1). The picker takes 5 columns on wide screens; stones
+// are drawn bigger on the 15 x 15 ponds.
 (function () {
   const LEVELS = [
     { n: 5, isl: [[2,2,3],[0,2,5],[2,4,1],[0,4,1],[0,0,2]], sol: [[0,2,1],[1,0,2],[1,3,1],[4,1,2]] },
@@ -15,7 +21,10 @@
     { n: 9, isl: [[4,4,6],[8,4,5],[4,2,4],[0,2,3],[0,4,2],[0,0,3],[0,6,2],[7,2,2],[8,0,1],[3,0,2],[6,0,1],[4,7,2],[2,6,1],[8,7,2]], sol: [[0,1,2],[0,11,2],[1,13,2],[2,7,2],[2,0,1],[3,2,1],[4,0,1],[4,6,1],[5,9,1],[5,3,2],[6,12,1],[8,1,1],[9,10,1]] },
     { n: 9, isl: [[4,4,6],[4,2,4],[7,4,2],[7,2,1],[1,2,1],[4,6,5],[4,0,4],[1,6,2],[2,4,3],[8,0,1],[2,0,2],[0,4,2],[7,7,2],[2,7,1],[0,8,2],[5,8,1],[6,6,1]], sol: [[0,2,1],[0,5,2],[1,3,1],[1,0,1],[2,12,1],[4,1,1],[5,16,1],[6,9,1],[6,1,1],[7,5,2],[8,0,2],[10,6,2],[11,8,1],[11,14,1],[13,12,1],[14,15,1]] },
     { n: 11, isl: [[5,5,8],[3,5,6],[8,5,4],[3,3,2],[5,7,4],[5,2,4],[8,0,1],[3,8,8],[1,2,4],[3,10,5],[1,0,3],[8,8,2],[8,10,1],[6,0,4],[6,4,2],[1,4,1],[10,5,2],[0,10,2],[7,7,2],[0,8,2],[10,9,1]], sol: [[0,2,2],[0,4,2],[1,0,2],[1,7,2],[2,16,1],[3,1,2],[4,18,2],[5,0,2],[6,2,1],[7,11,2],[7,9,2],[8,5,2],[8,15,1],[9,12,1],[10,13,2],[10,8,1],[13,14,2],[16,20,1],[17,9,2],[19,7,2]] },
-    { n: 13, isl: [[6,6,5],[6,8,5],[2,8,2],[0,6,3],[0,0,2],[6,3,7],[4,3,3],[12,6,2],[0,8,2],[1,3,2],[4,0,1],[6,0,3],[12,4,3],[12,8,3],[2,11,2],[12,2,2],[6,11,4],[10,0,4],[9,3,1],[10,2,1],[12,0,2],[11,11,2],[1,5,2],[12,10,4],[4,11,1],[0,12,1],[7,10,2],[3,5,1]], sol: [[0,7,1],[0,1,1],[1,13,1],[1,16,2],[2,1,1],[2,14,1],[3,0,1],[3,8,1],[4,10,1],[4,3,1],[5,18,1],[5,0,2],[6,5,2],[8,25,1],[9,6,1],[9,22,1],[11,17,1],[11,5,2],[12,7,1],[13,23,2],[14,24,1],[15,12,2],[16,21,2],[17,20,2],[17,19,1],[22,27,1],[26,23,2]] }
+    { n: 13, isl: [[6,6,5],[6,8,5],[2,8,2],[0,6,3],[0,0,2],[6,3,7],[4,3,3],[12,6,2],[0,8,2],[1,3,2],[4,0,1],[6,0,3],[12,4,3],[12,8,3],[2,11,2],[12,2,2],[6,11,4],[10,0,4],[9,3,1],[10,2,1],[12,0,2],[11,11,2],[1,5,2],[12,10,4],[4,11,1],[0,12,1],[7,10,2],[3,5,1]], sol: [[0,7,1],[0,1,1],[1,13,1],[1,16,2],[2,1,1],[2,14,1],[3,0,1],[3,8,1],[4,10,1],[4,3,1],[5,18,1],[5,0,2],[6,5,2],[8,25,1],[9,6,1],[9,22,1],[11,17,1],[11,5,2],[12,7,1],[13,23,2],[14,24,1],[15,12,2],[16,21,2],[17,20,2],[17,19,1],[22,27,1],[26,23,2]] },
+    { n: 13, isl: [[4,2,4],[0,2,2],[4,8,4],[11,8,2],[4,10,5],[11,2,1],[2,10,2],[8,2,2],[8,4,4],[2,5,4],[6,10,4],[4,0,4],[0,5,4],[0,11,3],[7,0,2],[10,0,2],[11,10,2],[8,6,4],[2,0,2],[2,3,1],[6,12,2],[6,4,1],[4,12,3],[3,11,1],[9,12,3],[10,6,1],[6,6,2],[12,12,3],[0,0,1],[2,12,2],[12,7,2],[12,0,1]], sol: [[0,7,1],[0,2,1],[1,0,1],[2,3,1],[2,4,2],[4,10,1],[4,22,1],[5,3,1],[6,4,1],[7,8,1],[8,17,2],[9,6,1],[10,16,2],[10,20,1],[11,14,1],[11,0,1],[12,9,2],[12,13,2],[13,23,1],[14,15,1],[15,25,1],[18,11,2],[19,9,1],[20,24,1],[21,8,1],[24,27,2],[26,17,2],[28,1,1],[29,22,2],[30,27,1],[31,30,1]] },
+    { n: 15, isl: [[0,3,5],[3,3,3],[5,3,2],[0,9,4],[3,5,2],[5,5,4],[5,8,4],[12,8,3],[3,8,4],[9,5,1],[0,1,2],[12,3,3],[0,13,3],[10,3,1],[3,12,5],[9,12,2],[12,14,3],[1,8,3],[12,1,3],[8,1,3],[1,12,2],[6,1,2],[1,10,1],[14,3,3],[2,1,1],[14,5,3],[9,10,3],[14,14,1],[14,9,3],[14,11,1],[4,14,2],[14,1,1],[6,13,2],[1,5,1],[8,13,2],[10,13,1],[6,10,2],[2,14,1]], sol: [[0,1,1],[0,3,2],[1,2,1],[1,4,1],[2,13,1],[3,12,2],[4,5,1],[5,9,1],[5,6,2],[6,7,1],[7,16,1],[8,6,1],[8,14,2],[10,0,2],[11,23,1],[11,7,1],[12,32,1],[14,15,1],[16,27,1],[17,8,1],[17,22,1],[18,11,1],[19,18,2],[20,14,2],[21,19,1],[23,25,1],[24,21,1],[25,28,2],[26,15,1],[28,29,1],[30,16,1],[31,23,1],[32,34,1],[33,17,1],[34,35,1],[36,26,2],[37,30,1]] },
+    { n: 15, isl: [[6,13,3],[0,13,3],[6,8,6],[4,8,4],[4,0,3],[10,8,6],[14,8,4],[14,12,3],[0,8,3],[0,2,4],[12,13,2],[6,6,5],[14,3,3],[10,0,3],[6,0,3],[14,0,1],[3,2,3],[6,4,3],[0,10,4],[10,10,3],[11,3,4],[3,7,2],[12,10,1],[2,10,4],[4,10,2],[11,6,3],[12,0,2],[10,12,2],[0,0,1],[7,10,1],[2,12,2],[13,6,2],[8,0,3],[8,4,1],[7,12,1],[4,12,2],[11,1,1],[6,2,1],[13,4,1],[12,2,1],[9,6,2],[14,14,1],[9,3,2],[9,1,1]], sol: [[0,10,1],[1,0,1],[2,5,2],[2,0,1],[3,2,1],[4,14,1],[4,3,2],[5,6,1],[5,19,1],[6,7,2],[7,41,1],[8,3,1],[9,16,1],[9,8,2],[11,40,1],[11,2,2],[12,6,1],[13,26,1],[13,5,2],[14,32,2],[15,12,1],[16,21,2],[17,11,2],[18,23,2],[18,1,2],[19,27,1],[20,12,1],[20,25,2],[22,10,1],[23,24,1],[23,30,1],[24,35,1],[25,31,1],[26,39,1],[28,9,1],[29,19,1],[30,35,1],[32,33,1],[34,27,1],[36,20,1],[37,17,1],[38,31,1],[42,40,1],[43,42,1]] }
   ];
   function edgesOf(isl) { // pairs of stones that see each other along a row or column, and which pairs cross
     const E = [], at = new Map(isl.map((p, i) => [p[0] + ',' + p[1], i]));
@@ -68,8 +77,8 @@
           const clash = e.cross.some(j => bd.v[j] > 0);
           for (const s of w === 2 ? [-1, 1] : [0]) { const ox = e.h ? 0 : s * off, oy = e.h ? s * off : 0; g.strokeStyle = clash ? '#e04a3a' : won ? '#e9c46a' : '#c99a5b'; g.lineWidth = Math.max(5, C * .1); g.beginPath(); g.moveTo(x0 + ox, y0 + oy); g.lineTo(x1 + ox, y1 + oy); g.stroke();
             g.strokeStyle = 'rgba(60,35,15,.55)'; g.lineWidth = 2; for (let t = .15; t < .9; t += .1) { const mx = x0 + (x1 - x0) * t + ox, my = y0 + (y1 - y0) * t + oy; g.beginPath(); if (e.h) { g.moveTo(mx, my - C * .05); g.lineTo(mx, my + C * .05); } else { g.moveTo(mx - C * .05, my); g.lineTo(mx + C * .05, my); } g.stroke(); } } });
-        // stones
-        bd.isl.forEach((p, i) => { const x = px(p[0]), y = py(p[1]), r = C * .36, d = deg(i), over = d > p[2], done = d === p[2];
+        // stones (bigger on the 15 x 15 ponds, where the far rows read small)
+        bd.isl.forEach((p, i) => { const x = px(p[0]), y = py(p[1]), r = C * (bd.n >= 14 ? .42 : .36), d = deg(i), over = d > p[2], done = d === p[2];
           g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.arc(x + 4, y + 6, r, 0, Math.PI * 2); g.fill();
           g.fillStyle = won ? '#f2e2b0' : done ? '#9aa2a4' : '#e8e2d4'; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
           g.strokeStyle = i === bd.sel ? '#ffb020' : over ? '#e04a3a' : '#4b4640'; g.lineWidth = i === bd.sel ? 8 : 4; g.stroke();
@@ -96,9 +105,9 @@
       }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,90vw);background:rgba(16,10,22,.95);border:1px solid rgba(190,140,230,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 400) + 'px,90vw);background:rgba(16,10,22,.95);border:1px solid rgba(190,140,230,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#d2a8f0;margin-bottom:10px">The Garden Bridges</div><div style="margin-bottom:12px;color:#bbb">Each number is the planks touching that stone; join every stone, no crossings.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#d2a8f0' : '#444'};background:${ok ? 'rgba(210,168,240,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.isl.length} stones</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#d2a8f0' : '#444'};background:${ok ? 'rgba(210,168,240,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${L.isl.length} stones</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
