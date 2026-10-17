@@ -59,7 +59,8 @@
         else { st.losses++; H.msg(`${Math.round(rt * 1000)} ms`, 1500, `too slow: the shadow drew at ${Math.round(st.reflex * 1000)} ms`); doFlash('rgba(150,20,20,.6)'); shadowStrike(); }
         st.phase = 'after'; st.wait = 2; score();
       }
-      function playerCut() { if (st.sword) ctx.player.clip(Math.random() < .5 ? 'sword_power_slash' : 'sword_down_slash', { hold: true }); else ctx.player.clip('jab'); ctx.sound('thock'); }
+      // the draw is fast (Miguel, Oct 17: the moves were too slow for a duel decided in a quarter second)
+      function playerCut() { if (st.sword) ctx.player.clip(Math.random() < .5 ? 'sword_power_slash' : 'sword_down_slash', { hold: true, speed: 1.8 }); else ctx.player.clip('jab', { speed: 1.6 }); ctx.sound('thock'); }
       function cutShadow() { slash.setEnabled(true); slash.position.set(AT[0], 1.9, AT[1] - GAP / 2 + .35); slash.rotation.set(0, 0, -.5); st.dissolve = 1; }
       function shadowStrike() { st.lunge = 1; blade.rotation.set(1.57, 0, 0); ctx.sound('thock'); }
       const score = () => H.score(`${st.wins} – ${st.losses}`);

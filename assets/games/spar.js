@@ -57,7 +57,7 @@
       function resolve(hit) {
         const a = st.att; if (!a || a.done) return; a.done = true;
         arms[a.side].a.material = wood; arms[a.side].tip.material = iron;
-        if (hit) { st.hearts--; st.combo = 0; st.shake = .35; ctx.sound('strike'); ctx.player.clip('hit_reaction'); H.msg('Hit!', 600); hud2(); if (st.hearts <= 0) { ctx.player.clip('knockdown', { hold: true }); end(); } }
+        if (hit) { st.hearts--; st.combo = 0; st.shake = .35; ctx.sound('strike'); ctx.player.clip('hit_reaction', { speed: 1.4 }); H.msg('Hit!', 600); hud2(); if (st.hearts <= 0) { ctx.player.clip('knockdown', { hold: true }); end(); } }
       }
       function block(side) {
         if (st.phase !== 'play') return;
@@ -70,13 +70,15 @@
         a.blocked = true; st.blocks++; st.combo++; st.best = Math.max(st.best, st.combo);
         const perfect = a.t >= a.wind; const pts = perfect ? 3 : 2; st.score += pts + (st.combo >= 5 ? 1 : 0);
         ctx.sound('clang'); spark.setEnabled(true); spark.position.copyFrom(arms[a.side].tip.getAbsolutePosition()); spark.scaling.setAll(.3); st.spark = 0;
-        ctx.player.clip(a.side === 'low' ? 'jump' : 'cross_punch');
+        // a block raises the forearm into the swing (the elbow strike's guard, quick), a low swing is hopped (Miguel, Oct 17:
+        // the moves were too slow and a block looked like a punch)
+        if (a.side === 'low') ctx.player.clip('jump', { speed: 1.6, from: .5 }); else ctx.player.clip('elbow_punch', { speed: 1.9 });
         H.msg(perfect ? 'Perfect block!' : 'Block', 500); st.open = .75; resolve(false); hud2();
       }
       function strike() {
         if (st.phase !== 'play') return;
         if (st.open <= 0) { st.combo = 0; ctx.player.clip('jab'); H.msg('Guard up!', 450); hud2(); return; }
-        st.open = 0; st.counters++; st.score += 4; ctx.sound('thock'); ctx.player.clip(['punch_combo', 'roundhouse_kick', 'side_kick', 'hook_punch'][st.counters % 4]);
+        st.open = 0; st.counters++; st.score += 4; ctx.sound('thock'); ctx.player.clip(['punch_combo', 'roundhouse_kick', 'side_kick', 'hook_punch'][st.counters % 4], { speed: 1.5 });
         st.wobble = 1; H.msg('Counter!', 500); hud2();
       }
       function end() {

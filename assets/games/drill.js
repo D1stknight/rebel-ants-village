@@ -66,8 +66,9 @@
         if (st.phase !== 'play') return;
         const m = dummies[i]; if (!m) return;
         ctx.player.face(FACE + m.d.turn);
-        ctx.player.clip(m.d.moves[st.move++ % m.d.moves.length]);
-        st.land = { m, t: .22 };
+        // quick moves (Miguel, Oct 17: the fighting moves were slow behind the drill): sped up, the hit lands sooner
+        ctx.player.clip(m.d.moves[st.move++ % m.d.moves.length], { speed: 1.6 });
+        st.land = { m, t: .15 };
         if (m.state === 'lit') {
           const quick = Math.max(0, 1 - m.t / m.w); st.streak++; st.best = Math.max(st.best, st.streak); st.hits++;
           const pts = (10 + Math.round(5 * quick)) * (st.streak >= 5 ? 2 : 1); st.score += pts; H.score(st.score);
