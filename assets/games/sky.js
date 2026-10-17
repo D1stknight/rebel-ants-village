@@ -5,6 +5,12 @@
 // out, U undoes, H shows a mistake or one tower (no clean bonus). When the block is right the towers rise.
 // Score: the block x 20, +10 without a hint. def: { levels, pass, points }
 // Oct 17: How to play (the rules + a solved 4 x 4 block, howto/sky.png) and Restart (a blank plan, notes off).
+// Oct 17 (Miguel: "all board games need to be 10 or 15 [levels]"): three more blocks, Lowrider Lane (7 x 7) and two
+// 8 x 8s, made by a new generator (scratchpad agents/lvB/sky/gen.mjs: every clue, a tower given where the clues alone
+// leave two answers, then clues and towers taken away while one answer stays) and graded by what a player needs on top
+// of the edge + Latin rules and line solving: what-ifs (Skyline of the Saints 11; new 23, 37, 58). The new blocks keep
+// one to three given towers. Each has one answer by the generator's search and by a SAT model of the rules written
+// apart from it (agents/lvB/sky/check.py; all ten pass). Height 8 has its own colour.
 (function () {
   const LEVELS = [
     { name: "Main Street", n: 4, top: [0,0,0,0], bottom: [4,3,0,0], left: [0,0,0,0], right: [0,2,0,0], given: '0000000000000000', sol: '4123341223411234' },
@@ -13,18 +19,24 @@
     { name: "Garage Row", n: 6, top: [0,0,0,3,0,0], bottom: [4,0,0,0,3,4], left: [4,0,4,0,0,4], right: [0,2,0,3,0,0], given: '000000000000000000000000000000000000', sol: '312456624135231564563241456312145623' },
     { name: "Downtown", n: 6, top: [2,0,0,5,0,0], bottom: [0,4,3,0,2,0], left: [0,4,0,0,0,2], right: [2,0,4,0,4,2], given: '000000000000000000000000000000000000', sol: '562134143256456321214563635412321645' },
     { name: "The Hills", n: 7, top: [2,3,6,0,0,0,1], bottom: [4,0,0,2,0,4,3], left: [3,0,0,0,3,2,0], right: [0,0,3,4,4,3,0], given: '0000000000000000000000000000000000000000000000000', sol: '4216357352417674352616753412216754353716241642735' },
-    { name: "Skyline of the Saints", n: 7, top: [0,5,2,4,2,2,0], bottom: [1,0,0,0,5,0,4], left: [2,3,4,4,0,0,0], right: [0,0,0,0,4,0,5], given: '0000000000000000000000000000000000000000000000000', sol: '6152347432571624165731237654567342137412657564132' }
+    { name: "Skyline of the Saints", n: 7, top: [0,5,2,4,2,2,0], bottom: [1,0,0,0,5,0,4], left: [2,3,4,4,0,0,0], right: [0,0,0,0,4,0,5], given: '0000000000000000000000000000000000000000000000000', sol: '6152347432571624165731237654567342137412657564132' },
+    // Oct 17: a harder 7 x 7 and two 8 x 8s, 23 / 37 / 58 what-ifs, 1-3 given towers (scratchpad agents/lvB/sky)
+    { name: "Lowrider Lane", n: 7, top: [0,0,0,2,2,3,3], bottom: [0,0,2,3,3,4,2], left: [3,0,4,4,6,0,0], right: [3,0,3,0,0,0,0], given: '0000000004000000000000000000000000000000000000000', sol: '4671253654713224537613124576123564757163247362415' },
+    { name: "The Night Market", n: 8, top: [0,6,7,0,0,0,3,0], bottom: [4,0,0,3,3,3,3,2], left: [4,0,4,1,0,4,0,3], right: [0,3,0,0,3,2,3,0], given: '5000000000000000000002000000000000001000000000000000000000000000', sol: '5216473873218645154762838654237167381452316578244872351624835167' },
+    { name: "The Saints' Crown", n: 8, top: [2,0,4,3,3,3,2,0], bottom: [0,0,0,3,3,2,2,0], left: [0,3,4,0,0,6,0,3], right: [3,0,2,6,4,0,3,0], given: '0006300004000000000000000000000000000000000000000000000000000000', sol: '7826341564135782236185478657432141786253124576385732186435842176' }
   ];
   const seenFrom = line => { let m = 0, c = 0; for (const v of line) { if (!v) return -1; if (v > m) { m = v; c++; } } return c; };
   const seenSoFar = line => { let m = 0, c = 0; for (const v of line) { if (!v) break; if (v > m) { m = v; c++; } } return c; };
   const G = {
     title: 'Skyline View',
     howTo: { lines: [
-      'Every row and every column gets one tower of each height, from 1 storey up to the size of the block (1 to 4 on a 4 x 4).',
-      'A number at the edge counts the towers you see looking along that line from there: a taller tower hides every shorter one behind it.',
-      'Click a square (or move with the arrows) and type its height; N writes small pencil notes, 0 or Backspace rubs out.',
-      'An edge number fades when its line is right and turns red when it is broken. U undoes, H shows a mistake or one tower (no +10 clean bonus then).',
-      'Tip: an edge 1 means the tallest tower stands right beside it; an edge number as big as the block means the towers climb 1, 2, 3... in order.'],
+      'Plan the block: every row and every column gets one tower of each height, from 1 storey up to the size of the block (1 to 4 on a 4 x 4, 1 to 8 on an 8 x 8).',
+      'A number at the edge counts the towers you see looking along that line from there: a taller tower hides every shorter one behind it. A line with no number can show any count.',
+      'Some blocks start with a tower or two already standing (cream numbers); they cannot change.',
+      'Click a square (or move with the arrows) and type its height; N switches to small pencil notes, 0 or Backspace rubs out. On a touch screen use the number pad at the bottom right.',
+      'Placing a tower rubs its height out of the notes in its row and column. A repeated height turns red, an edge number fades when its line is right and turns red when it is broken.',
+      'U undoes; H shows a mistake or places one tower (no +10 clean bonus then). Restart clears the plan.',
+      'Tip: an edge 1 means the tallest tower stands right beside it; an edge number as big as the block means the towers climb 1, 2, 3... in order; an edge 2 can never have the tallest tower right beside it.'],
       img: 'howto/sky.png', caption: 'A solved 4 x 4 block: each edge number counts the towers seen from that side.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
@@ -59,7 +71,7 @@
       function dupes() { const N = bd.N, out = new Set(); for (let a = 0; a < N; a++) for (const idx of [[...Array(N).keys()].map(q => a * N + q), [...Array(N).keys()].map(q => q * N + a)]) { const by = {}; for (const i of idx) if (bd.val[i]) (by[bd.val[i]] = by[bd.val[i]] || []).push(i); for (const k in by) if (by[k].length > 1) by[k].forEach(i => out.add(i)); } return out; }
       const info = () => H.info(bd ? `Block ${bd.k + 1} / ${LV.length} · ${bd.L.name} · ${bd.N} × ${bd.N} · ${fmt(bd.time)}${bd.notesOn ? ' · notes on' : ''}${bd.hints ? ` · hints ${bd.hints}` : ''}` : 'Pick a block');
       const draw = () => { st.dirty = true; }; // painted once per frame at most
-      const HC = ['#7f8fa6', '#5aa7c7', '#57b894', '#e2b04a', '#e07a4f', '#c45b8f', '#8f6bd1']; // a colour per height
+      const HC = ['#7f8fa6', '#5aa7c7', '#57b894', '#e2b04a', '#e07a4f', '#c45b8f', '#8f6bd1', '#d9c9a3']; // a colour per height (8: the 8 x 8 blocks)
       function building(g, x, y, C, v, N) { // a little tower icon: v storeys of windows
         const w = C * .34, h = C * (.2 + .55 * v / N), bx = x + C * .08, by = y + C * .9 - h; g.fillStyle = HC[(v - 1) % HC.length]; g.fillRect(bx, by, w, h);
         g.fillStyle = 'rgba(255,240,180,.8)'; const fl = v, fh = h / (fl + .5); for (let f = 0; f < fl; f++) for (const wx of [.22, .62]) g.fillRect(bx + w * wx, by + fh * (f + .35), w * .18, fh * .45); }
@@ -109,10 +121,10 @@
           B.Matrix.ComposeToRef(new B.Vector3(cell * .7, Math.max(.001, h), cell * .7), B.Quaternion.Identity(), new B.Vector3(px, TY + .01 + h / 2, pz), tmp); tmp.copyToArray(buf, i * 16); } }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);background:rgba(14,16,24,.95);border:1px solid rgba(160,200,255,.55);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 420) + 'px,92vw);background:rgba(14,16,24,.95);border:1px solid rgba(160,200,255,.55);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9fd6ff;margin-bottom:10px">Skyline View</div><div style="margin-bottom:12px;color:#bbb">One tower of each height in every row and column. The edge numbers count the towers you can see.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#9fd6ff' : '#444'};background:${ok ? 'rgba(159,214,255,.18)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#a9bcd6">${L.n} × ${L.n}</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
-          + `<div style="margin-top:10px;font-size:12px;color:#889">Keys 1-${LV.length} pick a block</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#9fd6ff' : '#444'};background:${ok ? 'rgba(159,214,255,.18)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:#a9bcd6">${L.n} × ${L.n}</div>` : `${k + 1}<div style="font:500 11px system-ui">locked</div>`}</button>`; }).join('')}</div>`
+          + `<div style="margin-top:10px;font-size:12px;color:#889">Keys ${LV.length > 9 ? '1-9 and 0' : '1-' + LV.length} pick a block</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;grid-template-columns:repeat(4,44px);gap:5px;pointer-events:auto';
