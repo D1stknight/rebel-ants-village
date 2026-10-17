@@ -2,6 +2,9 @@
 // money ball (2 points). Sixty seconds. Hold Space (or press and hold) to rise into the jump shot and let go at the top:
 // the meter's gold band is a make, its bright middle a swish; a little early or late rattles the rim, more is a brick.
 // The Rebel moves on to the next rack by itself.
+// Oct 17 (Miguel: "we need a basketball animation shooting"; the games pack has no jump shot yet): the jump starts
+// part-way through its crouch, so the Rebel is at the top of it when the meter is in the gold, and the ball rides over
+// the Rebel's head from the rack (picked up on the press) and leaves from there.
 // def: { court: 'sl_court' (the layout piece), hoop: [x, y, z] (its local rim centre), racks: [[x, z] x5] (its local
 // floor spots), seconds: 60, pass, points }
 (function () {
@@ -49,6 +52,19 @@
       function stand(r, t = 1) { const pos = r.p; ctx.player.place(pos.x, pos.z, r.yaw); }
       const camFor = r => ({ c: r.p.add(r.dir.scale(-4.4)).add(r.side.scale(1.5)).add(new V3(0, 3.3, 0)), a: new V3(hoop.x, hoop.y - .5, hoop.z) });
       let cam = camFor(racks[0]);
+      // the ball in the Rebel's hands while it rises: up over the head (the head bone rises with the jump; clear of the hood
+      // and antennae from the camera behind), else a point that rises with the meter; the jump starts .3 s in, so its top
+      // (about .75 s on) comes with the meter's gold (.66-.77 s)
+      let held = null;
+      function grab() {
+        const r = R(); held?.dispose(); held = (st.ball === 4 ? sMoney : sBall).createInstance('hoopHeld'); held.parent = ctx.frame; ctx.add(held);
+        r.balls[st.ball]?.setEnabled(false); ctx.player.clip('jump', { from: .3 }); placeHeld();
+      }
+      function placeHeld() {
+        if (!held) return; const r = R(), hd = ctx.player.bone?.('Head');
+        const p = hd ? ctx.toLocal(hd).add(r.dir.scale(.3)).add(new V3(0, .62, 0)) : r.p.add(r.dir.scale(.3)).add(new V3(0, 2.6 + Math.min(1, st.hv) * .85, 0));
+        p.y = Math.max(p.y, floorY + 2.5); held.position.copyFrom(p);
+      }
       function release() {
         if (!st.hold) return; st.hold = false;
         const v = st.hv, d = Math.abs(v - .84), r = R(), isMoney = st.ball === 4;
@@ -56,7 +72,7 @@
         // where it is heading: the rim's centre, off by how far the timing was out (long when late, short when early)
         const late = v > .84 ? 1 : -1, off = q === 'swish' ? 0 : q === 'in' ? .1 : q === 'rim' ? .34 : .62 + Math.random() * .3, lat = (Math.random() - .5) * (q === 'miss' ? .5 : .16);
         const tgt = new V3(hoop.x, hoop.y, hoop.z).add(r.dir.scale(late * off)).add(r.side.scale(lat));
-        const from = r.p.add(r.dir.scale(.3)).add(new V3(0, 3.15, 0));
+        const from = held ? held.position.clone() : r.p.add(r.dir.scale(.3)).add(new V3(0, 3.15, 0)); held?.dispose(); held = null;
         const g = 9.8, apex = Math.max(from.y, tgt.y) + 1.7, vy = Math.sqrt(2 * g * (apex - from.y)), T = vy / g + Math.sqrt(2 * (apex - tgt.y) / g);
         const m = (isMoney ? sMoney : sBall).createInstance('hoopShot'); m.parent = ctx.frame; ctx.add(m); m.position.copyFrom(from);
         st.flights.push({ m, p: from.clone(), v: new V3((tgt.x - from.x) / T, vy, (tgt.z - from.z) / T), q, money: isMoney, t: 0, state: 'air', rimTries: 0 });
@@ -100,6 +116,7 @@
             st.left -= dt; if (st.left <= 0) { st.left = 0; st.hold = false; st.phase = 'last'; st.wait = 2.2; H.msg('Time!', 1000); H.meter(null); }
             if (st.cool > 0) st.cool -= dt;
           }
+          if (held && !st.hold) { held.dispose(); held = null; } else placeHeld();
           if (st.phase === 'shoot' && st.hold) { st.hv += dt / .85; H.meter({ label: st.ball === 4 ? 'Money ball' : 'Shot', value: Math.min(1, st.hv), zone: [.78, .9] }); if (st.hv >= 1.05) release(); }
           if (st.phase === 'move') { const m = st.move; m.t += dt / .6; const u = Math.min(1, m.t), e = u * u * (3 - 2 * u), p = V3.Lerp(m.from.p, m.to.p, e); ctx.player.place(p.x, p.z, m.to.yaw); const a = camFor(m.from), b = camFor(m.to); cam = { c: V3.Lerp(a.c, b.c, e), a: b.a }; if (u >= 1) { st.phase = 'shoot'; stand(m.to); info(); } }
           for (let i = st.flights.length - 1; i >= 0; i--) { const f = st.flights[i]; let alive = true; for (let s = 0; s < 3 && alive; s++) alive = fly(f, dt / 3); if (!alive) { f.m.dispose(); st.flights.splice(i, 1); } }
@@ -111,15 +128,15 @@
         },
         key(e, down) {
           const k = e.key.toLowerCase(); if (!(k === ' ' || k === 'enter' || k === 'o')) return;
-          if (down && !e.repeat && st.phase === 'shoot' && !st.hold && st.cool <= 0) { st.hold = true; st.hv = 0; ctx.player.clip('jump'); }
+          if (down && !e.repeat && st.phase === 'shoot' && !st.hold && st.cool <= 0) { st.hold = true; st.hv = 0; grab(); }
           else if (!down) release();
         },
         pointer(evt) {
-          if (evt.type === B.PointerEventTypes.POINTERDOWN && st.phase === 'shoot' && !st.hold && st.cool <= 0) { st.hold = true; st.hv = 0; ctx.player.clip('jump'); }
+          if (evt.type === B.PointerEventTypes.POINTERDOWN && st.phase === 'shoot' && !st.hold && st.cool <= 0) { st.hold = true; st.hv = 0; grab(); }
           else if (evt.type === B.PointerEventTypes.POINTERUP) release();
         },
         _test: { st, racks, hoop, shoot(v) { if (st.phase !== 'shoot' || st.hold) return false; st.hold = true; st.hv = v; release(); return true; } },
-        dispose() { st.flights.forEach(f => { try { f.m.dispose(); } catch (e) {} }); }
+        dispose() { held?.dispose(); st.flights.forEach(f => { try { f.m.dispose(); } catch (e) {} }); }
       };
       return inst;
     }
