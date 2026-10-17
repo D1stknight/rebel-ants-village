@@ -44004,7 +44004,7 @@
         "id": "chz-high-low",
         "type": "highlow",
         "title": "High-Low with Peely",
-        "calls": 12,
+        "calls": 20,
         "streak": 5,
         "giver": "chumpz-dealer",
         "pass": 5,

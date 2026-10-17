@@ -1,13 +1,15 @@
 // High-Low (Oct 15): the dealer rolls a die; call whether the next roll is higher or lower (the buttons, the arrow keys or
 // W / S). A tie is a push. Five right calls in a row wins the pot; twelve calls in all.
-// def: { calls: 12, streak: 5, giver: npcId (the camera looks at them), pass (a streak to clear it), points }
+// def: { calls: 20, streak: 5, giver: npcId (the camera looks at them), pass (a streak to clear it), points }
+// Oct 17 (Miguel: "give it 20 rounds"): twenty calls, played to the end: the pot at five in a row, then on for the
+// longest streak (the score).
 (function () {
   const PIPS = { 1: [[.5, .5]], 2: [[.27, .27], [.73, .73]], 3: [[.27, .27], [.5, .5], [.73, .73]], 4: [[.27, .27], [.73, .27], [.27, .73], [.73, .73]],
     5: [[.27, .27], [.73, .27], [.5, .5], [.27, .73], [.73, .73]], 6: [[.27, .25], [.73, .25], [.27, .5], [.73, .5], [.27, .75], [.73, .75]] };
   const G = {
     title: 'High-Low',
     start(ctx) {
-      const H = ctx.HUD, def = ctx.def, CALLS = def.calls || 12, WIN = def.streak || 5;
+      const H = ctx.HUD, def = ctx.def, CALLS = Math.max(20, def.calls || 0), WIN = def.streak || 5;
       const giver = def.giver && ctx.npc ? ctx.npc(def.giver) : null;
       let at = def.at || [0, 2, 5];
       // the Rebel a step to the left, the camera over the right shoulder on the giver's face (seen above the panel)
@@ -42,12 +44,12 @@
         const n = st.next, was = st.die; st.die = n; st.calls++;
         let txt, glow;
         if (n === was) { txt = `A ${n} again: a push.`; glow = '#cfd8e6'; }
-        else if ((n > was) === (st.call > 0)) { st.streak++; st.right++; st.best = Math.max(st.best, st.streak); txt = `${n}! Right · streak ${st.streak}`; glow = '#7fe0a8'; H.score(st.best); ctx.sound(st.streak >= WIN ? 'gamewin' : 'thock'); }
+        else if ((n > was) === (st.call > 0)) { st.streak++; st.right++; st.best = Math.max(st.best, st.streak); txt = st.streak === WIN ? `${n}! ${WIN} in a row: the pot is yours. Keep going!` : `${n}! Right · streak ${st.streak}`; glow = '#7fe0a8'; H.score(st.best); ctx.sound(st.streak === WIN ? 'gamewin' : 'thock'); if (st.streak === WIN) st.pot = true; }
         else { txt = `${n}. Wrong: the streak starts over.`; glow = '#e07f7f'; st.streak = 0; ctx.sound('thock'); }
         draw(n, glow); line.textContent = txt; info();
-        if (st.streak >= WIN || st.calls >= CALLS) {
+        if (st.calls >= CALLS) {
           st.phase = 'done';
-          setTimeout(() => { box.remove(); H.hint(''); ctx.finish({ score: st.best, label: st.best === 1 ? 'in a row' : 'in a row', extra: st.streak >= WIN ? `${WIN} right in a row: the pot is yours.` : `${st.right} right calls of ${st.calls}.` }); }, 1200);
+          setTimeout(() => { box.remove(); H.hint(''); ctx.finish({ score: st.best, label: 'in a row', extra: `${st.right} right calls of ${st.calls}${st.pot ? `; ${WIN} in a row won the pot` : ''}.` }); }, 1200);
         } else st.phase = 'call';
       }
       hi.onclick = (e) => { e.stopPropagation(); hi.blur(); call(1); };
