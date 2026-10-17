@@ -11076,6 +11076,9 @@ function buildMiniGameCtx(def, src, frame) {
       placeWorld(x, z, yaw) { charMesh.position.x = x; charMesh.position.z = z; if (yaw != null) charMesh.rotation.y = yaw; charMesh._vel = 0; _playerDeckSnapUntil = performance.now() + 600;
         const g = getVillagePlayerGroundHeightAt(x, z); if (Number.isFinite(g)) groundPlayableVisualToTerrain(g); snapWalkCameraBehindPlayer(); },
       hold(on) { MiniGames.holdWalk = !!on; if (on) { moveForward = moveBackward = turnLeft = turnRight = runKey = false; charMesh._vel = 0; } },
+      // roam games: walk with another move while the game runs (Silent Steps: the sneak walk), null = the Rebel's own
+      // walk again; false when the Rebel has no such move
+      walkAs(name, speed = 1) { const slot = name && ctx.player.has(name) ? miniGameClipSlot(name) : null; MiniGames.walkSlot = slot; if (slot != null) { const g = animGroups[slot]; if (g._gameSpeed0 == null) g._gameSpeed0 = g.speedRatio; g.speedRatio = speed; } if (animState === slot || animState === 1) { const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } return slot != null; },
       // stand at this height (world y) instead of on the ground, e.g. a board on the sea; null = the ground again
       float(y) { MiniGames.floatY = Number.isFinite(y) ? +y : null; if (MiniGames.floatY != null) groundPlayableVisualToTerrain(MiniGames.floatY); },
       running() { return !!runKey; },
@@ -11350,7 +11353,7 @@ function endMiniGame() {
   if (MiniGames.pointerObs) { scene.onPointerObservable.remove(MiniGames.pointerObs); MiniGames.pointerObs = null; }
   RebelGames.hideResult(); RebelGames.HUD.show(false);
   const s = MiniGames.saved, roam = MiniGames.roam;
-  MiniGames.on = false; MiniGames.ctx = null; MiniGames.roam = false; MiniGames.holdWalk = false; MiniGames.floatY = null;
+  MiniGames.on = false; MiniGames.ctx = null; MiniGames.roam = false; MiniGames.holdWalk = false; MiniGames.floatY = null; MiniGames.walkSlot = null;
   animGroups.forEach(g => { if (g && g._gameSpeed0 != null) { g.speedRatio = g._gameSpeed0; g._gameSpeed0 = null; } });
   document.body.classList.remove('game-roam');
   window._newTerrain?.birds?.setVisible(birdsShownFor(getFakeLightStateFactor()));
@@ -28438,7 +28441,10 @@ engine.runRenderLoop(()=>{
       groundPlayableVisualToTerrain(_terrainY);
       // Slope tilt removed — character stays upright
     }
-    if(animState!==2&&animState<3){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
+    // a roam game's own walk (ctx.player.walkAs: the sneak walk) takes the walk's place; running stays the run
+    const _ws = MiniGames.on ? MiniGames.walkSlot : null;
+    if (_ws != null && animGroups[_ws]) { if (animState === _ws || animState < 3) { const mv = moveForward||moveBackward||turnLeft||turnRight; if (mv && runKey) { if (animState !== 2) switchAnim(2, true); } else if (mv) { if (animState !== _ws) switchAnim(_ws, true); } else if (animState !== 0) switchAnim(0, true); } }
+    else if(animState!==2&&animState<3){const mv=moveForward||moveBackward||turnLeft||turnRight;if(mv&&animState!==1)switchAnim(1,true);else if(!mv&&animState!==0)switchAnim(0,true);}
     if(window.followLight){if(walkMode&&charMesh){window.followLight.position.x=charMesh.position.x;window.followLight.position.y=charMesh.position.y+4;window.followLight.position.z=charMesh.position.z;window.followLight.intensity=2.8*(window._walkLightK??1)*(MiniGames.on?(MiniGames.walkLight??1):1);updateSandFootprints(_terrainY);}else{window.followLight.position.set(9999,-999,9999);window.followLight.intensity=0;}}
     // the camera swings round behind the character while it moves (about two seconds for a half turn at a walk, quicker
     // running), unless the mouse just turned it: walking out of a doorway toward the camera, it comes round behind

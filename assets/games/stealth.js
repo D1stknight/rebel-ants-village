@@ -8,10 +8,12 @@
 // The watchmen (Oct 17, Miguel: "we need to make the watchmen look better"): each takes the forged Ronin villager's model
 // (the NPC library's ronin_villager) once it has loaded, in place of the robe-and-hat figure: it walks its beat with the
 // walk clip, looks round when it stands, and its lantern pole runs from its right hand to the lamp ahead of it.
+// Oct 17 (Miguel: "im giving you ... sneak walk animations for it"): with the games pack the Rebel walks with the sneak
+// walk (game_sneak) while the game runs; running is still the run.
 (function () {
   const fmt = t => { const m = Math.floor(t / 60), s = t - m * 60; return m ? `${m}:${s.toFixed(1).padStart(4, '0')}` : s.toFixed(1); };
   const G = {
-    title: 'Silent Steps', roam: true,
+    title: 'Silent Steps', roam: true, moves: true,
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def, V3 = B.Vector3;
       const VIEW = def.view || 8, HALF = (def.fov || 64) / 2 * Math.PI / 180, med = def.medals || [40, 60, 90], [gold, silver, bronze] = med, limit = def.limit || Math.max(150, bronze * 2);
@@ -91,6 +93,7 @@
         else { H.msg('Out of time', 1800); ctx.finish({ time: t, finished: false, passed: false, kicker: 'Out of time', extra: `Seen ${st.caught} ${st.caught === 1 ? 'time' : 'times'}. Watch the light on the ground: it is all they can see. ${lines}` }); }
       }
       ctx.player.hold(true); ctx.walkLight?.(def.walkLight ?? .3); // the Rebel's own glow would read as lantern light
+      ctx.player.walkAs?.('game_sneak'); // the sneak walk (games pack), else the Rebel's own walk
       H.title(def.title || 'Silent Steps'); H.score('0.0'); H.info(`${guards.length} watchmen · gold ${gold} s`);
       H.hint(`${def.text ? def.text + ' · ' : ''}Keep out of the lantern light · walk (running makes them look) · blue rings are posts`);
       return {
