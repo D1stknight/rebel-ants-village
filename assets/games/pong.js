@@ -3,9 +3,11 @@
 // the ball arcs there. Inside a cup it sinks; on the rim it may roll in or bounce off. Sink both and the balls come back.
 // Then Big Chain throws two at your cups. Clear his rack first to win.
 // def: { table: [x, z] (world centre of the table), len: 4.8, top: 1.45 (over the deck), opponent: npcId, skill: .38, pass, points }
+// Oct 17 (Miguel: "we need an animation of him throwing the ball"): with the games pack the Rebel throws for real
+// (game_throw): the ball leaves the right hand on the throw's release, a third of a second after the press.
 (function () {
   const G = {
-    title: 'Beer Pong',
+    title: 'Beer Pong', moves: true,
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       // the frame: the spot at the near end, local +z down the table; the table's middle and top from the deck the Rebel stands on
@@ -51,13 +53,16 @@
         if (st.phase === 'aimZ') { st.az = Z0 + (Z1 - Z0) * st.u; throwBall(new V3(TW.x + st.ax, 0, st.az), true); }
       }
       // a ball from a hand to (x, z) on the cups' rim plane: a lob that peaks a little over a metre above the hand
+      const PACK = !!ctx.player.has?.('game_throw'), REL = .3; // game_throw from .55 s: the ball leaves the hand .3 s on
       function throwBall(to, me) {
-        const from = me ? new V3(TW.x + .35, deck + 2.55, MID - LEN / 2 - .6) : new V3(TW.x - .3, deck + 2.6, MID + LEN / 2 + .7);
+        if (me && PACK && !st.wound) { st.wound = true; ctx.player.clip('game_throw', { from: .55 }); st.phase = 'windup'; st.wind = REL; st.windTo = to; return; }
+        st.wound = false;
+        const hand = me && PACK ? ctx.player.bone('RightHand') : null, from = hand ? ctx.toLocal(hand) : me ? new V3(TW.x + .35, deck + 2.55, MID - LEN / 2 - .6) : new V3(TW.x - .3, deck + 2.6, MID + LEN / 2 + .7);
         const sc = me ? .028 : .02; to = to.add(new V3((Math.random() - .5) * 2 * sc, 0, (Math.random() - .5) * 2 * sc)); to.y = TOP + CUP.h;
         const g = 9.8, apex = Math.max(from.y, to.y) + 1.1, vy = Math.sqrt(2 * g * (apex - from.y)), tUp = vy / g, tDown = Math.sqrt(2 * (apex - to.y) / g), T = tUp + tDown;
         st.f = { p: from.clone(), v: new V3((to.x - from.x) / T, vy, (to.z - from.z) / T), me, done: false, t: 0, bounced: 0 };
         ball.position.copyFrom(from); ball.setEnabled(true); ring.setEnabled(false);
-        if (me) { ctx.player.clip('jab'); ctx.sound('whoosh'); } else cheer('kick');
+        if (me) { if (!PACK) ctx.player.clip('jab'); ctx.sound('whoosh'); } else cheer('kick');
         st.phase = 'flight';
       }
       function sink(c, me) {
@@ -121,7 +126,8 @@
             st.u += st.v * dt * (st.phase === 'aimX' ? .75 : .6); if (st.u > 1) { st.u = 1; st.v = -1; } if (st.u < 0) { st.u = 0; st.v = 1; }
             const x = st.phase === 'aimX' ? (st.u * 2 - 1) * XR : st.ax, z = st.phase === 'aimX' ? (Z0 + Z1) / 2 : Z0 + (Z1 - Z0) * st.u;
             ring.position.set(TW.x + x, TOP + CUP.h + .01, z); ring.scaling.setAll(st.phase === 'aimX' ? 1.25 : 1);
-          } else if (st.phase === 'flight') { for (let i = 0; i < 4 && st.phase === 'flight'; i++) step(dt / 4); }
+          } else if (st.phase === 'windup') { if ((st.wind -= dt) <= 0) throwBall(st.windTo, true); }
+          else if (st.phase === 'flight') { for (let i = 0; i < 4 && st.phase === 'flight'; i++) step(dt / 4); }
           else if (st.phase === 'after' && (st.wait -= dt) <= 0) next();
           else if (st.phase === 'oppWait' && (st.wait -= dt) <= 0) oppThrow();
           for (const c of [...mine, ...his]) if (!c.up && c.n.isEnabled()) { c.t += dt; c.n.position.y = TOP - c.t * .6; c.n.scaling.setAll(Math.max(.05, 1 - c.t * 1.6)); if (c.t > .6) c.n.setEnabled(false); }
