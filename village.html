@@ -11664,6 +11664,7 @@ function openDanceOff(root, cfg, level) {
   if (cfg.dance.levels && !level) return chooseDanceLevel(root, cfg);
   const dc = level ? { ...cfg.dance, ...DANCE_LEVELS[level] } : cfg.dance;
   el.classList.remove('choose');
+  try { loadGamesPack(); } catch (e) {} // the dances (usually here already: the pack comes 15 s after the Rebel)
   // the song starts a moment after (and is heard a little after that): the moves wait for it
   const t0 = performance.now() / 1000 + dc.lead + .05 + (MoonTaleSounds.latency?.() || 0), lane = el.querySelector('.do-notes');
   lane.innerHTML = '';
@@ -11677,7 +11678,7 @@ function openDanceOff(root, cfg, level) {
     return { t: t0 + t, dir, el: n, judged: false };
   });
   moveForward = moveBackward = turnLeft = turnRight = false;
-  Object.assign(DanceOff, { on:true, choosing:false, replay:isDanceReplay(cfg), root, cfg, level, dc, notes, need:Math.min(dc.need, notes.length), hits:0, combo:0, px:charMesh.position.x, pz:charMesh.position.z, end:t0 + times[times.length - 1] + .6, cheerAt:0 });
+  Object.assign(DanceOff, { on:true, choosing:false, replay:isDanceReplay(cfg), root, cfg, level, dc, notes, need:Math.min(dc.need, notes.length), hits:0, combo:0, missRow:0, move:null, px:charMesh.position.x, pz:charMesh.position.z, end:t0 + times[times.length - 1] + .6, cheerAt:0 });
   el.querySelector('.do-title').textContent = (dc.title || cfg.label || 'Dance-off') + (level ? ' · ' + DANCE_LEVELS[level].label : '');
   el.querySelector('.do-judge').textContent = 'Get ready...';
   updateDanceOffScore();
@@ -11718,7 +11719,7 @@ function restartDanceOff() {
   return openDanceOff(root, cfg, level);
 }
 window.restartDanceOff = restartDanceOff;
-function closeDanceOff() { DanceOff.on = false; DanceOff.choosing = false; document.getElementById('danceOff')?.classList.remove('on', 'choose'); setTimeout(processBadgeUnlockQueue, 400); }
+function closeDanceOff() { DanceOff.on = false; DanceOff.choosing = false; stopDanceOffLoop(); document.getElementById('danceOff')?.classList.remove('on', 'choose'); setTimeout(processBadgeUnlockQueue, 400); }
 function updateDanceOff() {
   if (DanceOff.choosing && (!walkMode || ActiveInterior || !charMesh || Math.hypot(charMesh.position.x - DanceOff.px, charMesh.position.z - DanceOff.pz) > 2)) { closeDanceOff(); return; }
   if (!DanceOff.on) return;
@@ -11727,7 +11728,7 @@ function updateDanceOff() {
   const w = el.querySelector('.do-lane').clientWidth || 500, ring = w * .09, pxs = w * .36; // the lane shows ~2.5 s ahead
   for (const n of DanceOff.notes) {
     n.el.style.left = (ring + (n.t - now) * pxs) + 'px';
-    if (!n.judged && now - n.t > (DanceOff.dc || DanceOff.cfg.dance).window - .06) { n.judged = true; n.el.classList.add('miss'); DanceOff.combo = 0; el.querySelector('.do-judge').textContent = 'Miss'; updateDanceOffScore(); }
+    if (!n.judged && now - n.t > (DanceOff.dc || DanceOff.cfg.dance).window - .06) { n.judged = true; n.el.classList.add('miss'); DanceOff.combo = 0; el.querySelector('.do-judge').textContent = 'Miss'; danceOffMissed(); updateDanceOffScore(); }
   }
   questSpotCheerTick(DanceOff.cfg, DanceOff);
   if (now > DanceOff.end) {
@@ -11745,27 +11746,47 @@ function pressDance(dir) {
   const now = performance.now() / 1000, el = document.getElementById('danceOff'), judge = el.querySelector('.do-judge');
   const win = (DanceOff.dc || DanceOff.cfg.dance).window;
   let best = null; for (const n of DanceOff.notes) if (!n.judged && Math.abs(n.t - now) <= win && (!best || Math.abs(n.t - now) < Math.abs(best.t - now))) best = n;
-  if (!best) { judge.textContent = 'Off beat'; DanceOff.combo = 0; updateDanceOffScore(); return true; }
+  if (!best) { judge.textContent = 'Off beat'; DanceOff.combo = 0; danceOffMissed(); updateDanceOffScore(); return true; }
   best.judged = true;
-  if (best.dir !== dir) { best.el.classList.add('miss'); judge.textContent = 'Wrong move'; DanceOff.combo = 0; updateDanceOffScore(); return true; }
+  if (best.dir !== dir) { best.el.classList.add('miss'); judge.textContent = 'Wrong move'; DanceOff.combo = 0; danceOffMissed(); updateDanceOffScore(); return true; }
   const dt = Math.abs(best.t - now); best.el.classList.add('hit');
-  DanceOff.hits++; DanceOff.combo++;
+  DanceOff.hits++; DanceOff.combo++; DanceOff.missRow = 0;
   judge.textContent = dt <= win * .36 ? 'Perfect!' : 'Good';
-  playDanceMove(dir);
+  playDanceMove(dir, now - best.t);
   updateDanceOffScore();
   return true;
 }
 window.pressDance = pressDance;
 window._danceOff = DanceOff; // tests
-// the move a good press plays: with the games pack, its dances (← wave, ↑ house, → tut, ↓ gangnam; each press starts its
-// move again, so the Rebel dances on the beat); other Forge rigs cartwheel / jump / front flip / backflip; a Chumpz ape
-// kicks or jumps; the starter ant flip-kicks or jumps (a move still playing finishes first)
+// the move a good press plays: with the games pack the Rebel dances right through the song (Oct 17, Miguel: "the dance
+// offs still dont have the animations", "the dancing animations will probably need to be sped up"): the arrow's dance
+// (← wave, ↑ house, → tut, ↓ gangnam) loops in time with the song, each loop stretched to a whole number of the song's
+// beats a little quicker than the move's own pace, and starts where the note was (a late press starts it part-way);
+// the dance changes to the pressed arrow's at most once a bar, and two misses in a row stop it until the next good
+// press. Other Forge rigs cartwheel / jump / front flip / backflip; a Chumpz ape kicks or jumps; the starter ant
+// flip-kicks or jumps (a move still playing finishes first)
 const DANCE_PACK_MOVES = ['dance_wave', 'dance_house', 'dance_tut', 'dance_gangnam'];
-function playDanceMove(dir) {
-  const packMove = DANCE_PACK_MOVES[dir];
-  if (window.forgeRigBundleInfo && GamesPack.slots?.[packMove] != null) {
-    const slot = GamesPack.slots[packMove], g = animGroups[slot];
-    if (g) { if (animState === slot && g.isPlaying) g.stop(); animState = -1; if (playForgeRigAction(slot, null, true)) return; }
+function danceOffLoop(dir, late) {
+  const slot = GamesPack.slots?.[DANCE_PACK_MOVES[dir]], g = slot != null ? animGroups[slot] : null; if (!g) return false;
+  const beat = DanceOff.dc?.beat || DanceOff.dc?.every || .5, len = (g.to - g.from) / 60, n = Math.max(2, Math.round(len / (beat * 1.12)));
+  if (g._danceSpeed0 == null) g._danceSpeed0 = g.speedRatio;
+  g.speedRatio = len / (n * beat);
+  if (animState === slot && g.isPlaying) g.stop(); animState = -1; switchAnim(slot, true);
+  if (late > 0) g.goToFrame(Math.min(g.to, g.from + late * g.speedRatio * 60));
+  DanceOff.move = { dir, slot, at: performance.now() / 1000 - Math.max(0, late || 0) };
+  return true;
+}
+function stopDanceOffLoop() { // back to standing, every dance at its own speed again
+  const m = DanceOff.move; DanceOff.move = null;
+  for (const k of DANCE_PACK_MOVES) { const g = animGroups[GamesPack.slots?.[k]]; if (g && g._danceSpeed0 != null) { g.speedRatio = g._danceSpeed0; g._danceSpeed0 = null; } }
+  if (m && animState === m.slot) { animGroups[m.slot]?.stop(); animState = -1; switchAnim(0, true); }
+}
+function danceOffMissed() { if (++DanceOff.missRow >= 2 && DanceOff.move) stopDanceOffLoop(); }
+function playDanceMove(dir, late = 0) {
+  if (window.forgeRigBundleInfo && GamesPack.slots?.[DANCE_PACK_MOVES[dir]] != null) {
+    const m = DanceOff.move, beat = DanceOff.dc?.beat || DanceOff.dc?.every || .5;
+    if (m && (m.dir === dir || performance.now() / 1000 - m.at < 4 * beat - .08)) return; // dancing on (a bar per dance)
+    if (danceOffLoop(dir, late)) return;
   }
   if (window.forgeRigBundleInfo && playForgeRigAction([9, 4, 12, 11][dir])) return;
   if (window.kitPlayerModel) { window.SamuraiKit?.actorAction?.(window.kitPlayerModel, dir === 1 || dir === 3 ? 'jump' : 'kick'); return; }
