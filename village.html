@@ -27857,6 +27857,14 @@ function villageWaterSurfaceAt(x, z) {
   return y;
 }
 function villageSwimAllowedAt(x, z) { return !MiniGames.on && Math.hypot(x, z) <= SWIM.maxR; }
+// the player in the water: the sea bed's steep edges under it (the dredged harbour's lip, a moat's sides) are no walls;
+// a quay or a bank still holds where the ground comes within wading depth of the surface (the Wokou west beach's
+// harbour lip stopped a Rebel wading in, 0.5 m deep)
+function villageSwimmerUnderwater(x, z) {
+  if (!_villageSwimmer || !villageSwimAllowedAt(x, z)) return false;
+  const w = villageWaterSurfaceAt(x, z), g = w == null ? NaN : window._newTerrain.heightAt(x, z);
+  return Number.isFinite(g) && w - g > SWIM.wade;
+}
 // how fast the player moves on foot / in the water (x the walk)
 function playerMoveSpeedK() { return SWIM.on ? (runKey ? .8 : .55) : SWIM.wading ? (runKey ? .95 : .62) : runKey ? 2 : 1; }
 // the floor the player stands at this frame: the ground, or the swimming height while in deep water
@@ -27907,7 +27915,7 @@ function updateSwimRings(dt) {
 }
 function villagePointBlocked(x, z, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   const onDeck = villageOnKitDeck(x, z); // piers run over the quay wall and the water, bridges over the ravine
-  if (!onDeck && window._newTerrain?.decorBlocksPoint(x, z, padding)) return true; // scattered pines and rocks
+  if (!onDeck && !villageSwimmerUnderwater(x, z) && window._newTerrain?.decorBlocksPoint(x, z, padding)) return true; // scattered pines and rocks
   if (villageSeaBlocks(x, z)) return true; // no wading into the sea
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'group') {
@@ -27957,7 +27965,7 @@ window._walkProbe = {
 var _villageWalkerY = NaN;
 function villageSegmentBlocked(startX, startZ, endX, endZ, padding = VILLAGE_MANUAL_BLOCKER_COLLISION_PADDING) {
   const onDeck = villageOnKitDeck(endX, endZ);
-  if (!onDeck && window._newTerrain?.decorBlocksPoint(endX, endZ, padding)) return true;
+  if (!onDeck && !villageSwimmerUnderwater(endX, endZ) && window._newTerrain?.decorBlocksPoint(endX, endZ, padding)) return true;
   if (villageSeaBlocks(endX, endZ)) return true;
   const cachedBlockerHit = villageCollisionBlockers.some(blocker => {
     if (blocker.kind === 'group') {
