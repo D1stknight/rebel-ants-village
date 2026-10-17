@@ -2,9 +2,14 @@
 // every square is lit. A lantern lights its row and column until a wall stops it; no lantern may shine on another;
 // a numbered wall has exactly that many lanterns right beside it (above, below, left, right). Click a square to set a
 // lantern (or, in mark mode, a dot for "no lantern here"); U undoes, H fixes one square (no clean bonus then).
-// Seven courtyards from 5 x 5 to 10 x 10, each with one answer (checked by a solver). Score: the courtyard x 20, +10
+// Ten courtyards from 5 x 5 to 12 x 12, each with one answer (checked by a solver). Score: the courtyard x 20, +10
 // without a hint.
 // Oct 17: How to play (the rules + a solved 5 x 5, howto/akari.png) and Restart (the courtyard as picked, all clear).
+// Oct 17 (Miguel: "make it 10 courtyards"): 8-10 are 11 x 11, 12 x 12, 12 x 12, made by make() of scratchpad
+// akari/gen.mjs (symmetric walls, numbers stripped while the answer stays unique; one answer by countSol, run to 3) and
+// chosen by a logic grader (scratchpad lv/akari/grade.mjs: the plain rules, then one-square "what ifs"): they need
+// 11, 22 and 27 of those (courtyards 1-7: 0-4). The picker takes 5 columns on wide screens; the camera aims a little
+// nearer (a 12 x 12's bottom row sat under the hint line).
 // def: { levels: [{ g: 'grid row by row: . open, # wall, 0-4 numbered wall', sol: [lantern squares] }], pass, points }
 (function () {
   const LEVELS = [
@@ -14,7 +19,10 @@
     { g: '..........21....3..#..##.#2..2..#....#1..........', sol: [0, 9, 12, 15, 17, 27, 30, 33, 36, 39, 44] },
     { g: '#.....#....0...#0..#..3.##....#..2....##.#..1..##...#....#.....2', sol: [4, 7, 9, 14, 21, 23, 32, 34, 43, 49, 55, 56, 62] },
     { g: '.....3..1###.#.#.......#.....2...#...##...11...#...#.....3.......#.#.2##2..#.....', sol: [4, 6, 14, 17, 20, 25, 28, 31, 41, 48, 52, 56, 60, 63, 66, 73, 78] },
-    { g: '#.....##...3.#...3.#1...#....1.....#..#....3...1....#...0....1..0.....#....#...##.1...2.#...00.....#', sol: [1, 9, 10, 12, 16, 18, 27, 33, 39, 41, 44, 48, 50, 53, 62, 67, 76, 81, 84, 89, 90, 96] }
+    { g: '#.....##...3.#...3.#1...#....1.....#..#....3...1....#...0....1..0.....#....#...##.1...2.#...00.....#', sol: [1, 9, 10, 12, 16, 18, 27, 33, 39, 41, 44, 48, 50, 53, 62, 67, 76, 81, 84, 89, 90, 96] },
+    { g: '1#1....1......#1....0..#......#......1...2......##..1..#..2...#..0..2..#0......#...#......#......1..2....2#......1....###', sol: [3, 8, 11, 16, 28, 32, 36, 40, 42, 57, 60, 63, 69, 81, 87, 89, 95, 99, 104, 108, 112, 116] },
+    { g: '..00...#...1##...1...2..#....##.....#.....2.#.0.....0.#.#..............11..............1.#.#.....2.0.#.....#.....#1....#..2...2...2##...1...##..', sol: [0, 6, 10, 16, 20, 27, 33, 41, 43, 59, 60, 85, 88, 95, 96, 102, 110, 118, 121, 125, 128, 135, 138, 142] },
+    { g: '......1.#.#.#..0...##.#....#..#......2...##........#.......1.....#..02....21..#.....#.......2........##...#......2..2....1.02...#..1.#.1.#......', sol: [0, 7, 17, 25, 32, 36, 39, 47, 57, 62, 66, 70, 73, 76, 83, 91, 99, 104, 110, 114, 117, 120, 125, 130, 136, 140] }
   ];
   const G = {
     title: "The Watchman's Lanterns",
@@ -93,9 +101,9 @@
       }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,90vw);background:rgba(14,8,10,.95);border:1px solid rgba(230,110,90,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 400) + 'px,90vw);background:rgba(14,8,10,.95);border:1px solid rgba(230,110,90,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#f29a86;margin-bottom:10px">The Watchman's Lanterns</div><div style="margin-bottom:12px;color:#bbb">Light every square. No lantern may shine on another; a number counts the lanterns beside its wall.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo, n = Math.round(Math.sqrt(L.g.length)); return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#f29a86' : '#444'};background:${ok ? 'rgba(242,154,134,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${n}×${n}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo, n = Math.round(Math.sqrt(L.g.length)); return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#f29a86' : '#444'};background:${ok ? 'rgba(242,154,134,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${n}×${n}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;gap:6px;pointer-events:auto';
@@ -104,7 +112,7 @@
       function toggleMode() { st.mode = st.mode === 1 ? 2 : 1; modeBtn.textContent = st.mode === 1 ? '🏮 Lantern' : '• Mark'; info(); }
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'flex'; H.msg(`Courtyard ${k + 1}`, 900); }
       hud.append(pick, pads); drawPick();
-      const cam = [0, TY + 5.2, -3.9], at = [0, TY, .2];
+      const cam = [0, TY + 5.2, -3.9], at = [0, TY, -.25]; // (Oct 17: aimed nearer, so a 12 x 12's bottom row clears the hint line)
       ctx.player.place(0, cam[2] - 1.6, 0); ctx.look(cam, at, def.fov || .8); // the player waits behind the camera, out of the picture
       { const g = tex.getContext(); g.fillStyle = '#2b2f3a'; g.fillRect(0, 0, TEX, TEX); tex.update(); }
       H.title(def.title || "The Watchman's Lanterns"); H.score(''); info();
