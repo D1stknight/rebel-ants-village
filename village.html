@@ -27219,7 +27219,9 @@ function addKitDeckSurfaces(node, surfaces) {
 // Railed stairs (the Saints fire escapes): both long sides of every flight and landing hold a walker standing on the
 // stairs at that height (1 m pieces, from .7 under the tread to 1.2 over it), so nobody steps off into the air; under the
 // stairs and beside them on the ground nothing holds. The ends stay open (the foot, the roof at the top).
-const KIT_STAIR_RAILS = new Set(['kit_stairs_fire']);
+// The Buke footbridges too (Miguel, Oct 17: chasing the thief he fell off a bridge into the canal and could not get out):
+// their stone parapets hold like rails.
+const KIT_STAIR_RAILS = new Set(['kit_stairs_fire', 'buke_footbridge']);
 function addKitStairRails(node, blockers) {
   const yaw = node.rotation?.y || 0, c = Math.cos(yaw), sn = Math.sin(yaw);
   const sx = Math.abs(node.scaling?.x || 1), sy = Math.abs(node.scaling?.y || sx), sz = Math.abs(node.scaling?.z || sx);
@@ -27231,14 +27233,22 @@ function addKitStairRails(node, blockers) {
       const h = node.position.y + (Number.isFinite(d.y1) ? d.y0 + (d.y1 - d.y0) * t : (d.y ?? 0)) * sy;
       for (const side of [-1, 1]) {
         const lx = side * (d.halfX + .12);
+        const ox = side * (d.halfX + .8); // a point just outside the rail: a floor there at the rail's level opens it
         items.push({ kind: 'obb', type: 'kit_rail', name: `${node.name}_rail_${di}_${k}_${side}`, centerX: node.position.x + (lx * sx * c + lz * sz * sn), centerZ: node.position.z + (-lx * sx * sn + lz * sz * c),
-          axisX, axisZ, yaw, halfX: .1, halfZ: (z1 - z0) / n * sz / 2 + .02, minY: h - .7, maxY: h + 1.2 });
+          axisX, axisZ, yaw, halfX: .1, halfZ: (z1 - z0) / n * sz / 2 + .02, minY: h - .7, maxY: h + 1.2,
+          floorY: h, outX: node.position.x + (ox * sx * c + lz * sz * sn), outZ: node.position.z + (-ox * sx * sn + lz * sz * c) });
       }
     }
   });
   if (!items.length) return;
   const r = Math.max(...items.map(b => Math.hypot(b.centerX - node.position.x, b.centerZ - node.position.z))) + 1;
-  blockers.push({ kind: 'group', x: node.position.x, z: node.position.z, r, items, name: node.name + '_rails', auto: true });
+  blockers.push({ kind: 'group', x: node.position.x, z: node.position.z, r, items, name: node.name + '_rails', auto: true, stairRails: true });
+}
+// once every floor is known: a rail gives way where a floor meets the stair at the rail's own level (a step up or down),
+// so the roof beside a fire escape's top landing is stepped onto (Miguel, Oct 17: at the top he could not get onto the
+// roof, "a step he can't get over": the landing's rail stood between them)
+function openKitStairRails(blockers) {
+  blockers.forEach(g => { if (g.stairRails) g.items = g.items.filter(b => !getVillageWalkableSurfaceHeightsAt(b.outX, b.outZ).some(y => Math.abs(y - b.floorY) <= .5)); });
 }
 
 // The Hub's model buildings (GLBs, not kit pieces) get floors and walls from tables measured in the models (floors set
@@ -27351,6 +27361,7 @@ function rebuildVillageCollisionBlockers() {
   villageCollisionBlockers = blockers;
   const _kitDecksBefore = villageWalkableSurfaces.filter(sf => sf.type === 'kit_deck').length;
   villageWalkableSurfaces = walkableSurfaces;
+  openKitStairRails(blockers);
   villageLastBlockerRebuild = performance.now();
   // new decks (the layout just loaded): let the player settle onto one it already stands in
   if (walkableSurfaces.filter(sf => sf.type === 'kit_deck').length > _kitDecksBefore) { _playerDeckSnapUntil = performance.now() + 1500; _playerGroundCache = null; }
