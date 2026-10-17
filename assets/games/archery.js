@@ -4,6 +4,9 @@
 // double. Aim with the mouse; hold the button (or Space) to draw and let go to loose: a fuller draw flies faster and
 // flatter, a draw held too long starts to shake. Arrows drop with distance and drift with the wind. Rings 10 / 7 / 5 / 3.
 // A Forge Rebel holds a lent bow (Dawn's Light) and plays its own bow moves; others shoot from the shoulder.
+// The arrow camera (Oct 17, Miguel: "I should be able to see the arrow hitting the target and flying into the target"):
+// once loosed, the view chases the arrow (the flight at half speed, a light streak behind it), then holds on the target
+// (or the ground) where it lands before going back to the line. def.arrowCam false keeps the old fixed view.
 (function () {
   const G = {
     title: 'Archery',
@@ -54,6 +57,14 @@
         shaft.material = wood; head.material = steel; fl.forEach(p => { p.material = feather; });
         const m = B.Mesh.MergeMeshes([shaft, head, ...fl], true, true, undefined, false, true); m.name = 'archArrow'; m.isPickable = false; m.isVisible = false; ctx.add(m); return m;
       })();
+      // the streak behind a flying arrow (taken off when it lands)
+      const trailSrc = (() => {
+        const t = B.MeshBuilder.CreateCylinder('archTrail', { height: 2.4, diameterTop: .05, diameterBottom: .005, tessellation: 6 }, scene); t.rotation.x = -Math.PI / 2; t.bakeCurrentTransformIntoVertices();
+        t.material = ctx.mat('trail', n => { const m = new B.StandardMaterial(n, scene); m.diffuseColor = new B.Color3(0, 0, 0); m.emissiveColor = new B.Color3(1, .92, .7); m.alpha = .45; m.disableLighting = true; m.backFaceCulling = false; return m; });
+        t.isPickable = false; t.isVisible = false; ctx.add(t); return t;
+      })();
+      const ARROW_CAM = def.arrowCam !== false;
+      let view = null; // the arrow camera: { p, t } world position / target being eased toward, hold = seconds left on a landing
       // ── state ──
       const st = { n: 0, score: 0, hits: 0, phase: 'intro', t: 0, wait: 1.4, power: 0, holdT: 0, wind: 0, flying: [], stuck: [], aimX: null, aimY: null, wob: [0, 0], rings: [], bow: null, releaseAt: -1, shot: null };
       const canvas = ctx.engine.getRenderingCanvas();
@@ -106,11 +117,15 @@
         const aim = s.P.add(new V3(0, .5 * .5 * GRAV * t * t, 0));
         const v = aim.subtract(o).normalize().scale(s.speed);
         const a = arrowSrc.createInstance('archArrowFly'); a.position.copyFrom(o); a.lookAt(o.add(v));
-        st.flying.push({ a, v, t: 0 }); ctx.sound('whoosh');
+        const tr = trailSrc.createInstance('archTrailFly'); tr.parent = a; tr.position.set(0, 0, -1.5 - 1.2);
+        st.flying.push({ a, v, t: 0, tr }); ctx.sound('whoosh');
+        if (ARROW_CAM) view = { p: ctx.camera.position.clone(), t: ctx.camera.getTarget().clone(), hold: 0 };
         st.phase = 'flight'; st.t = 0;
       }
-      function landed(hit) {
-        st.phase = 'after'; st.wait = 1.1;
+      function landed(hit, at, dir) {
+        st.phase = 'after'; st.wait = ARROW_CAM ? 1.7 : 1.1;
+        // the arrow camera holds on where it landed: beside and a little back from the arrow, looking at its head
+        if (ARROW_CAM && at) { const d = dir.normalizeToNew(), side = V3.Cross(d, V3.Up()).normalize(); view = { p: at.subtract(d.scale(3.4)).add(side.scale(1.3)).add(new V3(0, .7, 0)), t: at.clone(), hold: 1.7, land: true }; }
         if (st.bow) setTimeout(() => { if (st.phase === 'after' || st.phase === 'ready') ctx.player.clip('bow_idle', { loop: true }); }, 500);
         if (!hit) { H.msg('Miss', 700); return; }
         const q = hit.d / hit.tg.r, ring = q < .14 / .62 ? 10 : q < .3 / .62 ? 7 : q < .46 / .62 ? 5 : 3; // the painted rings
@@ -133,10 +148,16 @@
       ctx.look(camP, camT, .85);
       const inst = {
         update(dt) {
+          const realDt = dt; if (st.phase === 'flight' && ARROW_CAM) dt *= .5; // the flight in half time: arrows, wind and targets alike
           st.t += dt;
-          // the camera: over the shoulder, closing in as the bow draws
+          // the camera: over the shoulder, closing in as the bow draws; with an arrow loose, the arrow camera
           const fov = .85 - (st.phase === 'draw' ? .25 * st.power : 0);
-          ctx.look(camP, camT, fov);
+          if (view && ARROW_CAM && (st.phase === 'flight' || st.phase === 'after')) {
+            const f = st.flying[0];
+            if (f && !view.land) { const d = f.v.normalizeToNew(); view.p = f.a.position.subtract(d.scale(3.2)).add(new V3(0, .55, 0)); view.t = f.a.position.add(d.scale(4)); }
+            const cam = ctx.camera, k = 1 - Math.exp(-realDt * (view.land ? 6 : 14)), tg = cam.getTarget();
+            cam.position = V3.Lerp(cam.position, view.p, k); cam.setTarget(V3.Lerp(tg, view.t, k)); cam.fov += (.7 - cam.fov) * k;
+          } else { view = null; ctx.look(camP, camT, fov); }
           if (st.phase === 'intro' && (st.wait -= dt) <= 0) nextArrow();
           if (st.phase === 'draw') {
             st.drawT += dt;
@@ -165,9 +186,9 @@
             const l1 = ctx.toLocal(p1);
             if (hit) {
               f.a.position.copyFrom(hit.P.subtract(f.v.normalizeToNew().scale(.35))); f.a.lookAt(f.a.position.add(f.v));
-              f.a.setParent(hit.tg.node); st.stuck.push(f.a); st.flying.splice(i, 1); landed(hit); continue;
+              f.tr?.dispose(); f.a.setParent(hit.tg.node); st.stuck.push(f.a); st.flying.splice(i, 1); landed(hit, hit.P, f.v); continue;
             }
-            if (l1.y <= .02 || f.t > 4) { if (l1.y <= .02) { f.a.position.copyFrom(p1); f.a.lookAt(p1.add(f.v)); st.stuck.push(f.a); } else f.a.dispose(); st.flying.splice(i, 1); landed(null); continue; }
+            if (l1.y <= .02 || f.t > 4) { f.tr?.dispose(); if (l1.y <= .02) { f.a.position.copyFrom(p1); f.a.lookAt(p1.add(f.v)); st.stuck.push(f.a); } else f.a.dispose(); st.flying.splice(i, 1); landed(null, l1.y <= .02 ? p1 : null, f.v); continue; }
             f.a.position.copyFrom(p1); f.a.lookAt(p1.add(f.v));
           }
           if (st.phase === 'after' && (st.wait -= dt) <= 0) nextArrow();
