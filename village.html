@@ -11056,6 +11056,12 @@ function buildMiniGameCtx(def, src, frame) {
       // how far into its clip the move by that name is now (seconds; null when it is not playing): a ball or a stone can
       // follow the move's own timing (the dribble's bounces, the jump shot's release)
       clipTime(name) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null, a = g?.isPlaying && g.animatables?.[0]; return a ? Math.max(0, (a.masterFrame - g.from) / 60) : null; },
+      // stop the move playing now on its pose t seconds in (an axe's edge held in the log) until the next move; the bones
+      // read that pose at once (bone, grip), so a game can search the moment something meets something. false when that
+      // move is not the one on
+      pose(name, t) { const slot = miniGameClipSlot(name), g = slot != null ? animGroups[slot] : null; if (!g || animState !== slot || !g.isStarted) return false;
+        g.goToFrame(Math.min(g.to, g.from + Math.max(0, t) * 60)); if (g.isPlaying) g.stop(); // stopping keeps the pose (the next move blends from it)
+        charMesh.getChildMeshes(false).forEach(m => m.skeleton?.prepare(true)); return true; },
       idle() { if (animState !== 0) { const g = animGroups[animState]; if (g?.isPlaying) g.stop(); animState = -1; switchAnim(0, true); } },
       // where a bone is drawn now (world), e.g. 'RightHand'; null without a rig
       bone(name) { return getPlayerBoneWorld(name); },

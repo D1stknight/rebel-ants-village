@@ -10,6 +10,9 @@
 // game_hammer), the log splitting as the blade comes down to it. Twenty levels: more logs and less time for each, a
 // quicker mark and a narrower gold, knotty logs (a smaller gold) from level 6, the gold in a new place for every log from
 // level 11, oak logs that take two clean chops from level 15. A level is cleared when every log is split in time.
+// Oct 17 (the axe went on through the log and past it: the strike swings on down beside the Rebel): the move stops where
+// the edge bites into the log's top (ctx.player.pose, the moment searched between two frames), holds there while the log
+// splits or cracks, then the axe comes up again; the Rebel stands back so the edge lands on the log's middle.
 (function () {
   const LEVELS = 20;
   const LV = Array.from({ length: LEVELS }, (_, k) => { const u = k / (LEVELS - 1), logs = 10 + Math.round(10 * u);
@@ -59,21 +62,21 @@
         if (st.pin) { const d = st.pin.subtract(st.head); if (d.length() > .5 || (st.pin.t -= 1 / 60) <= 0) st.pin = null; else axe.position.addInPlace(d); }
         return true; };
       // the Rebel stands where the strike's edge comes down onto the log's top (measured on the move, frame by frame)
-      const REACH = def.reach ?? 2.0, SIDE = def.side ?? .3, LOGTOP = TOP + LH;
+      const REACH = def.reach ?? 2.3, SIDE = def.side ?? .3, LOGTOP = TOP + LH, BITE = .06; // the edge sinks BITE into the wood
       const info = () => H.info(`Level ${st.level + 1} · log ${Math.min(st.k + 1, L.logs)} / ${L.logs} · ${Math.ceil(st.left)} s`);
       const raise = () => { if (PACK) ctx.player.clip('game_hammer_up', { hold: true }); };
       function chop() {
         if (st.phase !== 'play' || !st.log || st.cool > 0) return;
         st.cool = PACK ? .65 : .35;
         const z = zone(), m = st.mark, inZ = m >= z[0] && m <= z[1], perfect = Math.abs(m - st.center) < (z[1] - z[0]) * .18;
-        if (PACK) { ctx.player.clip('game_hammer', { hold: true }); st.blow = { t: 0, inZ, perfect, up: false }; st.back = .9; return; } // lands as the edge meets the log
+        if (PACK) { ctx.player.clip('game_hammer', { hold: true }); st.blow = { t: 0, inZ, perfect, up: false, pt: null }; st.back = 0; return; } // lands as the edge meets the log
         if (OLD) { ctx.player.clip('game_chop', { from: .75, hold: true }); st.swing = .55; st.hitIn = .25; st.hitRes = { inZ, perfect }; return; }
         ctx.player.clip(Math.random() < .5 ? 'cross_punch' : 'elbow_punch'); land(inZ, perfect);
       }
       function land(inZ, perfect) {
         const Lg = st.log; if (!Lg) return;
         ctx.sound('thock');
-        if (inZ && Lg.kind === 'oak' && Lg.clean < 1) { Lg.clean++; H.msg('Oak: once more!', 650); Lg.halves.forEach((h, i) => { h.position.z = (i ? 1 : -1) * .035; }); if (st.head) { st.pin = st.head.clone(); st.pin.t = .35; } nextMark(); return; }
+        if (inZ && Lg.kind === 'oak' && Lg.clean < 1) { Lg.clean++; H.msg('Oak: once more!', 650); Lg.halves.forEach((h, i) => { h.position.z = (i ? 1 : -1) * .035; }); if (st.head && OLD) { st.pin = st.head.clone(); st.pin.t = .35; } nextMark(); return; }
         if (inZ || Lg.cracks >= 1) {
           const pts = inZ ? (perfect ? 15 : 10) : 5; st.score += pts; if (inZ) st.clean++;
           Lg.split = true; Lg.t = 0; Lg.v = [perfect ? 2.6 : 1.8, perfect ? 2.6 : 1.8];
@@ -82,9 +85,23 @@
           st.gone.push(Lg); st.log = null; st.k++; st.wait = .45; st.speed = L.speed + st.k * L.step;
           H.score(st.score); info();
           if (st.k >= L.logs) { st.phase = 'end'; st.wait = 1.1; st.won = true; }
-        } else { Lg.cracks++; H.msg('Cracked: again!', 600); Lg.halves.forEach((h, i) => { h.position.z = (i ? 1 : -1) * .025; }); if (st.head) { st.pin = st.head.clone(); st.pin.t = .35; } nextMark(); }
+        } else { Lg.cracks++; H.msg('Cracked: again!', 600); Lg.halves.forEach((h, i) => { h.position.z = (i ? 1 : -1) * .025; }); if (st.head && OLD) { st.pin = st.head.clone(); st.pin.t = .35; } nextMark(); }
       }
       function nextMark() { if (L.shift) st.center = .3 + Math.random() * .4; }
+      // the strike: once the edge has been up high, the frame it comes below the log's top (less the bite) the move is set
+      // back to the moment between the two frames when it reached it (halving the gap six times) and held there for HOLD s
+      const HOLD = .32;
+      function strike(dt) {
+        const b = st.blow; b.t += dt; const ct = ctx.player.clipTime('game_hammer'), y = st.head ? st.head.y : null;
+        if (y != null && y > LOGTOP + .9) b.up = true;
+        if (b.up && b.pt != null && ct != null && y <= LOGTOP - BITE) {
+          let lo = b.pt, hi = ct;
+          for (let i = 0; i < 6; i++) { const m = (lo + hi) / 2; ctx.player.pose('game_hammer', m); axeInHand(); if (st.head.y > LOGTOP - BITE) lo = m; else hi = m; }
+          ctx.player.pose('game_hammer', hi); axeInHand(); st.blow = null; st.back = HOLD; st.bit = hi; land(b.inZ, b.perfect); return;
+        }
+        if (ct != null) b.pt = ct;
+        if (b.t > .9) { st.blow = null; st.back = .2; land(b.inZ, b.perfect); } // never met the log (a short arm): it still counts
+      }
       // ── the level picker ──
       let picker = null;
       const showPicker = () => { picker = H.levels({ title: def.title || 'Log Split', sub: 'Split every log before the time runs out. Twenty levels, each quicker than the last.', n: LEVELS, open: store.open(LEVELS), done: store.get(), label: k => `${LV[k].logs} logs · ${LV[k].seconds} s`, pick: begin }); };
@@ -105,8 +122,7 @@
           if (st.cool > 0) st.cool -= dt;
           if (PACK || OLD) axeInHand();
           if (OLD) { if (st.swing > 0 && (st.swing -= dt) <= 0) ctx.player.idle(); if (st.hitRes && (st.hitIn -= dt) <= 0) { const r = st.hitRes; st.hitRes = null; land(r.inZ, r.perfect); } }
-          // the strike lands when its edge comes back down to the log's top after the raise (or after .7 s regardless)
-          if (st.blow) { const b = st.blow; b.t += dt; if (st.head && st.head.y > LOGTOP + .9) b.up = true; if (b.t > .7 || (b.up && st.head && st.head.y <= LOGTOP)) { st.blow = null; land(b.inZ, b.perfect); } }
+          if (st.blow) strike(dt);
           if (st.back > 0 && (st.back -= dt) <= 0 && st.phase !== 'done') raise();
           if (st.phase === 'intro' && (st.wait -= dt) <= 0) st.phase = 'play';
           if (st.phase === 'play') {
@@ -131,7 +147,7 @@
         key(e, down) { if (!down || e.repeat) return; if (picker && picker.key(e)) return; if (e.key === ' ' || e.key === 'Enter' || e.key.toLowerCase() === 'o') chop(); },
         pointer(evt) { if (evt.type === B.PointerEventTypes.POINTERDOWN) chop(); },
         restart() { if (st.phase === 'pick') return; if (st.log) { st.log.node.dispose(); st.log = null; } st.blow = null; st.phase = 'pick'; H.meter(null); showPicker(); },
-        _test: { st, chop, zone, begin, LV, get L() { return L; }, axe, PACK },
+        _test: { st, chop, zone, begin, LV, get L() { return L; }, axe, PACK, LOGTOP, BITE },
         dispose() { if (picker) picker.remove(); st.gone.forEach(Lg => { try { Lg.node.dispose(); } catch (e) {} }); if (st.log) st.log.node.dispose(); }
       };
       return inst;
