@@ -10792,7 +10792,7 @@ async function startMiniGame(def, src) {
   // a game that plays the games pack's moves waits for it the first time (a few seconds at most, then its stand-ins)
   if (impl?.moves && !GamesPack.slots) { const t = loadGamesPack(); await Promise.race([t, new Promise(r => setTimeout(r, 3500))]); }
   RebelGames.HUD.loading(false);
-  if (!impl || !walkMode || adminMode) { MiniGames.busy = false; if (!impl) showToast('This game is not ready yet.'); return true; }
+  if (!impl || !walkMode || adminMode) { MiniGames.busy = false; if (!impl) showToast('The game did not load (slow connection?). Press O to try again.', 6000); return true; }
   closeSkillBar(); closeDanceOff(); QuestSpotRuntime.hold = null;
   moveForward = moveBackward = turnLeft = turnRight = runKey = false; charMesh._vel = 0;
   _camOcc.dist = null; setPlayerCameraFade(1);
@@ -28280,7 +28280,11 @@ async function initWorldLayout() {
   setSt('Village: loading saved layout...');
   let remote = null;
   try {
-    const resp = await fetch(`/api/world-layout?village=${encodeURIComponent(CURRENT_VILLAGE_ID)}`);
+    // a layout service that never answers must not hold the village on its loading screen: with no answer in 15 s the
+    // cached (or shipped) layout loads instead; once it answers, the layout itself takes as long as it takes to arrive
+    const ctl = typeof AbortController === 'function' ? new AbortController() : null, timer = ctl && setTimeout(() => ctl.abort(), 15000);
+    const resp = await fetch(`/api/world-layout?village=${encodeURIComponent(CURRENT_VILLAGE_ID)}`, ctl ? { signal:ctl.signal } : undefined);
+    clearTimeout(timer);
     if (resp.ok) {
       const d = await resp.json();
       if (d.ok && Array.isArray(d.layout)) remote = { layout: d.layout, sha: d.sha || null };

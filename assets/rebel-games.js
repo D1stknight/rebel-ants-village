@@ -11,8 +11,13 @@
     if (!/^[a-z0-9_-]+$/.test(type)) return Promise.reject(new Error('bad game type ' + type));
     return loading[type] || (loading[type] = new Promise((res, rej) => {
       const s = document.createElement('script'); s.src = 'assets/games/' + type + '.js'; s.async = true;
-      s.onload = () => (games[type] ? res(games[type]) : rej(new Error('game ' + type + ' did not register')));
-      s.onerror = () => { delete loading[type]; rej(new Error('game ' + type + ' failed to load')); };
+      // a request that never answers gives up after 20 checks a second apart (the loading card goes, the next O asks
+      // again); checks, not the clock: a device too busy to run them on time gives the script the time it needs
+      let ticks = 0;
+      const fail = msg => { clearInterval(timer); delete loading[type]; s.remove(); rej(new Error('game ' + type + ' ' + msg)); };
+      const timer = setInterval(() => { if (++ticks >= 20) fail('timed out'); }, 1000);
+      s.onload = () => { clearInterval(timer); if (games[type]) res(games[type]); else fail('did not register'); };
+      s.onerror = () => fail('failed to load');
       document.head.appendChild(s);
     }));
   }
