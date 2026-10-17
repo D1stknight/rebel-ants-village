@@ -26074,11 +26074,11 @@
         "type": "skip",
         "id": "kenshi-stone-skipping",
         "title": "Stone Skipping",
-        "pass": 150,
+        "pass": 400,
         "points": 50,
         "questOn": "pass",
         "seaY": -1.2,
-        "stones": 5
+        "stones": 10
       }
     }
   },
