@@ -40,6 +40,7 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
 #gameHud .gh-hint kbd{font:600 11px ui-monospace,monospace;border:1px solid rgba(216,179,92,.7);border-bottom-width:2px;border-radius:3px;padding:0 4px;color:#ffe9b0}
 #gameHud .gh-msg{position:absolute;top:34%;left:50%;transform:translate(-50%,-50%) scale(.9);font:700 clamp(30px,7vw,64px)/1 Georgia,serif;letter-spacing:.06em;color:#ffd877;text-shadow:0 0 18px rgba(255,190,80,.6),0 3px 0 #5a3410;opacity:0;transition:opacity .18s,transform .18s;text-align:center;white-space:nowrap}
 #gameHud .gh-msg.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#gameHud .gh-msg.long{white-space:normal;width:min(86vw,760px);font-size:clamp(18px,3.6vw,30px);line-height:1.25;letter-spacing:.02em}
 #gameHud .gh-msg small{display:block;font-size:.34em;letter-spacing:.12em;color:#f3e6c4;margin-top:8px}
 #gameHud .gh-meter{position:absolute;bottom:68px;left:50%;transform:translateX(-50%);width:min(380px,80vw);display:none;text-align:center}
 #gameHud .gh-meter.on{display:block}
@@ -108,6 +109,10 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
       const m = ensure().q('.gh-msg'); clearTimeout(msgTimer);
       if (!t) { m.classList.remove('on'); return; }
       m.innerHTML = ''; m.append(t); if (sub) { const s = document.createElement('small'); s.textContent = sub; m.append(s); }
+      // a sentence (not a word or two) wraps in a smaller font and stays long enough to read (Miguel: the Garden Bridges
+      // line ran off the screen and was gone before he could read it)
+      const long = String(t).length > 22; m.classList.toggle('long', long);
+      if (long && ms) ms = Math.max(ms, 1200 + 60 * String(t).length);
       m.classList.remove('on'); void m.offsetWidth; m.classList.add('on');
       if (ms) msgTimer = setTimeout(() => m.classList.remove('on'), ms);
     },
