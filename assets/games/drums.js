@@ -1,8 +1,9 @@
 // The War Drums (Oct 15, Warrior): beat the fort's war drums in time. Notes roll down four lanes toward the drums;
 // strike a drum (D F J K, or the arrow keys, or the pads) as its note reaches the line. Perfect (within 0.06 s) and
 // good (within 0.12 s) hits build a combo that multiplies the score (x2 from 10, x3 from 30, x4 from 60); a note that
-// passes unstruck breaks it. Six songs from the slow Fort Gate March to the War Master's 168 beats a minute; a C
-// (70 %) opens the next song, and a B (80 %) on the third song or later clears the drums.
+// passes unstruck breaks it. Ten songs (Oct 17, Miguel: "make it 10 songs") from the slow Fort Gate March to Will to
+// Fight's 184 beats a minute (Smoke on the Ridge rolls in triplets); a C (70 %) opens the next song, and a B (80 %) on
+// the third song or later clears the drums.
 // Notes are thin instances of one mesh (one draw call); the beat is the game's own sound. def: { pass, points }
 (function () {
   const SONGS = [
@@ -11,7 +12,11 @@
     { name: 'The Charge', bpm: 120, bars: 24, lanes: [0, 1, 2, 3], sub: 2, density: .62, seed: 37 },
     { name: 'Night Siege', bpm: 136, bars: 24, lanes: [0, 1, 2, 3], sub: 2, density: .7, chords: .18, sync: .25, seed: 41 },
     { name: 'The Cracked Circle', bpm: 152, bars: 28, lanes: [0, 1, 2, 3], sub: 4, density: .42, chords: .14, bursts: .3, seed: 53 },
-    { name: 'War Master', bpm: 168, bars: 32, lanes: [0, 1, 2, 3], sub: 4, density: .5, chords: .2, bursts: .4, sync: .3, seed: 67 }];
+    { name: 'War Master', bpm: 168, bars: 32, lanes: [0, 1, 2, 3], sub: 4, density: .5, chords: .2, bursts: .4, sync: .3, seed: 67 },
+    { name: 'Smoke on the Ridge', bpm: 160, bars: 30, lanes: [0, 1, 2, 3], sub: 3, density: .62, chords: .2, bursts: .3, sync: .25, seed: 71 },
+    { name: 'Iron Rain', bpm: 168, bars: 32, lanes: [0, 1, 2, 3], sub: 4, density: .54, chords: .24, bursts: .4, sync: .3, seed: 83 },
+    { name: 'The Broken Wall', bpm: 176, bars: 34, lanes: [0, 1, 2, 3], sub: 4, density: .56, chords: .26, bursts: .45, sync: .33, seed: 97 },
+    { name: 'Will to Fight', bpm: 184, bars: 36, lanes: [0, 1, 2, 3], sub: 4, density: .58, chords: .28, bursts: .5, sync: .35, seed: 101 }];
   const LANE_X = [-1.2, -.4, .4, 1.2], LANE_COL = [[1, .35, .25], [1, .8, .25], [.35, .85, .45], [.35, .6, 1]], PITCH = [98, 131, 165, 220];
   const KEYS = { d: 0, arrowleft: 0, f: 1, arrowdown: 1, j: 2, arrowup: 2, k: 3, arrowright: 3 };
   const PERFECT = .06, GOOD = .12, LATE = .18, SPEED = 7.5, LEAD = 2; // m/s along the lanes, bars of count-in
@@ -101,7 +106,7 @@
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= SONGS.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= SONGS.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (k in KEYS) strike(KEYS[k]);
         },
         pointer() {},
