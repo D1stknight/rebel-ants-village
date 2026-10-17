@@ -109,7 +109,7 @@
         const pack = !!ctx.player.has?.('game_throw'); if (pack) st.hand = 1; // the throw is right-handed
         if (pack) ctx.player.clip('game_throw', { from: .78, speed: 1.5 }); else ctx.player.clip(st.hand ? 'cross_punch' : 'jab', { speed: 1.6 });
         const from = ctx.player.bone(st.hand ? 'RightHand' : 'LeftHand') || ctx.toWorld(LINE.x + (st.hand ? .5 : -.5), 2.4, LINE.z - .6);
-        const s = star.createInstance('shuriFly'); s.position.copyFrom(from);
+        const s = star.createInstance('shuriFly'); s.parent = null; s.position.copyFrom(from); // world coordinates (a copy takes its source's parent, the game frame)
         const dist = V3.Distance(from, P), dur = Math.max(.12, dist / 34);
         st.flying.push({ s, from, to: P, t: 0, dur, hit: best, spin: Math.random() * 6 });
         ctx.sound('whoosh');

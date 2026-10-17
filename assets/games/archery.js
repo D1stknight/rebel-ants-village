@@ -116,7 +116,9 @@
         const o = from || ctx.toWorld(.55, 2.75, .9), d = V3.Distance(o, s.P), t = d / s.speed;
         const aim = s.P.add(new V3(0, .5 * .5 * GRAV * t * t, 0));
         const v = aim.subtract(o).normalize().scale(s.speed);
-        const a = arrowSrc.createInstance('archArrowFly'); a.position.copyFrom(o); a.lookAt(o.add(v));
+        // a copy takes its source's parent (the game frame) and the flight is worked out in world coordinates: no parent
+        // (Oct 17, Miguel: "there is no arrow"; every arrow flew where the frame put it, 80 m off and out of sight)
+        const a = arrowSrc.createInstance('archArrowFly'); a.parent = null; a.position.copyFrom(o); a.lookAt(o.add(v));
         const tr = trailSrc.createInstance('archTrailFly'); tr.parent = a; tr.position.set(0, 0, -1.5 - 1.2);
         st.flying.push({ a, v, t: 0, tr }); ctx.sound('whoosh');
         if (ARROW_CAM) view = { p: ctx.camera.position.clone(), t: ctx.camera.getTarget().clone(), hold: 0 };
