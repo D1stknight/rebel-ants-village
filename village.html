@@ -10833,8 +10833,32 @@ function runMiniGameInstance() {
   const frame = makeMiniGameFrame(src);
   MiniGames.objs = [frame];
   const ctx = MiniGames.ctx = buildMiniGameCtx(def, src, frame);
+  ctx.startLevel = MiniGames.startLevel ?? null; MiniGames.startLevel = null; MiniGames.level = null;
   try { MiniGames.inst = MiniGames.impl.start(ctx) || {}; }
-  catch (e) { console.warn('mini-game start', e); showToast('The game hit a snag.'); endMiniGame(); }
+  catch (e) { console.warn('mini-game start', e); showToast('The game hit a snag.'); endMiniGame(); return; }
+  setMiniGameTools();
+  // the result card's Next level: a game with a level picker (buttons data-k) opens that level straight away
+  if (ctx.startLevel != null) document.querySelector(`#gameHud button[data-k="${ctx.startLevel}"]:not([disabled])`)?.click();
+}
+// which level the player picked (a picker's data-k button, or its digit key): the result card offers the next one
+document.addEventListener('click', e => { const b = MiniGames.on && e.target?.closest?.('#gameHud button[data-k]'); if (b) noteMiniGameLevel(+b.dataset.k, b.parentElement); }, true);
+function noteMiniGameLevel(k, box) { if (Number.isFinite(k)) { MiniGames.level = k; MiniGames.levels = box ? box.querySelectorAll('button[data-k]').length : 0; } }
+// How to play + Restart beside Quit (Oct 17, Miguel: the puzzles need a better explanation with an example, and every
+// board a restart): a game's rules card (impl.howTo { lines, img (under assets/games/), caption }) opens by itself the
+// first time that game is played on this device (localStorage rebelAntsHowTo:v1) and from its button any time; a game
+// whose board can be started over (inst.restart) gets the Restart button
+function setMiniGameTools() {
+  const how = MiniGames.impl?.howTo, inst = MiniGames.inst, type = MiniGames.def?.type;
+  RebelGames.HUD.tools({ help: how ? showMiniGameHowTo : null, restart: inst?.restart ? () => { try { inst.restart(); } catch (e) { console.warn('mini-game restart', e); } } : null });
+  if (!how || !type) return;
+  let seen = {}; try { seen = JSON.parse(localStorage.getItem('rebelAntsHowTo:v1') || '{}') || {}; } catch (e) {}
+  if (seen[type]) return;
+  seen[type] = 1; try { localStorage.setItem('rebelAntsHowTo:v1', JSON.stringify(seen)); } catch (e) {}
+  showMiniGameHowTo();
+}
+function showMiniGameHowTo() {
+  const how = MiniGames.impl?.howTo; if (!how) return;
+  RebelGames.HUD.howTo({ title: MiniGames.def?.title || MiniGames.impl.title, lines: how.lines, img: how.img ? 'assets/games/' + how.img : null, caption: how.caption });
 }
 function buildMiniGameCtx(def, src, frame) {
   const V3 = BABYLON.Vector3;
@@ -11039,20 +11063,25 @@ function updateMiniGame(dt) {
 }
 function miniGameKey(e, down) {
   const key = e.key.toLowerCase();
-  if (RebelGames.resultOpen()) { if (down && (key === 'enter' || key === 'escape')) { e.preventDefault(); document.querySelector('#gameResult .gr-done')?.click(); } return; }
+  // the result card: Enter goes on (Next when the game offers it, else Done), Esc is Done
+  if (RebelGames.resultOpen()) { if (down && (key === 'enter' || key === 'escape')) { e.preventDefault(); document.querySelector(key === 'enter' ? '#gameResult .gr-next:not([hidden]), #gameResult .gr-done' : '#gameResult .gr-done')?.click(); } return; }
+  // the how-to card: Enter, Space or Esc closes it; nothing reaches the game while it is open
+  if (RebelGames.HUD.howToOpen?.()) { if (down && (key === 'enter' || key === ' ' || key === 'escape')) { e.preventDefault(); RebelGames.HUD.closeHowTo(); } return; }
   if (down && key === 'escape') {
     e.preventDefault();
     if (performance.now() - MiniGames.escAt < 1800) { quitMiniGame(); return; }
     MiniGames.escAt = performance.now(); RebelGames.HUD.msg('Esc again to quit', 1700); return;
   }
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) e.preventDefault();
+  // a digit on a level picker picks that level (1-9, 0 = the tenth)
+  if (down && /^[0-9]$/.test(key)) { const b = document.querySelector(`#gameHud button[data-k="${key === '0' ? 9 : +key - 1}"]:not([disabled])`); if (b) noteMiniGameLevel(+b.dataset.k, b.parentElement); }
   try { MiniGames.inst?.key?.(e, down); } catch (err) { console.warn('mini-game key', err); }
 }
 // a roam game's keys: the result card and Esc as in other games; the game gets each key first (true = used); the
 // village's own O / Tab / M wait while it runs (no doors or talks mid-run); everything else walks. false = walk on.
 function miniGameRoamKey(e, down) {
   const key = e.key.toLowerCase();
-  if (RebelGames.resultOpen() || key === 'escape') { if (down || RebelGames.resultOpen()) miniGameKey(e, down); return true; }
+  if (RebelGames.resultOpen() || RebelGames.HUD.howToOpen?.() || key === 'escape') { if (down || RebelGames.resultOpen()) miniGameKey(e, down); return true; }
   let used = false;
   try { used = !!MiniGames.inst?.key?.(e, down); } catch (err) { console.warn('mini-game key', err); }
   if (!down) return false; // a key let go always reaches the walk (no stuck keys)
@@ -11105,8 +11134,12 @@ function finishMiniGame(r) {
   if (MiniGames.roam) { moveForward = moveBackward = turnLeft = turnRight = runKey = false; if (charMesh) charMesh._vel = 0; }
   const extra = [r.extra || '', points ? `First clear: +${points} Rebel points.` : (!passed && def.pass ? (r.solved ? `${def.pass} points clears the game: try a harder level.` : `Score ${def.pass} to clear it.`) : '')].filter(Boolean).join(' ');
   const clock = t => t >= 60 ? `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}` : t.toFixed(1); // a minute or more as m:ss.s
+  const nextLevel = r.next !== undefined ? r.next : (r.solved || passed) && MiniGames.level != null && MiniGames.level + 1 < (MiniGames.levels || 0) ? MiniGames.level + 1 : null;
   RebelGames.showResult({ kicker: r.kicker || (passed ? 'Cleared' : r.solved ? (r.solvedWord || 'Solved') : 'Game over'), title: def.title || MiniGames.impl?.title || '', score: low ? (done ? clock(score) : '—') : score, label: r.label || (low ? (done && score >= 60 ? 'time' : 'seconds') : 'points'), best: low ? (rec.best ? (rec.best >= 60 ? clock(rec.best) : rec.best.toFixed(1) + ' s') : null) : rec.best, newBest, extra,
-    onAgain: () => restartMiniGame(), onDone: () => endMiniGame() });
+    onAgain: () => restartMiniGame(), onDone: () => endMiniGame(),
+    // a game with levels goes straight on to the next one (r.next: its index; else the level picked on the game's own
+    // picker, once that level is solved or cleared)
+    onNext: nextLevel != null ? () => restartMiniGame({ level: nextLevel }) : null, nextLabel: r.nextLabel });
   showGameResultBoard(def, low, done, score, rec);
 }
 // Shared leaderboards (api/game-board.mjs): every game's top 10, one entry per wallet. The result card shows the board;
@@ -11164,8 +11197,9 @@ function disposeMiniGameInstance() {
   MiniGames.movables = [];
   RebelGames.HUD.meter(null); RebelGames.HUD.reticle(null); RebelGames.HUD.card(''); RebelGames.HUD.msg('');
 }
-function restartMiniGame() {
+function restartMiniGame(o) {
   if (!MiniGames.on) return;
+  MiniGames.startLevel = o?.level ?? null; // ctx.startLevel: the level to open at once (the result card's Next)
   disposeMiniGameInstance();
   RebelGames.HUD.score(''); RebelGames.HUD.info(''); RebelGames.HUD.hint('');
   runMiniGameInstance();

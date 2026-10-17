@@ -49,7 +49,22 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
 #gameHud .gh-meter .gm-zone{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,#b77b22,#ffd877,#b77b22);opacity:.85}
 #gameHud .gh-meter .gm-fill{position:absolute;top:0;bottom:0;left:0;background:linear-gradient(90deg,#3a8f7a,#5ecfca);opacity:.85}
 #gameHud .gh-meter .gm-mark{position:absolute;top:-3px;bottom:-3px;width:4px;margin-left:-2px;background:#fff;box-shadow:0 0 8px #fff;border-radius:2px}
-#gameHud .gh-quit{position:absolute;top:14px;right:16px;pointer-events:auto;font:600 12px Georgia,serif;letter-spacing:.08em;padding:6px 12px;border-radius:6px;border:1px solid #8a6a2a;background:rgba(42,29,16,.9);color:#ffe9b0;cursor:pointer}
+#gameHud .gh-tools{position:absolute;top:14px;right:16px;display:flex;gap:8px;pointer-events:auto}
+#gameHud .gh-tools button{font:600 12px Georgia,serif;letter-spacing:.08em;padding:6px 12px;border-radius:6px;border:1px solid #8a6a2a;background:rgba(42,29,16,.9);color:#ffe9b0;cursor:pointer}
+#gameHud .gh-tools button[hidden]{display:none}
+#gameHud .gh-tools .gh-help{border-color:#3a8f7a;color:#bff3ea}
+#gameHowTo{position:fixed;inset:0;z-index:74;display:none;align-items:center;justify-content:center;background:rgba(2,6,14,.6);padding:16px}
+#gameHowTo.on{display:flex}
+#gameHowTo .ht-card{width:min(560px,94vw);max-height:calc(100vh - 32px);overflow:auto;background:radial-gradient(circle at 50% 0%,rgba(94,207,202,.14),rgba(8,12,24,.97) 62%);border:1px solid rgba(232,197,106,.72);border-radius:14px;padding:18px 20px;font:15px/1.45 Georgia,serif;color:#f3e6c4}
+#gameHowTo .ht-kicker{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#5ecfca}
+#gameHowTo .ht-title{font-size:22px;color:#ffe9b0;margin:4px 0 10px}
+#gameHowTo ol{margin:0 0 10px;padding-left:22px}
+#gameHowTo li{margin:4px 0}
+#gameHowTo img{display:block;width:100%;height:auto;border-radius:8px;border:1px solid rgba(216,179,92,.4);margin:8px 0 4px;background:#141a24}
+#gameHowTo .ht-cap{font-size:13px;color:#cfd8e6;font-style:italic}
+#gameHowTo .ht-cap:empty{display:none}
+#gameHowTo .ht-btns{text-align:center;margin-top:14px}
+#gameHowTo button{font:600 14px Georgia,serif;letter-spacing:.06em;padding:9px 22px;border-radius:7px;border:1px solid #d8b35c;background:#d8b35c;color:#2a1d10;cursor:pointer}
 #gameHud .gh-pop{position:absolute;transform:translate(-50%,-50%);font:700 18px Georgia,serif;color:#ffe9b0;text-shadow:0 2px 0 #000,0 0 10px rgba(255,200,90,.7);pointer-events:none;animation:ghPop .9s ease-out forwards}
 #gameHud .gh-pop.bad{color:#ff8a7a}
 @keyframes ghPop{0%{opacity:0;margin-top:6px}15%{opacity:1}100%{opacity:0;margin-top:-34px}}
@@ -76,7 +91,8 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
 #gameResult .gr-btns{display:flex;justify-content:center;gap:10px;margin-top:16px}
 #gameResult .gr-btns button{font:600 14px Georgia,serif;letter-spacing:.06em;padding:9px 18px;border-radius:7px;border:1px solid #8a6a2a;background:#2a1d10;color:#ffe9b0;cursor:pointer}
 #gameResult .gr-btns button.primary{background:#d8b35c;color:#2a1d10;border-color:#d8b35c}
-@media (max-width:520px){#gameHud .gh-top{gap:8px;padding:6px 10px}#gameHud .gh-score{font-size:17px}#gameHud .gh-quit{top:auto;bottom:14px;right:12px}}
+#gameResult .gr-btns button[hidden]{display:none}
+@media (max-width:520px){#gameHud .gh-top{gap:8px;padding:6px 10px}#gameHud .gh-score{font-size:17px}#gameHud .gh-tools{top:auto;bottom:14px;right:12px}}
 `;
   let els = null;
   function ensure() {
@@ -85,20 +101,43 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
     const hud = document.createElement('div'); hud.id = 'gameHud';
     hud.innerHTML = '<div class="gh-top"><span class="gh-title"></span><span class="gh-score"></span><span class="gh-info"></span></div><div class="gh-card"></div>'
       + '<div class="gh-meter"><b></b><div class="gm-track"><div class="gm-zone"></div><div class="gm-fill"></div><div class="gm-mark"></div></div></div>'
-      + '<div class="gh-msg"></div><div class="gh-hint"></div><button class="gh-quit" type="button">Quit <kbd>Esc</kbd></button>';
+      + '<div class="gh-msg"></div><div class="gh-hint"></div><div class="gh-tools"><button class="gh-help" type="button" hidden>How to play</button>'
+      + '<button class="gh-restart" type="button" hidden>&#x21BB; Restart</button><button class="gh-quit" type="button">Quit <kbd>Esc</kbd></button></div>';
     const ret = document.createElement('div'); ret.id = 'gameReticle';
     const ld = document.createElement('div'); ld.id = 'gameLoading'; ld.textContent = 'Getting the game ready…';
     const res = document.createElement('div'); res.id = 'gameResult';
+    // how to play: the rules in a few lines and a worked example (a picture), over the game until it is closed
+    const how = document.createElement('div'); how.id = 'gameHowTo';
+    how.innerHTML = '<div class="ht-card"><div class="ht-kicker">How to play</div><div class="ht-title"></div><ol></ol><img alt=""><div class="ht-cap"></div><div class="ht-btns"><button type="button">Got it</button></div></div>';
     // the shared top 10 (.gr-board) sits beside the result on wide screens, under the buttons on narrow ones
     res.innerHTML = '<div class="gr-card"><div class="gr-main"><div class="gr-kicker"></div><div class="gr-title"></div><div class="gr-score"></div><div class="gr-label"></div><div class="gr-best"></div><div class="gr-extra"></div>'
-      + '<div class="gr-btns"><button type="button" class="gr-again">Play again</button><button type="button" class="gr-done primary">Done</button></div></div><div class="gr-board"></div></div>';
-    document.body.append(hud, ret, ld, res);
-    els = { hud, ret, ld, res, q: (s) => hud.querySelector(s) };
+      + '<div class="gr-btns"><button type="button" class="gr-again">Play again</button><button type="button" class="gr-done primary">Done</button><button type="button" class="gr-next primary" hidden></button></div></div><div class="gr-board"></div></div>';
+    document.body.append(hud, ret, ld, res, how);
+    els = { hud, ret, ld, res, how, q: (s) => hud.querySelector(s) };
     return els;
   }
-  let msgTimer = 0;
+  let msgTimer = 0, howDone = null;
   const HUD = {
-    show(on) { const e = ensure(); e.hud.classList.toggle('on', !!on); document.body.classList.toggle('in-game', !!on); if (!on) { HUD.reticle(null); HUD.meter(null); HUD.card(''); HUD.msg(''); } },
+    show(on) { const e = ensure(); e.hud.classList.toggle('on', !!on); document.body.classList.toggle('in-game', !!on); if (!on) { HUD.reticle(null); HUD.meter(null); HUD.card(''); HUD.msg(''); HUD.tools({}); HUD.closeHowTo(); } },
+    // the buttons beside Quit (Oct 17, Miguel: "add a restart to the board ... do this to all the board games", and every
+    // puzzle needs a better explanation with an example): { help: fn, restart: fn }, each shown only when given
+    tools(o = {}) {
+      for (const [k, fn] of [['help', o.help], ['restart', o.restart]]) {
+        const b = ensure().q('.gh-' + k); b.hidden = !fn; b.onclick = fn ? (e) => { e.stopPropagation(); e.currentTarget.blur(); fn(); } : null;
+      }
+    },
+    // the how-to card: { title, lines: [..], img (a URL), caption }; resolves when it is closed (button, Enter, Space, Esc)
+    howTo(o) {
+      const e = ensure(), c = e.how; HUD.closeHowTo();
+      c.querySelector('.ht-title').textContent = o.title || '';
+      const ol = c.querySelector('ol'); ol.innerHTML = ''; for (const l of o.lines || []) { const li = document.createElement('li'); li.textContent = l; ol.append(li); }
+      const img = c.querySelector('img'); img.style.display = o.img ? '' : 'none'; if (o.img) img.src = o.img; else img.removeAttribute('src');
+      c.querySelector('.ht-cap').textContent = o.caption || '';
+      c.classList.add('on');
+      return new Promise(res => { howDone = () => { howDone = null; c.classList.remove('on'); res(); }; c.querySelector('button').onclick = (ev) => { ev.currentTarget.blur(); howDone && howDone(); }; });
+    },
+    closeHowTo() { if (howDone) howDone(); },
+    howToOpen: () => !!els && els.how.classList.contains('on'),
     title(t) { ensure().q('.gh-title').textContent = t || ''; },
     score(t) { ensure().q('.gh-score').textContent = t == null ? '' : String(t); },
     info(t) { ensure().q('.gh-info').textContent = t || ''; },
@@ -135,7 +174,8 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
     loading(on) { ensure().ld.classList.toggle('on', !!on); },
     onQuit(fn) { ensure().q('.gh-quit').onclick = (e) => { e.stopPropagation(); e.currentTarget.blur(); fn(); }; }
   };
-  // the result card: { kicker, title, score, label, best, newBest, extra, onAgain, onDone }
+  // the result card: { kicker, title, score, label, best, newBest, extra, onAgain, onDone, onNext, nextLabel } (onNext: a
+  // game with levels goes straight on to the next one; Done is then the plain button)
   function showResult(o) {
     const e = ensure(), c = e.res;
     c.querySelector('.gr-kicker').textContent = o.kicker || 'Game over';
@@ -147,9 +187,11 @@ body.in-game #questLine,body.in-game:not(.game-roam) #miniMap,body.in-game #phot
     else if (o.best != null) { best.append('Your best: '); const b = document.createElement('b'); b.textContent = String(o.best); best.append(b); }
     c.querySelector('.gr-extra').textContent = o.extra || '';
     c.querySelector('.gr-board').innerHTML = '';                 // the shared top 10 fills in after (village.html GameBoard)
-    const again = c.querySelector('.gr-again'), done = c.querySelector('.gr-done');
+    const again = c.querySelector('.gr-again'), done = c.querySelector('.gr-done'), next = c.querySelector('.gr-next');
     again.onclick = () => { again.blur(); hideResult(); o.onAgain && o.onAgain(); };
     done.onclick = () => { done.blur(); hideResult(); o.onDone && o.onDone(); };
+    next.hidden = !o.onNext; done.classList.toggle('primary', !o.onNext); next.textContent = (o.nextLabel || 'Next level') + ' \u2192';
+    next.onclick = o.onNext ? () => { next.blur(); hideResult(); o.onNext(); } : null;
     c.classList.add('on');
   }
   function hideResult() { ensure().res.classList.remove('on'); }
