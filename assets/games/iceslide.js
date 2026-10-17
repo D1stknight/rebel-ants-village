@@ -6,6 +6,10 @@
 // def: { at: [x, z] (frame coords of the floor's middle), cell: 1.1, levels, pass, points }
 // Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart = R
 // (now mid-slide too).
+// Oct 17 (Miguel: "make it 10"): ten levels; 8-10 are 11 x 11, 11 x 11 and 12 x 12 floors with 4, 5 and 6 gold leaf
+// (scratchpad lv/ice/gen10.mjs: random floors, then a hill climb on the pillars, gold, mats and seal while the fewest
+// moves (BFS over square + gold gathered) grows to a target, then the floor with the most positions to get lost in):
+// fewest 33, 39 and 47 moves (level 7: 27), each checked again by a BFS on this file's own parse / slide (lv/ice/verify.mjs).
 (function () {
   const LEVELS = [
     { rows: ['......', '......', '.E....', '..##.#', '.....#', '...@#.'], best: 5 },
@@ -14,7 +18,10 @@
     { rows: ['#.#.#...', '...#.E..', '....#...', '#.......', '.......m', '.....#..', '..#.#.#.', '#.m@..#.'], best: 11 },
     { rows: ['.....E##', '#.......', '....#...', '........', 'g.......', '.#.#....', '#m.....#', 'g.#..@#.'], best: 16 },
     { rows: ['#....#..m', '..g....E.', '.....#..#', '#.......#', '.#..m....', 'g........', '#.......#', '....g....', '......@..'], best: 21 },
-    { rows: ['..#.......', '......m..#', '...#..#...', '...m...#..', 'E...#....g', '....g....#', '##........', '.g.#......', 'g.........', '....#@#m..'], best: 27 }
+    { rows: ['..#.......', '......m..#', '...#..#...', '...m...#..', 'E...#....g', '....g....#', '##........', '.g.#......', 'g.........', '....#@#m..'], best: 27 },
+    { rows: ['..........#', '.#.#.g.m.#.', '#..#...m...', '..........#', '#.m.#....#.', '.......#...', '..#...#E...', '##g..#..#..', '...#...#..#', '#.....#....', 'g..@#.g..#.'], best: 33 },
+    { rows: ['...#...#.g.', '#....#.....', '..#.....#..', '......#mg##', '...E....#..', '.#....#....', '#g.#...#..#', '.##.m...#..', '.......#...', '....g#...#.', '.#@.#..m..g'], best: 39 },
+    { rows: ['...#.....g..', '.....#gm.#m.', '#...#....#..', '..#...#....#', '.....#..#...', 'g..#.....mE.', '##...m.#...#', '.g#......#..', '......#.....', '......#.#g..', '...#.#.....#', '#...#g.#...@'], best: 47 }
   ];
   function parse(rows) {
     const H = rows.length, W = Math.max(...rows.map(r => r.length)), cell = [], gold = []; let start = 0, exit = 0;
@@ -76,7 +83,7 @@
         const sp = cellPos(Bd.exit); seal.position.set(sp.x, .112, sp.z); seal.setEnabled(true);
         const pp = cellPos(Bd.start); ctx.player.place(pp.x, pp.z, 0);
         const span = Math.max(W, Hh) * CELL;
-        st.cam = [AT[0], span * 1.15 + 3.5, AT[1] - span * .55 - 1.8]; st.at = [AT[0], 0, AT[1] + .3];
+        st.cam = [AT[0], span * 1.32 + 4.2, AT[1] - span * .68 - 2.3]; st.at = [AT[0], 0, AT[1] - span * .08]; // Oct 17: back, up and aimed nearer: the near row sat under the hint bar
         info();
       }
       const info = () => H.info(board ? `Level ${board.k + 1} / ${LV.length} · moves ${board.moves} · fewest ${LV[board.k].best ?? '?'}${board.B.gold.length ? ` · gold ${board.got.size} / ${board.B.gold.length}` : ''}` : 'Pick a level');
@@ -106,9 +113,9 @@
       function restart() { if (st.phase !== 'play') return; st.anim = null; build(board.k); H.msg('Again', 600); }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,90vw);background:rgba(18,8,16,.94);border:1px solid rgba(226,180,80,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 380) + 'px,92vw);background:rgba(18,8,16,.94);border:1px solid rgba(226,180,80,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 Georgia,serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:700 13px/1.2 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#e2b450;margin-bottom:10px">The Lacquer Floor</div><div style="margin-bottom:12px;color:#bbb">Slide to the purple seal. Only pillars, the edge and the mats stop you.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((_, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#e2b450' : '#444'};background:${done ? 'rgba(226,180,80,.25)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 16px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? k + 1 : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((_, k) => { const open = k <= solvedUpTo, done = k < solvedUpTo; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:10px 4px;border-radius:9px;border:1px solid ${open ? '#e2b450' : '#444'};background:${done ? 'rgba(226,180,80,.25)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 16px Georgia,serif;cursor:${open ? 'pointer' : 'default'}">${open ? k + 1 : '🔒'}${done ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       function choose(k) { if (st.phase !== 'pick' || k > solvedUpTo || k >= LV.length) return; pick.remove(); st.phase = 'play'; build(k); pads.style.display = 'grid'; H.msg(`Level ${k + 1}`, 900, LV[k].rows.join('').includes('g') ? 'gather the gold leaf first' : k >= 3 ? 'a hard one' : ''); }
       const pads = document.createElement('div');
