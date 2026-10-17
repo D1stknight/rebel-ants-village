@@ -5,11 +5,14 @@
 // Oct 17 (Miguel: "we need a basketball animation shooting"; the games pack has no jump shot yet): the jump starts
 // part-way through its crouch, so the Rebel is at the top of it when the meter is in the gold, and the ball rides over
 // the Rebel's head from the rack (picked up on the press) and leaves from there.
+// Oct 17 (Miguel's jump shot, the goalkeeper catch played backwards, in the games pack as game_shoot): the Rebel jumps
+// with the ball in both hands and lets it go from them; the move runs at .84, so its top (.6 s in) comes with the meter's
+// gold.
 // def: { court: 'sl_court' (the layout piece), hoop: [x, y, z] (its local rim centre), racks: [[x, z] x5] (its local
 // floor spots), seconds: 60, pass, points }
 (function () {
   const G = {
-    title: '3-Point Contest',
+    title: '3-Point Contest', moves: true,
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const DUR = def.seconds || 60, BR = .16, RIM = .32;
@@ -56,12 +59,14 @@
       // and antennae from the camera behind), else a point that rises with the meter; the jump starts .3 s in, so its top
       // (about .75 s on) comes with the meter's gold (.66-.77 s)
       let held = null;
+      const SHOT = !!ctx.player.has?.('game_shoot'), SHOT_SPEED = .84;
       function grab() {
         const r = R(); held?.dispose(); held = (st.ball === 4 ? sMoney : sBall).createInstance('hoopHeld'); held.parent = ctx.frame; ctx.add(held);
-        r.balls[st.ball]?.setEnabled(false); ctx.player.clip('jump', { from: .3 }); placeHeld();
+        r.balls[st.ball]?.setEnabled(false); if (SHOT) ctx.player.clip('game_shoot', { hold: true, speed: SHOT_SPEED }); else ctx.player.clip('jump', { from: .3 }); placeHeld();
       }
       function placeHeld() {
         if (!held) return; const r = R(), hd = ctx.player.bone?.('Head');
+        if (SHOT) { const l = ctx.player.bone('LeftHand'), rh = ctx.player.bone('RightHand'); if (l && rh) { held.position.copyFrom(V3.Center(ctx.toLocal(l), ctx.toLocal(rh)).add(r.dir.scale(.14)).add(new V3(0, .05, 0))); return; } }
         const p = hd ? ctx.toLocal(hd).add(r.dir.scale(.3)).add(new V3(0, .62, 0)) : r.p.add(r.dir.scale(.3)).add(new V3(0, 2.6 + Math.min(1, st.hv) * .85, 0));
         p.y = Math.max(p.y, floorY + 2.5); held.position.copyFrom(p);
       }
