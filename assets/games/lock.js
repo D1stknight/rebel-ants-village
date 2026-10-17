@@ -2,7 +2,7 @@
 // twice. Set the four dials and try them: every gold bead is a right mark in the right place, every silver bead a right
 // mark in the wrong place (they never say which). Eight tries. A logic puzzle: the fewer tries, the more it pays.
 // def: { box: [x, y, z] (frame coords of the box's foot), size: [w, h, d], face: yaw (the way its front faces),
-// playerAt: [x, z], cam, at, levels (default LEVELS), pass, points } (def.tries, the old single lock's, is no longer
+// playerAt: [x, z, yaw?], cam, at, levels (default LEVELS), pass, points } (def.tries, the old single lock's, is no longer
 // read: every level has its own)
 // Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart
 // (the dials and tries back, a NEW code on the lock: the old one's beads would give it away).
@@ -142,7 +142,7 @@
       }
       function restart() { if (st.phase !== 'play') return; fresh(); draw(); info(); H.msg('A new code', 1200, 'the Broker reset the lock'); }
       const PA = def.playerAt || [BOX[0] + Math.sin(FACE) * 2.2, BOX[2] + Math.cos(FACE) * 2.2];
-      ctx.player.place(PA[0], PA[1], FACE + Math.PI);
+      ctx.player.place(PA[0], PA[1], PA[2] ?? FACE + Math.PI); // playerAt [x, z, yaw?]: beside the box, out of the camera's line
       ctx.look(cam, at, def.fov || .8);
       H.title(def.title || "The Broker's Strongbox"); H.score(''); H.info('Pick a lock');
       H.hint('Pick a lock: click it or press its number.');
