@@ -1,10 +1,15 @@
 // The Ancestor's Grid (Oct 15, Samurai): number grids carved by the clan's ancestors. Fill every square so each row,
 // each column and each box holds every number once. Click a square (or move with the arrows), type its number;
 // N writes small pencil notes instead, 0 / Backspace rubs out, U undoes, H shows a mistake or one square (no clean
-// bonus then). Seven grids: a 4 x 4, two 6 x 6, four 9 x 9; the last ones need pairs and pointing, not just singles
+// bonus then). Ten grids: a 4 x 4, two 6 x 6, seven 9 x 9; the last ones need pairs and pointing, not just singles
 // (each has one answer, checked by a solver). Score: the grid x 20, +10 without a hint.
 // Oct 17: How to play (the rules in a few lines) and Restart (the grid as picked: only the carved numbers, no notes,
 // undo, hints or time).
+// Oct 17 (Miguel: "move it up to 10"): grids 8-10 (Master, Grandmaster, Ancestor), 9 x 9 with 26, 28 and 25 givens
+// (symmetric about the centre). Made by scratchpad lv/sudoku/pool3.mjs: givens taken out in pairs, each time the pair
+// that leaves one answer (countSolutions) and the most work for the grader of scratchpad sudoku/gen.mjs while it still
+// gets through with singles, hidden singles, pairs and pointing (level 3, no guessing). They need pairs / pointing 7, 8
+// and 10 times (lv/sudoku/grade2.mjs; grids 5-7: 2, 3, 1). The picker takes 5 columns on wide screens.
 // def: { levels: [{ g: 'givens, 0 = empty', s: 'solution' }], pass, points }
 (function () {
   const LEVELS = [
@@ -14,7 +19,10 @@
     { g: '009120700010007020002600509103080060000070000060090805206005900080700050001062300', s: '549123786618957423732648519193584267825376194467291835276835941384719652951462378', name: 'Medium' },
     { g: '058000000740860000100009000063100005400070009900004130000200008000016074000000360', s: '358742691749861253126359487263198745415673829987524136674235918832916574591487362', name: 'Hard' },
     { g: '800000430075000000600090008084300000050060090000008310400050002000000760036000001', s: '829176435175834629643295178784319256351762894962548317417653982598421763236987541', name: 'Hard' },
-    { g: '080400006007000800500700004700008090010000020060500007400007003009000100600003050', s: '183492576247635819596781234735268491814379625962514387458127963379856142621943758', name: 'Master' }
+    { g: '080400006007000800500700004700008090010000020060500007400007003009000100600003050', s: '183492576247635819596781234735268491814379625962514387458127963379856142621943758', name: 'Master' },
+    { g: '000000859003000004020400100001086000008304700000970300007001030100000900862000000', s: '416237859783159624529468173371586492298314765645972318957841236134625987862793541', name: 'Master' },
+    { g: '100000000870105000003942000700609020400000001090204007000591600000706054000000002', s: '129378546874165239653942718781639425462857391395214867247591683938726154516483972', name: 'Grandmaster' },
+    { g: '700400000090010240603000005000804000006050300000902000300000902085020010000009008', s: '712495863598316247643278195159834726426157389837962451364581972985723614271649538', name: 'Ancestor' }
   ];
   const BOX = { 4: [2, 2], 6: [2, 3], 9: [3, 3] };
   const G = {
@@ -104,9 +112,9 @@
       }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(390px,90vw);background:rgba(22,10,8,.94);border:1px solid rgba(220,90,70,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (LV.length > 6 && innerWidth >= 600 ? 560 : 390) + 'px,90vw);background:rgba(22,10,8,.94);border:1px solid rgba(220,90,70,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#f0a090;margin-bottom:10px">The Ancestor's Grid</div><div style="margin-bottom:12px;color:#bbb">Every row, column and box holds each number once.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo, n = Math.round(Math.sqrt(L.g.length)); return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#f0a090' : '#444'};background:${ok ? 'rgba(240,160,144,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${n}×${n} ${L.name || ''}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${LV.length > 6 && innerWidth >= 600 ? 5 : 4},1fr);gap:8px">${LV.map((L, k) => { const open = k <= solvedUpTo, ok = k < solvedUpTo, n = Math.round(Math.sqrt(L.g.length)); return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 2px;border-radius:9px;border:1px solid ${open ? '#f0a090' : '#444'};background:${ok ? 'rgba(240,160,144,.22)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${open ? `${k + 1}<div style="font:11px system-ui;opacity:.75">${n}×${n} ${L.name || ''}</div>` : '🔒'}${ok ? ' ✓' : ''}</button>`; }).join('')}</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
       const pads = document.createElement('div');
       pads.style.cssText = 'position:absolute;bottom:62px;right:14px;display:none;grid-template-columns:repeat(3,44px);gap:5px;pointer-events:auto';
