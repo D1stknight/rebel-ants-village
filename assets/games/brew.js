@@ -4,6 +4,8 @@
 // (five of the eight ingredients on the shelf, each with one of its riddles); the shelf holds eight of the witch's
 // sixteen ingredients, a new eight every brew.
 // Oct 17: How to play (the rules) and Restart (the same recipe from its first line, three tries again).
+// Oct 17 (Miguel: every board game needs an image example and fuller rules): howTo with howto/brew.png (a page line and
+// the jar it points at; scratchpad agents/htC/brew/draw.py + check.py, the riddles read from POOL by pool.mjs).
 // def: { cauldron: [x, z] (frame coords), rim: brew height, shelf: [x, y, z] (its middle), playerAt: [x, z], cam, at, pass, points }
 (function () {
   // the witch's stores: sixteen ingredients, six riddles each; a brew puts eight of them on the shelf (Oct 17, Miguel: "give
@@ -29,11 +31,14 @@
   const G = {
     title: "The Witch's Brew",
     howTo: { lines: [
-      "The Lunar Witch's recipe is a page of riddles: each line describes one ingredient.",
-      'Read the line on the page, then pour that jar: click it or press its number (on the tag under each jar).',
-      "Pour them in the recipe's order. A wrong jar hisses and costs one of your three tries (the stars); the third spoils the brew.",
-      'Every brew is a new recipe: eight of the witch\'s sixteen ingredients on the shelf and nearly a hundred riddles. Fewer wrong jars score more.',
-      'Tip: each riddle points at one jar by what it is or where it comes from: match it to the names on the tags.'] },
+      "Brew the Lunar Witch's recipe. Its page is a list of riddles, one line for each ingredient; the line to answer now shows on the page at the top.",
+      'Eight jars stand on the shelf by the cauldron, each with a tag under it: its number and its name. Read the line, work out which ingredient it means and pour that jar: click it or press its number.',
+      "Pour the lines in order: a poured line shows its ingredient's name on the page and the next line comes up. Five lines make the brew.",
+      'A wrong jar hisses and costs one of your three tries (the stars on the page); the third wrong jar spoils the brew.',
+      'Fewer wrong jars score more: 100 for a perfect brew, 15 less for each wrong jar (a spoiled brew pays 12 a poured line). Restart brews the same recipe again from its first line, with three tries.',
+      "Every brew is a new recipe: eight of the witch's sixteen ingredients on the shelf, each with six riddles, so the lines change from brew to brew.",
+      'Tip: a riddle points at one jar by what the ingredient is, what it does or where it comes from. When unsure, rule out the jars it cannot be.'],
+      img: 'howto/brew.png', caption: 'Line 2 of 5: "Eight legs wove it; the morning dew strings it with pearls" points at jar 4, the Spider Silk. Moonwater went in on line 1; one wrong jar has cost a star.' },
     start(ctx) {
       const B = ctx.B, V3 = B.Vector3, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
       const ING = POOL.slice().sort(() => Math.random() - .5).slice(0, 8); // this brew's shelf
