@@ -2936,21 +2936,21 @@ const MOON_TALES_WIRING = {
         say:['The Thunder Moon, round and glowing with power. It woke me from my storm-wrought slumber.', 'I was born of stormlight, little Rebel: part dragon, my spirit forged in thunderclouds and bound to the pulse of the earth itself.', 'Now I begin my spell. Come back when you are ready to catch lightning.'] }
     ] },
   18: { giver:'cc-nariko',
-    offer:['With hands aglow I summon an orb from the storm. Feel it crackle? It is hungry, little Rebel.', 'Call the lightning down to it. When the marker crosses the gold, strike. Not before, not after.'],
+    offer:['With hands aglow I summon an orb from the storm. Feel it crackle? It is hungry, little Rebel.', 'Stand on the glowing mark beside me and call the lightning down to it. A bar will run: when its marker crosses the gold part, press O. Not before, not after.'],
     steps:[
-      { id:'catch-lightning', objective:"Call the lightning down into Nariko's orb.", objectiveType:'useQuestSpot', targetObjectId:'mt-storm-orb', villageId:'cute-creepy' },
+      { id:'catch-lightning', objective:"Step onto the glowing mark beside Nariko and press O to call the lightning into her orb.", objectiveType:'useQuestSpot', targetObjectId:'mt-storm-orb', villageId:'cute-creepy' },
       { id:'root-to-sky', objective:'Stand with Nariko in the circle, from root to sky.', objectiveType:'useQuestSpot', targetObjectId:'mt-storm-root', villageId:'cute-creepy' },
       { id:'orb-fed', objective:'Talk to Nariko.', objectiveType:'talkToNpc', targetNpcId:'cc-nariko', villageId:'cute-creepy',
         say:['From root to sky. Did you feel your heart keep time with the thunder?', 'This power is not for me alone. The whole Coven felt that surge in their bones, and every one of them carries a weight.'] }
     ] },
   19: { giver:'cc-nariko',
-    offer:['My sisters carry burdens: pain, anger, fear. A weight like that can bend a witch double.', 'Go to Mamoru, to Kokeshi Flower Moon and to Ostara, and ask them gently what they carry. Then bring them to the circle.'],
+    offer:['My sisters carry burdens: pain, anger, fear. A weight like that can bend a witch double.', 'Go to Mamoru, to Kokeshi Flower Moon and to Ostara, in any order, and ask them gently what they carry. Then come back to the circle.'],
     steps:[
-      { id:'ask-mamoru', objective:'Ask Mamoru what she carries.', objectiveType:'talkToNpc', targetNpcId:'cc-mamoru', villageId:'cute-creepy',
+      { id:'ask-mamoru', objective:'Ask Mamoru what she carries.', anyOrder:'asks', anyOrderText:'Ask Mamoru, Kokeshi Flower Moon and Ostara what they carry (any order).', objectiveType:'talkToNpc', targetNpcId:'cc-mamoru', villageId:'cute-creepy',
         say:['Anger, little Rebel. Every harvest night the tricksters slip in, and every harvest night I am the one on watch.', 'I keep my candle steady. Inside, it burns too hot.', 'Nariko is calling? Then I will come to the circle.'] },
-      { id:'ask-flower-moon', objective:'Ask Kokeshi Flower Moon what she carries.', objectiveType:'talkToNpc', targetNpcId:'cc-flower-moon', villageId:'cute-creepy',
+      { id:'ask-flower-moon', objective:'Ask Kokeshi Flower Moon what she carries.', anyOrder:'asks', anyOrderText:'Ask Mamoru, Kokeshi Flower Moon and Ostara what they carry (any order).', objectiveType:'talkToNpc', targetNpcId:'cc-flower-moon', villageId:'cute-creepy',
         say:['Pain. I sing every bud awake, and every bloom still fades.', 'I know it is the cycle of life and death. Knowing does not make it hurt less.', 'I will come to the circle.'] },
-      { id:'ask-ostara', objective:'Ask Ostara what she carries.', objectiveType:'talkToNpc', targetNpcId:'cc-ostara', villageId:'cute-creepy',
+      { id:'ask-ostara', objective:'Ask Ostara what she carries.', anyOrder:'asks', anyOrderText:'Ask Mamoru, Kokeshi Flower Moon and Ostara what they carry (any order).', objectiveType:'talkToNpc', targetNpcId:'cc-ostara', villageId:'cute-creepy',
         say:['Fear. My bell keeps the shadows away, but I am always listening for them to come back.', 'Even still as starlight, part of me is waiting to run.', 'For Nariko, I will come.'] },
       { id:'release', objective:'Release the burdens in the stone circle with the Coven.', objectiveType:'useQuestSpot', targetObjectId:'mt-storm-release', villageId:'cute-creepy' },
       { id:'lightning-told', objective:'Talk to Nariko.', objectiveType:'talkToNpc', targetNpcId:'cc-nariko', villageId:'cute-creepy',
@@ -3381,6 +3381,8 @@ function registerBook1QuestDefinitions() {
 	            villageId:objective.villageId || null,
 	            say:Array.isArray(objective.say) ? objective.say : null,
 	            weather:objective.weather || null,
+	            anyOrder:objective.anyOrder || null,
+	            anyOrderText:objective.anyOrderText || null,
 	            wired:Boolean(objective.objectiveType)
 	          }
 	      ).concat({ id:'complete', objective:`Completed: ${quest.title}` })
@@ -3567,11 +3569,27 @@ function getSideQuestTalkStepForNpc(npc) {
   const npcId = String(npc?.metadata?.npcId || '').toLowerCase();
   if (!npcId) return null;
   for (const [questId, st] of Object.entries(SideQuestState.active)) {
-    const step = getQuestStep(questId, st.step);
-    if (step && normalizeQuestObjectiveAction(step.objectiveType) === 'talkToNpc' && String(step.targetNpcId || '').toLowerCase() === npcId) return { questId, step };
+    for (const step of sideQuestOpenSteps(questId, st)) {
+      if (normalizeQuestObjectiveAction(step.objectiveType) === 'talkToNpc' && String(step.targetNpcId || '').toLowerCase() === npcId) return { questId, step };
+    }
   }
   return null;
 }
+
+// The steps a side quest can take next: its current step, or every step of the current step's anyOrder group still to
+// do (steps sharing anyOrder: 'asks' are done in any order: ask the three of them, whoever comes first)
+function sideQuestGroup(questId, step) {
+  return step?.anyOrder ? (QUEST_DEFINITIONS[questId]?.steps || []).filter(s => s.anyOrder === step.anyOrder) : null;
+}
+function sideQuestOpenSteps(questId, st) {
+  const step = st && getQuestStep(questId, st.step);
+  if (!step) return [];
+  const group = sideQuestGroup(questId, step);
+  if (!group) return [step];
+  const done = st.steps?.['group:' + step.anyOrder]?.ids || [];
+  return group.filter(s => !done.includes(s.id));
+}
+function sideQuestStepText(questId, step) { return sideQuestGroup(questId, step) ? step.anyOrderText || step.objective : step.objective; }
 
 function getSideQuestDialogueLines(npc) {
   const talk = getSideQuestTalkStepForNpc(npc);
@@ -3594,7 +3612,7 @@ function startSideQuest(questId) {
   SideQuestState.active[questId] = { step:first.id, steps:{}, touched:Date.now() };
   saveSideQuestState();
   playProgressionAudio('progressMilestone');
-  showToast(`${sideQuestKindLabel(questId)} started: ${QUEST_DEFINITIONS[questId].title}. ${first.objective}`, 6500);
+  showToast(`${sideQuestKindLabel(questId)} started: ${QUEST_DEFINITIONS[questId].title}. ${sideQuestStepText(questId, first)}`, 6500);
   return true;
 }
 
@@ -3612,10 +3630,24 @@ function advanceSideQuests(actionType, context = {}) {
     if (!quest) { delete SideQuestState.active[questId]; continue; }
     const step = getQuestStep(questId, st.step);
     if (!step) continue;
-    const expected = getConfiguredQuestAction(quest, st.step);
-    if (!expected || !questActionMatches(expected, actionType)) continue;
-    if (!doesQuestContextMatchTarget(quest, context, actionType, st.step)) continue;
-    if (step.count > 1) {
+    const group = sideQuestGroup(questId, step);
+    if (group) {
+      // a step of an anyOrder group: whichever of the group's open steps this matches; the quest moves past the group
+      // once all of them are done, else its step is the first one still open (the guide points there)
+      const open = sideQuestOpenSteps(questId, st);
+      const hit = open.find(s => { const want = getConfiguredQuestAction(quest, s.id); return want && questActionMatches(want, actionType) && doesQuestContextMatchTarget(quest, context, actionType, s.id); });
+      if (!hit) continue;
+      getSideQuestStepProgress(questId, 'group:' + step.anyOrder).ids.push(hit.id);
+      advanced = true;
+      const left = open.filter(s => s !== hit);
+      if (left.length) { st.step = left[0].id; st.touched = Date.now(); playProgressionAudio('progressMilestone'); showToast(`${quest.title}: ${group.length - left.length} / ${group.length}`, 5000); continue; }
+      st.step = group[group.length - 1].id;
+    } else {
+      const expected = getConfiguredQuestAction(quest, st.step);
+      if (!expected || !questActionMatches(expected, actionType)) continue;
+      if (!doesQuestContextMatchTarget(quest, context, actionType, st.step)) continue;
+    }
+    if (!group && step.count > 1) {
       const progress = getSideQuestStepProgress(questId, step.id);
       const id = context.progressId || getQuestTargetObjectIdFromContext(context) || `${step.id}_${progress.ids.length + 1}`;
       if (progress.ids.includes(id)) continue;
@@ -3630,7 +3662,7 @@ function advanceSideQuests(actionType, context = {}) {
     if (index >= 0 && index < steps.length - 1) {
       st.step = steps[index + 1].id;
       playProgressionAudio('progressMilestone');
-      showToast(`${quest.title}: ${steps[index + 1].objective}`, 6000);
+      showToast(`${quest.title}: ${sideQuestStepText(questId, steps[index + 1])}`, 6000);
     } else {
       completeSideQuest(questId);
     }
@@ -3662,8 +3694,9 @@ function getActiveSideQuestTrackerLines(limit = 2) {
 function getSideQuestTrackerLine(questId) {
   const st = SideQuestState.active[questId], quest = QUEST_DEFINITIONS[questId], step = st && getQuestStep(questId, st.step);
   if (!quest || !step) return '';
-  const n = step.count > 1 ? ` (${Math.min((st.steps?.[step.id]?.ids || []).length, step.count)}/${step.count})` : '';
-  return `${quest.title}: ${step.objective}${n}`;
+  const group = sideQuestGroup(questId, step);
+  const n = group ? ` (${group.length - sideQuestOpenSteps(questId, st).length}/${group.length})` : step.count > 1 ? ` (${Math.min((st.steps?.[step.id]?.ids || []).length, step.count)}/${step.count})` : '';
+  return `${quest.title}: ${sideQuestStepText(questId, step)}${n}`;
 }
 
 // Quest items found before their step asked for them (a collectible can be picked up any time, and a picked-up item
