@@ -46,7 +46,8 @@ print('clips ok', len(need))
 npc = sorted(set(c['file'] for c in json.load(open('anim/clips_npc.json')) if not c.get('optional')))   # v2.29 the dances: optional (games files)
 nmiss = [f for f in npc if not os.path.exists(os.path.join('pack', f))]
 print('npc clips', len(npc) - len(nmiss), 'of', len(npc), ('missing: ' + ', '.join(nmiss)) if nmiss else 'ok')
-# v2.24 games pack (Rebels' village game moves): optional too, a job without it makes no games.glb
+# v2.24 games pack (Rebels' village game moves): optional too, a job without it makes no games.glb (v2.30: without some
+# files, a pack without their moves)
 gm = sorted(set(c['file'] for c in json.load(open('anim/clips_games.json'))))
 gmiss = [f for f in gm if not os.path.exists(os.path.join('pack', f))]
 print('games clips', len(gm) - len(gmiss), 'of', len(gm), ('missing: ' + ', '.join(gmiss)) if gmiss else 'ok')

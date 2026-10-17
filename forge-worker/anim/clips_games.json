@@ -110,5 +110,93 @@
   "t0": 4.8,
   "t1": 7.2,
   "pack": "games"
+ },
+ {
+  "name": "game_shoot",
+  "file": "mixamo/gm_goalkeeper_catch.npz",
+  "t0": 0.33,
+  "t1": 1.45,
+  "reverse": true,
+  "airborne": true,
+  "pack": "games"
+ },
+ {
+  "name": "game_dribble",
+  "file": "mixamo/gm_dribble.npz",
+  "t0": 0.07,
+  "t1": 1.47,
+  "pack": "games"
+ },
+ {
+  "name": "game_bowl",
+  "file": "mixamo/gm_throwing.npz",
+  "t0": 0.6,
+  "t1": 3.0,
+  "in_place": false,
+  "pack": "games"
+ },
+ {
+  "name": "game_block",
+  "file": "mixamo/gm_center_block.npz",
+  "t0": 0.0,
+  "t1": 1.58,
+  "pack": "games"
+ },
+ {
+  "name": "game_hammer_up",
+  "file": "mixamo/gm_melee_down.npz",
+  "t0": 0.0,
+  "t1": 0.27,
+  "pack": "games"
+ },
+ {
+  "name": "game_hammer",
+  "file": "mixamo/gm_melee_down.npz",
+  "t0": 0.27,
+  "t1": 1.29,
+  "pack": "games"
+ },
+ {
+  "name": "game_rope_pull",
+  "file": "mixamo/gm_pulling_rope.npz",
+  "t0": 4.2,
+  "t1": 5.9,
+  "pack": "games"
+ },
+ {
+  "name": "game_shield_idle",
+  "file": "mixamo/gm_shield_idle.npz",
+  "t0": 0.0,
+  "t1": 3.67,
+  "pack": "games"
+ },
+ {
+  "name": "game_shield_block",
+  "file": "mixamo/gm_shield_block.npz",
+  "t0": 0.0,
+  "t1": 0.54,
+  "pack": "games"
+ },
+ {
+  "name": "game_shield_impact",
+  "file": "mixamo/gm_shield_impact.npz",
+  "t0": 0.0,
+  "t1": 0.75,
+  "pack": "games"
+ },
+ {
+  "name": "game_shield_hit",
+  "file": "mixamo/gm_shield_hit.npz",
+  "t0": 0.0,
+  "t1": 0.96,
+  "pack": "games"
+ },
+ {
+  "name": "game_swim",
+  "file": "mixamo/gm_swimming.npz",
+  "t0": 0.0,
+  "t1": 4.5,
+  "grounded": false,
+  "pack": "games"
  }
 ]

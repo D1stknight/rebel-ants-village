@@ -83,6 +83,7 @@ for clip in CLIPS:
         A[n] = Rot.identity() if sn < 1e-6 else Rot.from_rotvec(ax / sn * np.arctan2(sn, cs))
     step = max(1, int(round(1 / (FPS * b.dt))))
     frames = np.arange(int(t0 / b.dt), min(int(t1 / b.dt), b.nf - 1) + 1, step)
+    if clip.get('reverse'): frames = frames[::-1]     # v2.30 played backwards (Miguel: the goalkeeper's catch run back is a jump shot)
     Pw, Rw = b.fk(frames); nf = len(frames)
     # yaw normalisation (BVH frame, about +Y): hips forward at the first frame -> +Z
     fwd = Rw[bi['Hips']][0].apply([0, 0, 1]); yaw = np.arctan2(fwd[0], fwd[2]) + np.radians(clip.get('yaw_deg', 0))

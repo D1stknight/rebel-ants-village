@@ -375,6 +375,13 @@ def hand_pose(clip, side):
     if clip in ('game_throw', 'game_throw_far'): return 'grip' if side == 'Right' else 'relaxed'
     if clip in ('game_push', 'game_push_walk') or clip.startswith('dance_'): return 'open'
     if clip == 'game_cheer': return 'fist'
+    # v2.30 the second set: both hands open on the ball (jump shot) and in the strokes, the dribbling hand open, a hand
+    # round the bowling ball / the hammer, fists up to block, both round the rope and the sword hilt + shield handle
+    if clip in ('game_shoot', 'game_swim'): return 'open'
+    if clip == 'game_dribble': return 'open' if side == 'Right' else 'relaxed'
+    if clip in ('game_bowl', 'game_hammer_up', 'game_hammer'): return 'grip' if side == 'Right' else 'relaxed'
+    if clip == 'game_block': return 'fist'
+    if clip == 'game_rope_pull' or clip.startswith('game_shield_'): return 'grip'
     if clip == 'pointing': return 'point' if side == 'Right' else 'relaxed'
     if clip in TALK: return 'talk'
     return 'fist' if clip in FIST else 'open' if clip in OPEN else 'relaxed'

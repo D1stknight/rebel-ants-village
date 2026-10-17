@@ -91,11 +91,20 @@ fi
 # pushing, four dances): retargeted and cleaned up with the other moves, shipped in their own games.glb (rig.glb and
 # moves.glb are unchanged). They keep their own head motion (headfix would level the look down at a shovel). A worker
 # built before the pack was uploaded makes no games.glb and everything else as before.
+# v2.30 Miguel's second set (rope pull, hammer, unarmed + shield blocks, jump shot, dribble, bowling throw, swim): a file
+# the image lacks leaves out only its own moves (logged "games pack missing: <file>"); the pack lists what it holds
+# (result.json gamesClips), so the NPC Forge can tell an older pack from a current one.
 GAMES=""
 if [ -z "$NPC" ]; then
-  export FORGE_GAME_CLIPS="$FW/anim/clips_games.json"; GAMES=1
-  for f in $(grep -o '"file": *"[^"]*"' "$FORGE_GAME_CLIPS" | sed 's/.*"\([^"]*\)"$/\1/' | sort -u); do
-    [ -f "$FORGE_PACK/$f" ] || { GAMES=""; echo "games pack missing: $f (upload it in the Rig worker box, then rebuild the worker); no games.glb" >> "$JOB/log"; }; done
+  export FORGE_GAME_CLIPS="$O/clips_games.json"
+  "$PY" - "$FW/anim/clips_games.json" "$FORGE_PACK" "$FORGE_GAME_CLIPS" >> "$JOB/log" 2>&1 <<'PY'
+import json, os, sys
+src, pack, out = sys.argv[1:4]; cl = json.load(open(src)); have = [c for c in cl if os.path.isfile(os.path.join(pack, c['file']))]
+for f in sorted(set(c['file'] for c in cl) - set(c['file'] for c in have)):
+    print(f'games pack missing: {f} (upload it in the Rig worker box, then rebuild the worker); its moves are left out')
+json.dump(have, open(out, 'w'), indent=1)
+PY
+  if [ "$("$PY" -c 'import json, sys; print(len(json.load(open(sys.argv[1]))))' "$FORGE_GAME_CLIPS")" -gt 0 ]; then GAMES=1; fi
   if [ -n "$GAMES" ]; then
     export FORGE_HEAD_SKIP="${FORGE_HEAD_SKIP-cartwheel,backflip,front_flip,flip_kick,spin_flip_kick,knockdown,get_up},$("$PY" -c 'import json, sys; print(",".join(c["name"] for c in json.load(open(sys.argv[1]))))' "$FORGE_GAME_CLIPS")"
 step games;      run "$FW/anim/retarget_bvh.py" -- "$O/anim6_ma.blend" "$O/anim6_ma.blend" "$FORGE_GAME_CLIPS"
@@ -135,6 +144,8 @@ import json, os, sys
 job, secs = sys.argv[1], int(sys.argv[2])
 qa = json.load(open(os.path.join(job, 'qa.json')))
 mv, gm = os.path.join(job, 'moves.glb'), os.path.join(job, 'games.glb')
-json.dump({'ok': True, 'seconds': secs, 'bytes': os.path.getsize(os.path.join(job, 'rig.glb')), 'thumb': os.path.exists(os.path.join(job, 'thumb.jpg')), 'moves': os.path.getsize(mv) if os.path.exists(mv) else 0, 'games': os.path.getsize(gm) if os.path.exists(gm) else 0, 'qa': qa}, open(os.path.join(job, 'result.json'), 'w'))
+gc = os.environ.get('FORGE_GAME_CLIPS', '')   # v2.30 the moves this games pack holds
+gnames = [c['name'] for c in json.load(open(gc))] if os.path.exists(gm) and gc and os.path.exists(gc) else []
+json.dump({'ok': True, 'seconds': secs, 'bytes': os.path.getsize(os.path.join(job, 'rig.glb')), 'thumb': os.path.exists(os.path.join(job, 'thumb.jpg')), 'moves': os.path.getsize(mv) if os.path.exists(mv) else 0, 'games': os.path.getsize(gm) if os.path.exists(gm) else 0, 'gamesClips': gnames, 'qa': qa}, open(os.path.join(job, 'result.json'), 'w'))
 PY
 echo done > "$JOB/progress"
