@@ -23,6 +23,9 @@ function saintsCity() {
   const nearStreet = (v, S, m) => S.some(s => Math.abs(v - s) < m);
   const palms = [], tallPalms = [], lights = [], poles = [], cars = { sl_car_blue: [], sl_car_gold: [], sl_car_red: [], sl_car_black: [], sl_car_white: [], sl_car_purple: [] };
   const carKinds = Object.keys(cars);
+  // Crosswalk Rush's crossing (x 20 on the street south of the block): no pole or streetlight on its curbs (from the
+  // game's camera the pole stood right in front of the Rebel at the start, the light at the far end of the crossing)
+  const onCrossing = (px, sz) => sz === -52 && Math.abs(px - 20) < 3;
   for (const sx of SX) for (const sd of [-1, 1]) for (let z = -232; z <= 232; z += 24) {
     if (nearStreet(z, SZ, 15)) continue;
     (Math.abs(sx) < 100 || r() < .6 ? tallPalms : palms).push([sx + sd * 9.4, z + (r() - .5) * 3, r() * 6.28, .85 + r() * .3]);
@@ -32,7 +35,7 @@ function saintsCity() {
   for (const sz of SZ) for (const sd of [-1, 1]) for (let x = -232; x <= 232; x += 24) {
     if (nearStreet(x, SX, 15)) continue;
     (Math.abs(sz - 20) < 100 || r() < .6 ? tallPalms : palms).push([x + (r() - .5) * 3, sz + sd * 9.4, r() * 6.28, .85 + r() * .3]);
-    if (sd < 0) poles.push([x + 12, sz - 9.8, 0, 1]); else if ((x / 24 | 0) % 2 === 0) lights.push([x + 12, sz + 8.6, Math.PI, 1]);
+    if (onCrossing(x + 12, sz)) {} else if (sd < 0) poles.push([x + 12, sz - 9.8, 0, 1]); else if ((x / 24 | 0) % 2 === 0) lights.push([x + 12, sz + 8.6, Math.PI, 1]);
     if (Math.abs(x) < 150 && Math.abs(sz - 20) < 160 && r() < .55) cars[carKinds[Math.floor(r() * 6)]].push([x + 6, sz + sd * 5.2, sd < 0 ? 0 : Math.PI, 1]);
   }
   const E = (kit, at, o = {}) => ({ kit, at, count: Math.max(1, at.length), minSq: 0, maxSq: 360, road: 0, ...o });
