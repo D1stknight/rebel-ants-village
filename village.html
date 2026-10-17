@@ -152,7 +152,7 @@ body.walk-photo #photoBtn{display:block}
 #photoOverlay .ph-btns{display:flex;justify-content:center;gap:10px}
 #photoOverlay .ph-btns button{font:600 13px Georgia,serif;letter-spacing:.06em;padding:8px 18px;border-radius:6px;border:1px solid #8a6a2a;background:#2a1d10;color:#ffe9b0;cursor:pointer}
 /* the dance-off (DanceOff): arrows come down the lane to the ring */
-#danceOff{position:fixed;left:50%;bottom:20%;transform:translateX(-50%);width:min(560px,92vw);padding:12px 16px 12px;background:rgba(10,13,22,.9);border:1px solid rgba(216,179,92,.6);border-radius:14px;color:#f3e6c4;font:600 14px/1.3 Georgia,serif;text-align:center;z-index:60;display:none;box-shadow:0 8px 30px rgba(0,0,0,.45);user-select:none}
+#danceOff{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:min(560px,92vw);padding:12px 16px 12px;background:rgba(10,13,22,.9);border:1px solid rgba(216,179,92,.6);border-radius:14px;color:#f3e6c4;font:600 14px/1.3 Georgia,serif;text-align:center;z-index:60;display:none;box-shadow:0 8px 30px rgba(0,0,0,.45);user-select:none}
 #danceOff.on{display:block}
 #danceOff .do-title{letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:#d8b35c;margin-bottom:8px}
 #danceOff .do-lane{position:relative;height:58px;border-radius:29px;background:linear-gradient(90deg,rgba(255,216,119,.12),rgba(255,255,255,.04));overflow:hidden}
@@ -11670,6 +11670,9 @@ function openDanceOff(root, cfg, level) {
   const dc = level ? { ...cfg.dance, ...DANCE_LEVELS[level] } : cfg.dance;
   el.classList.remove('choose');
   try { loadGamesPack(); } catch (e) {} // the dances (usually here already: the pack comes 15 s after the Rebel)
+  // the Rebel turns to the camera to dance (it stood with its back to it), and the panel sits at the bottom of the screen
+  // (it covered the Rebel)
+  if (charMesh && typeof _orbitAngleH === 'number') charMesh.rotation.y = _orbitAngleH;
   // the song starts a moment after (and is heard a little after that): the moves wait for it
   const t0 = performance.now() / 1000 + dc.lead + .05 + (MoonTaleSounds.latency?.() || 0), lane = el.querySelector('.do-notes');
   lane.innerHTML = '';
