@@ -1,28 +1,59 @@
 // Banana Drop (Oct 15, Chumpz): four in a row against the apes. Drop a banana into a column of the rack; it falls to
 // the lowest free hole. Four bananas in a line (across, up or slanted) wins; the apes drop coconuts and try the same.
-// Four opponents: Banana Band (plays for fun and misses things), Pengu (sees a move or two ahead), Peely (six moves
-// ahead) and Big Chain (twelve or more, the cove's champion). Beat one to meet the next; you always drop first.
-// Score: the opponent x 20 for a win (+10 winning with 12 bananas or fewer). def: { pass, points }
-// Oct 17: How to play (the rules) and Restart (an empty rack: a new game against the same ape, you drop first).
+// Ten opponents (Oct 17), weakest first: the first round (Banana Band, Racer, Barnacle, Pengu, Peely, Big Chain), then
+// a second round (Barnacle, Pengu, Peely and Big Chain again, each thinking further ahead). Beat one to meet the next;
+// you always drop first. Score: the ape's points for a win, 20 (Banana Band) to 110 (the title match), +10 winning with
+// 12 bananas or fewer; a pass of 60 is Peely, a little stronger than the Oct 15 Peely (the old pass), whose root noise
+// let it pick moves it had not searched. def: { pass, points }
+// Oct 17: How to play (the rules, howto/four.png) and Restart (an empty rack: a new game against the same ape, you drop
+// first). The ladder was played out ape against ape (scratchpad agents/lvD/four/ladder.mjs): each beats the one before
+// it from random openings with the sides swapped. Thinking is capped by racks looked at (nodes: the same on any
+// computer) and by time (280 ms, for slow ones).
 (function () {
+  // see: the chance to spot a win (or a block) one drop away; slip: the chance to drop without thinking (a mistake on
+  // purpose); depth: how many drops it looks ahead; noise: how loosely it weighs close moves; nodes: the most racks it
+  // may look at for one drop; par: the weight of threats on its own rows (evalBoard); pts: the score for beating it
   const OPP = [
-    { name: 'Banana Band', depth: 0, see: .55, noise: 0, ms: 0, says: 'just here for the music' },
-    { name: 'Pengu', depth: 2, see: 1, noise: 30, ms: 60, says: 'reads the water two moves out' },
-    { name: 'Peely', depth: 6, see: 1, noise: 6, ms: 150, says: 'counts the holes six moves ahead' },
-    { name: 'Big Chain', depth: 14, see: 1, noise: 0, ms: 260, says: 'the champion of the cove' }];
+    { name: 'Banana Band', depth: 0, see: .5, pts: 20, says: 'just here for the music' },
+    { name: 'Racer', depth: 0, see: .9, pts: 30, says: 'drops before he looks' },
+    { name: 'Barnacle', depth: 1, see: 1, slip: .3, noise: 40, pts: 40, says: 'blocks what she sees' },
+    { name: 'Pengu', depth: 2, see: 1, noise: 30, pts: 50, says: 'reads the water two moves out' },
+    { name: 'Peely', depth: 4, see: 1, noise: 12, pts: 60, says: 'counts the holes four moves ahead' },
+    { name: 'Big Chain', depth: 6, see: 1, noise: 6, pts: 70, says: 'the champion of the cove' },
+    { name: 'Barnacle', round: '2nd round', depth: 8, see: 1, noise: 2, nodes: 25000, pts: 80, says: 'thinks much further now' },
+    { name: 'Pengu', round: '2nd round', depth: 10, see: 1, nodes: 60000, par: 20, pts: 90, says: 'plays the long game' },
+    { name: 'Peely', round: '2nd round', depth: 12, see: 1, nodes: 140000, par: 20, pts: 100, says: 'counts ten moves ahead' },
+    { name: 'Big Chain', round: 'title match', depth: 16, see: 1, nodes: 300000, par: 20, pts: 110, says: 'as deep as the cove' }];
   const ORDER = [3, 2, 4, 1, 5, 0, 6];
   // the rack: Int8Array(42), cell r * 7 + c with r = 0 the bottom row; 1 the player's bananas, -1 the coconuts
   const LINES = []; for (let r = 0; r < 6; r++) for (let c = 0; c < 7; c++) for (const [dr, dc] of [[0, 1], [1, 0], [1, 1], [1, -1]]) {
     const cells = []; for (let k = 0; k < 4; k++) { const rr = r + dr * k, cc = c + dc * k; if (rr < 0 || rr >= 6 || cc < 0 || cc >= 7) break; cells.push(rr * 7 + cc); } if (cells.length === 4) LINES.push(cells); } // the 69 lines of four
   const LINES_AT = Array.from({ length: 42 }, (_, i) => LINES.filter(w => w.includes(i)));
+  const FLAT = Int8Array.from(LINES.flat()); // the same lines in one flat array (the evaluation's inner loop)
   const winAt = (b, i, who) => { for (const w of LINES_AT[i]) if (b[w[0]] === who && b[w[1]] === who && b[w[2]] === who && b[w[3]] === who) return w; return null; };
-  function evalBoard(b, who) { let s = 0; // open lines: one, two and three of a kind (theirs weigh more at three), the middle column
-    for (const w of LINES) { let m = 0, t = 0; for (const j of w) { if (b[j] === who) m++; else if (b[j] === -who) t++; } if (m && t) continue; if (m) s += m === 3 ? 30 : m === 2 ? 5 : 1; else if (t) s -= t === 3 ? 40 : t === 2 ? 5 : 1; }
-    for (let r = 0; r < 6; r++) { const v = b[r * 7 + 3]; if (v) s += v === who ? 4 : -4; } return s; }
+  const DR = [0, 1, 1, 1], DC = [1, 0, 1, -1];
+  function makesFour(b, i, who) { // would a disc of who's at cell i make four? (runs through it both ways: the search's quick test)
+    const r = (i / 7) | 0, c = i - r * 7;
+    for (let k = 0; k < 4; k++) { const dr = DR[k], dc = DC[k]; let n = 1;
+      for (let rr = r + dr, cc = c + dc; rr >= 0 && rr < 6 && cc >= 0 && cc < 7 && b[rr * 7 + cc] === who; rr += dr, cc += dc) n++;
+      for (let rr = r - dr, cc = c - dc; rr >= 0 && rr < 6 && cc >= 0 && cc < 7 && b[rr * 7 + cc] === who; rr -= dr, cc -= dc) n++;
+      if (n >= 4) return true; }
+    return false; }
+  const bits = x => { let n = 0; while (x) { x &= x - 1; n++; } return n; };
+  // the evaluation: open lines, one, two and three of a kind (theirs weigh more at three), the middle column; with par,
+  // also the holes that would make four (each counted once) on the rows that side wants: the bananas drop first and
+  // want them on odd rows from the bottom, the coconuts on even rows (who must fill which hole when the rack fills up)
+  function evalBoard(b, who, par) { let s = 0, ml = 0, mh = 0, tl = 0, th = 0;
+    for (let k = 0; k < FLAT.length; k += 4) { let m = 0, t = 0, e = 0; for (let q = k; q < k + 4; q++) { const v = b[FLAT[q]]; if (v === who) m++; else if (v) t++; else e = FLAT[q]; }
+      if (m && t) continue; if (m) s += m === 3 ? 30 : m === 2 ? 5 : 1; else if (t) s -= t === 3 ? 40 : t === 2 ? 5 : 1;
+      if (par && (m === 3 || t === 3) && (((e / 7) | 0) & 1) === ((m === 3 ? who : -who) === 1 ? 0 : 1)) {
+        if (m === 3) { if (e < 32) ml |= 1 << e; else mh |= 1 << (e - 32); } else { if (e < 32) tl |= 1 << e; else th |= 1 << (e - 32); } } }
+    for (let r = 0; r < 6; r++) { const v = b[r * 7 + 3]; if (v) s += v === who ? 4 : -4; }
+    return par ? s + par * (bits(ml) + bits(mh) - bits(tl) - bits(th)) : s; }
   function search(b, h, who, depth, alpha, beta, ply, S) { // negamax with alpha-beta, from who's side
-    if ((++S.nodes & 1023) === 0 && performance.now() > S.until) S.stop = true; if (S.stop) return 0;
-    for (const c of ORDER) { if (h[c] >= 6) continue; const i = h[c] * 7 + c; b[i] = who; const w = winAt(b, i, who); b[i] = 0; if (w) return 10000 - ply; }
-    if (depth <= 0) return evalBoard(b, who);
+    if ((++S.nodes & 1023) === 0 && (S.nodes > S.max || performance.now() > S.until)) S.stop = true; if (S.stop) return 0;
+    for (const c of ORDER) if (h[c] < 6 && makesFour(b, h[c] * 7 + c, who)) return 10000 - ply;
+    if (depth <= 0) return evalBoard(b, who, S.par);
     let best = -1e9, any = false;
     for (const c of ORDER) { if (h[c] >= 6) continue; any = true; const i = h[c] * 7 + c; b[i] = who; h[c]++;
       const v = -search(b, h, -who, depth - 1, -beta, -alpha, ply + 1, S); h[c]--; b[i] = 0; if (S.stop) return 0;
@@ -31,23 +62,28 @@
   function chooseMove(b, h, who, opp) {
     const legal = ORDER.filter(c => h[c] < 6); if (!legal.length) return -1;
     const rnd = () => { const w = legal.map(c => 4 - Math.abs(3 - c)); let x = Math.random() * w.reduce((a, v) => a + v, 0); for (let k = 0; k < legal.length; k++) { x -= w[k]; if (x <= 0) return legal[k]; } return legal[0]; };
-    for (const c of legal) { const i = h[c] * 7 + c; b[i] = who; const w = winAt(b, i, who); b[i] = 0; if (w && Math.random() < opp.see) return c; }
-    for (const c of legal) { const i = h[c] * 7 + c; b[i] = -who; const w = winAt(b, i, -who); b[i] = 0; if (w && Math.random() < opp.see) return c; }
-    if (!opp.depth) return rnd();
-    const S = { nodes: 0, until: performance.now() + opp.ms, stop: false }; let best = legal[0];
+    for (const c of legal) if (makesFour(b, h[c] * 7 + c, who) && Math.random() < opp.see) return c;
+    for (const c of legal) if (makesFour(b, h[c] * 7 + c, -who) && Math.random() < opp.see) return c;
+    if (!opp.depth || Math.random() < (opp.slip || 0)) return rnd();
+    const S = { nodes: 0, par: opp.par || 0, max: opp.nodes || 1e9, until: performance.now() + (opp.ms || 280), stop: false }, noise = opp.noise || 0; let best = legal[0];
+    // the noise blurs moves within noise of the best: those are searched to their true value (the window starts noise
+    // below it); a move cut off below that window could only be worse, so the noise never picks a blunder
     for (let d = 1; d <= opp.depth; d++) { let bd = -1, bv = -1e9, alpha = -1e9;
-      for (const c of [best, ...legal.filter(x => x !== best)]) { const i = h[c] * 7 + c; b[i] = who; h[c]++; let v = -search(b, h, -who, d - 1, -1e9, -alpha, 1, S); h[c]--; b[i] = 0; if (S.stop) break;
-        v += (Math.random() - .5) * opp.noise; if (v > bv) { bv = v; bd = c; } if (v > alpha) alpha = v; }
+      for (const c of [best, ...legal.filter(x => x !== best)]) { const i = h[c] * 7 + c; b[i] = who; h[c]++; let v = -search(b, h, -who, d - 1, -1e9, -(alpha - noise), 1, S); h[c]--; b[i] = 0; if (S.stop) break;
+        v += (Math.random() - .5) * noise; if (v > bv) { bv = v; bd = c; } if (v > alpha) alpha = v; }
       if (S.stop || bd < 0) break; best = bd; if (bv > 9000) break; } // a forced win: no need to look further
     return best; }
   const G = {
     title: 'Banana Drop',
     howTo: { lines: [
-      'Drop bananas into the rack: each one falls to the lowest free hole of its column.',
-      'Four of your bananas in a line, across, up or slanted, wins; the ape drops coconuts and tries to do the same.',
-      'Click a column to drop (or ← → and Space, or the keys 1-7). You always drop first.',
-      'Beat an ape to meet the next one; win with 12 bananas or fewer for +10.',
-      'Tip: the middle column is part of the most lines of four, and when the ape has three in a line, block the fourth hole.'] },
+      'Get four of your bananas in a line before the ape gets four coconuts: across, up and down, or slanted.',
+      'Drop a banana into a column and it falls to the lowest free hole. You always drop first, then you and the ape take turns.',
+      'A full rack with no four for anyone is a draw.',
+      'Ten apes, weakest first: the first round runs from Banana Band to Big Chain, then four of them come back in a second round and think much further ahead. Beat one to meet the next.',
+      'Click (or tap) a column to drop. The keys 1-7 drop in that column, or move the banana with ← → and drop it with Space. Restart begins a new game against the same ape.',
+      'A win scores that ape\'s points (the stronger the ape, the more); winning with 12 bananas or fewer adds 10.',
+      'Tip: the middle column is in the most lines of four. A drop that makes two threats at once wins, as the ape can only block one; and never drop just under a hole the ape needs for its four.'],
+      img: 'howto/four.png', caption: 'A won game: the last banana fell to the lowest free hole of its column and made four on a slant. The ringed banana blocked three coconuts.' },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def, KEY = 'rebelAntsDropProgress:' + (def.id || 'four');
       let beaten = 0; try { beaten = Math.max(0, Math.min(OPP.length, Number(localStorage.getItem(KEY)) || 0)); } catch (e) {}
@@ -87,7 +123,7 @@
         if (g && g.last >= 0 && !g.drop && !g.win) { const [hx, hy] = hole(g.last % 7, Math.floor(g.last / 7)); x.strokeStyle = 'rgba(255,211,106,.95)'; x.lineWidth = 5; x.beginPath(); x.arc(hx, hy, CS * .46, 0, Math.PI * 2); x.stroke(); }
         tex.update(); }
       const count = () => { let n = 0; for (const v of g.b) if (v === 1) n++; return n; };
-      const info = () => { if (!g) { H.info('Pick an opponent'); return; } H.info(`${g.opp.name} · bananas ${count()} · ${st.phase === 'play' ? (g.drop ? '…' : g.turn === 1 ? 'your drop' : `${g.opp.name} is thinking`) : 'game over'}`); };
+      const info = () => { if (!g) { H.info('Pick an opponent'); return; } H.info(`${g.opp.name}${g.opp.round ? ` (${g.opp.round})` : ''} · bananas ${count()} · ${st.phase === 'play' ? (g.drop ? '…' : g.turn === 1 ? 'your drop' : `${g.opp.name} is thinking`) : 'game over'}`); };
       function build(k) { g = { k, opp: OPP[k], b: new Int8Array(42), h: new Int8Array(7), turn: 1, last: -1, drop: null, win: null, moves: 0, hover: null, cur: 3 }; draw(); info(); }
       function drop(c, who) { if (g.h[c] >= 6) return false; const r = g.h[c]; g.h[c]++; g.b[r * 7 + c] = who; g.drop = { c, r, who, t: 0, dur: .14 + (6 - r) * .045 }; g.last = r * 7 + c; if (who === 1) g.moves++; draw(); info(); return true; }
       function landed() { const d = g.drop; g.drop = null; ctx.sound('thock'); const i = d.r * 7 + d.c, w = winAt(g.b, i, d.who);
@@ -99,12 +135,13 @@
         ctx.sound(won ? 'gamewin' : 'thock'); H.msg(won ? 'Four bananas!' : who === 0 ? 'A full rack' : `${g.opp.name} wins`, 1700, won ? `${g.moves} bananas` : who === 0 ? 'a draw' : 'four coconuts in a row'); info(); }
       const hud = document.getElementById('gameHud');
       const pick = document.createElement('div');
-      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);background:rgba(16,12,6,.95);border:1px solid rgba(240,200,80,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
+      const wide = OPP.length > 6 && innerWidth >= 600; // ten apes: five a row on wide screens
+      pick.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(' + (wide ? 600 : 420) + 'px,92vw);background:rgba(16,12,6,.95);border:1px solid rgba(240,200,80,.6);border-radius:14px;padding:16px;text-align:center;pointer-events:auto;font:15px/1.4 system-ui,sans-serif;color:#eee';
       const drawPick = () => { pick.innerHTML = `<div style="font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#f3c84a;margin-bottom:10px">Banana Drop</div><div style="margin-bottom:12px;color:#bbb">Drop bananas into the rack. Four in a line wins: across, up or slanted. You drop first.</div>`
-        + `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${OPP.map((o, k) => { const open = k <= beaten, ok = k < beaten; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:9px 4px;border-radius:9px;border:1px solid ${open ? '#f3c84a' : '#444'};background:${ok ? 'rgba(243,200,74,.18)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 15px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${k + 1}. ${o.name}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:${open ? '#d8c89a' : '#666'}">${open ? o.says : 'beat the one before'}</div></button>`; }).join('')}</div>`
-          + `<div style="margin-top:10px;font-size:12px;color:#998">Keys 1-${OPP.length} pick an opponent</div>`;
+        + `<div style="display:grid;grid-template-columns:repeat(${wide ? 5 : 2},1fr);gap:8px">${OPP.map((o, k) => { const open = k <= beaten, ok = k < beaten; return `<button type="button" data-k="${k}" ${open ? '' : 'disabled'} style="padding:8px 3px;border-radius:9px;border:1px solid ${open ? '#f3c84a' : '#444'};background:${ok ? 'rgba(243,200,74,.18)' : 'rgba(255,255,255,.04)'};color:${open ? '#fff' : '#666'};font:700 14px system-ui,sans-serif;cursor:${open ? 'pointer' : 'default'}">${k + 1}. ${o.name}${ok ? ' ✓' : ''}<div style="font:500 11px system-ui;color:${open ? '#d8c89a' : '#666'}">${open ? (o.round ? `${o.round}: ` : '') + o.says : 'beat the one before'}</div></button>`; }).join('')}</div>`
+          + `<div style="margin-top:10px;font-size:12px;color:#998">Keys ${OPP.length > 9 ? '1-9 and 0' : '1-' + OPP.length} pick an opponent</div>`;
         pick.querySelectorAll('button[data-k]').forEach(b => b.onclick = (e) => { e.stopPropagation(); b.blur(); choose(+b.dataset.k); }); };
-      function choose(k) { if (st.phase !== 'pick' || k > beaten || k >= OPP.length) return; pick.remove(); st.phase = 'play'; build(k); H.msg(OPP[k].name, 1000, 'you drop first'); }
+      function choose(k) { if (st.phase !== 'pick' || k > beaten || k >= OPP.length) return; pick.remove(); st.phase = 'play'; build(k); H.msg(OPP[k].name, 1000, OPP[k].round ? `${OPP[k].round}: you drop first` : 'you drop first'); }
       // Restart (the button beside Quit): an empty rack, a new game against the same ape, you drop first
       function restart() { if (st.phase !== 'play' || !g) return; build(g.k); st.think = 0; H.msg(g.opp.name, 1000, 'a new game: you drop first'); }
       hud.append(pick); drawPick();
@@ -120,12 +157,13 @@
           if (g.drop) { g.drop.t += dt; draw(); if (g.drop.t >= g.drop.dur) landed(); }
           else if (st.phase === 'play' && g.turn === -1 && (st.think -= dt) <= 0) { const c = chooseMove(g.b, g.h, -1, g.opp); if (c >= 0) drop(c, -1); }
           if (st.phase === 'over' && (st.wt += dt) > 2.2) { st.phase = 'done'; H.hint(''); const won = g.result === 1;
-            ctx.finish({ score: won ? (g.k + 1) * 20 + (g.moves <= 12 ? 10 : 0) : 0, label: 'points', passed: won && (g.k + 1) * 20 >= (def.pass || 0), solved: won,
-              extra: won ? `You beat ${g.opp.name} with ${g.moves} bananas.${g.k + 1 < OPP.length ? ` ${OPP[g.k + 1].name} will play you next.` : ' Nobody in the cove drops better.'}` : g.result === 0 ? `A full rack against ${g.opp.name}: a draw.` : `${g.opp.name} got four coconuts in a row.` }); }
+            const nx = OPP[g.k + 1];
+            ctx.finish({ score: won ? g.opp.pts + (g.moves <= 12 ? 10 : 0) : 0, label: 'points', passed: won && g.opp.pts >= (def.pass || 0), solved: won,
+              extra: won ? `You beat ${g.opp.name}${g.opp.round ? ` (${g.opp.round})` : ''} with ${g.moves} bananas.${nx ? ` ${nx.name}${nx.round ? ` (${nx.round})` : ''} will play you next.` : ' Nobody in the cove drops better.'}` : g.result === 0 ? `A full rack against ${g.opp.name}: a draw.` : `${g.opp.name} got four coconuts in a row.` }); }
         },
         key(e, down) {
           if (!down || e.repeat) return; const k = e.key.toLowerCase();
-          if (st.phase === 'pick') { const n = parseInt(k, 10); if (n >= 1 && n <= OPP.length) choose(n - 1); return; }
+          if (st.phase === 'pick') { const n = k === '0' ? 10 : parseInt(k, 10); if (n >= 1 && n <= OPP.length) choose(n - 1); return; } // 1-9, 0 = the tenth
           if (st.phase !== 'play' || !g) return; const n = parseInt(k, 10);
           if (n >= 1 && n <= 7) { g.hover = null; playerDrop(n - 1); return; }
           if (k === 'arrowleft' || k === 'a') { g.hover = null; g.cur = (g.cur + 6) % 7; draw(); } else if (k === 'arrowright' || k === 'd') { g.hover = null; g.cur = (g.cur + 1) % 7; draw(); }
