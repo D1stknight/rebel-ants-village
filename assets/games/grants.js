@@ -4,8 +4,8 @@
 // family colour, ones that break the rule show red. Seven maps from 5 x 5 to the 14 x 14 Shogun's Domain, each with
 // one answer (checked by a solver; the big ones need "what if this grant lay here?" reasoning). H hint (no clean
 // bonus). Score: the map x 20, +10 without a hint. def: { levels, pass, points }
-// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules in a few lines) and inst.restart
-// (the same map with no grants, the clock from 0; hints still count: they cost the bonus).
+// Oct 17 (Miguel: the puzzles need a how-to, every board a Restart): howTo (the rules + a 5 x 5 map, howto/grants.png)
+// and inst.restart (the same map with no grants, the clock from 0; hints still count: they cost the bonus).
 // Oct 17 (Miguel: "take it to 10 maps"): three more, 15 x 15, 16 x 16 and 17 x 17, from the Oct 15 generator (scratchpad
 // lv/grants: gen.mjs with a Math.imul LCG, gen17.mjs grading with the seals in the order kept here). Each has one answer
 // by its counting search and by a SAT model written apart from it (lv/grants/sat.py; all ten pass); the logic solver
@@ -30,9 +30,12 @@
     howTo: {
       lines: ['Share the whole map out in rectangles called grants. Every grant must hold exactly one seal, and the seal\'s number is the grant\'s size in fields.',
         'So a 6 can be 1 x 6, 2 x 3, 3 x 2 or 6 x 1 fields. Every field must end up in exactly one grant.',
-        'Drag from one corner of a grant to the opposite corner to draw it; click a grant to take it back. Keys: arrows move, Space at each corner, Del removes.',
-        'A grant that keeps the rule glows in colour; one that breaks it shows red. U undoes, Clear empties the map, H lays one right grant (no clean bonus then).',
-        'Tip: start with the seals that can only fit one way, like a big number pressed against the edge or between other seals.']
+        'Drag from one corner of a grant to the opposite corner to lay it; its size shows as you drag (2×3=6). A new grant pushes out any grant it overlaps; click a grant to take it back.',
+        'Keys: the arrows (or WASD) move the gold square, Space at one corner and again at the other, Esc drops the first corner, Del removes the grant under the square.',
+        'A grant that keeps the rule glows in colour; one that breaks it shows red. U (Undo) takes back a step, Clear empties the map, Restart starts the map again.',
+        'H (Hint) takes away a wrong grant, or lays a right one where there is none; it costs the +10 for a map shared out without hints.',
+        'Tip: start with the seals that can only fit one way, like a big number pressed against the edge or between other seals.'],
+      img: 'howto/grants.png', caption: 'A 5 x 5 map with one answer: six grants laid and the last being dragged (3×2=6). The other 6 lies two rows of three.'
     },
     start(ctx) {
       const B = ctx.B, H = ctx.HUD, scene = ctx.scene, def = ctx.def;
