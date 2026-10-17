@@ -11779,7 +11779,10 @@ function danceOffLoop(dir, late) {
   const beat = DanceOff.dc?.beat || DanceOff.dc?.every || .5, len = (g.to - g.from) / 60, n = Math.max(2, Math.round(len / (beat * 1.12)));
   if (g._danceSpeed0 == null) g._danceSpeed0 = g.speedRatio;
   g.speedRatio = len / (n * beat);
-  if (animState === slot && g.isPlaying) g.stop(); animState = -1; switchAnim(slot, true);
+  // the same dance again: from the beat; another one: switchAnim stops the one playing (idle or the last dance), else
+  // every dance kept looping under the next and went on after the dance-off
+  if (animState === slot) { if (g.isPlaying) g.stop(); animState = -1; }
+  switchAnim(slot, true);
   if (late > 0) g.goToFrame(Math.min(g.to, g.from + late * g.speedRatio * 60));
   DanceOff.move = { dir, slot, at: performance.now() / 1000 - Math.max(0, late || 0) };
   return true;
